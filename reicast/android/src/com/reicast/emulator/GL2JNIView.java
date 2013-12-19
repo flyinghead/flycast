@@ -52,7 +52,7 @@ import com.example.newdc.JNIdc;
 class GL2JNIView extends GLSurfaceView
 {
   private static String fileName;
-  //private AudioThread audioThread;
+  //private AudioThread audioThread;  
   private EmuThread ethd = new EmuThread();
 
   private static final boolean DEBUG           = false;
@@ -121,7 +121,7 @@ class GL2JNIView extends GLSurfaceView
   public GL2JNIView(Context context,String newFileName,boolean translucent,int depth,int stencil)
   {
     super(context);
-
+    setKeepScreenOn(true);
     vib=(Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
     
     // This is the game we are going to run
