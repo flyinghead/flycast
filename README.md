@@ -14,7 +14,7 @@ Rebranding/forks
 ----------------
 If you are interested into further porting/adapting/whatever, *please* don't fork off. I hate that. Really.
 
-Let’s try to keep everything under a single project :)
+Letï¿½s try to keep everything under a single project :)
 
 To build for android
 --------------------
@@ -53,13 +53,16 @@ We had to buy all of these, except the gcw zero and a beaglebone which were dona
 Apart from that, we don't accept monetary donations right now.
 We also don't plan to be releasing a premium version at any store.
 Most of the project has been developed by drk||Raziel (aka, skmp, drk, Raz, etc) but it has been based on the 
-Works of multiple people. It would be extremely unfair to charge for it and get all the credit :)
+works of multiple people. It would be extremely unfair to charge for it and get all the credit :)
+
 
 We're planning for an indiegogo campaign later on to help with sustained development and running costs, so follow @reicastdc on twitter for updates
+
 
 Team
 ----
 The active team consists of drk||Raziel (mostly just writing code), PsyMan (debugging/testing and everything else) and a little bit of gb_away
+
 
 In previous iterations a lot of people have worked on this, notably David Miller (aka, ZeZu), the nullDC team, friends from #pcsx2 and all over the world :)
 
