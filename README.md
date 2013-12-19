@@ -14,7 +14,7 @@ Rebranding/forks
 ----------------
 If you are interested into further porting/adapting/whatever, *please* don't fork off. I hate that. Really.
 
-Let�s try to keep everything under a single project :)
+Let's try to keep everything under a single project :)
 
 To build for android
 --------------------
