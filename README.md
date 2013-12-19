@@ -1,0 +1,68 @@
+reicast
+===========
+reicast is a sega dreamcast emulator
+
+This is developer oriented resource, if you just want bins head over to http://reicast.com
+
+Caution
+-------
+The source is a mess, and I need sleep.
+We had to discover some interesting arm bugs on the cleaned/refactored branch right after the release.
+Expect a much improved changed folder/make structure soon.
+
+Rebranding/forks
+----------------
+If you are interested into further porting/adapting/whatever, *please* don't fork off. I hate that. Really.
+
+Let’s try to keep everything under a single project :)
+
+To build for android
+--------------------
+```
+cd newdc\android\libnewdc
+android update project -p .
+
+cd ..\..\..\reicast\android
+android update project -p .
+
+ndk-build -j 4
+
+ant debug
+```
+
+Donations and stuff
+-------------------
+Well, glad you liked the project so far!
+
+We're currently short on hardware
+
+If you would like to donate some devices, get in touch at team@reicast.com. GLES3 capable stuff, some mainstream hardware and rarities would be extremely appreciated.
+Keep in mind we're located in Greece for the most part
+
+This has been tested/developed on
+* Galaxy tab 7.0 Plus
+* P990
+* Archos 10G9
+* Some Chinese tablet
+* OUYA
+* Various development boards
+* gcw zero
+
+We had to buy all of these, except the gcw zero and a beaglebone which were donated (thanks! You rock!)
+
+Apart from that, we don't accept monetary donations right now.
+We also don't plan to be releasing a premium version at any store.
+Most of the project has been developed by drk||Raziel (aka, skmp, drk, Raz, etc) but it has been based on the 
+Works of multiple people. It would be extremely unfair to charge for it and get all the credit :)
+
+We're planning for an indiegogo campaign later on to help with sustained development and running costs, so follow @reicastdc on twitter for updates
+
+Team
+----
+The active team consists of drk||Raziel (mostly just writing code), PsyMan (debugging/testing and everything else) and a little bit of gb_away
+
+In previous iterations a lot of people have worked on this, notably David Miller (aka, ZeZu), the nullDC team, friends from #pcsx2 and all over the world :)
+
+
+
+Thanks guys
