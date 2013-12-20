@@ -3,6 +3,18 @@
 #include "rend/TexCache.h"
 #include "cfg/cfg.h"
 
+#ifdef TARGET_PANDORA
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/ioctl.h>
+#include <linux/fb.h>
+
+#ifndef FBIO_WAITFORVSYNC
+	#define FBIO_WAITFORVSYNC _IOW('F', 0x20, __u32)
+#endif
+int fbdev = -1;
+#endif
+
 /*
 GL|ES 2
 Slower, smaller subset of gl2
@@ -304,12 +316,16 @@ int screen_height;
 //create a basic gles context
 bool gl_init(EGLNativeWindowType wind, EGLNativeDisplayType disp)
 {
-#ifndef _ANDROID
+#if !defined(_ANDROID)
 	gl.setup.native_wind=wind;
 	gl.setup.native_disp=disp;
 
 	//try to get a display
+	#ifdef TARGET_PANDORA0
+	gl.setup.display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+	#else
 	gl.setup.display = eglGetDisplay(gl.setup.native_disp);
+	#endif
 
 	//if failed, get the default display (this will not happen in win32)
 	if(gl.setup.display == EGL_NO_DISPLAY)
@@ -342,7 +358,11 @@ bool gl_init(EGLNativeWindowType wind, EGLNativeDisplayType disp)
 		return false;
 	}
 
+	#ifdef TARGET_PANDORA0
+	gl.setup.surface = eglCreateWindowSurface(gl.setup.display, config, (NativeWindowType)NULL, NULL);
+	#else
 	gl.setup.surface = eglCreateWindowSurface(gl.setup.display, config, wind, NULL);
+	#endif
 
 	if (eglCheck())
 		return false;
@@ -384,6 +404,12 @@ void egl_stealcntx()
 //swap buffers
 void gl_swap()
 {
+	#ifdef TARGET_PANDORA0
+	if (fbdev >= 0) {
+		int arg = 0;
+		ioctl(fbdev,FBIO_WAITFORVSYNC,&arg);
+	}	
+	#endif
 	eglSwapBuffers(gl.setup.display, gl.setup.surface);
 }
 
@@ -392,6 +418,21 @@ void gl_term()
 {
 #if HOST_OS==OS_WINDOWS
 	ReleaseDC((HWND)gl.setup.native_wind,(HDC)gl.setup.native_disp);
+#endif
+#ifdef TARGET_PANDORA
+	eglMakeCurrent( gl.setup.display, NULL, NULL, EGL_NO_CONTEXT );
+	if (gl.setup.context)
+		eglDestroyContext(gl.setup.display, gl.setup.context);	
+	if (gl.setup.surface)
+		eglDestroySurface(gl.setup.display, gl.setup.surface);
+	if (gl.setup.display)
+		eglTerminate(gl.setup.display);
+	if (fbdev>=0)	close( fbdev );
+	
+	fbdev=-1;
+	gl.setup.context=0;
+	gl.setup.surface=0;
+	gl.setup.display=0;
 #endif
 }
 
@@ -683,7 +724,11 @@ bool gles_init()
 		return false;
 
 	
+	#ifdef TARGET_PANDORA
+	fbdev=open("/dev/fb0", O_RDONLY);
+	#else
 	eglSwapInterval(gl.setup.display,1);
+	#endif
 
 	//clean up all buffers ...
 	for (int i=0;i<10;i++)
@@ -695,6 +740,7 @@ bool gles_init()
 
 	return true;
 }
+
 
 
 float fog_coefs[]={0,0};

@@ -28,10 +28,18 @@
 	#include <linux/joystick.h>
 #endif
 
+#ifdef TARGET_PANDORA
+#include <signal.h>
+#include <execinfo.h>
+#include <sys/soundcard.h>
+	
+#define WINDOW_WIDTH	800
+#else
 #define WINDOW_WIDTH	640
+#endif
 #define WINDOW_HEIGHT	480
 
-void* x11_win,* x11_disp;
+void* x11_win=0,* x11_disp=0;
 void* libPvr_GetRenderTarget() 
 { 
 	return x11_win; 
@@ -92,6 +100,10 @@ void emit_WriteCodeCache();
 
 static int JoyFD    = -1;     // Joystick file descriptor
 static int kbfd = -1; 
+#ifdef TARGET_PANDORA
+static int audio_fd = -1;
+#endif
+
 
 #define MAP_SIZE 32
 
@@ -121,7 +133,11 @@ void SetupInput()
 	}
 
 	if (true) {
+		#ifdef TARGET_PANDORA
+		const char* device = "/dev/input/event4";
+		#else
 		const char* device = "/dev/event2";
+		#endif
 		char name[256]= "Unknown";
 
 		if ((kbfd = open(device, O_RDONLY)) > 0) {
@@ -170,9 +186,48 @@ bool HandleKb(u32 port) {
 	if (kbfd < 0)
 		return false;
 
+	#ifdef TARGET_PANDORA
+	static int keys[13];
+	while(read(kbfd,&ie,sizeof(ie))==sizeof(ie)) {
+		if (ie.type=EV_KEY)
+		//printf("type %i key %i state %i\n", ie.type, ie.code, ie.value);
+		switch (ie.code) {
+			case KEY_SPACE: keys[0]=ie.value; break;
+			case KEY_UP:	keys[1]=ie.value; break;
+			case KEY_DOWN:	keys[2]=ie.value; break;
+			case KEY_LEFT:	keys[3]=ie.value; break;
+			case KEY_RIGHT:	keys[4]=ie.value; break;
+			case KEY_PAGEUP:keys[5]=ie.value; break;
+			case KEY_PAGEDOWN:keys[6]=ie.value; break;
+			case KEY_END:	keys[7]=ie.value; break;
+			case KEY_HOME:	keys[8]=ie.value; break;
+			case KEY_MENU:		keys[9]=ie.value; break;
+			case KEY_RIGHTSHIFT:	keys[10]=ie.value; break;
+			case KEY_RIGHTCTRL:	keys[11]=ie.value; break;
+			case KEY_LEFTALT:		keys[12]=ie.value; break;
+		}
+	}
+			
+	if (keys[0]) { kcode[port] &= ~Btn_C; }
+	if (keys[6]) { kcode[port] &= ~Btn_A; }
+	if (keys[7]) { kcode[port] &= ~Btn_B; }
+	if (keys[5]) { kcode[port] &= ~Btn_Y; }
+	if (keys[8]) { kcode[port] &= ~Btn_X; }
+	if (keys[1]) { kcode[port] &= ~DPad_Up;    }
+	if (keys[2]) { kcode[port] &= ~DPad_Down;  }
+	if (keys[3]) { kcode[port] &= ~DPad_Left;  }
+	if (keys[4]) { kcode[port] &= ~DPad_Right; }
+	if (keys[12]){ kcode[port] &= ~Btn_Start; }
+	if (keys[9]){ die("death by escape key"); } 
+	if (keys[10]) rt[port]=255;
+	if (keys[11]) lt[port]=255;
+	
+	return true;
+	#else
   	while(read(kbfd,&ie,sizeof(ie))==sizeof(ie)) {
 		printf("type %i key %i state %i\n", ie.type, ie.code, ie.value);
 	}
+	#endif
 
 }
 
@@ -268,16 +323,40 @@ bool HandleJoystick(u32 port)
 
 extern bool KillTex;
 
+#ifdef TARGET_PANDORA
+static Cursor CreateNullCursor(Display *display, Window root)
+{
+	Pixmap cursormask; 
+	XGCValues xgc;
+	GC gc;
+	XColor dummycolour;
+	Cursor cursor;
+	
+	cursormask = XCreatePixmap(display, root, 1, 1, 1/*depth*/);
+	xgc.function = GXclear;
+	gc =  XCreateGC(display, cursormask, GCFunction, &xgc);
+	XFillRectangle(display, cursormask, gc, 0, 0, 1, 1);
+	dummycolour.pixel = 0;
+	dummycolour.red = 0;
+	dummycolour.flags = 04;
+	cursor = XCreatePixmapCursor(display, cursormask, cursormask,
+	&dummycolour,&dummycolour, 0,0);
+	XFreePixmap(display,cursormask);
+	XFreeGC(display,gc);
+	return cursor;
+}
+#endif
+
 void UpdateInputState(u32 port)
 {
 	static char key = 0;
 
-	if (HandleJoystick(port)) return;
-	if (HandleKb(port)) return;
-
 	kcode[port]=0xFFFF;
 	rt[port]=0;
 	lt[port]=0;
+	
+	if (HandleJoystick(port)) return;
+	if (HandleKb(port)) return;
 
 	for(;;)
 	{
@@ -287,6 +366,17 @@ void UpdateInputState(u32 port)
 		if (0  == key || EOF == key) break;
 		if ('k' == key) KillTex=true;
 
+#ifdef TARGET_PANDORA
+		if (' ' == key) { kcode[port] &= ~Btn_C; }
+		if ('6' == key) { kcode[port] &= ~Btn_A; }
+		if ('O' == key) { kcode[port] &= ~Btn_B; }
+		if ('5' == key) { kcode[port] &= ~Btn_Y; }
+		if ('H' == key) { kcode[port] &= ~Btn_X; }
+		if ('A' == key) { kcode[port] &= ~DPad_Up;    }
+		if ('B' == key) { kcode[port] &= ~DPad_Down;  }
+		if ('D' == key) { kcode[port] &= ~DPad_Left;  }
+		if ('C' == key) { kcode[port] &= ~DPad_Right; }
+#else
 		if ('b' == key) { kcode[port] &= ~Btn_C; }
 		if ('v' == key) { kcode[port] &= ~Btn_A; }
 		if ('c' == key) { kcode[port] &= ~Btn_B; }
@@ -296,8 +386,11 @@ void UpdateInputState(u32 port)
 		if ('k' == key) { kcode[port] &= ~DPad_Down;  }
 		if ('j' == key) { kcode[port] &= ~DPad_Left;  }
 		if ('l' == key) { kcode[port] &= ~DPad_Right; }
-
+#endif
 		if (0x0A== key) { kcode[port] &= ~Btn_Start;  }
+#ifdef TARGET_PANDORA
+		if ('q' == key){ die("death by escape key"); } 
+#endif
 		//if (0x1b == key){ die("death by escape key"); } //this actually quits when i press left for some reason
 
 		if ('a' == key) rt[port]=255;
@@ -310,7 +403,6 @@ void UpdateInputState(u32 port)
 #endif
 	}
 }
-
 
 void os_DoEvents()
 {
@@ -379,8 +471,13 @@ void os_CreateWindow()
 			sWA.event_mask = StructureNotifyMask | ExposureMask | ButtonPressMask | ButtonReleaseMask | KeyPressMask | KeyReleaseMask;
 			ui32Mask = CWBackPixel | CWBorderPixel | CWEventMask | CWColormap;
 
+			#ifdef TARGET_PANDORA
+			int width=800;
+			int height=480;
+			#else
 			int width=cfgLoadInt("x11","width", WINDOW_WIDTH);
 			int height=cfgLoadInt("x11","height", WINDOW_HEIGHT);
+			#endif
 
 			if (width==-1)
 			{
@@ -390,8 +487,19 @@ void os_CreateWindow()
 			// Creates the X11 window
 			x11Window = XCreateWindow( x11Display, RootWindow(x11Display, x11Screen), (ndcid%3)*640, (ndcid/3)*480, width, height,
 				0, CopyFromParent, InputOutput, CopyFromParent, ui32Mask, &sWA);
+			#ifdef TARGET_PANDORA
+			// fullscreen
+			Atom wmState = XInternAtom(x11Display, "_NET_WM_STATE", False);
+			Atom wmFullscreen = XInternAtom(x11Display, "_NET_WM_STATE_FULLSCREEN", False);
+			XChangeProperty(x11Display, x11Window, wmState, XA_ATOM, 32, PropModeReplace, (unsigned char *)&wmFullscreen, 1);
+			
+			XMapRaised(x11Display, x11Window);
+			#else
 			XMapWindow(x11Display, x11Window);
+			#endif
 			XFlush(x11Display);
+
+			
 
 			//(EGLNativeDisplayType)x11Display;
 			x11_disp=(void*)x11Display;
@@ -448,12 +556,75 @@ void common_linux_setup();
 int dc_init(int argc,wchar* argv[]);
 void dc_run();
 
+#ifdef TARGET_PANDORA
+void gl_term();
+
+void clean_exit(int sig_num) {
+	void *array[10];
+	size_t size;
+	
+	// close files
+	if (JoyFD>=0) close(JoyFD);
+	if (kbfd>=0) close(kbfd);
+	if(audio_fd>=0) close(audio_fd);
+
+	// Close EGL context ???
+	if (sig_num!=0)
+		gl_term();
+	
+	// close XWindow
+	if (x11_win) {
+		XDestroyWindow(x11_disp, x11_win);
+		x11_win = 0;
+	}
+	if (x11_disp) {
+		XCloseDisplay(x11_disp);
+		x11_disp = 0;
+	}
+	
+	// finish cleaning
+	if (sig_num!=0) {
+		write(2, "\nSignal received\n", sizeof("\nSignal received\n"));
+	
+		size = backtrace(array, 10);
+		backtrace_symbols_fd(array, size, STDERR_FILENO);
+		exit(1);
+	}
+}
+
+void init_sound()
+{
+    if((audio_fd=open("/dev/dsp",O_WRONLY))<0)
+		printf("Couldn't open /dev/dsp.\n");
+    else
+	{
+	  printf("sound enabled, dsp openned for write\n");
+	  int tmp=44100;
+	  int err_ret;
+	  err_ret=ioctl(audio_fd,SNDCTL_DSP_SPEED,&tmp);
+	  printf("set Frequency to %i, return %i (rate=%i)\n", 44100, err_ret, tmp);
+	  int channels=2;
+	  err_ret=ioctl(audio_fd, SNDCTL_DSP_CHANNELS, &channels);	  
+	  printf("set dsp to stereo (%i => %i)\n", channels, err_ret);
+	  int format=AFMT_S16_LE;
+	  err_ret=ioctl(audio_fd, SNDCTL_DSP_SETFMT, &format);
+	  printf("set dsp to %s audio (%i/%i => %i)\n", "16bits signed" ,AFMT_S16_LE, format, err_ret);
+	}
+}
+#endif
+
 int main(int argc, wchar* argv[])
 {
 	//if (argc==2) 
 		//ndcid=atoi(argv[1]);
 
 	if (setup_curses() < 0) die("failed to setup curses!\n");
+#ifdef TARGET_PANDORA
+	signal(SIGSEGV, clean_exit);
+	signal(SIGKILL, clean_exit);
+	
+	init_sound();
+#endif
 	SetHomeDir(".");
 
 	printf("Home dir is: %s\n",GetPath("/").c_str());
@@ -467,12 +638,19 @@ int main(int argc, wchar* argv[])
 	dc_init(argc,argv);
 
 	dc_run();
+	
+#ifdef TARGET_PANDORA
+	clean_exit(0);
+#endif
 
 	return 0;
 }
 
 u32 os_Push(void* frame, u32 samples, bool wait)
 {
+#ifdef TARGET_PANDORA
+	write(audio_fd, frame, samples*4);
+#endif
 return 1;
 }
 #endif

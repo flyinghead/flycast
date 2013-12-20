@@ -230,7 +230,7 @@ void LoadSettings()
 	settings.pvr.ta_skip			= cfgLoadInt("config","ta.skip",0);
 	settings.pvr.rend				= cfgLoadInt("config","pvr.rend",0);
 
-#if (HOST_OS != OS_LINUX || defined(_ANDROID))
+#if (HOST_OS != OS_LINUX || defined(_ANDROID) || defined(TARGET_PANDORA))
 	settings.aica.BufferSize=2048;
 #else
 	settings.aica.BufferSize=1024;

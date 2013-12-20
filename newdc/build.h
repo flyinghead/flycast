@@ -45,7 +45,7 @@
 #define COMPILER_GCC	0x30000002
 
 ///
-#if (!defined(TARGET_WIN86) && !defined(TARGET_BEAGLE) && !defined(TARGET_NACL32) && !defined(TARGET_GCW0))
+#if (!defined(TARGET_WIN86) && !defined(TARGET_BEAGLE) && !defined(TARGET_NACL32) && !defined(TARGET_GCW0) && !defined(TARGET_PANDORA))
 	#define TARGET_WIN86
 #endif
 
@@ -53,6 +53,10 @@
 	#define HOST_OS OS_WINDOWS
 	#define HOST_CPU CPU_X86
 	#define BUILD_COMPILER COMPILER_VC
+#elif TARGET_PANDORA
+	#define HOST_OS OS_LINUX
+	#define HOST_CPU CPU_ARM
+	#define BUILD_COMPILER COMPILER_GCC
 #elif TARGET_BEAGLE
 	#define HOST_OS OS_LINUX
 	#define HOST_CPU CPU_ARM
