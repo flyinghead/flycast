@@ -226,7 +226,7 @@ public class MainActivity extends Activity {
         for (int i=0;i<list.size();i++)
         {
         	if (list.get(i)!=null && list.get(i).isFile())
-        		if (!list.get(i).getName().endsWith(".gdi") && !list.get(i).getName().endsWith(".cdi") && !list.get(i).getName().endsWith(".chd"))
+        		if (!list.get(i).getName().toLowerCase().endsWith(".gdi") && !list.get(i).getName().toLowerCase().endsWith(".cdi") && !list.get(i).getName().toLowerCase().endsWith(".chd"))
         			continue;
         	
         	View childview=getLayoutInflater().inflate(R.layout.app_list_item, null, false);
@@ -241,9 +241,9 @@ public class MainActivity extends Activity {
          	((ImageView)childview.findViewById(R.id.item_icon)).setImageResource(
          			list.get(i)==null ? R.drawable.config :
          			list.get(i).isDirectory() ? R.drawable.open_folder : 
-         			list.get(i).getName().endsWith(".gdi") ? R.drawable.gdi : 
-         			list.get(i).getName().endsWith(".cdi") ? R.drawable.cdi :
-         			list.get(i).getName().endsWith(".chd") ? R.drawable.chd : 
+         			list.get(i).getName().toLowerCase().endsWith(".gdi") ? R.drawable.gdi : 
+         			list.get(i).getName().toLowerCase().endsWith(".cdi") ? R.drawable.cdi :
+         			list.get(i).getName().toLowerCase().endsWith(".chd") ? R.drawable.chd : 
          			R.drawable.disk_unknown);
         	
          	childview.setTag(list.get(i));
