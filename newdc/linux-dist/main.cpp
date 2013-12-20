@@ -625,7 +625,20 @@ int main(int argc, wchar* argv[])
 	
 	init_sound();
 #endif
+
+#if defined(USES_HOMEDIR)
+	string home = (string)getenv("HOME");
+	if(home.c_str())
+	{
+		home += "/.reicast";
+		mkdir(home.c_str(), 0755); // create the directory if missing
+		SetHomeDir(home);
+	}
+	else
+		SetHomeDir(".");
+#else
 	SetHomeDir(".");
+#endif
 
 	printf("Home dir is: %s\n",GetPath("/").c_str());
 
