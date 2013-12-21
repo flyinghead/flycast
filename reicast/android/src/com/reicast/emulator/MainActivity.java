@@ -157,9 +157,9 @@ public class MainActivity extends Activity {
 
         String msg = null;
         if(!bios.exists()) 
-            msg = "Bios Missing. Put bios in /sdcard/dc/data/dc_boot.bin";
+            msg = "BIOS Missing. The Dreamcast BIOS is required for this emulator to work. In the internal memory of your phone, create a folder named dc, make a folder named data inside it, and put the bios files there (dc_boot.bin, dc_flash.bin).";
         else if (!flash.exists())
-            msg = "Flash Missing. Put bios in /sdcard/dc/data/dc_flash.bin";
+            msg = "Flash Missing. The Dreamcast BIOS is required for this emulator to work. In the internal memory of your phone, create a folder named dc, make a folder named data inside it, and put the bios files there (dc_boot.bin, dc_flash.bin).";
 
         if (msg != null ) {
             vib.vibrate(50);
@@ -167,7 +167,7 @@ public class MainActivity extends Activity {
                     MainActivity.this);
 
             // set title
-            alertDialogBuilder.setTitle("Missing files");
+            alertDialogBuilder.setTitle("You have to provide the BIOS");
 
             // set dialog message
             alertDialogBuilder
