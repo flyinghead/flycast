@@ -3,6 +3,8 @@ LOCAL_PATH := $(call my-dir)
 FOR_LINUX :=1
 FOR_ARM :=1
 FOR_PANDORA :=1
+USE_SDL :=1
+USE_OSS :=1
 
 RZDCY_SRC_DIR = ../../newdc
 
@@ -35,6 +37,9 @@ CXXFLAGS += -ffast-math -ftree-vectorize -fprefetch-loop-arrays
 CXXFLAGS += $(CFLAGS) $(MFLAGS) -fno-exceptions -fno-rtti
 CXXFLAGS += -D SUPPORT_X11
 
+ifdef USE_SDL
+	CXXFLAGS += `sdl-config --cflags`
+endif
 
 ifdef PGO_MAKE
 	CXXFLAGS += -fprofile-generate -pg
@@ -57,8 +62,21 @@ INCS	:= -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps -I$(RZDCY_SRC_DIR)/khronos
 #-I../linux-deps/include
 
 LIBS    := -L../linux-deps/lib
-LIBS    += -lm -lrt -lEGL -lGLESv2 #-lglslcompiler -lIMGegl -lpvr2d -lsrv_um 
-LIBS    += -lpthread -lasound -lX11 -lXdmcp -lXau
+LIBS    += -lm -lrt -lEGL -lGLESv2 
+#-lglslcompiler -lIMGegl -lpvr2d -lsrv_um 
+LIBS    += -lpthread
+
+ifdef USE_OSS
+	CXXFLAGS += -DUSE_OSS
+else
+	LIBS += -lasound
+endif
+
+ifdef USE_SDL
+	LIBS += `sdl-config --libs`
+else
+	LIBS    += -lX11 -lXdmcp -lXau
+endif
 
 
 OBJECTS=$(RZDCY_FILES:.cpp=.build_obj)
