@@ -78,7 +78,7 @@ EXECUTABLE=reicast.elf
 
 PACKAGE_FILES=$(EXECUTABLE_STRIPPED) default.gcw0.desktop icon-32.png
 
-all: $(CPPFILES) $(EXECUTABLE) $(EXECUTABLE_STRIPPED) $(EXECUTABLE_TARBZ) $(PACKAGE)
+all: $(CPPFILES) $(EXECUTABLE) $(EXECUTABLE_STRIPPED)  $(PACKAGE)
 	
 $(PACKAGE): $(PACKAGE_FILES)
 	mksquashfs $(PACKAGE_FILES) $(PACKAGE) -all-root
@@ -89,9 +89,6 @@ $(EXECUTABLE): $(OBJECTS)
 
 $(EXECUTABLE_STRIPPED): $(EXECUTABLE)
 	cp $< $@ && $(STRIP) $@
-
-$(EXECUTABLE_TARBZ): $(EXECUTABLE)
-	sudo tar -cjvf /var/www/$@ $<
 
 obj/%.build_obj : $(RZDCY_SRC_DIR)/%.cpp
 	mkdir -p $(dir $@)

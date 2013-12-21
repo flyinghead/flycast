@@ -186,7 +186,55 @@ bool HandleKb(u32 port) {
 	if (kbfd < 0)
 		return false;
 
-	#ifdef TARGET_PANDORA
+	#if defined(TARGET_GCW0)
+
+                #define KEY_A           0x1D
+                #define KEY_B           0x38
+                #define KEY_X           0x2A
+                #define KEY_Y           0x39
+                #define KEY_L           0xF
+                #define KEY_R           0xE
+                #define KEY_SELECT      0x1
+                #define KEY_START       0x1C
+                #define KEY_LEFT        0x69
+                #define KEY_RIGHT       0x6A
+                #define KEY_UP          0x67
+                #define KEY_DOWN        0x6C
+                #define KEY_LOCK        0x77    // Note that KEY_LOCK is a switch and remains pressed until it's switched back
+ 
+	static int keys[13];
+	while(read(kbfd,&ie,sizeof(ie))==sizeof(ie)) {
+		//printf("type %i key %i state %i\n", ie.type, ie.code, ie.value);
+		if (ie.type=EV_KEY)
+		switch (ie.code) {
+			case KEY_SELECT:	keys[9]=ie.value; break;
+			case KEY_UP:	keys[1]=ie.value; break;
+			case KEY_DOWN:	keys[2]=ie.value; break;
+			case KEY_LEFT:	keys[3]=ie.value; break;
+			case KEY_RIGHT:	keys[4]=ie.value; break;
+			case KEY_Y:keys[5]=ie.value; break;
+			case KEY_B:keys[6]=ie.value; break;
+			case KEY_A:	keys[7]=ie.value; break;
+			case KEY_X:	keys[8]=ie.value; break;
+			case KEY_START:		keys[12]=ie.value; break;
+		}
+	}
+	if (keys[6]) { kcode[port] &= ~Btn_A; }
+	if (keys[7]) { kcode[port] &= ~Btn_B; }
+	if (keys[5]) { kcode[port] &= ~Btn_Y; }
+	if (keys[8]) { kcode[port] &= ~Btn_X; }
+	if (keys[1]) { kcode[port] &= ~DPad_Up;    }
+	if (keys[2]) { kcode[port] &= ~DPad_Down;  }
+	if (keys[3]) { kcode[port] &= ~DPad_Left;  }
+	if (keys[4]) { kcode[port] &= ~DPad_Right; }
+	if (keys[12]){ kcode[port] &= ~Btn_Start; }
+	if (keys[9]){ die("death by escape key"); } 
+	if (keys[10]) rt[port]=255;
+	if (keys[11]) lt[port]=255;
+	
+	return true;
+
+	#elif defined(TARGET_PANDORA)
 	static int keys[13];
 	while(read(kbfd,&ie,sizeof(ie))==sizeof(ie)) {
 		if (ie.type=EV_KEY)
@@ -355,9 +403,14 @@ void UpdateInputState(u32 port)
 	rt[port]=0;
 	lt[port]=0;
 	
+#if defined(TARGET_GCW0)
+	HandleJoystick(port);
+	HandleKb(port);
+return;
+#else
 	if (HandleJoystick(port)) return;
 	if (HandleKb(port)) return;
-
+#endif
 	for(;;)
 	{
 		key = 0;
