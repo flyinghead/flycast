@@ -66,6 +66,8 @@ u32 vks[4];
 s8 joyx[4],joyy[4];
 u8 rt[4],lt[4];
 
+extern bool KillTex;
+
 enum DCPad {
 	Btn_C		= 1,
 	Btn_B		= 1<<1,
@@ -184,9 +186,10 @@ bool HandleEvents(u32 port) {
 					case SDLK_HOME:		keys[8]=value; break;
 					case SDLK_MENU:
 					case SDLK_ESCAPE:	keys[9]=value; break;
-					case SDLK_RSHIFT:	keys[10]=value; break;
-					case SDLK_RCTRL:	keys[11]=value; break;
+					case SDLK_RSHIFT:	keys[11]=value; break;
+					case SDLK_RCTRL:	keys[10]=value; break;
 					case SDLK_LALT:		keys[12]=value; break;
+					case SDLK_k:		KillTex=true; break;
 				#else
 				#error *TODO*
 				#endif
@@ -378,7 +381,6 @@ bool HandleJoystick(u32 port)
 	  return true;
 }
 */
-extern bool KillTex;
 
 void UpdateInputState(u32 port)
 {
@@ -471,6 +473,9 @@ void init_sound()
 	  int format=AFMT_S16_LE;
 	  err_ret=ioctl(audio_fd, SNDCTL_DSP_SETFMT, &format);
 	  printf("set dsp to %s audio (%i/%i => %i)\n", "16bits signed" ,AFMT_S16_LE, format, err_ret);
+	  int frag=(2<<16)|12;
+	  err_ret=ioctl(audio_fd, SNDCTL_DSP_SETFRAGMENT, &frag);
+	  printf("set dsp fragment to %i of %i bytes (%x => %i)\n", "16bits signed" ,(frag>>16), 2<<(frag&0xff), frag, err_ret);
 	  /*
 	  // this doesn't help stutering, and the emu goes too fast after that
 	  err_ret=ioctl(audio_fd, SNDCTL_DSP_NONBLOCK, NULL);

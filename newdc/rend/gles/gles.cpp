@@ -321,11 +321,7 @@ bool gl_init(EGLNativeWindowType wind, EGLNativeDisplayType disp)
 	gl.setup.native_disp=disp;
 
 	//try to get a display
-	#ifdef TARGET_PANDORA0
-	gl.setup.display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
-	#else
 	gl.setup.display = eglGetDisplay(gl.setup.native_disp);
-	#endif
 
 	//if failed, get the default display (this will not happen in win32)
 	if(gl.setup.display == EGL_NO_DISPLAY)
@@ -358,11 +354,7 @@ bool gl_init(EGLNativeWindowType wind, EGLNativeDisplayType disp)
 		return false;
 	}
 
-	#ifdef TARGET_PANDORA0
-	gl.setup.surface = eglCreateWindowSurface(gl.setup.display, config, (NativeWindowType)NULL, NULL);
-	#else
 	gl.setup.surface = eglCreateWindowSurface(gl.setup.display, config, wind, NULL);
-	#endif
 
 	if (eglCheck())
 		return false;
