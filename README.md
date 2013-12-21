@@ -41,7 +41,7 @@ Keep in mind we're located in Greece for the most part
 
 This has been tested/developed on
 * Galaxy tab 7.0 Plus
-* P990
+* LG P990
 * Archos 10G9
 * Some Chinese tablet
 * OUYA
