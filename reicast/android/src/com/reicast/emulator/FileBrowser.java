@@ -105,71 +105,7 @@ public class FileBrowser extends Fragment {
         vib=(Vibrator) parentActivity.getSystemService(Context.VIBRATOR_SERVICE);
         
         
-        parentActivity.findViewById(R.id.config).setOnClickListener(
-            	new OnClickListener() {
-            		public void onClick(View view) {
-            			AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
-            				parentActivity);
-             
-            			// set title
-            			alertDialogBuilder.setTitle("Configure");
-             
-            			// set dialog message
-            			alertDialogBuilder
-            				.setMessage("No configuration for now :D")
-            				.setCancelable(false)
-            				.setPositiveButton("Oh well",new DialogInterface.OnClickListener() {
-            					public void onClick(DialogInterface dialog,int id) {
-            						//FileBrowser.this.finish();
-            					}
-            				  });
-             
-            				// create alert dialog
-            				AlertDialog alertDialog = alertDialogBuilder.create();
-             
-            				// show it
-            				alertDialog.show();
-            		}
-
-            	});
         
-        parentActivity.findViewById(R.id.about).setOnTouchListener(
-            	new OnTouchListener() 
-            	{
-            		public boolean onTouch(View v, MotionEvent event)
-            		{
-            			if (event.getActionMasked()==MotionEvent.ACTION_DOWN)
-            			{
-	            			vib.vibrate(50);
-	            			AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
-	            					parentActivity);
-	             
-	            			// set title
-	            			alertDialogBuilder.setTitle("About reicast");
-	             
-	            			// set dialog message
-	            			alertDialogBuilder
-	            				.setMessage("reicast is a dreamcast emulator")
-	            				.setCancelable(false)
-	            				.setPositiveButton("Dismiss",new DialogInterface.OnClickListener() {
-	            					public void onClick(DialogInterface dialog,int id) {
-	            						// if this button is clicked, close
-	            						// current activity
-	            						//FileBrowser.this.finish();
-	            					}
-	            				  });
-	             
-	            				// create alert dialog
-	            				AlertDialog alertDialog = alertDialogBuilder.create();
-	             
-	            				// show it
-	            				alertDialog.show();
-	            				return true;
-            				}
-            				else
-                    			return false;
-            			}
-            	});
         
        /*
         OnTouchListener viblist=new OnTouchListener() {
@@ -315,7 +251,7 @@ public class FileBrowser extends Fragment {
         				mCallback.onFolderSelected(Uri.fromFile(new File(root_sd.getAbsolutePath())));
         				vib.vibrate(250);
         			}
-        			else
+        			else if(ImgBrowse)
         			{
         				vib.vibrate(50);
         				mCallback.onGameSelected(Uri.fromFile(f));
