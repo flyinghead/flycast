@@ -22,7 +22,7 @@
 #include <sys/soundcard.h>
 #endif
 
-//#define JOYSTICK_SDL
+#define JOYSTICK_SDL
 
 #ifndef JOYSTICK_SDL
 #include <linux/joystick.h>
@@ -30,6 +30,8 @@
 
 #include <signal.h>
 #include <execinfo.h>
+
+#include "hw/mem/_vmem.h"
 	
 #ifdef TARGET_PANDORA
 #define WINDOW_WIDTH	800
@@ -142,21 +144,22 @@ void SetupInput()
 	#ifdef JOYSTICK_SDL
 	// Open joystick device
 	int numjoys = SDL_NumJoysticks();
+	printf("Number of Joysticks found = %i\n", numjoys);
 	if (numjoys > 0)
 		JoySDL = SDL_JoystickOpen(0);
-		
+	printf("Joystick openned\n");	
 	if(JoySDL)
 	{
 		int AxisCount,ButtonCount;
-		char* Name;
+		const char* Name;
 
 		AxisCount   = 0;
 		ButtonCount = 0;
-		Name[0]     = '\0';
+//		Name[0]     = '\0';
 
 		AxisCount = SDL_JoystickNumAxes(JoySDL);
 		ButtonCount = SDL_JoystickNumButtons(JoySDL);
-		Name = SDL_JoystickName(JoySDL);
+		Name = SDL_JoystickName(0);
 		
 		printf("SDK: Found '%s' joystick with %d axis and %d buttons\n",Name,AxisCount,ButtonCount);
 
@@ -530,18 +533,6 @@ int main(int argc, wchar* argv[])
 	//if (argc==2) 
 		//ndcid=atoi(argv[1]);
 
-	/*
-		// The SDL_Init prevent mprotect from working correctly ?!!!
-		if (SDL_Init(SDL_INIT_VIDEO|SDL_INIT_JOYSTICK|SDL_INIT_NOPARACHUTE)==-1)
-		die("error initializing SDL");
-	 */
-	
-	SetupInput();
-
-#ifdef USE_OSS	
-	init_sound();
-#endif
-
 #if defined(USES_HOMEDIR)
 	string home = (string)getenv("HOME");
 	if(home.c_str())
@@ -566,6 +557,15 @@ int main(int argc, wchar* argv[])
 		
 	dc_init(argc,argv);
 
+	if (SDL_Init(SDL_INIT_VIDEO|SDL_INIT_JOYSTICK|SDL_INIT_NOPARACHUTE)==-1)
+	die("error initializing SDL");
+	
+	SetupInput();
+	
+	#ifdef USE_OSS	
+		init_sound();
+	#endif
+	
 	dc_run();
 	
 	clean_exit(0);
