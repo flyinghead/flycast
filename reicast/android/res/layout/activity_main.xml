@@ -39,6 +39,7 @@
     </LinearLayout>
 
      <ScrollView
+         android:id="@+id/game_scroller"
          android:layout_width="fill_parent"
          android:layout_height="fill_parent"
          android:layout_marginLeft="6dp"
