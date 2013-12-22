@@ -15,7 +15,7 @@
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
         <activity
-            android:name=".MainActivity"
+            android:name="com.reicast.emulator.MainActivity"
             android:label="@string/title_activity_main" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -36,6 +36,8 @@
 		        <data android:scheme="file" android:mimeType="*/*" android:host="*" android:pathPattern=".*\\.gdi"/>
 		        <data android:scheme="file" android:mimeType="*/*" android:host="*" android:pathPattern=".*\\.CHD"/>
 		        <data android:scheme="file" android:mimeType="*/*" android:host="*" android:pathPattern=".*\\.chd"/>
+		        <data android:scheme="file" android:mimeType="*/*" android:host="*" android:pathPattern=".*\\.CDI"/>
+		        <data android:scheme="file" android:mimeType="*/*" android:host="*" android:pathPattern=".*\\.cdi"/>
 		     </intent-filter>
         </activity>
         
