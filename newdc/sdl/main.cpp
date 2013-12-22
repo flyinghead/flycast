@@ -22,6 +22,12 @@
 #include <sys/soundcard.h>
 #endif
 
+//#define JOYSTICK_SDL
+
+#ifndef JOYSTICK_SDL
+#include <linux/joystick.h>
+#endif
+
 #include <signal.h>
 #include <execinfo.h>
 	
@@ -95,7 +101,11 @@ enum DCPad {
 
 void emit_WriteCodeCache();
 
+#ifdef JOYSTICK_SDL
 static SDL_Joystick *JoySDL    = 0;
+#else
+static int JoyFD    = -1;     // Joystick file descriptor
+#endif	
 
 #ifdef USE_OSS
 static int audio_fd = -1;
@@ -129,6 +139,7 @@ void SetupInput()
 		lt[port]=0;
 	}
 
+	#ifdef JOYSTICK_SDL
 	// Open joystick device
 	int numjoys = SDL_NumJoysticks();
 	if (numjoys > 0)
@@ -155,7 +166,35 @@ void SetupInput()
 			JMapAxis=JMapAxis_360;
 			printf("Using Xbox 360 map\n");
 		}
+	} else printf("SDK: No Joystick Found\n");
+	#else
+	// Open joystick device
+	JoyFD = open("/dev/input/js0",O_RDONLY);
+	
+	if(JoyFD>=0)
+	{
+		int AxisCount,ButtonCount;
+		char Name[128];
+		
+		AxisCount   = 0;
+		ButtonCount = 0;
+		Name[0]     = '\0';
+		
+		fcntl(JoyFD,F_SETFL,O_NONBLOCK);
+		ioctl(JoyFD,JSIOCGAXES,&AxisCount);
+		ioctl(JoyFD,JSIOCGBUTTONS,&ButtonCount);
+		ioctl(JoyFD,JSIOCGNAME(sizeof(Name)),&Name);
+		
+		printf("SDK: Found '%s' joystick with %d axis and %d buttons\n",Name,AxisCount,ButtonCount);
+		
+		if (strcmp(Name,"Microsoft X-Box 360 pad")==0)
+		{
+			JMapBtn=JMapBtn_360;
+			JMapAxis=JMapAxis_360;
+			printf("Using Xbox 360 map\n");
+		}
 	}
+	#endif
 }
 
 bool HandleEvents(u32 port) {
@@ -195,6 +234,7 @@ bool HandleEvents(u32 port) {
 				#endif
 				}
 				break;
+			#ifdef JOYSTICK_SDL
 			case SDL_JOYBUTTONDOWN:
 			case SDL_JOYBUTTONUP:
 				value = (event.type==SDL_JOYBUTTONDOWN)?1:0;
@@ -270,6 +310,7 @@ bool HandleEvents(u32 port) {
 					}
 				}
 				break;
+			#endif
 		}
 			
 	}
@@ -290,7 +331,8 @@ bool HandleEvents(u32 port) {
 	
 	return true;
 }
-/*
+
+#ifndef JOYSTICK_SDL
 bool HandleJoystick(u32 port)
 {
   
@@ -380,7 +422,7 @@ bool HandleJoystick(u32 port)
 
 	  return true;
 }
-*/
+#endif
 
 void UpdateInputState(u32 port)
 {
@@ -391,6 +433,9 @@ void UpdateInputState(u32 port)
 	lt[port]=0;
 	
 	HandleEvents(port);
+	#ifndef JOYSTICK_SDL
+	HandleJoystick(port);
+	#endif
 }
 
 void os_DoEvents()
@@ -434,7 +479,11 @@ void clean_exit(int sig_num) {
 	size_t size;
 	
 	// close files
+	#ifdef JOYSTICK_SDL
 	if (JoySDL) 		SDL_JoystickClose(JoySDL);
+	#else
+	if (JoyFD>=0) 		close(JoyFD);
+	#endif
 	#ifdef USE_OSS
 	if (audio_fd>=0) 	close(audio_fd);
 	#endif
@@ -444,15 +493,6 @@ void clean_exit(int sig_num) {
 		gl_term();
 
 	SDL_Quit();
-	
-	// finish cleaning
-	if (sig_num!=0) {
-		write(2, "\nSignal received\n", sizeof("\nSignal received\n"));
-	
-		size = backtrace(array, 10);
-		backtrace_symbols_fd(array, size, STDERR_FILENO);
-		exit(1);
-	}
 }
 
 #ifdef USE_OSS
@@ -490,8 +530,13 @@ int main(int argc, wchar* argv[])
 	//if (argc==2) 
 		//ndcid=atoi(argv[1]);
 
-	signal(SIGSEGV, clean_exit);
-	signal(SIGKILL, clean_exit);
+	/*
+		// The SDL_Init prevent mprotect from working correctly ?!!!
+		if (SDL_Init(SDL_INIT_VIDEO|SDL_INIT_JOYSTICK|SDL_INIT_NOPARACHUTE)==-1)
+		die("error initializing SDL");
+	 */
+	
+	SetupInput();
 
 #ifdef USE_OSS	
 	init_sound();
@@ -517,13 +562,6 @@ int main(int argc, wchar* argv[])
 
 	printf("common linux setup done\n");
 	
-	/*
-	// The SDL_Init prevent mprotect from working correctly ?!!!
-	if (SDL_Init(SDL_INIT_VIDEO|SDL_INIT_JOYSTICK|SDL_INIT_NOPARACHUTE)==-1)
-		die("error initializing SDL");
-	*/
-	
-	SetupInput();
 	settings.profile.run_counts=0;
 		
 	dc_init(argc,argv);
