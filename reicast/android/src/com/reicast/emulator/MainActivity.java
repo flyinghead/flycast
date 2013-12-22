@@ -49,7 +49,16 @@ public class MainActivity extends FragmentActivity implements
             findViewById(R.id.config).setOnClickListener(
                 	new OnClickListener() {
                 		public void onClick(View view) {
-                			AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
+                			OptionsFragment optsFrag = (OptionsFragment)getSupportFragmentManager().findFragmentByTag("OPTIONS_FRAG");
+                			if(optsFrag != null){
+	                			if(optsFrag.isVisible()){
+	                				return;	                				
+	                			}
+                			}
+                			optsFrag = new OptionsFragment();
+            				getSupportFragmentManager().beginTransaction()
+            				.replace(R.id.fragment_container,optsFrag, "OPTIONS_FRAG").addToBackStack(null).commit();
+                			/*AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
                 				MainActivity.this);
                  
                 			// set title
@@ -69,7 +78,7 @@ public class MainActivity extends FragmentActivity implements
                 				AlertDialog alertDialog = alertDialogBuilder.create();
                  
                 				// show it
-                				alertDialog.show();
+                				alertDialog.show();*/
                 		}
 
                 	});
