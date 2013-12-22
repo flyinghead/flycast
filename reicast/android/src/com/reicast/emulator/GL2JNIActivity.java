@@ -154,22 +154,22 @@ public class GL2JNIActivity extends Activity
         for(int i = 0;i<joys.length; i++){
         	Log.d("reidc", "InputDevice ID: "+joys[i]);
         	Log.d("reidc", "InputDevice Name: "+ InputDevice.getDevice(joys[i]).getName());
-    	if(InputDevice.getDevice(joys[i]).getName()=="Sony PLAYSTATION(R)3 Controller"){
+    	if(InputDevice.getDevice(joys[i]).getName().equals("Sony PLAYSTATION(R)3 Controller")){
     		map = new int[] { 
-    				  OuyaController.BUTTON_Y, 	key_CONT_B,
-    				  OuyaController.BUTTON_U, 	key_CONT_A,
-    				  OuyaController.BUTTON_O, 	key_CONT_X,
-    				  OuyaController.BUTTON_A, 	key_CONT_Y,
+					OuyaController.BUTTON_Y, 	key_CONT_B,
+					OuyaController.BUTTON_U, 	key_CONT_A,
+					OuyaController.BUTTON_O, 	key_CONT_X,
+					OuyaController.BUTTON_A, 	key_CONT_Y,
+					  
+					OuyaController.BUTTON_DPAD_UP, 		key_CONT_DPAD_UP,
+					OuyaController.BUTTON_DPAD_DOWN, 		key_CONT_DPAD_DOWN,
+					OuyaController.BUTTON_DPAD_LEFT, 		key_CONT_DPAD_LEFT,
+					OuyaController.BUTTON_DPAD_RIGHT, 	key_CONT_DPAD_RIGHT,
+					  
+					OuyaController.BUTTON_MENU, key_CONT_START,
+					OuyaController.BUTTON_L1, key_CONT_START
     				  
-    				  OuyaController.BUTTON_DPAD_UP, 		key_CONT_DPAD_UP,
-    				  OuyaController.BUTTON_DPAD_DOWN, 		key_CONT_DPAD_DOWN,
-    				  OuyaController.BUTTON_DPAD_LEFT, 		key_CONT_DPAD_LEFT,
-    				  OuyaController.BUTTON_DPAD_RIGHT, 	key_CONT_DPAD_RIGHT,
-    				  
-    				  OuyaController.BUTTON_MENU, key_CONT_START,
-    				  OuyaController.BUTTON_L1, key_CONT_START
-    				  
-    		  };
+    		  };    		
     	}else{	// Ouya controller
     		map = new int[] { 
     				OuyaController.BUTTON_O,         key_CONT_A,
