@@ -9,7 +9,9 @@ import com.reicast.emulator.GL2JNIView.EmuThread;
 import com.example.newdc.JNIdc;
 
 import android.view.InputDevice;
+import android.annotation.TargetApi;
 import android.app.Activity;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Gravity;
@@ -30,11 +32,13 @@ import android.content.res.AssetManager;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 
+@TargetApi(Build.VERSION_CODES.HONEYCOMB_MR1)
 public class GL2JNIActivity extends Activity
 {
   GL2JNIView mView;
   PopupWindow popUp;
   LayoutParams params;
+  int map[];
   
   View addbut(int x, OnClickListener ocl)
   {
@@ -142,6 +146,47 @@ public class GL2JNIActivity extends Activity
  
     // Call parent onCreate()
     super.onCreate(icicle);
+    
+    /*int joys[] =InputDevice.getDeviceIds();
+    for(int i = 0;i<joys.length; i++){
+    	Log.d("reidc", "InputDevice ID: "+joys[i]);
+    	Log.d("reidc", "InputDevice Name: "+ InputDevice.getDevice(joys[i]).getName());*/int joys[] =InputDevice.getDeviceIds();
+        for(int i = 0;i<joys.length; i++){
+        	Log.d("reidc", "InputDevice ID: "+joys[i]);
+        	Log.d("reidc", "InputDevice Name: "+ InputDevice.getDevice(joys[i]).getName());
+    	if(InputDevice.getDevice(joys[i]).getName()=="Sony PLAYSTATION(R)3 Controller"){
+    		map = new int[] { 
+    				  OuyaController.BUTTON_Y, 	key_CONT_B,
+    				  OuyaController.BUTTON_U, 	key_CONT_A,
+    				  OuyaController.BUTTON_O, 	key_CONT_X,
+    				  OuyaController.BUTTON_A, 	key_CONT_Y,
+    				  
+    				  OuyaController.BUTTON_DPAD_UP, 		key_CONT_DPAD_UP,
+    				  OuyaController.BUTTON_DPAD_DOWN, 		key_CONT_DPAD_DOWN,
+    				  OuyaController.BUTTON_DPAD_LEFT, 		key_CONT_DPAD_LEFT,
+    				  OuyaController.BUTTON_DPAD_RIGHT, 	key_CONT_DPAD_RIGHT,
+    				  
+    				  OuyaController.BUTTON_MENU, key_CONT_START,
+    				  OuyaController.BUTTON_L1, key_CONT_START
+    				  
+    		  };
+    	}else{	// Ouya controller
+    		map = new int[] { 
+    				OuyaController.BUTTON_O,         key_CONT_A,
+                    OuyaController.BUTTON_A,         key_CONT_B,
+                    OuyaController.BUTTON_Y,         key_CONT_Y,
+                    OuyaController.BUTTON_U,         key_CONT_X,
+                    
+                    OuyaController.BUTTON_DPAD_UP,                 key_CONT_DPAD_UP,
+                    OuyaController.BUTTON_DPAD_DOWN,                 key_CONT_DPAD_DOWN,
+                    OuyaController.BUTTON_DPAD_LEFT,                 key_CONT_DPAD_LEFT,
+                    OuyaController.BUTTON_DPAD_RIGHT,         key_CONT_DPAD_RIGHT,
+                    
+                    OuyaController.BUTTON_MENU, key_CONT_START,
+                    OuyaController.BUTTON_L1, key_CONT_START
+    		};  
+    	}
+    }
 
     // When viewing a resource, pass its URI to the native code for opening
     Intent intent = getIntent();
@@ -194,11 +239,13 @@ public class GL2JNIActivity extends Activity
   private static final int key_CONT_Y          = 0x0200;
   private static final int key_CONT_X          = 0x0400;
   
-  int map[] = new int[] { 
-		  OuyaController.BUTTON_O, 	key_CONT_A,
-		  OuyaController.BUTTON_A, 	key_CONT_B,
-		  OuyaController.BUTTON_Y, 	key_CONT_Y,
-		  OuyaController.BUTTON_U, 	key_CONT_X,
+  
+  // TODO: Controller mapping in options. Trunk has Ouya layout. This is a DS3 layout.
+   ;/*map[]= new int[] { 
+		  OuyaController.BUTTON_Y, 	key_CONT_B,
+		  OuyaController.BUTTON_U, 	key_CONT_A,
+		  OuyaController.BUTTON_O, 	key_CONT_X,
+		  OuyaController.BUTTON_A, 	key_CONT_Y,
 		  
 		  OuyaController.BUTTON_DPAD_UP, 		key_CONT_DPAD_UP,
 		  OuyaController.BUTTON_DPAD_DOWN, 		key_CONT_DPAD_DOWN,
@@ -208,7 +255,23 @@ public class GL2JNIActivity extends Activity
 		  OuyaController.BUTTON_MENU, key_CONT_START,
 		  OuyaController.BUTTON_L1, key_CONT_START
 		  
-  };
+  };*/
+  
+  /*int map[] = new int[] { 
+		  OuyaController.BUTTON_Y, 	key_CONT_B,
+		  OuyaController.BUTTON_U, 	key_CONT_A,
+		  OuyaController.BUTTON_O, 	key_CONT_X,
+		  OuyaController.BUTTON_A, 	key_CONT_Y,
+		  
+		  OuyaController.BUTTON_DPAD_UP, 		key_CONT_DPAD_UP,
+		  OuyaController.BUTTON_DPAD_DOWN, 		key_CONT_DPAD_DOWN,
+		  OuyaController.BUTTON_DPAD_LEFT, 		key_CONT_DPAD_LEFT,
+		  OuyaController.BUTTON_DPAD_RIGHT, 	key_CONT_DPAD_RIGHT,
+		  
+		  OuyaController.BUTTON_MENU, key_CONT_START,
+		  OuyaController.BUTTON_L1, key_CONT_START
+		  
+  };*/
   
   boolean handle_key(int kc, boolean down) {
 	  boolean rav = false;

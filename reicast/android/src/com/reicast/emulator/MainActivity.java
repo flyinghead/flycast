@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MotionEvent;
 import android.view.View;
@@ -13,7 +14,8 @@ import android.view.View.OnClickListener;
 import android.view.View.OnTouchListener;
 
 public class MainActivity extends FragmentActivity implements
-			FileBrowser.OnItemSelectedListener{
+			FileBrowser.OnItemSelectedListener, 
+			OptionsFragment.OnClickListener{
 
 	@Override
     public void onCreate(Bundle savedInstanceState) {
@@ -131,9 +133,35 @@ public class MainActivity extends FragmentActivity implements
 	}
 	
 	public void onFolderSelected(Uri uri){
+		FileBrowser browserFrag = (FileBrowser)getSupportFragmentManager().findFragmentByTag("MAIN_BROWSER");
+		if(browserFrag != null){
+			if(browserFrag.isVisible()){
+				
+				Log.d("reicast", "Main folder: "+uri.toString());
+				//return;	                				
+			}
+		}
+		
+		OptionsFragment optsFrag = new OptionsFragment();
+		getSupportFragmentManager().beginTransaction()
+		.replace(R.id.fragment_container,optsFrag, "OPTIONS_FRAG").commit();
 		return;
 	}
 	
+	public void onMainBrowseSelected(){
+		FileBrowser firstFragment = new FileBrowser();
+        Bundle args = new Bundle();
+        args.putBoolean("ImgBrowse", false);				// specify ImgBrowse option. true = images, false = folders only
+        firstFragment.setArguments(args);
+        // In case this activity was started with special instructions from
+        // an
+        // Intent, pass the Intent's extras to the fragment as arguments
+        // firstFragment.setArguments(getIntent().getExtras());
+
+        // Add the fragment to the 'fragment_container' FrameLayout
+        getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.fragment_container, firstFragment, "MAIN_BROWSER").addToBackStack(null).commit();
+	}
 	
 	@Override
     public boolean onCreateOptionsMenu(Menu menu) {

@@ -251,11 +251,11 @@ public class FileBrowser extends Fragment {
         				
         				mCallback.onFolderSelected(Uri.fromFile(new File(root_sd.getAbsolutePath())));
         				vib.vibrate(250);
-        			}
+        				        			}
         			else if(ImgBrowse)
         			{
         				vib.vibrate(50);
-        				mCallback.onGameSelected(Uri.fromFile(f));
+        				mCallback.onGameSelected(f!=null? Uri.fromFile(f):Uri.EMPTY);
         				//Intent inte = new Intent(Intent.ACTION_VIEW,f!=null? Uri.fromFile(f):Uri.EMPTY,parentActivity.getBaseContext(),GL2JNIActivity.class);
         				//FileBrowser.this.startActivity(inte);
         				vib.vibrate(250);
