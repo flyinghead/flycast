@@ -1,10 +1,13 @@
 package com.reicast.emulator;
 
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.view.Menu;
 
-public class MainActivity extends FragmentActivity {
+public class MainActivity extends FragmentActivity implements
+			FileBrowser.OnItemSelectedListener{
 
 	@Override
     public void onCreate(Bundle savedInstanceState) {
@@ -24,7 +27,9 @@ public class MainActivity extends FragmentActivity {
 
                     // Create a new Fragment to be placed in the activity layout
                     FileBrowser firstFragment = new FileBrowser();
-
+                    Bundle args = new Bundle();
+                    args.putBoolean("ImgBrowse", false);
+                    firstFragment.setArguments(args);
                     // In case this activity was started with special instructions from
                     // an
                     // Intent, pass the Intent's extras to the fragment as arguments
@@ -36,6 +41,15 @@ public class MainActivity extends FragmentActivity {
             }
 
     }
+	
+	public void onGameSelected(Uri uri){
+		Intent inte = new Intent(Intent.ACTION_VIEW,uri,getBaseContext(),GL2JNIActivity.class);
+		startActivity(inte);
+	}
+	
+	public void onFolderSelected(Uri uri){
+		return;
+	}
 	
 	
 	@Override

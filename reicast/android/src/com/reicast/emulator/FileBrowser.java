@@ -37,10 +37,39 @@ public class FileBrowser extends Fragment {
 	Vibrator vib;
 	Drawable orig_bg;
 	Activity parentActivity;
-	
+	boolean ImgBrowse;
+	OnItemSelectedListener mCallback;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        
+        Bundle b = getArguments();
+        if(b!=null)
+        	ImgBrowse = b.getBoolean("ImgBrowse", true);
+        
+    }
+    
+    
+
+    // Container Activity must implement this interface
+    public interface OnItemSelectedListener {
+            public void onGameSelected(Uri uri);
+            public void onFolderSelected(Uri uri);
+    }
+
+    @Override
+    public void onAttach(Activity activity) {
+            super.onAttach(activity);
+
+            // This makes sure that the container activity has implemented
+            // the callback interface. If not, it throws an exception
+            try {
+                    mCallback = (OnItemSelectedListener) activity;
+            } catch (ClassCastException e) {
+                    throw new ClassCastException(activity.toString()
+                                    + " must implement OnItemSelectedListener");
+            }
     }
     
     @Override public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) 
@@ -206,7 +235,9 @@ public class FileBrowser extends Fragment {
         }
     }
     
-    void navigate(File root_sd)
+
+    
+    void navigate(final File root_sd)
     {
         LinearLayout v = (LinearLayout)parentActivity.findViewById(R.id.game_list);
         v.removeAllViews();
@@ -233,14 +264,22 @@ public class FileBrowser extends Fragment {
         
         for (int i=0;i<list.size();i++)
         {
-        	if (list.get(i)!=null && list.get(i).isFile())
-        		if (!list.get(i).getName().toLowerCase().endsWith(".gdi") && !list.get(i).getName().toLowerCase().endsWith(".cdi") && !list.get(i).getName().toLowerCase().endsWith(".chd"))
+        	if(ImgBrowse){        		
+	        	if (list.get(i)!=null && list.get(i).isFile())
+	        		if (!list.get(i).getName().toLowerCase().endsWith(".gdi") && !list.get(i).getName().toLowerCase().endsWith(".cdi") && !list.get(i).getName().toLowerCase().endsWith(".chd"))
+	        			continue;
+        	}else{
+        		if (list.get(i)!=null && !list.get(i).isDirectory())
         			continue;
-        	
+        	}
         	View childview=parentActivity.getLayoutInflater().inflate(R.layout.app_list_item, null, false);
         	
-        	if (list.get(i)==null)
-        		((TextView)childview.findViewById(R.id.item_name)).setText("BOOT BIOS");
+        	if (list.get(i)==null){
+        		if(ImgBrowse==true)
+        			((TextView)childview.findViewById(R.id.item_name)).setText("BOOT BIOS");
+        		if(ImgBrowse==false)
+        			((TextView)childview.findViewById(R.id.item_name)).setText("SELECT CURRENT FOLDER");
+        	}
         	else if (list.get(i)==parent)
         		((TextView)childview.findViewById(R.id.item_name)).setText("..");
         	else
@@ -270,17 +309,23 @@ public class FileBrowser extends Fragment {
         			{
         				navigate(f);
         				vib.vibrate(50);
+        			}else if(f == null && !ImgBrowse){
+        				vib.vibrate(50);
+        				
+        				mCallback.onFolderSelected(Uri.fromFile(new File(root_sd.getAbsolutePath())));
+        				vib.vibrate(250);
         			}
         			else
         			{
         				vib.vibrate(50);
-        				Intent inte = new Intent(Intent.ACTION_VIEW,f!=null? Uri.fromFile(f):Uri.EMPTY,parentActivity.getBaseContext(),GL2JNIActivity.class);
-        				FileBrowser.this.startActivity(inte);
+        				mCallback.onGameSelected(Uri.fromFile(f));
+        				//Intent inte = new Intent(Intent.ACTION_VIEW,f!=null? Uri.fromFile(f):Uri.EMPTY,parentActivity.getBaseContext(),GL2JNIActivity.class);
+        				//FileBrowser.this.startActivity(inte);
         				vib.vibrate(250);
         			}
         		}
         	});
-        	
+        	        	
 
         	childview.findViewById(R.id.childview).setOnTouchListener(
         			new OnTouchListener() {
