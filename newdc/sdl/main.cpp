@@ -75,6 +75,7 @@ s8 joyx[4],joyy[4];
 u8 rt[4],lt[4];
 
 extern bool KillTex;
+extern void dc_term();
 
 enum DCPad {
 	Btn_C		= 1,
@@ -328,7 +329,15 @@ bool HandleEvents(u32 port) {
 	if (keys[3]) { kcode[port] &= ~DPad_Left;  }
 	if (keys[4]) { kcode[port] &= ~DPad_Right; }
 	if (keys[12]){ kcode[port] &= ~Btn_Start; }
-	if (keys[9]){ die("death by escape key"); } 
+	if (keys[9]){ 
+			//die("death by escape key"); 
+			//printf("death by escape key\n"); 
+			// clean exit
+			dc_term();
+		
+			// is there a proper way to exit? dc_term() doesn't end the dc_run() loop it seems
+			die("death by escape key"); 
+		} 
 	if (keys[10]) rt[port]=255;
 	if (keys[11]) lt[port]=255;
 	
