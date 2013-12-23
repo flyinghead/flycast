@@ -147,10 +147,8 @@ public class GL2JNIActivity extends Activity
     // Call parent onCreate()
     super.onCreate(icicle);
     
-    /*int joys[] =InputDevice.getDeviceIds();
-    for(int i = 0;i<joys.length; i++){
-    	Log.d("reidc", "InputDevice ID: "+joys[i]);
-    	Log.d("reidc", "InputDevice Name: "+ InputDevice.getDevice(joys[i]).getName());*/int joys[] =InputDevice.getDeviceIds();
+
+    int joys[] =InputDevice.getDeviceIds();
         for(int i = 0;i<joys.length; i++){
         	Log.d("reidc", "InputDevice ID: "+joys[i]);
         	Log.d("reidc", "InputDevice Name: "+ InputDevice.getDevice(joys[i]).getName());

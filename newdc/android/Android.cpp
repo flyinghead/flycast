@@ -186,7 +186,7 @@ JNIEXPORT void JNICALL Java_com_example_newdc_JNIdc_run(JNIEnv *env,jobject obj,
 
 JNIEXPORT void JNICALL Java_com_example_newdc_JNIdc_stop(JNIEnv *env,jobject obj)
 {
-	//dc_stop();
+	dc_term();
 }
 
 JNIEXPORT jint JNICALL Java_com_example_newdc_JNIdc_send(JNIEnv *env,jobject obj,jint cmd, jint param)

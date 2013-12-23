@@ -52,7 +52,7 @@ bool LoadRomFiles(const string& root)
 
 void SaveRomFiles(const string& root)
 {
-	sys_nvmem.Save(root,ROM_PREFIX,"nvmem.bin","nvmem");
+	sys_nvmem.Save(root,ROM_PREFIX,"dc_flash.bin","nvmem");
 }
 
 #if (DC_PLATFORM == DC_PLATFORM_NORMAL) || (DC_PLATFORM == DC_PLATFORM_DEV_UNIT) || (DC_PLATFORM == DC_PLATFORM_NAOMI) || (DC_PLATFORM == DC_PLATFORM_NAOMI2)
