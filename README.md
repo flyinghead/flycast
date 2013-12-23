@@ -61,11 +61,13 @@ We're planning for an indiegogo campaign later on to help with sustained develop
 
 Team
 ----
-The active team consists of drk||Raziel (mostly just writing code), PsyMan (debugging/testing and everything else) and a little bit of gb_away
+
+You can check the currently active commitors on [the pretty graphs page](https://github.com/reicast/reicast-emulator/graphs/contributors)
 
 
+The original reicast team consisted of drk||Raziel (mostly just writing code), PsyMan (debugging/testing and everything else) and a little bit of gb_away
+
+
+Special thanks
+--------------
 In previous iterations a lot of people have worked on this, notably David Miller (aka, ZeZu), the nullDC team, friends from #pcsx2 and all over the world :)
-
-
-
-Thanks guys
