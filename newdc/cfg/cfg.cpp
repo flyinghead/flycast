@@ -195,7 +195,7 @@ struct ConfigFile
 		}
 	}
 
-	void PaseFile(FILE* file)
+	void ParseFile(FILE* file)
 	{
 		
 	}

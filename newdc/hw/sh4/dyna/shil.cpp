@@ -411,7 +411,7 @@ void constprop(RuntimeBlockInfo* blk)
 						op->op=shop_shl;
 						op->rs2._imm=0x1f & v;
 					}
-					else if (0==v&0x1f)
+					else if (0==(v&0x1f))
 					{
 						if (op->op!=shop_shad)
 						{
@@ -839,7 +839,6 @@ void srt_waw(RuntimeBlockInfo* blk)
 		if (found)
 		{
 			if (op->rs1.is_reg() && op->rs1._reg==reg_sr_T
-				|| op->rs1.is_reg() && op->rs1._reg==reg_sr_T
 				|| op->rs2.is_reg() && op->rs2._reg==reg_sr_T
 				|| op->rs3.is_reg() && op->rs3._reg==reg_sr_T
 				|| op->op==shop_ifb)

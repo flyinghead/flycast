@@ -45,8 +45,8 @@ const static u32 Zfunction[]=
 /*
 0	Zero	(0, 0, 0, 0)
 1	One	(1, 1, 1, 1)
-2	ëOtherí Color	(OR, OG, OB, OA) 
-3	Inverse ëOtherí Color	(1-OR, 1-OG, 1-OB, 1-OA)
+2	ëOtherÅEColor	(OR, OG, OB, OA) 
+3	Inverse ëOtherÅEColor	(1-OR, 1-OG, 1-OB, 1-OA)
 4	SRC Alpha	(SA, SA, SA, SA)
 5	Inverse SRC Alpha	(1-SA, 1-SA, 1-SA, 1-SA)
 6	DST Alpha	(DA, DA, DA, DA)
@@ -596,7 +596,7 @@ void GenSorted()
 						}
 
 						//color
-						for (int i=0;i<8;i++)
+						for (int i=0;i<4;i++)
 						{
 							v3->col[i]=v0->col[i]/2+v2->col[i]/2;
 							v4->col[i]=v0->col[i]/2+v1->col[i]/2;

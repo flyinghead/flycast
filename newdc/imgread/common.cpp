@@ -33,12 +33,12 @@ void PatchRegion_0(u8* sector,int size)
 
 	if (size!=2048)
 	{
-		printf("PatchRegion_0 -> sector size %d , skiping patch\n",size);
+		printf("PatchRegion_0 -> sector size %d , skipping patch\n",size);
 	}
 
 	//patch meta info
 	u8* p_area_symbol=&usersect[0x30];
-	memcpy(p_area_symbol,"JUE        ",8);
+	memcpy(p_area_symbol,"JUE     ",8);
 }
 void PatchRegion_6(u8* sector,int size)
 {
@@ -49,7 +49,7 @@ void PatchRegion_6(u8* sector,int size)
 
 	if (size!=2048)
 	{
-		printf("PatchRegion_6 -> sector size %d , skiping patch\n",size);
+		printf("PatchRegion_6 -> sector size %d , skipping patch\n",size);
 	}
 
 	//patch area symbols
@@ -115,7 +115,7 @@ bool ConvertSector(u8* in_buff , u8* out_buff , int from , int to,int sector)
 		}
 		break;
 	default :
-		printf("Sector convertion from %d to %d not supported \n", from , to);
+		printf("Sector conversion from %d to %d not supported \n", from , to);
 		break;
 	}
 

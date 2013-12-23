@@ -293,7 +293,8 @@ void* prof( void *ptr )
                     fflush(prof_out);
                 }
         } while(prof_run);
-        
+
+        fclose(maps);
         fclose(prof_out);
 }
 

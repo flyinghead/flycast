@@ -33,7 +33,7 @@ u32 sh4io_read_noacc(u32 addr)
 } 
 void sh4io_write_noacc(u32 addr, u32 data) 
 { 
-	printf("sh4io: Invalid write access @@ %08X\n",addr,data);
+	printf("sh4io: Invalid write access @@ %08X %08X\n",addr,data);
 	//verify(false); 
 }
 void sh4io_write_const(u32 addr, u32 data) 
