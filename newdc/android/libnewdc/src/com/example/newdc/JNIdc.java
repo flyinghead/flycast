@@ -6,6 +6,7 @@ public class JNIdc
 {
   static { System.loadLibrary("dc"); }
 	
+  public static native void config(String dirName);
   public static native void init(String fileName);
   public static native void run(Object track);
   public static native void stop();

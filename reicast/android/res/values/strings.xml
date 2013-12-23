@@ -4,5 +4,8 @@
     <string name="hello_world">Hello world!</string>
     <string name="menu_settings">Settings</string>
     <string name="title_activity_main">reicast</string>
+    
+    <string name="system_path">System Path (location of dc_boot.bin/dc_flash.bin)</string>
+    <string name="browser_path">Default Browser Path</string>
 
 </resources>
