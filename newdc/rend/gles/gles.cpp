@@ -749,17 +749,17 @@ void tryfit(float* x,float* y)
 		int rep=1;
 
 		//discard values cliped to 0 or 1
-		if (y[i]==1 && i<128 && y[i+1]==1)
+		if (i<128 && y[i]==1 && y[i+1]==1)
 			continue;
 
-		if (y[i]==0 && i>0 && y[i-1]==0)
+		if (i>0 && y[i]==0 && y[i-1]==0)
 			continue;
 		
 		//Add many samples for first and last value (fog-in, fog-out -> important)
-		if (y[i]!=1 && i>0 && y[i-1]==1)
+		if (i>0 && y[i]!=1 && y[i-1]==1)
 			rep=10000;
 
-		if (y[i]!=0 && i<128 && y[i+1]==0)
+		if (i<128 && y[i]!=0 && y[i+1]==0)
 			rep=10000;
 		
 		for (int j=0;j<rep;j++)
