@@ -62,7 +62,7 @@ We're planning for an indiegogo campaign later on to help with sustained develop
 Team
 ----
 
-You can check the currently active commitors on [the pretty graphs page](https://github.com/reicast/reicast-emulator/graphs/contributors)
+You can check the currently active committers on [the pretty graphs page](https://github.com/reicast/reicast-emulator/graphs/contributors)
 
 
 The original reicast team consisted of drk||Raziel (mostly just writing code), PsyMan (debugging/testing and everything else) and a little bit of gb_away
