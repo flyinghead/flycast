@@ -411,7 +411,7 @@ void constprop(RuntimeBlockInfo* blk)
 						op->op=shop_shl;
 						op->rs2._imm=0x1f & v;
 					}
-					else if (0==v&0x1f)
+					else if (0==(v&0x1f))
 					{
 						if (op->op!=shop_shad)
 						{
