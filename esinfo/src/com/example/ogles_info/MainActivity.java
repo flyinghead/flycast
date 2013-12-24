@@ -19,6 +19,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.ToggleButton;
 import android.support.v4.app.NavUtils;
+import android.widget.Toast;
 
 public class MainActivity extends Activity {
 
@@ -30,11 +31,15 @@ public class MainActivity extends Activity {
 	
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    	final boolean jnt = jnitest.test()!=0;
+    	
+    	super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        lv = (LinearLayout)findViewById(R.id.caps_list);   
+        lv = (LinearLayout)findViewById(R.id.caps_list);
         
-        OnClickListener ocl =new OnClickListener() { public void onClick(View v) { MainActivity.this.populate_list(); } };
+        Toast.makeText(getApplicationContext(), jnt ? "jni test passed" : "jni test failed", Toast.LENGTH_SHORT).show();
+        
+        OnClickListener ocl =new OnClickListener() { public void onClick(View v) { MainActivity.this.populate_list(jnt); } };
         
         tbn_24bits=(ToggleButton)findViewById(R.id.tbn_24bits);
         tbn_depth=(ToggleButton)findViewById(R.id.tbn_depth);
@@ -46,7 +51,7 @@ public class MainActivity extends Activity {
         tbn_stencil.setOnClickListener(ocl);
         tbn_alpha.setOnClickListener(ocl);
         
-        populate_list();
+        populate_list(jnt);
     }
     
     void add_string(String s)
@@ -56,13 +61,11 @@ public class MainActivity extends Activity {
     	
     	lv.addView(tv);
     }
-    void populate_list()
+    void populate_list(boolean jnt)
     {
         lv.removeAllViews();
         
-        EGL10 e = (EGL10)EGLContext.getEGL();
-        //EGL10 e = (EGL10)GLES20.glGetString(name)
-        
+        add_string("MMAP ALLOC TEST: " + (jnt ? "PASSED":"FAILED"));
         add_string("BOARD: " + android.os.Build.BOARD);
         add_string("BOOTLOADER: " + android.os.Build.BOOTLOADER);
         add_string("BRAND: " + android.os.Build.BRAND);
@@ -84,6 +87,9 @@ public class MainActivity extends Activity {
         add_string("RELEASE: " + android.os.Build.VERSION.RELEASE);
         add_string("INCREMENTAL: " + android.os.Build.VERSION.INCREMENTAL);
         add_string("SDK: " + android.os.Build.VERSION.SDK_INT);
+        
+        EGL10 e = (EGL10)EGLContext.getEGL();
+        //EGL10 e = (EGL10)GLES20.glGetString(name)
         
         EGLConfig[] cfgs = new EGLConfig[1000];
         
