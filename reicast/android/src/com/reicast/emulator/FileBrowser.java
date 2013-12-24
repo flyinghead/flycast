@@ -287,6 +287,10 @@ public class FileBrowser extends Fragment {
 								mPrefs.edit()
 										.putString("home_directory",
 												home_directory).commit();
+								File data_directory = new File(home_directory, "data");
+					            if (!data_directory.exists() || !data_directory.isDirectory()) {
+					            	data_directory.mkdirs();
+					            }
 								JNIdc.config(home_directory);
 
 							} else if (ImgBrowse) {
