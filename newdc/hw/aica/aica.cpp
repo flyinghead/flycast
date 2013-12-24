@@ -21,7 +21,7 @@ InterruptInfo* SCIRE;
 u32 GetL(u32 witch)
 {
 	if (witch>7)
-		witch=7;	//higher bits share bit 7
+		witch=7; //higher bits share bit 7
 
 	u32 bit=1<<witch;
 	u32 rv=0;
@@ -54,7 +54,7 @@ void update_arm_interrupts()
 				Lval=GetL(i);
 				break;
 			}
-			bit_value<<=1;	//next bit
+			bit_value<<=1; //next bit
 		}
 	}
 
@@ -69,7 +69,7 @@ void UpdateSh4Ints()
 	{
 		if ((SB_ISTEXT & SH4_IRQ_BIT )==0)
 		{
-			//if no interrupt is allready pending then raise one :)
+			//if no interrupt is already pending then raise one :)
 			asic_RaiseInterrupt(holly_SPU_IRQ);
 		}
 	}
@@ -190,14 +190,14 @@ void WriteAicaReg(u32 reg,u32 data)
 			SCIPD->SCPU=1;
 			update_arm_interrupts();
 		}
-		//Read olny
+		//Read only
 		return;
 
 	case SCIRE_addr:
 		{
 			verify(sz!=1);
 			SCIPD->full&=~(data /*& SCIEB->full*/ );	//is the & SCIEB->full needed ? doesn't seem like it
-			data=0;//Write olny
+			data=0;//Write only
 			update_arm_interrupts();
 		}
 		break;
@@ -209,7 +209,7 @@ void WriteAicaReg(u32 reg,u32 data)
 			MCIPD->SCPU=1;
 			UpdateSh4Ints();
 		}
-		//Read olny
+		//Read only
 		return;
 
 	case MCIRE_addr:
@@ -217,7 +217,7 @@ void WriteAicaReg(u32 reg,u32 data)
 			verify(sz!=1);
 			MCIPD->full&=~data;
 			UpdateSh4Ints();
-			//Write olny
+			//Write only
 		}
 		break;
 

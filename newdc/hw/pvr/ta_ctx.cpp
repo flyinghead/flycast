@@ -163,7 +163,9 @@ TA_context* tactx_Find(u32 addr, bool allocnew)
 		return rv;
 	}
 	else
+	{
 		return 0;
+	}
 }
 
 TA_context* tactx_Pop(u32 addr)

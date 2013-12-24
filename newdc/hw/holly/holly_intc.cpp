@@ -6,7 +6,7 @@
 #include "hw/maple/maple_if.h"
 
 /*
-	asic Interrupt controler
+	ASIC Interrupt controller
 	part of the holly block on dc
 */
 
@@ -42,7 +42,7 @@ void asic_RL2Pending()
 void RaiseAsicNormal(HollyInterruptID inter)
 {
 	if (inter==holly_SCANINT2)
-				maple_vblank();
+		maple_vblank();
 
 	u32 Interrupt = 1<<(u8)inter;
 	SB_ISTNRM |= Interrupt;
@@ -92,10 +92,13 @@ void asic_RaiseInterrupt(HollyInterruptID inter)
 u32 Read_SB_ISTNRM(u32 addr)
 {
 	u32 tmp = SB_ISTNRM & 0x3FFFFFFF;
+
 	if (SB_ISTEXT)
 		tmp|=0x40000000;
+
 	if (SB_ISTERR)
 		tmp|=0x80000000;
+
 	return tmp;
 }
 
@@ -172,19 +175,19 @@ void Write_SB_IML2EXT(u32 addr, u32 data)
 void Write_SB_IML6ERR(u32 addr, u32 data)
 {
 	SB_IML6ERR=data;
-	
+
 	asic_RL6Pending();
 }
 void Write_SB_IML4ERR(u32 addr, u32 data)
 {
 	SB_IML4ERR=data;
-	
+
 	asic_RL4Pending();
 }
 void Write_SB_IML2ERR(u32 addr, u32 data)
 {
 	SB_IML2ERR=data;
-	
+
 	asic_RL2Pending();
 }
 

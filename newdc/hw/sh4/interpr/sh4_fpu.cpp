@@ -11,14 +11,14 @@
 
 
 #define sh4op(str) void DYNACALL str (u32 op)
-#define GetN(str) ((str>>8) & 0xf)
-#define GetM(str) ((str>>4) & 0xf)
-#define GetImm4(str) ((str>>0) & 0xf)
-#define GetImm8(str) ((str>>0) & 0xff)
+#define GetN(str)     ((str>>8) & 0xf)
+#define GetM(str)     ((str>>4) & 0xf)
+#define GetImm4(str)  ((str>>0) & 0xf)
+#define GetImm8(str)  ((str>>0) & 0xff)
 #define GetImm12(str) ((str>>0) & 0xfff)
 
-#define GetDN(opc)	((op&0x0F00)>>9)
-#define GetDM(opc)	((op&0x00F0)>>5)
+#define GetDN(opc)  ((op&0x0F00)>>9)
+#define GetDM(opc)  ((op&0x00F0)>>5)
 
 #define pi (3.14159265f)
 
@@ -30,23 +30,23 @@ void iNimp(const char*str);
 #define ReadMemU32(to,addr) to=ReadMem32(addr)
 #define ReadMemS32(to,addr) to=(s32)ReadMem32(addr)
 #define ReadMemS16(to,addr) to=(u32)(s32)(s16)ReadMem16(addr)
-#define ReadMemS8(to,addr) to=(u32)(s32)(s8)ReadMem8(addr)
+#define ReadMemS8(to,addr)  to=(u32)(s32)(s8)ReadMem8(addr)
 
 //Base,offset format
-#define ReadMemBOU32(to,addr,offset)	ReadMemU32(to,addr+offset)
-#define ReadMemBOS16(to,addr,offset)	ReadMemS16(to,addr+offset)
-#define ReadMemBOS8(to,addr,offset)		ReadMemS8(to,addr+offset)
+#define ReadMemBOU32(to,addr,offset)        ReadMemU32(to,addr+offset)
+#define ReadMemBOS16(to,addr,offset)        ReadMemS16(to,addr+offset)
+#define ReadMemBOS8(to,addr,offset)         ReadMemS8(to,addr+offset)
 
 //Write Mem Macros
-#define WriteMemU64(addr,data)				WriteMem64(addr,(u64)data)
-#define WriteMemU32(addr,data)				WriteMem32(addr,(u32)data)
-#define WriteMemU16(addr,data)				WriteMem16(addr,(u16)data)
-#define WriteMemU8(addr,data)				WriteMem8(addr,(u8)data)
+#define WriteMemU64(addr,data)              WriteMem64(addr,(u64)data)
+#define WriteMemU32(addr,data)              WriteMem32(addr,(u32)data)
+#define WriteMemU16(addr,data)              WriteMem16(addr,(u16)data)
+#define WriteMemU8(addr,data)               WriteMem8(addr,(u8)data)
 
 //Base,offset format
-#define WriteMemBOU32(addr,offset,data)		WriteMemU32(addr+offset,data)
-#define WriteMemBOU16(addr,offset,data)		WriteMemU16(addr+offset,data)
-#define WriteMemBOU8(addr,offset,data)		WriteMemU8(addr+offset,data)
+#define WriteMemBOU32(addr,offset,data)     WriteMemU32(addr+offset,data)
+#define WriteMemBOU16(addr,offset,data)     WriteMemU16(addr+offset,data)
+#define WriteMemBOU8(addr,offset,data)      WriteMemU8(addr+offset,data)
 
 INLINE void Denorm32(float &value)
 {
@@ -56,7 +56,7 @@ INLINE void Denorm32(float &value)
 		if (IS_DENORMAL(v) && (*v&0x7fFFFFFF)!=0)
 		{
 			*v&=0x80000000;
-			//printf("Denromal ..\n");
+			//printf("Denormal ..\n");
 		}
 		if ((*v<=0x007FFFFF) && *v>0)
 		{
@@ -352,7 +352,6 @@ sh4op(i1111_nnnn_mmmm_1011)
 	}
 	else
 	{
-
 		u32 n = GetN(op);
 		u32 m = GetM(op)>>1;
 
@@ -389,14 +388,17 @@ sh4op(i1111_nnnn_mmmm_1100)
 				//dr[n] = dr[m];
 				dr_hex[n] = dr_hex[m];
 				break;
+
 			case 0x01:
 				//dr[n] = xd[m];
 				dr_hex[n] = xd_hex[m];
 				break;
+
 			case 0x10:
 				//xd[n] = dr[m];
 				xd_hex[n] = dr_hex[m];
 				break;
+
 			case 0x11:
 				//xd[n] = xd[m];
 				xd_hex[n] = xd_hex[m];
@@ -510,7 +512,9 @@ sh4op(i1111_nnmm_1110_1101)
 		fr[n+3]=idp;
 	}
 	else
+	{
 		die("FIPR Precision=1");
+	}
 }
 
 //fldi0 <FREG_N>
@@ -642,8 +646,6 @@ sh4op(i1111_nnnn_0011_1101)
 }
 
 
-
-
 //fmac <FREG_0>,<FREG_M>,<FREG_N>
 sh4op(i1111_nnnn_mmmm_1110)
 {
@@ -668,13 +670,11 @@ sh4op(i1111_nn01_1111_1101)
 {
 	//iNimp("ftrv xmtrx,<FV_N>");
 
-
-
 	/*
-	XF[0] XF[4] XF[8] XF[12]	FR[n]			FR[n]
-	XF[1] XF[5] XF[9] XF[13]  *	FR[n+1]		->	FR[n+1]
-	XF[2] XF[6] XF[10] XF[14]	FR[n+2]			FR[n+2]
-	XF[3] XF[7] XF[11] XF[15]	FR[n+3]			FR[n+3]
+	XF[0] XF[4] XF[8] XF[12]    FR[n]      FR[n]
+	XF[1] XF[5] XF[9] XF[13]  *	FR[n+1] -> FR[n+1]
+	XF[2] XF[6] XF[10] XF[14]   FR[n+2]    FR[n+2]
+	XF[3] XF[7] XF[11] XF[15]   FR[n+3]    FR[n+3]
 	
 	gota love linear algebra !
 	*/
@@ -718,15 +718,14 @@ sh4op(i1111_nn01_1111_1101)
 
 	}
 	else
+	{
 		iNimp("FTRV in dp mode");
+	}
 }
 
 
 void iNimp(const char*str)
 {
-	printf("Unimplemented sh4 fpu instruction: ");
-	printf(str);
-	printf("\n");
-
+	printf("Unimplemented sh4 FPU instruction: %s\n", str);
 	//Sh4_int_Stop();
 }

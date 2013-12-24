@@ -9,13 +9,13 @@ u32 detwiddle[2][8][1024];
 //input : address in the yyyyyxxxxx format
 //output : address in the xyxyxyxy format
 //U : x resolution , V : y resolution
-//twidle works on 64b words
+//twiddle works on 64b words
 
 
 u32 twiddle_slow(u32 x,u32 y,u32 x_sz,u32 y_sz)
 {
 	u32 rv=0;//low 2 bits are directly passed  -> needs some misc stuff to work.However
-			 //Pvr internaly maps the 64b banks "as if" they were twidled :p
+			 //Pvr internally maps the 64b banks "as if" they were twiddled :p
 
 	u32 sh=0;
 	x_sz>>=1;
@@ -223,7 +223,7 @@ bool VramLockedWrite(u8* address)
 				
 					if ((*list)[i])
 					{
-						msgboxf("Error , pvr is suposed to remove lock",MBX_OK);
+						msgboxf("Error : pvr is supposed to remove lock",MBX_OK);
 						dbgbreak;
 					}
 
@@ -256,7 +256,7 @@ void libCore_vramlock_Unlock_block_wb(vram_block* block)
 {
 		//VRAM_SIZE/PAGE_SIZE;
 	if (block->end>VRAM_SIZE)
-		msgboxf("Error : block end is after vram , skiping unlock",MBX_OK);
+		msgboxf("Error : block end is after vram , skipping unlock",MBX_OK);
 	else
 	{
 		vramlock_list_remove(block);

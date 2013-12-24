@@ -6,10 +6,10 @@ using namespace std;
 extern u32 NullDriveDiscType;
 struct TocTrackInfo
 {
-	u32 FAD;	//fad , intel format
-	u8 Control;	//cotnrol info
-	u8 Addr;	//addr info
-	u8 Session; //Session where teh track belongs
+	u32 FAD;    //fad, Intel format
+	u8 Control; //control info
+	u8 Addr;    //address info
+	u8 Session; //Session where the track belongs
 };
 struct TocInfo
 {
@@ -19,15 +19,15 @@ struct TocInfo
 	u8 FistTrack;
 	u8 LastTrack;
 
-	TocTrackInfo LeadOut;	//session set to 0 on that one
+	TocTrackInfo LeadOut; //session set to 0 on that one
 };
 
 struct SessionInfo
 {
-	u32 SessionsEndFAD;	//end of Disc (?)
-	u8 SessionCount;	//must be at least 1
-	u32 SessionStart[99];//start track for session
-	u32 SessionFAD[99];	//for sessions 1-99 ;)
+	u32 SessionsEndFAD;   //end of Disc (?)
+	u8 SessionCount;      //must be at least 1
+	u32 SessionStart[99]; //start track for session
+	u32 SessionFAD[99];   //for sessions 1-99 ;)
 };
 
 /*
@@ -220,7 +220,7 @@ struct Disc
 		ses.StartFAD=tracks[0].StartFAD;
 		sessions.push_back(ses);
 
-		//this isn't always true for gdroms, depens on area look @ the get-toc code
+		//this isn't always true for gdroms, depends on area look @ the get-toc code
 		type=GdRom;
 		LeadOut.ADDR=0;
 		LeadOut.CTRL=0;

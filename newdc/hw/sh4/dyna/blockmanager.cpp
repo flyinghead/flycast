@@ -46,6 +46,7 @@ struct BlockMapCMP
 		else
 			return false;
 	}
+
 	static unat get_blkstart(RuntimeBlockInfo* blk)
 	{
 		if (is_code(blk)) 
@@ -53,6 +54,7 @@ struct BlockMapCMP
 		else 
 			return (unat)blk->code;
 	}
+
 	static unat get_blkend(RuntimeBlockInfo* blk)
 	{
 		if (is_code(blk)) 
@@ -60,23 +62,24 @@ struct BlockMapCMP
 		else 
 			return (unat)blk->code+blk->host_code_size-1;
 	}
+
 	//return true if blkl > blkr
-  bool operator()(RuntimeBlockInfo* blkl, RuntimeBlockInfo* blkr) const
-  {
-	  if (!is_code(blkl) && !is_code(blkr))
-		  return (unat)blkl->code<(unat)blkr->code;
+	bool operator()(RuntimeBlockInfo* blkl, RuntimeBlockInfo* blkr) const
+	{
+		if (!is_code(blkl) && !is_code(blkr))
+			return (unat)blkl->code<(unat)blkr->code;
 
-	  unat blkr_start=get_blkstart(blkr),blkl_end=get_blkend(blkl);
+		unat blkr_start=get_blkstart(blkr),blkl_end=get_blkend(blkl);
 
-	  if (blkl_end<blkr_start)
-	  {
-		  return true;
-	  }
-	  else
-	  {
-		  return false;
-	  }
-  }
+		if (blkl_end<blkr_start)
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
 };
 
 typedef std::set<RuntimeBlockInfo*,BlockMapCMP> blkmap_t;
@@ -418,7 +421,7 @@ void bm_Init()
 #ifdef DYNA_OPROF
 	oprofHandle=op_open_agent();
 	if (oprofHandle==0)
-		printf("bm: Failed to opened oprofile\n");
+		printf("bm: Failed to open oprofile\n");
 	else
 		printf("bm: Oprofile integration enabled !\n");
 #endif
@@ -438,7 +441,7 @@ void bm_WriteBlockMap(const string& file)
 	FILE* f=fopen(file.c_str(),"wb");
 	if (f)
 	{
-		printf("writing block map !\n");
+		printf("Writing block map !\n");
 		for (int i=0;i<all_blocks.size();i++)
 		{
 			fprintf(f,"block: %d:%08X:%08X:%d:%d:%d\n",all_blocks[i]->BlockType,all_blocks[i]->addr,all_blocks[i]->code,all_blocks[i]->host_code_size,all_blocks[i]->guest_cycles,all_blocks[i]->guest_opcodes);
@@ -446,17 +449,17 @@ void bm_WriteBlockMap(const string& file)
 				fprintf(f,"\top: %d:%d:%s\n",j,all_blocks[i]->oplist[j].guest_offs,all_blocks[i]->oplist[j].dissasm().c_str());
 		}
 		fclose(f);
-		printf("writen block map\n");
+		printf("Finished writing block map\n");
 	}
 }
 
 u32 GetLookup(RuntimeBlockInfo* elem)
 {
-		return elem->lookups;
+	return elem->lookups;
 }
 
 bool UDgreater ( RuntimeBlockInfo* elem1, RuntimeBlockInfo* elem2 )
-{	
+{
 	return elem1->runs > elem2->runs;
 }
 
@@ -614,7 +617,7 @@ void print_blocks()
 		f=fopen(GetPath("/blkmap.lst").c_str(),"w");
 		print_stats=0;
 
-		printf("writing blocks to %p\n",f);
+		printf("Writing blocks to %p\n",f);
 	}
 
 	for (size_t i=0;i<all_blocks.size();i++)

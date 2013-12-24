@@ -24,11 +24,11 @@ void pvr_WriteReg(u32 paddr,u32 data)
 	u32 addr=paddr&pvr_RegMask;
 
 	if (addr==ID_addr)
-		return;//read olny
+		return;//read only
 	if (addr==REVISION_addr)
-		return;//read olny
+		return;//read only
 	if (addr==TA_YUV_TEX_CNT_addr)
-		return;//read olny
+		return;//read only
 
 	if (addr==STARTRENDER_addr)
 	{
@@ -95,25 +95,25 @@ void pvr_WriteReg(u32 paddr,u32 data)
 
 void Regs_Reset(bool Manual)
 {
-	ID					= 0x17FD11DB;
-	REVISION			= 0x00000011;
-	SOFTRESET			= 0x00000007;
-	SPG_HBLANK_INT.full	= 0x031D0000;
-	SPG_VBLANK_INT.full	= 0x01500104;
-	FPU_PARAM_CFG		= 0x0007DF77;
-	HALF_OFFSET			= 0x00000007;
-	ISP_FEED_CFG		= 0x00402000;
-	SDRAM_REFRESH		= 0x00000020;
-	SDRAM_ARB_CFG		= 0x0000001F;
-	SDRAM_CFG			= 0x15F28997;
-	SPG_HBLANK.full		= 0x007E0345;
-	SPG_LOAD.full		= 0x01060359;
-	SPG_VBLANK.full		= 0x01500104;
-	SPG_WIDTH.full		= 0x07F1933F;
-	VO_CONTROL.full		= 0x00000108;
-	VO_STARTX.full		= 0x0000009D;
-	VO_STARTY.full		= 0x00000015;
-	SCALER_CTL.full		= 0x00000400;
-	FB_BURSTCTRL		= 0x00090639;
-	PT_ALPHA_REF		= 0x000000FF;
+	ID                  = 0x17FD11DB;
+	REVISION            = 0x00000011;
+	SOFTRESET           = 0x00000007;
+	SPG_HBLANK_INT.full = 0x031D0000;
+	SPG_VBLANK_INT.full = 0x01500104;
+	FPU_PARAM_CFG       = 0x0007DF77;
+	HALF_OFFSET         = 0x00000007;
+	ISP_FEED_CFG        = 0x00402000;
+	SDRAM_REFRESH       = 0x00000020;
+	SDRAM_ARB_CFG       = 0x0000001F;
+	SDRAM_CFG           = 0x15F28997;
+	SPG_HBLANK.full     = 0x007E0345;
+	SPG_LOAD.full       = 0x01060359;
+	SPG_VBLANK.full     = 0x01500104;
+	SPG_WIDTH.full      = 0x07F1933F;
+	VO_CONTROL.full     = 0x00000108;
+	VO_STARTX.full      = 0x0000009D;
+	VO_STARTY.full      = 0x00000015;
+	SCALER_CTL.full     = 0x00000400;
+	FB_BURSTCTRL        = 0x00090639;
+	PT_ALPHA_REF        = 0x000000FF;
 }

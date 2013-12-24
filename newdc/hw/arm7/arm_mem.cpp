@@ -12,14 +12,14 @@ u32 aica_reg_L=0;
 //Set to true when the out of the intc is 1
 bool e68k_out = false;
 u32 e68k_reg_L;
-u32 e68k_reg_M=0;	//constant ?
+u32 e68k_reg_M=0; //constant ?
 
 void update_e68k()
 {
 	if (!e68k_out && aica_interr)
 	{
 		//Set the pending signal
-		//Is L register holded here too ?
+		//Is L register held here too ?
 		e68k_out=1;
 		e68k_reg_L=aica_reg_L;
 
@@ -50,24 +50,28 @@ T arm_ReadReg(u32 addr)
 	if (addr==REG_L)
 		return e68k_reg_L;
 	else if(addr==REG_M)
-		return e68k_reg_M;	//shoudn't really happen
+		return e68k_reg_M;	//shouldn't really happen
 	else
 		return libAICA_ReadReg(addr,sz);
 }		
 template <u32 sz,class T>
 void arm_WriteReg(u32 addr,T data)
 {
-	addr&=0x7FFF;
-	if (addr==REG_L)
-		return;				//shoudn't really happen (read only)
-	else if(addr==REG_M)
+	addr &= 0x7FFF;
+	if (addr == REG_L)
+	{
+		return; // Shouldn't really happen (read only)
+	}
+	else if (addr == REG_M)
 	{
 		//accept interrupts
-		if (data&1)
+		if (data & 1)
 			e68k_AcceptInterrupt();
 	}
 	else
-		return libAICA_WriteReg(addr,data,sz);
+	{
+		return libAICA_WriteReg(addr, data, sz);
+	}
 }
 
 //00000000~007FFFFF @DRAM_AREA* 

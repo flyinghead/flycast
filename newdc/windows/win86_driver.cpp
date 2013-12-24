@@ -188,7 +188,7 @@ void DYNACALL csc_fail(u32 addr,u32 addy)
 	{
 		u32 fail_idx=(csc_sidx>>1)|(csc_sidx<<31);
 
-		printf("Ret Missmatch: %08X instead of %08X!\n",addr,addy);
+		printf("Ret Mismatch: %08X instead of %08X!\n",addr,addy);
 	}
 }
 void csc_pop(RuntimeBlockInfo* block)
@@ -379,10 +379,13 @@ void ngen_Compile(RuntimeBlockInfo* block,bool force_checks, bool reset, bool st
 				if (reg_rd.count(*iter))
 				{
 					reg_rd.erase(*iter);
-					x86e->Emit(op_add32,&prof.counters.ralloc.reg_rw[*iter],1);
+					x86e->Emit(op_add32, &prof.counters.ralloc.reg_rw[*iter], 1);
 				}
 				else
-					x86e->Emit(op_add32,&prof.counters.ralloc.reg_w[*iter],1);
+				{
+					x86e->Emit(op_add32, &prof.counters.ralloc.reg_w[*iter], 1);
+				}
+
 				++iter;
 			}
 
@@ -514,7 +517,7 @@ u32 DynaRBI::Relink()
 		}
 		x86e->Emit(op_call,x86_ptr_imm(UpdateINTC));
 
-		x86e->Emit(op_mov32,ECX,&next_pc);		
+		x86e->Emit(op_mov32,ECX,&next_pc);
 
 		x86e->Emit(op_jmp,x86_ptr_imm(loop_no_update));
 
@@ -530,18 +533,18 @@ u32 DynaRBI::Relink()
 
 /*
 	//10
-	R S8	B,M
-	R S16	B,M
-	R I32	B,M
-	R F32	B,M
-	R F32v2	B{,M}
+	R S8    B,M
+	R S16   B,M
+	R I32   B,M
+	R F32   B,M
+	R F32v2 B{,M}
 
 	//13
-	W I8	B,M
-	W I16	B,M
-	W I32	B,S,M
-	W F32	B,S,M
-	W F32v2	B,S{,M}
+	W I8    B,M
+	W I16   B,M
+	W I32   B,S,M
+	W F32   B,S,M
+	W F32v2 B,S{,M}
 */
 
 extern u8* virt_ram_base;
@@ -624,10 +627,12 @@ void gen_hande(u32 w, u32 sz, u32 mode)
 		{
 			x86e->Emit(op_movss,x86_mrm(ECX,sq_both),XMM0);
 			if (sz==SZ_64F)
-				x86e->Emit(op_movss,x86_mrm(ECX,sq_both+4),XMM1);			
+				x86e->Emit(op_movss,x86_mrm(ECX,sq_both+4),XMM1);
 		}
 		else
+		{
 			die("Can't happen\n");
+		}
 	}
 	else
 	{
@@ -702,8 +707,6 @@ void ngen_init()
 	delete x86e;
 
 	emit_SetBaseAddr();
-
-	
 }
 
 void ngen_ResetBlocks()
@@ -727,8 +730,6 @@ bool ngen_Rewrite(unat& addr,unat retadr,unat acc)
 {
 	if (addr>=mem_code_base && addr<mem_code_end)
 	{
-
-
 		u32 ca=*(u32*)(retadr-4)+retadr;
 
 		x86e = new x86_block();
@@ -743,16 +744,17 @@ bool ngen_Rewrite(unat& addr,unat retadr,unat acc)
 			{
 				if ((u32)mem_code[0][w][i]==ca)
 				{
-
 					//found !
 
-					if ((acc>>26)==0x38)	//sq ?
+					if ((acc >> 26) == 0x38) //sq ?
 					{
-						verify(w==1);
-						x86e->Emit(op_call,x86_ptr_imm(mem_code[1][w][i]));
+						verify(w == 1);
+						x86e->Emit(op_call, x86_ptr_imm(mem_code[1][w][i]));
 					}
 					else
-						x86e->Emit(op_call,x86_ptr_imm(mem_code[2][w][i]));
+					{
+						x86e->Emit(op_call, x86_ptr_imm(mem_code[2][w][i]));
+					}
 
 					x86e->Generate();
 					delete x86e;
@@ -770,6 +772,8 @@ bool ngen_Rewrite(unat& addr,unat retadr,unat acc)
 		return false;
 	}
 	else
+	{
 		return false;
+	}
 }
 #endif

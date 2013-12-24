@@ -67,17 +67,17 @@ struct rend_context
 
 	double early;
 
-	FB_X_CLIP_type		fb_X_CLIP;
-	FB_Y_CLIP_type		fb_Y_CLIP;
+	FB_X_CLIP_type    fb_X_CLIP;
+	FB_Y_CLIP_type    fb_Y_CLIP;
 
-	List<Vertex>		verts;
-	List<u16>			idx;
-	List<ModTriangle>	modtrig;
-	List<ISP_Modvol>	global_param_mvo;
+	List<Vertex>      verts;
+	List<u16>         idx;
+	List<ModTriangle> modtrig;
+	List<ISP_Modvol>  global_param_mvo;
 
-	List<PolyParam>		global_param_op;
-	List<PolyParam>		global_param_pt;
-	List<PolyParam>		global_param_tr;
+	List<PolyParam>   global_param_op;
+	List<PolyParam>   global_param_pt;
+	List<PolyParam>   global_param_tr;
 
 	void Clear()
 	{
@@ -120,8 +120,8 @@ struct TA_context
 			sc:     idx: 26150, vtx: 17417, op: 162, pt: 12, tr: 244, mvo: 6, modt: 2044
 			doa2le: idx: 47178, vtx: 34046, op: 868, pt: 0, tr: 354, mvo: 92, modt: 976 (overruns)
 			ika:    idx: 46748, vtx: 33818, op: 984, pt: 9, tr: 234, mvo: 10, modt: 16, ov: 0  
-			ct:		idx: 30920, vtx: 21468, op: 752, pt: 0, tr: 360, mvo: 101, modt: 732, ov: 0
-			sa2:	idx: 36094, vtx: 24520, op: 1330, pt: 10, tr: 177, mvo: 39, modt: 360, ov: 0
+			ct:     idx: 30920, vtx: 21468, op: 752, pt: 0, tr: 360, mvo: 101, modt: 732, ov: 0
+			sa2:    idx: 36094, vtx: 24520, op: 1330, pt: 10, tr: 177, mvo: 39, modt: 360, ov: 0
 	*/
 
 	void MarkRend()

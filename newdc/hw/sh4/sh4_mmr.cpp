@@ -13,18 +13,18 @@
 
 Array<u8> OnChipRAM;
 
-//All registers are 4 byte alligned
+//All registers are 4 byte aligned
 
-Array<RegisterStruct> CCN(16,true);			//CCN  : 14 registers
-Array<RegisterStruct> UBC(9,true);			//UBC  : 9 registers
-Array<RegisterStruct> BSC(19,true);			//BSC  : 18 registers
-Array<RegisterStruct> DMAC(17,true);		//DMAC : 17 registers
-Array<RegisterStruct> CPG(5,true);			//CPG  : 5 registers
-Array<RegisterStruct> RTC(16,true);			//RTC  : 16 registers
-Array<RegisterStruct> INTC(4,true);			//INTC : 4 registers
-Array<RegisterStruct> TMU(12,true);			//TMU  : 12 registers
-Array<RegisterStruct> SCI(8,true);			//SCI  : 8 registers
-Array<RegisterStruct> SCIF(10,true);		//SCIF : 10 registers
+Array<RegisterStruct> CCN(16,true);  //CCN  : 14 registers
+Array<RegisterStruct> UBC(9,true);   //UBC  : 9 registers
+Array<RegisterStruct> BSC(19,true);  //BSC  : 18 registers
+Array<RegisterStruct> DMAC(17,true); //DMAC : 17 registers
+Array<RegisterStruct> CPG(5,true);   //CPG  : 5 registers
+Array<RegisterStruct> RTC(16,true);  //RTC  : 16 registers
+Array<RegisterStruct> INTC(4,true);  //INTC : 4 registers
+Array<RegisterStruct> TMU(12,true);  //TMU  : 12 registers
+Array<RegisterStruct> SCI(8,true);   //SCI  : 8 registers
+Array<RegisterStruct> SCIF(10,true); //SCIF : 10 registers
 
 u32 sh4io_read_noacc(u32 addr) 
 { 
@@ -38,7 +38,7 @@ void sh4io_write_noacc(u32 addr, u32 data)
 }
 void sh4io_write_const(u32 addr, u32 data) 
 { 
-	printf("sh4io: Const write ingored @@ %08X <- %08X\n",addr,data);
+	printf("sh4io: Const write ignored @@ %08X <- %08X\n",addr,data);
 }
 
 void sh4_rio_reg(Array<RegisterStruct>& arr, u32 addr, RegIO flags, u32 sz, RegReadAddrFP* rf, RegWriteAddrFP* wf)
@@ -75,9 +75,9 @@ u32 sh4_rio_read(Array<RegisterStruct>& sb_regs, u32 addr)
 {	
 	u32 offset = addr&255;
 #ifdef TRACE
-	if (offset & 3/*(size-1)*/) //4 is min allign size
+	if (offset & 3/*(size-1)*/) //4 is min align size
 	{
-		EMUERROR("unallinged System Bus register read");
+		EMUERROR("Unalinged System Bus register read");
 	}
 #endif
 
@@ -118,9 +118,9 @@ void sh4_rio_write(Array<RegisterStruct>& sb_regs, u32 addr, u32 data)
 {
 	u32 offset = addr&255;
 #ifdef TRACE
-	if (offset & 3/*(size-1)*/) //4 is min allign size
+	if (offset & 3/*(size-1)*/) //4 is min align size
 	{
-		EMUERROR("unallinged System bus register write");
+		EMUERROR("Unaligned System bus register write");
 	}
 #endif
 offset>>=2;
@@ -144,7 +144,7 @@ offset>>=2;
 			sb_regs[offset].writeFunctionAddr(addr,data);
 			/*
 			if (sb_regs[offset].flags & REG_CONST)
-				EMUERROR("Error [Write to read olny register , const]");
+				EMUERROR("Error [Write to read only register , const]");
 			else
 			{
 				if ()
@@ -155,7 +155,7 @@ offset>>=2;
 				else
 				{
 					if (!(sb_regs[offset].flags& REG_NOT_IMPL))
-						EMUERROR("ERROR [Write to read olny register]");
+						EMUERROR("ERROR [Write to read only register]");
 				}
 			}*/
 			return;
@@ -165,10 +165,10 @@ offset>>=2;
 	else
 	{
 		if (!(sb_regs[offset].flags& REG_NOT_IMPL))
-			EMUERROR4("ERROR :wrong size write on register ; offset=%x , data=%x,sz=%d",offset,data,sz);
+			EMUERROR4("ERROR: Wrong size write on register - offset=%x, data=%x, size=%d",offset,data,sz);
 	}
 	if ((sb_regs[offset].flags& REG_NOT_IMPL))
-		EMUERROR3("Write to System Control Regs , not  implemented , addr=%x,data=%x",addr,data);
+		EMUERROR3("Write to System Control Regs, not implemented - addr=%x, data=%x",addr,data);
 #endif
 	
 }
@@ -264,7 +264,7 @@ T DYNACALL ReadMem_P4(u32 addr)
 		break;
 	}
 
-	EMUERROR2("Read from P4 not implemented , addr=%x",addr);
+	EMUERROR2("Read from P4 not implemented - addr=%x",addr);
 	return 0;
 
 }
@@ -275,7 +275,7 @@ void DYNACALL WriteMem_P4(u32 addr,T data)
 {
 	/*if (((addr>>26)&0x7)==7)
 	{
-	WriteMem_area7(addr,data,sz);	
+	WriteMem_area7(addr,data,sz);
 	return;
 	}*/
 
@@ -345,7 +345,7 @@ void DYNACALL WriteMem_P4(u32 addr,T data)
 		{
 			if (addr&0x80)
 			{
-				printf("Unhandled p4 Write [Unified TLB address array , Associative Write] 0x%x = %x\n",addr,data);
+				printf("Unhandled p4 Write [Unified TLB address array, Associative Write] 0x%x = %x\n",addr,data);
 				CCN_PTEH_type t;
 				t.reg_data=data;
 
@@ -410,7 +410,7 @@ void DYNACALL WriteMem_P4(u32 addr,T data)
 		break;
 	}
 
-	EMUERROR3("Write to P4 not implemented , addr=%x,data=%x",addr,data);
+	EMUERROR3("Write to P4 not implemented - addr=%x, data=%x",addr,data);
 }
 
 
@@ -424,7 +424,7 @@ T DYNACALL ReadMem_sq(u32 addr)
 {
 	if (sz!=4)
 	{
-		printf("Store Queue Error , olny 4 byte read are possible[x%X]\n",addr);
+		printf("Store Queue Error - only 4 byte read are possible[x%X]\n",addr);
 		return 0xDE;
 	}
 
@@ -439,7 +439,7 @@ template <u32 sz,class T>
 void DYNACALL WriteMem_sq(u32 addr,T data)
 {
 	if (sz!=4)
-		printf("Store Queue Error , olny 4 byte writes are possible[x%X=0x%X]\n",addr,data);
+		printf("Store Queue Error - only 4 byte writes are possible[x%X=0x%X]\n",addr,data);
 
 	u32 united_offset=addr & 0x3C;
 
@@ -485,7 +485,7 @@ T DYNACALL ReadMem_area7(u32 addr)
 		}
 		else
 		{
-			EMUERROR2("Out of range on register index . %x",addr);
+			EMUERROR2("Out of range on register index %x",addr);
 		}
 		break;
 
@@ -496,7 +496,7 @@ T DYNACALL ReadMem_area7(u32 addr)
 		}
 		else
 		{
-			EMUERROR2("Out of range on register index . %x",addr);
+			EMUERROR2("Out of range on register index %x",addr);
 		}
 		break;
 
@@ -507,13 +507,13 @@ T DYNACALL ReadMem_area7(u32 addr)
 		}
 		else if ((addr>=BSC_SDMR2_addr) && (addr<= 0x1F90FFFF))
 		{
-			//dram settings 2 / write olny
-			EMUERROR("Read from write-olny registers [dram settings 2]");
+			//dram settings 2 / write only
+			EMUERROR("Read from write-only registers [dram settings 2]");
 		}
 		else if ((addr>=BSC_SDMR3_addr) && (addr<= 0x1F94FFFF))
 		{
-			//dram settings 3 / write olny
-			EMUERROR("Read from write-olny registers [dram settings 3]");
+			//dram settings 3 / write only
+			EMUERROR("Read from write-only registers [dram settings 3]");
 		}
 		else
 		{
@@ -530,7 +530,7 @@ T DYNACALL ReadMem_area7(u32 addr)
 		}
 		else
 		{
-			EMUERROR2("Out of range on register index . %x",addr);
+			EMUERROR2("Out of range on register index %x",addr);
 		}
 		break;
 
@@ -541,7 +541,7 @@ T DYNACALL ReadMem_area7(u32 addr)
 		}
 		else
 		{
-			EMUERROR2("Out of range on register index . %x",addr);
+			EMUERROR2("Out of range on register index %x",addr);
 		}
 		break;
 
@@ -552,7 +552,7 @@ T DYNACALL ReadMem_area7(u32 addr)
 		}
 		else
 		{
-			EMUERROR2("Out of range on register index . %x",addr);
+			EMUERROR2("Out of range on register index %x",addr);
 		}
 		break;
 
@@ -563,7 +563,7 @@ T DYNACALL ReadMem_area7(u32 addr)
 		}
 		else
 		{
-			EMUERROR2("Out of range on register index . %x",addr);
+			EMUERROR2("Out of range on register index %x",addr);
 		}
 		break;
 
@@ -574,7 +574,7 @@ T DYNACALL ReadMem_area7(u32 addr)
 		}
 		else
 		{
-			EMUERROR2("Out of range on register index . %x",addr);
+			EMUERROR2("Out of range on register index %x",addr);
 		}
 		break;
 
@@ -585,7 +585,7 @@ T DYNACALL ReadMem_area7(u32 addr)
 		}
 		else
 		{
-			EMUERROR2("Out of range on register index . %x",addr);
+			EMUERROR2("Out of range on register index %x",addr);
 		}
 		break;
 
@@ -596,11 +596,11 @@ T DYNACALL ReadMem_area7(u32 addr)
 		}
 		else
 		{
-			EMUERROR2("Out of range on register index . %x",addr);
+			EMUERROR2("Out of range on register index %x",addr);
 		}
 		break;
 
-		//who realy cares about ht-udi ? it's not existant on dc iirc ..
+		// Who really cares about ht-UDI? it's not existent on the Dreamcast IIRC
 	case A7_REG_HASH(UDI_BASE_addr):
 		switch(addr)
 		{
@@ -617,7 +617,7 @@ T DYNACALL ReadMem_area7(u32 addr)
 	}
 
 
-	//EMUERROR2("unknown Read from Area7 , addr=%x",addr);
+	//EMUERROR2("Unknown Read from Area7 - addr=%x",addr);
 	return 0;
 }
 
@@ -651,7 +651,7 @@ void DYNACALL WriteMem_area7(u32 addr,T data)
 		}
 		else
 		{
-			EMUERROR2("Out of range on register index . %x",addr);
+			EMUERROR2("Out of range on register index %x",addr);
 		}
 		break;
 
@@ -663,7 +663,7 @@ void DYNACALL WriteMem_area7(u32 addr,T data)
 		}
 		else
 		{
-			EMUERROR2("Out of range on register index . %x",addr);
+			EMUERROR2("Out of range on register index %x",addr);
 		}
 		break;
 
@@ -675,17 +675,17 @@ void DYNACALL WriteMem_area7(u32 addr,T data)
 		}
 		else if ((addr>=BSC_SDMR2_addr) && (addr<= 0x1F90FFFF))
 		{
-			//dram settings 2 / write olny
+			//dram settings 2 / write only
 			return;//no need ?
 		}
 		else if ((addr>=BSC_SDMR3_addr) && (addr<= 0x1F94FFFF))
 		{
-			//dram settings 3 / write olny
+			//dram settings 3 / write only
 			return;//no need ?
 		}
 		else
 		{
-			EMUERROR2("Out of range on register index . %x",addr);
+			EMUERROR2("Out of range on register index %x",addr);
 		}
 		break;
 
@@ -699,7 +699,7 @@ void DYNACALL WriteMem_area7(u32 addr,T data)
 		}
 		else
 		{
-			EMUERROR2("Out of range on register index . %x",addr);
+			EMUERROR2("Out of range on register index %x",addr);
 		}
 		break;
 
@@ -711,7 +711,7 @@ void DYNACALL WriteMem_area7(u32 addr,T data)
 		}
 		else
 		{
-			EMUERROR2("Out of range on register index . %x",addr);
+			EMUERROR2("Out of range on register index %x",addr);
 		}
 		break;
 
@@ -723,7 +723,7 @@ void DYNACALL WriteMem_area7(u32 addr,T data)
 		}
 		else
 		{
-			EMUERROR2("Out of range on register index . %x",addr);
+			EMUERROR2("Out of range on register index %x",addr);
 		}
 		break;
 
@@ -735,7 +735,7 @@ void DYNACALL WriteMem_area7(u32 addr,T data)
 		}
 		else
 		{
-			EMUERROR2("Out of range on register index . %x",addr);
+			EMUERROR2("Out of range on register index %x",addr);
 		}
 		break;
 
@@ -747,7 +747,7 @@ void DYNACALL WriteMem_area7(u32 addr,T data)
 		}
 		else
 		{
-			EMUERROR2("Out of range on register index . %x",addr);
+			EMUERROR2("Out of range on register index %x",addr);
 		}
 		break;
 
@@ -759,7 +759,7 @@ void DYNACALL WriteMem_area7(u32 addr,T data)
 		}
 		else
 		{
-			EMUERROR2("Out of range on register index . %x",addr);
+			EMUERROR2("Out of range on register index %x",addr);
 		}
 		break;
 
@@ -771,11 +771,11 @@ void DYNACALL WriteMem_area7(u32 addr,T data)
 		}
 		else
 		{
-			EMUERROR2("Out of range on register index . %x",addr);
+			EMUERROR2("Out of range on register index %x",addr);
 		}
 		break;
 
-		//who realy cares about ht-udi ? it's not existant on dc iirc ..
+		//who really cares about ht-udi ? it's not existent on dc iirc ..
 	case A7_REG_HASH(UDI_BASE_addr):
 		switch(addr)
 		{
@@ -818,7 +818,7 @@ T DYNACALL ReadMem_area7_OCR_T(u32 addr)
 	}
 	else
 	{
-		printf("On Chip Ram Read ; but OCR is disabled\n");
+		printf("On Chip Ram Read, but OCR is disabled\n");
 		return 0xDE;
 	}
 }
@@ -842,7 +842,7 @@ void DYNACALL WriteMem_area7_OCR_T(u32 addr,T data)
 	}
 	else
 	{
-		printf("On Chip Ram Write ; but OCR is disabled\n");
+		printf("On Chip Ram Write, but OCR is disabled\n");
 	}
 }
 
@@ -854,16 +854,16 @@ void sh4_mmr_init()
 
 	for (u32 i=0;i<30;i++)
 	{
-		if (i<CCN.Size)	 sh4_rio_reg(CCN,CCN_BASE_addr+i*4,RIO_NO_ACCESS,32);	//(16,true);	//CCN  : 14 registers
-		if (i<UBC.Size)	 sh4_rio_reg(UBC,UBC_BASE_addr+i*4,RIO_NO_ACCESS,32);	//(9,true);		//UBC  : 9 registers
-		if (i<BSC.Size)	 sh4_rio_reg(BSC,BSC_BASE_addr+i*4,RIO_NO_ACCESS,32);	//(19,true);	//BSC  : 18 registers
-		if (i<DMAC.Size) sh4_rio_reg(DMAC,DMAC_BASE_addr+i*4,RIO_NO_ACCESS,32);	//(17,true);	//DMAC : 17 registers
-		if (i<CPG.Size)	 sh4_rio_reg(CPG,CPG_BASE_addr+i*4,RIO_NO_ACCESS,32);	//(5,true);		//CPG  : 5 registers
-		if (i<RTC.Size)	 sh4_rio_reg(RTC,RTC_BASE_addr+i*4,RIO_NO_ACCESS,32);	//(16,true);	//RTC  : 16 registers
-		if (i<INTC.Size) sh4_rio_reg(INTC,INTC_BASE_addr+i*4,RIO_NO_ACCESS,32);	//(4,true);		//INTC : 4 registers
-		if (i<TMU.Size)	 sh4_rio_reg(TMU,TMU_BASE_addr+i*4,RIO_NO_ACCESS,32);	//(12,true);	//TMU  : 12 registers
-		if (i<SCI.Size)	 sh4_rio_reg(SCI,SCI_BASE_addr+i*4,RIO_NO_ACCESS,32);	//(8,true);		//SCI  : 8 registers
-		if (i<SCIF.Size) sh4_rio_reg(SCIF,SCIF_BASE_addr+i*4,RIO_NO_ACCESS,32);	//(10,true);	//SCIF : 10 registers
+		if (i<CCN.Size)  sh4_rio_reg(CCN,CCN_BASE_addr+i*4,RIO_NO_ACCESS,32);   //(16,true);    //CCN  : 14 registers
+		if (i<UBC.Size)  sh4_rio_reg(UBC,UBC_BASE_addr+i*4,RIO_NO_ACCESS,32);   //(9,true);     //UBC  : 9 registers
+		if (i<BSC.Size)  sh4_rio_reg(BSC,BSC_BASE_addr+i*4,RIO_NO_ACCESS,32);   //(19,true);    //BSC  : 18 registers
+		if (i<DMAC.Size) sh4_rio_reg(DMAC,DMAC_BASE_addr+i*4,RIO_NO_ACCESS,32); //(17,true);    //DMAC : 17 registers
+		if (i<CPG.Size)  sh4_rio_reg(CPG,CPG_BASE_addr+i*4,RIO_NO_ACCESS,32);   //(5,true);     //CPG  : 5 registers
+		if (i<RTC.Size)  sh4_rio_reg(RTC,RTC_BASE_addr+i*4,RIO_NO_ACCESS,32);   //(16,true);    //RTC  : 16 registers
+		if (i<INTC.Size) sh4_rio_reg(INTC,INTC_BASE_addr+i*4,RIO_NO_ACCESS,32); //(4,true);     //INTC : 4 registers
+		if (i<TMU.Size)  sh4_rio_reg(TMU,TMU_BASE_addr+i*4,RIO_NO_ACCESS,32);   //(12,true);    //TMU  : 12 registers
+		if (i<SCI.Size)  sh4_rio_reg(SCI,SCI_BASE_addr+i*4,RIO_NO_ACCESS,32);   //(8,true);     //SCI  : 8 registers
+		if (i<SCIF.Size) sh4_rio_reg(SCIF,SCIF_BASE_addr+i*4,RIO_NO_ACCESS,32); //(10,true);    //SCIF : 10 registers
 	}
 
 	//initialise Register structs
@@ -909,7 +909,7 @@ void sh4_mmr_term()
 }
 //Mem map :)
 
-//AREA 7	--	Sh4 Regs
+//AREA 7--Sh4 Regs
 _vmem_handler area7_handler;
 
 _vmem_handler area7_orc_handler;
@@ -940,14 +940,14 @@ void map_area7(u32 base)
 void map_p4()
 {
 	//P4 Region :
-	_vmem_handler p4_handler =	_vmem_register_handler_Template(ReadMem_P4,WriteMem_P4);
+	_vmem_handler p4_handler = _vmem_register_handler_Template(ReadMem_P4,WriteMem_P4);
 
 	//register this before area7 and SQ , so they overwrite it and handle em :)
 	//default P4 handler
 	//0xE0000000-0xFFFFFFFF
 	_vmem_map_handler(p4_handler,0xE0,0xFF);
 
-	//Store Queues	--	Write olny 32bit
+	//Store Queues -- Write only 32bit
 	_vmem_map_block(sq_both,0xE0,0xE0,63);
 	_vmem_map_block(sq_both,0xE1,0xE1,63);
 	_vmem_map_block(sq_both,0xE2,0xE2,63);

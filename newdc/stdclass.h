@@ -20,7 +20,7 @@
 #define PAGE_MASK (PAGE_SIZE-1)
 #endif
 
-//comonly used classes across the project
+//Commonly used classes across the project
 //Simple Array class for helping me out ;P
 template<class T>
 class Array
@@ -59,7 +59,6 @@ public:
 		Size=0;
 	}
 
-
 	~Array()
 	{
 		if  (data)
@@ -70,6 +69,7 @@ public:
 			Free();
 		}
 	}
+
 	void SetPtr(T* Source,u32 ellements)
 	{
 		//initialise array
@@ -77,6 +77,7 @@ public:
 		data=Source;
 		Size=ellements;
 	}
+
 	T* Resize(u32 size,bool bZero)
 	{
 		if (size==0)
@@ -116,50 +117,47 @@ public:
 
 		return data;
 	}
+
 	void Zero()
 	{
 		memset(data,0,sizeof(T)*Size);
 	}
+
 	void Free()
 	{
-		if (Size!=0)
+		if (Size != 0)
 		{
 			if (data)
 				free(data);
 
-			data=0;
-		}
-		else
-		{
-
-
+			data = NULL;
 		}
 	}
 
 
 	INLINE T& operator [](const u32 i)
-    {
+	{
 #ifdef MEM_BOUND_CHECK
-        if (i>=Size)
+		if (i>=Size)
 		{
 			printf("Error: Array %d , index out of range (%d>%d)\n",id,i,Size-1);
 			MEM_DO_BREAK;
 		}
 #endif
 		return data[i];
-    }
+	}
 
 	INLINE T& operator [](const s32 i)
-    {
+	{
 #ifdef MEM_BOUND_CHECK
-        if (!(i>=0 && i<(s32)Size))
+		if (!(i>=0 && i<(s32)Size))
 		{
 			printf("Error: Array %d , index out of range (%d > %d)\n",id,i,Size-1);
 			MEM_DO_BREAK;
 		}
 #endif
 		return data[i];
-    }
+	}
 };
 
 //Windoze code

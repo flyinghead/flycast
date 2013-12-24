@@ -178,7 +178,7 @@ struct x86_opcode
 	u8 b_data[4];
 	x86_opcode_encoderFP* encode;
 	
-	//note : rm_rev affects olny encoding , so other flags are not affected . r/m,r w/ GPR,XMM have p1:GPR and p2: XMM
+	//note : rm_rev affects only encoding , so other flags are not affected . r/m,r w/ GPR,XMM have p1:GPR and p2: XMM
 	x86_opcode_param pg_1;		//param 1 group , valid for any r or r/m encoding.Ignored on m mode of r/m
 	x86_opcode_param pg_2;		//param 2 group , valid for any r or r/m encoding.Ignored on m mode of r/m
 	x86_opcode_param pg_3;		//param 3 group , either NONE or IMM*
@@ -210,7 +210,7 @@ void __fastcall encode_modrm(x86_block* block,encoded_type* mrm, u32 extra)
 //x64 stuff
 void __fastcall encode_rex(x86_block* block,encoded_type* mrm,u32 mrm_reg,u32 ofe=0)
 {
-	u32 flags = (ofe>>3) & 1; //opcode field extention
+	u32 flags = (ofe>>3) & 1; //opcode field extension
 
 	
 	flags |= (mrm_reg>>1) & 4;//mod R/M byte reg field extension
@@ -230,7 +230,7 @@ void __fastcall encode_rex(x86_block* block,encoded_type* mrm,u32 mrm_reg,u32 of
 #endif
 #define block_patches (*(vector<code_patch>*) block->_patches)
 
-//Encoding function (partialy) specialised by templates to gain speed :)
+//Encoding function (partially) specialised by templates to gain speed :)
 template < enc_param enc_1,enc_imm enc_2,u32 sz,x86_operand_size enc_op_size>
 void __fastcall x86_encode_opcode_tmpl(x86_block* block, const x86_opcode* op, encoded_type* p1,encoded_type* p2,u32 p3)
 {
@@ -487,7 +487,7 @@ x86 system opcodes have 2 sizes :
 8 bit
 native
 
-native is usualy 32b.Using a size override (0x66) makes these opcode(s) 16 bit.Using the Rex prefix makes em 64b.
+native is usually 32b.Using a size override (0x66) makes these opcode(s) 16 bit.Using the Rex prefix makes em 64b.
 
 x86 sse opcodes are similar , but they use 0xf3 prefix for ss versions and other various prefixes :)
 */

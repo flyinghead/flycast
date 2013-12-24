@@ -110,7 +110,7 @@ struct shil_param
 	bool is_r64f() const { return type==FMT_F64; }
 
 	bool is_r32() const { return is_r32i() || is_r32f(); }
-	bool is_r64() const { return is_r64f(); }	//just here for symetry ...
+	bool is_r64() const { return is_r64f(); }	//just here for symmetry ...
 
 	bool is_imm_s8() const { return is_imm() && is_s8(_imm); }
 	bool is_imm_u8() const { return is_imm() && is_u8(_imm); }
@@ -131,12 +131,12 @@ struct shil_param
 		Imms:
 		is_imm
 		
-		regs:	
-		integer regs			: is_r32i,is_r32,count=1
-		fpu regs, single view	: is_r32f,is_r32,count=1
-		fpu regs, double view	: is_r64f,count=2
-		fpu regs, quad view		: is_vector,is_r32fv=4, count=4
-		fpu regs, matrix view	: is_vector,is_r32fv=16, count=16
+		regs:
+		integer regs            : is_r32i,is_r32,count=1
+		fpu regs, single view   : is_r32f,is_r32,count=1
+		fpu regs, double view   : is_r64f,count=2
+		fpu regs, quad view     : is_vector,is_r32fv=4, count=4
+		fpu regs, matrix view   : is_vector,is_r32fv=16, count=16
 	*/
 };
 

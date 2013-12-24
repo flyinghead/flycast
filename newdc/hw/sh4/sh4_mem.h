@@ -72,7 +72,7 @@ struct MemInfo
 	//Direct ptr   , just read/write to the ptr
 	//Direct call  , just call for read , ecx=data on write (no address)
 	//Generic call , ecx=addr , call for read , edx=data for write
-	u32 MemType;		
+	u32 MemType;
 	
 	//todo
 	u32 Flags;

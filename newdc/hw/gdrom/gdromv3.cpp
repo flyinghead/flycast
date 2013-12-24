@@ -58,13 +58,13 @@ struct
 			{
 				u8 cc;
 
-				u8 prmtype	: 1 ;	
-				u8 expdtype	: 3 ;
+				u8 prmtype  : 1 ;
+				u8 expdtype : 3 ;
 				//	u8 datasel	: 4 ;
-				u8 other	: 1 ; //"other" data. I guess that means SYNC/ECC/EDC ?
-				u8 data		: 1 ; //user data. 2048 for mode1, 2048 for m2f1, 2324 for m2f2
-				u8 subh		: 1 ; //8 bytes, mode2 subheader
-				u8 head		: 1 ; //4 bytes, main cdrom header
+				u8 other    : 1 ; //"other" data. I guess that means SYNC/ECC/EDC ?
+				u8 data     : 1 ; //user data. 2048 for mode1, 2048 for m2f1, 2324 for m2f2
+				u8 subh     : 1 ; //8 bytes, mode2 subheader
+				u8 head     : 1 ; //4 bytes, main CDROM header
 
 				u8 block[10];
 			};
@@ -77,7 +77,7 @@ struct
 	};
 } packet_cmd;
 
-//Buffer for sector reads [ dma ]
+//Buffer for sector reads [dma]
 struct 
 {
 	u32 cache_index;
@@ -91,7 +91,7 @@ struct
 	gd_states next_state;
 	u32 index;
 	u32 size;
-	u16 data[0x10000>>1];	//64 kb
+	u16 data[0x10000>>1]; //64 kb
 } pio_buff;
 
 u32 set_mode_offset;
@@ -109,9 +109,9 @@ struct
 		u32 FAD;
 		struct
 		{
-			u8 B0;		//msb
-			u8 B1;		//midle byte
-			u8 B2;		//lsb
+			u8 B0; // MSB
+			u8 B1; // Middle byte
+			u8 B2; // LSB
 		};
 	}CurrAddr,EndAddr,StartAddr;
 } cdda;
@@ -143,9 +143,10 @@ u32 data_write_mode=0;
 	{
 		struct
 		{
-		u8 low;
-		u8 hi;
+			u8 low;
+			u8 hi;
 		};
+
 		u16 full;
 	} ByteCount;
 	
@@ -179,6 +180,7 @@ void libCore_CDDA_Sector(s16* sector)
 				//Repeat ;)
 				if (cdda.repeats!=0xf)
 					cdda.repeats--;
+
 				cdda.CurrAddr.FAD=cdda.StartAddr.FAD;
 			}
 		}
@@ -197,10 +199,10 @@ void FillReadBuffer()
 	u32 count = read_params.remaining_sectors;
 	u32 hint=0;
 
-	if (count>32)
+	if (count > 32)
 	{
-		hint=max(count-32,(u32)32);
-		count=32;
+		hint = max(count - 32, (u32)32);
+		count = 32;
 	}
 
 	read_buff.cache_size=count*read_params.sector_type;
@@ -217,56 +219,56 @@ void gd_set_state(gd_states state)
 	switch(state)
 	{
 		case gds_waitcmd:
-			GDStatus.DRDY=1;	//Can accept ata cmd :)
-			GDStatus.BSY=0;		//Does not access command block
+			GDStatus.DRDY=1;   // Can accept ATA command :)
+			GDStatus.BSY=0;    // Does not access command block
 			break;
 
 		case gds_procata:
-			//verify(prev==gds_waitcmd);	//validate the previous cmd ;)
+			//verify(prev==gds_waitcmd);    // Validate the previous command ;)
 
-			GDStatus.DRDY=0;	//can't accept ata cmd
-			GDStatus.BSY=1;		//accessing command block to process cmd
+			GDStatus.DRDY=0;   // Can't accept ATA command
+			GDStatus.BSY=1;    // Accessing command block to process command
 			gd_process_ata_cmd();
 			break;
 
 		case gds_waitpacket:
-			verify(prev==gds_procata);	//validate the previous cmd ;)
+			verify(prev==gds_procata); // Validate the previous command ;)
 
-			//prepare for packet cmd
+			// Prepare for packet command
 			packet_cmd.index=0;
 
-			//Set CoD, clear BSY and IO
+			// Set CoD, clear BSY and IO
 			IntReason.CoD=1;
 			GDStatus.BSY = 0;
 			IntReason.IO=0;
 
-			//Make DRQ valid
+			// Make DRQ valid
 			GDStatus.DRQ = 1;
 
-			//ATA can optionaly raise the interrupt ...
-			//RaiseInterrupt(holly_GDROM_CMD);
+			// ATA can optionally raise the interrupt ...
+			// RaiseInterrupt(holly_GDROM_CMD);
 			break;
 
 		case gds_procpacket:
-			verify(prev==gds_waitpacket);	//validate the previous state ;)
+			verify(prev==gds_waitpacket); // Validate the previous state ;)
 
-			GDStatus.DRQ=0;		//can't accept ata cmd
-			GDStatus.BSY=1;		//accessing command block to process cmd
+			GDStatus.DRQ=0;     // Can't accept ATA command
+			GDStatus.BSY=1;     // Accessing command block to process command
 			gd_process_spi_cmd();
 			break;
 			//yep , get/set are the same !
 		case gds_pio_get_data:
 		case gds_pio_send_data:
-			//	When preparations are complete, the following steps are carried out at the device.
-			//(1)	Number of bytes to be read is set in "Byte Count" register. 
+			//  When preparations are complete, the following steps are carried out at the device.
+			//(1)   Number of bytes to be read is set in "Byte Count" register. 
 			ByteCount.full =(u16)(pio_buff.size<<1);
-			//(2)	IO bit is set and CoD bit is cleared. 
+			//(2)   IO bit is set and CoD bit is cleared. 
 			IntReason.IO=1;
 			IntReason.CoD=0;
-			//(3)	DRQ bit is set, BSY bit is cleared. 
+			//(3)   DRQ bit is set, BSY bit is cleared. 
 			GDStatus.DRQ=1;
 			GDStatus.BSY=0;
-			//(4)	INTRQ is set, and a host interrupt is issued.
+			//(4)   INTRQ is set, and a host interrupt is issued.
 			asic_RaiseInterrupt(holly_GDROM_CMD);
 			/*
 			The number of bytes normally is the byte number in the register at the time of receiving 
@@ -285,13 +287,13 @@ void gd_set_state(gd_states state)
 				u32 sector_count = read_params.remaining_sectors;
 				gd_states next_state=gds_pio_end;
 
-				if (sector_count>27)
+				if (sector_count > 27)
 				{
-					sector_count=27;
-					next_state=gds_readsector_pio;
+					sector_count = 27;
+					next_state = gds_readsector_pio;
 				}
-				libGDR_ReadSector((u8*)&pio_buff.data[0],read_params.start_sector,sector_count,
-											read_params.sector_type);
+
+				libGDR_ReadSector((u8*)&pio_buff.data[0],read_params.start_sector,sector_count, read_params.sector_type);
 				read_params.start_sector+=sector_count;
 				read_params.remaining_sectors-=sector_count;
 
@@ -312,7 +314,7 @@ void gd_set_state(gd_states state)
 
 		case gds_procpacketdone:
 			/*
-			7.	When the device is ready to send the status, it writes the 
+			7.  When the device is ready to send the status, it writes the 
 			final status (IO, CoD, DRDY set, BSY, DRQ cleared) to the "Status" register before making INTRQ valid. 
 			After checking INTRQ, the host reads the "Status" register to check the completion status. 
 			*/
@@ -336,8 +338,9 @@ void gd_set_state(gd_states state)
 			//end pio transfer ;)
 			gd_set_state(gds_pio_end);
 			break;
+
 		default :
-			die("Unhandled gdrom state ...");
+			die("Unhandled GDROM state ...");
 			break;
 	}
 }
@@ -354,16 +357,19 @@ void gd_setdisc()
 		//GDStatus.BSY=0;
 		//GDStatus.DRDY=1;
 		break;
+
 	case Open:
 		SecNumber.Status = GD_OPEN;
 		//GDStatus.BSY=0;
 		//GDStatus.DRDY=1;
 		break;
+
 	case Busy:
 		SecNumber.Status = GD_BUSY;
 		GDStatus.BSY=1;
 		GDStatus.DRDY=0;
 		break;
+
 	default :
 		if (SecNumber.Status==GD_BUSY)
 			SecNumber.Status = GD_PAUSE;
@@ -373,6 +379,7 @@ void gd_setdisc()
 		//GDStatus.DRDY=1;
 		break;
 	}
+
 	if (gd_disk_type==Busy && newd!=Busy)
 	{
 		GDStatus.BSY=0;
@@ -389,9 +396,9 @@ void gd_reset()
 	gd_setdisc();
 	gd_set_state(gds_waitcmd);
 }
-u32 GetFAD(u8* data,bool msf)
+u32 GetFAD(u8* data, bool msf)
 {
-	if( msf )	
+	if(msf)
 	{
 		printf("GDROM: MSF FORMAT\n");
 		return ((data[0]*60*75) + (data[1]*75) + (data[2]));
@@ -401,32 +408,36 @@ u32 GetFAD(u8* data,bool msf)
 		return (data[0]<<16) | (data[1]<<8) | (data[2]);
 	}
 }
-//disk changes ect
+
+//disk changes etc
 void libCore_gdrom_disc_change()
 {
 	gd_setdisc();
 }
 
 //This handles the work of setting up the pio regs/state :)
-void gd_spi_pio_end(u8* buffer,u32 len,gd_states next_state)
+void gd_spi_pio_end(u8* buffer, u32 len, gd_states next_state)
 {
 	verify(len<0xFFFF);
 	pio_buff.index=0;
 	pio_buff.size=len>>1;
 	pio_buff.next_state=next_state;
+
 	if (buffer!=0)
 		memcpy(pio_buff.data,buffer,len);
+
 	if (len==0)
 		gd_set_state(next_state);
 	else
 		gd_set_state(gds_pio_send_data);
 }
-void gd_spi_pio_read_end(u32 len,gd_states next_state)
+void gd_spi_pio_read_end(u32 len, gd_states next_state)
 {
 	verify(len<0xFFFF);
 	pio_buff.index=0;
 	pio_buff.size=len>>1;
 	pio_buff.next_state=next_state;
+
 	if (len==0)
 		gd_set_state(next_state);
 	else
@@ -434,7 +445,7 @@ void gd_spi_pio_read_end(u32 len,gd_states next_state)
 }
 void gd_process_ata_cmd()
 {
-	//Any ata cmd clears these bits , unless aborted/error :p
+	//Any ATA command clears these bits, unless aborted/error :p
 	Error.ABRT=0;
 	GDStatus.CHECK=0;
 
@@ -449,7 +460,7 @@ void gd_process_ata_cmd()
 			Asserting the INTRQ signal
 		*/
 
-		//this is all very hacky, i don't know if the abort is correct actually
+		//this is all very hacky, I don't know if the abort is correct actually
 		//the above comment is from a wrong place in the docs ...
 		
 		Error.ABRT=1;
@@ -489,7 +500,7 @@ void gd_process_ata_cmd()
 
 		//Set features sets :
 		//Error : ABRT
-		Error.ABRT=0;	//command was not aborted ;) [hopefully ...]
+		Error.ABRT=0;  // Command was not aborted ;) [hopefully ...]
 
 		//status : DRDY , DSC , DF , CHECK
 		//DRDY is set on state change
@@ -501,15 +512,15 @@ void gd_process_ata_cmd()
 		break;
 
 	default:
-		die("unknown ATA command..");
+		die("Unknown ATA command...");
 		break;
 	};
 }
 
 void gd_process_spi_cmd()
 {
-	printf_spi("SPI cmd %02x;",packet_cmd.data_8[0]);
-	printf_spi("params: %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x \n",
+	printf_spi("SPI command %02x;",packet_cmd.data_8[0]);
+	printf_spi("Params: %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x \n",
 		packet_cmd.data_8[0], packet_cmd.data_8[1], packet_cmd.data_8[2], packet_cmd.data_8[3], packet_cmd.data_8[4], packet_cmd.data_8[5],
 		packet_cmd.data_8[6], packet_cmd.data_8[7], packet_cmd.data_8[8], packet_cmd.data_8[9], packet_cmd.data_8[10], packet_cmd.data_8[11] );
 
@@ -517,10 +528,10 @@ void gd_process_spi_cmd()
 
 	switch(packet_cmd.data_8[0])
 	{
-	case SPI_TEST_UNIT	:
+	case SPI_TEST_UNIT:
 		printf_spicmd("SPI_TEST_UNIT\n");
 
-		GDStatus.CHECK=SecNumber.Status==GD_BUSY;	//drive is ready ;)
+		GDStatus.CHECK=SecNumber.Status==GD_BUSY; // Drive is ready ;)
 
 		gd_set_state(gds_procpacketdone);
 		break;
@@ -536,27 +547,21 @@ void gd_process_spi_cmd()
 		{
 #define readcmd packet_cmd.GDReadBlock
 
-			
-			
 			u32 sector_type=2048;
 			if (readcmd.head ==1 && readcmd.subh==1 && readcmd.data==1 && readcmd.expdtype==3 && readcmd.other==0)
 				sector_type=2340;
-			else if( readcmd.head ||readcmd.subh || readcmd.other || (!readcmd.data) )	// assert
+			else if(readcmd.head ||readcmd.subh || readcmd.other || (!readcmd.data)) // assert
 				printf("GDROM: *FIXME* ADD MORE CD READ SETTINGS %d %d %d %d 0x%01X\n",readcmd.head,readcmd.subh,readcmd.other,readcmd.data,readcmd.expdtype);
 
-			
-			
-
 			u32 start_sector = GetFAD(&readcmd.b[2],readcmd.prmtype);
-
 			u32 sector_count = (readcmd.b[8]<<16) | (readcmd.b[9]<<8) | (readcmd.b[10]);
 
 			read_params.start_sector=start_sector;
 			read_params.remaining_sectors=sector_count;
-			read_params.sector_type = sector_type;//yeah i know , not realy many types supported ...
+			read_params.sector_type = sector_type;//yeah i know , not really many types supported...
 
-			printf_spicmd("SPI_CD_READ sec=%d sz=%d/%d dma=%d\n",read_params.start_sector,read_params.remaining_sectors,read_params.sector_type,Features.CDRead.DMA);
-			if (Features.CDRead.DMA==1)
+			printf_spicmd("SPI_CD_READ - Sector=%d Size=%d/%d DMA=%d\n",read_params.start_sector,read_params.remaining_sectors,read_params.sector_type,Features.CDRead.DMA);
+			if (Features.CDRead.DMA == 1)
 			{
 				gd_set_state(gds_readsector_dma);
 			}
@@ -601,8 +606,8 @@ void gd_process_spi_cmd()
 		{
 			printf_spicmd("SPI : unknown ? [0x71]\n");
 			printf("SPI : unknown ? [0x71]\n");
-		extern u32 reply_71_sz;
-			
+			extern u32 reply_71_sz;
+
 			gd_spi_pio_end((u8*)&reply_71[0],reply_71_sz);//uCount
 
 
@@ -638,25 +643,25 @@ void gd_process_spi_cmd()
 			//printf("GDROM: Unhandled Sega SPI frame: SPI_REQ_STAT\n");
 			u8 stat[10];
 
-			//0	0	0	0	0	STATUS
-			stat[0]=SecNumber.Status;	//low nibble 
-			//1	Disc Format	Repeat Count
+			//0  0   0   0   0   STATUS
+			stat[0]=SecNumber.Status;   //low nibble 
+			//1 Disc Format Repeat Count
 			stat[1]=(u8)(SecNumber.DiscFormat<<4) | (cdda.repeats);
-			//2	Address	Control
+			//2 Address Control
 			stat[2]=0x4;
-			//3	TNO
+			//3 TNO
 			stat[3]=2;
-			//4	X
+			//4 X
 			stat[4]=0;
-			//5	FAD
+			//5 FAD
 			stat[5]=cdda.CurrAddr.B0;
-			//6	FAD
+			//6 FAD
 			stat[6]=cdda.CurrAddr.B1;
-			//7	FAD
+			//7 FAD
 			stat[7]=cdda.CurrAddr.B2;
-			//8	Max Read Error Retry Times
+			//8 Max Read Error Retry Times
 			stat[8]=0;
-			//9	0	0	0	0	0	0	0	0
+			//9 0   0   0   0   0   0   0   0
 			stat[9]=0;
 
 			
@@ -806,22 +811,22 @@ void gd_process_spi_cmd()
 			u8 subc_info[100];
 
 
-			//0	Reserved
+			//0 Reserved
 			subc_info[0]=0;
-			//1	Audio status
+			//1 Audio status
 			if (SecNumber.Status==GD_STANDBY)
 			{
-				//13h	Audio playback ended normally
+				//13h  Audio playback ended normally
 				subc_info[1]=0x13;
 			}
 			else if (SecNumber.Status==GD_PAUSE)
 			{
-				//12h	Audio playback paused
+				//12h  Audio playback paused
 				subc_info[1]=0x12;
 			}
 			else if (SecNumber.Status==GD_PLAY)
 			{
-				//11h	Audio playback in progress
+				//11h  Audio playback in progress
 				subc_info[1]=0x11;
 			}
 			else
@@ -843,33 +848,33 @@ void gd_process_spi_cmd()
 			}
 			else
 			{
-				//2	DATA Length MSB (0 = 0h)
+				//2 DATA Length MSB (0 = 0h)
 				subc_info[2]=0;
-				//3	DATA Length LSB (14 = Eh)
+				//3 DATA Length LSB (14 = Eh)
 				subc_info[3]=0xE;
-				//4	Control	ADR
-				subc_info[4]=(4<<4) | (1);	//Audio :p
+				//4 Control ADR
+				subc_info[4]=(4<<4) | (1); //Audio :p
 				//5-13	DATA-Q
 				u8* data_q=&subc_info[5-1];
 				//-When ADR = 1
-				//Byte	Description
-				//1	TNO
-				data_q[1]=1;//Track number .. duno whats it :P gota parse toc xD ;p
-				//2	X
+				//Byte Description
+				//1 TNO
+				data_q[1]=1;//Track number .. dunno whats it :P gotta parse toc xD ;p
+				//2 X
 				data_q[2]=1;//gap #1 (main track)
-				//3-5	Elapsed FAD within track
+				//3-5   Elapsed FAD within track
 				u32 FAD_el=cdda.CurrAddr.FAD-cdda.StartAddr.FAD;
 				data_q[3]=0;//(u8)(FAD_el>>16);
 				data_q[4]=0;//(u8)(FAD_el>>8);
 				data_q[5]=0;//(u8)(FAD_el>>0);
-				//6	0	0	0	0	0	0	0	0
+				//6 0   0   0   0   0   0   0   0
 				data_q[6]=0;//
-				//7-9	-> seems to be FAD
-				data_q[7]=0;//(u8)(cdda.CurrAddr.FAD>>16);
-				data_q[8]=0x0;//(u8)(cdda.CurrAddr.FAD>>8);
+				//7-9   -> seems to be FAD
+				data_q[7]=0;   //(u8)(cdda.CurrAddr.FAD>>16);
+				data_q[8]=0x0; //(u8)(cdda.CurrAddr.FAD>>8);
 				data_q[9]=0x96;//(u8)(cdda.CurrAddr.FAD>>0);
 				sz=0xE;
-				printf_subcode("NON raw subcode read -- partialy wrong [fmt=%d]\n",format);
+				printf_subcode("NON raw subcode read -- partially wrong [format=%d]\n",format);
 			}
 
 			gd_spi_pio_end((u8*)&subc_info[0],sz);
@@ -912,8 +917,10 @@ u32 ReadMem_gdrom(u32 Addr, u32 sz)
 
 		if (gd_state == gds_pio_send_data)
 		{
-			if (pio_buff.index==pio_buff.size)
+			if (pio_buff.index == pio_buff.size)
+			{
 				printf("GDROM: Illegal Read From DATA (underflow)\n");
+			}
 			else
 			{
 				u32 rv= pio_buff.data[pio_buff.index];
@@ -951,7 +958,7 @@ u32 ReadMem_gdrom(u32 Addr, u32 sz)
 		return SecNumber.full;
 
 	default:
-		printf("GDROM: Unhandled Read From %X sz:%X\n",Addr,sz);
+		printf("GDROM: Unhandled read from address %X, Size:%X\n",Addr,sz);
 		return 0;
 	}
 }
@@ -962,12 +969,12 @@ void WriteMem_gdrom(u32 Addr, u32 data, u32 sz)
 	switch(Addr)
 	{
 	case GD_BYCTLLO:
-		printf_rm("GDROM: Write to GD_BYCTLLO = %X sz:%X\n",data,sz);
+		printf_rm("GDROM: Write to GD_BYCTLLO = %X, Size:%X\n",data,sz);
 		ByteCount.low =(u8) data;
 		break;
 
 	case GD_BYCTLHI: 
-		printf_rm("GDROM: Write to GD_BYCTLHI = %X sz:%X\n",data,sz);
+		printf_rm("GDROM: Write to GD_BYCTLHI = %X, Size:%X\n",data,sz);
 		ByteCount.hi =(u8) data;
 		break;
 
@@ -993,11 +1000,14 @@ void WriteMem_gdrom(u32 Addr, u32 data, u32 sz)
 				}
 			}
 			else
+			{
 				printf("GDROM: Illegal Write to DATA\n");
+			}
 			return;
 		}
+
 	case GD_DEVCTRL_Write:
-		printf("GDROM: Write GD_DEVCTRL ( Not implemented on dc)\n");
+		printf("GDROM: Write GD_DEVCTRL (Not implemented on Dreamcast)\n");
 		break;
 
 	case GD_DRVSEL: 
@@ -1005,10 +1015,9 @@ void WriteMem_gdrom(u32 Addr, u32 data, u32 sz)
 		DriveSel = data; 
 		break;
 
-
-		//	By writing "3" as Feature Number and issuing the Set Feature command,
-		//	the PIO or DMA transfer mode set in the Sector Count register can be selected.
-		//	The actual transfer mode is specified by the Sector Counter Register. 
+		// By writing "3" as Feature Number and issuing the Set Feature command,
+		// the PIO or DMA transfer mode set in the Sector Count register can be selected.
+		// The actual transfer mode is specified by the Sector Counter Register. 
 
 	case GD_FEATURES_Write:
 		printf_rm("GDROM: Write to GD_FEATURES\n");
@@ -1020,7 +1029,7 @@ void WriteMem_gdrom(u32 Addr, u32 data, u32 sz)
 		SecCount.full =(u8) data;
 		break;
 
-	case GD_SECTNUM	:
+	case GD_SECTNUM:
 		printf("GDROM: Write to SecNum; not possible = %X\n", data);
 		break;
 
@@ -1034,7 +1043,7 @@ void WriteMem_gdrom(u32 Addr, u32 data, u32 sz)
 		break;
 
 	default:
-		printf("\nGDROM:\tUnhandled Write to %X <= %X sz:%X\n",Addr,data,sz);
+		printf("\nGDROM:\tUnhandled write to address %X <= %X, Size:%X\n",Addr,data,sz);
 		break;
 	}
 }
@@ -1052,10 +1061,10 @@ int GDRomschd(int i, int c, int j)
 	//SB_GDST=0;
 
 	//TODO : Fix dmaor
-	u32 dmaor	= DMAC_DMAOR.full;
+	u32 dmaor = DMAC_DMAOR.full;
 
-	u32	src		= SB_GDSTARD,
-		len		= SB_GDLEN-SB_GDLEND ;
+	u32 src = SB_GDSTARD,
+		len = SB_GDLEN-SB_GDLEND ;
 	
 	if(SB_GDLEN & 0x1F) 
 	{
@@ -1064,25 +1073,27 @@ int GDRomschd(int i, int c, int j)
 	}
 
 	//if we don't have any more sectors to read
-	if (read_params.remaining_sectors==0)
+	if (read_params.remaining_sectors == 0)
 	{
 		//make sure we don't underrun the cache :)
-		len=min(len,read_buff.cache_size);
+		len = min(len, read_buff.cache_size);
 	}
 
-	len=min(len,(u32)10240);
-	// do we need to do this for gdrom dma ?
-	if(0x8201 != (dmaor &DMAOR_MASK)) {
+	len = min(len, (u32)10240);
+	// do we need to do this for GDROM DMA?
+	if(0x8201 != (dmaor &DMAOR_MASK))
+	{
 		printf("\n!\tGDROM: DMAOR has invalid settings (%X) !\n", dmaor);
 		//return;
 	}
 
-	if(0 == len) 
+	if(len == 0)
 	{
 		printf("\n!\tGDROM: Len: %X, Abnormal Termination !\n", len);
 	}
-	u32 len_backup=len;
-	if( 1 == SB_GDDIR ) 
+
+	u32 len_backup = len;
+	if(1 == SB_GDDIR) 
 	{
 		while(len)
 		{
@@ -1107,9 +1118,11 @@ int GDRomschd(int i, int c, int j)
 		}
 	}
 	else
-		msgboxf("GDROM: SB_GDDIR %X (TO AICA WAVE MEM?)",MBX_ICONERROR, SB_GDDIR);
+	{
+		msgboxf("GDROM: SB_GDDIR %X (TO AICA WAVE MEM?)", MBX_ICONERROR, SB_GDDIR);
+	}
 
-	//SB_GDLEN = 0x00000000; //13/5/2k7 -> acording to docs these regs are not updated by hardware
+	//SB_GDLEN = 0x00000000; //13/5/2k7 -> according to docs these regs are not updated by hardware
 	//SB_GDSTAR = (src + len_backup);
 
 	SB_GDLEND+= len_backup;
@@ -1117,18 +1130,18 @@ int GDRomschd(int i, int c, int j)
 
 	if (SB_GDLEND==SB_GDLEN)
 	{
-		//printf("Streamed GDMA end - %d bytes trasnfered\n",SB_GDLEND);
+		//printf("Streamed GDMA end - %d bytes transferred\n",SB_GDLEND);
 		SB_GDST=0;//done
 		// The DMA end interrupt flag
 		asic_RaiseInterrupt(holly_GDROM_DMA);
 	}
-	//Readed ALL sectors
+	//Read ALL sectors
 	if (read_params.remaining_sectors==0)
 	{
 		//And all buffer :p
 		if (read_buff.cache_size==0)
 		{
-			//verify(!SB_GDST&1)	-> dc can do multi read dma
+			//verify(!SB_GDST&1) -> dc can do multi read dma
 			gd_set_state(gds_procpacketdone);
 		}
 	}
@@ -1136,7 +1149,7 @@ int GDRomschd(int i, int c, int j)
 	return GDROM_TICK;
 }
 
-//Dma Start
+//DMA Start
 void GDROM_DmaStart(u32 addr, u32 data)
 {
 	if (SB_GDEN==0)
@@ -1158,30 +1171,30 @@ void GDROM_DmaStart(u32 addr, u32 data)
 
 void GDROM_DmaEnable(u32 addr, u32 data)
 {
-	SB_GDEN=data&1;
-	if (SB_GDEN==0 && SB_GDST==1)
+	SB_GDEN = (data & 1);
+	if (SB_GDEN == 0 && SB_GDST == 1)
 	{
 		printf_spi("GD-DMA aborted\n");
-		SB_GDST=0;
+		SB_GDST = 0;
 	}
 }
 
 //Init/Term/Res
 void gdrom_reg_Init()
 {
-	sb_rio_register(SB_GDST_addr,RIO_WF,0,&GDROM_DmaStart);
+	sb_rio_register(SB_GDST_addr, RIO_WF, 0, &GDROM_DmaStart);
 	/*
 	sb_regs[(SB_GDST_addr-SB_BASE)>>2].flags=REG_32BIT_READWRITE | REG_READ_DATA;
 	sb_regs[(SB_GDST_addr-SB_BASE)>>2].writeFunction=GDROM_DmaStart;
 	*/
 
-	sb_rio_register(SB_GDEN_addr,RIO_WF,0,&GDROM_DmaEnable);
+	sb_rio_register(SB_GDEN_addr, RIO_WF, 0, &GDROM_DmaEnable);
 	/*
 	sb_regs[(SB_GDEN_addr-SB_BASE)>>2].flags=REG_32BIT_READWRITE | REG_READ_DATA;
 	sb_regs[(SB_GDEN_addr-SB_BASE)>>2].writeFunction=GDROM_DmaEnable;
 	*/
 
-	gdrom_schid=sh4_sched_register(0,&GDRomschd);
+	gdrom_schid = sh4_sched_register(0, &GDRomschd);
 }
 void gdrom_reg_Term()
 {
@@ -1190,5 +1203,6 @@ void gdrom_reg_Term()
 
 void gdrom_reg_Reset(bool Manual)
 {
-	SB_GDST = SB_GDEN = 0;
+	SB_GDST = 0;
+	SB_GDEN = 0;
 }

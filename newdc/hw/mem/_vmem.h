@@ -55,7 +55,7 @@ void DYNACALL _vmem_WriteMem16(u32 Address,u16 data);
 void DYNACALL _vmem_WriteMem32(u32 Address,u32 data);
 void DYNACALL _vmem_WriteMem64(u32 Address,u64 data);
 
-//should be called at start up to ensure it will succed:)
+//should be called at start up to ensure it will succeed :)
 bool _vmem_reserve();
 void _vmem_release();
 

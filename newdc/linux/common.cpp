@@ -71,12 +71,12 @@ void fault_handler (int sn, siginfo_t * si, void *ctxr)
 
 void install_fault_handler (void)
 {
-  struct sigaction act, segv_oact;
-  memset(&act, 0, sizeof(act));
-  act.sa_sigaction = fault_handler;
-  sigemptyset(&act.sa_mask);
-  act.sa_flags = SA_SIGINFO;
-  sigaction(SIGSEGV, &act, &segv_oact);
+	struct sigaction act, segv_oact;
+	memset(&act, 0, sizeof(act));
+	act.sa_sigaction = fault_handler;
+	sigemptyset(&act.sa_mask);
+	act.sa_flags = SA_SIGINFO;
+	sigaction(SIGSEGV, &act, &segv_oact);
 }
 
 

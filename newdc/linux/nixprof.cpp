@@ -35,18 +35,22 @@
 
 #if defined(_ANDROID)
 #include <asm/sigcontext.h>
-typedef struct ucontext_t {
-unsigned long uc_flags;
-struct ucontext_t *uc_link;
-struct {
-void *p;
-int flags;
-size_t size;
-} sstack_data;
-struct sigcontext uc_mcontext;
-/* some 2.6.x kernel has fp data here after a few other fields
-* we don't use them for now...
-*/
+
+typedef struct ucontext_t
+{
+	unsigned long uc_flags;
+	struct ucontext_t *uc_link;
+	struct
+	{
+		void *p;
+		int flags;
+		size_t size;
+	} sstack_data;
+
+	struct sigcontext uc_mcontext;
+	/* some 2.6.x kernel has fp data here after a few other fields
+	 * we don't use them for now...
+	 */
 } ucontext_t;
 
 #include <android/log.h> 
@@ -80,33 +84,33 @@ int syms_len;
 
 void sample_Syms(u8* data,u32 len)
 {
-  syms_ptr=data;
-  syms_len=len;
+	syms_ptr=data;
+	syms_len=len;
 }
 
 void prof_handler (int sn, siginfo_t * si, void *ctxr)
 {
-    ucontext_t* ctx=(ucontext_t*)ctxr;
-    int thd=-1;
-    if (pthread_self()==thread[0]) thd=0;
-    else if (pthread_self()==thread[1]) thd=1;
-    else return;
+	ucontext_t* ctx=(ucontext_t*)ctxr;
+	int thd=-1;
+	if (pthread_self()==thread[0]) thd=0;
+	else if (pthread_self()==thread[1]) thd=1;
+	else return;
 
-    prof_address[thd]=(void*)GET_PC_FROM_CONTEXT(ctx);
+	prof_address[thd]=(void*)GET_PC_FROM_CONTEXT(ctx);
 }
 
 
 
 void install_prof_handler(int id)
 {
-    struct sigaction act, segv_oact;
-    memset(&act, 0, sizeof(act));
-    act.sa_sigaction = prof_handler;
-    sigemptyset(&act.sa_mask);
-    act.sa_flags = SA_SIGINFO | SA_RESTART;
-    sigaction(SIGPROF, &act, &segv_oact);
+	struct sigaction act, segv_oact;
+	memset(&act, 0, sizeof(act));
+	act.sa_sigaction = prof_handler;
+	sigemptyset(&act.sa_mask);
+	act.sa_flags = SA_SIGINFO | SA_RESTART;
+	sigaction(SIGPROF, &act, &segv_oact);
 
-    thread[id]=pthread_self();
+	thread[id]=pthread_self();
 }
 
 void prof_head(FILE* out, const char* type, const char* name)
@@ -120,33 +124,33 @@ void prof_head(FILE* out, const char* type, int d)
 
 void elf_syms(FILE* out,const char* libfile)
 {
-struct stat statbuf;
+	struct stat statbuf;
 
-printf("LIBFILE \"%s\"\n",libfile);
-	int fd=open(libfile,O_RDONLY,0);
-  
-  if (!fd)
-    {
-      printf("Failed to open file \"%s\"\n",libfile);
-      return;
-    }
-   if (fstat (fd,&statbuf) < 0)
-   {
-    printf("Failed to fstat file \"%s\"\n",libfile);
-    return;
-    }
-    
+	printf("LIBFILE \"%s\"\n", libfile);
+	int fd = open(libfile, O_RDONLY, 0);
+
+	if (!fd)
 	{
-		void* data=mmap (0, statbuf.st_size, PROT_READ, MAP_SHARED, fd, 0);
-    close(fd);
-    
-    if (data==(void*)-1)
-    {
-      printf("Failed to mmap file \"%s\"\n",libfile);
-      return;
-    }
-    
-    //printf("MMap: %08p, %08X\n",data,statbuf.st_size);
+		printf("Failed to open file \"%s\"\n", libfile);
+		return;
+	}
+	if (fstat(fd, &statbuf) < 0)
+	{
+		printf("Failed to fstat file \"%s\"\n", libfile);
+		return;
+	}
+
+	{
+		void* data = mmap(0, statbuf.st_size, PROT_READ, MAP_SHARED, fd, 0);
+		close(fd);
+
+		if (data == (void*)-1)
+		{
+			printf("Failed to mmap file \"%s\"\n", libfile);
+			return;
+		}
+
+		//printf("MMap: %08p, %08X\n",data,statbuf.st_size);
 
 		int dynsym=-1;
 		int dynstr=-1;
@@ -170,7 +174,9 @@ printf("LIBFILE \"%s\"\n",libfile);
 			}
 		}
 		else
-      printf("invalid elf file\n");
+		{
+			printf("Invalid elf file\n");
+		}
 
 		if (dynsym >= 0)
 		{
@@ -190,8 +196,10 @@ printf("LIBFILE \"%s\"\n",libfile);
 				}
 			}
 		}
-    else
-      printf("no dynsym\n");
+		else
+		{
+			printf("No dynsym\n");
+		}
 
 		munmap(data,statbuf.st_size);
 	}
@@ -201,117 +209,114 @@ printf("LIBFILE \"%s\"\n",libfile);
 
 volatile bool prof_run;
 
-int str_ends_with(const char * str, const char * suffix) {
+int str_ends_with(const char * str, const char * suffix)
+{
+	if (str == NULL || suffix == NULL)
+		return 0;
 
-  if( str == NULL || suffix == NULL )
-    return 0;
+	size_t str_len = strlen(str);
+	size_t suffix_len = strlen(suffix);
 
-  size_t str_len = strlen(str);
-  size_t suffix_len = strlen(suffix);
+	if (suffix_len > str_len)
+		return 0;
 
-  if(suffix_len > str_len)
-    return 0;
-
-  return 0 == strncmp( str + str_len - suffix_len, suffix, suffix_len );
+	return 0 == strncmp(str + str_len - suffix_len, suffix, suffix_len);
 }
 
 void sh4_jitsym(FILE* out);
 
-void* prof( void *ptr )
+void* prof(void *ptr)
 {
-        FILE* prof_out;
-        char line[512];
-        
-		sprintf(line,"/%d.reprof",tick_count);
+	FILE* prof_out;
+	char line[512];
+
+	sprintf(line, "/%d.reprof", tick_count);
 
 		string logfile=GetPath(line);
-        
-        
-        printf("Profiler thread logging to -> %s\n",logfile.c_str());
-        
-        prof_out=fopen(logfile.c_str(),"wb");
-        if (!prof_out)
-        {
-            printf("Failed to open profiler file\n");
-            return 0;
-        }
-        
-        set<string> libs;
-        
-        prof_head(prof_out,"vaddr","");
-        FILE* maps=fopen("/proc/self/maps","r");
-        while(!feof(maps))
-        {
-            fgets(line,512,maps);
-            fputs(line,prof_out);
-            
-            if(strstr(line,".so"))
-            {
-              char file[512];
-              file[0]=0;
-              sscanf(line,"%*x-%*x %*s %*x %*x:%*x %*d %s\n",file);
-              if (strlen(file))
-                libs.insert(file);
-            }
-        }
-        
-        
-        //Write map file
-        prof_head(prof_out,".map","");
-        fwrite(syms_ptr,1,syms_len,prof_out);
-        
-        //write exports from .so's
-        for (set<string>::iterator it=libs.begin(); it!=libs.end(); it++)
-        {
-          elf_syms(prof_out,it->c_str());
-        }
-        
-        //Write shrec syms file !
-        prof_head(prof_out,"jitsym","SH4");
-        sh4_jitsym(prof_out);
-        
-        //Write arm7rec syms file ! -> to do
-        //prof_head(prof_out,"jitsym","ARM7");
-        
-        
-        
-        prof_head(prof_out,"samples",prof_wait);
-        
-        do
-        {
-                tick_count++;
-                //printf("Sending SIGPROF %08X %08X\n",thread[0],thread[1]);
-                for (int i=0;i<2;i++) pthread_kill(thread[i],SIGPROF);
-                //printf("Sent SIGPROF\n");
-                usleep(prof_wait);
-                //fwrite(&prof_address[0],1,sizeof(prof_address[0])*2,prof_out);
-                fprintf(prof_out,"%p %p\n",prof_address[0],prof_address[1]);
-                
-                if (!(tick_count%10000))
-                {
-                    printf("Profiler: %d ticks, flusing ..\n",tick_count);
-                    fflush(prof_out);
-                }
-        } while(prof_run);
 
-        fclose(maps);
-        fclose(prof_out);
+
+		printf("Profiler thread logging to -> %s\n", logfile.c_str());
+
+		prof_out = fopen(logfile.c_str(), "wb");
+		if (!prof_out)
+		{
+			printf("Failed to open profiler file\n");
+			return 0;
+		}
+
+		set<string> libs;
+
+		prof_head(prof_out, "vaddr", "");
+		FILE* maps = fopen("/proc/self/maps", "r");
+		while (!feof(maps))
+		{
+			fgets(line, 512, maps);
+			fputs(line, prof_out);
+
+			if (strstr(line, ".so"))
+			{
+				char file[512];
+				file[0] = 0;
+				sscanf(line, "%*x-%*x %*s %*x %*x:%*x %*d %s\n", file);
+				if (strlen(file))
+					libs.insert(file);
+			}
+		}
+
+		//Write map file
+		prof_head(prof_out, ".map", "");
+		fwrite(syms_ptr, 1, syms_len, prof_out);
+
+		//write exports from .so's
+		for (set<string>::iterator it = libs.begin(); it != libs.end(); it++)
+		{
+			elf_syms(prof_out, it->c_str());
+		}
+
+		//Write shrec syms file !
+		prof_head(prof_out, "jitsym", "SH4");
+		sh4_jitsym(prof_out);
+
+		//Write arm7rec syms file ! -> to do
+		//prof_head(prof_out,"jitsym","ARM7");
+
+		prof_head(prof_out, "samples", prof_wait);
+
+		do
+		{
+			tick_count++;
+			//printf("Sending SIGPROF %08X %08X\n",thread[0],thread[1]);
+			for (int i = 0; i < 2; i++) pthread_kill(thread[i], SIGPROF);
+			//printf("Sent SIGPROF\n");
+			usleep(prof_wait);
+			//fwrite(&prof_address[0],1,sizeof(prof_address[0])*2,prof_out);
+			fprintf(prof_out, "%p %p\n", prof_address[0], prof_address[1]);
+
+			if (!(tick_count % 10000))
+			{
+				printf("Profiler: %d ticks, flusing ..\n", tick_count);
+				fflush(prof_out);
+			}
+		} while (prof_run);
+
+		fclose(maps);
+		fclose(prof_out);
 }
 
 void sample_Start(int freq)
 {
-    prof_wait=1000000/freq;
-    printf("sampling profiler: starting %d hz %d wait\n",freq,prof_wait);
-    prof_run=true;
-    pthread_create( &proft, NULL, prof, 0);
+	prof_wait = 1000000 / freq;
+	printf("sampling profiler: starting %d hz %d wait\n", freq, prof_wait);
+	prof_run = true;
+	pthread_create(&proft, NULL, prof, 0);
 }
 
 void sample_Stop()
 {
-    if (prof_run)
-    {
-        prof_run=false;
-        pthread_join( proft, NULL);
-    }
-    printf("sampling profiler: stopped\n");
+	if (prof_run)
+	{
+		prof_run = false;
+		pthread_join(proft, NULL);
+	}
+	printf("sampling profiler: stopped\n");
 }

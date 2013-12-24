@@ -9,30 +9,30 @@ typedef void (DYNACALL OpCallFP) (u32 op);
 enum OpcodeType
 {
 	//basic
-	Normal=0,			//heh , nothing special :P
-	ReadsPC=1,			//pc must be set upon calling it
-	WritesPC=2,			//it will write pc (branch)
-	Delayslot=4,		//has a delayslot opcode , valid olny when WritesPC is set
+	Normal       = 0,   // Heh , nothing special :P
+	ReadsPC      = 1,   // PC must be set upon calling it
+	WritesPC     = 2,   // It will write PC (branch)
+	Delayslot    = 4,   // Has a delayslot opcode , valid only when WritesPC is set
 
-	WritesSR=8,			//Writes to SR , and UpdateSR needs to be called
-	WritesFPSCR=16,		//Writes to FPSCR , and UpdateSR needs to be called
-	Invalid=128,			//invalid
+	WritesSR     = 8,   // Writes to SR , and UpdateSR needs to be called
+	WritesFPSCR  = 16,  // Writes to FPSCR , and UpdateSR needs to be called
+	Invalid      = 128, // Invalid
 
-	NO_FP=256,
-	NO_GP=512,
-	NO_SP=1024,
+	NO_FP        = 256,
+	NO_GP        = 512,
+	NO_SP        = 1024,
 
-	//heh not basic :P
-	ReadWritePC=ReadsPC|WritesPC,		//Read and writes pc :P
-	WritesSRRWPC=WritesSR|ReadsPC|WritesPC,
+	// Heh, not basic :P
+	ReadWritePC  = ReadsPC|WritesPC,     // Read and writes pc :P
+	WritesSRRWPC = WritesSR|ReadsPC|WritesPC,
 
-	//branches :
-	//not delay slot
-	Branch_dir=ReadWritePC,		//direct (eg , pc=r[xx]) -- this one is ReadWritePC b/c the delayslot may use pc ;)
-	Branch_rel=ReadWritePC,		//relative (rg pc+=10);
-	//delay slot
-	Branch_dir_d=Delayslot|Branch_dir,	//direct (eg , pc=r[xx])
-	Branch_rel_d=Delayslot|Branch_rel,	//relative (rg pc+=10);
+	// Branches (not delay slot):
+	Branch_dir   = ReadWritePC,          // Direct (eg , pc=r[xx]) -- this one is ReadWritePC b/c the delayslot may use pc ;)
+	Branch_rel   = ReadWritePC,          // Relative (rg pc+=10);
+
+	// Delay slot
+	Branch_dir_d = Delayslot|Branch_dir, // Direct (eg , pc=r[xx])
+	Branch_rel_d = Delayslot|Branch_rel, // Relative (rg pc+=10);
 };
 
 //interface

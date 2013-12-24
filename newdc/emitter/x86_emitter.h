@@ -19,15 +19,15 @@ const char* DissasmClass(x86_opcode_class opcode);
 */
 enum reg_class
 {
-	reg_GPR8=0<<16,		//8 bit regs   (al,cl,dl,bl,ah,cd,dh,bh // r0b .. r3b)
-	reg_GPR16=1<<16,		//16 bit regs  (ax,cx,dx,bx,sp,bp,si,di // ax,cx,dx,bx,sp,bp,si,di,r8w,r9w,r10w,r11w,r12w,r13w,r14w,r15w // r0w .. r15w)
-	reg_GPR32=2<<16,		//32 bit regs  (eax,ecx,edx,ebx,esp,ebp,esi,edi)
-	reg_MMX=3<<16,		//mmx regs     (mm0 .. mm7 // mm0 .. mm15)
-	reg_SSE=4<<16,		//sse regs     (xmm0 .. xmm7 // xmm0 .. xmm15)
+	reg_GPR8=0<<16,     //8 bit regs   (al,cl,dl,bl,ah,cd,dh,bh // r0b .. r3b)
+	reg_GPR16=1<<16,    //16 bit regs  (ax,cx,dx,bx,sp,bp,si,di // ax,cx,dx,bx,sp,bp,si,di,r8w,r9w,r10w,r11w,r12w,r13w,r14w,r15w // r0w .. r15w)
+	reg_GPR32=2<<16,    //32 bit regs  (eax,ecx,edx,ebx,esp,ebp,esi,edi)
+	reg_MMX=3<<16,      //mmx regs     (mm0 .. mm7 // mm0 .. mm15)
+	reg_SSE=4<<16,      //sse regs     (xmm0 .. xmm7 // xmm0 .. xmm15)
 #ifdef X64
-	reg_GPR8_64=6<<5,	//             (r8b .. r15b)
-	reg_GPR8L_64=6<<5,	//             (r4b,r5b,r6b,r7b)
-	reg_GPR64=7<<5,		//             (rax,rcx,rdx,rbx,rsp,rbp,rsi,rdi,r8,r9,r10,r11,r12,r13,r14,r15 // r0 .. r15)
+	reg_GPR8_64=6<<5,   //             (r8b .. r15b)
+	reg_GPR8L_64=6<<5,  //             (r4b,r5b,r6b,r7b)
+	reg_GPR64=7<<5,     //             (rax,rcx,rdx,rbx,rsp,rbp,rsi,rdi,r8,r9,r10,r11,r12,r13,r14,r15 // r0 .. r15)
 #endif
 };
 //Enum of all registers
@@ -91,7 +91,7 @@ enum x86_reg
 	DL,
 	BL,
 
-	AH,	//these are ONLY avaialbe on x86 mode.They will possibly added later  for x64...
+	AH,	//these are ONLY available on x86 mode.They will possibly added later  for x64...
 	CH,
 	DH,
 	BH,
@@ -167,7 +167,7 @@ enum x86_reg
 #endif
 
 #ifdef USE_MM
-	//mmx (? will it be suported by the emitter?) -> propably no , SSE2 mailny replaces em w/ integer XMM math
+	//mmx (? will it be supported by the emitter?) -> probably no , SSE2 mainly replaces em w/ integer XMM math
 	MM0=reg_MMX,
 	MM1,
 	MM2,
@@ -186,7 +186,7 @@ enum x86_reg
 #define x86_sse_reg x86_reg
 #define x86_gpr_reg x86_reg
 
-//memory managment !
+//memory management !
 typedef void* dyna_reallocFP(void*ptr,u32 oldsize,u32 newsize);
 typedef void* dyna_finalizeFP(void* ptr,u32 oldsize,u32 newsize);
 
@@ -315,13 +315,13 @@ public:
 	x86_block_externs* GetExterns();
 	//void CopyTo(void* to);
 
-	//Will free any used resources exept generated code
+	//Will free any used resources except generated code
 	void Free();
 
 	//Label related code
-	//NOTE : Label position in mem must not chainge
+	//NOTE : Label position in mem must not change
 	void CreateLabel(x86_Label* lbl,bool mark,u32 sz);
-	//Allocate a label and create it :).Will be delete'd when calling free and/or dtor
+	//Allocate a label and create it :).Will be deleted when calling free and/or destructor
 	x86_Label* CreateLabel(bool mark,u32 sz);
 	void MarkLabel(x86_Label* lbl);
 
@@ -348,29 +348,29 @@ public:
 	void x86_block::Emit(x86_opcode_class op,x86_Label* lbl);
 
 	//2 param
-	//reg,reg	,reg1 is writen
+	//reg,reg, reg1 is written
 	void x86_block::Emit(x86_opcode_class op,x86_reg reg1,x86_reg reg2);
-	//reg,smrm	,reg is writen
+	//reg,smrm, reg is written
 	void x86_block::Emit(x86_opcode_class op,x86_reg reg,x86_ptr mem);
-	//reg,mrm	,reg is writen
+	//reg,mrm, reg is written
 	void x86_block::Emit(x86_opcode_class op,x86_reg reg1,x86_mrm_t mrm);
-	//reg,imm	,reg is writen
+	//reg,imm, reg is written
 	void x86_block::Emit(x86_opcode_class op,x86_reg reg,u32 imm);
-	//smrm,reg	,mem is writen
+	//smrm,reg, mem is written
 	void x86_block::Emit(x86_opcode_class op,x86_ptr mem,x86_reg reg);
-	//smrm,imm	,mem is writen
+	//smrm,imm, mem is written
 	void x86_block::Emit(x86_opcode_class op,x86_ptr mem,u32 imm);
 
-	//mrm,reg	,mrm is writen
+	//mrm,reg, mrm is written
 	void x86_block::Emit(x86_opcode_class op,x86_mrm_t mrm,x86_reg reg);
-	//mrm,imm	,mrm is writen
+	//mrm,imm, mrm is written
 	void x86_block::Emit(x86_opcode_class op,x86_mrm_t mrm,u32 imm);
 
 	//3 param
-	//reg,reg,imm	,reg1 is writen
+	//reg,reg,imm, reg1 is written
 	void x86_block::Emit(x86_opcode_class op,x86_reg reg1,x86_reg reg2,u32 imm);
-	//reg,mrm,imm	,reg1 is writen
+	//reg,mrm,imm, reg1 is written
 	void x86_block::Emit(x86_opcode_class op,x86_reg reg,x86_ptr mem,u32 imm);
-	//reg,mrm,imm	,reg1 is writen
+	//reg,mrm,imm, reg1 is written
 	void x86_block::Emit(x86_opcode_class op,x86_reg reg,x86_mrm_t mrm,u32 imm);
 };

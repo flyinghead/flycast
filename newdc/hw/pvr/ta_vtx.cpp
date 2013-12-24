@@ -98,7 +98,7 @@ void TA_ListInit();
 void TA_SoftReset();
 
 //hehe
-//as it sems , bit 1,2 are type , bit 0 is mod volume :p
+//as it seems, bit 1,2 are type, bit 0 is mod volume :p
 
 
 //misc ones
@@ -138,7 +138,7 @@ extern u32 TA_VTX_O;
 
 #define vdrc vd_rc
 
-	//Splitter function (normaly ta_dma_main , modified for split dma's)
+	//Splitter function (normally ta_dma_main , modified for split dma's)
 	//extern TaListFP* TaCmd;
 
 template<u32 instance>
@@ -157,7 +157,7 @@ public:
 
 	static Ta_Dma* DYNACALL NullVertexData(Ta_Dma* data,Ta_Dma* data_end)
 	{
-		printf("TA: Invalid state, ingoring VTX data\n");
+		printf("TA: Invalid state, ignoring VTX data\n");
 		return data+SZ32;
 	}
 
@@ -184,7 +184,7 @@ AppendPolyVertex##num(&vp->vtx##num);\
 rv=SZ32; TA_VTX; }\
 break;
 
-			//32b , allways in one pass :)
+			//32b , always in one pass :)
 			ver_32B_def(0);//(Non-Textured, Packed Color)
 			ver_32B_def(1);//(Non-Textured, Floating Color)
 			ver_32B_def(2);//(Non-Textured, Intensity)
@@ -199,24 +199,24 @@ break;
 
 #define ver_64B_def(num) \
 case num : {\
-/*process first half*/	\
-	if (part!=2)	\
-	{	\
-	TA_VTX; \
-	rv+=SZ32;	\
+/*process first half*/\
+	if (part!=2)\
+	{\
+	TA_VTX;\
+	rv+=SZ32;\
 	AppendPolyVertex##num##A(&vp->vtx##num##A);\
-	}	\
-	/*process second half*/	\
-	if (part==0)	\
-	{	\
+	}\
+	/*process second half*/\
+	if (part==0)\
+	{\
 	AppendPolyVertex##num##B(&vp->vtx##num##B);\
-	rv+=SZ32;	\
-	} \
-	else if (part==2)	\
-	{	\
+	rv+=SZ32;\
+	}\
+	else if (part==2)\
+	{\
 	AppendPolyVertex##num##B((TA_Vertex##num##B*)data);\
-	rv+=SZ32;	\
-	} \
+	rv+=SZ32;\
+	}\
 	}\
 	break;
 
@@ -335,7 +335,7 @@ data+=poly_size;
 		{
 		fist_half:
 			ta_handle_poly<poly_type,1>(data,0);
-			if (data->pcw.EndOfStrip)	EndPolyStrip();
+			if (data->pcw.EndOfStrip) EndPolyStrip();
 			TaCmd=ta_handle_poly<poly_type,2>;
 					
 			data+=SZ32;
@@ -351,7 +351,6 @@ strip_end:
 		return data+poly_size;
 	}
 
-				
 	static void TACALL AppendPolyParam2Full(Ta_Dma* pp)
 	{
 		AppendPolyParam2A((TA_PolyParam2A*)&pp[0]);
@@ -412,15 +411,15 @@ public:
 			case ParamType_User_Tile_Clip:
 				{
 					SetTileClip(data->data_32[3]&63,data->data_32[4]&31,data->data_32[5]&63,data->data_32[6]&31);
-					//*couh* ignore it :p
+					//*cough* ignore it :p
 					data+=SZ32;
 				}
-				break;	
+				break;
 				//32B
 			case ParamType_Object_List_Set:
 				{
 					die("ParamType_Object_List_Set");
-					//*couh* ignore it :p
+					//*cough* ignore it :p
 					data+=SZ32;
 				}
 				break;
@@ -438,7 +437,8 @@ public:
 						ta_list_start(data->pcw.ListType);	//start a list ;)
 
 					if (IsModVolList(CurrentList))
-					{	//accept mod data
+					{
+						//accept mod data
 						StartModVol((TA_ModVolParam*)data);
 						VerxexDataFP=ta_mod_vol_data;
 						data+=SZ32;
@@ -503,7 +503,7 @@ public:
 			case 3:
 			case 6:
 				{
-					die("Unhadled parameter");
+					die("Unhandled parameter");
 					data+=SZ32;
 				}
 				break;
@@ -535,40 +535,40 @@ public:
 	}
 	/*
 	Volume,Col_Type,Texture,Offset,Gouraud,16bit_UV
-		
-	0	0	0	(0)	x	invalid	Polygon Type 0	Polygon Type 0
-	0	0	1	x	x	0		Polygon Type 0	Polygon Type 3
-	0	0	1	x	x	1		Polygon Type 0	Polygon Type 4
 
-	0	1	0	(0)	x	invalid	Polygon Type 0	Polygon Type 1
-	0	1	1	x	x	0		Polygon Type 0	Polygon Type 5
-	0	1	1	x	x	1		Polygon Type 0	Polygon Type 6
+	0   0   0   (0) x   invalid Polygon Type 0  Polygon Type 0
+	0   0   1   x   x   0       Polygon Type 0  Polygon Type 3
+	0   0   1   x   x   1       Polygon Type 0  Polygon Type 4
 
-	0	2	0	(0)	x	invalid	Polygon Type 1	Polygon Type 2
-	0	2	1	0	x	0		Polygon Type 1	Polygon Type 7
-	0	2	1	0	x	1		Polygon Type 1	Polygon Type 8
-	0	2	1	1	x	0		Polygon Type 2	Polygon Type 7
-	0	2	1	1	x	1		Polygon Type 2	Polygon Type 8
+	0   1   0   (0) x   invalid Polygon Type 0  Polygon Type 1
+	0   1   1   x   x   0       Polygon Type 0  Polygon Type 5
+	0   1   1   x   x   1       Polygon Type 0  Polygon Type 6
 
-	0	3	0	(0)	x	invalid	Polygon Type 0	Polygon Type 2
-	0	3	1	x	x	0		Polygon Type 0	Polygon Type 7
-	0	3	1	x	x	1		Polygon Type 0	Polygon Type 8
+	0   2   0   (0) x   invalid Polygon Type 1  Polygon Type 2
+	0   2   1   0   x   0       Polygon Type 1  Polygon Type 7
+	0   2   1   0   x   1       Polygon Type 1  Polygon Type 8
+	0   2   1   1   x   0       Polygon Type 2  Polygon Type 7
+	0   2   1   1   x   1       Polygon Type 2  Polygon Type 8
 
-	1	0	0	(0)	x	invalid	Polygon Type 3	Polygon Type 9
-	1	0	1	x	x	0		Polygon Type 3	Polygon Type 11
-	1	0	1	x	x	1		Polygon Type 3	Polygon Type 12
+	0   3   0   (0) x   invalid Polygon Type 0  Polygon Type 2
+	0   3   1   x   x   0       Polygon Type 0  Polygon Type 7
+	0   3   1   x   x   1       Polygon Type 0  Polygon Type 8
 
-	1	2	0	(0)	x	invalid	Polygon Type 4	Polygon Type 10
-	1	2	1	x	x	0		Polygon Type 4	Polygon Type 13
-	1	2	1	x	x	1		Polygon Type 4	Polygon Type 14
+	1   0   0   (0) x   invalid Polygon Type 3  Polygon Type 9
+	1   0   1   x   x   0       Polygon Type 3  Polygon Type 11
+	1   0   1   x   x   1       Polygon Type 3  Polygon Type 12
 
-	1	3	0	(0)	x	invalid	Polygon Type 3	Polygon Type 10
-	1	3	1	x	x	0		Polygon Type 3	Polygon Type 13
-	1	3	1	x	x	1		Polygon Type 3	Polygon Type 14
-		
+	1   2   0   (0) x   invalid Polygon Type 4  Polygon Type 10
+	1   2   1   x   x   0       Polygon Type 4  Polygon Type 13
+	1   2   1   x   x   1       Polygon Type 4  Polygon Type 14
+
+	1   3   0   (0) x   invalid Polygon Type 3  Polygon Type 10
+	1   3   1   x   x   0       Polygon Type 3  Polygon Type 13
+	1   3   1   x   x   1       Polygon Type 3  Polygon Type 14
+
 	Sprites :
-	(0)	(0)	0	(0)	(0)	invalid	Sprite	Sprite Type 0
-	(0)	(0)	1	x	(0)	(1)		Sprite	Sprite Type 1
+	(0) (0) 0 (0) (0) invalid Sprite  Sprite Type 0
+	(0) (0) 1  x   (0) (1)     Sprite  Sprite Type 1
 
 	*/
 	//helpers 0-14
@@ -582,23 +582,23 @@ public:
 				if (pcw.Col_Type==0)
 				{
 					if (pcw.UV_16bit==0)
-						return 3;					//(Textured, Packed Color , 32b uv)
+						return 3;           //(Textured, Packed Color , 32b uv)
 					else
-						return 4;					//(Textured, Packed Color , 16b uv)
+						return 4;           //(Textured, Packed Color , 16b uv)
 				}
 				else if (pcw.Col_Type==1)
 				{
 					if (pcw.UV_16bit==0)
-						return 5;					//(Textured, Floating Color , 32b uv)
+						return 5;           //(Textured, Floating Color , 32b uv)
 					else
-						return 6;					//(Textured, Floating Color , 16b uv)
+						return 6;           //(Textured, Floating Color , 16b uv)
 				}
 				else
 				{
 					if (pcw.UV_16bit==0)
-						return 7;					//(Textured, Intensity , 32b uv)
+						return 7;           //(Textured, Intensity , 32b uv)
 					else
-						return 8;					//(Textured, Intensity , 16b uv)
+						return 8;           //(Textured, Intensity , 16b uv)
 				}
 			}
 			else
@@ -607,10 +607,10 @@ public:
 				if (pcw.Col_Type==0)
 				{
 					if (pcw.UV_16bit==0)
-						return 11;					//(Textured, Packed Color, with Two Volumes)	
+						return 11;          //(Textured, Packed Color, with Two Volumes)	
 
 					else
-						return 12;					//(Textured, Packed Color, 16bit UV, with Two Volumes)
+						return 12;          //(Textured, Packed Color, 16bit UV, with Two Volumes)
 
 				}
 				else if (pcw.Col_Type==1)
@@ -621,10 +621,10 @@ public:
 				else
 				{
 					if (pcw.UV_16bit==0)
-						return 13;					//(Textured, Intensity, with Two Volumes)	
+						return 13;          //(Textured, Intensity, with Two Volumes)	
 
 					else
-						return 14;					//(Textured, Intensity, 16bit UV, with Two Volumes)
+						return 14;          //(Textured, Intensity, 16bit UV, with Two Volumes)
 				}
 			}
 		}
@@ -634,24 +634,26 @@ public:
 			if (pcw.Volume==0)
 			{	//single volume
 				if (pcw.Col_Type==0)
-					return 0;						//(Non-Textured, Packed Color)
+					return 0;               //(Non-Textured, Packed Color)
 				else if (pcw.Col_Type==1)
-					return 1;						//(Non-Textured, Floating Color)
+					return 1;               //(Non-Textured, Floating Color)
 				else
-					return 2;						//(Non-Textured, Intensity)
+					return 2;               //(Non-Textured, Intensity)
 			}
 			else
 			{
 				//two volumes
 				if (pcw.Col_Type==0)
-					return 9;						//(Non-Textured, Packed Color, with Two Volumes)
+					return 9;               //(Non-Textured, Packed Color, with Two Volumes)
 				else if (pcw.Col_Type==1)
 				{
 					//die ("invalid");
 					return 0xFFFFFFFF;
 				}
 				else
-					return 10;						//(Non-Textured, Intensity, with Two Volumes)
+				{
+					return 10;              //(Non-Textured, Intensity, with Two Volumes)
+				}
 			}
 		}
 	}
@@ -662,7 +664,7 @@ public:
 		{
 			if ( pcw.Col_Type<2 ) //0,1
 			{
-				return 0  | 0;	//Polygon Type 0 -- SZ32
+				return 0  | 0;              //Polygon Type 0 -- SZ32
 			}
 			else if ( pcw.Col_Type == 2 )
 			{
@@ -670,36 +672,36 @@ public:
 				{
 					if (pcw.Offset)
 					{
-						return 2 | 0x80;	//Polygon Type 2 -- SZ64
+						return 2 | 0x80;    //Polygon Type 2 -- SZ64
 					}
 					else
 					{
-						return 1 | 0;	//Polygon Type 1 -- SZ32
+						return 1 | 0;       //Polygon Type 1 -- SZ32
 					}
 				}
 				else
 				{
-					return 1 | 0;	//Polygon Type 1 -- SZ32
+					return 1 | 0;           //Polygon Type 1 -- SZ32
 				}
 			}
 			else	//col_type ==3
 			{
-				return 0 | 0;	//Polygon Type 0 -- SZ32
+				return 0 | 0;               //Polygon Type 0 -- SZ32
 			}
 		}
 		else
 		{
 			if ( pcw.Col_Type==0 ) //0
 			{
-				return 3 | 0;	//Polygon Type 3 -- SZ32
+				return 3 | 0;              //Polygon Type 3 -- SZ32
 			}
 			else if ( pcw.Col_Type==2 ) //2
 			{
-				return 4 | 0x80;	//Polygon Type 4 -- SZ64
+				return 4 | 0x80;           //Polygon Type 4 -- SZ64
 			}
 			else if ( pcw.Col_Type==3 ) //3
 			{
-				return 3 | 0;	//Polygon Type 3 -- SZ32
+				return 3 | 0;              //Polygon Type 3 -- SZ32
 			}
 			else
 			{
@@ -844,7 +846,7 @@ public:
 	}
 
 	//Poly Strip handling
-	//We unite Strips together by dupplicating the [last,first].On odd sized strips
+	//We unite Strips together by duplicating the [last,first].On odd sized strips
 	//a second [first] vert is needed to make sure Culling works fine :)
 	__forceinline
 		static void EndPolyStrip()
@@ -901,54 +903,54 @@ public:
 
 		//uv 16/32
 	#define vert_uv_32(u_name,v_name) \
-		cv->u	=	(vtx->u_name);\
-		cv->v	=	(vtx->v_name);
+		cv->u = (vtx->u_name);\
+		cv->v = (vtx->v_name);
 
 	#define vert_uv_16(u_name,v_name) \
-		cv->u	=	f16(vtx->u_name);\
-		cv->v	=	f16(vtx->v_name);
+		cv->u = f16(vtx->u_name);\
+		cv->v = f16(vtx->v_name);
 
-		//Color convertions
+		//Color conversions
 	#define vert_packed_color_(to,src) \
 		{ \
 		u32 t=src; \
-		to[2]	= (u8)(t);t>>=8;\
-		to[1]	= (u8)(t);t>>=8;\
-		to[0]	= (u8)(t);t>>=8;\
-		to[3]	= (u8)(t);	\
+		to[2] = (u8)(t);t>>=8;\
+		to[1] = (u8)(t);t>>=8;\
+		to[0] = (u8)(t);t>>=8;\
+		to[3] = (u8)(t);      \
 		}
 
 	#define vert_float_color_(to,a,r,g,b) \
-		to[0] = float_to_satu8(r);	\
-		to[1] = float_to_satu8(g);	\
-		to[2] = float_to_satu8(b);	\
+		to[0] = float_to_satu8(r); \
+		to[1] = float_to_satu8(g); \
+		to[2] = float_to_satu8(b); \
 		to[3] = float_to_satu8(a);
 
-		//Macros to make thins easyer ;)
+		//Macros to make thins easier ;)
 	#define vert_packed_color(to,src) \
 		vert_packed_color_(cv->to,vtx->src);
 
 	#define vert_float_color(to,src) \
 		vert_float_color_(cv->to,vtx->src##A,vtx->src##R,vtx->src##G,vtx->src##B)
 
-		//Intesity handling
+		//Intensity handling
 
 		//Notes:
 		//Alpha doesn't get intensity
-		//Intesity is clamped before the mul, as well as on face color to work the same as the hardware. [Fixes red dog]
+		//Intensity is clamped before the mul, as well as on face color to work the same as the hardware. [Fixes red dog]
 
 	#define vert_face_base_color(baseint) \
 		{ u32 satint=float_to_satu8(vtx->baseint); \
-		cv->col[0] = FaceBaseColor[0]*satint/256;	\
-		cv->col[1] = FaceBaseColor[1]*satint/256;	\
-		cv->col[2] = FaceBaseColor[2]*satint/256;	\
+		cv->col[0] = FaceBaseColor[0]*satint/256;  \
+		cv->col[1] = FaceBaseColor[1]*satint/256;  \
+		cv->col[2] = FaceBaseColor[2]*satint/256;  \
 		cv->col[3] = FaceBaseColor[3]; }
 
 	#define vert_face_offs_color(offsint) \
 		{ u32 satint=float_to_satu8(vtx->offsint); \
-		cv->spc[0] = FaceOffsColor[0]*satint/256;	\
-		cv->spc[1] = FaceOffsColor[1]*satint/256;	\
-		cv->spc[2] = FaceOffsColor[2]*satint/256;	\
+		cv->spc[0] = FaceOffsColor[0]*satint/256;  \
+		cv->spc[1] = FaceOffsColor[1]*satint/256;  \
+		cv->spc[2] = FaceOffsColor[2]*satint/256;  \
 		cv->spc[3] = FaceOffsColor[3]; }
 
 	//vert_float_color_(cv->spc,FaceOffsColor[3],FaceOffsColor[0]*satint/256,FaceOffsColor[1]*satint/256,FaceOffsColor[2]*satint/256); }
@@ -1195,8 +1197,8 @@ public:
 		update_fz(sv->z##st2);
 
 	#define sprite_uv(indx,u_name,v_name) \
-		cv[indx].u	=	f16(sv->u_name);\
-		cv[indx].v	=	f16(sv->v_name);
+		cv[indx].u = f16(sv->u_name);\
+		cv[indx].v = f16(sv->v_name);
 
 	//Sprite Vertex Handlers
 	__forceinline
@@ -1450,8 +1452,8 @@ void decode_pvr_vertex(u32 base,u32 ptr,Vertex* cv)
 		if (isp.UV_16b)
 		{
 			u32 uv=vri(ptr);
-			cv->u	=	f16((u16)uv);
-			cv->v	=	f16((u16)(uv>>16));
+			cv->u = f16((u16)uv);
+			cv->v = f16((u16)(uv >> 16));
 			ptr+=4;
 		}
 		else
@@ -1466,7 +1468,7 @@ void decode_pvr_vertex(u32 base,u32 ptr,Vertex* cv)
 	vert_packed_color_(cv->col,col);
 	if (isp.Offset)
 	{
-		//Intesity color (can be missing too ;p)
+		//Intensity color (can be missing too ;p)
 		u32 col=vri(ptr);ptr+=4;
 		vert_packed_color_(cv->spc,col);
 	}
@@ -1518,7 +1520,7 @@ void FillBGP(TA_context* ctx)
 	//Get the strip base
 	u32 strip_base=(param_base + ISP_BACKGND_T.tag_address*4)&0x7FFFFF;	//this is *not* VRAM_MASK on purpose.It fixes naomi bios and quite a few naomi games
 	//i have *no* idea why that happens, they manage to set the render target over there as well
-	//and that area is *not* writen by the games (they instead write the params on 000000 instead of 800000)
+	//and that area is *not* written by the games (they instead write the params on 000000 instead of 800000)
 	//could be a h/w bug ? param_base is 400000 and tag is 100000*4
 	//Calculate the vertex size
 	u32 strip_vs=3 + ISP_BACKGND_T.skip;
@@ -1541,9 +1543,9 @@ void FillBGP(TA_context* ctx)
 	bgpp->tileclip=0;//disabled ! HA ~
 
 	bgpp->isp.DepthMode=7;// -> this makes things AWFULLY slow .. sometimes
-	bgpp->isp.CullMode=0;// -> so that its not culled, or somehow else hiden !
+	bgpp->isp.CullMode=0;// -> so that its not culled, or somehow else hidden !
 	bgpp->tsp.FogCtrl=2;
-	//Set some pcw bits .. i should realy get rid of pcw ..
+	//Set some pcw bits .. I should really get rid of pcw ..
 	bgpp->pcw.UV_16bit=bgpp->isp.UV_16b;
 	bgpp->pcw.Gouraud=bgpp->isp.Gouraud;
 	bgpp->pcw.Offset=bgpp->isp.Offset;
@@ -1578,8 +1580,8 @@ void FillBGP(TA_context* ctx)
 
 bool UsingAutoSort()
 {
-	if (((FPU_PARAM_CFG>>21)&1) == 0)
-		return ((ISP_FEED_CFG&1)==0);
+	if (((FPU_PARAM_CFG >> 21) & 1) == 0)
+		return ((ISP_FEED_CFG & 1) == 0);
 	else
-		return ( (vri(REGION_BASE)>>29) & 1) == 0;
+		return ((vri(REGION_BASE) >> 29) & 1) == 0;
 }

@@ -112,7 +112,7 @@ struct RomChip : MemChip
 	}
 	void Write(u32 addr,u32 data,u32 sz)
 	{
-		die("Write to RomChip is not possible, addr=%x,data=%x,size=%d");
+		die("Write to RomChip is not possible, address=%x, data=%x, size=%d");
 	}
 };
 struct SRamChip : MemChip
@@ -142,15 +142,15 @@ struct SRamChip : MemChip
 		die("invalid access size");
 	}
 };
-struct DCFlashChip : MemChip	//i think its micronix :p
+struct DCFlashChip : MemChip // I think its Micronix :p
 {
 	DCFlashChip(u32 sz): MemChip(sz) { }
 
 	enum FlashState
 	{
-		FS_CMD_AA,		//Waiting AA
-		FS_CMD_55,		//Waiting 55
-		FS_CMD,			//Waiting command
+		FS_CMD_AA, //Waiting AA
+		FS_CMD_55, //Waiting 55
+		FS_CMD,    //Waiting command
 
 		FS_Erase_AA,
 		FS_Erase_55,
@@ -185,9 +185,10 @@ struct DCFlashChip : MemChip	//i think its micronix :p
 
 	void Write(u32 addr,u32 val,u32 sz)
 	{
-		if (sz!=1) die("invalid access size");
+		if (sz != 1)
+			die("invalid access size");
 
-		addr&=mask;
+		addr &= mask;
 		
 		switch(state)
 		{
@@ -195,7 +196,7 @@ struct DCFlashChip : MemChip	//i think its micronix :p
 		case FS_CMD_AA:
 			{
 				verify(addr==0x5555 && val==0xAA);
-				state=(FlashState)(state+1);
+				state = (FlashState)(state + 1);
 			}
 			break;
 
@@ -203,7 +204,7 @@ struct DCFlashChip : MemChip	//i think its micronix :p
 		case FS_CMD_55:
 			{
 				verify((addr==0xAAAA || addr==0x2AAA) && val==0x55);
-				state=(FlashState)(state+1);
+				state = (FlashState)(state + 1);
 			}
 			break;
 
@@ -218,7 +219,7 @@ struct DCFlashChip : MemChip	//i think its micronix :p
 					state=FS_Erase_AA;
 					break;
 				default:
-					printf("Flash write %06X %08X %d\n",addr,val,sz);
+					printf("Flash write: address=%06X, value=%08X, size=%d\n",addr,val,sz);
 					state=FS_CMD_AA;
 					die("lolwhut");
 				}
@@ -234,7 +235,7 @@ struct DCFlashChip : MemChip	//i think its micronix :p
 					memset(&data[addr&(~0x3FFF)],0xFF,0x4000);
 					break;
 				default:
-					printf("Flash write %06X %08X %d\n",addr,val,sz);
+					printf("Flash write: address=%06X, value=%08X, size=%d\n",addr,val,sz);
 					die("erase .. what ?");
 				}
 				state=FS_CMD_AA;

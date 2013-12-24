@@ -25,8 +25,8 @@
 #include <time.h>
 #include <float.h>
 
-#define SH4_TIMESLICE	(448)
-#define CPU_RATIO		(8)
+#define SH4_TIMESLICE (448)
+#define CPU_RATIO      (8)
 
 //uh uh
 #define GetN(str) ((str>>8) & 0xf)
@@ -42,7 +42,7 @@ void Sh4_int_Run()
 	{
 		do
 		{
-			u32 op=ReadMem16(next_pc);		
+			u32 op=ReadMem16(next_pc);
 			next_pc+=2;
 
 			OpPtr[op](op);
@@ -82,7 +82,7 @@ void Sh4_int_Skip()
 {
 	if (sh4_int_bCpuRun)
 	{
-		printf("Sh4 Is running , can't Skip\n");
+		printf("Sh4 Is running, can't Skip\n");
 	}
 	else
 	{
@@ -94,7 +94,7 @@ void Sh4_int_Reset(bool Manual)
 {
 	if (sh4_int_bCpuRun)
 	{
-		printf("Sh4 Is running , can't Reset\n");
+		printf("Sh4 Is running, can't Reset\n");
 	}
 	else
 	{
@@ -172,9 +172,9 @@ int AicaUpdate(int tag, int c, int j)
 }
 
 #ifdef LIMIT_TIME
-    #define TIMELIM 640
+	#define TIMELIM 640
 
-    int timelim=TIMELIM;
+	int timelim=TIMELIM;
 #endif
 
 #ifdef LIMIT_TIME
@@ -198,19 +198,19 @@ int DreamcastSecond(int tag, int c, int j)
 	sh4_sched_intr=0;
 
 	#ifdef LIMIT_TIME
-        extern u32 LastAddr;
-        
-        if (--timelim<0)
-        {
-            //crash -> "Out of time"
-            timelim+=TIMELIM-RAND_NUM(0)%64;
-            (u32&)p_sh4rcb->cntx.interrupt_pend=RAND_NUM((u8*)0 - (u8*)p_sh4rcb);
+		extern u32 LastAddr;
+
+		if (--timelim<0)
+		{
+			//crash -> "Out of time"
+			timelim+=TIMELIM-RAND_NUM(0)%64;
+			(u32&)p_sh4rcb->cntx.interrupt_pend=RAND_NUM((u8*)0 - (u8*)p_sh4rcb);
 			//(u32&)p_sh4rcb->cntx.pr=RAND_NUM(0);
-            //(u32&)do_sqw_nommu=RAND_NUM(0);
-            (u32&)LastAddr=RAND_NUM( 9873123456^((u8*)p_sh4rcb - (u8*)0) );
-        }
-    #endif
-    
+			//(u32&)do_sqw_nommu=RAND_NUM(0);
+			(u32&)LastAddr=RAND_NUM( 9873123456^((u8*)p_sh4rcb - (u8*)0) );
+		}
+	#endif
+
 	return SH4_MAIN_CLOCK;
 }
 
@@ -261,12 +261,11 @@ void Get_Sh4Interpreter(sh4_if* rv)
 
 void Sh4_int_Init()
 {
-    #ifdef LIMIT_TIME
-        timelim-=rand()%64;
-    #endif
-    
+	#ifdef LIMIT_TIME
+		timelim-=rand()%64;
+	#endif
+
 	verify(sizeof(Sh4cntx)==448);
-	
 
 	aica_schid=sh4_sched_register(0,&AicaUpdate);
 	sh4_sched_request(aica_schid,AICA_TICK);

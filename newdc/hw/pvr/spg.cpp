@@ -31,7 +31,7 @@ void CalculateSync()
 
 	pixel_clock=PIXEL_CLOCK / (FB_R_CTRL.vclk_div?1:2);
 
-	//We need to caclulate the pixel clock
+	//We need to calculate the pixel clock
 
 	u32 sync_cycles=(SPG_LOAD.hcount+1)*(SPG_LOAD.vcount+1);
 	pvr_numscanlines=SPG_LOAD.vcount+1;
@@ -45,7 +45,7 @@ void CalculateSync()
 		u32 interl_mode=VO_CONTROL.field_mode;
 		
 		//if (interl_mode==2)//3 will be funny =P
-		//	scale_y=0.5f;//single interlace
+		//  scale_y=0.5f;//single interlace
 		//else
 			scale_y=1;
 	}
@@ -53,10 +53,12 @@ void CalculateSync()
 	{
 		if (FB_R_CTRL.vclk_div)
 		{
-			scale_y=1.0f;//non interlaced vga mode has full resolution :)
+			scale_y = 1.0f;//non interlaced VGA mode has full resolution :)
 		}
 		else
-			scale_y=0.5f;//non interlaced modes have half resolution
+		{
+			scale_y = 0.5f;//non interlaced modes have half resolution
+		}
 	}
 
 	rend_set_fb_scale(scale_x,scale_y);
@@ -92,7 +94,7 @@ int spg_line_sched(int tag, int cycl, int jit)
 {
 	clc_pvr_scanline += cycl;
 
-	while (clc_pvr_scanline >=  Line_Cycles)//60 ~herz = 200 mhz / 60=3333333.333 cycles per screen refresh
+	while (clc_pvr_scanline >=  Line_Cycles)//60 ~hertz = 200 mhz / 60=3333333.333 cycles per screen refresh
 	{
 		//ok .. here , after much effort , we did one line
 		//now , we must check for raster beam interrupts and vblank
@@ -183,12 +185,12 @@ int spg_line_sched(int tag, int cycl, int jit)
 					spd_fps,fskip/ts
 					,mv,mv_c);
 					
-                #ifdef LIMIT_TIME
-                    if (mspdf>1000 && last_fps!=0)
-                    {
-                      die("too slow");
-                    }
-                #endif
+				#ifdef LIMIT_TIME
+					if (mspdf>1000 && last_fps!=0)
+					{
+						die("Too slow");
+					}
+				#endif
 
 				fskip=0;
 				os_SetWindowText(fpsStr);
@@ -273,5 +275,7 @@ void SetREP(TA_context* cntx)
 		sh4_sched_request(render_end_schid,render_end_pending_cycles);
 	}
 	else
-		sh4_sched_request(render_end_schid,4096);
+	{
+		sh4_sched_request(render_end_schid, 4096);
+	}
 }

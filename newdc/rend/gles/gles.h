@@ -89,6 +89,6 @@ int GetProgramID(u32 cp_AlphaTest, u32 pp_ClipTestMode,
 							u32 pp_Texture, u32 pp_UseAlpha, u32 pp_IgnoreTexA, u32 pp_ShadInstr, u32 pp_Offset,
 							u32 pp_FogCtrl);
 
-bool CompilePipelineShader(	PipelineShader* s);
+bool CompilePipelineShader(PipelineShader* s);
 #define TEXTURE_LOAD_ERROR 0
 GLuint loadPNG(const string& subpath, int &width, int &height);

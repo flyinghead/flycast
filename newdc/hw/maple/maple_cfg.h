@@ -22,7 +22,7 @@ enum PlainJoystickAxisId
 	PJAI_Y1 = 1,
 	PJAI_X2 = 2,
 	PJAI_Y2 = 3,
-	
+
 	PJAI_Count = 4
 };
 
@@ -43,7 +43,7 @@ struct PlainJoystickState
 		trigger[0]=trigger[1]=0;
 	}
 	static const u32 ButtonMask = PJBI_B | PJBI_A | PJBI_START | PJBI_DPAD_UP | 
-		PJBI_DPAD_DOWN | PJBI_DPAD_LEFT | PJBI_DPAD_RIGHT | PJBI_Y | PJBI_X;
+	                              PJBI_DPAD_DOWN | PJBI_DPAD_LEFT | PJBI_DPAD_RIGHT | PJBI_Y | PJBI_X;
 
 	static const u32 AxisMask = PJAI_X1 | PJAI_Y1;
 

@@ -1,7 +1,7 @@
 /*
 	Config file crap
 	Supports various things, as virtual config entries and such crap
-	Works suprisingly well considering how old it is ...
+	Works surprisingly well considering how old it is ...
 */
 
 #define _CRT_SECURE_NO_DEPRECATE (1)
@@ -10,7 +10,7 @@
 string cfgPath;
 
 //A config remains virtual only as long as a write at it
-//doesnt override the virtual value.While a config is virtual, a copy of its 'real' value is held and preserved
+//doesn't override the virtual value.While a config is virtual, a copy of its 'real' value is held and preserved
 
 //Is this a virtual entry ?
 #define CEM_VIRTUAL 1
@@ -241,20 +241,20 @@ void  cfgSaveStr(const wchar * Section, const wchar * Key, const wchar * String)
 //New config code
 
 /*
-	I want config to be realy flexible .. so , here is the new implementation :
+	I want config to be really flexible .. so , here is the new implementation :
 	
 	Functions :
-	cfgLoadInt	: Load an int , if it does not exist save the default value to it and return it
-	cfgSaveInt	: Save an int
-	cfgLoadStr	: Load a str , if it does not exist save the default value to it and return it
-	cfgSaveStr	: Save a str
-	cfgExists	: Returns true if the Section:Key exists. If Key is null , it retuns true if Section exists
+	cfgLoadInt  : Load an int , if it does not exist save the default value to it and return it
+	cfgSaveInt  : Save an int
+	cfgLoadStr  : Load a str , if it does not exist save the default value to it and return it
+	cfgSaveStr  : Save a str
+	cfgExists   : Returns true if the Section:Key exists. If Key is null , it retuns true if Section exists
 
-	Config parameters can be readed from the config file , and can be given at the command line
+	Config parameters can be read from the config file , and can be given at the command line
 	-cfg section:key=value -> defines a value at command line
 	If a cfgSave* is made on a value defined by command line , then the command line value is replaced by it
 
-	cfg values set by command line are not writen to the cfg file , unless a cfgSave* is used
+	cfg values set by command line are not written to the cfg file , unless a cfgSave* is used
 
 	There are some special values , all of em are on the emu namespace :)
 
@@ -335,7 +335,7 @@ bool cfgOpen()
 			wchar* str1=strstr(tl,"=");
 			if (!str1)
 			{
-				printf("Malformed entry on cfg,  ignoring @ %d(%s)\n",cline,tl);
+				printf("Malformed entry on config - ignoring @ %d(%s)\n",cline,tl);
 				continue;
 			}
 			*str1=0;
@@ -351,7 +351,7 @@ bool cfgOpen()
 			}
 			else
 			{
-				printf("Malformed entry on cfg,  ignoring @ %d(%s)\n",cline,tl);
+				printf("Malformed entry on config - ignoring @ %d(%s)\n",cline,tl);
 			}
 		}
 	}

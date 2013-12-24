@@ -78,15 +78,15 @@ enum Sh4RegType
 	reg_macl,
 	reg_pr,
 	reg_fpul,
-    reg_nextpc,
-	reg_sr,				//includes T (combined on read/separated on write)
-	reg_old_sr_status,		//Only the status bits
-	reg_sr_status,		//Only the status bits
-	reg_sr_T,			//only T
+	reg_nextpc,
+	reg_sr,            //Includes T (combined on read/separated on write)
+	reg_old_sr_status, //Only the status bits
+	reg_sr_status,     //Only the status bits
+	reg_sr_T,          //Only T
 	reg_old_fpscr,
 	reg_fpscr,
 	
-	reg_pc_dyn,			//Write only, for dynarec only (dynamic block exit address)
+	reg_pc_dyn,        //Write only, for dynarec only (dynamic block exit address)
 
 	sh4_reg_count,
 
@@ -128,19 +128,19 @@ union sr_status_t
 {
 	struct
 	{
-		u32 T_h		:1;//<<0
-		u32 S		:1;//<<1
-		u32 rsvd0	:2;//<<2
-		u32 IMASK	:4;//<<4
-		u32 Q		:1;//<<8
-		u32 M		:1;//<<9
-		u32 rsvd1	:5;//<<10
-		u32 FD		:1;//<<15
-		u32 rsvd2	:12;//<<16
-		u32 BL		:1;//<<28
-		u32 RB		:1;//<<29
-		u32 MD		:1;//<<20
-		u32 rsvd3	:1;//<<31
+		u32 T_h     : 1;//<<0
+		u32 S       : 1;//<<1
+		u32 rsvd0   : 2;//<<2
+		u32 IMASK   : 4;//<<4
+		u32 Q       : 1;//<<8
+		u32 M       : 1;//<<9
+		u32 rsvd1   : 5;//<<10
+		u32 FD      : 1;//<<15
+		u32 rsvd2   : 12;//<<16
+		u32 BL      : 1;//<<28
+		u32 RB      : 1;//<<29
+		u32 MD      : 1;//<<20
+		u32 rsvd3   : 1;//<<31
 	};
 	u32 status;
 };
@@ -152,19 +152,19 @@ struct sr_t
 	{
 		struct
 		{
-			u32 T_h		:1;//<<0
-			u32 S		:1;//<<1
-			u32 rsvd0	:2;//<<2
-			u32 IMASK	:4;//<<4
-			u32 Q		:1;//<<8
-			u32 M		:1;//<<9
-			u32 rsvd1	:5;//<<10
-			u32 FD		:1;//<<15
-			u32 rsvd2	:12;//<<16
-			u32 BL		:1;//<<28
-			u32 RB		:1;//<<29
-			u32 MD		:1;//<<20
-			u32 rsvd3	:1;//<<31
+			u32 T_h     : 1;//<<0
+			u32 S       : 1;//<<1
+			u32 rsvd0   : 2;//<<2
+			u32 IMASK   : 4;//<<4
+			u32 Q       : 1;//<<8
+			u32 M       : 1;//<<9
+			u32 rsvd1   : 5;//<<10
+			u32 FD      : 1;//<<15
+			u32 rsvd2   : 12;//<<16
+			u32 BL      : 1;//<<28
+			u32 RB      : 1;//<<29
+			u32 MD      : 1;//<<20
+			u32 rsvd3   : 1;//<<31
 		};
 		u32 status;
 	};
@@ -190,35 +190,34 @@ struct fpscr_t
 		u32 full;
 		struct
 		{
-			u32 RM:2;
-			u32 finexact:1;
-			u32 funderflow:1;
-			u32 foverflow:1;
-			u32 fdivbyzero:1;
-			u32 finvalidop:1;
-			u32 einexact:1;
-			u32 eunderflow:1;
-			u32 eoverflow:1;
-			u32 edivbyzero:1;
-			u32 einvalidop:1;
-			u32 cinexact:1;
-			u32 cunderflow:1;
-			u32 coverflow:1;
-			u32 cdivbyzero:1;
-			u32 cinvalid:1;
-			u32 cfpuerr:1;
-			u32 DN:1;
-			u32 PR:1;
-			u32 SZ:1;
-			u32 FR:1;
-			u32 pad:10;
+			u32 RM         : 2;
+			u32 finexact   : 1;
+			u32 funderflow : 1;
+			u32 foverflow  : 1;
+			u32 fdivbyzero : 1;
+			u32 finvalidop : 1;
+			u32 einexact   : 1;
+			u32 eunderflow : 1;
+			u32 eoverflow  : 1;
+			u32 edivbyzero : 1;
+			u32 einvalidop : 1;
+			u32 cinexact   : 1;
+			u32 cunderflow : 1;
+			u32 coverflow  : 1;
+			u32 cdivbyzero : 1;
+			u32 cinvalid   : 1;
+			u32 cfpuerr    : 1;
+			u32 DN         : 1;
+			u32 PR         : 1;
+			u32 SZ         : 1;
+			u32 FR         : 1;
+			u32 pad        : 10;
 		};
 		struct
 		{
-
-			u32 nil:2+1+1+1+1+4+8+1;
-			u32 PR_SZ:2;
-			u32 nilz:11;
+			u32 nil   : 2+1+1+1+1+4+8+1;
+			u32 PR_SZ : 2;
+			u32 nilz  : 11;
 		};
 	};
 };

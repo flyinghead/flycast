@@ -39,7 +39,7 @@ void CCN_MMUCR_write(u32 addr, u32 value)
 
 	if ((temp.AT!=CCN_MMUCR.AT) && (temp.AT==1))
 	{
-		printf("<*******>MMU Enabled , OLNY SQ remaps work<*******>\n");
+		printf("<*******>MMU Enabled , ONLY SQ remaps work<*******>\n");
 	}
 	
 	if (temp.TI)
@@ -114,10 +114,10 @@ void ccn_init()
 
 void ccn_reset()
 {
-	CCN_TRA					= 0x0;
-	CCN_EXPEVT				= 0x0;
-	CCN_MMUCR.reg_data		= 0x0;
-	CCN_CCR.reg_data		= 0x0;
+	CCN_TRA            = 0x0;
+	CCN_EXPEVT         = 0x0;
+	CCN_MMUCR.reg_data = 0x0;
+	CCN_CCR.reg_data   = 0x0;
 }
 
 void ccn_term()

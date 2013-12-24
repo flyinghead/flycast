@@ -5,18 +5,18 @@
 #define HANDLER_MAX 0x1F
 #define HANDLER_COUNT (HANDLER_MAX+1)
 
-//top registed handler
-_vmem_handler			_vmem_lrp;
+//top registered handler
+_vmem_handler       _vmem_lrp;
 
 //handler tables
-_vmem_ReadMem8FP*		_vmem_RF8[HANDLER_COUNT];
-_vmem_WriteMem8FP*		_vmem_WF8[HANDLER_COUNT];
+_vmem_ReadMem8FP*   _vmem_RF8[HANDLER_COUNT];
+_vmem_WriteMem8FP*  _vmem_WF8[HANDLER_COUNT];
 
-_vmem_ReadMem16FP*		_vmem_RF16[HANDLER_COUNT];
-_vmem_WriteMem16FP*		_vmem_WF16[HANDLER_COUNT];
+_vmem_ReadMem16FP*  _vmem_RF16[HANDLER_COUNT];
+_vmem_WriteMem16FP* _vmem_WF16[HANDLER_COUNT];
 
-_vmem_ReadMem32FP*		_vmem_RF32[HANDLER_COUNT];
-_vmem_WriteMem32FP*		_vmem_WF32[HANDLER_COUNT];
+_vmem_ReadMem32FP*  _vmem_RF32[HANDLER_COUNT];
+_vmem_WriteMem32FP* _vmem_WF32[HANDLER_COUNT];
 
 //upper 8b of the address
 void* _vmem_MemInfo_ptr[0x100];
@@ -80,7 +80,9 @@ void* _vmem_read_const(u32 addr,bool& ismem,u32 sz)
 			return (void*)_vmem_RF32[id/4];
 		}
 		else
+		{
 			die("Invalid size");
+		}
 	}
 	else
 	{
@@ -90,7 +92,7 @@ void* _vmem_read_const(u32 addr,bool& ismem,u32 sz)
 
 		return &(((u8*)ptr)[addr]);
 	}
-	die("Invalid mem sz");
+	die("Invalid memory size");
 
 	return 0;
 }
@@ -119,7 +121,9 @@ void* _vmem_page_info(u32 addr,bool& ismem,u32 sz,u32& page_sz,bool rw)
 			return rw?(void*)_vmem_RF32[id/4]:(void*)_vmem_WF32[id/4];
 		}
 		else
+		{
 			die("Invalid size");
+		}
 	}
 	else
 	{
@@ -129,7 +133,7 @@ void* _vmem_page_info(u32 addr,bool& ismem,u32 sz,u32& page_sz,bool rw)
 
 		return ptr;
 	}
-	die("Invalid mem sz");
+	die("Invalid memory size");
 
 	return 0;
 }
@@ -140,9 +144,9 @@ INLINE Trv DYNACALL _vmem_readt(u32 addr)
 	const u32 sz=sizeof(T);
 
 	u32   page=addr>>24;	//1 op, shift/extract
-	unat  iirf=(unat)_vmem_MemInfo_ptr[page];	//2 ops, insert + read [vmem table will be on reg ]
-	void* ptr=(void*)(iirf&~HANDLER_MAX);	//2 ops, and // 1 op insert
-	//u32   mask=(u32)0xFFFFFFFF>>iirf;//2 ops, load -1 and shift
+	unat  iirf=(unat)_vmem_MemInfo_ptr[page]; //2 ops, insert + read [vmem table will be on reg ]
+	void* ptr=(void*)(iirf&~HANDLER_MAX);     //2 ops, and // 1 op insert
+	//u32   mask=(u32)0xFFFFFFFF>>iirf;       //2 ops, load -1 and shift
 	//1 op for the mask
 	//1 op for the add
 	//1 op for ret
@@ -178,7 +182,9 @@ INLINE Trv DYNACALL _vmem_readt(u32 addr)
 			return rv;
 		}
 		else
+		{
 			die("Invalid size");
+		}
 	}
 }
 template<typename T>
@@ -223,7 +229,9 @@ INLINE void DYNACALL _vmem_writet(u32 addr,T data)
 			_vmem_WF32[id/4](addr+4,(u32)((u64)data>>32));
 		}
 		else
+		{
 			die("Invalid size");
+		}
 	}
 }
 
@@ -293,13 +301,13 @@ _vmem_handler _vmem_register_handler(
 
 	verify(rv<HANDLER_COUNT);
 
-	_vmem_RF8[rv] =read8==0  ?	_vmem_ReadMem8_not_mapped  :	read8;
-	_vmem_RF16[rv]=read16==0 ?	_vmem_ReadMem16_not_mapped :	read16;
-	_vmem_RF32[rv]=read32==0 ?	_vmem_ReadMem32_not_mapped :	read32;
+	_vmem_RF8[rv] =read8==0  ? _vmem_ReadMem8_not_mapped  : read8;
+	_vmem_RF16[rv]=read16==0 ? _vmem_ReadMem16_not_mapped : read16;
+	_vmem_RF32[rv]=read32==0 ? _vmem_ReadMem32_not_mapped : read32;
 
-	_vmem_WF8[rv] =write8==0 ?	_vmem_WriteMem8_not_mapped :	write8;
-	_vmem_WF16[rv]=write16==0?	_vmem_WriteMem16_not_mapped:	write16;
-	_vmem_WF32[rv]=write32==0?	_vmem_WriteMem32_not_mapped:	write32;
+	_vmem_WF8[rv] =write8==0 ? _vmem_WriteMem8_not_mapped : write8;
+	_vmem_WF16[rv]=write16==0? _vmem_WriteMem16_not_mapped: write16;
+	_vmem_WF32[rv]=write32==0? _vmem_WriteMem32_not_mapped: write32;
 
 	return rv;
 }
@@ -307,12 +315,14 @@ u32 FindMask(u32 msk)
 {
 	u32 s=-1;
 	u32 rv=0;
+
 	while(msk!=s>>rv)
 		rv++;
+
 	return rv;
 }
 
-//map a registed handler to a mem region
+//map a registered handler to a mem region
 void _vmem_map_handler(_vmem_handler Handler,u32 start,u32 end)
 {
 	verify(start<0x100);
@@ -377,7 +387,7 @@ void _vmem_reset()
 	//clear meminfo table
 	memset(_vmem_MemInfo_ptr,0,sizeof(_vmem_MemInfo_ptr));
 
-	//reset registation index
+	//reset registration index
 	_vmem_lrp=0;
 
 	//register default functions (0) for slot 0
@@ -430,8 +440,10 @@ void* _nvmem_map_buffer(u32 dst,u32 addrsz,u32 offset,u32 size, bool w)
 void* _nvmem_unused_buffer(u32 start,u32 end)
 {
 	void* ptr=VirtualAlloc(&virt_ram_base[start],end-start,MEM_RESERVE,PAGE_NOACCESS);
-	if (ptr==0)
+
+	if (ptr == 0)
 		return 0;
+
 	return ptr;
 }
 
@@ -639,8 +651,8 @@ bool _vmem_reserve()
 	//[0x00000000 ,0x00800000) -> unused
 	unused_buffer(0x00000000,0x00800000);
 
-	//i wonder, aica ram warps here ?.?
-	//i realy should check teh docs before codin ;p
+	//I wonder, aica ram warps here ?.?
+	//I really should check teh docs before codin ;p
 	//[0x00800000,0x00A00000);
 	map_buffer(0x00800000,0x01000000,MAP_ARAM_START_OFFSET,ARAM_SIZE,false);
 	map_buffer(0x20000000,0x20000000+ARAM_SIZE,MAP_ARAM_START_OFFSET,ARAM_SIZE,true);

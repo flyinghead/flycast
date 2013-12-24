@@ -31,26 +31,24 @@ const char idle_hash[] =
 	">:1:07:3778EBBC:29B99980:3E6CBA8E:4CA0C16A:AD952F27"
 	">:1:04:23F5F301:89CDFEC8:EBB8EB1A:57709C84:55EA4585"
 
-	//these look very suspicius, but i'm not sure about any of them
+	//these look very suspicious, but I'm not sure about any of them
 	//cross testing w/ IKA makes them more suspects than not
 	">:1:0D:DF0C1754:1E3DDC72:E845B7BF:AE1FC6D2:8644F261"
 	">:1:04:DB35BCA0:AB19570C:0E0E54D7:CCA83E6E:A8D17744"
 
 	//IKA
 
-	//Also on HH, duno if IDLESKIP
+	//Also on HH, dunno if IDLESKIP
 	//Looks like this one is
 	">:1:04:DB35BCA0:AB19570C:0E0E54D7:CCA83E6E:A8D17744"
 
-	//Similar to the hh 1:07 one, duno if idleskip
+	//Similar to the hh 1:07 one, dunno if idleskip
 	//Looks like yhis one is
 	">:1:0D:DF0C1754:1E3DDC72:E845B7BF:AE1FC6D2:8644F261"
 
 	//also does the -1 load
 	//looks like this one is
-	">1:08:AF4AC687:08BA1CD0:18592E67:45174350:C9EADF11"
-
-	;
+	">1:08:AF4AC687:08BA1CD0:18592E67:45174350:C9EADF11";
 
 shil_param mk_imm(u32 immv)
 {
@@ -66,10 +64,10 @@ shil_param mk_regi(int reg)
 }
 enum NextDecoderOperation
 {
-	NDO_NextOp,		//pc+=2
-	NDO_End,		//End the block, Type = BlockEndType
-	NDO_Delayslot,	//pc+=2, NextOp=DelayOp
-	NDO_Jump,		//pc=JumpAddr,NextOp=JumpOp
+	NDO_NextOp,     //pc+=2
+	NDO_End,        //End the block, Type = BlockEndType
+	NDO_Delayslot,  //pc+=2, NextOp=DelayOp
+	NDO_Jump,       //pc=JumpAddr,NextOp=JumpOp
 };
 
 
@@ -84,12 +82,12 @@ struct
 
 	struct
 	{
-		bool FPR64;	//64 bit fpu opcodes
-		bool FSZ64;	//64 bit fpu moves
-		bool RoundToZero;	//false -> Round to nearest.
+		bool FPR64; //64 bit FPU opcodes
+		bool FSZ64; //64 bit FPU moves
+		bool RoundToZero; //false -> Round to nearest.
 		u32 rpc;
 		bool is_delayslot;
-	}cpu;
+	} cpu;
 
 	ngen_features ngen;
 
@@ -151,16 +149,16 @@ void dec_fallback(u32 op)
 
 #if 1
 
-#define		FMT_I32 ERROR!WRONG++!!
-#define 	FMT_F32 ERROR!WRONG++!!
-#define		FMT_F32 ERROR!WRONG++!!
-#define 	FMT_TYPE ERROR!WRONG++!!
+#define FMT_I32 ERROR!WRONG++!!
+#define FMT_F32 ERROR!WRONG++!!
+#define FMT_F32 ERROR!WRONG++!!
+#define FMT_TYPE ERROR!WRONG++!!
 
-#define 	FMT_REG ERROR!WRONG++!!
-#define 	FMT_IMM ERROR!WRONG++!!
+#define FMT_REG ERROR!WRONG++!!
+#define FMT_IMM ERROR!WRONG++!!
 
-#define 	FMT_PARAM ERROR!WRONG++!!
-#define 	FMT_MASK ERROR!WRONG++!!
+#define FMT_PARAM ERROR!WRONG++!!
+#define FMT_MASK ERROR!WRONG++!!
 
 void dec_DynamicSet(u32 regbase,u32 offs=0)
 {
@@ -338,7 +336,7 @@ sh4dec(i0100_nnnn_0000_0111)
 	r[n] += 4;
 	if (UpdateSR())
 	{
-		//FIXME olny if interrupts got on .. :P
+		//FIXME only if interrupts got on .. :P
 		UpdateINTC();
 	}*/
 	dec_End(0xFFFFFFFF,BET_StaticIntr,false);
@@ -385,10 +383,10 @@ sh4dec(i0100_nnnn_0010_0100)
 	Emit(shop_rocl,rn,rn,reg_sr_T,0,shil_param(),reg_sr_T);
 	/*
 	Emit(shop_ror,rn,rn,mk_imm(31));
-	Emit(shop_xor,rn,rn,reg_sr_T);				//only affects last bit (swap part a)
-	Emit(shop_xor,reg_sr_T,reg_sr_T,rn);		//srT -> rn
-	Emit(shop_and,reg_sr_T,reg_sr_T,mk_imm(1));		//keep only last bit
-	Emit(shop_xor,rn,rn,reg_sr_T);				//only affects last bit (swap part b)
+	Emit(shop_xor,rn,rn,reg_sr_T);              //Only affects last bit (swap part a)
+	Emit(shop_xor,reg_sr_T,reg_sr_T,rn);        //srT -> rn
+	Emit(shop_and,reg_sr_T,reg_sr_T,mk_imm(1)); //Keep only last bit
+	Emit(shop_xor,rn,rn,reg_sr_T);              //Only affects last bit (swap part b)
 	*/
 }
 
@@ -400,10 +398,10 @@ sh4dec(i0100_nnnn_0010_0101)
 
 	Emit(shop_rocr,rn,rn,reg_sr_T,0,shil_param(),reg_sr_T);
 	/*
-	Emit(shop_xor,rn,rn,reg_sr_T);				//only affects last bit (swap part a)
-	Emit(shop_xor,reg_sr_T,reg_sr_T,rn);		//srT -> rn
-	Emit(shop_and,reg_sr_T,reg_sr_T,mk_imm(1));		//keep only last bit
-	Emit(shop_xor,rn,rn,reg_sr_T);				//only affects last bit (swap part b)
+	Emit(shop_xor,rn,rn,reg_sr_T);              //Only affects last bit (swap part a)
+	Emit(shop_xor,reg_sr_T,reg_sr_T,rn);        //srT -> rn
+	Emit(shop_and,reg_sr_T,reg_sr_T,mk_imm(1)); //Keep only last bit
+	Emit(shop_xor,rn,rn,reg_sr_T);              //Only affects last bit (swap part b)
 
 	Emit(shop_ror,rn,rn,mk_imm(1));
 	*/
@@ -620,7 +618,7 @@ void dec_param(DecParam p,shil_param& r1,shil_param& r2, u32 op)
 		break;
 
 	default:
-		die("Nop supported param used");
+		die("Non-supported parameter used");
 	}
 }
 
@@ -741,11 +739,11 @@ bool MatchDiv32s(u32 op,u32 pc)
 //This ended up too rare (and too hard to match)
 bool MatchDiv0S_0(u32 pc)
 {
-	if (ReadMem16(pc+0)==0x233A &&	//XOR	r3,r3
-		ReadMem16(pc+2)==0x2137 &&	//DIV0S r3,r1
-		ReadMem16(pc+4)==0x322A &&	//SUBC  r2,r2
-		ReadMem16(pc+6)==0x313A &&	//SUBC  r3,r1
-		(ReadMem16(pc+8)&0xF00F)==0x2007)	//DIV0S x,x
+	if (ReadMem16(pc+0)==0x233A && //XOR   r3,r3
+		ReadMem16(pc+2)==0x2137 && //DIV0S r3,r1
+		ReadMem16(pc+4)==0x322A && //SUBC  r2,r2
+		ReadMem16(pc+6)==0x313A && //SUBC  r3,r1
+		(ReadMem16(pc+8)&0xF00F)==0x2007) //DIV0S x,x
 		return true;
 	else
 		return false;
@@ -781,7 +779,7 @@ bool dec_generic(u32 op)
 	if (op>=0xF000)
 	{
 		state.info.has_fpu=true;
-		//return false;//fpu off for now
+		//return false;//FPU off for now
 		if (state.cpu.FPR64 /*|| state.cpu.FSZ64*/)
 			return false;
 
@@ -827,7 +825,7 @@ bool dec_generic(u32 op)
 		{
 			if ((s32)e<0)
 			{
-				//left rorate
+				//left rotate
 				Emit(shop_shr,mk_reg(reg_sr_T),rs2,mk_imm(31));
 				e=-e;
 			}
@@ -862,7 +860,7 @@ bool dec_generic(u32 op)
 			Emit(natop,rs1,rs2);
 		break;
 
-	case DM_WriteM:	//write(d,s)
+	case DM_WriteM: //write(d,s)
 		{
 			//0 has no effect, so get rid of it
 			if (rs3.is_imm() && rs3._imm==0)
@@ -873,7 +871,7 @@ bool dec_generic(u32 op)
 			bool update_after=false;
 			if ((s32)e<0)
 			{
-				if (rs1._reg!=rs2._reg)	//reg shoudn't be updated if its writen
+				if (rs1._reg!=rs2._reg) //reg shouldn't be updated if its written
 				{
 					Emit(shop_sub,rs1,rs1,mk_imm(-e));
 				}
@@ -905,7 +903,7 @@ bool dec_generic(u32 op)
 		Emit(shop_readm,rs1,rs2,shil_param(),(s32)e<0?-e:e,rs3);
 		if ((s32)e<0)
 		{
-			if (rs1._reg!=rs2._reg)//the reg shoudn't be updated if it was just readed
+			if (rs1._reg!=rs2._reg)//the reg shouldn't be updated if it was just read.
 				Emit(shop_add,rs2,rs2,mk_imm(-e));
 		}
 		break;
@@ -931,13 +929,13 @@ bool dec_generic(u32 op)
 
 			switch((s32)e)
 			{
-				case 16:	op=shop_mul_u16; break;
-				case -16:	op=shop_mul_s16; break;
+				case 16:  op=shop_mul_u16; break;
+				case -16: op=shop_mul_s16; break;
 
-				case -32:	op=shop_mul_i32; break;
+				case -32: op=shop_mul_i32; break;
 
-				case 64:	op=shop_mul_u64; rd2 = mk_reg(reg_mach); break;
-				case -64:	op=shop_mul_s64; rd2 = mk_reg(reg_mach); break;
+				case 64:  op=shop_mul_u64; rd2 = mk_reg(reg_mach); break;
+				case -64: op=shop_mul_s64; rd2 = mk_reg(reg_mach); break;
 
 				default:
 					die("DM_MUL: Failed to classify opcode");
@@ -968,7 +966,7 @@ bool dec_generic(u32 op)
 				}
 				else
 				{
-					//crear QM (bits 8,9)
+					//clear QM (bits 8,9)
 					u32 qm=(1<<8)|(1<<9);
 					Emit(shop_and,mk_reg(reg_sr_status),mk_reg(reg_sr_status),mk_imm(~qm));
 					//clear T !

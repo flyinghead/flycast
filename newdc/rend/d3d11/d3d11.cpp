@@ -56,8 +56,7 @@ struct d3d11 : Renderer
 									 ( LPVOID* )&pBackBuffer );
 
 		// Create a render-target view
-		dev->CreateRenderTargetView( pBackBuffer, NULL,
-											  &rtv );
+		dev->CreateRenderTargetView( pBackBuffer, NULL, &rtv );
 
 		// Bind the view
 		devctx->OMSetRenderTargets( 1, &rtv, NULL );
@@ -88,8 +87,14 @@ struct d3d11 : Renderer
 		return !pvrrc.isRTT;
 	}
 
-	void Present() { swapchain->Present(0,0); }
+	void Present()
+	{
+		swapchain->Present(0,0);
+	}
 };
 
 
-Renderer* rend_D3D11() { return new d3d11(); }
+Renderer* rend_D3D11()
+{
+	return new d3d11();
+}

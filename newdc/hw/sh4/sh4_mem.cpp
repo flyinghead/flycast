@@ -177,14 +177,14 @@ void mem_map_default()
 	//some areas can be customised :)
 	for (int i=0x0;i<0xE;i+=0x2)
 	{
-		map_area0(i<<4);	//Bios,Flahsrom,i/f regs,Ext. Device,Sound Ram
-		map_area1(i<<4);	//Vram
-		map_area2(i<<4);	//Unassigned
-		map_area3(i<<4);	//Ram
-		map_area4(i<<4);	//TA
-		map_area5(i<<4);	//Ext. Device
-		map_area6(i<<4);	//Unassigned
-		map_area7(i<<4);	//Sh4 Regs
+		map_area0(i<<4); //Bios,Flahsrom,i/f regs,Ext. Device,Sound Ram
+		map_area1(i<<4); //VRAM
+		map_area2(i<<4); //Unassigned
+		map_area3(i<<4); //RAM
+		map_area4(i<<4); //TA
+		map_area5(i<<4); //Ext. Device
+		map_area6(i<<4); //Unassigned
+		map_area7(i<<4); //Sh4 Regs
 	}
 
 	//map p4 region :)
@@ -200,7 +200,7 @@ void mem_Init()
 	MMU_init();
 }
 
-//Reset Sysmem/Regs -- Pvr is not changed , bios/flash are not zero'd out
+//Reset Sysmem/Regs -- Pvr is not changed , bios/flash are not zeroed out
 void mem_Reset(bool Manual)
 {
 	//mem is reseted on hard restart(power on) , not manual...
@@ -222,7 +222,7 @@ void mem_Term()
 	sh4_mmr_term();
 	sh4_area0_Term();
 
-	//write back flash/sram
+	//write back Flash/SRAM
 	SaveRomFiles(GetPath("/data/"));
 	
 	//mem_b.Term(); // handled by vmem
@@ -318,12 +318,12 @@ u8* GetMemPtr(u32 Addr,u32 size)
 		case 6:
 		case 7:
 		default:
-			printf("Get MemPtr not suported area ; addr=0x%X\n",Addr);
+			printf("Get MemPtr unsupported area : addr=0x%X\n",Addr);
 			return 0;
 	}
 }
 
-//Get infomation about an area , eg ram /size /anything
+//Get information about an area , eg ram /size /anything
 //For dynarec - needs to be done
 void GetMemInfo(u32 addr,u32 size)
 {

@@ -24,8 +24,7 @@ void libGDR_ReadSector(u8 * buff,u32 StartSector,u32 SectorCount,u32 secsz)
 
 void libGDR_GetToc(u32* toc,u32 area)
 {
-	
-		GetDriveToc(toc,(DiskArea)area);
+	GetDriveToc(toc,(DiskArea)area);
 }
 //TODO : fix up
 u32 libGDR_GetDiscType()
@@ -62,13 +61,13 @@ void EXPORT_CALL handle_SwitchDisc(u32 id,void* w,void* p)
 	//new disc is in
 }
 */
-//It's suposed to reset everything (if not a manual reset)
+//It's supposed to reset everything (if not a manual reset)
 void libGDR_Reset(bool Manual)
 {
 	libCore_gdrom_disc_change();
 }
 
-//called when entering sh4 thread , from the new thread context (for any thread speciacific init)
+//called when entering sh4 thread , from the new thread context (for any thread specific init)
 s32 libGDR_Init()
 {
 	if (!InitDrive())
@@ -79,7 +78,7 @@ s32 libGDR_Init()
 	return rv_ok;
 }
 
-//called when exiting from sh4 thread , from the new thread context (for any thread speciacific de init) :P
+//called when exiting from sh4 thread , from the new thread context (for any thread specific init) :P
 void libGDR_Term()
 {
 	TermDrive();

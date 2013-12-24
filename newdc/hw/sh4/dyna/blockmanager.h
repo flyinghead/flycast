@@ -34,10 +34,10 @@ struct RuntimeBlockInfo: RuntimeBlockInfo_Core
 	u32 host_opcodes;
 
 
-	u32 BranchBlock;	//if not 0xFFFFFFFF then jump target
-	u32 NextBlock;		//if not 0xFFFFFFFF then next block (by position)
+	u32 BranchBlock; //if not 0xFFFFFFFF then jump target
+	u32 NextBlock;   //if not 0xFFFFFFFF then next block (by position)
 
-	//0 if not avaiable
+	//0 if not available
 	RuntimeBlockInfo* pBranchBlock;
 	RuntimeBlockInfo* pNextBlock; 
 
@@ -60,7 +60,7 @@ struct RuntimeBlockInfo: RuntimeBlockInfo_Core
 	virtual u32 Relink()=0;
 	virtual void Relocate(void* dst)=0;
 	
-	//predecesors references
+	//predecessors references
 	vector<RuntimeBlockInfo*> pre_refs;
 
 	void AddRef(RuntimeBlockInfo* other);
