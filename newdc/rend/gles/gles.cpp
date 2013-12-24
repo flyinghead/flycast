@@ -304,7 +304,7 @@ void main() \n\
 { \n\
 	mediump vec2 uv=vtx_uv; \n\
 	uv.y=1.0-uv.y; \n\
-	gl_FragColor=vtx_base*texture2D(tex,uv); \n\; \n\
+	gl_FragColor=vtx_base*texture2D(tex,uv); \n\n\
 }";
 
 
