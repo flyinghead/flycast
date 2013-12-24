@@ -4,7 +4,7 @@
 #include <algorithm>
 /*
 
-Drawing and related state managment
+Drawing and related state management
 Takes vertex, textures and renders to the currently set up target
 
 
@@ -21,36 +21,33 @@ Takes vertex, textures and renders to the currently set up target
 const static u32 CullMode[]= 
 {
 
-	GL_NONE,	//0	No culling	no culling
-	GL_NONE,	//1	Cull if Small	Cull if	( |det| < fpu_cull_val )
+	GL_NONE, //0    No culling          No culling
+	GL_NONE, //1    Cull if Small       Cull if ( |det| < fpu_cull_val )
 
-	GL_FRONT,		//2	Cull if Negative	Cull if 	( |det| < 0 ) or
-	//( |det| < fpu_cull_val )
-	GL_BACK,		//3	Cull if Positive	Cull if 	( |det| > 0 ) or
-	//( |det| < fpu_cull_val )
-
+	GL_FRONT, //2   Cull if Negative    Cull if ( |det| < 0 ) or ( |det| < fpu_cull_val )
+	GL_BACK,  //3   Cull if Positive    Cull if ( |det| > 0 ) or ( |det| < fpu_cull_val )
 };
 const static u32 Zfunction[]=
 {
-	GL_NEVER,		//GL_NEVER,				//0	Never
-	GL_LESS,		//GL_LESS/*EQUAL*/,		//1	Less
-	GL_EQUAL,		//GL_EQUAL,				//2	Equal
-	GL_LEQUAL,		//GL_LEQUAL,			//3	Less Or Equal
-	GL_GREATER,		//GL_GREATER/*EQUAL*/,	//4	Greater
-	GL_NOTEQUAL,	//GL_NOTEQUAL,			//5	Not Equal
-	GL_GEQUAL,		//GL_GEQUAL,			//6	Greater Or Equal
-	GL_ALWAYS,		//GL_ALWAYS,			//7	Always
+	GL_NEVER,      //GL_NEVER,              //0 Never
+	GL_LESS,        //GL_LESS/*EQUAL*/,     //1 Less
+	GL_EQUAL,       //GL_EQUAL,             //2 Equal
+	GL_LEQUAL,      //GL_LEQUAL,            //3 Less Or Equal
+	GL_GREATER,     //GL_GREATER/*EQUAL*/,  //4 Greater
+	GL_NOTEQUAL,    //GL_NOTEQUAL,          //5 Not Equal
+	GL_GEQUAL,      //GL_GEQUAL,            //6 Greater Or Equal
+	GL_ALWAYS,      //GL_ALWAYS,            //7 Always
 };
 
 /*
-0	Zero	(0, 0, 0, 0)
-1	One	(1, 1, 1, 1)
-2	前ther・Color	(OR, OG, OB, OA) 
-3	Inverse 前ther・Color	(1-OR, 1-OG, 1-OB, 1-OA)
-4	SRC Alpha	(SA, SA, SA, SA)
-5	Inverse SRC Alpha	(1-SA, 1-SA, 1-SA, 1-SA)
-6	DST Alpha	(DA, DA, DA, DA)
-7	Inverse DST Alpha	(1-DA, 1-DA, 1-DA, 1-DA)
+0   Zero                  (0, 0, 0, 0)
+1   One                   (1, 1, 1, 1)
+2   Dither Color          (OR, OG, OB, OA) 
+3   Inverse Dither Color  (1-OR, 1-OG, 1-OB, 1-OA)
+4   SRC Alpha             (SA, SA, SA, SA)
+5   Inverse SRC Alpha     (1-SA, 1-SA, 1-SA, 1-SA)
+6   DST Alpha             (DA, DA, DA, DA)
+7   Inverse DST Alpha     (1-DA, 1-DA, 1-DA, 1-DA)
 */
 
 const static u32 DstBlendGL[] =
@@ -121,12 +118,12 @@ s32 SetTileClip(u32 val, bool set)
 	s32 clip_mode;
 	if (clipmode<2)
 	{
-		clip_mode=0;		//always passes
+		clip_mode=0;    //always passes
 	}
 	else if (clipmode&1)
-		clip_mode=-1;	//render stuff inside the region
+		clip_mode=-1;   //render stuff inside the region
 	else
-		clip_mode=1;		//render stuff outside the region
+		clip_mode=1;    //render stuff outside the region
 
 	float csx=0,csy=0,cex=0,cey=0;
 
@@ -145,7 +142,6 @@ s32 SetTileClip(u32 val, bool set)
 	
 	if (set)
 		glUniform4f(CurrentShader->pp_ClipTest,-csx,-csy,-cex,-cey);		
-
 
 	return clip_mode;
 }
@@ -178,7 +174,7 @@ __forceinline
 		cache.program=CurrentShader->program;
 		glUseProgram(CurrentShader->program);
 		SetTileClip(gp->tileclip,true);
-	}								
+	}
 
 	//This for some reason doesn't work properly
 	//So, shadow bit emulation is disabled.
@@ -285,9 +281,9 @@ void DrawList(const List<PolyParam>& gply)
 #endif
 
 	while(count-->0)
-	{		
+	{
 		if (params->count>2) //this actually happens for some games. No idea why ..
-		{	
+		{
 			SetGPState<Type,SortingEnabled>(params);
 			glDrawElements(GL_TRIANGLE_STRIP, params->count, GL_UNSIGNED_SHORT, (GLvoid*)(2*params->first)); glCheck();
 		}
@@ -308,7 +304,6 @@ void SortPParams()
 {
 	if (pvrrc.verts.used()==0 || pvrrc.global_param_tr.used()<=1)
 		return;
-
 
 	Vertex* vtx_base=pvrrc.verts.head();
 	u16* idx_base=pvrrc.idx.head();
@@ -391,13 +386,13 @@ bool operator<(const IndexTrig &left, const IndexTrig &right)
 
 */
 
-//aproximate the triangle area
+//approximate the triangle area
 float area_x2(Vertex* v)
 {
 	return 2/3*fabs( (v[0].x-v[2].x)*(v[1].y-v[0].y) - (v[0].x-v[1].x)*(v[2].y-v[0].y)) ;
 }
 
-//aproximate the distance ^2
+//approximate the distance ^2
 float distance_apprx(Vertex* a, Vertex* b)
 {
 	float xd=a->x-b->x;
@@ -467,7 +462,7 @@ bool operator<(const IndexTrig &left, const IndexTrig &right)
 	return minZ(&vtx_sort_base[left.id])<minZ(&vtx_sort_base[right.id]);
 }
 
-//Not really working cuz of borken intersect
+//Not really working cuz of broken intersect
 bool Intersect(const IndexTrig &left, const IndexTrig &right)
 {
 	TrigBounds l=bound(vtx_sort_base+left.id);
@@ -708,7 +703,7 @@ void GenSorted()
 #endif
 
 	//re-assemble them into drawing commands
-	static vector<u16>					vidx_sort;	
+	static vector<u16> vidx_sort;
 
 	vidx_sort.resize(aused*3);
 
@@ -742,10 +737,10 @@ void GenSorted()
 	stdp->count=aused*3-stdp->first;
 
 #if PRINT_SORT_STATS
-	printf("Reassmelbed into %d from %d\n",pidx_sort.size(),pp_end-pp_base);
+	printf("Reassembled into %d from %d\n",pidx_sort.size(),pp_end-pp_base);
 #endif
 
-	//Upload to gpu if needed
+	//Upload to GPU if needed
 	if (pidx_sort.size())
 	{
 		//Bind and upload sorted index buffer
@@ -857,7 +852,7 @@ void SetMVS_Mode(u32 mv_mode,ISP_Modvol ispc)
 	else
 	{
 		//1 (last in) or 2 (last out)
-		//each trinagle forms the last of a volume
+		//each triangle forms the last of a volume
 
 		//common states
 
@@ -896,7 +891,7 @@ void SetMVS_Mode(u32 mv_mode,ISP_Modvol ispc)
 			/*
 				this is bugged. a lot.
 				I've only seen a single game use it, so i guess it doesn't matter ? (Zombie revenge)
-				(actually, i think there was aslo another, racing game)
+				(actually, i think there was also another, racing game)
 			*/
 
 			//res : old : final 
@@ -1009,8 +1004,8 @@ void DrawModVols()
 			//Full emulation
 			//the *out* mode is buggy
 
-			u32 mod_base=0;		//cur start triangle
-			u32 mod_last=0;		//last merge
+			u32 mod_base=0; //cur start triangle
+			u32 mod_last=0; //last merge
 
 			u32 cmv_count=(pvrrc.global_param_mvo.used()-1);
 			ISP_Modvol* params=pvrrc.global_param_mvo.head();
@@ -1065,10 +1060,10 @@ void DrawModVols()
 		glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 		
 		glEnable(GL_STENCIL_TEST);
-		glStencilFunc(GL_EQUAL,0x81,0x81);	//only pixels that are Modvol enabled, and in area 1
+		glStencilFunc(GL_EQUAL,0x81,0x81); //only pixels that are Modvol enabled, and in area 1
 		
 		//clear the stencil result bit
-		glStencilMask(0x3);		//write to lsb 
+		glStencilMask(0x3);    //write to lsb 
 		glStencilOp(GL_ZERO,GL_ZERO,GL_ZERO);
 #ifndef NO_STENCIL_WORKAROUND
 		//looks like a driver bug ?

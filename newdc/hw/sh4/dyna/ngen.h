@@ -8,7 +8,7 @@
 	Ram -> link/relocate -> Staging buffer
 	Ram -> link/relocate -> Steady-state buffer
 
-	Staging		 : scratch, relativelly small, circular code buffer
+	Staging      : scratch, relatively small, circular code buffer
 	Steady state : 'final' code buffer. When blocks reach a steady-state, they get copied here
 
 	When the Staging buffer is full, a reset is done on the dynarec.
@@ -95,8 +95,8 @@ void ngen_mainloop(void* cntx);
 //ngen features
 struct ngen_features
 {
-	bool OnlyDynamicEnds;		//if set the block endings aren't handled natively and only Dynamic block end type is used
-	bool InterpreterFallback;	//if set all the non-branch opcodes are hanlded with the ifb opcode
+	bool OnlyDynamicEnds;     //if set the block endings aren't handled natively and only Dynamic block end type is used
+	bool InterpreterFallback; //if set all the non-branch opcodes are handled with the ifb opcode
 };
 
 void ngen_GetFeatures(ngen_features* dst);

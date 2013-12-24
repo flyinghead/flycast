@@ -15,7 +15,7 @@ PCHAR*
 	PCHAR  _argv;
 	ULONG   len;
 	ULONG   argc;
-	CHAR   a;
+	CHAR    a;
 	ULONG   i, j;
 
 	BOOLEAN  in_QM;
@@ -38,16 +38,24 @@ PCHAR*
 	i = 0;
 	j = 0;
 
-	while( a = CmdLine[i] ) {
-		if(in_QM) {
-			if(a == '\"') {
+	while( a = CmdLine[i] )
+	{
+		if(in_QM)
+		{
+			if(a == '\"') 
+			{
 				in_QM = FALSE;
-			} else {
+			}
+			else
+			{
 				_argv[j] = a;
 				j++;
 			}
-		} else {
-			switch(a) {
+		}
+		else
+		{
+			switch(a)
+			{
 			case '\"':
 				in_QM = TRUE;
 				in_TEXT = TRUE;
@@ -61,7 +69,8 @@ PCHAR*
 			case '\t':
 			case '\n':
 			case '\r':
-				if(in_TEXT) {
+				if(in_TEXT)
+				{
 					_argv[j] = '\0';
 					j++;
 				}
@@ -70,7 +79,8 @@ PCHAR*
 				break;
 			default:
 				in_TEXT = TRUE;
-				if(in_SPACE) {
+				if(in_SPACE)
+				{
 					argv[argc] = _argv+j;
 					argc++;
 				}
@@ -157,21 +167,21 @@ u16 kcode[4];
 u32 vks[4];
 s8 joyx[4],joyy[4];
 u8 rt[4],lt[4];
-#define key_CONT_C  (1 << 0)
-#define key_CONT_B  (1 << 1)
-#define key_CONT_A  (1 << 2)
-#define key_CONT_START  (1 << 3)
-#define key_CONT_DPAD_UP  (1 << 4)
-#define key_CONT_DPAD_DOWN  (1 << 5)
-#define key_CONT_DPAD_LEFT  (1 << 6)
-#define key_CONT_DPAD_RIGHT  (1 << 7)
-#define key_CONT_Z  (1 << 8)
-#define key_CONT_Y  (1 << 9)
-#define key_CONT_X  (1 << 10)
-#define key_CONT_D  (1 << 11)
-#define key_CONT_DPAD2_UP  (1 << 12)
-#define key_CONT_DPAD2_DOWN  (1 << 13)
-#define key_CONT_DPAD2_LEFT  (1 << 14)
+#define key_CONT_C            (1 << 0)
+#define key_CONT_B            (1 << 1)
+#define key_CONT_A            (1 << 2)
+#define key_CONT_START        (1 << 3)
+#define key_CONT_DPAD_UP      (1 << 4)
+#define key_CONT_DPAD_DOWN    (1 << 5)
+#define key_CONT_DPAD_LEFT    (1 << 6)
+#define key_CONT_DPAD_RIGHT   (1 << 7)
+#define key_CONT_Z            (1 << 8)
+#define key_CONT_Y            (1 << 9)
+#define key_CONT_X            (1 << 10)
+#define key_CONT_D            (1 << 11)
+#define key_CONT_DPAD2_UP     (1 << 12)
+#define key_CONT_DPAD2_DOWN   (1 << 13)
+#define key_CONT_DPAD2_LEFT   (1 << 14)
 #define key_CONT_DPAD2_RIGHT  (1 << 15)
 void UpdateInputState(u32 port)
 	{
@@ -229,15 +239,15 @@ LRESULT CALLBACK WndProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
 		/*
 		Here we are handling 2 system messages: screen saving and monitor power.
-		They are especially relevent on mobile devices.
+		They are especially relevant on mobile devices.
 		*/
 	case WM_SYSCOMMAND:
 		{
 			switch (wParam)
 			{
-			case SC_SCREENSAVE:					// Screensaver trying to start ?
-			case SC_MONITORPOWER:				// Monitor trying to enter powersave ?
-				return 0;							// Prevent this from happening
+			case SC_SCREENSAVE:   // Screensaver trying to start ?
+			case SC_MONITORPOWER: // Monitor trying to enter powersave ?
+				return 0;         // Prevent this from happening
 			}
 			break;
 		}
@@ -255,11 +265,11 @@ LRESULT CALLBACK WndProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 }
 
 // Windows class name to register
-#define	WINDOW_CLASS "nilDC"
+#define WINDOW_CLASS "nilDC"
 
 // Width and height of the window
-#define WINDOW_WIDTH	1024
-#define WINDOW_HEIGHT	512
+#define WINDOW_WIDTH  1024
+#define WINDOW_HEIGHT 512
 
 
 void* window_win;
@@ -286,7 +296,7 @@ void os_CreateWindow()
 	}
 
 	// Create the eglWindow
-	RECT	sRect;
+	RECT sRect;
 	SetRect(&sRect, 0, 0, nWidth, nHeight);
 	AdjustWindowRectEx(&sRect, WS_CAPTION | WS_SYSMENU, false, 0);
 	HWND hWnd = CreateWindow( WINDOW_CLASS, VER_FULLNAME, WS_VISIBLE | WS_SYSMENU,
@@ -307,6 +317,7 @@ void* libPvr_GetRenderSurface()
 { 
 	return GetDC((HWND)window_win);
 }
+
 BOOL CtrlHandler( DWORD fdwCtrlType ) 
 { 
 	switch( fdwCtrlType ) 
@@ -401,7 +412,9 @@ void os_consume(double t)
 		InterlockedExchangeAdd(&cycl_glob,cyc);
 	}
 	else
+	{
 		cycl_glob=10*1000*1000;
+	}
 
 	evt_hld.Set();
 }
@@ -452,7 +465,7 @@ int CALLBACK WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine
 	}
 	__except( (EXCEPTION_CONTINUE_EXECUTION==ExeptionHandler( GetExceptionCode(), (GetExceptionInformation()))) ? EXCEPTION_CONTINUE_EXECUTION : EXCEPTION_CONTINUE_SEARCH )
 	{
-		printf("Unhandled exeption ; Emulation thread halted...\n");
+		printf("Unhandled exception - Emulation thread halted...\n");
 	}
 
 	return 0;
@@ -520,11 +533,11 @@ void cThread::WaitToEnd()
 cResetEvent::cResetEvent(bool State,bool Auto)
 {
 		hEvent = CreateEvent( 
-        NULL,             // default security attributes
+		NULL,             // default security attributes
 		Auto?FALSE:TRUE,  // auto-reset event?
 		State?TRUE:FALSE, // initial state is State
-        NULL			  // unnamed object
-        );
+		NULL			  // unnamed object
+		);
 }
 cResetEvent::~cResetEvent()
 {

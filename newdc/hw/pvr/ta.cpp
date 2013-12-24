@@ -30,30 +30,30 @@ extern u32 SQW,DMAW;
 
 enum ta_state
 {
-					// -> TAS_NS, TAS_PLV32, TAS_PLHV32, TAS_PLV64, TAS_PLHV64, TAS_MLV64
-	TAS_NS,			//
+	               // -> TAS_NS, TAS_PLV32, TAS_PLHV32, TAS_PLV64, TAS_PLHV64, TAS_MLV64
+	TAS_NS,        //
 
-					// -> TAS_NS, TAS_PLV32, TAS_PLHV32, TAS_PLV64, TAS_PLHV64
-	TAS_PLV32,		//polygon list PMV<?>, V32
+	               // -> TAS_NS, TAS_PLV32, TAS_PLHV32, TAS_PLV64, TAS_PLHV64
+	TAS_PLV32,     //polygon list PMV<?>, V32
 	
-					// -> TAS_NS, TAS_PLV32, TAS_PLHV32, TAS_PLV64, TAS_PLHV64
-	TAS_PLV64,		//polygon list PMV<?>, V64
+	               // -> TAS_NS, TAS_PLV32, TAS_PLHV32, TAS_PLV64, TAS_PLHV64
+	TAS_PLV64,     //polygon list PMV<?>, V64
 
-					// -> TAS_NS, TAS_MLV64, TAS_MLV64_H
-	TAS_MLV64,		//mv list
+	               // -> TAS_NS, TAS_MLV64, TAS_MLV64_H
+	TAS_MLV64,     //mv list
 
-					// -> TAS_PLV32
-	TAS_PLHV32,		//polygon list PMV<64> 2nd half -> V32
+	               // -> TAS_PLV32
+	TAS_PLHV32,    //polygon list PMV<64> 2nd half -> V32
 
-					// -> TAS_PLV64
-	TAS_PLHV64,		//polygon list PMV<64> 2nd half -> V64
+	               // -> TAS_PLV64
+	TAS_PLHV64,    //polygon list PMV<64> 2nd half -> V64
 
-					// -> TAS_PLV64_H
-	TAS_PLV64_H,	//polygon list V64 2nd half
+	               // -> TAS_PLV64_H
+	TAS_PLV64_H,   //polygon list V64 2nd half
 
 
-					// -> TAS_MLV64
-	TAS_MLV64_H,	//mv list, 64 bit half
+	               // -> TAS_MLV64
+	TAS_MLV64_H,   //mv list, 64 bit half
 };
 
 /* state | PTEOS | OBJ -> next, proc*/
@@ -178,11 +178,11 @@ void fill_fsm()
 	}
 	//?
 
-	fill_fsm(TAS_PLHV32,-1,-1,TAS_PLV32);	//64 PH -> expect V32
-	fill_fsm(TAS_PLHV64,-1,-1,TAS_PLV64);	//64 PH -> expect V64
+	fill_fsm(TAS_PLHV32,-1,-1,TAS_PLV32);  //64 PH -> expect V32
+	fill_fsm(TAS_PLHV64,-1,-1,TAS_PLV64);  //64 PH -> expect V64
 
 	fill_fsm(TAS_PLV64_H,-1,-1,TAS_PLV64); //64 VH -> expect V64
-	fill_fsm(TAS_MLV64_H,-1,-1,TAS_MLV64);  //64 MH -> expect M64
+	fill_fsm(TAS_MLV64_H,-1,-1,TAS_MLV64); //64 MH -> expect M64
 }
 
 const HollyInterruptID ListEndInterrupt[5]=

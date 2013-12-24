@@ -43,7 +43,9 @@ u32 sh4_sched_remaining(int id)
 		return list[id].end-sh4_sched_now();
 	}
 	else
+	{
 		return -1;
+	}
 }
 
 void sh4_sched_ffts()

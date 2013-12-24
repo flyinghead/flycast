@@ -181,39 +181,39 @@ extern u8* virt_ram_base;
 /*
 
 	ReadM
-	I8			GAI1	[m]
-	I16			GAI2	[m]
-	I32			GAI4	[m]
-	F32			GA4		[m]
-	F32v2		RA4		[m,m]
-	F32v4		RA4		[m,m,m,m]
-	F32v4r3i1	RA4		[m,m,m,1.0]
-	F32v4r3i0	RA4		[m,m,m,0.0]
+	I8          GAI1    [m]
+	I16         GAI2    [m]
+	I32         GAI4    [m]
+	F32         GA4     [m]
+	F32v2       RA4     [m,m]
+	F32v4       RA4     [m,m,m,m]
+	F32v4r3i1   RA4     [m,m,m,1.0]
+	F32v4r3i0   RA4     [m,m,m,0.0]
 
 	WriteM
-	I8			GA1
-	I16			GA2
-	I32			GA4
-	F32			GA4
-	F32v2		SA
+	I8          GA1
+	I16         GA2
+	I32         GA4
+	F32         GA4
+	F32v2       SA
 	F32v4
 	F32v4s3
 	F32v4s4
 
 
 	//10
-	R S8	B,M
-	R S16	B,M
-	R I32	B,M
-	R F32	B,M
-	R F32v2	B{,M}
+	R S8    B,M
+	R S16   B,M
+	R I32   B,M
+	R F32   B,M
+	R F32v2 B{,M}
 
 	//13
-	W I8	B,M
-	W I16	B,M
-	W I32	B,S,M
-	W F32	B,S,M
-	W F32v2	B,S{,M}
+	W I8    B,M
+	W I16   B,M
+	W I32   B,S,M
+	W F32   B,S,M
+	W F32v2 B,S{,M}
 */
 
 extern void* mem_code[3][2][5];
@@ -256,8 +256,8 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 							x86e->Emit(op_mov32,EAX,ptr);
 							//this is a pretty good sieve, but its not perfect.
 							//whitelisting is much better, but requires side channel data
-							//Page locking w/ invalidation is another stragery we can try (leads to 'excessive'
-							//compilling. Maby a mix of both ?), its what the mainline nulldc uses
+							//Page locking w/ invalidation is another strategy we can try (leads to 'excessive'
+							//compiling. Maybe a mix of both ?), its what the mainline nulldc uses
 							if (optimise)
 							{
 								if (staging && !is_s8(*(u32*)ptr) && abs((int)op->rs1._imm-(int)block->addr)<=1024)
@@ -289,7 +289,9 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 							x86e->Emit(op_mov32,EDX,(u8*)ptr+4);
 						}
 						else
+						{
 							die("Invalid mem read size");
+						}
 					}
 					else
 					{
@@ -452,7 +454,9 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 							}
 #ifdef PROF2
 							else
+							{
 								x86e->Emit(op_add32,&rmls,1);
+							}
 #endif
 						}
 					}
@@ -474,13 +478,15 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 					x86e->Emit(op_call,x86_ptr_imm(mem_code[0][0][Lsz]));
 					reg.ThawXMM();
 
-					if (Lsz<=2)
-						x86e->Emit(op_mov32,reg.mapg(op->rd),EAX);
-					else 
+					if (Lsz <= 2)
 					{
-						x86e->Emit(op_movss,reg.mapfv(op->rd,0),XMM0);
-						if (Lsz==4)
-							x86e->Emit(op_movss,reg.mapfv(op->rd,1),XMM1);
+						x86e->Emit(op_mov32, reg.mapg(op->rd), EAX);
+					}
+					else
+					{
+						x86e->Emit(op_movss, reg.mapfv(op->rd, 0), XMM0);
+						if (Lsz == 4)
+							x86e->Emit(op_movss, reg.mapfv(op->rd, 1), XMM1);
 					}
 					break;
 #endif
@@ -1259,61 +1265,61 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 				//load the vector ..
 				if (sse_2)
 				{
-					x86e->Emit(op_movaps ,XMM3,op->rs1.reg_ptr());	//xmm0=vector
-					x86e->Emit(op_pshufd ,XMM0,XMM3,0);					//xmm0={v0}
-					x86e->Emit(op_pshufd ,XMM1,XMM3,0x55);				//xmm1={v1}	
-					x86e->Emit(op_pshufd ,XMM2,XMM3,0xaa);				//xmm2={v2}
-					x86e->Emit(op_pshufd ,XMM3,XMM3,0xff);				//xmm3={v3}
+					x86e->Emit(op_movaps ,XMM3,op->rs1.reg_ptr());  //xmm0=vector
+					x86e->Emit(op_pshufd ,XMM0,XMM3,0);             //xmm0={v0}
+					x86e->Emit(op_pshufd ,XMM1,XMM3,0x55);          //xmm1={v1}
+					x86e->Emit(op_pshufd ,XMM2,XMM3,0xaa);          //xmm2={v2}
+					x86e->Emit(op_pshufd ,XMM3,XMM3,0xff);          //xmm3={v3}
 				}
 				else
 				{
-					x86e->Emit(op_movaps ,XMM0,op->rs1.reg_ptr());	//xmm0=vector
+					x86e->Emit(op_movaps ,XMM0,op->rs1.reg_ptr());  //xmm0=vector
 
-					x86e->Emit(op_movaps ,XMM3,XMM0);					//xmm3=vector
-					x86e->Emit(op_shufps ,XMM0,XMM0,0);					//xmm0={v0}
-					x86e->Emit(op_movaps ,XMM1,XMM3);					//xmm1=vector
-					x86e->Emit(op_movaps ,XMM2,XMM3);					//xmm2=vector
-					x86e->Emit(op_shufps ,XMM3,XMM3,0xff);				//xmm3={v3}
-					x86e->Emit(op_shufps ,XMM1,XMM1,0x55);				//xmm1={v1}	
-					x86e->Emit(op_shufps ,XMM2,XMM2,0xaa);				//xmm2={v2}
+					x86e->Emit(op_movaps ,XMM3,XMM0);               //xmm3=vector
+					x86e->Emit(op_shufps ,XMM0,XMM0,0);             //xmm0={v0}
+					x86e->Emit(op_movaps ,XMM1,XMM3);               //xmm1=vector
+					x86e->Emit(op_movaps ,XMM2,XMM3);               //xmm2=vector
+					x86e->Emit(op_shufps ,XMM3,XMM3,0xff);          //xmm3={v3}
+					x86e->Emit(op_shufps ,XMM1,XMM1,0x55);          //xmm1={v1}
+					x86e->Emit(op_shufps ,XMM2,XMM2,0xaa);          //xmm2={v2}
 				}
 
 				//do the matrix mult !
-				x86e->Emit(op_mulps ,XMM0,op->rs2.reg_ptr() + 0);		//v0*=vm0
-				x86e->Emit(op_mulps ,XMM1,op->rs2.reg_ptr() + 4);		//v1*=vm1
-				x86e->Emit(op_mulps ,XMM2,op->rs2.reg_ptr() + 8);		//v2*=vm2
-				x86e->Emit(op_mulps ,XMM3,op->rs2.reg_ptr() + 12);		//v3*=vm3
+				x86e->Emit(op_mulps ,XMM0,op->rs2.reg_ptr() + 0);   //v0*=vm0
+				x86e->Emit(op_mulps ,XMM1,op->rs2.reg_ptr() + 4);   //v1*=vm1
+				x86e->Emit(op_mulps ,XMM2,op->rs2.reg_ptr() + 8);   //v2*=vm2
+				x86e->Emit(op_mulps ,XMM3,op->rs2.reg_ptr() + 12);  //v3*=vm3
 
-				x86e->Emit(op_addps ,XMM0,XMM1);					//sum it all up
+				x86e->Emit(op_addps ,XMM0,XMM1);	 //sum it all up
 				x86e->Emit(op_addps ,XMM2,XMM3);
 				x86e->Emit(op_addps ,XMM0,XMM2);
 
 				x86e->Emit(op_movaps ,op->rd.reg_ptr(),XMM0);
 #else
 				/*
-										AABB CCDD
+					AABB CCDD
 
-					ABCD *	0 1 2 3		0 1 4 5
-							4 5 6 7		2 3 6 7
-							8 9 a b		8 9 c d
-							c d e f		a b e f
+					ABCD *  0 1 2 3    0 1 4 5
+							4 5 6 7    2 3 6 7
+							8 9 a b    8 9 c d
+							c d e f    a b e f
 				*/
 
-				x86e->Emit(op_movaps ,XMM1,op->rs1.reg_ptr());	//xmm1=vector
+				x86e->Emit(op_movaps ,XMM1,op->rs1.reg_ptr()); //xmm1=vector
 
-				x86e->Emit(op_pshufd ,XMM0,XMM1,0x05);			//xmm0={v0,v0,v1,v1}
-				x86e->Emit(op_pshufd ,XMM1,XMM1,0xaf);			//xmm1={v2,v2,v3,v3}
+				x86e->Emit(op_pshufd ,XMM0,XMM1,0x05);         //xmm0={v0,v0,v1,v1}
+				x86e->Emit(op_pshufd ,XMM1,XMM1,0xaf);         //xmm1={v2,v2,v3,v3}
 
-				x86e->Emit(op_movaps,XMM2,XMM0);				//xmm2={v0,v0,v1,v1}
-				x86e->Emit(op_movaps,XMM3,XMM1);				//xmm3={v2,v2,v3,v3}
+				x86e->Emit(op_movaps,XMM2,XMM0);	               //xmm2={v0,v0,v1,v1}
+				x86e->Emit(op_movaps,XMM3,XMM1);	               //xmm3={v2,v2,v3,v3}
 
-				x86e->Emit(op_mulps ,XMM0,op->rs2.reg_ptr() + 0);		//aabb * 0145
-				x86e->Emit(op_mulps ,XMM2,op->rs2.reg_ptr() + 4);		//aabb * 2367
-				x86e->Emit(op_mulps ,XMM1,op->rs2.reg_ptr() + 8);		//ccdd * 89cd
-				x86e->Emit(op_mulps ,XMM3,op->rs2.reg_ptr() + 12);		//ccdd * abef
+				x86e->Emit(op_mulps ,XMM0,op->rs2.reg_ptr() + 0);    //aabb * 0145
+				x86e->Emit(op_mulps ,XMM2,op->rs2.reg_ptr() + 4);    //aabb * 2367
+				x86e->Emit(op_mulps ,XMM1,op->rs2.reg_ptr() + 8);    //ccdd * 89cd
+				x86e->Emit(op_mulps ,XMM3,op->rs2.reg_ptr() + 12);   //ccdd * abef
 
 
-				x86e->Emit(op_addps ,XMM0,XMM1);					//sum it all up
+				x86e->Emit(op_addps ,XMM0,XMM1);	 //sum it all up
 				x86e->Emit(op_addps ,XMM2,XMM3);
 
 				//XMM0 -> A0C8 | A1C9 | B4DC | B5DD
@@ -1322,7 +1328,7 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 				x86e->Emit(op_shufps,XMM0,XMM0,0x27);	//A0C8 B4DC A1C9 B5DC
 				x86e->Emit(op_shufps,XMM2,XMM2,0x27);
 				
-				x86e->Emit(op_haddps,XMM0,XMM2);	//haddps ={a0+a1			,a2+a3			,b0+b1			,b2+b3}
+				x86e->Emit(op_haddps,XMM0,XMM2);	//haddps ={a0+a1 ,a2+a3 ,b0+b1 ,b2+b3}
 
 
 				x86e->Emit(op_movaps ,op->rd.reg_ptr(),XMM0);

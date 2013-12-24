@@ -9,8 +9,8 @@
 #include "hw/sh4/sh4_mmr.h"
 
 
-#define tmu_underflow	0x0100
-#define tmu_UNIE		0x0020
+#define tmu_underflow 0x0100
+#define tmu_UNIE      0x0020
 /*
 u32 tmu_prescaler[3];
 u32 tmu_prescaler_shift[3];
@@ -28,11 +28,11 @@ const InterruptID tmu_intID[3]={sh4_TMU0_TUNI0,sh4_TMU1_TUNI1,sh4_TMU2_TUNI2};
 int tmu_sched[3];
 
 #if 0
-//Accurate counts for the chanel ch
+//Accurate counts for the channel ch
 template<u32 ch>
 void UpdateTMU_chan(u32 clc)
 {
-	//if chanel is on
+	//if channel is on
 	//if ((TMU_TSTR & tmu_ch_bit[ch])!=0)
 	//{
 		//count :D
@@ -54,11 +54,11 @@ void UpdateTMU_chan(u32 clc)
 			
 			//remove the full underflows (possible because we only check every 448 cycles)
 			//this can be done with a div, but its very very very rare so this is probably faster
-			//THIS can probably be replaced with a verify check on counter setup (havn't seen any game do this)
+			//THIS can probably be replaced with a verify check on counter setup (haven't seen any game do this)
 			while(steps>TMU_TCOR(ch))
 				steps-=TMU_TCOR(ch);
 
-			//steps now has the partial steps needed for update, guaranteeded it won't cause an overflow
+			//steps now has the partial steps needed for update, guaranteed it won't cause an overflow
 		}
 		//count down
 		TMU_TCNT(ch)-=steps;
@@ -68,9 +68,9 @@ void UpdateTMU_chan(u32 clc)
 template<u32 chans>
 void UpdateTMU_i(u32 Cycles)
 {
-	if (chans & 1)	UpdateTMU_chan<0>(Cycles);
-	if (chans & 2)	UpdateTMU_chan<1>(Cycles);
-	if (chans & 4)	UpdateTMU_chan<2>(Cycles);
+	if (chans & 1) UpdateTMU_chan<0>(Cycles);
+	if (chans & 2) UpdateTMU_chan<1>(Cycles);
+	if (chans & 4) UpdateTMU_chan<2>(Cycles);
 }
 #endif
 
@@ -139,36 +139,36 @@ void UpdateTMUCounts(u32 reg)
 	u32 TCNT=read_TMU_TCNTch(reg);
 	switch(TMU_TCR(reg) & 0x7)
 	{
-		case 0:	//4
+		case 0: //4
 			tmu_shift[reg]=2;
 			break;
 
-		case 1:	//16
+		case 1: //16
 			tmu_shift[reg]=4;
 			break;
 
-		case 2:	//64
+		case 2: //64
 			tmu_shift[reg]=6;
 			break;
 
-		case 3:	//256
+		case 3: //256
 			tmu_shift[reg]=8;
 			break;
 
-		case 4:	//1024
+		case 4: //1024
 			tmu_shift[reg]=10;
 			break;
 
-		case 5:	//reserved
-			printf("TMU ch%d , TCR%d mode is reserved (5)",reg,reg);
+		case 5: //reserved
+			printf("TMU ch%d - TCR%d mode is reserved (5)",reg,reg);
 			break;
 
-		case 6:	//RTC
-			printf("TMU ch%d , TCR%d mode is RTC (6) , can't be used on dreamcast",reg,reg);
+		case 6: //RTC
+			printf("TMU ch%d - TCR%d mode is RTC (6), can't be used on Dreamcast",reg,reg);
 			break;
 
-		case 7:	//external
-			printf("TMU ch%d , TCR%d mode is External (7) , can't be used on dreamcast",reg,reg);
+		case 7: //external
+			printf("TMU ch%d - TCR%d mode is External (7), can't be used on Dreamcast",reg,reg);
 			break;
 	}
 	tmu_shift[reg]+=2;
@@ -186,13 +186,13 @@ void TMU_TCR_write(u32 addr, u32 data)
 //Chan 2 not used functions
 u32 TMU_TCPR2_read(u32 addr)
 {
-	EMUERROR("Read from TMU_TCPR2  , this regiser should be not used on dreamcast according to docs");
+	EMUERROR("Read from TMU_TCPR2 - this register should be not used on Dreamcast according to docs");
 	return 0;
 }
 
 void TMU_TCPR2_write(u32 addr, u32 data)
 {
-	EMUERROR2("Write to TMU_TCPR2  , this regiser should be not used on dreamcast according to docs , data=%d",data);
+	EMUERROR2("Write to TMU_TCPR2 - this register should be not used on Dreamcast according to docs, data=%d",data);
 }
 
 void write_TMU_TSTR(u32 addr, u32 data)
@@ -276,7 +276,7 @@ void tmu_reset()
 {
 	TMU_TOCR=TMU_TSTR=0;
 	TMU_TCOR(0) = TMU_TCOR(1) = TMU_TCOR(2) = 0xffffffff;
-//	TMU_TCNT(0) = TMU_TCNT(1) = TMU_TCNT(2) = 0xffffffff;	
+//	TMU_TCNT(0) = TMU_TCNT(1) = TMU_TCNT(2) = 0xffffffff;
 	TMU_TCR(0) = TMU_TCR(1) = TMU_TCR(2) = 0;
 
 	UpdateTMUCounts(0);
@@ -287,8 +287,6 @@ void tmu_reset()
 
 	for (int i=0;i<3;i++)
 		write_TMU_TCNTch(i,0xffffffff);
-
-	
 }
 
 void tmu_term()

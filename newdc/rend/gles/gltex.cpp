@@ -5,7 +5,7 @@
 /*
 Textures
 
-Textures are converted to native opengl textures
+Textures are converted to native OpenGL textures
 The mapping is done with tcw:tsp -> GL texture. That includes stuff like
 filtering/ texture repeat
 
@@ -16,7 +16,7 @@ PALs are decoded to their unpaletted format, 8888 is downcasted to 4444
 Mipmaps
 	not supported for now
 
-Compresssion
+Compression
 	look into it, but afaik PVRC is not realtime doable
 */
 
@@ -27,7 +27,7 @@ typedef void TexConvFP(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height);
 struct PvrTexInfo
 {
 	const char* name;
-	int bpp;				//4/8 for pal. 16 for uv, argb
+	int bpp;        //4/8 for pal. 16 for uv, argb
 	GLuint type;
 	TexConvFP *PL;
 	TexConvFP *TW;
@@ -36,10 +36,10 @@ struct PvrTexInfo
 
 PvrTexInfo format[8]=
 {
-	{"1555", 16,GL_UNSIGNED_SHORT_5_5_5_1,		&tex1555_PL,&tex1555_TW,&tex1555_VQ},	//1555
-	{"565", 16,GL_UNSIGNED_SHORT_5_6_5,		&tex565_PL,&tex565_TW,&tex565_VQ},		//565
-	{"4444", 16,GL_UNSIGNED_SHORT_4_4_4_4,		&tex4444_PL,&tex4444_TW,&tex4444_VQ},	//4444
-	{"yuv", 16,GL_UNSIGNED_SHORT_5_6_5,		&texYUV422_PL,&texYUV422_TW,&texYUV422_VQ},	//yuv
+	{"1555", 16,GL_UNSIGNED_SHORT_5_5_5_1, &tex1555_PL,&tex1555_TW,&tex1555_VQ},	//1555
+	{"565", 16,GL_UNSIGNED_SHORT_5_6_5,    &tex565_PL,&tex565_TW,&tex565_VQ},		//565
+	{"4444", 16,GL_UNSIGNED_SHORT_4_4_4_4, &tex4444_PL,&tex4444_TW,&tex4444_VQ},	//4444
+	{"yuv", 16,GL_UNSIGNED_SHORT_5_6_5,    &texYUV422_PL,&texYUV422_TW,&texYUV422_VQ},	//yuv
 	{"ns/bump", 0},	//ns
 	{"pal4", 4,0,0,texPAL4_TW,0},	//pal4
 	{"pla8", 8,0,0,texPAL8_TW,0},	//pal8
@@ -65,18 +65,18 @@ const GLuint PAL_TYPE[4]=
 //Texture Cache :)
 struct TextureCacheData
 {
-	TSP tsp;		//dreamcast texture parametters
+	TSP tsp;        //dreamcast texture parameters
 	TCW tcw;
 
-	GLuint texID;	//gl texture
+	GLuint texID;   //gl texture
 
 	//decoded texture info
-	u32 sa;			//data start address in vram
-	u32 w,h;		//width & height of the texture
-	u32 size;		//size, in bytes, in vram
+	u32 sa;         //data start address in vram
+	u32 w,h;        //width & height of the texture
+	u32 size;       //size, in bytes, in vram
 
 	PvrTexInfo* tex;
-	TexConvFP*	texconv;
+	TexConvFP*  texconv;
 
 	bool dirty;
 	vram_block* lock_block;
@@ -85,11 +85,11 @@ struct TextureCacheData
 	u32 Updates;
 
 	//used for palette updates
-	u32  pal_local_rev;			//local palette rev
-	u32* pal_table_rev;			//table palette rev pointer
-	u32  indirect_color_ptr;	//palette color table index for pal. tex
-								//VQ quantinisers table for VQ tex
-								//a texture can't be both VQ and PAL at the same time
+	u32  pal_local_rev;         //local palette rev
+	u32* pal_table_rev;         //table palette rev pointer
+	u32  indirect_color_ptr;    //palette color table index for pal. tex
+	                            //VQ quantizers table for VQ tex
+	                            //a texture can't be both VQ and PAL at the same time
 
 	void PrintTextureName()
 	{
@@ -119,10 +119,10 @@ struct TextureCacheData
 			glTexParameteri (GL_TEXTURE_2D, dir, mirror?GL_MIRRORED_REPEAT : GL_REPEAT);
 	}
 
-	//Create gl texture from tsp/tcw
+	//Create GL texture from tsp/tcw
 	void Create()
 	{
-		//ask gl for tex id
+		//ask GL for texture ID
 		glGenTextures(1,&texID);
 
 		//Reset state info ..
@@ -134,16 +134,16 @@ struct TextureCacheData
 		//decode info from tsp/tcw into the texture struct
 		tex=&format[tcw.PixelFmt==7?0:tcw.PixelFmt];		//texture format table entry
 
-		sa=(tcw.TexAddr<<3) & VRAM_MASK;		//data start address
-		w=8<<tsp.TexU;							//tex width
-		h=8<<tsp.TexV;							//tex height
+		sa=(tcw.TexAddr<<3) & VRAM_MASK; //data start address
+		w=8<<tsp.TexU;                   //tex width
+		h=8<<tsp.TexV;                   //tex height
 
 		//bind texture to set modes
 		glBindTexture(GL_TEXTURE_2D,texID);
 
 		//set texture repeat mode
-		SetRepeatMode(GL_TEXTURE_WRAP_S,tsp.ClampU,tsp.FlipU);	// glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, (tsp.ClampU ? GL_CLAMP_TO_EDGE : (tsp.FlipU ? GL_MIRRORED_REPEAT : GL_REPEAT))) ;
-		SetRepeatMode(GL_TEXTURE_WRAP_T,tsp.ClampV,tsp.FlipV);	// glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, (tsp.ClampV ? GL_CLAMP_TO_EDGE : (tsp.FlipV ? GL_MIRRORED_REPEAT : GL_REPEAT))) ;
+		SetRepeatMode(GL_TEXTURE_WRAP_S,tsp.ClampU,tsp.FlipU); // glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, (tsp.ClampU ? GL_CLAMP_TO_EDGE : (tsp.FlipU ? GL_MIRRORED_REPEAT : GL_REPEAT))) ;
+		SetRepeatMode(GL_TEXTURE_WRAP_T,tsp.ClampV,tsp.FlipV); // glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, (tsp.ClampV ? GL_CLAMP_TO_EDGE : (tsp.FlipV ? GL_MIRRORED_REPEAT : GL_REPEAT))) ;
 
 		glHint(GL_GENERATE_MIPMAP_HINT, GL_NICEST);
 
@@ -186,13 +186,13 @@ struct TextureCacheData
 		switch (tcw.PixelFmt)
 		{
 
-		case 0:	//0     1555 value: 1 bit; RGB values: 5 bits each
-		case 7:	//7     Reserved        Regarded as 1555
-		case 1:	//1     565      R value: 5 bits; G value: 6 bits; B value: 5 bits
-		case 2:	//2     4444 value: 4 bits; RGB values: 4 bits each
-		case 3:	//3     YUV422 32 bits per 2 pixels; YUYV values: 8 bits each
-		case 5:	//5     4 BPP Palette   Palette texture with 4 bits/pixel
-		case 6:	//6     8 BPP Palette   Palette texture with 8 bits/pixel
+		case 0: //0     1555 value: 1 bit; RGB values: 5 bits each
+		case 7: //7     Reserved        Regarded as 1555
+		case 1: //1     565      R value: 5 bits; G value: 6 bits; B value: 5 bits
+		case 2: //2     4444 value: 4 bits; RGB values: 4 bits each
+		case 3: //3     YUV422 32 bits per 2 pixels; YUYV values: 8 bits each
+		case 5: //5     4 BPP Palette   Palette texture with 4 bits/pixel
+		case 6: //6     8 BPP Palette   Palette texture with 8 bits/pixel
 			if (tcw.ScanOrder && tex->PL)
 			{
 				//Texture is stored 'planar' in memory, no deswizzle is needed
@@ -201,7 +201,7 @@ struct TextureCacheData
 				int stride=w;
 				if (tcw.StrideSel) 
 					stride=(TEXT_CONTROL&31)*32;
-				//Call the format specific convertion code
+				//Call the format specific conversion code
 				texconv=tex->PL;
 				//calculate the size, in bytes, for the locking
 				size=w*h*tex->bpp/8;
@@ -251,10 +251,10 @@ struct TextureCacheData
 		if (pal_table_rev) 
 		{
 			textype=PAL_TYPE[PAL_RAM_CTRL&3];
-			pal_local_rev=*pal_table_rev;		//make sure to update the local rev, so it won't have to redo the tex
+			pal_local_rev=*pal_table_rev; //make sure to update the local rev, so it won't have to redo the tex
 		}
 
-		palette_index=indirect_color_ptr;	//might be used if pal. tex
+		palette_index=indirect_color_ptr; //might be used if pal. tex
 		vq_codebook=(u8*)&vram[indirect_color_ptr];  //might be used if VQ tex
 
 		//texture conversion work
@@ -265,7 +265,7 @@ struct TextureCacheData
 		u32 stride=w;
 
 		if (tcw.StrideSel && tcw.ScanOrder && tex->PL) 
-			stride=(TEXT_CONTROL&31)*32;	//i think this needs +1 ?
+			stride=(TEXT_CONTROL&31)*32; //I think this needs +1 ?
 
 		if(texconv!=0)
 		{
@@ -283,7 +283,7 @@ struct TextureCacheData
 		//lock the texture to detect changes in it
 		lock_block = libCore_vramlock_Lock(sa,sa+size-1,this);
 
-		//upload to opengl !
+		//upload to OpenGL !
 		glBindTexture(GL_TEXTURE_2D, texID);
 		GLuint comps=textype==GL_UNSIGNED_SHORT_5_6_5?GL_RGB:GL_RGBA;
 		glTexImage2D(GL_TEXTURE_2D, 0,comps , w, h, 0, comps, textype, temp_tex_buffer);
@@ -380,7 +380,7 @@ void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 }
 
 GLuint GetTexture(TSP tsp,TCW tcw)
-{       
+{
 	if (tcw.TexAddr==fb_rtt.TexAddr && fb_rtt.tex)
 	{
 		return fb_rtt.tex;

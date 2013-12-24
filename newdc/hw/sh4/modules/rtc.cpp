@@ -1,5 +1,5 @@
 /*
-	The rtc isn't working on dreamcast i'm told
+	The rtc isn't working on dreamcast I'm told
 */
 #include "types.h"
 #include "hw/sh4/sh4_mmr.h"

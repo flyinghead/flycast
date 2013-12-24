@@ -66,7 +66,7 @@ bool ConvertSector(u8* in_buff , u8* out_buff , int from , int to,int sector)
 		memcpy(q_subchannel,in_buff+2352,96);
 		from-=96;
 	}
-	//if no convertion
+	//if no conversion
 	if (to==from)
 	{
 		memcpy(out_buff,in_buff,to);
@@ -166,13 +166,15 @@ bool InitDrive(u32 fileflags)
 #else
 	int gfrv=0;
 #endif
-	if (gfrv==0)
+	if (gfrv == 0)
 	{
 		NullDriveDiscType=NoDisk;
 		return true;
 	}
-	else if (gfrv==-1)
+	else if (gfrv == -1)
+	{
 		return false;
+	}
 
 	strcpy(settings.imgread.LastImage,fn);
 	SaveSettings();
@@ -183,7 +185,9 @@ bool InitDrive(u32 fileflags)
 		return true;
 	}
 	else
+	{
 		return true;
+	}
 }
 
 void TermDrive()
@@ -253,7 +257,7 @@ void GetDriveToc(u32* to,DiskArea area)
 		last_track=2;
 	}
 
-	//Geneate the TOC info
+	//Generate the TOC info
 
 	//-1 for 1..99 0 ..98
 	to[99]=CreateTrackInfo_se(disc->tracks[first_track-1].CTRL,disc->tracks[first_track-1].ADDR,first_track); 
@@ -266,7 +270,9 @@ void GetDriveToc(u32* to,DiskArea area)
 			to[101]=CreateTrackInfo(disc->LeadOut.CTRL,disc->LeadOut.ADDR,13085);
 	}
 	else
-		to[101]=CreateTrackInfo(disc->LeadOut.CTRL,disc->LeadOut.ADDR,disc->LeadOut.StartFAD);
+	{
+		to[101] = CreateTrackInfo(disc->LeadOut.CTRL, disc->LeadOut.ADDR, disc->LeadOut.StartFAD);
+	}
 
 	for (u32 i=first_track-1;i<last_track;i++)
 	{
@@ -278,7 +284,7 @@ void GetDriveSessionInfo(u8* to,u8 session)
 {
 	if (!disc)
 		return;
-	to[0]=2;//status , will get overwrited anyway
+	to[0]=2;//status, will get overwritten anyway
 	to[1]=0;//0's
 	
 	if (session==0)

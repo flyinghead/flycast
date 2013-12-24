@@ -7,7 +7,7 @@
 #include "sh4_interrupts.h"
 
 Sh4RCB* p_sh4rcb;
-sh4_if				  sh4_cpu;
+sh4_if  sh4_cpu;
 u8* sh4_dyna_rcb;
 
 INLINE void ChangeGPR()
@@ -32,7 +32,7 @@ INLINE void ChangeFP()
 	}
 }
 
-//called when sr is changed and we must check for reg banks ect.. , returns true if interrupts got
+//called when sr is changed and we must check for reg banks etc.. , returns true if interrupts got
 bool UpdateSR()
 {
 	if (sr.MD)
@@ -45,7 +45,7 @@ bool UpdateSR()
 		if (sr.RB)
 		{
 			printf("UpdateSR MD=0;RB=1 , this must not happen\n");
-			sr.RB =0;//error - must allways be 0
+			sr.RB =0;//error - must always be 0
 			if (old_sr.RB)
 				ChangeGPR();//switch
 		}
@@ -76,20 +76,20 @@ void SetFloatStatusReg()
 
 		//TODO: Implement this (needed for SOTB)
 #if HOST_CPU==CPU_X86 && HOST_OS==OS_WINDOWS
-		if (fpscr.RM==1)	//if round to 0 , set the flag
+		if (fpscr.RM==1)  //if round to 0 , set the flag
 			temp|=(3<<13);
 
-		if (fpscr.DN)		//denormals are considered 0
+		if (fpscr.DN)     //denormals are considered 0
 			temp|=(1<<15);
 
 		_asm
 		{
-			ldmxcsr temp;	//load the float status :)
+			ldmxcsr temp; //load the float status :)
 		}
 #elif HOST_CPU==CPU_ARM
 		static const unsigned int x = 0x04086060;
 		unsigned int y = 0x02000000;
-		if (fpscr.RM==1)	//if round to 0 , set the flag
+		if (fpscr.RM==1)  //if round to 0 , set the flag
 			y|=3<<22;
 	
 		if (fpscr.DN)
@@ -100,10 +100,10 @@ void SetFloatStatusReg()
 
 		asm volatile
 			(
-				"fmrx	%0, fpscr	\n\t"
-				"and	%0, %0, %1	\n\t"
-				"orr	%0, %0, %2	\n\t"
-				"fmxr	fpscr, %0	\n\t"
+				"fmrx   %0, fpscr   \n\t"
+				"and    %0, %0, %1  \n\t"
+				"orr    %0, %0, %2  \n\t"
+				"fmxr   fpscr, %0   \n\t"
 				: "=r"(raa)
 				: "r"(x), "r"(y)
 			);
@@ -112,13 +112,14 @@ void SetFloatStatusReg()
 	}
 }
 
-//called when fpscr is changed and we must check for reg banks ect..
+//called when fpscr is changed and we must check for reg banks etc..
 void UpdateFPSCR()
 {
 	if (fpscr.FR !=old_fpscr.FR)
-		ChangeFP();//fpu bank change
+		ChangeFP(); // FPU bank change
+
 	old_fpscr=fpscr;
-	SetFloatStatusReg();//ensure they are on sync :)
+	SetFloatStatusReg(); // Ensure they are in sync :)
 }
 
 
@@ -212,8 +213,8 @@ u32* Sh4_int_GetRegisterPtr(Sh4RegType reg)
 			return &Sh4cntx.jdyn;
 
 		default:
-			EMUERROR2("Unkown register Id %d",reg);
-			die("invalid reg");
+			EMUERROR2("Unknown register ID %d",reg);
+			die("Invalid reg");
 			return 0;
 			break;
 		}

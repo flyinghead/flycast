@@ -30,17 +30,22 @@ namespace VARM
 
 
 
-	typedef union {
-		struct {
+	typedef union
+	{
+		struct
+		{
 			u8 B0;
 			u8 B1;
 			u8 B2;
 			u8 B3;
 		} B;
-		struct {
+
+		struct
+		{
 			u16 W0;
 			u16 W1;
 		} W;
+
 		u32 I;
 	} reg_pair;
 
@@ -283,14 +288,13 @@ namespace VARM
 	{
 		virt_arm_reset();
 
-		int i;
-		for(i = 0; i < 256; i++) 
+		for (int i = 0; i < 256; i++)
 		{
 			int count = 0;
-			int j;
-			for(j = 0; j < 8; j++)
-				if(i & (1 << j))
+			for (int j = 0; j < 8; j++)
+				if (i & (1 << j))
 					count++;
+
 			cpuBitsSet[i] = count;
 		}
 	}

@@ -62,17 +62,17 @@ struct dsp_t
 	u32 DEC;
 
 	//various dsp regs
-	signed int ACC;	//26 bit
-	signed int SHIFTED;	//24 bit
-	signed int X;	//24 bit
-	signed int Y;	//13 bit
-	signed int B;	//26 bit
-	signed int INPUTS;	//24 bit
+	signed int ACC;        //26 bit
+	signed int SHIFTED;    //24 bit
+	signed int X;          //24 bit
+	signed int Y;          //13 bit
+	signed int B;          //26 bit
+	signed int INPUTS;     //24 bit
 	signed int MEMVAL;
-	signed int FRC_REG;	//13 bit
-	signed int Y_REG;		//24 bit
+	signed int FRC_REG;    //13 bit
+	signed int Y_REG;      //24 bit
 	unsigned int ADDR;
-	unsigned int ADRS_REG;	//13 bit
+	unsigned int ADRS_REG; //13 bit
 
 	//Direct Mapped data :
 	//COEF  *128
@@ -82,7 +82,7 @@ struct dsp_t
 	//EXTS  *2
 
 
-	//Dynrec flags
+	//Dynarec flags
 	bool dyndirty;
 };
 

@@ -4,7 +4,7 @@
 
 enum OpcodeAccessFlags
 {
-	//explicit registers
+	//Explicit registers
 	OAF_RN,
 	OAF_RM,
 	OAF_FN,

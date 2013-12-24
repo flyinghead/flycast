@@ -35,7 +35,7 @@ u32 GetRTC_now()
 	time_t temp=time(0);
 	timeinfo=*localtime(&temp);
 	if (timeinfo.tm_isdst)
-		rawtime+=24*3600;//add an hour if dst (maby rtc has a reg for that ? *watch* and add it if yes :)
+		rawtime+=24*3600;//add an hour if dst (maybe rtc has a reg for that ? *watch* and add it if yes :)
 
 	u32 RTC=0x5bfc8900 + (u32)rawtime;// add delta to known dc time
 	return RTC;
@@ -46,11 +46,11 @@ u32 ReadMem_aica_rtc(u32 addr,u32 sz)
 	//settings.dreamcast.RTC=GetRTC_now();
 	switch( addr & 0xFF )
 	{
-	case 0:	
+	case 0:
 		return settings.dreamcast.RTC>>16;
-	case 4:	
+	case 4:
 		return settings.dreamcast.RTC &0xFFFF;
-	case 8:	
+	case 8:
 		return 0;
 	}
 
@@ -62,7 +62,7 @@ void WriteMem_aica_rtc(u32 addr,u32 data,u32 sz)
 {
 	switch( addr & 0xFF )
 	{
-	case 0:	
+	case 0:
 		if (rtc_EN)
 		{
 			settings.dreamcast.RTC&=0xFFFF;
@@ -71,15 +71,15 @@ void WriteMem_aica_rtc(u32 addr,u32 data,u32 sz)
 			SaveSettings();
 		}
 		return;
-	case 4:	
+	case 4:
 		if (rtc_EN)
 		{
 			settings.dreamcast.RTC&=0xFFFF0000;
 			settings.dreamcast.RTC|= data&0xFFFF;
-			//TODO: Clearn the internal timer ?
+			//TODO: Clean the internal timer ?
 		}
 		return;
-	case 8:	
+	case 8:
 		rtc_EN=data&1;
 		return;
 	}
@@ -100,7 +100,9 @@ u32 ReadMem_aica_reg(u32 addr,u32 sz)
 			return ARMRST;
 		}
 		else
-			return libAICA_ReadReg(addr,sz);
+		{
+			return libAICA_ReadReg(addr, sz);
+		}
 	}
 	else
 	{
@@ -109,7 +111,9 @@ u32 ReadMem_aica_reg(u32 addr,u32 sz)
 			return (VREG<<8) | ARMRST;
 		}
 		else
-			return libAICA_ReadReg(addr,sz);
+		{
+			return libAICA_ReadReg(addr, sz);
+		}
 	}
 }
 
@@ -158,7 +162,7 @@ void WriteMem_aica_reg(u32 addr,u32 data,u32 sz)
 //Init/res/term
 void aica_Init()
 {
-	//mmnnn ? gota fill it w/ something
+	//mmnnn ? gotta fill it w/ something
 }
 
 void aica_Reset(bool Manual)
@@ -288,7 +292,7 @@ void aica_sb_Init()
 	//sb_regs[((SB_ADST_addr-SB_BASE)>>2)].flags=REG_32BIT_READWRITE | REG_READ_DATA;
 	//sb_regs[((SB_ADST_addr-SB_BASE)>>2)].writeFunction=Write_SB_ADST;
 
-	//I realy need to implement G2 dma (and rest dmas actualy) properly
+	//I really need to implement G2 dma (and rest dmas actually) properly
 	//THIS IS NOT AICA, its G2-EXT (BBA)
 
 	sb_rio_register(SB_E1ST_addr,RIO_WF,0,&Write_SB_E1ST);

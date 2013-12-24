@@ -34,8 +34,8 @@ struct RegAlloc
 
 	struct RegSpan
 	{
-		u32 start;		//load before start
-		u32 end;		//write after end
+		u32 start; //load before start
+		u32 end;   //write after end
 
 		u32 regstart;
 		bool fpr;
@@ -93,7 +93,8 @@ struct RegAlloc
 
 		int pacc(int pos)
 		{
-			if (!contains(pos)) return -1;
+			if (!contains(pos))
+				return -1;
 
 			for (int i=(int)accesses.size()-1;i>=0;i--)
 			{
@@ -106,7 +107,8 @@ struct RegAlloc
 
 		int nacc(int pos)
 		{
-			if (!contains(pos)) return -1;
+			if (!contains(pos))
+				return -1;
 
 			for (size_t i=0;i<accesses.size();i++)
 			{
@@ -119,7 +121,8 @@ struct RegAlloc
 
 		int nacc_w(int pos)
 		{
-			if (!contains(pos)) return -1;
+			if (!contains(pos))
+				return -1;
 
 			for (size_t i=0;i<accesses.size();i++)
 			{
@@ -171,6 +174,7 @@ struct RegAlloc
 		{
 			if (accesses[0].am&AM_READ)
 				return true;
+
 			return false;
 		}
 
@@ -217,7 +221,9 @@ struct RegAlloc
 			return rv;
 		}
 		else
+		{
 			return false;
+		}
 	}
 
 	bool IsAllocg(Sh4RegType reg)
@@ -239,7 +245,9 @@ struct RegAlloc
 			return IsAllocg(prm._reg);
 		}
 		else
+		{
 			return false;
+		}
 	}
 
 	bool IsAllocf(Sh4RegType reg)
@@ -300,7 +308,7 @@ struct RegAlloc
 		}
 		else
 		{
-		die("map must return value\n");
+			die("map must return value\n");
 			return (nreg_t)-1;
 		}
 	}
@@ -334,7 +342,7 @@ struct RegAlloc
 		}
 		else
 		{
-		die("map must return value\n");
+			die("map must return value\n");
 			return (nregf_t)-1;
 		}
 	}
@@ -349,7 +357,7 @@ struct RegAlloc
 		}
 		else
 		{
-		die("map must return value\n");
+			die("map must return value\n");
 			return (nregf_t)-1;
 		}
 	}
@@ -588,7 +596,7 @@ struct RegAlloc
 									//this is a bug on the current reg alloc code, affects fipr.
 									//generally, vector registers aren't treated correctly
 									//as groups of phy registers. I really need a better model
-									//to accomodate for that on the reg alloc side of things ..
+									//to accommodate for that on the reg alloc side of things ..
 									if ((*iter).count()==1 && iter->_reg==op->rs1._reg+3)
 										spans[(*iter)._reg+i]->Flush();
 									else
@@ -716,10 +724,8 @@ struct RegAlloc
 				( 
 				(block->oplist[opid].rd.is_r32i() && block->oplist[opid].rs1.is_r32i() ) || 
 				(block->oplist[opid].rd.is_r32f() && block->oplist[opid].rs1.is_r32f() )
-				)
-			   )
+				))
 			{
-
 				//FindSpan(block->oplist[opid].rd._reg);
 				RegSpan* x=FindSpan(block->oplist[opid].rs1._reg,opid);
 				if (0 && x->nacc_w(opid)==-1 && (x->nreg!=-1 || x->nregf!=-1) && !x->aliased)
@@ -809,7 +815,7 @@ struct RegAlloc
 			
 			if (spn->start==0) continue; //can't move anyway ..
 
-			//try to move beginings backwards
+			//try to move beginnings backwards
 			u32 opid;
 			for (opid=spn->start;opid-->0;)
 			{
@@ -821,19 +827,17 @@ struct RegAlloc
 			opid++;
 
 			//
-			//this can cause slowdowns on aggeration of load/stores
+			//this can cause slowdowns on aggregation of load/stores
 			//we need some slack mechanism to distribute it !
 			//<< this will for now blindly avoid >2preload/op
 			//it still slows it down so disabled
 
 			if (spn->start>opid)
 			{
-
 				int opid_found=-1;
 				int opid_plc=60;
 
 				int slack=spn->start-opid;
-				
 
 				while (spn->start>opid)
 				{
@@ -879,7 +883,7 @@ struct RegAlloc
 			
 			if (spn->end==blk_last) continue; //can't move anyway ..
 
-			//try to move beginings backwards
+			//try to move beginnings backwards
 			u32 opid;
 			for (opid=spn->end+1;opid<=blk_last;opid++)
 			{
@@ -891,7 +895,7 @@ struct RegAlloc
 			opid--;
 
 			//
-			//this can cause slowdowns on aggeration of load/stores
+			//this can cause slowdowns on aggregation of load/stores
 			//we need some slack mechanism to distribute it !
 			//<< this will for now blindly avoid >1preload/op
 			//it still slows it down so disabled

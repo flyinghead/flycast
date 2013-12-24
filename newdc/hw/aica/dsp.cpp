@@ -37,17 +37,17 @@ struct _INST
 	unsigned int ZERO;
 	unsigned int BSEL;
 
-	unsigned int NOFL;	//MRQ set
-	unsigned int TABLE;	//MRQ set
-	unsigned int MWT;	//MRQ set
-	unsigned int MRD;	//MRQ set	
-	unsigned int MASA;	//MRQ set
-	unsigned int ADREB;	//MRQ set
-	unsigned int NXADR;	//MRQ set
+	unsigned int NOFL;  //MRQ set
+	unsigned int TABLE; //MRQ set
+	unsigned int MWT;   //MRQ set
+	unsigned int MRD;   //MRQ set
+	unsigned int MASA;  //MRQ set
+	unsigned int ADREB; //MRQ set
+	unsigned int NXADR; //MRQ set
 };
 
 
-#define DYNBUF	0x10000
+#define DYNBUF  0x10000
 /*
 //#define USEFLOATPACK
 //pack s24 to s1e4s11
@@ -55,8 +55,8 @@ naked u16 packasm(s32 val)
 {
 	__asm
 	{
-		mov edx,ecx;		//eax will be sign
-		and edx,0x80000;	//get the sign
+		mov edx,ecx;        //eax will be sign
+		and edx,0x80000;    //get the sign
 		
 		jz poz;
 		neg ecx;
@@ -69,13 +69,13 @@ naked u16 packasm(s32 val)
 		//13 -> 0
 		//12..0 -> 0
 		sub eax,11;
-		cmovs eax,0;	//if <0 -> 0
+		cmovs eax,0;    //if <0 -> 0
 
-		shr ecx,eax;	//shift out mantissa as needed (yeah i know, no rounding here and all .. )
+		shr ecx,eax;    //shift out mantissa as needed (yeah i know, no rounding here and all .. )
 
-		shr eax,12;		//[14:12] is exp
-		or edx,ecx;		//merge [15] | [11:0]
-		or eax,edx;		//merge [14:12] | ([15] | [11:0]), result on eax
+		shr eax,12;     //[14:12] is exp
+		or edx,ecx;     //merge [15] | [11:0]
+		or eax,edx;     //merge [14:12] | ([15] | [11:0]), result on eax
 		ret;
 
 _zero:
@@ -83,24 +83,24 @@ _zero:
 		ret;
 	}
 }
-//ONLY lower 16 bits are valid, rest are ingored but do movzx to avoid partial stalls :)
+//ONLY lower 16 bits are valid, rest are ignored but do movzx to avoid partial stalls :)
 naked s32 unpackasm(u32 val)
 {
 	__asm
 	{
-		mov eax,ecx;		//get mantissa bits
-		and ecx,0x7FF;		//
+		mov eax,ecx;        //get mantissa bits
+		and ecx,0x7FF;      //
 		
-		shl eax,11;			//get shift factor (shift)
-		mov edx,eax;		//keep a copy for the sign
-		and eax,0xF;		//get shift factor (mask)
+		shl eax,11;         //get shift factor (shift)
+		mov edx,eax;        //keep a copy for the sign
+		and eax,0xF;        //get shift factor (mask)
 
-		shl ecx,eax;		//shift mantissa to normal position
+		shl ecx,eax;        //shift mantissa to normal position
 
-		test edx,0x10;		//signed ?
+		test edx,0x10;      //signed ?
 		jnz _negme;
 		
-		ret;	//nop, return as is
+		ret;    //nop, return as is
 
 _negme:
 		//yep, negate and return
@@ -292,7 +292,7 @@ void dsp_rec_MEM_AGU(x86_block& x86e,_INST& op,u32 step)
 	
 	//These opcode fields are valid on odd steps (mem req. is only allowed then)
 	//MEM Request : step x
-	//Mem operation : step x+1 (address is avaiable at this point)
+	//Mem operation : step x+1 (address is available at this point)
 	if (step&1)
 	{
 		//Addrs is 16:1
@@ -306,7 +306,7 @@ void dsp_rec_MEM_AGU(x86_block& x86e,_INST& op,u32 step)
 		if (op.NXADR)
 			x86e.Emit(op_add32,EAX,1);
 
-		//RBL warp around is here, acording to docs, but that seems to cause _very_ bad results
+		//RBL warp around is here, according to docs, but that seems to cause _very_ bad results
 	//	if (!op.TABLE)
 	//		x86e.Emit(op_and32,EAX,dsp.RBL);
 
@@ -314,10 +314,10 @@ void dsp_rec_MEM_AGU(x86_block& x86e,_INST& op,u32 step)
 		if (!op.TABLE)
 			x86e.Emit(op_add32,EAX,&dsp.regs.MDEC_CT);
 
-		//RBL/RBP are constants for the pogram
+		//RBL/RBP are constants for the program
 		//Apply RBL if !TABLE
 		//Else limit to 16 bit add
-		//*update* allways limit to 16 bit add adter MDEC_CT ?
+		//*update* always limit to 16 bit add adter MDEC_CT ?
 		if (!op.TABLE)
 			x86e.Emit(op_and32,EAX,dsp.RBL);
 		else
@@ -384,7 +384,7 @@ void dsp_rec_MEMS_WRITE(x86_block& x86e,_INST& op,u32 step,x86_gpr_reg INPUTS)
 
 		if (SUPPORT_NOFL)
 		{
-			x86_Label* no_fl=x86e.CreateLabel(false,8);//no float convertions
+			x86_Label* no_fl=x86e.CreateLabel(false,8);//no float conversions
 
 			//Do we have to convert ?
 			x86e.Emit(op_cmp32,&dsp.regs.NOFL_2,1);
@@ -502,17 +502,17 @@ void dsp_rec_MAD(x86_block& x86e,_INST& op,u32 step,x86_gpr_reg INPUTS,x86_gpr_r
 		if (op.BSEL==1)
 		{
 			//B=MAD_OUT[??]
-			//mad out is stored on s32 format, so no need for sign extention
+			//mad out is stored on s32 format, so no need for sign extension
 			x86e.Emit(op_mov32,EDX,&dsp.regs.MAD_OUT);
 		}
 		else
 		{
 			//B=TEMP[??]
-			//TEMPS is allready sign extended, so no need for it
+			//TEMPS is already sign extended, so no need for it
 			//Just converting 24 -> 26 bits using lea
 			x86e.Emit(op_lea32,EDX,x86_mrm(TEMPS_reg,sib_scale_4,0));
 		}
-		//Gating is aplied here normaly (ZERO).
+		//Gating is applied here normally (ZERO).
 		//NEGB then inverts the value  (NOT) (or 0 , if gated) and the adder adds +1 if NEGB is set.
 		//However, (~X)+1 = -X , and (~0)+1=0 so i skip the add
 		if (op.NEGB)
@@ -521,7 +521,7 @@ void dsp_rec_MAD(x86_block& x86e,_INST& op,u32 step,x86_gpr_reg INPUTS,x86_gpr_r
 		}
 		
 		//Add hm, is there overflow protection here ?
-		//The resultof mul is on EAX, we modify that
+		//The result of mul is on EAX, we modify that
 		x86e.Emit(op_add32,EAX,EDX);
 	}
 
@@ -532,12 +532,12 @@ void dsp_rec_MAD(x86_block& x86e,_INST& op,u32 step,x86_gpr_reg INPUTS,x86_gpr_r
 	x86e.Emit(op_mov32,MAD_OUT_NV,EAX);
 }
 
-//Rreads : INPUTS,MAD_OUT
+//Reads  : INPUTS,MAD_OUT
 //Writes : EFREG,TEMP,FRC_REG,ADRS_REG,MEM_WT_DATA
 void dsp_rec_EFO_FB(x86_block& x86e,_INST& op,u32 step,x86_gpr_reg INPUTS)
 {
 	nwtn(MAD_OUT);
-	//MAD_OUT is s32, no sign extention needed
+	//MAD_OUT is s32, no sign extension needed
 	x86e.Emit(op_mov32,EAX,&dsp.regs.MAD_OUT);
 	//sh .. l ?
 	switch(op.SHIFT)
@@ -583,7 +583,7 @@ void dsp_rec_EFO_FB(x86_block& x86e,_INST& op,u32 step,x86_gpr_reg INPUTS)
 	{
 		x86e.Emit(op_mov32,EDX,EAX);
 		//top 16 bits ? or lower 16 ? 
-		//i use top 16, folowing the same rule as the input 
+		//i use top 16, following the same rule as the input 
 		x86e.Emit(op_sar32,EDX,4);
 
 		//write :)
@@ -593,7 +593,7 @@ void dsp_rec_EFO_FB(x86_block& x86e,_INST& op,u32 step,x86_gpr_reg INPUTS)
 	//Write TEMPS ?
 	if (op.TWT)
 	{	
-		//Temps is 24 bit, stored as s32 ( no convertion required)
+		//Temps is 24 bit, stored as s32 (no conversion required)
 
 		//write it
 		x86e.Emit(op_mov32,dsp_reg_GenerateTempsAddrs(x86e,op.TWA,ECX),EAX);
@@ -682,17 +682,17 @@ void dsp_recompile()
 	//mems is read/write (memory loads go there), mixs and exts are read only.
 	//There are various delays (registers) so i need to properly emulate (more on that later)
 
-	//Registers that can be writen : MIXS,FRC_REG,ADRS_REG,EFREG,TEMP
+	//Registers that can be written : MIXS,FRC_REG,ADRS_REG,EFREG,TEMP
 
 	//MRD, MWT, NOFL, TABLE, NXADR, ADREB, and MASA[4:0]
-	//Only alowed on odd steps, when counting from 1 (2,4,6, ...).That is even steps when counting from 0 (1,3,5, ...)
+	//Only allowed on odd steps, when counting from 1 (2,4,6, ...).That is even steps when counting from 0 (1,3,5, ...)
 	for(int step=0;step<128;++step)
 	{
 		u32* mpro=DSPData->MPRO+step*4;
 		u32 prev_step=(step-1)&127;
 		u32* prev_mpro=DSPData->MPRO+prev_step*4;
 		//if its a nop just go to the next opcode
-		//No, dont realy do that, we need to propage opcode bits :p
+		//No, don't really do that, we need to propage opcode bits :p
 		//if (mpro[0]==0 && mpro[1]==0 && mpro[2]== 0 && mpro[3]==0)
 		//	continue;
 
@@ -709,13 +709,13 @@ void dsp_recompile()
 		//Dynarec !
 		_dsp_debug_step_start();
 		//DSP regs are on memory
-		//Wires stay on x86 regs, writen to memory as fast as possible
+		//Wires stay on x86 regs, written to memory as fast as possible
 		
 		//EDI=MEM_RD_DATA_NV
 		dsp_rec_DRAM_CI(x86e,prev_op,step,EDI);
 		
 		//;)
-		//Address Generation Unit ! nothing spectacular realy ...
+		//Address Generation Unit ! nothing spectacular really ...
 		dsp_rec_MEM_AGU(x86e,op,step);
 		
 		//Calculate INPUTS wire

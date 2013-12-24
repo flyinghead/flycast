@@ -179,8 +179,6 @@ void arm_Run_(u32 CycleCount)
 		reg[15].I = armNextPC + 8;
 		#include "arm-new.h"
 	}
-
-
 }
 
 void CPUInterrupt();
@@ -195,15 +193,14 @@ void arm_Init()
 #endif
 	//CreateTables();
 	arm_Reset();
-	
-	int i;
-	for(i = 0; i < 256; i++) 
+
+	for (int i = 0; i < 256; i++)
 	{
 		int count = 0;
-		int j;
-		for(j = 0; j < 8; j++)
-			if(i & (1 << j))
+		for (int j = 0; j < 8; j++)
+			if (i & (1 << j))
 				count++;
+
 		cpuBitsSet[i] = count;
 	}
 }
@@ -212,7 +209,8 @@ void CPUSwitchMode(int mode, bool saveState, bool breakLoop)
 {
 	CPUUpdateCPSR();
 
-	switch(armMode) {
+	switch(armMode)
+	{
 	case 0x10:
 	case 0x1F:
 		reg[R13_USR].I = reg[13].I;
@@ -254,7 +252,8 @@ void CPUSwitchMode(int mode, bool saveState, bool breakLoop)
 	u32 CPSR = reg[16].I;
 	u32 SPSR = reg[17].I;
 
-	switch(mode) {
+	switch(mode)
+	{
 	case 0x10:
 	case 0x1F:
 		reg[13].I = reg[R13_USR].I;
@@ -300,7 +299,7 @@ void CPUSwitchMode(int mode, bool saveState, bool breakLoop)
 			reg[17].I = CPSR;
 		else
 			reg[17].I = reg[SPSR_ABT].I;
-		break;    
+		break;
 	case 0x1b:
 		reg[13].I = reg[R13_UND].I;
 		reg[14].I = reg[R14_UND].I;
@@ -309,7 +308,7 @@ void CPUSwitchMode(int mode, bool saveState, bool breakLoop)
 			reg[17].I = CPSR;
 		else
 			reg[17].I = reg[SPSR_UND].I;
-		break;    
+		break;
 	default:
 		printf("Unsupported ARM mode %02x\n", mode);
 		die("Arm error..");
@@ -1639,8 +1638,9 @@ void arm_Run(u32 CycleCount)
 #undef r
 
 /*
+	TODO:
 	R15 read/writing is kind of .. weird
-	Gota investigate why ..
+	Gotta investigate why ..
 */
 
 //Mem operand 2 calculation, if Reg or large imm
@@ -2121,21 +2121,22 @@ void armt_init()
 	InitHash();
 
 	//align to next page ..
-    ICache = (u8*)(((unat)ARM7_TCB+4095)& ~4095);
+	ICache = (u8*)(((unat)ARM7_TCB+4095)& ~4095);
 
 #if HOST_OS == OS_WINDOWS
 	DWORD old;
 	VirtualProtect(ICache,ICacheSize,PAGE_EXECUTE_READWRITE,&old);
 #elif HOST_OS == OS_LINUX
 	
-    printf("\n\t ARM7_TCB addr: %p | from: %p | addr here: %p\n", ICache, ARM7_TCB, armt_init);
+	printf("\n\t ARM7_TCB addr: %p | from: %p | addr here: %p\n", ICache, ARM7_TCB, armt_init);
 
-    if (mprotect(ICache, ICacheSize, PROT_EXEC|PROT_READ|PROT_WRITE)) {
-        perror("\n\tError,Couldn’t mprotect ARM7_TCB!");
-        verify(false);
-    }
+	if (mprotect(ICache, ICacheSize, PROT_EXEC|PROT_READ|PROT_WRITE))
+	{
+		perror("\n\tError - Couldn’t mprotect ARM7_TCB!");
+		verify(false);
+	}
 
-    memset(ICache,0xFF,ICacheSize);
+	memset(ICache,0xFF,ICacheSize);
 
 #endif
 

@@ -4,7 +4,7 @@
 	a) Shil opcode enums
 	b) Shil opcode classes/portable C implementation ("canonical" implementation)
 	c) The routing table for canonical implementations
-	d) Cookies (if youre really lucky)
+	d) Cookies (if you're really lucky)
 
 */
 #if HOST_CPU == CPU_ARM && !defined(_ANDROID)
@@ -315,7 +315,7 @@ u64,f1,(u32 r1,u32 r2,u32 C),
 
 	u64 rv;
 	((u32*)&rv)[0]=res;
-	((u32*)&rv)[1]=(res>>32)&1; //alternatevly: res>>63
+	((u32*)&rv)[1]=(res>>32)&1; //alternatively: res>>63
 
 	/*
 	//Damn macro magic//
@@ -536,7 +536,7 @@ shil_opc(mul_s16)
 BIN_OP_I4(s16,*,u32,u32)
 shil_opc_end()
 
-//no difference betwen signed and unsigned when only the lower
+//no difference between signed and unsigned when only the lower
 //32 bis are used !
 //shop_mul_i32
 shil_opc(mul_i32)
@@ -553,7 +553,7 @@ shil_opc(mul_s64)
 BIN_OP_I4(s64,*,u64,s32)
 shil_opc_end()
 
-//shop_div32u	//divide 32 bits, unisgned
+//shop_div32u	//divide 32 bits, unsigned
 shil_opc(div32u)
 shil_canonical
 (
@@ -662,7 +662,7 @@ shil_compile
 
 shil_opc_end()
 
-//shop_cvt_f2i_t	//float to integer : turnicate
+//shop_cvt_f2i_t	//float to integer : truncate
 shil_opc(cvt_f2i_t)
 shil_canonical
 (
@@ -772,7 +772,7 @@ shil_opc(setae)
 BIN_OP_I2(u32,>=)
 shil_opc_end()
 
-//shop_setab	//>, unsined (above)
+//shop_setab	//>, unsigned (above)
 shil_opc(setab)
 BIN_OP_I2(u32,>)
 shil_opc_end()

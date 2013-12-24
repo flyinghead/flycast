@@ -23,7 +23,7 @@ Disc* cdi_parse(wchar* file)
 
 	image.remaining_sessions = image.sessions;
 
-	/////////////////////////////////////////////////////////////// Bucle sessions
+	/////////////////////////////////////////////////////////////// Loop sessions
 	
 	bool ft=true, CD_M2=false,CD_M1=false,CD_DA=false;
 
@@ -42,10 +42,10 @@ Disc* cdi_parse(wchar* file)
 			printf("Open session\n");
 		else
 		{
-			// Crear cuesheet
+			// Clear cuesheet
 			image.remaining_tracks = image.tracks;
 
-			///////////////////////////////////////////////////////////////// Bucle tracks
+			///////////////////////////////////////////////////////////////// Loop tracks
 
 			while(image.remaining_tracks > 0)
 			{
@@ -56,7 +56,7 @@ Disc* cdi_parse(wchar* file)
 
 				image.header_position = ftell(fsource);
 
-				// Mostrar info
+				// Show info
 
 				printf("Saving  ");
 				printf("Track: %2d  ",track.global_current_track);
@@ -123,18 +123,18 @@ Disc* cdi_parse(wchar* file)
 					{
 						
 						printf("Track position: %d\n",track.position + track.pregap_length * track.sector_size);
-     fseek(fsource, track.position, SEEK_SET);
-//     fseek(fsource, track->pregap_length * track->sector_size, SEEK_CUR);
-//     fseek(fsource, track->length * track->sector_size, SEEK_CUR);
-     fseek(fsource, track.total_length * track.sector_size, SEEK_CUR);
+						fseek(fsource, track.position, SEEK_SET);
+						//     fseek(fsource, track->pregap_length * track->sector_size, SEEK_CUR);
+						//     fseek(fsource, track->length * track->sector_size, SEEK_CUR);
+						fseek(fsource, track.total_length * track.sector_size, SEEK_CUR);
 
 						//savetrack(fsource, &image, &track, &opts, &flags);
 						track.position = ftell(fsource);
 
 						rv->EndFAD=track.start_lba +track.total_length;
-						// Generar entradas de cuesheet
+						// Generate cuesheet entries
 
-						//if (flags.create_cuesheet && !(track.mode == 2 && flags.do_convert))  // No generar entrada si convertimos (obsoleto)
+						//if (flags.create_cuesheet && !(track.mode == 2 && flags.do_convert))  // Do not generate input if converted (obsolete)
 						//	savecuesheet(fcuesheet, &image, &track, &opts, &flags);
 
 					}
@@ -143,7 +143,7 @@ Disc* cdi_parse(wchar* file)
 				fseek(fsource, image.header_position, SEEK_SET);
 
 
-				// Cerrar bucles
+				// Close loops
 
 				image.remaining_tracks--;
 			}

@@ -26,19 +26,22 @@ DMAC_DMAOR_type DMAC_DMAOR;
 
 void DMAC_Ch2St()
 {
-	u32 chcr	= DMAC_CHCR(2).full,
-		dmaor	= DMAC_DMAOR.full,
-		dmatcr	= DMAC_DMATCR(2);
+	u32 chcr = DMAC_CHCR(2).full;
+	u32 dmaor = DMAC_DMAOR.full;
+	u32 dmatcr = DMAC_DMATCR(2);
 
-	u32	src		= DMAC_SAR(2),
-		dst		= SB_C2DSTAT,
-		len		= SB_C2DLEN ;
+	u32 src = DMAC_SAR(2);
+	u32 dst = SB_C2DSTAT;
+	u32 len = SB_C2DLEN ;
 
-	if(0x8201 != (dmaor &DMAOR_MASK)) {
+	if(0x8201 != (dmaor &DMAOR_MASK))
+	{
 		printf("\n!\tDMAC: DMAOR has invalid settings (%X) !\n", dmaor);
 		return;
 	}
-	if( len & 0x1F ) {
+
+	if (len & 0x1F)
+	{
 		printf("\n!\tDMAC: SB_C2DLEN has invalid size (%X) !\n", len);
 		return;
 	}
@@ -47,8 +50,8 @@ void DMAC_Ch2St()
 
 	// Direct DList DMA (Ch2)
 
-			// Texture DMA 
-	if( (dst >= 0x10000000) && (dst <= 0x10FFFFFF) )
+	// Texture DMA 
+	if((dst >= 0x10000000) && (dst <= 0x10FFFFFF))
 	{
 		u32 p_addr=src & RAM_MASK;
 		//GetMemPtr perhaps ? it's not good to use the mem arrays directly 
@@ -73,8 +76,8 @@ void DMAC_Ch2St()
 		}
 		//libPvr_TADma(dst,sys_buf,(len/32));
 	}
-	else	//	If SB_C2DSTAT reg is inrange from 0x11000000 to 0x11FFFFE0,	 set 1 in SB_LMMODE0 reg.
-	if( (dst >= 0x11000000) && (dst <= 0x11FFFFE0) )
+	// If SB_C2DSTAT reg is inrange from 0x11000000 to 0x11FFFFE0,	 set 1 in SB_LMMODE0 reg.
+	else if((dst >= 0x11000000) && (dst <= 0x11FFFFE0))
 	{
 		//printf(">>\tDMAC: TEX LNMODE0 Ch2 DMA SRC=%X DST=%X LEN=%X | LN(%X::%X)\n", src, dst, len, *pSB_LMMODE0, *pSB_LMMODE1 );
 
@@ -102,16 +105,16 @@ void DMAC_Ch2St()
 				break;
 			}
 		}
-	//	*pSB_LMMODE0 = 1;			// this prob was done by system already
-	//	WriteMem(SB_LMMODE1, 0, 4);	// should this be done ?
+	//	*pSB_LMMODE0 = 1;           // this prob was done by system already
+	//	WriteMem(SB_LMMODE1, 0, 4); // should this be done ?
 	}
-	else	//	If SB_C2DSTAT reg is inrange from 0x13000000 to 0x13FFFFE0,	 set 1 in SB_LMMODE1 reg.
-	if( (dst >= 0x13000000) && (dst <= 0x13FFFFE0) )
+	// If SB_C2DSTAT reg is in range from 0x13000000 to 0x13FFFFE0, set 1 in SB_LMMODE1 reg.
+	else if((dst >= 0x13000000) && (dst <= 0x13FFFFE0))
 	{
 		die(".\tPVR DList DMA LNMODE1\n\n");
 		src+=len;
-	//	*pSB_LMMODE1 = 1;			// this prob was done by system already
-	//	WriteMem(SB_LMMODE0, 0, 4);	// should this be done ?
+	//	*pSB_LMMODE1 = 1;           // this prob was done by system already
+	//	WriteMem(SB_LMMODE0, 0, 4); // should this be done ?
 	}
 	else 
 	{ 
@@ -131,7 +134,7 @@ void DMAC_Ch2St()
 	SB_C2DSTAT = (src );
 
 	// The DMA end interrupt flag (SB_ISTNRM - bit 19: DTDE2INT) is set to "1."
-	//-> fixed , holly_PVR_DMA is for diferent use now (fixed the interrupts enum too)
+	//-> fixed , holly_PVR_DMA is for different use now (fixed the interrupts enum too)
 	asic_RaiseInterrupt(holly_CH2_DMA);
 }
 

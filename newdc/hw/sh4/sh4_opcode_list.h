@@ -22,15 +22,15 @@ enum sh4_eu
 	sh4_eu_max
 };
 
-//exeption fixup needed , added it to fix exeption on opcodes that modify before exept :)
+//exception fixup needed , added it to fix exception on opcodes that modify before exept :)
 enum sh4_exept_fixup
 {
 	fix_none,
-	rn_opt_1,	//1 if n!=m
-	rn_opt_2,	//2 if n!=m
-	rn_opt_4,	//4 if n!=m
-	rn_4,		//allwways 4 from rn
-	rn_fpu_4,	//4 or 8 , acording to fpu size
+	rn_opt_1,    //1 if n!=m
+	rn_opt_2,    //2 if n!=m
+	rn_opt_4,    //4 if n!=m
+	rn_4,        //Always 4 from rn
+	rn_fpu_4,    //4 or 8, according to FPU size
 };
 typedef void ( RecOpCallFP) (u32 op);
 struct sh4_opcodelistentry
@@ -81,7 +81,7 @@ extern sh4_opcodelistentry opcodes[];
 void DissasembleOpcode(u16 opcode,u32 pc,char* Dissasm);
 enum DecParam
 {
-	//constants
+	// Constants
 	PRM_PC_D8_x2,
 	PRM_PC_D8_x4,
 	PRM_ZERO,
@@ -90,29 +90,29 @@ enum DecParam
 	PRM_TWO_INV,
 	PRM_ONE_F32,
 	
-	//imms
+	// imms
 	PRM_SIMM8,
 	PRM_UIMM8,
 
-	//direct registers
+	// Direct registers
 	PRM_R0,
 	PRM_RN,
 	PRM_RM,
 	PRM_FRN,
-	PRM_FRN_SZ,		//signle/double, selected bank
+	PRM_FRN_SZ, //single/double, selected bank
 	PRM_FRM,
 	PRM_FRM_SZ,
-	PRM_FPN,	//float pair, 3 bits
-	PRM_FVN,	//float quad, 2 bits
-	PRM_FVM,	//float quad, 2 bits
-	PRM_XMTRX,	//float matrix, 0 bits
+	PRM_FPN,    //float pair, 3 bits
+	PRM_FVN,    //float quad, 2 bits
+	PRM_FVM,    //float quad, 2 bits
+	PRM_XMTRX,  //float matrix, 0 bits
 	PRM_FRM_FR0,
 	PRM_FPUL,
 	PRM_SR_T,
 	PRM_SR_STATUS,
 
-	PRM_SREG,	//FPUL/FPSCR/MACH/MACL/PR/DBR/SGR
-	PRM_CREG,	//SR/GBR/VBR/SSR/SPC/<RM_BANK>
+	PRM_SREG,   //FPUL/FPSCR/MACH/MACL/PR/DBR/SGR
+	PRM_CREG,   //SR/GBR/VBR/SSR/SPC/<RM_BANK>
 	
 	//reg/imm reg/reg
 	PRM_RN_D4_x1,
@@ -133,13 +133,13 @@ enum DecParam
 enum DecMode
 {
 	DM_ReadSRF,
-	DM_BinaryOp,	//d=d op s
-	DM_UnaryOp,		//d= op s
-	DM_ReadM,		//d=readm(s);s+=e
-	DM_WriteM,		//s-=e;writem(s,d);
+	DM_BinaryOp,    //d=d op s
+	DM_UnaryOp,     //d= op s
+	DM_ReadM,       //d=readm(s);s+=e
+	DM_WriteM,      //s-=e;writem(s,d);
 	DM_fiprOp,
-	DM_WriteTOp,	//T=d op s
-	DM_DT,			//special case for dt
+	DM_WriteTOp,    //T=d op s
+	DM_DT,          //special case for dt
 	DM_Shift,
 	DM_Rot,
 	DM_EXTOP,

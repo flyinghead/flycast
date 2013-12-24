@@ -15,14 +15,14 @@ s32 libARM_Init()
 	return rv_ok;
 }
 
-//called when plugin is unloaded by emu , olny if dcInit is called (eg , not called to enumerate plugins)
+//called when plugin is unloaded by emu, only if dcInit is called (eg, not called to enumerate plugins)
 void libARM_Term()
 {
 	term_mem();
 	//arm7_Term ?
 }
 
-//It's suposed to reset anything 
+//It's supposed to reset anything
 void libARM_Reset(bool Manual)
 {
 	arm_Reset();

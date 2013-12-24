@@ -41,7 +41,7 @@ void cpg_reset()
 	CPG_STBCR = 0;
 	CPG_WTCNT = 0;
 	CPG_WTCSR = 0;
-	CPG_STBCR2 = 0;	
+	CPG_STBCR2 = 0;
 }
 
 void cpg_term()

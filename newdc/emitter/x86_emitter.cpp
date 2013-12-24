@@ -81,7 +81,7 @@ void x86_block::Init(dyna_reallocFP* ral,dyna_finalizeFP* alf)
 #define labels (*(vector<x86_Label*>*) _labels)
 
 //Generates code.if user_data is non zero , user_data_size bytes are allocated after the executable code
-//and user_data is set to the first byte of em.Allways 16 byte alligned
+//and user_data is set to the first byte of em.Allways 16 byte aligned
 void* x86_block::Generate()
 {
 	if (do_realloc)
@@ -237,12 +237,12 @@ x86_block::x86_block()
 }
 x86_block::~x86_block()
 {
-	//ensure everything is free'd :)
+	//ensure everything is freed :)
 	Free();
 	delete &patches;
 	delete &labels;
 }
-//Will free any used resources exept generated code
+//Will free any used resources except generated code
 void x86_block::Free()
 {
 	for (u32 i =0;i<labels.size();i++)
@@ -284,7 +284,7 @@ void  x86_block::write32(u32 value)
 
 //Label related code
 
-//NOTE : Label position in mem must not chainge
+//NOTE : Label position in mem must not change
 void x86_block::CreateLabel(x86_Label* lbl,bool mark,u32 sz)
 {
 	memset(lbl,0xFFFFFFFF,sizeof(x86_Label));
@@ -294,7 +294,7 @@ void x86_block::CreateLabel(x86_Label* lbl,bool mark,u32 sz)
 	if (mark)
 		MarkLabel(lbl);
 }
-//Allocate a label and create it :).Will be delete'd when calling free and/or dtor
+//Allocate a label and create it :).Will be deleted when calling free and/or destructor
 x86_Label* x86_block::CreateLabel(bool mark,u32 sz)
 {
 	x86_Label* lbl = new x86_Label();
@@ -356,63 +356,63 @@ void x86_block::Emit(x86_opcode_class op,x86_Label* lbl)
 }
 
 //2 param
-//reg,reg	,reg1 is writen
+//reg,reg, reg1 is written
 void x86_block::Emit(x86_opcode_class op,x86_reg reg1,x86_reg reg2)
 {
 	ME_op_2_nrm(op,reg1,reg2);
 }
-//reg,smrm	,reg is writen
+//reg,smrm, reg is written
 void x86_block::Emit(x86_opcode_class op,x86_reg reg,x86_ptr mem)
 {
 	Emit(op,reg,c_mrm(mem));
 }
-//reg,mrm	,reg is writen
+//reg,mrm, reg is written
 void x86_block::Emit(x86_opcode_class op,x86_reg reg,x86_mrm_t mrm)
 {
 	ME_op_2_nrm(op,reg,mrm);
 }
-//reg,imm	,reg is writen
+//reg,imm, reg is written
 void x86_block::Emit(x86_opcode_class op,x86_reg reg,u32 imm)
 {
 	ME_op_2_imm(op,reg,imm);
 }
 
-//smrm,reg	,mem is writen
+//smrm,reg, mem is written
 void x86_block::Emit(x86_opcode_class op,x86_ptr mem,x86_reg reg)
 {
 	Emit(op,c_mrm(mem),reg);
 }
-//smrm,imm	,mem is writen
+//smrm,imm, mem is written
 void x86_block::Emit(x86_opcode_class op,x86_ptr mem,u32 imm)
 {
 	Emit(op,c_mrm(mem),imm);
 }
 
-//mrm,reg	,mrm is writen
+//mrm,reg, mrm is written
 void x86_block::Emit(x86_opcode_class op,x86_mrm_t mrm,x86_reg reg)
 {
 	ME_op_2_nrm(op,mrm,reg);
 }
-//mrm,imm	,mrm is writen
+//mrm,imm, mrm is written
 void x86_block::Emit(x86_opcode_class op,x86_mrm_t mrm,u32 imm)
 {
 	ME_op_2_imm(op,mrm,imm);
 }
 
 //3 param
-//reg,reg,imm	,reg1 is writen
+//reg,reg,imm, reg1 is written
 void x86_block::Emit(x86_opcode_class op,x86_reg reg1,x86_reg reg2,u32 imm)
 {
 	ME_op_3_imm(op,reg1,reg2,imm);
 }
 
-//reg,mrm,imm	,reg1 is writen
+//reg,mrm,imm, reg1 is written
 void x86_block::Emit(x86_opcode_class op,x86_reg reg,x86_ptr mem,u32 imm)
 {
 	ME_op_3_imm(op,reg,c_mrm(mem),imm);
 }
 
-//reg,mrm,imm	,reg1 is writen
+//reg,mrm,imm, reg1 is written
 void x86_block::Emit(x86_opcode_class op,x86_reg reg,x86_mrm_t mrm,u32 imm)
 {
 	ME_op_3_imm(op,reg,mrm,imm);
@@ -424,7 +424,7 @@ void x86_block::Emit(x86_opcode_class op,x86_reg reg,x86_mrm_t mrm,u32 imm)
 u8 EncodeDisp(u32 disp,x86_mrm_t* to,u8 flags)
 {
 	//[reg+sdisp8] or [reg+sdisp32]
-	//sdisp32 support olny for now , sdisp8 for later
+	//sdisp32 support only for now , sdisp8 for later
 	if (flags&1)
 	{
 		if (IsS8(disp))
@@ -489,13 +489,13 @@ x86_mrm_t x86_mrm(x86_reg base,x86_reg index,x86_sib_scale scale,x86_ptr disp)
 
 	if(index==NO_REG)
 	{
-		//no index , ingore scale
+		//no index , ignore scale
 		if (base==ESP)
 		{
 			//special encoding
 			//encoded as [none*x + ESP]
 			//index ,scale [sib]
-			rv.modrm = make_modrm(0,ESP);//ESP means sib
+			rv.modrm = make_modrm(0,ESP); //ESP means sib
 			rv.flags|=1;
 
 
@@ -512,14 +512,14 @@ x86_mrm_t x86_mrm(x86_reg base,x86_reg index,x86_sib_scale scale,x86_ptr disp)
 			//verify(false);
 			rv.modrm = make_modrm(0,base);
 			//uses [EBP+S8] , or [EBP+S32] forms
-			rv.modrm |= EncodeDisp(disp.ptr_int,&rv,3);	//32 or 8 bit disp
+			rv.modrm |= EncodeDisp(disp.ptr_int,&rv,3); //32 or 8 bit disp
 		}
 		else if (base == NO_REG)
 		{
 			//[disp32]
 			//special encoding , will use mode [EBP] (it means disp :p)
-			rv.modrm=make_modrm(0,EBP);			
-			EncodeDisp(disp.ptr_int,&rv,2|4);		//olny 32b disp alowed , uses form 0
+			rv.modrm=make_modrm(0,EBP);
+			EncodeDisp(disp.ptr_int,&rv,2|4); //only 32b disp allowed , uses form 0
 		}
 		else
 		{
@@ -527,7 +527,7 @@ x86_mrm_t x86_mrm(x86_reg base,x86_reg index,x86_sib_scale scale,x86_ptr disp)
 			rv.modrm = make_modrm(0,base);
 			if (disp.ptr_int!=0)
 			{
-				rv.modrm |= EncodeDisp(disp.ptr_int,&rv,3);	//32 or 16 bit disp
+				rv.modrm |= EncodeDisp(disp.ptr_int,&rv,3); //32 or 16 bit disp
 			}
 		}
 	}
@@ -547,7 +547,7 @@ x86_mrm_t x86_mrm(x86_reg base,x86_reg index,x86_sib_scale scale,x86_ptr disp)
 		if (base==NO_REG)
 		{
 			rv.sib=make_sib(scale,index,EBP);
-			disp_sz=2|4;//olny 32b disp , return 0 on mrm type
+			disp_sz=2|4; //only 32b disp , return 0 on mrm type
 			force_disp=true;
 		}
 		else

@@ -20,18 +20,18 @@ int maple_schid;
 /*
 	Maple host controller
 	Direct processing, async interrupt handling
-	Device code is on maple_devs.cpp/h, config&managment is on maple_cfg.cpp/h
+	Device code is on maple_devs.cpp/h, config&management is on maple_cfg.cpp/h
 
 	This code is missing many of the hardware details, like proper trigger handling,
-	dma continuation on suspect, etc ...
+	DMA continuation on suspect, etc ...
 */
 
 void maple_DoDma();
 
-//realy hackish
+//really hackish
 //misses delay , and stop/start implementation
 //ddt/etc are just hacked for wince to work
-//now with proper maple delayed dma maby its time to look into it ?
+//now with proper maple delayed DMA maybe its time to look into it ?
 bool maple_ddt_pending_reset=false;
 void maple_vblank()
 {
@@ -83,7 +83,7 @@ void maple_SB_MDEN_Write(u32 addr, u32 data)
 
 	if ((data & 0x1)==0  && SB_MDST)
 	{
-		die("maple dma abort ?\n");
+		die("Maple DMA abort ?\n");
 	}
 }
 
@@ -192,7 +192,7 @@ int maple_schd(int tag, int c, int j)
 	else
 	{
 		printf("WARNING: MAPLE DMA ABORT\n");
-		SB_MDST=0;	//I really wonder what this means, can the dma be continued ?
+		SB_MDST=0; //I really wonder what this means, can the DMA be continued ?
 	}
 
 	return 0;
@@ -222,13 +222,13 @@ void maple_Init()
 void maple_Reset(bool Manual)
 {
 	maple_ddt_pending_reset=false;
-	SB_MDTSEL	= 0x00000000;
-	SB_MDEN	= 0x00000000;
-	SB_MDST	= 0x00000000;
-	SB_MSYS	= 0x3A980000;
-	SB_MSHTCL	= 0x00000000;
+	SB_MDTSEL = 0x00000000;
+	SB_MDEN   = 0x00000000;
+	SB_MDST   = 0x00000000;
+	SB_MSYS   = 0x3A980000;
+	SB_MSHTCL = 0x00000000;
 	SB_MDAPRO = 0x00007F00;
-	SB_MMSEL	= 0x00000001;
+	SB_MMSEL  = 0x00000001;
 }
 
 void maple_Term()

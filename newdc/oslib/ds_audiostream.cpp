@@ -162,20 +162,25 @@ u32 os_Push(void* frame, u32 samples, bool wait)
 
 	bool w=false;
 
-	for(int i=0;i<samples*2;i++)
+	for (int i = 0; i < samples*2; i++)
+	{
 		if (f[i])
 		{
-			w=true;
+			w = true;
 			break;
 		}
+	}
 
 	wait &= w;
 
 	int ffs=1;
 	
-	while (os_IsAudioBufferedLots() && wait) if (ffs==0) ffs=printf("AUD WAIT %d\n",os_getusedSamples()) ;
+	while (os_IsAudioBufferedLots() && wait)
+		if (ffs == 0)
+			ffs = printf("AUD WAIT %d\n",os_getusedSamples());
 
-	while(!os_Push_nw(frame,samples) && wait) printf("FAILED waiting on audio FAILED %d\n",os_getusedSamples()) ;
+	while(!os_Push_nw(frame,samples) && wait)
+		printf("FAILED waiting on audio FAILED %d\n",os_getusedSamples());
 
 	return 1;
 }

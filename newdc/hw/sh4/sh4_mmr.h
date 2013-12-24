@@ -12,16 +12,16 @@ void map_p4();
 
 #define sq_both ((u8*)sh4rcb.sq_buffer)
 
-extern Array<RegisterStruct> CCN;		//CCN  : 14 registers
-extern Array<RegisterStruct> UBC;		//UBC  : 9 registers
-extern Array<RegisterStruct> BSC;		//BSC  : 18 registers
-extern Array<RegisterStruct> DMAC;		//DMAC : 17 registers
-extern Array<RegisterStruct> CPG;		//CPG  : 5 registers
-extern Array<RegisterStruct> RTC;		//RTC  : 16 registers
-extern Array<RegisterStruct> INTC;		//INTC : 4 registers
-extern Array<RegisterStruct> TMU;		//TMU  : 12 registers
-extern Array<RegisterStruct> SCI;		//SCI  : 8 registers
-extern Array<RegisterStruct> SCIF;		//SCIF : 10 registers
+extern Array<RegisterStruct> CCN;  //CCN  : 14 registers
+extern Array<RegisterStruct> UBC;  //UBC  : 9 registers
+extern Array<RegisterStruct> BSC;  //BSC  : 18 registers
+extern Array<RegisterStruct> DMAC; //DMAC : 17 registers
+extern Array<RegisterStruct> CPG;  //CPG  : 5 registers
+extern Array<RegisterStruct> RTC;  //RTC  : 16 registers
+extern Array<RegisterStruct> INTC; //INTC : 4 registers
+extern Array<RegisterStruct> TMU;  //TMU  : 12 registers
+extern Array<RegisterStruct> SCI;  //SCI  : 8 registers
+extern Array<RegisterStruct> SCIF; //SCIF : 10 registers
 
 /*
 //Region P4
@@ -438,41 +438,41 @@ union BSC_BCR1_type
 {
 	struct
 	{
-		u32 A56PCM:1;
-		u32 res_0:1;
-		u32 DRAMTP0:1;
-		u32 DRAMTP1:1;
-		u32 DRAMTP2:1;
-		u32 A6BST0:1;
-		u32 A6BST1:1;
-		u32 A6BST2:1;
+		u32 A56PCM  : 1;
+		u32 res_0   : 1;
+		u32 DRAMTP0 : 1;
+		u32 DRAMTP1 : 1;
+		u32 DRAMTP2 : 1;
+		u32 A6BST0  : 1;
+		u32 A6BST1  : 1;
+		u32 A6BST2  : 1;
 		//8
-		u32 A5BST0:1;
-		u32 A5BST1:1;
-		u32 A5BST2:1;
-		u32 A0BST0:1;
-		u32 A0BST1:1;
-		u32 A0BST2:1;
-		u32 HIZCNT:1;
-		u32 HIZMEM:1;
+		u32 A5BST0 : 1;
+		u32 A5BST1 : 1;
+		u32 A5BST2 : 1;
+		u32 A0BST0 : 1;
+		u32 A0BST1 : 1;
+		u32 A0BST2 : 1;
+		u32 HIZCNT : 1;
+		u32 HIZMEM : 1;
 		//16
-		u32 res_1:1;
-		u32 MEMMPX:1;
-		u32 PSHR:1;
-		u32 BREQEN:1;
-		u32 A4MBC:1;
-		u32 A1MBC:1;
-		u32 res_2:1;
-		u32 res_3:1;
+		u32 res_1  : 1;
+		u32 MEMMPX : 1;
+		u32 PSHR   : 1;
+		u32 BREQEN : 1;
+		u32 A4MBC  : 1;
+		u32 A1MBC  : 1;
+		u32 res_2  : 1;
+		u32 res_3  : 1;
 		//24
-		u32 OPUP:1;
-		u32 IPUP:1;
-		u32 res_4:1;
-		u32 res_5:1;
-		u32 res_6:1;
-		u32 A0MPX:1;	//set to 1 (area 0 is mpx)
-		u32 MASTER:1;	//what is it on dreamcast ?
-		u32 ENDIAN:1;	//this is 1 on dreamcast
+		u32 OPUP   : 1;
+		u32 IPUP   : 1;
+		u32 res_4  : 1;
+		u32 res_5  : 1;
+		u32 res_6  : 1;
+		u32 A0MPX  : 1;  // Set to 1 (area 0 is mpx)
+		u32 MASTER : 1; // What is it on the Dreamcast ?
+		u32 ENDIAN : 1; // This is 1 on the Dreamcast
 	};
 
 	u32 full;
@@ -483,28 +483,28 @@ union BSC_BCR1_type
 //extern BCR1_type BSC_BCR1;
 
 //16 bit
-//A0SZ0,A0SZ1 are read olny , ohters are are editable and reseted to 0
+//A0SZ0,A0SZ1 are read only , others are are editable and reseted to 0
 union BSC_BCR2_type
 {
 	struct
 	{
-		u32 PORTEN:1;
-		u32 res_0:1;
-		u32 A0SZ0:1;
-		u32 A1SZ1:1;
-		u32 A2SZ0:1;
-		u32 A2SZ1:1;
-		u32 A3SZ0:1;
-		u32 A3SZ1:1;
+		u32 PORTEN    : 1;
+		u32 res_0     : 1;
+		u32 A0SZ0     : 1;
+		u32 A1SZ1     : 1;
+		u32 A2SZ0     : 1;
+		u32 A2SZ1     : 1;
+		u32 A3SZ0     : 1;
+		u32 A3SZ1     : 1;
 		//8
-		u32 A4SZ0:1;
-		u32 A4SZ1:1;
-		u32 A5SZ0:1;
-		u32 A5SZ1:1;
-		u32 A6SZ0:1;
-		u32 A6SZ1:1;
-		u32 A0SZ0_inp:1;	//read olny , what value on dc?
-		u32 A0SZ1_inp:1;	//read olny , what value on dc?
+		u32 A4SZ0     : 1;
+		u32 A4SZ1     : 1;
+		u32 A5SZ0     : 1;
+		u32 A5SZ1     : 1;
+		u32 A6SZ0     : 1;
+		u32 A6SZ1     : 1;
+		u32 A0SZ0_inp : 1; //read only - what value on the Dreamcast?
+		u32 A0SZ1_inp : 1; //read only - what value on the Dreamcast?
 		//16
 	};
 
@@ -517,41 +517,41 @@ union BSC_WCR1_type
 {
 	struct
 	{
-		u32 A0IW0:1;
-		u32 A0IW1:1;
-		u32 A0IW2:1;
-		u32 res_0:1;
-		u32 A1IW0:1;
-		u32 A1IW1:1;
-		u32 A1IW2:1;
-		u32 res_1:1;
+		u32 A0IW0  : 1;
+		u32 A0IW1  : 1;
+		u32 A0IW2  : 1;
+		u32 res_0  : 1;
+		u32 A1IW0  : 1;
+		u32 A1IW1  : 1;
+		u32 A1IW2  : 1;
+		u32 res_1  : 1;
 		//8
-		u32 A2IW0:1;
-		u32 A2IW1:1;
-		u32 A2IW2:1;
-		u32 res_2:1;
-		u32 A3IW0:1;
-		u32 A3IW1:1;
-		u32 A3IW2:1;
-		u32 res_3:1;
+		u32 A2IW0  : 1;
+		u32 A2IW1  : 1;
+		u32 A2IW2  : 1;
+		u32 res_2  : 1;
+		u32 A3IW0  : 1;
+		u32 A3IW1  : 1;
+		u32 A3IW2  : 1;
+		u32 res_3  : 1;
 		//16
-		u32 A4IW0:1;
-		u32 A4IW1:1;
-		u32 A4IW2:1;
-		u32 res_4:1;
-		u32 A5IW0:1;
-		u32 A5IW1:1;
-		u32 A5IW2:1;
-		u32 res_5:1;
+		u32 A4IW0  : 1;
+		u32 A4IW1  : 1;
+		u32 A4IW2  : 1;
+		u32 res_4  : 1;
+		u32 A5IW0  : 1;
+		u32 A5IW1  : 1;
+		u32 A5IW2  : 1;
+		u32 res_5  : 1;
 		//24
-		u32 A6IW0:1;
-		u32 A6IW1:1;
-		u32 A6IW2:1;
-		u32 res_6:1;
-		u32 DMAIW0:1;
-		u32 DMAIW1:1;	
-		u32 DMAIW2:1;	
-		u32 res_7:1;		
+		u32 A6IW0  : 1;
+		u32 A6IW1  : 1;
+		u32 A6IW2  : 1;
+		u32 res_6  : 1;
+		u32 DMAIW0 : 1;
+		u32 DMAIW1 : 1;
+		u32 DMAIW2 : 1;
+		u32 res_7  : 1;
 	};
 
 	u32 full;
@@ -563,41 +563,41 @@ union BSC_WCR2_type
 {
 	struct
 	{
-		u32 A0B0:1;
-		u32 A0B1:1;
-		u32 A0B2:1;
-		u32 A0W0:1;
-		u32 A0W1:1;
-		u32 A0W2:1;
-		u32 A1W0:1;
-		u32 A1W1:1;
+		u32 A0B0  : 1;
+		u32 A0B1  : 1;
+		u32 A0B2  : 1;
+		u32 A0W0  : 1;
+		u32 A0W1  : 1;
+		u32 A0W2  : 1;
+		u32 A1W0  : 1;
+		u32 A1W1  : 1;
 		//8
-		u32 A1W2:1;
-		u32 A2W0:1;
-		u32 A2W1:1;
-		u32 A2W2:1;
-		u32 res_0:1;
-		u32 A3W0:1;
-		u32 A3W1:1;
-		u32 A3W2:1;
+		u32 A1W2  : 1;
+		u32 A2W0  : 1;
+		u32 A2W1  : 1;
+		u32 A2W2  : 1;
+		u32 res_0 : 1;
+		u32 A3W0  : 1;
+		u32 A3W1  : 1;
+		u32 A3W2  : 1;
 		//16
-		u32 res_1:1;
-		u32 A4W0:1;
-		u32 A4W1:1;
-		u32 A4W2:1;
-		u32 A5B0:1;
-		u32 A5B1:1;
-		u32 A5B2:1;
-		u32 A5W0:1;
+		u32 res_1 : 1;
+		u32 A4W0  : 1;
+		u32 A4W1  : 1;
+		u32 A4W2  : 1;
+		u32 A5B0  : 1;
+		u32 A5B1  : 1;
+		u32 A5B2  : 1;
+		u32 A5W0  : 1;
 		//24
-		u32 A5W1:1;
-		u32 A5W2:1;
-		u32 A6B0:1;
-		u32 A6B1:1;
-		u32 A6B2:1;
-		u32 A6W0:1;	
-		u32 A6W1:1;	
-		u32 A6W2:1;		
+		u32 A5W1  : 1;
+		u32 A5W2  : 1;
+		u32 A6B0  : 1;
+		u32 A6B1  : 1;
+		u32 A6B2  : 1;
+		u32 A6W0  : 1;
+		u32 A6W1  : 1;
+		u32 A6W2  : 1;
 	};
 
 	u32 full;
@@ -610,41 +610,41 @@ union BSC_WCR3_type
 {
 	struct
 	{
-		u32 A0H0:1;
-		u32 A0H1:1;
-		u32 A0S0:1;
-		u32 res_0:1;
-		u32 A1H0:1;	//TODO: check if this is correct, on the maual it says A1H0 .. typo in the manual ? 
-		u32 A1H1:1;
-		u32 A1S0:1;
-		u32 res_1:1;
+		u32 A0H0   : 1;
+		u32 A0H1   : 1;
+		u32 A0S0   : 1;
+		u32 res_0  : 1;
+		u32 A1H0   : 1; //TODO: check if this is correct, on the manual it says A1H0 .. typo in the manual ? 
+		u32 A1H1   : 1;
+		u32 A1S0   : 1;
+		u32 res_1  : 1;
 		//8
-		u32 A2H0:1;
-		u32 A2H1:1;
-		u32 A2S0:1;
-		u32 res_2:1;
-		u32 A3H0:1;
-		u32 A3H1:1;
-		u32 A3S0:1;
-		u32 res_3:1;
+		u32 A2H0   : 1;
+		u32 A2H1   : 1;
+		u32 A2S0   : 1;
+		u32 res_2  : 1;
+		u32 A3H0   : 1;
+		u32 A3H1   : 1;
+		u32 A3S0   : 1;
+		u32 res_3  : 1;
 		//16
-		u32 A4H0:1;
-		u32 A4H1:1;
-		u32 A4S0:1;
-		u32 res_4:1;
-		u32 A5H0:1;
-		u32 A5H1:1;
-		u32 A5S0:1;
-		u32 res_5:1;
+		u32 A4H0   : 1;
+		u32 A4H1   : 1;
+		u32 A4S0   : 1;
+		u32 res_4  : 1;
+		u32 A5H0   : 1;
+		u32 A5H1   : 1;
+		u32 A5S0   : 1;
+		u32 res_5  : 1;
 		//24
-		u32 A6H0:1;
-		u32 A6H1:1;
-		u32 A6S0:1;
-		u32 res_6:1;
-		u32 res_7:1;
-		u32 res_8:1;	
-		u32 res_9:1;	
-		u32 res_10:1;		
+		u32 A6H0   : 1;
+		u32 A6H1   : 1;
+		u32 A6S0   : 1;
+		u32 res_6  : 1;
+		u32 res_7  : 1;
+		u32 res_8  : 1;
+		u32 res_9  : 1;
+		u32 res_10 : 1;
 	};
 
 	u32 full;
@@ -658,41 +658,41 @@ union BSC_MCR_type
 {
 	struct
 	{
-		u32 EDO_MODE:1;
-		u32 RMODE:1;
-		u32 RFSH:1;
-		u32 AMX0:1;
-		u32 AMX1:1;
-		u32 AMX2:1;
-		u32 AMXEXT:1;
-		u32 SZ0:1;
+		u32 EDO_MODE : 1;
+		u32 RMODE    : 1;
+		u32 RFSH     : 1;
+		u32 AMX0     : 1;
+		u32 AMX1     : 1;
+		u32 AMX2     : 1;
+		u32 AMXEXT   : 1;
+		u32 SZ0      : 1;
 		//8
-		u32 SZ1:1;
-		u32 BE:1;
-		u32 TRAS0:1;
-		u32 TRAS1:1;
-		u32 TRAS2:1;
-		u32 TRWL0:1;
-		u32 TRWL1:1;
-		u32 TRWL2:1;
+		u32 SZ1      : 1;
+		u32 BE       : 1;
+		u32 TRAS0    : 1;
+		u32 TRAS1    : 1;
+		u32 TRAS2    : 1;
+		u32 TRWL0    : 1;
+		u32 TRWL1    : 1;
+		u32 TRWL2    : 1;
 		//16
-		u32 RCD0:1;
-		u32 RCD1:1;
-		u32 res_0:1;
-		u32 TPC0:1;
-		u32 TPC1:1;
-		u32 TPC2:1;
-		u32 res_1:1;
-		u32 TCAS:1;
+		u32 RCD0     : 1;
+		u32 RCD1     : 1;
+		u32 res_0    : 1;
+		u32 TPC0     : 1;
+		u32 TPC1     : 1;
+		u32 TPC2     : 1;
+		u32 res_1    : 1;
+		u32 TCAS     : 1;
 		//24
-		u32 res_2:1;
-		u32 res_3:1;
-		u32 res_4:1;
-		u32 TRC0:1;
-		u32 TRC1:1;
-		u32 TRC2:1;	
-		u32 MRSET:1;	
-		u32 RASD:1;		
+		u32 res_2    : 1;
+		u32 res_3    : 1;
+		u32 res_4    : 1;
+		u32 TRC0     : 1;
+		u32 TRC1     : 1;
+		u32 TRC2     : 1;
+		u32 MRSET    : 1;
+		u32 RASD     : 1;
 	};
 
 	u32 full;
@@ -706,23 +706,23 @@ union BSC_PCR_type
 {
 	struct
 	{
-		u32 A6TEH0:1;
-		u32 A6TEH1:1;
-		u32 A6TEH2:1;
-		u32 A5TEH0:1;
-		u32 A5TEH1:1;
-		u32 A5TEH2:1;
-		u32 A6TED0:1;
-		u32 A6TED1:1;
+		u32 A6TEH0 : 1;
+		u32 A6TEH1 : 1;
+		u32 A6TEH2 : 1;
+		u32 A5TEH0 : 1;
+		u32 A5TEH1 : 1;
+		u32 A5TEH2 : 1;
+		u32 A6TED0 : 1;
+		u32 A6TED1 : 1;
 		//8
-		u32 A6TED2:1;
-		u32 A5TED0:1;
-		u32 A5TED1:1;
-		u32 A5TED2:1;
-		u32 A6PCW0:1;
-		u32 A6PCW1:1;
-		u32 A5PCW0:1;
-		u32 A5PCW1:1;
+		u32 A6TED2 : 1;
+		u32 A5TED0 : 1;
+		u32 A5TED1 : 1;
+		u32 A5TED2 : 1;
+		u32 A6PCW0 : 1;
+		u32 A6PCW1 : 1;
+		u32 A5PCW0 : 1;
+		u32 A5PCW1 : 1;
 		//16
 	};
 	u16 full;
@@ -735,23 +735,23 @@ union BSC_RTCSR_type
 {
 	struct
 	{
-		u32 LMTS:1;
-		u32 OVIE:1;
-		u32 OVF:1;
-		u32 CKS0:1;
-		u32 CKS1:1;
-		u32 CKS2:1;
-		u32 CMIE:1;
-		u32 CMF:1;
+		u32 LMTS : 1;
+		u32 OVIE : 1;
+		u32 OVF  : 1;
+		u32 CKS0 : 1;
+		u32 CKS1 : 1;
+		u32 CKS2 : 1;
+		u32 CMIE : 1;
+		u32 CMF  : 1;
 		//8
-		u32 res_0:1;
-		u32 res_1:1;
-		u32 res_2:1;
-		u32 res_3:1;
-		u32 res_4:1;
-		u32 res_5:1;
-		u32 res_6:1;
-		u32 res_7:1;
+		u32 res_0 : 1;
+		u32 res_1 : 1;
+		u32 res_2 : 1;
+		u32 res_3 : 1;
+		u32 res_4 : 1;
+		u32 res_5 : 1;
+		u32 res_6 : 1;
+		u32 res_7 : 1;
 		//16
 	};
 	u16 full;
@@ -764,16 +764,16 @@ union BSC_RTCNT_type
 {
 	struct
 	{
-		u32 VALUE:8;
+		u32 VALUE : 8;
 		//8
-		u32 res_0:1;
-		u32 res_1:1;
-		u32 res_2:1;
-		u32 res_3:1;
-		u32 res_4:1;
-		u32 res_5:1;
-		u32 res_6:1;
-		u32 res_7:1;
+		u32 res_0 : 1;
+		u32 res_1 : 1;
+		u32 res_2 : 1;
+		u32 res_3 : 1;
+		u32 res_4 : 1;
+		u32 res_5 : 1;
+		u32 res_6 : 1;
+		u32 res_7 : 1;
 		//16
 	};
 	u16 full;
@@ -786,16 +786,16 @@ union BSC_RTCOR_type
 {
 	struct
 	{
-		u32 VALUE:8;
+		u32 VALUE : 8;
 		//8
-		u32 res_0:1;
-		u32 res_1:1;
-		u32 res_2:1;
-		u32 res_3:1;
-		u32 res_4:1;
-		u32 res_5:1;
-		u32 res_6:1;
-		u32 res_7:1;
+		u32 res_0 : 1;
+		u32 res_1 : 1;
+		u32 res_2 : 1;
+		u32 res_3 : 1;
+		u32 res_4 : 1;
+		u32 res_5 : 1;
+		u32 res_6 : 1;
+		u32 res_7 : 1;
 		//16
 	};
 	u16 full;
@@ -809,14 +809,14 @@ union BSC_RFCR_type
 {
 	struct
 	{
-		u32 VALUE:10;
+		u32 VALUE : 10;
 		//10
-		u32 res_2:1;
-		u32 res_3:1;
-		u32 res_4:1;
-		u32 res_5:1;
-		u32 res_6:1;
-		u32 res_7:1;
+		u32 res_2 : 1;
+		u32 res_3 : 1;
+		u32 res_4 : 1;
+		u32 res_5 : 1;
+		u32 res_6 : 1;
+		u32 res_7 : 1;
 		//16
 	};
 	u16 full;
@@ -829,41 +829,41 @@ union BSC_PCTRA_type
 {
 	struct
 	{
-		u32 PB0IO:1;
-		u32 PB0PUP:1;
-		u32 PB1IO:1;
-		u32 PB1PUP:1;
-		u32 PB2IO:1;
-		u32 PB2PUP:1;
-		u32 PB3IO:1;
-		u32 PB3PUP:1;
+		u32 PB0IO   : 1;
+		u32 PB0PUP  : 1;
+		u32 PB1IO   : 1;
+		u32 PB1PUP  : 1;
+		u32 PB2IO   : 1;
+		u32 PB2PUP  : 1;
+		u32 PB3IO   : 1;
+		u32 PB3PUP  : 1;
 		//8
-		u32 PB4IO:1;
-		u32 PB4PUP:1;
-		u32 PB5IO:1;
-		u32 PB5PUP:1;
-		u32 PB6IO:1;
-		u32 PB6PUP:1;
-		u32 PB7IO:1;
-		u32 PB7PUP:1;
+		u32 PB4IO   : 1;
+		u32 PB4PUP  : 1;
+		u32 PB5IO   : 1;
+		u32 PB5PUP  : 1;
+		u32 PB6IO   : 1;
+		u32 PB6PUP  : 1;
+		u32 PB7IO   : 1;
+		u32 PB7PUP  : 1;
 		//16
-		u32 PB8IO:1;
-		u32 PB8PUP:1;
-		u32 PB9IO:1;
-		u32 PB9PUP:1;
-		u32 PB10IO:1;
-		u32 PB10PUP:1;
-		u32 PB11IO:1;
-		u32 PB11PUP:1;
+		u32 PB8IO   : 1;
+		u32 PB8PUP  : 1;
+		u32 PB9IO   : 1;
+		u32 PB9PUP  : 1;
+		u32 PB10IO  : 1;
+		u32 PB10PUP : 1;
+		u32 PB11IO  : 1;
+		u32 PB11PUP : 1;
 		//24
-		u32 PB12IO:1;
-		u32 PB12PUP:1;
-		u32 PB13IO:1;
-		u32 PB13PUP:1;
-		u32 PB14IO:1;
-		u32 PB14PUP:1;
-		u32 PB15IO:1;
-		u32 PB15PUP:1;
+		u32 PB12IO  : 1;
+		u32 PB12PUP : 1;
+		u32 PB13IO  : 1;
+		u32 PB13PUP : 1;
+		u32 PB14IO  : 1;
+		u32 PB14PUP : 1;
+		u32 PB15IO  : 1;
+		u32 PB15PUP : 1;
 	};
 
 	u32 full;
@@ -876,23 +876,23 @@ union BSC_PDTRA_type
 {
 	struct
 	{
-		u32 PB0DT:1;
-		u32 PB1DT:1;
-		u32 PB2DT:1;
-		u32 PB3DT:1;
-		u32 PB4DT:1;
-		u32 PB5DT:1;
-		u32 PB6DT:1;
-		u32 PB7DT:1;
+		u32 PB0DT  : 1;
+		u32 PB1DT  : 1;
+		u32 PB2DT  : 1;
+		u32 PB3DT  : 1;
+		u32 PB4DT  : 1;
+		u32 PB5DT  : 1;
+		u32 PB6DT  : 1;
+		u32 PB7DT  : 1;
 		//8
-		u32 PB8DT:1;
-		u32 PB9DT:1;
-		u32 PB10DT:1;
-		u32 PB11DT:1;
-		u32 PB12DT:1;
-		u32 PB13DT:1;
-		u32 PB14DT:1;
-		u32 PB15DT:1;
+		u32 PB8DT  : 1;
+		u32 PB9DT  : 1;
+		u32 PB10DT : 1;
+		u32 PB11DT : 1;
+		u32 PB12DT : 1;
+		u32 PB13DT : 1;
+		u32 PB14DT : 1;
+		u32 PB15DT : 1;
 		//16
 	};
 	u16 full;
@@ -905,41 +905,41 @@ union BSC_PCTRB_type
 {
 	struct
 	{
-		u32 PB16IO:1;
-		u32 PB16PUP:1;
-		u32 PB17IO:1;
-		u32 PB17PUP:1;
-		u32 PB18IO:1;
-		u32 PB18PUP:1;
-		u32 PB19IO:1;
-		u32 PB19PUP:1;
+		u32 PB16IO  : 1;
+		u32 PB16PUP : 1;
+		u32 PB17IO  : 1;
+		u32 PB17PUP : 1;
+		u32 PB18IO  : 1;
+		u32 PB18PUP : 1;
+		u32 PB19IO  : 1;
+		u32 PB19PUP : 1;
 		//8
-		u32 res_0:1;
-		u32 res_1:1;
-		u32 res_2:1;
-		u32 res_3:1;
-		u32 res_4:1;
-		u32 res_5:1;
-		u32 res_6:1;
-		u32 res_7:1;
+		u32 res_0   : 1;
+		u32 res_1   : 1;
+		u32 res_2   : 1;
+		u32 res_3   : 1;
+		u32 res_4   : 1;
+		u32 res_5   : 1;
+		u32 res_6   : 1;
+		u32 res_7   : 1;
 		//16
-		u32 res_8:1;
-		u32 res_9:1;
-		u32 res_10:1;
-		u32 res_11:1;
-		u32 res_12:1;
-		u32 res_13:1;
-		u32 res_14:1;
-		u32 res_15:1;
+		u32 res_8   : 1;
+		u32 res_9   : 1;
+		u32 res_10  : 1;
+		u32 res_11  : 1;
+		u32 res_12  : 1;
+		u32 res_13  : 1;
+		u32 res_14  : 1;
+		u32 res_15  : 1;
 		//24
-		u32 res_16:1;
-		u32 res_17:1;
-		u32 res_18:1;
-		u32 res_19:1;
-		u32 res_20:1;
-		u32 res_21:1;
-		u32 res_22:1;
-		u32 res_23:1;
+		u32 res_16  : 1;
+		u32 res_17  : 1;
+		u32 res_18  : 1;
+		u32 res_19  : 1;
+		u32 res_20  : 1;
+		u32 res_21  : 1;
+		u32 res_22  : 1;
+		u32 res_23  : 1;
 	};
 
 	u32 full;
@@ -952,23 +952,23 @@ union BSC_PDTRB_type
 {
 	struct
 	{
-		u32 PB16DT:1;
-		u32 PB17DT:1;
-		u32 PB18DT:1;
-		u32 PB19DT:1;
-		u32 res_0:1;
-		u32 res_1:1;
-		u32 res_2:1;
-		u32 res_3:1;
+		u32 PB16DT : 1;
+		u32 PB17DT : 1;
+		u32 PB18DT : 1;
+		u32 PB19DT : 1;
+		u32 res_0  : 1;
+		u32 res_1  : 1;
+		u32 res_2  : 1;
+		u32 res_3  : 1;
 		//8
-		u32 res_4:1;
-		u32 res_5:1;
-		u32 res_6:1;
-		u32 res_7:1;
-		u32 res_8:1;
-		u32 res_9:1;
-		u32 res_10:1;
-		u32 res_11:1;
+		u32 res_4  : 1;
+		u32 res_5  : 1;
+		u32 res_6  : 1;
+		u32 res_7  : 1;
+		u32 res_8  : 1;
+		u32 res_9  : 1;
+		u32 res_10 : 1;
+		u32 res_11 : 1;
 		//16
 	};
 	u16 full;
@@ -981,23 +981,23 @@ union BSC_GPIOIC_type
 {
 	struct
 	{
-		u32 PTIREN0:1;
-		u32 PTIREN1:1;
-		u32 PTIREN2:1;
-		u32 PTIREN3:1;
-		u32 PTIREN4:1;
-		u32 PTIREN5:1;
-		u32 PTIREN6:1;
-		u32 PTIREN7:1;
+		u32 PTIREN0  : 1;
+		u32 PTIREN1  : 1;
+		u32 PTIREN2  : 1;
+		u32 PTIREN3  : 1;
+		u32 PTIREN4  : 1;
+		u32 PTIREN5  : 1;
+		u32 PTIREN6  : 1;
+		u32 PTIREN7  : 1;
 		//8
-		u32 PTIREN8:1;
-		u32 PTIREN9:1;
-		u32 PTIREN10:1;
-		u32 PTIREN11:1;
-		u32 PTIREN12:1;
-		u32 PTIREN13:1;
-		u32 PTIREN14:1;
-		u32 PTIREN15:1;
+		u32 PTIREN8  : 1;
+		u32 PTIREN9  : 1;
+		u32 PTIREN10 : 1;
+		u32 PTIREN11 : 1;
+		u32 PTIREN12 : 1;
+		u32 PTIREN13 : 1;
+		u32 PTIREN14 : 1;
+		u32 PTIREN15 : 1;
 		//16
 	};
 	u16 full;
@@ -1011,9 +1011,9 @@ union CCN_PTEH_type
 {
 	struct
 	{
-		u32 ASID:8; //0-7 ASID
-		u32 res:2;  //8,9 reserved
-		u32 VPN:22; //10-31 VPN
+		u32 ASID : 8;  //0-7 ASID
+		u32 res  : 2;  //8,9 reserved
+		u32 VPN  : 22; //10-31 VPN
 	};
 	u32 reg_data;
 };
@@ -1022,19 +1022,19 @@ union CCN_PTEL_type
 {
 	struct
 	{
-		u32 WT:1;
-		u32 SH:1;
-		u32 D :1;
-		u32 C :1;
-		
-		u32 SZ0:1;
-		u32 PR :2;
-		u32 SZ1:1;
+		u32 WT    : 1;
+		u32 SH    : 1;
+		u32 D     : 1;
+		u32 C     : 1;
 
-		u32 V:1;
-		u32 res_0:1;
-		u32 PPN:19;//PPN 10-28
-		u32 res_1:3;
+		u32 SZ0   : 1;
+		u32 PR    : 2;
+		u32 SZ1   : 1;
+
+		u32 V     : 1;
+		u32 res_0 : 1;
+		u32 PPN   : 19; //PPN 10-28
+		u32 res_1 : 3;
 	};
 	u32 reg_data;
 };
@@ -1043,15 +1043,15 @@ union CCN_MMUCR_type
 {
 	struct
 	{
-		u32 AT:1;
-		u32 res:1;
-		u32 TI:1;
-		u32 res_2:5;
-		u32 SV:1;
-		u32 SQMD:1;
-		u32 URC:6;
-		u32 URB:6;
-		u32 LRUI:6;
+		u32 AT    : 1;
+		u32 res   : 1;
+		u32 TI    : 1;
+		u32 res_2 : 5;
+		u32 SV    : 1;
+		u32 SQMD  : 1;
+		u32 URC   : 6;
+		u32 URB   : 6;
+		u32 LRUI  : 6;
 	};
 	u32 reg_data;
 };
@@ -1060,9 +1060,9 @@ union CCN_PTEA_type
 {
 	struct
 	{
-		u32 SA:3;
-		u32 TC:1;
-		u32 res:28;
+		u32 SA  : 3;
+		u32 TC  : 1;
+		u32 res : 28;
 	};
 	u32 reg_data;
 };
@@ -1071,20 +1071,20 @@ union CCN_CCR_type
 {
 	struct
 	{
-		u32 OCE:1;
-		u32 WT:1;
-		u32 CB:1;
-		u32 OCI:1;
-		u32 res:1;
-		u32 ORA:1;
-		u32 res_1:1;
-		u32 OIX:1;
-		u32 ICE:1;
-		u32 res_2:2;
-		u32 ICI:1;
-		u32 res_3:3;
-		u32 IIX:1;
-		u32 res_4:16;
+		u32 OCE   : 1;
+		u32 WT    : 1;
+		u32 CB    : 1;
+		u32 OCI   : 1;
+		u32 res   : 1;
+		u32 ORA   : 1;
+		u32 res_1 : 1;
+		u32 OIX   : 1;
+		u32 ICE   : 1;
+		u32 res_2 : 2;
+		u32 ICI   : 1;
+		u32 res_3 : 3;
+		u32 IIX   : 1;
+		u32 res_4 : 16;
 	};
 	u32 reg_data;
 };
@@ -1093,9 +1093,9 @@ union CCN_QACR_type
 {
 	struct
 	{
-		u32 res:2;
-		u32 Area:3;
-		u32 res_1:27;
+		u32 res   : 2;
+		u32 Area  : 3;
+		u32 res_1 : 27;
 	};
 	u32 reg_data;
 };
@@ -1131,40 +1131,40 @@ union DMAC_CHCR_type
 {
 	struct
 	{
-		u32 DE:1;	//Channel Enable
-		u32 TE:1;	//Transfer End
-		u32 IE:1;	//Interrupt Enable
-		u32 res0:1;
+		u32 DE    : 1; //Channel Enable
+		u32 TE    : 1; //Transfer End
+		u32 IE    : 1; //Interrupt Enable
+		u32 res0  : 1;
 
-		u32 TS:3;	//Transmit Size
-		//u32 TS1:1;
-		//u32 TS2:1;
-		u32 TM:1;	//Transmit Mode
+		u32 TS    : 3; //Transmit Size
+		//u32 TS1 :1;
+		//u32 TS2 :1;
+		u32 TM    : 1; //Transmit Mode
 
-		u32 RS:4;	//Resource Select
-		//u32 RS1:1;
-		//u32 RS2:1;
-		//u32 RS3:1;
+		u32 RS    : 4; //Resource Select
+		//u32 RS1 :1;
+		//u32 RS2 :1;
+		//u32 RS3 :1;
 
-		u32 SM:2;	//SRC mode
-		//u32 SM1:1;
-		u32 DM:2;	//DST mode
-		//u32 DM1:1;
+		u32 SM    : 2; //SRC mode
+		//u32 SM1 :1;
+		u32 DM    : 2; //DST mode
+		//u32 DM1 :1;
 
-		u32 AL:1;	//Acknowledge Level
-		u32 AM:1;	//Acknowledge Mode
-		u32 RL:1;	//In normal DMA mode, this bit is valid only in CHCR0 and CHCR1. In DDT mode, this bit is invalid.
-		u32 DS:1;	//In normal DMA mode, this bit is valid only in CHCR0 and CHCR1. In DDT mode, it is valid in CHCR0–CHCR3.
+		u32 AL    : 1; //Acknowledge Level
+		u32 AM    : 1; //Acknowledge Mode
+		u32 RL    : 1; //In normal DMA mode, this bit is valid only in CHCR0 and CHCR1. In DDT mode, this bit is invalid.
+		u32 DS    : 1; //In normal DMA mode, this bit is valid only in CHCR0 and CHCR1. In DDT mode, it is valid in CHCR0–CHCR3.
 
-		u32 res1:4;
+		u32 res1  : 4;
 
-		u32 DTC:1;
-		u32 DSA:3;
+		u32 DTC   : 1;
+		u32 DSA   : 3;
 		//u32 DSA1:1;
 		//u32 DSA2:1;
 
-		u32 STC:1;
-		u32 SSA:3;
+		u32 STC   : 1;
+		u32 SSA   : 3;
 		//u32 SSA1:1;
 		//u32 SSA2:1;
 	};
@@ -1175,22 +1175,22 @@ union DMAC_DMAOR_type
 {
 	struct
 	{
-		u32 DME:1;
-		u32 NMIF:1;
-		u32 AE:1;
-		u32 res0:1;
+		u32 DME  : 1;
+		u32 NMIF : 1;
+		u32 AE   : 1;
+		u32 res0 : 1;
 
-		u32 COD:1;
-		u32 res1:3;
-		
-		u32 PR0:1;
-		u32 PR1:1;
-		u32 res2:2;
+		u32 COD  : 1;
+		u32 res1 : 3;
 
-		u32 res3:3;
-		u32 DDT:1;
+		u32 PR0  : 1;
+		u32 PR1  : 1;
+		u32 res2 : 2;
 
-		u32 res4:16;
+		u32 res3 : 3;
+		u32 DDT  : 1;
+
+		u32 res4 : 16;
 	};
 	u32 full;
 };
@@ -1245,23 +1245,23 @@ union SCIF_SCSMR2_type
 {
 	struct
 	{
-		u32 CKS0:1;
-		u32 CKS1:1;
-		u32 res_0:1;
-		u32 STOP:1;
-		u32 OE_paritymode:1;
-		u32 PE:1;
-		u32 CHR:1;
-		u32 res_1:1;
+		u32 CKS0          : 1;
+		u32 CKS1          : 1;
+		u32 res_0         : 1;
+		u32 STOP          : 1;
+		u32 OE_paritymode : 1;
+		u32 PE            : 1;
+		u32 CHR           : 1;
+		u32 res_1         : 1;
 		//8
-		u32 res_2:1;
-		u32 res_3:1;
-		u32 res_4:1;
-		u32 res_5:1;
-		u32 res_6:1;
-		u32 res_7:1;
-		u32 res_8:1;
-		u32 res_9:1;
+		u32 res_2         : 1;
+		u32 res_3         : 1;
+		u32 res_4         : 1;
+		u32 res_5         : 1;
+		u32 res_6         : 1;
+		u32 res_7         : 1;
+		u32 res_8         : 1;
+		u32 res_9         : 1;
 		//16
 	};
 	u16 full;
@@ -1277,23 +1277,23 @@ union SCIF_SCSCR2_type
 {
 	struct
 	{
-		u32 res_0:1;
-		u32 CKE1:1;
-		u32 res_1:1;
-		u32 REIE:1;
-		u32 RE:1;
-		u32 TE:1;
-		u32 RIE:1;
-		u32 TIE:1;
+		u32 res_0 : 1;
+		u32 CKE1  : 1;
+		u32 res_1 : 1;
+		u32 REIE  : 1;
+		u32 RE    : 1;
+		u32 TE    : 1;
+		u32 RIE   : 1;
+		u32 TIE   : 1;
 		//8
-		u32 res_2:1;
-		u32 res_3:1;
-		u32 res_4:1;
-		u32 res_5:1;
-		u32 res_6:1;
-		u32 res_7:1;
-		u32 res_8:1;
-		u32 res_9:1;
+		u32 res_2 : 1;
+		u32 res_3 : 1;
+		u32 res_4 : 1;
+		u32 res_5 : 1;
+		u32 res_6 : 1;
+		u32 res_7 : 1;
+		u32 res_8 : 1;
+		u32 res_9 : 1;
 		//16
 	};
 	u16 full;
@@ -1308,23 +1308,23 @@ union SCIF_SCFSR2_type
 {
 	struct
 	{
-		u32 DR:1;
-		u32 RDF:1;
-		u32 PER:1;
-		u32 FER:1;
-		u32 BRK:1;
-		u32 TDFE:1;
-		u32 TEND:1;
-		u32 ER:1;
+		u32 DR   : 1;
+		u32 RDF  : 1;
+		u32 PER  : 1;
+		u32 FER  : 1;
+		u32 BRK  : 1;
+		u32 TDFE : 1;
+		u32 TEND : 1;
+		u32 ER   : 1;
 		//8
-		u32 FER0:1;
-		u32 FER1:1;
-		u32 FER2:1;
-		u32 FER3:1;
-		u32 PER0:1;
-		u32 PER1:1;
-		u32 PER2:1;
-		u32 PER3:1;
+		u32 FER0 : 1;
+		u32 FER1 : 1;
+		u32 FER2 : 1;
+		u32 FER3 : 1;
+		u32 PER0 : 1;
+		u32 PER1 : 1;
+		u32 PER2 : 1;
+		u32 PER3 : 1;
 		//16
 	};
 	u16 full;
@@ -1340,23 +1340,23 @@ union SCIF_SCFCR2_type
 {
 	struct
 	{
-		u32 LOOP:1;
-		u32 RFRST:1;
-		u32 TFRST:1;
-		u32 MCE:1;
-		u32 TTRG0:1;
-		u32 TTRG1:1;
-		u32 RTRG0:1;
-		u32 RTRG1:1;
+		u32 LOOP  : 1;
+		u32 RFRST : 1;
+		u32 TFRST : 1;
+		u32 MCE   : 1;
+		u32 TTRG0 : 1;
+		u32 TTRG1 : 1;
+		u32 RTRG0 : 1;
+		u32 RTRG1 : 1;
 		//8
-		u32 res_0:1;
-		u32 res_1:1;
-		u32 res_2:1;
-		u32 res_3:1;
-		u32 res_4:1;
-		u32 res_5:1;
-		u32 res_6:1;
-		u32 res_7:1;
+		u32 res_0 : 1;
+		u32 res_1 : 1;
+		u32 res_2 : 1;
+		u32 res_3 : 1;
+		u32 res_4 : 1;
+		u32 res_5 : 1;
+		u32 res_6 : 1;
+		u32 res_7 : 1;
 		//16
 	};
 	u16 full;
@@ -1369,11 +1369,11 @@ union SCIF_SCFDR2_type
 {
 	struct
 	{
-		u32 R:5;
-		u32 res_0:3;
+		u32 R     : 5;
+		u32 res_0 : 3;
 		//8
-		u32 T:5;
-		u32 res_1:3;
+		u32 T     : 5;
+		u32 res_1 : 3;
 		//16
 	};
 	u16 full;
@@ -1385,23 +1385,23 @@ union SCIF_SCSPTR2_type
 {
 	struct
 	{
-		u32 SPB2DT:1;
-		u32 SPB2IO:1;
-		u32 res_0:1;
-		u32 res_1:1;
-		u32 CTSDT:1;
-		u32 CTSIO:1;
-		u32 RTSDT:1;
-		u32 RTSIO:1;
+		u32 SPB2DT : 1;
+		u32 SPB2IO : 1;
+		u32 res_0  : 1;
+		u32 res_1  : 1;
+		u32 CTSDT  : 1;
+		u32 CTSIO  : 1;
+		u32 RTSDT  : 1;
+		u32 RTSIO  : 1;
 		//8
-		u32 res_2:1;
-		u32 res_3:1;
-		u32 res_4:1;
-		u32 res_5:1;
-		u32 res_6:1;
-		u32 res_7:1;
-		u32 res_8:1;
-		u32 res_9:1;
+		u32 res_2  : 1;
+		u32 res_3  : 1;
+		u32 res_4  : 1;
+		u32 res_5  : 1;
+		u32 res_6  : 1;
+		u32 res_7  : 1;
+		u32 res_8  : 1;
+		u32 res_9  : 1;
 		//16
 	};
 	u16 full;
@@ -1413,10 +1413,10 @@ union SCIF_SCLSR2_type
 {
 	struct
 	{
-		u32 ORER:1;
-		u32 res_0:7;
+		u32 ORER  : 1;
+		u32 res_0 : 7;
 		//8
-		u32 res_1:8;
+		u32 res_1 : 8;
 		//16
 	};
 	u16 full;
@@ -1449,13 +1449,13 @@ union INTC_ICR_type
 	u16 reg_data;
 	struct
 	{
-		u32 res:7;
-		u32 IRLM:1;
-		u32 NMIE:1;
-		u32 NMIB:1;
-		u32 res_2:4;
-		u32 MAI:1;
-		u32 NMIL:1;
+		u32 res   : 7;
+		u32 IRLM  : 1;
+		u32 NMIE  : 1;
+		u32 NMIB  : 1;
+		u32 res_2 : 4;
+		u32 MAI   : 1;
+		u32 NMIL  : 1;
 	};
 };
 
@@ -1464,10 +1464,10 @@ union INTC_IPRA_type
 	u16 reg_data;
 	struct
 	{
-		u32 RTC:4;
-		u32 TMU2:4;
-		u32 TMU1:4;
-		u32 TMU0:4;
+		u32 RTC  : 4;
+		u32 TMU2 : 4;
+		u32 TMU1 : 4;
+		u32 TMU0 : 4;
 	};
 };
 
@@ -1476,10 +1476,10 @@ union INTC_IPRB_type
 	u16 reg_data;
 	struct
 	{
-		u32 Reserved:4;
-		u32 SCI1:4;
-		u32 REF:4;
-		u32 WDT:4;
+		u32 Reserved : 4;
+		u32 SCI1     : 4;
+		u32 REF      : 4;
+		u32 WDT      : 4;
 	};
 };
 
@@ -1488,10 +1488,10 @@ union INTC_IPRC_type
 	u16 reg_data;
 	struct
 	{
-		u32 Hitachi_UDI:4;
-		u32 SCIF:4;
-		u32 DMAC:4;
-		u32 GPIO:4;
+		u32 Hitachi_UDI : 4;
+		u32 SCIF        : 4;
+		u32 DMAC        : 4;
+		u32 GPIO        : 4;
 	};
 };
 

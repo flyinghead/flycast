@@ -28,7 +28,7 @@ void RegWriteInfo(shil_opcode* ops, shil_param p,size_t ord)
 			if (RegisterWrite[p._reg+i]>=RegisterRead[p._reg+i] && RegisterWrite[p._reg+i]!=0xFFFFFFFF)	//if last read was before last write, and there was a last write
 			{
 				printf("DEAD OPCODE %d %d!\n",RegisterWrite[p._reg+i],ord);
-				ops[RegisterWrite[p._reg+i]].Flow=1;						//the last write was unused
+				ops[RegisterWrite[p._reg+i]].Flow=1; //the last write was unused
 			}
 			RegisterWrite[p._reg+i]=ord;
 		}

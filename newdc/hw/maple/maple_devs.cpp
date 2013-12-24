@@ -18,53 +18,53 @@ const char* maple_sega_brand = "Produced By or Under License From SEGA ENTERPRIS
 
 enum MapleFunctionID
 {
-	MFID_0_Input		= 0x01000000,		//DC Controller, Lightgun buttons, arcade stick .. stuff like that
-	MFID_1_Storage		= 0x02000000,		//VMU , VMS
-	MFID_2_LCD			= 0x04000000,		//VMU
-	MFID_3_Clock		= 0x08000000,		//VMU
-	MFID_4_Mic			= 0x10000000,		//DC Mic (, dreameye too ?)
-	MFID_5_ARGun		= 0x20000000,		//Artificial Retina gun ? seems like this one was never developed or smth -- i only remember of lightguns
-	MFID_6_Keyboard		= 0x40000000,		//DC Keyboard
-	MFID_7_LightGun		= 0x80000000,		//DC Lightgun
-	MFID_8_Vibration	= 0x00010000,		//Puru Puru Puur~~~
-	MFID_9_Mouse		= 0x00020000,		//DC Mouse
-	MFID_10_StorageExt	= 0x00040000,		//Storage ? propably never used
-	MFID_11_Camera		= 0x00080000,		//DreamEye
+	MFID_0_Input       = 0x01000000, //DC Controller, Lightgun buttons, arcade stick .. stuff like that
+	MFID_1_Storage     = 0x02000000, //VMU , VMS
+	MFID_2_LCD         = 0x04000000, //VMU
+	MFID_3_Clock       = 0x08000000, //VMU
+	MFID_4_Mic         = 0x10000000, //DC Mic (, dreameye too ?)
+	MFID_5_ARGun       = 0x20000000, //Artificial Retina gun ? seems like this one was never developed or smth -- I only remember of lightguns
+	MFID_6_Keyboard    = 0x40000000, //DC Keyboard
+	MFID_7_LightGun    = 0x80000000, //DC Lightgun
+	MFID_8_Vibration   = 0x00010000, //Puru Puru Puur~~~
+	MFID_9_Mouse       = 0x00020000, //DC Mouse
+	MFID_10_StorageExt = 0x00040000, //Storage ? probably never used
+	MFID_11_Camera     = 0x00080000, //DreamEye
 };
 
 enum MapleDeviceCommand
 {
-	MDC_DeviceRequest	=0x01,			//7 words.Note : Initialises device
-	MDC_AllStatusReq	=0x02,			//7 words + device depedant ( seems to be 8 words)
-	MDC_DeviceReset		=0x03,			//0 words
-	MDC_DeviceKill		=0x04,			//0 words
-	MDC_DeviceStatus    =0x05,			//Same as MDC_DeviceRequest ?
-	MDC_DeviceAllStatus =0x06,			//Same as MDC_AllStatusReq ?
+	MDC_DeviceRequest   = 0x01, //7 words.Note : Initialises device
+	MDC_AllStatusReq    = 0x02, //7 words + device dependent ( seems to be 8 words)
+	MDC_DeviceReset     = 0x03, //0 words
+	MDC_DeviceKill      = 0x04, //0 words
+	MDC_DeviceStatus    = 0x05, //Same as MDC_DeviceRequest ?
+	MDC_DeviceAllStatus = 0x06, //Same as MDC_AllStatusReq ?
 
-	//Varius Functions
-	MDCF_GetCondition=0x09,				//FT
-	MDCF_GetMediaInfo=0x0A,				//FT,PT,3 pad
-	MDCF_BlockRead   =0x0B,				//FT,PT,Phase,Block #
-	MDCF_BlockWrite  =0x0C,				//FT,PT,Phase,Block #,data ...
-	MDCF_GetLastError=0x0D,				//FT,PT,Phase,Block #
-	MDCF_SetCondition=0x0E,				//FT,data ...
-	MDCF_MICControl	 =0x0F,				//FT,MIC data ...
-	MDCF_ARGunControl=0x10,				//FT,AR-Gun data ...
+	//Various Functions
+	MDCF_GetCondition   = 0x09, //FT
+	MDCF_GetMediaInfo   = 0x0A, //FT,PT,3 pad
+	MDCF_BlockRead      = 0x0B, //FT,PT,Phase,Block #
+	MDCF_BlockWrite     = 0x0C, //FT,PT,Phase,Block #,data ...
+	MDCF_GetLastError   = 0x0D, //FT,PT,Phase,Block #
+	MDCF_SetCondition   = 0x0E, //FT,data ...
+	MDCF_MICControl     = 0x0F, //FT,MIC data ...
+	MDCF_ARGunControl   = 0x10, //FT,AR-Gun data ...
 };
 
 enum MapleDeviceRV
 {
-	MDRS_DeviceStatus=0x05,			//28 words
-	MDRS_DeviceStatusAll=0x06,		//28 words + device depedant data
-	MDRS_DeviceReply=0x07,			//0 words
-	MDRS_DataTransfer=0x08,			//FT,depends on the command
+	MDRS_DeviceStatus    = 0x05, //28 words
+	MDRS_DeviceStatusAll = 0x06, //28 words + device dependent data
+	MDRS_DeviceReply     = 0x07, //0 words
+	MDRS_DataTransfer    = 0x08, //FT,depends on the command
 
-	MDRE_UnknownFunction=0xFE,		//0 words
-	MDRE_UnknownCmd=0xFD,			//0 words
-	MDRE_TransminAgain=0xFC,		//0 words
-	MDRE_FileError=0xFB,			//1 word, bitfield
-	MDRE_LCDError=0xFA,				//1 word, bitfield
-	MDRE_ARGunError=0xF9,			//1 word, bitfield
+	MDRE_UnknownFunction = 0xFE, //0 words
+	MDRE_UnknownCmd      = 0xFD, //0 words
+	MDRE_TransminAgain   = 0xFC, //0 words
+	MDRE_FileError       = 0xFB, //1 word, bitfield
+	MDRE_LCDError        = 0xFA, //1 word, bitfield
+	MDRE_ARGunError      = 0xF9, //1 word, bitfield
 };
 
 
@@ -146,7 +146,7 @@ struct maple_base: maple_device
 
 /*
 	Sega Dreamcast Controller
-	No error checking of anykind, but works just fine
+	No error checking of any kind, but works just fine
 */
 struct maple_sega_controller: maple_base
 {
@@ -199,7 +199,7 @@ struct maple_sega_controller: maple_base
 				//2 key code
 				w16(pjs.kcode);
 
-				//trigers
+				//triggers
 				//1 R
 				w8(pjs.trigger[PJTI_R]);
 				//1 L
@@ -251,7 +251,7 @@ struct maple_sega_vmu: maple_base
 		file=fopen(apath.c_str(),"rb+");
 		if (!file)
 		{
-			printf("Unable to open vmu save file \"%s\", creating new file\n",apath.c_str());
+			printf("Unable to open VMU save file \"%s\", creating new file\n",apath.c_str());
 			file=fopen(apath.c_str(),"wb");
 			fwrite(flash_data, sizeof(flash_data), 1, file);
 			fseek(file,0,SEEK_SET);
@@ -259,7 +259,7 @@ struct maple_sega_vmu: maple_base
 
 		if (!file)
 		{
-			printf("Failed to create vmu save file \"%s\"\n",apath.c_str());
+			printf("Failed to create VMU save file \"%s\"\n",apath.c_str());
 		}
 		else
 		{
@@ -283,12 +283,12 @@ struct maple_sega_vmu: maple_base
 
 				//struct data
 				//3*4
-				w32( 0x403f7e7e);	//for clock
-				w32( 0x00100500);	//for LCD
-				w32( 0x00410f00);	//for storage
-				//1	area code
+				w32( 0x403f7e7e); // for clock
+				w32( 0x00100500); // for LCD
+				w32( 0x00410f00); // for storage
+				//1  area code
 				w8(0xFF);
-				//1	direction
+				//1  direction
 				w8(0);
 				//30
 				wstr(maple_sega_vmu_name,30);
@@ -297,10 +297,10 @@ struct maple_sega_vmu: maple_base
 				wstr(maple_sega_brand,60);
 
 				//2
-				w16(0x007c); 
+				w16(0x007c);
 
 				//2
-				w16(0x0082); 
+				w16(0x0082);
 
 				return MDRS_DeviceStatus;
 			}
@@ -357,10 +357,10 @@ struct maple_sega_vmu: maple_base
 						{
 							w32(MFID_2_LCD);
 
-							w8(47);					//X dots -1
-							w8(31);					//Y dots -1
-							w8(((1)<<4) | (0));		//1 Color, 0 contrast levels
-							w8(0);					//Padding
+							w8(47);             //X dots -1
+							w8(31);             //Y dots -1
+							w8(((1)<<4) | (0)); //1 Color, 0 contrast levels
+							w8(0);              //Padding
 							
 							return MDRS_DataTransfer;
 						}
@@ -413,7 +413,7 @@ struct maple_sega_vmu: maple_base
 						if (r32()!=0)
 						{
 							printf("VMU: Block read: MFID_3_Clock : invalid params \n");
-							return MDRE_TransminAgain;		//invalid params
+							return MDRE_TransminAgain; //invalid params
 						}
 						else
 						{
@@ -471,7 +471,7 @@ struct maple_sega_vmu: maple_base
 						}
 						else
 						{
-							printf("Failed to save vmu %s data\n",logical_port);
+							printf("Failed to save VMU %s data\n",logical_port);
 						}
 						return MDRS_DeviceReply;//just ko
 					}
@@ -501,7 +501,7 @@ struct maple_sega_vmu: maple_base
 						}
 						config->SetImage(lcd_data_decoded);
 #if 0
-						//Update lcd window
+						// Update LCD window
 						if (!dev->lcd.visible)
 						{
 							dev->lcd.visible=true;
@@ -512,7 +512,7 @@ struct maple_sega_vmu: maple_base
 							InvalidateRect(dev->lcd.handle,NULL,FALSE);
 						}
 
-						//Logitech G series stuff start
+						// Logitech G series stuff start
 	#ifdef _HAS_LGLCD_
 						{
 							lgLcdBitmap160x43x1 bmp;
@@ -524,7 +524,7 @@ struct maple_sega_vmu: maple_base
 							//make it all black...
 							memset(bmp.pixels,black,sizeof(bmp.pixels));
 
-							//decode from the vmu
+							//decode from the VMU
 							for(int y=0;y<32;++y)
 							{
 								BYTE *dst=bmp.pixels+5816+((-y)*(48+112)); //ugly way to make things look right :p
@@ -569,7 +569,7 @@ struct maple_sega_vmu: maple_base
 
 					default:
 					{
-						printf("VMU: cmd MDCF_BlockWrite -> Bad function used, returning MDRE_UnknownFunction\n");
+						printf("VMU: command MDCF_BlockWrite -> Bad function used, returning MDRE_UnknownFunction\n");
 						return  MDRE_UnknownFunction;//bad function
 					}
 				}
@@ -596,7 +596,7 @@ struct maple_sega_vmu: maple_base
 
 				default:
 					{
-						printf("VMU: cmd MDCF_SetCondition -> Bad function used, returning MDRE_UnknownFunction\n");
+						printf("VMU: command MDCF_SetCondition -> Bad function used, returning MDRE_UnknownFunction\n");
 						return MDRE_UnknownFunction;//bad function
 					}
 					break;
@@ -605,7 +605,7 @@ struct maple_sega_vmu: maple_base
 
 
 		default:
-			printf("unknown MAPLE COMMAND %d\n",cmd);
+			printf("Unknown MAPLE COMMAND %d\n",cmd);
 			return MDRE_UnknownCmd;
 		}
 	}	

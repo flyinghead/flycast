@@ -48,7 +48,7 @@ s32 libPvr_Init()
 	return rv_ok;
 }
 
-//called when exiting from sh4 thread , from the new thread context (for any thread speciacific de init) :P
+//called when exiting from sh4 thread , from the new thread context (for any thread specific de init) :P
 void libPvr_Term()
 {
 	rend_term();

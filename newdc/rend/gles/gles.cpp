@@ -25,16 +25,16 @@ Keep data as small as possible
 Keep vertex programs as small as possible
 The drivers more or less suck. Don't depend on dynamic allocation, or any 'complex' feature
 as it is likely to be problematic/slow
-Do we really want to enable striping joins ?
+Do we really want to enable striping joins?
 
 *Design notes*
 Follow same architecture as the d3d renderer for now
-Render to texture, keep track of textures in gl memory
+Render to texture, keep track of textures in GL memory
 Direct flip to screen (no vlbank/fb emulation)
-Do we really need a combining shader ? it is needlessly expenssive for opengl | es
-Render contextes
-Free over time ? we actually care about ram usage here ?
-Limit max resoure size ? for psp 48k verts worked just fine
+Do we really need a combining shader? it is needlessly expensive for openGL | ES
+Render contexts
+Free over time? we actually care about ram usage here?
+Limit max resource size? for psp 48k verts worked just fine
 
 FB:
 Pixel clip, mapping
@@ -63,14 +63,14 @@ volatile bool render_restart = false;
 //pretty much 1:1 copy of the d3d ones for now
 const char* VertexShaderSource = "\
 /* Vertex constants*/  \n\
-uniform highp vec4		scale; \n\
-uniform highp vec4		depth_scale; \n\
+uniform highp vec4      scale; \n\
+uniform highp vec4      depth_scale; \n\
 uniform highp float sp_FOG_DENSITY; \n\
 /* Vertex output */ \n\
-attribute highp vec4	in_pos; \n\
-attribute lowp vec4		in_base; \n\
-attribute lowp vec4		in_offs; \n\
-attribute mediump vec2	in_uv; \n\
+attribute highp vec4    in_pos; \n\
+attribute lowp vec4     in_base; \n\
+attribute lowp vec4     in_offs; \n\
+attribute mediump vec2  in_uv; \n\
 /* Transformed input */ \n\
 varying lowp vec4 vtx_base; \n\
 varying lowp vec4 vtx_offs; \n\
@@ -106,7 +106,7 @@ const char* VertexShaderSource =
 				"/* Vertex constants */"
 				""
 				"uniform highp float sp_FOG_DENSITY;"
-				"uniform highp vec4	 scale;"
+				"uniform highp vec4  scale;"
 				""
 				"/* Vertex output */"
 				""
@@ -152,16 +152,16 @@ const char* VertexShaderSource =
 
 /*
 
-cp_AlphaTest 0 1		2 2
-pp_ClipTestMode -1 0 1	3 6
-pp_UseAlpha  0 1		2 12
-pp_Texture 1			
-	pp_IgnoreTexA 0 1		2	2
-	pp_ShadInstr 0 1 2 3	4	8
-	pp_Offset 0 1			2	16
-	pp_FogCtrl 0 1 2 3		4	64
+cp_AlphaTest 0 1        2 2
+pp_ClipTestMode -1 0 1  3 6
+pp_UseAlpha  0 1        2 12
+pp_Texture 1
+	pp_IgnoreTexA 0 1       2   2
+	pp_ShadInstr 0 1 2 3    4   8
+	pp_Offset 0 1           2   16
+	pp_FogCtrl 0 1 2 3      4   64
 pp_Texture 0
-	pp_FogCtrl 0 2 3		4	4
+	pp_FogCtrl 0 2 3        4   4
 
 pp_Texture: off -> 12*4=48 shaders
 pp_Texture: on  -> 12*64=768 shaders
@@ -169,23 +169,23 @@ Total: 816 shaders
 
 highp float fdecp(highp float flt,out highp float e)  \n\
 {  \n\
-	highp float lg2=log2(flt);	//ie , 2.5  \n\
-	highp float frc=fract(lg2);	//ie , 0.5  \n\
-	e=lg2-frc;				//ie , 2.5-0.5=2 (exp)  \n\
-	return pow(2.0,frc);		//2^0.5 (manitsa)  \n\
+	highp float lg2=log2(flt);  //ie , 2.5  \n\
+	highp float frc=fract(lg2); //ie , 0.5  \n\
+	e=lg2-frc;                  //ie , 2.5-0.5=2 (exp)  \n\
+	return pow(2.0,frc);        //2^0.5 (manitsa)  \n\
 }  \n\
 lowp float fog_mode2(highp float invW)  \n\
 {  \n\
 	highp float foginvW=invW;  \n\
 	foginvW=clamp(foginvW,1.0,255.0);  \n\
 	  \n\
-	highp float fogexp;									//0 ... 7  \n\
-	highp float fogman=fdecp(foginvW, fogexp);			//[1,2) mantissa bits. that is 1.m  \n\
+	highp float fogexp;                                 //0 ... 7  \n\
+	highp float fogman=fdecp(foginvW, fogexp);          //[1,2) mantissa bits. that is 1.m  \n\
 	  \n\
-	highp float fogman_hi=fogman*16.0-16.0;					//[16,32) -16 -> [0,16)  \n\
-	highp float fogman_idx=floor(fogman_hi);					//[0,15]  \n\
-	highp float fogman_blend=fract(fogman_hi);				//[0,1) -- can also be fogman_idx-fogman_idx !  \n\
-	highp float fog_idx_fr=fogexp*16.0+fogman_idx;			//[0,127]  \n\
+	highp float fogman_hi=fogman*16.0-16.0;             //[16,32) -16 -> [0,16)  \n\
+	highp float fogman_idx=floor(fogman_hi);            //[0,15]  \n\
+	highp float fogman_blend=fract(fogman_hi);          //[0,1) -- can also be fogman_idx-fogman_idx !  \n\
+	highp float fog_idx_fr=fogexp*16.0+fogman_idx;      //[0,127]  \n\
 	  \n\
 	highp float fog_idx_pixel_fr=fog_idx_fr+0.5;  \n\
 	highp float fog_idx_pixel_n=fog_idx_pixel_fr/128.0;//normalise to [0.5/128,127.5/128) coordinates  \n\
@@ -224,7 +224,7 @@ varying highp vec3 vtx_xyz; \n\
 lowp float fog_mode2(highp float val) \n\
 { \n\
 	highp float fog_idx=clamp(val,0.0,127.99); \n\
-	return clamp(sp_LOG_FOG_COEFS.y*log2(fog_idx)+sp_LOG_FOG_COEFS.x,0.001,1.0); //the clap is reuqired due to yet another bug !\n\
+	return clamp(sp_LOG_FOG_COEFS.y*log2(fog_idx)+sp_LOG_FOG_COEFS.x,0.001,1.0); //the clamp is required due to yet another bug !\n\
 } \n\
 void main() \n\
 { \n\
@@ -313,7 +313,7 @@ gl_ctx gl;
 int screen_width;
 int screen_height;
 
-//create a basic gles context
+// Create a basic GLES context
 bool gl_init(EGLNativeWindowType wind, EGLNativeDisplayType disp)
 {
 #if !defined(_ANDROID)
@@ -328,7 +328,7 @@ bool gl_init(EGLNativeWindowType wind, EGLNativeDisplayType disp)
 		gl.setup.display = eglGetDisplay((EGLNativeDisplayType) EGL_DEFAULT_DISPLAY);
 
 	
-	//initialise egl
+	// Initialise EGL
 	EGLint maj, min;
 	if (!eglInitialize(gl.setup.display, &maj, &min))
 	{
@@ -340,10 +340,8 @@ bool gl_init(EGLNativeWindowType wind, EGLNativeDisplayType disp)
 
 
 
-	EGLint pi32ConfigAttribs[]=	{ EGL_SURFACE_TYPE, EGL_WINDOW_BIT, EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT , EGL_DEPTH_SIZE, 24, EGL_STENCIL_SIZE, 8, EGL_NONE };
-
-
-	EGLint pi32ContextAttribs[] = {EGL_CONTEXT_CLIENT_VERSION, 2 , EGL_NONE };
+	EGLint pi32ConfigAttribs[]  = { EGL_SURFACE_TYPE, EGL_WINDOW_BIT, EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT , EGL_DEPTH_SIZE, 24, EGL_STENCIL_SIZE, 8, EGL_NONE };
+	EGLint pi32ContextAttribs[] = { EGL_CONTEXT_CLIENT_VERSION, 2 , EGL_NONE };
 	
 	int num_config;
 
@@ -370,37 +368,38 @@ bool gl_init(EGLNativeWindowType wind, EGLNativeDisplayType disp)
 
 #endif
 
-    eglMakeCurrent(gl.setup.display, gl.setup.surface, gl.setup.surface, gl.setup.context);
+	eglMakeCurrent(gl.setup.display, gl.setup.surface, gl.setup.surface, gl.setup.context);
 
-    if (eglCheck())
-        return false;
+	if (eglCheck())
+		return false;
 
-    EGLint w,h;
-    eglQuerySurface(gl.setup.display, gl.setup.surface, EGL_WIDTH, &w);
-    eglQuerySurface(gl.setup.display, gl.setup.surface, EGL_HEIGHT, &h);
+	EGLint w,h;
+	eglQuerySurface(gl.setup.display, gl.setup.surface, EGL_WIDTH, &w);
+	eglQuerySurface(gl.setup.display, gl.setup.surface, EGL_HEIGHT, &h);
 
-    screen_width=w;
-    screen_height=h;
+	screen_width=w;
+	screen_height=h;
 
-    printf("EGL config: %08X, %08X, %08X %dx%d\n",gl.setup.context,gl.setup.display,gl.setup.surface,w,h);
-    return true;
+	printf("EGL config: %08X, %08X, %08X %dx%d\n",gl.setup.context,gl.setup.display,gl.setup.surface,w,h);
+	return true;
 }
 
 void egl_stealcntx()
 {
-    gl.setup.context=eglGetCurrentContext();
-    gl.setup.display=eglGetCurrentDisplay();
-    gl.setup.surface=eglGetCurrentSurface(EGL_DRAW);
+	gl.setup.context=eglGetCurrentContext();
+	gl.setup.display=eglGetCurrentDisplay();
+	gl.setup.surface=eglGetCurrentSurface(EGL_DRAW);
 }
 
 //swap buffers
 void gl_swap()
 {
 	#ifdef TARGET_PANDORA0
-	if (fbdev >= 0) {
+	if (fbdev >= 0)
+	{
 		int arg = 0;
 		ioctl(fbdev,FBIO_WAITFORVSYNC,&arg);
-	}	
+	}
 	#endif
 	eglSwapBuffers(gl.setup.display, gl.setup.surface);
 }
@@ -419,7 +418,8 @@ void gl_term()
 		eglDestroySurface(gl.setup.display, gl.setup.surface);
 	if (gl.setup.display)
 		eglTerminate(gl.setup.display);
-	if (fbdev>=0)	close( fbdev );
+	if (fbdev>=0)
+		close( fbdev );
 	
 	fbdev=-1;
 	gl.setup.context=0;
@@ -504,10 +504,10 @@ GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentShader)
 	glAttachShader(program, ps);
 
 	//bind vertex attribute to vbo inputs
-	glBindAttribLocation(program, VERTEX_POS_ARRAY,			"in_pos");
-	glBindAttribLocation(program, VERTEX_COL_BASE_ARRAY,	"in_base");
-	glBindAttribLocation(program, VERTEX_COL_OFFS_ARRAY,	"in_offs");
-	glBindAttribLocation(program, VERTEX_UV_ARRAY,			"in_uv");
+	glBindAttribLocation(program, VERTEX_POS_ARRAY,      "in_pos");
+	glBindAttribLocation(program, VERTEX_COL_BASE_ARRAY, "in_base");
+	glBindAttribLocation(program, VERTEX_COL_OFFS_ARRAY, "in_offs");
+	glBindAttribLocation(program, VERTEX_UV_ARRAY,       "in_uv");
 
 	glLinkProgram(program);
 
@@ -577,13 +577,13 @@ bool CompilePipelineShader(	PipelineShader* s)
 		glUniform1i(gu,0);
 
 	//get the uniform locations
-	s->scale			= glGetUniformLocation(s->program, "scale");
-	s->depth_scale		= glGetUniformLocation(s->program, "depth_scale");
+	s->scale	            = glGetUniformLocation(s->program, "scale");
+	s->depth_scale      = glGetUniformLocation(s->program, "depth_scale");
 	
 	
-	s->pp_ClipTest		= glGetUniformLocation(s->program, "pp_ClipTest");
+	s->pp_ClipTest      = glGetUniformLocation(s->program, "pp_ClipTest");
 	
-	s->sp_FOG_DENSITY	= glGetUniformLocation(s->program, "sp_FOG_DENSITY");
+	s->sp_FOG_DENSITY   = glGetUniformLocation(s->program, "sp_FOG_DENSITY");
 
 	s->cp_AlphaTestValue= glGetUniformLocation(s->program, "cp_AlphaTestValue");
 
@@ -629,7 +629,7 @@ bool gl_create_resources()
 		forl(pp_ClipTestMode,2)
 		{
 			forl(pp_UseAlpha,1)
-			{					
+			{
 				forl(pp_Texture,1)
 				{
 					forl(pp_FogCtrl,3)
@@ -664,9 +664,9 @@ bool gl_create_resources()
 
 	
 	gl.modvol_shader.program=gl_CompileAndLink(VertexShaderSource,ModifierVolumeShader);
-	gl.modvol_shader.scale			= glGetUniformLocation(gl.modvol_shader.program, "scale");
-	gl.modvol_shader.sp_ShaderColor	= glGetUniformLocation(gl.modvol_shader.program, "sp_ShaderColor");
-	gl.modvol_shader.depth_scale	= glGetUniformLocation(gl.modvol_shader.program, "depth_scale");
+	gl.modvol_shader.scale          = glGetUniformLocation(gl.modvol_shader.program, "scale");
+	gl.modvol_shader.sp_ShaderColor = glGetUniformLocation(gl.modvol_shader.program, "sp_ShaderColor");
+	gl.modvol_shader.depth_scale    = glGetUniformLocation(gl.modvol_shader.program, "depth_scale");
 
 	
 	gl.OSD_SHADER.program=gl_CompileAndLink(VertexShaderSource,OSD_Shader);
@@ -679,9 +679,8 @@ bool gl_create_resources()
 	#ifdef PRECOMPILE_SHADERS
 	for (u32 i=0;i<sizeof(gl.pogram_table)/sizeof(gl.pogram_table[0]);i++)
 	{
-		
-				if (!CompilePipelineShader(	&gl.pogram_table[i] ))
-					return false;
+		if (!CompilePipelineShader(	&gl.pogram_table[i] ))
+			return false;
 	}
 	#endif
 
@@ -708,9 +707,9 @@ bool gl_create_resources();
 
 bool gles_init()
 {
-	if (!gl_init(	(EGLNativeWindowType)libPvr_GetRenderTarget(),
-					(EGLNativeDisplayType)libPvr_GetRenderSurface())
-		) return false;
+	if (!gl_init((EGLNativeWindowType)libPvr_GetRenderTarget(),
+		         (EGLNativeDisplayType)libPvr_GetRenderSurface()))
+			return false;
 
 	if (!gl_create_resources())
 		return false;
@@ -748,7 +747,7 @@ void tryfit(float* x,float* y)
 	{
 		int rep=1;
 
-		//discard values cliped to 0 or 1
+		//discard values clipped to 0 or 1
 		if (i<128 && y[i]==1 && y[i+1]==1)
 			continue;
 
@@ -800,22 +799,22 @@ void tryfit(float* x,float* y)
 extern u16 kcode[4];
 extern u8 rt[4],lt[4];
 
-#define key_CONT_C  (1 << 0)
-#define key_CONT_B  (1 << 1)
-#define key_CONT_A  (1 << 2)
-#define key_CONT_START  (1 << 3)
-#define key_CONT_DPAD_UP  (1 << 4)
-#define key_CONT_DPAD_DOWN  (1 << 5)
-#define key_CONT_DPAD_LEFT  (1 << 6)
+#define key_CONT_C           (1 << 0)
+#define key_CONT_B           (1 << 1)
+#define key_CONT_A           (1 << 2)
+#define key_CONT_START       (1 << 3)
+#define key_CONT_DPAD_UP     (1 << 4)
+#define key_CONT_DPAD_DOWN   (1 << 5)
+#define key_CONT_DPAD_LEFT   (1 << 6)
 #define key_CONT_DPAD_RIGHT  (1 << 7)
-#define key_CONT_Z  (1 << 8)
-#define key_CONT_Y  (1 << 9)
-#define key_CONT_X  (1 << 10)
-#define key_CONT_D  (1 << 11)
-#define key_CONT_DPAD2_UP  (1 << 12)
+#define key_CONT_Z           (1 << 8)
+#define key_CONT_Y           (1 << 9)
+#define key_CONT_X           (1 << 10)
+#define key_CONT_D           (1 << 11)
+#define key_CONT_DPAD2_UP    (1 << 12)
 #define key_CONT_DPAD2_DOWN  (1 << 13)
 #define key_CONT_DPAD2_LEFT  (1 << 14)
-#define key_CONT_DPAD2_RIGHT  (1 << 15)
+#define key_CONT_DPAD2_RIGHT (1 << 15)
 
 u32 osd_base;
 u32 osd_count;
@@ -827,31 +826,31 @@ extern float vjoy_pos[14][8];
 
 float vjoy_pos[14][8]=
 {
-	{24+0,24+64,64,64},		//LEFT
-	{24+64,24+0,64,64},		//UP
-	{24+128,24+64,64,64},	//RIGHT
-	{24+64,24+128,64,64},	//DOWN
+	{24+0,24+64,64,64},     //LEFT
+	{24+64,24+0,64,64},     //UP
+	{24+128,24+64,64,64},   //RIGHT
+	{24+64,24+128,64,64},   //DOWN
 
-	{440+0,280+64,64,64},	//X
-	{440+64,280+0,64,64},	//Y
-	{440+128,280+64,64,64},	//B
+	{440+0,280+64,64,64},   //X
+	{440+64,280+0,64,64},   //Y
+	{440+128,280+64,64,64}, //B
 	{440+64,280+128,64,64}, //A
 
-	{320-32,360+32,64,64},	//Start
+	{320-32,360+32,64,64},  //Start
 
-	{440,200,90,64},		//RT
-	{542,200,90,64},		//LT
+	{440,200,90,64},        //RT
+	{542,200,90,64},        //LT
 
-	{-24,128+224,128,128},	//ANALOG_RING
-	{96,320,64,64},			//ANALOG_POINT
+	{-24,128+224,128,128},  //ANALOG_RING
+	{96,320,64,64},         //ANALOG_POINT
 	{1}
 };
 #endif // !_ANDROID
 
 float vjoy_sz[2][14] = {
-							{ 64,64,64,64, 64,64,64,64, 64, 90,90, 128, 64 },
-							{ 64,64,64,64, 64,64,64,64, 64, 64,64, 128, 64 },
-					   };
+	{ 64,64,64,64, 64,64,64,64, 64, 90,90, 128, 64 },
+	{ 64,64,64,64, 64,64,64,64, 64, 64,64, 128, 64 },
+};
 
 static void DrawButton(float* xy, u32 state)
 {
@@ -933,9 +932,8 @@ void OSD_DRAW()
 {
 	if (osd_tex)
 	{
-		float v,u;
-		u=0;
-		v=0;
+		float u=0;
+		float v=0;
 
 		for (int i=0;i<13;i++)
 		{
@@ -1007,12 +1005,12 @@ bool RenderFrame()
 		vtx_max_fZ=10*1024;
 
 
-	//add some extra range to avoid cliping border cases
+	//add some extra range to avoid clipping border cases
 	vtx_min_fZ*=0.98f;
 	vtx_max_fZ*=1.001f;
 
 	//calculate a projection so that it matches the pvr x,y setup, and
-	//a) Z is linearly scaled betwen 0 ... 1
+	//a) Z is linearly scaled between 0 ... 1
 	//b) W is passed though for proper perspective calculations
 
 	/*
@@ -1033,17 +1031,17 @@ bool RenderFrame()
 	Attributes: 
 	//this needs to be cleared up, been some time since I wrote my rasteriser and i'm starting
 	//to forget/mixup stuff
-	vaX			-> VS output
-	iaX=vaX*W	-> value to be interpolated
-	iaX',W'		-> interpolated values
-	paX=iaX'/W'	-> Per pixel interpolated value for attribute
+	vaX         -> VS output
+	iaX=vaX*W   -> value to be interpolated
+	iaX',W'     -> interpolated values
+	paX=iaX'/W' -> Per pixel interpolated value for attribute
 
 
 	Proper mappings:
 	Output from shader:
 	W=1/fz
-	x=fx*W -> maps to fx after perspective divie
-	y=fy*W ->		  fy   -//-
+	x=fx*W -> maps to fx after perspective divide
+	y=fy*W ->         fy   -//-
 	z=-W for min, W for max. Needs to be linear.
 
 
@@ -1143,7 +1141,7 @@ bool RenderFrame()
 	{
 		(2.f/dc_width)  ,0                ,-(640/dc_width)              ,0  ,
 		0               ,-(2.f/dc_height) ,(480/dc_height)              ,0  ,
-		0               ,0                ,A							,B  ,
+		0               ,0                ,A                            ,B  ,
 		0               ,0                ,1                            ,0
 	};
 
@@ -1185,7 +1183,7 @@ bool RenderFrame()
 
 	//Fog density constant
 	u8* fog_density=(u8*)&FOG_DENSITY;
-	float fog_den_mant=fog_density[1]/128.0f;		//bit 7 -> x. bit, so [6:0] -> fraction -> /128
+	float fog_den_mant=fog_density[1]/128.0f;  //bit 7 -> x. bit, so [6:0] -> fraction -> /128
 	s32 fog_den_exp=(s8)fog_density[0];
 	ShaderUniforms.fog_den_float=fog_den_mant*powf(2.0f,fog_den_exp);
 
@@ -1236,42 +1234,42 @@ bool RenderFrame()
 		GLuint channels,format;
 		switch(FB_W_CTRL.fb_packmode)
 		{
-		case 0:	//0x0	0555 KRGB 16 bit  (default)	Bit 15 is the value of fb_kval[7].
+		case 0: //0x0   0555 KRGB 16 bit  (default)	Bit 15 is the value of fb_kval[7].
 			channels=GL_RGBA;
 			format=GL_UNSIGNED_SHORT_5_5_5_1;
 			break;
 			
-		case 1:	//0x1	565 RGB 16 bit	
+		case 1: //0x1   565 RGB 16 bit	
 			channels=GL_RGB;
 			format=GL_UNSIGNED_SHORT_5_6_5;
 			break;
 			
-		case 2:	//0x2	4444 ARGB 16 bit
+		case 2: //0x2   4444 ARGB 16 bit
 			channels=GL_RGBA;
 			format=GL_UNSIGNED_SHORT_5_5_5_1;
 			break;
 			
-		case 3://0x3	1555 ARGB 16 bit	The alpha value is determined by comparison with the value of fb_alpha_threshold.
+		case 3://0x3    1555 ARGB 16 bit    The alpha value is determined by comparison with the value of fb_alpha_threshold.
 			channels=GL_RGBA;
 			format=GL_UNSIGNED_SHORT_5_5_5_1;
 			break;
-			
-		case 4:	//0x4	888 RGB 24 bit packed	
+
+		case 4: //0x4   888 RGB 24 bit packed
 			channels=GL_RGB;
 			format=GL_UNSIGNED_SHORT_5_6_5;
 			break;
 			
-		case 5:	//0x5	0888 KRGB 32 bit	K is the value of fk_kval.
+		case 5: //0x5   0888 KRGB 32 bit    K is the value of fk_kval.
 			channels=GL_RGBA;
 			format=GL_UNSIGNED_SHORT_4_4_4_4;
 			break;
 			
-		case 6:	//0x6	8888 ARGB 32 bit	
+		case 6: //0x6   8888 ARGB 32 bit
 			channels=GL_RGBA;
 			format=GL_UNSIGNED_SHORT_4_4_4_4;
 			break;
 
-		case 7:	//7     invalid
+		case 7: //7     invalid
 			die("7 is not valid");
 			break;
 		}
@@ -1410,8 +1408,9 @@ struct glesrend : Renderer
 
 FILE* pngfile;
 
-void png_cstd_read(png_structp png_ptr, png_bytep data, png_size_t length) {
-  fread(data,1, length,pngfile);
+void png_cstd_read(png_structp png_ptr, png_bytep data, png_size_t length)
+{
+	fread(data,1, length,pngfile);
 }
 
 GLuint loadPNG(const string& fname, int &width, int &height)
@@ -1420,7 +1419,8 @@ GLuint loadPNG(const string& fname, int &width, int &height)
 	FILE* file = fopen(filename, "rb");
 	pngfile=file;
 
-	if (!file) {
+	if (!file)
+	{
 		printf("Error opening %s", filename);
 		return TEXTURE_LOAD_ERROR;
 	}
@@ -1433,41 +1433,46 @@ GLuint loadPNG(const string& fname, int &width, int &height)
 
 	//test if png
 	int is_png = !png_sig_cmp(header, 0, 8);
-	if (!is_png) {
+	if (!is_png)
+	{
 		fclose(file);
-		printf("Not a png file : %s", filename);
+		printf("Not a PNG file : %s", filename);
 		return TEXTURE_LOAD_ERROR;
 	}
 
 	//create png struct
 	png_structp png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL,
 		NULL, NULL);
-	if (!png_ptr) {
+	if (!png_ptr)
+	{
 		fclose(file);
-		printf("Unable to create png struct : %s", filename);
+		printf("Unable to create PNG struct : %s", filename);
 		return (TEXTURE_LOAD_ERROR);
 	}
 
 	//create png info struct
 	png_infop info_ptr = png_create_info_struct(png_ptr);
-	if (!info_ptr) {
+	if (!info_ptr)
+	{
 		png_destroy_read_struct(&png_ptr, (png_infopp) NULL, (png_infopp) NULL);
-		printf("Unable to create png info : %s", filename);
+		printf("Unable to create PNG info : %s", filename);
 		fclose(file);
 		return (TEXTURE_LOAD_ERROR);
 	}
 
 	//create png info struct
 	png_infop end_info = png_create_info_struct(png_ptr);
-	if (!end_info) {
+	if (!end_info)
+	{
 		png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp) NULL);
-		printf("Unable to create png end info : %s", filename);
+		printf("Unable to create PNG end info : %s", filename);
 		fclose(file);
 		return (TEXTURE_LOAD_ERROR);
 	}
 
 	//png error stuff, not sure libpng man suggests this.
-	if (setjmp(png_jmpbuf(png_ptr))) {
+	if (setjmp(png_jmpbuf(png_ptr)))
+	{
 		fclose(file);
 		printf("Error during setjmp : %s", filename);
 		png_destroy_read_struct(&png_ptr, &info_ptr, &end_info);
@@ -1504,7 +1509,8 @@ GLuint loadPNG(const string& fname, int &width, int &height)
 
 	// Allocate the image_data as a big block, to be given to opengl
 	png_byte *image_data = new png_byte[rowbytes * height];
-	if (!image_data) {
+	if (!image_data)
+	{
 		//clean up memory and close stuff
 		png_destroy_read_struct(&png_ptr, &info_ptr, &end_info);
 		printf("Unable to allocate image_data while loading %s ", filename);
@@ -1514,7 +1520,8 @@ GLuint loadPNG(const string& fname, int &width, int &height)
 
 	//row_pointers is for pointing to image_data for reading the png with libpng
 	png_bytep *row_pointers = new png_bytep[height];
-	if (!row_pointers) {
+	if (!row_pointers) 
+	{
 		//clean up memory and close stuff
 		png_destroy_read_struct(&png_ptr, &info_ptr, &end_info);
 		delete[] image_data;
@@ -1522,6 +1529,7 @@ GLuint loadPNG(const string& fname, int &width, int &height)
 		fclose(file);
 		return TEXTURE_LOAD_ERROR;
 	}
+
 	// set the individual row_pointers to point at the correct offsets of image_data
 	for (int i = 0; i < height; ++i)
 		row_pointers[height - 1 - i] = image_data + i * rowbytes;

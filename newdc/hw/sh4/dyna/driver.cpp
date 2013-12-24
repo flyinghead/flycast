@@ -125,6 +125,7 @@ bool DoCheck(u32 pc)
 			//DOA2LE
 			case 0x3DAFC6:
 			case 0x3C83F8:
+
 			//Shenmue 2
 			case 0x348000:
 				return true;
@@ -253,7 +254,8 @@ u32 DYNACALL rdv_DoInterrupts(void* block_cpde)
 	//Interrupts happen at least 50 times/second, so its not a problem ..
 	if (rebuild_counter==0)
 	{
-		//bm_Rebuild();	
+		// TODO: Why is this commented, etc.
+		//bm_Rebuild();
 	}
 
 	return next_pc;
@@ -402,14 +404,15 @@ void recSh4_Init()
 	VirtualProtect(CodeCache,CODE_SIZE*2,PAGE_EXECUTE_READWRITE,&old);
 #elif HOST_OS == OS_LINUX
 	
-    printf("\n\t CodeCache addr: %p | from: %p | addr here: %p\n", CodeCache, SH4_TCB, recSh4_Init);
+	printf("\n\t CodeCache addr: %p | from: %p | addr here: %p\n", CodeCache, SH4_TCB, recSh4_Init);
 
-    if (mprotect(CodeCache, CODE_SIZE*2, PROT_EXEC|PROT_READ|PROT_WRITE)) {
-        perror("\n\tError,Couldn’t mprotect CodeCache!");
-        verify(false);
-    }
+	if (mprotect(CodeCache, CODE_SIZE*2, PROT_EXEC|PROT_READ|PROT_WRITE))
+	{
+		perror("\n\tError,Couldn’t mprotect CodeCache!");
+		verify(false);
+	}
 
-    memset(CodeCache,0xFF,CODE_SIZE*2);
+	memset(CodeCache,0xFF,CODE_SIZE*2);
 
 #endif
 	ngen_init();
@@ -434,9 +437,9 @@ bool recSh4_IsCpuRunning()
 
 void Get_Sh4Recompiler(sh4_if* rv)
 {
-    #ifdef HOST_NO_REC
-    Get_Sh4Interpreter(rv);
-    #else
+	#ifdef HOST_NO_REC
+	Get_Sh4Interpreter(rv);
+	#else
 	rv->Run=recSh4_Run;
 	rv->Stop=recSh4_Stop;
 	rv->Step=recSh4_Step;

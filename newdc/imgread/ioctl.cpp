@@ -11,13 +11,13 @@
 
 
 #ifndef noheaders
-#define RAW_SECTOR_SIZE			2352
-#define CD_SECTOR_SIZE			2048
-#define MAXIMUM_NUMBER_TRACKS	100
-#define SECTORS_AT_READ			20
-#define CD_BLOCKS_PER_SECOND	75
-#define IOCTL_CDROM_RAW_READ	0x2403E
-#define IOCTL_CDROM_READ_TOC	0x24000
+#define RAW_SECTOR_SIZE         2352
+#define CD_SECTOR_SIZE          2048
+#define MAXIMUM_NUMBER_TRACKS   100
+#define SECTORS_AT_READ         20
+#define CD_BLOCKS_PER_SECOND    75
+#define IOCTL_CDROM_RAW_READ    0x2403E
+#define IOCTL_CDROM_READ_TOC    0x24000
 #define IOCTL_CDROM_READ_TOC_EX 0x24054
 
 // These structures are defined somewhere in the windows-api, but I did
@@ -104,7 +104,7 @@ bool spti_SendCommand(HANDLE hand,spti_s& s,SCSI_ADDRESS& ioctl_addr)
 	s.sptd.TargetId           = ioctl_addr.TargetId;
 	s.sptd.Lun                = ioctl_addr.Lun;
 	s.sptd.TimeOutValue       = 30;
-	//s.sptd.CdbLength		 = 0x0A;
+	//s.sptd.CdbLength        = 0x0A;
 	s.sptd.SenseInfoLength    = 0x12;
 	s.sptd.SenseInfoOffset    = offsetof(spti_s, senseBuf);
 //	s.sptd.DataIn             = 0x01;//DATA_IN
@@ -125,18 +125,18 @@ bool spti_Read10(HANDLE hand,void * pdata,u32 sector,SCSI_ADDRESS& ioctl_addr)
 	spti_s s;
 	memset(&s,0,sizeof(spti_s));
 
-	s.sptd.Cdb[0]	= SCSI_READ10;
-	s.sptd.Cdb[1]	= (ioctl_addr.Lun&7) << 5;// | DPO ;	DPO = 8
+	s.sptd.Cdb[0] = SCSI_READ10;
+	s.sptd.Cdb[1] = (ioctl_addr.Lun&7) << 5;// | DPO ;	DPO = 8
 
-	s.sptd.Cdb[2]	= (BYTE)(sector >> 0x18 & 0xFF);	// MSB
-	s.sptd.Cdb[3]	= (BYTE)(sector >> 0x10 & 0xFF);
-	s.sptd.Cdb[4]	= (BYTE)(sector >> 0x08 & 0xFF);
-	s.sptd.Cdb[5]	= (BYTE)(sector >> 0x00 & 0xFF);	// LSB
+	s.sptd.Cdb[2] = (BYTE)(sector >> 0x18 & 0xFF); // MSB
+	s.sptd.Cdb[3] = (BYTE)(sector >> 0x10 & 0xFF);
+	s.sptd.Cdb[4] = (BYTE)(sector >> 0x08 & 0xFF);
+	s.sptd.Cdb[5] = (BYTE)(sector >> 0x00 & 0xFF); // LSB
 
-	s.sptd.Cdb[7]	= 0;
-	s.sptd.Cdb[8]	= 1;
+	s.sptd.Cdb[7] = 0;
+	s.sptd.Cdb[8] = 1;
 	
-	s.sptd.CdbLength		 = 0x0A;
+	s.sptd.CdbLength          = 0x0A;
 	s.sptd.DataIn             = 0x01;//DATA_IN
 	s.sptd.DataTransferLength = 0x800;
 	s.sptd.DataBuffer         = pdata;
@@ -153,10 +153,10 @@ bool spti_ReadCD(HANDLE hand,void * pdata,u32 sector,SCSI_ADDRESS& ioctl_addr)
 	
 
 	//lba
-	r.LBA[0]	= (BYTE)(sector >> 0x18 & 0xFF);
-	r.LBA[1]	= (BYTE)(sector >> 0x10 & 0xFF);
-	r.LBA[2]	= (BYTE)(sector >> 0x08 & 0xFF);
-	r.LBA[3]	= (BYTE)(sector >> 0x00 & 0xFF);
+	r.LBA[0] = (BYTE)(sector >> 0x18 & 0xFF);
+	r.LBA[1] = (BYTE)(sector >> 0x10 & 0xFF);
+	r.LBA[2] = (BYTE)(sector >> 0x08 & 0xFF);
+	r.LBA[3] = (BYTE)(sector >> 0x00 & 0xFF);
 
 	//1 sector
 	r.len[0]=0;
@@ -172,7 +172,7 @@ bool spti_ReadCD(HANDLE hand,void * pdata,u32 sector,SCSI_ADDRESS& ioctl_addr)
 
 	r.subchannel=1;
 	
-	s.sptd.CdbLength		 = 12;
+	s.sptd.CdbLength          = 12;
 	s.sptd.DataIn             = 0x01;//DATA_IN
 	s.sptd.DataTransferLength = 2448;
 	s.sptd.DataBuffer         = pdata;
@@ -206,7 +206,7 @@ struct PhysicalDrive:Disc
 		drive = CreateFile( path, GENERIC_READ|GENERIC_WRITE,FILE_SHARE_READ|FILE_SHARE_WRITE,NULL, OPEN_EXISTING, 0, NULL);
 
 		if ( INVALID_HANDLE_VALUE == drive )
-			return false;	//failed to open
+			return false; //failed to open
 
 		printf(" Opened device %s, reading TOC ...",path);
 		// Get track-table and parse it
@@ -303,14 +303,14 @@ void PhysicalTrack::Read(u32 FAD,u8* dst,SectorFormat* sector_type,u8* subcode,S
 		{
 			if (spti_Read10(disc->drive, dst,LBA,disc->scsi_addr))
 			{
-				//sector read succcess, just user data
+				//sector read success, just user data
 				*sector_type=SECFMT_2048_MODE2_FORM1; //m2f1 seems more common ? is there some way to detect it properly here?
 				return;
 			}
 		}
 		else
 		{
-			//sector read succcess, with subcode
+			//sector read success, with subcode
 			memcpy(dst,temp,2352);
 			memcpy(subcode,temp+2352,96);
 
@@ -341,7 +341,7 @@ void PhysicalTrack::Read(u32 FAD,u8* dst,SectorFormat* sector_type,u8* subcode,S
 		}
 		else
 		{
-			//sector read succcess
+			//sector read success
 			*sector_type=SECFMT_2352;
 			return;
 		}
@@ -353,13 +353,13 @@ void PhysicalTrack::Read(u32 FAD,u8* dst,SectorFormat* sector_type,u8* subcode,S
 		DWORD BytesRead;
 		if (FALSE!=ReadFile(disc->drive,dst,2048,&BytesRead,0) && BytesRead==2048)
 		{
-			//sector read succcess, just user data
+			//sector read success, just user data
 			*sector_type=SECFMT_2048_MODE2_FORM1; //m2f1 seems more common ? is there some way to detect it properly here?
 			return;
 		}
 	}
 
-	printf("IOCTL: Totaly failed to read sector @LBA %d\n",LBA);
+	printf("IOCTL: Totally failed to read sector @LBA %d\n", LBA);
 }
 
 
@@ -373,7 +373,9 @@ Disc* ioctl_parse(wchar* file)
 		PhysicalDrive* rv = new PhysicalDrive();	
 
 		if (rv->Build(fn))
+		{
 			return rv;
+		}
 		else
 		{
 			delete rv;
@@ -381,7 +383,9 @@ Disc* ioctl_parse(wchar* file)
 		}
 	}
 	else
+	{
 		return 0;
+	}
 }
 
 #endif

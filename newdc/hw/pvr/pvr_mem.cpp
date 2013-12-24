@@ -1,6 +1,6 @@
 /*
 	PowerVR interface to plugins
-	Handles YUV convertion (slow and ugly -- but hey it works ...)
+	Handles YUV conversion (slow and ugly -- but hey it works ...)
 
 	Most of this was hacked together when i needed support for YUV-dma for thps2 ;)
 */
@@ -21,7 +21,7 @@
 //inits the YUV converter
 u32 YUV_tempdata[512/4];//512 bytes
 
-u32	YUV_dest=0;
+u32 YUV_dest=0;
 
 u32 YUV_blockcount;
 
@@ -41,13 +41,13 @@ void YUV_init()
 	YUV_blockcount=(((TA_YUV_TEX_CTRL>>0)&0x3F)+1)*(((TA_YUV_TEX_CTRL>>8)&0x3F)+1);
 
 	if ((TA_YUV_TEX_CTRL>>16 )&1)
-	{	
+	{
 		die ("YUV: Not supported configuration\n");
 		YUV_x_size=16;
 		YUV_y_size=16;
 	}
-	else
-	{	//yesh!!!
+	else // yesh!!!
+	{
 		YUV_x_size=(((TA_YUV_TEX_CTRL>>0)&0x3F)+1)*16;
 		YUV_y_size=(((TA_YUV_TEX_CTRL>>8)&0x3F)+1)*16;
 	}
@@ -57,16 +57,16 @@ void YUV_init()
 INLINE u8 GetY420(int x, int y,u8* base)
 {
 	//u32 base=0;
-	if (x>7)
+	if (x > 7)
 	{
-		x-=8;
-		base+=64;
+		x -= 8;
+		base += 64;
 	}
 
-	if (y>7)
+	if (y > 7)
 	{
-		y-=8;
-		base+=128;
+		y -= 8;
+		base += 128;
 	}
 	
 	return base[x+y*8];
@@ -122,10 +122,10 @@ INLINE void YUV_Block384(u8* in, u8* out)
 	u8* iny=in+128;
 	u8* p_out=out;
 
-	YUV_Block8x8(inuv+ 0,iny+  0,p_out);	//(0,0)
-	YUV_Block8x8(inuv+ 4,iny+64,p_out+8*2);	//(8,0)
-	YUV_Block8x8(inuv+32,iny+128,p_out+YUV_x_size*8*2);	//(0,8)
-	YUV_Block8x8(inuv+36,iny+192,p_out+YUV_x_size*8*2+8*2);	//(8,8)
+	YUV_Block8x8(inuv+ 0,iny+  0,p_out);                    //(0,0)
+	YUV_Block8x8(inuv+ 4,iny+64,p_out+8*2);                 //(8,0)
+	YUV_Block8x8(inuv+32,iny+128,p_out+YUV_x_size*8*2);     //(0,8)
+	YUV_Block8x8(inuv+36,iny+192,p_out+YUV_x_size*8*2+8*2); //(8,8)
 }
 
 INLINE void YUV_ConvertMacroBlock(u8* datap)
@@ -167,14 +167,14 @@ void YUV_data(u32* data , u32 count)
 
 	u32 block_size=(TA_YUV_TEX_CTRL & (1<<24))==0?384:512;
 
-	verify(block_size==384);	//no support for 512
+	verify(block_size==384); //no support for 512
 
 	
 	count*=32;
 
 	while(count>=block_size)
 	{
-		YUV_ConvertMacroBlock((u8*)data);					//convert block
+		YUV_ConvertMacroBlock((u8*)data); //convert block
 		data+=block_size>>2;
 		count-=block_size;
 	}
@@ -189,7 +189,7 @@ void YUV_data(u32* data , u32 count)
 //read
 u8 DYNACALL pvr_read_area1_8(u32 addr)
 {
-	printf("8 bit vram reads are not possible\n");
+	printf("8-bit VRAM reads are not possible\n");
 	return 0;
 }
 
@@ -205,7 +205,7 @@ u32 DYNACALL pvr_read_area1_32(u32 addr)
 //write
 void DYNACALL pvr_write_area1_8(u32 addr,u8 data)
 {
-	printf("8 bit vram writes are not possible\n");
+	printf("8-bit VRAM writes are not possible\n");
 }
 void DYNACALL pvr_write_area1_16(u32 addr,u16 data)
 {
@@ -230,7 +230,7 @@ void TAWrite(u32 address,u32* data,u32 count)
 	}
 	else //Vram Writef
 	{
-		//shoudn't realy get here (?) -> works on dc :D need to handle lmmodes
+		//shouldn't really get here (?) -> works on dc :D need to handle lmmodes
 		//printf("Vram Write 0x%X , size %d\n",address,count*32);
 		memcpy(&vram.data[address&VRAM_MASK],data,count*32);
 	}
@@ -260,7 +260,7 @@ extern "C" void DYNACALL TAWriteSQ(u32 address,u8* sqb)
 	}
 	else //Vram Writef
 	{
-		//shoudn't realy get here (?)
+		//shouldn't really get here (?)
 		//printf("Vram Write 0x%X , size %d\n",address,count*32);
 		u8* vram=sqb+512+0x04000000;
 		MemWrite32(&vram[address_w&(VRAM_MASK-0x1F)],sq);
@@ -280,7 +280,7 @@ void pvr_Reset(bool Manual)
 
 u32 pvr_map32(u32 offset32)
 {
-		//64b wide bus is archevied by interleaving the banks every 32 bits
+		//64b wide bus is achieved by interleaving the banks every 32 bits
 		//so bank is Address<<3
 		//bits <4 are <<1 to create space for bank num
 		//bank 0 is mapped at 400000 (32b offset) and after
@@ -288,7 +288,7 @@ u32 pvr_map32(u32 offset32)
 		const u32 static_bits=(VRAM_MASK-(bank_bit*2)+1)|3;
 		const u32 moved_bits=VRAM_MASK-static_bits-bank_bit;
 
-		u32 bank=(offset32&bank_bit)/bank_bit*4;//bank will be used as uper offset too
+		u32 bank=(offset32&bank_bit)/bank_bit*4;//bank will be used as upper offset too
 		u32 lv=offset32&static_bits; //these will survive
 		offset32&=moved_bits;
 		offset32<<=1;
