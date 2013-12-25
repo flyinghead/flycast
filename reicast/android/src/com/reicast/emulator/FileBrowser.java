@@ -139,8 +139,26 @@ public class FileBrowser extends Fragment {
 		 * findViewById(R.id.about).setOnTouchListener(viblist);
 		 */
 
+		File home = new File(home_directory);
+		if (!home.exists() || !home.isDirectory()) {
+			Toast.makeText(getActivity(), "Please configure a home directory",
+					Toast.LENGTH_LONG).show();
+			OptionsFragment optsFrag = (OptionsFragment) getActivity()
+					.getSupportFragmentManager().findFragmentByTag(
+							"OPTIONS_FRAG");
+			if (optsFrag != null) {
+				if (optsFrag.isVisible()) {
+					return;
+				}
+			}
+			optsFrag = new OptionsFragment();
+			getActivity().getSupportFragmentManager().beginTransaction()
+					.replace(R.id.fragment_container, optsFrag, "OPTIONS_FRAG")
+					.addToBackStack(null).commit();
+		}
+
 		if (!ImgBrowse) {
-		navigate(new File(home_directory));
+			navigate(sdcard);
 		} else {
 			generate(ExternalFiles(sdcard));
 		}
@@ -175,6 +193,27 @@ public class FileBrowser extends Fragment {
 									// if this button is clicked, close
 									// current activity
 									parentActivity.finish();
+								}
+							})
+					.setNegativeButton("Options",
+							new DialogInterface.OnClickListener() {
+								public void onClick(DialogInterface dialog,
+										int id) {
+									OptionsFragment optsFrag = (OptionsFragment) getActivity()
+											.getSupportFragmentManager()
+											.findFragmentByTag("OPTIONS_FRAG");
+									if (optsFrag != null) {
+										if (optsFrag.isVisible()) {
+											return;
+										}
+									}
+									optsFrag = new OptionsFragment();
+									getActivity()
+											.getSupportFragmentManager()
+											.beginTransaction()
+											.replace(R.id.fragment_container,
+													optsFrag, "OPTIONS_FRAG")
+											.addToBackStack(null).commit();
 								}
 							});
 
