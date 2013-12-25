@@ -72,11 +72,11 @@ public class FileBrowser extends Fragment {
 		if (b != null) {
 			ImgBrowse = b.getBoolean("ImgBrowse", true);
 			if (games = b.getBoolean("games_entry", false)) {
-				if (b.getString("path_entry", null) != null) {
+				if (b.getString("path_entry") != null) {
 					home_directory = b.getString("path_entry");
 				}
 			} else {
-				if (b.getString("path_entry", null) != null) {
+				if (b.getString("path_entry") != null) {
 					game_directory = b.getString("path_entry");
 				}
 			}
