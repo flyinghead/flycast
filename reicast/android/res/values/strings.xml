@@ -7,5 +7,11 @@
     
     <string name="system_path">System Path (location of dc_boot.bin/dc_flash.bin)</string>
     <string name="browser_path">Default Browser Path</string>
+    
+    <string-array name="images">
+        <item>cdi</item>
+        <item>chd</item>
+        <item>gdi</item>
+    </string-array>
 
 </resources>

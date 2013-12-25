@@ -2,19 +2,27 @@ package com.reicast.emulator;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Locale;
+
+import org.apache.commons.io.comparator.CompositeFileComparator;
+import org.apache.commons.io.comparator.LastModifiedFileComparator;
+import org.apache.commons.io.comparator.SizeFileComparator;
+import org.apache.commons.lang3.StringUtils;
 
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
+import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
@@ -34,6 +42,7 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
+import com.android.util.FileUtils;
 import com.example.newdc.JNIdc;
 
 public class FileBrowser extends Fragment {
@@ -130,18 +139,22 @@ public class FileBrowser extends Fragment {
 		 * findViewById(R.id.about).setOnTouchListener(viblist);
 		 */
 
+		if (!ImgBrowse) {
 		navigate(new File(home_directory));
+		} else {
+			generate(ExternalFiles(sdcard));
+		}
 
 		File bios = new File(home_directory, "data/dc_boot.bin");
 		File flash = new File(home_directory, "data/dc_flash.bin");
 
 		String msg = null;
 		if (!bios.exists())
-			msg = "Bios Missing. Put bios in " + home_directory
-					+ "/data/dc_boot.bin";
+			msg = "BIOS Missing. The Dreamcast BIOS is required for this emulator to work. Place the BIOS file in "
+					+ home_directory + "/data/dc_boot.bin";
 		else if (!flash.exists())
-			msg = "Flash Missing. Put bios in " + home_directory
-					+ "/data/dc_flash.bin";
+			msg = "Flash Missing. The Dreamcast Flash is required for this emulator to work. Place the Flash file in "
+					+ home_directory + "/data/dc_flash.bin";
 
 		if (msg != null) {
 			vib.vibrate(50);
@@ -149,7 +162,7 @@ public class FileBrowser extends Fragment {
 					parentActivity);
 
 			// set title
-			alertDialogBuilder.setTitle("Missing files");
+			alertDialogBuilder.setTitle("You have to provide the BIOS");
 
 			// set dialog message
 			alertDialogBuilder
@@ -181,7 +194,129 @@ public class FileBrowser extends Fragment {
 			return ((filea.isFile() ? "a" : "b") + filea.getName().toLowerCase(
 					Locale.getDefault()))
 					.compareTo((fileb.isFile() ? "a" : "b")
-							+ fileb.getName().toLowerCase());
+							+ fileb.getName().toLowerCase(Locale.getDefault()));
+		}
+	}
+	
+	private List<File> ExternalFiles(File baseDirectory) {
+		// allows the input of a base directory for storage selection
+		final List<File> tFileList = new ArrayList<File>();
+		Resources resources = getResources();
+		// array of valid image file extensions
+		String[] mediaTypes = resources.getStringArray(R.array.images);
+		FilenameFilter[] filter = new FilenameFilter[mediaTypes.length];
+
+		int i = 0;
+		for (final String type : mediaTypes) {
+			filter[i] = new FilenameFilter() {
+
+				public boolean accept(File dir, String name) {
+					if (dir.getName().startsWith(".") || name.startsWith(".")) {
+						return false;
+					} else {
+						return StringUtils.endsWithIgnoreCase(name, "." + type);
+					}
+				}
+
+			};
+			i++;
+		}
+
+		FileUtils fileUtils = new FileUtils();
+		File[] allMatchingFiles = fileUtils.listFilesAsArray(baseDirectory,
+				filter, -1);
+		for (File mediaFile : allMatchingFiles) {
+			tFileList.add(mediaFile);
+		}
+
+		@SuppressWarnings("unchecked")
+		CompositeFileComparator comparator = new CompositeFileComparator(
+				SizeFileComparator.SIZE_REVERSE,
+				LastModifiedFileComparator.LASTMODIFIED_REVERSE);
+		comparator.sort(tFileList);
+
+		return tFileList;
+	}
+
+	void generate(List<File> list) {
+		LinearLayout v = (LinearLayout) parentActivity
+				.findViewById(R.id.game_list);
+		v.removeAllViews();
+
+		for (int i = 0; i < list.size(); i++) {
+			final View childview = parentActivity.getLayoutInflater().inflate(
+					R.layout.app_list_item, null, false);
+
+			((TextView) childview.findViewById(R.id.item_name)).setText(list
+					.get(i).getName());
+
+			((ImageView) childview.findViewById(R.id.item_icon))
+					.setImageResource(list.get(i) == null ? R.drawable.config
+							: list.get(i).isDirectory() ? R.drawable.open_folder
+									: list.get(i).getName()
+											.toLowerCase(Locale.getDefault())
+											.endsWith(".gdi") ? R.drawable.gdi
+											: list.get(i)
+													.getName()
+													.toLowerCase(
+															Locale.getDefault())
+													.endsWith(".cdi") ? R.drawable.cdi
+													: list.get(i)
+															.getName()
+															.toLowerCase(
+																	Locale.getDefault())
+															.endsWith(".chd") ? R.drawable.chd
+															: R.drawable.disk_unknown);
+
+			childview.setTag(list.get(i));
+
+			orig_bg = childview.getBackground();
+
+			// vw.findViewById(R.id.childview).setBackgroundColor(0xFFFFFFFF);
+
+			childview.findViewById(R.id.childview).setOnClickListener(
+					new OnClickListener() {
+						public void onClick(View view) {
+							File f = (File) view.getTag();
+							vib.vibrate(50);
+							mCallback.onGameSelected(f != null ? Uri
+									.fromFile(f) : Uri.EMPTY);
+							// Intent inte = new
+							// Intent(Intent.ACTION_VIEW,f!=null?
+							// Uri.fromFile(f):Uri.EMPTY,parentActivity.getBaseContext(),GL2JNIActivity.class);
+							// FileBrowser.this.startActivity(inte);
+							vib.vibrate(250);
+						}
+					});
+
+			childview.findViewById(R.id.childview).setOnTouchListener(
+					new OnTouchListener() {
+						@SuppressWarnings("deprecation")
+						public boolean onTouch(View view, MotionEvent arg1) {
+							if (arg1.getActionMasked() == MotionEvent.ACTION_DOWN) {
+								view.setBackgroundColor(0xFF4F3FFF);
+							} else if (arg1.getActionMasked() == MotionEvent.ACTION_CANCEL
+									|| arg1.getActionMasked() == MotionEvent.ACTION_UP) {
+								view.setBackgroundDrawable(orig_bg);
+							}
+
+							return false;
+
+						}
+					});
+
+			if (i == 0) {
+				FrameLayout sepa = new FrameLayout(parentActivity);
+				sepa.setBackgroundColor(0xFFA0A0A0);
+				sepa.setPadding(0, 0, 0, 1);
+				v.addView(sepa);
+			}
+			v.addView(childview);
+
+			FrameLayout sep = new FrameLayout(parentActivity);
+			sep.setBackgroundColor(0xFFA0A0A0);
+			sep.setPadding(0, 0, 0, 1);
+			v.addView(sep);
 		}
 	}
 
@@ -214,9 +349,11 @@ public class FileBrowser extends Fragment {
 				if (list.get(i) != null && list.get(i).isFile())
 					if (!list.get(i).getName().toLowerCase(Locale.getDefault())
 							.endsWith(".gdi")
-							&& !list.get(i).getName().toLowerCase()
+							&& !list.get(i).getName()
+									.toLowerCase(Locale.getDefault())
 									.endsWith(".cdi")
-							&& !list.get(i).getName().toLowerCase()
+							&& !list.get(i).getName()
+									.toLowerCase(Locale.getDefault())
 									.endsWith(".chd"))
 						continue;
 			} else {
@@ -287,10 +424,12 @@ public class FileBrowser extends Fragment {
 								mPrefs.edit()
 										.putString("home_directory",
 												home_directory).commit();
-								File data_directory = new File(home_directory, "data");
-					            if (!data_directory.exists() || !data_directory.isDirectory()) {
-					            	data_directory.mkdirs();
-					            }
+								File data_directory = new File(home_directory,
+										"data");
+								if (!data_directory.exists()
+										|| !data_directory.isDirectory()) {
+									data_directory.mkdirs();
+								}
 								JNIdc.config(home_directory);
 
 							} else if (ImgBrowse) {
