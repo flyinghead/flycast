@@ -243,6 +243,8 @@ public class FileBrowser extends Fragment {
 				.findViewById(R.id.game_list);
 		v.removeAllViews();
 
+		((TextView) parentActivity.findViewById(R.id.text_cwd)).setText(R.string.games_listing);
+
 		for (int i = 0; i < list.size(); i++) {
 			final View childview = parentActivity.getLayoutInflater().inflate(
 					R.layout.app_list_item, null, false);
