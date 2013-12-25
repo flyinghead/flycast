@@ -55,7 +55,7 @@ public class FileBrowser extends Fragment {
 
 	private SharedPreferences mPrefs;
 	private File sdcard = Environment.getExternalStorageDirectory();
-	private String home_directory = sdcard + "/Dreamcast";
+	private String home_directory = sdcard + "/dc";
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {

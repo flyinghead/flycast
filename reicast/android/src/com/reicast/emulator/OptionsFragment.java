@@ -27,7 +27,7 @@ public class OptionsFragment extends Fragment{
 	
 	private SharedPreferences mPrefs;
 	private File sdcard = Environment.getExternalStorageDirectory();
-	private String home_directory = sdcard + "/Dreamcast";
+	private String home_directory = sdcard + "/dc";
 	private String browse_entry = home_directory;
 	
 	 // Container Activity must implement this interface
