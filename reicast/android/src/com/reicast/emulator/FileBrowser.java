@@ -242,8 +242,10 @@ public class FileBrowser extends Fragment {
 		LinearLayout v = (LinearLayout) parentActivity
 				.findViewById(R.id.game_list);
 		v.removeAllViews();
-
+		
 		((TextView) parentActivity.findViewById(R.id.text_cwd)).setText(R.string.games_listing);
+		
+		bootBiosItem(v);
 
 		for (int i = 0; i < list.size(); i++) {
 			final View childview = parentActivity.getLayoutInflater().inflate(
@@ -320,6 +322,64 @@ public class FileBrowser extends Fragment {
 			sep.setPadding(0, 0, 0, 1);
 			v.addView(sep);
 		}
+	}
+	
+	private void bootBiosItem(LinearLayout v) {
+		final View childview = parentActivity.getLayoutInflater().inflate(
+				R.layout.app_list_item, null, false);
+
+		((TextView) childview.findViewById(R.id.item_name))
+		.setText("Boot Dreamcast Bios");
+
+		childview.setTag(null);
+
+		orig_bg = childview.getBackground();
+
+		// vw.findViewById(R.id.childview).setBackgroundColor(0xFFFFFFFF);
+
+		childview.findViewById(R.id.childview).setOnClickListener(
+				new OnClickListener() {
+					public void onClick(View view) {
+						File f = (File) view.getTag();
+						vib.vibrate(50);
+						mCallback.onGameSelected(f != null ? Uri
+								.fromFile(f) : Uri.EMPTY);
+						// Intent inte = new
+						// Intent(Intent.ACTION_VIEW,f!=null?
+						// Uri.fromFile(f):Uri.EMPTY,parentActivity.getBaseContext(),GL2JNIActivity.class);
+						// FileBrowser.this.startActivity(inte);
+						vib.vibrate(250);
+					}
+				});
+
+		childview.findViewById(R.id.childview).setOnTouchListener(
+				new OnTouchListener() {
+					@SuppressWarnings("deprecation")
+					public boolean onTouch(View view, MotionEvent arg1) {
+						if (arg1.getActionMasked() == MotionEvent.ACTION_DOWN) {
+							view.setBackgroundColor(0xFF4F3FFF);
+						} else if (arg1.getActionMasked() == MotionEvent.ACTION_CANCEL
+								|| arg1.getActionMasked() == MotionEvent.ACTION_UP) {
+							view.setBackgroundDrawable(orig_bg);
+						}
+
+						return false;
+
+					}
+				});
+
+
+			FrameLayout sepa = new FrameLayout(parentActivity);
+			sepa.setBackgroundColor(0xFFA0A0A0);
+			sepa.setPadding(0, 0, 0, 1);
+			v.addView(sepa);
+		
+		v.addView(childview);
+
+		FrameLayout sep = new FrameLayout(parentActivity);
+		sep.setBackgroundColor(0xFFA0A0A0);
+		sep.setPadding(0, 0, 0, 1);
+		v.addView(sep);
 	}
 
 	void navigate(final File root_sd) {
