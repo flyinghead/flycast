@@ -30,7 +30,6 @@
                 android:ems="10"
                 android:inputType="textPersonName" >
 			
-                <requestFocus />
             </EditText>
 
             <Button     
@@ -49,11 +48,11 @@
         android:layout_height="wrap_content"
         android:orientation="vertical" >
         <TextView
-                android:id="@+id/textView2"
+                android:id="@+id/textView1"
                 android:layout_width="wrap_content"
                 android:layout_height="0dip"
                 android:layout_weight="1"
-                android:text="@string/browser_path" />
+                android:text="@string/games_path" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -64,18 +63,18 @@
 
             <EditText
                 android:layout_weight="1"
-                android:id="@+id/browse_path"
+                android:id="@+id/game_path"
                 android:layout_width="0dip"
                 android:layout_height="wrap_content"
                 android:ems="10"
                 android:inputType="textPersonName" >
-			
-                
+
+		<requestFocus />
             </EditText>
 
             <Button     
                            
-                android:id="@+id/browse_main_path"
+                android:id="@+id/browse_game_path"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Browse" />

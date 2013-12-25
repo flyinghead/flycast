@@ -165,11 +165,12 @@ public class MainActivity extends FragmentActivity implements
 		return;
 	}
 	
-	public void onMainBrowseSelected(String browse_entry){
+	public void onMainBrowseSelected(String path_entry, boolean games){
 		FileBrowser firstFragment = new FileBrowser();
         Bundle args = new Bundle();
         args.putBoolean("ImgBrowse", false);
-        args.putString("browse_entry", browse_entry);
+        args.putString("browse_entry", path_entry);
+        args.putBoolean("games_entry", games);
         // specify ImgBrowse option. true = images, false = folders only
         firstFragment.setArguments(args);
         // In case this activity was started with special instructions from

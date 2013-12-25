@@ -41,6 +41,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.android.util.FileUtils;
 import com.example.newdc.JNIdc;
@@ -51,11 +52,13 @@ public class FileBrowser extends Fragment {
 	Drawable orig_bg;
 	Activity parentActivity;
 	boolean ImgBrowse;
+	private boolean games;
 	OnItemSelectedListener mCallback;
 
 	private SharedPreferences mPrefs;
 	private File sdcard = Environment.getExternalStorageDirectory();
 	private String home_directory = sdcard + "/dc";
+	private String game_directory = sdcard + "/";
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -63,12 +66,19 @@ public class FileBrowser extends Fragment {
 
 		mPrefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
 		home_directory = mPrefs.getString("home_directory", home_directory);
+		game_directory = mPrefs.getString("game_directory", game_directory);
 
 		Bundle b = getArguments();
 		if (b != null) {
 			ImgBrowse = b.getBoolean("ImgBrowse", true);
-			if (b.getString("browse_entry", null) != null) {
-				home_directory = b.getString("browse_entry");
+			if (games = b.getBoolean("games_entry", false)) {
+				if (b.getString("path_entry", null) != null) {
+					home_directory = b.getString("path_entry");
+				}
+			} else {
+				if (b.getString("path_entry", null) != null) {
+					game_directory = b.getString("path_entry");
+				}
 			}
 		}
 
@@ -160,7 +170,7 @@ public class FileBrowser extends Fragment {
 		if (!ImgBrowse) {
 			navigate(sdcard);
 		} else {
-			generate(ExternalFiles(sdcard));
+			generate(ExternalFiles(new File(game_directory)));
 		}
 
 		File bios = new File(home_directory, "data/dc_boot.bin");
@@ -520,18 +530,25 @@ public class FileBrowser extends Fragment {
 										.fromFile(new File(root_sd
 												.getAbsolutePath())));
 								vib.vibrate(250);
-
-								home_directory = root_sd.getAbsolutePath();
-								mPrefs.edit()
-										.putString("home_directory",
-												home_directory).commit();
-								File data_directory = new File(home_directory,
-										"data");
-								if (!data_directory.exists()
-										|| !data_directory.isDirectory()) {
-									data_directory.mkdirs();
+								
+								if (games) {
+									game_directory = root_sd.getAbsolutePath();
+									mPrefs.edit()
+											.putString("game_directory",
+													game_directory).commit();
+								} else {
+									home_directory = root_sd.getAbsolutePath();
+									mPrefs.edit()
+											.putString("home_directory",
+													home_directory).commit();
+									File data_directory = new File(home_directory,
+											"data");
+									if (!data_directory.exists()
+											|| !data_directory.isDirectory()) {
+										data_directory.mkdirs();
+									}
+									JNIdc.config(home_directory);
 								}
-								JNIdc.config(home_directory);
 
 							} else if (ImgBrowse) {
 								vib.vibrate(50);
