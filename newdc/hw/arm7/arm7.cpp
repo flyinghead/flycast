@@ -1321,9 +1321,9 @@ u32 nfb,ffb,bfb,mfb;
 
 static x86_block* x86e;
 
-void DumpRegs()
+void DumpRegs(const char* output)
 {
-	static FILE* f=fopen("c:\\arm.txt","w");
+	static FILE* f=fopen(output, "w");
 	static int id=0;
 #if 0
 	if (490710==id)
