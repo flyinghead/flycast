@@ -1,9 +1,14 @@
 package com.reicast.emulator;
 
+import java.io.File;
+
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.InputDevice;
@@ -11,6 +16,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
 
 @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
 public class OptionsFragment extends Fragment{
@@ -19,9 +25,14 @@ public class OptionsFragment extends Fragment{
 	Button mainBrowse;
 	OnClickListener mCallback;
 	
+	private SharedPreferences mPrefs;
+	private File sdcard = Environment.getExternalStorageDirectory();
+	private String home_directory = sdcard + "/Dreamcast";
+	private String browse_entry = home_directory;
+	
 	 // Container Activity must implement this interface
     public interface OnClickListener {            
-            public void onMainBrowseSelected();
+            public void onMainBrowseSelected(String browse_entry);
     }
 
     @Override
@@ -57,9 +68,18 @@ public class OptionsFragment extends Fragment{
 		 
 	    	parentActivity = getActivity();
 	    	mainBrowse = (Button)getView().findViewById(R.id.browse_main_path);
+	    	
+	    	final EditText editBrowse = (EditText)getView().findViewById(R.id.main_path);
+	    	mPrefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+	    	home_directory = mPrefs.getString("home_directory", home_directory);
+	    	editBrowse.setText(home_directory);
+	    	
 	    	mainBrowse.setOnClickListener(new View.OnClickListener() {
         		public void onClick(View view) {
-        			mCallback.onMainBrowseSelected();
+        			if (editBrowse.getText() != null) {
+        				browse_entry = editBrowse.getText().toString();
+        			}
+        			mCallback.onMainBrowseSelected(browse_entry);
         		}
 	    	});
 	 }

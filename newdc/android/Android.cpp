@@ -18,6 +18,7 @@
 
 extern "C"
 {
+  JNIEXPORT void JNICALL Java_com_example_newdc_JNIdc_config(JNIEnv *env,jobject obj,jstring dirName)  __attribute__((visibility("default")));
   JNIEXPORT void JNICALL Java_com_example_newdc_JNIdc_init(JNIEnv *env,jobject obj,jstring fileName)  __attribute__((visibility("default")));
   JNIEXPORT void JNICALL Java_com_example_newdc_JNIdc_run(JNIEnv *env,jobject obj,jobject track)  __attribute__((visibility("default")));
   JNIEXPORT void JNICALL Java_com_example_newdc_JNIdc_stop(JNIEnv *env,jobject obj)  __attribute__((visibility("default")));
@@ -127,11 +128,16 @@ void os_SetWindowText(char const *Text)
 {
 	putinf(Text);
 }
+JNIEXPORT void JNICALL Java_com_example_newdc_JNIdc_config(JNIEnv *env,jobject obj,jstring dirName)
+{
+  // Set home directory based on User config
+  const char* D = dirName? env->GetStringUTFChars(dirName,0):0;
+  SetHomeDir(D);
+  printf("Home dir is: '%s'\n",GetPath("/").c_str());
+  env->ReleaseStringUTFChars(dirName,D);
+}
 JNIEXPORT void JNICALL Java_com_example_newdc_JNIdc_init(JNIEnv *env,jobject obj,jstring fileName)
 {
-  // Set home directory to SD card
-  SetHomeDir("/sdcard/dc");
-  printf("Home dir is: '%s'\n",GetPath("/").c_str());
 
   // Get filename string from Java
   const char* P = fileName? env->GetStringUTFChars(fileName,0):0;

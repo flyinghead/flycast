@@ -1,10 +1,17 @@
 package com.reicast.emulator;
 
+import java.io.File;
+
+import com.example.newdc.JNIdc;
+
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
+import android.preference.PreferenceManager;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 import android.view.Menu;
@@ -13,9 +20,15 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnTouchListener;
 
+import com.example.newdc.JNIdc;
+
 public class MainActivity extends FragmentActivity implements
 			FileBrowser.OnItemSelectedListener, 
 			OptionsFragment.OnClickListener{
+	
+	private SharedPreferences mPrefs;
+	private File sdcard = Environment.getExternalStorageDirectory();
+	private String home_directory = sdcard + "/Dreamcast";
 
 	@Override
     public void onCreate(Bundle savedInstanceState) {
@@ -122,6 +135,10 @@ public class MainActivity extends FragmentActivity implements
                         			return false;
                 			}
                 	});
+            
+            mPrefs = PreferenceManager.getDefaultSharedPreferences(this);
+            home_directory = mPrefs.getString("home_directory", home_directory);
+            JNIdc.config(home_directory);
 
     }
 	
@@ -148,14 +165,15 @@ public class MainActivity extends FragmentActivity implements
 		return;
 	}
 	
-	public void onMainBrowseSelected(){
+	public void onMainBrowseSelected(String browse_entry){
 		FileBrowser firstFragment = new FileBrowser();
         Bundle args = new Bundle();
-        args.putBoolean("ImgBrowse", false);				// specify ImgBrowse option. true = images, false = folders only
+        args.putBoolean("ImgBrowse", false);
+        args.putString("browse_entry", browse_entry);
+        // specify ImgBrowse option. true = images, false = folders only
         firstFragment.setArguments(args);
         // In case this activity was started with special instructions from
-        // an
-        // Intent, pass the Intent's extras to the fragment as arguments
+        // an Intent, pass the Intent's extras to the fragment as arguments
         // firstFragment.setArguments(getIntent().getExtras());
 
         // Add the fragment to the 'fragment_container' FrameLayout

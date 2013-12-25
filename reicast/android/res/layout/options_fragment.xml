@@ -13,7 +13,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="0dip"
                 android:layout_weight="1"
-                android:text="System Path(location of dc_boot.bin/dc_flash.bin)" />
+                android:text="@string/system_path" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -53,7 +53,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="0dip"
                 android:layout_weight="1"
-                android:text="Default Browser Path" />
+                android:text="@string/browser_path" />
 
         <LinearLayout
             android:layout_width="match_parent"
