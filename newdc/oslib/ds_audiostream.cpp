@@ -162,7 +162,7 @@ u32 os_Push(void* frame, u32 samples, bool wait)
 
 	bool w=false;
 
-	for (int i = 0; i < samples*2; i++)
+	for (u32 i = 0; i < samples*2; i++)
 	{
 		if (f[i])
 		{

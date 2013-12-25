@@ -655,7 +655,7 @@ void GenSorted()
 	//Merge pids/draw cmds if two different pids are actually equal
 	if (true)
 	{
-		for (int k=1;k<aused;k++)
+		for (u32 k=1;k<aused;k++)
 		{
 			if (lst[k].pid!=lst[k-1].pid)
 			{
@@ -709,7 +709,7 @@ void GenSorted()
 
 	int idx=-1;
 
-	for (int i=0;i<aused;i++)
+	for (u32 i=0; i<aused; i++)
 	{
 		int pid=lst[i].pid;
 		u16* midx=lst[i].id;
@@ -777,8 +777,8 @@ void DrawSorted()
 			glStencilOp(GL_KEEP,GL_KEEP,GL_REPLACE);
 		#endif
 
-			for (int p=0;p<count;p++)
-			{		
+			for (u32 p=0; p<count; p++)
+			{
 				PolyParam* params = pidx_sort[p].ppid;
 				if (pidx_sort[p].count>2) //this actually happens for some games. No idea why ..
 				{
@@ -789,9 +789,9 @@ void DrawSorted()
 					//Verify restriping -- only valid if no sort
 					int fs=pidx_sort[p].first;
 
-					for (int j=0;j<(params->count-2);j++)
+					for (u32 j=0; j<(params->count-2); j++)
 					{
-						for (int k=0;k<3;k++)
+						for (u32 k=0; k<3; k++)
 						{
 							verify(idx_base[params->first+j+k]==vidx_sort[fs++]);
 						}

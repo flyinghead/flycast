@@ -336,7 +336,7 @@ void bm_Rebuild()
 	
 	std::sort(all_blocks.begin(),all_blocks.end(),UDgreaterLOC);
 	
-	for(int i=0;i<all_blocks.size();i++)
+	for(size_t i=0; i<all_blocks.size(); i++)
 	{
 		bool do_opts=((all_blocks[i]->addr&0x3FFFFFFF)>0x0C010100);
 
@@ -354,7 +354,7 @@ void bm_Rebuild()
 		FPCA(all_blocks[i]->addr)=all_blocks[i]->code;
 	}
 
-	for(int i=0;i<all_blocks.size();i++)
+	for(size_t i=0; i<all_blocks.size(); i++)
 	{
 		all_blocks[i]->Relink();
 	}
@@ -366,7 +366,7 @@ void _vmem_bm_reset();
 
 void _vmem_bm_pagefail(void** ptr,u32 PAGE_SZ)
 {
-	for (int i=0;i<PAGE_SZ/sizeof(ptr[0]);i++)
+	for (size_t i=0; i<PAGE_SZ/sizeof(ptr[0]); i++)
 	{
 		ptr[i]=(void*)ngen_FailedToFindBlock;
 	}
@@ -375,7 +375,7 @@ void _vmem_bm_pagefail(void** ptr,u32 PAGE_SZ)
 void bm_Reset()
 {
 	ngen_ResetBlocks();
-	for (u32 i=0;i<BLOCKS_IN_PAGE_LIST_COUNT;i++)
+	for (u32 i=0; i<BLOCKS_IN_PAGE_LIST_COUNT; i++)
 	{
 		blocks_page[i].clear();
 	}
@@ -387,7 +387,7 @@ void bm_Reset()
 		//sh4rcb.fpcb[i]=(void*)ngen_FailedToFindBlock;
 	}
 
-	for (int i=0;i<all_blocks.size();i++)
+	for (size_t i=0; i<all_blocks.size(); i++)
 	{
 		all_blocks[i]->relink_data=0;
 		all_blocks[i]->pNextBlock=0;
@@ -442,10 +442,10 @@ void bm_WriteBlockMap(const string& file)
 	if (f)
 	{
 		printf("Writing block map !\n");
-		for (int i=0;i<all_blocks.size();i++)
+		for (size_t i=0; i<all_blocks.size(); i++)
 		{
 			fprintf(f,"block: %d:%08X:%08X:%d:%d:%d\n",all_blocks[i]->BlockType,all_blocks[i]->addr,all_blocks[i]->code,all_blocks[i]->host_code_size,all_blocks[i]->guest_cycles,all_blocks[i]->guest_opcodes);
-			for(int j=0;j<all_blocks[i]->oplist.size();j++)
+			for(size_t j=0;j<all_blocks[i]->oplist.size();j++)
 				fprintf(f,"\top: %d:%d:%s\n",j,all_blocks[i]->oplist[j].guest_offs,all_blocks[i]->oplist[j].dissasm().c_str());
 		}
 		fclose(f);
@@ -475,7 +475,7 @@ bool UDgreater3 ( RuntimeBlockInfo* elem1, RuntimeBlockInfo* elem2 )
 
 void sh4_jitsym(FILE* out)
 {
-	for (size_t i=0;i<all_blocks.size();i++)
+	for (size_t i=0; i<all_blocks.size(); i++)
 	{
 		fprintf(out,"%08p %d %08X\n",all_blocks[i]->code,all_blocks[i]->host_code_size,all_blocks[i]->addr);
 	}

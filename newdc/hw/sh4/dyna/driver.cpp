@@ -154,7 +154,7 @@ const char* RuntimeBlockInfo::hash(bool full, bool relocable)
 	{
 		if (relocable)
 		{
-			for (int i=0;i<this->guest_opcodes;i++)
+			for (u32 i=0; i<this->guest_opcodes; i++)
 			{
 				u16 data=ptr[i];
 				//Do not count PC relative loads (relocated code)

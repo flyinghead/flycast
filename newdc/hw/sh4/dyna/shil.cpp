@@ -15,7 +15,7 @@ void RegReadInfo(shil_param p,size_t ord)
 {
 	if (p.is_reg())
 	{
-		for (int i=0;i<p.count();i++)
+		for (u32 i=0; i<p.count(); i++)
 			RegisterRead[p._reg+i]=ord;
 	}
 }
@@ -23,7 +23,7 @@ void RegWriteInfo(shil_opcode* ops, shil_param p,size_t ord)
 {
 	if (p.is_reg())
 	{
-		for (int i=0;i<p.count();i++)
+		for (u32 i=0; i<p.count(); i++)
 		{
 			if (RegisterWrite[p._reg+i]>=RegisterRead[p._reg+i] && RegisterWrite[p._reg+i]!=0xFFFFFFFF)	//if last read was before last write, and there was a last write
 			{
