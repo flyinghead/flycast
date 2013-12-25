@@ -5,8 +5,6 @@
 #include <map>
 
 
-
-
 #define C_CORE
 
 #if 0
@@ -40,49 +38,51 @@
 
 enum
 {
-	RN_CPSR=16,
-	RN_SPSR=17,
+	RN_CPSR      = 16,
+	RN_SPSR      = 17,
 
-	R13_IRQ=18,
-	R14_IRQ=19,
-	SPSR_IRQ =20,
-	R13_USR=26,
-	R14_USR=27,
-	R13_SVC=28,
-	R14_SVC=29,
-	SPSR_SVC =30,
-	R13_ABT=31,
-	R14_ABT=32,
-	SPSR_ABT =33,
-	R13_UND=34,
-	R14_UND=35,
-	SPSR_UND =36,
-	R8_FIQ= 37,
-	R9_FIQ= 38,
-	R10_FIQ=39,
-	R11_FIQ=40,
-	R12_FIQ=41,
-	R13_FIQ=42,
-	R14_FIQ=43,
-	SPSR_FIQ =44,
-	RN_PSR_FLAGS=45,
-	R15_ARM_NEXT=46,
-	INTR_PEND=47,
-	CYCL_CNT=48,
-	
+	R13_IRQ      = 18,
+	R14_IRQ      = 19,
+	SPSR_IRQ     = 20,
+	R13_USR      = 26,
+	R14_USR      = 27,
+	R13_SVC      = 28,
+	R14_SVC      = 29,
+	SPSR_SVC     = 30,
+	R13_ABT      = 31,
+	R14_ABT      = 32,
+	SPSR_ABT     = 33,
+	R13_UND      = 34,
+	R14_UND      = 35,
+	SPSR_UND     = 36,
+	R8_FIQ       = 37,
+	R9_FIQ       = 38,
+	R10_FIQ      = 39,
+	R11_FIQ      = 40,
+	R12_FIQ      = 41,
+	R13_FIQ      = 42,
+	R14_FIQ      = 43,
+	SPSR_FIQ     = 44,
+	RN_PSR_FLAGS = 45,
+	R15_ARM_NEXT = 46,
+	INTR_PEND    = 47,
+	CYCL_CNT     = 48,
 
 	RN_ARM_REG_COUNT,
 };
 
-typedef union {
-	struct {
+typedef union
+{
+	struct
+	{
 		u8 B0;
 		u8 B1;
 		u8 B2;
 		u8 B3;
 	} B;
 	
-	struct {
+	struct
+	{
 		u16 W0;
 		u16 W1;
 	} W;
@@ -91,28 +91,28 @@ typedef union {
 	{
 		struct
 		{
-			u32 _pad0:28;
-			u32 V:1;		//Bit 28
-			u32 C:1;		//Bit 29
-			u32 Z:1;		//Bit 30
-			u32 N:1;		//Bit 31
+			u32 _pad0 : 28;
+			u32 V     : 1; //Bit 28
+			u32 C     : 1; //Bit 29
+			u32 Z     : 1; //Bit 30
+			u32 N     : 1; //Bit 31
 		};
 
 		struct
 		{
-			u32 _pad1:28;
-			u32 NZCV:4;		//Bits [31:28]
+			u32 _pad1 : 28;
+			u32 NZCV  : 4; //Bits [31:28]
 		};
 	} FLG;
 
 	struct
 	{
-		u32 M:5;		//mode, PSR[4:0]
-		u32 _pad0:1;	//not used / zero
-		u32 F:1;		//FIQ disable, PSR[6]
-		u32 I:1;		//IRQ disable, PSR[7]
-		u32 _pad1:20;	//not used / zero
-		u32 NZCV:4;		//Bits [31:28]
+		u32 M     : 5;  //mode, PSR[4:0]
+		u32 _pad0 : 1;  //not used / zero
+		u32 F     : 1;  //FIQ disable, PSR[6]
+		u32 I     : 1;  //IRQ disable, PSR[7]
+		u32 _pad1 : 20; //not used / zero
+		u32 NZCV  : 4;  //Bits [31:28]
 	} PSR;
 
 	u32 I;
@@ -165,8 +165,8 @@ void CPUUndefinedException();
 
 void arm_Run_(u32 CycleCount)
 {
-  if (!Arm7Enabled)
-	 return;
+	if (!Arm7Enabled)
+		return;
 
 	u32 clockTicks=0;
 	while (clockTicks<CycleCount)
@@ -575,34 +575,34 @@ vector<ArmDPOP> ops;
 
 enum OpFlags
 {
-	OP_SETS_PC=1,
-	OP_READS_PC=32768,
-	OP_IS_COND=65536,
-	OP_MFB=0x80000000,
+	OP_SETS_PC         = 1,
+	OP_READS_PC        = 32768,
+	OP_IS_COND         = 65536,
+	OP_MFB             = 0x80000000,
 
-	OP_HAS_RD_12=2,
-	OP_HAS_RD_16=4,
-	OP_HAS_RS_0=8,
-	OP_HAS_RS_8=16,
-	OP_HAS_RS_16=32,
-	OP_HAS_FLAGS_READ=4096,
-	OP_HAS_FLAGS_WRITE=8192,
-	OP_HAS_RD_READ=16384,		//for conditionals ..
+	OP_HAS_RD_12       = 2,
+	OP_HAS_RD_16       = 4,
+	OP_HAS_RS_0        = 8,
+	OP_HAS_RS_8        = 16,
+	OP_HAS_RS_16       = 32,
+	OP_HAS_FLAGS_READ  = 4096,
+	OP_HAS_FLAGS_WRITE = 8192,
+	OP_HAS_RD_READ     = 16384, //For conditionals
 
-	OP_WRITE_FLAGS=64,
-	OP_WRITE_FLAGS_S=128,
-	OP_READ_FLAGS=256,
-	OP_READ_FLAGS_S=512,
-	OP_WRITE_REG=1024,
-	OP_READ_REG_1=2048,
+	OP_WRITE_FLAGS     = 64,
+	OP_WRITE_FLAGS_S   = 128,
+	OP_READ_FLAGS      = 256,
+	OP_READ_FLAGS_S    = 512,
+	OP_WRITE_REG       = 1024,
+	OP_READ_REG_1      = 2048,
 };
 
-#define DP_R_ROFC (OP_READ_FLAGS_S|OP_READ_REG_1)		//reads reg1, op2, flags if S
-#define DP_R_ROF (OP_READ_FLAGS|OP_READ_REG_1)			//reads reg1, op2, flags (ADC & co)
-#define DP_R_OFC (OP_READ_FLAGS_S)						//reads op2, flags if S
+#define DP_R_ROFC (OP_READ_FLAGS_S|OP_READ_REG_1) //Reads reg1, op2, flags if S
+#define DP_R_ROF (OP_READ_FLAGS|OP_READ_REG_1)    //Reads reg1, op2, flags (ADC & co)
+#define DP_R_OFC (OP_READ_FLAGS_S)                //Reads op2, flags if S
 
-#define DP_W_RFC (OP_WRITE_FLAGS_S|OP_WRITE_REG)		//writes reg, and flags if S
-#define DP_W_F (OP_WRITE_FLAGS)							//writes only flags, always (S=1)
+#define DP_W_RFC (OP_WRITE_FLAGS_S|OP_WRITE_REG)  //Writes reg, and flags if S
+#define DP_W_F (OP_WRITE_FLAGS)                   //Writes only flags, always (S=1)
 
 /*
 	COND | 00 0 OP1   S Rn Rd SA    ST 0  Rm -- Data opcode, PSR xfer (imm shifted reg)
@@ -611,11 +611,11 @@ enum OpFlags
 		 | 00 0 1 0B0 0 Rn Rd 0000  1001  Rm -- SWP
 		 | 00 1 OP1   S Rn Rd imm8r4         -- Data opcode, PSR xfer (imm8r4)
 
-		 | 01 0 P UBW L Rn Rd Offset	-- LDR/STR (I=0)
-		 | 01 1 P UBW L Rn Rd SHAM SHTP 0 Rs	-- LDR/STR (I=1)
-		 | 10 0 P USW L Rn {RList}	-- LDM/STM
-		 | 10 1 L {offset}			--B/BL
-		 | 11 1 1 X*	-- SWI
+		 | 01 0 P UBW L Rn Rd Offset          -- LDR/STR (I=0)
+		 | 01 1 P UBW L Rn Rd SHAM SHTP 0 Rs  -- LDR/STR (I=1)
+		 | 10 0 P USW L Rn {RList}            -- LDM/STM
+		 | 10 1 L {offset}                    -- B/BL
+		 | 11 1 1 X*                          -- SWI
 
 		 (undef cases)
 		 | 01 1 XXXX X X*  X*  X* 1 XXXX - Undefined (LDR/STR w/ encodings that would be reg. based shift)
@@ -676,13 +676,13 @@ void InitHash()
 		Data processing opcodes
 	*/
 		 
-	//AND	0000		Rn, OPER2, {Flags}		Rd, {Flags}
-	//EOR	0001		Rn, OPER2, {Flags}		Rd, {Flags}
-	//SUB	0010		Rn, OPER2, {Flags}		Rd, {Flags}
-	//RSB	0011		Rn, OPER2, {Flags}		Rd, {Flags}
-	//ADD	0100		Rn, OPER2, {Flags}		Rd, {Flags}
-	//ORR	1100		Rn, OPER2, {Flags}		Rd, {Flags}
-	//BIC	1110		Rn, OPER2, {Flags}		Rd, {Flags}
+	//AND   0000        Rn, OPER2, {Flags}    Rd, {Flags}
+	//EOR   0001        Rn, OPER2, {Flags}    Rd, {Flags}
+	//SUB   0010        Rn, OPER2, {Flags}    Rd, {Flags}
+	//RSB   0011        Rn, OPER2, {Flags}    Rd, {Flags}
+	//ADD   0100        Rn, OPER2, {Flags}    Rd, {Flags}
+	//ORR   1100        Rn, OPER2, {Flags}    Rd, {Flags}
+	//BIC   1110        Rn, OPER2, {Flags}    Rd, {Flags}
 	AddDPOP(0,DP_R_ROFC, DP_W_RFC);
 	AddDPOP(1,DP_R_ROFC, DP_W_RFC);
 	AddDPOP(2,DP_R_ROFC, DP_W_RFC);
@@ -691,25 +691,25 @@ void InitHash()
 	AddDPOP(12,DP_R_ROFC, DP_W_RFC);
 	AddDPOP(14,DP_R_ROFC, DP_W_RFC);
 	
-	//ADC	0101		Rn, OPER2, Flags		Rd, {Flags}
-	//SBC	0110		Rn, OPER2, Flags		Rd, {Flags}
-	//RSC	0111		Rn, OPER2, Flags		Rd, {Flags}
+	//ADC   0101        Rn, OPER2, Flags      Rd, {Flags}
+	//SBC   0110        Rn, OPER2, Flags      Rd, {Flags}
+	//RSC   0111        Rn, OPER2, Flags      Rd, {Flags}
 	AddDPOP(5,DP_R_ROF, DP_W_RFC);
 	AddDPOP(6,DP_R_ROF, DP_W_RFC);
 	AddDPOP(7,DP_R_ROF, DP_W_RFC);
 
-	//TST	1000 S=1	Rn, OPER2, Flags		Flags
-	//TEQ	1001 S=1	Rn, OPER2, Flags		Flags
+	//TST   1000 S=1    Rn, OPER2, Flags      Flags
+	//TEQ   1001 S=1    Rn, OPER2, Flags      Flags
 	AddDPOP(8,DP_R_ROF, DP_W_F);
 	AddDPOP(9,DP_R_ROF, DP_W_F);
 
-	//CMP	1010 S=1	Rn, OPER2				Flags
-	//CMN	1011 S=1	Rn, OPER2				Flags
+	//CMP   1010 S=1    Rn, OPER2             Flags
+	//CMN   1011 S=1    Rn, OPER2             Flags
 	AddDPOP(10,DP_R_ROF, DP_W_F);
 	AddDPOP(11,DP_R_ROF, DP_W_F);
 	
-	//MOV	1101		OPER2, {Flags}			Rd, {Flags}
-	//MVN	1111		OPER2, {Flags}			Rd, {Flags}
+	//MOV   1101        OPER2, {Flags}        Rd, {Flags}
+	//MVN   1111        OPER2, {Flags}        Rd, {Flags}
 	AddDPOP(13,DP_R_OFC, DP_W_RFC);
 	AddDPOP(15,DP_R_OFC, DP_W_RFC);
 }
@@ -727,9 +727,9 @@ void  armEmit32(u32 emit32);
 void *armGetEmitPtr();
 
 
-#define _DEVEL			(1)
-#define EMIT_I			armEmit32((I))
-#define EMIT_GET_PTR()	armGetEmitPtr()
+#define _DEVEL          (1)
+#define EMIT_I          armEmit32((I))
+#define EMIT_GET_PTR()  armGetEmitPtr()
 u8* icPtr;
 u8* ICache;
 
@@ -760,9 +760,9 @@ enum OpType
 	VOT_DataOp,
 	VOT_B,
 	VOT_BL,
-	VOT_BR,		//Branch (to register)
-	VOT_Read,	//Actually, this handles LDR and STR
-	//VOT_LDM,	//This Isn't used anymore
+	VOT_BR,     //Branch (to register)
+	VOT_Read,   //Actually, this handles LDR and STR
+	//VOT_LDM,  //This Isn't used anymore
 	VOT_MRS,
 	VOT_MSR,
 };
@@ -887,19 +887,19 @@ OpType DecodeOpcode(u32& opcd,u32& flags)
 		flags|=OP_IS_COND;
 
 	//helpers ...
-	#define CHK_BTS(M,S,V) ( (M & (opcd>>S)) == (V) )	//Check bits value in opcode
-	#define IS_LOAD (opcd & (1<<20))	//is L bit set ? (LDM/STM LDR/STR)
+	#define CHK_BTS(M,S,V) ( (M & (opcd>>S)) == (V) ) //Check bits value in opcode
+	#define IS_LOAD (opcd & (1<<20))                  //Is L bit set ? (LDM/STM LDR/STR)
 	#define READ_PC_CHECK(S) if (CHK_BTS(15,S,15)) flags|=OP_READS_PC;
 
 	//Opcode sets pc ?
 	bool _set_pc=
-		(CHK_BTS(3,26,0) && CHK_BTS(15,12,15)) || 	//Data processing w/ Rd=PC
-		(CHK_BTS(3,26,1) && CHK_BTS(15,12,15) && IS_LOAD ) ||	//LDR/STR w/ Rd=PC 
-		(CHK_BTS(7,25,4) && (opcd & 32768) &&  IS_LOAD)	   ||	//LDM/STM w/ PC in list	
-		CHK_BTS(7,25,5)		||						//B or BL
-		CHK_BTS(15,24,15);							//SWI
+		(CHK_BTS(3,26,0) && CHK_BTS(15,12,15))             || //Data processing w/ Rd=PC
+		(CHK_BTS(3,26,1) && CHK_BTS(15,12,15) && IS_LOAD ) || //LDR/STR w/ Rd=PC 
+		(CHK_BTS(7,25,4) && (opcd & 32768) &&  IS_LOAD)    || //LDM/STM w/ PC in list	
+		CHK_BTS(7,25,5)                                    || //B or BL
+		CHK_BTS(15,24,15);                                    //SWI
 	
-	//NV condition means VFP on newer cores, let interpreter handle it ...
+	//NV condition means VFP on newer cores, let interpreter handle it...
 	if (CC==15)
 		return VOT_Fallback;
 
@@ -910,10 +910,10 @@ OpType DecodeOpcode(u32& opcd,u32& flags)
 	if (CHK_BTS(7,25,5))
 	{
 		verify(_set_pc);
-		if ( !(flags&OP_IS_COND) )
-			flags&=~OP_READS_PC;	//not COND doesn't read from pc
+		if (!(flags&OP_IS_COND))
+			flags&=~OP_READS_PC;  //not COND doesn't read from pc
 
-		flags|=OP_SETS_PC;			//Branches Set pc ..
+		flags|=OP_SETS_PC;        //Branches Set pc ..
 
 		//branch !
 		return (opcd&(1<<24))?VOT_BL:VOT_B;
@@ -952,7 +952,7 @@ OpType DecodeOpcode(u32& opcd,u32& flags)
 			flags &= ~OP_READS_PC;
 
 			//Conditionals always need flags read ...
-			if ( (opcd >> 28)!=0xE)
+			if ((opcd >> 28)!=0xE)
 			{
 				flags |= OP_HAS_FLAGS_READ;
 				//if (flags & OP_WRITE_REG)
@@ -962,15 +962,13 @@ OpType DecodeOpcode(u32& opcd,u32& flags)
 			//DPOP !
 
 			if ((ops[i].flags & OP_READ_FLAGS) ||
-				( (ops[i].flags & OP_READ_FLAGS_S) && (opcd & (1<<20)) )
-			   )
+			   ((ops[i].flags & OP_READ_FLAGS_S) && (opcd & (1<<20))))
 			{
 				flags |= OP_HAS_FLAGS_READ;
 			}
 
 			if ((ops[i].flags & OP_WRITE_FLAGS) ||
-				( (ops[i].flags & OP_WRITE_FLAGS_S) && (opcd & (1<<20)) )
-			   )
+			   ((ops[i].flags & OP_WRITE_FLAGS_S) && (opcd & (1<<20))))
 			{
 				flags |= OP_HAS_FLAGS_WRITE;
 			}
@@ -1808,6 +1806,7 @@ extern "C" void CompileCode()
 				{
 					if (opt==VOT_BL)
 						armv_imm_to_reg(14,pc+4);
+
 					armv_imm_to_reg(R15_ARM_NEXT,pc+8+offs);
 				}
 			}
@@ -1880,7 +1879,7 @@ extern "C" void CompileCode()
 					{
 						MemOperand2(r1,I,U,offs,opcd);
 						ADD(r0,r0,r1);
-					}					
+					}
 				}
 
 				if (CHK_BTS(1,20,0))
@@ -1890,7 +1889,9 @@ extern "C" void CompileCode()
 						armv_MOV32(r1,pc+12);
 					}
 					else
+					{
 						LoadReg(r1,Rd);
+					}
 				}
 				//Call handler
 				armv_call(GetMemOp(CHK_BTS(1,20,1),CHK_BTS(1,22,1)));
@@ -1903,8 +1904,9 @@ extern "C" void CompileCode()
 						StoreReg(r0,R15_ARM_NEXT);
 					}
 					else
+					{
 						StoreReg(r0,Rd);
-					
+					}
 				}
 				
 				//Write back from AGU, if any
@@ -1960,23 +1962,23 @@ extern "C" void CompileCode()
 				u32 RList=opcd&0xFFFF;
 				u32 tsz=(cpuBitsSet[RList & 255] + cpuBitsSet[(RList >> 8) & 255]);
 
-				verify(CHK_BTS(1,24,0));	//P=0
-				verify(CHK_BTS(1,23,1));	//U=1
-				verify(CHK_BTS(1,22,0));	//S=0
-				verify(CHK_BTS(1,21,1));	//W=1
-				verify(CHK_BTS(1,20,1));	//L=0
+				verify(CHK_BTS(1,24,0)); //P=0
+				verify(CHK_BTS(1,23,1)); //U=1
+				verify(CHK_BTS(1,22,0)); //S=0
+				verify(CHK_BTS(1,21,1)); //W=1
+				verify(CHK_BTS(1,20,1)); //L=0
 
 				
 				//if (tsz!=1)
 				//	goto FALLBACK;
 
-				bool _W=true;		//w=1
+				bool _W=true; //w=1
 				
 
 				if (RList & (1<<Rn))
 					_W=false;
 
-				bool _AGU=_W;	// (w=1 && p=0) || p=1 (P=0)
+				bool _AGU=_W; // (w=1 && p=0) || p=1 (P=0)
 
 				LoadReg(r0,Rn);
 				if (_AGU)
@@ -1999,7 +2001,7 @@ extern "C" void CompileCode()
 				//interpreter fallback
 
 				//arm_single_op needs PC+4 on r15
-				//TODO: only write it if needed -> Probably not worth the code, very few fallbacks now ..
+				//TODO: only write it if needed -> Probably not worth the code, very few fallbacks now...
 				armv_imm_to_reg(15,pc+8);
 
 				//For cond branch, MSR
@@ -2054,7 +2056,6 @@ extern "C" void CompileCode()
 				x86e->Emit(op_call,x86_ptr_imm(PrintOp));
 			}
 #endif
-
 			break;
 		}
 
@@ -2095,7 +2096,7 @@ eReg ARM::reg_addr;
 eReg ARM::reg_dst;
 s32 ARM::imma;
 
-void  armEmit32(u32 emit32)
+void armEmit32(u32 emit32)
 {
 	if (icPtr >= (ICache+ICacheSize-1024))
 		die("ICache is full, invalidate old entries ...");	//ifdebug
@@ -2113,9 +2114,6 @@ void *armGetEmitPtr()
 #endif
 
 
-
-
-
 void armt_init()
 {
 	InitHash();
@@ -2127,7 +2125,7 @@ void armt_init()
 	DWORD old;
 	VirtualProtect(ICache,ICacheSize,PAGE_EXECUTE_READWRITE,&old);
 #elif HOST_OS == OS_LINUX
-	
+
 	printf("\n\t ARM7_TCB addr: %p | from: %p | addr here: %p\n", ICache, ARM7_TCB, armt_init);
 
 	if (mprotect(ICache, ICacheSize, PROT_EXEC|PROT_READ|PROT_WRITE))
@@ -2141,7 +2139,6 @@ void armt_init()
 #endif
 
 	icPtr=ICache;
-
 }
 
 
