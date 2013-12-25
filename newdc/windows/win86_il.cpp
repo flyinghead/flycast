@@ -105,7 +105,7 @@ void ngen_CC_Param(shil_opcode* op,shil_param* par,CanonicalParamType tp)
 			die("FAIL");
 			x86e->Emit(op_push,(unat)par->reg_ptr());
 
-			for (int ri=0;ri<(*par).count();ri++)
+			for (u32 ri=0; ri<(*par).count(); ri++)
 			{
 				if (reg.IsAllocf(*par,ri))
 				{
@@ -778,8 +778,8 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 					x86e->Emit(op_shr32,EAX,ECX);
 					x86e->Emit(op_and32,ECX,~0x7F);
 
-					int i=0;
-					for (i=0;(i+16)<=sz;i+=16)
+					u32 i=0;
+					for (; (i+16)<=sz; i+=16)
 					{
 						if (op->rs2._reg&3)
 							x86e->Emit(op_movups,XMM0,op->rs2.reg_ptr()+i/4);
@@ -788,12 +788,12 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 
 						x86e->Emit(op_movups,x86_mrm(EAX,ECX,sib_scale_1,x86_ptr::create(i)),XMM0);
 					}
-					for (;(i+8)<=sz;i+=8)
+					for (; (i+8)<=sz; i+=8)
 					{
 						x86e->Emit(op_movlps,XMM0,op->rs2.reg_ptr()+i/4);
 						x86e->Emit(op_movlps,x86_mrm(EAX,ECX,sib_scale_1,x86_ptr::create(i)),XMM0);
 					}
-					for (;(i+4)<=sz;i+=4)
+					for (; (i+4)<=sz; i+=4)
 					{
 						x86e->Emit(op_movss,XMM0,op->rs2.reg_ptr()+i/4);
 						x86e->Emit(op_movss,x86_mrm(EAX,ECX,sib_scale_1,x86_ptr::create(i)),XMM0);

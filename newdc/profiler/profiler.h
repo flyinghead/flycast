@@ -8,7 +8,7 @@ void prof_periodical();
 inline void print_array(const char* name, u32* arr,u32 size)
 {
 	printf("%s = [",name);
-	for(int i=0;i<size;i++)
+	for(u32 i=0; i<size; i++)
 	{
 		printf("%d ",arr[i]);
 		if (i%12==0)

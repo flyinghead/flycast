@@ -151,7 +151,7 @@ struct RegAlloc
 		{
 			if (!contains(pos)) return AM_NONE;
 
-			for (int i=0;i<accesses.size();i++)
+			for (size_t i=0; i<accesses.size(); i++)
 			{
 				if (accesses[i].pos==pos)
 					return accesses[i].am;
@@ -162,7 +162,7 @@ struct RegAlloc
 
 		bool NeedsWB()
 		{
-			for (size_t i=0;i<accesses.size();i++)
+			for (size_t i=0; i<accesses.size(); i++)
 			{
 				if (accesses[i].am&AM_WRITE)
 					return true;
@@ -391,7 +391,7 @@ struct RegAlloc
 		{
 			verify(regs.type==FMT_V4 || regs.type==FMT_V2 || regs.type==FMT_F64);
 
-			for (int i=0;i<regs.count();i++)
+			for (u32 i=0; i<regs.count(); i++)
 			{
 				shil_param p=regs;
 				p.type=FMT_F32;
@@ -570,14 +570,17 @@ struct RegAlloc
 										all_spans.push_back(spans[(*iter)._reg]);
 									}
 									else
+									{
 										spans[(*iter)._reg]->Access(opid,AM_READWRITE);
+									}
 								}
 								else
 								{
-									for (int i=0;i<(*iter).count();i++)
+									for (u32 i=0; i<(*iter).count(); i++)
 									{
 										if (spans[(*iter)._reg+i]!=0)
 											spans[(*iter)._reg+i]->Flush();
+
 										spans[(*iter)._reg+i]=0;
 									}
 								}
@@ -588,7 +591,7 @@ struct RegAlloc
 					{
 						if ((*iter).is_reg())
 						{
-							for (int i=0;i<(*iter).count();i++)
+							for (u32 i=0; i<(*iter).count(); i++)
 							{
 								if (spans[(*iter)._reg+i]!=0)
 								{
@@ -633,14 +636,17 @@ struct RegAlloc
 								all_spans.push_back(spans[(*iter)._reg]);
 							}
 							else
+							{
 								spans[(*iter)._reg]->Access(opid,AM_READ);
+							}
 						}
 						else
 						{
-							for (int i=0;i<(*iter).count();i++)
+							for (u32 i=0; i<(*iter).count(); i++)
 							{
 								if (spans[(*iter)._reg+i]!=0)
 									spans[(*iter)._reg+i]->Flush();
+
 								spans[(*iter)._reg+i]=0;
 							}
 						}

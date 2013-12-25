@@ -148,7 +148,7 @@ void tactx_Recycle(TA_context* poped_ctx)
 
 TA_context* tactx_Find(u32 addr, bool allocnew)
 {
-	for (int i=0;i<ctx_list.size();i++)
+	for (size_t i=0; i<ctx_list.size(); i++)
 	{
 		if (ctx_list[i]->Address==addr)
 			return ctx_list[i];
@@ -170,7 +170,7 @@ TA_context* tactx_Find(u32 addr, bool allocnew)
 
 TA_context* tactx_Pop(u32 addr)
 {
-	for (int i=0;i<ctx_list.size();i++)
+	for (size_t i=0; i<ctx_list.size(); i++)
 	{
 		if (ctx_list[i]->Address==addr)
 		{
