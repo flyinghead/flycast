@@ -19,14 +19,14 @@ import android.widget.Button;
 import android.widget.EditText;
 
 @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
-public class OptionsFragment extends Fragment{
-	
+public class OptionsFragment extends Fragment {
+
 	Activity parentActivity;
 	Button mainBrowse;
 	Button gameBrowse;
 	Button mainLocale;
 	OnClickListener mCallback;
-	
+
 	private SharedPreferences mPrefs;
 	private File sdcard = Environment.getExternalStorageDirectory();
 	private String home_directory = sdcard + "/dc";
@@ -72,12 +72,14 @@ public class OptionsFragment extends Fragment{
 		// setContentView(R.layout.activity_main);
 
 		parentActivity = getActivity();
+		
+		mPrefs = PreferenceManager.getDefaultSharedPreferences(parentActivity);
+		home_directory = mPrefs.getString("home_directory", home_directory);
+		
 		mainBrowse = (Button) getView().findViewById(R.id.browse_main_path);
 
 		final EditText editBrowse = (EditText) getView().findViewById(
 				R.id.main_path);
-		mPrefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
-		home_directory = mPrefs.getString("home_directory", home_directory);
 		editBrowse.setText(home_directory);
 
 		mainBrowse.setOnClickListener(new View.OnClickListener() {
@@ -88,9 +90,9 @@ public class OptionsFragment extends Fragment{
 				mCallback.onMainBrowseSelected(browse_entry, false);
 			}
 		});
-		
+
 		gameBrowse = (Button) getView().findViewById(R.id.browse_game_path);
-		
+
 		final EditText editGames = (EditText) getView().findViewById(
 				R.id.game_path);
 		game_directory = mPrefs.getString("game_directory", game_directory);

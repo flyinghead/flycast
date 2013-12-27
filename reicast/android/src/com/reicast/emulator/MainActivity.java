@@ -112,9 +112,12 @@ public class MainActivity extends FragmentActivity implements
 			// Options
 			navDrawerItems.add(new NavDrawerItem(navMenuTitles[1], navMenuIcons
 					.getResourceId(1, -1)));
+			// Config
+						navDrawerItems.add(new NavDrawerItem(navMenuTitles[2], navMenuIcons
+								.getResourceId(2, -1)));
 			// About
-			navDrawerItems.add(new NavDrawerItem(navMenuTitles[2], navMenuIcons
-					.getResourceId(2, -1)));
+			navDrawerItems.add(new NavDrawerItem(navMenuTitles[3], navMenuIcons
+					.getResourceId(3, -1)));
 
 			// Recycle the typed array
 			navMenuIcons.recycle();
@@ -332,6 +335,17 @@ public class MainActivity extends FragmentActivity implements
 			frag_tag = "OPTIONS_FRAG";
 			break;
 		case 2:
+			fragment = (ConfigureFragment) getSupportFragmentManager()
+					.findFragmentByTag("CONFIG_FRAG");
+			if (fragment != null) {
+				if (fragment.isVisible()) {
+					return;
+				}
+			}
+			fragment = new ConfigureFragment();
+			frag_tag = "CONFIG_FRAG";
+			break;
+		case 3:
 			fragment = null;
 			// vib.vibrate(50);
 			AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
