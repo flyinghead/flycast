@@ -37,6 +37,8 @@ public class GL2JNIActivity extends Activity {
 	GL2JNIView mView;
 	PopupWindow popUp;
 	LayoutParams params;
+	MOGAInput moga = new MOGAInput();
+
 	int map[];
 
 	View addbut(int x, OnClickListener ocl) {
@@ -116,6 +118,7 @@ public class GL2JNIActivity extends Activity {
 
 	@Override
 	protected void onCreate(Bundle icicle) {
+		moga.onCreate(this);
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		
 		createPopup();
@@ -237,8 +240,6 @@ public class GL2JNIActivity extends Activity {
 		return true;
 	}
 
-	int rv = 0xFFFF;
-
 	private static final int key_CONT_B 			= 0x0002;
 	private static final int key_CONT_A 			= 0x0004;
 	private static final int key_CONT_START 		= 0x0008;
@@ -251,7 +252,7 @@ public class GL2JNIActivity extends Activity {
 
 	// TODO: Controller mapping in options. Trunk has Ouya layout. This is a DS3
 	// layout.
-	;/*
+	/*
 	 * map[]= new int[] { OuyaController.BUTTON_Y, key_CONT_B,
 	 * OuyaController.BUTTON_U, key_CONT_A, OuyaController.BUTTON_O, key_CONT_X,
 	 * OuyaController.BUTTON_A, key_CONT_Y,
@@ -288,16 +289,14 @@ public class GL2JNIActivity extends Activity {
 		for (int i = 0; i < map.length; i += 2) {
 			if (map[i + 0] == kc) {
 				if (down)
-					this.rv &= ~map[i + 1];
+					GL2JNIView.kcode_raw &= ~map[i + 1];
 				else
-					this.rv |= map[i + 1];
+					GL2JNIView.kcode_raw |= map[i + 1];
 
 				rav = true;
 				break;
 			}
 		}
-
-		GL2JNIView.kcode_raw = rv;
 
 		return rav;
 	}
@@ -332,6 +331,13 @@ public class GL2JNIActivity extends Activity {
 	protected void onPause() {
 		super.onPause();
 		mView.onPause();
+		moga.onPause();
+	}
+
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
+		moga.onDestroy();
 	}
 
 	@Override
@@ -357,5 +363,6 @@ public class GL2JNIActivity extends Activity {
 	protected void onResume() {
 		super.onResume();
 		mView.onResume();
+		moga.onResume();
 	}
 }
