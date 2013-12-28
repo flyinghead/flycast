@@ -1,0 +1,9 @@
+.DS_Store
+*.class
+
+bin/
+gen/
+obj/
+
+newdc/android/libnewdc/bin/libnewdc.jar
+newdc/android/libnewdc/bin/classes/com/example/newdc/JNIdc.class
