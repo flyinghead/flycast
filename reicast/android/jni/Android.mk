@@ -30,6 +30,7 @@ LOCAL_PRELINK_MODULE  := false
 
 LOCAL_MODULE	:= dc
 LOCAL_CFLAGS	:= $(LOCAL_CXXFLAGS) -DHAS_VMU
+LOCAL_DISABLE_FORMAT_STRING_CHECKS=true
 LOCAL_ASFLAGS := -fvisibility=hidden
 LOCAL_LDLIBS	:= -llog -lGLESv2 -lEGL -lz 
 #-Wl,-Map,./res/raw/syms.mp3
