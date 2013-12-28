@@ -4,13 +4,13 @@
     <string name="hello_world">Hello world!</string>
     <string name="menu_settings">Settings</string>
     <string name="title_activity_main">reicast</string>
-    
     <string name="system_path">System Path (location of dc_boot.bin/dc_flash.bin)</string>
     <string name="browser_path">Default System Path</string>
-    
     <string name="games_path">Storage Path (location of .gid .cdi or .cdh images)</string>
     <string name="game_path">Default Game Storage</string>
-    
+    <string name="select_stretch">Stretch to Fullscreen</string>
+    <string name="set_frameskip">Frameskipping Amount</string>
+    <string name="select_render">PVR Rendering</string>
     <string name="games_listing">Available Dreamcast Games</string>
     
     <string-array name="images">
@@ -18,5 +18,28 @@
         <item>chd</item>
         <item>gdi</item>
     </string-array>
+
+    <string name="drawer_open">Slider Menu Opened</string>
+    <string name="drawer_close">Slider Menu Closed</string>
+
+    <!-- Nav Drawer Menu Items -->
+    <string-array name="nav_drawer_items">
+        <item>Browser</item>
+        <item>Options</item>
+        <item>Emulator</item>
+        <item>About</item>
+    </string-array>
+
+    <!-- Nav Drawer List Item Icons -->
+    <!-- Keep them in order as the titles are in -->
+    <array name="nav_drawer_icons">
+        <item>@drawable/disk_unknown</item>
+        <item>@drawable/config</item>
+        <item>@drawable/config</item>
+        <item>@drawable/question</item>
+    </array>
+
+    <!-- Content Description -->
+    <string name="desc_list_item_icon">Item Icon</string>
 
 </resources>

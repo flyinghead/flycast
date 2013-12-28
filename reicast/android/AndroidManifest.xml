@@ -5,7 +5,7 @@
 
     <uses-sdk
         android:minSdkVersion="8"
-        android:targetSdkVersion="15" />
+        android:targetSdkVersion="19" />
 	
 	<uses-permission android:name="android.permission.VIBRATE"></uses-permission>
 	<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
@@ -26,7 +26,8 @@
         </activity>
         
         <activity android:name=".GL2JNIActivity" android:screenOrientation="landscape">
-            <meta-data android:name="android.app.lib_name" android:value="dc" />
+            <meta-data android:name="android.app.lib_name" android:value="dc"
+                android:theme="@android:style/Theme.NoTitleBar.Fullscreen" />
             
             <intent-filter>
 		        <action android:name="android.intent.action.VIEW" />
