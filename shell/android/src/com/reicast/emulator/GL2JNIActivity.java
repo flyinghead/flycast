@@ -6,7 +6,6 @@ import java.io.InputStream;
 import tv.ouya.console.api.OuyaController;
 
 import com.reicast.emulator.GL2JNIView.EmuThread;
-import com.example.newdc.JNIdc;
 
 import android.view.InputDevice;
 import android.annotation.TargetApi;

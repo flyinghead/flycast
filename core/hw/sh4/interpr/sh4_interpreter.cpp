@@ -171,17 +171,6 @@ int AicaUpdate(int tag, int c, int j)
 	return AICA_TICK;
 }
 
-#ifdef LIMIT_TIME
-    #define TIMELIM 640
-
-    int timelim=TIMELIM;
-#endif
-
-#ifdef LIMIT_TIME
-int rseed = 192;
-#define RAND_NUM(x) (x)
-#endif
-
 int DreamcastSecond(int tag, int c, int j)
 {
 	settings.dreamcast.RTC++;
@@ -196,20 +185,6 @@ int DreamcastSecond(int tag, int c, int j)
 
 	//printf("%d ticks\n",sh4_sched_intr);
 	sh4_sched_intr=0;
-
-	#ifdef LIMIT_TIME
-        extern u32 LastAddr;
-        
-        if (--timelim<0)
-        {
-            //crash -> "Out of time"
-            timelim+=TIMELIM-RAND_NUM(0)%64;
-            (u32&)p_sh4rcb->cntx.interrupt_pend=RAND_NUM((u8*)0 - (u8*)p_sh4rcb);
-			//(u32&)p_sh4rcb->cntx.pr=RAND_NUM(0);
-            //(u32&)do_sqw_nommu=RAND_NUM(0);
-            (u32&)LastAddr=RAND_NUM( 9873123456^((u8*)p_sh4rcb - (u8*)0) );
-        }
-    #endif
     
 	return SH4_MAIN_CLOCK;
 }
@@ -261,9 +236,6 @@ void Get_Sh4Interpreter(sh4_if* rv)
 
 void Sh4_int_Init()
 {
-    #ifdef LIMIT_TIME
-        timelim-=rand()%64;
-    #endif
     
 	verify(sizeof(Sh4cntx)==448);
 	

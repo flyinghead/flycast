@@ -1,4 +1,4 @@
-package com.example.newdc;
+package com.reicast.emulator;
 
 import android.media.AudioTrack;
 

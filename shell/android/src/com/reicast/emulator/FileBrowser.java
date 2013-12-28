@@ -44,7 +44,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.android.util.FileUtils;
-import com.example.newdc.JNIdc;
 
 public class FileBrowser extends Fragment {
 

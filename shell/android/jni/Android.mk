@@ -18,11 +18,11 @@ include $(CLEAR_VARS)
 
 FOR_ANDROID := 1
 
-include $(LOCAL_PATH)/../../newdc/newdc.mk
+include $(LOCAL_PATH)/../../core/core.mk
 
 
 
-LOCAL_SRC_FILES := $(RZDCY_FILES)
+LOCAL_SRC_FILES := $(RZDCY_FILES) $(wildcard $(LOCAL_PATH)/jni/src/*.cpp)
 LOCAL_CXXFLAGS  := $(RZDCY_CXXFLAGS)
 
 LOCAL_SHARED_LIBRARIES:= libcutils libutils

@@ -3,8 +3,6 @@ package com.reicast.emulator;
 import java.io.File;
 import java.util.ArrayList;
 
-import com.example.newdc.JNIdc;
-
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;

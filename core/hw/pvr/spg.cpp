@@ -182,13 +182,6 @@ int spg_line_sched(int tag, int cycl, int jit)
 					spd_vbs/full_rps,mode,res,fullvbs,
 					spd_fps,fskip/ts
 					,mv,mv_c);
-					
-                #ifdef LIMIT_TIME
-                    if (mspdf>1000 && last_fps!=0)
-                    {
-                      die("too slow");
-                    }
-                #endif
 
 				fskip=0;
 				os_SetWindowText(fpsStr);
