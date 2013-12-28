@@ -102,52 +102,10 @@ public class ConfigureFragment extends Fragment {
 			public void onCheckedChanged(CompoundButton buttonView,
 					boolean isChecked) {
 				mPrefs.edit().putBoolean("stretch_view", isChecked).commit();
-				File config = new File(home_directory, "emu.cfg");
-				try {
-					StringBuilder rebuildFile = new StringBuilder();
-					if (config.exists()) {
-						Scanner scanner = new Scanner(config);
-						String currentLine;
-						while (scanner.hasNextLine()) {
-							currentLine = scanner.nextLine();
-							if (StringUtils.containsIgnoreCase(currentLine,
-									"rend.WideScreen")) {
-								rebuildFile.append("rend.WideScreen="
-										+ String.valueOf(isChecked ? 1 : 0)
-										+ "\n");
-							} else {
-								rebuildFile.append(currentLine + "\n");
-							}
-						}
-						scanner.close();
-						config.delete();
-						// Investigate alternatives to not re-read
-					} else {
-						rebuildFile.append("[config]" + "\n");
-						rebuildFile.append("Dynarec.Enabled=1" + "\n");
-						rebuildFile.append("Dynarec.idleskip=1" + "\n");
-						rebuildFile.append("Dynarec.unstable-opt=0" + "\n");
-						rebuildFile.append("Dreamcast.Cable=3" + "\n");
-						rebuildFile.append("Dreamcast.RTC=2018927206" + "\n");
-						rebuildFile.append("Dreamcast.Region=3" + "\n");
-						rebuildFile.append("Dreamcast.Broadcast=4" + "\n");
-						rebuildFile.append("aica.LimitFPS=1" + "\n");
-						rebuildFile.append("aica.NoBatch=0" + "\n");
-						rebuildFile.append("rend.UseMipmaps=1" + "\n");
-						rebuildFile.append("rend.WideScreen="
-								+ String.valueOf(isChecked ? 1 : 0) + "\n");
-						rebuildFile.append("pvr.Subdivide=0" + "\n");
-						rebuildFile.append("ta.skip=" + frameskip + "\n");
-						rebuildFile.append("pvr.rend="
-								+ String.valueOf(pvrrender ? 1 : 0) + "\n");
-						rebuildFile.append("image=null" + "\n");
-					}
-					FileOutputStream fos = new FileOutputStream(config);
-					fos.write(rebuildFile.toString().getBytes());
-					fos.close();
-					widescreen = isChecked;
-				} catch (Exception e) {
-					Log.d("reicast", "Exception: " + e);
+				widescreen = isChecked;
+				if (!executeAppendConfig("rend.WideScreen",
+						String.valueOf(isChecked ? 1 : 0))) {
+					executeWriteConfig();
 				}
 			}
 		};
@@ -185,7 +143,7 @@ public class ConfigureFragment extends Fragment {
 			public void onProgressChanged(SeekBar seekBar, int progress,
 					boolean fromUser) {
 				progressChanged = progress;
-				mainFrames.setText(progress);
+				mainFrames.setText(String.valueOf(progress));
 			}
 
 			public void onStartTrackingTouch(SeekBar seekBar) {
@@ -194,50 +152,10 @@ public class ConfigureFragment extends Fragment {
 
 			public void onStopTrackingTouch(SeekBar seekBar) {
 				mPrefs.edit().putInt("frame_skip", progressChanged).commit();
-				File config = new File(home_directory, "emu.cfg");
-				try {
-					StringBuilder rebuildFile = new StringBuilder();
-					if (config.exists()) {
-						Scanner scanner = new Scanner(config);
-						String currentLine;
-						while (scanner.hasNextLine()) {
-							currentLine = scanner.nextLine();
-							if (StringUtils.containsIgnoreCase(currentLine,
-									"ta.skip")) {
-								rebuildFile.append("ta.skip=" + progressChanged
-										+ "\n");
-							} else {
-								rebuildFile.append(currentLine + "\n");
-							}
-						}
-						scanner.close();
-						config.delete();
-					} else {
-						rebuildFile.append("[config]" + "\n");
-						rebuildFile.append("Dynarec.Enabled=1" + "\n");
-						rebuildFile.append("Dynarec.idleskip=1" + "\n");
-						rebuildFile.append("Dynarec.unstable-opt=0" + "\n");
-						rebuildFile.append("Dreamcast.Cable=3" + "\n");
-						rebuildFile.append("Dreamcast.RTC=2018927206" + "\n");
-						rebuildFile.append("Dreamcast.Region=3" + "\n");
-						rebuildFile.append("Dreamcast.Broadcast=4" + "\n");
-						rebuildFile.append("aica.LimitFPS=1" + "\n");
-						rebuildFile.append("aica.NoBatch=0" + "\n");
-						rebuildFile.append("rend.UseMipmaps=1" + "\n");
-						rebuildFile.append("rend.WideScreen="
-								+ String.valueOf(widescreen ? 1 : 0) + "\n");
-						rebuildFile.append("pvr.Subdivide=0" + "\n");
-						rebuildFile.append("ta.skip=" + progressChanged + "\n");
-						rebuildFile.append("pvr.rend="
-								+ String.valueOf(pvrrender ? 1 : 0) + "\n");
-						rebuildFile.append("image=null" + "\n");
-					}
-					FileOutputStream fos = new FileOutputStream(config);
-					fos.write(rebuildFile.toString().getBytes());
-					fos.close();
-					frameskip = progressChanged;
-				} catch (Exception e) {
-					Log.d("reicast", "Exception: " + e);
+				frameskip = progressChanged;
+				if (!executeAppendConfig("ta.skip",
+						String.valueOf(progressChanged))) {
+					executeWriteConfig();
 				}
 			}
 		});
@@ -247,58 +165,16 @@ public class ConfigureFragment extends Fragment {
 			public void onCheckedChanged(CompoundButton buttonView,
 					boolean isChecked) {
 				mPrefs.edit().putBoolean("pvr_render", isChecked).commit();
-				File config = new File(home_directory, "emu.cfg");
-				try {
-					StringBuilder rebuildFile = new StringBuilder();
-					if (config.exists()) {
-						Scanner scanner = new Scanner(config);
-						String currentLine;
-						while (scanner.hasNextLine()) {
-							currentLine = scanner.nextLine();
-							if (StringUtils.containsIgnoreCase(currentLine,
-									"pvr.rend")) {
-								rebuildFile.append("pvr.rend="
-										+ String.valueOf(isChecked ? 1 : 0)
-										+ "\n");
-							} else {
-								rebuildFile.append(currentLine + "\n");
-							}
-						}
-						scanner.close();
-						config.delete();
-						// Investigate alternatives to not re-read
-					} else {
-						rebuildFile.append("[config]" + "\n");
-						rebuildFile.append("Dynarec.Enabled=1" + "\n");
-						rebuildFile.append("Dynarec.idleskip=1" + "\n");
-						rebuildFile.append("Dynarec.unstable-opt=0" + "\n");
-						rebuildFile.append("Dreamcast.Cable=3" + "\n");
-						rebuildFile.append("Dreamcast.RTC=2018927206" + "\n");
-						rebuildFile.append("Dreamcast.Region=3" + "\n");
-						rebuildFile.append("Dreamcast.Broadcast=4" + "\n");
-						rebuildFile.append("aica.LimitFPS=1" + "\n");
-						rebuildFile.append("aica.NoBatch=0" + "\n");
-						rebuildFile.append("rend.UseMipmaps=1" + "\n");
-						rebuildFile.append("rend.WideScreen=" + widescreen
-								+ "\n");
-						rebuildFile.append("pvr.Subdivide=0" + "\n");
-						rebuildFile.append("ta.skip=" + frameskip + "\n");
-						rebuildFile.append("pvr.rend="
-								+ String.valueOf(isChecked ? 1 : 0) + "\n");
-						rebuildFile.append("image=null" + "\n");
-					}
-					FileOutputStream fos = new FileOutputStream(config);
-					fos.write(rebuildFile.toString().getBytes());
-					fos.close();
-					pvrrender = isChecked;
-				} catch (Exception e) {
-					Log.d("reicast", "Exception: " + e);
+				pvrrender = isChecked;
+				if (!executeAppendConfig("pvr.rend",
+						String.valueOf(isChecked ? 1 : 0))) {
+					executeWriteConfig();
 				}
 			}
 		};
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR1) {
 			Switch pvr_render = (Switch) getView().findViewById(
-					R.id.stretch_option);
+					R.id.render_option);
 			boolean rendered = mPrefs.getBoolean("pvr_render", pvrrender);
 			if (rendered) {
 				pvr_render.setChecked(true);
@@ -308,7 +184,7 @@ public class ConfigureFragment extends Fragment {
 			pvr_render.setOnCheckedChangeListener(pvr_rendering);
 		} else {
 			CheckBox pvr_render = (CheckBox) getView().findViewById(
-					R.id.stretch_option);
+					R.id.render_option);
 			boolean rendered = mPrefs.getBoolean("pvr_render", pvrrender);
 			if (rendered) {
 				pvr_render.setChecked(true);
@@ -316,6 +192,67 @@ public class ConfigureFragment extends Fragment {
 				pvr_render.setChecked(false);
 			}
 			pvr_render.setOnCheckedChangeListener(pvr_rendering);
+		}
+	}
+
+	private boolean executeAppendConfig(String identifier, String value) {
+		File config = new File(home_directory, "emu.cfg");
+		if (config.exists()) {
+			try {
+				StringBuilder rebuildFile = new StringBuilder();
+				Scanner scanner = new Scanner(config);
+				String currentLine;
+				while (scanner.hasNextLine()) {
+					currentLine = scanner.nextLine();
+					if (StringUtils.containsIgnoreCase(currentLine, identifier)) {
+						rebuildFile.append(identifier + "=" + value + "\n");
+					} else {
+						rebuildFile.append(currentLine + "\n");
+					}
+				}
+				scanner.close();
+				config.delete();
+				FileOutputStream fos = new FileOutputStream(config);
+				fos.write(rebuildFile.toString().getBytes());
+				fos.close();
+				return true;
+			} catch (Exception e) {
+				Log.d("reicast", "Exception: " + e);
+			}
+		}
+		return false;
+	}
+
+	private void executeWriteConfig() {
+		try {
+			File config = new File(home_directory, "emu.cfg");
+			if (config.exists()) {
+				config.delete();
+			}
+			StringBuilder rebuildFile = new StringBuilder();
+			rebuildFile.append("[config]" + "\n");
+			rebuildFile.append("Dynarec.Enabled=1" + "\n");
+			rebuildFile.append("Dynarec.idleskip=1" + "\n");
+			rebuildFile.append("Dynarec.unstable-opt=0" + "\n");
+			rebuildFile.append("Dreamcast.Cable=3" + "\n");
+			rebuildFile.append("Dreamcast.RTC=2018927206" + "\n");
+			rebuildFile.append("Dreamcast.Region=3" + "\n");
+			rebuildFile.append("Dreamcast.Broadcast=4" + "\n");
+			rebuildFile.append("aica.LimitFPS=1" + "\n");
+			rebuildFile.append("aica.NoBatch=0" + "\n");
+			rebuildFile.append("rend.UseMipmaps=1" + "\n");
+			rebuildFile.append("rend.WideScreen="
+					+ String.valueOf(widescreen ? 1 : 0) + "\n");
+			rebuildFile.append("pvr.Subdivide=0" + "\n");
+			rebuildFile.append("ta.skip=" + String.valueOf(frameskip) + "\n");
+			rebuildFile.append("pvr.rend=" + String.valueOf(pvrrender ? 1 : 0)
+					+ "\n");
+			rebuildFile.append("image=null" + "\n");
+			FileOutputStream fos = new FileOutputStream(config);
+			fos.write(rebuildFile.toString().getBytes());
+			fos.close();
+		} catch (Exception e) {
+			Log.d("reicast", "Exception: " + e);
 		}
 	}
 }
