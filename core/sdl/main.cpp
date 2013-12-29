@@ -525,9 +525,10 @@ void init_sound()
 	  int format=AFMT_S16_LE;
 	  err_ret=ioctl(audio_fd, SNDCTL_DSP_SETFMT, &format);
 	  printf("set dsp to %s audio (%i/%i => %i)\n", "16bits signed" ,AFMT_S16_LE, format, err_ret);
-	  int frag=(2<<16)|12;
+	  int frag=(4<<16)|11;
+	  int f=frag;
 	  err_ret=ioctl(audio_fd, SNDCTL_DSP_SETFRAGMENT, &frag);
-	  printf("set dsp fragment to %i of %i bytes (%x => %i)\n", "16bits signed" ,(frag>>16), 2<<(frag&0xff), frag, err_ret);
+	  printf("set dsp fragment to %i of %i bytes (0x%x => %i)\n", "16bits signed" ,(f>>16), 1<<(f&0xff), frag, err_ret);
 	  /*
 	  // this doesn't help stutering, and the emu goes too fast after that
 	  err_ret=ioctl(audio_fd, SNDCTL_DSP_NONBLOCK, NULL);
@@ -585,6 +586,11 @@ int main(int argc, wchar* argv[])
 u32 os_Push(void* frame, u32 samples, bool wait)
 {
 #ifdef USE_OSS
+	static bool blocking = true;
+	if (wait!=blocking) {
+		fcntl(audio_fd, F_SETFD, O_WRONLY | wait?0:O_NONBLOCK);
+		blocking=wait;
+	}
 	write(audio_fd, frame, samples*4);
 #endif
 return 1;
