@@ -14,22 +14,36 @@ int max_idx,max_mvo,max_op,max_pt,max_tr,max_vtx,max_modt, ovrn;
 TA_context* _pvrrc;
 void SetREP(TA_context* cntx);
 
-
+int frameskip;
 
 bool rend_single_frame()
 {
 	//wait render start only if no frame pending
 	_pvrrc = DequeueRender();
 
+/*	if (_pvrrc) {
+		if (!pvrrc.isRTT) {
+			frameskip++;
+			if (frameskip>4) frameskip = 0;
+		}
+	} else frameskip = 0;*/
+	
 	while (!_pvrrc)
 	{
 		rs.Wait();
 		_pvrrc = DequeueRender();
 	}
-
-	bool do_swp=false;
 	
-	do_swp=rend->Render();
+	bool do_swp=false;
+
+	if (!pvrrc.isRTT) {
+		frameskip=1-frameskip;
+		//frameskip=(frameskip+1)%3;
+	}
+
+	
+	if (!frameskip || pvrrc.isRTT)
+		do_swp=rend->Render();
 	
 
 	if (do_swp)
@@ -78,11 +92,14 @@ void* rend_thread(void* p)
 		die("rend->init() failed\n");
 
 	rend->Resize(640,480);
+	
+	frameskip = 0;
 
 	for(;;)
 	{
 		if (rend_single_frame())
-			rend->Present();	
+			if (!frameskip)
+				rend->Present();	
 	}
 }
 
