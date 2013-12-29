@@ -935,7 +935,7 @@ void AnalyseBlock(RuntimeBlockInfo* blk)
 
 	srt_waw(blk);
 	constlink(blk);
-	dejcond(blk);
+	//dejcond(blk);
 	if (last_op_sets_flags)
 	{
 		shilop op= blk->oplist[blk->oplist.size()-1].op;
