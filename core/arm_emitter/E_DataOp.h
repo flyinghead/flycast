@@ -194,6 +194,19 @@ ADD.SP.REG	0x008D0000
 			ADD(Rd,Rn,Rm,0,S,CC);
 		}
 
+		EAPI ADD(eReg Rd, eReg Rn, eReg Rm, ShiftOp Shift, u32 Imm8, ConditionCode CC=AL)
+		{
+            DECL_Id(0x00800000);
+			
+			SET_CC;
+            I |= (Rn&15)<<16;
+            I |= (Rd&15)<<12;
+            I |= (Rm&15);
+			I |= Shift<<5;
+			I |= (Imm8&15)<<7;
+			EMIT_I;
+		}
+		
 		EAPI ADD(eReg Rd, eReg Rn, eReg Rm, ConditionCode CC=AL)
         {
 			ADD(Rd,Rn,Rm,false,CC);
@@ -285,7 +298,20 @@ ADD.SP.REG	0x008D0000
             I |= ARMImmid8r4(Imm8);  // * 12b imm is 8b imm 4b rot. spec, add rot support!
             EMIT_I;
         }
-
+		
+		EAPI ORR(eReg Rd, eReg Rn, eReg Rm, ShiftOp Shift, eReg Rs, ConditionCode CC=AL)
+		{
+			DECL_Id(0x01800000);
+			
+			SET_CC;
+			I |= (Rn&15)<<16;
+			I |= (Rd&15)<<12;
+			I |= (Rm&15);
+			I |= Shift<<5;
+			I |= (Rs&15)<<8;
+			EMIT_I;
+		}
+	
         EAPI AND(eReg Rd, eReg Rn, eReg Rm, ConditionCode CC=AL)
         {
             DECL_Id(0x00000000);
@@ -358,7 +384,25 @@ ADD.SP.REG	0x008D0000
         }
 		EAPI SUB(eReg Rd, eReg Rn, s32 Imm8, ConditionCode CC=AL) { SUB(Rd,Rn,Imm8,false,CC); }
 
-
+		EAPI SBC(eReg Rd, eReg Rn, eReg Rm, bool S, ConditionCode CC=AL)
+		{
+			DECL_Id(0x00C00000);
+			
+			if (S)
+			I |= 1<<20;
+			
+			SET_CC;
+			I |= (Rn&15)<<16;
+			I |= (Rd&15)<<12;
+			I |= (Rm&15);
+			EMIT_I;
+		}
+		
+		EAPI SBC(eReg Rd, eReg Rn, eReg Rm, ConditionCode CC=AL)
+		{
+			SBC(Rd,Rn,Rm,false,CC);
+		}
+	
         EAPI RSB(eReg Rd, eReg Rn, eReg Rm, ConditionCode CC=AL)
         {
             DECL_Id(0x00600000);
@@ -486,7 +530,18 @@ ADD.SP.REG	0x008D0000
 			I |= (Imm16&0x0FFF);
 			EMIT_I;
 		}
-
+		
+		EAPI MOV(eReg Rd, s32 Imm8, ConditionCode CC=AL)
+		{
+			DECL_Id(0x03A00000);
+			
+			SET_CC;
+			I |= (Rd&15)<<12;
+			I |= ARMImmid8r4(Imm8);  // * 12b imm is 8b imm 4b rot. spec, add rot support!
+			EMIT_I;
+		}
+		
+	
 
 
 

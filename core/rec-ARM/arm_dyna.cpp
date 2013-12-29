@@ -1371,6 +1371,56 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 				ADC(reg.mapg(op->rd2),reg.mapg(op->rd2),0);     //rd2=C (or MOVCS rd2, 1)
 			}
 			break;
+			
+		case shop_sbc:
+			//printf("sbc: r%d r%d r%d r%d\n",reg.mapg(op->rd),reg.mapg(op->rs1),reg.mapg(op->rs2), reg.mapg(op->rs3));
+			{
+				MOV(reg.mapg(op->rd2), 0);
+				SUB(r1, reg.mapg(op->rd2), reg.mapg(op->rs3));	// create a carry
+				SBC(reg.mapg(op->rd), reg.mapg(op->rs1), reg.mapg(op->rs2));
+				ADC(reg.mapg(op->rd2), reg.mapg(op->rd2), 0);
+			}
+			break;
+			
+		case shop_shld:
+			//printf("shld: r%d r%d r%d\n",reg.mapg(op->rd),reg.mapg(op->rs1),reg.mapg(op->rs2));
+			{
+				TST(reg.mapg(op->rs2), 0x80000000);	//sign
+				B(4*4-8, CC_NE);	// Label1
+				AND(r2, reg.mapg(op->rs2), 0x1F);
+				LSL(r1, reg.mapg(op->rs1), r2);
+				B(6*4-8, CC_AL);	// Label2
+				//Label1:
+				NEG(r2, reg.mapg(op->rs2));
+				AND(r2, r2, 0x1F);
+				CMP(r2, 0x0);
+				LSR(r1, reg.mapg(op->rs1), r2, CC_NE);
+				MOV(r1, 0, CC_EQ);
+				// Label2:
+				MOV(reg.mapg(op->rd), r1);
+			}		
+			break;
+
+		case shop_shad:
+			//printf("shad: r%d r%d r%d\n",reg.mapg(op->rd),reg.mapg(op->rs1),reg.mapg(op->rs2));
+			{
+				TST(reg.mapg(op->rs2), 0x80000000);	//sign
+				B(6*4-8, CC_NE);	// Label1
+				AND(r2, reg.mapg(op->rs2), 0x1F);
+				TST(reg.mapg(op->rs1), 0x80000000);	//sign
+				LSL(r1, reg.mapg(op->rs1), r2);
+				ORR(r1, r1, 0x80000000, CC_NE);	// restaure sign
+				B(6*4-8, CC_AL);	// Label2
+				//Label1:
+				NEG(r2, reg.mapg(op->rs2));
+				AND(r2, r2, 0x1F);
+				CMP(r2, 0x0);
+				MOVW(r2, 31, CC_EQ);
+				ASR(r1, reg.mapg(op->rs1), r2);
+				// Label2:
+				MOV(reg.mapg(op->rd), r1);
+			}		
+			break;
 
 		case shop_sync_sr:
 		{
@@ -1398,7 +1448,6 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 		{
 			verify(op->rd._reg!=op->rs1._reg);
 			verify(op->rs2.is_imm() || op->rd._reg!=op->rs2._reg);
-
 			//rd is always NOT a source !
 			MOVW(reg.mapg(op->rd),0);
 
@@ -1443,14 +1492,40 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 		    MOVW(reg.mapg(op->rd),1,opcls2[op->op-shop_test]);
 		    break;
         }
-
+		
+		case shop_setpeq:
+			{
+				EOR(reg.mapg(op->rd), reg.mapg(op->rd), reg.mapg(op->rd));
+				EOR(r1, reg.mapg(op->rs1), reg.mapg(op->rs2));
+				
+				TST(r1, 0xFF000000);
+				MOVW(reg.mapg(op->rd), 1, CC_EQ);
+				TST(r1, 0x00FF0000);
+				MOVW(reg.mapg(op->rd), 1, CC_EQ);
+				TST(r1, 0x0000FF00);
+				MOVW(reg.mapg(op->rd), 1, CC_EQ);
+				TST(r1, 0x000000FF);
+				MOVW(reg.mapg(op->rd), 1, CC_EQ);
+			}
+			break;
+		
 		//UXTH for zero extention and/or more mul forms (for 16 and 64 bits)
 
-//		case shop_mul_u16:
-//		case shop_mul_s16:
+		case shop_mul_u16:
+			{
+				UXTH(r1, reg.mapg(op->rs1));
+				UXTH(r2, reg.mapg(op->rs2));
+				MUL(reg.mapg(op->rd),r1,r2);
+			}
+			break;
+		case shop_mul_s16:
+			{
+				SXTH(r1, reg.mapg(op->rs1));
+				SXTH(r2, reg.mapg(op->rs2));
+				MUL(reg.mapg(op->rd),r1,r2);
+			}
+			break;
 		case shop_mul_i32:
-//		case shop_mul_u64:
-//		case shop_mul_s64:
 			{
 				//x86_opcode_class opdt[]={op_movzx16to32,op_movsx16to32,op_mov32,op_mov32,op_mov32};
 				//x86_opcode_class opmt[]={op_mul32,op_mul32,op_mul32,op_mul32,op_imul32};
@@ -1459,7 +1534,42 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 				MUL(reg.mapg(op->rd),reg.mapg(op->rs1),reg.mapg(op->rs2));
 			}
 			break;
-			
+		case shop_mul_u64:
+			{
+				UMULL(reg.mapg(op->rd2), reg.mapg(op->rd), reg.mapg(op->rs1), reg.mapg(op->rs2));
+			}
+			break;
+		case shop_mul_s64:
+			{
+				SMULL(reg.mapg(op->rd2), reg.mapg(op->rd), reg.mapg(op->rs1), reg.mapg(op->rs2));
+			}
+			break;
+
+/*		case shop_div32u:
+			// Doesn't work
+			// algo from new arm dynarec from mupen64plus
+			printf("div32u: r%d r%d r%d r%d\n",reg.mapg(op->rd2),reg.mapg(op->rd),reg.mapg(op->rs1),reg.mapg(op->rs2));
+			{
+				EOR(reg.mapg(op->rd2), reg.mapg(op->rd2), reg.mapg(op->rd2));
+				MOV(reg.mapg(op->rd), reg.mapg(op->rd2));
+				MOVS(r2, reg.mapg(op->rs2));
+				B(11*4-8, CC_EQ);		// Divide by zero, Label1:
+				MOV(reg.mapg(op->rd2), reg.mapg(op->rs1));
+				CLZ(reg.mapg(op->rd), r2);
+				LSL(reg.mapg(op->rd), reg.mapg(op->rd), r2);
+				ORR(reg.mapg(op->rd), reg.mapg(op->rd), 1<<31);
+				LSR(reg.mapg(op->rd), reg.mapg(op->rd), reg.mapg(op->rd));
+				// Label2:
+				CMP(reg.mapg(op->rd2), r2);
+				SUB(reg.mapg(op->rd2), reg.mapg(op->rd2), r2, CC_CS);
+				ADC(reg.mapg(op->rd), reg.mapg(op->rd), reg.mapg(op->rd), true, CC_AL);
+				LSR(r2, r2, 1, CC_AL);
+				B(-4*4-8, CC_CC); // Label2:
+				// Labe1:
+				MOV(r0,r0);				
+			}
+			break;*/
+		
 		case shop_pref:
 			{
 				if (op->flags != 0x1337)
@@ -1601,9 +1711,10 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 					VLDR(d0,r0);
 				*/
 
-				LSL(r0,r0,3);
-				ADD(r0,r1,r0); //EMITTER: Todo, add with shifted !
-
+				//LSL(r0,r0,3);
+				//ADD(r0,r1,r0); //EMITTER: Todo, add with shifted !
+				ADD(r0,r1,r0, S_LSL, 3);
+				
 				VLDR(/*reg.mapf(op->rd,0)*/d0,r0,0);
 				VSTR(d0,r8,op->rd.reg_nofs()/4);
 			}
@@ -1630,7 +1741,7 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 					_r2=q1;
 				}
 
-#if 1
+#if !defined(TARGET_PANDORA)
 				//VFP
 				eFSReg fs2=_r2==q0?f0:f4;
 
@@ -1660,7 +1771,7 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 					SUB(r0,r8,op->rd.reg_aofs());
 				}
 	
-#if 1
+#if !defined(TARGET_PANDORA)
 				//f0,f1,f2,f3	  : vin
 				//f4,f5,f6,f7     : out
 				//f8,f9,f10,f11   : mtx temp
@@ -1736,7 +1847,7 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 					//4 mul
 					//4 mla
 					//1 add
-					*/
+					
 				*/
 #endif
 			}
@@ -1774,10 +1885,20 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 				VMOV(reg.mapg(op->rd),f0);
 				//shil_chf[op->op](op);
 				break;
+			
+			case shop_cvt_i2f_n:	// may be some difference should be made ?
+			case shop_cvt_i2f_z:
+			
+				//printf("i2f: f%d r%d\n",reg.mapf(op->rd),reg.mapg(op->rs1));
+				//BKPT();
+				VMOV(f0, reg.mapg(op->rs1));
+				VCVT_from_S32_VFP(reg.mapfs(op->rd),f0);
+				//shil_chf[op->op](op);
+				break;
 #endif
 
 		default:
-			//printf("CFB %d\n",op->op);
+			printf("CFB %d\n",op->op);/*SEB*/
 			shil_chf[op->op](op);
 			break;
 
