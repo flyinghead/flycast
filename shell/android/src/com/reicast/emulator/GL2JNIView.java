@@ -128,9 +128,10 @@ class GL2JNIView extends GLSurfaceView
     
     if (GL2JNIActivity.syms != null)
     	JNIdc.data(1, GL2JNIActivity.syms);
-    JNIdc.vjoy(13, 0,0,0,0);
-	JNIdc.kcode(0xFFFF,0,0,128,128); 
-	JNIdc.init(fileName);
+  
+    JNIdc.hide_osd();
+    JNIdc.kcode(0xFFFF,0,0,128,128); 
+    JNIdc.init(fileName);
 
 
     // By default, GLSurfaceView() creates a RGB_565 opaque surface.
@@ -278,7 +279,7 @@ class GL2JNIView extends GLSurfaceView
 
   @Override public boolean onTouchEvent(final MotionEvent event) 
   {
-	JNIdc.vjoy(13, 1,0,0,0); 
+  JNIdc.show_osd();
   
   float ty  = 0.0f;
   float scl  = getHeight()/480.0f;

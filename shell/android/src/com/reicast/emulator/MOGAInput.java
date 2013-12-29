@@ -65,6 +65,7 @@ public class MOGAInput
 						KeyEvent.KEYCODE_BUTTON_START, key_CONT_START,
 				};
 
+	Activity act;
 	public MOGAInput()
 	{
 		/*
@@ -101,28 +102,25 @@ public class MOGAInput
 
 	protected void onCreate(Activity act)
 	{
+		this.act = act;
+
 		mController = Controller.getInstance(act);
 		mController.init();
 		mController.setListener(new ExampleControllerListener(), new Handler());
-
-		Log.w("INPUT", "Create");
 	}
 
 	protected void onDestroy()
 	{
-		Log.w("INPUT", "Desotry");
 		mController.exit();
 	}
 
 	protected void onPause()
 	{
-		Log.w("INPUT", "PAUSe");
 		mController.onPause();
 	}
 
 	protected void onResume()
 	{
-		Log.w("INPUT", "RESUMe");
 		mController.onResume();
 
 		/*
@@ -153,7 +151,7 @@ public class MOGAInput
 	{
 		public void onKeyEvent(KeyEvent event)
 		{
-			Log.w("KEYINPUT", event.toString());
+			JNIdc.hide_osd();
 			for (int i = 0; i < map.length; i += 2) {
 				if (map[i + 0] == event.getKeyCode()) {
 					if (event.getAction() == 0) //FIXME to const
@@ -164,18 +162,11 @@ public class MOGAInput
 					break;
 				}
 			}
-
-			/*
-			final ExampleInteger value = mKeys.get(event.getKeyCode());
-			if(value != null)
-			{
-				value.mValue = event.getAction();
-			}*/
 		}
 
 		public void onMotionEvent(MotionEvent event)
 		{
-			Log.w("MOINPUT", event.toString());
+			JNIdc.hide_osd();
 
 			float LS_X = event.getAxisValue(MotionEvent.AXIS_X);
 			float LS_Y = event.getAxisValue(MotionEvent.AXIS_Y);
@@ -199,13 +190,11 @@ public class MOGAInput
 
 		public void onStateEvent(StateEvent event)
 		{
-			Log.w("SINPUT", event.toString());
-			/*
-			final ExampleInteger value = mStates.get(event.getState());
-			if(value != null)
-			{
-				value.mValue = event.getAction();
-			}*/
+			JNIdc.hide_osd();
+
+			if (event.getState() == ACTION_CONNECTED) {
+        		Toast.makeText(act.getApplicationContext(), "MOGA Connected!", Toast.LENGTH_SHORT).show();
+			}
 		}
 	}
 }

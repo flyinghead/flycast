@@ -118,8 +118,8 @@ public class GL2JNIActivity extends Activity {
 
 	@Override
 	protected void onCreate(Bundle icicle) {
-		moga.onCreate(this);
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
+		moga.onCreate(this);
 		
 		createPopup();
 		/*
@@ -307,7 +307,7 @@ public class GL2JNIActivity extends Activity {
 
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
 		if (handle_key(keyCode, true)) {
-			JNIdc.vjoy(13, 0, 0, 0, 0);
+			JNIdc.hide_osd();
 			return true;
 		}
 
