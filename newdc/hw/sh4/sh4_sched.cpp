@@ -71,7 +71,7 @@ void sh4_sched_ffts()
 	}
 	else
 	{
-		Sh4cntx.sh4_sched_next=200*1000*1000;
+		Sh4cntx.sh4_sched_next=SH4_MAIN_CLOCK;
 	}
 
 	sh4_sched_ffb+=Sh4cntx.sh4_sched_next;
