@@ -25,9 +25,8 @@
             </intent-filter>
         </activity>
         
-        <activity android:name=".GL2JNIActivity" android:screenOrientation="landscape">
-            <meta-data android:name="android.app.lib_name" android:value="dc"
-                android:theme="@android:style/Theme.NoTitleBar.Fullscreen" />
+        <activity android:name=".GL2JNIActivity" android:screenOrientation="landscape" android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
+            <meta-data android:name="android.app.lib_name" android:value="dc" />
             
             <intent-filter>
 		        <action android:name="android.intent.action.VIEW" />
