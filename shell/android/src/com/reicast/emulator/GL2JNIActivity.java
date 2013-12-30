@@ -162,7 +162,8 @@ public class GL2JNIActivity extends Activity {
 					};
 				} else if (InputDevice.getDevice(joys[i]).getName()
 						.contains("NVIDIA Corporation NVIDIA Controller")) {
-					map = new int[] { OuyaController.BUTTON_O, key_CONT_A,
+					map = new int[] {
+							OuyaController.BUTTON_O, key_CONT_A,
 							OuyaController.BUTTON_A, key_CONT_B,
 							OuyaController.BUTTON_Y, key_CONT_Y,
 							OuyaController.BUTTON_U, key_CONT_X,
@@ -179,7 +180,8 @@ public class GL2JNIActivity extends Activity {
 							OuyaController.BUTTON_R1, key_CONT_START };
 					nVidia = true;
 				} else if (!moga.isActive) { // Ouya controller
-					map = new int[] { OuyaController.BUTTON_O, key_CONT_A,
+					map = new int[] {
+							OuyaController.BUTTON_O, key_CONT_A,
 							OuyaController.BUTTON_A, key_CONT_B,
 							OuyaController.BUTTON_Y, key_CONT_Y,
 							OuyaController.BUTTON_U, key_CONT_X,
