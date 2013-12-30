@@ -1385,6 +1385,7 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 		case shop_shld:
 			//printf("shld: r%d r%d r%d\n",reg.mapg(op->rd),reg.mapg(op->rs1),reg.mapg(op->rs2));
 			{
+				verify(!op->rs2.is_imm());
 				TST(reg.mapg(op->rs2), 0x80000000);	//sign
 				B(4*4-8, CC_NE);	// Label1
 				AND(r2, reg.mapg(op->rs2), 0x1F);
@@ -1404,6 +1405,7 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 		case shop_shad:
 			//printf("shad: r%d r%d r%d\n",reg.mapg(op->rd),reg.mapg(op->rs1),reg.mapg(op->rs2));
 			{
+				verify(!op->rs2.is_imm());
 				TST(reg.mapg(op->rs2), 0x80000000);	//sign
 				B(6*4-8, CC_NE);	// Label1
 				AND(r2, reg.mapg(op->rs2), 0x1F);
@@ -1495,16 +1497,16 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 		
 		case shop_setpeq:
 			{
-				EOR(reg.mapg(op->rd), reg.mapg(op->rd), reg.mapg(op->rd));
 				EOR(r1, reg.mapg(op->rs1), reg.mapg(op->rs2));
+				EOR(reg.mapg(op->rd), reg.mapg(op->rd), reg.mapg(op->rd));
 				
 				TST(r1, 0xFF000000);
-				MOVW(reg.mapg(op->rd), 1, CC_EQ);
-				TST(r1, 0x00FF0000);
-				MOVW(reg.mapg(op->rd), 1, CC_EQ);
-				TST(r1, 0x0000FF00);
-				MOVW(reg.mapg(op->rd), 1, CC_EQ);
-				TST(r1, 0x000000FF);
+//				MOVW(reg.mapg(op->rd), 1, CC_EQ);
+				TST(r1, 0x00FF0000, CC_NE);
+//				MOVW(reg.mapg(op->rd), 1, CC_EQ);
+				TST(r1, 0x0000FF00, CC_NE);
+//				MOVW(reg.mapg(op->rd), 1, CC_EQ);
+				TST(r1, 0x000000FF, CC_NE);
 				MOVW(reg.mapg(op->rd), 1, CC_EQ);
 			}
 			break;
@@ -1741,7 +1743,7 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 					_r2=q1;
 				}
 
-#if !defined(TARGET_PANDORA)
+#if 1//!defined(TARGET_PANDORA)
 				//VFP
 				eFSReg fs2=_r2==q0?f0:f4;
 
@@ -1771,7 +1773,7 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 					SUB(r0,r8,op->rd.reg_aofs());
 				}
 	
-#if !defined(TARGET_PANDORA)
+#if 1//!defined(TARGET_PANDORA)
 				//f0,f1,f2,f3	  : vin
 				//f4,f5,f6,f7     : out
 				//f8,f9,f10,f11   : mtx temp
