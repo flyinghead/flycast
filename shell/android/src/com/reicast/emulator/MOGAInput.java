@@ -40,6 +40,7 @@ public class MOGAInput
 
 	Controller mController = null;
 
+    public boolean isActive = false;
 
 	private static final int key_CONT_B 			= 0x0002;
 	private static final int key_CONT_A 			= 0x0004;
@@ -194,6 +195,7 @@ public class MOGAInput
 
 			if (event.getState() == ACTION_CONNECTED) {
         		Toast.makeText(act.getApplicationContext(), "MOGA Connected!", Toast.LENGTH_SHORT).show();
+        		isActive = true;
 			}
 		}
 	}

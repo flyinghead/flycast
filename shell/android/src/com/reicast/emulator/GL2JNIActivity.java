@@ -38,6 +38,7 @@ public class GL2JNIActivity extends Activity {
 	PopupWindow popUp;
 	LayoutParams params;
 	MOGAInput moga = new MOGAInput();
+	static boolean nVidia = false;
 
 	int map[];
 
@@ -158,47 +159,44 @@ public class GL2JNIActivity extends Activity {
 						OuyaController.BUTTON_MENU, key_CONT_START,
 						OuyaController.BUTTON_R1, key_CONT_START
 
-				};
-			} else if (InputDevice.getDevice(joys[i]).getName()
-					.equals("Moga 2")
-					|| InputDevice.getDevice(joys[i]).getName()
-							.equals("Moga 2 HID")
-					|| InputDevice.getDevice(joys[i]).getName()
-							.equals("Moga Pro 2")
-					|| InputDevice.getDevice(joys[i]).getName()
-							.equals("Moga Pro 2 HID")
-					|| InputDevice.getDevice(joys[i]).getName()
-							.equals("Broadcom Bluetooth HID")) {
-				map = new int[] {
-						OuyaController.BUTTON_O, key_CONT_A,
-						OuyaController.BUTTON_A, key_CONT_B,
-						OuyaController.BUTTON_Y, key_CONT_Y,
-						OuyaController.BUTTON_U, key_CONT_X,
-						
-						OuyaController.BUTTON_DPAD_UP, key_CONT_DPAD_UP,
-						OuyaController.BUTTON_DPAD_DOWN, key_CONT_DPAD_DOWN,
-						OuyaController.BUTTON_DPAD_LEFT, key_CONT_DPAD_LEFT,
-						OuyaController.BUTTON_DPAD_RIGHT, key_CONT_DPAD_RIGHT,
+					};
+				} else if (InputDevice.getDevice(joys[i]).getName()
+						.contains("NVIDIA Corporation NVIDIA Controller")) {
+					map = new int[] {
+							OuyaController.BUTTON_O, key_CONT_A,
+							OuyaController.BUTTON_A, key_CONT_B,
+							OuyaController.BUTTON_Y, key_CONT_Y,
+							OuyaController.BUTTON_U, key_CONT_X,
 
-						OuyaController.BUTTON_MENU, key_CONT_START,
-						OuyaController.BUTTON_R1, key_CONT_START
+							OuyaController.BUTTON_DPAD_UP, key_CONT_DPAD_UP,
+							OuyaController.BUTTON_DPAD_DOWN,
+							key_CONT_DPAD_DOWN,
+							OuyaController.BUTTON_DPAD_LEFT,
+							key_CONT_DPAD_LEFT,
+							OuyaController.BUTTON_DPAD_RIGHT,
+							key_CONT_DPAD_RIGHT,
 
-				};
-			} else { // Ouya controller
-				map = new int[] {
-						OuyaController.BUTTON_O, key_CONT_A,
-						OuyaController.BUTTON_A, key_CONT_B,
-						OuyaController.BUTTON_Y, key_CONT_Y,
-						OuyaController.BUTTON_U, key_CONT_X,
+							OuyaController.BUTTON_MENU, key_CONT_START,
+							OuyaController.BUTTON_R1, key_CONT_START };
+					nVidia = true;
+				} else if (!moga.isActive) { // Ouya controller
+					map = new int[] {
+							OuyaController.BUTTON_O, key_CONT_A,
+							OuyaController.BUTTON_A, key_CONT_B,
+							OuyaController.BUTTON_Y, key_CONT_Y,
+							OuyaController.BUTTON_U, key_CONT_X,
 
-						OuyaController.BUTTON_DPAD_UP, key_CONT_DPAD_UP,
-						OuyaController.BUTTON_DPAD_DOWN, key_CONT_DPAD_DOWN,
-						OuyaController.BUTTON_DPAD_LEFT, key_CONT_DPAD_LEFT,
-						OuyaController.BUTTON_DPAD_RIGHT, key_CONT_DPAD_RIGHT,
+							OuyaController.BUTTON_DPAD_UP, key_CONT_DPAD_UP,
+							OuyaController.BUTTON_DPAD_DOWN,
+							key_CONT_DPAD_DOWN,
+							OuyaController.BUTTON_DPAD_LEFT,
+							key_CONT_DPAD_LEFT,
+							OuyaController.BUTTON_DPAD_RIGHT,
+							key_CONT_DPAD_RIGHT,
 
-						OuyaController.BUTTON_MENU, key_CONT_START,
-						OuyaController.BUTTON_R1, key_CONT_START };
-			}
+							OuyaController.BUTTON_MENU, key_CONT_START,
+							OuyaController.BUTTON_R1, key_CONT_START };
+				}
 		}
 
 		// When viewing a resource, pass its URI to the native code for opening
@@ -219,6 +217,12 @@ public class GL2JNIActivity extends Activity {
 		// Log.w("INPUT", event.toString() + " " + event.getSource());
 		// Get all the axis for the KeyEvent
 
+		if (nVidia) {
+		    JNIdc.hide_osd();
+		}
+
+		if (!moga.isActive) {
+
 		// Joystick
 		if ((event.getSource() & InputDevice.SOURCE_CLASS_JOYSTICK) != 0) {
 
@@ -235,6 +239,8 @@ public class GL2JNIActivity extends Activity {
 
 			GL2JNIView.jx = (int) (LS_X * 126);
 			GL2JNIView.jy = (int) (LS_Y * 126);
+		}
+		
 		}
 
 		return true;
@@ -285,6 +291,8 @@ public class GL2JNIActivity extends Activity {
 	 */
 
 	boolean handle_key(int kc, boolean down) {
+	    if (!moga.isActive) {
+
 		boolean rav = false;
 		for (int i = 0; i < map.length; i += 2) {
 			if (map[i + 0] == kc) {
@@ -299,6 +307,10 @@ public class GL2JNIActivity extends Activity {
 		}
 
 		return rav;
+
+		} else {
+		    return true;
+		}
 	}
 
 	public boolean onKeyUp(int keyCode, KeyEvent event) {
