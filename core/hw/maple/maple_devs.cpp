@@ -15,6 +15,7 @@ const char* maple_sega_mic_name = "MicDevice for Dreameye";
 
 const char* maple_sega_brand = "Produced By or Under License From SEGA ENTERPRISES,LTD.";
 
+#define HAS_VMU
 
 enum MapleFunctionID
 {
