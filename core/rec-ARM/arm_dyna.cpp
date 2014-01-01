@@ -941,6 +941,11 @@ EAPI NEG(eReg Rd,eReg Rs)
 	RSB(Rd,Rs,0);
 }
 
+EAPI NEG(eReg Rd,eReg Rs, bool S, ConditionCode cond = CC_AL)
+{
+	RSB(Rd,Rs,0, S, cond);
+}
+
 eReg GenMemAddr(shil_opcode* op,eReg raddr=r0)
 {
 	if (op->rs3.is_imm())
@@ -1366,7 +1371,8 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 			
 		case shop_rocl:
 			{
-				ADD(reg.mapg(op->rd),reg.mapg(op->rs2),reg.mapg(op->rs1),1,true); //(C,rd)= rs1<<1 + (|) rs2
+				//ADD(reg.mapg(op->rd),reg.mapg(op->rs2),reg.mapg(op->rs1),1,true); //(C,rd)= rs1<<1 + (|) rs2
+				ORR(reg.mapg(op->rd),reg.mapg(op->rs2),reg.mapg(op->rs1),true, S_LSL, 1); //(C,rd)= rs1<<1 + (|) rs2
 				MOVW(reg.mapg(op->rd2),0);                      //clear rd2 (for ADC/MOVCS)
 				ADC(reg.mapg(op->rd2),reg.mapg(op->rd2),0);     //rd2=C (or MOVCS rd2, 1)
 			}
@@ -1381,24 +1387,17 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 				ADC(reg.mapg(op->rd2), reg.mapg(op->rd2), 0);
 			}
 			break;
-			
+		
 		case shop_shld:
 			//printf("shld: r%d r%d r%d\n",reg.mapg(op->rd),reg.mapg(op->rs1),reg.mapg(op->rs2));
 			{
 				verify(!op->rs2.is_imm());
-				TST(reg.mapg(op->rs2), 0x80000000);	//sign
-				B(4*4-8, CC_NE);	// Label1
-				AND(r2, reg.mapg(op->rs2), 0x1F);
-				LSL(r1, reg.mapg(op->rs1), r2);
-				B(6*4-8, CC_AL);	// Label2
-				//Label1:
-				NEG(r2, reg.mapg(op->rs2));
-				AND(r2, r2, 0x1F);
-				CMP(r2, 0x0);
-				LSR(r1, reg.mapg(op->rs1), r2, CC_NE);
-				MOV(r1, 0, CC_EQ);
-				// Label2:
-				MOV(reg.mapg(op->rd), r1);
+				AND(r0, reg.mapg(op->rs2), 0x8000001F, true);
+				RSB(r0, r0, 0x80000020, CC_MI);
+				LSR(reg.mapg(op->rd), reg.mapg(op->rs1), r0, CC_MI);
+				LSL(reg.mapg(op->rd), reg.mapg(op->rs1), r0, CC_PL);
+				//MOV(reg.mapg(op->rd), reg.mapg(op->rs1), S_LSL, r0, CC_PL);
+				//MOV(reg.mapg(op->rd), reg.mapg(op->rs1), S_LSR, r0, CC_MI);
 			}		
 			break;
 
@@ -1406,21 +1405,12 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 			//printf("shad: r%d r%d r%d\n",reg.mapg(op->rd),reg.mapg(op->rs1),reg.mapg(op->rs2));
 			{
 				verify(!op->rs2.is_imm());
-				TST(reg.mapg(op->rs2), 0x80000000);	//sign
-				B(6*4-8, CC_NE);	// Label1
-				AND(r2, reg.mapg(op->rs2), 0x1F);
-				TST(reg.mapg(op->rs1), 0x80000000);	//sign
-				LSL(r1, reg.mapg(op->rs1), r2);
-				ORR(r1, r1, 0x80000000, CC_NE);	// restaure sign
-				B(6*4-8, CC_AL);	// Label2
-				//Label1:
-				NEG(r2, reg.mapg(op->rs2));
-				AND(r2, r2, 0x1F);
-				CMP(r2, 0x0);
-				MOVW(r2, 31, CC_EQ);
-				ASR(r1, reg.mapg(op->rs1), r2);
-				// Label2:
-				MOV(reg.mapg(op->rd), r1);
+				AND(r0, reg.mapg(op->rs2), 0x8000001F, true);
+				RSB(r0, r0, 0x80000020, CC_MI);
+				ASR(reg.mapg(op->rd), reg.mapg(op->rs1), r0, CC_MI);
+				LSL(reg.mapg(op->rd), reg.mapg(op->rs1), r0, CC_PL);
+				//MOV(reg.mapg(op->rd), reg.mapg(op->rs1), S_LSL, r0, CC_PL);
+				//MOV(reg.mapg(op->rd), reg.mapg(op->rs1), S_ASR, r0, CC_MI);
 			}		
 			break;
 
@@ -1547,31 +1537,62 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 			}
 			break;
 
-/*		case shop_div32u:
+		case shop_div32u:
 			// Doesn't work
 			// algo from new arm dynarec from mupen64plus
-			printf("div32u: r%d r%d r%d r%d\n",reg.mapg(op->rd2),reg.mapg(op->rd),reg.mapg(op->rs1),reg.mapg(op->rs2));
+			//printf("div32u: r%d r%d r%d r%d\n",reg.mapg(op->rd2),reg.mapg(op->rd),reg.mapg(op->rs1),reg.mapg(op->rs2));
 			{
-				EOR(reg.mapg(op->rd2), reg.mapg(op->rd2), reg.mapg(op->rd2));
-				MOV(reg.mapg(op->rd), reg.mapg(op->rd2));
-				MOVS(r2, reg.mapg(op->rs2));
-				B(11*4-8, CC_EQ);		// Divide by zero, Label1:
-				MOV(reg.mapg(op->rd2), reg.mapg(op->rs1));
-				CLZ(reg.mapg(op->rd), r2);
-				LSL(reg.mapg(op->rd), reg.mapg(op->rd), r2);
-				ORR(reg.mapg(op->rd), reg.mapg(op->rd), 1<<31);
-				LSR(reg.mapg(op->rd), reg.mapg(op->rd), reg.mapg(op->rd));
-				// Label2:
-				CMP(reg.mapg(op->rd2), r2);
-				SUB(reg.mapg(op->rd2), reg.mapg(op->rd2), r2, CC_CS);
-				ADC(reg.mapg(op->rd), reg.mapg(op->rd), reg.mapg(op->rd), true, CC_AL);
-				LSR(r2, r2, 1, CC_AL);
-				B(-4*4-8, CC_CC); // Label2:
-				// Labe1:
-				MOV(r0,r0);				
+				// remainder = r0, quotient = r1, HOST_TEMPREG = r2, copy de rs1 = r3, copy de rs2 = r4
+				MOV(r3, reg.mapg(op->rs1));
+				MOV(r4, reg.mapg(op->rs2), true);
+				MOV(r0, reg.mapg(op->rs1));	// dividend = d1 , divisor = d2
+				MVN(r1, 0);
+				B(10*4-8, CC_EQ);
+				CLZ(r2, r4);
+				MOV(r1, 1<<31);
+				LSL(r4, r4, r2);
+				LSR(r1, r1, r2);
+				CMP(r0, r4);
+				SUB(r0, r0, r4, CC_CS);
+				ADC(r1, r1, r1, true);
+				MOV(r4, r4, S_LSR, 1, CC_CC);
+				B(-4*4-8, CC_CC);
+				MOV(reg.mapg(op->rd), r1);
+				MOV(reg.mapg(op->rd2), r0);
 			}
-			break;*/
-		
+			break;
+		case shop_div32s:
+			//printf("div32s r%d, r%d, r%d, r%d\n", reg.mapg(op->rd2),reg.mapg(op->rd),reg.mapg(op->rs1),reg.mapg(op->rs2));
+			// algo from dynarec from pcsxrearmed
+			// remainder = r0, quotient = r1, HOST_TEMPREG = r2, copy de rs1 = r3, copy de rs2 = r4
+			{
+				MOV(r3, reg.mapg(op->rs1));
+				MOV(r4, reg.mapg(op->rs2), true);
+				MOV(r0, reg.mapg(op->rs1));
+				MVN(r1, 0);
+				RSB(r1, r1, 0, CC_MI); // .. quotient and ..
+				RSB(r0, r0, 0, CC_MI); // .. remainder for div0 case (will be negated back after jump)
+				MOV(r2, reg.mapg(op->rs2), true);
+				B(13*4-8, CC_EQ); // Division by zero
+				RSB(r2, r2, 0, true, CC_MI);
+				CLZ(r1, r2);
+				LSL(r2, r2, r1);
+				ORR(r1, r1, 1<<31);
+				LSR(r1, r1, r1);
+				CMP(r0, r2);
+				SUB(r0, r0, r2, CC_CS);
+				ADC(r1, r1, r1, true);
+				MOV(r2, r2, S_LSR, 1);
+				B(-4*4-8, CC_CC); // -4
+				TEQ(r3, r4, S_LSL, CC_AL);
+				RSB(reg.mapg(op->rd), r1, 0, CC_MI);
+				MOV(reg.mapg(op->rd), r1, CC_PL);
+				TST(r3, r3);
+				RSB(reg.mapg(op->rd2), r0, 0, CC_MI);
+				MOV(reg.mapg(op->rd2), r0, CC_PL);
+			}
+			break;
+	
 		case shop_pref:
 			{
 				if (op->flags != 0x1337)

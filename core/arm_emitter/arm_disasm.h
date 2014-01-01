@@ -79,6 +79,7 @@ namespace ARM
 		u32 uSB = ((op>>20) & 0x01) ;		// Sign Change Bit
 
 
+		/*
 		if (uCC == UC) {
 
 			printf ("DBG armdis has UC instruction %X\n", op);
@@ -91,7 +92,6 @@ namespace ARM
 		if (uCC != AL) {
 			armdis_cc(uCC,isuff);
 		}
-
 
 
 		if (uO1 == 0) 
@@ -181,8 +181,55 @@ namespace ARM
 
 			sprintf (disbuf, "INVALID INSTRUCTION");
 		}
-
-
+		*/
+		if (!uC1 && uO1==5) {
+		 //B
+			char tmp[20];
+			tmp[0]='\0';
+			armdis_cc(uCC, tmp);
+			sprintf(disbuf, "B%s %08X", tmp, (op&0xffffff)<<2);
+		} else {
+			armdis_dp(uC1, disbuf);
+			char tmp[20];
+			tmp[0]='\0';
+			armdis_cc(uCC, tmp);
+			if (tmp[0]) {
+				strcat(disbuf, ".\0");
+				strcat(disbuf, tmp);
+			}
+			if (uSB) strcat(disbuf, ".S\0");
+			bool shifter=false;
+			switch (uO1) {
+				case 0:
+					// reg_reg
+					sprintf(tmp,"\tr%d, r%d", (op>>12)&0x0f, (op)&0x0f);
+					shifter=true;
+					break;
+				case 1:
+					// reg_imm
+					sprintf(tmp,"\tr%d, %04X", (op>>16)&0x0f, (op)&0xffff);
+					break;
+				default:
+					shifter=true;
+					sprintf(tmp, " 0x%0X", uO1);
+			}
+			strcat(disbuf, tmp);
+			char* ShiftOpStr[]={"LSL","LSR","ASR","ROR"};
+			u32 shiftop=(op>>5)&0x3;
+			u32 shiftoptype=(op>>4)&0x1;
+			u32 shiftopreg=(op>>8)&0xf;
+			u32 shiftopimm=(op>>7)&0x1f;
+			if (shifter) {
+				if (!shiftop && !shiftoptype && !shiftopimm)
+				{
+					//nothing
+				} else {
+					if ((shiftop==1) || (shiftop==2)) if (!shiftoptype) if (!shiftopimm) shiftopimm=32;
+					sprintf(tmp, " ,%s %s%d", ShiftOpStr[shiftop], (shiftoptype)?" r":" #", (shiftoptype)?shiftopreg:shiftopimm);
+					strcat(disbuf, tmp);
+				}
+			}
+		}
 	}
 
 
