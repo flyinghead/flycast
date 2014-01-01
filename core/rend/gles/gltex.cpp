@@ -40,7 +40,7 @@ PvrTexInfo format[8]=
 	{"565", 16,GL_UNSIGNED_SHORT_5_6_5,    &tex565_PL,&tex565_TW,&tex565_VQ},		//565
 	{"4444", 16,GL_UNSIGNED_SHORT_4_4_4_4, &tex4444_PL,&tex4444_TW,&tex4444_VQ},	//4444
 	{"yuv", 16,GL_UNSIGNED_SHORT_5_6_5,    &texYUV422_PL,&texYUV422_TW,&texYUV422_VQ},	//yuv
-	{"ns/bump", 0},	//ns
+	{"UNSUPPORTED BUMP MAPPED POLY", 16,GL_UNSIGNED_SHORT_4_4_4_4,&texBMP_PL,&texBMP_TW,&texBMP_VQ},	//bump_ns
 	{"pal4", 4,0,0,texPAL4_TW,0},	//pal4
 	{"pla8", 8,0,0,texPAL8_TW,0},	//pal8
 	{"ns/1555", 0},	//ns, 1555
@@ -191,6 +191,7 @@ struct TextureCacheData
 		case 1: //1     565      R value: 5 bits; G value: 6 bits; B value: 5 bits
 		case 2: //2     4444 value: 4 bits; RGB values: 4 bits each
 		case 3: //3     YUV422 32 bits per 2 pixels; YUYV values: 8 bits each
+		case 4: //4    -NOT_PROPERLY SUPPORTED- Bump Map        16 bits/pixel; S value: 8 bits; R value: 8 bits -NOT_PROPERLY SUPPORTED-
 		case 5: //5     4 BPP Palette   Palette texture with 4 bits/pixel
 		case 6: //6     8 BPP Palette   Palette texture with 8 bits/pixel
 			if (tcw.ScanOrder && tex->PL)
@@ -229,9 +230,6 @@ struct TextureCacheData
 				}
 			}
 			break;
-
-			//4     Bump Map        16 bits/pixel; S value: 8 bits; R value: 8 bits
-			//Bump maps are not supported for now
 		default:
 			printf("Unhandled texture %d\n",tcw.PixelFmt);
 			size=w*h*2;

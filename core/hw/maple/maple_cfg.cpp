@@ -4,6 +4,7 @@
 #include "maple_devs.h"
 #include "maple_cfg.h"
 
+#define HAS_VMU
 /*
 bus_x=0{p0=1{config};p1=2{config};config;}
 Plugins:
