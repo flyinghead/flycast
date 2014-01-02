@@ -38,7 +38,8 @@ public class GL2JNIActivity extends Activity {
 	PopupWindow popUp;
 	LayoutParams params;
 	MOGAInput moga = new MOGAInput();
-	static boolean nVidia = false;
+	static boolean xbox = false, nVidia = false;
+	float globalLS_X, globalLS_Y, previousLS_X, previousLS_Y;
 
 	int map[];
 
@@ -161,6 +162,25 @@ public class GL2JNIActivity extends Activity {
 
 					};
 				} else if (InputDevice.getDevice(joys[i]).getName()
+					.equals("Microsoft X-Box 360 pad")) {
+					map = new int[] {
+							OuyaController.BUTTON_O, key_CONT_A,
+							OuyaController.BUTTON_A, key_CONT_B,
+							OuyaController.BUTTON_Y, key_CONT_Y,
+							OuyaController.BUTTON_U, key_CONT_X,
+
+							OuyaController.BUTTON_DPAD_UP, key_CONT_DPAD_UP,
+							OuyaController.BUTTON_DPAD_DOWN,
+							key_CONT_DPAD_DOWN,
+							OuyaController.BUTTON_DPAD_LEFT,
+							key_CONT_DPAD_LEFT,
+							OuyaController.BUTTON_DPAD_RIGHT,
+							key_CONT_DPAD_RIGHT,
+
+							OuyaController.BUTTON_MENU, key_CONT_START,
+							OuyaController.BUTTON_R1, key_CONT_START };
+					xbox = true;
+				} else if (InputDevice.getDevice(joys[i]).getName()
 						.contains("NVIDIA Corporation NVIDIA Controller")) {
 					map = new int[] {
 							OuyaController.BUTTON_O, key_CONT_A,
@@ -234,6 +254,13 @@ public class GL2JNIActivity extends Activity {
 			float L2 = event.getAxisValue(OuyaController.AXIS_L2);
 			float R2 = event.getAxisValue(OuyaController.AXIS_R2);
 
+			if (xbox) {
+				previousLS_X = globalLS_X;
+				previousLS_Y = globalLS_Y;
+				globalLS_X = LS_X;
+				globalLS_Y = LS_Y;
+			}
+
 			GL2JNIView.lt = (int) (L2 * 255);
 			GL2JNIView.rt = (int) (R2 * 255);
 
@@ -242,8 +269,13 @@ public class GL2JNIActivity extends Activity {
 		}
 		
 		}
-
-		return true;
+		
+		if (xbox && globalLS_X == previousLS_X && globalLS_Y == previousLS_Y)
+			// Only handle Left Stick on an Xbox 360 controller if there was some actual motion on the stick,
+			// so otherwise the event can be handled as a DPAD event
+			return false;
+		else
+			return true;
 	}
 
 	private static final int key_CONT_B 			= 0x0002;
