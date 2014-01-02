@@ -1353,9 +1353,9 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 			ADC(reg.mapg(op->rd2),r1,0);
 #else
 
-			LSR(reg.mapg(op->rd2),reg.mapg(op->rs3),1,true); //C=rs3, rd2=0
+			LSR(r0,reg.mapg(op->rs3),1,true); //C=rs3, r0=0
 			ADC(reg.mapg(op->rd),reg.mapg(op->rs1),reg.mapg(op->rs2),true); //(C,rd)=rs1+rs2+rs3(C)
-			ADC(reg.mapg(op->rd2),reg.mapg(op->rd2),0);	//rd2=C, (or MOVCS rd2, 1)
+			ADC(reg.mapg(op->rd2),r0,0);	//rd2=C, (or MOVCS rd2, 1)
 #endif
 		}
 		break;
@@ -1363,9 +1363,17 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 		case shop_rocr:
 			{
 
-				LSR(reg.mapg(op->rd2),reg.mapg(op->rs2),1,true); //C=rs2, rd2=0
-				AND(reg.mapg(op->rd2),reg.mapg(op->rs1),1);      //get new carry
+				if (reg.mapg(op->rd2)!=reg.mapg(op->rs1)) {
+					LSR(reg.mapg(op->rd2),reg.mapg(op->rs2),1,true); //C=rs2, rd2=0
+					AND(reg.mapg(op->rd2),reg.mapg(op->rs1),1);      //get new carry
+				} else {
+					LSR(r0,reg.mapg(op->rs2),1,true); //C=rs2, rd2=0
+					ADD(r0, reg.mapg(op->rs1),1);
+				}
 				RRX(reg.mapg(op->rd),reg.mapg(op->rs1));         //RRX w/ carry :)
+				if (reg.mapg(op->rd2)==reg.mapg(op->rs1))
+					MOV(reg.mapg(op->rd2), r0);
+				
 			}
 			break;
 			
@@ -1379,12 +1387,12 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 			break;
 			
 		case shop_sbc:
-			//printf("sbc: r%d r%d r%d r%d\n",reg.mapg(op->rd),reg.mapg(op->rs1),reg.mapg(op->rs2), reg.mapg(op->rs3));
+			//printf("sbc: r%d r%d r%d r%d r%d\n",reg.mapg(op->rd),reg.mapg(op->rd2),reg.mapg(op->rs1),reg.mapg(op->rs2), reg.mapg(op->rs3));
 			{
-				MOV(reg.mapg(op->rd2), 0);
-				SUB(r1, reg.mapg(op->rd2), reg.mapg(op->rs3));	// create a carry
-				SBC(reg.mapg(op->rd), reg.mapg(op->rs1), reg.mapg(op->rs2));
-				ADC(reg.mapg(op->rd2), reg.mapg(op->rd2), 0);
+				EOR(reg.mapg(op->rd2),reg.mapg(op->rs3),1);
+				LSR(reg.mapg(op->rd2),reg.mapg(op->rd2),1,true); //C=rs3, rd2=0
+				SBC(reg.mapg(op->rd), reg.mapg(op->rs1), reg.mapg(op->rs2), true);
+				MOV(reg.mapg(op->rd2), 1, CC_CC);
 			}
 			break;
 		
@@ -1488,14 +1496,11 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 		case shop_setpeq:
 			{
 				EOR(r1, reg.mapg(op->rs1), reg.mapg(op->rs2));
-				EOR(reg.mapg(op->rd), reg.mapg(op->rd), reg.mapg(op->rd));
+				MOVW(reg.mapg(op->rd), 0);
 				
 				TST(r1, 0xFF000000);
-//				MOVW(reg.mapg(op->rd), 1, CC_EQ);
 				TST(r1, 0x00FF0000, CC_NE);
-//				MOVW(reg.mapg(op->rd), 1, CC_EQ);
 				TST(r1, 0x0000FF00, CC_NE);
-//				MOVW(reg.mapg(op->rd), 1, CC_EQ);
 				TST(r1, 0x000000FF, CC_NE);
 				MOVW(reg.mapg(op->rd), 1, CC_EQ);
 			}
@@ -1537,7 +1542,7 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 			}
 			break;
 
-		case shop_div32u:
+/*		case shop_div32u:
 			// Doesn't work
 			// algo from new arm dynarec from mupen64plus
 			//printf("div32u: r%d r%d r%d r%d\n",reg.mapg(op->rd2),reg.mapg(op->rd),reg.mapg(op->rs1),reg.mapg(op->rs2));
@@ -1560,20 +1565,20 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 				MOV(reg.mapg(op->rd), r1);
 				MOV(reg.mapg(op->rd2), r0);
 			}
-			break;
-		case shop_div32s:
+			break;*/
+/*		case shop_div32s:
 			//printf("div32s r%d, r%d, r%d, r%d\n", reg.mapg(op->rd2),reg.mapg(op->rd),reg.mapg(op->rs1),reg.mapg(op->rs2));
 			// algo from dynarec from pcsxrearmed
 			// remainder = r0, quotient = r1, HOST_TEMPREG = r2, copy de rs1 = r3, copy de rs2 = r4
 			{
 				MOV(r3, reg.mapg(op->rs1));
-				MOV(r4, reg.mapg(op->rs2), true);
-				MOV(r0, reg.mapg(op->rs1));
+				MOV(r4, reg.mapg(op->rs2));
+				MOV(r0, reg.mapg(op->rs1), true);
 				MVN(r1, 0);
 				RSB(r1, r1, 0, CC_MI); // .. quotient and ..
 				RSB(r0, r0, 0, CC_MI); // .. remainder for div0 case (will be negated back after jump)
 				MOV(r2, reg.mapg(op->rs2), true);
-				B(13*4-8, CC_EQ); // Division by zero
+				B(14*4-8, CC_EQ); // Division by zero
 				RSB(r2, r2, 0, true, CC_MI);
 				CLZ(r1, r2);
 				LSL(r2, r2, r1);
@@ -1585,13 +1590,13 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 				MOV(r2, r2, S_LSR, 1);
 				B(-4*4-8, CC_CC); // -4
 				TEQ(r3, r4, S_LSL, CC_AL);
-				RSB(reg.mapg(op->rd), r1, 0, CC_MI);
-				MOV(reg.mapg(op->rd), r1, CC_PL);
+				RSB(r1, r1, 0, CC_MI);
 				TST(r3, r3);
-				RSB(reg.mapg(op->rd2), r0, 0, CC_MI);
-				MOV(reg.mapg(op->rd2), r0, CC_PL);
+				RSB(r0, r0, 0, CC_MI);
+				MOV(reg.mapg(op->rd2), r0);
+				MOV(reg.mapg(op->rd), r1);
 			}
-			break;
+			break;*/
 	
 		case shop_pref:
 			{
