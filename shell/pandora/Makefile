@@ -29,7 +29,7 @@ SOURCES	:=	cfg/ hw/arm7/ hw/aica/ hw/asic/ hw/ hw/gdrom/ hw/maple/ \
  hw/extdev/ hw/arm/ imgread/ linux/ linux-dist/ ./ rec-ARM/ deps/zlib/ deps/chdr/ deps/crypto/ arm_emitter/ 
 
 
-CXXFLAGS := -g -O3  -D RELEASE -c -D TARGET_PANDORA  -D WEIRD_SLOWNESS -D HAS_VMU
+CXXFLAGS := -g -O3  -D RELEASE -c -D TARGET_PANDORA  -D WEIRD_SLOWNESS
 CXXFLAGS += -frename-registers -fno-strict-aliasing -fsingle-precision-constant 
 CXXFLAGS += -ffast-math -ftree-vectorize -fprefetch-loop-arrays 
 #-std=c++0x
