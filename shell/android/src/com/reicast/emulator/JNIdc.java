@@ -16,7 +16,7 @@ public class JNIdc
   public static native void rendinit(int w,int y);
   public static native void rendframe();
   
-  public static native void kcode(int kcode,int lt, int rt, int jx, int jy);
+  public static native void kcode(int[] kcode, int[] lt, int[] rt, int[] jx, int[] jy);
   
   public static native void vjoy(int id,float x, float y, float w, float h);
   //public static native int play(short result[],int size);

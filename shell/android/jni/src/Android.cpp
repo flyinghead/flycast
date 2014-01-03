@@ -29,7 +29,7 @@ extern "C"
   JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_rendinit(JNIEnv *env,jobject obj,jint w,jint h)  __attribute__((visibility("default")));
   JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_rendframe(JNIEnv *env,jobject obj)  __attribute__((visibility("default")));
 
-  JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_kcode(JNIEnv * env, jobject obj,u32 k_code, u32 l_t, u32 r_t, u32 jx, u32 jy)  __attribute__((visibility("default")));
+  JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_kcode(JNIEnv * env, jobject obj, jintArray k_code, jintArray l_t, jintArray r_t, jintArray jx, jintArray jy)  __attribute__((visibility("default")));
   JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_vjoy(JNIEnv * env, jobject obj,u32 id,float x, float y, float w, float h)  __attribute__((visibility("default")));
   //JNIEXPORT jint JNICALL Java_com_reicast_emulator_JNIdc_play(JNIEnv *env,jobject obj,jshortArray result,jint size);
 };
@@ -244,17 +244,37 @@ JNIEXPORT jint JNICALL Java_com_reicast_emulator_JNIdc_data(JNIEnv *env,jobject 
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_rendframe(JNIEnv *env,jobject obj)
 {
+	/*char kcode_str0[100];
+	char kcode_str1[100];
+	sprintf(kcode_str0,"%d", kcode[0]);
+	sprintf(kcode_str1,"%d", kcode[1]);
+	__android_log_write(ANDROID_LOG_INFO, "kcode 0", kcode_str0);
+	__android_log_write(ANDROID_LOG_INFO, "kcode 1", kcode_str1);*/
 	while(!rend_single_frame()) ;
 }
 
-JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_kcode(JNIEnv * env, jobject obj,u32 k_code, u32 l_t, u32 r_t, u32 jx, u32 jy)
+JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_kcode(JNIEnv * env, jobject obj, jintArray k_code, jintArray l_t, jintArray r_t, jintArray jx, jintArray jy)
 {
-  lt[0]    = l_t;
-  rt[0]    = r_t;
-  kcode[0] = k_code;
-  kcode[3] = kcode[2] = kcode[1] = 0xFFFF;
-  joyx[0]=jx;
-  joyy[0]=jy;
+	jint *k_code_body = env->GetIntArrayElements(k_code, 0);
+	jint *l_t_body = env->GetIntArrayElements(l_t, 0);
+	jint *r_t_body = env->GetIntArrayElements(r_t, 0);
+	jint *jx_body = env->GetIntArrayElements(jx, 0);
+	jint *jy_body = env->GetIntArrayElements(jy, 0);
+
+	for(int i = 0; i < 4; i++)
+	{
+		kcode[i] = k_code_body[i];	
+		lt[i] = l_t_body[i];
+		rt[i] = r_t_body[i];
+		joyx[i] = jx_body[i];
+		joyy[i] = jy_body[i];
+	}
+
+	env->ReleaseIntArrayElements(k_code, k_code_body, 0);
+	env->ReleaseIntArrayElements(l_t, l_t_body, 0);
+	env->ReleaseIntArrayElements(r_t, r_t_body, 0);
+	env->ReleaseIntArrayElements(jx, jx_body, 0);
+	env->ReleaseIntArrayElements(jy, jy_body, 0);
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_rendinit(JNIEnv * env, jobject obj, jint w,jint h)

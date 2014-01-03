@@ -145,9 +145,9 @@ public class MOGAInput
 			for (int i = 0; i < map.length; i += 2) {
 				if (map[i + 0] == event.getKeyCode()) {
 					if (event.getAction() == 0) //FIXME to const
-						GL2JNIView.kcode_raw &= ~map[i + 1];
+						GL2JNIView.kcode_raw[0] &= ~map[i + 1];
 					else
-						GL2JNIView.kcode_raw |= map[i + 1];
+						GL2JNIView.kcode_raw[0] |= map[i + 1];
 
 					break;
 				}
@@ -163,11 +163,11 @@ public class MOGAInput
 			float L2 = event.getAxisValue(MotionEvent.AXIS_LTRIGGER);
 			float R2 = event.getAxisValue(MotionEvent.AXIS_RTRIGGER);
 
-			GL2JNIView.lt = (int) (L2 * 255);
-			GL2JNIView.rt = (int) (R2 * 255);
+			GL2JNIView.lt[0] = (int) (L2 * 255);
+			GL2JNIView.rt[0] = (int) (R2 * 255);
 
-			GL2JNIView.jx = (int) (LS_X * 126);
-			GL2JNIView.jy = (int) (LS_Y * 126);
+			GL2JNIView.jx[0] = (int) (LS_X * 126);
+			GL2JNIView.jy[0] = (int) (LS_Y * 126);
 
 			/*
 			for(final Entry<Integer, ExampleFloat> entry : mMotions.entrySet())
