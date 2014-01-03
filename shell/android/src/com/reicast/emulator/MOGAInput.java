@@ -193,7 +193,7 @@ public class MOGAInput
 		{
 			JNIdc.hide_osd();
 
-			if (event.getState() == ACTION_CONNECTED) {
+			if (event.getState() == StateEvent.STATE_CONNECTION && event.getAction() == ACTION_CONNECTED) {
         		Toast.makeText(act.getApplicationContext(), "MOGA Connected!", Toast.LENGTH_SHORT).show();
         		isActive = true;
 			}

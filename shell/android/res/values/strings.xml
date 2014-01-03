@@ -8,7 +8,7 @@
     <string name="browser_path">Default System Path</string>
     <string name="games_path">Storage Path (location of .gid .cdi or .cdh images)</string>
     <string name="game_path">Default Game Storage</string>
-    <string name="select_stretch">Stretch to Fullscreen</string>
+    <string name="select_stretch">Widescreen Mode</string>
     <string name="set_frameskip">Frameskipping Amount</string>
     <string name="select_render">PVR Rendering</string>
     <string name="games_listing">Available Dreamcast Games</string>
@@ -25,8 +25,8 @@
     <!-- Nav Drawer Menu Items -->
     <string-array name="nav_drawer_items">
         <item>Browser</item>
-        <item>Options</item>
-        <item>Emulator</item>
+        <item>Paths</item>
+        <item>Settings</item>
         <item>About</item>
     </string-array>
 
