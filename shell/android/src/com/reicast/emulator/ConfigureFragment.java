@@ -33,7 +33,7 @@ public class ConfigureFragment extends Fragment {
 	TextView mainFrames;
 	OnClickListener mCallback;
 	boolean widescreen = false;
-	boolean pvrrender = false;
+	boolean unstable_opt = false;
 	int frameskip = 0;
 
 	private SharedPreferences mPrefs;
@@ -83,9 +83,9 @@ public class ConfigureFragment extends Fragment {
 						frameskip = Integer.valueOf(currentLine.replace(
 								"ta.skip=", ""));
 					}
-					if (StringUtils.containsIgnoreCase(currentLine, "pvr.rend")) {
-						pvrrender = Boolean.valueOf(currentLine.replace(
-								"pvr.rend=", ""));
+					if (StringUtils.containsIgnoreCase(currentLine, "Dynarec.unstable-opt")) {
+						unstable_opt = Boolean.valueOf(currentLine.replace(
+								"Dynarec.unstable-opt=", ""));
 					}
 				}
 				scanner.close();
@@ -164,9 +164,9 @@ public class ConfigureFragment extends Fragment {
 
 			public void onCheckedChanged(CompoundButton buttonView,
 					boolean isChecked) {
-				mPrefs.edit().putBoolean("pvr_render", isChecked).commit();
-				pvrrender = isChecked;
-				if (!executeAppendConfig("pvr.rend",
+				mPrefs.edit().putBoolean("unstable_opt", isChecked).commit();
+				unstable_opt = isChecked;
+				if (!executeAppendConfig("Dynarec.unstable-opt",
 						String.valueOf(isChecked ? 1 : 0))) {
 					executeWriteConfig();
 				}
@@ -175,7 +175,7 @@ public class ConfigureFragment extends Fragment {
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR1) {
 			Switch pvr_render = (Switch) getView().findViewById(
 					R.id.render_option);
-			boolean rendered = mPrefs.getBoolean("pvr_render", pvrrender);
+			boolean rendered = mPrefs.getBoolean("unstable_opt", unstable_opt);
 			if (rendered) {
 				pvr_render.setChecked(true);
 			} else {
@@ -185,7 +185,7 @@ public class ConfigureFragment extends Fragment {
 		} else {
 			CheckBox pvr_render = (CheckBox) getView().findViewById(
 					R.id.render_option);
-			boolean rendered = mPrefs.getBoolean("pvr_render", pvrrender);
+			boolean rendered = mPrefs.getBoolean("unstable_opt", unstable_opt);
 			if (rendered) {
 				pvr_render.setChecked(true);
 			} else {
@@ -233,7 +233,7 @@ public class ConfigureFragment extends Fragment {
 			rebuildFile.append("[config]" + "\n");
 			rebuildFile.append("Dynarec.Enabled=1" + "\n");
 			rebuildFile.append("Dynarec.idleskip=1" + "\n");
-			rebuildFile.append("Dynarec.unstable-opt=0" + "\n");
+			rebuildFile.append("Dynarec.unstable-opt=" + String.valueOf(unstable_opt ? 1 : 0) + "\n");
 			rebuildFile.append("Dreamcast.Cable=3" + "\n");
 			rebuildFile.append("Dreamcast.RTC=2018927206" + "\n");
 			rebuildFile.append("Dreamcast.Region=3" + "\n");
@@ -245,8 +245,7 @@ public class ConfigureFragment extends Fragment {
 					+ String.valueOf(widescreen ? 1 : 0) + "\n");
 			rebuildFile.append("pvr.Subdivide=0" + "\n");
 			rebuildFile.append("ta.skip=" + String.valueOf(frameskip) + "\n");
-			rebuildFile.append("pvr.rend=" + String.valueOf(pvrrender ? 1 : 0)
-					+ "\n");
+			rebuildFile.append("pvr.rend=1" + "\n");
 			rebuildFile.append("image=null" + "\n");
 			FileOutputStream fos = new FileOutputStream(config);
 			fos.write(rebuildFile.toString().getBytes());

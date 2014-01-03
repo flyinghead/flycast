@@ -1390,15 +1390,19 @@ public:
 
 FifoSplitter<0> TAFifo0;
 
+int ta_parse_cnt = 0;
+
 bool ta_parse_vdrc(TA_context* ctx)
 {
-	bool rv=true;
+	bool rv=false;
 
 	verify( vd_ctx == 0);
 	vd_ctx = ctx;
 	vd_rc = vd_ctx->rend;
-
-	if (!settings.pvr.ta_skip)
+	
+	ta_parse_cnt++;
+ 
+	if (0 == (ta_parse_cnt %  ( settings.pvr.ta_skip + 1)))
 	{
 		TAFifo0.vdec_init();
 		
