@@ -5,6 +5,11 @@ import java.io.InputStream;
 import java.util.HashMap;
 
 import tv.ouya.console.api.OuyaController;
+
+import com.reicast.emulator.GL2JNIView.EmuThread;
+
+import android.content.SharedPreferences;
+import android.view.InputDevice;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Intent;
@@ -12,6 +17,7 @@ import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.InputDevice;
@@ -36,7 +42,8 @@ public class GL2JNIActivity extends Activity {
 	static boolean[] xbox = { false, false, false, false }, nVidia = { false, false, false, false };
 	float[] globalLS_X = new float[4], globalLS_Y = new float[4], previousLS_X = new float[4], previousLS_Y = new float[4];
 
-	HashMap<Integer, Integer> deviceId_PlayerNum = new HashMap<Integer, Integer>();
+	HashMap<Integer, String> deviceId_deviceDescriptor = new HashMap<Integer, String>();
+	HashMap<String, Integer> deviceDescriptor_PlayerNum = new HashMap<String, Integer>();
 
 	int map[][];
 
@@ -117,10 +124,6 @@ public class GL2JNIActivity extends Activity {
 
 	@Override
 	protected void onCreate(Bundle icicle) {
-		map = new int[4][];
-		deviceId_PlayerNum.put(87, 0);
-		deviceId_PlayerNum.put(86, 1);
-
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		moga.onCreate(this);
 		
@@ -141,13 +144,54 @@ public class GL2JNIActivity extends Activity {
 		super.onCreate(icicle);
 		OuyaController.init(this);
 
+		map = new int[4][];
+
+		// Populate device descriptor-to-player-map from preferences
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+		deviceDescriptor_PlayerNum.put(prefs.getString("device_descriptor_player_1", null), 0);
+		deviceDescriptor_PlayerNum.put(prefs.getString("device_descriptor_player_2", null), 1);
+		deviceDescriptor_PlayerNum.put(prefs.getString("device_descriptor_player_3", null), 2);
+		deviceDescriptor_PlayerNum.put(prefs.getString("device_descriptor_player_4", null), 3);
+
+		boolean controllerTwoConnected = false;
+		boolean controllerThreeConnected = false;
+		boolean controllerFourConnected = false;
+
+		for (HashMap.Entry<String, Integer> e : deviceDescriptor_PlayerNum.entrySet()) {
+			String descriptor = e.getKey();
+			Integer playerNum = e.getValue();
+
+			switch (playerNum) {
+				case 1:
+					if (descriptor != null)
+						controllerTwoConnected = true;
+					break;
+				case 2:
+					if (descriptor != null)
+						controllerThreeConnected = true;
+					break;
+				case 3:
+					if (descriptor != null)
+						controllerFourConnected = true;
+					break;
+			}
+		}
+
+		JNIdc.initControllers(new boolean[] {controllerTwoConnected, controllerThreeConnected, controllerFourConnected});
+
 		int joys[] = InputDevice.getDeviceIds();
 		for (int i = 0; i < joys.length; i++) {
+			String descriptor = InputDevice.getDevice(joys[i]).getDescriptor();
 			Log.d("reidc", "InputDevice ID: " + joys[i]);
 			Log.d("reidc", "InputDevice Name: "
 					+ InputDevice.getDevice(joys[i]).getName());
+			Log.d("reidc", "InputDevice Descriptor: " + descriptor);
+			deviceId_deviceDescriptor.put(joys[i], descriptor);
+		}
 
-			Integer playerNum = deviceId_PlayerNum.get(joys[i]);
+		for (int i = 0; i < joys.length; i++) {
+			Integer playerNum = deviceDescriptor_PlayerNum.get(deviceId_deviceDescriptor.get(joys[i]));
+
 			if (playerNum != null) {
 
 			if (InputDevice.getDevice(joys[i]).getName()
@@ -188,7 +232,11 @@ public class GL2JNIActivity extends Activity {
 
 							OuyaController.BUTTON_MENU, key_CONT_START,
 							OuyaController.BUTTON_R1, key_CONT_START };
+
 					xbox[playerNum] = true;
+
+					globalLS_X[playerNum] = previousLS_X[playerNum] = 0.0f;
+					globalLS_Y[playerNum] = previousLS_Y[playerNum] = 0.0f;
 				} else if (InputDevice.getDevice(joys[i]).getName()
 						.contains("NVIDIA Corporation NVIDIA Controller")) {
 					map[playerNum] = new int[] {
@@ -247,8 +295,8 @@ public class GL2JNIActivity extends Activity {
 		// Log.w("INPUT", event.toString() + " " + event.getSource());
 		// Get all the axis for the KeyEvent
 
-		Integer playerNum = deviceId_PlayerNum.get(event.getDeviceId());
-		Log.w("onGenericMotionEvent playerNum", String.valueOf(playerNum));
+		Integer playerNum = deviceDescriptor_PlayerNum.get(deviceId_deviceDescriptor.get(event.getDeviceId()));
+
 		if (playerNum == null)
 			return false;
 
@@ -285,7 +333,8 @@ public class GL2JNIActivity extends Activity {
 		
 		}
 		
-		if ((xbox[playerNum] || nVidia[playerNum]) && globalLS_X[playerNum] == previousLS_X[playerNum] && globalLS_Y[playerNum] == previousLS_Y[playerNum])
+		if ((xbox[playerNum] || nVidia[playerNum]) && ((globalLS_X[playerNum] == previousLS_X[playerNum] && globalLS_Y[playerNum] == previousLS_Y[playerNum])
+		 || (previousLS_X[playerNum] == 0.0f && previousLS_Y[playerNum] == 0.0f)))
 			// Only handle Left Stick on an Xbox 360 controller if there was some actual motion on the stick,
 			// so otherwise the event can be handled as a DPAD event
 			return false;
@@ -364,18 +413,17 @@ public class GL2JNIActivity extends Activity {
 	}
 
 	public boolean onKeyUp(int keyCode, KeyEvent event) {
-		Integer playerNum = deviceId_PlayerNum.get(event.getDeviceId());
-		Log.w("onKeyUp playerNum", String.valueOf(playerNum));
+		Integer playerNum = deviceDescriptor_PlayerNum.get(deviceId_deviceDescriptor.get(event.getDeviceId()));
 
 		return handle_key(playerNum, keyCode, false) || super.onKeyUp(keyCode, event);
 	}
 
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
-		Integer playerNum = deviceId_PlayerNum.get(event.getDeviceId());
-		Log.w("onKeyDown playerNum", String.valueOf(playerNum));
+		Integer playerNum = deviceDescriptor_PlayerNum.get(deviceId_deviceDescriptor.get(event.getDeviceId()));
 
 		if (handle_key(playerNum, keyCode, true)) {
-			JNIdc.hide_osd();
+			if(playerNum == 1)
+				JNIdc.hide_osd();
 			return true;
 		}
 

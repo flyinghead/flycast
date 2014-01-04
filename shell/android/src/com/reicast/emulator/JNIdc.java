@@ -21,6 +21,8 @@ public class JNIdc
   public static native void vjoy(int id,float x, float y, float w, float h);
   //public static native int play(short result[],int size);
 
+  public static native void initControllers(boolean[] controllers);
+
   public static void show_osd() {
     JNIdc.vjoy(13, 1,0,0,0);
   }

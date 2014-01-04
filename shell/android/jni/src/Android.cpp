@@ -13,6 +13,7 @@
 #include "profiler/profiler.h"
 #include "cfg/cfg.h"
 #include "rend/TexCache.h"
+#include "hw/maple/maple_devs.h"
 
 #include "util.h"
 
@@ -32,6 +33,8 @@ extern "C"
   JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_kcode(JNIEnv * env, jobject obj, jintArray k_code, jintArray l_t, jintArray r_t, jintArray jx, jintArray jy)  __attribute__((visibility("default")));
   JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_vjoy(JNIEnv * env, jobject obj,u32 id,float x, float y, float w, float h)  __attribute__((visibility("default")));
   //JNIEXPORT jint JNICALL Java_com_reicast_emulator_JNIdc_play(JNIEnv *env,jobject obj,jshortArray result,jint size);
+
+  JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_initControllers(JNIEnv *env, jobject obj, jbooleanArray controllers)  __attribute__((visibility("default")));
 };
 
 void egl_stealcntx();
@@ -39,6 +42,7 @@ void SetApplicationPath(wchar *path);
 int dc_init(int argc,wchar* argv[]);
 void dc_run();
 void dc_term();
+void mcfg_Create(MapleDeviceType type,u32 bus,u32 port);
 
 bool VramLockedWrite(u8* address);
 
@@ -50,6 +54,9 @@ extern int screen_width,screen_height;
 
 static u64 tvs_base;
 static char CurFileName[256];
+
+// Additonal controllers 2, 3 and 4 connected ?
+static bool add_controllers[3] = { false, true, false };
 
 u16 kcode[4];
 u32 vks[4];
@@ -82,6 +89,13 @@ static void *ThreadHandler(void *UserData)
   {
     strcpy(Args[2],"config:image=");
     strcat(Args[2],P);
+  }
+
+  // Add additonal controllers
+  for (int i = 0; i < 3; i++)
+  {
+    if (add_controllers[i])
+      mcfg_Create(MDT_SegaController,i+1,5);
   }
 
   // Run nullDC emulator
@@ -244,12 +258,6 @@ JNIEXPORT jint JNICALL Java_com_reicast_emulator_JNIdc_data(JNIEnv *env,jobject 
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_rendframe(JNIEnv *env,jobject obj)
 {
-	/*char kcode_str0[100];
-	char kcode_str1[100];
-	sprintf(kcode_str0,"%d", kcode[0]);
-	sprintf(kcode_str1,"%d", kcode[1]);
-	__android_log_write(ANDROID_LOG_INFO, "kcode 0", kcode_str0);
-	__android_log_write(ANDROID_LOG_INFO, "kcode 1", kcode_str1);*/
 	while(!rend_single_frame()) ;
 }
 
@@ -301,6 +309,13 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_vjoy(JNIEnv * env, jobjec
 	vjoy_pos[id][2] = w;
 	vjoy_pos[id][3] = h;
   }
+}
+
+JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_initControllers(JNIEnv *env, jobject obj, jbooleanArray controllers)
+{
+	jboolean *controllers_body = env->GetBooleanArrayElements(controllers, 0);
+	memcpy(add_controllers, controllers_body, 3);
+	env->ReleaseBooleanArrayElements(controllers, controllers_body, 0);
 }
 
 u32 os_Push(void* frame, u32 amt, bool wait)
