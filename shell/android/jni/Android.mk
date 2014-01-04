@@ -32,9 +32,27 @@ LOCAL_MODULE	:= dc
 LOCAL_CFLAGS	:= $(LOCAL_CXXFLAGS) -DHAS_VMU
 LOCAL_DISABLE_FORMAT_STRING_CHECKS=true
 LOCAL_ASFLAGS := -fvisibility=hidden
-LOCAL_LDLIBS	:= -llog -lGLESv2 -lEGL -lz 
+LOCAL_LDLIBS	:= -llog -lGLESv2 -lEGL -lz
 #-Wl,-Map,./res/raw/syms.mp3
 LOCAL_ARM_MODE	:= arm
+
+#
+# android has poor support for hardfp calling.
+# r9b+ is required, and it only works for internal calls
+# the opengl drivers would really benefit from this, but they are still using softfp
+# the header files tell gcc to automatically use aapcs for calling system/etc
+# so there is no real perfomance difference
+#
+# The way this is implemented is a huge hack on the android/linux side
+# (but then again, which part of android isn't a huge hack?)
+
+#ifneq ($(filter %armeabi-v7a,$(TARGET_ARCH_ABI)),)
+#LOCAL_CFLAGS += -mhard-float -D_NDK_MATH_NO_SOFTFP=1 -DARM_HARDFP
+#LOCAL_LDLIBS += -lm_hard
+#ifeq (,$(filter -fuse-ld=mcld,$(APP_LDFLAGS) $(LOCAL_LDFLAGS)))
+#LOCAL_LDFLAGS += -Wl,--no-warn-mismatch
+#endif
+#endif
 
 include $(BUILD_SHARED_LIBRARY)
 

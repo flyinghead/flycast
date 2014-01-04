@@ -565,6 +565,22 @@ void ngen_CC_Param(shil_opcode* op,shil_param* par,CanonicalParamType tp)
 	switch(tp)
 	{
 		case CPT_f32rv:
+		#ifdef ARM_HARDFP
+			{
+				if (reg.IsAllocg(*par))
+				{
+					//printf("MOV(reg.map(*par),r0); %d\n",reg.map(*par));
+					VMOV(reg.mapg(*par),f0);
+				}
+				else if (reg.IsAllocf(*par))
+				{
+					//VMOV(reg.mapf(*par),0,r0); %d\n",reg.map(*par));
+					VMOV(reg.mapfs(*par),f0);
+				}
+			}
+			break;
+		#endif
+
 		case CPT_u32rv:
 		case CPT_u64rvL:
 			{
@@ -606,6 +622,8 @@ void ngen_CC_Param(shil_opcode* op,shil_param* par,CanonicalParamType tp)
 void ngen_CC_Call(shil_opcode* op,void* function) 
 {
 	u32 rd=r0;
+	u32 fd=f0;
+
 	for (int i=CC_pars.size();i-->0;)
 	{
 		if (CC_pars[i].type==CPT_ptr)
@@ -616,6 +634,25 @@ void ngen_CC_Call(shil_opcode* op,void* function)
 		{
 			if (CC_pars[i].par->is_reg())
 			{
+				#ifdef ARM_HARDFP
+				if (CC_pars[i].type == CPT_f32) 
+				{
+					if (reg.IsAllocg(*CC_pars[i].par))
+					{
+						//printf("MOV((eReg)rd,reg.map(*CC_pars[i].par)); %d %d\n",rd,reg.map(*CC_pars[i].par));
+						VMOV((eFSReg)fd,reg.mapg(*CC_pars[i].par));
+					}
+					else if (reg.IsAllocf(*CC_pars[i].par))
+					{
+						//printf("LoadSh4Reg_mem((eReg)rd, *CC_pars[i].par); %d\n",rd);
+						VMOV((eFSReg)fd,reg.mapfs(*CC_pars[i].par));
+					}
+					else
+						die("Must not happen!\n");
+					continue;
+				}
+				#endif
+
 				if (reg.IsAllocg(*CC_pars[i].par))
 				{
 					//printf("MOV((eReg)rd,reg.map(*CC_pars[i].par)); %d %d\n",rd,reg.map(*CC_pars[i].par));
@@ -631,6 +668,7 @@ void ngen_CC_Call(shil_opcode* op,void* function)
 			}
 			else
 			{
+				verify(CC_pars[i].type != CPT_f32);
 				//printf("MOV32((eReg)rd, CC_pars[i].par->_imm); %d\n",rd);
 				MOV32((eReg)rd, CC_pars[i].par->_imm);
 			}
