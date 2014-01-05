@@ -245,7 +245,7 @@ public class GL2JNIActivity extends Activity {
 			float L2 = event.getAxisValue(OuyaController.AXIS_L2);
 			float R2 = event.getAxisValue(OuyaController.AXIS_R2);
 
-			if (xbox) {
+			if (xbox || nVidia) {
 				previousLS_X = globalLS_X;
 				previousLS_Y = globalLS_Y;
 				globalLS_X = LS_X;
@@ -261,7 +261,7 @@ public class GL2JNIActivity extends Activity {
 		
 		}
 		
-		if (xbox && globalLS_X == previousLS_X && globalLS_Y == previousLS_Y)
+		if ((xbox || nVidia) && globalLS_X == previousLS_X && globalLS_Y == previousLS_Y)
 			// Only handle Left Stick on an Xbox 360 controller if there was some actual motion on the stick,
 			// so otherwise the event can be handled as a DPAD event
 			return false;
