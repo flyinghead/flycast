@@ -120,10 +120,10 @@ public class MainActivity extends FragmentActivity implements
 					.getResourceId(2, 0)));
 			// Controllers
 			navDrawerItems.add(new NavDrawerItem(navMenuTitles[3], navMenuIcons
-					.getResourceId(3, -1)));
+					.getResourceId(3, 0)));
 			// About
 			navDrawerItems.add(new NavDrawerItem(navMenuTitles[4], navMenuIcons
-					.getResourceId(4, -1)));
+					.getResourceId(4, 0)));
 
 			// Recycle the typed array
 			navMenuIcons.recycle();

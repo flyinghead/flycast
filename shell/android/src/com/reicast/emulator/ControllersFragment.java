@@ -196,7 +196,7 @@ public class ControllersFragment extends Fragment {
 			}
 		});
 		builder.setOnKeyListener(new Dialog.OnKeyListener() {
-			@Override
+			//@Override
 			public boolean onKey(DialogInterface dialog, int keyCode, KeyEvent event) {
 				mapDevice(event);
 				return true;
