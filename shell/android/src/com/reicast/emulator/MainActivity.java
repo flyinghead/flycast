@@ -306,9 +306,8 @@ public class MainActivity extends FragmentActivity implements
 									// specify ImgBrowse option. true = images, false = folders only
 									args.putString("browse_entry", sdcard.toString());
 									// specify a path for selecting folder options
-									//FIME
-									//args.putBoolean("games_entry", games);
-									// specify if the desired path is for games or data
+									args.putBoolean("games_entry", false);
+									// selecting a BIOS folder, so this is not games
 
 									firstFragment.setArguments(args);
 									// In case this activity was started with special instructions from
@@ -316,8 +315,7 @@ public class MainActivity extends FragmentActivity implements
 									// firstFragment.setArguments(getIntent().getExtras());
 
 									// Add the fragment to the 'fragment_container' FrameLayout
-									//FIXME
-									MainActivity.this.getSupportFragmentManager()
+									getSupportFragmentManager()
 											.beginTransaction()
 											.replace(R.id.fragment_container, firstFragment, "MAIN_BROWSER")
 											.addToBackStack(null).commit();
