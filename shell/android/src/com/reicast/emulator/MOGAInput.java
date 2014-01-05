@@ -141,13 +141,20 @@ public class MOGAInput
 	{
 		public void onKeyEvent(KeyEvent event)
 		{
-			JNIdc.hide_osd();
+			Integer playerNum = GL2JNIActivity.deviceDescriptor_PlayerNum.get(GL2JNIActivity.deviceId_deviceDescriptor.get(event.getControllerId()));
+
+	    		if (playerNum == null)
+				return;
+
+			if(playerNum == 0)
+				JNIdc.hide_osd();
+
 			for (int i = 0; i < map.length; i += 2) {
 				if (map[i + 0] == event.getKeyCode()) {
 					if (event.getAction() == 0) //FIXME to const
-						GL2JNIView.kcode_raw[0] &= ~map[i + 1];
+						GL2JNIView.kcode_raw[playerNum] &= ~map[i + 1];
 					else
-						GL2JNIView.kcode_raw[0] |= map[i + 1];
+						GL2JNIView.kcode_raw[playerNum] |= map[i + 1];
 
 					break;
 				}
@@ -156,18 +163,24 @@ public class MOGAInput
 
 		public void onMotionEvent(MotionEvent event)
 		{
-			JNIdc.hide_osd();
+			Integer playerNum = GL2JNIActivity.deviceDescriptor_PlayerNum.get(GL2JNIActivity.deviceId_deviceDescriptor.get(event.getControllerId()));
+
+	    		if (playerNum == null)
+				return;
+
+			if(playerNum == 0)
+				JNIdc.hide_osd();
 
 			float LS_X = event.getAxisValue(MotionEvent.AXIS_X);
 			float LS_Y = event.getAxisValue(MotionEvent.AXIS_Y);
 			float L2 = event.getAxisValue(MotionEvent.AXIS_LTRIGGER);
 			float R2 = event.getAxisValue(MotionEvent.AXIS_RTRIGGER);
 
-			GL2JNIView.lt[0] = (int) (L2 * 255);
-			GL2JNIView.rt[0] = (int) (R2 * 255);
+			GL2JNIView.lt[playerNum] = (int) (L2 * 255);
+			GL2JNIView.rt[playerNum] = (int) (R2 * 255);
 
-			GL2JNIView.jx[0] = (int) (LS_X * 126);
-			GL2JNIView.jy[0] = (int) (LS_Y * 126);
+			GL2JNIView.jx[playerNum] = (int) (LS_X * 126);
+			GL2JNIView.jy[playerNum] = (int) (LS_Y * 126);
 
 			/*
 			for(final Entry<Integer, ExampleFloat> entry : mMotions.entrySet())
@@ -180,7 +193,13 @@ public class MOGAInput
 
 		public void onStateEvent(StateEvent event)
 		{
-			JNIdc.hide_osd();
+			Integer playerNum = GL2JNIActivity.deviceDescriptor_PlayerNum.get(GL2JNIActivity.deviceId_deviceDescriptor.get(event.getControllerId()));
+
+	    		if (playerNum == null)
+				return;
+
+			if(playerNum == 0)
+				JNIdc.hide_osd();
 
 			if (event.getState() == StateEvent.STATE_CONNECTION && event.getAction() == ACTION_CONNECTED) {
         		Toast.makeText(act.getApplicationContext(), "MOGA Connected!", Toast.LENGTH_SHORT).show();

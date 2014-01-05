@@ -42,8 +42,8 @@ public class GL2JNIActivity extends Activity {
 	static boolean[] xbox = { false, false, false, false }, nVidia = { false, false, false, false };
 	float[] globalLS_X = new float[4], globalLS_Y = new float[4], previousLS_X = new float[4], previousLS_Y = new float[4];
 
-	HashMap<Integer, String> deviceId_deviceDescriptor = new HashMap<Integer, String>();
-	HashMap<String, Integer> deviceDescriptor_PlayerNum = new HashMap<String, Integer>();
+	public static HashMap<Integer, String> deviceId_deviceDescriptor = new HashMap<Integer, String>();
+	public static HashMap<String, Integer> deviceDescriptor_PlayerNum = new HashMap<String, Integer>();
 
 	int map[][];
 
@@ -197,10 +197,10 @@ public class GL2JNIActivity extends Activity {
 			if (InputDevice.getDevice(joys[i]).getName()
 					.equals("Sony PLAYSTATION(R)3 Controller")) {
 				map[playerNum] = new int[] {
-						OuyaController.BUTTON_Y, key_CONT_B,
-						OuyaController.BUTTON_U, key_CONT_A,
-						OuyaController.BUTTON_O, key_CONT_X,
-						OuyaController.BUTTON_A, key_CONT_Y,
+						OuyaController.BUTTON_Y, key_CONT_Y,
+						OuyaController.BUTTON_U, key_CONT_X,
+						OuyaController.BUTTON_O, key_CONT_A,
+						OuyaController.BUTTON_A, key_CONT_B,
 
 							OuyaController.BUTTON_DPAD_UP, key_CONT_DPAD_UP,
 							OuyaController.BUTTON_DPAD_DOWN,
@@ -299,10 +299,6 @@ public class GL2JNIActivity extends Activity {
 
 		if (playerNum == null)
 			return false;
-
-		if (nVidia[playerNum]) {
-		    JNIdc.hide_osd();
-		}
 
 		if (!moga.isActive) {
 
@@ -422,7 +418,7 @@ public class GL2JNIActivity extends Activity {
 		Integer playerNum = deviceDescriptor_PlayerNum.get(deviceId_deviceDescriptor.get(event.getDeviceId()));
 
 		if (handle_key(playerNum, keyCode, true)) {
-			if(playerNum == 1)
+			if(playerNum == 0)
 				JNIdc.hide_osd();
 			return true;
 		}
