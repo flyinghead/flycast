@@ -57,7 +57,7 @@ public class MainActivity extends FragmentActivity implements
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.mainuilayout_fragment);
-		
+
 		mPrefs = PreferenceManager.getDefaultSharedPreferences(this);
 		home_directory = mPrefs.getString("home_directory", home_directory);
 		JNIdc.config(home_directory);
@@ -69,8 +69,10 @@ public class MainActivity extends FragmentActivity implements
 			// However, if we're being restored from a previous state,
 			// then we don't need to do anything and should return or else
 			// we could end up with overlapping fragments.
-			if (savedInstanceState != null) {
-				return;
+			if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB_MR1) {
+				if (savedInstanceState != null) {
+					return;
+				}
 			}
 
 			// Create a new Fragment to be placed in the activity layout
