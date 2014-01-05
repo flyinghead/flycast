@@ -152,18 +152,6 @@ public class FileBrowser extends Fragment {
 		if (!home.exists() || !home.isDirectory()) {
 			Toast.makeText(getActivity(), "Please configure a home directory",
 					Toast.LENGTH_LONG).show();
-			OptionsFragment optsFrag = (OptionsFragment) getActivity()
-					.getSupportFragmentManager().findFragmentByTag(
-							"OPTIONS_FRAG");
-			if (optsFrag != null) {
-				if (optsFrag.isVisible()) {
-					return;
-				}
-			}
-			optsFrag = new OptionsFragment();
-			getActivity().getSupportFragmentManager().beginTransaction()
-					.replace(R.id.fragment_container, optsFrag, "OPTIONS_FRAG")
-					.addToBackStack(null).commit();
 		}
 
 		if (!ImgBrowse) {
@@ -183,7 +171,7 @@ public class FileBrowser extends Fragment {
 			msg = "Flash Missing. The Dreamcast Flash is required for this emulator to work. Place the Flash file in "
 					+ home_directory + "/data/dc_flash.bin";
 
-		if (msg != null) {
+		if (msg != null && ImgBrowse) {
 			vib.vibrate(50);
 			AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
 					parentActivity);
@@ -208,20 +196,24 @@ public class FileBrowser extends Fragment {
 							new DialogInterface.OnClickListener() {
 								public void onClick(DialogInterface dialog,
 										int id) {
-									OptionsFragment optsFrag = (OptionsFragment) getActivity()
-											.getSupportFragmentManager()
-											.findFragmentByTag("OPTIONS_FRAG");
-									if (optsFrag != null) {
-										if (optsFrag.isVisible()) {
-											return;
-										}
-									}
-									optsFrag = new OptionsFragment();
-									getActivity()
-											.getSupportFragmentManager()
+									FileBrowser firstFragment = new FileBrowser();
+									Bundle args = new Bundle();
+									args.putBoolean("ImgBrowse", false);
+									// specify ImgBrowse option. true = images, false = folders only
+									args.putString("browse_entry", sdcard.toString());
+									// specify a path for selecting folder options
+									args.putBoolean("games_entry", games);
+									// specify if the desired path is for games or data
+
+									firstFragment.setArguments(args);
+									// In case this activity was started with special instructions from
+									// an Intent, pass the Intent's extras to the fragment as arguments
+									// firstFragment.setArguments(getIntent().getExtras());
+
+									// Add the fragment to the 'fragment_container' FrameLayout
+									getActivity().getSupportFragmentManager()
 											.beginTransaction()
-											.replace(R.id.fragment_container,
-													optsFrag, "OPTIONS_FRAG")
+											.replace(R.id.fragment_container, firstFragment, "MAIN_BROWSER")
 											.addToBackStack(null).commit();
 								}
 							});
