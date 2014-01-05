@@ -1,6 +1,5 @@
 package com.reicast.emulator;
 
-import android.media.AudioTrack;
 
 public class JNIdc
 {

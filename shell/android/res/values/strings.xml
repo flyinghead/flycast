@@ -8,15 +8,29 @@
     <string name="browser_path">Default System Path</string>
     <string name="games_path">Storage Path (location of .gid .cdi or .cdh images)</string>
     <string name="game_path">Default Game Storage</string>
+
+    <string name="select_dynarec">Dynarec Options</string>
+    <string name="select_unstable">Unstable Optimisations</string>
+    <string name="select_region">DC Region</string>
+    <string name="select_limitfps">Limit FPS</string>
+    <string name="select_mipmaps">Use Mipmaps</string>
     <string name="select_stretch">Widescreen Mode</string>
-    <string name="set_frameskip">Frameskipping Amount</string>
-    <string name="select_render">Unstable Optimisations</string>
+    <string name="set_frameskip">Frameskip Value</string>
+    <string name="select_render">PVR Rendering</string>
+
     <string name="games_listing">Available Dreamcast Games</string>
     
     <string-array name="images">
         <item>cdi</item>
         <item>chd</item>
         <item>gdi</item>
+    </string-array>
+    
+    <string-array name="region">
+        <item></item>
+        <item></item>
+        <item></item>
+        <item>(Default)</item>
     </string-array>
 
     <string name="drawer_open">Slider Menu Opened</string>
@@ -25,17 +39,17 @@
     <!-- Nav Drawer Menu Items -->
     <string-array name="nav_drawer_items">
         <item>Browser</item>
-        <item>Paths</item>
         <item>Settings</item>
+        <item>Paths</item>
         <item>About</item>
     </string-array>
 
     <!-- Nav Drawer List Item Icons -->
-    <!-- Keep them in order as the titles are in -->
+    <!-- Matched to Nav Drawer Menu Items -->
     <array name="nav_drawer_icons">
         <item>@drawable/disk_unknown</item>
         <item>@drawable/config</item>
-        <item>@drawable/config</item>
+        <item>@drawable/open_folder</item>
         <item>@drawable/question</item>
     </array>
 

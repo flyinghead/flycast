@@ -3,20 +3,9 @@ package com.reicast.emulator;
 
 /******************************************************************************/
 
-import java.util.Map.Entry;
-import java.util.TreeMap;
-
 import android.app.Activity;
-import android.os.Bundle;
 import android.os.Handler;
-import android.os.SystemClock;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.widget.TableLayout;
-import android.widget.TextView;
 import android.widget.Toast;
-
-import android.util.Log;
 
 import com.bda.controller.Controller;
 import com.bda.controller.ControllerListener;

@@ -1,32 +1,22 @@
 package com.reicast.emulator;
 
 
-import android.app.Application;
-import android.content.Context;
-import android.graphics.PixelFormat;
-import android.opengl.GLSurfaceView;
-import android.util.AttributeSet;
-import android.util.Log;
-import android.view.KeyEvent;
-import android.view.MotionEvent;
-
-import android.graphics.Canvas;
-import android.graphics.Paint;
-import android.opengl.GLU;
-import android.os.Vibrator;
-
-import java.nio.FloatBuffer;
-
-import android.media.AudioManager;
-import android.media.AudioFormat;
-import android.media.AudioTrack;
-import android.content.res.Configuration;
-
 import javax.microedition.khronos.egl.EGL10;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.egl.EGLContext;
 import javax.microedition.khronos.egl.EGLDisplay;
 import javax.microedition.khronos.opengles.GL10;
+
+import android.content.Context;
+import android.content.res.Configuration;
+import android.graphics.PixelFormat;
+import android.media.AudioFormat;
+import android.media.AudioManager;
+import android.media.AudioTrack;
+import android.opengl.GLSurfaceView;
+import android.os.Vibrator;
+import android.util.Log;
+import android.view.MotionEvent;
 
 
 /**
