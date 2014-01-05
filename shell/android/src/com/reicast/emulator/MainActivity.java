@@ -117,7 +117,7 @@ public class MainActivity extends FragmentActivity implements
 					.getResourceId(1, 0)));
 			// Paths
 			navDrawerItems.add(new NavDrawerItem(navMenuTitles[2], navMenuIcons
-								.getResourceId(2, 0)));
+					.getResourceId(2, 0)));
 			// About
 			navDrawerItems.add(new NavDrawerItem(navMenuTitles[3], navMenuIcons
 					.getResourceId(3, 0)));
@@ -165,43 +165,46 @@ public class MainActivity extends FragmentActivity implements
 			// }
 		} else {
 
-			findViewById(R.id.options).setOnClickListener(new OnClickListener() {
-				public void onClick(View view) {
-					OptionsFragment optionsFrag = (OptionsFragment) getSupportFragmentManager()
-							.findFragmentByTag("OPTIONS_FRAG");
-					if (optionsFrag != null) {
-						if (optionsFrag.isVisible()) {
-							return;
+			findViewById(R.id.options).setOnClickListener(
+					new OnClickListener() {
+						public void onClick(View view) {
+							OptionsFragment optionsFrag = (OptionsFragment) getSupportFragmentManager()
+									.findFragmentByTag("OPTIONS_FRAG");
+							if (optionsFrag != null) {
+								if (optionsFrag.isVisible()) {
+									return;
+								}
+							}
+							optionsFrag = new OptionsFragment();
+							getSupportFragmentManager()
+									.beginTransaction()
+									.replace(R.id.fragment_container,
+											optionsFrag, "OPTIONS_FRAG")
+									.addToBackStack(null).commit();
+							/*
+							 * AlertDialog.Builder alertDialogBuilder = new
+							 * AlertDialog.Builder( MainActivity.this);
+							 * 
+							 * // set title
+							 * alertDialogBuilder.setTitle("Configure");
+							 * 
+							 * // set dialog message alertDialogBuilder
+							 * .setMessage("No configuration for now :D")
+							 * .setCancelable(false)
+							 * .setPositiveButton("Oh well",new
+							 * DialogInterface.OnClickListener() { public void
+							 * onClick(DialogInterface dialog,int id) {
+							 * //FileBrowser.this.finish(); } });
+							 * 
+							 * // create alert dialog AlertDialog alertDialog =
+							 * alertDialogBuilder.create();
+							 * 
+							 * // show it alertDialog.show();
+							 */
 						}
-					}
-					optionsFrag = new OptionsFragment();
-					getSupportFragmentManager()
-							.beginTransaction()
-							.replace(R.id.fragment_container, optionsFrag,
-									"OPTIONS_FRAG").addToBackStack(null)
-							.commit();
-					/*
-					 * AlertDialog.Builder alertDialogBuilder = new
-					 * AlertDialog.Builder( MainActivity.this);
-					 * 
-					 * // set title alertDialogBuilder.setTitle("Configure");
-					 * 
-					 * // set dialog message alertDialogBuilder
-					 * .setMessage("No configuration for now :D")
-					 * .setCancelable(false) .setPositiveButton("Oh well",new
-					 * DialogInterface.OnClickListener() { public void
-					 * onClick(DialogInterface dialog,int id) {
-					 * //FileBrowser.this.finish(); } });
-					 * 
-					 * // create alert dialog AlertDialog alertDialog =
-					 * alertDialogBuilder.create();
-					 * 
-					 * // show it alertDialog.show();
-					 */
-				}
 
-			});
-			
+					});
+
 			findViewById(R.id.config).setOnClickListener(new OnClickListener() {
 				public void onClick(View view) {
 					ConfigureFragment configFrag = (ConfigureFragment) getSupportFragmentManager()
@@ -262,9 +265,76 @@ public class MainActivity extends FragmentActivity implements
 	}
 
 	public void onGameSelected(Uri uri) {
-		Intent inte = new Intent(Intent.ACTION_VIEW, uri, getBaseContext(),
+		File bios = new File(home_directory, "data/dc_boot.bin");
+		File flash = new File(home_directory, "data/dc_flash.bin");
+
+		String msg = null;
+		if (!bios.exists())
+			msg = "BIOS Missing. The Dreamcast BIOS is required for this emulator to work. Place the BIOS file in "
+					+ home_directory + "/data/dc_boot.bin";
+		else if (!flash.exists())
+			msg = "Flash Missing. The Dreamcast Flash is required for this emulator to work. Place the Flash file in "
+					+ home_directory + "/data/dc_flash.bin";
+
+		if (msg != null) {
+			AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
+					this);
+
+			// set title
+			alertDialogBuilder.setTitle("You have to provide the BIOS");
+
+			// set dialog message
+			alertDialogBuilder
+					.setMessage(msg)
+					.setCancelable(false)
+					.setPositiveButton("Dismiss",
+							new DialogInterface.OnClickListener() {
+								public void onClick(DialogInterface dialog,
+										int id) {
+									// if this button is clicked, close
+									// current activity
+									//MainActivity.this.finish();
+								}
+							})
+					.setNegativeButton("Options",
+							new DialogInterface.OnClickListener() {
+								public void onClick(DialogInterface dialog,
+										int id) {
+									FileBrowser firstFragment = new FileBrowser();
+									Bundle args = new Bundle();
+									//args.putBoolean("ImgBrowse", false);
+									// specify ImgBrowse option. true = images, false = folders only
+									args.putString("browse_entry", sdcard.toString());
+									// specify a path for selecting folder options
+									//FIME
+									//args.putBoolean("games_entry", games);
+									// specify if the desired path is for games or data
+
+									firstFragment.setArguments(args);
+									// In case this activity was started with special instructions from
+									// an Intent, pass the Intent's extras to the fragment as arguments
+									// firstFragment.setArguments(getIntent().getExtras());
+
+									// Add the fragment to the 'fragment_container' FrameLayout
+									//FIXME
+									MainActivity.this.getSupportFragmentManager()
+											.beginTransaction()
+											.replace(R.id.fragment_container, firstFragment, "MAIN_BROWSER")
+											.addToBackStack(null).commit();
+								}
+							});
+
+			// create alert dialog
+			AlertDialog alertDialog = alertDialogBuilder.create();
+
+			// show it
+			alertDialog.show();
+		}
+		else {
+			Intent inte = new Intent(Intent.ACTION_VIEW, uri, getBaseContext(),
 				GL2JNIActivity.class);
-		startActivity(inte);
+			startActivity(inte);
+		}
 	}
 
 	public void onFolderSelected(Uri uri) {
