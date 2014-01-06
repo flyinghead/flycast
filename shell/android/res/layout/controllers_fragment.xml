@@ -22,7 +22,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:ems="10"
-		android:text="@string/controller_none" />
+		android:text="@string/controller_none_selected" />
 
             <Button
                 android:layout_weight="1"
@@ -58,7 +58,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:ems="10"
-		android:text="@string/controller_none" />
+		android:text="@string/controller_none_selected" />
 
             <Button
                 android:layout_weight="1"
@@ -94,7 +94,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:ems="10"
-		android:text="@string/controller_none" />
+		android:text="@string/controller_none_selected" />
 
             <Button
                 android:layout_weight="1"
@@ -130,7 +130,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:ems="10"
-		android:text="@string/controller_none" />
+		android:text="@string/controller_none_selected" />
 
             <Button
                 android:layout_weight="1"
