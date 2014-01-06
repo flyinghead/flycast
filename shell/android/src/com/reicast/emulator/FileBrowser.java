@@ -218,9 +218,10 @@ public class FileBrowser extends Fragment {
 				.findViewById(R.id.game_list);
 		v.removeAllViews();
 		
-		((TextView) parentActivity.findViewById(R.id.text_cwd)).setText(R.string.games_listing);
-		
 		bootBiosItem(v);
+
+		((TextView) parentActivity.findViewById(R.id.text_cwd))
+				.setText(R.string.games_listing);
 
 		for (int i = 0; i < list.size(); i++) {
 			final View childview = parentActivity.getLayoutInflater().inflate(
@@ -304,7 +305,7 @@ public class FileBrowser extends Fragment {
 				R.layout.app_list_item, null, false);
 
 		((TextView) childview.findViewById(R.id.item_name))
-		.setText("Boot Dreamcast Bios");
+				.setText(getString(R.string.boot_bios));
 
 		childview.setTag(null);
 
@@ -403,10 +404,10 @@ public class FileBrowser extends Fragment {
 			if (list.get(i) == null) {
 				if (ImgBrowse == true)
 					((TextView) childview.findViewById(R.id.item_name))
-							.setText("BOOT BIOS");
+							.setText(getString(R.string.folder_bios));
 				if (ImgBrowse == false)
 					((TextView) childview.findViewById(R.id.item_name))
-							.setText("SELECT CURRENT FOLDER");
+							.setText(getString(R.string.folder_select));
 			} else if (list.get(i) == parent)
 				((TextView) childview.findViewById(R.id.item_name))
 						.setText("..");
@@ -456,7 +457,7 @@ public class FileBrowser extends Fragment {
 										.fromFile(new File(root_sd
 												.getAbsolutePath())));
 								vib.vibrate(250);
-								
+
 								if (games) {
 									game_directory = root_sd.getAbsolutePath();
 									mPrefs.edit()
@@ -467,8 +468,8 @@ public class FileBrowser extends Fragment {
 									mPrefs.edit()
 											.putString("home_directory",
 													home_directory).commit();
-									File data_directory = new File(home_directory,
-											"data");
+									File data_directory = new File(
+											home_directory, "data");
 									if (!data_directory.exists()
 											|| !data_directory.isDirectory()) {
 										data_directory.mkdirs();
@@ -519,5 +520,4 @@ public class FileBrowser extends Fragment {
 			v.addView(sep);
 		}
 	}
-
 }

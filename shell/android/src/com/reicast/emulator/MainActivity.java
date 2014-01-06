@@ -273,11 +273,9 @@ public class MainActivity extends FragmentActivity implements
 
 		String msg = null;
 		if (!bios.exists())
-			msg = "BIOS Missing. The Dreamcast BIOS is required for this emulator to work. Place the BIOS file in "
-					+ home_directory + "/data/dc_boot.bin";
+			msg = getString(R.string.missing_bios, home_directory);
 		else if (!flash.exists())
-			msg = "Flash Missing. The Dreamcast Flash is required for this emulator to work. Place the Flash file in "
-					+ home_directory + "/data/dc_flash.bin";
+			msg = getString(R.string.missing_flash, home_directory);
 
 		if (msg != null) {
 			AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
