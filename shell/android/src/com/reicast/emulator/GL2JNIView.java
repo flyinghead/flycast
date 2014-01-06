@@ -120,7 +120,9 @@ class GL2JNIView extends GLSurfaceView
     	JNIdc.data(1, GL2JNIActivity.syms);
   
     JNIdc.hide_osd();
-    JNIdc.kcode(0xFFFF,0,0,128,128); 
+    int[] kcode = { 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF };
+    int[] rt = { 0, 0, 0, 0 }, lt = { 0, 0, 0, 0 };
+    int[] jx = { 128, 128, 128, 128 }, jy = { 128, 128, 128, 128 };
     JNIdc.init(fileName);
 
 
@@ -264,8 +266,8 @@ class GL2JNIView extends GLSurfaceView
   }
   */
 
-  static int kcode_raw = 0xFFFF;
-  static int lt, rt, jx, jy;
+  static int[] kcode_raw = { 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF };
+  static int[] lt = new int[4], rt = new int[4], jx = new int[4], jy = new int[4];
 
   @Override public boolean onTouchEvent(final MotionEvent event) 
   {
@@ -321,8 +323,8 @@ class GL2JNIView extends GLSurfaceView
         		  anal_id=event.getPointerId(i);      	  
 	          }
 		      else if (vjoy[j][4]==-4) ;
-	          else if(vjoy[j][4]==-1) lt=pre;
-	          else if(vjoy[j][4]==-2) rt=pre;
+	          else if(vjoy[j][4]==-1) lt[0]=pre;
+	          else if(vjoy[j][4]==-2) rt[0]=pre;
 	          else                    
 	        	  rv&=~(int)vjoy[j][4];
 	        }
@@ -365,8 +367,8 @@ class GL2JNIView extends GLSurfaceView
   		reset_analog();
   		anal_id=-1;
   		rv=0xFFFF;
-  		rt=0;
-  		lt=0;
+  		rt[0]=0;
+  		lt[0]=0;
   		 for(int j=0;j<vjoy.length;j++)
   			 vjoy[j][5]=0;
 	break;
@@ -391,9 +393,9 @@ class GL2JNIView extends GLSurfaceView
     if(GL2JNIActivity.keys[0]!=0) rv&=~key_CONT_B;
     */
 	  
-    kcode_raw = rv;
-    jx = get_anal(11, 0);
-    jy = get_anal(11, 1);
+    kcode_raw[0] = rv;
+    jx[0] = get_anal(11, 0);
+    jy[0] = get_anal(11, 1);
     return(true);
   }
   
