@@ -19,8 +19,8 @@ Let's try to keep everything under a single project :)
 To build for android
 --------------------
 Tools required:
--Latest Android SDK and NDK (duh)
--Ant
+* Latest Android SDK and NDK (duh)
+* Ant
 
 From project root directory:
 ```
