@@ -56,7 +56,7 @@ static u64 tvs_base;
 static char CurFileName[256];
 
 // Additonal controllers 2, 3 and 4 connected ?
-static bool add_controllers[3] = { false, true, false };
+static bool add_controllers[3] = { false, false, false };
 
 u16 kcode[4];
 u32 vks[4];
