@@ -18,11 +18,13 @@ Let's try to keep everything under a single project :)
 
 To build for android
 --------------------
-```
-cd newdc\android\libnewdc
-android update project -p .
+Tools required:
+-Latest Android SDK and NDK (duh)
+-Ant
 
-cd ..\..\..\reicast\android
+From project root directory:
+```
+cd shell\android
 android update project -p .
 
 ndk-build -j 4
