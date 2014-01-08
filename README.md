@@ -66,6 +66,7 @@ Team
 
 You can check the currently active committers on [the pretty graphs page](https://github.com/reicast/reicast-emulator/graphs/contributors)
 
+Chat on freenode #reicast. 
 
 The original reicast team consisted of drk||Raziel (mostly just writing code), PsyMan (debugging/testing and everything else) and a little bit of gb_away
 
