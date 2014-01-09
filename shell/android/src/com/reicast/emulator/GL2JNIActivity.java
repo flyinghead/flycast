@@ -9,7 +9,6 @@ import tv.ouya.console.api.OuyaController;
 import com.reicast.emulator.GL2JNIView.EmuThread;
 
 import android.content.SharedPreferences;
-import android.view.InputDevice;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Intent;
