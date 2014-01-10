@@ -9,12 +9,14 @@ import javax.microedition.khronos.opengles.GL10;
 
 import android.content.Context;
 import android.content.res.Configuration;
+import android.content.SharedPreferences;
 import android.graphics.PixelFormat;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
 import android.opengl.GLSurfaceView;
 import android.os.Vibrator;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.MotionEvent;
 
@@ -105,6 +107,8 @@ class GL2JNIView extends GLSurfaceView
 		  };
   
   Renderer rend;
+
+  private boolean touchVibrationEnabled;
   
   	
   public GL2JNIView(Context context,String newFileName,boolean translucent,int depth,int stencil)
@@ -112,6 +116,9 @@ class GL2JNIView extends GLSurfaceView
     super(context);
     setKeepScreenOn(true);
     vib=(Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
+
+    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+    touchVibrationEnabled = prefs.getBoolean("touch_vibration_enabled", true);
     
     // This is the game we are going to run
     fileName = newFileName;
@@ -309,7 +316,8 @@ class GL2JNIView extends GLSurfaceView
 		    	if (vjoy[j][4]>=-2)
 		    	{
 		    		if (vjoy[j][5]==0)
-		    			vib.vibrate(50);
+					if (touchVibrationEnabled)
+			    			vib.vibrate(50);
 		    		vjoy[j][5]=2;
 		    	}
 		    	

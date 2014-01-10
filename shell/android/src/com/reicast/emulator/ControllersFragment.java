@@ -17,6 +17,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.CompoundButton;
+import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -45,6 +47,14 @@ public class ControllersFragment extends Fragment {
 		parentActivity = getActivity();
 
 		sharedPreferences = PreferenceManager.getDefaultSharedPreferences(parentActivity);
+
+		CompoundButton compoundButtonTouchVibrationEnabled = (CompoundButton) getView()
+					.findViewById(R.id.compoundButtonTouchVibrationEnabled);
+		compoundButtonTouchVibrationEnabled.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+				sharedPreferences.edit().putBoolean("touch_vibration_enabled", isChecked).commit();
+			}
+		});
 
 		Button buttonSelectControllerPlayer1 = (Button) getView()
 				.findViewById(R.id.buttonSelectControllerPlayer1);
@@ -107,7 +117,16 @@ public class ControllersFragment extends Fragment {
     			} 
 		});
 
+		updateVibration();
 		updateControllers();
+	}
+
+	private void updateVibration() {
+		boolean touchVibrationEnabled = sharedPreferences.getBoolean("touch_vibration_enabled", true);
+
+		CompoundButton compoundButtonTouchVibrationEnabled = (CompoundButton) getView()
+				.findViewById(R.id.compoundButtonTouchVibrationEnabled);
+		compoundButtonTouchVibrationEnabled.setChecked(touchVibrationEnabled);
 	}
 
 	private void updateControllers() {

@@ -20,6 +20,7 @@
 
     <string name="games_listing">Available Dreamcast Games</string>
 
+    <string name="touch_vibration">Touch Vibration</string>
     <string name="controller_1">Controller 1</string>
     <string name="controller_2">Controller 2</string>
     <string name="controller_3">Controller 3</string>
