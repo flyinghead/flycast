@@ -18,11 +18,13 @@ Let's try to keep everything under a single project :)
 
 To build for android
 --------------------
-```
-cd newdc\android\libnewdc
-android update project -p .
+Tools required:
+* Latest Android SDK and NDK (duh)
+* Ant
 
-cd ..\..\..\reicast\android
+From project root directory:
+```
+cd shell\android
 android update project -p .
 
 ndk-build -j 4
@@ -64,6 +66,7 @@ Team
 
 You can check the currently active committers on [the pretty graphs page](https://github.com/reicast/reicast-emulator/graphs/contributors)
 
+Chat on freenode #reicast. 
 
 The original reicast team consisted of drk||Raziel (mostly just writing code), PsyMan (debugging/testing and everything else) and a little bit of gb_away
 
