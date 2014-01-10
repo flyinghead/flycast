@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.content.res.TypedArray;
@@ -453,11 +455,19 @@ public class MainActivity extends FragmentActivity implements
 					MainActivity.this);
 
 			// set title
-			alertDialogBuilder.setTitle("About reicast");
+			alertDialogBuilder.setTitle(getString(R.string.about_title));
+
+			String versionName = "";
+			try {
+				PackageInfo pInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
+				versionName = pInfo.versionName;
+			} catch (NameNotFoundException e) {
+				e.printStackTrace();
+			}
 
 			// set dialog message
 			alertDialogBuilder
-					.setMessage("reicast is a dreamcast emulator")
+					.setMessage(getString(R.string.about_text) + " " + versionName)
 					.setCancelable(false)
 					.setPositiveButton("Dismiss",
 							new DialogInterface.OnClickListener() {
