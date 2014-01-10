@@ -1,0 +1,80 @@
+<resources>
+
+    <string name="app_name">reicast</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="menu_settings">セッティング</string>
+    <string name="title_activity_main">reicast</string>
+    <string name="system_path">システムパス (とのデータフォルダーの場所 dc_boot.bin/dc_flash.bin)</string>
+    <string name="browser_path">デフォルトのシステムパス</string>
+    <string name="games_path">ストレージパス (の場所 .gdi .cdi or .cdh イメージ)</string>
+    <string name="game_path">デフォルトゲーム·ストレージ</string>
+    
+    <string name="boot_bios">ブートドリームキャストビオス</string>
+    <string name="missing_bios">BIOSが不足している。ドリームキャストBIOSが動作するように、このエミュレータに必要です。 BIOSファイル内に配置します %1$s/data/dc_boot.bin</string>
+    <string name="missing_flash">行方不明に点滅します。ドリームキャストのFlashが動作するためにこのエミュレータに必要です。 Flashファイル内に配置します %1$s/data/dc_flash.bin</string>
+    <string name="require_bios">あなたは、BIOSを提供する必要が</string>
+    
+    <string name="folder_bios">BOOT BIOS</string>
+    <string name="folder_select">SELECT CURRENT FOLDER</string>
+
+    <string name="select_dynarec">Dynarec Options</string>
+    <string name="select_unstable">Unstable Optimisations</string>
+    <string name="select_region">DC Region</string>
+    <string name="select_limitfps">Limit FPS</string>
+    <string name="select_mipmaps">Use Mipmaps (古いSGX540のために修正)</string>
+    <string name="select_stretch">Widescreen Mode</string>
+    <string name="set_frameskip">Frameskip Value</string>
+    <string name="select_render">PVR Rendering</string>
+
+    <string name="games_listing">利用可能なドリームキャストのゲーム</string>
+
+    <string name="controller_1">コントローラ 1</string>
+    <string name="controller_2">コントローラ 2</string>
+    <string name="controller_3">コントローラ 3</string>
+    <string name="controller_4">コントローラ 4</string>
+    <string name="controller_none">None</string>
+    <string name="select_controller">セレクトコントローラ</string>
+    <string name="remove_controller">コントローラを取り外し</string>
+    <string name="select_controller_title">セレクトコントローラ</string>
+    <string name="select_controller_message">ポートに割り当てるコントローラのいずれかのボタンを押してください</string>
+    <string name="controller_already_in_use">このコントローラは、すでに使用されています！</string>
+    
+    <string-array name="images">
+        <item>cdi</item>
+        <item>chd</item>
+        <item>gdi</item>
+    </string-array>
+    
+    <string-array name="region">
+        <item></item>
+        <item></item>
+        <item></item>
+        <item>(Default)</item>
+    </string-array>
+
+    <string name="drawer_open">Slider Menu Opened</string>
+    <string name="drawer_close">Slider Menu Closed</string>
+
+    <!-- Nav Drawer Menu Items -->
+    <string-array name="nav_drawer_items">
+        <item>Browser</item>
+        <item>Settings</item>
+        <item>Paths</item>
+        <item>Controllers</item>
+        <item>About</item>
+    </string-array>
+
+    <!-- Nav Drawer List Item Icons -->
+    <!-- Matched to Nav Drawer Menu Items -->
+    <array name="nav_drawer_icons">
+        <item>@drawable/disk_unknown</item>
+        <item>@drawable/config</item>
+        <item>@drawable/open_folder</item>
+        <item>@drawable/config</item>
+        <item>@drawable/question</item>
+    </array>
+
+    <!-- Content Description -->
+    <string name="desc_list_item_icon">Item Icon</string>
+
+</resources>
