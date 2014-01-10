@@ -457,9 +457,9 @@ public class MainActivity extends FragmentActivity implements
 					MainActivity.this);
 
 			// set title
-			alertDialogBuilder.setTitle("About reicast");
+			alertDialogBuilder.setTitle(getString(R.string.about_title));
 
-			String versionName = "unknown";
+			String versionName = "";
 			try {
 				PackageInfo pInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
 				versionName = pInfo.versionName;
@@ -469,7 +469,7 @@ public class MainActivity extends FragmentActivity implements
 
 			// set dialog message
 			alertDialogBuilder
-					.setMessage("reicast is a dreamcast emulator\n\nVersion: " + versionName)
+					.setMessage(getString(R.string.about_text) + " " + versionName)
 					.setCancelable(false)
 					.setPositiveButton("Dismiss",
 							new DialogInterface.OnClickListener() {
