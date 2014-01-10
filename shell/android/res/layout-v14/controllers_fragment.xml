@@ -16,7 +16,7 @@
             android:ems="10"
             android:text="@string/touch_vibration" />
 
-        <CheckBox
+        <Switch
             android:id="@+id/compoundButtonTouchVibrationEnabled"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
