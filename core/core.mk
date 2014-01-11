@@ -52,7 +52,7 @@ else
 RZDCY_CXXFLAGS	:= \
 	$(CFLAGS) -c -g -O3 -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps \
 	-D_ANDROID -DRELEASE -DTARGET_BEAGLE\
-	-march=armv7-a -mtune=cortex-a9 -mfpu=vfpv3-d16 -mfloat-abi=softfp \
+	-march=armv7-a -mtune=cortex-a9 -mfpu=vfpv3-d16 \
 	-frename-registers -fsingle-precision-constant -ffast-math \
 	-ftree-vectorize -fomit-frame-pointer -fno-exceptions -fno-rtti -std=gnu++11
 endif

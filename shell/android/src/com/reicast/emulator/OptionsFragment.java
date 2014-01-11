@@ -52,11 +52,14 @@ public class OptionsFragment extends Fragment {
 					+ " must implement OnClickListener");
 		}
 
-		int joys[] = InputDevice.getDeviceIds();
-		for (int i = 0; i < joys.length; i++) {
-			Log.d("reidc", "InputDevice ID: " + joys[i]);
-			Log.d("reidc", "InputDevice Name: "
-					+ InputDevice.getDevice(joys[i]).getName());
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR1) {
+			int joys[] = InputDevice.getDeviceIds();
+			for (int i = 0; i < joys.length; i++) {
+				Log.d("reidc", "InputDevice ID: " + joys[i]);
+				Log.d("reidc",
+						"InputDevice Name: "
+								+ InputDevice.getDevice(joys[i]).getName());
+			}
 		}
 	}
 
@@ -72,10 +75,10 @@ public class OptionsFragment extends Fragment {
 		// setContentView(R.layout.activity_main);
 
 		parentActivity = getActivity();
-		
+
 		mPrefs = PreferenceManager.getDefaultSharedPreferences(parentActivity);
 		home_directory = mPrefs.getString("home_directory", home_directory);
-		
+
 		mainBrowse = (Button) getView().findViewById(R.id.browse_main_path);
 
 		final EditText editBrowse = (EditText) getView().findViewById(

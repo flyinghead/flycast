@@ -1,32 +1,24 @@
 package com.reicast.emulator;
 
 
-import android.app.Application;
-import android.content.Context;
-import android.graphics.PixelFormat;
-import android.opengl.GLSurfaceView;
-import android.util.AttributeSet;
-import android.util.Log;
-import android.view.KeyEvent;
-import android.view.MotionEvent;
-
-import android.graphics.Canvas;
-import android.graphics.Paint;
-import android.opengl.GLU;
-import android.os.Vibrator;
-
-import java.nio.FloatBuffer;
-
-import android.media.AudioManager;
-import android.media.AudioFormat;
-import android.media.AudioTrack;
-import android.content.res.Configuration;
-
 import javax.microedition.khronos.egl.EGL10;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.egl.EGLContext;
 import javax.microedition.khronos.egl.EGLDisplay;
 import javax.microedition.khronos.opengles.GL10;
+
+import android.content.Context;
+import android.content.res.Configuration;
+import android.content.SharedPreferences;
+import android.graphics.PixelFormat;
+import android.media.AudioFormat;
+import android.media.AudioManager;
+import android.media.AudioTrack;
+import android.opengl.GLSurfaceView;
+import android.os.Vibrator;
+import android.preference.PreferenceManager;
+import android.util.Log;
+import android.view.MotionEvent;
 
 
 /**
@@ -115,6 +107,8 @@ class GL2JNIView extends GLSurfaceView
 		  };
   
   Renderer rend;
+
+  private boolean touchVibrationEnabled;
   
   	
   public GL2JNIView(Context context,String newFileName,boolean translucent,int depth,int stencil)
@@ -122,6 +116,9 @@ class GL2JNIView extends GLSurfaceView
     super(context);
     setKeepScreenOn(true);
     vib=(Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
+
+    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+    touchVibrationEnabled = prefs.getBoolean("touch_vibration_enabled", true);
     
     // This is the game we are going to run
     fileName = newFileName;
@@ -130,7 +127,9 @@ class GL2JNIView extends GLSurfaceView
     	JNIdc.data(1, GL2JNIActivity.syms);
   
     JNIdc.hide_osd();
-    JNIdc.kcode(0xFFFF,0,0,128,128); 
+    int[] kcode = { 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF };
+    int[] rt = { 0, 0, 0, 0 }, lt = { 0, 0, 0, 0 };
+    int[] jx = { 128, 128, 128, 128 }, jy = { 128, 128, 128, 128 };
     JNIdc.init(fileName);
 
 
@@ -274,8 +273,8 @@ class GL2JNIView extends GLSurfaceView
   }
   */
 
-  static int kcode_raw = 0xFFFF;
-  static int lt, rt, jx, jy;
+  static int[] kcode_raw = { 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF };
+  static int[] lt = new int[4], rt = new int[4], jx = new int[4], jy = new int[4];
 
   @Override public boolean onTouchEvent(final MotionEvent event) 
   {
@@ -317,7 +316,8 @@ class GL2JNIView extends GLSurfaceView
 		    	if (vjoy[j][4]>=-2)
 		    	{
 		    		if (vjoy[j][5]==0)
-		    			vib.vibrate(50);
+					if (touchVibrationEnabled)
+			    			vib.vibrate(50);
 		    		vjoy[j][5]=2;
 		    	}
 		    	
@@ -331,8 +331,8 @@ class GL2JNIView extends GLSurfaceView
         		  anal_id=event.getPointerId(i);      	  
 	          }
 		      else if (vjoy[j][4]==-4) ;
-	          else if(vjoy[j][4]==-1) lt=pre;
-	          else if(vjoy[j][4]==-2) rt=pre;
+	          else if(vjoy[j][4]==-1) lt[0]=pre;
+	          else if(vjoy[j][4]==-2) rt[0]=pre;
 	          else                    
 	        	  rv&=~(int)vjoy[j][4];
 	        }
@@ -375,8 +375,8 @@ class GL2JNIView extends GLSurfaceView
   		reset_analog();
   		anal_id=-1;
   		rv=0xFFFF;
-  		rt=0;
-  		lt=0;
+  		rt[0]=0;
+  		lt[0]=0;
   		 for(int j=0;j<vjoy.length;j++)
   			 vjoy[j][5]=0;
 	break;
@@ -401,9 +401,9 @@ class GL2JNIView extends GLSurfaceView
     if(GL2JNIActivity.keys[0]!=0) rv&=~key_CONT_B;
     */
 	  
-    kcode_raw = rv;
-    jx = get_anal(11, 0);
-    jy = get_anal(11, 1);
+    kcode_raw[0] = rv;
+    jx[0] = get_anal(11, 0);
+    jy[0] = get_anal(11, 1);
     return(true);
   }
   

@@ -152,85 +152,12 @@ public class FileBrowser extends Fragment {
 		if (!home.exists() || !home.isDirectory()) {
 			Toast.makeText(getActivity(), "Please configure a home directory",
 					Toast.LENGTH_LONG).show();
-			OptionsFragment optsFrag = (OptionsFragment) getActivity()
-					.getSupportFragmentManager().findFragmentByTag(
-							"OPTIONS_FRAG");
-			if (optsFrag != null) {
-				if (optsFrag.isVisible()) {
-					return;
-				}
-			}
-			optsFrag = new OptionsFragment();
-			getActivity().getSupportFragmentManager().beginTransaction()
-					.replace(R.id.fragment_container, optsFrag, "OPTIONS_FRAG")
-					.addToBackStack(null).commit();
 		}
 
 		if (!ImgBrowse) {
 			navigate(sdcard);
 		} else {
 			generate(ExternalFiles(new File(game_directory)));
-		}
-
-		File bios = new File(home_directory, "data/dc_boot.bin");
-		File flash = new File(home_directory, "data/dc_flash.bin");
-
-		String msg = null;
-		if (!bios.exists())
-			msg = "BIOS Missing. The Dreamcast BIOS is required for this emulator to work. Place the BIOS file in "
-					+ home_directory + "/data/dc_boot.bin";
-		else if (!flash.exists())
-			msg = "Flash Missing. The Dreamcast Flash is required for this emulator to work. Place the Flash file in "
-					+ home_directory + "/data/dc_flash.bin";
-
-		if (msg != null) {
-			vib.vibrate(50);
-			AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
-					parentActivity);
-
-			// set title
-			alertDialogBuilder.setTitle("You have to provide the BIOS");
-
-			// set dialog message
-			alertDialogBuilder
-					.setMessage(msg)
-					.setCancelable(false)
-					.setPositiveButton("Dismiss",
-							new DialogInterface.OnClickListener() {
-								public void onClick(DialogInterface dialog,
-										int id) {
-									// if this button is clicked, close
-									// current activity
-									parentActivity.finish();
-								}
-							})
-					.setNegativeButton("Options",
-							new DialogInterface.OnClickListener() {
-								public void onClick(DialogInterface dialog,
-										int id) {
-									OptionsFragment optsFrag = (OptionsFragment) getActivity()
-											.getSupportFragmentManager()
-											.findFragmentByTag("OPTIONS_FRAG");
-									if (optsFrag != null) {
-										if (optsFrag.isVisible()) {
-											return;
-										}
-									}
-									optsFrag = new OptionsFragment();
-									getActivity()
-											.getSupportFragmentManager()
-											.beginTransaction()
-											.replace(R.id.fragment_container,
-													optsFrag, "OPTIONS_FRAG")
-											.addToBackStack(null).commit();
-								}
-							});
-
-			// create alert dialog
-			AlertDialog alertDialog = alertDialogBuilder.create();
-
-			// show it
-			alertDialog.show();
 		}
 	}
 
@@ -291,9 +218,10 @@ public class FileBrowser extends Fragment {
 				.findViewById(R.id.game_list);
 		v.removeAllViews();
 		
-		((TextView) parentActivity.findViewById(R.id.text_cwd)).setText(R.string.games_listing);
-		
 		bootBiosItem(v);
+
+		((TextView) parentActivity.findViewById(R.id.text_cwd))
+				.setText(R.string.games_listing);
 
 		for (int i = 0; i < list.size(); i++) {
 			final View childview = parentActivity.getLayoutInflater().inflate(
@@ -377,7 +305,7 @@ public class FileBrowser extends Fragment {
 				R.layout.app_list_item, null, false);
 
 		((TextView) childview.findViewById(R.id.item_name))
-		.setText("Boot Dreamcast Bios");
+				.setText(getString(R.string.boot_bios));
 
 		childview.setTag(null);
 
@@ -476,10 +404,10 @@ public class FileBrowser extends Fragment {
 			if (list.get(i) == null) {
 				if (ImgBrowse == true)
 					((TextView) childview.findViewById(R.id.item_name))
-							.setText("BOOT BIOS");
+							.setText(getString(R.string.folder_bios));
 				if (ImgBrowse == false)
 					((TextView) childview.findViewById(R.id.item_name))
-							.setText("SELECT CURRENT FOLDER");
+							.setText(getString(R.string.folder_select));
 			} else if (list.get(i) == parent)
 				((TextView) childview.findViewById(R.id.item_name))
 						.setText("..");
@@ -529,7 +457,7 @@ public class FileBrowser extends Fragment {
 										.fromFile(new File(root_sd
 												.getAbsolutePath())));
 								vib.vibrate(250);
-								
+
 								if (games) {
 									game_directory = root_sd.getAbsolutePath();
 									mPrefs.edit()
@@ -540,8 +468,8 @@ public class FileBrowser extends Fragment {
 									mPrefs.edit()
 											.putString("home_directory",
 													home_directory).commit();
-									File data_directory = new File(home_directory,
-											"data");
+									File data_directory = new File(
+											home_directory, "data");
 									if (!data_directory.exists()
 											|| !data_directory.isDirectory()) {
 										data_directory.mkdirs();
@@ -592,5 +520,4 @@ public class FileBrowser extends Fragment {
 			v.addView(sep);
 		}
 	}
-
 }

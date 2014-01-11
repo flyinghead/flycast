@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.content.res.TypedArray;
@@ -27,7 +29,6 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnTouchListener;
 import android.widget.AdapterView;
-import android.widget.LinearLayout;
 import android.widget.ListView;
 
 public class MainActivity extends FragmentActivity implements
@@ -59,81 +60,21 @@ public class MainActivity extends FragmentActivity implements
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.mainuilayout_fragment);
 
+		mPrefs = PreferenceManager.getDefaultSharedPreferences(this);
+		home_directory = mPrefs.getString("home_directory", home_directory);
+		JNIdc.config(home_directory);
+
 		// Check that the activity is using the layout version with
 		// the fragment_container FrameLayout
 		if (findViewById(R.id.fragment_container) != null) {
-			
-			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR1) {
-
-				navMenuTitles = getResources().getStringArray(
-						R.array.nav_drawer_items);
-
-				// nav drawer icons from resources
-				navMenuIcons = getResources().obtainTypedArray(
-						R.array.nav_drawer_icons);
-
-				mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
-				mDrawerList = (ListView) findViewById(R.id.list_slidermenu);
-
-				navDrawerItems = new ArrayList<NavDrawerItem>();
-
-				// adding nav drawer items to array
-				// Browser
-				navDrawerItems.add(new NavDrawerItem(navMenuTitles[0], navMenuIcons
-						.getResourceId(0, -1)));
-				// Options
-				navDrawerItems.add(new NavDrawerItem(navMenuTitles[1], navMenuIcons
-						.getResourceId(1, -1)));
-				// Config
-							navDrawerItems.add(new NavDrawerItem(navMenuTitles[2], navMenuIcons
-									.getResourceId(2, -1)));
-				// About
-				navDrawerItems.add(new NavDrawerItem(navMenuTitles[3], navMenuIcons
-						.getResourceId(3, -1)));
-
-				// Recycle the typed array
-				navMenuIcons.recycle();
-
-				mDrawerList.setOnItemClickListener(new SlideMenuClickListener());
-
-				// setting the nav drawer list adapter
-				adapter = new NavDrawerListAdapter(getApplicationContext(),
-						navDrawerItems);
-				mDrawerList.setAdapter(adapter);
-
-				// enabling action bar app icon and behaving it as toggle button
-				getActionBar().setDisplayHomeAsUpEnabled(true);
-				getActionBar().setHomeButtonEnabled(true);
-
-				mDrawerToggle = new ActionBarDrawerToggle(this, mDrawerLayout,
-						R.drawable.ic_drawer, // nav menu toggle icon
-						R.string.app_name, // nav drawer open - description for
-											// accessibility
-						R.string.app_name // nav drawer close - description for
-											// accessibility
-				) {
-					public void onDrawerClosed(View view) {
-						getActionBar().setTitle(mTitle);
-						// calling onPrepareOptionsMenu() to show action bar
-						// icons
-						invalidateOptionsMenu();
-					}
-
-					public void onDrawerOpened(View drawerView) {
-						getActionBar().setTitle(mDrawerTitle);
-						// calling onPrepareOptionsMenu() to hide action bar
-						// icons
-						invalidateOptionsMenu();
-					}
-				};
-				mDrawerLayout.setDrawerListener(mDrawerToggle);
-			}
 
 			// However, if we're being restored from a previous state,
 			// then we don't need to do anything and should return or else
 			// we could end up with overlapping fragments.
-			if (savedInstanceState != null) {
-				return;
+			if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB_MR1) {
+				if (savedInstanceState != null) {
+					return;
+				}
 			}
 
 			// Create a new Fragment to be placed in the activity layout
@@ -155,41 +96,135 @@ public class MainActivity extends FragmentActivity implements
 					.add(R.id.fragment_container, firstFragment).commit();
 		}
 
-		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB_MR1) {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR1) {
+
+			navMenuTitles = getResources().getStringArray(
+					R.array.nav_drawer_items);
+
+			// nav drawer icons from resources
+			navMenuIcons = getResources().obtainTypedArray(
+					R.array.nav_drawer_icons);
+
+			mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+			mDrawerList = (ListView) findViewById(R.id.list_slidermenu);
+
+			navDrawerItems = new ArrayList<NavDrawerItem>();
+
+			// adding nav drawer items to array
+			// Browser
+			navDrawerItems.add(new NavDrawerItem(navMenuTitles[0], navMenuIcons
+					.getResourceId(0, 0)));
+			// Settings
+			navDrawerItems.add(new NavDrawerItem(navMenuTitles[1], navMenuIcons
+					.getResourceId(1, 0)));
+			// Paths
+			navDrawerItems.add(new NavDrawerItem(navMenuTitles[2], navMenuIcons
+					.getResourceId(2, 0)));
+			// Controllers
+			navDrawerItems.add(new NavDrawerItem(navMenuTitles[3], navMenuIcons
+					.getResourceId(3, 0)));
+			// About
+			navDrawerItems.add(new NavDrawerItem(navMenuTitles[4], navMenuIcons
+					.getResourceId(4, 0)));
+
+			// Recycle the typed array
+			navMenuIcons.recycle();
+
+			mDrawerList.setOnItemClickListener(new SlideMenuClickListener());
+
+			// setting the nav drawer list adapter
+			adapter = new NavDrawerListAdapter(getApplicationContext(),
+					navDrawerItems);
+			mDrawerList.setAdapter(adapter);
+
+			// enabling action bar app icon and behaving it as toggle button
+			getActionBar().setDisplayHomeAsUpEnabled(true);
+			getActionBar().setHomeButtonEnabled(true);
+
+			mDrawerToggle = new ActionBarDrawerToggle(this, mDrawerLayout,
+					R.drawable.ic_drawer, // nav menu toggle icon
+					R.string.app_name, // nav drawer open - description for
+										// accessibility
+					R.string.app_name // nav drawer close - description for
+										// accessibility
+			) {
+				public void onDrawerClosed(View view) {
+					getActionBar().setTitle(mTitle);
+					// calling onPrepareOptionsMenu() to show action bar
+					// icons
+					invalidateOptionsMenu();
+				}
+
+				public void onDrawerOpened(View drawerView) {
+					getActionBar().setTitle(mDrawerTitle);
+					// calling onPrepareOptionsMenu() to hide action bar
+					// icons
+					invalidateOptionsMenu();
+				}
+			};
+			mDrawerLayout.setDrawerListener(mDrawerToggle);
+
+			// if (savedInstanceState == null) {
+			// displayView(0);
+			//
+			// }
+		} else {
+
+			findViewById(R.id.options).setOnClickListener(
+					new OnClickListener() {
+						public void onClick(View view) {
+							OptionsFragment optionsFrag = (OptionsFragment) getSupportFragmentManager()
+									.findFragmentByTag("OPTIONS_FRAG");
+							if (optionsFrag != null) {
+								if (optionsFrag.isVisible()) {
+									return;
+								}
+							}
+							optionsFrag = new OptionsFragment();
+							getSupportFragmentManager()
+									.beginTransaction()
+									.replace(R.id.fragment_container,
+											optionsFrag, "OPTIONS_FRAG")
+									.addToBackStack(null).commit();
+							/*
+							 * AlertDialog.Builder alertDialogBuilder = new
+							 * AlertDialog.Builder( MainActivity.this);
+							 * 
+							 * // set title
+							 * alertDialogBuilder.setTitle("Configure");
+							 * 
+							 * // set dialog message alertDialogBuilder
+							 * .setMessage("No configuration for now :D")
+							 * .setCancelable(false)
+							 * .setPositiveButton("Oh well",new
+							 * DialogInterface.OnClickListener() { public void
+							 * onClick(DialogInterface dialog,int id) {
+							 * //FileBrowser.this.finish(); } });
+							 * 
+							 * // create alert dialog AlertDialog alertDialog =
+							 * alertDialogBuilder.create();
+							 * 
+							 * // show it alertDialog.show();
+							 */
+						}
+
+					});
 
 			findViewById(R.id.config).setOnClickListener(new OnClickListener() {
 				public void onClick(View view) {
-					OptionsFragment optsFrag = (OptionsFragment) getSupportFragmentManager()
-							.findFragmentByTag("OPTIONS_FRAG");
-					if (optsFrag != null) {
-						if (optsFrag.isVisible()) {
+					ConfigureFragment configFrag = (ConfigureFragment) getSupportFragmentManager()
+							.findFragmentByTag("CONFIG_FRAG");
+					if (configFrag != null) {
+						if (configFrag.isVisible()) {
 							return;
 						}
 					}
-					optsFrag = new OptionsFragment();
+					configFrag = new ConfigureFragment();
 					getSupportFragmentManager()
 							.beginTransaction()
-							.replace(R.id.fragment_container, optsFrag,
-									"OPTIONS_FRAG").addToBackStack(null)
+							.replace(R.id.fragment_container, configFrag,
+									"CONFIG_FRAG").addToBackStack(null)
 							.commit();
-					/*
-					 * AlertDialog.Builder alertDialogBuilder = new
-					 * AlertDialog.Builder( MainActivity.this);
-					 * 
-					 * // set title alertDialogBuilder.setTitle("Configure");
-					 * 
-					 * // set dialog message alertDialogBuilder
-					 * .setMessage("No configuration for now :D")
-					 * .setCancelable(false) .setPositiveButton("Oh well",new
-					 * DialogInterface.OnClickListener() { public void
-					 * onClick(DialogInterface dialog,int id) {
-					 * //FileBrowser.this.finish(); } });
-					 * 
-					 * // create alert dialog AlertDialog alertDialog =
-					 * alertDialogBuilder.create();
-					 * 
-					 * // show it alertDialog.show();
-					 */
 				}
 
 			});
@@ -232,16 +267,75 @@ public class MainActivity extends FragmentActivity implements
 			});
 		}
 
-		mPrefs = PreferenceManager.getDefaultSharedPreferences(this);
-		home_directory = mPrefs.getString("home_directory", home_directory);
-		JNIdc.config(home_directory);
-
 	}
 
 	public void onGameSelected(Uri uri) {
-		Intent inte = new Intent(Intent.ACTION_VIEW, uri, getBaseContext(),
+		File bios = new File(home_directory, "data/dc_boot.bin");
+		File flash = new File(home_directory, "data/dc_flash.bin");
+
+		String msg = null;
+		if (!bios.exists())
+			msg = getString(R.string.missing_bios, home_directory);
+		else if (!flash.exists())
+			msg = getString(R.string.missing_flash, home_directory);
+
+		if (msg != null) {
+			AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
+					this);
+
+			// set title
+			alertDialogBuilder.setTitle("You have to provide the BIOS");
+
+			// set dialog message
+			alertDialogBuilder
+					.setMessage(msg)
+					.setCancelable(false)
+					.setPositiveButton("Dismiss",
+							new DialogInterface.OnClickListener() {
+								public void onClick(DialogInterface dialog,
+										int id) {
+									// if this button is clicked, close
+									// current activity
+									//MainActivity.this.finish();
+								}
+							})
+					.setNegativeButton("Options",
+							new DialogInterface.OnClickListener() {
+								public void onClick(DialogInterface dialog,
+										int id) {
+									FileBrowser firstFragment = new FileBrowser();
+									Bundle args = new Bundle();
+									//args.putBoolean("ImgBrowse", false);
+									// specify ImgBrowse option. true = images, false = folders only
+									args.putString("browse_entry", sdcard.toString());
+									// specify a path for selecting folder options
+									args.putBoolean("games_entry", false);
+									// selecting a BIOS folder, so this is not games
+
+									firstFragment.setArguments(args);
+									// In case this activity was started with special instructions from
+									// an Intent, pass the Intent's extras to the fragment as arguments
+									// firstFragment.setArguments(getIntent().getExtras());
+
+									// Add the fragment to the 'fragment_container' FrameLayout
+									getSupportFragmentManager()
+											.beginTransaction()
+											.replace(R.id.fragment_container, firstFragment, "MAIN_BROWSER")
+											.addToBackStack(null).commit();
+								}
+							});
+
+			// create alert dialog
+			AlertDialog alertDialog = alertDialogBuilder.create();
+
+			// show it
+			alertDialog.show();
+		}
+		else {
+			Intent inte = new Intent(Intent.ACTION_VIEW, uri, getBaseContext(),
 				GL2JNIActivity.class);
-		startActivity(inte);
+			startActivity(inte);
+		}
 	}
 
 	public void onFolderSelected(Uri uri) {
@@ -266,9 +360,12 @@ public class MainActivity extends FragmentActivity implements
 		FileBrowser firstFragment = new FileBrowser();
 		Bundle args = new Bundle();
 		args.putBoolean("ImgBrowse", false);
-		args.putString("browse_entry", path_entry);
-		args.putBoolean("games_entry", games);
 		// specify ImgBrowse option. true = images, false = folders only
+		args.putString("browse_entry", path_entry);
+		// specify a path for selecting folder options
+		args.putBoolean("games_entry", games);
+		// specify if the desired path is for games or data
+
 		firstFragment.setArguments(args);
 		// In case this activity was started with special instructions from
 		// an Intent, pass the Intent's extras to the fragment as arguments
@@ -319,17 +416,6 @@ public class MainActivity extends FragmentActivity implements
 			frag_tag = "MAIN_BROWSER";
 			break;
 		case 1:
-			fragment = (OptionsFragment) getSupportFragmentManager()
-					.findFragmentByTag("OPTIONS_FRAG");
-			if (fragment != null) {
-				if (fragment.isVisible()) {
-					return;
-				}
-			}
-			fragment = new OptionsFragment();
-			frag_tag = "OPTIONS_FRAG";
-			break;
-		case 2:
 			fragment = (ConfigureFragment) getSupportFragmentManager()
 					.findFragmentByTag("CONFIG_FRAG");
 			if (fragment != null) {
@@ -340,18 +426,48 @@ public class MainActivity extends FragmentActivity implements
 			fragment = new ConfigureFragment();
 			frag_tag = "CONFIG_FRAG";
 			break;
+		case 2:
+			fragment = (OptionsFragment) getSupportFragmentManager()
+					.findFragmentByTag("OPTIONS_FRAG");
+			if (fragment != null) {
+				if (fragment.isVisible()) {
+					return;
+				}
+			}
+			fragment = new OptionsFragment();
+			frag_tag = "OPTIONS_FRAG";
+			break;
 		case 3:
+			fragment = (ControllersFragment) getSupportFragmentManager()
+					.findFragmentByTag("CONTROLLERS_FRAG");
+			if (fragment != null) {
+				if (fragment.isVisible()) {
+					return;
+				}
+			}
+			fragment = new ControllersFragment();
+			frag_tag = "CONTROLLERS_FRAG";
+			break;
+		case 4:
 			fragment = null;
 			// vib.vibrate(50);
 			AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
 					MainActivity.this);
 
 			// set title
-			alertDialogBuilder.setTitle("About reicast");
+			alertDialogBuilder.setTitle(getString(R.string.about_title));
+
+			String versionName = "";
+			try {
+				PackageInfo pInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
+				versionName = pInfo.versionName;
+			} catch (NameNotFoundException e) {
+				e.printStackTrace();
+			}
 
 			// set dialog message
 			alertDialogBuilder
-					.setMessage("reicast is a dreamcast emulator")
+					.setMessage(getString(R.string.about_text) + " " + versionName)
 					.setCancelable(false)
 					.setPositiveButton("Dismiss",
 							new DialogInterface.OnClickListener() {
