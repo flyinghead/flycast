@@ -69,6 +69,8 @@ s8 joyx[4],joyy[4];
 u8 rt[4],lt[4];
 
 extern bool KillTex;
+extern bool FrameSkipping;
+extern bool NoSound;
 extern void dc_term();
 
 enum DCPad {
@@ -122,6 +124,10 @@ const u32 JMapAxis_360[MAP_SIZE] =
 const u32* JMapBtn=JMapBtn_USB;
 const u32* JMapAxis=JMapAxis_USB;
 
+#ifdef TARGET_PANDORA
+u32	JSensitivity[256];	// To have less sensitive value on nubs
+#endif
+
 
 void SetupInput()
 {
@@ -160,12 +166,30 @@ void SetupInput()
 			printf("Using Xbox 360 map\n");
 		}
 	} else printf("SDK: No Joystick Found\n");
+	
+	#ifdef TARGET_PANDORA
+	float v;
+	int j;
+	for (int i=0; i<128; i++) {
+		v=((float)i)/127.0f;
+		v=(v+v*v)/2.0f;
+		j=(int)(v*127.0f);
+		if (j>127) j=127;
+		JSensitivity[128-i]=-j;
+		JSensitivity[128+i]=j;
+	}
+	#endif
 
 	SDL_ShowCursor( 0 );
 	if (SDL_WM_GrabInput( SDL_GRAB_ON ) != SDL_GRAB_ON)
 		printf("SDK: Error while grabbing mouse\n");
 	
 }
+
+extern char OSD_Info[128];
+extern int OSD_Delay;
+extern char OSD_Counters[256];
+extern int OSD_Counter;
 
 bool HandleEvents(u32 port) {
 
@@ -174,6 +198,7 @@ bool HandleEvents(u32 port) {
 	SDL_Event event;
 	int k, value;
 	int xx, yy;
+	char *num_mode[] = {"Off", "Up/Down => RT/LT", "Left/Right => LT/RT", "U/D/L/R => A/B/X/Y"};
 	while (SDL_PollEvent(&event)) {
 		switch (event.type) {
 			case SDL_QUIT:
@@ -201,8 +226,11 @@ bool HandleEvents(u32 port) {
 					case SDLK_RCTRL:	keys[10]=value; break;
 					case SDLK_LALT:		keys[12]=value; break;
 					case SDLK_k:		if (value) KillTex=true; break;
-					case SDLK_n:		if (value) mouse_use=(mouse_use+1)%4; printf("Nub mode %i\n", mouse_use); break;	//*TODO* Do some feedback on OSD
-				#else
+					case SDLK_n:		if (value) {mouse_use=(mouse_use+1)%4; snprintf(OSD_Info, 128, "Right Nub mode: %s\n", num_mode[mouse_use]); OSD_Delay=300;}; break;	
+					case SDLK_f:		if (value) {FrameSkipping=!FrameSkipping; snprintf(OSD_Info, 128, "FrameSkipping %s\n", (FrameSkipping)?"On":"Off"); OSD_Delay=300;};break;	
+					case SDLK_s:		if (value) {NoSound=!NoSound; snprintf(OSD_Info, 128, "Sound %s\n", (NoSound)?"Off":"On"); OSD_Delay=300;};break;	
+					case SDLK_c:		if (value) {OSD_Counter=1-OSD_Counter;};break;
+					#else
 				#error *TODO*
 				#endif
 				}
@@ -245,6 +273,9 @@ bool HandleEvents(u32 port) {
 					
 					//printf("AXIS %d,%d\n",JE.number,JE.value);
 					s8 v=(s8)(value/256); //-127 ... + 127 range
+					#ifdef TARGET_PANDORA
+					v=JSensitivity[128+v];
+					#endif
 					
 					if (mt==0)
 					{
@@ -358,7 +389,12 @@ void os_DoEvents()
 
 void os_SetWindowText(const char * text)
 {
+	#ifndef TARGET_PANDORA
 	SDL_WM_SetCaption(text, NULL);		// *TODO*  Set Icon also...
+	#endif
+	#ifdef TARGET_PANDORA
+	strncpy(OSD_Counters, text, 256);
+	#endif
 }
 
 
@@ -461,6 +497,7 @@ int main(int argc, wchar* argv[])
 	printf("common linux setup done\n");
 	
 	settings.profile.run_counts=0;
+	FrameSkipping=true;
 		
 	dc_init(argc,argv);
 

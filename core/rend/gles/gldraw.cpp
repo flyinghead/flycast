@@ -747,7 +747,9 @@ void GenSorted()
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs2); glCheck();
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER,vidx_sort.size()*2,&vidx_sort[0],GL_STREAM_DRAW);
 
+#if PRINT_SORT_STATS
 		if (tess_gen) printf("Generated %.2fK Triangles !\n",tess_gen/1000.0);
+#endif
 	}
 }
 
