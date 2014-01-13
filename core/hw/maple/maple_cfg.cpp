@@ -72,7 +72,7 @@ void mcfg_CreateDevices()
 
 	#ifdef HAS_VMU
 	mcfg_Create(MDT_SegaVMU,0,0);
-	mcfg_Create(MDT_SegaVMU,0,1);
+	mcfg_Create(MDT_Microphone,0,1);
 	#endif
 }
 
