@@ -1,0 +1,12 @@
+1/13/2014	hooby3dfx
+
+general info links from bluecrab: http://dreamcast-talk.com/forum/viewtopic.php?t=2921&f=5
+kallistios driver (could use for test app): http://cadcdev.sourceforge.net/docs/kos-2.0.0/sip_8h.html
+maplebus: https://web.archive.org/web/20101117090620/http://mc.pp.se/dc/maplebus.html
+
+plan:
+-figure out the mic commands that seaman is looking for and implement them
+-create mic test app (consult bluecrab)
+-figure out how the game/dc requests the audio (or how the mic just streams)...
+-for poc just create some kind of global way to pass the audio data from android mic interface directly to the maple_base instance
+-cleanup
