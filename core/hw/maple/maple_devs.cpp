@@ -225,7 +225,7 @@ struct maple_sega_controller: maple_base
 		return MDRS_DataTransfer;
 
 		default:
-			printf("UNKOWN MAPLE COMMAND %d\n",cmd);
+			//printf("UNKOWN MAPLE COMMAND %d\n",cmd);
 			return MDRE_UnknownFunction;
 		}
 	}	
@@ -644,7 +644,7 @@ struct maple_sega_vmu: maple_base
 
 
 		default:
-			printf("Unknown MAPLE COMMAND %d\n",cmd);
+			//printf("Unknown MAPLE COMMAND %d\n",cmd);
 			return MDRE_UnknownCmd;
 		}
 	}	
@@ -655,7 +655,7 @@ struct maple_microphone: maple_base
 {
 	virtual u32 dma(u32 cmd)
 	{
-		//printf("maple_microphone::dma Called 0x%X;Command %d\n",device_instance->port,Command);
+		printf("maple_microphone::dma Called 0x%X;Command %d\n",this->maple_port,cmd);
 		switch (cmd)
 		{
 		case MDC_DeviceRequest:
@@ -723,9 +723,13 @@ struct maple_microphone: maple_base
 			}
 
 		return MDRS_DataTransfer;
+		
+		case MDC_DeviceReset:
+		
+		return MDRS_DeviceReply;
 
 		default:
-			printf("UNKOWN MAPLE COMMAND %d\n",cmd);
+			printf("maple_microphone::dma UNHANDLED MAPLE COMMAND %d\n",cmd);
 			return MDRE_UnknownFunction;
 		}
 	}	
