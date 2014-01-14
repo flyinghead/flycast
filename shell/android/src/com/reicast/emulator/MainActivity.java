@@ -3,12 +3,13 @@ package com.reicast.emulator;
 import java.io.File;
 import java.util.ArrayList;
 
+import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
-import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.content.res.TypedArray;
 import android.net.Uri;
@@ -143,18 +144,17 @@ public class MainActivity extends FragmentActivity implements
 
 			mDrawerToggle = new ActionBarDrawerToggle(this, mDrawerLayout,
 					R.drawable.ic_drawer, // nav menu toggle icon
-					R.string.app_name, // nav drawer open - description for
-										// accessibility
-					R.string.app_name // nav drawer close - description for
-										// accessibility
+					R.string.app_name, // nav drawer open title
+					R.string.app_name // nav drawer close title
 			) {
+				@SuppressLint("NewApi")
 				public void onDrawerClosed(View view) {
 					getActionBar().setTitle(mTitle);
 					// calling onPrepareOptionsMenu() to show action bar
 					// icons
 					invalidateOptionsMenu();
 				}
-
+				@SuppressLint("NewApi")
 				public void onDrawerOpened(View drawerView) {
 					getActionBar().setTitle(mDrawerTitle);
 					// calling onPrepareOptionsMenu() to hide action bar
@@ -164,10 +164,9 @@ public class MainActivity extends FragmentActivity implements
 			};
 			mDrawerLayout.setDrawerListener(mDrawerToggle);
 
-			// if (savedInstanceState == null) {
-			// displayView(0);
-			//
-			// }
+			if (savedInstanceState == null) {
+				displayView(0);
+			}
 		} else {
 
 			findViewById(R.id.options).setOnClickListener(
@@ -459,7 +458,8 @@ public class MainActivity extends FragmentActivity implements
 
 			String versionName = "";
 			try {
-				PackageInfo pInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
+				PackageInfo pInfo = getPackageManager().getPackageInfo(
+						getPackageName(), 0);
 				versionName = pInfo.versionName;
 			} catch (NameNotFoundException e) {
 				e.printStackTrace();
@@ -467,7 +467,8 @@ public class MainActivity extends FragmentActivity implements
 
 			// set dialog message
 			alertDialogBuilder
-					.setMessage(getString(R.string.about_text) + " " + versionName)
+					.setMessage(
+							getString(R.string.about_text) + " " + versionName)
 					.setCancelable(false)
 					.setPositiveButton("Dismiss",
 							new DialogInterface.OnClickListener() {
@@ -538,6 +539,7 @@ public class MainActivity extends FragmentActivity implements
 		return super.onPrepareOptionsMenu(menu);
 	}
 
+	@SuppressLint("NewApi")
 	@Override
 	public void setTitle(CharSequence title) {
 		mTitle = title;
