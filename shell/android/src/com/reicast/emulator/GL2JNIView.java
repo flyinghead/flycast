@@ -61,7 +61,7 @@ class GL2JNIView extends GLSurfaceView
   
   Vibrator vib;
 
-  private boolean editVjoyMode = true;
+  private boolean editVjoyMode = false;
   private int selectedVjoyElement = -1;
   private ScaleGestureDetector scaleGestureDetector;
   
@@ -142,6 +142,39 @@ class GL2JNIView extends GLSurfaceView
        };
   }
 
+  public void resetCustomVjoyValues() {
+       SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+
+       prefs.edit().remove("touch_x_shift_dpad").commit();
+       prefs.edit().remove("touch_y_shift_dpad").commit();
+       prefs.edit().remove("touch_scale_dpad").commit();
+
+       prefs.edit().remove("touch_x_shift_buttons").commit();
+       prefs.edit().remove("touch_y_shift_buttons").commit();
+       prefs.edit().remove("touch_scale_buttons").commit();
+
+       prefs.edit().remove("touch_x_shift_start").commit();
+       prefs.edit().remove("touch_y_shift_start").commit();
+       prefs.edit().remove("touch_scale_start").commit();
+
+       prefs.edit().remove("touch_x_shift_left_trigger").commit();
+       prefs.edit().remove("touch_y_shift_left_trigger").commit();
+       prefs.edit().remove("touch_scale_left_trigger").commit();
+
+       prefs.edit().remove("touch_x_shift_right_trigger").commit();
+       prefs.edit().remove("touch_y_shift_right_trigger").commit();
+       prefs.edit().remove("touch_scale_right_trigger").commit();
+
+       prefs.edit().remove("touch_x_shift_analog").commit();
+       prefs.edit().remove("touch_y_shift_analog").commit();
+       prefs.edit().remove("touch_scale_analog").commit();
+
+       vjoy_d_custom = readCustomVjoyValues(context);
+
+       resetEditMode();
+       requestLayout();
+  }
+
   private static final float[][] vjoy = new float[][]
 		  { 
 		    new float[] { 24+0,     24+64,   64,64, key_CONT_DPAD_LEFT, 0},
@@ -170,10 +203,11 @@ class GL2JNIView extends GLSurfaceView
   private boolean touchVibrationEnabled;
   Context context;
   	
-  public GL2JNIView(Context context,String newFileName,boolean translucent,int depth,int stencil)
+  public GL2JNIView(Context context,String newFileName,boolean translucent,int depth,int stencil,boolean editVjoyMode)
   {
     super(context);
     this.context = context;
+    this.editVjoyMode = editVjoyMode;
     setKeepScreenOn(true);
     vib=(Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
 
@@ -186,16 +220,14 @@ class GL2JNIView extends GLSurfaceView
 
     // This is the game we are going to run
     fileName = newFileName;
-    
+
     if (GL2JNIActivity.syms != null)
     	JNIdc.data(1, GL2JNIActivity.syms);
-  
-    JNIdc.hide_osd();
+
     int[] kcode = { 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF };
     int[] rt = { 0, 0, 0, 0 }, lt = { 0, 0, 0, 0 };
     int[] jx = { 128, 128, 128, 128 }, jy = { 128, 128, 128, 128 };
     JNIdc.init(fileName);
-
 
     // By default, GLSurfaceView() creates a RGB_565 opaque surface.
     // If we want a translucent one, we should change the surface's

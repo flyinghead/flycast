@@ -49,7 +49,16 @@ public class ControllersFragment extends Fragment {
 		parentActivity = getActivity();
 
 		sharedPreferences = PreferenceManager.getDefaultSharedPreferences(parentActivity);
-		
+
+		Button buttonEditVJoy = (Button) getView()
+				.findViewById(R.id.buttonEditVJoy);
+		buttonEditVJoy.setOnClickListener(new View.OnClickListener() {
+    			public void onClick(View v) {
+				Intent inte = new Intent(parentActivity.getBaseContext(), EditVJoyActivity.class);
+				startActivity(inte);
+    			} 
+		});
+
 		OnCheckedChangeListener touch_vibration = new OnCheckedChangeListener() {
 
 			public void onCheckedChanged(CompoundButton buttonView,

@@ -43,6 +43,9 @@
 		        <data android:scheme="file" android:mimeType="*/*" android:host="*" android:pathPattern=".*\\.cdi"/>
 		     </intent-filter>
         </activity>
+
+        <activity android:name=".EditVJoyActivity" android:screenOrientation="landscape" android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
+        </activity>
         
     </application>
 
