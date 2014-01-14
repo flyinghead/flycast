@@ -11,7 +11,8 @@
         android:layout_height="wrap_content"
         android:layout_alignParentRight="true"
         android:layout_alignParentTop="true"
-        android:orientation="horizontal" >
+        android:orientation="horizontal"
+        android:layout_marginRight="2dp">
 
         <ImageView
             android:id="@+id/item_icon"
