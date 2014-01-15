@@ -54,7 +54,7 @@ public class EditVJoyActivity extends Activity {
 			}
 		}), params);
 
-		hlay.addView(addbut(R.drawable.config, new OnClickListener() {
+		hlay.addView(addbut(R.drawable.reset, new OnClickListener() {
 			public void onClick(View v) {
 				// Reset VJoy positions and scale
 				mView.resetCustomVjoyValues();

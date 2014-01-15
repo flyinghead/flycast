@@ -65,16 +65,35 @@ class GL2JNIView extends GLSurfaceView
   private int selectedVjoyElement = -1;
   private ScaleGestureDetector scaleGestureDetector;
   
-  private static float[][] vjoy_d_custom;/* = new float[][]
-  {
-    // x-shift, y-shift, sizing-factor
-    new float[] { 0, 0, 1 }, // DPAD
-    new float[] { 0, 0, 1 }, // X, Y, B, A Buttons
-    new float[] { 0, 0, 1 }, // Start
-    new float[] { 0, 0, 1 }, // Left Trigger
-    new float[] { 0, 0, 1 }, // Right Trigger
-    new float[] { 0, 0, 1 } // Analog Stick
-  };*/
+  private static float[][] vjoy_d_custom;
+
+  private static final float[][] vjoy = new float[][]
+		  { 
+		    new float[] { 24+0,     24+64,   64,64, key_CONT_DPAD_LEFT, 0},
+		    new float[] { 24+64,    24+0,    64,64, key_CONT_DPAD_UP, 0},
+		    new float[] { 24+128,   24+64,   64,64, key_CONT_DPAD_RIGHT, 0},
+		    new float[] { 24+64,    24+128,  64,64, key_CONT_DPAD_DOWN, 0},
+
+		    new float[] { 440+0,    280+64,  64,64, key_CONT_X, 0},
+		    new float[] { 440+64,   280+0,   64,64, key_CONT_Y, 0},
+		    new float[] { 440+128,  280+64,  64,64, key_CONT_B, 0},
+		    new float[] { 440+64,   280+128, 64,64, key_CONT_A, 0},
+
+		    new float[] { 320-32,   360+32,  64,64, key_CONT_START, 0},
+		    
+		    new float[] { 440, 200,  90,64, -1, 0},
+		    new float[] { 542, 200,  90,64, -2, 0},
+		    
+		    new float[] { 0,   128+224,  128,128, -3, 0},
+		    new float[] { 96, 320,  32,32, -4, 0},
+		    
+		    
+		  };
+  
+  Renderer rend;
+
+  private boolean touchVibrationEnabled;
+  Context context;
 
   private static float[][] getVjoy_d(float[][] vjoy_d_custom) {
        return new float[][]
@@ -174,34 +193,6 @@ class GL2JNIView extends GLSurfaceView
        resetEditMode();
        requestLayout();
   }
-
-  private static final float[][] vjoy = new float[][]
-		  { 
-		    new float[] { 24+0,     24+64,   64,64, key_CONT_DPAD_LEFT, 0},
-		    new float[] { 24+64,    24+0,    64,64, key_CONT_DPAD_UP, 0},
-		    new float[] { 24+128,   24+64,   64,64, key_CONT_DPAD_RIGHT, 0},
-		    new float[] { 24+64,    24+128,  64,64, key_CONT_DPAD_DOWN, 0},
-
-		    new float[] { 440+0,    280+64,  64,64, key_CONT_X, 0},
-		    new float[] { 440+64,   280+0,   64,64, key_CONT_Y, 0},
-		    new float[] { 440+128,  280+64,  64,64, key_CONT_B, 0},
-		    new float[] { 440+64,   280+128, 64,64, key_CONT_A, 0},
-
-		    new float[] { 320-32,   360+32,  64,64, key_CONT_START, 0},
-		    
-		    new float[] { 440, 200,  90,64, -1, 0},
-		    new float[] { 542, 200,  90,64, -2, 0},
-		    
-		    new float[] { 0,   128+224,  128,128, -3, 0},
-		    new float[] { 96, 320,  32,32, -4, 0},
-		    
-		    
-		  };
-  
-  Renderer rend;
-
-  private boolean touchVibrationEnabled;
-  Context context;
   	
   public GL2JNIView(Context context,String newFileName,boolean translucent,int depth,int stencil,boolean editVjoyMode)
   {
@@ -352,7 +343,7 @@ class GL2JNIView extends GLSurfaceView
    * 	UP / CANCEL -> reset state
    * 	POINTER_UP -> check for freed analog
    * */
-  int anal_id=-1;
+  int anal_id=-1, lt_id=-1, rt_id=-1;
   /*
   bool intersects(CircleType circle, RectType rect)
   {
@@ -485,15 +476,19 @@ class GL2JNIView extends GLSurfaceView
                           if (editVjoyMode) {
                                 selectedVjoyElement = 3; // Left Trigger
                                 resetEditMode();
-                          } else
+                          } else {
                                 lt[0]=pre;
+                                lt_id=event.getPointerId(i);
+                          }
                   }
 	          else if(vjoy[j][4]==-2) {
                           if (editVjoyMode) {
                                 selectedVjoyElement = 4; // Right Trigger
                                 resetEditMode();
-                          } else
+                          } else{
                                 rt[0]=pre;
+                                rt_id=event.getPointerId(i);
+                          }
                   }
 	          else {
                           if (editVjoyMode) {
@@ -544,6 +539,8 @@ class GL2JNIView extends GLSurfaceView
   		rv=0xFFFF;
   		rt[0]=0;
   		lt[0]=0;
+                lt_id=-1;
+                rt_id=-1;
   		 for(int j=0;j<vjoy.length;j++)
   			 vjoy[j][5]=0;
 	break;
@@ -554,6 +551,16 @@ class GL2JNIView extends GLSurfaceView
   			reset_analog();
   			anal_id=-1;
   		}
+                else if (event.getPointerId(event.getActionIndex())==lt_id)
+                {
+                        lt[0]=0;
+  			lt_id=-1;
+                }
+                else if (event.getPointerId(event.getActionIndex())==rt_id)
+                {
+                        rt[0]=0;
+  			rt_id=-1;
+                }
 	break;
 	
   	case MotionEvent.ACTION_POINTER_DOWN:

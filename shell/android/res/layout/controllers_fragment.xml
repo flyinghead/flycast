@@ -16,7 +16,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:ems="10"
-            android:text="Onscreen Controls" />
+            android:text="@string/customize_touch_controls" />
 
             <LinearLayout
                 android:layout_width="wrap_content"
@@ -27,10 +27,10 @@
 
 		<Button
 		    android:layout_weight="1"
-		    android:id="@+id/buttonEditVJoy"
+		    android:id="@+id/buttonLaunchEditor"
 		    android:layout_width="wrap_content"
 		    android:layout_height="wrap_content"
-		    android:text="Edit VJoy" />
+		    android:text="@string/launch_editor" />
             </LinearLayout>
         </TableRow>
 

@@ -50,9 +50,9 @@ public class ControllersFragment extends Fragment {
 
 		sharedPreferences = PreferenceManager.getDefaultSharedPreferences(parentActivity);
 
-		Button buttonEditVJoy = (Button) getView()
-				.findViewById(R.id.buttonEditVJoy);
-		buttonEditVJoy.setOnClickListener(new View.OnClickListener() {
+		Button buttonLaunchEditor = (Button) getView()
+				.findViewById(R.id.buttonLaunchEditor);
+		buttonLaunchEditor.setOnClickListener(new View.OnClickListener() {
     			public void onClick(View v) {
 				Intent inte = new Intent(parentActivity.getBaseContext(), EditVJoyActivity.class);
 				startActivity(inte);
