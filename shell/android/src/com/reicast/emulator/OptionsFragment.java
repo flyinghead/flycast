@@ -10,6 +10,8 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.InputDevice;
 import android.view.LayoutInflater;
@@ -30,9 +32,7 @@ public class OptionsFragment extends Fragment {
 	private SharedPreferences mPrefs;
 	private File sdcard = Environment.getExternalStorageDirectory();
 	private String home_directory = sdcard + "/dc";
-	private String browse_entry = home_directory;
 	private String game_directory = sdcard + "/";
-	private String games_entry = game_directory;
 
 	// Container Activity must implement this interface
 	public interface OnClickListener {
@@ -88,9 +88,29 @@ public class OptionsFragment extends Fragment {
 		mainBrowse.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View view) {
 				if (editBrowse.getText() != null) {
-					browse_entry = editBrowse.getText().toString();
+					home_directory = editBrowse.getText().toString();
+					mPrefs.edit().putString("home_directory", home_directory)
+							.commit();
 				}
-				mCallback.onMainBrowseSelected(browse_entry, false);
+				mCallback.onMainBrowseSelected(home_directory, false);
+			}
+		});
+
+		editBrowse.addTextChangedListener(new TextWatcher() {
+			public void afterTextChanged(Editable s) {
+				if (editBrowse.getText() != null) {
+					home_directory = editBrowse.getText().toString();
+					mPrefs.edit().putString("home_directory", home_directory)
+							.commit();
+				}
+			}
+
+			public void beforeTextChanged(CharSequence s, int start, int count,
+					int after) {
+			}
+
+			public void onTextChanged(CharSequence s, int start, int before,
+					int count) {
 			}
 		});
 
@@ -104,9 +124,29 @@ public class OptionsFragment extends Fragment {
 		gameBrowse.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View view) {
 				if (editBrowse.getText() != null) {
-					games_entry = editGames.getText().toString();
+					game_directory = editGames.getText().toString();
+					mPrefs.edit().putString("game_directory", game_directory)
+							.commit();
 				}
-				mCallback.onMainBrowseSelected(games_entry, true);
+				mCallback.onMainBrowseSelected(game_directory, true);
+			}
+		});
+
+		editGames.addTextChangedListener(new TextWatcher() {
+			public void afterTextChanged(Editable s) {
+				if (editBrowse.getText() != null) {
+					game_directory = editGames.getText().toString();
+					mPrefs.edit().putString("game_directory", game_directory)
+					.commit();
+				}
+			}
+
+			public void beforeTextChanged(CharSequence s, int start, int count,
+					int after) {
+			}
+
+			public void onTextChanged(CharSequence s, int start, int before,
+					int count) {
 			}
 		});
 
