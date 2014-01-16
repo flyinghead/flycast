@@ -740,6 +740,7 @@ struct maple_microphone: maple_base
 
 		case MDCF_MICControl:
 		{
+			//LOGD("maple_microphone::dma handling MDCF_MICControl %d\n",cmd);
 			//MONEY
 			u32 function=r32();
 			//LOGD("maple_microphone::dma MDCF_MICControl function (1st word) %#010x\n", function);
@@ -762,14 +763,14 @@ struct maple_microphone: maple_base
 				0x00000002          Disables recording
 				 *
 				 */
-				u32 subcommand=r32();
+				u32 secondword=r32();
 				//LOGD("maple_microphone::dma MDCF_MICControl subcommand (2nd word) %#010x\n", subcommand);
 
-				u32 cmd = subcommand & 0xFF; //just get last byte for now, deal with params later
+				u32 subcommand = secondword & 0xFF; //just get last byte for now, deal with params later
 
 				//LOGD("maple_microphone::dma MDCF_MICControl (3rd word) %#010x\n", r32());
 				//LOGD("maple_microphone::dma MDCF_MICControl (4th word) %#010x\n", r32());
-				switch(cmd)
+				switch(subcommand)
 				{
 				case 0x01:
 				{
@@ -777,7 +778,7 @@ struct maple_microphone: maple_base
 					//maximum size of a Maple Bus packet is 256 words (1024 bytes)
 					//maybe i should start with 512 (same as vmu)
 					u8* micdata=(u8*)malloc(512);
-					get_mic_data(micdata); //this is crashing (jni issue)
+					get_mic_data(micdata);
 					wptr(micdata, 512);
 					
 					return MDRS_DataTransfer;
@@ -790,10 +791,12 @@ struct maple_microphone: maple_base
 				case 0x03:
 					return MDRS_DeviceReply;
 				default:
+					LOGD("maple_microphone::dma UNHANDLED secondword %#010x\n",secondword);
 					break;
 				}
 			}
 			default:
+				LOGD("maple_microphone::dma UNHANDLED function %#010x\n",function);
 				break;
 			}
 		}

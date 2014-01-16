@@ -214,9 +214,8 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_run(JNIEnv *env,jobject o
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_setupMic(JNIEnv *env,jobject obj,jobject sip)
 {
-	sipemu = sip;
-	getmicdata = env->GetMethodID(env->GetObjectClass(sipemu),"getData","()[B");
-	
+	sipemu = env->NewGlobalRef(sip);
+	getmicdata = env->GetMethodID(env->GetObjectClass(sipemu),"getData","()[B");	
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_stop(JNIEnv *env,jobject obj)
