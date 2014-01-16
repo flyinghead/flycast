@@ -16,7 +16,7 @@ public class SipEmulator extends Thread{
 	//this needs to get set to the amount the mic normally sends per data request
 	//--->target 512!
 	static final int ONE_BLIP_SIZE = 512; 
-	static final long TIME_TO_WAIT_BETWEEN_POLLS = 1000 / 44; //poll every ~23 ms
+	static final long TIME_TO_WAIT_BETWEEN_POLLS = 1000 / (BUFFER_SIZE / ONE_BLIP_SIZE);
 	
 	private AudioRecord record;
 	private LinkedList<byte[]> bytesReadBuffer;
@@ -78,11 +78,15 @@ public class SipEmulator extends Thread{
 		Log.d(TAG, "SipEmulator getData bytesReadBuffer size: "+bytesReadBuffer.size());
 		if(firstGet){
 			firstGet = false;
-			byte[] last = bytesReadBuffer.removeLast();
-			bytesReadBuffer.clear();
-			return last;
+			return catchUp();
 		}
 		return bytesReadBuffer.poll();
+	}
+	
+	private byte[] catchUp(){
+		byte[] last = bytesReadBuffer.removeLast();
+		bytesReadBuffer.clear();
+		return last;
 	}
 	
 	public void configSomething(int what, int setting){
