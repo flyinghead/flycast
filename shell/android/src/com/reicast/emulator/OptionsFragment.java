@@ -52,7 +52,7 @@ public class OptionsFragment extends Fragment {
 					+ " must implement OnClickListener");
 		}
 
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR1) {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
 			int joys[] = InputDevice.getDeviceIds();
 			for (int i = 0; i < joys.length; i++) {
 				Log.d("reidc", "InputDevice ID: " + joys[i]);

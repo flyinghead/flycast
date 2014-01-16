@@ -5,43 +5,16 @@
     android:layout_height="match_parent"
     android:orientation="vertical" >
 
-    
-
     <View
         android:layout_width="fill_parent"
         android:layout_height="1dp"
         android:layout_marginBottom="2dp"
         android:background="#7f7f7f" />
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="48dp" >
-
-        <ImageView
-            android:id="@+id/imageView1"
-            android:layout_width="48dp"
-            android:layout_height="wrap_content"
-            android:layout_marginLeft="3dp"
-            android:scaleType="fitCenter"
-            android:src="@drawable/open_folder" />
-
-        <TextView
-            android:id="@+id/text_cwd"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical"
-            android:layout_marginLeft="0dp"
-            android:layout_marginRight="4dp"
-            android:text="/sdcard/lol/folder/path/too/lolg/text/must/wrap"
-            android:textAppearance="?android:attr/textAppearanceMedium"
-            android:textSize="20dp" />
-
-    </LinearLayout>
-
      <ScrollView
          android:id="@+id/game_scroller"
-         android:layout_width="fill_parent"
-         android:layout_height="fill_parent"
+         android:layout_width="match_parent"
+         android:layout_height="match_parent"
          android:layout_marginLeft="6dp"
          android:layout_weight="1"
          android:fillViewport="true" >

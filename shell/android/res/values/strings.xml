@@ -81,5 +81,8 @@
 
     <!-- Content Description -->
     <string name="desc_list_item_icon">Item Icon</string>
+    
+    <string name="textOn">ON</string>
+    <string name="textOff">OFF</string>
 
 </resources>

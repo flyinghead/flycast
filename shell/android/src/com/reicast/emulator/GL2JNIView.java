@@ -315,8 +315,7 @@ class GL2JNIView extends GLSurfaceView
 		    {
 		    	if (vjoy[j][4]>=-2)
 		    	{
-		    		if (vjoy[j][5]==0)
-					if (touchVibrationEnabled)
+		    		if (vjoy[j][5]==0 && touchVibrationEnabled)
 			    			vib.vibrate(50);
 		    		vjoy[j][5]=2;
 		    	}

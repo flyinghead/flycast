@@ -1,5 +1,6 @@
 package com.reicast.emulator;
 
+import de.ankri.views.Switch;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -18,9 +19,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CompoundButton;
-import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.CompoundButton.OnCheckedChangeListener;
 
 @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
 public class ControllersFragment extends Fragment {
@@ -29,6 +30,7 @@ public class ControllersFragment extends Fragment {
 	private int listenForButton = 0;
 	private AlertDialog alertDialogSelectController;
 	private SharedPreferences sharedPreferences;
+	private Switch switchTouchVibrationEnabled;
 
 	// Container Activity must implement this interface
 	public interface OnClickListener {
@@ -47,14 +49,23 @@ public class ControllersFragment extends Fragment {
 		parentActivity = getActivity();
 
 		sharedPreferences = PreferenceManager.getDefaultSharedPreferences(parentActivity);
+		
+		OnCheckedChangeListener touch_vibration = new OnCheckedChangeListener() {
 
-		CompoundButton compoundButtonTouchVibrationEnabled = (CompoundButton) getView()
-					.findViewById(R.id.compoundButtonTouchVibrationEnabled);
-		compoundButtonTouchVibrationEnabled.setOnCheckedChangeListener(new OnCheckedChangeListener() {
-			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+			public void onCheckedChanged(CompoundButton buttonView,
+					boolean isChecked) {
 				sharedPreferences.edit().putBoolean("touch_vibration_enabled", isChecked).commit();
 			}
-		});
+		};
+		switchTouchVibrationEnabled = (Switch) getView().findViewById(
+				R.id.switchTouchVibrationEnabled);
+		boolean vibrate = sharedPreferences.getBoolean("touch_vibration_enabled", true);
+		if (vibrate) {
+			switchTouchVibrationEnabled.setChecked(true);
+		} else {
+			switchTouchVibrationEnabled.setChecked(false);
+		}
+		switchTouchVibrationEnabled.setOnCheckedChangeListener(touch_vibration);
 
 		Button buttonSelectControllerPlayer1 = (Button) getView()
 				.findViewById(R.id.buttonSelectControllerPlayer1);
@@ -123,10 +134,7 @@ public class ControllersFragment extends Fragment {
 
 	private void updateVibration() {
 		boolean touchVibrationEnabled = sharedPreferences.getBoolean("touch_vibration_enabled", true);
-
-		CompoundButton compoundButtonTouchVibrationEnabled = (CompoundButton) getView()
-				.findViewById(R.id.compoundButtonTouchVibrationEnabled);
-		compoundButtonTouchVibrationEnabled.setChecked(touchVibrationEnabled);
+		switchTouchVibrationEnabled.setChecked(touchVibrationEnabled);
 	}
 
 	private void updateControllers() {

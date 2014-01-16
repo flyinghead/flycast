@@ -6,6 +6,8 @@ import java.util.Scanner;
 
 import org.apache.commons.lang3.StringUtils;
 
+import de.ankri.views.Switch;
+
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.SharedPreferences;
@@ -18,12 +20,10 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
-import android.widget.Switch;
 import android.widget.TextView;
 
 @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
@@ -138,7 +138,6 @@ public class ConfigureFragment extends Fragment {
 				}
 			}
 		};
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR1) {
 			Switch dynarec_opt = (Switch) getView().findViewById(
 					R.id.dynarec_option);
 			boolean dynarec = mPrefs.getBoolean("dynarec_opt", dynarecopt);
@@ -147,18 +146,7 @@ public class ConfigureFragment extends Fragment {
 			} else {
 				dynarec_opt.setChecked(false);
 			}
-			dynarec_opt.setOnCheckedChangeListener(dynarec_options);
-		} else {
-			CheckBox dynarec_opt = (CheckBox) getView().findViewById(
-					R.id.dynarec_option);
-			boolean dynarec = mPrefs.getBoolean("dynarec_opt", dynarecopt);
-			if (dynarec) {
-				dynarec_opt.setChecked(true);
-			} else {
-				dynarec_opt.setChecked(false);
-			}
-			dynarec_opt.setOnCheckedChangeListener(dynarec_options);
-		}*/
+			dynarec_opt.setOnCheckedChangeListener(dynarec_options);*/
 		
 		OnCheckedChangeListener unstable_option = new OnCheckedChangeListener() {
 
@@ -172,27 +160,15 @@ public class ConfigureFragment extends Fragment {
 				}
 			}
 		};
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR1) {
-			Switch unstable_opt = (Switch) getView().findViewById(
-					R.id.unstable_option);
-			boolean unstable = mPrefs.getBoolean("unstable_opt", unstableopt);
-			if (unstable) {
-				unstable_opt.setChecked(true);
-			} else {
-				unstable_opt.setChecked(false);
-			}
-			unstable_opt.setOnCheckedChangeListener(unstable_option);
+		Switch unstable_opt = (Switch) getView().findViewById(
+				R.id.unstable_option);
+		boolean unstable = mPrefs.getBoolean("unstable_opt", unstableopt);
+		if (unstable) {
+			unstable_opt.setChecked(true);
 		} else {
-			CheckBox unstable_opt = (CheckBox) getView().findViewById(
-					R.id.unstable_option);
-			boolean unstable = mPrefs.getBoolean("unstable_opt", unstableopt);
-			if (unstable) {
-				unstable_opt.setChecked(true);
-			} else {
-				unstable_opt.setChecked(false);
-			}
-			unstable_opt.setOnCheckedChangeListener(unstable_option);
+			unstable_opt.setChecked(false);
 		}
+		unstable_opt.setOnCheckedChangeListener(unstable_option);
 		
 		/*String[] regions = parentActivity.getResources().getStringArray(R.array.region);
 
@@ -238,27 +214,15 @@ public class ConfigureFragment extends Fragment {
 				}
 			}
 		};
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR1) {
-			Switch limit_fps = (Switch) getView().findViewById(
-					R.id.limitfps_option);
-			boolean limited = mPrefs.getBoolean("limit_fps", limitfps);
-			if (limited) {
-				limit_fps.setChecked(true);
-			} else {
-				limit_fps.setChecked(false);
-			}
-			limit_fps.setOnCheckedChangeListener(limitfps_option);
+		Switch limit_fps = (Switch) getView()
+				.findViewById(R.id.limitfps_option);
+		boolean limited = mPrefs.getBoolean("limit_fps", limitfps);
+		if (limited) {
+			limit_fps.setChecked(true);
 		} else {
-			CheckBox limit_fps = (CheckBox) getView().findViewById(
-					R.id.limitfps_option);
-			boolean limited = mPrefs.getBoolean("limit_fps", limitfps);
-			if (limited) {
-				limit_fps.setChecked(true);
-			} else {
-				limit_fps.setChecked(false);
-			}
-			limit_fps.setOnCheckedChangeListener(limitfps_option);
+			limit_fps.setChecked(false);
 		}
+		limit_fps.setOnCheckedChangeListener(limitfps_option);
 		
 		OnCheckedChangeListener mipmaps_option = new OnCheckedChangeListener() {
 
@@ -272,27 +236,15 @@ public class ConfigureFragment extends Fragment {
 				}
 			}
 		};
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR1) {
-			Switch mipmap_opt = (Switch) getView().findViewById(
-					R.id.mipmaps_option);
-			boolean mipmapped = mPrefs.getBoolean("use_mipmaps", mipmaps);
-			if (mipmapped) {
-				mipmap_opt.setChecked(true);
-			} else {
-				mipmap_opt.setChecked(false);
-			}
-			mipmap_opt.setOnCheckedChangeListener(mipmaps_option);
+		Switch mipmap_opt = (Switch) getView()
+				.findViewById(R.id.mipmaps_option);
+		boolean mipmapped = mPrefs.getBoolean("use_mipmaps", mipmaps);
+		if (mipmapped) {
+			mipmap_opt.setChecked(true);
 		} else {
-			CheckBox mipmap_opt = (CheckBox) getView().findViewById(
-					R.id.mipmaps_option);
-			boolean mipmapped = mPrefs.getBoolean("use_mipmaps", mipmaps);
-			if (mipmapped) {
-				mipmap_opt.setChecked(true);
-			} else {
-				mipmap_opt.setChecked(false);
-			}
-			mipmap_opt.setOnCheckedChangeListener(mipmaps_option);
+			mipmap_opt.setChecked(false);
 		}
+		mipmap_opt.setOnCheckedChangeListener(mipmaps_option);
 
 		OnCheckedChangeListener full_screen = new OnCheckedChangeListener() {
 
@@ -306,27 +258,15 @@ public class ConfigureFragment extends Fragment {
 				}
 			}
 		};
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR1) {
-			Switch stretch_view = (Switch) getView().findViewById(
-					R.id.stretch_option);
-			boolean stretched = mPrefs.getBoolean("stretch_view", widescreen);
-			if (stretched) {
-				stretch_view.setChecked(true);
-			} else {
-				stretch_view.setChecked(false);
-			}
-			stretch_view.setOnCheckedChangeListener(full_screen);
+		Switch stretch_view = (Switch) getView().findViewById(
+				R.id.stretch_option);
+		boolean stretched = mPrefs.getBoolean("stretch_view", widescreen);
+		if (stretched) {
+			stretch_view.setChecked(true);
 		} else {
-			CheckBox stretch_view = (CheckBox) getView().findViewById(
-					R.id.stretch_option);
-			boolean stretched = mPrefs.getBoolean("stretch_view", widescreen);
-			if (stretched) {
-				stretch_view.setChecked(true);
-			} else {
-				stretch_view.setChecked(false);
-			}
-			stretch_view.setOnCheckedChangeListener(full_screen);
+			stretch_view.setChecked(false);
 		}
+		stretch_view.setOnCheckedChangeListener(full_screen);
 		
 		mainFrames = (TextView) getView().findViewById(R.id.current_frames);
 		mainFrames.setText(String.valueOf(frameskip));
@@ -372,7 +312,6 @@ public class ConfigureFragment extends Fragment {
 				}
 			}
 		};
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR1) {
 			Switch pvr_render = (Switch) getView().findViewById(
 					R.id.render_option);
 			boolean rendered = mPrefs.getBoolean("pvr_render", pvrrender);
@@ -381,18 +320,7 @@ public class ConfigureFragment extends Fragment {
 			} else {
 				pvr_render.setChecked(false);
 			}
-			pvr_render.setOnCheckedChangeListener(pvr_rendering);
-		} else {
-			CheckBox pvr_render = (CheckBox) getView().findViewById(
-					R.id.render_option);
-			boolean rendered = mPrefs.getBoolean("pvr_render", pvrrender);
-			if (rendered) {
-				pvr_render.setChecked(true);
-			} else {
-				pvr_render.setChecked(false);
-			}
-			pvr_render.setOnCheckedChangeListener(pvr_rendering);
-		}*/
+			pvr_render.setOnCheckedChangeListener(pvr_rendering);*/
 	}
 
 	private boolean executeAppendConfig(String identifier, String value) {
