@@ -461,7 +461,7 @@ class GL2JNIView extends GLSurfaceView
 		      if(vjoy[j][4]==-3)
 		      {
                           if (editVjoyMode) {
-                                selectedVjoyElement = 5;Log.w("selcted", "anal"); // Analog
+                                selectedVjoyElement = 5; // Analog
                                 resetEditMode();
                           } else {
         		        vjoy[j+1][0]=x-vjoy[j+1][2]/2;
@@ -534,15 +534,16 @@ class GL2JNIView extends GLSurfaceView
   {
   	case MotionEvent.ACTION_UP:
   	case MotionEvent.ACTION_CANCEL:
+  		selectedVjoyElement = -1;
   		reset_analog();
   		anal_id=-1;
   		rv=0xFFFF;
   		rt[0]=0;
   		lt[0]=0;
-                lt_id=-1;
-                rt_id=-1;
-  		 for(int j=0;j<vjoy.length;j++)
-  			 vjoy[j][5]=0;
+  		lt_id=-1;
+  		rt_id=-1;
+  		for(int j=0;j<vjoy.length;j++)
+  			vjoy[j][5]=0;
 	break;
 	
   	case MotionEvent.ACTION_POINTER_UP:

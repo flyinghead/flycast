@@ -40,7 +40,8 @@ public class EditVJoyActivity extends Activity {
 
 	void createPopup() {
 		popUp = new PopupWindow(this);
-		params = new LayoutParams(80, 80);
+		int p = GL2JNIActivity.getPixelsFromDp(60, this);
+		params = new LayoutParams(p, p);
 
 		LinearLayout hlay = new LinearLayout(this);
 
