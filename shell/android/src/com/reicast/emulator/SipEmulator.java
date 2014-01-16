@@ -23,6 +23,7 @@ public class SipEmulator extends Thread{
 	
 	private Thread recordThread;
 	private boolean continueRecording;
+	private boolean firstGet;
 	
 	/*
 	16-bit PCM @ 11025 hz
@@ -51,6 +52,8 @@ public class SipEmulator extends Thread{
 		
 		bytesReadBuffer = new LinkedList<byte[]>();
 		
+		continueRecording = false;
+		firstGet = true;
 	}
 
 	
@@ -73,6 +76,12 @@ public class SipEmulator extends Thread{
 	public byte[] getData(){
 		//Log.d(TAG, "SipEmulator getData called");
 		Log.d(TAG, "SipEmulator getData bytesReadBuffer size: "+bytesReadBuffer.size());
+		if(firstGet){
+			firstGet = false;
+			byte[] last = bytesReadBuffer.removeLast();
+			bytesReadBuffer.clear();
+			return last;
+		}
 		return bytesReadBuffer.poll();
 	}
 	

@@ -349,7 +349,12 @@ void get_mic_data(u8* buffer)
 {
 	LOGD("get_mic_data called");
 	jbyteArray jdata = (jbyteArray)jenv->CallObjectMethod(sipemu,getmicdata);
+	if(jdata==NULL){
+		LOGD("get_mic_data jdata NULL");
+		return;
+	}
 	LOGD("CallObjectMethod happened");
 	jenv->GetByteArrayRegion(jdata, 0, 512, (jbyte*)buffer);
 	LOGD("GetByteArrayRegion happened");
+	jenv->DeleteLocalRef(jdata);
 }
