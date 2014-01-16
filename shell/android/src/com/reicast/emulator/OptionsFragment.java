@@ -10,6 +10,8 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.InputDevice;
 import android.view.LayoutInflater;
@@ -93,6 +95,16 @@ public class OptionsFragment extends Fragment {
 				mCallback.onMainBrowseSelected(browse_entry, false);
 			}
 		});
+		
+		editBrowse.addTextChangedListener(new TextWatcher(){
+	        public void afterTextChanged(Editable s) {
+	        	if (editBrowse.getText() != null) {
+					browse_entry = editBrowse.getText().toString();
+				}
+	        }
+	        public void beforeTextChanged(CharSequence s, int start, int count, int after){}
+	        public void onTextChanged(CharSequence s, int start, int before, int count){}
+	    });
 
 		gameBrowse = (Button) getView().findViewById(R.id.browse_game_path);
 
@@ -109,6 +121,16 @@ public class OptionsFragment extends Fragment {
 				mCallback.onMainBrowseSelected(games_entry, true);
 			}
 		});
+		
+		editGames.addTextChangedListener(new TextWatcher(){
+	        public void afterTextChanged(Editable s) {
+	        	if (editBrowse.getText() != null) {
+					games_entry = editGames.getText().toString();
+				}
+	        }
+	        public void beforeTextChanged(CharSequence s, int start, int count, int after){}
+	        public void onTextChanged(CharSequence s, int start, int before, int count){}
+	    });
 
 	}
 }
