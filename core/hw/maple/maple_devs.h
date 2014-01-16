@@ -29,3 +29,4 @@ struct maple_device
 };
 
 maple_device* maple_Create(MapleDeviceType type);
+void get_mic_data(u8* buffer);

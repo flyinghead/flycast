@@ -35,7 +35,12 @@ extern "C"
   //JNIEXPORT jint JNICALL Java_com_reicast_emulator_JNIdc_play(JNIEnv *env,jobject obj,jshortArray result,jint size);
 
   JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_initControllers(JNIEnv *env, jobject obj, jbooleanArray controllers)  __attribute__((visibility("default")));
+  
+  JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_setupMic(JNIEnv *env,jobject obj,jobject sip)  __attribute__((visibility("default")));
 };
+
+#define  LOGD(...)  __android_log_print(ANDROID_LOG_DEBUG, "Android.cpp JNI wtf", __VA_ARGS__)
+
 
 void egl_stealcntx();
 void SetApplicationPath(wchar *path);
@@ -191,6 +196,9 @@ jshortArray jsamples;
 jmethodID writemid;
 jobject track;
 
+jobject sipemu;
+jmethodID getmicdata;
+
 JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_run(JNIEnv *env,jobject obj,jobject trk)
 {
 	install_prof_handler(0);
@@ -202,6 +210,13 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_run(JNIEnv *env,jobject o
 	writemid=env->GetMethodID(env->GetObjectClass(track),"WriteBuffer","([SI)I");
 
 	dc_run();
+}
+
+JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_setupMic(JNIEnv *env,jobject obj,jobject sip)
+{
+	sipemu = sip;
+	getmicdata = env->GetMethodID(env->GetObjectClass(sipemu),"getData","()[B");
+	
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_stop(JNIEnv *env,jobject obj)
@@ -329,4 +344,13 @@ u32 os_Push(void* frame, u32 amt, bool wait)
 bool os_IsAudioBuffered()
 {
     return jenv->CallIntMethod(track,writemid,jsamples,-1)==0;
+}
+
+void get_mic_data(u8* buffer)
+{
+	LOGD("get_mic_data called");
+	jbyteArray jdata = (jbyteArray)jenv->CallObjectMethod(sipemu,getmicdata);
+	LOGD("CallObjectMethod happened");
+	jenv->GetByteArrayRegion(jdata, 0, 512, (jbyte*)buffer);
+	LOGD("GetByteArrayRegion happened");
 }
