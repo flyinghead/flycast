@@ -324,20 +324,17 @@ public class FileBrowser extends Fragment {
 			childview.setTag(list.get(i));
 
 			orig_bg = childview.getBackground();
+			
+			final File game = list.get(i);
 
 			// vw.findViewById(R.id.childview).setBackgroundColor(0xFFFFFFFF);
 
 			childview.findViewById(R.id.childview).setOnClickListener(
 					new OnClickListener() {
 						public void onClick(View view) {
-							File f = (File) view.getTag();
 							vib.vibrate(50);
-							mCallback.onGameSelected(f != null ? Uri
-									.fromFile(f) : Uri.EMPTY);
-							// Intent inte = new
-							// Intent(Intent.ACTION_VIEW,f!=null?
-							// Uri.fromFile(f):Uri.EMPTY,parentActivity.getBaseContext(),GL2JNIActivity.class);
-							// FileBrowser.this.startActivity(inte);
+							mCallback.onGameSelected(game != null ? Uri
+									.fromFile(game) : Uri.EMPTY);
 							vib.vibrate(250);
 						}
 					});
