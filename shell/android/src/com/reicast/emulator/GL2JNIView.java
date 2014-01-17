@@ -406,15 +406,15 @@ class GL2JNIView extends GLSurfaceView
   int   pid = event.getActionIndex();
 
   if (editVjoyMode && selectedVjoyElement != -1 && aid == MotionEvent.ACTION_MOVE && !scaleGestureDetector.isInProgress()) {
-       float x = event.getX();
-       float y = event.getY();
+       float x = (event.getX()-tx)/scl;
+       float y = (event.getY()-ty)/scl;
 
        if (editLastX != 0 && editLastY != 0) {
             float deltaX = x - editLastX;
             float deltaY = y - editLastY;
 
-            vjoy_d_custom[selectedVjoyElement][0] += deltaX / scl;
-            vjoy_d_custom[selectedVjoyElement][1] += deltaY / scl;
+            vjoy_d_custom[selectedVjoyElement][0] += isTablet() ? deltaX * 2 : deltaX;
+            vjoy_d_custom[selectedVjoyElement][1] += isTablet() ? deltaY * 2 : deltaY;
 
             requestLayout();
        }

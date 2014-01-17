@@ -47,7 +47,7 @@ public class EditVJoyActivity extends Activity {
 
 		hlay.setOrientation(LinearLayout.HORIZONTAL);
 
-		hlay.addView(addbut(R.drawable.close, new OnClickListener() {
+		hlay.addView(addbut(R.drawable.apply, new OnClickListener() {
 			public void onClick(View v) {
 				Intent inte = new Intent(EditVJoyActivity.this, MainActivity.class);
 				startActivity(inte);
