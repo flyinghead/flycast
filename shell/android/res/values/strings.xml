@@ -31,14 +31,14 @@
     <string name="customize_touch_controls">Customize Touch Controls</string>
     <string name="launch_editor">Launch Editor</string>
     <string name="touch_vibration">Touch Vibration</string>
-    <string name="controller_1">Controller 1</string>
-    <string name="controller_2">Controller 2</string>
-    <string name="controller_3">Controller 3</string>
-    <string name="controller_4">Controller 4</string>
+    <string name="controller_a">Controller A</string>
+    <string name="controller_b">Controller B</string>
+    <string name="controller_c">Controller C</string>
+    <string name="controller_d">Controller D</string>
     <string name="controller_not_connected">Controller Not Connected</string>
     <string name="controller_none_selected">No Controller Selected</string>
-    <string name="select_controller">Select Controller</string>
-    <string name="remove_controller">Remove Controller</string>
+    <string name="select">Select</string>
+    <string name="remove">Remove</string>
     <string name="select_controller_title">Select Controller</string>
     <string name="select_controller_message">Press any button on the controller to assign to port</string>
     <string name="controller_already_in_use">This controller is already in use!</string>
@@ -67,7 +67,7 @@
         <item>Browser</item>
         <item>Settings</item>
         <item>Paths</item>
-        <item>Controllers</item>
+        <item>Input</item>
         <item>About</item>
     </string-array>
 
@@ -77,7 +77,7 @@
         <item>@drawable/disk_unknown</item>
         <item>@drawable/config</item>
         <item>@drawable/open_folder</item>
-        <item>@drawable/config</item>
+        <item>@drawable/input</item>
         <item>@drawable/question</item>
     </array>
 
