@@ -874,9 +874,20 @@ public:
 
 
 	
-	static void update_fz(float z)
+	static inline void update_fz(Vertex* vtx)
 	{
-		if ((s32&)vdrc.fZ_max<(s32&)z && (s32&)z<0x49800000)
+		s32 x = (s32&)vtx->x;
+		s32 y = (s32&)vtx->y;
+		s32 z = (s32&)vtx->z;
+
+		s32 xy = x | y;
+		s32 maxxy = max(x, y);
+
+		//if either is negative or > 1024
+		if (xy < 0) return;
+		if (maxxy > 0x44800000) return;
+
+		if ((s32&)vdrc.fZ_max<z && z<0x49800000)
 			vdrc.fZ_max=z;
 	}
 
@@ -891,7 +902,7 @@ public:
 		cv->x=vtx->xyz[0];
 		cv->y=vtx->xyz[1];
 		cv->z=invW;
-		update_fz(invW);
+		update_fz(cv);
 		return cv;
 	}
 
@@ -1227,12 +1238,12 @@ public:
 		cv[2].x=sv->x0;
 		cv[2].y=sv->y0;
 		cv[2].z=sv->z0;
-		update_fz(sv->z0);
+		update_fz(&cv[2]);
 
 		cv[3].x=sv->x1;
 		cv[3].y=sv->y1;
 		cv[3].z=sv->z1;
-		update_fz(sv->z1);
+		update_fz(&cv[3]);
 
 		cv[1].x=sv->x2;
 	}
@@ -1292,7 +1303,7 @@ public:
 
 		cv[1].y=sv->y2;
 		cv[1].z=sv->z2;
-		update_fz(sv->z2);
+		update_fz(&cv[1]);
 
 		cv[0].x=sv->x3;
 		cv[0].y=sv->y3;
@@ -1305,7 +1316,7 @@ public:
 
 		CaclulateSpritePlane(cv);
 
-		update_fz(cv[0].z);
+		update_fz(&cv[0]);
 
 		/*
 		if (CurrentPP->count)
@@ -1350,12 +1361,12 @@ public:
 		lmr->x0=mvv->x0;
 		lmr->y0=mvv->y0;
 		lmr->z0=mvv->z0;
-		update_fz(mvv->z0);
+		//update_fz(mvv->z0);
 
 		lmr->x1=mvv->x1;
 		lmr->y1=mvv->y1;
 		lmr->z1=mvv->z1;
-		update_fz(mvv->z1);
+		//update_fz(mvv->z1);
 
 		lmr->x2=mvv->x2;
 	}
@@ -1367,7 +1378,7 @@ public:
 			return;
 		lmr->y2=mvv->y2;
 		lmr->z2=mvv->z2;
-		update_fz(mvv->z2);
+		//update_fz(mvv->z2);
 	}
 
 	static void VDECInit()
