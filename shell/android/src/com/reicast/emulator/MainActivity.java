@@ -121,7 +121,7 @@ public class MainActivity extends FragmentActivity implements
 			// Paths
 			navDrawerItems.add(new NavDrawerItem(navMenuTitles[2], navMenuIcons
 					.getResourceId(2, 0)));
-			// Controllers
+			// Input
 			navDrawerItems.add(new NavDrawerItem(navMenuTitles[3], navMenuIcons
 					.getResourceId(3, 0)));
 			// About
@@ -437,15 +437,15 @@ public class MainActivity extends FragmentActivity implements
 			frag_tag = "OPTIONS_FRAG";
 			break;
 		case 3:
-			fragment = (ControllersFragment) getSupportFragmentManager()
-					.findFragmentByTag("CONTROLLERS_FRAG");
+			fragment = (InputFragment) getSupportFragmentManager()
+					.findFragmentByTag("INPUT_FRAG");
 			if (fragment != null) {
 				if (fragment.isVisible()) {
 					return;
 				}
 			}
-			fragment = new ControllersFragment();
-			frag_tag = "CONTROLLERS_FRAG";
+			fragment = new InputFragment();
+			frag_tag = "INPUT_FRAG";
 			break;
 		case 4:
 			fragment = null;

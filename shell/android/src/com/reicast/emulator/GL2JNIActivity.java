@@ -11,6 +11,7 @@ import com.reicast.emulator.GL2JNIView.EmuThread;
 import android.content.SharedPreferences;
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.net.Uri;
@@ -46,6 +47,10 @@ public class GL2JNIActivity extends Activity {
 
 	int map[][];
 
+	public static int getPixelsFromDp(float dps, Context context) {
+		return (int) (dps * context.getResources().getDisplayMetrics().density + 0.5f);
+	}
+
 	View addbut(int x, OnClickListener ocl) {
 		ImageButton but = new ImageButton(this);
 
@@ -63,8 +68,8 @@ public class GL2JNIActivity extends Activity {
 		// LinearLayout layout = new LinearLayout(this);
 
 		// tv = new TextView(this);
-
-		params = new LayoutParams(80, 80);
+		int p = getPixelsFromDp(60, this);
+		params = new LayoutParams(p, p);
 
 		// layout.setOrientation(LinearLayout.VERTICAL);
 		// tv.setText("Hi this is a sample text for popup window");
@@ -282,7 +287,7 @@ public class GL2JNIActivity extends Activity {
 			fileName = Uri.decode(intent.getData().toString());
 
 		// Create the actual GLES view
-		mView = new GL2JNIView(getApplication(), fileName, false, 24, 0);
+		mView = new GL2JNIView(getApplication(), fileName, false, 24, 0, false);
 		setContentView(mView);
 
 		Toast.makeText(getApplicationContext(),

@@ -6,6 +6,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
@@ -24,7 +25,7 @@ import android.widget.Toast;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 
 @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
-public class ControllersFragment extends Fragment {
+public class InputFragment extends Fragment {
 
 	private Activity parentActivity;
 	private int listenForButton = 0;
@@ -41,7 +42,7 @@ public class ControllersFragment extends Fragment {
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 			Bundle savedInstanceState) {
 		// Inflate the layout for this fragment
-		return inflater.inflate(R.layout.controllers_fragment, container, false);
+		return inflater.inflate(R.layout.input_fragment, container, false);
 	}
 
 	@Override
@@ -49,7 +50,16 @@ public class ControllersFragment extends Fragment {
 		parentActivity = getActivity();
 
 		sharedPreferences = PreferenceManager.getDefaultSharedPreferences(parentActivity);
-		
+
+		Button buttonLaunchEditor = (Button) getView()
+				.findViewById(R.id.buttonLaunchEditor);
+		buttonLaunchEditor.setOnClickListener(new View.OnClickListener() {
+    			public void onClick(View v) {
+				Intent inte = new Intent(parentActivity.getBaseContext(), EditVJoyActivity.class);
+				startActivity(inte);
+    			} 
+		});
+
 		OnCheckedChangeListener touch_vibration = new OnCheckedChangeListener() {
 
 			public void onCheckedChanged(CompoundButton buttonView,

@@ -19,6 +19,8 @@ import android.os.Vibrator;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.MotionEvent;
+import android.view.ScaleGestureDetector;
+import android.view.ScaleGestureDetector.SimpleOnScaleGestureListener;
 
 
 /**
@@ -58,31 +60,13 @@ class GL2JNIView extends GLSurfaceView
   private static final int key_CONT_X          = 0x0400;
   
   Vibrator vib;
-  
- 
-  private static final float[][] vjoy_d = new float[][]
-  { 
-    new float[] { 20+0,     288+64,   64,64, key_CONT_DPAD_LEFT},
-    new float[] { 20+64,    288+0,    64,64, key_CONT_DPAD_UP},
-    new float[] { 20+128,   288+64,   64,64, key_CONT_DPAD_RIGHT},
-    new float[] { 20+64,    288+128,  64,64, key_CONT_DPAD_DOWN},
 
-    new float[] { 448+0,    288+64,  64,64, key_CONT_X},
-    new float[] { 448+64,   288+0,   64,64, key_CONT_Y},
-    new float[] { 448+128,  288+64,  64,64, key_CONT_B},
-    new float[] { 448+64,   288+128, 64,64, key_CONT_A},
-
-    new float[] { 320-32,   288+128,  64,64, key_CONT_START},
-    
-    new float[] { 440, 200,  90,64, -1},
-    new float[] { 542, 200,  90,64, -2},
-    
-    new float[] { 16,   24+32,  128,128, -3},
-    new float[] { 96, 320,  32,32, -4},
-    
-    
-  };
+  private boolean editVjoyMode = false;
+  private int selectedVjoyElement = -1;
+  private ScaleGestureDetector scaleGestureDetector;
   
+  private static float[][] vjoy_d_custom;
+
   private static final float[][] vjoy = new float[][]
 		  { 
 		    new float[] { 24+0,     24+64,   64,64, key_CONT_DPAD_LEFT, 0},
@@ -109,29 +93,132 @@ class GL2JNIView extends GLSurfaceView
   Renderer rend;
 
   private boolean touchVibrationEnabled;
-  
+  Context context;
+
+  private static float[][] getVjoy_d(float[][] vjoy_d_custom) {
+       return new float[][]
+         { 
+           new float[] { 20+0*vjoy_d_custom[0][2]+vjoy_d_custom[0][0],     288+64*vjoy_d_custom[0][2]+vjoy_d_custom[0][1],   64*vjoy_d_custom[0][2],64*vjoy_d_custom[0][2], key_CONT_DPAD_LEFT},
+           new float[] { 20+64*vjoy_d_custom[0][2]+vjoy_d_custom[0][0],    288+0*vjoy_d_custom[0][2]+vjoy_d_custom[0][1],    64*vjoy_d_custom[0][2],64*vjoy_d_custom[0][2], key_CONT_DPAD_UP},
+           new float[] { 20+128*vjoy_d_custom[0][2]+vjoy_d_custom[0][0],   288+64*vjoy_d_custom[0][2]+vjoy_d_custom[0][1],   64*vjoy_d_custom[0][2],64*vjoy_d_custom[0][2], key_CONT_DPAD_RIGHT},
+           new float[] { 20+64*vjoy_d_custom[0][2]+vjoy_d_custom[0][0],    288+128*vjoy_d_custom[0][2]+vjoy_d_custom[0][1],  64*vjoy_d_custom[0][2],64*vjoy_d_custom[0][2], key_CONT_DPAD_DOWN},
+
+           new float[] { 448+0*vjoy_d_custom[1][2]+vjoy_d_custom[1][0],    288+64*vjoy_d_custom[1][2]+vjoy_d_custom[1][1],  64*vjoy_d_custom[1][2],64*vjoy_d_custom[1][2], key_CONT_X},
+           new float[] { 448+64*vjoy_d_custom[1][2]+vjoy_d_custom[1][0],   288+0*vjoy_d_custom[1][2]+vjoy_d_custom[1][1],   64*vjoy_d_custom[1][2],64*vjoy_d_custom[1][2], key_CONT_Y},
+           new float[] { 448+128*vjoy_d_custom[1][2]+vjoy_d_custom[1][0],  288+64*vjoy_d_custom[1][2]+vjoy_d_custom[1][1],  64*vjoy_d_custom[1][2],64*vjoy_d_custom[1][2], key_CONT_B},
+           new float[] { 448+64*vjoy_d_custom[1][2]+vjoy_d_custom[1][0],   288+128*vjoy_d_custom[1][2]+vjoy_d_custom[1][1], 64*vjoy_d_custom[1][2],64*vjoy_d_custom[1][2], key_CONT_A},
+
+           new float[] { 320-32+vjoy_d_custom[2][0],   288+128+vjoy_d_custom[2][1],  64*vjoy_d_custom[2][2],64*vjoy_d_custom[2][2], key_CONT_START},
+    
+           new float[] { 440+vjoy_d_custom[3][0], 200+vjoy_d_custom[3][1],  90*vjoy_d_custom[3][2],64*vjoy_d_custom[3][2], -1},
+           new float[] { 542+vjoy_d_custom[4][0], 200+vjoy_d_custom[4][1],  90*vjoy_d_custom[4][2],64*vjoy_d_custom[4][2], -2},
+    
+           new float[] { 16+vjoy_d_custom[5][0],   24+32+vjoy_d_custom[5][1],  128*vjoy_d_custom[5][2],128*vjoy_d_custom[5][2], -3},
+           new float[] { 96+vjoy_d_custom[5][0], 320+vjoy_d_custom[5][1],  32*vjoy_d_custom[5][2],32*vjoy_d_custom[5][2], -4},
+         };
+  }
+
+  private static void writeCustomVjoyValues(float[][] vjoy_d_custom, Context context) {
+       SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+
+       prefs.edit().putFloat("touch_x_shift_dpad", vjoy_d_custom[0][0]).commit();
+       prefs.edit().putFloat("touch_y_shift_dpad", vjoy_d_custom[0][1]).commit();
+       prefs.edit().putFloat("touch_scale_dpad", vjoy_d_custom[0][2]).commit();
+
+       prefs.edit().putFloat("touch_x_shift_buttons", vjoy_d_custom[1][0]).commit();
+       prefs.edit().putFloat("touch_y_shift_buttons", vjoy_d_custom[1][1]).commit();
+       prefs.edit().putFloat("touch_scale_buttons", vjoy_d_custom[1][2]).commit();
+
+       prefs.edit().putFloat("touch_x_shift_start", vjoy_d_custom[2][0]).commit();
+       prefs.edit().putFloat("touch_y_shift_start", vjoy_d_custom[2][1]).commit();
+       prefs.edit().putFloat("touch_scale_start", vjoy_d_custom[2][2]).commit();
+
+       prefs.edit().putFloat("touch_x_shift_left_trigger", vjoy_d_custom[3][0]).commit();
+       prefs.edit().putFloat("touch_y_shift_left_trigger", vjoy_d_custom[3][1]).commit();
+       prefs.edit().putFloat("touch_scale_left_trigger", vjoy_d_custom[3][2]).commit();
+
+       prefs.edit().putFloat("touch_x_shift_right_trigger", vjoy_d_custom[4][0]).commit();
+       prefs.edit().putFloat("touch_y_shift_right_trigger", vjoy_d_custom[4][1]).commit();
+       prefs.edit().putFloat("touch_scale_right_trigger", vjoy_d_custom[4][2]).commit();
+
+       prefs.edit().putFloat("touch_x_shift_analog", vjoy_d_custom[5][0]).commit();
+       prefs.edit().putFloat("touch_y_shift_analog", vjoy_d_custom[5][1]).commit();
+       prefs.edit().putFloat("touch_scale_analog", vjoy_d_custom[5][2]).commit();
+  }
+
+  private static float[][] readCustomVjoyValues(Context context) {
+       SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+
+       return new float[][]
+       {
+        // x-shift, y-shift, sizing-factor
+        new float[] { prefs.getFloat("touch_x_shift_dpad", 0), prefs.getFloat("touch_y_shift_dpad", 0), prefs.getFloat("touch_scale_dpad", 1) }, // DPAD
+        new float[] { prefs.getFloat("touch_x_shift_buttons", 0), prefs.getFloat("touch_y_shift_buttons", 0), prefs.getFloat("touch_scale_buttons", 1) }, // X, Y, B, A Buttons
+        new float[] { prefs.getFloat("touch_x_shift_start", 0), prefs.getFloat("touch_y_shift_start", 0), prefs.getFloat("touch_scale_start", 1) }, // Start
+        new float[] { prefs.getFloat("touch_x_shift_left_trigger", 0), prefs.getFloat("touch_y_shift_left_trigger", 0), prefs.getFloat("touch_scale_left_trigger", 1) }, // Left Trigger
+        new float[] { prefs.getFloat("touch_x_shift_right_trigger", 0), prefs.getFloat("touch_y_shift_right_trigger", 0), prefs.getFloat("touch_scale_right_trigger", 1) }, // Right Trigger
+        new float[] { prefs.getFloat("touch_x_shift_analog", 0), prefs.getFloat("touch_y_shift_analog", 0), prefs.getFloat("touch_scale_analog", 1) } // Analog Stick
+       };
+  }
+
+  public void resetCustomVjoyValues() {
+       SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+
+       prefs.edit().remove("touch_x_shift_dpad").commit();
+       prefs.edit().remove("touch_y_shift_dpad").commit();
+       prefs.edit().remove("touch_scale_dpad").commit();
+
+       prefs.edit().remove("touch_x_shift_buttons").commit();
+       prefs.edit().remove("touch_y_shift_buttons").commit();
+       prefs.edit().remove("touch_scale_buttons").commit();
+
+       prefs.edit().remove("touch_x_shift_start").commit();
+       prefs.edit().remove("touch_y_shift_start").commit();
+       prefs.edit().remove("touch_scale_start").commit();
+
+       prefs.edit().remove("touch_x_shift_left_trigger").commit();
+       prefs.edit().remove("touch_y_shift_left_trigger").commit();
+       prefs.edit().remove("touch_scale_left_trigger").commit();
+
+       prefs.edit().remove("touch_x_shift_right_trigger").commit();
+       prefs.edit().remove("touch_y_shift_right_trigger").commit();
+       prefs.edit().remove("touch_scale_right_trigger").commit();
+
+       prefs.edit().remove("touch_x_shift_analog").commit();
+       prefs.edit().remove("touch_y_shift_analog").commit();
+       prefs.edit().remove("touch_scale_analog").commit();
+
+       vjoy_d_custom = readCustomVjoyValues(context);
+
+       resetEditMode();
+       requestLayout();
+  }
   	
-  public GL2JNIView(Context context,String newFileName,boolean translucent,int depth,int stencil)
+  public GL2JNIView(Context context,String newFileName,boolean translucent,int depth,int stencil,boolean editVjoyMode)
   {
     super(context);
+    this.context = context;
+    this.editVjoyMode = editVjoyMode;
     setKeepScreenOn(true);
     vib=(Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
 
     SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
     touchVibrationEnabled = prefs.getBoolean("touch_vibration_enabled", true);
     
+    vjoy_d_custom = readCustomVjoyValues(context);
+
+    scaleGestureDetector = new ScaleGestureDetector(context, new OscOnScaleGestureListener());
+
     // This is the game we are going to run
     fileName = newFileName;
-    
+
     if (GL2JNIActivity.syms != null)
     	JNIdc.data(1, GL2JNIActivity.syms);
-  
-    JNIdc.hide_osd();
+
     int[] kcode = { 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF };
     int[] rt = { 0, 0, 0, 0 }, lt = { 0, 0, 0, 0 };
     int[] jx = { 128, 128, 128, 128 }, jy = { 128, 128, 128, 128 };
     JNIdc.init(fileName);
-
 
     // By default, GLSurfaceView() creates a RGB_565 opaque surface.
     // If we want a translucent one, we should change the surface's
@@ -214,11 +301,11 @@ class GL2JNIView extends GLSurfaceView
   }
 
   @Override
-	protected void onLayout(boolean changed, int left, int top, int right, int bottom) 
+  protected void onLayout(boolean changed, int left, int top, int right, int bottom) 
   {  
 		super.onLayout(changed, left, top, right, bottom);
 		//dcpx/cm = dcpx/px * px/cm
-    float magic = isTablet() ? 0.8f : 0.7f;
+                float magic = isTablet() ? 0.8f : 0.7f;
 		float scl=480.0f/getHeight() * getContext().getResources().getDisplayMetrics().density * magic;
 		float scl_dc=getHeight()/480.0f;
 		float tx  = ((getWidth()-640.0f*scl_dc)/2)/scl_dc;
@@ -226,25 +313,28 @@ class GL2JNIView extends GLSurfaceView
 		float a_x = -tx+ 24*scl;
 		float a_y=- 24*scl;
 		
+                float[][] vjoy_d = getVjoy_d(vjoy_d_custom);
+
 		for(int i=0;i<vjoy.length;i++)
 		{
-			if (vjoy_d[i][0]==288)
-				;
-			else if (vjoy_d[i][0]<320)
+			if (vjoy_d[i][0] == 288)
+				vjoy[i][0] = vjoy_d[i][0];
+			else if (vjoy_d[i][0]-vjoy_d_custom[getElementIdFromButtonId(i)][0] < 320)
 				vjoy[i][0] = a_x + vbase(vjoy_d[i][0],scl);
 			else
-				vjoy[i][0] = -a_x+vbase(vjoy_d[i][0],640,scl);
+				vjoy[i][0] = -a_x + vbase(vjoy_d[i][0],640,scl);
 			
-			vjoy[i][1]=a_y + vbase(vjoy_d[i][1],480,scl);
+			vjoy[i][1] = a_y + vbase(vjoy_d[i][1],480,scl);
 			
-			vjoy[i][2]=vbase(vjoy_d[i][2],scl);
-			vjoy[i][3]=vbase(vjoy_d[i][3],scl);
+			vjoy[i][2] = vbase(vjoy_d[i][2],scl);
+			vjoy[i][3] = vbase(vjoy_d[i][3],scl);
 		}
 		
 		for(int i=0;i<vjoy.length;i++)
 		      JNIdc.vjoy(i,vjoy[i][0],vjoy[i][1],vjoy[i][2],vjoy[i][3]);
 		    
-		reset_analog(); 
+		reset_analog();
+                writeCustomVjoyValues(vjoy_d_custom, context);
 	}
   
   /*
@@ -253,7 +343,7 @@ class GL2JNIView extends GLSurfaceView
    * 	UP / CANCEL -> reset state
    * 	POINTER_UP -> check for freed analog
    * */
-  int anal_id=-1;
+  int anal_id=-1, lt_id=-1, rt_id=-1;
   /*
   bool intersects(CircleType circle, RectType rect)
   {
@@ -273,12 +363,38 @@ class GL2JNIView extends GLSurfaceView
   }
   */
 
+  private void resetEditMode() {
+        editLastX = 0;
+        editLastY = 0;
+  }
+
+  private static int getElementIdFromButtonId(int buttonId) {
+       if (buttonId <= 3)
+            return 0; // DPAD
+       else if (buttonId <= 7)
+            return 1; // X, Y, B, A Buttons
+       else if (buttonId == 8)
+            return 2; // Start
+       else if (buttonId == 9)
+            return 3; // Left Trigger
+       else if (buttonId == 10)
+            return 4; // Right Trigger
+       else if (buttonId <= 12)
+            return 5; // Analog
+       else
+            return -1; // Invalid
+  }
+
   static int[] kcode_raw = { 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF };
   static int[] lt = new int[4], rt = new int[4], jx = new int[4], jy = new int[4];
+
+  float editLastX = 0, editLastY = 0;
 
   @Override public boolean onTouchEvent(final MotionEvent event) 
   {
   JNIdc.show_osd();
+
+  scaleGestureDetector.onTouchEvent(event);
   
   float ty  = 0.0f;
   float scl  = getHeight()/480.0f;
@@ -288,6 +404,26 @@ class GL2JNIView extends GLSurfaceView
   
   int   aid = event.getActionMasked();
   int   pid = event.getActionIndex();
+
+  if (editVjoyMode && selectedVjoyElement != -1 && aid == MotionEvent.ACTION_MOVE && !scaleGestureDetector.isInProgress()) {
+       float x = (event.getX()-tx)/scl;
+       float y = (event.getY()-ty)/scl;
+
+       if (editLastX != 0 && editLastY != 0) {
+            float deltaX = x - editLastX;
+            float deltaY = y - editLastY;
+
+            vjoy_d_custom[selectedVjoyElement][0] += isTablet() ? deltaX * 2 : deltaX;
+            vjoy_d_custom[selectedVjoyElement][1] += isTablet() ? deltaY * 2 : deltaY;
+
+            requestLayout();
+       }
+
+       editLastX = x;
+       editLastY = y;
+
+       return true;
+  }
   
   //LOGI("Touch: " + aid + ", " + pid);
     
@@ -315,7 +451,8 @@ class GL2JNIView extends GLSurfaceView
 		    {
 		    	if (vjoy[j][4]>=-2)
 		    	{
-		    		if (vjoy[j][5]==0 && touchVibrationEnabled)
+		    		if (vjoy[j][5]==0)
+					if (!editVjoyMode && touchVibrationEnabled)
 			    			vib.vibrate(50);
 		    		vjoy[j][5]=2;
 		    	}
@@ -323,17 +460,43 @@ class GL2JNIView extends GLSurfaceView
 		      
 		      if(vjoy[j][4]==-3)
 		      {
-        		  vjoy[j+1][0]=x-vjoy[j+1][2]/2;
-        		  vjoy[j+1][1]=y-vjoy[j+1][3]/2;
+                          if (editVjoyMode) {
+                                selectedVjoyElement = 5; // Analog
+                                resetEditMode();
+                          } else {
+        		        vjoy[j+1][0]=x-vjoy[j+1][2]/2;
+        		        vjoy[j+1][1]=y-vjoy[j+1][3]/2;
         		  
-        		  JNIdc.vjoy(j+1, vjoy[j+1][0], vjoy[j+1][1] , vjoy[j+1][2], vjoy[j+1][3]);
-        		  anal_id=event.getPointerId(i);      	  
+        		        JNIdc.vjoy(j+1, vjoy[j+1][0], vjoy[j+1][1] , vjoy[j+1][2], vjoy[j+1][3]);
+        		        anal_id=event.getPointerId(i);
+                          }
 	          }
-		      else if (vjoy[j][4]==-4) ;
-	          else if(vjoy[j][4]==-1) lt[0]=pre;
-	          else if(vjoy[j][4]==-2) rt[0]=pre;
-	          else                    
-	        	  rv&=~(int)vjoy[j][4];
+		  else if (vjoy[j][4]==-4);
+	          else if(vjoy[j][4]==-1) {
+                          if (editVjoyMode) {
+                                selectedVjoyElement = 3; // Left Trigger
+                                resetEditMode();
+                          } else {
+                                lt[0]=pre;
+                                lt_id=event.getPointerId(i);
+                          }
+                  }
+	          else if(vjoy[j][4]==-2) {
+                          if (editVjoyMode) {
+                                selectedVjoyElement = 4; // Right Trigger
+                                resetEditMode();
+                          } else{
+                                rt[0]=pre;
+                                rt_id=event.getPointerId(i);
+                          }
+                  }
+	          else {
+                          if (editVjoyMode) {
+                                selectedVjoyElement = getElementIdFromButtonId(j);
+                                resetEditMode();
+                          } else
+	        	        rv&=~(int)vjoy[j][4];
+                  }
 	        }
 		  }
 		}
@@ -357,7 +520,7 @@ class GL2JNIView extends GLSurfaceView
 		  JNIdc.vjoy(j+1, vjoy[j+1][0], vjoy[j+1][1] , vjoy[j+1][2], vjoy[j+1][3]);
 		  
 	  }
-	}
+  }
   
   for(int j=0;j<vjoy.length;j++)
 	{
@@ -371,13 +534,16 @@ class GL2JNIView extends GLSurfaceView
   {
   	case MotionEvent.ACTION_UP:
   	case MotionEvent.ACTION_CANCEL:
+  		selectedVjoyElement = -1;
   		reset_analog();
   		anal_id=-1;
   		rv=0xFFFF;
   		rt[0]=0;
   		lt[0]=0;
-  		 for(int j=0;j<vjoy.length;j++)
-  			 vjoy[j][5]=0;
+  		lt_id=-1;
+  		rt_id=-1;
+  		for(int j=0;j<vjoy.length;j++)
+  			vjoy[j][5]=0;
 	break;
 	
   	case MotionEvent.ACTION_POINTER_UP:
@@ -386,6 +552,16 @@ class GL2JNIView extends GLSurfaceView
   			reset_analog();
   			anal_id=-1;
   		}
+                else if (event.getPointerId(event.getActionIndex())==lt_id)
+                {
+                        lt[0]=0;
+  			lt_id=-1;
+                }
+                else if (event.getPointerId(event.getActionIndex())==rt_id)
+                {
+                        rt[0]=0;
+  			rt_id=-1;
+                }
 	break;
 	
   	case MotionEvent.ACTION_POINTER_DOWN:
@@ -405,7 +581,27 @@ class GL2JNIView extends GLSurfaceView
     jy[0] = get_anal(11, 1);
     return(true);
   }
-  
+
+private class OscOnScaleGestureListener extends
+  SimpleOnScaleGestureListener {
+
+ @Override
+ public boolean onScale(ScaleGestureDetector detector) {
+  if (editVjoyMode && selectedVjoyElement != -1) {
+       vjoy_d_custom[selectedVjoyElement][2] *= detector.getScaleFactor();
+       requestLayout();
+
+       return true;
+  }
+
+  return false;
+ }
+
+ @Override
+ public void onScaleEnd(ScaleGestureDetector detector) {
+  selectedVjoyElement = -1;
+ }
+}
 
 private static class ContextFactory implements GLSurfaceView.EGLContextFactory
   {
