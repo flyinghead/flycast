@@ -39,8 +39,6 @@ extern "C"
   JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_setupMic(JNIEnv *env,jobject obj,jobject sip)  __attribute__((visibility("default")));
 };
 
-#define  LOGD(...)  __android_log_print(ANDROID_LOG_DEBUG, "Android.cpp JNI wtf", __VA_ARGS__)
-
 
 void egl_stealcntx();
 void SetApplicationPath(wchar *path);
@@ -347,14 +345,11 @@ bool os_IsAudioBuffered()
 
 void get_mic_data(u8* buffer)
 {
-	LOGD("get_mic_data called");
 	jbyteArray jdata = (jbyteArray)jenv->CallObjectMethod(sipemu,getmicdata);
 	if(jdata==NULL){
-		LOGD("get_mic_data jdata NULL");
+		LOGW("get_mic_data NULL");
 		return;
 	}
-	LOGD("CallObjectMethod happened");
-	jenv->GetByteArrayRegion(jdata, 0, 512, (jbyte*)buffer);
-	LOGD("GetByteArrayRegion happened");
+	jenv->GetByteArrayRegion(jdata, 0, SIZE_OF_MIC_DATA, (jbyte*)buffer);
 	jenv->DeleteLocalRef(jdata);
 }

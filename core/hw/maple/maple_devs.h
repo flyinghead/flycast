@@ -29,4 +29,5 @@ struct maple_device
 };
 
 maple_device* maple_Create(MapleDeviceType type);
-void get_mic_data(u8* buffer);
+#define SIZE_OF_MIC_DATA	512 //ALSO DEFINED IN SipEmulator.java
+void get_mic_data(u8* buffer); //implemented in Android.cpp

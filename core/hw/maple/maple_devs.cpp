@@ -656,6 +656,13 @@ struct maple_sega_vmu: maple_base
 
 struct maple_microphone: maple_base
 {
+	u8 micdata[SIZE_OF_MIC_DATA];
+
+	virtual void OnSetup()
+	{
+		memset(micdata,0,sizeof(micdata));
+	}
+
 	virtual u32 dma(u32 cmd)
 	{
 		//printf("maple_microphone::dma Called 0x%X;Command %d\n",this->maple_port,cmd);
@@ -775,21 +782,28 @@ struct maple_microphone: maple_base
 				case 0x01:
 				{
 					LOGD("maple_microphone::dma MDCF_MICControl someone wants some data!");
-					//maximum size of a Maple Bus packet is 256 words (1024 bytes)
-					//maybe i should start with 512 (same as vmu)
-					u8* micdata=(u8*)malloc(512);
+
+					//do i need this?
+					//w32(MFID_4_Mic);
+
 					get_mic_data(micdata);
-					wptr(micdata, 512);
+					wptr(micdata, SIZE_OF_MIC_DATA);
 					
 					return MDRS_DataTransfer;
 				}
 				case 0x02:
-					LOGD("maple_microphone::dma MDCF_MICControl toggle recording!");
+					LOGD("maple_microphone::dma MDCF_MICControl toggle recording %#010x\n",secondword);
 					//this is where i should start recording...
 
 					return MDRS_DeviceReply;
 				case 0x03:
+					LOGD("maple_microphone::dma MDCF_MICControl set gain %#010x\n",secondword);
 					return MDRS_DeviceReply;
+				case MDRE_TransminAgain:
+					LOGD("maple_microphone::dma MDCF_MICControl MDRE_TransminAgain");
+					//w32(MFID_4_Mic);
+					wptr(micdata, SIZE_OF_MIC_DATA);
+					return MDRS_DataTransfer;
 				default:
 					LOGD("maple_microphone::dma UNHANDLED secondword %#010x\n",secondword);
 					break;
