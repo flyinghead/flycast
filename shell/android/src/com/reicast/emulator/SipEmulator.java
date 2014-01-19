@@ -15,8 +15,8 @@ public class SipEmulator extends Thread {
 	static final int BUFFER_SIZE = 22050;
 	//this needs to get set to the amount the mic normally sends per data request
 	//...cant be bigger than a maple packet
-	static final int ONE_BLIP_SIZE = 512; //ALSO DEFINED IN maple_devs.h
-	//static final long TIME_TO_WAIT_BETWEEN_POLLS = 1000 / (BUFFER_SIZE / ONE_BLIP_SIZE);
+	// 240 16 (or 14) bit samples
+	static final int ONE_BLIP_SIZE = 480; //ALSO DEFINED IN maple_devs.h
 	
 	private AudioRecord record;
 	private LinkedList<byte[]> bytesReadBuffer;

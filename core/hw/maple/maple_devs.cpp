@@ -706,6 +706,7 @@ struct maple_microphone: maple_base
 
 		case MDCF_GetCondition:
 			{
+				LOGD("maple_microphone::dma MDCF_GetCondition");
 				//this was copied from the controller case with just the id replaced!
 
 				//PlainJoystickState pjs;
@@ -781,14 +782,25 @@ struct maple_microphone: maple_base
 				{
 				case 0x01:
 				{
-					LOGD("maple_microphone::dma MDCF_MICControl someone wants some data!");
+					LOGD("maple_microphone::dma MDCF_MICControl someone wants some data! (2nd word) %#010x\n", subcommand);
 
-					//do i need this?
-					//w32(MFID_4_Mic);
+					w32(MFID_4_Mic);
 
-					get_mic_data(micdata);
-					wptr(micdata, SIZE_OF_MIC_DATA);
-					
+					//from what i can tell this is up to spec but results in transmit again
+					//w32(secondword);
+
+					//32 bit header
+					w8(0x04);//status (just the bit for recording)
+					w8(0x0f);//gain (default)
+					w8(0);//exp ?
+
+					if(get_mic_data(micdata)){
+						w8(240);//ct (240 samples)
+						wptr(micdata, SIZE_OF_MIC_DATA);
+					}else{
+						w8(0);
+					}
+
 					return MDRS_DataTransfer;
 				}
 				case 0x02:
@@ -801,9 +813,9 @@ struct maple_microphone: maple_base
 					return MDRS_DeviceReply;
 				case MDRE_TransminAgain:
 					LOGD("maple_microphone::dma MDCF_MICControl MDRE_TransminAgain");
-					//w32(MFID_4_Mic);
-					wptr(micdata, SIZE_OF_MIC_DATA);
-					return MDRS_DataTransfer;
+					//apparently this doesnt matter
+					//wptr(micdata, SIZE_OF_MIC_DATA);
+					return MDRS_DeviceReply;//MDRS_DataTransfer;
 				default:
 					LOGD("maple_microphone::dma UNHANDLED secondword %#010x\n",secondword);
 					break;
