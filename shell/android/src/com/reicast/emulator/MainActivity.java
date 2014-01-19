@@ -94,7 +94,7 @@ public class MainActivity extends FragmentActivity implements
 
 			// Add the fragment to the 'fragment_container' FrameLayout
 			getSupportFragmentManager().beginTransaction()
-					.add(R.id.fragment_container, firstFragment).commit();
+					.replace(R.id.fragment_container, firstFragment).commit();
 		}
 
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR1) {
