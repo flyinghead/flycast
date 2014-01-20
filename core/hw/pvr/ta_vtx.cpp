@@ -874,7 +874,7 @@ public:
 
 
 	
-	static inline void update_fz(Vertex* vtx)
+	static inline void update_fz(float z)
 	{
 		if ((s32&)vdrc.fZ_max<(s32&)z && (s32&)z<0x49800000)
 			vdrc.fZ_max=z;
