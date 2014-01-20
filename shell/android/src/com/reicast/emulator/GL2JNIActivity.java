@@ -187,7 +187,12 @@ public class GL2JNIActivity extends Activity {
 
 		int joys[] = InputDevice.getDeviceIds();
 		for (int i = 0; i < joys.length; i++) {
-			String descriptor = InputDevice.getDevice(joys[i]).getDescriptor();
+			String descriptor = null;
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+				descriptor = InputDevice.getDevice(joys[i]).getDescriptor();
+			} else {
+				descriptor = InputDevice.getDevice(joys[i]).getName();
+			}
 			Log.d("reidc", "InputDevice ID: " + joys[i]);
 			Log.d("reidc", "InputDevice Name: "
 					+ InputDevice.getDevice(joys[i]).getName());

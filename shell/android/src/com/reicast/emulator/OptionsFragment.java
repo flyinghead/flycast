@@ -18,7 +18,6 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 
-@TargetApi(Build.VERSION_CODES.JELLY_BEAN)
 public class OptionsFragment extends Fragment {
 
 	Activity parentActivity;

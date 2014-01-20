@@ -26,7 +26,6 @@ import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.TextView;
 
-@TargetApi(Build.VERSION_CODES.JELLY_BEAN)
 public class ConfigureFragment extends Fragment {
 
 	Activity parentActivity;

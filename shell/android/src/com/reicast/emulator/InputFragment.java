@@ -25,7 +25,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 
-@TargetApi(Build.VERSION_CODES.JELLY_BEAN)
 public class InputFragment extends Fragment {
 
 	private Activity parentActivity;
@@ -168,7 +167,12 @@ public class InputFragment extends Fragment {
 
 		for (int devideId : InputDevice.getDeviceIds()) {
 			InputDevice dev = InputDevice.getDevice(devideId);
-			String descriptor = dev.getDescriptor();
+			String descriptor = null;
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+			descriptor = dev.getDescriptor();
+			} else {
+				descriptor = dev.getName();
+			}
 
 			if (descriptor != null) {
 				if (descriptor.equals(deviceDescriptorPlayer1))
@@ -277,7 +281,14 @@ public class InputFragment extends Fragment {
 		 keyCode == KeyEvent.KEYCODE_VOLUME_UP || keyCode == KeyEvent.KEYCODE_VOLUME_DOWN)
 			return false;
 
-		String descriptor = InputDevice.getDevice(event.getDeviceId()).getDescriptor();
+		String descriptor = null;
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+			descriptor = InputDevice.getDevice(event.getDeviceId())
+				.getDescriptor();
+		} else {
+			descriptor = InputDevice.getDevice(event.getDeviceId())
+					.getName();
+		}
 
 		if (descriptor == null)
 			return false;
