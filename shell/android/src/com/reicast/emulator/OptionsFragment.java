@@ -12,8 +12,6 @@ import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
-import android.view.InputDevice;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -50,16 +48,6 @@ public class OptionsFragment extends Fragment {
 		} catch (ClassCastException e) {
 			throw new ClassCastException(activity.toString()
 					+ " must implement OnClickListener");
-		}
-
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
-			int joys[] = InputDevice.getDeviceIds();
-			for (int i = 0; i < joys.length; i++) {
-				Log.d("reidc", "InputDevice ID: " + joys[i]);
-				Log.d("reidc",
-						"InputDevice Name: "
-								+ InputDevice.getDevice(joys[i]).getName());
-			}
 		}
 	}
 

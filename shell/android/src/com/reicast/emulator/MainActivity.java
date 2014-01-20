@@ -30,6 +30,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnTouchListener;
 import android.widget.AdapterView;
+import android.widget.ImageView;
 import android.widget.ListView;
 
 public class MainActivity extends FragmentActivity implements
@@ -154,6 +155,7 @@ public class MainActivity extends FragmentActivity implements
 					// icons
 					invalidateOptionsMenu();
 				}
+
 				@SuppressLint("NewApi")
 				public void onDrawerOpened(View drawerView) {
 					getActionBar().setTitle(mDrawerTitle);
@@ -187,7 +189,7 @@ public class MainActivity extends FragmentActivity implements
 				}
 
 			});
-			
+
 			findViewById(R.id.options).setOnClickListener(
 					new OnClickListener() {
 						public void onClick(View view) {
@@ -207,25 +209,29 @@ public class MainActivity extends FragmentActivity implements
 						}
 
 					});
-			
-			findViewById(R.id.input).setOnClickListener(new OnClickListener() {
-				public void onClick(View view) {
-					InputFragment inputFrag = (InputFragment) getSupportFragmentManager()
-							.findFragmentByTag("INPUT_FRAG");
-					if (inputFrag != null) {
-						if (inputFrag.isVisible()) {
-							return;
+			ImageView inputButton = (ImageView) findViewById(R.id.input);
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
+				inputButton.setOnClickListener(new OnClickListener() {
+					public void onClick(View view) {
+						InputFragment inputFrag = (InputFragment) getSupportFragmentManager()
+								.findFragmentByTag("INPUT_FRAG");
+						if (inputFrag != null) {
+							if (inputFrag.isVisible()) {
+								return;
+							}
 						}
+						inputFrag = new InputFragment();
+						getSupportFragmentManager()
+								.beginTransaction()
+								.replace(R.id.fragment_container, inputFrag,
+										"INPUT_FRAG").addToBackStack(null)
+								.commit();
 					}
-					inputFrag = new InputFragment();
-					getSupportFragmentManager()
-							.beginTransaction()
-							.replace(R.id.fragment_container, inputFrag,
-									"INPUT_FRAG").addToBackStack(null)
-							.commit();
-				}
 
-			});
+				});
+			} else {
+				inputButton.setVisibility(View.GONE);
+			}
 
 			findViewById(R.id.about).setOnTouchListener(new OnTouchListener() {
 				public boolean onTouch(View v, MotionEvent event) {
@@ -294,7 +300,7 @@ public class MainActivity extends FragmentActivity implements
 										int id) {
 									// if this button is clicked, close
 									// current activity
-									//MainActivity.this.finish();
+									// MainActivity.this.finish();
 								}
 							})
 					.setNegativeButton("Options",
@@ -303,22 +309,31 @@ public class MainActivity extends FragmentActivity implements
 										int id) {
 									FileBrowser firstFragment = new FileBrowser();
 									Bundle args = new Bundle();
-									//args.putBoolean("ImgBrowse", false);
-									// specify ImgBrowse option. true = images, false = folders only
-									args.putString("browse_entry", sdcard.toString());
-									// specify a path for selecting folder options
+									// args.putBoolean("ImgBrowse", false);
+									// specify ImgBrowse option. true = images,
+									// false = folders only
+									args.putString("browse_entry",
+											sdcard.toString());
+									// specify a path for selecting folder
+									// options
 									args.putBoolean("games_entry", false);
-									// selecting a BIOS folder, so this is not games
+									// selecting a BIOS folder, so this is not
+									// games
 
 									firstFragment.setArguments(args);
-									// In case this activity was started with special instructions from
-									// an Intent, pass the Intent's extras to the fragment as arguments
+									// In case this activity was started with
+									// special instructions from
+									// an Intent, pass the Intent's extras to
+									// the fragment as arguments
 									// firstFragment.setArguments(getIntent().getExtras());
 
-									// Add the fragment to the 'fragment_container' FrameLayout
+									// Add the fragment to the
+									// 'fragment_container' FrameLayout
 									getSupportFragmentManager()
 											.beginTransaction()
-											.replace(R.id.fragment_container, firstFragment, "MAIN_BROWSER")
+											.replace(R.id.fragment_container,
+													firstFragment,
+													"MAIN_BROWSER")
 											.addToBackStack(null).commit();
 								}
 							});
@@ -328,10 +343,9 @@ public class MainActivity extends FragmentActivity implements
 
 			// show it
 			alertDialog.show();
-		}
-		else {
+		} else {
 			Intent inte = new Intent(Intent.ACTION_VIEW, uri, getBaseContext(),
-				GL2JNIActivity.class);
+					GL2JNIActivity.class);
 			startActivity(inte);
 		}
 	}
