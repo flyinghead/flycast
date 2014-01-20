@@ -87,4 +87,6 @@
     <string name="textOn">ON</string>
     <string name="textOff">OFF</string>
 
+    <string name="menu_debug">Save Error Logs</string>
+
 </resources>
