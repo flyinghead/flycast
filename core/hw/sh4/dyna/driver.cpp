@@ -119,7 +119,7 @@ bool DoCheck(u32 pc)
 {
 	if (IsOnRam(pc))
 	{
-		if (!settings.dynarec.unstable_opts)
+		if (!settings.dynarec.unstable_opt)
 			return true;
 
 		pc&=0xFFFFFF;
