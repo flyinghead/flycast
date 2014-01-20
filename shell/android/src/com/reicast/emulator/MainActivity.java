@@ -169,6 +169,25 @@ public class MainActivity extends FragmentActivity implements
 			}
 		} else {
 
+			findViewById(R.id.config).setOnClickListener(new OnClickListener() {
+				public void onClick(View view) {
+					ConfigureFragment configFrag = (ConfigureFragment) getSupportFragmentManager()
+							.findFragmentByTag("CONFIG_FRAG");
+					if (configFrag != null) {
+						if (configFrag.isVisible()) {
+							return;
+						}
+					}
+					configFrag = new ConfigureFragment();
+					getSupportFragmentManager()
+							.beginTransaction()
+							.replace(R.id.fragment_container, configFrag,
+									"CONFIG_FRAG").addToBackStack(null)
+							.commit();
+				}
+
+			});
+			
 			findViewById(R.id.options).setOnClickListener(
 					new OnClickListener() {
 						public void onClick(View view) {
@@ -185,34 +204,14 @@ public class MainActivity extends FragmentActivity implements
 									.replace(R.id.fragment_container,
 											optionsFrag, "OPTIONS_FRAG")
 									.addToBackStack(null).commit();
-							/*
-							 * AlertDialog.Builder alertDialogBuilder = new
-							 * AlertDialog.Builder( MainActivity.this);
-							 * 
-							 * // set title
-							 * alertDialogBuilder.setTitle("Configure");
-							 * 
-							 * // set dialog message alertDialogBuilder
-							 * .setMessage("No configuration for now :D")
-							 * .setCancelable(false)
-							 * .setPositiveButton("Oh well",new
-							 * DialogInterface.OnClickListener() { public void
-							 * onClick(DialogInterface dialog,int id) {
-							 * //FileBrowser.this.finish(); } });
-							 * 
-							 * // create alert dialog AlertDialog alertDialog =
-							 * alertDialogBuilder.create();
-							 * 
-							 * // show it alertDialog.show();
-							 */
 						}
 
 					});
-
-			findViewById(R.id.config).setOnClickListener(new OnClickListener() {
+			
+			findViewById(R.id.input).setOnClickListener(new OnClickListener() {
 				public void onClick(View view) {
 					ConfigureFragment configFrag = (ConfigureFragment) getSupportFragmentManager()
-							.findFragmentByTag("CONFIG_FRAG");
+							.findFragmentByTag("INPUT_FRAG");
 					if (configFrag != null) {
 						if (configFrag.isVisible()) {
 							return;
@@ -222,7 +221,7 @@ public class MainActivity extends FragmentActivity implements
 					getSupportFragmentManager()
 							.beginTransaction()
 							.replace(R.id.fragment_container, configFrag,
-									"CONFIG_FRAG").addToBackStack(null)
+									"INPUT_FRAG").addToBackStack(null)
 							.commit();
 				}
 

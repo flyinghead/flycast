@@ -29,17 +29,6 @@
             android:textSize="32dp" />
 
         <ImageView
-            android:id="@+id/options"
-            android:layout_width="48dp"
-            android:layout_height="fill_parent"
-            android:layout_marginBottom="2dp"
-            android:layout_marginLeft="2dp"
-            android:layout_marginRight="2dp"
-            android:layout_marginTop="2dp"
-            android:scaleType="fitCenter"
-            android:src="@drawable/open_folder" />
-
-        <ImageView
             android:id="@+id/config"
             android:layout_width="48dp"
             android:layout_height="fill_parent"
@@ -59,6 +48,28 @@
             android:layout_marginTop="2dp"
             android:scaleType="fitCenter"
             android:src="@drawable/question" />
+        
+        <ImageView
+            android:id="@+id/options"
+            android:layout_width="48dp"
+            android:layout_height="fill_parent"
+            android:layout_marginBottom="2dp"
+            android:layout_marginLeft="2dp"
+            android:layout_marginRight="2dp"
+            android:layout_marginTop="2dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/open_folder" />
+        
+        <ImageView
+            android:id="@+id/input"
+            android:layout_width="48dp"
+            android:layout_height="fill_parent"
+            android:layout_marginBottom="2dp"
+            android:layout_marginLeft="2dp"
+            android:layout_marginRight="2dp"
+            android:layout_marginTop="2dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/input" />
     </LinearLayout>
 
     <FrameLayout
