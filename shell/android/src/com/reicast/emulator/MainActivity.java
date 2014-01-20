@@ -209,29 +209,24 @@ public class MainActivity extends FragmentActivity implements
 						}
 
 					});
-			ImageView inputButton = (ImageView) findViewById(R.id.input);
-			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
-				inputButton.setOnClickListener(new OnClickListener() {
-					public void onClick(View view) {
-						InputFragment inputFrag = (InputFragment) getSupportFragmentManager()
-								.findFragmentByTag("INPUT_FRAG");
-						if (inputFrag != null) {
-							if (inputFrag.isVisible()) {
-								return;
-							}
-						}
-						inputFrag = new InputFragment();
-						getSupportFragmentManager()
-								.beginTransaction()
-								.replace(R.id.fragment_container, inputFrag,
-										"INPUT_FRAG").addToBackStack(null)
-								.commit();
-					}
 
-				});
-			} else {
-				inputButton.setVisibility(View.GONE);
-			}
+			findViewById(R.id.input).setOnClickListener(new OnClickListener() {
+				public void onClick(View view) {
+					InputFragment inputFrag = (InputFragment) getSupportFragmentManager()
+							.findFragmentByTag("INPUT_FRAG");
+					if (inputFrag != null) {
+						if (inputFrag.isVisible()) {
+							return;
+						}
+					}
+					inputFrag = new InputFragment();
+					getSupportFragmentManager()
+							.beginTransaction()
+							.replace(R.id.fragment_container, inputFrag,
+									"INPUT_FRAG").addToBackStack(null).commit();
+				}
+
+			});
 
 			findViewById(R.id.about).setOnTouchListener(new OnTouchListener() {
 				public boolean onTouch(View v, MotionEvent event) {

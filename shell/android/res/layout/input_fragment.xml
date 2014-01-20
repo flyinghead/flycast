@@ -59,6 +59,13 @@
                     android:layout_height="wrap_content" />
             </LinearLayout>
         </TableRow>
+    </TableLayout>
+
+    <TableLayout
+        android:id="@+id/input_devices"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:stretchColumns="*" >
 
         <TableRow
             android:layout_marginTop="25dp"
