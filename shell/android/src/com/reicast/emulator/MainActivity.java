@@ -210,17 +210,17 @@ public class MainActivity extends FragmentActivity implements
 			
 			findViewById(R.id.input).setOnClickListener(new OnClickListener() {
 				public void onClick(View view) {
-					ConfigureFragment configFrag = (ConfigureFragment) getSupportFragmentManager()
+					InputFragment inputFrag = (InputFragment) getSupportFragmentManager()
 							.findFragmentByTag("INPUT_FRAG");
-					if (configFrag != null) {
-						if (configFrag.isVisible()) {
+					if (inputFrag != null) {
+						if (inputFrag.isVisible()) {
 							return;
 						}
 					}
-					configFrag = new ConfigureFragment();
+					inputFrag = new InputFragment();
 					getSupportFragmentManager()
 							.beginTransaction()
-							.replace(R.id.fragment_container, configFrag,
+							.replace(R.id.fragment_container, inputFrag,
 									"INPUT_FRAG").addToBackStack(null)
 							.commit();
 				}
