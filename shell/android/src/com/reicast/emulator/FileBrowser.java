@@ -55,7 +55,7 @@ public class FileBrowser extends Fragment {
 	private SharedPreferences mPrefs;
 	private File sdcard = Environment.getExternalStorageDirectory();
 	private String home_directory = sdcard + "/dc";
-	private String game_directory = sdcard + "/";
+	private String game_directory = sdcard + "/dc";
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -216,6 +216,9 @@ public class FileBrowser extends Fragment {
 				for (int i = 0; i < games.size(); i++) {
 					createListItem(list, games.get(i));
 				}
+			} else {
+				Toast.makeText(getActivity(), "Please configure a games directory",
+							Toast.LENGTH_LONG).show();
 			}
 		}
 
