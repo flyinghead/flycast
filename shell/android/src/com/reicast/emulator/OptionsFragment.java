@@ -2,10 +2,8 @@ package com.reicast.emulator;
 
 import java.io.File;
 
-import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.SharedPreferences;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
@@ -76,8 +74,7 @@ public class OptionsFragment extends Fragment {
 			public void onClick(View view) {
 				if (editBrowse.getText() != null) {
 					home_directory = editBrowse.getText().toString();
-					mPrefs.edit().putString("home_directory", home_directory)
-							.commit();
+					//mPrefs.edit().putString("home_directory", home_directory).commit();
 				}
 				mCallback.onMainBrowseSelected(home_directory, false);
 			}
@@ -112,8 +109,7 @@ public class OptionsFragment extends Fragment {
 			public void onClick(View view) {
 				if (editBrowse.getText() != null) {
 					game_directory = editGames.getText().toString();
-					mPrefs.edit().putString("game_directory", game_directory)
-							.commit();
+					//mPrefs.edit().putString("game_directory", game_directory).commit();
 				}
 				mCallback.onMainBrowseSelected(game_directory, true);
 			}
