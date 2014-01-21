@@ -267,6 +267,9 @@ public class GL2JNIActivity extends Activity {
 							OuyaController.BUTTON_MENU, key_CONT_START,
 							OuyaController.BUTTON_R1, key_CONT_START };
 					nVidia[playerNum] = true;
+
+					globalLS_X[playerNum] = previousLS_X[playerNum] = 0.0f;
+					globalLS_Y[playerNum] = previousLS_Y[playerNum] = 0.0f;
 				} else if (!moga.isActive) { // Ouya controller
 					map[playerNum] = new int[] {
 							OuyaController.BUTTON_O, key_CONT_A,
