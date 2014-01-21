@@ -196,7 +196,7 @@ public class FileBrowser extends Fragment {
 
 			FileUtils fileUtils = new FileUtils();
 			File[] allMatchingFiles = fileUtils.listFilesAsArray(storage,
-					filter, 0);
+					filter, 1);
 			for (File mediaFile : allMatchingFiles) {
 				tFileList.add(mediaFile);
 			}
