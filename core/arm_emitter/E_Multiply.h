@@ -32,8 +32,31 @@ namespace ARM
 		EMIT_I;
 	}
 
-
-
+	EAPI UMULL(eReg Rdhi, eReg Rdlo, eReg Rs, eReg Rm, ConditionCode CC=AL)   //     *FIXME* S
+	{
+		DECL_Id(0x00800090);
+		
+		SET_CC;
+		I |= (Rdhi&15)<<16;
+		I |= (Rdlo&15)<<12;
+		I |= (Rs&15)<<8;
+		I |= (Rm&15);
+		EMIT_I;
+	}
+	
+	EAPI SMULL(eReg Rdhi, eReg Rdlo, eReg Rs, eReg Rm, ConditionCode CC=AL)   //     *FIXME* S
+	{
+		DECL_Id(0x00C00090);
+		
+		SET_CC;
+		I |= (Rdhi&15)<<16;
+		I |= (Rdlo&15)<<12;
+		I |= (Rs&15)<<8;
+		I |= (Rm&15);
+		EMIT_I;
+	}
+	
+	
 
 
 

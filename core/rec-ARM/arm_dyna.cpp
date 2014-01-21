@@ -979,6 +979,11 @@ EAPI NEG(eReg Rd,eReg Rs)
 	RSB(Rd,Rs,0);
 }
 
+EAPI NEG(eReg Rd,eReg Rs, bool S, ConditionCode cond = CC_AL)
+{
+	RSB(Rd,Rs,0, S, cond);
+}
+
 eReg GenMemAddr(shil_opcode* op,eReg raddr=r0)
 {
 	if (op->rs3.is_imm())
@@ -1386,9 +1391,9 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 			ADC(reg.mapg(op->rd2),r1,0);
 #else
 
-			LSR(reg.mapg(op->rd2),reg.mapg(op->rs3),1,true); //C=rs3, rd2=0
+			LSR(r0,reg.mapg(op->rs3),1,true); //C=rs3, r0=0
 			ADC(reg.mapg(op->rd),reg.mapg(op->rs1),reg.mapg(op->rs2),true); //(C,rd)=rs1+rs2+rs3(C)
-			ADC(reg.mapg(op->rd2),reg.mapg(op->rd2),0);	//rd2=C, (or MOVCS rd2, 1)
+			ADC(reg.mapg(op->rd2),r0,0);	//rd2=C, (or MOVCS rd2, 1)
 #endif
 		}
 		break;
@@ -1396,18 +1401,63 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 		case shop_rocr:
 			{
 
-				LSR(reg.mapg(op->rd2),reg.mapg(op->rs2),1,true); //C=rs2, rd2=0
-				AND(reg.mapg(op->rd2),reg.mapg(op->rs1),1);      //get new carry
+				if (reg.mapg(op->rd2)!=reg.mapg(op->rs1)) {
+					LSR(reg.mapg(op->rd2),reg.mapg(op->rs2),1,true); //C=rs2, rd2=0
+					AND(reg.mapg(op->rd2),reg.mapg(op->rs1),1);      //get new carry
+				} else {
+					LSR(r0,reg.mapg(op->rs2),1,true); //C=rs2, rd2=0
+					ADD(r0, reg.mapg(op->rs1),1);
+				}
 				RRX(reg.mapg(op->rd),reg.mapg(op->rs1));         //RRX w/ carry :)
+				if (reg.mapg(op->rd2)==reg.mapg(op->rs1))
+					MOV(reg.mapg(op->rd2), r0);
+				
 			}
 			break;
 			
 		case shop_rocl:
 			{
-				ADD(reg.mapg(op->rd),reg.mapg(op->rs2),reg.mapg(op->rs1),1,true); //(C,rd)= rs1<<1 + (|) rs2
+				//ADD(reg.mapg(op->rd),reg.mapg(op->rs2),reg.mapg(op->rs1),1,true); //(C,rd)= rs1<<1 + (|) rs2
+				ORR(reg.mapg(op->rd),reg.mapg(op->rs2),reg.mapg(op->rs1),true, S_LSL, 1); //(C,rd)= rs1<<1 + (|) rs2
 				MOVW(reg.mapg(op->rd2),0);                      //clear rd2 (for ADC/MOVCS)
 				ADC(reg.mapg(op->rd2),reg.mapg(op->rd2),0);     //rd2=C (or MOVCS rd2, 1)
 			}
+			break;
+			
+		case shop_sbc:
+			//printf("sbc: r%d r%d r%d r%d r%d\n",reg.mapg(op->rd),reg.mapg(op->rd2),reg.mapg(op->rs1),reg.mapg(op->rs2), reg.mapg(op->rs3));
+			{
+				EOR(reg.mapg(op->rd2),reg.mapg(op->rs3),1);
+				LSR(reg.mapg(op->rd2),reg.mapg(op->rd2),1,true); //C=rs3, rd2=0
+				SBC(reg.mapg(op->rd), reg.mapg(op->rs1), reg.mapg(op->rs2), true);
+				MOV(reg.mapg(op->rd2), 1, CC_CC);
+			}
+			break;
+		
+		case shop_shld:
+			//printf("shld: r%d r%d r%d\n",reg.mapg(op->rd),reg.mapg(op->rs1),reg.mapg(op->rs2));
+			{
+				verify(!op->rs2.is_imm());
+				AND(r0, reg.mapg(op->rs2), 0x8000001F, true);
+				RSB(r0, r0, 0x80000020, CC_MI);
+				LSR(reg.mapg(op->rd), reg.mapg(op->rs1), r0, CC_MI);
+				LSL(reg.mapg(op->rd), reg.mapg(op->rs1), r0, CC_PL);
+				//MOV(reg.mapg(op->rd), reg.mapg(op->rs1), S_LSL, r0, CC_PL);
+				//MOV(reg.mapg(op->rd), reg.mapg(op->rs1), S_LSR, r0, CC_MI);
+			}		
+			break;
+
+		case shop_shad:
+			//printf("shad: r%d r%d r%d\n",reg.mapg(op->rd),reg.mapg(op->rs1),reg.mapg(op->rs2));
+			{
+				verify(!op->rs2.is_imm());
+				AND(r0, reg.mapg(op->rs2), 0x8000001F, true);
+				RSB(r0, r0, 0x80000020, CC_MI);
+				ASR(reg.mapg(op->rd), reg.mapg(op->rs1), r0, CC_MI);
+				LSL(reg.mapg(op->rd), reg.mapg(op->rs1), r0, CC_PL);
+				//MOV(reg.mapg(op->rd), reg.mapg(op->rs1), S_LSL, r0, CC_PL);
+				//MOV(reg.mapg(op->rd), reg.mapg(op->rs1), S_ASR, r0, CC_MI);
+			}		
 			break;
 
 		case shop_sync_sr:
@@ -1481,14 +1531,37 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 		    MOVW(reg.mapg(op->rd),1,opcls2[op->op-shop_test]);
 		    break;
         }
-
+		
+		case shop_setpeq:
+			{
+				EOR(r1, reg.mapg(op->rs1), reg.mapg(op->rs2));
+				MOVW(reg.mapg(op->rd), 0);
+				
+				TST(r1, 0xFF000000);
+				TST(r1, 0x00FF0000, CC_NE);
+				TST(r1, 0x0000FF00, CC_NE);
+				TST(r1, 0x000000FF, CC_NE);
+				MOVW(reg.mapg(op->rd), 1, CC_EQ);
+			}
+			break;
+		
 		//UXTH for zero extention and/or more mul forms (for 16 and 64 bits)
 
-//		case shop_mul_u16:
-//		case shop_mul_s16:
+		case shop_mul_u16:
+			{
+				UXTH(r1, reg.mapg(op->rs1));
+				UXTH(r2, reg.mapg(op->rs2));
+				MUL(reg.mapg(op->rd),r1,r2);
+			}
+			break;
+		case shop_mul_s16:
+			{
+				SXTH(r1, reg.mapg(op->rs1));
+				SXTH(r2, reg.mapg(op->rs2));
+				MUL(reg.mapg(op->rd),r1,r2);
+			}
+			break;
 		case shop_mul_i32:
-//		case shop_mul_u64:
-//		case shop_mul_s64:
 			{
 				//x86_opcode_class opdt[]={op_movzx16to32,op_movsx16to32,op_mov32,op_mov32,op_mov32};
 				//x86_opcode_class opmt[]={op_mul32,op_mul32,op_mul32,op_mul32,op_imul32};
@@ -1497,7 +1570,73 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 				MUL(reg.mapg(op->rd),reg.mapg(op->rs1),reg.mapg(op->rs2));
 			}
 			break;
-			
+		case shop_mul_u64:
+			{
+				UMULL(reg.mapg(op->rd2), reg.mapg(op->rd), reg.mapg(op->rs1), reg.mapg(op->rs2));
+			}
+			break;
+		case shop_mul_s64:
+			{
+				SMULL(reg.mapg(op->rd2), reg.mapg(op->rd), reg.mapg(op->rs1), reg.mapg(op->rs2));
+			}
+			break;
+
+/*		case shop_div32u:
+			// Doesn't work
+			// algo from new arm dynarec from mupen64plus
+			//printf("div32u: r%d r%d r%d r%d\n",reg.mapg(op->rd2),reg.mapg(op->rd),reg.mapg(op->rs1),reg.mapg(op->rs2));
+			{
+				// remainder = r0, quotient = r1, HOST_TEMPREG = r2, copy de rs1 = r3, copy de rs2 = r4
+				MOV(r3, reg.mapg(op->rs1));
+				MOV(r4, reg.mapg(op->rs2), true);
+				MOV(r0, reg.mapg(op->rs1));	// dividend = d1 , divisor = d2
+				MVN(r1, 0);
+				B(10*4-8, CC_EQ);
+				CLZ(r2, r4);
+				MOV(r1, 1<<31);
+				LSL(r4, r4, r2);
+				LSR(r1, r1, r2);
+				CMP(r0, r4);
+				SUB(r0, r0, r4, CC_CS);
+				ADC(r1, r1, r1, true);
+				MOV(r4, r4, S_LSR, 1, CC_CC);
+				B(-4*4-8, CC_CC);
+				MOV(reg.mapg(op->rd), r1);
+				MOV(reg.mapg(op->rd2), r0);
+			}
+			break;*/
+/*		case shop_div32s:
+			//printf("div32s r%d, r%d, r%d, r%d\n", reg.mapg(op->rd2),reg.mapg(op->rd),reg.mapg(op->rs1),reg.mapg(op->rs2));
+			// algo from dynarec from pcsxrearmed
+			// remainder = r0, quotient = r1, HOST_TEMPREG = r2, copy de rs1 = r3, copy de rs2 = r4
+			{
+				MOV(r3, reg.mapg(op->rs1));
+				MOV(r4, reg.mapg(op->rs2));
+				MOV(r0, reg.mapg(op->rs1), true);
+				MVN(r1, 0);
+				RSB(r1, r1, 0, CC_MI); // .. quotient and ..
+				RSB(r0, r0, 0, CC_MI); // .. remainder for div0 case (will be negated back after jump)
+				MOV(r2, reg.mapg(op->rs2), true);
+				B(14*4-8, CC_EQ); // Division by zero
+				RSB(r2, r2, 0, true, CC_MI);
+				CLZ(r1, r2);
+				LSL(r2, r2, r1);
+				ORR(r1, r1, 1<<31);
+				LSR(r1, r1, r1);
+				CMP(r0, r2);
+				SUB(r0, r0, r2, CC_CS);
+				ADC(r1, r1, r1, true);
+				MOV(r2, r2, S_LSR, 1);
+				B(-4*4-8, CC_CC); // -4
+				TEQ(r3, r4, S_LSL, CC_AL);
+				RSB(r1, r1, 0, CC_MI);
+				TST(r3, r3);
+				RSB(r0, r0, 0, CC_MI);
+				MOV(reg.mapg(op->rd2), r0);
+				MOV(reg.mapg(op->rd), r1);
+			}
+			break;*/
+	
 		case shop_pref:
 			{
 				if (op->flags != 0x1337)
@@ -1639,9 +1778,10 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 					VLDR(d0,r0);
 				*/
 
-				LSL(r0,r0,3);
-				ADD(r0,r1,r0); //EMITTER: Todo, add with shifted !
-
+				//LSL(r0,r0,3);
+				//ADD(r0,r1,r0); //EMITTER: Todo, add with shifted !
+				ADD(r0,r1,r0, S_LSL, 3);
+				
 				VLDR(/*reg.mapf(op->rd,0)*/d0,r0,0);
 				VSTR(d0,r8,op->rd.reg_nofs()/4);
 			}
@@ -1774,7 +1914,6 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 					//4 mul
 					//4 mla
 					//1 add
-					*/
 				*/
 #endif
 			}
@@ -1810,6 +1949,16 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 				//BKPT();
 				VCVT_to_S32_VFP(f0,reg.mapf(op->rs1));
 				VMOV(reg.mapg(op->rd),f0);
+				//shil_chf[op->op](op);
+				break;
+			
+			case shop_cvt_i2f_n:	// may be some difference should be made ?
+			case shop_cvt_i2f_z:
+			
+				//printf("i2f: f%d r%d\n",reg.mapf(op->rd),reg.mapg(op->rs1));
+				//BKPT();
+				VMOV(f0, reg.mapg(op->rs1));
+				VCVT_from_S32_VFP(reg.mapfs(op->rd),f0);
 				//shil_chf[op->op](op);
 				break;
 #endif

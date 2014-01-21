@@ -234,8 +234,15 @@ namespace ARM
 	//	VAC{COND}		{	DECL_Id(0xF3000E10);	SET_Vdnm;	EMIT_I;	}
 
 	//	VCEQ			{	DECL_Id(0xF3000810);	SET_Vdnm;	EMIT_I;	}	.F32	{	DECL_Id(0xF2000E00);	SET_Vdnm;	EMIT_I;	}
+	VdpInstrI(CEQ, 0xF3200810)
+//	VdpInstrF(CEQ, 0xF2000e00)	
 	//	VCGE			{	DECL_Id(0xF2000310);	SET_Vdnm;	EMIT_I;	}	.F32	{	DECL_Id(0xF3000E00);	SET_Vdnm;	EMIT_I;	}
+	VdpInstrI(CGE, 0xF2200310)
+//	VdpInstrF(CGE, 0xF3000e00)	
 	//	VCGT			{	DECL_Id(0xF2000300);	SET_Vdnm;	EMIT_I;	}	.F32	{	DECL_Id(0xF3200E00);	SET_Vdnm;	EMIT_I;	}
+	//*SEB*  0xF220030 for S32, 0xF3200300 for U32, 0xF2000300 is for S8.
+	VdpInstrI(CGT, 0xF2200300)
+	//VdpInstrF(CGT, 0xF3200e00)
 	//	VCLE			{	DECL_Id(0xF3B10180);	SET_Vdnm;	EMIT_I;	}	//	R is VCGE w/ operands reversed
 	//	VCLT			{	DECL_Id(0xF3B10200);	SET_Vdnm;	EMIT_I;	}	//	R is VCGT w/ operands reversed
 	//	VTST			{	DECL_Id(0xF2000810);	SET_Vdnm;	EMIT_I;	}
@@ -325,7 +332,7 @@ namespace ARM
 		I |= 1<<8;	//SET_F
 		
 		SET_Dm;
-		I |= 0x1<<24;	//SET_Q not compitable
+		I |= 0x1<<24;	//SET_Q not compatible
 
 		I |= 2<<20;		//size to 32
 		
@@ -348,7 +355,7 @@ namespace ARM
 		I |= 1<<8;	//SET_F
 		
 		SET_Dm;
-		I |= 0x1<<24;	//SET_Q not compitable
+		I |= 0x1<<24;	//SET_Q not compatible
 
 		I |= 2<<20;		//size to 32
 		
@@ -592,7 +599,8 @@ namespace ARM
 
 	
 	EAPI VCVT_to_S32_VFP (eFSReg Sd, eFSReg Sm, ConditionCode CC=CC_AL)  {   DECL_Id(0x0EBD0AC0);  SET_CC;	SET_Sd; SET_Sm;   EMIT_I; }		//	VfpInstrS(ABS,	0x0EB00AC0)		** {D,S}dm
-	//EAPI VCVT_from_S32_VFP (eFSReg Sd, eFSReg Sm)  {   DECL_Id(0x0EB80A40);  SET_CC;	SET_Sd; SET_Sm;   EMIT_I; }		//	VfpInstrS(ABS,	0x0EB00AC0)		** {D,S}dm
+	// 0x0EB80A40 is to_U32. to_S32 is 0x0EB80AC0
+	EAPI VCVT_from_S32_VFP (eFSReg Sd, eFSReg Sm, ConditionCode CC=CC_AL)  {   DECL_Id(0x0EB80AC0);  SET_CC;	SET_Sd; SET_Sm;   EMIT_I; }		//	VfpInstrS(ABS,	0x0EB00AC0)		** {D,S}dm
 
 	EAPI VABS_VFP (eFSReg Sd, eFSReg Sm, ConditionCode CC=CC_AL)  {   DECL_Id(0x0EB00AC0);  SET_CC;	SET_Sd; SET_Sm;   EMIT_I; }		//	VfpInstrS(ABS,	0x0EB00AC0)		** {D,S}dm
 	EAPI VNEG_VFP (eFSReg Sd, eFSReg Sm, ConditionCode CC=CC_AL)  {   DECL_Id(0x0EB10A40);  SET_CC;	SET_Sd; SET_Sm;   EMIT_I; }		//	VfpInstrS(NEG,	0x0EB10A40)		** {D,S}dm
