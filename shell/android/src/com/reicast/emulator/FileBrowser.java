@@ -217,7 +217,7 @@ public class FileBrowser extends Fragment {
 					createListItem(list, games.get(i));
 				}
 			} else {
-				Toast.makeText(getActivity(), "Please configure a games directory",
+				Toast.makeText(parentActivity, "Please configure a games directory",
 							Toast.LENGTH_LONG).show();
 			}
 		}
