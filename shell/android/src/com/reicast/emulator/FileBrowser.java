@@ -218,40 +218,6 @@ public class FileBrowser extends Fragment {
 	}
 
 	private void createListHeader(String header_text, View view, boolean hasBios) {
-		LinearLayout list_header = new LinearLayout(parentActivity);
-		LinearLayout.LayoutParams listParams = new LinearLayout.LayoutParams(
-				LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
-		int margin_top = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 10, getResources().getDisplayMetrics());
-		listParams.setMargins(0, margin_top, 0, 0);
-		list_header.setLayoutParams(listParams);
-
-		ImageView list_icon = new ImageView(parentActivity);
-		LinearLayout.LayoutParams imageParams = new LinearLayout.LayoutParams(
-				LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
-		int size = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 32, getResources().getDisplayMetrics());
-		imageParams.width = size;
-		imageParams.height = size;
-		int margin_left_right = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 6, getResources().getDisplayMetrics());
-		int margin_top_bottom = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 2, getResources().getDisplayMetrics());
-		imageParams.setMargins(margin_left_right, margin_top_bottom, margin_left_right, margin_top_bottom);
-		imageParams.gravity=Gravity.CENTER_VERTICAL;
-		list_icon.setLayoutParams(imageParams);
-		list_icon.setScaleType(ScaleType.FIT_CENTER);
-		list_icon.setImageResource(R.drawable.open_folder);
-		list_header.addView(list_icon);
-
-		TextView list_text = new TextView(parentActivity);
-		LinearLayout.LayoutParams textParams = new LinearLayout.LayoutParams(
-				LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
-		textParams.gravity=Gravity.CENTER_VERTICAL;
-		textParams.weight=1;
-		list_text.setLayoutParams(textParams);
-		list_text.setTextAppearance(parentActivity,
-				android.R.style.TextAppearance_Large);
-		list_text.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 18);
-		list_text.setText(header_text);
-		list_header.addView(list_text);
-
 		if (hasBios) {
 			final View childview = parentActivity.getLayoutInflater().inflate(
 					R.layout.bios_list_item, null, false);
@@ -292,7 +258,13 @@ public class FileBrowser extends Fragment {
 			((ViewGroup) view).addView(childview);
 		}
 
-		((ViewGroup) view).addView(list_header);
+		final View headerView = parentActivity.getLayoutInflater().inflate(
+				R.layout.app_list_item, null, false);
+		((ImageView) headerView.findViewById(R.id.item_icon))
+				.setImageResource(R.drawable.open_folder);
+		((TextView) headerView.findViewById(R.id.item_name))
+				.setText(header_text);
+		((ViewGroup) view).addView(headerView);
 
 	}
 
@@ -332,7 +304,7 @@ public class FileBrowser extends Fragment {
 			childview.setTag(list.get(i));
 
 			orig_bg = childview.getBackground();
-			
+
 			final File game = list.get(i);
 
 			// vw.findViewById(R.id.childview).setBackgroundColor(0xFFFFFFFF);

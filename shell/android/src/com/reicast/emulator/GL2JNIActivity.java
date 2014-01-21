@@ -181,11 +181,18 @@ public class GL2JNIActivity extends Activity {
 			}
 		}
 
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
+
 		JNIdc.initControllers(new boolean[] {controllerTwoConnected, controllerThreeConnected, controllerFourConnected});
 
 		int joys[] = InputDevice.getDeviceIds();
 		for (int i = 0; i < joys.length; i++) {
-			String descriptor = InputDevice.getDevice(joys[i]).getDescriptor();
+			String descriptor = null;
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+				descriptor = InputDevice.getDevice(joys[i]).getDescriptor();
+			} else {
+				descriptor = InputDevice.getDevice(joys[i]).getName();
+			}
 			Log.d("reidc", "InputDevice ID: " + joys[i]);
 			Log.d("reidc", "InputDevice Name: "
 					+ InputDevice.getDevice(joys[i]).getName());
@@ -279,6 +286,9 @@ public class GL2JNIActivity extends Activity {
 							OuyaController.BUTTON_R1, key_CONT_START };
 				}
 			}
+		
+		}
+
 		}
 
 		// When viewing a resource, pass its URI to the native code for opening
@@ -298,6 +308,8 @@ public class GL2JNIActivity extends Activity {
 	public boolean onGenericMotionEvent(MotionEvent event) {
 		// Log.w("INPUT", event.toString() + " " + event.getSource());
 		// Get all the axis for the KeyEvent
+		
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
 
 		Integer playerNum = deviceDescriptor_PlayerNum.get(deviceId_deviceDescriptor.get(event.getDeviceId()));
 
@@ -330,7 +342,7 @@ public class GL2JNIActivity extends Activity {
 			GL2JNIView.jx[playerNum] = (int) (LS_X * 126);
 			GL2JNIView.jy[playerNum] = (int) (LS_Y * 126);
 		}
-		
+
 		}
 		
 		if ((xbox[playerNum] || nVidia[playerNum]) && ((globalLS_X[playerNum] == previousLS_X[playerNum] && globalLS_Y[playerNum] == previousLS_Y[playerNum])
@@ -340,6 +352,11 @@ public class GL2JNIActivity extends Activity {
 			return false;
 		else
 			return true;
+
+		} else {
+			return false;
+		}
+
 	}
 
 	private static final int key_CONT_B 			= 0x0002;

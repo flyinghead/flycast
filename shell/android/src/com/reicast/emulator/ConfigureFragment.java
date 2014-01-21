@@ -1,7 +1,13 @@
 package com.reicast.emulator;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.Scanner;
 
 import org.apache.commons.lang3.StringUtils;
@@ -20,13 +26,13 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.TextView;
 
-@TargetApi(Build.VERSION_CODES.JELLY_BEAN)
 public class ConfigureFragment extends Fragment {
 
 	Activity parentActivity;
@@ -45,6 +51,21 @@ public class ConfigureFragment extends Fragment {
 	private SharedPreferences mPrefs;
 	private File sdcard = Environment.getExternalStorageDirectory();
 	private String home_directory = sdcard + "/dc";
+
+	public static final String build_model = android.os.Build.MODEL;
+	public static final String build_device = android.os.Build.DEVICE;
+	public static final String build_board = android.os.Build.BOARD;
+	public static final int build_sdk = android.os.Build.VERSION.SDK_INT;
+
+	public static final String DN = "Donut";
+	public static final String EC = "Eclair";
+	public static final String FR = "Froyo";
+	public static final String GB = "Gingerbread";
+	public static final String HC = "Honeycomb";
+	public static final String IC = "Ice Cream Sandwich";
+	public static final String JB = "JellyBean";
+	public static final String KK = "KitKat";
+	public static final String NF = "Not Found";
 
 	// Container Activity must implement this interface
 	public interface OnClickListener {
@@ -321,6 +342,124 @@ public class ConfigureFragment extends Fragment {
 				pvr_render.setChecked(false);
 			}
 			pvr_render.setOnCheckedChangeListener(pvr_rendering);*/
+	
+		Button debug_button = (Button) getView()
+				.findViewById(R.id.debug_button);
+		debug_button.setOnClickListener(new View.OnClickListener() {
+			public void onClick(View v) {
+				generateErrorLog();
+			}
+		});
+	}
+
+	public void generateErrorLog() {
+		String currentTime = String.valueOf(System.currentTimeMillis());
+		String logOuput = home_directory + "/" + currentTime + ".txt";
+		Process mLogcatProc = null;
+		BufferedReader reader = null;
+		try {
+			mLogcatProc = Runtime.getRuntime().exec(
+					new String[] { "logcat", "-d", "AndroidRuntime:E *:S" });
+			reader = new BufferedReader(new InputStreamReader(
+					mLogcatProc.getInputStream()));
+			String line;
+			final StringBuilder log = new StringBuilder();
+			String separator = System.getProperty("line.separator");
+			log.append(discoverCPUData());
+			log.append(separator);
+			log.append(separator);
+			log.append("AndroidRuntime Output");
+			log.append(separator);
+			log.append(separator);
+			while ((line = reader.readLine()) != null) {
+				log.append(line);
+				log.append(separator);
+			}
+			reader.close();
+			mLogcatProc = null;
+			reader = null;
+			int PID = android.os.Process
+					.getUidForName("com.reicast.emulator");
+			mLogcatProc = Runtime.getRuntime().exec(
+					new String[] { "logcat", "-d", "|", "grep " + PID });
+			reader = new BufferedReader(new InputStreamReader(
+					mLogcatProc.getInputStream()));
+			log.append(separator);
+			log.append(separator);
+			log.append("Application ID Output");
+			log.append(separator);
+			log.append(separator);
+			while ((line = reader.readLine()) != null) {
+				log.append(line);
+				log.append(separator);
+			}
+			reader.close();
+			File file = new File(logOuput);
+			BufferedWriter writer = new BufferedWriter(new FileWriter(file));
+			writer.write(log.toString());
+			writer.flush();
+			writer.close();
+		} catch (IOException e) {
+
+		}
+	}
+
+	private String discoverCPUData() {
+		String s = "MODEL: " + Build.MODEL;
+		s += "\r\n";
+		s += "DEVICE: " + build_device;
+		s += "\r\n";
+		s += "BOARD: " + build_board;
+		s += "\r\n";
+		if (String.valueOf(build_sdk) != null) {
+			String build_version = NF;
+			if (build_sdk >= 4 && build_sdk < 7) {
+				build_version = DN;
+			} else if (build_sdk == 7) {
+				build_version = EC;
+			} else if (build_sdk == 8) {
+				build_version = FR;
+			} else if (build_sdk >= 9 && build_sdk < 11) {
+				build_version = GB;
+			} else if (build_sdk >= 11 && build_sdk < 14) {
+				build_version = HC;
+			} else if (build_sdk >= 14 && build_sdk < 16) {
+				build_version = IC;
+			} else if (build_sdk >= 16 && build_sdk < 17) {
+				build_version = JB;
+			} else if (build_sdk >= 17) {
+				build_version = KK;
+			}
+			s += build_version + " (" + build_sdk + ")";
+		} else {
+			String prop_build_version = "ro.build.version.release";
+			String prop_sdk_version = "ro.build.version.sdk";
+			String build_version = readOutput("/system/bin/getprop "
+					+ prop_build_version);
+			String sdk_version = readOutput("/system/bin/getprop "
+					+ prop_sdk_version);
+			s += build_version + " (" + sdk_version + ")";
+		}
+		return s;
+	}
+
+	public static String readOutput(String command) {
+		try {
+			Process p = Runtime.getRuntime().exec(command);
+			InputStream is = null;
+			if (p.waitFor() == 0) {
+				is = p.getInputStream();
+			} else {
+				is = p.getErrorStream();
+			}
+			BufferedReader br = new BufferedReader(new InputStreamReader(is),
+					2048);
+			String line = br.readLine();
+			br.close();
+			return line;
+		} catch (Exception ex) {
+			return "ERROR: " + ex.getMessage();
+		}
 	}
 
 	private boolean executeAppendConfig(String identifier, String value) {
