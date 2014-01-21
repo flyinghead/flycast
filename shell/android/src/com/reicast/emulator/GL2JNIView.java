@@ -146,7 +146,7 @@ class GL2JNIView extends GLSurfaceView
        prefs.edit().putFloat("touch_scale_analog", vjoy_d_custom[5][2]).commit();
   }
 
-  private static float[][] readCustomVjoyValues(Context context) {
+  public static float[][] readCustomVjoyValues(Context context) {
        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
 
        return new float[][]
@@ -193,6 +193,14 @@ class GL2JNIView extends GLSurfaceView
        resetEditMode();
        requestLayout();
   }
+  
+  public void restoreCustomVjoyValues(float[][] vjoy_d_cached) {
+	  vjoy_d_custom = vjoy_d_cached;
+	  writeCustomVjoyValues(vjoy_d_cached, context);
+
+      resetEditMode();
+      requestLayout();
+ }
   	
   public GL2JNIView(Context context,String newFileName,boolean translucent,int depth,int stencil,boolean editVjoyMode)
   {
@@ -334,7 +342,7 @@ class GL2JNIView extends GLSurfaceView
 		      JNIdc.vjoy(i,vjoy[i][0],vjoy[i][1],vjoy[i][2],vjoy[i][3]);
 		    
 		reset_analog();
-                writeCustomVjoyValues(vjoy_d_custom, context);
+        writeCustomVjoyValues(vjoy_d_custom, context);
 	}
   
   /*
