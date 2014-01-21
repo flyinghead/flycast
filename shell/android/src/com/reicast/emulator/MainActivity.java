@@ -37,8 +37,8 @@ public class MainActivity extends FragmentActivity implements
 		FileBrowser.OnItemSelectedListener, OptionsFragment.OnClickListener {
 
 	private SharedPreferences mPrefs;
-	private File sdcard = Environment.getExternalStorageDirectory();
-	private String home_directory = sdcard + "/dc";
+	private static File sdcard = Environment.getExternalStorageDirectory();
+	public static String home_directory = sdcard + "/dc";
 
 	private DrawerLayout mDrawerLayout;
 	private ListView mDrawerList;
@@ -268,14 +268,21 @@ public class MainActivity extends FragmentActivity implements
 
 	}
 
-	public void onGameSelected(Uri uri) {
+	public static boolean isBiosExisting() {
 		File bios = new File(home_directory, "data/dc_boot.bin");
-		File flash = new File(home_directory, "data/dc_flash.bin");
+		return bios.exists();
+	}
 
+	public static boolean isFlashExisting() {
+		File flash = new File(home_directory, "data/dc_flash.bin");
+		return flash.exists();
+	}
+
+	public void onGameSelected(Uri uri) {
 		String msg = null;
-		if (!bios.exists())
+		if (!isBiosExisting())
 			msg = getString(R.string.missing_bios, home_directory);
-		else if (!flash.exists())
+		else if (!isFlashExisting())
 			msg = getString(R.string.missing_flash, home_directory);
 
 		if (msg != null) {
