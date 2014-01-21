@@ -15,6 +15,11 @@
 int fbdev = -1;
 #endif
 
+#ifndef GLES
+#include <GL3/gl3w.c>
+#pragma comment(lib,"Opengl32.lib")
+#endif
+
 /*
 GL|ES 2
 Slower, smaller subset of gl2
@@ -57,25 +62,36 @@ float fb_scale_x,fb_scale_y;
 
 volatile bool render_restart = false;
 
+#ifndef GLES
+#define attr "in"
+#define vary "out"
+#else
+#define attr "attribute"
+#define vary "varying"
+#endif
 #if 1
 
 //Fragment and vertex shaders code
 //pretty much 1:1 copy of the d3d ones for now
-const char* VertexShaderSource = "\
+const char* VertexShaderSource = 
+#ifndef GLES
+	"#version 140 \n"
+#endif
+"\
 /* Vertex constants*/  \n\
 uniform highp vec4      scale; \n\
 uniform highp vec4      depth_scale; \n\
 uniform highp float sp_FOG_DENSITY; \n\
-/* Vertex output */ \n\
-attribute highp vec4    in_pos; \n\
-attribute lowp vec4     in_base; \n\
-attribute lowp vec4     in_offs; \n\
-attribute mediump vec2  in_uv; \n\
-/* Transformed input */ \n\
-varying lowp vec4 vtx_base; \n\
-varying lowp vec4 vtx_offs; \n\
-varying mediump vec2 vtx_uv; \n\
-varying highp vec3 vtx_xyz; \n\
+/* Vertex input */ \n\
+" attr " highp vec4    in_pos; \n\
+" attr " lowp vec4     in_base; \n\
+" attr " lowp vec4     in_offs; \n\
+" attr " mediump vec2  in_uv; \n\
+/* output */ \n\
+" vary " lowp vec4 vtx_base; \n\
+" vary " lowp vec4 vtx_offs; \n\
+" vary " mediump vec2 vtx_uv; \n\
+" vary " highp vec3 vtx_xyz; \n\
 void main() \n\
 { \n\
 	vtx_base=in_base; \n\
@@ -199,7 +215,20 @@ lowp float fog_mode2(highp float invW)  \n\
 } \n\
 */
 
-const char* PixelPipelineShader = "\
+#ifndef GLES
+#define FRAGCOL "FragColor"
+#define vary "in"
+#else
+#define FRAGCOL "gl_FragColor"
+#endif
+
+
+const char* PixelPipelineShader = 
+#ifndef GLES
+	"#version 140 \n"
+	"out vec4 FragColor; \n"
+#endif	
+"\
 \
 #define cp_AlphaTest %d \n\
 #define pp_ClipTestMode %d.0 \n\
@@ -217,10 +246,10 @@ uniform lowp vec3 sp_FOG_COL_RAM,sp_FOG_COL_VERT; \n\
 uniform highp vec2 sp_LOG_FOG_COEFS; \n\
 uniform sampler2D tex,fog_table; \n\
 /* Vertex input*/ \n\
-varying lowp vec4 vtx_base; \n\
-varying lowp vec4 vtx_offs; \n\
-varying mediump vec2 vtx_uv; \n\
-varying highp vec3 vtx_xyz; \n\
+" vary " lowp vec4 vtx_base; \n\
+" vary " lowp vec4 vtx_offs; \n\
+" vary " mediump vec2 vtx_uv; \n\
+" vary " highp vec3 vtx_xyz; \n\
 lowp float fog_mode2(highp float val) \n\
 { \n\
 	highp float fog_idx=clamp(val,0.0,127.99); \n\
@@ -284,27 +313,37 @@ void main() \n\
 		if (cp_AlphaTestValue>color.a) discard;\n\
 	#endif  \n\
 	//color.rgb=vec3(vtx_xyz.z/255.0);\n\
-	gl_FragColor=color; \n\
+	" FRAGCOL "=color; \n\
 }";
 
-const char* ModifierVolumeShader = " \
+const char* ModifierVolumeShader = 
+#ifndef GLES
+	"#version 140 \n"
+	"out vec4 FragColor; \n"
+#endif
+" \
 uniform lowp float sp_ShaderColor; \n\
 /* Vertex input*/ \n\
 void main() \n\
 { \n\
-	gl_FragColor=vec4(0.0, 0.0, 0.0, sp_ShaderColor); \n\
+	" FRAGCOL "=vec4(0.0, 0.0, 0.0, sp_ShaderColor); \n\
 }";
 
-const char* OSD_Shader = " \
-varying lowp vec4 vtx_base; \n\
-varying mediump vec2 vtx_uv; \n\
+const char* OSD_Shader = 
+#ifndef GLES
+	"#version 140 \n"
+	"out vec4 FragColor; \n"
+#endif
+" \
+" vary " lowp vec4 vtx_base; \n\
+" vary " mediump vec2 vtx_uv; \n\
 /* Vertex input*/ \n\
 uniform sampler2D tex; \n\
 void main() \n\
 { \n\
 	mediump vec2 uv=vtx_uv; \n\
 	uv.y=1.0-uv.y; \n\
-	gl_FragColor=vtx_base*texture2D(tex,uv); \n\n\
+	" FRAGCOL "=vtx_base*texture2D(tex,uv.st); \n\n\
 }";
 
 
@@ -313,12 +352,13 @@ gl_ctx gl;
 int screen_width;
 int screen_height;
 
+#ifdef GLES
 // Create a basic GLES context
-bool gl_init(EGLNativeWindowType wind, EGLNativeDisplayType disp)
+bool gl_init(void* wind, void* disp)
 {
 #if !defined(_ANDROID)
-	gl.setup.native_wind=wind;
-	gl.setup.native_disp=disp;
+	gl.setup.native_wind=(EGLNativeWindowType)wind;
+	gl.setup.native_disp=(EGLNativeDisplayType)disp;
 
 	//try to get a display
 	gl.setup.display = eglGetDisplay(gl.setup.native_disp);
@@ -427,6 +467,129 @@ void gl_term()
 	gl.setup.display=0;
 #endif
 }
+#else
+
+#define WGL_DRAW_TO_WINDOW_ARB         0x2001
+#define WGL_ACCELERATION_ARB           0x2003
+#define WGL_SWAP_METHOD_ARB            0x2007
+#define WGL_SUPPORT_OPENGL_ARB         0x2010
+#define WGL_DOUBLE_BUFFER_ARB          0x2011
+#define WGL_PIXEL_TYPE_ARB             0x2013
+#define WGL_COLOR_BITS_ARB             0x2014
+#define WGL_DEPTH_BITS_ARB             0x2022
+#define WGL_STENCIL_BITS_ARB           0x2023
+#define WGL_FULL_ACCELERATION_ARB      0x2027
+#define WGL_SWAP_EXCHANGE_ARB          0x2028
+#define WGL_TYPE_RGBA_ARB              0x202B
+#define WGL_CONTEXT_MAJOR_VERSION_ARB  0x2091
+#define WGL_CONTEXT_MINOR_VERSION_ARB  0x2092
+#define WGL_CONTEXT_FLAGS_ARB              0x2094
+
+#define		WGL_CONTEXT_PROFILE_MASK_ARB  0x9126
+#define 	WGL_CONTEXT_MAJOR_VERSION_ARB   0x2091
+#define 	WGL_CONTEXT_MINOR_VERSION_ARB   0x2092
+#define 	WGL_CONTEXT_LAYER_PLANE_ARB   0x2093
+#define 	WGL_CONTEXT_FLAGS_ARB   0x2094
+#define 	WGL_CONTEXT_DEBUG_BIT_ARB   0x0001
+#define 	WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB   0x0002
+#define 	ERROR_INVALID_VERSION_ARB   0x2095
+#define		WGL_CONTEXT_CORE_PROFILE_BIT_ARB 0x00000001 
+
+typedef BOOL (WINAPI * PFNWGLCHOOSEPIXELFORMATARBPROC) (HDC hdc, const int *piAttribIList, const FLOAT *pfAttribFList, UINT nMaxFormats, 
+                                                        int *piFormats, UINT *nNumFormats);
+typedef HGLRC (WINAPI * PFNWGLCREATECONTEXTATTRIBSARBPROC) (HDC hDC, HGLRC hShareContext, const int *attribList);
+typedef BOOL (WINAPI * PFNWGLSWAPINTERVALEXTPROC) (int interval);
+
+PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB;
+PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB;
+PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT;
+
+
+HDC ourWindowHandleToDeviceContext;
+bool gl_init(void* hwnd, void* hdc)
+{
+	PIXELFORMATDESCRIPTOR pfd =
+    {
+            sizeof(PIXELFORMATDESCRIPTOR),
+            1,
+            PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER,    //Flags
+            PFD_TYPE_RGBA,            //The kind of framebuffer. RGBA or palette.
+            32,                        //Colordepth of the framebuffer.
+            0, 0, 0, 0, 0, 0,
+            0,
+            0,
+            0,
+            0, 0, 0, 0,
+            24,                        //Number of bits for the depthbuffer
+            8,                        //Number of bits for the stencilbuffer
+            0,                        //Number of Aux buffers in the framebuffer.
+            PFD_MAIN_PLANE,
+            0,
+            0, 0, 0
+    };
+
+    /*HDC*/ ourWindowHandleToDeviceContext = (HDC)hdc;//GetDC((HWND)hwnd);
+
+    int  letWindowsChooseThisPixelFormat;
+    letWindowsChooseThisPixelFormat = ChoosePixelFormat(ourWindowHandleToDeviceContext, &pfd); 
+    SetPixelFormat(ourWindowHandleToDeviceContext,letWindowsChooseThisPixelFormat, &pfd);
+
+    HGLRC ourOpenGLRenderingContext = wglCreateContext(ourWindowHandleToDeviceContext);
+    wglMakeCurrent (ourWindowHandleToDeviceContext, ourOpenGLRenderingContext);
+
+	bool rv = true;
+
+	if (rv) {
+
+		wglChoosePixelFormatARB = (PFNWGLCHOOSEPIXELFORMATARBPROC)wglGetProcAddress("wglChoosePixelFormatARB");
+		if(!wglChoosePixelFormatARB)
+		{
+			return false;
+		}
+
+		wglCreateContextAttribsARB = (PFNWGLCREATECONTEXTATTRIBSARBPROC)wglGetProcAddress("wglCreateContextAttribsARB");
+		if(!wglCreateContextAttribsARB)
+		{
+			return false;
+		}
+
+		wglSwapIntervalEXT = (PFNWGLSWAPINTERVALEXTPROC)wglGetProcAddress("wglSwapIntervalEXT");
+		if(!wglSwapIntervalEXT)
+		{
+			return false;
+		}
+
+		int attribs[] =
+       {
+            WGL_CONTEXT_MAJOR_VERSION_ARB, 3,
+            WGL_CONTEXT_MINOR_VERSION_ARB, 1, 
+            WGL_CONTEXT_FLAGS_ARB, WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB,
+            WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
+            0
+       };
+
+		HGLRC m_hrc = wglCreateContextAttribsARB(ourWindowHandleToDeviceContext,0, attribs);
+
+		if (m_hrc)
+			wglMakeCurrent(ourWindowHandleToDeviceContext,m_hrc);
+		else
+			rv = false;
+
+		wglDeleteContext(ourOpenGLRenderingContext);
+	}
+
+	if (rv) {
+		rv = gl3wInit() != -1 && gl3wIsSupported(3, 1);
+	}
+	return rv;
+}
+#include <Wingdi.h>
+void gl_swap()
+{
+	wglSwapLayerBuffers(ourWindowHandleToDeviceContext,WGL_SWAP_MAIN_PLANE);
+	//SwapBuffers(ourWindowHandleToDeviceContext);
+}
+#endif
 
 
 struct ShaderUniforms_t
@@ -508,6 +671,10 @@ GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentShader)
 	glBindAttribLocation(program, VERTEX_COL_BASE_ARRAY, "in_base");
 	glBindAttribLocation(program, VERTEX_COL_OFFS_ARRAY, "in_offs");
 	glBindAttribLocation(program, VERTEX_UV_ARRAY,       "in_uv");
+
+#ifndef GLES
+	glBindFragDataLocation(program, 0, "FragColor");
+#endif
 
 	glLinkProgram(program);
 
@@ -696,8 +863,7 @@ bool gl_create_resources()
 	return true;
 }
 
-//create a basic gles context
-bool gl_init(EGLNativeWindowType wind, EGLNativeDisplayType disp);
+bool gl_init(void* wind, void* disp);
 
 //swap buffers
 void gl_swap();
@@ -713,19 +879,21 @@ bool gl_create_resources();
 
 bool gles_init()
 {
-	if (!gl_init((EGLNativeWindowType)libPvr_GetRenderTarget(),
-		         (EGLNativeDisplayType)libPvr_GetRenderSurface()))
+
+	if (!gl_init((void*)libPvr_GetRenderTarget(),
+		         (void*)libPvr_GetRenderSurface()))
 			return false;
 
 	if (!gl_create_resources())
 		return false;
 
-	
+#ifdef GLES
 	#ifdef TARGET_PANDORA
 	fbdev=open("/dev/fb0", O_RDONLY);
 	#else
 	eglSwapInterval(gl.setup.display,1);
 	#endif
+#endif
 
 	//clean up all buffers ...
 	for (int i=0;i<10;i++)

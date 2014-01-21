@@ -145,7 +145,9 @@ struct TextureCacheData
 		SetRepeatMode(GL_TEXTURE_WRAP_S,tsp.ClampU,tsp.FlipU); // glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, (tsp.ClampU ? GL_CLAMP_TO_EDGE : (tsp.FlipU ? GL_MIRRORED_REPEAT : GL_REPEAT))) ;
 		SetRepeatMode(GL_TEXTURE_WRAP_T,tsp.ClampV,tsp.FlipV); // glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, (tsp.ClampV ? GL_CLAMP_TO_EDGE : (tsp.FlipV ? GL_MIRRORED_REPEAT : GL_REPEAT))) ;
 
+#ifdef GLES
 		glHint(GL_GENERATE_MIPMAP_HINT, GL_NICEST);
+#endif
 
 		//set texture filter mode
 		if ( tsp.FilterMode == 0 )
@@ -344,7 +346,11 @@ void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 		m_i32TexSize by m_i32TexSize.
 	*/
 
+#ifdef GLES
 	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24_OES, fbw, fbh);
+#else
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, fbw, fbh);
+#endif
 
 	glGenRenderbuffers(1, &rv.stencilb);
 	glBindRenderbuffer(GL_RENDERBUFFER, rv.stencilb);
