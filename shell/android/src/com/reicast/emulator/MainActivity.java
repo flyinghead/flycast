@@ -584,17 +584,22 @@ public class MainActivity extends FragmentActivity implements
 			Fragment fragment = (FileBrowser) getSupportFragmentManager()
 					.findFragmentByTag("MAIN_BROWSER");
 			if (fragment != null && fragment.isVisible()) {
-				this.finish();
+				MainActivity.this.finish();
 				return false;
 			} else {
-				fragment = new FileBrowser();
-				Bundle args = new Bundle();
-				args.putBoolean("ImgBrowse", true);
-				args.putString("browse_entry", null);
-				args.putBoolean("games_entry", false);
-				fragment.setArguments(args);
-				getSupportFragmentManager().beginTransaction()
-						.replace(R.id.fragment_container, fragment).commit();
+				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR1) {
+					displayView(0);
+				} else {
+					fragment = new FileBrowser();
+					Bundle args = new Bundle();
+					args.putBoolean("ImgBrowse", true);
+					args.putString("browse_entry", null);
+					args.putBoolean("games_entry", false);
+					fragment.setArguments(args);
+					getSupportFragmentManager().beginTransaction()
+							.replace(R.id.fragment_container, fragment)
+							.commit();
+				}
 				return false;
 			}
 
