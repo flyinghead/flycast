@@ -27,6 +27,8 @@ public class EditVJoyActivity extends Activity {
 	GL2JNIView mView;
 	PopupWindow popUp;
 	LayoutParams params;
+	
+	private static float[][] vjoy_d_cached;
 
 	View addbut(int x, OnClickListener ocl) {
 		ImageButton but = new ImageButton(this);
@@ -63,6 +65,13 @@ public class EditVJoyActivity extends Activity {
 			}
 		}), params);
 
+		hlay.addView(addbut(R.drawable.close, new OnClickListener() {
+			public void onClick(View v) {
+				mView.restoreCustomVjoyValues(vjoy_d_cached);
+				popUp.dismiss();
+			}
+		}), params);
+
 		popUp.setContentView(hlay);
 	}
 
@@ -78,8 +87,10 @@ public class EditVJoyActivity extends Activity {
 		// Create the actual GLES view
 		mView = new GL2JNIView(getApplication(), null, false, 24, 0, true);
 		setContentView(mView);
+		
+		vjoy_d_cached = GL2JNIView.readCustomVjoyValues(getApplicationContext());
 
-                JNIdc.show_osd();
+        JNIdc.show_osd();
 
 		Toast.makeText(getApplicationContext(),
 				"Press the back button for a menu", Toast.LENGTH_SHORT).show();

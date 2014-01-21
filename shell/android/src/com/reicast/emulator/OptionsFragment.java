@@ -27,7 +27,7 @@ public class OptionsFragment extends Fragment {
 	private SharedPreferences mPrefs;
 	private File sdcard = Environment.getExternalStorageDirectory();
 	private String home_directory = sdcard + "/dc";
-	private String game_directory = sdcard + "/";
+	private String game_directory = sdcard + "/dc";
 
 	// Container Activity must implement this interface
 	public interface OnClickListener {
