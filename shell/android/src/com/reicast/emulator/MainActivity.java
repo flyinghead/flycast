@@ -23,6 +23,7 @@ import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.widget.DrawerLayout;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
@@ -30,7 +31,6 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnTouchListener;
 import android.widget.AdapterView;
-import android.widget.ImageView;
 import android.widget.ListView;
 
 public class MainActivity extends FragmentActivity implements
@@ -576,5 +576,30 @@ public class MainActivity extends FragmentActivity implements
 			mDrawerToggle.onConfigurationChanged(newConfig);
 		}
 
+	}
+
+	@Override
+	public boolean onKeyDown(int keyCode, KeyEvent event) {
+		if (keyCode == KeyEvent.KEYCODE_BACK) {
+			Fragment fragment = (FileBrowser) getSupportFragmentManager()
+					.findFragmentByTag("MAIN_BROWSER");
+			if (fragment != null && fragment.isVisible()) {
+				this.finish();
+				return false;
+			} else {
+				fragment = new FileBrowser();
+				Bundle args = new Bundle();
+				args.putBoolean("ImgBrowse", true);
+				args.putString("browse_entry", null);
+				args.putBoolean("games_entry", false);
+				fragment.setArguments(args);
+				getSupportFragmentManager().beginTransaction()
+						.replace(R.id.fragment_container, fragment).commit();
+				return false;
+			}
+
+		}
+
+		return super.onKeyDown(keyCode, event);
 	}
 }

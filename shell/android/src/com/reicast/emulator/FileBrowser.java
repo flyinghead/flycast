@@ -12,13 +12,11 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 
-import org.apache.commons.io.comparator.CompositeFileComparator;
-import org.apache.commons.io.comparator.LastModifiedFileComparator;
-import org.apache.commons.io.comparator.SizeFileComparator;
 import org.apache.commons.lang3.StringUtils;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
@@ -30,19 +28,14 @@ import android.os.Environment;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
-import android.util.TypedValue;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnTouchListener;
 import android.view.ViewGroup;
-import android.widget.FrameLayout;
 import android.widget.ImageView;
-import android.widget.ImageView.ScaleType;
 import android.widget.LinearLayout;
-import android.widget.LinearLayout.LayoutParams;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -208,12 +201,6 @@ public class FileBrowser extends Fragment {
 			tFileList.add(mediaFile);
 		}
 
-		@SuppressWarnings("unchecked")
-		CompositeFileComparator comparator = new CompositeFileComparator(
-				SizeFileComparator.SIZE_REVERSE,
-				LastModifiedFileComparator.LASTMODIFIED_REVERSE);
-		comparator.sort(tFileList);
-
 		return tFileList;
 	}
 
@@ -267,75 +254,80 @@ public class FileBrowser extends Fragment {
 		((ViewGroup) view).addView(headerView);
 
 	}
-
-	void generate(List<File> list) {
-		LinearLayout v = (LinearLayout) parentActivity
+	
+	void generate(List<File> games) {
+		final LinearLayout list = (LinearLayout) parentActivity
 				.findViewById(R.id.game_list);
-		v.removeAllViews();
+		list.removeAllViews();
 
 		String heading = parentActivity.getString(R.string.games_listing);
-		createListHeader(heading, v, true);
-
-		for (int i = 0; i < list.size(); i++) {
-			final View childview = parentActivity.getLayoutInflater().inflate(
-					R.layout.app_list_item, null, false);
-
-			((TextView) childview.findViewById(R.id.item_name)).setText(list
-					.get(i).getName());
-
-			((ImageView) childview.findViewById(R.id.item_icon))
-					.setImageResource(list.get(i) == null ? R.drawable.config
-							: list.get(i).isDirectory() ? R.drawable.open_folder
-									: list.get(i).getName()
-											.toLowerCase(Locale.getDefault())
-											.endsWith(".gdi") ? R.drawable.gdi
-											: list.get(i)
-													.getName()
-													.toLowerCase(
-															Locale.getDefault())
-													.endsWith(".cdi") ? R.drawable.cdi
-													: list.get(i)
-															.getName()
-															.toLowerCase(
-																	Locale.getDefault())
-															.endsWith(".chd") ? R.drawable.chd
-															: R.drawable.disk_unknown);
-
-			childview.setTag(list.get(i));
-
-			orig_bg = childview.getBackground();
-
-			final File game = list.get(i);
-
-			// vw.findViewById(R.id.childview).setBackgroundColor(0xFFFFFFFF);
-
-			childview.findViewById(R.id.childview).setOnClickListener(
-					new OnClickListener() {
-						public void onClick(View view) {
-							vib.vibrate(50);
-							mCallback.onGameSelected(game != null ? Uri
-									.fromFile(game) : Uri.EMPTY);
-							vib.vibrate(250);
-						}
-					});
-
-			childview.findViewById(R.id.childview).setOnTouchListener(
-					new OnTouchListener() {
-						@SuppressWarnings("deprecation")
-						public boolean onTouch(View view, MotionEvent arg1) {
-							if (arg1.getActionMasked() == MotionEvent.ACTION_DOWN) {
-								view.setBackgroundColor(0xFF4F3FFF);
-							} else if (arg1.getActionMasked() == MotionEvent.ACTION_CANCEL
-									|| arg1.getActionMasked() == MotionEvent.ACTION_UP) {
-								view.setBackgroundDrawable(orig_bg);
-							}
-
-							return false;
-
-						}
-					});
-			v.addView(childview);
+		createListHeader(heading, list, true);
+		for (int i = 0; i < games.size(); i++) {
+			createListItem(list, games.get(i));
 		}
+	}
+
+	private void createListItem(LinearLayout list, final File game) {
+		final String name = game.getName();
+		final View childview = parentActivity
+				.getLayoutInflater()
+				.inflate(R.layout.app_list_item, null,
+						false);
+
+		((TextView) childview.findViewById(R.id.item_name))
+				.setText(name);
+
+		((ImageView) childview.findViewById(R.id.item_icon))
+				.setImageResource(game == null ? R.drawable.config
+						: game.isDirectory() ? R.drawable.open_folder
+								: name.toLowerCase(
+										Locale.getDefault())
+										.endsWith(".gdi") ? R.drawable.gdi
+										: name.toLowerCase(
+												Locale.getDefault())
+												.endsWith(
+														".cdi") ? R.drawable.cdi
+												: name.toLowerCase(
+														Locale.getDefault())
+														.endsWith(
+																".chd") ? R.drawable.chd
+														: R.drawable.disk_unknown);
+
+		childview.setTag(name);
+
+		orig_bg = childview.getBackground();
+
+		// vw.findViewById(R.id.childview).setBackgroundColor(0xFFFFFFFF);
+
+		childview.findViewById(R.id.childview)
+				.setOnClickListener(new OnClickListener() {
+					public void onClick(View view) {
+						vib.vibrate(50);
+						mCallback
+								.onGameSelected(game != null ? Uri
+										.fromFile(game)
+										: Uri.EMPTY);
+						vib.vibrate(250);
+					}
+				});
+
+		childview.findViewById(R.id.childview)
+				.setOnTouchListener(new OnTouchListener() {
+					@SuppressWarnings("deprecation")
+					public boolean onTouch(View view,
+							MotionEvent arg1) {
+						if (arg1.getActionMasked() == MotionEvent.ACTION_DOWN) {
+							view.setBackgroundColor(0xFF4F3FFF);
+						} else if (arg1.getActionMasked() == MotionEvent.ACTION_CANCEL
+								|| arg1.getActionMasked() == MotionEvent.ACTION_UP) {
+							view.setBackgroundDrawable(orig_bg);
+						}
+
+						return false;
+
+					}
+				});
+		list.addView(childview);
 	}
 
 	void navigate(final File root_sd) {
