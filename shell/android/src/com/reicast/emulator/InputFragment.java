@@ -60,6 +60,9 @@ public class InputFragment extends Fragment {
     			} 
 		});
 
+		if (!MainActivity.isBiosExisting() || !MainActivity.isFlashExisting())
+			buttonLaunchEditor.setEnabled(false);
+
 		OnCheckedChangeListener touch_vibration = new OnCheckedChangeListener() {
 
 			public void onCheckedChanged(CompoundButton buttonView,
