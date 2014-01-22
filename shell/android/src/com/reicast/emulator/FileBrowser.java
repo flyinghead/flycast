@@ -158,38 +158,6 @@ public class FileBrowser extends Fragment {
 		if (!ImgBrowse) {
 			navigate(sdcard);
 		} else {
-			if (0 == 1) {
-				AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
-						parentActivity);
-				alertDialogBuilder.setTitle(getString(R.string.rating_title));
-				alertDialogBuilder
-						.setMessage(getString(R.string.rating_text))
-						.setCancelable(false)
-						.setPositiveButton("Rate It",
-								new DialogInterface.OnClickListener() {
-									public void onClick(DialogInterface dialog,
-											int id) {
-										parentActivity.startActivity(new Intent(
-												Intent.ACTION_VIEW,
-												Uri.parse("market://details?id="
-														+ parentActivity
-																.getPackageName())));
-									}
-								})
-						.setNegativeButton("Dismiss",
-								new DialogInterface.OnClickListener() {
-									public void onClick(DialogInterface dialog,
-											int id) {
-
-									}
-								});
-
-				// create alert dialog
-				AlertDialog alertDialog = alertDialogBuilder.create();
-
-				// show it
-				alertDialog.show();
-			}
 			LocateGames mLocateGames = new LocateGames();
 			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
 				mLocateGames
