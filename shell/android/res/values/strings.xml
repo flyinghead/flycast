@@ -44,7 +44,7 @@
     <string name="controller_already_in_use">This controller is already in use!</string>
 
     <string name="about_title">About reicast</string>
-    <string name="about_text">reicast is a dreamcast emulator\n\nVersion: %1$s\n\nWe are hard at work to bring the full Dreamcast experience to your Android device, so why not take a minute and tell us how you like it so far? We appreciate it!</string>
+    <string name="about_text">reicast is a dreamcast emulator\n\nVersion: %1$s\n\nWe work hard for you\nShare the love back and rate the app!</string>
     
     <string-array name="images">
         <item>cdi</item>
