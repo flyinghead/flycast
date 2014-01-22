@@ -480,26 +480,32 @@ public class MainActivity extends FragmentActivity implements
 				e.printStackTrace();
 			}
 
-			// set dialog message
-			alertDialogBuilder
-					.setMessage(
-							getString(R.string.about_text) + " " + versionName)
-					.setCancelable(false)
-					.setPositiveButton("Dismiss",
-							new DialogInterface.OnClickListener() {
-								public void onClick(DialogInterface dialog,
-										int id) {
-									// if this button is clicked, close
-									// current activity
-									// FileBrowser.this.finish();
-								}
-							});
+				alertDialogBuilder
+						.setMessage(getString(R.string.about_text, versionName))
+						.setCancelable(false)
+						.setPositiveButton("Rate It",
+								new DialogInterface.OnClickListener() {
+									public void onClick(DialogInterface dialog,
+											int id) {
+										startActivity(new Intent(
+												Intent.ACTION_VIEW,
+												Uri.parse("market://details?id="
+														+ getPackageName())));
+									}
+								})
+						.setNegativeButton("Dismiss",
+								new DialogInterface.OnClickListener() {
+									public void onClick(DialogInterface dialog,
+											int id) {
 
-			// create alert dialog
-			AlertDialog alertDialog = alertDialogBuilder.create();
+									}
+								});
 
-			// show it
-			alertDialog.show();
+				// create alert dialog
+				AlertDialog alertDialog = alertDialogBuilder.create();
+
+				// show it
+				alertDialog.show();
 			break;
 
 		default:
