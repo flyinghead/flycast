@@ -55,7 +55,7 @@ public class InputModFragment extends Fragment {
 		switchModifiedLayoutEnabled = (Switch) getView().findViewById(
 				R.id.switchModifiedLayoutEnabled);
 		boolean layout = mPrefs.getBoolean(
-				"modified_key_layout", true);
+				"modified_key_layout", false);
 		if (layout) {
 			switchModifiedLayoutEnabled.setChecked(true);
 		} else {
