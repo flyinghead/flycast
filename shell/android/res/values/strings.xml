@@ -49,7 +49,7 @@
     <string name="map_keycode_message">Press the new controller button for %1$s</string>
 
     <string name="about_title">About reicast</string>
-    <string name="about_text">reicast is a dreamcast emulator\n\nVersion: %1$s\n\nWe work hard for you\nShare the love back and rate the app!</string>
+    <string name="about_text">reicast is a dreamcast emulator\n\nVersion: %1$s\n\n</string>
     
     <string-array name="images">
         <item>cdi</item>
