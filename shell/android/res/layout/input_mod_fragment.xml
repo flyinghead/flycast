@@ -1,0 +1,335 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical" >
+
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical" >
+
+    <TableLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:stretchColumns="*" >
+
+        <TableRow android:gravity="center_vertical" >
+
+            <TextView
+                android:id="@+id/a_button_key"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ems="10"
+                android:text="A button" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="right"
+                android:orientation="vertical" >
+
+                <Button
+                    android:id="@+id/a_button_edit"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ems="8"
+                    android:text="@string/launch_editor" />
+            </LinearLayout>
+        </TableRow>
+
+        <TableRow android:gravity="center_vertical" >
+
+            <TextView
+                android:id="@+id/b_button_key"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ems="10"
+                android:text="B button" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="right"
+                android:orientation="vertical" >
+
+                <Button
+                    android:id="@+id/b_button_edit"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ems="8"
+                    android:text="@string/launch_editor" />
+            </LinearLayout>
+        </TableRow>
+
+        <TableRow android:gravity="center_vertical" >
+
+            <TextView
+                android:id="@+id/x_button_key"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ems="10"
+                android:text="X button" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="right"
+                android:orientation="vertical" >
+
+                <Button
+                    android:id="@+id/x_button_edit"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ems="8"
+                    android:text="@string/launch_editor" />
+            </LinearLayout>
+        </TableRow>
+        <TableRow android:gravity="center_vertical" >
+
+            <TextView
+                android:id="@+id/y_button_key"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ems="10"
+                android:text="Y button" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="right"
+                android:orientation="vertical" >
+
+                <Button
+                    android:id="@+id/y_button_edit"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ems="8"
+                    android:text="@string/launch_editor" />
+            </LinearLayout>
+        </TableRow>
+        <TableRow android:gravity="center_vertical" >
+
+            <TextView
+                android:id="@+id/l_button_key"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ems="10"
+                android:text="L button" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="right"
+                android:orientation="vertical" >
+
+                <Button
+                    android:id="@+id/l_button_edit"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ems="8"
+                    android:text="@string/launch_editor" />
+            </LinearLayout>
+        </TableRow>
+        <TableRow android:gravity="center_vertical" >
+
+            <TextView
+                android:id="@+id/r_button_key"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ems="10"
+                android:text="R button" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="right"
+                android:orientation="vertical" >
+
+                <Button
+                    android:id="@+id/r_button_edit"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ems="8"
+                    android:text="@string/launch_editor" />
+            </LinearLayout>
+        </TableRow>
+        <TableRow android:gravity="center_vertical" >
+
+            <TextView
+                android:id="@+id/joystick_key"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ems="10"
+                android:text="Joystick" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="right"
+                android:orientation="vertical" >
+
+                <Button
+                    android:id="@+id/joystick_edit"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ems="8"
+                    android:text="@string/launch_editor" />
+            </LinearLayout>
+        </TableRow>
+        <TableRow android:gravity="center_vertical" >
+
+            <TextView
+                android:id="@+id/dpad_left_key"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ems="10"
+                android:text="DPad Left" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="right"
+                android:orientation="vertical" >
+
+                <Button
+                    android:id="@+id/dpad_left_edit"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ems="8"
+                    android:text="@string/launch_editor" />
+            </LinearLayout>
+        </TableRow>
+        <TableRow android:gravity="center_vertical" >
+
+            <TextView
+                android:id="@+id/dpad_right_key"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ems="10"
+                android:text="DPad Right" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="right"
+                android:orientation="vertical" >
+
+                <Button
+                    android:id="@+id/dpad_right_edit"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ems="8"
+                    android:text="@string/launch_editor" />
+            </LinearLayout>
+        </TableRow>
+        <TableRow android:gravity="center_vertical" >
+
+            <TextView
+                android:id="@+id/dpad_up_key"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ems="10"
+                android:text="DPad Up" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="right"
+                android:orientation="vertical" >
+
+                <Button
+                    android:id="@+id/dpad_up_edit"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ems="8"
+                    android:text="@string/launch_editor" />
+            </LinearLayout>
+        </TableRow>
+        <TableRow android:gravity="center_vertical" >
+
+            <TextView
+                android:id="@+id/dpad_down_key"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ems="10"
+                android:text="DPad Down" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="right"
+                android:orientation="vertical" >
+
+                <Button
+                    android:id="@+id/dpad_down_edit"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ems="8"
+                    android:text="@string/launch_editor" />
+            </LinearLayout>
+        </TableRow>
+        <TableRow android:gravity="center_vertical" >
+
+            <TextView
+                android:id="@+id/start_button_key"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ems="10"
+                android:text="Start Button" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="right"
+                android:orientation="vertical" >
+
+                <Button
+                    android:id="@+id/start_button_edit"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ems="8"
+                    android:text="@string/launch_editor" />
+            </LinearLayout>
+        </TableRow>
+    </TableLayout>
+
+</LinearLayout>
+
+</ScrollView>

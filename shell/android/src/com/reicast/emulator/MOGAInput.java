@@ -3,8 +3,11 @@ package com.reicast.emulator;
 
 /******************************************************************************/
 
+import tv.ouya.console.api.OuyaController;
 import android.app.Activity;
+import android.content.SharedPreferences;
 import android.os.Handler;
+import android.preference.PreferenceManager;
 import android.widget.Toast;
 
 import com.bda.controller.Controller;
@@ -20,6 +23,8 @@ import com.bda.controller.StateEvent;
 */
 public class MOGAInput
 {
+	private SharedPreferences prefs;
+
 	static final int DELAY = 1000 / 50; // 50 Hz
 	
 	static final int ACTION_CONNECTED = Controller.ACTION_CONNECTED;
@@ -93,6 +98,9 @@ public class MOGAInput
 	protected void onCreate(Activity act)
 	{
 		this.act = act;
+		
+		prefs = PreferenceManager
+				.getDefaultSharedPreferences(act.getApplicationContext());
 
 		mController = Controller.getInstance(act);
 		mController.init();
@@ -136,6 +144,43 @@ public class MOGAInput
 		}
 		*/
 	}
+	
+	private int getModifiedKey(int KeyCode) {
+		if (prefs.getInt("a_button", -1) == KeyCode) {
+			return KeyEvent.KEYCODE_BUTTON_A;
+		}
+		if (prefs.getInt("b_button", -1) == KeyCode) {
+			return KeyEvent.KEYCODE_BUTTON_B;
+		}
+		if (prefs.getInt("x_button", -1) == KeyCode) {
+			return KeyEvent.KEYCODE_BUTTON_X;
+		}
+		if (prefs.getInt("y_button", -1) == KeyCode) {
+			return KeyEvent.KEYCODE_BUTTON_Y;
+		}
+		if (prefs.getInt("l_button", -1) == KeyCode) {
+			return KeyEvent.KEYCODE_BUTTON_L2;
+		}
+		if (prefs.getInt("r_button", -1) == KeyCode) {
+			return KeyEvent.KEYCODE_BUTTON_R2;
+		}
+		if (prefs.getInt("dpad_left", -1) == KeyCode) {
+			return KeyEvent.KEYCODE_DPAD_LEFT;
+		}
+		if (prefs.getInt("dpad_right", -1) == KeyCode) {
+			return KeyEvent.KEYCODE_DPAD_RIGHT;
+		}
+		if (prefs.getInt("dpad_up", -1) == KeyCode) {
+			return KeyEvent.KEYCODE_DPAD_UP;
+		}
+		if (prefs.getInt("dpad_down", -1) == KeyCode) {
+			return KeyEvent.KEYCODE_DPAD_DOWN;
+		}
+		if (prefs.getInt("start_button", -1) == KeyCode) {
+			return KeyEvent.KEYCODE_BUTTON_START;
+		}
+		return KeyCode;
+	}
 
 	class ExampleControllerListener implements ControllerListener
 	{
@@ -150,7 +195,7 @@ public class MOGAInput
 				JNIdc.hide_osd();
 
 			for (int i = 0; i < map.length; i += 2) {
-				if (map[i + 0] == event.getKeyCode()) {
+				if (map[i + 0] == getModifiedKey(event.getKeyCode())) {
 					if (event.getAction() == 0) //FIXME to const
 						GL2JNIView.kcode_raw[playerNum] &= ~map[i + 1];
 					else
