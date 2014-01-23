@@ -10,7 +10,7 @@ PGO_USE :=1
 
 #USE_CCACHE :=1
 #PGO_MAKE :=1
-#PGO_USE :=1
+PGO_USE :=1
 
 RZDCY_SRC_DIR = ../../core
 
