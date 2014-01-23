@@ -13,7 +13,7 @@ PGO_USE :=1
 
 RZDCY_SRC_DIR = ../../newdc
 
-include $(RZDCY_SRC_DIR)/newdc.mk
+include $(RZDCY_SRC_DIR)/core.mk
 
 CC_PREFIX ?=
 
