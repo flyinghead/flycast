@@ -1,5 +1,6 @@
 package com.reicast.emulator;
 
+import de.ankri.views.Switch;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -14,12 +15,15 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.CompoundButton;
 import android.widget.TextView;
+import android.widget.CompoundButton.OnCheckedChangeListener;
 
 public class InputModFragment extends Fragment {
 
 	private Activity parentActivity;
 	private SharedPreferences mPrefs;
+	private Switch switchModifiedLayoutEnabled;
 
 	// Container Activity must implement this interface
 	public interface OnClickListener {
@@ -39,6 +43,25 @@ public class InputModFragment extends Fragment {
 
 		mPrefs = PreferenceManager
 				.getDefaultSharedPreferences(parentActivity);
+		
+		OnCheckedChangeListener modified_layout = new OnCheckedChangeListener() {
+			public void onCheckedChanged(CompoundButton buttonView,
+					boolean isChecked) {
+				mPrefs.edit()
+						.putBoolean("modified_key_layout", isChecked)
+						.commit();
+			}
+		};
+		switchModifiedLayoutEnabled = (Switch) getView().findViewById(
+				R.id.switchModifiedLayoutEnabled);
+		boolean layout = mPrefs.getBoolean(
+				"modified_key_layout", true);
+		if (layout) {
+			switchModifiedLayoutEnabled.setChecked(true);
+		} else {
+			switchModifiedLayoutEnabled.setChecked(false);
+		}
+		switchModifiedLayoutEnabled.setOnCheckedChangeListener(modified_layout);
 		
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
 
@@ -118,6 +141,9 @@ public class InputModFragment extends Fragment {
 	    				mapKeyCode("joystick", joystick_text);
 	    			} 
 			});
+			joystick.setEnabled(false);
+			mPrefs.edit().remove("joystick").commit();
+			// Still needs better support for identifying the entire stick
 
 			final TextView dpad_left_text = (TextView) getView()
 					.findViewById(R.id.dpad_left_key);
@@ -176,7 +202,7 @@ public class InputModFragment extends Fragment {
 		
 		} else {
 
-			// Notify the user they got here by mistake
+			switchModifiedLayoutEnabled.setEnabled(false);
 
 		}
 	}

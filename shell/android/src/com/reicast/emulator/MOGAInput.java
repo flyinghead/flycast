@@ -47,18 +47,18 @@ public class MOGAInput
 	private static final int key_CONT_X 			= 0x0400;
 
 	int[] map = new int[] {
-						KeyEvent.KEYCODE_BUTTON_B, key_CONT_B,
-						KeyEvent.KEYCODE_BUTTON_A, key_CONT_A,
-						KeyEvent.KEYCODE_BUTTON_X, key_CONT_X,
-						KeyEvent.KEYCODE_BUTTON_Y, key_CONT_Y,
+		KeyEvent.KEYCODE_BUTTON_B, key_CONT_B,
+		KeyEvent.KEYCODE_BUTTON_A, key_CONT_A,
+		KeyEvent.KEYCODE_BUTTON_X, key_CONT_X,
+		KeyEvent.KEYCODE_BUTTON_Y, key_CONT_Y,
 
-						KeyEvent.KEYCODE_DPAD_UP, key_CONT_DPAD_UP,
-						KeyEvent.KEYCODE_DPAD_DOWN, key_CONT_DPAD_DOWN,
-						KeyEvent.KEYCODE_DPAD_LEFT, key_CONT_DPAD_LEFT,
-						KeyEvent.KEYCODE_DPAD_RIGHT, key_CONT_DPAD_RIGHT,
+		KeyEvent.KEYCODE_DPAD_UP, key_CONT_DPAD_UP,
+		KeyEvent.KEYCODE_DPAD_DOWN, key_CONT_DPAD_DOWN,
+		KeyEvent.KEYCODE_DPAD_LEFT, key_CONT_DPAD_LEFT,
+		KeyEvent.KEYCODE_DPAD_RIGHT, key_CONT_DPAD_RIGHT,
 
-						KeyEvent.KEYCODE_BUTTON_START, key_CONT_START,
-				};
+		KeyEvent.KEYCODE_BUTTON_START, key_CONT_START,
+	};
 
 	Activity act;
 	public MOGAInput()
@@ -98,9 +98,7 @@ public class MOGAInput
 	protected void onCreate(Activity act)
 	{
 		this.act = act;
-		
-		prefs = PreferenceManager
-				.getDefaultSharedPreferences(act.getApplicationContext());
+		setModifiedKeys();
 
 		mController = Controller.getInstance(act);
 		mController.init();
@@ -145,41 +143,24 @@ public class MOGAInput
 		*/
 	}
 	
-	private int getModifiedKey(int KeyCode) {
-		if (prefs.getInt("a_button", -1) == KeyCode) {
-			return KeyEvent.KEYCODE_BUTTON_A;
+	private void setModifiedKeys() {
+		prefs = PreferenceManager
+				.getDefaultSharedPreferences(act.getApplicationContext());
+		if (prefs.getBoolean("modified_key_layout", false)) {
+			map = new int[] {
+				prefs.getInt("b_button", KeyEvent.KEYCODE_BUTTON_B), key_CONT_B,
+				prefs.getInt("a_button", KeyEvent.KEYCODE_BUTTON_A), key_CONT_A,
+				prefs.getInt("x_button", KeyEvent.KEYCODE_BUTTON_X), key_CONT_X,
+				prefs.getInt("l_button", KeyEvent.KEYCODE_BUTTON_Y), key_CONT_Y,
+
+				prefs.getInt("dpad_up", KeyEvent.KEYCODE_DPAD_UP), key_CONT_DPAD_UP,
+				prefs.getInt("dpad_down", KeyEvent.KEYCODE_DPAD_DOWN), key_CONT_DPAD_DOWN,
+				prefs.getInt("dpad_left", KeyEvent.KEYCODE_DPAD_LEFT), key_CONT_DPAD_LEFT,
+				prefs.getInt("dpad_right", KeyEvent.KEYCODE_DPAD_RIGHT), key_CONT_DPAD_RIGHT,
+
+				prefs.getInt("start_button", KeyEvent.KEYCODE_BUTTON_START), key_CONT_START,
+			};
 		}
-		if (prefs.getInt("b_button", -1) == KeyCode) {
-			return KeyEvent.KEYCODE_BUTTON_B;
-		}
-		if (prefs.getInt("x_button", -1) == KeyCode) {
-			return KeyEvent.KEYCODE_BUTTON_X;
-		}
-		if (prefs.getInt("y_button", -1) == KeyCode) {
-			return KeyEvent.KEYCODE_BUTTON_Y;
-		}
-		if (prefs.getInt("l_button", -1) == KeyCode) {
-			return KeyEvent.KEYCODE_BUTTON_L2;
-		}
-		if (prefs.getInt("r_button", -1) == KeyCode) {
-			return KeyEvent.KEYCODE_BUTTON_R2;
-		}
-		if (prefs.getInt("dpad_left", -1) == KeyCode) {
-			return KeyEvent.KEYCODE_DPAD_LEFT;
-		}
-		if (prefs.getInt("dpad_right", -1) == KeyCode) {
-			return KeyEvent.KEYCODE_DPAD_RIGHT;
-		}
-		if (prefs.getInt("dpad_up", -1) == KeyCode) {
-			return KeyEvent.KEYCODE_DPAD_UP;
-		}
-		if (prefs.getInt("dpad_down", -1) == KeyCode) {
-			return KeyEvent.KEYCODE_DPAD_DOWN;
-		}
-		if (prefs.getInt("start_button", -1) == KeyCode) {
-			return KeyEvent.KEYCODE_BUTTON_START;
-		}
-		return KeyCode;
 	}
 
 	class ExampleControllerListener implements ControllerListener
@@ -195,7 +176,7 @@ public class MOGAInput
 				JNIdc.hide_osd();
 
 			for (int i = 0; i < map.length; i += 2) {
-				if (map[i + 0] == getModifiedKey(event.getKeyCode())) {
+				if (map[i + 0] == event.getKeyCode()) {
 					if (event.getAction() == 0) //FIXME to const
 						GL2JNIView.kcode_raw[playerNum] &= ~map[i + 1];
 					else
