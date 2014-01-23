@@ -8,9 +8,9 @@ USE_OSS :=1
 
 #USE_CCACHE :=1
 
-RZDCY_SRC_DIR = ../../newdc
+RZDCY_SRC_DIR = ../../core
 
-include $(RZDCY_SRC_DIR)/newdc.mk
+include $(RZDCY_SRC_DIR)/core.mk
 
 CC_PREFIX ?=
 
