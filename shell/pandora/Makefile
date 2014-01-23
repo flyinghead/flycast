@@ -5,8 +5,10 @@ FOR_ARM :=1
 FOR_PANDORA :=1
 USE_SDL :=1
 USE_OSS :=1
+
+#USE_CCACHE :=1
 #PGO_MAKE :=1
-PGO_USE :=1
+#PGO_USE :=1
 
 RZDCY_SRC_DIR = ../../newdc
 
