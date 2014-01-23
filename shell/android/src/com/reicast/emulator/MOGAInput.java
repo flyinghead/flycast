@@ -114,21 +114,21 @@ public class MOGAInput
 		mController.onResume();
 
 		/*
-		for(final Entry&lt;Integer, ExampleInteger&gt; entry : mStates.entrySet())
+		for(final Entry<Integer, ExampleInteger> entry : mStates.entrySet())
 		{
 			final int key = entry.getKey();
 			final ExampleInteger value = entry.getValue();
 			value.mValue = mController.getState(key);
 		}
 		
-		for(final Entry&lt;Integer, ExampleInteger&gt; entry : mKeys.entrySet())
+		for(final Entry<Integer, ExampleInteger> entry : mKeys.entrySet())
 		{
 			final int key = entry.getKey();
 			final ExampleInteger value = entry.getValue();
 			value.mValue = mController.getKeyCode(key);
 		}
 
-		for(final Entry&lt;Integer, ExampleFloat&gt; entry : mMotions.entrySet())
+		for(final Entry<Integer, ExampleFloat> entry : mMotions.entrySet())
 		{
 			final int key = entry.getKey();
 			final ExampleFloat value = entry.getValue();
@@ -149,10 +149,10 @@ public class MOGAInput
 			if(playerNum == 0)
 				JNIdc.hide_osd();
 
-			for (int i = 0; i &lt; map.length; i += 2) {
+			for (int i = 0; i < map.length; i += 2) {
 				if (map[i + 0] == event.getKeyCode()) {
 					if (event.getAction() == 0) //FIXME to const
-						GL2JNIView.kcode_raw[playerNum] &amp;= ~map[i + 1];
+						GL2JNIView.kcode_raw[playerNum] &= ~map[i + 1];
 					else
 						GL2JNIView.kcode_raw[playerNum] |= map[i + 1];
 
@@ -183,7 +183,7 @@ public class MOGAInput
 			GL2JNIView.jy[playerNum] = (int) (LS_Y * 126);
 
 			/*
-			for(final Entry&lt;Integer, ExampleFloat&gt; entry : mMotions.entrySet())
+			for(final Entry<Integer, ExampleFloat> entry : mMotions.entrySet())
 			{
 				final int key = entry.getKey();
 				final ExampleFloat value = entry.getValue();
@@ -201,7 +201,7 @@ public class MOGAInput
 			if(playerNum == 0)
 				JNIdc.hide_osd();
 
-			if (event.getState() == StateEvent.STATE_CONNECTION &amp;&amp; event.getAction() == ACTION_CONNECTED) {
+			if (event.getState() == StateEvent.STATE_CONNECTION && event.getAction() == ACTION_CONNECTED) {
         		Toast.makeText(act.getApplicationContext(), "MOGA Connected!", Toast.LENGTH_SHORT).show();
         		isActive = true;
 			}

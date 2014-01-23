@@ -11,6 +11,7 @@ import com.reicast.emulator.GL2JNIView.EmuThread;
 import android.content.SharedPreferences;
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.net.Uri;
@@ -46,6 +47,10 @@ public class GL2JNIActivity extends Activity {
 
 	int map[][];
 
+	public static int getPixelsFromDp(float dps, Context context) {
+		return (int) (dps * context.getResources().getDisplayMetrics().density + 0.5f);
+	}
+
 	View addbut(int x, OnClickListener ocl) {
 		ImageButton but = new ImageButton(this);
 
@@ -63,8 +68,8 @@ public class GL2JNIActivity extends Activity {
 		// LinearLayout layout = new LinearLayout(this);
 
 		// tv = new TextView(this);
-
-		params = new LayoutParams(80, 80);
+		int p = getPixelsFromDp(60, this);
+		params = new LayoutParams(p, p);
 
 		// layout.setOrientation(LinearLayout.VERTICAL);
 		// tv.setText("Hi this is a sample text for popup window");
@@ -176,11 +181,18 @@ public class GL2JNIActivity extends Activity {
 			}
 		}
 
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
+
 		JNIdc.initControllers(new boolean[] {controllerTwoConnected, controllerThreeConnected, controllerFourConnected});
 
 		int joys[] = InputDevice.getDeviceIds();
 		for (int i = 0; i < joys.length; i++) {
-			String descriptor = InputDevice.getDevice(joys[i]).getDescriptor();
+			String descriptor = null;
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+				descriptor = InputDevice.getDevice(joys[i]).getDescriptor();
+			} else {
+				descriptor = InputDevice.getDevice(joys[i]).getName();
+			}
 			Log.d("reidc", "InputDevice ID: " + joys[i]);
 			Log.d("reidc", "InputDevice Name: "
 					+ InputDevice.getDevice(joys[i]).getName());
@@ -255,6 +267,9 @@ public class GL2JNIActivity extends Activity {
 							OuyaController.BUTTON_MENU, key_CONT_START,
 							OuyaController.BUTTON_R1, key_CONT_START };
 					nVidia[playerNum] = true;
+
+					globalLS_X[playerNum] = previousLS_X[playerNum] = 0.0f;
+					globalLS_Y[playerNum] = previousLS_Y[playerNum] = 0.0f;
 				} else if (!moga.isActive) { // Ouya controller
 					map[playerNum] = new int[] {
 							OuyaController.BUTTON_O, key_CONT_A,
@@ -274,6 +289,9 @@ public class GL2JNIActivity extends Activity {
 							OuyaController.BUTTON_R1, key_CONT_START };
 				}
 			}
+		
+		}
+
 		}
 
 		// When viewing a resource, pass its URI to the native code for opening
@@ -282,7 +300,7 @@ public class GL2JNIActivity extends Activity {
 			fileName = Uri.decode(intent.getData().toString());
 
 		// Create the actual GLES view
-		mView = new GL2JNIView(getApplication(), fileName, false, 24, 0);
+		mView = new GL2JNIView(getApplication(), fileName, false, 24, 0, false);
 		setContentView(mView);
 
 		Toast.makeText(getApplicationContext(),
@@ -293,6 +311,8 @@ public class GL2JNIActivity extends Activity {
 	public boolean onGenericMotionEvent(MotionEvent event) {
 		// Log.w("INPUT", event.toString() + " " + event.getSource());
 		// Get all the axis for the KeyEvent
+		
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
 
 		Integer playerNum = deviceDescriptor_PlayerNum.get(deviceId_deviceDescriptor.get(event.getDeviceId()));
 
@@ -325,7 +345,7 @@ public class GL2JNIActivity extends Activity {
 			GL2JNIView.jx[playerNum] = (int) (LS_X * 126);
 			GL2JNIView.jy[playerNum] = (int) (LS_Y * 126);
 		}
-		
+
 		}
 		
 		if ((xbox[playerNum] || nVidia[playerNum]) && ((globalLS_X[playerNum] == previousLS_X[playerNum] && globalLS_Y[playerNum] == previousLS_Y[playerNum])
@@ -335,6 +355,11 @@ public class GL2JNIActivity extends Activity {
 			return false;
 		else
 			return true;
+
+		} else {
+			return false;
+		}
+
 	}
 
 	private static final int key_CONT_B 			= 0x0002;

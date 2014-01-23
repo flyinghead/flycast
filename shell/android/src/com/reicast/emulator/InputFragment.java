@@ -1,10 +1,12 @@
 package com.reicast.emulator;
 
+import de.ankri.views.Switch;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
@@ -18,17 +20,18 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CompoundButton;
-import android.widget.CompoundButton.OnCheckedChangeListener;
+import android.widget.TableLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.CompoundButton.OnCheckedChangeListener;
 
-@TargetApi(Build.VERSION_CODES.JELLY_BEAN)
-public class ControllersFragment extends Fragment {
+public class InputFragment extends Fragment {
 
 	private Activity parentActivity;
 	private int listenForButton = 0;
 	private AlertDialog alertDialogSelectController;
 	private SharedPreferences sharedPreferences;
+	private Switch switchTouchVibrationEnabled;
 
 	// Container Activity must implement this interface
 	public interface OnClickListener {
@@ -39,7 +42,7 @@ public class ControllersFragment extends Fragment {
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 			Bundle savedInstanceState) {
 		// Inflate the layout for this fragment
-		return inflater.inflate(R.layout.controllers_fragment, container, false);
+		return inflater.inflate(R.layout.input_fragment, container, false);
 	}
 
 	@Override
@@ -48,85 +51,113 @@ public class ControllersFragment extends Fragment {
 
 		sharedPreferences = PreferenceManager.getDefaultSharedPreferences(parentActivity);
 
-		CompoundButton compoundButtonTouchVibrationEnabled = (CompoundButton) getView()
-					.findViewById(R.id.compoundButtonTouchVibrationEnabled);
-		compoundButtonTouchVibrationEnabled.setOnCheckedChangeListener(new OnCheckedChangeListener() {
-			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+		Button buttonLaunchEditor = (Button) getView()
+				.findViewById(R.id.buttonLaunchEditor);
+		buttonLaunchEditor.setOnClickListener(new View.OnClickListener() {
+    			public void onClick(View v) {
+				Intent inte = new Intent(parentActivity.getBaseContext(), EditVJoyActivity.class);
+				startActivity(inte);
+    			} 
+		});
+
+		if (!MainActivity.isBiosExisting() || !MainActivity.isFlashExisting())
+			buttonLaunchEditor.setEnabled(false);
+
+		OnCheckedChangeListener touch_vibration = new OnCheckedChangeListener() {
+
+			public void onCheckedChanged(CompoundButton buttonView,
+					boolean isChecked) {
 				sharedPreferences.edit().putBoolean("touch_vibration_enabled", isChecked).commit();
 			}
-		});
+		};
+		switchTouchVibrationEnabled = (Switch) getView().findViewById(
+				R.id.switchTouchVibrationEnabled);
+		boolean vibrate = sharedPreferences.getBoolean("touch_vibration_enabled", true);
+		if (vibrate) {
+			switchTouchVibrationEnabled.setChecked(true);
+		} else {
+			switchTouchVibrationEnabled.setChecked(false);
+		}
+		switchTouchVibrationEnabled.setOnCheckedChangeListener(touch_vibration);
+		
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
 
-		Button buttonSelectControllerPlayer1 = (Button) getView()
-				.findViewById(R.id.buttonSelectControllerPlayer1);
-		buttonSelectControllerPlayer1.setOnClickListener(new View.OnClickListener() {
-    			public void onClick(View v) {
-				selectController(1);
-    			} 
-		});
-		Button buttonSelectControllerPlayer2 = (Button) getView()
-				.findViewById(R.id.buttonSelectControllerPlayer2);
-		buttonSelectControllerPlayer2.setOnClickListener(new View.OnClickListener() {
-    			public void onClick(View v) {
-				selectController(2);
-    			} 
-		});
-		Button buttonSelectControllerPlayer3 = (Button) getView()
-				.findViewById(R.id.buttonSelectControllerPlayer3);
-		buttonSelectControllerPlayer3.setOnClickListener(new View.OnClickListener() {
-    			public void onClick(View v) {
-				selectController(3);
-    			} 
-		});
-		Button buttonSelectControllerPlayer4 = (Button) getView()
-				.findViewById(R.id.buttonSelectControllerPlayer4);
-		buttonSelectControllerPlayer4.setOnClickListener(new View.OnClickListener() {
-    			public void onClick(View v) {
-				selectController(4);
-    			} 
-		});
+			Button buttonSelectControllerPlayer1 = (Button) getView()
+					.findViewById(R.id.buttonSelectControllerPlayer1);
+			buttonSelectControllerPlayer1.setOnClickListener(new View.OnClickListener() {
+	    			public void onClick(View v) {
+	    				selectController(1);
+	    			} 
+			});
+			Button buttonSelectControllerPlayer2 = (Button) getView()
+					.findViewById(R.id.buttonSelectControllerPlayer2);
+			buttonSelectControllerPlayer2.setOnClickListener(new View.OnClickListener() {
+	    			public void onClick(View v) {
+	    				selectController(2);
+	    			} 
+			});
+			Button buttonSelectControllerPlayer3 = (Button) getView()
+					.findViewById(R.id.buttonSelectControllerPlayer3);
+			buttonSelectControllerPlayer3.setOnClickListener(new View.OnClickListener() {
+	    			public void onClick(View v) {
+	    				selectController(3);
+	    			} 
+			});
+			Button buttonSelectControllerPlayer4 = (Button) getView()
+					.findViewById(R.id.buttonSelectControllerPlayer4);
+			buttonSelectControllerPlayer4.setOnClickListener(new View.OnClickListener() {
+	    			public void onClick(View v) {
+	    				selectController(4);
+	    			} 
+			});
 
-		Button buttonRemoveControllerPlayer1 = (Button) getView()
-				.findViewById(R.id.buttonRemoveControllerPlayer1);
-		buttonRemoveControllerPlayer1.setOnClickListener(new View.OnClickListener() {
-    			public void onClick(View v) {
-				removeController(1);
-    			} 
-		});
+			Button buttonRemoveControllerPlayer1 = (Button) getView()
+					.findViewById(R.id.buttonRemoveControllerPlayer1);
+			buttonRemoveControllerPlayer1.setOnClickListener(new View.OnClickListener() {
+	    			public void onClick(View v) {
+	    				removeController(1);
+	    			} 
+			});
 
-		Button buttonRemoveControllerPlayer2 = (Button) getView()
-				.findViewById(R.id.buttonRemoveControllerPlayer2);
-		buttonRemoveControllerPlayer2.setOnClickListener(new View.OnClickListener() {
-    			public void onClick(View v) {
-				removeController(2);
-    			} 
-		});
+			Button buttonRemoveControllerPlayer2 = (Button) getView()
+					.findViewById(R.id.buttonRemoveControllerPlayer2);
+			buttonRemoveControllerPlayer2.setOnClickListener(new View.OnClickListener() {
+	    			public void onClick(View v) {
+	    				removeController(2);
+	    			} 
+			});
 
-		Button buttonRemoveControllerPlayer3 = (Button) getView()
-				.findViewById(R.id.buttonRemoveControllerPlayer3);
-		buttonRemoveControllerPlayer3.setOnClickListener(new View.OnClickListener() {
-    			public void onClick(View v) {
-				removeController(3);
-    			} 
-		});
+			Button buttonRemoveControllerPlayer3 = (Button) getView()
+					.findViewById(R.id.buttonRemoveControllerPlayer3);
+			buttonRemoveControllerPlayer3.setOnClickListener(new View.OnClickListener() {
+	    			public void onClick(View v) {
+	    				removeController(3);
+	    			} 
+			});
 
-		Button buttonRemoveControllerPlayer4 = (Button) getView()
-				.findViewById(R.id.buttonRemoveControllerPlayer4);
-		buttonRemoveControllerPlayer4.setOnClickListener(new View.OnClickListener() {
-    			public void onClick(View v) {
-				removeController(4);
-    			} 
-		});
+			Button buttonRemoveControllerPlayer4 = (Button) getView()
+					.findViewById(R.id.buttonRemoveControllerPlayer4);
+			buttonRemoveControllerPlayer4.setOnClickListener(new View.OnClickListener() {
+	    			public void onClick(View v) {
+	    				removeController(4);
+	    			} 
+			});
+
+			updateControllers();
+
+		} else {
+
+			TableLayout input_devices = (TableLayout) parentActivity.findViewById(R.id.input_devices);
+			input_devices.setVisibility(View.GONE);
+
+		}
 
 		updateVibration();
-		updateControllers();
 	}
 
 	private void updateVibration() {
 		boolean touchVibrationEnabled = sharedPreferences.getBoolean("touch_vibration_enabled", true);
-
-		CompoundButton compoundButtonTouchVibrationEnabled = (CompoundButton) getView()
-				.findViewById(R.id.compoundButtonTouchVibrationEnabled);
-		compoundButtonTouchVibrationEnabled.setChecked(touchVibrationEnabled);
+		switchTouchVibrationEnabled.setChecked(touchVibrationEnabled);
 	}
 
 	private void updateControllers() {
@@ -139,7 +170,12 @@ public class ControllersFragment extends Fragment {
 
 		for (int devideId : InputDevice.getDeviceIds()) {
 			InputDevice dev = InputDevice.getDevice(devideId);
-			String descriptor = dev.getDescriptor();
+			String descriptor = null;
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+			descriptor = dev.getDescriptor();
+			} else {
+				descriptor = dev.getName();
+			}
 
 			if (descriptor != null) {
 				if (descriptor.equals(deviceDescriptorPlayer1))
@@ -248,7 +284,14 @@ public class ControllersFragment extends Fragment {
 		 keyCode == KeyEvent.KEYCODE_VOLUME_UP || keyCode == KeyEvent.KEYCODE_VOLUME_DOWN)
 			return false;
 
-		String descriptor = InputDevice.getDevice(event.getDeviceId()).getDescriptor();
+		String descriptor = null;
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+			descriptor = InputDevice.getDevice(event.getDeviceId())
+				.getDescriptor();
+		} else {
+			descriptor = InputDevice.getDevice(event.getDeviceId())
+					.getName();
+		}
 
 		if (descriptor == null)
 			return false;

@@ -874,7 +874,7 @@ public:
 
 
 	
-	static void update_fz(float z)
+	static inline void update_fz(float z)
 	{
 		if ((s32&)vdrc.fZ_max<(s32&)z && (s32&)z<0x49800000)
 			vdrc.fZ_max=z;
@@ -1350,12 +1350,12 @@ public:
 		lmr->x0=mvv->x0;
 		lmr->y0=mvv->y0;
 		lmr->z0=mvv->z0;
-		update_fz(mvv->z0);
+		//update_fz(mvv->z0);
 
 		lmr->x1=mvv->x1;
 		lmr->y1=mvv->y1;
 		lmr->z1=mvv->z1;
-		update_fz(mvv->z1);
+		//update_fz(mvv->z1);
 
 		lmr->x2=mvv->x2;
 	}
@@ -1367,7 +1367,7 @@ public:
 			return;
 		lmr->y2=mvv->y2;
 		lmr->z2=mvv->z2;
-		update_fz(mvv->z2);
+		//update_fz(mvv->z2);
 	}
 
 	static void VDECInit()

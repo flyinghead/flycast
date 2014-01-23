@@ -2,23 +2,20 @@ package com.reicast.emulator;
 
 import java.io.File;
 
-import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.SharedPreferences;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
-import android.util.Log;
-import android.view.InputDevice;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 
-@TargetApi(Build.VERSION_CODES.JELLY_BEAN)
 public class OptionsFragment extends Fragment {
 
 	Activity parentActivity;
@@ -30,9 +27,7 @@ public class OptionsFragment extends Fragment {
 	private SharedPreferences mPrefs;
 	private File sdcard = Environment.getExternalStorageDirectory();
 	private String home_directory = sdcard + "/dc";
-	private String browse_entry = home_directory;
-	private String game_directory = sdcard + "/";
-	private String games_entry = game_directory;
+	private String game_directory = sdcard + "/dc";
 
 	// Container Activity must implement this interface
 	public interface OnClickListener {
@@ -50,16 +45,6 @@ public class OptionsFragment extends Fragment {
 		} catch (ClassCastException e) {
 			throw new ClassCastException(activity.toString()
 					+ " must implement OnClickListener");
-		}
-
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR1) {
-			int joys[] = InputDevice.getDeviceIds();
-			for (int i = 0; i < joys.length; i++) {
-				Log.d("reidc", "InputDevice ID: " + joys[i]);
-				Log.d("reidc",
-						"InputDevice Name: "
-								+ InputDevice.getDevice(joys[i]).getName());
-			}
 		}
 	}
 
@@ -88,9 +73,28 @@ public class OptionsFragment extends Fragment {
 		mainBrowse.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View view) {
 				if (editBrowse.getText() != null) {
-					browse_entry = editBrowse.getText().toString();
+					home_directory = editBrowse.getText().toString();
+					//mPrefs.edit().putString("home_directory", home_directory).commit();
 				}
-				mCallback.onMainBrowseSelected(browse_entry, false);
+				mCallback.onMainBrowseSelected(home_directory, false);
+			}
+		});
+
+		editBrowse.addTextChangedListener(new TextWatcher() {
+			public void afterTextChanged(Editable s) {
+				if (editBrowse.getText() != null) {
+					home_directory = editBrowse.getText().toString();
+					mPrefs.edit().putString("home_directory", home_directory)
+							.commit();
+				}
+			}
+
+			public void beforeTextChanged(CharSequence s, int start, int count,
+					int after) {
+			}
+
+			public void onTextChanged(CharSequence s, int start, int before,
+					int count) {
 			}
 		});
 
@@ -104,9 +108,28 @@ public class OptionsFragment extends Fragment {
 		gameBrowse.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View view) {
 				if (editBrowse.getText() != null) {
-					games_entry = editGames.getText().toString();
+					game_directory = editGames.getText().toString();
+					//mPrefs.edit().putString("game_directory", game_directory).commit();
 				}
-				mCallback.onMainBrowseSelected(games_entry, true);
+				mCallback.onMainBrowseSelected(game_directory, true);
+			}
+		});
+
+		editGames.addTextChangedListener(new TextWatcher() {
+			public void afterTextChanged(Editable s) {
+				if (editBrowse.getText() != null) {
+					game_directory = editGames.getText().toString();
+					mPrefs.edit().putString("game_directory", game_directory)
+					.commit();
+				}
+			}
+
+			public void beforeTextChanged(CharSequence s, int start, int count,
+					int after) {
+			}
+
+			public void onTextChanged(CharSequence s, int start, int before,
+					int count) {
 			}
 		});
 

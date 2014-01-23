@@ -8,18 +8,11 @@ USE_OSS :=1
 
 #USE_CCACHE :=1
 
-#PGO_MAKE :=1
-PGO_USE :=1
+RZDCY_SRC_DIR = ../../newdc
 
-RZDCY_SRC_DIR = ../../core
-
-include $(RZDCY_SRC_DIR)/core.mk
+include $(RZDCY_SRC_DIR)/newdc.mk
 
 CC_PREFIX ?=
-
-ifdef USE_CCACHE
- CC_PREFIX =ccache ${CC_PREFIX}
-endif
 
 CXX=${CC_PREFIX}g++
 CC=${CC_PREFIX}gcc
@@ -38,7 +31,7 @@ SOURCES	:=	cfg/ hw/arm7/ hw/aica/ hw/asic/ hw/ hw/gdrom/ hw/maple/ \
  hw/extdev/ hw/arm/ imgread/ linux/ linux-dist/ ./ rec-ARM/ deps/zlib/ deps/chdr/ deps/crypto/ arm_emitter/ 
 
 
-CXXFLAGS := -g -O3  -D RELEASE -c -D TARGET_PANDORA  -D WEIRD_SLOWNESS
+CXXFLAGS := -g -O3  -D RELEASE -c -D TARGET_PANDORA  -D WEIRD_SLOWNESS -D HAS_VMU
 CXXFLAGS += -frename-registers -fno-strict-aliasing -fsingle-precision-constant 
 CXXFLAGS += -ffast-math -ftree-vectorize -fprefetch-loop-arrays 
 #-std=c++0x

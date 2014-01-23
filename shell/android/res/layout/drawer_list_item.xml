@@ -1,15 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="48dp">
+    android:layout_height="48dp"
+    android:background="#D0000000">
  
     <ImageView
         android:id="@+id/icon"
-        android:layout_width="25dp"
-        android:layout_height="wrap_content"
+        android:layout_width="42dp"
+        android:layout_height="42dp"
         android:layout_alignParentLeft="true"
-        android:layout_marginLeft="12dp"
-        android:layout_marginRight="12dp"
+        android:layout_marginLeft="6dp"
+        android:layout_marginRight="6dp"
         android:contentDescription="@string/desc_list_item_icon"
         android:src="@drawable/ic_launcher"
         android:layout_centerVertical="true" />
@@ -17,7 +18,7 @@
     <TextView
         android:id="@+id/title"
         android:layout_width="wrap_content"
-        android:layout_height="match_parent"
+        android:layout_height="48dp"
         android:layout_toRightOf="@id/icon"
         android:minHeight="?android:attr/listPreferredItemHeightSmall"
         android:textAppearance="@style/BaseText"

@@ -5,9 +5,9 @@ NOT_ARM := 1
 NO_REC := 1
 #NO_REND := 1
 
-RZDCY_SRC_DIR = ../../newdc
+RZDCY_SRC_DIR = ../../core
 
-include $(RZDCY_SRC_DIR)/newdc.mk
+include $(RZDCY_SRC_DIR)/core.mk
 
 CC_PREFIX ?= /opt/gcw0-toolchain/usr/bin/mipsel-gcw0-linux-uclibc-
 

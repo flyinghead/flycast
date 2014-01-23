@@ -119,6 +119,9 @@ bool DoCheck(u32 pc)
 {
 	if (IsOnRam(pc))
 	{
+		if (!settings.dynarec.unstable_opt)
+			return true;
+
 		pc&=0xFFFFFF;
 		switch(pc)
 		{
@@ -128,6 +131,11 @@ bool DoCheck(u32 pc)
 
 			//Shenmue 2
 			case 0x348000:
+				
+			//Shenmue
+			case 0x41860e:
+			
+
 				return true;
 
 			default:

@@ -1,29 +1,42 @@
-<?xml version="1.0" encoding="utf-8"?><LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/childview"
-    android:layout_width="fill_parent"
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/child_root"
+    android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="horizontal" >
-
-    <ImageView
-        android:id="@+id/item_icon"
-        android:layout_width="32dp"
-        android:layout_height="32dp"
-        android:layout_gravity="center_vertical"
-        android:layout_marginBottom="2dp"
-        android:layout_marginLeft="6dp"
-        android:layout_marginRight="2dp"
-        android:layout_marginTop="2dp"
-        android:scaleType="fitCenter"
-        android:src="@drawable/gdi" />
-    
-    <TextView
-        android:id="@+id/item_name"
+    android:orientation="vertical" >
+
+    <View
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_vertical"
-        android:layout_weight="1"
-        android:text="Tooo large Large Text 123"
-        android:textAppearance="?android:attr/textAppearanceLarge"
-        android:textSize="18dp" />
-
+        android:layout_height="2dp"
+        android:background="@drawable/list_item_border" />
+
+    <LinearLayout
+        android:id="@+id/childview"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal" >
+
+        <ImageView
+            android:id="@+id/item_icon"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_gravity="center_vertical"
+            android:layout_marginBottom="2dp"
+            android:layout_marginLeft="6dp"
+            android:layout_marginRight="2dp"
+            android:layout_marginTop="2dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/gdi" />
+
+        <TextView
+            android:id="@+id/item_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:layout_weight="1"
+            android:text="Something Wrong?"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:textSize="18dp" />
+    </LinearLayout>
+
 </LinearLayout>

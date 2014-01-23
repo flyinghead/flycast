@@ -1486,6 +1486,7 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 		{
 			verify(op->rd._reg!=op->rs1._reg);
 			verify(op->rs2.is_imm() || op->rd._reg!=op->rs2._reg);
+
 			//rd is always NOT a source !
 			MOVW(reg.mapg(op->rd),0);
 
@@ -1807,7 +1808,7 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 					_r2=q1;
 				}
 
-#if 1//!defined(TARGET_PANDORA)
+#if 1
 				//VFP
 				eFSReg fs2=_r2==q0?f0:f4;
 
@@ -1837,7 +1838,7 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 					SUB(r0,r8,op->rd.reg_aofs());
 				}
 	
-#if 1//!defined(TARGET_PANDORA)
+#if 1
 				//f0,f1,f2,f3	  : vin
 				//f4,f5,f6,f7     : out
 				//f8,f9,f10,f11   : mtx temp
@@ -1913,7 +1914,6 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 					//4 mul
 					//4 mla
 					//1 add
-					
 				*/
 #endif
 			}
@@ -1964,7 +1964,7 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 #endif
 
 		default:
-			printf("CFB %d\n",op->op);/*SEB*/
+			//printf("CFB %d\n",op->op);
 			shil_chf[op->op](op);
 			break;
 

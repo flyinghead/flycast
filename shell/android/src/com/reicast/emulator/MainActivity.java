@@ -3,12 +3,13 @@ package com.reicast.emulator;
 import java.io.File;
 import java.util.ArrayList;
 
+import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
-import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.content.res.TypedArray;
 import android.net.Uri;
@@ -22,6 +23,7 @@ import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.widget.DrawerLayout;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
@@ -35,8 +37,8 @@ public class MainActivity extends FragmentActivity implements
 		FileBrowser.OnItemSelectedListener, OptionsFragment.OnClickListener {
 
 	private SharedPreferences mPrefs;
-	private File sdcard = Environment.getExternalStorageDirectory();
-	private String home_directory = sdcard + "/dc";
+	private static File sdcard = Environment.getExternalStorageDirectory();
+	public static String home_directory = sdcard + "/dc";
 
 	private DrawerLayout mDrawerLayout;
 	private ListView mDrawerList;
@@ -93,7 +95,7 @@ public class MainActivity extends FragmentActivity implements
 
 			// Add the fragment to the 'fragment_container' FrameLayout
 			getSupportFragmentManager().beginTransaction()
-					.add(R.id.fragment_container, firstFragment).commit();
+					.replace(R.id.fragment_container, firstFragment).commit();
 		}
 
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR1) {
@@ -120,7 +122,7 @@ public class MainActivity extends FragmentActivity implements
 			// Paths
 			navDrawerItems.add(new NavDrawerItem(navMenuTitles[2], navMenuIcons
 					.getResourceId(2, 0)));
-			// Controllers
+			// Input
 			navDrawerItems.add(new NavDrawerItem(navMenuTitles[3], navMenuIcons
 					.getResourceId(3, 0)));
 			// About
@@ -143,11 +145,10 @@ public class MainActivity extends FragmentActivity implements
 
 			mDrawerToggle = new ActionBarDrawerToggle(this, mDrawerLayout,
 					R.drawable.ic_drawer, // nav menu toggle icon
-					R.string.app_name, // nav drawer open - description for
-										// accessibility
-					R.string.app_name // nav drawer close - description for
-										// accessibility
+					R.string.app_name, // nav drawer open title
+					R.string.app_name // nav drawer close title
 			) {
+				@SuppressLint("NewApi")
 				public void onDrawerClosed(View view) {
 					getActionBar().setTitle(mTitle);
 					// calling onPrepareOptionsMenu() to show action bar
@@ -155,6 +156,7 @@ public class MainActivity extends FragmentActivity implements
 					invalidateOptionsMenu();
 				}
 
+				@SuppressLint("NewApi")
 				public void onDrawerOpened(View drawerView) {
 					getActionBar().setTitle(mDrawerTitle);
 					// calling onPrepareOptionsMenu() to hide action bar
@@ -164,11 +166,29 @@ public class MainActivity extends FragmentActivity implements
 			};
 			mDrawerLayout.setDrawerListener(mDrawerToggle);
 
-			// if (savedInstanceState == null) {
-			// displayView(0);
-			//
-			// }
+			if (savedInstanceState == null) {
+				displayView(0);
+			}
 		} else {
+
+			findViewById(R.id.config).setOnClickListener(new OnClickListener() {
+				public void onClick(View view) {
+					ConfigureFragment configFrag = (ConfigureFragment) getSupportFragmentManager()
+							.findFragmentByTag("CONFIG_FRAG");
+					if (configFrag != null) {
+						if (configFrag.isVisible()) {
+							return;
+						}
+					}
+					configFrag = new ConfigureFragment();
+					getSupportFragmentManager()
+							.beginTransaction()
+							.replace(R.id.fragment_container, configFrag,
+									"CONFIG_FRAG").addToBackStack(null)
+							.commit();
+				}
+
+			});
 
 			findViewById(R.id.options).setOnClickListener(
 					new OnClickListener() {
@@ -186,45 +206,24 @@ public class MainActivity extends FragmentActivity implements
 									.replace(R.id.fragment_container,
 											optionsFrag, "OPTIONS_FRAG")
 									.addToBackStack(null).commit();
-							/*
-							 * AlertDialog.Builder alertDialogBuilder = new
-							 * AlertDialog.Builder( MainActivity.this);
-							 * 
-							 * // set title
-							 * alertDialogBuilder.setTitle("Configure");
-							 * 
-							 * // set dialog message alertDialogBuilder
-							 * .setMessage("No configuration for now :D")
-							 * .setCancelable(false)
-							 * .setPositiveButton("Oh well",new
-							 * DialogInterface.OnClickListener() { public void
-							 * onClick(DialogInterface dialog,int id) {
-							 * //FileBrowser.this.finish(); } });
-							 * 
-							 * // create alert dialog AlertDialog alertDialog =
-							 * alertDialogBuilder.create();
-							 * 
-							 * // show it alertDialog.show();
-							 */
 						}
 
 					});
 
-			findViewById(R.id.config).setOnClickListener(new OnClickListener() {
+			findViewById(R.id.input).setOnClickListener(new OnClickListener() {
 				public void onClick(View view) {
-					ConfigureFragment configFrag = (ConfigureFragment) getSupportFragmentManager()
-							.findFragmentByTag("CONFIG_FRAG");
-					if (configFrag != null) {
-						if (configFrag.isVisible()) {
+					InputFragment inputFrag = (InputFragment) getSupportFragmentManager()
+							.findFragmentByTag("INPUT_FRAG");
+					if (inputFrag != null) {
+						if (inputFrag.isVisible()) {
 							return;
 						}
 					}
-					configFrag = new ConfigureFragment();
+					inputFrag = new InputFragment();
 					getSupportFragmentManager()
 							.beginTransaction()
-							.replace(R.id.fragment_container, configFrag,
-									"CONFIG_FRAG").addToBackStack(null)
-							.commit();
+							.replace(R.id.fragment_container, inputFrag,
+									"INPUT_FRAG").addToBackStack(null).commit();
 				}
 
 			});
@@ -269,14 +268,21 @@ public class MainActivity extends FragmentActivity implements
 
 	}
 
-	public void onGameSelected(Uri uri) {
+	public static boolean isBiosExisting() {
 		File bios = new File(home_directory, "data/dc_boot.bin");
-		File flash = new File(home_directory, "data/dc_flash.bin");
+		return bios.exists();
+	}
 
+	public static boolean isFlashExisting() {
+		File flash = new File(home_directory, "data/dc_flash.bin");
+		return flash.exists();
+	}
+
+	public void onGameSelected(Uri uri) {
 		String msg = null;
-		if (!bios.exists())
+		if (!isBiosExisting())
 			msg = getString(R.string.missing_bios, home_directory);
-		else if (!flash.exists())
+		else if (!isFlashExisting())
 			msg = getString(R.string.missing_flash, home_directory);
 
 		if (msg != null) {
@@ -296,7 +302,7 @@ public class MainActivity extends FragmentActivity implements
 										int id) {
 									// if this button is clicked, close
 									// current activity
-									//MainActivity.this.finish();
+									// MainActivity.this.finish();
 								}
 							})
 					.setNegativeButton("Options",
@@ -305,22 +311,31 @@ public class MainActivity extends FragmentActivity implements
 										int id) {
 									FileBrowser firstFragment = new FileBrowser();
 									Bundle args = new Bundle();
-									//args.putBoolean("ImgBrowse", false);
-									// specify ImgBrowse option. true = images, false = folders only
-									args.putString("browse_entry", sdcard.toString());
-									// specify a path for selecting folder options
+									// args.putBoolean("ImgBrowse", false);
+									// specify ImgBrowse option. true = images,
+									// false = folders only
+									args.putString("browse_entry",
+											sdcard.toString());
+									// specify a path for selecting folder
+									// options
 									args.putBoolean("games_entry", false);
-									// selecting a BIOS folder, so this is not games
+									// selecting a BIOS folder, so this is not
+									// games
 
 									firstFragment.setArguments(args);
-									// In case this activity was started with special instructions from
-									// an Intent, pass the Intent's extras to the fragment as arguments
+									// In case this activity was started with
+									// special instructions from
+									// an Intent, pass the Intent's extras to
+									// the fragment as arguments
 									// firstFragment.setArguments(getIntent().getExtras());
 
-									// Add the fragment to the 'fragment_container' FrameLayout
+									// Add the fragment to the
+									// 'fragment_container' FrameLayout
 									getSupportFragmentManager()
 											.beginTransaction()
-											.replace(R.id.fragment_container, firstFragment, "MAIN_BROWSER")
+											.replace(R.id.fragment_container,
+													firstFragment,
+													"MAIN_BROWSER")
 											.addToBackStack(null).commit();
 								}
 							});
@@ -330,10 +345,9 @@ public class MainActivity extends FragmentActivity implements
 
 			// show it
 			alertDialog.show();
-		}
-		else {
+		} else {
 			Intent inte = new Intent(Intent.ACTION_VIEW, uri, getBaseContext(),
-				GL2JNIActivity.class);
+					GL2JNIActivity.class);
 			startActivity(inte);
 		}
 	}
@@ -438,15 +452,15 @@ public class MainActivity extends FragmentActivity implements
 			frag_tag = "OPTIONS_FRAG";
 			break;
 		case 3:
-			fragment = (ControllersFragment) getSupportFragmentManager()
-					.findFragmentByTag("CONTROLLERS_FRAG");
+			fragment = (InputFragment) getSupportFragmentManager()
+					.findFragmentByTag("INPUT_FRAG");
 			if (fragment != null) {
 				if (fragment.isVisible()) {
 					return;
 				}
 			}
-			fragment = new ControllersFragment();
-			frag_tag = "CONTROLLERS_FRAG";
+			fragment = new InputFragment();
+			frag_tag = "INPUT_FRAG";
 			break;
 		case 4:
 			fragment = null;
@@ -459,31 +473,39 @@ public class MainActivity extends FragmentActivity implements
 
 			String versionName = "";
 			try {
-				PackageInfo pInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
+				PackageInfo pInfo = getPackageManager().getPackageInfo(
+						getPackageName(), 0);
 				versionName = pInfo.versionName;
 			} catch (NameNotFoundException e) {
 				e.printStackTrace();
 			}
 
-			// set dialog message
-			alertDialogBuilder
-					.setMessage(getString(R.string.about_text) + " " + versionName)
-					.setCancelable(false)
-					.setPositiveButton("Dismiss",
-							new DialogInterface.OnClickListener() {
-								public void onClick(DialogInterface dialog,
-										int id) {
-									// if this button is clicked, close
-									// current activity
-									// FileBrowser.this.finish();
-								}
-							});
+				alertDialogBuilder
+						.setMessage(getString(R.string.about_text, versionName))
+						.setCancelable(false)
+						.setPositiveButton("Rate It",
+								new DialogInterface.OnClickListener() {
+									public void onClick(DialogInterface dialog,
+											int id) {
+										startActivity(new Intent(
+												Intent.ACTION_VIEW,
+												Uri.parse("market://details?id="
+														+ getPackageName())));
+									}
+								})
+						.setNegativeButton("Dismiss",
+								new DialogInterface.OnClickListener() {
+									public void onClick(DialogInterface dialog,
+											int id) {
 
-			// create alert dialog
-			AlertDialog alertDialog = alertDialogBuilder.create();
+									}
+								});
 
-			// show it
-			alertDialog.show();
+				// create alert dialog
+				AlertDialog alertDialog = alertDialogBuilder.create();
+
+				// show it
+				alertDialog.show();
 			break;
 
 		default:
@@ -538,6 +560,7 @@ public class MainActivity extends FragmentActivity implements
 		return super.onPrepareOptionsMenu(menu);
 	}
 
+	@SuppressLint("NewApi")
 	@Override
 	public void setTitle(CharSequence title) {
 		mTitle = title;
@@ -566,5 +589,35 @@ public class MainActivity extends FragmentActivity implements
 			mDrawerToggle.onConfigurationChanged(newConfig);
 		}
 
+	}
+
+	@Override
+	public boolean onKeyDown(int keyCode, KeyEvent event) {
+		if (keyCode == KeyEvent.KEYCODE_BACK) {
+			Fragment fragment = (FileBrowser) getSupportFragmentManager()
+					.findFragmentByTag("MAIN_BROWSER");
+			if (fragment != null && fragment.isVisible()) {
+				MainActivity.this.finish();
+				return false;
+			} else {
+				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR1) {
+					displayView(0);
+				} else {
+					fragment = new FileBrowser();
+					Bundle args = new Bundle();
+					args.putBoolean("ImgBrowse", true);
+					args.putString("browse_entry", null);
+					args.putBoolean("games_entry", false);
+					fragment.setArguments(args);
+					getSupportFragmentManager().beginTransaction()
+							.replace(R.id.fragment_container, fragment)
+							.commit();
+				}
+				return false;
+			}
+
+		}
+
+		return super.onKeyDown(keyCode, event);
 	}
 }

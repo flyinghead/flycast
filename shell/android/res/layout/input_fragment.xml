@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical" >
+
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical" >
+
+    <TableLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:stretchColumns="*" >
+
+        <TableRow android:gravity="center_vertical" >
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ems="10"
+                android:text="@string/customize_touch_controls" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="right"
+                android:orientation="vertical" >
+
+                <Button
+                    android:id="@+id/buttonLaunchEditor"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ems="8"
+                    android:text="@string/launch_editor" />
+            </LinearLayout>
+        </TableRow>
+
+        <TableRow
+            android:layout_marginTop="25dp"
+            android:gravity="center_vertical" >
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.5"
+                android:ems="10"
+                android:gravity="center_vertical|left"
+                android:text="@string/touch_vibration" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="right"
+                android:orientation="vertical" >
+
+                <de.ankri.views.Switch
+                    android:id="@+id/switchTouchVibrationEnabled"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+        </TableRow>
+    </TableLayout>
+
+    <TableLayout
+        android:id="@+id/input_devices"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:stretchColumns="*" >
+
+        <TableRow
+            android:layout_marginTop="25dp"
+            android:gravity="center_vertical" >
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ems="10"
+                android:gravity="center_vertical|left"
+                android:text="@string/controller_a" />
+
+            <TextView
+                android:id="@+id/textViewDeviceDescriptorPlayer1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ems="10"
+                android:gravity="center_vertical|left"
+                android:text="@string/controller_none_selected" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="right"
+                android:orientation="vertical" >
+
+                <Button
+                    android:id="@+id/buttonSelectControllerPlayer1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ems="6"
+                    android:text="@string/select" />
+
+                <Button
+                    android:id="@+id/buttonRemoveControllerPlayer1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ems="6"
+                    android:text="@string/remove" />
+            </LinearLayout>
+        </TableRow>
+
+        <TableRow
+            android:layout_marginTop="25dp"
+            android:gravity="center_vertical" >
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ems="10"
+                android:gravity="center_vertical|left"
+                android:text="@string/controller_b" />
+
+            <TextView
+                android:id="@+id/textViewDeviceDescriptorPlayer2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ems="10"
+                android:gravity="center_vertical|left"
+                android:text="@string/controller_none_selected" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="right"
+                android:orientation="vertical" >
+
+                <Button
+                    android:id="@+id/buttonSelectControllerPlayer2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ems="6"
+                    android:text="@string/select" />
+
+                <Button
+                    android:id="@+id/buttonRemoveControllerPlayer2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ems="6"
+                    android:text="@string/remove" />
+            </LinearLayout>
+        </TableRow>
+
+        <TableRow
+            android:layout_marginTop="25dp"
+            android:gravity="center_vertical" >
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ems="10"
+                android:gravity="center_vertical|left"
+                android:text="@string/controller_c" />
+
+            <TextView
+                android:id="@+id/textViewDeviceDescriptorPlayer3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ems="10"
+                android:gravity="center_vertical|left"
+                android:text="@string/controller_none_selected" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="right"
+                android:orientation="vertical" >
+
+                <Button
+                    android:id="@+id/buttonSelectControllerPlayer3"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ems="6"
+                    android:text="@string/select" />
+
+                <Button
+                    android:id="@+id/buttonRemoveControllerPlayer3"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ems="6"
+                    android:text="@string/remove" />
+            </LinearLayout>
+        </TableRow>
+
+        <TableRow
+            android:layout_marginTop="25dp"
+            android:gravity="center_vertical" >
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ems="10"
+                android:gravity="center_vertical|left"
+                android:text="@string/controller_d" />
+
+            <TextView
+                android:id="@+id/textViewDeviceDescriptorPlayer4"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ems="10"
+                android:gravity="center_vertical|left"
+                android:text="@string/controller_none_selected" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="right"
+                android:orientation="vertical" >
+
+                <Button
+                    android:id="@+id/buttonSelectControllerPlayer4"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ems="6"
+                    android:text="@string/select" />
+
+                <Button
+                    android:id="@+id/buttonRemoveControllerPlayer4"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ems="6"
+                    android:text="@string/remove" />
+            </LinearLayout>
+        </TableRow>
+    </TableLayout>
+
+</LinearLayout>
+
+</ScrollView>

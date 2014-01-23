@@ -14,8 +14,7 @@ int max_idx,max_mvo,max_op,max_pt,max_tr,max_vtx,max_modt, ovrn;
 TA_context* _pvrrc;
 void SetREP(TA_context* cntx);
 
-int frameskip=0;
-bool FrameSkipping=false;		// global switch to enable/disable frameskip
+
 
 bool rend_single_frame()
 {
@@ -27,17 +26,10 @@ bool rend_single_frame()
 		rs.Wait();
 		_pvrrc = DequeueRender();
 	}
-	
+
 	bool do_swp=false;
-
-/*	if (FrameSkipping)
-		if (!pvrrc.isRTT) {
-			frameskip=1-frameskip;
-	} else frameskip=0;*/
-
 	
-	if (!frameskip || pvrrc.isRTT)
-		do_swp=rend->Render();
+	do_swp=rend->Render();
 	
 
 	if (do_swp)
@@ -86,14 +78,11 @@ void* rend_thread(void* p)
 		die("rend->init() failed\n");
 
 	rend->Resize(640,480);
-	
-	frameskip = 0;
 
 	for(;;)
 	{
 		if (rend_single_frame())
-			if (!frameskip)
-				rend->Present();	
+			rend->Present();	
 	}
 }
 
@@ -110,10 +99,6 @@ void rend_start_render()
 
 	if (ctx)
 	{
-		if (FrameSkipping && frameskip) {
-			frameskip=1-frameskip;
-			tactx_Recycle(ctx);
-		} else
 		if (!ctx->rend.Overrun)
 		{
 			//printf("REP: %.2f ms\n",render_end_pending_cycles/200000.0);

@@ -74,3 +74,7 @@ The original reicast team consisted of drk||Raziel (mostly just writing code), P
 Special thanks
 --------------
 In previous iterations a lot of people have worked on this, notably David Miller (aka, ZeZu), the nullDC team, friends from #pcsx2 and all over the world :)
+
+
+[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/reicast/reicast-emulator/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
+
