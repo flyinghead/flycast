@@ -1,5 +1,6 @@
 package com.reicast.emulator;
 
+import java.util.Arrays;
 import java.util.HashMap;
 
 // Keeping a reference just in case it's needed
@@ -40,6 +41,7 @@ public class GL2JNIActivity extends Activity {
 	private SharedPreferences prefs;
 	static boolean[] custom = { false, false, false, false }, xbox = { false,
 			false, false, false }, nVidia = { false, false, false, false };
+	int[] name = { -1, -1, -1, -1 };
 	float[] globalLS_X = new float[4], globalLS_Y = new float[4],
 			previousLS_X = new float[4], previousLS_Y = new float[4];
 
@@ -301,6 +303,22 @@ public class GL2JNIActivity extends Activity {
 
 			}
 
+		} else {
+			if (prefs.getBoolean("modified_key_layout", false)) {
+				for (int i = 0; i < 4; i++) {
+					String[] players = getResources().getStringArray(R.array.controllers);
+					String id = players[i].substring(
+							players[i].lastIndexOf(" "), players[i].length());
+					name[i] = prefs.getInt("controller" + id, -1);
+					if (name[i] != -1) {
+						map[i] = setModifiedKeys(i);
+						custom[i] = true;
+					}
+
+					globalLS_X[i] = previousLS_X[i] = 0.0f;
+					globalLS_Y[i] = previousLS_Y[i] = 0.0f;
+				}
+			}
 		}
 
 		// When viewing a resource, pass its URI to the native code for opening
@@ -437,46 +455,52 @@ public class GL2JNIActivity extends Activity {
 	 */
 
 	boolean handle_key(Integer playerNum, int kc, boolean down) {
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
-			if (playerNum == null)
-				return false;
-
-			if (!moga.isActive[playerNum]) {
-
-				boolean rav = false;
-				for (int i = 0; i < map[playerNum].length; i += 2) {
-					if (map[playerNum][i + 0] == kc) {
-						if (down)
-							GL2JNIView.kcode_raw[playerNum] &= ~map[playerNum][i + 1];
-						else
-							GL2JNIView.kcode_raw[playerNum] |= map[playerNum][i + 1];
-
-						rav = true;
-						break;
-					}
-				}
-
-				return rav;
-
-			} else {
-				return true;
-			}
-		} else {
+		if (playerNum == null || playerNum == -1)
 			return false;
+
+		if (!moga.isActive[playerNum]) {
+
+			boolean rav = false;
+			for (int i = 0; i < map[playerNum].length; i += 2) {
+				if (map[playerNum][i + 0] == kc) {
+					if (down)
+						GL2JNIView.kcode_raw[playerNum] &= ~map[playerNum][i + 1];
+					else
+						GL2JNIView.kcode_raw[playerNum] |= map[playerNum][i + 1];
+
+					rav = true;
+					break;
+				}
+			}
+
+			return rav;
+
+		} else {
+			return true;
 		}
 	}
 
 	public boolean onKeyUp(int keyCode, KeyEvent event) {
-		Integer playerNum = deviceDescriptor_PlayerNum
+		Integer playerNum = 0;
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
+			playerNum = deviceDescriptor_PlayerNum
 				.get(deviceId_deviceDescriptor.get(event.getDeviceId()));
+		} else {
+			playerNum = Arrays.asList(name).indexOf(event.getDeviceId());
+		}
 
 		return handle_key(playerNum, keyCode, false)
 				|| super.onKeyUp(keyCode, event);
 	}
 
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
-		Integer playerNum = deviceDescriptor_PlayerNum
+		Integer playerNum = 0;
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
+			playerNum = deviceDescriptor_PlayerNum
 				.get(deviceId_deviceDescriptor.get(event.getDeviceId()));
+		} else {
+			playerNum = Arrays.asList(name).indexOf(event.getDeviceId());
+		}
 
 		if (handle_key(playerNum, keyCode, true)) {
 			if (playerNum == 0)

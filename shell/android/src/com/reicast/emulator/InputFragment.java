@@ -80,6 +80,18 @@ public class InputFragment extends Fragment {
 		}
 		switchTouchVibrationEnabled.setOnCheckedChangeListener(touch_vibration);
 		
+		Button buttonKeycodeEditor = (Button) getView().findViewById(
+				R.id.buttonKeycodeEditor);
+		buttonKeycodeEditor.setOnClickListener(new View.OnClickListener() {
+			public void onClick(View v) {
+				InputModFragment inputModFrag = new InputModFragment();
+				getActivity().getSupportFragmentManager()
+				.beginTransaction()
+				.replace(R.id.fragment_container, inputModFrag,
+						"INPUT_MOD_FRAG").addToBackStack(null).commit();
+			}
+		});
+		
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
 
 			Button buttonSelectControllerPlayer1 = (Button) getView()
@@ -153,22 +165,6 @@ public class InputFragment extends Fragment {
 		}
 
 		updateVibration();
-		
-		Button buttonKeycodeEditor = (Button) getView().findViewById(
-				R.id.buttonKeycodeEditor);
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
-			buttonKeycodeEditor.setOnClickListener(new View.OnClickListener() {
-				public void onClick(View v) {
-					InputModFragment inputModFrag = new InputModFragment();
-					getActivity().getSupportFragmentManager()
-							.beginTransaction()
-							.replace(R.id.fragment_container, inputModFrag,
-									"INPUT_MOD_FRAG").addToBackStack(null).commit();
-				}
-			});
-		} else {
-			buttonKeycodeEditor.setVisibility(View.GONE);
-		}
 	}
 
 	private void updateVibration() {
