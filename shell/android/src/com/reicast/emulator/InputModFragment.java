@@ -53,11 +53,11 @@ public class InputModFragment extends Fragment {
 
 		Spinner player_spnr = (Spinner) getView().findViewById(
 				R.id.player_spinner);
-		ArrayAdapter<String> localeAdapter = new ArrayAdapter<String>(
+		ArrayAdapter<String> playerAdapter = new ArrayAdapter<String>(
 				parentActivity, android.R.layout.simple_spinner_item, controllers);
-		localeAdapter
+		playerAdapter
 				.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-		player_spnr.setAdapter(localeAdapter);
+		player_spnr.setAdapter(playerAdapter);
 
 		player_spnr.setOnItemSelectedListener(new OnItemSelectedListener() {
 
@@ -321,7 +321,7 @@ public class InputModFragment extends Fragment {
 	}
 	
 	private void getKeyCode(final String button, final TextView output) {
-		int keyCode = mPrefs.getInt(button, -1);
+		int keyCode = mPrefs.getInt(button + player, -1);
 		if (keyCode != -1) {
 			String label = output.getText().toString();
 			if (label.contains(":")) {
@@ -365,7 +365,7 @@ public class InputModFragment extends Fragment {
 	}
 
 	private void remKeyCode(final String button, final TextView output) {
-		mPrefs.edit().remove(button).commit();
+		mPrefs.edit().remove(button + player).commit();
 		String label = output.getText().toString();
 		if (label.contains(":")) {
 			label = label.substring(0, label.indexOf(":"));

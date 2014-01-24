@@ -146,7 +146,9 @@ public class MOGAInput
 		prefs = PreferenceManager
 				.getDefaultSharedPreferences(act.getApplicationContext());
 		if (prefs.getBoolean("modified_key_layout", false)) {
-			String id = String.valueOf(player);
+			String[] players = act.getResources().getStringArray(R.array.controllers);
+			String id = players[player].substring(
+					players[player].lastIndexOf(" "), players[player].length());
 			map = new int[] {
 				prefs.getInt("a_button" + id, KeyEvent.KEYCODE_BUTTON_A), key_CONT_A,
 				prefs.getInt("b_button" + id, KeyEvent.KEYCODE_BUTTON_B), key_CONT_B,

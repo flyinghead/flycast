@@ -312,7 +312,9 @@ public class GL2JNIActivity extends Activity {
 	}
 	
 	private int[] setModifiedKeys(int player) {
-		String id = String.valueOf(player);
+		String[] players = getResources().getStringArray(R.array.controllers);
+		String id = players[player].substring(
+				players[player].lastIndexOf(" "), players[player].length());
 		return new int[] { 
 			prefs.getInt("a_button" + id, OuyaController.BUTTON_O), key_CONT_A, 
 			prefs.getInt("b_button" + id, OuyaController.BUTTON_A), key_CONT_B,
