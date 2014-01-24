@@ -371,6 +371,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:ems="10"
+                    android:layout_marginLeft="4dp"
                     android:text="Joystick" />
 
                 <LinearLayout
@@ -408,6 +409,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:ems="10"
+                    android:layout_marginLeft="4dp"
                     android:text="DPad Up" />
 
                 <LinearLayout
@@ -444,6 +446,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
+                    android:layout_marginLeft="4dp"
                     android:ems="10"
                     android:text="DPad Down" />
 
@@ -481,6 +484,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
+                    android:layout_marginLeft="4dp"
                     android:ems="10"
                     android:text="DPad Left" />
 
@@ -518,6 +522,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
+                    android:layout_marginLeft="4dp"
                     android:ems="10"
                     android:text="DPad Right" />
 

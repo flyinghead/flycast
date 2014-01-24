@@ -209,7 +209,7 @@ public class InputModFragment extends Fragment {
 
 			ImageView r_button_icon = (ImageView) getView()
 					.findViewById(R.id.r_button_icon);
-			r_button_icon.setImageDrawable(getButtonImage(160, 64));
+			r_button_icon.setImageDrawable(getButtonImage(162, 64));
 			final TextView r_button_text = (TextView) getView()
 					.findViewById(R.id.r_button_key);
 			getKeyCode("r_button", r_button_text);
