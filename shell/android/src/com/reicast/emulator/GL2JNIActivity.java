@@ -38,8 +38,8 @@ public class GL2JNIActivity extends Activity {
 	LayoutParams params;
 	MOGAInput moga = new MOGAInput();
 	private SharedPreferences prefs;
-	static boolean[] xbox = { false, false, false, false }, nVidia = { false,
-			false, false, false };
+	static boolean[] custom = { false, false, false, false }, xbox = { false,
+			false, false, false }, nVidia = { false, false, false, false };
 	float[] globalLS_X = new float[4], globalLS_Y = new float[4],
 			previousLS_X = new float[4], previousLS_Y = new float[4];
 
@@ -217,6 +217,11 @@ public class GL2JNIActivity extends Activity {
 
 					if (prefs.getBoolean("modified_key_layout", false)) {
 						map[playerNum] = setModifiedKeys(playerNum);
+						
+						custom[playerNum] = true;
+						
+						globalLS_X[playerNum] = previousLS_X[playerNum] = 0.0f;
+						globalLS_Y[playerNum] = previousLS_Y[playerNum] = 0.0f;
 					} else if (InputDevice.getDevice(joys[i]).getName()
 							.equals("Sony PLAYSTATION(R)3 Controller")) {
 						map[playerNum] = new int[] {
@@ -356,7 +361,7 @@ public class GL2JNIActivity extends Activity {
 					float L2 = event.getAxisValue(OuyaController.AXIS_L2);
 					float R2 = event.getAxisValue(OuyaController.AXIS_R2);
 
-					if (xbox[playerNum] || nVidia[playerNum]) {
+					if (custom[playerNum] || xbox[playerNum] || nVidia[playerNum]) {
 						previousLS_X[playerNum] = globalLS_X[playerNum];
 						previousLS_Y[playerNum] = globalLS_Y[playerNum];
 						globalLS_X[playerNum] = LS_X;
@@ -372,7 +377,7 @@ public class GL2JNIActivity extends Activity {
 
 			}
 
-			if ((xbox[playerNum] || nVidia[playerNum])
+			if ((custom[playerNum] || xbox[playerNum] || nVidia[playerNum])
 					&& ((globalLS_X[playerNum] == previousLS_X[playerNum] && globalLS_Y[playerNum] == previousLS_Y[playerNum]) || (previousLS_X[playerNum] == 0.0f && previousLS_Y[playerNum] == 0.0f)))
 				// Only handle Left Stick on an Xbox 360 controller if there was
 				// some actual motion on the stick,

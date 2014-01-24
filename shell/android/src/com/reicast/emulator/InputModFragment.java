@@ -1,11 +1,19 @@
 package com.reicast.emulator;
 
+import java.io.IOException;
+import java.io.InputStream;
+
 import de.ankri.views.Switch;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -18,6 +26,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CompoundButton;
+import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.AdapterView.OnItemSelectedListener;
@@ -94,9 +103,11 @@ public class InputModFragment extends Fragment {
 		
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
 
+			ImageView a_button_icon = (ImageView) getView()
+					.findViewById(R.id.a_button_icon);
+			a_button_icon.setImageDrawable(getButtonImage(448, 0));
 			final TextView a_button_text = (TextView) getView()
 					.findViewById(R.id.a_button_key);
-			getKeyCode("a_button", a_button_text);
 			Button a_button = (Button) getView()
 					.findViewById(R.id.a_button_edit);
 			a_button.setOnClickListener(new View.OnClickListener() {
@@ -112,6 +123,9 @@ public class InputModFragment extends Fragment {
 	    			} 
 			});
 			
+			ImageView b_button_icon = (ImageView) getView()
+					.findViewById(R.id.b_button_icon);
+			b_button_icon.setImageDrawable(getButtonImage(384, 0));
 			final TextView b_button_text = (TextView) getView()
 					.findViewById(R.id.b_button_key);
 			getKeyCode("b_button", b_button_text);
@@ -130,6 +144,9 @@ public class InputModFragment extends Fragment {
 	    			} 
 			});
 			
+			ImageView x_button_icon = (ImageView) getView()
+					.findViewById(R.id.x_button_icon);
+			x_button_icon.setImageDrawable(getButtonImage(256, 0));
 			final TextView x_button_text = (TextView) getView()
 					.findViewById(R.id.x_button_key);
 			getKeyCode("x_button", x_button_text);
@@ -148,6 +165,9 @@ public class InputModFragment extends Fragment {
 	    			} 
 			});
 			
+			ImageView y_button_icon = (ImageView) getView()
+					.findViewById(R.id.y_button_icon);
+			y_button_icon.setImageDrawable(getButtonImage(320, 0));
 			final TextView y_button_text = (TextView) getView()
 					.findViewById(R.id.y_button_key);
 			getKeyCode("y_button", y_button_text);
@@ -166,6 +186,9 @@ public class InputModFragment extends Fragment {
 	    			} 
 			});
 
+			ImageView l_button_icon = (ImageView) getView()
+					.findViewById(R.id.l_button_icon);
+			l_button_icon.setImageDrawable(getButtonImage(78, 64));
 			final TextView l_button_text = (TextView) getView()
 					.findViewById(R.id.l_button_key);
 			getKeyCode("l_button", l_button_text);
@@ -184,6 +207,9 @@ public class InputModFragment extends Fragment {
 	    			} 
 			});
 
+			ImageView r_button_icon = (ImageView) getView()
+					.findViewById(R.id.r_button_icon);
+			r_button_icon.setImageDrawable(getButtonImage(160, 64));
 			final TextView r_button_text = (TextView) getView()
 					.findViewById(R.id.r_button_key);
 			getKeyCode("r_button", r_button_text);
@@ -295,6 +321,9 @@ public class InputModFragment extends Fragment {
 	    			} 
 			});
 			
+			ImageView start_button_icon = (ImageView) getView()
+					.findViewById(R.id.start_button_icon);
+			start_button_icon.setImageDrawable(getButtonImage(0, 64));
 			final TextView start_button_text = (TextView) getView()
 					.findViewById(R.id.start_button_key);
 			getKeyCode("start_button", start_button_text);
@@ -318,6 +347,22 @@ public class InputModFragment extends Fragment {
 			switchModifiedLayoutEnabled.setEnabled(false);
 
 		}
+	}
+
+	private Drawable getButtonImage(int x, int y) {
+		try {
+			InputStream bitmap = parentActivity.getAssets().open("buttons.png");
+			Bitmap image = BitmapFactory.decodeStream(bitmap);
+			Matrix matrix = new Matrix();
+			matrix.postScale(32, 32);
+			Bitmap resizedBitmap = Bitmap.createBitmap(image, x, y, 64, 64,
+					matrix, true);
+			BitmapDrawable bmd = new BitmapDrawable(resizedBitmap);
+			return bmd;
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
+		return parentActivity.getResources().getDrawable(R.drawable.input);
 	}
 	
 	private void getKeyCode(final String button, final TextView output) {

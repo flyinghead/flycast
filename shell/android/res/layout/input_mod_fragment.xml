@@ -55,15 +55,31 @@
                 </LinearLayout>
             </TableRow>
 
-            <TableRow android:gravity="center_vertical" >
+            <TableRow
+                android:layout_marginTop="25dp"
+                android:gravity="center_vertical" >
 
-                <TextView
-                    android:id="@+id/a_button_key"
+                <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:ems="10"
-                    android:text="A button" />
+                    android:gravity="center_vertical|left"
+                    android:orientation="horizontal" >
+
+                    <ImageView
+                        android:id="@+id/a_button_icon"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:src="@drawable/input" />
+
+                    <TextView
+                        android:id="@+id/a_button_key"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="4dp"
+                        android:ems="10"
+                        android:text="A button" />
+                </LinearLayout>
 
                 <LinearLayout
                     android:layout_width="wrap_content"
@@ -90,15 +106,31 @@
                 </LinearLayout>
             </TableRow>
 
-            <TableRow android:gravity="center_vertical" >
+            <TableRow
+                android:layout_marginTop="25dp"
+                android:gravity="center_vertical" >
 
-                <TextView
-                    android:id="@+id/b_button_key"
+                <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:ems="10"
-                    android:text="B button" />
+                    android:gravity="center_vertical|left"
+                    android:orientation="horizontal" >
+
+                    <ImageView
+                        android:id="@+id/b_button_icon"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:src="@drawable/input" />
+
+                    <TextView
+                        android:id="@+id/b_button_key"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="4dp"
+                        android:ems="10"
+                        android:text="B button" />
+                </LinearLayout>
 
                 <LinearLayout
                     android:layout_width="wrap_content"
@@ -125,15 +157,31 @@
                 </LinearLayout>
             </TableRow>
 
-            <TableRow android:gravity="center_vertical" >
+            <TableRow
+                android:layout_marginTop="25dp"
+                android:gravity="center_vertical" >
 
-                <TextView
-                    android:id="@+id/x_button_key"
+                <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:ems="10"
-                    android:text="X button" />
+                    android:gravity="center_vertical|left"
+                    android:orientation="horizontal" >
+
+                    <ImageView
+                        android:id="@+id/x_button_icon"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:src="@drawable/input" />
+
+                    <TextView
+                        android:id="@+id/x_button_key"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="4dp"
+                        android:ems="10"
+                        android:text="X button" />
+                </LinearLayout>
 
                 <LinearLayout
                     android:layout_width="wrap_content"
@@ -160,15 +208,31 @@
                 </LinearLayout>
             </TableRow>
 
-            <TableRow android:gravity="center_vertical" >
+            <TableRow
+                android:layout_marginTop="25dp"
+                android:gravity="center_vertical" >
 
-                <TextView
-                    android:id="@+id/y_button_key"
+                <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:ems="10"
-                    android:text="Y button" />
+                    android:gravity="center_vertical|left"
+                    android:orientation="horizontal" >
+
+                    <ImageView
+                        android:id="@+id/y_button_icon"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:src="@drawable/input" />
+
+                    <TextView
+                        android:id="@+id/y_button_key"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="4dp"
+                        android:ems="10"
+                        android:text="Y button" />
+                </LinearLayout>
 
                 <LinearLayout
                     android:layout_width="wrap_content"
@@ -195,15 +259,31 @@
                 </LinearLayout>
             </TableRow>
 
-            <TableRow android:gravity="center_vertical" >
+            <TableRow
+                android:layout_marginTop="25dp"
+                android:gravity="center_vertical" >
 
-                <TextView
-                    android:id="@+id/l_button_key"
+                <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:ems="10"
-                    android:text="L button" />
+                    android:gravity="center_vertical|left"
+                    android:orientation="horizontal" >
+
+                    <ImageView
+                        android:id="@+id/l_button_icon"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:src="@drawable/input" />
+
+                    <TextView
+                        android:id="@+id/l_button_key"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="4dp"
+                        android:ems="10"
+                        android:text="L button" />
+                </LinearLayout>
 
                 <LinearLayout
                     android:layout_width="wrap_content"
@@ -230,15 +310,31 @@
                 </LinearLayout>
             </TableRow>
 
-            <TableRow android:gravity="center_vertical" >
+            <TableRow
+                android:layout_marginTop="25dp"
+                android:gravity="center_vertical" >
 
-                <TextView
-                    android:id="@+id/r_button_key"
+                <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:ems="10"
-                    android:text="R button" />
+                    android:gravity="center_vertical|left"
+                    android:orientation="horizontal" >
+
+                    <ImageView
+                        android:id="@+id/r_button_icon"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:src="@drawable/input" />
+
+                    <TextView
+                        android:id="@+id/r_button_key"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="4dp"
+                        android:ems="10"
+                        android:text="R button" />
+                </LinearLayout>
 
                 <LinearLayout
                     android:layout_width="wrap_content"
@@ -265,7 +361,9 @@
                 </LinearLayout>
             </TableRow>
 
-            <TableRow android:gravity="center_vertical" >
+            <TableRow
+                android:layout_marginTop="25dp"
+                android:gravity="center_vertical" >
 
                 <TextView
                     android:id="@+id/joystick_key"
@@ -300,7 +398,9 @@
                 </LinearLayout>
             </TableRow>
 
-            <TableRow android:gravity="center_vertical" >
+            <TableRow
+                android:layout_marginTop="25dp"
+                android:gravity="center_vertical" >
 
                 <TextView
                     android:id="@+id/dpad_up_key"
@@ -335,7 +435,9 @@
                 </LinearLayout>
             </TableRow>
 
-            <TableRow android:gravity="center_vertical" >
+            <TableRow
+                android:layout_marginTop="25dp"
+                android:gravity="center_vertical" >
 
                 <TextView
                     android:id="@+id/dpad_down_key"
@@ -370,7 +472,9 @@
                 </LinearLayout>
             </TableRow>
 
-            <TableRow android:gravity="center_vertical" >
+            <TableRow
+                android:layout_marginTop="25dp"
+                android:gravity="center_vertical" >
 
                 <TextView
                     android:id="@+id/dpad_left_key"
@@ -405,7 +509,9 @@
                 </LinearLayout>
             </TableRow>
 
-            <TableRow android:gravity="center_vertical" >
+            <TableRow
+                android:layout_marginTop="25dp"
+                android:gravity="center_vertical" >
 
                 <TextView
                     android:id="@+id/dpad_right_key"
@@ -440,15 +546,31 @@
                 </LinearLayout>
             </TableRow>
 
-            <TableRow android:gravity="center_vertical" >
+            <TableRow
+                android:layout_marginTop="25dp"
+                android:gravity="center_vertical" >
 
-                <TextView
-                    android:id="@+id/start_button_key"
+                <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:ems="10"
-                    android:text="Start Button" />
+                    android:gravity="center_vertical|left"
+                    android:orientation="horizontal" >
+
+                    <ImageView
+                        android:id="@+id/start_button_icon"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:src="@drawable/input" />
+
+                    <TextView
+                        android:id="@+id/start_button_key"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="4dp"
+                        android:ems="10"
+                        android:text="Start Button" />
+                </LinearLayout>
 
                 <LinearLayout
                     android:layout_width="wrap_content"
