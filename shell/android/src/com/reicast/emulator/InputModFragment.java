@@ -429,7 +429,7 @@ public class InputModFragment extends Fragment {
 		if (keyCode == KeyEvent.KEYCODE_BACK)
 			return -1;
 
-		mPrefs.edit().putInt(button, keyCode).commit();
+		mPrefs.edit().putInt(button + player, keyCode).commit();
 
 		return keyCode;
 	}
