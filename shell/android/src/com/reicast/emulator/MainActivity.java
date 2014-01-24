@@ -95,7 +95,7 @@ public class MainActivity extends FragmentActivity implements
 
 			// Add the fragment to the 'fragment_container' FrameLayout
 			getSupportFragmentManager().beginTransaction()
-					.replace(R.id.fragment_container, firstFragment).commit();
+					.replace(R.id.fragment_container, firstFragment, "MAIN_BROWSER").commit();
 		}
 
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR1) {
@@ -609,7 +609,7 @@ public class MainActivity extends FragmentActivity implements
 					.findFragmentByTag("MAIN_BROWSER");
 			if (fragment != null && fragment.isVisible()) {
 				MainActivity.this.finish();
-				return false;
+				return true;
 			} else {
 				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR1) {
 					displayView(0);
@@ -621,10 +621,10 @@ public class MainActivity extends FragmentActivity implements
 					args.putBoolean("games_entry", false);
 					fragment.setArguments(args);
 					getSupportFragmentManager().beginTransaction()
-							.replace(R.id.fragment_container, fragment)
+							.replace(R.id.fragment_container, fragment, "MAIN_BROWSER")
 							.commit();
 				}
-				return false;
+				return true;
 			}
 
 		}
