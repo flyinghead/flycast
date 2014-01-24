@@ -38,6 +38,7 @@ public class InputModFragment extends Fragment {
 	private SharedPreferences mPrefs;
 	private Switch switchModifiedLayoutEnabled;
 	private String player;
+	private int sS = 2;
 
 	// Container Activity must implement this interface
 	public interface OnClickListener {
@@ -105,7 +106,7 @@ public class InputModFragment extends Fragment {
 
 			ImageView a_button_icon = (ImageView) getView()
 					.findViewById(R.id.a_button_icon);
-			a_button_icon.setImageDrawable(getButtonImage(448, 0));
+			a_button_icon.setImageDrawable(getButtonImage(448 / sS, 0));
 			final TextView a_button_text = (TextView) getView()
 					.findViewById(R.id.a_button_key);
 			Button a_button = (Button) getView()
@@ -125,7 +126,7 @@ public class InputModFragment extends Fragment {
 			
 			ImageView b_button_icon = (ImageView) getView()
 					.findViewById(R.id.b_button_icon);
-			b_button_icon.setImageDrawable(getButtonImage(384, 0));
+			b_button_icon.setImageDrawable(getButtonImage(384 / sS, 0));
 			final TextView b_button_text = (TextView) getView()
 					.findViewById(R.id.b_button_key);
 			getKeyCode("b_button", b_button_text);
@@ -146,7 +147,7 @@ public class InputModFragment extends Fragment {
 			
 			ImageView x_button_icon = (ImageView) getView()
 					.findViewById(R.id.x_button_icon);
-			x_button_icon.setImageDrawable(getButtonImage(256, 0));
+			x_button_icon.setImageDrawable(getButtonImage(256 / sS, 0));
 			final TextView x_button_text = (TextView) getView()
 					.findViewById(R.id.x_button_key);
 			getKeyCode("x_button", x_button_text);
@@ -167,7 +168,7 @@ public class InputModFragment extends Fragment {
 			
 			ImageView y_button_icon = (ImageView) getView()
 					.findViewById(R.id.y_button_icon);
-			y_button_icon.setImageDrawable(getButtonImage(320, 0));
+			y_button_icon.setImageDrawable(getButtonImage(320 / sS, 0));
 			final TextView y_button_text = (TextView) getView()
 					.findViewById(R.id.y_button_key);
 			getKeyCode("y_button", y_button_text);
@@ -188,7 +189,7 @@ public class InputModFragment extends Fragment {
 
 			ImageView l_button_icon = (ImageView) getView()
 					.findViewById(R.id.l_button_icon);
-			l_button_icon.setImageDrawable(getButtonImage(78, 64));
+			l_button_icon.setImageDrawable(getButtonImage(78 / sS, 64 / sS));
 			final TextView l_button_text = (TextView) getView()
 					.findViewById(R.id.l_button_key);
 			getKeyCode("l_button", l_button_text);
@@ -209,7 +210,7 @@ public class InputModFragment extends Fragment {
 
 			ImageView r_button_icon = (ImageView) getView()
 					.findViewById(R.id.r_button_icon);
-			r_button_icon.setImageDrawable(getButtonImage(162, 64));
+			r_button_icon.setImageDrawable(getButtonImage(162 / sS, 64 / sS));
 			final TextView r_button_text = (TextView) getView()
 					.findViewById(R.id.r_button_key);
 			getKeyCode("r_button", r_button_text);
@@ -323,7 +324,7 @@ public class InputModFragment extends Fragment {
 			
 			ImageView start_button_icon = (ImageView) getView()
 					.findViewById(R.id.start_button_icon);
-			start_button_icon.setImageDrawable(getButtonImage(0, 64));
+			start_button_icon.setImageDrawable(getButtonImage(0, 64 / sS));
 			final TextView start_button_text = (TextView) getView()
 					.findViewById(R.id.start_button_key);
 			getKeyCode("start_button", start_button_text);
@@ -352,16 +353,18 @@ public class InputModFragment extends Fragment {
 	private Drawable getButtonImage(int x, int y) {
 		try {
 			InputStream bitmap = parentActivity.getAssets().open("buttons.png");
-			Bitmap image = BitmapFactory.decodeStream(bitmap);
+			BitmapFactory.Options options = new BitmapFactory.Options();
+			options.inSampleSize = sS;
+			Bitmap image = BitmapFactory.decodeStream(bitmap, null, options);
+			bitmap.close();
+			bitmap = null;
 			Matrix matrix = new Matrix();
 			matrix.postScale(32, 32);
-			Bitmap resizedBitmap = Bitmap.createBitmap(image, x, y, 64, 64,
+			Bitmap resizedBitmap = Bitmap.createBitmap(image, x, y, 64 / sS, 64 / sS,
 					matrix, true);
 			BitmapDrawable bmd = new BitmapDrawable(resizedBitmap);
 			image.recycle();
 			image = null;
-			bitmap.close();
-			bitmap = null;
 			return bmd;
 		} catch (IOException e1) {
 			e1.printStackTrace();
