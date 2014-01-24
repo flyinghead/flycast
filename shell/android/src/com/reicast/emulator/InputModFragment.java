@@ -75,6 +75,13 @@ public class InputModFragment extends Fragment {
 	    				mapKeyCode("a_button", a_button_text);
 	    			} 
 			});
+			Button a_remove = (Button) getView()
+					.findViewById(R.id.remove_a_button);
+			a_remove.setOnClickListener(new View.OnClickListener() {
+	    			public void onClick(View v) {
+	    				remKeyCode("a_button", a_button_text);
+	    			} 
+			});
 			
 			final TextView b_button_text = (TextView) getView()
 					.findViewById(R.id.b_button_key);
@@ -84,6 +91,13 @@ public class InputModFragment extends Fragment {
 			b_button.setOnClickListener(new View.OnClickListener() {
 	    			public void onClick(View v) {
 	    				mapKeyCode("b_button", b_button_text);
+	    			} 
+			});
+			Button b_remove = (Button) getView()
+					.findViewById(R.id.remove_b_button);
+			b_remove.setOnClickListener(new View.OnClickListener() {
+	    			public void onClick(View v) {
+	    				remKeyCode("b_button", b_button_text);
 	    			} 
 			});
 			
@@ -97,6 +111,13 @@ public class InputModFragment extends Fragment {
 	    				mapKeyCode("x_button", x_button_text);
 	    			} 
 			});
+			Button x_remove = (Button) getView()
+					.findViewById(R.id.remove_x_button);
+			x_remove.setOnClickListener(new View.OnClickListener() {
+	    			public void onClick(View v) {
+	    				remKeyCode("x_button", x_button_text);
+	    			} 
+			});
 			
 			final TextView y_button_text = (TextView) getView()
 					.findViewById(R.id.y_button_key);
@@ -106,6 +127,13 @@ public class InputModFragment extends Fragment {
 			y_button.setOnClickListener(new View.OnClickListener() {
 	    			public void onClick(View v) {
 	    				mapKeyCode("y_button", y_button_text);
+	    			} 
+			});
+			Button y_remove = (Button) getView()
+				.findViewById(R.id.remove_y_button);
+			y_remove.setOnClickListener(new View.OnClickListener() {
+	    			public void onClick(View v) {
+	    				remKeyCode("y_button", y_button_text);
 	    			} 
 			});
 
@@ -119,6 +147,13 @@ public class InputModFragment extends Fragment {
 	    				mapKeyCode("l_button", l_button_text);
 	    			} 
 			});
+			Button l_remove = (Button) getView()
+					.findViewById(R.id.remove_l_button);
+			l_remove.setOnClickListener(new View.OnClickListener() {
+	    			public void onClick(View v) {
+	    				remKeyCode("l_button", l_button_text);
+	    			} 
+			});
 
 			final TextView r_button_text = (TextView) getView()
 					.findViewById(R.id.r_button_key);
@@ -130,6 +165,13 @@ public class InputModFragment extends Fragment {
 	    				mapKeyCode("r_button", r_button_text);
 	    			} 
 			});
+			Button r_remove = (Button) getView()
+					.findViewById(R.id.remove_r_button);
+			r_remove.setOnClickListener(new View.OnClickListener() {
+	    			public void onClick(View v) {
+	    				remKeyCode("r_button", r_button_text);
+	    			} 
+			});
 
 			final TextView joystick_text = (TextView) getView()
 					.findViewById(R.id.joystick_key);
@@ -139,6 +181,13 @@ public class InputModFragment extends Fragment {
 			joystick.setOnClickListener(new View.OnClickListener() {
 	    			public void onClick(View v) {
 	    				mapKeyCode("joystick", joystick_text);
+	    			} 
+			});
+			Button joystick_remove = (Button) getView()
+					.findViewById(R.id.remove_joystick);
+			joystick_remove.setOnClickListener(new View.OnClickListener() {
+	    			public void onClick(View v) {
+	    				remKeyCode("joystick", joystick_text);
 	    			} 
 			});
 			joystick.setEnabled(false);
@@ -155,6 +204,13 @@ public class InputModFragment extends Fragment {
 	    				mapKeyCode("dpad_up", dpad_up_text);
 	    			} 
 			});
+			Button up_remove = (Button) getView()
+					.findViewById(R.id.remove_dpad_up);
+			up_remove.setOnClickListener(new View.OnClickListener() {
+	    			public void onClick(View v) {
+	    				remKeyCode("dpad_up", dpad_up_text);
+	    			} 
+			});
 			
 			final TextView dpad_down_text = (TextView) getView()
 					.findViewById(R.id.dpad_down_key);
@@ -164,6 +220,13 @@ public class InputModFragment extends Fragment {
 			dpad_down.setOnClickListener(new View.OnClickListener() {
 	    			public void onClick(View v) {
 	    				mapKeyCode("dpad_down", dpad_down_text);
+	    			} 
+			});
+			Button down_remove = (Button) getView()
+					.findViewById(R.id.remove_dpad_down);
+			down_remove.setOnClickListener(new View.OnClickListener() {
+	    			public void onClick(View v) {
+	    				remKeyCode("dpad_down", dpad_down_text);
 	    			} 
 			});
 
@@ -177,6 +240,13 @@ public class InputModFragment extends Fragment {
 	    				mapKeyCode("dpad_left", dpad_left_text);
 	    			} 
 			});
+			Button left_remove = (Button) getView()
+					.findViewById(R.id.remove_dpad_left);
+			left_remove.setOnClickListener(new View.OnClickListener() {
+	    			public void onClick(View v) {
+	    				remKeyCode("dpad_left", dpad_left_text);
+	    			} 
+			});
 			
 			final TextView dpad_right_text = (TextView) getView()
 					.findViewById(R.id.dpad_right_key);
@@ -188,6 +258,13 @@ public class InputModFragment extends Fragment {
 	    				mapKeyCode("dpad_right", dpad_right_text);
 	    			} 
 			});
+			Button right_remove = (Button) getView()
+					.findViewById(R.id.remove_dpad_right);
+			right_remove.setOnClickListener(new View.OnClickListener() {
+	    			public void onClick(View v) {
+	    				remKeyCode("dpad_right", dpad_right_text);
+	    			} 
+			});
 			
 			final TextView start_button_text = (TextView) getView()
 					.findViewById(R.id.start_button_key);
@@ -197,6 +274,13 @@ public class InputModFragment extends Fragment {
 			start_button.setOnClickListener(new View.OnClickListener() {
 	    			public void onClick(View v) {
 	    				mapKeyCode("start_button", start_button_text);
+	    			} 
+			});
+			Button start_remove = (Button) getView()
+					.findViewById(R.id.remove_start);
+			start_remove.setOnClickListener(new View.OnClickListener() {
+	    			public void onClick(View v) {
+	    				remKeyCode("start_button", start_button_text);
 	    			} 
 			});
 		
@@ -249,6 +333,15 @@ public class InputModFragment extends Fragment {
 		});
 		builder.create();
 		builder.show();
+	}
+
+	private void remKeyCode(final String button, final TextView output) {
+		mPrefs.edit().remove(button).commit();
+		String label = output.getText().toString();
+		if (label.contains(":")) {
+			label = label.substring(0, label.indexOf(":"));
+		}
+		output.setText(label);
 	}
 
 	private int mapButton(int keyCode, KeyEvent event, String button) {

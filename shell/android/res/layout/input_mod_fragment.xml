@@ -64,6 +64,14 @@
                         android:layout_weight="1"
                         android:ems="8"
                         android:text="@string/launch_editor" />
+
+                    <Button
+                        android:id="@+id/remove_a_button"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:ems="6"
+                        android:text="@string/remove" />
                 </LinearLayout>
             </TableRow>
 
@@ -91,6 +99,14 @@
                         android:layout_weight="1"
                         android:ems="8"
                         android:text="@string/launch_editor" />
+
+                    <Button
+                        android:id="@+id/remove_b_button"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:ems="6"
+                        android:text="@string/remove" />
                 </LinearLayout>
             </TableRow>
 
@@ -118,6 +134,14 @@
                         android:layout_weight="1"
                         android:ems="8"
                         android:text="@string/launch_editor" />
+
+                    <Button
+                        android:id="@+id/remove_x_button"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:ems="6"
+                        android:text="@string/remove" />
                 </LinearLayout>
             </TableRow>
 
@@ -145,6 +169,14 @@
                         android:layout_weight="1"
                         android:ems="8"
                         android:text="@string/launch_editor" />
+
+                    <Button
+                        android:id="@+id/remove_y_button"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:ems="6"
+                        android:text="@string/remove" />
                 </LinearLayout>
             </TableRow>
 
@@ -172,6 +204,14 @@
                         android:layout_weight="1"
                         android:ems="8"
                         android:text="@string/launch_editor" />
+
+                    <Button
+                        android:id="@+id/remove_l_button"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:ems="6"
+                        android:text="@string/remove" />
                 </LinearLayout>
             </TableRow>
 
@@ -199,6 +239,14 @@
                         android:layout_weight="1"
                         android:ems="8"
                         android:text="@string/launch_editor" />
+
+                    <Button
+                        android:id="@+id/remove_r_button"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:ems="6"
+                        android:text="@string/remove" />
                 </LinearLayout>
             </TableRow>
 
@@ -226,6 +274,14 @@
                         android:layout_weight="1"
                         android:ems="8"
                         android:text="@string/launch_editor" />
+
+                    <Button
+                        android:id="@+id/remove_joystick"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:ems="6"
+                        android:text="@string/remove" />
                 </LinearLayout>
             </TableRow>
 
@@ -253,6 +309,14 @@
                         android:layout_weight="1"
                         android:ems="8"
                         android:text="@string/launch_editor" />
+
+                    <Button
+                        android:id="@+id/remove_dpad_up"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:ems="6"
+                        android:text="@string/remove" />
                 </LinearLayout>
             </TableRow>
 
@@ -280,6 +344,14 @@
                         android:layout_weight="1"
                         android:ems="8"
                         android:text="@string/launch_editor" />
+
+                    <Button
+                        android:id="@+id/remove_dpad_down"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:ems="6"
+                        android:text="@string/remove" />
                 </LinearLayout>
             </TableRow>
 
@@ -307,6 +379,14 @@
                         android:layout_weight="1"
                         android:ems="8"
                         android:text="@string/launch_editor" />
+
+                    <Button
+                        android:id="@+id/remove_dpad_left"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:ems="6"
+                        android:text="@string/remove" />
                 </LinearLayout>
             </TableRow>
 
@@ -334,6 +414,14 @@
                         android:layout_weight="1"
                         android:ems="8"
                         android:text="@string/launch_editor" />
+
+                    <Button
+                        android:id="@+id/remove_dpad_right"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:ems="6"
+                        android:text="@string/remove" />
                 </LinearLayout>
             </TableRow>
 
@@ -361,6 +449,14 @@
                         android:layout_weight="1"
                         android:ems="8"
                         android:text="@string/launch_editor" />
+                    
+                    <Button
+                        android:id="@+id/remove_start"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:ems="6"
+                        android:text="@string/remove" />
                 </LinearLayout>
             </TableRow>
         </TableLayout>
