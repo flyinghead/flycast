@@ -252,10 +252,7 @@ public class InputModFragment extends Fragment {
 	}
 
 	private int mapButton(int keyCode, KeyEvent event, String button) {
-		if (keyCode == KeyEvent.KEYCODE_MENU
-				|| keyCode == KeyEvent.KEYCODE_BACK
-				|| keyCode == KeyEvent.KEYCODE_VOLUME_UP
-				|| keyCode == KeyEvent.KEYCODE_VOLUME_DOWN)
+		if (keyCode == KeyEvent.KEYCODE_BACK)
 			return -1;
 
 		mPrefs.edit().putInt(button, keyCode).commit();
