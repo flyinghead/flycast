@@ -208,14 +208,14 @@ public class FileBrowser extends Fragment {
 
 		@Override
 		protected void onPostExecute(List<File> games) {
-			if (games != null && !games.isEmpty()) {
-				final LinearLayout list = (LinearLayout) parentActivity
-						.findViewById(R.id.game_list);
-				list.removeAllViews();
+			final LinearLayout list = (LinearLayout) parentActivity
+					.findViewById(R.id.game_list);
+			list.removeAllViews();
 
-				String heading = parentActivity
-						.getString(R.string.games_listing);
-				createListHeader(heading, list, true);
+			String heading = parentActivity
+					.getString(R.string.games_listing);
+			createListHeader(heading, list, true);
+			if (games != null && !games.isEmpty()) {
 				for (int i = 0; i < games.size(); i++) {
 					createListItem(list, games.get(i));
 				}
