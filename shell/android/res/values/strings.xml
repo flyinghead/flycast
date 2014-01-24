@@ -54,6 +54,13 @@
     <string name="about_title">About reicast</string>
     <string name="about_text">reicast is a dreamcast emulator\n\nVersion: %1$s\n\n</string>
     
+    <string-array name="controllers">
+    <item>Controller A</item>
+    <item>Controller B</item>
+    <item>Controller C</item>
+    <item>Controller D</item>
+    </string-array>
+    
     <string-array name="images">
         <item>cdi</item>
         <item>chd</item>

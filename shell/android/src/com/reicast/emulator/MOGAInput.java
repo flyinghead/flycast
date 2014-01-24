@@ -98,7 +98,6 @@ public class MOGAInput
 	protected void onCreate(Activity act)
 	{
 		this.act = act;
-		setModifiedKeys();
 
 		mController = Controller.getInstance(act);
 		mController.init();
@@ -143,22 +142,25 @@ public class MOGAInput
 		*/
 	}
 	
-	private void setModifiedKeys() {
+	private void setModifiedKeys(int player) {
 		prefs = PreferenceManager
 				.getDefaultSharedPreferences(act.getApplicationContext());
 		if (prefs.getBoolean("modified_key_layout", false)) {
+			String[] players = act.getResources().getStringArray(R.array.controllers);
+			String id = players[player].substring(
+					players[player].lastIndexOf(" "), players[player].length());
 			map = new int[] {
-				prefs.getInt("b_button", KeyEvent.KEYCODE_BUTTON_B), key_CONT_B,
-				prefs.getInt("a_button", KeyEvent.KEYCODE_BUTTON_A), key_CONT_A,
-				prefs.getInt("x_button", KeyEvent.KEYCODE_BUTTON_X), key_CONT_X,
-				prefs.getInt("l_button", KeyEvent.KEYCODE_BUTTON_Y), key_CONT_Y,
+				prefs.getInt("a_button" + id, KeyEvent.KEYCODE_BUTTON_A), key_CONT_A,
+				prefs.getInt("b_button" + id, KeyEvent.KEYCODE_BUTTON_B), key_CONT_B,
+				prefs.getInt("x_button" + id, KeyEvent.KEYCODE_BUTTON_X), key_CONT_X,
+				prefs.getInt("y_button" + id, KeyEvent.KEYCODE_BUTTON_Y), key_CONT_Y,
 
-				prefs.getInt("dpad_up", KeyEvent.KEYCODE_DPAD_UP), key_CONT_DPAD_UP,
-				prefs.getInt("dpad_down", KeyEvent.KEYCODE_DPAD_DOWN), key_CONT_DPAD_DOWN,
-				prefs.getInt("dpad_left", KeyEvent.KEYCODE_DPAD_LEFT), key_CONT_DPAD_LEFT,
-				prefs.getInt("dpad_right", KeyEvent.KEYCODE_DPAD_RIGHT), key_CONT_DPAD_RIGHT,
+				prefs.getInt("dpad_up" + id, KeyEvent.KEYCODE_DPAD_UP), key_CONT_DPAD_UP,
+				prefs.getInt("dpad_down" + id, KeyEvent.KEYCODE_DPAD_DOWN), key_CONT_DPAD_DOWN,
+				prefs.getInt("dpad_left" + id, KeyEvent.KEYCODE_DPAD_LEFT), key_CONT_DPAD_LEFT,
+				prefs.getInt("dpad_right" + id, KeyEvent.KEYCODE_DPAD_RIGHT), key_CONT_DPAD_RIGHT,
 
-				prefs.getInt("start_button", KeyEvent.KEYCODE_BUTTON_START), key_CONT_START,
+				prefs.getInt("start_button" + id, KeyEvent.KEYCODE_BUTTON_START), key_CONT_START,
 			};
 		}
 	}
@@ -233,10 +235,12 @@ public class MOGAInput
         		if (mControllerVersion == Controller.ACTION_VERSION_MOGAPRO) {
         			isActive[playerNum] = true;
         			isMogaPro[playerNum] = true;
+        			setModifiedKeys(playerNum);
         			notify = act.getApplicationContext().getString(R.string.moga_pro_connect);
         		} else if (mControllerVersion == Controller.ACTION_VERSION_MOGA) {
         			isActive[playerNum] = true;
         			isMogaPro[playerNum] = false;
+        			setModifiedKeys(playerNum);
         			notify = act.getApplicationContext().getString(R.string.moga_connect);
         		}
         		if (notify != null && !notify.equals(null)) {
