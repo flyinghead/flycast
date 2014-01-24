@@ -277,7 +277,7 @@ public class GL2JNIActivity extends Activity {
 
 						globalLS_X[playerNum] = previousLS_X[playerNum] = 0.0f;
 						globalLS_Y[playerNum] = previousLS_Y[playerNum] = 0.0f;
-					} else if (!moga.isActive[playerNum] && !moga.isMogaPro[playerNum]) { // Ouya controller
+					} else if (!moga.isActive[playerNum]) { // Ouya controller
 						map[playerNum] = new int[] {
 							OuyaController.BUTTON_O, key_CONT_A,
 							OuyaController.BUTTON_A, key_CONT_B,
@@ -290,7 +290,8 @@ public class GL2JNIActivity extends Activity {
 							OuyaController.BUTTON_DPAD_RIGHT, key_CONT_DPAD_RIGHT,
 
 							OuyaController.BUTTON_MENU, key_CONT_START,
-							OuyaController.BUTTON_R1, key_CONT_START };
+							OuyaController.BUTTON_R1, key_CONT_START
+						};
 					}
 				}
 
@@ -340,7 +341,7 @@ public class GL2JNIActivity extends Activity {
 			if (playerNum == null)
 				return false;
 
-			if (!moga.isActive[playerNum] && !moga.isMogaPro[playerNum]) {
+			if (!moga.isActive[playerNum]) {
 
 				// Joystick
 				if ((event.getSource() & InputDevice.SOURCE_CLASS_JOYSTICK) != 0) {
@@ -432,7 +433,7 @@ public class GL2JNIActivity extends Activity {
 		if (playerNum == null)
 			return false;
 
-		if (!moga.isActive[playerNum] && !moga.isMogaPro[playerNum]) {
+		if (!moga.isActive[playerNum]) {
 
 			boolean rav = false;
 			for (int i = 0; i < map[playerNum].length; i += 2) {
