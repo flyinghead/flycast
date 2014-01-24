@@ -70,6 +70,16 @@
             android:layout_marginTop="2dp"
             android:scaleType="fitCenter"
             android:src="@drawable/question" />
+        
+        <ImageView
+            android:id="@+id/rate"
+            android:layout_width="48dp"
+            android:layout_height="fill_parent"
+            android:layout_marginBottom="2dp"
+            android:layout_marginLeft="2dp"
+            android:layout_marginTop="2dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/profiler" />
     </LinearLayout>
 
     <FrameLayout

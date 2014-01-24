@@ -128,6 +128,9 @@ public class MainActivity extends FragmentActivity implements
 			// About
 			navDrawerItems.add(new NavDrawerItem(navMenuTitles[4], navMenuIcons
 					.getResourceId(4, 0)));
+			// Rate
+			navDrawerItems.add(new NavDrawerItem(navMenuTitles[5], navMenuIcons
+					.getResourceId(5, 0)));
 
 			// Recycle the typed array
 			navMenuIcons.recycle();
@@ -236,29 +239,44 @@ public class MainActivity extends FragmentActivity implements
 								MainActivity.this);
 
 						// set title
-						alertDialogBuilder.setTitle("About reicast");
+						alertDialogBuilder.setTitle(getString(R.string.about_title));
 
-						// set dialog message
+						String versionName = "";
+						try {
+							PackageInfo pInfo = getPackageManager().getPackageInfo(
+									getPackageName(), 0);
+							versionName = pInfo.versionName;
+						} catch (NameNotFoundException e) {
+							e.printStackTrace();
+						}
+
 						alertDialogBuilder
-								.setMessage("reicast is a dreamcast emulator")
-								.setCancelable(false)
-								.setPositiveButton("Dismiss",
-										new DialogInterface.OnClickListener() {
-											public void onClick(
-													DialogInterface dialog,
-													int id) {
-												// if this button is clicked,
-												// close
-												// current activity
-												// FileBrowser.this.finish();
-											}
-										});
+							.setMessage(getString(R.string.about_text, versionName))
+							.setCancelable(false)
+							.setPositiveButton("Dismiss",
+									new DialogInterface.OnClickListener() {
+										public void onClick(DialogInterface dialog,
+												int id) {
+											dialog.dismiss();
+										}
+									});
 
 						// create alert dialog
 						AlertDialog alertDialog = alertDialogBuilder.create();
 
 						// show it
 						alertDialog.show();
+						return true;
+					} else
+						return false;
+				}
+			});
+			findViewById(R.id.rate).setOnTouchListener(new OnTouchListener() {
+				public boolean onTouch(View v, MotionEvent event) {
+					if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
+						// vib.vibrate(50);
+						startActivity(new Intent(Intent.ACTION_VIEW,
+							Uri.parse("market://details?id=" + getPackageName())));
 						return true;
 					} else
 						return false;
@@ -483,21 +501,11 @@ public class MainActivity extends FragmentActivity implements
 				alertDialogBuilder
 						.setMessage(getString(R.string.about_text, versionName))
 						.setCancelable(false)
-						.setPositiveButton("Rate It",
+						.setPositiveButton("Dismiss",
 								new DialogInterface.OnClickListener() {
 									public void onClick(DialogInterface dialog,
 											int id) {
-										startActivity(new Intent(
-												Intent.ACTION_VIEW,
-												Uri.parse("market://details?id="
-														+ getPackageName())));
-									}
-								})
-						.setNegativeButton("Dismiss",
-								new DialogInterface.OnClickListener() {
-									public void onClick(DialogInterface dialog,
-											int id) {
-
+										dialog.dismiss();
 									}
 								});
 
@@ -508,6 +516,9 @@ public class MainActivity extends FragmentActivity implements
 				alertDialog.show();
 			break;
 
+		case 5:
+			startActivity(new Intent(Intent.ACTION_VIEW,
+				Uri.parse("market://details?id=" + getPackageName())));
 		default:
 			break;
 		}

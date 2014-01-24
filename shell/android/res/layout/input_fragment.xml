@@ -252,6 +252,17 @@
                     android:text="@string/remove" />
             </LinearLayout>
         </TableRow>
+        <TableRow android:gravity="center_vertical" >
+
+            <Button
+                android:id="@+id/buttonKeycodeEditor"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="25dp"
+                android:layout_weight="1"
+                android:ems="8"
+                android:text="@string/menu_edit_keycodes" />
+        </TableRow>
     </TableLayout>
 
 </LinearLayout>

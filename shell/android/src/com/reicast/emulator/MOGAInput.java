@@ -4,7 +4,9 @@ package com.reicast.emulator;
 /******************************************************************************/
 
 import android.app.Activity;
+import android.content.SharedPreferences;
 import android.os.Handler;
+import android.preference.PreferenceManager;
 import android.widget.Toast;
 
 import com.bda.controller.Controller;
@@ -20,6 +22,8 @@ import com.bda.controller.StateEvent;
 */
 public class MOGAInput
 {
+	private SharedPreferences prefs;
+
 	static final int DELAY = 1000 / 50; // 50 Hz
 	
 	static final int ACTION_CONNECTED = Controller.ACTION_CONNECTED;
@@ -29,7 +33,8 @@ public class MOGAInput
 
 	Controller mController = null;
 
-    public boolean isActive = false;
+    public boolean isActive[] = { false, false, false, false };
+    public boolean isMogaPro[] = { false, false, false, false };
 
 	private static final int key_CONT_B 			= 0x0002;
 	private static final int key_CONT_A 			= 0x0004;
@@ -42,18 +47,18 @@ public class MOGAInput
 	private static final int key_CONT_X 			= 0x0400;
 
 	int[] map = new int[] {
-						KeyEvent.KEYCODE_BUTTON_B, key_CONT_B,
-						KeyEvent.KEYCODE_BUTTON_A, key_CONT_A,
-						KeyEvent.KEYCODE_BUTTON_X, key_CONT_X,
-						KeyEvent.KEYCODE_BUTTON_Y, key_CONT_Y,
+		KeyEvent.KEYCODE_BUTTON_B, key_CONT_B,
+		KeyEvent.KEYCODE_BUTTON_A, key_CONT_A,
+		KeyEvent.KEYCODE_BUTTON_X, key_CONT_X,
+		KeyEvent.KEYCODE_BUTTON_Y, key_CONT_Y,
 
-						KeyEvent.KEYCODE_DPAD_UP, key_CONT_DPAD_UP,
-						KeyEvent.KEYCODE_DPAD_DOWN, key_CONT_DPAD_DOWN,
-						KeyEvent.KEYCODE_DPAD_LEFT, key_CONT_DPAD_LEFT,
-						KeyEvent.KEYCODE_DPAD_RIGHT, key_CONT_DPAD_RIGHT,
+		KeyEvent.KEYCODE_DPAD_UP, key_CONT_DPAD_UP,
+		KeyEvent.KEYCODE_DPAD_DOWN, key_CONT_DPAD_DOWN,
+		KeyEvent.KEYCODE_DPAD_LEFT, key_CONT_DPAD_LEFT,
+		KeyEvent.KEYCODE_DPAD_RIGHT, key_CONT_DPAD_RIGHT,
 
-						KeyEvent.KEYCODE_BUTTON_START, key_CONT_START,
-				};
+		KeyEvent.KEYCODE_BUTTON_START, key_CONT_START,
+	};
 
 	Activity act;
 	public MOGAInput()
@@ -93,6 +98,7 @@ public class MOGAInput
 	protected void onCreate(Activity act)
 	{
 		this.act = act;
+		setModifiedKeys();
 
 		mController = Controller.getInstance(act);
 		mController.init();
@@ -135,6 +141,26 @@ public class MOGAInput
 			value.mValue = mController.getAxisValue(key);
 		}
 		*/
+	}
+	
+	private void setModifiedKeys() {
+		prefs = PreferenceManager
+				.getDefaultSharedPreferences(act.getApplicationContext());
+		if (prefs.getBoolean("modified_key_layout", false)) {
+			map = new int[] {
+				prefs.getInt("b_button", KeyEvent.KEYCODE_BUTTON_B), key_CONT_B,
+				prefs.getInt("a_button", KeyEvent.KEYCODE_BUTTON_A), key_CONT_A,
+				prefs.getInt("x_button", KeyEvent.KEYCODE_BUTTON_X), key_CONT_X,
+				prefs.getInt("l_button", KeyEvent.KEYCODE_BUTTON_Y), key_CONT_Y,
+
+				prefs.getInt("dpad_up", KeyEvent.KEYCODE_DPAD_UP), key_CONT_DPAD_UP,
+				prefs.getInt("dpad_down", KeyEvent.KEYCODE_DPAD_DOWN), key_CONT_DPAD_DOWN,
+				prefs.getInt("dpad_left", KeyEvent.KEYCODE_DPAD_LEFT), key_CONT_DPAD_LEFT,
+				prefs.getInt("dpad_right", KeyEvent.KEYCODE_DPAD_RIGHT), key_CONT_DPAD_RIGHT,
+
+				prefs.getInt("start_button", KeyEvent.KEYCODE_BUTTON_START), key_CONT_START,
+			};
+		}
 	}
 
 	class ExampleControllerListener implements ControllerListener
@@ -202,8 +228,20 @@ public class MOGAInput
 				JNIdc.hide_osd();
 
 			if (event.getState() == StateEvent.STATE_CONNECTION && event.getAction() == ACTION_CONNECTED) {
-        		Toast.makeText(act.getApplicationContext(), "MOGA Connected!", Toast.LENGTH_SHORT).show();
-        		isActive = true;
+        		int mControllerVersion = mController.getState(Controller.STATE_CURRENT_PRODUCT_VERSION);
+        		String notify = null;
+        		if (mControllerVersion == Controller.ACTION_VERSION_MOGAPRO) {
+        			isActive[playerNum] = true;
+        			isMogaPro[playerNum] = true;
+        			notify = act.getApplicationContext().getString(R.string.moga_pro_connect);
+        		} else if (mControllerVersion == Controller.ACTION_VERSION_MOGA) {
+        			isActive[playerNum] = true;
+        			isMogaPro[playerNum] = false;
+        			notify = act.getApplicationContext().getString(R.string.moga_connect);
+        		}
+        		if (notify != null && !notify.equals(null)) {
+        			Toast.makeText(act.getApplicationContext(), notify, Toast.LENGTH_SHORT).show();
+        		}
 			}
 		}
 	}

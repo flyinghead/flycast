@@ -153,6 +153,22 @@ public class InputFragment extends Fragment {
 		}
 
 		updateVibration();
+		
+		Button buttonKeycodeEditor = (Button) getView().findViewById(
+				R.id.buttonKeycodeEditor);
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
+			buttonKeycodeEditor.setOnClickListener(new View.OnClickListener() {
+				public void onClick(View v) {
+					InputModFragment inputModFrag = new InputModFragment();
+					getActivity().getSupportFragmentManager()
+							.beginTransaction()
+							.replace(R.id.fragment_container, inputModFrag,
+									"INPUT_MOD_FRAG").addToBackStack(null).commit();
+				}
+			});
+		} else {
+			buttonKeycodeEditor.setVisibility(View.GONE);
+		}
 	}
 
 	private void updateVibration() {
@@ -172,7 +188,7 @@ public class InputFragment extends Fragment {
 			InputDevice dev = InputDevice.getDevice(devideId);
 			String descriptor = null;
 			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-			descriptor = dev.getDescriptor();
+				descriptor = dev.getDescriptor();
 			} else {
 				descriptor = dev.getName();
 			}
