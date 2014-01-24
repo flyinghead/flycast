@@ -33,7 +33,8 @@ public class MOGAInput
 
 	Controller mController = null;
 
-    public boolean isActive = false;
+    public boolean isActive[] = { false, false, false, false };
+    public boolean isMogaPro[] = { false, false, false, false };
 
 	private static final int key_CONT_B 			= 0x0002;
 	private static final int key_CONT_A 			= 0x0004;
@@ -227,8 +228,20 @@ public class MOGAInput
 				JNIdc.hide_osd();
 
 			if (event.getState() == StateEvent.STATE_CONNECTION && event.getAction() == ACTION_CONNECTED) {
-        		Toast.makeText(act.getApplicationContext(), "MOGA Connected!", Toast.LENGTH_SHORT).show();
-        		isActive = true;
+        		int mControllerVersion = mController.getState(Controller.STATE_CURRENT_PRODUCT_VERSION);
+        		String notify = null;
+        		if (mControllerVersion == Controller.ACTION_VERSION_MOGAPRO) {
+        			isActive[playerNum] = true;
+        			isMogaPro[playerNum] = true;
+        			notify = act.getApplicationContext().getString(R.string.moga_pro_connect);
+        		} else if (mControllerVersion == Controller.ACTION_VERSION_MOGA) {
+        			isActive[playerNum] = true;
+        			isMogaPro[playerNum] = false;
+        			notify = act.getApplicationContext().getString(R.string.moga_connect);
+        		}
+        		if (notify != null && !notify.equals(null)) {
+        			Toast.makeText(act.getApplicationContext(), notify, Toast.LENGTH_SHORT).show();
+        		}
 			}
 		}
 	}
