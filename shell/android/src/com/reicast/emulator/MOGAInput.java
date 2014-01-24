@@ -148,10 +148,10 @@ public class MOGAInput
 				.getDefaultSharedPreferences(act.getApplicationContext());
 		if (prefs.getBoolean("modified_key_layout", false)) {
 			map = new int[] {
-				prefs.getInt("b_button", KeyEvent.KEYCODE_BUTTON_B), key_CONT_B,
 				prefs.getInt("a_button", KeyEvent.KEYCODE_BUTTON_A), key_CONT_A,
+				prefs.getInt("b_button", KeyEvent.KEYCODE_BUTTON_B), key_CONT_B,
 				prefs.getInt("x_button", KeyEvent.KEYCODE_BUTTON_X), key_CONT_X,
-				prefs.getInt("l_button", KeyEvent.KEYCODE_BUTTON_Y), key_CONT_Y,
+				prefs.getInt("y_button", KeyEvent.KEYCODE_BUTTON_Y), key_CONT_Y,
 
 				prefs.getInt("dpad_up", KeyEvent.KEYCODE_DPAD_UP), key_CONT_DPAD_UP,
 				prefs.getInt("dpad_down", KeyEvent.KEYCODE_DPAD_DOWN), key_CONT_DPAD_DOWN,

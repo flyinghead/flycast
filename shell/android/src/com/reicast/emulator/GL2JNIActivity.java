@@ -1,18 +1,16 @@
 package com.reicast.emulator;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.HashMap;
 
-import tv.ouya.console.api.OuyaController;
-
+// Keeping a reference just in case it's needed
 import com.reicast.emulator.GL2JNIView.EmuThread;
 
-import android.content.SharedPreferences;
+import tv.ouya.console.api.OuyaController;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Build;
@@ -222,10 +220,11 @@ public class GL2JNIActivity extends Activity {
 					} else if (InputDevice.getDevice(joys[i]).getName()
 							.equals("Sony PLAYSTATION(R)3 Controller")) {
 						map[playerNum] = new int[] {
-							OuyaController.BUTTON_Y, key_CONT_Y,
-							OuyaController.BUTTON_U, key_CONT_X,
 							OuyaController.BUTTON_O, key_CONT_A,
 							OuyaController.BUTTON_A, key_CONT_B,
+							OuyaController.BUTTON_U, key_CONT_X,
+							OuyaController.BUTTON_Y, key_CONT_Y,
+							
 
 							OuyaController.BUTTON_DPAD_UP, key_CONT_DPAD_UP,
 							OuyaController.BUTTON_DPAD_DOWN, key_CONT_DPAD_DOWN,
@@ -241,8 +240,8 @@ public class GL2JNIActivity extends Activity {
 						map[playerNum] = new int[] {
 							OuyaController.BUTTON_O, key_CONT_A,
 							OuyaController.BUTTON_A, key_CONT_B,
-							OuyaController.BUTTON_Y, key_CONT_Y,
 							OuyaController.BUTTON_U, key_CONT_X,
+							OuyaController.BUTTON_Y, key_CONT_Y,
 
 							OuyaController.BUTTON_DPAD_UP, key_CONT_DPAD_UP,
 							OuyaController.BUTTON_DPAD_DOWN, key_CONT_DPAD_DOWN,
@@ -262,8 +261,8 @@ public class GL2JNIActivity extends Activity {
 						map[playerNum] = new int[] { 
 							OuyaController.BUTTON_O, key_CONT_A,
 							OuyaController.BUTTON_A, key_CONT_B,
-							OuyaController.BUTTON_Y, key_CONT_Y,
 							OuyaController.BUTTON_U, key_CONT_X,
+							OuyaController.BUTTON_Y, key_CONT_Y,
 
 							OuyaController.BUTTON_DPAD_UP, key_CONT_DPAD_UP,
 							OuyaController.BUTTON_DPAD_DOWN, key_CONT_DPAD_DOWN,
@@ -281,8 +280,8 @@ public class GL2JNIActivity extends Activity {
 						map[playerNum] = new int[] {
 							OuyaController.BUTTON_O, key_CONT_A,
 							OuyaController.BUTTON_A, key_CONT_B,
-							OuyaController.BUTTON_Y, key_CONT_Y,
 							OuyaController.BUTTON_U, key_CONT_X,
+							OuyaController.BUTTON_Y, key_CONT_Y,
 
 							OuyaController.BUTTON_DPAD_UP, key_CONT_DPAD_UP,
 							OuyaController.BUTTON_DPAD_DOWN, key_CONT_DPAD_DOWN,
@@ -316,8 +315,8 @@ public class GL2JNIActivity extends Activity {
 		return new int[] { 
 			prefs.getInt("a_button", OuyaController.BUTTON_O), key_CONT_A, 
 			prefs.getInt("b_button", OuyaController.BUTTON_A), key_CONT_B,
-			prefs.getInt("y_button", OuyaController.BUTTON_Y), key_CONT_Y,
 			prefs.getInt("x_button", OuyaController.BUTTON_U), key_CONT_X,
+			prefs.getInt("y_button", OuyaController.BUTTON_Y), key_CONT_Y,
 
 			prefs.getInt("dpad_up", OuyaController.BUTTON_DPAD_UP), key_CONT_DPAD_UP,
 			prefs.getInt("dpad_down", OuyaController.BUTTON_DPAD_DOWN), key_CONT_DPAD_DOWN,
