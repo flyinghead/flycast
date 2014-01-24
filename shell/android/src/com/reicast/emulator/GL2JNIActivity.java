@@ -437,28 +437,32 @@ public class GL2JNIActivity extends Activity {
 	 */
 
 	boolean handle_key(Integer playerNum, int kc, boolean down) {
-		if (playerNum == null)
-			return false;
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
+			if (playerNum == null)
+				return false;
 
-		if (!moga.isActive[playerNum]) {
+			if (!moga.isActive[playerNum]) {
 
-			boolean rav = false;
-			for (int i = 0; i < map[playerNum].length; i += 2) {
-				if (map[playerNum][i + 0] == kc) {
-					if (down)
-						GL2JNIView.kcode_raw[playerNum] &= ~map[playerNum][i + 1];
-					else
-						GL2JNIView.kcode_raw[playerNum] |= map[playerNum][i + 1];
+				boolean rav = false;
+				for (int i = 0; i < map[playerNum].length; i += 2) {
+					if (map[playerNum][i + 0] == kc) {
+						if (down)
+							GL2JNIView.kcode_raw[playerNum] &= ~map[playerNum][i + 1];
+						else
+							GL2JNIView.kcode_raw[playerNum] |= map[playerNum][i + 1];
 
-					rav = true;
-					break;
+						rav = true;
+						break;
+					}
 				}
+
+				return rav;
+
+			} else {
+				return true;
 			}
-
-			return rav;
-
 		} else {
-			return true;
+			return false;
 		}
 	}
 
