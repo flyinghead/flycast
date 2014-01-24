@@ -358,6 +358,10 @@ public class InputModFragment extends Fragment {
 			Bitmap resizedBitmap = Bitmap.createBitmap(image, x, y, 64, 64,
 					matrix, true);
 			BitmapDrawable bmd = new BitmapDrawable(resizedBitmap);
+			image.recycle();
+			image = null;
+			bitmap.close();
+			bitmap = null;
 			return bmd;
 		} catch (IOException e1) {
 			e1.printStackTrace();
