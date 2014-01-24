@@ -14,9 +14,13 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CompoundButton;
+import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 
 public class InputModFragment extends Fragment {
@@ -24,6 +28,7 @@ public class InputModFragment extends Fragment {
 	private Activity parentActivity;
 	private SharedPreferences mPrefs;
 	private Switch switchModifiedLayoutEnabled;
+	private String player;
 
 	// Container Activity must implement this interface
 	public interface OnClickListener {
@@ -43,6 +48,30 @@ public class InputModFragment extends Fragment {
 
 		mPrefs = PreferenceManager
 				.getDefaultSharedPreferences(parentActivity);
+		
+		String[] controllers = parentActivity.getResources().getStringArray(R.array.controllers);
+
+		Spinner player_spnr = (Spinner) getView().findViewById(
+				R.id.player_spinner);
+		ArrayAdapter<String> localeAdapter = new ArrayAdapter<String>(
+				parentActivity, android.R.layout.simple_spinner_item, controllers);
+		localeAdapter
+				.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		player_spnr.setAdapter(localeAdapter);
+
+		player_spnr.setOnItemSelectedListener(new OnItemSelectedListener() {
+
+			public void onItemSelected(AdapterView<?> parent, View view,
+					int pos, long id) {
+				String selection = parent.getItemAtPosition(pos).toString();
+				player = selection.substring(selection.lastIndexOf(" "), selection.length());
+			}
+
+			public void onNothingSelected(AdapterView<?> arg0) {
+				
+			}
+
+		});
 		
 		OnCheckedChangeListener modified_layout = new OnCheckedChangeListener() {
 			public void onCheckedChanged(CompoundButton buttonView,

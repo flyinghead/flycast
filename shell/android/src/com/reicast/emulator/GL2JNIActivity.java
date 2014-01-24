@@ -216,7 +216,7 @@ public class GL2JNIActivity extends Activity {
 				if (playerNum != null) {
 
 					if (prefs.getBoolean("modified_key_layout", false)) {
-						map[playerNum] = setModifiedKeys();
+						map[playerNum] = setModifiedKeys(playerNum);
 					} else if (InputDevice.getDevice(joys[i]).getName()
 							.equals("Sony PLAYSTATION(R)3 Controller")) {
 						map[playerNum] = new int[] {
@@ -311,19 +311,20 @@ public class GL2JNIActivity extends Activity {
 				"Press the back button for a menu", Toast.LENGTH_SHORT).show();
 	}
 	
-	private int[] setModifiedKeys() {
+	private int[] setModifiedKeys(int player) {
+		String id = String.valueOf(player);
 		return new int[] { 
-			prefs.getInt("a_button", OuyaController.BUTTON_O), key_CONT_A, 
-			prefs.getInt("b_button", OuyaController.BUTTON_A), key_CONT_B,
-			prefs.getInt("x_button", OuyaController.BUTTON_U), key_CONT_X,
-			prefs.getInt("y_button", OuyaController.BUTTON_Y), key_CONT_Y,
+			prefs.getInt("a_button" + id, OuyaController.BUTTON_O), key_CONT_A, 
+			prefs.getInt("b_button" + id, OuyaController.BUTTON_A), key_CONT_B,
+			prefs.getInt("x_button" + id, OuyaController.BUTTON_U), key_CONT_X,
+			prefs.getInt("y_button" + id, OuyaController.BUTTON_Y), key_CONT_Y,
 
-			prefs.getInt("dpad_up", OuyaController.BUTTON_DPAD_UP), key_CONT_DPAD_UP,
-			prefs.getInt("dpad_down", OuyaController.BUTTON_DPAD_DOWN), key_CONT_DPAD_DOWN,
-			prefs.getInt("dpad_left", OuyaController.BUTTON_DPAD_LEFT), key_CONT_DPAD_LEFT,
-			prefs.getInt("dpad_right", OuyaController.BUTTON_DPAD_RIGHT), key_CONT_DPAD_RIGHT,
+			prefs.getInt("dpad_up" + id, OuyaController.BUTTON_DPAD_UP), key_CONT_DPAD_UP,
+			prefs.getInt("dpad_down" + id, OuyaController.BUTTON_DPAD_DOWN), key_CONT_DPAD_DOWN,
+			prefs.getInt("dpad_left" + id, OuyaController.BUTTON_DPAD_LEFT), key_CONT_DPAD_LEFT,
+			prefs.getInt("dpad_right" + id, OuyaController.BUTTON_DPAD_RIGHT), key_CONT_DPAD_RIGHT,
 
-			prefs.getInt("start_button", OuyaController.BUTTON_MENU), key_CONT_START,
+			prefs.getInt("start_button" + id, OuyaController.BUTTON_MENU), key_CONT_START,
 		};
 	}
 
