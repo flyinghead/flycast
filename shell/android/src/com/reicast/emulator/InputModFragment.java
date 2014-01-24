@@ -144,28 +144,6 @@ public class InputModFragment extends Fragment {
 			joystick.setEnabled(false);
 			mPrefs.edit().remove("joystick").commit();
 			// Still needs better support for identifying the entire stick
-
-			final TextView dpad_left_text = (TextView) getView()
-					.findViewById(R.id.dpad_left_key);
-			getKeyCode("dpad_left", dpad_left_text);
-			Button dpad_left = (Button) getView()
-					.findViewById(R.id.dpad_left_edit);
-			dpad_left.setOnClickListener(new View.OnClickListener() {
-	    			public void onClick(View v) {
-	    				mapKeyCode("dpad_left", dpad_left_text);
-	    			} 
-			});
-			
-			final TextView dpad_right_text = (TextView) getView()
-					.findViewById(R.id.dpad_right_key);
-			getKeyCode("dpad_right", dpad_right_text);
-			Button dpad_right = (Button) getView()
-					.findViewById(R.id.dpad_right_edit);
-			dpad_right.setOnClickListener(new View.OnClickListener() {
-	    			public void onClick(View v) {
-	    				mapKeyCode("dpad_right", dpad_right_text);
-	    			} 
-			});
 			
 			final TextView dpad_up_text = (TextView) getView()
 					.findViewById(R.id.dpad_up_key);
@@ -186,6 +164,28 @@ public class InputModFragment extends Fragment {
 			dpad_down.setOnClickListener(new View.OnClickListener() {
 	    			public void onClick(View v) {
 	    				mapKeyCode("dpad_down", dpad_down_text);
+	    			} 
+			});
+
+			final TextView dpad_left_text = (TextView) getView()
+					.findViewById(R.id.dpad_left_key);
+			getKeyCode("dpad_left", dpad_left_text);
+			Button dpad_left = (Button) getView()
+					.findViewById(R.id.dpad_left_edit);
+			dpad_left.setOnClickListener(new View.OnClickListener() {
+	    			public void onClick(View v) {
+	    				mapKeyCode("dpad_left", dpad_left_text);
+	    			} 
+			});
+			
+			final TextView dpad_right_text = (TextView) getView()
+					.findViewById(R.id.dpad_right_key);
+			getKeyCode("dpad_right", dpad_right_text);
+			Button dpad_right = (Button) getView()
+					.findViewById(R.id.dpad_right_edit);
+			dpad_right.setOnClickListener(new View.OnClickListener() {
+	    			public void onClick(View v) {
+	    				mapKeyCode("dpad_right", dpad_right_text);
 	    			} 
 			});
 			
