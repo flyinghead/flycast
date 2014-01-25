@@ -56,6 +56,9 @@ public class InputModFragment extends Fragment {
 	@Override
 	public void onViewCreated(View view, Bundle savedInstanceState) {
 		parentActivity = getActivity();
+		
+		Runtime.getRuntime().freeMemory();
+		System.gc();
 
 		mPrefs = PreferenceManager.getDefaultSharedPreferences(parentActivity);
 
@@ -348,6 +351,7 @@ public class InputModFragment extends Fragment {
 	}
 
 	private Drawable getButtonImage(int x, int y) {
+		System.gc();
 		try {
 			InputStream bitmap = parentActivity.getAssets().open("buttons.png");
 			BitmapFactory.Options options = new BitmapFactory.Options();
@@ -355,6 +359,7 @@ public class InputModFragment extends Fragment {
 			Bitmap image = BitmapFactory.decodeStream(bitmap, null, options);
 			bitmap.close();
 			bitmap = null;
+			System.gc();
 			Matrix matrix = new Matrix();
 			matrix.postScale(32, 32);
 			Bitmap resizedBitmap = Bitmap.createBitmap(image, x, y, 64 / sS,

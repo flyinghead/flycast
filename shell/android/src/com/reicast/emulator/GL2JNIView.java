@@ -209,6 +209,9 @@ class GL2JNIView extends GLSurfaceView
     this.editVjoyMode = editVjoyMode;
     setKeepScreenOn(true);
     vib=(Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
+    
+    Runtime.getRuntime().freeMemory();
+	System.gc();
 
     SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
     touchVibrationEnabled = prefs.getBoolean("touch_vibration_enabled", true);
