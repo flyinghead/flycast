@@ -502,7 +502,7 @@ public class GL2JNIActivity extends Activity {
 			playerNum = deviceDescriptor_PlayerNum
 				.get(deviceId_deviceDescriptor.get(event.getDeviceId()));
 		} else {
-			playerNum = 0;
+			playerNum = -1;
 		}
 
 		return handle_key(playerNum, keyCode, false)
@@ -515,7 +515,7 @@ public class GL2JNIActivity extends Activity {
 			playerNum = deviceDescriptor_PlayerNum
 				.get(deviceId_deviceDescriptor.get(event.getDeviceId()));
 		} else {
-			playerNum = 0;
+			playerNum = -1;
 		}
 
 		if (handle_key(playerNum, keyCode, true)) {
