@@ -43,6 +43,7 @@
     <string name="select_controller_message">Press any button on the controller %1$s to assign to port</string>
     <string name="controller_already_in_use">This controller is already in use!</string>
     <string name="modified_layout">Enable Custom Key Layout</string>
+    <string name="controller_compat">Enable Compatibility Mode</string>
     
     <string name="menu_edit_keycodes">Custom Button Layout</string>
     <string name="map_keycode_title">Modify Controller</string>

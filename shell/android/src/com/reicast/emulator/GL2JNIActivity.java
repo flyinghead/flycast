@@ -214,10 +214,14 @@ public class GL2JNIActivity extends Activity {
 			for (int i = 0; i < joys.length; i++) {
 				Integer playerNum = deviceDescriptor_PlayerNum
 						.get(deviceId_deviceDescriptor.get(joys[i]));
+				
+				String[] players = getResources().getStringArray(R.array.controllers);
+				String id = players[i].substring(
+						players[i].lastIndexOf(" "), players[i].length());
+				boolean compat = prefs.getBoolean("controller_compat" + id, false);
 
-				if (playerNum != null) {
-
-					if (prefs.getBoolean("modified_key_layout", false)) {
+				if (playerNum != null && !compat) {
+					if (prefs.getBoolean("modified_key_layout" + id, false)) {
 						map[playerNum] = setModifiedKeys(playerNum);
 						
 						custom[playerNum] = true;
@@ -299,24 +303,19 @@ public class GL2JNIActivity extends Activity {
 							OuyaController.BUTTON_R1, key_CONT_START
 						};
 					}
+				} else {
+					runCompatibilityCheck(i, id);
 				}
 
 			}
 
 		} else {
-			if (prefs.getBoolean("modified_key_layout", false)) {
-				for (int i = 0; i < 4; i++) {
-					String[] players = getResources().getStringArray(R.array.controllers);
-					String id = players[i].substring(
-							players[i].lastIndexOf(" "), players[i].length());
-					name[i] = prefs.getInt("controller" + id, -1);
-					if (name[i] != -1) {
-						map[i] = setModifiedKeys(i);
-						custom[i] = true;
-					}
-
-					globalLS_X[i] = previousLS_X[i] = 0.0f;
-					globalLS_Y[i] = previousLS_Y[i] = 0.0f;
+			for (int i = 0; i < 4; i++) {
+				String[] players = getResources().getStringArray(R.array.controllers);
+				String id = players[i].substring(
+						players[i].lastIndexOf(" "), players[i].length());
+				if (prefs.getBoolean("controller_compat" + id, false)) {
+					runCompatibilityCheck(i, id);
 				}
 			}
 		}
@@ -333,7 +332,18 @@ public class GL2JNIActivity extends Activity {
 		Toast.makeText(getApplicationContext(),
 				"Press the back button for a menu", Toast.LENGTH_SHORT).show();
 	}
-	
+
+	private void runCompatibilityCheck(int playerNum, String id) {
+		name[playerNum] = prefs.getInt("controller" + id, -1);
+		if (name[playerNum] != -1) {
+			map[playerNum] = setModifiedKeys(playerNum);
+			custom[playerNum] = true;
+		}
+
+		globalLS_X[playerNum] = previousLS_X[playerNum] = 0.0f;
+		globalLS_Y[playerNum] = previousLS_Y[playerNum] = 0.0f;
+	}
+
 	private int[] setModifiedKeys(int player) {
 		String[] players = getResources().getStringArray(R.array.controllers);
 		String id = players[player].substring(
