@@ -80,6 +80,18 @@ public class InputFragment extends Fragment {
 		}
 		switchTouchVibrationEnabled.setOnCheckedChangeListener(touch_vibration);
 		
+		Button buttonKeycodeEditor = (Button) getView().findViewById(
+				R.id.buttonKeycodeEditor);
+		buttonKeycodeEditor.setOnClickListener(new View.OnClickListener() {
+			public void onClick(View v) {
+				InputModFragment inputModFrag = new InputModFragment();
+				getActivity().getSupportFragmentManager()
+				.beginTransaction()
+				.replace(R.id.fragment_container, inputModFrag,
+						"INPUT_MOD_FRAG").addToBackStack(null).commit();
+			}
+		});
+		
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
 
 			Button buttonSelectControllerPlayer1 = (Button) getView()
@@ -153,22 +165,6 @@ public class InputFragment extends Fragment {
 		}
 
 		updateVibration();
-		
-		Button buttonKeycodeEditor = (Button) getView().findViewById(
-				R.id.buttonKeycodeEditor);
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
-			buttonKeycodeEditor.setOnClickListener(new View.OnClickListener() {
-				public void onClick(View v) {
-					InputModFragment inputModFrag = new InputModFragment();
-					getActivity().getSupportFragmentManager()
-							.beginTransaction()
-							.replace(R.id.fragment_container, inputModFrag,
-									"INPUT_MOD_FRAG").addToBackStack(null).commit();
-				}
-			});
-		} else {
-			buttonKeycodeEditor.setVisibility(View.GONE);
-		}
 	}
 
 	private void updateVibration() {
@@ -279,13 +275,15 @@ public class InputFragment extends Fragment {
 
 		AlertDialog.Builder builder = new AlertDialog.Builder(parentActivity);
 		builder.setTitle(getString(R.string.select_controller_title));
-		builder.setMessage(getString(R.string.select_controller_message) + " " + String.valueOf(listenForButton) + ".");
-		builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-			public void onClick(DialogInterface dialog, int which) {
-				listenForButton = 0;
-				dialog.dismiss();
-			}
-		});
+		builder.setMessage(getString(R.string.select_controller_message,
+				String.valueOf(listenForButton)));
+		builder.setNegativeButton("Cancel",
+				new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int which) {
+						listenForButton = 0;
+						dialog.dismiss();
+					}
+				});
 		builder.setOnKeyListener(new Dialog.OnKeyListener() {
 			public boolean onKey(DialogInterface dialog, int keyCode, KeyEvent event) {
 				return mapDevice(keyCode, event);
