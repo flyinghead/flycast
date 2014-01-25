@@ -45,7 +45,7 @@
     <string name="modified_layout">Enable Custom Key Layout</string>
     <string name="controller_compat">Enable Compatibility Mode</string>
     
-    <string name="menu_edit_keycodes">Custom Button Layout</string>
+    <string name="customize_physical_controls">Customize Physical Controls</string>
     <string name="map_keycode_title">Modify Controller</string>
     <string name="map_keycode_message">Press the new controller button for %1$s</string>
     
@@ -96,7 +96,7 @@
         <item>@drawable/open_folder</item>
         <item>@drawable/input</item>
         <item>@drawable/question</item>
-        <item>@drawable/profiler</item>
+        <item>@drawable/star</item>
     </array>
 
     <!-- Content Description -->
