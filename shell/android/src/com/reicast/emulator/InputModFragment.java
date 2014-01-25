@@ -76,12 +76,12 @@ public class InputModFragment extends Fragment {
 			public void onItemSelected(AdapterView<?> parent, View view,
 					int pos, long id) {
 				String selection = parent.getItemAtPosition(pos).toString();
-				player = selection.substring(selection.lastIndexOf(" "),
+				player = "_" + selection.substring(selection.lastIndexOf(" ") + 1,
 						selection.length());
 			}
 
 			public void onNothingSelected(AdapterView<?> arg0) {
-
+				//player = "A";
 			}
 
 		});
@@ -394,9 +394,9 @@ public class InputModFragment extends Fragment {
 		builder.setOnKeyListener(new Dialog.OnKeyListener() {
 			public boolean onKey(DialogInterface dialog, int keyCode,
 					KeyEvent event) {
-				dialog.dismiss();
 				mPrefs.edit()
-						.putInt("controller" + player, event.getDeviceId());
+						.putInt("controller" + player, event.getDeviceId()).commit();
+				dialog.dismiss();
 				return true;
 			}
 		});
