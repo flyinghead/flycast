@@ -132,6 +132,7 @@
                             android:layout_height="wrap_content"
                             android:layout_centerInParent="true"
                             android:text="A"
+                            android:textAppearance="?android:attr/textAppearanceLarge"
                             android:textColor="#ff0000"
                             android:textIsSelectable="false"
                             android:textStyle="bold" />
@@ -141,18 +142,17 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginLeft="6dp"
-                        android:ems="10"
                         android:orientation="vertical" >
 
                         <TextView
-                            android:layout_width="wrap_content"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:ems="10"
                             android:text="@string/controller_a" />
 
                         <TextView
                             android:id="@+id/textViewDeviceDescriptorPlayer1"
-                            android:layout_width="wrap_content"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:ems="10"
                             android:text="@string/controller_none_selected" />
@@ -213,6 +213,7 @@
                             android:layout_height="wrap_content"
                             android:layout_centerInParent="true"
                             android:text="B"
+                            android:textAppearance="?android:attr/textAppearanceLarge"
                             android:textColor="#0000ff"
                             android:textIsSelectable="false"
                             android:textStyle="bold" />
@@ -222,18 +223,17 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginLeft="6dp"
-                        android:ems="10"
                         android:orientation="vertical" >
 
                         <TextView
-                            android:layout_width="wrap_content"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:ems="10"
                             android:text="@string/controller_b" />
 
                         <TextView
                             android:id="@+id/textViewDeviceDescriptorPlayer2"
-                            android:layout_width="wrap_content"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:ems="10"
                             android:text="@string/controller_none_selected" />
@@ -294,6 +294,7 @@
                             android:layout_height="wrap_content"
                             android:layout_centerInParent="true"
                             android:text="C"
+                            android:textAppearance="?android:attr/textAppearanceLarge"
                             android:textColor="#ffff00"
                             android:textIsSelectable="false"
                             android:textStyle="bold" />
@@ -303,18 +304,17 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginLeft="6dp"
-                        android:ems="10"
                         android:orientation="vertical" >
 
                         <TextView
-                            android:layout_width="wrap_content"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:ems="10"
                             android:text="@string/controller_c" />
 
                         <TextView
                             android:id="@+id/textViewDeviceDescriptorPlayer3"
-                            android:layout_width="wrap_content"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:ems="10"
                             android:text="@string/controller_none_selected" />
@@ -375,6 +375,7 @@
                             android:layout_height="wrap_content"
                             android:layout_centerInParent="true"
                             android:text="D"
+                            android:textAppearance="?android:attr/textAppearanceLarge"
                             android:textColor="#00ff00"
                             android:textIsSelectable="false"
                             android:textStyle="bold" />
@@ -384,18 +385,17 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginLeft="6dp"
-                        android:ems="10"
                         android:orientation="vertical" >
 
                         <TextView
-                            android:layout_width="wrap_content"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:ems="10"
                             android:text="@string/controller_d" />
 
                         <TextView
                             android:id="@+id/textViewDeviceDescriptorPlayer4"
-                            android:layout_width="wrap_content"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:ems="10"
                             android:text="@string/controller_none_selected" />
