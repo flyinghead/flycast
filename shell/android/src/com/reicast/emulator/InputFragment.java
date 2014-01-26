@@ -1,5 +1,11 @@
 package com.reicast.emulator;
 
+import com.bda.controller.Controller;
+import com.bda.controller.ControllerListener;
+import com.bda.controller.MotionEvent;
+import com.bda.controller.StateEvent;
+import com.reicast.emulator.MOGAInput.ExampleControllerListener;
+
 import de.ankri.views.Switch;
 import android.annotation.TargetApi;
 import android.app.Activity;
@@ -8,8 +14,10 @@ import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Configuration;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.util.Log;
@@ -33,6 +41,8 @@ public class InputFragment extends Fragment {
 	private AlertDialog alertDialogSelectController;
 	private SharedPreferences sharedPreferences;
 	private Switch switchTouchVibrationEnabled;
+	
+	public MOGAInput moga = new MOGAInput();
 
 	// Container Activity must implement this interface
 	public interface OnClickListener {
@@ -49,6 +59,8 @@ public class InputFragment extends Fragment {
 	@Override
 	public void onViewCreated(View view, Bundle savedInstanceState) {
 		parentActivity = getActivity();
+		
+		moga.onCreate(parentActivity);
 
 		sharedPreferences = PreferenceManager.getDefaultSharedPreferences(parentActivity);
 		
@@ -316,6 +328,11 @@ public class InputFragment extends Fragment {
 
 		String descriptor = null;
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+			if (moga.isActive[listenForButton]) {
+				MogaListener config = new MogaListener(listenForButton);
+				moga.mController.setListener(config, new Handler());
+				descriptor = config.getController();
+			}
 			descriptor = InputDevice.getDevice(event.getDeviceId())
 				.getDescriptor();
 		} else {
@@ -380,5 +397,39 @@ public class InputFragment extends Fragment {
 		}
 
 		updateControllers();
+	}
+	
+	class MogaListener implements ControllerListener
+	{
+		
+		private int playerNum;
+		private String controllerId;
+		
+		public MogaListener(int playerNum) {
+			this.playerNum = playerNum;
+		}
+		
+		public void onKeyEvent(com.bda.controller.KeyEvent event) {
+			controllerId = String.valueOf(event.getControllerId());
+		}
+
+		public void onMotionEvent(MotionEvent arg0) {
+			
+		}
+		
+		public String getController() {
+			return controllerId;
+		}
+
+		public void onStateEvent(StateEvent event) {
+			if (event.getState() == StateEvent.STATE_CONNECTION && event.getAction() == MOGAInput.ACTION_CONNECTED) {
+        		int mControllerVersion = moga.mController.getState(Controller.STATE_CURRENT_PRODUCT_VERSION);
+        		if (mControllerVersion == Controller.ACTION_VERSION_MOGAPRO) {
+        			moga.isActive[playerNum] = true;
+        		} else if (mControllerVersion == Controller.ACTION_VERSION_MOGA) {
+        			moga.isActive[playerNum] = true;
+        		}
+			}
+		}
 	}
 }
