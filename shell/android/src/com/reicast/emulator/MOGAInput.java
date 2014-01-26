@@ -32,6 +32,8 @@ public class MOGAInput
 	static final int ACTION_VERSION_MOGAPRO = Controller.ACTION_VERSION_MOGAPRO;
 
 	Controller mController = null;
+	private Handler handler;
+	private String notify;
 
     public boolean isActive[] = { false, false, false, false };
     public boolean isMogaPro[] = { false, false, false, false };
@@ -98,6 +100,8 @@ public class MOGAInput
 	protected void onCreate(Activity act)
 	{
 		this.act = act;
+		
+		handler = new Handler();
 
 		mController = Controller.getInstance(act);
 		mController.init();
@@ -231,7 +235,6 @@ public class MOGAInput
 
 			if (event.getState() == StateEvent.STATE_CONNECTION && event.getAction() == ACTION_CONNECTED) {
         		int mControllerVersion = mController.getState(Controller.STATE_CURRENT_PRODUCT_VERSION);
-        		String notify = null;
         		if (mControllerVersion == Controller.ACTION_VERSION_MOGAPRO) {
         			isActive[playerNum] = true;
         			isMogaPro[playerNum] = true;
@@ -244,7 +247,11 @@ public class MOGAInput
         			notify = act.getApplicationContext().getString(R.string.moga_connect);
         		}
         		if (notify != null && !notify.equals(null)) {
-        			Toast.makeText(act.getApplicationContext(), notify, Toast.LENGTH_SHORT).show();
+        			handler.post(new Runnable() {
+    					public void run() {
+    						Toast.makeText(act.getApplicationContext(), notify, Toast.LENGTH_SHORT).show();
+    					}
+    				});
         		}
 			}
 		}
