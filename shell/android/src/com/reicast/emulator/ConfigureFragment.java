@@ -378,8 +378,7 @@ public class ConfigureFragment extends Fragment {
 			reader.close();
 			mLogcatProc = null;
 			reader = null;
-			int PID = android.os.Process
-					.getUidForName("com.reicast.emulator");
+			int PID = android.os.Process.getUidForName("com.reicast.emulator");
 			mLogcatProc = Runtime.getRuntime().exec(
 					new String[] { "logcat", "-d", "|", "grep " + PID });
 			reader = new BufferedReader(new InputStreamReader(
@@ -476,6 +475,11 @@ public class ConfigureFragment extends Fragment {
 					currentLine = scanner.nextLine();
 					if (StringUtils.containsIgnoreCase(currentLine, identifier)) {
 						rebuildFile.append(identifier + "=" + value + "\n");
+					} else if (StringUtils.containsIgnoreCase(currentLine,
+							"Dreamcast.RTC")) {
+						rebuildFile.append("Dreamcast.RTC="
+								+ String.valueOf(System.currentTimeMillis())
+								+ "\n");
 					} else {
 						rebuildFile.append(currentLine + "\n");
 					}
@@ -508,8 +512,10 @@ public class ConfigureFragment extends Fragment {
 			rebuildFile.append("Dynarec.idleskip=1" + "\n");
 			rebuildFile.append("Dynarec.unstable-opt=" + String.valueOf(unstableopt ? 1 : 0) + "\n");
 			rebuildFile.append("Dreamcast.Cable=3" + "\n");
-			rebuildFile.append("Dreamcast.RTC=2018927206" + "\n");
-			rebuildFile.append("Dreamcast.Region=" + String.valueOf(dcregion) + "\n");
+			rebuildFile.append("Dreamcast.RTC="
+					+ String.valueOf(System.currentTimeMillis()) + "\n");
+			rebuildFile.append("Dreamcast.Region=" + String.valueOf(dcregion)
+					+ "\n");
 			rebuildFile.append("Dreamcast.Broadcast=4" + "\n");
 			rebuildFile.append("aica.LimitFPS=" + String.valueOf(limitfps ? 1 : 0) + "\n");
 			rebuildFile.append("aica.NoBatch=0" + "\n");
