@@ -399,7 +399,7 @@ public class InputModFragment extends Fragment {
 		AlertDialog.Builder builder = new AlertDialog.Builder(parentActivity);
 		builder.setTitle(getString(R.string.select_controller_title));
 		builder.setMessage(getString(R.string.select_controller_message,
-				String.valueOf(player)));
+				String.valueOf(player.replace("_", ""))));
 		builder.setNegativeButton("Cancel",
 				new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int which) {
