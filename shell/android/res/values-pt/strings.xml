@@ -1,7 +1,6 @@
 <resources>
 
     <string name="app_name">reicast</string>
-    <string name="hello_world">Hello world!</string>
     <string name="menu_settings">Configurações</string>
     <string name="title_activity_main">reicast</string>
     <string name="system_path">Caminho Sistema (localização da pasta de dados com dc_boot.bin / dc_flash.bin dentro)</string>
