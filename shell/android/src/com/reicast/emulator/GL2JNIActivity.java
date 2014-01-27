@@ -520,7 +520,7 @@ public class GL2JNIActivity extends Activity {
 			playerNum = -1;
 		}
 		
-		if (playerNum != -1) {
+		if (playerNum != null && playerNum != -1) {
 			float x = -1, y = -1;
 			String[] players = getResources().getStringArray(R.array.controllers);
 			String id = "_" + players[playerNum].substring(
