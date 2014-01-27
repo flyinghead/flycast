@@ -94,8 +94,10 @@ public class MainActivity extends FragmentActivity implements
 			// firstFragment.setArguments(getIntent().getExtras());
 
 			// Add the fragment to the 'fragment_container' FrameLayout
-			getSupportFragmentManager().beginTransaction()
-					.replace(R.id.fragment_container, firstFragment, "MAIN_BROWSER").commit();
+			getSupportFragmentManager()
+					.beginTransaction()
+					.replace(R.id.fragment_container, firstFragment,
+							"MAIN_BROWSER").commit();
 		}
 
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR1) {
@@ -243,8 +245,8 @@ public class MainActivity extends FragmentActivity implements
 
 						String versionName = "";
 						try {
-							PackageInfo pInfo = getPackageManager().getPackageInfo(
-									getPackageName(), 0);
+							PackageInfo pInfo = getPackageManager()
+									.getPackageInfo(getPackageName(), 0);
 							versionName = pInfo.versionName;
 						} catch (NameNotFoundException e) {
 							e.printStackTrace();
@@ -255,8 +257,7 @@ public class MainActivity extends FragmentActivity implements
 							.setCancelable(false)
 							.setPositiveButton("Dismiss",
 									new DialogInterface.OnClickListener() {
-										public void onClick(DialogInterface dialog,
-												int id) {
+										public void onClick(DialogInterface dialog, int id) {
 											dialog.dismiss();
 										}
 									});
@@ -275,8 +276,9 @@ public class MainActivity extends FragmentActivity implements
 				public boolean onTouch(View v, MotionEvent event) {
 					if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
 						// vib.vibrate(50);
-						startActivity(new Intent(Intent.ACTION_VIEW,
-							Uri.parse("market://details?id=" + getPackageName())));
+						startActivity(new Intent(Intent.ACTION_VIEW, Uri
+								.parse("market://details?id="
+										+ getPackageName())));
 						return true;
 					} else
 						return false;
@@ -498,22 +500,22 @@ public class MainActivity extends FragmentActivity implements
 				e.printStackTrace();
 			}
 
-				alertDialogBuilder
-						.setMessage(getString(R.string.about_text, versionName))
-						.setCancelable(false)
-						.setPositiveButton("Dismiss",
-								new DialogInterface.OnClickListener() {
-									public void onClick(DialogInterface dialog,
-											int id) {
-										dialog.dismiss();
-									}
-								});
+			alertDialogBuilder
+					.setMessage(getString(R.string.about_text, versionName))
+					.setCancelable(false)
+					.setPositiveButton("Dismiss",
+							new DialogInterface.OnClickListener() {
+								public void onClick(DialogInterface dialog,
+										int id) {
+									dialog.dismiss();
+								}
+							});
 
-				// create alert dialog
-				AlertDialog alertDialog = alertDialogBuilder.create();
+			// create alert dialog
+			AlertDialog alertDialog = alertDialogBuilder.create();
 
-				// show it
-				alertDialog.show();
+			// show it
+			alertDialog.show();
 			break;
 
 		case 5:
@@ -620,9 +622,10 @@ public class MainActivity extends FragmentActivity implements
 					args.putString("browse_entry", null);
 					args.putBoolean("games_entry", false);
 					fragment.setArguments(args);
-					getSupportFragmentManager().beginTransaction()
-							.replace(R.id.fragment_container, fragment, "MAIN_BROWSER")
-							.commit();
+					getSupportFragmentManager()
+							.beginTransaction()
+							.replace(R.id.fragment_container, fragment,
+									"MAIN_BROWSER").commit();
 				}
 				return true;
 			}
@@ -630,5 +633,41 @@ public class MainActivity extends FragmentActivity implements
 		}
 
 		return super.onKeyDown(keyCode, event);
+	}
+
+	@Override
+	protected void onPause() {
+		super.onPause();
+		InputFragment fragment = (InputFragment) getSupportFragmentManager()
+				.findFragmentByTag("INPUT_FRAG");
+		if (fragment != null && fragment.isVisible()) {
+			if (fragment.moga != null) {
+				fragment.moga.onPause();
+			}
+		}
+	}
+
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
+		InputFragment fragment = (InputFragment) getSupportFragmentManager()
+				.findFragmentByTag("INPUT_FRAG");
+		if (fragment != null && fragment.isVisible()) {
+			if (fragment.moga != null) {
+				fragment.moga.onDestroy();
+			}
+		}
+	}
+
+	@Override
+	protected void onResume() {
+		super.onResume();
+		InputFragment fragment = (InputFragment) getSupportFragmentManager()
+				.findFragmentByTag("INPUT_FRAG");
+		if (fragment != null && fragment.isVisible()) {
+			if (fragment.moga != null) {
+				fragment.moga.onResume();
+			}
+		}
 	}
 }

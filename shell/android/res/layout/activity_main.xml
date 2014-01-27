@@ -11,22 +11,22 @@
         android:layout_marginBottom="2dp"
         android:background="#7f7f7f" />
 
-     <ScrollView
-         android:id="@+id/game_scroller"
-         android:layout_width="match_parent"
-         android:layout_height="match_parent"
-         android:layout_marginLeft="6dp"
-         android:layout_weight="1"
-         android:fillViewport="true" >
-    
-	    <LinearLayout
-	        android:id="@+id/game_list"
-	        android:layout_width="match_parent"
-	        android:layout_height="match_parent"
-	        android:orientation="vertical" >
-	
-	    </LinearLayout>
-	    
+    <ScrollView
+        android:id="@+id/game_scroller"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginLeft="6dp"
+        android:layout_weight="1"
+        android:fillViewport="true" >
+
+        <LinearLayout
+            android:id="@+id/game_list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical" >
+
+            <requestFocus />
+        </LinearLayout>
     </ScrollView>
 
 </LinearLayout>

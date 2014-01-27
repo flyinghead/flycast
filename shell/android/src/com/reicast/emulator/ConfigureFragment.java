@@ -22,12 +22,16 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CompoundButton;
+import android.widget.EditText;
+import android.widget.Toast;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
@@ -47,6 +51,7 @@ public class ConfigureFragment extends Fragment {
 	boolean widescreen = false;
 	int frameskip = 0;
 	boolean pvrrender = false;
+	String cheatdisk = "null";
 
 	private SharedPreferences mPrefs;
 	private File sdcard = Environment.getExternalStorageDirectory();
@@ -137,7 +142,9 @@ public class ConfigureFragment extends Fragment {
 						pvrrender = Boolean.valueOf(currentLine.replace(
 								"pvr.rend=", ""));
 					}*/
-					
+					if (StringUtils.containsIgnoreCase(currentLine, "image")) {
+						cheatdisk = currentLine.replace("image=", "");
+					}
 				}
 				scanner.close();
 			}
@@ -333,15 +340,38 @@ public class ConfigureFragment extends Fragment {
 				}
 			}
 		};
-			Switch pvr_render = (Switch) getView().findViewById(
-					R.id.render_option);
-			boolean rendered = mPrefs.getBoolean("pvr_render", pvrrender);
-			if (rendered) {
-				pvr_render.setChecked(true);
-			} else {
-				pvr_render.setChecked(false);
+		Switch pvr_render = (Switch) getView().findViewById(R.id.render_option);
+		boolean rendered = mPrefs.getBoolean("pvr_render", pvrrender);
+		if (rendered) {
+			pvr_render.setChecked(true);
+		} else {
+			pvr_render.setChecked(false);
+		}
+		pvr_render.setOnCheckedChangeListener(pvr_rendering);*/
+
+		final EditText cheatEdit = (EditText) getView().findViewById(
+				R.id.cheat_disk);
+		cheatEdit.setText(cheatdisk);
+
+		cheatEdit.addTextChangedListener(new TextWatcher() {
+			public void afterTextChanged(Editable s) {
+				if (cheatEdit.getText() != null) {
+					cheatdisk = cheatEdit.getText().toString();
+					mPrefs.edit().putString("cheat_disk", cheatdisk).commit();
+					if (!executeAppendConfig("image", cheatdisk)) {
+						executeWriteConfig();
+					}
+				}
 			}
-			pvr_render.setOnCheckedChangeListener(pvr_rendering);*/
+
+			public void beforeTextChanged(CharSequence s, int start, int count,
+					int after) {
+			}
+
+			public void onTextChanged(CharSequence s, int start, int before,
+					int count) {
+			}
+		});
 	
 		Button debug_button = (Button) getView()
 				.findViewById(R.id.debug_button);
@@ -524,8 +554,9 @@ public class ConfigureFragment extends Fragment {
 					+ String.valueOf(widescreen ? 1 : 0) + "\n");
 			rebuildFile.append("pvr.Subdivide=0" + "\n");
 			rebuildFile.append("ta.skip=" + String.valueOf(frameskip) + "\n");
-			rebuildFile.append("pvr.rend=" + String.valueOf(pvrrender ? 1 : 0) + "\n");
-			rebuildFile.append("image=null" + "\n");
+			rebuildFile.append("pvr.rend=" + String.valueOf(pvrrender ? 1 : 0)
+					+ "\n");
+			rebuildFile.append("image=" + cheatdisk + "\n");
 			FileOutputStream fos = new FileOutputStream(config);
 			fos.write(rebuildFile.toString().getBytes());
 			fos.close();
