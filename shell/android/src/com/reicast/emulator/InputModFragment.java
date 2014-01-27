@@ -56,7 +56,7 @@ public class InputModFragment extends Fragment {
 	@Override
 	public void onViewCreated(View view, Bundle savedInstanceState) {
 		parentActivity = getActivity();
-		
+
 		Runtime.getRuntime().freeMemory();
 		System.gc();
 
@@ -79,12 +79,13 @@ public class InputModFragment extends Fragment {
 			public void onItemSelected(AdapterView<?> parent, View view,
 					int pos, long id) {
 				String selection = parent.getItemAtPosition(pos).toString();
-				player = "_" + selection.substring(selection.lastIndexOf(" ") + 1,
-						selection.length());
+				player = "_"
+						+ selection.substring(selection.lastIndexOf(" ") + 1,
+								selection.length());
 			}
 
 			public void onNothingSelected(AdapterView<?> arg0) {
-				//player = "A";
+				// player = "A";
 			}
 
 		});
@@ -371,9 +372,14 @@ public class InputModFragment extends Fragment {
 		} catch (IOException e1) {
 			e1.printStackTrace();
 		} catch (OutOfMemoryError E) {
-			E.printStackTrace();
-			Runtime.getRuntime().freeMemory();
-			System.gc();
+			if (sS == 2) {
+				sS = 4;
+				return getButtonImage(x, y);
+			} else {
+				E.printStackTrace();
+				Runtime.getRuntime().freeMemory();
+				System.gc();
+			}
 		}
 		return parentActivity.getResources().getDrawable(R.drawable.input);
 	}
@@ -404,7 +410,8 @@ public class InputModFragment extends Fragment {
 			public boolean onKey(DialogInterface dialog, int keyCode,
 					KeyEvent event) {
 				mPrefs.edit()
-						.putInt("controller" + player, event.getDeviceId()).commit();
+						.putInt("controller" + player, event.getDeviceId())
+						.commit();
 				dialog.dismiss();
 				return true;
 			}
