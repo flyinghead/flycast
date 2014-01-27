@@ -370,6 +370,10 @@ public class InputModFragment extends Fragment {
 			return bmd;
 		} catch (IOException e1) {
 			e1.printStackTrace();
+		} catch (OutOfMemoryError E) {
+			E.printStackTrace();
+			Runtime.getRuntime().freeMemory();
+			System.gc();
 		}
 		return parentActivity.getResources().getDrawable(R.drawable.input);
 	}
