@@ -51,7 +51,7 @@ public class MOGAInput
 	private static final int key_CONT_Y 			= 0x0200;
 	private static final int key_CONT_X 			= 0x0400;
 
-	int[] map = new int[] {
+	int[] keys = new int[] {
 		KeyEvent.KEYCODE_BUTTON_B, key_CONT_B,
 		KeyEvent.KEYCODE_BUTTON_A, key_CONT_A,
 		KeyEvent.KEYCODE_BUTTON_X, key_CONT_X,
@@ -64,6 +64,8 @@ public class MOGAInput
 
 		KeyEvent.KEYCODE_BUTTON_START, key_CONT_START,
 	};
+	
+	int map[][] = { keys, keys, keys, keys };
 
 	Activity act;
 	public MOGAInput()
@@ -156,11 +158,11 @@ public class MOGAInput
 	private void setModifiedKeys(int player) {
 		prefs = PreferenceManager
 				.getDefaultSharedPreferences(act.getApplicationContext());
-		if (prefs.getBoolean("modified_key_layout", false)) {
-			String[] players = act.getResources().getStringArray(R.array.controllers);
-			String id = players[player].substring(
-					players[player].lastIndexOf(" "), players[player].length());
-			map = new int[] {
+		String[] players = act.getResources().getStringArray(R.array.controllers);
+		String id = players[player].substring(
+				players[player].lastIndexOf(" "), players[player].length());
+		if (prefs.getBoolean("modified_key_layout"  + id, false)) {
+			map[player] = new int[] {
 				prefs.getInt("a_button" + id, KeyEvent.KEYCODE_BUTTON_A), key_CONT_A,
 				prefs.getInt("b_button" + id, KeyEvent.KEYCODE_BUTTON_B), key_CONT_B,
 				prefs.getInt("x_button" + id, KeyEvent.KEYCODE_BUTTON_X), key_CONT_X,
@@ -185,10 +187,11 @@ public class MOGAInput
 	    		if (playerNum == null)
 				return;
 
+	    		String[] players = act.getResources().getStringArray(R.array.controllers);
+	    		String id = "_" + players[playerNum].substring(
+	    				players[playerNum].lastIndexOf(" ") + 1, players[playerNum].length());
+	    		if (prefs.getBoolean("modified_key_layout"  + id, false)) {
 	    			float x = -1, y = -1;
-	    			String[] players = act.getResources().getStringArray(R.array.controllers);
-	    			String id = "_" + players[playerNum].substring(
-	    					players[playerNum].lastIndexOf(" ") + 1, players[playerNum].length());
 	    			if (event.getKeyCode() == prefs.getInt("l_button" + id, OuyaController.BUTTON_L1)) {
 	    				float LxC = prefs.getFloat("touch_x_shift_left_trigger", 0);
 	    				float LyC = prefs.getFloat("touch_y_shift_left_trigger", 0);
@@ -213,17 +216,17 @@ public class MOGAInput
 	    					JNIdc.hide_osd();
 	    				return;
 	    			}
+	    		}
 
 			if(playerNum == 0)
 				JNIdc.hide_osd();
 
 			for (int i = 0; i < map.length; i += 2) {
-				if (map[i + 0] == event.getKeyCode()) {
+				if (map[playerNum][i + 0] == event.getKeyCode()) {
 					if (event.getAction() == 0) //FIXME to const
-						GL2JNIView.kcode_raw[playerNum] &= ~map[i + 1];
+						GL2JNIView.kcode_raw[playerNum] &= ~map[playerNum][i + 1];
 					else
-						GL2JNIView.kcode_raw[playerNum] |= map[i + 1];
-
+						GL2JNIView.kcode_raw[playerNum] |= map[playerNum][i + 1];
 					break;
 				}
 			}
