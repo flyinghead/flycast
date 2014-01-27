@@ -38,7 +38,7 @@ public class InputModFragment extends Fragment {
 	private SharedPreferences mPrefs;
 	private Switch switchModifiedLayoutEnabled;
 	private Switch switchCompatibilityEnabled;
-	private String player;
+	private String player = "_A";
 	private int sS = 2;
 
 	// Container Activity must implement this interface
@@ -85,7 +85,7 @@ public class InputModFragment extends Fragment {
 			}
 
 			public void onNothingSelected(AdapterView<?> arg0) {
-				// player = "A";
+				player = "_A";
 			}
 
 		});
