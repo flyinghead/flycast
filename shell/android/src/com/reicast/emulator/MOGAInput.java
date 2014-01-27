@@ -3,9 +3,11 @@ package com.reicast.emulator;
 
 /******************************************************************************/
 
+import tv.ouya.console.api.OuyaController;
 import android.app.Activity;
 import android.content.SharedPreferences;
 import android.os.Handler;
+import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.widget.Toast;
 
@@ -34,6 +36,7 @@ public class MOGAInput
 	Controller mController = null;
 	private Handler handler;
 	private String notify;
+	private GL2JNIView mView;
 
     public boolean isActive[] = { false, false, false, false };
     public boolean isMogaPro[] = { false, false, false, false };
@@ -95,6 +98,10 @@ public class MOGAInput
 		mMotions.put(MotionEvent.AXIS_LTRIGGER, new ExampleFloat("AXIS_LTRIGGER........."));
 		mMotions.put(MotionEvent.AXIS_RTRIGGER, new ExampleFloat("AXIS_RTRIGGER........."));
 		*/
+	}
+	
+	public void setGL2View(GL2JNIView mView) {
+		this.mView = mView;
 	}
 
 	protected void onCreate(Activity act)
@@ -177,6 +184,34 @@ public class MOGAInput
 
 	    		if (playerNum == null)
 				return;
+
+	    			float x = -1, y = -1;
+	    			String[] players = act.getResources().getStringArray(R.array.controllers);
+	    			String id = "_" + players[playerNum].substring(
+	    					players[playerNum].lastIndexOf(" ") + 1, players[playerNum].length());
+	    			if (event.getKeyCode() == prefs.getInt("l_button" + id, OuyaController.BUTTON_L1)) {
+	    				float LxC = prefs.getFloat("touch_x_shift_left_trigger", 0);
+	    				float LyC = prefs.getFloat("touch_y_shift_left_trigger", 0);
+	    				x = 440 + LxC + 1;
+	    				y = 200 + LyC + 1;
+	    			}
+	    			if (event.getKeyCode() == prefs.getInt("l_button" + id, OuyaController.BUTTON_R1)) {
+	    				float RxC = prefs.getFloat("touch_x_shift_right_trigger", 0);
+	    				float RyC = prefs.getFloat("touch_y_shift_right_trigger", 0);
+	    				x = 542 + RxC + 1;
+	    				y = 200 + RyC + 1;
+	    			}
+	    			if (mView != null && (x != -1 || y != -1)) {
+	    				long downTime = SystemClock.uptimeMillis();
+	    				long eventTime = SystemClock.uptimeMillis() + 100;
+	    				int metaState = 0;
+	    				android.view.MotionEvent motionEvent = android.view.MotionEvent.obtain(downTime, eventTime,
+	    						android.view.MotionEvent.ACTION_UP, x, y, metaState);
+	    				mView.dispatchTouchEvent(motionEvent);
+	    				if (playerNum == 0)
+	    					JNIdc.hide_osd();
+	    				return;
+	    			}
 
 			if(playerNum == 0)
 				JNIdc.hide_osd();

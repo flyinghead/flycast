@@ -16,6 +16,7 @@ import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.Gravity;
@@ -242,8 +243,8 @@ public class GL2JNIActivity extends Activity {
 									OuyaController.BUTTON_DPAD_LEFT, key_CONT_DPAD_LEFT,
 									OuyaController.BUTTON_DPAD_RIGHT, key_CONT_DPAD_RIGHT,
 
-									OuyaController.BUTTON_MENU, key_CONT_START,
-									OuyaController.BUTTON_R1, key_CONT_START
+									OuyaController.BUTTON_MENU, key_CONT_START/*,
+									OuyaController.BUTTON_R1, key_CONT_START*/
 
 							};
 						} else if (InputDevice.getDevice(joys[i]).getName()
@@ -259,8 +260,8 @@ public class GL2JNIActivity extends Activity {
 									OuyaController.BUTTON_DPAD_LEFT, key_CONT_DPAD_LEFT,
 									OuyaController.BUTTON_DPAD_RIGHT, key_CONT_DPAD_RIGHT,
 
-									OuyaController.BUTTON_MENU, key_CONT_START,
-									OuyaController.BUTTON_R1, key_CONT_START
+									OuyaController.BUTTON_MENU, key_CONT_START/*,
+									OuyaController.BUTTON_R1, key_CONT_START*/
 							};
 
 							xbox[playerNum] = true;
@@ -280,8 +281,8 @@ public class GL2JNIActivity extends Activity {
 									OuyaController.BUTTON_DPAD_LEFT, key_CONT_DPAD_LEFT,
 									OuyaController.BUTTON_DPAD_RIGHT, key_CONT_DPAD_RIGHT,
 
-									OuyaController.BUTTON_MENU, key_CONT_START,
-									OuyaController.BUTTON_R1, key_CONT_START
+									OuyaController.BUTTON_MENU, key_CONT_START/*,
+									OuyaController.BUTTON_R1, key_CONT_START*/
 							};
 							nVidia[playerNum] = true;
 
@@ -299,8 +300,8 @@ public class GL2JNIActivity extends Activity {
 									OuyaController.BUTTON_DPAD_LEFT, key_CONT_DPAD_LEFT,
 									OuyaController.BUTTON_DPAD_RIGHT, key_CONT_DPAD_RIGHT,
 
-									OuyaController.BUTTON_MENU, key_CONT_START,
-									OuyaController.BUTTON_R1, key_CONT_START
+									OuyaController.BUTTON_MENU, key_CONT_START/*,
+									OuyaController.BUTTON_R1, key_CONT_START*/
 							};
 						}
 					} else {
@@ -323,6 +324,7 @@ public class GL2JNIActivity extends Activity {
 		// Create the actual GLES view
 		mView = new GL2JNIView(getApplication(), fileName, false, 24, 0, false);
 		setContentView(mView);
+		moga.setGL2View(mView);
 
 		Toast.makeText(getApplicationContext(),
 				"Press the back button for a menu", Toast.LENGTH_SHORT).show();
@@ -426,15 +428,15 @@ public class GL2JNIActivity extends Activity {
 
 	}
 
-	private static final int key_CONT_B = 0x0002;
-	private static final int key_CONT_A = 0x0004;
-	private static final int key_CONT_START = 0x0008;
-	private static final int key_CONT_DPAD_UP = 0x0010;
-	private static final int key_CONT_DPAD_DOWN = 0x0020;
-	private static final int key_CONT_DPAD_LEFT = 0x0040;
-	private static final int key_CONT_DPAD_RIGHT = 0x0080;
-	private static final int key_CONT_Y = 0x0200;
-	private static final int key_CONT_X = 0x0400;
+	private static final int key_CONT_B 			= 0x0002;
+	private static final int key_CONT_A 			= 0x0004;
+	private static final int key_CONT_START 		= 0x0008;
+	private static final int key_CONT_DPAD_UP 		= 0x0010;
+	private static final int key_CONT_DPAD_DOWN 	= 0x0020;
+	private static final int key_CONT_DPAD_LEFT 	= 0x0040;
+	private static final int key_CONT_DPAD_RIGHT 	= 0x0080;
+	private static final int key_CONT_Y 			= 0x0200;
+	private static final int key_CONT_X 			= 0x0400;
 
 	// TODO: Controller mapping in options. Trunk has Ouya layout. This is a DS3
 	// layout.
@@ -516,6 +518,36 @@ public class GL2JNIActivity extends Activity {
 				.get(deviceId_deviceDescriptor.get(event.getDeviceId()));
 		} else {
 			playerNum = -1;
+		}
+		
+		if (playerNum != -1) {
+			float x = -1, y = -1;
+			String[] players = getResources().getStringArray(R.array.controllers);
+			String id = "_" + players[playerNum].substring(
+					players[playerNum].lastIndexOf(" ") + 1, players[playerNum].length());
+			if (keyCode == prefs.getInt("l_button" + id, OuyaController.BUTTON_L1)) {
+				float LxC = prefs.getFloat("touch_x_shift_left_trigger", 0);
+				float LyC = prefs.getFloat("touch_y_shift_left_trigger", 0);
+				x = 440 + LxC + 1;
+				y = 200 + LyC + 1;
+			}
+			if (keyCode == prefs.getInt("l_button" + id, OuyaController.BUTTON_R1)) {
+				float RxC = prefs.getFloat("touch_x_shift_right_trigger", 0);
+				float RyC = prefs.getFloat("touch_y_shift_right_trigger", 0);
+				x = 542 + RxC + 1;
+				y = 200 + RyC + 1;
+			}
+			if (x != -1 || y != -1) {
+				long downTime = SystemClock.uptimeMillis();
+				long eventTime = SystemClock.uptimeMillis() + 100;
+				int metaState = 0;
+				MotionEvent motionEvent = MotionEvent.obtain(downTime, eventTime,
+						MotionEvent.ACTION_UP, x, y, metaState);
+				mView.dispatchTouchEvent(motionEvent);
+				if (playerNum == 0)
+					JNIdc.hide_osd();
+				return true;
+			}
 		}
 
 		if (handle_key(playerNum, keyCode, true)) {
