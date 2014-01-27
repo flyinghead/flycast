@@ -1,16 +1,11 @@
 package com.reicast.emulator;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.HashMap;
-
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.Gravity;
-import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;

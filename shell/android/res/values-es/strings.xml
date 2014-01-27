@@ -51,7 +51,6 @@
     <string name="moga_pro_connect">MOGA Pro conectado!</string>
     <string name="moga_connect">MOGA conectado!</string>
 
-    <string name="about_title">Acerca reicast</string>
     <string name="about_text">reicast es un emulador de Dreamcast\n\nVersion: %1$s</string>
     
     <string-array name="controllers">

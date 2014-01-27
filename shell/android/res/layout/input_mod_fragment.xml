@@ -424,6 +424,32 @@
                         android:text="@string/remove" />
                 </LinearLayout>
             </TableRow>
+            
+            <TableRow
+                android:layout_marginTop="25dp"
+                android:gravity="center_vertical" >
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="0.5"
+                    android:ems="10"
+                    android:gravity="center_vertical|left"
+                    android:text="@string/dpad_joystick" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="right"
+                    android:orientation="vertical" >
+
+                    <de.ankri.views.Switch
+                        android:id="@+id/dpad_js_layout"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" />
+                </LinearLayout>
+            </TableRow>
 
             <TableRow
                 android:layout_marginTop="25dp"

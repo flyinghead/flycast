@@ -8,8 +8,6 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.res.Configuration;
 import android.content.res.TypedArray;
 import android.net.Uri;
@@ -232,46 +230,64 @@ public class MainActivity extends FragmentActivity implements
 				}
 
 			});
-
-			findViewById(R.id.about).setOnTouchListener(new OnTouchListener() {
-				public boolean onTouch(View v, MotionEvent event) {
-					if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
-						// vib.vibrate(50);
-						AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
-								MainActivity.this);
-
-						// set title
-						alertDialogBuilder.setTitle(getString(R.string.about_title));
-
-						String versionName = "";
-						try {
-							PackageInfo pInfo = getPackageManager()
-									.getPackageInfo(getPackageName(), 0);
-							versionName = pInfo.versionName;
-						} catch (NameNotFoundException e) {
-							e.printStackTrace();
+			
+			findViewById(R.id.about).setOnClickListener(new OnClickListener() {
+				public void onClick(View view) {
+					AboutFragment aboutFrag = (AboutFragment) getSupportFragmentManager()
+							.findFragmentByTag("ABOUT_FRAG");
+					if (aboutFrag != null) {
+						if (aboutFrag.isVisible()) {
+							return;
 						}
-
-						alertDialogBuilder
-							.setMessage(getString(R.string.about_text, versionName))
-							.setCancelable(false)
-							.setPositiveButton("Dismiss",
-									new DialogInterface.OnClickListener() {
-										public void onClick(DialogInterface dialog, int id) {
-											dialog.dismiss();
-										}
-									});
-
-						// create alert dialog
-						AlertDialog alertDialog = alertDialogBuilder.create();
-
-						// show it
-						alertDialog.show();
-						return true;
-					} else
-						return false;
+					}
+					aboutFrag = new AboutFragment();
+					getSupportFragmentManager()
+							.beginTransaction()
+							.replace(R.id.fragment_container, aboutFrag,
+									"ABOUT_FRAG").addToBackStack(null).commit();
 				}
+
 			});
+
+//			findViewById(R.id.about).setOnTouchListener(new OnTouchListener() {
+//				public boolean onTouch(View v, MotionEvent event) {
+//					if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
+//						// vib.vibrate(50);
+//						AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
+//								MainActivity.this);
+//
+//						// set title
+//						alertDialogBuilder.setTitle(getString(R.string.about_title));
+//
+//						String versionName = "";
+//						try {
+//							PackageInfo pInfo = getPackageManager()
+//									.getPackageInfo(getPackageName(), 0);
+//							versionName = pInfo.versionName;
+//						} catch (NameNotFoundException e) {
+//							e.printStackTrace();
+//						}
+//
+//						alertDialogBuilder
+//							.setMessage(getString(R.string.about_text, versionName))
+//							.setCancelable(false)
+//							.setPositiveButton("Dismiss",
+//									new DialogInterface.OnClickListener() {
+//										public void onClick(DialogInterface dialog, int id) {
+//											dialog.dismiss();
+//										}
+//									});
+//
+//						// create alert dialog
+//						AlertDialog alertDialog = alertDialogBuilder.create();
+//
+//						// show it
+//						alertDialog.show();
+//						return true;
+//					} else
+//						return false;
+//				}
+//			});
 			findViewById(R.id.rate).setOnTouchListener(new OnTouchListener() {
 				public boolean onTouch(View v, MotionEvent event) {
 					if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
@@ -483,40 +499,51 @@ public class MainActivity extends FragmentActivity implements
 			frag_tag = "INPUT_FRAG";
 			break;
 		case 4:
-			fragment = null;
-			// vib.vibrate(50);
-			AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
-					MainActivity.this);
-
-			// set title
-			alertDialogBuilder.setTitle(getString(R.string.about_title));
-
-			String versionName = "";
-			try {
-				PackageInfo pInfo = getPackageManager().getPackageInfo(
-						getPackageName(), 0);
-				versionName = pInfo.versionName;
-			} catch (NameNotFoundException e) {
-				e.printStackTrace();
+			fragment = (AboutFragment) getSupportFragmentManager()
+			.findFragmentByTag("ABOUT_FRAG");
+			if (fragment != null) {
+				if (fragment.isVisible()) {
+					return;
+				}
 			}
-
-			alertDialogBuilder
-					.setMessage(getString(R.string.about_text, versionName))
-					.setCancelable(false)
-					.setPositiveButton("Dismiss",
-							new DialogInterface.OnClickListener() {
-								public void onClick(DialogInterface dialog,
-										int id) {
-									dialog.dismiss();
-								}
-							});
-
-			// create alert dialog
-			AlertDialog alertDialog = alertDialogBuilder.create();
-
-			// show it
-			alertDialog.show();
+			fragment = new AboutFragment();
+			frag_tag = "ABOUT_FRAG";
 			break;
+
+//			fragment = null;
+//			// vib.vibrate(50);
+//			AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
+//					MainActivity.this);
+//
+//			// set title
+//			alertDialogBuilder.setTitle(getString(R.string.about_title));
+//
+//			String versionName = "";
+//			try {
+//				PackageInfo pInfo = getPackageManager().getPackageInfo(
+//						getPackageName(), 0);
+//				versionName = pInfo.versionName;
+//			} catch (NameNotFoundException e) {
+//				e.printStackTrace();
+//			}
+//
+//			alertDialogBuilder
+//					.setMessage(getString(R.string.about_text, versionName))
+//					.setCancelable(false)
+//					.setPositiveButton("Dismiss",
+//							new DialogInterface.OnClickListener() {
+//								public void onClick(DialogInterface dialog,
+//										int id) {
+//									dialog.dismiss();
+//								}
+//							});
+//
+//			// create alert dialog
+//			AlertDialog alertDialog = alertDialogBuilder.create();
+//
+//			// show it
+//			alertDialog.show();
+//			break;
 
 		case 5:
 			startActivity(new Intent(Intent.ACTION_VIEW,

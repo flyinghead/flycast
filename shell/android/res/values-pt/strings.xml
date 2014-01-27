@@ -44,7 +44,7 @@
     <string name="map_keycode_message">Pressione o novo botão para o controlador %1$s</string>
     <string name="moga_pro_connect">MOGA Pro Conectado!</string>
     <string name="moga_connect">MOGA Conectado!</string>
-    <string name="about_title">Sobre o reicast</string>
+
     <string name="about_text">reicast é um emulador de Dreamcast\n\nVersão :%1$s</string>
 
     <string-array name="controllers">

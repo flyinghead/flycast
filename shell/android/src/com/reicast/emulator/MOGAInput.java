@@ -7,7 +7,6 @@ import tv.ouya.console.api.OuyaController;
 import android.app.Activity;
 import android.content.SharedPreferences;
 import android.os.Handler;
-import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.widget.Toast;
 
@@ -36,7 +35,13 @@ public class MOGAInput
 	Controller mController = null;
 	private Handler handler;
 	private String notify;
-	private GL2JNIView mView;
+	
+	static String[] portId = { "_A", "_B", "_C", "_D" };
+	static boolean[] custom = { false, false, false, false },
+			jsCompat = { false, false, false, false };
+	
+	float[] globalLS_X = new float[4], globalLS_Y = new float[4],
+			previousLS_X = new float[4], previousLS_Y = new float[4];
 
     public boolean isActive[] = { false, false, false, false };
     public boolean isMogaPro[] = { false, false, false, false };
@@ -101,16 +106,14 @@ public class MOGAInput
 		mMotions.put(MotionEvent.AXIS_RTRIGGER, new ExampleFloat("AXIS_RTRIGGER........."));
 		*/
 	}
-	
-	public void setGL2View(GL2JNIView mView) {
-		this.mView = mView;
-	}
 
 	protected void onCreate(Activity act)
 	{
 		this.act = act;
 		
 		handler = new Handler();
+		prefs = PreferenceManager
+				.getDefaultSharedPreferences(act.getApplicationContext());
 
 		mController = Controller.getInstance(act);
 		mController.init();
@@ -156,12 +159,8 @@ public class MOGAInput
 	}
 	
 	private void setModifiedKeys(int player) {
-		prefs = PreferenceManager
-				.getDefaultSharedPreferences(act.getApplicationContext());
-		String[] players = act.getResources().getStringArray(R.array.controllers);
-		String id = players[player].substring(
-				players[player].lastIndexOf(" "), players[player].length());
-		if (prefs.getBoolean("modified_key_layout"  + id, false)) {
+		String id = portId[player];
+		if (custom[player]) {
 			map[player] = new int[] {
 				prefs.getInt("a_button" + id, KeyEvent.KEYCODE_BUTTON_A), key_CONT_A,
 				prefs.getInt("b_button" + id, KeyEvent.KEYCODE_BUTTON_B), key_CONT_B,
@@ -176,6 +175,10 @@ public class MOGAInput
 				prefs.getInt("start_button" + id, KeyEvent.KEYCODE_BUTTON_START), key_CONT_START,
 			};
 		}
+		if (jsCompat[player]) {
+			globalLS_X[player] = previousLS_X[player] = 0.0f;
+			globalLS_Y[player] = previousLS_Y[player] = 0.0f;
+		}
 	}
 
 	class ExampleControllerListener implements ControllerListener
@@ -187,35 +190,20 @@ public class MOGAInput
 	    		if (playerNum == null)
 				return;
 
-	    		String[] players = act.getResources().getStringArray(R.array.controllers);
-	    		String id = "_" + players[playerNum].substring(
-	    				players[playerNum].lastIndexOf(" ") + 1, players[playerNum].length());
-	    		if (prefs.getBoolean("modified_key_layout"  + id, false)) {
-	    			float x = -1, y = -1;
-	    			if (event.getKeyCode() == prefs.getInt("l_button" + id, OuyaController.BUTTON_L1)) {
-	    				float LxC = prefs.getFloat("touch_x_shift_left_trigger", 0);
-	    				float LyC = prefs.getFloat("touch_y_shift_left_trigger", 0);
-	    				x = 440 + LxC + 1;
-	    				y = 200 + LyC + 1;
-	    			}
-	    			if (event.getKeyCode() == prefs.getInt("r_button" + id, OuyaController.BUTTON_R1)) {
-	    				float RxC = prefs.getFloat("touch_x_shift_right_trigger", 0);
-	    				float RyC = prefs.getFloat("touch_y_shift_right_trigger", 0);
-	    				x = 542 + RxC + 1;
-	    				y = 200 + RyC + 1;
-	    			}
-	    			if (mView != null && (x != -1 || y != -1)) {
-	    				JNIdc.show_osd();
-	    				long downTime = SystemClock.uptimeMillis();
-	    				long eventTime = SystemClock.uptimeMillis() + 100;
-	    				int metaState = 0;
-	    				android.view.MotionEvent motionEvent = android.view.MotionEvent.obtain(downTime, eventTime,
-	    						android.view.MotionEvent.ACTION_UP, x, y, metaState);
-	    				mView.dispatchTouchEvent(motionEvent);
-	    				if (playerNum == 0)
-	    					JNIdc.hide_osd();
-	    				return;
-	    			}
+	    		String id = portId[playerNum];
+	    		if (custom[playerNum]) {
+	    				if (event.getKeyCode() == prefs.getInt("l_button" + id, OuyaController.BUTTON_L1)) {
+	    					GL2JNIView.lt[playerNum] = (int) (0.5 * 255);
+	    					GL2JNIView.lt[playerNum] = (int) (1.0 * 255);
+	    					GL2JNIView.lt[playerNum] = (int) (0.5 * 255);
+	    					GL2JNIView.lt[playerNum] = 0;
+	    				}
+	    				if (event.getKeyCode() == prefs.getInt("r_button" + id, OuyaController.BUTTON_R1)) {
+	    					GL2JNIView.lt[playerNum] = (int) (0.5 * 255);
+	    					GL2JNIView.lt[playerNum] = (int) (1.0 * 255);
+	    					GL2JNIView.lt[playerNum] = (int) (0.5 * 255);
+	    					GL2JNIView.lt[playerNum] = 0;
+	    				}
 	    		}
 
 			if(playerNum == 0)
@@ -246,6 +234,15 @@ public class MOGAInput
 			float LS_Y = event.getAxisValue(MotionEvent.AXIS_Y);
 			float L2 = event.getAxisValue(MotionEvent.AXIS_LTRIGGER);
 			float R2 = event.getAxisValue(MotionEvent.AXIS_RTRIGGER);
+			
+			if (jsCompat[playerNum]) {
+
+				previousLS_X[playerNum] = globalLS_X[playerNum];
+				previousLS_Y[playerNum] = globalLS_Y[playerNum];
+				globalLS_X[playerNum] = LS_X;
+				globalLS_Y[playerNum] = LS_Y;
+
+			}
 
 			GL2JNIView.lt[playerNum] = (int) (L2 * 255);
 			GL2JNIView.rt[playerNum] = (int) (R2 * 255);
@@ -271,6 +268,10 @@ public class MOGAInput
 
 			if(playerNum == 0)
 				JNIdc.hide_osd();
+			
+			String id = portId[playerNum];
+			custom[playerNum] = prefs.getBoolean("modified_key_layout" + id, false);
+    		jsCompat[playerNum] = prefs.getBoolean("dpad_js_layout" + id, false);
 
 			if (event.getState() == StateEvent.STATE_CONNECTION && event.getAction() == ACTION_CONNECTED) {
         		int mControllerVersion = mController.getState(Controller.STATE_CURRENT_PRODUCT_VERSION);

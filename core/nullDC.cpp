@@ -216,7 +216,7 @@ void LoadSettings()
 	settings.dynarec.Enable			= cfgLoadInt("config","Dynarec.Enabled", 1)!=0;
 	settings.dynarec.idleskip		= cfgLoadInt("config","Dynarec.idleskip",1)!=0;
 	settings.dynarec.unstable_opt	= cfgLoadInt("config","Dynarec.unstable-opt",0);
-	settings.dreamcast.cable		= cfgLoadInt("config","Dreamcast.Cable", 3);
+	settings.dreamcast.cable		= cfgLoadInt("config","Dreamcast.Cable",3);
 	settings.dreamcast.RTC			= cfgLoadInt("config","Dreamcast.RTC",GetRTC_now());
 	settings.dreamcast.region		= cfgLoadInt("config","Dreamcast.Region",3);
 	settings.dreamcast.broadcast	= cfgLoadInt("config","Dreamcast.Broadcast",4);
