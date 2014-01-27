@@ -100,11 +100,11 @@
     </array>
 
     <!-- Content Description -->
-    <string name="desc_list_item_icon">項目アイコン</string>
+    <string name="desc_list_item_icon">Item Icon</string>
     
-    <string name="textOn">オン</string>
-    <string name="textOff">オフ</string>
+    <string name="textOn">ON</string>
+    <string name="textOff">OFF</string>
 
-    <string name="menu_debug">エラーログを保存</string>
+    <string name="menu_debug">Save Error Logs</string>
 
 </resources>
