@@ -1,7 +1,6 @@
 <resources>
 
     <string name="app_name">reicast</string>
-    <string name="hello_world">Hello world!</string>
     <string name="menu_settings">セッティング</string>
     <string name="title_activity_main">reicast</string>
     <string name="system_path">システムパス (とのデータフォルダーの場所 dc_boot.bin/dc_flash.bin)</string>
@@ -98,6 +97,11 @@
     </array>
 
     <!-- Content Description -->
-    <string name="desc_list_item_icon">Item Icon</string>
+    <string name="desc_list_item_icon">Icono Elemento</string>
+    
+    <string name="textOn">EN</string>
+    <string name="textOff">OFF</string>
+
+    <string name="menu_debug">Guarde registros de errores</string>
 
 </resources>

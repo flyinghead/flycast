@@ -1,0 +1,95 @@
+<resources>
+
+    <string name="app_name">reicast</string>
+    <string name="menu_settings">Configurações</string>
+    <string name="title_activity_main">reicast</string>
+    <string name="system_path">Caminho Sistema (localização da pasta de dados com dc_boot.bin / dc_flash.bin dentro)</string>
+    <string name="browser_path">Caminho padrão do sistema</string>
+    <string name="games_path">Caminho de Armazenamento ( local de . gdi , . chd ou imagens . CDI)</string>
+    <string name="game_path">Padrão jogo de armazenamento</string>
+    <string name="boot_bios">Bota Dreamcast Bios</string>
+    <string name="missing_bios">BIOS falta. O Dreamcast BIOS é necessário para este emulador de trabalhar. Coloque o arquivo de BIOS em %1$s/data/dc_boot.bin</string>
+    <string name="missing_flash">Flash falta. O Dreamcast Flash é necessário para este emulador funcionar. Coloque o arquivo Flash em %1$s/data/dc_flash.bin</string>
+    <string name="require_bios">Você tem que fornecer a BIOS</string>
+    <string name="folder_bios">BOTA BIOS</string>
+    <string name="folder_select">SELECIONE A PASTA ATUAL</string>
+    <string name="select_dynarec">Opções Dynarec</string>
+    <string name="select_unstable">Otimizações Instáveis</string>
+    <string name="select_region">DC Região</string>
+    <string name="select_limitfps">Limite FPS</string>
+    <string name="select_mipmaps">Uso Mipmaps (correção para idade SGX540)</string>
+    <string name="select_stretch">Modo Widescreen</string>
+    <string name="set_frameskip">Frameskip Valor</string>
+    <string name="select_render">PVR Rendering ( não faz nada por enquanto)</string>
+    <string name="default_disk">Definir padrão de disco</string>
+    <string name="games_listing">disponíveis jogos Dreamcast</string>
+    <string name="customize_touch_controls">Personalizar controles de toque</string>
+    <string name="launch_editor">Inicie o Editor</string>
+    <string name="touch_vibration">Toque de vibração</string>
+    <string name="controller_a">Controlador A</string>
+    <string name="controller_b">Controlador B</string>
+    <string name="controller_c">Controlador C</string>
+    <string name="controller_d">Controlador D</string>
+    <string name="controller_not_connected">Controlador Não conectado</string>
+    <string name="controller_none_selected">No controlador selecionado</string>
+    <string name="select">Selecione</string>
+    <string name="remove">Remover</string>
+    <string name="select_controller_title">Selecione Controlador</string>
+    <string name="select_controller_message">Pressione qualquer botão no controlador %1$s para atribuir a porta</string>
+    <string name="controller_already_in_use">Este controlador já está em uso !</string>
+    <string name="modified_layout">Ativar personalizado layout chave</string>
+    <string name="controller_compat">Ativar Modo de Compatibilidade</string>
+    <string name="customize_physical_controls">Personalizar controles físicas</string>
+    <string name="map_keycode_title">Modificar Controlador</string>
+    <string name="map_keycode_message">Pressione o botão novo controlador para %1$s</string>
+    <string name="moga_pro_connect">MOGA Pro Conectado!</string>
+    <string name="moga_connect">MOGA Conectado!</string>
+    <string name="about_title">Sobre reicast</string>
+    <string name="about_text">reicast é um emulador de Dreamcast\n\nVersão :%1$s</string>
+
+    <string-array name="controllers">
+        <item>Controlador A</item>
+        <item>Controlador B</item>
+        <item>Controlador C</item>
+        <item>Controlador D</item>
+    </string-array>
+    <string-array name="images">
+        <item>cdi</item>
+        <item>chd</item>
+        <item>gdi</item>
+    </string-array>
+    <string-array name="region">
+        <item></item>
+        <item></item>
+        <item></item>
+        <item>(Padrão)</item>
+    </string-array>
+
+    <string name="drawer_open">menu Slider Inaugurado</string>
+    <string name="drawer_close">menu Slider fechado</string>
+    <!-- Nav gaveta itens de menu -->
+    <string-array name="nav_drawer_items">
+        <item>Navegador</item>
+        <item>Configurações</item>
+        <item>Caminhos</item>
+        <item>entrada</item>
+        <item>Sobre</item>
+        <item>Taxa Me</item>
+    </string-array>
+    <!-- Nav Lista gaveta ícones dos itens -->
+    <!-- Matched para Nav gaveta itens de menu -->
+    <array name="nav_drawer_icons">
+        <item>@drawable/disk_unknown</item>
+        <item>@drawable/config</item>
+        <item>@drawable/open_folder</item>
+        <item>@drawable/input</item>
+        <item>@drawable/question</item>
+        <item>@drawable/star</item>
+    </array>
+    <!-- Conteúdo Descrição -->
+    <string name="desc_list_item_icon">Ícone Item</string>
+    <string name="textOn">ON</string>
+    <string name="textOff">OFF</string>
+    <string name="menu_debug">Guardar logs de erros</string>
+
+</resources>
