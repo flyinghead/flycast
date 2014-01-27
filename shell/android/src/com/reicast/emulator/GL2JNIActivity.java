@@ -384,7 +384,8 @@ public class GL2JNIActivity extends Activity {
 			if (playerNum == null)
 				return false;
 
-			if (!moga.isActive[playerNum]) {
+			if (!moga.isActive[playerNum] && !custom[playerNum]) {
+				// TODO: Moga should handle this locally
 
 				// Joystick
 				if ((event.getSource() & InputDevice.SOURCE_CLASS_JOYSTICK) != 0) {
