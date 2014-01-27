@@ -16,6 +16,7 @@
     <string name="folder_bios">BOOT BIOS</string>
     <string name="folder_select">SELECT CURRENT FOLDER</string>
 
+    <string name="experimental_opts">Experimental (May cause widespread panic)</string>
     <string name="select_dynarec">Dynarec Options</string>
     <string name="select_unstable">Unstable Optimisations</string>
     <string name="select_region">DC Region</string>
@@ -104,6 +105,8 @@
     
     <string name="textOn">ON</string>
     <string name="textOff">OFF</string>
+    
+    <string name="platform">Identified %1$s</string>
 
     <string name="menu_debug">Save Error Logs</string>
 

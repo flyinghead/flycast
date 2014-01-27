@@ -16,7 +16,14 @@ import de.ankri.views.Switch;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.content.ActivityNotFoundException;
+import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
@@ -28,9 +35,13 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemSelectedListener;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.Spinner;
 import android.widget.Toast;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.SeekBar;
@@ -42,7 +53,7 @@ public class ConfigureFragment extends Fragment {
 	Activity parentActivity;
 	TextView mainFrames;
 	OnClickListener mCallback;
-	
+
 	boolean dynarecopt = true;
 	boolean unstableopt = false;
 	int dcregion = 3;
@@ -52,6 +63,9 @@ public class ConfigureFragment extends Fragment {
 	int frameskip = 0;
 	boolean pvrrender = false;
 	String cheatdisk = "null";
+
+	boolean tegra = false;
+	boolean qualcomm = false;
 
 	private SharedPreferences mPrefs;
 	private File sdcard = Environment.getExternalStorageDirectory();
@@ -99,6 +113,19 @@ public class ConfigureFragment extends Fragment {
 		mPrefs = PreferenceManager.getDefaultSharedPreferences(parentActivity);
 		home_directory = mPrefs.getString("home_directory", home_directory);
 
+		String platform = readOutput("/system/bin/getprop ro.board.platform");
+		if (platform != null && !platform.equals(null)) {
+			Toast.makeText(parentActivity,
+					parentActivity.getString(R.string.platform, platform),
+					Toast.LENGTH_SHORT).show();
+			if (platform.contains("msm")) {
+				qualcomm = true;
+			}
+			if (platform.contains("tegra")) {
+				tegra = true;
+			}
+		}
+
 		try {
 			File config = new File(home_directory, "emu.cfg");
 			if (config.exists()) {
@@ -106,26 +133,32 @@ public class ConfigureFragment extends Fragment {
 				String currentLine;
 				while (scanner.hasNextLine()) {
 					currentLine = scanner.nextLine();
-					
-					// Check if the existing emu.cfg has the setting and get current value
-					
-					/*if (StringUtils.containsIgnoreCase(currentLine, "Dynarec.Enabled")) {
+
+					// Check if the existing emu.cfg has the setting and get
+					// current value
+
+					if (StringUtils.containsIgnoreCase(currentLine,
+							"Dynarec.Enabled")) {
 						dynarecopt = Boolean.valueOf(currentLine.replace(
 								"Dynarec.Enabled=", ""));
-					}*/
-					if (StringUtils.containsIgnoreCase(currentLine, "Dynarec.unstable-opt")) {
+					}
+					if (StringUtils.containsIgnoreCase(currentLine,
+							"Dynarec.unstable-opt")) {
 						unstableopt = Boolean.valueOf(currentLine.replace(
 								"Dynarec.unstable-opt=", ""));
 					}
-					/*if (StringUtils.containsIgnoreCase(currentLine, "Dreamcast.Region")) {
+					if (StringUtils.containsIgnoreCase(currentLine,
+							"Dreamcast.Region")) {
 						dcregion = Integer.valueOf(currentLine.replace(
 								"Dreamcast.Region=", ""));
-					}*/
-					if (StringUtils.containsIgnoreCase(currentLine, "aica.LimitFPS")) {
+					}
+					if (StringUtils.containsIgnoreCase(currentLine,
+							"aica.LimitFPS")) {
 						limitfps = Boolean.valueOf(currentLine.replace(
 								"aica.LimitFPS=", ""));
 					}
-					if (StringUtils.containsIgnoreCase(currentLine, "rend.UseMipmaps")) {
+					if (StringUtils.containsIgnoreCase(currentLine,
+							"rend.UseMipmaps")) {
 						mipmaps = Boolean.valueOf(currentLine.replace(
 								"rend.UseMipmaps=", ""));
 					}
@@ -138,23 +171,24 @@ public class ConfigureFragment extends Fragment {
 						frameskip = Integer.valueOf(currentLine.replace(
 								"ta.skip=", ""));
 					}
-					/*if (StringUtils.containsIgnoreCase(currentLine, "pvr.rend")) {
+					if (StringUtils.containsIgnoreCase(currentLine, "pvr.rend")) {
 						pvrrender = Boolean.valueOf(currentLine.replace(
 								"pvr.rend=", ""));
-					}*/
+					}
 					if (StringUtils.containsIgnoreCase(currentLine, "image")) {
 						cheatdisk = currentLine.replace("image=", "");
 					}
+
 				}
 				scanner.close();
 			}
 		} catch (Exception e) {
 			Log.d("reicast", "Exception: " + e);
 		}
-		
+
 		// Generate the menu options and fill in existing settings
-		
-		/*OnCheckedChangeListener dynarec_options = new OnCheckedChangeListener() {
+
+		OnCheckedChangeListener dynarec_options = new OnCheckedChangeListener() {
 
 			public void onCheckedChanged(CompoundButton buttonView,
 					boolean isChecked) {
@@ -166,16 +200,16 @@ public class ConfigureFragment extends Fragment {
 				}
 			}
 		};
-			Switch dynarec_opt = (Switch) getView().findViewById(
-					R.id.dynarec_option);
-			boolean dynarec = mPrefs.getBoolean("dynarec_opt", dynarecopt);
-			if (dynarec) {
-				dynarec_opt.setChecked(true);
-			} else {
-				dynarec_opt.setChecked(false);
-			}
-			dynarec_opt.setOnCheckedChangeListener(dynarec_options);*/
-		
+		Switch dynarec_opt = (Switch) getView().findViewById(
+				R.id.dynarec_option);
+		boolean dynarec = mPrefs.getBoolean("dynarec_opt", dynarecopt);
+		if (dynarec) {
+			dynarec_opt.setChecked(true);
+		} else {
+			dynarec_opt.setChecked(false);
+		}
+		dynarec_opt.setOnCheckedChangeListener(dynarec_options);
+
 		OnCheckedChangeListener unstable_option = new OnCheckedChangeListener() {
 
 			public void onCheckedChanged(CompoundButton buttonView,
@@ -197,8 +231,9 @@ public class ConfigureFragment extends Fragment {
 			unstable_opt.setChecked(false);
 		}
 		unstable_opt.setOnCheckedChangeListener(unstable_option);
-		
-		/*String[] regions = parentActivity.getResources().getStringArray(R.array.region);
+
+		String[] regions = parentActivity.getResources().getStringArray(
+				R.array.region);
 
 		Spinner region_spnr = (Spinner) getView().findViewById(
 				R.id.region_spinner);
@@ -207,7 +242,7 @@ public class ConfigureFragment extends Fragment {
 		localeAdapter
 				.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		region_spnr.setAdapter(localeAdapter);
-		
+
 		int dc_region = mPrefs.getInt("dc_region", dcregion);
 		region_spnr.setSelection(dc_region, true);
 
@@ -228,8 +263,8 @@ public class ConfigureFragment extends Fragment {
 				mPrefs.edit().putInt("dc_region", 3).commit();
 			}
 
-		});*/
-		
+		});
+
 		OnCheckedChangeListener limitfps_option = new OnCheckedChangeListener() {
 
 			public void onCheckedChanged(CompoundButton buttonView,
@@ -251,7 +286,7 @@ public class ConfigureFragment extends Fragment {
 			limit_fps.setChecked(false);
 		}
 		limit_fps.setOnCheckedChangeListener(limitfps_option);
-		
+
 		OnCheckedChangeListener mipmaps_option = new OnCheckedChangeListener() {
 
 			public void onCheckedChanged(CompoundButton buttonView,
@@ -295,7 +330,7 @@ public class ConfigureFragment extends Fragment {
 			stretch_view.setChecked(false);
 		}
 		stretch_view.setOnCheckedChangeListener(full_screen);
-		
+
 		mainFrames = (TextView) getView().findViewById(R.id.current_frames);
 		mainFrames.setText(String.valueOf(frameskip));
 
@@ -328,7 +363,7 @@ public class ConfigureFragment extends Fragment {
 			}
 		});
 
-		/*OnCheckedChangeListener pvr_rendering = new OnCheckedChangeListener() {
+		OnCheckedChangeListener pvr_rendering = new OnCheckedChangeListener() {
 
 			public void onCheckedChanged(CompoundButton buttonView,
 					boolean isChecked) {
@@ -347,7 +382,7 @@ public class ConfigureFragment extends Fragment {
 		} else {
 			pvr_render.setChecked(false);
 		}
-		pvr_render.setOnCheckedChangeListener(pvr_rendering);*/
+		pvr_render.setOnCheckedChangeListener(pvr_rendering);
 
 		final EditText cheatEdit = (EditText) getView().findViewById(
 				R.id.cheat_disk);
@@ -372,7 +407,7 @@ public class ConfigureFragment extends Fragment {
 					int count) {
 			}
 		});
-	
+
 		Button debug_button = (Button) getView()
 				.findViewById(R.id.debug_button);
 		debug_button.setOnClickListener(new View.OnClickListener() {
@@ -495,9 +530,9 @@ public class ConfigureFragment extends Fragment {
 		File config = new File(home_directory, "emu.cfg");
 		if (config.exists()) {
 			try {
-				
+
 				// Read existing emu.cfg and substitute new setting value
-				
+
 				StringBuilder rebuildFile = new StringBuilder();
 				Scanner scanner = new Scanner(config);
 				String currentLine;
@@ -533,23 +568,27 @@ public class ConfigureFragment extends Fragment {
 			if (config.exists()) {
 				config.delete();
 			}
-			
+
 			// Write new emu.cfg using current display values
-			
+
 			StringBuilder rebuildFile = new StringBuilder();
 			rebuildFile.append("[config]" + "\n");
-			rebuildFile.append("Dynarec.Enabled=" + String.valueOf(dynarecopt ? 1 : 0) + "\n");
+			rebuildFile.append("Dynarec.Enabled="
+					+ String.valueOf(dynarecopt ? 1 : 0) + "\n");
 			rebuildFile.append("Dynarec.idleskip=1" + "\n");
-			rebuildFile.append("Dynarec.unstable-opt=" + String.valueOf(unstableopt ? 1 : 0) + "\n");
+			rebuildFile.append("Dynarec.unstable-opt="
+					+ String.valueOf(unstableopt ? 1 : 0) + "\n");
 			rebuildFile.append("Dreamcast.Cable=3" + "\n");
 			rebuildFile.append("Dreamcast.RTC="
 					+ String.valueOf(System.currentTimeMillis()) + "\n");
 			rebuildFile.append("Dreamcast.Region=" + String.valueOf(dcregion)
 					+ "\n");
 			rebuildFile.append("Dreamcast.Broadcast=4" + "\n");
-			rebuildFile.append("aica.LimitFPS=" + String.valueOf(limitfps ? 1 : 0) + "\n");
+			rebuildFile.append("aica.LimitFPS="
+					+ String.valueOf(limitfps ? 1 : 0) + "\n");
 			rebuildFile.append("aica.NoBatch=0" + "\n");
-			rebuildFile.append("rend.UseMipmaps=" + String.valueOf(mipmaps ? 1 : 0) + "\n");
+			rebuildFile.append("rend.UseMipmaps="
+					+ String.valueOf(mipmaps ? 1 : 0) + "\n");
 			rebuildFile.append("rend.WideScreen="
 					+ String.valueOf(widescreen ? 1 : 0) + "\n");
 			rebuildFile.append("pvr.Subdivide=0" + "\n");
