@@ -195,13 +195,14 @@ public class MOGAInput
 	    				x = 440 + LxC + 1;
 	    				y = 200 + LyC + 1;
 	    			}
-	    			if (event.getKeyCode() == prefs.getInt("l_button" + id, OuyaController.BUTTON_R1)) {
+	    			if (event.getKeyCode() == prefs.getInt("r_button" + id, OuyaController.BUTTON_R1)) {
 	    				float RxC = prefs.getFloat("touch_x_shift_right_trigger", 0);
 	    				float RyC = prefs.getFloat("touch_y_shift_right_trigger", 0);
 	    				x = 542 + RxC + 1;
 	    				y = 200 + RyC + 1;
 	    			}
 	    			if (mView != null && (x != -1 || y != -1)) {
+	    				JNIdc.show_osd();
 	    				long downTime = SystemClock.uptimeMillis();
 	    				long eventTime = SystemClock.uptimeMillis() + 100;
 	    				int metaState = 0;
