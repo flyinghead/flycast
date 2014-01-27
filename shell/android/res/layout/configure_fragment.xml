@@ -10,7 +10,8 @@
         android:stretchColumns="*" >
 
         <!--
-        TableRow android:gravity="center_vertical" >
+        TableRow android:gravity="center_vertical"
+        android:layout_marginTop="10dp" >
             
             <TextView
             android:id="@+id/dynarec_text"
@@ -36,7 +37,8 @@
         </TableRow
         -->
 
-        <TableRow android:gravity="center_vertical" >
+        <TableRow android:gravity="center_vertical"
+            android:layout_marginTop="10dp" >
 
             <TextView
                 android:id="@+id/unstable_text"
@@ -65,7 +67,8 @@
         LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical" >
+            android:orientation="vertical"
+            android:layout_marginTop="10dp" >
             
             <TextView
             android:id="@+id/region_text"
@@ -90,7 +93,8 @@
         </LinearLayout
         -->
 
-        <TableRow android:gravity="center_vertical" >
+        <TableRow android:gravity="center_vertical"
+            android:layout_marginTop="10dp" >
 
             <TextView
                 android:id="@+id/limitfps_text"
@@ -115,7 +119,8 @@
             </LinearLayout>
         </TableRow>
 
-        <TableRow android:gravity="center_vertical" >
+        <TableRow android:gravity="center_vertical"
+            android:layout_marginTop="10dp" >
 
             <TextView
                 android:id="@+id/mipmaps_text"
@@ -140,7 +145,8 @@
             </LinearLayout>
         </TableRow>
 
-        <TableRow android:gravity="center_vertical" >
+        <TableRow android:gravity="center_vertical"
+            android:layout_marginTop="10dp" >
 
             <TextView
                 android:id="@+id/stretch_text"
@@ -168,7 +174,8 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical" >
+            android:orientation="vertical"
+            android:layout_marginTop="10dp" >
 
             <TextView
                 android:id="@+id/frameskip_text"
@@ -201,7 +208,8 @@
         </LinearLayout>
 
         <!--
-        TableRow android:gravity="center_vertical" >
+        TableRow android:gravity="center_vertical"
+        android:layout_marginTop="10dp" >
             
             <TextView
             android:id="@+id/render_text"
@@ -231,7 +239,8 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical" >
+            android:orientation="vertical"
+            android:layout_marginTop="10dp" >
 
             <TextView
                 android:id="@+id/cheatdisk_text"
@@ -256,7 +265,8 @@
             </LinearLayout>
         </LinearLayout>
 
-        <TableRow android:gravity="center_vertical" >
+        <TableRow android:gravity="center_vertical"
+            android:layout_marginTop="10dp" >
 
             <Button
                 android:id="@+id/debug_button"
