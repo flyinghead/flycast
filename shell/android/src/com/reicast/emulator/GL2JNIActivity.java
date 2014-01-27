@@ -243,8 +243,8 @@ public class GL2JNIActivity extends Activity {
 									OuyaController.BUTTON_DPAD_LEFT, key_CONT_DPAD_LEFT,
 									OuyaController.BUTTON_DPAD_RIGHT, key_CONT_DPAD_RIGHT,
 
-									OuyaController.BUTTON_MENU, key_CONT_START/*,
-									OuyaController.BUTTON_R1, key_CONT_START*/
+									OuyaController.BUTTON_MENU, key_CONT_START,
+									OuyaController.BUTTON_R1, key_CONT_START
 
 							};
 						} else if (InputDevice.getDevice(joys[i]).getName()
@@ -260,8 +260,8 @@ public class GL2JNIActivity extends Activity {
 									OuyaController.BUTTON_DPAD_LEFT, key_CONT_DPAD_LEFT,
 									OuyaController.BUTTON_DPAD_RIGHT, key_CONT_DPAD_RIGHT,
 
-									OuyaController.BUTTON_MENU, key_CONT_START/*,
-									OuyaController.BUTTON_R1, key_CONT_START*/
+									OuyaController.BUTTON_MENU, key_CONT_START,
+									OuyaController.BUTTON_R1, key_CONT_START
 							};
 
 							xbox[playerNum] = true;
@@ -281,8 +281,8 @@ public class GL2JNIActivity extends Activity {
 									OuyaController.BUTTON_DPAD_LEFT, key_CONT_DPAD_LEFT,
 									OuyaController.BUTTON_DPAD_RIGHT, key_CONT_DPAD_RIGHT,
 
-									OuyaController.BUTTON_MENU, key_CONT_START/*,
-									OuyaController.BUTTON_R1, key_CONT_START*/
+									OuyaController.BUTTON_MENU, key_CONT_START,
+									OuyaController.BUTTON_R1, key_CONT_START
 							};
 							nVidia[playerNum] = true;
 
@@ -300,8 +300,8 @@ public class GL2JNIActivity extends Activity {
 									OuyaController.BUTTON_DPAD_LEFT, key_CONT_DPAD_LEFT,
 									OuyaController.BUTTON_DPAD_RIGHT, key_CONT_DPAD_RIGHT,
 
-									OuyaController.BUTTON_MENU, key_CONT_START/*,
-									OuyaController.BUTTON_R1, key_CONT_START*/
+									OuyaController.BUTTON_MENU, key_CONT_START,
+									OuyaController.BUTTON_R1, key_CONT_START
 							};
 						}
 					} else {
@@ -527,31 +527,11 @@ public class GL2JNIActivity extends Activity {
 					players[playerNum].lastIndexOf(" ") + 1, players[playerNum].length());
 			boolean compat = prefs.getBoolean("controller_compat" + id, false);
 			if (compat || custom[playerNum]) {
-				float x = -1, y = -1;
-
 				if (keyCode == prefs.getInt("l_button" + id, OuyaController.BUTTON_L1)) {
-					float LxC = prefs.getFloat("touch_x_shift_left_trigger", 0);
-					float LyC = prefs.getFloat("touch_y_shift_left_trigger", 0);
-					x = 440 + LxC + 1;
-					y = 200 + LyC + 1;
+					GL2JNIView.lt[playerNum] = 255;
 				}
 				if (keyCode == prefs.getInt("r_button" + id, OuyaController.BUTTON_R1)) {
-					float RxC = prefs.getFloat("touch_x_shift_right_trigger", 0);
-					float RyC = prefs.getFloat("touch_y_shift_right_trigger", 0);
-					x = 542 + RxC + 1;
-					y = 200 + RyC + 1;
-				}
-				if (x != -1 || y != -1) {
-					JNIdc.show_osd();
-					long downTime = SystemClock.uptimeMillis();
-					long eventTime = SystemClock.uptimeMillis() + 100;
-					int metaState = 0;
-					MotionEvent motionEvent = MotionEvent.obtain(downTime, eventTime,
-							MotionEvent.ACTION_UP, x, y, metaState);
-					mView.dispatchTouchEvent(motionEvent);
-					if (playerNum == 0)
-						JNIdc.hide_osd();
-					return true;
+					GL2JNIView.lt[playerNum] = 255;
 				}
 			}
 		}
