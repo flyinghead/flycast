@@ -329,7 +329,26 @@ public class ConfigureFragment extends Fragment {
 		});
 
 		/*OnCheckedChangeListener pvr_rendering = new OnCheckedChangeListener() {
-		
+
+			public void onCheckedChanged(CompoundButton buttonView,
+					boolean isChecked) {
+				mPrefs.edit().putBoolean("pvr_render", isChecked).commit();
+				pvrrender = isChecked;
+				if (!executeAppendConfig("pvr.rend",
+						String.valueOf(isChecked ? 1 : 0))) {
+					executeWriteConfig();
+				}
+			}
+		};
+		Switch pvr_render = (Switch) getView().findViewById(R.id.render_option);
+		boolean rendered = mPrefs.getBoolean("pvr_render", pvrrender);
+		if (rendered) {
+			pvr_render.setChecked(true);
+		} else {
+			pvr_render.setChecked(false);
+		}
+		pvr_render.setOnCheckedChangeListener(pvr_rendering);*/
+
 		final EditText cheatEdit = (EditText) getView().findViewById(
 				R.id.cheat_disk);
 		cheatEdit.setText(cheatdisk);
@@ -338,8 +357,7 @@ public class ConfigureFragment extends Fragment {
 			public void afterTextChanged(Editable s) {
 				if (cheatEdit.getText() != null) {
 					cheatdisk = cheatEdit.getText().toString();
-					mPrefs.edit().putString("cheat_disk", cheatdisk)
-							.commit();
+					mPrefs.edit().putString("cheat_disk", cheatdisk).commit();
 					if (!executeAppendConfig("image", cheatdisk)) {
 						executeWriteConfig();
 					}
@@ -354,26 +372,6 @@ public class ConfigureFragment extends Fragment {
 					int count) {
 			}
 		});
-
-			public void onCheckedChanged(CompoundButton buttonView,
-					boolean isChecked) {
-				mPrefs.edit().putBoolean("pvr_render", isChecked).commit();
-				pvrrender = isChecked;
-				if (!executeAppendConfig("pvr.rend",
-						String.valueOf(isChecked ? 1 : 0))) {
-					executeWriteConfig();
-				}
-			}
-		};
-			Switch pvr_render = (Switch) getView().findViewById(
-					R.id.render_option);
-			boolean rendered = mPrefs.getBoolean("pvr_render", pvrrender);
-			if (rendered) {
-				pvr_render.setChecked(true);
-			} else {
-				pvr_render.setChecked(false);
-			}
-			pvr_render.setOnCheckedChangeListener(pvr_rendering);*/
 	
 		Button debug_button = (Button) getView()
 				.findViewById(R.id.debug_button);
