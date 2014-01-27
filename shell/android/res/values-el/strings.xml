@@ -3,9 +3,9 @@
     <string name="app_name">reicast</string>
     <string name="menu_settings">セッティング</string>
     <string name="title_activity_main">reicast</string>
-    <string name="system_path">システムパス (とのデータフォルダーの場所 dc_boot.bin/dc_flash.bin)</string>
+    <string name="system_path">システムパス (dc_boot.bin/dc_flash.bin)</string>
     <string name="browser_path">デフォルトのシステムパス</string>
-    <string name="games_path">ストレージパス (の場所 .gdi .cdi or .cdh イメージ)</string>
+    <string name="games_path">ストレージパス (.gdi .cdi or .cdh イメージ)</string>
     <string name="game_path">デフォルトゲーム·ストレージ</string>
     
     <string name="boot_bios">ブートドリームキャストビオス</string>
@@ -26,6 +26,7 @@
     <string name="select_render">PVRレンダリング</string>
 
     <string name="games_listing">利用可能なドリームキャストのゲーム</string>
+    <string name="select_locale">DC Region (dc_flash[X].bin where X is region code)</string>
 
     <string name="customize_touch_controls">タッチコントロールをカスタマイズする</string>
     <string name="launch_editor">エディタを起動します</string>
@@ -97,11 +98,6 @@
     </array>
 
     <!-- Content Description -->
-    <string name="desc_list_item_icon">Icono Elemento</string>
-    
-    <string name="textOn">EN</string>
-    <string name="textOff">OFF</string>
-
-    <string name="menu_debug">Guarde registros de errores</string>
+    <string name="desc_list_item_icon">Item Icon</string>
 
 </resources>
