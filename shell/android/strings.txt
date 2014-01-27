@@ -1,69 +1,62 @@
-{\rtf1\ansi\ansicpg1252\cocoartf1265
-{\fonttbl\f0\fnil\fcharset0 Monaco;}
-{\colortbl;\red255\green255\blue255;}
-\margl1440\margr1440\vieww10800\viewh8400\viewkind0
-\deftab720
-\pard\pardeftab720
-
-\f0\fs22 \cf0 Settings\
-reicast\
-System Path (location of the data folder with dc_boot.bin/dc_flash.bin inside)\
-Default System Path\
-Storage Path (location of .gdi, .chd or .cdi images)\
-Default Game Storage\
-Boot Dreamcast Bios\
-BIOS Missing. The Dreamcast BIOS is required for this emulator to work. Place the BIOS file in ####/data/dc_boot.bin\
-Flash Missing. The Dreamcast Flash is required for this emulator to work. Place the Flash file in ####/data/dc_flash.bin\
-You have to provide the BIOS\
-BOOT BIOS\
-SELECT CURRENT FOLDER\
-Dynarec Options\
-Unstable Optimisations\
-DC Region\
-Limit FPS\
-Use Mipmaps (fix for old SGX540)\
-Widescreen Mode\
-Frameskip Value\
-PVR Rendering (does nothing for now)\
-Set Default Disk\
-Available Dreamcast Games\
-Customize Touch Controls\
-Launch Editor\
-Touch Vibration\
-Controller A\
-Controller B\
-Controller C\
-Controller D\
-Controller Not Connected\
-No Controller Selected\
-Select\
-Remove\
-Select Controller\
-Press any button on the controller #### to assign to port\
-This controller is already in use!\
-Enable Custom Key Layout\
-Enable Compatibility Mode\
-Customize Physical Controls\
-Modify Controller\
-Press the new controller button for ####\
-MOGA Pro Connected!\
-MOGA Connected!\
-About reicast\
-reicast is a dreamcast emulator\\n\\nVersion: ####\
-Controller A\
-Controller B\
-Controller C\
-Controller D\
-(Default)\
-Slider Menu Opened\
-Slider Menu Closed\
-Browser\
-Settings\
-Paths\
-Input\
-About\
-Rate Me\
-Item Icon\
-ON\
-OFF\
-Save Error Logs}
+Settings
+reicast
+System Path (location of the data folder with dc_boot.bin/dc_flash.bin inside)
+Default System Path
+Storage Path (location of .gdi, .chd or .cdi images)
+Default Game Storage
+Boot Dreamcast Bios
+BIOS Missing. The Dreamcast BIOS is required for this emulator to work. Place the BIOS file in ####/data/dc_boot.bin
+Flash Missing. The Dreamcast Flash is required for this emulator to work. Place the Flash file in ####/data/dc_flash.bin
+You have to provide the BIOS
+BOOT BIOS
+SELECT CURRENT FOLDER
+Dynarec Options
+Unstable Optimisations
+DC Region
+Limit FPS
+Use Mipmaps (fix for old SGX540)
+Widescreen Mode
+Frameskip Value
+PVR Rendering (does nothing for now)
+Set Default Disk
+Available Dreamcast Games
+Customize Touch Controls
+Launch Editor
+Touch Vibration
+Controller A
+Controller B
+Controller C
+Controller D
+Controller Not Connected
+No Controller Selected
+Select
+Remove
+Select Controller
+Press any button on the controller #### to assign to port
+This controller is already in use!
+Enable Custom Key Layout
+Enable Compatibility Mode
+Customize Physical Controls
+Modify Controller
+Press the new controller button for ####
+MOGA Pro Connected!
+MOGA Connected!
+About reicast
+reicast is a dreamcast emulator\\n\\nVersion: ####
+Controller A
+Controller B
+Controller C
+Controller D
+(Default)
+Slider Menu Opened
+Slider Menu Closed
+Browser
+Settings
+Paths
+Input
+About
+Rate Me
+Item Icon
+ON
+OFF
+Save Error Logs
