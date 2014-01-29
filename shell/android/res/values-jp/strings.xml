@@ -61,12 +61,6 @@
     <item>コントローラ D</item>
     </string-array>
     
-    <string-array name="images">
-        <item>cdi</item>
-        <item>chd</item>
-        <item>gdi</item>
-    </string-array>
-    
     <string-array name="region">
         <item></item>
         <item></item>
@@ -85,16 +79,6 @@
         <item>コントローラー</item>
         <item>およそ</item>
     </string-array>
-
-    <!-- Nav Drawer List Item Icons -->
-    <!-- Matched to Nav Drawer Menu Items -->
-    <array name="nav_drawer_icons">
-        <item>@drawable/disk_unknown</item>
-        <item>@drawable/config</item>
-        <item>@drawable/open_folder</item>
-        <item>@drawable/config</item>
-        <item>@drawable/question</item>
-    </array>
 
     <!-- Content Description -->
     <string name="desc_list_item_icon">Icono Elemento</string>
