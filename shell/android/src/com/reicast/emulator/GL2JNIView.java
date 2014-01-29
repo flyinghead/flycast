@@ -200,7 +200,7 @@ class GL2JNIView extends GLSurfaceView
 
       resetEditMode();
       requestLayout();
- }
+  }
   	
   public GL2JNIView(Context context,String newFileName,boolean translucent,int depth,int stencil,boolean editVjoyMode)
   {
@@ -208,6 +208,19 @@ class GL2JNIView extends GLSurfaceView
     this.context = context;
     this.editVjoyMode = editVjoyMode;
     setKeepScreenOn(true);
+
+    setOnSystemUiVisibilityChangeListener (new OnSystemUiVisibilityChangeListener() {
+      @Override
+      public void onSystemUiVisibilityChange(int visibility) {
+        if ((visibility & SYSTEM_UI_FLAG_FULLSCREEN) == 0) {
+          GL2JNIView.this.setSystemUiVisibility(
+            SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+            | SYSTEM_UI_FLAG_FULLSCREEN
+            | SYSTEM_UI_FLAG_HIDE_NAVIGATION);
+        }
+      }
+    });
+
     vib=(Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
     
     Runtime.getRuntime().freeMemory();
