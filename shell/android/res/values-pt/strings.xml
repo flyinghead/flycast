@@ -53,11 +53,7 @@
         <item>Controlador C</item>
         <item>Controlador D</item>
     </string-array>
-    <string-array name="images">
-        <item>cdi</item>
-        <item>chd</item>
-        <item>gdi</item>
-    </string-array>
+
     <string-array name="region">
         <item></item>
         <item></item>
@@ -76,16 +72,7 @@
         <item>Sobre</item>
         <item>Avaliar</item>
     </string-array>
-    <!-- Nav Lista gaveta ícones dos itens -->
-    <!-- Matched para Nav gaveta itens de menu -->
-    <array name="nav_drawer_icons">
-        <item>@drawable/disk_unknown</item>
-        <item>@drawable/config</item>
-        <item>@drawable/open_folder</item>
-        <item>@drawable/input</item>
-        <item>@drawable/question</item>
-        <item>@drawable/star</item>
-    </array>
+
     <!-- Conteúdo Descrição -->
     <string name="desc_list_item_icon">Ícone do Item</string>
     <string name="textOn">ON</string>
