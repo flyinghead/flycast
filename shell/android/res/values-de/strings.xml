@@ -3,12 +3,12 @@
     <string name="app_name">reicast</string>
     <string name="menu_settings">Einstellungen</string>
     <string name="title_activity_main">reicast</string>
-    <string name="system_path">System Pfad (location of the data folder with dc_boot.bin/dc_flash.bin inside)</string>
+    <string name="system_path">System Pfad (Speicherort des data Ordners welcher dc_boot.bin und dc_flash.bin enthält)</string>
     <string name="browser_path">Standard System Pfad</string>
     <string name="games_path">Spiele Pfad (Speicherort von .gdi, .chd oder .cdi Abbildern)</string>
     <string name="game_path">Standard Spiele Pfad</string>
     
-    <string name="boot_bios">Dreamcast Bios starten</string>
+    <string name="boot_bios">Dreamcast Bios Starten</string>
     <string name="missing_bios">Fehlendes BIOS. Für einen funktionsfähigen Emulator ist das Dreamcast BIOS erforderlich. Legen Sie die BIOS Datei unter %1$s/data/dc_boot.bin ab.</string>
     <string name="missing_flash">Fehlender Flash. Für einen funktionsfähigen Emulator ist der Dreamcast Flash erforderlich. Legen Sie die Flash Datei unter %1$s/data/dc_flash.bin ab.</string>
     <string name="require_bios">Es muss ein BIOS bereitgestellt werden</string>
@@ -29,14 +29,14 @@
     <string name="games_listing">Verfügbare Dreamcast Spiele</string>
 
     <string name="customize_touch_controls">Touch Steuerung anpassen</string>
-    <string name="launch_editor">Editor starten</string>
+    <string name="launch_editor">Editor Starten</string>
     <string name="touch_vibration">Touch Vibration</string>
     <string name="controller_a">Controller A</string>
     <string name="controller_b">Controller B</string>
     <string name="controller_c">Controller C</string>
     <string name="controller_d">Controller D</string>
-    <string name="controller_not_connected">Controller nicht verbunden</string>
-    <string name="controller_none_selected">Kein Controller ausgewählt</string>
+    <string name="controller_not_connected">Controller Nicht Verbunden</string>
+    <string name="controller_none_selected">Kein Controller Ausgewählt</string>
     <string name="select">Auswählen</string>
     <string name="remove">Entfernen</string>
     <string name="select_controller_title">Controller Auswählen</string>
@@ -46,7 +46,7 @@
     <string name="controller_compat">Kompatibilitätsmodus</string>
     
     <string name="customize_physical_controls">Physische Controller anpassen</string>
-    <string name="map_keycode_title">Controller ändern</string>
+    <string name="map_keycode_title">Controller Ändern</string>
     <string name="map_keycode_message">Drücken Sie die neue Controller-Taste für %1$s</string>
     
     <string name="moga_pro_connect">MOGA Pro verbunden!</string>
@@ -69,8 +69,8 @@
         <item>(Standard)</item>
     </string-array>
 
-    <string name="drawer_open">Slider Menü geöffnet</string>
-    <string name="drawer_close">Slider Menü geschlossen</string>
+    <string name="drawer_open">Slider Menü Geöffnet</string>
+    <string name="drawer_close">Slider Menü Geschlossen</string>
 
     <!-- Nav Drawer Menu Items -->
     <string-array name="nav_drawer_items">
@@ -79,7 +79,7 @@
         <item>Pfade</item>
         <item>Eingabe</item>
         <item>Über</item>
-        <item>Rate Me</item>
+        <item>Bewerten</item>
     </string-array>
 
     <!-- Content Description -->
@@ -88,6 +88,6 @@
     <string name="textOn">Ein</string>
     <string name="textOff">Aus</string>
 
-    <string name="menu_debug">Debug Logs speichern</string>
+    <string name="menu_debug">Debug Logs Speichern</string>
 
 </resources>
