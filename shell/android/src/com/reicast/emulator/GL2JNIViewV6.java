@@ -212,6 +212,19 @@ class GL2JNIViewV6 extends GLSurfaceView
     this.context = context;
     this.editVjoyMode = editVjoyMode;
     setKeepScreenOn(true);
+    
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+    setOnSystemUiVisibilityChangeListener (new OnSystemUiVisibilityChangeListener() {
+	      public void onSystemUiVisibilityChange(int visibility) {
+	        if ((visibility & SYSTEM_UI_FLAG_FULLSCREEN) == 0) {
+	          GL2JNIViewV6.this.setSystemUiVisibility(
+	            SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+	            | SYSTEM_UI_FLAG_FULLSCREEN
+	            | SYSTEM_UI_FLAG_HIDE_NAVIGATION);
+	        }
+	      }
+	    });
+    }
 
     vib=(Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
     
