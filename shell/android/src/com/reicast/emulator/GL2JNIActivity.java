@@ -3,9 +3,6 @@ package com.reicast.emulator;
 import java.util.Arrays;
 import java.util.HashMap;
 
-// Keeping a reference just in case it's needed
-import com.reicast.emulator.GL2JNIView.EmuThread;
-
 import tv.ouya.console.api.OuyaController;
 import android.annotation.TargetApi;
 import android.app.Activity;
@@ -16,7 +13,6 @@ import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.Gravity;
@@ -40,8 +36,10 @@ public class GL2JNIActivity extends Activity {
 	LayoutParams params;
 	MOGAInput moga = new MOGAInput();
 	private SharedPreferences prefs;
-	static boolean[] custom = { false, false, false, false }, xbox = { false,
-			false, false, false }, nVidia = { false, false, false, false };
+	static String[] portId = { "_A", "_B", "_C", "_D" };
+	static boolean[] compat = { false, false, false, false }, custom = { false,
+			false, false, false }, jsCompat = { false, false, false, false };
+	static boolean[] xbox = { false, false, false, false }, nVidia = { false, false, false, false };
 	int[] name = { -1, -1, -1, -1 };
 	float[] globalLS_X = new float[4], globalLS_Y = new float[4],
 			previousLS_X = new float[4], previousLS_Y = new float[4];
@@ -217,18 +215,18 @@ public class GL2JNIActivity extends Activity {
 						.get(deviceId_deviceDescriptor.get(joys[i]));
 
 				if (playerNum != null) {
-					String[] players = getResources().getStringArray(R.array.controllers);
-					String id = "_" + players[playerNum].substring(
-							players[playerNum].lastIndexOf(" ") + 1, players[playerNum].length());
-					boolean compat = prefs.getBoolean("controller_compat" + id, false);
-					if (!compat) {
-						if (prefs.getBoolean("modified_key_layout" + id, false)) {
+					String id = portId[playerNum];
+					custom[playerNum] = prefs.getBoolean("modified_key_layout" + id, false);
+					compat[playerNum] = prefs.getBoolean("controller_compat" + id, false);
+					jsCompat[playerNum] = prefs.getBoolean("dpad_js_layout" + id, false);
+					if (!compat[playerNum]) {
+						if (custom[playerNum]) {
 							map[playerNum] = setModifiedKeys(playerNum);
 
-							custom[playerNum] = true;
-
-							globalLS_X[playerNum] = previousLS_X[playerNum] = 0.0f;
-							globalLS_Y[playerNum] = previousLS_Y[playerNum] = 0.0f;
+							if (jsCompat[playerNum]) {
+								globalLS_X[playerNum] = previousLS_X[playerNum] = 0.0f;
+								globalLS_Y[playerNum] = previousLS_Y[playerNum] = 0.0f;
+							}
 						} else if (InputDevice.getDevice(joys[i]).getName()
 								.equals("Sony PLAYSTATION(R)3 Controller")) {
 							map[playerNum] = new int[] {
@@ -324,7 +322,6 @@ public class GL2JNIActivity extends Activity {
 		// Create the actual GLES view
 		mView = new GL2JNIView(getApplication(), fileName, false, 24, 0, false);
 		setContentView(mView);
-		moga.setGL2View(mView);
 
 		Toast.makeText(getApplicationContext(),
 				"Press the back button for a menu", Toast.LENGTH_SHORT).show();
@@ -332,11 +329,8 @@ public class GL2JNIActivity extends Activity {
 	
 	private void runCompatibilityMode() {
 		for (int n = 0; n < 4; n++) {
-			String[] players = getResources().getStringArray(R.array.controllers);
-			String id = "_" + players[n].substring(
-					players[n].lastIndexOf(" ") + 1, players[n].length());
-			if (prefs.getBoolean("controller_compat" + id, false)) {
-				getCompatibilityMap(n, id);
+			if (compat[n]) {
+				getCompatibilityMap(n, portId[n]);
 			}
 		}
 	}
@@ -345,17 +339,15 @@ public class GL2JNIActivity extends Activity {
 		name[playerNum] = prefs.getInt("controller" + id, -1);
 		if (name[playerNum] != -1) {
 			map[playerNum] = setModifiedKeys(playerNum);
-			custom[playerNum] = true;
 		}
-
-		globalLS_X[playerNum] = previousLS_X[playerNum] = 0.0f;
-		globalLS_Y[playerNum] = previousLS_Y[playerNum] = 0.0f;
+		if (jsCompat[playerNum]) {
+			globalLS_X[playerNum] = previousLS_X[playerNum] = 0.0f;
+			globalLS_Y[playerNum] = previousLS_Y[playerNum] = 0.0f;
+		}
 	}
 
 	private int[] setModifiedKeys(int player) {
-		String[] players = getResources().getStringArray(R.array.controllers);
-		String id = "_" + players[player].substring(
-				players[player].lastIndexOf(" ") + 1, players[player].length());
+		String id = portId[player];
 		return new int[] { 
 			prefs.getInt("a_button" + id, OuyaController.BUTTON_O), key_CONT_A, 
 			prefs.getInt("b_button" + id, OuyaController.BUTTON_A), key_CONT_B,
@@ -378,13 +370,18 @@ public class GL2JNIActivity extends Activity {
 
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
 
-			Integer playerNum = deviceDescriptor_PlayerNum
+			Integer playerNum = Arrays.asList(name).indexOf(event.getDeviceId());
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD && playerNum == -1) {
+				playerNum = deviceDescriptor_PlayerNum
 					.get(deviceId_deviceDescriptor.get(event.getDeviceId()));
+			} else {
+				playerNum = -1;
+			}
 
-			if (playerNum == null)
+			if (playerNum == null || playerNum == -1)
 				return false;
 
-			if (!moga.isActive[playerNum] && !custom[playerNum]) {
+			if (!moga.isActive[playerNum] || compat[playerNum]) {
 				// TODO: Moga should handle this locally
 
 				// Joystick
@@ -398,7 +395,7 @@ public class GL2JNIActivity extends Activity {
 					float L2 = event.getAxisValue(OuyaController.AXIS_L2);
 					float R2 = event.getAxisValue(OuyaController.AXIS_R2);
 
-					if (custom[playerNum] || xbox[playerNum] || nVidia[playerNum]) {
+					if (jsCompat[playerNum] || xbox[playerNum] || nVidia[playerNum]) {
 						previousLS_X[playerNum] = globalLS_X[playerNum];
 						previousLS_Y[playerNum] = globalLS_Y[playerNum];
 						globalLS_X[playerNum] = LS_X;
@@ -414,7 +411,7 @@ public class GL2JNIActivity extends Activity {
 
 			}
 
-			if ((custom[playerNum] || xbox[playerNum] || nVidia[playerNum])
+			if ((jsCompat[playerNum] || xbox[playerNum] || nVidia[playerNum])
 					&& ((globalLS_X[playerNum] == previousLS_X[playerNum] && globalLS_Y[playerNum] == previousLS_Y[playerNum]) || (previousLS_X[playerNum] == 0.0f && previousLS_Y[playerNum] == 0.0f)))
 				// Only handle Left Stick on an Xbox 360 controller if there was
 				// some actual motion on the stick,
@@ -522,11 +519,8 @@ public class GL2JNIActivity extends Activity {
 		}
 		
 		if (playerNum != null && playerNum != -1) {
-			String[] players = getResources().getStringArray(R.array.controllers);
-			String id = "_" + players[playerNum].substring(
-					players[playerNum].lastIndexOf(" ") + 1, players[playerNum].length());
-			boolean compat = prefs.getBoolean("controller_compat" + id, false);
-			if (compat || custom[playerNum]) {
+			String id = portId[playerNum];
+			if (custom[playerNum]) {
 				if (keyCode == prefs.getInt("l_button" + id, OuyaController.BUTTON_L1)) {
 					GL2JNIView.lt[playerNum] = (int) (0.5 * 255);
 					GL2JNIView.lt[playerNum] = (int) (1.0 * 255);

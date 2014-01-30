@@ -34,9 +34,9 @@ import android.os.Parcelable;
 import android.preference.Preference;
 import android.util.AttributeSet;
 import android.view.View;
+import android.widget.TextView;
 //import android.view.accessibility.AccessibilityEvent;
 //import android.view.accessibility.AccessibilityManager;
-import android.widget.TextView;
 
 /**
  * Common base class for preferences that have two selectable states, persist a

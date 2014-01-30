@@ -1,8 +1,5 @@
 package de.ankri.views;
 
-import com.reicast.emulator.R;
-import de.ankri.text.method.AllCapsTransformationMethod;
-import de.ankri.text.method.TransformationMethodCompat2;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.ColorStateList;
@@ -25,6 +22,11 @@ import android.view.VelocityTracker;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.widget.CompoundButton;
+
+import com.reicast.emulator.R;
+
+import de.ankri.text.method.AllCapsTransformationMethod;
+import de.ankri.text.method.TransformationMethodCompat2;
 
 /**
  * A Switch is a two-state toggle switch widget that can select between two options. The user may drag the "thumb" back and forth to choose the selected option, or simply tap to toggle as if it were a

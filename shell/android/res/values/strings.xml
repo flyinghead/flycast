@@ -16,6 +16,7 @@
     <string name="folder_bios">BOOT BIOS</string>
     <string name="folder_select">SELECT CURRENT FOLDER</string>
 
+    <string name="experimental_opts">Experimental (May cause widespread panic)</string>
     <string name="select_dynarec">Dynarec Options</string>
     <string name="select_unstable">Unstable Optimisations</string>
     <string name="select_region">DC Region</string>
@@ -44,6 +45,7 @@
     <string name="controller_already_in_use">This controller is already in use!</string>
     <string name="modified_layout">Enable Custom Key Layout</string>
     <string name="controller_compat">Enable Compatibility Mode</string>
+    <string name="dpad_joystick">Joystick Uses DPAD Layout</string>
     
     <string name="customize_physical_controls">Customize Physical Controls</string>
     <string name="map_keycode_title">Modify Controller</string>
@@ -52,8 +54,10 @@
     <string name="moga_pro_connect">MOGA Pro Connected!</string>
     <string name="moga_connect">MOGA Connected!</string>
 
-    <string name="about_title">About reicast</string>
     <string name="about_text">reicast is a dreamcast emulator\n\nVersion: %1$s</string>
+    <string name="app_site">Homepage: http://reicast.com</string>
+    <string name="beta_site">Betas: http://reicast.loungekatt.com</string>
+    <string name="git_api">https://api.github.com/repos/NoblesseOblige/reicast-emulator/commits</string>
     
     <string-array name="controllers">
     <item>Controller A</item>
@@ -69,10 +73,10 @@
     </string-array>
     
     <string-array name="region">
-        <item></item>
-        <item></item>
-        <item></item>
-        <item>(Default)</item>
+        <item>E - United States</item>
+        <item>J - Japanese</item>
+        <item>U - European</item>
+        <item>R - Region Free</item>
     </string-array>
 
     <string name="drawer_open">Slider Menu Opened</string>
@@ -104,6 +108,8 @@
     
     <string name="textOn">ON</string>
     <string name="textOff">OFF</string>
+    
+    <string name="platform">Identified %1$s</string>
 
     <string name="menu_debug">Save Error Logs</string>
 

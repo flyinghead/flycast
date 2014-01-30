@@ -51,7 +51,6 @@
     <string name="moga_pro_connect">MOGAプロ接続!</string>
     <string name="moga_connect">MOGA接続!</string>
 
-    <string name="about_title">reicastについて</string>
     <string name="about_text">reicastはドリームキャストエミュレータです\n\nバージョン: %1$s</string>
     
     <string-array name="controllers">

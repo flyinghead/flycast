@@ -3,7 +3,6 @@ package com.reicast.emulator;
 import java.io.IOException;
 import java.io.InputStream;
 
-import de.ankri.views.Switch;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -14,7 +13,6 @@ import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
@@ -23,14 +21,15 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CompoundButton;
+import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.TextView;
-import android.widget.AdapterView.OnItemSelectedListener;
-import android.widget.CompoundButton.OnCheckedChangeListener;
+import de.ankri.views.Switch;
 
 public class InputModFragment extends Fragment {
 
@@ -40,6 +39,7 @@ public class InputModFragment extends Fragment {
 	private Switch switchCompatibilityEnabled;
 	private String player = "_A";
 	private int sS = 2;
+	private int playerNum = -1;
 
 	// Container Activity must implement this interface
 	public interface OnClickListener {
@@ -62,8 +62,13 @@ public class InputModFragment extends Fragment {
 
 		mPrefs = PreferenceManager.getDefaultSharedPreferences(parentActivity);
 
-		String[] controllers = parentActivity.getResources().getStringArray(
+		final String[] controllers = parentActivity.getResources().getStringArray(
 				R.array.controllers);
+		
+		Bundle b = getArguments();
+		if (b != null) {
+			playerNum = b.getInt("portNumber", -1);
+		}
 
 		Spinner player_spnr = (Spinner) getView().findViewById(
 				R.id.player_spinner);
@@ -73,7 +78,9 @@ public class InputModFragment extends Fragment {
 		playerAdapter
 				.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		player_spnr.setAdapter(playerAdapter);
-
+		if (playerNum != -1) {
+			player_spnr.setSelection(playerNum, true);
+		}
 		player_spnr.setOnItemSelectedListener(new OnItemSelectedListener() {
 
 			public void onItemSelected(AdapterView<?> parent, View view,
@@ -85,7 +92,9 @@ public class InputModFragment extends Fragment {
 			}
 
 			public void onNothingSelected(AdapterView<?> arg0) {
-				player = "_A";
+				if (playerNum != -1) {
+					player = controllers[playerNum];	
+				}
 			}
 
 		});
@@ -133,6 +142,7 @@ public class InputModFragment extends Fragment {
 		a_button_icon.setImageDrawable(getButtonImage(448 / sS, 0));
 		final TextView a_button_text = (TextView) getView().findViewById(
 				R.id.a_button_key);
+		getKeyCode("a_button", a_button_text);
 		Button a_button = (Button) getView().findViewById(R.id.a_button_edit);
 		a_button.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
@@ -260,6 +270,25 @@ public class InputModFragment extends Fragment {
 		joystick.setEnabled(false);
 		mPrefs.edit().remove("joystick").commit();
 		// Still needs better support for identifying the entire stick
+		
+		OnCheckedChangeListener dpad_joystick = new OnCheckedChangeListener() {
+			public void onCheckedChanged(CompoundButton buttonView,
+					boolean isChecked) {
+				mPrefs.edit()
+						.putBoolean("dpad_js_layout" + player, isChecked)
+						.commit();
+			}
+		};
+		Switch dpad_js_layout = (Switch) getView().findViewById(
+				R.id.dpad_js_layout);
+		boolean joypad = mPrefs.getBoolean("dpad_js_layout" + player,
+				false);
+		if (joypad) {
+			dpad_js_layout.setChecked(true);
+		} else {
+			dpad_js_layout.setChecked(false);
+		}
+		dpad_js_layout.setOnCheckedChangeListener(dpad_joystick);
 
 		final TextView dpad_up_text = (TextView) getView().findViewById(
 				R.id.dpad_up_key);

@@ -32,6 +32,10 @@ ndk-build -j 4
 ant debug
 ```
 
+Beta versions
+-------------------
+Compiled test versions are available at reicast.loungekatt.com
+
 Donations and stuff
 -------------------
 Well, glad you liked the project so far!

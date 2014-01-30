@@ -8,13 +8,14 @@ import javax.microedition.khronos.egl.EGLDisplay;
 import javax.microedition.khronos.opengles.GL10;
 
 import android.content.Context;
-import android.content.res.Configuration;
 import android.content.SharedPreferences;
+import android.content.res.Configuration;
 import android.graphics.PixelFormat;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
 import android.opengl.GLSurfaceView;
+import android.os.Build;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
 import android.util.Log;
@@ -209,17 +210,18 @@ class GL2JNIView extends GLSurfaceView
     this.editVjoyMode = editVjoyMode;
     setKeepScreenOn(true);
 
-    setOnSystemUiVisibilityChangeListener (new OnSystemUiVisibilityChangeListener() {
-      @Override
-      public void onSystemUiVisibilityChange(int visibility) {
-        if ((visibility & SYSTEM_UI_FLAG_FULLSCREEN) == 0) {
-          GL2JNIView.this.setSystemUiVisibility(
-            SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-            | SYSTEM_UI_FLAG_FULLSCREEN
-            | SYSTEM_UI_FLAG_HIDE_NAVIGATION);
-        }
-      }
-    });
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+		setOnSystemUiVisibilityChangeListener (new OnSystemUiVisibilityChangeListener() {
+			public void onSystemUiVisibilityChange(int visibility) {
+				if ((visibility & SYSTEM_UI_FLAG_FULLSCREEN) == 0) {
+					GL2JNIView.this.setSystemUiVisibility(
+							SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+							| SYSTEM_UI_FLAG_FULLSCREEN
+							| SYSTEM_UI_FLAG_HIDE_NAVIGATION);
+				}
+			}
+		});
+	}
 
     vib=(Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
     
