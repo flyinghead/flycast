@@ -51,7 +51,6 @@
     <string name="moga_pro_connect">Подключена MOGA Pro!</string>
     <string name="moga_connect">Подключена MOGA!</string>
 
-    <string name="about_title">О reicast</string>
     <string name="about_text">reicast эмулятор dreamcast\n\nВерсия: %1$s\n\n</string>
     
     <string-array name="controllers">
