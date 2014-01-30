@@ -17,11 +17,11 @@
     <string name="folder_select">SELECTIONNER LE DOSSIER ACTUEL</string>
 
     <string name="experimental_opts">Experimental (peut causer un crash)</string>
-    <string name="select_dynarec">Options du Dynarec</string>
+    <string name="select_dynarec">Dynarec</string>
     <string name="select_unstable">Optimisations instables</string>
     <string name="select_region">Région du bios</string>
     <string name="select_limitfps">Limiter le nombre de FPS</string>
-    <string name="select_mipmaps">Rendu Mipmaps (correction pour l\'ancien SGX540)</string>
+    <string name="select_mipmaps">Rendu Mipmaps (correctif pour l\'ancien SGX540)</string>
     <string name="select_stretch">Mode portrait (écran large)</string>
     <string name="set_frameskip">Valeur de saut des images</string>
     <string name="select_render">Rendu PVR (ne fonctionne pas pour le moment)</string>
@@ -41,11 +41,11 @@
     <string name="select">Choisir</string>
     <string name="remove">Supprimer</string>
     <string name="select_controller_title">Choisir manette</string>
-    <string name="select_controller_message">Pressez une touche de la manette %1$s pour attribuer</string>
+    <string name="select_controller_message">Pressez une touche de la manette %1$s pour attribuer le bouton</string>
     <string name="controller_already_in_use">Cette manette est déjà utilisé !</string>
     <string name="modified_layout">Activer la fonction de disposition des touches</string>
     <string name="controller_compat">Activer le mode de compatibilité</string>
-    <string name="dpad_joystick">Joystick utilisant la disposition du pad directionnel</string>
+    <string name="dpad_joystick">Le joystick doit utiliser la disposition du pad directionnel</string>
     
     <string name="customize_physical_controls">Customiser les touches physiques</string>
     <string name="map_keycode_title">Modifier la manette</string>
@@ -106,11 +106,11 @@
     <!-- Content Description -->
     <string name="desc_list_item_icon">Icône de l\'élément</string>
     
-    <string name="textOn">ALLUME</string>
-    <string name="textOff">ETEINT</string>
+    <string name="textOn">ACTIF</string>
+    <string name="textOff">DESACT.</string>
     
     <string name="platform">Identifié %1$s</string>
 
-    <string name="menu_debug">Sauvegarde des logs d\'erreurs</string>
+    <string name="menu_debug">Sauvegarder les logs d\'erreurs</string>
 
 </resources>
