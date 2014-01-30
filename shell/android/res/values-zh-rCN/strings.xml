@@ -1,7 +1,6 @@
 <resources>
 
     <string name="app_name">reicast</string>
-    <string name="hello_world">Hello world!</string>
     <string name="menu_settings">设置</string>
     <string name="title_activity_main">reicast</string>
     <string name="system_path">系统路径 (dc_boot.bin/dc_flash.bin 所在的路径)</string>
@@ -53,7 +52,6 @@
     <string name="moga_pro_connect">MOGA Pro已连接!</string>
     <string name="moga_connect">MOGA已连接</string>
 
-    <string name="about_title">关于 reicast</string>
     <string name="about_text">reicast是一款dreamcast模拟器 \n\n版本: %1$s</string>
     
     <string-array name="controllers">
