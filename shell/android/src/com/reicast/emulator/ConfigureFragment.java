@@ -449,6 +449,39 @@ public class ConfigureFragment extends Fragment {
 				log.append(separator);
 			}
 			reader.close();
+			mLogcatProc = null;
+			reader = null;
+			mLogcatProc = Runtime.getRuntime().exec(
+					new String[] { "logcat", "-d", "reidc:V *:S" });
+			reader = new BufferedReader(new InputStreamReader(
+					mLogcatProc.getInputStream()));
+			log.append(separator);
+			log.append(separator);
+			log.append("Native Interface Output");
+			log.append(separator);
+			log.append(separator);
+			while ((line = reader.readLine()) != null) {
+				log.append(line);
+				log.append(separator);
+			}
+			reader.close();
+			mLogcatProc = null;
+			reader = null;
+			mLogcatProc = Runtime.getRuntime().exec(
+					new String[] { "logcat", "-d", "newdc:V *:S" });
+			reader = new BufferedReader(new InputStreamReader(
+					mLogcatProc.getInputStream()));
+			log.append(separator);
+			log.append(separator);
+			log.append("Native Library Output");
+			log.append(separator);
+			log.append(separator);
+			while ((line = reader.readLine()) != null) {
+				log.append(line);
+				log.append(separator);
+			}
+			reader.close();
+			reader = null;
 			File file = new File(logOuput);
 			BufferedWriter writer = new BufferedWriter(new FileWriter(file));
 			writer.write(log.toString());

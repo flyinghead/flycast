@@ -67,20 +67,12 @@
         <item>(Default)</item>
     </string-array>
 
-    <string name="drawer_open">スライダーメニューがオープン</string>
-    <string name="drawer_close">スライダーメニューが休館</string>
-
-    <!-- Nav Drawer Menu Items -->
-    <string-array name="nav_drawer_items">
-        <item>ブラウザ</item>
-        <item>セッティング</item>
-        <item>パス</item>
-        <item>コントローラー</item>
-        <item>およそ</item>
-    </string-array>
-
-    <!-- Content Description -->
-    <string name="desc_list_item_icon">Icono Elemento</string>
+    <string name="browser">ブラウザ</string>
+    <string name="settings">セッティング</string>
+    <string name="paths">パス</string>
+    <string name="input">コントローラー</string>
+    <string name="about">およそ</string>
+    <string name="rateme">Rate Me</string>
     
     <string name="textOn">EN</string>
     <string name="textOff">OFF</string>

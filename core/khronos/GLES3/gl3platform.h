@@ -1,5 +1,5 @@
-#ifndef __gl2platform_h_
-#define __gl2platform_h_
+#ifndef __gl3platform_h_
+#define __gl3platform_h_
 
 /* $Revision: 23328 $ on $Date:: 2013-10-02 02:28:28 -0700 #$ */
 
@@ -8,7 +8,7 @@
  * 2.0. For details, see http://oss.sgi.com/projects/FreeB/ .
  */
 
-/* Platform-specific types and definitions for OpenGL ES 2.X  gl2.h
+/* Platform-specific types and definitions for OpenGL ES 3.X  gl3.h
  *
  * Adopters may modify khrplatform.h and this file to suit their platform.
  * You are encouraged to submit all modifications to the Khronos group so that
@@ -27,4 +27,4 @@
 #define GL_APIENTRY KHRONOS_APIENTRY
 #endif
 
-#endif /* __gl2platform_h_ */
+#endif /* __gl3platform_h_ */

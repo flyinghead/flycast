@@ -14,6 +14,8 @@ import android.graphics.PixelFormat;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
+import android.opengl.EGL14;
+import android.opengl.EGLExt;
 import android.opengl.GLSurfaceView;
 import android.os.Build;
 import android.os.Vibrator;
@@ -35,7 +37,7 @@ import android.view.ScaleGestureDetector.SimpleOnScaleGestureListener;
  * - The class must use a custom EGLConfigChooser to be able to select
  *   an EGLConfig that supports 2.0. This is done by providing a config
  *   specification to eglChooseConfig() that has the attribute
- *   EGL10.ELG_RENDERABLE_TYPE containing the EGL_OPENGL_ES2_BIT flag
+ *   EGL14.ELG_RENDERABLE_TYPE containing the EGL_OPENGL_ES2_BIT flag
  *   set. See ConfigChooser class definition below.
  *
  * - The class must select the surface's format, then choose an EGLConfig
@@ -635,7 +637,7 @@ private static class ContextFactory implements GLSurfaceView.EGLContextFactory
 
     public EGLContext createContext(EGL10 egl,EGLDisplay display,EGLConfig eglConfig)
     {
-      int[] attrList = { EGL_CONTEXT_CLIENT_VERSION, 2, EGL10.EGL_NONE };
+      int[] attrList = { EGL_CONTEXT_CLIENT_VERSION, 2, EGL14.EGL_NONE };
 
       LOGI("Creating OpenGL ES 2.0 context");
 
@@ -656,7 +658,7 @@ private static class ContextFactory implements GLSurfaceView.EGLContextFactory
   {
     int error;
 
-    while((error=egl.eglGetError()) != EGL10.EGL_SUCCESS)
+    while((error=egl.eglGetError()) != EGL14.EGL_SUCCESS)
       LOGE(String.format("%s: EGL error: 0x%x",prompt,error));
   }
 
@@ -681,69 +683,96 @@ private static class ContextFactory implements GLSurfaceView.EGLContextFactory
       mStencilSize = stencil;
     }
 
-    // This EGL config specification is used to specify 2.0 rendering.
-    // We use a minimum size of 4 bits for red/green/blue, but will
-    // perform actual matching in chooseConfig() below.
-    private static final int EGL_OPENGL_ES2_BIT = 4;
-    private static final int[] cfgAttrs =
-    {
-      EGL10.EGL_RED_SIZE,        4,
-      EGL10.EGL_GREEN_SIZE,      4,
-      EGL10.EGL_BLUE_SIZE,       4,
-      EGL10.EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
-      EGL10.EGL_DEPTH_SIZE,      24,
-      EGL10.EGL_NONE
-    };
+    public EGLConfig chooseConfig(EGL10 egl, EGLDisplay display) {
+    	mValue = new int[1];
 
-    public EGLConfig chooseConfig(EGL10 egl,EGLDisplay display)
-    {
-      // Get the number of minimally matching EGL configurations
-      int[] cfgCount = new int[1];
-      egl.eglChooseConfig(display,cfgAttrs,null,0,cfgCount);
+        int glAPIToTry;
 
-      if(cfgCount[0]<=0)
-      {
-        cfgAttrs[9]=16;
-        egl.eglChooseConfig(display,cfgAttrs,null,0,cfgCount);
-      }
-
-
-      if(cfgCount[0]<=0)
-        throw new IllegalArgumentException("No configs match configSpec");
-
-      // Allocate then read the array of minimally matching EGL configs
-      EGLConfig[] configs = new EGLConfig[cfgCount[0]];
-      egl.eglChooseConfig(display,cfgAttrs,configs,cfgCount[0],cfgCount);
-      
-      if(DEBUG)
-        printConfigs(egl,display,configs);
-
-      // Now return the "best" one
-      return(chooseConfig(egl,display,configs));
-    }
-
-    public EGLConfig chooseConfig(EGL10 egl,EGLDisplay display,EGLConfig[] configs)
-    {
-      for(EGLConfig config : configs)
-      {
-        int d = findConfigAttrib(egl,display,config,EGL10.EGL_DEPTH_SIZE,0);
-        int s = findConfigAttrib(egl,display,config,EGL10.EGL_STENCIL_SIZE,0);
-
-        // We need at least mDepthSize and mStencilSize bits
-        if(d>=mDepthSize || s>=mStencilSize)
-        {
-          // We want an *exact* match for red/green/blue/alpha
-          int r = findConfigAttrib(egl,display,config,EGL10.EGL_RED_SIZE,  0);
-          int g = findConfigAttrib(egl,display,config,EGL10.EGL_GREEN_SIZE,0);
-          int b = findConfigAttrib(egl,display,config,EGL10.EGL_BLUE_SIZE, 0);
-          int a = findConfigAttrib(egl,display,config,EGL10.EGL_ALPHA_SIZE,0);
-
-          if(r==mRedSize && g==mGreenSize && b==mBlueSize && a==mAlphaSize)
-            return(config);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            glAPIToTry = EGLExt.EGL_OPENGL_ES3_BIT_KHR;
+        } else {
+            glAPIToTry = EGL14.EGL_OPENGL_ES2_BIT;
         }
-      }
 
-      return(null);
+        int numConfigs = 0;
+        int[] configSpec = null;
+
+        do {
+        	EGL14.eglBindAPI(glAPIToTry);
+
+        	int renderableType;
+        	if (glAPIToTry == EGLExt.EGL_OPENGL_ES3_BIT_KHR) {
+        		renderableType = EGLExt.EGL_OPENGL_ES3_BIT_KHR;
+        		// If this API does not work, try ES2 next.
+        		glAPIToTry = EGL14.EGL_OPENGL_ES2_BIT;
+        	} else {
+        		renderableType = EGL14.EGL_OPENGL_ES2_BIT;
+        		// If this API does not work, try ES next.
+        		glAPIToTry = EGL14.EGL_OPENGL_ES_API;
+        	}
+
+        	configSpec = new int[] { 
+        			EGL14.EGL_RED_SIZE, 4,
+        			EGL14.EGL_GREEN_SIZE, 4, 
+        			EGL14.EGL_BLUE_SIZE, 4,
+        			EGL14.EGL_RENDERABLE_TYPE, renderableType,
+        			EGL14.EGL_DEPTH_SIZE, 24,
+        			EGL14.EGL_NONE
+        	};
+
+        	if (!egl.eglChooseConfig(display, configSpec, null, 0, mValue)) {
+        		configSpec[9] = 16;
+        		if (!egl.eglChooseConfig(display, configSpec, null, 0, mValue)) {
+        			throw new IllegalArgumentException("Could not get context count");
+        		}
+        	}
+
+        	numConfigs = mValue[0];
+
+        } while (glAPIToTry != EGL14.EGL_OPENGL_ES_API && numConfigs == 0);
+
+        if (numConfigs <= 0) {
+            throw new IllegalArgumentException("No configs match configSpec");
+        }
+
+        // Get all matching configurations.
+        EGLConfig[] configs = new EGLConfig[numConfigs];
+        if (DEBUG)
+        	LOGW(String.format("%d configurations", configs.length));
+        if (!egl.eglChooseConfig(display, configSpec, configs, numConfigs, mValue)) {
+            throw new IllegalArgumentException("Could not get config data");
+        }
+
+        for (int i = 0; i < configs.length; ++i) {
+            EGLConfig config = configs[i];
+            int d = findConfigAttrib(egl, display, config,
+					EGL14.EGL_DEPTH_SIZE, 0);
+			int s = findConfigAttrib(egl, display, config,
+					EGL14.EGL_STENCIL_SIZE, 0);
+
+			// We need at least mDepthSize and mStencilSize bits
+			if (d >= mDepthSize || s >= mStencilSize) {
+				// We want an *exact* match for red/green/blue/alpha
+				int r = findConfigAttrib(egl, display, config,
+						EGL14.EGL_RED_SIZE, 0);
+				int g = findConfigAttrib(egl, display, config,
+						EGL14.EGL_GREEN_SIZE, 0);
+				int b = findConfigAttrib(egl, display, config,
+						EGL14.EGL_BLUE_SIZE, 0);
+				int a = findConfigAttrib(egl, display, config,
+						EGL14.EGL_ALPHA_SIZE, 0);
+
+				if (r == mRedSize && g == mGreenSize && b == mBlueSize
+						&& a == mAlphaSize)
+					if (DEBUG) {
+						LOGW(String.format("Configuration %d:", i));
+						printConfig(egl, display, configs[i]);
+					}
+					return config;
+			}
+        }
+
+        throw new IllegalArgumentException("Could not find suitable EGL config");
     }
 
     private int findConfigAttrib(EGL10 egl,EGLDisplay display,EGLConfig config,int attribute,int defaultValue)
@@ -766,39 +795,39 @@ private static class ContextFactory implements GLSurfaceView.EGLContextFactory
     {
       final int[] attributes =
       {
-        EGL10.EGL_BUFFER_SIZE,
-        EGL10.EGL_ALPHA_SIZE,
-        EGL10.EGL_BLUE_SIZE,
-        EGL10.EGL_GREEN_SIZE,
-        EGL10.EGL_RED_SIZE,
-        EGL10.EGL_DEPTH_SIZE,
-        EGL10.EGL_STENCIL_SIZE,
-        EGL10.EGL_CONFIG_CAVEAT,
-        EGL10.EGL_CONFIG_ID,
-        EGL10.EGL_LEVEL,
-        EGL10.EGL_MAX_PBUFFER_HEIGHT,
-        EGL10.EGL_MAX_PBUFFER_PIXELS,
-        EGL10.EGL_MAX_PBUFFER_WIDTH,
-        EGL10.EGL_NATIVE_RENDERABLE,
-        EGL10.EGL_NATIVE_VISUAL_ID,
-        EGL10.EGL_NATIVE_VISUAL_TYPE,
-        0x3030, // EGL10.EGL_PRESERVED_RESOURCES,
-        EGL10.EGL_SAMPLES,
-        EGL10.EGL_SAMPLE_BUFFERS,
-        EGL10.EGL_SURFACE_TYPE,
-        EGL10.EGL_TRANSPARENT_TYPE,
-        EGL10.EGL_TRANSPARENT_RED_VALUE,
-        EGL10.EGL_TRANSPARENT_GREEN_VALUE,
-        EGL10.EGL_TRANSPARENT_BLUE_VALUE,
-        0x3039, // EGL10.EGL_BIND_TO_TEXTURE_RGB,
-        0x303A, // EGL10.EGL_BIND_TO_TEXTURE_RGBA,
-        0x303B, // EGL10.EGL_MIN_SWAP_INTERVAL,
-        0x303C, // EGL10.EGL_MAX_SWAP_INTERVAL,
-        EGL10.EGL_LUMINANCE_SIZE,
-        EGL10.EGL_ALPHA_MASK_SIZE,
-        EGL10.EGL_COLOR_BUFFER_TYPE,
-        EGL10.EGL_RENDERABLE_TYPE,
-        0x3042 // EGL10.EGL_CONFORMANT
+        EGL14.EGL_BUFFER_SIZE,
+        EGL14.EGL_ALPHA_SIZE,
+        EGL14.EGL_BLUE_SIZE,
+        EGL14.EGL_GREEN_SIZE,
+        EGL14.EGL_RED_SIZE,
+        EGL14.EGL_DEPTH_SIZE,
+        EGL14.EGL_STENCIL_SIZE,
+        EGL14.EGL_CONFIG_CAVEAT,
+        EGL14.EGL_CONFIG_ID,
+        EGL14.EGL_LEVEL,
+        EGL14.EGL_MAX_PBUFFER_HEIGHT,
+        EGL14.EGL_MAX_PBUFFER_PIXELS,
+        EGL14.EGL_MAX_PBUFFER_WIDTH,
+        EGL14.EGL_NATIVE_RENDERABLE,
+        EGL14.EGL_NATIVE_VISUAL_ID,
+        EGL14.EGL_NATIVE_VISUAL_TYPE,
+        0x3030, // EGL14.EGL_PRESERVED_RESOURCES,
+        EGL14.EGL_SAMPLES,
+        EGL14.EGL_SAMPLE_BUFFERS,
+        EGL14.EGL_SURFACE_TYPE,
+        EGL14.EGL_TRANSPARENT_TYPE,
+        EGL14.EGL_TRANSPARENT_RED_VALUE,
+        EGL14.EGL_TRANSPARENT_GREEN_VALUE,
+        EGL14.EGL_TRANSPARENT_BLUE_VALUE,
+        0x3039, // EGL14.EGL_BIND_TO_TEXTURE_RGB,
+        0x303A, // EGL14.EGL_BIND_TO_TEXTURE_RGBA,
+        0x303B, // EGL14.EGL_MIN_SWAP_INTERVAL,
+        0x303C, // EGL14.EGL_MAX_SWAP_INTERVAL,
+        EGL14.EGL_LUMINANCE_SIZE,
+        EGL14.EGL_ALPHA_MASK_SIZE,
+        EGL14.EGL_COLOR_BUFFER_TYPE,
+        EGL14.EGL_RENDERABLE_TYPE,
+        0x3042 // EGL14.EGL_CONFORMANT
       };
 
       final String[] names =
@@ -844,7 +873,7 @@ private static class ContextFactory implements GLSurfaceView.EGLContextFactory
         if(egl.eglGetConfigAttrib(display,config,attributes[i],value))
           LOGI(String.format("  %s: %d\n",names[i],value[0]));
         else
-          while(egl.eglGetError()!=EGL10.EGL_SUCCESS);
+          while(egl.eglGetError()!=EGL14.EGL_SUCCESS);
     }
   }
 

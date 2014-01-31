@@ -68,11 +68,12 @@
         <item>(Default)</item>
     </string-array>
 
-    <string name="drawer_open">Slider Menu Opened</string>
-    <string name="drawer_close">Slider Menu Closed</string>
-
-    <!-- Content Description -->
-    <string name="desc_list_item_icon">Item Icon</string>
+	<string name="browser">Explorar</string>
+    <string name="settings">Configurações</string>
+    <string name="paths">Pastas</string>
+    <string name="input">Entrada</string>
+    <string name="about">Sobre</string>
+    <string name="rateme">Avaliar</string>
     
     <string name="textOn">ON</string>
     <string name="textOff">OFF</string>

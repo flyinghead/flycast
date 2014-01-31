@@ -32,8 +32,14 @@ ndk-build -j 4
 ant debug
 ```
 
+Translations
+------------
+New and updated translations are always appreciated!
+All we ask is that you not use “regional” phrases that may not be generally understood.
+
+>>>>>>> dea890e... Update README to include information about translating
 Beta versions
--------------------
+-------------
 Compiled test versions are available at reicast.loungekatt.com
 
 Donations and stuff
@@ -63,6 +69,13 @@ works of multiple people. It would be extremely unfair to charge for it and get 
 
 
 We're planning for an indiegogo campaign later on to help with sustained development and running costs, so follow @reicastdc on twitter for updates
+
+Other Testing
+-------------
+These devices are tested by contributors regularly
+* Nvidia Shield
+* Nexus 5 / 7
+* Xperia Play
 
 
 Team

@@ -61,20 +61,13 @@
         <item>(Padrão)</item>
     </string-array>
 
-    <string name="drawer_open">menu Aberto</string>
-    <string name="drawer_close">menu Fechado</string>
-    <!-- Nav gaveta itens de menu -->
-    <string-array name="nav_drawer_items">
-        <item>Explorar</item>
-        <item>Configurações</item>
-        <item>Pastas</item>
-        <item>Entrada</item>
-        <item>Sobre</item>
-        <item>Avaliar</item>
-    </string-array>
+    <string name="browser">Explorar</string>
+    <string name="settings">Configurações</string>
+    <string name="paths">Pastas</string>
+    <string name="input">Entrada</string>
+    <string name="about">Sobre</string>
+    <string name="rateme">Avaliar</string>
 
-    <!-- Conteúdo Descrição -->
-    <string name="desc_list_item_icon">Ícone do Item</string>
     <string name="textOn">ON</string>
     <string name="textOff">OFF</string>
     <string name="menu_debug">Salvar logs de erros</string>

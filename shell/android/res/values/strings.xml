@@ -78,33 +78,13 @@
         <item>U - European</item>
         <item>R - Region Free</item>
     </string-array>
-
-    <string name="drawer_open">Slider Menu Opened</string>
-    <string name="drawer_close">Slider Menu Closed</string>
-
-    <!-- Nav Drawer Menu Items -->
-    <string-array name="nav_drawer_items">
-        <item>Browser</item>
-        <item>Settings</item>
-        <item>Paths</item>
-        <item>Input</item>
-        <item>About</item>
-        <item>Rate Me</item>
-    </string-array>
-
-    <!-- Nav Drawer List Item Icons -->
-    <!-- Matched to Nav Drawer Menu Items -->
-    <array name="nav_drawer_icons">
-        <item>@drawable/disk_unknown</item>
-        <item>@drawable/config</item>
-        <item>@drawable/open_folder</item>
-        <item>@drawable/input</item>
-        <item>@drawable/question</item>
-        <item>@drawable/star</item>
-    </array>
-
-    <!-- Content Description -->
-    <string name="desc_list_item_icon">Item Icon</string>
+    
+    <string name="browser">Broswer</string>
+    <string name="settings">Settings</string>
+    <string name="paths">Paths</string>
+    <string name="input">Input</string>
+    <string name="about">About</string>
+    <string name="rateme">Rate Me</string>
     
     <string name="textOn">ON</string>
     <string name="textOff">OFF</string>

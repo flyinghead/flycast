@@ -67,21 +67,12 @@
         <item>(По умолчанию)</item>
     </string-array>
 
-    <string name="drawer_open">Меню открыто</string>
-    <string name="drawer_close">Меню закрыто</string>
-
-    <!-- Nav Drawer Menu Items -->
-    <string-array name="nav_drawer_items">
-        <item>Обзор</item>
-        <item>Настройки</item>
-        <item>Папки</item>
-        <item>Управление</item>
-        <item>О программе</item>
-        <item>Поставить рейтинг</item>
-    </string-array>
-
-    <!-- Content Description -->
-    <string name="desc_list_item_icon">Иконка</string>
+    <string name="browser">Обзор</string>
+    <string name="settings">Настройки</string>
+    <string name="paths">Папки</string>
+    <string name="input">Управление</string>
+    <string name="about">О программе</string>
+    <string name="rateme">Поставить рейтинг</string>
     
     <string name="textOn">Вкл.</string>
     <string name="textOff">Выкл.</string>
