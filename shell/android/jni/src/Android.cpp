@@ -348,7 +348,7 @@ int get_mic_data(u8* buffer)
 {
 	jbyteArray jdata = (jbyteArray)jenv->CallObjectMethod(sipemu,getmicdata);
 	if(jdata==NULL){
-		//LOGW("get_mic_data NULL");
+		LOGW("get_mic_data NULL");
 		return 0;
 	}
 	jenv->GetByteArrayRegion(jdata, 0, SIZE_OF_MIC_DATA, (jbyte*)buffer);

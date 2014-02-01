@@ -781,7 +781,7 @@ struct maple_microphone: maple_base
 				{
 				case 0x01:
 				{
-					//LOGD("maple_microphone::dma MDCF_MICControl someone wants some data! (2nd word) %#010x\n", subcommand);
+					LOGI("maple_microphone::dma MDCF_MICControl someone wants some data! (2nd word) %#010x\n", subcommand);
 
 					w32(MFID_4_Mic);
 

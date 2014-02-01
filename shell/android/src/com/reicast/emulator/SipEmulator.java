@@ -75,7 +75,7 @@ public class SipEmulator extends Thread {
 	
 	public byte[] getData(){
 		//Log.d(TAG, "SipEmulator getData called");
-		//Log.d(TAG, "SipEmulator getData bytesReadBuffer size: "+bytesReadBuffer.size());
+		Log.d(TAG, "SipEmulator getData bytesReadBuffer size: "+bytesReadBuffer.size());
 		if(firstGet || bytesReadBuffer.size()>50){//50 blips is about 2 seconds!
 			firstGet = false;
 			return catchUp();
