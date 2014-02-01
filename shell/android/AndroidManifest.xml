@@ -15,7 +15,7 @@
 	<uses-feature android:glEsVersion="0x00020000" android:required="true" />
 	<uses-feature android:name="android.hardware.touchscreen" android:required="false"/>
 	<uses-feature android:name="android.hardware.microphone" android:required="false"/>
-  
+
     <application
         android:hardwareAccelerated="true"
         android:largeHeap="true" 
