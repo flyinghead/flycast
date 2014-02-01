@@ -54,6 +54,7 @@ bool gles_init();
 
 //extern cResetEvent rs,re;
 extern int screen_width,screen_height;
+extern bool micpluggedin;
 
 static u64 tvs_base;
 static char CurFileName[256];
@@ -214,6 +215,7 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_setupMic(JNIEnv *env,jobj
 {
 	sipemu = env->NewGlobalRef(sip);
 	getmicdata = env->GetMethodID(env->GetObjectClass(sipemu),"getData","()[B");	
+	micpluggedin = true;
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_stop(JNIEnv *env,jobject obj)
@@ -347,7 +349,7 @@ int get_mic_data(u8* buffer)
 {
 	jbyteArray jdata = (jbyteArray)jenv->CallObjectMethod(sipemu,getmicdata);
 	if(jdata==NULL){
-		LOGW("get_mic_data NULL");
+		//LOGW("get_mic_data NULL");
 		return 0;
 	}
 	jenv->GetByteArrayRegion(jdata, 0, SIZE_OF_MIC_DATA, (jbyte*)buffer);

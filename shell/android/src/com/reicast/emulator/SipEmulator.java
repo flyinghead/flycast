@@ -21,7 +21,7 @@ public class SipEmulator extends Thread {
 	private AudioRecord record;
 	private LinkedList<byte[]> bytesReadBuffer;
 	
-	private Thread recordThread;
+	//private Thread recordThread;
 	private boolean continueRecording;
 	private boolean firstGet;
 	
@@ -58,10 +58,10 @@ public class SipEmulator extends Thread {
 
 	
 	public void startRecording(){
+		Log.d(TAG, "SipEmulator startRecording called");
 		if(continueRecording){
 			return;
 		}
-		Log.d(TAG, "SipEmulator startRecording called");
 		record.startRecording();
 		continueRecording = true;
 		this.start();
@@ -75,7 +75,7 @@ public class SipEmulator extends Thread {
 	
 	public byte[] getData(){
 		//Log.d(TAG, "SipEmulator getData called");
-		Log.d(TAG, "SipEmulator getData bytesReadBuffer size: "+bytesReadBuffer.size());
+		//Log.d(TAG, "SipEmulator getData bytesReadBuffer size: "+bytesReadBuffer.size());
 		if(firstGet || bytesReadBuffer.size()>50){//50 blips is about 2 seconds!
 			firstGet = false;
 			return catchUp();

@@ -20,7 +20,6 @@ const char* maple_sega_mic_name = "MicDevice for Dreameye";
 const char* maple_sega_brand = "Produced By or Under License From SEGA ENTERPRISES,LTD.";
 
 #define HAS_VMU
-#define  LOGD(...)  __android_log_print(ANDROID_LOG_DEBUG, "maple_devs", __VA_ARGS__)
 
 enum MapleFunctionID
 {
@@ -671,7 +670,7 @@ struct maple_microphone: maple_base
 		switch (cmd)
 		{
 		case MDC_DeviceRequest:
-			LOGD("maple_microphone::dma MDC_DeviceRequest");
+			LOGI("maple_microphone::dma MDC_DeviceRequest");
 			//this was copied from the controller case with just the id and name replaced!
 
 			//caps
@@ -706,7 +705,7 @@ struct maple_microphone: maple_base
 
 		case MDCF_GetCondition:
 			{
-				LOGD("maple_microphone::dma MDCF_GetCondition");
+				LOGI("maple_microphone::dma MDCF_GetCondition");
 				//this was copied from the controller case with just the id replaced!
 
 				//PlainJoystickState pjs;
@@ -743,7 +742,7 @@ struct maple_microphone: maple_base
 
 		case MDC_DeviceReset:
 			//uhhh do nothing?
-			LOGD("maple_microphone::dma MDC_DeviceReset");
+			LOGI("maple_microphone::dma MDC_DeviceReset");
 			return MDRS_DeviceReply;
 
 		case MDCF_MICControl:
@@ -782,7 +781,7 @@ struct maple_microphone: maple_base
 				{
 				case 0x01:
 				{
-					LOGD("maple_microphone::dma MDCF_MICControl someone wants some data! (2nd word) %#010x\n", subcommand);
+					//LOGD("maple_microphone::dma MDCF_MICControl someone wants some data! (2nd word) %#010x\n", subcommand);
 
 					w32(MFID_4_Mic);
 
@@ -804,31 +803,31 @@ struct maple_microphone: maple_base
 					return MDRS_DataTransfer;
 				}
 				case 0x02:
-					LOGD("maple_microphone::dma MDCF_MICControl toggle recording %#010x\n",secondword);
+					LOGI("maple_microphone::dma MDCF_MICControl toggle recording %#010x\n",secondword);
 					//this is where i should start recording...
 
 					return MDRS_DeviceReply;
 				case 0x03:
-					LOGD("maple_microphone::dma MDCF_MICControl set gain %#010x\n",secondword);
+					LOGI("maple_microphone::dma MDCF_MICControl set gain %#010x\n",secondword);
 					return MDRS_DeviceReply;
 				case MDRE_TransminAgain:
-					LOGD("maple_microphone::dma MDCF_MICControl MDRE_TransminAgain");
+					LOGW("maple_microphone::dma MDCF_MICControl MDRE_TransminAgain");
 					//apparently this doesnt matter
 					//wptr(micdata, SIZE_OF_MIC_DATA);
 					return MDRS_DeviceReply;//MDRS_DataTransfer;
 				default:
-					LOGD("maple_microphone::dma UNHANDLED secondword %#010x\n",secondword);
+					LOGW("maple_microphone::dma UNHANDLED secondword %#010x\n",secondword);
 					break;
 				}
 			}
 			default:
-				LOGD("maple_microphone::dma UNHANDLED function %#010x\n",function);
+				LOGW("maple_microphone::dma UNHANDLED function %#010x\n",function);
 				break;
 			}
 		}
 
 		default:
-			LOGD("maple_microphone::dma UNHANDLED MAPLE COMMAND %d\n",cmd);
+			LOGW("maple_microphone::dma UNHANDLED MAPLE COMMAND %d\n",cmd);
 			return MDRE_UnknownFunction;
 		}
 	}	

@@ -39,6 +39,7 @@ public class InputFragment extends Fragment {
 	private AlertDialog alertDialogSelectController;
 	private SharedPreferences sharedPreferences;
 	private Switch switchTouchVibrationEnabled;
+	private Switch micPluggedIntoFirstController;
 	
 	public MOGAInput moga = new MOGAInput();
 
@@ -105,6 +106,16 @@ public class InputFragment extends Fragment {
 			switchTouchVibrationEnabled.setChecked(false);
 		}
 		switchTouchVibrationEnabled.setOnCheckedChangeListener(touch_vibration);
+		
+		micPluggedIntoFirstController = (Switch) getView().findViewById(
+				R.id.micInPort2);
+		boolean micPluggedIn = sharedPreferences.getBoolean("mic_plugged_in", false);
+		micPluggedIntoFirstController.setChecked(micPluggedIn);
+		micPluggedIntoFirstController.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+				sharedPreferences.edit().putBoolean("mic_plugged_in", isChecked).commit();
+			}
+		});
 		
 		Button buttonKeycodeEditor = (Button) getView().findViewById(
 				R.id.buttonKeycodeEditor);

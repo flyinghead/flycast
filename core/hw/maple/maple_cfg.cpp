@@ -27,6 +27,8 @@ extern u32 vks[4];
 extern s8 joyx[4],joyy[4];
 extern u8 rt[4],lt[4];
 
+bool micpluggedin = false;
+
 u8 GetBtFromSgn(s8 val)
 {
 	return val+128;
@@ -72,7 +74,15 @@ void mcfg_CreateDevices()
 
 	#ifdef HAS_VMU
 	mcfg_Create(MDT_SegaVMU,0,0);
-	mcfg_Create(MDT_Microphone,0,1);
+	if(micpluggedin){
+		LOGI("maple_cfg::mcfg_CreateDevices micpluggedin!");
+		mcfg_Create(MDT_Microphone,0,1);
+	}
+	else
+	{
+		LOGI("maple_cfg::mcfg_CreateDevices mic NOT plugged in");
+		mcfg_Create(MDT_SegaVMU,0,1);
+	}
 	#endif
 }
 
