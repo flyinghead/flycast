@@ -639,7 +639,7 @@ private static class ContextFactory implements GLSurfaceView.EGLContextFactory
     {
       int[] attrList = { EGL_CONTEXT_CLIENT_VERSION, 2, EGL14.EGL_NONE };
 
-      LOGI("Creating OpenGL ES 2.0 context");
+      LOGI("Creating OpenGL ES X context");
 
       checkEglError("Before eglCreateContext",egl);
       EGLContext context = egl.eglCreateContext(display,eglConfig,EGL10.EGL_NO_CONTEXT,attrList);
@@ -649,7 +649,7 @@ private static class ContextFactory implements GLSurfaceView.EGLContextFactory
 
     public void destroyContext(EGL10 egl,EGLDisplay display,EGLContext context)
     {
-      LOGI("Destroying OpenGL ES 2.0 context");
+      LOGI("Destroying OpenGL ES X context");
       egl.eglDestroyContext(display,context);
     }
   }

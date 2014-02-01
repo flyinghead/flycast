@@ -441,7 +441,7 @@ public class ConfigureFragment extends Fragment {
 					mLogcatProc.getInputStream()));
 			log.append(separator);
 			log.append(separator);
-			log.append("Application ID Output");
+			log.append("Application Output");
 			log.append(separator);
 			log.append(separator);
 			while ((line = reader.readLine()) != null) {
@@ -458,6 +458,22 @@ public class ConfigureFragment extends Fragment {
 			log.append(separator);
 			log.append(separator);
 			log.append("Native Interface Output");
+			log.append(separator);
+			log.append(separator);
+			while ((line = reader.readLine()) != null) {
+				log.append(line);
+				log.append(separator);
+			}
+			reader.close();
+			mLogcatProc = null;
+			reader = null;
+			mLogcatProc = Runtime.getRuntime().exec(
+					new String[] { "logcat", "-d", "GL2JNIView:E *:S" });
+			reader = new BufferedReader(new InputStreamReader(
+					mLogcatProc.getInputStream()));
+			log.append(separator);
+			log.append(separator);
+			log.append("Open GLES View Output");
 			log.append(separator);
 			log.append(separator);
 			while ((line = reader.readLine()) != null) {
