@@ -313,14 +313,6 @@ public class GL2JNIActivity extends Activity {
 		} else {
 			runCompatibilityMode();
 		}
-		
-		//setup mic
-		boolean micPluggedIn = prefs.getBoolean("mic_plugged_in", false);
-		if(micPluggedIn){
-			SipEmulator sip = new SipEmulator();
-			sip.startRecording();
-			JNIdc.setupMic(sip);
-		}
 
 		// When viewing a resource, pass its URI to the native code for opening
 		Intent intent = getIntent();
@@ -334,6 +326,13 @@ public class GL2JNIActivity extends Activity {
 		Toast.makeText(getApplicationContext(),
 				"Press the back button for a menu", Toast.LENGTH_SHORT).show();
 
+		//setup mic
+		boolean micPluggedIn = prefs.getBoolean("mic_plugged_in", false);
+		if(micPluggedIn){
+			SipEmulator sip = new SipEmulator();
+			sip.startRecording();
+			JNIdc.setupMic(sip);
+		}
 	}
 	
 	private void runCompatibilityMode() {
