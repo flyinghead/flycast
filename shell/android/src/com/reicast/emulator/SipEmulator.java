@@ -1,6 +1,7 @@
 package com.reicast.emulator;
 
 import java.util.LinkedList;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import android.media.AudioFormat;
 import android.media.AudioRecord;
@@ -19,9 +20,8 @@ public class SipEmulator extends Thread {
 	static final int ONE_BLIP_SIZE = 480; //ALSO DEFINED IN maple_devs.h
 	
 	private AudioRecord record;
-	private LinkedList<byte[]> bytesReadBuffer;
+	private ConcurrentLinkedQueue<byte[]> bytesReadBuffer;
 	
-	//private Thread recordThread;
 	private boolean continueRecording;
 	private boolean firstGet;
 	
@@ -50,7 +50,7 @@ public class SipEmulator extends Thread {
 				AudioFormat.ENCODING_PCM_16BIT, 
 				BUFFER_SIZE);
 		
-		bytesReadBuffer = new LinkedList<byte[]>();
+		bytesReadBuffer = new ConcurrentLinkedQueue<byte[]>();
 		
 		continueRecording = false;
 		firstGet = true;
@@ -75,7 +75,7 @@ public class SipEmulator extends Thread {
 	
 	public byte[] getData(){
 		//Log.d(TAG, "SipEmulator getData called");
-		Log.d(TAG, "SipEmulator getData bytesReadBuffer size: "+bytesReadBuffer.size());
+		//Log.d(TAG, "SipEmulator getData bytesReadBuffer size: "+bytesReadBuffer.size());
 		if(firstGet || bytesReadBuffer.size()>50){//50 blips is about 2 seconds!
 			firstGet = false;
 			return catchUp();
@@ -85,7 +85,7 @@ public class SipEmulator extends Thread {
 	
 	private byte[] catchUp(){
 		Log.d(TAG, "SipEmulator catchUp");
-		byte[] last = bytesReadBuffer.removeLast();
+		byte[] last = bytesReadBuffer.poll();
 		bytesReadBuffer.clear();
 		return last;
 	}

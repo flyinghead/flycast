@@ -781,7 +781,7 @@ struct maple_microphone: maple_base
 				{
 				case 0x01:
 				{
-					LOGI("maple_microphone::dma MDCF_MICControl someone wants some data! (2nd word) %#010x\n", subcommand);
+					//LOGI("maple_microphone::dma MDCF_MICControl someone wants some data! (2nd word) %#010x\n", secondword);
 
 					w32(MFID_4_Mic);
 
@@ -804,8 +804,6 @@ struct maple_microphone: maple_base
 				}
 				case 0x02:
 					LOGI("maple_microphone::dma MDCF_MICControl toggle recording %#010x\n",secondword);
-					//this is where i should start recording...
-
 					return MDRS_DeviceReply;
 				case 0x03:
 					LOGI("maple_microphone::dma MDCF_MICControl set gain %#010x\n",secondword);
