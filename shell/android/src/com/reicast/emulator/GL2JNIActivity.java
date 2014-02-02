@@ -528,10 +528,10 @@ public class GL2JNIActivity extends Activity {
 					GL2JNIView.lt[playerNum] = 0;
 				}
 				if (keyCode == prefs.getInt("r_button" + id, OuyaController.BUTTON_R1)) {
-					GL2JNIView.lt[playerNum] = (int) (0.5 * 255);
-					GL2JNIView.lt[playerNum] = (int) (1.0 * 255);
-					GL2JNIView.lt[playerNum] = (int) (0.5 * 255);
-					GL2JNIView.lt[playerNum] = 0;
+					GL2JNIView.rt[playerNum] = (int) (0.5 * 255);
+					GL2JNIView.rt[playerNum] = (int) (1.0 * 255);
+					GL2JNIView.rt[playerNum] = (int) (0.5 * 255);
+					GL2JNIView.rt[playerNum] = 0;
 				}
 			}
 		}

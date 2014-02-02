@@ -8,15 +8,30 @@
     <LinearLayout
         android:id="@+id/header_list"
         android:layout_width="match_parent"
-        android:layout_height="48dp"
+        android:layout_height="wrap_content"
         android:layout_marginBottom="2dp"
         android:orientation="horizontal" >
+        
+        <LinearLayout
+            android:id="@+id/header"
+            android:layout_width="wrap_content"
+            android:layout_height="48dp"
+            android:layout_marginBottom="2dp"
+            android:orientation="horizontal" >
+        
+            <ImageView
+            android:id="@+id/header_menu"
+            android:layout_width="wrap_content"
+            android:layout_height="fill_parent"
+            android:src="@drawable/ic_drawer" />
 
         <ImageView
             android:id="@+id/header_icon"
             android:layout_width="wrap_content"
             android:layout_height="fill_parent"
             android:src="@drawable/ic_launcher" />
+        </LinearLayout>
+        
 
         <TextView
             android:id="@+id/textView1"
@@ -28,58 +43,6 @@
             android:textAppearance="?android:attr/textAppearanceLarge"
             android:textSize="32dp" />
 
-        <ImageView
-            android:id="@+id/config"
-            android:layout_width="48dp"
-            android:layout_height="fill_parent"
-            android:layout_marginBottom="2dp"
-            android:layout_marginLeft="2dp"
-            android:layout_marginRight="2dp"
-            android:layout_marginTop="2dp"
-            android:scaleType="fitCenter"
-            android:src="@drawable/config" />
-
-        <ImageView
-            android:id="@+id/options"
-            android:layout_width="48dp"
-            android:layout_height="fill_parent"
-            android:layout_marginBottom="2dp"
-            android:layout_marginLeft="2dp"
-            android:layout_marginRight="2dp"
-            android:layout_marginTop="2dp"
-            android:scaleType="fitCenter"
-            android:src="@drawable/open_folder" />
-
-        <ImageView
-            android:id="@+id/input"
-            android:layout_width="48dp"
-            android:layout_height="fill_parent"
-            android:layout_marginBottom="2dp"
-            android:layout_marginLeft="2dp"
-            android:layout_marginRight="2dp"
-            android:layout_marginTop="2dp"
-            android:scaleType="fitCenter"
-            android:src="@drawable/input" />
-
-        <ImageView
-            android:id="@+id/about"
-            android:layout_width="48dp"
-            android:layout_height="fill_parent"
-            android:layout_marginBottom="2dp"
-            android:layout_marginLeft="2dp"
-            android:layout_marginTop="2dp"
-            android:scaleType="fitCenter"
-            android:src="@drawable/question" />
-
-        <ImageView
-            android:id="@+id/rate"
-            android:layout_width="48dp"
-            android:layout_height="fill_parent"
-            android:layout_marginBottom="2dp"
-            android:layout_marginLeft="2dp"
-            android:layout_marginTop="2dp"
-            android:scaleType="fitCenter"
-            android:src="@drawable/profiler" />
     </LinearLayout>
 
     <FrameLayout

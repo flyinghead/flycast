@@ -1,8 +1,6 @@
 <resources>
 
-    <string name="app_name">reicast</string>
     <string name="menu_settings">Einstellungen</string>
-    <string name="title_activity_main">reicast</string>
     <string name="system_path">System Pfad (Speicherort des data Ordners welcher dc_boot.bin und dc_flash.bin enthält)</string>
     <string name="browser_path">Standard System Pfad</string>
     <string name="games_path">Spiele Pfad (Speicherort von .gdi, .chd oder .cdi Abbildern)</string>
@@ -68,21 +66,12 @@
         <item>(Standard)</item>
     </string-array>
 
-    <string name="drawer_open">Slider Menü Geöffnet</string>
-    <string name="drawer_close">Slider Menü Geschlossen</string>
-
-    <!-- Nav Drawer Menu Items -->
-    <string-array name="nav_drawer_items">
-        <item>Browser</item>
-        <item>Einstellungen</item>
-        <item>Pfade</item>
-        <item>Eingabe</item>
-        <item>Über</item>
-        <item>Bewerten</item>
-    </string-array>
-
-    <!-- Content Description -->
-    <string name="desc_list_item_icon">Eintrags Symbol</string>
+   	<string name="browser">Browser</string>
+    <string name="settings">Einstellungen</string>
+    <string name="paths">Pfade</string>
+    <string name="input">Eingabe</string>
+    <string name="about">Über</string>
+    <string name="rateme">Bewerten</string>
     
     <string name="textOn">Ein</string>
     <string name="textOff">Aus</string>

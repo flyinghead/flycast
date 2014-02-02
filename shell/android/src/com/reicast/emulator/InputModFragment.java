@@ -121,7 +121,11 @@ public class InputModFragment extends Fragment {
 		OnCheckedChangeListener compat_mode = new OnCheckedChangeListener() {
 			public void onCheckedChanged(CompoundButton buttonView,
 					boolean isChecked) {
-				selectController();
+				if (isChecked) {
+					selectController();
+				} else {
+					mPrefs.edit().remove("controller" + player).commit();
+				}
 				mPrefs.edit()
 						.putBoolean("controller_compat" + player, isChecked)
 						.commit();

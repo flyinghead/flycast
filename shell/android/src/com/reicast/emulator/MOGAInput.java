@@ -199,10 +199,10 @@ public class MOGAInput
 	    					GL2JNIView.lt[playerNum] = 0;
 	    				}
 	    				if (event.getKeyCode() == prefs.getInt("r_button" + id, OuyaController.BUTTON_R1)) {
-	    					GL2JNIView.lt[playerNum] = (int) (0.5 * 255);
-	    					GL2JNIView.lt[playerNum] = (int) (1.0 * 255);
-	    					GL2JNIView.lt[playerNum] = (int) (0.5 * 255);
-	    					GL2JNIView.lt[playerNum] = 0;
+	    					GL2JNIView.rt[playerNum] = (int) (0.5 * 255);
+	    					GL2JNIView.rt[playerNum] = (int) (1.0 * 255);
+	    					GL2JNIView.rt[playerNum] = (int) (0.5 * 255);
+	    					GL2JNIView.rt[playerNum] = 0;
 	    				}
 	    		}
 
@@ -230,8 +230,8 @@ public class MOGAInput
 			if(playerNum == 0)
 				JNIdc.hide_osd();
 
-			float LS_X = event.getAxisValue(MotionEvent.AXIS_X);
-			float LS_Y = event.getAxisValue(MotionEvent.AXIS_Y);
+			float S_X = event.getAxisValue(MotionEvent.AXIS_X);
+			float S_Y = event.getAxisValue(MotionEvent.AXIS_Y);
 			float L2 = event.getAxisValue(MotionEvent.AXIS_LTRIGGER);
 			float R2 = event.getAxisValue(MotionEvent.AXIS_RTRIGGER);
 			
@@ -239,16 +239,16 @@ public class MOGAInput
 
 				previousLS_X[playerNum] = globalLS_X[playerNum];
 				previousLS_Y[playerNum] = globalLS_Y[playerNum];
-				globalLS_X[playerNum] = LS_X;
-				globalLS_Y[playerNum] = LS_Y;
+				globalLS_X[playerNum] = S_X;
+				globalLS_Y[playerNum] = S_Y;
 
 			}
 
 			GL2JNIView.lt[playerNum] = (int) (L2 * 255);
 			GL2JNIView.rt[playerNum] = (int) (R2 * 255);
 
-			GL2JNIView.jx[playerNum] = (int) (LS_X * 126);
-			GL2JNIView.jy[playerNum] = (int) (LS_Y * 126);
+			GL2JNIView.jx[playerNum] = (int) (S_X * 126);
+			GL2JNIView.jy[playerNum] = (int) (S_Y * 126);
 
 			/*
 			for(final Entry<Integer, ExampleFloat> entry : mMotions.entrySet())

@@ -1,8 +1,6 @@
 <resources>
 
-    <string name="app_name">reicast</string>
     <string name="menu_settings">Configuración</string>
-    <string name="title_activity_main">reicast</string>
     <string name="system_path">Ruta de acceso del sistema (ubicación de la carpeta de datos con dc_boot.bin / dc_flash.bin interior)</string>
     <string name="browser_path">Ruta por defecto del sistema</string>
     <string name="games_path">Ruta de Almacenamiento (ubicación de .gdi .chd o Imágenes .cdi )</string>
@@ -67,21 +65,12 @@
         <item>(Predeterminado)</item>
     </string-array>
 
-    <string name="drawer_open">Menú deslizante abierto</string>
-    <string name="drawer_close">Menú deslizante cerrado</string>
-
-    <!-- Nav Drawer Menu Items -->
-    <string-array name="nav_drawer_items">
-        <item>Navegador</item>
-        <item>Configuración</item>
-        <item>Rutas</item>
-        <item>Entrada</item>
-        <item>Acerca de</item>
-        <item>Califícame</item>
-    </string-array>
-
-    <!-- Content Description -->
-    <string name="desc_list_item_icon">Icono Elemento</string>
+    <string name="browser">Navegador</string>
+    <string name="settings">Configuración</string>
+    <string name="paths">Caminos</string>
+    <string name="input">Entrada</string>
+    <string name="about">Acerca de</string>
+    <string name="rateme">Rate Me</string>
     
     <string name="textOn">EN</string>
     <string name="textOff">OFF</string>
