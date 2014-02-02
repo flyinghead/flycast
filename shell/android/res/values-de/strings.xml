@@ -1,8 +1,6 @@
 <resources>
 
-    <string name="app_name">reicast</string>
     <string name="menu_settings">Einstellungen</string>
-    <string name="title_activity_main">reicast</string>
     <string name="system_path">System Pfad (Speicherort des data Ordners welcher dc_boot.bin und dc_flash.bin enthält)</string>
     <string name="browser_path">Standard System Pfad</string>
     <string name="games_path">Spiele Pfad (Speicherort von .gdi, .chd oder .cdi Abbildern)</string>

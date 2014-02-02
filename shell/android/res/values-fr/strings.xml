@@ -1,8 +1,6 @@
 <resources>
 
-    <string name="app_name">reicast</string>
     <string name="menu_settings">Réglages</string>
-    <string name="title_activity_main">reicast</string>
     <string name="system_path">Répertoire système (emplacement du répertoire \'data\' comprenant les fichiers \'dc_boot.bin\' et \'dc_flash.bin\')</string>
     <string name="browser_path">Répertoire système par défaut</string>
     <string name="games_path">Répertoire des jeux (emplacement de vos fichiers images au format gdi, chd ou cdi)</string>

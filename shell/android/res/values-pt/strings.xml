@@ -1,8 +1,6 @@
 <resources>
 
-    <string name="app_name">reicast</string>
     <string name="menu_settings">Configurações</string>
-    <string name="title_activity_main">reicast</string>
     <string name="system_path">Pasta do Sistema (localização da pasta de dados com os arquivos dc_boot.bin / dc_flash.bin)</string>
     <string name="browser_path">Caminho padrão do sistema</string>
     <string name="games_path">Caminho de Armazenamento ( local das imagens .gdi, .chd ou .cdi)</string>

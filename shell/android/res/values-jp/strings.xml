@@ -1,9 +1,8 @@
 <resources>
 
-    <string name="app_name">reicast</string>
     <string name="menu_settings">セッティング</string>
-    <string name="title_activity_main">reicast</string>
     <string name="system_path">システムパス (とのデータフォルダーの場所 dc_boot.bin/dc_flash.bin)</string>
+
     <string name="browser_path">デフォルトのシステムパス</string>
     <string name="games_path">ストレージパス (の場所 .gdi .cdi or .cdh イメージ)</string>
     <string name="game_path">デフォルトゲーム·ストレージ</string>

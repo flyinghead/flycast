@@ -1,8 +1,6 @@
 <resources>
 
-    <string name="app_name">reicast</string>
     <string name="menu_settings">Настройки</string>
-    <string name="title_activity_main">reicast</string>
     <string name="system_path">Системная папка (папка с dc_boot.bin/dc_flash.bin)</string>
     <string name="browser_path">Стандартная системная папка</string>
     <string name="games_path">Папка образов (папка с образами .gdi, .chd или .cdi)</string>
