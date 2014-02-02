@@ -20,7 +20,7 @@ To build for android
 --------------------
 Tools required:
 * Latest Android SDK and NDK
-* Android 4.3 or newer (http://developer.android.com/sdk/installing/adding-packages.html)
+* Android 4.4 (API 19) or newer (http://developer.android.com/sdk/installing/adding-packages.html)
 * Ant
 
 From project root directory:
