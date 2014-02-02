@@ -37,7 +37,6 @@ Translations
 New and updated translations are always appreciated!
 All we ask is that you not use “regional” phrases that may not be generally understood.
 
->>>>>>> dea890e... Update README to include information about translating
 Beta versions
 -------------
 Compiled test versions are available at reicast.loungekatt.com
