@@ -686,15 +686,7 @@ private static class ContextFactory implements GLSurfaceView.EGLContextFactory
     public EGLConfig chooseConfig(EGL10 egl, EGLDisplay display) {
     	mValue = new int[1];
 
-        int glAPIToTry;
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            glAPIToTry = EGLExt.EGL_OPENGL_ES3_BIT_KHR;
-        } else {
-            glAPIToTry = EGL14.EGL_OPENGL_ES2_BIT;
-        }
-
-        int numConfigs = 0;
+        int glAPIToTry = EGLExt.EGL_OPENGL_ES3_BIT_KHR;
         int[] configSpec = null;
 
         do {
@@ -727,19 +719,17 @@ private static class ContextFactory implements GLSurfaceView.EGLContextFactory
         		}
         	}
 
-        	numConfigs = mValue[0];
+        } while (glAPIToTry != EGL14.EGL_OPENGL_ES_API && mValue[0]<=0);
 
-        } while (glAPIToTry != EGL14.EGL_OPENGL_ES_API && numConfigs == 0);
-
-        if (numConfigs <= 0) {
+        if (mValue[0]<=0) {
             throw new IllegalArgumentException("No configs match configSpec");
         }
 
         // Get all matching configurations.
-        EGLConfig[] configs = new EGLConfig[numConfigs];
+        EGLConfig[] configs = new EGLConfig[mValue[0]];
         if (DEBUG)
         	LOGW(String.format("%d configurations", configs.length));
-        if (!egl.eglChooseConfig(display, configSpec, configs, numConfigs, mValue)) {
+        if (!egl.eglChooseConfig(display, configSpec, configs, mValue[0], mValue)) {
             throw new IllegalArgumentException("Could not get config data");
         }
 
