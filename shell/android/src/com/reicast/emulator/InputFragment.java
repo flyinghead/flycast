@@ -111,11 +111,18 @@ public class InputFragment extends Fragment {
 				R.id.micInPort2);
 		boolean micPluggedIn = sharedPreferences.getBoolean("mic_plugged_in", false);
 		micPluggedIntoFirstController.setChecked(micPluggedIn);
-		micPluggedIntoFirstController.setOnCheckedChangeListener(new OnCheckedChangeListener() {
-			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-				sharedPreferences.edit().putBoolean("mic_plugged_in", isChecked).commit();
-			}
-		});
+		if (getActivity().getPackageManager().hasSystemFeature(
+				"android.hardware.microphone")) {
+			//Microphone is present on the device
+			micPluggedIntoFirstController.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+				public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+					sharedPreferences.edit().putBoolean("mic_plugged_in", isChecked).commit();
+				}
+			});
+		}else{
+			micPluggedIntoFirstController.setEnabled(false);
+		}
+		
 		
 		Button buttonKeycodeEditor = (Button) getView().findViewById(
 				R.id.buttonKeycodeEditor);
