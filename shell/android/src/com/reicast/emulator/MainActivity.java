@@ -23,6 +23,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnTouchListener;
+import android.widget.TextView;
 
 import com.jeremyfeinstein.slidingmenu.lib.SlidingMenu;
 import com.jeremyfeinstein.slidingmenu.lib.SlidingMenu.OnOpenListener;
@@ -35,8 +36,7 @@ public class MainActivity extends SlidingFragmentActivity implements
 	private static File sdcard = Environment.getExternalStorageDirectory();
 	public static String home_directory = sdcard + "/dc";
 
-	// used to store app title
-	private CharSequence mTitle;
+	private TextView menuHeading;
 	
 	private SlidingMenu sm;
 
@@ -83,6 +83,8 @@ public class MainActivity extends SlidingFragmentActivity implements
 					.replace(R.id.fragment_container, firstFragment,
 							"MAIN_BROWSER").commit();
 		}
+		
+		menuHeading = (TextView) findViewById(R.id.menu_heading);
 		
 		sm = getSlidingMenu();
 		sm.setShadowWidthRes(R.dimen.shadow_width);
@@ -218,17 +220,15 @@ public class MainActivity extends SlidingFragmentActivity implements
 				});
 			}
 		});
-		
-			findViewById(R.id.header).setOnTouchListener(new OnTouchListener() {
-				public boolean onTouch(View v, MotionEvent event) {
-					if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
-						sm.toggle(true);
-						return true;
-					} else
-						return false;
-				}
-			});
-
+		findViewById(R.id.header_list).setOnTouchListener(new OnTouchListener() {
+			public boolean onTouch(View v, MotionEvent event) {
+				if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
+					sm.toggle(true);
+					return true;
+				} else
+					return false;
+			}
+		});
 		System.gc();
 
 	}
@@ -363,10 +363,7 @@ public class MainActivity extends SlidingFragmentActivity implements
 	@SuppressLint("NewApi")
 	@Override
 	public void setTitle(CharSequence title) {
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR1) {
-			mTitle = title;
-			getActionBar().setTitle(mTitle);
-		}
+		menuHeading.setText(title);
 	}
 
 	/**
@@ -409,33 +406,6 @@ public class MainActivity extends SlidingFragmentActivity implements
 		}
 
 		return super.onKeyDown(keyCode, event);
-	}
-	
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR1) {
-			MenuInflater inflater = getMenuInflater();
-		}
-		return true;
-	}
-
-	@Override
-	public boolean onPrepareOptionsMenu(Menu menu) {
-		return super.onPrepareOptionsMenu(menu);
-	}
-
-	/* Handles item selections */
-	@Override
-	public boolean onMenuItemSelected(int featureId, MenuItem item) {
-		System.gc();
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR1) {
-		switch (item.getItemId()) {
-		case android.R.id.home:
-			sm.toggle(true);
-			break;
-		}
-		}
-		return super.onMenuItemSelected(featureId, item);
 	}
 
 	@Override

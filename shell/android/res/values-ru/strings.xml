@@ -75,6 +75,8 @@
     <string name="textOn">Вкл.</string>
     <string name="textOff">Выкл.</string>
 
-    <string name="menu_debug">Сохранять журнал ошибок</string>
+    <string name="platform">Содержание Копирование Logcat в буфер\nПожалуйста, вставьте в отчета об итогах выпуска</string>
+    
+    <string name="menu_debug">Представьте журналы ошибок</string>
 
 </resources>

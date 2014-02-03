@@ -88,8 +88,8 @@
     <string name="textOn">ON</string>
     <string name="textOff">OFF</string>
     
-    <string name="platform">확인 %1$s</string>
+    <string name="platform">클립 보드에 복사 logcat 내용\n문제 보고서에 붙여 넣기</string>
 
-    <string name="menu_debug">오류 로그를 저장</string>
+    <string name="menu_debug">디버그 로그를 제출</string>
 
 </resources>

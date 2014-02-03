@@ -87,8 +87,8 @@
     <string name="textOn">ACTIF</string>
     <string name="textOff">DESACT.</string>
     
-    <string name="platform">Identifié %1$s</string>
+    <string name="platform">Copie le contenu de logcat au presse-papiers\nS\'il vous plaît coller dans le rapport d\'émission</string>
 
-    <string name="menu_debug">Sauvegarder les logs d\'erreurs</string>
+    <string name="menu_debug">Soumettre les logs d\'erreurs</string>
 
 </resources>
