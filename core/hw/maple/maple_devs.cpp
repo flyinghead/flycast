@@ -4,6 +4,8 @@
 #include "maple_devs.h"
 #include "maple_cfg.h"
 #include <time.h>
+#include <android/log.h>
+#include <jni.h>
 
 #include "deps/zlib/zlib.h"
 
@@ -225,7 +227,7 @@ struct maple_sega_controller: maple_base
 		return MDRS_DataTransfer;
 
 		default:
-			printf("UNKOWN MAPLE COMMAND %d\n",cmd);
+			//printf("UNKOWN MAPLE COMMAND %d\n",cmd);
 			return MDRE_UnknownFunction;
 		}
 	}	
@@ -644,12 +646,190 @@ struct maple_sega_vmu: maple_base
 
 
 		default:
-			printf("Unknown MAPLE COMMAND %d\n",cmd);
+			//printf("Unknown MAPLE COMMAND %d\n",cmd);
 			return MDRE_UnknownCmd;
 		}
 	}	
 };
 #endif
+
+struct maple_microphone: maple_base
+{
+	u8 micdata[SIZE_OF_MIC_DATA];
+
+	virtual void OnSetup()
+	{
+		memset(micdata,0,sizeof(micdata));
+	}
+
+	virtual u32 dma(u32 cmd)
+	{
+		//printf("maple_microphone::dma Called 0x%X;Command %d\n",this->maple_port,cmd);
+		//LOGD("maple_microphone::dma Called 0x%X;Command %d\n",this->maple_port,cmd);
+
+		switch (cmd)
+		{
+		case MDC_DeviceRequest:
+			LOGI("maple_microphone::dma MDC_DeviceRequest");
+			//this was copied from the controller case with just the id and name replaced!
+
+			//caps
+			//4
+			w32(MFID_4_Mic);
+
+			//struct data
+			//3*4
+			w32( 0xfe060f00);
+			w32( 0);
+			w32( 0);
+
+			//1	area code
+			w8(0xFF);
+
+			//1	direction
+			w8(0);
+			
+			//30
+			wstr(maple_sega_mic_name,30);
+
+			//60
+			wstr(maple_sega_brand,60);
+
+			//2
+			w16(0x01AE); 
+
+			//2
+			w16(0x01F4);
+
+			return MDRS_DeviceStatus;
+
+		case MDCF_GetCondition:
+			{
+				LOGI("maple_microphone::dma MDCF_GetCondition");
+				//this was copied from the controller case with just the id replaced!
+
+				//PlainJoystickState pjs;
+				//config->GetInput(&pjs);
+				//caps
+				//4
+				w32(MFID_4_Mic);
+
+				//state data
+				//2 key code
+				//w16(pjs.kcode);
+
+				//triggers
+				//1 R
+				//w8(pjs.trigger[PJTI_R]);
+				//1 L
+				//w8(pjs.trigger[PJTI_L]);
+
+				//joyx
+				//1
+				//w8(pjs.joy[PJAI_X1]);
+				//joyy
+				//1
+				//w8(pjs.joy[PJAI_Y1]);
+
+				//not used
+				//1
+				w8(0x80);
+				//1
+				w8(0x80);
+			}
+
+			return MDRS_DataTransfer;
+
+		case MDC_DeviceReset:
+			//uhhh do nothing?
+			LOGI("maple_microphone::dma MDC_DeviceReset");
+			return MDRS_DeviceReply;
+
+		case MDCF_MICControl:
+		{
+			//LOGD("maple_microphone::dma handling MDCF_MICControl %d\n",cmd);
+			//MONEY
+			u32 function=r32();
+			//LOGD("maple_microphone::dma MDCF_MICControl function (1st word) %#010x\n", function);
+			//LOGD("maple_microphone::dma MDCF_MICControl words: %d\n", dma_count_in);
+
+			switch(function)
+			{
+			case MFID_4_Mic:
+			{
+				//MAGIC HERE
+				//http://dcemulation.org/phpBB/viewtopic.php?f=34&t=69600
+				// <3 <3 BlueCrab <3 <3
+				/*
+				2nd word               What it does:
+				0x0000??03          Sets the amplifier gain, ?? can be from 00 to 1F
+									0x0f = default
+				0x00008002          Enables recording
+				0x00000001          Returns sampled data while recording is enabled
+									While not enabled, returns status of the mic.
+				0x00000002          Disables recording
+				 *
+				 */
+				u32 secondword=r32();
+				//LOGD("maple_microphone::dma MDCF_MICControl subcommand (2nd word) %#010x\n", subcommand);
+
+				u32 subcommand = secondword & 0xFF; //just get last byte for now, deal with params later
+
+				//LOGD("maple_microphone::dma MDCF_MICControl (3rd word) %#010x\n", r32());
+				//LOGD("maple_microphone::dma MDCF_MICControl (4th word) %#010x\n", r32());
+				switch(subcommand)
+				{
+				case 0x01:
+				{
+					//LOGI("maple_microphone::dma MDCF_MICControl someone wants some data! (2nd word) %#010x\n", secondword);
+
+					w32(MFID_4_Mic);
+
+					//from what i can tell this is up to spec but results in transmit again
+					//w32(secondword);
+
+					//32 bit header
+					w8(0x04);//status (just the bit for recording)
+					w8(0x0f);//gain (default)
+					w8(0);//exp ?
+
+					if(get_mic_data(micdata)){
+						w8(240);//ct (240 samples)
+						wptr(micdata, SIZE_OF_MIC_DATA);
+					}else{
+						w8(0);
+					}
+
+					return MDRS_DataTransfer;
+				}
+				case 0x02:
+					LOGI("maple_microphone::dma MDCF_MICControl toggle recording %#010x\n",secondword);
+					return MDRS_DeviceReply;
+				case 0x03:
+					LOGI("maple_microphone::dma MDCF_MICControl set gain %#010x\n",secondword);
+					return MDRS_DeviceReply;
+				case MDRE_TransminAgain:
+					LOGW("maple_microphone::dma MDCF_MICControl MDRE_TransminAgain");
+					//apparently this doesnt matter
+					//wptr(micdata, SIZE_OF_MIC_DATA);
+					return MDRS_DeviceReply;//MDRS_DataTransfer;
+				default:
+					LOGW("maple_microphone::dma UNHANDLED secondword %#010x\n",secondword);
+					break;
+				}
+			}
+			default:
+				LOGW("maple_microphone::dma UNHANDLED function %#010x\n",function);
+				break;
+			}
+		}
+
+		default:
+			LOGW("maple_microphone::dma UNHANDLED MAPLE COMMAND %d\n",cmd);
+			return MDRE_UnknownFunction;
+		}
+	}	
+};
 
 maple_device* maple_Create(MapleDeviceType type)
 {
@@ -658,6 +838,9 @@ maple_device* maple_Create(MapleDeviceType type)
 	{
 	case MDT_SegaController:
 		rv=new maple_sega_controller();
+		break;
+	case MDT_Microphone:
+		rv=new maple_microphone();
 		break;
 #ifdef HAS_VMU
 	case MDT_SegaVMU:

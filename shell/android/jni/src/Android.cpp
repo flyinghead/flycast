@@ -14,6 +14,7 @@
 #include "cfg/cfg.h"
 #include "rend/TexCache.h"
 #include "hw/maple/maple_devs.h"
+#include "hw/maple/maple_if.h"
 
 #include "util.h"
 
@@ -35,7 +36,10 @@ extern "C"
   //JNIEXPORT jint JNICALL Java_com_reicast_emulator_JNIdc_play(JNIEnv *env,jobject obj,jshortArray result,jint size);
 
   JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_initControllers(JNIEnv *env, jobject obj, jbooleanArray controllers)  __attribute__((visibility("default")));
+  
+  JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_setupMic(JNIEnv *env,jobject obj,jobject sip)  __attribute__((visibility("default")));
 };
+
 
 void egl_stealcntx();
 void SetApplicationPath(wchar *path);
@@ -191,6 +195,9 @@ jshortArray jsamples;
 jmethodID writemid;
 jobject track;
 
+jobject sipemu;
+jmethodID getmicdata;
+
 JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_run(JNIEnv *env,jobject obj,jobject trk)
 {
 	install_prof_handler(0);
@@ -202,6 +209,14 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_run(JNIEnv *env,jobject o
 	writemid=env->GetMethodID(env->GetObjectClass(track),"WriteBuffer","([SI)I");
 
 	dc_run();
+}
+
+JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_setupMic(JNIEnv *env,jobject obj,jobject sip)
+{
+	sipemu = env->NewGlobalRef(sip);
+	getmicdata = env->GetMethodID(env->GetObjectClass(sipemu),"getData","()[B");	
+	delete MapleDevices[0][1];
+	mcfg_Create(MDT_Microphone,0,1);
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_stop(JNIEnv *env,jobject obj)
@@ -329,4 +344,16 @@ u32 os_Push(void* frame, u32 amt, bool wait)
 bool os_IsAudioBuffered()
 {
     return jenv->CallIntMethod(track,writemid,jsamples,-1)==0;
+}
+
+int get_mic_data(u8* buffer)
+{
+	jbyteArray jdata = (jbyteArray)jenv->CallObjectMethod(sipemu,getmicdata);
+	if(jdata==NULL){
+		//LOGW("get_mic_data NULL");
+		return 0;
+	}
+	jenv->GetByteArrayRegion(jdata, 0, SIZE_OF_MIC_DATA, (jbyte*)buffer);
+	jenv->DeleteLocalRef(jdata);
+	return 1;
 }

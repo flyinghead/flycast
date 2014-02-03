@@ -22,6 +22,8 @@ public class JNIdc
   //public static native int play(short result[],int size);
 
   public static native void initControllers(boolean[] controllers);
+  
+  public static native void setupMic(Object sip);
 
   public static void show_osd() {
     JNIdc.vjoy(13, 1,0,0,0);
