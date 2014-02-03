@@ -31,6 +31,8 @@ public class UploadLogs extends AsyncTask<String, Integer, String> {
 	public static final String JB = "JellyBean";
 	public static final String KK = "KitKat";
 	public static final String NF = "Not Found";
+	
+	private String unHandledIOE;
 
 	private Context mContext;
 
@@ -100,6 +102,10 @@ public class UploadLogs extends AsyncTask<String, Integer, String> {
 			return "ERROR: " + ex.getMessage();
 		}
 	}
+	
+	public void setUnhandled(String unHandledIOE) {
+		this.unHandledIOE = unHandledIOE;
+	}
 
 	@Override
 	protected String doInBackground(String... params) {
@@ -107,15 +113,23 @@ public class UploadLogs extends AsyncTask<String, Integer, String> {
 		String logOuput = params[0] + "/" + currentTime + ".txt";
 		Process mLogcatProc = null;
 		BufferedReader reader = null;
+		final StringBuilder log = new StringBuilder();
+		String separator = System.getProperty("line.separator");
+		log.append(discoverCPUData());
+		if (unHandledIOE != null) {
+			log.append(separator);
+			log.append(separator);
+			log.append("Unhandled Exceptions");
+			log.append(separator);
+			log.append(separator);
+			log.append(unHandledIOE);
+		}
 		try {
 			mLogcatProc = Runtime.getRuntime().exec(
 					new String[] { "logcat", "-d", "AndroidRuntime:E *:S" });
 			reader = new BufferedReader(new InputStreamReader(
 					mLogcatProc.getInputStream()));
 			String line;
-			final StringBuilder log = new StringBuilder();
-			String separator = System.getProperty("line.separator");
-			log.append(discoverCPUData());
 			log.append(separator);
 			log.append(separator);
 			log.append("AndroidRuntime Output");

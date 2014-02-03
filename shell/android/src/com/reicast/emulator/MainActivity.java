@@ -1,6 +1,7 @@
 package com.reicast.emulator;
 
 import java.io.File;
+import java.lang.Thread.UncaughtExceptionHandler;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
@@ -9,6 +10,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
@@ -16,14 +18,12 @@ import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.KeyEvent;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnTouchListener;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.jeremyfeinstein.slidingmenu.lib.SlidingMenu;
 import com.jeremyfeinstein.slidingmenu.lib.SlidingMenu.OnOpenListener;
@@ -39,6 +39,8 @@ public class MainActivity extends SlidingFragmentActivity implements
 	private TextView menuHeading;
 	
 	private SlidingMenu sm;
+	
+	private UncaughtExceptionHandler mUEHandler;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -49,6 +51,25 @@ public class MainActivity extends SlidingFragmentActivity implements
 		mPrefs = PreferenceManager.getDefaultSharedPreferences(this);
 		home_directory = mPrefs.getString("home_directory", home_directory);
 		JNIdc.config(home_directory);
+		
+		mUEHandler = new Thread.UncaughtExceptionHandler() {
+	        public void uncaughtException(Thread t, Throwable error) {
+	        	if (error != null) {
+					Toast.makeText(MainActivity.this,
+		    				getString(R.string.platform),
+		    				Toast.LENGTH_SHORT).show();
+		    		UploadLogs mUploadLogs = new UploadLogs(MainActivity.this);
+		    		mUploadLogs.setUnhandled(error.getMessage());
+		    		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+		    			mUploadLogs.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,
+		    					home_directory);
+		    		} else {
+		    			mUploadLogs.execute(home_directory);
+		    		}
+	        	}
+	        }
+	    };
+	    Thread.setDefaultUncaughtExceptionHandler(mUEHandler);
 
 		// Check that the activity is using the layout version with
 		// the fragment_container FrameLayout
