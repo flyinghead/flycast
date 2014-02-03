@@ -311,6 +311,9 @@ public class MainActivity extends SlidingFragmentActivity implements
 			// show it
 			alertDialog.show();
 		} else {
+			ConfigureFragment config = new ConfigureFragment();
+			config.executeAppendConfig("Dreamcast.RTC",
+					String.valueOf(String.valueOf(System.currentTimeMillis())));
 			Intent inte = new Intent(Intent.ACTION_VIEW, uri, getBaseContext(),
 					GL2JNIActivity.class);
 			startActivity(inte);

@@ -566,13 +566,11 @@ public class ConfigureFragment extends Fragment {
 		}
 	}
 
-	private boolean executeAppendConfig(String identifier, String value) {
+	public boolean executeAppendConfig(String identifier, String value) {
 		File config = new File(home_directory, "emu.cfg");
 		if (config.exists()) {
 			try {
-
 				// Read existing emu.cfg and substitute new setting value
-
 				StringBuilder rebuildFile = new StringBuilder();
 				Scanner scanner = new Scanner(config);
 				String currentLine;
@@ -580,11 +578,6 @@ public class ConfigureFragment extends Fragment {
 					currentLine = scanner.nextLine();
 					if (StringUtils.containsIgnoreCase(currentLine, identifier)) {
 						rebuildFile.append(identifier + "=" + value + "\n");
-					} else if (StringUtils.containsIgnoreCase(currentLine,
-							"Dreamcast.RTC")) {
-						rebuildFile.append("Dreamcast.RTC="
-								+ String.valueOf(System.currentTimeMillis())
-								+ "\n");
 					} else {
 						rebuildFile.append(currentLine + "\n");
 					}
