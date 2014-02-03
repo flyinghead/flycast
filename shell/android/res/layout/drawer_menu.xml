@@ -37,6 +37,7 @@
                 android:gravity="center_vertical"
 				style="@android:style/TextAppearance.Large"
                 android:text="@string/browser"
+                android:textSize="28dp"
                 android:textAppearance="@style/BaseText" />
         </LinearLayout>
 
@@ -65,6 +66,7 @@
                 android:gravity="center_vertical"
 				style="@android:style/TextAppearance.Large"
                 android:text="@string/settings"
+                android:textSize="28dp"
                 android:textAppearance="@style/BaseText" />
         </LinearLayout>
 
@@ -93,6 +95,7 @@
                 android:gravity="center_vertical"
 				style="@android:style/TextAppearance.Large"
                 android:text="@string/paths"
+                android:textSize="28dp"
                 android:textAppearance="@style/BaseText" />
         </LinearLayout>
 
@@ -121,6 +124,7 @@
                 android:gravity="center_vertical"
 				style="@android:style/TextAppearance.Large"
                 android:text="@string/input"
+                android:textSize="28dp"
                 android:textAppearance="@style/BaseText" />
         </LinearLayout>
 
@@ -149,6 +153,7 @@
                 android:gravity="center_vertical"
 				style="@android:style/TextAppearance.Large"
                 android:text="@string/about"
+                android:textSize="28dp"
                 android:textAppearance="@style/BaseText" />
         </LinearLayout>
 
@@ -176,6 +181,7 @@
                 android:gravity="center_vertical"
 				style="@android:style/TextAppearance.Large"
                 android:text="@string/rateme"
+                android:textSize="28dp"
                 android:textAppearance="@style/BaseText" />
         </LinearLayout>
     </LinearLayout>
