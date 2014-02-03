@@ -83,8 +83,8 @@
     <string name="textOn">開</string>
     <string name="textOff">關閉</string>
     
-    <string name="platform">確定 %1$s</string>
+    <string name="platform">複製logcat的內容到剪貼板\n請在問題的報告貼</string>
     
-    <string name="menu_debug">保存錯誤日誌</string>
+    <string name="menu_debug">提交錯誤日誌</string>
 
 </resources>

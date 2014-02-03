@@ -88,8 +88,8 @@
     <string name="textOn">LIG</string>
     <string name="textOff">DESL</string>
     
-    <string name="platform">Identificado %1$s</string>
+    <string name="platform">Copiar conteúdo logcat para o clipboard\nPor favor, cole no relatório questão</string>
 
-    <string name="menu_debug">Salvar Logs de Erros</string>
+    <string name="menu_debug">Submeter Logs de Erros</string>
 
 </resources>

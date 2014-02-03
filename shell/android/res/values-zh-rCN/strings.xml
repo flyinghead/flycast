@@ -83,8 +83,8 @@
     <string name="textOn">开</string>
     <string name="textOff">关</string>
     
-    <string name="platform">已识别  %1$s</string>
+    <string name="platform">复制logcat的内容到剪贴板\n请在问题的报告贴</string>
 
-    <string name="menu_debug">保存出错日志</string>
+    <string name="menu_debug">提交错误日志</string>
 
 </resources>
