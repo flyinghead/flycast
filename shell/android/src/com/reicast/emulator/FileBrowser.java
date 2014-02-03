@@ -214,11 +214,11 @@ public class FileBrowser extends Fragment {
 				for (int i = 0; i < games.size(); i++) {
 					createListItem(list, games.get(i));
 				}
-				list.invalidate();
 			} else {
 				Toast.makeText(parentActivity, "Please configure a games directory",
 							Toast.LENGTH_LONG).show();
 			}
+			list.invalidate();
 		}
 
 	}
@@ -445,5 +445,6 @@ public class FileBrowser extends Fragment {
 					});
 			v.addView(childview);
 		}
+		v.invalidate();
 	}
 }
