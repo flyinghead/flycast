@@ -1,296 +1,302 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical" >
 
-    <TableLayout
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:stretchColumns="*"
-        android:layout_marginLeft="6dp" >
+        android:layout_height="match_parent"
+        android:orientation="vertical" >
 
-        <TableRow
-            android:layout_marginTop="10dp"
-            android:gravity="center_vertical" >
-
-            <TextView
-                android:id="@+id/unstable_text"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="0.5"
-                android:ems="10"
-                android:gravity="center_vertical|left"
-                android:text="@string/select_unstable" />
-
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:gravity="right"
-                android:orientation="vertical" >
-
-                <de.ankri.views.Switch
-                    android:id="@+id/unstable_option"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" />
-            </LinearLayout>
-        </TableRow>
-
-        <TableRow
-            android:layout_marginTop="10dp"
-            android:gravity="center_vertical" >
-
-            <TextView
-                android:id="@+id/mipmaps_text"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="0.5"
-                android:ems="10"
-                android:gravity="center_vertical|left"
-                android:text="@string/select_mipmaps" />
-
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:gravity="right"
-                android:orientation="vertical" >
-
-                <de.ankri.views.Switch
-                    android:id="@+id/mipmaps_option"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" />
-            </LinearLayout>
-        </TableRow>
-
-        <TableRow
-            android:layout_marginTop="10dp"
-            android:gravity="center_vertical" >
-
-            <TextView
-                android:id="@+id/stretch_text"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="0.5"
-                android:ems="10"
-                android:gravity="center_vertical|left"
-                android:text="@string/select_stretch" />
-
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:gravity="right"
-                android:orientation="vertical" >
-
-                <de.ankri.views.Switch
-                    android:id="@+id/stretch_option"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" />
-            </LinearLayout>
-        </TableRow>
-
-        <LinearLayout
+        <TableLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:orientation="vertical" >
+            android:layout_marginLeft="6dp"
+            android:stretchColumns="*" >
 
-            <TextView
-                android:id="@+id/frameskip_text"
-                android:layout_width="wrap_content"
-                android:layout_height="0dip"
-                android:layout_weight="1"
-                android:text="@string/set_frameskip" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal" >
+            <TableRow
+                android:layout_marginTop="10dp"
+                android:gravity="center_vertical" >
 
                 <TextView
-                    android:id="@+id/current_frames"
-                    android:layout_width="0dip"
+                    android:id="@+id/unstable_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="0.5"
+                    android:ems="10"
+                    android:gravity="center_vertical|left"
+                    android:text="@string/select_unstable" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:ems="10" />
+                    android:gravity="right"
+                    android:orientation="vertical" >
 
-                <SeekBar
-                    android:id="@+id/frame_seekbar"
+                    <de.ankri.views.Switch
+                        android:id="@+id/unstable_option"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" />
+                </LinearLayout>
+            </TableRow>
+
+            <TableRow
+                android:layout_marginTop="10dp"
+                android:gravity="center_vertical" >
+
+                <TextView
+                    android:id="@+id/mipmaps_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="0.5"
+                    android:ems="10"
+                    android:gravity="center_vertical|left"
+                    android:text="@string/select_mipmaps" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="right"
+                    android:orientation="vertical" >
+
+                    <de.ankri.views.Switch
+                        android:id="@+id/mipmaps_option"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" />
+                </LinearLayout>
+            </TableRow>
+
+            <TableRow
+                android:layout_marginTop="10dp"
+                android:gravity="center_vertical" >
+
+                <TextView
+                    android:id="@+id/stretch_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="0.5"
+                    android:ems="10"
+                    android:gravity="center_vertical|left"
+                    android:text="@string/select_stretch" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="right"
+                    android:orientation="vertical" >
+
+                    <de.ankri.views.Switch
+                        android:id="@+id/stretch_option"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" />
+                </LinearLayout>
+            </TableRow>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:orientation="vertical" >
+
+                <TextView
+                    android:id="@+id/frameskip_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="0dip"
+                    android:layout_weight="1"
+                    android:text="@string/set_frameskip" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal" >
+
+                    <TextView
+                        android:id="@+id/current_frames"
+                        android:layout_width="0dip"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:ems="10" />
+
+                    <SeekBar
+                        android:id="@+id/frame_seekbar"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:ems="10"
+                        android:max="5"
+                        android:progress="0" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <TableRow
+                android:layout_marginTop="10dp"
+                android:gravity="center_vertical" >
+
+                <TextView
+                    android:id="@+id/experimental_text"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:ems="10"
-                    android:max="5"
-                    android:progress="0" />
-            </LinearLayout>
-        </LinearLayout>
+                    android:gravity="center_vertical"
+                    android:text="@string/experimental_opts" />
+            </TableRow>
 
-        <TableRow
-            android:layout_marginTop="10dp"
-            android:gravity="center_vertical" >
+            <TableRow
+                android:layout_marginTop="10dp"
+                android:gravity="center_vertical" >
 
-            <TextView
-                android:id="@+id/experimental_text"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:ems="10"
-                android:gravity="center_vertical"
-                android:text="@string/experimental_opts" />
-        </TableRow>
-
-        <TableRow
-            android:layout_marginTop="10dp"
-            android:gravity="center_vertical" >
-
-            <TextView
-                android:id="@+id/dynarec_text"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="0.5"
-                android:ems="10"
-                android:gravity="center_vertical|left"
-                android:text="@string/select_dynarec" />
-
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:gravity="right"
-                android:orientation="vertical" >
-
-                <de.ankri.views.Switch
-                    android:id="@+id/dynarec_option"
+                <TextView
+                    android:id="@+id/dynarec_text"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" />
-            </LinearLayout>
-        </TableRow>
+                    android:layout_height="wrap_content"
+                    android:layout_weight="0.5"
+                    android:ems="10"
+                    android:gravity="center_vertical|left"
+                    android:text="@string/select_dynarec" />
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:orientation="vertical" >
-
-            <TextView
-                android:id="@+id/region_text"
-                android:layout_width="wrap_content"
-                android:layout_height="0dip"
-                android:layout_weight="1"
-                android:text="@string/select_region" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal" >
-
-                <Spinner
-                    android:id="@+id/region_spinner"
-                    android:layout_width="0dip"
+                <LinearLayout
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:ems="10" >
-                </Spinner>
-            </LinearLayout>
-        </LinearLayout>
+                    android:gravity="right"
+                    android:orientation="vertical" >
 
-        <TableRow
-            android:layout_marginTop="10dp"
-            android:gravity="center_vertical" >
-
-            <TextView
-                android:id="@+id/limitfps_text"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="0.5"
-                android:ems="10"
-                android:gravity="center_vertical|left"
-                android:text="@string/select_limitfps" />
-
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:gravity="right"
-                android:orientation="vertical" >
-
-                <de.ankri.views.Switch
-                    android:id="@+id/limitfps_option"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" />
-            </LinearLayout>
-        </TableRow>
-
-        <TableRow
-            android:layout_marginTop="10dp"
-            android:gravity="center_vertical" >
-
-            <TextView
-                android:id="@+id/render_text"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="0.5"
-                android:ems="10"
-                android:gravity="center_vertical|left"
-                android:text="@string/select_render" />
-
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:gravity="right"
-                android:orientation="vertical" >
-
-                <de.ankri.views.Switch
-                    android:id="@+id/render_option"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" />
-            </LinearLayout>
-        </TableRow>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:orientation="vertical" >
-
-            <TextView
-                android:id="@+id/cheatdisk_text"
-                android:layout_width="wrap_content"
-                android:layout_height="0dip"
-                android:layout_weight="1"
-                android:text="@string/default_disk" />
+                    <de.ankri.views.Switch
+                        android:id="@+id/dynarec_option"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" />
+                </LinearLayout>
+            </TableRow>
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
                 android:orientation="vertical" >
 
-                <EditText
-                    android:id="@+id/cheat_disk"
+                <TextView
+                    android:id="@+id/region_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="0dip"
+                    android:layout_weight="1"
+                    android:text="@string/select_region" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal" >
+
+                    <Spinner
+                        android:id="@+id/region_spinner"
+                        android:layout_width="0dip"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:ems="10" >
+                    </Spinner>
+                </LinearLayout>
+            </LinearLayout>
+
+            <TableRow
+                android:layout_marginTop="10dp"
+                android:gravity="center_vertical" >
+
+                <TextView
+                    android:id="@+id/limitfps_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="0.5"
+                    android:ems="10"
+                    android:gravity="center_vertical|left"
+                    android:text="@string/select_limitfps" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="right"
+                    android:orientation="vertical" >
+
+                    <de.ankri.views.Switch
+                        android:id="@+id/limitfps_option"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" />
+                </LinearLayout>
+            </TableRow>
+
+            <TableRow
+                android:layout_marginTop="10dp"
+                android:gravity="center_vertical" >
+
+                <TextView
+                    android:id="@+id/render_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="0.5"
+                    android:ems="10"
+                    android:gravity="center_vertical|left"
+                    android:text="@string/select_render" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="right"
+                    android:orientation="vertical" >
+
+                    <de.ankri.views.Switch
+                        android:id="@+id/render_option"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" />
+                </LinearLayout>
+            </TableRow>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:orientation="vertical" >
+
+                <TextView
+                    android:id="@+id/cheatdisk_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="0dip"
+                    android:layout_weight="1"
+                    android:text="@string/default_disk" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical" >
+
+                    <EditText
+                        android:id="@+id/cheat_disk"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:ems="10"
+                        android:inputType="textPersonName" >
+                    </EditText>
+                </LinearLayout>
+            </LinearLayout>
+
+            <TableRow
+                android:layout_marginTop="10dp"
+                android:gravity="center_vertical" >
+
+                <Button
+                    android:id="@+id/debug_button"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:ems="10"
-                    android:inputType="textPersonName" >
-                </EditText>
-            </LinearLayout>
-        </LinearLayout>
+                    android:ems="8"
+                    android:text="@string/menu_debug" />
+            </TableRow>
+        </TableLayout>
+    </LinearLayout>
 
-        <TableRow
-            android:layout_marginTop="10dp"
-            android:gravity="center_vertical" >
-
-            <Button
-                android:id="@+id/debug_button"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:ems="8"
-                android:text="@string/menu_debug" />
-        </TableRow>
-    </TableLayout>
-
-</LinearLayout>
+</ScrollView>
