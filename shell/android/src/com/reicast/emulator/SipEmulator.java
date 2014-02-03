@@ -1,6 +1,5 @@
 package com.reicast.emulator;
 
-import java.util.LinkedList;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import android.media.AudioFormat;
@@ -37,7 +36,6 @@ public class SipEmulator extends Thread {
 		
 		init();
 		
-		
 	}
 	
 	private void init(){
@@ -55,7 +53,6 @@ public class SipEmulator extends Thread {
 		continueRecording = false;
 		firstGet = true;
 	}
-
 	
 	public void startRecording(){
 		Log.d(TAG, "SipEmulator startRecording called");
@@ -97,26 +94,15 @@ public class SipEmulator extends Thread {
 	
 	public void run() {
 		Log.d(TAG, "recordThread starting");
-		//sleep to let some data come in
-	//				try {
-	//					Thread.sleep(TIME_TO_WAIT_BETWEEN_POLLS);
-	//				} catch (InterruptedException e) {
-	//					e.printStackTrace();
-	//				}
 		
 		while(continueRecording){
 			byte[] freshData = new byte[ONE_BLIP_SIZE];
 			// read blocks
 			int bytesRead = record.read(freshData, 0, ONE_BLIP_SIZE); 
 			//Log.d(TAG, "recordThread recorded: "+bytesRead);
-			bytesReadBuffer.add(freshData);
-			/*
-			try {
-				Thread.sleep(TIME_TO_WAIT_BETWEEN_POLLS);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
+			if(!firstGet){
+				bytesReadBuffer.add(freshData);
 			}
-			*/
 		}
 	}
 
