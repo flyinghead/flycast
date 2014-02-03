@@ -38,6 +38,8 @@ Translations
 New and updated translations are always appreciated!
 All we ask is that you not use “regional” phrases that may not be generally understood.
 
+Translations can be submitted as a pull request or at http://reicast.loungekatt.com/translate
+
 Beta versions
 -------------
 Compiled test versions are available at reicast.loungekatt.com
