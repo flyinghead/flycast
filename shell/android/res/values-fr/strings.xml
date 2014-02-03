@@ -7,14 +7,14 @@
     <string name="game_path">Répertoire des jeux par défaut</string>
     
     <string name="boot_bios">Démarrer le bios Dreamcast</string>
-    <string name="missing_bios">Il manque le fichier BIOS. Le fichier BIOS de la Dreamcast est indispensable pour faire fonctionner cet émulateur. Celui-ci doit être placé dans %1$s/data/dc_boot.bin</string>
-    <string name="missing_flash">Il manque le fichier FLASH. Le fichier FLASH de la Dreamcast est indispensable pour faire fonctionner cet émulateur. Celui-ci doit être placé dans %1$s/data/dc_flash.bin</string>
+    <string name="missing_bios">Il manque le fichier BIOS. Le fichier BIOS de la Dreamcast est indispensable pour faire fonctionner cet émulateur. Celui-ci doit être placé comme ceci: %1$s/data/dc_boot.bin (ou configurer le répertoire bios)</string>
+    <string name="missing_flash">Il manque le fichier FLASH. Le fichier FLASH de la Dreamcast est indispensable pour faire fonctionner cet émulateur. Celui-ci doit être placé comme ceci: %1$s/data/dc_flash.bin (ou configurer le répertoire bios)</string>
     <string name="require_bios">Vous devez fournir un fichier BIOS</string>
     
     <string name="folder_bios">DEMARRER LE BIOS</string>
     <string name="folder_select">SELECTIONNER LE DOSSIER ACTUEL</string>
 
-    <string name="experimental_opts">Experimental (peut causer un crash)</string>
+    <string name="experimental_opts">Experimental (peut causer des crashs)</string>
     <string name="select_dynarec">Dynarec</string>
     <string name="select_unstable">Optimisations instables</string>
     <string name="select_region">Région du bios</string>
@@ -23,7 +23,7 @@
     <string name="select_stretch">Mode portrait (écran large)</string>
     <string name="set_frameskip">Valeur de saut des images</string>
     <string name="select_render">Rendu PVR (ne fonctionne pas pour le moment)</string>
-    <string name="default_disk">Régler le disc par défaut</string>
+    <string name="default_disk">Réglage du disque par défaut</string>
 
     <string name="games_listing">Liste des jeux disponibles</string>
 
@@ -64,12 +64,6 @@
     <item>Manette D</item>
     </string-array>
     
-    <string-array name="images">
-        <item>cdi</item>
-        <item>chd</item>
-        <item>gdi</item>
-    </string-array>
-    
     <string-array name="region">
         <item>E - Etats-Unis</item>
         <item>J - Japon</item>
@@ -77,18 +71,18 @@
         <item>R - Sans région</item>
     </string-array>
 
-    <string name="browser">Navigateur</string>
+    <string name="browser">Navigation</string>
     <string name="settings">Réglages</string>
-    <string name="paths">Chemins</string>
-    <string name="input">Configurer manette</string>
+    <string name="paths">Répertoires</string>
+    <string name="input">Manettes</string>
     <string name="about">A propos</string>
     <string name="rateme">Evaluez-nous</string>
     
     <string name="textOn">ACTIF</string>
     <string name="textOff">DESACT.</string>
     
-    <string name="platform">Copie le contenu de logcat au presse-papiers\nS\'il vous plaît coller dans le rapport d\'émission</string>
+    <string name="platform">Le contenu du logcat a été copié dans le presse-papiers\nVeuillez coller le rapport d\'émission</string>
 
-    <string name="menu_debug">Soumettre les logs d\'erreurs</string>
+    <string name="menu_debug">Soumettre le log d\'erreurs</string>
 
 </resources>
