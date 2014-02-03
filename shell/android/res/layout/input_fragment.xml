@@ -62,7 +62,8 @@
                     <de.ankri.views.Switch
                         android:id="@+id/switchTouchVibrationEnabled"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content" />
+                        android:layout_height="wrap_content"
+                        android:focusable="true" />
                 </LinearLayout>
             </TableRow>
 
@@ -116,7 +117,8 @@
                     <de.ankri.views.Switch
                         android:id="@+id/micInPort2"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content" />
+                        android:layout_height="wrap_content"
+                        android:focusable="true" />
                 </LinearLayout>
             </TableRow>
         </TableLayout>

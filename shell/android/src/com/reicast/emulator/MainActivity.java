@@ -219,10 +219,6 @@ public class MainActivity extends SlidingFragmentActivity implements
 			}
 		});
 		
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR1) {
-			getActionBar().setHomeButtonEnabled(true);
-			getActionBar().setDisplayHomeAsUpEnabled(true);
-		} else {
 			findViewById(R.id.header).setOnTouchListener(new OnTouchListener() {
 				public boolean onTouch(View v, MotionEvent event) {
 					if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
@@ -232,7 +228,6 @@ public class MainActivity extends SlidingFragmentActivity implements
 						return false;
 				}
 			});
-		}
 
 		System.gc();
 

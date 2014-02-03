@@ -51,10 +51,11 @@
                     <de.ankri.views.Switch
                         android:id="@+id/switchModifiedLayoutEnabled"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content" />
+                        android:layout_height="wrap_content"
+                        android:focusable="true" />
                 </LinearLayout>
             </TableRow>
-            
+
             <TableRow
                 android:layout_marginTop="25dp"
                 android:gravity="center_vertical" >
@@ -77,7 +78,8 @@
                     <de.ankri.views.Switch
                         android:id="@+id/switchCompatibilityEnabled"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content" />
+                        android:layout_height="wrap_content"
+                        android:focusable="true" />
                 </LinearLayout>
             </TableRow>
 
@@ -395,9 +397,9 @@
                     android:id="@+id/joystick_key"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginLeft="4dp"
                     android:layout_weight="1"
                     android:ems="10"
-                    android:layout_marginLeft="4dp"
                     android:text="Joystick" />
 
                 <LinearLayout
@@ -424,7 +426,7 @@
                         android:text="@string/remove" />
                 </LinearLayout>
             </TableRow>
-            
+
             <TableRow
                 android:layout_marginTop="25dp"
                 android:gravity="center_vertical" >
@@ -447,7 +449,8 @@
                     <de.ankri.views.Switch
                         android:id="@+id/dpad_js_layout"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content" />
+                        android:layout_height="wrap_content"
+                        android:focusable="true" />
                 </LinearLayout>
             </TableRow>
 
@@ -459,9 +462,9 @@
                     android:id="@+id/dpad_up_key"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginLeft="4dp"
                     android:layout_weight="1"
                     android:ems="10"
-                    android:layout_marginLeft="4dp"
                     android:text="DPad Up" />
 
                 <LinearLayout
@@ -497,8 +500,8 @@
                     android:id="@+id/dpad_down_key"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
                     android:layout_marginLeft="4dp"
+                    android:layout_weight="1"
                     android:ems="10"
                     android:text="DPad Down" />
 
@@ -535,8 +538,8 @@
                     android:id="@+id/dpad_left_key"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
                     android:layout_marginLeft="4dp"
+                    android:layout_weight="1"
                     android:ems="10"
                     android:text="DPad Left" />
 
@@ -573,8 +576,8 @@
                     android:id="@+id/dpad_right_key"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
                     android:layout_marginLeft="4dp"
+                    android:layout_weight="1"
                     android:ems="10"
                     android:text="DPad Right" />
 

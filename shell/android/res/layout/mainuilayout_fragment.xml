@@ -11,27 +11,26 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="2dp"
         android:orientation="horizontal" >
-        
+
         <LinearLayout
             android:id="@+id/header"
             android:layout_width="wrap_content"
             android:layout_height="48dp"
             android:layout_marginBottom="2dp"
             android:orientation="horizontal" >
-        
-            <ImageView
-            android:id="@+id/header_menu"
-            android:layout_width="wrap_content"
-            android:layout_height="fill_parent"
-            android:src="@drawable/ic_drawer" />
 
-        <ImageView
-            android:id="@+id/header_icon"
-            android:layout_width="wrap_content"
-            android:layout_height="fill_parent"
-            android:src="@drawable/ic_launcher" />
+            <ImageView
+                android:id="@+id/header_menu"
+                android:layout_width="wrap_content"
+                android:layout_height="fill_parent"
+                android:src="@drawable/ic_drawer" />
+
+            <ImageView
+                android:id="@+id/header_icon"
+                android:layout_width="wrap_content"
+                android:layout_height="fill_parent"
+                android:src="@drawable/ic_launcher" />
         </LinearLayout>
-        
 
         <TextView
             android:id="@+id/textView1"
@@ -42,15 +41,11 @@
             android:text="@string/app_name"
             android:textAppearance="?android:attr/textAppearanceLarge"
             android:textSize="32dp" />
-
     </LinearLayout>
 
     <FrameLayout
         android:id="@+id/fragment_container"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" >
-
-        <requestFocus />
-    </FrameLayout>
+        android:layout_height="match_parent" />
 
 </LinearLayout>
