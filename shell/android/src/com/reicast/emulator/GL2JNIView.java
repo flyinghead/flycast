@@ -687,6 +687,9 @@ private static class ContextFactory implements GLSurfaceView.EGLContextFactory
     	mValue = new int[1];
 
         int glAPIToTry = EGLExt.EGL_OPENGL_ES3_BIT_KHR;
+        if (!checkGLSupport(glAPIToTry)) {
+        	glAPIToTry = EGL14.EGL_OPENGL_ES2_BIT;
+        }
         int[] configSpec = null;
 
         do {
@@ -763,6 +766,30 @@ private static class ContextFactory implements GLSurfaceView.EGLContextFactory
         }
 
         throw new IllegalArgumentException("Could not find suitable EGL config");
+    }
+    
+    private boolean checkGLSupport(int renderableType)
+    {
+        EGL10 egl = (EGL10) EGLContext.getEGL();       
+        EGLDisplay display = egl.eglGetDisplay(EGL10.EGL_DEFAULT_DISPLAY);
+
+        int[] version = new int[2];
+        egl.eglInitialize(display, version);
+
+        int[] configAttribs =
+        {
+            EGL10.EGL_RED_SIZE, 4,
+            EGL10.EGL_GREEN_SIZE, 4,
+            EGL10.EGL_BLUE_SIZE, 4,
+            EGL10.EGL_RENDERABLE_TYPE, renderableType,
+            EGL10.EGL_NONE
+        };
+
+        EGLConfig[] configs = new EGLConfig[10];
+        int[] num_config = new int[1];
+        egl.eglChooseConfig(display, configAttribs, configs, 10, num_config);     
+        egl.eglTerminate(display);
+        return num_config[0] > 0;
     }
 
     private int findConfigAttrib(EGL10 egl,EGLDisplay display,EGLConfig config,int attribute,int defaultValue)
