@@ -145,6 +145,26 @@ public class ConfigureFragment extends Fragment {
 		}
 
 		// Generate the menu options and fill in existing settings
+		Switch force_gpu_opt = (Switch) getView().findViewById(
+				R.id.force_gpu_option);
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+			OnCheckedChangeListener force_gpu_options = new OnCheckedChangeListener() {
+
+				public void onCheckedChanged(CompoundButton buttonView,
+						boolean isChecked) {
+					mPrefs.edit().putBoolean("force_gpu", isChecked).commit();
+					MainActivity.force_gpu = isChecked;
+				}
+			};
+			if (MainActivity.force_gpu) {
+				force_gpu_opt.setChecked(true);
+			} else {
+				force_gpu_opt.setChecked(false);
+			}
+			force_gpu_opt.setOnCheckedChangeListener(force_gpu_options);
+		} else {
+			force_gpu_opt.setEnabled(false);
+		}
 
 		OnCheckedChangeListener dynarec_options = new OnCheckedChangeListener() {
 

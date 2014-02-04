@@ -32,6 +32,7 @@ import android.widget.Toast;
 @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR1)
 public class GL2JNIActivity extends Activity {
 	GL2JNIView mView;
+	GL2JNIViewV6 mView6;
 	PopupWindow popUp;
 	LayoutParams params;
 	MOGAInput moga = new MOGAInput();
@@ -320,8 +321,13 @@ public class GL2JNIActivity extends Activity {
 			fileName = Uri.decode(intent.getData().toString());
 
 		// Create the actual GLES view
-		mView = new GL2JNIView(getApplication(), fileName, false, 24, 0, false);
-		setContentView(mView);
+		if (MainActivity.force_gpu) {
+			mView6 = new GL2JNIViewV6(getApplication(), fileName, false, 24, 0, false);
+			setContentView(mView6);
+		} else {
+			mView = new GL2JNIView(getApplication(), fileName, false, 24, 0, false);
+			setContentView(mView);
+		}
 
 		Toast.makeText(getApplicationContext(),
 				"Press the back button for a menu", Toast.LENGTH_SHORT).show();
@@ -410,11 +416,19 @@ public class GL2JNIActivity extends Activity {
 						globalLS_Y[playerNum] = LS_Y;
 					}
 
-					GL2JNIView.lt[playerNum] = (int) (L2 * 255);
-					GL2JNIView.rt[playerNum] = (int) (R2 * 255);
+					if (MainActivity.force_gpu) {
+						GL2JNIViewV6.lt[playerNum] = (int) (L2 * 255);
+						GL2JNIViewV6.rt[playerNum] = (int) (R2 * 255);
 
-					GL2JNIView.jx[playerNum] = (int) (LS_X * 126);
-					GL2JNIView.jy[playerNum] = (int) (LS_Y * 126);
+						GL2JNIViewV6.jx[playerNum] = (int) (LS_X * 126);
+						GL2JNIViewV6.jy[playerNum] = (int) (LS_Y * 126);
+					} else {
+						GL2JNIView.lt[playerNum] = (int) (L2 * 255);
+						GL2JNIView.rt[playerNum] = (int) (R2 * 255);
+
+						GL2JNIView.jx[playerNum] = (int) (LS_X * 126);
+						GL2JNIView.jy[playerNum] = (int) (LS_Y * 126);
+					}
 				}
 
 			}
@@ -432,6 +446,37 @@ public class GL2JNIActivity extends Activity {
 			return false;
 		}
 
+	}
+	
+	public boolean simulatedTouchEvent(int playerNum, float L2, float R2) {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
+			if (!moga.isActive[playerNum] || compat[playerNum]) {
+					if (jsCompat[playerNum] || xbox[playerNum] || nVidia[playerNum]) {
+						previousLS_X[playerNum] = globalLS_X[playerNum];
+						previousLS_Y[playerNum] = globalLS_Y[playerNum];
+						globalLS_X[playerNum] = 0;
+						globalLS_Y[playerNum] = 0;
+					}
+					if (MainActivity.force_gpu) {
+						GL2JNIViewV6.lt[playerNum] = (int) (L2 * 255);
+						GL2JNIViewV6.rt[playerNum] = (int) (R2 * 255);
+						GL2JNIViewV6.jx[playerNum] = (int) (0 * 126);
+						GL2JNIViewV6.jy[playerNum] = (int) (0 * 126);
+					} else {
+						GL2JNIView.lt[playerNum] = (int) (L2 * 255);
+						GL2JNIView.rt[playerNum] = (int) (R2 * 255);
+						GL2JNIView.jx[playerNum] = (int) (0 * 126);
+						GL2JNIView.jy[playerNum] = (int) (0 * 126);
+					}
+				}
+			if ((jsCompat[playerNum] || xbox[playerNum] || nVidia[playerNum])
+					&& ((globalLS_X[playerNum] == previousLS_X[playerNum] && globalLS_Y[playerNum] == previousLS_Y[playerNum]) || (previousLS_X[playerNum] == 0.0f && previousLS_Y[playerNum] == 0.0f)))
+				return false;
+			else
+				return true;
+		} else {
+			return false;
+		}
 	}
 
 	private static final int key_CONT_B 			= 0x0002;
@@ -487,11 +532,17 @@ public class GL2JNIActivity extends Activity {
 			boolean rav = false;
 			for (int i = 0; i < map[playerNum].length; i += 2) {
 				if (map[playerNum][i + 0] == kc) {
-					if (down)
-						GL2JNIView.kcode_raw[playerNum] &= ~map[playerNum][i + 1];
-					else
-						GL2JNIView.kcode_raw[playerNum] |= map[playerNum][i + 1];
-
+					if (MainActivity.force_gpu) {
+						if (down)
+							GL2JNIViewV6.kcode_raw[playerNum] &= ~map[playerNum][i + 1];
+						else
+							GL2JNIViewV6.kcode_raw[playerNum] |= map[playerNum][i + 1];
+					} else {
+						if (down)
+							GL2JNIView.kcode_raw[playerNum] &= ~map[playerNum][i + 1];
+						else
+							GL2JNIView.kcode_raw[playerNum] |= map[playerNum][i + 1];
+					}
 					rav = true;
 					break;
 				}
@@ -530,16 +581,12 @@ public class GL2JNIActivity extends Activity {
 			String id = portId[playerNum];
 			if (custom[playerNum]) {
 				if (keyCode == prefs.getInt("l_button" + id, OuyaController.BUTTON_L1)) {
-					GL2JNIView.lt[playerNum] = (int) (0.5 * 255);
-					GL2JNIView.lt[playerNum] = (int) (1.0 * 255);
-					GL2JNIView.lt[playerNum] = (int) (0.5 * 255);
-					GL2JNIView.lt[playerNum] = 0;
+					simulatedTouchEvent(playerNum, 1.0f, 0.0f);
+					simulatedTouchEvent(playerNum, 0.0f, 0.0f);
 				}
 				if (keyCode == prefs.getInt("r_button" + id, OuyaController.BUTTON_R1)) {
-					GL2JNIView.rt[playerNum] = (int) (0.5 * 255);
-					GL2JNIView.rt[playerNum] = (int) (1.0 * 255);
-					GL2JNIView.rt[playerNum] = (int) (0.5 * 255);
-					GL2JNIView.rt[playerNum] = 0;
+					simulatedTouchEvent(playerNum, 0.0f, 1.0f);
+					simulatedTouchEvent(playerNum, 0.0f, 0.0f);
 				}
 			}
 		}
@@ -553,7 +600,11 @@ public class GL2JNIActivity extends Activity {
 		if (keyCode == KeyEvent.KEYCODE_MENU
 				|| keyCode == KeyEvent.KEYCODE_BACK) {
 			if (!popUp.isShowing()) {
-				popUp.showAtLocation(mView, Gravity.BOTTOM, 0, 0);
+				if (MainActivity.force_gpu) {
+					popUp.showAtLocation(mView6, Gravity.BOTTOM, 0, 0);
+				} else {
+					popUp.showAtLocation(mView, Gravity.BOTTOM, 0, 0);
+				}
 				popUp.update(LayoutParams.WRAP_CONTENT,
 						LayoutParams.WRAP_CONTENT);
 
@@ -569,7 +620,11 @@ public class GL2JNIActivity extends Activity {
 	@Override
 	protected void onPause() {
 		super.onPause();
-		mView.onPause();
+		if (MainActivity.force_gpu) {
+			mView6.onPause();
+		} else {
+			mView.onPause();
+		}
 		moga.onPause();
 	}
 
@@ -583,8 +638,11 @@ public class GL2JNIActivity extends Activity {
 	protected void onStop() {
 		// TODO Auto-generated method stub
 		JNIdc.stop();
-
-		mView.onStop();
+		if (MainActivity.force_gpu) {
+			mView6.onStop();
+		} else {
+			mView.onStop();
+		}
 		super.onStop();
 	}
 
@@ -601,7 +659,11 @@ public class GL2JNIActivity extends Activity {
 	@Override
 	protected void onResume() {
 		super.onResume();
-		mView.onResume();
+		if (MainActivity.force_gpu) {
+			mView6.onResume();
+		} else {
+			mView.onResume();
+		}
 		moga.onResume();
 	}
 }

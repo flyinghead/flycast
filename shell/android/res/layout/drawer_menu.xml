@@ -19,7 +19,9 @@
             android:layout_marginTop="10dp"
             android:gravity="center_vertical|left"
             android:layout_marginLeft="4dp"
-            android:orientation="horizontal" >
+            android:orientation="horizontal"
+            android:focusable="true"
+            android:background="@drawable/game_selector" >
 
             <ImageView
                 android:id="@+id/browser"
@@ -48,7 +50,9 @@
             android:layout_marginTop="10dp"
             android:gravity="center_vertical|left"
             android:layout_marginLeft="26dp"
-            android:orientation="horizontal" >
+            android:orientation="horizontal"
+            android:focusable="true"
+            android:background="@drawable/game_selector" >
 
             <ImageView
                 android:id="@+id/config"
@@ -77,7 +81,9 @@
             android:layout_marginTop="10dp"
             android:gravity="center_vertical|left"
             android:layout_marginLeft="4dp"
-            android:orientation="horizontal" >
+            android:orientation="horizontal"
+            android:focusable="true"
+            android:background="@drawable/game_selector" >
 
             <ImageView
                 android:id="@+id/options"
@@ -106,7 +112,9 @@
             android:layout_marginTop="10dp"
             android:gravity="center_vertical|left"
             android:layout_marginLeft="26dp"
-            android:orientation="horizontal" >
+            android:orientation="horizontal"
+            android:focusable="true"
+            android:background="@drawable/game_selector" >
 
             <ImageView
                 android:id="@+id/input"
@@ -135,7 +143,9 @@
             android:layout_marginTop="10dp"
             android:gravity="center_vertical|left"
             android:layout_marginLeft="4dp"
-            android:orientation="horizontal" >
+            android:orientation="horizontal"
+            android:focusable="true"
+            android:background="@drawable/game_selector" >
 
             <ImageView
                 android:id="@+id/about"
@@ -164,7 +174,9 @@
             android:layout_marginTop="10dp"
             android:gravity="center_vertical|left"
             android:layout_marginLeft="26dp"
-            android:orientation="horizontal" >
+            android:orientation="horizontal"
+            android:focusable="true"
+            android:background="@drawable/game_selector" >
 
             <ImageView
                 android:id="@+id/rate"

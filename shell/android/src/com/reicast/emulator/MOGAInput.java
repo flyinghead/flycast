@@ -6,6 +6,7 @@ package com.reicast.emulator;
 import tv.ouya.console.api.OuyaController;
 import android.app.Activity;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.widget.Toast;
@@ -192,18 +193,14 @@ public class MOGAInput
 
 	    		String id = portId[playerNum];
 	    		if (custom[playerNum]) {
-	    				if (event.getKeyCode() == prefs.getInt("l_button" + id, OuyaController.BUTTON_L1)) {
-	    					GL2JNIView.lt[playerNum] = (int) (0.5 * 255);
-	    					GL2JNIView.lt[playerNum] = (int) (1.0 * 255);
-	    					GL2JNIView.lt[playerNum] = (int) (0.5 * 255);
-	    					GL2JNIView.lt[playerNum] = 0;
-	    				}
-	    				if (event.getKeyCode() == prefs.getInt("r_button" + id, OuyaController.BUTTON_R1)) {
-	    					GL2JNIView.rt[playerNum] = (int) (0.5 * 255);
-	    					GL2JNIView.rt[playerNum] = (int) (1.0 * 255);
-	    					GL2JNIView.rt[playerNum] = (int) (0.5 * 255);
-	    					GL2JNIView.rt[playerNum] = 0;
-	    				}
+                    if (event.getKeyCode() == prefs.getInt("l_button" + id, KeyEvent.KEYCODE_BUTTON_L1)) {
+						simulatedTouchEvent(playerNum, 1.0f, 0.0f);
+						simulatedTouchEvent(playerNum, 0.0f, 0.0f);
+					}
+					if (event.getKeyCode() == prefs.getInt("r_button" + id, KeyEvent.KEYCODE_BUTTON_R1)) {
+						simulatedTouchEvent(playerNum, 0.0f, 1.0f);
+						simulatedTouchEvent(playerNum, 0.0f, 0.0f);
+					}
 	    		}
 
 			if(playerNum == 0)
@@ -211,12 +208,41 @@ public class MOGAInput
 
 			for (int i = 0; i < map.length; i += 2) {
 				if (map[playerNum][i + 0] == event.getKeyCode()) {
-					if (event.getAction() == 0) //FIXME to const
-						GL2JNIView.kcode_raw[playerNum] &= ~map[playerNum][i + 1];
-					else
-						GL2JNIView.kcode_raw[playerNum] |= map[playerNum][i + 1];
+					if (MainActivity.force_gpu) {
+						if (event.getAction() == 0) //FIXME to const
+							GL2JNIViewV6.kcode_raw[playerNum] &= ~map[playerNum][i + 1];
+						else
+							GL2JNIViewV6.kcode_raw[playerNum] |= map[playerNum][i + 1];
+					} else {
+						if (event.getAction() == 0) //FIXME to const
+							GL2JNIView.kcode_raw[playerNum] &= ~map[playerNum][i + 1];
+						else
+							GL2JNIView.kcode_raw[playerNum] |= map[playerNum][i + 1];
+					}
 					break;
 				}
+			}
+		}
+		
+		public void simulatedTouchEvent(int playerNum, float L2, float R2) {
+			if(playerNum == 0)
+				JNIdc.hide_osd();
+			if (jsCompat[playerNum]) {
+				previousLS_X[playerNum] = globalLS_X[playerNum];
+				previousLS_Y[playerNum] = globalLS_Y[playerNum];
+				globalLS_X[playerNum] = 0;
+				globalLS_Y[playerNum] = 0;
+			}
+			if (MainActivity.force_gpu) {
+				GL2JNIViewV6.lt[playerNum] = (int) (L2 * 255);
+				GL2JNIViewV6.rt[playerNum] = (int) (R2 * 255);
+				GL2JNIViewV6.jx[playerNum] = (int) (0 * 126);
+				GL2JNIViewV6.jy[playerNum] = (int) (0 * 126);
+			} else {
+				GL2JNIView.lt[playerNum] = (int) (L2 * 255);
+				GL2JNIView.rt[playerNum] = (int) (R2 * 255);
+				GL2JNIView.jx[playerNum] = (int) (0 * 126);
+				GL2JNIView.jy[playerNum] = (int) (0 * 126);
 			}
 		}
 
@@ -244,11 +270,19 @@ public class MOGAInput
 
 			}
 
-			GL2JNIView.lt[playerNum] = (int) (L2 * 255);
-			GL2JNIView.rt[playerNum] = (int) (R2 * 255);
+			if (MainActivity.force_gpu) {
+				GL2JNIViewV6.lt[playerNum] = (int) (L2 * 255);
+				GL2JNIViewV6.rt[playerNum] = (int) (R2 * 255);
 
-			GL2JNIView.jx[playerNum] = (int) (S_X * 126);
-			GL2JNIView.jy[playerNum] = (int) (S_Y * 126);
+				GL2JNIViewV6.jx[playerNum] = (int) (S_X * 126);
+				GL2JNIViewV6.jy[playerNum] = (int) (S_Y * 126);
+			} else {
+				GL2JNIView.lt[playerNum] = (int) (L2 * 255);
+				GL2JNIView.rt[playerNum] = (int) (R2 * 255);
+
+				GL2JNIView.jx[playerNum] = (int) (S_X * 126);
+				GL2JNIView.jy[playerNum] = (int) (S_Y * 126);
+			}
 
 			/*
 			for(final Entry<Integer, ExampleFloat> entry : mMotions.entrySet())

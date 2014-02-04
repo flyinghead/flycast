@@ -33,6 +33,7 @@ public class MainActivity extends SlidingFragmentActivity implements
 		FileBrowser.OnItemSelectedListener, OptionsFragment.OnClickListener {
 
 	private SharedPreferences mPrefs;
+	public static boolean force_gpu;
 	private static File sdcard = Environment.getExternalStorageDirectory();
 	public static String home_directory = sdcard + "/dc";
 
@@ -104,6 +105,8 @@ public class MainActivity extends SlidingFragmentActivity implements
 					.replace(R.id.fragment_container, firstFragment,
 							"MAIN_BROWSER").commit();
 		}
+		
+		force_gpu = mPrefs.getBoolean("force_gpu", false);
 		
 		menuHeading = (TextView) findViewById(R.id.menu_heading);
 		
@@ -232,7 +235,7 @@ public class MainActivity extends SlidingFragmentActivity implements
 							startActivity(new Intent(Intent.ACTION_VIEW, Uri
 									.parse("market://details?id="
 											+ getPackageName())));
-							setTitle(getString(R.string.rateme));
+							//setTitle(getString(R.string.rateme));
 							sm.toggle(true);
 							return true;
 						} else
@@ -421,6 +424,7 @@ public class MainActivity extends SlidingFragmentActivity implements
 				.beginTransaction()
 				.replace(R.id.fragment_container, fragment,
 						"MAIN_BROWSER").commit();
+				setTitle(getString(R.string.browser));
 				return true;
 			}
 
