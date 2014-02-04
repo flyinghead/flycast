@@ -50,9 +50,6 @@ public class ConfigureFragment extends Fragment {
 	boolean pvrrender = false;
 	String cheatdisk = "null";
 
-	boolean tegra = false;
-	boolean qualcomm = false;
-
 	private SharedPreferences mPrefs;
 	private File sdcard = Environment.getExternalStorageDirectory();
 	private String home_directory = sdcard + "/dc";
