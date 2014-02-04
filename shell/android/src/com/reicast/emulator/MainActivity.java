@@ -421,6 +421,7 @@ public class MainActivity extends SlidingFragmentActivity implements
 				.beginTransaction()
 				.replace(R.id.fragment_container, fragment,
 						"MAIN_BROWSER").commit();
+				setTitle(getString(R.string.browser));
 				return true;
 			}
 
