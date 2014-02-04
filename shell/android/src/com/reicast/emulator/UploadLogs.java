@@ -234,8 +234,10 @@ public class UploadLogs extends AsyncTask<String, Integer, String> {
 			}
 			Intent browserIntent = new Intent(
 					Intent.ACTION_VIEW,
-					Uri.parse("https://github.com/reicast/reicast-emulator/issues/new"));
-			mContext.startActivity(browserIntent);
+					Uri.parse("https://reicast.loungekatt.com/report"));
+//			Intent browserIntent = new Intent(
+//					Intent.ACTION_VIEW,
+//					Uri.parse("https://github.com/reicast/reicast-emulator/issues/new"));
 		}
 	}
 }

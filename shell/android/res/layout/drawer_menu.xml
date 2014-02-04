@@ -20,7 +20,8 @@
             android:gravity="center_vertical|left"
             android:layout_marginLeft="4dp"
             android:orientation="horizontal"
-            android:focusable="true" >
+            android:focusable="true"
+            android:background="@drawable/game_selector" >
 
             <ImageView
                 android:id="@+id/browser"
@@ -50,7 +51,8 @@
             android:gravity="center_vertical|left"
             android:layout_marginLeft="26dp"
             android:orientation="horizontal"
-            android:focusable="true" >
+            android:focusable="true"
+            android:background="@drawable/game_selector" >
 
             <ImageView
                 android:id="@+id/config"
@@ -80,7 +82,8 @@
             android:gravity="center_vertical|left"
             android:layout_marginLeft="4dp"
             android:orientation="horizontal"
-            android:focusable="true" >
+            android:focusable="true"
+            android:background="@drawable/game_selector" >
 
             <ImageView
                 android:id="@+id/options"
@@ -110,7 +113,8 @@
             android:gravity="center_vertical|left"
             android:layout_marginLeft="26dp"
             android:orientation="horizontal"
-            android:focusable="true" >
+            android:focusable="true"
+            android:background="@drawable/game_selector" >
 
             <ImageView
                 android:id="@+id/input"
@@ -140,7 +144,8 @@
             android:gravity="center_vertical|left"
             android:layout_marginLeft="4dp"
             android:orientation="horizontal"
-            android:focusable="true" >
+            android:focusable="true"
+            android:background="@drawable/game_selector" >
 
             <ImageView
                 android:id="@+id/about"
@@ -170,7 +175,8 @@
             android:gravity="center_vertical|left"
             android:layout_marginLeft="26dp"
             android:orientation="horizontal"
-            android:focusable="true" >
+            android:focusable="true"
+            android:background="@drawable/game_selector" >
 
             <ImageView
                 android:id="@+id/rate"

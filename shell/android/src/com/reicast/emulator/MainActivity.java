@@ -232,7 +232,7 @@ public class MainActivity extends SlidingFragmentActivity implements
 							startActivity(new Intent(Intent.ACTION_VIEW, Uri
 									.parse("market://details?id="
 											+ getPackageName())));
-							setTitle(getString(R.string.rateme));
+							//setTitle(getString(R.string.rateme));
 							sm.toggle(true);
 							return true;
 						} else
