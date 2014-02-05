@@ -1,6 +1,4 @@
 <resources>
-
-    <string name="app_name">reicast</string>
     <string name="menu_settings">Настройки</string>
 
     <string name="system_path">Системный путь (с папакой data в которой находятся dc_boot.bin и dc_flash.bin)</string>
@@ -66,13 +64,7 @@
     <item>Контроллер C</item>
     <item>Контроллер D</item>
     </string-array>
-    
-    <string-array name="images">
-        <item>cdi</item>
-        <item>chd</item>
-        <item>gdi</item>
-    </string-array>
-    
+
     <string-array name="region">
         <item>E - США</item>
         <item>J - Япония</item>
