@@ -24,6 +24,7 @@ public class JNIdc
   public static native void initControllers(boolean[] controllers);
   
   public static native void setupMic(Object sip);
+  public static native void vmuSwap();
 
   public static void show_osd() {
     JNIdc.vjoy(13, 1,0,0,0);

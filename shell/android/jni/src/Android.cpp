@@ -38,6 +38,7 @@ extern "C"
   JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_initControllers(JNIEnv *env, jobject obj, jbooleanArray controllers)  __attribute__((visibility("default")));
   
   JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_setupMic(JNIEnv *env,jobject obj,jobject sip)  __attribute__((visibility("default")));
+  JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_vmuSwap(JNIEnv *env,jobject obj)  __attribute__((visibility("default")));
 };
 
 
@@ -222,6 +223,14 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_setupMic(JNIEnv *env,jobj
 JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_stop(JNIEnv *env,jobject obj)
 {
 	dc_term();
+}
+
+JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_vmuSwap(JNIEnv *env,jobject obj)
+{
+	maple_device* swap = MapleDevices[0][1];
+	MapleDevices[0][1] = MapleDevices[0][0];
+	MapleDevices[0][0] = swap;
+
 }
 
 JNIEXPORT jint JNICALL Java_com_reicast_emulator_JNIdc_send(JNIEnv *env,jobject obj,jint cmd, jint param)

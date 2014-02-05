@@ -90,31 +90,34 @@ public class GL2JNIActivity extends Activity {
 				GL2JNIActivity.this.finish();
 			}
 		}), params);
+		
+		//TODO comment what these do
+		//TODO update these icons
 
 		hlay.addView(addbut(R.drawable.config, new OnClickListener() {
 			public void onClick(View v) {
-				JNIdc.send(0, 0);
+				JNIdc.send(0, 0); //Killing texture cache
 				popUp.dismiss();
 			}
 		}), params);
 
 		hlay.addView(addbut(R.drawable.profiler, new OnClickListener() {
 			public void onClick(View v) {
-				JNIdc.send(1, 3000);
+				JNIdc.send(1, 3000); //sample_Start(param);
 				popUp.dismiss();
 			}
 		}), params);
 
 		hlay.addView(addbut(R.drawable.profiler, new OnClickListener() {
 			public void onClick(View v) {
-				JNIdc.send(1, 0);
+				JNIdc.send(1, 0); //sample_Start(param);
 				popUp.dismiss();
 			}
 		}), params);
 
 		hlay.addView(addbut(R.drawable.disk_unknown, new OnClickListener() {
 			public void onClick(View v) {
-				JNIdc.send(0, 1);
+				JNIdc.send(0, 1); //settings.pvr.ta_skip
 				popUp.dismiss();
 			}
 		}), params);
@@ -122,6 +125,13 @@ public class GL2JNIActivity extends Activity {
 		hlay.addView(addbut(R.drawable.profiler, new OnClickListener() {
 			public void onClick(View v) {
 				JNIdc.send(0, 2);
+				popUp.dismiss(); //print_stats=true;
+			}
+		}), params);
+		
+		hlay.addView(addbut(R.drawable.input, new OnClickListener() {
+			public void onClick(View v) {
+				JNIdc.vmuSwap();
 				popUp.dismiss();
 			}
 		}), params);

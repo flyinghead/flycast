@@ -26,12 +26,11 @@ maximum size of a Maple Bus packet is 256 words (1024 bytes)
 
 ================
 Games that can use mic:
--Seaman
+-Seaman [tested, working!]
 -Alien Front Online
 -Planet Ring
--Mr Driller
--Otoire
+-Mr Driller [tested, working!] (lol @ telling mr driller to dig)
+-Otoire [tested, working!]
 -Propeller Arena
 -Visual Park
 -Kiteretsu Boys Gangagan
-
