@@ -66,9 +66,9 @@ public class UploadLogs extends AsyncTask<String, Integer, String> {
 				build_version = HC;
 			} else if (build_sdk >= 14 && build_sdk < 16) {
 				build_version = IC;
-			} else if (build_sdk >= 16 && build_sdk < 17) {
+			} else if (build_sdk >= 16 && build_sdk < 19) {
 				build_version = JB;
-			} else if (build_sdk >= 17) {
+			} else if (build_sdk >= 19) {
 				build_version = KK;
 			}
 			s += build_version + " (" + build_sdk + ")";

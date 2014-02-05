@@ -36,6 +36,8 @@ public class MainActivity extends SlidingFragmentActivity implements
 	public static boolean force_gpu;
 	private static File sdcard = Environment.getExternalStorageDirectory();
 	public static String home_directory = sdcard + "/dc";
+	
+	public static long dreamRTC = ((20 * 365 + 5) * 86400);
 
 	private TextView menuHeading;
 	
@@ -56,6 +58,7 @@ public class MainActivity extends SlidingFragmentActivity implements
 		mUEHandler = new Thread.UncaughtExceptionHandler() {
 	        public void uncaughtException(Thread t, Throwable error) {
 	        	if (error != null) {
+	        		Log.e("com.reicast.emulator", error.getMessage());
 					Toast.makeText(MainActivity.this,
 		    				getString(R.string.platform),
 		    				Toast.LENGTH_SHORT).show();
@@ -335,9 +338,10 @@ public class MainActivity extends SlidingFragmentActivity implements
 			// show it
 			alertDialog.show();
 		} else {
+			long dreamTime = (System.currentTimeMillis() / 1000) + dreamRTC;
 			ConfigureFragment config = new ConfigureFragment();
 			config.executeAppendConfig("Dreamcast.RTC",
-					String.valueOf(String.valueOf(System.currentTimeMillis())));
+					String.valueOf(String.valueOf(dreamTime)));
 			Intent inte = new Intent(Intent.ACTION_VIEW, uri, getBaseContext(),
 					GL2JNIActivity.class);
 			startActivity(inte);
