@@ -56,6 +56,7 @@ public class MainActivity extends SlidingFragmentActivity implements
 		mUEHandler = new Thread.UncaughtExceptionHandler() {
 	        public void uncaughtException(Thread t, Throwable error) {
 	        	if (error != null) {
+	        		Log.e("com.reicast.emulator", error.getMessage());
 					Toast.makeText(MainActivity.this,
 		    				getString(R.string.platform),
 		    				Toast.LENGTH_SHORT).show();
