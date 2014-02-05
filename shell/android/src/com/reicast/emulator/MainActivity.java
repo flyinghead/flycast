@@ -36,6 +36,8 @@ public class MainActivity extends SlidingFragmentActivity implements
 	public static boolean force_gpu;
 	private static File sdcard = Environment.getExternalStorageDirectory();
 	public static String home_directory = sdcard + "/dc";
+	
+	public static long dreamRTC = ((20 * 365 + 5) * 86400);
 
 	private TextView menuHeading;
 	
@@ -336,9 +338,10 @@ public class MainActivity extends SlidingFragmentActivity implements
 			// show it
 			alertDialog.show();
 		} else {
-//			ConfigureFragment config = new ConfigureFragment();
-//			config.executeAppendConfig("Dreamcast.RTC",
-//					String.valueOf(String.valueOf(System.currentTimeMillis())));
+			long dreamTime = (System.currentTimeMillis() / 1000) + dreamRTC;
+			ConfigureFragment config = new ConfigureFragment();
+			config.executeAppendConfig("Dreamcast.RTC",
+					String.valueOf(String.valueOf(dreamTime)));
 			Intent inte = new Intent(Intent.ACTION_VIEW, uri, getBaseContext(),
 					GL2JNIActivity.class);
 			startActivity(inte);
