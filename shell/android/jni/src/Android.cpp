@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <android/log.h>  
+#include <unistd.h>
 
 #include <EGL/egl.h>
 #include <GLES2/gl2.h>
@@ -227,9 +228,18 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_stop(JNIEnv *env,jobject 
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_vmuSwap(JNIEnv *env,jobject obj)
 {
-	maple_device* swap = MapleDevices[0][1];
-	MapleDevices[0][1] = MapleDevices[0][0];
-	MapleDevices[0][0] = swap;
+	LOGD("vmuSwap go!");
+
+	maple_device* olda = MapleDevices[0][0];
+	maple_device* oldb = MapleDevices[0][1];
+	MapleDevices[0][0] = NULL;
+	MapleDevices[0][1] = NULL;
+	usleep(50000);//50 ms, wait for host to detect disconnect
+
+	MapleDevices[0][0] = oldb;
+	MapleDevices[0][1] = olda;
+
+	LOGD("vmuSwap done");
 
 }
 
