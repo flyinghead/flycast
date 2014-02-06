@@ -1,82 +1,89 @@
 <resources>
-
     <string name="menu_settings">Настройки</string>
-    <string name="system_path">Системная папка (папка с dc_boot.bin/dc_flash.bin)</string>
-    <string name="browser_path">Стандартная системная папка</string>
-    <string name="games_path">Папка образов (папка с образами .gdi, .chd или .cdi)</string>
-    <string name="game_path">Стандартная папка образов</string>
-    
-    <string name="boot_bios">Запуск BIOS</string>
-    <string name="missing_bios">BIOS не найден. BIOS Dreamcast необходим для работы эмулятора. Скопируйте файл BIOS в %1$s/data/dc_boot.bin</string>
-    <string name="missing_flash">Flash не найден. Flash Dreamcast необходим для работы эмулятора. Скопируйте файл Flash в %1$s/data/dc_flash.bin</string>
-    <string name="require_bios">Вы должны скопировать BIOS</string>
-    
-    <string name="folder_bios">ЗАГРУЗКА BIOS</string>
-    <string name="folder_select">ВЫБРАТЬ ТЕКУЩУЮ ПАПКУ</string>
 
-    <string name="select_dynarec">Параметры динамической компиляция</string>
-    <string name="select_unstable">Нестабильные опции</string>
-    <string name="select_region">Регион DC</string>
+    <string name="system_path">Системный путь (с папакой data в которой находятся dc_boot.bin и dc_flash.bin)</string>
+    <string name="browser_path">Стандартный системный путь</string>
+    <string name="games_path">Путь хранения (где находятся .gdi, .chd, .cdi файлы)</string>
+    <string name="game_path">Игровой путь по умолчанию</string>
+    
+    <string name="boot_bios">Запустить DREAMCAST BIOS</string>
+    <string name="missing_bios">BIOS не найден. Dreamcast BIOS требуется для работы эмулятора. Поместите файл BIOS по этому пути: %1$s/data/dc_boot.bin</string>
+    <string name="missing_flash">Flash файл не найден. Dreamcast Flash требуется для работы эмулятора. Поместите файл Flash в %1$s/data/dc_flash.bin</string>
+    <string name="require_bios">Вы должны предоставить BIOS</string>
+    
+    <string name="folder_bios">ЗАГРУЗОЧНЫЙ BIOS</string>
+    <string name="folder_select">Выбрать эту папку</string>
+
+    <string name="experimental_opts">Эксперементально (может произойти что-то плохое)</string>
+    <string name="select_dynarec">Динамический рекомпилятор</string>
+    <string name="select_unstable">Нестабильные оптимизации</string>
+    <string name="select_region">DC Регион</string>
     <string name="select_limitfps">Ограничитель FPS</string>
-    <string name="select_mipmaps">Использовать мипмаппинг</string>
-    <string name="select_stretch">Широкий экран</string>
-    <string name="set_frameskip">Пропуск</string>
-    <string name="select_render">PVR рендеринг</string>
+    <string name="select_mipmaps">Использовать уменьшающиеся изображения</string>
+    <string name="select_stretch">Широкоэкранный режим</string>
+    <string name="set_frameskip">Количество пропускаемых кадров:</string>
+    <string name="select_render">PVR Rendering (не работает)</string>
+    <string name="default_disk">Выбрать стандартный диск</string>
+    <string name="select_force_gpu">Принудительно v6 GPU конфиг.</string>
+    <string name="games_listing">Список доступных DREAMCAST игр</string>
 
-    <string name="games_listing">Доступные игры</string>
-
-    <string name="customize_touch_controls">Параметры управления</string>
+    <string name="customize_touch_controls">Настроить сенсорное управление</string>
     <string name="launch_editor">Запустить редактор</string>
-    <string name="touch_vibration">Вибрация при касании</string>
-    <string name="controller_a">Контролер A</string>
-    <string name="controller_b">Контролер B</string>
-    <string name="controller_c">Контролер C</string>
-    <string name="controller_d">Контролер D</string>
-    <string name="controller_not_connected">Контролер не подключен</string>
-    <string name="controller_none_selected">Контролер не выбран</string>
+    <string name="touch_vibration">Вибрация</string>
+    <string name="controller_a">Контроллер A</string>
+    <string name="controller_b">Контроллер B</string>
+    <string name="controller_c">Контроллер C</string>
+    <string name="controller_d">Контроллер D</string>
+    <string name="controller_not_connected">Контроллер не подключен</string>
+    <string name="controller_none_selected">Контроллер не выбран</string>
     <string name="select">Выбрать</string>
-    <string name="remove">Удалить</string>
-    <string name="select_controller_title">Выбор контролера</string>
-    <string name="select_controller_message">Нажмите любую кнопку на контролере %1$s для выбора</string>
-    <string name="controller_already_in_use">Этот контролер уже используется!</string>
-    <string name="modified_layout">Включить пользовательский режим</string>
+    <string name="remove">Извлечь</string>
+    <string name="select_controller_title">Выбрать контроллер</string>
+    <string name="select_controller_message">Нажмите любую кнопку на контроллере %1$s</string>
+    <string name="controller_already_in_use">Этот контроллер уже используется!</string>
+    <string name="modified_layout">Включить измененное расположение кнопок</string>
     <string name="controller_compat">Включить режим совместимости</string>
+    <string name="dpad_joystick">Джойстик использует DPAD</string>
+    <string name="mic_in_port_2">Микрофон вставлен в порт 2</string>
     
-    <string name="customize_physical_controls">Настроить физический контролер</string>
-    <string name="map_keycode_title">Изменить контролер</string>
-    <string name="map_keycode_message">Выберите кнопку для %1$s</string>
+    <string name="customize_physical_controls">Customize Physical Controls</string>
+    <string name="map_keycode_title">Изменить контроллер</string>
+    <string name="map_keycode_message">Нажмите кнопку на контроллере для %1$s</string>
     
-    <string name="moga_pro_connect">Подключена MOGA Pro!</string>
-    <string name="moga_connect">Подключена MOGA!</string>
+    <string name="moga_pro_connect">MOGA Pro присоиденен!</string>
+    <string name="moga_connect">MOGA присоиденен!</string>
 
-    <string name="about_text">reicast эмулятор dreamcast\n\nВерсия: %1$s\n\n</string>
+    <string name="about_text">DREAMCAST эмулятор "REICAST"\nВерсия: %1$s</string>
+    <string name="app_site">Сайт: http://reicast.com</string>
+    <string name="beta_site">Бета версии: http://reicast.loungekatt.com</string>
+    <string name="git_api">https://api.github.com/repos/reicast/reicast-emulator/commits</string>
     
     <string-array name="controllers">
-    <item>Контролер A</item>
-    <item>Контролер B</item>
-    <item>Контролер C</item>
-    <item>Контролер D</item>
+    <item>Контроллер A</item>
+    <item>Контроллер B</item>
+    <item>Контроллер C</item>
+    <item>Контроллер D</item>
     </string-array>
-    
+
     <string-array name="region">
-        <item></item>
-        <item></item>
-        <item></item>
-        <item>(По умолчанию)</item>
+        <item>E - США</item>
+        <item>J - Япония</item>
+        <item>U - Европа</item>
+        <item>R - Свободный</item>
     </string-array>
-
-    <string name="browser">Обзор</string>
+    
+    <string name="browser">Перейти к списку игр</string>
     <string name="settings">Настройки</string>
-    <string name="paths">Папки</string>
+    <string name="paths">Пути</string>
     <string name="input">Управление</string>
-    <string name="about">О программе</string>
-    <string name="rateme">Поставить рейтинг</string>
+    <string name="about">О эмуляторе</string>
+    <string name="rateme">Оценить меня</string>
     
-    <string name="textOn">Вкл.</string>
-    <string name="textOff">Выкл.</string>
-
-    <string name="platform">Содержание Копирование Logcat в буфер\nПожалуйста, вставьте в отчета об итогах выпуска</string>
+    <string name="textOn">ВКЛ</string>
+    <string name="textOff">ВЫКЛ</string>
     
-    <string name="menu_debug">Представьте журналы ошибок</string>
+    <string name="platform">Логи скопированы в буфер обмена.\nВставьте их в репорт.</string>
+    
+    <string name="menu_debug">Отправить журнал ошибок</string>
 
 </resources>
