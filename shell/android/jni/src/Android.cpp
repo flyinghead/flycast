@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <android/log.h>  
+#include <unistd.h>
 
 #include <EGL/egl.h>
 #include <GLES2/gl2.h>
@@ -38,6 +39,7 @@ extern "C"
   JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_initControllers(JNIEnv *env, jobject obj, jbooleanArray controllers)  __attribute__((visibility("default")));
   
   JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_setupMic(JNIEnv *env,jobject obj,jobject sip)  __attribute__((visibility("default")));
+  JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_vmuSwap(JNIEnv *env,jobject obj)  __attribute__((visibility("default")));
 };
 
 
@@ -222,6 +224,23 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_setupMic(JNIEnv *env,jobj
 JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_stop(JNIEnv *env,jobject obj)
 {
 	dc_term();
+}
+
+JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_vmuSwap(JNIEnv *env,jobject obj)
+{
+	LOGD("vmuSwap go!");
+
+	maple_device* olda = MapleDevices[0][0];
+	maple_device* oldb = MapleDevices[0][1];
+	MapleDevices[0][0] = NULL;
+	MapleDevices[0][1] = NULL;
+	usleep(50000);//50 ms, wait for host to detect disconnect
+
+	MapleDevices[0][0] = oldb;
+	MapleDevices[0][1] = olda;
+
+	LOGD("vmuSwap done");
+
 }
 
 JNIEXPORT jint JNICALL Java_com_reicast_emulator_JNIdc_send(JNIEnv *env,jobject obj,jint cmd, jint param)
