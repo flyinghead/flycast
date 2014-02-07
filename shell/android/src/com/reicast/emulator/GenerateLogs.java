@@ -165,7 +165,7 @@ public class GenerateLogs extends AsyncTask<String, Integer, String> {
 					mLogcatProc.getInputStream()));
 			log.append(separator);
 			log.append(separator);
-			log.append("Application Output");
+			log.append("Application Core Output");
 			log.append(separator);
 			log.append(separator);
 			while ((line = reader.readLine()) != null) {
@@ -207,21 +207,21 @@ public class GenerateLogs extends AsyncTask<String, Integer, String> {
 			reader.close();
 			mLogcatProc = null;
 			reader = null;
-			mLogcatProc = Runtime.getRuntime().exec(
-					new String[] { "logcat", "-d", "newdc:V *:S" });
-			reader = new BufferedReader(new InputStreamReader(
-					mLogcatProc.getInputStream()));
-			log.append(separator);
-			log.append(separator);
-			log.append("Native Library Output");
-			log.append(separator);
-			log.append(separator);
-			while ((line = reader.readLine()) != null) {
-				log.append(line);
-				log.append(separator);
-			}
-			reader.close();
-			reader = null;
+//			mLogcatProc = Runtime.getRuntime().exec(
+//					new String[] { "logcat", "-d", "newdc:V *:S" });
+//			reader = new BufferedReader(new InputStreamReader(
+//					mLogcatProc.getInputStream()));
+//			log.append(separator);
+//			log.append(separator);
+//			log.append("Native Library Output");
+//			log.append(separator);
+//			log.append(separator);
+//			while ((line = reader.readLine()) != null) {
+//				log.append(line);
+//				log.append(separator);
+//			}
+//			reader.close();
+//			reader = null;
 			File file = new File(logOuput);
 			BufferedWriter writer = new BufferedWriter(new FileWriter(file));
 			writer.write(log.toString());
