@@ -129,7 +129,7 @@ public class GL2JNIActivity extends Activity {
 			}
 		}), params);
 		
-		hlay.addView(addbut(R.drawable.input, new OnClickListener() {
+		hlay.addView(addbut(R.drawable.vmu_swap, new OnClickListener() {
 			public void onClick(View v) {
 				JNIdc.vmuSwap();
 				popUp.dismiss();
