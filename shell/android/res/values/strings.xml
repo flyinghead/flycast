@@ -27,7 +27,7 @@
     <string name="select_render">PVR Rendering (does nothing for now)</string>
     <string name="select_force_gpu">Force v6 GPU Config</string>
     <string name="default_disk">Set Default Disk</string>
-    <string name="show_profiling_tools">Show debug profiling tools</string>
+    <string name="show_profiling_tools">Show BIOS Debug Tools</string>
 
     <string name="games_listing">Available Dreamcast Games</string>
 
