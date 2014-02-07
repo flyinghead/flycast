@@ -60,6 +60,7 @@
     <string name="app_site">Homepage: http://reicast.com</string>
     <string name="beta_site">Betas: http://reicast.loungekatt.com</string>
     <string name="git_api">https://api.github.com/repos/reicast/reicast-emulator/commits</string>
+    <string name="git_issues">https://github.com/reicast/reicast-emulator/issues/</string>
     
     <string-array name="controllers">
     <item>Controller A</item>
@@ -92,7 +93,7 @@
     <string name="textOff">OFF</string>
     
     <string name="platform">Copying logcat content to clipboard\nPlease paste in the issue report</string>
-    
+    <string name="bios_config">Please generate a config\n(Run BIOS at least once)</string>
     <string name="menu_debug">Submit Error Logs</string>
 
 </resources>
