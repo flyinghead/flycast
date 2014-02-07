@@ -62,13 +62,13 @@ public class MainActivity extends SlidingFragmentActivity implements
 					Toast.makeText(MainActivity.this,
 		    				getString(R.string.platform),
 		    				Toast.LENGTH_SHORT).show();
-		    		UploadLogs mUploadLogs = new UploadLogs(MainActivity.this);
-		    		mUploadLogs.setUnhandled(error.getMessage());
+		    		GenerateLogs mGenerateLogs = new GenerateLogs(MainActivity.this);
+		    		mGenerateLogs.setUnhandled(error.getMessage());
 		    		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-		    			mUploadLogs.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,
+		    			mGenerateLogs.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,
 		    					home_directory);
 		    		} else {
-		    			mUploadLogs.execute(home_directory);
+		    			mGenerateLogs.execute(home_directory);
 		    		}
 	        	}
 	        }

@@ -60,6 +60,7 @@
     <string name="app_site">Homepage: http://reicast.com</string>
     <string name="beta_site">Betas: http://reicast.loungekatt.com</string>
     <string name="git_api">https://api.github.com/repos/reicast/reicast-emulator/commits</string>
+    <string name="git_issues">https://github.com/reicast/reicast-emulator/issues/</string>
     
     <string-array name="controllers">
     <item>Controller A</item>

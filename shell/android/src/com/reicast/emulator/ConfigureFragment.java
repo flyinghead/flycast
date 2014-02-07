@@ -378,12 +378,12 @@ public class ConfigureFragment extends Fragment {
 		Toast.makeText(parentActivity,
 				parentActivity.getString(R.string.platform),
 				Toast.LENGTH_SHORT).show();
-		UploadLogs mUploadLogs = new UploadLogs(parentActivity);
+		GenerateLogs mGenerateLogs = new GenerateLogs(parentActivity);
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-			mUploadLogs.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,
+			mGenerateLogs.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,
 					home_directory);
 		} else {
-			mUploadLogs.execute(home_directory);
+			mGenerateLogs.execute(home_directory);
 		}
 	}
 
