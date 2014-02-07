@@ -305,6 +305,16 @@ public class ConfigureFragment extends Fragment {
 			stretch_view.setChecked(false);
 		}
 		stretch_view.setOnCheckedChangeListener(full_screen);
+		
+		Switch showProfilingToolsSwitch = (Switch) getView().findViewById(
+				R.id.debug_profling_tools);
+		boolean showProfilingTools = mPrefs.getBoolean("debug_profling_tools", false);
+		showProfilingToolsSwitch.setChecked(showProfilingTools);
+		showProfilingToolsSwitch.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+				mPrefs.edit().putBoolean("debug_profling_tools", isChecked).commit();
+			}
+		});
 
 		mainFrames = (TextView) getView().findViewById(R.id.current_frames);
 		mainFrames.setText(String.valueOf(frameskip));

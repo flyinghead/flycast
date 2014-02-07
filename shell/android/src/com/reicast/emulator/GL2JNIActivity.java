@@ -91,44 +91,43 @@ public class GL2JNIActivity extends Activity {
 			}
 		}), params);
 		
-		//TODO comment what these do
-		//TODO update these icons
+		if(prefs.getBoolean("debug_profling_tools", false)){
 
-		hlay.addView(addbut(R.drawable.config, new OnClickListener() {
-			public void onClick(View v) {
-				JNIdc.send(0, 0); //Killing texture cache
-				popUp.dismiss();
-			}
-		}), params);
-
-		hlay.addView(addbut(R.drawable.profiler, new OnClickListener() {
-			public void onClick(View v) {
-				JNIdc.send(1, 3000); //sample_Start(param);
-				popUp.dismiss();
-			}
-		}), params);
-
-		hlay.addView(addbut(R.drawable.profiler, new OnClickListener() {
-			public void onClick(View v) {
-				JNIdc.send(1, 0); //sample_Start(param);
-				popUp.dismiss();
-			}
-		}), params);
-
-		hlay.addView(addbut(R.drawable.disk_unknown, new OnClickListener() {
-			public void onClick(View v) {
-				JNIdc.send(0, 1); //settings.pvr.ta_skip
-				popUp.dismiss();
-			}
-		}), params);
-
-		hlay.addView(addbut(R.drawable.profiler, new OnClickListener() {
-			public void onClick(View v) {
-				JNIdc.send(0, 2);
-				popUp.dismiss(); //print_stats=true;
-			}
-		}), params);
-		
+			hlay.addView(addbut(R.drawable.config, new OnClickListener() {
+				public void onClick(View v) {
+					JNIdc.send(0, 0); //Killing texture cache
+					popUp.dismiss();
+				}
+			}), params);
+	
+			hlay.addView(addbut(R.drawable.profiler, new OnClickListener() {
+				public void onClick(View v) {
+					JNIdc.send(1, 3000); //sample_Start(param);
+					popUp.dismiss();
+				}
+			}), params);
+	
+			hlay.addView(addbut(R.drawable.profiler, new OnClickListener() {
+				public void onClick(View v) {
+					JNIdc.send(1, 0); //sample_Start(param);
+					popUp.dismiss();
+				}
+			}), params);
+	
+			hlay.addView(addbut(R.drawable.disk_unknown, new OnClickListener() {
+				public void onClick(View v) {
+					JNIdc.send(0, 1); //settings.pvr.ta_skip
+					popUp.dismiss();
+				}
+			}), params);
+	
+			hlay.addView(addbut(R.drawable.profiler, new OnClickListener() {
+				public void onClick(View v) {
+					JNIdc.send(0, 2);
+					popUp.dismiss(); //print_stats=true;
+				}
+			}), params);
+		}
 		hlay.addView(addbut(R.drawable.vmu_swap, new OnClickListener() {
 			public void onClick(View v) {
 				JNIdc.vmuSwap();
@@ -144,7 +143,8 @@ public class GL2JNIActivity extends Activity {
 	protected void onCreate(Bundle icicle) {
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		moga.onCreate(this);
-
+		
+		prefs = PreferenceManager.getDefaultSharedPreferences(this);
 		createPopup();
 		/*
 		 * try { //int rID =
@@ -165,7 +165,6 @@ public class GL2JNIActivity extends Activity {
 		map = new int[4][];
 
 		// Populate device descriptor-to-player-map from preferences
-		prefs = PreferenceManager.getDefaultSharedPreferences(this);
 		deviceDescriptor_PlayerNum.put(
 				prefs.getString("device_descriptor_player_1", null), 0);
 		deviceDescriptor_PlayerNum.put(
