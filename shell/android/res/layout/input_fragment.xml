@@ -99,14 +99,30 @@
                 android:layout_marginTop="25dp"
                 android:gravity="center_vertical" >
 
-                <TextView
-                    android:layout_width="wrap_content"
+			    <LinearLayout 
+			        android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_weight="0.5"
-                    android:ems="10"
-                    android:gravity="center_vertical|left"
-                    android:text="@string/mic_in_port_2" />
-
+                    android:layout_weight="1"
+                    android:layout_marginLeft="6dp"
+                    android:gravity="center_vertical" >
+			        
+			        <ImageView 
+			            android:src="@drawable/mic_icon"
+			            android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:layout_centerInParent="true"
+                        android:scaleType="fitCenter" />
+			        
+	                <TextView
+	                    android:layout_width="wrap_content"
+	                    android:layout_height="wrap_content"
+	                    android:layout_weight="0.5"
+	                    android:ems="10"
+	                    android:gravity="center_vertical|left"
+	                    android:layout_marginLeft="6dp"
+	                    android:text="@string/mic_in_port_2" />
+				</LinearLayout>
+				
                 <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
