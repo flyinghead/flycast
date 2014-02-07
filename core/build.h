@@ -34,6 +34,7 @@
 //HOST_OS
 #define OS_WINDOWS   0x10000001
 #define OS_LINUX     0x10000002
+#define OS_DARWIN    0x10000003
 
 //HOST_CPU
 #define CPU_X86      0x20000001
@@ -69,6 +70,10 @@
 	#define HOST_OS OS_LINUX
 	#define HOST_CPU CPU_X86
 	#define BUILD_COMPILER COMPILER_GCC
+#elif TARGET_IPHONE
+    #define HOST_OS OS_DARWIN
+    #define HOST_CPU CPU_ARM
+    #define BUILD_COMPILER COMPILER_GCC
 #else
 	#error Invalid Target: TARGET_* not defined
 #endif
