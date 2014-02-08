@@ -290,7 +290,7 @@ public class GL2JNIActivity extends Activity {
 									OuyaController.BUTTON_DPAD_RIGHT, key_CONT_DPAD_RIGHT,
 
 									OuyaController.BUTTON_MENU, key_CONT_START,
-									108, key_CONT_START
+									KeyEvent.KEYCODE_BUTTON_START, key_CONT_START
 							};
 							nVidia[playerNum] = true;
 
@@ -299,8 +299,8 @@ public class GL2JNIActivity extends Activity {
 						} else if (InputDevice.getDevice(joys[i]).getName()
 								.contains("keypad-zeus")) {
 							map[playerNum] = new int[] { 
-									23, key_CONT_A,
-									4, key_CONT_B,
+									KeyEvent.KEYCODE_DPAD_CENTER, key_CONT_A,
+									KeyEvent.KEYCODE_BACK, key_CONT_B,
 									OuyaController.BUTTON_U, key_CONT_X,
 									OuyaController.BUTTON_Y, key_CONT_Y,
 
@@ -310,7 +310,7 @@ public class GL2JNIActivity extends Activity {
 									OuyaController.BUTTON_DPAD_RIGHT, key_CONT_DPAD_RIGHT,
 
 									OuyaController.BUTTON_MENU, key_CONT_START,
-									108, key_CONT_START
+									KeyEvent.KEYCODE_BUTTON_START, key_CONT_START
 							};
 						} else if (!moga.isActive[playerNum]) { // Ouya controller
 							map[playerNum] = new int[] {
@@ -325,7 +325,7 @@ public class GL2JNIActivity extends Activity {
 									OuyaController.BUTTON_DPAD_RIGHT, key_CONT_DPAD_RIGHT,
 
 									OuyaController.BUTTON_MENU, key_CONT_START,
-									OuyaController.BUTTON_R1, key_CONT_START
+									KeyEvent.KEYCODE_BUTTON_START, key_CONT_START
 							};
 						}
 					} else {
@@ -408,7 +408,7 @@ public class GL2JNIActivity extends Activity {
 			prefs.getInt("dpad_left" + id, OuyaController.BUTTON_DPAD_LEFT), key_CONT_DPAD_LEFT,
 			prefs.getInt("dpad_right" + id, OuyaController.BUTTON_DPAD_RIGHT), key_CONT_DPAD_RIGHT,
 
-			prefs.getInt("start_button" + id, OuyaController.BUTTON_MENU), key_CONT_START,
+			prefs.getInt("start_button" + id, KeyEvent.KEYCODE_BUTTON_START), key_CONT_START,
 		};
 	}
 
