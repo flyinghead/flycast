@@ -44,6 +44,9 @@ public class GL2JNIActivity extends Activity {
 	int[] name = { -1, -1, -1, -1 };
 	float[] globalLS_X = new float[4], globalLS_Y = new float[4],
 			previousLS_X = new float[4], previousLS_Y = new float[4];
+	
+	int userFrames;
+	private boolean frameskipping = false;
 
 	public static HashMap<Integer, String> deviceId_deviceDescriptor = new HashMap<Integer, String>();
 	public static HashMap<String, Integer> deviceDescriptor_PlayerNum = new HashMap<String, Integer>();
@@ -134,6 +137,25 @@ public class GL2JNIActivity extends Activity {
 				popUp.dismiss();
 			}
 		}), params);
+		View frameskip;
+		if (!frameskipping) {
+			frameskip = addbut(R.drawable.fast_forward, new OnClickListener() {
+				public void onClick(View v) {
+					JNIdc.frameskip((userFrames + 1) * 5);
+					popUp.dismiss();
+					frameskipping = true;
+				}
+			});
+		} else {
+			frameskip = addbut(R.drawable.normal_play, new OnClickListener() {
+				public void onClick(View v) {
+					JNIdc.frameskip(userFrames);
+					popUp.dismiss();
+					frameskipping = false;
+				}
+			});
+		}
+		hlay.addView(frameskip, params);
 
 		// layout.addView(hlay,params);
 		popUp.setContentView(hlay);
@@ -145,6 +167,7 @@ public class GL2JNIActivity extends Activity {
 		moga.onCreate(this);
 		
 		prefs = PreferenceManager.getDefaultSharedPreferences(this);
+		userFrames = prefs.getInt("frame_skip", 0);
 		createPopup();
 		/*
 		 * try { //int rID =
