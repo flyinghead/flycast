@@ -1024,14 +1024,14 @@ private static class ContextFactory implements GLSurfaceView.EGLContextFactory
     }
   }
 
-public void onStop() {
-	// TODO Auto-generated method stub
-	System.exit(0);
-	try {
-		ethd.join();
-	} catch (InterruptedException e) {
-		// TODO Auto-generated catch block
-		e.printStackTrace();
-	}
-}
+  public void onStop() {
+	  // TODO Auto-generated method stub
+	  System.exit(0);
+	  try {
+		  ethd.join();
+	  } catch (InterruptedException e) {
+		  // TODO Auto-generated catch block
+		  e.printStackTrace();
+	  }
+  }
 }

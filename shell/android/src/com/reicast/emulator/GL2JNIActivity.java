@@ -297,12 +297,12 @@ public class GL2JNIActivity extends Activity {
 							globalLS_X[playerNum] = previousLS_X[playerNum] = 0.0f;
 							globalLS_Y[playerNum] = previousLS_Y[playerNum] = 0.0f;
 						} else if (InputDevice.getDevice(joys[i]).getName()
-								.contains("zeus-keypad")) {
+								.contains("keypad-zeus")) {
 							map[playerNum] = new int[] { 
 									23, key_CONT_A,
-									OuyaController.BUTTON_A, key_CONT_B,
+									4, key_CONT_B,
 									OuyaController.BUTTON_U, key_CONT_X,
-									4, key_CONT_Y,
+									OuyaController.BUTTON_Y, key_CONT_Y,
 
 									OuyaController.BUTTON_DPAD_UP, key_CONT_DPAD_UP,
 									OuyaController.BUTTON_DPAD_DOWN, key_CONT_DPAD_DOWN,
@@ -357,7 +357,7 @@ public class GL2JNIActivity extends Activity {
 		String menu_spec;
 		if (android.os.Build.MODEL.equals("R800")
 				|| android.os.Build.MODEL.equals("R800i")) {
-			menu_spec = getApplicationContext().getString(R.string.menu_button);
+			menu_spec = getApplicationContext().getString(R.string.search_button);
 		} else {
 			menu_spec = getApplicationContext().getString(R.string.back_button);
 		}
@@ -632,26 +632,35 @@ public class GL2JNIActivity extends Activity {
 			return true;
 		}
 
-		if (keyCode == KeyEvent.KEYCODE_MENU
-				|| (keyCode == KeyEvent.KEYCODE_BACK && !(android.os.Build.MODEL
-						.equals("R800") || android.os.Build.MODEL
-						.equals("R800i")))) {
-			if (!popUp.isShowing()) {
-				if (MainActivity.force_gpu) {
-					popUp.showAtLocation(mView6, Gravity.BOTTOM, 0, 0);
-				} else {
-					popUp.showAtLocation(mView, Gravity.BOTTOM, 0, 0);
-				}
-				popUp.update(LayoutParams.WRAP_CONTENT,
-						LayoutParams.WRAP_CONTENT);
-
-			} else {
-				popUp.dismiss();
+		if (android.os.Build.MODEL.equals("R800")
+				|| android.os.Build.MODEL.equals("R800i")) {
+			if ((keyCode == KeyEvent.KEYCODE_MENU)
+					|| (keyCode == KeyEvent.KEYCODE_SEARCH)) {
+				return showMenu();
 			}
+		} else {
+			if (keyCode == KeyEvent.KEYCODE_MENU
+					|| (keyCode == KeyEvent.KEYCODE_BACK)) {
+				return showMenu();
+			}
+		}
+		return super.onKeyDown(keyCode, event);
+	}
+	
+	private boolean showMenu() {
+		if (!popUp.isShowing()) {
+			if (MainActivity.force_gpu) {
+				popUp.showAtLocation(mView6, Gravity.BOTTOM, 0, 0);
+			} else {
+				popUp.showAtLocation(mView, Gravity.BOTTOM, 0, 0);
+			}
+			popUp.update(LayoutParams.WRAP_CONTENT,
+					LayoutParams.WRAP_CONTENT);
 
-			return true;
-		} else
-			return super.onKeyDown(keyCode, event);
+		} else {
+			popUp.dismiss();
+		}
+		return true;
 	}
 
 	@Override
