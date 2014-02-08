@@ -32,6 +32,9 @@ import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.android.util.DreamTime;
+
 import de.ankri.views.Switch;
 
 public class ConfigureFragment extends Fragment {
@@ -94,13 +97,13 @@ public class ConfigureFragment extends Fragment {
 
 					if (StringUtils.containsIgnoreCase(currentLine,
 							"Dynarec.Enabled")) {
-						dynarecopt = Boolean.valueOf(currentLine.replace(
-								"Dynarec.Enabled=", ""));
+						dynarecopt = currentLine.replace(
+								"Dynarec.Enabled=", "").equals("1");
 					}
 					if (StringUtils.containsIgnoreCase(currentLine,
 							"Dynarec.unstable-opt")) {
-						unstableopt = Boolean.valueOf(currentLine.replace(
-								"Dynarec.unstable-opt=", ""));
+						unstableopt = currentLine.replace(
+								"Dynarec.unstable-opt=", "").equals("1");
 					}
 					if (StringUtils.containsIgnoreCase(currentLine,
 							"Dreamcast.Region")) {
@@ -109,26 +112,26 @@ public class ConfigureFragment extends Fragment {
 					}
 					if (StringUtils.containsIgnoreCase(currentLine,
 							"aica.LimitFPS")) {
-						limitfps = Boolean.valueOf(currentLine.replace(
-								"aica.LimitFPS=", ""));
+						limitfps = currentLine.replace(
+								"aica.LimitFPS=", "").equals("1");
 					}
 					if (StringUtils.containsIgnoreCase(currentLine,
 							"rend.UseMipmaps")) {
-						mipmaps = Boolean.valueOf(currentLine.replace(
-								"rend.UseMipmaps=", ""));
+						mipmaps = currentLine.replace(
+								"rend.UseMipmaps=", "").equals("1");
 					}
 					if (StringUtils.containsIgnoreCase(currentLine,
 							"rend.WideScreen")) {
-						widescreen = Boolean.valueOf(currentLine.replace(
-								"rend.WideScreen=", ""));
+						widescreen = currentLine.replace(
+								"rend.WideScreen=", "").equals("1");
 					}
 					if (StringUtils.containsIgnoreCase(currentLine, "ta.skip")) {
 						frameskip = Integer.valueOf(currentLine.replace(
 								"ta.skip=", ""));
 					}
 					if (StringUtils.containsIgnoreCase(currentLine, "pvr.rend")) {
-						pvrrender = Boolean.valueOf(currentLine.replace(
-								"pvr.rend=", ""));
+						pvrrender = currentLine.replace(
+								"pvr.rend=", "").equals("1");
 					}
 					if (StringUtils.containsIgnoreCase(currentLine, "image")) {
 						cheatdisk = currentLine.replace("image=", "");
@@ -427,9 +430,7 @@ public class ConfigureFragment extends Fragment {
 				rebuildFile.append("Dynarec.unstable-opt="
 						+ String.valueOf(unstableopt ? 1 : 0) + "\n");
 				rebuildFile.append("Dreamcast.Cable=3" + "\n");
-				long dreamTime = (System.currentTimeMillis() / 1000)
-						+ MainActivity.dreamRTC;
-				rebuildFile.append("Dreamcast.RTC=" + String.valueOf(dreamTime)
+				rebuildFile.append("Dreamcast.RTC=" + DreamTime.getDreamtime()
 						+ "\n");
 				rebuildFile.append("Dreamcast.Region="
 						+ String.valueOf(dcregion) + "\n");

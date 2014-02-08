@@ -3,6 +3,7 @@ package com.reicast.emulator;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.Gravity;
@@ -157,5 +158,10 @@ public class EditVJoyActivity extends Activity {
 			return true;
 		} else
 			return super.onKeyDown(keyCode, event);
+	}
+	
+	@Override
+	public void onConfigurationChanged(Configuration newConfig) {
+		super.onConfigurationChanged(newConfig);
 	}
 }

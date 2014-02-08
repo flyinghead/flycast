@@ -25,6 +25,7 @@ import android.view.View.OnTouchListener;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.util.DreamTime;
 import com.jeremyfeinstein.slidingmenu.lib.SlidingMenu;
 import com.jeremyfeinstein.slidingmenu.lib.SlidingMenu.OnOpenListener;
 import com.jeremyfeinstein.slidingmenu.lib.app.SlidingFragmentActivity;
@@ -36,8 +37,6 @@ public class MainActivity extends SlidingFragmentActivity implements
 	public static boolean force_gpu;
 	private static File sdcard = Environment.getExternalStorageDirectory();
 	public static String home_directory = sdcard + "/dc";
-	
-	public static long dreamRTC = ((20 * 365 + 5) * 86400);
 
 	private TextView menuHeading;
 	
@@ -338,10 +337,9 @@ public class MainActivity extends SlidingFragmentActivity implements
 			// show it
 			alertDialog.show();
 		} else {
-			long dreamTime = (System.currentTimeMillis() / 1000) + dreamRTC;
 			ConfigureFragment config = new ConfigureFragment();
 			config.executeAppendConfig("Dreamcast.RTC",
-					String.valueOf(String.valueOf(dreamTime)));
+                                       DreamTime.getDreamtime());
 			Intent inte = new Intent(Intent.ACTION_VIEW, uri, getBaseContext(),
 					GL2JNIActivity.class);
 			startActivity(inte);

@@ -23,6 +23,7 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
+import android.view.View;
 import android.view.ScaleGestureDetector.SimpleOnScaleGestureListener;
 
 
@@ -212,19 +213,6 @@ class GL2JNIViewV6 extends GLSurfaceView
     this.editVjoyMode = editVjoyMode;
     setKeepScreenOn(true);
 
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-		setOnSystemUiVisibilityChangeListener (new OnSystemUiVisibilityChangeListener() {
-			public void onSystemUiVisibilityChange(int visibility) {
-				if ((visibility & SYSTEM_UI_FLAG_FULLSCREEN) == 0) {
-					GL2JNIViewV6.this.setSystemUiVisibility(
-							SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-							| SYSTEM_UI_FLAG_FULLSCREEN
-							| SYSTEM_UI_FLAG_HIDE_NAVIGATION);
-				}
-			}
-		});
-	}
-
     vib=(Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
     
     Runtime.getRuntime().freeMemory();
@@ -290,12 +278,6 @@ class GL2JNIViewV6 extends GLSurfaceView
   {
     //if(audioThread!=null) audioThread.stopPlayback();
     //audioThread = new AudioThread(rate,latency);
-  }
-
-  @Override public void onWindowFocusChanged(boolean hasWindowFocus)
-  {
-    //super.onWindowFocusChanged(hasWindowFocus);
-    //if(audioThread!=null) audioThread.pausePlayback(!hasWindowFocus);
   }
 
   private void reset_analog()
@@ -1019,14 +1001,27 @@ private static class ContextFactory implements GLSurfaceView.EGLContextFactory
     }
   }
 
-public void onStop() {
-	// TODO Auto-generated method stub
-	System.exit(0);
-	try {
-		ethd.join();
-	} catch (InterruptedException e) {
-		// TODO Auto-generated catch block
-		e.printStackTrace();
-	}
-}
+  public void onStop() {
+	  // TODO Auto-generated method stub
+	  System.exit(0);
+	  try {
+		  ethd.join();
+	  } catch (InterruptedException e) {
+		  // TODO Auto-generated catch block
+		  e.printStackTrace();
+	  }
+  }
+  
+  @Override
+  public void onWindowFocusChanged(boolean hasFocus) {
+          super.onWindowFocusChanged(hasFocus);
+      if (hasFocus && Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+          GL2JNIViewV6.this.setSystemUiVisibility(
+                  View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                  | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                  | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                  | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                  | View.SYSTEM_UI_FLAG_FULLSCREEN
+                  | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);}
+  }
 }

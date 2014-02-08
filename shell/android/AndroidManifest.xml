@@ -6,55 +6,92 @@
     <uses-sdk
         android:minSdkVersion="8"
         android:targetSdkVersion="19" />
-	
-	<uses-permission android:name="android.permission.VIBRATE" />
-	<uses-permission android:name="android.permission.READ_LOGS" />
-	<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-	<uses-permission android:name="android.permission.INTERNET" />
-	<uses-permission android:name="android.permission.RECORD_AUDIO" />
 
-	<uses-feature android:glEsVersion="0x00020000" android:required="true" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.READ_LOGS" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
-	<uses-feature android:name="android.hardware.touchscreen" android:required="false"/>
-	<uses-feature android:name="android.hardware.microphone" android:required="false"/>
+    <uses-feature
+        android:glEsVersion="0x00020000"
+        android:required="true" />
+    <uses-feature
+        android:name="android.hardware.touchscreen"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.microphone"
+        android:required="false" />
 
     <application
         android:hardwareAccelerated="true"
-        android:largeHeap="true" 
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
+        android:largeHeap="true"
         android:theme="@style/AppTheme" >
-        
         <activity
             android:name=".MainActivity"
-            android:label="@string/app_name"
-            android:configChanges="orientation|screenSize|screenLayout|uiMode" >
+            android:configChanges="orientation|screenSize|screenLayout|uiMode|keyboard|keyboardHidden"
+            android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
-                <category android:name="tv.ouya.intent.category.GAME"/>
+                <category android:name="tv.ouya.intent.category.GAME" />
             </intent-filter>
         </activity>
-        
-        <activity android:name=".GL2JNIActivity" android:screenOrientation="landscape" android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
-            <meta-data android:name="android.app.lib_name" android:value="dc" />
-            
-            <intent-filter>
-		        <action android:name="android.intent.action.VIEW" />
-		        <category android:name="android.intent.category.DEFAULT" />
-		        <category android:name="android.intent.category.BROWSABLE" />
-		        <data android:scheme="file" android:mimeType="*/*" android:host="*" android:pathPattern=".*\\.GDI"/>
-		        <data android:scheme="file" android:mimeType="*/*" android:host="*" android:pathPattern=".*\\.gdi"/>
-		        <data android:scheme="file" android:mimeType="*/*" android:host="*" android:pathPattern=".*\\.CHD"/>
-		        <data android:scheme="file" android:mimeType="*/*" android:host="*" android:pathPattern=".*\\.chd"/>
-		        <data android:scheme="file" android:mimeType="*/*" android:host="*" android:pathPattern=".*\\.CDI"/>
-		        <data android:scheme="file" android:mimeType="*/*" android:host="*" android:pathPattern=".*\\.cdi"/>
-		     </intent-filter>
-        </activity>
+        <activity
+            android:name=".GL2JNIActivity"
+            android:configChanges="orientation|screenSize|screenLayout|uiMode|keyboard|keyboardHidden"
+            android:screenOrientation="landscape"
+            android:theme="@android:style/Theme.NoTitleBar.Fullscreen" >
+            <meta-data
+                android:name="android.app.lib_name"
+                android:value="dc" />
 
-        <activity android:name=".EditVJoyActivity" android:screenOrientation="landscape" android:theme="@android:style/Theme.NoTitleBar.Fullscreen" />
-        
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:host="*"
+                    android:mimeType="*/*"
+                    android:pathPattern=".*\\.GDI"
+                    android:scheme="file" />
+                <data
+                    android:host="*"
+                    android:mimeType="*/*"
+                    android:pathPattern=".*\\.gdi"
+                    android:scheme="file" />
+                <data
+                    android:host="*"
+                    android:mimeType="*/*"
+                    android:pathPattern=".*\\.CHD"
+                    android:scheme="file" />
+                <data
+                    android:host="*"
+                    android:mimeType="*/*"
+                    android:pathPattern=".*\\.chd"
+                    android:scheme="file" />
+                <data
+                    android:host="*"
+                    android:mimeType="*/*"
+                    android:pathPattern=".*\\.CDI"
+                    android:scheme="file" />
+                <data
+                    android:host="*"
+                    android:mimeType="*/*"
+                    android:pathPattern=".*\\.cdi"
+                    android:scheme="file" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".EditVJoyActivity"
+            android:configChanges="orientation|screenSize|screenLayout|uiMode|keyboard|keyboardHidden"
+            android:screenOrientation="landscape"
+            android:theme="@android:style/Theme.NoTitleBar.Fullscreen" />
     </application>
 
 </manifest>
