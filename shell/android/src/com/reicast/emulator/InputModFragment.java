@@ -497,8 +497,14 @@ public class InputModFragment extends Fragment {
 	}
 
 	private int mapButton(int keyCode, KeyEvent event, String button) {
+		if (android.os.Build.MODEL.equals("R800") || android.os.Build.MODEL
+						.equals("R800i")) {
+			if (keyCode == KeyEvent.KEYCODE_MENU)
+				return -1;			
+		} else {
 		if (keyCode == KeyEvent.KEYCODE_BACK)
 			return -1;
+		}
 
 		mPrefs.edit().putInt(button + player, keyCode).commit();
 
