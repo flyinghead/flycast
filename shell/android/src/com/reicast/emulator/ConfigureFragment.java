@@ -32,6 +32,9 @@ import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.android.util.DreamTime;
+
 import de.ankri.views.Switch;
 
 public class ConfigureFragment extends Fragment {
@@ -427,9 +430,7 @@ public class ConfigureFragment extends Fragment {
 				rebuildFile.append("Dynarec.unstable-opt="
 						+ String.valueOf(unstableopt ? 1 : 0) + "\n");
 				rebuildFile.append("Dreamcast.Cable=3" + "\n");
-				long dreamTime = (System.currentTimeMillis() / 1000)
-						+ MainActivity.dreamRTC;
-				rebuildFile.append("Dreamcast.RTC=" + String.valueOf(dreamTime)
+				rebuildFile.append("Dreamcast.RTC=" + DreamTime.getDreamtime()
 						+ "\n");
 				rebuildFile.append("Dreamcast.Region="
 						+ String.valueOf(dcregion) + "\n");
