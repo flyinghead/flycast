@@ -694,11 +694,6 @@ public class GL2JNIActivity extends Activity {
 
 	@Override
 	public void onConfigurationChanged(Configuration newConfig) {
-		if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
-			// do your task
-		} else if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
-			// do your task
-		}
 		super.onConfigurationChanged(newConfig);
 	}
 
