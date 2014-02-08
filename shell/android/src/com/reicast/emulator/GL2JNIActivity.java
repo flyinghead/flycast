@@ -93,7 +93,7 @@ public class GL2JNIActivity extends Activity {
 		
 		if(prefs.getBoolean("debug_profling_tools", false)){
 
-			hlay.addView(addbut(R.drawable.config, new OnClickListener() {
+			hlay.addView(addbut(R.drawable.clear_cache, new OnClickListener() {
 				public void onClick(View v) {
 					JNIdc.send(0, 0); //Killing texture cache
 					popUp.dismiss();
@@ -114,14 +114,14 @@ public class GL2JNIActivity extends Activity {
 				}
 			}), params);
 	
-			hlay.addView(addbut(R.drawable.disk_unknown, new OnClickListener() {
-				public void onClick(View v) {
-					JNIdc.send(0, 1); //settings.pvr.ta_skip
-					popUp.dismiss();
-				}
-			}), params);
+//			hlay.addView(addbut(R.drawable.disk_unknown, new OnClickListener() {
+//				public void onClick(View v) {
+//					JNIdc.send(0, 1); //settings.pvr.ta_skip
+//					popUp.dismiss();
+//				}
+//			}), params);
 	
-			hlay.addView(addbut(R.drawable.profiler, new OnClickListener() {
+			hlay.addView(addbut(R.drawable.print_stats, new OnClickListener() {
 				public void onClick(View v) {
 					JNIdc.send(0, 2);
 					popUp.dismiss(); //print_stats=true;
