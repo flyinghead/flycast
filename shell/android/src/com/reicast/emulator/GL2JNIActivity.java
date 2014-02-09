@@ -42,7 +42,7 @@ public class GL2JNIActivity extends Activity {
 	static String[] portId = { "_A", "_B", "_C", "_D" };
 	static boolean[] compat = { false, false, false, false }, custom = { false,
 			false, false, false }, jsCompat = { false, false, false, false };
-	static boolean[] xbox = { false, false, false, false }, nVidia = { false, false, false, false };
+	static boolean[] xbox = { false, false, false, false }, nVidia = { false, false, false, false }, xPlay = { false, false, false, false };
 	int[] name = { -1, -1, -1, -1 };
 	float[] globalLS_X = new float[4], globalLS_Y = new float[4],
 			previousLS_X = new float[4], previousLS_Y = new float[4];
@@ -413,6 +413,8 @@ public class GL2JNIActivity extends Activity {
 
 									KeyEvent.KEYCODE_BUTTON_START, key_CONT_START
 							};
+							
+							xPlay[playerNum] = true;
 						} else if (!moga.isActive[playerNum]) { // Ouya controller
 							map[playerNum] = new int[] {
 									OuyaController.BUTTON_O, key_CONT_A,
@@ -714,12 +716,12 @@ public class GL2JNIActivity extends Activity {
 		
 		if (playerNum != null && playerNum != -1) {
 			String id = portId[playerNum];
-			if (custom[playerNum]) {
-				if (keyCode == prefs.getInt("l_button" + id, OuyaController.BUTTON_L1)) {
+			if (custom[playerNum] || xPlay[playerNum]) {
+				if (keyCode == prefs.getInt("l_button" + id, KeyEvent.KEYCODE_BUTTON_L1)) {
 					simulatedTouchEvent(playerNum, 1.0f, 0.0f);
 					simulatedTouchEvent(playerNum, 0.0f, 0.0f);
 				}
-				if (keyCode == prefs.getInt("r_button" + id, OuyaController.BUTTON_R1)) {
+				if (keyCode == prefs.getInt("r_button" + id, KeyEvent.KEYCODE_BUTTON_R1)) {
 					simulatedTouchEvent(playerNum, 0.0f, 1.0f);
 					simulatedTouchEvent(playerNum, 0.0f, 0.0f);
 				}
