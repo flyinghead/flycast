@@ -356,7 +356,6 @@ public class GL2JNIActivity extends Activity {
 									OuyaController.BUTTON_DPAD_LEFT, key_CONT_DPAD_LEFT,
 									OuyaController.BUTTON_DPAD_RIGHT, key_CONT_DPAD_RIGHT,
 
-									OuyaController.BUTTON_MENU, key_CONT_START,
 									OuyaController.BUTTON_R1, key_CONT_START
 
 							};
@@ -373,7 +372,6 @@ public class GL2JNIActivity extends Activity {
 									OuyaController.BUTTON_DPAD_LEFT, key_CONT_DPAD_LEFT,
 									OuyaController.BUTTON_DPAD_RIGHT, key_CONT_DPAD_RIGHT,
 
-									OuyaController.BUTTON_MENU, key_CONT_START,
 									OuyaController.BUTTON_R1, key_CONT_START
 							};
 
@@ -394,7 +392,6 @@ public class GL2JNIActivity extends Activity {
 									OuyaController.BUTTON_DPAD_LEFT, key_CONT_DPAD_LEFT,
 									OuyaController.BUTTON_DPAD_RIGHT, key_CONT_DPAD_RIGHT,
 
-									OuyaController.BUTTON_MENU, key_CONT_START,
 									KeyEvent.KEYCODE_BUTTON_START, key_CONT_START
 							};
 							nVidia[playerNum] = true;
@@ -414,7 +411,6 @@ public class GL2JNIActivity extends Activity {
 									OuyaController.BUTTON_DPAD_LEFT, key_CONT_DPAD_LEFT,
 									OuyaController.BUTTON_DPAD_RIGHT, key_CONT_DPAD_RIGHT,
 
-									OuyaController.BUTTON_MENU, key_CONT_START,
 									KeyEvent.KEYCODE_BUTTON_START, key_CONT_START
 							};
 						} else if (!moga.isActive[playerNum]) { // Ouya controller
@@ -429,7 +425,6 @@ public class GL2JNIActivity extends Activity {
 									OuyaController.BUTTON_DPAD_LEFT, key_CONT_DPAD_LEFT,
 									OuyaController.BUTTON_DPAD_RIGHT, key_CONT_DPAD_RIGHT,
 
-									OuyaController.BUTTON_MENU, key_CONT_START,
 									KeyEvent.KEYCODE_BUTTON_START, key_CONT_START
 							};
 						}
@@ -744,8 +739,8 @@ public class GL2JNIActivity extends Activity {
 				return showMenu();
 			}
 		} else {
-			if (keyCode == KeyEvent.KEYCODE_MENU
-					|| (keyCode == KeyEvent.KEYCODE_BACK)) {
+			if (keyCode == OuyaController.BUTTON_MENU
+					|| keyCode == KeyEvent.KEYCODE_BACK) {
 				return showMenu();
 			}
 		}
