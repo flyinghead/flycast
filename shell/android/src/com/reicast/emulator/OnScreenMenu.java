@@ -18,7 +18,8 @@ import android.widget.ImageView.ScaleType;
 
 public class OnScreenMenu {
 	
-	private Context mContext;
+	private GL2JNIActivity mContext;
+	private EditVJoyActivity vContext;
 	private SharedPreferences prefs;
 	LayoutParams params;
 	private int frameskip;
@@ -31,7 +32,7 @@ public class OnScreenMenu {
 	private File sdcard = Environment.getExternalStorageDirectory();
 	private String home_directory = sdcard + "/dc";
 	
-	public OnScreenMenu(Context mContext, SharedPreferences prefs) {
+	public OnScreenMenu(GL2JNIActivity mContext, SharedPreferences prefs) {
 		this.mContext = mContext;
 		this.prefs = prefs;
 		home_directory = prefs.getString("home_directory", home_directory);
@@ -40,8 +41,8 @@ public class OnScreenMenu {
 		frameskip = ConfigureFragment.frameskip;
 	}
 	
-	public OnScreenMenu(Context mContext) {
-		this.mContext = mContext;
+	public OnScreenMenu(EditVJoyActivity vContext) {
+		this.vContext = vContext;
 	}
 	
 	public void setGLView(GL2JNIView mView, GL2JNIViewV6 mView6) {
@@ -125,19 +126,19 @@ public class OnScreenMenu {
 	}
 	
 	PopupWindow createVjoyPopup() {
-		final PopupWindow popUp = new PopupWindow(mContext);
-		int p = getPixelsFromDp(60, mContext);
+		final PopupWindow popUp = new PopupWindow(vContext);
+		int p = getPixelsFromDp(60, vContext);
 		params = new LayoutParams(p, p);
 
-		LinearLayout hlay = new LinearLayout(mContext);
+		LinearLayout hlay = new LinearLayout(vContext);
 
 		hlay.setOrientation(LinearLayout.HORIZONTAL);
 
 		hlay.addView(addbut(R.drawable.apply, new OnClickListener() {
 			public void onClick(View v) {
-				Intent inte = new Intent(mContext, MainActivity.class);
-				mContext.startActivity(inte);
-				((Activity) mContext).finish();
+				Intent inte = new Intent(vContext, MainActivity.class);
+				vContext.startActivity(inte);
+				((Activity) vContext).finish();
 			}
 		}), params);
 
@@ -170,15 +171,9 @@ public class OnScreenMenu {
 	
 	void displayConfigPopup(final PopupWindow popUp) {
 		final PopupWindow popUpConfig = new PopupWindow(mContext);
-		// LinearLayout layout = new LinearLayout(this);
 
-		// tv = new TextView(this);
 		int p = getPixelsFromDp(60, mContext);
 		LayoutParams configParams = new LayoutParams(p, p);
-
-		// layout.setOrientation(LinearLayout.VERTICAL);
-		// tv.setText("Hi this is a sample text for popup window");
-		// layout.addView(tv, params);
 
 		LinearLayout hlay = new LinearLayout(mContext);
 
@@ -255,28 +250,12 @@ public class OnScreenMenu {
 		hlay.addView(addbut(R.drawable.up, new OnClickListener() {
 			public void onClick(View v) {
 				popUpConfig.dismiss();
-				if (MainActivity.force_gpu) {
-					popUp.showAtLocation(mView6, Gravity.BOTTOM, 0, 0);
-				} else {
-					popUp.showAtLocation(mView, Gravity.BOTTOM, 0, 0);
-				}
-				popUp.update(LayoutParams.WRAP_CONTENT,
-						LayoutParams.WRAP_CONTENT);
+				mContext.displayPopUp(popUp);
 			}
 		}), configParams);
 
-		// layout.addView(hlay,params);
 		popUpConfig.setContentView(hlay);
-		if (popUp.isShowing()) {
-			popUp.dismiss();
-		}
-		if (MainActivity.force_gpu) {
-			popUpConfig.showAtLocation(mView6, Gravity.BOTTOM, 0, 0);
-		} else {
-			popUpConfig.showAtLocation(mView, Gravity.BOTTOM, 0, 0);
-		}
-		popUpConfig.update(LayoutParams.WRAP_CONTENT,
-				LayoutParams.WRAP_CONTENT);
+		mContext.displayConfig(popUpConfig);
 	}
 	
 	public static int getPixelsFromDp(float dps, Context context) {

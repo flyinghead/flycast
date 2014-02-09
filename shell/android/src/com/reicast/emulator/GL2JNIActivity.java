@@ -496,6 +496,26 @@ public class GL2JNIActivity extends Activity {
 			return true;
 		}
 	}
+	
+	public void displayPopUp(PopupWindow popUp) {
+		if (MainActivity.force_gpu) {
+			popUp.showAtLocation(mView6, Gravity.BOTTOM, 0, 0);
+		} else {
+			popUp.showAtLocation(mView, Gravity.BOTTOM, 0, 0);
+		}
+		popUp.update(LayoutParams.WRAP_CONTENT,
+				LayoutParams.WRAP_CONTENT);
+	}
+	
+	public void displayConfig(PopupWindow popUpConfig) {
+		if (MainActivity.force_gpu) {
+			popUpConfig.showAtLocation(mView6, Gravity.BOTTOM, 0, 0);
+		} else {
+			popUpConfig.showAtLocation(mView, Gravity.BOTTOM, 0, 0);
+		}
+		popUpConfig.update(LayoutParams.WRAP_CONTENT,
+				LayoutParams.WRAP_CONTENT);
+	}
 
 	public boolean onKeyUp(int keyCode, KeyEvent event) {
 		Integer playerNum = Arrays.asList(name).indexOf(event.getDeviceId());
@@ -556,14 +576,7 @@ public class GL2JNIActivity extends Activity {
 	
 	private boolean showMenu() {
 		if (!popUp.isShowing()) {
-			if (MainActivity.force_gpu) {
-				popUp.showAtLocation(mView6, Gravity.BOTTOM, 0, 0);
-			} else {
-				popUp.showAtLocation(mView, Gravity.BOTTOM, 0, 0);
-			}
-			popUp.update(LayoutParams.WRAP_CONTENT,
-					LayoutParams.WRAP_CONTENT);
-
+			displayPopUp(popUp);
 		} else {
 			popUp.dismiss();
 		}

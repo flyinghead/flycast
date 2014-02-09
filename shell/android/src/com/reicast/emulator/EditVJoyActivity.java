@@ -2,11 +2,9 @@ package com.reicast.emulator;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
-import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Build;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
@@ -15,7 +13,6 @@ import android.view.ViewGroup.LayoutParams;
 import android.view.Window;
 import android.widget.ImageButton;
 import android.widget.ImageView.ScaleType;
-import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.Toast;
 
@@ -45,7 +42,7 @@ public class EditVJoyActivity extends Activity {
 		
 		menu = new OnScreenMenu(this);
 		menu.setGLView(mView, mView6);
-		popUp = menu.createPopup();
+		popUp = menu.createVjoyPopup();
 
 		// Call parent onCreate()
 		super.onCreate(icicle);
