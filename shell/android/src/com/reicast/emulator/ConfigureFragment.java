@@ -87,7 +87,7 @@ public class ConfigureFragment extends Fragment {
 		getCurrentConfiguration(home_directory);
 
 		// Generate the menu options and fill in existing settings
-		Switch force_gpu_opt = (Switch) getView().findViewById(
+		final Switch force_gpu_opt = (Switch) getView().findViewById(
 				R.id.force_gpu_option);
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
 			OnCheckedChangeListener force_gpu_options = new OnCheckedChangeListener() {
@@ -107,6 +107,32 @@ public class ConfigureFragment extends Fragment {
 		} else {
 			force_gpu_opt.setEnabled(false);
 		}
+
+		Switch force_software_opt = (Switch) getView().findViewById(
+				R.id.software_option);
+		OnCheckedChangeListener force_software = new OnCheckedChangeListener() {
+
+			public void onCheckedChanged(CompoundButton buttonView,
+					boolean isChecked) {
+				mPrefs.edit().putInt("render_type", isChecked ? 1 : 2).commit();
+				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+					if (isChecked) {
+						force_gpu_opt.setEnabled(false);
+						mPrefs.edit().putBoolean("force_gpu", false).commit();
+						MainActivity.force_gpu = false;
+					} else {
+						force_gpu_opt.setEnabled(true);
+					}
+				}
+			}
+		};
+		int software = mPrefs.getInt("render_type", GL2JNIView.LAYER_TYPE_HARDWARE);
+		if (software == GL2JNIView.LAYER_TYPE_SOFTWARE) {
+			force_software_opt.setChecked(true);
+		} else {
+			force_software_opt.setChecked(false);
+		}
+		force_software_opt.setOnCheckedChangeListener(force_software);
 
 		OnCheckedChangeListener dynarec_options = new OnCheckedChangeListener() {
 

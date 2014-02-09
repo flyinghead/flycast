@@ -25,6 +25,7 @@
     <string name="select_stretch">Widescreen Mode</string>
     <string name="set_frameskip">Frameskip Value</string>
     <string name="select_render">PVR Rendering (does nothing for now)</string>
+    <string name="select_software">Force Software Rendering</string>
     <string name="select_force_gpu">Force v6 GPU Config</string>
     <string name="default_disk">Set Default Disk</string>
     <string name="show_profiling_tools">Show BIOS Debug Tools</string>
