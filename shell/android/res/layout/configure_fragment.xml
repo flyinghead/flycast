@@ -322,6 +322,34 @@
                 android:gravity="center_vertical" >
 
                 <TextView
+                    android:id="@+id/software_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="0.5"
+                    android:ems="10"
+                    android:gravity="center_vertical|left"
+                    android:text="@string/select_software" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="right"
+                    android:orientation="vertical" >
+
+                    <de.ankri.views.Switch
+                        android:id="@+id/software_option"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:focusable="true" />
+                </LinearLayout>
+            </TableRow>
+            
+            <TableRow
+                android:layout_marginTop="10dp"
+                android:gravity="center_vertical" >
+
+                <TextView
                     android:id="@+id/force_gpu_text"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"

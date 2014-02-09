@@ -1,5 +1,6 @@
 package com.reicast.emulator;
 
+import java.io.File;
 import java.util.Arrays;
 import java.util.HashMap;
 
@@ -13,6 +14,7 @@ import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.Gravity;
@@ -40,10 +42,15 @@ public class GL2JNIActivity extends Activity {
 	static String[] portId = { "_A", "_B", "_C", "_D" };
 	static boolean[] compat = { false, false, false, false }, custom = { false,
 			false, false, false }, jsCompat = { false, false, false, false };
-	static boolean[] xbox = { false, false, false, false }, nVidia = { false, false, false, false };
+	static boolean[] xbox = { false, false, false, false }, nVidia = { false, false, false, false }, xPlay = { false, false, false, false };
 	int[] name = { -1, -1, -1, -1 };
 	float[] globalLS_X = new float[4], globalLS_Y = new float[4],
 			previousLS_X = new float[4], previousLS_Y = new float[4];
+	
+	private File sdcard = Environment.getExternalStorageDirectory();
+	private String home_directory = sdcard + "/dc";
+	private boolean frameskipping = false;
+	private boolean widescreen;
 
 	public static HashMap<Integer, String> deviceId_deviceDescriptor = new HashMap<Integer, String>();
 	public static HashMap<String, Integer> deviceDescriptor_PlayerNum = new HashMap<String, Integer>();
@@ -134,9 +141,104 @@ public class GL2JNIActivity extends Activity {
 				popUp.dismiss();
 			}
 		}), params);
+		
+		hlay.addView(addbut(R.drawable.config, new OnClickListener() {
+			public void onClick(View v) {
+				displayConfigPopup();
+				popUp.dismiss();
+			}
+		}), params);
 
 		// layout.addView(hlay,params);
 		popUp.setContentView(hlay);
+	}
+	
+	void displayConfigPopup() {
+		final PopupWindow popUpConfig = new PopupWindow(this);
+		// LinearLayout layout = new LinearLayout(this);
+
+		// tv = new TextView(this);
+		int p = getPixelsFromDp(60, this);
+		LayoutParams configParams = new LayoutParams(p, p);
+
+		// layout.setOrientation(LinearLayout.VERTICAL);
+		// tv.setText("Hi this is a sample text for popup window");
+		// layout.addView(tv, params);
+
+		LinearLayout hlay = new LinearLayout(this);
+
+		hlay.setOrientation(LinearLayout.HORIZONTAL);
+
+		hlay.addView(addbut(R.drawable.close, new OnClickListener() {
+			public void onClick(View v) {
+				popUpConfig.dismiss();
+			}
+		}), configParams);
+		View fullscreen;
+		if (!widescreen) {
+			fullscreen = addbut(R.drawable.widescreen, new OnClickListener() {
+				public void onClick(View v) {
+					JNIdc.widescreen(1);
+					popUpConfig.dismiss();
+					widescreen = true;
+				}
+			});
+		} else {
+			fullscreen = addbut(R.drawable.normal_view, new OnClickListener() {
+				public void onClick(View v) {
+					JNIdc.widescreen(0);
+					popUpConfig.dismiss();
+					widescreen = false;
+				}
+			});
+		}
+		hlay.addView(fullscreen, params);
+		View frameskip;
+		if (!frameskipping) {
+			frameskip = addbut(R.drawable.fast_forward, new OnClickListener() {
+				public void onClick(View v) {
+					JNIdc.frameskip((ConfigureFragment.frameskip + 1) * 5);
+					popUpConfig.dismiss();
+					frameskipping = true;
+					displayConfigPopup();
+					
+				}
+			});
+		} else {
+			frameskip = addbut(R.drawable.normal_play, new OnClickListener() {
+				public void onClick(View v) {
+					JNIdc.frameskip(ConfigureFragment.frameskip);
+					popUpConfig.dismiss();
+					frameskipping = false;
+				}
+			});
+		}
+		hlay.addView(frameskip, params);
+		hlay.addView(addbut(R.drawable.up, new OnClickListener() {
+			public void onClick(View v) {
+				popUpConfig.dismiss();
+				if (MainActivity.force_gpu) {
+					popUp.showAtLocation(mView6, Gravity.BOTTOM, 0, 0);
+				} else {
+					popUp.showAtLocation(mView, Gravity.BOTTOM, 0, 0);
+				}
+				popUp.update(LayoutParams.WRAP_CONTENT,
+						LayoutParams.WRAP_CONTENT);
+			}
+		}), configParams);
+
+		// layout.addView(hlay,params);
+		popUpConfig.setContentView(hlay);
+		if (popUp.isShowing()) {
+			popUp.dismiss();
+		}
+		if (MainActivity.force_gpu) {
+			popUpConfig.showAtLocation(mView6, Gravity.BOTTOM, 0, 0);
+		} else {
+			popUpConfig.showAtLocation(mView, Gravity.BOTTOM, 0, 0);
+		}
+		popUpConfig.update(LayoutParams.WRAP_CONTENT,
+				LayoutParams.WRAP_CONTENT);
 	}
 
 	@Override
@@ -155,6 +257,9 @@ public class GL2JNIActivity extends Activity {
 		 * syms = new byte[(int) is.available()]; is.read(syms); is.close(); }
 		 * catch (IOException e) { e.getMessage(); e.printStackTrace(); }
 		 */
+		home_directory = prefs.getString("home_directory", home_directory);
+		ConfigureFragment.getCurrentConfiguration(home_directory);
+		widescreen = ConfigureFragment.widescreen;
 
 		String fileName = null;
 
@@ -251,7 +356,6 @@ public class GL2JNIActivity extends Activity {
 									OuyaController.BUTTON_DPAD_LEFT, key_CONT_DPAD_LEFT,
 									OuyaController.BUTTON_DPAD_RIGHT, key_CONT_DPAD_RIGHT,
 
-									OuyaController.BUTTON_MENU, key_CONT_START,
 									OuyaController.BUTTON_R1, key_CONT_START
 
 							};
@@ -268,7 +372,6 @@ public class GL2JNIActivity extends Activity {
 									OuyaController.BUTTON_DPAD_LEFT, key_CONT_DPAD_LEFT,
 									OuyaController.BUTTON_DPAD_RIGHT, key_CONT_DPAD_RIGHT,
 
-									OuyaController.BUTTON_MENU, key_CONT_START,
 									OuyaController.BUTTON_R1, key_CONT_START
 							};
 
@@ -289,8 +392,7 @@ public class GL2JNIActivity extends Activity {
 									OuyaController.BUTTON_DPAD_LEFT, key_CONT_DPAD_LEFT,
 									OuyaController.BUTTON_DPAD_RIGHT, key_CONT_DPAD_RIGHT,
 
-									OuyaController.BUTTON_MENU, key_CONT_START,
-									108, key_CONT_START
+									KeyEvent.KEYCODE_BUTTON_START, key_CONT_START
 							};
 							nVidia[playerNum] = true;
 
@@ -299,8 +401,8 @@ public class GL2JNIActivity extends Activity {
 						} else if (InputDevice.getDevice(joys[i]).getName()
 								.contains("keypad-zeus")) {
 							map[playerNum] = new int[] { 
-									23, key_CONT_A,
-									4, key_CONT_B,
+									KeyEvent.KEYCODE_DPAD_CENTER, key_CONT_A,
+									KeyEvent.KEYCODE_BACK, key_CONT_B,
 									OuyaController.BUTTON_U, key_CONT_X,
 									OuyaController.BUTTON_Y, key_CONT_Y,
 
@@ -309,9 +411,10 @@ public class GL2JNIActivity extends Activity {
 									OuyaController.BUTTON_DPAD_LEFT, key_CONT_DPAD_LEFT,
 									OuyaController.BUTTON_DPAD_RIGHT, key_CONT_DPAD_RIGHT,
 
-									OuyaController.BUTTON_MENU, key_CONT_START,
-									108, key_CONT_START
+									KeyEvent.KEYCODE_BUTTON_START, key_CONT_START
 							};
+							
+							xPlay[playerNum] = true;
 						} else if (!moga.isActive[playerNum]) { // Ouya controller
 							map[playerNum] = new int[] {
 									OuyaController.BUTTON_O, key_CONT_A,
@@ -324,8 +427,7 @@ public class GL2JNIActivity extends Activity {
 									OuyaController.BUTTON_DPAD_LEFT, key_CONT_DPAD_LEFT,
 									OuyaController.BUTTON_DPAD_RIGHT, key_CONT_DPAD_RIGHT,
 
-									OuyaController.BUTTON_MENU, key_CONT_START,
-									OuyaController.BUTTON_R1, key_CONT_START
+									KeyEvent.KEYCODE_BUTTON_START, key_CONT_START
 							};
 						}
 					} else {
@@ -408,7 +510,7 @@ public class GL2JNIActivity extends Activity {
 			prefs.getInt("dpad_left" + id, OuyaController.BUTTON_DPAD_LEFT), key_CONT_DPAD_LEFT,
 			prefs.getInt("dpad_right" + id, OuyaController.BUTTON_DPAD_RIGHT), key_CONT_DPAD_RIGHT,
 
-			prefs.getInt("start_button" + id, OuyaController.BUTTON_MENU), key_CONT_START,
+			prefs.getInt("start_button" + id, KeyEvent.KEYCODE_BUTTON_START), key_CONT_START,
 		};
 	}
 
@@ -614,12 +716,12 @@ public class GL2JNIActivity extends Activity {
 		
 		if (playerNum != null && playerNum != -1) {
 			String id = portId[playerNum];
-			if (custom[playerNum]) {
-				if (keyCode == prefs.getInt("l_button" + id, OuyaController.BUTTON_L1)) {
+			if (custom[playerNum] || xPlay[playerNum]) {
+				if (keyCode == prefs.getInt("l_button" + id, KeyEvent.KEYCODE_BUTTON_L1)) {
 					simulatedTouchEvent(playerNum, 1.0f, 0.0f);
 					simulatedTouchEvent(playerNum, 0.0f, 0.0f);
 				}
-				if (keyCode == prefs.getInt("r_button" + id, OuyaController.BUTTON_R1)) {
+				if (keyCode == prefs.getInt("r_button" + id, KeyEvent.KEYCODE_BUTTON_R1)) {
 					simulatedTouchEvent(playerNum, 0.0f, 1.0f);
 					simulatedTouchEvent(playerNum, 0.0f, 0.0f);
 				}
@@ -639,8 +741,8 @@ public class GL2JNIActivity extends Activity {
 				return showMenu();
 			}
 		} else {
-			if (keyCode == KeyEvent.KEYCODE_MENU
-					|| (keyCode == KeyEvent.KEYCODE_BACK)) {
+			if (keyCode == OuyaController.BUTTON_MENU
+					|| keyCode == KeyEvent.KEYCODE_BACK) {
 				return showMenu();
 			}
 		}

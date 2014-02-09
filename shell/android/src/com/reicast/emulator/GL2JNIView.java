@@ -1,6 +1,9 @@
 package com.reicast.emulator;
 
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+
 import javax.microedition.khronos.egl.EGL10;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.egl.EGLContext;
@@ -10,6 +13,7 @@ import javax.microedition.khronos.opengles.GL10;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
+import android.graphics.Paint;
 import android.graphics.PixelFormat;
 import android.media.AudioFormat;
 import android.media.AudioManager;
@@ -60,6 +64,9 @@ class GL2JNIView extends GLSurfaceView
   private static final int key_CONT_DPAD_RIGHT = 0x0080;
   private static final int key_CONT_Y          = 0x0200;
   private static final int key_CONT_X          = 0x0400;
+  
+  public static final int LAYER_TYPE_SOFTWARE = 1;
+  public static final int LAYER_TYPE_HARDWARE = 2;
   
   Vibrator vib;
 
@@ -215,9 +222,23 @@ class GL2JNIView extends GLSurfaceView
     
     Runtime.getRuntime().freeMemory();
 	System.gc();
+	
+	Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
 
     SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
     touchVibrationEnabled = prefs.getBoolean("touch_vibration_enabled", true);
+    
+    int rederType = prefs.getInt("render_type", LAYER_TYPE_HARDWARE);
+    try {
+        Method setLayerType = this.getClass().getMethod(
+                "setLayerType", new Class[] { int.class, Paint.class });
+        if (setLayerType != null)
+            setLayerType.invoke(this, new Object[] { rederType, null });
+    } catch (NoSuchMethodException e) {
+    } catch (IllegalArgumentException e) {
+    } catch (IllegalAccessException e) {
+    } catch (InvocationTargetException e) {
+    }
     
     vjoy_d_custom = readCustomVjoyValues(context);
 

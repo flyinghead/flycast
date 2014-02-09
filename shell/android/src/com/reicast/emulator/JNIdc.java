@@ -25,6 +25,9 @@ public class JNIdc
   
   public static native void setupMic(Object sip);
   public static native void vmuSwap();
+  
+  public static native void frameskip(int frames);
+  public static native void widescreen(int stretch);
 
   public static void show_osd() {
     JNIdc.vjoy(13, 1,0,0,0);
