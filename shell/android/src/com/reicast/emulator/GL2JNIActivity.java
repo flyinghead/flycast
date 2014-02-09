@@ -51,6 +51,7 @@ public class GL2JNIActivity extends Activity {
 	private String home_directory = sdcard + "/dc";
 	private int frameskip;
 	private boolean widescreen;
+	private boolean limitframes;
 
 	public static HashMap<Integer, String> deviceId_deviceDescriptor = new HashMap<Integer, String>();
 	public static HashMap<String, Integer> deviceDescriptor_PlayerNum = new HashMap<String, Integer>();
@@ -218,6 +219,25 @@ public class GL2JNIActivity extends Activity {
 		if (frameskip <= 0) {
 			frames_down.setEnabled(false);
 		}
+		View framelimit;
+		if (!limitframes) {
+			framelimit = addbut(R.drawable.frames_limit_on, new OnClickListener() {
+				public void onClick(View v) {
+					JNIdc.limitfps(1);
+					popUpConfig.dismiss();
+					limitframes = true;
+				}
+			});
+		} else {
+			framelimit = addbut(R.drawable.frames_limit_off, new OnClickListener() {
+				public void onClick(View v) {
+					JNIdc.limitfps(0);
+					popUpConfig.dismiss();
+					limitframes = false;
+				}
+			});
+		}
+		hlay.addView(framelimit, params);
 		hlay.addView(addbut(R.drawable.up, new OnClickListener() {
 			public void onClick(View v) {
 				popUpConfig.dismiss();
