@@ -49,7 +49,7 @@ public class GL2JNIActivity extends Activity {
 	
 	private File sdcard = Environment.getExternalStorageDirectory();
 	private String home_directory = sdcard + "/dc";
-	private boolean frameskipping = false;
+	private int frameskip;
 	private boolean widescreen;
 
 	public static HashMap<Integer, String> deviceId_deviceDescriptor = new HashMap<Integer, String>();
@@ -193,27 +193,31 @@ public class GL2JNIActivity extends Activity {
 			});
 		}
 		hlay.addView(fullscreen, params);
-		View frameskip;
-		if (!frameskipping) {
-			frameskip = addbut(R.drawable.fast_forward, new OnClickListener() {
-				public void onClick(View v) {
-					JNIdc.frameskip((ConfigureFragment.frameskip + 1) * 5);
-					popUpConfig.dismiss();
-					frameskipping = true;
-					displayConfigPopup();
-					
-				}
-			});
-		} else {
-			frameskip = addbut(R.drawable.normal_play, new OnClickListener() {
-				public void onClick(View v) {
-					JNIdc.frameskip(ConfigureFragment.frameskip);
-					popUpConfig.dismiss();
-					frameskipping = false;
-				}
-			});
+		View frames_up = addbut(R.drawable.frames_up, new OnClickListener() {
+			public void onClick(View v) {
+				frameskip++;
+				JNIdc.frameskip(frameskip);
+				popUpConfig.dismiss();
+				displayConfigPopup();
+				
+			}
+		});
+			hlay.addView(frames_up, params);
+		if (frameskip >= 5) {
+			frames_up.setEnabled(false);
 		}
-		hlay.addView(frameskip, params);
+		View frames_down = addbut(R.drawable.frames_down, new OnClickListener() {
+			public void onClick(View v) {
+				frameskip--;
+				JNIdc.frameskip(frameskip);
+				popUpConfig.dismiss();
+				displayConfigPopup();
+			}
+		});
+		hlay.addView(frames_down, params);
+		if (frameskip <= 0) {
+			frames_down.setEnabled(false);
+		}
 		hlay.addView(addbut(R.drawable.up, new OnClickListener() {
 			public void onClick(View v) {
 				popUpConfig.dismiss();
@@ -260,6 +264,7 @@ public class GL2JNIActivity extends Activity {
 		home_directory = prefs.getString("home_directory", home_directory);
 		ConfigureFragment.getCurrentConfiguration(home_directory);
 		widescreen = ConfigureFragment.widescreen;
+		frameskip = ConfigureFragment.frameskip;
 
 		String fileName = null;
 
