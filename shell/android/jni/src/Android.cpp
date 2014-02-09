@@ -42,6 +42,7 @@ extern "C"
   JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_vmuSwap(JNIEnv *env,jobject obj)  __attribute__((visibility("default")));
 
   JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_frameskip(JNIEnv *env,jobject obj, jint frames)  __attribute__((visibility("default")));
+  JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_widescreen(JNIEnv *env,jobject obj, jint stretch)  __attribute__((visibility("default")));
 };
 
 
@@ -324,6 +325,11 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_kcode(JNIEnv * env, jobje
 JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_frameskip(JNIEnv *env,jobject obj, jint frames)
 {
     settings.pvr.ta_skip = frames;
+}
+
+JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_widescreen(JNIEnv *env,jobject obj, jint stretch)
+{
+    settings.rend.WideScreen = stretch;
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_rendinit(JNIEnv * env, jobject obj, jint w,jint h)

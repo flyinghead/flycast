@@ -43,15 +43,15 @@ public class ConfigureFragment extends Fragment {
 	TextView mainFrames;
 	OnClickListener mCallback;
 
-	boolean dynarecopt = true;
-	boolean unstableopt = false;
-	int dcregion = 3;
-	boolean limitfps = true;
-	boolean mipmaps = true;
-	boolean widescreen = false;
-	int frameskip = 0;
-	boolean pvrrender = false;
-	String cheatdisk = "null";
+	public static boolean dynarecopt = true;
+	public static boolean unstableopt = false;
+	public static int dcregion = 3;
+	public static boolean limitfps = true;
+	public static boolean mipmaps = true;
+	public static boolean widescreen = false;
+	public static int frameskip = 0;
+	public static boolean pvrrender = false;
+	public static String cheatdisk = "null";
 
 	private SharedPreferences mPrefs;
 	private File sdcard = Environment.getExternalStorageDirectory();
@@ -84,65 +84,7 @@ public class ConfigureFragment extends Fragment {
 		mPrefs = PreferenceManager.getDefaultSharedPreferences(parentActivity);
 		home_directory = mPrefs.getString("home_directory", home_directory);
 
-		try {
-			File config = new File(home_directory, "emu.cfg");
-			if (config.exists()) {
-				Scanner scanner = new Scanner(config);
-				String currentLine;
-				while (scanner.hasNextLine()) {
-					currentLine = scanner.nextLine();
-
-					// Check if the existing emu.cfg has the setting and get
-					// current value
-
-					if (StringUtils.containsIgnoreCase(currentLine,
-							"Dynarec.Enabled")) {
-						dynarecopt = currentLine.replace(
-								"Dynarec.Enabled=", "").equals("1");
-					}
-					if (StringUtils.containsIgnoreCase(currentLine,
-							"Dynarec.unstable-opt")) {
-						unstableopt = currentLine.replace(
-								"Dynarec.unstable-opt=", "").equals("1");
-					}
-					if (StringUtils.containsIgnoreCase(currentLine,
-							"Dreamcast.Region")) {
-						dcregion = Integer.valueOf(currentLine.replace(
-								"Dreamcast.Region=", ""));
-					}
-					if (StringUtils.containsIgnoreCase(currentLine,
-							"aica.LimitFPS")) {
-						limitfps = currentLine.replace(
-								"aica.LimitFPS=", "").equals("1");
-					}
-					if (StringUtils.containsIgnoreCase(currentLine,
-							"rend.UseMipmaps")) {
-						mipmaps = currentLine.replace(
-								"rend.UseMipmaps=", "").equals("1");
-					}
-					if (StringUtils.containsIgnoreCase(currentLine,
-							"rend.WideScreen")) {
-						widescreen = currentLine.replace(
-								"rend.WideScreen=", "").equals("1");
-					}
-					if (StringUtils.containsIgnoreCase(currentLine, "ta.skip")) {
-						frameskip = Integer.valueOf(currentLine.replace(
-								"ta.skip=", ""));
-					}
-					if (StringUtils.containsIgnoreCase(currentLine, "pvr.rend")) {
-						pvrrender = currentLine.replace(
-								"pvr.rend=", "").equals("1");
-					}
-					if (StringUtils.containsIgnoreCase(currentLine, "image")) {
-						cheatdisk = currentLine.replace("image=", "");
-					}
-
-				}
-				scanner.close();
-			}
-		} catch (Exception e) {
-			Log.d("reicast", "Exception: " + e);
-		}
+		getCurrentConfiguration(home_directory);
 
 		// Generate the menu options and fill in existing settings
 		Switch force_gpu_opt = (Switch) getView().findViewById(
@@ -397,6 +339,68 @@ public class ConfigureFragment extends Fragment {
 					home_directory);
 		} else {
 			mGenerateLogs.execute(home_directory);
+		}
+	}
+	
+	public static void getCurrentConfiguration(String home_directory) {
+		try {
+			File config = new File(home_directory, "emu.cfg");
+			if (config.exists()) {
+				Scanner scanner = new Scanner(config);
+				String currentLine;
+				while (scanner.hasNextLine()) {
+					currentLine = scanner.nextLine();
+
+					// Check if the existing emu.cfg has the setting and get
+					// current value
+
+					if (StringUtils.containsIgnoreCase(currentLine,
+							"Dynarec.Enabled")) {
+						dynarecopt = currentLine.replace(
+								"Dynarec.Enabled=", "").equals("1");
+					}
+					if (StringUtils.containsIgnoreCase(currentLine,
+							"Dynarec.unstable-opt")) {
+						unstableopt = currentLine.replace(
+								"Dynarec.unstable-opt=", "").equals("1");
+					}
+					if (StringUtils.containsIgnoreCase(currentLine,
+							"Dreamcast.Region")) {
+						dcregion = Integer.valueOf(currentLine.replace(
+								"Dreamcast.Region=", ""));
+					}
+					if (StringUtils.containsIgnoreCase(currentLine,
+							"aica.LimitFPS")) {
+						limitfps = currentLine.replace(
+								"aica.LimitFPS=", "").equals("1");
+					}
+					if (StringUtils.containsIgnoreCase(currentLine,
+							"rend.UseMipmaps")) {
+						mipmaps = currentLine.replace(
+								"rend.UseMipmaps=", "").equals("1");
+					}
+					if (StringUtils.containsIgnoreCase(currentLine,
+							"rend.WideScreen")) {
+						widescreen = currentLine.replace(
+								"rend.WideScreen=", "").equals("1");
+					}
+					if (StringUtils.containsIgnoreCase(currentLine, "ta.skip")) {
+						frameskip = Integer.valueOf(currentLine.replace(
+								"ta.skip=", ""));
+					}
+					if (StringUtils.containsIgnoreCase(currentLine, "pvr.rend")) {
+						pvrrender = currentLine.replace(
+								"pvr.rend=", "").equals("1");
+					}
+					if (StringUtils.containsIgnoreCase(currentLine, "image")) {
+						cheatdisk = currentLine.replace("image=", "");
+					}
+
+				}
+				scanner.close();
+			}
+		} catch (Exception e) {
+			Log.d("reicast", "Exception: " + e);
 		}
 	}
 

@@ -1,5 +1,6 @@
 package com.reicast.emulator;
 
+import java.io.File;
 import java.util.Arrays;
 import java.util.HashMap;
 
@@ -13,6 +14,7 @@ import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.Gravity;
@@ -45,8 +47,12 @@ public class GL2JNIActivity extends Activity {
 	float[] globalLS_X = new float[4], globalLS_Y = new float[4],
 			previousLS_X = new float[4], previousLS_Y = new float[4];
 	
-	int userFrames;
+	private File sdcard = Environment.getExternalStorageDirectory();
+	private String home_directory = sdcard + "/dc";
 	private boolean frameskipping = false;
+	private boolean widescreen;
+	private View frameskip;
+	private View fullscreen;
 
 	public static HashMap<Integer, String> deviceId_deviceDescriptor = new HashMap<Integer, String>();
 	public static HashMap<String, Integer> deviceDescriptor_PlayerNum = new HashMap<String, Integer>();
@@ -137,11 +143,28 @@ public class GL2JNIActivity extends Activity {
 				popUp.dismiss();
 			}
 		}), params);
-		View frameskip;
+		if (!widescreen) {
+			fullscreen = addbut(R.drawable.widescreen, new OnClickListener() {
+				public void onClick(View v) {
+					JNIdc.widescreen(1);
+					popUp.dismiss();
+					widescreen = true;
+				}
+			});
+		} else {
+			fullscreen = addbut(R.drawable.normal_view, new OnClickListener() {
+				public void onClick(View v) {
+					JNIdc.widescreen(0);
+					popUp.dismiss();
+					widescreen = false;
+				}
+			});
+		}
+		hlay.addView(fullscreen, params);
 		if (!frameskipping) {
 			frameskip = addbut(R.drawable.fast_forward, new OnClickListener() {
 				public void onClick(View v) {
-					JNIdc.frameskip((userFrames + 1) * 5);
+					JNIdc.frameskip((ConfigureFragment.frameskip + 1) * 5);
 					popUp.dismiss();
 					frameskipping = true;
 				}
@@ -149,7 +172,7 @@ public class GL2JNIActivity extends Activity {
 		} else {
 			frameskip = addbut(R.drawable.normal_play, new OnClickListener() {
 				public void onClick(View v) {
-					JNIdc.frameskip(userFrames);
+					JNIdc.frameskip(ConfigureFragment.frameskip);
 					popUp.dismiss();
 					frameskipping = false;
 				}
@@ -167,7 +190,6 @@ public class GL2JNIActivity extends Activity {
 		moga.onCreate(this);
 		
 		prefs = PreferenceManager.getDefaultSharedPreferences(this);
-		userFrames = prefs.getInt("frame_skip", 0);
 		createPopup();
 		/*
 		 * try { //int rID =
@@ -178,6 +200,9 @@ public class GL2JNIActivity extends Activity {
 		 * syms = new byte[(int) is.available()]; is.read(syms); is.close(); }
 		 * catch (IOException e) { e.getMessage(); e.printStackTrace(); }
 		 */
+		home_directory = prefs.getString("home_directory", home_directory);
+		ConfigureFragment.getCurrentConfiguration(home_directory);
+		widescreen = ConfigureFragment.widescreen;
 
 		String fileName = null;
 
@@ -672,6 +697,42 @@ public class GL2JNIActivity extends Activity {
 	
 	private boolean showMenu() {
 		if (!popUp.isShowing()) {
+			if (!frameskipping) {
+				frameskip = addbut(R.drawable.fast_forward, new OnClickListener() {
+					public void onClick(View v) {
+						JNIdc.frameskip((ConfigureFragment.frameskip + 1) * 5);
+						popUp.dismiss();
+						frameskipping = true;
+					}
+				});
+			} else {
+				frameskip = addbut(R.drawable.normal_play, new OnClickListener() {
+					public void onClick(View v) {
+						JNIdc.frameskip(ConfigureFragment.frameskip);
+						popUp.dismiss();
+						frameskipping = false;
+					}
+				});
+			}
+			frameskip.invalidate();
+			if (!widescreen) {
+				fullscreen = addbut(R.drawable.widescreen, new OnClickListener() {
+					public void onClick(View v) {
+						JNIdc.widescreen(1);
+						popUp.dismiss();
+						widescreen = true;
+					}
+				});
+			} else {
+				fullscreen = addbut(R.drawable.normal_view, new OnClickListener() {
+					public void onClick(View v) {
+						JNIdc.widescreen(0);
+						popUp.dismiss();
+						widescreen = false;
+					}
+				});
+			}
+			fullscreen.invalidate();
 			if (MainActivity.force_gpu) {
 				popUp.showAtLocation(mView6, Gravity.BOTTOM, 0, 0);
 			} else {
