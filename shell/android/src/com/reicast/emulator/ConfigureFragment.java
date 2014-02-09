@@ -397,13 +397,13 @@ public class ConfigureFragment extends Fragment {
 
 					if (StringUtils.containsIgnoreCase(currentLine,
 							"Dynarec.Enabled")) {
-						ConfigureFragment.dynarecopt = currentLine.replace(
-								"Dynarec.Enabled=", "").equals("1");
+						ConfigureFragment.dynarecopt = Integer.valueOf(currentLine.replace(
+								"Dynarec.Enabled=", "")) == 1;
 					}
 					if (StringUtils.containsIgnoreCase(currentLine,
 							"Dynarec.unstable-opt")) {
-						ConfigureFragment.unstableopt = currentLine.replace(
-								"Dynarec.unstable-opt=", "").equals("1");
+						ConfigureFragment.unstableopt = Integer.valueOf(currentLine.replace(
+								"Dynarec.unstable-opt=", "")) == 1;
 					}
 					if (StringUtils.containsIgnoreCase(currentLine,
 							"Dreamcast.Region")) {
@@ -413,26 +413,26 @@ public class ConfigureFragment extends Fragment {
 					}
 					if (StringUtils.containsIgnoreCase(currentLine,
 							"aica.LimitFPS")) {
-						ConfigureFragment.limitfps = currentLine.replace(
-								"aica.LimitFPS=", "").equals("1");
+						ConfigureFragment.limitfps = Integer.valueOf(currentLine.replace(
+								"aica.LimitFPS=", "")) == 1;
 					}
 					if (StringUtils.containsIgnoreCase(currentLine,
 							"rend.UseMipmaps")) {
-						ConfigureFragment.mipmaps = currentLine.replace(
-								"rend.UseMipmaps=", "").equals("1");
+						ConfigureFragment.mipmaps = Integer.valueOf(currentLine.replace(
+								"rend.UseMipmaps=", "")) == 1;
 					}
 					if (StringUtils.containsIgnoreCase(currentLine,
 							"rend.WideScreen")) {
-						ConfigureFragment.widescreen = currentLine.replace(
-								"rend.WideScreen=", "").equals("1");
+						ConfigureFragment.widescreen = Integer.valueOf(currentLine.replace(
+								"rend.WideScreen=", "")) == 1;
 					}
 					if (StringUtils.containsIgnoreCase(currentLine, "ta.skip")) {
 						ConfigureFragment.frameskip = Integer
 								.valueOf(currentLine.replace("ta.skip=", ""));
 					}
 					if (StringUtils.containsIgnoreCase(currentLine, "pvr.rend")) {
-						ConfigureFragment.pvrrender = currentLine.replace(
-								"pvr.rend=", "").equals("1");
+						ConfigureFragment.pvrrender = Integer.valueOf(currentLine.replace(
+								"pvr.rend=", "")) == 1;
 					}
 					if (StringUtils.containsIgnoreCase(currentLine, "image")) {
 						ConfigureFragment.cheatdisk = currentLine.replace(
