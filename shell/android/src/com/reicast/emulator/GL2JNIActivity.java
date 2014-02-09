@@ -51,8 +51,6 @@ public class GL2JNIActivity extends Activity {
 	private String home_directory = sdcard + "/dc";
 	private boolean frameskipping = false;
 	private boolean widescreen;
-	private View frameskip;
-	private View fullscreen;
 
 	public static HashMap<Integer, String> deviceId_deviceDescriptor = new HashMap<Integer, String>();
 	public static HashMap<String, Integer> deviceDescriptor_PlayerNum = new HashMap<String, Integer>();
@@ -143,11 +141,48 @@ public class GL2JNIActivity extends Activity {
 				popUp.dismiss();
 			}
 		}), params);
+		
+		hlay.addView(addbut(R.drawable.config, new OnClickListener() {
+			public void onClick(View v) {
+				displayConfigPopup();
+				popUp.dismiss();
+			}
+		}), params);
+
+		// layout.addView(hlay,params);
+		popUp.setContentView(hlay);
+	}
+	
+	void displayConfigPopup() {
+		final PopupWindow popUpConfig = new PopupWindow(this);
+		// LinearLayout layout = new LinearLayout(this);
+
+		// tv = new TextView(this);
+		int p = getPixelsFromDp(60, this);
+		LayoutParams configParams = new LayoutParams(p, p);
+
+		// layout.setOrientation(LinearLayout.VERTICAL);
+		// tv.setText("Hi this is a sample text for popup window");
+		// layout.addView(tv, params);
+
+		LinearLayout hlay = new LinearLayout(this);
+
+		hlay.setOrientation(LinearLayout.HORIZONTAL);
+
+		hlay.addView(addbut(R.drawable.close, new OnClickListener() {
+			public void onClick(View v) {
+				Intent inte = new Intent(GL2JNIActivity.this,
+						MainActivity.class);
+				startActivity(inte);
+				GL2JNIActivity.this.finish();
+			}
+		}), configParams);
+		View fullscreen;
 		if (!widescreen) {
 			fullscreen = addbut(R.drawable.widescreen, new OnClickListener() {
 				public void onClick(View v) {
 					JNIdc.widescreen(1);
-					popUp.dismiss();
+					popUpConfig.dismiss();
 					widescreen = true;
 				}
 			});
@@ -155,12 +190,13 @@ public class GL2JNIActivity extends Activity {
 			fullscreen = addbut(R.drawable.normal_view, new OnClickListener() {
 				public void onClick(View v) {
 					JNIdc.widescreen(0);
-					popUp.dismiss();
+					popUpConfig.dismiss();
 					widescreen = false;
 				}
 			});
 		}
 		hlay.addView(fullscreen, params);
+		View frameskip;
 		if (!frameskipping) {
 			frameskip = addbut(R.drawable.fast_forward, new OnClickListener() {
 				public void onClick(View v) {
@@ -173,7 +209,7 @@ public class GL2JNIActivity extends Activity {
 			frameskip = addbut(R.drawable.normal_play, new OnClickListener() {
 				public void onClick(View v) {
 					JNIdc.frameskip(ConfigureFragment.frameskip);
-					popUp.dismiss();
+					popUpConfig.dismiss();
 					frameskipping = false;
 				}
 			});
@@ -181,7 +217,17 @@ public class GL2JNIActivity extends Activity {
 		hlay.addView(frameskip, params);
 
 		// layout.addView(hlay,params);
-		popUp.setContentView(hlay);
+		popUpConfig.setContentView(hlay);
+		if (popUp.isShowing()) {
+			popUp.dismiss();
+		}
+		if (MainActivity.force_gpu) {
+			popUpConfig.showAtLocation(mView6, Gravity.BOTTOM, 0, 0);
+		} else {
+			popUpConfig.showAtLocation(mView, Gravity.BOTTOM, 0, 0);
+		}
+		popUpConfig.update(LayoutParams.WRAP_CONTENT,
+				LayoutParams.WRAP_CONTENT);
 	}
 
 	@Override
@@ -697,42 +743,6 @@ public class GL2JNIActivity extends Activity {
 	
 	private boolean showMenu() {
 		if (!popUp.isShowing()) {
-			if (!frameskipping) {
-				frameskip = addbut(R.drawable.fast_forward, new OnClickListener() {
-					public void onClick(View v) {
-						JNIdc.frameskip((ConfigureFragment.frameskip + 1) * 5);
-						popUp.dismiss();
-						frameskipping = true;
-					}
-				});
-			} else {
-				frameskip = addbut(R.drawable.normal_play, new OnClickListener() {
-					public void onClick(View v) {
-						JNIdc.frameskip(ConfigureFragment.frameskip);
-						popUp.dismiss();
-						frameskipping = false;
-					}
-				});
-			}
-			frameskip.invalidate();
-			if (!widescreen) {
-				fullscreen = addbut(R.drawable.widescreen, new OnClickListener() {
-					public void onClick(View v) {
-						JNIdc.widescreen(1);
-						popUp.dismiss();
-						widescreen = true;
-					}
-				});
-			} else {
-				fullscreen = addbut(R.drawable.normal_view, new OnClickListener() {
-					public void onClick(View v) {
-						JNIdc.widescreen(0);
-						popUp.dismiss();
-						widescreen = false;
-					}
-				});
-			}
-			fullscreen.invalidate();
 			if (MainActivity.force_gpu) {
 				popUp.showAtLocation(mView6, Gravity.BOTTOM, 0, 0);
 			} else {
