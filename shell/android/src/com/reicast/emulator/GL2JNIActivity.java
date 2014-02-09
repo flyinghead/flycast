@@ -171,10 +171,7 @@ public class GL2JNIActivity extends Activity {
 
 		hlay.addView(addbut(R.drawable.close, new OnClickListener() {
 			public void onClick(View v) {
-				Intent inte = new Intent(GL2JNIActivity.this,
-						MainActivity.class);
-				startActivity(inte);
-				GL2JNIActivity.this.finish();
+				popUpConfig.dismiss();
 			}
 		}), configParams);
 		View fullscreen;
@@ -201,8 +198,10 @@ public class GL2JNIActivity extends Activity {
 			frameskip = addbut(R.drawable.fast_forward, new OnClickListener() {
 				public void onClick(View v) {
 					JNIdc.frameskip((ConfigureFragment.frameskip + 1) * 5);
-					popUp.dismiss();
+					popUpConfig.dismiss();
 					frameskipping = true;
+					displayConfigPopup();
+					
 				}
 			});
 		} else {
@@ -215,6 +214,18 @@ public class GL2JNIActivity extends Activity {
 			});
 		}
 		hlay.addView(frameskip, params);
+		hlay.addView(addbut(R.drawable.up, new OnClickListener() {
+			public void onClick(View v) {
+				popUpConfig.dismiss();
+				if (MainActivity.force_gpu) {
+					popUp.showAtLocation(mView6, Gravity.BOTTOM, 0, 0);
+				} else {
+					popUp.showAtLocation(mView, Gravity.BOTTOM, 0, 0);
+				}
+				popUp.update(LayoutParams.WRAP_CONTENT,
+						LayoutParams.WRAP_CONTENT);
+			}
+		}), configParams);
 
 		// layout.addView(hlay,params);
 		popUpConfig.setContentView(hlay);
