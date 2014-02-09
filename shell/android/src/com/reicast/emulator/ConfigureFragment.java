@@ -432,11 +432,13 @@ public class ConfigureFragment extends Fragment {
 
 	public void executeAppendConfig(String identifier, String value) {
 		File config = new File(home_directory, "emu.cfg");
+		File modified = new File(home_directory, "emu.cfg.bak");
 		try {
 			if (config.exists()) {
+				config.renameTo(modified);
 				// Read existing emu.cfg and substitute new setting value
 				StringBuilder rebuildFile = new StringBuilder();
-				Scanner scanner = new Scanner(config);
+				Scanner scanner = new Scanner(modified);
 				String currentLine;
 				while (scanner.hasNextLine()) {
 					currentLine = scanner.nextLine();
@@ -447,11 +449,18 @@ public class ConfigureFragment extends Fragment {
 					}
 				}
 				scanner.close();
-				config.delete();
 				FileOutputStream fos = new FileOutputStream(config);
 				fos.write(rebuildFile.toString().getBytes());
 				fos.close();
-			} else if (config.createNewFile()) {
+				if (config.exists()) {
+					modified.delete();
+				} else {
+					Toast.makeText(parentActivity,
+							parentActivity.getString(R.string.bios_config),
+							Toast.LENGTH_SHORT).show();
+					modified.renameTo(config);
+				}
+			} else {
 				StringBuilder rebuildFile = new StringBuilder();
 				rebuildFile.append("[config]" + "\n");
 				rebuildFile.append("Dynarec.Enabled="
@@ -481,13 +490,17 @@ public class ConfigureFragment extends Fragment {
 				FileOutputStream fos = new FileOutputStream(config);
 				fos.write(rebuildFile.toString().getBytes());
 				fos.close();
-			} else {
-				Toast.makeText(parentActivity,
-						parentActivity.getString(R.string.bios_config),
-						Toast.LENGTH_SHORT).show();
+				if (!config.exists()) {
+					Toast.makeText(parentActivity,
+							parentActivity.getString(R.string.bios_config),
+							Toast.LENGTH_SHORT).show();
+				}
 			}
 		} catch (Exception e) {
 			Log.d("reicast", "Exception: " + e);
+			Toast.makeText(parentActivity,
+					parentActivity.getString(R.string.bios_config),
+					Toast.LENGTH_SHORT).show();
 		}
 	}
 }
