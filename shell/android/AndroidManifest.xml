@@ -29,6 +29,9 @@
         android:label="@string/app_name"
         android:largeHeap="true"
         android:theme="@style/AppTheme" >
+        <meta-data
+                android:name="xperiaplayoptimized_content"
+                android:resource="@drawable/ic_xperia_play" />
         <activity
             android:name=".MainActivity"
             android:configChanges="orientation|screenSize|screenLayout|uiMode|keyboard|keyboardHidden"
