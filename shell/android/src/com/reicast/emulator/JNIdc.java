@@ -35,7 +35,7 @@ public class JNIdc
   public static native void frameskip(int frames);
   public static native void pvrrender(int render);
   public static native void cheatdisk(String disk);
-  public static native void dreamtime(String clock);
+  public static native void dreamtime(long clock);
 
   public static void show_osd() {
     JNIdc.vjoy(13, 1,0,0,0);

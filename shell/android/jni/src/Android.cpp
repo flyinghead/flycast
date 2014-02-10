@@ -50,7 +50,7 @@ extern "C"
     JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_frameskip(JNIEnv *env,jobject obj, jint frames)  __attribute__((visibility("default")));
     JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_pvrrender(JNIEnv *env,jobject obj, jint render)  __attribute__((visibility("default")));
     JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_cheatdisk(JNIEnv *env,jobject obj, jstring disk)  __attribute__((visibility("default")));
-    JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_dreamtime(JNIEnv *env,jobject obj, jstring clock)  __attribute__((visibility("default")));
+    JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_dreamtime(JNIEnv *env,jobject obj, u32 clock)  __attribute__((visibility("default")));
 };
 
 
@@ -375,7 +375,7 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_cheatdisk(JNIEnv *env,job
 
 }
 
-JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_dreamtime(JNIEnv *env,jobject obj, jstring clock)
+JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_dreamtime(JNIEnv *env,jobject obj, u32 clock)
 {
     settings.dreamcast.RTC = clock;
 }
