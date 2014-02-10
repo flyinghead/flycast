@@ -36,7 +36,6 @@ public class OnScreenMenu {
 		this.mContext = mContext;
 		this.prefs = prefs;
 		home_directory = prefs.getString("home_directory", home_directory);
-		ConfigureFragment.getCurrentConfiguration(home_directory);
 		widescreen = ConfigureFragment.widescreen;
 		frameskip = ConfigureFragment.frameskip;
 	}

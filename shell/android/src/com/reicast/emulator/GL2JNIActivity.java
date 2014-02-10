@@ -52,6 +52,7 @@ public class GL2JNIActivity extends Activity {
 		moga.onCreate(this);
 		
 		prefs = PreferenceManager.getDefaultSharedPreferences(this);
+		ConfigureFragment.getCurrentConfiguration(prefs);
 		menu = new OnScreenMenu(this, prefs);
 		menu.setGLView(mView, mView6);
 		popUp = menu.createPopup();

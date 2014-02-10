@@ -26,9 +26,16 @@ public class JNIdc
   public static native void setupMic(Object sip);
   public static native void vmuSwap();
   
-  public static native void frameskip(int frames);
-  public static native void widescreen(int stretch);
+  public static native void dynarec(int dynarec);
+  public static native void unstable(int unstable);
+  public static native void region(int region);
   public static native void limitfps(int stretch);
+  public static native void mipmaps(int mipmaps);
+  public static native void widescreen(int stretch);
+  public static native void frameskip(int frames);
+  public static native void pvrrender(int render);
+  public static native void cheatdisk(String disk);
+  public static native void dreamtime(String clock);
 
   public static void show_osd() {
     JNIdc.vjoy(13, 1,0,0,0);

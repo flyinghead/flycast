@@ -41,9 +41,16 @@ extern "C"
   JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_setupMic(JNIEnv *env,jobject obj,jobject sip)  __attribute__((visibility("default")));
   JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_vmuSwap(JNIEnv *env,jobject obj)  __attribute__((visibility("default")));
 
-  JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_frameskip(JNIEnv *env,jobject obj, jint frames)  __attribute__((visibility("default")));
-  JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_widescreen(JNIEnv *env,jobject obj, jint stretch)  __attribute__((visibility("default")));
-  JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_limitfps(JNIEnv *env,jobject obj, jint limiter)  __attribute__((visibility("default")));
+    JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_dynarec(JNIEnv *env,jobject obj, jint dynarec)  __attribute__((visibility("default")));
+    JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_unstable(JNIEnv *env,jobject obj, jint unstable)  __attribute__((visibility("default")));
+    JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_region(JNIEnv *env,jobject obj, jint region)  __attribute__((visibility("default")));
+    JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_limitfps(JNIEnv *env,jobject obj, jint limiter)  __attribute__((visibility("default")));
+    JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_mipmaps(JNIEnv *env,jobject obj, jint mipmaps)  __attribute__((visibility("default")));
+    JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_widescreen(JNIEnv *env,jobject obj, jint stretch)  __attribute__((visibility("default")));
+    JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_frameskip(JNIEnv *env,jobject obj, jint frames)  __attribute__((visibility("default")));
+    JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_pvrrender(JNIEnv *env,jobject obj, jint render)  __attribute__((visibility("default")));
+    JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_cheatdisk(JNIEnv *env,jobject obj, jstring disk)  __attribute__((visibility("default")));
+    JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_dreamtime(JNIEnv *env,jobject obj, jstring clock)  __attribute__((visibility("default")));
 };
 
 
@@ -323,9 +330,29 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_kcode(JNIEnv * env, jobje
 	env->ReleaseIntArrayElements(jy, jy_body, 0);
 }
 
-JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_frameskip(JNIEnv *env,jobject obj, jint frames)
+JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_dynarec(JNIEnv *env,jobject obj, jint dynarec)
 {
-    settings.pvr.ta_skip = frames;
+    settings.dynarec.Enable = dynarec;
+}
+
+JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_unstable(JNIEnv *env,jobject obj, jint unstable)
+{
+    settings.dynarec.unstable_opt = unstable;
+}
+
+JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_region(JNIEnv *env,jobject obj, jint region)
+{
+    settings.dreamcast.region = region;
+}
+
+JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_limitfps(JNIEnv *env,jobject obj, jint limiter)
+{
+    settings.aica.LimitFPS = limiter;
+}
+
+JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_mipmaps(JNIEnv *env,jobject obj, jint mipmaps)
+{
+    settings.rend.UseMipmaps = mipmaps;
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_widescreen(JNIEnv *env,jobject obj, jint stretch)
@@ -333,9 +360,24 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_widescreen(JNIEnv *env,jo
     settings.rend.WideScreen = stretch;
 }
 
-JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_limitfps(JNIEnv *env,jobject obj, jint limiter)
+JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_frameskip(JNIEnv *env,jobject obj, jint frames)
 {
-    settings.aica.LimitFPS = limiter;
+    settings.pvr.ta_skip = frames;
+}
+
+JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_pvrrender(JNIEnv *env,jobject obj, jint render)
+{
+    settings.pvr.rend = render;
+}
+
+JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_cheatdisk(JNIEnv *env,jobject obj, jstring disk)
+{
+
+}
+
+JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_dreamtime(JNIEnv *env,jobject obj, jstring clock)
+{
+    settings.dreamcast.RTC = clock;
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_rendinit(JNIEnv * env, jobject obj, jint w,jint h)
