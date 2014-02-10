@@ -44,11 +44,16 @@ public class ConfigureFragment extends Fragment {
 	OnClickListener mCallback;
 
 	public static boolean dynarecopt = true;
+	public static boolean idleskip = false;
 	public static boolean unstableopt = false;
+	public static int cable = 3;
 	public static int dcregion = 3;
+	public static int broadcast = 4;
 	public static boolean limitfps = true;
+	public static boolean nobatch = false;
 	public static boolean mipmaps = true;
 	public static boolean widescreen = false;
+	public static boolean subdivide = false;
 	public static int frameskip = 0;
 	public static boolean pvrrender = false;
 	public static String cheatdisk = "null";
@@ -357,20 +362,25 @@ public class ConfigureFragment extends Fragment {
 		ConfigureFragment.dynarecopt = mPrefs.getBoolean("dynarec_opt",
 				ConfigureFragment.dynarecopt);
 		JNIdc.dynarec(ConfigureFragment.dynarecopt ? 1 : 0);
+		JNIdc.idleskip(ConfigureFragment.idleskip ? 1 : 0);
 		ConfigureFragment.unstableopt = mPrefs.getBoolean("unstable_opt",
 				ConfigureFragment.unstableopt);
 		JNIdc.unstable(ConfigureFragment.unstableopt ? 1 : 0);
+		JNIdc.cable(ConfigureFragment.cable);
 		ConfigureFragment.dcregion = mPrefs.getInt("dc_region", ConfigureFragment.dcregion);
 		JNIdc.region(ConfigureFragment.dcregion);
+		JNIdc.broadcast(ConfigureFragment.broadcast);
 		ConfigureFragment.limitfps = mPrefs.getBoolean("limit_fps",
 				ConfigureFragment.limitfps);
 		JNIdc.limitfps(ConfigureFragment.limitfps ? 1 : 0);
+		JNIdc.nobatch(ConfigureFragment.nobatch ? 1 : 0);
 		ConfigureFragment.mipmaps = mPrefs.getBoolean("use_mipmaps",
 				ConfigureFragment.mipmaps);
 		JNIdc.mipmaps(ConfigureFragment.mipmaps ? 1 : 0);
 		ConfigureFragment.widescreen = mPrefs.getBoolean("stretch_view",
 				ConfigureFragment.widescreen);
 		JNIdc.widescreen(ConfigureFragment.widescreen ? 1 : 0);
+		JNIdc.subdivide(ConfigureFragment.subdivide ? 1 : 0);
 		ConfigureFragment.frameskip = mPrefs.getInt("frame_skip",
 				ConfigureFragment.frameskip);
 		JNIdc.frameskip(ConfigureFragment.frameskip);

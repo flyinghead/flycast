@@ -27,11 +27,16 @@ public class JNIdc
   public static native void vmuSwap();
   
   public static native void dynarec(int dynarec);
+  public static native void idleskip(int idleskip);
   public static native void unstable(int unstable);
+  public static native void cable(int cable);
   public static native void region(int region);
+  public static native void broadcast(int broadcast);
   public static native void limitfps(int stretch);
+  public static native void nobatch(int nobatch);
   public static native void mipmaps(int mipmaps);
   public static native void widescreen(int stretch);
+  public static native void subdivide(int subdivide);
   public static native void frameskip(int frames);
   public static native void pvrrender(int render);
   public static native void cheatdisk(String disk);
