@@ -207,12 +207,15 @@ void dc_term()
 	plugins_Term();
 	_vmem_release();
 
+#ifndef _ANDROID
 	SaveSettings();
+#endif
 	SaveRomFiles(GetPath("/data/"));
 }
 
 void LoadSettings()
 {
+#ifndef _ANDROID
 	settings.dynarec.Enable			= cfgLoadInt("config","Dynarec.Enabled", 1)!=0;
 	settings.dynarec.idleskip		= cfgLoadInt("config","Dynarec.idleskip",1)!=0;
 	settings.dynarec.unstable_opt	= cfgLoadInt("config","Dynarec.unstable-opt",0);
@@ -229,6 +232,7 @@ void LoadSettings()
 	
 	settings.pvr.ta_skip			= cfgLoadInt("config","ta.skip",0);
 	settings.pvr.rend				= cfgLoadInt("config","pvr.rend",0);
+#endif
 
 #if (HOST_OS != OS_LINUX || defined(_ANDROID) || defined(TARGET_PANDORA))
 	settings.aica.BufferSize=2048;

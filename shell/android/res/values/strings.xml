@@ -99,7 +99,7 @@
     <string name="textOff">OFF</string>
     
     <string name="platform">Copying logcat content to clipboard\nPlease paste in the issue report</string>
-    <string name="bios_config">Please generate a config\n(Run BIOS at least once)</string>
+    <string name="bios_config">Configuration failed!</string>
     <string name="menu_debug">Submit Error Logs</string>
 
 </resources>

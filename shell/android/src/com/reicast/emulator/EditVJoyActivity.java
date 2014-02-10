@@ -2,7 +2,6 @@ package com.reicast.emulator;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
-import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Build;
 import android.os.Bundle;
@@ -14,7 +13,6 @@ import android.view.ViewGroup.LayoutParams;
 import android.view.Window;
 import android.widget.ImageButton;
 import android.widget.ImageView.ScaleType;
-import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.Toast;
 
@@ -22,10 +20,11 @@ import android.widget.Toast;
 public class EditVJoyActivity extends Activity {
 	GL2JNIView mView;
 	GL2JNIViewV6 mView6;
+	OnScreenMenu menu;
 	PopupWindow popUp;
 	LayoutParams params;
 	
-	private static float[][] vjoy_d_cached;
+	public static float[][] vjoy_d_cached;
 
 	View addbut(int x, OnClickListener ocl) {
 		ImageButton but = new ImageButton(this);
@@ -37,54 +36,13 @@ public class EditVJoyActivity extends Activity {
 		return but;
 	}
 
-	void createPopup() {
-		popUp = new PopupWindow(this);
-		int p = GL2JNIActivity.getPixelsFromDp(60, this);
-		params = new LayoutParams(p, p);
-
-		LinearLayout hlay = new LinearLayout(this);
-
-		hlay.setOrientation(LinearLayout.HORIZONTAL);
-
-		hlay.addView(addbut(R.drawable.apply, new OnClickListener() {
-			public void onClick(View v) {
-				Intent inte = new Intent(EditVJoyActivity.this, MainActivity.class);
-				startActivity(inte);
-				EditVJoyActivity.this.finish();
-			}
-		}), params);
-
-		hlay.addView(addbut(R.drawable.reset, new OnClickListener() {
-			public void onClick(View v) {
-				// Reset VJoy positions and scale
-				if (MainActivity.force_gpu) {
-					mView6.resetCustomVjoyValues();
-				} else {
-					mView.resetCustomVjoyValues();
-				}
-				popUp.dismiss();
-			}
-		}), params);
-
-		hlay.addView(addbut(R.drawable.close, new OnClickListener() {
-			public void onClick(View v) {
-				if (MainActivity.force_gpu) {
-					mView6.restoreCustomVjoyValues(vjoy_d_cached);
-				} else {
-					mView.restoreCustomVjoyValues(vjoy_d_cached);
-				}
-				popUp.dismiss();
-			}
-		}), params);
-
-		popUp.setContentView(hlay);
-	}
-
 	@Override
 	protected void onCreate(Bundle icicle) {
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		
-		createPopup();
+		menu = new OnScreenMenu(this);
+		menu.setGLView(mView, mView6);
+		popUp = menu.createVjoyPopup();
 
 		// Call parent onCreate()
 		super.onCreate(icicle);

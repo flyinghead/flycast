@@ -1,33 +1,25 @@
 package com.reicast.emulator;
 
-import java.io.File;
 import java.util.Arrays;
 import java.util.HashMap;
 
 import tv.ouya.console.api.OuyaController;
 import android.annotation.TargetApi;
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
-import android.view.View;
-import android.view.View.OnClickListener;
 import android.view.ViewGroup.LayoutParams;
 import android.view.Window;
-import android.widget.ImageButton;
-import android.widget.ImageView.ScaleType;
-import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.Toast;
 
@@ -35,8 +27,8 @@ import android.widget.Toast;
 public class GL2JNIActivity extends Activity {
 	GL2JNIView mView;
 	GL2JNIViewV6 mView6;
+	OnScreenMenu menu;
 	PopupWindow popUp;
-	LayoutParams params;
 	MOGAInput moga = new MOGAInput();
 	private SharedPreferences prefs;
 	static String[] portId = { "_A", "_B", "_C", "_D" };
@@ -46,200 +38,13 @@ public class GL2JNIActivity extends Activity {
 	int[] name = { -1, -1, -1, -1 };
 	float[] globalLS_X = new float[4], globalLS_Y = new float[4],
 			previousLS_X = new float[4], previousLS_Y = new float[4];
-	
-	private File sdcard = Environment.getExternalStorageDirectory();
-	private String home_directory = sdcard + "/dc";
-	private boolean frameskipping = false;
-	private boolean widescreen;
 
 	public static HashMap<Integer, String> deviceId_deviceDescriptor = new HashMap<Integer, String>();
 	public static HashMap<String, Integer> deviceDescriptor_PlayerNum = new HashMap<String, Integer>();
 
 	int map[][];
 
-	public static int getPixelsFromDp(float dps, Context context) {
-		return (int) (dps * context.getResources().getDisplayMetrics().density + 0.5f);
-	}
-
-	View addbut(int x, OnClickListener ocl) {
-		ImageButton but = new ImageButton(this);
-
-		but.setImageResource(x);
-		but.setScaleType(ScaleType.FIT_CENTER);
-		but.setOnClickListener(ocl);
-
-		return but;
-	}
-
 	static byte[] syms;
-
-	void createPopup() {
-		popUp = new PopupWindow(this);
-		// LinearLayout layout = new LinearLayout(this);
-
-		// tv = new TextView(this);
-		int p = getPixelsFromDp(60, this);
-		params = new LayoutParams(p, p);
-
-		// layout.setOrientation(LinearLayout.VERTICAL);
-		// tv.setText("Hi this is a sample text for popup window");
-		// layout.addView(tv, params);
-
-		LinearLayout hlay = new LinearLayout(this);
-
-		hlay.setOrientation(LinearLayout.HORIZONTAL);
-
-		hlay.addView(addbut(R.drawable.close, new OnClickListener() {
-			public void onClick(View v) {
-				Intent inte = new Intent(GL2JNIActivity.this,
-						MainActivity.class);
-				startActivity(inte);
-				GL2JNIActivity.this.finish();
-			}
-		}), params);
-		
-		if(prefs.getBoolean("debug_profling_tools", false)){
-
-			hlay.addView(addbut(R.drawable.clear_cache, new OnClickListener() {
-				public void onClick(View v) {
-					JNIdc.send(0, 0); //Killing texture cache
-					popUp.dismiss();
-				}
-			}), params);
-	
-			hlay.addView(addbut(R.drawable.profiler, new OnClickListener() {
-				public void onClick(View v) {
-					JNIdc.send(1, 3000); //sample_Start(param);
-					popUp.dismiss();
-				}
-			}), params);
-	
-			hlay.addView(addbut(R.drawable.profiler, new OnClickListener() {
-				public void onClick(View v) {
-					JNIdc.send(1, 0); //sample_Start(param);
-					popUp.dismiss();
-				}
-			}), params);
-	
-//			hlay.addView(addbut(R.drawable.disk_unknown, new OnClickListener() {
-//				public void onClick(View v) {
-//					JNIdc.send(0, 1); //settings.pvr.ta_skip
-//					popUp.dismiss();
-//				}
-//			}), params);
-	
-			hlay.addView(addbut(R.drawable.print_stats, new OnClickListener() {
-				public void onClick(View v) {
-					JNIdc.send(0, 2);
-					popUp.dismiss(); //print_stats=true;
-				}
-			}), params);
-		}
-		hlay.addView(addbut(R.drawable.vmu_swap, new OnClickListener() {
-			public void onClick(View v) {
-				JNIdc.vmuSwap();
-				popUp.dismiss();
-			}
-		}), params);
-		
-		hlay.addView(addbut(R.drawable.config, new OnClickListener() {
-			public void onClick(View v) {
-				displayConfigPopup();
-				popUp.dismiss();
-			}
-		}), params);
-
-		// layout.addView(hlay,params);
-		popUp.setContentView(hlay);
-	}
-	
-	void displayConfigPopup() {
-		final PopupWindow popUpConfig = new PopupWindow(this);
-		// LinearLayout layout = new LinearLayout(this);
-
-		// tv = new TextView(this);
-		int p = getPixelsFromDp(60, this);
-		LayoutParams configParams = new LayoutParams(p, p);
-
-		// layout.setOrientation(LinearLayout.VERTICAL);
-		// tv.setText("Hi this is a sample text for popup window");
-		// layout.addView(tv, params);
-
-		LinearLayout hlay = new LinearLayout(this);
-
-		hlay.setOrientation(LinearLayout.HORIZONTAL);
-
-		hlay.addView(addbut(R.drawable.close, new OnClickListener() {
-			public void onClick(View v) {
-				popUpConfig.dismiss();
-			}
-		}), configParams);
-		View fullscreen;
-		if (!widescreen) {
-			fullscreen = addbut(R.drawable.widescreen, new OnClickListener() {
-				public void onClick(View v) {
-					JNIdc.widescreen(1);
-					popUpConfig.dismiss();
-					widescreen = true;
-				}
-			});
-		} else {
-			fullscreen = addbut(R.drawable.normal_view, new OnClickListener() {
-				public void onClick(View v) {
-					JNIdc.widescreen(0);
-					popUpConfig.dismiss();
-					widescreen = false;
-				}
-			});
-		}
-		hlay.addView(fullscreen, params);
-		View frameskip;
-		if (!frameskipping) {
-			frameskip = addbut(R.drawable.fast_forward, new OnClickListener() {
-				public void onClick(View v) {
-					JNIdc.frameskip((ConfigureFragment.frameskip + 1) * 5);
-					popUpConfig.dismiss();
-					frameskipping = true;
-					displayConfigPopup();
-					
-				}
-			});
-		} else {
-			frameskip = addbut(R.drawable.normal_play, new OnClickListener() {
-				public void onClick(View v) {
-					JNIdc.frameskip(ConfigureFragment.frameskip);
-					popUpConfig.dismiss();
-					frameskipping = false;
-				}
-			});
-		}
-		hlay.addView(frameskip, params);
-		hlay.addView(addbut(R.drawable.up, new OnClickListener() {
-			public void onClick(View v) {
-				popUpConfig.dismiss();
-				if (MainActivity.force_gpu) {
-					popUp.showAtLocation(mView6, Gravity.BOTTOM, 0, 0);
-				} else {
-					popUp.showAtLocation(mView, Gravity.BOTTOM, 0, 0);
-				}
-				popUp.update(LayoutParams.WRAP_CONTENT,
-						LayoutParams.WRAP_CONTENT);
-			}
-		}), configParams);
-
-		// layout.addView(hlay,params);
-		popUpConfig.setContentView(hlay);
-		if (popUp.isShowing()) {
-			popUp.dismiss();
-		}
-		if (MainActivity.force_gpu) {
-			popUpConfig.showAtLocation(mView6, Gravity.BOTTOM, 0, 0);
-		} else {
-			popUpConfig.showAtLocation(mView, Gravity.BOTTOM, 0, 0);
-		}
-		popUpConfig.update(LayoutParams.WRAP_CONTENT,
-				LayoutParams.WRAP_CONTENT);
-	}
 
 	@Override
 	protected void onCreate(Bundle icicle) {
@@ -247,7 +52,10 @@ public class GL2JNIActivity extends Activity {
 		moga.onCreate(this);
 		
 		prefs = PreferenceManager.getDefaultSharedPreferences(this);
-		createPopup();
+		ConfigureFragment.getCurrentConfiguration(prefs);
+		menu = new OnScreenMenu(this, prefs);
+		menu.setGLView(mView, mView6);
+		popUp = menu.createPopup();
 		/*
 		 * try { //int rID =
 		 * getResources().getIdentifier("fortyonepost.com.lfas:raw/syms.map",
@@ -257,9 +65,7 @@ public class GL2JNIActivity extends Activity {
 		 * syms = new byte[(int) is.available()]; is.read(syms); is.close(); }
 		 * catch (IOException e) { e.getMessage(); e.printStackTrace(); }
 		 */
-		home_directory = prefs.getString("home_directory", home_directory);
-		ConfigureFragment.getCurrentConfiguration(home_directory);
-		widescreen = ConfigureFragment.widescreen;
+		
 
 		String fileName = null;
 
@@ -691,6 +497,26 @@ public class GL2JNIActivity extends Activity {
 			return true;
 		}
 	}
+	
+	public void displayPopUp(PopupWindow popUp) {
+		if (MainActivity.force_gpu) {
+			popUp.showAtLocation(mView6, Gravity.BOTTOM, 0, 0);
+		} else {
+			popUp.showAtLocation(mView, Gravity.BOTTOM, 0, 0);
+		}
+		popUp.update(LayoutParams.WRAP_CONTENT,
+				LayoutParams.WRAP_CONTENT);
+	}
+	
+	public void displayConfig(PopupWindow popUpConfig) {
+		if (MainActivity.force_gpu) {
+			popUpConfig.showAtLocation(mView6, Gravity.BOTTOM, 0, 0);
+		} else {
+			popUpConfig.showAtLocation(mView, Gravity.BOTTOM, 0, 0);
+		}
+		popUpConfig.update(LayoutParams.WRAP_CONTENT,
+				LayoutParams.WRAP_CONTENT);
+	}
 
 	public boolean onKeyUp(int keyCode, KeyEvent event) {
 		Integer playerNum = Arrays.asList(name).indexOf(event.getDeviceId());
@@ -751,14 +577,7 @@ public class GL2JNIActivity extends Activity {
 	
 	private boolean showMenu() {
 		if (!popUp.isShowing()) {
-			if (MainActivity.force_gpu) {
-				popUp.showAtLocation(mView6, Gravity.BOTTOM, 0, 0);
-			} else {
-				popUp.showAtLocation(mView, Gravity.BOTTOM, 0, 0);
-			}
-			popUp.update(LayoutParams.WRAP_CONTENT,
-					LayoutParams.WRAP_CONTENT);
-
+			displayPopUp(popUp);
 		} else {
 			popUp.dismiss();
 		}
