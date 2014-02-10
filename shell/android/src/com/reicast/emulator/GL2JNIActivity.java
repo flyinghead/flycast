@@ -467,7 +467,7 @@ public class GL2JNIActivity extends Activity {
 				}
 
 			}
-
+			mView.pushInput();
 			if ((jsCompat[playerNum] || xbox[playerNum] || nVidia[playerNum])
 					&& ((globalLS_X[playerNum] == previousLS_X[playerNum] && globalLS_Y[playerNum] == previousLS_Y[playerNum]) || (previousLS_X[playerNum] == 0.0f && previousLS_Y[playerNum] == 0.0f)))
 				// Only handle Left Stick on an Xbox 360 controller if there was
@@ -582,7 +582,7 @@ public class GL2JNIActivity extends Activity {
 					break;
 				}
 			}
-
+			mView.pushInput();
 			return rav;
 
 		} else {
