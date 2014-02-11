@@ -26,6 +26,7 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.ScaleGestureDetector.SimpleOnScaleGestureListener;
+import android.view.View.OnSystemUiVisibilityChangeListener;
 import android.view.View;
 
 
@@ -217,6 +218,19 @@ class GL2JNIView extends GLSurfaceView
     this.context = context;
     this.editVjoyMode = editVjoyMode;
     setKeepScreenOn(true);
+    
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+    setOnSystemUiVisibilityChangeListener (new OnSystemUiVisibilityChangeListener() {
+	      public void onSystemUiVisibilityChange(int visibility) {
+	        if ((visibility & SYSTEM_UI_FLAG_FULLSCREEN) == 0) {
+	          GL2JNIView.this.setSystemUiVisibility(
+	            SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+	            | SYSTEM_UI_FLAG_FULLSCREEN
+	            | SYSTEM_UI_FLAG_HIDE_NAVIGATION);
+	        }
+	      }
+	    });
+    }
 
     vib=(Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
     
