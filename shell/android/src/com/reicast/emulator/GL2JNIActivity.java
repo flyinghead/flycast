@@ -53,8 +53,7 @@ public class GL2JNIActivity extends Activity {
 		
 		prefs = PreferenceManager.getDefaultSharedPreferences(this);
 		ConfigureFragment.getCurrentConfiguration(prefs);
-		menu = new OnScreenMenu(this, prefs);
-		menu.setGLView(mView, mView6);
+		menu = new OnScreenMenu(GL2JNIActivity.this, prefs);
 		popUp = menu.createPopup();
 		/*
 		 * try { //int rID =
