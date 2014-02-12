@@ -6,7 +6,6 @@ package com.reicast.emulator;
 import tv.ouya.console.api.OuyaController;
 import android.app.Activity;
 import android.content.SharedPreferences;
-import android.os.Build;
 import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.widget.Toast;
@@ -208,17 +207,10 @@ public class MOGAInput
 
 			for (int i = 0; i < map.length; i += 2) {
 				if (map[playerNum][i + 0] == event.getKeyCode()) {
-					if (MainActivity.force_gpu) {
-						if (event.getAction() == 0) //FIXME to const
-							GL2JNIViewV6.kcode_raw[playerNum] &= ~map[playerNum][i + 1];
-						else
-							GL2JNIViewV6.kcode_raw[playerNum] |= map[playerNum][i + 1];
-					} else {
-						if (event.getAction() == 0) //FIXME to const
-							GL2JNIView.kcode_raw[playerNum] &= ~map[playerNum][i + 1];
-						else
-							GL2JNIView.kcode_raw[playerNum] |= map[playerNum][i + 1];
-					}
+					if (event.getAction() == 0) //FIXME to const
+						GL2JNIView.kcode_raw[playerNum] &= ~map[playerNum][i + 1];
+					else
+						GL2JNIView.kcode_raw[playerNum] |= map[playerNum][i + 1];
 					break;
 				}
 			}
@@ -233,17 +225,10 @@ public class MOGAInput
 				globalLS_X[playerNum] = 0;
 				globalLS_Y[playerNum] = 0;
 			}
-			if (MainActivity.force_gpu) {
-				GL2JNIViewV6.lt[playerNum] = (int) (L2 * 255);
-				GL2JNIViewV6.rt[playerNum] = (int) (R2 * 255);
-				GL2JNIViewV6.jx[playerNum] = (int) (0 * 126);
-				GL2JNIViewV6.jy[playerNum] = (int) (0 * 126);
-			} else {
-				GL2JNIView.lt[playerNum] = (int) (L2 * 255);
-				GL2JNIView.rt[playerNum] = (int) (R2 * 255);
-				GL2JNIView.jx[playerNum] = (int) (0 * 126);
-				GL2JNIView.jy[playerNum] = (int) (0 * 126);
-			}
+			GL2JNIView.lt[playerNum] = (int) (L2 * 255);
+			GL2JNIView.rt[playerNum] = (int) (R2 * 255);
+			GL2JNIView.jx[playerNum] = (int) (0 * 126);
+			GL2JNIView.jy[playerNum] = (int) (0 * 126);
 		}
 
 		public void onMotionEvent(MotionEvent event)
@@ -270,19 +255,11 @@ public class MOGAInput
 
 			}
 
-			if (MainActivity.force_gpu) {
-				GL2JNIViewV6.lt[playerNum] = (int) (L2 * 255);
-				GL2JNIViewV6.rt[playerNum] = (int) (R2 * 255);
+			GL2JNIView.lt[playerNum] = (int) (L2 * 255);
+			GL2JNIView.rt[playerNum] = (int) (R2 * 255);
 
-				GL2JNIViewV6.jx[playerNum] = (int) (S_X * 126);
-				GL2JNIViewV6.jy[playerNum] = (int) (S_Y * 126);
-			} else {
-				GL2JNIView.lt[playerNum] = (int) (L2 * 255);
-				GL2JNIView.rt[playerNum] = (int) (R2 * 255);
-
-				GL2JNIView.jx[playerNum] = (int) (S_X * 126);
-				GL2JNIView.jy[playerNum] = (int) (S_Y * 126);
-			}
+			GL2JNIView.jx[playerNum] = (int) (S_X * 126);
+			GL2JNIView.jy[playerNum] = (int) (S_Y * 126);
 
 			/*
 			for(final Entry<Integer, ExampleFloat> entry : mMotions.entrySet())

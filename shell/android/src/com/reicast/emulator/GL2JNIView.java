@@ -54,7 +54,7 @@ class GL2JNIView extends GLSurfaceView
   //private AudioThread audioThread;  
   private EmuThread ethd = new EmuThread();
 
-  private static final boolean DEBUG           = false;
+  public static final boolean DEBUG = false;
   
   Vibrator vib;
 
@@ -62,83 +62,14 @@ class GL2JNIView extends GLSurfaceView
   private int selectedVjoyElement = -1;
   private ScaleGestureDetector scaleGestureDetector;
   
-  private static float[][] vjoy_d_custom;
+  public float[][] vjoy_d_custom;
 
-  private static final float[][] vjoy = new float[][]
-		  { 
-		    new float[] { 24+0,     24+64,   64,64, VJoy.key_CONT_DPAD_LEFT, 0},
-		    new float[] { 24+64,    24+0,    64,64, VJoy.key_CONT_DPAD_UP, 0},
-		    new float[] { 24+128,   24+64,   64,64, VJoy.key_CONT_DPAD_RIGHT, 0},
-		    new float[] { 24+64,    24+128,  64,64, VJoy.key_CONT_DPAD_DOWN, 0},
-
-		    new float[] { 440+0,    280+64,  64,64, VJoy.key_CONT_X, 0},
-		    new float[] { 440+64,   280+0,   64,64, VJoy.key_CONT_Y, 0},
-		    new float[] { 440+128,  280+64,  64,64, VJoy.key_CONT_B, 0},
-		    new float[] { 440+64,   280+128, 64,64, VJoy.key_CONT_A, 0},
-
-		    new float[] { 320-32,   360+32,  64,64, VJoy.key_CONT_START, 0},
-		    
-		    new float[] { 440, 200,  90,64, -1, 0},
-		    new float[] { 542, 200,  90,64, -2, 0},
-		    
-		    new float[] { 0,   128+224,  128,128, -3, 0},
-		    new float[] { 96, 320,  32,32, -4, 0},
-		    
-		    
-		  };
+  private static final float[][] vjoy = VJoy.baseVJoy();
   
   Renderer rend;
 
   private boolean touchVibrationEnabled;
   Context context;
-
-  public static float[][] readCustomVjoyValues(Context context) {
-       SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-
-       return new float[][]
-       {
-        // x-shift, y-shift, sizing-factor
-        new float[] { prefs.getFloat("touch_x_shift_dpad", 0), prefs.getFloat("touch_y_shift_dpad", 0), prefs.getFloat("touch_scale_dpad", 1) }, // DPAD
-        new float[] { prefs.getFloat("touch_x_shift_buttons", 0), prefs.getFloat("touch_y_shift_buttons", 0), prefs.getFloat("touch_scale_buttons", 1) }, // X, Y, B, A Buttons
-        new float[] { prefs.getFloat("touch_x_shift_start", 0), prefs.getFloat("touch_y_shift_start", 0), prefs.getFloat("touch_scale_start", 1) }, // Start
-        new float[] { prefs.getFloat("touch_x_shift_left_trigger", 0), prefs.getFloat("touch_y_shift_left_trigger", 0), prefs.getFloat("touch_scale_left_trigger", 1) }, // Left Trigger
-        new float[] { prefs.getFloat("touch_x_shift_right_trigger", 0), prefs.getFloat("touch_y_shift_right_trigger", 0), prefs.getFloat("touch_scale_right_trigger", 1) }, // Right Trigger
-        new float[] { prefs.getFloat("touch_x_shift_analog", 0), prefs.getFloat("touch_y_shift_analog", 0), prefs.getFloat("touch_scale_analog", 1) } // Analog Stick
-       };
-  }
-
-  public void resetCustomVjoyValues() {
-       SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-
-       prefs.edit().remove("touch_x_shift_dpad").commit();
-       prefs.edit().remove("touch_y_shift_dpad").commit();
-       prefs.edit().remove("touch_scale_dpad").commit();
-
-       prefs.edit().remove("touch_x_shift_buttons").commit();
-       prefs.edit().remove("touch_y_shift_buttons").commit();
-       prefs.edit().remove("touch_scale_buttons").commit();
-
-       prefs.edit().remove("touch_x_shift_start").commit();
-       prefs.edit().remove("touch_y_shift_start").commit();
-       prefs.edit().remove("touch_scale_start").commit();
-
-       prefs.edit().remove("touch_x_shift_left_trigger").commit();
-       prefs.edit().remove("touch_y_shift_left_trigger").commit();
-       prefs.edit().remove("touch_scale_left_trigger").commit();
-
-       prefs.edit().remove("touch_x_shift_right_trigger").commit();
-       prefs.edit().remove("touch_y_shift_right_trigger").commit();
-       prefs.edit().remove("touch_scale_right_trigger").commit();
-
-       prefs.edit().remove("touch_x_shift_analog").commit();
-       prefs.edit().remove("touch_y_shift_analog").commit();
-       prefs.edit().remove("touch_scale_analog").commit();
-
-       vjoy_d_custom = readCustomVjoyValues(context);
-
-       resetEditMode();
-       requestLayout();
-  }
   
   public void restoreCustomVjoyValues(float[][] vjoy_d_cached) {
 	  vjoy_d_custom = vjoy_d_cached;
@@ -190,7 +121,7 @@ class GL2JNIView extends GLSurfaceView
     } catch (InvocationTargetException e) {
     }
     
-    vjoy_d_custom = readCustomVjoyValues(context);
+    vjoy_d_custom = VJoy.readCustomVjoyValues(context);
 
     scaleGestureDetector = new ScaleGestureDetector(context, new OscOnScaleGestureListener());
 
@@ -210,20 +141,29 @@ class GL2JNIView extends GLSurfaceView
     // format here, using PixelFormat.TRANSLUCENT for GL Surfaces
     // is interpreted as any 32-bit surface with alpha by SurfaceFlinger.
     if(translucent) this.getHolder().setFormat(PixelFormat.TRANSLUCENT);
+    
+    if (MainActivity.force_gpu) {
+    	setEGLContextFactory(new ContextFactory());
+    	setEGLConfigChooser(
+    			translucent?
+    					new ConfigChooser(8, 8, 8, 8, depth, stencil)
+    			: new ConfigChooser(5, 6, 5, 0, depth, stencil)
+    			);
+    } else {
+    	// Setup the context factory for 2.0 rendering.
+    	// See ContextFactory class definition below
+    	setEGLContextFactory(new ContextFactory());
 
-    // Setup the context factory for 2.0 rendering.
-    // See ContextFactory class definition below
-    setEGLContextFactory(new ContextFactory());
-
-    // We need to choose an EGLConfig that matches the format of
-    // our surface exactly. This is going to be done in our
-    // custom config chooser. See ConfigChooser class definition
-    // below.
-    setEGLConfigChooser(
-      translucent?
-        new ConfigChooser(8, 8, 8, 8, depth, stencil)
-      : new ConfigChooser(5, 6, 5, 0, depth, stencil)
-    );
+    	// We need to choose an EGLConfig that matches the format of
+    	// our surface exactly. This is going to be done in our
+    	// custom config chooser. See ConfigChooser class definition
+    	// below.
+    	setEGLConfigChooser(
+    			translucent?
+    					new ConfigChooser(8, 8, 8, 8, depth, stencil)
+    			: new ConfigChooser(5, 6, 5, 0, depth, stencil)
+    			);
+    }
 
     // Set the renderer responsible for frame rendering
     setRenderer(rend=new Renderer());
@@ -342,7 +282,7 @@ class GL2JNIView extends GLSurfaceView
   }
   */
 
-  private void resetEditMode() {
+  public void resetEditMode() {
         editLastX = 0;
         editLastY = 0;
   }
@@ -849,6 +789,14 @@ private static class ContextFactory implements GLSurfaceView.EGLContextFactory
     {
     	onSurfaceChanged(gl, 800, 480);
     }
+  }
+  
+  public void audioConfigure(boolean enabled) {
+	  if (!enabled) {
+		  ethd.Player.pause();
+	  } else {
+		  ethd.Player.play();
+	  }
   }
 
 

@@ -23,6 +23,7 @@ public class OnScreenMenu {
 	private int frameskip;
 	private boolean widescreen;
 	private boolean limitframes;
+	private boolean audioenabled;
 
 	private File sdcard = Environment.getExternalStorageDirectory();
 	private String home_directory = sdcard + "/dc";
@@ -197,6 +198,27 @@ public class OnScreenMenu {
 					});
 		}
 		hlay.addView(framelimit, params);
+		View audiosetting;
+		if (!audioenabled) {
+			audiosetting = addbut(R.drawable.enable_sound,
+					new OnClickListener() {
+						public void onClick(View v) {
+							mContext.mView.audioConfigure(true);
+							popUpConfig.dismiss();
+							audioenabled = true;
+						}
+					});
+		} else {
+			audiosetting = addbut(R.drawable.mute_sound,
+					new OnClickListener() {
+						public void onClick(View v) {
+							mContext.mView.audioConfigure(false);
+							popUpConfig.dismiss();
+							audioenabled = false;
+						}
+					});
+		}
+		hlay.addView(audiosetting, params);
 		hlay.addView(addbut(R.drawable.up, new OnClickListener() {
 			public void onClick(View v) {
 				popUpConfig.dismiss();
