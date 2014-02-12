@@ -264,9 +264,9 @@ class GL2JNIView extends GLSurfaceView
     if (GL2JNIActivity.syms != null)
     	JNIdc.data(1, GL2JNIActivity.syms);
 
-    int[] kcode = { 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF };
-    int[] rt = { 0, 0, 0, 0 }, lt = { 0, 0, 0, 0 };
-    int[] jx = { 128, 128, 128, 128 }, jy = { 128, 128, 128, 128 };
+//    int[] kcode = { 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF };
+//    int[] rt = { 0, 0, 0, 0 }, lt = { 0, 0, 0, 0 };
+//    int[] jx = { 128, 128, 128, 128 }, jy = { 128, 128, 128, 128 };
     JNIdc.init(fileName);
 
     // By default, GLSurfaceView() creates a RGB_565 opaque surface.
@@ -293,7 +293,7 @@ class GL2JNIView extends GLSurfaceView
     setRenderer(rend=new Renderer());
 
     // Initialize audio
-    configAudio(44100,250);
+    //configAudio(44100,250);
     
     ethd.start();
   }
@@ -307,11 +307,11 @@ class GL2JNIView extends GLSurfaceView
   private static void LOGW(String S) { Log.w("GL2JNIView",S); }
   private static void LOGE(String S) { Log.e("GL2JNIView",S); }
 
-  public void configAudio(int rate,int latency)
-  {
-    //if(audioThread!=null) audioThread.stopPlayback();
-    //audioThread = new AudioThread(rate,latency);
-  }
+//  public void configAudio(int rate,int latency)
+//  {
+//    //if(audioThread!=null) audioThread.stopPlayback();
+//    //audioThread = new AudioThread(rate,latency);
+//  }
 
   private void reset_analog()
   {
@@ -622,6 +622,7 @@ class GL2JNIView extends GLSurfaceView
     kcode_raw[0] = rv;
     jx[0] = get_anal(11, 0);
     jy[0] = get_anal(11, 1);
+    pushInput();
     return(true);
   }
 
@@ -888,13 +889,17 @@ private static class ContextFactory implements GLSurfaceView.EGLContextFactory
           while(egl.eglGetError()!=EGL10.EGL_SUCCESS);
     }
   }
+  
+  public void pushInput(){
+	  JNIdc.kcode(kcode_raw,lt,rt,jx,jy);
+  }
 
   private static class Renderer implements GLSurfaceView.Renderer
   {
     public void onDrawFrame(GL10 gl)
     {
       //Log.w("INPUT", " " + kcode_raw + " " + rt + " " + lt + " " + jx + " " + jy);
-      JNIdc.kcode(kcode_raw,lt,rt,jx,jy);
+      //JNIdc.kcode(kcode_raw,lt,rt,jx,jy);
       // Natively update nullDC display
       JNIdc.rendframe();
     }
@@ -969,6 +974,7 @@ private static class ContextFactory implements GLSurfaceView.EGLContextFactory
   //
   // Thread responsible for playing audio.
   //
+  /*
   class AudioThready extends Thread
   {
     private AudioTrack Player;
@@ -1040,7 +1046,8 @@ private static class ContextFactory implements GLSurfaceView.EGLContextFactory
       LOGI("Exiting audio thread");
     }
   }
-
+	*/
+  
   public void onStop() {
 	  // TODO Auto-generated method stub
 	  System.exit(0);
