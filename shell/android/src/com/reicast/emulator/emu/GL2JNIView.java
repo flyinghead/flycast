@@ -105,8 +105,6 @@ public class GL2JNIView extends GLSurfaceView
     
     Runtime.getRuntime().freeMemory();
 	System.gc();
-	
-	Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
 
     SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
     touchVibrationEnabled = prefs.getBoolean("touch_vibration_enabled", true);

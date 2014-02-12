@@ -473,13 +473,21 @@ public class GL2JNIActivity extends Activity {
 	}
 	
 	public void displayPopUp(PopupWindow popUp) {
-		popUp.showAtLocation(mView, Gravity.BOTTOM, 0, 0);
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+			popUp.showAtLocation(mView, Gravity.BOTTOM, 0, 60);
+		} else {
+			popUp.showAtLocation(mView, Gravity.BOTTOM, 0, 0);
+		}
 		popUp.update(LayoutParams.WRAP_CONTENT,
 				LayoutParams.WRAP_CONTENT);
 	}
 	
 	public void displayConfig(PopupWindow popUpConfig) {
-		popUpConfig.showAtLocation(mView, Gravity.BOTTOM, 0, 0);
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+			popUpConfig.showAtLocation(mView, Gravity.BOTTOM, 0, 60);
+		} else {
+			popUpConfig.showAtLocation(mView, Gravity.BOTTOM, 0, 0);
+		}
 		popUpConfig.update(LayoutParams.WRAP_CONTENT,
 				LayoutParams.WRAP_CONTENT);
 	}
