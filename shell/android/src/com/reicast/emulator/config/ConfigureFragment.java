@@ -108,11 +108,7 @@ public class ConfigureFragment extends Fragment {
 					MainActivity.force_gpu = isChecked;
 				}
 			};
-			if (MainActivity.force_gpu) {
-				force_gpu_opt.setChecked(true);
-			} else {
-				force_gpu_opt.setChecked(false);
-			}
+			force_gpu_opt.setChecked(MainActivity.force_gpu);
 			force_gpu_opt.setOnCheckedChangeListener(force_gpu_options);
 		} else {
 			force_gpu_opt.setEnabled(false);
@@ -138,11 +134,7 @@ public class ConfigureFragment extends Fragment {
 		};
 		int software = mPrefs.getInt("render_type",
 				GL2JNIView.LAYER_TYPE_HARDWARE);
-		if (software == GL2JNIView.LAYER_TYPE_SOFTWARE) {
-			force_software_opt.setChecked(true);
-		} else {
-			force_software_opt.setChecked(false);
-		}
+		force_software_opt.setChecked(software == GL2JNIView.LAYER_TYPE_SOFTWARE);
 		force_software_opt.setOnCheckedChangeListener(force_software);
 		
 		Switch sound_opt = (Switch) getView().findViewById(
@@ -156,11 +148,7 @@ public class ConfigureFragment extends Fragment {
 		};
 		boolean sound = mPrefs.getBoolean("sound_enabled",
 				true);
-		if (sound) {
-			sound_opt.setChecked(true);
-		} else {
-			sound_opt.setChecked(false);
-		}
+		sound_opt.setChecked(sound);
 		sound_opt.setOnCheckedChangeListener(emu_sound);
 
 		OnCheckedChangeListener dynarec_options = new OnCheckedChangeListener() {
@@ -173,11 +161,7 @@ public class ConfigureFragment extends Fragment {
 		};
 		Switch dynarec_opt = (Switch) getView().findViewById(
 				R.id.dynarec_option);
-		if (ConfigureFragment.dynarecopt) {
-			dynarec_opt.setChecked(true);
-		} else {
-			dynarec_opt.setChecked(false);
-		}
+		dynarec_opt.setChecked(ConfigureFragment.dynarecopt);
 		dynarec_opt.setOnCheckedChangeListener(dynarec_options);
 
 		OnCheckedChangeListener unstable_option = new OnCheckedChangeListener() {
@@ -236,11 +220,7 @@ public class ConfigureFragment extends Fragment {
 		};
 		Switch limit_fps = (Switch) getView()
 				.findViewById(R.id.limitfps_option);
-		if (ConfigureFragment.limitfps) {
-			limit_fps.setChecked(true);
-		} else {
-			limit_fps.setChecked(false);
-		}
+		limit_fps.setChecked(ConfigureFragment.limitfps);
 		limit_fps.setOnCheckedChangeListener(limitfps_option);
 
 		OnCheckedChangeListener mipmaps_option = new OnCheckedChangeListener() {
@@ -253,11 +233,7 @@ public class ConfigureFragment extends Fragment {
 		};
 		Switch mipmap_opt = (Switch) getView()
 				.findViewById(R.id.mipmaps_option);
-		if (ConfigureFragment.mipmaps) {
-			mipmap_opt.setChecked(true);
-		} else {
-			mipmap_opt.setChecked(false);
-		}
+		mipmap_opt.setChecked(ConfigureFragment.mipmaps);
 		mipmap_opt.setOnCheckedChangeListener(mipmaps_option);
 
 		OnCheckedChangeListener full_screen = new OnCheckedChangeListener() {
@@ -270,27 +246,8 @@ public class ConfigureFragment extends Fragment {
 		};
 		Switch stretch_view = (Switch) getView().findViewById(
 				R.id.stretch_option);
-		if (ConfigureFragment.widescreen) {
-			stretch_view.setChecked(true);
-		} else {
-			stretch_view.setChecked(false);
-		}
+		stretch_view.setChecked(ConfigureFragment.widescreen);
 		stretch_view.setOnCheckedChangeListener(full_screen);
-
-		Switch showProfilingToolsSwitch = (Switch) getView().findViewById(
-				R.id.debug_profling_tools);
-		boolean showProfilingTools = mPrefs.getBoolean("debug_profling_tools",
-				false);
-		showProfilingToolsSwitch.setChecked(showProfilingTools);
-		showProfilingToolsSwitch
-				.setOnCheckedChangeListener(new OnCheckedChangeListener() {
-					public void onCheckedChanged(CompoundButton buttonView,
-							boolean isChecked) {
-						mPrefs.edit()
-								.putBoolean("debug_profling_tools", isChecked)
-								.commit();
-					}
-				});
 
 		mainFrames = (TextView) getView().findViewById(R.id.current_frames);
 		mainFrames.setText(String.valueOf(ConfigureFragment.frameskip));
@@ -328,11 +285,7 @@ public class ConfigureFragment extends Fragment {
 			}
 		};
 		Switch pvr_render = (Switch) getView().findViewById(R.id.render_option);
-		if (ConfigureFragment.pvrrender) {
-			pvr_render.setChecked(true);
-		} else {
-			pvr_render.setChecked(false);
-		}
+		pvr_render.setChecked(ConfigureFragment.pvrrender);
 		pvr_render.setOnCheckedChangeListener(pvr_rendering);
 
 		final EditText cheatEdit = (EditText) getView().findViewById(
