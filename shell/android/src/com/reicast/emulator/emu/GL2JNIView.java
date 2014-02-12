@@ -116,16 +116,20 @@ public class GL2JNIView extends GLSurfaceView
     
     touchVibrationEnabled = prefs.getBoolean("touch_vibration_enabled", true);
     
-    int rederType = prefs.getInt("render_type", LAYER_TYPE_HARDWARE);
-    try {
-        Method setLayerType = this.getClass().getMethod(
-                "setLayerType", new Class[] { int.class, Paint.class });
-        if (setLayerType != null)
-            setLayerType.invoke(this, new Object[] { rederType, null });
-    } catch (NoSuchMethodException e) {
-    } catch (IllegalArgumentException e) {
-    } catch (IllegalAccessException e) {
-    } catch (InvocationTargetException e) {
+    int renderType = prefs.getInt("render_type", LAYER_TYPE_HARDWARE);
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+    	this.setLayerType(renderType, null);
+    } else {
+    	try {
+    		Method setLayerType = this.getClass().getMethod(
+    				"setLayerType", new Class[] { int.class, Paint.class });
+    		if (setLayerType != null)
+    			setLayerType.invoke(this, new Object[] { renderType, null });
+    	} catch (NoSuchMethodException e) {
+    	} catch (IllegalArgumentException e) {
+    	} catch (IllegalAccessException e) {
+    	} catch (InvocationTargetException e) {
+    	}
     }
     
     vjoy_d_custom = VJoy.readCustomVjoyValues(context);
