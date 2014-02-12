@@ -44,7 +44,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".GL2JNIActivity"
+            android:name="com.reicast.emulator.emu.GL2JNIActivity"
             android:configChanges="orientation|screenSize|screenLayout|uiMode|keyboard|keyboardHidden"
             android:screenOrientation="landscape"
             android:theme="@android:style/Theme.NoTitleBar.Fullscreen" >
@@ -91,7 +91,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".EditVJoyActivity"
+            android:name="com.reicast.emulator.config.EditVJoyActivity"
             android:configChanges="orientation|screenSize|screenLayout|uiMode|keyboard|keyboardHidden"
             android:screenOrientation="landscape"
             android:theme="@android:style/Theme.NoTitleBar.Fullscreen" />

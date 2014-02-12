@@ -1,4 +1,4 @@
-package com.reicast.emulator;
+package com.reicast.emulator.emu;
 
 
 public class JNIdc

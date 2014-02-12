@@ -1,4 +1,4 @@
-package com.reicast.emulator;
+package com.reicast.emulator.emu;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 

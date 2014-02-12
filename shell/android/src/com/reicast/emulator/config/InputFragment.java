@@ -1,4 +1,4 @@
-package com.reicast.emulator;
+package com.reicast.emulator.config;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -29,6 +29,9 @@ import com.bda.controller.Controller;
 import com.bda.controller.ControllerListener;
 import com.bda.controller.MotionEvent;
 import com.bda.controller.StateEvent;
+import com.reicast.emulator.MainActivity;
+import com.reicast.emulator.R;
+import com.reicast.emulator.emu.MOGAInput;
 
 import de.ankri.views.Switch;
 

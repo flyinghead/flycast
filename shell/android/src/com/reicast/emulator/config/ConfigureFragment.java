@@ -1,4 +1,4 @@
-package com.reicast.emulator;
+package com.reicast.emulator.config;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -34,6 +34,11 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.android.util.DreamTime;
+import com.reicast.emulator.MainActivity;
+import com.reicast.emulator.R;
+import com.reicast.emulator.debug.GenerateLogs;
+import com.reicast.emulator.emu.GL2JNIView;
+import com.reicast.emulator.emu.JNIdc;
 
 import de.ankri.views.Switch;
 
@@ -139,6 +144,24 @@ public class ConfigureFragment extends Fragment {
 			force_software_opt.setChecked(false);
 		}
 		force_software_opt.setOnCheckedChangeListener(force_software);
+		
+		Switch sound_opt = (Switch) getView().findViewById(
+				R.id.sound_option);
+		OnCheckedChangeListener emu_sound = new OnCheckedChangeListener() {
+
+			public void onCheckedChanged(CompoundButton buttonView,
+					boolean isChecked) {
+				mPrefs.edit().putBoolean("sound_enabled", isChecked).commit();
+			}
+		};
+		boolean sound = mPrefs.getBoolean("sound_enabled",
+				true);
+		if (sound) {
+			sound_opt.setChecked(true);
+		} else {
+			sound_opt.setChecked(false);
+		}
+		sound_opt.setOnCheckedChangeListener(emu_sound);
 
 		OnCheckedChangeListener dynarec_options = new OnCheckedChangeListener() {
 

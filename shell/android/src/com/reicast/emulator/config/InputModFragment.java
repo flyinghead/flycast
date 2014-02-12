@@ -1,4 +1,4 @@
-package com.reicast.emulator;
+package com.reicast.emulator.config;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -29,6 +29,9 @@ import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.TextView;
+
+import com.reicast.emulator.R;
+
 import de.ankri.views.Switch;
 
 public class InputModFragment extends Fragment {

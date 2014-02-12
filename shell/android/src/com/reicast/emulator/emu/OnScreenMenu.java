@@ -1,4 +1,4 @@
-package com.reicast.emulator;
+package com.reicast.emulator.emu;
 
 import java.io.File;
 
@@ -14,6 +14,10 @@ import android.widget.ImageButton;
 import android.widget.ImageView.ScaleType;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
+
+import com.reicast.emulator.MainActivity;
+import com.reicast.emulator.R;
+import com.reicast.emulator.config.ConfigureFragment;
 
 public class OnScreenMenu {
 
@@ -40,7 +44,7 @@ public class OnScreenMenu {
 		}
 	}
 
-	PopupWindow createPopup() {
+	public PopupWindow createPopup() {
 		final PopupWindow popUp = new PopupWindow(mContext);
 
 		int p = getPixelsFromDp(60, mContext);
@@ -60,41 +64,13 @@ public class OnScreenMenu {
 
 		if (prefs.getBoolean("debug_profling_tools", false)) {
 
-			hlay.addView(addbut(R.drawable.clear_cache, new OnClickListener() {
+			hlay.addView(addbut(R.drawable.disk_unknown, new OnClickListener() {
 				public void onClick(View v) {
-					JNIdc.send(0, 0); // Killing texture cache
+					displayDebugPopup(popUp);
 					popUp.dismiss();
 				}
 			}), params);
 
-			hlay.addView(addbut(R.drawable.profiler, new OnClickListener() {
-				public void onClick(View v) {
-					JNIdc.send(1, 3000); // sample_Start(param);
-					popUp.dismiss();
-				}
-			}), params);
-
-			hlay.addView(addbut(R.drawable.profiler, new OnClickListener() {
-				public void onClick(View v) {
-					JNIdc.send(1, 0); // sample_Start(param);
-					popUp.dismiss();
-				}
-			}), params);
-
-			// hlay.addView(addbut(R.drawable.disk_unknown, new
-			// OnClickListener() {
-			// public void onClick(View v) {
-			// JNIdc.send(0, 1); //settings.pvr.ta_skip
-			// popUp.dismiss();
-			// }
-			// }), params);
-
-			hlay.addView(addbut(R.drawable.print_stats, new OnClickListener() {
-				public void onClick(View v) {
-					JNIdc.send(0, 2);
-					popUp.dismiss(); // print_stats=true;
-				}
-			}), params);
 		}
 		hlay.addView(addbut(R.drawable.vmu_swap, new OnClickListener() {
 			public void onClick(View v) {
@@ -115,7 +91,68 @@ public class OnScreenMenu {
 		return popUp;
 	}
 
-	
+	void displayDebugPopup(final PopupWindow popUp) {
+		final PopupWindow popUpDebug = new PopupWindow(mContext);
+
+		int p = getPixelsFromDp(60, mContext);
+		LayoutParams debugParams = new LayoutParams(p, p);
+
+		LinearLayout hlay = new LinearLayout(mContext);
+
+		hlay.setOrientation(LinearLayout.HORIZONTAL);
+		
+		hlay.addView(addbut(R.drawable.close, new OnClickListener() {
+			public void onClick(View v) {
+				popUpDebug.dismiss();
+			}
+		}), debugParams);
+
+		hlay.addView(addbut(R.drawable.clear_cache, new OnClickListener() {
+			public void onClick(View v) {
+				JNIdc.send(0, 0); // Killing texture cache
+				popUpDebug.dismiss();
+			}
+		}), debugParams);
+
+		hlay.addView(addbut(R.drawable.profiler, new OnClickListener() {
+			public void onClick(View v) {
+				JNIdc.send(1, 3000); // sample_Start(param);
+				popUpDebug.dismiss();
+			}
+		}), debugParams);
+
+		hlay.addView(addbut(R.drawable.profiler, new OnClickListener() {
+			public void onClick(View v) {
+				JNIdc.send(1, 0); // sample_Start(param);
+				popUpDebug.dismiss();
+			}
+		}), debugParams);
+
+		// hlay.addView(addbut(R.drawable.disk_unknown, new
+		// OnClickListener() {
+		// public void onClick(View v) {
+		// JNIdc.send(0, 1); //settings.pvr.ta_skip
+		// popUp.dismiss();
+		// }
+		// }), debugParams);
+
+		hlay.addView(addbut(R.drawable.print_stats, new OnClickListener() {
+			public void onClick(View v) {
+				JNIdc.send(0, 2);
+				popUpDebug.dismiss(); // print_stats=true;
+			}
+		}), debugParams);
+
+		hlay.addView(addbut(R.drawable.up, new OnClickListener() {
+			public void onClick(View v) {
+				popUpDebug.dismiss();
+				mContext.displayPopUp(popUp);
+			}
+		}), debugParams);
+
+		popUpDebug.setContentView(hlay);
+		mContext.displayDebug(popUpDebug);
+	}
 
 	void displayConfigPopup(final PopupWindow popUp) {
 		final PopupWindow popUpConfig = new PopupWindow(mContext);
@@ -132,6 +169,7 @@ public class OnScreenMenu {
 				popUpConfig.dismiss();
 			}
 		}), configParams);
+
 		View fullscreen;
 		if (!widescreen) {
 			fullscreen = addbut(R.drawable.widescreen, new OnClickListener() {
@@ -151,6 +189,7 @@ public class OnScreenMenu {
 			});
 		}
 		hlay.addView(fullscreen, params);
+
 		View frames_up = addbut(R.drawable.frames_up, new OnClickListener() {
 			public void onClick(View v) {
 				frameskip++;
@@ -161,6 +200,7 @@ public class OnScreenMenu {
 			}
 		});
 		hlay.addView(frames_up, params);
+
 		if (frameskip >= 5) {
 			frames_up.setEnabled(false);
 		}
@@ -177,6 +217,7 @@ public class OnScreenMenu {
 		if (frameskip <= 0) {
 			frames_down.setEnabled(false);
 		}
+
 		View framelimit;
 		if (!limitframes) {
 			framelimit = addbut(R.drawable.frames_limit_on,
@@ -198,27 +239,31 @@ public class OnScreenMenu {
 					});
 		}
 		hlay.addView(framelimit, params);
-		View audiosetting;
-		if (!audiodisabled) {
-			audiosetting = addbut(R.drawable.mute_sound,
-					new OnClickListener() {
-						public void onClick(View v) {
-							mContext.mView.audioDisable(true);
-							popUpConfig.dismiss();
-							audiodisabled = true;
-						}
-					});
-		} else {
-			audiosetting = addbut(R.drawable.enable_sound,
-					new OnClickListener() {
-						public void onClick(View v) {
-							mContext.mView.audioDisable(false);
-							popUpConfig.dismiss();
-							audiodisabled = false;
-						}
-					});
+
+		if (prefs.getBoolean("sound_enabled", true)) {
+			View audiosetting;
+			if (!audiodisabled) {
+				audiosetting = addbut(R.drawable.mute_sound,
+						new OnClickListener() {
+					public void onClick(View v) {
+						mContext.mView.audioDisable(true);
+						popUpConfig.dismiss();
+						audiodisabled = true;
+					}
+				});
+			} else {
+				audiosetting = addbut(R.drawable.enable_sound,
+						new OnClickListener() {
+					public void onClick(View v) {
+						mContext.mView.audioDisable(false);
+						popUpConfig.dismiss();
+						audiodisabled = false;
+					}
+				});
+			}
+			hlay.addView(audiosetting, params);
 		}
-		hlay.addView(audiosetting, params);
+
 		hlay.addView(addbut(R.drawable.up, new OnClickListener() {
 			public void onClick(View v) {
 				popUpConfig.dismiss();

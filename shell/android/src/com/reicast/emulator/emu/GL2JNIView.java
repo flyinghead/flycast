@@ -1,4 +1,4 @@
-package com.reicast.emulator;
+package com.reicast.emulator.emu;
 
 
 import java.lang.reflect.InvocationTargetException;
@@ -28,6 +28,8 @@ import android.view.ScaleGestureDetector;
 import android.view.ScaleGestureDetector.SimpleOnScaleGestureListener;
 import android.view.View;
 
+import com.reicast.emulator.MainActivity;
+
 
 /**
  * A simple GLSurfaceView sub-class that demonstrate how to perform
@@ -48,11 +50,11 @@ import android.view.View;
  *   bit depths). Failure to do so would result in an EGL_BAD_MATCH error.
  */
 
-class GL2JNIView extends GLSurfaceView
+public class GL2JNIView extends GLSurfaceView
 {
   private static String fileName;
   //private AudioThread audioThread;  
-  private EmuThread ethd = new EmuThread();
+  private EmuThread ethd;
 
   public static final boolean DEBUG = false;
   
@@ -103,10 +105,9 @@ class GL2JNIView extends GLSurfaceView
     
     Runtime.getRuntime().freeMemory();
 	System.gc();
-	
-	Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
 
     SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+    ethd = new EmuThread(prefs.getBoolean("sound_enabled", true));
     touchVibrationEnabled = prefs.getBoolean("touch_vibration_enabled", true);
     
     int rederType = prefs.getInt("render_type", LAYER_TYPE_HARDWARE);
@@ -170,8 +171,9 @@ class GL2JNIView extends GLSurfaceView
 
     // Initialize audio
     //configAudio(44100,250);
-    
+   
     ethd.start();
+  
   }
   
   public GLSurfaceView.Renderer getRenderer()
@@ -304,8 +306,11 @@ class GL2JNIView extends GLSurfaceView
             return -1; // Invalid
   }
 
-  static int[] kcode_raw = { 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF };
-  static int[] lt = new int[4], rt = new int[4], jx = new int[4], jy = new int[4];
+  public static int[] kcode_raw = { 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF };
+  public static int[] lt = new int[4];
+  public static int[] rt = new int[4];
+  public static int[] jx = new int[4];
+  public static int[] jy = new int[4];
 
   float editLastX = 0, editLastY = 0;
 
@@ -805,9 +810,15 @@ private static class ContextFactory implements GLSurfaceView.EGLContextFactory
 	AudioTrack Player;
 	long pos;	//write position
 	long size;	//size in frames
+	private boolean sound;
+	
+	public EmuThread(boolean sound) {
+		this.sound = sound;
+	}
 	
     @Override public void run()
     {
+    	if (sound) {
     	int min=AudioTrack.getMinBufferSize(44100,AudioFormat.CHANNEL_OUT_STEREO,AudioFormat.ENCODING_PCM_16BIT);
     	
     	if (2048>min)
@@ -827,12 +838,14 @@ private static class ContextFactory implements GLSurfaceView.EGLContextFactory
     	
     	Log.i("audcfg", "Audio streaming: buffer size " + min + " samples / " + min/44100.0 + " ms");
     	Player.play();
+    	}
     	 
     	JNIdc.run(this);
     }
     
     int WriteBuffer(short[] samples, int wait)
     {
+    	if (sound) {
     	int newdata=samples.length/2;
     	
     	if (wait==0)
@@ -850,6 +863,7 @@ private static class ContextFactory implements GLSurfaceView.EGLContextFactory
     	pos+=newdata;
     	
     	Player.write(samples, 0, samples.length);
+    	}
     	
     	return 1;
     }

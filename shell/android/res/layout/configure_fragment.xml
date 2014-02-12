@@ -39,7 +39,7 @@
                         android:id="@+id/unstable_option"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                android:focusable="true" />
+                        android:focusable="true" />
                 </LinearLayout>
             </TableRow>
 
@@ -136,6 +136,109 @@
             </LinearLayout>
 
             <TableRow
+                android:layout_marginTop="20dp"
+                android:gravity="center_vertical" >
+
+                <TextView
+                    android:id="@+id/optimization_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ems="10"
+                    android:gravity="center_vertical"
+                    android:text="@string/optimization_opts" />
+            </TableRow>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="2dp"
+                android:background="@drawable/list_item_border" />
+
+            <TableRow
+                android:layout_marginTop="20dp"
+                android:gravity="center_vertical" >
+
+                <TextView
+                    android:id="@+id/software_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="0.5"
+                    android:ems="10"
+                    android:gravity="center_vertical|left"
+                    android:text="@string/select_software" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="right"
+                    android:orientation="vertical" >
+
+                    <de.ankri.views.Switch
+                        android:id="@+id/software_option"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:focusable="true" />
+                </LinearLayout>
+            </TableRow>
+
+            <TableRow
+                android:layout_marginTop="10dp"
+                android:gravity="center_vertical" >
+
+                <TextView
+                    android:id="@+id/sound_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="0.5"
+                    android:ems="10"
+                    android:gravity="center_vertical|left"
+                    android:text="@string/select_sound" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="right"
+                    android:orientation="vertical" >
+
+                    <de.ankri.views.Switch
+                        android:id="@+id/sound_option"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:focusable="true" />
+                </LinearLayout>
+            </TableRow>
+
+            <TableRow
+                android:layout_marginTop="10dp"
+                android:gravity="center_vertical" >
+
+                <TextView
+                    android:id="@+id/force_gpu_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="0.5"
+                    android:ems="10"
+                    android:gravity="center_vertical|left"
+                    android:text="@string/select_force_gpu" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="right"
+                    android:orientation="vertical" >
+
+                    <de.ankri.views.Switch
+                        android:id="@+id/force_gpu_option"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:focusable="true" />
+                </LinearLayout>
+            </TableRow>
+
+            <TableRow
                 android:layout_marginTop="10dp"
                 android:gravity="center_vertical" >
 
@@ -166,6 +269,19 @@
                 android:layout_marginTop="10dp"
                 android:gravity="center_vertical" >
 
+                <Button
+                    android:id="@+id/debug_button"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ems="8"
+                    android:text="@string/menu_debug" />
+            </TableRow>
+
+            <TableRow
+                android:layout_marginTop="20dp"
+                android:gravity="center_vertical" >
+
                 <TextView
                     android:id="@+id/experimental_text"
                     android:layout_width="match_parent"
@@ -176,8 +292,13 @@
                     android:text="@string/experimental_opts" />
             </TableRow>
 
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="2dp"
+                android:background="@drawable/list_item_border" />
+
             <TableRow
-                android:layout_marginTop="10dp"
+                android:layout_marginTop="20dp"
                 android:gravity="center_vertical" >
 
                 <TextView
@@ -316,75 +437,6 @@
                     </EditText>
                 </LinearLayout>
             </LinearLayout>
-            
-            <TableRow
-                android:layout_marginTop="10dp"
-                android:gravity="center_vertical" >
-
-                <TextView
-                    android:id="@+id/software_text"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="0.5"
-                    android:ems="10"
-                    android:gravity="center_vertical|left"
-                    android:text="@string/select_software" />
-
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:gravity="right"
-                    android:orientation="vertical" >
-
-                    <de.ankri.views.Switch
-                        android:id="@+id/software_option"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:focusable="true" />
-                </LinearLayout>
-            </TableRow>
-            
-            <TableRow
-                android:layout_marginTop="10dp"
-                android:gravity="center_vertical" >
-
-                <TextView
-                    android:id="@+id/force_gpu_text"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="0.5"
-                    android:ems="10"
-                    android:gravity="center_vertical|left"
-                    android:text="@string/select_force_gpu" />
-
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:gravity="right"
-                    android:orientation="vertical" >
-
-                    <de.ankri.views.Switch
-                        android:id="@+id/force_gpu_option"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:focusable="true" />
-                </LinearLayout>
-            </TableRow>
-
-            <TableRow
-                android:layout_marginTop="10dp"
-                android:gravity="center_vertical" >
-
-                <Button
-                    android:id="@+id/debug_button"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:ems="8"
-                    android:text="@string/menu_debug" />
-            </TableRow>
         </TableLayout>
     </LinearLayout>
 

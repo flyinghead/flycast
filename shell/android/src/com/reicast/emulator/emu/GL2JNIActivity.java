@@ -1,4 +1,4 @@
-package com.reicast.emulator;
+package com.reicast.emulator.emu;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -23,9 +23,12 @@ import android.view.Window;
 import android.widget.PopupWindow;
 import android.widget.Toast;
 
+import com.reicast.emulator.R;
+import com.reicast.emulator.config.ConfigureFragment;
+
 @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR1)
 public class GL2JNIActivity extends Activity {
-	GL2JNIView mView;
+	public GL2JNIView mView;
 	OnScreenMenu menu;
 	PopupWindow popUp;
 	MOGAInput moga = new MOGAInput();
@@ -470,13 +473,31 @@ public class GL2JNIActivity extends Activity {
 	}
 	
 	public void displayPopUp(PopupWindow popUp) {
-		popUp.showAtLocation(mView, Gravity.BOTTOM, 0, 0);
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+			popUp.showAtLocation(mView, Gravity.BOTTOM, 0, 60);
+		} else {
+			popUp.showAtLocation(mView, Gravity.BOTTOM, 0, 0);
+		}
 		popUp.update(LayoutParams.WRAP_CONTENT,
 				LayoutParams.WRAP_CONTENT);
 	}
 	
+	public void displayDebug(PopupWindow popUpDebug) {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+			popUpDebug.showAtLocation(mView, Gravity.BOTTOM, 0, 60);
+		} else {
+			popUpDebug.showAtLocation(mView, Gravity.BOTTOM, 0, 0);
+		}
+		popUpDebug.update(LayoutParams.WRAP_CONTENT,
+				LayoutParams.WRAP_CONTENT);
+	}
+	
 	public void displayConfig(PopupWindow popUpConfig) {
-		popUpConfig.showAtLocation(mView, Gravity.BOTTOM, 0, 0);
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+			popUpConfig.showAtLocation(mView, Gravity.BOTTOM, 0, 60);
+		} else {
+			popUpConfig.showAtLocation(mView, Gravity.BOTTOM, 0, 0);
+		}
 		popUpConfig.update(LayoutParams.WRAP_CONTENT,
 				LayoutParams.WRAP_CONTENT);
 	}

@@ -53,7 +53,7 @@
  * subject to to the terms and conditions of the Apache License, Version 2.0.
  */
 
-package com.reicast.emulator;
+package com.reicast.emulator.debug;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -84,6 +84,7 @@ import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
 import com.nostra13.universalimageloader.core.assist.ImageScaleType;
+import com.reicast.emulator.R;
 
 public class GitAdapter extends BaseAdapter {
 

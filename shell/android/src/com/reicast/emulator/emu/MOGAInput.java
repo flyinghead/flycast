@@ -1,4 +1,4 @@
-package com.reicast.emulator;
+package com.reicast.emulator.emu;
 
 
 /******************************************************************************/
@@ -15,6 +15,7 @@ import com.bda.controller.ControllerListener;
 import com.bda.controller.KeyEvent;
 import com.bda.controller.MotionEvent;
 import com.bda.controller.StateEvent;
+import com.reicast.emulator.R;
 
 /******************************************************************************/
 
@@ -27,12 +28,12 @@ public class MOGAInput
 
 	static final int DELAY = 1000 / 50; // 50 Hz
 	
-	static final int ACTION_CONNECTED = Controller.ACTION_CONNECTED;
+	public static final int ACTION_CONNECTED = Controller.ACTION_CONNECTED;
 	static final int ACTION_DISCONNECTED = Controller.ACTION_DISCONNECTED;
 	static final int ACTION_VERSION_MOGA = Controller.ACTION_VERSION_MOGA;
 	static final int ACTION_VERSION_MOGAPRO = Controller.ACTION_VERSION_MOGAPRO;
 
-	Controller mController = null;
+	public Controller mController = null;
 	private Handler handler;
 	private String notify;
 	
@@ -107,7 +108,7 @@ public class MOGAInput
 		*/
 	}
 
-	protected void onCreate(Activity act)
+	public void onCreate(Activity act)
 	{
 		this.act = act;
 		
@@ -120,17 +121,17 @@ public class MOGAInput
 		mController.setListener(new ExampleControllerListener(), new Handler());
 	}
 
-	protected void onDestroy()
+	public void onDestroy()
 	{
 		mController.exit();
 	}
 
-	protected void onPause()
+	public void onPause()
 	{
 		mController.onPause();
 	}
 
-	protected void onResume()
+	public void onResume()
 	{
 		mController.onResume();
 
