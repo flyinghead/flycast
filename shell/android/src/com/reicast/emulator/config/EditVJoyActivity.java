@@ -22,8 +22,8 @@ import com.reicast.emulator.MainActivity;
 import com.reicast.emulator.R;
 import com.reicast.emulator.emu.GL2JNIView;
 import com.reicast.emulator.emu.JNIdc;
-import com.reicast.emulator.input.OnScreenMenu;
-import com.reicast.emulator.input.VJoy;
+import com.reicast.emulator.emu.OnScreenMenu;
+import com.reicast.emulator.emu.VJoy;
 
 @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR1)
 public class EditVJoyActivity extends Activity {

@@ -1,4 +1,4 @@
-package com.reicast.emulator.input;
+package com.reicast.emulator.emu;
 
 import java.io.File;
 
@@ -18,8 +18,6 @@ import android.widget.PopupWindow;
 import com.reicast.emulator.MainActivity;
 import com.reicast.emulator.R;
 import com.reicast.emulator.config.ConfigureFragment;
-import com.reicast.emulator.emu.GL2JNIActivity;
-import com.reicast.emulator.emu.JNIdc;
 
 public class OnScreenMenu {
 

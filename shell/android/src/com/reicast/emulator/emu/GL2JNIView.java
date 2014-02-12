@@ -29,7 +29,6 @@ import android.view.ScaleGestureDetector.SimpleOnScaleGestureListener;
 import android.view.View;
 
 import com.reicast.emulator.MainActivity;
-import com.reicast.emulator.input.VJoy;
 
 
 /**
