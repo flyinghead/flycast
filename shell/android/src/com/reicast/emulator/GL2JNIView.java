@@ -791,8 +791,8 @@ private static class ContextFactory implements GLSurfaceView.EGLContextFactory
     }
   }
   
-  public void audioConfigure(boolean enabled) {
-	  if (!enabled) {
+  public void audioDisable(boolean disabled) {
+	  if (disabled) {
 		  ethd.Player.pause();
 	  } else {
 		  ethd.Player.play();
