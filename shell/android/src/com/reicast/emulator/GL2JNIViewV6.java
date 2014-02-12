@@ -23,8 +23,8 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
-import android.view.View;
 import android.view.ScaleGestureDetector.SimpleOnScaleGestureListener;
+import android.view.View;
 
 
 /**
@@ -53,15 +53,6 @@ class GL2JNIViewV6 extends GLSurfaceView
   private EmuThread ethd = new EmuThread();
 
   private static final boolean DEBUG           = false;
-  private static final int key_CONT_B          = 0x0002;
-  private static final int key_CONT_A          = 0x0004;
-  private static final int key_CONT_START      = 0x0008;
-  private static final int key_CONT_DPAD_UP    = 0x0010;
-  private static final int key_CONT_DPAD_DOWN  = 0x0020;
-  private static final int key_CONT_DPAD_LEFT  = 0x0040;
-  private static final int key_CONT_DPAD_RIGHT = 0x0080;
-  private static final int key_CONT_Y          = 0x0200;
-  private static final int key_CONT_X          = 0x0400;
   
   Vibrator vib;
 
@@ -73,17 +64,17 @@ class GL2JNIViewV6 extends GLSurfaceView
 
   private static final float[][] vjoy = new float[][]
 		  { 
-		    new float[] { 24+0,     24+64,   64,64, key_CONT_DPAD_LEFT, 0},
-		    new float[] { 24+64,    24+0,    64,64, key_CONT_DPAD_UP, 0},
-		    new float[] { 24+128,   24+64,   64,64, key_CONT_DPAD_RIGHT, 0},
-		    new float[] { 24+64,    24+128,  64,64, key_CONT_DPAD_DOWN, 0},
+		    new float[] { 24+0,     24+64,   64,64, VJoy.key_CONT_DPAD_LEFT, 0},
+		    new float[] { 24+64,    24+0,    64,64, VJoy.key_CONT_DPAD_UP, 0},
+		    new float[] { 24+128,   24+64,   64,64, VJoy.key_CONT_DPAD_RIGHT, 0},
+		    new float[] { 24+64,    24+128,  64,64, VJoy.key_CONT_DPAD_DOWN, 0},
 
-		    new float[] { 440+0,    280+64,  64,64, key_CONT_X, 0},
-		    new float[] { 440+64,   280+0,   64,64, key_CONT_Y, 0},
-		    new float[] { 440+128,  280+64,  64,64, key_CONT_B, 0},
-		    new float[] { 440+64,   280+128, 64,64, key_CONT_A, 0},
+		    new float[] { 440+0,    280+64,  64,64, VJoy.key_CONT_X, 0},
+		    new float[] { 440+64,   280+0,   64,64, VJoy.key_CONT_Y, 0},
+		    new float[] { 440+128,  280+64,  64,64, VJoy.key_CONT_B, 0},
+		    new float[] { 440+64,   280+128, 64,64, VJoy.key_CONT_A, 0},
 
-		    new float[] { 320-32,   360+32,  64,64, key_CONT_START, 0},
+		    new float[] { 320-32,   360+32,  64,64, VJoy.key_CONT_START, 0},
 		    
 		    new float[] { 440, 200,  90,64, -1, 0},
 		    new float[] { 542, 200,  90,64, -2, 0},
@@ -98,57 +89,6 @@ class GL2JNIViewV6 extends GLSurfaceView
 
   private boolean touchVibrationEnabled;
   Context context;
-
-  private static float[][] getVjoy_d(float[][] vjoy_d_custom) {
-       return new float[][]
-         { 
-           new float[] { 20+0*vjoy_d_custom[0][2]+vjoy_d_custom[0][0],     288+64*vjoy_d_custom[0][2]+vjoy_d_custom[0][1],   64*vjoy_d_custom[0][2],64*vjoy_d_custom[0][2], key_CONT_DPAD_LEFT},
-           new float[] { 20+64*vjoy_d_custom[0][2]+vjoy_d_custom[0][0],    288+0*vjoy_d_custom[0][2]+vjoy_d_custom[0][1],    64*vjoy_d_custom[0][2],64*vjoy_d_custom[0][2], key_CONT_DPAD_UP},
-           new float[] { 20+128*vjoy_d_custom[0][2]+vjoy_d_custom[0][0],   288+64*vjoy_d_custom[0][2]+vjoy_d_custom[0][1],   64*vjoy_d_custom[0][2],64*vjoy_d_custom[0][2], key_CONT_DPAD_RIGHT},
-           new float[] { 20+64*vjoy_d_custom[0][2]+vjoy_d_custom[0][0],    288+128*vjoy_d_custom[0][2]+vjoy_d_custom[0][1],  64*vjoy_d_custom[0][2],64*vjoy_d_custom[0][2], key_CONT_DPAD_DOWN},
-
-           new float[] { 448+0*vjoy_d_custom[1][2]+vjoy_d_custom[1][0],    288+64*vjoy_d_custom[1][2]+vjoy_d_custom[1][1],  64*vjoy_d_custom[1][2],64*vjoy_d_custom[1][2], key_CONT_X},
-           new float[] { 448+64*vjoy_d_custom[1][2]+vjoy_d_custom[1][0],   288+0*vjoy_d_custom[1][2]+vjoy_d_custom[1][1],   64*vjoy_d_custom[1][2],64*vjoy_d_custom[1][2], key_CONT_Y},
-           new float[] { 448+128*vjoy_d_custom[1][2]+vjoy_d_custom[1][0],  288+64*vjoy_d_custom[1][2]+vjoy_d_custom[1][1],  64*vjoy_d_custom[1][2],64*vjoy_d_custom[1][2], key_CONT_B},
-           new float[] { 448+64*vjoy_d_custom[1][2]+vjoy_d_custom[1][0],   288+128*vjoy_d_custom[1][2]+vjoy_d_custom[1][1], 64*vjoy_d_custom[1][2],64*vjoy_d_custom[1][2], key_CONT_A},
-
-           new float[] { 320-32+vjoy_d_custom[2][0],   288+128+vjoy_d_custom[2][1],  64*vjoy_d_custom[2][2],64*vjoy_d_custom[2][2], key_CONT_START},
-    
-           new float[] { 440+vjoy_d_custom[3][0], 200+vjoy_d_custom[3][1],  90*vjoy_d_custom[3][2],64*vjoy_d_custom[3][2], -1},
-           new float[] { 542+vjoy_d_custom[4][0], 200+vjoy_d_custom[4][1],  90*vjoy_d_custom[4][2],64*vjoy_d_custom[4][2], -2},
-    
-           new float[] { 16+vjoy_d_custom[5][0],   24+32+vjoy_d_custom[5][1],  128*vjoy_d_custom[5][2],128*vjoy_d_custom[5][2], -3},
-           new float[] { 96+vjoy_d_custom[5][0], 320+vjoy_d_custom[5][1],  32*vjoy_d_custom[5][2],32*vjoy_d_custom[5][2], -4},
-         };
-  }
-
-  private static void writeCustomVjoyValues(float[][] vjoy_d_custom, Context context) {
-       SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-
-       prefs.edit().putFloat("touch_x_shift_dpad", vjoy_d_custom[0][0]).commit();
-       prefs.edit().putFloat("touch_y_shift_dpad", vjoy_d_custom[0][1]).commit();
-       prefs.edit().putFloat("touch_scale_dpad", vjoy_d_custom[0][2]).commit();
-
-       prefs.edit().putFloat("touch_x_shift_buttons", vjoy_d_custom[1][0]).commit();
-       prefs.edit().putFloat("touch_y_shift_buttons", vjoy_d_custom[1][1]).commit();
-       prefs.edit().putFloat("touch_scale_buttons", vjoy_d_custom[1][2]).commit();
-
-       prefs.edit().putFloat("touch_x_shift_start", vjoy_d_custom[2][0]).commit();
-       prefs.edit().putFloat("touch_y_shift_start", vjoy_d_custom[2][1]).commit();
-       prefs.edit().putFloat("touch_scale_start", vjoy_d_custom[2][2]).commit();
-
-       prefs.edit().putFloat("touch_x_shift_left_trigger", vjoy_d_custom[3][0]).commit();
-       prefs.edit().putFloat("touch_y_shift_left_trigger", vjoy_d_custom[3][1]).commit();
-       prefs.edit().putFloat("touch_scale_left_trigger", vjoy_d_custom[3][2]).commit();
-
-       prefs.edit().putFloat("touch_x_shift_right_trigger", vjoy_d_custom[4][0]).commit();
-       prefs.edit().putFloat("touch_y_shift_right_trigger", vjoy_d_custom[4][1]).commit();
-       prefs.edit().putFloat("touch_scale_right_trigger", vjoy_d_custom[4][2]).commit();
-
-       prefs.edit().putFloat("touch_x_shift_analog", vjoy_d_custom[5][0]).commit();
-       prefs.edit().putFloat("touch_y_shift_analog", vjoy_d_custom[5][1]).commit();
-       prefs.edit().putFloat("touch_scale_analog", vjoy_d_custom[5][2]).commit();
-  }
 
   public static float[][] readCustomVjoyValues(Context context) {
        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
@@ -200,7 +140,7 @@ class GL2JNIViewV6 extends GLSurfaceView
   
   public void restoreCustomVjoyValues(float[][] vjoy_d_cached) {
 	  vjoy_d_custom = vjoy_d_cached;
-	  writeCustomVjoyValues(vjoy_d_cached, context);
+	  VJoy.writeCustomVjoyValues(vjoy_d_cached, context);
 
       resetEditMode();
       requestLayout();
@@ -246,9 +186,6 @@ class GL2JNIViewV6 extends GLSurfaceView
     if (GL2JNIActivity.syms != null)
     	JNIdc.data(1, GL2JNIActivity.syms);
 
-    int[] kcode = { 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF };
-    int[] rt = { 0, 0, 0, 0 }, lt = { 0, 0, 0, 0 };
-    int[] jx = { 128, 128, 128, 128 }, jy = { 128, 128, 128, 128 };
     JNIdc.init(fileName);
 
     // By default, GLSurfaceView() creates a RGB_565 opaque surface.
@@ -273,9 +210,6 @@ class GL2JNIViewV6 extends GLSurfaceView
 
     // Set the renderer responsible for frame rendering
     setRenderer(rend=new Renderer());
-
-    // Initialize audio
-    configAudio(44100,250);
     
     ethd.start();
   }
@@ -288,12 +222,6 @@ class GL2JNIViewV6 extends GLSurfaceView
   private static void LOGI(String S) { Log.i("GL2JNIView",S); }
   private static void LOGW(String S) { Log.w("GL2JNIView",S); }
   private static void LOGE(String S) { Log.e("GL2JNIView",S); }
-
-  public void configAudio(int rate,int latency)
-  {
-    //if(audioThread!=null) audioThread.stopPlayback();
-    //audioThread = new AudioThread(rate,latency);
-  }
 
   private void reset_analog()
   {
@@ -338,7 +266,7 @@ class GL2JNIViewV6 extends GLSurfaceView
 		float a_x = -tx+ 24*scl;
 		float a_y=- 24*scl;
 		
-                float[][] vjoy_d = getVjoy_d(vjoy_d_custom);
+                float[][] vjoy_d = VJoy.getVjoy_d(vjoy_d_custom);
 
 		for(int i=0;i<vjoy.length;i++)
 		{
@@ -359,7 +287,7 @@ class GL2JNIViewV6 extends GLSurfaceView
 		      JNIdc.vjoy(i,vjoy[i][0],vjoy[i][1],vjoy[i][2],vjoy[i][3]);
 		    
 		reset_analog();
-        writeCustomVjoyValues(vjoy_d_custom, context);
+		VJoy.writeCustomVjoyValues(vjoy_d_custom, context);
 	}
   
   /*
@@ -369,24 +297,6 @@ class GL2JNIViewV6 extends GLSurfaceView
    * 	POINTER_UP -> check for freed analog
    * */
   int anal_id=-1, lt_id=-1, rt_id=-1;
-  /*
-  bool intersects(CircleType circle, RectType rect)
-  {
-      circleDistance.x = abs(circle.x - rect.x);
-      circleDistance.y = abs(circle.y - rect.y);
-
-      if (circleDistance.x > (rect.width/2 + circle.r)) { return false; }
-      if (circleDistance.y > (rect.height/2 + circle.r)) { return false; }
-
-      if (circleDistance.x <= (rect.width/2)) { return true; } 
-      if (circleDistance.y <= (rect.height/2)) { return true; }
-
-      cornerDistance_sq = (circleDistance.x - rect.width/2)^2 +
-                           (circleDistance.y - rect.height/2)^2;
-
-      return (cornerDistance_sq <= (circle.r^2));
-  }
-  */
 
   private void resetEditMode() {
         editLastX = 0;
@@ -604,6 +514,7 @@ class GL2JNIViewV6 extends GLSurfaceView
     kcode_raw[0] = rv;
     jx[0] = get_anal(11, 0);
     jy[0] = get_anal(11, 1);
+    pushInput();
     return(true);
   }
 
@@ -766,17 +677,6 @@ private static class ContextFactory implements GLSurfaceView.EGLContextFactory
     {
       return(egl.eglGetConfigAttrib(display,config,attribute,mValue)? mValue[0] : defaultValue);
     }
-
-    private void printConfigs(EGL10 egl,EGLDisplay display,EGLConfig[] configs)
-    {
-      LOGW(String.format("%d configurations",configs.length));
-
-      for(int i=0 ; i<configs.length ; i++)
-      {
-        LOGW(String.format("Configuration %d:",i));
-        printConfig(egl,display,configs[i]);
-      }
-    }
  
     private void printConfig(EGL10 egl,EGLDisplay display,EGLConfig config)
     {
@@ -863,13 +763,15 @@ private static class ContextFactory implements GLSurfaceView.EGLContextFactory
           while(egl.eglGetError()!=EGL14.EGL_SUCCESS);
     }
   }
+  
+  public void pushInput(){
+	  JNIdc.kcode(kcode_raw,lt,rt,jx,jy);
+  }
 
   private static class Renderer implements GLSurfaceView.Renderer
   {
     public void onDrawFrame(GL10 gl)
     {
-      //Log.w("INPUT", " " + kcode_raw + " " + rt + " " + lt + " " + jx + " " + jy);
-      JNIdc.kcode(kcode_raw,lt,rt,jx,jy);
       // Natively update nullDC display
       JNIdc.rendframe();
     }
@@ -938,81 +840,6 @@ private static class ContextFactory implements GLSurfaceView.EGLContextFactory
     	Player.write(samples, 0, samples.length);
     	
     	return 1;
-    }
-  }
-  
-  //
-  // Thread responsible for playing audio.
-  //
-  class AudioThready extends Thread
-  {
-    private AudioTrack Player;
-    private int Rate;
-    private int Latency;
-    private int Chunk;
-    private short Data[];
-
-    public AudioThready(int AudioRate,int AudioLatency)
-    {
-      Rate    = (AudioRate==0)||(AudioRate>=8192)? AudioRate:8192;
-      Latency = AudioLatency>=50? AudioLatency:50;
-      Chunk   = 2048;
-      Data    = new short[Chunk*2];
-      start();
-    }
-
-    public void stopPlayback()
-    { Rate=0; }
-
-    public void pausePlayback(boolean Switch)
-    {
-      // Must have a valid player
-      if((Player==null) || (Player.getState()!=AudioTrack.STATE_INITIALIZED)) return;
-
-      // Switch between playback and pause
-      if(Switch) { if(Player.getPlayState()==AudioTrack.PLAYSTATE_PLAYING) Player.pause(); }
-      else       { if(Player.getPlayState()!=AudioTrack.PLAYSTATE_PLAYING) Player.play(); }
-    }
-
-    @Override public void run()
-    {
-      int Size,Min;
-
-      LOGI("Starting audio thread for Rate="+Rate+"Hz, Latency="+Latency+"ms");
-
-      // When no audio sampling rate supplied, do not play
-      if(Rate<=0) return;
-
-      // Compute minimal and requested buffer sizes
-      Min  = AudioTrack.getMinBufferSize(Rate,AudioFormat.CHANNEL_OUT_STEREO,AudioFormat.ENCODING_PCM_16BIT);
-      Size = 2*2*Chunk*2;
-
-      // Create audio player
-      Player = new AudioTrack(
-        AudioManager.STREAM_MUSIC,
-        Rate,
-        AudioFormat.CHANNEL_OUT_STEREO,
-        AudioFormat.ENCODING_PCM_16BIT,
-        Min>Size? Min:Size,
-        AudioTrack.MODE_STREAM
-      );
-
-      // Start playback
-      Player.play();
- 
-      // Continue writing data, until requested to quit
-      while(Rate>0)
-      {
-        //Size = JNIdc.play(Data,Chunk);
-        if(Size>0) Player.write(Data,0,2*Size); else yield();
-      }
-
-      // Stop playback
-      Player.stop();
-      Player.flush();
-      Player.release();
-
-      LOGI("Exiting audio thread");
     }
   }
 
