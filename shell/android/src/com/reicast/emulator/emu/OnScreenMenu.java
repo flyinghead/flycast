@@ -128,14 +128,6 @@ public class OnScreenMenu {
 			}
 		}), debugParams);
 
-		// hlay.addView(addbut(R.drawable.disk_unknown, new
-		// OnClickListener() {
-		// public void onClick(View v) {
-		// JNIdc.send(0, 1); //settings.pvr.ta_skip
-		// popUp.dismiss();
-		// }
-		// }), debugParams);
-
 		hlay.addView(addbut(R.drawable.print_stats, new OnClickListener() {
 			public void onClick(View v) {
 				JNIdc.send(0, 2);
@@ -189,34 +181,33 @@ public class OnScreenMenu {
 			});
 		}
 		hlay.addView(fullscreen, params);
-
-		View frames_up = addbut(R.drawable.frames_up, new OnClickListener() {
+		
+		final ImageButton frames_up = new ImageButton(mContext);
+		final ImageButton frames_down = new ImageButton(mContext);
+		
+		frames_up.setImageResource(R.drawable.frames_up);
+		frames_up.setScaleType(ScaleType.FIT_CENTER);
+		frames_up.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
 				frameskip++;
 				JNIdc.frameskip(frameskip);
-				popUpConfig.dismiss();
-				displayConfigPopup(popUp);
-
+				enableState(frames_up, frames_down);
 			}
 		});
-		hlay.addView(frames_up, params);
 
-		if (frameskip >= 5) {
-			frames_up.setEnabled(false);
-		}
-		View frames_down = addbut(R.drawable.frames_down,
-				new OnClickListener() {
-					public void onClick(View v) {
-						frameskip--;
-						JNIdc.frameskip(frameskip);
-						popUpConfig.dismiss();
-						displayConfigPopup(popUp);
-					}
-				});
+		frames_down.setImageResource(R.drawable.frames_down);
+		frames_down.setScaleType(ScaleType.FIT_CENTER);
+		frames_down.setOnClickListener(new OnClickListener() {
+			public void onClick(View v) {
+				frameskip--;
+				JNIdc.frameskip(frameskip);
+				enableState(frames_up, frames_down);
+			}
+		});
+		
+		hlay.addView(frames_up, params);
 		hlay.addView(frames_down, params);
-		if (frameskip <= 0) {
-			frames_down.setEnabled(false);
-		}
+		enableState(frames_up, frames_down);
 
 		View framelimit;
 		if (!limitframes) {
@@ -273,6 +264,19 @@ public class OnScreenMenu {
 
 		popUpConfig.setContentView(hlay);
 		mContext.displayConfig(popUpConfig);
+	}
+	
+	private void enableState(View frames_up, View frames_down) {
+		if (frameskip <= 0) {
+			frames_down.setEnabled(false);
+		} else {
+			frames_down.setEnabled(true);
+		}
+		if (frameskip >= 5) {
+			frames_up.setEnabled(false);
+		} else {
+			frames_up.setEnabled(true);
+		}
 	}
 
 	public static int getPixelsFromDp(float dps, Context context) {
