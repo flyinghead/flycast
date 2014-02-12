@@ -21,7 +21,6 @@ import android.widget.Toast;
 @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR1)
 public class EditVJoyActivity extends Activity {
 	GL2JNIView mView;
-	GL2JNIViewV6 mView6;
 	PopupWindow popUp;
 	LayoutParams params;
 	
@@ -47,17 +46,10 @@ public class EditVJoyActivity extends Activity {
 		super.onCreate(icicle);
 
 		// Create the actual GLES view
-		if (MainActivity.force_gpu) {
-			mView6 = new GL2JNIViewV6(getApplication(), null, false, 24, 0, true);
-			setContentView(mView6);
-			
-			vjoy_d_cached = GL2JNIView.readCustomVjoyValues(getApplicationContext());
-		} else {
-			mView = new GL2JNIView(getApplication(), null, false, 24, 0, true);
-			setContentView(mView);
-			
-			vjoy_d_cached = GL2JNIView.readCustomVjoyValues(getApplicationContext());
-		}
+		mView = new GL2JNIView(getApplication(), null, false, 24, 0, true);
+		setContentView(mView);
+
+		vjoy_d_cached = VJoy.readCustomVjoyValues(getApplicationContext());
 
         JNIdc.show_osd();
 
@@ -68,20 +60,12 @@ public class EditVJoyActivity extends Activity {
 	@Override
 	protected void onPause() {
 		super.onPause();
-		if (MainActivity.force_gpu) {
-			mView6.onPause();
-		} else {
-			mView.onPause();
-		}
+		mView.onPause();
 	}
 
 	@Override
 	protected void onStop() {
-		if (MainActivity.force_gpu) {
-			mView6.onStop();
-		} else {
-			mView.onStop();
-		}
+		mView.onStop();
 		super.onStop();
 	}
 
@@ -89,11 +73,7 @@ public class EditVJoyActivity extends Activity {
 	@Override
 	protected void onResume() {
 		super.onResume();
-		if (MainActivity.force_gpu) {
-			mView6.onResume();
-		} else {
-			mView.onResume();
-		}
+		mView.onResume();
 	}
 	
 	PopupWindow createVJoyPopup() {
@@ -116,22 +96,18 @@ public class EditVJoyActivity extends Activity {
 		hlay.addView(addbut(R.drawable.reset, new OnClickListener() {
 			public void onClick(View v) {
 				// Reset VJoy positions and scale
-				if (MainActivity.force_gpu) {
-					mView6.resetCustomVjoyValues();
-				} else {
-					mView.resetCustomVjoyValues();
-				}
+				VJoy.resetCustomVjoyValues(getApplicationContext());
+				mView.vjoy_d_custom = VJoy
+						.readCustomVjoyValues(getApplicationContext());
+				mView.resetEditMode();
+				mView.requestLayout();
 				popUp.dismiss();
 			}
 		}), params);
 
 		hlay.addView(addbut(R.drawable.close, new OnClickListener() {
 			public void onClick(View v) {
-				if (MainActivity.force_gpu) {
-					mView6.restoreCustomVjoyValues(vjoy_d_cached);
-				} else {
-					mView.restoreCustomVjoyValues(vjoy_d_cached);
-				}
+				mView.restoreCustomVjoyValues(vjoy_d_cached);
 				popUp.dismiss();
 			}
 		}), params);
@@ -144,11 +120,7 @@ public class EditVJoyActivity extends Activity {
 		if (keyCode == KeyEvent.KEYCODE_MENU
 				|| keyCode == KeyEvent.KEYCODE_BACK) {
 			if (!popUp.isShowing()) {
-				if (MainActivity.force_gpu) {
-					popUp.showAtLocation(mView6, Gravity.BOTTOM, 0, 0);
-				} else {
-					popUp.showAtLocation(mView, Gravity.BOTTOM, 0, 0);
-				}
+				popUp.showAtLocation(mView, Gravity.BOTTOM, 0, 0);
 				popUp.update(LayoutParams.WRAP_CONTENT,
 						LayoutParams.WRAP_CONTENT);
 			} else {
