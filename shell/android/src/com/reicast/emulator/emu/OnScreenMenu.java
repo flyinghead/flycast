@@ -54,24 +54,12 @@ public class OnScreenMenu {
 
 		hlay.setOrientation(LinearLayout.HORIZONTAL);
 
-		hlay.addView(addbut(R.drawable.close, new OnClickListener() {
+		hlay.addView(addbut(R.drawable.up, new OnClickListener() {
 			public void onClick(View v) {
-				Intent inte = new Intent(mContext, MainActivity.class);
-				mContext.startActivity(inte);
-				((Activity) mContext).finish();
+				popUp.dismiss();
 			}
 		}), params);
 
-		if (prefs.getBoolean("debug_profling_tools", false)) {
-
-			hlay.addView(addbut(R.drawable.disk_unknown, new OnClickListener() {
-				public void onClick(View v) {
-					displayDebugPopup(popUp);
-					popUp.dismiss();
-				}
-			}), params);
-
-		}
 		hlay.addView(addbut(R.drawable.vmu_swap, new OnClickListener() {
 			public void onClick(View v) {
 				JNIdc.vmuSwap();
@@ -83,6 +71,21 @@ public class OnScreenMenu {
 			public void onClick(View v) {
 				displayConfigPopup(popUp);
 				popUp.dismiss();
+			}
+		}), params);
+
+		hlay.addView(addbut(R.drawable.disk_unknown, new OnClickListener() {
+			public void onClick(View v) {
+				displayDebugPopup(popUp);
+				popUp.dismiss();
+			}
+		}), params);
+
+		hlay.addView(addbut(R.drawable.close, new OnClickListener() {
+			public void onClick(View v) {
+				Intent inte = new Intent(mContext, MainActivity.class);
+				mContext.startActivity(inte);
+				((Activity) mContext).finish();
 			}
 		}), params);
 
@@ -100,10 +103,11 @@ public class OnScreenMenu {
 		LinearLayout hlay = new LinearLayout(mContext);
 
 		hlay.setOrientation(LinearLayout.HORIZONTAL);
-		
-		hlay.addView(addbut(R.drawable.close, new OnClickListener() {
+
+		hlay.addView(addbut(R.drawable.up, new OnClickListener() {
 			public void onClick(View v) {
 				popUpDebug.dismiss();
+				mContext.displayPopUp(popUp);
 			}
 		}), debugParams);
 
@@ -135,10 +139,9 @@ public class OnScreenMenu {
 			}
 		}), debugParams);
 
-		hlay.addView(addbut(R.drawable.up, new OnClickListener() {
+		hlay.addView(addbut(R.drawable.close, new OnClickListener() {
 			public void onClick(View v) {
 				popUpDebug.dismiss();
-				mContext.displayPopUp(popUp);
 			}
 		}), debugParams);
 
@@ -156,9 +159,10 @@ public class OnScreenMenu {
 
 		hlay.setOrientation(LinearLayout.HORIZONTAL);
 
-		hlay.addView(addbut(R.drawable.close, new OnClickListener() {
+		hlay.addView(addbut(R.drawable.up, new OnClickListener() {
 			public void onClick(View v) {
 				popUpConfig.dismiss();
+				mContext.displayPopUp(popUp);
 			}
 		}), configParams);
 
@@ -181,10 +185,10 @@ public class OnScreenMenu {
 			});
 		}
 		hlay.addView(fullscreen, params);
-		
+
 		final ImageButton frames_up = new ImageButton(mContext);
 		final ImageButton frames_down = new ImageButton(mContext);
-		
+
 		frames_up.setImageResource(R.drawable.frames_up);
 		frames_up.setScaleType(ScaleType.FIT_CENTER);
 		frames_up.setOnClickListener(new OnClickListener() {
@@ -204,7 +208,7 @@ public class OnScreenMenu {
 				enableState(frames_up, frames_down);
 			}
 		});
-		
+
 		hlay.addView(frames_up, params);
 		hlay.addView(frames_down, params);
 		enableState(frames_up, frames_down);
@@ -255,10 +259,9 @@ public class OnScreenMenu {
 			hlay.addView(audiosetting, params);
 		}
 
-		hlay.addView(addbut(R.drawable.up, new OnClickListener() {
+		hlay.addView(addbut(R.drawable.close, new OnClickListener() {
 			public void onClick(View v) {
 				popUpConfig.dismiss();
-				mContext.displayPopUp(popUp);
 			}
 		}), configParams);
 
