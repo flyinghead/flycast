@@ -54,7 +54,7 @@ public class GL2JNIView extends GLSurfaceView
 {
   private static String fileName;
   //private AudioThread audioThread;  
-  private EmuThread ethd = new EmuThread();
+  private EmuThread ethd;
 
   public static final boolean DEBUG = false;
   
@@ -107,6 +107,7 @@ public class GL2JNIView extends GLSurfaceView
 	System.gc();
 
     SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+    ethd = new EmuThread(prefs.getBoolean("sound_enabled", true));
     touchVibrationEnabled = prefs.getBoolean("touch_vibration_enabled", true);
     
     int rederType = prefs.getInt("render_type", LAYER_TYPE_HARDWARE);
@@ -170,8 +171,9 @@ public class GL2JNIView extends GLSurfaceView
 
     // Initialize audio
     //configAudio(44100,250);
-    
+   
     ethd.start();
+  
   }
   
   public GLSurfaceView.Renderer getRenderer()
@@ -808,9 +810,15 @@ private static class ContextFactory implements GLSurfaceView.EGLContextFactory
 	AudioTrack Player;
 	long pos;	//write position
 	long size;	//size in frames
+	private boolean sound;
+	
+	public EmuThread(boolean sound) {
+		this.sound = sound;
+	}
 	
     @Override public void run()
     {
+    	if (sound) {
     	int min=AudioTrack.getMinBufferSize(44100,AudioFormat.CHANNEL_OUT_STEREO,AudioFormat.ENCODING_PCM_16BIT);
     	
     	if (2048>min)
@@ -830,12 +838,14 @@ private static class ContextFactory implements GLSurfaceView.EGLContextFactory
     	
     	Log.i("audcfg", "Audio streaming: buffer size " + min + " samples / " + min/44100.0 + " ms");
     	Player.play();
+    	}
     	 
     	JNIdc.run(this);
     }
     
     int WriteBuffer(short[] samples, int wait)
     {
+    	if (sound) {
     	int newdata=samples.length/2;
     	
     	if (wait==0)
@@ -853,6 +863,7 @@ private static class ContextFactory implements GLSurfaceView.EGLContextFactory
     	pos+=newdata;
     	
     	Player.write(samples, 0, samples.length);
+    	}
     	
     	return 1;
     }

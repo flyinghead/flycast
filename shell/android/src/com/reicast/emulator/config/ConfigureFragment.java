@@ -144,6 +144,24 @@ public class ConfigureFragment extends Fragment {
 			force_software_opt.setChecked(false);
 		}
 		force_software_opt.setOnCheckedChangeListener(force_software);
+		
+		Switch sound_opt = (Switch) getView().findViewById(
+				R.id.sound_option);
+		OnCheckedChangeListener emu_sound = new OnCheckedChangeListener() {
+
+			public void onCheckedChanged(CompoundButton buttonView,
+					boolean isChecked) {
+				mPrefs.edit().putBoolean("sound_enabled", isChecked).commit();
+			}
+		};
+		boolean sound = mPrefs.getBoolean("sound_enabled",
+				true);
+		if (sound) {
+			sound_opt.setChecked(true);
+		} else {
+			sound_opt.setChecked(false);
+		}
+		sound_opt.setOnCheckedChangeListener(emu_sound);
 
 		OnCheckedChangeListener dynarec_options = new OnCheckedChangeListener() {
 
