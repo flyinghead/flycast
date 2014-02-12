@@ -107,7 +107,13 @@ public class GL2JNIView extends GLSurfaceView
 	System.gc();
 
     SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-    ethd = new EmuThread(prefs.getBoolean("sound_enabled", true));
+    boolean soundEndabled = prefs.getBoolean("sound_enabled", true);
+    ethd = new EmuThread(soundEndabled);
+    if (!soundEndabled) {
+    	Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
+    	// Ensures priority is not placed on disabled sound thread
+    }
+    
     touchVibrationEnabled = prefs.getBoolean("touch_vibration_enabled", true);
     
     int rederType = prefs.getInt("render_type", LAYER_TYPE_HARDWARE);
