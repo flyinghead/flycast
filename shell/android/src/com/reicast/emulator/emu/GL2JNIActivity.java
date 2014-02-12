@@ -1,4 +1,4 @@
-package com.reicast.emulator;
+package com.reicast.emulator.emu;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -23,9 +23,14 @@ import android.view.Window;
 import android.widget.PopupWindow;
 import android.widget.Toast;
 
+import com.reicast.emulator.R;
+import com.reicast.emulator.config.ConfigureFragment;
+import com.reicast.emulator.input.MOGAInput;
+import com.reicast.emulator.input.OnScreenMenu;
+
 @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR1)
 public class GL2JNIActivity extends Activity {
-	GL2JNIView mView;
+	public GL2JNIView mView;
 	OnScreenMenu menu;
 	PopupWindow popUp;
 	MOGAInput moga = new MOGAInput();

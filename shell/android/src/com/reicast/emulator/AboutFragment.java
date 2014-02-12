@@ -92,6 +92,8 @@ import android.widget.SlidingDrawer.OnDrawerOpenListener;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.reicast.emulator.debug.GitAdapter;
+
 public class AboutFragment extends Fragment {
 
 	SlidingDrawer slidingGithub;

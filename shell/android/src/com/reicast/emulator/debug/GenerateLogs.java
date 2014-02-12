@@ -1,4 +1,4 @@
-package com.reicast.emulator;
+package com.reicast.emulator.debug;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;

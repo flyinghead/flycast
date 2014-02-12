@@ -1,4 +1,4 @@
-package com.reicast.emulator;
+package com.reicast.emulator.emu;
 
 
 import java.lang.reflect.InvocationTargetException;
@@ -28,6 +28,9 @@ import android.view.ScaleGestureDetector;
 import android.view.ScaleGestureDetector.SimpleOnScaleGestureListener;
 import android.view.View;
 
+import com.reicast.emulator.MainActivity;
+import com.reicast.emulator.input.VJoy;
+
 
 /**
  * A simple GLSurfaceView sub-class that demonstrate how to perform
@@ -48,7 +51,7 @@ import android.view.View;
  *   bit depths). Failure to do so would result in an EGL_BAD_MATCH error.
  */
 
-class GL2JNIView extends GLSurfaceView
+public class GL2JNIView extends GLSurfaceView
 {
   private static String fileName;
   //private AudioThread audioThread;  
@@ -304,8 +307,11 @@ class GL2JNIView extends GLSurfaceView
             return -1; // Invalid
   }
 
-  static int[] kcode_raw = { 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF };
-  static int[] lt = new int[4], rt = new int[4], jx = new int[4], jy = new int[4];
+  public static int[] kcode_raw = { 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF };
+  public static int[] lt = new int[4];
+  public static int[] rt = new int[4];
+  public static int[] jx = new int[4];
+  public static int[] jy = new int[4];
 
   float editLastX = 0, editLastY = 0;
 

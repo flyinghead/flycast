@@ -1,4 +1,4 @@
-package com.reicast.emulator;
+package com.reicast.emulator.input;
 
 import java.io.File;
 
@@ -14,6 +14,12 @@ import android.widget.ImageButton;
 import android.widget.ImageView.ScaleType;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
+
+import com.reicast.emulator.MainActivity;
+import com.reicast.emulator.R;
+import com.reicast.emulator.config.ConfigureFragment;
+import com.reicast.emulator.emu.GL2JNIActivity;
+import com.reicast.emulator.emu.JNIdc;
 
 public class OnScreenMenu {
 
@@ -40,7 +46,7 @@ public class OnScreenMenu {
 		}
 	}
 
-	PopupWindow createPopup() {
+	public PopupWindow createPopup() {
 		final PopupWindow popUp = new PopupWindow(mContext);
 
 		int p = getPixelsFromDp(60, mContext);

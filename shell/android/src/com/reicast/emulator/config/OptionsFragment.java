@@ -1,4 +1,4 @@
-package com.reicast.emulator;
+package com.reicast.emulator.config;
 
 import java.io.File;
 
@@ -15,6 +15,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+
+import com.reicast.emulator.MainActivity;
+import com.reicast.emulator.R;
 
 public class OptionsFragment extends Fragment {
 

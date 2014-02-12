@@ -1,4 +1,4 @@
-package com.reicast.emulator;
+package com.reicast.emulator.input;
 
 import android.content.Context;
 import android.content.SharedPreferences;

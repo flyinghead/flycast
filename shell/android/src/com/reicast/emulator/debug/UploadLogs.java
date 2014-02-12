@@ -1,4 +1,4 @@
-package com.reicast.emulator;
+package com.reicast.emulator.debug;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -21,6 +21,8 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
+
+import com.reicast.emulator.R;
 
 
 public class UploadLogs extends AsyncTask<String, Integer, Object> {

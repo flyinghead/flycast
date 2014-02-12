@@ -1,4 +1,4 @@
-package com.reicast.emulator;
+package com.reicast.emulator.config;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
@@ -17,6 +17,13 @@ import android.widget.ImageView.ScaleType;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.Toast;
+
+import com.reicast.emulator.MainActivity;
+import com.reicast.emulator.R;
+import com.reicast.emulator.emu.GL2JNIView;
+import com.reicast.emulator.emu.JNIdc;
+import com.reicast.emulator.input.OnScreenMenu;
+import com.reicast.emulator.input.VJoy;
 
 @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR1)
 public class EditVJoyActivity extends Activity {

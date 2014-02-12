@@ -1,4 +1,4 @@
-package com.reicast.emulator;
+package com.reicast.emulator.config;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -34,6 +34,11 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.android.util.DreamTime;
+import com.reicast.emulator.MainActivity;
+import com.reicast.emulator.R;
+import com.reicast.emulator.debug.GenerateLogs;
+import com.reicast.emulator.emu.GL2JNIView;
+import com.reicast.emulator.emu.JNIdc;
 
 import de.ankri.views.Switch;
 
