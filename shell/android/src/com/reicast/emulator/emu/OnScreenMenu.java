@@ -1,6 +1,7 @@
 package com.reicast.emulator.emu;
 
 import java.io.File;
+import java.util.Vector;
 
 import android.app.Activity;
 import android.content.Context;
@@ -29,10 +30,12 @@ public class OnScreenMenu {
 	private boolean limitframes;
 	private boolean audiodisabled;
 
+	private Vector<PopupWindow> popups;
+
 	private File sdcard = Environment.getExternalStorageDirectory();
 	private String home_directory = sdcard + "/dc";
 
-	public OnScreenMenu(Context mContext, SharedPreferences prefs) {
+	public OnScreenMenu(Context mContext, SharedPreferences prefs, Vector<PopupWindow> popups) {
 		if (mContext instanceof GL2JNIActivity) {
 			this.mContext = (GL2JNIActivity) mContext;
 		}
@@ -56,6 +59,7 @@ public class OnScreenMenu {
 
 		hlay.addView(addbut(R.drawable.up, new OnClickListener() {
 			public void onClick(View v) {
+				popups.remove(popUp);
 				popUp.dismiss();
 			}
 		}), params);
@@ -70,6 +74,7 @@ public class OnScreenMenu {
 		hlay.addView(addbut(R.drawable.config, new OnClickListener() {
 			public void onClick(View v) {
 				displayConfigPopup(popUp);
+				popups.remove(popUp);
 				popUp.dismiss();
 			}
 		}), params);
@@ -77,6 +82,7 @@ public class OnScreenMenu {
 		hlay.addView(addbut(R.drawable.disk_unknown, new OnClickListener() {
 			public void onClick(View v) {
 				displayDebugPopup(popUp);
+				popups.remove(popUp);
 				popUp.dismiss();
 			}
 		}), params);
@@ -91,6 +97,7 @@ public class OnScreenMenu {
 
 		// layout.addView(hlay,params);
 		popUp.setContentView(hlay);
+		popups.add(popUp);
 		return popUp;
 	}
 
@@ -106,6 +113,7 @@ public class OnScreenMenu {
 
 		hlay.addView(addbut(R.drawable.up, new OnClickListener() {
 			public void onClick(View v) {
+				popups.remove(popUpDebug);
 				popUpDebug.dismiss();
 				mContext.displayPopUp(popUp);
 			}
@@ -141,11 +149,13 @@ public class OnScreenMenu {
 
 		hlay.addView(addbut(R.drawable.close, new OnClickListener() {
 			public void onClick(View v) {
+				popups.remove(popUpDebug);
 				popUpDebug.dismiss();
 			}
 		}), debugParams);
 
 		popUpDebug.setContentView(hlay);
+		popups.add(popUpDebug);
 		mContext.displayDebug(popUpDebug);
 	}
 
@@ -161,6 +171,7 @@ public class OnScreenMenu {
 
 		hlay.addView(addbut(R.drawable.up, new OnClickListener() {
 			public void onClick(View v) {
+				popups.remove(popUpConfig);
 				popUpConfig.dismiss();
 				mContext.displayPopUp(popUp);
 			}
@@ -261,11 +272,13 @@ public class OnScreenMenu {
 
 		hlay.addView(addbut(R.drawable.close, new OnClickListener() {
 			public void onClick(View v) {
+				popups.remove(popUpConfig);
 				popUpConfig.dismiss();
 			}
 		}), configParams);
 
 		popUpConfig.setContentView(hlay);
+		popups.add(popUpConfig);
 		mContext.displayConfig(popUpConfig);
 	}
 	

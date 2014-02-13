@@ -2,6 +2,7 @@ package com.reicast.emulator.emu;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Vector;
 
 import tv.ouya.console.api.OuyaController;
 import android.annotation.TargetApi;
@@ -43,6 +44,8 @@ public class GL2JNIActivity extends Activity {
 
 	public static HashMap<Integer, String> deviceId_deviceDescriptor = new HashMap<Integer, String>();
 	public static HashMap<String, Integer> deviceDescriptor_PlayerNum = new HashMap<String, Integer>();
+	
+	private Vector<PopupWindow> popups = new Vector<PopupWindow>();
 
 	int map[][];
 
@@ -55,7 +58,7 @@ public class GL2JNIActivity extends Activity {
 		
 		prefs = PreferenceManager.getDefaultSharedPreferences(this);
 		ConfigureFragment.getCurrentConfiguration(prefs);
-		menu = new OnScreenMenu(GL2JNIActivity.this, prefs);
+		menu = new OnScreenMenu(GL2JNIActivity.this, prefs, popups);
 		popUp = menu.createPopup();
 		/*
 		 * try { //int rID =
@@ -563,7 +566,12 @@ public class GL2JNIActivity extends Activity {
 		if (!popUp.isShowing()) {
 			displayPopUp(popUp);
 		} else {
-			popUp.dismiss();
+			for (PopupWindow popup : popups) {
+				if (popup.isShowing()) {
+					popup.dismiss();
+					popups.remove(popup);
+				}
+			}
 		}
 		return true;
 	}
