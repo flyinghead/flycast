@@ -98,7 +98,6 @@ public class OnScreenMenu {
 
 		// layout.addView(hlay,params);
 		popUp.setContentView(hlay);
-		popups.add(popUp);
 		return popUp;
 	}
 
@@ -296,13 +295,15 @@ public class OnScreenMenu {
 		}
 	}
 	
-	public void dismissPopUps() {
+	public boolean dismissPopUps() {
 		for (PopupWindow popup : popups) {
 			if (popup.isShowing()) {
 				popup.dismiss();
 				popups.remove(popup);
+				return true;
 			}
 		}
+		return false;
 	}
 
 	public static int getPixelsFromDp(float dps, Context context) {
