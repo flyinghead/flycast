@@ -103,7 +103,10 @@ public class GL2JNIView extends GLSurfaceView
 
     vib=(Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
     
-	System.gc();
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB) {
+    	Runtime.getRuntime().freeMemory();
+    	System.gc();
+    }
 
     SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
     boolean soundEndabled = prefs.getBoolean("sound_enabled", true);
