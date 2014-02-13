@@ -295,6 +295,15 @@ public class OnScreenMenu {
 			frames_up.setEnabled(true);
 		}
 	}
+	
+	public void dismissPopUps() {
+		for (PopupWindow popup : popups) {
+			if (popup.isShowing()) {
+				popup.dismiss();
+				popups.remove(popup);
+			}
+		}
+	}
 
 	public static int getPixelsFromDp(float dps, Context context) {
 		return (int) (dps * context.getResources().getDisplayMetrics().density + 0.5f);
@@ -308,14 +317,5 @@ public class OnScreenMenu {
 		but.setOnClickListener(ocl);
 
 		return but;
-	}
-	
-	public void dismissPopUps() {
-		for (PopupWindow popup : popups) {
-			if (popup.isShowing()) {
-				popup.dismiss();
-				popups.remove(popup);
-			}
-		}
 	}
 }
