@@ -35,10 +35,11 @@ public class OnScreenMenu {
 	private File sdcard = Environment.getExternalStorageDirectory();
 	private String home_directory = sdcard + "/dc";
 
-	public OnScreenMenu(Context mContext, SharedPreferences prefs, Vector<PopupWindow> popups) {
+	public OnScreenMenu(Context mContext, SharedPreferences prefs) {
 		if (mContext instanceof GL2JNIActivity) {
 			this.mContext = (GL2JNIActivity) mContext;
 		}
+		popups = new Vector<PopupWindow>();
 		if (prefs != null) {
 			this.prefs = prefs;
 			home_directory = prefs.getString("home_directory", home_directory);
@@ -307,5 +308,14 @@ public class OnScreenMenu {
 		but.setOnClickListener(ocl);
 
 		return but;
+	}
+	
+	public void dismissPopUps() {
+		for (PopupWindow popup : popups) {
+			if (popup.isShowing()) {
+				popup.dismiss();
+				popups.remove(popup);
+			}
+		}
 	}
 }
