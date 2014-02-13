@@ -4,7 +4,7 @@
     <dimen name="padding_medium">8dp</dimen>
     <dimen name="padding_large">16dp</dimen>
     
-    <dimen name="slidingmenu_offset">160dp</dimen>
+    <dimen name="slidingmenu_offset">80dp</dimen>
     <dimen name="list_padding">10dp</dimen>
     <dimen name="shadow_width">15dp</dimen>
 
