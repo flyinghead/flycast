@@ -60,6 +60,8 @@ public class MainActivity extends SlidingFragmentActivity implements
 		home_directory = mPrefs.getString("home_directory", home_directory);
 		JNIdc.config(home_directory);
 		
+		getFilesDir().mkdir();
+		
 		mUEHandler = new Thread.UncaughtExceptionHandler() {
 	        public void uncaughtException(Thread t, Throwable error) {
 	        	if (error != null) {
