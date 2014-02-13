@@ -155,12 +155,43 @@ void VArray2::LockRegion(u32 offset,u32 size)
 	}
 }
 
+void print_mem_addr()
+{
+    FILE *ifp, *ofp;
+    char *mode = "r";
+    char outputFilename[] = "/data/data/com.reicast.emulator/files/mem_alloc.txt";
+
+    ifp = fopen("/proc/self/maps", mode);
+
+    if (ifp == NULL) {
+        fprintf(stderr, "Can't open input file /proc/self/maps!\n");
+        exit(1);
+    }
+
+    ofp = fopen(outputFilename, "w");
+
+    if (ofp == NULL) {
+        fprintf(stderr, "Can't open output file %s!\n",
+                outputFilename);
+        exit(1);
+    }
+
+    char line [ 512 ];
+    while (fgets(line, sizeof line, ifp) != NULL) {
+        fprintf(ofp, "%s", line);
+    }
+
+    fclose(ifp);
+    fclose(ofp);
+}
+
 void VArray2::UnLockRegion(u32 offset,u32 size)
 {
   u32 inpage=offset & PAGE_MASK;
 	u32 rv=mprotect (data+offset-inpage, size+inpage, PROT_READ | PROT_WRITE);
 	if (rv!=0)
 	{
+        print_mem_addr();
 		printf("mprotect(%08X,%08X,RW) failed: %d | %d\n",data+offset-inpage,size+inpage,rv,errno);
 		die("mprotect  failed ..\n");
 	}

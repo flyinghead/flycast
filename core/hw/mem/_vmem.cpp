@@ -561,8 +561,8 @@ error:
 		fd = ashmem_create_region(0,RAM_SIZE + VRAM_SIZE +ARAM_SIZE);
 		if (false)//this causes writebacks to flash -> slow and stuttery 
 		{
-		fd = open("/data/data/com.example.droidcast/dcnzorz_mem",O_CREAT|O_RDWR|O_TRUNC,S_IRWXU|S_IRWXG|S_IRWXO);
-		unlink("/data/data/com.example.droidcast/dcnzorz_mem");
+		fd = open("/data/data/com.reicast.emulator/files/dcnzorz_mem",O_CREAT|O_RDWR|O_TRUNC,S_IRWXU|S_IRWXG|S_IRWXO);
+		unlink("/data/data/com.reicast.emulator/files/dcnzorz_mem");
 		}
 #endif
 

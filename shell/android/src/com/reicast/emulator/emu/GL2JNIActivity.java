@@ -2,6 +2,7 @@ package com.reicast.emulator.emu;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Vector;
 
 import tv.ouya.console.api.OuyaController;
 import android.annotation.TargetApi;
@@ -563,7 +564,7 @@ public class GL2JNIActivity extends Activity {
 		if (!popUp.isShowing()) {
 			displayPopUp(popUp);
 		} else {
-			popUp.dismiss();
+			menu.dismissPopUps();
 		}
 		return true;
 	}
