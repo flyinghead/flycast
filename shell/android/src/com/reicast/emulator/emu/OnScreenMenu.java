@@ -28,6 +28,7 @@ public class OnScreenMenu {
 	private boolean widescreen;
 	private boolean limitframes;
 	private boolean audiodisabled;
+	private VmuLcd vmuLcd;
 
 	private File sdcard = Environment.getExternalStorageDirectory();
 	private String home_directory = sdcard + "/dc";
@@ -59,6 +60,9 @@ public class OnScreenMenu {
 				popUp.dismiss();
 			}
 		}), params);
+		
+		vmuLcd = new VmuLcd(mContext);
+		hlay.addView(vmuLcd, params);
 
 		hlay.addView(addbut(R.drawable.vmu_swap, new OnClickListener() {
 			public void onClick(View v) {
@@ -294,5 +298,9 @@ public class OnScreenMenu {
 		but.setOnClickListener(ocl);
 
 		return but;
+	}
+	
+	public VmuLcd getVmuLcd(){
+		return vmuLcd;
 	}
 }

@@ -25,7 +25,7 @@ public class JNIdc
   
   public static native void setupMic(Object sip);
   public static native void vmuSwap();
-  
+  public static native void setupVmu(Object sip);  
   public static native void dynarec(int dynarec);
   public static native void idleskip(int idleskip);
   public static native void unstable(int unstable);

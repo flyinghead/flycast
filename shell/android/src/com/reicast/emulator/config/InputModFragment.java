@@ -60,7 +60,6 @@ public class InputModFragment extends Fragment {
 	public void onViewCreated(View view, Bundle savedInstanceState) {
 		parentActivity = getActivity();
 
-		Runtime.getRuntime().freeMemory();
 		System.gc();
 
 		mPrefs = PreferenceManager.getDefaultSharedPreferences(parentActivity);
@@ -413,7 +412,6 @@ public class InputModFragment extends Fragment {
 				return getButtonImage(x, y);
 			} else {
 				E.printStackTrace();
-				Runtime.getRuntime().freeMemory();
 				System.gc();
 			}
 		}
