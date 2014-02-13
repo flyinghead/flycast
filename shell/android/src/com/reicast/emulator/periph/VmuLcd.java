@@ -21,7 +21,7 @@ public class VmuLcd extends View {
 	public VmuLcd(Context context) {
 		super(context);
 		
-		scale = (float)OnScreenMenu.getPixelsFromDp(60, getContext()) / w;
+		scale = (float)OnScreenMenu.getPixelsFromDp(72, getContext()) / w;
 		Log.d("VmuLcd", "scale: "+scale);
 	}
 	

@@ -37,7 +37,6 @@ public class GL2JNIActivity extends Activity {
 	OnScreenMenu menu;
 	PopupWindow popUp;
 	PopupWindow vmuPop;
-	public static Activity mActivity;
 	MOGAInput moga = new MOGAInput();
 	private SharedPreferences prefs;
 	static String[] portId = { "_A", "_B", "_C", "_D" };
@@ -64,10 +63,6 @@ public class GL2JNIActivity extends Activity {
 		ConfigureFragment.getCurrentConfiguration(prefs);
 		menu = new OnScreenMenu(GL2JNIActivity.this, prefs);
 		popUp = menu.createPopup();
-		if (prefs.getBoolean("vmu_always_on", false)) {
-			vmuPop = menu.generateVMU();
-		}
-		mActivity = GL2JNIActivity.this;
 
 		/*
 		 * try { //int rID =
@@ -291,8 +286,7 @@ public class GL2JNIActivity extends Activity {
 			JNIdc.setupMic(sip);
 		}
 		
-		//setup vmu screen
-		JNIdc.setupVmu(menu.getVmuLcd());
+		vmuPop = menu.generateVMU();
 	}
 	
 	private void runCompatibilityMode() {
@@ -507,6 +501,18 @@ public class GL2JNIActivity extends Activity {
 				LayoutParams.WRAP_CONTENT);
 	}
 	
+	public void toggleVMU(boolean show) {
+		if (vmuPop != null) {
+			if (!vmuPop.isShowing() && show) {
+				vmuPop.showAtLocation(mView, Gravity.TOP | Gravity.RIGHT, 20, 20);
+				vmuPop.update(LayoutParams.WRAP_CONTENT,
+						LayoutParams.WRAP_CONTENT);
+			} else if (!prefs.getBoolean("vmu_always_on", false) && !show) {
+				vmuPop.dismiss();
+			}
+		}
+	}
+	
 	public void displayConfig(PopupWindow popUpConfig) {
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
 			popUpConfig.showAtLocation(mView, Gravity.BOTTOM, 0, 60);
@@ -575,18 +581,13 @@ public class GL2JNIActivity extends Activity {
 	}
 	
 	private boolean showMenu() {
-		if (prefs.getBoolean("vmu_always_on", false)) {
-			if (vmuPop != null && !vmuPop.isShowing()) {
-				vmuPop.showAtLocation(mView, Gravity.NO_GRAVITY, 20, 20);
-				vmuPop.update(LayoutParams.WRAP_CONTENT,
-						LayoutParams.WRAP_CONTENT);
-			}
-		}
-		if (!popUp.isShowing()) {
-			displayPopUp(popUp);
-		} else {
-			if (!menu.dismissPopUps()) {
+		if (!menu.dismissPopUps()) {
+			if (!popUp.isShowing()) {
+				displayPopUp(popUp);
+				toggleVMU(true);
+			} else {
 				popUp.dismiss();
+				toggleVMU(false);
 			}
 		}
 		return true;
