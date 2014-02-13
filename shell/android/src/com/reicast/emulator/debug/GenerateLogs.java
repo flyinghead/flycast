@@ -191,7 +191,7 @@ public class GenerateLogs extends AsyncTask<String, Integer, String> {
 			reader.close();
 			mLogcatProc = null;
 			reader = null;
-			File memory = new File(mContext.getFilesDir(), "reicast_mem.txt");
+			File memory = new File(mContext.getFilesDir(), "mem_alloc.txt");
 			if (memory.exists()) {
 				log.append(separator);
 				log.append(separator);
@@ -208,7 +208,6 @@ public class GenerateLogs extends AsyncTask<String, Integer, String> {
 				fis = null;
 				reader.close();
 				reader = null;
-				
 			}
 			File file = new File(logOuput);
 			BufferedWriter writer = new BufferedWriter(new FileWriter(file));

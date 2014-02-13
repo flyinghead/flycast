@@ -159,7 +159,7 @@ void print_mem_addr()
 {
     FILE *ifp, *ofp;
     char *mode = "r";
-    char outputFilename[] = "/data/data/com.reicast.emulator/files/reicast_mem.txt";
+    char outputFilename[] = "/data/data/com.reicast.emulator/files/mem_alloc.txt";
 
     ifp = fopen("/proc/self/maps", mode);
 
