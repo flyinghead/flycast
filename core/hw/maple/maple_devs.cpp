@@ -541,6 +541,7 @@ struct maple_sega_vmu: maple_base
 							}
 						}
 						config->SetImage(lcd_data_decoded);
+						push_vmu_screen(lcd_data_decoded);
 #if 0
 						// Update LCD window
 						if (!dev->lcd.visible)

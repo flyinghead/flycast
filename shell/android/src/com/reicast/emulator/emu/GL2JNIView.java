@@ -103,7 +103,6 @@ public class GL2JNIView extends GLSurfaceView
 
     vib=(Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
     
-    Runtime.getRuntime().freeMemory();
 	System.gc();
 
     SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);

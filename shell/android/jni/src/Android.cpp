@@ -40,6 +40,7 @@ extern "C"
   
   JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setupMic(JNIEnv *env,jobject obj,jobject sip)  __attribute__((visibility("default")));
   JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_vmuSwap(JNIEnv *env,jobject obj)  __attribute__((visibility("default")));
+  JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setupVmu(JNIEnv *env,jobject obj,jobject sip)  __attribute__((visibility("default")));
 
     JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_dynarec(JNIEnv *env,jobject obj, jint dynarec)  __attribute__((visibility("default")));
     JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_idleskip(JNIEnv *env,jobject obj, jint idleskip)  __attribute__((visibility("default")));
@@ -283,12 +284,18 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_init(JNIEnv *env,jobj
 #define SAMPLE_COUNT 512
 
 JNIEnv* jenv;
+//stuff for audio
 jshortArray jsamples;
 jmethodID writemid;
 jobject track;
-
+//stuff for microphone
 jobject sipemu;
 jmethodID getmicdata;
+//stuff for vmu lcd
+jobject vmulcd;
+jbyteArray jpix;
+jmethodID updatevmuscreen;
+
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_run(JNIEnv *env,jobject obj,jobject trk)
 {
@@ -311,6 +318,13 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setupMic(JNIEnv *env,
 	mcfg_Create(MDT_Microphone,0,1);
 }
 
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setupVmu(JNIEnv *env,jobject obj,jobject vmu)
+{
+	vmulcd = env->NewGlobalRef(vmu);
+	updatevmuscreen = env->GetMethodID(env->GetObjectClass(vmu),"updateBytes","([B)V");
+	jpix=jenv->NewByteArray(1536);
+}
+
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_stop(JNIEnv *env,jobject obj)
 {
 	dc_term();
@@ -318,8 +332,6 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_stop(JNIEnv *env,jobj
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_vmuSwap(JNIEnv *env,jobject obj)
 {
-	LOGD("vmuSwap go!");
-
 	maple_device* olda = MapleDevices[0][0];
 	maple_device* oldb = MapleDevices[0][1];
 	MapleDevices[0][0] = NULL;
@@ -328,9 +340,6 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_vmuSwap(JNIEnv *env,j
 
 	MapleDevices[0][0] = oldb;
 	MapleDevices[0][1] = olda;
-
-	LOGD("vmuSwap done");
-
 }
 
 JNIEXPORT jint JNICALL Java_com_reicast_emulator_emu_JNIdc_send(JNIEnv *env,jobject obj,jint cmd, jint param)
@@ -464,5 +473,12 @@ int get_mic_data(u8* buffer)
 	}
 	jenv->GetByteArrayRegion(jdata, 0, SIZE_OF_MIC_DATA, (jbyte*)buffer);
 	jenv->DeleteLocalRef(jdata);
+	return 1;
+}
+
+int push_vmu_screen(u8* buffer)
+{
+	jenv->SetByteArrayRegion(jpix,0,1536,(jbyte*)buffer);
+	jenv->CallVoidMethod(vmulcd,updatevmuscreen,jpix);
 	return 1;
 }

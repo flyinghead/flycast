@@ -10,6 +10,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -58,6 +59,7 @@ public class GL2JNIActivity extends Activity {
 		ConfigureFragment.getCurrentConfiguration(prefs);
 		menu = new OnScreenMenu(GL2JNIActivity.this, prefs);
 		popUp = menu.createPopup();
+
 		/*
 		 * try { //int rID =
 		 * getResources().getIdentifier("fortyonepost.com.lfas:raw/syms.map",
@@ -279,6 +281,10 @@ public class GL2JNIActivity extends Activity {
 			sip.startRecording();
 			JNIdc.setupMic(sip);
 		}
+		
+		//setup vmu screen
+		JNIdc.setupVmu(menu.getVmuLcd());
+		
 	}
 	
 	private void runCompatibilityMode() {
