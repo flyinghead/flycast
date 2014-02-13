@@ -564,7 +564,9 @@ public class GL2JNIActivity extends Activity {
 		if (!popUp.isShowing()) {
 			displayPopUp(popUp);
 		} else {
-			menu.dismissPopUps();
+			if (!menu.dismissPopUps()) {
+				popUp.dismiss();
+			}
 		}
 		return true;
 	}
