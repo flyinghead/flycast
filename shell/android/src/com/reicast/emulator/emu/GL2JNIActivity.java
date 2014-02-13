@@ -22,6 +22,7 @@ import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.ViewGroup.LayoutParams;
 import android.view.Window;
+import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.Toast;
 
@@ -33,6 +34,8 @@ public class GL2JNIActivity extends Activity {
 	public GL2JNIView mView;
 	OnScreenMenu menu;
 	PopupWindow popUp;
+	PopupWindow vmuPop;
+	public static Activity mActivity;
 	MOGAInput moga = new MOGAInput();
 	private SharedPreferences prefs;
 	static String[] portId = { "_A", "_B", "_C", "_D" };
@@ -59,6 +62,10 @@ public class GL2JNIActivity extends Activity {
 		ConfigureFragment.getCurrentConfiguration(prefs);
 		menu = new OnScreenMenu(GL2JNIActivity.this, prefs);
 		popUp = menu.createPopup();
+		if (prefs.getBoolean("vmu_always_on", false)) {
+			vmuPop = menu.generateVMU();
+		}
+		mActivity = GL2JNIActivity.this;
 
 		/*
 		 * try { //int rID =
@@ -284,7 +291,6 @@ public class GL2JNIActivity extends Activity {
 		
 		//setup vmu screen
 		JNIdc.setupVmu(menu.getVmuLcd());
-		
 	}
 	
 	private void runCompatibilityMode() {
@@ -567,6 +573,13 @@ public class GL2JNIActivity extends Activity {
 	}
 	
 	private boolean showMenu() {
+		if (prefs.getBoolean("vmu_always_on", false)) {
+			if (vmuPop != null && !vmuPop.isShowing()) {
+				vmuPop.showAtLocation(mView, Gravity.NO_GRAVITY, 20, 20);
+				vmuPop.update(LayoutParams.WRAP_CONTENT,
+						LayoutParams.WRAP_CONTENT);
+			}
+		}
 		if (!popUp.isShowing()) {
 			displayPopUp(popUp);
 		} else {

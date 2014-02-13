@@ -32,7 +32,7 @@ public class JNIdc
   public static native void cable(int cable);
   public static native void region(int region);
   public static native void broadcast(int broadcast);
-  public static native void limitfps(int stretch);
+  public static native void limitfps(int limiter);
   public static native void nobatch(int nobatch);
   public static native void mipmaps(int mipmaps);
   public static native void widescreen(int stretch);

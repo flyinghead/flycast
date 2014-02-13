@@ -182,7 +182,6 @@ public class GL2JNIView extends GLSurfaceView
     //configAudio(44100,250);
    
     ethd.start();
-  
   }
   
   public GLSurfaceView.Renderer getRenderer()

@@ -48,6 +48,18 @@ public class OnScreenMenu {
 			frameskip = ConfigureFragment.frameskip;
 		}
 	}
+	
+	public PopupWindow generateVMU() {
+		PopupWindow vmuPop = new PopupWindow(mContext);
+		int p = OnScreenMenu.getPixelsFromDp(60, mContext);
+		LayoutParams params = new LayoutParams(p, p);
+		LinearLayout vlay = new LinearLayout(mContext);
+		vlay.setOrientation(LinearLayout.HORIZONTAL);
+		vmuLcd = new VmuLcd(mContext);
+		vlay.addView(vmuLcd, params);
+		vmuPop.setContentView(vlay);
+		return vmuPop;
+	}
 
 	public PopupWindow createPopup() {
 		final PopupWindow popUp = new PopupWindow(mContext);
@@ -58,6 +70,11 @@ public class OnScreenMenu {
 		LinearLayout hlay = new LinearLayout(mContext);
 
 		hlay.setOrientation(LinearLayout.HORIZONTAL);
+		
+		if (!prefs.getBoolean("vmu_always_on", false)) {
+			vmuLcd = new VmuLcd(mContext);
+			hlay.addView(vmuLcd, params);
+		}
 
 		hlay.addView(addbut(R.drawable.up, new OnClickListener() {
 			public void onClick(View v) {
@@ -65,9 +82,6 @@ public class OnScreenMenu {
 				popUp.dismiss();
 			}
 		}), params);
-		
-		vmuLcd = new VmuLcd(mContext);
-		hlay.addView(vmuLcd, params);
 
 		hlay.addView(addbut(R.drawable.vmu_swap, new OnClickListener() {
 			public void onClick(View v) {
