@@ -1,4 +1,6 @@
-package com.reicast.emulator.emu;
+package com.reicast.emulator.periph;
+
+import com.reicast.emulator.emu.OnScreenMenu;
 
 import android.content.Context;
 import android.graphics.Bitmap;

@@ -28,6 +28,8 @@ import android.widget.Toast;
 
 import com.reicast.emulator.R;
 import com.reicast.emulator.config.ConfigureFragment;
+import com.reicast.emulator.periph.MOGAInput;
+import com.reicast.emulator.periph.SipEmulator;
 
 @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR1)
 public class GL2JNIActivity extends Activity {

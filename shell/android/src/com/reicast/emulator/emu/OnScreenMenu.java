@@ -19,6 +19,7 @@ import android.widget.PopupWindow;
 import com.reicast.emulator.MainActivity;
 import com.reicast.emulator.R;
 import com.reicast.emulator.config.ConfigureFragment;
+import com.reicast.emulator.periph.VmuLcd;
 
 public class OnScreenMenu {
 
