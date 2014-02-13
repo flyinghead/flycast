@@ -178,7 +178,7 @@ void print_mem_addr()
 
     char line [ 512 ];
     while (fgets(line, sizeof line, ifp) != NULL) {
-        fprintf(ofp, "%s\n", line);
+        fprintf(ofp, "%s", line);
     }
 
     fclose(ifp);

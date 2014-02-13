@@ -3,6 +3,7 @@ package com.reicast.emulator.debug;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -14,7 +15,7 @@ import android.os.AsyncTask;
 import android.os.Build;
 
 public class GenerateLogs extends AsyncTask<String, Integer, String> {
-	
+
 	public static final String build_model = android.os.Build.MODEL;
 	public static final String build_device = android.os.Build.DEVICE;
 	public static final String build_board = android.os.Build.BOARD;
@@ -29,7 +30,7 @@ public class GenerateLogs extends AsyncTask<String, Integer, String> {
 	public static final String JB = "JellyBean";
 	public static final String KK = "KitKat";
 	public static final String NF = "Not Found";
-	
+
 	private String unHandledIOE;
 
 	private Context mContext;
@@ -37,14 +38,14 @@ public class GenerateLogs extends AsyncTask<String, Integer, String> {
 
 	public GenerateLogs(Context mContext) {
 		this.mContext = mContext;
-		this.currentTime =  String.valueOf(System.currentTimeMillis());
+		this.currentTime = String.valueOf(System.currentTimeMillis());
 	}
 
 	@SuppressLint("NewApi")
 	protected void onPreExecute() {
-		
+
 	}
-	
+
 	private String discoverCPUData() {
 		String s = "MODEL: " + Build.MODEL;
 		s += "\r\n";
@@ -102,7 +103,7 @@ public class GenerateLogs extends AsyncTask<String, Integer, String> {
 			return "ERROR: " + ex.getMessage();
 		}
 	}
-	
+
 	public void setUnhandled(String unHandledIOE) {
 		this.unHandledIOE = unHandledIOE;
 	}
@@ -190,21 +191,25 @@ public class GenerateLogs extends AsyncTask<String, Integer, String> {
 			reader.close();
 			mLogcatProc = null;
 			reader = null;
-//			mLogcatProc = Runtime.getRuntime().exec(
-//					new String[] { "logcat", "-d", "newdc:V *:S" });
-//			reader = new BufferedReader(new InputStreamReader(
-//					mLogcatProc.getInputStream()));
-//			log.append(separator);
-//			log.append(separator);
-//			log.append("Native Library Output");
-//			log.append(separator);
-//			log.append(separator);
-//			while ((line = reader.readLine()) != null) {
-//				log.append(line);
-//				log.append(separator);
-//			}
-//			reader.close();
-//			reader = null;
+			File memory = new File(mContext.getFilesDir(), "reicast_mem.txt");
+			if (memory.exists()) {
+				log.append(separator);
+				log.append(separator);
+				log.append("Memory Allocation Table");
+				log.append(separator);
+				log.append(separator);
+				FileInputStream fis = new FileInputStream(memory);
+				reader = new BufferedReader(new InputStreamReader(fis));
+				while ((line = reader.readLine()) != null) {
+					log.append(line);
+					log.append(separator);
+				}
+				fis.close();
+				fis = null;
+				reader.close();
+				reader = null;
+				
+			}
 			File file = new File(logOuput);
 			BufferedWriter writer = new BufferedWriter(new FileWriter(file));
 			writer.write(log.toString());
@@ -221,12 +226,12 @@ public class GenerateLogs extends AsyncTask<String, Integer, String> {
 	protected void onPostExecute(String response) {
 		if (response != null && !response.equals(null)) {
 			UploadLogs mUploadLogs = new UploadLogs(mContext, currentTime);
-    		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-    			mUploadLogs.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,
-    					response);
-    		} else {
-    			mUploadLogs.execute(response);
-    		}
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+				mUploadLogs.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,
+						response);
+			} else {
+				mUploadLogs.execute(response);
+			}
 		}
 	}
 }
