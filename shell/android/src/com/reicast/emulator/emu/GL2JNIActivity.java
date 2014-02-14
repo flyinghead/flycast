@@ -20,11 +20,14 @@ import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.ViewGroup.LayoutParams;
 import android.view.Window;
+import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.Toast;
 
 import com.reicast.emulator.R;
 import com.reicast.emulator.config.ConfigureFragment;
+import com.reicast.emulator.emu.OnScreenMenu.MainPopup;
+import com.reicast.emulator.emu.OnScreenMenu.VmuPopup;
 import com.reicast.emulator.periph.MOGAInput;
 import com.reicast.emulator.periph.SipEmulator;
 
@@ -32,8 +35,8 @@ import com.reicast.emulator.periph.SipEmulator;
 public class GL2JNIActivity extends Activity {
 	public GL2JNIView mView;
 	OnScreenMenu menu;
-	PopupWindow popUp;
-	PopupWindow vmuPop;
+	MainPopup popUp;
+	VmuPopup vmuPop;
 	MOGAInput moga = new MOGAInput();
 	private SharedPreferences prefs;
 	static String[] portId = { "_A", "_B", "_C", "_D" };
@@ -282,9 +285,20 @@ public class GL2JNIActivity extends Activity {
 			JNIdc.setupMic(sip);
 		}
 		
-		popUp = menu.createPopup();
-		vmuPop = menu.generateVMU();
-		JNIdc.setupVmu(menu.vmuLcdMenu);
+		popUp = menu.new MainPopup(this);
+		vmuPop = menu.new VmuPopup(this);
+		if(prefs.getBoolean("vmu_floating", false)){
+			//kind of a hack - if the user last had the vmu on screen
+			//inverse it and then "toggle"
+			prefs.edit().putBoolean("vmu_floating", false).commit();
+			//can only display a popup after onCreate
+			mView.post(new Runnable() {
+				public void run() {
+					toggleVmu();
+				}
+			});
+		}
+		JNIdc.setupVmu(menu.getVmu());
 	}
 	
 	private void runCompatibilityMode() {
@@ -498,16 +512,29 @@ public class GL2JNIActivity extends Activity {
 		popUpDebug.update(LayoutParams.WRAP_CONTENT,
 				LayoutParams.WRAP_CONTENT);
 	}
-	
-	public void toggleVMU(boolean show) {
-		if (vmuPop != null) {
-			if (!vmuPop.isShowing() && show) {
-				vmuPop.showAtLocation(mView, Gravity.TOP | Gravity.RIGHT, 20, 20);
-				vmuPop.update(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
-			} else if (vmuPop.isShowing() && !show) {
-				vmuPop.dismiss();
+
+	public void toggleVmu() {
+		boolean showFloating = !prefs.getBoolean("vmu_floating", false);
+		if(showFloating){
+			if(popUp.isShowing()){
+				popUp.dismiss();
 			}
+			//remove from popup menu
+			LinearLayout parent = (LinearLayout) popUp.getContentView();
+			parent.removeView(menu.getVmu());
+			//add to floating window
+			vmuPop.showVmu();
+			vmuPop.showAtLocation(mView, Gravity.TOP | Gravity.RIGHT, 20, 20);
+			vmuPop.update(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+		}else{
+			vmuPop.dismiss();
+			//remove from floating window
+			LinearLayout parent = (LinearLayout) vmuPop.getContentView();
+			parent.removeView(menu.getVmu());
+			//add back to popup menu
+			popUp.showVmu();
 		}
+		prefs.edit().putBoolean("vmu_floating", showFloating).commit();
 	}
 	
 	public void displayConfig(PopupWindow popUpConfig) {

@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Environment;
+import android.preference.PreferenceManager;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup.LayoutParams;
@@ -25,14 +26,13 @@ public class OnScreenMenu {
 
 	private GL2JNIActivity mContext;
 	private SharedPreferences prefs;
-	LayoutParams params;
+	private LinearLayout hlay;
+	private LayoutParams params;
 	private int frameskip;
 	private boolean widescreen;
 	private boolean limitframes;
 	private boolean audiodisabled;
 	
-	LinearLayout hlay;
-	public VmuLcd vmuLcdMenu;
 	private VmuLcd vmuLcd;
 
 	private Vector<PopupWindow> popups;
@@ -51,91 +51,12 @@ public class OnScreenMenu {
 			widescreen = ConfigureFragment.widescreen;
 			frameskip = ConfigureFragment.frameskip;
 		}
-	}
-	
-	public PopupWindow generateVMU() {
 		vmuLcd = new VmuLcd(mContext);
-		vmuLcd.configureScale(80);
-		PopupWindow vmuPop = new PopupWindow(mContext);
-		int pX = OnScreenMenu.getPixelsFromDp(80, mContext);
-		int pY = OnScreenMenu.getPixelsFromDp(56, mContext);
-		LayoutParams vparams = new LayoutParams(pX, pY);
-		LinearLayout vlay = new LinearLayout(mContext);
-		vlay.setOrientation(LinearLayout.HORIZONTAL);
 		vmuLcd.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
-				hlay.addView(vmuLcdMenu, 0, params);
-				mContext.toggleVMU(false);
-				JNIdc.setupVmu(vmuLcdMenu);
+				OnScreenMenu.this.mContext.toggleVmu();
 			}
 		});
-		vlay.addView(vmuLcd, vparams);
-		vmuPop.setContentView(vlay);
-		return vmuPop;
-	}
-
-	public PopupWindow createPopup() {
-		final PopupWindow popUp = new PopupWindow(mContext);
-
-		int p = getPixelsFromDp(60, mContext);
-		params = new LayoutParams(p, p);
-
-		hlay = new LinearLayout(mContext);
-
-		hlay.setOrientation(LinearLayout.HORIZONTAL);
-		
-		vmuLcdMenu = new VmuLcd(mContext);
-		vmuLcdMenu.setOnClickListener(new OnClickListener() {
-			public void onClick(View v) {
-				mContext.toggleVMU(true);
-				hlay.removeView(vmuLcdMenu);
-				JNIdc.setupVmu(vmuLcd);
-				popUp.dismiss();
-			}
-		});
-		hlay.addView(vmuLcdMenu, params);
-
-		hlay.addView(addbut(R.drawable.up, new OnClickListener() {
-			public void onClick(View v) {
-				popups.remove(popUp);
-				popUp.dismiss();
-			}
-		}), params);
-
-		hlay.addView(addbut(R.drawable.vmu_swap, new OnClickListener() {
-			public void onClick(View v) {
-				JNIdc.vmuSwap();
-				popUp.dismiss();
-			}
-		}), params);
-
-		hlay.addView(addbut(R.drawable.config, new OnClickListener() {
-			public void onClick(View v) {
-				displayConfigPopup(popUp);
-				popups.remove(popUp);
-				popUp.dismiss();
-			}
-		}), params);
-
-		hlay.addView(addbut(R.drawable.disk_unknown, new OnClickListener() {
-			public void onClick(View v) {
-				displayDebugPopup(popUp);
-				popups.remove(popUp);
-				popUp.dismiss();
-			}
-		}), params);
-
-		hlay.addView(addbut(R.drawable.close, new OnClickListener() {
-			public void onClick(View v) {
-				Intent inte = new Intent(mContext, MainActivity.class);
-				mContext.startActivity(inte);
-				((Activity) mContext).finish();
-			}
-		}), params);
-
-		// layout.addView(hlay,params);
-		popUp.setContentView(hlay);
-		return popUp;
 	}
 
 	void displayDebugPopup(final PopupWindow popUp) {
@@ -346,6 +267,10 @@ public class OnScreenMenu {
 	public static int getPixelsFromDp(float dps, Context context) {
 		return (int) (dps * context.getResources().getDisplayMetrics().density + 0.5f);
 	}
+	
+	public VmuLcd getVmu(){
+		return vmuLcd;
+	}
 
 	View addbut(int x, OnClickListener ocl) {
 		ImageButton but = new ImageButton(mContext);
@@ -355,5 +280,81 @@ public class OnScreenMenu {
 		but.setOnClickListener(ocl);
 
 		return but;
+	}
+	
+	public class VmuPopup extends PopupWindow{
+		LayoutParams vparams;
+		LinearLayout vlay;
+		public VmuPopup(Context c){
+			super(c);
+			int pX = OnScreenMenu.getPixelsFromDp(80, mContext);
+			int pY = OnScreenMenu.getPixelsFromDp(56, mContext);
+			vparams = new LayoutParams(pX, pY);
+			vlay = new LinearLayout(mContext);
+			vlay.setOrientation(LinearLayout.HORIZONTAL);
+			setContentView(vlay);
+		}
+		
+		public void showVmu(){
+			vmuLcd.configureScale(80);
+			vlay.addView(vmuLcd, vparams);
+		}
+		
+	}
+	
+	public class MainPopup extends PopupWindow{
+		public MainPopup(Context c){
+			int p = getPixelsFromDp(60, mContext);
+			params = new LayoutParams(p, p);
+			hlay = new LinearLayout(mContext);
+			hlay.setOrientation(LinearLayout.HORIZONTAL);
+
+			hlay.addView(vmuLcd, params);
+
+			hlay.addView(addbut(R.drawable.up, new OnClickListener() {
+				public void onClick(View v) {
+					popups.remove(MainPopup.this);
+					dismiss();
+				}
+			}), params);
+
+			hlay.addView(addbut(R.drawable.vmu_swap, new OnClickListener() {
+				public void onClick(View v) {
+					JNIdc.vmuSwap();
+					dismiss();
+				}
+			}), params);
+
+			hlay.addView(addbut(R.drawable.config, new OnClickListener() {
+				public void onClick(View v) {
+					displayConfigPopup(MainPopup.this);
+					popups.remove(MainPopup.this);
+					dismiss();
+				}
+			}), params);
+
+			hlay.addView(addbut(R.drawable.disk_unknown, new OnClickListener() {
+				public void onClick(View v) {
+					displayDebugPopup(MainPopup.this);
+					popups.remove(MainPopup.this);
+					dismiss();
+				}
+			}), params);
+
+			hlay.addView(addbut(R.drawable.close, new OnClickListener() {
+				public void onClick(View v) {
+					Intent inte = new Intent(mContext, MainActivity.class);
+					mContext.startActivity(inte);
+					((Activity) mContext).finish();
+				}
+			}), params);
+
+			setContentView(hlay);
+		}
+		
+		public void showVmu(){
+			vmuLcd.configureScale(60);
+			hlay.addView(vmuLcd, 0, params);
+		}
 	}
 }
