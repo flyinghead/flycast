@@ -6,6 +6,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
 import android.util.Log;
 import android.view.View;
 
@@ -17,11 +18,18 @@ public class VmuLcd extends View {
 	private int[] image = new int[w*h];
 	private Bitmap current = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
 	private float scale;
+	private Paint paint;
 	
-	public VmuLcd(Context context) {
+	public VmuLcd(Context context, boolean popOut) {
 		super(context);
 		
-		scale = (float)OnScreenMenu.getPixelsFromDp(72, getContext()) / w;
+		paint = new Paint();
+		
+		if (popOut) {
+			scale = (float)OnScreenMenu.getPixelsFromDp(80, getContext()) / w;
+		} else {
+			scale = (float)OnScreenMenu.getPixelsFromDp(60, getContext()) / w;
+		}
 		Log.d("VmuLcd", "scale: "+scale);
 	}
 	
@@ -35,10 +43,11 @@ public class VmuLcd extends View {
 	}
 
 	@Override
-	public void onDraw(Canvas c){
+	public void onDraw(Canvas c) {
 		current.setPixels(image, 0, w, 0, 0, w, h);
 		c.scale(scale, scale);
-		c.drawBitmap(current, 0, 0, null);
+		paint.setFilterBitmap(true);
+		c.drawBitmap(current, 0, 0, paint);
 	}
 
 }

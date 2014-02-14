@@ -18,7 +18,6 @@
 
     <string name="optimization_opts">Optimization and Debugging Options</string>
     <string name="experimental_opts">Experimental (May cause widespread panic)</string>
-    <string name="select_vmu_disp">Persistent VMU Display</string>
     <string name="select_dynarec">Dynarec Options</string>
     <string name="select_unstable">Unstable Optimisations</string>
     <string name="select_region">DC Region</string>

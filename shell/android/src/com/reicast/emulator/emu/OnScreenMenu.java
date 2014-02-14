@@ -30,6 +30,10 @@ public class OnScreenMenu {
 	private boolean widescreen;
 	private boolean limitframes;
 	private boolean audiodisabled;
+	
+	LinearLayout hlay;
+	public VmuLcd vmuLcdMenu;
+	private VmuLcd vmuLcd;
 
 	private Vector<PopupWindow> popups;
 
@@ -50,13 +54,21 @@ public class OnScreenMenu {
 	}
 	
 	public PopupWindow generateVMU() {
-		VmuLcd vmuLcd = new VmuLcd(mContext);
+		vmuLcd = new VmuLcd(mContext, true);
 		PopupWindow vmuPop = new PopupWindow(mContext);
-		int p = OnScreenMenu.getPixelsFromDp(72, mContext);
-		LayoutParams params = new LayoutParams(p, p);
+		int pX = OnScreenMenu.getPixelsFromDp(80, mContext);
+		int pY = OnScreenMenu.getPixelsFromDp(56, mContext);
+		LayoutParams vparams = new LayoutParams(pX, pY);
 		LinearLayout vlay = new LinearLayout(mContext);
 		vlay.setOrientation(LinearLayout.HORIZONTAL);
-		vlay.addView(vmuLcd, params);
+		vmuLcd.setOnClickListener(new OnClickListener() {
+			public void onClick(View v) {
+				hlay.addView(vmuLcdMenu, 0, params);
+				mContext.toggleVMU(false);
+				JNIdc.setupVmu(vmuLcdMenu);
+			}
+		});
+		vlay.addView(vmuLcd, vparams);
 		vmuPop.setContentView(vlay);
 		JNIdc.setupVmu(vmuLcd);
 		return vmuPop;
@@ -68,13 +80,23 @@ public class OnScreenMenu {
 		int p = getPixelsFromDp(60, mContext);
 		params = new LayoutParams(p, p);
 
-		LinearLayout hlay = new LinearLayout(mContext);
+		hlay = new LinearLayout(mContext);
 
 		hlay.setOrientation(LinearLayout.HORIZONTAL);
+		
+		vmuLcdMenu = new VmuLcd(mContext, false);
+		vmuLcdMenu.setOnClickListener(new OnClickListener() {
+			public void onClick(View v) {
+				mContext.toggleVMU(true);
+				hlay.removeView(vmuLcdMenu);
+				JNIdc.setupVmu(vmuLcd);
+				popUp.dismiss();
+			}
+		});
+		hlay.addView(vmuLcdMenu, params);
 
 		hlay.addView(addbut(R.drawable.up, new OnClickListener() {
 			public void onClick(View v) {
-				mContext.toggleVMU(false);
 				popups.remove(popUp);
 				popUp.dismiss();
 			}

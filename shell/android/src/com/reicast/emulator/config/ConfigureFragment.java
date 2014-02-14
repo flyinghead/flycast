@@ -311,27 +311,6 @@ public class ConfigureFragment extends Fragment {
 					int count) {
 			}
 		});
-		
-		OnCheckedChangeListener vmu_option = new OnCheckedChangeListener() {
-
-			public void onCheckedChanged(CompoundButton buttonView,
-					boolean isChecked) {
-				mPrefs.edit().putBoolean("vmu_always_on", isChecked).commit();
-			}
-		};
-		Switch vmu_always_on = (Switch) getView()
-				.findViewById(R.id.vmu_disp_option);
-		boolean vmu_display = mPrefs.getBoolean("vmu_always_on", false);
-		vmu_always_on.setChecked(vmu_display);
-		vmu_always_on.setOnCheckedChangeListener(vmu_option);
-
-		Button debug_button = (Button) getView()
-				.findViewById(R.id.debug_button);
-		debug_button.setOnClickListener(new View.OnClickListener() {
-			public void onClick(View v) {
-				generateErrorLog();
-			}
-		});
 	}
 
 	public void generateErrorLog() {

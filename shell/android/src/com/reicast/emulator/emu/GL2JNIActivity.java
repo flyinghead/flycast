@@ -30,6 +30,7 @@ import com.reicast.emulator.R;
 import com.reicast.emulator.config.ConfigureFragment;
 import com.reicast.emulator.periph.MOGAInput;
 import com.reicast.emulator.periph.SipEmulator;
+import com.reicast.emulator.periph.VmuLcd;
 
 @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR1)
 public class GL2JNIActivity extends Activity {
@@ -62,7 +63,6 @@ public class GL2JNIActivity extends Activity {
 		prefs = PreferenceManager.getDefaultSharedPreferences(this);
 		ConfigureFragment.getCurrentConfiguration(prefs);
 		menu = new OnScreenMenu(GL2JNIActivity.this, prefs);
-		popUp = menu.createPopup();
 
 		/*
 		 * try { //int rID =
@@ -286,7 +286,9 @@ public class GL2JNIActivity extends Activity {
 			JNIdc.setupMic(sip);
 		}
 		
+		popUp = menu.createPopup();
 		vmuPop = menu.generateVMU();
+		JNIdc.setupVmu(menu.vmuLcdMenu);
 	}
 	
 	private void runCompatibilityMode() {
@@ -505,9 +507,8 @@ public class GL2JNIActivity extends Activity {
 		if (vmuPop != null) {
 			if (!vmuPop.isShowing() && show) {
 				vmuPop.showAtLocation(mView, Gravity.TOP | Gravity.RIGHT, 20, 20);
-				vmuPop.update(LayoutParams.WRAP_CONTENT,
-						LayoutParams.WRAP_CONTENT);
-			} else if (!prefs.getBoolean("vmu_always_on", false) && !show) {
+				vmuPop.update(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+			} else if (vmuPop.isShowing() && !show) {
 				vmuPop.dismiss();
 			}
 		}
@@ -581,13 +582,13 @@ public class GL2JNIActivity extends Activity {
 	}
 	
 	private boolean showMenu() {
-		if (!menu.dismissPopUps()) {
-			if (!popUp.isShowing()) {
-				displayPopUp(popUp);
-				toggleVMU(true);
-			} else {
-				popUp.dismiss();
-				toggleVMU(false);
+		if (popUp != null) {
+			if (!menu.dismissPopUps()) {
+				if (!popUp.isShowing()) {
+					displayPopUp(popUp);
+				} else {
+					popUp.dismiss();
+				}
 			}
 		}
 		return true;
