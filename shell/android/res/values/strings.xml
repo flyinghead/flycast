@@ -83,9 +83,9 @@
     </string-array>
     
     <string-array name="region">
-        <item>E - United States</item>
+        <item>U - United States</item>
         <item>J - Japanese</item>
-        <item>U - European</item>
+        <item>E - European</item>
         <item>R - Region Free</item>
     </string-array>
     
