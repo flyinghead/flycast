@@ -9,12 +9,13 @@
     <string name="boot_bios">Запустить DREAMCAST BIOS</string>
     <string name="missing_bios">BIOS не найден. Dreamcast BIOS требуется для работы эмулятора. Поместите файл BIOS по этому пути: %1$s/data/dc_boot.bin</string>
     <string name="missing_flash">Flash файл не найден. Dreamcast Flash требуется для работы эмулятора. Поместите файл Flash в %1$s/data/dc_flash.bin</string>
-    <string name="require_bios">Вы должны предоставить BIOS</string>
+    <string name="require_bios">Вы должны выбрать BIOS</string>
     
     <string name="folder_bios">ЗАГРУЗОЧНЫЙ BIOS</string>
     <string name="folder_select">Выбрать эту папку</string>
 
-    <string name="experimental_opts">Эксперементально (может произойти что-то плохое)</string>
+    <string name="optimization_opts">Настройки оптимизации и отладки</string>
+    <string name="experimental_opts">Эксперементальные (могут возникнуть проблемы)</string>
     <string name="select_dynarec">Динамический рекомпилятор</string>
     <string name="select_unstable">Нестабильные оптимизации</string>
     <string name="select_region">DC Регион</string>
@@ -22,7 +23,9 @@
     <string name="select_mipmaps">Использовать уменьшающиеся изображения</string>
     <string name="select_stretch">Широкоэкранный режим</string>
     <string name="set_frameskip">Количество пропускаемых кадров:</string>
-    <string name="select_render">PVR Rendering (не работает)</string>
+    <string name="select_render">PVR Rendering (пока не работает)</string>
+    <string name="select_software">Програмный Rendering</string>
+    <string name="select_sound">Включить эмуляцию звука</string>
     <string name="default_disk">Выбрать стандартный диск</string>
     <string name="select_force_gpu">Принудительно v6 GPU конфиг.</string>
     <string name="games_listing">Список доступных DREAMCAST игр</string>
