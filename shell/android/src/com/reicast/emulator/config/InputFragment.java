@@ -31,7 +31,7 @@ import com.bda.controller.MotionEvent;
 import com.bda.controller.StateEvent;
 import com.reicast.emulator.MainActivity;
 import com.reicast.emulator.R;
-import com.reicast.emulator.emu.MOGAInput;
+import com.reicast.emulator.periph.MOGAInput;
 
 import de.ankri.views.Switch;
 

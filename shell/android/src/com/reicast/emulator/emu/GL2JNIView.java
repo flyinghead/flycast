@@ -29,6 +29,7 @@ import android.view.ScaleGestureDetector.SimpleOnScaleGestureListener;
 import android.view.View;
 
 import com.reicast.emulator.MainActivity;
+import com.reicast.emulator.periph.VJoy;
 
 
 /**
@@ -103,7 +104,10 @@ public class GL2JNIView extends GLSurfaceView
 
     vib=(Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
     
-	System.gc();
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB) {
+    	Runtime.getRuntime().freeMemory();
+    	System.gc();
+    }
 
     SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
     boolean soundEndabled = prefs.getBoolean("sound_enabled", true);
@@ -182,7 +186,6 @@ public class GL2JNIView extends GLSurfaceView
     //configAudio(44100,250);
    
     ethd.start();
-  
   }
   
   public GLSurfaceView.Renderer getRenderer()

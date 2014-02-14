@@ -13,6 +13,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
@@ -60,7 +61,10 @@ public class InputModFragment extends Fragment {
 	public void onViewCreated(View view, Bundle savedInstanceState) {
 		parentActivity = getActivity();
 
-		System.gc();
+		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB) {
+	    	Runtime.getRuntime().freeMemory();
+	    	System.gc();
+	    }
 
 		mPrefs = PreferenceManager.getDefaultSharedPreferences(parentActivity);
 
@@ -387,7 +391,10 @@ public class InputModFragment extends Fragment {
 	}
 
 	private Drawable getButtonImage(int x, int y) {
-		System.gc();
+		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB) {
+	    	Runtime.getRuntime().freeMemory();
+	    	System.gc();
+	    }
 		try {
 			InputStream bitmap = parentActivity.getAssets().open("buttons.png");
 			BitmapFactory.Options options = new BitmapFactory.Options();
@@ -395,7 +402,10 @@ public class InputModFragment extends Fragment {
 			Bitmap image = BitmapFactory.decodeStream(bitmap, null, options);
 			bitmap.close();
 			bitmap = null;
-			System.gc();
+			if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB) {
+		    	Runtime.getRuntime().freeMemory();
+		    	System.gc();
+		    }
 			Matrix matrix = new Matrix();
 			matrix.postScale(32, 32);
 			Bitmap resizedBitmap = Bitmap.createBitmap(image, x, y, 64 / sS,
@@ -412,7 +422,10 @@ public class InputModFragment extends Fragment {
 				return getButtonImage(x, y);
 			} else {
 				E.printStackTrace();
-				System.gc();
+				if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB) {
+			    	Runtime.getRuntime().freeMemory();
+			    	System.gc();
+			    }
 			}
 		}
 		return parentActivity.getResources().getDrawable(R.drawable.input);

@@ -1,4 +1,4 @@
-package com.reicast.emulator.emu;
+package com.reicast.emulator.periph;
 
 import android.content.Context;
 import android.content.SharedPreferences;

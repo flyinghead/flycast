@@ -2,7 +2,6 @@ package com.reicast.emulator.emu;
 
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Vector;
 
 import tv.ouya.console.api.OuyaController;
 import android.annotation.TargetApi;
@@ -10,7 +9,6 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
-import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -22,17 +20,23 @@ import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.ViewGroup.LayoutParams;
 import android.view.Window;
+import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.Toast;
 
 import com.reicast.emulator.R;
 import com.reicast.emulator.config.ConfigureFragment;
+import com.reicast.emulator.emu.OnScreenMenu.MainPopup;
+import com.reicast.emulator.emu.OnScreenMenu.VmuPopup;
+import com.reicast.emulator.periph.MOGAInput;
+import com.reicast.emulator.periph.SipEmulator;
 
 @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR1)
 public class GL2JNIActivity extends Activity {
 	public GL2JNIView mView;
 	OnScreenMenu menu;
-	PopupWindow popUp;
+	MainPopup popUp;
+	VmuPopup vmuPop;
 	MOGAInput moga = new MOGAInput();
 	private SharedPreferences prefs;
 	static String[] portId = { "_A", "_B", "_C", "_D" };
@@ -58,7 +62,6 @@ public class GL2JNIActivity extends Activity {
 		prefs = PreferenceManager.getDefaultSharedPreferences(this);
 		ConfigureFragment.getCurrentConfiguration(prefs);
 		menu = new OnScreenMenu(GL2JNIActivity.this, prefs);
-		popUp = menu.createPopup();
 
 		/*
 		 * try { //int rID =
@@ -282,9 +285,20 @@ public class GL2JNIActivity extends Activity {
 			JNIdc.setupMic(sip);
 		}
 		
-		//setup vmu screen
-		JNIdc.setupVmu(menu.getVmuLcd());
-		
+		popUp = menu.new MainPopup(this);
+		vmuPop = menu.new VmuPopup(this);
+		if(prefs.getBoolean("vmu_floating", false)){
+			//kind of a hack - if the user last had the vmu on screen
+			//inverse it and then "toggle"
+			prefs.edit().putBoolean("vmu_floating", false).commit();
+			//can only display a popup after onCreate
+			mView.post(new Runnable() {
+				public void run() {
+					toggleVmu();
+				}
+			});
+		}
+		JNIdc.setupVmu(menu.getVmu());
 	}
 	
 	private void runCompatibilityMode() {
@@ -498,6 +512,30 @@ public class GL2JNIActivity extends Activity {
 		popUpDebug.update(LayoutParams.WRAP_CONTENT,
 				LayoutParams.WRAP_CONTENT);
 	}
+
+	public void toggleVmu() {
+		boolean showFloating = !prefs.getBoolean("vmu_floating", false);
+		if(showFloating){
+			if(popUp.isShowing()){
+				popUp.dismiss();
+			}
+			//remove from popup menu
+			LinearLayout parent = (LinearLayout) popUp.getContentView();
+			parent.removeView(menu.getVmu());
+			//add to floating window
+			vmuPop.showVmu();
+			vmuPop.showAtLocation(mView, Gravity.TOP | Gravity.RIGHT, 20, 20);
+			vmuPop.update(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+		}else{
+			vmuPop.dismiss();
+			//remove from floating window
+			LinearLayout parent = (LinearLayout) vmuPop.getContentView();
+			parent.removeView(menu.getVmu());
+			//add back to popup menu
+			popUp.showVmu();
+		}
+		prefs.edit().putBoolean("vmu_floating", showFloating).commit();
+	}
 	
 	public void displayConfig(PopupWindow popUpConfig) {
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
@@ -567,11 +605,13 @@ public class GL2JNIActivity extends Activity {
 	}
 	
 	private boolean showMenu() {
-		if (!popUp.isShowing()) {
-			displayPopUp(popUp);
-		} else {
+		if (popUp != null) {
 			if (!menu.dismissPopUps()) {
-				popUp.dismiss();
+				if (!popUp.isShowing()) {
+					displayPopUp(popUp);
+				} else {
+					popUp.dismiss();
+				}
 			}
 		}
 		return true;

@@ -311,14 +311,6 @@ public class ConfigureFragment extends Fragment {
 					int count) {
 			}
 		});
-
-		Button debug_button = (Button) getView()
-				.findViewById(R.id.debug_button);
-		debug_button.setOnClickListener(new View.OnClickListener() {
-			public void onClick(View v) {
-				generateErrorLog();
-			}
-		});
 	}
 
 	public void generateErrorLog() {

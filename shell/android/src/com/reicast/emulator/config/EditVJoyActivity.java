@@ -23,7 +23,7 @@ import com.reicast.emulator.R;
 import com.reicast.emulator.emu.GL2JNIView;
 import com.reicast.emulator.emu.JNIdc;
 import com.reicast.emulator.emu.OnScreenMenu;
-import com.reicast.emulator.emu.VJoy;
+import com.reicast.emulator.periph.VJoy;
 
 @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR1)
 public class EditVJoyActivity extends Activity {
@@ -127,7 +127,11 @@ public class EditVJoyActivity extends Activity {
 		if (keyCode == KeyEvent.KEYCODE_MENU
 				|| keyCode == KeyEvent.KEYCODE_BACK) {
 			if (!popUp.isShowing()) {
-				popUp.showAtLocation(mView, Gravity.BOTTOM, 0, 0);
+				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+					popUp.showAtLocation(mView, Gravity.BOTTOM, 0, 60);
+				} else {
+					popUp.showAtLocation(mView, Gravity.BOTTOM, 0, 0);
+				}
 				popUp.update(LayoutParams.WRAP_CONTENT,
 						LayoutParams.WRAP_CONTENT);
 			} else {

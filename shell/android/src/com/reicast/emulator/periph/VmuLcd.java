@@ -1,11 +1,14 @@
-package com.reicast.emulator.emu;
+package com.reicast.emulator.periph;
 
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
 import android.util.Log;
 import android.view.View;
+
+import com.reicast.emulator.emu.OnScreenMenu;
 
 public class VmuLcd extends View {
 	
@@ -15,12 +18,17 @@ public class VmuLcd extends View {
 	private int[] image = new int[w*h];
 	private Bitmap current = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
 	private float scale;
+	private Paint paint;
 	
 	public VmuLcd(Context context) {
 		super(context);
-		
+		paint = new Paint();
 		scale = (float)OnScreenMenu.getPixelsFromDp(60, getContext()) / w;
 		Log.d("VmuLcd", "scale: "+scale);
+	}
+	
+	public void configureScale(int dp) {
+		scale = (float)OnScreenMenu.getPixelsFromDp(dp, getContext()) / w;
 	}
 	
 	public void updateBytes(byte[] data){
@@ -33,10 +41,11 @@ public class VmuLcd extends View {
 	}
 
 	@Override
-	public void onDraw(Canvas c){
+	public void onDraw(Canvas c) {
 		current.setPixels(image, 0, w, 0, 0, w, h);
 		c.scale(scale, scale);
-		c.drawBitmap(current, 0, 0, null);
+		paint.setFilterBitmap(true);
+		c.drawBitmap(current, 0, 0, paint);
 	}
 
 }
