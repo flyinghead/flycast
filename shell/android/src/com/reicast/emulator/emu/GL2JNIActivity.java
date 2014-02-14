@@ -2,7 +2,6 @@ package com.reicast.emulator.emu;
 
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Vector;
 
 import tv.ouya.console.api.OuyaController;
 import android.annotation.TargetApi;
@@ -10,7 +9,6 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
-import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -22,7 +20,6 @@ import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.ViewGroup.LayoutParams;
 import android.view.Window;
-import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.Toast;
 
@@ -30,7 +27,6 @@ import com.reicast.emulator.R;
 import com.reicast.emulator.config.ConfigureFragment;
 import com.reicast.emulator.periph.MOGAInput;
 import com.reicast.emulator.periph.SipEmulator;
-import com.reicast.emulator.periph.VmuLcd;
 
 @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR1)
 public class GL2JNIActivity extends Activity {

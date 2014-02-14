@@ -1,7 +1,5 @@
 package com.reicast.emulator.periph;
 
-import com.reicast.emulator.emu.OnScreenMenu;
-
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -9,6 +7,8 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.util.Log;
 import android.view.View;
+
+import com.reicast.emulator.emu.OnScreenMenu;
 
 public class VmuLcd extends View {
 	
@@ -20,17 +20,15 @@ public class VmuLcd extends View {
 	private float scale;
 	private Paint paint;
 	
-	public VmuLcd(Context context, boolean popOut) {
+	public VmuLcd(Context context) {
 		super(context);
-		
 		paint = new Paint();
-		
-		if (popOut) {
-			scale = (float)OnScreenMenu.getPixelsFromDp(80, getContext()) / w;
-		} else {
-			scale = (float)OnScreenMenu.getPixelsFromDp(60, getContext()) / w;
-		}
+		scale = (float)OnScreenMenu.getPixelsFromDp(60, getContext()) / w;
 		Log.d("VmuLcd", "scale: "+scale);
+	}
+	
+	public void configureScale(int dp) {
+		scale = (float)OnScreenMenu.getPixelsFromDp(dp, getContext()) / w;
 	}
 	
 	public void updateBytes(byte[] data){

@@ -54,7 +54,8 @@ public class OnScreenMenu {
 	}
 	
 	public PopupWindow generateVMU() {
-		vmuLcd = new VmuLcd(mContext, true);
+		vmuLcd = new VmuLcd(mContext);
+		vmuLcd.configureScale(80);
 		PopupWindow vmuPop = new PopupWindow(mContext);
 		int pX = OnScreenMenu.getPixelsFromDp(80, mContext);
 		int pY = OnScreenMenu.getPixelsFromDp(56, mContext);
@@ -70,7 +71,6 @@ public class OnScreenMenu {
 		});
 		vlay.addView(vmuLcd, vparams);
 		vmuPop.setContentView(vlay);
-		JNIdc.setupVmu(vmuLcd);
 		return vmuPop;
 	}
 
@@ -84,7 +84,7 @@ public class OnScreenMenu {
 
 		hlay.setOrientation(LinearLayout.HORIZONTAL);
 		
-		vmuLcdMenu = new VmuLcd(mContext, false);
+		vmuLcdMenu = new VmuLcd(mContext);
 		vmuLcdMenu.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
 				mContext.toggleVMU(true);
