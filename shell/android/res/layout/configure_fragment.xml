@@ -326,126 +326,126 @@
                 </LinearLayout>
             </TableRow>
 
+            <TableRow
+                android:layout_marginTop="10dp"
+                android:gravity="center_vertical" >
+
+                <TextView
+                    android:id="@+id/region_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="0.5"
+                    android:ems="10"
+                    android:gravity="center_vertical|left"
+                    android:text="@string/select_region" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="right" >
+
+                    <Spinner
+                        android:id="@+id/region_spinner"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:ems="10" >
+                    </Spinner>
+                </LinearLayout>
+            </TableRow>
+
+            <TableRow
+                android:layout_marginTop="10dp"
+                android:gravity="center_vertical" >
+
+                <TextView
+                    android:id="@+id/limitfps_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="0.5"
+                    android:ems="10"
+                    android:gravity="center_vertical|left"
+                    android:text="@string/select_limitfps" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="right"
+                    android:orientation="vertical" >
+
+                    <de.ankri.views.Switch
+                        android:id="@+id/limitfps_option"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:focusable="true" />
+                </LinearLayout>
+            </TableRow>
+
+            <TableRow
+                android:layout_marginTop="10dp"
+                android:gravity="center_vertical" >
+
+                <TextView
+                    android:id="@+id/render_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="0.5"
+                    android:ems="10"
+                    android:gravity="center_vertical|left"
+                    android:text="@string/select_render" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="right"
+                    android:orientation="vertical" >
+
+                    <de.ankri.views.Switch
+                        android:id="@+id/render_option"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:focusable="true" />
+                </LinearLayout>
+            </TableRow>
+
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
                 android:orientation="vertical" >
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:orientation="vertical" >
-
-                    <TextView
-                        android:id="@+id/region_text"
-                        android:layout_width="wrap_content"
-                        android:layout_height="0dip"
-                        android:layout_weight="1"
-                        android:text="@string/select_region" />
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal" >
-
-                        <Spinner
-                            android:id="@+id/region_spinner"
-                            android:layout_width="0dip"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:ems="10" >
-                        </Spinner>
-                    </LinearLayout>
-                </LinearLayout>
-
-                <TableRow
-                    android:layout_marginTop="10dp"
-                    android:gravity="center_vertical" >
-
-                    <TextView
-                        android:id="@+id/limitfps_text"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="0.5"
-                        android:ems="10"
-                        android:gravity="center_vertical|left"
-                        android:text="@string/select_limitfps" />
-
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:gravity="right"
-                        android:orientation="vertical" >
-
-                        <de.ankri.views.Switch
-                            android:id="@+id/limitfps_option"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:focusable="true" />
-                    </LinearLayout>
-                </TableRow>
-
-                <TableRow
-                    android:layout_marginTop="10dp"
-                    android:gravity="center_vertical" >
-
-                    <TextView
-                        android:id="@+id/render_text"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="0.5"
-                        android:ems="10"
-                        android:gravity="center_vertical|left"
-                        android:text="@string/select_render" />
-
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:gravity="right"
-                        android:orientation="vertical" >
-
-                        <de.ankri.views.Switch
-                            android:id="@+id/render_option"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:focusable="true" />
-                    </LinearLayout>
-                </TableRow>
+                <TextView
+                    android:id="@+id/cheatdisk_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="0dip"
+                    android:layout_weight="1"
+                    android:text="@string/default_disk" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
                     android:orientation="vertical" >
 
-                    <TextView
-                        android:id="@+id/cheatdisk_text"
-                        android:layout_width="wrap_content"
-                        android:layout_height="0dip"
-                        android:layout_weight="1"
-                        android:text="@string/default_disk" />
-
-                    <LinearLayout
+                    <EditText
+                        android:id="@+id/cheat_disk"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="vertical" >
-
-                        <EditText
-                            android:id="@+id/cheat_disk"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:ems="10"
-                            android:inputType="textPersonName" >
-                        </EditText>
-                    </LinearLayout>
+                        android:layout_weight="1"
+                        android:ems="10"
+                        android:inputType="textPersonName" >
+                    </EditText>
                 </LinearLayout>
             </LinearLayout>
         </TableLayout>
+    </LinearLayout>
+
+    <TableLayout>
+    </TableLayout>
+
+    <LinearLayout>
     </LinearLayout>
 
 </ScrollView>
