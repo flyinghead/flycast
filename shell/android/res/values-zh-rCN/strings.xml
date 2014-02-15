@@ -52,7 +52,8 @@
     <string name="search_button">搜寻</string>
     <string name="moga_pro_connect">MOGA Pro已连接!</string>
     <string name="moga_connect">MOGA已连接</string>
-    <string name="about_text">reicast是一款dreamcast模拟器 \n\n版本: %1$s</string>
+    <string name="about_text">reicast是一款dreamcast模拟器</string>
+    <string name="revision_text">版本: %1$s [%2$s]</string>
     <string name="app_site">主页: http://reicast.com</string>
     <string name="beta_site">测试版: http://reicast.loungekatt.com</string>
     <string name="git_api">https://api.github.com/repos/reicast/reicast-emulator/commits</string>

@@ -50,7 +50,8 @@
     <string name="moga_pro_connect">MOGA Pro verbunden!</string>
     <string name="moga_connect">MOGA verbunden!</string>
 
-    <string name="about_text">reicast ist ein Dreamcast Emulator\n\nVersion: %1$s</string>
+    <string name="about_text">reicast ist ein Dreamcast Emulator</string>
+    <string name="revision_text">Version: %1$s</string>
     
     <string-array name="controllers">
     <item>Controller A</item>

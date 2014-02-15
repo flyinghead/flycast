@@ -56,7 +56,8 @@
     <string name="moga_pro_connect">MOGA Pro присоиденен!</string>
     <string name="moga_connect">MOGA присоиденен!</string>
 
-    <string name="about_text">DREAMCAST эмулятор "REICAST"\nВерсия: %1$s</string>
+    <string name="about_text">DREAMCAST эмулятор "REICAST"</string>
+    <string name="revision_text">Версия: %1$s [%2$s]</string>
     <string name="app_site">Сайт: http://reicast.com</string>
     <string name="beta_site">Бета версии: http://reicast.loungekatt.com</string>
     <string name="git_api">https://api.github.com/repos/reicast/reicast-emulator/commits</string>

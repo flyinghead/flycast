@@ -50,7 +50,8 @@
     <string name="moga_pro_connect">MOGAプロ接続!</string>
     <string name="moga_connect">MOGA接続!</string>
 
-    <string name="about_text">reicastはドリームキャストエミュレータです\n\nバージョン: %1$s</string>
+    <string name="about_text">reicastはドリームキャストエミュレータです</string>
+    <string name="revision_text">バージョン: %1$s [%2$s]</string>
     
     <string-array name="controllers">
     <item>コントローラ A</item>
