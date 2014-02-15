@@ -64,7 +64,8 @@
     <string name="moga_pro_connect">MOGA Pro Connected!</string>
     <string name="moga_connect">MOGA Connected!</string>
 
-    <string name="about_text">reicast is a dreamcast emulator\n\nVersion: %1$s</string>
+    <string name="about_text">reicast is a dreamcast emulator</string>
+    <string name="revision_text">Version: %1$s [%2$s]</string>
     <string name="app_site">Homepage: http://reicast.com</string>
     <string name="beta_site">Betas: http://reicast.loungekatt.com</string>
     <string name="git_api">https://api.github.com/repos/reicast/reicast-emulator/commits</string>

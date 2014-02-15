@@ -15,6 +15,16 @@
         android:ems="12"
         android:gravity="center"
         android:text="@string/about_text" />
+
+    <TextView
+        android:id="@+id/revision_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="6dp"
+        android:layout_marginTop="10dp"
+        android:ems="12"
+        android:gravity="center"
+        android:text="@string/revision_text" />
     
     <TextView
         android:id="@+id/site_text"
