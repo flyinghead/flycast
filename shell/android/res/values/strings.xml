@@ -34,6 +34,8 @@
 
     <string name="games_listing">Available Dreamcast Games</string>
 
+    <string name="report_issue">Previous Crash Detected</string>
+
     <string name="customize_touch_controls">Customize Touch Controls</string>
     <string name="launch_editor">Launch Editor</string>
     <string name="touch_vibration">Touch Vibration</string>
