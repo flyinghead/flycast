@@ -270,7 +270,7 @@ public class MainActivity extends SlidingFragmentActivity implements
 						dialog.dismiss();
 					}
 				});
-		builder.setNegativeButton("Report",
+		builder.setPositiveButton("Report",
 				new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int which) {
 						Toast.makeText(MainActivity.this,
