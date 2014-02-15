@@ -26,6 +26,7 @@ import android.widget.Toast;
 
 import com.reicast.emulator.R;
 import com.reicast.emulator.config.ConfigureFragment;
+import com.reicast.emulator.emu.OnScreenMenu.FpsPopup;
 import com.reicast.emulator.emu.OnScreenMenu.MainPopup;
 import com.reicast.emulator.emu.OnScreenMenu.VmuPopup;
 import com.reicast.emulator.periph.MOGAInput;
@@ -37,6 +38,7 @@ public class GL2JNIActivity extends Activity {
 	OnScreenMenu menu;
 	MainPopup popUp;
 	VmuPopup vmuPop;
+	FpsPopup fpsPop;
 	MOGAInput moga = new MOGAInput();
 	private SharedPreferences prefs;
 	static String[] portId = { "_A", "_B", "_C", "_D" };
@@ -299,6 +301,15 @@ public class GL2JNIActivity extends Activity {
 			});
 		}
 		JNIdc.setupVmu(menu.getVmu());
+		if (prefs.getBoolean("show_fps", false)) {
+			fpsPop = menu.new FpsPopup(this);
+			mView.setFpsDisplay(fpsPop);
+			mView.post(new Runnable() {
+				public void run() {
+					displayFPS();
+				}
+			});
+		}
 	}
 	
 	private void runCompatibilityMode() {
@@ -511,6 +522,11 @@ public class GL2JNIActivity extends Activity {
 		}
 		popUpDebug.update(LayoutParams.WRAP_CONTENT,
 				LayoutParams.WRAP_CONTENT);
+	}
+
+	public void displayFPS() {
+		fpsPop.showAtLocation(mView, Gravity.TOP | Gravity.LEFT, 20, 20);
+		fpsPop.update(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
 	}
 
 	public void toggleVmu() {

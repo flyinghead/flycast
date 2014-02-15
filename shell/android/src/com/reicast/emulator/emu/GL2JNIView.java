@@ -28,7 +28,7 @@ import android.view.ScaleGestureDetector;
 import android.view.ScaleGestureDetector.SimpleOnScaleGestureListener;
 import android.view.View;
 
-import com.reicast.emulator.MainActivity;
+import com.reicast.emulator.emu.OnScreenMenu.FpsPopup;
 import com.reicast.emulator.periph.VJoy;
 
 
@@ -68,7 +68,7 @@ public class GL2JNIView extends GLSurfaceView
   public float[][] vjoy_d_custom;
 
   private static final float[][] vjoy = VJoy.baseVJoy();
-  
+
   Renderer rend;
 
   private boolean touchVibrationEnabled;
@@ -80,6 +80,10 @@ public class GL2JNIView extends GLSurfaceView
 
       resetEditMode();
       requestLayout();
+  }
+
+  public void setFpsDisplay(FpsPopup fpsPop) {
+	  rend.fpsPop = fpsPop;
   }
   	
   public GL2JNIView(Context context,String newFileName,boolean translucent,int depth,int stencil,boolean editVjoyMode)
@@ -156,8 +160,8 @@ public class GL2JNIView extends GLSurfaceView
     // is interpreted as any 32-bit surface with alpha by SurfaceFlinger.
     if(translucent) this.getHolder().setFormat(PixelFormat.TRANSLUCENT);
     
-    if (MainActivity.force_gpu) {
-    	setEGLContextFactory(new ContextFactory());
+    if (prefs.getBoolean("force_gpu", false)) {
+    	setEGLContextFactory(new GLCFactory6.ContextFactory());
     	setEGLConfigChooser(
     			translucent?
     					new ConfigChooser(8, 8, 8, 8, depth, stencil)
@@ -180,7 +184,7 @@ public class GL2JNIView extends GLSurfaceView
     }
 
     // Set the renderer responsible for frame rendering
-    setRenderer(rend=new Renderer());
+    setRenderer(rend=new Renderer(this));
 
     // Initialize audio
     //configAudio(44100,250);
@@ -789,23 +793,52 @@ private static class ContextFactory implements GLSurfaceView.EGLContextFactory
 
   private static class Renderer implements GLSurfaceView.Renderer
   {
-    public void onDrawFrame(GL10 gl)
-    {
-      //Log.w("INPUT", " " + kcode_raw + " " + rt + " " + lt + " " + jx + " " + jy);
-      //JNIdc.kcode(kcode_raw,lt,rt,jx,jy);
-      // Natively update nullDC display
-      JNIdc.rendframe();
-    }
 
-    public void onSurfaceChanged(GL10 gl,int width,int height)
-    {
-    	JNIdc.rendinit(width,height);
-    }
+	  private GL2JNIView mView;
+	  private FPSCounter fps = new FPSCounter();
+	  private FpsPopup fpsPop;
 
-    public void onSurfaceCreated(GL10 gl,EGLConfig config)
-    {
-    	onSurfaceChanged(gl, 800, 480);
-    }
+	  public Renderer (GL2JNIView mView) {
+		  this.mView = mView;
+	  }
+
+	  public void onDrawFrame(GL10 gl)
+	  {
+		  if (fpsPop != null && fpsPop.isShowing()) {
+			  fps.logFrame();
+		  }
+		  JNIdc.rendframe();
+	  }
+
+	  public void onSurfaceChanged(GL10 gl,int width,int height)
+	  {
+		  JNIdc.rendinit(width,height);
+	  }
+
+	  public void onSurfaceCreated(GL10 gl,EGLConfig config)
+	  {
+		  onSurfaceChanged(gl, 800, 480);
+	  }
+
+	  public class FPSCounter {
+		  long startTime = System.nanoTime();
+		  int frames = 0;
+
+		  public void logFrame() {
+			  frames++;
+			  if (System.nanoTime() - startTime >= 1000000000) {
+				  mView.post(new Runnable() {
+					  public void run() {
+						  if (frames > 0) {
+							  fpsPop.setText(frames);
+						  }
+					  }
+				  });
+				  startTime = System.nanoTime();
+				  frames = 0;
+			  }
+		  }
+	  }
   }
   
   public void audioDisable(boolean disabled) {
@@ -815,7 +848,6 @@ private static class ContextFactory implements GLSurfaceView.EGLContextFactory
 		  ethd.Player.play();
 	  }
   }
-
 
   class EmuThread extends Thread
   {

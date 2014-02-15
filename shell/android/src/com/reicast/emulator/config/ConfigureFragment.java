@@ -23,7 +23,6 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.EditText;
@@ -34,7 +33,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.android.util.DreamTime;
-import com.reicast.emulator.MainActivity;
 import com.reicast.emulator.R;
 import com.reicast.emulator.debug.GenerateLogs;
 import com.reicast.emulator.emu.GL2JNIView;
@@ -96,6 +94,20 @@ public class ConfigureFragment extends Fragment {
 
 		getCurrentConfiguration(mPrefs);
 
+		final Switch fps_opt = (Switch) getView().findViewById(
+				R.id.fps_option);
+			OnCheckedChangeListener fps_options = new OnCheckedChangeListener() {
+
+				public void onCheckedChanged(CompoundButton buttonView,
+						boolean isChecked) {
+					mPrefs.edit().putBoolean("show_fps", isChecked).commit();
+				}
+			};
+			boolean counter = mPrefs.getBoolean("show_fps",
+					false);
+			fps_opt.setChecked(counter);
+			fps_opt.setOnCheckedChangeListener(fps_options);
+
 		// Generate the menu options and fill in existing settings
 		final Switch force_gpu_opt = (Switch) getView().findViewById(
 				R.id.force_gpu_option);
@@ -105,10 +117,11 @@ public class ConfigureFragment extends Fragment {
 				public void onCheckedChanged(CompoundButton buttonView,
 						boolean isChecked) {
 					mPrefs.edit().putBoolean("force_gpu", isChecked).commit();
-					MainActivity.force_gpu = isChecked;
 				}
 			};
-			force_gpu_opt.setChecked(MainActivity.force_gpu);
+			boolean enhanced = mPrefs.getBoolean("sound_enabled",
+					true);
+			force_gpu_opt.setChecked(enhanced);
 			force_gpu_opt.setOnCheckedChangeListener(force_gpu_options);
 		} else {
 			force_gpu_opt.setEnabled(false);
@@ -125,7 +138,6 @@ public class ConfigureFragment extends Fragment {
 					if (isChecked) {
 						force_gpu_opt.setEnabled(false);
 						mPrefs.edit().putBoolean("force_gpu", false).commit();
-						MainActivity.force_gpu = false;
 					} else {
 						force_gpu_opt.setEnabled(true);
 					}

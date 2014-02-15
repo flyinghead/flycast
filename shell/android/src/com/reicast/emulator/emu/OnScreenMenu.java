@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Environment;
+import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -16,6 +17,7 @@ import android.widget.ImageButton;
 import android.widget.ImageView.ScaleType;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
+import android.widget.TextView;
 
 import com.reicast.emulator.MainActivity;
 import com.reicast.emulator.R;
@@ -60,12 +62,42 @@ public class OnScreenMenu {
 	}
 
 	void displayDebugPopup(final PopupWindow popUp) {
-		mContext.displayDebug(new DebugPopup(mContext));
+		mContext.displayDebug(new DebugPopup());
+	}
+
+	public class FpsPopup extends PopupWindow {
+		
+		private TextView fpsText;
+
+		public FpsPopup(Context c) {
+			super(c);
+
+			int pX = getPixelsFromDp(66, mContext);
+			int pY = getPixelsFromDp(34, mContext);
+			LinearLayout.LayoutParams fpsParams = new LinearLayout.LayoutParams(pX, pY);
+			LinearLayout flay = new LinearLayout(mContext);
+			flay.setOrientation(LinearLayout.HORIZONTAL);
+			fpsText = new TextView(mContext);
+			fpsParams.weight = 1.0f;
+			fpsParams.gravity = Gravity.CENTER;
+			fpsText.setTextSize(TypedValue.COMPLEX_UNIT_SP,32);
+			fpsText.setTextColor(mContext.getResources().getColor(android.R.color.white));
+			fpsText.setLayoutParams(fpsParams);
+
+			flay.addView(fpsText, fpsParams);
+
+			setContentView(flay);
+		}
+
+		public void setText(int frames) {
+			fpsText.setText(String.valueOf(frames));
+			fpsText.invalidate();
+		}
 	}
 
 	public class DebugPopup extends PopupWindow {
 
-		public DebugPopup(Context c) {
+		public DebugPopup() {
 
 			int p = getPixelsFromDp(60, mContext);
 			LayoutParams debugParams = new LayoutParams(p, p);
@@ -123,7 +155,7 @@ public class OnScreenMenu {
 	}
 
 	void displayConfigPopup(final PopupWindow popUp) {
-		mContext.displayConfig(new ConfigPopup(mContext));
+		mContext.displayConfig(new ConfigPopup());
 	}
 
 	public class ConfigPopup extends PopupWindow {
@@ -131,7 +163,7 @@ public class OnScreenMenu {
 		private View fullscreen;
 		private View framelimit;
 
-		public ConfigPopup(Context c) {
+		public ConfigPopup() {
 
 			int p = getPixelsFromDp(60, mContext);
 			LayoutParams configParams = new LayoutParams(p, p);
