@@ -326,33 +326,34 @@
                 </LinearLayout>
             </TableRow>
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+            <TableRow
                 android:layout_marginTop="10dp"
-                android:orientation="vertical" >
+                android:gravity="center_vertical" >
 
                 <TextView
                     android:id="@+id/region_text"
                     android:layout_width="wrap_content"
-                    android:layout_height="0dip"
-                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="0.5"
+                    android:ems="10"
+                    android:gravity="center_vertical|left"
                     android:text="@string/select_region" />
 
                 <LinearLayout
-                    android:layout_width="match_parent"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal" >
+                    android:layout_weight="1"
+                    android:gravity="right" >
 
                     <Spinner
                         android:id="@+id/region_spinner"
-                        android:layout_width="0dip"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:ems="10" >
                     </Spinner>
                 </LinearLayout>
-            </LinearLayout>
+            </TableRow>
 
             <TableRow
                 android:layout_marginTop="10dp"
@@ -439,6 +440,12 @@
                 </LinearLayout>
             </LinearLayout>
         </TableLayout>
+    </LinearLayout>
+
+    <TableLayout>
+    </TableLayout>
+
+    <LinearLayout>
     </LinearLayout>
 
 </ScrollView>

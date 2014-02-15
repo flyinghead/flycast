@@ -25,7 +25,6 @@ import android.view.View.OnTouchListener;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.android.util.DreamTime;
 import com.jeremyfeinstein.slidingmenu.lib.SlidingMenu;
 import com.jeremyfeinstein.slidingmenu.lib.SlidingMenu.OnOpenListener;
 import com.jeremyfeinstein.slidingmenu.lib.app.SlidingFragmentActivity;
@@ -65,21 +64,18 @@ public class MainActivity extends SlidingFragmentActivity implements
 	        public void uncaughtException(Thread t, Throwable error) {
 	        	if (error != null) {
 	        		Log.e("com.reicast.emulator", error.getMessage());
-					Toast.makeText(MainActivity.this,
-		    				getString(R.string.platform),
-		    				Toast.LENGTH_SHORT).show();
-		    		GenerateLogs mGenerateLogs = new GenerateLogs(MainActivity.this);
-		    		mGenerateLogs.setUnhandled(error.getMessage());
-		    		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-		    			mGenerateLogs.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,
-		    					home_directory);
-		    		} else {
-		    			mGenerateLogs.execute(home_directory);
-		    		}
+					mPrefs.edit().putString("prior_error", error.getMessage()).commit();
+					MainActivity.this.finish();
 	        	}
 	        }
 	    };
 	    Thread.setDefaultUncaughtExceptionHandler(mUEHandler);
+
+		String prior_error = mPrefs.getString("prior_error", null);
+		if (!prior_error.equals(null)) {
+			initiateReport(prior_error);
+			mPrefs.edit().remove("prior_error").commit();
+		}
 
 		// Check that the activity is using the layout version with
 		// the fragment_container FrameLayout
@@ -262,6 +258,37 @@ public class MainActivity extends SlidingFragmentActivity implements
 		});
 		System.gc();
 
+	}
+
+	private void initiateReport(final String error) {
+		AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+		builder.setTitle(getString(R.string.report_issue));
+		builder.setMessage(error);
+		builder.setNegativeButton("Cancel",
+				new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int which) {
+						dialog.dismiss();
+					}
+				});
+		builder.setPositiveButton("Report",
+				new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int which) {
+						Toast.makeText(MainActivity.this,
+								getString(R.string.platform),
+								Toast.LENGTH_SHORT).show();
+						GenerateLogs mGenerateLogs = new GenerateLogs(MainActivity.this);
+						mGenerateLogs.setUnhandled(error);
+						if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+							mGenerateLogs.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,
+									home_directory);
+						} else {
+							mGenerateLogs.execute(home_directory);
+						}
+						dialog.dismiss();
+					}
+				});
+		builder.create();
+		builder.show();
 	}
 
 	public static boolean isBiosExisting() {

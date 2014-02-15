@@ -1,10 +1,6 @@
 package com.reicast.emulator.config;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.util.Scanner;
-
-import org.apache.commons.lang3.StringUtils;
 
 import android.app.Activity;
 import android.content.SharedPreferences;
@@ -16,7 +12,6 @@ import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -48,7 +43,7 @@ public class ConfigureFragment extends Fragment {
 
 	public static boolean dynarecopt = true;
 	public static boolean idleskip = true;
-	public static boolean unstableopt = true;
+	public static boolean unstableopt = false;
 	public static int cable = 3;
 	public static int dcregion = 3;
 	public static int broadcast = 4;
@@ -371,39 +366,5 @@ public class ConfigureFragment extends Fragment {
 				ConfigureFragment.cheatdisk);
 		JNIdc.cheatdisk(ConfigureFragment.cheatdisk);
 		JNIdc.dreamtime(DreamTime.getDreamtime());
-		
-//		StringBuilder rebuildFile = new StringBuilder();
-//		rebuildFile.append("[config]" + "\n");
-//		rebuildFile.append("Dynarec.Enabled="
-//				+ String.valueOf(ConfigureFragment.dynarecopt ? 1 : 0)
-//				+ "\n");
-//		rebuildFile.append("Dynarec.idleskip=1" + "\n");
-//		rebuildFile.append("Dynarec.unstable-opt="
-//				+ String.valueOf(ConfigureFragment.unstableopt ? 1 : 0)
-//				+ "\n");
-//		rebuildFile.append("Dreamcast.Cable=3" + "\n");
-//		rebuildFile.append("Dreamcast.RTC=" + DreamTime.getDreamtime()
-//				+ "\n");
-//		rebuildFile.append("Dreamcast.Region="
-//				+ String.valueOf(ConfigureFragment.dcregion) + "\n");
-//		rebuildFile.append("Dreamcast.Broadcast=4" + "\n");
-//		rebuildFile.append("aica.LimitFPS="
-//				+ String.valueOf(ConfigureFragment.limitfps ? 1 : 0)
-//				+ "\n");
-//		rebuildFile.append("aica.NoBatch=0" + "\n");
-//		rebuildFile.append("rend.UseMipmaps="
-//				+ String.valueOf(ConfigureFragment.mipmaps ? 1 : 0)
-//				+ "\n");
-//		rebuildFile.append("rend.WideScreen="
-//				+ String.valueOf(ConfigureFragment.widescreen ? 1 : 0)
-//				+ "\n");
-//		rebuildFile.append("pvr.Subdivide=0" + "\n");
-//		rebuildFile.append("ta.skip="
-//				+ String.valueOf(ConfigureFragment.frameskip) + "\n");
-//		rebuildFile.append("pvr.rend="
-//				+ String.valueOf(ConfigureFragment.pvrrender ? 1 : 0)
-//				+ "\n");
-//		rebuildFile.append("image=" + ConfigureFragment.cheatdisk
-//				+ "\n");
 	}
 }
