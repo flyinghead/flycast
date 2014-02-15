@@ -71,22 +71,13 @@ public class OnScreenMenu {
 
 		public FpsPopup(Context c) {
 			super(c);
-
-			int pX = getPixelsFromDp(66, mContext);
-			int pY = getPixelsFromDp(34, mContext);
-			LinearLayout.LayoutParams fpsParams = new LinearLayout.LayoutParams(pX, pY);
-			LinearLayout flay = new LinearLayout(mContext);
-			flay.setOrientation(LinearLayout.HORIZONTAL);
 			fpsText = new TextView(mContext);
-			fpsParams.weight = 1.0f;
-			fpsParams.gravity = Gravity.CENTER;
-			fpsText.setTextSize(TypedValue.COMPLEX_UNIT_SP,32);
-			fpsText.setTextColor(mContext.getResources().getColor(android.R.color.white));
-			fpsText.setLayoutParams(fpsParams);
-
-			flay.addView(fpsText, fpsParams);
-
-			setContentView(flay);
+			fpsText.setTextSize(TypedValue.COMPLEX_UNIT_SP, 32);
+			fpsText.setTextColor(mContext.getResources().getColor(
+					android.R.color.white));
+			fpsText.setGravity(Gravity.CENTER);
+			fpsText.setText("XX");
+			setContentView(fpsText);
 		}
 
 		public void setText(int frames) {
