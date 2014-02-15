@@ -47,7 +47,7 @@ public class ConfigureFragment extends Fragment {
 	OnClickListener mCallback;
 
 	public static boolean dynarecopt = true;
-	public static boolean idleskip = false;
+	public static boolean idleskip = true;
 	public static boolean unstableopt = true;
 	public static int cable = 3;
 	public static int dcregion = 3;
