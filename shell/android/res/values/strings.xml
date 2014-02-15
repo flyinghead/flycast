@@ -26,6 +26,7 @@
     <string name="select_stretch">Widescreen Mode</string>
     <string name="set_frameskip">Frameskip Value</string>
     <string name="select_render">PVR Rendering (does nothing for now)</string>
+    <string name="select_fps">Show OnScreen FPS</string>
     <string name="select_software">Force Software Rendering</string>
     <string name="select_sound">Enable Emulator Sound</string>
     <string name="select_force_gpu">Force v6 GPU Config</string>
@@ -63,7 +64,8 @@
     <string name="moga_pro_connect">MOGA Pro Connected!</string>
     <string name="moga_connect">MOGA Connected!</string>
 
-    <string name="about_text">reicast is a dreamcast emulator\n\nVersion: %1$s</string>
+    <string name="about_text">reicast is a dreamcast emulator</string>
+    <string name="revision_text">Version: %1$s [%2$s]</string>
     <string name="app_site">Homepage: http://reicast.com</string>
     <string name="beta_site">Betas: http://reicast.loungekatt.com</string>
     <string name="git_api">https://api.github.com/repos/reicast/reicast-emulator/commits</string>
@@ -83,10 +85,10 @@
     </string-array>
     
     <string-array name="region">
-        <item>U - United States</item>
-        <item>J - Japanese</item>
-        <item>E - European</item>
-        <item>R - Region Free</item>
+        <item>NTSC-J</item>
+        <item>NTSC-U/PAL-M/PAL-N</item>
+        <item>PAL-E</item>
+        <item>reicast</item>
     </string-array>
     
     <string name="browser">Browser</string>

@@ -50,20 +50,14 @@
     <string name="moga_pro_connect">MOGA Pro Connected!</string>
     <string name="moga_connect">MOGA Connected!</string>
 
-    <string name="about_text">reicast is a dreamcast emulator\n\nVersion: %1$s</string>
+    <string name="about_text">reicast is a dreamcast emulator</string>
+    <string name="revision_text">Version: %1$s [%2$s]</string>
     
     <string-array name="controllers">
     <item>Controller A</item>
     <item>Controller B</item>
     <item>Controller C</item>
     <item>Controller D</item>
-    </string-array>
-    
-    <string-array name="region">
-        <item></item>
-        <item></item>
-        <item></item>
-        <item>(Default)</item>
     </string-array>
 
     <string name="browser">Browser</string>

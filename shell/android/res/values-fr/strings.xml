@@ -52,7 +52,8 @@
     <string name="moga_pro_connect">MOGA Pro connecté</string>
     <string name="moga_connect">MOGA connecté</string>
 
-    <string name="about_text">reicast est un émulateur dreamcast\n\nVersion: %1$s</string>
+    <string name="about_text">reicast est un émulateur dreamcast</string>
+    <string name="revision_text">Version: %1$s [%2$s]</string>
     <string name="app_site">Site web officiel: http://reicast.com</string>
     <string name="beta_site">Bétas: http://reicast.loungekatt.com</string>
     <string name="git_api">https://api.github.com/repos/NoblesseOblige/reicast-emulator/commits</string>
@@ -62,13 +63,6 @@
     <item>Manette B</item>
     <item>Manette C</item>
     <item>Manette D</item>
-    </string-array>
-    
-    <string-array name="region">
-        <item>E - Etats-Unis</item>
-        <item>J - Japon</item>
-        <item>U - Europe</item>
-        <item>R - Sans région</item>
     </string-array>
 
     <string name="browser">Navigation</string>

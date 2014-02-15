@@ -50,20 +50,14 @@
     <string name="moga_pro_connect">MOGAプロ接続!</string>
     <string name="moga_connect">MOGA接続!</string>
 
-    <string name="about_text">reicastはドリームキャストエミュレータです\n\nバージョン: %1$s</string>
+    <string name="about_text">reicastはドリームキャストエミュレータです</string>
+    <string name="revision_text">バージョン: %1$s [%2$s]</string>
     
     <string-array name="controllers">
     <item>コントローラ A</item>
     <item>コントローラ B</item>
     <item>コントローラ C</item>
     <item>コントローラ D</item>
-    </string-array>
-    
-    <string-array name="region">
-        <item>E - 米国</item>
-        <item>J - 日本の</item>
-        <item>U - 欧州の</item>
-        <item>R - リージョンフリー</item>
     </string-array>
 
     <string name="browser">ブラウザ</string>

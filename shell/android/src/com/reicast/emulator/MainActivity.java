@@ -40,7 +40,6 @@ public class MainActivity extends SlidingFragmentActivity implements
 		FileBrowser.OnItemSelectedListener, OptionsFragment.OnClickListener {
 
 	private SharedPreferences mPrefs;
-	public static boolean force_gpu;
 	private static File sdcard = Environment.getExternalStorageDirectory();
 	public static String home_directory = sdcard + "/dc";
 
@@ -115,8 +114,6 @@ public class MainActivity extends SlidingFragmentActivity implements
 					.replace(R.id.fragment_container, firstFragment,
 							"MAIN_BROWSER").commit();
 		}
-		
-		force_gpu = mPrefs.getBoolean("force_gpu", false);
 		
 		menuHeading = (TextView) findViewById(R.id.menu_heading);
 		

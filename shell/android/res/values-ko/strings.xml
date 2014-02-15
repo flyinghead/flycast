@@ -53,7 +53,8 @@
     <string name="moga_pro_connect">MOGA 프로 연결!</string>
     <string name="moga_connect">MOGA 연결!</string>
 
-    <string name="about_text">reicast는 드림 캐스트 에뮬레이터\n\n버전: %1$s</string>
+    <string name="about_text">reicast는 드림 캐스트 에뮬레이터</string>
+    <string name="revision_text">버전: %1$s [%2$s]</string>
     <string name="app_site">홈페이지: http://reicast.com</string>
     <string name="beta_site">베타: http://reicast.loungekatt.com</string>
     <string name="git_api">https://api.github.com/repos/reicast/reicast-emulator/commits</string>
@@ -69,13 +70,6 @@
         <item>cdi</item>
         <item>chd</item>
         <item>gdi</item>
-    </string-array>
-    
-    <string-array name="region">
-        <item>E - 미국</item>
-        <item>J - 일본의</item>
-        <item>U - 유럽의</item>
-        <item>R - 지역</item>
     </string-array>
     
     <string name="browser">브라우저</string>

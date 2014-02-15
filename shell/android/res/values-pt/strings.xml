@@ -53,7 +53,8 @@
     <string name="moga_pro_connect">MOGA Pro Conectado!</string>
     <string name="moga_connect">MOGA Conectado!</string>
 
-    <string name="about_text">reicast é um emulador de Dreamcast\n\nVersão: %1$s</string>
+    <string name="about_text">reicast é um emulador de Dreamcast</string>
+    <string name="revision_text">Versão: %1$s [%2$s]</string>
     <string name="app_site">Página: http://reicast.com</string>
     <string name="beta_site">Betas: http://reicast.loungekatt.com</string>
     <string name="git_api">https://api.github.com/repos/reicast/reicast-emulator/commits</string>
@@ -69,13 +70,6 @@
         <item>cdi</item>
         <item>chd</item>
         <item>gdi</item>
-    </string-array>
-    
-    <string-array name="region">
-        <item>E - Estados Unidos</item>
-        <item>J - Japão</item>
-        <item>U - Europa</item>
-        <item>R - Sem Região</item>
     </string-array>
     
     <string name="browser">Selecionar Jogos</string>
