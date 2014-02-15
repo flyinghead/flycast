@@ -71,13 +71,6 @@
         <item>gdi</item>
     </string-array>
     
-    <string-array name="region">
-        <item>E - Estados Unidos</item>
-        <item>J - Japão</item>
-        <item>U - Europa</item>
-        <item>R - Sem Região</item>
-    </string-array>
-    
     <string name="browser">Selecionar Jogos</string>
     <string name="settings">Configurações</string>
     <string name="paths">Diretórios</string>

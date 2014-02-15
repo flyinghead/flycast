@@ -63,13 +63,6 @@
     <item>Manette C</item>
     <item>Manette D</item>
     </string-array>
-    
-    <string-array name="region">
-        <item>E - Etats-Unis</item>
-        <item>J - Japon</item>
-        <item>U - Europe</item>
-        <item>R - Sans région</item>
-    </string-array>
 
     <string name="browser">Navigation</string>
     <string name="settings">Réglages</string>

@@ -64,12 +64,6 @@
         <item>控制器C</item>
         <item>控制器D</item>
     </string-array>
-    <string-array name="region">
-        <item>E - 美国</item>
-        <item>J - 日本</item>
-        <item>U - 欧洲</item>
-        <item>R - 无地区</item>
-    </string-array>
 
     <string name="browser">浏览器</string>
     <string name="settings">设置</string>

@@ -58,13 +58,6 @@
     <item>コントローラ C</item>
     <item>コントローラ D</item>
     </string-array>
-    
-    <string-array name="region">
-        <item>E - 米国</item>
-        <item>J - 日本の</item>
-        <item>U - 欧州の</item>
-        <item>R - リージョンフリー</item>
-    </string-array>
 
     <string name="browser">ブラウザ</string>
     <string name="settings">セッティング</string>

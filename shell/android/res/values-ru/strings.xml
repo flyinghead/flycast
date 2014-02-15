@@ -67,13 +67,6 @@
     <item>Контроллер C</item>
     <item>Контроллер D</item>
     </string-array>
-
-    <string-array name="region">
-        <item>E - США</item>
-        <item>J - Япония</item>
-        <item>U - Европа</item>
-        <item>R - Свободный</item>
-    </string-array>
     
     <string name="browser">Перейти к списку игр</string>
     <string name="settings">Настройки</string>

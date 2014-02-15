@@ -57,13 +57,6 @@
     <item>Controlador C</item>
     <item>Controlador D</item>
     </string-array>
-    
-    <string-array name="region">
-        <item></item>
-        <item></item>
-        <item></item>
-        <item>(Predeterminado)</item>
-    </string-array>
 
     <string name="browser">Navegador</string>
     <string name="settings">Configuración</string>

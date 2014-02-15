@@ -84,10 +84,10 @@
     </string-array>
     
     <string-array name="region">
-        <item>U - United States</item>
-        <item>J - Japanese</item>
-        <item>E - European</item>
-        <item>R - Region Free</item>
+        <item>NTSC-J</item>
+        <item>NTSC-U/PAL-M/PAL-N</item>
+        <item>PAL-E</item>
+        <item>reicast</item>
     </string-array>
     
     <string name="browser">Browser</string>

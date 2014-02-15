@@ -58,13 +58,6 @@
     <item>Controller C</item>
     <item>Controller D</item>
     </string-array>
-    
-    <string-array name="region">
-        <item></item>
-        <item></item>
-        <item></item>
-        <item>(Default)</item>
-    </string-array>
 
 	<string name="browser">Explorar</string>
     <string name="settings">Configurações</string>
