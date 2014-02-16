@@ -65,6 +65,7 @@ public class MainActivity extends SlidingFragmentActivity implements
 					mPrefs.edit().putString("prior_error", log).commit();
 					error.printStackTrace();
 					//Unreliable, but useful when possible
+					//...or could lead us on wild goose chase
 					MainActivity.this.finish();
 				}
 	        }
@@ -81,8 +82,6 @@ public class MainActivity extends SlidingFragmentActivity implements
 			loadInterface(savedInstanceState);
 		}
 
-
-			
 	}
 
 	private void loadInterface(Bundle savedInstanceState) {

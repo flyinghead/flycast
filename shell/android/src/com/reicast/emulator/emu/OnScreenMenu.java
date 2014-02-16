@@ -90,7 +90,7 @@ public class OnScreenMenu {
 
 		public DebugPopup(Context c) {
 			super(c);
-
+			setBackgroundDrawable(null);
 			int p = getPixelsFromDp(60, mContext);
 			LayoutParams debugParams = new LayoutParams(p, p);
 
@@ -157,7 +157,7 @@ public class OnScreenMenu {
 
 		public ConfigPopup(Context c) {
 			super(c);
-
+			setBackgroundDrawable(null);
 			int p = getPixelsFromDp(60, mContext);
 			LayoutParams configParams = new LayoutParams(p, p);
 
@@ -326,6 +326,7 @@ public class OnScreenMenu {
 
 		public VmuPopup(Context c) {
 			super(c);
+			setBackgroundDrawable(null);
 			int pX = OnScreenMenu.getPixelsFromDp(80, mContext);
 			int pY = OnScreenMenu.getPixelsFromDp(56, mContext);
 			vparams = new LayoutParams(pX, pY);
@@ -344,6 +345,7 @@ public class OnScreenMenu {
 	public class MainPopup extends PopupWindow {
 		public MainPopup(Context c) {
 			super(c);
+			setBackgroundDrawable(null);
 			int p = getPixelsFromDp(60, mContext);
 			params = new LayoutParams(p, p);
 			hlay = new LinearLayout(mContext);
