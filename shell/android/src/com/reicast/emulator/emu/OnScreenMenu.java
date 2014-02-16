@@ -9,7 +9,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Environment;
-import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -74,9 +73,8 @@ public class OnScreenMenu {
 			super(c);
 			setBackgroundDrawable(null);
 			fpsText = new TextView(mContext);
-			fpsText.setTextSize(TypedValue.COMPLEX_UNIT_SP, 32);
-			fpsText.setTextColor(Color.YELLOW);
-			fpsText.setBackgroundColor(Color.TRANSPARENT);
+			fpsText.setTextAppearance(mContext,  
+				       R.style.fpsOverlayText);
 			fpsText.setGravity(Gravity.CENTER);
 			fpsText.setText("XX");
 			setContentView(fpsText);
