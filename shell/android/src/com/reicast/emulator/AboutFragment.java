@@ -139,7 +139,7 @@ public class AboutFragment extends Fragment {
 					versionName, String.valueOf(versionCode));
 			if (!buildId.equals("")) {
 				revision = parentActivity.getString(R.string.revision_text,
-						versionName, buildId);
+						versionName, buildId.substring(0,7));
 			}
 			version.setText(revision);
 		} catch (NameNotFoundException e) {

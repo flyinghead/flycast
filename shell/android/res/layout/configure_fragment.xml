@@ -343,15 +343,15 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:gravity="right" >
+                    android:gravity="right"
+                    android:orientation="vertical" >
 
                     <Spinner
                         android:id="@+id/region_spinner"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:ems="10" >
-                    </Spinner>
+                        android:ems="10" />
                 </LinearLayout>
             </TableRow>
 
