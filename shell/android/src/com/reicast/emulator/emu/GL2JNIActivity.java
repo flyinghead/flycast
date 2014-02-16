@@ -93,6 +93,7 @@ public class GL2JNIActivity extends Activity {
 				prefs.getString("device_descriptor_player_3", null), 2);
 		deviceDescriptor_PlayerNum.put(
 				prefs.getString("device_descriptor_player_4", null), 3);
+		deviceDescriptor_PlayerNum.remove(null);
 
 		boolean controllerTwoConnected = false;
 		boolean controllerThreeConnected = false;
@@ -482,7 +483,6 @@ public class GL2JNIActivity extends Activity {
 	boolean handle_key(Integer playerNum, int kc, boolean down) {
 		if (playerNum == null || playerNum == -1)
 			return false;
-
 		if (!moga.isActive[playerNum]) {
 
 			boolean rav = false;
