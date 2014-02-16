@@ -442,10 +442,4 @@
         </TableLayout>
     </LinearLayout>
 
-    <TableLayout>
-    </TableLayout>
-
-    <LinearLayout>
-    </LinearLayout>
-
 </ScrollView>

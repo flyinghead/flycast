@@ -52,13 +52,9 @@ public class MainActivity extends SlidingFragmentActivity implements
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.mainuilayout_fragment);
-		setBehindContentView(R.layout.drawer_menu);
+        setBehindContentView(R.layout.drawer_menu);
 
 		mPrefs = PreferenceManager.getDefaultSharedPreferences(this);
-		home_directory = mPrefs.getString("home_directory", home_directory);
-		JNIdc.config(home_directory);
-		
-		getFilesDir().mkdir();
 		
 		mUEHandler = new Thread.UncaughtExceptionHandler() {
 	        public void uncaughtException(Thread t, Throwable error) {
@@ -72,10 +68,15 @@ public class MainActivity extends SlidingFragmentActivity implements
 	    Thread.setDefaultUncaughtExceptionHandler(mUEHandler);
 
 		String prior_error = mPrefs.getString("prior_error", null);
-		if (!prior_error.equals(null)) {
+		if (prior_error != null && !prior_error.equals(null)) {
 			initiateReport(prior_error);
 			mPrefs.edit().remove("prior_error").commit();
 		}
+
+		home_directory = mPrefs.getString("home_directory", home_directory);
+		JNIdc.config(home_directory);
+		
+		getFilesDir().mkdir();
 
 		// Check that the activity is using the layout version with
 		// the fragment_container FrameLayout
