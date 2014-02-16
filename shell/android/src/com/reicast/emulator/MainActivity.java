@@ -66,21 +66,30 @@ public class MainActivity extends SlidingFragmentActivity implements
 					error.printStackTrace();
 					//Unreliable, but useful when possible
 					MainActivity.this.finish();
-	        	}
+				}
 	        }
-	    };
-	    Thread.setDefaultUncaughtExceptionHandler(mUEHandler);
+		};
+		Thread.setDefaultUncaughtExceptionHandler(mUEHandler);
+
+		home_directory = mPrefs.getString("home_directory", home_directory);
 
 		String prior_error = mPrefs.getString("prior_error", null);
 		if (prior_error != null && !prior_error.equals(null)) {
-			initiateReport(prior_error);
+			initiateReport(prior_error, savedInstanceState);
 			mPrefs.edit().remove("prior_error").commit();
+		} else {
+			loadInterface(savedInstanceState);
 		}
 
-		home_directory = mPrefs.getString("home_directory", home_directory);
+
+			
+	}
+
+	private void loadInterface(Bundle savedInstanceState) {
+		if (!getFilesDir().exists()) {
+			getFilesDir().mkdir();
+		}
 		JNIdc.config(home_directory);
-		
-		getFilesDir().mkdir();
 
 		// Check that the activity is using the layout version with
 		// the fragment_container FrameLayout
@@ -111,13 +120,13 @@ public class MainActivity extends SlidingFragmentActivity implements
 
 			// Add the fragment to the 'fragment_container' FrameLayout
 			getSupportFragmentManager()
-					.beginTransaction()
-					.replace(R.id.fragment_container, firstFragment,
-							"MAIN_BROWSER").commit();
+			.beginTransaction()
+			.replace(R.id.fragment_container, firstFragment,
+					"MAIN_BROWSER").commit();
 		}
-		
+
 		menuHeading = (TextView) findViewById(R.id.menu_heading);
-		
+
 		sm = getSlidingMenu();
 		sm.setShadowWidthRes(R.dimen.shadow_width);
 		sm.setShadowDrawable(R.drawable.shadow);
@@ -144,9 +153,9 @@ public class MainActivity extends SlidingFragmentActivity implements
 						// specify if the desired path is for games or data
 						browseFrag.setArguments(args);
 						getSupportFragmentManager()
-								.beginTransaction()
-								.replace(R.id.fragment_container, browseFrag,
-										"MAIN_BROWSER").addToBackStack(null)
+						.beginTransaction()
+						.replace(R.id.fragment_container, browseFrag,
+								"MAIN_BROWSER").addToBackStack(null)
 								.commit();
 						setTitle(getString(R.string.browser));
 						sm.toggle(true);
@@ -164,9 +173,9 @@ public class MainActivity extends SlidingFragmentActivity implements
 						}
 						configFrag = new ConfigureFragment();
 						getSupportFragmentManager()
-								.beginTransaction()
-								.replace(R.id.fragment_container, configFrag,
-										"CONFIG_FRAG").addToBackStack(null)
+						.beginTransaction()
+						.replace(R.id.fragment_container, configFrag,
+								"CONFIG_FRAG").addToBackStack(null)
 								.commit();
 						setTitle(getString(R.string.settings));
 						sm.toggle(true);
@@ -186,9 +195,9 @@ public class MainActivity extends SlidingFragmentActivity implements
 								}
 								optionsFrag = new OptionsFragment();
 								getSupportFragmentManager()
-										.beginTransaction()
-										.replace(R.id.fragment_container,
-												optionsFrag, "OPTIONS_FRAG")
+								.beginTransaction()
+								.replace(R.id.fragment_container,
+										optionsFrag, "OPTIONS_FRAG")
 										.addToBackStack(null).commit();
 								setTitle(getString(R.string.paths));
 								sm.toggle(true);
@@ -207,15 +216,15 @@ public class MainActivity extends SlidingFragmentActivity implements
 						}
 						inputFrag = new InputFragment();
 						getSupportFragmentManager()
-								.beginTransaction()
-								.replace(R.id.fragment_container, inputFrag,
-										"INPUT_FRAG").addToBackStack(null).commit();
+						.beginTransaction()
+						.replace(R.id.fragment_container, inputFrag,
+								"INPUT_FRAG").addToBackStack(null).commit();
 						setTitle(getString(R.string.input));
 						sm.toggle(true);
 					}
 
 				});
-				
+
 				findViewById(R.id.about_menu).setOnClickListener(new OnClickListener() {
 					public void onClick(View view) {
 						AboutFragment aboutFrag = (AboutFragment) getSupportFragmentManager()
@@ -227,9 +236,9 @@ public class MainActivity extends SlidingFragmentActivity implements
 						}
 						aboutFrag = new AboutFragment();
 						getSupportFragmentManager()
-								.beginTransaction()
-								.replace(R.id.fragment_container, aboutFrag,
-										"ABOUT_FRAG").addToBackStack(null).commit();
+						.beginTransaction()
+						.replace(R.id.fragment_container, aboutFrag,
+								"ABOUT_FRAG").addToBackStack(null).commit();
 						setTitle(getString(R.string.about));
 						sm.toggle(true);
 					}
@@ -261,17 +270,16 @@ public class MainActivity extends SlidingFragmentActivity implements
 					return false;
 			}
 		});
-		System.gc();
-
 	}
 
-	private void initiateReport(final String error) {
+	private void initiateReport(final String error, final Bundle savedInstanceState) {
 		AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
 		builder.setTitle(getString(R.string.report_issue));
 		builder.setMessage(error);
 		builder.setNegativeButton("Cancel",
 				new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int which) {
+						loadInterface(savedInstanceState);
 						dialog.dismiss();
 					}
 				});
