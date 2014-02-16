@@ -60,7 +60,8 @@ public class MainActivity extends SlidingFragmentActivity implements
 	        public void uncaughtException(Thread t, Throwable error) {
 				if (error != null) {
 					String log = error.getMessage() + ": "
-							+ error.getStackTrace()[2].getLineNumber();
+							+ t.getStackTrace()[1].getLineNumber() + " / "
+							+ error.getStackTrace()[1].getLineNumber();
 					Log.e("com.reicast.emulator", log);
 					mPrefs.edit().putString("prior_error", log).commit();
 					MainActivity.this.finish();
