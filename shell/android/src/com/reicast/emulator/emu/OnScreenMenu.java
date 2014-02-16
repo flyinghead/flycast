@@ -62,7 +62,7 @@ public class OnScreenMenu {
 	}
 
 	void displayDebugPopup(final PopupWindow popUp) {
-		mContext.displayDebug(new DebugPopup());
+		mContext.displayDebug(new DebugPopup(mContext));
 	}
 
 	public class FpsPopup extends PopupWindow {
@@ -88,7 +88,8 @@ public class OnScreenMenu {
 
 	public class DebugPopup extends PopupWindow {
 
-		public DebugPopup() {
+		public DebugPopup(Context c) {
+			super(c);
 
 			int p = getPixelsFromDp(60, mContext);
 			LayoutParams debugParams = new LayoutParams(p, p);
@@ -146,7 +147,7 @@ public class OnScreenMenu {
 	}
 
 	void displayConfigPopup(final PopupWindow popUp) {
-		mContext.displayConfig(new ConfigPopup());
+		mContext.displayConfig(new ConfigPopup(mContext));
 	}
 
 	public class ConfigPopup extends PopupWindow {
@@ -154,7 +155,8 @@ public class OnScreenMenu {
 		private View fullscreen;
 		private View framelimit;
 
-		public ConfigPopup() {
+		public ConfigPopup(Context c) {
+			super(c);
 
 			int p = getPixelsFromDp(60, mContext);
 			LayoutParams configParams = new LayoutParams(p, p);
@@ -341,6 +343,7 @@ public class OnScreenMenu {
 
 	public class MainPopup extends PopupWindow {
 		public MainPopup(Context c) {
+			super(c);
 			int p = getPixelsFromDp(60, mContext);
 			params = new LayoutParams(p, p);
 			hlay = new LinearLayout(mContext);

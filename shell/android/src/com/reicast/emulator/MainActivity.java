@@ -62,8 +62,9 @@ public class MainActivity extends SlidingFragmentActivity implements
 					String log = error.getMessage() + ": "
 							+ t.getStackTrace()[1].getLineNumber() + " / "
 							+ error.getStackTrace()[1].getLineNumber();
-					Log.e("com.reicast.emulator", log);
 					mPrefs.edit().putString("prior_error", log).commit();
+					error.printStackTrace();
+					//Unreliable, but useful when possible
 					MainActivity.this.finish();
 	        	}
 	        }
