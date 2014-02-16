@@ -114,7 +114,7 @@ public class ConfigureFragment extends Fragment {
 					mPrefs.edit().putBoolean("force_gpu", isChecked).commit();
 				}
 			};
-			boolean enhanced = mPrefs.getBoolean("sound_enabled",
+			boolean enhanced = mPrefs.getBoolean("force_gpu",
 					true);
 			force_gpu_opt.setChecked(enhanced);
 			force_gpu_opt.setOnCheckedChangeListener(force_gpu_options);

@@ -58,9 +58,13 @@ public class MainActivity extends SlidingFragmentActivity implements
 		
 		mUEHandler = new Thread.UncaughtExceptionHandler() {
 	        public void uncaughtException(Thread t, Throwable error) {
-	        	if (error != null) {
-	        		Log.e("com.reicast.emulator", error.getMessage());
-					mPrefs.edit().putString("prior_error", error.getMessage()).commit();
+				if (error != null) {
+					String log = error.getMessage() + ": "
+							+ t.getStackTrace()[1].getLineNumber() + " / "
+							+ error.getStackTrace()[1].getLineNumber();
+					mPrefs.edit().putString("prior_error", log).commit();
+					error.printStackTrace();
+					//Unreliable, but useful when possible
 					MainActivity.this.finish();
 	        	}
 	        }
