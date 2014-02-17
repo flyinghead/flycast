@@ -295,6 +295,7 @@ public class MainActivity extends SlidingFragmentActivity implements
 						} else {
 							mGenerateLogs.execute(home_directory);
 						}
+						loadInterface(savedInstanceState);
 						dialog.dismiss();
 					}
 				});

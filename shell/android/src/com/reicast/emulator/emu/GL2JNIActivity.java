@@ -276,8 +276,7 @@ public class GL2JNIActivity extends Activity {
 		setContentView(mView);
 		
 		String menu_spec;
-		if (android.os.Build.MODEL.equals("R800")
-				|| android.os.Build.MODEL.equals("R800i")) {
+		if (android.os.Build.MODEL.startsWith("R800")) {
 			menu_spec = getApplicationContext().getString(R.string.search_button);
 		} else {
 			menu_spec = getApplicationContext().getString(R.string.back_button);
@@ -613,8 +612,7 @@ public class GL2JNIActivity extends Activity {
 			return true;
 		}
 
-		if (android.os.Build.MODEL.equals("R800")
-				|| android.os.Build.MODEL.equals("R800i")) {
+		if (android.os.Build.MODEL.startsWith("R800")) {
 			if (keyCode == KeyEvent.KEYCODE_SEARCH) {
 				return showMenu();
 			}
