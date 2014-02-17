@@ -318,6 +318,36 @@ public class ConfigureFragment extends Fragment {
 					int count) {
 			}
 		});
+
+		String[] depths = parentActivity.getResources().getStringArray(
+				R.array.depth);
+
+		Spinner depth_spnr = (Spinner) getView().findViewById(
+				R.id.depth_spinner);
+		ArrayAdapter<String> depthAdapter = new ArrayAdapter<String>(
+				parentActivity, android.R.layout.simple_spinner_item, depths);
+		depthAdapter
+				.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		depth_spnr.setAdapter(depthAdapter);
+
+		String depth = String.valueOf(mPrefs.getInt("depth_render", 24));
+		depth_spnr.setSelection(depthAdapter.getPosition(depth), true);
+
+		depth_spnr.setOnItemSelectedListener(new OnItemSelectedListener() {
+
+			public void onItemSelected(AdapterView<?> parent, View view,
+					int pos, long id) {
+				int render = Integer.valueOf(parent.getItemAtPosition(pos)
+						.toString());
+				mPrefs.edit().putInt("depth_render", render).commit();
+
+			}
+
+			public void onNothingSelected(AdapterView<?> arg0) {
+
+			}
+
+		});
 	}
 
 	public void generateErrorLog() {

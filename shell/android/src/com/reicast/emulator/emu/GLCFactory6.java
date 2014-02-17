@@ -93,7 +93,7 @@ public class GLCFactory6 {
 						EGL14.EGL_GREEN_SIZE, 4, 
 						EGL14.EGL_BLUE_SIZE, 4,
 						EGL14.EGL_RENDERABLE_TYPE, renderableType,
-						EGL14.EGL_DEPTH_SIZE, 24,
+						EGL14.EGL_DEPTH_SIZE, 16,
 						EGL14.EGL_NONE
 				};
 

@@ -81,7 +81,6 @@ public class MainActivity extends SlidingFragmentActivity implements
 		} else {
 			loadInterface(savedInstanceState);
 		}
-
 	}
 
 	private void loadInterface(Bundle savedInstanceState) {
