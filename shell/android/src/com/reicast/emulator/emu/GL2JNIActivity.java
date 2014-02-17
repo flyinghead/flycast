@@ -172,7 +172,7 @@ public class GL2JNIActivity extends Activity {
 									OuyaController.BUTTON_DPAD_LEFT, key_CONT_DPAD_LEFT,
 									OuyaController.BUTTON_DPAD_RIGHT, key_CONT_DPAD_RIGHT,
 
-									OuyaController.BUTTON_R1, key_CONT_START
+									KeyEvent.KEYCODE_BUTTON_START, key_CONT_START
 
 							};
 						} else if (InputDevice.getDevice(joys[i]).getName()
