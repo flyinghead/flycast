@@ -8,6 +8,7 @@ import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Build;
@@ -48,6 +49,7 @@ public class GL2JNIActivity extends Activity {
 	int[] name = { -1, -1, -1, -1 };
 	float[] globalLS_X = new float[4], globalLS_Y = new float[4],
 			previousLS_X = new float[4], previousLS_Y = new float[4];
+	private boolean isOuyaOrTV = false;
 
 	public static HashMap<Integer, String> deviceId_deviceDescriptor = new HashMap<Integer, String>();
 	public static HashMap<String, Integer> deviceDescriptor_PlayerNum = new HashMap<String, Integer>();
@@ -64,6 +66,11 @@ public class GL2JNIActivity extends Activity {
 		prefs = PreferenceManager.getDefaultSharedPreferences(this);
 		ConfigureFragment.getCurrentConfiguration(prefs);
 		menu = new OnScreenMenu(GL2JNIActivity.this, prefs);
+
+		PackageManager pMan = getPackageManager();
+	    if (pMan.hasSystemFeature(PackageManager.FEATURE_TELEVISION)) {
+	    	isOuyaOrTV = true;
+	    }
 
 		/*
 		 * try { //int rID =
@@ -172,7 +179,7 @@ public class GL2JNIActivity extends Activity {
 									OuyaController.BUTTON_DPAD_LEFT, key_CONT_DPAD_LEFT,
 									OuyaController.BUTTON_DPAD_RIGHT, key_CONT_DPAD_RIGHT,
 
-									OuyaController.BUTTON_R1, key_CONT_START
+									OuyaController.BUTTON_MENU, key_CONT_START
 
 							};
 						} else if (InputDevice.getDevice(joys[i]).getName()
@@ -188,7 +195,7 @@ public class GL2JNIActivity extends Activity {
 									OuyaController.BUTTON_DPAD_LEFT, key_CONT_DPAD_LEFT,
 									OuyaController.BUTTON_DPAD_RIGHT, key_CONT_DPAD_RIGHT,
 
-									OuyaController.BUTTON_R1, key_CONT_START
+									OuyaController.BUTTON_MENU, key_CONT_START
 							};
 
 							xbox[playerNum] = true;
@@ -243,6 +250,7 @@ public class GL2JNIActivity extends Activity {
 									OuyaController.BUTTON_DPAD_LEFT, key_CONT_DPAD_LEFT,
 									OuyaController.BUTTON_DPAD_RIGHT, key_CONT_DPAD_RIGHT,
 
+									OuyaController.BUTTON_MENU, key_CONT_START,
 									KeyEvent.KEYCODE_BUTTON_START, key_CONT_START
 							};
 						}
@@ -607,13 +615,15 @@ public class GL2JNIActivity extends Activity {
 
 		if (android.os.Build.MODEL.equals("R800")
 				|| android.os.Build.MODEL.equals("R800i")) {
-			if ((keyCode == KeyEvent.KEYCODE_MENU)
-					|| (keyCode == KeyEvent.KEYCODE_SEARCH)) {
+			if (keyCode == KeyEvent.KEYCODE_SEARCH) {
+				return showMenu();
+			}
+		} else if (isOuyaOrTV) {
+			if (keyCode == OuyaController.BUTTON_R3) {
 				return showMenu();
 			}
 		} else {
-			if (keyCode == OuyaController.BUTTON_MENU
-					|| keyCode == KeyEvent.KEYCODE_BACK) {
+			if (keyCode == KeyEvent.KEYCODE_BACK) {
 				return showMenu();
 			}
 		}
