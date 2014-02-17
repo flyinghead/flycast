@@ -21,6 +21,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
+import android.os.StrictMode;
 
 import com.reicast.emulator.R;
 
@@ -42,15 +43,19 @@ public class UploadLogs extends AsyncTask<String, Integer, Object> {
 
 	@SuppressLint("NewApi")
 	protected void onPreExecute() {
-
+		if (logUrl == null || logUrl.equals(null)) {
+			logUrl = "http://twisted.dyndns.tv:3194/ReicastBot/report/submit.php";
+		}
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
+			StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder()
+					.permitAll().build();
+			StrictMode.setThreadPolicy(policy);
+		}
 	}
 
 	@Override
 	protected Object doInBackground(String... params) {
 		HttpClient client = new DefaultHttpClient();
-		if (logUrl == null || logUrl.equals(null)) {
-			logUrl = "http://twisted.dyndns.tv:3194/ReicastBot/report/submit.php";
-		}
 		HttpPost post = new HttpPost(logUrl);
 		try {
 			ArrayList<NameValuePair> mPairs = new ArrayList<NameValuePair>();

@@ -25,7 +25,6 @@ import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.Spinner;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.android.util.DreamTime;
 import com.reicast.emulator.R;
@@ -351,9 +350,6 @@ public class ConfigureFragment extends Fragment {
 	}
 
 	public void generateErrorLog() {
-		Toast.makeText(parentActivity,
-				parentActivity.getString(R.string.platform), Toast.LENGTH_SHORT)
-				.show();
 		GenerateLogs mGenerateLogs = new GenerateLogs(parentActivity);
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
 			mGenerateLogs.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,

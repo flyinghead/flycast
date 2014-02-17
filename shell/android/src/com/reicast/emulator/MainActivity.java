@@ -23,7 +23,6 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnTouchListener;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.jeremyfeinstein.slidingmenu.lib.SlidingMenu;
 import com.jeremyfeinstein.slidingmenu.lib.SlidingMenu.OnOpenListener;
@@ -284,9 +283,6 @@ public class MainActivity extends SlidingFragmentActivity implements
 		builder.setPositiveButton("Report",
 				new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int which) {
-						Toast.makeText(MainActivity.this,
-								getString(R.string.platform),
-								Toast.LENGTH_SHORT).show();
 						GenerateLogs mGenerateLogs = new GenerateLogs(MainActivity.this);
 						mGenerateLogs.setUnhandled(error);
 						if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {

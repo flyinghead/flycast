@@ -3,7 +3,6 @@ package com.reicast.emulator.periph;
 
 /******************************************************************************/
 
-import tv.ouya.console.api.OuyaController;
 import android.app.Activity;
 import android.content.SharedPreferences;
 import android.os.Handler;
