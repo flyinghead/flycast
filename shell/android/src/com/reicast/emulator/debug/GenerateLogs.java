@@ -47,6 +47,10 @@ public class GenerateLogs extends AsyncTask<String, Integer, String> {
 		this.currentTime = String.valueOf(System.currentTimeMillis());
 	}
 
+	/**
+	 * Obtain the specific parameters of the current device
+	 * 
+	 */
 	private String discoverCPUData() {
 		String s = "MODEL: " + Build.MODEL;
 		s += "\r\n";
@@ -86,6 +90,12 @@ public class GenerateLogs extends AsyncTask<String, Integer, String> {
 		return s;
 	}
 
+	/**
+	 * Read the output of a shell command
+	 * 
+	 * @param string
+	 *            The shell command being issued to the terminal
+	 */
 	public static String readOutput(String command) {
 		try {
 			Process p = Runtime.getRuntime().exec(command);
@@ -256,6 +266,12 @@ public class GenerateLogs extends AsyncTask<String, Integer, String> {
 		}
 	}
 
+	/**
+	 * Check for network connectivity, either wifi or any
+	 * 
+	 * @param boolean
+	 *            Whether to consider all data or just wifi
+	 */
 	public boolean isNetworkAvailable(boolean wifi_only) {
 		ConnectivityManager connectivityManager = (ConnectivityManager) mContext
 				.getSystemService(Context.CONNECTIVITY_SERVICE);

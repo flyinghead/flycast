@@ -82,6 +82,12 @@ public class MainActivity extends SlidingFragmentActivity implements
 		}
 	}
 
+	/**
+	 * Load the GUI interface for display to the user
+	 * 
+	 * @param bundle
+	 *            The savedInstanceState passed from onCreate
+	 */
 	private void loadInterface(Bundle savedInstanceState) {
 		if (!getFilesDir().exists()) {
 			getFilesDir().mkdir();
@@ -269,6 +275,14 @@ public class MainActivity extends SlidingFragmentActivity implements
 		});
 	}
 
+	/**
+	 * Display a dialog to notify the user of prior crash
+	 * 
+	 * @param string
+	 *            A generalized summary of the crash cause
+	 * @param bundle
+	 *            The savedInstanceState passed from onCreate
+	 */
 	private void initiateReport(final String error, final Bundle savedInstanceState) {
 		AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
 		builder.setTitle(getString(R.string.report_issue));

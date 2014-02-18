@@ -25,7 +25,14 @@ import android.os.StrictMode;
 
 import com.reicast.emulator.R;
 
-
+/**
+ * Upload the specialized logcat to reicast issues
+ * 
+ * @param context
+ *            The context this method will be executed from
+ * @param string
+ *            The system time at which the log was made
+ */
 public class UploadLogs extends AsyncTask<String, Integer, Object> {
 
 	private String currentTime;
@@ -36,7 +43,12 @@ public class UploadLogs extends AsyncTask<String, Integer, Object> {
 		this.mContext = mContext;
 		this.currentTime = currentTime;
 	}
-
+	/**
+	 * Set the URL for where the log will be uploaded
+	 * 
+	 * @param string
+	 *            The URL of the log upload server
+	 */
 	public void setPostUrl(String logUrl) {
 		this.logUrl = logUrl;
 	}
