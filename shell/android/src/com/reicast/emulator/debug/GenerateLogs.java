@@ -14,6 +14,7 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Build;
+import android.os.Handler;
 import android.widget.Toast;
 
 import com.reicast.emulator.R;
@@ -111,7 +112,7 @@ public class GenerateLogs extends AsyncTask<String, Integer, String> {
 	@Override
 	protected String doInBackground(String... params) {
 		debug_directory = params[0];
-		File logFile = new File (debug_directory, currentTime + ".txt");
+		File logFile = new File(debug_directory, currentTime + ".txt");
 		Process mLogcatProc = null;
 		BufferedReader reader = null;
 		final StringBuilder log = new StringBuilder();
@@ -222,22 +223,35 @@ public class GenerateLogs extends AsyncTask<String, Integer, String> {
 	}
 
 	@Override
-	protected void onPostExecute(String response) {
+	protected void onPostExecute(final String response) {
 		if (response != null && !response.equals(null)) {
+			Handler handler = new Handler();
 			if (isNetworkAvailable(false)) {
-				Toast.makeText(mContext, mContext.getString(R.string.platform),
-						Toast.LENGTH_SHORT).show();
-				UploadLogs mUploadLogs = new UploadLogs(mContext, currentTime);
-				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-					mUploadLogs.executeOnExecutor(
-							AsyncTask.THREAD_POOL_EXECUTOR, response);
-				} else {
-					mUploadLogs.execute(response);
-				}
+				handler.post(new Runnable() {
+					public void run() {
+						Toast.makeText(mContext,
+								mContext.getString(R.string.platform),
+								Toast.LENGTH_SHORT).show();
+						UploadLogs mUploadLogs = new UploadLogs(mContext,
+								currentTime);
+						if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+							mUploadLogs.executeOnExecutor(
+									AsyncTask.THREAD_POOL_EXECUTOR, response);
+						} else {
+							mUploadLogs.execute(response);
+						}
+					}
+				});
 			} else {
-				Toast.makeText(mContext,
-						mContext.getString(R.string.log_saved, debug_directory),
-						Toast.LENGTH_SHORT).show();
+				handler.post(new Runnable() {
+					public void run() {
+						Toast.makeText(
+								mContext,
+								mContext.getString(R.string.log_saved,
+										debug_directory), Toast.LENGTH_SHORT)
+								.show();
+					}
+				});
 			}
 		}
 	}
