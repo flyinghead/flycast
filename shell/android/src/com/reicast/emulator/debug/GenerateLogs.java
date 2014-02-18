@@ -9,10 +9,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Build;
+import android.os.Handler;
+import android.widget.Toast;
+
+import com.reicast.emulator.R;
 
 public class GenerateLogs extends AsyncTask<String, Integer, String> {
 
@@ -35,17 +40,17 @@ public class GenerateLogs extends AsyncTask<String, Integer, String> {
 
 	private Context mContext;
 	private String currentTime;
+	private String debug_directory;
 
 	public GenerateLogs(Context mContext) {
 		this.mContext = mContext;
 		this.currentTime = String.valueOf(System.currentTimeMillis());
 	}
 
-	@SuppressLint("NewApi")
-	protected void onPreExecute() {
-
-	}
-
+	/**
+	 * Obtain the specific parameters of the current device
+	 * 
+	 */
 	private String discoverCPUData() {
 		String s = "MODEL: " + Build.MODEL;
 		s += "\r\n";
@@ -85,6 +90,12 @@ public class GenerateLogs extends AsyncTask<String, Integer, String> {
 		return s;
 	}
 
+	/**
+	 * Read the output of a shell command
+	 * 
+	 * @param string
+	 *            The shell command being issued to the terminal
+	 */
 	public static String readOutput(String command) {
 		try {
 			Process p = Runtime.getRuntime().exec(command);
@@ -110,7 +121,8 @@ public class GenerateLogs extends AsyncTask<String, Integer, String> {
 
 	@Override
 	protected String doInBackground(String... params) {
-		String logOuput = params[0] + "/" + currentTime + ".txt";
+		debug_directory = params[0];
+		File logFile = new File(debug_directory, currentTime + ".txt");
 		Process mLogcatProc = null;
 		BufferedReader reader = null;
 		final StringBuilder log = new StringBuilder();
@@ -209,8 +221,7 @@ public class GenerateLogs extends AsyncTask<String, Integer, String> {
 				reader.close();
 				reader = null;
 			}
-			File file = new File(logOuput);
-			BufferedWriter writer = new BufferedWriter(new FileWriter(file));
+			BufferedWriter writer = new BufferedWriter(new FileWriter(logFile));
 			writer.write(log.toString());
 			writer.flush();
 			writer.close();
@@ -222,15 +233,60 @@ public class GenerateLogs extends AsyncTask<String, Integer, String> {
 	}
 
 	@Override
-	protected void onPostExecute(String response) {
+	protected void onPostExecute(final String response) {
 		if (response != null && !response.equals(null)) {
-			UploadLogs mUploadLogs = new UploadLogs(mContext, currentTime);
-			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-				mUploadLogs.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,
-						response);
+			Handler handler = new Handler();
+			if (isNetworkAvailable(false)) {
+				handler.post(new Runnable() {
+					public void run() {
+						Toast.makeText(mContext,
+								mContext.getString(R.string.platform),
+								Toast.LENGTH_SHORT).show();
+						UploadLogs mUploadLogs = new UploadLogs(mContext,
+								currentTime);
+						if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+							mUploadLogs.executeOnExecutor(
+									AsyncTask.THREAD_POOL_EXECUTOR, response);
+						} else {
+							mUploadLogs.execute(response);
+						}
+					}
+				});
 			} else {
-				mUploadLogs.execute(response);
+				handler.post(new Runnable() {
+					public void run() {
+						Toast.makeText(
+								mContext,
+								mContext.getString(R.string.log_saved,
+										debug_directory), Toast.LENGTH_SHORT)
+								.show();
+					}
+				});
 			}
+		}
+	}
+
+	/**
+	 * Check for network connectivity, either wifi or any
+	 * 
+	 * @param boolean
+	 *            Whether to consider all data or just wifi
+	 */
+	public boolean isNetworkAvailable(boolean wifi_only) {
+		ConnectivityManager connectivityManager = (ConnectivityManager) mContext
+				.getSystemService(Context.CONNECTIVITY_SERVICE);
+		NetworkInfo activeNetworkInfo = connectivityManager
+				.getActiveNetworkInfo();
+		if (wifi_only) {
+			return activeNetworkInfo != null
+					/*
+					 * && activeNetworkInfo.getType() ==
+					 * ConnectivityManager.TYPE_WIFI
+					 */
+					&& connectivityManager.getNetworkInfo(
+							ConnectivityManager.TYPE_WIFI).isConnected();
+		} else {
+			return activeNetworkInfo != null && activeNetworkInfo.isConnected();
 		}
 	}
 }

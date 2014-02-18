@@ -23,7 +23,6 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnTouchListener;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.jeremyfeinstein.slidingmenu.lib.SlidingMenu;
 import com.jeremyfeinstein.slidingmenu.lib.SlidingMenu.OnOpenListener;
@@ -83,6 +82,12 @@ public class MainActivity extends SlidingFragmentActivity implements
 		}
 	}
 
+	/**
+	 * Load the GUI interface for display to the user
+	 * 
+	 * @param bundle
+	 *            The savedInstanceState passed from onCreate
+	 */
 	private void loadInterface(Bundle savedInstanceState) {
 		if (!getFilesDir().exists()) {
 			getFilesDir().mkdir();
@@ -270,6 +275,14 @@ public class MainActivity extends SlidingFragmentActivity implements
 		});
 	}
 
+	/**
+	 * Display a dialog to notify the user of prior crash
+	 * 
+	 * @param string
+	 *            A generalized summary of the crash cause
+	 * @param bundle
+	 *            The savedInstanceState passed from onCreate
+	 */
 	private void initiateReport(final String error, final Bundle savedInstanceState) {
 		AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
 		builder.setTitle(getString(R.string.report_issue));
@@ -284,9 +297,6 @@ public class MainActivity extends SlidingFragmentActivity implements
 		builder.setPositiveButton("Report",
 				new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int which) {
-						Toast.makeText(MainActivity.this,
-								getString(R.string.platform),
-								Toast.LENGTH_SHORT).show();
 						GenerateLogs mGenerateLogs = new GenerateLogs(MainActivity.this);
 						mGenerateLogs.setUnhandled(error);
 						if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
