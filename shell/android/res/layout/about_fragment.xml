@@ -35,16 +35,6 @@
         android:ems="12"
         android:gravity="center"
         android:text="@string/app_site" />
-    
-    <TextView
-        android:id="@+id/beta_text"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="6dp"
-        android:layout_marginTop="10dp"
-        android:ems="12"
-        android:gravity="center"
-        android:text="@string/beta_site" />
 
     <SlidingDrawer
         android:id="@+id/slidingGithub"
