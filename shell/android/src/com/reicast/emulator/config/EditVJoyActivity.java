@@ -56,7 +56,6 @@ public class EditVJoyActivity extends Activity {
 
 		SharedPreferences prefs = PreferenceManager
 				.getDefaultSharedPreferences(this);
-		ConfigureFragment.getCurrentConfiguration(prefs);
 
 		// Create the actual GLES view
 		mView = new GL2JNIView(getApplication(), null, false, prefs.getInt("depth_render", 24), 0, true);

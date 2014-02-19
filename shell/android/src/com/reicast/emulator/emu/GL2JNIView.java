@@ -28,6 +28,7 @@ import android.view.ScaleGestureDetector;
 import android.view.ScaleGestureDetector.SimpleOnScaleGestureListener;
 import android.view.View;
 
+import com.reicast.emulator.config.ConfigureFragment;
 import com.reicast.emulator.emu.OnScreenMenu.FpsPopup;
 import com.reicast.emulator.periph.VJoy;
 
@@ -153,7 +154,7 @@ public class GL2JNIView extends GLSurfaceView
 //    int[] rt = { 0, 0, 0, 0 }, lt = { 0, 0, 0, 0 };
 //    int[] jx = { 128, 128, 128, 128 }, jy = { 128, 128, 128, 128 };
     JNIdc.init(fileName);
-
+    ConfigureFragment.pushCfgToEmu(prefs);
     // By default, GLSurfaceView() creates a RGB_565 opaque surface.
     // If we want a translucent one, we should change the surface's
     // format here, using PixelFormat.TRANSLUCENT for GL Surfaces

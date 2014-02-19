@@ -39,7 +39,9 @@ public class ConfigureFragment extends Fragment {
 	Activity parentActivity;
 	TextView mainFrames;
 	OnClickListener mCallback;
-
+	/*
+	 * default settings for emu-cfg
+	 */
 	public static boolean dynarecopt = true;
 	public static boolean idleskip = true;
 	public static boolean unstableopt = false;
@@ -79,15 +81,15 @@ public class ConfigureFragment extends Fragment {
 
 	@Override
 	public void onViewCreated(View view, Bundle savedInstanceState) {
-		// setContentView(R.layout.activity_main);
 
 		parentActivity = getActivity();
 
 		mPrefs = PreferenceManager.getDefaultSharedPreferences(parentActivity);
 		home_directory = mPrefs.getString("home_directory", home_directory);
-
-		getCurrentConfiguration(mPrefs);
-
+		loadCfgSettingsFromPrefs(mPrefs);
+		/*
+		 * section for all non-emu-cfg settings
+		 */
 		final Switch fps_opt = (Switch) getView().findViewById(
 				R.id.fps_option);
 			OnCheckedChangeListener fps_options = new OnCheckedChangeListener() {
@@ -102,7 +104,6 @@ public class ConfigureFragment extends Fragment {
 			fps_opt.setChecked(counter);
 			fps_opt.setOnCheckedChangeListener(fps_options);
 
-		// Generate the menu options and fill in existing settings
 		final Switch force_gpu_opt = (Switch) getView().findViewById(
 				R.id.force_gpu_option);
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
@@ -156,7 +157,9 @@ public class ConfigureFragment extends Fragment {
 				true);
 		sound_opt.setChecked(sound);
 		sound_opt.setOnCheckedChangeListener(emu_sound);
-
+		/*
+		 * section for all emu-cfg settings
+		 */
 		OnCheckedChangeListener dynarec_options = new OnCheckedChangeListener() {
 
 			public void onCheckedChanged(CompoundButton buttonView,
@@ -358,39 +361,54 @@ public class ConfigureFragment extends Fragment {
 			mGenerateLogs.execute(home_directory);
 		}
 	}
-
-	public static void getCurrentConfiguration(SharedPreferences mPrefs) {
-		ConfigureFragment.dynarecopt = mPrefs.getBoolean("dynarec_opt",
+	
+	private static void loadCfgSettingsFromPrefs(SharedPreferences prefs){
+		ConfigureFragment.dynarecopt = prefs.getBoolean("dynarec_opt",
 				ConfigureFragment.dynarecopt);
+		//idleskip not configurable
+		ConfigureFragment.unstableopt = prefs.getBoolean("unstable_opt",
+				ConfigureFragment.unstableopt);
+		//cable not configurable
+		//rtc configured automatically
+		ConfigureFragment.dcregion = prefs.getInt("dc_region", ConfigureFragment.dcregion);
+		//broadcast not configurable
+		ConfigureFragment.limitfps = prefs.getBoolean("limit_fps",
+				ConfigureFragment.limitfps);
+		//nobatch not configurable
+		ConfigureFragment.mipmaps = prefs.getBoolean("use_mipmaps",
+				ConfigureFragment.mipmaps);
+		ConfigureFragment.widescreen = prefs.getBoolean("stretch_view",
+				ConfigureFragment.widescreen);
+		//subdivide not configurable
+		ConfigureFragment.frameskip = prefs.getInt("frame_skip",
+				ConfigureFragment.frameskip);
+		ConfigureFragment.pvrrender = prefs.getBoolean("pvr_render",
+				ConfigureFragment.pvrrender);
+		
+		ConfigureFragment.cheatdisk = prefs.getString("cheat_disk",
+				ConfigureFragment.cheatdisk);
+	}
+	
+	public static void pushCfgToEmu(SharedPreferences prefs){
+		//make sure all settings are loaded
+		loadCfgSettingsFromPrefs(prefs);
+		
 		JNIdc.dynarec(ConfigureFragment.dynarecopt ? 1 : 0);
 		JNIdc.idleskip(ConfigureFragment.idleskip ? 1 : 0);
-		ConfigureFragment.unstableopt = mPrefs.getBoolean("unstable_opt",
-				ConfigureFragment.unstableopt);
 		JNIdc.unstable(ConfigureFragment.unstableopt ? 1 : 0);
 		JNIdc.cable(ConfigureFragment.cable);
-		ConfigureFragment.dcregion = mPrefs.getInt("dc_region", ConfigureFragment.dcregion);
+		JNIdc.dreamtime(DreamTime.getDreamtime());
 		JNIdc.region(ConfigureFragment.dcregion);
 		JNIdc.broadcast(ConfigureFragment.broadcast);
-		ConfigureFragment.limitfps = mPrefs.getBoolean("limit_fps",
-				ConfigureFragment.limitfps);
 		JNIdc.limitfps(ConfigureFragment.limitfps ? 1 : 0);
 		JNIdc.nobatch(ConfigureFragment.nobatch ? 1 : 0);
-		ConfigureFragment.mipmaps = mPrefs.getBoolean("use_mipmaps",
-				ConfigureFragment.mipmaps);
 		JNIdc.mipmaps(ConfigureFragment.mipmaps ? 1 : 0);
-		ConfigureFragment.widescreen = mPrefs.getBoolean("stretch_view",
-				ConfigureFragment.widescreen);
 		JNIdc.widescreen(ConfigureFragment.widescreen ? 1 : 0);
 		JNIdc.subdivide(ConfigureFragment.subdivide ? 1 : 0);
-		ConfigureFragment.frameskip = mPrefs.getInt("frame_skip",
-				ConfigureFragment.frameskip);
 		JNIdc.frameskip(ConfigureFragment.frameskip);
-		ConfigureFragment.pvrrender = mPrefs.getBoolean("pvr_render",
-				ConfigureFragment.pvrrender);
 		JNIdc.pvrrender(ConfigureFragment.pvrrender ? 1 : 0);
-		ConfigureFragment.cheatdisk = mPrefs.getString("cheat_disk",
-				ConfigureFragment.cheatdisk);
+		
 		JNIdc.cheatdisk(ConfigureFragment.cheatdisk);
-		JNIdc.dreamtime(DreamTime.getDreamtime());
 	}
+
 }
