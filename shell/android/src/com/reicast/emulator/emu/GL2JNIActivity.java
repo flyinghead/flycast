@@ -214,8 +214,8 @@ public class GL2JNIActivity extends Activity {
 		setContentView(mView);
 		
 		String menu_spec;
-		if (android.os.Build.MODEL.startsWith("R800")) {
-			menu_spec = getApplicationContext().getString(R.string.search_button);
+		if (isXperiaPlay) {
+			menu_spec = getApplicationContext().getString(R.string.menu_button);
 		} else {
 			menu_spec = getApplicationContext().getString(R.string.back_button);
 		}
@@ -269,29 +269,12 @@ public class GL2JNIActivity extends Activity {
 	private void getCompatibilityMap(int playerNum, String id) {
 		name[playerNum] = prefs.getInt("controller" + id, -1);
 		if (name[playerNum] != -1) {
-			map[playerNum] = setModifiedKeys(playerNum);
+			map[playerNum] = gamepad.setModifiedKeys(id, playerNum);
 		}
 		if (jsDpad[playerNum]) {
 			globalLS_X[playerNum] = previousLS_X[playerNum] = 0.0f;
 			globalLS_Y[playerNum] = previousLS_Y[playerNum] = 0.0f;
 		}
-	}
-
-	private int[] setModifiedKeys(int player) {
-		String id = portId[player];
-		return new int[] { 
-			prefs.getInt("a_button" + id, OuyaController.BUTTON_O), key_CONT_A, 
-			prefs.getInt("b_button" + id, OuyaController.BUTTON_A), key_CONT_B,
-			prefs.getInt("x_button" + id, OuyaController.BUTTON_U), key_CONT_X,
-			prefs.getInt("y_button" + id, OuyaController.BUTTON_Y), key_CONT_Y,
-
-			prefs.getInt("dpad_up" + id, OuyaController.BUTTON_DPAD_UP), key_CONT_DPAD_UP,
-			prefs.getInt("dpad_down" + id, OuyaController.BUTTON_DPAD_DOWN), key_CONT_DPAD_DOWN,
-			prefs.getInt("dpad_left" + id, OuyaController.BUTTON_DPAD_LEFT), key_CONT_DPAD_LEFT,
-			prefs.getInt("dpad_right" + id, OuyaController.BUTTON_DPAD_RIGHT), key_CONT_DPAD_RIGHT,
-
-			prefs.getInt("start_button" + id, KeyEvent.KEYCODE_BUTTON_START), key_CONT_START,
-		};
 	}
 
 	@Override
@@ -363,16 +346,6 @@ public class GL2JNIActivity extends Activity {
 		mView.pushInput();
 		return true;
 	}
-
-	private static final int key_CONT_B 			= 0x0002;
-	private static final int key_CONT_A 			= 0x0004;
-	private static final int key_CONT_START 		= 0x0008;
-	private static final int key_CONT_DPAD_UP 		= 0x0010;
-	private static final int key_CONT_DPAD_DOWN 	= 0x0020;
-	private static final int key_CONT_DPAD_LEFT 	= 0x0040;
-	private static final int key_CONT_DPAD_RIGHT 	= 0x0080;
-	private static final int key_CONT_Y 			= 0x0200;
-	private static final int key_CONT_X 			= 0x0400;
 
 	// TODO: Controller mapping in options. Trunk has Ouya layout. This is a DS3
 	// layout.
@@ -543,9 +516,12 @@ public class GL2JNIActivity extends Activity {
 			return true;
 		}
 
-		if (android.os.Build.MODEL.startsWith("R800")) {
-			if (keyCode == KeyEvent.KEYCODE_SEARCH) {
+		if (isXperiaPlay) {
+			if (keyCode == KeyEvent.KEYCODE_MENU) {
 				return showMenu();
+			}
+			if (keyCode == KeyEvent.KEYCODE_BACK) {
+				return false;
 			}
 		} else if (isOuyaOrTV) {
 			if (keyCode == OuyaController.BUTTON_R3) {
