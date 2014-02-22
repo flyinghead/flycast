@@ -12,6 +12,7 @@ import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -392,7 +393,7 @@ public class ConfigureFragment extends Fragment {
 	public static void pushCfgToEmu(SharedPreferences prefs){
 		//make sure all settings are loaded
 		loadCfgSettingsFromPrefs(prefs);
-		
+
 		JNIdc.dynarec(ConfigureFragment.dynarecopt ? 1 : 0);
 		JNIdc.idleskip(ConfigureFragment.idleskip ? 1 : 0);
 		JNIdc.unstable(ConfigureFragment.unstableopt ? 1 : 0);
