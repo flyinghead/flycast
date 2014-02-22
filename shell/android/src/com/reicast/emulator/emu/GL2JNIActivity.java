@@ -420,27 +420,10 @@ public class GL2JNIActivity extends Activity {
 	}
 	
 	public boolean simulatedTouchEvent(int playerNum, float L2, float R2) {
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
-			if (!moga.isActive[playerNum] || compat[playerNum]) {
-					if (jsCompat[playerNum] || xbox[playerNum] || nVidia[playerNum]) {
-						previousLS_X[playerNum] = globalLS_X[playerNum];
-						previousLS_Y[playerNum] = globalLS_Y[playerNum];
-						globalLS_X[playerNum] = 0;
-						globalLS_Y[playerNum] = 0;
-					}
-					GL2JNIView.lt[playerNum] = (int) (L2 * 255);
-					GL2JNIView.rt[playerNum] = (int) (R2 * 255);
-					GL2JNIView.jx[playerNum] = (int) (0 * 126);
-					GL2JNIView.jy[playerNum] = (int) (0 * 126);
-				}
-			if ((jsCompat[playerNum] || xbox[playerNum] || nVidia[playerNum])
-					&& ((globalLS_X[playerNum] == previousLS_X[playerNum] && globalLS_Y[playerNum] == previousLS_Y[playerNum]) || (previousLS_X[playerNum] == 0.0f && previousLS_Y[playerNum] == 0.0f)))
-				return false;
-			else
-				return true;
-		} else {
-			return false;
-		}
+		GL2JNIView.lt[playerNum] = (int) (L2 * 255);
+		GL2JNIView.rt[playerNum] = (int) (R2 * 255);
+		mView.pushInput();
+		return true;
 	}
 
 	private static final int key_CONT_B 			= 0x0002;
@@ -579,6 +562,18 @@ public class GL2JNIActivity extends Activity {
 			playerNum = -1;
 		}
 
+		if (playerNum != null && playerNum != -1) {
+			if (compat[playerNum] || custom[playerNum]) {
+				String id = portId[playerNum];
+				if (keyCode == prefs.getInt("l_button" + id,
+						KeyEvent.KEYCODE_BUTTON_L1)
+						|| keyCode == prefs.getInt("r_button" + id,
+								KeyEvent.KEYCODE_BUTTON_R1)) {
+					return simulatedTouchEvent(playerNum, 0.0f, 0.0f);
+				}
+			}
+		}
+
 		return handle_key(playerNum, keyCode, false)
 				|| super.onKeyUp(keyCode, event);
 	}
@@ -593,15 +588,13 @@ public class GL2JNIActivity extends Activity {
 		}
 		
 		if (playerNum != null && playerNum != -1) {
-			String id = portId[playerNum];
-			if (custom[playerNum] || xPlay[playerNum]) {
+			if (compat[playerNum] || custom[playerNum]) {
+				String id = portId[playerNum];
 				if (keyCode == prefs.getInt("l_button" + id, KeyEvent.KEYCODE_BUTTON_L1)) {
-					simulatedTouchEvent(playerNum, 1.0f, 0.0f);
-					simulatedTouchEvent(playerNum, 0.0f, 0.0f);
+					return simulatedTouchEvent(playerNum, 1.0f, 0.0f);
 				}
 				if (keyCode == prefs.getInt("r_button" + id, KeyEvent.KEYCODE_BUTTON_R1)) {
-					simulatedTouchEvent(playerNum, 0.0f, 1.0f);
-					simulatedTouchEvent(playerNum, 0.0f, 0.0f);
+					return simulatedTouchEvent(playerNum, 0.0f, 1.0f);
 				}
 			}
 		}
