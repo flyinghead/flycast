@@ -28,6 +28,7 @@ import android.view.ScaleGestureDetector;
 import android.view.ScaleGestureDetector.SimpleOnScaleGestureListener;
 import android.view.View;
 
+import com.reicast.emulator.config.ConfigureFragment;
 import com.reicast.emulator.emu.OnScreenMenu.FpsPopup;
 import com.reicast.emulator.periph.VJoy;
 
@@ -152,8 +153,10 @@ public class GL2JNIView extends GLSurfaceView
 //    int[] kcode = { 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF };
 //    int[] rt = { 0, 0, 0, 0 }, lt = { 0, 0, 0, 0 };
 //    int[] jx = { 128, 128, 128, 128 }, jy = { 128, 128, 128, 128 };
+    
+    ConfigureFragment.pushCfgToEmu(prefs);
     JNIdc.init(fileName);
-
+    
     // By default, GLSurfaceView() creates a RGB_565 opaque surface.
     // If we want a translucent one, we should change the surface's
     // format here, using PixelFormat.TRANSLUCENT for GL Surfaces
@@ -188,8 +191,11 @@ public class GL2JNIView extends GLSurfaceView
 
     // Initialize audio
     //configAudio(44100,250);
-   
+    
+    pushInput(); //initializes controller codes
+    
     ethd.start();
+    
   }
   
   public GLSurfaceView.Renderer getRenderer()
@@ -606,7 +612,7 @@ private static class ContextFactory implements GLSurfaceView.EGLContextFactory
       EGL10.EGL_GREEN_SIZE,      4,
       EGL10.EGL_BLUE_SIZE,       4,
       EGL10.EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
-      EGL10.EGL_DEPTH_SIZE,      16,
+      EGL10.EGL_DEPTH_SIZE,      24,
       EGL10.EGL_NONE
     };
 

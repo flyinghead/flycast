@@ -69,7 +69,7 @@ public class GL2JNIActivity extends Activity {
 		moga.onCreate(this);
 		
 		prefs = PreferenceManager.getDefaultSharedPreferences(this);
-		ConfigureFragment.getCurrentConfiguration(prefs);
+
 		menu = new OnScreenMenu(GL2JNIActivity.this, prefs);
 		gamepad = new Gamepad(GL2JNIActivity.this);
 
