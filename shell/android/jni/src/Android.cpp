@@ -285,7 +285,7 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_init(JNIEnv *env,jobj
 #define SAMPLE_COUNT 512
 
 JNIEnv* jenv; //we are abusing the f*** out of this poor guy
-JavaVM* javaVM = NULL; //this seems like the right way to go
+//JavaVM* javaVM = NULL; //this seems like the right way to go
 //stuff for audio
 jshortArray jsamples;
 jmethodID writemid;
@@ -294,7 +294,7 @@ jobject track;
 jobject sipemu;
 jmethodID getmicdata;
 //stuff for vmu lcd
-jobject vmulcd;
+jobject vmulcd = NULL;
 jbyteArray jpix = NULL;
 jmethodID updatevmuscreen;
 
@@ -482,6 +482,9 @@ int get_mic_data(u8* buffer)
 
 int push_vmu_screen(u8* buffer)
 {
+	if(vmulcd==NULL){
+		return 0;
+	}
 	JNIEnv *env = jenv;
 	//javaVM->AttachCurrentThread(&env, NULL);
 	if(jpix==NULL){
