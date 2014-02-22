@@ -59,10 +59,11 @@ public class MainActivity extends SlidingFragmentActivity implements
 	        public void uncaughtException(Thread t, Throwable error) {
 			if (error != null) {
 				StringBuilder output = new StringBuilder();
+				output.append("Thread:\n");
 				for (StackTraceElement trace : t.getStackTrace()) {
 					output.append(trace.toString() + " ");
 				}
-				output.append(" / ");
+				output.append("\n\nError:\n");
 				for (StackTraceElement trace : error.getStackTrace()) {
 					output.append(trace.toString() + " ");
 				}
