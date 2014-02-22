@@ -135,22 +135,25 @@ public class GL2JNIActivity extends Activity {
 
 			JNIdc.initControllers(new boolean[] { controllerTwoConnected,
 					controllerThreeConnected, controllerFourConnected });
-
 			int joys[] = InputDevice.getDeviceIds();
-			for (int i = 0; i < joys.length; i++) {
+			for (int joy: joys) {
 				String descriptor = null;
 				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-					descriptor = InputDevice.getDevice(joys[i]).getDescriptor();
+					descriptor = InputDevice.getDevice(joy).getDescriptor();
 				} else {
-					descriptor = InputDevice.getDevice(joys[i]).getName();
+					descriptor = InputDevice.getDevice(joy).getName();
 				}
-				Log.d("reidc", "InputDevice ID: " + joys[i]);
+				Log.d("reidc", "InputDevice ID: " + joy);
 				Log.d("reidc",
 						"InputDevice Name: "
-								+ InputDevice.getDevice(joys[i]).getName());
+								+ InputDevice.getDevice(joy).getName());
 				Log.d("reidc", "InputDevice Descriptor: " + descriptor);
-				deviceId_deviceDescriptor.put(joys[i], descriptor);
-				Integer playerNum = deviceDescriptor_PlayerNum.get(descriptor);
+				deviceId_deviceDescriptor.put(joy, descriptor);
+			}
+
+			for (int joy :joys) {
+				Integer playerNum = deviceDescriptor_PlayerNum
+						.get(deviceId_deviceDescriptor.get(joy));
 
 				if (playerNum != null) {
 					String id = portId[playerNum];
@@ -162,33 +165,29 @@ public class GL2JNIActivity extends Activity {
 							map[playerNum] = gamepad.setModifiedKeys(id, playerNum);
 
 							if (jsDpad[playerNum]) {
-								globalLS_X[playerNum] = previousLS_X[playerNum] = 0.0f;
-								globalLS_Y[playerNum] = previousLS_Y[playerNum] = 0.0f;
+								initJoyStickLayout(playerNum);
 							}
-						} else if (InputDevice.getDevice(joys[i]).getName()
+						} else if (InputDevice.getDevice(joy).getName()
 								.equals("Sony PLAYSTATION(R)3 Controller")) {
 							map[playerNum] = gamepad.getConsoleController();
-						} else if (InputDevice.getDevice(joys[i]).getName()
+						} else if (InputDevice.getDevice(joy).getName()
 								.equals("Microsoft X-Box 360 pad")) {
 							map[playerNum] = gamepad.getConsoleController();
 
 							jsDpad[playerNum] = true;
 
-							globalLS_X[playerNum] = previousLS_X[playerNum] = 0.0f;
-							globalLS_Y[playerNum] = previousLS_Y[playerNum] = 0.0f;
-						} else if (InputDevice.getDevice(joys[i]).getName()
+							initJoyStickLayout(playerNum);
+						} else if (InputDevice.getDevice(joy).getName()
 								.contains("NVIDIA Corporation NVIDIA Controller")) {
 							map[playerNum] = gamepad.getConsoleController();
 							jsDpad[playerNum] = true;
 
-							globalLS_X[playerNum] = previousLS_X[playerNum] = 0.0f;
-							globalLS_Y[playerNum] = previousLS_Y[playerNum] = 0.0f;
-						} else if (InputDevice.getDevice(joys[i]).getName()
+							initJoyStickLayout(playerNum);
+						} else if (InputDevice.getDevice(joy).getName()
 								.contains("keypad-zeus")) {
 							map[playerNum] = gamepad.getXPlayController();
 
-							globalLS_X[playerNum] = previousLS_X[playerNum] = 0.0f;
-							globalLS_Y[playerNum] = previousLS_Y[playerNum] = 0.0f;
+							initJoyStickLayout(playerNum);
 						} else if (!moga.isActive[playerNum]) { // Ouya controller
 							map[playerNum] = gamepad.getOUYAController();
 						}
@@ -257,6 +256,11 @@ public class GL2JNIActivity extends Activity {
 			});
 		}
 	}
+
+	private void initJoyStickLayout(int playerNum) {
+		globalLS_X[playerNum] = previousLS_X[playerNum] = 0.0f;
+		globalLS_Y[playerNum] = previousLS_Y[playerNum] = 0.0f;
+	}
 	
 	private void runCompatibilityMode() {
 		for (int n = 0; n < 4; n++) {
@@ -272,8 +276,7 @@ public class GL2JNIActivity extends Activity {
 			map[playerNum] = gamepad.setModifiedKeys(id, playerNum);
 		}
 		if (jsDpad[playerNum]) {
-			globalLS_X[playerNum] = previousLS_X[playerNum] = 0.0f;
-			globalLS_Y[playerNum] = previousLS_Y[playerNum] = 0.0f;
+			initJoyStickLayout(playerNum);
 		}
 	}
 
