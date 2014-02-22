@@ -57,13 +57,20 @@ public class MainActivity extends SlidingFragmentActivity implements
 		
 		mUEHandler = new Thread.UncaughtExceptionHandler() {
 	        public void uncaughtException(Thread t, Throwable error) {
-				if (error != null) {
-					String log = t.getStackTrace().toString() + " / "
-							+ error.getStackTrace().toString();
-					mPrefs.edit().putString("prior_error", log).commit();
-					error.printStackTrace();
-					MainActivity.this.finish();
+			if (error != null) {
+				StringBuilder output = new StringBuilder();
+				for (StackTraceElement trace : t.getStackTrace()) {
+					output.append(trace.toString() + " ");
 				}
+				output.append(" / ");
+				for (StackTraceElement trace : error.getStackTrace()) {
+					output.append(trace.toString() + " ");
+				}
+				String log = output.toString();
+				mPrefs.edit().putString("prior_error", log).commit();
+				error.printStackTrace();
+				MainActivity.this.finish();
+			}
 	        }
 		};
 		Thread.setDefaultUncaughtExceptionHandler(mUEHandler);
