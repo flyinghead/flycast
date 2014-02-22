@@ -67,6 +67,17 @@
             -pre-clean
     -->
     <import file="custom_rules.xml" optional="true" />
+    <property name="ndkbuildopt" value=""/>
+    <target name="-pre-build">
+        <exec executable="${ndk.dir}/ndk-build" failonerror="true">
+            <arg line="-j4 ${ndkbuildopt}"/>
+        </exec>
+    </target>
+    <target name="clean" depends="android_rules.clean">
+        <exec executable="${ndk.dir}/ndk-build" failonerror="true">
+            <arg value="clean"/>
+        </exec>
+    </target>
 
     <!-- Import the actual build file.
 

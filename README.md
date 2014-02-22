@@ -28,8 +28,6 @@ From project root directory:
 cd shell\android
 android update project -p .
 
-ndk-build -j4
-
 ant debug
 ```
 
