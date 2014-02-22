@@ -163,6 +163,8 @@ float vjoy_pos[14][8];
 
 extern bool print_stats;
 
+
+
 void os_DoEvents()
 {
   // @@@ Nothing here yet
@@ -249,7 +251,6 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_config(JNIEnv *env,jo
 }
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_init(JNIEnv *env,jobject obj,jstring fileName)
 {
-
   // Get filename string from Java
   const char* P = fileName? env->GetStringUTFChars(fileName,0):0;
   if(!P) CurFileName[0] = '\0';
@@ -283,7 +284,8 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_init(JNIEnv *env,jobj
 
 #define SAMPLE_COUNT 512
 
-JNIEnv* jenv;
+JNIEnv* jenv; //we are abusing the f*** out of this poor guy
+JavaVM* javaVM = NULL; //this seems like the right way to go
 //stuff for audio
 jshortArray jsamples;
 jmethodID writemid;
@@ -293,7 +295,7 @@ jobject sipemu;
 jmethodID getmicdata;
 //stuff for vmu lcd
 jobject vmulcd;
-jbyteArray jpix;
+jbyteArray jpix = NULL;
 jmethodID updatevmuscreen;
 
 
@@ -308,6 +310,7 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_run(JNIEnv *env,jobje
 	writemid=env->GetMethodID(env->GetObjectClass(track),"WriteBuffer","([SI)I");
 
 	dc_run();
+
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setupMic(JNIEnv *env,jobject obj,jobject sip)
@@ -320,9 +323,10 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setupMic(JNIEnv *env,
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setupVmu(JNIEnv *env,jobject obj,jobject vmu)
 {
+	//env->GetJavaVM(&javaVM);
 	vmulcd = env->NewGlobalRef(vmu);
 	updatevmuscreen = env->GetMethodID(env->GetObjectClass(vmu),"updateBytes","([B)V");
-	jpix=jenv->NewByteArray(1536);
+	//jpix=env->NewByteArray(1536);
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_stop(JNIEnv *env,jobject obj)
@@ -478,7 +482,12 @@ int get_mic_data(u8* buffer)
 
 int push_vmu_screen(u8* buffer)
 {
-	jenv->SetByteArrayRegion(jpix,0,1536,(jbyte*)buffer);
-	jenv->CallVoidMethod(vmulcd,updatevmuscreen,jpix);
+	JNIEnv *env = jenv;
+	//javaVM->AttachCurrentThread(&env, NULL);
+	if(jpix==NULL){
+		jpix=env->NewByteArray(1536);
+	}
+	env->SetByteArrayRegion(jpix,0,1536,(jbyte*)buffer);
+	env->CallVoidMethod(vmulcd,updatevmuscreen,jpix);
 	return 1;
 }
