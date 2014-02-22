@@ -191,8 +191,11 @@ public class GL2JNIView extends GLSurfaceView
 
     // Initialize audio
     //configAudio(44100,250);
-   
+    
+    pushInput(); //initializes controller codes
+    
     ethd.start();
+    
   }
   
   public GLSurfaceView.Renderer getRenderer()
