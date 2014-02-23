@@ -153,6 +153,13 @@ public class OnScreenMenu {
 
 		private View fullscreen;
 		private View framelimit;
+		private View audiosetting;
+		private View fdown;
+		private View fup;
+		private int frames = Config.frameskip;
+		private boolean screen = Config.widescreen;
+		private boolean limit = Config.limitfps;
+		private boolean audio;
 
 		public ConfigPopup(Context c) {
 			super(c);
@@ -172,43 +179,35 @@ public class OnScreenMenu {
 				}
 			}), configParams);
 
-			if (!widescreen) {
-				fullscreen = addbut(R.drawable.widescreen,
-						new OnClickListener() {
-							public void onClick(View v) {
-								JNIdc.widescreen(1);
-								dismiss();
-								widescreen = true;
-							}
-						});
-			} else {
-				fullscreen = addbut(R.drawable.normal_view,
-						new OnClickListener() {
-							public void onClick(View v) {
-								JNIdc.widescreen(0);
-								dismiss();
-								widescreen = false;
-							}
-						});
+			fullscreen = addbut(R.drawable.widescreen,
+					new OnClickListener() {
+				public void onClick(View v) {
+					if (screen) {
+						JNIdc.widescreen(1);
+						screen = true;
+						((ImageButton) fullscreen).setImageResource(R.drawable.normal_view);
+					} else {
+						JNIdc.widescreen(0);
+						screen = false;
+						((ImageButton) fullscreen).setImageResource(R.drawable.widescreen);
+					}
+					dismiss();
+				}
+			});
+			if (screen) {
+				((ImageButton) fullscreen).setImageResource(R.drawable.normal_view);
+
 			}
 			hlay.addView(fullscreen, params);
 
-			final ImageButton frames_up = new ImageButton(mContext);
-			final ImageButton frames_down = new ImageButton(mContext);
-
-			frames_up.setImageResource(R.drawable.frames_up);
-			frames_up.setScaleType(ScaleType.FIT_CENTER);
-			frames_up.setOnClickListener(new OnClickListener() {
+			fdown = addbut(R.drawable.frames_down, new OnClickListener() {
 				public void onClick(View v) {
 					frameskip++;
 					JNIdc.frameskip(frameskip);
 					enableState(frames_up, frames_down);
 				}
 			});
-
-			frames_down.setImageResource(R.drawable.frames_down);
-			frames_down.setScaleType(ScaleType.FIT_CENTER);
-			frames_down.setOnClickListener(new OnClickListener() {
+			fup = addbut(R.drawable.frames_up, new OnClickListener() {
 				public void onClick(View v) {
 					frameskip--;
 					JNIdc.frameskip(frameskip);
@@ -220,50 +219,47 @@ public class OnScreenMenu {
 			hlay.addView(frames_down, params);
 			enableState(frames_up, frames_down);
 
-			if (!limitframes) {
-				framelimit = addbut(R.drawable.frames_limit_on,
-						new OnClickListener() {
-							public void onClick(View v) {
-								JNIdc.limitfps(1);
-								dismiss();
-								limitframes = true;
-							}
-						});
-			} else {
-				framelimit = addbut(R.drawable.frames_limit_off,
-						new OnClickListener() {
-							public void onClick(View v) {
-								JNIdc.limitfps(0);
-								dismiss();
-								limitframes = false;
-							}
-						});
+
+			framelimit = addbut(R.drawable.frames_limit_on,
+					new OnClickListener() {
+				public void onClick(View v) {
+					if (limit) {
+						JNIdc.limitfps(0);
+						limit = false;
+						((ImageButton) audiosetting).setImageResource(R.drawable.frames_limit_on);
+					} else {
+						JNIdc.limitfps(1);
+						limit = true;
+						((ImageButton) audiosetting).setImageResource(R.drawable.frames_limit_off);
+					}
+					dismiss();
+
+				}
+			});
+			if (limit) {
+				((ImageButton) audiosetting).setImageResource(R.drawable.frames_limit_off);
 			}
 			hlay.addView(framelimit, params);
 
-			if (prefs.getBoolean("sound_enabled", true)) {
-				View audiosetting;
-				if (!audiodisabled) {
-					audiosetting = addbut(R.drawable.mute_sound,
-							new OnClickListener() {
-								public void onClick(View v) {
-									mContext.mView.audioDisable(true);
-									dismiss();
-									audiodisabled = true;
-								}
-							});
-				} else {
-					audiosetting = addbut(R.drawable.enable_sound,
-							new OnClickListener() {
-								public void onClick(View v) {
-									mContext.mView.audioDisable(false);
-									dismiss();
-									audiodisabled = false;
-								}
-							});
+			audiosetting = addbut(R.drawable.enable_sound,
+					new OnClickListener() {
+				public void onClick(View v) {
+					if (audio) {
+						((ImageButton) audiosetting).setImageResource(R.drawable.mute_sound);
+						mContext.mView.audioDisable(false);
+					} else {
+						((ImageButton) audiosetting).setImageResource(R.drawable.enable_sound);
+						mContext.mView.audioDisable(true);
+					}
+					dismiss();
+					audio = true;
 				}
-				hlay.addView(audiosetting, params);
+			});
+			audio = prefs.getBoolean("sound_enabled", true);
+			if (audio) {
+				((ImageButton) audiosetting).setImageResource(R.drawable.mute_sound);
 			}
+			hlay.addView(audiosetting, params);
 
 			hlay.addView(addbut(R.drawable.close, new OnClickListener() {
 				public void onClick(View v) {
@@ -342,6 +338,9 @@ public class OnScreenMenu {
 	}
 
 	public class MainPopup extends PopupWindow {
+
+		private View rsticksetting;
+
 		public MainPopup(Context c) {
 			super(c);
 			setBackgroundDrawable(null);
@@ -372,6 +371,24 @@ public class OnScreenMenu {
 					dismiss();
 				}
 			}), params);
+
+			rsticksetting = addbut(R.drawable.toggle_a_b,
+					new OnClickListener() {
+				public void onClick(View v) {
+					if (prefs.getBoolean("right_buttons", true)) {
+						prefs.edit().putBoolean("right_buttons", false).commit();
+						((ImageButton) rsticksetting).setImageResource(R.drawable.toggle_a_b);
+					} else {
+						prefs.edit().putBoolean("right_buttons", true).commit();
+						((ImageButton) rsticksetting).setImageResource(R.drawable.toggle_r_l);
+					}
+					dismiss();
+				}
+			});
+			if (prefs.getBoolean("right_buttons", true)) {
+				((ImageButton) rsticksetting).setImageResource(R.drawable.toggle_r_l);
+			}
+			hlay.addView(rsticksetting, params);
 
 			hlay.addView(addbut(R.drawable.config, new OnClickListener() {
 				public void onClick(View v) {

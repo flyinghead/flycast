@@ -307,6 +307,25 @@ public class GL2JNIActivity extends Activity {
 						globalLS_Y[playerNum] = LS_Y;
 					}
 
+					if (prefs.getBoolean("right_buttons", true)) {
+						if (RS_Y > 0.5) {
+							GL2JNIView.kcode_raw[playerNum] |= map[playerNum][gamepad.key_CONT_B];
+							GL2JNIView.kcode_raw[playerNum] &= ~map[playerNum][gamepad.key_CONT_A];
+						} else if (RS_Y < 0.5) {
+							GL2JNIView.kcode_raw[playerNum] |= map[playerNum][gamepad.key_CONT_A];
+							GL2JNIView.kcode_raw[playerNum] &= ~map[playerNum][gamepad.key_CONT_B];
+						} else {
+							GL2JNIView.kcode_raw[playerNum] |= map[playerNum][gamepad.key_CONT_A];
+							GL2JNIView.kcode_raw[playerNum] |= map[playerNum][gamepad.key_CONT_B];
+						}
+					} else {
+						if (RS_Y > 0) {
+							R2 = RS_Y;
+						} else if (RS_Y < 0) {
+							L2 = -(RS_Y);
+						}
+					}
+
 					GL2JNIView.lt[playerNum] = (int) (L2 * 255);
 					GL2JNIView.rt[playerNum] = (int) (R2 * 255);
 
