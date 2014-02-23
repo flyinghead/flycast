@@ -324,20 +324,21 @@ public class InputFragment extends Fragment {
 		builder.setTitle(getString(R.string.select_controller_title));
 		builder.setMessage(getString(R.string.select_controller_message,
 				String.valueOf(listenForButton)));
-		builder.setPositiveButton("Cancel",
+		builder.setPositiveButton(getString(R.string.cancel),
 				new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int which) {
 						listenForButton = 0;
 						dialog.dismiss();
 					}
 				});
-		builder.setNegativeButton("Custom",
+		builder.setNegativeButton(getString(R.string.manual),
 				new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int which) {
 						InputModFragment inputModFrag = new InputModFragment();
 						Bundle args = new Bundle();
 						args.putInt("portNumber", listenForButton - 1);
 						inputModFrag.setArguments(args);
+						listenForButton = 0;
 						getActivity().getSupportFragmentManager()
 						.beginTransaction()
 						.replace(R.id.fragment_container, inputModFrag,

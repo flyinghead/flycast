@@ -115,4 +115,7 @@
     <string name="textOn">ON</string>
     <string name="textOff">OFF</string>
 
+    <string name="cancel">Cancel</string>
+    <string name="manual">Manual</string>
+
 </resources>
