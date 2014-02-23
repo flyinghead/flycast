@@ -67,6 +67,7 @@
     <string name="bios_menu">Press the %1$s button for a menu</string>
     <string name="back_button">back</string>
     <string name="menu_button">menu</string>
+    <string name="right_button">R3</string>
     
     <string name="moga_pro_connect">MOGA Pro Connected!</string>
     <string name="moga_connect">MOGA Connected!</string>

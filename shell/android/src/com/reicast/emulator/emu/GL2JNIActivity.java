@@ -211,6 +211,23 @@ public class GL2JNIActivity extends Activity {
 		// Create the actual GLES view
 		mView = new GL2JNIView(getApplication(), fileName, false, prefs.getInt("depth_render", 24), 0, false);
 		setContentView(mView);
+<<<<<<< HEAD
+=======
+		
+		String menu_spec;
+		if (isXperiaPlay) {
+			menu_spec = getApplicationContext().getString(R.string.menu_button);
+		} else if (isOuyaOrTV) {
+			menu_spec = getApplicationContext().getString(R.string.right_button);
+		} else {
+			menu_spec = getApplicationContext().getString(R.string.back_button);
+		}
+		Toast.makeText(
+				getApplicationContext(),
+				getApplicationContext()
+						.getString(R.string.bios_menu, menu_spec),
+				Toast.LENGTH_SHORT).show();
+>>>>>>> Add a notice about the OUYA R3 being the onscreen menu
 
 		//setup mic
 		boolean micPluggedIn = prefs.getBoolean("mic_plugged_in", false);
