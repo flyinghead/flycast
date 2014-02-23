@@ -111,6 +111,10 @@ public class GL2JNIView extends GLSurfaceView
         setPreserveEGLContextOnPause(true);
     }
 
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+    	setPreserveEGLContextOnPause(true);
+    }
+
     vib=(Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
     
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB) {
@@ -249,7 +253,7 @@ public class GL2JNIView extends GLSurfaceView
 
   @Override
   protected void onLayout(boolean changed, int left, int top, int right, int bottom) 
-  {  
+  {
 		super.onLayout(changed, left, top, right, bottom);
 		//dcpx/cm = dcpx/px * px/cm
                 float magic = isTablet() ? 0.8f : 0.7f;
