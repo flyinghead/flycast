@@ -31,7 +31,6 @@ import com.reicast.emulator.config.ConfigureFragment;
 import com.reicast.emulator.config.InputFragment;
 import com.reicast.emulator.config.OptionsFragment;
 import com.reicast.emulator.debug.GenerateLogs;
-import com.reicast.emulator.emu.GL2JNIActivity;
 import com.reicast.emulator.emu.JNIdc;
 
 public class MainActivity extends SlidingFragmentActivity implements

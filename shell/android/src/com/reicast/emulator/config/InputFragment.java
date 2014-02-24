@@ -1,5 +1,7 @@
 package com.reicast.emulator.config;
 
+import java.util.HashMap;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -12,6 +14,7 @@ import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.util.Log;
+import android.util.SparseArray;
 import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -31,6 +34,7 @@ import com.bda.controller.MotionEvent;
 import com.bda.controller.StateEvent;
 import com.reicast.emulator.MainActivity;
 import com.reicast.emulator.R;
+import com.reicast.emulator.periph.Gamepad;
 import com.reicast.emulator.periph.MOGAInput;
 
 import de.ankri.views.Switch;
@@ -43,7 +47,6 @@ public class InputFragment extends Fragment {
 	private SharedPreferences sharedPreferences;
 	private Switch switchTouchVibrationEnabled;
 	private Switch micPluggedIntoFirstController;
-	
 	public MOGAInput moga = new MOGAInput();
 
 	// Container Activity must implement this interface
@@ -62,7 +65,7 @@ public class InputFragment extends Fragment {
 	public void onViewCreated(View view, Bundle savedInstanceState) {
 		parentActivity = getActivity();
 		
-		moga.onCreate(parentActivity);
+		moga.onCreate(parentActivity, new SparseArray<String>(), new HashMap<String, Integer>());
 
 		sharedPreferences = PreferenceManager.getDefaultSharedPreferences(parentActivity);
 		
@@ -362,7 +365,7 @@ public class InputFragment extends Fragment {
 
 		String descriptor = null;
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-			if (moga.isActive[listenForButton]) {
+			if (moga.isActiveMoga[listenForButton]) {
 				MogaListener config = new MogaListener(listenForButton);
 				moga.mController.setListener(config, new Handler());
 				descriptor = config.getController();
@@ -459,9 +462,9 @@ public class InputFragment extends Fragment {
 			if (event.getState() == StateEvent.STATE_CONNECTION && event.getAction() == MOGAInput.ACTION_CONNECTED) {
         		int mControllerVersion = moga.mController.getState(Controller.STATE_CURRENT_PRODUCT_VERSION);
         		if (mControllerVersion == Controller.ACTION_VERSION_MOGAPRO) {
-        			moga.isActive[playerNum] = true;
+        			moga.isActiveMoga[playerNum] = true;
         		} else if (mControllerVersion == Controller.ACTION_VERSION_MOGA) {
-        			moga.isActive[playerNum] = true;
+        			moga.isActiveMoga[playerNum] = true;
         		}
 			}
 		}

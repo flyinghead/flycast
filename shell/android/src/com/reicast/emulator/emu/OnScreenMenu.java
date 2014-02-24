@@ -18,6 +18,7 @@ import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 
+import com.reicast.emulator.GL2JNIActivity;
 import com.reicast.emulator.MainActivity;
 import com.reicast.emulator.R;
 import com.reicast.emulator.config.ConfigureFragment;

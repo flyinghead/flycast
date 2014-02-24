@@ -28,6 +28,7 @@ import android.view.ScaleGestureDetector;
 import android.view.ScaleGestureDetector.SimpleOnScaleGestureListener;
 import android.view.View;
 
+import com.reicast.emulator.GL2JNIActivity;
 import com.reicast.emulator.config.ConfigureFragment;
 import com.reicast.emulator.emu.OnScreenMenu.FpsPopup;
 import com.reicast.emulator.periph.VJoy;
