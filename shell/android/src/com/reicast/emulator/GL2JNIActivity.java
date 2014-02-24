@@ -14,7 +14,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
-import android.util.SparseArray;
 import android.view.Gravity;
 import android.view.InputDevice;
 import android.view.KeyEvent;
@@ -26,6 +25,7 @@ import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.Toast;
 
+import com.reicast.emulator.config.Config;
 import com.reicast.emulator.emu.GL2JNIView;
 import com.reicast.emulator.emu.JNIdc;
 import com.reicast.emulator.emu.OnScreenMenu;
@@ -45,30 +45,24 @@ public class GL2JNIActivity extends Activity {
 	FpsPopup fpsPop;
 	MOGAInput moga = new MOGAInput();
 	private SharedPreferences prefs;
+	
+	private Config config;
+	private Gamepad pad = new Gamepad();
 
 	public static byte[] syms;
-
-	private String[] portId = { "_A", "_B", "_C", "_D" };
-	private boolean[] compat = { false, false, false, false };
-	private boolean[] custom = { false, false, false, false };
-	private int[] name = { -1, -1, -1, -1 };
-	private float[] globalLS_X = new float[4], globalLS_Y = new float[4],
-			previousLS_X = new float[4], previousLS_Y = new float[4];
-	private int map[][] = new int[4][];
-
-	private SparseArray<String> deviceId_deviceDescriptor = new SparseArray<String>();
-	private HashMap<String, Integer> deviceDescriptor_PlayerNum = new HashMap<String, Integer>();
 
 	@Override
 	protected void onCreate(Bundle icicle) {
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		
 		prefs = PreferenceManager.getDefaultSharedPreferences(this);
+		config = new Config(GL2JNIActivity.this);
+		config.getConfigurationPrefs();
 		menu = new OnScreenMenu(GL2JNIActivity.this, prefs);
 
-		Gamepad.isXperiaPlay = Gamepad.IsXperiaPlay();
-		Gamepad.isOuyaOrTV = Gamepad.IsOuyaOrTV(GL2JNIActivity.this);
-//		isNvidiaShield = Gamepad.IsNvidiaShield();
+		pad.isXperiaPlay = pad.IsXperiaPlay();
+		pad.isOuyaOrTV = pad.IsOuyaOrTV(GL2JNIActivity.this);
+//		pad.isNvidiaShield = pad.IsNvidiaShield();
 
 		/*
 		 * try { //int rID =
@@ -86,24 +80,24 @@ public class GL2JNIActivity extends Activity {
 		// Call parent onCreate()
 		super.onCreate(icicle);
 		OuyaController.init(this);
-		moga.onCreate(this, deviceId_deviceDescriptor, deviceDescriptor_PlayerNum);
+		moga.onCreate(this, pad);
 
 		// Populate device descriptor-to-player-map from preferences
-		deviceDescriptor_PlayerNum.put(
+		pad.deviceDescriptor_PlayerNum.put(
 				prefs.getString("device_descriptor_player_1", null), 0);
-		deviceDescriptor_PlayerNum.put(
+		pad.deviceDescriptor_PlayerNum.put(
 				prefs.getString("device_descriptor_player_2", null), 1);
-		deviceDescriptor_PlayerNum.put(
+		pad.deviceDescriptor_PlayerNum.put(
 				prefs.getString("device_descriptor_player_3", null), 2);
-		deviceDescriptor_PlayerNum.put(
+		pad.deviceDescriptor_PlayerNum.put(
 				prefs.getString("device_descriptor_player_4", null), 3);
-		deviceDescriptor_PlayerNum.remove(null);
+		pad.deviceDescriptor_PlayerNum.remove(null);
 
 		boolean controllerTwoConnected = false;
 		boolean controllerThreeConnected = false;
 		boolean controllerFourConnected = false;
 
-		for (HashMap.Entry<String, Integer> e : deviceDescriptor_PlayerNum
+		for (HashMap.Entry<String, Integer> e : pad.deviceDescriptor_PlayerNum
 				.entrySet()) {
 			String descriptor = e.getKey();
 			Integer playerNum = e.getValue();
@@ -141,34 +135,34 @@ public class GL2JNIActivity extends Activity {
 						"InputDevice Name: "
 								+ InputDevice.getDevice(joy).getName());
 				Log.d("reidc", "InputDevice Descriptor: " + descriptor);
-				deviceId_deviceDescriptor.put(joy, descriptor);
+				pad.deviceId_deviceDescriptor.put(joy, descriptor);
 			}
 
 			for (int joy :joys) {
-				Integer playerNum = deviceDescriptor_PlayerNum
-						.get(deviceId_deviceDescriptor.get(joy));
+				Integer playerNum = pad.deviceDescriptor_PlayerNum
+						.get(pad.deviceId_deviceDescriptor.get(joy));
 
 				if (playerNum != null) {
-					String id = portId[playerNum];
-					custom[playerNum] = prefs.getBoolean("modified_key_layout" + id, false);
-					compat[playerNum] = prefs.getBoolean("controller_compat" + id, false);
-					if (!compat[playerNum]) {
-						if (custom[playerNum]) {
-							map[playerNum] = Gamepad.setModifiedKeys(id, playerNum, prefs);
+					String id = pad.portId[playerNum];
+					pad.custom[playerNum] = prefs.getBoolean("modified_key_layout" + id, false);
+					pad.compat[playerNum] = prefs.getBoolean("controller_compat" + id, false);
+					if (!pad.compat[playerNum]) {
+						if (pad.custom[playerNum]) {
+							pad.map[playerNum] = pad.setModifiedKeys(id, playerNum, prefs);
 						} else if (InputDevice.getDevice(joy).getName()
 								.equals("Sony PLAYSTATION(R)3 Controller")) {
-							map[playerNum] = Gamepad.getConsoleController();
+							pad.map[playerNum] = pad.getConsoleController();
 						} else if (InputDevice.getDevice(joy).getName()
 								.equals("Microsoft X-Box 360 pad")) {
-							map[playerNum] = Gamepad.getConsoleController();
+							pad.map[playerNum] = pad.getConsoleController();
 						} else if (InputDevice.getDevice(joy).getName()
 								.contains("NVIDIA Corporation NVIDIA Controller")) {
-							map[playerNum] = Gamepad.getConsoleController();
+							pad.map[playerNum] = pad.getConsoleController();
 						} else if (InputDevice.getDevice(joy).getName()
 								.contains("keypad-zeus")) {
-							map[playerNum] = Gamepad.getXPlayController();
-						} else if (!moga.isActiveMoga[playerNum]) { // Ouya controller
-							map[playerNum] = Gamepad.getOUYAController();
+							pad.map[playerNum] = pad.getXPlayController();
+						} else if (!pad.isActiveMoga[playerNum]) { // Ouya controller
+							pad.map[playerNum] = pad.getOUYAController();
 						}
 					} else {
 						getCompatibilityMap(playerNum, id);
@@ -189,15 +183,15 @@ public class GL2JNIActivity extends Activity {
 			fileName = Uri.decode(intent.getData().toString());
 
 		// Create the actual GLES view
-		mView = new GL2JNIView(getApplication(), fileName, false, prefs.getInt("depth_render", 24), 0, false);
+		mView = new GL2JNIView(getApplication(), config, fileName, false, prefs.getInt("depth_render", 24), 0, false);
 		setContentView(mView);
 <<<<<<< HEAD
 =======
 		
 		String menu_spec;
-		if (Gamepad.isXperiaPlay) {
+		if (pad.isXperiaPlay) {
 			menu_spec = getApplicationContext().getString(R.string.menu_button);
-		} else if (Gamepad.isOuyaOrTV) {
+		} else if (pad.isOuyaOrTV) {
 			menu_spec = getApplicationContext().getString(R.string.right_button);
 		} else {
 			menu_spec = getApplicationContext().getString(R.string.back_button);
@@ -243,23 +237,23 @@ public class GL2JNIActivity extends Activity {
 	}
 
 	private void initJoyStickLayout(int playerNum) {
-		globalLS_X[playerNum] = previousLS_X[playerNum] = 0.0f;
-		globalLS_Y[playerNum] = previousLS_Y[playerNum] = 0.0f;
+		pad.globalLS_X[playerNum] = pad.previousLS_X[playerNum] = 0.0f;
+		pad.globalLS_Y[playerNum] = pad.previousLS_Y[playerNum] = 0.0f;
 	}
 	
 	private void runCompatibilityMode() {
 		for (int n = 0; n < 4; n++) {
-			if (compat[n]) {
-				getCompatibilityMap(n, portId[n]);
+			if (pad.compat[n]) {
+				getCompatibilityMap(n, pad.portId[n]);
 				initJoyStickLayout(n);
 			}
 		}
 	}
 
 	private void getCompatibilityMap(int playerNum, String id) {
-		name[playerNum] = prefs.getInt("controller" + id, -1);
-		if (name[playerNum] != -1) {
-			map[playerNum] = Gamepad.setModifiedKeys(id, playerNum, prefs);
+		pad.name[playerNum] = prefs.getInt("controller" + id, -1);
+		if (pad.name[playerNum] != -1) {
+			pad.map[playerNum] = pad.setModifiedKeys(id, playerNum, prefs);
 		}
 	}
 
@@ -270,10 +264,10 @@ public class GL2JNIActivity extends Activity {
 
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
 
-			Integer playerNum = Arrays.asList(name).indexOf(event.getDeviceId());
+			Integer playerNum = Arrays.asList(pad.name).indexOf(event.getDeviceId());
 			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD && playerNum == -1) {
-				playerNum = deviceDescriptor_PlayerNum
-					.get(deviceId_deviceDescriptor.get(event.getDeviceId()));
+				playerNum = pad.deviceDescriptor_PlayerNum
+					.get(pad.deviceId_deviceDescriptor.get(event.getDeviceId()));
 			} else {
 				playerNum = -1;
 			}
@@ -281,11 +275,11 @@ public class GL2JNIActivity extends Activity {
 			if (playerNum == null || playerNum == -1)
 				return false;
 
-			if (moga.isActiveMoga[playerNum]) {
+			if (pad.isActiveMoga[playerNum]) {
 				return false;
 			}
 
-			if (compat[playerNum]) {
+			if (!pad.compat[playerNum]) {
 				// TODO: Moga should handle this locally
 
 				// Joystick
@@ -299,21 +293,21 @@ public class GL2JNIActivity extends Activity {
 					float L2 = event.getAxisValue(OuyaController.AXIS_L2);
 					float R2 = event.getAxisValue(OuyaController.AXIS_R2);
 
-					previousLS_X[playerNum] = globalLS_X[playerNum];
-					previousLS_Y[playerNum] = globalLS_Y[playerNum];
-					globalLS_X[playerNum] = LS_X;
-					globalLS_Y[playerNum] = LS_Y;
+					pad.previousLS_X[playerNum] = pad.globalLS_X[playerNum];
+					pad.previousLS_Y[playerNum] = pad.globalLS_Y[playerNum];
+					pad.globalLS_X[playerNum] = LS_X;
+					pad.globalLS_Y[playerNum] = LS_Y;
 
 					if (prefs.getBoolean("right_buttons", true)) {
 						if (RS_Y > 0.5) {
-							GL2JNIView.kcode_raw[playerNum] |= map[playerNum][Gamepad.key_CONT_B];
-							GL2JNIView.kcode_raw[playerNum] &= ~map[playerNum][Gamepad.key_CONT_A];
+							GL2JNIView.kcode_raw[playerNum] |= pad.map[playerNum][Gamepad.key_CONT_B];
+							GL2JNIView.kcode_raw[playerNum] &= ~pad.map[playerNum][Gamepad.key_CONT_A];
 						} else if (RS_Y < 0.5) {
-							GL2JNIView.kcode_raw[playerNum] |= map[playerNum][Gamepad.key_CONT_A];
-							GL2JNIView.kcode_raw[playerNum] &= ~map[playerNum][Gamepad.key_CONT_B];
+							GL2JNIView.kcode_raw[playerNum] |= pad.map[playerNum][Gamepad.key_CONT_A];
+							GL2JNIView.kcode_raw[playerNum] &= ~pad.map[playerNum][Gamepad.key_CONT_B];
 						} else {
-							GL2JNIView.kcode_raw[playerNum] |= map[playerNum][Gamepad.key_CONT_A];
-							GL2JNIView.kcode_raw[playerNum] |= map[playerNum][Gamepad.key_CONT_B];
+							GL2JNIView.kcode_raw[playerNum] |= pad.map[playerNum][Gamepad.key_CONT_A];
+							GL2JNIView.kcode_raw[playerNum] |= pad.map[playerNum][Gamepad.key_CONT_B];
 						}
 					} else {
 						if (RS_Y > 0) {
@@ -332,8 +326,8 @@ public class GL2JNIActivity extends Activity {
 
 			}
 			mView.pushInput();
-			if ((globalLS_X[playerNum] == previousLS_X[playerNum] && globalLS_Y[playerNum] == previousLS_Y[playerNum])
-					|| (previousLS_X[playerNum] == 0.0f && previousLS_Y[playerNum] == 0.0f))
+			if ((pad.globalLS_X[playerNum] == pad.previousLS_X[playerNum] && pad.globalLS_Y[playerNum] == pad.previousLS_Y[playerNum])
+					|| (pad.previousLS_X[playerNum] == 0.0f && pad.previousLS_Y[playerNum] == 0.0f))
 				// Only handle Left Stick on an Xbox 360 controller if there was
 				// some actual motion on the stick,
 				// so otherwise the event can be handled as a DPAD event
@@ -391,23 +385,24 @@ public class GL2JNIActivity extends Activity {
 	boolean handle_key(Integer playerNum, int kc, boolean down) {
 		if (playerNum == null || playerNum == -1)
 			return false;
-		if (moga.isActiveMoga[playerNum]) {
+		if (pad.isActiveMoga[playerNum]) {
 			return false;
 		}
 
 		boolean rav = false;
-		for (int i = 0; i < map[playerNum].length; i += 2) {
-			if (map[playerNum][i + 0] == kc) {
+		for (int i = 0; i < pad.map[playerNum].length; i += 2) {
+			if (pad.map[playerNum][i + 0] == kc) {
 				if (down)
-					GL2JNIView.kcode_raw[playerNum] &= ~map[playerNum][i + 1];
+					GL2JNIView.kcode_raw[playerNum] &= ~pad.map[playerNum][i + 1];
 				else
-					GL2JNIView.kcode_raw[playerNum] |= map[playerNum][i + 1];
+					GL2JNIView.kcode_raw[playerNum] |= pad.map[playerNum][i + 1];
 				rav = true;
 				break;
 			}
 		}
 		mView.pushInput();
 		return rav;
+
 	}
 	
 	public void displayPopUp(PopupWindow popUp) {
@@ -470,17 +465,17 @@ public class GL2JNIActivity extends Activity {
 	}
 
 	public boolean onKeyUp(int keyCode, KeyEvent event) {
-		Integer playerNum = Arrays.asList(name).indexOf(event.getDeviceId());
+		Integer playerNum = Arrays.asList(pad.name).indexOf(event.getDeviceId());
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD && playerNum == -1) {
-			playerNum = deviceDescriptor_PlayerNum
-				.get(deviceId_deviceDescriptor.get(event.getDeviceId()));
+			playerNum = pad.deviceDescriptor_PlayerNum
+				.get(pad.deviceId_deviceDescriptor.get(event.getDeviceId()));
 		} else {
 			playerNum = -1;
 		}
 
 		if (playerNum != null && playerNum != -1) {
-			if (compat[playerNum] || custom[playerNum]) {
-				String id = portId[playerNum];
+			if (pad.compat[playerNum] || pad.custom[playerNum]) {
+				String id = pad.portId[playerNum];
 				if (keyCode == prefs.getInt("l_button" + id,
 						KeyEvent.KEYCODE_BUTTON_L1)
 						|| keyCode == prefs.getInt("r_button" + id,
@@ -495,17 +490,17 @@ public class GL2JNIActivity extends Activity {
 	}
 
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
-		Integer playerNum = Arrays.asList(name).indexOf(event.getDeviceId());
+		Integer playerNum = Arrays.asList(pad.name).indexOf(event.getDeviceId());
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD && playerNum == -1) {
-			playerNum = deviceDescriptor_PlayerNum
-				.get(deviceId_deviceDescriptor.get(event.getDeviceId()));
+			playerNum = pad.deviceDescriptor_PlayerNum
+				.get(pad.deviceId_deviceDescriptor.get(event.getDeviceId()));
 		} else {
 			playerNum = -1;
 		}
 		
 		if (playerNum != null && playerNum != -1) {
-			if (compat[playerNum] || custom[playerNum]) {
-				String id = portId[playerNum];
+			if (pad.compat[playerNum] || pad.custom[playerNum]) {
+				String id = pad.portId[playerNum];
 				if (keyCode == prefs.getInt("l_button" + id, KeyEvent.KEYCODE_BUTTON_L1)) {
 					return simulatedTouchEvent(playerNum, 1.0f, 0.0f);
 				}
@@ -539,7 +534,7 @@ public class GL2JNIActivity extends Activity {
 =======
 		}
 		if (keyCode == KeyEvent.KEYCODE_BACK) {
-			if (Gamepad.isXperiaPlay) {
+			if (pad.isXperiaPlay) {
 				return true;
 			} else {
 >>>>>>> Support "Select" as menu, Mapping, "Menu" hardware key

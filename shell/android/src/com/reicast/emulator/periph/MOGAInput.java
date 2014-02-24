@@ -37,21 +37,10 @@ public class MOGAInput
 	static final int ACTION_VERSION_MOGA = Controller.ACTION_VERSION_MOGA;
 	static final int ACTION_VERSION_MOGAPRO = Controller.ACTION_VERSION_MOGAPRO;
 
-	public boolean isActiveMoga[] = { false, false, false, false };
-	public boolean isMogaPro[] = { false, false, false, false };
-
-	private String[] portId = { "_A", "_B", "_C", "_D" };
-	private boolean[] custom = { false, false, false, false };
-	private float[] globalLS_X = new float[4], globalLS_Y = new float[4],
-			previousLS_X = new float[4], previousLS_Y = new float[4];
-	private int map[][] = new int[4][];
-
-	private SparseArray<String> deviceId_deviceDescriptor;
-	private HashMap<String, Integer> deviceDescriptor_PlayerNum;
-
 	public Controller mController = null;
 	private Handler handler;
 	private String notify;
+	private Gamepad pad;
 
 	Activity act;
 	public MOGAInput()
@@ -88,13 +77,10 @@ public class MOGAInput
 		*/
 	}
 
-	public void onCreate(Activity act,
-			SparseArray<String> deviceId_deviceDescriptor,
-			HashMap<String, Integer> deviceDescriptor_PlayerNum) {
+	public void onCreate(Activity act, Gamepad pad) {
 		this.act = act;
 
-		this.deviceId_deviceDescriptor = deviceId_deviceDescriptor;
-		this.deviceDescriptor_PlayerNum = deviceDescriptor_PlayerNum;
+		this.pad = pad;
 		
 		handler = new Handler();
 		prefs = PreferenceManager
@@ -147,13 +133,13 @@ public class MOGAInput
 	{
 		public void onKeyEvent(KeyEvent event)
 		{
-			Integer playerNum = deviceDescriptor_PlayerNum.get(deviceId_deviceDescriptor.get(event.getControllerId()));
+			Integer playerNum = pad.deviceDescriptor_PlayerNum.get(pad.deviceId_deviceDescriptor.get(event.getControllerId()));
 
 	    		if (playerNum == null)
 				return;
 
-	    		String id = portId[playerNum];
-	    		if (custom[playerNum]) {
+	    		String id = pad.portId[playerNum];
+	    		if (pad.custom[playerNum]) {
 	    			if (event.getKeyCode() == prefs.getInt("l_button" + id, KeyEvent.KEYCODE_BUTTON_L1)) {
 						simulatedTouchEvent(playerNum, 1.0f, 0.0f);
 						simulatedTouchEvent(playerNum, 0.0f, 0.0f);
@@ -167,12 +153,12 @@ public class MOGAInput
 			if(playerNum == 0)
 				JNIdc.hide_osd();
 
-			for (int i = 0; i < map.length; i += 2) {
-				if (map[playerNum][i + 0] == event.getKeyCode()) {
+			for (int i = 0; i < pad.map.length; i += 2) {
+				if (pad.map[playerNum][i + 0] == event.getKeyCode()) {
 					if (event.getAction() == 0) //FIXME to const
-						GL2JNIView.kcode_raw[playerNum] &= ~map[playerNum][i + 1];
+						GL2JNIView.kcode_raw[playerNum] &= ~pad.map[playerNum][i + 1];
 					else
-						GL2JNIView.kcode_raw[playerNum] |= map[playerNum][i + 1];
+						GL2JNIView.kcode_raw[playerNum] |= pad.map[playerNum][i + 1];
 					break;
 				}
 			}
@@ -181,10 +167,10 @@ public class MOGAInput
 		public void simulatedTouchEvent(int playerNum, float L2, float R2) {
 			if(playerNum == 0)
 				JNIdc.hide_osd();
-			previousLS_X[playerNum] = globalLS_X[playerNum];
-			previousLS_Y[playerNum] = globalLS_Y[playerNum];
-			globalLS_X[playerNum] = 0;
-			globalLS_Y[playerNum] = 0;
+			pad.previousLS_X[playerNum] = pad.globalLS_X[playerNum];
+			pad.previousLS_Y[playerNum] = pad.globalLS_Y[playerNum];
+			pad.globalLS_X[playerNum] = 0;
+			pad.globalLS_Y[playerNum] = 0;
 			GL2JNIView.lt[playerNum] = (int) (L2 * 255);
 			GL2JNIView.rt[playerNum] = (int) (R2 * 255);
 			GL2JNIView.jx[playerNum] = (int) (0 * 126);
@@ -193,7 +179,7 @@ public class MOGAInput
 
 		public void onMotionEvent(MotionEvent event)
 		{
-			Integer playerNum = deviceDescriptor_PlayerNum.get(deviceId_deviceDescriptor.get(event.getControllerId()));
+			Integer playerNum = pad.deviceDescriptor_PlayerNum.get(pad.deviceId_deviceDescriptor.get(event.getControllerId()));
 
 	    		if (playerNum == null)
 				return;
@@ -206,10 +192,10 @@ public class MOGAInput
 			float L2 = event.getAxisValue(MotionEvent.AXIS_LTRIGGER);
 			float R2 = event.getAxisValue(MotionEvent.AXIS_RTRIGGER);
 
-			previousLS_X[playerNum] = globalLS_X[playerNum];
-			previousLS_Y[playerNum] = globalLS_Y[playerNum];
-			globalLS_X[playerNum] = S_X;
-			globalLS_Y[playerNum] = S_Y;
+			pad.previousLS_X[playerNum] = pad.globalLS_X[playerNum];
+			pad.previousLS_Y[playerNum] = pad.globalLS_Y[playerNum];
+			pad.globalLS_X[playerNum] = S_X;
+			pad.globalLS_Y[playerNum] = S_Y;
 
 			GL2JNIView.lt[playerNum] = (int) (L2 * 255);
 			GL2JNIView.rt[playerNum] = (int) (R2 * 255);
@@ -228,7 +214,7 @@ public class MOGAInput
 
 		public void onStateEvent(StateEvent event)
 		{
-			Integer playerNum = deviceDescriptor_PlayerNum.get(deviceId_deviceDescriptor.get(event.getControllerId()));
+			Integer playerNum = pad.deviceDescriptor_PlayerNum.get(pad.deviceId_deviceDescriptor.get(event.getControllerId()));
 
 	    		if (playerNum == null)
 				return;
@@ -236,27 +222,27 @@ public class MOGAInput
 			if(playerNum == 0)
 				JNIdc.hide_osd();
 			
-			String id = portId[playerNum];
-			custom[playerNum] = prefs.getBoolean("modified_key_layout" + id, false);
+			String id = pad.portId[playerNum];
+			pad.custom[playerNum] = prefs.getBoolean("modified_key_layout" + id, false);
 
 			if (event.getState() == StateEvent.STATE_CONNECTION && event.getAction() == ACTION_CONNECTED) {
         		int mControllerVersion = mController.getState(Controller.STATE_CURRENT_PRODUCT_VERSION);
         		if (mControllerVersion == Controller.ACTION_VERSION_MOGAPRO) {
-        			isActiveMoga[playerNum] = true;
-        			isMogaPro[playerNum] = true;
-        			if (custom[playerNum]) {
-        				map[playerNum] = Gamepad.setModifiedKeys(id, playerNum, prefs);
+        			pad.isActiveMoga[playerNum] = true;
+        			pad.isMogaPro[playerNum] = true;
+        			if (pad.custom[playerNum]) {
+        				pad.map[playerNum] = pad.setModifiedKeys(id, playerNum, prefs);
         			} else {
-        				map[playerNum] = Gamepad.getMogaController();
+        				pad.map[playerNum] = pad.getMogaController();
         			}
         			notify = act.getApplicationContext().getString(R.string.moga_pro_connect);
         		} else if (mControllerVersion == Controller.ACTION_VERSION_MOGA) {
-        			isActiveMoga[playerNum] = true;
-        			isMogaPro[playerNum] = false;
-        			if (custom[playerNum]) {
-        				map[playerNum] = Gamepad.setModifiedKeys(id, playerNum, prefs);
+        			pad.isActiveMoga[playerNum] = true;
+        			pad.isMogaPro[playerNum] = false;
+        			if (pad.custom[playerNum]) {
+        				pad.map[playerNum] = pad.setModifiedKeys(id, playerNum, prefs);
         			} else {
-        				map[playerNum] = Gamepad.getMogaController();
+        				pad.map[playerNum] = pad.getMogaController();
         			}
         			notify = act.getApplicationContext().getString(R.string.moga_connect);
         		}

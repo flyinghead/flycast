@@ -32,6 +32,8 @@ public class EditVJoyActivity extends Activity {
 	GL2JNIView mView;
 	PopupWindow popUp;
 	LayoutParams params;
+
+	private Config config;
 	
 	private float[][] vjoy_d_cached;
 
@@ -56,9 +58,12 @@ public class EditVJoyActivity extends Activity {
 
 		SharedPreferences prefs = PreferenceManager
 				.getDefaultSharedPreferences(this);
+		config = new Config(EditVJoyActivity.this);
+		config.getConfigurationPrefs();
 
 		// Create the actual GLES view
-		mView = new GL2JNIView(getApplication(), null, false, prefs.getInt("depth_render", 24), 0, true);
+		mView = new GL2JNIView(getApplication(), config, null, false,
+				prefs.getInt("depth_render", 24), 0, true);
 		mView.setFpsDisplay(null);
 		setContentView(mView);
 

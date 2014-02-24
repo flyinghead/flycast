@@ -1,17 +1,41 @@
 package com.reicast.emulator.periph;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
 import tv.ouya.console.api.OuyaController;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
+import android.util.SparseArray;
 import android.view.KeyEvent;
 
 public class Gamepad {
 
-	public static boolean isXperiaPlay;
-	public static boolean isOuyaOrTV;
+	public String[] portId = { "_A", "_B", "_C", "_D" };
+	public boolean[] compat = { false, false, false, false };
+	public boolean[] custom = { false, false, false, false };
+	public int[] name = { -1, -1, -1, -1 };
+	public float[] globalLS_X = new float[4], globalLS_Y = new float[4],
+			previousLS_X = new float[4], previousLS_Y = new float[4];
+	public int map[][] = new int[4][];
+
+	public SparseArray<String> deviceId_deviceDescriptor = new SparseArray<String>();
+	public HashMap<String, Integer> deviceDescriptor_PlayerNum = new HashMap<String, Integer>();
+
+	public boolean isActiveMoga[] = { false, false, false, false };
+	public boolean isMogaPro[] = { false, false, false, false };
+
+	public SparseArray<Integer> playerNumX = new SparseArray<Integer>();
+	public List<Integer> keypadZeus = new ArrayList<Integer>();
+
+	public boolean isXperiaPlay;
+	public boolean isOuyaOrTV;
 //	public boolean isNvidiaShield;
+
+	public static final int Xperia_Touchpad = 1048584;
 	
 	public static final int key_CONT_B 			= 0x0002;
 	public static final int key_CONT_A 			= 0x0004;
@@ -23,7 +47,7 @@ public class Gamepad {
 	public static final int key_CONT_Y 			= 0x0200;
 	public static final int key_CONT_X 			= 0x0400;
 
-	public static int[] getConsoleController() {
+	public int[] getConsoleController() {
 		return new int[] {
 				OuyaController.BUTTON_O, 			key_CONT_A,
 				OuyaController.BUTTON_A, 			key_CONT_B,
@@ -41,7 +65,7 @@ public class Gamepad {
 		};
 	}
 
-	public static int[] getXPlayController() {
+	public int[] getXPlayController() {
 		return new int[] { 
 				KeyEvent.KEYCODE_DPAD_CENTER, 		key_CONT_A,
 				KeyEvent.KEYCODE_BACK, 				key_CONT_B,
@@ -59,7 +83,7 @@ public class Gamepad {
 		};
 	}
 
-	public static int[] getOUYAController() {
+	public int[] getOUYAController() {
 		return new int[] {
 				OuyaController.BUTTON_O, 			key_CONT_A,
 				OuyaController.BUTTON_A, 			key_CONT_B,
@@ -87,7 +111,7 @@ public class Gamepad {
 		};
 	}
 
-	public static int[] getMogaController() {
+	public int[] getMogaController() {
 		return new int[] {
 				KeyEvent.KEYCODE_BUTTON_B,			key_CONT_B,
 				KeyEvent.KEYCODE_BUTTON_A,			key_CONT_A,
@@ -104,7 +128,7 @@ public class Gamepad {
 			};
 	}
 
-	public static int[] setModifiedKeys(String id, int playerNum, SharedPreferences mPrefs) {
+	public int[] setModifiedKeys(String id, int playerNum, SharedPreferences mPrefs) {
 		return new int[] { 
 				mPrefs.getInt("a_button" + id, OuyaController.BUTTON_O), 				key_CONT_A, 
 				mPrefs.getInt("b_button" + id, OuyaController.BUTTON_A), 				key_CONT_B,
@@ -121,7 +145,7 @@ public class Gamepad {
 		};
 	}
 
-	public static boolean IsXperiaPlay() {
+	public boolean IsXperiaPlay() {
 		return android.os.Build.MODEL.equals("R800a")
 				|| android.os.Build.MODEL.equals("R800i")
 				|| android.os.Build.MODEL.equals("R800x")
@@ -130,7 +154,7 @@ public class Gamepad {
 				|| android.os.Build.MODEL.equals("zeus");
 	}
 
-	public static boolean IsOuyaOrTV(Context context) {
+	public boolean IsOuyaOrTV(Context context) {
 		PackageManager pMan = context.getPackageManager();
 		if (pMan.hasSystemFeature(PackageManager.FEATURE_TELEVISION)) {
 			return true;
@@ -138,7 +162,7 @@ public class Gamepad {
 		return false;
 	}
 	
-	public static int getStartButtonCode() {
+	public int getStartButtonCode() {
 		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.GINGERBREAD) {
 			return 108;
 		} else {
@@ -146,7 +170,7 @@ public class Gamepad {
 		}
 	}
 	
-	public static int getSelectButtonCode() {
+	public int getSelectButtonCode() {
 		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.GINGERBREAD) {
 			return 109;
 		} else {
@@ -154,7 +178,7 @@ public class Gamepad {
 		}
 	}
 
-	public static boolean IsNvidiaShield() {
+	public boolean IsNvidiaShield() {
 		return android.os.Build.MODEL.equals("SHIELD")
 				|| android.os.Build.DEVICE.equals("roth")
 				|| android.os.Build.PRODUCT.equals("thor");
