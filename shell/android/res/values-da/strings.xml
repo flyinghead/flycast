@@ -78,7 +78,7 @@
     <string name="git_api">https://api.github.com/repos/reicast/reicast-emulator/commits</string>
     <string name="git_issues">https://github.com/reicast/reicast-emulator/issues/</string>
     
-    <string-array name="controllere">
+    <string-array name="controllers">
     <item>Controller A</item>
     <item>Controller B</item>
     <item>Controller C</item>
