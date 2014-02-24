@@ -65,7 +65,7 @@
     <string name="map_keycode_message">Press the new controller button for %1$s</string>
     
     <string name="bios_menu">Press the %1$s button for a menu</string>
-    <string name="back_button">back</string>
+    <string name="back_button">back / select</string>
     <string name="menu_button">menu</string>
     <string name="right_button">R3</string>
     

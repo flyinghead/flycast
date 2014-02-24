@@ -39,7 +39,8 @@ public class Gamepad {
 				OuyaController.BUTTON_DPAD_LEFT, 	key_CONT_DPAD_LEFT,
 				OuyaController.BUTTON_DPAD_RIGHT, 	key_CONT_DPAD_RIGHT,
 
-				KeyEvent.KEYCODE_BUTTON_START, 		key_CONT_START
+				KeyEvent.KEYCODE_BUTTON_START, 		key_CONT_START,
+				KeyEvent.KEYCODE_BUTTON_SELECT, 	KeyEvent.KEYCODE_BACK
 		};
 	}
 
@@ -55,7 +56,8 @@ public class Gamepad {
 				OuyaController.BUTTON_DPAD_LEFT, 	key_CONT_DPAD_LEFT,
 				OuyaController.BUTTON_DPAD_RIGHT, 	key_CONT_DPAD_RIGHT,
 
-				KeyEvent.KEYCODE_BUTTON_START, 		key_CONT_START
+				KeyEvent.KEYCODE_BUTTON_START, 		key_CONT_START,
+				KeyEvent.KEYCODE_BUTTON_SELECT, 	KeyEvent.KEYCODE_MENU
 		};
 	}
 
