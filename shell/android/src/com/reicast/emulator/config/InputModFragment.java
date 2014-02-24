@@ -392,6 +392,26 @@ public class InputModFragment extends Fragment {
 				remKeyCode("start_button", start_button_text);
 			}
 		});
+
+		ImageView select_button_icon = (ImageView) getView().findViewById(
+				R.id.select_button_icon);
+		select_button_icon.setImageResource(R.drawable.ic_drawer);
+		final TextView select_button_text = (TextView) getView().findViewById(
+				R.id.select_button_key);
+		Button select_button = (Button) getView().findViewById(
+				R.id.select_button_edit);
+		select_button.setOnClickListener(new View.OnClickListener() {
+			public void onClick(View v) {
+				mKey.intiateSearch("select_button", select_button_text);
+			}
+		});
+		Button select_remove = (Button) getView()
+				.findViewById(R.id.remove_select);
+		select_remove.setOnClickListener(new View.OnClickListener() {
+			public void onClick(View v) {
+				remKeyCode("select_button", select_button_text);
+			}
+		});
 	}
 
 	/**

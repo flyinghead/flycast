@@ -40,7 +40,8 @@ public class Gamepad {
 				OuyaController.BUTTON_DPAD_RIGHT, 	key_CONT_DPAD_RIGHT,
 
 				KeyEvent.KEYCODE_BUTTON_START, 		key_CONT_START,
-				KeyEvent.KEYCODE_BUTTON_SELECT, 	KeyEvent.KEYCODE_BACK
+				KeyEvent.KEYCODE_BUTTON_SELECT, 	KeyEvent.KEYCODE_BUTTON_SELECT
+				// Redundant, but verifies it is mapped properly
 		};
 	}
 
@@ -57,7 +58,8 @@ public class Gamepad {
 				OuyaController.BUTTON_DPAD_RIGHT, 	key_CONT_DPAD_RIGHT,
 
 				KeyEvent.KEYCODE_BUTTON_START, 		key_CONT_START,
-				KeyEvent.KEYCODE_BUTTON_SELECT, 	KeyEvent.KEYCODE_MENU
+				KeyEvent.KEYCODE_BUTTON_SELECT, 	KeyEvent.KEYCODE_BUTTON_SELECT
+				// Redundant, but verifies it is mapped properly
 		};
 	}
 
@@ -73,8 +75,14 @@ public class Gamepad {
 				OuyaController.BUTTON_DPAD_LEFT, 	key_CONT_DPAD_LEFT,
 				OuyaController.BUTTON_DPAD_RIGHT, 	key_CONT_DPAD_RIGHT,
 
+<<<<<<< HEAD
 				OuyaController.BUTTON_R3, 			key_CONT_START,
 				KeyEvent.KEYCODE_BUTTON_START, 		key_CONT_START
+=======
+				OuyaController.BUTTON_MENU, 		key_CONT_START,
+				KeyEvent.KEYCODE_BUTTON_START, 		key_CONT_START,
+				OuyaController.BUTTON_R3, 			KeyEvent.KEYCODE_BUTTON_SELECT
+>>>>>>> Support "Select" as menu, Mapping, "Menu" hardware key
 		};
 	}
 
@@ -91,6 +99,7 @@ public class Gamepad {
 				mPrefs.getInt("dpad_right" + id, OuyaController.BUTTON_DPAD_RIGHT), key_CONT_DPAD_RIGHT,
 
 				mPrefs.getInt("start_button" + id, KeyEvent.KEYCODE_BUTTON_START), 	key_CONT_START,
+				mPrefs.getInt("select_button" + id, KeyEvent.KEYCODE_BUTTON_SELECT), 	KeyEvent.KEYCODE_BUTTON_SELECT
 		};
 	}
 

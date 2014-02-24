@@ -18,6 +18,7 @@ import android.view.Gravity;
 import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
+import android.view.ViewConfiguration;
 import android.view.ViewGroup.LayoutParams;
 import android.view.Window;
 import android.widget.LinearLayout;
@@ -543,15 +544,28 @@ public class GL2JNIActivity extends Activity {
 			return true;
 		}
 
-		if (isXperiaPlay) {
+		if (keyCode == KeyEvent.KEYCODE_BUTTON_SELECT) {
+			return showMenu();
+		} 
+		if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.GINGERBREAD_MR1
+				|| (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH 
+				&& ViewConfiguration.get(this).hasPermanentMenuKey())) {
 			if (keyCode == KeyEvent.KEYCODE_MENU) {
 				return showMenu();
 			}
+<<<<<<< HEAD
 			if (keyCode == KeyEvent.KEYCODE_BACK) {
 				return false;
 			}
 		} else {
 			if (keyCode == KeyEvent.KEYCODE_BACK || keyCode == OuyaController.BUTTON_MENU) {
+=======
+		}
+		if (keyCode == KeyEvent.KEYCODE_BACK) {
+			if (isXperiaPlay) {
+				return true;
+			} else {
+>>>>>>> Support "Select" as menu, Mapping, "Menu" hardware key
 				return showMenu();
 			}
 		}
