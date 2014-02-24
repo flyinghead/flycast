@@ -106,6 +106,10 @@ public class GL2JNIView extends GLSurfaceView
 	      }
 	    });
     }
+    
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+        setPreserveEGLContextOnPause(true);
+    }
 
     vib=(Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
     
@@ -794,11 +798,13 @@ private static class ContextFactory implements GLSurfaceView.EGLContextFactory
 
 	  public void onSurfaceChanged(GL10 gl,int width,int height)
 	  {
+		  Log.d("GL2JNIView Renderer", "onSurfaceChanged");
 		  JNIdc.rendinit(width,height);
 	  }
 
 	  public void onSurfaceCreated(GL10 gl,EGLConfig config)
 	  {
+		  Log.d("GL2JNIView Renderer", "onSurfaceCreated");
 		  onSurfaceChanged(gl, 800, 480);
 	  }
 

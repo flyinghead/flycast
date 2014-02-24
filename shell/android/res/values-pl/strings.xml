@@ -6,9 +6,9 @@
     <string name="games_path">Ścieżka obrazów (lokalizacja obrazów dysków .gdi, .chd or .cdi)</string>
     <string name="game_path">Domyślna ścieżka obrazów</string>
     
-    <string name="boot_bios">Uruchom BIOS'a Dreamcast'a</string>
-    <string name="missing_bios">Brak BIOS'u. BIOS Dreamcast'a jest potrzebny, aby ten emulator działał. Skopiuj BIOS do %1$s/data/dc_boot.bin</string>
-    <string name="missing_flash">Brak Flash'a. Plik Flash Dreamcast'a jest potrzebny, aby ten emulator działał. Skopiuj plik Flash do %1$s/data/dc_flash.bin</string>    <string name="require_bios">You have to provide the BIOS</string>
+    <string name="boot_bios">Uruchom BIOS\'a Dreamcast\'a</string>
+    <string name="missing_bios">Brak BIOS\'u. BIOS Dreamcast\'a jest potrzebny, aby ten emulator działał. Skopiuj BIOS do %1$s/data/dc_boot.bin</string>
+    <string name="missing_flash">Brak Flash\'a. Plik Flash Dreamcast\'a jest potrzebny, aby ten emulator działał. Skopiuj plik Flash do %1$s/data/dc_flash.bin</string>    <string name="require_bios">You have to provide the BIOS</string>
     
     <string name="folder_bios">URUCHOM BIOS</string>
     <string name="folder_select">WYBIERZ BIEŻĄCY FOLDER</string>
@@ -23,7 +23,7 @@
     <string name="select_render">PVR Rendering (na razie nie działa)</string>
     <string name="default_disk">Ustaw domyślny dysk</string>
 
-    <string name="games_listing">Dostępne gry Dreamcast'a</string>
+    <string name="games_listing">Dostępne gry Dreamcast\'a</string>
 
     <string name="customize_touch_controls">Dostosuj układ przycisków dotykowych</string>
     <string name="launch_editor">Uruchom Edytor</string>
@@ -49,10 +49,10 @@
     <string name="moga_pro_connect">MOGA Pro przyłączona!</string>
     <string name="moga_connect">MOGA przyłączona!</string>
 
-    <string name="about_text">reicast jest emulatorem dreamcast'a</string>
+    <string name="about_text">reicast jest emulatorem dreamcast\'a</string>
     <string name="revision_text">Wersja: %1$s [%2$s]</string>
     
-    <string-array name="kontrolery">
+    <string-array name="controllers">
     <item>Controller A</item>
     <item>Controller B</item>
     <item>Controller C</item>
