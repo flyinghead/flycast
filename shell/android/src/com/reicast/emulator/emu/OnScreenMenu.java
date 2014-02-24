@@ -156,9 +156,9 @@ public class OnScreenMenu {
 		private View audiosetting;
 		private View fdown;
 		private View fup;
-		private int frames = Config.frameskip;
-		private boolean screen = Config.widescreen;
-		private boolean limit = Config.limitfps;
+		private int frames = ConfigureFragment.frameskip;
+		private boolean screen = ConfigureFragment.widescreen;
+		private boolean limit = ConfigureFragment.limitfps;
 		private boolean audio;
 
 		public ConfigPopup(Context c) {
@@ -204,20 +204,20 @@ public class OnScreenMenu {
 				public void onClick(View v) {
 					frameskip++;
 					JNIdc.frameskip(frameskip);
-					enableState(frames_up, frames_down);
+					enableState(fup, fdown);
 				}
 			});
 			fup = addbut(R.drawable.frames_up, new OnClickListener() {
 				public void onClick(View v) {
 					frameskip--;
 					JNIdc.frameskip(frameskip);
-					enableState(frames_up, frames_down);
+					enableState(fup, fdown);
 				}
 			});
 
-			hlay.addView(frames_up, params);
-			hlay.addView(frames_down, params);
-			enableState(frames_up, frames_down);
+			hlay.addView(fup, params);
+			hlay.addView(fdown, params);
+			enableState(fup, fdown);
 
 
 			framelimit = addbut(R.drawable.frames_limit_on,
