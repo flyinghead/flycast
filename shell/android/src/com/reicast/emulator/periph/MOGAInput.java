@@ -38,6 +38,8 @@ public class MOGAInput
 	public Controller mController = null;
 	private Handler handler;
 	private String notify;
+
+	private Gamepad gamepad;
 	
 	static String[] portId = { "_A", "_B", "_C", "_D" };
 	static boolean[] custom = { false, false, false, false },
@@ -48,32 +50,8 @@ public class MOGAInput
 
     public boolean isActive[] = { false, false, false, false };
     public boolean isMogaPro[] = { false, false, false, false };
-
-	private static final int key_CONT_B 			= 0x0002;
-	private static final int key_CONT_A 			= 0x0004;
-	private static final int key_CONT_START 		= 0x0008;
-	private static final int key_CONT_DPAD_UP 		= 0x0010;
-	private static final int key_CONT_DPAD_DOWN 	= 0x0020;
-	private static final int key_CONT_DPAD_LEFT 	= 0x0040;
-	private static final int key_CONT_DPAD_RIGHT 	= 0x0080;
-	private static final int key_CONT_Y 			= 0x0200;
-	private static final int key_CONT_X 			= 0x0400;
-
-	int[] keys = new int[] {
-		KeyEvent.KEYCODE_BUTTON_B, key_CONT_B,
-		KeyEvent.KEYCODE_BUTTON_A, key_CONT_A,
-		KeyEvent.KEYCODE_BUTTON_X, key_CONT_X,
-		KeyEvent.KEYCODE_BUTTON_Y, key_CONT_Y,
-
-		KeyEvent.KEYCODE_DPAD_UP, key_CONT_DPAD_UP,
-		KeyEvent.KEYCODE_DPAD_DOWN, key_CONT_DPAD_DOWN,
-		KeyEvent.KEYCODE_DPAD_LEFT, key_CONT_DPAD_LEFT,
-		KeyEvent.KEYCODE_DPAD_RIGHT, key_CONT_DPAD_RIGHT,
-
-		KeyEvent.KEYCODE_BUTTON_START, key_CONT_START,
-	};
 	
-	int map[][] = { keys, keys, keys, keys };
+	int map[][];
 
 	Activity act;
 	public MOGAInput()
@@ -118,6 +96,8 @@ public class MOGAInput
 		prefs = PreferenceManager
 				.getDefaultSharedPreferences(act.getApplicationContext());
 
+		gamepad = new Gamepad(act);
+
 		mController = Controller.getInstance(act);
 		mController.init();
 		mController.setListener(new ExampleControllerListener(), new Handler());
@@ -159,29 +139,6 @@ public class MOGAInput
 			value.mValue = mController.getAxisValue(key);
 		}
 		*/
-	}
-	
-	private void setModifiedKeys(int player) {
-		String id = portId[player];
-		if (custom[player]) {
-			map[player] = new int[] {
-				prefs.getInt("a_button" + id, KeyEvent.KEYCODE_BUTTON_A), key_CONT_A,
-				prefs.getInt("b_button" + id, KeyEvent.KEYCODE_BUTTON_B), key_CONT_B,
-				prefs.getInt("x_button" + id, KeyEvent.KEYCODE_BUTTON_X), key_CONT_X,
-				prefs.getInt("y_button" + id, KeyEvent.KEYCODE_BUTTON_Y), key_CONT_Y,
-
-				prefs.getInt("dpad_up" + id, KeyEvent.KEYCODE_DPAD_UP), key_CONT_DPAD_UP,
-				prefs.getInt("dpad_down" + id, KeyEvent.KEYCODE_DPAD_DOWN), key_CONT_DPAD_DOWN,
-				prefs.getInt("dpad_left" + id, KeyEvent.KEYCODE_DPAD_LEFT), key_CONT_DPAD_LEFT,
-				prefs.getInt("dpad_right" + id, KeyEvent.KEYCODE_DPAD_RIGHT), key_CONT_DPAD_RIGHT,
-
-				prefs.getInt("start_button" + id, KeyEvent.KEYCODE_BUTTON_START), key_CONT_START,
-			};
-		}
-		if (jsCompat[player]) {
-			globalLS_X[player] = previousLS_X[player] = 0.0f;
-			globalLS_Y[player] = previousLS_Y[player] = 0.0f;
-		}
 	}
 
 	class ExampleControllerListener implements ControllerListener
@@ -292,12 +249,20 @@ public class MOGAInput
         		if (mControllerVersion == Controller.ACTION_VERSION_MOGAPRO) {
         			isActive[playerNum] = true;
         			isMogaPro[playerNum] = true;
-        			setModifiedKeys(playerNum);
+        			if (custom[playerNum]) {
+        				map[playerNum] = gamepad.setModifiedKeys(id, playerNum);
+        			} else {
+        				map[playerNum] = gamepad.getMogaController();
+        			}
         			notify = act.getApplicationContext().getString(R.string.moga_pro_connect);
         		} else if (mControllerVersion == Controller.ACTION_VERSION_MOGA) {
         			isActive[playerNum] = true;
         			isMogaPro[playerNum] = false;
-        			setModifiedKeys(playerNum);
+        			if (custom[playerNum]) {
+        				map[playerNum] = gamepad.setModifiedKeys(id, playerNum);
+        			} else {
+        				map[playerNum] = gamepad.getMogaController();
+        			}
         			notify = act.getApplicationContext().getString(R.string.moga_connect);
         		}
         		if (notify != null && !notify.equals(null)) {

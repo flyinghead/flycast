@@ -4,6 +4,7 @@ import tv.ouya.console.api.OuyaController;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.preference.PreferenceManager;
 import android.view.KeyEvent;
 
@@ -39,8 +40,8 @@ public class Gamepad {
 				OuyaController.BUTTON_DPAD_LEFT, 	key_CONT_DPAD_LEFT,
 				OuyaController.BUTTON_DPAD_RIGHT, 	key_CONT_DPAD_RIGHT,
 
-				KeyEvent.KEYCODE_BUTTON_START, 		key_CONT_START,
-				KeyEvent.KEYCODE_BUTTON_SELECT, 	KeyEvent.KEYCODE_BUTTON_SELECT
+				getStartButtonCode(), 				key_CONT_START,
+				getSelectButtonCode(), 				getSelectButtonCode()
 				// Redundant, but verifies it is mapped properly
 		};
 	}
@@ -57,8 +58,8 @@ public class Gamepad {
 				OuyaController.BUTTON_DPAD_LEFT, 	key_CONT_DPAD_LEFT,
 				OuyaController.BUTTON_DPAD_RIGHT, 	key_CONT_DPAD_RIGHT,
 
-				KeyEvent.KEYCODE_BUTTON_START, 		key_CONT_START,
-				KeyEvent.KEYCODE_BUTTON_SELECT, 	KeyEvent.KEYCODE_BUTTON_SELECT
+				getStartButtonCode(), 				key_CONT_START,
+				getSelectButtonCode(), 				getSelectButtonCode()
 				// Redundant, but verifies it is mapped properly
 		};
 	}
@@ -80,10 +81,33 @@ public class Gamepad {
 				KeyEvent.KEYCODE_BUTTON_START, 		key_CONT_START
 =======
 				OuyaController.BUTTON_MENU, 		key_CONT_START,
+<<<<<<< HEAD
 				KeyEvent.KEYCODE_BUTTON_START, 		key_CONT_START,
 				OuyaController.BUTTON_R3, 			KeyEvent.KEYCODE_BUTTON_SELECT
 >>>>>>> Support "Select" as menu, Mapping, "Menu" hardware key
+=======
+				getStartButtonCode(), 				key_CONT_START,
+				OuyaController.BUTTON_R3, 			getSelectButtonCode()
+>>>>>>> Support deprecated platforms, Bring Moga into Gamepads
 		};
+	}
+
+	public int[] getMogaController() {
+		return new int[] {
+				KeyEvent.KEYCODE_BUTTON_B,			key_CONT_B,
+				KeyEvent.KEYCODE_BUTTON_A,			key_CONT_A,
+				KeyEvent.KEYCODE_BUTTON_X,			key_CONT_X,
+				KeyEvent.KEYCODE_BUTTON_Y,			key_CONT_Y,
+
+				KeyEvent.KEYCODE_DPAD_UP,			key_CONT_DPAD_UP,
+				KeyEvent.KEYCODE_DPAD_DOWN,			key_CONT_DPAD_DOWN,
+				KeyEvent.KEYCODE_DPAD_LEFT,			key_CONT_DPAD_LEFT,
+				KeyEvent.KEYCODE_DPAD_RIGHT,		key_CONT_DPAD_RIGHT,
+
+				getStartButtonCode(),				key_CONT_START,
+				getSelectButtonCode(),				getSelectButtonCode()
+                // Redundant, but verifies it is mapped properly
+			};
 	}
 
 	public int[] setModifiedKeys(String id, int playerNum) {
@@ -97,9 +121,8 @@ public class Gamepad {
 				mPrefs.getInt("dpad_down" + id, OuyaController.BUTTON_DPAD_DOWN), 	key_CONT_DPAD_DOWN,
 				mPrefs.getInt("dpad_left" + id, OuyaController.BUTTON_DPAD_LEFT), 	key_CONT_DPAD_LEFT,
 				mPrefs.getInt("dpad_right" + id, OuyaController.BUTTON_DPAD_RIGHT), key_CONT_DPAD_RIGHT,
-
-				mPrefs.getInt("start_button" + id, KeyEvent.KEYCODE_BUTTON_START), 	key_CONT_START,
-				mPrefs.getInt("select_button" + id, KeyEvent.KEYCODE_BUTTON_SELECT), 	KeyEvent.KEYCODE_BUTTON_SELECT
+				mPrefs.getInt("start_button" + id, getStartButtonCode()), 		key_CONT_START,
+				mPrefs.getInt("select_button" + id, getSelectButtonCode()), 	getSelectButtonCode()
 		};
 	}
 
@@ -118,5 +141,27 @@ public class Gamepad {
 			return true;
 		}
 		return false;
+	}
+	
+	public static int getStartButtonCode() {
+		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.GINGERBREAD) {
+			return 108;
+		} else {
+			return KeyEvent.KEYCODE_BUTTON_START;
+		}
+	}
+	
+	public static int getSelectButtonCode() {
+		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.GINGERBREAD) {
+			return 109;
+		} else {
+			return KeyEvent.KEYCODE_BUTTON_SELECT;
+		}
+	}
+
+	public static boolean IsNvidiaShield() {
+		return android.os.Build.MODEL.equals("SHIELD")
+				|| android.os.Build.DEVICE.equals("roth")
+				|| android.os.Build.PRODUCT.equals("thor");
 	}
 }
