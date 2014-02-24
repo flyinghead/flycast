@@ -1,6 +1,7 @@
 <resources>
 
     <string name="menu_settings">Ustawienia</string>
+<<<<<<< HEAD
     <string name="system_path">Ścieżka systemowa (lokalizacja folderu zawierającego dc_boot.bin/dc_flash.bin)</string>
     <string name="browser_path">Domyślna ścieżka systemowa</string>
     <string name="games_path">Ścieżka obrazów (lokalizacja obrazów dysków .gdi, .chd or .cdi)</string>
@@ -9,6 +10,17 @@
     <string name="boot_bios">Uruchom BIOS\'a Dreamcast\'a</string>
     <string name="missing_bios">Brak BIOS\'u. BIOS Dreamcast\'a jest potrzebny, aby ten emulator działał. Skopiuj BIOS do %1$s/data/dc_boot.bin</string>
     <string name="missing_flash">Brak Flash\'a. Plik Flash Dreamcast\'a jest potrzebny, aby ten emulator działał. Skopiuj plik Flash do %1$s/data/dc_flash.bin</string>    <string name="require_bios">You have to provide the BIOS</string>
+=======
+    <string name="system_path">Ścieżka System (lokalizacja folderu danych z dc_boot.bin / dc_flash.bin wewnątrz)</string>
+    <string name="browser_path">Ścieżka domyślna systemu</string>
+    <string name="games_path">Ścieżka przechowywania (lokalizacja. GDI. CHD lub. Cdi zdjęcia)</string>
+    <string name="game_path">Domyślnie gra bagażu</string>
+    
+    <string name="boot_bios">Bios Boot Dreamcast</string>
+    <string name="missing_bios">BIOS Missing. The Dreamcast BIOS is required for this emulator to work. Place the BIOS file in %1$s/data/dc_boot.bin</string>
+    <string name="missing_flash">Flash Missing. The Dreamcast Flash is required for this emulator to work. Place the Flash file in %1$s/data/dc_flash.bin</string>
+    <string name="require_bios">You have to provide the BIOS</string>
+>>>>>>> This will at least solve the Spanish issue until it is complete
     
     <string name="folder_bios">URUCHOM BIOS</string>
     <string name="folder_select">WYBIERZ BIEŻĄCY FOLDER</string>
@@ -59,12 +71,21 @@
     <item>Controller D</item>
     </string-array>
 
+<<<<<<< HEAD
 	<string name="browser">Eksplorator</string>
     <string name="settings">Konfiguracja</string>
     <string name="paths">Ścieżki</string>
     <string name="input">Kontrolery</string>
     <string name="about">O nas</string>
     <string name="rateme">Oceń nas</string>
+=======
+	<string name="browser">przeglądarka</string>
+    <string name="settings">Ustawienia</string>
+    <string name="paths">ścieżki</string>
+    <string name="input">wkład</string>
+    <string name="about">dookoła</string>
+    <string name="rateme">oceń mnie</string>
+>>>>>>> This will at least solve the Spanish issue until it is complete
     
     <string name="textOn">WŁ</string>
     <string name="textOff">WYŁ</string>
