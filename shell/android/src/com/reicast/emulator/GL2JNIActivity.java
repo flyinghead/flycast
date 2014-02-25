@@ -272,11 +272,7 @@ public class GL2JNIActivity extends Activity {
 			if (playerNum == null || playerNum == -1)
 				return false;
 
-			if (pad.isActiveMoga[playerNum]) {
-				return false;
-			}
-
-			if (!pad.compat[playerNum]) {
+			if (!pad.compat[playerNum] && !pad.isActiveMoga[playerNum]) {
 				// TODO: Moga should handle this locally
 
 				// Joystick
@@ -303,14 +299,15 @@ public class GL2JNIActivity extends Activity {
 
 					if (prefs.getBoolean("right_buttons", true)) {
 						if (RS_Y > 0.5) {
-							handle_key(playerNum, pad.map[playerNum][0], true);
-							handle_key(playerNum, pad.map[playerNum][1], false);
+							handle_key(playerNum, pad.map[playerNum][0]/* A */, true);
+							pad.wasKeyStick[playerNum] = true;
 						} else if (RS_Y < 0.5) {
-							handle_key(playerNum, pad.map[playerNum][0], false);
-							handle_key(playerNum, pad.map[playerNum][1], true);
-						} else {
+							handle_key(playerNum, pad.map[playerNum][1]/* B */, true);
+							pad.wasKeyStick[playerNum] = true;
+						} else if (pad.wasKeyStick[playerNum]){
 							handle_key(playerNum, pad.map[playerNum][0], false);
 							handle_key(playerNum, pad.map[playerNum][1], false);
+							pad.wasKeyStick[playerNum] = false;
 						}
 					} else {
 						if (RS_Y > 0.5) {
@@ -320,9 +317,8 @@ public class GL2JNIActivity extends Activity {
 						}
 					}
 				}
-
+				mView.pushInput();
 			}
-			mView.pushInput();
 			if ((pad.globalLS_X[playerNum] == pad.previousLS_X[playerNum] && pad.globalLS_Y[playerNum] == pad.previousLS_Y[playerNum])
 					|| (pad.previousLS_X[playerNum] == 0.0f && pad.previousLS_Y[playerNum] == 0.0f))
 				// Only handle Left Stick on an Xbox 360 controller if there was
@@ -379,7 +375,7 @@ public class GL2JNIActivity extends Activity {
 	 * };
 	 */
 
-	boolean handle_key(Integer playerNum, int kc, boolean down) {
+	public boolean handle_key(Integer playerNum, int kc, boolean down) {
 		if (playerNum == null || playerNum == -1)
 			return false;
 		if (pad.isActiveMoga[playerNum]) {
@@ -461,6 +457,10 @@ public class GL2JNIActivity extends Activity {
 				LayoutParams.WRAP_CONTENT);
 	}
 
+	public GL2JNIView getGameView() {
+		return mView;
+	}
+
 	public boolean onKeyUp(int keyCode, KeyEvent event) {
 		Integer playerNum = Arrays.asList(pad.name).indexOf(event.getDeviceId());
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD && playerNum == -1) {
@@ -470,7 +470,7 @@ public class GL2JNIActivity extends Activity {
 			playerNum = -1;
 		}
 
-		if (playerNum != null && playerNum != -1) {
+		if (playerNum != null && playerNum != -1 && !pad.isActiveMoga[playerNum]) {
 			if (pad.compat[playerNum] || pad.custom[playerNum]) {
 				String id = pad.portId[playerNum];
 				if (keyCode == prefs.getInt("l_button" + id,
@@ -482,8 +482,15 @@ public class GL2JNIActivity extends Activity {
 			}
 		}
 
-		return handle_key(playerNum, keyCode, false)
-				|| super.onKeyUp(keyCode, event);
+		if (!pad.isActiveMoga[playerNum]) {
+			return handle_key(playerNum, keyCode, false)
+					|| super.onKeyUp(keyCode, event);
+		} else if (keyCode == KeyEvent.KEYCODE_VOLUME_UP
+				|| keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) {
+			return super.onKeyUp(keyCode, event);
+		} else {
+			return true;
+		}
 	}
 
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
@@ -494,8 +501,8 @@ public class GL2JNIActivity extends Activity {
 		} else {
 			playerNum = -1;
 		}
-		
-		if (playerNum != null && playerNum != -1) {
+
+		if (playerNum != null && playerNum != -1 && !pad.isActiveMoga[playerNum]) {
 			if (pad.compat[playerNum] || pad.custom[playerNum]) {
 				String id = pad.portId[playerNum];
 				if (keyCode == prefs.getInt("l_button" + id, KeyEvent.KEYCODE_BUTTON_L1)) {
@@ -507,10 +514,12 @@ public class GL2JNIActivity extends Activity {
 			}
 		}
 
-		if (handle_key(playerNum, keyCode, true)) {
-			if (playerNum == 0)
-				JNIdc.hide_osd();
-			return true;
+		if (!pad.isActiveMoga[playerNum]) {
+			if (handle_key(playerNum, keyCode, true)) {
+				if (playerNum == 0)
+					JNIdc.hide_osd();
+				return true;
+			}
 		}
 
 		if (keyCode == KeyEvent.KEYCODE_BUTTON_SELECT) {
@@ -530,7 +539,14 @@ public class GL2JNIActivity extends Activity {
 				return showMenu();
 			}
 		}
-		return super.onKeyDown(keyCode, event);
+		if (!pad.isActiveMoga[playerNum]) {
+			return super.onKeyDown(keyCode, event);
+		} else if (keyCode == KeyEvent.KEYCODE_VOLUME_UP
+				|| keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) {
+			return super.onKeyUp(keyCode, event);
+		} else {
+			return true;
+		}
 	}
 	
 	private boolean showMenu() {
