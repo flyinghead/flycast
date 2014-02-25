@@ -43,6 +43,20 @@ public class UploadLogs extends AsyncTask<String, Integer, Object> {
 		this.mContext = mContext;
 		this.currentTime = currentTime;
 	}
+	
+	private void RedirectSubmission(Header[] headers, String content) {
+		UploadLogs mUploadLogs = new UploadLogs(mContext,
+				currentTime);
+		mUploadLogs.setPostUrl(headers[headers.length - 1]
+				.getValue());
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+			mUploadLogs.executeOnExecutor(
+					AsyncTask.THREAD_POOL_EXECUTOR, content);
+		} else {
+			mUploadLogs.execute(content);
+		}
+	}
+	
 	/**
 	 * Set the URL for where the log will be uploaded
 	 * 
@@ -79,16 +93,7 @@ public class UploadLogs extends AsyncTask<String, Integer, Object> {
 			if (statusCode != HttpStatus.SC_OK) {
 				Header[] headers = getResponse.getHeaders("Location");
 				if (headers != null && headers.length != 0) {
-					UploadLogs mUploadLogs = new UploadLogs(mContext,
-							currentTime);
-					mUploadLogs.setPostUrl(headers[headers.length - 1]
-							.getValue());
-					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-						mUploadLogs.executeOnExecutor(
-								AsyncTask.THREAD_POOL_EXECUTOR, params[0]);
-					} else {
-						mUploadLogs.execute(params[0]);
-					}
+					RedirectSubmission(headers, params[0]);
 				} else {
 					return null;
 				}

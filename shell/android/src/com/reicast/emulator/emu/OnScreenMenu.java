@@ -26,7 +26,7 @@ import com.reicast.emulator.periph.VmuLcd;
 
 public class OnScreenMenu {
 
-	private Context mContext;
+	private Activity mContext;
 	private SharedPreferences prefs;
 	private LinearLayout hlay;
 	private LayoutParams params;
@@ -38,7 +38,7 @@ public class OnScreenMenu {
 	private File sdcard = Environment.getExternalStorageDirectory();
 	private String home_directory = sdcard + "/dc";
 
-	public OnScreenMenu(Context context, SharedPreferences prefs) {
+	public OnScreenMenu(Activity context, SharedPreferences prefs) {
 		if (context instanceof GL2JNIActivity) {
 			this.mContext = (GL2JNIActivity) context;
 		}
@@ -61,7 +61,6 @@ public class OnScreenMenu {
 		if (mContext instanceof GL2JNIActivity) {
 			((GL2JNIActivity) mContext).displayDebug(new DebugPopup(mContext));
 		}
-
 	}
 
 	public class FpsPopup extends PopupWindow {
@@ -84,6 +83,15 @@ public class OnScreenMenu {
 		}
 	}
 
+	private void removePopUp(PopupWindow window) {
+		window.dismiss();
+		popups.remove(window);
+		if (mContext instanceof GL2JNIActivity) {
+			((GL2JNIActivity) mContext)
+					.displayPopUp(((GL2JNIActivity) OnScreenMenu.this.mContext).popUp);
+		}
+	}
+
 	public class DebugPopup extends PopupWindow {
 
 		public DebugPopup(Context c) {
@@ -98,12 +106,7 @@ public class OnScreenMenu {
 
 			hlay.addView(addbut(R.drawable.up, new OnClickListener() {
 				public void onClick(View v) {
-					popups.remove(this);
-					dismiss();
-					if (mContext instanceof GL2JNIActivity) {
-						((GL2JNIActivity) mContext)
-								.displayPopUp(((GL2JNIActivity) OnScreenMenu.this.mContext).popUp);
-					}
+					removePopUp(DebugPopup.this);
 				}
 			}), debugParams);
 
@@ -137,7 +140,7 @@ public class OnScreenMenu {
 
 			hlay.addView(addbut(R.drawable.close, new OnClickListener() {
 				public void onClick(View v) {
-					popups.remove(this);
+					popups.remove(DebugPopup.this);
 					dismiss();
 				}
 			}), debugParams);
@@ -178,12 +181,7 @@ public class OnScreenMenu {
 
 			hlay.addView(addbut(R.drawable.up, new OnClickListener() {
 				public void onClick(View v) {
-					popups.remove(this);
-					dismiss();
-					if (mContext instanceof GL2JNIActivity) {
-						((GL2JNIActivity) mContext)
-								.displayPopUp(((GL2JNIActivity) OnScreenMenu.this.mContext).popUp);
-					}
+					removePopUp(ConfigPopup.this);
 				}
 			}), configParams);
 
@@ -284,7 +282,7 @@ public class OnScreenMenu {
 
 			hlay.addView(addbut(R.drawable.close, new OnClickListener() {
 				public void onClick(View v) {
-					popups.remove(this);
+					popups.remove(ConfigPopup.this);
 					dismiss();
 				}
 			}), configParams);

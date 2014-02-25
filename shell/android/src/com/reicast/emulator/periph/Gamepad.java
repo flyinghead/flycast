@@ -21,6 +21,7 @@ public class Gamepad {
 	public int[] name = { -1, -1, -1, -1 };
 	public float[] globalLS_X = new float[4], globalLS_Y = new float[4],
 			previousLS_X = new float[4], previousLS_Y = new float[4];
+	public boolean[] wasKeyStick = { false, false, false, false };
 	public int map[][] = new int[4][];
 
 	public SparseArray<String> deviceId_deviceDescriptor = new SparseArray<String>();
