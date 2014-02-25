@@ -298,30 +298,30 @@ public class GL2JNIActivity extends Activity {
 					pad.globalLS_X[playerNum] = LS_X;
 					pad.globalLS_Y[playerNum] = LS_Y;
 
-					if (prefs.getBoolean("right_buttons", true)) {
-						if (RS_Y > 0.5) {
-							GL2JNIView.kcode_raw[playerNum] |= pad.map[playerNum][Gamepad.key_CONT_B];
-							GL2JNIView.kcode_raw[playerNum] &= ~pad.map[playerNum][Gamepad.key_CONT_A];
-						} else if (RS_Y < 0.5) {
-							GL2JNIView.kcode_raw[playerNum] |= pad.map[playerNum][Gamepad.key_CONT_A];
-							GL2JNIView.kcode_raw[playerNum] &= ~pad.map[playerNum][Gamepad.key_CONT_B];
-						} else {
-							GL2JNIView.kcode_raw[playerNum] |= pad.map[playerNum][Gamepad.key_CONT_A];
-							GL2JNIView.kcode_raw[playerNum] |= pad.map[playerNum][Gamepad.key_CONT_B];
-						}
-					} else {
-						if (RS_Y > 0) {
-							R2 = RS_Y;
-						} else if (RS_Y < 0) {
-							L2 = -(RS_Y);
-						}
-					}
-
 					GL2JNIView.lt[playerNum] = (int) (L2 * 255);
 					GL2JNIView.rt[playerNum] = (int) (R2 * 255);
 
 					GL2JNIView.jx[playerNum] = (int) (LS_X * 126);
 					GL2JNIView.jy[playerNum] = (int) (LS_Y * 126);
+
+					if (prefs.getBoolean("right_buttons", true)) {
+						if (RS_Y > 0.5) {
+							handle_key(playerNum, pad.map[playerNum][0], true);
+							handle_key(playerNum, pad.map[playerNum][1], false);
+						} else if (RS_Y < 0.5) {
+							handle_key(playerNum, pad.map[playerNum][0], false);
+							handle_key(playerNum, pad.map[playerNum][1], true);
+						} else {
+							handle_key(playerNum, pad.map[playerNum][0], false);
+							handle_key(playerNum, pad.map[playerNum][1], false);
+						}
+					} else {
+						if (RS_Y > 0.5) {
+							GL2JNIView.rt[playerNum] = (int) (RS_Y * 255);
+						} else if (RS_Y < 0.5) {
+							GL2JNIView.lt[playerNum] = (int) (-(RS_Y) * 255);
+						}
+					}
 				}
 
 			}

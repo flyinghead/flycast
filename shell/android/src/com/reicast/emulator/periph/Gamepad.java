@@ -113,8 +113,8 @@ public class Gamepad {
 
 	public int[] getMogaController() {
 		return new int[] {
-				KeyEvent.KEYCODE_BUTTON_B,			key_CONT_B,
 				KeyEvent.KEYCODE_BUTTON_A,			key_CONT_A,
+				KeyEvent.KEYCODE_BUTTON_B,			key_CONT_B,
 				KeyEvent.KEYCODE_BUTTON_X,			key_CONT_X,
 				KeyEvent.KEYCODE_BUTTON_Y,			key_CONT_Y,
 
