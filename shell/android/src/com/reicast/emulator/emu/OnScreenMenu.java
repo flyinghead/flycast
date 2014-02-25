@@ -26,7 +26,7 @@ import com.reicast.emulator.periph.VmuLcd;
 
 public class OnScreenMenu {
 
-	private Context mContext;
+	private Activity mContext;
 	private SharedPreferences prefs;
 	private LinearLayout hlay;
 	private LayoutParams params;
@@ -38,7 +38,7 @@ public class OnScreenMenu {
 	private File sdcard = Environment.getExternalStorageDirectory();
 	private String home_directory = sdcard + "/dc";
 
-	public OnScreenMenu(Context context, SharedPreferences prefs) {
+	public OnScreenMenu(Activity context, SharedPreferences prefs) {
 		if (context instanceof GL2JNIActivity) {
 			this.mContext = (GL2JNIActivity) context;
 		}
