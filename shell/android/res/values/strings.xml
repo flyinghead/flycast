@@ -57,7 +57,6 @@
     <string name="controller_already_in_use">This controller is already in use!</string>
     <string name="modified_layout">Enable Custom Key Layout</string>
     <string name="controller_compat">Enable Compatibility Mode</string>
-    <string name="dpad_joystick">Joystick Uses DPAD Layout</string>
     <string name="mic_in_port_2">Microphone plugged into port 2</string>
     
     <string name="customize_physical_controls">Customize Physical Controls</string>
@@ -65,8 +64,9 @@
     <string name="map_keycode_message">Press the new controller button for %1$s</string>
     
     <string name="bios_menu">Press the %1$s button for a menu</string>
-    <string name="back_button">back</string>
+    <string name="back_button">back / select</string>
     <string name="menu_button">menu</string>
+    <string name="right_button">R3</string>
     
     <string name="moga_pro_connect">MOGA Pro Connected!</string>
     <string name="moga_connect">MOGA Connected!</string>
@@ -113,5 +113,8 @@
     
     <string name="textOn">ON</string>
     <string name="textOff">OFF</string>
+
+    <string name="cancel">Cancel</string>
+    <string name="manual">Manual</string>
 
 </resources>

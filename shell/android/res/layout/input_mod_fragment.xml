@@ -394,71 +394,6 @@
                 android:gravity="center_vertical" >
 
                 <TextView
-                    android:id="@+id/joystick_key"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginLeft="4dp"
-                    android:layout_weight="1"
-                    android:ems="10"
-                    android:text="Joystick" />
-
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:gravity="right"
-                    android:orientation="vertical" >
-
-                    <Button
-                        android:id="@+id/joystick_edit"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:ems="6"
-                        android:text="@string/select" />
-
-                    <Button
-                        android:id="@+id/remove_joystick"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:ems="6"
-                        android:text="@string/remove" />
-                </LinearLayout>
-            </TableRow>
-
-            <TableRow
-                android:layout_marginTop="25dp"
-                android:gravity="center_vertical" >
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="0.5"
-                    android:ems="10"
-                    android:gravity="center_vertical|left"
-                    android:text="@string/dpad_joystick" />
-
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:gravity="right"
-                    android:orientation="vertical" >
-
-                    <de.ankri.views.Switch
-                        android:id="@+id/dpad_js_layout"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:focusable="true" />
-                </LinearLayout>
-            </TableRow>
-
-            <TableRow
-                android:layout_marginTop="25dp"
-                android:gravity="center_vertical" >
-
-                <TextView
                     android:id="@+id/dpad_up_key"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -649,6 +584,57 @@
 
                     <Button
                         android:id="@+id/remove_start"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:ems="6"
+                        android:text="@string/remove" />
+                </LinearLayout>
+            </TableRow>
+
+            <TableRow
+                android:layout_marginTop="25dp"
+                android:gravity="center_vertical" >
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center_vertical|left"
+                    android:orientation="horizontal" >
+
+                    <ImageView
+                        android:id="@+id/select_button_icon"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:src="@drawable/input" />
+
+                    <TextView
+                        android:id="@+id/select_button_key"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="4dp"
+                        android:ems="10"
+                        android:text="Select Button" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="right"
+                    android:orientation="vertical" >
+
+                    <Button
+                        android:id="@+id/select_button_edit"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:ems="6"
+                        android:text="@string/select" />
+
+                    <Button
+                        android:id="@+id/remove_select"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"

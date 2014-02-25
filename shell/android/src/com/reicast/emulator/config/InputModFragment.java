@@ -267,44 +267,7 @@ public class InputModFragment extends Fragment {
 			}
 		});
 
-		final TextView joystick_text = (TextView) getView().findViewById(
-				R.id.joystick_key);
-		getKeyCode("joystick", joystick_text);
-		Button joystick = (Button) getView().findViewById(R.id.joystick_edit);
-		joystick.setOnClickListener(new View.OnClickListener() {
-			public void onClick(View v) {
-				mKey.intiateSearch("joystick", joystick_text);
-			}
-		});
-		Button joystick_remove = (Button) getView().findViewById(
-				R.id.remove_joystick);
-		joystick_remove.setOnClickListener(new View.OnClickListener() {
-			public void onClick(View v) {
-				remKeyCode("joystick", joystick_text);
-			}
-		});
-		joystick.setEnabled(false);
-		mPrefs.edit().remove("joystick").commit();
-		// Still needs better support for identifying the entire stick
-
-		OnCheckedChangeListener dpad_joystick = new OnCheckedChangeListener() {
-			public void onCheckedChanged(CompoundButton buttonView,
-					boolean isChecked) {
-				mPrefs.edit().putBoolean("dpad_js_layout" + player, isChecked)
-						.commit();
-			}
-		};
-		Switch dpad_js_layout = (Switch) getView().findViewById(
-				R.id.dpad_js_layout);
-		boolean joypad = mPrefs.getBoolean("dpad_js_layout" + player, false);
-		if (joypad) {
-			dpad_js_layout.setChecked(true);
-		} else {
-			dpad_js_layout.setChecked(false);
-		}
-		dpad_js_layout.setOnCheckedChangeListener(dpad_joystick);
-
-		final TextView dpad_up_text = (TextView) getView().findViewById(
+        final TextView dpad_up_text = (TextView) getView().findViewById(
 				R.id.dpad_up_key);
 		getKeyCode("dpad_up", dpad_up_text);
 		Button dpad_up = (Button) getView().findViewById(R.id.dpad_up_edit);
@@ -390,6 +353,26 @@ public class InputModFragment extends Fragment {
 		start_remove.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
 				remKeyCode("start_button", start_button_text);
+			}
+		});
+
+		ImageView select_button_icon = (ImageView) getView().findViewById(
+				R.id.select_button_icon);
+		select_button_icon.setImageResource(R.drawable.ic_drawer);
+		final TextView select_button_text = (TextView) getView().findViewById(
+				R.id.select_button_key);
+		Button select_button = (Button) getView().findViewById(
+				R.id.select_button_edit);
+		select_button.setOnClickListener(new View.OnClickListener() {
+			public void onClick(View v) {
+				mKey.intiateSearch("select_button", select_button_text);
+			}
+		});
+		Button select_remove = (Button) getView()
+				.findViewById(R.id.remove_select);
+		select_remove.setOnClickListener(new View.OnClickListener() {
+			public void onClick(View v) {
+				remKeyCode("select_button", select_button_text);
 			}
 		});
 	}
