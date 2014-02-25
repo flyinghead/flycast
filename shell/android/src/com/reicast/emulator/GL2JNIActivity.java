@@ -520,7 +520,7 @@ public class GL2JNIActivity extends Activity {
 				return showMenu();
 			}
 		}
-		if (keyCode == KeyEvent.KEYCODE_BACK || keyCode == OuyaController.BUTTON_MENU) {
+		if (keyCode == KeyEvent.KEYCODE_BACK) {
 			if (pad.isXperiaPlay) {
 				return true;
 			} else {
