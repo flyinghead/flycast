@@ -10,8 +10,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 
 import android.content.Context;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Handler;
@@ -40,7 +38,6 @@ public class GenerateLogs extends AsyncTask<String, Integer, String> {
 
 	private Context mContext;
 	private String currentTime;
-	private String debug_directory;
 
 	public GenerateLogs(Context mContext) {
 		this.mContext = mContext;
@@ -121,8 +118,7 @@ public class GenerateLogs extends AsyncTask<String, Integer, String> {
 
 	@Override
 	protected String doInBackground(String... params) {
-		debug_directory = params[0];
-		File logFile = new File(debug_directory, currentTime + ".txt");
+		File logFile = new File(params[0], currentTime + ".txt");
 		Process mLogcatProc = null;
 		BufferedReader reader = null;
 		final StringBuilder log = new StringBuilder();
@@ -235,46 +231,17 @@ public class GenerateLogs extends AsyncTask<String, Integer, String> {
 	@Override
 	protected void onPostExecute(final String response) {
 		if (response != null && !response.equals(null)) {
-			if (isNetworkAvailable(false)) {
-				Toast.makeText(mContext, mContext.getString(R.string.platform),
-						Toast.LENGTH_SHORT).show();
-				UploadLogs mUploadLogs = new UploadLogs(mContext, currentTime);
-				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-					mUploadLogs.executeOnExecutor(
-							AsyncTask.THREAD_POOL_EXECUTOR, response);
-				} else {
-					mUploadLogs.execute(response);
-				}
+			Toast.makeText(mContext, mContext.getString(R.string.log_saved),
+					Toast.LENGTH_SHORT).show();
+			Toast.makeText(mContext, mContext.getString(R.string.platform),
+					Toast.LENGTH_SHORT).show();
+			UploadLogs mUploadLogs = new UploadLogs(mContext, currentTime);
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+				mUploadLogs.executeOnExecutor(
+						AsyncTask.THREAD_POOL_EXECUTOR, response);
 			} else {
-				Toast.makeText(
-						mContext,
-						mContext.getString(R.string.log_saved, debug_directory),
-						Toast.LENGTH_SHORT).show();
+				mUploadLogs.execute(response);
 			}
-		}
-	}
-
-	/**
-	 * Check for network connectivity, either wifi or any
-	 * 
-	 * @param boolean
-	 *            Whether to consider all data or just wifi
-	 */
-	public boolean isNetworkAvailable(boolean wifi_only) {
-		ConnectivityManager connectivityManager = (ConnectivityManager) mContext
-				.getSystemService(Context.CONNECTIVITY_SERVICE);
-		NetworkInfo activeNetworkInfo = connectivityManager
-				.getActiveNetworkInfo();
-		if (wifi_only) {
-			return activeNetworkInfo != null
-					/*
-					 * && activeNetworkInfo.getType() ==
-					 * ConnectivityManager.TYPE_WIFI
-					 */
-					&& connectivityManager.getNetworkInfo(
-							ConnectivityManager.TYPE_WIFI).isConnected();
-		} else {
-			return activeNetworkInfo != null && activeNetworkInfo.isConnected();
 		}
 	}
 }
