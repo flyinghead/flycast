@@ -97,7 +97,7 @@ public class OnScreenMenu {
 		public DebugPopup(Context c) {
 			super(c);
 			setBackgroundDrawable(null);
-			int p = getPixelsFromDp(60, mContext);
+			int p = getPixelsFromDp(72, mContext);
 			LayoutParams debugParams = new LayoutParams(p, p);
 
 			LinearLayout hlay = new LinearLayout(mContext);
@@ -172,7 +172,7 @@ public class OnScreenMenu {
 		public ConfigPopup(Context c) {
 			super(c);
 			setBackgroundDrawable(null);
-			int p = getPixelsFromDp(60, mContext);
+			int p = getPixelsFromDp(72, mContext);
 			LayoutParams configParams = new LayoutParams(p, p);
 
 			LinearLayout hlay = new LinearLayout(mContext);
@@ -341,8 +341,8 @@ public class OnScreenMenu {
 		public VmuPopup(Context c) {
 			super(c);
 			setBackgroundDrawable(null);
-			int pX = OnScreenMenu.getPixelsFromDp(80, mContext);
-			int pY = OnScreenMenu.getPixelsFromDp(56, mContext);
+			int pX = OnScreenMenu.getPixelsFromDp(96, mContext);
+			int pY = OnScreenMenu.getPixelsFromDp(68, mContext);
 			vparams = new LayoutParams(pX, pY);
 			vlay = new LinearLayout(mContext);
 			vlay.setOrientation(LinearLayout.HORIZONTAL);
@@ -350,7 +350,7 @@ public class OnScreenMenu {
 		}
 
 		public void showVmu() {
-			vmuLcd.configureScale(80);
+			vmuLcd.configureScale(96);
 			vlay.addView(vmuLcd, vparams);
 		}
 
@@ -363,13 +363,13 @@ public class OnScreenMenu {
 		public MainPopup(Context c) {
 			super(c);
 			setBackgroundDrawable(null);
-			int p = getPixelsFromDp(60, mContext);
+			int p = getPixelsFromDp(72, mContext);
 			params = new LayoutParams(p, p);
 			hlay = new LinearLayout(mContext);
 			hlay.setOrientation(LinearLayout.HORIZONTAL);
 
-			int vpX = getPixelsFromDp(60, mContext);
-			int vpY = getPixelsFromDp(42, mContext);
+			int vpX = getPixelsFromDp(72, mContext);
+			int vpY = getPixelsFromDp(52, mContext);
 			LinearLayout.LayoutParams vmuParams = new LinearLayout.LayoutParams(
 					vpX, vpY);
 			vmuParams.weight = 1.0f;
@@ -439,10 +439,11 @@ public class OnScreenMenu {
 			}), params);
 
 			setContentView(hlay);
+			this.setAnimationStyle(R.style.Animation);
 		}
 
 		public void showVmu() {
-			vmuLcd.configureScale(60);
+			vmuLcd.configureScale(72);
 			hlay.addView(vmuLcd, 0, params);
 		}
 	}
