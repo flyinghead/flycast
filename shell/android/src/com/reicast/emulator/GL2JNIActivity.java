@@ -304,7 +304,7 @@ public class GL2JNIActivity extends Activity {
 						} else if (RS_Y < 0.5) {
 							handle_key(playerNum, pad.map[playerNum][1]/* B */, true);
 							pad.wasKeyStick[playerNum] = true;
-						} else if (pad.wasKeyStick[playerNum]){
+						} else if (pad.wasKeyStick[playerNum]) {
 							handle_key(playerNum, pad.map[playerNum][0], false);
 							handle_key(playerNum, pad.map[playerNum][1], false);
 							pad.wasKeyStick[playerNum] = false;
@@ -317,8 +317,9 @@ public class GL2JNIActivity extends Activity {
 						}
 					}
 				}
-				mView.pushInput();
+
 			}
+			mView.pushInput();
 			if ((pad.globalLS_X[playerNum] == pad.previousLS_X[playerNum] && pad.globalLS_Y[playerNum] == pad.previousLS_Y[playerNum])
 					|| (pad.previousLS_X[playerNum] == 0.0f && pad.previousLS_Y[playerNum] == 0.0f))
 				// Only handle Left Stick on an Xbox 360 controller if there was
@@ -457,10 +458,6 @@ public class GL2JNIActivity extends Activity {
 				LayoutParams.WRAP_CONTENT);
 	}
 
-	public GL2JNIView getGameView() {
-		return mView;
-	}
-
 	public boolean onKeyUp(int keyCode, KeyEvent event) {
 		Integer playerNum = Arrays.asList(pad.name).indexOf(event.getDeviceId());
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD && playerNum == -1) {
@@ -482,15 +479,8 @@ public class GL2JNIActivity extends Activity {
 			}
 		}
 
-		if (!pad.isActiveMoga[playerNum]) {
-			return handle_key(playerNum, keyCode, false)
-					|| super.onKeyUp(keyCode, event);
-		} else if (keyCode == KeyEvent.KEYCODE_VOLUME_UP
-				|| keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) {
-			return super.onKeyUp(keyCode, event);
-		} else {
-			return true;
-		}
+		return handle_key(playerNum, keyCode, false)
+				|| super.onKeyUp(keyCode, event);
 	}
 
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
@@ -514,12 +504,10 @@ public class GL2JNIActivity extends Activity {
 			}
 		}
 
-		if (!pad.isActiveMoga[playerNum]) {
-			if (handle_key(playerNum, keyCode, true)) {
-				if (playerNum == 0)
-					JNIdc.hide_osd();
-				return true;
-			}
+		if (handle_key(playerNum, keyCode, true)) {
+			if (playerNum == 0)
+				JNIdc.hide_osd();
+			return true;
 		}
 
 		if (keyCode == KeyEvent.KEYCODE_BUTTON_SELECT) {
@@ -539,14 +527,11 @@ public class GL2JNIActivity extends Activity {
 				return showMenu();
 			}
 		}
-		if (!pad.isActiveMoga[playerNum]) {
-			return super.onKeyDown(keyCode, event);
-		} else if (keyCode == KeyEvent.KEYCODE_VOLUME_UP
-				|| keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) {
-			return super.onKeyUp(keyCode, event);
-		} else {
-			return true;
-		}
+		return super.onKeyDown(keyCode, event);
+	}
+
+	public GL2JNIView getGameView() {
+		return mView;
 	}
 	
 	private boolean showMenu() {
