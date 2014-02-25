@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import tv.ouya.console.api.OuyaController;
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -94,23 +95,14 @@ public class Gamepad {
 				OuyaController.BUTTON_DPAD_DOWN, 	key_CONT_DPAD_DOWN,
 				OuyaController.BUTTON_DPAD_LEFT, 	key_CONT_DPAD_LEFT,
 				OuyaController.BUTTON_DPAD_RIGHT, 	key_CONT_DPAD_RIGHT,
-
-<<<<<<< HEAD
-				OuyaController.BUTTON_R3, 			key_CONT_START,
-				KeyEvent.KEYCODE_BUTTON_START, 		key_CONT_START
-=======
+				
 				OuyaController.BUTTON_MENU, 		key_CONT_START,
-<<<<<<< HEAD
-				KeyEvent.KEYCODE_BUTTON_START, 		key_CONT_START,
-				OuyaController.BUTTON_R3, 			KeyEvent.KEYCODE_BUTTON_SELECT
->>>>>>> Support "Select" as menu, Mapping, "Menu" hardware key
-=======
 				getStartButtonCode(), 				key_CONT_START,
 				OuyaController.BUTTON_R3, 			getSelectButtonCode()
->>>>>>> Support deprecated platforms, Bring Moga into Gamepads
 		};
 	}
 
+	@TargetApi(Build.VERSION_CODES.GINGERBREAD)
 	public int[] getMogaController() {
 		return new int[] {
 				KeyEvent.KEYCODE_BUTTON_A,			key_CONT_A,

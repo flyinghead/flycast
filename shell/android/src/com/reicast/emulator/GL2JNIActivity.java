@@ -185,8 +185,6 @@ public class GL2JNIActivity extends Activity {
 		// Create the actual GLES view
 		mView = new GL2JNIView(getApplication(), config, fileName, false, prefs.getInt("depth_render", 24), 0, false);
 		setContentView(mView);
-<<<<<<< HEAD
-=======
 		
 		String menu_spec;
 		if (pad.isXperiaPlay) {
@@ -201,7 +199,6 @@ public class GL2JNIActivity extends Activity {
 				getApplicationContext()
 						.getString(R.string.bios_menu, menu_spec),
 				Toast.LENGTH_SHORT).show();
->>>>>>> Add a notice about the OUYA R3 being the onscreen menu
 
 		//setup mic
 		boolean micPluggedIn = prefs.getBoolean("mic_plugged_in", false);
@@ -525,19 +522,11 @@ public class GL2JNIActivity extends Activity {
 			if (keyCode == KeyEvent.KEYCODE_MENU) {
 				return showMenu();
 			}
-<<<<<<< HEAD
-			if (keyCode == KeyEvent.KEYCODE_BACK) {
-				return false;
-			}
-		} else {
-			if (keyCode == KeyEvent.KEYCODE_BACK || keyCode == OuyaController.BUTTON_MENU) {
-=======
 		}
 		if (keyCode == KeyEvent.KEYCODE_BACK) {
 			if (pad.isXperiaPlay) {
 				return true;
 			} else {
->>>>>>> Support "Select" as menu, Mapping, "Menu" hardware key
 				return showMenu();
 			}
 		}
