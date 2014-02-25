@@ -1,0 +1,117 @@
+<resources>
+
+    <string name="app_name">reicast</string>
+    <string name="menu_settings">Indstillinger</string>
+
+    <string name="system_path">System sti (placering af data folderen, som indeholder dc_boot.bin/dc_flash.bin)</string>
+    <string name="browser_path">Standard system sti</string>
+    <string name="games_path">Spil sti (placering af .gdi, .chd eller .cdi afbildninger)</string>
+    <string name="game_path">Standard spil sti</string>
+    
+    <string name="boot_bios">Start Dreamcast Bios</string>
+    <string name="missing_bios">BIOS mangler. Dreamcast BIOS er nødvendig for at denne emulator kan virke. Placer BIOS filen i %1$s/data/dc_boot.bin</string>
+    <string name="missing_flash">Flash mangler. Dreamcast Flash er nødvendig for at denne emulator kan virke. Placer Flash filen i %1$s/data/dc_flash.bin</string>
+    <string name="require_bios">Du er nødt til at levere en BIOS</string>
+    
+    <string name="folder_bios">START BIOS</string>
+    <string name="folder_select">VÆLG AKTUELLE FOLDER</string>
+
+    <string name="optimization_opts">Optimerings- og fejlfindingsopsætninger</string>
+    <string name="experimental_opts">Eksperimentel (Kan medføre vidtspredt panik)</string>
+    <string name="select_dynarec">Dynarec option</string>
+    <string name="select_unstable">Ustabile optimeringer</string>
+    <string name="select_region">DC region</string>
+    <string name="select_limitfps">Begræns FPS</string>
+    <string name="select_mipmaps">Brug Mipmaps (rettelse for gammel SGX540)</string>
+    <string name="select_stretch">Bredskærmstilstand</string>
+    <string name="set_frameskip">Frameskip værdi</string>
+    <string name="select_render">PVR rendering (gør ikke noget i øjeblikket)</string>
+    <string name="select_fps">Vis FPS</string>
+    <string name="select_software">Tving software rendering</string>
+    <string name="select_sound">Aktiver emulator lyd</string>
+    <string name="select_depth">Renderingsdybde</string>
+    <string name="select_force_gpu">Tving v6 GPU konfiguration</string>
+    <string name="default_disk">Sæt standard disk</string>
+
+    <string name="games_listing">Tilgængelige Dreamcast spil</string>
+
+    <string name="report_issue">Tidligere nedbrud detekteret</string>
+    <string name="platform">Kopierer logcat indhold til clipboardet\nIndsæt venligst i fejlrapporten</string>
+    <string name="log_saved">Log gemt i %1$s</string>
+    <string name="bios_config">Konfiguration fejlede!</string>
+    <string name="menu_debug">Indsend fejllogger</string>
+
+    <string name="customize_touch_controls">Tilpas touch knapper</string>
+    <string name="launch_editor">Opstarts editor</string>
+    <string name="touch_vibration">Touch vibration</string>
+    <string name="controller_a">Controller A</string>
+    <string name="controller_b">Controller B</string>
+    <string name="controller_c">Controller C</string>
+    <string name="controller_d">Controller D</string>
+    <string name="controller_not_connected">Controller ikke forbundet</string>
+    <string name="controller_none_selected">Ingen controller valgt</string>
+    <string name="select">Vælg</string>
+    <string name="remove">Fjern</string>
+    <string name="select_controller_title">Vælg controller</string>
+    <string name="select_controller_message">Tryk på en vilkårlig knap på controller %1$s for at knytte den til en port</string>
+    <string name="controller_already_in_use">Denne controller er allerede i brug!</string>
+    <string name="modified_layout">Aktiver brugerdefineret layout</string>
+    <string name="controller_compat">Aktiver kompatibilitesmode</string>
+    <string name="dpad_joystick">Joystick bruger DPAD Layout</string>
+    <string name="mic_in_port_2">Microphone tilsluttet port 2</string>
+    
+    <string name="customize_physical_controls">Tilpas fysiske taster</string>
+    <string name="map_keycode_title">Tilpas controller</string>
+    <string name="map_keycode_message">Tryk på den nye controller taste for %1$s</string>
+    
+    <string name="bios_menu">Tryk på %1$s knappen for en menu</string>
+    <string name="back_button">tilbage</string>
+    <string name="menu_button">menu</string>
+    
+    <string name="moga_pro_connect">MOGA Pro tilsluttet!</string>
+    <string name="moga_connect">MOGA tilsluttet!</string>
+
+    <string name="about_text">reicast er en Dreamcast emulator</string>
+    <string name="revision_text">Version: %1$s [%2$s]</string>
+    <string name="app_site">Hjemmeside: http://reicast.com</string>
+    <string name="beta_site">Betaer: http://reicast.loungekatt.com</string>
+    <string name="git_api">https://api.github.com/repos/reicast/reicast-emulator/commits</string>
+    <string name="git_issues">https://github.com/reicast/reicast-emulator/issues/</string>
+    
+    <string-array name="controllers">
+    <item>Controller A</item>
+    <item>Controller B</item>
+    <item>Controller C</item>
+    <item>Controller D</item>
+    </string-array>
+
+    <string-array name="depth">
+        <item>16</item>
+        <item>24</item>
+        <item>32</item>        
+    </string-array>
+    
+    <string-array name="images">
+        <item>cdi</item>
+        <item>chd</item>
+        <item>gdi</item>
+    </string-array>
+    
+    <string-array name="region">
+        <item>NTSC-J</item>
+        <item>NTSC-U/PAL-M/PAL-N</item>
+        <item>PAL-E</item>
+        <item>reicast</item>
+    </string-array>
+    
+    <string name="browser">Browser</string>
+    <string name="settings">Indstillinger</string>
+    <string name="paths">Stier</string>
+    <string name="input">Taster</string>
+    <string name="about">Om</string>
+    <string name="rateme">Bedøm mig</string>
+    
+    <string name="textOn">TIL</string>
+    <string name="textOff">FRA</string>
+
+</resources>
