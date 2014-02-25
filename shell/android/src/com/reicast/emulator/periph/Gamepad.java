@@ -97,9 +97,7 @@ public class Gamepad {
 				OuyaController.BUTTON_DPAD_LEFT, 	key_CONT_DPAD_LEFT,
 				OuyaController.BUTTON_DPAD_RIGHT, 	key_CONT_DPAD_RIGHT,
 				
-				OuyaController.BUTTON_MENU, 		key_CONT_START,
-				getStartButtonCode(), 				key_CONT_START,
-				OuyaController.BUTTON_R3, 			getSelectButtonCode()
+				OuyaController.BUTTON_R3, 			key_CONT_START,
 		};
 	}
 
