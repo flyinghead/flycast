@@ -37,7 +37,7 @@
 
     <string name="report_issue">Tidligere nedbrud detekteret</string>
     <string name="platform">Kopierer logcat indhold til clipboardet\nIndsæt venligst i fejlrapporten</string>
-    <string name="log_saved">Log gemt i %1$s</string>
+    <string name="log_saved">Log gemt i \"System Path\"</string>
     <string name="bios_config">Konfiguration fejlede!</string>
     <string name="menu_debug">Indsend fejllogger</string>
 
@@ -57,8 +57,7 @@
     <string name="controller_already_in_use">Denne controller er allerede i brug!</string>
     <string name="modified_layout">Aktiver brugerdefineret layout</string>
     <string name="controller_compat">Aktiver kompatibilitesmode</string>
-    <string name="dpad_joystick">Joystick bruger DPAD Layout</string>
-    <string name="mic_in_port_2">Microphone tilsluttet port 2</string>
+    <string name="mic_in_port_2">Mikrofon tilsluttet port 2</string>
     
     <string name="customize_physical_controls">Tilpas fysiske taster</string>
     <string name="map_keycode_title">Tilpas controller</string>
@@ -67,6 +66,7 @@
     <string name="bios_menu">Tryk på %1$s knappen for en menu</string>
     <string name="back_button">tilbage</string>
     <string name="menu_button">menu</string>
+    <string name="right_button">R3</string>
     
     <string name="moga_pro_connect">MOGA Pro tilsluttet!</string>
     <string name="moga_connect">MOGA tilsluttet!</string>
@@ -113,5 +113,8 @@
     
     <string name="textOn">TIL</string>
     <string name="textOff">FRA</string>
+
+    <string name="cancel">Afbryd</string>
+    <string name="manual">Manuel</string>
 
 </resources>

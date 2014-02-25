@@ -14,6 +14,7 @@
     <string name="folder_bios">DEMARRER LE BIOS</string>
     <string name="folder_select">SELECTIONNER LE DOSSIER ACTUEL</string>
 
+    <string name="optimization_opts">Options d\'optimisations et de débogage</string>
     <string name="experimental_opts">Experimental (peut causer des crashs)</string>
     <string name="select_dynarec">Dynarec</string>
     <string name="select_unstable">Optimisations instables</string>
@@ -23,6 +24,11 @@
     <string name="select_stretch">Mode portrait (écran large)</string>
     <string name="set_frameskip">Valeur de saut des images</string>
     <string name="select_render">Rendu PVR (ne fonctionne pas pour le moment)</string>
+    <string name="select_fps">Montrer les FPS</string>
+    <string name="select_software">Forcer le rendu logiciel</string>
+    <string name="select_sound">Activer le son de l\'émulateur</string>
+    <string name="select_depth">Rendu de profondeur</string>
+    <string name="select_force_gpu">Forcer la config GPU v6</string>
     <string name="default_disk">Réglage du disque par défaut</string>
 
     <string name="games_listing">Liste des jeux disponibles</string>
@@ -44,6 +50,7 @@
     <string name="modified_layout">Activer la fonction de disposition des touches</string>
     <string name="controller_compat">Activer le mode de compatibilité</string>
     <string name="dpad_joystick">Le joystick doit utiliser la disposition du pad directionnel</string>
+    <string name="mic_in_port_2">Microphone branché au port 2</string>
     
     <string name="customize_physical_controls">Customiser les touches physiques</string>
     <string name="map_keycode_title">Modifier la manette</string>

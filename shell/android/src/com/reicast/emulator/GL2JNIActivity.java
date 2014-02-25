@@ -183,7 +183,8 @@ public class GL2JNIActivity extends Activity {
 			fileName = Uri.decode(intent.getData().toString());
 
 		// Create the actual GLES view
-		mView = new GL2JNIView(getApplication(), config, fileName, false, prefs.getInt("depth_render", 24), 0, false);
+		mView = new GL2JNIView(getApplication(), config, fileName, false,
+				prefs.getInt("depth_render", 24), 0, false);
 		setContentView(mView);
 		
 		String menu_spec;
@@ -377,7 +378,7 @@ public class GL2JNIActivity extends Activity {
 	public boolean handle_key(Integer playerNum, int kc, boolean down) {
 		if (playerNum == null || playerNum == -1)
 			return false;
-		if (kc == KeyEvent.KEYCODE_BUTTON_SELECT) {
+		if (kc == pad.getSelectButtonCode()) {
 			return false;
 		}
 		if (pad.isActiveMoga[playerNum]) {
@@ -436,7 +437,7 @@ public class GL2JNIActivity extends Activity {
 			parent.removeView(menu.getVmu());
 			//add to floating window
 			vmuPop.showVmu();
-			vmuPop.showAtLocation(mView, Gravity.TOP | Gravity.RIGHT, 20, 20);
+			vmuPop.showAtLocation(mView, Gravity.TOP | Gravity.RIGHT, 4, 4);
 			vmuPop.update(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
 		}else{
 			vmuPop.dismiss();
@@ -511,7 +512,7 @@ public class GL2JNIActivity extends Activity {
 			return true;
 		}
 
-		if (keyCode == KeyEvent.KEYCODE_BUTTON_SELECT) {
+		if (keyCode == pad.getSelectButtonCode()) {
 			return showMenu();
 		} 
 		if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.GINGERBREAD_MR1

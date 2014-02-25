@@ -106,8 +106,8 @@ public class ConfigureFragment extends Fragment {
 		}
 		unstable_opt.setOnCheckedChangeListener(unstable_option);
 
-		String[] regions = ArrayUtils.remove(parentActivity.getResources()
-				.getStringArray(R.array.region), 4);
+		String[] regions = parentActivity.getResources().getStringArray(
+				R.array.region);
 		Spinner region_spnr = (Spinner) getView().findViewById(
 				R.id.region_spinner);
 		ArrayAdapter<String> regionAdapter = new ArrayAdapter<String>(

@@ -141,10 +141,6 @@ public class GL2JNIView extends GLSurfaceView
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
 		boolean soundEndabled = prefs.getBoolean("sound_enabled", true);
 		ethd = new EmuThread(soundEndabled);
-		if (!soundEndabled) {
-			Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
-			// Ensures priority is not placed on disabled sound thread
-		}
 
 		touchVibrationEnabled = prefs.getBoolean("touch_vibration_enabled", true);
 
@@ -584,6 +580,14 @@ public class GL2JNIView extends GLSurfaceView
 			ethd.Player.pause();
 		} else {
 			ethd.Player.play();
+		}
+	}
+
+	public void fastForward(boolean enabled) {
+		if (enabled) {
+			ethd.setPriority(Thread.MIN_PRIORITY);
+		} else {
+			ethd.setPriority(Thread.NORM_PRIORITY);
 		}
 	}
 

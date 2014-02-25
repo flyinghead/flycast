@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import tv.ouya.console.api.OuyaController;
+import tv.ouya.console.api.OuyaFacade;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -149,6 +150,8 @@ public class Gamepad {
 	public boolean IsOuyaOrTV(Context context) {
 		PackageManager pMan = context.getPackageManager();
 		if (pMan.hasSystemFeature(PackageManager.FEATURE_TELEVISION)) {
+			return true;
+		} else if (OuyaFacade.getInstance().isRunningOnOUYAHardware()) {
 			return true;
 		}
 		return false;
