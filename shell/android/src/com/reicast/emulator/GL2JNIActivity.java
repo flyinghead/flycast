@@ -187,10 +187,8 @@ public class GL2JNIActivity extends Activity {
 		setContentView(mView);
 		
 		String menu_spec;
-		if (pad.isXperiaPlay) {
+		if (pad.isXperiaPlay || pad.isOuyaOrTV) {
 			menu_spec = getApplicationContext().getString(R.string.menu_button);
-		} else if (pad.isOuyaOrTV) {
-			menu_spec = getApplicationContext().getString(R.string.right_button);
 		} else {
 			menu_spec = getApplicationContext().getString(R.string.back_button);
 		}
@@ -379,6 +377,9 @@ public class GL2JNIActivity extends Activity {
 	public boolean handle_key(Integer playerNum, int kc, boolean down) {
 		if (playerNum == null || playerNum == -1)
 			return false;
+		if (kc == KeyEvent.KEYCODE_BUTTON_SELECT) {
+			return false;
+		}
 		if (pad.isActiveMoga[playerNum]) {
 			return false;
 		}
