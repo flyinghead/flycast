@@ -1,6 +1,5 @@
 <resources>
 
-    <string name="app_name">reicast</string>
     <string name="menu_settings">Indstillinger</string>
 
     <string name="system_path">System sti (placering af data folderen, som indeholder dc_boot.bin/dc_flash.bin)</string>
@@ -83,25 +82,6 @@
     <item>Controller B</item>
     <item>Controller C</item>
     <item>Controller D</item>
-    </string-array>
-
-    <string-array name="depth">
-        <item>16</item>
-        <item>24</item>
-        <item>32</item>        
-    </string-array>
-    
-    <string-array name="images">
-        <item>cdi</item>
-        <item>chd</item>
-        <item>gdi</item>
-    </string-array>
-    
-    <string-array name="region">
-        <item>NTSC-J</item>
-        <item>NTSC-U/PAL-M/PAL-N</item>
-        <item>PAL-E</item>
-        <item>reicast</item>
     </string-array>
     
     <string name="browser">Browser</string>
