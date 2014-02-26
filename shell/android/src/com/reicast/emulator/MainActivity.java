@@ -4,6 +4,7 @@ import java.io.File;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.List;
 
+import tv.ouya.console.api.OuyaFacade;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
