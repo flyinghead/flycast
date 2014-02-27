@@ -33,8 +33,6 @@ public class Config {
 	/**
 	 * Load the user configuration from preferences
 	 * 
-	 * @param sharedpreferences
-	 *            The preference instance to load values from
 	 */
 	public void getConfigurationPrefs() {
 		Config.dynarecopt = mPrefs.getBoolean("dynarec_opt", dynarecopt);

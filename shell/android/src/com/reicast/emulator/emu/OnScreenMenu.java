@@ -215,22 +215,26 @@ public class OnScreenMenu {
 
 			fdown = addbut(R.drawable.frames_down, new OnClickListener() {
 				public void onClick(View v) {
-					frames--;
+					if (frames > 0) {
+						frames--;
+					}
 					JNIdc.frameskip(frames);
-					enableState(fup, fdown, frames);
+					enableState(fdown, fup);
 				}
 			});
 			fup = addbut(R.drawable.frames_up, new OnClickListener() {
 				public void onClick(View v) {
-					frames++;
+					if (frames < 5) {
+						frames++;
+					}
 					JNIdc.frameskip(frames);
-					enableState(fup, fdown, frames);
+					enableState(fdown, fup);
 				}
 			});
 
 			hlay.addView(fdown, params);
 			hlay.addView(fup, params);
-			enableState(fdown, fup, frames);
+			enableState(fdown, fup);
 
 			framelimit = addbut(R.drawable.frames_limit_on,
 					new OnClickListener() {
@@ -285,48 +289,42 @@ public class OnScreenMenu {
 			}
 			hlay.addView(audiosetting, params);
 
-			fastforward = addbut(R.drawable.star,
-					new OnClickListener() {
-						public void onClick(View v) {
-							if (boosted) {
-								if (audio) {
-									if (mContext instanceof GL2JNIActivity) {
-										((GL2JNIActivity) mContext).mView
-												.audioDisable(false);
-									}
-								}
-								audiosetting.setEnabled(true);
-								if (limit) {
-									JNIdc.limitfps(1);
-								}
-								framelimit.setEnabled(true);
-								if (mContext instanceof GL2JNIActivity) {
-									((GL2JNIActivity) mContext).mView
-											.fastForward(true);
-								}
-								boosted = true;
-								((ImageButton) fastforward)
-										.setImageResource(R.drawable.star);
-							} else {
-								if (audio) {
-									if (mContext instanceof GL2JNIActivity) {
-										((GL2JNIActivity) mContext).mView
-												.audioDisable(true);
-									}
-								}
-								if (limit) {
-									JNIdc.limitfps(0);
-								}
-								audiosetting.setEnabled(false);
-								if (mContext instanceof GL2JNIActivity) {
-									((GL2JNIActivity) mContext).mView
-											.fastForward(false);
-								}
-								framelimit.setEnabled(false);
-								boosted = false;
-								((ImageButton) fastforward)
-										.setImageResource(R.drawable.reset);
-							}
+			fastforward = addbut(R.drawable.star, new OnClickListener() {
+				public void onClick(View v) {
+					if (boosted) {
+						if (mContext instanceof GL2JNIActivity) {
+							((GL2JNIActivity) mContext).mView
+									.audioDisable(!audio);
+						}
+						audiosetting.setEnabled(true);
+						JNIdc.limitfps(limit ? 1 : 0);
+						framelimit.setEnabled(true);
+						JNIdc.frameskip(frames);
+						enableState(fdown, fup);
+						if (mContext instanceof GL2JNIActivity) {
+							((GL2JNIActivity) mContext).mView.fastForward(false);
+						}
+						boosted = false;
+						((ImageButton) fastforward)
+								.setImageResource(R.drawable.star);
+					} else {
+						if (mContext instanceof GL2JNIActivity) {
+							((GL2JNIActivity) mContext).mView
+									.audioDisable(true);
+						}
+						audiosetting.setEnabled(false);
+						JNIdc.limitfps(0);
+						framelimit.setEnabled(false);
+						JNIdc.frameskip(5);
+						fdown.setEnabled(false);
+						fup.setEnabled(false);
+						if (mContext instanceof GL2JNIActivity) {
+							((GL2JNIActivity) mContext).mView.fastForward(true);
+						}
+						boosted = true;
+						((ImageButton) fastforward)
+								.setImageResource(R.drawable.reset);
+					}
 						}
 					});
 			if (boosted) {
@@ -347,13 +345,21 @@ public class OnScreenMenu {
 		}
 	}
 
-	private void enableState(View fdown, View fup, int frames) {
-		if (frames <= 0) {
+	/**
+	 * Toggle the frameskip button visibility by current value
+	 * 
+	 * @param fdown
+	 *            The frameskip reduction button view
+	 * @param fup
+	 *            The frameskip increase button view
+	 */
+	private void enableState(View fdown, View fup) {
+		if (frames == 0) {
 			fdown.setEnabled(false);
 		} else {
 			fdown.setEnabled(true);
 		}
-		if (frames >= 5) {
+		if (frames == 5) {
 			fup.setEnabled(false);
 		} else {
 			fup.setEnabled(true);
