@@ -58,6 +58,8 @@ package com.reicast.emulator.debug;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import android.annotation.SuppressLint;
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -74,7 +76,6 @@ import android.webkit.WebSettings;
 import android.webkit.WebSettings.PluginState;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.webkit.WebViewDatabase;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
@@ -98,16 +99,14 @@ public class GitAdapter extends BaseAdapter {
 		this.data = d;
 		this.inflater = (LayoutInflater) activity
 				.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-		ImageLoaderConfiguration configicon = new ImageLoaderConfiguration.Builder(activity)
-						.memoryCacheExtraOptions(96, 96)
-						.build();
-				this.options = new DisplayImageOptions.Builder()
-						.showStubImage(R.drawable.ic_github)
-						.showImageForEmptyUri(R.drawable.ic_github)
-						.imageScaleType(ImageScaleType.EXACTLY_STRETCHED)
-						.build();
+		ImageLoaderConfiguration configicon = new ImageLoaderConfiguration.Builder(
+				activity).memoryCacheExtraOptions(96, 96).build();
+		this.options = new DisplayImageOptions.Builder()
+				.showStubImage(R.drawable.ic_github)
+				.showImageForEmptyUri(R.drawable.ic_github)
+				.imageScaleType(ImageScaleType.EXACTLY_STRETCHED).build();
 
-				ImageLoader.getInstance().init(configicon);
+		ImageLoader.getInstance().init(configicon);
 
 	}
 
@@ -154,7 +153,8 @@ public class GitAdapter extends BaseAdapter {
 		dateText.setText(date);
 		committerText.setText(committer);
 		titleText.setText(title);
-		ImageLoader.getInstance().displayImage(avatar, avatarIcon, this.options);
+		ImageLoader.getInstance()
+				.displayImage(avatar, avatarIcon, this.options);
 
 		vi.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
@@ -167,6 +167,7 @@ public class GitAdapter extends BaseAdapter {
 
 		return vi;
 	}
+
 	public static void displayCommit(String title, String message, String url,
 			Context context) {
 		final AlertDialog.Builder builder = new AlertDialog.Builder(context);
@@ -187,19 +188,22 @@ public class GitAdapter extends BaseAdapter {
 				});
 		builder.create().show();
 	}
-	
+
+	@TargetApi(Build.VERSION_CODES.HONEYCOMB)
+	@SuppressLint("SetJavaScriptEnabled")
+	@SuppressWarnings("deprecation")
 	public static WebView configureWebview(String url, Context context,
 			WebView mWebView) {
 		mWebView.getSettings().setSupportZoom(true);
 		mWebView.getSettings().setBuiltInZoomControls(true);
-		if (Integer.parseInt(Build.VERSION.SDK) >= Build.VERSION_CODES.HONEYCOMB) {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
 			mWebView.getSettings().setDisplayZoomControls(false);
 		}
 		mWebView.setInitialScale(1);
-		if (Integer.parseInt(Build.VERSION.SDK) >= Build.VERSION_CODES.ECLAIR) {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ECLAIR) {
 			mWebView.getSettings().setUseWideViewPort(true);
 		}
-		if (Integer.parseInt(Build.VERSION.SDK) >= Build.VERSION_CODES.ECLAIR_MR1) {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ECLAIR_MR1) {
 			mWebView.getSettings().setLoadWithOverviewMode(true);
 		}
 		mWebView.getSettings().setJavaScriptEnabled(true);
@@ -208,13 +212,10 @@ public class GitAdapter extends BaseAdapter {
 		mWebView.clearHistory();
 		mWebView.clearFormData();
 		mWebView.clearCache(true);
-		WebViewDatabase mDatabase = WebViewDatabase.getInstance(context);
-		mDatabase.clearUsernamePassword();
 		CookieSyncManager.createInstance(context);
 		CookieManager cookieManager = CookieManager.getInstance();
 		cookieManager.removeAllCookie();
 		CookieSyncManager.getInstance().stopSync();
-		mWebView.getSettings().setSavePassword(false);
 		mWebView.setWebViewClient(new WebViewClient() {
 			@Override
 			public boolean shouldOverrideUrlLoading(WebView view, String url) {

@@ -73,6 +73,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.AsyncTask;
@@ -94,6 +95,7 @@ import android.widget.Toast;
 
 import com.reicast.emulator.debug.GitAdapter;
 
+@SuppressWarnings("deprecation")
 public class AboutFragment extends Fragment {
 
 	SlidingDrawer slidingGithub;
@@ -153,6 +155,7 @@ public class AboutFragment extends Fragment {
 		slidingGithub = (SlidingDrawer) getView().findViewById(
 				R.id.slidingGithub);
 		slidingGithub.setOnDrawerOpenListener(new OnDrawerOpenListener() {
+			@TargetApi(Build.VERSION_CODES.HONEYCOMB)
 			public void onDrawerOpened() {
 				String git = parentActivity.getString(R.string.git_api);
 				retrieveGitTask queryGithub = new retrieveGitTask();
@@ -278,6 +281,7 @@ public class AboutFragment extends Fragment {
 				ArrayList<HashMap<String, String>> commitList) {
 			if (commitList != null && commitList.size() > 0) {
 				list = (ListView) getView().findViewById(R.id.list);
+				list.setSelector(R.drawable.list_selector);
 				list.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
 				adapter = new GitAdapter(parentActivity, commitList);
 				// Set adapter as specified collection
