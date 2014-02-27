@@ -75,6 +75,11 @@
         <exec executable="${ndk.dir}/ndk-build" failonerror="true">
             <arg line="-j4 ${ndkbuildopt}"/>
         </exec>
+        <copy todir="${jar.libs.dir}/armeabi-v7a">
+            <fileset
+			dir="xperia/libs/armeabi-v7a"
+			includes="libsexplay.so" />
+        </copy>
     </target>
     <target name="clean" depends="android_rules.clean">
         <exec executable="${ndk.dir}/ndk-build" failonerror="true">
