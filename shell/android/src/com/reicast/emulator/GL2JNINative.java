@@ -448,27 +448,6 @@ public class GL2JNINative extends NativeActivity {
 	}
 
 	public boolean onKeyUp(int keyCode, KeyEvent event) {
-//		Integer playerNum = Arrays.asList(name).indexOf(event.getDeviceId());
-//		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD && playerNum == -1) {
-//			playerNum = deviceDescriptor_PlayerNum
-//					.get(deviceId_deviceDescriptor.get(event.getDeviceId()));
-//		} else {
-//			playerNum = -1;
-//		}
-//		if (playerNum != null && playerNum != -1) {
-//			if (compat[playerNum] || custom[playerNum]) {
-//				String id = portId[playerNum];
-//				if (keyCode == prefs.getInt("l_button" + id,
-//						KeyEvent.KEYCODE_BUTTON_L1)
-//						|| keyCode == prefs.getInt("r_button" + id,
-//								KeyEvent.KEYCODE_BUTTON_R1)) {
-//					return simulatedTouchEvent(playerNum, 0.0f, 0.0f);
-//				}
-//			}
-//		}
-//
-//		return handle_key(playerNum, keyCode, false)
-//				|| super.onKeyUp(keyCode, event);
 		if (keyCode == KeyEvent.KEYCODE_VOLUME_UP || keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) {
 			return super.onKeyUp(keyCode, event);
 		}
@@ -476,30 +455,6 @@ public class GL2JNINative extends NativeActivity {
 	}
 
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
-//		Integer playerNum = Arrays.asList(name).indexOf(event.getDeviceId());
-//		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD && playerNum == -1) {
-//			playerNum = deviceDescriptor_PlayerNum
-//					.get(deviceId_deviceDescriptor.get(event.getDeviceId()));
-//		} else {
-//			playerNum = -1;
-//		}
-//		if (playerNum != null && playerNum != -1) {
-//			if (compat[playerNum] || custom[playerNum]) {
-//				String id = portId[playerNum];
-//				if (keyCode == prefs.getInt("l_button" + id, KeyEvent.KEYCODE_BUTTON_L1)) {
-//					return simulatedTouchEvent(playerNum, 1.0f, 0.0f);
-//				}
-//				if (keyCode == prefs.getInt("r_button" + id, KeyEvent.KEYCODE_BUTTON_R1)) {
-//					return simulatedTouchEvent(playerNum, 0.0f, 1.0f);
-//				}
-//			}
-//		}
-//
-//		if (handle_key(playerNum, keyCode, true)) {
-//			if (playerNum == 0)
-//				JNIdc.hide_osd();
-//			return true;
-//		}
 		if (keyCode == pad.getSelectButtonCode()) {
 			return showMenu();
 		} 
@@ -517,7 +472,6 @@ public class GL2JNINative extends NativeActivity {
 				return showMenu();
 			}
 		}
-//		return super.onKeyDown(keyCode, event);
 		if (keyCode == KeyEvent.KEYCODE_VOLUME_UP || keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) {
 			return super.onKeyDown(keyCode, event);
 		}

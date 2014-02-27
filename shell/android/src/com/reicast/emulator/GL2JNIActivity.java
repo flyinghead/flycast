@@ -255,8 +255,6 @@ public class GL2JNIActivity extends Activity {
 
 	@Override
 	public boolean onGenericMotionEvent(MotionEvent event) {
-		// Log.w("INPUT", event.toString() + " " + event.getSource());
-		// Get all the axis for the KeyEvent
 
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
 
@@ -272,7 +270,6 @@ public class GL2JNIActivity extends Activity {
 				return false;
 
 			if (!pad.compat[playerNum] && !pad.isActiveMoga[playerNum]) {
-				// TODO: Moga should handle this locally
 
 				// Joystick
 				if ((event.getSource() & InputDevice.SOURCE_CLASS_JOYSTICK) != 0) {
@@ -340,40 +337,6 @@ public class GL2JNIActivity extends Activity {
 		mView.pushInput();
 		return true;
 	}
-
-	// TODO: Controller mapping in options. Trunk has Ouya layout. This is a DS3
-	// layout.
-	/*
-	 * map[]= new int[] { OuyaController.BUTTON_Y, key_CONT_B,
-	 * OuyaController.BUTTON_U, key_CONT_A, OuyaController.BUTTON_O, key_CONT_X,
-	 * OuyaController.BUTTON_A, key_CONT_Y,
-	 * 
-	 * OuyaController.BUTTON_DPAD_UP, key_CONT_DPAD_UP,
-	 * OuyaController.BUTTON_DPAD_DOWN, key_CONT_DPAD_DOWN,
-	 * OuyaController.BUTTON_DPAD_LEFT, key_CONT_DPAD_LEFT,
-	 * OuyaController.BUTTON_DPAD_RIGHT, key_CONT_DPAD_RIGHT,
-	 * 
-	 * OuyaController.BUTTON_MENU, key_CONT_START, OuyaController.BUTTON_L1,
-	 * key_CONT_START
-	 * 
-	 * };
-	 */
-
-	/*
-	 * int map[] = new int[] { OuyaController.BUTTON_Y, key_CONT_B,
-	 * OuyaController.BUTTON_U, key_CONT_A, OuyaController.BUTTON_O, key_CONT_X,
-	 * OuyaController.BUTTON_A, key_CONT_Y,
-	 * 
-	 * OuyaController.BUTTON_DPAD_UP, key_CONT_DPAD_UP,
-	 * OuyaController.BUTTON_DPAD_DOWN, key_CONT_DPAD_DOWN,
-	 * OuyaController.BUTTON_DPAD_LEFT, key_CONT_DPAD_LEFT,
-	 * OuyaController.BUTTON_DPAD_RIGHT, key_CONT_DPAD_RIGHT,
-	 * 
-	 * OuyaController.BUTTON_MENU, key_CONT_START, OuyaController.BUTTON_L1,
-	 * key_CONT_START
-	 * 
-	 * };
-	 */
 
 	public boolean handle_key(Integer playerNum, int kc, boolean down) {
 		if (playerNum == null || playerNum == -1)
