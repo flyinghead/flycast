@@ -1,15 +1,20 @@
 package com.reicast.emulator.emu;
 
+import java.util.Locale;
+
 import javax.microedition.khronos.egl.EGL10;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.egl.EGLContext;
 import javax.microedition.khronos.egl.EGLDisplay;
 
+import android.annotation.TargetApi;
 import android.opengl.EGL14;
 import android.opengl.EGLExt;
 import android.opengl.GLSurfaceView;
+import android.os.Build;
 import android.util.Log;
 
+@TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
 public class GLCFactory6 {
 
 	private static void LOGI(String S) { Log.i("GL2JNIView-v6",S); }
@@ -44,7 +49,7 @@ public class GLCFactory6 {
 		int error;
 
 		while((error=egl.eglGetError()) != EGL14.EGL_SUCCESS)
-			LOGE(String.format("%s: EGL error: 0x%x",prompt,error));
+			LOGE(String.format(Locale.getDefault(), "%s: EGL error: 0x%x",prompt,error));
 	}
 
 	public static class ConfigChooser implements GLSurfaceView.EGLConfigChooser
@@ -93,7 +98,7 @@ public class GLCFactory6 {
 						EGL14.EGL_GREEN_SIZE, 4, 
 						EGL14.EGL_BLUE_SIZE, 4,
 						EGL14.EGL_RENDERABLE_TYPE, renderableType,
-						EGL14.EGL_DEPTH_SIZE, 16,
+						EGL14.EGL_DEPTH_SIZE, 24,
 						EGL14.EGL_NONE
 				};
 
@@ -113,7 +118,7 @@ public class GLCFactory6 {
 			// Get all matching configurations.
 			EGLConfig[] configs = new EGLConfig[mValue[0]];
 			if (GL2JNIView.DEBUG)
-				LOGW(String.format("%d configurations", configs.length));
+				LOGW(String.format(Locale.getDefault(), "%d configurations", configs.length));
 			if (!egl.eglChooseConfig(display, configSpec, configs, mValue[0], mValue)) {
 				throw new IllegalArgumentException("Could not get config data");
 			}
@@ -235,7 +240,7 @@ public class GLCFactory6 {
 
 			for(int i=0 ; i<attributes.length ; i++)
 				if(egl.eglGetConfigAttrib(display,config,attributes[i],value))
-					LOGI(String.format("  %s: %d\n",names[i],value[0]));
+					LOGI(String.format(Locale.getDefault(), "  %s: %d\n",names[i],value[0]));
 				else
 					while(egl.eglGetError()!=EGL14.EGL_SUCCESS);
 		}

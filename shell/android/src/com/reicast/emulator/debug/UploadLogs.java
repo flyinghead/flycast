@@ -16,6 +16,7 @@ import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 
 import android.annotation.SuppressLint;
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
@@ -28,9 +29,9 @@ import com.reicast.emulator.R;
 /**
  * Upload the specialized logcat to reicast issues
  * 
- * @param context
+ * @param mContext
  *            The context this method will be executed from
- * @param string
+ * @param currentTime
  *            The system time at which the log was made
  */
 public class UploadLogs extends AsyncTask<String, Integer, Object> {
@@ -60,7 +61,7 @@ public class UploadLogs extends AsyncTask<String, Integer, Object> {
 	/**
 	 * Set the URL for where the log will be uploaded
 	 * 
-	 * @param string
+	 * @param logUrl
 	 *            The URL of the log upload server
 	 */
 	public void setPostUrl(String logUrl) {
@@ -70,7 +71,7 @@ public class UploadLogs extends AsyncTask<String, Integer, Object> {
 	@SuppressLint("NewApi")
 	protected void onPreExecute() {
 		if (logUrl == null || logUrl.equals(null)) {
-			logUrl = "http://twisted.dyndns.tv:3194/ReicastBot/report/submit.php";
+			logUrl = mContext.getString(R.string.log_url);
 		}
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
 			StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder()
@@ -79,6 +80,7 @@ public class UploadLogs extends AsyncTask<String, Integer, Object> {
 		}
 	}
 
+	@TargetApi(Build.VERSION_CODES.HONEYCOMB)
 	@Override
 	protected Object doInBackground(String... params) {
 		HttpClient client = new DefaultHttpClient();
@@ -113,6 +115,8 @@ public class UploadLogs extends AsyncTask<String, Integer, Object> {
 		return null;
 	}
 
+	@TargetApi(Build.VERSION_CODES.HONEYCOMB)
+	@SuppressWarnings("deprecation")
 	@Override
 	protected void onPostExecute(Object response) {
 		if (response != null && !response.equals(null)) {

@@ -18,6 +18,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
+import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -283,6 +284,8 @@ public class FileBrowser extends Fragment {
 				.setImageResource(R.drawable.open_folder);
 		((TextView) headerView.findViewById(R.id.item_name))
 				.setText(header_text);
+        ((TextView) headerView.findViewById(R.id.item_name))
+                .setTypeface(Typeface.DEFAULT_BOLD);
 		((ViewGroup) view).addView(headerView);
 
 	}

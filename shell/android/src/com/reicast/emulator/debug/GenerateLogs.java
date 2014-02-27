@@ -12,7 +12,6 @@ import java.io.InputStreamReader;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Build;
-import android.os.Handler;
 import android.widget.Toast;
 
 import com.reicast.emulator.R;
@@ -90,7 +89,7 @@ public class GenerateLogs extends AsyncTask<String, Integer, String> {
 	/**
 	 * Read the output of a shell command
 	 * 
-	 * @param string
+	 * @param command
 	 *            The shell command being issued to the terminal
 	 */
 	public static String readOutput(String command) {
@@ -184,7 +183,7 @@ public class GenerateLogs extends AsyncTask<String, Integer, String> {
 			mLogcatProc = null;
 			reader = null;
 			mLogcatProc = Runtime.getRuntime().exec(
-					new String[] { "logcat", "-d", "GL3JNIView:E *:S" });
+					new String[] { "logcat", "-d", "GL2JNIView:E *:S" });
 			reader = new BufferedReader(new InputStreamReader(
 					mLogcatProc.getInputStream()));
 			log.append(separator);
