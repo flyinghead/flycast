@@ -64,21 +64,21 @@ public class MainActivity extends SlidingFragmentActivity implements
 		
 		mUEHandler = new Thread.UncaughtExceptionHandler() {
 	        public void uncaughtException(Thread t, Throwable error) {
-			if (error != null) {
-				StringBuilder output = new StringBuilder();
-				output.append("Thread:\n");
-				for (StackTraceElement trace : t.getStackTrace()) {
-					output.append(trace.toString() + " ");
+	        	if (error != null) {
+					StringBuilder output = new StringBuilder();
+					output.append("Thread:\n");
+					for (StackTraceElement trace : t.getStackTrace()) {
+						output.append(trace.toString() + "\n");
+					}
+					output.append("\nError:\n");
+					for (StackTraceElement trace : error.getStackTrace()) {
+						output.append(trace.toString() + "\n");
+					}
+					String log = output.toString();
+					mPrefs.edit().putString("prior_error", log).commit();
+					error.printStackTrace();
+					MainActivity.this.finish();
 				}
-				output.append("\n\nError:\n");
-				for (StackTraceElement trace : error.getStackTrace()) {
-					output.append(trace.toString() + " ");
-				}
-				String log = output.toString();
-				mPrefs.edit().putString("prior_error", log).commit();
-				error.printStackTrace();
-				MainActivity.this.finish();
-			}
 	        }
 		};
 		Thread.setDefaultUncaughtExceptionHandler(mUEHandler);
@@ -292,10 +292,8 @@ public class MainActivity extends SlidingFragmentActivity implements
 	/**
 	 * Display a dialog to notify the user of prior crash
 	 * 
-	 * @param string
+	 * @param error
 	 *            A generalized summary of the crash cause
-	 * @param bundle
-	 *            The savedInstanceState passed from onCreate
 	 */
 	private void initiateReport(final String error) {
 		AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
@@ -407,9 +405,13 @@ public class MainActivity extends SlidingFragmentActivity implements
 			// show it
 			alertDialog.show();
 		} else {
-			Intent inte = new Intent(Intent.ACTION_VIEW, uri, getBaseContext(),
-					GL2JNIActivity.class);
-			startActivity(inte);
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
+				startActivity(new Intent(Intent.ACTION_VIEW, uri, getBaseContext(),
+						GL2JNINative.class));
+			} else {
+				startActivity(new Intent(Intent.ACTION_VIEW, uri, getBaseContext(),
+						GL2JNIActivity.class));
+			}
 		}
 	}
 

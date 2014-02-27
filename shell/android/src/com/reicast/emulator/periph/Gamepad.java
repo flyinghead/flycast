@@ -6,7 +6,6 @@ import java.util.List;
 
 import tv.ouya.console.api.OuyaController;
 import tv.ouya.console.api.OuyaFacade;
-import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -103,7 +102,6 @@ public class Gamepad {
 		};
 	}
 
-	@TargetApi(Build.VERSION_CODES.GINGERBREAD)
 	public int[] getMogaController() {
 		return new int[] {
 				KeyEvent.KEYCODE_BUTTON_A,			key_CONT_A,

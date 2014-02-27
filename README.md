@@ -25,8 +25,17 @@ Tools required:
 
 From project root directory:
 ```
-cd shell\android
-android update project -p .
+cd shell\android\xperia
+
+rm -rf libs
+
+android update project -p . --target "android-9"
+
+ndk-build -j4
+
+cd ..\
+
+android update project -p . --target "android-19"
 
 ant debug
 ```

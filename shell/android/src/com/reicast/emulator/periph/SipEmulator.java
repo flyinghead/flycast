@@ -98,8 +98,7 @@ public class SipEmulator extends Thread {
 		while(continueRecording){
 			byte[] freshData = new byte[ONE_BLIP_SIZE];
 			// read blocks
-			int bytesRead = record.read(freshData, 0, ONE_BLIP_SIZE); 
-			//Log.d(TAG, "recordThread recorded: "+bytesRead);
+			record.read(freshData, 0, ONE_BLIP_SIZE); 
 			if(!firstGet){
 				bytesReadBuffer.add(freshData);
 			}
