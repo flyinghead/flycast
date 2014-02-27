@@ -19,6 +19,7 @@ import android.widget.PopupWindow;
 import android.widget.TextView;
 
 import com.reicast.emulator.GL2JNIActivity;
+import com.reicast.emulator.GL2JNINative;
 import com.reicast.emulator.MainActivity;
 import com.reicast.emulator.R;
 import com.reicast.emulator.config.Config;
@@ -46,6 +47,9 @@ public class OnScreenMenu {
 	private boolean boosted = false;
 
 	public OnScreenMenu(Activity context, SharedPreferences prefs) {
+		if (context instanceof GL2JNINative) {
+			this.mContext = (GL2JNINative) context;
+		}
 		if (context instanceof GL2JNIActivity) {
 			this.mContext = (GL2JNIActivity) context;
 		}
@@ -59,6 +63,9 @@ public class OnScreenMenu {
 		vmuLcd = new VmuLcd(mContext);
 		vmuLcd.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
+				if (mContext instanceof GL2JNINative) {
+					((GL2JNINative) OnScreenMenu.this.mContext).toggleVmu();
+				}
 				if (mContext instanceof GL2JNIActivity) {
 					((GL2JNIActivity) OnScreenMenu.this.mContext).toggleVmu();
 				}
@@ -67,9 +74,13 @@ public class OnScreenMenu {
 	}
 
 	void displayDebugPopup(final PopupWindow popUp) {
+		if (mContext instanceof GL2JNINative) {
+			((GL2JNINative) mContext).displayDebug(new DebugPopup(mContext));
+		}
 		if (mContext instanceof GL2JNIActivity) {
 			((GL2JNIActivity) mContext).displayDebug(new DebugPopup(mContext));
 		}
+
 	}
 
 	public class FpsPopup extends PopupWindow {
@@ -95,6 +106,10 @@ public class OnScreenMenu {
 	private void removePopUp(PopupWindow window) {
 		window.dismiss();
 		popups.remove(window);
+		if (mContext instanceof GL2JNINative) {
+			((GL2JNINative) mContext)
+					.displayPopUp(((GL2JNINative) OnScreenMenu.this.mContext).popUp);
+		}
 		if (mContext instanceof GL2JNIActivity) {
 			((GL2JNIActivity) mContext)
 					.displayPopUp(((GL2JNIActivity) OnScreenMenu.this.mContext).popUp);
@@ -160,6 +175,9 @@ public class OnScreenMenu {
 	}
 
 	void displayConfigPopup(final PopupWindow popUp) {
+		if (mContext instanceof GL2JNINative) {
+			((GL2JNINative) mContext).displayConfig(new ConfigPopup(mContext));
+		}
 		if (mContext instanceof GL2JNIActivity) {
 			((GL2JNIActivity) mContext)
 					.displayConfig(new ConfigPopup(mContext));
@@ -262,21 +280,29 @@ public class OnScreenMenu {
 					new OnClickListener() {
 						public void onClick(View v) {
 							if (audio) {
+								if (mContext instanceof GL2JNINative) {
+									((GL2JNINative) mContext).mView
+											.audioDisable(true);
+								}
 								if (mContext instanceof GL2JNIActivity) {
 									((GL2JNIActivity) mContext).mView
 											.audioDisable(true);
 								}
+								audio = false;
 								((ImageButton) audiosetting)
 										.setImageResource(R.drawable.enable_sound);
-								audio = false;
 							} else {
+								if (mContext instanceof GL2JNINative) {
+									((GL2JNINative) mContext).mView
+											.audioDisable(false);
+								}
 								if (mContext instanceof GL2JNIActivity) {
 									((GL2JNIActivity) mContext).mView
 											.audioDisable(false);
 								}
+								audio = true;
 								((ImageButton) audiosetting)
 										.setImageResource(R.drawable.mute_sound);
-								audio = true;
 							}
 						}
 					});
@@ -292,6 +318,10 @@ public class OnScreenMenu {
 			fastforward = addbut(R.drawable.star, new OnClickListener() {
 				public void onClick(View v) {
 					if (boosted) {
+						if (mContext instanceof GL2JNINative) {
+							((GL2JNINative) mContext).mView
+									.audioDisable(!audio);
+						}
 						if (mContext instanceof GL2JNIActivity) {
 							((GL2JNIActivity) mContext).mView
 									.audioDisable(!audio);
@@ -301,6 +331,9 @@ public class OnScreenMenu {
 						framelimit.setEnabled(true);
 						JNIdc.frameskip(frames);
 						enableState(fdown, fup);
+						if (mContext instanceof GL2JNINative) {
+							((GL2JNINative) mContext).mView.fastForward(false);
+						}
 						if (mContext instanceof GL2JNIActivity) {
 							((GL2JNIActivity) mContext).mView.fastForward(false);
 						}
@@ -308,6 +341,10 @@ public class OnScreenMenu {
 						((ImageButton) fastforward)
 								.setImageResource(R.drawable.star);
 					} else {
+						if (mContext instanceof GL2JNINative) {
+							((GL2JNINative) mContext).mView
+									.audioDisable(true);
+						}
 						if (mContext instanceof GL2JNIActivity) {
 							((GL2JNIActivity) mContext).mView
 									.audioDisable(true);
@@ -318,6 +355,9 @@ public class OnScreenMenu {
 						JNIdc.frameskip(5);
 						fdown.setEnabled(false);
 						fup.setEnabled(false);
+						if (mContext instanceof GL2JNINative) {
+							((GL2JNINative) mContext).mView.fastForward(true);
+						}
 						if (mContext instanceof GL2JNIActivity) {
 							((GL2JNIActivity) mContext).mView.fastForward(true);
 						}
