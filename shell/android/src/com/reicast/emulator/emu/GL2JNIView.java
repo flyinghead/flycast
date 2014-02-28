@@ -8,6 +8,7 @@ import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
 import android.annotation.TargetApi;
+import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
@@ -21,11 +22,13 @@ import android.os.Build;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
 import android.util.AttributeSet;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.ScaleGestureDetector.SimpleOnScaleGestureListener;
 import android.view.View;
+import android.view.WindowManager;
 
 import com.reicast.emulator.GL2JNIActivity;
 import com.reicast.emulator.GL2JNINative;
@@ -60,6 +63,9 @@ public class GL2JNIView extends GLSurfaceView
 	private static String fileName;
 	//private AudioThread audioThread;  
 	private EmuThread ethd;
+
+	private static int sWidth;
+	private static int sHeight;
 
 	Vibrator vib;
 
@@ -138,6 +144,14 @@ public class GL2JNIView extends GLSurfaceView
 			Runtime.getRuntime().freeMemory();
 			System.gc();
 		}
+
+		DisplayMetrics metrics = new DisplayMetrics();
+		//((Activity) context).getWindowManager().getDefaultDisplay().getMetrics(metrics);
+		((WindowManager) context.getSystemService(Context.WINDOW_SERVICE))
+				.getDefaultDisplay().getMetrics(metrics);
+		final float scale = context.getResources().getDisplayMetrics().density;
+		sWidth = (int) (metrics.widthPixels * scale + 0.5f);
+		sHeight = (int) (metrics.heightPixels * scale + 0.5f);
 
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
 		boolean soundEndabled = prefs.getBoolean("sound_enabled", true);
@@ -552,7 +566,7 @@ public class GL2JNIView extends GLSurfaceView
 
 		public void onSurfaceChanged(GL10 gl,int width,int height)
 		{
-			JNIdc.rendinit(width,height);
+			JNIdc.rendinit(sWidth,sHeight);
 		}
 
 		public void onSurfaceCreated(GL10 gl,EGLConfig config)
