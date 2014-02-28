@@ -146,6 +146,7 @@ public class GL2JNIActivity extends Activity {
 					String id = pad.portId[playerNum];
 					pad.custom[playerNum] = prefs.getBoolean("modified_key_layout" + id, false);
 					pad.compat[playerNum] = prefs.getBoolean("controller_compat" + id, false);
+					pad.joystick[playerNum] = prefs.getBoolean("separate_joystick" + id, true);
 					if (!pad.compat[playerNum]) {
 						if (pad.custom[playerNum]) {
 							pad.map[playerNum] = pad.setModifiedKeys(id, playerNum, prefs);
@@ -270,10 +271,12 @@ public class GL2JNIActivity extends Activity {
 					float L2 = event.getAxisValue(OuyaController.AXIS_L2);
 					float R2 = event.getAxisValue(OuyaController.AXIS_R2);
 
-					pad.previousLS_X[playerNum] = pad.globalLS_X[playerNum];
-					pad.previousLS_Y[playerNum] = pad.globalLS_Y[playerNum];
-					pad.globalLS_X[playerNum] = LS_X;
-					pad.globalLS_Y[playerNum] = LS_Y;
+					if (!pad.joystick[playerNum]) {
+						pad.previousLS_X[playerNum] = pad.globalLS_X[playerNum];
+						pad.previousLS_Y[playerNum] = pad.globalLS_Y[playerNum];
+						pad.globalLS_X[playerNum] = LS_X;
+						pad.globalLS_Y[playerNum] = LS_Y;
+					}
 
 					GL2JNIView.jx[playerNum] = (int) (LS_X * 126);
 					GL2JNIView.jy[playerNum] = (int) (LS_Y * 126);
@@ -306,7 +309,7 @@ public class GL2JNIActivity extends Activity {
 
 			}
 			mView.pushInput();
-			if ((pad.globalLS_X[playerNum] == pad.previousLS_X[playerNum] && pad.globalLS_Y[playerNum] == pad.previousLS_Y[playerNum])
+			if (!pad.joystick[playerNum] && (pad.globalLS_X[playerNum] == pad.previousLS_X[playerNum] && pad.globalLS_Y[playerNum] == pad.previousLS_Y[playerNum])
 					|| (pad.previousLS_X[playerNum] == 0.0f && pad.previousLS_Y[playerNum] == 0.0f))
 				// Only handle Left Stick on an Xbox 360 controller if there was
 				// some actual motion on the stick,
