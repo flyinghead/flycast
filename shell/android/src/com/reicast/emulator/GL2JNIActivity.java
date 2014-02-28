@@ -257,7 +257,7 @@ public class GL2JNIActivity extends Activity {
 			if (playerNum == null || playerNum == -1)
 				return false;
 
-			if (!pad.compat[playerNum] && !pad.isActiveMoga[playerNum]) {
+			if (!pad.compat[playerNum]) {
 
 				// Joystick
 				if ((event.getSource() & InputDevice.SOURCE_CLASS_JOYSTICK) != 0) {
@@ -330,9 +330,6 @@ public class GL2JNIActivity extends Activity {
 		if (playerNum == null || playerNum == -1)
 			return false;
 		if (kc == pad.getSelectButtonCode()) {
-			return false;
-		}
-		if (pad.isActiveMoga[playerNum]) {
 			return false;
 		}
 
@@ -420,7 +417,7 @@ public class GL2JNIActivity extends Activity {
 			playerNum = -1;
 		}
 
-		if (playerNum != null && playerNum != -1 && !pad.isActiveMoga[playerNum]) {
+		if (playerNum != null && playerNum != -1) {
 			if (pad.compat[playerNum] || pad.custom[playerNum]) {
 				String id = pad.portId[playerNum];
 				if (keyCode == prefs.getInt("l_button" + id,
@@ -445,7 +442,7 @@ public class GL2JNIActivity extends Activity {
 			playerNum = -1;
 		}
 
-		if (playerNum != null && playerNum != -1 && !pad.isActiveMoga[playerNum]) {
+		if (playerNum != null && playerNum != -1) {
 			if (pad.compat[playerNum] || pad.custom[playerNum]) {
 				String id = pad.portId[playerNum];
 				if (keyCode == prefs.getInt("l_button" + id, KeyEvent.KEYCODE_BUTTON_L1)) {

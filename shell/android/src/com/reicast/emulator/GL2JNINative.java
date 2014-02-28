@@ -350,8 +350,7 @@ public class GL2JNINative extends NativeActivity {
 			if (playerNum == null || playerNum == -1) {
 				return false;
 			}
-			if (!pad.compat[playerNum] && !pad.isActiveMoga[playerNum]) {
-				// TODO: Moga should handle this locally
+			if (!pad.compat[playerNum]) {
 
 				// Joystick
 				if ((event.getSource() & InputDevice.SOURCE_CLASS_JOYSTICK) != 0) {
@@ -468,7 +467,7 @@ public class GL2JNINative extends NativeActivity {
 
 	public boolean OnNativeKeyPress(int device, int keyCode, int action, int metaState) {
 		Integer playerNum = pad.playerNumX.get(device);
-		if (playerNum != null && playerNum != -1 && !pad.isActiveMoga[playerNum]) {
+		if (playerNum != null && playerNum != -1) {
 			String id = pad.portId[playerNum];
 			if (action == KeyEvent.ACTION_DOWN) {
 				if (keyCode == prefs.getInt("l_button" + id, KeyEvent.KEYCODE_BUTTON_L1)) {
@@ -499,7 +498,7 @@ public class GL2JNINative extends NativeActivity {
 		if (newEvent && source == Gamepad.Xperia_Touchpad) {
 			// Source is Xperia Play touchpad
 			Integer playerNum = pad.playerNumX.get(device);
-			if (playerNum != null && playerNum != -1 && !pad.isActiveMoga[playerNum]) {
+			if (playerNum != null && playerNum != -1) {
 				Log.d("reidc", playerNum + " - " + device + ": " + source);
 				if (action == MotionEvent.ACTION_UP) {
 					x = 0;
