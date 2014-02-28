@@ -61,35 +61,35 @@ public class MainActivity extends SlidingFragmentActivity implements
         setBehindContentView(R.layout.drawer_menu);
 
 		mPrefs = PreferenceManager.getDefaultSharedPreferences(this);
-		
-		mUEHandler = new Thread.UncaughtExceptionHandler() {
-	        public void uncaughtException(Thread t, Throwable error) {
-	        	if (error != null) {
-					StringBuilder output = new StringBuilder();
-					output.append("Thread:\n");
-					for (StackTraceElement trace : t.getStackTrace()) {
-						output.append(trace.toString() + "\n");
-					}
-					output.append("\nError:\n");
-					for (StackTraceElement trace : error.getStackTrace()) {
-						output.append(trace.toString() + "\n");
-					}
-					String log = output.toString();
-					mPrefs.edit().putString("prior_error", log).commit();
-					error.printStackTrace();
-					MainActivity.this.finish();
-				}
-	        }
-		};
-		Thread.setDefaultUncaughtExceptionHandler(mUEHandler);
-
-		home_directory = mPrefs.getString("home_directory", home_directory);
 
 		String prior_error = mPrefs.getString("prior_error", null);
 		if (prior_error != null && !prior_error.equals(null)) {
 			initiateReport(prior_error);
 			mPrefs.edit().remove("prior_error").commit();
+		} else {
+			mUEHandler = new Thread.UncaughtExceptionHandler() {
+				public void uncaughtException(Thread t, Throwable error) {
+					if (error != null) {
+						StringBuilder output = new StringBuilder();
+						output.append("Thread:\n");
+						for (StackTraceElement trace : t.getStackTrace()) {
+							output.append(trace.toString() + "\n");
+						}
+						output.append("\nError:\n");
+						for (StackTraceElement trace : error.getStackTrace()) {
+							output.append(trace.toString() + "\n");
+						}
+						String log = output.toString();
+						mPrefs.edit().putString("prior_error", log).commit();
+						error.printStackTrace();
+						MainActivity.this.finish();
+					}
+				}
+			};
+			Thread.setDefaultUncaughtExceptionHandler(mUEHandler);
 		}
+
+		home_directory = mPrefs.getString("home_directory", home_directory);
 
 		Intent market = new Intent(Intent.ACTION_VIEW, Uri.parse("market://search?q=dummy"));
 		PackageManager manager = getPackageManager();
