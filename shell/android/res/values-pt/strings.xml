@@ -1,6 +1,5 @@
 <resources>
 
-    <string name="app_name">reicast</string>
     <string name="menu_settings">Configurações</string>
 
     <string name="system_path">Diretório do sistema (localização do diretório de dados com os arquivos dc_boot.bin / dc_flash.bin)</string>
@@ -74,11 +73,6 @@
 
     <string name="about_text">reicast é um emulador de Dreamcast</string>
     <string name="revision_text">Versão: %1$s [%2$s]</string>
-    <string name="app_site">Homepage: http://reicast.com</string>
-    <string name="beta_site">Betas: http://reicast.loungekatt.com</string>
-    <string name="git_api">https://api.github.com/repos/reicast/reicast-emulator/commits</string>
-    <string name="git_issues">https://github.com/reicast/reicast-emulator/issues/</string>
-    <string name="log_url">http://twisted.dyndns.tv:3194/ReicastBot/report/submit.php</string>
     
     <string-array name="controllers">
     <item>Controle A</item>
