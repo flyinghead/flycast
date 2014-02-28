@@ -1,0 +1,35 @@
+language:
+  cpp
+compiler:
+  gcc
+
+before_install:
+  - sudo apt-get install aria2 -qq
+  - download_extract() { aria2c -x 16 $1 -o $2 && tar -xf $2; }
+  - download_extract_zip() { aria2c -x 16 $1 -o $2 && unzip -qq $2; }
+  - sudo apt-get -qq update
+  - sudo apt-get -qq -y install openjdk-7-jdk ant lib32z1-dev lib32stdc++6
+  - GIT_BUILD=$(git log --pretty=format:'%h' -n 1)
+install:
+  - download_extract http://dl.google.com/android/ndk/android-ndk-r9c-linux-x86_64.tar.bz2 android-ndk-r9c-linux-x86_64.tar.bz2
+  - download_extract_zip http://dl.google.com/android/adt/adt-bundle-linux-x86_64-20131030.zip adt-bundle-linux-x86_64-20131030.zip
+  - mv android-ndk-r9c android-ndk
+  - mv adt-bundle-linux-x86_64-20131030/sdk/ android-sdk
+  - rm android-ndk-r9c-linux-x86_64.tar.bz2
+  - rm adt-bundle-linux-x86_64-20131030.zip
+  - export ANDROID_HOME=$(pwd)/android-sdk
+  - export NDK=$(pwd)/android-ndk
+  - export PATH=${PATH}:$ANDROID_HOME/tools
+  - export PATH=${PATH}:$ANDROID_HOME/platform-tools
+  - export PATH=${PATH}:$NDK
+before_script:
+
+script:
+  - cd shell/android
+  - android update project -p .
+  - ndk-build -j 4
+  - ant debug
+after_script:
+  - cp /home/travis/build/MrYadro/reicast-emulator/shell/android/bin/reicast-debug.apk reicast-debug-$GIT_BUILD.apk
+  - curl --upload-file reicast-debug-$GIT_BUILD.apk ftp://reicast:reicast@109.120.165.109/
+  - echo "http://mryadro.ru/reicast/reicast-debug-$GIT_BUILD.apk"

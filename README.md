@@ -19,7 +19,8 @@ Let's try to keep everything under a single project :)
 To build for android
 --------------------
 Tools required:
-* Latest Android SDK and NDK (duh)
+* Latest Android SDK and NDK
+* Android 4.4 (API 19) or newer (http://developer.android.com/sdk/installing/adding-packages.html)
 * Ant
 
 From project root directory:
@@ -27,10 +28,19 @@ From project root directory:
 cd shell\android
 android update project -p .
 
-ndk-build -j 4
-
 ant debug
 ```
+
+Translations
+------------
+New and updated translations are always appreciated!
+All we ask is that you not use “regional” phrases that may not be generally understood.
+
+Translations can be submitted as a pull request or at http://reicast.loungekatt.com/translate
+
+Beta versions
+-------------
+Compiled test versions are available at reicast.loungekatt.com
 
 Donations and stuff
 -------------------
@@ -59,6 +69,13 @@ works of multiple people. It would be extremely unfair to charge for it and get 
 
 
 We're planning for an indiegogo campaign later on to help with sustained development and running costs, so follow @reicastdc on twitter for updates
+
+Other Testing
+-------------
+These devices are tested by contributors regularly
+* Nvidia Shield
+* Nexus 5 / 7
+* Xperia Play
 
 
 Team

@@ -15,14 +15,10 @@ import java.util.Locale;
 import org.apache.commons.lang3.StringUtils;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
-import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.res.Resources;
+import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -45,6 +41,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.android.util.FileUtils;
+import com.reicast.emulator.emu.JNIdc;
 
 public class FileBrowser extends Fragment {
 
@@ -120,7 +117,7 @@ public class FileBrowser extends Fragment {
 			if (!file.exists()) {
 				file.createNewFile();
 				OutputStream fo = new FileOutputStream(file);
-				InputStream png = parentActivity.getBaseContext().getAssets()
+				InputStream png = parentActivity.getAssets()
 						.open("buttons.png");
 
 				byte[] buffer = new byte[4096];
@@ -208,14 +205,14 @@ public class FileBrowser extends Fragment {
 
 		@Override
 		protected void onPostExecute(List<File> games) {
-			if (games != null && !games.isEmpty()) {
-				final LinearLayout list = (LinearLayout) parentActivity
-						.findViewById(R.id.game_list);
-				list.removeAllViews();
+			final LinearLayout list = (LinearLayout) parentActivity
+					.findViewById(R.id.game_list);
+			list.removeAllViews();
 
-				String heading = parentActivity
-						.getString(R.string.games_listing);
-				createListHeader(heading, list, true);
+			String heading = parentActivity
+					.getString(R.string.games_listing);
+			createListHeader(heading, list, true);
+			if (games != null && !games.isEmpty()) {
 				for (int i = 0; i < games.size(); i++) {
 					createListItem(list, games.get(i));
 				}
@@ -223,6 +220,7 @@ public class FileBrowser extends Fragment {
 				Toast.makeText(parentActivity, "Please configure a games directory",
 							Toast.LENGTH_LONG).show();
 			}
+			list.invalidate();
 		}
 
 	}
@@ -286,6 +284,8 @@ public class FileBrowser extends Fragment {
 				.setImageResource(R.drawable.open_folder);
 		((TextView) headerView.findViewById(R.id.item_name))
 				.setText(header_text);
+        ((TextView) headerView.findViewById(R.id.item_name))
+                .setTypeface(Typeface.DEFAULT_BOLD);
 		((ViewGroup) view).addView(headerView);
 
 	}
@@ -449,5 +449,6 @@ public class FileBrowser extends Fragment {
 					});
 			v.addView(childview);
 		}
+		v.invalidate();
 	}
 }

@@ -1,0 +1,96 @@
+<resources>
+    <string name="menu_settings">Настройки</string>
+
+    <string name="system_path">Системный путь (с папакой data в которой находятся dc_boot.bin и dc_flash.bin)</string>
+    <string name="browser_path">Стандартный системный путь</string>
+    <string name="games_path">Путь хранения (где находятся .gdi, .chd, .cdi файлы)</string>
+    <string name="game_path">Игровой путь по умолчанию</string>
+    
+    <string name="boot_bios">Запустить DREAMCAST BIOS</string>
+    <string name="missing_bios">BIOS не найден. Dreamcast BIOS требуется для работы эмулятора. Поместите файл BIOS по этому пути: %1$s/data/dc_boot.bin</string>
+    <string name="missing_flash">Flash файл не найден. Dreamcast Flash требуется для работы эмулятора. Поместите файл Flash в %1$s/data/dc_flash.bin</string>
+    <string name="require_bios">Вы должны выбрать BIOS</string>
+    
+    <string name="folder_bios">ЗАГРУЗОЧНЫЙ BIOS</string>
+    <string name="folder_select">Выбрать эту папку</string>
+
+    <string name="optimization_opts">Настройки оптимизации и отладки</string>
+    <string name="experimental_opts">Эксперементальные (могут возникнуть проблемы)</string>
+    <string name="select_dynarec">Динамический рекомпилятор</string>
+    <string name="select_unstable">Нестабильные оптимизации</string>
+    <string name="select_region">DC Регион</string>
+    <string name="select_limitfps">Ограничитель FPS</string>
+    <string name="select_mipmaps">Использовать уменьшающиеся изображения</string>
+    <string name="select_stretch">Широкоэкранный режим</string>
+    <string name="set_frameskip">Количество пропускаемых кадров:</string>
+    <string name="select_render">PVR Rendering (пока не работает)</string>
+    <string name="select_fps">Отоброжать FPS</string>
+    <string name="select_software">Програмный Rendering</string>
+    <string name="select_sound">Включить эмуляцию звука</string>
+    <string name="select_depth">Выбрать глубину рендера</string>
+    <string name="default_disk">Выбрать стандартный диск</string>
+    <string name="select_force_gpu">Принудительно v6 GPU конфиг.</string>
+    <string name="games_listing">Список доступных DREAMCAST игр</string>
+
+    <string name="customize_touch_controls">Настроить сенсорное управление</string>
+    <string name="launch_editor">Запустить редактор</string>
+    <string name="touch_vibration">Вибрация</string>
+    <string name="controller_a">Контроллер A</string>
+    <string name="controller_b">Контроллер B</string>
+    <string name="controller_c">Контроллер C</string>
+    <string name="controller_d">Контроллер D</string>
+    <string name="controller_not_connected">Контроллер не подключен</string>
+    <string name="controller_none_selected">Контроллер не выбран</string>
+    <string name="select">Выбрать</string>
+    <string name="remove">Извлечь</string>
+    <string name="select_controller_title">Выбрать контроллер</string>
+    <string name="select_controller_message">Нажмите любую кнопку на контроллере %1$s</string>
+    <string name="controller_already_in_use">Этот контроллер уже используется!</string>
+    <string name="modified_layout">Включить измененное расположение кнопок</string>
+    <string name="controller_compat">Включить режим совместимости</string>
+    <string name="dpad_joystick">Джойстик использует DPAD</string>
+    <string name="mic_in_port_2">Микрофон вставлен в порт 2</string>
+    
+    <string name="customize_physical_controls">Customize Physical Controls</string>
+    <string name="map_keycode_title">Изменить контроллер</string>
+    <string name="map_keycode_message">Нажмите кнопку на контроллере для %1$s</string>
+    
+    
+    <string name="bios_menu">Нажмите на кнопку %1$s для выхода в меню</string>
+    <string name="back_button">назад</string>
+    <string name="search_button">поиск</string>
+    
+    <string name="moga_pro_connect">MOGA Pro присоиденен!</string>
+    <string name="moga_connect">MOGA присоиденен!</string>
+
+    <string name="about_text">DREAMCAST эмулятор "REICAST"</string>
+    <string name="revision_text">Версия: %1$s [%2$s]</string>
+    <string name="app_site">Сайт: http://reicast.com</string>
+    <string name="beta_site">Бета версии: http://reicast.loungekatt.com</string>
+    <string name="git_api">https://api.github.com/repos/reicast/reicast-emulator/commits</string>
+    
+    <string-array name="controllers">
+    <item>Контроллер A</item>
+    <item>Контроллер B</item>
+    <item>Контроллер C</item>
+    <item>Контроллер D</item>
+    </string-array>
+    
+    <string name="browser">Перейти к списку игр</string>
+    <string name="settings">Настройки</string>
+    <string name="paths">Пути</string>
+    <string name="input">Управление</string>
+    <string name="about">О эмуляторе</string>
+    <string name="rateme">Оценить меня</string>
+    
+    <string name="textOn">ВКЛ</string>
+    <string name="textOff">ВЫКЛ</string>
+    
+    <string name="report_issue">Обнаружен предыдущий краш</string>
+    <string name="log_saved">Логи сохранены в %1$s</string>
+    <string name="bios_config">Ошибка конфигурации!</string>
+    <string name="platform">Логи скопированы в буфер обмена.\nВставьте их в репорт.</string>
+    
+    <string name="menu_debug">Отправить журнал ошибок</string>
+
+</resources>

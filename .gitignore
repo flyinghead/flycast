@@ -8,3 +8,5 @@ obj/
 
 newdc/android/libnewdc/bin/libnewdc.jar
 newdc/android/libnewdc/bin/classes/com/example/newdc/JNIdc.class
+
+shell/android/assets/build
