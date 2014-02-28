@@ -386,7 +386,9 @@ public class GL2JNINative extends NativeActivity {
 					} else {
 						if (RS_Y > 0.5) {
 							GL2JNIView.rt[playerNum] = (int) (RS_Y * 255);
+							GL2JNIView.lt[playerNum] = (int) (L2 * 255);
 						} else if (RS_Y < 0.5) {
+							GL2JNIView.rt[playerNum] = (int) (R2 * 255);
 							GL2JNIView.lt[playerNum] = (int) (-(RS_Y) * 255);
 						} else {
 							GL2JNIView.lt[playerNum] = (int) (L2 * 255);

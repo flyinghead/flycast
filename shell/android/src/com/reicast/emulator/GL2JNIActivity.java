@@ -285,7 +285,7 @@ public class GL2JNIActivity extends Activity {
 						} else if (RS_Y < 0.5) {
 							handle_key(playerNum, pad.map[playerNum][1]/* B */, true);
 							pad.wasKeyStick[playerNum] = true;
-						} else if (pad.wasKeyStick[playerNum]) {
+						} else if (pad.wasKeyStick[playerNum]){
 							handle_key(playerNum, pad.map[playerNum][0], false);
 							handle_key(playerNum, pad.map[playerNum][1], false);
 							pad.wasKeyStick[playerNum] = false;
@@ -293,7 +293,9 @@ public class GL2JNIActivity extends Activity {
 					} else {
 						if (RS_Y > 0.5) {
 							GL2JNIView.rt[playerNum] = (int) (RS_Y * 255);
+							GL2JNIView.lt[playerNum] = (int) (L2 * 255);
 						} else if (RS_Y < 0.5) {
+							GL2JNIView.rt[playerNum] = (int) (R2 * 255);
 							GL2JNIView.lt[playerNum] = (int) (-(RS_Y) * 255);
 						} else {
 							GL2JNIView.lt[playerNum] = (int) (L2 * 255);
