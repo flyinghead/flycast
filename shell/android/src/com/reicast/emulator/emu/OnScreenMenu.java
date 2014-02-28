@@ -1,6 +1,7 @@
 package com.reicast.emulator.emu;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Vector;
 
 import android.app.Activity;
@@ -192,6 +193,7 @@ public class OnScreenMenu {
 		private View fastforward;
 		private View fdown;
 		private View fup;
+		ArrayList<View> menuItems = new ArrayList<View>();
 
 		public ConfigPopup(Context c) {
 			super(c);
@@ -203,11 +205,13 @@ public class OnScreenMenu {
 
 			hlay.setOrientation(LinearLayout.HORIZONTAL);
 
-			hlay.addView(addbut(R.drawable.up, new OnClickListener() {
+			View up = addbut(R.drawable.up, new OnClickListener() {
 				public void onClick(View v) {
 					removePopUp(ConfigPopup.this);
 				}
-			}), configParams);
+			});
+			hlay.addView(up, configParams);
+			menuItems.add(up);
 
 			fullscreen = addbut(R.drawable.widescreen, new OnClickListener() {
 				public void onClick(View v) {
@@ -230,6 +234,7 @@ public class OnScreenMenu {
 
 			}
 			hlay.addView(fullscreen, params);
+			menuItems.add(fullscreen);
 
 			fdown = addbut(R.drawable.frames_down, new OnClickListener() {
 				public void onClick(View v) {
@@ -251,7 +256,9 @@ public class OnScreenMenu {
 			});
 
 			hlay.addView(fdown, params);
+			menuItems.add(fdown);
 			hlay.addView(fup, params);
+			menuItems.add(fup);
 			enableState(fdown, fup);
 
 			framelimit = addbut(R.drawable.frames_limit_on,
@@ -275,6 +282,7 @@ public class OnScreenMenu {
 						.setImageResource(R.drawable.frames_limit_off);
 			}
 			hlay.addView(framelimit, params);
+			menuItems.add(framelimit);
 
 			audiosetting = addbut(R.drawable.enable_sound,
 					new OnClickListener() {
@@ -314,6 +322,7 @@ public class OnScreenMenu {
 				audiosetting.setEnabled(false);
 			}
 			hlay.addView(audiosetting, params);
+			menuItems.add(audiosetting);
 
 			fastforward = addbut(R.drawable.star, new OnClickListener() {
 				public void onClick(View v) {
@@ -372,16 +381,30 @@ public class OnScreenMenu {
 						.setImageResource(R.drawable.reset);
 			}
 			hlay.addView(fastforward, params);
+			menuItems.add(fastforward);
 
-			hlay.addView(addbut(R.drawable.close, new OnClickListener() {
+			View close = addbut(R.drawable.close, new OnClickListener() {
 				public void onClick(View v) {
 					popups.remove(ConfigPopup.this);
 					dismiss();
 				}
-			}), configParams);
+			});
+			hlay.addView(close, configParams);
+			menuItems.add(close);
 
 			setContentView(hlay);
+			getFocusedItem();
 			popups.add(this);
+		}
+
+		public void getFocusedItem() {
+			for (View menuItem : menuItems) {
+				if (menuItem.hasFocus()) {
+					// do something to the focused item
+				} else {
+					// do something to the rest of them
+				}
+			}
 		}
 	}
 

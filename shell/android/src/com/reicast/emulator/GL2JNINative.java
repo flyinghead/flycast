@@ -204,18 +204,6 @@ public class GL2JNINative extends NativeActivity {
 		mView = new GL2JNIView(getApplication(), config, fileName, false,
 				prefs.getInt("depth_render", 24), 0, false);
 		setContentView(mView);
-		
-		String menu_spec;
-		if (pad.isXperiaPlay || pad.isOuyaOrTV) {
-			menu_spec = getApplicationContext().getString(R.string.menu_button);
-		} else {
-			menu_spec = getApplicationContext().getString(R.string.back_button);
-		}
-		Toast.makeText(
-				getApplicationContext(),
-				getApplicationContext()
-						.getString(R.string.bios_menu, menu_spec),
-				Toast.LENGTH_SHORT).show();
 
 		//setup mic
 		boolean micPluggedIn = prefs.getBoolean("mic_plugged_in", false);

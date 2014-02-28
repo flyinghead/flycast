@@ -55,11 +55,6 @@
     <string name="map_keycode_title">Изменить контроллер</string>
     <string name="map_keycode_message">Нажмите кнопку на контроллере для %1$s</string>
     
-    
-    <string name="bios_menu">Нажмите на кнопку %1$s для выхода в меню</string>
-    <string name="back_button">назад</string>
-    <string name="search_button">поиск</string>
-    
     <string name="moga_pro_connect">MOGA Pro присоиденен!</string>
     <string name="moga_connect">MOGA присоиденен!</string>
 
