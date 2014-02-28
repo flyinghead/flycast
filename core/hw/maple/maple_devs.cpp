@@ -4,7 +4,6 @@
 #include "maple_devs.h"
 #include "maple_cfg.h"
 #include <time.h>
-
 #if _ANDROID
 #include <android/log.h>
 #include <jni.h>
