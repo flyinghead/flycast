@@ -368,9 +368,6 @@ public class GL2JNINative extends NativeActivity {
 					pad.globalLS_X[playerNum] = LS_X;
 					pad.globalLS_Y[playerNum] = LS_Y;
 
-					GL2JNIView.lt[playerNum] = (int) (L2 * 255);
-					GL2JNIView.rt[playerNum] = (int) (R2 * 255);
-
 					GL2JNIView.jx[playerNum] = (int) (LS_X * 126);
 					GL2JNIView.jy[playerNum] = (int) (LS_Y * 126);
 
@@ -391,11 +388,14 @@ public class GL2JNINative extends NativeActivity {
 							GL2JNIView.rt[playerNum] = (int) (RS_Y * 255);
 						} else if (RS_Y < 0.5) {
 							GL2JNIView.lt[playerNum] = (int) (-(RS_Y) * 255);
+						} else {
+							GL2JNIView.lt[playerNum] = (int) (L2 * 255);
+							GL2JNIView.rt[playerNum] = (int) (R2 * 255);
 						}
 					}
 				}
-				mView.pushInput();
 			}
+			mView.pushInput();
 			if ((pad.globalLS_X[playerNum] == pad.previousLS_X[playerNum] && pad.globalLS_Y[playerNum] == pad.previousLS_Y[playerNum])
 					|| (pad.previousLS_X[playerNum] == 0.0f && pad.previousLS_Y[playerNum] == 0.0f))
 				// Only handle Left Stick on an Xbox 360 controller if there was
