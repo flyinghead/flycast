@@ -179,12 +179,19 @@ int spg_line_sched(int tag, int cycl, int jit)
 
 				full_rps=(spd_fps+fskip/ts);
 
+				#ifdef TARGET_PANDORA
+				sprintf(fpsStr,"CPU: %4.2f V: %4.2f (%s%s%4.2f) R: %4.2f+%4.2f", 
+					spd_cpu*100/200,spd_vbs,
+					mode,res,fullvbs,
+					spd_fps,fskip/ts);
+				#else					
 				sprintf(fpsStr,"%s/%c - %4.2f (%4.2f) - %4.2f - V: %4.2f (%.2f, %s%s%4.2f) R: %4.2f+%4.2f VTX: %4.2f%c", 
 					VER_SHORTNAME,'n',mspdf,speed_load_mspdf,spd_cpu*100/200,spd_vbs,
 					spd_vbs/full_rps,mode,res,fullvbs,
 					spd_fps,fskip/ts
 					,mv,mv_c);
-					
+				#endif
+				
 				fskip=0;
 				os_SetWindowText(fpsStr);
 

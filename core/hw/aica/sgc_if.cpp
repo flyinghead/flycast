@@ -17,6 +17,7 @@
 #endif
 
 //Sound generation, mixin, and channel regs emulation
+bool NoSound = false;  // global switch to kill sound (and some of the cpu part of it)
 
 //x.15
 s32 volume_lut[16];
@@ -1289,7 +1290,7 @@ void AICA_Sample32()
 		pl=mixl;
 		pr=mixr;
 
-		WriteSample(mixr,mixl);
+		if (!NoSound) WriteSample(mixr,mixl);
 	}
 }
 
@@ -1335,7 +1336,12 @@ void AICA_Sample()
 		}
 	}
 
-	//Mono !
+	if (NoSound)
+	{
+		return;
+	}  
+
+ 	//Mono !
 	if (CommonData->Mono)
 	{
 		//Yay for mono =P
