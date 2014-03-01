@@ -301,10 +301,11 @@ public class ConfigureFragment extends Fragment {
 
 			public void onCheckedChanged(CompoundButton buttonView,
 					boolean isChecked) {
-				mPrefs.edit().putBoolean("sound_enabled", isChecked).commit();
+				mPrefs.edit().putBoolean("sound_disabled", isChecked).commit();
+				Config.nosound = isChecked;
 			}
 		};
-		boolean sound = mPrefs.getBoolean("sound_enabled", true);
+		boolean sound = mPrefs.getBoolean("sound_disabled", false);
 		sound_opt.setChecked(sound);
 		sound_opt.setOnCheckedChangeListener(emu_sound);
 

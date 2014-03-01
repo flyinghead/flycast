@@ -26,7 +26,7 @@
     <string name="select_render">PVR Rendering (пока не работает)</string>
     <string name="select_fps">Отоброжать FPS</string>
     <string name="select_software">Програмный Rendering</string>
-    <string name="select_sound">Включить эмуляцию звука</string>
+    
     <string name="select_depth">Выбрать глубину рендера</string>
     <string name="default_disk">Выбрать стандартный диск</string>
     <string name="select_force_gpu">Принудительно v6 GPU конфиг.</string>

@@ -154,8 +154,8 @@ public class GL2JNIView extends GLSurfaceView
 		sHeight = (int) (metrics.heightPixels * scale + 0.5f);
 
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-		boolean soundEndabled = prefs.getBoolean("sound_enabled", true);
-		ethd = new EmuThread(soundEndabled);
+
+		ethd = new EmuThread(!Config.nosound);
 
 		touchVibrationEnabled = prefs.getBoolean("touch_vibration_enabled", true);
 

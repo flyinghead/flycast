@@ -17,6 +17,7 @@ public class Config {
 	public static int broadcast = 4;
 	public static boolean limitfps = true;
 	public static boolean nobatch = false;
+	public static boolean nosound = false;
 	public static boolean mipmaps = true;
 	public static boolean widescreen = false;
 	public static boolean subdivide = false;
@@ -41,6 +42,7 @@ public class Config {
 		Config.dcregion = mPrefs.getInt("dc_region", dcregion);
 		Config.broadcast = mPrefs.getInt("dc_broadcast", broadcast);
 		Config.limitfps = mPrefs.getBoolean("limit_fps", limitfps);
+		Config.nosound = mPrefs.getBoolean("sound_disabled", nosound);
 		Config.mipmaps = mPrefs.getBoolean("use_mipmaps", mipmaps);
 		Config.widescreen = mPrefs.getBoolean("stretch_view", widescreen);
 		Config.frameskip = mPrefs.getInt("frame_skip", frameskip);
@@ -61,6 +63,7 @@ public class Config {
 		JNIdc.broadcast(Config.broadcast);
 		JNIdc.limitfps(Config.limitfps ? 1 : 0);
 		JNIdc.nobatch(Config.nobatch ? 1 : 0);
+		JNIdc.nosound(Config.nosound ? 1 : 0);
 		JNIdc.mipmaps(Config.mipmaps ? 1 : 0);
 		JNIdc.widescreen(Config.widescreen ? 1 : 0);
 		JNIdc.subdivide(Config.subdivide ? 1 : 0);

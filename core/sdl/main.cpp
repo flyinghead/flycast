@@ -69,7 +69,6 @@ s8 joyx[4],joyy[4];
 u8 rt[4],lt[4];
 
 extern bool KillTex;
-extern bool NoSound;
 
 extern void dc_term();
 
@@ -222,7 +221,7 @@ bool HandleEvents(u32 port) {
 					case SDLK_LALT:		keys[12]=value; break;
 					case SDLK_k:		KillTex=true; break;
 					case SDLK_n:    if (value) {mouse_use=(mouse_use+1)%4; snprintf(OSD_Info, 128, "Right Nub mode: %s\n", num_mode[mouse_use]); OSD_Delay=300;}; break;  
-					case SDLK_s:    if (value) {NoSound=!NoSound; snprintf(OSD_Info, 128, "Sound %s\n", (NoSound)?"Off":"On"); OSD_Delay=300;};break;  
+					case SDLK_s:        if (value) {settings.aica.NoSound=!settings.aica.NoSound; snprintf(OSD_Info, 128, "Sound %s\n", (settings.aica.NoSound)?"Off":"On"); OSD_Delay=300;};break;
 					case SDLK_c:    if (value) {OSD_Counter=1-OSD_Counter;};break;
 
 				#else
