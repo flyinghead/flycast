@@ -58,7 +58,7 @@ public class OnScreenMenu {
 		if (prefs != null) {
 			this.prefs = prefs;
 			home_directory = prefs.getString("home_directory", home_directory);
-			masteraudio = prefs.getBoolean("sound_enabled", true);
+			masteraudio = !Config.nosound;
 			audio = masteraudio;
 		}
 		vmuLcd = new VmuLcd(mContext);
@@ -335,6 +335,7 @@ public class OnScreenMenu {
 							((GL2JNIActivity) mContext).mView
 									.audioDisable(!audio);
 						}
+						JNIdc.nosound(!audio ? 1 : 0);
 						audiosetting.setEnabled(true);
 						JNIdc.limitfps(limit ? 1 : 0);
 						framelimit.setEnabled(true);
@@ -358,6 +359,7 @@ public class OnScreenMenu {
 							((GL2JNIActivity) mContext).mView
 									.audioDisable(true);
 						}
+						JNIdc.nosound(1);
 						audiosetting.setEnabled(false);
 						JNIdc.limitfps(0);
 						framelimit.setEnabled(false);
