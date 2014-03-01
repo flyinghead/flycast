@@ -154,20 +154,24 @@ public class AboutFragment extends Fragment {
 
 		slidingGithub = (SlidingDrawer) getView().findViewById(
 				R.id.slidingGithub);
-		slidingGithub.setOnDrawerOpenListener(new OnDrawerOpenListener() {
-			@TargetApi(Build.VERSION_CODES.HONEYCOMB)
-			public void onDrawerOpened() {
-				String git = parentActivity.getString(R.string.git_api);
-				retrieveGitTask queryGithub = new retrieveGitTask();
-				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-					queryGithub.executeOnExecutor(
-							AsyncTask.THREAD_POOL_EXECUTOR, git);
-				} else {
-					queryGithub.execute(git);
+		if (MainActivity.debugUser) {
+			slidingGithub.setOnDrawerOpenListener(new OnDrawerOpenListener() {
+				@TargetApi(Build.VERSION_CODES.HONEYCOMB)
+				public void onDrawerOpened() {
+					String git = parentActivity.getString(R.string.git_api);
+					retrieveGitTask queryGithub = new retrieveGitTask();
+					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+						queryGithub.executeOnExecutor(
+								AsyncTask.THREAD_POOL_EXECUTOR, git);
+					} else {
+						queryGithub.execute(git);
+					}
 				}
-			}
-		});
-		slidingGithub.open();
+			});
+			slidingGithub.open();
+		} else {
+			slidingGithub.setVisibility(View.GONE);
+		}
 	}
 
 	public class retrieveGitTask extends

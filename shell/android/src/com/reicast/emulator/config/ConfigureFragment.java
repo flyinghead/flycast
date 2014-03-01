@@ -20,6 +20,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.EditText;
@@ -28,6 +29,7 @@ import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.Spinner;
 import android.widget.TextView;
 
+import com.reicast.emulator.MainActivity;
 import com.reicast.emulator.R;
 import com.reicast.emulator.debug.GenerateLogs;
 import com.reicast.emulator.emu.GL2JNIView;
@@ -335,6 +337,17 @@ public class ConfigureFragment extends Fragment {
 			}
 
 		});
+
+		Button debug = (Button) getView().findViewById(R.id.debug_button);
+		if (MainActivity.debugUser) {
+			debug.setOnClickListener(new View.OnClickListener() {
+				public void onClick(View view) {
+					generateErrorLog();
+				}
+			});
+		} else {
+			debug.setVisibility(View.GONE);
+		}
 	}
 
 	public void generateErrorLog() {

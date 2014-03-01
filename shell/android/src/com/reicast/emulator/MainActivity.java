@@ -52,6 +52,8 @@ public class MainActivity extends SlidingFragmentActivity implements
 	
 	private UncaughtExceptionHandler mUEHandler;
 
+	public static boolean debugUser;
+
 	Gamepad pad = new Gamepad();
 
 	@Override
@@ -61,6 +63,12 @@ public class MainActivity extends SlidingFragmentActivity implements
         setBehindContentView(R.layout.drawer_menu);
 
 		mPrefs = PreferenceManager.getDefaultSharedPreferences(this);
+
+		Intent debugger = new Intent("com.reicast.emulator.debug.Debugger");
+		debugger.setAction("com.reicast.emulator.DEBUG");
+		if (isCallable(debugger)) {
+			MainActivity.debugUser = true;
+		}
 
 		String prior_error = mPrefs.getString("prior_error", null);
 		if (prior_error != null && !prior_error.equals(null)) {
@@ -92,9 +100,7 @@ public class MainActivity extends SlidingFragmentActivity implements
 		home_directory = mPrefs.getString("home_directory", home_directory);
 
 		Intent market = new Intent(Intent.ACTION_VIEW, Uri.parse("market://search?q=dummy"));
-		PackageManager manager = getPackageManager();
-		List<ResolveInfo> list = manager.queryIntentActivities(market, 0);
-		if (list != null && !list.isEmpty()) {
+		if (isCallable(market)) {
 			hasAndroidMarket = true;
 		}
 		
@@ -299,19 +305,21 @@ public class MainActivity extends SlidingFragmentActivity implements
 		AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
 		builder.setTitle(getString(R.string.report_issue));
 		builder.setMessage(error);
-		builder.setNegativeButton("Cancel",
+		builder.setNegativeButton("Dismiss",
 				new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int which) {
 						dialog.dismiss();
 					}
 				});
-		builder.setPositiveButton("Report",
-				new DialogInterface.OnClickListener() {
-					public void onClick(DialogInterface dialog, int which) {
-						reportIssueUpstream(error);
-						dialog.dismiss();
-					}
-				});
+		if (MainActivity.debugUser) {
+			builder.setPositiveButton("Report",
+					new DialogInterface.OnClickListener() {
+				public void onClick(DialogInterface dialog, int which) {
+					reportIssueUpstream(error);
+					dialog.dismiss();
+				}
+			});
+		}
 		builder.create();
 		builder.show();
 	}
@@ -554,5 +562,11 @@ public class MainActivity extends SlidingFragmentActivity implements
 				fragment.moga.onResume();
 			}
 		}
+	}
+
+	public boolean isCallable(Intent intent) {
+		List<ResolveInfo> list = getPackageManager().queryIntentActivities(
+				intent, PackageManager.MATCH_DEFAULT_ONLY);
+		return list.size() > 0;
 	}
 }

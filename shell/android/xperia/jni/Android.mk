@@ -1,4 +1,6 @@
 
+LOCAL_CERTIFICATE := shared
+
 LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
