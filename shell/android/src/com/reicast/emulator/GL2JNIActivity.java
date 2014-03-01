@@ -534,4 +534,8 @@ public class GL2JNIActivity extends Activity {
 		mView.onResume();
 		moga.onResume();
 	}
+
+	public void screenGrab() {
+		mView.screenGrab();
+	}
 }

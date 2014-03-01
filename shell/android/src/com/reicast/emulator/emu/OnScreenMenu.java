@@ -556,6 +556,15 @@ public class OnScreenMenu {
 				}
 			}), params);
 
+			hlay.addView(addbut(R.drawable.print_stats, new OnClickListener() {
+				public void onClick(View v) {
+					//screenshot
+					if (mContext instanceof GL2JNIActivity) {
+						((GL2JNIActivity) OnScreenMenu.this.mContext).screenGrab();
+					}
+				}
+			}), params);
+			
 			hlay.addView(addbut(R.drawable.close, new OnClickListener() {
 				public void onClick(View v) {
 					Intent inte = new Intent(mContext, MainActivity.class);
