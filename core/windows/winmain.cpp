@@ -268,8 +268,8 @@ LRESULT CALLBACK WndProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 #define WINDOW_CLASS "nilDC"
 
 // Width and height of the window
-#define WINDOW_WIDTH  1024
-#define WINDOW_HEIGHT 512
+#define WINDOW_WIDTH  1280
+#define WINDOW_HEIGHT 800
 
 
 void* window_win;
@@ -576,3 +576,6 @@ void VArray2::UnLockRegion(u32 offset,u32 size)
 	DWORD old;
 	VirtualProtect(((u8*)data)+offset , size, PAGE_READWRITE,&old);
 }
+
+int get_mic_data(u8* buffer) { return 0; }
+int push_vmu_screen(u8* buffer) { return 0; }
