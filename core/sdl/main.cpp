@@ -22,12 +22,6 @@
 #include <sys/soundcard.h>
 #endif
 
-#define JOYSTICK_SDL
-
-#ifndef JOYSTICK_SDL
-#include <linux/joystick.h>
-#endif
-
 #include <signal.h>
 #include <execinfo.h>
 
@@ -75,6 +69,7 @@ s8 joyx[4],joyy[4];
 u8 rt[4],lt[4];
 
 extern bool KillTex;
+
 extern void dc_term();
 
 enum DCPad {
@@ -104,11 +99,7 @@ enum DCPad {
 
 void emit_WriteCodeCache();
 
-#ifdef JOYSTICK_SDL
 static SDL_Joystick *JoySDL    = 0;
-#else
-static int JoyFD    = -1;     // Joystick file descriptor
-#endif	
 
 #ifdef USE_OSS
 static int audio_fd = -1;
@@ -131,7 +122,9 @@ const u32 JMapAxis_360[MAP_SIZE] =
 
 const u32* JMapBtn=JMapBtn_USB;
 const u32* JMapAxis=JMapAxis_USB;
-
+#ifdef TARGET_PANDORA
+u32  JSensitivity[256];  // To have less sensitive value on nubs
+#endif
 
 void SetupInput()
 {
@@ -142,7 +135,6 @@ void SetupInput()
 		lt[port]=0;
 	}
 
-	#ifdef JOYSTICK_SDL
 	// Open joystick device
 	int numjoys = SDL_NumJoysticks();
 	printf("Number of Joysticks found = %i\n", numjoys);
@@ -171,41 +163,36 @@ void SetupInput()
 			printf("Using Xbox 360 map\n");
 		}
 	} else printf("SDK: No Joystick Found\n");
-	#else
-	// Open joystick device
-	JoyFD = open("/dev/input/js0",O_RDONLY);
-	
-	if(JoyFD>=0)
-	{
-		int AxisCount,ButtonCount;
-		char Name[128];
-		
-		AxisCount   = 0;
-		ButtonCount = 0;
-		Name[0]     = '\0';
-		
-		fcntl(JoyFD,F_SETFL,O_NONBLOCK);
-		ioctl(JoyFD,JSIOCGAXES,&AxisCount);
-		ioctl(JoyFD,JSIOCGBUTTONS,&ButtonCount);
-		ioctl(JoyFD,JSIOCGNAME(sizeof(Name)),&Name);
-		
-		printf("SDK: Found '%s' joystick with %d axis and %d buttons\n",Name,AxisCount,ButtonCount);
-		
-		if (strcmp(Name,"Microsoft X-Box 360 pad")==0)
-		{
-			JMapBtn=JMapBtn_360;
-			JMapAxis=JMapAxis_360;
-			printf("Using Xbox 360 map\n");
-		}
+	#ifdef TARGET_PANDORA
+	float v;
+	int j;
+	for (int i=0; i<128; i++) {
+		v=((float)i)/127.0f;
+		v=(v+v*v)/2.0f;
+		j=(int)(v*127.0f);
+		if (j>127) j=127;
+		JSensitivity[128-i]=-j;
+		JSensitivity[128+i]=j;
 	}
 	#endif
+	SDL_ShowCursor( 0 );
+	if (SDL_WM_GrabInput( SDL_GRAB_ON ) != SDL_GRAB_ON)
+		printf("SDK: Error while grabbing mouse\n");
 }
+
+extern char OSD_Info[128];
+extern int OSD_Delay;
+extern char OSD_Counters[256];
+extern int OSD_Counter;
 
 bool HandleEvents(u32 port) {
 
 	static int keys[13];
+	static int mouse_use = 0;
 	SDL_Event event;
 	int k, value;
+	int xx, yy;
+	char *num_mode[] = {"Off", "Up/Down => RT/LT", "Left/Right => LT/RT", "U/D/L/R => A/B/X/Y"};
 	while (SDL_PollEvent(&event)) {
 		switch (event.type) {
 			case SDL_QUIT:
@@ -233,12 +220,15 @@ bool HandleEvents(u32 port) {
 					case SDLK_RCTRL:	keys[10]=value; break;
 					case SDLK_LALT:		keys[12]=value; break;
 					case SDLK_k:		KillTex=true; break;
+					case SDLK_n:    if (value) {mouse_use=(mouse_use+1)%4; snprintf(OSD_Info, 128, "Right Nub mode: %s\n", num_mode[mouse_use]); OSD_Delay=300;}; break;  
+					case SDLK_s:        if (value) {settings.aica.NoSound=!settings.aica.NoSound; snprintf(OSD_Info, 128, "Sound %s\n", (settings.aica.NoSound)?"Off":"On"); OSD_Delay=300;};break;
+					case SDLK_c:    if (value) {OSD_Counter=1-OSD_Counter;};break;
+
 				#else
 				#error *TODO*
 				#endif
 				}
 				break;
-			#ifdef JOYSTICK_SDL
 			case SDL_JOYBUTTONDOWN:
 			case SDL_JOYBUTTONUP:
 				value = (event.type==SDL_JOYBUTTONDOWN)?1:0;
@@ -277,6 +267,9 @@ bool HandleEvents(u32 port) {
 					
 					//printf("AXIS %d,%d\n",JE.number,JE.value);
 					s8 v=(s8)(value/256); //-127 ... + 127 range
+					#ifdef TARGET_PANDORA
+					v=JSensitivity[128+v];
+					#endif
 					
 					if (mt==0)
 					{
@@ -314,7 +307,35 @@ bool HandleEvents(u32 port) {
 					}
 				}
 				break;
-			#endif
+      case SDL_MOUSEMOTION:
+          xx = event.motion.xrel;
+          yy = event.motion.yrel;
+          // some caping and dead zone...
+          if (abs(xx)<4) xx = 0;
+          if (abs(yy)<4) yy = 0;
+          xx = xx*255/20; yy = yy*255/20;
+          if (xx>255) xx = 255; if (xx<-255) xx = -255;
+          if (yy>255) yy = 255; if (yy<-255) yy = -255;
+          //if (abs(xx)>0 || abs(yy)>0) printf("mouse %i, %i\n", xx, yy);
+          switch (mouse_use) {
+            case 0:  // nothing
+              break;
+            case 1:  // Up=RT, Down=LT
+              if (yy<0) rt[port]=-yy;
+              if (yy>0) lt[port]=yy;
+              break;
+            case 2:  // Left=LT, Right=RT
+              if (xx<0) lt[port]=-xx;
+              if (xx>0) rt[port]=xx;
+              break;
+            case 3:  // Nub = ABXY
+              if (xx<-127) kcode[port] &= ~Btn_X;
+              if (xx>127) kcode[port] &= ~Btn_B;
+              if (yy<-127) kcode[port] &= ~Btn_Y;
+              if (yy>127) kcode[port] &= ~Btn_A;
+              break;
+          }
+        break;
 		}
 			
 	}
@@ -344,98 +365,6 @@ bool HandleEvents(u32 port) {
 	return true;
 }
 
-#ifndef JOYSTICK_SDL
-bool HandleJoystick(u32 port)
-{
-  
-  struct js_event JE;
-
-  // Joystick must be connected
-  if(JoyFD<0) return false;
-
-  while(read(JoyFD,&JE,sizeof(JE))==sizeof(JE))
-	  if (JE.number<MAP_SIZE)
-	  {
-		  switch(JE.type & ~JS_EVENT_INIT)
-		  {
-		  case JS_EVENT_AXIS:
-			  {
-				  u32 mt=JMapAxis[JE.number]>>16;
-				  u32 mo=JMapAxis[JE.number]&0xFFFF;
-				  
-				 //printf("AXIS %d,%d\n",JE.number,JE.value);
-				  s8 v=(s8)(JE.value/256); //-127 ... + 127 range
-				  
-				  if (mt==0)
-				  {
-					  kcode[port]|=mo;
-					  kcode[port]|=mo*2;
-					  if (v<-64)
-					  {
-						  kcode[port]&=~mo;
-					  }
-					  else if (v>64)
-					  {
-						  kcode[port]&=~(mo*2);
-					  }
-
-					 // printf("Mapped to %d %d %d\n",mo,kcode[port]&mo,kcode[port]&(mo*2));
-				  }
-				  else if (mt==1)
-				  {
-					  if (v>=0) v++;	//up to 255
-
-					//   printf("AXIS %d,%d Mapped to %d %d %d\n",JE.number,JE.value,mo,v,v+127);
-
-					  if (mo==0)
-						  lt[port]=v+127;
-					  else if (mo==1)
-						  rt[port]=v+127;
-				  }
-				  else if (mt==2)
-				  {
-					//  printf("AXIS %d,%d Mapped to %d %d [%d]",JE.number,JE.value,mo,v);
-					  if (mo==0)
-						  joyx[port]=v;
-					  else if (mo==1)
-						  joyy[port]=v;
-				  }
-			  }
-			  break;
-
-		  case JS_EVENT_BUTTON:
-			  {
-				  u32 mt=JMapBtn[JE.number]>>16;
-				  u32 mo=JMapBtn[JE.number]&0xFFFF;
-
-				// printf("BUTTON %d,%d\n",JE.number,JE.value);
-
-				  if (mt==0)
-				  {
-					 // printf("Mapped to %d\n",mo);
-					  if (JE.value)
-						  kcode[port]&=~mo;
-					  else
-						  kcode[port]|=mo;
-				  }
-				  else if (mt==1)
-				  {
-					 // printf("Mapped to %d %d\n",mo,JE.value?255:0);
-					  if (mo==0)
-						  lt[port]=JE.value?255:0;
-					  else if (mo==1)
-						  rt[port]=JE.value?255:0;
-				  }
-
-			  }
-			  break;
-		  }
-	  }
-
-	  return true;
-}
-#endif
-
 void UpdateInputState(u32 port)
 {
 	static char key = 0;
@@ -445,9 +374,6 @@ void UpdateInputState(u32 port)
 	lt[port]=0;
 	
 	HandleEvents(port);
-	#ifndef JOYSTICK_SDL
-	HandleJoystick(port);
-	#endif
 }
 
 void os_DoEvents()
@@ -457,7 +383,12 @@ void os_DoEvents()
 
 void os_SetWindowText(const char * text)
 {
+	#ifndef TARGET_PANDORA
 	SDL_WM_SetCaption(text, NULL);		// *TODO*  Set Icon also...
+	#endif
+	#ifdef TARGET_PANDORA
+	strncpy(OSD_Counters, text, 256);
+	#endif
 }
 
 
@@ -491,11 +422,7 @@ void clean_exit(int sig_num) {
 	size_t size;
 	
 	// close files
-	#ifdef JOYSTICK_SDL
 	if (JoySDL) 		SDL_JoystickClose(JoySDL);
-	#else
-	if (JoyFD>=0) 		close(JoyFD);
-	#endif
 	#ifdef USE_OSS
 	if (audio_fd>=0) 	close(audio_fd);
 	#endif
@@ -525,9 +452,10 @@ void init_sound()
 	  int format=AFMT_S16_LE;
 	  err_ret=ioctl(audio_fd, SNDCTL_DSP_SETFMT, &format);
 	  printf("set dsp to %s audio (%i/%i => %i)\n", "16bits signed" ,AFMT_S16_LE, format, err_ret);
-	  int frag=(2<<16)|12;
+	  int frag=(4<<16)|11;
+	  int f=frag;
 	  err_ret=ioctl(audio_fd, SNDCTL_DSP_SETFRAGMENT, &frag);
-	  printf("set dsp fragment to %i of %i bytes (%x => %i)\n", "16bits signed" ,(frag>>16), 2<<(frag&0xff), frag, err_ret);
+	  printf("set dsp fragment to %i of %i bytes (0x%x => %i)\n", "16bits signed" ,(f>>16), 1<<(f&0xff), frag, err_ret);
 	  /*
 	  // this doesn't help stutering, and the emu goes too fast after that
 	  err_ret=ioctl(audio_fd, SNDCTL_DSP_NONBLOCK, NULL);
@@ -585,6 +513,11 @@ int main(int argc, wchar* argv[])
 u32 os_Push(void* frame, u32 samples, bool wait)
 {
 #ifdef USE_OSS
+static bool blocking = true;
+	if (wait!=blocking) {
+		fcntl(audio_fd, F_SETFD, O_WRONLY | wait?0:O_NONBLOCK);
+		blocking=wait;
+	}
 	write(audio_fd, frame, samples*4);
 #endif
 return 1;

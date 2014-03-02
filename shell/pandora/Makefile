@@ -5,6 +5,8 @@ FOR_ARM :=1
 FOR_PANDORA :=1
 USE_SDL :=1
 USE_OSS :=1
+#PGO_MAKE :=1
+PGO_USE :=1
 
 RZDCY_SRC_DIR = ../../newdc
 
@@ -29,9 +31,9 @@ SOURCES	:=	cfg/ hw/arm7/ hw/aica/ hw/asic/ hw/ hw/gdrom/ hw/maple/ \
  hw/extdev/ hw/arm/ imgread/ linux/ linux-dist/ ./ rec-ARM/ deps/zlib/ deps/chdr/ deps/crypto/ arm_emitter/ 
 
 
-CXXFLAGS := -g -O3  -D RELEASE -c -D TARGET_PANDORA  -D WEIRD_SLOWNESS -D HAS_VMU
+CXXFLAGS :=  -std=gnu++11 -g -O3  -D RELEASE -c -D TARGET_PANDORA  -D WEIRD_SLOWNESS
 CXXFLAGS += -frename-registers -fno-strict-aliasing -fsingle-precision-constant 
-CXXFLAGS += -ffast-math -ftree-vectorize -fprefetch-loop-arrays 
+CXXFLAGS += -ffast-math -ftree-vectorize -fprefetch-loop-arrays  -Wno-write-strings
 #-std=c++0x
 
 CXXFLAGS += $(CFLAGS) $(MFLAGS) -fno-exceptions -fno-rtti

@@ -1,6 +1,5 @@
 <resources>
 
-    <string name="app_name">reicast</string>
     <string name="menu_settings">Settings</string>
 
     <string name="system_path">System Path (location of the data folder with dc_boot.bin/dc_flash.bin inside)</string>
@@ -17,10 +16,12 @@
     <string name="folder_select">SELECT CURRENT FOLDER</string>
 
     <string name="optimization_opts">Optimization and Debugging Options</string>
-    <string name="experimental_opts">Experimental (May cause widespread panic)</string>
+    <string name="experimental_opts">Expert (May cause widespread panic)</string>
+    <string name="select_native">Disable Native Interface</string>
     <string name="select_dynarec">Dynarec Options</string>
     <string name="select_unstable">Unstable Optimisations</string>
     <string name="select_region">DC Region</string>
+    <string name="select_broadcast">Broadcast</string>
     <string name="select_limitfps">Limit FPS</string>
     <string name="select_mipmaps">Use Mipmaps (fix for old SGX540)</string>
     <string name="select_stretch">Widescreen Mode</string>
@@ -28,7 +29,7 @@
     <string name="select_render">PVR Rendering (does nothing for now)</string>
     <string name="select_fps">Show OnScreen FPS</string>
     <string name="select_software">Force Software Rendering</string>
-    <string name="select_sound">Enable Emulator Sound</string>
+    <string name="select_sound">Disable Emulator Sound</string>
     <string name="select_depth">Rendering Depth</string>
     <string name="select_force_gpu">Force v6 GPU Config</string>
     <string name="default_disk">Set Default Disk</string>
@@ -55,6 +56,7 @@
     <string name="select_controller_title">Select Controller</string>
     <string name="select_controller_message">Press any button on the controller %1$s to assign to port</string>
     <string name="controller_already_in_use">This controller is already in use!</string>
+    <string name="joystick_layout">Use Joystick For Dpad Input</string>
     <string name="modified_layout">Enable Custom Key Layout</string>
     <string name="controller_compat">Enable Compatibility Mode</string>
     <string name="mic_in_port_2">Microphone plugged into port 2</string>
@@ -63,46 +65,17 @@
     <string name="map_keycode_title">Modify Controller</string>
     <string name="map_keycode_message">Press the new controller button for %1$s</string>
     
-    <string name="bios_menu">Press the %1$s button for a menu</string>
-    <string name="back_button">back / select</string>
-    <string name="menu_button">menu</string>
-    <string name="right_button">R3</string>
-    
     <string name="moga_pro_connect">MOGA Pro Connected!</string>
     <string name="moga_connect">MOGA Connected!</string>
 
     <string name="about_text">reicast is a dreamcast emulator</string>
     <string name="revision_text">Version: %1$s [%2$s]</string>
-    <string name="app_site">Homepage: http://reicast.com</string>
-    <string name="beta_site">Betas: http://reicast.loungekatt.com</string>
-    <string name="git_api">https://api.github.com/repos/reicast/reicast-emulator/commits</string>
-    <string name="git_issues">https://github.com/reicast/reicast-emulator/issues/</string>
-    <string name="log_url">http://twisted.dyndns.tv:3194/ReicastBot/report/submit.php</string>
     
     <string-array name="controllers">
     <item>Controller A</item>
     <item>Controller B</item>
     <item>Controller C</item>
     <item>Controller D</item>
-    </string-array>
-
-    <string-array name="depth">
-        <item>16</item>
-        <item>24</item>
-        <item>32</item>        
-    </string-array>
-    
-    <string-array name="images">
-        <item>cdi</item>
-        <item>chd</item>
-        <item>gdi</item>
-    </string-array>
-    
-    <string-array name="region">
-        <item>NTSC-J</item>
-        <item>NTSC-U/PAL-M/PAL-N</item>
-        <item>PAL-E</item>
-        <item>reicast</item>
     </string-array>
     
     <string name="browser">Browser</string>

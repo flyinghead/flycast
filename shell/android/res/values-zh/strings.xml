@@ -22,7 +22,7 @@
     <string name="set_frameskip">跳幀值</string>
     <string name="select_render">PVR 渲染 (目前沒有任何作用)</string>
     <string name="select_software">強制使用軟件渲染</string>
-    <string name="select_sound">開啟聲音</string>
+    
     <string name="select_force_gpu">強制使用 v6 GPU 的配置</string>
     <string name="default_disk">設置默認光盤</string>
     <string name="games_listing">可用的Dreamcast遊戲</string>
@@ -47,9 +47,6 @@
     <string name="customize_physical_controls">自定義物理控制</string>
     <string name="map_keycode_title">修改控制器</string>
     <string name="map_keycode_message">按下控制器按鈕來映射 %1$s</string>
-    <string name="bios_menu">按 %1$s 來調出菜單</string>
-    <string name="back_button">返回</string>
-    <string name="search_button">搜尋</string>
     <string name="moga_pro_connect">MOGA Pro已連接!</string>
     <string name="moga_connect">MOGA已連接</string>
     <string name="about_text">reicast是一款dreamcast模擬器</string>

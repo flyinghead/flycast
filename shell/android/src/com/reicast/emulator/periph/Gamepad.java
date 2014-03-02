@@ -6,7 +6,6 @@ import java.util.List;
 
 import tv.ouya.console.api.OuyaController;
 import tv.ouya.console.api.OuyaFacade;
-import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -19,6 +18,7 @@ public class Gamepad {
 	public String[] portId = { "_A", "_B", "_C", "_D" };
 	public boolean[] compat = { false, false, false, false };
 	public boolean[] custom = { false, false, false, false };
+	public boolean[] joystick = { false, false, false, false };
 	public int[] name = { -1, -1, -1, -1 };
 	public float[] globalLS_X = new float[4], globalLS_Y = new float[4],
 			previousLS_X = new float[4], previousLS_Y = new float[4];
@@ -103,7 +103,6 @@ public class Gamepad {
 		};
 	}
 
-	@TargetApi(Build.VERSION_CODES.GINGERBREAD)
 	public int[] getMogaController() {
 		return new int[] {
 				KeyEvent.KEYCODE_BUTTON_A,			key_CONT_A,

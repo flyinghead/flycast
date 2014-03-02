@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
+LOCAL_CERTIFICATE := shared
+
 LOCAL_PATH:= $(call my-dir)/..
 
 include $(CLEAR_VARS)
@@ -19,8 +22,6 @@ include $(CLEAR_VARS)
 FOR_ANDROID := 1
 
 include $(LOCAL_PATH)/../../core/core.mk
-
-
 
 LOCAL_SRC_FILES := $(RZDCY_FILES) $(wildcard $(LOCAL_PATH)/jni/src/*.cpp)
 LOCAL_CXXFLAGS  := $(RZDCY_CXXFLAGS)

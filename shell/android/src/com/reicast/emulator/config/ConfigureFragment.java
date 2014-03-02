@@ -20,6 +20,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.EditText;
@@ -28,6 +29,7 @@ import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.Spinner;
 import android.widget.TextView;
 
+import com.reicast.emulator.MainActivity;
 import com.reicast.emulator.R;
 import com.reicast.emulator.debug.GenerateLogs;
 import com.reicast.emulator.emu.GL2JNIView;
@@ -75,6 +77,19 @@ public class ConfigureFragment extends Fragment {
 		config.getConfigurationPrefs();
 
 		// Generate the menu options and fill in existing settings
+
+		OnCheckedChangeListener native_options = new OnCheckedChangeListener() {
+
+			public void onCheckedChanged(CompoundButton buttonView,
+					boolean isChecked) {
+				mPrefs.edit().putBoolean("native_override", isChecked).commit();
+				Config.nonative = isChecked;
+			}
+		};
+		Switch native_opt = (Switch) getView().findViewById(
+				R.id.native_option);
+		native_opt.setChecked(Config.nonative);
+		native_opt.setOnCheckedChangeListener(native_options);
 
 		OnCheckedChangeListener dynarec_options = new OnCheckedChangeListener() {
 
@@ -124,6 +139,43 @@ public class ConfigureFragment extends Fragment {
 					int pos, long id) {
 				mPrefs.edit().putInt("dc_region", pos).commit();
 				Config.dcregion = pos;
+
+			}
+
+			public void onNothingSelected(AdapterView<?> arg0) {
+
+			}
+
+		});
+
+		String[] broadcasts = parentActivity.getResources().getStringArray(
+				R.array.broadcast);
+		Spinner broadcast_spnr = (Spinner) getView().findViewById(
+				R.id.broadcast_spinner);
+		ArrayAdapter<String> broadcastAdapter = new ArrayAdapter<String>(
+				parentActivity, R.layout.spinner_selected, broadcasts);
+		broadcastAdapter
+				.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		broadcast_spnr.setAdapter(broadcastAdapter);
+
+		int select = 0;
+		String cast = String.valueOf(Config.broadcast);
+		for (int i = 0; i < broadcasts.length; i++) {
+			if (broadcasts[i].startsWith(cast + " - "))
+				select = i;
+		}
+		broadcast_spnr.setSelection(select, true);
+
+		broadcast_spnr.setOnItemSelectedListener(new OnItemSelectedListener() {
+
+			public void onItemSelected(AdapterView<?> parent, View view,
+					int pos, long id) {
+				String item = parent.getItemAtPosition(pos).toString();
+				String selection = item.substring(0, item.indexOf(" - "));
+				mPrefs.edit()
+						.putInt("dc_broadcast", Integer.valueOf(selection))
+						.commit();
+				Config.broadcast = Integer.valueOf(selection);
 
 			}
 
@@ -299,10 +351,11 @@ public class ConfigureFragment extends Fragment {
 
 			public void onCheckedChanged(CompoundButton buttonView,
 					boolean isChecked) {
-				mPrefs.edit().putBoolean("sound_enabled", isChecked).commit();
+				mPrefs.edit().putBoolean("sound_disabled", isChecked).commit();
+				Config.nosound = isChecked;
 			}
 		};
-		boolean sound = mPrefs.getBoolean("sound_enabled", true);
+		boolean sound = mPrefs.getBoolean("sound_disabled", false);
 		sound_opt.setChecked(sound);
 		sound_opt.setOnCheckedChangeListener(emu_sound);
 
@@ -335,6 +388,17 @@ public class ConfigureFragment extends Fragment {
 			}
 
 		});
+
+		Button debug = (Button) getView().findViewById(R.id.debug_button);
+		if (MainActivity.debugUser) {
+			debug.setOnClickListener(new View.OnClickListener() {
+				public void onClick(View view) {
+					generateErrorLog();
+				}
+			});
+		} else {
+			debug.setVisibility(View.GONE);
+		}
 	}
 
 	public void generateErrorLog() {

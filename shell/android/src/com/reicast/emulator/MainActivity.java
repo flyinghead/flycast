@@ -31,6 +31,7 @@ import android.widget.TextView;
 import com.jeremyfeinstein.slidingmenu.lib.SlidingMenu;
 import com.jeremyfeinstein.slidingmenu.lib.SlidingMenu.OnOpenListener;
 import com.jeremyfeinstein.slidingmenu.lib.app.SlidingFragmentActivity;
+import com.reicast.emulator.config.Config;
 import com.reicast.emulator.config.ConfigureFragment;
 import com.reicast.emulator.config.InputFragment;
 import com.reicast.emulator.config.OptionsFragment;
@@ -52,6 +53,8 @@ public class MainActivity extends SlidingFragmentActivity implements
 	
 	private UncaughtExceptionHandler mUEHandler;
 
+	public static boolean debugUser;
+
 	Gamepad pad = new Gamepad();
 
 	@Override
@@ -61,40 +64,44 @@ public class MainActivity extends SlidingFragmentActivity implements
         setBehindContentView(R.layout.drawer_menu);
 
 		mPrefs = PreferenceManager.getDefaultSharedPreferences(this);
-		
-		mUEHandler = new Thread.UncaughtExceptionHandler() {
-	        public void uncaughtException(Thread t, Throwable error) {
-			if (error != null) {
-				StringBuilder output = new StringBuilder();
-				output.append("Thread:\n");
-				for (StackTraceElement trace : t.getStackTrace()) {
-					output.append(trace.toString() + " ");
-				}
-				output.append("\n\nError:\n");
-				for (StackTraceElement trace : error.getStackTrace()) {
-					output.append(trace.toString() + " ");
-				}
-				String log = output.toString();
-				mPrefs.edit().putString("prior_error", log).commit();
-				error.printStackTrace();
-				MainActivity.this.finish();
-			}
-	        }
-		};
-		Thread.setDefaultUncaughtExceptionHandler(mUEHandler);
 
-		home_directory = mPrefs.getString("home_directory", home_directory);
+		Intent debugger = new Intent("com.reicast.emulator.debug.Debugger");
+		debugger.setAction("com.reicast.emulator.DEBUG");
+		if (isCallable(debugger)) {
+			MainActivity.debugUser = true;
+		}
 
 		String prior_error = mPrefs.getString("prior_error", null);
 		if (prior_error != null && !prior_error.equals(null)) {
 			initiateReport(prior_error);
 			mPrefs.edit().remove("prior_error").commit();
+		} else {
+			mUEHandler = new Thread.UncaughtExceptionHandler() {
+				public void uncaughtException(Thread t, Throwable error) {
+					if (error != null) {
+						StringBuilder output = new StringBuilder();
+						output.append("Thread:\n");
+						for (StackTraceElement trace : t.getStackTrace()) {
+							output.append(trace.toString() + "\n");
+						}
+						output.append("\nError:\n");
+						for (StackTraceElement trace : error.getStackTrace()) {
+							output.append(trace.toString() + "\n");
+						}
+						String log = output.toString();
+						mPrefs.edit().putString("prior_error", log).commit();
+						error.printStackTrace();
+						MainActivity.this.finish();
+					}
+				}
+			};
+			Thread.setDefaultUncaughtExceptionHandler(mUEHandler);
 		}
 
+		home_directory = mPrefs.getString("home_directory", home_directory);
+
 		Intent market = new Intent(Intent.ACTION_VIEW, Uri.parse("market://search?q=dummy"));
-		PackageManager manager = getPackageManager();
-		List<ResolveInfo> list = manager.queryIntentActivities(market, 0);
-		if (list != null && !list.isEmpty()) {
+		if (isCallable(market)) {
 			hasAndroidMarket = true;
 		}
 		
@@ -292,28 +299,28 @@ public class MainActivity extends SlidingFragmentActivity implements
 	/**
 	 * Display a dialog to notify the user of prior crash
 	 * 
-	 * @param string
+	 * @param error
 	 *            A generalized summary of the crash cause
-	 * @param bundle
-	 *            The savedInstanceState passed from onCreate
 	 */
 	private void initiateReport(final String error) {
 		AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
 		builder.setTitle(getString(R.string.report_issue));
 		builder.setMessage(error);
-		builder.setNegativeButton("Cancel",
+		builder.setNegativeButton("Dismiss",
 				new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int which) {
 						dialog.dismiss();
 					}
 				});
-		builder.setPositiveButton("Report",
-				new DialogInterface.OnClickListener() {
-					public void onClick(DialogInterface dialog, int which) {
-						reportIssueUpstream(error);
-						dialog.dismiss();
-					}
-				});
+		if (MainActivity.debugUser) {
+			builder.setPositiveButton("Report",
+					new DialogInterface.OnClickListener() {
+				public void onClick(DialogInterface dialog, int which) {
+					reportIssueUpstream(error);
+					dialog.dismiss();
+				}
+			});
+		}
 		builder.create();
 		builder.show();
 	}
@@ -407,9 +414,13 @@ public class MainActivity extends SlidingFragmentActivity implements
 			// show it
 			alertDialog.show();
 		} else {
-			Intent inte = new Intent(Intent.ACTION_VIEW, uri, getBaseContext(),
-					GL2JNIActivity.class);
-			startActivity(inte);
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD && !Config.nonative) {
+				startActivity(new Intent(Intent.ACTION_VIEW, uri, getBaseContext(),
+					GL2JNINative.class));
+			} else {
+				startActivity(new Intent(Intent.ACTION_VIEW, uri, getBaseContext(),
+						GL2JNIActivity.class));
+			}
 		}
 	}
 
@@ -552,5 +563,11 @@ public class MainActivity extends SlidingFragmentActivity implements
 				fragment.moga.onResume();
 			}
 		}
+	}
+
+	public boolean isCallable(Intent intent) {
+		List<ResolveInfo> list = getPackageManager().queryIntentActivities(
+				intent, PackageManager.MATCH_DEFAULT_ONLY);
+		return list.size() > 0;
 	}
 }

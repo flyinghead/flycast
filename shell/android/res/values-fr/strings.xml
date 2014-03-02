@@ -26,7 +26,7 @@
     <string name="select_render">Rendu PVR (ne fonctionne pas pour le moment)</string>
     <string name="select_fps">Montrer les FPS</string>
     <string name="select_software">Forcer le rendu logiciel</string>
-    <string name="select_sound">Activer le son de l\'émulateur</string>
+    
     <string name="select_depth">Rendu de profondeur</string>
     <string name="select_force_gpu">Forcer la config GPU v6</string>
     <string name="default_disk">Réglage du disque par défaut</string>

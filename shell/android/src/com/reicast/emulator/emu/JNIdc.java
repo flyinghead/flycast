@@ -34,6 +34,7 @@ public class JNIdc
   public static native void broadcast(int broadcast);
   public static native void limitfps(int limiter);
   public static native void nobatch(int nobatch);
+  public static native void nosound(int noaudio);
   public static native void mipmaps(int mipmaps);
   public static native void widescreen(int stretch);
   public static native void subdivide(int subdivide);

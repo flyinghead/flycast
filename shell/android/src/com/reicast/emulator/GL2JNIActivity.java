@@ -146,6 +146,7 @@ public class GL2JNIActivity extends Activity {
 					String id = pad.portId[playerNum];
 					pad.custom[playerNum] = prefs.getBoolean("modified_key_layout" + id, false);
 					pad.compat[playerNum] = prefs.getBoolean("controller_compat" + id, false);
+					pad.joystick[playerNum] = prefs.getBoolean("separate_joystick" + id, true);
 					if (!pad.compat[playerNum]) {
 						if (pad.custom[playerNum]) {
 							pad.map[playerNum] = pad.setModifiedKeys(id, playerNum, prefs);
@@ -186,18 +187,6 @@ public class GL2JNIActivity extends Activity {
 		mView = new GL2JNIView(getApplication(), config, fileName, false,
 				prefs.getInt("depth_render", 24), 0, false);
 		setContentView(mView);
-		
-		String menu_spec;
-		if (pad.isXperiaPlay || pad.isOuyaOrTV) {
-			menu_spec = getApplicationContext().getString(R.string.menu_button);
-		} else {
-			menu_spec = getApplicationContext().getString(R.string.back_button);
-		}
-		Toast.makeText(
-				getApplicationContext(),
-				getApplicationContext()
-						.getString(R.string.bios_menu, menu_spec),
-				Toast.LENGTH_SHORT).show();
 
 		//setup mic
 		boolean micPluggedIn = prefs.getBoolean("mic_plugged_in", false);
@@ -255,8 +244,6 @@ public class GL2JNIActivity extends Activity {
 
 	@Override
 	public boolean onGenericMotionEvent(MotionEvent event) {
-		// Log.w("INPUT", event.toString() + " " + event.getSource());
-		// Get all the axis for the KeyEvent
 
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
 
@@ -271,8 +258,7 @@ public class GL2JNIActivity extends Activity {
 			if (playerNum == null || playerNum == -1)
 				return false;
 
-			if (!pad.compat[playerNum] && !pad.isActiveMoga[playerNum]) {
-				// TODO: Moga should handle this locally
+			if (!pad.compat[playerNum]) {
 
 				// Joystick
 				if ((event.getSource() & InputDevice.SOURCE_CLASS_JOYSTICK) != 0) {
@@ -285,13 +271,12 @@ public class GL2JNIActivity extends Activity {
 					float L2 = event.getAxisValue(OuyaController.AXIS_L2);
 					float R2 = event.getAxisValue(OuyaController.AXIS_R2);
 
-					pad.previousLS_X[playerNum] = pad.globalLS_X[playerNum];
-					pad.previousLS_Y[playerNum] = pad.globalLS_Y[playerNum];
-					pad.globalLS_X[playerNum] = LS_X;
-					pad.globalLS_Y[playerNum] = LS_Y;
-
-					GL2JNIView.lt[playerNum] = (int) (L2 * 255);
-					GL2JNIView.rt[playerNum] = (int) (R2 * 255);
+					if (!pad.joystick[playerNum]) {
+						pad.previousLS_X[playerNum] = pad.globalLS_X[playerNum];
+						pad.previousLS_Y[playerNum] = pad.globalLS_Y[playerNum];
+						pad.globalLS_X[playerNum] = LS_X;
+						pad.globalLS_Y[playerNum] = LS_Y;
+					}
 
 					GL2JNIView.jx[playerNum] = (int) (LS_X * 126);
 					GL2JNIView.jy[playerNum] = (int) (LS_Y * 126);
@@ -303,7 +288,7 @@ public class GL2JNIActivity extends Activity {
 						} else if (RS_Y < 0.5) {
 							handle_key(playerNum, pad.map[playerNum][1]/* B */, true);
 							pad.wasKeyStick[playerNum] = true;
-						} else if (pad.wasKeyStick[playerNum]) {
+						} else if (pad.wasKeyStick[playerNum]){
 							handle_key(playerNum, pad.map[playerNum][0], false);
 							handle_key(playerNum, pad.map[playerNum][1], false);
 							pad.wasKeyStick[playerNum] = false;
@@ -311,15 +296,20 @@ public class GL2JNIActivity extends Activity {
 					} else {
 						if (RS_Y > 0.5) {
 							GL2JNIView.rt[playerNum] = (int) (RS_Y * 255);
+							GL2JNIView.lt[playerNum] = (int) (L2 * 255);
 						} else if (RS_Y < 0.5) {
+							GL2JNIView.rt[playerNum] = (int) (R2 * 255);
 							GL2JNIView.lt[playerNum] = (int) (-(RS_Y) * 255);
+						} else {
+							GL2JNIView.lt[playerNum] = (int) (L2 * 255);
+							GL2JNIView.rt[playerNum] = (int) (R2 * 255);
 						}
 					}
 				}
 
 			}
 			mView.pushInput();
-			if ((pad.globalLS_X[playerNum] == pad.previousLS_X[playerNum] && pad.globalLS_Y[playerNum] == pad.previousLS_Y[playerNum])
+			if (!pad.joystick[playerNum] && (pad.globalLS_X[playerNum] == pad.previousLS_X[playerNum] && pad.globalLS_Y[playerNum] == pad.previousLS_Y[playerNum])
 					|| (pad.previousLS_X[playerNum] == 0.0f && pad.previousLS_Y[playerNum] == 0.0f))
 				// Only handle Left Stick on an Xbox 360 controller if there was
 				// some actual motion on the stick,
@@ -341,47 +331,10 @@ public class GL2JNIActivity extends Activity {
 		return true;
 	}
 
-	// TODO: Controller mapping in options. Trunk has Ouya layout. This is a DS3
-	// layout.
-	/*
-	 * map[]= new int[] { OuyaController.BUTTON_Y, key_CONT_B,
-	 * OuyaController.BUTTON_U, key_CONT_A, OuyaController.BUTTON_O, key_CONT_X,
-	 * OuyaController.BUTTON_A, key_CONT_Y,
-	 * 
-	 * OuyaController.BUTTON_DPAD_UP, key_CONT_DPAD_UP,
-	 * OuyaController.BUTTON_DPAD_DOWN, key_CONT_DPAD_DOWN,
-	 * OuyaController.BUTTON_DPAD_LEFT, key_CONT_DPAD_LEFT,
-	 * OuyaController.BUTTON_DPAD_RIGHT, key_CONT_DPAD_RIGHT,
-	 * 
-	 * OuyaController.BUTTON_MENU, key_CONT_START, OuyaController.BUTTON_L1,
-	 * key_CONT_START
-	 * 
-	 * };
-	 */
-
-	/*
-	 * int map[] = new int[] { OuyaController.BUTTON_Y, key_CONT_B,
-	 * OuyaController.BUTTON_U, key_CONT_A, OuyaController.BUTTON_O, key_CONT_X,
-	 * OuyaController.BUTTON_A, key_CONT_Y,
-	 * 
-	 * OuyaController.BUTTON_DPAD_UP, key_CONT_DPAD_UP,
-	 * OuyaController.BUTTON_DPAD_DOWN, key_CONT_DPAD_DOWN,
-	 * OuyaController.BUTTON_DPAD_LEFT, key_CONT_DPAD_LEFT,
-	 * OuyaController.BUTTON_DPAD_RIGHT, key_CONT_DPAD_RIGHT,
-	 * 
-	 * OuyaController.BUTTON_MENU, key_CONT_START, OuyaController.BUTTON_L1,
-	 * key_CONT_START
-	 * 
-	 * };
-	 */
-
 	public boolean handle_key(Integer playerNum, int kc, boolean down) {
 		if (playerNum == null || playerNum == -1)
 			return false;
 		if (kc == pad.getSelectButtonCode()) {
-			return false;
-		}
-		if (pad.isActiveMoga[playerNum]) {
 			return false;
 		}
 
@@ -469,7 +422,7 @@ public class GL2JNIActivity extends Activity {
 			playerNum = -1;
 		}
 
-		if (playerNum != null && playerNum != -1 && !pad.isActiveMoga[playerNum]) {
+		if (playerNum != null && playerNum != -1) {
 			if (pad.compat[playerNum] || pad.custom[playerNum]) {
 				String id = pad.portId[playerNum];
 				if (keyCode == prefs.getInt("l_button" + id,
@@ -494,7 +447,7 @@ public class GL2JNIActivity extends Activity {
 			playerNum = -1;
 		}
 
-		if (playerNum != null && playerNum != -1 && !pad.isActiveMoga[playerNum]) {
+		if (playerNum != null && playerNum != -1) {
 			if (pad.compat[playerNum] || pad.custom[playerNum]) {
 				String id = pad.portId[playerNum];
 				if (keyCode == prefs.getInt("l_button" + id, KeyEvent.KEYCODE_BUTTON_L1)) {
@@ -534,6 +487,10 @@ public class GL2JNIActivity extends Activity {
 
 	public GL2JNIView getGameView() {
 		return mView;
+	}
+
+	public void screenGrab() {
+		mView.screenGrab();
 	}
 	
 	private boolean showMenu() {

@@ -1,6 +1,7 @@
 package com.reicast.emulator.emu;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Vector;
 
 import android.app.Activity;
@@ -19,6 +20,7 @@ import android.widget.PopupWindow;
 import android.widget.TextView;
 
 import com.reicast.emulator.GL2JNIActivity;
+import com.reicast.emulator.GL2JNINative;
 import com.reicast.emulator.MainActivity;
 import com.reicast.emulator.R;
 import com.reicast.emulator.config.Config;
@@ -46,6 +48,9 @@ public class OnScreenMenu {
 	private boolean boosted = false;
 
 	public OnScreenMenu(Activity context, SharedPreferences prefs) {
+		if (context instanceof GL2JNINative) {
+			this.mContext = (GL2JNINative) context;
+		}
 		if (context instanceof GL2JNIActivity) {
 			this.mContext = (GL2JNIActivity) context;
 		}
@@ -53,12 +58,15 @@ public class OnScreenMenu {
 		if (prefs != null) {
 			this.prefs = prefs;
 			home_directory = prefs.getString("home_directory", home_directory);
-			masteraudio = prefs.getBoolean("sound_enabled", true);
+			masteraudio = !Config.nosound;
 			audio = masteraudio;
 		}
 		vmuLcd = new VmuLcd(mContext);
 		vmuLcd.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
+				if (mContext instanceof GL2JNINative) {
+					((GL2JNINative) OnScreenMenu.this.mContext).toggleVmu();
+				}
 				if (mContext instanceof GL2JNIActivity) {
 					((GL2JNIActivity) OnScreenMenu.this.mContext).toggleVmu();
 				}
@@ -67,9 +75,13 @@ public class OnScreenMenu {
 	}
 
 	void displayDebugPopup(final PopupWindow popUp) {
+		if (mContext instanceof GL2JNINative) {
+			((GL2JNINative) mContext).displayDebug(new DebugPopup(mContext));
+		}
 		if (mContext instanceof GL2JNIActivity) {
 			((GL2JNIActivity) mContext).displayDebug(new DebugPopup(mContext));
 		}
+
 	}
 
 	public class FpsPopup extends PopupWindow {
@@ -95,6 +107,10 @@ public class OnScreenMenu {
 	private void removePopUp(PopupWindow window) {
 		window.dismiss();
 		popups.remove(window);
+		if (mContext instanceof GL2JNINative) {
+			((GL2JNINative) mContext)
+					.displayPopUp(((GL2JNINative) OnScreenMenu.this.mContext).popUp);
+		}
 		if (mContext instanceof GL2JNIActivity) {
 			((GL2JNIActivity) mContext)
 					.displayPopUp(((GL2JNIActivity) OnScreenMenu.this.mContext).popUp);
@@ -160,6 +176,9 @@ public class OnScreenMenu {
 	}
 
 	void displayConfigPopup(final PopupWindow popUp) {
+		if (mContext instanceof GL2JNINative) {
+			((GL2JNINative) mContext).displayConfig(new ConfigPopup(mContext));
+		}
 		if (mContext instanceof GL2JNIActivity) {
 			((GL2JNIActivity) mContext)
 					.displayConfig(new ConfigPopup(mContext));
@@ -174,6 +193,7 @@ public class OnScreenMenu {
 		private View fastforward;
 		private View fdown;
 		private View fup;
+		ArrayList<View> menuItems = new ArrayList<View>();
 
 		public ConfigPopup(Context c) {
 			super(c);
@@ -185,11 +205,13 @@ public class OnScreenMenu {
 
 			hlay.setOrientation(LinearLayout.HORIZONTAL);
 
-			hlay.addView(addbut(R.drawable.up, new OnClickListener() {
+			View up = addbut(R.drawable.up, new OnClickListener() {
 				public void onClick(View v) {
 					removePopUp(ConfigPopup.this);
 				}
-			}), configParams);
+			});
+			hlay.addView(up, configParams);
+			menuItems.add(up);
 
 			fullscreen = addbut(R.drawable.widescreen, new OnClickListener() {
 				public void onClick(View v) {
@@ -212,6 +234,7 @@ public class OnScreenMenu {
 
 			}
 			hlay.addView(fullscreen, params);
+			menuItems.add(fullscreen);
 
 			fdown = addbut(R.drawable.frames_down, new OnClickListener() {
 				public void onClick(View v) {
@@ -233,7 +256,9 @@ public class OnScreenMenu {
 			});
 
 			hlay.addView(fdown, params);
+			menuItems.add(fdown);
 			hlay.addView(fup, params);
+			menuItems.add(fup);
 			enableState(fdown, fup);
 
 			framelimit = addbut(R.drawable.frames_limit_on,
@@ -257,26 +282,35 @@ public class OnScreenMenu {
 						.setImageResource(R.drawable.frames_limit_off);
 			}
 			hlay.addView(framelimit, params);
+			menuItems.add(framelimit);
 
 			audiosetting = addbut(R.drawable.enable_sound,
 					new OnClickListener() {
 						public void onClick(View v) {
 							if (audio) {
+								if (mContext instanceof GL2JNINative) {
+									((GL2JNINative) mContext).mView
+											.audioDisable(true);
+								}
 								if (mContext instanceof GL2JNIActivity) {
 									((GL2JNIActivity) mContext).mView
 											.audioDisable(true);
 								}
+								audio = false;
 								((ImageButton) audiosetting)
 										.setImageResource(R.drawable.enable_sound);
-								audio = false;
 							} else {
+								if (mContext instanceof GL2JNINative) {
+									((GL2JNINative) mContext).mView
+											.audioDisable(false);
+								}
 								if (mContext instanceof GL2JNIActivity) {
 									((GL2JNIActivity) mContext).mView
 											.audioDisable(false);
 								}
+								audio = true;
 								((ImageButton) audiosetting)
 										.setImageResource(R.drawable.mute_sound);
-								audio = true;
 							}
 						}
 					});
@@ -288,19 +322,28 @@ public class OnScreenMenu {
 				audiosetting.setEnabled(false);
 			}
 			hlay.addView(audiosetting, params);
+			menuItems.add(audiosetting);
 
 			fastforward = addbut(R.drawable.star, new OnClickListener() {
 				public void onClick(View v) {
 					if (boosted) {
+						if (mContext instanceof GL2JNINative) {
+							((GL2JNINative) mContext).mView
+									.audioDisable(!audio);
+						}
 						if (mContext instanceof GL2JNIActivity) {
 							((GL2JNIActivity) mContext).mView
 									.audioDisable(!audio);
 						}
+						JNIdc.nosound(!audio ? 1 : 0);
 						audiosetting.setEnabled(true);
 						JNIdc.limitfps(limit ? 1 : 0);
 						framelimit.setEnabled(true);
 						JNIdc.frameskip(frames);
 						enableState(fdown, fup);
+						if (mContext instanceof GL2JNINative) {
+							((GL2JNINative) mContext).mView.fastForward(false);
+						}
 						if (mContext instanceof GL2JNIActivity) {
 							((GL2JNIActivity) mContext).mView.fastForward(false);
 						}
@@ -308,16 +351,24 @@ public class OnScreenMenu {
 						((ImageButton) fastforward)
 								.setImageResource(R.drawable.star);
 					} else {
+						if (mContext instanceof GL2JNINative) {
+							((GL2JNINative) mContext).mView
+									.audioDisable(true);
+						}
 						if (mContext instanceof GL2JNIActivity) {
 							((GL2JNIActivity) mContext).mView
 									.audioDisable(true);
 						}
+						JNIdc.nosound(1);
 						audiosetting.setEnabled(false);
 						JNIdc.limitfps(0);
 						framelimit.setEnabled(false);
 						JNIdc.frameskip(5);
 						fdown.setEnabled(false);
 						fup.setEnabled(false);
+						if (mContext instanceof GL2JNINative) {
+							((GL2JNINative) mContext).mView.fastForward(true);
+						}
 						if (mContext instanceof GL2JNIActivity) {
 							((GL2JNIActivity) mContext).mView.fastForward(true);
 						}
@@ -332,16 +383,30 @@ public class OnScreenMenu {
 						.setImageResource(R.drawable.reset);
 			}
 			hlay.addView(fastforward, params);
+			menuItems.add(fastforward);
 
-			hlay.addView(addbut(R.drawable.close, new OnClickListener() {
+			View close = addbut(R.drawable.close, new OnClickListener() {
 				public void onClick(View v) {
 					popups.remove(ConfigPopup.this);
 					dismiss();
 				}
-			}), configParams);
+			});
+			hlay.addView(close, configParams);
+			menuItems.add(close);
 
 			setContentView(hlay);
+			getFocusedItem();
 			popups.add(this);
+		}
+
+		public void getFocusedItem() {
+			for (View menuItem : menuItems) {
+				if (menuItem.hasFocus()) {
+					// do something to the focused item
+				} else {
+					// do something to the rest of them
+				}
+			}
 		}
 	}
 
@@ -491,6 +556,18 @@ public class OnScreenMenu {
 				}
 			}), params);
 
+			hlay.addView(addbut(R.drawable.print_stats, new OnClickListener() {
+				public void onClick(View v) {
+					//screenshot
+					if (mContext instanceof GL2JNINative) {
+						((GL2JNINative) OnScreenMenu.this.mContext).screenGrab();
+					}
+					if (mContext instanceof GL2JNIActivity) {
+						((GL2JNIActivity) OnScreenMenu.this.mContext).screenGrab();
+					}
+				}
+			}), params);
+			
 			hlay.addView(addbut(R.drawable.close, new OnClickListener() {
 				public void onClick(View v) {
 					Intent inte = new Intent(mContext, MainActivity.class);

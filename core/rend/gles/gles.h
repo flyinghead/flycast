@@ -21,10 +21,6 @@
 #define VERTEX_COL_OFFS_ARRAY 2
 #define VERTEX_UV_ARRAY 3
 
-#ifdef TARGET_PANDORA
-#define WEIRD_SLOWNESS
-#endif
-
 
 //vertex types
 extern u32 gcflip;

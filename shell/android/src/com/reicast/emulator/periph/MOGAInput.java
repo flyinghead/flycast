@@ -3,12 +3,8 @@ package com.reicast.emulator.periph;
 
 /******************************************************************************/
 
-import java.util.Arrays;
-
-import tv.ouya.console.api.OuyaController;
 import android.app.Activity;
 import android.content.SharedPreferences;
-import android.os.Build;
 import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.widget.Toast;
@@ -18,9 +14,7 @@ import com.bda.controller.ControllerListener;
 import com.bda.controller.KeyEvent;
 import com.bda.controller.MotionEvent;
 import com.bda.controller.StateEvent;
-import com.reicast.emulator.GL2JNIActivity;
 import com.reicast.emulator.R;
-import com.reicast.emulator.emu.GL2JNIView;
 import com.reicast.emulator.emu.JNIdc;
 
 /******************************************************************************/
@@ -135,100 +129,12 @@ public class MOGAInput
 	{
 		public void onKeyEvent(KeyEvent event)
 		{
-			Integer playerNum = Arrays.asList(pad.name).indexOf(event.getControllerId());
-			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD && playerNum == -1) {
-				playerNum = pad.deviceDescriptor_PlayerNum
-					.get(pad.deviceId_deviceDescriptor.get(event.getControllerId()));
-			} else {
-				playerNum = -1;
-			}
-			if (playerNum == null || playerNum == -1)
-				return;
-			if (playerNum != null && playerNum != -1) {
-				String id = pad.portId[playerNum];
-				if (event.getAction() == KeyEvent.ACTION_DOWN) {
-					if (event.getKeyCode() == prefs.getInt("l_button" + id, KeyEvent.KEYCODE_BUTTON_L1)) {
-						simulatedTouchEvent(playerNum, 1.0f, 0.0f);
-					} else if (event.getKeyCode() == prefs.getInt("r_button" + id, KeyEvent.KEYCODE_BUTTON_R1)) {
-						simulatedTouchEvent(playerNum, 0.0f, 1.0f);
-					} else if (((GL2JNIActivity) act).handle_key(playerNum, event.getKeyCode(), true)) {
-						if (playerNum == 0)
-							JNIdc.hide_osd();
-					}
-				}
-				if (event.getAction() == KeyEvent.ACTION_UP) {
-					if (event.getKeyCode() == prefs.getInt("l_button" + id,
-							KeyEvent.KEYCODE_BUTTON_L1)
-							|| event.getKeyCode() == prefs.getInt("r_button" + id,
-									KeyEvent.KEYCODE_BUTTON_R1)) {
-						simulatedTouchEvent(playerNum, 0.0f, 0.0f);
-					} else {
-						((GL2JNIActivity) act).handle_key(playerNum, event.getKeyCode(), false);
-					}
-				}
-			}
+			// Handled by the primary controller interface
 		}
 
 		public void onMotionEvent(MotionEvent event)
 		{
-			Integer playerNum = Arrays.asList(pad.name).indexOf(event.getControllerId());
-			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD && playerNum == -1) {
-				playerNum = pad.deviceDescriptor_PlayerNum
-					.get(pad.deviceId_deviceDescriptor.get(event.getControllerId()));
-			} else {
-				playerNum = -1;
-			}
-			if (playerNum == null || playerNum == -1)
-				return;
-			if (!pad.compat[playerNum]) {
-				// Joystick
-					// do other things with joystick
-					float LS_X = event.getAxisValue(OuyaController.AXIS_LS_X);
-					float LS_Y = event.getAxisValue(OuyaController.AXIS_LS_Y);
-					float RS_X = event.getAxisValue(OuyaController.AXIS_RS_X);
-					float RS_Y = event.getAxisValue(OuyaController.AXIS_RS_Y);
-					float L2 = event.getAxisValue(OuyaController.AXIS_L2);
-					float R2 = event.getAxisValue(OuyaController.AXIS_R2);
-
-					pad.previousLS_X[playerNum] = pad.globalLS_X[playerNum];
-					pad.previousLS_Y[playerNum] = pad.globalLS_Y[playerNum];
-					pad.globalLS_X[playerNum] = LS_X;
-					pad.globalLS_Y[playerNum] = LS_Y;
-
-					GL2JNIView.lt[playerNum] = (int) (L2 * 255);
-					GL2JNIView.rt[playerNum] = (int) (R2 * 255);
-
-					GL2JNIView.jx[playerNum] = (int) (LS_X * 126);
-					GL2JNIView.jy[playerNum] = (int) (LS_Y * 126);
-
-					if (prefs.getBoolean("right_buttons", true)) {
-						if (RS_Y > 0.5) {
-							((GL2JNIActivity) act).handle_key(playerNum, pad.map[playerNum][0]/* A */, true);
-							pad.wasKeyStick[playerNum] = true;
-						} else if (RS_Y < 0.5) {
-							((GL2JNIActivity) act).handle_key(playerNum, pad.map[playerNum][1]/* B */, true);
-							pad.wasKeyStick[playerNum] = true;
-						} else if (pad.wasKeyStick[playerNum]){
-							((GL2JNIActivity) act).handle_key(playerNum, pad.map[playerNum][0], false);
-							((GL2JNIActivity) act).handle_key(playerNum, pad.map[playerNum][1], false);
-							pad.wasKeyStick[playerNum] = false;
-						}
-					} else {
-						if (RS_Y > 0.5) {
-							GL2JNIView.rt[playerNum] = (int) (RS_Y * 255);
-						} else if (RS_Y < 0.5) {
-							GL2JNIView.lt[playerNum] = (int) (-(RS_Y) * 255);
-						}
-					}
-				((GL2JNIActivity) act).getGameView().pushInput();
-			}
-		}
-
-		public boolean simulatedTouchEvent(int playerNum, float L2, float R2) {
-			GL2JNIView.lt[playerNum] = (int) (L2 * 255);
-			GL2JNIView.rt[playerNum] = (int) (R2 * 255);
-			((GL2JNIActivity) act).getGameView().pushInput();
-			return true;
+			// Handled by the primary controller interface
 		}
 
 		public void onStateEvent(StateEvent event)

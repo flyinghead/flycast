@@ -45,6 +45,7 @@ public class InputModFragment extends Fragment {
 	private Activity parentActivity;
 	private SharedPreferences mPrefs;
 
+	private Switch switchJoystickDpadEnabled;
 	private Switch switchModifiedLayoutEnabled;
 	private Switch switchCompatibilityEnabled;
 
@@ -98,6 +99,18 @@ public class InputModFragment extends Fragment {
 		if (b != null) {
 			playerNum = b.getInt("portNumber", -1);
 		}
+
+		OnCheckedChangeListener joystick_mode = new OnCheckedChangeListener() {
+			public void onCheckedChanged(CompoundButton buttonView,
+					boolean isChecked) {
+				mPrefs.edit()
+						.putBoolean("separate_joystick" + player, isChecked)
+						.commit();
+			}
+		};
+		switchJoystickDpadEnabled = (Switch) getView().findViewById(
+				R.id.switchJoystickDpadEnabled);
+		switchJoystickDpadEnabled.setOnCheckedChangeListener(joystick_mode);
 
 		OnCheckedChangeListener modified_layout = new OnCheckedChangeListener() {
 			public void onCheckedChanged(CompoundButton buttonView,
@@ -559,6 +572,8 @@ public class InputModFragment extends Fragment {
 	}
 	
 	private void updateController(String player) {
+		switchJoystickDpadEnabled.setChecked(mPrefs.getBoolean(
+				"separate_joystick" + player, false));
 		switchModifiedLayoutEnabled.setChecked(mPrefs.getBoolean(
 				"modified_key_layout" + player, false));
 		switchCompatibilityEnabled.setChecked(mPrefs.getBoolean(

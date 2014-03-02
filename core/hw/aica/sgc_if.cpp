@@ -16,8 +16,6 @@
 #define clip_verify(x)
 #endif
 
-//Sound generation, mixin, and channel regs emulation
-
 //x.15
 s32 volume_lut[16];
 //255 -> mute
@@ -1289,7 +1287,7 @@ void AICA_Sample32()
 		pl=mixl;
 		pr=mixr;
 
-		WriteSample(mixr,mixl);
+		if (!settings.aica.NoSound) WriteSample(mixr,mixl);
 	}
 }
 
@@ -1334,6 +1332,11 @@ void AICA_Sample()
 			VOLPAN( (*(s16*)&DSPData->EFREG[i]) ,dsp_out_vol[i].EFSDL,dsp_out_vol[i].EFPAN,mixl,mixr);
 		}
 	}
+
+    if (settings.aica.NoSound)
+    {
+        return;
+    }
 
 	//Mono !
 	if (CommonData->Mono)
