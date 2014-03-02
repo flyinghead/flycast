@@ -24,6 +24,7 @@ public class Config {
 	public static int frameskip = 0;
 	public static boolean pvrrender = false;
 	public static String cheatdisk = "null";
+	public static boolean nonative = false;
 
 	private SharedPreferences mPrefs;
 
@@ -48,6 +49,7 @@ public class Config {
 		Config.frameskip = mPrefs.getInt("frame_skip", frameskip);
 		Config.pvrrender = mPrefs.getBoolean("pvr_render", pvrrender);
 		Config.cheatdisk = mPrefs.getString("cheat_disk", cheatdisk);
+		Config.nonative = mPrefs.getBoolean("native_override", nonative);
 	}
 
 	/**

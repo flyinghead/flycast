@@ -16,7 +16,8 @@
     <string name="folder_select">SELECT CURRENT FOLDER</string>
 
     <string name="optimization_opts">Optimization and Debugging Options</string>
-    <string name="experimental_opts">Experimental (May cause widespread panic)</string>
+    <string name="experimental_opts">Expert (May cause widespread panic)</string>
+    <string name="select_native">Disable Native Interface</string>
     <string name="select_dynarec">Dynarec Options</string>
     <string name="select_unstable">Unstable Optimisations</string>
     <string name="select_region">DC Region</string>

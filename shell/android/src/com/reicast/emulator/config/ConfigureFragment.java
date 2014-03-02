@@ -78,6 +78,19 @@ public class ConfigureFragment extends Fragment {
 
 		// Generate the menu options and fill in existing settings
 
+		OnCheckedChangeListener native_options = new OnCheckedChangeListener() {
+
+			public void onCheckedChanged(CompoundButton buttonView,
+					boolean isChecked) {
+				mPrefs.edit().putBoolean("native_override", isChecked).commit();
+				Config.nonative = isChecked;
+			}
+		};
+		Switch native_opt = (Switch) getView().findViewById(
+				R.id.native_option);
+		native_opt.setChecked(Config.nonative);
+		native_opt.setOnCheckedChangeListener(native_options);
+
 		OnCheckedChangeListener dynarec_options = new OnCheckedChangeListener() {
 
 			public void onCheckedChanged(CompoundButton buttonView,

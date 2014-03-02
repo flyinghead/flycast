@@ -31,6 +31,7 @@ import android.widget.TextView;
 import com.jeremyfeinstein.slidingmenu.lib.SlidingMenu;
 import com.jeremyfeinstein.slidingmenu.lib.SlidingMenu.OnOpenListener;
 import com.jeremyfeinstein.slidingmenu.lib.app.SlidingFragmentActivity;
+import com.reicast.emulator.config.Config;
 import com.reicast.emulator.config.ConfigureFragment;
 import com.reicast.emulator.config.InputFragment;
 import com.reicast.emulator.config.OptionsFragment;
@@ -413,9 +414,9 @@ public class MainActivity extends SlidingFragmentActivity implements
 			// show it
 			alertDialog.show();
 		} else {
-			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD && !Config.nonative) {
 				startActivity(new Intent(Intent.ACTION_VIEW, uri, getBaseContext(),
-						GL2JNINative.class));
+					GL2JNINative.class));
 			} else {
 				startActivity(new Intent(Intent.ACTION_VIEW, uri, getBaseContext(),
 						GL2JNIActivity.class));
