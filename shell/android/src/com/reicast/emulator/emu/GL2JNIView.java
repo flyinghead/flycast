@@ -110,17 +110,6 @@ public class GL2JNIView extends GLSurfaceView
 		this.editVjoyMode = editVjoyMode;
 		setKeepScreenOn(true);
 
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-			setOnSystemUiVisibilityChangeListener (new OnSystemUiVisibilityChangeListener() {
-				public void onSystemUiVisibilityChange(int visibility) {
-					if ((visibility & SYSTEM_UI_FLAG_FULLSCREEN) == 0) {
-						GL2JNIView.this.setSystemUiVisibility(
-								SYSTEM_UI_FLAG_FULLSCREEN
-								| SYSTEM_UI_FLAG_HIDE_NAVIGATION);
-					}
-				}
-			});
-		}
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
 			setOnSystemUiVisibilityChangeListener (new OnSystemUiVisibilityChangeListener() {
 				public void onSystemUiVisibilityChange(int visibility) {
@@ -690,13 +679,6 @@ public class GL2JNIView extends GLSurfaceView
 	@Override
 	public void onWindowFocusChanged(boolean hasFocus) {
 		super.onWindowFocusChanged(hasFocus);
-		if (hasFocus && Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-			GL2JNIView.this.setSystemUiVisibility(
-					View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-					| View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-					| View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-					| View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-					| View.SYSTEM_UI_FLAG_FULLSCREEN);}
 		if (hasFocus && Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
 			GL2JNIView.this.setSystemUiVisibility(
 					View.SYSTEM_UI_FLAG_LAYOUT_STABLE
