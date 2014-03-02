@@ -488,6 +488,10 @@ public class GL2JNIActivity extends Activity {
 	public GL2JNIView getGameView() {
 		return mView;
 	}
+
+	public void screenGrab() {
+		mView.screenGrab();
+	}
 	
 	private boolean showMenu() {
 		if (popUp != null) {
@@ -533,9 +537,5 @@ public class GL2JNIActivity extends Activity {
 		super.onResume();
 		mView.onResume();
 		moga.onResume();
-	}
-
-	public void screenGrab() {
-		mView.screenGrab();
 	}
 }

@@ -532,6 +532,14 @@ public class GL2JNINative extends NativeActivity {
 		}
 		return false;
 	}
+
+	public GL2JNIView getGameView() {
+		return mView;
+	}
+
+	public void screenGrab() {
+		mView.screenGrab();
+	}
 	
 	private boolean showMenu() {
 		if (popUp != null) {

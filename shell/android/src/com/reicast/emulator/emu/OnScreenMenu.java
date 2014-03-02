@@ -559,6 +559,9 @@ public class OnScreenMenu {
 			hlay.addView(addbut(R.drawable.print_stats, new OnClickListener() {
 				public void onClick(View v) {
 					//screenshot
+					if (mContext instanceof GL2JNINative) {
+						((GL2JNINative) OnScreenMenu.this.mContext).screenGrab();
+					}
 					if (mContext instanceof GL2JNIActivity) {
 						((GL2JNIActivity) OnScreenMenu.this.mContext).screenGrab();
 					}
