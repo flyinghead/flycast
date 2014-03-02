@@ -15,6 +15,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import com.reicast.emulator.R;
 
@@ -86,6 +87,12 @@ public class OptionsFragment extends Fragment {
 			public void afterTextChanged(Editable s) {
 				if (editBrowse.getText() != null) {
 					home_directory = editBrowse.getText().toString();
+					if (home_directory.endsWith("/data")) {
+						home_directory.replace("/data", "");
+						Toast.makeText(parentActivity,
+								parentActivity.getText(R.string.data_folder),
+								Toast.LENGTH_SHORT).show();
+					}
 					mPrefs.edit().putString("home_directory", home_directory)
 							.commit();
 				}
