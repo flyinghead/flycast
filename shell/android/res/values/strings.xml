@@ -20,6 +20,7 @@
     <string name="select_dynarec">Dynarec Options</string>
     <string name="select_unstable">Unstable Optimisations</string>
     <string name="select_region">DC Region</string>
+    <string name="select_broadcast">Broadcast</string>
     <string name="select_limitfps">Limit FPS</string>
     <string name="select_mipmaps">Use Mipmaps (fix for old SGX540)</string>
     <string name="select_stretch">Widescreen Mode</string>

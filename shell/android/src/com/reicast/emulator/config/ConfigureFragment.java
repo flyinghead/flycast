@@ -135,6 +135,43 @@ public class ConfigureFragment extends Fragment {
 
 		});
 
+		String[] broadcasts = parentActivity.getResources().getStringArray(
+				R.array.broadcast);
+		Spinner broadcast_spnr = (Spinner) getView().findViewById(
+				R.id.broadcast_spinner);
+		ArrayAdapter<String> broadcastAdapter = new ArrayAdapter<String>(
+				parentActivity, R.layout.spinner_selected, broadcasts);
+		broadcastAdapter
+				.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		broadcast_spnr.setAdapter(broadcastAdapter);
+
+		int select = 0;
+		String cast = String.valueOf(Config.broadcast);
+		for (int i = 0; i < broadcasts.length; i++) {
+			if (broadcasts[i].startsWith(cast + " - "))
+				select = i;
+		}
+		broadcast_spnr.setSelection(select, true);
+
+		broadcast_spnr.setOnItemSelectedListener(new OnItemSelectedListener() {
+
+			public void onItemSelected(AdapterView<?> parent, View view,
+					int pos, long id) {
+				String item = parent.getItemAtPosition(pos).toString();
+				String selection = item.substring(0, item.indexOf(" - "));
+				mPrefs.edit()
+						.putInt("dc_broadcast", Integer.valueOf(selection))
+						.commit();
+				Config.broadcast = Integer.valueOf(selection);
+
+			}
+
+			public void onNothingSelected(AdapterView<?> arg0) {
+
+			}
+
+		});
+
 		OnCheckedChangeListener limitfps_option = new OnCheckedChangeListener() {
 
 			public void onCheckedChanged(CompoundButton buttonView,

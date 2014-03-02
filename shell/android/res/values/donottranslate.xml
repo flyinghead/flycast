@@ -24,8 +24,15 @@
         <item>chd</item>
         <item>gdi</item>
     </string-array>
-    
-    <string-array name="region">
+
+   	<string-array name="region">
+        <item>NTSC-J</item>
+        <item>NTSC-U/PAL-M/PAL-N</item>
+        <item>PAL-E</item>
+        <item>reicast</item>
+    </string-array>
+
+    <string-array name="bios">
         <item>NTSC-J</item>
         <item>NTSC-U/PAL-M/PAL-N</item>
         <item>PAL-E</item>
