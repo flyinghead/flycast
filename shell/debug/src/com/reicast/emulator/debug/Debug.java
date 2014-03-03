@@ -1,6 +1,5 @@
 package com.reicast.emulator.debug;
 
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -11,11 +10,8 @@ import java.net.MalformedURLException;
 import java.net.NetworkInterface;
 import java.net.ProtocolException;
 import java.net.URL;
-import java.text.DateFormat;
-import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -40,20 +36,27 @@ import org.apache.http.message.BasicNameValuePair;
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.util.Patterns;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -109,7 +112,7 @@ public class Debug extends Activity {
 					mRegisterTask.execute();
 				}
 			}
-			submitGcmUser(regid, false);
+			submitGcmUser(regid);
 			gcm = GoogleCloudMessaging.getInstance(mContext);
 		} else {
 			GooglePlayServicesUtil.getErrorDialog(resultCode, this, 1).show();
@@ -119,7 +122,9 @@ public class Debug extends Activity {
 			protected void onPostExecute(List<String[]> jsonArray) {
 				if (jsonArray != null && !jsonArray.isEmpty()) {
 					ListView wrapper = (ListView) findViewById(R.id.dialog_list);
-					MessageAdapter adapter = new MessageAdapter(mContext, jsonArray);
+					DisplayDialog dialog = new DisplayDialog(Debug.this);
+					MessageAdapter adapter = new MessageAdapter(mContext,
+							jsonArray, dialog);
 					wrapper.setAdapter(adapter);
 					adapter.notifyDataSetChanged();
 					exlist.setListViewHeightBasedOnChildren(wrapper);
@@ -128,7 +133,8 @@ public class Debug extends Activity {
 			}
 		};
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-			mRequestArchive.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, archiveUrl);
+			mRequestArchive.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,
+					archiveUrl);
 		} else {
 			mRequestArchive.execute(archiveUrl);
 		}
@@ -144,7 +150,7 @@ public class Debug extends Activity {
 					msgEntry.setText("");
 				}
 			}
-			
+
 		});
 	}
 
@@ -152,10 +158,12 @@ public class Debug extends Activity {
 		@SuppressWarnings("unused")
 		private Context mContext;
 		private List<String[]> data;
+		private DisplayDialog note;
 
-		public MessageAdapter(Context c, List<String[]> d) {
+		public MessageAdapter(Context c, List<String[]> d, DisplayDialog n) {
 			mContext = c;
 			data = d;
+			note = n;
 		}
 
 		public int getCount() {
@@ -180,16 +188,57 @@ public class Debug extends Activity {
 				vi = inflater.inflate(R.layout.dialog_item, null);
 
 			String[] message = data.get(position);
+			final String title = message[0] + " [" + message[2] + "]";
+			final String content = message[1];
 
-			TextView itemName = (TextView) vi
-					.findViewById(R.id.item_name);
-			itemName.setText(message[0] + " [" + message[2] + "]");
+			TextView itemName = (TextView) vi.findViewById(R.id.item_name);
+			itemName.setText(title);
 
 			TextView itemContent = (TextView) vi
 					.findViewById(R.id.item_content);
-			itemContent.setText(message[1]);
+			itemContent.setText(content);
+
+			vi.setOnClickListener(new OnClickListener() {
+				@Override
+				public void onClick(View v) {
+					new Handler().post(new Runnable() {
+						public void run() {
+							note.showMessage(title, content);
+						}
+					});
+				}
+			});
 
 			return vi;
+		}
+	}
+
+	public class DisplayDialog extends AlertDialog.Builder {
+
+		public DisplayDialog(Context context) {
+			super(context);
+		}
+
+		public void showMessage(String title, String content) {
+
+			this.setTitle(title);
+			this.setMessage(content);
+			this.setNegativeButton("Dismiss",
+					new DialogInterface.OnClickListener() {
+						public void onClick(DialogInterface dialog, int which) {
+							dialog.dismiss();
+						}
+					});
+			this.setPositiveButton(null, null);
+			this.setOnKeyListener(new Dialog.OnKeyListener() {
+				public boolean onKey(DialogInterface dialog, int keyCode,
+						KeyEvent event) {
+					dialog.dismiss();
+					return true;
+				}
+			});
+			this.create();
+			this.show();
 		}
 	}
 
@@ -261,7 +310,7 @@ public class Debug extends Activity {
 		@Override
 		protected void onPostExecute(String regid) {
 			if (regid != null && !regid.equals(null)) {
-				submitGcmUser(regid, false);
+				submitGcmUser(regid);
 			}
 		}
 	};
@@ -358,10 +407,10 @@ public class Debug extends Activity {
 			try {
 				ArrayList<NameValuePair> mPairs = new ArrayList<NameValuePair>();
 				boolean hasIdentitiy = false;
-				String identity = mPrefs
-						.getString(PREF_IDENTITY, "?");
+				String identity = mPrefs.getString(PREF_IDENTITY, "?");
 				if (!identity.equals("?")) {
-					mPairs.add(new BasicNameValuePair("sender", "reicast tag #" + identity));
+					mPairs.add(new BasicNameValuePair("sender", "reicast tag #"
+							+ identity));
 					hasIdentitiy = true;
 				} else {
 					String ip = getSenderIPAddress(true);
@@ -403,8 +452,8 @@ public class Debug extends Activity {
 
 	}
 
-	public void submitGcmUser(String regid, boolean speak) {
-		CloudSelecao mCloudSelecao = new CloudSelecao(speak);
+	public void submitGcmUser(String regid) {
+		CloudSelecao mCloudSelecao = new CloudSelecao();
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
 			mCloudSelecao.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,
 					regid);
@@ -414,12 +463,6 @@ public class Debug extends Activity {
 	}
 
 	public class CloudSelecao extends AsyncTask<String, Integer, Object> {
-
-		private boolean speak;
-
-		CloudSelecao(boolean speak) {
-			this.speak = speak;
-		}
 
 		@Override
 		protected Object doInBackground(String... params) {
@@ -474,8 +517,7 @@ public class Debug extends Activity {
 			if (response != null && !response.equals(null)) {
 				String identity = response.toString();
 				if (!identity.equals("Err")) {
-					mPrefs.edit().putString(PREF_IDENTITY, identity)
-							.commit();
+					mPrefs.edit().putString(PREF_IDENTITY, identity).commit();
 				}
 				Log.d(APP_TAG, "reicast tag #" + identity);
 			}
@@ -498,44 +540,45 @@ public class Debug extends Activity {
 		}
 		return null;
 	}
-	
+
 	/**
 	 * Obtain the current device IP address from mobile interface
 	 * 
-	 * @param useIPv4 Specify the infrastructure to return from
+	 * @param useIPv4
+	 *            Specify the infrastructure to return from
 	 * 
 	 * @return String The IP address associated with this device
 	 */
-		public static String getSenderIPAddress(boolean useIPv4) {
-			try {
-				List<NetworkInterface> interfaces = Collections
-						.list(NetworkInterface.getNetworkInterfaces());
-				for (NetworkInterface intf : interfaces) {
-					List<InetAddress> addrs = Collections.list(intf
-							.getInetAddresses());
-					for (InetAddress addr : addrs) {
-						if (!addr.isLoopbackAddress()) {
-							String sAddr = addr.getHostAddress().toUpperCase(
-									Locale.getDefault());
-							boolean isIPv4 = InetAddressUtils.isIPv4Address(sAddr);
-							if (useIPv4) {
-								if (isIPv4)
-									return sAddr;
-							} else {
-								if (!isIPv4) {
-									int delim = sAddr.indexOf('%');
-									return delim < 0 ? sAddr : sAddr.substring(0,
-											delim);
-								}
+	public static String getSenderIPAddress(boolean useIPv4) {
+		try {
+			List<NetworkInterface> interfaces = Collections
+					.list(NetworkInterface.getNetworkInterfaces());
+			for (NetworkInterface intf : interfaces) {
+				List<InetAddress> addrs = Collections.list(intf
+						.getInetAddresses());
+				for (InetAddress addr : addrs) {
+					if (!addr.isLoopbackAddress()) {
+						String sAddr = addr.getHostAddress().toUpperCase(
+								Locale.getDefault());
+						boolean isIPv4 = InetAddressUtils.isIPv4Address(sAddr);
+						if (useIPv4) {
+							if (isIPv4)
+								return sAddr;
+						} else {
+							if (!isIPv4) {
+								int delim = sAddr.indexOf('%');
+								return delim < 0 ? sAddr : sAddr.substring(0,
+										delim);
 							}
 						}
 					}
 				}
-			} catch (Exception ex) {
-
 			}
-			return null;
+		} catch (Exception ex) {
+
 		}
+		return null;
+	}
 
 	@Override
 	protected void onPause() {
