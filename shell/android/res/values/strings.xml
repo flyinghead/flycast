@@ -8,6 +8,7 @@
     <string name="game_path">Default Game Storage</string>
     <string name="config_home">Please configure a home directory</string>
     <string name="config_game">Please configure a games directory</string>
+    <string name="unsupported">Unsupported Kernel Version!</string>
     
     <string name="boot_bios">Boot Dreamcast Bios</string>
     <string name="missing_bios">BIOS Missing. The Dreamcast BIOS is required for this emulator to work. Place the BIOS file in %1$s/data/dc_boot.bin</string>
