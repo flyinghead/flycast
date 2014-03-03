@@ -93,6 +93,7 @@ import android.widget.SlidingDrawer.OnDrawerOpenListener;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.reicast.emulator.config.Config;
 import com.reicast.emulator.debug.GitAdapter;
 
 @SuppressWarnings("deprecation")
@@ -258,9 +259,7 @@ public class AboutFragment extends Fragment {
 			} catch (JSONException e) {
 				handler.post(new Runnable() {
 					public void run() {
-						Toast.makeText(parentActivity,
-								"GitHub Native Unavailable!", Toast.LENGTH_LONG)
-								.show();
+						Config.customNotify(parentActivity, R.drawable.ic_github, R.string.git_broken);
 						slidingGithub.close();
 					}
 				});
@@ -268,9 +267,7 @@ public class AboutFragment extends Fragment {
 			} catch (Exception e) {
 				handler.post(new Runnable() {
 					public void run() {
-						Toast.makeText(parentActivity,
-								"GitHub Native Unavailable!", Toast.LENGTH_LONG)
-								.show();
+						Config.customNotify(parentActivity, R.drawable.ic_github, R.string.git_broken);
 						slidingGithub.close();
 					}
 				});

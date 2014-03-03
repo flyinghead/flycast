@@ -1,10 +1,20 @@
 package com.reicast.emulator.config;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
+import android.util.DisplayMetrics;
+import android.view.Gravity;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import com.android.util.DreamTime;
+import com.reicast.emulator.R;
 import com.reicast.emulator.emu.JNIdc;
 
 public class Config {
@@ -73,6 +83,33 @@ public class Config {
 		JNIdc.pvrrender(Config.pvrrender ? 1 : 0);
 		JNIdc.cheatdisk(Config.cheatdisk);
 		JNIdc.dreamtime(DreamTime.getDreamtime());
+	}
+
+	public static void customNotify(Activity activity, int icon, int message) {
+		LayoutInflater inflater = activity.getLayoutInflater();
+		View layout = inflater.inflate(R.layout.toast_layout,
+				(ViewGroup) activity.findViewById(R.id.toast_layout_root));
+
+		ImageView image = (ImageView) layout.findViewById(R.id.image);
+		if (icon != -1) {
+			image.setImageResource(icon);
+		} else {
+			image.setImageResource(R.drawable.ic_launcher);
+		}
+		
+		TextView text = (TextView) layout.findViewById(R.id.text);
+		text.setText(activity.getString(message));
+
+		DisplayMetrics metrics = new DisplayMetrics();
+		activity.getWindowManager().getDefaultDisplay().getMetrics(metrics);
+		final float scale = activity.getResources().getDisplayMetrics().density;
+		int toastPixels = (int) ((metrics.widthPixels * scale + 0.5f) / 14);
+
+		Toast toast = new Toast(activity);
+		toast.setGravity(Gravity.BOTTOM, 0, toastPixels);
+		toast.setDuration(Toast.LENGTH_SHORT);
+		toast.setView(layout);
+		toast.show();
 	}
 
 }
