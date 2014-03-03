@@ -20,7 +20,10 @@
         </copy>
     </target>
     <target name="clean" depends="android_rules.clean">
-        <exec executable="${ndk.dir}/ndk-build" failonerror="true">
+        <exec executable="${ndk.dir}/ndk-build.cmd" failonerror="true" osfamily="windows">
+            <arg value="clean"/>
+        </exec>
+        <exec executable="${ndk.dir}/ndk-build" failonerror="true" osfamily="unix">
             <arg value="clean"/>
         </exec>
     </target>
