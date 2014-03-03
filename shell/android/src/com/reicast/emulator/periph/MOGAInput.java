@@ -10,6 +10,7 @@ import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Handler;
 import android.preference.PreferenceManager;
+import android.util.Log;
 import android.widget.Toast;
 
 import com.bda.controller.Controller;
@@ -37,7 +38,6 @@ public class MOGAInput
 	static final int ACTION_VERSION_MOGAPRO = Controller.ACTION_VERSION_MOGAPRO;
 
 	public Controller mController = null;
-	private Handler handler;
 	private String notify;
 	private Gamepad pad;
 
@@ -80,8 +80,7 @@ public class MOGAInput
 		this.act = act;
 
 		this.pad = pad;
-		
-		handler = new Handler();
+
 		prefs = PreferenceManager
 				.getDefaultSharedPreferences(act.getApplicationContext());
 
@@ -157,7 +156,6 @@ public class MOGAInput
 			pad.custom[playerNum] = prefs.getBoolean("modified_key_layout" + id, false);
 			pad.compat[playerNum] = prefs.getBoolean("controller_compat" + id, false);
 			pad.joystick[playerNum] = prefs.getBoolean("separate_joystick" + id, false);
-			pad.isActiveMoga[playerNum] = true;
 			if (pad.compat[playerNum]) {
 				getCompatibilityMap(playerNum, id);
 			} else if (pad.custom[playerNum]) {
@@ -166,11 +164,6 @@ public class MOGAInput
 				pad.map[playerNum] = pad.getMogaController();
 			}
 			initJoyStickLayout(playerNum);
-			handler.post(new Runnable() {
-				public void run() {
-					Toast.makeText(act.getApplicationContext(), notify, Toast.LENGTH_SHORT).show();
-				}
-			});
 		}
 
 		public void onStateEvent(StateEvent event)
@@ -191,12 +184,14 @@ public class MOGAInput
         		int mControllerVersion = mController.getState(Controller.STATE_CURRENT_PRODUCT_VERSION);
         		if (mControllerVersion == Controller.ACTION_VERSION_MOGAPRO) {
         			pad.isMogaPro[playerNum] = true;
-        			notify = act.getApplicationContext().getString(R.string.moga_pro_connect);
+        			pad.isActiveMoga[playerNum] = true;
+        			Log.d("com.reicast.emulator", act.getApplicationContext().getString(R.string.moga_pro_connect));
         		} else if (mControllerVersion == Controller.ACTION_VERSION_MOGA) {
         			pad.isMogaPro[playerNum] = false;
-        			notify = act.getApplicationContext().getString(R.string.moga_connect);
+        			pad.isActiveMoga[playerNum] = true;
+        			Log.d("com.reicast.emulator", act.getApplicationContext().getString(R.string.moga_connect));
         		}
-        		if (notify != null && !notify.equals(null)) {
+        		if (pad.isActiveMoga[playerNum]) {
         			notifyMogaConnected(notify, playerNum);
         		}
 			}
