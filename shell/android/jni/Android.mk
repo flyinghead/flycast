@@ -21,6 +21,11 @@ include $(CLEAR_VARS)
 
 FOR_ANDROID := 1
 
+ifneq ($(TARGET_ARCH_ABI),armeabi-v7a)
+  NOT_ARM := 1
+  NO_REC := 1
+endif
+
 include $(LOCAL_PATH)/../../core/core.mk
 
 LOCAL_SRC_FILES := $(RZDCY_FILES) $(wildcard $(LOCAL_PATH)/jni/src/*.cpp)

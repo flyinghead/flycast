@@ -58,11 +58,13 @@ typedef struct ucontext_t
 
 #if HOST_CPU == CPU_ARM
 #define GET_PC_FROM_CONTEXT(c) (((ucontext_t *)(c))->uc_mcontext.arm_pc)
-#else
+#elif HOST_CPU == CPU_MIPS
 #define GET_PC_FROM_CONTEXT(c) (((ucontext_t *)(c))->uc_mcontext.pc)
+#elif HOST_CPU == CPU_X86
+#define GET_PC_FROM_CONTEXT(c) (((ucontext_t *)(c))->uc_mcontext.eip)
+#else
+#error fix ->pc support
 #endif
-
-
 
 /** 
 @file      CallStack_Android.h 
@@ -275,7 +277,10 @@ void* prof(void *ptr)
 
 		//Write shrec syms file !
 		prof_head(prof_out, "jitsym", "SH4");
+		
+		#if !defined(HOST_NO_REC)
 		sh4_jitsym(prof_out);
+		#endif
 
 		//Write arm7rec syms file ! -> to do
 		//prof_head(prof_out,"jitsym","ARM7");

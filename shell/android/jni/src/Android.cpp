@@ -369,8 +369,10 @@ JNIEXPORT jint JNICALL Java_com_reicast_emulator_emu_JNIdc_send(JNIEnv *env,jobj
 		}
 		if (param==2)
 		{
+		#if !defined(HOST_NO_REC)
 			print_stats=true;
 			printf("Storing blocks ...\n");
+		#endif
 		}
 	}
 	else if (cmd==1)
