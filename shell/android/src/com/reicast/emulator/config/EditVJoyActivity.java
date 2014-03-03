@@ -18,7 +18,6 @@ import android.widget.ImageButton;
 import android.widget.ImageView.ScaleType;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
-import android.widget.Toast;
 
 import com.reicast.emulator.MainActivity;
 import com.reicast.emulator.R;
@@ -70,9 +69,6 @@ public class EditVJoyActivity extends Activity {
 		vjoy_d_cached = VJoy.readCustomVjoyValues(getApplicationContext());
 
         JNIdc.show_osd();
-
-		Toast.makeText(getApplicationContext(),
-				"Press the back button for a menu", Toast.LENGTH_SHORT).show();
 	}
 
 	@Override

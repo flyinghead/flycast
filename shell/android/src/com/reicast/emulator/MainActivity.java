@@ -4,7 +4,6 @@ import java.io.File;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.List;
 
-import tv.ouya.console.api.OuyaFacade;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
@@ -27,6 +26,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnTouchListener;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.jeremyfeinstein.slidingmenu.lib.SlidingMenu;
 import com.jeremyfeinstein.slidingmenu.lib.SlidingMenu.OnOpenListener;
@@ -347,6 +347,10 @@ public class MainActivity extends SlidingFragmentActivity implements
 	}
 
 	public void onGameSelected(Uri uri) {
+		if (GenerateLogs.readOutput("uname -a").equals(getString(R.string.error_kernel))) {
+			Toast.makeText(MainActivity.this, R.string.unsupported,
+					Toast.LENGTH_SHORT).show();
+		}
 		String msg = null;
 		if (!isBiosExisting())
 			msg = getString(R.string.missing_bios, home_directory);
@@ -362,51 +366,51 @@ public class MainActivity extends SlidingFragmentActivity implements
 
 			// set dialog message
 			alertDialogBuilder
-					.setMessage(msg)
-					.setCancelable(false)
-					.setPositiveButton("Dismiss",
-							new DialogInterface.OnClickListener() {
-								public void onClick(DialogInterface dialog,
-										int id) {
-									// if this button is clicked, close
-									// current activity
-									// MainActivity.this.finish();
-								}
-							})
-					.setNegativeButton("Options",
-							new DialogInterface.OnClickListener() {
-								public void onClick(DialogInterface dialog,
-										int id) {
-									FileBrowser firstFragment = new FileBrowser();
-									Bundle args = new Bundle();
-									// args.putBoolean("ImgBrowse", false);
-									// specify ImgBrowse option. true = images,
-									// false = folders only
-									args.putString("browse_entry",
-											sdcard.toString());
-									// specify a path for selecting folder
-									// options
-									args.putBoolean("games_entry", false);
-									// selecting a BIOS folder, so this is not
-									// games
+			.setMessage(msg)
+			.setCancelable(false)
+			.setPositiveButton("Dismiss",
+					new DialogInterface.OnClickListener() {
+				public void onClick(DialogInterface dialog,
+						int id) {
+					// if this button is clicked, close
+					// current activity
+					// MainActivity.this.finish();
+				}
+			})
+			.setNegativeButton("Options",
+					new DialogInterface.OnClickListener() {
+				public void onClick(DialogInterface dialog,
+						int id) {
+					FileBrowser firstFragment = new FileBrowser();
+					Bundle args = new Bundle();
+					// args.putBoolean("ImgBrowse", false);
+					// specify ImgBrowse option. true = images,
+					// false = folders only
+					args.putString("browse_entry",
+							sdcard.toString());
+					// specify a path for selecting folder
+					// options
+					args.putBoolean("games_entry", false);
+					// selecting a BIOS folder, so this is not
+					// games
 
-									firstFragment.setArguments(args);
-									// In case this activity was started with
-									// special instructions from
-									// an Intent, pass the Intent's extras to
-									// the fragment as arguments
-									// firstFragment.setArguments(getIntent().getExtras());
+					firstFragment.setArguments(args);
+					// In case this activity was started with
+					// special instructions from
+					// an Intent, pass the Intent's extras to
+					// the fragment as arguments
+					// firstFragment.setArguments(getIntent().getExtras());
 
-									// Add the fragment to the
-									// 'fragment_container' FrameLayout
-									getSupportFragmentManager()
-											.beginTransaction()
-											.replace(R.id.fragment_container,
-													firstFragment,
-													"MAIN_BROWSER")
-											.addToBackStack(null).commit();
-								}
-							});
+					// Add the fragment to the
+					// 'fragment_container' FrameLayout
+					getSupportFragmentManager()
+					.beginTransaction()
+					.replace(R.id.fragment_container,
+							firstFragment,
+							"MAIN_BROWSER")
+							.addToBackStack(null).commit();
+				}
+			});
 
 			// create alert dialog
 			AlertDialog alertDialog = alertDialogBuilder.create();
@@ -416,7 +420,7 @@ public class MainActivity extends SlidingFragmentActivity implements
 		} else {
 			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD && !Config.nonative) {
 				startActivity(new Intent(Intent.ACTION_VIEW, uri, getBaseContext(),
-					GL2JNINative.class));
+						GL2JNINative.class));
 			} else {
 				startActivity(new Intent(Intent.ACTION_VIEW, uri, getBaseContext(),
 						GL2JNIActivity.class));
