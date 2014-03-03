@@ -425,7 +425,7 @@ public class Debug extends Activity {
 				boolean hasIdentitiy = false;
 				String identity = mPrefs.getString(PREF_IDENTITY, "?");
 				if (!identity.equals("?")) {
-					mPairs.add(new BasicNameValuePair("sender", "reicast tester "
+					mPairs.add(new BasicNameValuePair("sender", "reicast tester #"
 							+ identity));
 					hasIdentitiy = true;
 				} else {
@@ -535,7 +535,7 @@ public class Debug extends Activity {
 				if (!identity.equals("Err")) {
 					mPrefs.edit().putString(PREF_IDENTITY, identity).commit();
 				}
-				Log.d(APP_TAG, "reicast tester " + identity);
+				Log.d(APP_TAG, "reicast tester #" + identity);
 			}
 		}
 

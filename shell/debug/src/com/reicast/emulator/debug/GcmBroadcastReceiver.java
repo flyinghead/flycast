@@ -37,7 +37,7 @@ public class GcmBroadcastReceiver extends BroadcastReceiver {
 				Log.d(TAG, "Sender: " + sender);
 				String message = extras.getString("message");
 				if (!message.equals("")) {
-					if (sender.contains("reicast tester ")) {
+					if (sender.contains("reicast tester #")) {
 						sendNotification(sender, message);
 					}
 				}
@@ -50,13 +50,13 @@ public class GcmBroadcastReceiver extends BroadcastReceiver {
 	private void sendNotification(String sender, String message) {
 		SharedPreferences prefs = PreferenceManager
 				.getDefaultSharedPreferences(mContext);
-		final String number = sender.replace("reicast tester ", "");
+		final String number = sender.replace("reicast tester #", "");
 		long timestamp = System.currentTimeMillis();
 		int reference = (int) timestamp;
 		if (prefs.getBoolean("enable_messaging", true)) {
 			NotificationManager notificationManager = (NotificationManager) mContext
 					.getSystemService(Context.NOTIFICATION_SERVICE);
-			String title = "New reicast message!";
+			String title = "New reicast tester message!";
 			Notification notification;
 			Intent notificationIntent = new Intent(mContext, Debug.class);
 			// notificationIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);

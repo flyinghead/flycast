@@ -65,6 +65,8 @@ import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import android.annotation.SuppressLint;
 import android.os.AsyncTask;
@@ -86,23 +88,22 @@ public class RequestArchive extends AsyncTask<String, String, List<String[]>> {
 	@Override
 	protected List<String[]> doInBackground(String... urls) {
 		try {
-			List<String[]> message = new ArrayList<String[]>();
+			List<String[]> messages = new ArrayList<String[]>();
 			HttpClient client = new DefaultHttpClient();
 			HttpPost post = new HttpPost(urls[0]);
 			ResponseHandler<String> responseHandler = new BasicResponseHandler();
 			String response = client.execute(post, responseHandler);
-			if (response.contains("[") && response.contains("]")) {
-				String[] jsonString = response.split(" , ");
-				for (String jsonText : jsonString) {
-					if (jsonText.contains("[\"")) {
-						jsonText = jsonText.replace("[\"", "");
-					}
-					if (jsonText.contains("\"]")) {
-						jsonText = jsonText.replace("\"]", "");
-					}
-					message.add(jsonText.split("\",\""));
+			if (response.contains("{") && response.contains("}")) {
+				JSONObject archive = new JSONObject(response);
+				JSONArray items = archive.getJSONArray("archive");
+				for (int i = 0; i < items.length(); i++) {
+					JSONObject log = items.getJSONObject(i);
+					String id = log.getString("identifier");
+					String msg = log.getString("message");
+					String date = log.getString("created_at");
+					messages.add(new String[] { id, msg, date });
 				}
-				return message;
+				return messages;
 			}
 			return null;
 
