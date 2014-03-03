@@ -6,11 +6,15 @@
     <string name="browser_path">Default System Path</string>
     <string name="games_path">Storage Path (location of .gdi, .chd or .cdi images)</string>
     <string name="game_path">Default Game Storage</string>
+    <string name="config_home">Please configure a home directory</string>
+    <string name="config_game">Please configure a games directory</string>
+    <string name="unsupported">Unsupported Kernel Version!</string>
     
     <string name="boot_bios">Boot Dreamcast Bios</string>
     <string name="missing_bios">BIOS Missing. The Dreamcast BIOS is required for this emulator to work. Place the BIOS file in %1$s/data/dc_boot.bin</string>
     <string name="missing_flash">Flash Missing. The Dreamcast Flash is required for this emulator to work. Place the Flash file in %1$s/data/dc_flash.bin</string>
     <string name="require_bios">You have to provide the BIOS</string>
+    <string name="data_folder">The data folder is assumed</string>
     
     <string name="folder_bios">BOOT BIOS</string>
     <string name="folder_select">SELECT CURRENT FOLDER</string>

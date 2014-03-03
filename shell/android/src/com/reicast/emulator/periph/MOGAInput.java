@@ -3,8 +3,11 @@ package com.reicast.emulator.periph;
 
 /******************************************************************************/
 
+import java.util.Arrays;
+
 import android.app.Activity;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.widget.Toast;
@@ -137,46 +140,64 @@ public class MOGAInput
 			// Handled by the primary controller interface
 		}
 
-		public void onStateEvent(StateEvent event)
-		{
-			Integer playerNum = pad.deviceDescriptor_PlayerNum.get(pad.deviceId_deviceDescriptor.get(event.getControllerId()));
+		private void getCompatibilityMap(int playerNum, String id) {
+			pad.name[playerNum] = prefs.getInt("controller" + id, -1);
+			if (pad.name[playerNum] != -1) {
+				pad.map[playerNum] = pad.setModifiedKeys(id, playerNum, prefs);
+			}
+		}
 
-	    		if (playerNum == null)
-				return;
+		private void initJoyStickLayout(int playerNum) {
+			pad.globalLS_X[playerNum] = pad.previousLS_X[playerNum] = 0.0f;
+			pad.globalLS_Y[playerNum] = pad.previousLS_Y[playerNum] = 0.0f;
+		}
 
-			if(playerNum == 0)
-				JNIdc.hide_osd();
-			
+		private void notifyMogaConnected(final String notify, int playerNum) {
 			String id = pad.portId[playerNum];
 			pad.custom[playerNum] = prefs.getBoolean("modified_key_layout" + id, false);
+			pad.compat[playerNum] = prefs.getBoolean("controller_compat" + id, false);
+			pad.joystick[playerNum] = prefs.getBoolean("separate_joystick" + id, false);
+			pad.isActiveMoga[playerNum] = true;
+			if (pad.compat[playerNum]) {
+				getCompatibilityMap(playerNum, id);
+			} else if (pad.custom[playerNum]) {
+				pad.map[playerNum] = pad.setModifiedKeys(id, playerNum, prefs);
+			} else {
+				pad.map[playerNum] = pad.getMogaController();
+			}
+			initJoyStickLayout(playerNum);
+			handler.post(new Runnable() {
+				public void run() {
+					Toast.makeText(act.getApplicationContext(), notify, Toast.LENGTH_SHORT).show();
+				}
+			});
+		}
+
+		public void onStateEvent(StateEvent event)
+		{
+			Integer playerNum = Arrays.asList(pad.name).indexOf(event.getControllerId());
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD && playerNum == -1) {
+				playerNum = pad.deviceDescriptor_PlayerNum
+						.get(pad.deviceId_deviceDescriptor.get(event.getControllerId()));
+			} else {
+				playerNum = -1;
+			}
+
+			if (playerNum == null || playerNum == -1) {
+				return;
+			}
 
 			if (event.getState() == StateEvent.STATE_CONNECTION && event.getAction() == ACTION_CONNECTED) {
         		int mControllerVersion = mController.getState(Controller.STATE_CURRENT_PRODUCT_VERSION);
         		if (mControllerVersion == Controller.ACTION_VERSION_MOGAPRO) {
-        			pad.isActiveMoga[playerNum] = true;
         			pad.isMogaPro[playerNum] = true;
-        			if (pad.custom[playerNum]) {
-        				pad.map[playerNum] = pad.setModifiedKeys(id, playerNum, prefs);
-        			} else {
-        				pad.map[playerNum] = pad.getMogaController();
-        			}
         			notify = act.getApplicationContext().getString(R.string.moga_pro_connect);
         		} else if (mControllerVersion == Controller.ACTION_VERSION_MOGA) {
-        			pad.isActiveMoga[playerNum] = true;
         			pad.isMogaPro[playerNum] = false;
-        			if (pad.custom[playerNum]) {
-        				pad.map[playerNum] = pad.setModifiedKeys(id, playerNum, prefs);
-        			} else {
-        				pad.map[playerNum] = pad.getMogaController();
-        			}
         			notify = act.getApplicationContext().getString(R.string.moga_connect);
         		}
         		if (notify != null && !notify.equals(null)) {
-        			handler.post(new Runnable() {
-    					public void run() {
-    						Toast.makeText(act.getApplicationContext(), notify, Toast.LENGTH_SHORT).show();
-    					}
-    				});
+        			notifyMogaConnected(notify, playerNum);
         		}
 			}
 		}
