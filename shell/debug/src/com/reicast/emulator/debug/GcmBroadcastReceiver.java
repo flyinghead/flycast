@@ -37,7 +37,7 @@ public class GcmBroadcastReceiver extends BroadcastReceiver {
 				Log.d(TAG, "Sender: " + sender);
 				String message = extras.getString("message");
 				if (!message.equals("")) {
-					if (sender.contains("reicast tag #")) {
+					if (sender.contains("reicast tester ")) {
 						sendNotification(sender, message);
 					}
 				}
@@ -50,7 +50,7 @@ public class GcmBroadcastReceiver extends BroadcastReceiver {
 	private void sendNotification(String sender, String message) {
 		SharedPreferences prefs = PreferenceManager
 				.getDefaultSharedPreferences(mContext);
-		final String number = sender.replace("reicast tag #", "");
+		final String number = sender.replace("reicast tester ", "");
 		long timestamp = System.currentTimeMillis();
 		int reference = (int) timestamp;
 		if (prefs.getBoolean("enable_messaging", true)) {

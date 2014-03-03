@@ -57,8 +57,10 @@ import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
+import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.BaseAdapter;
 import android.widget.Button;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -66,6 +68,8 @@ import android.widget.TextView;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
+
+import de.ankri.views.Switch;
 
 public class Debug extends Activity {
 
@@ -117,6 +121,18 @@ public class Debug extends Activity {
 		} else {
 			GooglePlayServicesUtil.getErrorDialog(resultCode, this, 1).show();
 		}
+
+		OnCheckedChangeListener notify_options = new OnCheckedChangeListener() {
+
+			public void onCheckedChanged(CompoundButton buttonView,
+					boolean isChecked) {
+				mPrefs.edit().putBoolean("enable_messaging", isChecked).commit();
+			}
+		};
+		Switch notify_opt = (Switch) findViewById(R.id.notify_option);
+		notify_opt.setChecked(mPrefs.getBoolean("enable_messaging", true));
+		notify_opt.setOnCheckedChangeListener(notify_options);
+
 		RequestArchive mRequestArchive = new RequestArchive() {
 			@Override
 			protected void onPostExecute(List<String[]> jsonArray) {
@@ -409,7 +425,7 @@ public class Debug extends Activity {
 				boolean hasIdentitiy = false;
 				String identity = mPrefs.getString(PREF_IDENTITY, "?");
 				if (!identity.equals("?")) {
-					mPairs.add(new BasicNameValuePair("sender", "reicast tag #"
+					mPairs.add(new BasicNameValuePair("sender", "reicast tester "
 							+ identity));
 					hasIdentitiy = true;
 				} else {
@@ -519,7 +535,7 @@ public class Debug extends Activity {
 				if (!identity.equals("Err")) {
 					mPrefs.edit().putString(PREF_IDENTITY, identity).commit();
 				}
-				Log.d(APP_TAG, "reicast tag #" + identity);
+				Log.d(APP_TAG, "reicast tester " + identity);
 			}
 		}
 
