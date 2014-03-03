@@ -15,6 +15,7 @@
     <string name="missing_flash">Flash Missing. The Dreamcast Flash is required for this emulator to work. Place the Flash file in %1$s/data/dc_flash.bin</string>
     <string name="require_bios">You have to provide the BIOS</string>
     <string name="data_folder">The data folder is assumed</string>
+    <string name="git_broken">GitHub Native Unavailable!</string>
     
     <string name="folder_bios">BOOT BIOS</string>
     <string name="folder_select">SELECT CURRENT FOLDER</string>
@@ -87,6 +88,7 @@
     <string name="paths">Paths</string>
     <string name="input">Input</string>
     <string name="about">About</string>
+    <string name="messages">Messages</string>
     <string name="rateme">Rate Me</string>
     
     <string name="textOn">ON</string>

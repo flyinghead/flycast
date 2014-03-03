@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:fitsSystemWindows="true"
+    android:orientation="vertical" >
+
+    <EditText
+        android:id="@+id/txt_message"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:layout_weight="0.25"
+        android:ems="10"
+        android:hint="Enter Broadcast Message"
+        android:inputType="textCapSentences"
+        android:maxLines="4"
+        android:minLines="2" />
+
+    <Button
+        android:id="@+id/txt_button"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:layout_weight="0.25"
+        android:ems="10"
+        android:text="Submit Message" />
+
+    <ListView
+        android:id="@+id/dialog_list"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:layout_weight="1.0"
+        android:divider="#b5b5b5"
+        android:dividerHeight="1dp" />
+
+</LinearLayout>

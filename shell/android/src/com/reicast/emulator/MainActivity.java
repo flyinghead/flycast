@@ -53,6 +53,7 @@ public class MainActivity extends SlidingFragmentActivity implements
 	
 	private UncaughtExceptionHandler mUEHandler;
 
+	private Intent debugger;
 	public static boolean debugUser;
 
 	Gamepad pad = new Gamepad();
@@ -65,8 +66,8 @@ public class MainActivity extends SlidingFragmentActivity implements
 
 		mPrefs = PreferenceManager.getDefaultSharedPreferences(this);
 
-		Intent debugger = new Intent("com.reicast.emulator.debug.Debugger");
-		debugger.setAction("com.reicast.emulator.DEBUG");
+		debugger = new Intent("com.reicast.emulator.debug.Debug");
+		debugger.setAction("reicast.emulator.DEBUG");
 		if (isCallable(debugger)) {
 			MainActivity.debugUser = true;
 		}
@@ -282,6 +283,17 @@ public class MainActivity extends SlidingFragmentActivity implements
 								return false;
 						}
 					});
+				}
+
+				View messages = findViewById(R.id.message_menu);
+				if (MainActivity.debugUser) {
+					messages.setOnClickListener(new OnClickListener() {
+						public void onClick(View view) {
+							startActivity(debugger);
+						}
+					});
+				} else {
+					messages.setVisibility(View.GONE);
 				}
 			}
 		});
