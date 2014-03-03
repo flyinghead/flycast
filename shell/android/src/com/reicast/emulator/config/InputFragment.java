@@ -416,8 +416,7 @@ public class InputFragment extends Fragment {
 				|| descriptor.equals(deviceDescriptorPlayer2)
 				|| descriptor.equals(deviceDescriptorPlayer3)
 				|| descriptor.equals(deviceDescriptorPlayer4)) {
-			Toast.makeText(parentActivity,
-					getString(R.string.controller_already_in_use),
+			Toast.makeText(parentActivity, R.string.controller_already_in_use,
 					Toast.LENGTH_SHORT).show();
 			return true;
 		}

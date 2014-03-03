@@ -19,9 +19,15 @@ Let's try to keep everything under a single project :)
 To build for android
 --------------------
 Tools required:
-* Latest Android SDK and NDK
-* Android 4.4 (API 19) or newer (http://developer.android.com/sdk/installing/adding-packages.html)
+* Latest Android SDK
+ - http://developer.android.com/sdk/index.html
+* NDK r8b or newer
+ - https://developer.android.com/tools/sdk/ndk/index.html
+ - If using r9c+, it is recommended you uncomment the "NDK_TOOLCHAIN_VERSION := 4.8" in shell/android/jni/Application.mk and shell/android/xperia/jni/Application.mk
+* Android 4.4 (API 19) 
+ - http://developer.android.com/sdk/installing/adding-packages.html
 * Ant
+ - http://ant.apache.org/
 
 From project root directory:
 ```

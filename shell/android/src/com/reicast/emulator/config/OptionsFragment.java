@@ -89,8 +89,7 @@ public class OptionsFragment extends Fragment {
 					home_directory = editBrowse.getText().toString();
 					if (home_directory.endsWith("/data")) {
 						home_directory.replace("/data", "");
-						Toast.makeText(parentActivity,
-								parentActivity.getText(R.string.data_folder),
+						Toast.makeText(parentActivity, R.string.data_folder,
 								Toast.LENGTH_SHORT).show();
 					}
 					mPrefs.edit().putString("home_directory", home_directory)

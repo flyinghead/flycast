@@ -148,7 +148,7 @@ public class FileBrowser extends Fragment {
 
 		File home = new File(home_directory);
 		if (!home.exists() || !home.isDirectory()) {
-			Toast.makeText(getActivity(), "Please configure a home directory",
+			Toast.makeText(getActivity(), R.string.config_home,
 					Toast.LENGTH_LONG).show();
 		}
 
@@ -217,7 +217,7 @@ public class FileBrowser extends Fragment {
 					createListItem(list, games.get(i));
 				}
 			} else {
-				Toast.makeText(parentActivity, "Please configure a games directory",
+				Toast.makeText(parentActivity, R.string.config_game,
 							Toast.LENGTH_LONG).show();
 			}
 			list.invalidate();
