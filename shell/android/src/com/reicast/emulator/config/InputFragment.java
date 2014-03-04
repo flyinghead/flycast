@@ -100,14 +100,14 @@ public class InputFragment extends Fragment {
 			public void onCheckedChanged(CompoundButton buttonView,
 					boolean isChecked) {
 				sharedPreferences.edit()
-						.putBoolean("touch_vibration_enabled", isChecked)
+						.putBoolean(Config.pref_touchvibe, isChecked)
 						.commit();
 			}
 		};
 		switchTouchVibrationEnabled = (Switch) getView().findViewById(
 				R.id.switchTouchVibrationEnabled);
 		boolean vibrate = sharedPreferences.getBoolean(
-				"touch_vibration_enabled", true);
+				Config.pref_touchvibe, true);
 		if (vibrate) {
 			switchTouchVibrationEnabled.setChecked(true);
 		} else {
@@ -117,14 +117,14 @@ public class InputFragment extends Fragment {
 		
 		micPluggedIntoFirstController = (Switch) getView().findViewById(
 				R.id.micInPort2);
-		boolean micPluggedIn = sharedPreferences.getBoolean("mic_plugged_in", false);
+		boolean micPluggedIn = sharedPreferences.getBoolean(Config.pref_mic, false);
 		micPluggedIntoFirstController.setChecked(micPluggedIn);
 		if (getActivity().getPackageManager().hasSystemFeature(
 				"android.hardware.microphone")) {
 			//Microphone is present on the device
 			micPluggedIntoFirstController.setOnCheckedChangeListener(new OnCheckedChangeListener() {
 				public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-					sharedPreferences.edit().putBoolean("mic_plugged_in", isChecked).commit();
+					sharedPreferences.edit().putBoolean(Config.pref_mic, isChecked).commit();
 				}
 			});
 		}else{
@@ -221,19 +221,19 @@ public class InputFragment extends Fragment {
 
 	private void updateVibration() {
 		boolean touchVibrationEnabled = sharedPreferences.getBoolean(
-				"touch_vibration_enabled", true);
+				Config.pref_touchvibe, true);
 		switchTouchVibrationEnabled.setChecked(touchVibrationEnabled);
 	}
 
 	private void updateControllers() {
 		String deviceDescriptorPlayer1 = sharedPreferences.getString(
-				"device_descriptor_player_1", null);
+				Gamepad.pref_player1, null);
 		String deviceDescriptorPlayer2 = sharedPreferences.getString(
-				"device_descriptor_player_2", null);
+				Gamepad.pref_player2, null);
 		String deviceDescriptorPlayer3 = sharedPreferences.getString(
-				"device_descriptor_player_3", null);
+				Gamepad.pref_player3, null);
 		String deviceDescriptorPlayer4 = sharedPreferences.getString(
-				"device_descriptor_player_4", null);
+				Gamepad.pref_player4, null);
 
 		String labelPlayer1 = null, labelPlayer2 = null, labelPlayer3 = null, labelPlayer4 = null;
 

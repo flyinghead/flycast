@@ -45,6 +45,10 @@ public class Config {
 	public static final String pref_rendertype = "render_type";
 	public static final String pref_renderdepth = "depth_render";
 
+	public static final String pref_touchvibe = "touch_vibration_enabled";
+	public static final String pref_mic = "mic_plugged_in";
+	public static final String pref_vmu = "vmu_floating";
+
 	public static boolean dynarecopt = true;
 	public static boolean idleskip = true;
 	public static boolean unstableopt = false;

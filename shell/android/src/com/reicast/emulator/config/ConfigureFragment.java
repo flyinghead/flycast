@@ -66,7 +66,7 @@ public class ConfigureFragment extends Fragment {
 		
 
 		mPrefs = PreferenceManager.getDefaultSharedPreferences(parentActivity);
-		home_directory = mPrefs.getString("home_directory", home_directory);
+		home_directory = mPrefs.getString(Config.pref_home, home_directory);
 		config = new Config(parentActivity);
 		config.getConfigurationPrefs();
 

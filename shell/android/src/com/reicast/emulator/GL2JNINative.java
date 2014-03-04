@@ -205,11 +205,11 @@ public class GL2JNINative extends NativeActivity {
 
 		// Create the actual GLES view
 		mView = new GL2JNIView(getApplication(), config, fileName, false,
-				prefs.getInt("depth_render", 24), 0, false);
+				prefs.getInt(Config.pref_renderdepth, 24), 0, false);
 		setContentView(mView);
 
 		//setup mic
-		boolean micPluggedIn = prefs.getBoolean("mic_plugged_in", false);
+		boolean micPluggedIn = prefs.getBoolean(Config.pref_mic, false);
 		if(micPluggedIn){
 			SipEmulator sip = new SipEmulator();
 			sip.startRecording();
@@ -218,10 +218,10 @@ public class GL2JNINative extends NativeActivity {
 		
 		popUp = menu.new MainPopup(this);
 		vmuPop = menu.new VmuPopup(this);
-		if(prefs.getBoolean("vmu_floating", false)){
+		if(prefs.getBoolean(Config.pref_vmu, false)){
 			//kind of a hack - if the user last had the vmu on screen
 			//inverse it and then "toggle"
-			prefs.edit().putBoolean("vmu_floating", false).commit();
+			prefs.edit().putBoolean(Config.pref_vmu, false).commit();
 			//can only display a popup after onCreate
 			mView.post(new Runnable() {
 				public void run() {
@@ -230,7 +230,7 @@ public class GL2JNINative extends NativeActivity {
 			});
 		}
 		JNIdc.setupVmu(menu.getVmu());
-		if (prefs.getBoolean("show_fps", false)) {
+		if (prefs.getBoolean(Config.pref_showfps, false)) {
 			fpsPop = menu.new FpsPopup(this);
 			mView.setFpsDisplay(fpsPop);
 			mView.post(new Runnable() {
@@ -302,7 +302,7 @@ public class GL2JNINative extends NativeActivity {
 	}
 
 	public void toggleVmu() {
-		boolean showFloating = !prefs.getBoolean("vmu_floating", false);
+		boolean showFloating = !prefs.getBoolean(Config.pref_vmu, false);
 		if(showFloating){
 			if(popUp.isShowing()){
 				popUp.dismiss();
@@ -322,7 +322,7 @@ public class GL2JNINative extends NativeActivity {
 			//add back to popup menu
 			popUp.showVmu();
 		}
-		prefs.edit().putBoolean("vmu_floating", showFloating).commit();
+		prefs.edit().putBoolean(Config.pref_vmu, showFloating).commit();
 	}
 	
 	public void displayConfig(PopupWindow popUpConfig) {
@@ -477,9 +477,9 @@ public class GL2JNINative extends NativeActivity {
 		if (playerNum != null && playerNum != -1) {
 			String id = pad.portId[playerNum];
 			if (action == KeyEvent.ACTION_DOWN) {
-				if (keyCode == prefs.getInt("l_button" + id, KeyEvent.KEYCODE_BUTTON_L1)) {
+				if (keyCode == prefs.getInt(Gamepad.pref_button_l + id, KeyEvent.KEYCODE_BUTTON_L1)) {
 					return simulatedTouchEvent(playerNum, 1.0f, 0.0f);
-				} else if (keyCode == prefs.getInt("r_button" + id, KeyEvent.KEYCODE_BUTTON_R1)) {
+				} else if (keyCode == prefs.getInt(Gamepad.pref_button_r + id, KeyEvent.KEYCODE_BUTTON_R1)) {
 					return simulatedTouchEvent(playerNum, 0.0f, 1.0f);
 				} else if (handle_key(playerNum, keyCode, true)) {
 					if (playerNum == 0)
@@ -488,9 +488,9 @@ public class GL2JNINative extends NativeActivity {
 				}
 			}
 			if (action == KeyEvent.ACTION_UP) {
-				if (keyCode == prefs.getInt("l_button" + id,
+				if (keyCode == prefs.getInt(Gamepad.pref_button_l + id,
 						KeyEvent.KEYCODE_BUTTON_L1)
-						|| keyCode == prefs.getInt("r_button" + id,
+						|| keyCode == prefs.getInt(Gamepad.pref_button_r + id,
 								KeyEvent.KEYCODE_BUTTON_R1)) {
 					return simulatedTouchEvent(playerNum, 0.0f, 0.0f);
 				} else {

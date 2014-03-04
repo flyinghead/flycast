@@ -19,10 +19,14 @@ public class Gamepad {
 	public static final String pref_player2 = "device_descriptor_player_2";
 	public static final String pref_player3 = "device_descriptor_player_3";
 	public static final String pref_player4 = "device_descriptor_player_4";
+	public static final String pref_pad = "controller";
 
 	public static final String pref_js_modified = "modified_key_layout";
 	public static final String pref_js_compat = "controller_compat";
 	public static final String pref_js_separate = "separate_joystick";
+
+	public static final String pref_button_l = "l_button";
+	public static final String pref_button_r = "r_button";
 
 	public static final String controllers_sony = "Sony PLAYSTATION(R)3 Controller";
 	public static final String controllers_xbox = "Microsoft X-Box 360 pad";
