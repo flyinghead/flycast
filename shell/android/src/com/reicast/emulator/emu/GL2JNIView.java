@@ -164,7 +164,7 @@ public class GL2JNIView extends GLSurfaceView
 			}
 		}
 
-		config.loadConfigurationPrefs();
+//		config.loadConfigurationPrefs();
 
 		vjoy_d_custom = VJoy.readCustomVjoyValues(context);
 
