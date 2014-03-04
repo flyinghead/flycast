@@ -81,13 +81,13 @@ public class GL2JNINative extends NativeActivity {
 
 		// Populate device descriptor-to-player-map from preferences
 		pad.deviceDescriptor_PlayerNum.put(
-				prefs.getString("device_descriptor_player_1", null), 0);
+				prefs.getString(Gamepad.pref_player1, null), 0);
 		pad.deviceDescriptor_PlayerNum.put(
-				prefs.getString("device_descriptor_player_2", null), 1);
+				prefs.getString(Gamepad.pref_player2, null), 1);
 		pad.deviceDescriptor_PlayerNum.put(
-				prefs.getString("device_descriptor_player_3", null), 2);
+				prefs.getString(Gamepad.pref_player3, null), 2);
 		pad.deviceDescriptor_PlayerNum.put(
-				prefs.getString("device_descriptor_player_4", null), 3);
+				prefs.getString(Gamepad.pref_player4, null), 3);
 		pad.deviceDescriptor_PlayerNum.remove(null);
 
 		moga.onCreate(this, pad);
@@ -135,7 +135,7 @@ public class GL2JNINative extends NativeActivity {
 								+ InputDevice.getDevice(joy).getName());
 				if (pad.isXperiaPlay) {
 					if (InputDevice.getDevice(joy).getName()
-							.contains("keypad-game-zeus")) {
+							.contains(Gamepad.controllers_play_gp)) {
 						pad.keypadZeus.add(joy);
 					}
 					if (InputDevice.getDevice(joy).getName()
@@ -154,11 +154,11 @@ public class GL2JNINative extends NativeActivity {
 
 				if (playerNum != null) {
 					String id = pad.portId[playerNum];
-					pad.custom[playerNum] = prefs.getBoolean("modified_key_layout" + id, false);
-					pad.compat[playerNum] = prefs.getBoolean("controller_compat" + id, false);
-					pad.joystick[playerNum] = prefs.getBoolean("separate_joystick" + id, false);
+					pad.custom[playerNum] = prefs.getBoolean(Gamepad.pref_js_modified + id, false);
+					pad.compat[playerNum] = prefs.getBoolean(Gamepad.pref_js_compat + id, false);
+					pad.joystick[playerNum] = prefs.getBoolean(Gamepad.pref_js_separate + id, false);
 					if (InputDevice.getDevice(joy).getName()
-							.contains("keypad-zeus")) {
+							.contains(Gamepad.controllers_play)) {
 						pad.playerNumX.put(joy, playerNum);
 						for (int keys : pad.keypadZeus) {
 							pad.playerNumX.put(keys, playerNum);
@@ -173,13 +173,13 @@ public class GL2JNINative extends NativeActivity {
 							if (pad.custom[playerNum]) {
 								setCustomMapping(id, playerNum);
 							} else if (InputDevice.getDevice(joy).getName()
-									.equals("Sony PLAYSTATION(R)3 Controller")) {
+									.equals(Gamepad.controllers_sony)) {
 								pad.map[playerNum] = pad.getConsoleController();
 							} else if (InputDevice.getDevice(joy).getName()
-									.equals("Microsoft X-Box 360 pad")) {
+									.equals(Gamepad.controllers_xbox)) {
 								pad.map[playerNum] = pad.getConsoleController();
 							} else if (InputDevice.getDevice(joy).getName()
-									.contains("NVIDIA Corporation NVIDIA Controller")) {
+									.contains(Gamepad.controllers_shield)) {
 								pad.map[playerNum] = pad.getConsoleController();
 							} else if (!pad.isActiveMoga[playerNum]) { // Ouya controller
 								pad.map[playerNum] = pad.getOUYAController();

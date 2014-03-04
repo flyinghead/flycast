@@ -15,6 +15,21 @@ import android.view.KeyEvent;
 
 public class Gamepad {
 
+	public static final String pref_player1 = "device_descriptor_player_1";
+	public static final String pref_player2 = "device_descriptor_player_2";
+	public static final String pref_player3 = "device_descriptor_player_3";
+	public static final String pref_player4 = "device_descriptor_player_4";
+
+	public static final String pref_js_modified = "modified_key_layout";
+	public static final String pref_js_compat = "controller_compat";
+	public static final String pref_js_separate = "separate_joystick";
+
+	public static final String controllers_sony = "Sony PLAYSTATION(R)3 Controller";
+	public static final String controllers_xbox = "Microsoft X-Box 360 pad";
+	public static final String controllers_shield = "NVIDIA Corporation NVIDIA Controller";
+	public static final String controllers_play = "keypad-zeus";
+	public static final String controllers_play_gp = "keypad-game-zeus";
+
 	public String[] portId = { "_A", "_B", "_C", "_D" };
 	public boolean[] compat = { false, false, false, false };
 	public boolean[] custom = { false, false, false, false };

@@ -41,6 +41,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.android.util.FileUtils;
+import com.reicast.emulator.config.Config;
 import com.reicast.emulator.emu.JNIdc;
 
 public class FileBrowser extends Fragment {
@@ -62,8 +63,8 @@ public class FileBrowser extends Fragment {
 		super.onCreate(savedInstanceState);
 
 		mPrefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
-		home_directory = mPrefs.getString("home_directory", home_directory);
-		game_directory = mPrefs.getString("game_directory", game_directory);
+		home_directory = mPrefs.getString(Config.pref_home, home_directory);
+		game_directory = mPrefs.getString(Config.pref_games, game_directory);
 
 		Bundle b = getArguments();
 		if (b != null) {
@@ -413,12 +414,12 @@ public class FileBrowser extends Fragment {
 								if (games) {
 									game_directory = heading;
 									mPrefs.edit()
-											.putString("game_directory",
+											.putString(Config.pref_games,
 													heading).commit();
 								} else {
 									home_directory = heading;
 									mPrefs.edit()
-											.putString("home_directory",
+											.putString(Config.pref_home,
 													heading).commit();
 									File data_directory = new File(heading,
 											"data");

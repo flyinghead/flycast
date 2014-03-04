@@ -64,12 +64,6 @@ LOCAL_ARM_MODE	:= arm
 
 include $(BUILD_SHARED_LIBRARY)
 
-$(call import-module,android/native_app_glue)
-
-LOCAL_CERTIFICATE := shared
-
-LOCAL_PATH:= $(call my-dir)/..
-
 include $(CLEAR_VARS)
 
 LOCAL_MODULE    := sexplay

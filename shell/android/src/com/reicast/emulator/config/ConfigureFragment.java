@@ -76,7 +76,7 @@ public class ConfigureFragment extends Fragment {
 
 			public void onCheckedChanged(CompoundButton buttonView,
 					boolean isChecked) {
-				mPrefs.edit().putBoolean(Config.pref_native, isChecked).commit();
+				mPrefs.edit().putBoolean(Config.pref_nativeact, isChecked).commit();
 				Config.nativeact = isChecked;
 			}
 		};
@@ -89,7 +89,7 @@ public class ConfigureFragment extends Fragment {
 
 			public void onCheckedChanged(CompoundButton buttonView,
 					boolean isChecked) {
-				mPrefs.edit().putBoolean(Config.pref_dynarec, isChecked).commit();
+				mPrefs.edit().putBoolean(Config.pref_dynarecopt, isChecked).commit();
 				Config.dynarecopt = isChecked;
 			}
 		};
@@ -115,8 +115,9 @@ public class ConfigureFragment extends Fragment {
 		}
 		unstable_opt.setOnCheckedChangeListener(unstable_option);
 
-		String[] regions = parentActivity.getResources().getStringArray(
-				R.array.region);
+		String[] regions = parentActivity.getResources()
+				.getStringArray(R.array.region);
+
 		Spinner region_spnr = (Spinner) getView().findViewById(
 				R.id.region_spinner);
 		ArrayAdapter<String> regionAdapter = new ArrayAdapter<String>(
@@ -131,7 +132,7 @@ public class ConfigureFragment extends Fragment {
 
 			public void onItemSelected(AdapterView<?> parent, View view,
 					int pos, long id) {
-				mPrefs.edit().putInt("dc_region", pos).commit();
+				mPrefs.edit().putInt(Config.pref_dcregion, pos).commit();
 				Config.dcregion = pos;
 
 			}
@@ -167,7 +168,7 @@ public class ConfigureFragment extends Fragment {
 				String item = parent.getItemAtPosition(pos).toString();
 				String selection = item.substring(0, item.indexOf(" - "));
 				mPrefs.edit()
-						.putInt("dc_broadcast", Integer.valueOf(selection))
+						.putInt(Config.pref_broadcast, Integer.valueOf(selection))
 						.commit();
 				Config.broadcast = Integer.valueOf(selection);
 
@@ -183,7 +184,7 @@ public class ConfigureFragment extends Fragment {
 
 			public void onCheckedChanged(CompoundButton buttonView,
 					boolean isChecked) {
-				mPrefs.edit().putBoolean("limit_fps", isChecked).commit();
+				mPrefs.edit().putBoolean(Config.pref_limitfps, isChecked).commit();
 				Config.limitfps = isChecked;
 			}
 		};
@@ -196,7 +197,7 @@ public class ConfigureFragment extends Fragment {
 
 			public void onCheckedChanged(CompoundButton buttonView,
 					boolean isChecked) {
-				mPrefs.edit().putBoolean("use_mipmaps", isChecked).commit();
+				mPrefs.edit().putBoolean(Config.pref_mipmaps, isChecked).commit();
 				Config.mipmaps = isChecked;
 			}
 		};
@@ -209,7 +210,7 @@ public class ConfigureFragment extends Fragment {
 
 			public void onCheckedChanged(CompoundButton buttonView,
 					boolean isChecked) {
-				mPrefs.edit().putBoolean("stretch_view", isChecked).commit();
+				mPrefs.edit().putBoolean(Config.pref_widescreen, isChecked).commit();
 				Config.widescreen = isChecked;
 			}
 		};
@@ -237,7 +238,7 @@ public class ConfigureFragment extends Fragment {
 
 			public void onStopTrackingTouch(SeekBar seekBar) {
 				int progress = seekBar.getProgress();
-				mPrefs.edit().putInt("frame_skip", progress).commit();
+				mPrefs.edit().putInt(Config.pref_frameskip, progress).commit();
 				Config.frameskip = progress;
 			}
 		});
@@ -246,7 +247,7 @@ public class ConfigureFragment extends Fragment {
 
 			public void onCheckedChanged(CompoundButton buttonView,
 					boolean isChecked) {
-				mPrefs.edit().putBoolean("pvr_render", isChecked).commit();
+				mPrefs.edit().putBoolean(Config.pref_pvrrender, isChecked).commit();
 				Config.pvrrender = isChecked;
 			}
 		};
@@ -274,7 +275,7 @@ public class ConfigureFragment extends Fragment {
 					} else {
 						cheatEdit.setText(disk);
 					}
-					mPrefs.edit().putString("cheat_disk", disk).commit();
+					mPrefs.edit().putString(Config.pref_cheatdisk, disk).commit();
 					Config.cheatdisk = disk;
 				}
 			}
@@ -293,10 +294,10 @@ public class ConfigureFragment extends Fragment {
 
 			public void onCheckedChanged(CompoundButton buttonView,
 					boolean isChecked) {
-				mPrefs.edit().putBoolean("show_fps", isChecked).commit();
+				mPrefs.edit().putBoolean(Config.pref_showfps, isChecked).commit();
 			}
 		};
-		boolean counter = mPrefs.getBoolean("show_fps", false);
+		boolean counter = mPrefs.getBoolean(Config.pref_showfps, false);
 		fps_opt.setChecked(counter);
 		fps_opt.setOnCheckedChangeListener(fps_options);
 
@@ -307,10 +308,10 @@ public class ConfigureFragment extends Fragment {
 
 				public void onCheckedChanged(CompoundButton buttonView,
 						boolean isChecked) {
-					mPrefs.edit().putBoolean("force_gpu", isChecked).commit();
+					mPrefs.edit().putBoolean(Config.pref_forcegpu, isChecked).commit();
 				}
 			};
-			boolean enhanced = mPrefs.getBoolean("force_gpu", true);
+			boolean enhanced = mPrefs.getBoolean(Config.pref_forcegpu, true);
 			force_gpu_opt.setChecked(enhanced);
 			force_gpu_opt.setOnCheckedChangeListener(force_gpu_options);
 		} else {
@@ -323,18 +324,18 @@ public class ConfigureFragment extends Fragment {
 
 			public void onCheckedChanged(CompoundButton buttonView,
 					boolean isChecked) {
-				mPrefs.edit().putInt("render_type", isChecked ? 1 : 2).commit();
+				mPrefs.edit().putInt(Config.pref_rendertype, isChecked ? 1 : 2).commit();
 				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
 					if (isChecked) {
 						force_gpu_opt.setEnabled(false);
-						mPrefs.edit().putBoolean("force_gpu", false).commit();
+						mPrefs.edit().putBoolean(Config.pref_forcegpu, false).commit();
 					} else {
 						force_gpu_opt.setEnabled(true);
 					}
 				}
 			}
 		};
-		int software = mPrefs.getInt("render_type",
+		int software = mPrefs.getInt(Config.pref_rendertype,
 				GL2JNIView.LAYER_TYPE_HARDWARE);
 		force_software_opt
 				.setChecked(software == GL2JNIView.LAYER_TYPE_SOFTWARE);
@@ -345,11 +346,11 @@ public class ConfigureFragment extends Fragment {
 
 			public void onCheckedChanged(CompoundButton buttonView,
 					boolean isChecked) {
-				mPrefs.edit().putBoolean("sound_disabled", isChecked).commit();
+				mPrefs.edit().putBoolean(Config.pref_nosound, isChecked).commit();
 				Config.nosound = isChecked;
 			}
 		};
-		boolean sound = mPrefs.getBoolean("sound_disabled", false);
+		boolean sound = mPrefs.getBoolean(Config.pref_nosound, false);
 		sound_opt.setChecked(sound);
 		sound_opt.setOnCheckedChangeListener(emu_sound);
 
@@ -364,7 +365,7 @@ public class ConfigureFragment extends Fragment {
 				.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		depth_spnr.setAdapter(depthAdapter);
 
-		String depth = String.valueOf(mPrefs.getInt("depth_render", 24));
+		String depth = String.valueOf(mPrefs.getInt(Config.pref_renderdepth, 24));
 		depth_spnr.setSelection(depthAdapter.getPosition(depth), true);
 
 		depth_spnr.setOnItemSelectedListener(new OnItemSelectedListener() {
@@ -373,7 +374,7 @@ public class ConfigureFragment extends Fragment {
 					int pos, long id) {
 				int render = Integer.valueOf(parent.getItemAtPosition(pos)
 						.toString());
-				mPrefs.edit().putInt("depth_render", render).commit();
+				mPrefs.edit().putInt(Config.pref_renderdepth, render).commit();
 
 			}
 
