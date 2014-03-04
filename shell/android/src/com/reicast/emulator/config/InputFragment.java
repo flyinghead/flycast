@@ -63,12 +63,12 @@ public class InputFragment extends Fragment {
 	@Override
 	public void onViewCreated(View view, Bundle savedInstanceState) {
 		parentActivity = getActivity();
-		
+
 		moga.onCreate(parentActivity, pad);
 
 		sharedPreferences = PreferenceManager
 				.getDefaultSharedPreferences(parentActivity);
-		
+
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
 			ImageView icon_a = (ImageView) getView().findViewById(
 					R.id.controller_icon_a);
@@ -100,118 +100,131 @@ public class InputFragment extends Fragment {
 			public void onCheckedChanged(CompoundButton buttonView,
 					boolean isChecked) {
 				sharedPreferences.edit()
-						.putBoolean(Config.pref_touchvibe, isChecked)
-						.commit();
+						.putBoolean(Config.pref_touchvibe, isChecked).commit();
 			}
 		};
 		switchTouchVibrationEnabled = (Switch) getView().findViewById(
 				R.id.switchTouchVibrationEnabled);
-		boolean vibrate = sharedPreferences.getBoolean(
-				Config.pref_touchvibe, true);
+		boolean vibrate = sharedPreferences.getBoolean(Config.pref_touchvibe,
+				true);
 		if (vibrate) {
 			switchTouchVibrationEnabled.setChecked(true);
 		} else {
 			switchTouchVibrationEnabled.setChecked(false);
 		}
 		switchTouchVibrationEnabled.setOnCheckedChangeListener(touch_vibration);
-		
+
 		micPluggedIntoFirstController = (Switch) getView().findViewById(
 				R.id.micInPort2);
-		boolean micPluggedIn = sharedPreferences.getBoolean(Config.pref_mic, false);
+		boolean micPluggedIn = sharedPreferences.getBoolean(Config.pref_mic,
+				false);
 		micPluggedIntoFirstController.setChecked(micPluggedIn);
 		if (getActivity().getPackageManager().hasSystemFeature(
 				"android.hardware.microphone")) {
-			//Microphone is present on the device
-			micPluggedIntoFirstController.setOnCheckedChangeListener(new OnCheckedChangeListener() {
-				public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-					sharedPreferences.edit().putBoolean(Config.pref_mic, isChecked).commit();
-				}
-			});
-		}else{
+			// Microphone is present on the device
+			micPluggedIntoFirstController
+					.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+						public void onCheckedChanged(CompoundButton buttonView,
+								boolean isChecked) {
+							sharedPreferences.edit()
+									.putBoolean(Config.pref_mic, isChecked)
+									.commit();
+						}
+					});
+		} else {
 			micPluggedIntoFirstController.setEnabled(false);
 		}
-		
-		
+
 		Button buttonKeycodeEditor = (Button) getView().findViewById(
 				R.id.buttonKeycodeEditor);
 		buttonKeycodeEditor.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
 				InputModFragment inputModFrag = new InputModFragment();
-				getActivity().getSupportFragmentManager()
-				.beginTransaction()
-				.replace(R.id.fragment_container, inputModFrag,
-						"INPUT_MOD_FRAG").addToBackStack(null).commit();
+				getActivity()
+						.getSupportFragmentManager()
+						.beginTransaction()
+						.replace(R.id.fragment_container, inputModFrag,
+								"INPUT_MOD_FRAG").addToBackStack(null).commit();
 			}
 		});
-		
+
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
 
 			Button buttonSelectControllerPlayer1 = (Button) getView()
 					.findViewById(R.id.buttonSelectControllerPlayer1);
-			buttonSelectControllerPlayer1.setOnClickListener(new View.OnClickListener() {
-	    			public void onClick(View v) {
-	    				selectController(1);
-	    			} 
-			});
+			buttonSelectControllerPlayer1
+					.setOnClickListener(new View.OnClickListener() {
+						public void onClick(View v) {
+							selectController(1);
+						}
+					});
 			Button buttonSelectControllerPlayer2 = (Button) getView()
 					.findViewById(R.id.buttonSelectControllerPlayer2);
-			buttonSelectControllerPlayer2.setOnClickListener(new View.OnClickListener() {
-	    			public void onClick(View v) {
-	    				selectController(2);
-	    			} 
-			});
+			buttonSelectControllerPlayer2
+					.setOnClickListener(new View.OnClickListener() {
+						public void onClick(View v) {
+							selectController(2);
+						}
+					});
 			Button buttonSelectControllerPlayer3 = (Button) getView()
 					.findViewById(R.id.buttonSelectControllerPlayer3);
-			buttonSelectControllerPlayer3.setOnClickListener(new View.OnClickListener() {
-	    			public void onClick(View v) {
-	    				selectController(3);
-	    			} 
-			});
+			buttonSelectControllerPlayer3
+					.setOnClickListener(new View.OnClickListener() {
+						public void onClick(View v) {
+							selectController(3);
+						}
+					});
 			Button buttonSelectControllerPlayer4 = (Button) getView()
 					.findViewById(R.id.buttonSelectControllerPlayer4);
-			buttonSelectControllerPlayer4.setOnClickListener(new View.OnClickListener() {
-	    			public void onClick(View v) {
-	    				selectController(4);
-	    			} 
-			});
+			buttonSelectControllerPlayer4
+					.setOnClickListener(new View.OnClickListener() {
+						public void onClick(View v) {
+							selectController(4);
+						}
+					});
 
 			Button buttonRemoveControllerPlayer1 = (Button) getView()
 					.findViewById(R.id.buttonRemoveControllerPlayer1);
-			buttonRemoveControllerPlayer1.setOnClickListener(new View.OnClickListener() {
-	    			public void onClick(View v) {
-	    				removeController(1);
-	    			} 
-			});
+			buttonRemoveControllerPlayer1
+					.setOnClickListener(new View.OnClickListener() {
+						public void onClick(View v) {
+							removeController(1);
+						}
+					});
 
 			Button buttonRemoveControllerPlayer2 = (Button) getView()
 					.findViewById(R.id.buttonRemoveControllerPlayer2);
-			buttonRemoveControllerPlayer2.setOnClickListener(new View.OnClickListener() {
-	    			public void onClick(View v) {
-	    				removeController(2);
-	    			} 
-			});
+			buttonRemoveControllerPlayer2
+					.setOnClickListener(new View.OnClickListener() {
+						public void onClick(View v) {
+							removeController(2);
+						}
+					});
 
 			Button buttonRemoveControllerPlayer3 = (Button) getView()
 					.findViewById(R.id.buttonRemoveControllerPlayer3);
-			buttonRemoveControllerPlayer3.setOnClickListener(new View.OnClickListener() {
-	    			public void onClick(View v) {
-	    				removeController(3);
-	    			} 
-			});
+			buttonRemoveControllerPlayer3
+					.setOnClickListener(new View.OnClickListener() {
+						public void onClick(View v) {
+							removeController(3);
+						}
+					});
 
 			Button buttonRemoveControllerPlayer4 = (Button) getView()
 					.findViewById(R.id.buttonRemoveControllerPlayer4);
-			buttonRemoveControllerPlayer4.setOnClickListener(new View.OnClickListener() {
-	    			public void onClick(View v) {
-	    				removeController(4);
-	    			} 
-			});
+			buttonRemoveControllerPlayer4
+					.setOnClickListener(new View.OnClickListener() {
+						public void onClick(View v) {
+							removeController(4);
+						}
+					});
 
 			updateControllers();
-		
+
 		} else {
 
-			TableLayout input_devices = (TableLayout) parentActivity.findViewById(R.id.input_devices);
+			TableLayout input_devices = (TableLayout) parentActivity
+					.findViewById(R.id.input_devices);
 			input_devices.setVisibility(View.GONE);
 
 		}
@@ -361,10 +374,12 @@ public class InputFragment extends Fragment {
 						args.putInt("portNumber", listenForButton - 1);
 						inputModFrag.setArguments(args);
 						listenForButton = 0;
-						getActivity().getSupportFragmentManager()
-						.beginTransaction()
-						.replace(R.id.fragment_container, inputModFrag,
-								"INPUT_MOD_FRAG").addToBackStack(null).commit();
+						getActivity()
+								.getSupportFragmentManager()
+								.beginTransaction()
+								.replace(R.id.fragment_container, inputModFrag,
+										"INPUT_MOD_FRAG").addToBackStack(null)
+								.commit();
 						dialog.dismiss();
 					}
 				});
@@ -394,23 +409,22 @@ public class InputFragment extends Fragment {
 				descriptor = config.getController();
 			}
 			descriptor = InputDevice.getDevice(event.getDeviceId())
-				.getDescriptor();
+					.getDescriptor();
 		} else {
-			descriptor = InputDevice.getDevice(event.getDeviceId())
-					.getName();
+			descriptor = InputDevice.getDevice(event.getDeviceId()).getName();
 		}
 
 		if (descriptor == null)
 			return false;
 
 		String deviceDescriptorPlayer1 = sharedPreferences.getString(
-				"device_descriptor_player_1", null);
+				Gamepad.pref_player1, null);
 		String deviceDescriptorPlayer2 = sharedPreferences.getString(
-				"device_descriptor_player_2", null);
+				Gamepad.pref_player2, null);
 		String deviceDescriptorPlayer3 = sharedPreferences.getString(
-				"device_descriptor_player_3", null);
+				Gamepad.pref_player3, null);
 		String deviceDescriptorPlayer4 = sharedPreferences.getString(
-				"device_descriptor_player_4", null);
+				Gamepad.pref_player4, null);
 
 		if (descriptor.equals(deviceDescriptorPlayer1)
 				|| descriptor.equals(deviceDescriptorPlayer2)
@@ -426,23 +440,19 @@ public class InputFragment extends Fragment {
 			return false;
 		case 1:
 			sharedPreferences.edit()
-					.putString("device_descriptor_player_1", descriptor)
-					.commit();
+					.putString(Gamepad.pref_player1, descriptor).commit();
 			break;
 		case 2:
 			sharedPreferences.edit()
-					.putString("device_descriptor_player_2", descriptor)
-					.commit();
+					.putString(Gamepad.pref_player2, descriptor).commit();
 			break;
 		case 3:
 			sharedPreferences.edit()
-					.putString("device_descriptor_player_3", descriptor)
-					.commit();
+					.putString(Gamepad.pref_player3, descriptor).commit();
 			break;
 		case 4:
 			sharedPreferences.edit()
-					.putString("device_descriptor_player_4", descriptor)
-					.commit();
+					.putString(Gamepad.pref_player4, descriptor).commit();
 			break;
 		}
 
@@ -459,56 +469,57 @@ public class InputFragment extends Fragment {
 	private void removeController(int playerNum) {
 		switch (playerNum) {
 		case 1:
-			sharedPreferences.edit()
-					.putString("device_descriptor_player_1", null).commit();
+			sharedPreferences.edit().putString(Gamepad.pref_player1, null)
+					.commit();
 			break;
 		case 2:
-			sharedPreferences.edit()
-					.putString("device_descriptor_player_2", null).commit();
+			sharedPreferences.edit().putString(Gamepad.pref_player2, null)
+					.commit();
 			break;
 		case 3:
-			sharedPreferences.edit()
-					.putString("device_descriptor_player_3", null).commit();
+			sharedPreferences.edit().putString(Gamepad.pref_player3, null)
+					.commit();
 			break;
 		case 4:
-			sharedPreferences.edit()
-					.putString("device_descriptor_player_4", null).commit();
+			sharedPreferences.edit().putString(Gamepad.pref_player4, null)
+					.commit();
 			break;
 		}
 
 		updateControllers();
 	}
-	
-	class MogaListener implements ControllerListener
-	{
-		
+
+	class MogaListener implements ControllerListener {
+
 		private int playerNum;
 		private String controllerId;
-		
+
 		public MogaListener(int playerNum) {
 			this.playerNum = playerNum;
 		}
-		
+
 		public void onKeyEvent(com.bda.controller.KeyEvent event) {
 			controllerId = String.valueOf(event.getControllerId());
 		}
 
 		public void onMotionEvent(MotionEvent arg0) {
-			
+
 		}
-		
+
 		public String getController() {
 			return controllerId;
 		}
 
 		public void onStateEvent(StateEvent event) {
-			if (event.getState() == StateEvent.STATE_CONNECTION && event.getAction() == MOGAInput.ACTION_CONNECTED) {
-        		int mControllerVersion = moga.mController.getState(Controller.STATE_CURRENT_PRODUCT_VERSION);
-        		if (mControllerVersion == Controller.ACTION_VERSION_MOGAPRO) {
-        			pad.isActiveMoga[playerNum] = true;
-        		} else if (mControllerVersion == Controller.ACTION_VERSION_MOGA) {
-        			pad.isActiveMoga[playerNum] = true;
-        		}
+			if (event.getState() == StateEvent.STATE_CONNECTION
+					&& event.getAction() == MOGAInput.ACTION_CONNECTED) {
+				int mControllerVersion = moga.mController
+						.getState(Controller.STATE_CURRENT_PRODUCT_VERSION);
+				if (mControllerVersion == Controller.ACTION_VERSION_MOGAPRO) {
+					pad.isActiveMoga[playerNum] = true;
+				} else if (mControllerVersion == Controller.ACTION_VERSION_MOGA) {
+					pad.isActiveMoga[playerNum] = true;
+				}
 			}
 		}
 	}
