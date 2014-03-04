@@ -1,0 +1,7 @@
+<resources>
+
+    <string name="platform">Conteúdo do logcat copiado para a área de transferência\n Por favor, cole no relatório de erros.</string>
+    <string name="log_saved">Log salvo no \"Diretório do sistema\"</string>
+    <string name="menu_debug">Enviar Log de Erros</string>
+
+</resources>

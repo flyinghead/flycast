@@ -1,0 +1,7 @@
+<resources>
+
+    <string name="platform">Kopierer logcat indhold til clipboardet\nIndsæt venligst i fejlrapporten</string>
+    <string name="log_saved">Log gemt i \"System Path\"</string>
+    <string name="menu_debug">Indsend fejllogger</string>
+
+</resources>

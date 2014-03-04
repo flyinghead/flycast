@@ -61,10 +61,7 @@
 
     <string name="about_text">reicast est un émulateur dreamcast</string>
     <string name="revision_text">Version: %1$s [%2$s]</string>
-    <string name="app_site">Site web officiel: http://reicast.com</string>
-    <string name="beta_site">Bétas: http://reicast.loungekatt.com</string>
-    <string name="git_api">https://api.github.com/repos/NoblesseOblige/reicast-emulator/commits</string>
-    
+
     <string-array name="controllers">
     <item>Manette A</item>
     <item>Manette B</item>
@@ -81,9 +78,5 @@
     
     <string name="textOn">ACTIF</string>
     <string name="textOff">DESACT.</string>
-    
-    <string name="platform">Le contenu du logcat a été copié dans le presse-papiers\nVeuillez coller le rapport d\'émission</string>
-
-    <string name="menu_debug">Soumettre le log d\'erreurs</string>
 
 </resources>

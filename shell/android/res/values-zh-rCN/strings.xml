@@ -51,10 +51,6 @@
     <string name="moga_connect">MOGA已连接</string>
     <string name="about_text">reicast是一款dreamcast模拟器</string>
     <string name="revision_text">版本: %1$s [%2$s]</string>
-    <string name="app_site">主页: http://reicast.com</string>
-    <string name="beta_site">测试版: http://reicast.loungekatt.com</string>
-    <string name="git_api">https://api.github.com/repos/reicast/reicast-emulator/commits</string>
-    <string name="git_issues">https://github.com/reicast/reicast-emulator/issues/</string>
 
     <string-array name="controllers">
         <item>控制器A</item>
@@ -71,8 +67,7 @@
     <string name="rateme">评价我</string>
     <string name="textOn">开</string>
     <string name="textOff">关</string>
-    <string name="platform">复制logcat的内容到剪贴板\n请在问题的报告贴</string>
+
     <string name="bios_config">请生成一个配置\n（运行至少一次BIOS）</string>
-    <string name="menu_debug">提交错误日志</string>
 
 </resources>

@@ -1,6 +1,5 @@
 <resources>
 
-    <string name="app_name">reicast</string>
     <string name="menu_settings">설정</string>
     <string name="system_path">시스템 경로 (dc_boot.bin / dc_flash.bin 내부와 데이터 폴더의 ​​위치)</string>
     <string name="browser_path">기본 시스템 경로</string>
@@ -55,21 +54,12 @@
 
     <string name="about_text">reicast는 드림 캐스트 에뮬레이터</string>
     <string name="revision_text">버전: %1$s [%2$s]</string>
-    <string name="app_site">홈페이지: http://reicast.com</string>
-    <string name="beta_site">베타: http://reicast.loungekatt.com</string>
-    <string name="git_api">https://api.github.com/repos/reicast/reicast-emulator/commits</string>
     
     <string-array name="controllers">
     <item>제어 장치 A</item>
     <item>제어 장치 B</item>
     <item>제어 장치 C</item>
     <item>제어 장치 D</item>
-    </string-array>
-    
-    <string-array name="images">
-        <item>cdi</item>
-        <item>chd</item>
-        <item>gdi</item>
     </string-array>
     
     <string name="browser">브라우저</string>
@@ -81,9 +71,5 @@
     
     <string name="textOn">ON</string>
     <string name="textOff">OFF</string>
-    
-    <string name="platform">클립 보드에 복사 logcat 내용\n문제 보고서에 붙여 넣기</string>
-
-    <string name="menu_debug">디버그 로그를 제출</string>
 
 </resources>

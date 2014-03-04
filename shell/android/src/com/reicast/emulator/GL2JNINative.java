@@ -78,7 +78,6 @@ public class GL2JNINative extends NativeActivity {
 		// Call parent onCreate()
 		super.onCreate(icicle);
 		OuyaController.init(this);
-		moga.onCreate(this, pad);
 
 		// Populate device descriptor-to-player-map from preferences
 		pad.deviceDescriptor_PlayerNum.put(
@@ -90,6 +89,8 @@ public class GL2JNINative extends NativeActivity {
 		pad.deviceDescriptor_PlayerNum.put(
 				prefs.getString("device_descriptor_player_4", null), 3);
 		pad.deviceDescriptor_PlayerNum.remove(null);
+
+		moga.onCreate(this, pad);
 
 		boolean controllerTwoConnected = false;
 		boolean controllerThreeConnected = false;
@@ -194,6 +195,8 @@ public class GL2JNINative extends NativeActivity {
 				}
 			}
 		}
+
+		config.loadConfigurationPrefs();
 
 		// When viewing a resource, pass its URI to the native code for opening
 		Intent intent = getIntent();

@@ -1,5 +1,9 @@
 package com.reicast.emulator.config;
 
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+
 import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -110,6 +114,31 @@ public class Config {
 		toast.setDuration(Toast.LENGTH_SHORT);
 		toast.setView(layout);
 		toast.show();
+	}
+
+	/**
+	 * Read the output of a shell command
+	 * 
+	 * @param command
+	 *            The shell command being issued to the terminal
+	 */
+	public static String readOutput(String command) {
+		try {
+			Process p = Runtime.getRuntime().exec(command);
+			InputStream is = null;
+			if (p.waitFor() == 0) {
+				is = p.getInputStream();
+			} else {
+				is = p.getErrorStream();
+			}
+			BufferedReader br = new BufferedReader(new InputStreamReader(is),
+					2048);
+			String line = br.readLine();
+			br.close();
+			return line;
+		} catch (Exception ex) {
+			return "ERROR: " + ex.getMessage();
+		}
 	}
 
 }

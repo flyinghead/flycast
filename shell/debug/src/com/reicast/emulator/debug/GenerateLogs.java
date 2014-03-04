@@ -14,8 +14,6 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.widget.Toast;
 
-import com.reicast.emulator.R;
-
 public class GenerateLogs extends AsyncTask<String, Integer, String> {
 
 	public static final String build_model = android.os.Build.MODEL;
