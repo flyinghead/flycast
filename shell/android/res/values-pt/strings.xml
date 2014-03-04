@@ -35,10 +35,8 @@
     <string name="games_listing">Jogos disponíveis</string>
 	
     <string name="report_issue">Falha Anterior Detectada</string>
-    <string name="platform">Conteúdo do logcat copiado para a área de transferência\n Por favor, cole no relatório de erros.</string>
     <string name="log_saved">Log salvo no \"Diretório do sistema\"</string>
     <string name="bios_config">Falha ao Configurar!</string>
-    <string name="menu_debug">Enviar Log de Erros</string>
 
     <string name="customize_touch_controls">Configurar controles de toque na tela</string>
     <string name="launch_editor">Iniciar editor</string>

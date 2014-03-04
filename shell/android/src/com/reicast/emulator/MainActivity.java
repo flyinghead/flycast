@@ -13,7 +13,6 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.content.res.Configuration;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
@@ -35,7 +34,6 @@ import com.reicast.emulator.config.Config;
 import com.reicast.emulator.config.ConfigureFragment;
 import com.reicast.emulator.config.InputFragment;
 import com.reicast.emulator.config.OptionsFragment;
-import com.reicast.emulator.debug.GenerateLogs;
 import com.reicast.emulator.emu.JNIdc;
 import com.reicast.emulator.periph.Gamepad;
 
@@ -74,7 +72,7 @@ public class MainActivity extends SlidingFragmentActivity implements
 
 		String prior_error = mPrefs.getString("prior_error", null);
 		if (prior_error != null && !prior_error.equals(null)) {
-			initiateReport(prior_error);
+			displayLogOutput(prior_error);
 			mPrefs.edit().remove("prior_error").commit();
 		} else {
 			mUEHandler = new Thread.UncaughtExceptionHandler() {
@@ -314,7 +312,7 @@ public class MainActivity extends SlidingFragmentActivity implements
 	 * @param error
 	 *            A generalized summary of the crash cause
 	 */
-	private void initiateReport(final String error) {
+	private void displayLogOutput(final String error) {
 		AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
 		builder.setTitle(getString(R.string.report_issue));
 		builder.setMessage(error);
@@ -324,28 +322,8 @@ public class MainActivity extends SlidingFragmentActivity implements
 						dialog.dismiss();
 					}
 				});
-		if (MainActivity.debugUser) {
-			builder.setPositiveButton("Report",
-					new DialogInterface.OnClickListener() {
-				public void onClick(DialogInterface dialog, int which) {
-					reportIssueUpstream(error);
-					dialog.dismiss();
-				}
-			});
-		}
 		builder.create();
 		builder.show();
-	}
-
-	private void reportIssueUpstream(String error) {
-		GenerateLogs mGenerateLogs = new GenerateLogs(MainActivity.this);
-		mGenerateLogs.setUnhandled(error);
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-			mGenerateLogs.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,
-					home_directory);
-		} else {
-			mGenerateLogs.execute(home_directory);
-		}
 	}
 
 	public static boolean isBiosExisting() {
@@ -359,7 +337,7 @@ public class MainActivity extends SlidingFragmentActivity implements
 	}
 
 	public void onGameSelected(Uri uri) {
-		if (GenerateLogs.readOutput("uname -a").equals(getString(R.string.error_kernel))) {
+		if (Config.readOutput("uname -a").equals(getString(R.string.error_kernel))) {
 			Toast.makeText(MainActivity.this, R.string.unsupported,
 					Toast.LENGTH_SHORT).show();
 		}

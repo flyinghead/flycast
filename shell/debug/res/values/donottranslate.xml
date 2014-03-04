@@ -1,0 +1,8 @@
+<resources>
+
+    <string name="app_name">reicast [LK Edition]</string>
+
+    <string name="git_issues">https://github.com/NoblesseOblige/reicast-emulator/issues/</string>
+    <string name="log_url">http://twisted.dyndns.tv:3194/Dreamcast/report/submit.php</string>
+
+</resources>

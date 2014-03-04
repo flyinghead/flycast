@@ -69,5 +69,18 @@
         android:layout_weight="1.0"
         android:divider="#b5b5b5"
         android:dividerHeight="1dp" />
+    
+    <TableRow
+                android:layout_marginTop="20dp"
+                android:gravity="center_vertical" >
+
+                <Button
+                    android:id="@+id/debug_button"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ems="8"
+                    android:text="@string/menu_debug" />
+            </TableRow>
 
 </LinearLayout>

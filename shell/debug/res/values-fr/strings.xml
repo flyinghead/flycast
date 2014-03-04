@@ -1,0 +1,7 @@
+<resources>
+    
+    <string name="platform">Le contenu du logcat a été copié dans le presse-papiers\nVeuillez coller le rapport d\'émission</string>
+
+    <string name="menu_debug">Soumettre le log d\'erreurs</string>
+
+</resources>

@@ -1,0 +1,7 @@
+<resources>
+    
+    <string name="platform">Kopieren logcat Inhalt in die Zwischenablage kopieren\nBitte fügen Sie in der Ausgabe Bericht</string>
+
+    <string name="menu_debug">Senden Debug-Protokolle</string>
+
+</resources>

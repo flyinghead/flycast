@@ -1,0 +1,7 @@
+<resources>
+
+    <string name="platform">クリップボードにコピーするlogcatをコンテンツ\n問題報告書に貼り付けてください</string>
+    
+    <string name="menu_debug">デバッグログを提出</string>
+
+</resources>
