@@ -76,20 +76,20 @@ public class ConfigureFragment extends Fragment {
 
 			public void onCheckedChanged(CompoundButton buttonView,
 					boolean isChecked) {
-				mPrefs.edit().putBoolean("native_override", isChecked).commit();
-				Config.nonative = isChecked;
+				mPrefs.edit().putBoolean(Config.pref_native, isChecked).commit();
+				Config.nativeact = isChecked;
 			}
 		};
 		Switch native_opt = (Switch) getView().findViewById(
 				R.id.native_option);
-		native_opt.setChecked(Config.nonative);
+		native_opt.setChecked(Config.nativeact);
 		native_opt.setOnCheckedChangeListener(native_options);
 
 		OnCheckedChangeListener dynarec_options = new OnCheckedChangeListener() {
 
 			public void onCheckedChanged(CompoundButton buttonView,
 					boolean isChecked) {
-				mPrefs.edit().putBoolean("dynarec_opt", isChecked).commit();
+				mPrefs.edit().putBoolean(Config.pref_dynarec, isChecked).commit();
 				Config.dynarecopt = isChecked;
 			}
 		};
@@ -102,7 +102,7 @@ public class ConfigureFragment extends Fragment {
 
 			public void onCheckedChanged(CompoundButton buttonView,
 					boolean isChecked) {
-				mPrefs.edit().putBoolean("unstable_opt", isChecked).commit();
+				mPrefs.edit().putBoolean(Config.pref_unstable, isChecked).commit();
 				Config.unstableopt = isChecked;
 			}
 		};

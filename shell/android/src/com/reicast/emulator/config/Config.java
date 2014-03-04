@@ -23,6 +23,10 @@ import com.reicast.emulator.emu.JNIdc;
 
 public class Config {
 
+	public static final String pref_native = "enable_native";
+	public static final String pref_dynarec = "dynarec_opt";
+	public static final String pref_unstable = "unstable_opt";
+
 	public static boolean dynarecopt = true;
 	public static boolean idleskip = true;
 	public static boolean unstableopt = false;
@@ -38,7 +42,7 @@ public class Config {
 	public static int frameskip = 0;
 	public static boolean pvrrender = false;
 	public static String cheatdisk = "null";
-	public static boolean nonative = false;
+	public static boolean nativeact = false;
 
 	private SharedPreferences mPrefs;
 
@@ -51,8 +55,8 @@ public class Config {
 	 * 
 	 */
 	public void getConfigurationPrefs() {
-		Config.dynarecopt = mPrefs.getBoolean("dynarec_opt", dynarecopt);
-		Config.unstableopt = mPrefs.getBoolean("unstable_opt", unstableopt);
+		Config.dynarecopt = mPrefs.getBoolean(pref_dynarec, dynarecopt);
+		Config.unstableopt = mPrefs.getBoolean(pref_unstable, unstableopt);
 		Config.cable = mPrefs.getInt("dc_cable", cable);
 		Config.dcregion = mPrefs.getInt("dc_region", dcregion);
 		Config.broadcast = mPrefs.getInt("dc_broadcast", broadcast);
@@ -63,7 +67,7 @@ public class Config {
 		Config.frameskip = mPrefs.getInt("frame_skip", frameskip);
 		Config.pvrrender = mPrefs.getBoolean("pvr_render", pvrrender);
 		Config.cheatdisk = mPrefs.getString("cheat_disk", cheatdisk);
-		Config.nonative = mPrefs.getBoolean("native_override", nonative);
+		Config.nativeact = mPrefs.getBoolean(pref_native, nativeact);
 	}
 
 	/**
