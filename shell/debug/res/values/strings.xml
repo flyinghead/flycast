@@ -1,7 +1,5 @@
 <resources>
 
-    <string name="app_name">reicast debug</string>
-
     <string name="select_notify">Message Notifications</string>
 
     <string name="platform">Copying logcat content to clipboard\nPlease paste in the issue report</string>
