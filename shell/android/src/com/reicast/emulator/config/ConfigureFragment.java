@@ -2,11 +2,8 @@ package com.reicast.emulator.config;
 
 import java.io.File;
 
-import org.apache.commons.lang3.ArrayUtils;
-
 import android.app.Activity;
 import android.content.SharedPreferences;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
@@ -20,7 +17,6 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.EditText;
@@ -29,9 +25,7 @@ import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.Spinner;
 import android.widget.TextView;
 
-import com.reicast.emulator.MainActivity;
 import com.reicast.emulator.R;
-import com.reicast.emulator.debug.GenerateLogs;
 import com.reicast.emulator.emu.GL2JNIView;
 
 import de.ankri.views.Switch;
@@ -388,27 +382,6 @@ public class ConfigureFragment extends Fragment {
 			}
 
 		});
-
-		Button debug = (Button) getView().findViewById(R.id.debug_button);
-		if (MainActivity.debugUser) {
-			debug.setOnClickListener(new View.OnClickListener() {
-				public void onClick(View view) {
-					generateErrorLog();
-				}
-			});
-		} else {
-			debug.setVisibility(View.GONE);
-		}
-	}
-
-	public void generateErrorLog() {
-		GenerateLogs mGenerateLogs = new GenerateLogs(parentActivity);
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-			mGenerateLogs.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,
-					home_directory);
-		} else {
-			mGenerateLogs.execute(home_directory);
-		}
 
 	}
 }

@@ -1,0 +1,7 @@
+<resources>
+    
+    <string name="platform">클립 보드에 복사 logcat 내용\n문제 보고서에 붙여 넣기</string>
+
+    <string name="menu_debug">디버그 로그를 제출</string>
+
+</resources>

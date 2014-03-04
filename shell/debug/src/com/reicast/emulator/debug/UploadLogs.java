@@ -24,8 +24,6 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.StrictMode;
 
-import com.reicast.emulator.R;
-
 /**
  * Upload the specialized logcat to reicast issues
  * 

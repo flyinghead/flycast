@@ -1,0 +1,8 @@
+<resources>
+
+    <string name="log_saved">Логи сохранены в %1$s</string>
+    <string name="platform">Логи скопированы в буфер обмена.\nВставьте их в репорт.</string>
+    
+    <string name="menu_debug">Отправить журнал ошибок</string>
+
+</resources>

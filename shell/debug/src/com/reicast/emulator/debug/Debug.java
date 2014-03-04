@@ -1,6 +1,7 @@
 package com.reicast.emulator.debug;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -46,6 +47,7 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.util.Log;
@@ -94,6 +96,8 @@ public class Debug extends Activity {
 
 	private Context mContext;
 	private SharedPreferences mPrefs;
+
+	private File sdcard = Environment.getExternalStorageDirectory();
 
 	private ExpandableListView exlist = new ExpandableListView();
 
@@ -168,6 +172,23 @@ public class Debug extends Activity {
 			}
 
 		});
+		Button debug = (Button) findViewById(R.id.debug_button);
+			debug.setOnClickListener(new View.OnClickListener() {
+				public void onClick(View view) {
+					generateErrorLog();
+				}
+			});
+	}
+
+	public void generateErrorLog() {
+		GenerateLogs mGenerateLogs = new GenerateLogs(Debug.this);
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+			mGenerateLogs.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,
+					sdcard.getAbsolutePath());
+		} else {
+			mGenerateLogs.execute(sdcard.getAbsolutePath());
+		}
+
 	}
 
 	public class MessageAdapter extends BaseAdapter {

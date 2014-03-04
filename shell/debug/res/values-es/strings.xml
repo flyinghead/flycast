@@ -1,0 +1,7 @@
+<resources>
+
+    <string name="platform">Contenido Copiado Logcat al portapapeles\nPor favor, pegue en el informe de problema</string>
+    
+    <string name="menu_debug">Enviar registros de errores</string>
+
+</resources>

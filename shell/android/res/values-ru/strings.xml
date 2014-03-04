@@ -60,9 +60,6 @@
 
     <string name="about_text">DREAMCAST эмулятор "REICAST"</string>
     <string name="revision_text">Версия: %1$s [%2$s]</string>
-    <string name="app_site">Сайт: http://reicast.com</string>
-    <string name="beta_site">Бета версии: http://reicast.loungekatt.com</string>
-    <string name="git_api">https://api.github.com/repos/reicast/reicast-emulator/commits</string>
     
     <string-array name="controllers">
     <item>Контроллер A</item>
@@ -84,8 +81,5 @@
     <string name="report_issue">Обнаружен предыдущий краш</string>
     <string name="log_saved">Логи сохранены в %1$s</string>
     <string name="bios_config">Ошибка конфигурации!</string>
-    <string name="platform">Логи скопированы в буфер обмена.\nВставьте их в репорт.</string>
-    
-    <string name="menu_debug">Отправить журнал ошибок</string>
 
 </resources>

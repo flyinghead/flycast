@@ -31,15 +31,9 @@ Tools required:
 
 From project root directory:
 ```
-cd shell\android\xperia
+export ANDROID_NDK=\ <-Type the full path to your NDK here
 
-rm -rf libs
-
-android update project -p . --target "android-9"
-
-ndk-build -j4
-
-cd ..\
+cd shell\android
 
 android update project -p . --target "android-19"
 

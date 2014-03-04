@@ -35,10 +35,7 @@
     <string name="games_listing">Tilgængelige Dreamcast spil</string>
 
     <string name="report_issue">Tidligere nedbrud detekteret</string>
-    <string name="platform">Kopierer logcat indhold til clipboardet\nIndsæt venligst i fejlrapporten</string>
-    <string name="log_saved">Log gemt i \"System Path\"</string>
     <string name="bios_config">Konfiguration fejlede!</string>
-    <string name="menu_debug">Indsend fejllogger</string>
 
     <string name="customize_touch_controls">Tilpas touch knapper</string>
     <string name="launch_editor">Opstarts editor</string>
@@ -67,10 +64,6 @@
 
     <string name="about_text">reicast er en Dreamcast emulator</string>
     <string name="revision_text">Version: %1$s [%2$s]</string>
-    <string name="app_site">Hjemmeside: http://reicast.com</string>
-    <string name="beta_site">Betaer: http://reicast.loungekatt.com</string>
-    <string name="git_api">https://api.github.com/repos/reicast/reicast-emulator/commits</string>
-    <string name="git_issues">https://github.com/reicast/reicast-emulator/issues/</string>
     
     <string-array name="controllers">
     <item>Controller A</item>
