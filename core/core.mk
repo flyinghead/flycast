@@ -59,7 +59,11 @@ RZDCY_CXXFLAGS	:= \
 		RZDCY_CXXFLAGS += -march=armv7-a -mtune=cortex-a9 -mfpu=vfpv3-d16
 		RZDCY_CXXFLAGS += -DTARGET_LINUX_ARMELv7
 	else
-		RZDCY_CXXFLAGS += -DTARGET_LINUX_x86
+	  ifndef ISMIPS
+      RZDCY_CXXFLAGS += -DTARGET_LINUX_x86
+		else
+      RZDCY_CXXFLAGS += -DTARGET_LINUX_MIPS
+		endif
 	endif
 endif
 

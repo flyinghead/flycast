@@ -26,6 +26,10 @@ ifneq ($(TARGET_ARCH_ABI),armeabi-v7a)
   NO_REC := 1
 endif
 
+ifeq ($(TARGET_ARCH_ABI),mips)
+  ISMIPS := 1
+endif
+
 include $(LOCAL_PATH)/../../core/core.mk
 
 LOCAL_SRC_FILES := $(RZDCY_FILES)
