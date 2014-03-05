@@ -24,6 +24,7 @@ import com.reicast.emulator.GL2JNINative;
 import com.reicast.emulator.MainActivity;
 import com.reicast.emulator.R;
 import com.reicast.emulator.config.Config;
+import com.reicast.emulator.periph.Gamepad;
 import com.reicast.emulator.periph.VmuLcd;
 
 public class OnScreenMenu {
@@ -57,7 +58,7 @@ public class OnScreenMenu {
 		popups = new Vector<PopupWindow>();
 		if (prefs != null) {
 			this.prefs = prefs;
-			home_directory = prefs.getString("home_directory", home_directory);
+			home_directory = prefs.getString(Config.pref_home, home_directory);
 			masteraudio = !Config.nosound;
 			audio = masteraudio;
 		}
@@ -345,15 +346,15 @@ public class OnScreenMenu {
 							((GL2JNINative) mContext).mView.fastForward(false);
 						}
 						if (mContext instanceof GL2JNIActivity) {
-							((GL2JNIActivity) mContext).mView.fastForward(false);
+							((GL2JNIActivity) mContext).mView
+									.fastForward(false);
 						}
 						boosted = false;
 						((ImageButton) fastforward)
 								.setImageResource(R.drawable.star);
 					} else {
 						if (mContext instanceof GL2JNINative) {
-							((GL2JNINative) mContext).mView
-									.audioDisable(true);
+							((GL2JNINative) mContext).mView.audioDisable(true);
 						}
 						if (mContext instanceof GL2JNIActivity) {
 							((GL2JNIActivity) mContext).mView
@@ -376,11 +377,10 @@ public class OnScreenMenu {
 						((ImageButton) fastforward)
 								.setImageResource(R.drawable.reset);
 					}
-						}
-					});
+				}
+			});
 			if (boosted) {
-				((ImageButton) fastforward)
-						.setImageResource(R.drawable.reset);
+				((ImageButton) fastforward).setImageResource(R.drawable.reset);
 			}
 			hlay.addView(fastforward, params);
 			menuItems.add(fastforward);
@@ -520,21 +520,24 @@ public class OnScreenMenu {
 			rsticksetting = addbut(R.drawable.toggle_a_b,
 					new OnClickListener() {
 						public void onClick(View v) {
-							if (prefs.getBoolean("right_buttons", true)) {
-								prefs.edit().putBoolean("right_buttons", false)
-										.commit();
+							if (prefs
+									.getBoolean(Gamepad.pref_js_rbuttons, true)) {
+								prefs.edit()
+										.putBoolean(Gamepad.pref_js_rbuttons,
+												false).commit();
 								((ImageButton) rsticksetting)
 										.setImageResource(R.drawable.toggle_a_b);
 							} else {
-								prefs.edit().putBoolean("right_buttons", true)
-										.commit();
+								prefs.edit()
+										.putBoolean(Gamepad.pref_js_rbuttons,
+												true).commit();
 								((ImageButton) rsticksetting)
 										.setImageResource(R.drawable.toggle_r_l);
 							}
 							dismiss();
 						}
 					});
-			if (prefs.getBoolean("right_buttons", true)) {
+			if (prefs.getBoolean(Gamepad.pref_js_rbuttons, true)) {
 				((ImageButton) rsticksetting)
 						.setImageResource(R.drawable.toggle_r_l);
 			}
@@ -558,16 +561,18 @@ public class OnScreenMenu {
 
 			hlay.addView(addbut(R.drawable.print_stats, new OnClickListener() {
 				public void onClick(View v) {
-					//screenshot
+					// screenshot
 					if (mContext instanceof GL2JNINative) {
-						((GL2JNINative) OnScreenMenu.this.mContext).screenGrab();
+						((GL2JNINative) OnScreenMenu.this.mContext)
+								.screenGrab();
 					}
 					if (mContext instanceof GL2JNIActivity) {
-						((GL2JNIActivity) OnScreenMenu.this.mContext).screenGrab();
+						((GL2JNIActivity) OnScreenMenu.this.mContext)
+								.screenGrab();
 					}
 				}
 			}), params);
-			
+
 			hlay.addView(addbut(R.drawable.close, new OnClickListener() {
 				public void onClick(View v) {
 					Intent inte = new Intent(mContext, MainActivity.class);

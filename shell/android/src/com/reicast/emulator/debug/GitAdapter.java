@@ -64,6 +64,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.graphics.PorterDuff;
 import android.os.Build;
 import android.view.LayoutInflater;
@@ -85,11 +86,12 @@ import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
 import com.nostra13.universalimageloader.core.assist.ImageScaleType;
+import com.reicast.emulator.MainActivity;
 import com.reicast.emulator.R;
 
 public class GitAdapter extends BaseAdapter {
 
-	private Activity activity;
+	private static Activity activity;
 	private ArrayList<HashMap<String, String>> data;
 	private LayoutInflater inflater = null;
 	private DisplayImageOptions options;
@@ -168,7 +170,15 @@ public class GitAdapter extends BaseAdapter {
 		return vi;
 	}
 
-	public static void displayCommit(String title, String message, String url,
+	private static void callGithubVerification(String sha) {
+		String hash = sha.substring(0, 7);
+		Intent github = new Intent("com.reicast.emulator.debug.GitHash");
+		github.setAction("reicast.emulator.GITHUB");
+		github.putExtra("hashtag", hash);
+		activity.startActivity(github);
+	}
+
+	public static void displayCommit(final String title, String message, String url,
 			Context context) {
 		final AlertDialog.Builder builder = new AlertDialog.Builder(context);
 		builder.setCancelable(true);
@@ -186,6 +196,16 @@ public class GitAdapter extends BaseAdapter {
 						return;
 					}
 				});
+		if (MainActivity.debugUser) {
+			builder.setNegativeButton("Download",
+					new DialogInterface.OnClickListener() {
+						public void onClick(DialogInterface dialog, int which) {
+							callGithubVerification(title);
+							dialog.dismiss();
+							return;
+						}
+					});
+		}
 		builder.create().show();
 	}
 

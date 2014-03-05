@@ -3,6 +3,7 @@ package com.reicast.emulator.debug;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
@@ -44,6 +45,7 @@ import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.content.res.Resources;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
@@ -57,12 +59,10 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.AdapterView.OnItemClickListener;
-import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.CompoundButton;
+import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -178,6 +178,20 @@ public class Debug extends Activity {
 					generateErrorLog();
 				}
 			});
+			try {
+				Resources res = getPackageManager().getResourcesForApplication("com.reicast.emulator");
+				InputStream file = res.getAssets().open("build");
+				if (file != null) {
+					BufferedReader reader = new BufferedReader(
+							new InputStreamReader(file));
+					Log.d("reicast-debug", "Hash: " + reader.readLine());
+					file.close();
+				}
+			} catch (IOException ioe) {
+				ioe.printStackTrace();
+			} catch (NameNotFoundException e) {
+				e.printStackTrace();
+			}
 	}
 
 	public void generateErrorLog() {

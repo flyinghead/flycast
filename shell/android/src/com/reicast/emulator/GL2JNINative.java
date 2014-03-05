@@ -81,13 +81,13 @@ public class GL2JNINative extends NativeActivity {
 
 		// Populate device descriptor-to-player-map from preferences
 		pad.deviceDescriptor_PlayerNum.put(
-				prefs.getString("device_descriptor_player_1", null), 0);
+				prefs.getString(Gamepad.pref_player1, null), 0);
 		pad.deviceDescriptor_PlayerNum.put(
-				prefs.getString("device_descriptor_player_2", null), 1);
+				prefs.getString(Gamepad.pref_player2, null), 1);
 		pad.deviceDescriptor_PlayerNum.put(
-				prefs.getString("device_descriptor_player_3", null), 2);
+				prefs.getString(Gamepad.pref_player3, null), 2);
 		pad.deviceDescriptor_PlayerNum.put(
-				prefs.getString("device_descriptor_player_4", null), 3);
+				prefs.getString(Gamepad.pref_player4, null), 3);
 		pad.deviceDescriptor_PlayerNum.remove(null);
 
 		moga.onCreate(this, pad);
@@ -135,7 +135,7 @@ public class GL2JNINative extends NativeActivity {
 								+ InputDevice.getDevice(joy).getName());
 				if (pad.isXperiaPlay) {
 					if (InputDevice.getDevice(joy).getName()
-							.contains("keypad-game-zeus")) {
+							.contains(Gamepad.controllers_play_gp)) {
 						pad.keypadZeus.add(joy);
 					}
 					if (InputDevice.getDevice(joy).getName()
@@ -154,11 +154,11 @@ public class GL2JNINative extends NativeActivity {
 
 				if (playerNum != null) {
 					String id = pad.portId[playerNum];
-					pad.custom[playerNum] = prefs.getBoolean("modified_key_layout" + id, false);
-					pad.compat[playerNum] = prefs.getBoolean("controller_compat" + id, false);
-					pad.joystick[playerNum] = prefs.getBoolean("separate_joystick" + id, false);
+					pad.custom[playerNum] = prefs.getBoolean(Gamepad.pref_js_modified + id, false);
+					pad.compat[playerNum] = prefs.getBoolean(Gamepad.pref_js_compat + id, false);
+					pad.joystick[playerNum] = prefs.getBoolean(Gamepad.pref_js_separate + id, false);
 					if (InputDevice.getDevice(joy).getName()
-							.contains("keypad-zeus")) {
+							.contains(Gamepad.controllers_play)) {
 						pad.playerNumX.put(joy, playerNum);
 						for (int keys : pad.keypadZeus) {
 							pad.playerNumX.put(keys, playerNum);
@@ -173,13 +173,13 @@ public class GL2JNINative extends NativeActivity {
 							if (pad.custom[playerNum]) {
 								setCustomMapping(id, playerNum);
 							} else if (InputDevice.getDevice(joy).getName()
-									.equals("Sony PLAYSTATION(R)3 Controller")) {
+									.equals(Gamepad.controllers_sony)) {
 								pad.map[playerNum] = pad.getConsoleController();
 							} else if (InputDevice.getDevice(joy).getName()
-									.equals("Microsoft X-Box 360 pad")) {
+									.equals(Gamepad.controllers_xbox)) {
 								pad.map[playerNum] = pad.getConsoleController();
 							} else if (InputDevice.getDevice(joy).getName()
-									.contains("NVIDIA Corporation NVIDIA Controller")) {
+									.contains(Gamepad.controllers_shield)) {
 								pad.map[playerNum] = pad.getConsoleController();
 							} else if (!pad.isActiveMoga[playerNum]) { // Ouya controller
 								pad.map[playerNum] = pad.getOUYAController();
@@ -205,11 +205,11 @@ public class GL2JNINative extends NativeActivity {
 
 		// Create the actual GLES view
 		mView = new GL2JNIView(getApplication(), config, fileName, false,
-				prefs.getInt("depth_render", 24), 0, false);
+				prefs.getInt(Config.pref_renderdepth, 24), 0, false);
 		setContentView(mView);
 
 		//setup mic
-		boolean micPluggedIn = prefs.getBoolean("mic_plugged_in", false);
+		boolean micPluggedIn = prefs.getBoolean(Config.pref_mic, false);
 		if(micPluggedIn){
 			SipEmulator sip = new SipEmulator();
 			sip.startRecording();
@@ -218,10 +218,10 @@ public class GL2JNINative extends NativeActivity {
 		
 		popUp = menu.new MainPopup(this);
 		vmuPop = menu.new VmuPopup(this);
-		if(prefs.getBoolean("vmu_floating", false)){
+		if(prefs.getBoolean(Config.pref_vmu, false)){
 			//kind of a hack - if the user last had the vmu on screen
 			//inverse it and then "toggle"
-			prefs.edit().putBoolean("vmu_floating", false).commit();
+			prefs.edit().putBoolean(Config.pref_vmu, false).commit();
 			//can only display a popup after onCreate
 			mView.post(new Runnable() {
 				public void run() {
@@ -230,7 +230,7 @@ public class GL2JNINative extends NativeActivity {
 			});
 		}
 		JNIdc.setupVmu(menu.getVmu());
-		if (prefs.getBoolean("show_fps", false)) {
+		if (prefs.getBoolean(Config.pref_showfps, false)) {
 			fpsPop = menu.new FpsPopup(this);
 			mView.setFpsDisplay(fpsPop);
 			mView.post(new Runnable() {
@@ -302,7 +302,7 @@ public class GL2JNINative extends NativeActivity {
 	}
 
 	public void toggleVmu() {
-		boolean showFloating = !prefs.getBoolean("vmu_floating", false);
+		boolean showFloating = !prefs.getBoolean(Config.pref_vmu, false);
 		if(showFloating){
 			if(popUp.isShowing()){
 				popUp.dismiss();
@@ -322,7 +322,7 @@ public class GL2JNINative extends NativeActivity {
 			//add back to popup menu
 			popUp.showVmu();
 		}
-		prefs.edit().putBoolean("vmu_floating", showFloating).commit();
+		prefs.edit().putBoolean(Config.pref_vmu, showFloating).commit();
 	}
 	
 	public void displayConfig(PopupWindow popUpConfig) {
@@ -477,9 +477,9 @@ public class GL2JNINative extends NativeActivity {
 		if (playerNum != null && playerNum != -1) {
 			String id = pad.portId[playerNum];
 			if (action == KeyEvent.ACTION_DOWN) {
-				if (keyCode == prefs.getInt("l_button" + id, KeyEvent.KEYCODE_BUTTON_L1)) {
+				if (keyCode == prefs.getInt(Gamepad.pref_button_l + id, KeyEvent.KEYCODE_BUTTON_L1)) {
 					return simulatedTouchEvent(playerNum, 1.0f, 0.0f);
-				} else if (keyCode == prefs.getInt("r_button" + id, KeyEvent.KEYCODE_BUTTON_R1)) {
+				} else if (keyCode == prefs.getInt(Gamepad.pref_button_r + id, KeyEvent.KEYCODE_BUTTON_R1)) {
 					return simulatedTouchEvent(playerNum, 0.0f, 1.0f);
 				} else if (handle_key(playerNum, keyCode, true)) {
 					if (playerNum == 0)
@@ -488,9 +488,9 @@ public class GL2JNINative extends NativeActivity {
 				}
 			}
 			if (action == KeyEvent.ACTION_UP) {
-				if (keyCode == prefs.getInt("l_button" + id,
+				if (keyCode == prefs.getInt(Gamepad.pref_button_l + id,
 						KeyEvent.KEYCODE_BUTTON_L1)
-						|| keyCode == prefs.getInt("r_button" + id,
+						|| keyCode == prefs.getInt(Gamepad.pref_button_r + id,
 								KeyEvent.KEYCODE_BUTTON_R1)) {
 					return simulatedTouchEvent(playerNum, 0.0f, 0.0f);
 				} else {

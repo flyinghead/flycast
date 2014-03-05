@@ -23,6 +23,32 @@ import com.reicast.emulator.emu.JNIdc;
 
 public class Config {
 
+	public static final String pref_home = "home_directory";
+	public static final String pref_games = "game_directory";
+
+	public static final String pref_nativeact = "enable_native";
+	public static final String pref_dynarecopt = "dynarec_opt";
+	public static final String pref_unstable = "unstable_opt";
+	public static final String pref_cable = "dc_cable";
+	public static final String pref_dcregion = "dc_region";
+	public static final String pref_broadcast = "dc_broadcast";
+	public static final String pref_limitfps = "limit_fps";
+	public static final String pref_nosound = "sound_disabled";
+	public static final String pref_mipmaps = "use_mipmaps";
+	public static final String pref_widescreen = "stretch_view";
+	public static final String pref_frameskip = "frame_skip";
+	public static final String pref_pvrrender = "pvr_render";
+	public static final String pref_cheatdisk = "cheat_disk";
+
+	public static final String pref_showfps = "show_fps";
+	public static final String pref_forcegpu = "force_gpu";
+	public static final String pref_rendertype = "render_type";
+	public static final String pref_renderdepth = "depth_render";
+
+	public static final String pref_touchvibe = "touch_vibration_enabled";
+	public static final String pref_mic = "mic_plugged_in";
+	public static final String pref_vmu = "vmu_floating";
+
 	public static boolean dynarecopt = true;
 	public static boolean idleskip = true;
 	public static boolean unstableopt = false;
@@ -38,7 +64,7 @@ public class Config {
 	public static int frameskip = 0;
 	public static boolean pvrrender = false;
 	public static String cheatdisk = "null";
-	public static boolean nonative = false;
+	public static boolean nativeact = false;
 
 	private SharedPreferences mPrefs;
 
@@ -51,19 +77,19 @@ public class Config {
 	 * 
 	 */
 	public void getConfigurationPrefs() {
-		Config.dynarecopt = mPrefs.getBoolean("dynarec_opt", dynarecopt);
-		Config.unstableopt = mPrefs.getBoolean("unstable_opt", unstableopt);
-		Config.cable = mPrefs.getInt("dc_cable", cable);
-		Config.dcregion = mPrefs.getInt("dc_region", dcregion);
-		Config.broadcast = mPrefs.getInt("dc_broadcast", broadcast);
-		Config.limitfps = mPrefs.getBoolean("limit_fps", limitfps);
-		Config.nosound = mPrefs.getBoolean("sound_disabled", nosound);
-		Config.mipmaps = mPrefs.getBoolean("use_mipmaps", mipmaps);
-		Config.widescreen = mPrefs.getBoolean("stretch_view", widescreen);
-		Config.frameskip = mPrefs.getInt("frame_skip", frameskip);
-		Config.pvrrender = mPrefs.getBoolean("pvr_render", pvrrender);
-		Config.cheatdisk = mPrefs.getString("cheat_disk", cheatdisk);
-		Config.nonative = mPrefs.getBoolean("native_override", nonative);
+		Config.dynarecopt = mPrefs.getBoolean(pref_dynarecopt, dynarecopt);
+		Config.unstableopt = mPrefs.getBoolean(pref_unstable, unstableopt);
+		Config.cable = mPrefs.getInt(pref_cable, cable);
+		Config.dcregion = mPrefs.getInt(pref_dcregion, dcregion);
+		Config.broadcast = mPrefs.getInt(pref_broadcast, broadcast);
+		Config.limitfps = mPrefs.getBoolean(pref_limitfps, limitfps);
+		Config.nosound = mPrefs.getBoolean(pref_nosound, nosound);
+		Config.mipmaps = mPrefs.getBoolean(pref_mipmaps, mipmaps);
+		Config.widescreen = mPrefs.getBoolean(pref_widescreen, widescreen);
+		Config.frameskip = mPrefs.getInt(pref_frameskip, frameskip);
+		Config.pvrrender = mPrefs.getBoolean(pref_pvrrender, pvrrender);
+		Config.cheatdisk = mPrefs.getString(pref_cheatdisk, cheatdisk);
+		Config.nativeact = mPrefs.getBoolean(pref_nativeact, nativeact);
 	}
 
 	/**

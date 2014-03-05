@@ -91,7 +91,6 @@ import android.widget.ListView;
 import android.widget.SlidingDrawer;
 import android.widget.SlidingDrawer.OnDrawerOpenListener;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.reicast.emulator.config.Config;
 import com.reicast.emulator.debug.GitAdapter;

@@ -408,7 +408,7 @@ public class MainActivity extends SlidingFragmentActivity implements
 			// show it
 			alertDialog.show();
 		} else {
-			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD && !Config.nonative) {
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD && Config.nativeact) {
 				startActivity(new Intent(Intent.ACTION_VIEW, uri, getBaseContext(),
 						GL2JNINative.class));
 			} else {

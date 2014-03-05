@@ -146,9 +146,9 @@ public class GL2JNIView extends GLSurfaceView
 
 		ethd = new EmuThread(!Config.nosound);
 
-		touchVibrationEnabled = prefs.getBoolean("touch_vibration_enabled", true);
+		touchVibrationEnabled = prefs.getBoolean(Config.pref_touchvibe, true);
 
-		int renderType = prefs.getInt("render_type", LAYER_TYPE_HARDWARE);
+		int renderType = prefs.getInt(Config.pref_renderdepth, LAYER_TYPE_HARDWARE);
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
 			this.setLayerType(renderType, null);
 		} else {
@@ -189,7 +189,7 @@ public class GL2JNIView extends GLSurfaceView
 		// is interpreted as any 32-bit surface with alpha by SurfaceFlinger.
 		if(translucent) this.getHolder().setFormat(PixelFormat.TRANSLUCENT);
 
-		if (prefs.getBoolean("force_gpu", false)) {
+		if (prefs.getBoolean(Config.pref_forcegpu, false)) {
 			setEGLContextFactory(new GLCFactory6.ContextFactory());
 			setEGLConfigChooser(
 					translucent?
