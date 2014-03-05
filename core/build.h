@@ -45,6 +45,9 @@
 #define COMPILER_VC  0x30000001
 #define COMPILER_GCC 0x30000002
 
+#ifdef _WIN32
+	#define TARGET_WIN86
+#endif
 
 #ifdef TARGET_WIN86
 	#define HOST_OS OS_WINDOWS
