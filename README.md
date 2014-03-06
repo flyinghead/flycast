@@ -63,14 +63,12 @@ Translations
 New and updated translations are always appreciated!
 All we ask is that you not use “regional” phrases that may not be generally understood.
 
-Translations can be submitted as a pull request or at http://reicast.loungekatt.com/translate
+Translations can be submitted as a pull request
 
 
 Beta versions
 -------------
 Automated Git builds can be found at http://reicast.angelxwind.net/ for iOS and Android.
-
-Android updates are also available through the plugin at http://reicast.loungekatt.com/.
 
 Donations and stuff
 -------------------
