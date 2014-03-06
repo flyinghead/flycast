@@ -60,7 +60,7 @@ public class MainActivity extends SlidingFragmentActivity implements
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.mainuilayout_fragment);
-        setBehindContentView(R.layout.drawer_menu);
+		setBehindContentView(R.layout.drawer_menu);
 
 		mPrefs = PreferenceManager.getDefaultSharedPreferences(this);
 
@@ -71,7 +71,7 @@ public class MainActivity extends SlidingFragmentActivity implements
 		}
 
 		String prior_error = mPrefs.getString("prior_error", null);
-		if (prior_error != null && !prior_error.equals(null)) {
+		if (prior_error != null) {
 			displayLogOutput(prior_error);
 			mPrefs.edit().remove("prior_error").commit();
 		} else {

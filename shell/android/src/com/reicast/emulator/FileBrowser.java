@@ -293,21 +293,18 @@ public class FileBrowser extends Fragment {
 
 	private void createListItem(LinearLayout list, final File game) {
 		final String name = game.getName();
+		final String nameLower = name.toLowerCase(Locale.getDefault());
 		final View childview = parentActivity.getLayoutInflater().inflate(
 				R.layout.app_list_item, null, false);
 
 		((TextView) childview.findViewById(R.id.item_name)).setText(name);
 
 		((ImageView) childview.findViewById(R.id.item_icon))
-				.setImageResource(game == null ? R.drawable.config : game
-						.isDirectory() ? R.drawable.open_folder
-						: name.toLowerCase(Locale.getDefault())
-								.endsWith(".gdi") ? R.drawable.gdi : name
-								.toLowerCase(Locale.getDefault()).endsWith(
-										".cdi") ? R.drawable.cdi : name
-								.toLowerCase(Locale.getDefault()).endsWith(
-										".chd") ? R.drawable.chd
-								: R.drawable.disk_unknown);
+		        .setImageResource(game.isDirectory() ? R.drawable.open_folder
+		                : nameLower.endsWith(".gdi") ? R.drawable.gdi 
+		                : nameLower.endsWith(".cdi") ? R.drawable.cdi
+		                : nameLower.endsWith(".chd") ? R.drawable.chd
+		                : R.drawable.disk_unknown);
 
 		childview.setTag(name);
 
