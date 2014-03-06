@@ -11,7 +11,6 @@ import android.os.Build;
 import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.bda.controller.Controller;
 import com.bda.controller.ControllerListener;
@@ -19,7 +18,6 @@ import com.bda.controller.KeyEvent;
 import com.bda.controller.MotionEvent;
 import com.bda.controller.StateEvent;
 import com.reicast.emulator.R;
-import com.reicast.emulator.emu.JNIdc;
 
 /******************************************************************************/
 
