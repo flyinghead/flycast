@@ -139,7 +139,7 @@ public class AboutFragment extends Fragment {
 					R.id.revision_text);
 			String revision = parentActivity.getString(R.string.revision_text,
 					versionName, String.valueOf(versionCode));
-			if (!buildId.equals("")) {
+			if (!buildId.isEmpty()) {
 				revision = parentActivity.getString(R.string.revision_text,
 						versionName, buildId.substring(0,7));
 			}

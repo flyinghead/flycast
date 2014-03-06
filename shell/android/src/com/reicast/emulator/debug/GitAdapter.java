@@ -145,7 +145,7 @@ public class GitAdapter extends BaseAdapter {
 		final String current = commit.get("Build");
 
 		RelativeLayout item = (RelativeLayout) vi.findViewById(R.id.change);
-		if (current != null && !current.equals("") && current.equals(sha)) {
+		if (current != null && !current.isEmpty() && current.equals(sha)) {
 			item.getBackground().setColorFilter(0xFF00FF00,
 					PorterDuff.Mode.MULTIPLY);
 		} else {
