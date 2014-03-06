@@ -130,9 +130,8 @@ public class Config {
 		TextView text = (TextView) layout.findViewById(R.id.text);
 		text.setText(activity.getString(message));
 
-		DisplayMetrics metrics = new DisplayMetrics();
-		activity.getWindowManager().getDefaultDisplay().getMetrics(metrics);
-		final float scale = activity.getResources().getDisplayMetrics().density;
+		DisplayMetrics metrics = activity.getResources().getDisplayMetrics();
+		final float scale = metrics.density;
 		int toastPixels = (int) ((metrics.widthPixels * scale + 0.5f) / 14);
 
 		Toast toast = new Toast(activity);
