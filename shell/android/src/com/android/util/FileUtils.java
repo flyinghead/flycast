@@ -96,10 +96,9 @@ public class FileUtils {
 			File dir = new File(MainActivity.home_directory);
 			SimpleDateFormat s = new SimpleDateFormat("yyyyMMddHHmmss");
 			String timestamp = s.format(new Date());
-			File f = new File(dir.toString(), timestamp+".jpeg");
+			File f = new File(dir.getPath(), timestamp+".jpeg");
 			FileOutputStream out = new FileOutputStream(f);
 			savePixels(0, 0, w, h, gl).compress(Bitmap.CompressFormat.JPEG, 100, out);
-			out.flush();
 			out.close();
 			//attempt to put into gallery app
 			MediaScannerConnection.scanFile(c.getApplicationContext(), new String[]{f.toString()}, null, new OnScanCompletedListener() {
