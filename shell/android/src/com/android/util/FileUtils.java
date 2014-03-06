@@ -92,7 +92,7 @@ public class FileUtils {
 	}
 	
 	public static void saveScreenshot(final Context c, int w, int h, GL10 gl){
-		try{
+		try {
 			File dir = new File(MainActivity.home_directory);
 			SimpleDateFormat s = new SimpleDateFormat("yyyyMMddHHmmss");
 			String timestamp = s.format(new Date());
@@ -108,34 +108,34 @@ public class FileUtils {
 					//c.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, uri));
 				}
 			});
-		}catch(Exception e){
+		} catch(Exception e) {
 			e.printStackTrace();
 		}
 	}
 	
 	//thank you stackoverflow
 	public static Bitmap savePixels(int x, int y, int w, int h, GL10 gl)
-	{  
-	     int b[]=new int[w*(y+h)];
-	     int bt[]=new int[w*h];
-	     IntBuffer ib=IntBuffer.wrap(b);
-	     ib.position(0);
-	     gl.glReadPixels(x, 0, w, y+h, GL10.GL_RGBA, GL10.GL_UNSIGNED_BYTE, ib);
+	{
+		int b[]=new int[w*(y+h)];
+		int bt[]=new int[w*h];
+		IntBuffer ib=IntBuffer.wrap(b);
+		ib.position(0);
+		gl.glReadPixels(x, 0, w, y+h, GL10.GL_RGBA, GL10.GL_UNSIGNED_BYTE, ib);
 
-	     for(int i=0, k=0; i<h; i++, k++)
-	     {//remember, that OpenGL bitmap is incompatible with Android bitmap
-	      //and so, some correction need.        
-	          for(int j=0; j<w; j++)
-	          {
-	               int pix=b[i*w+j];
-	               int pb=(pix>>16)&0xff;
-	               int pr=(pix<<16)&0x00ff0000;
-	               int pix1=(pix&0xff00ff00) | pr | pb;
-	               bt[(h-k-1)*w+j]=pix1;
-	          }
-	     }
+		for(int i=0, k=0; i<h; i++, k++)
+		{//remember, that OpenGL bitmap is incompatible with Android bitmap
+			//and so, some correction need.        
+			for(int j=0; j<w; j++)
+			{
+				int pix=b[i*w+j];
+				int pb=(pix>>16)&0xff;
+				int pr=(pix<<16)&0x00ff0000;
+				int pix1=(pix&0xff00ff00) | pr | pb;
+				bt[(h-k-1)*w+j]=pix1;
+			}
+		}
 
-	     Bitmap sb=Bitmap.createBitmap(bt, w, h, Bitmap.Config.ARGB_8888);
-	     return sb;
+		Bitmap sb=Bitmap.createBitmap(bt, w, h, Bitmap.Config.ARGB_8888);
+		return sb;
 	}
 }

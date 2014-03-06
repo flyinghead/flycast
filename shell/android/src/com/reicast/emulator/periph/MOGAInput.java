@@ -181,19 +181,19 @@ public class MOGAInput
 			}
 
 			if (event.getState() == StateEvent.STATE_CONNECTION && event.getAction() == ACTION_CONNECTED) {
-        		int mControllerVersion = mController.getState(Controller.STATE_CURRENT_PRODUCT_VERSION);
-        		if (mControllerVersion == Controller.ACTION_VERSION_MOGAPRO) {
-        			pad.isMogaPro[playerNum] = true;
-        			pad.isActiveMoga[playerNum] = true;
-        			Log.d("com.reicast.emulator", act.getApplicationContext().getString(R.string.moga_pro_connect));
-        		} else if (mControllerVersion == Controller.ACTION_VERSION_MOGA) {
-        			pad.isMogaPro[playerNum] = false;
-        			pad.isActiveMoga[playerNum] = true;
-        			Log.d("com.reicast.emulator", act.getApplicationContext().getString(R.string.moga_connect));
-        		}
-        		if (pad.isActiveMoga[playerNum]) {
-        			notifyMogaConnected(notify, playerNum);
-        		}
+				int mControllerVersion = mController.getState(Controller.STATE_CURRENT_PRODUCT_VERSION);
+				if (mControllerVersion == Controller.ACTION_VERSION_MOGAPRO) {
+					pad.isMogaPro[playerNum] = true;
+					pad.isActiveMoga[playerNum] = true;
+					Log.d("com.reicast.emulator", act.getApplicationContext().getString(R.string.moga_pro_connect));
+				} else if (mControllerVersion == Controller.ACTION_VERSION_MOGA) {
+					pad.isMogaPro[playerNum] = false;
+					pad.isActiveMoga[playerNum] = true;
+					Log.d("com.reicast.emulator", act.getApplicationContext().getString(R.string.moga_connect));
+				}
+				if (pad.isActiveMoga[playerNum]) {
+					notifyMogaConnected(notify, playerNum);
+				}
 			}
 		}
 	}

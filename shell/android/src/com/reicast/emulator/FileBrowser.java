@@ -285,8 +285,8 @@ public class FileBrowser extends Fragment {
 				.setImageResource(R.drawable.open_folder);
 		((TextView) headerView.findViewById(R.id.item_name))
 				.setText(header_text);
-        ((TextView) headerView.findViewById(R.id.item_name))
-                .setTypeface(Typeface.DEFAULT_BOLD);
+		((TextView) headerView.findViewById(R.id.item_name))
+				.setTypeface(Typeface.DEFAULT_BOLD);
 		((ViewGroup) view).addView(headerView);
 
 	}

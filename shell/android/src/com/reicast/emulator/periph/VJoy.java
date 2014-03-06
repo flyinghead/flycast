@@ -105,30 +105,30 @@ public class VJoy {
 	}
 	
 	public static void resetCustomVjoyValues(Context context) {
-	       SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
 
-	       prefs.edit().remove("touch_x_shift_dpad").commit();
-	       prefs.edit().remove("touch_y_shift_dpad").commit();
-	       prefs.edit().remove("touch_scale_dpad").commit();
+		prefs.edit().remove("touch_x_shift_dpad").commit();
+		prefs.edit().remove("touch_y_shift_dpad").commit();
+		prefs.edit().remove("touch_scale_dpad").commit();
 
-	       prefs.edit().remove("touch_x_shift_buttons").commit();
-	       prefs.edit().remove("touch_y_shift_buttons").commit();
-	       prefs.edit().remove("touch_scale_buttons").commit();
+		prefs.edit().remove("touch_x_shift_buttons").commit();
+		prefs.edit().remove("touch_y_shift_buttons").commit();
+		prefs.edit().remove("touch_scale_buttons").commit();
 
-	       prefs.edit().remove("touch_x_shift_start").commit();
-	       prefs.edit().remove("touch_y_shift_start").commit();
-	       prefs.edit().remove("touch_scale_start").commit();
+		prefs.edit().remove("touch_x_shift_start").commit();
+		prefs.edit().remove("touch_y_shift_start").commit();
+		prefs.edit().remove("touch_scale_start").commit();
 
-	       prefs.edit().remove("touch_x_shift_left_trigger").commit();
-	       prefs.edit().remove("touch_y_shift_left_trigger").commit();
-	       prefs.edit().remove("touch_scale_left_trigger").commit();
+		prefs.edit().remove("touch_x_shift_left_trigger").commit();
+		prefs.edit().remove("touch_y_shift_left_trigger").commit();
+		prefs.edit().remove("touch_scale_left_trigger").commit();
 
-	       prefs.edit().remove("touch_x_shift_right_trigger").commit();
-	       prefs.edit().remove("touch_y_shift_right_trigger").commit();
-	       prefs.edit().remove("touch_scale_right_trigger").commit();
+		prefs.edit().remove("touch_x_shift_right_trigger").commit();
+		prefs.edit().remove("touch_y_shift_right_trigger").commit();
+		prefs.edit().remove("touch_scale_right_trigger").commit();
 
-	       prefs.edit().remove("touch_x_shift_analog").commit();
-	       prefs.edit().remove("touch_y_shift_analog").commit();
-	       prefs.edit().remove("touch_scale_analog").commit();
-	  }
+		prefs.edit().remove("touch_x_shift_analog").commit();
+		prefs.edit().remove("touch_y_shift_analog").commit();
+		prefs.edit().remove("touch_scale_analog").commit();
+	}
 }
