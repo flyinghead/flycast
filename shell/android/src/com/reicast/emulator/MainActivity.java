@@ -352,7 +352,7 @@ public class MainActivity extends SlidingFragmentActivity implements
 					this);
 
 			// set title
-			alertDialogBuilder.setTitle("You have to provide the BIOS");
+			alertDialogBuilder.setTitle("You have to provide a Dreamcast BIOS.");
 
 			// set dialog message
 			alertDialogBuilder
