@@ -47,12 +47,12 @@ import com.reicast.emulator.emu.JNIdc;
 
 public class FileBrowser extends Fragment {
 
-	Vibrator vib;
-	Drawable orig_bg;
-	Activity parentActivity;
-	boolean ImgBrowse;
+	private Vibrator vib;
+	private Drawable orig_bg;
+	private Activity parentActivity;
+	private boolean ImgBrowse;
 	private boolean games;
-	OnItemSelectedListener mCallback;
+	private OnItemSelectedListener mCallback;
 
 	private SharedPreferences mPrefs;
 	private File sdcard = Environment.getExternalStorageDirectory();
@@ -85,9 +85,8 @@ public class FileBrowser extends Fragment {
 
 	// Container Activity must implement this interface
 	public interface OnItemSelectedListener {
-		public void onGameSelected(Uri uri);
-
-		public void onFolderSelected(Uri uri);
+		void onGameSelected(Uri uri);
+		void onFolderSelected(Uri uri);
 	}
 
 	@Override
