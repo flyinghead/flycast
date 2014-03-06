@@ -168,9 +168,9 @@ public class ConfigureFragment extends Fragment {
 				String item = parent.getItemAtPosition(pos).toString();
 				String selection = item.substring(0, item.indexOf(" - "));
 				mPrefs.edit()
-						.putInt(Config.pref_broadcast, Integer.valueOf(selection))
+						.putInt(Config.pref_broadcast, Integer.parseInt(selection))
 						.commit();
-				Config.broadcast = Integer.valueOf(selection);
+				Config.broadcast = Integer.parseInt(selection);
 
 			}
 
@@ -372,7 +372,7 @@ public class ConfigureFragment extends Fragment {
 
 			public void onItemSelected(AdapterView<?> parent, View view,
 					int pos, long id) {
-				int render = Integer.valueOf(parent.getItemAtPosition(pos)
+				int render = Integer.parseInt(parent.getItemAtPosition(pos)
 						.toString());
 				mPrefs.edit().putInt(Config.pref_renderdepth, render).commit();
 
