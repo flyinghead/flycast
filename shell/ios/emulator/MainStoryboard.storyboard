@@ -895,7 +895,7 @@
                         <sections>
                             <tableViewSection id="5bO-pn-k6g">
                                 <cells>
-                                    <tableViewCell contentMode="scaleToFill" selectionStyle="gray" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" id="yWH-uO-gSN" customClass="MenuCell">
+                                    <tableViewCell contentMode="scaleToFill" selectionStyle="gray" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" reuseIdentifier="browser" id="yWH-uO-gSN" customClass="MenuCell">
                                         <rect key="frame" x="0.0" y="23" width="320" height="44"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="yWH-uO-gSN" id="18s-3V-rCO">
@@ -934,7 +934,7 @@
                                             <segue destination="12" kind="custom" customClass="SWRevealViewControllerSegue" trigger="accessoryAction" id="LRx-0Z-bBN"/>
                                         </connections>
                                     </tableViewCell>
-                                    <tableViewCell contentMode="scaleToFill" selectionStyle="gray" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" id="bw2-C6-8qN" customClass="MenuCell">
+                                    <tableViewCell contentMode="scaleToFill" selectionStyle="gray" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" reuseIdentifier="settings" id="bw2-C6-8qN" customClass="MenuCell">
                                         <rect key="frame" x="0.0" y="67" width="320" height="44"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="bw2-C6-8qN" id="1G7-yi-EZx">
@@ -973,7 +973,7 @@
                                             <segue destination="c3c-6p-wCh" kind="custom" customClass="SWRevealViewControllerSegue" trigger="accessoryAction" id="uWt-k7-bY5"/>
                                         </connections>
                                     </tableViewCell>
-                                    <tableViewCell contentMode="scaleToFill" selectionStyle="gray" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" id="1YN-co-peb" customClass="MenuCell">
+                                    <tableViewCell contentMode="scaleToFill" selectionStyle="gray" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" reuseIdentifier="paths" id="1YN-co-peb" customClass="MenuCell">
                                         <rect key="frame" x="0.0" y="111" width="320" height="44"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="1YN-co-peb" id="vcY-Cl-EzH">
@@ -1012,7 +1012,7 @@
                                             <segue destination="XzS-kx-tLR" kind="custom" customClass="SWRevealViewControllerSegue" trigger="accessoryAction" id="ZfG-Ck-y1N"/>
                                         </connections>
                                     </tableViewCell>
-                                    <tableViewCell contentMode="scaleToFill" selectionStyle="gray" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" id="roF-Xv-zlv" customClass="MenuCell">
+                                    <tableViewCell contentMode="scaleToFill" selectionStyle="gray" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" reuseIdentifier="input" id="roF-Xv-zlv" customClass="MenuCell">
                                         <rect key="frame" x="0.0" y="155" width="320" height="44"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="roF-Xv-zlv" id="ysB-mi-7qA">
@@ -1051,7 +1051,7 @@
                                             <segue destination="PZu-Bi-7Xn" kind="custom" customClass="SWRevealViewControllerSegue" trigger="accessoryAction" id="TOC-px-3X2"/>
                                         </connections>
                                     </tableViewCell>
-                                    <tableViewCell contentMode="scaleToFill" selectionStyle="gray" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" id="8fc-MH-AFQ" customClass="MenuCell">
+                                    <tableViewCell contentMode="scaleToFill" selectionStyle="gray" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" reuseIdentifier="about" id="8fc-MH-AFQ" customClass="MenuCell">
                                         <rect key="frame" x="0.0" y="199" width="320" height="44"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="8fc-MH-AFQ" id="baB-lb-KIZ">
@@ -1444,6 +1444,6 @@
         <simulatedScreenMetrics key="destination" type="retina4"/>
     </simulatedMetricsContainer>
     <inferredMetricsTieBreakers>
-        <segue reference="bPa-BK-u0Y"/>
+        <segue reference="LRx-0Z-bBN"/>
     </inferredMetricsTieBreakers>
 </document>
