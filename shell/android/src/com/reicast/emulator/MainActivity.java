@@ -316,7 +316,7 @@ public class MainActivity extends SlidingFragmentActivity implements
 		AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
 		builder.setTitle(getString(R.string.report_issue));
 		builder.setMessage(error);
-		builder.setNegativeButton("Dismiss",
+		builder.setNegativeButton(getString(R.string.dismiss),
 				new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int which) {
 						dialog.dismiss();
@@ -352,13 +352,16 @@ public class MainActivity extends SlidingFragmentActivity implements
 					this);
 
 			// set title
-			alertDialogBuilder.setTitle("You have to provide a Dreamcast BIOS.");
+			if (!isBiosExisting())
+				alertDialogBuilder.setTitle(getString(R.string.missing_bios_title));
+			else if (!isFlashExisting())
+				alertDialogBuilder.setTitle(getString(R.string.missing_flash_title));
 
 			// set dialog message
 			alertDialogBuilder
 			.setMessage(msg)
 			.setCancelable(false)
-			.setPositiveButton("Dismiss",
+			.setPositiveButton(getString(R.string.dismiss),
 					new DialogInterface.OnClickListener() {
 				public void onClick(DialogInterface dialog,
 						int id) {
@@ -367,7 +370,7 @@ public class MainActivity extends SlidingFragmentActivity implements
 					// MainActivity.this.finish();
 				}
 			})
-			.setNegativeButton("Options",
+			.setNegativeButton(getString(R.string.options),
 					new DialogInterface.OnClickListener() {
 				public void onClick(DialogInterface dialog,
 						int id) {
