@@ -115,32 +115,6 @@ public class Config {
 		JNIdc.dreamtime(DreamTime.getDreamtime());
 	}
 
-	public static void customNotify(Activity activity, int icon, int message) {
-		LayoutInflater inflater = activity.getLayoutInflater();
-		View layout = inflater.inflate(R.layout.toast_layout,
-				(ViewGroup) activity.findViewById(R.id.toast_layout_root));
-
-		ImageView image = (ImageView) layout.findViewById(R.id.image);
-		if (icon != -1) {
-			image.setImageResource(icon);
-		} else {
-			image.setImageResource(R.drawable.ic_launcher);
-		}
-		
-		TextView text = (TextView) layout.findViewById(R.id.text);
-		text.setText(activity.getString(message));
-
-		DisplayMetrics metrics = activity.getResources().getDisplayMetrics();
-		final float scale = metrics.density;
-		int toastPixels = (int) ((metrics.widthPixels * scale + 0.5f) / 14);
-
-		Toast toast = new Toast(activity);
-		toast.setGravity(Gravity.BOTTOM, 0, toastPixels);
-		toast.setDuration(Toast.LENGTH_SHORT);
-		toast.setView(layout);
-		toast.show();
-	}
-
 	/**
 	 * Read the output of a shell command
 	 * 
