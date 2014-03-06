@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
@@ -196,11 +197,8 @@ public class FileBrowser extends Fragment {
 			}
 
 			FileUtils fileUtils = new FileUtils();
-			File[] allMatchingFiles = fileUtils.listFilesAsArray(storage,
-					filter, 1);
-			for (File mediaFile : allMatchingFiles) {
-				tFileList.add(mediaFile);
-			}
+			File[] allMatchingFiles = fileUtils.listFilesAsArray(storage, filter, 1);
+			Collections.addAll(tFileList, allMatchingFiles);
 			return tFileList;
 		}
 
@@ -214,8 +212,8 @@ public class FileBrowser extends Fragment {
 					.getString(R.string.games_listing);
 			createListHeader(heading, list, true);
 			if (games != null && !games.isEmpty()) {
-				for (int i = 0; i < games.size(); i++) {
-					createListItem(list, games.get(i));
+				for (final File game : games) {
+					createListItem(list, game);
 				}
 			} else {
 				Toast.makeText(parentActivity, R.string.config_game,
@@ -351,7 +349,6 @@ public class FileBrowser extends Fragment {
 		createListHeader(heading, v, false);
 
 		File flist[] = root_sd.listFiles();
-
 		File parent = root_sd.getParentFile();
 
 		list.add(null);
@@ -361,32 +358,30 @@ public class FileBrowser extends Fragment {
 
 		Arrays.sort(flist, new DirSort());
 
-		for (int i = 0; i < flist.length; i++)
-			list.add(flist[i]);
+		Collections.addAll(list, flist);
 
-		for (int i = 0; i < list.size(); i++) {
-			if (list.get(i) != null && !list.get(i).isDirectory())
+		for (final File file : list) {
+			if (file != null && !file.isDirectory())
 				continue;
 			final View childview = parentActivity.getLayoutInflater().inflate(
 					R.layout.app_list_item, null, false);
 
-			if (list.get(i) == null) {
+			if (file == null) {
 				((TextView) childview.findViewById(R.id.item_name))
 						.setText(getString(R.string.folder_select));
-			} else if (list.get(i) == parent)
+			} else if (file == parent)
 				((TextView) childview.findViewById(R.id.item_name))
 						.setText("..");
 			else
 				((TextView) childview.findViewById(R.id.item_name))
-						.setText(list.get(i).getName());
+						.setText(file.getName());
 
 			((ImageView) childview.findViewById(R.id.item_icon))
-					.setImageResource(list.get(i) == null ? R.drawable.config
-							: list.get(i).isDirectory() ? R.drawable.open_folder
+					.setImageResource(file == null ? R.drawable.config
+							: file.isDirectory() ? R.drawable.open_folder
 									: R.drawable.disk_unknown);
 
-			childview.setTag(list.get(i));
-			final File item = list.get(i);
+			childview.setTag(file);
 
 			orig_bg = childview.getBackground();
 
@@ -395,8 +390,8 @@ public class FileBrowser extends Fragment {
 			childview.findViewById(R.id.childview).setOnClickListener(
 					new OnClickListener() {
 						public void onClick(View view) {
-							if (item != null && item.isDirectory()) {
-								navigate(item);
+							if (file != null && file.isDirectory()) {
+								navigate(file);
 								ScrollView sv = (ScrollView) parentActivity
 										.findViewById(R.id.game_scroller);
 								sv.scrollTo(0, 0);
@@ -433,11 +428,11 @@ public class FileBrowser extends Fragment {
 			childview.findViewById(R.id.childview).setOnTouchListener(
 					new OnTouchListener() {
 						@SuppressWarnings("deprecation")
-						public boolean onTouch(View view, MotionEvent arg1) {
-							if (arg1.getActionMasked() == MotionEvent.ACTION_DOWN) {
+						public boolean onTouch(View view, MotionEvent event) {
+							if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
 								view.setBackgroundColor(0xFF4F3FFF);
-							} else if (arg1.getActionMasked() == MotionEvent.ACTION_CANCEL
-									|| arg1.getActionMasked() == MotionEvent.ACTION_UP) {
+							} else if (event.getActionMasked() == MotionEvent.ACTION_CANCEL
+									|| event.getActionMasked() == MotionEvent.ACTION_UP) {
 								view.setBackgroundDrawable(orig_bg);
 							}
 
