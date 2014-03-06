@@ -1,8 +1,0 @@
-<resources>
-
-   	<string name="app_name">reicast debug</string>
-
-    <string name="git_issues">https://github.com/reicast/reicast-emulator/issues/</string>
-    <string name="log_url">http://twisted.dyndns.tv:3194/ReicastBot/report/submit.php</string>
-
-</resources>
