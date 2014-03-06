@@ -510,13 +510,14 @@ public class InputFragment extends Fragment {
 		}
 
 		public void onStateEvent(StateEvent event) {
-			if (event.getState() == StateEvent.STATE_CONNECTION
-					&& event.getAction() == MOGAInput.ACTION_CONNECTED) {
+			if (event.getState() == StateEvent.STATE_CONNECTION &&
+			    event.getAction() == MOGAInput.ACTION_CONNECTED) {
+
 				int mControllerVersion = moga.mController
-						.getState(Controller.STATE_CURRENT_PRODUCT_VERSION);
-				if (mControllerVersion == Controller.ACTION_VERSION_MOGAPRO) {
-					pad.isActiveMoga[playerNum] = true;
-				} else if (mControllerVersion == Controller.ACTION_VERSION_MOGA) {
+				        .getState(Controller.STATE_CURRENT_PRODUCT_VERSION);
+
+				if (mControllerVersion == Controller.ACTION_VERSION_MOGA ||
+				    mControllerVersion == Controller.ACTION_VERSION_MOGAPRO) {
 					pad.isActiveMoga[playerNum] = true;
 				}
 			}
