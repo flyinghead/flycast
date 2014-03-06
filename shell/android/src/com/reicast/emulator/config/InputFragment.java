@@ -6,6 +6,7 @@ import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -50,7 +51,7 @@ public class InputFragment extends Fragment {
 
 	// Container Activity must implement this interface
 	public interface OnClickListener {
-		public void onMainBrowseSelected(String path_entry, boolean games);
+		void onMainBrowseSelected(String path_entry, boolean games);
 	}
 
 	@Override
@@ -105,8 +106,7 @@ public class InputFragment extends Fragment {
 		};
 		switchTouchVibrationEnabled = (Switch) getView().findViewById(
 				R.id.switchTouchVibrationEnabled);
-		boolean vibrate = sharedPreferences.getBoolean(Config.pref_touchvibe,
-				true);
+		boolean vibrate = sharedPreferences.getBoolean(Config.pref_touchvibe, true);
 		if (vibrate) {
 			switchTouchVibrationEnabled.setChecked(true);
 		} else {
@@ -120,7 +120,7 @@ public class InputFragment extends Fragment {
 				false);
 		micPluggedIntoFirstController.setChecked(micPluggedIn);
 		if (getActivity().getPackageManager().hasSystemFeature(
-				"android.hardware.microphone")) {
+				PackageManager.FEATURE_MICROPHONE)) {
 			// Microphone is present on the device
 			micPluggedIntoFirstController
 					.setOnCheckedChangeListener(new OnCheckedChangeListener() {
@@ -456,8 +456,7 @@ public class InputFragment extends Fragment {
 			break;
 		}
 
-		Log.d("New controller for port " + String.valueOf(listenForButton)
-				+ ":", descriptor);
+		Log.d("New controller for port " + listenForButton + ":", descriptor);
 
 		listenForButton = 0;
 		alertDialogSelectController.cancel();
@@ -489,7 +488,7 @@ public class InputFragment extends Fragment {
 		updateControllers();
 	}
 
-	class MogaListener implements ControllerListener {
+	private final class MogaListener implements ControllerListener {
 
 		private int playerNum;
 		private String controllerId;
