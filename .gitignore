@@ -31,3 +31,7 @@ DerivedData
 emulator.xccheckout
 reicast.xccheckout
 build/*
+*.so
+*Karen_angelXwind*
+local.properties
+ant.properties
