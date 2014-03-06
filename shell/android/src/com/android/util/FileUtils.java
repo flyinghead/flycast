@@ -57,14 +57,6 @@ public class FileUtils {
 		return null;
 	}
 
-	public File[] listFilesAsArray(File directory, FilenameFilter[] filter,
-			int recurse) {
-		Collection<File> files = listFiles(directory, filter, recurse);
-
-		File[] arr = new File[files.size()];
-		return files.toArray(arr);
-	}
-
 	public Collection<File> listFiles(File directory, FilenameFilter[] filter,
 			int recurse) {
 
@@ -96,7 +88,7 @@ public class FileUtils {
 			File dir = new File(MainActivity.home_directory);
 			SimpleDateFormat s = new SimpleDateFormat("yyyyMMddHHmmss");
 			String timestamp = s.format(new Date());
-			File f = new File(dir.getPath(), timestamp+".jpeg");
+			File f = new File(dir.getAbsolutePath(), timestamp+".jpeg");
 			FileOutputStream out = new FileOutputStream(f);
 			savePixels(0, 0, w, h, gl).compress(Bitmap.CompressFormat.JPEG, 100, out);
 			out.close();
