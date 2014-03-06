@@ -26,7 +26,7 @@ import com.reicast.emulator.emu.JNIdc;
 /*
 
 */
-public class MOGAInput
+public final class MOGAInput
 {
 	private SharedPreferences prefs;
 
@@ -41,7 +41,8 @@ public class MOGAInput
 	private String notify;
 	private Gamepad pad;
 
-	Activity act;
+	private Activity act;
+
 	public MOGAInput()
 	{
 		/*
