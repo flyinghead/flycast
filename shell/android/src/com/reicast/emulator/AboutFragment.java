@@ -119,7 +119,7 @@ public class AboutFragment extends Fragment {
 		handler = new Handler();
 
 		try {
-			InputStream file = parentActivity.getAssets().open("build");
+			InputStream file = getResources().getAssets().open("build");
 			if (file != null) {
 				BufferedReader reader = new BufferedReader(
 						new InputStreamReader(file));
@@ -137,10 +137,10 @@ public class AboutFragment extends Fragment {
 					.getPackageInfo(parentActivity.getPackageName(), 0).versionCode;
 			TextView version = (TextView) getView().findViewById(
 					R.id.revision_text);
-			String revision = parentActivity.getString(R.string.revision_text,
+			String revision = getString(R.string.revision_text,
 					versionName, String.valueOf(versionCode));
 			if (!buildId.isEmpty()) {
-				revision = parentActivity.getString(R.string.revision_text,
+				revision = getString(R.string.revision_text,
 						versionName, buildId.substring(0,7));
 			}
 			version.setText(revision);
@@ -148,17 +148,15 @@ public class AboutFragment extends Fragment {
 			e.printStackTrace();
 		}
 		
-		TextView website = (TextView) getView().findViewById(
-				R.id.site_text);
+		TextView website = (TextView) getView().findViewById(R.id.site_text);
 		Linkify.addLinks(website, Linkify.ALL);
 
-		slidingGithub = (SlidingDrawer) getView().findViewById(
-				R.id.slidingGithub);
+		slidingGithub = (SlidingDrawer) getView().findViewById(R.id.slidingGithub);
 		if (MainActivity.debugUser) {
 			slidingGithub.setOnDrawerOpenListener(new OnDrawerOpenListener() {
 				@TargetApi(Build.VERSION_CODES.HONEYCOMB)
 				public void onDrawerOpened() {
-					String git = parentActivity.getString(R.string.git_api);
+					String git = getString(R.string.git_api);
 					retrieveGitTask queryGithub = new retrieveGitTask();
 					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
 						queryGithub.executeOnExecutor(
@@ -297,8 +295,7 @@ public class AboutFragment extends Fragment {
 		}
 	}
 
-	private JSONArray getContent(String urlString) throws IOException,
-			JSONException {
+	private JSONArray getContent(String urlString) throws IOException, JSONException {
 		StringBuilder builder = new StringBuilder();
 		HttpClient client = new DefaultHttpClient();
 		HttpGet httpGet = new HttpGet(urlString);

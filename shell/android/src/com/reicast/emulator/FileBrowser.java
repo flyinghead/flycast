@@ -19,7 +19,6 @@ import org.apache.commons.lang3.StringUtils;
 import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.content.res.Resources;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -172,9 +171,9 @@ public class FileBrowser extends Fragment {
 		@Override
 		protected List<File> doInBackground(String... paths) {
 			File storage = new File(paths[0]);
-			Resources resources = parentActivity.getResources();
+
 			// array of valid image file extensions
-			String[] mediaTypes = resources.getStringArray(R.array.images);
+			String[] mediaTypes = getResources().getStringArray(R.array.images);
 			FilenameFilter[] filter = new FilenameFilter[mediaTypes.length];
 
 			int i = 0;
@@ -206,8 +205,7 @@ public class FileBrowser extends Fragment {
 					.findViewById(R.id.game_list);
 			list.removeAllViews();
 
-			String heading = parentActivity
-					.getString(R.string.games_listing);
+			String heading = getString(R.string.games_listing);
 			createListHeader(heading, list, true);
 			if (games != null && !games.isEmpty()) {
 				for (final File game : games) {
@@ -240,7 +238,7 @@ public class FileBrowser extends Fragment {
 					R.layout.bios_list_item, null, false);
 
 			((TextView) childview.findViewById(R.id.item_name))
-					.setText(parentActivity.getString(R.string.boot_bios));
+					.setText(R.string.boot_bios);
 
 			childview.setTag(null);
 
@@ -365,14 +363,11 @@ public class FileBrowser extends Fragment {
 					R.layout.app_list_item, null, false);
 
 			if (file == null) {
-				((TextView) childview.findViewById(R.id.item_name))
-						.setText(getString(R.string.folder_select));
+				((TextView) childview.findViewById(R.id.item_name)).setText(R.string.folder_select);
 			} else if (file == parent)
-				((TextView) childview.findViewById(R.id.item_name))
-						.setText("..");
+				((TextView) childview.findViewById(R.id.item_name)).setText("..");
 			else
-				((TextView) childview.findViewById(R.id.item_name))
-						.setText(file.getName());
+				((TextView) childview.findViewById(R.id.item_name)).setText(file.getName());
 
 			((ImageView) childview.findViewById(R.id.item_icon))
 					.setImageResource(file == null ? R.drawable.config

@@ -286,7 +286,7 @@ public class InputFragment extends Fragment {
 				buttonRemoveControllerPlayer1.setEnabled(true);
 			} else {
 				textViewDeviceDescriptorPlayer1
-						.setText(getString(R.string.controller_none_selected));
+						.setText(R.string.controller_none_selected);
 				buttonRemoveControllerPlayer1.setEnabled(false);
 			}
 		}
@@ -306,7 +306,7 @@ public class InputFragment extends Fragment {
 				buttonRemoveControllerPlayer2.setEnabled(true);
 			} else {
 				textViewDeviceDescriptorPlayer2
-						.setText(getString(R.string.controller_none_selected));
+						.setText(R.string.controller_none_selected);
 				buttonRemoveControllerPlayer2.setEnabled(false);
 			}
 		}
@@ -326,7 +326,7 @@ public class InputFragment extends Fragment {
 				buttonRemoveControllerPlayer3.setEnabled(true);
 			} else {
 				textViewDeviceDescriptorPlayer3
-						.setText(getString(R.string.controller_none_selected));
+						.setText(R.string.controller_none_selected);
 				buttonRemoveControllerPlayer3.setEnabled(false);
 			}
 		}
@@ -346,7 +346,7 @@ public class InputFragment extends Fragment {
 				buttonRemoveControllerPlayer4.setEnabled(true);
 			} else {
 				textViewDeviceDescriptorPlayer4
-						.setText(getString(R.string.controller_none_selected));
+						.setText(R.string.controller_none_selected);
 				buttonRemoveControllerPlayer4.setEnabled(false);
 			}
 		}
@@ -356,17 +356,17 @@ public class InputFragment extends Fragment {
 		listenForButton = playerNum;
 
 		AlertDialog.Builder builder = new AlertDialog.Builder(parentActivity);
-		builder.setTitle(getString(R.string.select_controller_title));
+		builder.setTitle(R.string.select_controller_title);
 		builder.setMessage(getString(R.string.select_controller_message,
 				String.valueOf(listenForButton)));
-		builder.setPositiveButton(getString(R.string.cancel),
+		builder.setPositiveButton(R.string.cancel,
 				new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int which) {
 						listenForButton = 0;
 						dialog.dismiss();
 					}
 				});
-		builder.setNegativeButton(getString(R.string.manual),
+		builder.setNegativeButton(R.string.manual,
 				new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int which) {
 						InputModFragment inputModFrag = new InputModFragment();

@@ -185,11 +185,11 @@ public class MOGAInput
 				if (mControllerVersion == Controller.ACTION_VERSION_MOGAPRO) {
 					pad.isMogaPro[playerNum] = true;
 					pad.isActiveMoga[playerNum] = true;
-					Log.d("com.reicast.emulator", act.getApplicationContext().getString(R.string.moga_pro_connect));
+					Log.d("com.reicast.emulator", act.getString(R.string.moga_pro_connect));
 				} else if (mControllerVersion == Controller.ACTION_VERSION_MOGA) {
 					pad.isMogaPro[playerNum] = false;
 					pad.isActiveMoga[playerNum] = true;
-					Log.d("com.reicast.emulator", act.getApplicationContext().getString(R.string.moga_connect));
+					Log.d("com.reicast.emulator", act.getString(R.string.moga_connect));
 				}
 				if (pad.isActiveMoga[playerNum]) {
 					notifyMogaConnected(notify, playerNum);

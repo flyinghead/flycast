@@ -471,7 +471,7 @@ public class InputModFragment extends Fragment {
 			this.output = output;
 			isMapping = true;
 			AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-			builder.setTitle(getString(R.string.map_keycode_title));
+			builder.setTitle(R.string.map_keycode_title);
 			builder.setMessage(getString(R.string.map_keycode_message, button.replace("_", " ")));
 			builder.setNegativeButton(R.string.cancel,
 					new DialogInterface.OnClickListener() {

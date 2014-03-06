@@ -175,7 +175,7 @@ public class MainActivity extends SlidingFragmentActivity implements
 						.replace(R.id.fragment_container, browseFrag,
 								"MAIN_BROWSER").addToBackStack(null)
 								.commit();
-						setTitle(getString(R.string.browser));
+						setTitle(R.string.browser);
 						sm.toggle(true);
 					}
 
@@ -195,7 +195,7 @@ public class MainActivity extends SlidingFragmentActivity implements
 						.replace(R.id.fragment_container, configFrag,
 								"CONFIG_FRAG").addToBackStack(null)
 								.commit();
-						setTitle(getString(R.string.settings));
+						setTitle(R.string.settings);
 						sm.toggle(true);
 					}
 
@@ -217,7 +217,7 @@ public class MainActivity extends SlidingFragmentActivity implements
 								.replace(R.id.fragment_container,
 										optionsFrag, "OPTIONS_FRAG")
 										.addToBackStack(null).commit();
-								setTitle(getString(R.string.paths));
+								setTitle(R.string.paths);
 								sm.toggle(true);
 							}
 
@@ -237,7 +237,7 @@ public class MainActivity extends SlidingFragmentActivity implements
 						.beginTransaction()
 						.replace(R.id.fragment_container, inputFrag,
 								"INPUT_FRAG").addToBackStack(null).commit();
-						setTitle(getString(R.string.input));
+						setTitle(R.string.input);
 						sm.toggle(true);
 					}
 
@@ -257,7 +257,7 @@ public class MainActivity extends SlidingFragmentActivity implements
 						.beginTransaction()
 						.replace(R.id.fragment_container, aboutFrag,
 								"ABOUT_FRAG").addToBackStack(null).commit();
-						setTitle(getString(R.string.about));
+						setTitle(R.string.about);
 						sm.toggle(true);
 					}
 
@@ -274,7 +274,7 @@ public class MainActivity extends SlidingFragmentActivity implements
 								startActivity(new Intent(Intent.ACTION_VIEW, Uri
 										.parse("market://details?id="
 												+ getPackageName())));
-								//setTitle(getString(R.string.rateme));
+								//setTitle(R.string.rateme);
 								sm.toggle(true);
 								return true;
 							} else
@@ -314,9 +314,9 @@ public class MainActivity extends SlidingFragmentActivity implements
 	 */
 	private void displayLogOutput(final String error) {
 		AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-		builder.setTitle(getString(R.string.report_issue));
+		builder.setTitle(R.string.report_issue);
 		builder.setMessage(error);
-		builder.setNegativeButton(getString(R.string.dismiss),
+		builder.setNegativeButton(R.string.dismiss,
 				new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int which) {
 						dialog.dismiss();
@@ -353,34 +353,31 @@ public class MainActivity extends SlidingFragmentActivity implements
 
 			// set title
 			if (!isBiosExisting())
-				alertDialogBuilder.setTitle(getString(R.string.missing_bios_title));
+				alertDialogBuilder.setTitle(R.string.missing_bios_title);
 			else if (!isFlashExisting())
-				alertDialogBuilder.setTitle(getString(R.string.missing_flash_title));
+				alertDialogBuilder.setTitle(R.string.missing_flash_title);
 
 			// set dialog message
 			alertDialogBuilder
 			.setMessage(msg)
 			.setCancelable(false)
-			.setPositiveButton(getString(R.string.dismiss),
+			.setPositiveButton(R.string.dismiss,
 					new DialogInterface.OnClickListener() {
-				public void onClick(DialogInterface dialog,
-						int id) {
+				public void onClick(DialogInterface dialog, int id) {
 					// if this button is clicked, close
 					// current activity
 					// MainActivity.this.finish();
 				}
 			})
-			.setNegativeButton(getString(R.string.options),
+			.setNegativeButton(R.string.options,
 					new DialogInterface.OnClickListener() {
-				public void onClick(DialogInterface dialog,
-						int id) {
+				public void onClick(DialogInterface dialog, int id) {
 					FileBrowser firstFragment = new FileBrowser();
 					Bundle args = new Bundle();
 					// args.putBoolean("ImgBrowse", false);
 					// specify ImgBrowse option. true = images,
 					// false = folders only
-					args.putString("browse_entry",
-							sdcard.toString());
+					args.putString("browse_entry", sdcard.toString());
 					// specify a path for selecting folder
 					// options
 					args.putBoolean("games_entry", false);
@@ -523,7 +520,7 @@ public class MainActivity extends SlidingFragmentActivity implements
 		.beginTransaction()
 		.replace(R.id.fragment_container, fragment,
 				"MAIN_BROWSER").commit();
-		setTitle(getString(R.string.browser));
+		setTitle(R.string.browser);
 	}
 
 	@Override
