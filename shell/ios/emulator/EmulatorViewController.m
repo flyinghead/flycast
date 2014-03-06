@@ -1,12 +1,12 @@
 //
-//  ViewController.m
+//  EmulatorViewController.m
 //  emulator
 //
-//  Created by Lounge Katt on 2/6/14.
-//  Copyright (c) 2014 Lounge Katt. All rights reserved.
+//  Created by Karen Tsai (angelXwind) on 2014/3/5.
+//  Copyright (c) 2014 Karen Tsai (angelXwind). All rights reserved.
 //
 
-#import "ViewController.h"
+#import "EmulatorViewController.h"
 
 #define BUFFER_OFFSET(i) ((char *)NULL + (i))
 

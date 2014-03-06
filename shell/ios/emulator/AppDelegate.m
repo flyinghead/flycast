@@ -12,6 +12,10 @@
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
+    if ([UIDevice currentDevice].systemVersion.floatValue >= 7.0f) // TODO: consider using the black variant for iOS 5.
+        [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleLightContent];
+    else
+        [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleDefault];
     // Override point for customization after application launch.
     return YES;
 }
