@@ -7,6 +7,7 @@
 //
 
 #import "AboutViewController.h"
+#import "SWRevealViewController.h"
 
 @interface AboutViewController ()
 
@@ -26,7 +27,16 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-
+    self.title = @"About";
+    
+    versionLabel.text = [NSBundle mainBundle].infoDictionary[@"GitVersionString"];
+    
+    // Set the side bar button action. When it's tapped, it'll show up the sidebar.
+    _sidebarButton.target = self.revealViewController;
+    _sidebarButton.action = @selector(revealToggle:);
+    
+    // Set the gesture
+    [self.view addGestureRecognizer:self.revealViewController.panGestureRecognizer];
     // Uncomment the following line to preserve selection between presentations.
     // self.clearsSelectionOnViewWillAppear = NO;
  
@@ -42,79 +52,32 @@
 
 #pragma mark - Table view data source
 
-- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
+- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
-#warning Potentially incomplete method implementation.
-    // Return the number of sections.
-    return 0;
+    NSArray *developerTwitters = @[@"angelXwind"/*, @"LoungeKatt"*/]; //@LoungeKatt is private, so not linking it to the About dialog.
+    NSArray *githubframeworks = @[@"John-Lluch/SWRevealViewController"];
+    if (indexPath.section == 0 && indexPath.row == 0) //@reicastdc twitter
+    {
+        NSURL *twitterURL = [NSURL URLWithString:[NSString stringWithFormat:@"twitter://user?screen_name=reicastdc"]];
+        if ([[UIApplication sharedApplication] canOpenURL:twitterURL])
+            [[UIApplication sharedApplication] openURL:twitterURL];
+        else
+            [[UIApplication sharedApplication] openURL:[NSURL URLWithString:[NSString stringWithFormat:@"https://twitter.com/reicastdc"]]];
+    } else if (indexPath.section == 0 && indexPath.row == 1) //reicast github
+    {
+        [[UIApplication sharedApplication] openURL:[NSURL URLWithString:[NSString stringWithFormat:@"https://github.com/reicast/reicast-emulator/"]]];
+    } else if (indexPath.section == 1 && indexPath.row < developerTwitters.count) //developer twitter accounts
+    {
+        NSURL *twitterURL = [NSURL URLWithString:[NSString stringWithFormat:@"twitter://user?screen_name=%@", developerTwitters[indexPath.row]]];
+        if ([[UIApplication sharedApplication] canOpenURL:twitterURL])
+            [[UIApplication sharedApplication] openURL:twitterURL];
+        else
+            [[UIApplication sharedApplication] openURL:[NSURL URLWithString:[NSString stringWithFormat:@"https://twitter.com/%@", developerTwitters[indexPath.row]]]];
+    } else if (indexPath.section == 2 && indexPath.row < githubframeworks.count) //third-party frameworks
+    {
+        [[UIApplication sharedApplication] openURL:[NSURL URLWithString:[NSString stringWithFormat:@"https://github.com/%@", githubframeworks[indexPath.row]]]];
+    }
+    [tableView deselectRowAtIndexPath:indexPath animated:YES];
 }
-
-- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
-{
-#warning Incomplete method implementation.
-    // Return the number of rows in the section.
-    return 0;
-}
-
-- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
-{
-    static NSString *CellIdentifier = @"Cell";
-    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier forIndexPath:indexPath];
-    
-    // Configure the cell...
-    
-    return cell;
-}
-
-/*
-// Override to support conditional editing of the table view.
-- (BOOL)tableView:(UITableView *)tableView canEditRowAtIndexPath:(NSIndexPath *)indexPath
-{
-    // Return NO if you do not want the specified item to be editable.
-    return YES;
-}
-*/
-
-/*
-// Override to support editing the table view.
-- (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath
-{
-    if (editingStyle == UITableViewCellEditingStyleDelete) {
-        // Delete the row from the data source
-        [tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
-    }   
-    else if (editingStyle == UITableViewCellEditingStyleInsert) {
-        // Create a new instance of the appropriate class, insert it into the array, and add a new row to the table view
-    }   
-}
-*/
-
-/*
-// Override to support rearranging the table view.
-- (void)tableView:(UITableView *)tableView moveRowAtIndexPath:(NSIndexPath *)fromIndexPath toIndexPath:(NSIndexPath *)toIndexPath
-{
-}
-*/
-
-/*
-// Override to support conditional rearranging of the table view.
-- (BOOL)tableView:(UITableView *)tableView canMoveRowAtIndexPath:(NSIndexPath *)indexPath
-{
-    // Return NO if you do not want the item to be re-orderable.
-    return YES;
-}
-*/
-
-/*
-#pragma mark - Navigation
-
-// In a story board-based application, you will often want to do a little preparation before navigation
-- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
-{
-    // Get the new view controller using [segue destinationViewController].
-    // Pass the selected object to the new view controller.
-}
-
- */
 
 @end

@@ -10,6 +10,5 @@
 #import <GLKit/GLKit.h>
 
 @interface ViewController : GLKViewController
-@property (weak, nonatomic) IBOutlet UIBarButtonItem *sidebarButton;
 
 @end

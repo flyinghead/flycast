@@ -8,6 +8,9 @@
 
 #import <UIKit/UIKit.h>
 
-@interface AboutViewController : UITableViewController
+@interface AboutViewController : UITableViewController {
+    IBOutlet UILabel *versionLabel;
+}
+@property (weak, nonatomic) IBOutlet UIBarButtonItem *sidebarButton;
 
 @end

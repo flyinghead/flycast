@@ -1463,6 +1463,7 @@
 				87078A7F18A47FE90034C7A0 /* Sources */,
 				87078A8018A47FE90034C7A0 /* Frameworks */,
 				87078A8118A47FE90034C7A0 /* Resources */,
+				9C7A3C2518C85A080070BB5F /* ShellScript */,
 			);
 			buildRules = (
 			);
@@ -1556,6 +1557,22 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		9C7A3C2518C85A080070BB5F /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "GIT=`which git`\nif [ \"$GIT\" -a -d .git ]; then\nGIT_VERSION=`$GIT describe --tags --always`\nelse\nGIT_VERSION=unknown\nfi\ndefaults write $BUILT_PRODUCTS_DIR/$CONTENTS_FOLDER_PATH/Info GitVersionString -string $GIT_VERSION";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		87078A7F18A47FE90034C7A0 /* Sources */ = {

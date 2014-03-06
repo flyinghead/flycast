@@ -9,5 +9,6 @@
 #import <UIKit/UIKit.h>
 
 @interface PathsViewController : UITableViewController
+@property (weak, nonatomic) IBOutlet UIBarButtonItem *sidebarButton;
 
 @end
