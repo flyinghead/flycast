@@ -224,9 +224,9 @@ public class FileBrowser extends Fragment {
 
 	}
 
-	class DirSort implements Comparator<File> {
+	private static final class DirSort implements Comparator<File> {
 
-		// Comparator interface requires defining compare method.
+		@Override
 		public int compare(File filea, File fileb) {
 
 			return ((filea.isFile() ? "a" : "b") + filea.getName().toLowerCase(
