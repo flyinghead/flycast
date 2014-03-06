@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -170,7 +171,6 @@ public class FileBrowser extends Fragment {
 
 		@Override
 		protected List<File> doInBackground(String... paths) {
-			final List<File> tFileList = new ArrayList<File>();
 			File storage = new File(paths[0]);
 			Resources resources = parentActivity.getResources();
 			// array of valid image file extensions
@@ -196,9 +196,8 @@ public class FileBrowser extends Fragment {
 			}
 
 			FileUtils fileUtils = new FileUtils();
-			File[] allMatchingFiles = fileUtils.listFilesAsArray(storage, filter, 1);
-			Collections.addAll(tFileList, allMatchingFiles);
-			return tFileList;
+			Collection<File> files = fileUtils.listFiles(storage, filter, 1);
+			return (List<File>) files;
 		}
 
 		@Override

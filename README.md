@@ -68,10 +68,9 @@ Translations can be submitted as a pull request or at http://reicast.loungekatt.
 
 Beta versions
 -------------
-Compiled test versions are available at http://reicast.loungekatt.com/ for Android.
+Automated Git builds can be found at http://reicast.angelxwind.net/ for iOS and Android.
 
-Automated Git builds can also be found at http://reicast.angelxwind.net/ for iOS and Android.
-
+Android updates are also available through the plugin at http://reicast.loungekatt.com/.
 
 Donations and stuff
 -------------------
