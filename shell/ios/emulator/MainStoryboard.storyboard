@@ -395,7 +395,7 @@
                         </sections>
                     </tableView>
                     <navigationItem key="navigationItem" title="Settings" id="rWF-4U-yKM">
-                        <barButtonItem key="leftBarButtonItem" title="Menu" id="nHp-gh-HhE">
+                        <barButtonItem key="leftBarButtonItem" image="menuicon.png" id="nHp-gh-HhE">
                             <color key="tintColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                         </barButtonItem>
                     </navigationItem>
@@ -473,7 +473,7 @@
                         </connections>
                     </tableView>
                     <navigationItem key="navigationItem" title="Browser" id="36">
-                        <barButtonItem key="leftBarButtonItem" title="Menu" id="Tyx-TC-opV">
+                        <barButtonItem key="leftBarButtonItem" image="menuicon.png" id="Tyx-TC-opV">
                             <color key="tintColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                         </barButtonItem>
                     </navigationItem>
@@ -507,7 +507,7 @@
                                 <rect key="frame" x="1" y="328" width="320" height="240"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                                 <subviews>
-                                    <view contentMode="scaleToFill" id="2r2-6d-4At" customClass="NDSDirectionalControl">
+                                    <view contentMode="scaleToFill" id="2r2-6d-4At" customClass="DirectionalControl">
                                         <rect key="frame" x="0.0" y="112" width="120" height="120"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES" flexibleMaxY="YES"/>
                                         <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
@@ -515,7 +515,7 @@
                                             <action selector="pressedDPad:" destination="WRM-pR-XCP" eventType="valueChanged" id="Cqe-1p-cTH"/>
                                         </connections>
                                     </view>
-                                    <view contentMode="scaleToFill" id="wc7-x7-O1M" customClass="NDSButtonControl">
+                                    <view contentMode="scaleToFill" id="wc7-x7-O1M" customClass="ButtonControl">
                                         <rect key="frame" x="200" y="112" width="120" height="120"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES" flexibleMaxY="YES"/>
                                         <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
@@ -523,25 +523,8 @@
                                             <action selector="pressedABXY:" destination="WRM-pR-XCP" eventType="valueChanged" id="5Rn-3B-kxl"/>
                                         </connections>
                                     </view>
-                                    <button opaque="NO" tag="4" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" adjustsImageWhenHighlighted="NO" adjustsImageWhenDisabled="NO" lineBreakMode="middleTruncation" id="V4S-vg-8Nm">
-                                        <rect key="frame" x="109" y="214" width="48" height="26"/>
-                                        <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
-                                        <fontDescription key="fontDescription" type="boldSystem" pointSize="15"/>
-                                        <state key="normal" backgroundImage="Select.png">
-                                            <color key="titleColor" red="0.29803922772407532" green="0.29803922772407532" blue="0.29803922772407532" alpha="1" colorSpace="calibratedRGB"/>
-                                            <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
-                                        </state>
-                                        <state key="highlighted">
-                                            <color key="titleColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
-                                        </state>
-                                        <connections>
-                                            <action selector="onButtonDown:" destination="WRM-pR-XCP" eventType="touchDown" id="y0V-BE-cP5"/>
-                                            <action selector="onButtonUp:" destination="WRM-pR-XCP" eventType="touchUpInside" id="7lx-KM-ry2"/>
-                                            <action selector="onButtonUp:" destination="WRM-pR-XCP" eventType="touchUpOutside" id="FJ2-Vv-RIY"/>
-                                        </connections>
-                                    </button>
                                     <button opaque="NO" tag="5" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" adjustsImageWhenHighlighted="NO" adjustsImageWhenDisabled="NO" lineBreakMode="middleTruncation" id="DAf-Ip-ZfX">
-                                        <rect key="frame" x="163" y="214" width="48" height="26"/>
+                                        <rect key="frame" x="136" y="206" width="48" height="26"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
                                         <fontDescription key="fontDescription" type="boldSystem" pointSize="15"/>
                                         <state key="normal" backgroundImage="Start.png">
@@ -622,7 +605,6 @@
                         <outlet property="directionalControl" destination="2r2-6d-4At" id="vWy-8J-bQS"/>
                         <outlet property="dismissButton" destination="VZZ-1B-BHQ" id="mnz-cv-9tm"/>
                         <outlet property="fpsLabel" destination="mo4-qa-NUQ" id="8Zo-5a-CNQ"/>
-                        <outlet property="selectButton" destination="V4S-vg-8Nm" id="tBb-zg-QsY"/>
                         <outlet property="startButton" destination="DAf-Ip-ZfX" id="p1g-5Z-VZV"/>
                     </connections>
                 </viewController>
@@ -644,7 +626,7 @@
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <color key="backgroundColor" red="0.93725496529999996" green="0.93725496529999996" blue="0.95686280729999995" alpha="1" colorSpace="deviceRGB"/>
                         <sections>
-                            <tableViewSection headerTitle="reicast" id="rPI-it-7HS" userLabel="InfiniDev Twitter">
+                            <tableViewSection headerTitle="reicast" id="rPI-it-7HS">
                                 <cells>
                                     <tableViewCell contentMode="scaleToFill" selectionStyle="gray" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" textLabel="Tta-Oi-9kd" style="IBUITableViewCellStyleDefault" id="kQz-pt-y9O">
                                         <rect key="frame" x="0.0" y="119" width="320" height="44"/>
@@ -668,12 +650,34 @@
                                         </tableViewCellContentView>
                                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                     </tableViewCell>
+                                    <tableViewCell contentMode="scaleToFill" selectionStyle="gray" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" textLabel="wSL-UC-Eg6" style="IBUITableViewCellStyleDefault" id="mBv-oV-Zxu">
+                                        <rect key="frame" x="0.0" y="163" width="320" height="44"/>
+                                        <autoresizingMask key="autoresizingMask"/>
+                                        <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="mBv-oV-Zxu" id="FK3-Q3-ooP">
+                                            <rect key="frame" x="0.0" y="0.0" width="320" height="43"/>
+                                            <autoresizingMask key="autoresizingMask"/>
+                                            <subviews>
+                                                <label opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="left" text="reicast/reicast-emulator" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="wSL-UC-Eg6">
+                                                    <rect key="frame" x="15" y="0.0" width="290" height="43"/>
+                                                    <autoresizingMask key="autoresizingMask"/>
+                                                    <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                                    <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
+                                                    <nil key="highlightedColor"/>
+                                                </label>
+                                                <imageView opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" image="210-octocat.png" id="lde-Dc-p8h">
+                                                    <rect key="frame" x="289" y="11" width="22" height="22"/>
+                                                    <autoresizingMask key="autoresizingMask" flexibleMinX="YES"/>
+                                                </imageView>
+                                            </subviews>
+                                        </tableViewCellContentView>
+                                        <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                    </tableViewCell>
                                 </cells>
                             </tableViewSection>
-                            <tableViewSection headerTitle="reicast iOS Developers" id="bB9-5l-Lwc" userLabel="InfiniDev Twitter">
+                            <tableViewSection headerTitle="reicast iOS Developers" id="bB9-5l-Lwc">
                                 <cells>
                                     <tableViewCell contentMode="scaleToFill" selectionStyle="gray" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" textLabel="8c2-Ki-74y" style="IBUITableViewCellStyleDefault" id="t2B-60-djU">
-                                        <rect key="frame" x="0.0" y="211" width="320" height="44"/>
+                                        <rect key="frame" x="0.0" y="255" width="320" height="44"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="t2B-60-djU" id="HA1-NI-QQr">
                                             <rect key="frame" x="0.0" y="0.0" width="320" height="43"/>
@@ -695,7 +699,7 @@
                                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                     </tableViewCell>
                                     <tableViewCell contentMode="scaleToFill" selectionStyle="gray" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" textLabel="b1R-MO-pFn" style="IBUITableViewCellStyleDefault" id="WS7-jv-EhH">
-                                        <rect key="frame" x="0.0" y="255" width="320" height="44"/>
+                                        <rect key="frame" x="0.0" y="299" width="320" height="44"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="WS7-jv-EhH" id="SVt-UV-RJB">
                                             <rect key="frame" x="0.0" y="0.0" width="320" height="43"/>
@@ -708,20 +712,16 @@
                                                     <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
                                                     <nil key="highlightedColor"/>
                                                 </label>
-                                                <imageView opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" image="210-twitterbird.png" id="RUo-VG-FKP">
-                                                    <rect key="frame" x="289" y="11" width="22" height="22"/>
-                                                    <autoresizingMask key="autoresizingMask" flexibleMinX="YES"/>
-                                                </imageView>
                                             </subviews>
                                         </tableViewCellContentView>
                                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                     </tableViewCell>
                                 </cells>
                             </tableViewSection>
-                            <tableViewSection headerTitle="reicast Core Developers" id="vko-5a-NSx" userLabel="InfiniDev Twitter">
+                            <tableViewSection headerTitle="reicast Core Developers" id="vko-5a-NSx">
                                 <cells>
                                     <tableViewCell contentMode="scaleToFill" selectionStyle="gray" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" textLabel="Byv-Xg-O2X" style="IBUITableViewCellStyleDefault" id="guG-G9-H1W">
-                                        <rect key="frame" x="0.0" y="347" width="320" height="44"/>
+                                        <rect key="frame" x="0.0" y="391" width="320" height="44"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="guG-G9-H1W" id="2yZ-dl-AB0">
                                             <rect key="frame" x="0.0" y="0.0" width="320" height="43"/>
@@ -734,16 +734,12 @@
                                                     <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
                                                     <nil key="highlightedColor"/>
                                                 </label>
-                                                <imageView opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" image="210-twitterbird.png" id="fLx-nY-mSw">
-                                                    <rect key="frame" x="289" y="11" width="22" height="22"/>
-                                                    <autoresizingMask key="autoresizingMask" flexibleMinX="YES"/>
-                                                </imageView>
                                             </subviews>
                                         </tableViewCellContentView>
                                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                     </tableViewCell>
                                     <tableViewCell contentMode="scaleToFill" selectionStyle="gray" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" textLabel="mRA-9i-5tR" style="IBUITableViewCellStyleDefault" id="dQy-g4-S16">
-                                        <rect key="frame" x="0.0" y="391" width="320" height="44"/>
+                                        <rect key="frame" x="0.0" y="435" width="320" height="44"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="dQy-g4-S16" id="3dO-8Z-3yY">
                                             <rect key="frame" x="0.0" y="0.0" width="320" height="43"/>
@@ -756,16 +752,12 @@
                                                     <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
                                                     <nil key="highlightedColor"/>
                                                 </label>
-                                                <imageView opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" image="210-twitterbird.png" id="29D-F6-hnS">
-                                                    <rect key="frame" x="289" y="11" width="22" height="22"/>
-                                                    <autoresizingMask key="autoresizingMask" flexibleMinX="YES"/>
-                                                </imageView>
                                             </subviews>
                                         </tableViewCellContentView>
                                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                     </tableViewCell>
                                     <tableViewCell contentMode="scaleToFill" selectionStyle="gray" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" textLabel="pms-nc-K79" style="IBUITableViewCellStyleDefault" id="ync-mn-VmT">
-                                        <rect key="frame" x="0.0" y="435" width="320" height="44"/>
+                                        <rect key="frame" x="0.0" y="479" width="320" height="44"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="ync-mn-VmT" id="2YE-SV-jX5">
                                             <rect key="frame" x="0.0" y="0.0" width="320" height="43"/>
@@ -778,16 +770,12 @@
                                                     <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
                                                     <nil key="highlightedColor"/>
                                                 </label>
-                                                <imageView opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" image="210-twitterbird.png" id="Ho3-Wu-YnD">
-                                                    <rect key="frame" x="289" y="11" width="22" height="22"/>
-                                                    <autoresizingMask key="autoresizingMask" flexibleMinX="YES"/>
-                                                </imageView>
                                             </subviews>
                                         </tableViewCellContentView>
                                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                     </tableViewCell>
                                     <tableViewCell contentMode="scaleToFill" selectionStyle="gray" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" textLabel="llN-Uf-9zj" style="IBUITableViewCellStyleDefault" id="0dx-Qi-1WO">
-                                        <rect key="frame" x="0.0" y="479" width="320" height="44"/>
+                                        <rect key="frame" x="0.0" y="523" width="320" height="44"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="0dx-Qi-1WO" id="Qn8-XW-rdw">
                                             <rect key="frame" x="0.0" y="0.0" width="320" height="43"/>
@@ -800,16 +788,12 @@
                                                     <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
                                                     <nil key="highlightedColor"/>
                                                 </label>
-                                                <imageView opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" image="210-twitterbird.png" id="6k3-Gt-awk">
-                                                    <rect key="frame" x="289" y="11" width="22" height="22"/>
-                                                    <autoresizingMask key="autoresizingMask" flexibleMinX="YES"/>
-                                                </imageView>
                                             </subviews>
                                         </tableViewCellContentView>
                                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                     </tableViewCell>
                                     <tableViewCell contentMode="scaleToFill" selectionStyle="gray" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" textLabel="uL9-hq-cBA" style="IBUITableViewCellStyleDefault" id="Qyg-qP-QhM">
-                                        <rect key="frame" x="0.0" y="523" width="320" height="44"/>
+                                        <rect key="frame" x="0.0" y="567" width="320" height="44"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="Qyg-qP-QhM" id="Ocx-l5-KrD">
                                             <rect key="frame" x="0.0" y="0.0" width="320" height="43"/>
@@ -822,16 +806,12 @@
                                                     <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
                                                     <nil key="highlightedColor"/>
                                                 </label>
-                                                <imageView opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" image="210-twitterbird.png" id="6rm-Jo-e9W">
-                                                    <rect key="frame" x="289" y="11" width="22" height="22"/>
-                                                    <autoresizingMask key="autoresizingMask" flexibleMinX="YES"/>
-                                                </imageView>
                                             </subviews>
                                         </tableViewCellContentView>
                                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                     </tableViewCell>
                                     <tableViewCell contentMode="scaleToFill" selectionStyle="gray" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" textLabel="IbX-JF-bbI" style="IBUITableViewCellStyleDefault" id="pcm-bq-cG2">
-                                        <rect key="frame" x="0.0" y="567" width="320" height="44"/>
+                                        <rect key="frame" x="0.0" y="611" width="320" height="44"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="pcm-bq-cG2" id="6ZM-yc-8Z1">
                                             <rect key="frame" x="0.0" y="0.0" width="320" height="43"/>
@@ -844,20 +824,16 @@
                                                     <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
                                                     <nil key="highlightedColor"/>
                                                 </label>
-                                                <imageView opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" image="210-twitterbird.png" id="Ofc-jw-9vW">
-                                                    <rect key="frame" x="289" y="11" width="22" height="22"/>
-                                                    <autoresizingMask key="autoresizingMask" flexibleMinX="YES"/>
-                                                </imageView>
                                             </subviews>
                                         </tableViewCellContentView>
                                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                     </tableViewCell>
                                 </cells>
                             </tableViewSection>
-                            <tableViewSection headerTitle="About reicast" footerTitle="© 2013-2014 reicast" id="zoU-Tc-bmD" userLabel="Version">
+                            <tableViewSection headerTitle="About reicast" footerTitle="© 2013-2014 reicast" id="zoU-Tc-bmD">
                                 <cells>
                                     <tableViewCell contentMode="scaleToFill" selectionStyle="gray" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" textLabel="Oph-va-v9C" style="IBUITableViewCellStyleDefault" id="dMh-Oa-8e4">
-                                        <rect key="frame" x="0.0" y="659" width="320" height="44"/>
+                                        <rect key="frame" x="0.0" y="703" width="320" height="44"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="dMh-Oa-8e4" id="SWx-Ro-0H2">
                                             <rect key="frame" x="0.0" y="0.0" width="320" height="43"/>
@@ -890,7 +866,7 @@
                         </connections>
                     </tableView>
                     <navigationItem key="navigationItem" title="About" id="wjq-Iv-O9N">
-                        <barButtonItem key="leftBarButtonItem" title="Menu" id="8us-Nf-FXc">
+                        <barButtonItem key="leftBarButtonItem" image="menuicon.png" id="8us-Nf-FXc">
                             <color key="tintColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                         </barButtonItem>
                     </navigationItem>
@@ -945,7 +921,7 @@
                                                     <rect key="frame" x="250" y="12" width="20" height="20"/>
                                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                                 </imageView>
-                                                <imageView opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleAspectFit" image="240-ndscartridge.png" id="Wb4-Uc-IKI">
+                                                <imageView opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleAspectFit" image="browser.png" id="Wb4-Uc-IKI">
                                                     <rect key="frame" x="10" y="5" width="28" height="33"/>
                                                     <autoresizingMask key="autoresizingMask"/>
                                                 </imageView>
@@ -1023,7 +999,7 @@
                                                     <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                                     <color key="highlightedColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                                 </label>
-                                                <imageView opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" image="24-gift.png" id="kfG-fx-Ryb">
+                                                <imageView opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" image="paths.png" id="kfG-fx-Ryb">
                                                     <rect key="frame" x="11" y="7" width="22" height="26"/>
                                                     <autoresizingMask key="autoresizingMask"/>
                                                 </imageView>
@@ -1062,7 +1038,7 @@
                                                     <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                                     <color key="highlightedColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                                 </label>
-                                                <imageView opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" image="24-gift.png" id="30b-Fg-E5g">
+                                                <imageView opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" image="input.png" id="30b-Fg-E5g">
                                                     <rect key="frame" x="11" y="7" width="22" height="26"/>
                                                     <autoresizingMask key="autoresizingMask"/>
                                                 </imageView>
@@ -1200,7 +1176,7 @@
                         </connections>
                     </tableView>
                     <navigationItem key="navigationItem" title="Paths" id="Xrj-DG-nws">
-                        <barButtonItem key="leftBarButtonItem" title="Menu" id="CQX-A9-wag">
+                        <barButtonItem key="leftBarButtonItem" image="menuicon.png" id="CQX-A9-wag">
                             <color key="tintColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                         </barButtonItem>
                     </navigationItem>
@@ -1389,7 +1365,7 @@
                         </sections>
                     </tableView>
                     <navigationItem key="navigationItem" title="Input" id="2q5-l1-aYv">
-                        <barButtonItem key="rightBarButtonItem" title="Menu" id="crn-dT-w2U">
+                        <barButtonItem key="rightBarButtonItem" image="menuicon.png" id="crn-dT-w2U">
                             <color key="tintColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                         </barButtonItem>
                     </navigationItem>
@@ -1447,15 +1423,17 @@
     <resources>
         <image name="112-group.png" width="32" height="21"/>
         <image name="19-gear.png" width="26" height="26"/>
+        <image name="210-octocat.png" width="22" height="22"/>
         <image name="210-twitterbird.png" width="22" height="22"/>
-        <image name="24-gift.png" width="22" height="26"/>
-        <image name="240-ndscartridge.png" width="32" height="32"/>
         <image name="HideEmulator.png" width="28" height="28"/>
         <image name="LTrigger.png" width="67" height="44"/>
         <image name="RTrigger.png" width="67" height="44"/>
-        <image name="Select.png" width="48" height="26"/>
         <image name="Start.png" width="48" height="26"/>
+        <image name="browser.png" width="512" height="512"/>
         <image name="disclosure.png" width="20" height="20"/>
+        <image name="input.png" width="512" height="512"/>
+        <image name="menuicon.png" width="20" height="17"/>
+        <image name="paths.png" width="512" height="512"/>
         <image name="row.png" width="1" height="44"/>
         <image name="rowselected.png" width="1" height="44"/>
     </resources>
@@ -1466,6 +1444,6 @@
         <simulatedScreenMetrics key="destination" type="retina4"/>
     </simulatedMetricsContainer>
     <inferredMetricsTieBreakers>
-        <segue reference="LRx-0Z-bBN"/>
+        <segue reference="bPa-BK-u0Y"/>
     </inferredMetricsTieBreakers>
 </document>
