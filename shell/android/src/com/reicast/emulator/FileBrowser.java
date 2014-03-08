@@ -166,14 +166,14 @@ public class FileBrowser extends Fragment {
 		}
 	}
 
-	class LocateGames extends AsyncTask<String, Integer, List<File>> {
+	private final class LocateGames extends AsyncTask<String, Integer, List<File>> {
 
 		@Override
 		protected List<File> doInBackground(String... paths) {
 			File storage = new File(paths[0]);
 
 			// array of valid image file extensions
-			String[] mediaTypes = getResources().getStringArray(R.array.images);
+			String[] mediaTypes = parentActivity.getResources().getStringArray(R.array.images);
 			FilenameFilter[] filter = new FilenameFilter[mediaTypes.length];
 
 			int i = 0;
@@ -201,23 +201,20 @@ public class FileBrowser extends Fragment {
 
 		@Override
 		protected void onPostExecute(List<File> games) {
-			final LinearLayout list = (LinearLayout) parentActivity
-					.findViewById(R.id.game_list);
+			final LinearLayout list = (LinearLayout) parentActivity.findViewById(R.id.game_list);
 			list.removeAllViews();
 
-			String heading = getString(R.string.games_listing);
+			String heading = parentActivity.getString(R.string.games_listing);
 			createListHeader(heading, list, true);
 			if (games != null && !games.isEmpty()) {
 				for (final File game : games) {
 					createListItem(list, game);
 				}
 			} else {
-				Toast.makeText(parentActivity, R.string.config_game,
-							Toast.LENGTH_LONG).show();
+				Toast.makeText(parentActivity, R.string.config_game, Toast.LENGTH_LONG).show();
 			}
 			list.invalidate();
 		}
-
 	}
 
 	private static final class DirSort implements Comparator<File> {
