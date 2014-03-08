@@ -343,14 +343,14 @@ public class GL2JNINative extends NativeActivity {
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD
 				&& event.getSource() != Gamepad.Xperia_Touchpad) {
 
-			int playerNum = Arrays.asList(pad.name).indexOf(event.getDeviceId());
+			Integer playerNum = Arrays.asList(pad.name).indexOf(event.getDeviceId());
 			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD && playerNum == -1) {
 				playerNum = pad.deviceDescriptor_PlayerNum
 						.get(pad.deviceId_deviceDescriptor.get(event.getDeviceId()));
 			} else {
 				playerNum = -1;
 			}
-			if (playerNum == -1) {
+			if (playerNum == null || playerNum == -1) {
 				return false;
 			}
 			if (!pad.compat[playerNum]) {
@@ -416,8 +416,8 @@ public class GL2JNINative extends NativeActivity {
 
 	}
 
-	boolean handle_key(int playerNum, int kc, boolean down) {
-		if (playerNum == -1)
+	boolean handle_key(Integer playerNum, int kc, boolean down) {
+		if (playerNum == null || playerNum == -1)
 			return false;
 		if (kc == pad.getSelectButtonCode()) {
 			return false;
@@ -473,8 +473,8 @@ public class GL2JNINative extends NativeActivity {
 	}
 
 	public boolean OnNativeKeyPress(int device, int keyCode, int action, int metaState) {
-		int playerNum = pad.playerNumX.get(device);
-		if (playerNum != -1) {
+		Integer playerNum = pad.playerNumX.get(device);
+		if (playerNum != null && playerNum != -1) {
 			String id = pad.portId[playerNum];
 			if (action == KeyEvent.ACTION_DOWN) {
 				if (keyCode == prefs.getInt(Gamepad.pref_button_l + id, KeyEvent.KEYCODE_BUTTON_L1)) {
@@ -504,8 +504,8 @@ public class GL2JNINative extends NativeActivity {
 	public boolean OnNativeMotion(int device, int source, int action, int x, int y, boolean newEvent) {
 		if (newEvent && source == Gamepad.Xperia_Touchpad) {
 			// Source is Xperia Play touchpad
-			int playerNum = pad.playerNumX.get(device);
-			if (playerNum != -1) {
+			Integer playerNum = pad.playerNumX.get(device);
+			if (playerNum != null && playerNum != -1) {
 				Log.d("reidc", playerNum + " - " + device + ": " + source);
 				if (action == MotionEvent.ACTION_UP) {
 					x = 0;

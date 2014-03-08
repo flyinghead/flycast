@@ -18,8 +18,6 @@ public class AboutFragment extends Fragment {
 
 	String buildId = "";
 
-	private Activity parentActivity;
-
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 			Bundle savedInstanceState) {
@@ -29,7 +27,6 @@ public class AboutFragment extends Fragment {
 
 	@Override
 	public void onViewCreated(View view, Bundle savedInstanceState) {
-		parentActivity = getActivity();
 
 		try {
 			InputStream file = getResources().getAssets().open("build");
@@ -44,10 +41,10 @@ public class AboutFragment extends Fragment {
 		}
 
 		try {
-			String versionName = parentActivity.getPackageManager()
-					.getPackageInfo(parentActivity.getPackageName(), 0).versionName;
-			int versionCode = parentActivity.getPackageManager()
-					.getPackageInfo(parentActivity.getPackageName(), 0).versionCode;
+			String versionName = getActivity().getPackageManager()
+					.getPackageInfo(getActivity().getPackageName(), 0).versionName;
+			int versionCode = getActivity().getPackageManager()
+					.getPackageInfo(getActivity().getPackageName(), 0).versionCode;
 			TextView version = (TextView) getView().findViewById(
 					R.id.revision_text);
 			String revision = getString(R.string.revision_text,
