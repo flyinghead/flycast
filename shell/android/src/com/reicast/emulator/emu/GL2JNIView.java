@@ -59,6 +59,9 @@ public class GL2JNIView extends GLSurfaceView
 {
 	public static final boolean DEBUG = false;
 
+	public static final int LAYER_TYPE_SOFTWARE = 1;
+	public static final int LAYER_TYPE_HARDWARE = 2;
+
 	private static String fileName;
 	//private AudioThread audioThread;  
 	private EmuThread ethd;
@@ -147,7 +150,7 @@ public class GL2JNIView extends GLSurfaceView
 
 		touchVibrationEnabled = prefs.getBoolean(Config.pref_touchvibe, true);
 
-		int renderType = prefs.getInt(Config.pref_renderdepth, LAYER_TYPE_HARDWARE);
+		int renderType = prefs.getInt(Config.pref_rendertype, LAYER_TYPE_HARDWARE);
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
 			this.setLayerType(renderType, null);
 		} else {

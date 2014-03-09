@@ -293,7 +293,11 @@ public class ConfigureFragment extends Fragment {
 		OnCheckedChangeListener force_software = new OnCheckedChangeListener() {
 
 			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-				mPrefs.edit().putInt(Config.pref_rendertype, isChecked ? 1 : 2).commit();
+				mPrefs.edit()
+						.putInt(Config.pref_rendertype,
+								isChecked ? GL2JNIView.LAYER_TYPE_SOFTWARE
+										: GL2JNIView.LAYER_TYPE_HARDWARE)
+						.commit();
 				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
 					if (isChecked) {
 						force_gpu_opt.setEnabled(false);
