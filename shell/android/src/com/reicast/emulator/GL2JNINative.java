@@ -246,13 +246,17 @@ public class GL2JNINative extends NativeActivity {
 	}
 
 	private void initJoyStickLayout(int playerNum) {
-		pad.globalLS_X[playerNum] = pad.previousLS_X[playerNum] = 0.0f;
-		pad.globalLS_Y[playerNum] = pad.previousLS_Y[playerNum] = 0.0f;
+		if (!pad.joystick[playerNum]) {
+			pad.globalLS_X[playerNum] = pad.previousLS_X[playerNum] = 0.0f;
+			pad.globalLS_Y[playerNum] = pad.previousLS_Y[playerNum] = 0.0f;
+		}
 	}
 	
 	private void runCompatibilityMode(int joy) {
 		for (int n = 0; n < 4; n++) {
 			if (pad.compat[n]) {
+				String id = pad.portId[n];
+				pad.joystick[n] = prefs.getBoolean(Gamepad.pref_js_separate + id, false);
 				getCompatibilityMap(n, pad.portId[n]);
 				pad.playerNumX.put(joy, n);
 				initJoyStickLayout(n);
