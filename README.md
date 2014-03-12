@@ -26,6 +26,7 @@ Tools required:
  - If are not using r9c+, comment the "NDK_TOOLCHAIN_VERSION := 4.8" in shell/android/jni/Application.mk and shell/android/xperia/jni/Application.mk
 * Android 4.4 (API 19) & Android 2.3.1 (API 9)
  - http://developer.android.com/sdk/installing/adding-packages.html
+ - note that API 9 is hidden (you must check to show obsolete in SDK manager)
 * Ant
  - http://ant.apache.org/
 
