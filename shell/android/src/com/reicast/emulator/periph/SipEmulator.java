@@ -42,7 +42,7 @@ public class SipEmulator extends Thread {
 		Log.d(TAG, "SipEmulator init called");
 
 		record = new AudioRecord(
-				MediaRecorder.AudioSource.MIC, 
+				MediaRecorder.AudioSource.VOICE_RECOGNITION, 
 				11025, 
 				AudioFormat.CHANNEL_IN_MONO, 
 				AudioFormat.ENCODING_PCM_16BIT, 
