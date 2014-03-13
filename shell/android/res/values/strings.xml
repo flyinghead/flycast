@@ -1,52 +1,53 @@
 <resources>
-
+    
     <string name="menu_settings">Settings</string>
-
+    
     <string name="system_path">System Path (location of the data folder with dc_boot.bin/dc_flash.bin inside)</string>
     <string name="browser_path">Default System Path</string>
-    <string name="games_path">Storage Path (location of .gdi, .chd or .cdi images)</string>
+    <string name="games_path">Storage Path (location of *.gdi, *.chd or *.cdi images)</string>
     <string name="game_path">Default Game Storage</string>
-    <string name="config_home">Please configure a home directory</string>
-    <string name="config_game">Please configure a games directory</string>
-    <string name="unsupported">Unsupported Kernel Version!</string>
+    <string name="config_home">Please configure a home directory.</string>
+    <string name="config_game">Please configure a game directory.</string>
+    <string name="unsupported">Unsupported kernel version!</string>
     
-    <string name="boot_bios">Boot Dreamcast Bios</string>
-    <string name="missing_bios">BIOS Missing. The Dreamcast BIOS is required for this emulator to work. Place the BIOS file in %1$s/data/dc_boot.bin</string>
-    <string name="missing_flash">Flash Missing. The Dreamcast Flash is required for this emulator to work. Place the Flash file in %1$s/data/dc_flash.bin</string>
-    <string name="require_bios">You have to provide the BIOS</string>
-    <string name="data_folder">The data folder is assumed</string>
-    <string name="git_broken">GitHub Native Unavailable!</string>
+    <string name="boot_bios">Boot Dreamcast BIOS</string>
+    <string name="missing_bios_title">Missing Dreamcast BIOS</string>
+    <string name="missing_bios">The Dreamcast BIOS is missing. A dump of the Dreamcast BIOS is required for this emulator to work. Make sure the BIOS file is named "dc_boot.bin" and is in %1$s/data/dc_boot.bin</string>
+    <string name="missing_flash_title">Missing Dreamcast Flash ROM</string>
+    <string name="missing_flash">The Dreamcast Flash is missing. A dump of the Dreamcast Flash is required for this emulator to work. Make sure the Flash file is named "dc_flash.bin" and is in %1$s/data/dc_flash.bin</string>
+    <string name="require_bios">You have to provide a Dreamcast BIOS.</string>
+    <string name="data_folder">The current data folder is assumed.</string>
     
-    <string name="folder_bios">BOOT BIOS</string>
-    <string name="folder_select">SELECT CURRENT FOLDER</string>
-
+    <string name="folder_bios">Boot BIOS</string>
+    <string name="folder_select">Select current folder</string>
+    
     <string name="optimization_opts">Optimization and Debugging Options</string>
-    <string name="experimental_opts">Expert (May cause widespread panic)</string>
+    <string name="experimental_opts">Experimental (May cause widespread panic)</string>
     <string name="select_native">Enable Native Interface</string>
     <string name="select_dynarec">Dynarec Options</string>
     <string name="select_unstable">Unstable Optimisations</string>
     <string name="select_region">DC Region</string>
     <string name="select_broadcast">Broadcast</string>
     <string name="select_limitfps">Limit FPS</string>
-    <string name="select_mipmaps">Use Mipmaps (fix for old SGX540)</string>
+    <string name="select_mipmaps">Use Mipmaps (fixes SGX540)</string>
     <string name="select_stretch">Widescreen Mode</string>
     <string name="set_frameskip">Frameskip Value</string>
     <string name="select_render">PVR Rendering (does nothing for now)</string>
-    <string name="select_fps">Show OnScreen FPS</string>
+    <string name="select_fps">Show On-screen FPS</string>
     <string name="select_software">Force Software Rendering</string>
     <string name="select_sound">Disable Emulator Sound</string>
     <string name="select_depth">Rendering Depth</string>
     <string name="select_force_gpu">Force v6 GPU Config</string>
-    <string name="default_disk">Set Default Disk</string>
-
-    <string name="games_listing">Available Dreamcast Games</string>
-
+    <string name="default_disk">Default Disk</string>
+    
+    <string name="games_listing">Game List</string>
+    
     <string name="report_issue">Previous Crash Detected</string>
     <string name="bios_config">Configuration failed!</string>
-
+    
     <string name="customize_touch_controls">Customize Touch Controls</string>
     <string name="launch_editor">Launch Editor</string>
-    <string name="touch_vibration">Touch Vibration</string>
+    <string name="touch_vibration">Haptic Feedback</string>
     <string name="controller_a">Controller A</string>
     <string name="controller_b">Controller B</string>
     <string name="controller_c">Controller C</string>
@@ -58,7 +59,7 @@
     <string name="select_controller_title">Select Controller</string>
     <string name="select_controller_message">Press any button on the controller %1$s to assign to port</string>
     <string name="controller_already_in_use">This controller is already in use!</string>
-    <string name="joystick_layout">Use Joystick For Dpad Input</string>
+    <string name="joystick_layout">Use Joystick For D-Pad Input</string>
     <string name="modified_layout">Enable Custom Key Layout</string>
     <string name="controller_compat">Enable Compatibility Mode</string>
     <string name="mic_in_port_2">Microphone plugged into port 2</string>
@@ -67,17 +68,17 @@
     <string name="map_keycode_title">Modify Controller</string>
     <string name="map_keycode_message">Press the new controller button for %1$s</string>
     
-    <string name="moga_pro_connect">MOGA Pro Connected!</string>
-    <string name="moga_connect">MOGA Connected!</string>
-
-    <string name="about_text">reicast is a dreamcast emulator</string>
+    <string name="moga_pro_connect">MOGA Pro connected!</string>
+    <string name="moga_connect">MOGA connected!</string>
+    
+    <string name="about_text">reicast is a multi-platform Dreamcast emulator.</string>
     <string name="revision_text">Version: %1$s [%2$s]</string>
     
     <string-array name="controllers">
-    <item>Controller A</item>
-    <item>Controller B</item>
-    <item>Controller C</item>
-    <item>Controller D</item>
+        <item>Controller A</item>
+        <item>Controller B</item>
+        <item>Controller C</item>
+        <item>Controller D</item>
     </string-array>
     
     <string name="browser">Browser</string>
@@ -92,6 +93,7 @@
     <string name="textOff">OFF</string>
 
     <string name="cancel">Cancel</string>
+    <string name="dismiss">Dismiss</string>
     <string name="manual">Manual</string>
-
+    <string name="options">Options</string>
 </resources>

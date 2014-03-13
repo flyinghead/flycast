@@ -6,6 +6,7 @@ import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -50,7 +51,7 @@ public class InputFragment extends Fragment {
 
 	// Container Activity must implement this interface
 	public interface OnClickListener {
-		public void onMainBrowseSelected(String path_entry, boolean games);
+		void onMainBrowseSelected(String path_entry, boolean games);
 	}
 
 	@Override
@@ -105,8 +106,7 @@ public class InputFragment extends Fragment {
 		};
 		switchTouchVibrationEnabled = (Switch) getView().findViewById(
 				R.id.switchTouchVibrationEnabled);
-		boolean vibrate = sharedPreferences.getBoolean(Config.pref_touchvibe,
-				true);
+		boolean vibrate = sharedPreferences.getBoolean(Config.pref_touchvibe, true);
 		if (vibrate) {
 			switchTouchVibrationEnabled.setChecked(true);
 		} else {
@@ -120,7 +120,7 @@ public class InputFragment extends Fragment {
 				false);
 		micPluggedIntoFirstController.setChecked(micPluggedIn);
 		if (getActivity().getPackageManager().hasSystemFeature(
-				"android.hardware.microphone")) {
+				PackageManager.FEATURE_MICROPHONE)) {
 			// Microphone is present on the device
 			micPluggedIntoFirstController
 					.setOnCheckedChangeListener(new OnCheckedChangeListener() {
@@ -286,7 +286,7 @@ public class InputFragment extends Fragment {
 				buttonRemoveControllerPlayer1.setEnabled(true);
 			} else {
 				textViewDeviceDescriptorPlayer1
-						.setText(getString(R.string.controller_none_selected));
+						.setText(R.string.controller_none_selected);
 				buttonRemoveControllerPlayer1.setEnabled(false);
 			}
 		}
@@ -306,7 +306,7 @@ public class InputFragment extends Fragment {
 				buttonRemoveControllerPlayer2.setEnabled(true);
 			} else {
 				textViewDeviceDescriptorPlayer2
-						.setText(getString(R.string.controller_none_selected));
+						.setText(R.string.controller_none_selected);
 				buttonRemoveControllerPlayer2.setEnabled(false);
 			}
 		}
@@ -326,7 +326,7 @@ public class InputFragment extends Fragment {
 				buttonRemoveControllerPlayer3.setEnabled(true);
 			} else {
 				textViewDeviceDescriptorPlayer3
-						.setText(getString(R.string.controller_none_selected));
+						.setText(R.string.controller_none_selected);
 				buttonRemoveControllerPlayer3.setEnabled(false);
 			}
 		}
@@ -346,7 +346,7 @@ public class InputFragment extends Fragment {
 				buttonRemoveControllerPlayer4.setEnabled(true);
 			} else {
 				textViewDeviceDescriptorPlayer4
-						.setText(getString(R.string.controller_none_selected));
+						.setText(R.string.controller_none_selected);
 				buttonRemoveControllerPlayer4.setEnabled(false);
 			}
 		}
@@ -356,17 +356,17 @@ public class InputFragment extends Fragment {
 		listenForButton = playerNum;
 
 		AlertDialog.Builder builder = new AlertDialog.Builder(parentActivity);
-		builder.setTitle(getString(R.string.select_controller_title));
+		builder.setTitle(R.string.select_controller_title);
 		builder.setMessage(getString(R.string.select_controller_message,
 				String.valueOf(listenForButton)));
-		builder.setPositiveButton(getString(R.string.cancel),
+		builder.setPositiveButton(R.string.cancel,
 				new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int which) {
 						listenForButton = 0;
 						dialog.dismiss();
 					}
 				});
-		builder.setNegativeButton(getString(R.string.manual),
+		builder.setNegativeButton(R.string.manual,
 				new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int which) {
 						InputModFragment inputModFrag = new InputModFragment();
@@ -456,8 +456,7 @@ public class InputFragment extends Fragment {
 			break;
 		}
 
-		Log.d("New controller for port " + String.valueOf(listenForButton)
-				+ ":", descriptor);
+		Log.d("New controller for port " + listenForButton + ":", descriptor);
 
 		listenForButton = 0;
 		alertDialogSelectController.cancel();
@@ -489,7 +488,7 @@ public class InputFragment extends Fragment {
 		updateControllers();
 	}
 
-	class MogaListener implements ControllerListener {
+	private final class MogaListener implements ControllerListener {
 
 		private int playerNum;
 		private String controllerId;
@@ -511,13 +510,14 @@ public class InputFragment extends Fragment {
 		}
 
 		public void onStateEvent(StateEvent event) {
-			if (event.getState() == StateEvent.STATE_CONNECTION
-					&& event.getAction() == MOGAInput.ACTION_CONNECTED) {
+			if (event.getState() == StateEvent.STATE_CONNECTION &&
+			    event.getAction() == MOGAInput.ACTION_CONNECTED) {
+
 				int mControllerVersion = moga.mController
-						.getState(Controller.STATE_CURRENT_PRODUCT_VERSION);
-				if (mControllerVersion == Controller.ACTION_VERSION_MOGAPRO) {
-					pad.isActiveMoga[playerNum] = true;
-				} else if (mControllerVersion == Controller.ACTION_VERSION_MOGA) {
+				        .getState(Controller.STATE_CURRENT_PRODUCT_VERSION);
+
+				if (mControllerVersion == Controller.ACTION_VERSION_MOGA ||
+				    mControllerVersion == Controller.ACTION_VERSION_MOGAPRO) {
 					pad.isActiveMoga[playerNum] = true;
 				}
 			}

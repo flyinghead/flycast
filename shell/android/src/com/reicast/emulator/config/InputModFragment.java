@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import android.annotation.TargetApi;
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
@@ -42,7 +41,6 @@ import de.ankri.views.Switch;
 
 public class InputModFragment extends Fragment {
 
-	private Activity parentActivity;
 	private SharedPreferences mPrefs;
 
 	private Switch switchJoystickDpadEnabled;
@@ -67,11 +65,9 @@ public class InputModFragment extends Fragment {
 	private int playerNum = -1;
 	private mapKeyCode mKey;
 
-	Gamepad pad = new Gamepad();
-
 	// Container Activity must implement this interface
 	public interface OnClickListener {
-		public void onMainBrowseSelected(String path_entry, boolean games);
+		void onMainBrowseSelected(String path_entry, boolean games);
 	}
 
 	@Override
@@ -83,17 +79,15 @@ public class InputModFragment extends Fragment {
 
 	@Override
 	public void onViewCreated(View view, Bundle savedInstanceState) {
-		parentActivity = getActivity();
 
 		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB) {
 			Runtime.getRuntime().freeMemory();
 			System.gc();
 		}
 
-		mPrefs = PreferenceManager.getDefaultSharedPreferences(parentActivity);
+		mPrefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
 
-		final String[] controllers = parentActivity.getResources()
-				.getStringArray(R.array.controllers);
+		final String[] controllers = getResources().getStringArray(R.array.controllers);
 
 		Bundle b = getArguments();
 		if (b != null) {
@@ -141,7 +135,7 @@ public class InputModFragment extends Fragment {
 				R.id.switchCompatibilityEnabled);
 		switchCompatibilityEnabled.setOnCheckedChangeListener(compat_mode);
 
-		mKey = new mapKeyCode(parentActivity);
+		mKey = new mapKeyCode(getActivity());
 
 		ImageView a_button_icon = (ImageView) getView().findViewById(
 				R.id.a_button_icon);
@@ -350,7 +344,7 @@ public class InputModFragment extends Fragment {
 		Spinner player_spnr = (Spinner) getView().findViewById(
 				R.id.player_spinner);
 		ArrayAdapter<String> playerAdapter = new ArrayAdapter<String>(
-				parentActivity, android.R.layout.simple_spinner_item,
+				getActivity(), android.R.layout.simple_spinner_item,
 				controllers);
 		playerAdapter
 				.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -392,7 +386,7 @@ public class InputModFragment extends Fragment {
 			System.gc();
 		}
 		try {
-			InputStream bitmap = parentActivity.getAssets().open("buttons.png");
+			InputStream bitmap = getResources().getAssets().open("buttons.png");
 			BitmapFactory.Options options = new BitmapFactory.Options();
 			options.inSampleSize = sS;
 			Bitmap image = BitmapFactory.decodeStream(bitmap, null, options);
@@ -425,7 +419,7 @@ public class InputModFragment extends Fragment {
 				}
 			}
 		}
-		return parentActivity.getResources().getDrawable(R.drawable.input);
+		return getResources().getDrawable(R.drawable.input);
 	}
 
 	/**
@@ -433,19 +427,17 @@ public class InputModFragment extends Fragment {
 	 * 
 	 */
 	private void selectController() {
-		AlertDialog.Builder builder = new AlertDialog.Builder(parentActivity);
-		builder.setTitle(getString(R.string.select_controller_title));
-		builder.setMessage(getString(R.string.select_controller_message,
-				String.valueOf(player.replace("_", ""))));
-		builder.setNegativeButton("Cancel",
+		AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+		builder.setTitle(R.string.select_controller_title);
+		builder.setMessage(getString(R.string.select_controller_message, player.replace("_", "")));
+		builder.setNegativeButton(R.string.cancel,
 				new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int which) {
 						dialog.dismiss();
 					}
 				});
 		builder.setOnKeyListener(new Dialog.OnKeyListener() {
-			public boolean onKey(DialogInterface dialog, int keyCode,
-					KeyEvent event) {
+			public boolean onKey(DialogInterface dialog, int keyCode, KeyEvent event) {
 				mPrefs.edit()
 						.putInt("controller" + player, event.getDeviceId())
 						.commit();
@@ -478,12 +470,10 @@ public class InputModFragment extends Fragment {
 			this.button = button;
 			this.output = output;
 			isMapping = true;
-			AlertDialog.Builder builder = new AlertDialog.Builder(
-					parentActivity);
-			builder.setTitle(getString(R.string.map_keycode_title));
-			builder.setMessage(getString(R.string.map_keycode_message,
-					button.replace("_", " ")));
-			builder.setNegativeButton("Cancel",
+			AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+			builder.setTitle(R.string.map_keycode_title);
+			builder.setMessage(getString(R.string.map_keycode_message, button.replace("_", " ")));
+			builder.setNegativeButton(R.string.cancel,
 					new DialogInterface.OnClickListener() {
 						public void onClick(DialogInterface dialog, int which) {
 							isMapping = false;
@@ -491,8 +481,7 @@ public class InputModFragment extends Fragment {
 						}
 					});
 			builder.setOnKeyListener(new Dialog.OnKeyListener() {
-				public boolean onKey(DialogInterface dialog, int keyCode,
-						KeyEvent event) {
+				public boolean onKey(DialogInterface dialog, int keyCode, KeyEvent event) {
 					mapButton(keyCode, event);
 					isMapping = false;
 					dialog.dismiss();
@@ -512,7 +501,7 @@ public class InputModFragment extends Fragment {
 		 *            The keyevent generated by the button being assigned
 		 */
 		private int mapButton(int keyCode, KeyEvent event) {
-			if (android.os.Build.MODEL.startsWith("R800")) {
+			if (Build.MODEL.startsWith("R800")) {
 				if (keyCode == KeyEvent.KEYCODE_MENU)
 					return -1;
 			} else {
@@ -557,8 +546,8 @@ public class InputModFragment extends Fragment {
 					if (label.contains(":")) {
 						label = label.substring(0, label.indexOf(":"));
 					}
-					output.setText(label + ": "
-							+ String.valueOf(ev.getAction()));
+					
+					output.setText(label + ": " + ev.getAction());
 				}
 
 			}
@@ -594,7 +583,7 @@ public class InputModFragment extends Fragment {
 			if (label.contains(":")) {
 				label = label.substring(0, label.indexOf(":"));
 			}
-			output.setText(label + ": " + String.valueOf(keyCode));
+			output.setText(label + ": " + keyCode);
 			return true;
 		} else {
 			String label = output.getText().toString();

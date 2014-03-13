@@ -73,100 +73,100 @@ public class Gamepad {
 
 	public static final int Xperia_Touchpad = 1048584;
 	
-	public static final int key_CONT_B 			= 0x0002;
-	public static final int key_CONT_A 			= 0x0004;
-	public static final int key_CONT_START 		= 0x0008;
-	public static final int key_CONT_DPAD_UP 	= 0x0010;
-	public static final int key_CONT_DPAD_DOWN 	= 0x0020;
-	public static final int key_CONT_DPAD_LEFT 	= 0x0040;
+	public static final int key_CONT_B          = 0x0002;
+	public static final int key_CONT_A          = 0x0004;
+	public static final int key_CONT_START      = 0x0008;
+	public static final int key_CONT_DPAD_UP    = 0x0010;
+	public static final int key_CONT_DPAD_DOWN  = 0x0020;
+	public static final int key_CONT_DPAD_LEFT  = 0x0040;
 	public static final int key_CONT_DPAD_RIGHT = 0x0080;
-	public static final int key_CONT_Y 			= 0x0200;
-	public static final int key_CONT_X 			= 0x0400;
+	public static final int key_CONT_Y          = 0x0200;
+	public static final int key_CONT_X          = 0x0400;
 
 	public int[] getConsoleController() {
 		return new int[] {
-				OuyaController.BUTTON_O, 			key_CONT_A,
-				OuyaController.BUTTON_A, 			key_CONT_B,
-				OuyaController.BUTTON_U, 			key_CONT_X,
-				OuyaController.BUTTON_Y, 			key_CONT_Y,
+				OuyaController.BUTTON_O,          key_CONT_A,
+				OuyaController.BUTTON_A,          key_CONT_B,
+				OuyaController.BUTTON_U,          key_CONT_X,
+				OuyaController.BUTTON_Y,          key_CONT_Y,
 
-				OuyaController.BUTTON_DPAD_UP, 		key_CONT_DPAD_UP,
-				OuyaController.BUTTON_DPAD_DOWN, 	key_CONT_DPAD_DOWN,
-				OuyaController.BUTTON_DPAD_LEFT, 	key_CONT_DPAD_LEFT,
-				OuyaController.BUTTON_DPAD_RIGHT, 	key_CONT_DPAD_RIGHT,
+				OuyaController.BUTTON_DPAD_UP,    key_CONT_DPAD_UP,
+				OuyaController.BUTTON_DPAD_DOWN,  key_CONT_DPAD_DOWN,
+				OuyaController.BUTTON_DPAD_LEFT,  key_CONT_DPAD_LEFT,
+				OuyaController.BUTTON_DPAD_RIGHT, key_CONT_DPAD_RIGHT,
 
-				getStartButtonCode(), 				key_CONT_START,
-				getSelectButtonCode(), 				getSelectButtonCode()
+				getStartButtonCode(),             key_CONT_START,
+				getSelectButtonCode(),            getSelectButtonCode()
 				// Redundant, but verifies it is mapped properly
 		};
 	}
 
 	public int[] getXPlayController() {
 		return new int[] { 
-				KeyEvent.KEYCODE_DPAD_CENTER, 		key_CONT_A,
-				KeyEvent.KEYCODE_BACK, 				key_CONT_B,
-				OuyaController.BUTTON_U, 			key_CONT_X,
-				OuyaController.BUTTON_Y, 			key_CONT_Y,
+				KeyEvent.KEYCODE_DPAD_CENTER,    key_CONT_A,
+				KeyEvent.KEYCODE_BACK,           key_CONT_B,
+				OuyaController.BUTTON_U,         key_CONT_X,
+				OuyaController.BUTTON_Y,         key_CONT_Y,
 
-				OuyaController.BUTTON_DPAD_UP, 		key_CONT_DPAD_UP,
-				OuyaController.BUTTON_DPAD_DOWN, 	key_CONT_DPAD_DOWN,
-				OuyaController.BUTTON_DPAD_LEFT, 	key_CONT_DPAD_LEFT,
-				OuyaController.BUTTON_DPAD_RIGHT, 	key_CONT_DPAD_RIGHT,
+				OuyaController.BUTTON_DPAD_UP,    key_CONT_DPAD_UP,
+				OuyaController.BUTTON_DPAD_DOWN,  key_CONT_DPAD_DOWN,
+				OuyaController.BUTTON_DPAD_LEFT,  key_CONT_DPAD_LEFT,
+				OuyaController.BUTTON_DPAD_RIGHT, key_CONT_DPAD_RIGHT,
 
-				getStartButtonCode(), 				key_CONT_START,
-				getSelectButtonCode(), 				getSelectButtonCode()
+				getStartButtonCode(),             key_CONT_START,
+				getSelectButtonCode(),            getSelectButtonCode()
 				// Redundant, but verifies it is mapped properly
 		};
 	}
 
 	public int[] getOUYAController() {
 		return new int[] {
-				OuyaController.BUTTON_O, 			key_CONT_A,
-				OuyaController.BUTTON_A, 			key_CONT_B,
-				OuyaController.BUTTON_U, 			key_CONT_X,
-				OuyaController.BUTTON_Y, 			key_CONT_Y,
+				OuyaController.BUTTON_O,          key_CONT_A,
+				OuyaController.BUTTON_A,          key_CONT_B,
+				OuyaController.BUTTON_U,          key_CONT_X,
+				OuyaController.BUTTON_Y,          key_CONT_Y,
 
-				OuyaController.BUTTON_DPAD_UP, 		key_CONT_DPAD_UP,
-				OuyaController.BUTTON_DPAD_DOWN, 	key_CONT_DPAD_DOWN,
-				OuyaController.BUTTON_DPAD_LEFT, 	key_CONT_DPAD_LEFT,
-				OuyaController.BUTTON_DPAD_RIGHT, 	key_CONT_DPAD_RIGHT,
+				OuyaController.BUTTON_DPAD_UP,    key_CONT_DPAD_UP,
+				OuyaController.BUTTON_DPAD_DOWN,  key_CONT_DPAD_DOWN,
+				OuyaController.BUTTON_DPAD_LEFT,  key_CONT_DPAD_LEFT,
+				OuyaController.BUTTON_DPAD_RIGHT, key_CONT_DPAD_RIGHT,
 
-				getStartButtonCode(), 				key_CONT_START,
-				OuyaController.BUTTON_R3, 			key_CONT_START
+				getStartButtonCode(),             key_CONT_START,
+				OuyaController.BUTTON_R3,         key_CONT_START
 		};
 	}
 
 	public int[] getMogaController() {
 		return new int[] {
-				KeyEvent.KEYCODE_BUTTON_A,			key_CONT_A,
-				KeyEvent.KEYCODE_BUTTON_B,			key_CONT_B,
-				KeyEvent.KEYCODE_BUTTON_X,			key_CONT_X,
-				KeyEvent.KEYCODE_BUTTON_Y,			key_CONT_Y,
+				KeyEvent.KEYCODE_BUTTON_A,   key_CONT_A,
+				KeyEvent.KEYCODE_BUTTON_B,   key_CONT_B,
+				KeyEvent.KEYCODE_BUTTON_X,   key_CONT_X,
+				KeyEvent.KEYCODE_BUTTON_Y,   key_CONT_Y,
 
-				KeyEvent.KEYCODE_DPAD_UP,			key_CONT_DPAD_UP,
-				KeyEvent.KEYCODE_DPAD_DOWN,			key_CONT_DPAD_DOWN,
-				KeyEvent.KEYCODE_DPAD_LEFT,			key_CONT_DPAD_LEFT,
-				KeyEvent.KEYCODE_DPAD_RIGHT,		key_CONT_DPAD_RIGHT,
+				KeyEvent.KEYCODE_DPAD_UP,    key_CONT_DPAD_UP,
+				KeyEvent.KEYCODE_DPAD_DOWN,  key_CONT_DPAD_DOWN,
+				KeyEvent.KEYCODE_DPAD_LEFT,  key_CONT_DPAD_LEFT,
+				KeyEvent.KEYCODE_DPAD_RIGHT, key_CONT_DPAD_RIGHT,
 
-				getStartButtonCode(),				key_CONT_START,
-				getSelectButtonCode(),				getSelectButtonCode()
+				getStartButtonCode(),        key_CONT_START,
+				getSelectButtonCode(),       getSelectButtonCode()
 			};
 	}
 
 	public int[] setModifiedKeys(String id, int playerNum, SharedPreferences mPrefs) {
 		return new int[] { 
-				mPrefs.getInt(pref_button_a + id, OuyaController.BUTTON_O), 				key_CONT_A, 
-				mPrefs.getInt(pref_button_b + id, OuyaController.BUTTON_A), 				key_CONT_B,
-				mPrefs.getInt(pref_button_x + id, OuyaController.BUTTON_U), 				key_CONT_X,
-				mPrefs.getInt(pref_button_y + id, OuyaController.BUTTON_Y), 				key_CONT_Y,
+				mPrefs.getInt(pref_button_a + id, OuyaController.BUTTON_O),             key_CONT_A, 
+				mPrefs.getInt(pref_button_b + id, OuyaController.BUTTON_A),             key_CONT_B,
+				mPrefs.getInt(pref_button_x + id, OuyaController.BUTTON_U),             key_CONT_X,
+				mPrefs.getInt(pref_button_y + id, OuyaController.BUTTON_Y),             key_CONT_Y,
 
-				mPrefs.getInt(pref_dpad_up + id, OuyaController.BUTTON_DPAD_UP), 			key_CONT_DPAD_UP,
-				mPrefs.getInt(pref_dpad_down + id, OuyaController.BUTTON_DPAD_DOWN), 		key_CONT_DPAD_DOWN,
-				mPrefs.getInt(pref_dpad_left + id, OuyaController.BUTTON_DPAD_LEFT), 		key_CONT_DPAD_LEFT,
-				mPrefs.getInt(pref_dpad_right + id, OuyaController.BUTTON_DPAD_RIGHT), 	key_CONT_DPAD_RIGHT,
+				mPrefs.getInt(pref_dpad_up + id, OuyaController.BUTTON_DPAD_UP),        key_CONT_DPAD_UP,
+				mPrefs.getInt(pref_dpad_down + id, OuyaController.BUTTON_DPAD_DOWN),    key_CONT_DPAD_DOWN,
+				mPrefs.getInt(pref_dpad_left + id, OuyaController.BUTTON_DPAD_LEFT),    key_CONT_DPAD_LEFT,
+				mPrefs.getInt(pref_dpad_right + id, OuyaController.BUTTON_DPAD_RIGHT),  key_CONT_DPAD_RIGHT,
 
-				mPrefs.getInt(pref_button_start + id, getStartButtonCode()), 		key_CONT_START,
-				mPrefs.getInt(pref_button_select + id, getSelectButtonCode()), 	getSelectButtonCode()
+				mPrefs.getInt(pref_button_start + id, getStartButtonCode()),            key_CONT_START,
+				mPrefs.getInt(pref_button_select + id, getSelectButtonCode()),          getSelectButtonCode()
 		};
 	}
 

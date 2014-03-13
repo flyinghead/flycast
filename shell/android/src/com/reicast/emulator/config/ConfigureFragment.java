@@ -32,8 +32,6 @@ import de.ankri.views.Switch;
 
 public class ConfigureFragment extends Fragment {
 
-	Activity parentActivity;
-	OnClickListener mCallback;
 	private Config config;
 
 	private SharedPreferences mPrefs;
@@ -62,12 +60,12 @@ public class ConfigureFragment extends Fragment {
 	public void onViewCreated(View view, Bundle savedInstanceState) {
 		// setContentView(R.layout.activity_main);
 
-		parentActivity = getActivity();
+		//parentActivity = getActivity();
 		
 
-		mPrefs = PreferenceManager.getDefaultSharedPreferences(parentActivity);
+		mPrefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
 		home_directory = mPrefs.getString(Config.pref_home, home_directory);
-		config = new Config(parentActivity);
+		config = new Config(getActivity());
 		config.getConfigurationPrefs();
 
 		// Generate the menu options and fill in existing settings
@@ -115,23 +113,15 @@ public class ConfigureFragment extends Fragment {
 		}
 		unstable_opt.setOnCheckedChangeListener(unstable_option);
 
-		String[] regions = parentActivity.getResources()
-				.getStringArray(R.array.region);
-
-		Spinner region_spnr = (Spinner) getView().findViewById(
-				R.id.region_spinner);
+		String[] regions = getResources().getStringArray(R.array.region);
+		Spinner region_spnr = (Spinner) getView().findViewById(R.id.region_spinner);
 		ArrayAdapter<String> regionAdapter = new ArrayAdapter<String>(
-				parentActivity, R.layout.spinner_selected, regions);
-		regionAdapter
-				.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+				getActivity(), R.layout.spinner_selected, regions);
+		regionAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		region_spnr.setAdapter(regionAdapter);
-
 		region_spnr.setSelection(Config.dcregion, true);
-
 		region_spnr.setOnItemSelectedListener(new OnItemSelectedListener() {
-
-			public void onItemSelected(AdapterView<?> parent, View view,
-					int pos, long id) {
+			public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
 				mPrefs.edit().putInt(Config.pref_dcregion, pos).commit();
 				Config.dcregion = pos;
 
@@ -140,17 +130,13 @@ public class ConfigureFragment extends Fragment {
 			public void onNothingSelected(AdapterView<?> arg0) {
 
 			}
-
 		});
 
-		String[] broadcasts = parentActivity.getResources().getStringArray(
-				R.array.broadcast);
-		Spinner broadcast_spnr = (Spinner) getView().findViewById(
-				R.id.broadcast_spinner);
+		String[] broadcasts = getResources().getStringArray(R.array.broadcast);
+		Spinner broadcast_spnr = (Spinner) getView().findViewById(R.id.broadcast_spinner);
 		ArrayAdapter<String> broadcastAdapter = new ArrayAdapter<String>(
-				parentActivity, R.layout.spinner_selected, broadcasts);
-		broadcastAdapter
-				.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+				getActivity(), R.layout.spinner_selected, broadcasts);
+		broadcastAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		broadcast_spnr.setAdapter(broadcastAdapter);
 
 		int select = 0;
@@ -159,76 +145,66 @@ public class ConfigureFragment extends Fragment {
 			if (broadcasts[i].startsWith(cast + " - "))
 				select = i;
 		}
-		broadcast_spnr.setSelection(select, true);
 
+		broadcast_spnr.setSelection(select, true);
 		broadcast_spnr.setOnItemSelectedListener(new OnItemSelectedListener() {
 
-			public void onItemSelected(AdapterView<?> parent, View view,
-					int pos, long id) {
+			public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
 				String item = parent.getItemAtPosition(pos).toString();
 				String selection = item.substring(0, item.indexOf(" - "));
 				mPrefs.edit()
-						.putInt(Config.pref_broadcast, Integer.valueOf(selection))
+						.putInt(Config.pref_broadcast, Integer.parseInt(selection))
 						.commit();
-				Config.broadcast = Integer.valueOf(selection);
+				Config.broadcast = Integer.parseInt(selection);
 
 			}
 
 			public void onNothingSelected(AdapterView<?> arg0) {
 
 			}
-
 		});
 
 		OnCheckedChangeListener limitfps_option = new OnCheckedChangeListener() {
 
-			public void onCheckedChanged(CompoundButton buttonView,
-					boolean isChecked) {
+			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
 				mPrefs.edit().putBoolean(Config.pref_limitfps, isChecked).commit();
 				Config.limitfps = isChecked;
 			}
 		};
-		Switch limit_fps = (Switch) getView()
-				.findViewById(R.id.limitfps_option);
+		Switch limit_fps = (Switch) getView().findViewById(R.id.limitfps_option);
 		limit_fps.setChecked(Config.limitfps);
 		limit_fps.setOnCheckedChangeListener(limitfps_option);
 
 		OnCheckedChangeListener mipmaps_option = new OnCheckedChangeListener() {
 
-			public void onCheckedChanged(CompoundButton buttonView,
-					boolean isChecked) {
+			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
 				mPrefs.edit().putBoolean(Config.pref_mipmaps, isChecked).commit();
 				Config.mipmaps = isChecked;
 			}
 		};
-		Switch mipmap_opt = (Switch) getView()
-				.findViewById(R.id.mipmaps_option);
+		Switch mipmap_opt = (Switch) getView().findViewById(R.id.mipmaps_option);
 		mipmap_opt.setChecked(Config.mipmaps);
 		mipmap_opt.setOnCheckedChangeListener(mipmaps_option);
 
 		OnCheckedChangeListener full_screen = new OnCheckedChangeListener() {
 
-			public void onCheckedChanged(CompoundButton buttonView,
-					boolean isChecked) {
+			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
 				mPrefs.edit().putBoolean(Config.pref_widescreen, isChecked).commit();
 				Config.widescreen = isChecked;
 			}
 		};
-		Switch stretch_view = (Switch) getView().findViewById(
-				R.id.stretch_option);
+		Switch stretch_view = (Switch) getView().findViewById(R.id.stretch_option);
 		stretch_view.setChecked(Config.widescreen);
 		stretch_view.setOnCheckedChangeListener(full_screen);
 
 		final TextView mainFrames = (TextView) getView().findViewById(R.id.current_frames);
 		mainFrames.setText(String.valueOf(Config.frameskip));
 
-		SeekBar frameSeek = (SeekBar) getView()
-				.findViewById(R.id.frame_seekbar);
+		SeekBar frameSeek = (SeekBar) getView().findViewById(R.id.frame_seekbar);
 		frameSeek.setProgress(Config.frameskip);
 		frameSeek.setIndeterminate(false);
 		frameSeek.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
-			public void onProgressChanged(SeekBar seekBar, int progress,
-					boolean fromUser) {
+			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
 				mainFrames.setText(String.valueOf(progress));
 			}
 
@@ -245,8 +221,7 @@ public class ConfigureFragment extends Fragment {
 
 		OnCheckedChangeListener pvr_rendering = new OnCheckedChangeListener() {
 
-			public void onCheckedChanged(CompoundButton buttonView,
-					boolean isChecked) {
+			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
 				mPrefs.edit().putBoolean(Config.pref_pvrrender, isChecked).commit();
 				Config.pvrrender = isChecked;
 			}
@@ -255,8 +230,7 @@ public class ConfigureFragment extends Fragment {
 		pvr_render.setChecked(Config.pvrrender);
 		pvr_render.setOnCheckedChangeListener(pvr_rendering);
 
-		final EditText cheatEdit = (EditText) getView().findViewById(
-				R.id.cheat_disk);
+		final EditText cheatEdit = (EditText) getView().findViewById(R.id.cheat_disk);
 		String disk = Config.cheatdisk;
 		if (disk != null && disk.contains("/")) {
 			cheatEdit.setText(disk.substring(disk.lastIndexOf("/"),
@@ -280,12 +254,10 @@ public class ConfigureFragment extends Fragment {
 				}
 			}
 
-			public void beforeTextChanged(CharSequence s, int start, int count,
-					int after) {
+			public void beforeTextChanged(CharSequence s, int start, int count, int after) {
 			}
 
-			public void onTextChanged(CharSequence s, int start, int before,
-					int count) {
+			public void onTextChanged(CharSequence s, int start, int before, int count) {
 			}
 		});
 
@@ -301,13 +273,11 @@ public class ConfigureFragment extends Fragment {
 		fps_opt.setChecked(counter);
 		fps_opt.setOnCheckedChangeListener(fps_options);
 
-		final Switch force_gpu_opt = (Switch) getView().findViewById(
-				R.id.force_gpu_option);
+		final Switch force_gpu_opt = (Switch) getView().findViewById(R.id.force_gpu_option);
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
 			OnCheckedChangeListener force_gpu_options = new OnCheckedChangeListener() {
 
-				public void onCheckedChanged(CompoundButton buttonView,
-						boolean isChecked) {
+				public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
 					mPrefs.edit().putBoolean(Config.pref_forcegpu, isChecked).commit();
 				}
 			};
@@ -322,9 +292,12 @@ public class ConfigureFragment extends Fragment {
 				R.id.software_option);
 		OnCheckedChangeListener force_software = new OnCheckedChangeListener() {
 
-			public void onCheckedChanged(CompoundButton buttonView,
-					boolean isChecked) {
-				mPrefs.edit().putInt(Config.pref_rendertype, isChecked ? 1 : 2).commit();
+			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+				mPrefs.edit()
+						.putInt(Config.pref_rendertype,
+								isChecked ? GL2JNIView.LAYER_TYPE_SOFTWARE
+										: GL2JNIView.LAYER_TYPE_HARDWARE)
+						.commit();
 				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
 					if (isChecked) {
 						force_gpu_opt.setEnabled(false);
@@ -335,17 +308,14 @@ public class ConfigureFragment extends Fragment {
 				}
 			}
 		};
-		int software = mPrefs.getInt(Config.pref_rendertype,
-				GL2JNIView.LAYER_TYPE_HARDWARE);
-		force_software_opt
-				.setChecked(software == GL2JNIView.LAYER_TYPE_SOFTWARE);
+		int software = mPrefs.getInt(Config.pref_rendertype, GL2JNIView.LAYER_TYPE_HARDWARE);
+		force_software_opt.setChecked(software == GL2JNIView.LAYER_TYPE_SOFTWARE);
 		force_software_opt.setOnCheckedChangeListener(force_software);
 
 		Switch sound_opt = (Switch) getView().findViewById(R.id.sound_option);
 		OnCheckedChangeListener emu_sound = new OnCheckedChangeListener() {
 
-			public void onCheckedChanged(CompoundButton buttonView,
-					boolean isChecked) {
+			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
 				mPrefs.edit().putBoolean(Config.pref_nosound, isChecked).commit();
 				Config.nosound = isChecked;
 			}
@@ -354,15 +324,12 @@ public class ConfigureFragment extends Fragment {
 		sound_opt.setChecked(sound);
 		sound_opt.setOnCheckedChangeListener(emu_sound);
 
-		String[] depths = parentActivity.getResources().getStringArray(
-				R.array.depth);
+		String[] depths = getResources().getStringArray(R.array.depth);
 
-		Spinner depth_spnr = (Spinner) getView().findViewById(
-				R.id.depth_spinner);
+		Spinner depth_spnr = (Spinner) getView().findViewById(R.id.depth_spinner);
 		ArrayAdapter<String> depthAdapter = new ArrayAdapter<String>(
-				parentActivity, R.layout.spinner_selected, depths);
-		depthAdapter
-				.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+				getActivity(), R.layout.spinner_selected, depths);
+		depthAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		depth_spnr.setAdapter(depthAdapter);
 
 		String depth = String.valueOf(mPrefs.getInt(Config.pref_renderdepth, 24));
@@ -370,19 +337,14 @@ public class ConfigureFragment extends Fragment {
 
 		depth_spnr.setOnItemSelectedListener(new OnItemSelectedListener() {
 
-			public void onItemSelected(AdapterView<?> parent, View view,
-					int pos, long id) {
-				int render = Integer.valueOf(parent.getItemAtPosition(pos)
-						.toString());
+			public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
+				int render = Integer.parseInt(parent.getItemAtPosition(pos).toString());
 				mPrefs.edit().putInt(Config.pref_renderdepth, render).commit();
-
 			}
 
 			public void onNothingSelected(AdapterView<?> arg0) {
 
 			}
-
 		});
-
 	}
 }

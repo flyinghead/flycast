@@ -3,9 +3,6 @@
     <string name="app_name">reicast</string>
 
     <string name="app_site">Homepage: http://reicast.com</string>
-    <string name="git_api">https://api.github.com/repos/reicast/reicast-emulator/commits</string>
-    <string name="git_issues">https://github.com/reicast/reicast-emulator/issues/</string>
-    <string name="log_url">http://twisted.dyndns.tv:3194/ReicastBot/report/submit.php</string>
 
     <string name="error_kernel"></string>
 
