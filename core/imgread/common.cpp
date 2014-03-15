@@ -1,6 +1,5 @@
 #include "common.h"
 
-
 Disc* chd_parse(wchar* file);
 Disc* gdi_parse(wchar* file);
 Disc* cdi_parse(wchar* file);
@@ -169,6 +168,10 @@ bool InitDrive(u32 fileflags)
 	if (gfrv == 0)
 	{
 		NullDriveDiscType=NoDisk;
+		gd_setdisc();
+		sns_asc=0x29;
+		sns_ascq=0x00;
+		sns_key=0x6;
 		return true;
 	}
 	else if (gfrv == -1)
@@ -182,10 +185,75 @@ bool InitDrive(u32 fileflags)
 	if (!InitDrive_(fn))
 	{
 		//msgboxf("Selected image failed to load",MBX_ICONERROR);
+		NullDriveDiscType=NoDisk;
+		gd_setdisc();
+		sns_asc=0x29;
+		sns_ascq=0x00;
+		sns_key=0x6;
 		return true;
 	}
 	else
 	{
+		return true;
+	}
+}
+
+bool DiscSwap(u32 fileflags)
+{
+	if (settings.imgread.LoadDefaultImage)
+	{
+		printf("Loading default image \"%s\"\n",settings.imgread.DefaultImage);
+		if (!InitDrive_(settings.imgread.DefaultImage))
+		{
+			msgboxf("Default image \"%s\" failed to load",MBX_ICONERROR);
+			return false;
+		}
+		else
+			return true;
+	}
+
+	wchar fn[512];
+	strcpy(fn,settings.imgread.LastImage);
+#ifdef BUILD_DREAMCAST
+	int gfrv=GetFile(fn,0,fileflags);
+#else
+	int gfrv=0;
+#endif
+	if (gfrv == 0)
+	{
+		NullDriveDiscType=Open;
+		gd_setdisc();
+		sns_asc=0x28;
+		sns_ascq=0x00;
+		sns_key=0x6;
+		return true;
+	}
+	else if (gfrv == -1)
+	{
+		sns_asc=0x28;
+		sns_ascq=0x00;
+		sns_key=0x6;
+		return false;
+	}
+
+	strcpy(settings.imgread.LastImage,fn);
+	SaveSettings();
+
+	if (!InitDrive_(fn))
+	{
+		//msgboxf("Selected image failed to load",MBX_ICONERROR);
+		NullDriveDiscType=Open;
+		gd_setdisc();
+		sns_asc=0x28;
+		sns_ascq=0x00;
+		sns_key=0x6;
+		return true;
+	}
+	else
+	{
+		sns_asc=0x28;
+		sns_ascq=0x00;
+		sns_key=0x6;
 		return true;
 	}
 }

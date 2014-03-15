@@ -1,5 +1,6 @@
 #include "oslib\oslib.h"
 #include "oslib\audiostream_rif.h"
+#include "imgread\common.h"
 
 #define _WIN32_WINNT 0x0500 
 #include <windows.h>
@@ -229,6 +230,9 @@ void UpdateInputState(u32 port)
 
 		if (GetAsyncKeyState('2'))
 			settings.pvr.ta_skip = 0;
+
+		if (GetAsyncKeyState('0'))
+			DiscSwap();
 	}
 
 
