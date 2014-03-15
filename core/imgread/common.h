@@ -299,4 +299,4 @@ struct RawTrackFile : TrackFile
 
 DiscType GuessDiscType(bool m1, bool m2, bool da);
 
-extern void gd_setdisc()
+extern void gd_setdisc();
