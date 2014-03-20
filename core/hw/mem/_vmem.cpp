@@ -571,7 +571,7 @@ error:
 		u32 sz= 512*1024*1024 + sizeof(Sh4RCB) + ARAM_SIZE + 0x10000;
 		void* rv=mmap(0, sz, PROT_NONE, MAP_PRIVATE | MAP_ANON, -1, 0);
 		munmap(rv,sz);
-		return (u8*)rv + 0x10000 - u32(rv)%0x10000;//align to 64 KB (Needed for linaro mmap not to extend to next region)
+		return (u8*)rv + 0x10000 - unat(rv)%0x10000;//align to 64 KB (Needed for linaro mmap not to extend to next region)
 	}
 #endif
 

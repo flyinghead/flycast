@@ -26,6 +26,8 @@
 
 #if !defined(ANDROID)
 	#include <linux/joystick.h>
+	#include <sys/stat.h> 
+	#include <sys/types.h> 
 #endif
 
 #ifdef TARGET_PANDORA
@@ -717,3 +719,6 @@ u32 os_Push(void* frame, u32 samples, bool wait)
 return 1;
 }
 #endif
+
+int get_mic_data(u8* buffer) { return 0; }
+int push_vmu_screen(u8* buffer) { return 0; }

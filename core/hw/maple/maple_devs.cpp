@@ -10,7 +10,7 @@
 #include <jni.h>
 #else
 #define LOGW printf
-#define LOGI() 
+#define LOGI printf
 #endif
 
 #include "deps/zlib/zlib.h"

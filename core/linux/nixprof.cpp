@@ -65,7 +65,11 @@ typedef struct ucontext_t
 #define GET_PC_FROM_CONTEXT(c) (((ucontext_t *)(c))->uc_mcontext.pc)
 #endif
 #elif HOST_CPU == CPU_X86
+#ifdef _ANDROID
 #define GET_PC_FROM_CONTEXT(c) (((ucontext_t *)(c))->uc_mcontext.eip)
+#else
+#define GET_PC_FROM_CONTEXT(c) (((ucontext_t *)(c))->uc_mcontext.gregs[REG_EIP])
+#endif
 #else
 #error fix ->pc support
 #endif
