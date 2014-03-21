@@ -19,6 +19,7 @@ import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.ViewConfiguration;
+import android.view.WindowManager;
 import android.view.ViewGroup.LayoutParams;
 import android.view.Window;
 import android.widget.LinearLayout;
@@ -53,8 +54,12 @@ public class GL2JNIActivity extends Activity {
 	@Override
 	protected void onCreate(Bundle icicle) {
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
-		
 		prefs = PreferenceManager.getDefaultSharedPreferences(this);
+		if (prefs.getInt(Config.pref_rendertype, 2) == 2) {
+			getWindow().setFlags(
+					WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
+					WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
+		}
 		config = new Config(GL2JNIActivity.this);
 		config.getConfigurationPrefs();
 		menu = new OnScreenMenu(GL2JNIActivity.this, prefs);

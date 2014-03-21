@@ -21,6 +21,7 @@ import android.view.MotionEvent;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup.LayoutParams;
 import android.view.Window;
+import android.view.WindowManager;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 
@@ -61,10 +62,15 @@ public class GL2JNINative extends NativeActivity {
 	@Override
 	protected void onCreate(Bundle icicle) {
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
+		prefs = PreferenceManager.getDefaultSharedPreferences(this);
+		if (prefs.getInt(Config.pref_rendertype, 2) == 2) {
+			getWindow().setFlags(
+					WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
+					WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
+		}
 		getWindow().takeSurface(null);
 		registerNative();
-
-		prefs = PreferenceManager.getDefaultSharedPreferences(this);
+		
 		config = new Config(GL2JNINative.this);
 		config.getConfigurationPrefs();
 		menu = new OnScreenMenu(GL2JNINative.this, prefs);
