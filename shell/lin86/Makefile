@@ -3,7 +3,7 @@ LOCAL_PATH := $(call my-dir)
 FOR_LINUX :=1
 NOT_ARM := 1
 NO_REC := 1
-NO_REND := 1
+#NO_REND := 1
 
 RZDCY_SRC_DIR = ../../core
 
@@ -29,7 +29,7 @@ SOURCES	:=	cfg/ hw/arm7/ hw/aica/ hw/asic/ hw/ hw/gdrom/ hw/maple/ \
  hw/extdev/ hw/arm/ imgread/ linux/ linux-dist/ ./ rec-ARM/ deps/zlib/ deps/chdr/ deps/crypto/ arm_emitter/ 
 
 
-CXXFLAGS :=  -m32 -g -O3  -D RELEASE -c -D TARGET_LINUX_x86 -D USES_HOMEDIR -D HOST_NO_REC -D NO_REND
+CXXFLAGS :=  -m32 -g -O3  -D RELEASE -c -D TARGET_LINUX_x86 -D USES_HOMEDIR -D HOST_NO_REC #-D NO_REND
 CXXFLAGS += -frename-registers -fno-strict-aliasing -fsingle-precision-constant 
 CXXFLAGS += -ffast-math -ftree-vectorize 
 #-fprefetch-loop-arrays 
