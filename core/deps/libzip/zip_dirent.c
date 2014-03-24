@@ -475,7 +475,7 @@ _zip_d2u_time(int dtime, int ddate)
 {
     struct tm tm;
 
-    memset(&tm, sizeof(tm), 0);
+    memset(&tm, 0, sizeof(tm));
     
     /* let mktime decide if DST is in effect */
     tm.tm_isdst = -1;
