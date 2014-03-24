@@ -14,7 +14,7 @@
 #if BUILD_COMPILER==COMPILER_VC
 #define DYNACALL  __fastcall
 #else
-#define DYNACALL 
+#define DYNACALL __attribute__((fastcall))
 #endif
 
 #if BUILD_COMPILER==COMPILER_VC

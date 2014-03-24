@@ -1,6 +1,6 @@
 #include "virt_arm.h"
 
-#if HOST_CPU==CPU_X86 && !defined(HOST_NO_REC)
+#if HOST_CPU==CPU_X86 && !defined(HOST_NO_AREC)
 
 #define C_CORE
 

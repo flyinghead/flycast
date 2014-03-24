@@ -92,14 +92,14 @@ u32 bm_gc_luc,bm_gcf_luc;
 DynarecCodeEntry* DYNACALL bm_GetCode(u32 addr)
 {
 	//rdv_FailedToFindBlock_pc=addr;
-	DynarecCodeEntry* rv=FPCA(addr);
+	DynarecCodeEntry* rv=(DynarecCodeEntry*)FPCA(addr);
 
-	return rv;
+	return (DynarecCodeEntry*)rv;
 }
 
 DynarecCodeEntry* DYNACALL bm_GetCode2(u32 addr)
 {
-	return bm_GetCode(addr);
+	return (DynarecCodeEntry*)bm_GetCode(addr);
 }
 
 RuntimeBlockInfo* DYNACALL bm_GetBlock(u32 addr)
@@ -155,7 +155,7 @@ void bm_AddBlock(RuntimeBlockInfo* blk)
 	blkmap.insert(blk);
 
 
-	verify(bm_GetCode(blk->addr)==ngen_FailedToFindBlock);
+	verify((void*)bm_GetCode(blk->addr)==(void*)ngen_FailedToFindBlock);
 	FPCA(blk->addr)=blk->code;
 
 #ifdef DYNA_OPROF

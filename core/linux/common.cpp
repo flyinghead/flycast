@@ -66,7 +66,7 @@ void fault_handler (int sn, siginfo_t * si, void *ctxr)
 	
 	if (VramLockedWrite((u8*)si->si_addr) || BM_LockedWrite((u8*)si->si_addr))
 		return;
-#ifndef HOST_NO_REC
+#if !defined( HOST_NO_REC) && HOST_CPU==CPU_ARM
 	else if (dyna_cde)
 	{
 		GET_PC_FROM_CONTEXT(ctxr)=(u32)ngen_readm_fail_v2((u32*)GET_PC_FROM_CONTEXT(ctxr),(u32*)&(ctx->uc_mcontext.arm_r0),(unat)si->si_addr);

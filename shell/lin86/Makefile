@@ -2,7 +2,8 @@
 LOCAL_PATH := $(call my-dir)
 FOR_LINUX :=1
 NOT_ARM := 1
-NO_REC := 1
+X86_REC := 1
+#NO_REC := 1
 #NO_REND := 1
 
 RZDCY_SRC_DIR = ../../core
@@ -26,33 +27,35 @@ LDFLAGS	:= -m32	-g -Wl,-Map,$(notdir $@).map,--gc-sections -Wl,-O3 -Wl,--sort-co
 
 SOURCES	:=	cfg/ hw/arm7/ hw/aica/ hw/asic/ hw/ hw/gdrom/ hw/maple/ \
  hw/mem/ hw/pvr/ hw/sh4/ hw/sh4/rec_v2/ plugins/ profiler/ serial_ipc/ \
- hw/extdev/ hw/arm/ imgread/ linux/ linux-dist/ ./ rec-ARM/ deps/zlib/ deps/chdr/ deps/crypto/ arm_emitter/ 
+ hw/extdev/ hw/arm/ imgread/ linux/ linux-dist/ ./ rec-x86/ deps/zlib/ deps/chdr/ deps/crypto/ arm_emitter/
 
 
-CXXFLAGS :=  -m32 -g -O3  -D RELEASE -c -D TARGET_LINUX_x86 -D USES_HOMEDIR -D HOST_NO_REC #-D NO_REND
-CXXFLAGS += -frename-registers -fno-strict-aliasing -fsingle-precision-constant 
-CXXFLAGS += -ffast-math -ftree-vectorize 
+CFLAGS :=  -m32 -g -O3  -D RELEASE -c -D TARGET_LINUX_x86 -D USES_HOMEDIR -D HOST_NO_AREC #-D NO_REND
+CFLAGS += -D SUPPORT_X11
+CFLAGS += -frename-registers -fno-strict-aliasing -fsingle-precision-constant 
+CFLAGS += -ffast-math -ftree-vectorize 
+
+
 #-fprefetch-loop-arrays 
 #-std=c++0x
 
-CXXFLAGS += $(CFLAGS) $(MFLAGS) -fno-exceptions -fno-rtti
-CXXFLAGS += -D SUPPORT_X11
+CXXFLAGS = $(MFLAGS) -fno-exceptions -fno-rtti -fpermissive
 
 
 ifdef PGO_MAKE
-	CXXFLAGS += -fprofile-generate -pg
+	CFLAGS += -fprofile-generate -pg
 	LDFLAGS	+= -fprofile-generate
 else
-	CXXFLAGS += -fomit-frame-pointer
+	CFLAGS += -fomit-frame-pointer
 endif
 
 ifdef PGO_USE
-	CXXFLAGS += -fprofile-use
+	CFLAGS += -fprofile-use
 endif
 
 
 ifdef LTO_TEST
-	CXXFLAGS += -flto -fwhole-program 
+	CFLAGS += -flto -fwhole-program 
 	LDFLAGS +=-flto -fwhole-program 
 endif
 
@@ -86,11 +89,11 @@ $(EXECUTABLE_STRIPPED): $(EXECUTABLE)
 
 obj/%.build_obj : $(RZDCY_SRC_DIR)/%.cpp
 	mkdir -p $(dir $@)
-	$(CXX) $(EXTRAFLAGS) $(INCS) $(CXXFLAGS) $< -o $@
+	$(CXX) $(EXTRAFLAGS) $(INCS) $(CFLAGS) $(CXXFLAGS) $< -o $@
 	
 obj/%.build_obj : $(RZDCY_SRC_DIR)/%.c
 	mkdir -p $(dir $@)
-	$(CC) $(EXTRAFLAGS) $(INCS) $(CXXFLAGS) $< -o $@
+	$(CC) $(EXTRAFLAGS) $(INCS) $(CFLAGS) $< -o $@
 
 obj/%.build_obj : $(RZDCY_SRC_DIR)/%.S
 	mkdir -p $(dir $@)	

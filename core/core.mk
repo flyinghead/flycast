@@ -19,6 +19,10 @@ ifndef NOT_ARM
     RZDCY_MODULES += rec-ARM/
 endif
 
+ifdef X86_REC
+    RZDCY_MODULES += rec-x86/
+endif
+
 ifndef NO_REND
     RZDCY_MODULES += rend/gles/
 else

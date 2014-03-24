@@ -193,7 +193,7 @@ typedef void* dyna_finalizeFP(void* ptr,u32 oldsize,u32 newsize);
 //define it here cus we use it on label type ;)
 class x86_block;
 // a label
-struct __declspec(dllexport) x86_Label
+struct /*__declspec(dllexport)*/ x86_Label
 {
 	u32 target_opcode;
 	u8 patch_sz;
@@ -202,7 +202,7 @@ struct __declspec(dllexport) x86_Label
 	void* GetPtr();
 };
 //An empty type that we will use as ptr type.This is ptr-reference
-struct __declspec(dllexport)  x86_ptr
+struct /*__declspec(dllexport)*/  x86_ptr
 {
 	union
 	{
@@ -216,7 +216,7 @@ struct __declspec(dllexport)  x86_ptr
 	}
 };
 //This is ptr/imm (for call/jmp)
-struct __declspec(dllexport)  x86_ptr_imm
+struct /*__declspec(dllexport)*/  x86_ptr_imm
 {
 	union
 	{
@@ -255,11 +255,11 @@ struct x86_mrm_t
 	u32 disp;
 };
 
-__declspec(dllexport) x86_mrm_t x86_mrm(x86_reg base);
-__declspec(dllexport) x86_mrm_t x86_mrm(x86_reg base,x86_ptr disp);
-__declspec(dllexport) x86_mrm_t x86_mrm(x86_reg base,x86_reg index);
-__declspec(dllexport) x86_mrm_t x86_mrm(x86_reg index,x86_sib_scale scale,x86_ptr disp);
-__declspec(dllexport) x86_mrm_t x86_mrm(x86_reg base,x86_reg index,x86_sib_scale scale,x86_ptr disp);
+/*__declspec(dllexport)*/ x86_mrm_t x86_mrm(x86_reg base);
+/*__declspec(dllexport)*/ x86_mrm_t x86_mrm(x86_reg base,x86_ptr disp);
+/*__declspec(dllexport)*/ x86_mrm_t x86_mrm(x86_reg base,x86_reg index);
+/*__declspec(dllexport)*/ x86_mrm_t x86_mrm(x86_reg index,x86_sib_scale scale,x86_ptr disp);
+/*__declspec(dllexport)*/ x86_mrm_t x86_mrm(x86_reg base,x86_reg index,x86_sib_scale scale,x86_ptr disp);
 
 
 struct code_patch
@@ -273,7 +273,7 @@ struct code_patch
 	u32 offset;			//offset in opcode stream :)
 };
 
-struct __declspec(dllexport) x86_block_externs
+struct /*__declspec(dllexport)*/ x86_block_externs
 {
 	void Apply(void* code_base);
 	bool Modify(u32 offs,u8* dst);
@@ -282,7 +282,7 @@ struct __declspec(dllexport) x86_block_externs
 };
 
 //A block of x86 code :p
-class __declspec(dllexport) x86_block
+class /*__declspec(dllexport)*/ x86_block
 {
 private:
 	void* _labels;
