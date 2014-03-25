@@ -162,7 +162,11 @@ public class GL2JNINative extends NativeActivity {
 					String id = pad.portId[playerNum];
 					pad.custom[playerNum] = prefs.getBoolean(Gamepad.pref_js_modified + id, false);
 					pad.compat[playerNum] = prefs.getBoolean(Gamepad.pref_js_compat + id, false);
-					pad.joystick[playerNum] = prefs.getBoolean(Gamepad.pref_js_separate + id, false);
+					if (pad.custom[playerNum] || pad.compat[playerNum]) {
+						pad.joystick[playerNum] = prefs.getBoolean(Gamepad.pref_js_separate + id, false);
+					} else {
+						pad.joystick[playerNum] = false;
+					}
 					if (InputDevice.getDevice(joy).getName()
 							.contains(Gamepad.controllers_play)) {
 						pad.playerNumX.put(joy, playerNum);

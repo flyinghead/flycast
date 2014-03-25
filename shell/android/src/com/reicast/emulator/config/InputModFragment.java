@@ -93,6 +93,13 @@ public class InputModFragment extends Fragment {
 		if (b != null) {
 			playerNum = b.getInt("portNumber", -1);
 		}
+		
+		switchJoystickDpadEnabled = (Switch) getView().findViewById(
+				R.id.switchJoystickDpadEnabled);
+		switchModifiedLayoutEnabled = (Switch) getView().findViewById(
+				R.id.switchModifiedLayoutEnabled);
+		switchCompatibilityEnabled = (Switch) getView().findViewById(
+				R.id.switchCompatibilityEnabled);
 
 		OnCheckedChangeListener joystick_mode = new OnCheckedChangeListener() {
 			public void onCheckedChanged(CompoundButton buttonView,
@@ -102,8 +109,7 @@ public class InputModFragment extends Fragment {
 								isChecked).commit();
 			}
 		};
-		switchJoystickDpadEnabled = (Switch) getView().findViewById(
-				R.id.switchJoystickDpadEnabled);
+		
 		switchJoystickDpadEnabled.setOnCheckedChangeListener(joystick_mode);
 
 		OnCheckedChangeListener modified_layout = new OnCheckedChangeListener() {
@@ -112,28 +118,36 @@ public class InputModFragment extends Fragment {
 				mPrefs.edit()
 						.putBoolean(Gamepad.pref_js_modified + player,
 								isChecked).commit();
+				if (isChecked) {
+					switchJoystickDpadEnabled.setEnabled(true);
+				} else if (!switchCompatibilityEnabled.isChecked()) {
+					switchJoystickDpadEnabled.setEnabled(false);
+				}
 			}
 		};
-		switchModifiedLayoutEnabled = (Switch) getView().findViewById(
-				R.id.switchModifiedLayoutEnabled);
+		
 		switchModifiedLayoutEnabled.setOnCheckedChangeListener(modified_layout);
 
 		OnCheckedChangeListener compat_mode = new OnCheckedChangeListener() {
 			public void onCheckedChanged(CompoundButton buttonView,
 					boolean isChecked) {
-				if (isChecked) {
-					selectController();
-				} else {
-					mPrefs.edit().remove(Gamepad.pref_pad + player).commit();
-				}
 				mPrefs.edit()
 						.putBoolean(Gamepad.pref_js_compat + player, isChecked)
 						.commit();
+				if (isChecked) {
+					selectController();
+					switchJoystickDpadEnabled.setEnabled(true);
+				} else if (!switchCompatibilityEnabled.isChecked()) {
+					switchJoystickDpadEnabled.setEnabled(false);
+				}
 			}
 		};
-		switchCompatibilityEnabled = (Switch) getView().findViewById(
-				R.id.switchCompatibilityEnabled);
+		
 		switchCompatibilityEnabled.setOnCheckedChangeListener(compat_mode);
+		
+		if (!switchModifiedLayoutEnabled.isChecked() && !switchCompatibilityEnabled.isChecked()) {
+			switchJoystickDpadEnabled.setEnabled(false);
+		}
 
 		mKey = new mapKeyCode(getActivity());
 
