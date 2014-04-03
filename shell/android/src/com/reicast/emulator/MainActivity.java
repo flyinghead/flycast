@@ -544,7 +544,6 @@ public class MainActivity extends SlidingFragmentActivity implements
 
 	@Override
 	protected void onDestroy() {
-		super.onDestroy();
 		InputFragment fragment = (InputFragment) getSupportFragmentManager()
 				.findFragmentByTag("INPUT_FRAG");
 		if (fragment != null && fragment.isVisible()) {
@@ -552,6 +551,7 @@ public class MainActivity extends SlidingFragmentActivity implements
 				fragment.moga.onDestroy();
 			}
 		}
+		super.onDestroy();
 	}
 
 	@Override
