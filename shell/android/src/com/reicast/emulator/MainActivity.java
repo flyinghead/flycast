@@ -108,6 +108,11 @@ public class MainActivity extends SlidingFragmentActivity implements
 			getFilesDir().mkdir();
 		}
 		JNIdc.config(home_directory);
+		
+		// When viewing a resource, pass its URI to the native code for opening
+		Intent intent = getIntent();
+		if (intent.getAction().equals(Intent.ACTION_VIEW))
+			onGameSelected(Uri.parse(intent.getData().toString()));
 
 		// Check that the activity is using the layout version with
 		// the fragment_container FrameLayout
@@ -309,8 +314,10 @@ public class MainActivity extends SlidingFragmentActivity implements
 	/**
 	 * Display a dialog to notify the user of prior crash
 	 * 
-	 * @param error
+	 * @param string
 	 *            A generalized summary of the crash cause
+	 * @param bundle
+	 *            The savedInstanceState passed from onCreate
 	 */
 	private void displayLogOutput(final String error) {
 		AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
@@ -409,10 +416,10 @@ public class MainActivity extends SlidingFragmentActivity implements
 			alertDialog.show();
 		} else {
 			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD && Config.nativeact) {
-				startActivity(new Intent(Intent.ACTION_VIEW, uri, getBaseContext(),
+				startActivity(new Intent("com.reciast.LAUNCH_ROM", uri, getBaseContext(),
 						GL2JNINative.class));
 			} else {
-				startActivity(new Intent(Intent.ACTION_VIEW, uri, getBaseContext(),
+				startActivity(new Intent("com.reciast.LAUNCH_ROM", uri, getBaseContext(),
 						GL2JNIActivity.class));
 			}
 		}
