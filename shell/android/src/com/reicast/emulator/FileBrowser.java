@@ -202,7 +202,9 @@ public class FileBrowser extends Fragment {
 		@Override
 		protected void onPostExecute(List<File> games) {
 			final LinearLayout list = (LinearLayout) parentActivity.findViewById(R.id.game_list);
-			list.removeAllViews();
+			if (list != null) {
+				list.removeAllViews();
+			}
 
 			String heading = parentActivity.getString(R.string.games_listing);
 			createListHeader(heading, list, true);
