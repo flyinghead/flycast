@@ -56,7 +56,7 @@ public class GL2JNINative extends NativeActivity {
 	}
 
 	public native void registerNative();
-	public native void registerXperia(int xperia);
+//	public native void registerXperia(int xperia);
 
 	@TargetApi(Build.VERSION_CODES.JELLY_BEAN)
 	@Override
@@ -142,12 +142,12 @@ public class GL2JNINative extends NativeActivity {
 				if (pad.isXperiaPlay) {
 					if (InputDevice.getDevice(joy).getName()
 							.contains(Gamepad.controllers_play_gp)) {
-						pad.keypadZeus.add(joy);
+						pad.keypadZeus[0] = joy;
 					}
 					if (InputDevice.getDevice(joy).getName()
-							.contains("synaptics_touchpad")) {
-						registerXperia(joy);
-						pad.keypadZeus.add(joy);
+							.contains(Gamepad.controllers_play_tp)) {
+//						registerXperia(joy);
+						pad.keypadZeus[1] = joy;
 					}
 				}
 				Log.d("reidc", "InputDevice Descriptor: " + descriptor);
@@ -515,12 +515,12 @@ public class GL2JNINative extends NativeActivity {
 		return false;
 	}
 
-	public boolean OnNativeMotion(int device, int source, int action, int x, int y, boolean newEvent) {
-		if (newEvent && source == Gamepad.Xperia_Touchpad) {
-			// Source is Xperia Play touchpad
-			Integer playerNum = pad.playerNumX.get(device);
-			if (playerNum != null && playerNum != -1) {
-				Log.d("reidc", playerNum + " - " + device + ": " + source);
+	public boolean OnNativeMotion(int device, int source, int action, int x,
+			int y, boolean newEvent) {
+		Integer playerNum = pad.playerNumX.get(device);
+		if (playerNum != null && playerNum != -1) {
+			Log.d("reidc", playerNum + " - " + device + ": " + source);
+			if (newEvent && source == Gamepad.Xperia_Touchpad) {
 				if (action == MotionEvent.ACTION_UP) {
 					x = 0;
 					y = 0;
@@ -532,7 +532,7 @@ public class GL2JNINative extends NativeActivity {
 					x = 640;
 				}
 				if (x >= 640) {
-					x =  x - 640;
+					x = x - 640;
 				}
 				y = 366 - y;
 				// Right stick is an extension of left stick

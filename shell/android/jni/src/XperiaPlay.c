@@ -50,7 +50,8 @@ static jobject		g_pActivity		= 0;
 static jmethodID	javaOnNDKTouch	= 0;
 static jmethodID	javaOnNDKKey	= 0;
 
-int target;
+//int target;
+static bool isXperiaPlay;
 
 /**
  * Our saved state data.
@@ -146,12 +147,14 @@ engine_handle_input( struct android_app* app, AInputEvent* event )
                 touchstate[nPointerId].x = AMotionEvent_getX( event, n );
                 touchstate[nPointerId].y = AMotionEvent_getY( event, n );
             }
-            if( jni && g_pActivity && device == target ) {
+            //if( jni && g_pActivity && device == target ) {
+            if( jni && g_pActivity && isXperiaPlay) {
                 (*jni)->CallVoidMethod( jni, g_pActivity, javaOnNDKTouch, device, nSourceId, nRawAction, touchstate[nPointerId].x, touchstate[nPointerId].y, newTouch);
             }
             newTouch = JNI_FALSE;
         }
-        if( device == target ) {
+//        if( device == target ) {
+        if( isXperiaPlay ) {
             return 1;
         } else {
             return 0;
@@ -225,6 +228,8 @@ android_main( struct android_app* state )
     //JNIEnv *env;
     //(*jVM)->AttachCurrentThread(jVM, &env, NULL);
 
+    isXperiaPlay = IsXperiaPlay();
+
     if( state->savedState != NULL )
     {
         // We are starting with a previous saved state; restore from it.
@@ -262,10 +267,10 @@ void EXPORT_XPLAY JNICALL Java_com_reicast_emulator_GL2JNINative_registerNative(
 {
     g_pActivity = (jobject)(*env)->NewGlobalRef(env, clazz);
 }
-void EXPORT_XPLAY JNICALL Java_com_reicast_emulator_GL2JNINative_registerXperia(JNIEnv *env, jobject clazz, jint xperia)
-{
-    target = xperia;
-}
+//void EXPORT_XPLAY JNICALL Java_com_reicast_emulator_GL2JNINative_registerXperia(JNIEnv *env, jobject clazz, jint xperia)
+//{
+//    target = xperia;
+//}
 jint EXPORT_XPLAY JNICALL JNI_OnLoad(JavaVM * vm, void * reserved)
 {
     JNIEnv *env;

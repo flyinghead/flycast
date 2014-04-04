@@ -47,6 +47,7 @@ public class Gamepad {
 	public static final String controllers_shield = "NVIDIA Corporation NVIDIA Controller";
 	public static final String controllers_play = "keypad-zeus";
 	public static final String controllers_play_gp = "keypad-game-zeus";
+	public static final String controllers_play_tp = "synaptics_touchpad";
 
 	public String[] portId = { "_A", "_B", "_C", "_D" };
 	public boolean[] compat = { false, false, false, false };
@@ -65,7 +66,7 @@ public class Gamepad {
 	public boolean isMogaPro[] = { false, false, false, false };
 
 	public SparseArray<Integer> playerNumX = new SparseArray<Integer>();
-	public List<Integer> keypadZeus = new ArrayList<Integer>();
+	public int[] keypadZeus = new int[2];
 
 	public boolean isXperiaPlay;
 	public boolean isOuyaOrTV;
