@@ -15,16 +15,15 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import com.reicast.emulator.R;
 
 public class OptionsFragment extends Fragment {
 
-	Activity parentActivity;
-	Button mainBrowse;
-	Button gameBrowse;
-	Button mainLocale;
-	OnClickListener mCallback;
+	private Button mainBrowse;
+	private Button gameBrowse;
+	private OnClickListener mCallback;
 
 	private SharedPreferences mPrefs;
 	private File sdcard = Environment.getExternalStorageDirectory();
@@ -60,10 +59,8 @@ public class OptionsFragment extends Fragment {
 	@Override
 	public void onViewCreated(View view, Bundle savedInstanceState) {
 		// setContentView(R.layout.activity_main);
-
-		parentActivity = getActivity();
-
-		mPrefs = PreferenceManager.getDefaultSharedPreferences(parentActivity);
+		
+		mPrefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
 		home_directory = mPrefs.getString("home_directory", home_directory);
 
 		mainBrowse = (Button) getView().findViewById(R.id.browse_main_path);
@@ -86,17 +83,20 @@ public class OptionsFragment extends Fragment {
 			public void afterTextChanged(Editable s) {
 				if (editBrowse.getText() != null) {
 					home_directory = editBrowse.getText().toString();
+					if (home_directory.endsWith("/data")) {
+						home_directory.replace("/data", "");
+						Toast.makeText(getActivity(), R.string.data_folder,
+								Toast.LENGTH_SHORT).show();
+					}
 					mPrefs.edit().putString("home_directory", home_directory)
 							.commit();
 				}
 			}
 
-			public void beforeTextChanged(CharSequence s, int start, int count,
-					int after) {
+			public void beforeTextChanged(CharSequence s, int start, int count, int after) {
 			}
 
-			public void onTextChanged(CharSequence s, int start, int before,
-					int count) {
+			public void onTextChanged(CharSequence s, int start, int before, int count) {
 			}
 		});
 
@@ -126,14 +126,11 @@ public class OptionsFragment extends Fragment {
 				}
 			}
 
-			public void beforeTextChanged(CharSequence s, int start, int count,
-					int after) {
+			public void beforeTextChanged(CharSequence s, int start, int count, int after) {
 			}
 
-			public void onTextChanged(CharSequence s, int start, int before,
-					int count) {
+			public void onTextChanged(CharSequence s, int start, int before, int count) {
 			}
 		});
-
 	}
 }

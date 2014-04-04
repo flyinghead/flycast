@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import android.annotation.TargetApi;
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
@@ -42,9 +41,9 @@ import de.ankri.views.Switch;
 
 public class InputModFragment extends Fragment {
 
-	private Activity parentActivity;
 	private SharedPreferences mPrefs;
 
+	private Switch switchJoystickDpadEnabled;
 	private Switch switchModifiedLayoutEnabled;
 	private Switch switchCompatibilityEnabled;
 
@@ -60,17 +59,15 @@ public class InputModFragment extends Fragment {
 	private TextView dpad_right_text;
 	private TextView start_button_text;
 	private TextView select_button_text;
-	
+
 	private String player = "_A";
 	private int sS = 2;
 	private int playerNum = -1;
 	private mapKeyCode mKey;
 
-	Gamepad pad = new Gamepad();
-
 	// Container Activity must implement this interface
 	public interface OnClickListener {
-		public void onMainBrowseSelected(String path_entry, boolean games);
+		void onMainBrowseSelected(String path_entry, boolean games);
 	}
 
 	@Override
@@ -82,223 +79,238 @@ public class InputModFragment extends Fragment {
 
 	@Override
 	public void onViewCreated(View view, Bundle savedInstanceState) {
-		parentActivity = getActivity();
 
 		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB) {
 			Runtime.getRuntime().freeMemory();
 			System.gc();
 		}
 
-		mPrefs = PreferenceManager.getDefaultSharedPreferences(parentActivity);
+		mPrefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
 
-		final String[] controllers = parentActivity.getResources()
-				.getStringArray(R.array.controllers);
+		final String[] controllers = getResources().getStringArray(R.array.controllers);
 
 		Bundle b = getArguments();
 		if (b != null) {
 			playerNum = b.getInt("portNumber", -1);
 		}
+		
+		switchJoystickDpadEnabled = (Switch) getView().findViewById(
+				R.id.switchJoystickDpadEnabled);
+		switchModifiedLayoutEnabled = (Switch) getView().findViewById(
+				R.id.switchModifiedLayoutEnabled);
+		switchCompatibilityEnabled = (Switch) getView().findViewById(
+				R.id.switchCompatibilityEnabled);
+
+		OnCheckedChangeListener joystick_mode = new OnCheckedChangeListener() {
+			public void onCheckedChanged(CompoundButton buttonView,
+					boolean isChecked) {
+				mPrefs.edit()
+						.putBoolean(Gamepad.pref_js_separate + player,
+								isChecked).commit();
+			}
+		};
+		
+		switchJoystickDpadEnabled.setOnCheckedChangeListener(joystick_mode);
 
 		OnCheckedChangeListener modified_layout = new OnCheckedChangeListener() {
 			public void onCheckedChanged(CompoundButton buttonView,
 					boolean isChecked) {
 				mPrefs.edit()
-						.putBoolean("modified_key_layout" + player, isChecked)
-						.commit();
+						.putBoolean(Gamepad.pref_js_modified + player,
+								isChecked).commit();
+				if (isChecked) {
+					switchJoystickDpadEnabled.setEnabled(true);
+				} else if (!switchCompatibilityEnabled.isChecked()) {
+					switchJoystickDpadEnabled.setEnabled(false);
+				}
 			}
 		};
-		switchModifiedLayoutEnabled = (Switch) getView().findViewById(
-				R.id.switchModifiedLayoutEnabled);
+		
 		switchModifiedLayoutEnabled.setOnCheckedChangeListener(modified_layout);
 
 		OnCheckedChangeListener compat_mode = new OnCheckedChangeListener() {
 			public void onCheckedChanged(CompoundButton buttonView,
 					boolean isChecked) {
+				mPrefs.edit()
+						.putBoolean(Gamepad.pref_js_compat + player, isChecked)
+						.commit();
 				if (isChecked) {
 					selectController();
-				} else {
-					mPrefs.edit().remove("controller" + player).commit();
+					switchJoystickDpadEnabled.setEnabled(true);
+				} else if (!switchCompatibilityEnabled.isChecked()) {
+					switchJoystickDpadEnabled.setEnabled(false);
 				}
-				mPrefs.edit()
-						.putBoolean("controller_compat" + player, isChecked)
-						.commit();
 			}
 		};
-		switchCompatibilityEnabled = (Switch) getView().findViewById(
-				R.id.switchCompatibilityEnabled);
+		
 		switchCompatibilityEnabled.setOnCheckedChangeListener(compat_mode);
+		
+		if (!switchModifiedLayoutEnabled.isChecked() && !switchCompatibilityEnabled.isChecked()) {
+			switchJoystickDpadEnabled.setEnabled(false);
+		}
 
-		mKey = new mapKeyCode(parentActivity);
+		mKey = new mapKeyCode(getActivity());
 
 		ImageView a_button_icon = (ImageView) getView().findViewById(
 				R.id.a_button_icon);
 		a_button_icon.setImageDrawable(getButtonImage(448 / sS, 0));
-		a_button_text = (TextView) getView().findViewById(
-				R.id.a_button_key);
+		a_button_text = (TextView) getView().findViewById(R.id.a_button_key);
 		Button a_button = (Button) getView().findViewById(R.id.a_button_edit);
 		a_button.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
-				mKey.intiateSearch("a_button", a_button_text);
+				mKey.intiateSearch(Gamepad.pref_button_a, a_button_text);
 			}
 		});
 		Button a_remove = (Button) getView().findViewById(R.id.remove_a_button);
 		a_remove.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
-				remKeyCode("a_button", a_button_text);
+				remKeyCode(Gamepad.pref_button_a, a_button_text);
 			}
 		});
 
 		ImageView b_button_icon = (ImageView) getView().findViewById(
 				R.id.b_button_icon);
 		b_button_icon.setImageDrawable(getButtonImage(384 / sS, 0));
-		b_button_text = (TextView) getView().findViewById(
-				R.id.b_button_key);
+		b_button_text = (TextView) getView().findViewById(R.id.b_button_key);
 		Button b_button = (Button) getView().findViewById(R.id.b_button_edit);
 		b_button.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
-				mKey.intiateSearch("b_button", b_button_text);
+				mKey.intiateSearch(Gamepad.pref_button_b, b_button_text);
 			}
 		});
 		Button b_remove = (Button) getView().findViewById(R.id.remove_b_button);
 		b_remove.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
-				remKeyCode("b_button", b_button_text);
+				remKeyCode(Gamepad.pref_button_b, b_button_text);
 			}
 		});
 
 		ImageView x_button_icon = (ImageView) getView().findViewById(
 				R.id.x_button_icon);
 		x_button_icon.setImageDrawable(getButtonImage(256 / sS, 0));
-		x_button_text = (TextView) getView().findViewById(
-				R.id.x_button_key);
+		x_button_text = (TextView) getView().findViewById(R.id.x_button_key);
 		Button x_button = (Button) getView().findViewById(R.id.x_button_edit);
 		x_button.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
-				mKey.intiateSearch("x_button", x_button_text);
+				mKey.intiateSearch(Gamepad.pref_button_x, x_button_text);
 			}
 		});
 		Button x_remove = (Button) getView().findViewById(R.id.remove_x_button);
 		x_remove.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
-				remKeyCode("x_button", x_button_text);
+				remKeyCode(Gamepad.pref_button_x, x_button_text);
 			}
 		});
 
 		ImageView y_button_icon = (ImageView) getView().findViewById(
 				R.id.y_button_icon);
 		y_button_icon.setImageDrawable(getButtonImage(320 / sS, 0));
-		y_button_text = (TextView) getView().findViewById(
-				R.id.y_button_key);
+		y_button_text = (TextView) getView().findViewById(R.id.y_button_key);
 		Button y_button = (Button) getView().findViewById(R.id.y_button_edit);
 		y_button.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
-				mKey.intiateSearch("y_button", y_button_text);
+				mKey.intiateSearch(Gamepad.pref_button_y, y_button_text);
 			}
 		});
 		Button y_remove = (Button) getView().findViewById(R.id.remove_y_button);
 		y_remove.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
-				remKeyCode("y_button", y_button_text);
+				remKeyCode(Gamepad.pref_button_y, y_button_text);
 			}
 		});
 
 		ImageView l_button_icon = (ImageView) getView().findViewById(
 				R.id.l_button_icon);
 		l_button_icon.setImageDrawable(getButtonImage(78 / sS, 64 / sS));
-		l_button_text = (TextView) getView().findViewById(
-				R.id.l_button_key);
+		l_button_text = (TextView) getView().findViewById(R.id.l_button_key);
 		Button l_button = (Button) getView().findViewById(R.id.l_button_edit);
 		l_button.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
-				mKey.intiateSearch("l_button", l_button_text);
+				mKey.intiateSearch(Gamepad.pref_button_l, l_button_text);
 			}
 		});
 		Button l_remove = (Button) getView().findViewById(R.id.remove_l_button);
 		l_remove.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
-				remKeyCode("l_button", l_button_text);
+				remKeyCode(Gamepad.pref_button_l, l_button_text);
 			}
 		});
 
 		ImageView r_button_icon = (ImageView) getView().findViewById(
 				R.id.r_button_icon);
 		r_button_icon.setImageDrawable(getButtonImage(162 / sS, 64 / sS));
-		r_button_text = (TextView) getView().findViewById(
-				R.id.r_button_key);
+		r_button_text = (TextView) getView().findViewById(R.id.r_button_key);
 		Button r_button = (Button) getView().findViewById(R.id.r_button_edit);
 		r_button.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
-				mKey.intiateSearch("r_button", r_button_text);
+				mKey.intiateSearch(Gamepad.pref_button_r, r_button_text);
 			}
 		});
 		Button r_remove = (Button) getView().findViewById(R.id.remove_r_button);
 		r_remove.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
-				remKeyCode("r_button", r_button_text);
+				remKeyCode(Gamepad.pref_button_r, r_button_text);
 			}
 		});
 
-		dpad_up_text = (TextView) getView().findViewById(
-				R.id.dpad_up_key);
+		dpad_up_text = (TextView) getView().findViewById(R.id.dpad_up_key);
 		Button dpad_up = (Button) getView().findViewById(R.id.dpad_up_edit);
 		dpad_up.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
-				mKey.intiateSearch("dpad_up", dpad_up_text);
+				mKey.intiateSearch(Gamepad.pref_dpad_up, dpad_up_text);
 			}
 		});
 		Button up_remove = (Button) getView().findViewById(R.id.remove_dpad_up);
 		up_remove.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
-				remKeyCode("dpad_up", dpad_up_text);
+				remKeyCode(Gamepad.pref_dpad_up, dpad_up_text);
 			}
 		});
 
-		dpad_down_text = (TextView) getView().findViewById(
-				R.id.dpad_down_key);
+		dpad_down_text = (TextView) getView().findViewById(R.id.dpad_down_key);
 		Button dpad_down = (Button) getView().findViewById(R.id.dpad_down_edit);
 		dpad_down.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
-				mKey.intiateSearch("dpad_down", dpad_down_text);
+				mKey.intiateSearch(Gamepad.pref_dpad_down, dpad_down_text);
 			}
 		});
 		Button down_remove = (Button) getView().findViewById(
 				R.id.remove_dpad_down);
 		down_remove.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
-				remKeyCode("dpad_down", dpad_down_text);
+				remKeyCode(Gamepad.pref_dpad_down, dpad_down_text);
 			}
 		});
 
-		dpad_left_text = (TextView) getView().findViewById(
-				R.id.dpad_left_key);
+		dpad_left_text = (TextView) getView().findViewById(R.id.dpad_left_key);
 		Button dpad_left = (Button) getView().findViewById(R.id.dpad_left_edit);
 		dpad_left.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
-				mKey.intiateSearch("dpad_left", dpad_left_text);
+				mKey.intiateSearch(Gamepad.pref_dpad_left, dpad_left_text);
 			}
 		});
 		Button left_remove = (Button) getView().findViewById(
 				R.id.remove_dpad_left);
 		left_remove.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
-				remKeyCode("dpad_left", dpad_left_text);
+				remKeyCode(Gamepad.pref_dpad_left, dpad_left_text);
 			}
 		});
 
-		dpad_right_text = (TextView) getView().findViewById(
-				R.id.dpad_right_key);
+		dpad_right_text = (TextView) getView()
+				.findViewById(R.id.dpad_right_key);
 		Button dpad_right = (Button) getView().findViewById(
 				R.id.dpad_right_edit);
 		dpad_right.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
-				mKey.intiateSearch("dpad_right", dpad_right_text);
+				mKey.intiateSearch(Gamepad.pref_dpad_right, dpad_right_text);
 			}
 		});
 		Button right_remove = (Button) getView().findViewById(
 				R.id.remove_dpad_right);
 		right_remove.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
-				remKeyCode("dpad_right", dpad_right_text);
+				remKeyCode(Gamepad.pref_dpad_right, dpad_right_text);
 			}
 		});
 
@@ -311,14 +323,14 @@ public class InputModFragment extends Fragment {
 				R.id.start_button_edit);
 		start_button.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
-				mKey.intiateSearch("start_button", start_button_text);
+				mKey.intiateSearch(Gamepad.pref_button_start, start_button_text);
 			}
 		});
 		Button start_remove = (Button) getView()
 				.findViewById(R.id.remove_start);
 		start_remove.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
-				remKeyCode("start_button", start_button_text);
+				remKeyCode(Gamepad.pref_button_start, start_button_text);
 			}
 		});
 
@@ -331,21 +343,22 @@ public class InputModFragment extends Fragment {
 				R.id.select_button_edit);
 		select_button.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
-				mKey.intiateSearch("select_button", select_button_text);
+				mKey.intiateSearch(Gamepad.pref_button_select,
+						select_button_text);
 			}
 		});
-		Button select_remove = (Button) getView()
-				.findViewById(R.id.remove_select);
+		Button select_remove = (Button) getView().findViewById(
+				R.id.remove_select);
 		select_remove.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
-				remKeyCode("select_button", select_button_text);
+				remKeyCode(Gamepad.pref_button_select, select_button_text);
 			}
 		});
 
 		Spinner player_spnr = (Spinner) getView().findViewById(
 				R.id.player_spinner);
 		ArrayAdapter<String> playerAdapter = new ArrayAdapter<String>(
-				parentActivity, android.R.layout.simple_spinner_item,
+				getActivity(), android.R.layout.simple_spinner_item,
 				controllers);
 		playerAdapter
 				.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -366,7 +379,7 @@ public class InputModFragment extends Fragment {
 			}
 
 			public void onNothingSelected(AdapterView<?> arg0) {
-				
+
 			}
 
 		});
@@ -376,8 +389,10 @@ public class InputModFragment extends Fragment {
 	/**
 	 * Retrieve an image to serve as a visual representation
 	 * 
-	 * @param x The x start value of the image within the atlas
-	 * @param y The y start value of the image within the atlas
+	 * @param x
+	 *            The x start value of the image within the atlas
+	 * @param y
+	 *            The y start value of the image within the atlas
 	 */
 	private Drawable getButtonImage(int x, int y) {
 		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB) {
@@ -385,7 +400,7 @@ public class InputModFragment extends Fragment {
 			System.gc();
 		}
 		try {
-			InputStream bitmap = parentActivity.getAssets().open("buttons.png");
+			InputStream bitmap = getResources().getAssets().open("buttons.png");
 			BitmapFactory.Options options = new BitmapFactory.Options();
 			options.inSampleSize = sS;
 			Bitmap image = BitmapFactory.decodeStream(bitmap, null, options);
@@ -418,7 +433,7 @@ public class InputModFragment extends Fragment {
 				}
 			}
 		}
-		return parentActivity.getResources().getDrawable(R.drawable.input);
+		return getResources().getDrawable(R.drawable.input);
 	}
 
 	/**
@@ -426,19 +441,17 @@ public class InputModFragment extends Fragment {
 	 * 
 	 */
 	private void selectController() {
-		AlertDialog.Builder builder = new AlertDialog.Builder(parentActivity);
-		builder.setTitle(getString(R.string.select_controller_title));
-		builder.setMessage(getString(R.string.select_controller_message,
-				String.valueOf(player.replace("_", ""))));
-		builder.setNegativeButton("Cancel",
+		AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+		builder.setTitle(R.string.select_controller_title);
+		builder.setMessage(getString(R.string.select_controller_message, player.replace("_", "")));
+		builder.setNegativeButton(R.string.cancel,
 				new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int which) {
 						dialog.dismiss();
 					}
 				});
 		builder.setOnKeyListener(new Dialog.OnKeyListener() {
-			public boolean onKey(DialogInterface dialog, int keyCode,
-					KeyEvent event) {
+			public boolean onKey(DialogInterface dialog, int keyCode, KeyEvent event) {
 				mPrefs.edit()
 						.putInt("controller" + player, event.getDeviceId())
 						.commit();
@@ -471,12 +484,10 @@ public class InputModFragment extends Fragment {
 			this.button = button;
 			this.output = output;
 			isMapping = true;
-			AlertDialog.Builder builder = new AlertDialog.Builder(
-					parentActivity);
-			builder.setTitle(getString(R.string.map_keycode_title));
-			builder.setMessage(getString(R.string.map_keycode_message,
-					button.replace("_", " ")));
-			builder.setNegativeButton("Cancel",
+			AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+			builder.setTitle(R.string.map_keycode_title);
+			builder.setMessage(getString(R.string.map_keycode_message, button.replace("_", " ")));
+			builder.setNegativeButton(R.string.cancel,
 					new DialogInterface.OnClickListener() {
 						public void onClick(DialogInterface dialog, int which) {
 							isMapping = false;
@@ -484,8 +495,7 @@ public class InputModFragment extends Fragment {
 						}
 					});
 			builder.setOnKeyListener(new Dialog.OnKeyListener() {
-				public boolean onKey(DialogInterface dialog, int keyCode,
-						KeyEvent event) {
+				public boolean onKey(DialogInterface dialog, int keyCode, KeyEvent event) {
 					mapButton(keyCode, event);
 					isMapping = false;
 					dialog.dismiss();
@@ -499,12 +509,13 @@ public class InputModFragment extends Fragment {
 		/**
 		 * Assign the user button to the emulator button
 		 * 
-		 * @param keyCode The keycode generated by the button being assigned
+		 * @param keyCode
+		 *            The keycode generated by the button being assigned
 		 * @param event
 		 *            The keyevent generated by the button being assigned
 		 */
 		private int mapButton(int keyCode, KeyEvent event) {
-			if (android.os.Build.MODEL.startsWith("R800")) {
+			if (Build.MODEL.startsWith("R800")) {
 				if (keyCode == KeyEvent.KEYCODE_MENU)
 					return -1;
 			} else {
@@ -549,32 +560,34 @@ public class InputModFragment extends Fragment {
 					if (label.contains(":")) {
 						label = label.substring(0, label.indexOf(":"));
 					}
-					output.setText(label + ": "
-							+ String.valueOf(ev.getAction()));
+					
+					output.setText(label + ": " + ev.getAction());
 				}
 
 			}
 			return dispatchTouchEvent(ev);
 		}
 	}
-	
+
 	private void updateController(String player) {
+		switchJoystickDpadEnabled.setChecked(mPrefs.getBoolean(
+				Gamepad.pref_js_separate + player, false));
 		switchModifiedLayoutEnabled.setChecked(mPrefs.getBoolean(
-				"modified_key_layout" + player, false));
+				Gamepad.pref_js_modified + player, false));
 		switchCompatibilityEnabled.setChecked(mPrefs.getBoolean(
-				"controller_compat" + player, false));
-		getKeyCode("a_button", a_button_text);
-		getKeyCode("b_button", b_button_text);
-		getKeyCode("x_button", x_button_text);
-		getKeyCode("y_button", y_button_text);
-		getKeyCode("l_button", l_button_text);
-		getKeyCode("r_button", r_button_text);
-		getKeyCode("dpad_up", dpad_up_text);
-		getKeyCode("dpad_down", dpad_down_text);
-		getKeyCode("dpad_left", dpad_left_text);
-		getKeyCode("dpad_right", dpad_right_text);
-		getKeyCode("start_button", start_button_text);
-		getKeyCode("select_button", select_button_text);
+				Gamepad.pref_js_compat + player, false));
+		getKeyCode(Gamepad.pref_button_a, a_button_text);
+		getKeyCode(Gamepad.pref_button_b, b_button_text);
+		getKeyCode(Gamepad.pref_button_x, x_button_text);
+		getKeyCode(Gamepad.pref_button_y, y_button_text);
+		getKeyCode(Gamepad.pref_button_l, l_button_text);
+		getKeyCode(Gamepad.pref_button_r, r_button_text);
+		getKeyCode(Gamepad.pref_dpad_up, dpad_up_text);
+		getKeyCode(Gamepad.pref_dpad_down, dpad_down_text);
+		getKeyCode(Gamepad.pref_dpad_left, dpad_left_text);
+		getKeyCode(Gamepad.pref_dpad_right, dpad_right_text);
+		getKeyCode(Gamepad.pref_button_start, start_button_text);
+		getKeyCode(Gamepad.pref_button_select, select_button_text);
 	}
 
 	private boolean getKeyCode(final String button, final TextView output) {
@@ -584,7 +597,7 @@ public class InputModFragment extends Fragment {
 			if (label.contains(":")) {
 				label = label.substring(0, label.indexOf(":"));
 			}
-			output.setText(label + ": " + String.valueOf(keyCode));
+			output.setText(label + ": " + keyCode);
 			return true;
 		} else {
 			String label = output.getText().toString();

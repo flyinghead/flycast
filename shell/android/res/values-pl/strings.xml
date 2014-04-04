@@ -71,6 +71,4 @@
     <string name="textOn">WŁ</string>
     <string name="textOff">WYŁ</string>
 
-    <string name="menu_debug">Zapisz logi błędów</string>
-
 </resources>

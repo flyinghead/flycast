@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="reicast-touchpad" default="help">
+    <property name="ndkbuildopt" value=""/>
+    <target name="-pre-build">
+        <exec executable="${ndk.dir}/ndk-build.cmd" failonerror="true" osfamily="windows">
+            <arg line="-j8 ${ndkbuildopt}"/>
+        </exec>
+        <exec executable="${ndk.dir}/ndk-build" failonerror="true" osfamily="unix">
+            <arg line="-j8 ${ndkbuildopt}"/>
+        </exec>
+    </target>
+    <target name="clean" depends="android_rules.clean">
+        <exec executable="${ndk.dir}/ndk-build.cmd" failonerror="true" osfamily="windows">
+            <arg value="clean"/>
+        </exec>
+        <exec executable="${ndk.dir}/ndk-build" failonerror="true" osfamily="unix">
+            <arg value="clean"/>
+        </exec>
+    </target>
+</project>

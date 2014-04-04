@@ -51,8 +51,22 @@ RZDCY_CXXFLAGS	:= \
 else
 RZDCY_CXXFLAGS	:= \
 	$(CFLAGS) -c -g -O3 -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps \
-	-D_ANDROID -DRELEASE -DTARGET_BEAGLE\
-	-march=armv7-a -mtune=cortex-a9 -mfpu=vfpv3-d16 \
+	-D_ANDROID -DRELEASE\
 	-frename-registers -fsingle-precision-constant -ffast-math \
 	-ftree-vectorize -fomit-frame-pointer -fno-exceptions -fno-rtti -std=gnu++11
+	
+	ifndef NOT_ARM
+		RZDCY_CXXFLAGS += -march=armv7-a -mtune=cortex-a9 -mfpu=vfpv3-d16
+		RZDCY_CXXFLAGS += -DTARGET_LINUX_ARMELv7
+	else
+	  ifndef ISMIPS
+      RZDCY_CXXFLAGS += -DTARGET_LINUX_x86
+		else
+      RZDCY_CXXFLAGS += -DTARGET_LINUX_MIPS
+		endif
+	endif
+endif
+
+ifdef NO_REC
+  RZDCY_CXXFLAGS += -DHOST_NO_REC
 endif

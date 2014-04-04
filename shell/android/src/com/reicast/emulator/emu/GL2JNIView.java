@@ -3,7 +3,6 @@ package com.reicast.emulator.emu;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
@@ -21,13 +20,17 @@ import android.os.Build;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
 import android.util.AttributeSet;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.ScaleGestureDetector.SimpleOnScaleGestureListener;
 import android.view.View;
+import android.view.WindowManager;
 
+import com.android.util.FileUtils;
 import com.reicast.emulator.GL2JNIActivity;
+import com.reicast.emulator.GL2JNINative;
 import com.reicast.emulator.config.Config;
 import com.reicast.emulator.emu.OnScreenMenu.FpsPopup;
 import com.reicast.emulator.periph.VJoy;
@@ -56,9 +59,15 @@ public class GL2JNIView extends GLSurfaceView
 {
 	public static final boolean DEBUG = false;
 
+	public static final int LAYER_TYPE_SOFTWARE = 1;
+	public static final int LAYER_TYPE_HARDWARE = 2;
+
 	private static String fileName;
 	//private AudioThread audioThread;  
 	private EmuThread ethd;
+
+	private static int sWidth;
+	private static int sHeight;
 
 	Vibrator vib;
 
@@ -103,17 +112,6 @@ public class GL2JNIView extends GLSurfaceView
 		this.editVjoyMode = editVjoyMode;
 		setKeepScreenOn(true);
 
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-			setOnSystemUiVisibilityChangeListener (new OnSystemUiVisibilityChangeListener() {
-				public void onSystemUiVisibilityChange(int visibility) {
-					if ((visibility & SYSTEM_UI_FLAG_FULLSCREEN) == 0) {
-						GL2JNIView.this.setSystemUiVisibility(
-								SYSTEM_UI_FLAG_FULLSCREEN
-								| SYSTEM_UI_FLAG_HIDE_NAVIGATION);
-					}
-				}
-			});
-		}
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
 			setOnSystemUiVisibilityChangeListener (new OnSystemUiVisibilityChangeListener() {
 				public void onSystemUiVisibilityChange(int visibility) {
@@ -138,13 +136,21 @@ public class GL2JNIView extends GLSurfaceView
 			System.gc();
 		}
 
+		DisplayMetrics metrics = new DisplayMetrics();
+		//((Activity) context).getWindowManager().getDefaultDisplay().getMetrics(metrics);
+		((WindowManager) context.getSystemService(Context.WINDOW_SERVICE))
+				.getDefaultDisplay().getMetrics(metrics);
+		final float scale = context.getResources().getDisplayMetrics().density;
+		sWidth = (int) (metrics.widthPixels * scale + 0.5f);
+		sHeight = (int) (metrics.heightPixels * scale + 0.5f);
+
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-		boolean soundEndabled = prefs.getBoolean("sound_enabled", true);
-		ethd = new EmuThread(soundEndabled);
 
-		touchVibrationEnabled = prefs.getBoolean("touch_vibration_enabled", true);
+		ethd = new EmuThread(!Config.nosound);
 
-		int renderType = prefs.getInt("render_type", LAYER_TYPE_HARDWARE);
+		touchVibrationEnabled = prefs.getBoolean(Config.pref_touchvibe, true);
+
+		int renderType = prefs.getInt(Config.pref_rendertype, LAYER_TYPE_HARDWARE);
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
 			this.setLayerType(renderType, null);
 		} else {
@@ -160,7 +166,7 @@ public class GL2JNIView extends GLSurfaceView
 			}
 		}
 
-		config.loadConfigurationPrefs();
+//		config.loadConfigurationPrefs();
 
 		vjoy_d_custom = VJoy.readCustomVjoyValues(context);
 
@@ -169,8 +175,13 @@ public class GL2JNIView extends GLSurfaceView
 		// This is the game we are going to run
 		fileName = newFileName;
 
-		if (GL2JNIActivity.syms != null)
-			JNIdc.data(1, GL2JNIActivity.syms);
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
+			if (GL2JNINative.syms != null)
+				JNIdc.data(1, GL2JNINative.syms);
+		} else {
+			if (GL2JNIActivity.syms != null)
+				JNIdc.data(1, GL2JNIActivity.syms);
+		}
 
 		JNIdc.init(fileName);
 
@@ -180,7 +191,7 @@ public class GL2JNIView extends GLSurfaceView
 		// is interpreted as any 32-bit surface with alpha by SurfaceFlinger.
 		if(translucent) this.getHolder().setFormat(PixelFormat.TRANSLUCENT);
 
-		if (prefs.getBoolean("force_gpu", false)) {
+		if (prefs.getBoolean(Config.pref_forcegpu, false)) {
 			setEGLContextFactory(new GLCFactory6.ContextFactory());
 			setEGLConfigChooser(
 					translucent?
@@ -542,11 +553,15 @@ public class GL2JNIView extends GLSurfaceView
 				fps.logFrame();
 			}
 			JNIdc.rendframe();
+			if(mView.takeScreenshot){
+				mView.takeScreenshot = false;
+				FileUtils.saveScreenshot(mView.getContext(), mView.getWidth(), mView.getHeight(), gl);
+			}
 		}
 
 		public void onSurfaceChanged(GL10 gl,int width,int height)
 		{
-			JNIdc.rendinit(width,height);
+			JNIdc.rendinit(sWidth,sHeight);
 		}
 
 		public void onSurfaceCreated(GL10 gl,EGLConfig config)
@@ -670,13 +685,6 @@ public class GL2JNIView extends GLSurfaceView
 	@Override
 	public void onWindowFocusChanged(boolean hasFocus) {
 		super.onWindowFocusChanged(hasFocus);
-		if (hasFocus && Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-			GL2JNIView.this.setSystemUiVisibility(
-					View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-					| View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-					| View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-					| View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-					| View.SYSTEM_UI_FLAG_FULLSCREEN);}
 		if (hasFocus && Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
 			GL2JNIView.this.setSystemUiVisibility(
 					View.SYSTEM_UI_FLAG_LAYOUT_STABLE
@@ -686,4 +694,10 @@ public class GL2JNIView extends GLSurfaceView
 					| View.SYSTEM_UI_FLAG_FULLSCREEN
 					| View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);}
 	}
+
+	private boolean takeScreenshot = false;
+	public void screenGrab() {
+		takeScreenshot = true;
+	}
+	
 }

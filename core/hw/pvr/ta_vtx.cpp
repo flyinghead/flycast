@@ -1564,21 +1564,21 @@ void FillBGP(TA_context* ctx)
 
 	float ZV=0;
 
-	cv[0].x=0;
-	cv[0].y=0;
+	cv[0].x=-2000;
+	cv[0].y=-2000;
 	cv[0].z=ISP_BACKGND_D.f;
 
-	cv[1].x=640*scale_x;
+	cv[1].x=640*scale_x + 2000;
 	cv[1].y=0;
 	cv[1].z=ISP_BACKGND_D.f;
 
-	cv[2].x=0;
-	cv[2].y=480;
+	cv[2].x=-2000;
+	cv[2].y=480+2000;
 	cv[2].z=ISP_BACKGND_D.f;
 
 	cv[3]=cv[2];
-	cv[3].x=640*scale_x;
-	cv[3].y=480;
+	cv[3].x=640*scale_x+2000;
+	cv[3].y=480+2000;
 	cv[3].z=ISP_BACKGND_D.f;
 }
 

@@ -22,7 +22,7 @@
     <string name="set_frameskip">跳帧值</string>
     <string name="select_render">PVR 渲染 (目前没有任何作用)</string>
     <string name="select_software">强制使用软件渲染</string>
-    <string name="select_sound">开启声音</string>
+    
     <string name="select_force_gpu">强制使用 v6 GPU 的配置</string>
     <string name="default_disk">设置默认光盘</string>
     <string name="games_listing">可用的Dreamcast游戏</string>
@@ -47,17 +47,10 @@
     <string name="customize_physical_controls">自定义物理控制</string>
     <string name="map_keycode_title">修改控制器</string>
     <string name="map_keycode_message">按下控制器按钮来映射 %1$s</string>
-    <string name="bios_menu">按 %1$s 来调出菜单</string>
-    <string name="back_button">返回</string>
-    <string name="search_button">搜寻</string>
     <string name="moga_pro_connect">MOGA Pro已连接!</string>
     <string name="moga_connect">MOGA已连接</string>
     <string name="about_text">reicast是一款dreamcast模拟器</string>
     <string name="revision_text">版本: %1$s [%2$s]</string>
-    <string name="app_site">主页: http://reicast.com</string>
-    <string name="beta_site">测试版: http://reicast.loungekatt.com</string>
-    <string name="git_api">https://api.github.com/repos/reicast/reicast-emulator/commits</string>
-    <string name="git_issues">https://github.com/reicast/reicast-emulator/issues/</string>
 
     <string-array name="controllers">
         <item>控制器A</item>
@@ -74,8 +67,7 @@
     <string name="rateme">评价我</string>
     <string name="textOn">开</string>
     <string name="textOff">关</string>
-    <string name="platform">复制logcat的内容到剪贴板\n请在问题的报告贴</string>
+
     <string name="bios_config">请生成一个配置\n（运行至少一次BIOS）</string>
-    <string name="menu_debug">提交错误日志</string>
 
 </resources>

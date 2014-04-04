@@ -82,6 +82,11 @@ bool ConvertSector(u8* in_buff , u8* out_buff , int from , int to,int sector);
 
 bool InitDrive(u32 fileflags=0);
 void TermDrive();
+bool DiscSwap(u32 fileflags=0);
+extern signed int sns_asc;
+extern signed int sns_ascq;
+extern signed int sns_key;
+
 
 void PatchRegion_0(u8* sector,int size);
 void PatchRegion_6(u8* sector,int size);
@@ -293,3 +298,5 @@ struct RawTrackFile : TrackFile
 };
 
 DiscType GuessDiscType(bool m1, bool m2, bool da);
+
+extern void gd_setdisc();

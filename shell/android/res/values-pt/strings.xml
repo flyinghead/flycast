@@ -15,7 +15,8 @@
     <string name="folder_bios">INICIAR BIOS</string>
     <string name="folder_select">SELECIONAR DIRETÓRIO ATUAL</string>
 
-    <string name="experimental_opts">Experimental (Pode causar problemas)</string>
+    <string name="optimization_opts">Opções de Otimização e Depuração</string>
+	<string name="experimental_opts">Experimental (Pode causar problemas)</string>
     <string name="select_dynarec">Habilitar Recompilador Dinâmico (Dynarec)</string>
     <string name="select_unstable">Otimizações instáveis</string>
     <string name="select_region">Região DC</string>
@@ -24,9 +25,18 @@
     <string name="select_stretch">Modo Widescreen</string>
     <string name="set_frameskip">Pulo de Frames</string>
     <string name="select_render">Renderização PVR (não faz nada por enquanto)</string>
+    <string name="select_fps">Mostrar FPS na tela</string>
+    <string name="select_software">Forçar Renderização por Software</string>
+    <string name="select_sound">Habilitar Som</string>
+    <string name="select_depth">Profundidade da Renderização</string>
+    <string name="select_force_gpu">Forçar Configurações GPU v6</string>
     <string name="default_disk">Definir disco padrão</string>
 
     <string name="games_listing">Jogos disponíveis</string>
+	
+    <string name="report_issue">Falha Anterior Detectada</string>
+    <string name="log_saved">Log salvo no \"Diretório do sistema\"</string>
+    <string name="bios_config">Falha ao Configurar!</string>
 
     <string name="customize_touch_controls">Configurar controles de toque na tela</string>
     <string name="launch_editor">Iniciar editor</string>
@@ -45,19 +55,22 @@
     <string name="modified_layout">Habilitar layout de botões personalizado</string>
     <string name="controller_compat">Habilitar modo de compatibilidade</string>
     <string name="dpad_joystick">Controle analógico usa layout do DPAD</string>
+	<string name="mic_in_port_2">Microfone conectado na porta 2</string>
     
     <string name="customize_physical_controls">Personalizar controles físicos</string>
     <string name="map_keycode_title">Configurar controle</string>
     <string name="map_keycode_message">Pressione o novo botão para o controle %1$s</string>
     
+    <string name="bios_menu">Pressione o botão %1$s para abrir o menu</string>
+    <string name="back_button">Voltar / Selecionar</string>
+    <string name="menu_button">menu</string>
+    <string name="right_button">R3</string>	
+	
     <string name="moga_pro_connect">MOGA Pro Conectado!</string>
     <string name="moga_connect">MOGA Conectado!</string>
 
     <string name="about_text">reicast é um emulador de Dreamcast</string>
     <string name="revision_text">Versão: %1$s [%2$s]</string>
-    <string name="app_site">Página: http://reicast.com</string>
-    <string name="beta_site">Betas: http://reicast.loungekatt.com</string>
-    <string name="git_api">https://api.github.com/repos/reicast/reicast-emulator/commits</string>
     
     <string-array name="controllers">
     <item>Controle A</item>
@@ -82,8 +95,7 @@
     <string name="textOn">LIG</string>
     <string name="textOff">DESL</string>
     
-    <string name="platform">Copiar conteúdo logcat para o clipboard\nPor favor, cole no relatório questão</string>
-
-    <string name="menu_debug">Submeter Logs de Erros</string>
+    <string name="cancel">Cancelar</string>
+    <string name="manual">Manual</string>
 
 </resources>

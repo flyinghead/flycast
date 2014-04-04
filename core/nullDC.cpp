@@ -223,6 +223,7 @@ void LoadSettings()
 	settings.dreamcast.broadcast	= cfgLoadInt("config","Dreamcast.Broadcast",4);
 	settings.aica.LimitFPS			= cfgLoadInt("config","aica.LimitFPS",1);
 	settings.aica.NoBatch			= cfgLoadInt("config","aica.NoBatch",0);
+    settings.aica.NoSound			= cfgLoadInt("config","aica.NoSound",0);
 	settings.rend.UseMipmaps		= cfgLoadInt("config","rend.UseMipmaps",1);
 	settings.rend.WideScreen		= cfgLoadInt("config","rend.WideScreen",0);
 	

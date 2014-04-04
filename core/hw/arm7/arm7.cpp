@@ -789,7 +789,7 @@ u32 DYNACALL DoMemOp(u32 addr,u32 data)
 {
 	u32 rv=0;
 
-#if HOST_CPU==CPU_X86
+#if HOST_CPU==CPU_X86 && !defined(HOST_NO_REC)
 	addr=virt_arm_reg(0);
 	data=virt_arm_reg(1);
 #endif
@@ -809,7 +809,7 @@ u32 DYNACALL DoMemOp(u32 addr,u32 data)
 			arm_WriteMem32(addr,data);
 	}
 
-	#if HOST_CPU==CPU_X86
+	#if HOST_CPU==CPU_X86 && !defined(HOST_NO_REC)
 		virt_arm_reg(0)=rv;
 	#endif
 
@@ -817,7 +817,7 @@ u32 DYNACALL DoMemOp(u32 addr,u32 data)
 }
 
 //findfirstset -- used in LDM/STM handling
-#if HOST_CPU==CPU_X86
+#if HOST_CPU==CPU_X86 && BUILD_COMPILER != COMPILER_GCC
 #include <intrin.h>
 
 u32 findfirstset(u32 v)
@@ -2086,7 +2086,7 @@ void FlushCache()
 
 
 
-#if HOST_CPU==CPU_X86
+#if HOST_CPU==CPU_X86 && HOST_OS == OS_WINDOWS
 
 #include <Windows.h>
 

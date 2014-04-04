@@ -4,12 +4,13 @@
 #include "maple_devs.h"
 #include "maple_cfg.h"
 #include <time.h>
-#ifdef TARGET_PANDORA
-#define LOGI printf
-#define LOGW printf
-#else
+
+#if _ANDROID
 #include <android/log.h>
 #include <jni.h>
+#else
+#define LOGW printf
+#define LOGI printf
 #endif
 
 #include "deps/zlib/zlib.h"

@@ -18,7 +18,6 @@ import android.widget.ImageButton;
 import android.widget.ImageView.ScaleType;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
-import android.widget.Toast;
 
 import com.reicast.emulator.MainActivity;
 import com.reicast.emulator.R;
@@ -63,16 +62,13 @@ public class EditVJoyActivity extends Activity {
 
 		// Create the actual GLES view
 		mView = new GL2JNIView(getApplication(), config, null, false,
-				prefs.getInt("depth_render", 24), 0, true);
+				prefs.getInt(Config.pref_renderdepth, 24), 0, true);
 		mView.setFpsDisplay(null);
 		setContentView(mView);
 
 		vjoy_d_cached = VJoy.readCustomVjoyValues(getApplicationContext());
 
         JNIdc.show_osd();
-
-		Toast.makeText(getApplicationContext(),
-				"Press the back button for a menu", Toast.LENGTH_SHORT).show();
 	}
 
 	@Override

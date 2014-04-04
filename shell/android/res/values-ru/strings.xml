@@ -26,7 +26,7 @@
     <string name="select_render">PVR Rendering (пока не работает)</string>
     <string name="select_fps">Отоброжать FPS</string>
     <string name="select_software">Програмный Rendering</string>
-    <string name="select_sound">Включить эмуляцию звука</string>
+    
     <string name="select_depth">Выбрать глубину рендера</string>
     <string name="default_disk">Выбрать стандартный диск</string>
     <string name="select_force_gpu">Принудительно v6 GPU конфиг.</string>
@@ -55,19 +55,11 @@
     <string name="map_keycode_title">Изменить контроллер</string>
     <string name="map_keycode_message">Нажмите кнопку на контроллере для %1$s</string>
     
-    
-    <string name="bios_menu">Нажмите на кнопку %1$s для выхода в меню</string>
-    <string name="back_button">назад</string>
-    <string name="search_button">поиск</string>
-    
     <string name="moga_pro_connect">MOGA Pro присоиденен!</string>
     <string name="moga_connect">MOGA присоиденен!</string>
 
     <string name="about_text">DREAMCAST эмулятор "REICAST"</string>
     <string name="revision_text">Версия: %1$s [%2$s]</string>
-    <string name="app_site">Сайт: http://reicast.com</string>
-    <string name="beta_site">Бета версии: http://reicast.loungekatt.com</string>
-    <string name="git_api">https://api.github.com/repos/reicast/reicast-emulator/commits</string>
     
     <string-array name="controllers">
     <item>Контроллер A</item>
@@ -89,8 +81,5 @@
     <string name="report_issue">Обнаружен предыдущий краш</string>
     <string name="log_saved">Логи сохранены в %1$s</string>
     <string name="bios_config">Ошибка конфигурации!</string>
-    <string name="platform">Логи скопированы в буфер обмена.\nВставьте их в репорт.</string>
-    
-    <string name="menu_debug">Отправить журнал ошибок</string>
 
 </resources>

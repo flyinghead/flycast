@@ -19,6 +19,11 @@
 
 int gdrom_schid;
 
+//Sense: ASC - ASCQ - Key
+signed int sns_asc=0;
+signed int sns_ascq=0;
+signed int sns_key=0;
+
 enum gd_states
 {
 	//Generic
@@ -447,7 +452,11 @@ void gd_process_ata_cmd()
 {
 	//Any ATA command clears these bits, unless aborted/error :p
 	Error.ABRT=0;
-	GDStatus.CHECK=0;
+	
+	if (sns_key==0x0 || sns_key==0xB)
+		GDStatus.CHECK=0;
+	else
+		GDStatus.CHECK=1;
 
 	switch(ata_cmd.command)
 	{
@@ -464,7 +473,7 @@ void gd_process_ata_cmd()
 		//the above comment is from a wrong place in the docs ...
 		
 		Error.ABRT=1;
-		//Error.Sense=0x00; //fixme ?
+		Error.Sense=sns_key;
 		GDStatus.BSY=0;
 		GDStatus.CHECK=1;
 
@@ -519,12 +528,18 @@ void gd_process_ata_cmd()
 
 void gd_process_spi_cmd()
 {
+
+	printf_spi("Sense: %02x %02x %02x \n", sns_asc, sns_ascq, sns_key);
+
 	printf_spi("SPI command %02x;",packet_cmd.data_8[0]);
 	printf_spi("Params: %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x \n",
 		packet_cmd.data_8[0], packet_cmd.data_8[1], packet_cmd.data_8[2], packet_cmd.data_8[3], packet_cmd.data_8[4], packet_cmd.data_8[5],
 		packet_cmd.data_8[6], packet_cmd.data_8[7], packet_cmd.data_8[8], packet_cmd.data_8[9], packet_cmd.data_8[10], packet_cmd.data_8[11] );
 
-	GDStatus.CHECK=0;
+	if (sns_key==0x0 || sns_key==0xB)
+		GDStatus.CHECK=0;
+	else
+		GDStatus.CHECK=1;
 
 	switch(packet_cmd.data_8[0])
 	{
@@ -672,18 +687,22 @@ void gd_process_spi_cmd()
 
 	case SPI_REQ_ERROR:
 		printf_spicmd("SPI_REQ_ERROR\n");
-		printf("GDROM: Unhandled Sega SPI frame: SPI_REQ_ERROR\n");
+		//printf("GDROM: Unhandled Sega SPI frame: SPI_REQ_ERROR\n");
 		
 		u8 resp[10];
 		resp[0]=0xF0;
 		resp[1]=0;
-		resp[2]= SecNumber.Status==GD_BUSY ? 2:0;//sense
+		resp[2]=sns_key;//sense
 		resp[3]=0;
 		resp[4]=resp[5]=resp[6]=resp[7]=0; //Command Specific Information
-		resp[8]=0;//Additional Sense Code
-		resp[9]=0;//Additional Sense Code Qualifier
+		resp[8]=sns_asc;//Additional Sense Code
+		resp[9]=sns_ascq;//Additional Sense Code Qualifier
 
 		gd_spi_pio_end(resp,packet_cmd.data_8[4]);
+		sns_key=0;
+		sns_asc=0;
+		sns_ascq=0;
+		//GDStatus.CHECK=0;
 		break;
 
 	case SPI_REQ_SES:
@@ -915,8 +934,8 @@ u32 ReadMem_gdrom(u32 Addr, u32 sz)
 		if(2!=sz)
 			printf("GDROM: Bad size on DATA REG Read\n");
 
-		if (gd_state == gds_pio_send_data)
-		{
+		//if (gd_state == gds_pio_send_data)
+		//{
 			if (pio_buff.index == pio_buff.size)
 			{
 				printf("GDROM: Illegal Read From DATA (underflow)\n");
@@ -935,9 +954,9 @@ u32 ReadMem_gdrom(u32 Addr, u32 sz)
 				return rv;
 			}
 
-		}
-		else
-			printf("GDROM: Illegal Read From DATA (wrong mode)\n");
+		//}
+		//else
+		//	printf("GDROM: Illegal Read From DATA (wrong mode)\n");
 
 		return 0;
 
@@ -947,6 +966,7 @@ u32 ReadMem_gdrom(u32 Addr, u32 sz)
 
 	case GD_ERROR_Read:
 		printf_rm("GDROM: Read from ERROR Register\n");
+		Error.Sense=sns_key;
 		return Error.full;
 
 	case GD_IREASON_Read:

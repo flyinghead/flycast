@@ -12,17 +12,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
+LOCAL_CERTIFICATE := shared
+
 LOCAL_PATH:= $(call my-dir)/..
 
 include $(CLEAR_VARS)
 
 FOR_ANDROID := 1
 
+ifneq ($(TARGET_ARCH_ABI),armeabi-v7a)
+  NOT_ARM := 1
+  NO_REC := 1
+endif
+
+ifeq ($(TARGET_ARCH_ABI),mips)
+  ISMIPS := 1
+endif
+
 include $(LOCAL_PATH)/../../core/core.mk
 
-
-
-LOCAL_SRC_FILES := $(RZDCY_FILES) $(wildcard $(LOCAL_PATH)/jni/src/*.cpp)
+LOCAL_SRC_FILES := $(RZDCY_FILES)
+LOCAL_SRC_FILES += $(wildcard $(LOCAL_PATH)/jni/src/Android.cpp)
+LOCAL_SRC_FILES += $(wildcard $(LOCAL_PATH)/jni/src/utils.cpp)
 LOCAL_CXXFLAGS  := $(RZDCY_CXXFLAGS)
 
 LOCAL_SHARED_LIBRARIES:= libcutils libutils
@@ -53,6 +65,15 @@ LOCAL_ARM_MODE	:= arm
 #LOCAL_LDFLAGS += -Wl,--no-warn-mismatch
 #endif
 #endif
+
+include $(BUILD_SHARED_LIBRARY)
+
+include $(CLEAR_VARS)
+
+LOCAL_MODULE    := sexplay
+LOCAL_SRC_FILES := $(wildcard $(LOCAL_PATH)/jni/src/XperiaPlay.c)
+LOCAL_LDLIBS    := -llog -landroid -lEGL -lGLESv1_CM
+LOCAL_STATIC_LIBRARIES := android_native_app_glue
 
 include $(BUILD_SHARED_LIBRARY)
 
