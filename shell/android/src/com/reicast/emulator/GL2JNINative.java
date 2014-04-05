@@ -55,8 +55,7 @@ public class GL2JNINative extends NativeActivity {
 		System.loadLibrary("sexplay");
 	}
 
-	public native void registerNative();
-//	public native void registerXperia(int xperia);
+	native int RegisterNative(boolean touchpad);
 
 	@TargetApi(Build.VERSION_CODES.JELLY_BEAN)
 	@Override
@@ -69,15 +68,16 @@ public class GL2JNINative extends NativeActivity {
 					WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
 		}
 		getWindow().takeSurface(null);
-		registerNative();
+		
+		pad.isXperiaPlay = pad.IsXperiaPlay();
+		pad.isOuyaOrTV = pad.IsOuyaOrTV(GL2JNINative.this);
+//		isNvidiaShield = Gamepad.IsNvidiaShield();
+		
+		RegisterNative(pad.isXperiaPlay);
 		
 		config = new Config(GL2JNINative.this);
 		config.getConfigurationPrefs();
 		menu = new OnScreenMenu(GL2JNINative.this, prefs);
-
-		pad.isXperiaPlay = pad.IsXperiaPlay();
-		pad.isOuyaOrTV = pad.IsOuyaOrTV(GL2JNINative.this);
-//		isNvidiaShield = Gamepad.IsNvidiaShield();
 
 		String fileName = null;
 
@@ -515,12 +515,15 @@ public class GL2JNINative extends NativeActivity {
 		return false;
 	}
 
+//	public boolean OnNativeMotion(int device, int source, int action, int x,
+//			int y, boolean newEvent) {
 	public boolean OnNativeMotion(int device, int source, int action, int x,
-			int y, boolean newEvent) {
+			int y) {
 		Integer playerNum = pad.playerNumX.get(device);
 		if (playerNum != null && playerNum != -1) {
 			Log.d("reidc", playerNum + " - " + device + ": " + source);
-			if (newEvent && source == Gamepad.Xperia_Touchpad) {
+//			if (newEvent && source == Gamepad.Xperia_Touchpad) {
+			if (source == Gamepad.Xperia_Touchpad) {
 				if (action == MotionEvent.ACTION_UP) {
 					x = 0;
 					y = 0;
