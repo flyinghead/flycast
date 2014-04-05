@@ -90,7 +90,8 @@ public class MainActivity extends SlidingFragmentActivity implements
 						String log = output.toString();
 						mPrefs.edit().putString("prior_error", log).commit();
 						error.printStackTrace();
-						MainActivity.this.finish();
+						android.os.Process.killProcess(android.os.Process.myPid());
+						System.exit(0);
 					}
 				}
 			};
@@ -417,11 +418,12 @@ public class MainActivity extends SlidingFragmentActivity implements
 			// show it
 			alertDialog.show();
 		} else {
+			Config.nativeact = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).getBoolean(Config.pref_nativeact, Config.nativeact);
 			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD && Config.nativeact) {
-				startActivity(new Intent("com.reciast.LAUNCH_ROM", uri, getBaseContext(),
+				startActivity(new Intent("com.reciast.LAUNCH_ROM", uri, getApplicationContext(),
 						GL2JNINative.class));
 			} else {
-				startActivity(new Intent("com.reciast.LAUNCH_ROM", uri, getBaseContext(),
+				startActivity(new Intent("com.reciast.LAUNCH_ROM", uri, getApplicationContext(),
 						GL2JNIActivity.class));
 			}
 		}
@@ -525,10 +527,9 @@ public class MainActivity extends SlidingFragmentActivity implements
 		args.putString("browse_entry", null);
 		args.putBoolean("games_entry", false);
 		fragment.setArguments(args);
-		getSupportFragmentManager()
-		.beginTransaction()
-		.replace(R.id.fragment_container, fragment,
-				"MAIN_BROWSER").commit();
+		getSupportFragmentManager().beginTransaction()
+				.replace(R.id.fragment_container, fragment, "MAIN_BROWSER")
+				.addToBackStack(null).commit();
 		setTitle(R.string.browser);
 	}
 
