@@ -18,14 +18,14 @@ import java.util.zip.GZIPOutputStream;
 
 import javax.microedition.khronos.opengles.GL10;
 
-import com.reicast.emulator.MainActivity;
-
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.media.MediaScannerConnection;
 import android.media.MediaScannerConnection.OnScanCompletedListener;
 import android.net.Uri;
 import android.util.Log;
+
+import com.reicast.emulator.MainActivity;
 
 public class FileUtils {
 

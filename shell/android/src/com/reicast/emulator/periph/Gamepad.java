@@ -1,8 +1,6 @@
 package com.reicast.emulator.periph;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 
 import tv.ouya.console.api.OuyaController;
 import tv.ouya.console.api.OuyaFacade;
@@ -48,6 +46,7 @@ public class Gamepad {
 	public static final String controllers_play = "keypad-zeus";
 	public static final String controllers_play_gp = "keypad-game-zeus";
 	public static final String controllers_play_tp = "synaptics_touchpad";
+	public static final String controllers_gamekey = "gamekeyboard";
 
 	public String[] portId = { "_A", "_B", "_C", "_D" };
 	public boolean[] compat = { false, false, false, false };
