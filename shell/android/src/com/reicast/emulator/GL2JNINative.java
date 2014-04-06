@@ -24,6 +24,7 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
+import android.widget.Toast;
 
 import com.reicast.emulator.config.Config;
 import com.reicast.emulator.emu.GL2JNIView;
@@ -146,7 +147,6 @@ public class GL2JNINative extends NativeActivity {
 					}
 					if (InputDevice.getDevice(joy).getName()
 							.contains(Gamepad.controllers_play_tp)) {
-//						registerXperia(joy);
 						pad.keypadZeus[1] = joy;
 					}
 				}
@@ -168,8 +168,17 @@ public class GL2JNINative extends NativeActivity {
 						pad.joystick[playerNum] = false;
 					}
 					if (InputDevice.getDevice(joy).getName()
-							.contains(Gamepad.controllers_play)) {
-						pad.playerNumX.put(joy, playerNum);
+							.contains(Gamepad.controllers_gamekey)) {
+//						if (pad.custom[playerNum]) {
+//							setCustomMapping(id, playerNum);
+//						} else {
+//							pad.map[playerNum] = pad.getConsoleController();
+//						}
+						Toast.makeText(getApplicationContext(), R.string.controller_unavailable,
+								Toast.LENGTH_SHORT).show();
+						finish();
+					} else if (InputDevice.getDevice(joy).getName()
+							.contains(Gamepad.controllers_play) ) {
 						for (int keys : pad.keypadZeus) {
 							pad.playerNumX.put(keys, playerNum);
 						}
@@ -178,28 +187,26 @@ public class GL2JNINative extends NativeActivity {
 						} else {
 							pad.map[playerNum] = pad.getXPlayController();
 						}
-					} else {
-						if (!pad.compat[playerNum]) {
-							if (pad.custom[playerNum]) {
-								setCustomMapping(id, playerNum);
-							} else if (InputDevice.getDevice(joy).getName()
-									.equals(Gamepad.controllers_sony)) {
-								pad.map[playerNum] = pad.getConsoleController();
-							} else if (InputDevice.getDevice(joy).getName()
-									.equals(Gamepad.controllers_xbox)) {
-								pad.map[playerNum] = pad.getConsoleController();
-							} else if (InputDevice.getDevice(joy).getName()
-									.contains(Gamepad.controllers_shield)) {
-								pad.map[playerNum] = pad.getConsoleController();
-							} else if (!pad.isActiveMoga[playerNum]) { // Ouya controller
-								pad.map[playerNum] = pad.getOUYAController();
-							}
-						} else{
-							getCompatibilityMap(playerNum, id);
+					} else if (!pad.compat[playerNum]) {
+						if (pad.custom[playerNum]) {
+							setCustomMapping(id, playerNum);
+						} else if (InputDevice.getDevice(joy).getName()
+								.equals(Gamepad.controllers_sony)) {
+							pad.map[playerNum] = pad.getConsoleController();
+						} else if (InputDevice.getDevice(joy).getName()
+								.equals(Gamepad.controllers_xbox)) {
+							pad.map[playerNum] = pad.getConsoleController();
+						} else if (InputDevice.getDevice(joy).getName()
+								.contains(Gamepad.controllers_shield)) {
+							pad.map[playerNum] = pad.getConsoleController();
+						} else if (!pad.isActiveMoga[playerNum]) { // Ouya controller
+							pad.map[playerNum] = pad.getOUYAController();
 						}
-						initJoyStickLayout(playerNum);
-						pad.playerNumX.put(joy, playerNum);
+					} else{
+						getCompatibilityMap(playerNum, id);
 					}
+					initJoyStickLayout(playerNum);
+					pad.playerNumX.put(joy, playerNum);
 				} else {
 					runCompatibilityMode(joy);
 				}
