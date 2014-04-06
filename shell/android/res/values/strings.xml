@@ -62,6 +62,7 @@
     <string name="joystick_layout">Use Joystick For D-Pad Input</string>
     <string name="modified_layout">Enable Custom Key Layout</string>
     <string name="controller_compat">Enable Compatibility Mode</string>
+    <string name="controller_unavailable">Gamepad IME detected!\nPlease disable native interface</string>
     <string name="mic_in_port_2">Microphone plugged into port 2</string>
     
     <string name="customize_physical_controls">Customize Physical Controls</string>
