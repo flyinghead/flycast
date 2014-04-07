@@ -199,9 +199,8 @@ public class GL2JNIActivity extends Activity {
 		config.loadConfigurationPrefs();
 
 		// When viewing a resource, pass its URI to the native code for opening
-		Intent intent = getIntent();
-		if (intent.getAction().equals("com.reciast.LAUNCH_ROM"))
-			fileName = Uri.decode(intent.getData().toString());
+		if (getIntent().getAction().equals("com.reciast.EMULATOR"))
+			fileName = Uri.decode(getIntent().getData().toString());
 
 		// Create the actual GLES view
 		mView = new GL2JNIView(getApplication(), config, fileName, false,
