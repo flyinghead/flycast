@@ -12,6 +12,7 @@ import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.Gravity;
@@ -174,9 +175,13 @@ public class GL2JNINative extends NativeActivity {
 //						} else {
 //							pad.map[playerNum] = pad.getConsoleController();
 //						}
-						Toast.makeText(getApplicationContext(), R.string.controller_unavailable,
-								Toast.LENGTH_SHORT).show();
-						finish();
+						new Handler().post(new Runnable() {
+							public void run() {
+								Toast.makeText(getApplicationContext(), R.string.controller_unavailable,
+										Toast.LENGTH_SHORT).show();
+								finish();
+							}
+						});
 					} else if (InputDevice.getDevice(joy).getName()
 							.contains(Gamepad.controllers_play) ) {
 						for (int keys : pad.keypadZeus) {
