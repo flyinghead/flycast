@@ -420,10 +420,10 @@ public class MainActivity extends SlidingFragmentActivity implements
 		} else {
 			Config.nativeact = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).getBoolean(Config.pref_nativeact, Config.nativeact);
 			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD && Config.nativeact) {
-				startActivity(new Intent("com.reciast.LAUNCH_ROM", uri, getApplicationContext(),
+				startActivity(new Intent("com.reicast.EMULATOR", uri, getApplicationContext(),
 						GL2JNINative.class));
 			} else {
-				startActivity(new Intent("com.reciast.LAUNCH_ROM", uri, getApplicationContext(),
+				startActivity(new Intent("com.reicast.EMULATOR", uri, getApplicationContext(),
 						GL2JNIActivity.class));
 			}
 		}
