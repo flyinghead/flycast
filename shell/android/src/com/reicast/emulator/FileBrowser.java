@@ -16,6 +16,8 @@ import java.util.Locale;
 
 import org.apache.commons.lang3.StringUtils;
 
+import android.annotation.SuppressLint;
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -28,6 +30,7 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
@@ -37,6 +40,12 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnTouchListener;
 import android.view.ViewGroup;
+import android.webkit.CookieManager;
+import android.webkit.CookieSyncManager;
+import android.webkit.WebSettings;
+import android.webkit.WebSettings.PluginState;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
@@ -350,6 +359,74 @@ public class FileBrowser extends Fragment {
 					}
 				});
 		list.addView(childview);
+	}
+	
+	private void displayDetails(String message, String url, final File game) {
+		final AlertDialog.Builder builder = new AlertDialog.Builder(parentActivity);
+		builder.setCancelable(true);
+		builder.setTitle(R.string.game_details);
+		builder.setMessage(message);
+		LayoutInflater infalter = LayoutInflater.from(parentActivity);
+		final View popWebView = infalter.inflate(R.layout.webview, null);
+		WebView mWebView = (WebView) popWebView.findViewById(R.id.webframe);
+		mWebView = configureWebview(url, parentActivity, mWebView);
+		builder.setView(popWebView);
+		builder.setPositiveButton("Close",
+				new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int which) {
+						dialog.dismiss();
+						return;
+					}
+				});
+		builder.setPositiveButton("Launch",
+				new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int which) {
+						dialog.dismiss();
+						mCallback.onGameSelected(game != null ? Uri
+								.fromFile(game) : Uri.EMPTY);
+						vib.vibrate(250);
+						return;
+					}
+				});
+		builder.create().show();
+	}
+	
+	@TargetApi(Build.VERSION_CODES.HONEYCOMB)
+	@SuppressLint("SetJavaScriptEnabled")
+	@SuppressWarnings("deprecation")
+	public static WebView configureWebview(String url, Context context,
+			WebView mWebView) {
+		mWebView.getSettings().setSupportZoom(true);
+		mWebView.getSettings().setBuiltInZoomControls(true);
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+			mWebView.getSettings().setDisplayZoomControls(false);
+		}
+		mWebView.setInitialScale(1);
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ECLAIR) {
+			mWebView.getSettings().setUseWideViewPort(true);
+		}
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ECLAIR_MR1) {
+			mWebView.getSettings().setLoadWithOverviewMode(true);
+		}
+		mWebView.getSettings().setJavaScriptEnabled(true);
+		mWebView.getSettings().setPluginState(PluginState.ON);
+		mWebView.getSettings().setCacheMode(WebSettings.LOAD_NO_CACHE);
+		mWebView.clearHistory();
+		mWebView.clearFormData();
+		mWebView.clearCache(true);
+		CookieSyncManager.createInstance(context);
+		CookieManager cookieManager = CookieManager.getInstance();
+		cookieManager.removeAllCookie();
+		CookieSyncManager.getInstance().stopSync();
+		mWebView.setWebViewClient(new WebViewClient() {
+			@Override
+			public boolean shouldOverrideUrlLoading(WebView view, String url) {
+				view.loadUrl(url);
+				return true;
+			}
+		});
+		mWebView.loadUrl(url);
+		return mWebView;
 	}
 
 	void navigate(final File root_sd) {
