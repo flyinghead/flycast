@@ -42,6 +42,8 @@
     
     <string name="games_listing">Game List</string>
     
+    <string name="game_details">Game Information</string>
+    
     <string name="report_issue">Previous Crash Detected</string>
     <string name="bios_config">Configuration failed!</string>
     
