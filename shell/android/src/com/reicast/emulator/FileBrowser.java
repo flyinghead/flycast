@@ -321,13 +321,19 @@ public class FileBrowser extends Fragment {
 				new OnClickListener() {
 					public void onClick(View view) {
 						vib.vibrate(50);
-						String title = "";
-						if (name.contains("[")) {
-							title = name.substring(0, name.lastIndexOf("["));
+						if (mPrefs.getBoolean(Config.pref_gamedetails, true)) {
+							String title = "";
+							if (name.contains("[")) {
+								title = name.substring(0, name.lastIndexOf("["));
+							} else {
+								title = name.substring(0, name.lastIndexOf("."));
+							}
+							displayDetails(game_index + title.replace(" ", "+"), game);
 						} else {
-							title = name.substring(0, name.lastIndexOf("."));
+							mCallback.onGameSelected(game != null ? Uri
+									.fromFile(game) : Uri.EMPTY);
+							vib.vibrate(250);
 						}
-						displayDetails(game_index + title.replace(" ", "+"), game);
 					}
 				});
 
