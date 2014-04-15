@@ -23,6 +23,7 @@
     
     <string name="optimization_opts">Optimization and Debugging Options</string>
     <string name="experimental_opts">Experimental (May cause widespread panic)</string>
+    <string name="select_details">Enable Game Details</string>
     <string name="select_native">Enable Native Interface</string>
     <string name="select_dynarec">Dynarec Options</string>
     <string name="select_unstable">Unstable Optimisations</string>

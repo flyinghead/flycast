@@ -16,6 +16,7 @@ public class Config {
 	public static final String pref_home = "home_directory";
 	public static final String pref_games = "game_directory";
 
+	public static final String pref_gamedetails = "game_details";
 	public static final String pref_nativeact = "enable_native";
 	public static final String pref_dynarecopt = "dynarec_opt";
 	public static final String pref_unstable = "unstable_opt";
