@@ -1,11 +1,14 @@
 package com.reicast.emulator;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -15,22 +18,24 @@ import java.util.List;
 import java.util.Locale;
 
 import org.apache.commons.lang3.StringUtils;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
-import android.annotation.SuppressLint;
-import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Typeface;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.Handler;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
@@ -40,12 +45,6 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnTouchListener;
 import android.view.ViewGroup;
-import android.webkit.CookieManager;
-import android.webkit.CookieSyncManager;
-import android.webkit.WebSettings;
-import android.webkit.WebSettings.PluginState;
-import android.webkit.WebView;
-import android.webkit.WebViewClient;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
@@ -64,6 +63,8 @@ public class FileBrowser extends Fragment {
 	private boolean ImgBrowse;
 	private boolean games;
 	private OnItemSelectedListener mCallback;
+	
+	private static final String game_index = "http://thegamesdb.net/api/GetGame.php?platform=sega+dreamcast&name=";
 
 	private SharedPreferences mPrefs;
 	private File sdcard = Environment.getExternalStorageDirectory();
@@ -326,9 +327,7 @@ public class FileBrowser extends Fragment {
 						} else {
 							title = name.substring(0, name.lastIndexOf("."));
 						}
-						String url = "http://www.retrocollect.com/videogamedatabase/results.php?gamename="
-								+ title.replace(" ", "+") + "&mode=releases&platform=21";
-						displayDetails(title, url, game);
+						displayDetails(game_index + title.replace(" ", "+"), game);
 					}
 				});
 
@@ -349,16 +348,34 @@ public class FileBrowser extends Fragment {
 		list.addView(childview);
 	}
 	
-	private void displayDetails(String message, String url, final File game) {
+	private void displayDetails(String url, final File game) {
 		final AlertDialog.Builder builder = new AlertDialog.Builder(parentActivity);
 		builder.setCancelable(true);
-		builder.setTitle(R.string.game_details);
-		builder.setMessage(message);
-		LayoutInflater infalter = LayoutInflater.from(parentActivity);
-		final View popWebView = infalter.inflate(R.layout.webview, null);
-		WebView mWebView = (WebView) popWebView.findViewById(R.id.webframe);
-		mWebView = configureWebview(url, parentActivity, mWebView);
-		builder.setView(popWebView);
+		XMLParser xmlParser = new XMLParser(parentActivity);
+		String gameData = xmlParser.getXmlFromUrl(url);
+		if (gameData != null) {
+			Document doc = xmlParser.getDomElement(gameData);
+			if (doc != null && doc.getElementsByTagName("Game") != null) {
+				Element root = (Element) doc.getElementsByTagName("Game").item(
+						0);
+				String title = xmlParser.getValue(root, "GameTitle");
+				builder.setTitle(getString(R.string.game_details, title));
+				String details = xmlParser.getValue(root, "Overview");
+				builder.setMessage(details);
+				Element boxart = (Element) root.getElementsByTagName("Images")
+						.item(0);
+				String image = "http://thegamesdb.net/banners/"
+						+ xmlParser.getValue(boxart, "boxart");
+				try {
+					builder.setIcon(new BitmapDrawable(decodeBitmapIcon(image)));
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		} else {
+			builder.setTitle(getString(R.string.info_unavailable));
+		}
 		builder.setPositiveButton("Close",
 				new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int which) {
@@ -379,42 +396,40 @@ public class FileBrowser extends Fragment {
 		builder.create().show();
 	}
 	
-	@TargetApi(Build.VERSION_CODES.HONEYCOMB)
-	@SuppressLint("SetJavaScriptEnabled")
-	@SuppressWarnings("deprecation")
-	public static WebView configureWebview(String url, Context context,
-			WebView mWebView) {
-		mWebView.getSettings().setSupportZoom(true);
-		mWebView.getSettings().setBuiltInZoomControls(true);
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-			mWebView.getSettings().setDisplayZoomControls(false);
-		}
-		mWebView.setInitialScale(1);
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ECLAIR) {
-			mWebView.getSettings().setUseWideViewPort(true);
-		}
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ECLAIR_MR1) {
-			mWebView.getSettings().setLoadWithOverviewMode(true);
-		}
-		mWebView.getSettings().setJavaScriptEnabled(true);
-		mWebView.getSettings().setPluginState(PluginState.ON);
-		mWebView.getSettings().setCacheMode(WebSettings.LOAD_NO_CACHE);
-		mWebView.clearHistory();
-		mWebView.clearFormData();
-		mWebView.clearCache(true);
-		CookieSyncManager.createInstance(context);
-		CookieManager cookieManager = CookieManager.getInstance();
-		cookieManager.removeAllCookie();
-		CookieSyncManager.getInstance().stopSync();
-		mWebView.setWebViewClient(new WebViewClient() {
-			@Override
-			public boolean shouldOverrideUrlLoading(WebView view, String url) {
-				view.loadUrl(url);
-				return true;
+	public Bitmap decodeBitmapIcon(String filename) throws IOException {
+		URL updateURL = new URL(filename);
+		URLConnection conn1 = updateURL.openConnection();
+		InputStream im = conn1.getInputStream();
+		BufferedInputStream bis = new BufferedInputStream(im, 512);
+
+		BitmapFactory.Options options = new BitmapFactory.Options();
+		options.inJustDecodeBounds = true;
+		Bitmap bitmap = BitmapFactory.decodeStream(bis, null, options);
+
+		int heightRatio = (int) Math.ceil(options.outHeight / (float) 72);
+		int widthRatio = (int) Math.ceil(options.outWidth / (float) 72);
+
+		if (heightRatio > 1 || widthRatio > 1) {
+			if (heightRatio > widthRatio) {
+				options.inSampleSize = heightRatio;
+			} else {
+				options.inSampleSize = widthRatio;
 			}
-		});
-		mWebView.loadUrl(url);
-		return mWebView;
+		}
+
+		options.inJustDecodeBounds = false;
+		bis.close();
+		im.close();
+		conn1 = updateURL.openConnection();
+		im = conn1.getInputStream();
+		bis = new BufferedInputStream(im, 512);
+		bitmap = BitmapFactory.decodeStream(bis, null, options);
+
+		bis.close();
+		im.close();
+		bis = null;
+		im = null;
+		return bitmap;
 	}
 
 	void navigate(final File root_sd) {
