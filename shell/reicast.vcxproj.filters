@@ -509,9 +509,12 @@
     <Filter Include="deps\libwebsocket">
       <UniqueIdentifier>{3d3de3ff-9e79-4920-a95a-61d190e73004}</UniqueIdentifier>
     </Filter>
+<<<<<<< HEAD
     <Filter Include="webui">
       <UniqueIdentifier>{81193efc-656a-4154-9adf-146856d4c7d3}</UniqueIdentifier>
     </Filter>
+=======
+>>>>>>> add libwebsocket
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\core\hw\aica\aica.h">
@@ -856,9 +859,12 @@
     <ClInclude Include="..\core\deps\libwebsocket\private-libwebsockets.h">
       <Filter>deps\libwebsocket</Filter>
     </ClInclude>
+<<<<<<< HEAD
     <ClInclude Include="..\core\webui\server.h">
       <Filter>webui</Filter>
     </ClInclude>
+=======
+>>>>>>> add libwebsocket
   </ItemGroup>
   <ItemGroup>
     <None Include="..\core\deps\zlib\Makefile">
