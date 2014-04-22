@@ -12,6 +12,8 @@
 #include "hw/maple/maple_cfg.h"
 #include "hw/sh4/sh4_mem.h"
 
+#include "webui/server.h"
+
 settings_t settings;
 
 /*
@@ -41,7 +43,7 @@ int GetFile(char *szFileName, char *szParse=0,u32 flags=0)
 	if (strcmp(szFileName,"null")==0)
 	{
 #if defined(OMAP4)
-		strcpy(szFileName,GetPath("gdimage/crazy_taxi.chd").c_str());
+		strcpy(szFileName,GetPath("/gdimage/crazy_taxi.chd").c_str());
 #else
 	#if HOST_OS==OS_WINDOWS
 		OPENFILENAME ofn;
@@ -64,7 +66,7 @@ int GetFile(char *szFileName, char *szParse=0,u32 flags=0)
 			//strcpy(szFileName,ofn.lpstrFile);
 		}
 	#else
-		strcpy(szFileName,GetPath("discs/game.gdi").c_str());
+		strcpy(szFileName,GetPath("/discs/game.gdi").c_str());
 	#endif
 #endif
 	}
@@ -127,6 +129,17 @@ void plugins_Reset(bool Manual)
 }
 
 
+void* webui_th(void* p)
+{
+	#if HOST_OS == OS_WINDOWS
+		webui_start();
+	#endif
+
+	return 0;
+}
+
+cThread webui_thd(&webui_th,0);
+
 int dc_init(int argc,wchar* argv[])
 {
 	setbuf(stdin,0);
@@ -137,6 +150,8 @@ int dc_init(int argc,wchar* argv[])
 		printf("Failed to alloc mem\n");
 		return -1;
 	}
+
+	webui_thd.Start();
 
 	if(ParseCommandLine(argc,argv))
 	{
