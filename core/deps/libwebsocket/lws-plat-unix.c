@@ -1,5 +1,8 @@
 #include "private-libwebsockets.h"
 
+#include "build.h"
+
+#if HOST_OS != OS_WINDOWS
 /*
  * included from libwebsockets.c for unix builds
  */
@@ -387,4 +390,5 @@ lws_plat_inet_ntop(int af, const void *src, char *dst, int cnt)
 { 
 	return inet_ntop(af, src, dst, cnt);
 }
+#endif
 #endif

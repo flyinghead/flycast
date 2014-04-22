@@ -43,6 +43,7 @@
     <ClCompile Include="..\core\deps\libwebsocket\extension-deflate-frame.c" />
     <ClCompile Include="..\core\deps\libwebsocket\extension-deflate-stream.c" />
     <ClCompile Include="..\core\deps\libwebsocket\extension.c" />
+    <ClCompile Include="..\core\deps\libwebsocket\handshake.c" />
     <ClCompile Include="..\core\deps\libwebsocket\libwebsockets.c" />
     <ClCompile Include="..\core\deps\libwebsocket\lws-plat-unix.c" />
     <ClCompile Include="..\core\deps\libwebsocket\lws-plat-win.c" />
@@ -147,6 +148,7 @@
     <ClCompile Include="..\core\rend\gles\gltex.cpp" />
     <ClCompile Include="..\core\rend\TexCache.cpp" />
     <ClCompile Include="..\core\stdclass.cpp" />
+    <ClCompile Include="..\core\webui\server.cpp" />
     <ClCompile Include="..\core\windows\win86_driver.cpp" />
     <ClCompile Include="..\core\windows\win86_il.cpp" />
     <ClCompile Include="..\core\windows\win86_ngen.cpp" />
@@ -271,6 +273,7 @@
     <ClInclude Include="..\core\rend\TexCache.h" />
     <ClInclude Include="..\core\stdclass.h" />
     <ClInclude Include="..\core\types.h" />
+    <ClInclude Include="..\core\webui\server.h" />
     <ClInclude Include="..\core\windows\win86_ngen.h" />
   </ItemGroup>
   <ItemGroup>
