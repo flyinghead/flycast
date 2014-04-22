@@ -19,7 +19,12 @@
  *  MA  02110-1301  USA
  */
 
+
 #include "private-libwebsockets.h"
+
+#if HOST_OS == OS_WINDOWS
+	#pragma comment(lib, "Ws2_32.lib")
+#endif
 
 int log_level = LLL_ERR | LLL_WARN | LLL_NOTICE;
 static void (*lwsl_emit)(int level, const char *line) = lwsl_emit_stderr;

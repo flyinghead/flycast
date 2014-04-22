@@ -1,5 +1,5 @@
 
-#include <zlib.h>
+#include "deps/zlib/zlib.h"
 
 #define DEFLATE_STREAM_CHUNK 128
 #define DEFLATE_STREAM_COMPRESSION_LEVEL 1

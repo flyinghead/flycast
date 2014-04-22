@@ -19,11 +19,20 @@
  *  MA  02110-1301  USA
  */
 
+#include "build.h"
+
+/* The Libwebsocket version */
+#define LWS_LIBRARY_VERSION "1.3"
+
+/* The current git commit hash that we're building from */
+#define LWS_BUILD_HASH "c11b847"
+
+
 /* System introspection configs */
 #ifdef CMAKE_BUILD
 #include "lws_config.h"
 #else
-#if defined(WIN32) || defined(_WIN32)
+#if HOST_OS == OS_WINDOWS
 #define inline __inline
 #else /* not WIN32 */
 #include "config.h"
