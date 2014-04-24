@@ -206,6 +206,55 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 		return game_name;
 	}
 
+	@SuppressWarnings("deprecation")
+	@Override
+	protected void onPostExecute(String gameData) {
+		final AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
+		builder.setCancelable(true);
+		if (gameData != null) {
+			Document doc = getDomElement(gameData);
+			if (doc != null && doc.getElementsByTagName("Game") != null) {
+				Element root = (Element) doc.getElementsByTagName("Game").item(
+						0);
+				String title = getValue(root, "GameTitle");
+				builder.setTitle(mContext.getString(R.string.game_details,
+						title));
+				String details = getValue(root, "Overview");
+				builder.setMessage(details);
+				Element boxart = (Element) root.getElementsByTagName("Images")
+						.item(0);
+				String image = "http://thegamesdb.net/banners/"
+						+ getValue(boxart, "boxart");
+				try {
+					builder.setIcon(new BitmapDrawable(decodeBitmapIcon(image)));
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		} else {
+			builder.setTitle(mContext.getString(R.string.info_unavailable));
+		}
+		builder.setPositiveButton("Close",
+				new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int which) {
+						dialog.dismiss();
+						return;
+					}
+				});
+		builder.setPositiveButton("Launch",
+				new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int which) {
+						dialog.dismiss();
+						mCallback.onGameSelected(game != null ? Uri
+								.fromFile(game) : Uri.EMPTY);
+						vib.vibrate(250);
+						return;
+					}
+				});
+		builder.create().show();
+	}
+
 	public Document getDomElement(String xml) {
 		Document doc = null;
 		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();

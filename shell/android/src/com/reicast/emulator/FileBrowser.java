@@ -1,14 +1,11 @@
 package com.reicast.emulator;
 
-import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.URL;
-import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -18,18 +15,11 @@ import java.util.List;
 import java.util.Locale;
 
 import org.apache.commons.lang3.StringUtils;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Typeface;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -360,90 +350,6 @@ public class FileBrowser extends Fragment {
 					}
 				});
 		list.addView(childview);
-	}
-	
-	private void displayDetails(String url, final File game) {
-		final AlertDialog.Builder builder = new AlertDialog.Builder(parentActivity);
-		builder.setCancelable(true);
-		XMLParser xmlParser = new XMLParser(parentActivity);
-		String gameData = xmlParser.getXmlFromUrl(url);
-		if (gameData != null) {
-			Document doc = xmlParser.getDomElement(gameData);
-			if (doc != null && doc.getElementsByTagName("Game") != null) {
-				Element root = (Element) doc.getElementsByTagName("Game").item(
-						0);
-				String title = xmlParser.getValue(root, "GameTitle");
-				builder.setTitle(getString(R.string.game_details, title));
-				String details = xmlParser.getValue(root, "Overview");
-				builder.setMessage(details);
-				Element boxart = (Element) root.getElementsByTagName("Images")
-						.item(0);
-				String image = "http://thegamesdb.net/banners/"
-						+ xmlParser.getValue(boxart, "boxart");
-				try {
-					builder.setIcon(new BitmapDrawable(decodeBitmapIcon(image)));
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			}
-		} else {
-			builder.setTitle(getString(R.string.info_unavailable));
-		}
-		builder.setPositiveButton("Close",
-				new DialogInterface.OnClickListener() {
-					public void onClick(DialogInterface dialog, int which) {
-						dialog.dismiss();
-						return;
-					}
-				});
-		builder.setPositiveButton("Launch",
-				new DialogInterface.OnClickListener() {
-					public void onClick(DialogInterface dialog, int which) {
-						dialog.dismiss();
-						mCallback.onGameSelected(game != null ? Uri
-								.fromFile(game) : Uri.EMPTY);
-						vib.vibrate(250);
-						return;
-					}
-				});
-		builder.create().show();
-	}
-	
-	public Bitmap decodeBitmapIcon(String filename) throws IOException {
-		URL updateURL = new URL(filename);
-		URLConnection conn1 = updateURL.openConnection();
-		InputStream im = conn1.getInputStream();
-		BufferedInputStream bis = new BufferedInputStream(im, 512);
-
-		BitmapFactory.Options options = new BitmapFactory.Options();
-		options.inJustDecodeBounds = true;
-		Bitmap bitmap = BitmapFactory.decodeStream(bis, null, options);
-
-		int heightRatio = (int) Math.ceil(options.outHeight / (float) 72);
-		int widthRatio = (int) Math.ceil(options.outWidth / (float) 72);
-
-		if (heightRatio > 1 || widthRatio > 1) {
-			if (heightRatio > widthRatio) {
-				options.inSampleSize = heightRatio;
-			} else {
-				options.inSampleSize = widthRatio;
-			}
-		}
-
-		options.inJustDecodeBounds = false;
-		bis.close();
-		im.close();
-		conn1 = updateURL.openConnection();
-		im = conn1.getInputStream();
-		bis = new BufferedInputStream(im, 512);
-		bitmap = BitmapFactory.decodeStream(bis, null, options);
-
-		bis.close();
-		im.close();
-		bis = null;
-		im = null;
-		return bitmap;
 	}
 
 	void navigate(final File root_sd) {
