@@ -1,8 +1,13 @@
 package com.reicast.emulator;
 
+import java.io.BufferedInputStream;
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
+import java.net.URL;
+import java.net.URLConnection;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -21,15 +26,36 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-import android.annotation.SuppressLint;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
+import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.StrictMode;
+import android.os.Vibrator;
 
-public class XMLParser {
+import com.reicast.emulator.FileBrowser.OnItemSelectedListener;
 
-	@SuppressLint("NewApi")
-	public XMLParser(Context mContext) {
+public class XMLParser extends AsyncTask<String, Integer, String> {
+
+	private Context mContext;
+	private String url;
+	private File game;
+	private OnItemSelectedListener mCallback;
+	private Vibrator vib;
+
+	public XMLParser(Context mContext, File game, OnItemSelectedListener mCallback, Vibrator vib) {
+		this.mContext = mContext;
+		this.game = game;
+		this.mCallback = mCallback;
+		this.vib = vib;
+	}
+
+	protected void onPreExecute() {
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
 			StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder()
 					.permitAll().build();
@@ -37,9 +63,46 @@ public class XMLParser {
 		}
 	}
 
-	public String getXmlFromUrl(String url) {
-		String xml = null;
+	public Bitmap decodeBitmapIcon(String filename) throws IOException {
+		URL updateURL = new URL(filename);
+		URLConnection conn1 = updateURL.openConnection();
+		InputStream im = conn1.getInputStream();
+		BufferedInputStream bis = new BufferedInputStream(im, 512);
 
+		BitmapFactory.Options options = new BitmapFactory.Options();
+		options.inJustDecodeBounds = true;
+		Bitmap bitmap = BitmapFactory.decodeStream(bis, null, options);
+
+		int heightRatio = (int) Math.ceil(options.outHeight / (float) 72);
+		int widthRatio = (int) Math.ceil(options.outWidth / (float) 72);
+
+		if (heightRatio > 1 || widthRatio > 1) {
+			if (heightRatio > widthRatio) {
+				options.inSampleSize = heightRatio;
+			} else {
+				options.inSampleSize = widthRatio;
+			}
+		}
+
+		options.inJustDecodeBounds = false;
+		bis.close();
+		im.close();
+		conn1 = updateURL.openConnection();
+		im = conn1.getInputStream();
+		bis = new BufferedInputStream(im, 512);
+		bitmap = BitmapFactory.decodeStream(bis, null, options);
+
+		bis.close();
+		im.close();
+		bis = null;
+		im = null;
+		return bitmap;
+	}
+
+	@Override
+	protected String doInBackground(String... params) {
+		url = params[0];
+		String xml = null;
 		try {
 			DefaultHttpClient httpClient = new DefaultHttpClient();
 			HttpPost httpPost = new HttpPost(url);
@@ -49,14 +112,63 @@ public class XMLParser {
 			xml = EntityUtils.toString(httpEntity);
 
 		} catch (UnsupportedEncodingException e) {
-			
+
 		} catch (ClientProtocolException e) {
-			
+
 		} catch (IOException e) {
-			
+
 		}
 		// return XML
 		return xml;
+	}
+
+	@SuppressWarnings("deprecation")
+	@Override
+	protected void onPostExecute(String gameData) {
+		final AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
+		builder.setCancelable(true);
+		if (gameData != null) {
+			Document doc = getDomElement(gameData);
+			if (doc != null && doc.getElementsByTagName("Game") != null) {
+				Element root = (Element) doc.getElementsByTagName("Game").item(
+						0);
+				String title = getValue(root, "GameTitle");
+				builder.setTitle(mContext.getString(R.string.game_details,
+						title));
+				String details = getValue(root, "Overview");
+				builder.setMessage(details);
+				Element boxart = (Element) root.getElementsByTagName("Images")
+						.item(0);
+				String image = "http://thegamesdb.net/banners/"
+						+ getValue(boxart, "boxart");
+				try {
+					builder.setIcon(new BitmapDrawable(decodeBitmapIcon(image)));
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		} else {
+			builder.setTitle(mContext.getString(R.string.info_unavailable));
+		}
+		builder.setPositiveButton("Close",
+				new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int which) {
+						dialog.dismiss();
+						return;
+					}
+				});
+		builder.setPositiveButton("Launch",
+				new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int which) {
+						dialog.dismiss();
+						mCallback.onGameSelected(game != null ? Uri
+								.fromFile(game) : Uri.EMPTY);
+						vib.vibrate(250);
+						return;
+					}
+				});
+		builder.create().show();
 	}
 
 	public Document getDomElement(String xml) {
@@ -71,13 +183,13 @@ public class XMLParser {
 			doc = db.parse(is);
 
 		} catch (ParserConfigurationException e) {
-			
+
 			return null;
 		} catch (SAXException e) {
-			
+
 			return null;
 		} catch (IOException e) {
-			
+
 			return null;
 		}
 
