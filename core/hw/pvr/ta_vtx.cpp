@@ -376,7 +376,9 @@ strip_end:
 	}
 
 public:
-#define group_EN() if (data->pcw.Group_En){ TileClipMode(data->pcw.User_Clip);}
+	
+	//Group_En bit seems ignored, thanks p1pkin 
+#define group_EN() /*if (data->pcw.Group_En) */{ TileClipMode(data->pcw.User_Clip);}
 	static Ta_Dma* TACALL ta_main(Ta_Dma* data,Ta_Dma* data_end)
 	{
 		do
