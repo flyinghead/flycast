@@ -46,11 +46,29 @@ struct  tad_context
 {
 	u8* thd_data;
 	u8* thd_root;
+	u8* thd_old_data;
 
 	void Clear()
 	{
-		thd_data=thd_root;
+		thd_old_data = thd_data = thd_root;
 	}
+
+	void ClearPartial()
+	{
+		thd_old_data = thd_data;
+		thd_data = thd_root;
+	}
+	
+	u8* End()
+	{
+		return thd_data == thd_root ? thd_old_data : thd_data;
+	}
+
+	void Reset(u8* ptr)
+	{
+		thd_data = thd_root = thd_old_data = ptr;
+	}
+
 };
 
 struct rend_context
@@ -127,11 +145,11 @@ struct TA_context
 	void MarkRend()
 	{
 		rend.proc_start = rend.proc_end;
-		rend.proc_end = tad.thd_data;
+		rend.proc_end = tad.End();
 	}
 	void Alloc()
 	{
-		tad.thd_root=tad.thd_data=(u8*)malloc(2*1024*1024);
+		tad.Reset((u8*)malloc(2*1024*1024));
 
 		rend.verts.InitBytes(1024*1024,&rend.Overrun); //up to 1 mb of vtx data/frame = ~ 38k vtx/frame
 		rend.idx.Init(60*1024,&rend.Overrun);			//up to 60K indexes ( idx have stripification overhead )
