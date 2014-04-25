@@ -11,6 +11,13 @@ RZDCY_MODULES	:=	cfg/ hw/arm7/ hw/aica/ hw/holly/ hw/ hw/gdrom/ hw/maple/ \
  hw/extdev/ hw/arm/ imgread/ linux/ ./ deps/zlib/ deps/chdr/ deps/crypto/ deps/libelf/ deps/chdpsr/ arm_emitter/ \
  deps/libzip/ deps/libpng/ rend/
 
+
+ifdef WEBUI
+	RZDCY_MODULES += webui/
+	RZDCY_MODULES += deps/libwebsocket/
+	RZDCY_MODULES += deps/ifaddrs/
+endif
+
 ifndef NO_REC
 	RZDCY_MODULES += hw/sh4/dyna/
 endif

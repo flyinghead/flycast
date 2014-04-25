@@ -131,7 +131,7 @@ void plugins_Reset(bool Manual)
 
 void* webui_th(void* p)
 {
-	#if HOST_OS == OS_WINDOWS
+	#if HOST_OS == OS_WINDOWS || defined(_ANDROID)
 		webui_start();
 	#endif
 

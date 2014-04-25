@@ -110,11 +110,11 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #ifdef LWS_BUILTIN_GETIFADDRS
- #include <getifaddrs.h>
+ #include "deps/ifaddrs/ifaddrs.h"
 #else
  #include <ifaddrs.h>
 #endif
-#include <sys/syslog.h>
+//#include <sys/syslog.h>
 #include <sys/un.h>
 #include <sys/socket.h>
 #include <netdb.h>

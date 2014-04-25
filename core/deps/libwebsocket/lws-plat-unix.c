@@ -75,6 +75,7 @@ libwebsocket_cancel_service(struct libwebsocket_context *context)
 
 LWS_VISIBLE void lwsl_emit_syslog(int level, const char *line)
 {
+/*
 	int syslog_level = LOG_DEBUG;
 
 	switch (level) {
@@ -91,7 +92,8 @@ LWS_VISIBLE void lwsl_emit_syslog(int level, const char *line)
 		syslog_level = LOG_INFO;
 		break;
 	}
-	syslog(syslog_level, "%s", line);
+	*/
+	printf("%s", line);
 }
 
 LWS_VISIBLE int
