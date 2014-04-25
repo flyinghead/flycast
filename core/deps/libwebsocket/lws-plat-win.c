@@ -1,5 +1,10 @@
 #include "private-libwebsockets.h"
 
+
+#include "build.h"
+
+#if HOST_OS == OS_WINDOWS
+
 unsigned long long
 time_in_microseconds()
 {
@@ -356,3 +361,5 @@ lws_plat_inet_ntop(int af, const void *src, char *dst, int cnt)
 	free(buffer);
 	return ok ? dst : NULL;
 }
+
+#endif
