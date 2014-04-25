@@ -20,7 +20,7 @@ LD=${CC}
 
 MFLAGS := -m32
 #-marm -march=armv7-a -mtune=cortex-a9 -mfpu=neon -mfloat-abi=softfp -funroll-loops
-ASFLAGS := -m32
+ASFLAGS := -32
 #-march=armv7-a -mfpu=neon -mfloat-abi=softfp
 
 LDFLAGS	:= -m32	-g -Wl,-Map,$(notdir $@).map,--gc-sections -Wl,-O3 -Wl,--sort-common 
@@ -81,7 +81,6 @@ PACKAGE_FILES=$(EXECUTABLE_STRIPPED) default.gcw0.desktop icon-32.png
 all: $(CPPFILES) $(EXECUTABLE) $(EXECUTABLE_STRIPPED)
 	
 $(EXECUTABLE): $(OBJECTS)
-	echo $(RZDCY_FILES)
 	$(CXX) $(MFLAGS) $(EXTRAFLAGS) $(LDFLAGS)  $(OBJECTS) $(LIBS) -o $@
 
 $(EXECUTABLE_STRIPPED): $(EXECUTABLE)

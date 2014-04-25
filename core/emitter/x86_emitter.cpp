@@ -3,6 +3,7 @@
 #pragma warning(disable:4244)
 #pragma warning(disable:4245)
 
+#include "../types.h"
 #include "x86_emitter.h"
 bool IsS8(u32 value)
 {
@@ -183,6 +184,8 @@ x86_block_externs* x86_block::GetExterns()
 
 	return rv;
 }
+
+#if 0
 #include "windows.h"
 /*void x86_block::CopyTo(void* to)
 {
@@ -193,6 +196,8 @@ x86_block_externs* x86_block::GetExterns()
 	ApplyPatches(x86_buff);
 }
 */
+
+#endif
 
 //wut ?
 void x86_block::ApplyPatches(u8* base)
@@ -409,7 +414,10 @@ void x86_block::Emit(x86_opcode_class op,x86_reg reg1,x86_reg reg2,u32 imm)
 //reg,mrm,imm, reg1 is written
 void x86_block::Emit(x86_opcode_class op,x86_reg reg,x86_ptr mem,u32 imm)
 {
-	ME_op_3_imm(op,reg,c_mrm(mem),imm);
+	//GCC bitches about using this directly. It doesn't complain for the other uses though
+	//go figure ....
+	x86_mrm_t mrm = c_mrm(mem);
+	ME_op_3_imm(op,reg,mrm,imm);
 }
 
 //reg,mrm,imm, reg1 is written
@@ -449,19 +457,19 @@ u8 EncodeDisp(u32 disp,x86_mrm_t* to,u8 flags)
 	verify(false);
 	return 0;
 }
-__declspec(dllexport) x86_mrm_t x86_mrm(x86_reg base)
+/*__declspec(dllexport) */x86_mrm_t x86_mrm(x86_reg base)
 {
 	return x86_mrm(base,NO_REG,sib_scale_1,0);
 }
-__declspec(dllexport) x86_mrm_t x86_mrm(x86_reg base,x86_ptr disp)
+/*__declspec(dllexport) */x86_mrm_t x86_mrm(x86_reg base,x86_ptr disp)
 {
 	return x86_mrm(base,NO_REG,sib_scale_1,disp);
 }
-__declspec(dllexport) x86_mrm_t x86_mrm(x86_reg index,x86_sib_scale scale,x86_ptr disp)
+/*__declspec(dllexport) */x86_mrm_t x86_mrm(x86_reg index,x86_sib_scale scale,x86_ptr disp)
 {
 	return x86_mrm(NO_REG,index,scale,disp);
 }
-__declspec(dllexport) x86_mrm_t x86_mrm(x86_reg base,x86_reg index)
+/*__declspec(dllexport) */x86_mrm_t x86_mrm(x86_reg base,x86_reg index)
 {
 	return x86_mrm(base,index,sib_scale_1,0);
 }

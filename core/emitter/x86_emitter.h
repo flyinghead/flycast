@@ -303,9 +303,9 @@ public:
 	~x86_block();
 	void x86_buffer_ensure(u32 size);
 
-	void  x86_block::write8(u32 value);
-	void  x86_block::write16(u32 value);
-	void  x86_block::write32(u32 value);
+	void  write8(u32 value);
+	void  write16(u32 value);
+	void  write32(u32 value);
 
 	//init things
 	void Init(dyna_reallocFP* ral,dyna_finalizeFP* alf);
@@ -332,45 +332,45 @@ public:
 	//opcode Emitters
 
 	//no param
-	void x86_block::Emit(x86_opcode_class op);
+	void Emit(x86_opcode_class op);
 	//1 param
 	//reg
-	void x86_block::Emit(x86_opcode_class op,x86_reg reg);
+	void Emit(x86_opcode_class op,x86_reg reg);
 	//smrm
-	void x86_block::Emit(x86_opcode_class op,x86_ptr mem);
+	void Emit(x86_opcode_class op,x86_ptr mem);
 	//mrm
-	void x86_block::Emit(x86_opcode_class op,x86_mrm_t mrm);
+	void Emit(x86_opcode_class op,x86_mrm_t mrm);
 	//imm
-	void x86_block::Emit(x86_opcode_class op,u32 imm);
+	void Emit(x86_opcode_class op,u32 imm);
 	//ptr_imm
-	void x86_block::Emit(x86_opcode_class op,x86_ptr_imm disp);
+	void Emit(x86_opcode_class op,x86_ptr_imm disp);
 	//lbl
-	void x86_block::Emit(x86_opcode_class op,x86_Label* lbl);
+	void Emit(x86_opcode_class op,x86_Label* lbl);
 
 	//2 param
 	//reg,reg, reg1 is written
-	void x86_block::Emit(x86_opcode_class op,x86_reg reg1,x86_reg reg2);
+	void Emit(x86_opcode_class op,x86_reg reg1,x86_reg reg2);
 	//reg,smrm, reg is written
-	void x86_block::Emit(x86_opcode_class op,x86_reg reg,x86_ptr mem);
+	void Emit(x86_opcode_class op,x86_reg reg,x86_ptr mem);
 	//reg,mrm, reg is written
-	void x86_block::Emit(x86_opcode_class op,x86_reg reg1,x86_mrm_t mrm);
+	void Emit(x86_opcode_class op,x86_reg reg1,x86_mrm_t mrm);
 	//reg,imm, reg is written
-	void x86_block::Emit(x86_opcode_class op,x86_reg reg,u32 imm);
+	void Emit(x86_opcode_class op,x86_reg reg,u32 imm);
 	//smrm,reg, mem is written
-	void x86_block::Emit(x86_opcode_class op,x86_ptr mem,x86_reg reg);
+	void Emit(x86_opcode_class op,x86_ptr mem,x86_reg reg);
 	//smrm,imm, mem is written
-	void x86_block::Emit(x86_opcode_class op,x86_ptr mem,u32 imm);
+	void Emit(x86_opcode_class op,x86_ptr mem,u32 imm);
 
 	//mrm,reg, mrm is written
-	void x86_block::Emit(x86_opcode_class op,x86_mrm_t mrm,x86_reg reg);
+	void Emit(x86_opcode_class op,x86_mrm_t mrm,x86_reg reg);
 	//mrm,imm, mrm is written
-	void x86_block::Emit(x86_opcode_class op,x86_mrm_t mrm,u32 imm);
+	void Emit(x86_opcode_class op,x86_mrm_t mrm,u32 imm);
 
 	//3 param
 	//reg,reg,imm, reg1 is written
-	void x86_block::Emit(x86_opcode_class op,x86_reg reg1,x86_reg reg2,u32 imm);
+	void Emit(x86_opcode_class op,x86_reg reg1,x86_reg reg2,u32 imm);
 	//reg,mrm,imm, reg1 is written
-	void x86_block::Emit(x86_opcode_class op,x86_reg reg,x86_ptr mem,u32 imm);
+	void Emit(x86_opcode_class op,x86_reg reg,x86_ptr mem,u32 imm);
 	//reg,mrm,imm, reg1 is written
-	void x86_block::Emit(x86_opcode_class op,x86_reg reg,x86_mrm_t mrm,u32 imm);
+	void Emit(x86_opcode_class op,x86_reg reg,x86_mrm_t mrm,u32 imm);
 };

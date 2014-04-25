@@ -20,7 +20,7 @@ ifndef NOT_ARM
 endif
 
 ifdef X86_REC
-    RZDCY_MODULES += rec-x86/
+    RZDCY_MODULES += rec-x86/ emitter/
 endif
 
 ifndef NO_REND
