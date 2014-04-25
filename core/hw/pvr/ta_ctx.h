@@ -146,7 +146,11 @@ struct TA_context
 
 	void MarkRend()
 	{
+<<<<<<< HEAD
 		rend.proc_start = tad.thd_root;
+=======
+		rend.proc_start = rend.proc_end;
+>>>>>>> Stored TA command stream persists on TA_LIST_INIT, until first actual write.
 		rend.proc_end = tad.End();
 	}
 	void Alloc()
