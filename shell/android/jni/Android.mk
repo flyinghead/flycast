@@ -20,6 +20,7 @@ LOCAL_PATH:= $(call my-dir)/..
 include $(CLEAR_VARS)
 
 FOR_ANDROID := 1
+WEBUI := 1
 
 ifneq ($(TARGET_ARCH_ABI),armeabi-v7a)
   NOT_ARM := 1
