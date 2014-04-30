@@ -8,6 +8,7 @@ import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.Locale;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -26,33 +27,42 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
-import android.net.Uri;
+import android.graphics.drawable.Drawable;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.StrictMode;
-import android.os.Vibrator;
-
-import com.reicast.emulator.FileBrowser.OnItemSelectedListener;
+import android.util.SparseArray;
+import android.view.View;
+import android.widget.ImageView;
+import android.widget.TextView;
 
 public class XMLParser extends AsyncTask<String, Integer, String> {
 
-	private Context mContext;
-	private String url;
 	private File game;
-	private OnItemSelectedListener mCallback;
-	private Vibrator vib;
+	private int index;
+	private View childview;
+	private Context mContext;
+	private String game_name;
+	private Drawable game_icon;
 
-	public XMLParser(Context mContext, File game, OnItemSelectedListener mCallback, Vibrator vib) {
-		this.mContext = mContext;
+	private static final String game_index = "http://thegamesdb.net/api/GetGame.php?platform=sega+dreamcast&name=";
+	public SparseArray<String> game_details = new SparseArray<String>();
+	public SparseArray<Bitmap> game_preview = new SparseArray<Bitmap>();
+
+	public XMLParser(File game, int index) {
 		this.game = game;
-		this.mCallback = mCallback;
-		this.vib = vib;
+		this.index = index;
+	}
+	
+	public void setViewParent(Context mContext, View childview) {
+		this.mContext = mContext;
+		this.childview = childview;
 	}
 
 	protected void onPreExecute() {
@@ -101,16 +111,24 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 
 	@Override
 	protected String doInBackground(String... params) {
-		url = params[0];
-		String xml = null;
+		if (isNetworkAvailable()) {
+		String filename = game_name = params[0];
+		if (params[0].contains("[")) {
+			filename = params[0].substring(0, params[0].lastIndexOf("["));
+		} else {
+			filename = params[0].substring(0, params[0].lastIndexOf("."));
+		}
+		filename = filename.replace(" ", "+").replace("_", "+");
+		if (filename.endsWith("+")) {
+			filename = filename.substring(0, filename.length() - 1);
+		}
 		try {
 			DefaultHttpClient httpClient = new DefaultHttpClient();
-			HttpPost httpPost = new HttpPost(url);
+			HttpPost httpPost = new HttpPost(game_index + filename);
 
 			HttpResponse httpResponse = httpClient.execute(httpPost);
 			HttpEntity httpEntity = httpResponse.getEntity();
-			xml = EntityUtils.toString(httpEntity);
-
+			return EntityUtils.toString(httpEntity);
 		} catch (UnsupportedEncodingException e) {
 
 		} catch (ClientProtocolException e) {
@@ -118,57 +136,66 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 		} catch (IOException e) {
 
 		}
-		// return XML
-		return xml;
+		}
+		return null;
 	}
 
-	@SuppressWarnings("deprecation")
 	@Override
 	protected void onPostExecute(String gameData) {
-		final AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
-		builder.setCancelable(true);
 		if (gameData != null) {
 			Document doc = getDomElement(gameData);
 			if (doc != null && doc.getElementsByTagName("Game") != null) {
 				Element root = (Element) doc.getElementsByTagName("Game").item(
 						0);
-				String title = getValue(root, "GameTitle");
-				builder.setTitle(mContext.getString(R.string.game_details,
-						title));
+				game_name = getValue(root, "GameTitle");
 				String details = getValue(root, "Overview");
-				builder.setMessage(details);
+				game_details.put(index, details);
 				Element boxart = (Element) root.getElementsByTagName("Images")
 						.item(0);
 				String image = "http://thegamesdb.net/banners/"
 						+ getValue(boxart, "boxart");
 				try {
-					builder.setIcon(new BitmapDrawable(decodeBitmapIcon(image)));
+					game_preview.put(index, decodeBitmapIcon(image));
+					game_icon = new BitmapDrawable(decodeBitmapIcon(image));
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 			}
 		} else {
-			builder.setTitle(mContext.getString(R.string.info_unavailable));
+			game_details.put(index, mContext.getString(R.string.info_unavailable));
+			final String nameLower = game.getName().toLowerCase(Locale.getDefault());
+			game_icon = mContext.getResources().getDrawable(
+					game.isDirectory() ? R.drawable.open_folder : nameLower
+							.endsWith(".gdi") ? R.drawable.gdi : nameLower
+							.endsWith(".cdi") ? R.drawable.cdi : nameLower
+							.endsWith(".chd") ? R.drawable.chd
+							: R.drawable.disk_unknown);
+			
 		}
-		builder.setPositiveButton("Close",
-				new DialogInterface.OnClickListener() {
-					public void onClick(DialogInterface dialog, int which) {
-						dialog.dismiss();
-						return;
-					}
-				});
-		builder.setPositiveButton("Launch",
-				new DialogInterface.OnClickListener() {
-					public void onClick(DialogInterface dialog, int which) {
-						dialog.dismiss();
-						mCallback.onGameSelected(game != null ? Uri
-								.fromFile(game) : Uri.EMPTY);
-						vib.vibrate(250);
-						return;
-					}
-				});
-		builder.create().show();
+
+		((TextView) childview.findViewById(R.id.item_name)).setText(game_name);
+
+		((ImageView) childview.findViewById(R.id.item_icon))
+				.setImageDrawable(game_icon);
+
+		childview.setTag(game_name);
+	}
+
+	private boolean isNetworkAvailable() {
+		ConnectivityManager connectivityManager = (ConnectivityManager) mContext
+				.getSystemService(Context.CONNECTIVITY_SERVICE);
+		NetworkInfo activeNetworkInfo = connectivityManager
+				.getActiveNetworkInfo();
+		return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+	}
+
+	public Drawable getGameIcon() {
+		return game_icon;
+	}
+
+	public String getGameTitle() {
+		return game_name;
 	}
 
 	public Document getDomElement(String xml) {

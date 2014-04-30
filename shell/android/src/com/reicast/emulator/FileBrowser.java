@@ -17,7 +17,9 @@ import java.util.Locale;
 import org.apache.commons.lang3.StringUtils;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
@@ -53,8 +55,6 @@ public class FileBrowser extends Fragment {
 	private boolean ImgBrowse;
 	private boolean games;
 	private OnItemSelectedListener mCallback;
-	
-	private static final String game_index = "http://thegamesdb.net/api/GetGame.php?platform=sega+dreamcast&name=";
 
 	private SharedPreferences mPrefs;
 	private File sdcard = Environment.getExternalStorageDirectory();
@@ -202,7 +202,7 @@ public class FileBrowser extends Fragment {
 		}
 
 		@Override
-		protected void onPostExecute(List<File> games) {
+		protected void onPostExecute(List<File> items) {
 			final LinearLayout list = (LinearLayout) parentActivity.findViewById(R.id.game_list);
 			if (list != null) {
 				list.removeAllViews();
@@ -210,9 +210,9 @@ public class FileBrowser extends Fragment {
 
 			String heading = parentActivity.getString(R.string.games_listing);
 			createListHeader(heading, list, true);
-			if (games != null && !games.isEmpty()) {
-				for (final File game : games) {
-					createListItem(list, game);
+			if (items != null && !items.isEmpty()) {
+				for (int i = 0; i < items.size(); i++) {
+					createListItem(list, items.get(i), i);
 				}
 			} else {
 				Toast.makeText(parentActivity, R.string.config_game, Toast.LENGTH_LONG).show();
@@ -286,22 +286,13 @@ public class FileBrowser extends Fragment {
 
 	}
 
-	private void createListItem(LinearLayout list, final File game) {
-		final String name = game.getName();
-		final String nameLower = name.toLowerCase(Locale.getDefault());
+	private void createListItem(LinearLayout list, final File game, final int index) {				
 		final View childview = parentActivity.getLayoutInflater().inflate(
 				R.layout.app_list_item, null, false);
-
-		((TextView) childview.findViewById(R.id.item_name)).setText(name);
-
-		((ImageView) childview.findViewById(R.id.item_icon))
-		        .setImageResource(game.isDirectory() ? R.drawable.open_folder
-		                : nameLower.endsWith(".gdi") ? R.drawable.gdi 
-		                : nameLower.endsWith(".cdi") ? R.drawable.cdi
-		                : nameLower.endsWith(".chd") ? R.drawable.chd
-		                : R.drawable.disk_unknown);
-
-		childview.setTag(name);
+		
+		final XMLParser xmlParser = new XMLParser(game, index);
+		xmlParser.setViewParent(parentActivity, childview);
+		xmlParser.execute(game.getName());
 
 		orig_bg = childview.getBackground();
 
@@ -312,18 +303,30 @@ public class FileBrowser extends Fragment {
 					public void onClick(View view) {
 						vib.vibrate(50);
 						if (mPrefs.getBoolean(Config.pref_gamedetails, true)) {
-							String title = "";
-							if (name.contains("[")) {
-								title = name.substring(0, name.lastIndexOf("["));
-							} else {
-								title = name.substring(0, name.lastIndexOf("."));
-							}
-							title = title.replace(" ", "+").replace("_", "+");
-							if (title.endsWith("+")) {
-								title = title.substring(0, title.length() - 1);
-							}
-							XMLParser xmlParser = new XMLParser(parentActivity, game, mCallback, vib);
-							xmlParser.execute(game_index + title);
+							final AlertDialog.Builder builder = new AlertDialog.Builder(parentActivity);
+							builder.setCancelable(true);
+							builder.setTitle(getString(R.string.game_details,
+									xmlParser.getGameTitle()));
+							builder.setMessage(xmlParser.game_details.get(index));
+							builder.setIcon(xmlParser.getGameIcon());
+							builder.setPositiveButton("Close",
+									new DialogInterface.OnClickListener() {
+										public void onClick(DialogInterface dialog, int which) {
+											dialog.dismiss();
+											return;
+										}
+									});
+							builder.setPositiveButton("Launch",
+									new DialogInterface.OnClickListener() {
+										public void onClick(DialogInterface dialog, int which) {
+											dialog.dismiss();
+											mCallback.onGameSelected(game != null ? Uri
+													.fromFile(game) : Uri.EMPTY);
+											vib.vibrate(250);
+											return;
+										}
+									});
+							builder.create().show();
 						} else {
 							mCallback.onGameSelected(game != null ? Uri
 									.fromFile(game) : Uri.EMPTY);
