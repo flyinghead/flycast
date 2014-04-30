@@ -154,7 +154,7 @@ public class GL2JNIActivity extends Activity {
 					if (pad.custom[playerNum] || pad.compat[playerNum]) {
 						pad.joystick[playerNum] = prefs.getBoolean(Gamepad.pref_js_separate + id, false);
 					} else {
-						pad.joystick[playerNum] = false;
+						pad.joystick[playerNum] = true;
 					}
 					if (InputDevice.getDevice(joy).getName()
 							.contains(Gamepad.controllers_gamekey)) {
