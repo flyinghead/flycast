@@ -206,53 +206,62 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 		return game_name;
 	}
 
-	@SuppressWarnings("deprecation")
 	@Override
 	protected void onPostExecute(String gameData) {
-		final AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
-		builder.setCancelable(true);
 		if (gameData != null) {
 			Document doc = getDomElement(gameData);
 			if (doc != null && doc.getElementsByTagName("Game") != null) {
 				Element root = (Element) doc.getElementsByTagName("Game").item(
 						0);
-				String title = getValue(root, "GameTitle");
-				builder.setTitle(mContext.getString(R.string.game_details,
-						title));
+				game_name = getValue(root, "GameTitle");
 				String details = getValue(root, "Overview");
-				builder.setMessage(details);
+				game_details.put(index, details);
 				Element boxart = (Element) root.getElementsByTagName("Images")
 						.item(0);
 				String image = "http://thegamesdb.net/banners/"
 						+ getValue(boxart, "boxart");
 				try {
-					builder.setIcon(new BitmapDrawable(decodeBitmapIcon(image)));
+					game_preview.put(index, decodeBitmapIcon(image));
+					game_icon = new BitmapDrawable(decodeBitmapIcon(image));
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 			}
 		} else {
-			builder.setTitle(mContext.getString(R.string.info_unavailable));
+			game_details.put(index, mContext.getString(R.string.info_unavailable));
+			final String nameLower = game.getName().toLowerCase(Locale.getDefault());
+			game_icon = mContext.getResources().getDrawable(
+					game.isDirectory() ? R.drawable.open_folder : nameLower
+							.endsWith(".gdi") ? R.drawable.gdi : nameLower
+							.endsWith(".cdi") ? R.drawable.cdi : nameLower
+							.endsWith(".chd") ? R.drawable.chd
+							: R.drawable.disk_unknown);
+			
 		}
-		builder.setPositiveButton("Close",
-				new DialogInterface.OnClickListener() {
-					public void onClick(DialogInterface dialog, int which) {
-						dialog.dismiss();
-						return;
-					}
-				});
-		builder.setPositiveButton("Launch",
-				new DialogInterface.OnClickListener() {
-					public void onClick(DialogInterface dialog, int which) {
-						dialog.dismiss();
-						mCallback.onGameSelected(game != null ? Uri
-								.fromFile(game) : Uri.EMPTY);
-						vib.vibrate(250);
-						return;
-					}
-				});
-		builder.create().show();
+
+		((TextView) childview.findViewById(R.id.item_name)).setText(game_name);
+
+		((ImageView) childview.findViewById(R.id.item_icon))
+				.setImageDrawable(game_icon);
+
+		childview.setTag(game_name);
+	}
+
+	private boolean isNetworkAvailable() {
+		ConnectivityManager connectivityManager = (ConnectivityManager) mContext
+				.getSystemService(Context.CONNECTIVITY_SERVICE);
+		NetworkInfo activeNetworkInfo = connectivityManager
+				.getActiveNetworkInfo();
+		return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+	}
+
+	public Drawable getGameIcon() {
+		return game_icon;
+	}
+
+	public String getGameTitle() {
+		return game_name;
 	}
 
 	public Document getDomElement(String xml) {
