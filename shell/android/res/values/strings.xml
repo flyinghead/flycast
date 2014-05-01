@@ -23,6 +23,7 @@
     
     <string name="optimization_opts">Optimization and Debugging Options</string>
     <string name="experimental_opts">Experimental (May cause widespread panic)</string>
+    <string name="select_details">Enable Game Details</string>
     <string name="select_native">Enable Native Interface</string>
     <string name="select_dynarec">Dynarec Options</string>
     <string name="select_unstable">Unstable Optimisations</string>
@@ -42,6 +43,10 @@
     
     <string name="games_listing">Game List</string>
     
+    <string name="game_details">Game Info - %1$s</string>
+    <string name="info_unavailable">Game Info Unavailable</string>
+    <string name="disk_loading">Loading Disk Info</string>
+
     <string name="report_issue">Previous Crash Detected</string>
     <string name="bios_config">Configuration failed!</string>
     
