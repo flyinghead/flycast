@@ -32,9 +32,12 @@ struct Renderer
 
 	virtual void Term()=0;
 
+	virtual bool Process(TA_context* ctx)=0;
 	virtual bool Render()=0;
 
 	virtual void Present()=0;
+
+	virtual void DrawOSD() { }
 };
 
 

@@ -81,11 +81,11 @@ u32 gcflip;
 static struct
 {
 	TSP tsp;
-	TCW tcw;
+	//TCW tcw;
 	PCW pcw;
 	ISP_TSP isp;
 	u32 clipmode;
-	u32 texture_enabled;
+	//u32 texture_enabled;
 	u32 stencil_modvol_on;
 	u32 program;
 	GLuint texture;
@@ -95,11 +95,11 @@ static struct
 		program=~0;
 		texture=~0;
 		tsp.full = ~gp->tsp.full;
-		tcw.full = ~gp->tcw.full;
+		//tcw.full = ~gp->tcw.full;
 		pcw.full = ~gp->pcw.full;
 		isp.full = ~gp->isp.full;
 		clipmode=0xFFFFFFFF;
-		texture_enabled=~gp->pcw.Texture;
+//		texture_enabled=~gp->pcw.Texture;
 		stencil_modvol_on=false;
 	}
 } cache;
@@ -194,36 +194,27 @@ __forceinline
 		glStencilFunc(GL_ALWAYS,stencil,stencil);
 	}
 
-	if ((gp->tcw.full != cache.tcw.full) || (gp->tsp.full!=cache.tsp.full) || (cache.texture_enabled!= gp->pcw.Texture))
+	if (gp->texid != cache.texture)
 	{
-		cache.tcw=gp->tcw;
-		cache.texture_enabled = gp->pcw.Texture;
+		cache.texture=gp->texid;
+		if (gp->texid != -1)
+			glBindTexture(GL_TEXTURE_2D, gp->texid);
+	}
 
-		if (gp->pcw.Texture)
+	if (gp->tsp.full!=cache.tsp.full)
+	{
+		cache.tsp=gp->tsp;
+
+		if (Type==ListType_Translucent)
 		{
-			GLuint tex=GetTexture(gp->tsp,gp->tcw);
-			if (tex!=cache.texture)
-			{
-				glBindTexture(GL_TEXTURE_2D,tex);
-				cache.texture=tex;
-			}
-		}
-
-		if (gp->tsp.full!=cache.tsp.full)
-		{
-			cache.tsp=gp->tsp;
-
-			if (Type==ListType_Translucent)
-			{
-				glBlendFunc(SrcBlendGL[gp->tsp.SrcInstr],DstBlendGL[gp->tsp.DstInstr]);
+			glBlendFunc(SrcBlendGL[gp->tsp.SrcInstr],DstBlendGL[gp->tsp.DstInstr]);
 
 #ifdef WEIRD_SLOWNESS
-				//SGX seems to be super slow with discard enabled blended pixels
-				//can't cache this -- due to opengl shader api
-				bool clip_alpha_on_zero=gp->tsp.SrcInstr==4 && (gp->tsp.DstInstr==1 || gp->tsp.DstInstr==5);
-				glUniform1f(CurrentShader->cp_AlphaTestValue,clip_alpha_on_zero?(1/255.f):(-2.f));
+			//SGX seems to be super slow with discard enabled blended pixels
+			//can't cache this -- due to opengl shader api
+			bool clip_alpha_on_zero=gp->tsp.SrcInstr==4 && (gp->tsp.DstInstr==1 || gp->tsp.DstInstr==5);
+			glUniform1f(CurrentShader->cp_AlphaTestValue,clip_alpha_on_zero?(1/255.f):(-2.f));
 #endif
-			}
 		}
 	}
 
