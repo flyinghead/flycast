@@ -2,12 +2,69 @@
 #include "ta.h"
 #include "hw/pvr/pvr_mem.h"
 
+/*
+
+	rendv3 ideas
+	- multiple backends
+	  - ESish
+	    - OpenGL ES2.0
+	    - OpenGL ES3.0
+	    - OpenGL 3.1
+	  - OpenGL 4.x
+	  - Direct3D 10+ ?
+	- correct memory ordering model
+	- resource pools
+	- threaded ta
+	- threaded rendering
+	- rtts
+	- framebuffers
+	- overlays
+
+
+	PHASES
+	- TA submition (memops, dma)
+
+	- TA parsing (defered, rend thread)
+
+	- CORE render (in-order, defered, rend thread)
+
+
+	submition is done in-order
+	- Partial handling of TA values
+	- Gotchas with TA contexts
+
+	parsing is done on demand and out-of-order, and might be skipped
+	- output is only consumed by renderer
+
+	render is queued on RENDER_START, and won't stall the emulation or might be skipped
+	- VRAM integrity is an issue with out-of-order or delayed rendering.
+	- selective vram snapshots require ta parsing to complete in order with REND_START / REND_END
+
+
+	Complications
+	- For some apis (gles2, maybe gl31) texture allocation needs to happen on the gpu thread
+	- multiple versions of different time snapshots of the same texture are required
+	- ta parsing vs frameskip logic
+
+
+	Texture versioning and staging
+	 A memory copy of the texture can be used to temporary store the texture before upload to vram
+	 This can be moved to another thread
+	 If the api supports async resource creation, we don't need the extra copy
+	 Texcache lookups need to be versioned
+
+
+	rendv2x hacks
+	- Only a single pending render. Any renders while still pending are dropped (before parsing)
+	- wait and block for parse/texcache. Render is async
+*/
 
 u32 VertexCount=0;
 u32 FrameCount=0;
 
 Renderer* rend;
 cResetEvent rs(false,true);
+cResetEvent re(false,true);
 
 int max_idx,max_mvo,max_op,max_pt,max_tr,max_vtx,max_modt, ovrn;
 
@@ -19,26 +76,23 @@ void SetREP(TA_context* cntx);
 bool rend_single_frame()
 {
 	//wait render start only if no frame pending
-	_pvrrc = DequeueRender();
-
-	while (!_pvrrc)
+	do
 	{
 		rs.Wait();
 		_pvrrc = DequeueRender();
 	}
+	while (!_pvrrc);
 
-	bool do_swp=false;
-	
-	do_swp=rend->Render();
-	
+	bool proc = rend->Process(_pvrrc);
+	re.Set();
 
+	bool do_swp = proc && rend->Render();
+		
 	if (do_swp)
-	{
-		//OSD_DRAW();
-	}
+		rend->DrawOSD();
 
 	//clear up & free data ..
-	tactx_Recycle(_pvrrc);
+	FinishRender(_pvrrc);
 	_pvrrc=0;
 
 	return do_swp;
@@ -89,9 +143,11 @@ void* rend_thread(void* p)
 cThread rthd(rend_thread,0);
 
 
+bool pend_rend = false;
 
 void rend_start_render()
 {
+	pend_rend = false;
 	bool is_rtt=(FB_W_SOF1& 0x1000000)!=0;
 	TA_context* ctx = tactx_Pop(CORE_CURRENT_CTX);
 
@@ -122,8 +178,10 @@ void rend_start_render()
 #if HOST_OS==OS_WINDOWS && 0
 			printf("max: idx: %d, vtx: %d, op: %d, pt: %d, tr: %d, mvo: %d, modt: %d, ov: %d\n", max_idx, max_vtx, max_op, max_pt, max_tr, max_mvo, max_modt, ovrn);
 #endif
-			QueueRender(ctx);
-			rs.Set();
+			if (QueueRender(ctx))  {
+				rs.Set();
+				pend_rend = true;
+			}
 		}
 		else
 		{
@@ -137,12 +195,14 @@ void rend_start_render()
 
 void rend_end_render()
 {
-#if 0 //also disabled the printf, it takes quite some time ...
+#if 1 //also disabled the printf, it takes quite some time ...
 	#if HOST_OS!=OS_WINDOWS && !defined(_ANDROID)
 		if (!re.state) printf("Render > Extended time slice ...\n");
 	#endif
-	rend_end_wait();
 #endif
+
+	if (pend_rend)
+		re.Wait();
 }
 
 /*

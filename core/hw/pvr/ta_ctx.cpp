@@ -46,7 +46,7 @@ bool TryDecodeTARC()
 
 		vd_ctx->rend.proc_start = vd_ctx->rend.proc_end + 32;
 		vd_ctx->rend.proc_end = vd_ctx->tad.thd_data;
-
+			
 		vd_ctx->rend_inuse.Lock();
 		vd_rc = vd_ctx->rend;
 
@@ -71,33 +71,46 @@ void VDecEnd()
 cMutex mtx_rqueue;
 TA_context* rqueue;
 
-void QueueRender(TA_context* ctx)
+bool QueueRender(TA_context* ctx)
 {
 	verify(ctx != 0);
 	
+	if (rqueue) {
+		tactx_Recycle(ctx);
+		fskip++;
+		return false;
+	}
+
 	mtx_rqueue.Lock();
 	TA_context* old = rqueue;
 	rqueue=ctx;
 	mtx_rqueue.Unlock();
 
-	if (old)
-	{
-		tactx_Recycle(old);
-		fskip++;
-	}
+	verify(!old);
+
+	return true;
 }
 
 TA_context* DequeueRender()
 {
 	mtx_rqueue.Lock();
 	TA_context* rv = rqueue;
-	rqueue = 0;
 	mtx_rqueue.Unlock();
 
 	if (rv)
 		FrameCount++;
 
 	return rv;
+}
+
+void FinishRender(TA_context* ctx)
+{
+	verify(rqueue == ctx);
+	mtx_rqueue.Lock();
+	rqueue = 0;
+	mtx_rqueue.Unlock();
+
+	tactx_Recycle(ctx);
 }
 
 cMutex mtx_pool;

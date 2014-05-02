@@ -8,6 +8,7 @@
 #include "ta.h"
 #include "ta_ctx.h"
 #include "pvr_mem.h"
+#include "rend/gles/gles.h"
 #include "Renderer_if.h"
 
 u32 ta_type_lut[256];
@@ -788,11 +789,18 @@ public:
 			}
 			d_pp->first=vdrc.idx.used(); 
 			d_pp->count=0; 
+
 			d_pp->isp=pp->isp; 
 			d_pp->tsp=pp->tsp; 
 			d_pp->tcw=pp->tcw;
 			d_pp->pcw=pp->pcw; 
 			d_pp->tileclip=tileclip_val;
+
+			d_pp->texid = -1;
+
+			if (d_pp->pcw.Texture) {
+				d_pp->texid = GetTexture(d_pp->tsp,d_pp->tcw);
+			}
 		}
 	}
 
@@ -1183,6 +1191,12 @@ public:
 		d_pp->pcw=spr->pcw; 
 		d_pp->tileclip=tileclip_val;
 
+		d_pp->texid = -1;
+		
+		if (d_pp->pcw.Texture) {
+			d_pp->texid = GetTexture(d_pp->tsp,d_pp->tcw);
+		}
+
 		SFaceBaseColor=spr->BaseCol;
 		SFaceOffsColor=spr->OffsCol;
 	}
@@ -1394,6 +1408,9 @@ FifoSplitter<0> TAFifo0;
 
 int ta_parse_cnt = 0;
 
+/*
+	Also: gotta stage textures here
+*/
 bool ta_parse_vdrc(TA_context* ctx)
 {
 	bool rv=false;
