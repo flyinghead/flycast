@@ -237,7 +237,7 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 							.endsWith(".cdi") ? R.drawable.cdi : nameLower
 							.endsWith(".chd") ? R.drawable.chd
 							: R.drawable.disk_unknown);
-			
+
 		}
 
 		((TextView) childview.findViewById(R.id.item_name)).setText(game_name);
