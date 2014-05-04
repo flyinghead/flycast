@@ -290,7 +290,9 @@ public class FileBrowser extends Fragment {
 		final View childview = parentActivity.getLayoutInflater().inflate(
 				R.layout.app_list_item, null, false);
 		
-		final XMLParser xmlParser = new XMLParser(game, index);
+		final boolean webInfo = mPrefs.getBoolean(Config.pref_gamedetails, true);
+		
+		final XMLParser xmlParser = new XMLParser(game, index, webInfo);
 		xmlParser.setViewParent(parentActivity, childview);
 		xmlParser.execute(game.getName());
 
@@ -302,7 +304,7 @@ public class FileBrowser extends Fragment {
 				new OnClickListener() {
 					public void onClick(View view) {
 						vib.vibrate(50);
-						if (mPrefs.getBoolean(Config.pref_gamedetails, true)) {
+						if (webInfo) {
 							final AlertDialog.Builder builder = new AlertDialog.Builder(parentActivity);
 							builder.setCancelable(true);
 							builder.setTitle(getString(R.string.game_details,
