@@ -44,6 +44,7 @@ import android.widget.TextView;
 
 public class XMLParser extends AsyncTask<String, Integer, String> {
 
+	private boolean webInfo;
 	private File game;
 	private int index;
 	private View childview;
@@ -55,11 +56,12 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 	public SparseArray<String> game_details = new SparseArray<String>();
 	public SparseArray<Bitmap> game_preview = new SparseArray<Bitmap>();
 
-	public XMLParser(File game, int index) {
+	public XMLParser(File game, int index, boolean webInfo) {
+		this.webInfo = webInfo;
 		this.game = game;
 		this.index = index;
 	}
-	
+
 	public void setViewParent(Context mContext, View childview) {
 		this.mContext = mContext;
 		this.childview = childview;
@@ -111,31 +113,31 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 
 	@Override
 	protected String doInBackground(String... params) {
-		if (isNetworkAvailable()) {
-		String filename = game_name = params[0];
-		if (params[0].contains("[")) {
-			filename = params[0].substring(0, params[0].lastIndexOf("["));
-		} else {
-			filename = params[0].substring(0, params[0].lastIndexOf("."));
-		}
-		filename = filename.replace(" ", "+").replace("_", "+");
-		if (filename.endsWith("+")) {
-			filename = filename.substring(0, filename.length() - 1);
-		}
-		try {
-			DefaultHttpClient httpClient = new DefaultHttpClient();
-			HttpPost httpPost = new HttpPost(game_index + filename);
+		if (isNetworkAvailable() && webInfo) {
+			String filename = game_name = params[0];
+			if (params[0].contains("[")) {
+				filename = params[0].substring(0, params[0].lastIndexOf("["));
+			} else {
+				filename = params[0].substring(0, params[0].lastIndexOf("."));
+			}
+			filename = filename.replace(" ", "+").replace("_", "+");
+			if (filename.endsWith("+")) {
+				filename = filename.substring(0, filename.length() - 1);
+			}
+			try {
+				DefaultHttpClient httpClient = new DefaultHttpClient();
+				HttpPost httpPost = new HttpPost(game_index + filename);
 
-			HttpResponse httpResponse = httpClient.execute(httpPost);
-			HttpEntity httpEntity = httpResponse.getEntity();
-			return EntityUtils.toString(httpEntity);
-		} catch (UnsupportedEncodingException e) {
+				HttpResponse httpResponse = httpClient.execute(httpPost);
+				HttpEntity httpEntity = httpResponse.getEntity();
+				return EntityUtils.toString(httpEntity);
+			} catch (UnsupportedEncodingException e) {
 
-		} catch (ClientProtocolException e) {
+			} catch (ClientProtocolException e) {
 
-		} catch (IOException e) {
+			} catch (IOException e) {
 
-		}
+			}
 		}
 		return null;
 	}
@@ -163,15 +165,17 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 				}
 			}
 		} else {
-			game_details.put(index, mContext.getString(R.string.info_unavailable));
-			final String nameLower = game.getName().toLowerCase(Locale.getDefault());
+			game_details.put(index,
+					mContext.getString(R.string.info_unavailable));
+			final String nameLower = game.getName().toLowerCase(
+					Locale.getDefault());
 			game_icon = mContext.getResources().getDrawable(
 					game.isDirectory() ? R.drawable.open_folder : nameLower
 							.endsWith(".gdi") ? R.drawable.gdi : nameLower
 							.endsWith(".cdi") ? R.drawable.cdi : nameLower
 							.endsWith(".chd") ? R.drawable.chd
 							: R.drawable.disk_unknown);
-			
+
 		}
 
 		((TextView) childview.findViewById(R.id.item_name)).setText(game_name);
