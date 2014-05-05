@@ -145,14 +145,14 @@ public class OnScreenMenu {
 				}
 			}), debugParams);
 
-			hlay.addView(addbut(R.drawable.profiler, "Profiler", new OnClickListener() {
+			hlay.addView(addbut(R.drawable.profiler, "Profiler 1", new OnClickListener() {
 				public void onClick(View v) {
 					JNIdc.send(1, 3000); // sample_Start(param);
 					dismiss();
 				}
 			}), debugParams);
 
-			hlay.addView(addbut(R.drawable.profiler, "Profiler", new OnClickListener() {
+			hlay.addView(addbut(R.drawable.profiler, "Profiler 2", new OnClickListener() {
 				public void onClick(View v) {
 					JNIdc.send(1, 0); // sample_Start(param);
 					dismiss();
@@ -544,6 +544,13 @@ public class OnScreenMenu {
 			hlay.addView(addbut(R.drawable.up, "Back", new OnClickListener() {
 				public void onClick(View v) {
 					popups.remove(MainPopup.this);
+					dismiss();
+				}
+			}), params);
+			
+			hlay.addView(addbut(R.drawable.vmu_swap, "Disk Swap", new OnClickListener() {
+				public void onClick(View v) {
+					JNIdc.diskSwap(null);
 					dismiss();
 				}
 			}), params);

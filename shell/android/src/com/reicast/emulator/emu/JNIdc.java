@@ -24,6 +24,7 @@ public final class JNIdc
 	public static native void initControllers(boolean[] controllers);
 
 	public static native void setupMic(Object sip);
+	public static native void diskSwap(String disk);
 	public static native void vmuSwap();
 	public static native void setupVmu(Object sip);  
 	public static native void dynarec(int dynarec);
