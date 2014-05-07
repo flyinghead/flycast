@@ -62,7 +62,7 @@
     <string name="joystick_layout">Utiliser le joystick pour le pad directionnel</string>
     <string name="modified_layout">Activer la fonction de disposition des touches</string>
     <string name="controller_compat">Activer le mode de compatibilité</string>
-    <string name="controller_unavailable">Manette IME détéctée!\nVeuillez S\'il vous plait désactiver l'interface native</string>
+    <string name="controller_unavailable">Manette IME détéctée!\nVeuillez S\'il vous plait désactiver l\'interface native</string>
     <string name="mic_in_port_2">Microphone branché au port 2</string>
      
     <string name="customize_physical_controls">Customiser les touches physiques</string>
