@@ -1178,11 +1178,15 @@ bool ProcessFrame(TA_context* ctx)
 	if (!ta_parse_vdrc(ctx))
 		return false;
 
+	CollectCleanup();
+
 	return true;
 }
 
 bool RenderFrame()
 {
+	DoCleanup();
+
 	bool is_rtt=pvrrc.isRTT;
 
 	OSD_HOOK();

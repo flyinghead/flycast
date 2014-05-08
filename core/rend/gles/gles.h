@@ -80,6 +80,9 @@ struct gl_ctx
 extern gl_ctx gl;
 
 GLuint GetTexture(TSP tsp,TCW tcw);
+void CollectCleanup();
+void DoCleanup();
+
 void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt);
 int GetProgramID(u32 cp_AlphaTest, u32 pp_ClipTestMode,
 							u32 pp_Texture, u32 pp_UseAlpha, u32 pp_IgnoreTexA, u32 pp_ShadInstr, u32 pp_Offset,

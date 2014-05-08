@@ -60,7 +60,7 @@
 */
 
 u32 VertexCount=0;
-u32 FrameCount=0;
+u32 FrameCount=1;
 
 Renderer* rend;
 cResetEvent rs(false,true);
