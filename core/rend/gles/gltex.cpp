@@ -78,7 +78,7 @@ struct TextureCacheData
 	PvrTexInfo* tex;
 	TexConvFP*  texconv;
 
-	bool dirty;
+	u32 dirty;
 	vram_block* lock_block;
 
 	u32 Lookups;
@@ -128,7 +128,7 @@ struct TextureCacheData
 		//Reset state info ..
 		Lookups=0;
 		Updates=0;
-		dirty=true;
+		dirty=FrameCount;
 		lock_block=0;
 
 		//decode info from tsp/tcw into the texture struct
@@ -242,7 +242,7 @@ struct TextureCacheData
 	{
 		//texture state tracking stuff
 		Updates++;
-		dirty=false;
+		dirty=0;
 
 		GLuint textype=tex->type;
 
@@ -419,6 +419,32 @@ GLuint GetTexture(TSP tsp,TCW tcw)
 	return tf->texID;
 }
 
+void CollectCleanup() {
+	vector<u64> list;
+
+	u32 TargetFrame = max(120,FrameCount) - 120;
+
+	for (TexCacheIter i=TexCache.begin();i!=TexCache.end();i++)
+	{
+		if ( i->second.dirty &&  i->second.dirty < TargetFrame) {
+			list.push_back(i->first);
+		}
+
+		if (list.size() > 5)
+			break;
+	}
+
+	for (size_t i=0; i<list.size(); i++) {
+		//printf("Deleting %d\n",TexCache[list[i]].texID);
+		TexCache[list[i]].Delete();
+
+		TexCache.erase(list[i]);
+	}
+}
+
+void DoCleanup() {
+
+}
 void killtex()
 {
 	for (TexCacheIter i=TexCache.begin();i!=TexCache.end();i++)
@@ -432,7 +458,7 @@ void killtex()
 void rend_text_invl(vram_block* bl)
 {
 	TextureCacheData* tcd = (TextureCacheData*)bl->userdata;
-	tcd->dirty=true;
+	tcd->dirty=FrameCount;
 	tcd->lock_block=0;
 
 	libCore_vramlock_Unlock_block_wb(bl);
