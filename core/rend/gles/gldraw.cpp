@@ -197,8 +197,10 @@ __forceinline
 	if (gp->texid != cache.texture)
 	{
 		cache.texture=gp->texid;
-		if (gp->texid != -1)
+		if (gp->texid != -1) {
+			//verify(glIsTexture(gp->texid));
 			glBindTexture(GL_TEXTURE_2D, gp->texid);
+		}
 	}
 
 	if (gp->tsp.full!=cache.tsp.full)

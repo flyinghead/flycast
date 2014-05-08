@@ -1558,6 +1558,8 @@ void FillBGP(TA_context* ctx)
 	u32 vertex_ptr=strip_vert_num*strip_vs+strip_base +3*4;
 	//now , all the info is ready :p
 
+	bgpp->texid = -1;
+
 	bgpp->isp.full=vri(strip_base);
 	bgpp->tsp.full=vri(strip_base+4);
 	bgpp->tcw.full=vri(strip_base+8);
