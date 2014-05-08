@@ -422,7 +422,7 @@ GLuint GetTexture(TSP tsp,TCW tcw)
 void CollectCleanup() {
 	vector<u64> list;
 
-	u32 TargetFrame = max(120,FrameCount) - 120;
+	u32 TargetFrame = max((u32)120,FrameCount) - 120;
 
 	for (TexCacheIter i=TexCache.begin();i!=TexCache.end();i++)
 	{
