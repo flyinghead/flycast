@@ -129,8 +129,8 @@ public class OnScreenMenu {
 
 			LinearLayout hlay = new LinearLayout(mContext);
 
-//			hlay.setOrientation(LinearLayout.HORIZONTAL);
-			hlay.setOrientation(LinearLayout.VERTICAL);
+			hlay.setOrientation(LinearLayout.HORIZONTAL);
+//			hlay.setOrientation(LinearLayout.VERTICAL);
 
 			hlay.addView(addbut(R.drawable.up, "Back", new OnClickListener() {
 				public void onClick(View v) {
@@ -206,8 +206,8 @@ public class OnScreenMenu {
 
 			LinearLayout hlay = new LinearLayout(mContext);
 
-//			hlay.setOrientation(LinearLayout.HORIZONTAL);
-			hlay.setOrientation(LinearLayout.VERTICAL);
+			hlay.setOrientation(LinearLayout.HORIZONTAL);
+//			hlay.setOrientation(LinearLayout.VERTICAL);
 
 			View up = addbut(R.drawable.up, "Back", new OnClickListener() {
 				public void onClick(View v) {
@@ -222,21 +222,15 @@ public class OnScreenMenu {
 					if (screen) {
 						JNIdc.widescreen(0);
 						screen = false;
-//						((ImageButton) fullscreen)
-//								.setImageResource(R.drawable.widescreen);
 						modbut(fullscreen, R.drawable.widescreen);
 					} else {
 						JNIdc.widescreen(1);
 						screen = true;
-//						((ImageButton) fullscreen)
-//								.setImageResource(R.drawable.normal_view);
 						modbut(fullscreen, R.drawable.normal_view);
 					}
 				}
 			});
 			if (screen) {
-//				((ImageButton) fullscreen)
-//						.setImageResource(R.drawable.normal_view);
 				modbut(fullscreen, R.drawable.normal_view);
 
 			}
@@ -274,21 +268,15 @@ public class OnScreenMenu {
 							if (limit) {
 								JNIdc.limitfps(0);
 								limit = false;
-//								((ImageButton) framelimit)
-//										.setImageResource(R.drawable.frames_limit_on);
 								modbut(framelimit, R.drawable.frames_limit_on);
 							} else {
 								JNIdc.limitfps(1);
 								limit = true;
-//								((ImageButton) framelimit)
-//										.setImageResource(R.drawable.frames_limit_off);
 								modbut(framelimit, R.drawable.frames_limit_off);
 							}
 						}
 					});
 			if (limit) {
-//				((ImageButton) framelimit)
-//						.setImageResource(R.drawable.frames_limit_off);
 				modbut(framelimit, R.drawable.frames_limit_off);
 			}
 			hlay.addView(framelimit, params);
@@ -307,8 +295,6 @@ public class OnScreenMenu {
 											.audioDisable(true);
 								}
 								audio = false;
-//								((ImageButton) audiosetting)
-//										.setImageResource(R.drawable.enable_sound);
 								modbut(audiosetting, R.drawable.enable_sound);
 							} else {
 								if (mContext instanceof GL2JNINative) {
@@ -320,15 +306,11 @@ public class OnScreenMenu {
 											.audioDisable(false);
 								}
 								audio = true;
-//								((ImageButton) audiosetting)
-//										.setImageResource(R.drawable.mute_sound);
 								modbut(audiosetting, R.drawable.mute_sound);
 							}
 						}
 					});
 			if (audio) {
-//				((ImageButton) audiosetting)
-//						.setImageResource(R.drawable.mute_sound);
 				modbut(audiosetting, R.drawable.mute_sound);
 			}
 			if (!masteraudio) {
@@ -362,8 +344,6 @@ public class OnScreenMenu {
 									.fastForward(false);
 						}
 						boosted = false;
-//						((ImageButton) fastforward)
-//								.setImageResource(R.drawable.star);
 						modbut(fastforward, R.drawable.star);
 					} else {
 						if (mContext instanceof GL2JNINative) {
@@ -387,14 +367,11 @@ public class OnScreenMenu {
 							((GL2JNIActivity) mContext).mView.fastForward(true);
 						}
 						boosted = true;
-//						((ImageButton) fastforward)
-//								.setImageResource(R.drawable.reset);
 						modbut(fastforward, R.drawable.reset);
 					}
 				}
 			});
 			if (boosted) {
-//				((ImageButton) fastforward).setImageResource(R.drawable.reset);
 				modbut(fastforward, R.drawable.reset);
 			}
 			hlay.addView(fastforward, params);
@@ -476,7 +453,7 @@ public class OnScreenMenu {
 		Drawable image = mContext.getResources().getDrawable(x);
 		image.setBounds(0, 0, 72, 72);
 		but.setCompoundDrawables(image, null, null, null);
-		but.setText(l);
+//		but.setText(l);
 		but.setOnClickListener(ocl);
 
 		return but;
@@ -529,8 +506,8 @@ public class OnScreenMenu {
 			int p = getPixelsFromDp(72, mContext);
 			params = new LayoutParams(LayoutParams.WRAP_CONTENT, p);
 			hlay = new LinearLayout(mContext);
-//			hlay.setOrientation(LinearLayout.HORIZONTAL);
-			hlay.setOrientation(LinearLayout.VERTICAL);
+			hlay.setOrientation(LinearLayout.HORIZONTAL);
+//			hlay.setOrientation(LinearLayout.VERTICAL);
 
 			int vpX = getPixelsFromDp(72, mContext);
 			int vpY = getPixelsFromDp(52, mContext);
@@ -570,23 +547,17 @@ public class OnScreenMenu {
 								prefs.edit()
 										.putBoolean(Gamepad.pref_js_rbuttons,
 												false).commit();
-//								((ImageButton) rsticksetting)
-//										.setImageResource(R.drawable.toggle_a_b);
 								modbut(rsticksetting, R.drawable.toggle_a_b);
 							} else {
 								prefs.edit()
 										.putBoolean(Gamepad.pref_js_rbuttons,
 												true).commit();
-//								((ImageButton) rsticksetting)
-//										.setImageResource(R.drawable.toggle_r_l);
 								modbut(rsticksetting, R.drawable.toggle_r_l);
 							}
 							dismiss();
 						}
 					});
 			if (prefs.getBoolean(Gamepad.pref_js_rbuttons, true)) {
-//				((ImageButton) rsticksetting)
-//						.setImageResource(R.drawable.toggle_r_l);
 				modbut(rsticksetting, R.drawable.toggle_r_l);
 			}
 			hlay.addView(rsticksetting, params);
