@@ -20,8 +20,8 @@ LDFLAGS:=-lppapi_gles2 -lppapi_cpp -lppapi
 
 
 # Project Build flags
-WARNINGS:=-Wno-long-long -Wall -Wswitch-enum -pedantic
-CXXFLAGS:=-pthread -std=gnu++98 $(WARNINGS)
+WARNINGS:=-Wno-long-long -Wswitch-enum
+CXXFLAGS:=-pthread -std=gnu++0x $(WARNINGS)
 
 CXXFLAGS	+= -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps -I$(RZDCY_SRC_DIR)/khronos -I../linux-deps/include -D RELEASE -D HOST_NO_REC -D TARGET_NACL32
 
@@ -45,19 +45,21 @@ export CYGWIN
 all: $(PROJECT)_x86_32.nexe
 
 # Define 32 bit compile and link rules for C++ sources
-CXX_32_OBJS:=$(RZDCY_FILES)
-#$(patsubst %.cpp,%.nacl_86x32_build_obj,$(CXX_SOURCES))
+CXX_32_OBJSX:=$(patsubst %.cpp,%.nacl_86x32_build_obj,$(RZDCY_FILES))
+CXX_32_OBJSY:=$(patsubst %.c,%.nacl_86x32_build_obj,$(CXX_32_OBJSX))
+CXX_32_OBJS:=$(patsubst %.S,%.nacl_86x32_build_obj,$(CXX_32_OBJSY))
 #CC_32_OBJS:=$(patsubst %.c,%.build_obj_nacl_32,$(CC_SOURCES))
-
+  
 x86_32_OBJS:=$(CXX_32_OBJS) $(CC_32_OBJS)
 
-%.o : %.cpp $(THIS_MAKE)
+%.nacl_86x32_build_obj : %.cpp $(THIS_MAKE)
 	$(CXX) -o $@ -c $< -m32 -O0 -g $(CXXFLAGS)
 	
-%.o : %.c $(THIS_MAKE)
+%.nacl_86x32_build_obj : %.c $(THIS_MAKE)
 	$(CC) -o $@ -c $< -m32 -O0 -g $(CXXFLAGS)
 
 $(PROJECT)_x86_32.nexe : $(x86_32_OBJS)
+	echo $(x86_32_OBJS)
 	$(CXX) -o $@ $^ -m32 -O0 -g $(CXXFLAGS) $(LDFLAGS)
 
 clean:
