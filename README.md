@@ -69,6 +69,7 @@ Translations can be submitted as a pull request
 Beta versions
 -------------
 [![Build Status](https://travis-ci.org/reicast/reicast-emulator.svg?branch=master)](https://travis-ci.org/reicast/reicast-emulator)
+
 Automated Git builds can be found at http://reicast.angelxwind.net/ for iOS and Android.
 
 Donations and stuff
