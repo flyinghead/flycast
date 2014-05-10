@@ -30,6 +30,6 @@ script:
   - android update project -p . --target "android-19"
   - ant debug
 after_script:
-  - cp /home/travis/build/MrYadro/reicast-emulator/shell/android/bin/reicast-debug.apk reicast-debug-$GIT_BUILD.apk
+  - cp /home/travis/build/reicast/reicast-emulator/shell/android/bin/reicast-debug.apk reicast-debug-$GIT_BUILD.apk
   - curl --upload-file reicast-debug-$GIT_BUILD.apk ftp://reicast:reicast@109.120.165.109/
   - echo "http://mryadro.ru/reicast/reicast-debug-$GIT_BUILD.apk"
