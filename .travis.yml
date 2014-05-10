@@ -19,6 +19,7 @@ install:
   - rm adt-bundle-linux-x86_64-20131030.zip
   - export ANDROID_HOME=$(pwd)/android-sdk
   - export NDK=$(pwd)/android-ndk
+  - export ANDROID_NDK=$(pwd)/android-ndk
   - export PATH=${PATH}:$ANDROID_HOME/tools
   - export PATH=${PATH}:$ANDROID_HOME/platform-tools
   - export PATH=${PATH}:$NDK
@@ -26,8 +27,7 @@ before_script:
 
 script:
   - cd shell/android
-  - android update project -p .
-  - ndk-build -j 4
+  - android update project -p . --target "android-19"
   - ant debug
 after_script:
   - cp /home/travis/build/MrYadro/reicast-emulator/shell/android/bin/reicast-debug.apk reicast-debug-$GIT_BUILD.apk
