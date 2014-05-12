@@ -42,8 +42,8 @@ unsigned long track_mode;
 void CDI_read_track (FILE *fsource, image_s *image, track_s *track)
 {
 
-     char TRACK_START_MARK[10] = { 0, 0, 0x01, 0, 0, 0, 0xFF, 0xFF, 0xFF, 0xFF };
-     char current_start_mark[10];
+     unsigned char TRACK_START_MARK[10] = { 0, 0, 0x01, 0, 0, 0, 0xFF, 0xFF, 0xFF, 0xFF };
+     unsigned char current_start_mark[10];
 
          fread(&temp_value, 4, 1, fsource);
          if (temp_value != 0)
