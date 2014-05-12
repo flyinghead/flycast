@@ -713,7 +713,7 @@ void GenSorted()
 
 		if (idx!=pid /* && !PP_EQ(&pp_base[pid],&pp_base[idx]) */ )
 		{
-			SortTrigDrawParam stdp={pp_base + pid, i*3, 0};
+			SortTrigDrawParam stdp={pp_base + pid, (u16)(i*3), 0};
 			
 			if (idx!=-1)
 			{
