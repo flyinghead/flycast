@@ -52,31 +52,33 @@ RZDCY_FILES += $(foreach dir,$(addprefix $(RZDCY_SRC_DIR)/,$(RZDCY_MODULES)),$(w
 RZDCY_FILES += $(foreach dir,$(addprefix $(RZDCY_SRC_DIR)/,$(RZDCY_MODULES)),$(wildcard $(dir)*.S))
 	
 ifdef FOR_PANDORA
-RZDCY_CXXFLAGS	:= \
+RZDCY_CFLAGS	:= \
 	$(CFLAGS) -c -g -O3 -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps \
 	-DRELEASE -DPANDORA\
 	-march=armv7-a -mtune=cortex-a8 -mfpu=neon -mfloat-abi=softfp \
 	-frename-registers -fsingle-precision-constant -ffast-math \
-	-ftree-vectorize -fomit-frame-pointer -fno-exceptions -fno-rtti -std=gnu++11
+	-ftree-vectorize -fomit-frame-pointer
 else
-RZDCY_CXXFLAGS	:= \
+RZDCY_CFLAGS	:= \
 	$(CFLAGS) -c -g -O3 -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps \
 	-D_ANDROID -DRELEASE\
 	-frename-registers -fsingle-precision-constant -ffast-math \
-	-ftree-vectorize -fomit-frame-pointer -fno-exceptions -fno-rtti -std=gnu++11
+	-ftree-vectorize -fomit-frame-pointer
 	
 	ifndef NOT_ARM
-		RZDCY_CXXFLAGS += -march=armv7-a -mtune=cortex-a9 -mfpu=vfpv3-d16
-		RZDCY_CXXFLAGS += -DTARGET_LINUX_ARMELv7
+		RZDCY_CFLAGS += -march=armv7-a -mtune=cortex-a9 -mfpu=vfpv3-d16
+		RZDCY_CFLAGS += -DTARGET_LINUX_ARMELv7
 	else
 	  ifndef ISMIPS
-      RZDCY_CXXFLAGS += -DTARGET_LINUX_x86
+      RZDCY_CFLAGS += -DTARGET_LINUX_x86
 		else
-      RZDCY_CXXFLAGS += -DTARGET_LINUX_MIPS
+      RZDCY_CFLAGS += -DTARGET_LINUX_MIPS
 		endif
 	endif
 endif
 
 ifdef NO_REC
-  RZDCY_CXXFLAGS += -DHOST_NO_REC
+  RZDCY_CFLAGS += -DHOST_NO_REC
 endif
+
+RZDCY_CXXFLAGS := $(RZDCY_CFLAGS) -fno-exceptions -fno-rtti -std=gnu++11
