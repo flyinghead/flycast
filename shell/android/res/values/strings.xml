@@ -94,6 +94,7 @@
     <string name="about">About</string>
     <string name="rateme">Rate Me</string>
     <string name="messages">Test Suite</string>
+    <string name="cloud">Cloud VMU</string>
     
     <string name="textOn">ON</string>
     <string name="textOff">OFF</string>
@@ -102,4 +103,11 @@
     <string name="dismiss">Dismiss</string>
     <string name="manual">Manual</string>
     <string name="options">Options</string>
+    
+    <string name="cloudInfos">With this tool you can upload/download your VMUs to/from Dropbox, in order to sync them with all your devices!</string>
+    <string name="uploadWarning">ATTENTION: You are about to upload your VMUs to Dropbox, please notice that this will OVERWRITE your last upload!!</string>
+    <string name="downloadWarning">ATTENTION: You are about to download your VMUs from Dropbox, please notice that this will OVERWRITE your currently VMUs!! By the way a backup copy will 
+        be created in VmuBackups folder!</string>
+    <string name="uploadVMU">Upload VMU</string>
+    <string name="downloadVMU">Download VMU</string>
 </resources>

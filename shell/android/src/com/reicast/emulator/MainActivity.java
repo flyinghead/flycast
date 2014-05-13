@@ -270,6 +270,27 @@ public class MainActivity extends SlidingFragmentActivity implements
 					}
 
 				});
+				
+				findViewById(R.id.cloud_menu).setOnClickListener(new OnClickListener() {
+					public void onClick(View view) {
+						CloudFragment cloudFrag = (CloudFragment) getSupportFragmentManager()
+								.findFragmentByTag("CLOUD_FRAG");
+						if (cloudFrag != null) {
+							if (cloudFrag.isVisible()) {
+								return;
+							}
+						}
+						cloudFrag = new CloudFragment();
+						getSupportFragmentManager()
+						.beginTransaction()
+						.replace(R.id.fragment_container,
+						cloudFrag, "CLOUD_FRAG")
+							.addToBackStack(null).commit();
+						setTitle(R.string.cloud);
+						sm.toggle(true);
+					}
+
+				});
 
 				View rateMe = findViewById(R.id.rateme_menu);
 				if (!hasAndroidMarket) {
@@ -290,6 +311,8 @@ public class MainActivity extends SlidingFragmentActivity implements
 						}
 					});
 				}
+				
+
 
 				View messages = findViewById(R.id.message_menu);
 				if (MainActivity.debugUser) {
@@ -565,6 +588,14 @@ public class MainActivity extends SlidingFragmentActivity implements
 		if (fragment != null && fragment.isVisible()) {
 			if (fragment.moga != null) {
 				fragment.moga.onResume();
+			}
+		}
+		
+		CloudFragment cloudfragment = (CloudFragment) getSupportFragmentManager()
+				.findFragmentByTag("CLOUD_FRAG");
+		if (cloudfragment != null && cloudfragment.isVisible()) {
+			if (cloudfragment != null) {
+				cloudfragment.onResume();
 			}
 		}
 	}
