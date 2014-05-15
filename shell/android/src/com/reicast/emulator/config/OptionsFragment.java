@@ -113,7 +113,7 @@ public class OptionsFragment extends Fragment {
 		};
 		Switch details_opt = (Switch) getView().findViewById(
 				R.id.details_option);
-		details_opt.setChecked(mPrefs.getBoolean(Config.pref_gamedetails, true));
+		details_opt.setChecked(mPrefs.getBoolean(Config.pref_gamedetails, false));
 		details_opt.setOnCheckedChangeListener(details_options);
 
 		gameBrowse = (Button) getView().findViewById(R.id.browse_game_path);
