@@ -290,7 +290,7 @@ public class FileBrowser extends Fragment {
 		final View childview = parentActivity.getLayoutInflater().inflate(
 				R.layout.app_list_item, null, false);
 		
-		final boolean webInfo = mPrefs.getBoolean(Config.pref_gamedetails, true);
+		final boolean webInfo = mPrefs.getBoolean(Config.pref_gamedetails, false);
 		
 		final XMLParser xmlParser = new XMLParser(game, index, webInfo);
 		xmlParser.setViewParent(parentActivity, childview);
