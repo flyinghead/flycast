@@ -15,7 +15,6 @@
     <string name="missing_flash">ドリームキャストFlashが不足している。ドリームキャストFlashが動作するためreicastために必要です。ここでFlashファイルを入れてください：%1$s/data/dc_flash.bin</string>
     <string name="require_bios">BIOSファイルを提供する必要があります。</string>
     <string name="data_folder">データフォルダが想定されます。</string>
-    <string name="git_broken">GitHub Nativeは使用できません！</string>
     
     <string name="folder_bios">BIOSをスタートする</string>
     <string name="folder_select">フォルダーを選択</string>

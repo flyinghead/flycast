@@ -43,7 +43,6 @@
     <string name="controller_already_in_use">이 컨트롤러는 이미 사용 중입니다!</string>
     <string name="modified_layout">사용자 정의 키 레이아웃보기 사용</string>
     <string name="controller_compat">호환성 모드 사용</string>
-    <string name="dpad_joystick">조이스틱 DPAD 레이아웃을 사용</string>
     
     <string name="customize_physical_controls">물리적 컨트롤 사용자 지정</string>
     <string name="map_keycode_title">컨트롤러를 수정</string>
