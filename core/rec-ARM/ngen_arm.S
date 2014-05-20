@@ -41,7 +41,11 @@ MOV     R1, #1
 B       _Z8YUV_dataPjj	
 
 TAWriteSQ_vram:				@vram write ..
+#ifdef TARGET_IPHONE
+bkpt #0
+#else
 bkpt
+#endif
 ubfx r0,r3,#5,#18		@ get vram offset
 add r3,r1,#0x04000000	@ get vram ptr from r1, part 1
 add r3,#512				@ get ram ptr from r1, part 2
@@ -157,13 +161,23 @@ arm_compilecode:
 bl CompileCode
 b arm_dispatch
 
+#ifdef TARGET_IPHONE
+Xarm_Reg: .word arm_Reg
+XEntryPoints: .word EntryPoints
+#endif
+
 .global arm_mainloop
 arm_mainloop: @(cntx,lookup_base,cycles)
 
 push {r4,r5,r8,r9,lr}
 
+	#ifdef TARGET_IPHONE
+	ldr r8,Xarm_Reg			@load cntx
+	ldr r4,XEntryPoints		@load lookup base
+    #else
 	ldr r8,=arm_Reg			@load cntx
 	ldr r4,=EntryPoints		@load lookup base
+	#endif
 
 	ldr r5,[r8,#192]	@load cycle count
 	add r5,r0			@add cycles for this timeslice
@@ -172,7 +186,12 @@ push {r4,r5,r8,r9,lr}
 
 .global arm_dispatch
 arm_dispatch:
+	#ifdef TARGET_IPHONE
+	ldrd r0,r1,[r8,#184]		@load: Next PC, interrupt
+	#else
 	ldrd r0,[r8,#184]		@load: Next PC, interrupt
+	#endif
+
 	ubfx r2,r0,#2,#19
 	cmp r1,#0
 	bne arm_dofiq
