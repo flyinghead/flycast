@@ -1,9 +1,14 @@
 #pragma once
 #include "rend/rend.h"
 
-#include <EGL/egl.h>
+#ifdef TARGET_IPHONE //apple-specific ogles2 headers
+#include <OpenGLES/ES2/gl.h>
+#include <OpenGLES/ES2/glext.h>
+#else
+#include <EGL/egl.h
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>
+#endif
 
 #ifndef GL_NV_draw_path
 //IMGTEC GLES emulation
