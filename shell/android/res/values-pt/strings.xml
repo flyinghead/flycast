@@ -35,7 +35,6 @@
     <string name="games_listing">Jogos disponíveis</string>
 	
     <string name="report_issue">Falha Anterior Detectada</string>
-    <string name="log_saved">Log salvo no \"Diretório do sistema\"</string>
     <string name="bios_config">Falha ao Configurar!</string>
 
     <string name="customize_touch_controls">Configurar controles de toque na tela</string>
@@ -54,18 +53,12 @@
     <string name="controller_already_in_use">Esse controle já está em uso!</string>
     <string name="modified_layout">Habilitar layout de botões personalizado</string>
     <string name="controller_compat">Habilitar modo de compatibilidade</string>
-    <string name="dpad_joystick">Controle analógico usa layout do DPAD</string>
 	<string name="mic_in_port_2">Microfone conectado na porta 2</string>
     
     <string name="customize_physical_controls">Personalizar controles físicos</string>
     <string name="map_keycode_title">Configurar controle</string>
     <string name="map_keycode_message">Pressione o novo botão para o controle %1$s</string>
     
-    <string name="bios_menu">Pressione o botão %1$s para abrir o menu</string>
-    <string name="back_button">Voltar / Selecionar</string>
-    <string name="menu_button">menu</string>
-    <string name="right_button">R3</string>	
-	
     <string name="moga_pro_connect">MOGA Pro Conectado!</string>
     <string name="moga_connect">MOGA Conectado!</string>
 
