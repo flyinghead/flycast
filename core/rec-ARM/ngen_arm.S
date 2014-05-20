@@ -174,7 +174,7 @@ push {r4,r5,r8,r9,lr}
 	#ifdef TARGET_IPHONE
 	ldr r8,Xarm_Reg			@load cntx
 	ldr r4,XEntryPoints		@load lookup base
-    #else
+	#else
 	ldr r8,=arm_Reg			@load cntx
 	ldr r4,=EntryPoints		@load lookup base
 	#endif
