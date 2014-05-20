@@ -27,7 +27,10 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
+import com.reicast.emulator.config.Config;
+
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
@@ -44,7 +47,7 @@ import android.widget.TextView;
 
 public class XMLParser extends AsyncTask<String, Integer, String> {
 
-	private boolean webInfo;
+	private SharedPreferences mPrefs;
 	private File game;
 	private int index;
 	private View childview;
@@ -56,8 +59,8 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 	public SparseArray<String> game_details = new SparseArray<String>();
 	public SparseArray<Bitmap> game_preview = new SparseArray<Bitmap>();
 
-	public XMLParser(File game, int index, boolean webInfo) {
-		this.webInfo = webInfo;
+	public XMLParser(File game, int index, SharedPreferences mPrefs) {
+		this.mPrefs = mPrefs;
 		this.game = game;
 		this.index = index;
 	}
@@ -114,7 +117,7 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 	@Override
 	protected String doInBackground(String... params) {
 		String filename = game_name = params[0];
-		if (isNetworkAvailable() && webInfo) {
+		if (isNetworkAvailable() && mPrefs.getBoolean(Config.pref_gamedetails, false)) {
 			if (params[0].contains("[")) {
 				filename = params[0].substring(0, params[0].lastIndexOf("["));
 			} else {

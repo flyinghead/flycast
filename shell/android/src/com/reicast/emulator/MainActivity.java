@@ -519,11 +519,6 @@ public class MainActivity extends SlidingFragmentActivity implements
 		menuHeading.setText(title);
 	}
 
-	/**
-	 * When using the ActionBarDrawerToggle, you must call it during
-	 * onPostCreate() and onConfigurationChanged()...
-	 */
-
 	@Override
 	public void onConfigurationChanged(Configuration newConfig) {
 		super.onConfigurationChanged(newConfig);
