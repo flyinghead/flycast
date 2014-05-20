@@ -1220,6 +1220,7 @@
         <!--Navigation Controller-->
         <scene sceneID="6mx-8l-fBn">
             <objects>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="mYK-ES-4ep" userLabel="First Responder" sceneMemberID="firstResponder"/>
                 <navigationController definesPresentationContext="YES" id="2a6-jc-CVw" sceneMemberID="viewController">
                     <simulatedNavigationBarMetrics key="simulatedTopBarMetrics" prompted="NO"/>
                     <navigationBar key="navigationBar" contentMode="scaleToFill" id="GEg-bW-l1t">
@@ -1234,7 +1235,6 @@
                         <segue destination="12" kind="relationship" relationship="rootViewController" id="bPa-BK-u0Y"/>
                     </connections>
                 </navigationController>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="mYK-ES-4ep" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="-41" y="-984"/>
         </scene>
