@@ -68,7 +68,7 @@ struct RegAlloc
 
 			nreg=(nreg_t)-1;
 			nregf=(nregf_t)-1;
-			RegAccess ra={pos,mode};
+			RegAccess ra={static_cast<u32>(pos),mode};
 			accesses.push_back(ra);
 		}
 
@@ -87,7 +87,7 @@ struct RegAlloc
 			end=pos;
 			if (mode&AM_WRITE)
 				writeback=true;
-			RegAccess ra={pos,mode};
+			RegAccess ra={static_cast<u32>(pos),mode};
 			accesses.push_back(ra);
 		}
 

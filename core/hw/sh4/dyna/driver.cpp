@@ -304,7 +304,7 @@ void* DYNACALL rdv_LinkBlock(u8* code,u32 dpc)
 		rbi=bm_GetStaleBlock(code);
 	}
 	
-	verify(rbi);
+	verify((int)rbi);
 
 	u32 bcls=BET_GET_CLS(rbi->BlockType);
 

@@ -38,7 +38,7 @@ void SetCurrentTARC(u32 addr)
 
 bool TryDecodeTARC()
 {
-	verify(ta_ctx);
+	verify((int)ta_ctx);
 
 	if (vd_ctx == 0)
 	{
@@ -59,7 +59,7 @@ bool TryDecodeTARC()
 
 void VDecEnd()
 {
-	verify(vd_ctx);
+	verify((int)vd_ctx);
 
 	vd_ctx->rend = vd_rc;
 
