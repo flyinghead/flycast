@@ -189,7 +189,7 @@ public class OptionsFragment extends Fragment {
 
 			public void onItemSelected(AdapterView<?> parent, View view,
 					int pos, long id) {
-                //flashBios(codes[pos]);
+                flashBios(codes[pos]);
 			}
 
 			public void onNothingSelected(AdapterView<?> arg0) {
@@ -504,5 +504,19 @@ public class OptionsFragment extends Fragment {
 
 			}
 		});
+	}
+	
+	private void flashBios(String localized) {
+		File local = new File(home_directory, "data/dc_flash[" + localized
+				+ "].bin");
+		File flash = new File(home_directory, "data/dc_flash.bin");
+
+		if (local.exists()) {
+			if (flash.exists()) {
+				flash.delete();
+			}
+			local.renameTo(flash);
+		}
+		mPrefs.edit().putString("localized", localized).commit();
 	}
 }
