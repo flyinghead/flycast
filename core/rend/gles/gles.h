@@ -2,6 +2,7 @@
 #include "rend/rend.h"
 
 #ifdef TARGET_IPHONE //apple-specific ogles2 headers
+#include <APPLE/egl.h>
 #include <OpenGLES/ES2/gl.h>
 #include <OpenGLES/ES2/glext.h>
 #else
