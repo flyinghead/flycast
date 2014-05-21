@@ -6,7 +6,6 @@ import java.util.HashMap;
 import tv.ouya.console.api.OuyaController;
 import android.annotation.TargetApi;
 import android.app.NativeActivity;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.net.Uri;
