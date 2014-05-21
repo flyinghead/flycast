@@ -1,3 +1,9 @@
+<!--
+File: strings.xml (French)
+Author: Jérôme P. (AndroidGX)
+Last Edit: 21 May 2014
+-->
+
 <resources>
  
     <string name="menu_settings">Réglages</string>
@@ -23,6 +29,7 @@
  
     <string name="optimization_opts">Options d\'optimisations et de débogage</string>
     <string name="experimental_opts">Experimental (peut causer des crashs)</string>
+    <string name="select_details">Activer le détail des jeux</string>
     <string name="select_native">Activer l\'interface native</string>
     <string name="select_dynarec">Dynarec</string>
     <string name="select_unstable">Optimisations instables</string>
@@ -41,13 +48,17 @@
     <string name="default_disk">Réglage du disque par défaut</string>
  
     <string name="games_listing">Liste des jeux disponibles</string>
+
+    <string name="game_details">Infos du jeu - %1$s</string>
+    <string name="info_unavailable">Infos du jeu non disponible</string>
+    <string name="disk_loading">Chargement des infos du disque</string>
  
     <string name="report_issue">Crash détécté précédemment</string>
-    <string name="bios_config">Crash dans la configuration</string>
+    <string name="bios_config">Crash dans la configuration!</string>
  
     <string name="customize_touch_controls">Personnaliser les contrôles tactiles</string>
     <string name="launch_editor">Lancer l\'éditeur</string>
-    <string name="touch_vibration">Vibrations</string>
+    <string name="touch_vibration">Vibration</string>
     <string name="controller_a">Manette A</string>
     <string name="controller_b">Manette B</string>
     <string name="controller_c">Manette C</string>
@@ -89,6 +100,7 @@
     <string name="about">A propos</string>
     <string name="rateme">Evaluez-nous</string>
     <string name="messages">Test Suite</string>
+    <string name="cloud">Cloud VMU</string>
      
     <string name="textOn">ACTIF</string>
     <string name="textOff">DESACT.</string>
@@ -97,4 +109,10 @@
     <string name="dismiss">Abandonner</string>
     <string name="manual">Manuel</string>
     <string name="options">Options</string>
+
+    <string name="cloudInfos">Avec cet outil vous pouvez envoyer/télécharger vos VMUs sur/depuis Dropbox, de manière à les synchroniser avec tous vos dispositifs!</string>
+    <string name="uploadWarning">ATTENTION: Vous êtes sur le point d\'envoyer vos VMUs sur Dropbox, veuillez s\'il vous plait prendre en considération que ceci va ECRASER votre dernier envoi!!</string>
+    <string name="downloadWarning">ATTENTION: Vous êtes sur le point de télécharger vos VMUs depuis Dropbox, veuillez s\'il vous plait prendre en considération que ceci va ECRASER vos VMUs actuelles!! Par ailleurs une copie de sauvegarde va être créé dans le dossier VmuBackups!</string>
+    <string name="uploadVMU">Envoyer VMU</string>
+    <string name="downloadVMU">Télécharger VMU</string>
 </resources>
