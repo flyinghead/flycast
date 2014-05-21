@@ -158,13 +158,13 @@ public class GL2JNIActivity extends Activity {
 					if (InputDevice.getDevice(joy).getName()
 							.contains(Gamepad.controllers_gamekey)) {
 						if (pad.custom[playerNum]) {
-							setCustomMapping(id, playerNum);
+							pad.setCustomMapping(id, playerNum, prefs);
 						} else {
 							pad.map[playerNum] = pad.getConsoleController();
 						}
 					} else if (!pad.compat[playerNum]) {
 						if (pad.custom[playerNum]) {
-							setCustomMapping(id, playerNum);
+							pad.setCustomMapping(id, playerNum, prefs);
 						} else if (InputDevice.getDevice(joy).getName()
 								.equals(Gamepad.controllers_sony)) {
 							pad.map[playerNum] = pad.getConsoleController();
@@ -181,18 +181,18 @@ public class GL2JNIActivity extends Activity {
 							pad.map[playerNum] = pad.getOUYAController();
 						}
 					} else {
-						getCompatibilityMap(playerNum, id);
+						pad.getCompatibilityMap(playerNum, id, prefs);
 					}
-					initJoyStickLayout(playerNum);
+					pad.initJoyStickLayout(playerNum);
 				} else {
-					runCompatibilityMode(joy);
+					pad.runCompatibilityMode(joy, prefs);
 				}
 			}
 			if (joys.length == 0) {
-				fullCompatibilityMode();
+				pad.fullCompatibilityMode(prefs);
 			}
 		} else {
-			fullCompatibilityMode();
+			pad.fullCompatibilityMode(prefs);
 		}
 
 		config.loadConfigurationPrefs();
@@ -236,41 +236,6 @@ public class GL2JNIActivity extends Activity {
 					displayFPS();
 				}
 			});
-		}
-	}
-	
-	private void setCustomMapping(String id, int playerNum) {
-		pad.map[playerNum] = pad.setModifiedKeys(id, playerNum, prefs);
-	}
-
-	private void initJoyStickLayout(int playerNum) {
-		if (!pad.joystick[playerNum]) {
-			pad.globalLS_X[playerNum] = pad.previousLS_X[playerNum] = 0.0f;
-			pad.globalLS_Y[playerNum] = pad.previousLS_Y[playerNum] = 0.0f;
-		}
-	}
-	
-	private void runCompatibilityMode(int joy) {
-		for (int n = 0; n < 4; n++) {
-			if (pad.compat[n]) {
-				String id = pad.portId[n];
-				pad.joystick[n] = prefs.getBoolean(Gamepad.pref_js_separate + id, false);
-				getCompatibilityMap(n, pad.portId[n]);
-				initJoyStickLayout(n);
-			}
-		}
-	}
-	
-	private void fullCompatibilityMode() {
-		for (int n = 0; n < 4; n++) {
-			runCompatibilityMode(n);
-		}
-	}
-
-	private void getCompatibilityMap(int playerNum, String id) {
-		pad.name[playerNum] = prefs.getInt(Gamepad.pref_pad + id, -1);
-		if (pad.name[playerNum] != -1) {
-			pad.map[playerNum] = pad.setModifiedKeys(id, playerNum, prefs);
 		}
 	}
 
