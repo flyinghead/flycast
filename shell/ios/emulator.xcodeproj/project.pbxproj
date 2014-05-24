@@ -202,18 +202,10 @@
 		9C7A3C0418C851C50070BB5F /* ABXYPad@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BDE18C851C50070BB5F /* ABXYPad@2x.png */; };
 		9C7A3C0518C851C50070BB5F /* close.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BDF18C851C50070BB5F /* close.png */; };
 		9C7A3C0618C851C50070BB5F /* close@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BE018C851C50070BB5F /* close@2x.png */; };
-		9C7A3C0718C851C50070BB5F /* config.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BE118C851C50070BB5F /* config.png */; };
-		9C7A3C0818C851C50070BB5F /* config@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BE218C851C50070BB5F /* config@2x.png */; };
-		9C7A3C0918C851C50070BB5F /* disc.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BE318C851C50070BB5F /* disc.png */; };
-		9C7A3C0A18C851C50070BB5F /* disc@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BE418C851C50070BB5F /* disc@2x.png */; };
-		9C7A3C0B18C851C50070BB5F /* disclosure.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BE518C851C50070BB5F /* disclosure.png */; };
-		9C7A3C0C18C851C50070BB5F /* disclosure@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BE618C851C50070BB5F /* disclosure@2x.png */; };
 		9C7A3C0D18C851C50070BB5F /* DPad.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BE718C851C50070BB5F /* DPad.png */; };
 		9C7A3C0E18C851C50070BB5F /* DPad@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BE818C851C50070BB5F /* DPad@2x.png */; };
 		9C7A3C0F18C851C50070BB5F /* HideEmulator.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BE918C851C50070BB5F /* HideEmulator.png */; };
 		9C7A3C1018C851C50070BB5F /* HideEmulator@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BEA18C851C50070BB5F /* HideEmulator@2x.png */; };
-		9C7A3C1118C851C50070BB5F /* input.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BEB18C851C50070BB5F /* input.png */; };
-		9C7A3C1218C851C50070BB5F /* input@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BEC18C851C50070BB5F /* input@2x.png */; };
 		9C7A3C1318C851C50070BB5F /* JoystickBackground.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BED18C851C50070BB5F /* JoystickBackground.png */; };
 		9C7A3C1418C851C50070BB5F /* JoystickBackground@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BEE18C851C50070BB5F /* JoystickBackground@2x.png */; };
 		9C7A3C1518C851C50070BB5F /* JoystickButton.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BEF18C851C50070BB5F /* JoystickButton.png */; };
@@ -224,14 +216,11 @@
 		9C7A3C1A18C851C50070BB5F /* menuback@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BF418C851C50070BB5F /* menuback@2x.png */; };
 		9C7A3C1B18C851C50070BB5F /* menuicon.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BF518C851C50070BB5F /* menuicon.png */; };
 		9C7A3C1C18C851C50070BB5F /* menuicon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BF618C851C50070BB5F /* menuicon@2x.png */; };
-		9C7A3C1D18C851C50070BB5F /* row.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BF718C851C50070BB5F /* row.png */; };
-		9C7A3C1E18C851C50070BB5F /* row@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BF818C851C50070BB5F /* row@2x.png */; };
-		9C7A3C1F18C851C50070BB5F /* rowselected.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BF918C851C50070BB5F /* rowselected.png */; };
-		9C7A3C2018C851C50070BB5F /* rowselected@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BFA18C851C50070BB5F /* rowselected@2x.png */; };
 		9C7A3C2118C851C50070BB5F /* RTrigger.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BFB18C851C50070BB5F /* RTrigger.png */; };
 		9C7A3C2218C851C50070BB5F /* RTrigger@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BFC18C851C50070BB5F /* RTrigger@2x.png */; };
 		9C7A3C2318C851C50070BB5F /* Start.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BFD18C851C50070BB5F /* Start.png */; };
 		9C7A3C2418C851C50070BB5F /* Start@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BFE18C851C50070BB5F /* Start@2x.png */; };
+		9C7D581019301E140004EA2C /* CloudVMUViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 9C7D580F19301E140004EA2C /* CloudVMUViewController.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -573,18 +562,10 @@
 		9C7A3BDE18C851C50070BB5F /* ABXYPad@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "ABXYPad@2x.png"; path = "emulator/Images/ABXYPad@2x.png"; sourceTree = "<group>"; };
 		9C7A3BDF18C851C50070BB5F /* close.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = close.png; path = emulator/Images/close.png; sourceTree = "<group>"; };
 		9C7A3BE018C851C50070BB5F /* close@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "close@2x.png"; path = "emulator/Images/close@2x.png"; sourceTree = "<group>"; };
-		9C7A3BE118C851C50070BB5F /* config.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = config.png; path = emulator/Images/config.png; sourceTree = "<group>"; };
-		9C7A3BE218C851C50070BB5F /* config@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "config@2x.png"; path = "emulator/Images/config@2x.png"; sourceTree = "<group>"; };
-		9C7A3BE318C851C50070BB5F /* disc.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = disc.png; path = emulator/Images/disc.png; sourceTree = "<group>"; };
-		9C7A3BE418C851C50070BB5F /* disc@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "disc@2x.png"; path = "emulator/Images/disc@2x.png"; sourceTree = "<group>"; };
-		9C7A3BE518C851C50070BB5F /* disclosure.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = disclosure.png; path = emulator/Images/disclosure.png; sourceTree = "<group>"; };
-		9C7A3BE618C851C50070BB5F /* disclosure@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "disclosure@2x.png"; path = "emulator/Images/disclosure@2x.png"; sourceTree = "<group>"; };
 		9C7A3BE718C851C50070BB5F /* DPad.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = DPad.png; path = emulator/Images/DPad.png; sourceTree = "<group>"; };
 		9C7A3BE818C851C50070BB5F /* DPad@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "DPad@2x.png"; path = "emulator/Images/DPad@2x.png"; sourceTree = "<group>"; };
 		9C7A3BE918C851C50070BB5F /* HideEmulator.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = HideEmulator.png; path = emulator/Images/HideEmulator.png; sourceTree = "<group>"; };
 		9C7A3BEA18C851C50070BB5F /* HideEmulator@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "HideEmulator@2x.png"; path = "emulator/Images/HideEmulator@2x.png"; sourceTree = "<group>"; };
-		9C7A3BEB18C851C50070BB5F /* input.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = input.png; path = emulator/Images/input.png; sourceTree = "<group>"; };
-		9C7A3BEC18C851C50070BB5F /* input@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "input@2x.png"; path = "emulator/Images/input@2x.png"; sourceTree = "<group>"; };
 		9C7A3BED18C851C50070BB5F /* JoystickBackground.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = JoystickBackground.png; path = emulator/Images/JoystickBackground.png; sourceTree = "<group>"; };
 		9C7A3BEE18C851C50070BB5F /* JoystickBackground@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "JoystickBackground@2x.png"; path = "emulator/Images/JoystickBackground@2x.png"; sourceTree = "<group>"; };
 		9C7A3BEF18C851C50070BB5F /* JoystickButton.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = JoystickButton.png; path = emulator/Images/JoystickButton.png; sourceTree = "<group>"; };
@@ -595,14 +576,12 @@
 		9C7A3BF418C851C50070BB5F /* menuback@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "menuback@2x.png"; path = "emulator/Images/menuback@2x.png"; sourceTree = "<group>"; };
 		9C7A3BF518C851C50070BB5F /* menuicon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = menuicon.png; path = emulator/Images/menuicon.png; sourceTree = "<group>"; };
 		9C7A3BF618C851C50070BB5F /* menuicon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "menuicon@2x.png"; path = "emulator/Images/menuicon@2x.png"; sourceTree = "<group>"; };
-		9C7A3BF718C851C50070BB5F /* row.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = row.png; path = emulator/Images/row.png; sourceTree = "<group>"; };
-		9C7A3BF818C851C50070BB5F /* row@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "row@2x.png"; path = "emulator/Images/row@2x.png"; sourceTree = "<group>"; };
-		9C7A3BF918C851C50070BB5F /* rowselected.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = rowselected.png; path = emulator/Images/rowselected.png; sourceTree = "<group>"; };
-		9C7A3BFA18C851C50070BB5F /* rowselected@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "rowselected@2x.png"; path = "emulator/Images/rowselected@2x.png"; sourceTree = "<group>"; };
 		9C7A3BFB18C851C50070BB5F /* RTrigger.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = RTrigger.png; path = emulator/Images/RTrigger.png; sourceTree = "<group>"; };
 		9C7A3BFC18C851C50070BB5F /* RTrigger@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "RTrigger@2x.png"; path = "emulator/Images/RTrigger@2x.png"; sourceTree = "<group>"; };
 		9C7A3BFD18C851C50070BB5F /* Start.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Start.png; path = emulator/Images/Start.png; sourceTree = "<group>"; };
 		9C7A3BFE18C851C50070BB5F /* Start@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Start@2x.png"; path = "emulator/Images/Start@2x.png"; sourceTree = "<group>"; };
+		9C7D580E19301E140004EA2C /* CloudVMUViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CloudVMUViewController.h; path = emulator/CloudVMUViewController.h; sourceTree = "<group>"; };
+		9C7D580F19301E140004EA2C /* CloudVMUViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = CloudVMUViewController.m; path = emulator/CloudVMUViewController.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -692,6 +671,8 @@
 		9C7A393618C805F70070BB5F /* View Controller Subclasses */ = {
 			isa = PBXGroup;
 			children = (
+				9C7D580E19301E140004EA2C /* CloudVMUViewController.h */,
+				9C7D580F19301E140004EA2C /* CloudVMUViewController.m */,
 				9C7A3B6C18C820B40070BB5F /* InputViewController.h */,
 				9C7A3B6D18C820B40070BB5F /* InputViewController.m */,
 				9C7A3B6618C8208D0070BB5F /* SettingsViewController.h */,
@@ -722,18 +703,10 @@
 				9C7A3BDE18C851C50070BB5F /* ABXYPad@2x.png */,
 				9C7A3BDF18C851C50070BB5F /* close.png */,
 				9C7A3BE018C851C50070BB5F /* close@2x.png */,
-				9C7A3BE118C851C50070BB5F /* config.png */,
-				9C7A3BE218C851C50070BB5F /* config@2x.png */,
-				9C7A3BE318C851C50070BB5F /* disc.png */,
-				9C7A3BE418C851C50070BB5F /* disc@2x.png */,
-				9C7A3BE518C851C50070BB5F /* disclosure.png */,
-				9C7A3BE618C851C50070BB5F /* disclosure@2x.png */,
 				9C7A3BE718C851C50070BB5F /* DPad.png */,
 				9C7A3BE818C851C50070BB5F /* DPad@2x.png */,
 				9C7A3BE918C851C50070BB5F /* HideEmulator.png */,
 				9C7A3BEA18C851C50070BB5F /* HideEmulator@2x.png */,
-				9C7A3BEB18C851C50070BB5F /* input.png */,
-				9C7A3BEC18C851C50070BB5F /* input@2x.png */,
 				9C7A3BED18C851C50070BB5F /* JoystickBackground.png */,
 				9C7A3BEE18C851C50070BB5F /* JoystickBackground@2x.png */,
 				9C7A3BEF18C851C50070BB5F /* JoystickButton.png */,
@@ -744,10 +717,6 @@
 				9C7A3BF418C851C50070BB5F /* menuback@2x.png */,
 				9C7A3BF518C851C50070BB5F /* menuicon.png */,
 				9C7A3BF618C851C50070BB5F /* menuicon@2x.png */,
-				9C7A3BF718C851C50070BB5F /* row.png */,
-				9C7A3BF818C851C50070BB5F /* row@2x.png */,
-				9C7A3BF918C851C50070BB5F /* rowselected.png */,
-				9C7A3BFA18C851C50070BB5F /* rowselected@2x.png */,
 				9C7A3BFB18C851C50070BB5F /* RTrigger.png */,
 				9C7A3BFC18C851C50070BB5F /* RTrigger@2x.png */,
 				9C7A3BFD18C851C50070BB5F /* Start.png */,
@@ -1429,15 +1398,12 @@
 				9C7A3C0518C851C50070BB5F /* close.png in Resources */,
 				9C7A3C1718C851C50070BB5F /* LTrigger.png in Resources */,
 				9C7A3C0218C851C50070BB5F /* 210-twitterbird@2x.png in Resources */,
-				9C7A3C0918C851C50070BB5F /* disc.png in Resources */,
 				9C7A3AA418C806E00070BB5F /* core.mk in Resources */,
 				9C7A3C2218C851C50070BB5F /* RTrigger@2x.png in Resources */,
 				9C7A3C0F18C851C50070BB5F /* HideEmulator.png in Resources */,
 				9C7A3C0E18C851C50070BB5F /* DPad@2x.png in Resources */,
 				87078AA318A47FE90034C7A0 /* Shader.fsh in Resources */,
-				9C7A3C1E18C851C50070BB5F /* row@2x.png in Resources */,
 				9C7A3C2118C851C50070BB5F /* RTrigger.png in Resources */,
-				9C7A3C0B18C851C50070BB5F /* disclosure.png in Resources */,
 				9C7A3C1C18C851C50070BB5F /* menuicon@2x.png in Resources */,
 				9C7A3C0118C851C50070BB5F /* 210-twitterbird.png in Resources */,
 				9C7A3C0D18C851C50070BB5F /* DPad.png in Resources */,
@@ -1445,7 +1411,6 @@
 				9C7A3BFF18C851C50070BB5F /* 210-octocat.png in Resources */,
 				9C7A3C1618C851C50070BB5F /* JoystickButton@2x.png in Resources */,
 				87078AAA18A47FE90034C7A0 /* Images.xcassets in Resources */,
-				9C7A3C0C18C851C50070BB5F /* disclosure@2x.png in Resources */,
 				9C7A3C1418C851C50070BB5F /* JoystickBackground@2x.png in Resources */,
 				9C7A3C1918C851C50070BB5F /* menuback.png in Resources */,
 				9C7A3BC418C84EA10070BB5F /* MainStoryboard.storyboard in Resources */,
@@ -1454,17 +1419,9 @@
 				9C7A3C1B18C851C50070BB5F /* menuicon.png in Resources */,
 				9C7A3C0418C851C50070BB5F /* ABXYPad@2x.png in Resources */,
 				87078AA518A47FE90034C7A0 /* Shader.vsh in Resources */,
-				9C7A3C0818C851C50070BB5F /* config@2x.png in Resources */,
-				9C7A3C1D18C851C50070BB5F /* row.png in Resources */,
-				9C7A3C1118C851C50070BB5F /* input.png in Resources */,
 				9C7A3C0318C851C50070BB5F /* ABXYPad.png in Resources */,
 				9C7A3C2418C851C50070BB5F /* Start@2x.png in Resources */,
-				9C7A3C0718C851C50070BB5F /* config.png in Resources */,
-				9C7A3C0A18C851C50070BB5F /* disc@2x.png in Resources */,
-				9C7A3C1218C851C50070BB5F /* input@2x.png in Resources */,
-				9C7A3C2018C851C50070BB5F /* rowselected@2x.png in Resources */,
 				9C7A3C2318C851C50070BB5F /* Start.png in Resources */,
-				9C7A3C1F18C851C50070BB5F /* rowselected.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1556,6 +1513,7 @@
 				9C7A3B0F18C806E00070BB5F /* maple_cfg.cpp in Sources */,
 				9C7A3AF318C806E00070BB5F /* crc32.c in Sources */,
 				9C7A3B5F18C81D090070BB5F /* BrowserTableViewController.m in Sources */,
+				9C7D581019301E140004EA2C /* CloudVMUViewController.m in Sources */,
 				9C7A3AE118C806E00070BB5F /* zip_set_file_comment.c in Sources */,
 				9C7A3B4118C806E00070BB5F /* audiostream.cpp in Sources */,
 				9C7A3AB118C806E00070BB5F /* pngread.c in Sources */,
