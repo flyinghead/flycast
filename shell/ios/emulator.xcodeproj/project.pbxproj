@@ -200,12 +200,8 @@
 		9C7A3C0218C851C50070BB5F /* 210-twitterbird@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BDC18C851C50070BB5F /* 210-twitterbird@2x.png */; };
 		9C7A3C0318C851C50070BB5F /* ABXYPad.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BDD18C851C50070BB5F /* ABXYPad.png */; };
 		9C7A3C0418C851C50070BB5F /* ABXYPad@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BDE18C851C50070BB5F /* ABXYPad@2x.png */; };
-		9C7A3C0518C851C50070BB5F /* close.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BDF18C851C50070BB5F /* close.png */; };
-		9C7A3C0618C851C50070BB5F /* close@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BE018C851C50070BB5F /* close@2x.png */; };
 		9C7A3C0D18C851C50070BB5F /* DPad.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BE718C851C50070BB5F /* DPad.png */; };
 		9C7A3C0E18C851C50070BB5F /* DPad@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BE818C851C50070BB5F /* DPad@2x.png */; };
-		9C7A3C0F18C851C50070BB5F /* HideEmulator.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BE918C851C50070BB5F /* HideEmulator.png */; };
-		9C7A3C1018C851C50070BB5F /* HideEmulator@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BEA18C851C50070BB5F /* HideEmulator@2x.png */; };
 		9C7A3C1318C851C50070BB5F /* JoystickBackground.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BED18C851C50070BB5F /* JoystickBackground.png */; };
 		9C7A3C1418C851C50070BB5F /* JoystickBackground@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BEE18C851C50070BB5F /* JoystickBackground@2x.png */; };
 		9C7A3C1518C851C50070BB5F /* JoystickButton.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BEF18C851C50070BB5F /* JoystickButton.png */; };
@@ -560,12 +556,8 @@
 		9C7A3BDC18C851C50070BB5F /* 210-twitterbird@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "210-twitterbird@2x.png"; path = "emulator/Images/210-twitterbird@2x.png"; sourceTree = "<group>"; };
 		9C7A3BDD18C851C50070BB5F /* ABXYPad.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = ABXYPad.png; path = emulator/Images/ABXYPad.png; sourceTree = "<group>"; };
 		9C7A3BDE18C851C50070BB5F /* ABXYPad@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "ABXYPad@2x.png"; path = "emulator/Images/ABXYPad@2x.png"; sourceTree = "<group>"; };
-		9C7A3BDF18C851C50070BB5F /* close.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = close.png; path = emulator/Images/close.png; sourceTree = "<group>"; };
-		9C7A3BE018C851C50070BB5F /* close@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "close@2x.png"; path = "emulator/Images/close@2x.png"; sourceTree = "<group>"; };
 		9C7A3BE718C851C50070BB5F /* DPad.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = DPad.png; path = emulator/Images/DPad.png; sourceTree = "<group>"; };
 		9C7A3BE818C851C50070BB5F /* DPad@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "DPad@2x.png"; path = "emulator/Images/DPad@2x.png"; sourceTree = "<group>"; };
-		9C7A3BE918C851C50070BB5F /* HideEmulator.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = HideEmulator.png; path = emulator/Images/HideEmulator.png; sourceTree = "<group>"; };
-		9C7A3BEA18C851C50070BB5F /* HideEmulator@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "HideEmulator@2x.png"; path = "emulator/Images/HideEmulator@2x.png"; sourceTree = "<group>"; };
 		9C7A3BED18C851C50070BB5F /* JoystickBackground.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = JoystickBackground.png; path = emulator/Images/JoystickBackground.png; sourceTree = "<group>"; };
 		9C7A3BEE18C851C50070BB5F /* JoystickBackground@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "JoystickBackground@2x.png"; path = "emulator/Images/JoystickBackground@2x.png"; sourceTree = "<group>"; };
 		9C7A3BEF18C851C50070BB5F /* JoystickButton.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = JoystickButton.png; path = emulator/Images/JoystickButton.png; sourceTree = "<group>"; };
@@ -701,12 +693,8 @@
 				9C7A3BDC18C851C50070BB5F /* 210-twitterbird@2x.png */,
 				9C7A3BDD18C851C50070BB5F /* ABXYPad.png */,
 				9C7A3BDE18C851C50070BB5F /* ABXYPad@2x.png */,
-				9C7A3BDF18C851C50070BB5F /* close.png */,
-				9C7A3BE018C851C50070BB5F /* close@2x.png */,
 				9C7A3BE718C851C50070BB5F /* DPad.png */,
 				9C7A3BE818C851C50070BB5F /* DPad@2x.png */,
-				9C7A3BE918C851C50070BB5F /* HideEmulator.png */,
-				9C7A3BEA18C851C50070BB5F /* HideEmulator@2x.png */,
 				9C7A3BED18C851C50070BB5F /* JoystickBackground.png */,
 				9C7A3BEE18C851C50070BB5F /* JoystickBackground@2x.png */,
 				9C7A3BEF18C851C50070BB5F /* JoystickButton.png */,
@@ -1389,18 +1377,14 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				9C7A3C0618C851C50070BB5F /* close@2x.png in Resources */,
 				9C7A3C1818C851C50070BB5F /* LTrigger@2x.png in Resources */,
 				9C7A3C1318C851C50070BB5F /* JoystickBackground.png in Resources */,
 				9C7A393318C804A80070BB5F /* reicast.entitlements in Resources */,
-				9C7A3C1018C851C50070BB5F /* HideEmulator@2x.png in Resources */,
 				9C7A3C0018C851C50070BB5F /* 210-octocat@2x.png in Resources */,
-				9C7A3C0518C851C50070BB5F /* close.png in Resources */,
 				9C7A3C1718C851C50070BB5F /* LTrigger.png in Resources */,
 				9C7A3C0218C851C50070BB5F /* 210-twitterbird@2x.png in Resources */,
 				9C7A3AA418C806E00070BB5F /* core.mk in Resources */,
 				9C7A3C2218C851C50070BB5F /* RTrigger@2x.png in Resources */,
-				9C7A3C0F18C851C50070BB5F /* HideEmulator.png in Resources */,
 				9C7A3C0E18C851C50070BB5F /* DPad@2x.png in Resources */,
 				87078AA318A47FE90034C7A0 /* Shader.fsh in Resources */,
 				9C7A3C2118C851C50070BB5F /* RTrigger.png in Resources */,
