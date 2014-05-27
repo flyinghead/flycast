@@ -14,7 +14,8 @@ int max_idx,max_mvo,max_op,max_pt,max_tr,max_vtx,max_modt, ovrn;
 TA_context* _pvrrc;
 void SetREP(TA_context* cntx);
 
-
+int frameskip=0;
+bool FrameSkipping=false;		// global switch to enable/disable frameskip
 
 bool rend_single_frame()
 {
@@ -28,8 +29,12 @@ bool rend_single_frame()
 	}
 
 	bool do_swp=false;
-	
-	do_swp=rend->Render();
+
+
+	if (FrameSkipping && frameskip) {
+ 		frameskip=1-frameskip;
+ 	} else
+ 		do_swp=rend->Render();
 	
 
 	if (do_swp)
