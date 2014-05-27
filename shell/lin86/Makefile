@@ -4,6 +4,7 @@ FOR_LINUX :=1
 NOT_ARM := 1
 NO_REC := 1
 #NO_REND := 1
+WEBUI :=1 
 
 RZDCY_SRC_DIR = ../../core
 

@@ -12,6 +12,7 @@ import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.Gravity;
@@ -24,6 +25,7 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
+import android.widget.Toast;
 
 import com.reicast.emulator.config.Config;
 import com.reicast.emulator.emu.GL2JNIView;
@@ -55,8 +57,7 @@ public class GL2JNINative extends NativeActivity {
 		System.loadLibrary("sexplay");
 	}
 
-	public native void registerNative();
-//	public native void registerXperia(int xperia);
+	native int RegisterNative(boolean touchpad);
 
 	@TargetApi(Build.VERSION_CODES.JELLY_BEAN)
 	@Override
@@ -69,15 +70,16 @@ public class GL2JNINative extends NativeActivity {
 					WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
 		}
 		getWindow().takeSurface(null);
-		registerNative();
+		
+		pad.isXperiaPlay = pad.IsXperiaPlay();
+		pad.isOuyaOrTV = pad.IsOuyaOrTV(GL2JNINative.this);
+//		isNvidiaShield = Gamepad.IsNvidiaShield();
+		
+		RegisterNative(pad.isXperiaPlay);
 		
 		config = new Config(GL2JNINative.this);
 		config.getConfigurationPrefs();
 		menu = new OnScreenMenu(GL2JNINative.this, prefs);
-
-		pad.isXperiaPlay = pad.IsXperiaPlay();
-		pad.isOuyaOrTV = pad.IsOuyaOrTV(GL2JNINative.this);
-//		isNvidiaShield = Gamepad.IsNvidiaShield();
 
 		String fileName = null;
 
@@ -146,7 +148,6 @@ public class GL2JNINative extends NativeActivity {
 					}
 					if (InputDevice.getDevice(joy).getName()
 							.contains(Gamepad.controllers_play_tp)) {
-//						registerXperia(joy);
 						pad.keypadZeus[1] = joy;
 					}
 				}
@@ -165,11 +166,24 @@ public class GL2JNINative extends NativeActivity {
 					if (pad.custom[playerNum] || pad.compat[playerNum]) {
 						pad.joystick[playerNum] = prefs.getBoolean(Gamepad.pref_js_separate + id, false);
 					} else {
-						pad.joystick[playerNum] = false;
+						pad.joystick[playerNum] = true;
 					}
 					if (InputDevice.getDevice(joy).getName()
-							.contains(Gamepad.controllers_play)) {
-						pad.playerNumX.put(joy, playerNum);
+							.contains(Gamepad.controllers_gamekey)) {
+//						if (pad.custom[playerNum]) {
+//							setCustomMapping(id, playerNum);
+//						} else {
+//							pad.map[playerNum] = pad.getConsoleController();
+//						}
+						new Handler().post(new Runnable() {
+							public void run() {
+								Toast.makeText(getApplicationContext(), R.string.controller_unavailable,
+										Toast.LENGTH_SHORT).show();
+								finish();
+							}
+						});
+					} else if (InputDevice.getDevice(joy).getName()
+							.contains(Gamepad.controllers_play) ) {
 						for (int keys : pad.keypadZeus) {
 							pad.playerNumX.put(keys, playerNum);
 						}
@@ -178,28 +192,26 @@ public class GL2JNINative extends NativeActivity {
 						} else {
 							pad.map[playerNum] = pad.getXPlayController();
 						}
-					} else {
-						if (!pad.compat[playerNum]) {
-							if (pad.custom[playerNum]) {
-								setCustomMapping(id, playerNum);
-							} else if (InputDevice.getDevice(joy).getName()
-									.equals(Gamepad.controllers_sony)) {
-								pad.map[playerNum] = pad.getConsoleController();
-							} else if (InputDevice.getDevice(joy).getName()
-									.equals(Gamepad.controllers_xbox)) {
-								pad.map[playerNum] = pad.getConsoleController();
-							} else if (InputDevice.getDevice(joy).getName()
-									.contains(Gamepad.controllers_shield)) {
-								pad.map[playerNum] = pad.getConsoleController();
-							} else if (!pad.isActiveMoga[playerNum]) { // Ouya controller
-								pad.map[playerNum] = pad.getOUYAController();
-							}
-						} else{
-							getCompatibilityMap(playerNum, id);
+					} else if (!pad.compat[playerNum]) {
+						if (pad.custom[playerNum]) {
+							setCustomMapping(id, playerNum);
+						} else if (InputDevice.getDevice(joy).getName()
+								.equals(Gamepad.controllers_sony)) {
+							pad.map[playerNum] = pad.getConsoleController();
+						} else if (InputDevice.getDevice(joy).getName()
+								.equals(Gamepad.controllers_xbox)) {
+							pad.map[playerNum] = pad.getConsoleController();
+						} else if (InputDevice.getDevice(joy).getName()
+								.contains(Gamepad.controllers_shield)) {
+							pad.map[playerNum] = pad.getConsoleController();
+						} else if (!pad.isActiveMoga[playerNum]) { // Ouya controller
+							pad.map[playerNum] = pad.getOUYAController();
 						}
-						initJoyStickLayout(playerNum);
-						pad.playerNumX.put(joy, playerNum);
+					} else{
+						getCompatibilityMap(playerNum, id);
 					}
+					initJoyStickLayout(playerNum);
+					pad.playerNumX.put(joy, playerNum);
 				} else {
 					runCompatibilityMode(joy);
 				}
@@ -209,9 +221,8 @@ public class GL2JNINative extends NativeActivity {
 		config.loadConfigurationPrefs();
 
 		// When viewing a resource, pass its URI to the native code for opening
-		Intent intent = getIntent();
-		if (intent.getAction().equals("com.reciast.LAUNCH_ROM"))
-			fileName = Uri.decode(intent.getData().toString());
+		if (getIntent().getAction().equals("com.reicast.EMULATOR"))
+			fileName = Uri.decode(getIntent().getData().toString());
 
 		// Create the actual GLES view
 		mView = new GL2JNIView(getApplication(), config, fileName, false,
@@ -515,12 +526,15 @@ public class GL2JNINative extends NativeActivity {
 		return false;
 	}
 
+//	public boolean OnNativeMotion(int device, int source, int action, int x,
+//			int y, boolean newEvent) {
 	public boolean OnNativeMotion(int device, int source, int action, int x,
-			int y, boolean newEvent) {
+			int y) {
 		Integer playerNum = pad.playerNumX.get(device);
 		if (playerNum != null && playerNum != -1) {
 			Log.d("reidc", playerNum + " - " + device + ": " + source);
-			if (newEvent && source == Gamepad.Xperia_Touchpad) {
+//			if (newEvent && source == Gamepad.Xperia_Touchpad) {
+			if (source == Gamepad.Xperia_Touchpad) {
 				if (action == MotionEvent.ACTION_UP) {
 					x = 0;
 					y = 0;

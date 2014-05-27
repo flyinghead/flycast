@@ -14,10 +14,14 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.CompoundButton;
+import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.EditText;
 import android.widget.Toast;
 
 import com.reicast.emulator.R;
+
+import de.ankri.views.Switch;
 
 public class OptionsFragment extends Fragment {
 
@@ -99,6 +103,18 @@ public class OptionsFragment extends Fragment {
 			public void onTextChanged(CharSequence s, int start, int before, int count) {
 			}
 		});
+		
+		OnCheckedChangeListener details_options = new OnCheckedChangeListener() {
+
+			public void onCheckedChanged(CompoundButton buttonView,
+					boolean isChecked) {
+				mPrefs.edit().putBoolean(Config.pref_gamedetails, isChecked).commit();
+			}
+		};
+		Switch details_opt = (Switch) getView().findViewById(
+				R.id.details_option);
+		details_opt.setChecked(mPrefs.getBoolean(Config.pref_gamedetails, false));
+		details_opt.setOnCheckedChangeListener(details_options);
 
 		gameBrowse = (Button) getView().findViewById(R.id.browse_game_path);
 

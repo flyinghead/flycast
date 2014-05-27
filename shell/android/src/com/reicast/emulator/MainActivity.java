@@ -22,7 +22,9 @@ import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.WindowManager;
 import android.view.View.OnClickListener;
+import android.view.View.OnSystemUiVisibilityChangeListener;
 import android.view.View.OnTouchListener;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -61,6 +63,25 @@ public class MainActivity extends SlidingFragmentActivity implements
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.mainuilayout_fragment);
 		setBehindContentView(R.layout.drawer_menu);
+		
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+			getWindow().getDecorView().setOnSystemUiVisibilityChangeListener (new OnSystemUiVisibilityChangeListener() {
+				public void onSystemUiVisibilityChange(int visibility) {
+					if ((visibility & View.SYSTEM_UI_FLAG_FULLSCREEN) == 0) {
+						getWindow().getDecorView().setSystemUiVisibility(
+//                            View.SYSTEM_UI_FLAG_LAYOUT_STABLE | 
+								View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                                | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                                | View.SYSTEM_UI_FLAG_FULLSCREEN
+                                | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+					}
+				}
+			});
+		} else {
+			getWindow().setFlags (WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                    WindowManager.LayoutParams.FLAG_FULLSCREEN);
+		}
 
 		mPrefs = PreferenceManager.getDefaultSharedPreferences(this);
 
@@ -90,7 +111,8 @@ public class MainActivity extends SlidingFragmentActivity implements
 						String log = output.toString();
 						mPrefs.edit().putString("prior_error", log).commit();
 						error.printStackTrace();
-						MainActivity.this.finish();
+						android.os.Process.killProcess(android.os.Process.myPid());
+						System.exit(0);
 					}
 				}
 			};
@@ -269,6 +291,27 @@ public class MainActivity extends SlidingFragmentActivity implements
 					}
 
 				});
+				
+				findViewById(R.id.cloud_menu).setOnClickListener(new OnClickListener() {
+					public void onClick(View view) {
+						CloudFragment cloudFrag = (CloudFragment) getSupportFragmentManager()
+								.findFragmentByTag("CLOUD_FRAG");
+						if (cloudFrag != null) {
+							if (cloudFrag.isVisible()) {
+								return;
+							}
+						}
+						cloudFrag = new CloudFragment();
+						getSupportFragmentManager()
+						.beginTransaction()
+						.replace(R.id.fragment_container,
+						cloudFrag, "CLOUD_FRAG")
+							.addToBackStack(null).commit();
+						setTitle(R.string.cloud);
+						sm.toggle(true);
+					}
+
+				});
 
 				View rateMe = findViewById(R.id.rateme_menu);
 				if (!hasAndroidMarket) {
@@ -289,6 +332,8 @@ public class MainActivity extends SlidingFragmentActivity implements
 						}
 					});
 				}
+				
+
 
 				View messages = findViewById(R.id.message_menu);
 				if (MainActivity.debugUser) {
@@ -417,11 +462,12 @@ public class MainActivity extends SlidingFragmentActivity implements
 			// show it
 			alertDialog.show();
 		} else {
+			Config.nativeact = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).getBoolean(Config.pref_nativeact, Config.nativeact);
 			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD && Config.nativeact) {
-				startActivity(new Intent("com.reciast.LAUNCH_ROM", uri, getBaseContext(),
+				startActivity(new Intent("com.reicast.EMULATOR", uri, getApplicationContext(),
 						GL2JNINative.class));
 			} else {
-				startActivity(new Intent("com.reciast.LAUNCH_ROM", uri, getBaseContext(),
+				startActivity(new Intent("com.reicast.EMULATOR", uri, getApplicationContext(),
 						GL2JNIActivity.class));
 			}
 		}
@@ -473,16 +519,6 @@ public class MainActivity extends SlidingFragmentActivity implements
 		menuHeading.setText(title);
 	}
 
-	/**
-	 * When using the ActionBarDrawerToggle, you must call it during
-	 * onPostCreate() and onConfigurationChanged()...
-	 */
-
-	@Override
-	public void onPostCreate(Bundle savedInstanceState) {
-		super.onPostCreate(savedInstanceState);
-	}
-
 	@Override
 	public void onConfigurationChanged(Configuration newConfig) {
 		super.onConfigurationChanged(newConfig);
@@ -525,10 +561,9 @@ public class MainActivity extends SlidingFragmentActivity implements
 		args.putString("browse_entry", null);
 		args.putBoolean("games_entry", false);
 		fragment.setArguments(args);
-		getSupportFragmentManager()
-		.beginTransaction()
-		.replace(R.id.fragment_container, fragment,
-				"MAIN_BROWSER").commit();
+		getSupportFragmentManager().beginTransaction()
+				.replace(R.id.fragment_container, fragment, "MAIN_BROWSER")
+				.addToBackStack(null).commit();
 		setTitle(R.string.browser);
 	}
 
@@ -566,6 +601,32 @@ public class MainActivity extends SlidingFragmentActivity implements
 				fragment.moga.onResume();
 			}
 		}
+		
+		CloudFragment cloudfragment = (CloudFragment) getSupportFragmentManager()
+				.findFragmentByTag("CLOUD_FRAG");
+		if (cloudfragment != null && cloudfragment.isVisible()) {
+			if (cloudfragment != null) {
+				cloudfragment.onResume();
+			}
+		}
+	}
+	
+	@Override
+	public void onPostCreate(Bundle savedInstanceState) {
+		super.onPostCreate(savedInstanceState);
+	}
+	
+	@Override
+	public void onWindowFocusChanged(boolean hasFocus) {
+		super.onWindowFocusChanged(hasFocus);
+		if (hasFocus && Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+			getWindow().getDecorView().setSystemUiVisibility(
+					View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+	                | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+	                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+	                | View.SYSTEM_UI_FLAG_FULLSCREEN
+	                | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+        }
 	}
 
 	public boolean isCallable(Intent intent) {

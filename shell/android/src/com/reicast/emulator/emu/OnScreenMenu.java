@@ -8,16 +8,17 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.drawable.Drawable;
 import android.os.Environment;
 import android.view.Gravity;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup.LayoutParams;
-import android.widget.ImageButton;
-import android.widget.ImageView.ScaleType;
+import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.TextView;
+import at.technikum.mti.fancycoverflow.FancyCoverFlow;
 
 import com.reicast.emulator.GL2JNIActivity;
 import com.reicast.emulator.GL2JNINative;
@@ -124,47 +125,48 @@ public class OnScreenMenu {
 			super(c);
 			setBackgroundDrawable(null);
 			int p = getPixelsFromDp(72, mContext);
-			LayoutParams debugParams = new LayoutParams(p, p);
+			LayoutParams debugParams = new LayoutParams(LayoutParams.WRAP_CONTENT, p);
 
 			LinearLayout hlay = new LinearLayout(mContext);
 
 			hlay.setOrientation(LinearLayout.HORIZONTAL);
+//			hlay.setOrientation(LinearLayout.VERTICAL);
 
-			hlay.addView(addbut(R.drawable.up, new OnClickListener() {
+			hlay.addView(addbut(R.drawable.up, "Back", new OnClickListener() {
 				public void onClick(View v) {
 					removePopUp(DebugPopup.this);
 				}
 			}), debugParams);
 
-			hlay.addView(addbut(R.drawable.clear_cache, new OnClickListener() {
+			hlay.addView(addbut(R.drawable.clear_cache, "Clear Cache", new OnClickListener() {
 				public void onClick(View v) {
 					JNIdc.send(0, 0); // Killing texture cache
 					dismiss();
 				}
 			}), debugParams);
 
-			hlay.addView(addbut(R.drawable.profiler, new OnClickListener() {
+			hlay.addView(addbut(R.drawable.profiler, "Profiler 1", new OnClickListener() {
 				public void onClick(View v) {
 					JNIdc.send(1, 3000); // sample_Start(param);
 					dismiss();
 				}
 			}), debugParams);
 
-			hlay.addView(addbut(R.drawable.profiler, new OnClickListener() {
+			hlay.addView(addbut(R.drawable.profiler, "Profiler 2", new OnClickListener() {
 				public void onClick(View v) {
 					JNIdc.send(1, 0); // sample_Start(param);
 					dismiss();
 				}
 			}), debugParams);
 
-			hlay.addView(addbut(R.drawable.print_stats, new OnClickListener() {
+			hlay.addView(addbut(R.drawable.print_stats, "Print Stats", new OnClickListener() {
 				public void onClick(View v) {
 					JNIdc.send(0, 2);
 					dismiss(); // print_stats=true;
 				}
 			}), debugParams);
 
-			hlay.addView(addbut(R.drawable.close, new OnClickListener() {
+			hlay.addView(addbut(R.drawable.close, "Exit", new OnClickListener() {
 				public void onClick(View v) {
 					popups.remove(DebugPopup.this);
 					dismiss();
@@ -200,13 +202,14 @@ public class OnScreenMenu {
 			super(c);
 			setBackgroundDrawable(null);
 			int p = getPixelsFromDp(72, mContext);
-			LayoutParams configParams = new LayoutParams(p, p);
+			LayoutParams configParams = new LayoutParams(LayoutParams.WRAP_CONTENT, p);
 
 			LinearLayout hlay = new LinearLayout(mContext);
 
 			hlay.setOrientation(LinearLayout.HORIZONTAL);
+//			hlay.setOrientation(LinearLayout.VERTICAL);
 
-			View up = addbut(R.drawable.up, new OnClickListener() {
+			View up = addbut(R.drawable.up, "Back", new OnClickListener() {
 				public void onClick(View v) {
 					removePopUp(ConfigPopup.this);
 				}
@@ -214,30 +217,27 @@ public class OnScreenMenu {
 			hlay.addView(up, configParams);
 			menuItems.add(up);
 
-			fullscreen = addbut(R.drawable.widescreen, new OnClickListener() {
+			fullscreen = addbut(R.drawable.widescreen, "Widescreen", new OnClickListener() {
 				public void onClick(View v) {
 					if (screen) {
 						JNIdc.widescreen(0);
 						screen = false;
-						((ImageButton) fullscreen)
-								.setImageResource(R.drawable.widescreen);
+						modbut(fullscreen, R.drawable.widescreen);
 					} else {
 						JNIdc.widescreen(1);
 						screen = true;
-						((ImageButton) fullscreen)
-								.setImageResource(R.drawable.normal_view);
+						modbut(fullscreen, R.drawable.normal_view);
 					}
 				}
 			});
 			if (screen) {
-				((ImageButton) fullscreen)
-						.setImageResource(R.drawable.normal_view);
+				modbut(fullscreen, R.drawable.normal_view);
 
 			}
 			hlay.addView(fullscreen, params);
 			menuItems.add(fullscreen);
 
-			fdown = addbut(R.drawable.frames_down, new OnClickListener() {
+			fdown = addbut(R.drawable.frames_down, "Frameskip -", new OnClickListener() {
 				public void onClick(View v) {
 					if (frames > 0) {
 						frames--;
@@ -246,7 +246,7 @@ public class OnScreenMenu {
 					enableState(fdown, fup);
 				}
 			});
-			fup = addbut(R.drawable.frames_up, new OnClickListener() {
+			fup = addbut(R.drawable.frames_up, "Frameskip +", new OnClickListener() {
 				public void onClick(View v) {
 					if (frames < 5) {
 						frames++;
@@ -262,30 +262,27 @@ public class OnScreenMenu {
 			menuItems.add(fup);
 			enableState(fdown, fup);
 
-			framelimit = addbut(R.drawable.frames_limit_on,
+			framelimit = addbut(R.drawable.frames_limit_on, "Frame Limiter", 
 					new OnClickListener() {
 						public void onClick(View v) {
 							if (limit) {
 								JNIdc.limitfps(0);
 								limit = false;
-								((ImageButton) framelimit)
-										.setImageResource(R.drawable.frames_limit_on);
+								modbut(framelimit, R.drawable.frames_limit_on);
 							} else {
 								JNIdc.limitfps(1);
 								limit = true;
-								((ImageButton) framelimit)
-										.setImageResource(R.drawable.frames_limit_off);
+								modbut(framelimit, R.drawable.frames_limit_off);
 							}
 						}
 					});
 			if (limit) {
-				((ImageButton) framelimit)
-						.setImageResource(R.drawable.frames_limit_off);
+				modbut(framelimit, R.drawable.frames_limit_off);
 			}
 			hlay.addView(framelimit, params);
 			menuItems.add(framelimit);
 
-			audiosetting = addbut(R.drawable.enable_sound,
+			audiosetting = addbut(R.drawable.enable_sound, "Emu Sound", 
 					new OnClickListener() {
 						public void onClick(View v) {
 							if (audio) {
@@ -298,8 +295,7 @@ public class OnScreenMenu {
 											.audioDisable(true);
 								}
 								audio = false;
-								((ImageButton) audiosetting)
-										.setImageResource(R.drawable.enable_sound);
+								modbut(audiosetting, R.drawable.enable_sound);
 							} else {
 								if (mContext instanceof GL2JNINative) {
 									((GL2JNINative) mContext).mView
@@ -310,14 +306,12 @@ public class OnScreenMenu {
 											.audioDisable(false);
 								}
 								audio = true;
-								((ImageButton) audiosetting)
-										.setImageResource(R.drawable.mute_sound);
+								modbut(audiosetting, R.drawable.mute_sound);
 							}
 						}
 					});
 			if (audio) {
-				((ImageButton) audiosetting)
-						.setImageResource(R.drawable.mute_sound);
+				modbut(audiosetting, R.drawable.mute_sound);
 			}
 			if (!masteraudio) {
 				audiosetting.setEnabled(false);
@@ -325,7 +319,7 @@ public class OnScreenMenu {
 			hlay.addView(audiosetting, params);
 			menuItems.add(audiosetting);
 
-			fastforward = addbut(R.drawable.star, new OnClickListener() {
+			fastforward = addbut(R.drawable.star, "Turbo", new OnClickListener() {
 				public void onClick(View v) {
 					if (boosted) {
 						if (mContext instanceof GL2JNINative) {
@@ -350,8 +344,7 @@ public class OnScreenMenu {
 									.fastForward(false);
 						}
 						boosted = false;
-						((ImageButton) fastforward)
-								.setImageResource(R.drawable.star);
+						modbut(fastforward, R.drawable.star);
 					} else {
 						if (mContext instanceof GL2JNINative) {
 							((GL2JNINative) mContext).mView.audioDisable(true);
@@ -374,18 +367,17 @@ public class OnScreenMenu {
 							((GL2JNIActivity) mContext).mView.fastForward(true);
 						}
 						boosted = true;
-						((ImageButton) fastforward)
-								.setImageResource(R.drawable.reset);
+						modbut(fastforward, R.drawable.reset);
 					}
 				}
 			});
 			if (boosted) {
-				((ImageButton) fastforward).setImageResource(R.drawable.reset);
+				modbut(fastforward, R.drawable.reset);
 			}
 			hlay.addView(fastforward, params);
 			menuItems.add(fastforward);
 
-			View close = addbut(R.drawable.close, new OnClickListener() {
+			View close = addbut(R.drawable.close, "Exit", new OnClickListener() {
 				public void onClick(View v) {
 					popups.remove(ConfigPopup.this);
 					dismiss();
@@ -450,14 +442,36 @@ public class OnScreenMenu {
 		return vmuLcd;
 	}
 
-	View addbut(int x, OnClickListener ocl) {
-		ImageButton but = new ImageButton(mContext);
-
-		but.setImageResource(x);
-		but.setScaleType(ScaleType.FIT_CENTER);
+	View addbut(int x, String l, OnClickListener ocl) {
+//		ImageButton but = new ImageButton(mContext);
+//
+//		but.setImageResource(x);
+//		but.setScaleType(ScaleType.FIT_CENTER);
+//		but.setOnClickListener(ocl);
+		
+		Button but = new Button(mContext);
+		Drawable image = mContext.getResources().getDrawable(x);
+		image.setBounds(0, 0, 72, 72);
+		but.setCompoundDrawables(image, null, null, null);
+//		but.setText(l);
 		but.setOnClickListener(ocl);
 
 		return but;
+	}
+
+	void modbut (View button, int x) {
+		Button but = (Button) button;
+		Drawable image = mContext.getResources().getDrawable(x);
+		image.setBounds(0, 0, 72, 72);
+		but.setCompoundDrawables(image, null, null, null);
+	}
+	
+	void showXMBMenu() {
+		FancyCoverFlow fancyCoverFlow = new FancyCoverFlow(mContext);
+		fancyCoverFlow.setMaxRotation(45);
+		fancyCoverFlow.setUnselectedAlpha(0.3f);
+		fancyCoverFlow.setUnselectedSaturation(0.0f);
+		fancyCoverFlow.setUnselectedScale(0.4f);
 	}
 
 	public class VmuPopup extends PopupWindow {
@@ -490,9 +504,10 @@ public class OnScreenMenu {
 			super(c);
 			setBackgroundDrawable(null);
 			int p = getPixelsFromDp(72, mContext);
-			params = new LayoutParams(p, p);
+			params = new LayoutParams(LayoutParams.WRAP_CONTENT, p);
 			hlay = new LinearLayout(mContext);
 			hlay.setOrientation(LinearLayout.HORIZONTAL);
+//			hlay.setOrientation(LinearLayout.VERTICAL);
 
 			int vpX = getPixelsFromDp(72, mContext);
 			int vpY = getPixelsFromDp(52, mContext);
@@ -503,21 +518,28 @@ public class OnScreenMenu {
 			vmuParams.rightMargin = 4;
 			hlay.addView(vmuLcd, vmuParams);
 
-			hlay.addView(addbut(R.drawable.up, new OnClickListener() {
+			hlay.addView(addbut(R.drawable.up, "Back", new OnClickListener() {
 				public void onClick(View v) {
 					popups.remove(MainPopup.this);
 					dismiss();
 				}
 			}), params);
+			
+			hlay.addView(addbut(R.drawable.vmu_swap, "Disk Swap", new OnClickListener() {
+				public void onClick(View v) {
+					JNIdc.diskSwap(null);
+					dismiss();
+				}
+			}), params);
 
-			hlay.addView(addbut(R.drawable.vmu_swap, new OnClickListener() {
+			hlay.addView(addbut(R.drawable.vmu_swap, "VMU Swap", new OnClickListener() {
 				public void onClick(View v) {
 					JNIdc.vmuSwap();
 					dismiss();
 				}
 			}), params);
 
-			rsticksetting = addbut(R.drawable.toggle_a_b,
+			rsticksetting = addbut(R.drawable.toggle_a_b, "Right Stick", 
 					new OnClickListener() {
 						public void onClick(View v) {
 							if (prefs
@@ -525,25 +547,22 @@ public class OnScreenMenu {
 								prefs.edit()
 										.putBoolean(Gamepad.pref_js_rbuttons,
 												false).commit();
-								((ImageButton) rsticksetting)
-										.setImageResource(R.drawable.toggle_a_b);
+								modbut(rsticksetting, R.drawable.toggle_a_b);
 							} else {
 								prefs.edit()
 										.putBoolean(Gamepad.pref_js_rbuttons,
 												true).commit();
-								((ImageButton) rsticksetting)
-										.setImageResource(R.drawable.toggle_r_l);
+								modbut(rsticksetting, R.drawable.toggle_r_l);
 							}
 							dismiss();
 						}
 					});
 			if (prefs.getBoolean(Gamepad.pref_js_rbuttons, true)) {
-				((ImageButton) rsticksetting)
-						.setImageResource(R.drawable.toggle_r_l);
+				modbut(rsticksetting, R.drawable.toggle_r_l);
 			}
 			hlay.addView(rsticksetting, params);
 
-			hlay.addView(addbut(R.drawable.config, new OnClickListener() {
+			hlay.addView(addbut(R.drawable.config, "Options", new OnClickListener() {
 				public void onClick(View v) {
 					displayConfigPopup(MainPopup.this);
 					popups.remove(MainPopup.this);
@@ -551,7 +570,7 @@ public class OnScreenMenu {
 				}
 			}), params);
 
-			hlay.addView(addbut(R.drawable.disk_unknown, new OnClickListener() {
+			hlay.addView(addbut(R.drawable.disk_unknown, "Debugging", new OnClickListener() {
 				public void onClick(View v) {
 					displayDebugPopup(MainPopup.this);
 					popups.remove(MainPopup.this);
@@ -559,7 +578,7 @@ public class OnScreenMenu {
 				}
 			}), params);
 
-			hlay.addView(addbut(R.drawable.print_stats, new OnClickListener() {
+			hlay.addView(addbut(R.drawable.print_stats, "Screenshot", new OnClickListener() {
 				public void onClick(View v) {
 					// screenshot
 					if (mContext instanceof GL2JNINative) {
@@ -573,7 +592,7 @@ public class OnScreenMenu {
 				}
 			}), params);
 
-			hlay.addView(addbut(R.drawable.close, new OnClickListener() {
+			hlay.addView(addbut(R.drawable.close, "Exit", new OnClickListener() {
 				public void onClick(View v) {
 					Intent inte = new Intent(mContext, MainActivity.class);
 					mContext.startActivity(inte);

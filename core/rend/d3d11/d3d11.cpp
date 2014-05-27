@@ -76,6 +76,11 @@ struct d3d11 : Renderer
 	void Resize(int w, int h) { }
 	void Term() { }
 
+	bool Process(TA_context* ctx)
+	{
+		return true;
+	}
+
 	bool Render()
 	{
 		if (!pvrrc.isRTT)

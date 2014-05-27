@@ -1166,19 +1166,28 @@ void OSD_DRAW()
 #endif
 }
 
+bool ProcessFrame(TA_context* ctx)
+{
+	//disable RTTs for now ..
+	if (ctx->rend.isRTT)
+		return false;
+
+	ctx->rend_inuse.Lock();
+	ctx->MarkRend();
+
+	if (!ta_parse_vdrc(ctx))
+		return false;
+
+	CollectCleanup();
+
+	return true;
+}
+
 bool RenderFrame()
 {
-	bool is_rtt=pvrrc.isRTT;//(FB_W_SOF1& 0x1000000)!=0;
+	DoCleanup();
 
-	//disable RTTs for now ..
-	if (is_rtt)
-		return false;
-
-	_pvrrc->rend_inuse.Lock();
-	_pvrrc->MarkRend();
-
-	if (!ta_parse_vdrc(_pvrrc))
-		return false;
+	bool is_rtt=pvrrc.isRTT;
 
 	OSD_HOOK();
 
@@ -1579,19 +1588,12 @@ struct glesrend : Renderer
 	void Resize(int w, int h) { }
 	void Term() { } 
 
-	bool Render() 
-	{ 
-		bool do_swp=RenderFrame();
-
-		if (do_swp)
-		{
-			OSD_DRAW();
-		}
-
-		return do_swp;
-	}
+	bool Process(TA_context* ctx) { return ProcessFrame(ctx); }
+	bool Render() { return RenderFrame(); }
 
 	void Present() { gl_swap(); }
+
+	void DrawOSD() { OSD_DRAW(); }
 };
 
 

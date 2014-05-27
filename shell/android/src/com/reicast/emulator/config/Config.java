@@ -4,21 +4,11 @@ import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
-import android.util.DisplayMetrics;
-import android.view.Gravity;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ImageView;
-import android.widget.TextView;
-import android.widget.Toast;
 
 import com.android.util.DreamTime;
-import com.reicast.emulator.R;
 import com.reicast.emulator.emu.JNIdc;
 
 public class Config {
@@ -26,6 +16,7 @@ public class Config {
 	public static final String pref_home = "home_directory";
 	public static final String pref_games = "game_directory";
 
+	public static final String pref_gamedetails = "game_details";
 	public static final String pref_nativeact = "enable_native";
 	public static final String pref_dynarecopt = "dynarec_opt";
 	public static final String pref_unstable = "unstable_opt";

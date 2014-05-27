@@ -19,9 +19,9 @@ import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.ViewConfiguration;
-import android.view.WindowManager;
 import android.view.ViewGroup.LayoutParams;
 import android.view.Window;
+import android.view.WindowManager;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 
@@ -154,11 +154,18 @@ public class GL2JNIActivity extends Activity {
 					if (pad.custom[playerNum] || pad.compat[playerNum]) {
 						pad.joystick[playerNum] = prefs.getBoolean(Gamepad.pref_js_separate + id, false);
 					} else {
-						pad.joystick[playerNum] = false;
+						pad.joystick[playerNum] = true;
 					}
-					if (!pad.compat[playerNum]) {
+					if (InputDevice.getDevice(joy).getName()
+							.contains(Gamepad.controllers_gamekey)) {
 						if (pad.custom[playerNum]) {
-							pad.map[playerNum] = pad.setModifiedKeys(id, playerNum, prefs);
+							setCustomMapping(id, playerNum);
+						} else {
+							pad.map[playerNum] = pad.getConsoleController();
+						}
+					} else if (!pad.compat[playerNum]) {
+						if (pad.custom[playerNum]) {
+							setCustomMapping(id, playerNum);
 						} else if (InputDevice.getDevice(joy).getName()
 								.equals(Gamepad.controllers_sony)) {
 							pad.map[playerNum] = pad.getConsoleController();
@@ -178,21 +185,22 @@ public class GL2JNIActivity extends Activity {
 						getCompatibilityMap(playerNum, id);
 					}
 					initJoyStickLayout(playerNum);
+				} else {
+					runCompatibilityMode(joy);
 				}
 			}
 			if (joys.length == 0) {
-				runCompatibilityMode();
+				fullCompatibilityMode();
 			}
 		} else {
-			runCompatibilityMode();
+			fullCompatibilityMode();
 		}
 
 		config.loadConfigurationPrefs();
 
 		// When viewing a resource, pass its URI to the native code for opening
-		Intent intent = getIntent();
-		if (intent.getAction().equals("com.reciast.LAUNCH_ROM"))
-			fileName = Uri.decode(intent.getData().toString());
+		if (getIntent().getAction().equals("com.reicast.EMULATOR"))
+			fileName = Uri.decode(getIntent().getData().toString());
 
 		// Create the actual GLES view
 		mView = new GL2JNIView(getApplication(), config, fileName, false,
@@ -231,6 +239,10 @@ public class GL2JNIActivity extends Activity {
 			});
 		}
 	}
+	
+	private void setCustomMapping(String id, int playerNum) {
+		pad.map[playerNum] = pad.setModifiedKeys(id, playerNum, prefs);
+	}
 
 	private void initJoyStickLayout(int playerNum) {
 		if (!pad.joystick[playerNum]) {
@@ -239,7 +251,7 @@ public class GL2JNIActivity extends Activity {
 		}
 	}
 	
-	private void runCompatibilityMode() {
+	private void runCompatibilityMode(int joy) {
 		for (int n = 0; n < 4; n++) {
 			if (pad.compat[n]) {
 				String id = pad.portId[n];
@@ -247,6 +259,12 @@ public class GL2JNIActivity extends Activity {
 				getCompatibilityMap(n, pad.portId[n]);
 				initJoyStickLayout(n);
 			}
+		}
+	}
+	
+	private void fullCompatibilityMode() {
+		for (int n = 0; n < 4; n++) {
+			runCompatibilityMode(n);
 		}
 	}
 

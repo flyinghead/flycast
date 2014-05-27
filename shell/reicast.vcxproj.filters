@@ -336,6 +336,66 @@
     <ClCompile Include="..\core\rend\d3d11\d3d11.cpp">
       <Filter>rend\d3d11</Filter>
     </ClCompile>
+    <ClCompile Include="..\core\deps\libwebsocket\base64-decode.c">
+      <Filter>deps\libwebsocket</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\libwebsocket\client.c">
+      <Filter>deps\libwebsocket</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\libwebsocket\client-handshake.c">
+      <Filter>deps\libwebsocket</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\libwebsocket\client-parser.c">
+      <Filter>deps\libwebsocket</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\libwebsocket\context.c">
+      <Filter>deps\libwebsocket</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\libwebsocket\extension.c">
+      <Filter>deps\libwebsocket</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\libwebsocket\extension-deflate-frame.c">
+      <Filter>deps\libwebsocket</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\libwebsocket\extension-deflate-stream.c">
+      <Filter>deps\libwebsocket</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\libwebsocket\libwebsockets.c">
+      <Filter>deps\libwebsocket</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\libwebsocket\lws-plat-unix.c">
+      <Filter>deps\libwebsocket</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\libwebsocket\lws-plat-win.c">
+      <Filter>deps\libwebsocket</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\libwebsocket\output.c">
+      <Filter>deps\libwebsocket</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\libwebsocket\parsers.c">
+      <Filter>deps\libwebsocket</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\libwebsocket\pollfd.c">
+      <Filter>deps\libwebsocket</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\libwebsocket\server.c">
+      <Filter>deps\libwebsocket</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\libwebsocket\server-handshake.c">
+      <Filter>deps\libwebsocket</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\libwebsocket\service.c">
+      <Filter>deps\libwebsocket</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\libwebsocket\sha-1.c">
+      <Filter>deps\libwebsocket</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\libwebsocket\handshake.c">
+      <Filter>deps\libwebsocket</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\webui\server.cpp">
+      <Filter>webui</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="hw">
@@ -445,6 +505,12 @@
     </Filter>
     <Filter Include="rend\d3d11">
       <UniqueIdentifier>{cc05f61b-c484-40e6-9859-6ca0cd64735c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="deps\libwebsocket">
+      <UniqueIdentifier>{3d3de3ff-9e79-4920-a95a-61d190e73004}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="webui">
+      <UniqueIdentifier>{81193efc-656a-4154-9adf-146856d4c7d3}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -774,6 +840,24 @@
     </ClInclude>
     <ClInclude Include="..\core\hw\pvr\pvr_mem.h">
       <Filter>hw\pvr\emu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\libwebsocket\extension-deflate-frame.h">
+      <Filter>deps\libwebsocket</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\libwebsocket\extension-deflate-stream.h">
+      <Filter>deps\libwebsocket</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\libwebsocket\libwebsockets.h">
+      <Filter>deps\libwebsocket</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\libwebsocket\lws_config.h">
+      <Filter>deps\libwebsocket</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\libwebsocket\private-libwebsockets.h">
+      <Filter>deps\libwebsocket</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\webui\server.h">
+      <Filter>webui</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

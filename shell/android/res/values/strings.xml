@@ -23,6 +23,7 @@
     
     <string name="optimization_opts">Optimization and Debugging Options</string>
     <string name="experimental_opts">Experimental (May cause widespread panic)</string>
+    <string name="select_details">Enable Game Details</string>
     <string name="select_native">Enable Native Interface</string>
     <string name="select_dynarec">Dynarec Options</string>
     <string name="select_unstable">Unstable Optimisations</string>
@@ -42,6 +43,10 @@
     
     <string name="games_listing">Game List</string>
     
+    <string name="game_details">Game Info - %1$s</string>
+    <string name="info_unavailable">Game Info Unavailable</string>
+    <string name="disk_loading">Loading Disk Info</string>
+
     <string name="report_issue">Previous Crash Detected</string>
     <string name="bios_config">Configuration failed!</string>
     
@@ -62,6 +67,7 @@
     <string name="joystick_layout">Use Joystick For D-Pad Input</string>
     <string name="modified_layout">Enable Custom Key Layout</string>
     <string name="controller_compat">Enable Compatibility Mode</string>
+    <string name="controller_unavailable">Gamepad IME detected!\nPlease disable native interface</string>
     <string name="mic_in_port_2">Microphone plugged into port 2</string>
     
     <string name="customize_physical_controls">Customize Physical Controls</string>
@@ -88,6 +94,7 @@
     <string name="about">About</string>
     <string name="rateme">Rate Me</string>
     <string name="messages">Test Suite</string>
+    <string name="cloud">Cloud VMU</string>
     
     <string name="textOn">ON</string>
     <string name="textOff">OFF</string>
@@ -96,4 +103,11 @@
     <string name="dismiss">Dismiss</string>
     <string name="manual">Manual</string>
     <string name="options">Options</string>
+    
+    <string name="cloudInfos">With this tool you can upload/download your VMUs to/from Dropbox, in order to sync them with all your devices!</string>
+    <string name="uploadWarning">ATTENTION: You are about to upload your VMUs to Dropbox, please notice that this will OVERWRITE your last upload!!</string>
+    <string name="downloadWarning">ATTENTION: You are about to download your VMUs from Dropbox, please notice that this will OVERWRITE your currently VMUs!! By the way a backup copy will 
+        be created in VmuBackups folder!</string>
+    <string name="uploadVMU">Upload VMU</string>
+    <string name="downloadVMU">Download VMU</string>
 </resources>
