@@ -196,7 +196,7 @@ void rend_start_render()
 void rend_end_render()
 {
 #if 1 //also disabled the printf, it takes quite some time ...
-	#if HOST_OS!=OS_WINDOWS && !defined(_ANDROID)
+	#if HOST_OS!=OS_WINDOWS && !(defined(_ANDROID) || defined(TARGET_PANDORA))
 		if (!re.state) printf("Render > Extended time slice ...\n");
 	#endif
 #endif
