@@ -302,10 +302,21 @@ static const codec_interface codec_interfaces[] =
 	},
 };
 
+
+#if 0
 #pragma comment (lib, "wsock32.lib")
 
 #include <string>
 #include <sstream>
+
+#if HOST_OS == OS_LINUX
+	#include <sys/socket.h>
+	#include <netinet/in.h>
+	#include <netinet/ip.h>
+	#include <linux/tcp.h>
+	#include <netdb.h>
+	#include <unistd.h>
+#endif
 
 size_t HTTP_GET(string host, int port,string path, size_t offs, size_t len, void* pdata){
     string request;
@@ -339,9 +350,11 @@ size_t HTTP_GET(string host, int port,string path, size_t offs, size_t len, void
 
 	static bool init = false;
 	if (!init) {
+#if HOST_OS == OS_WINDOWS
 		static WSADATA wsaData;
 		if (WSAStartup(MAKEWORD(2, 0), &wsaData) != 0)
 			die("WSAStartup fail");
+#endif
 		init = true;
 	}
 
@@ -358,7 +371,11 @@ size_t HTTP_GET(string host, int port,string path, size_t offs, size_t len, void
     if (connect(sock, (struct sockaddr *) &serveraddr, sizeof(serveraddr)) < 0)
         return -1;
 
-	BOOL v = FALSE;
+#if HOST_OS == OS_WINDOWS
+	BOOL v = TRUE;
+#else
+	int v = 1;
+#endif
 
 	setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (const char*)&v, sizeof(v));
     //send request
@@ -376,6 +393,8 @@ size_t HTTP_GET(string host, int port,string path, size_t offs, size_t len, void
 		parse headers ..
 	*/
 	size_t content_length = 0;
+	
+	size_t rv = content_length;
 
 	for (;;) {
 		stringstream ss;
@@ -405,7 +424,6 @@ size_t HTTP_GET(string host, int port,string path, size_t offs, size_t len, void
 
 _data:
 
-	size_t rv = content_length;
 	if (len == 0) {
 
 	}
@@ -424,7 +442,11 @@ _data:
 
 	_cleanup:
     //disconnect
+#if HOST_OS == OS_WINDOWS
     closesocket(sock);
+#else
+	close(sock);
+#endif
 
 	/*
     //cleanup
@@ -433,7 +455,6 @@ _data:
 
     return  rv;
 }
-
 
 struct CORE_FILE {
 	FILE* f;
@@ -534,6 +555,8 @@ size_t core_fsize(core_file* fc)
 		return HTTP_GET(f->host, f->port, f->path, 0, 0,0);
 	}	
 }
+
+#endif
 
 #define MIN min
 #define MAX max

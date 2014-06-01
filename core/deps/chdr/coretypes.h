@@ -15,7 +15,4 @@ typedef s8 INT8;
 #define INLINE inline
 #endif
 
-//#define core_file FILE
-typedef void* core_file;
-
 #define ARRAY_LENGTH(x) (sizeof(x)/sizeof(x[0]))

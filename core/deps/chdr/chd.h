@@ -43,6 +43,7 @@
 #define __CHD_H__
 
 #include "coretypes.h"
+#include "deps/coreio/coreio.h"
 
 
 /***************************************************************************

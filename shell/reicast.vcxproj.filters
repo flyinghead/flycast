@@ -396,6 +396,9 @@
     <ClCompile Include="..\core\webui\server.cpp">
       <Filter>webui</Filter>
     </ClCompile>
+    <ClCompile Include="..\core\deps\coreio\coreio.cpp">
+      <Filter>deps\coreio</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="hw">
@@ -511,6 +514,9 @@
     </Filter>
     <Filter Include="webui">
       <UniqueIdentifier>{81193efc-656a-4154-9adf-146856d4c7d3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="deps\coreio">
+      <UniqueIdentifier>{23cfa286-fe88-439d-89de-a6a5a23cacc9}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -858,6 +864,9 @@
     </ClInclude>
     <ClInclude Include="..\core\webui\server.h">
       <Filter>webui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\coreio\coreio.h">
+      <Filter>deps\coreio</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
