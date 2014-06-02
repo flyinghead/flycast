@@ -395,6 +395,7 @@ public class InputModFragment extends Fragment {
 	 *            The y start value of the image within the atlas
 	 */
 	private Drawable getButtonImage(int x, int y) {
+		Bitmap image = null;
 		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB) {
 			Runtime.getRuntime().freeMemory();
 			System.gc();
@@ -403,7 +404,7 @@ public class InputModFragment extends Fragment {
 			InputStream bitmap = getResources().getAssets().open("buttons.png");
 			BitmapFactory.Options options = new BitmapFactory.Options();
 			options.inSampleSize = sS;
-			Bitmap image = BitmapFactory.decodeStream(bitmap, null, options);
+			image = BitmapFactory.decodeStream(bitmap, null, options);
 			bitmap.close();
 			bitmap = null;
 			if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB) {
@@ -423,6 +424,10 @@ public class InputModFragment extends Fragment {
 			e1.printStackTrace();
 		} catch (OutOfMemoryError E) {
 			if (sS == 2) {
+				if (image != null) {
+					image.recycle();
+					image = null;
+				}
 				sS = 4;
 				return getButtonImage(x, y);
 			} else {
