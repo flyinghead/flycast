@@ -240,7 +240,7 @@ struct Disc
 		{
 			u32 fmt=tracks[i].CTRL==4?2048:2352;
 			char fsto[1024];
-			sprintf(fsto,"%s%s%d.img",path.c_str(),"track",i);
+			sprintf(fsto,"%s%s%d.img",path.c_str(),".track",i);
 			
 			FILE* fo=fopen(fsto,"wb");
 
@@ -256,6 +256,8 @@ struct Disc
 };
 
 extern Disc* disc;
+
+Disc* OpenDisc(wchar* fn);
 
 struct RawTrackFile : TrackFile
 {

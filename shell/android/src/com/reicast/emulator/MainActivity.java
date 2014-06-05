@@ -33,7 +33,6 @@ import com.jeremyfeinstein.slidingmenu.lib.SlidingMenu;
 import com.jeremyfeinstein.slidingmenu.lib.SlidingMenu.OnOpenListener;
 import com.jeremyfeinstein.slidingmenu.lib.app.SlidingFragmentActivity;
 import com.reicast.emulator.config.Config;
-import com.reicast.emulator.config.ConfigureFragment;
 import com.reicast.emulator.config.InputFragment;
 import com.reicast.emulator.config.OptionsFragment;
 import com.reicast.emulator.emu.JNIdc;
@@ -209,28 +208,8 @@ public class MainActivity extends SlidingFragmentActivity implements
 					}
 
 				});
-				findViewById(R.id.settings_menu).setOnClickListener(new OnClickListener() {
-					public void onClick(View view) {
-						ConfigureFragment configFrag = (ConfigureFragment) getSupportFragmentManager()
-								.findFragmentByTag("CONFIG_FRAG");
-						if (configFrag != null) {
-							if (configFrag.isVisible()) {
-								return;
-							}
-						}
-						configFrag = new ConfigureFragment();
-						getSupportFragmentManager()
-						.beginTransaction()
-						.replace(R.id.fragment_container, configFrag,
-								"CONFIG_FRAG").addToBackStack(null)
-								.commit();
-						setTitle(R.string.settings);
-						sm.toggle(true);
-					}
 
-				});
-
-				findViewById(R.id.paths_menu).setOnClickListener(
+				findViewById(R.id.settings_menu).setOnClickListener(
 						new OnClickListener() {
 							public void onClick(View view) {
 								OptionsFragment optionsFrag = (OptionsFragment) getSupportFragmentManager()
@@ -246,7 +225,7 @@ public class MainActivity extends SlidingFragmentActivity implements
 								.replace(R.id.fragment_container,
 										optionsFrag, "OPTIONS_FRAG")
 										.addToBackStack(null).commit();
-								setTitle(R.string.paths);
+								setTitle(R.string.settings);
 								sm.toggle(true);
 							}
 

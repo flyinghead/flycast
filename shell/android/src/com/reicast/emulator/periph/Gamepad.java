@@ -210,4 +210,39 @@ public class Gamepad {
 				|| android.os.Build.DEVICE.equals("roth")
 				|| android.os.Build.PRODUCT.equals("thor");
 	}
+	
+	public void setCustomMapping(String id, int playerNum, SharedPreferences prefs) {
+		map[playerNum] = setModifiedKeys(id, playerNum, prefs);
+	}
+
+	public void initJoyStickLayout(int playerNum) {
+		if (!joystick[playerNum]) {
+			globalLS_X[playerNum] = previousLS_X[playerNum] = 0.0f;
+			globalLS_Y[playerNum] = previousLS_Y[playerNum] = 0.0f;
+		}
+	}
+	
+	public void runCompatibilityMode(int joy, SharedPreferences prefs) {
+		for (int n = 0; n < 4; n++) {
+			if (compat[n]) {
+				String id = portId[n];
+				joystick[n] = prefs.getBoolean(Gamepad.pref_js_separate + id, false);
+				getCompatibilityMap(n, portId[n], prefs);
+				initJoyStickLayout(n);
+			}
+		}
+	}
+	
+	public void fullCompatibilityMode(SharedPreferences prefs) {
+		for (int n = 0; n < 4; n++) {
+			runCompatibilityMode(n, prefs);
+		}
+	}
+
+	public void getCompatibilityMap(int playerNum, String id, SharedPreferences prefs) {
+		name[playerNum] = prefs.getInt(Gamepad.pref_pad + id, -1);
+		if (name[playerNum] != -1) {
+			map[playerNum] = setModifiedKeys(id, playerNum, prefs);
+		}
+	}
 }
