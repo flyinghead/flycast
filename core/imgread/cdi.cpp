@@ -6,7 +6,7 @@
 
 #include "deps/chdpsr/cdipsr.h"
 
-Disc* cdi_parse(wchar* file)
+Disc* cdi_parse(const wchar* file)
 {
 	FILE* fsource=fopen(file,"rb");
 

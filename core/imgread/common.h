@@ -257,7 +257,7 @@ struct Disc
 
 extern Disc* disc;
 
-Disc* OpenDisc(wchar* fn);
+Disc* OpenDisc(const wchar* fn);
 
 struct RawTrackFile : TrackFile
 {

@@ -1,7 +1,7 @@
 #include "common.h"
 #include <ctype.h>
 
-Disc* load_gdi(char* file)
+Disc* load_gdi(const char* file)
 {
 	u32 iso_tc;
 	Disc* disc = new Disc();
@@ -75,7 +75,7 @@ Disc* load_gdi(char* file)
 }
 
 
-Disc* gdi_parse(char* file)
+Disc* gdi_parse(const char* file)
 {
 	size_t len=strlen(file);
 	if (len>4)

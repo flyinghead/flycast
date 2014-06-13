@@ -22,4 +22,4 @@ struct cdimage {
 };
 
 
-void parse_cdfs(cdimage* cdio, int offs);
+bool parse_cdfs(FILE* w, cdimage* cdio, const char* prefix, int offs, bool first);

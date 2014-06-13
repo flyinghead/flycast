@@ -1,16 +1,16 @@
 #include "common.h"
 
-Disc* chd_parse(wchar* file);
-Disc* gdi_parse(wchar* file);
-Disc* cdi_parse(wchar* file);
+Disc* chd_parse(const wchar* file);
+Disc* gdi_parse(const wchar* file);
+Disc* cdi_parse(const wchar* file);
 #if HOST_OS==OS_WINDOWS
-Disc* ioctl_parse(wchar* file);
+Disc* ioctl_parse(const wchar* file);
 #endif
 
 u32 NullDriveDiscType;
 Disc* disc;
 
-Disc*(*drivers[])(wchar* path)=
+Disc*(*drivers[])(const wchar* path)=
 {
 	chd_parse,
 	gdi_parse,
@@ -129,7 +129,7 @@ bool ConvertSector(u8* in_buff , u8* out_buff , int from , int to,int sector)
 	return true;
 }
 
-Disc* OpenDisc(wchar* fn)
+Disc* OpenDisc(const wchar* fn)
 {
 	Disc* rv;
 	

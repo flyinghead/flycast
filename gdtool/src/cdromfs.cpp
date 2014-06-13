@@ -185,9 +185,9 @@ union voldesc {
 };
 
 char *iso_astring(char *, int len);
-char *cdrom_time(struct cdromtime *, int);
-void printdirent(struct directent *, struct fs *);
-void printdirents(struct directent *, struct fs *);
+double cdrom_time(struct cdromtime *, int);
+void printdirent(FILE* w, struct directent *, struct fs *, bool&);
+void printdirents(FILE* w, struct directent *, struct fs *);
 void printdirentheader(char *p);
 int searchdirent(struct directent *, struct directent *, struct directent *,
     struct fs *);
@@ -353,10 +353,11 @@ printdirentheader(char *path) {
 }
 /* Print all entries in the directory. */
 void
-printdirents(struct directent *dp, struct fs *fs) {
+printdirents(FILE* w, struct directent *dp, struct fs *fs) {
     struct directent *ldp;
     long    filesize = ISO_WD(FDV(dp, size, fs->type)),
         lbn = 0, cnt;
+	bool first = true;
     char    *buffer = (char *) malloc(fs->lbs);
     while (getblkdirent(dp, buffer, lbn, fs)) {
         long    entlen, namelen;
@@ -367,7 +368,7 @@ printdirents(struct directent *dp, struct fs *fs) {
         namelen = ISO_BY(FDV(ldp, name_len, fs->type));
         /* have we a record to match? */
         while (cnt > sizeof (union fsdir) && entlen && namelen) {
-            printdirent(ldp, fs);
+            printdirent(w, ldp, fs, first);
             /* next entry? */
             cnt -= entlen;
             ldp = (struct directent *) (((char *) ldp) + entlen);
@@ -380,61 +381,70 @@ printdirents(struct directent *dp, struct fs *fs) {
     free(buffer);
 }
 
+char __212[32];
+
 /* print CDROM file modes */
-void prmodes(int f) {
+char* prmodes(int f) {
+	memset(__212, 0, sizeof(__212));
+	char* p = __212;
+
     int i;
     for(i=0; i < 8; i++) {
         if(CD_FLAGBITS[i] == ' ')
             continue;
         if(f & (1<<i))
-            putchar(CD_FLAGBITS[i]);
-        else
-            putchar('-');
+            *p++=(CD_FLAGBITS[i]);
+        /*else
+            *p++=('-');*/
     }
-    putchar(' ');
+
+	return __212;
 }
 /* Print a directent on output, formatted. */
+#define HN(name, val, lst) fprintf(w, "%s\"%s\":%0.f", !lst?", " : "", name, (double)(val))
+#define HS(name, val, lst) fprintf(w, "%s\"%s\":\"%s\"", !lst?", " : " ", name, val)
+
 void
-printdirent(struct directent *dp, struct fs *fs) {
+printdirent(FILE* w, struct directent *dp, struct fs *fs, bool& first) {
     unsigned extattlen;
     unsigned fbname, name_len, entlen, enttaken;
-    /* mode flags */
-    prmodes(ISO_BY(FDV(dp, flags, fs->type)));
-/* Note: this feature of HSF is not used because of lack of semantic def. */
-#ifdef whybother
-    extattlen = ISO_BY(FDV(dp, ext_attr_length, fs->type));
-    if (extattlen)
-        printf(" E%3d", extattlen);
-    else
-        printf("     ");
-#endif
-    /* size */
-    printf("\t%6d", ISO_WD(FDV(dp, size, fs->type)));
-    /* time */
-    printf(" %s",
-       cdrom_time((struct cdromtime *) FDV(dp, date, fs->type),fs->type));
-    /* compensate for reserved field used to word align directory entry */
-    entlen = ISO_BY(FDV(dp, length, fs->type));
+
+	entlen = ISO_BY(FDV(dp, length, fs->type));
     name_len = ISO_BY(FDV(dp, name_len, fs->type));
     enttaken = sizeof(union fsdir) + name_len;
-    if (enttaken & 1)
+
+	if (enttaken & 1)
         enttaken++;
     fbname = ISO_BY(FDV(dp, name(), fs->type));
     entlen -= enttaken;
-    /* print size of CDROM Extensions field if present */
-    if (entlen)
-        printf(" %3d", entlen);
-    else
-        printf("    ");
-    /* finally print name. compensate for unprintable names */
-    if (name_len == 1 && fbname <= 1) {
-        printf("\t%s\n", (fbname == 0) ? "." : "..");
-    } else
-        printf("\t%s\n",
-            iso_astring(FDV(dp, name(), fs->type), name_len));
-};
-/* attempt to print a CDROM file's creation time */
-char *
+
+	if (name_len == 1 && fbname <= 1) 
+		return;
+
+
+	fprintf(w, "%s\n\t{", first ? "" : ",");
+	{
+		first = false;
+
+		HS("name", iso_astring(FDV(dp, name(), fs->type), name_len), true);
+
+		//modes
+		HS("modes", prmodes(ISO_BY(FDV(dp, flags, fs->type))), false);
+
+		// size
+		HN("size", ISO_WD(FDV(dp, size, fs->type)), false);
+
+		//lba
+		HN("startFAD", 150 + ISO_WD(FDV(dp, extent, fs->type)), false);
+
+		//time
+		HN("time", cdrom_time((struct cdromtime *) FDV(dp, date, fs->type),fs->type), false);
+	}
+	fprintf(w, " }");
+}
+
+//cdrom_time to js timestamp
+double
 cdrom_time(struct cdromtime *crt, int type) {
     struct tm tm;
     static char buf[32];
@@ -457,10 +467,8 @@ cdrom_time(struct cdromtime *crt, int type) {
         fmt = "%b %e %H:%M:%S %Z %Y";
     } else
 #endif
-        fmt = "%b %d %H:%M:%S %Y";
-    /* step 2. use ANSI C standard function to format time properly */
-    (void)strftime(buf, sizeof(buf), fmt, &tm);
-    return (buf);
+
+	return 1000.0*mktime(&tm);
 }
 static char __strbuf[200];
 /* turn a blank padded character field into the null terminated strings
@@ -533,14 +541,18 @@ mainy(int argc, char *argv[])
 #endif
 
 
-void find(directent* rootent, fs* fsd, char* pathname) {
+void find(FILE* w, directent* rootent, fs* fsd, char* pathname) {
 	struct directent openfile;
 
 	if (lookup(rootent, &openfile, pathname, fsd)) {
 		/* if a directory, format and list it */
 		if (ISO_BY(FDV(&openfile, flags, fsd->type)) & CD_DIRECTORY) {
+			/*
 			printdirentheader(pathname);
-			printdirents(&openfile, fsd);
+			*/
+			fprintf(w, "[");
+			printdirents(w, &openfile, fsd);
+			fprintf(w, "\n]\n");
 		}
 		/* if a file, print it on standard output */
 		else
@@ -551,7 +563,7 @@ void find(directent* rootent, fs* fsd, char* pathname) {
 }
 
 
-void parse_cdfs(cdimage* cdio, int offs) {
+bool parse_cdfs(FILE* w, cdimage* cdio, const char* name, int offs, bool first) {
 	//im
 	fs fsd;
 	directent rootent;
@@ -564,10 +576,14 @@ void parse_cdfs(cdimage* cdio, int offs) {
 
 	/* is there a filesystem we can understand here? */
 	if (iscdromfs(&rootent, &fsd, offs) ) {
-		/* print the contents of the root directory to give user a start */
-		printf("Root Directory Listing:\n");
-		printdirentheader("/");
-		printdirents(&rootent, &fsd);
+		//printdirentheader("/");
+		fprintf(w, "%s\"%s\": [", first? "\n":",\n", name);
+		printdirents(w, &rootent, &fsd);
+		fprintf(w, "\n]");
 		
+		return true;
 	}
+	else
+		return false;
+
 }
