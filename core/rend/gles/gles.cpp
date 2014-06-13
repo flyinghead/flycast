@@ -1087,7 +1087,7 @@ void OSD_DRAW()
 		glUseProgram(gl.OSD_SHADER.program);
 
 		//reset rendering scale
-
+/*
 		float dc_width=640;
 		float dc_height=480;
 
@@ -1101,7 +1101,7 @@ void OSD_DRAW()
 		ShaderUniforms.scale_coefs[3]=-1;
 		
 		glUniform4fv( gl.OSD_SHADER.scale, 1, ShaderUniforms.scale_coefs);
-
+*/
 
 		glEnable(GL_BLEND);
 		glDisable(GL_DEPTH_TEST);
@@ -1136,6 +1136,8 @@ void OSD_DRAW()
     
     glBindTexture(GL_TEXTURE_2D,osd_font);
     glUseProgram(gl.OSD_SHADER.program);
+  
+  /*
     //-1 -> too much to left
     ShaderUniforms.scale_coefs[0]=2.0f/(screen_width/dc2s_scale_h);
     ShaderUniforms.scale_coefs[1]=-2/dc_height;
@@ -1143,7 +1145,7 @@ void OSD_DRAW()
     ShaderUniforms.scale_coefs[3]=-1;
     
     glUniform4fv( gl.OSD_SHADER.scale, 1, ShaderUniforms.scale_coefs);
-
+*/
 
     glEnable(GL_BLEND);
     glDisable(GL_DEPTH_TEST);
