@@ -1,3 +1,5 @@
+notifications:
+  irc: "chat.freenode.net#reicast"
 language: cpp
 compiler: gcc
 before_install:
