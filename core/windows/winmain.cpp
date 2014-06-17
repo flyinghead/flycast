@@ -273,7 +273,7 @@ LRESULT CALLBACK WndProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 // Width and height of the window
 #define WINDOW_WIDTH  1280
-#define WINDOW_HEIGHT 800
+#define WINDOW_HEIGHT 720
 
 
 void* window_win;
@@ -308,7 +308,6 @@ void os_CreateWindow()
 
 	window_win=hWnd;
 
-	void os_InitAudio();
 	os_InitAudio();
 }
 
