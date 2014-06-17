@@ -66,6 +66,11 @@ public class FileBrowser extends Fragment {
 		super.onCreate(savedInstanceState);
 
 		mPrefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+			sdcard = getActivity().getExternalFilesDir(null);
+			home_directory = sdcard + "/dc";
+			game_directory = sdcard + "/dc";
+		}
 		home_directory = mPrefs.getString(Config.pref_home, home_directory);
 		game_directory = mPrefs.getString(Config.pref_games, game_directory);
 

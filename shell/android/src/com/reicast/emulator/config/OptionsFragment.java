@@ -83,6 +83,11 @@ public class OptionsFragment extends Fragment {
 		// setContentView(R.layout.activity_main);
 
 		//parentActivity = getActivity();
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+			sdcard = getActivity().getExternalFilesDir(null);
+			home_directory = sdcard + "/dc";
+			game_directory = sdcard + "/dc";
+		}
 		
 
 		mPrefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
