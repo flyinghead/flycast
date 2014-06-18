@@ -181,6 +181,10 @@ void extract_data(FILE* w, bool first, Disc* d, int start_fad, int size) {
 	}
 }
 
+void hash_track() {
+
+}
+
 bool jsarray;
 vector<string> cmds;
 vector<string> files;
@@ -201,9 +205,17 @@ void exec_cmd(FILE* w, bool first,  Disc* d) {
 			}
 			break;
 
-		case 'i':
-			extract_info(w, first, d);
-			break;
+			case 'i':
+				extract_info(w, first, d);
+				break;
+
+			case 'h':
+				printf("hashes not supported yet");
+				break;
+
+			case 'f':
+				printf("fingerprint not supported yet");
+				break;
 		}
 	}
 }
@@ -238,27 +250,23 @@ void parse_args(int argc, char** argv) {
 
 		if (p[0][0] == '-') 
 		{
-			i++;
+			auto cmd = string(p[0]);
 
-			switch(p[0][1]) {
-			
-			case 'G':
-			case 'g':
+			if (cmd == "-get") {
 				cmds.push_back("g");
 				cmds.push_back(p[1]);
 				cmds.push_back(p[2]);
 				i+=2;
 				break;
-			
-			case 'I':
-			case 'i':
+			} else if (cmd == "-info") {
 				cmds.push_back("i");
-				break;
-
-			default:
-				printf("Unknown option %c\n",*p[1]);
+			} else if (cmd == "-hash") {
+				cmds.push_back("h");
+			} else if (cmd == "-fingerprint") {
+				cmds.push_back("f");
+			} else {
+				printf("Unknown option %s\n", cmd.c_str());
 			}
-
 		}
 		else
 			files.push_back(p[0]);

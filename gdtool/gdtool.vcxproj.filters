@@ -115,6 +115,9 @@
     <ClCompile Include="src\cdromfs.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="..\core\deps\coreio\coreio.cpp">
+      <Filter>deps\coreio</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\core\imgread\SCSIDEFS.H">
@@ -195,6 +198,9 @@
     <ClInclude Include="src\cdromfs_imp.h">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="..\core\deps\coreio\coreio.h">
+      <Filter>deps\coreio</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="imgread">
@@ -220,6 +226,9 @@
     </Filter>
     <Filter Include="deps\crypto">
       <UniqueIdentifier>{a78ba9fb-70ba-4319-89e7-926abca0794c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="deps\coreio">
+      <UniqueIdentifier>{cac3d6da-3b7f-47ae-89be-59803c990f41}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

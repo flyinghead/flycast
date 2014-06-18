@@ -66,6 +66,7 @@
   <ItemGroup>
     <ClCompile Include="..\core\deps\chdpsr\cdipsr.cpp" />
     <ClCompile Include="..\core\deps\chdr\chdr.cpp" />
+    <ClCompile Include="..\core\deps\coreio\coreio.cpp" />
     <ClCompile Include="..\core\deps\crypto\md5.cpp" />
     <ClCompile Include="..\core\deps\crypto\sha1.cpp" />
     <ClCompile Include="..\core\deps\libpng\png.c" />
@@ -110,6 +111,7 @@
     <ClInclude Include="..\core\deps\chdpsr\cdipsr.h" />
     <ClInclude Include="..\core\deps\chdr\chd.h" />
     <ClInclude Include="..\core\deps\chdr\coretypes.h" />
+    <ClInclude Include="..\core\deps\coreio\coreio.h" />
     <ClInclude Include="..\core\deps\crypto\md5.h" />
     <ClInclude Include="..\core\deps\crypto\sha1.h" />
     <ClInclude Include="..\core\deps\libpng\config.h" />
