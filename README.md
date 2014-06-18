@@ -70,7 +70,10 @@ Beta versions
 -------------
 [![Build Status](https://travis-ci.org/reicast/reicast-emulator.svg?branch=master)](https://travis-ci.org/reicast/reicast-emulator)
 
-Automated Git builds can be found at http://reicast.angelxwind.net/ for iOS and Android.
+Official builds from the reicast ci service can be found at http://builds.reicast.com/
+
+Additional builds (iOS & android) can be found at [angelxwind's](http://reicast.angelxwind.net/) buildbot
+
 
 Donations and stuff
 -------------------
