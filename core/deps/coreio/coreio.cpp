@@ -207,7 +207,7 @@ size_t core_fseek(core_file* fc, size_t offs, size_t origin) {
 		die("Invalid code path");
 
 	if (f->f)
-		fseek((FILE*)f, f->seek_ptr, SEEK_SET);
+		fseek(f->f, f->seek_ptr, SEEK_SET);
 
 	return 0;
 }
