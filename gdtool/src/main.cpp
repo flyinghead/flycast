@@ -100,8 +100,9 @@ struct gdio : cdimage {
 	}
 };
 
+bool has_info_basename = false;
 
-bool extract_info(FILE* w, bool first, Disc* d) {
+bool extract_info(FILE* w, bool first, Disc* d, const string& basename) {
 
 	int start_fad = -1;
 	if (d->type == GdRom) {
@@ -118,7 +119,6 @@ bool extract_info(FILE* w, bool first, Disc* d) {
 		start_fad = d->sessions[1].StartFAD; 
 	}
 
-
 	u8 ip_meta[2048];
 	d->ReadSectors(start_fad,1,ip_meta,2048);
 
@@ -126,6 +126,10 @@ bool extract_info(FILE* w, bool first, Disc* d) {
 	fprintf(w, first?"\n{":",\n{");
 	{
 		data_kvp(w, "type",d->type == GdRom? "gdrom" : "cdrom", true);
+
+		if (has_info_basename) {
+			data_kvp(w, "basename", basename.c_str(), false);
+		}
 
 		parse_ip_meta(w, ip_meta, false);
 
@@ -188,7 +192,7 @@ void hash_track() {
 bool jsarray;
 vector<string> cmds;
 vector<string> files;
-void exec_cmd(FILE* w, bool first,  Disc* d) {
+void exec_cmd(FILE* w, bool first,  Disc* d, const string& basename) {
 	
 	for (auto i=cmds.begin();i!=cmds.end();i++)
 	{
@@ -206,7 +210,7 @@ void exec_cmd(FILE* w, bool first,  Disc* d) {
 			break;
 
 			case 'i':
-				extract_info(w, first, d);
+				extract_info(w, first, d, basename);
 				break;
 
 			case 'h':
@@ -228,7 +232,15 @@ bool process_image(FILE* w, bool& first, const string& image) {
 		return false;
 	}
 
-	exec_cmd(w, first, d);
+	auto l = image.find_last_of('\\');
+	if (l == image.npos)
+		l = image.find_last_of('/');
+	if (l == image.npos)
+		l = -1;
+
+
+	string basename = image.substr(l + 1, image.find_last_of('.') - l-1);
+	exec_cmd(w, first, d, basename);
 
 	delete d;
 
@@ -260,6 +272,8 @@ void parse_args(int argc, char** argv) {
 				break;
 			} else if (cmd == "-info") {
 				cmds.push_back("i");
+			} else if (cmd == "-info-basename") {
+				has_info_basename = true;
 			} else if (cmd == "-hash") {
 				cmds.push_back("h");
 			} else if (cmd == "-fingerprint") {
