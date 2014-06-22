@@ -191,6 +191,11 @@ core_file* core_fopen(const char* filename)
 		}
 	} else {
 		rv->f = fopen(filename, "rb");
+
+		if (!rv->f) {
+			delete rv;
+			return 0;
+		}
 	}
 
 	return (core_file*)rv;
@@ -232,7 +237,7 @@ int core_fclose(core_file* fc)
 	CORE_FILE* f = (CORE_FILE*)fc;
 
 	if (f->f) {
-		fclose((FILE*)f);
+		fclose(f->f);
 	}
 	else {
 
