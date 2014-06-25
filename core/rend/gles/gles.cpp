@@ -217,9 +217,11 @@ lowp float fog_mode2(highp float invW)  \n\
 
 #ifndef GLES
 #define FRAGCOL "FragColor"
+#define TEXLOOKUP "texture"
 #define vary "in"
 #else
 #define FRAGCOL "gl_FragColor"
+#define TEXLOOKUP "texture2D"
 #endif
 
 
@@ -266,7 +268,7 @@ void main() \n\
 	#endif\n\
 	#if pp_Texture==1 \n\
 	{ \n\
-		lowp vec4 texcol=texture2D(tex,vtx_uv); \n\
+		lowp vec4 texcol=" TEXLOOKUP "(tex,vtx_uv); \n\
 		\n\
 		#if pp_IgnoreTexA==1 \n\
 			texcol.a=1.0;	 \n\
@@ -343,7 +345,7 @@ void main() \n\
 { \n\
 	mediump vec2 uv=vtx_uv; \n\
 	uv.y=1.0-uv.y; \n\
-	" FRAGCOL "=vtx_base*texture2D(tex,uv.st); \n\n\
+	" FRAGCOL "=vtx_base*" TEXLOOKUP "(tex,uv.st); \n\n\
 }";
 
 
