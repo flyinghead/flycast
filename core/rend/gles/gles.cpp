@@ -583,6 +583,12 @@ bool gl_init(void* hwnd, void* hdc)
 	if (rv) {
 		rv = gl3wInit() != -1 && gl3wIsSupported(3, 1);
 	}
+
+	RECT r;
+	GetClientRect((HWND)hwnd, &r);
+	screen_width = r.right - r.left;
+	screen_height = r.bottom - r.top;
+
 	return rv;
 }
 #include <Wingdi.h>
@@ -785,6 +791,14 @@ GLuint osd_font;
 
 bool gl_create_resources()
 {
+
+#ifndef GLES
+	//create vao
+	//This is really not "proper", vaos are suposed to be defined once
+	//i keep updating the same one to make the es2 code work in 3.1 context
+	glGenVertexArrays(1, &gl.vbo.vao);
+#endif
+
 	//create vbos
 	glGenBuffers(1, &gl.vbo.geometry);
 	glGenBuffers(1, &gl.vbo.modvols);

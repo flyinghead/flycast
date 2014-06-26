@@ -904,8 +904,11 @@ void SetMVS_Mode(u32 mv_mode,ISP_Modvol ispc)
 	}
 }
 
+
 void SetupMainVBO()
 {
+	glBindVertexArray(gl.vbo.vao);
+
 	glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.geometry); glCheck();
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs); glCheck();
 
@@ -925,6 +928,8 @@ void SetupMainVBO()
 
 void SetupModvolVBO()
 {
+	glBindVertexArray(gl.vbo.vao);
+
 	glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.modvols); glCheck();
 
 	//setup vertex buffers attrib pointers

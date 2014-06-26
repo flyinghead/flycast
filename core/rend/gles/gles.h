@@ -26,7 +26,7 @@
 #endif
 
 
-#define glCheck() false
+#define glCheck() verify(glGetError()==GL_NO_ERROR)
 #define eglCheck() false
 
 #define VERTEX_POS_ARRAY 0
@@ -86,6 +86,9 @@ struct gl_ctx
 	struct
 	{
 		GLuint geometry,modvols,idxs,idxs2;
+#ifndef GLES
+		GLuint vao;
+#endif
 	} vbo;
 
 
