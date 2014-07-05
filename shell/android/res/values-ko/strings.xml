@@ -7,12 +7,12 @@
     <string name="game_path">기본 게임 저장</string>
     
     <string name="boot_bios">부팅 드림 캐스트 바이오스</string>
-    <string name="missing_bios">BIOS는 없음.드림 캐스트 BIOS가 작동하려면이 에뮬레이터가 필요합니다.BIOS 파일에 배치 %1$s/데이터/dc_boot.bin</string>
-    <string name="missing_flash">누락 플래시.드림 캐스트 플래시가 작동하려면이 에뮬레이터가 필요합니다.플래시 파일에 배치 %1$s/데이터/dc_flash.bin</string>
-    <string name="require_bios">당신은 BIOS를 제공해야</string>
+    <string name="missing_bios">BIOS가 없음.드림캐스트가 작동하려면 BIOS가 필요합니다.BIOS 파일에 배치 %1$s/데이터/dc_boot.bin</string>
+    <string name="missing_flash">플래시파일 없음.드림 캐스트가 에뮬레이터가 작동하려면 플레시파일이필요합니다.%1$s/데이터/dc_flash.bin에 넣으십시오</string>
+    <string name="require_bios">BIOS가 필요합니다</string>
     
     <string name="folder_bios">BOOT의 BIOS</string>
-    <string name="folder_select">현재 폴더를 선택</string>
+    <string name="folder_select">이 폴더를 선택</string>
 
     <string name="experimental_opts">실험 (광범위한 패닉이 발생할 수 있음)</string>
     <string name="select_dynarec">Dynarec 옵션</string>
@@ -34,7 +34,7 @@
     <string name="controller_b">제어 장치 B</string>
     <string name="controller_c">제어 장치 C</string>
     <string name="controller_d">제어 장치 D</string>
-    <string name="controller_not_connected">컨트롤러 연결되지 않음</string>
+    <string name="controller_not_connected">컨트롤러가 연결되지 않음</string>
     <string name="controller_none_selected">선정 된 제어기가 없습니다</string>
     <string name="select">선택</string>
     <string name="remove">제거</string>
