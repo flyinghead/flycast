@@ -1,10 +1,12 @@
 package com.reicast.emulator.config;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.channels.FileChannel;
 
 import android.app.Activity;
 import android.content.SharedPreferences;
@@ -121,6 +123,11 @@ public class OptionsFragment extends Fragment {
 						home_directory.replace("/data", "");
 						Toast.makeText(getActivity(), R.string.data_folder,
 								Toast.LENGTH_SHORT).show();
+					}
+					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+						cleanHouse(getActivity().getExternalFilesDir(null));
+						buildHouse(new File(home_directory), getActivity().getExternalFilesDir(null));
+						home_directory = sdcard + "/dc";
 					}
 					mPrefs.edit().putString("home_directory", home_directory)
 							.commit();
@@ -509,6 +516,43 @@ public class OptionsFragment extends Fragment {
 
 			}
 		});
+	}
+	
+	private void cleanHouse(File dir) {
+		File[] existing = dir.listFiles();
+		for (File item: existing) {
+			if (item.isDirectory()) {
+				cleanHouse(item);
+			} else {
+				item.delete();
+			}
+		}
+	}
+	
+	private void buildHouse(File dir, File root) {
+		File[] existing = dir.listFiles();
+		for (File item: existing) {
+			if (item.isDirectory()) {
+				item.mkdirs();
+				buildHouse(item, item);
+			} else {
+				try {
+					copy(item, new File(root + "/" + item));
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+	}
+	
+	public void copy(File src, File dst) throws IOException {
+	    FileInputStream inStream = new FileInputStream(src);
+	    FileOutputStream outStream = new FileOutputStream(dst);
+	    FileChannel inChannel = inStream.getChannel();
+	    FileChannel outChannel = outStream.getChannel();
+	    inChannel.transferTo(0, inChannel.size(), outChannel);
+	    inStream.close();
+	    outStream.close();
 	}
 	
 	private void flashBios(String localized) {
