@@ -37,6 +37,7 @@ public class Config {
 	public static final String pref_renderdepth = "depth_render";
 
 	public static final String pref_touchvibe = "touch_vibration_enabled";
+	public static final String pref_vibrationDuration = "vibration_duration";
 	public static final String pref_mic = "mic_plugged_in";
 	public static final String pref_vmu = "vmu_floating";
 
@@ -56,6 +57,7 @@ public class Config {
 	public static boolean pvrrender = false;
 	public static String cheatdisk = "null";
 	public static boolean nativeact = false;
+	public static int vibrationDuration = 20;
 
 	private SharedPreferences mPrefs;
 

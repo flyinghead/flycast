@@ -83,6 +83,7 @@ public class GL2JNIView extends GLSurfaceView
 	Renderer rend;
 
 	private boolean touchVibrationEnabled;
+	private int vibrationDuration;
 	Context context;
 
 	public void restoreCustomVjoyValues(float[][] vjoy_d_cached) {
@@ -150,6 +151,7 @@ public class GL2JNIView extends GLSurfaceView
 		ethd = new EmuThread(!Config.nosound);
 
 		touchVibrationEnabled = prefs.getBoolean(Config.pref_touchvibe, true);
+		vibrationDuration = prefs.getInt(Config.pref_vibrationDuration, 20);
 
 		int renderType = prefs.getInt(Config.pref_rendertype, LAYER_TYPE_HARDWARE);
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
@@ -389,7 +391,7 @@ public class GL2JNIView extends GLSurfaceView
 							{
 								if (vjoy[j][5]==0)
 									if (!editVjoyMode && touchVibrationEnabled)
-										vib.vibrate(50);
+										vib.vibrate(vibrationDuration);
 								vjoy[j][5]=2;
 							}
 

@@ -55,6 +55,7 @@
     <string name="customize_touch_controls">Customize Touch Controls</string>
     <string name="launch_editor">Launch Editor</string>
     <string name="touch_vibration">Haptic Feedback</string>
+    <string name="vibration_duration">Duration of Haptic Feedback</string>
     <string name="controller_a">Controller A</string>
     <string name="controller_b">Controller B</string>
     <string name="controller_c">Controller C</string>
