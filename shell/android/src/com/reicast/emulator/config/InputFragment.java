@@ -3,6 +3,7 @@ package com.reicast.emulator.config;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -10,6 +11,7 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Vibrator;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.util.Log;
@@ -22,6 +24,8 @@ import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.SeekBar;
 import android.widget.TableLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -48,6 +52,7 @@ public class InputFragment extends Fragment {
 
 	private Gamepad pad = new Gamepad();
 	public MOGAInput moga = new MOGAInput();
+	Vibrator vib;
 
 	// Container Activity must implement this interface
 	public interface OnClickListener {
@@ -69,6 +74,9 @@ public class InputFragment extends Fragment {
 
 		sharedPreferences = PreferenceManager
 				.getDefaultSharedPreferences(parentActivity);
+
+		Config.vibrationDuration = sharedPreferences.getInt(Config.pref_vibrationDuration, 20);
+		vib = (Vibrator) parentActivity.getSystemService(Context.VIBRATOR_SERVICE);
 
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
 			ImageView icon_a = (ImageView) getView().findViewById(
@@ -97,11 +105,42 @@ public class InputFragment extends Fragment {
 		if (!MainActivity.isBiosExisting() || !MainActivity.isFlashExisting())
 			buttonLaunchEditor.setEnabled(false);
 
+		final TextView duration = (TextView) getView().findViewById(R.id.vibDuration_current);
+		final LinearLayout vibLay = (LinearLayout) getView().findViewById(R.id.vibDuration_layout);
+		final SeekBar vibSeek = (SeekBar) getView().findViewById(R.id.vib_seekBar);
+
+		if (sharedPreferences.getBoolean(Config.pref_touchvibe, true)) {
+		  vibLay.setVisibility(View.VISIBLE);
+		} else {
+		  vibLay.setVisibility(View.GONE);
+		}
+
+		duration.setText(String.valueOf(Config.vibrationDuration +  " ms"));
+		vibSeek.setProgress(Config.vibrationDuration);
+
+		vibSeek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+		    public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+		      duration.setText(String.valueOf(progress + 5 + " ms"));
+		    }
+
+		    public void onStartTrackingTouch(SeekBar seekBar) {
+		      // TODO Auto-generated method stub
+		    }
+
+		    public void onStopTrackingTouch(SeekBar seekBar) {
+			int progress = seekBar.getProgress() + 5;
+			sharedPreferences.edit().putInt(Config.pref_vibrationDuration, progress).commit();
+			Config.vibrationDuration = progress;
+			vib.vibrate(progress);
+		    }
+		});
+
 		OnCheckedChangeListener touch_vibration = new OnCheckedChangeListener() {
 			public void onCheckedChanged(CompoundButton buttonView,
 					boolean isChecked) {
 				sharedPreferences.edit()
 						.putBoolean(Config.pref_touchvibe, isChecked).commit();
+				vibLay.setVisibility( isChecked ? View.VISIBLE : View.GONE );
 			}
 		};
 		switchTouchVibrationEnabled = (Switch) getView().findViewById(
