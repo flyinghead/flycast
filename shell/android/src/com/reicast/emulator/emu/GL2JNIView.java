@@ -564,7 +564,8 @@ public class GL2JNIView extends GLSurfaceView
 
 		public void onSurfaceChanged(GL10 gl,int width,int height)
 		{
-			JNIdc.rendinit(sWidth,sHeight);
+			gl.glViewport(0, 0, width, height);
+			JNIdc.rendinit(width,height);
 		}
 
 		public void onSurfaceCreated(GL10 gl,EGLConfig config)
