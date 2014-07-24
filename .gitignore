@@ -37,3 +37,10 @@ build/*
 *Karen_angelXwind*
 local.properties
 ant.properties
+*build_obj
+Workdir/data
+Workdir/reicast*
+Workdir/vmu*
+Workdir/webui*
+Workdir/emu.cfg
+Workdir/lib*
