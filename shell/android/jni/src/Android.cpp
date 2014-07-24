@@ -508,3 +508,8 @@ int push_vmu_screen(u8* buffer)
 	env->CallVoidMethod(vmulcd,updatevmuscreen,jpix);
 	return 1;
 }
+
+void os_DebugBreak()
+{
+  //notify the parent thread about it ...
+}

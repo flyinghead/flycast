@@ -488,6 +488,11 @@ double os_GetSeconds()
 	return time_now.QuadPart*qpfd;
 }
 
+void os_DebugBreak()
+{
+	__debugbreak();
+}
+
 //#include "plugins/plugin_manager.h"
 
 void os_DoEvents()
