@@ -9,7 +9,7 @@ before_install:
 - sudo apt-get -qq update
 - sudo apt-get -qq -y install openjdk-7-jdk ant lib32z1-dev lib32stdc++6
 - GIT_HASH=`git log --pretty=format:'%h' -n 1`
-- GIT_BUILD=`git rev-parse --abbrev-ref HEAD`-$GIT_HASH
+- GIT_BUILD=`git describe --all`-$GIT_HASH
 install:
 - download_extract http://dl.google.com/android/ndk/android-ndk-r9c-linux-x86_64.tar.bz2
   android-ndk-r9c-linux-x86_64.tar.bz2
