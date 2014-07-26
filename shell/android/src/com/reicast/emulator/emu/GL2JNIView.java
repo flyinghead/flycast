@@ -291,7 +291,7 @@ public class GL2JNIView extends GLSurfaceView
 					vjoy[i][3] = vbase(vjoy_d[i][3],scl);
 				}
 
-				for(int i=0;i<vjoy.length;i++)
+				for(int i=0;i<VJoy.VJoyCount;i++)
 					JNIdc.vjoy(i,vjoy[i][0],vjoy[i][1],vjoy[i][2],vjoy[i][3]);
 
 				reset_analog();
@@ -319,7 +319,7 @@ public class GL2JNIView extends GLSurfaceView
 			else if (buttonId <= 12)
 				return 5; // Analog
 			else
-				return -1; // Invalid
+				return 0; // DPAD diagonials
 	}
 
 	public static int[] kcode_raw = { 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF };
@@ -377,13 +377,20 @@ public class GL2JNIView extends GLSurfaceView
 				{
 					if(x>vjoy[j][0] && x<=(vjoy[j][0]+vjoy[j][2]))
 					{
-						int pre=(int)(event.getPressure(i)*255);
-						if (pre>20)
-						{
-							pre-=20;
-							pre*=7;
-						}
-						if (pre>255) pre=255;
+						/*
+							//Disable pressure sensitive R/L
+							//Doesn't really work properly
+
+							int pre=(int)(event.getPressure(i)*255);
+							if (pre>20)
+							{
+								pre-=20;
+								pre*=7;
+							}
+							if (pre>255) pre=255;
+						*/
+
+						int pre = 255;
 
 						if(y>vjoy[j][1] && y<=(vjoy[j][1]+vjoy[j][3]))
 						{
@@ -672,6 +679,44 @@ public class GL2JNIView extends GLSurfaceView
 
 			return 1;
 		}
+	}
+
+	void showMessage(String msg) {
+		/*
+		activity.runOnUiThread(new Runnable() {
+        	public void run() {
+	        
+	        	AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
+				context);
+ 
+				// set title
+				alertDialogBuilder.setTitle("Ooops");
+	 
+				// set dialog message
+				alertDialogBuilder
+					.setMessage(msg)
+					.setCancelable(false)
+					.setPositiveButton("Okay...",new DialogInterface.OnClickListener() {
+						public void onClick(DialogInterface dialog,int id) {
+							// if this button is clicked, close
+							// current activity
+							MainActivity.this.finish();
+						}
+					  });
+	 
+					// create alert dialog
+					AlertDialog alertDialog = alertDialogBuilder.create();
+	 
+					// show it
+					alertDialog.show();
+	        }
+	    });
+	    */
+	}
+
+	void die() {
+		showMessage("Something went very bad. Please report this on the reicast forums.");
+		onStop();
 	}
 
 	public void onStop() {
