@@ -127,7 +127,6 @@ public class OptionsFragment extends Fragment {
 					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
 						cleanHouse(getActivity().getExternalFilesDir(null));
 						buildHouse(new File(home_directory), getActivity().getExternalFilesDir(null));
-						home_directory = sdcard + "/dc";
 					}
 					mPrefs.edit().putString("home_directory", home_directory)
 							.commit();
