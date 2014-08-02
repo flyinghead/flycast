@@ -315,9 +315,10 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_run(JNIEnv *env,jobje
 
 	jsamples=env->NewShortArray(SAMPLE_COUNT*2);
 	writemid=env->GetMethodID(env->GetObjectClass(track),"WriteBuffer","([SI)I");
+  //showMessageMid=env->GetMethodID(env->GetObjectClass(track),"WriteBuffer","([SI)I");
+  //dieMid=env->GetMethodID(env->GetObjectClass(track),"Die","([SI)I");
 
 	dc_run();
-
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setupMic(JNIEnv *env,jobject obj,jobject sip)
