@@ -13,6 +13,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.content.res.Configuration;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
@@ -22,10 +23,10 @@ import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.WindowManager;
 import android.view.View.OnClickListener;
 import android.view.View.OnSystemUiVisibilityChangeListener;
 import android.view.View.OnTouchListener;
+import android.view.WindowManager;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -35,6 +36,7 @@ import com.jeremyfeinstein.slidingmenu.lib.app.SlidingFragmentActivity;
 import com.reicast.emulator.config.Config;
 import com.reicast.emulator.config.InputFragment;
 import com.reicast.emulator.config.OptionsFragment;
+import com.reicast.emulator.debug.GenerateLogs;
 import com.reicast.emulator.emu.JNIdc;
 import com.reicast.emulator.periph.Gamepad;
 
@@ -322,7 +324,11 @@ public class MainActivity extends SlidingFragmentActivity implements
 						}
 					});
 				} else {
-					messages.setVisibility(View.GONE);
+					messages.setOnClickListener(new OnClickListener() {
+						public void onClick(View view) {
+							generateErrorLog();
+						}
+					});
 				}
 			}
 		});
@@ -335,6 +341,17 @@ public class MainActivity extends SlidingFragmentActivity implements
 					return false;
 			}
 		});
+	}
+	
+	public void generateErrorLog() {
+		GenerateLogs mGenerateLogs = new GenerateLogs(MainActivity.this);
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+			mGenerateLogs.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,
+					getFilesDir().getAbsolutePath());
+		} else {
+			mGenerateLogs.execute(getFilesDir().getAbsolutePath());
+		}
+
 	}
 
 	/**
