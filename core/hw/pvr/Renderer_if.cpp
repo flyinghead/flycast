@@ -71,9 +71,6 @@ int max_idx,max_mvo,max_op,max_pt,max_tr,max_vtx,max_modt, ovrn;
 TA_context* _pvrrc;
 void SetREP(TA_context* cntx);
 
-int frameskip=0;
-bool FrameSkipping=false;		// global switch to enable/disable frameskip
-
 bool rend_single_frame()
 {
 	//wait render start only if no frame pending
@@ -84,12 +81,7 @@ bool rend_single_frame()
 	}
 	while (!_pvrrc);
 
-	bool proc=false;
-
-	if (FrameSkipping && frameskip) {
- 		frameskip=1-frameskip;
- 	} else
-		proc = rend->Process(_pvrrc);
+	bool proc = rend->Process(_pvrrc);
 	re.Set();
 
 	bool do_swp = proc && rend->Render();
