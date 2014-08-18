@@ -4,6 +4,9 @@
 extern u32 fskip;
 extern u32 FrameCount;
 
+int frameskip=0;
+bool FrameSkipping=false;		// global switch to enable/disable frameskip
+
 TA_context* ta_ctx;
 tad_context ta_tad;
 
@@ -75,6 +78,13 @@ bool QueueRender(TA_context* ctx)
 {
 	verify(ctx != 0);
 	
+	if (FrameSkipping && frameskip) {
+ 		frameskip=1-frameskip;
+		tactx_Recycle(ctx);
+		fskip++;
+		return false;
+ 	}
+ 	
 	if (rqueue) {
 		tactx_Recycle(ctx);
 		fskip++;
