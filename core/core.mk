@@ -58,6 +58,8 @@ RZDCY_CFLAGS	:= \
 	-march=armv7-a -mtune=cortex-a8 -mfpu=neon -mfloat-abi=softfp \
 	-frename-registers -fsingle-precision-constant -ffast-math \
 	-ftree-vectorize -fomit-frame-pointer
+	RZDCY_CFLAGS += -march=armv7-a -mtune=cortex-a8 -mfpu=neon
+	RZDCY_CFLAGS += -DTARGET_LINUX_ARMELv7
 else
 RZDCY_CFLAGS	:= \
 	$(CFLAGS) -c -g -O3 -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps \
