@@ -8,6 +8,7 @@ USE_OSS :=1
 #PGO_MAKE :=1
 #PGO_USE :=1
 #USE_CCACHE :=1
+<<<<<<< HEAD
 
 #USE_CCACHE :=1
 #PGO_MAKE :=1
@@ -15,6 +16,12 @@ PGO_USE :=1
 
 RZDCY_SRC_DIR = ../../core
 
+=======
+
+
+RZDCY_SRC_DIR = ../../core
+
+>>>>>>> 32c0aa4ac39984aceb33ef44231ebac3abea1c22
 include $(RZDCY_SRC_DIR)/core.mk
 
 CC_PREFIX ?=
