@@ -118,6 +118,9 @@
     <ClCompile Include="..\core\deps\coreio\coreio.cpp">
       <Filter>deps\coreio</Filter>
     </ClCompile>
+    <ClCompile Include="..\core\deps\crypto\sha256.cpp">
+      <Filter>deps\crypto</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\core\imgread\SCSIDEFS.H">
@@ -200,6 +203,9 @@
     </ClInclude>
     <ClInclude Include="..\core\deps\coreio\coreio.h">
       <Filter>deps\coreio</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\crypto\sha256.h">
+      <Filter>deps\crypto</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

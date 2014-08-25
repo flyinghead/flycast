@@ -69,6 +69,7 @@
     <ClCompile Include="..\core\deps\coreio\coreio.cpp" />
     <ClCompile Include="..\core\deps\crypto\md5.cpp" />
     <ClCompile Include="..\core\deps\crypto\sha1.cpp" />
+    <ClCompile Include="..\core\deps\crypto\sha256.cpp" />
     <ClCompile Include="..\core\deps\libpng\png.c" />
     <ClCompile Include="..\core\deps\libpng\pngerror.c" />
     <ClCompile Include="..\core\deps\libpng\pngget.c" />
@@ -114,6 +115,7 @@
     <ClInclude Include="..\core\deps\coreio\coreio.h" />
     <ClInclude Include="..\core\deps\crypto\md5.h" />
     <ClInclude Include="..\core\deps\crypto\sha1.h" />
+    <ClInclude Include="..\core\deps\crypto\sha256.h" />
     <ClInclude Include="..\core\deps\libpng\config.h" />
     <ClInclude Include="..\core\deps\libpng\png.h" />
     <ClInclude Include="..\core\deps\libpng\pngconf.h" />
