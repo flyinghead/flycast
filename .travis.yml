@@ -8,7 +8,8 @@ before_install:
 - download_extract_zip() { aria2c -x 16 $1 -o $2 && unzip -qq $2; }
 - sudo apt-get -qq update
 - sudo apt-get -qq -y install openjdk-7-jdk ant lib32z1-dev lib32stdc++6
-- GIT_BUILD=$(git log --pretty=format:'%h' -n 1)
+- GIT_HASH=`git log --pretty=format:'%h' -n 1`
+- GIT_BUILD=`git rev-parse --abbrev-ref HEAD`-$GIT_HASH
 install:
 - download_extract http://dl.google.com/android/ndk/android-ndk-r9c-linux-x86_64.tar.bz2
   android-ndk-r9c-linux-x86_64.tar.bz2
@@ -32,7 +33,7 @@ script:
 before_deploy:
 - cd ../../
 - mkdir -p artifacts/$GIT_BUILD/
-- cp shell/android/bin/reicast-debug.apk  artifacts/$GIT_BUILD/reicast-android-debug-$GIT_BUILD.apk
+- cp shell/android/bin/reicast-debug.apk  artifacts/$GIT_BUILD/reicast-android-debug-$GIT_HASH.apk
 deploy:
   provider: s3
   access_key_id: "AKIAJR5J3OHAQUP5BHHQ"
