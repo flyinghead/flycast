@@ -37,3 +37,8 @@ build/*
 *Karen_angelXwind*
 local.properties
 ant.properties
+
+# Linux stuff
+shell/lin86/.map
+shell/lin86/nosym-reicast.elf
+shell/lin86/reicast.elf

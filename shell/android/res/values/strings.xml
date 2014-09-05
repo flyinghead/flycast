@@ -113,4 +113,7 @@
         be created in VmuBackups folder!</string>
     <string name="uploadVMU">Upload VMU</string>
     <string name="downloadVMU">Download VMU</string>
+    
+    <string name="platform">Copying logcat content to clipboard\nPlease paste in the issue report</string>
+    <string name="log_saved">Log saved to \"Files Dir\" path</string>
 </resources>

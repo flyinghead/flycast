@@ -59,6 +59,22 @@ cd shell/ios/
 xcodebuild -configuration Release
 ```
 
+Building for Linux
+------------------
+
+The code is only currently compatible with 32bit architectures so you will need
+to install 32bit libs to build reicast.
+
+Requirements:
+* build-essential
+* libasound
+* libegl1-mesa-dev
+* libgles2-mesa-dev
+* libasound2-dev
+
+To build the project, go to shell/lin86 and run make
+
+
 Translations
 ------------
 New and updated translations are always appreciated!
@@ -82,7 +98,9 @@ Well, glad you liked the project so far!
 
 We're currently short on hardware.
 
-If you would like to donate some devices, get in touch at team@reicast.com. GLES3 capable stuff, some mainstream hardware and rarities would be extremely appreciated.
+If you would like to donate some devices, get in touch at team@reicast.com.
+GLES3 capable stuff, some mainstream hardware and rarities would be extremely
+appreciated.
 Keep in mind we're located in Greece for the most part
 
 This has been tested/developed on
@@ -94,14 +112,17 @@ This has been tested/developed on
 * Various development boards
 * GCW Zero
 
-We had to buy all of these, except the GCW Zero and a BeagleBone which were donated (Thanks! You rock!)
+We had to buy all of these, except the GCW Zero and a BeagleBone which were
+donated (Thanks! You rock!)
 
 Apart from that, we don't accept monetary donations right now.
 We also don't plan to be releasing a premium version at any store.
-Most of the project has been developed by drk||Raziel (aka, skmp, drk, Raz, etc) but it has been based on the 
-works of multiple people. It would be extremely unfair to charge for it and get all the credit :)
+Most of the project has been developed by drk||Raziel (aka, skmp, drk, Raz,
+etc) but it has been based on the works of multiple people. It would be
+extremely unfair to charge for it and get all the credit :)
 
-We're planning for an indiegogo campaign later on to help with sustained development and running costs, so follow @reicastdc on twitter for updates
+We're planning for an indiegogo campaign later on to help with sustained
+development and running costs, so follow @reicastdc on twitter for updates
 
 Other Testing
 -------------
@@ -124,14 +145,16 @@ Team
 
 You can check the currently active committers on [the pretty graphs page](https://github.com/reicast/reicast-emulator/graphs/contributors)
 
-Our IRC channel is [#reicast @ chat.freenode.net](irc://chat.freenode.net/reicast). 
+Our IRC channel is [#reicast @ chat.freenode.net](irc://chat.freenode.net/reicast).
 
-The original reicast team consisted of drk||Raziel (mostly just writing code), PsyMan (debugging/testing and everything else) and a little bit of gb_away
+The original reicast team consisted of drk||Raziel (mostly just writing code),
+PsyMan (debugging/testing and everything else) and a little bit of gb_away
 
 
 Special thanks
 --------------
-In previous iterations a lot of people have worked on this, notably David Miller (aka, ZeZu), the nullDC team, friends from #pcsx2 and all over the world :)
+In previous iterations a lot of people have worked on this, notably David
+Miller (aka, ZeZu), the nullDC team, friends from #pcsx2 and all over the world :)
 
 [![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/reicast/reicast-emulator/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
 
