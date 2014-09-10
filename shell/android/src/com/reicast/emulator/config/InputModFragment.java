@@ -105,7 +105,7 @@ public class InputModFragment extends Fragment {
 			public void onCheckedChanged(CompoundButton buttonView,
 					boolean isChecked) {
 				mPrefs.edit()
-						.putBoolean(Gamepad.pref_js_separate + player,
+						.putBoolean(Gamepad.pref_js_merged + player,
 								isChecked).commit();
 			}
 		};
@@ -118,11 +118,6 @@ public class InputModFragment extends Fragment {
 				mPrefs.edit()
 						.putBoolean(Gamepad.pref_js_modified + player,
 								isChecked).commit();
-				if (isChecked) {
-					switchJoystickDpadEnabled.setEnabled(true);
-				} else if (!switchCompatibilityEnabled.isChecked()) {
-					switchJoystickDpadEnabled.setEnabled(false);
-				}
 			}
 		};
 		
@@ -576,7 +571,7 @@ public class InputModFragment extends Fragment {
 
 	private void updateController(String player) {
 		switchJoystickDpadEnabled.setChecked(mPrefs.getBoolean(
-				Gamepad.pref_js_separate + player, false));
+				Gamepad.pref_js_merged + player, false));
 		switchModifiedLayoutEnabled.setChecked(mPrefs.getBoolean(
 				Gamepad.pref_js_modified + player, false));
 		switchCompatibilityEnabled.setChecked(mPrefs.getBoolean(

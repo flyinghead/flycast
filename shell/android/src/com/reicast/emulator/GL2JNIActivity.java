@@ -150,11 +150,7 @@ public class GL2JNIActivity extends Activity {
 					String id = pad.portId[playerNum];
 					pad.custom[playerNum] = prefs.getBoolean(Gamepad.pref_js_modified + id, false);
 					pad.compat[playerNum] = prefs.getBoolean(Gamepad.pref_js_compat + id, false);
-					if (pad.custom[playerNum] || pad.compat[playerNum]) {
-						pad.joystick[playerNum] = prefs.getBoolean(Gamepad.pref_js_separate + id, false);
-					} else {
-						pad.joystick[playerNum] = true;
-					}
+					pad.joystick[playerNum] = prefs.getBoolean(Gamepad.pref_js_merged + id, false);
 					if (InputDevice.getDevice(joy).getName()
 							.contains(Gamepad.controllers_gamekey)) {
 						if (pad.custom[playerNum]) {
