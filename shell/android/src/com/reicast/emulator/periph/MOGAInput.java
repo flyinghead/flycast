@@ -6,15 +6,18 @@ package com.reicast.emulator.periph;
 import java.util.Arrays;
 
 import android.app.Activity;
+import android.app.Instrumentation;
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Handler;
+import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.util.Log;
+import com.bda.controller.KeyEvent;
 
 import com.bda.controller.Controller;
 import com.bda.controller.ControllerListener;
-import com.bda.controller.KeyEvent;
 import com.bda.controller.MotionEvent;
 import com.bda.controller.StateEvent;
 import com.reicast.emulator.R;
@@ -131,11 +134,14 @@ public final class MOGAInput
 		public void onKeyEvent(KeyEvent event)
 		{
 			// Handled by the primary controller interface
+//			act.dispatchKeyEvent(new android.view.KeyEvent(0, 0, event.getAction(),
+//				    event.getKeyCode(), 0));
 		}
 
 		public void onMotionEvent(MotionEvent event)
 		{
 			// Handled by the primary controller interface
+			
 		}
 
 		private void getCompatibilityMap(int playerNum, String id) {
