@@ -21,7 +21,7 @@ public class Gamepad {
 
 	public static final String pref_js_modified = "modified_key_layout";
 	public static final String pref_js_compat = "controller_compat";
-	public static final String pref_js_separate = "separate_joystick";
+	public static final String pref_js_merged = "merged_joystick";
 	public static final String pref_js_rbuttons = "right_buttons";
 
 	public static final String pref_button_a = "a_button";
@@ -226,7 +226,7 @@ public class Gamepad {
 		for (int n = 0; n < 4; n++) {
 			if (compat[n]) {
 				String id = portId[n];
-				joystick[n] = prefs.getBoolean(Gamepad.pref_js_separate + id, false);
+				joystick[n] = prefs.getBoolean(Gamepad.pref_js_merged + id, false);
 				getCompatibilityMap(n, portId[n], prefs);
 				initJoyStickLayout(n);
 			}
