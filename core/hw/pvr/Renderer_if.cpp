@@ -219,7 +219,7 @@ void rend_end_wait()
 bool rend_init()
 {
 
-#if NO_REND
+#ifdef NO_REND
 	rend = rend_norend();
 #else
 

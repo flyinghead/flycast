@@ -2,6 +2,9 @@
 #include "cfg/cfg.h"
 
 #if HOST_OS==OS_LINUX
+#define _XOPEN_SOURCE 1
+#define __USE_GNU 1
+#include <ucontext.h>
 #include <poll.h>
 #include <termios.h>
 //#include <curses.h>
@@ -32,6 +35,7 @@ struct sigcontext uc_mcontext;
 } ucontext_t;
 #endif
 
+
 #if HOST_CPU == CPU_ARM
 #define GET_PC_FROM_CONTEXT(c) (((ucontext_t *)(c))->uc_mcontext.arm_pc)
 #elif HOST_CPU == CPU_MIPS
@@ -44,7 +48,7 @@ struct sigcontext uc_mcontext;
 #ifdef _ANDROID
 #define GET_PC_FROM_CONTEXT(c) (((ucontext_t *)(c))->uc_mcontext.eip)
 #else
-#define GET_PC_FROM_CONTEXT(c) (((ucontext_t *)(c))->uc_mcontext.gregs[REG_EIP])
+#define GET_PC_FROM_CONTEXT(c) (((ucontext_t *)(c))->uc_mcontext->__ss.__eip)
 #endif
 #else
 #error fix ->pc support
@@ -116,8 +120,10 @@ cResetEvent::cResetEvent(bool State,bool Auto)
 {
 	//sem_init((sem_t*)hEvent, 0, State?1:0);
 	verify(State==false&&Auto==true);
-	mutx = PTHREAD_MUTEX_INITIALIZER;
-	cond = PTHREAD_COND_INITIALIZER;
+	//mutx = PTHREAD_MUTEX_INITIALIZER;
+	pthread_mutex_init(&mutx, NULL);
+	//cond = PTHREAD_COND_INITIALIZER;
+	pthread_cond_init(&cond, NULL);
 }
 cResetEvent::~cResetEvent()
 {
@@ -216,6 +222,10 @@ double os_GetSeconds()
 	return a.tv_sec-tvs_base+a.tv_usec/1000000.0;
 }
 
+void os_DebugBreak()
+{
+	__builtin_trap();
+}
 
 void enable_runfast()
 {

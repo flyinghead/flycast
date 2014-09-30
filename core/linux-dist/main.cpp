@@ -24,7 +24,7 @@
 	#include <X11/Xutil.h>
 #endif
 
-#if !defined(ANDROID)
+#if !defined(ANDROID) && 0
 	#include <linux/joystick.h>
 	#include <sys/stat.h> 
 	#include <sys/types.h> 
@@ -134,6 +134,7 @@ void SetupInput()
 		lt[port]=0;
 	}
 
+#if 0
 	if (true) {
 		#ifdef TARGET_PANDORA
 		const char* device = "/dev/input/event4";
@@ -154,10 +155,10 @@ void SetupInput()
 		else
 			perror("evdev open");
 	}
-
+#endif
 	// Open joystick device
 	JoyFD = open("/dev/input/js0",O_RDONLY);
-		
+#if 0		
 	if(JoyFD>=0)
 	{
 		int AxisCount,ButtonCount;
@@ -181,10 +182,12 @@ void SetupInput()
 			printf("Using Xbox 360 map\n");
 		}
 	}
+#endif
 }
 
 bool HandleKb(u32 port) {
-	struct input_event ie;
+#if 0
+	//struct input_event ie;
 	if (kbfd < 0)
 		return false;
 
@@ -278,17 +281,19 @@ bool HandleKb(u32 port) {
 		printf("type %i key %i state %i\n", ie.type, ie.code, ie.value);
 	}
 	#endif
-
+#endif
+return true;
 }
 
 bool HandleJoystick(u32 port)
 {
   
-  struct js_event JE;
+  //struct js_event JE;
 
   // Joystick must be connected
   if(JoyFD<0) return false;
 
+#if 0
   while(read(JoyFD,&JE,sizeof(JE))==sizeof(JE))
 	  if (JE.number<MAP_SIZE)
 	  {
@@ -367,8 +372,9 @@ bool HandleJoystick(u32 port)
 			  break;
 		  }
 	  }
-
+#endif
 	  return true;
+
 }
 
 extern bool KillTex;
@@ -678,7 +684,7 @@ int main(int argc, wchar* argv[])
 	init_sound();
 #endif
 
-#if defined(USES_HOMEDIR)
+#if defined(USES_HOMEDIR) && 0
 	string home = (string)getenv("HOME");
 	if(home.c_str())
 	{

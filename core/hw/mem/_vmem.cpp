@@ -570,7 +570,9 @@ error:
 
 		u32 sz= 512*1024*1024 + sizeof(Sh4RCB) + ARAM_SIZE + 0x10000;
 		void* rv=mmap(0, sz, PROT_NONE, MAP_PRIVATE | MAP_ANON, -1, 0);
+		verify(rv != NULL);
 		munmap(rv,sz);
+		printf("%X\n",rv);
 		return (u8*)rv + 0x10000 - unat(rv)%0x10000;//align to 64 KB (Needed for linaro mmap not to extend to next region)
 	}
 #endif
@@ -590,8 +592,13 @@ void _vmem_bm_reset()
 #else
 	mprotect(p_sh4rcb, sizeof(p_sh4rcb->fpcb), PROT_NONE);
 	madvise(p_sh4rcb,sizeof(p_sh4rcb->fpcb),MADV_DONTNEED);
+	#ifdef MADV_REMOVE
+	//Linux, Android
 	madvise(p_sh4rcb,sizeof(p_sh4rcb->fpcb),MADV_REMOVE);
-	//madvise(p_sh4rcb,sizeof(p_sh4rcb->fpcb),MADV_FREE);
+	#else
+	//OSX, ?	
+	madvise(p_sh4rcb,sizeof(p_sh4rcb->fpcb),MADV_FREE);
+	#endif
 #endif
 
 	printf("Freeing fpcb\n");
@@ -631,6 +638,10 @@ bool _vmem_reserve()
 	verify((sizeof(Sh4RCB)%PAGE_SIZE)==0);
 
 	virt_ram_base=(u8*)_nvmem_alloc_mem();
+
+	if (virt_ram_base==0)
+		return false;
+	
 	p_sh4rcb=(Sh4RCB*)virt_ram_base;
 
 #if HOST_OS==OS_WINDOWS
@@ -644,9 +655,6 @@ bool _vmem_reserve()
 #endif
 	virt_ram_base+=sizeof(Sh4RCB);
 
-	if (virt_ram_base==0)
-		return false;
-	
 	//Area 0
 	//[0x00000000 ,0x00800000) -> unused
 	unused_buffer(0x00000000,0x00800000);

@@ -68,7 +68,7 @@ typedef struct ucontext_t
 #ifdef _ANDROID
 #define GET_PC_FROM_CONTEXT(c) (((ucontext_t *)(c))->uc_mcontext.eip)
 #else
-#define GET_PC_FROM_CONTEXT(c) (((ucontext_t *)(c))->uc_mcontext.gregs[REG_EIP])
+#define GET_PC_FROM_CONTEXT(c) (((ucontext_t *)(c))->uc_mcontext->__ss.__eip)
 #endif
 #else
 #error fix ->pc support
