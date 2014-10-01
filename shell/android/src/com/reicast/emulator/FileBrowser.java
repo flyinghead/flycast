@@ -149,7 +149,7 @@ public class FileBrowser extends Fragment {
 		 * findViewById(R.id.about).setOnTouchListener(viblist);
 		 */
 
-		File home = new File(home_directory);
+		File home = new File(mPrefs.getString(Config.pref_home, home_directory));
 		if (!home.exists() || !home.isDirectory()) {
 			Toast.makeText(getActivity(), R.string.config_home,
 					Toast.LENGTH_LONG).show();

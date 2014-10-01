@@ -6,6 +6,7 @@ import java.util.List;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -376,15 +377,19 @@ public class MainActivity extends SlidingFragmentActivity implements
 		builder.show();
 	}
 
-	public static boolean isBiosExisting() {
-		File bios = new File(home_directory, "data/dc_boot.bin");
-		return bios.exists();
-	}
+    public static boolean isBiosExisting(Context context) {
+        SharedPreferences mPrefs = PreferenceManager.getDefaultSharedPreferences(context);
+        home_directory = mPrefs.getString("home_directory", home_directory);
+        File bios = new File(home_directory, "data/dc_boot.bin");
+        return bios.exists();
+    }
 
-	public static boolean isFlashExisting() {
-		File flash = new File(home_directory, "data/dc_flash.bin");
-		return flash.exists();
-	}
+    public static boolean isFlashExisting(Context context) {
+        SharedPreferences mPrefs = PreferenceManager.getDefaultSharedPreferences(context);
+        home_directory = mPrefs.getString("home_directory", home_directory);
+        File flash = new File(home_directory, "data/dc_flash.bin");
+        return flash.exists();
+    }
 
 	public void onGameSelected(Uri uri) {
 		if (Config.readOutput("uname -a").equals(getString(R.string.error_kernel))) {
@@ -392,9 +397,9 @@ public class MainActivity extends SlidingFragmentActivity implements
 					Toast.LENGTH_SHORT).show();
 		}
 		String msg = null;
-		if (!isBiosExisting())
+		if (!isBiosExisting(MainActivity.this))
 			msg = getString(R.string.missing_bios, home_directory);
-		else if (!isFlashExisting())
+		else if (!isFlashExisting(MainActivity.this))
 			msg = getString(R.string.missing_flash, home_directory);
 
 		if (msg != null) {
@@ -402,9 +407,9 @@ public class MainActivity extends SlidingFragmentActivity implements
 					this);
 
 			// set title
-			if (!isBiosExisting())
+			if (!isBiosExisting(MainActivity.this))
 				alertDialogBuilder.setTitle(R.string.missing_bios_title);
-			else if (!isFlashExisting())
+			else if (!isFlashExisting(MainActivity.this))
 				alertDialogBuilder.setTitle(R.string.missing_flash_title);
 
 			// set dialog message

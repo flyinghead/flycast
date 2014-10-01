@@ -33,6 +33,7 @@ import android.widget.TextView;
 
 import com.reicast.emulator.R;
 import com.reicast.emulator.emu.GL2JNIView;
+import com.reicast.emulator.emu.JNIdc;
 
 import de.ankri.views.Switch;
 
@@ -119,6 +120,7 @@ public class OptionsFragment extends Fragment {
 					}
 					mPrefs.edit().putString("home_directory", home_directory)
 							.commit();
+					JNIdc.config(home_directory);
 				}
 			}
 

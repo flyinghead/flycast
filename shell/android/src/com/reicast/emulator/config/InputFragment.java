@@ -102,7 +102,7 @@ public class InputFragment extends Fragment {
 			}
 		});
 
-		if (!MainActivity.isBiosExisting() || !MainActivity.isFlashExisting())
+		if (!MainActivity.isBiosExisting(parentActivity) || !MainActivity.isFlashExisting(parentActivity))
 			buttonLaunchEditor.setEnabled(false);
 
 		final TextView duration = (TextView) getView().findViewById(R.id.vibDuration_current);
