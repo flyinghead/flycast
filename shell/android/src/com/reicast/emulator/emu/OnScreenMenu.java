@@ -525,7 +525,7 @@ public class OnScreenMenu {
 				}
 			}), params);
 			
-			hlay.addView(addbut(R.drawable.vmu_swap, "Disk Swap", new OnClickListener() {
+			hlay.addView(addbut(R.drawable.disk_swap, "Disk Swap", new OnClickListener() {
 				public void onClick(View v) {
 					JNIdc.diskSwap(null);
 					dismiss();
