@@ -190,6 +190,7 @@ public class OnScreenMenu {
 
 	public class ConfigPopup extends PopupWindow {
 
+		private View rsticksetting;
 		private View fullscreen;
 		private View framelimit;
 		private View audiosetting;
@@ -216,6 +217,29 @@ public class OnScreenMenu {
 			});
 			hlay.addView(up, configParams);
 			menuItems.add(up);
+			
+			rsticksetting = addbut(R.drawable.toggle_a_b, "Right Stick", 
+					new OnClickListener() {
+						public void onClick(View v) {
+							if (prefs
+									.getBoolean(Gamepad.pref_js_rbuttons, true)) {
+								prefs.edit()
+										.putBoolean(Gamepad.pref_js_rbuttons,
+												false).commit();
+								modbut(rsticksetting, R.drawable.toggle_a_b);
+							} else {
+								prefs.edit()
+										.putBoolean(Gamepad.pref_js_rbuttons,
+												true).commit();
+								modbut(rsticksetting, R.drawable.toggle_r_l);
+							}
+							dismiss();
+						}
+					});
+			if (prefs.getBoolean(Gamepad.pref_js_rbuttons, true)) {
+				modbut(rsticksetting, R.drawable.toggle_r_l);
+			}
+			hlay.addView(rsticksetting, params);
 
 			fullscreen = addbut(R.drawable.widescreen, "Widescreen", new OnClickListener() {
 				public void onClick(View v) {
@@ -498,8 +522,6 @@ public class OnScreenMenu {
 
 	public class MainPopup extends PopupWindow {
 
-		private View rsticksetting;
-
 		public MainPopup(Context c) {
 			super(c);
 			setBackgroundDrawable(null);
@@ -538,29 +560,6 @@ public class OnScreenMenu {
 					dismiss();
 				}
 			}), params);
-
-			rsticksetting = addbut(R.drawable.toggle_a_b, "Right Stick", 
-					new OnClickListener() {
-						public void onClick(View v) {
-							if (prefs
-									.getBoolean(Gamepad.pref_js_rbuttons, true)) {
-								prefs.edit()
-										.putBoolean(Gamepad.pref_js_rbuttons,
-												false).commit();
-								modbut(rsticksetting, R.drawable.toggle_a_b);
-							} else {
-								prefs.edit()
-										.putBoolean(Gamepad.pref_js_rbuttons,
-												true).commit();
-								modbut(rsticksetting, R.drawable.toggle_r_l);
-							}
-							dismiss();
-						}
-					});
-			if (prefs.getBoolean(Gamepad.pref_js_rbuttons, true)) {
-				modbut(rsticksetting, R.drawable.toggle_r_l);
-			}
-			hlay.addView(rsticksetting, params);
 
 			hlay.addView(addbut(R.drawable.config, "Options", new OnClickListener() {
 				public void onClick(View v) {
