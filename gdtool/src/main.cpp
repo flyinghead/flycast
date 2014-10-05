@@ -7,6 +7,8 @@
 #include "imgread/common.h"
 #include "cdromfs.h"
 
+#include "crypto/sha256.h"
+
 int msgboxf(const wchar* text,unsigned int type,...) {
 	return MBX_OK;
 }
@@ -185,8 +187,46 @@ void extract_data(FILE* w, bool first, Disc* d, int start_fad, int size) {
 	}
 }
 
-void hash_track() {
+void compute_disc_hash(FILE* w, bool first, Disc* d, const string& basename) {
+	SHA256_CTX ctx;
+	sha256_init(&ctx);
 
+	u8 temp[4096];
+
+	u32 fads = 0;
+
+	for (size_t i = 0; i < d->tracks.size(); i++) {
+		u32 fmt = d->tracks[i].CTRL==4?2048:2352;
+		u32 fad = d->tracks[i].StartFAD;
+
+		while (fad <= d->tracks[i].EndFAD) {
+			fads++;
+			d->ReadSectors(fad++,1,temp,fmt);
+			sha256_update(&ctx,temp,fmt);
+
+			if (0 == (fads % 32768 )) {
+				printf("hashed 64 megs ...\n");
+			}
+		}
+	}
+
+	BYTE hash[32];
+	sha256_final(&ctx, hash);
+
+
+	fprintf(w, first?"\n{":",\n{");
+
+		fprintf(w, "\n\t\"disc_hash\":\"sha256-");
+
+		for (int i=0; i<16; i++)
+			fprintf(w, "%02x", hash[i]);
+		fprintf(w, "\"");
+
+	if (has_info_basename) {
+		data_kvp(w, "basename", basename.c_str(), false);
+	}
+
+	fprintf(w, "\n}");
 }
 
 bool jsarray;
@@ -214,7 +254,8 @@ void exec_cmd(FILE* w, bool first,  Disc* d, const string& basename) {
 				break;
 
 			case 'h':
-				printf("hashes not supported yet");
+				//printf("hashes not supported yet");
+				compute_disc_hash(w, first, d, basename);
 				break;
 
 			case 'f':
