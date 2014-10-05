@@ -171,8 +171,13 @@ public class OnScreenMenu {
 //					dismiss();
 //				}
 //			}), debugParams);
+			
+			LayoutParams wrapParams = new LayoutParams(LayoutParams.FILL_PARENT, p);
+			LinearLayout wlay = new LinearLayout(mContext);
+			hlay.setGravity(Gravity.CENTER);
+			wlay.addView(hlay, wrapParams);
 
-			setContentView(hlay);
+			setContentView(wlay);
 			popups.add(this);
 		}
 	}
@@ -384,8 +389,13 @@ public class OnScreenMenu {
 //			});
 //			hlay.addView(close, configParams);
 //			menuItems.add(close);
+			
+			LayoutParams wrapParams = new LayoutParams(LayoutParams.FILL_PARENT, p);
+			LinearLayout wlay = new LinearLayout(mContext);
+			hlay.setGravity(Gravity.CENTER);
+			wlay.addView(hlay, wrapParams);
 
-			setContentView(hlay);
+			setContentView(wlay);
 			getFocusedItem();
 			popups.add(this);
 		}
