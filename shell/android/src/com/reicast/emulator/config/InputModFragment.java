@@ -44,6 +44,7 @@ public class InputModFragment extends Fragment {
 	private SharedPreferences mPrefs;
 
 	private Switch switchJoystickDpadEnabled;
+	private Switch switchRightStickLREnabled;
 	private Switch switchModifiedLayoutEnabled;
 	private Switch switchCompatibilityEnabled;
 
@@ -96,6 +97,8 @@ public class InputModFragment extends Fragment {
 		
 		switchJoystickDpadEnabled = (Switch) getView().findViewById(
 				R.id.switchJoystickDpadEnabled);
+		switchRightStickLREnabled = (Switch) getView().findViewById(
+				R.id.switchRightStickLREnabled);
 		switchModifiedLayoutEnabled = (Switch) getView().findViewById(
 				R.id.switchModifiedLayoutEnabled);
 		switchCompatibilityEnabled = (Switch) getView().findViewById(
@@ -111,6 +114,17 @@ public class InputModFragment extends Fragment {
 		};
 		
 		switchJoystickDpadEnabled.setOnCheckedChangeListener(joystick_mode);
+		
+		OnCheckedChangeListener rstick_mode = new OnCheckedChangeListener() {
+			public void onCheckedChanged(CompoundButton buttonView,
+					boolean isChecked) {
+				mPrefs.edit()
+						.putBoolean(Gamepad.pref_js_rbuttons + player,
+								isChecked).commit();
+			}
+		};
+		
+		switchRightStickLREnabled.setOnCheckedChangeListener(rstick_mode);
 
 		OnCheckedChangeListener modified_layout = new OnCheckedChangeListener() {
 			public void onCheckedChanged(CompoundButton buttonView,
