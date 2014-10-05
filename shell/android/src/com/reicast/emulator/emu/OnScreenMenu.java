@@ -25,7 +25,6 @@ import com.reicast.emulator.GL2JNINative;
 import com.reicast.emulator.MainActivity;
 import com.reicast.emulator.R;
 import com.reicast.emulator.config.Config;
-import com.reicast.emulator.periph.Gamepad;
 import com.reicast.emulator.periph.VmuLcd;
 
 public class OnScreenMenu {
@@ -166,12 +165,12 @@ public class OnScreenMenu {
 				}
 			}), debugParams);
 
-			hlay.addView(addbut(R.drawable.close, "Exit", new OnClickListener() {
-				public void onClick(View v) {
-					popups.remove(DebugPopup.this);
-					dismiss();
-				}
-			}), debugParams);
+//			hlay.addView(addbut(R.drawable.close, "Exit", new OnClickListener() {
+//				public void onClick(View v) {
+//					popups.remove(DebugPopup.this);
+//					dismiss();
+//				}
+//			}), debugParams);
 
 			setContentView(hlay);
 			popups.add(this);
@@ -190,7 +189,6 @@ public class OnScreenMenu {
 
 	public class ConfigPopup extends PopupWindow {
 
-		private View rsticksetting;
 		private View fullscreen;
 		private View framelimit;
 		private View audiosetting;
@@ -217,29 +215,6 @@ public class OnScreenMenu {
 			});
 			hlay.addView(up, configParams);
 			menuItems.add(up);
-			
-			rsticksetting = addbut(R.drawable.toggle_a_b, "Right Stick", 
-					new OnClickListener() {
-						public void onClick(View v) {
-							if (prefs
-									.getBoolean(Gamepad.pref_js_rbuttons, true)) {
-								prefs.edit()
-										.putBoolean(Gamepad.pref_js_rbuttons,
-												false).commit();
-								modbut(rsticksetting, R.drawable.toggle_a_b);
-							} else {
-								prefs.edit()
-										.putBoolean(Gamepad.pref_js_rbuttons,
-												true).commit();
-								modbut(rsticksetting, R.drawable.toggle_r_l);
-							}
-							dismiss();
-						}
-					});
-			if (prefs.getBoolean(Gamepad.pref_js_rbuttons, true)) {
-				modbut(rsticksetting, R.drawable.toggle_r_l);
-			}
-			hlay.addView(rsticksetting, params);
 
 			fullscreen = addbut(R.drawable.widescreen, "Widescreen", new OnClickListener() {
 				public void onClick(View v) {
@@ -401,14 +376,14 @@ public class OnScreenMenu {
 			hlay.addView(fastforward, params);
 			menuItems.add(fastforward);
 
-			View close = addbut(R.drawable.close, "Exit", new OnClickListener() {
-				public void onClick(View v) {
-					popups.remove(ConfigPopup.this);
-					dismiss();
-				}
-			});
-			hlay.addView(close, configParams);
-			menuItems.add(close);
+//			View close = addbut(R.drawable.close, "Exit", new OnClickListener() {
+//				public void onClick(View v) {
+//					popups.remove(ConfigPopup.this);
+//					dismiss();
+//				}
+//			});
+//			hlay.addView(close, configParams);
+//			menuItems.add(close);
 
 			setContentView(hlay);
 			getFocusedItem();

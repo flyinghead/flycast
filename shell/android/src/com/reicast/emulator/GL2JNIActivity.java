@@ -277,7 +277,7 @@ public class GL2JNIActivity extends Activity {
 					GL2JNIView.lt[playerNum] = (int) (L2 * 255);
 					GL2JNIView.rt[playerNum] = (int) (R2 * 255);
 
-					if (prefs.getBoolean("right_buttons", true)) {
+					if (prefs.getBoolean(Gamepad.pref_js_rbuttons + pad.portId[playerNum], true)) {
 						if (RS_Y > 0.25) {
 							handle_key(playerNum, pad.map[playerNum][0]/* A */, true);
 							pad.wasKeyStick[playerNum] = true;
