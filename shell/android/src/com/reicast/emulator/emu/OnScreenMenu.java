@@ -17,6 +17,7 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
+import android.widget.ScrollView;
 import android.widget.TableRow;
 import android.widget.TextView;
 import at.technikum.mti.fancycoverflow.FancyCoverFlow;
@@ -126,8 +127,7 @@ public class OnScreenMenu {
 			setBackgroundDrawable(null);
 
 			View shell = mContext.getLayoutInflater().inflate(R.layout.menu_popup_debug, null);
-
-			LinearLayout hlay = (LinearLayout) shell.findViewById(R.id.menuDebug);
+			ScrollView hlay = (ScrollView) shell.findViewById(R.id.menuDebug);
 
 			OnClickListener clickBack = new OnClickListener() {
 				public void onClick(View v) {
@@ -201,8 +201,7 @@ public class OnScreenMenu {
 			setBackgroundDrawable(null);
 
 			View shell = mContext.getLayoutInflater().inflate(R.layout.menu_popup_config, null);
-
-			final LinearLayout hlay = (LinearLayout) shell.findViewById(R.id.menuConfig);
+			final ScrollView hlay = (ScrollView) shell.findViewById(R.id.menuConfig);
 
 			OnClickListener clickBack = new OnClickListener() {
 				public void onClick(View v) {
