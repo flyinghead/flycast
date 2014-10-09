@@ -477,6 +477,18 @@ public class OnScreenMenu {
 	public class MainPopup extends PopupWindow {
 		
 		private LinearLayout vmuIcon;
+		LinearLayout.LayoutParams params;
+		
+		private LinearLayout.LayoutParams setVmuParams() {
+			int vpX = getPixelsFromDp(72, mContext);
+			int vpY = getPixelsFromDp(52, mContext);
+			LinearLayout.LayoutParams vmuParams = new LinearLayout.LayoutParams(
+					vpX, vpY);
+			vmuParams.weight = 1.0f;
+			vmuParams.gravity = Gravity.LEFT | Gravity.CENTER_VERTICAL;
+			vmuParams.leftMargin = 6;
+			return vmuParams;
+		}
 
 		public MainPopup(Context c) {
 			super(c);
@@ -486,7 +498,9 @@ public class OnScreenMenu {
 			ScrollView hlay = (ScrollView) shell.findViewById(R.id.menuMain);
 			
 			vmuIcon = (LinearLayout) hlay.findViewById(R.id.vmuIcon);
-			vmuIcon.addView(vmuLcd);
+			vmuLcd.configureScale(72);
+			params = setVmuParams();
+			vmuIcon.addView(vmuLcd, params);
 			
 			OnClickListener clickDisk = new OnClickListener() {
 				public void onClick(View v) {
@@ -562,7 +576,8 @@ public class OnScreenMenu {
 		
 		public void showVmu() {
 			vmuLcd.configureScale(72);
-			vmuIcon.addView(vmuLcd, 0);
+			params = setVmuParams();
+			vmuIcon.addView(vmuLcd, params);
 		}
 	}
 }

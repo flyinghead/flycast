@@ -24,11 +24,7 @@
                 android:id="@+id/vmuIcon"
                 android:layout_width="72dp"
                 android:layout_height="52dp"
-                android:layout_weight="1"
-                android:gravity="center"
-                android:orientation="vertical"
-                android:paddingLeft="4dp"
-                android:paddingTop="10dp" />
+                android:orientation="vertical" />
         </TableRow>
 
         <TableRow
