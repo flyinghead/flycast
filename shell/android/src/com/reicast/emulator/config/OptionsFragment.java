@@ -101,10 +101,6 @@ public class OptionsFragment extends Fragment {
 
 		mainBrowse.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View view) {
-				if (editBrowse.getText() != null) {
-					home_directory = editBrowse.getText().toString();
-					//mPrefs.edit().putString("home_directory", home_directory).commit();
-				}
 				mCallback.onMainBrowseSelected(home_directory, false);
 			}
 		});

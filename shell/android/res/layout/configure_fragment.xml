@@ -40,7 +40,7 @@
                     android:id="@+id/browse_main_path"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Browse" />
+                    android:text="@string/locate" />
             </LinearLayout>
         </LinearLayout>
 
@@ -51,7 +51,7 @@
             android:orientation="vertical" >
 
             <TextView
-                android:id="@+id/textView1"
+                android:id="@+id/textView2"
                 android:layout_width="wrap_content"
                 android:layout_height="0dip"
                 android:layout_weight="1"
@@ -75,7 +75,7 @@
                     android:id="@+id/browse_game_path"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Browse" />
+                    android:text="@string/browse" />
             </LinearLayout>
         </LinearLayout>
         
@@ -121,7 +121,7 @@
             android:orientation="vertical" >
 
             <TextView
-                android:id="@+id/textView1"
+                android:id="@+id/textView3"
                 android:layout_width="wrap_content"
                 android:layout_height="0dip"
                 android:layout_weight="1"

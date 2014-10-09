@@ -9,6 +9,8 @@
     <string name="config_home">Please configure a home directory.</string>
     <string name="config_game">Please configure a game directory.</string>
     <string name="unsupported">Unsupported kernel version!</string>
+    <string name="locate">Locate</string>
+    <string name="browse">Browse</string>
     
     <string name="boot_bios">Boot Dreamcast BIOS</string>
     <string name="missing_bios_title">Missing Dreamcast BIOS</string>

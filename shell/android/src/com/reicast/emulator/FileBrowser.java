@@ -156,9 +156,16 @@ public class FileBrowser extends Fragment {
 		}
 
 		if (!ImgBrowse) {
-			navigate(sdcard);
+//			navigate(sdcard);
+			LocateGames mLocateGames = new LocateGames(R.array.flash);
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+				mLocateGames
+						.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, home_directory);
+			} else {
+				mLocateGames.execute(home_directory);
+			}
 		} else {
-			LocateGames mLocateGames = new LocateGames();
+			LocateGames mLocateGames = new LocateGames(R.array.images);
 			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
 				mLocateGames
 						.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, game_directory);
@@ -169,13 +176,19 @@ public class FileBrowser extends Fragment {
 	}
 
 	private final class LocateGames extends AsyncTask<String, Integer, List<File>> {
+		
+		private int array;
+		
+		public LocateGames(int arrayType) {
+			this.array = arrayType;
+		}
 
 		@Override
 		protected List<File> doInBackground(String... paths) {
 			File storage = new File(paths[0]);
 
 			// array of valid image file extensions
-			String[] mediaTypes = parentActivity.getResources().getStringArray(R.array.images);
+			String[] mediaTypes = parentActivity.getResources().getStringArray(array);
 			FilenameFilter[] filter = new FilenameFilter[mediaTypes.length];
 
 			int i = 0;
@@ -209,10 +222,10 @@ public class FileBrowser extends Fragment {
 			}
 
 			String heading = parentActivity.getString(R.string.games_listing);
-			createListHeader(heading, list, true);
+			createListHeader(heading, list, array == R.array.images);
 			if (items != null && !items.isEmpty()) {
 				for (int i = 0; i < items.size(); i++) {
-					createListItem(list, items.get(i), i);
+					createListItem(list, items.get(i), i, array == R.array.images);
 				}
 			} else {
 				Toast.makeText(parentActivity, R.string.config_game, Toast.LENGTH_LONG).show();
@@ -286,7 +299,7 @@ public class FileBrowser extends Fragment {
 
 	}
 
-	private void createListItem(LinearLayout list, final File game, final int index) {				
+	private void createListItem(LinearLayout list, final File game, final int index, final boolean isGame) {				
 		final View childview = parentActivity.getLayoutInflater().inflate(
 				R.layout.app_list_item, null, false);
 		
@@ -301,6 +314,7 @@ public class FileBrowser extends Fragment {
 		childview.findViewById(R.id.childview).setOnClickListener(
 				new OnClickListener() {
 					public void onClick(View view) {
+						if (isGame) {
 						vib.vibrate(50);
 						if (mPrefs.getBoolean(Config.pref_gamedetails, false)) {
 							final AlertDialog.Builder builder = new AlertDialog.Builder(parentActivity);
@@ -331,6 +345,16 @@ public class FileBrowser extends Fragment {
 							mCallback.onGameSelected(game != null ? Uri
 									.fromFile(game) : Uri.EMPTY);
 							vib.vibrate(250);
+						}
+						} else {
+							vib.vibrate(50);
+							mCallback.onFolderSelected(game != null ? Uri
+									.fromFile(game) : Uri.EMPTY);
+							home_directory = game.getAbsolutePath().substring(0,
+									game.getAbsolutePath().lastIndexOf(File.separator));
+							mPrefs.edit().putString("home_directory",
+									home_directory.replace("/data", "")).commit();
+							JNIdc.config(home_directory.replace("/data", ""));
 						}
 					}
 				});

@@ -11,6 +11,10 @@
         <item>24</item>
         <item>32</item>        
     </string-array>
+    
+    <string-array name="flash">
+        <item>bin</item>
+    </string-array>
 
     <string-array name="cable">
         <item>HDMI</item>
