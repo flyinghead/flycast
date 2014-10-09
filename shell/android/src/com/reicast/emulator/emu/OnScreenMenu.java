@@ -33,8 +33,6 @@ public class OnScreenMenu {
 
 	private Activity mContext;
 	private SharedPreferences prefs;
-	private LinearLayout hlay;
-	private LayoutParams params;
 
 	private VmuLcd vmuLcd;
 
@@ -469,67 +467,66 @@ public class OnScreenMenu {
 			vmuLcd.configureScale(96);
 			vlay.addView(vmuLcd, vparams);
 		}
+		
+		public void hideVmu() {
+			vlay.removeView(vmuLcd);
+		}
 
 	}
 
 	public class MainPopup extends PopupWindow {
+		
+		private LinearLayout vmuIcon;
 
 		public MainPopup(Context c) {
 			super(c);
 			setBackgroundDrawable(null);
-			int p = getPixelsFromDp(72, mContext);
-			params = new LayoutParams(LayoutParams.WRAP_CONTENT, p);
-			hlay = new LinearLayout(mContext);
-			hlay.setOrientation(LinearLayout.HORIZONTAL);
-//			hlay.setOrientation(LinearLayout.VERTICAL);
-
-			int vpX = getPixelsFromDp(72, mContext);
-			int vpY = getPixelsFromDp(52, mContext);
-			LinearLayout.LayoutParams vmuParams = new LinearLayout.LayoutParams(
-					vpX, vpY);
-			vmuParams.weight = 1.0f;
-			vmuParams.gravity = Gravity.CENTER_VERTICAL;
-			vmuParams.rightMargin = 4;
-			hlay.addView(vmuLcd, vmuParams);
-
-			hlay.addView(addbut(R.drawable.up, "Back", new OnClickListener() {
-				public void onClick(View v) {
-					popups.remove(MainPopup.this);
-					dismiss();
-				}
-			}), params);
 			
-			hlay.addView(addbut(R.drawable.disk_swap, "Disk Swap", new OnClickListener() {
+			View shell = mContext.getLayoutInflater().inflate(R.layout.menu_popup_main, null);
+			ScrollView hlay = (ScrollView) shell.findViewById(R.id.menuMain);
+			
+			vmuIcon = (LinearLayout) hlay.findViewById(R.id.vmuIcon);
+			vmuIcon.addView(vmuLcd);
+			
+			OnClickListener clickDisk = new OnClickListener() {
 				public void onClick(View v) {
 					JNIdc.diskSwap(null);
 					dismiss();
 				}
-			}), params);
+			};
+			Button buttonDisk = (Button) hlay.findViewById(R.id.buttonDisk);
+			addimg(buttonDisk, R.drawable.disk_swap, clickDisk);
 
-			hlay.addView(addbut(R.drawable.vmu_swap, "VMU Swap", new OnClickListener() {
+			OnClickListener clickVmuSwap = new OnClickListener() {
 				public void onClick(View v) {
 					JNIdc.vmuSwap();
 					dismiss();
 				}
-			}), params);
-
-			hlay.addView(addbut(R.drawable.config, "Options", new OnClickListener() {
+			};
+			Button buttonVmuSwap = (Button) hlay.findViewById(R.id.buttonVmuSwap);
+			addimg(buttonVmuSwap, R.drawable.vmu_swap, clickVmuSwap);
+			
+			OnClickListener clickOptions = new OnClickListener() {
 				public void onClick(View v) {
 					displayConfigPopup(MainPopup.this);
 					popups.remove(MainPopup.this);
 					dismiss();
 				}
-			}), params);
-
-			hlay.addView(addbut(R.drawable.disk_unknown, "Debugging", new OnClickListener() {
+			};
+			Button buttonOptions = (Button) hlay.findViewById(R.id.buttonOptions);
+			addimg(buttonOptions, R.drawable.config, clickOptions);
+			
+			OnClickListener clickDebugging = new OnClickListener() {
 				public void onClick(View v) {
 					displayDebugPopup(MainPopup.this);
 					popups.remove(MainPopup.this);
 					dismiss();
 				}
-			}), params);
-
-			hlay.addView(addbut(R.drawable.print_stats, "Screenshot", new OnClickListener() {
+			};
+			Button buttonDebugging = (Button) hlay.findViewById(R.id.buttonDebugging);
+			addimg(buttonDebugging, R.drawable.disk_unknown, clickDebugging);
+			
+			OnClickListener clickScreenshot = new OnClickListener() {
 				public void onClick(View v) {
 					// screenshot
 					if (mContext instanceof GL2JNINative) {
@@ -541,23 +538,31 @@ public class OnScreenMenu {
 								.screenGrab();
 					}
 				}
-			}), params);
-
-			hlay.addView(addbut(R.drawable.close, "Exit", new OnClickListener() {
+			};
+			Button buttonScreenshot = (Button) hlay.findViewById(R.id.buttonScreenshot);
+			addimg(buttonScreenshot, R.drawable.print_stats, clickScreenshot);
+			
+			OnClickListener clickExit = new OnClickListener() {
 				public void onClick(View v) {
 					Intent inte = new Intent(mContext, MainActivity.class);
 					mContext.startActivity(inte);
 					((Activity) mContext).finish();
 				}
-			}), params);
+			};
+			Button buttonExit = (Button) hlay.findViewById(R.id.buttonExit);
+			addimg(buttonExit, R.drawable.close, clickExit);
 
-			setContentView(hlay);
+			setContentView(shell);
 			this.setAnimationStyle(R.style.Animation);
 		}
-
+		
+		public void hideVmu() {
+			vmuIcon.removeView(vmuLcd);
+		}
+		
 		public void showVmu() {
 			vmuLcd.configureScale(72);
-			hlay.addView(vmuLcd, 0, params);
+			vmuIcon.addView(vmuLcd, 0);
 		}
 	}
 }

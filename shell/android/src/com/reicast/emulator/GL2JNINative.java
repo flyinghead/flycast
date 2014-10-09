@@ -291,22 +291,20 @@ public class GL2JNINative extends NativeActivity {
 
 	public void toggleVmu() {
 		boolean showFloating = !prefs.getBoolean(Config.pref_vmu, false);
-		if(showFloating){
-			if(popUp.isShowing()){
+		if (showFloating) {
+			if (popUp.isShowing()) {
 				popUp.dismiss();
 			}
 			//remove from popup menu
-			LinearLayout parent = (LinearLayout) popUp.getContentView();
-			parent.removeView(menu.getVmu());
+			popUp.hideVmu();
 			//add to floating window
 			vmuPop.showVmu();
 			vmuPop.showAtLocation(mView, Gravity.TOP | Gravity.RIGHT, 4, 4);
 			vmuPop.update(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
-		}else{
+		} else {
 			vmuPop.dismiss();
 			//remove from floating window
-			LinearLayout parent = (LinearLayout) vmuPop.getContentView();
-			parent.removeView(menu.getVmu());
+			vmuPop.hideVmu();
 			//add back to popup menu
 			popUp.showVmu();
 		}

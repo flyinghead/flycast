@@ -120,6 +120,12 @@
     
     <!-- Onscreen Menu -->
     <string name="popup_button_back">Back</string>
+    <string name="popup_button_disk">Disk Swap</string>
+    <string name="popup_button_vmu_swap">VMU Swap</string>
+    <string name="popup_button_options">Config Menu</string>
+    <string name="popup_button_debugging">Debug Menu</string>
+    <string name="popup_button_screenshot">Screenshot</string>
+    <string name="popup_button_exit">Quit Emu</string>
     <string name="popup_button_clear_cache">Clear Cache</string>
     <string name="popup_button_profiler_one">Profiler 1</string>
     <string name="popup_button_profiler_two">Profiler 2</string>
