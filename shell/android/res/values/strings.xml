@@ -117,4 +117,23 @@
     
     <string name="platform">Copying logcat content to clipboard\nPlease paste in the issue report</string>
     <string name="log_saved">Log saved to \"Files Dir\" path</string>
+    
+    <!-- Onscreen Menu -->
+    <string name="popup_button_back">Back</string>
+    <string name="popup_button_disk">Disk Swap</string>
+    <string name="popup_button_vmu_swap">VMU Swap</string>
+    <string name="popup_button_options">Config Menu</string>
+    <string name="popup_button_debugging">Debug Menu</string>
+    <string name="popup_button_screenshot">Screenshot</string>
+    <string name="popup_button_exit">Quit Emu</string>
+    <string name="popup_button_clear_cache">Clear Cache</string>
+    <string name="popup_button_profiler_one">Profiler 1</string>
+    <string name="popup_button_profiler_two">Profiler 2</string>
+    <string name="popup_button_print_stats">Print Stats</string>
+    <string name="popup_button_widescreen">Widescreen</string>
+    <string name="popup_button_frames_down">Frameskip -</string>
+    <string name="popup_button_frames_up">Frameskip +</string>
+    <string name="popup_button_frame_limit">Limit Framerate</string>
+    <string name="popup_button_audio">Emu Sound</string>
+    <string name="popup_button_turbo">Turbo</string>
 </resources>
