@@ -5,6 +5,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.HashSet;
+import java.util.Iterator;
 
 import android.app.Activity;
 import android.content.SharedPreferences;
@@ -23,14 +25,15 @@ import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CompoundButton;
-import android.widget.Toast;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.EditText;
 import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.reicast.emulator.FileBrowser;
 import com.reicast.emulator.R;
 import com.reicast.emulator.emu.GL2JNIView;
 import com.reicast.emulator.emu.JNIdc;
@@ -81,12 +84,21 @@ public class OptionsFragment extends Fragment {
 
 	@Override
 	public void onViewCreated(View view, Bundle savedInstanceState) {
-		// setContentView(R.layout.activity_main);
-
-		//parentActivity = getActivity();
 		
-
 		mPrefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+		
+		// Specialized handler for devices with an extSdCard mount for external
+		HashSet<String> extStorage = FileBrowser.getExternalMounts();
+		if (extStorage != null && !extStorage.isEmpty()) {
+			for (Iterator<String> sd = extStorage.iterator(); sd.hasNext();) {
+				String sdCardPath = sd.next();
+				if (!sdCardPath.equals(sdcard)) {
+//					home_directory = sdCardPath + "/dc";
+					game_directory = sdCardPath + "/dc";
+				}
+			}
+		}
+		
 		home_directory = mPrefs.getString(Config.pref_home, home_directory);
 		config = new Config(getActivity());
 		config.getConfigurationPrefs();

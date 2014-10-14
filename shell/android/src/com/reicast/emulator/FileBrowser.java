@@ -11,6 +11,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 
@@ -83,6 +85,42 @@ public class FileBrowser extends Fragment {
 			}
 		}
 
+	}
+	
+	public static HashSet<String> getExternalMounts() {
+		final HashSet<String> out = new HashSet<String>();
+		String reg = "(?i).*vold.*(vfat|ntfs|exfat|fat32|ext3|ext4|fuse).*rw.*";
+		String s = "";
+		try {
+			final Process process = new ProcessBuilder().command("mount")
+					.redirectErrorStream(true).start();
+			process.waitFor();
+			final InputStream is = process.getInputStream();
+			final byte[] buffer = new byte[1024];
+			while (is.read(buffer) != -1) {
+				s = s + new String(buffer);
+			}
+			is.close();
+		} catch (final Exception e) {
+
+		}
+
+		final String[] lines = s.split("\n");
+		for (String line : lines) {
+			if (StringUtils.containsIgnoreCase(line, "secure"))
+				continue;
+			if (StringUtils.containsIgnoreCase(line, "asec"))
+				continue;
+			if (line.matches(reg)) {
+				String[] parts = line.split(" ");
+				for (String part : parts) {
+					if (part.startsWith("/"))
+						if (!StringUtils.containsIgnoreCase(part, "vold"))
+							out.add(part);
+				}
+			}
+		}
+		return out;
 	}
 
 	// Container Activity must implement this interface
@@ -228,7 +266,16 @@ public class FileBrowser extends Fragment {
 					createListItem(list, items.get(i), i, array == R.array.images);
 				}
 			} else {
-				Toast.makeText(parentActivity, R.string.config_game, Toast.LENGTH_LONG).show();
+				HashSet<String> extStorage = FileBrowser.getExternalMounts();
+				if (extStorage != null && !extStorage.isEmpty()) {
+					for (Iterator<String> sd = extStorage.iterator(); sd.hasNext();) {
+						String sdCardPath = sd.next();
+						if (!sdCardPath.equals(sdcard)) {
+							sdcard = new File(sdCardPath);
+						}
+					}
+				}
+				navigate(sdcard);
 			}
 			list.invalidate();
 		}
