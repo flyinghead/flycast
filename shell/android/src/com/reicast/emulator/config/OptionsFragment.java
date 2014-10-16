@@ -50,8 +50,8 @@ public class OptionsFragment extends Fragment {
 
 	private SharedPreferences mPrefs;
 	private File sdcard = Environment.getExternalStorageDirectory();
-	private String home_directory = sdcard + "/dc";
-	private String game_directory = sdcard + "/dc";
+	private String home_directory = sdcard.getAbsolutePath();
+	private String game_directory = sdcard.getAbsolutePath();
 	
 	private String[] codes;
 
@@ -91,10 +91,9 @@ public class OptionsFragment extends Fragment {
 		HashSet<String> extStorage = FileBrowser.getExternalMounts();
 		if (extStorage != null && !extStorage.isEmpty()) {
 			for (Iterator<String> sd = extStorage.iterator(); sd.hasNext();) {
-				String sdCardPath = sd.next();
-				if (!sdCardPath.equals(sdcard)) {
-//					home_directory = sdCardPath + "/dc";
-					game_directory = sdCardPath + "/dc";
+				String sdCardPath = sd.next().replace("mnt/media_rw", "storage");
+				if (!sdCardPath.equals(sdcard.getAbsolutePath())) {
+					game_directory = sdCardPath;
 				}
 			}
 		}

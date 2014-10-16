@@ -46,7 +46,7 @@ public class MainActivity extends SlidingFragmentActivity implements
 
 	private SharedPreferences mPrefs;
 	private static File sdcard = Environment.getExternalStorageDirectory();
-	public static String home_directory = sdcard + "/dc";
+	public static String home_directory = sdcard.getAbsolutePath();
 
 	private TextView menuHeading;
 	private boolean hasAndroidMarket = false;
