@@ -11,6 +11,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 
@@ -58,8 +60,8 @@ public class FileBrowser extends Fragment {
 
 	private SharedPreferences mPrefs;
 	private File sdcard = Environment.getExternalStorageDirectory();
-	private String home_directory = sdcard + "/dc";
-	private String game_directory = sdcard + "/dc";
+	private String home_directory = sdcard.getAbsolutePath();
+	private String game_directory = sdcard.getAbsolutePath();
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -83,6 +85,42 @@ public class FileBrowser extends Fragment {
 			}
 		}
 
+	}
+	
+	public static HashSet<String> getExternalMounts() {
+		final HashSet<String> out = new HashSet<String>();
+		String reg = "(?i).*vold.*(vfat|ntfs|exfat|fat32|ext3|ext4|fuse).*rw.*";
+		String s = "";
+		try {
+			final Process process = new ProcessBuilder().command("mount")
+					.redirectErrorStream(true).start();
+			process.waitFor();
+			final InputStream is = process.getInputStream();
+			final byte[] buffer = new byte[1024];
+			while (is.read(buffer) != -1) {
+				s = s + new String(buffer);
+			}
+			is.close();
+		} catch (final Exception e) {
+
+		}
+
+		final String[] lines = s.split("\n");
+		for (String line : lines) {
+			if (StringUtils.containsIgnoreCase(line, "secure"))
+				continue;
+			if (StringUtils.containsIgnoreCase(line, "asec"))
+				continue;
+			if (line.matches(reg)) {
+				String[] parts = line.split(" ");
+				for (String part : parts) {
+					if (part.startsWith("/"))
+						if (!StringUtils.containsIgnoreCase(part, "vold"))
+							out.add(part);
+				}
+			}
+		}
+		return out;
 	}
 
 	// Container Activity must implement this interface
@@ -155,12 +193,11 @@ public class FileBrowser extends Fragment {
 					Toast.LENGTH_LONG).show();
 		}
 
-		if (!ImgBrowse) {
-//			navigate(sdcard);
+		if (!ImgBrowse && !games) {
 			LocateGames mLocateGames = new LocateGames(R.array.flash);
 			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
 				mLocateGames
-						.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, home_directory);
+				.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, home_directory);
 			} else {
 				mLocateGames.execute(home_directory);
 			}
@@ -216,22 +253,38 @@ public class FileBrowser extends Fragment {
 
 		@Override
 		protected void onPostExecute(List<File> items) {
-			final LinearLayout list = (LinearLayout) parentActivity.findViewById(R.id.game_list);
-			if (list != null) {
-				list.removeAllViews();
-			}
-
-			String heading = parentActivity.getString(R.string.games_listing);
-			createListHeader(heading, list, array == R.array.images);
 			if (items != null && !items.isEmpty()) {
+				final LinearLayout list = (LinearLayout) parentActivity.findViewById(R.id.game_list);
+				if (list != null) {
+					list.removeAllViews();
+				}
+
+				String heading = parentActivity.getString(R.string.games_listing);
+				createListHeader(heading, list, array == R.array.images);
 				for (int i = 0; i < items.size(); i++) {
 					createListItem(list, items.get(i), i, array == R.array.images);
 				}
+				list.invalidate();
 			} else {
-				Toast.makeText(parentActivity, R.string.config_game, Toast.LENGTH_LONG).show();
+				browseStorage();
 			}
-			list.invalidate();
 		}
+	}
+	
+	private void browseStorage() {
+		HashSet<String> extStorage = FileBrowser.getExternalMounts();
+		if (extStorage != null && !extStorage.isEmpty()) {
+			for (Iterator<String> sd = extStorage.iterator(); sd.hasNext();) {
+				String sdCardPath = sd.next().replace("mnt/media_rw", "storage");
+				if (!sdCardPath.equals(sdcard.getAbsolutePath())) {
+					if (new File(sdCardPath).canRead()) {
+						navigate(new File(sdCardPath));
+						return;
+					}
+				}
+			}
+		}
+		navigate(sdcard);
 	}
 
 	private static final class DirSort implements Comparator<File> {
@@ -305,11 +358,7 @@ public class FileBrowser extends Fragment {
 		
 		final XMLParser xmlParser = new XMLParser(game, index, mPrefs);
 		xmlParser.setViewParent(parentActivity, childview);
-		xmlParser.execute(game.getName());
-
 		orig_bg = childview.getBackground();
-
-		// vw.findViewById(R.id.childview).setBackgroundColor(0xFFFFFFFF);
 
 		childview.findViewById(R.id.childview).setOnClickListener(
 				new OnClickListener() {
@@ -374,6 +423,7 @@ public class FileBrowser extends Fragment {
 					}
 				});
 		list.addView(childview);
+		xmlParser.execute(game.getName());
 	}
 
 	void navigate(final File root_sd) {
