@@ -173,19 +173,23 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 					mContext.getString(R.string.info_unavailable));
 			final String nameLower = game.getName().toLowerCase(
 					Locale.getDefault());
-			game_icon = mContext.getResources().getDrawable(
-					game.isDirectory() ? R.drawable.open_folder : nameLower
-							.endsWith(".gdi") ? R.drawable.gdi : nameLower
-							.endsWith(".cdi") ? R.drawable.cdi : nameLower
-							.endsWith(".chd") ? R.drawable.chd
-							: R.drawable.disk_unknown);
+			if (Build.VERSION.SDK_INT < 21) {
+				game_icon = mContext.getResources().getDrawable(
+						game.isDirectory() ? R.drawable.open_folder : nameLower
+								.endsWith(".gdi") ? R.drawable.gdi : nameLower
+								.endsWith(".cdi") ? R.drawable.cdi : nameLower
+								.endsWith(".chd") ? R.drawable.chd
+								: R.drawable.disk_unknown);
+			}
 
 		}
 
 		((TextView) childview.findViewById(R.id.item_name)).setText(game_name);
 
-		((ImageView) childview.findViewById(R.id.item_icon))
-				.setImageDrawable(game_icon);
+		if (Build.VERSION.SDK_INT < 21) {
+			((ImageView) childview.findViewById(R.id.item_icon))
+					.setImageDrawable(game_icon);
+		}
 
 		childview.setTag(game_name);
 	}
