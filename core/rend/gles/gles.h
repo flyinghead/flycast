@@ -1,6 +1,8 @@
 #pragma once
 #include "rend/rend.h"
 
+
+#ifdef GLES
 #ifdef TARGET_IPHONE //apple-specific ogles2 headers
 #include <APPLE/egl.h>
 #include <OpenGLES/ES2/gl.h>
@@ -17,9 +19,14 @@
 #pragma comment(lib,"libGLESv2.lib")
 #else /* NV gles emulation*/
 #pragma comment(lib,"libGLES20.lib")
-
 #endif
-#define glCheck() false
+
+#else
+#include <GL3/gl3w.h>
+#endif
+
+
+#define glCheck() verify(glGetError()==GL_NO_ERROR)
 #define eglCheck() false
 
 #define VERTEX_POS_ARRAY 0
@@ -50,6 +57,7 @@ struct PipelineShader
 
 struct gl_ctx
 {
+#ifdef GLES
 	struct
 	{
 		EGLNativeWindowType native_wind;
@@ -58,6 +66,7 @@ struct gl_ctx
 		EGLSurface surface;
 		EGLContext context;
 	} setup;
+#endif
 
 	struct
 	{
@@ -77,6 +86,9 @@ struct gl_ctx
 	struct
 	{
 		GLuint geometry,modvols,idxs,idxs2;
+#ifndef GLES
+		GLuint vao;
+#endif
 	} vbo;
 
 
