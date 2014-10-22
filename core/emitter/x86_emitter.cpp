@@ -232,7 +232,7 @@ void x86_block::ApplyPatches(u8* base)
 x86_block::x86_block()
 {
 	_patches=new vector<code_patch>;
-	_labels=new vector<code_patch>;
+	_labels=new vector<x86_Label*>;
 	opcode_count=0;
 }
 x86_block::~x86_block()
