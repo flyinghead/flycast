@@ -81,4 +81,8 @@ ifdef NO_REC
   RZDCY_CFLAGS += -DHOST_NO_REC
 endif
 
+ifndef DESKTOPGL
+  RZDCY_CFLAGS += -DGLES
+endif
+
 RZDCY_CXXFLAGS := $(RZDCY_CFLAGS) -fno-exceptions -fno-rtti -std=gnu++11
