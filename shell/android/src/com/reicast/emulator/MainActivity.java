@@ -397,8 +397,7 @@ public class MainActivity extends SlidingFragmentActivity implements
 
 	public void onGameSelected(Uri uri) {
 		if (Config.readOutput("uname -a").equals(getString(R.string.error_kernel))) {
-			Toast.makeText(MainActivity.this, R.string.unsupported,
-					Toast.LENGTH_SHORT).show();
+			MainActivity.showToastMessage(MainActivity.this, getString(R.string.unsupported), Toast.LENGTH_SHORT);
 		}
 		String msg = null;
 		if (!isBiosExisting(MainActivity.this))
@@ -647,7 +646,7 @@ public class MainActivity extends SlidingFragmentActivity implements
 		View layout = inflater.inflate(R.layout.toast_layout, null);
 
 		ImageView image = (ImageView) layout.findViewById(R.id.image);
-		image.setImageResource(R.drawable.ic_launcher);
+		image.setImageResource(R.drawable.ic_notification);
 		TextView text = (TextView) layout.findViewById(R.id.text);
 		text.setText(message);
 
