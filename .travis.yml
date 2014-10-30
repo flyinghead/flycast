@@ -29,6 +29,7 @@ before_script:
 script:
 - cd shell/android
 - android update project -p . --target "android-19"
+- export NUMBER_OF_PROCESSORS=1
 - ant debug
 before_deploy:
 - cd ../../
