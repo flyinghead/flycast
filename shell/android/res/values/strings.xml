@@ -7,6 +7,7 @@
     <string name="games_path">Storage Path (location of *.gdi, *.chd or *.cdi images)</string>
     <string name="game_path">Default Game Storage</string>
     <string name="config_home">Please configure a home directory.</string>
+    <string name="config_data">Please move BIOS to %1$s/data/</string>
     <string name="config_game">Please configure a game directory.</string>
     <string name="unsupported">Unsupported kernel version!</string>
     <string name="locate">Locate</string>

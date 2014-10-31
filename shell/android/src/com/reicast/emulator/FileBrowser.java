@@ -189,8 +189,9 @@ public class FileBrowser extends Fragment {
 
 		File home = new File(mPrefs.getString(Config.pref_home, home_directory));
 		if (!home.exists() || !home.isDirectory()) {
-			Toast.makeText(getActivity(), R.string.config_home,
-					Toast.LENGTH_LONG).show();
+			MainActivity.showToastMessage(getActivity(), 
+					getActivity().getString(R.string.config_home),
+					Toast.LENGTH_LONG);
 		}
 
 		if (!ImgBrowse && !games) {
@@ -401,6 +402,11 @@ public class FileBrowser extends Fragment {
 									.fromFile(game) : Uri.EMPTY);
 							home_directory = game.getAbsolutePath().substring(0,
 									game.getAbsolutePath().lastIndexOf(File.separator));
+							if (!DataDirectoryBIOS()) {
+								MainActivity.showToastMessage(getActivity(), 
+										getActivity().getString(R.string.config_data, home_directory),
+										Toast.LENGTH_LONG);
+							}
 							mPrefs.edit().putString("home_directory",
 									home_directory.replace("/data", "")).commit();
 							JNIdc.config(home_directory.replace("/data", ""));
@@ -498,11 +504,10 @@ public class FileBrowser extends Fragment {
 									mPrefs.edit()
 											.putString(Config.pref_home,
 													heading).commit();
-									File data_directory = new File(heading,
-											"data");
-									if (!data_directory.exists()
-											|| !data_directory.isDirectory()) {
-										data_directory.mkdirs();
+									if (!DataDirectoryBIOS()) {
+										MainActivity.showToastMessage(getActivity(), 
+												getActivity().getString(R.string.config_data, home_directory),
+												Toast.LENGTH_LONG);
 									}
 									JNIdc.config(heading);
 								}
@@ -528,5 +533,19 @@ public class FileBrowser extends Fragment {
 			v.addView(childview);
 		}
 		v.invalidate();
+	}
+	
+	private boolean DataDirectoryBIOS() {
+		File data_directory = new File(home_directory, "data");
+		if (!data_directory.exists() || !data_directory.isDirectory()) {
+			data_directory.mkdirs();
+			File bios = new File(home_directory, "dc_boot.bin");
+			boolean success = bios.renameTo(new File(home_directory + "/data", "dc_boot.bin"));
+			File flash = new File(home_directory, "dc_flash.bin");
+			success = flash.renameTo(new File(home_directory + "/data", "dc_flash.bin"));
+			return success;
+		} else {
+			return true;
+		}
 	}
 }

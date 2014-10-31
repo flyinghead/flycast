@@ -20,14 +20,18 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
+import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.KeyEvent;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnSystemUiVisibilityChangeListener;
 import android.view.View.OnTouchListener;
 import android.view.WindowManager;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -393,8 +397,7 @@ public class MainActivity extends SlidingFragmentActivity implements
 
 	public void onGameSelected(Uri uri) {
 		if (Config.readOutput("uname -a").equals(getString(R.string.error_kernel))) {
-			Toast.makeText(MainActivity.this, R.string.unsupported,
-					Toast.LENGTH_SHORT).show();
+			MainActivity.showToastMessage(MainActivity.this, getString(R.string.unsupported), Toast.LENGTH_SHORT);
 		}
 		String msg = null;
 		if (!isBiosExisting(MainActivity.this))
@@ -634,5 +637,30 @@ public class MainActivity extends SlidingFragmentActivity implements
 		List<ResolveInfo> list = getPackageManager().queryIntentActivities(
 				intent, PackageManager.MATCH_DEFAULT_ONLY);
 		return list.size() > 0;
+	}
+	
+	public static void showToastMessage(Context context, String message,
+			int duration) {
+		LayoutInflater inflater = (LayoutInflater) context
+				.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+		View layout = inflater.inflate(R.layout.toast_layout, null);
+
+		ImageView image = (ImageView) layout.findViewById(R.id.image);
+		image.setImageResource(R.drawable.ic_notification);
+		TextView text = (TextView) layout.findViewById(R.id.text);
+		text.setText(message);
+
+		DisplayMetrics metrics = new DisplayMetrics();
+		WindowManager winman = (WindowManager) context
+				.getSystemService(Context.WINDOW_SERVICE);
+		winman.getDefaultDisplay().getMetrics(metrics);
+		final float scale = context.getResources().getDisplayMetrics().density;
+		int toastPixels = (int) ((metrics.widthPixels * scale + 0.5f) / 18);
+
+		Toast toast = new Toast(context);
+		toast.setGravity(Gravity.BOTTOM, 0, toastPixels);
+		toast.setDuration(duration);
+		toast.setView(layout);
+		toast.show();
 	}
 }
