@@ -27,7 +27,8 @@ install:
 - export PATH=${PATH}:$ANDROID_HOME/tools
 - export PATH=${PATH}:$ANDROID_HOME/platform-tools
 - export PATH=${PATH}:$NDK
-- cp debug.keystore ~/.android/debug.keystore
+- mkdir -p ~/.android
+- mv debug.keystore ~/.android/debug.keystore
 before_script: 
 script:
 - cd shell/android
