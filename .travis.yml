@@ -1,8 +1,10 @@
 notifications:
-  irc: "chat.freenode.net#reicast"
+  irc: chat.freenode.net#reicast
 language: cpp
 compiler: gcc
 before_install:
+- openssl aes-256-cbc -K $encrypted_c726d225a9d9_key -iv $encrypted_c726d225a9d9_iv
+  -in debug.keystore.enc -out debug.keystore -d
 - sudo apt-get install aria2 -qq
 - download_extract() { aria2c -x 16 $1 -o $2 && tar -xf $2; }
 - download_extract_zip() { aria2c -x 16 $1 -o $2 && unzip -qq $2; }
@@ -25,6 +27,7 @@ install:
 - export PATH=${PATH}:$ANDROID_HOME/tools
 - export PATH=${PATH}:$ANDROID_HOME/platform-tools
 - export PATH=${PATH}:$NDK
+- cp debug.keystore ~/.android/debug.keystore
 before_script: 
 script:
 - cd shell/android
@@ -37,10 +40,10 @@ before_deploy:
 - cp shell/android/bin/reicast-debug.apk  artifacts/$GIT_BUILD/reicast-android-debug-$GIT_HASH.apk
 deploy:
   provider: s3
-  access_key_id: "AKIAJR5J3OHAQUP5BHHQ"
+  access_key_id: AKIAJR5J3OHAQUP5BHHQ
   secret_access_key:
     secure: dDmBiadS1cc2XCWWDZ1kwZGIoLkwEOLsdi5nzVdn1dHMsEKxN3u+3WFuuOfJHZYcdrtN7VhojCarPa+eGDDeiVme4m3y+QKMbI9lecHX9+t4jDNUyYep5TpeIVUkZ7fj4JsMi7U9/YFBTg7QnqvVsMAHE9vobkvjegjAYToBrlM=
-  bucket: "reicast-builds"
+  bucket: reicast-builds
   local-dir: artifacts
   upload-dir: builds
   skip_cleanup: true
