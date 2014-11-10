@@ -308,6 +308,9 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_run(JNIEnv *env,jobje
     coreMessageMid=env->GetMethodID(env->GetObjectClass(emu),"coreMessage","([B)V");
     dieMid=env->GetMethodID(env->GetObjectClass(emu),"Die","()V");
 
+	
+	msgboxf("HELLO!", MBX_OK);
+	
 	dc_run();
 }
 
@@ -324,10 +327,9 @@ int msgboxf(const wchar* Text,unsigned int Type,...)
   jbyteArray bytes = jenv->NewByteArray(byteCount);
   jenv->SetByteArrayRegion(bytes, 0, byteCount, (jbyte*)S);
 
-  //puts(S);
   jenv->CallVoidMethod(emu,coreMessageMid,bytes);
 
-  return(MBX_OK);
+  return (MBX_OK);
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setupMic(JNIEnv *env,jobject obj,jobject sip)

@@ -1,6 +1,7 @@
 package com.reicast.emulator.emu;
 
 
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.charset.Charset;
@@ -688,7 +689,12 @@ public class GL2JNIView extends GLSurfaceView
 		}
 		
 		void coreMessage(byte[] msg) {
-			showMessage(new String(msg, Charset.forName("UTF-8")));
+			try {
+				showMessage(new String(msg, "UTF-8"));
+			}
+			catch (UnsupportedEncodingException e) {
+				showMessage("coreMessage: Failed to display error");
+			}
 		}
 		
 		void showMessage(final String msg) {
