@@ -23,7 +23,7 @@ extern "C"
 {
   JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_config(JNIEnv *env,jobject obj,jstring dirName)  __attribute__((visibility("default")));
   JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_init(JNIEnv *env,jobject obj,jstring fileName)  __attribute__((visibility("default")));
-  JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_run(JNIEnv *env,jobject obj,jobject track)  __attribute__((visibility("default")));
+  JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_run(JNIEnv *env,jobject obj,jobject emu_thread)  __attribute__((visibility("default")));
   JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_stop(JNIEnv *env,jobject obj)  __attribute__((visibility("default")));
 
   JNIEXPORT jint JNICALL Java_com_reicast_emulator_emu_JNIdc_send(JNIEnv *env,jobject obj,jint id, jint v)  __attribute__((visibility("default")));
@@ -212,18 +212,6 @@ static void *ThreadHandler(void *UserData)
 // Platform-specific NullDC functions
 //
 
-int msgboxf(const wchar* Text,unsigned int Type,...)
-{
-  wchar S[2048];
-  va_list Args;
-
-  va_start(Args,Type);
-  vsprintf(S,Text,Args);
-  va_end(Args);
-
-  puts(S);
-  return(MBX_OK);
-}
 
 void UpdateInputState(u32 Port)
 {
@@ -296,7 +284,9 @@ JNIEnv* jenv; //we are abusing the f*** out of this poor guy
 //stuff for audio
 jshortArray jsamples;
 jmethodID writemid;
-jobject track;
+jmethodID coreMessageMid;
+jmethodID dieMid;
+jobject emu;
 //stuff for microphone
 jobject sipemu;
 jmethodID getmicdata;
@@ -306,19 +296,38 @@ jbyteArray jpix = NULL;
 jmethodID updatevmuscreen;
 
 
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_run(JNIEnv *env,jobject obj,jobject trk)
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_run(JNIEnv *env,jobject obj,jobject emu_thread)
 {
 	install_prof_handler(0);
 
 	jenv=env;
-	track=trk;
+	emu=emu_thread;
 
 	jsamples=env->NewShortArray(SAMPLE_COUNT*2);
-	writemid=env->GetMethodID(env->GetObjectClass(track),"WriteBuffer","([SI)I");
-  //showMessageMid=env->GetMethodID(env->GetObjectClass(track),"WriteBuffer","([SI)I");
-  //dieMid=env->GetMethodID(env->GetObjectClass(track),"Die","([SI)I");
+	writemid=env->GetMethodID(env->GetObjectClass(emu),"WriteBuffer","([SI)I");
+    coreMessageMid=env->GetMethodID(env->GetObjectClass(emu),"coreMessage","([B)V");
+    dieMid=env->GetMethodID(env->GetObjectClass(emu),"Die","()V");
 
 	dc_run();
+}
+
+int msgboxf(const wchar* Text,unsigned int Type,...)
+{
+  wchar S[2048];
+  va_list Args;
+
+  va_start(Args,Type);
+  vsprintf(S,Text,Args);
+  va_end(Args);
+
+  int byteCount = strlen(S);
+  jbyteArray bytes = jenv->NewByteArray(byteCount);
+  jenv->SetByteArrayRegion(bytes, 0, byteCount, (jbyte*)S);
+
+  //puts(S);
+  jenv->CallVoidMethod(emu,coreMessageMid,bytes);
+
+  return(MBX_OK);
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setupMic(JNIEnv *env,jobject obj,jobject sip)
@@ -475,12 +484,12 @@ u32 os_Push(void* frame, u32 amt, bool wait)
 	verify(amt==SAMPLE_COUNT);
 	//yeah, do some audio piping magic here !
 	jenv->SetShortArrayRegion(jsamples,0,amt*2,(jshort*)frame);
-	return jenv->CallIntMethod(track,writemid,jsamples,wait);
+	return jenv->CallIntMethod(emu,writemid,jsamples,wait);
 }
 
 bool os_IsAudioBuffered()
 {
-    return jenv->CallIntMethod(track,writemid,jsamples,-1)==0;
+    return jenv->CallIntMethod(emu,writemid,jsamples,-1)==0;
 }
 
 int get_mic_data(u8* buffer)

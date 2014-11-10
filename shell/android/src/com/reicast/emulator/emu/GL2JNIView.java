@@ -3,12 +3,16 @@ package com.reicast.emulator.emu;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.charset.Charset;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
 import android.annotation.TargetApi;
+import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.graphics.Paint;
@@ -149,7 +153,7 @@ public class GL2JNIView extends GLSurfaceView
 
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
 
-		ethd = new EmuThread(!Config.nosound);
+		ethd = new EmuThread((Activity) getContext(), !Config.nosound);
 
 		touchVibrationEnabled = prefs.getBoolean(Config.pref_touchvibe, true);
 		vibrationDuration = prefs.getInt(Config.pref_vibrationDuration, 20);
@@ -620,13 +624,15 @@ public class GL2JNIView extends GLSurfaceView
 
 	class EmuThread extends Thread
 	{
+		Activity activity;
 		AudioTrack Player;
 		long pos;	//write position
 		long size;	//size in frames
 		private boolean sound;
 
-		public EmuThread(boolean sound) {
+		public EmuThread(Activity activity, boolean sound) {
 			this.sound = sound;
+			this.activity = activity;
 		}
 
 		@Override public void run()
@@ -680,44 +686,47 @@ public class GL2JNIView extends GLSurfaceView
 
 			return 1;
 		}
-	}
+		
+		void coreMessage(byte[] msg) {
+			showMessage(new String(msg, Charset.forName("UTF-8")));
+		}
+		
+		void showMessage(final String msg) {
+			activity.runOnUiThread(new Runnable() {
+	        	public void run() {
+		        
+		        	AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
+					context);
+	 
+					// set title
+					alertDialogBuilder.setTitle("Ooops");
+		 
+					// set dialog message
+					alertDialogBuilder
+						.setMessage(msg)
+						.setCancelable(false)
+						.setPositiveButton("Okay...",new DialogInterface.OnClickListener() {
+							public void onClick(DialogInterface dialog,int id) {
+								// if this button is clicked, close
+								// current activity
+								//MainActivity.this.finish();
+							}
+						  });
+		 
+						// create alert dialog
+						AlertDialog alertDialog = alertDialogBuilder.create();
+		 
+						// show it
+						alertDialog.show();
+		        }
+		    });
+		}
 
-	void showMessage(String msg) {
-		/*
-		activity.runOnUiThread(new Runnable() {
-        	public void run() {
-	        
-	        	AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
-				context);
- 
-				// set title
-				alertDialogBuilder.setTitle("Ooops");
-	 
-				// set dialog message
-				alertDialogBuilder
-					.setMessage(msg)
-					.setCancelable(false)
-					.setPositiveButton("Okay...",new DialogInterface.OnClickListener() {
-						public void onClick(DialogInterface dialog,int id) {
-							// if this button is clicked, close
-							// current activity
-							MainActivity.this.finish();
-						}
-					  });
-	 
-					// create alert dialog
-					AlertDialog alertDialog = alertDialogBuilder.create();
-	 
-					// show it
-					alertDialog.show();
-	        }
-	    });
-	    */
-	}
+		void die() {
+			showMessage("Something went wrong and reicast crashed.\nPlease report this on the reicast forums.");
+			activity.finish();
+		}
 
-	void die() {
-		showMessage("Something went very bad. Please report this on the reicast forums.");
-		onStop();
 	}
 
 	public void onStop() {
