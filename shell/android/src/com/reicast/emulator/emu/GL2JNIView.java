@@ -4,7 +4,6 @@ package com.reicast.emulator.emu;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.nio.charset.Charset;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -38,6 +37,7 @@ import android.view.WindowManager;
 import com.android.util.FileUtils;
 import com.reicast.emulator.GL2JNIActivity;
 import com.reicast.emulator.GL2JNINative;
+import com.reicast.emulator.R;
 import com.reicast.emulator.config.Config;
 import com.reicast.emulator.emu.OnScreenMenu.FpsPopup;
 import com.reicast.emulator.periph.VJoy;
@@ -694,12 +694,13 @@ public class GL2JNIView extends GLSurfaceView
 
 					AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(context);
 					// set title
-					alertDialogBuilder.setTitle("Ooops");
+					alertDialogBuilder.setTitle(context.getString(R.string.emu_crash));
 					// set dialog message
 					alertDialogBuilder
 					.setMessage(msg)
 					.setCancelable(false)
-					.setPositiveButton("Okay...",new DialogInterface.OnClickListener() {
+					.setPositiveButton(context.getString(R.string.dismiss),
+							new DialogInterface.OnClickListener() {
 						public void onClick(DialogInterface dialog,int id) {
 							// if this button is clicked, close
 							// current activity

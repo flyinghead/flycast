@@ -307,9 +307,7 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_run(JNIEnv *env,jobje
 	writemid=env->GetMethodID(env->GetObjectClass(emu),"WriteBuffer","([SI)I");
     coreMessageMid=env->GetMethodID(env->GetObjectClass(emu),"coreMessage","([B)V");
     dieMid=env->GetMethodID(env->GetObjectClass(emu),"Die","()V");
-
-	
-	msgboxf("HELLO!", MBX_OK);
+//	msgboxf("HELLO!", MBX_OK);
 	
 	dc_run();
 }
