@@ -61,7 +61,7 @@ public class EditVJoyActivity extends Activity {
 		config.getConfigurationPrefs();
 
 		// Create the actual GLES view
-		mView = new GL2JNIView(this, config, null, false,
+		mView = new GL2JNIView(EditVJoyActivity.this, config, null, false,
 				prefs.getInt(Config.pref_renderdepth, 24), 0, true);
 		mView.setFpsDisplay(null);
 		setContentView(mView);
