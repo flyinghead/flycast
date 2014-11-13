@@ -198,7 +198,7 @@ public class GL2JNIActivity extends Activity {
 			fileName = Uri.decode(getIntent().getData().toString());
 
 		// Create the actual GLES view
-		mView = new GL2JNIView(this, config, fileName, false,
+		mView = new GL2JNIView(GL2JNIActivity.this, config, fileName, false,
 				prefs.getInt(Config.pref_renderdepth, 24), 0, false);
 		setContentView(mView);
 
