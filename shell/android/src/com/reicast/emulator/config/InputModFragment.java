@@ -145,18 +145,11 @@ public class InputModFragment extends Fragment {
 						.commit();
 				if (isChecked) {
 					selectController();
-					switchJoystickDpadEnabled.setEnabled(true);
-				} else if (!switchCompatibilityEnabled.isChecked()) {
-					switchJoystickDpadEnabled.setEnabled(false);
 				}
 			}
 		};
 		
 		switchCompatibilityEnabled.setOnCheckedChangeListener(compat_mode);
-		
-		if (!switchModifiedLayoutEnabled.isChecked() && !switchCompatibilityEnabled.isChecked()) {
-			switchJoystickDpadEnabled.setEnabled(false);
-		}
 
 		mKey = new mapKeyCode(getActivity());
 
