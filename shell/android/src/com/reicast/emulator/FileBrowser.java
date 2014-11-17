@@ -267,12 +267,12 @@ public class FileBrowser extends Fragment {
 				}
 				list.invalidate();
 			} else {
-				browseStorage();
+				browseStorage(array == R.array.images);
 			}
 		}
 	}
 	
-	private void browseStorage() {
+	private void browseStorage(boolean images) {
 		HashSet<String> extStorage = FileBrowser.getExternalMounts();
 		if (extStorage != null && !extStorage.isEmpty()) {
 			for (Iterator<String> sd = extStorage.iterator(); sd.hasNext();) {
@@ -285,7 +285,11 @@ public class FileBrowser extends Fragment {
 				}
 			}
 		}
-		navigate(sdcard);
+		if (images) {
+			navigate(new File(home_directory));
+		} else {
+			navigate(new File(game_directory));
+		}
 	}
 
 	private static final class DirSort implements Comparator<File> {
