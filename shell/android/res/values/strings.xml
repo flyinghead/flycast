@@ -140,4 +140,6 @@
     <string name="popup_button_frame_limit">Limit Framerate</string>
     <string name="popup_button_audio">Emu Sound</string>
     <string name="popup_button_turbo">Turbo</string>
+    
+    <string name="git_broken">GitHub Native is unavailable!</string>
 </resources>
