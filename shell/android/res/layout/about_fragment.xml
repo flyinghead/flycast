@@ -35,5 +35,35 @@
         android:ems="12"
         android:gravity="center"
         android:text="@string/app_site" />
+        
+        <SlidingDrawer
+            android:id="@+id/slidingGithub"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:content="@+id/changelist"
+            android:handle="@+id/handle"
+            android:topOffset="40dp" >
+            
+            <Button
+                android:id="@+id/handle"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="@drawable/ic_github" >
+            </Button>
+            
+            <RelativeLayout
+                android:id="@+id/changelist"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical" >
+                
+                <ListView
+                android:id="@+id/list"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:divider="#b5b5b5"
+                android:dividerHeight="1dp" />
+            </RelativeLayout>
+        </SlidingDrawer>
 
 </LinearLayout>
