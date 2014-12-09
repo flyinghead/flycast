@@ -75,17 +75,21 @@ void SetFloatStatusReg()
 
 
 		//TODO: Implement this (needed for SOTB)
-#if HOST_CPU==CPU_X86 && HOST_OS==OS_WINDOWS
+#if HOST_CPU==CPU_X86
 		if (fpscr.RM==1)  //if round to 0 , set the flag
 			temp|=(3<<13);
 
 		if (fpscr.DN)     //denormals are considered 0
 			temp|=(1<<15);
 
-		_asm
-		{
-			ldmxcsr temp; //load the float status :)
-		}
+		#if BUILD_COMPILER == COMPILER_VC
+				_asm
+				{
+					ldmxcsr temp; //load the float status :)
+				}
+		#else
+			asm("ldmxcsr %0" : : "m"(temp));
+		#endif
 #elif HOST_CPU==CPU_ARM
 		static const unsigned int x = 0x04086060;
 		unsigned int y = 0x02000000;
