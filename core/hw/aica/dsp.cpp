@@ -5,7 +5,7 @@
 
 ALIGN(4096) dsp_t dsp;
 
-#if HOST_OS==OS_WINDOWS
+#if HOST_OS==OS_WINDOWS && !defined(HOST_NO_REC)
 #include "emitter/x86_emitter.h"
 
 const bool SUPPORT_NOFL=false;
