@@ -20,6 +20,7 @@ struct norend : Renderer
 		return !pvrrc.isRTT;
 	}
 
+  bool Process(TA_context*) { }
 	void Present() { }
 };
 
