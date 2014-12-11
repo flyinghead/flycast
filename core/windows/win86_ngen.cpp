@@ -1,3 +1,7 @@
+#include "types.h"
+
+#ifndef HOST_NO_REC
+
 #include "win86_ngen.h"
 
 
@@ -121,3 +125,5 @@ naked void DYNACALL ngen_blockcheckfail2(u32 addr)
 		jmp eax;
 	}
 }
+
+#endif

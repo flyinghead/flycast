@@ -125,6 +125,7 @@ int ExeptionHandler(u32 dwCode, void* pExceptionPointers)
 	{
 		return EXCEPTION_CONTINUE_EXECUTION;
 	}
+#ifndef HOST_NO_REC
 	else if ( ngen_Rewrite((unat&)ep->ContextRecord->Eip,*(unat*)ep->ContextRecord->Esp,ep->ContextRecord->Eax) )
 	{
 		//remove the call from call stack
@@ -133,6 +134,7 @@ int ExeptionHandler(u32 dwCode, void* pExceptionPointers)
 		ep->ContextRecord->Ecx=ep->ContextRecord->Eax;
 		return EXCEPTION_CONTINUE_EXECUTION;
 	}
+#endif
 	else
 	{
 		printf("[GPF]Unhandled access to : 0x%X\n",address);

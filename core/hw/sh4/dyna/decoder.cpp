@@ -4,6 +4,9 @@
 */
 
 #include "types.h"
+
+#ifndef HOST_NO_REC
+
 #include "decoder.h"
 #include "shil.h"
 #include "ngen.h"
@@ -1210,3 +1213,4 @@ _end:
 	blk=0;
 }
 
+#endif
