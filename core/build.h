@@ -40,6 +40,7 @@
 #define CPU_X86      0x20000001
 #define CPU_ARM      0x20000002
 #define CPU_MIPS     0x20000003
+#define CPU_X64      0x20000004
 
 //BUILD_COMPILER
 #define COMPILER_VC  0x30000001
