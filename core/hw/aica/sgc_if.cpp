@@ -16,6 +16,7 @@
 #define clip_verify(x)
 #endif
 
+//Sound generation, mixin, and channel regs emulation
 //x.15
 s32 volume_lut[16];
 //255 -> mute

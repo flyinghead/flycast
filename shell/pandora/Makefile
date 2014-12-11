@@ -6,11 +6,22 @@ FOR_PANDORA :=1
 USE_SDL :=1
 USE_OSS :=1
 #PGO_MAKE :=1
+#PGO_USE :=1
+#USE_CCACHE :=1
+
+#USE_CCACHE :=1
+#PGO_MAKE :=1
+#PGO_USE :=1
+#USE_CCACHE :=1
+
+#USE_CCACHE :=1
+
+#PGO_MAKE :=1
 PGO_USE :=1
 
-RZDCY_SRC_DIR = ../../newdc
+RZDCY_SRC_DIR = ../../core
 
-include $(RZDCY_SRC_DIR)/newdc.mk
+include $(RZDCY_SRC_DIR)/core.mk
 
 CC_PREFIX ?=
 

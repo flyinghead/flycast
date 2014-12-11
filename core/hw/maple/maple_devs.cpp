@@ -547,7 +547,9 @@ struct maple_sega_vmu: maple_base
 							}
 						}
 						config->SetImage(lcd_data_decoded);
+#ifndef TARGET_PANDORA
 						push_vmu_screen(lcd_data_decoded);
+#endif
 #if 0
 						// Update LCD window
 						if (!dev->lcd.visible)
@@ -799,11 +801,13 @@ struct maple_microphone: maple_base
 					w8(0x04);//status (just the bit for recording)
 					w8(0x0f);//gain (default)
 					w8(0);//exp ?
-
+#ifndef TARGET_PANDORA
 					if(get_mic_data(micdata)){
 						w8(240);//ct (240 samples)
 						wptr(micdata, SIZE_OF_MIC_DATA);
-					}else{
+					}else
+#endif
+					{
 						w8(0);
 					}
 
