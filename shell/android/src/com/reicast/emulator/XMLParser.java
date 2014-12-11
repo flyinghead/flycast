@@ -173,77 +173,23 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 					mContext.getString(R.string.info_unavailable));
 			final String nameLower = game.getName().toLowerCase(
 					Locale.getDefault());
-			game_icon = mContext.getResources().getDrawable(
-					game.isDirectory() ? R.drawable.open_folder : nameLower
-							.endsWith(".gdi") ? R.drawable.gdi : nameLower
-							.endsWith(".cdi") ? R.drawable.cdi : nameLower
-							.endsWith(".chd") ? R.drawable.chd
-							: R.drawable.disk_unknown);
-
-		}
-
-		((TextView) childview.findViewById(R.id.item_name)).setText(game_name);
-
-		((ImageView) childview.findViewById(R.id.item_icon))
-				.setImageDrawable(game_icon);
-
-		childview.setTag(game_name);
-	}
-
-	private boolean isNetworkAvailable() {
-		ConnectivityManager connectivityManager = (ConnectivityManager) mContext
-				.getSystemService(Context.CONNECTIVITY_SERVICE);
-		NetworkInfo activeNetworkInfo = connectivityManager
-				.getActiveNetworkInfo();
-		return activeNetworkInfo != null && activeNetworkInfo.isConnected();
-	}
-
-	public Drawable getGameIcon() {
-		return game_icon;
-	}
-
-	public String getGameTitle() {
-		return game_name;
-	}
-
-	@Override
-	protected void onPostExecute(String gameData) {
-		if (gameData != null) {
-			Document doc = getDomElement(gameData);
-			if (doc != null && doc.getElementsByTagName("Game") != null) {
-				Element root = (Element) doc.getElementsByTagName("Game").item(
-						0);
-				game_name = getValue(root, "GameTitle");
-				String details = getValue(root, "Overview");
-				game_details.put(index, details);
-				Element boxart = (Element) root.getElementsByTagName("Images")
-						.item(0);
-				String image = "http://thegamesdb.net/banners/"
-						+ getValue(boxart, "boxart");
-				try {
-					game_preview.put(index, decodeBitmapIcon(image));
-					game_icon = new BitmapDrawable(decodeBitmapIcon(image));
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+			if (Build.VERSION.SDK_INT < 21) {
+				game_icon = mContext.getResources().getDrawable(
+						game.isDirectory() ? R.drawable.open_folder : nameLower
+								.endsWith(".gdi") ? R.drawable.gdi : nameLower
+								.endsWith(".cdi") ? R.drawable.cdi : nameLower
+								.endsWith(".chd") ? R.drawable.chd
+								: R.drawable.disk_unknown);
 			}
-		} else {
-			game_details.put(index, mContext.getString(R.string.info_unavailable));
-			final String nameLower = game.getName().toLowerCase(Locale.getDefault());
-			game_icon = mContext.getResources().getDrawable(
-					game.isDirectory() ? R.drawable.open_folder : nameLower
-							.endsWith(".gdi") ? R.drawable.gdi : nameLower
-							.endsWith(".cdi") ? R.drawable.cdi : nameLower
-							.endsWith(".chd") ? R.drawable.chd
-							: R.drawable.disk_unknown);
 
 		}
 
 		((TextView) childview.findViewById(R.id.item_name)).setText(game_name);
 
-		((ImageView) childview.findViewById(R.id.item_icon))
-				.setImageDrawable(game_icon);
+		if (Build.VERSION.SDK_INT < 21) {
+			((ImageView) childview.findViewById(R.id.item_icon))
+					.setImageDrawable(game_icon);
+		}
 
 		childview.setTag(game_name);
 	}
