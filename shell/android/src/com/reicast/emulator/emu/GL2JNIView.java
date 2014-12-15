@@ -691,7 +691,7 @@ public class GL2JNIView extends GLSurfaceView
 		void showMessage(final String msg) {
 			handler.post(new Runnable() {
 				public void run() {
-
+					Log.d(context.getApplicationContext().getPackageName(), msg);
 					AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(context);
 					// set title
 					alertDialogBuilder.setTitle(context.getString(R.string.emu_crash));
