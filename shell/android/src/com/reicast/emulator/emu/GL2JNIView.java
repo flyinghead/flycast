@@ -10,9 +10,7 @@ import javax.microedition.khronos.opengles.GL10;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.graphics.Paint;
@@ -33,10 +31,12 @@ import android.view.ScaleGestureDetector;
 import android.view.ScaleGestureDetector.SimpleOnScaleGestureListener;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.Toast;
 
 import com.android.util.FileUtils;
 import com.reicast.emulator.GL2JNIActivity;
 import com.reicast.emulator.GL2JNINative;
+import com.reicast.emulator.MainActivity;
 import com.reicast.emulator.R;
 import com.reicast.emulator.config.Config;
 import com.reicast.emulator.emu.OnScreenMenu.FpsPopup;
@@ -692,25 +692,9 @@ public class GL2JNIView extends GLSurfaceView
 			handler.post(new Runnable() {
 				public void run() {
 					Log.d(context.getApplicationContext().getPackageName(), msg);
-					AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(context);
-					// set title
-					alertDialogBuilder.setTitle(context.getString(R.string.emu_crash));
-					// set dialog message
-					alertDialogBuilder
-					.setMessage(msg)
-					.setCancelable(false)
-					.setPositiveButton(context.getString(R.string.dismiss),
-							new DialogInterface.OnClickListener() {
-						public void onClick(DialogInterface dialog,int id) {
-							// if this button is clicked, close
-							// current activity
-							//MainActivity.this.finish();
-						}
-					});
-					// create alert dialog
-					AlertDialog alertDialog = alertDialogBuilder.create();
-					// show it
-					alertDialog.show();
+					MainActivity.showToastMessage(context, 
+							context.getString(R.string.emu_crash, msg),
+							Toast.LENGTH_LONG);
 				}
 			});
 		}
