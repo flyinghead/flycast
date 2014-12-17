@@ -3,6 +3,23 @@
 #include "hw/aica/aica_if.h"
 #include "oslib/oslib.h"
 
+/*
+	DSP rec_v1
+
+	Tries to emulate a guesstimation of the aica dsp, by directly emitting x86 opcodes.
+
+	This was my first dsp implementation, as implemented for nullDC 1.0.3. 
+	
+	This was derived from a schematic I drew for the dsp, based on 
+	liberal interpretation of known specs, the saturn dsp, digital 
+	electronics assumptions, as well as "best-fitted" my typical 
+	test game suite.
+
+
+	Initiall code by skmp, now part of the reicast project.
+	See LICENSE & COPYRIGHT files further details
+*/
+
 ALIGN(4096) dsp_t dsp;
 
 #if HOST_OS==OS_WINDOWS && !defined(HOST_NO_REC)
@@ -14,7 +31,7 @@ const bool SUPPORT_NOFL=false;
 #define assert verify
 
 #pragma warning(disable:4311)
-#define DYNOPT 0
+
 struct _INST
 {
 	unsigned int TRA;
