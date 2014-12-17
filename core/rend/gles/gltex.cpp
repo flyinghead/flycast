@@ -70,8 +70,11 @@ struct TextureCacheData
 
 	GLuint texID;   //gl texture
 
+	u32 Lookups;
+
 	//decoded texture info
-	u32 sa;         //data start address in vram
+	u32 sa;         //pixel data start address in vram (might be offset for mipmaps/etc)
+	u32 sa_tex;		//texture data start address in vram 
 	u32 w,h;        //width & height of the texture
 	u32 size;       //size, in bytes, in vram
 
@@ -81,7 +84,6 @@ struct TextureCacheData
 	u32 dirty;
 	vram_block* lock_block;
 
-	u32 Lookups;
 	u32 Updates;
 
 	//used for palette updates
@@ -134,7 +136,8 @@ struct TextureCacheData
 		//decode info from tsp/tcw into the texture struct
 		tex=&format[tcw.PixelFmt==7?0:tcw.PixelFmt];		//texture format table entry
 
-		sa=(tcw.TexAddr<<3) & VRAM_MASK; //data start address
+		sa_tex = (tcw.TexAddr<<3) & VRAM_MASK;	//texture start address
+		sa = sa_tex;							//data texture start address (modified for MIPs, as needed)
 		w=8<<tsp.TexU;                   //tex width
 		h=8<<tsp.TexV;                   //tex height
 
@@ -281,7 +284,7 @@ struct TextureCacheData
 		//PrintTextureName();
 
 		//lock the texture to detect changes in it
-		lock_block = libCore_vramlock_Lock(sa,sa+size-1,this);
+		lock_block = libCore_vramlock_Lock(sa_tex,sa+size-1,this);
 
 		//upload to OpenGL !
 		glBindTexture(GL_TEXTURE_2D, texID);
