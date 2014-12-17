@@ -1,6 +1,7 @@
 #include "Renderer_if.h"
 #include "ta.h"
 #include "hw/pvr/pvr_mem.h"
+#include "rend/texcache.h"
 
 /*
 
@@ -179,6 +180,7 @@ void rend_start_render()
 			printf("max: idx: %d, vtx: %d, op: %d, pt: %d, tr: %d, mvo: %d, modt: %d, ov: %d\n", max_idx, max_vtx, max_op, max_pt, max_tr, max_mvo, max_modt, ovrn);
 #endif
 			if (QueueRender(ctx))  {
+				palette_update();
 				rs.Set();
 				pend_rend = true;
 			}

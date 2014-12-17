@@ -1361,6 +1361,13 @@ bool ProcessFrame(TA_context* ctx)
 	ctx->rend_inuse.Lock();
 	ctx->MarkRend();
 
+	if (KillTex)
+	{
+		void killtex();
+		killtex();
+		printf("Texture cache cleared\n");
+	}
+
 	if (!ta_parse_vdrc(ctx))
 		return false;
 
@@ -1665,12 +1672,6 @@ bool RenderFrame()
 	{
 		glBindFramebuffer(GL_FRAMEBUFFER,0);
 	}
-	if (KillTex)
-	{
-		void killtex();
-		killtex();
-		printf("Texture cache cleared\n");
-	}
 	
 	//Clear depth
 	//Color is cleared by the bgp
@@ -1702,8 +1703,6 @@ bool RenderFrame()
 		glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.modvols); glCheck();
 		glBufferData(GL_ARRAY_BUFFER,pvrrc.modtrig.bytes(),pvrrc.modtrig.head(),GL_STREAM_DRAW); glCheck();
 	}
-
-	palette_update();
 
 	int offs_x=ds2s_offs_x+0.5f;
 	//this needs to be scaled
