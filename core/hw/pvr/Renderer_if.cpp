@@ -62,7 +62,7 @@
 u32 VertexCount=0;
 u32 FrameCount=1;
 
-Renderer* rend;
+Renderer* renderer;
 cResetEvent rs(false,true);
 cResetEvent re(false,true);
 
@@ -83,13 +83,13 @@ bool rend_single_frame()
 	}
 	while (!_pvrrc);
 
-	bool proc = rend->Process(_pvrrc);
+	bool proc = renderer->Process(_pvrrc);
 	re.Set();
 	
-	bool do_swp = proc && rend->Render();
+	bool do_swp = proc && renderer->Render();
 		
 	if (do_swp)
-		rend->DrawOSD();
+		renderer->DrawOSD();
 
 	//clear up & free data ..
 	FinishRender(_pvrrc);
@@ -128,15 +128,15 @@ void* rend_thread(void* p)
 
 
 
-	if (!rend->Init())
+	if (!renderer->Init())
 		die("rend->init() failed\n");
 
-	rend->Resize(640,480);
+	renderer->Resize(640, 480);
 
 	for(;;)
 	{
 		if (rend_single_frame())
-			rend->Present();	
+			renderer->Present();
 	}
 }
 
@@ -220,13 +220,13 @@ bool rend_init()
 {
 
 #if NO_REND
-	rend = rend_norend();
+	renderer = rend_norend();
 #else
 
 #if HOST_OS == OS_WINDOWS
-	rend = settings.pvr.rend == 0 ? rend_GLES2() : rend_D3D11() ;
+	renderer = settings.pvr.rend == 0 ? rend_GLES2() : rend_D3D11();
 #else
-	rend = rend_GLES2();
+	renderer = rend_GLES2();
 #endif
 
 #endif
