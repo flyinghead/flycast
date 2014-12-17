@@ -7,6 +7,7 @@
 //
 
 #import "EmulatorViewController.h"
+#import <OpenGLES/ES2/glext.h>
 
 #define BUFFER_OFFSET(i) ((char *)NULL + (i))
 
@@ -161,7 +162,11 @@ GLfloat gCubeVertexData[216] =
     [EAGLContext setCurrentContext:self.context];
     
     glDeleteBuffers(1, &_vertexBuffer);
+    
+    
+    //Is this needed? xcode fails to resole it
     glDeleteVertexArraysOES(1, &_vertexArray);
+    
     
     self.effect = nil;
     
@@ -207,8 +212,10 @@ GLfloat gCubeVertexData[216] =
     glClearColor(0.65f, 0.65f, 0.65f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
-    glBindVertexArrayOES(_vertexArray);
     
+    //See ..
+    glBindVertexArrayOES(_vertexArray);
+        
     // Render the object with GLKit
     [self.effect prepareToDraw];
     

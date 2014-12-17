@@ -169,7 +169,6 @@
 		9C7A3B3818C806E00070BB5F /* gdi.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A3A6018C806E00070BB5F /* gdi.cpp */; };
 		9C7A3B3918C806E00070BB5F /* ImgReader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A3A6118C806E00070BB5F /* ImgReader.cpp */; };
 		9C7A3B3A18C806E00070BB5F /* ioctl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A3A6318C806E00070BB5F /* ioctl.cpp */; };
-		9C7A3B3E18C806E00070BB5F /* nacl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A3A7B18C806E00070BB5F /* nacl.cpp */; };
 		9C7A3B3F18C806E00070BB5F /* nullDC.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A3A7C18C806E00070BB5F /* nullDC.cpp */; };
 		9C7A3B4018C806E00070BB5F /* alsa_audiostream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A3A7E18C806E00070BB5F /* alsa_audiostream.cpp */; };
 		9C7A3B4118C806E00070BB5F /* audiostream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A3A7F18C806E00070BB5F /* audiostream.cpp */; };
@@ -184,7 +183,6 @@
 		9C7A3B4A18C806E00070BB5F /* gltex.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A3A9118C806E00070BB5F /* gltex.cpp */; };
 		9C7A3B4B18C806E00070BB5F /* norend.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A3A9318C806E00070BB5F /* norend.cpp */; };
 		9C7A3B4C18C806E00070BB5F /* TexCache.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A3A9518C806E00070BB5F /* TexCache.cpp */; };
-		9C7A3B4D18C806E00070BB5F /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A3A9818C806E00070BB5F /* main.cpp */; };
 		9C7A3B4E18C806E00070BB5F /* stdclass.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A3A9918C806E00070BB5F /* stdclass.cpp */; };
 		9C7A3B5918C81A4F0070BB5F /* SWRevealViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A3B5818C81A4F0070BB5F /* SWRevealViewController.m */; };
 		9C7A3B5C18C81BC80070BB5F /* SideDrawerViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A3B5B18C81BC80070BB5F /* SideDrawerViewController.m */; };
@@ -510,7 +508,6 @@
 		9C7A3A7018C806E00070BB5F /* gl3.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = gl3.h; sourceTree = "<group>"; };
 		9C7A3A7118C806E00070BB5F /* gl3platform.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = gl3platform.h; sourceTree = "<group>"; };
 		9C7A3A7318C806E00070BB5F /* khrplatform.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = khrplatform.h; sourceTree = "<group>"; };
-		9C7A3A7B18C806E00070BB5F /* nacl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = nacl.cpp; sourceTree = "<group>"; };
 		9C7A3A7C18C806E00070BB5F /* nullDC.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = nullDC.cpp; sourceTree = "<group>"; };
 		9C7A3A7E18C806E00070BB5F /* alsa_audiostream.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = alsa_audiostream.cpp; sourceTree = "<group>"; };
 		9C7A3A7F18C806E00070BB5F /* audiostream.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = audiostream.cpp; sourceTree = "<group>"; };
@@ -531,7 +528,6 @@
 		9C7A3A9418C806E00070BB5F /* rend.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = rend.h; sourceTree = "<group>"; };
 		9C7A3A9518C806E00070BB5F /* TexCache.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TexCache.cpp; sourceTree = "<group>"; };
 		9C7A3A9618C806E00070BB5F /* TexCache.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TexCache.h; sourceTree = "<group>"; };
-		9C7A3A9818C806E00070BB5F /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		9C7A3A9918C806E00070BB5F /* stdclass.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = stdclass.cpp; sourceTree = "<group>"; };
 		9C7A3A9A18C806E00070BB5F /* stdclass.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = stdclass.h; sourceTree = "<group>"; };
 		9C7A3A9B18C806E00070BB5F /* types.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = types.h; sourceTree = "<group>"; };
@@ -726,14 +722,12 @@
 				9C7A39DE18C806DF0070BB5F /* hw */,
 				9C7A3A5A18C806E00070BB5F /* imgread */,
 				9C7A3A6518C806E00070BB5F /* khronos */,
-				9C7A3A7A18C806E00070BB5F /* nacl */,
 				9C7A3A7C18C806E00070BB5F /* nullDC.cpp */,
 				9C7A3A7D18C806E00070BB5F /* oslib */,
 				9C7A3A8318C806E00070BB5F /* profiler */,
 				9C7A3A8618C806E00070BB5F /* README.md */,
 				9C7A3A8718C806E00070BB5F /* rec-ARM */,
 				9C7A3A8A18C806E00070BB5F /* rend */,
-				9C7A3A9718C806E00070BB5F /* sdl */,
 				9C7A3A9918C806E00070BB5F /* stdclass.cpp */,
 				9C7A3A9A18C806E00070BB5F /* stdclass.h */,
 				9C7A3A9B18C806E00070BB5F /* types.h */,
@@ -1238,14 +1232,6 @@
 			path = KHR;
 			sourceTree = "<group>";
 		};
-		9C7A3A7A18C806E00070BB5F /* nacl */ = {
-			isa = PBXGroup;
-			children = (
-				9C7A3A7B18C806E00070BB5F /* nacl.cpp */,
-			);
-			path = nacl;
-			sourceTree = "<group>";
-		};
 		9C7A3A7D18C806E00070BB5F /* oslib */ = {
 			isa = PBXGroup;
 			children = (
@@ -1316,14 +1302,6 @@
 			path = norend;
 			sourceTree = "<group>";
 		};
-		9C7A3A9718C806E00070BB5F /* sdl */ = {
-			isa = PBXGroup;
-			children = (
-				9C7A3A9818C806E00070BB5F /* main.cpp */,
-			);
-			path = sdl;
-			sourceTree = "<group>";
-		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -1353,6 +1331,11 @@
 			attributes = {
 				LastUpgradeCheck = 0500;
 				ORGANIZATIONNAME = "Karen Tsai (angelXwind)";
+				TargetAttributes = {
+					87078A8218A47FE90034C7A0 = {
+						DevelopmentTeam = QRT73U549N;
+					};
+				};
 			};
 			buildConfigurationList = 87078A7E18A47FE90034C7A0 /* Build configuration list for PBXProject "emulator" */;
 			compatibilityVersion = "Xcode 3.2";
@@ -1564,7 +1547,6 @@
 				9C7A3AB218C806E00070BB5F /* pngrio.c in Sources */,
 				9C7A3AC118C806E00070BB5F /* zip_entry_free.c in Sources */,
 				9C7A3B4018C806E00070BB5F /* alsa_audiostream.cpp in Sources */,
-				9C7A3B3E18C806E00070BB5F /* nacl.cpp in Sources */,
 				9C7A3AE518C806E00070BB5F /* zip_source_filep.c in Sources */,
 				9C7A3B0318C806E00070BB5F /* dsp.cpp in Sources */,
 				9C7A3B0B18C806E00070BB5F /* holly_intc.cpp in Sources */,
@@ -1583,7 +1565,6 @@
 				9C7A3B1318C806E00070BB5F /* _vmem.cpp in Sources */,
 				9C7A3B1118C806E00070BB5F /* maple_helper.cpp in Sources */,
 				9C7A3AD018C806E00070BB5F /* zip_fopen.c in Sources */,
-				9C7A3B4D18C806E00070BB5F /* main.cpp in Sources */,
 				9C7A3B1718C806E00070BB5F /* pvr_sb_regs.cpp in Sources */,
 				9C7A3B3918C806E00070BB5F /* ImgReader.cpp in Sources */,
 				9C7A3ACC18C806E00070BB5F /* zip_file_error_get.c in Sources */,
@@ -1699,10 +1680,16 @@
 				);
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
-				CODE_SIGN_ENTITLEMENTS = emulator/reicast.entitlements;
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "emulator/emulator-Prefix.pch";
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"GLES=1",
+					"DEBUG=1",
+					"TARGET_IPHONE=1",
+					"$(inherited)",
+				);
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
@@ -1711,8 +1698,11 @@
 					../../core/khronos/,
 				);
 				INFOPLIST_FILE = "emulator/emulator-Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				ONLY_ACTIVE_ARCH = NO;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE = "";
+				TARGETED_DEVICE_FAMILY = "1,2";
 				VALID_ARCHS = "armv7 armv7s";
 				WRAPPER_EXTENSION = app;
 			};
@@ -1727,10 +1717,14 @@
 				);
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
-				CODE_SIGN_ENTITLEMENTS = emulator/reicast.entitlements;
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "emulator/emulator-Prefix.pch";
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"GLES=1",
+					"TARGET_IPHONE=1",
+				);
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
@@ -1739,8 +1733,11 @@
 					../../core/khronos/,
 				);
 				INFOPLIST_FILE = "emulator/emulator-Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				ONLY_ACTIVE_ARCH = NO;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE = "";
+				TARGETED_DEVICE_FAMILY = "1,2";
 				VALID_ARCHS = "armv7 armv7s";
 				WRAPPER_EXTENSION = app;
 			};

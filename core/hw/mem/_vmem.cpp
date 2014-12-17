@@ -590,8 +590,12 @@ void _vmem_bm_reset()
 #else
 	mprotect(p_sh4rcb, sizeof(p_sh4rcb->fpcb), PROT_NONE);
 	madvise(p_sh4rcb,sizeof(p_sh4rcb->fpcb),MADV_DONTNEED);
+    #ifdef MADV_REMOVE
 	madvise(p_sh4rcb,sizeof(p_sh4rcb->fpcb),MADV_REMOVE);
-	//madvise(p_sh4rcb,sizeof(p_sh4rcb->fpcb),MADV_FREE);
+    #else
+    //OSX, IOS
+    madvise(p_sh4rcb,sizeof(p_sh4rcb->fpcb),MADV_FREE);
+    #endif
 #endif
 
 	printf("Freeing fpcb\n");

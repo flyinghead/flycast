@@ -183,10 +183,10 @@ typedef ConditionCode eCC;
 #define rfp_r9 r9
 
 
-typedef void FPBinOP        (eFSReg Sd, eFSReg Sn, eFSReg Sm, ConditionCode CC=CC_AL);
-typedef void FPUnOP         (eFSReg Sd, eFSReg Sm,            ConditionCode CC=CC_AL);
-typedef void BinaryOP       (eReg Rd, eReg Rn, eReg Rm,       ConditionCode CC=AL);
-typedef void BinaryOPImm    (eReg Rd, eReg Rn, s32 sImm8,     ConditionCode CC=AL);
+typedef void FPBinOP        (eFSReg Sd, eFSReg Sn, eFSReg Sm, ConditionCode CC);
+typedef void FPUnOP         (eFSReg Sd, eFSReg Sm,            ConditionCode CC);
+typedef void BinaryOP       (eReg Rd, eReg Rn, eReg Rm,       ConditionCode CC);
+typedef void BinaryOPImm    (eReg Rd, eReg Rn, s32 sImm8,     ConditionCode CC);
 typedef void UnaryOP        (eReg Rd, eReg Rs);
 
 
@@ -535,14 +535,14 @@ void ngen_Binary(shil_opcode* op, BinaryOP dtop,BinaryOPImm dtopimm, bool has_im
 	dtop(reg.mapg(op->rd),reg.mapg(op->rs1), rs2, CC_AL);
 }
 
-void ngen_fp_bin(shil_opcode* op, FPBinOP fpop)
+void ngen_fp_bin(shil_opcode* op, const FPBinOP fpop)
 {
 	verify(op->rs1.is_r32f());
 	verify(op->rs2.is_r32f());
 
 	fpop(reg.mapfs(op->rd),reg.mapfs(op->rs1),reg.mapfs(op->rs2),CC_AL);
 }
-void ngen_fp_una(shil_opcode* op, FPUnOP fpop)
+void ngen_fp_una(shil_opcode* op, const FPUnOP fpop)
 {
 	verify(op->rd.is_r32f());
 	verify(op->rs1.is_r32f());
