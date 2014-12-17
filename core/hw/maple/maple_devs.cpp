@@ -547,7 +547,7 @@ struct maple_sega_vmu: maple_base
 							}
 						}
 						config->SetImage(lcd_data_decoded);
-#ifndef TARGET_PANDORA
+#if !defined(TARGET_PANDORA) && HOST_OS != OS_DARWIN
 						push_vmu_screen(lcd_data_decoded);
 #endif
 #if 0

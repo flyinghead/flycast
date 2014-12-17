@@ -7,6 +7,13 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		8497BCBF1A41A0E900EFB9ED /* common.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8497BCBC1A41A0E900EFB9ED /* common.cpp */; };
+		8497BCC01A41A0E900EFB9ED /* nixprof.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8497BCBD1A41A0E900EFB9ED /* nixprof.cpp */; };
+		8497BCC21A41B02000EFB9ED /* ios_main.mm in Sources */ = {isa = PBXBuildFile; fileRef = 8497BCC11A41B02000EFB9ED /* ios_main.mm */; };
+		8497BCC91A41BFBA00EFB9ED /* alsa_audiostream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8497BCC41A41BFBA00EFB9ED /* alsa_audiostream.cpp */; };
+		8497BCCA1A41BFBA00EFB9ED /* audiostream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8497BCC51A41BFBA00EFB9ED /* audiostream.cpp */; };
+		8497BCCB1A41BFBA00EFB9ED /* ds_audiostream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8497BCC71A41BFBA00EFB9ED /* ds_audiostream.cpp */; };
+		8497BCCF1A41BFD800EFB9ED /* coreio.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8497BCCD1A41BFD800EFB9ED /* coreio.cpp */; };
 		87078A8718A47FE90034C7A0 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 87078A8618A47FE90034C7A0 /* Foundation.framework */; };
 		87078A8918A47FE90034C7A0 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 87078A8818A47FE90034C7A0 /* CoreGraphics.framework */; };
 		87078A8B18A47FE90034C7A0 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 87078A8A18A47FE90034C7A0 /* UIKit.framework */; };
@@ -16,7 +23,7 @@
 		87078A9B18A47FE90034C7A0 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 87078A9A18A47FE90034C7A0 /* AppDelegate.m */; };
 		87078AA318A47FE90034C7A0 /* Shader.fsh in Resources */ = {isa = PBXBuildFile; fileRef = 87078AA218A47FE90034C7A0 /* Shader.fsh */; };
 		87078AA518A47FE90034C7A0 /* Shader.vsh in Resources */ = {isa = PBXBuildFile; fileRef = 87078AA418A47FE90034C7A0 /* Shader.vsh */; };
-		87078AA818A47FE90034C7A0 /* EmulatorViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 87078AA718A47FE90034C7A0 /* EmulatorViewController.m */; };
+		87078AA818A47FE90034C7A0 /* EmulatorViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 87078AA718A47FE90034C7A0 /* EmulatorViewController.mm */; };
 		87078AAA18A47FE90034C7A0 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 87078AA918A47FE90034C7A0 /* Images.xcassets */; };
 		9C7A393318C804A80070BB5F /* reicast.entitlements in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A393218C804A80070BB5F /* reicast.entitlements */; };
 		9C7A3AA218C806E00070BB5F /* cfg.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A395118C806DE0070BB5F /* cfg.cpp */; };
@@ -170,18 +177,13 @@
 		9C7A3B3918C806E00070BB5F /* ImgReader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A3A6118C806E00070BB5F /* ImgReader.cpp */; };
 		9C7A3B3A18C806E00070BB5F /* ioctl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A3A6318C806E00070BB5F /* ioctl.cpp */; };
 		9C7A3B3F18C806E00070BB5F /* nullDC.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A3A7C18C806E00070BB5F /* nullDC.cpp */; };
-		9C7A3B4018C806E00070BB5F /* alsa_audiostream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A3A7E18C806E00070BB5F /* alsa_audiostream.cpp */; };
-		9C7A3B4118C806E00070BB5F /* audiostream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A3A7F18C806E00070BB5F /* audiostream.cpp */; };
-		9C7A3B4218C806E00070BB5F /* ds_audiostream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A3A8118C806E00070BB5F /* ds_audiostream.cpp */; };
 		9C7A3B4318C806E00070BB5F /* profiler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A3A8418C806E00070BB5F /* profiler.cpp */; };
 		9C7A3B4418C806E00070BB5F /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3A8618C806E00070BB5F /* README.md */; };
 		9C7A3B4518C806E00070BB5F /* arm_dyna.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A3A8818C806E00070BB5F /* arm_dyna.cpp */; };
 		9C7A3B4618C806E00070BB5F /* ngen_arm.S in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A3A8918C806E00070BB5F /* ngen_arm.S */; };
-		9C7A3B4718C806E00070BB5F /* d3d11.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A3A8C18C806E00070BB5F /* d3d11.cpp */; };
 		9C7A3B4818C806E00070BB5F /* gldraw.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A3A8E18C806E00070BB5F /* gldraw.cpp */; };
 		9C7A3B4918C806E00070BB5F /* gles.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A3A8F18C806E00070BB5F /* gles.cpp */; };
 		9C7A3B4A18C806E00070BB5F /* gltex.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A3A9118C806E00070BB5F /* gltex.cpp */; };
-		9C7A3B4B18C806E00070BB5F /* norend.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A3A9318C806E00070BB5F /* norend.cpp */; };
 		9C7A3B4C18C806E00070BB5F /* TexCache.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A3A9518C806E00070BB5F /* TexCache.cpp */; };
 		9C7A3B4E18C806E00070BB5F /* stdclass.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A3A9918C806E00070BB5F /* stdclass.cpp */; };
 		9C7A3B5918C81A4F0070BB5F /* SWRevealViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A3B5818C81A4F0070BB5F /* SWRevealViewController.m */; };
@@ -218,6 +220,17 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		8497BCBC1A41A0E900EFB9ED /* common.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = common.cpp; sourceTree = "<group>"; };
+		8497BCBD1A41A0E900EFB9ED /* nixprof.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = nixprof.cpp; sourceTree = "<group>"; };
+		8497BCBE1A41A0E900EFB9ED /* typedefs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = typedefs.h; sourceTree = "<group>"; };
+		8497BCC11A41B02000EFB9ED /* ios_main.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ios_main.mm; sourceTree = "<group>"; };
+		8497BCC41A41BFBA00EFB9ED /* alsa_audiostream.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = alsa_audiostream.cpp; sourceTree = "<group>"; };
+		8497BCC51A41BFBA00EFB9ED /* audiostream.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = audiostream.cpp; sourceTree = "<group>"; };
+		8497BCC61A41BFBA00EFB9ED /* audiostream_rif.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = audiostream_rif.h; sourceTree = "<group>"; };
+		8497BCC71A41BFBA00EFB9ED /* ds_audiostream.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ds_audiostream.cpp; sourceTree = "<group>"; };
+		8497BCC81A41BFBA00EFB9ED /* oslib.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = oslib.h; sourceTree = "<group>"; };
+		8497BCCD1A41BFD800EFB9ED /* coreio.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = coreio.cpp; sourceTree = "<group>"; };
+		8497BCCE1A41BFD800EFB9ED /* coreio.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = coreio.h; sourceTree = "<group>"; };
 		87078A8318A47FE90034C7A0 /* emulator.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = emulator.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		87078A8618A47FE90034C7A0 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		87078A8818A47FE90034C7A0 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
@@ -232,7 +245,7 @@
 		87078AA218A47FE90034C7A0 /* Shader.fsh */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; name = Shader.fsh; path = Shaders/Shader.fsh; sourceTree = "<group>"; };
 		87078AA418A47FE90034C7A0 /* Shader.vsh */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; name = Shader.vsh; path = Shaders/Shader.vsh; sourceTree = "<group>"; };
 		87078AA618A47FE90034C7A0 /* EmulatorViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = EmulatorViewController.h; path = emulator/EmulatorViewController.h; sourceTree = "<group>"; };
-		87078AA718A47FE90034C7A0 /* EmulatorViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = EmulatorViewController.m; path = emulator/EmulatorViewController.m; sourceTree = "<group>"; };
+		87078AA718A47FE90034C7A0 /* EmulatorViewController.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = EmulatorViewController.mm; path = emulator/EmulatorViewController.mm; sourceTree = "<group>"; };
 		87078AA918A47FE90034C7A0 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = emulator/Images.xcassets; sourceTree = "<group>"; };
 		87078AB018A47FE90034C7A0 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
 		9C7A393218C804A80070BB5F /* reicast.entitlements */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = reicast.entitlements; sourceTree = "<group>"; };
@@ -509,22 +522,15 @@
 		9C7A3A7118C806E00070BB5F /* gl3platform.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = gl3platform.h; sourceTree = "<group>"; };
 		9C7A3A7318C806E00070BB5F /* khrplatform.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = khrplatform.h; sourceTree = "<group>"; };
 		9C7A3A7C18C806E00070BB5F /* nullDC.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = nullDC.cpp; sourceTree = "<group>"; };
-		9C7A3A7E18C806E00070BB5F /* alsa_audiostream.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = alsa_audiostream.cpp; sourceTree = "<group>"; };
-		9C7A3A7F18C806E00070BB5F /* audiostream.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = audiostream.cpp; sourceTree = "<group>"; };
-		9C7A3A8018C806E00070BB5F /* audiostream_rif.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = audiostream_rif.h; sourceTree = "<group>"; };
-		9C7A3A8118C806E00070BB5F /* ds_audiostream.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ds_audiostream.cpp; sourceTree = "<group>"; };
-		9C7A3A8218C806E00070BB5F /* oslib.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = oslib.h; sourceTree = "<group>"; };
 		9C7A3A8418C806E00070BB5F /* profiler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = profiler.cpp; sourceTree = "<group>"; };
 		9C7A3A8518C806E00070BB5F /* profiler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = profiler.h; sourceTree = "<group>"; };
 		9C7A3A8618C806E00070BB5F /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = README.md; sourceTree = "<group>"; };
 		9C7A3A8818C806E00070BB5F /* arm_dyna.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = arm_dyna.cpp; sourceTree = "<group>"; };
 		9C7A3A8918C806E00070BB5F /* ngen_arm.S */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; path = ngen_arm.S; sourceTree = "<group>"; usesTabs = 1; };
-		9C7A3A8C18C806E00070BB5F /* d3d11.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = d3d11.cpp; sourceTree = "<group>"; };
 		9C7A3A8E18C806E00070BB5F /* gldraw.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = gldraw.cpp; sourceTree = "<group>"; };
 		9C7A3A8F18C806E00070BB5F /* gles.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = gles.cpp; sourceTree = "<group>"; };
 		9C7A3A9018C806E00070BB5F /* gles.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = gles.h; sourceTree = "<group>"; };
 		9C7A3A9118C806E00070BB5F /* gltex.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = gltex.cpp; sourceTree = "<group>"; };
-		9C7A3A9318C806E00070BB5F /* norend.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = norend.cpp; sourceTree = "<group>"; };
 		9C7A3A9418C806E00070BB5F /* rend.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = rend.h; sourceTree = "<group>"; };
 		9C7A3A9518C806E00070BB5F /* TexCache.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TexCache.cpp; sourceTree = "<group>"; };
 		9C7A3A9618C806E00070BB5F /* TexCache.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TexCache.h; sourceTree = "<group>"; };
@@ -588,6 +594,38 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		8497BCBB1A41A0E900EFB9ED /* linux */ = {
+			isa = PBXGroup;
+			children = (
+				8497BCBC1A41A0E900EFB9ED /* common.cpp */,
+				8497BCBD1A41A0E900EFB9ED /* nixprof.cpp */,
+				8497BCBE1A41A0E900EFB9ED /* typedefs.h */,
+			);
+			path = linux;
+			sourceTree = "<group>";
+		};
+		8497BCC31A41BFBA00EFB9ED /* oslib */ = {
+			isa = PBXGroup;
+			children = (
+				8497BCC41A41BFBA00EFB9ED /* alsa_audiostream.cpp */,
+				8497BCC51A41BFBA00EFB9ED /* audiostream.cpp */,
+				8497BCC61A41BFBA00EFB9ED /* audiostream_rif.h */,
+				8497BCC71A41BFBA00EFB9ED /* ds_audiostream.cpp */,
+				8497BCC81A41BFBA00EFB9ED /* oslib.h */,
+			);
+			path = oslib;
+			sourceTree = "<group>";
+		};
+		8497BCCC1A41BFD800EFB9ED /* coreio */ = {
+			isa = PBXGroup;
+			children = (
+				8497BCCD1A41BFD800EFB9ED /* coreio.cpp */,
+				8497BCCE1A41BFD800EFB9ED /* coreio.h */,
+			);
+			name = coreio;
+			path = deps/coreio;
+			sourceTree = "<group>";
+		};
 		87078A7A18A47FE90034C7A0 = {
 			isa = PBXGroup;
 			children = (
@@ -632,6 +670,7 @@
 				9C7A393418C805980070BB5F /* Third-Party Frameworks */,
 				87078A9118A47FE90034C7A0 /* Supporting Files */,
 				9C7A393818C806DE0070BB5F /* Emulator Core Code */,
+				8497BCC11A41B02000EFB9ED /* ios_main.mm */,
 			);
 			name = reicast;
 			path = emulator;
@@ -674,7 +713,7 @@
 				9C7A3B5A18C81BC80070BB5F /* SideDrawerViewController.h */,
 				9C7A3B5B18C81BC80070BB5F /* SideDrawerViewController.m */,
 				87078AA618A47FE90034C7A0 /* EmulatorViewController.h */,
-				87078AA718A47FE90034C7A0 /* EmulatorViewController.m */,
+				87078AA718A47FE90034C7A0 /* EmulatorViewController.mm */,
 			);
 			name = "View Controller Subclasses";
 			path = ..;
@@ -714,6 +753,9 @@
 		9C7A393818C806DE0070BB5F /* Emulator Core Code */ = {
 			isa = PBXGroup;
 			children = (
+				8497BCCC1A41BFD800EFB9ED /* coreio */,
+				8497BCC31A41BFBA00EFB9ED /* oslib */,
+				8497BCBB1A41A0E900EFB9ED /* linux */,
 				9C7A393918C806DE0070BB5F /* arm_emitter */,
 				9C7A394F18C806DE0070BB5F /* build.h */,
 				9C7A395018C806DE0070BB5F /* cfg */,
@@ -723,7 +765,6 @@
 				9C7A3A5A18C806E00070BB5F /* imgread */,
 				9C7A3A6518C806E00070BB5F /* khronos */,
 				9C7A3A7C18C806E00070BB5F /* nullDC.cpp */,
-				9C7A3A7D18C806E00070BB5F /* oslib */,
 				9C7A3A8318C806E00070BB5F /* profiler */,
 				9C7A3A8618C806E00070BB5F /* README.md */,
 				9C7A3A8718C806E00070BB5F /* rec-ARM */,
@@ -1232,18 +1273,6 @@
 			path = KHR;
 			sourceTree = "<group>";
 		};
-		9C7A3A7D18C806E00070BB5F /* oslib */ = {
-			isa = PBXGroup;
-			children = (
-				9C7A3A7E18C806E00070BB5F /* alsa_audiostream.cpp */,
-				9C7A3A7F18C806E00070BB5F /* audiostream.cpp */,
-				9C7A3A8018C806E00070BB5F /* audiostream_rif.h */,
-				9C7A3A8118C806E00070BB5F /* ds_audiostream.cpp */,
-				9C7A3A8218C806E00070BB5F /* oslib.h */,
-			);
-			path = oslib;
-			sourceTree = "<group>";
-		};
 		9C7A3A8318C806E00070BB5F /* profiler */ = {
 			isa = PBXGroup;
 			children = (
@@ -1265,22 +1294,12 @@
 		9C7A3A8A18C806E00070BB5F /* rend */ = {
 			isa = PBXGroup;
 			children = (
-				9C7A3A8B18C806E00070BB5F /* d3d11 */,
 				9C7A3A8D18C806E00070BB5F /* gles */,
-				9C7A3A9218C806E00070BB5F /* norend */,
 				9C7A3A9418C806E00070BB5F /* rend.h */,
 				9C7A3A9518C806E00070BB5F /* TexCache.cpp */,
 				9C7A3A9618C806E00070BB5F /* TexCache.h */,
 			);
 			path = rend;
-			sourceTree = "<group>";
-		};
-		9C7A3A8B18C806E00070BB5F /* d3d11 */ = {
-			isa = PBXGroup;
-			children = (
-				9C7A3A8C18C806E00070BB5F /* d3d11.cpp */,
-			);
-			path = d3d11;
 			sourceTree = "<group>";
 		};
 		9C7A3A8D18C806E00070BB5F /* gles */ = {
@@ -1292,14 +1311,6 @@
 				9C7A3A9118C806E00070BB5F /* gltex.cpp */,
 			);
 			path = gles;
-			sourceTree = "<group>";
-		};
-		9C7A3A9218C806E00070BB5F /* norend */ = {
-			isa = PBXGroup;
-			children = (
-				9C7A3A9318C806E00070BB5F /* norend.cpp */,
-			);
-			path = norend;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -1455,6 +1466,7 @@
 				9C7A3B2418C806E00070BB5F /* bsc.cpp in Sources */,
 				9C7A3AD318C806E00070BB5F /* zip_free.c in Sources */,
 				9C7A3AB918C806E00070BB5F /* pngwtran.c in Sources */,
+				8497BCCA1A41BFBA00EFB9ED /* audiostream.cpp in Sources */,
 				9C7A3B4918C806E00070BB5F /* gles.cpp in Sources */,
 				9C7A3ADD18C806E00070BB5F /* zip_rename.c in Sources */,
 				9C7A3ADB18C806E00070BB5F /* zip_new.c in Sources */,
@@ -1464,6 +1476,7 @@
 				9C7A3AB318C806E00070BB5F /* pngrtran.c in Sources */,
 				9C7A3AEC18C806E00070BB5F /* zip_strerror.c in Sources */,
 				9C7A3AB718C806E00070BB5F /* pngwio.c in Sources */,
+				8497BCCB1A41BFBA00EFB9ED /* ds_audiostream.cpp in Sources */,
 				9C7A3B2D18C806E00070BB5F /* ubc.cpp in Sources */,
 				9C7A3B2618C806E00070BB5F /* cpg.cpp in Sources */,
 				9C7A3B1A18C806E00070BB5F /* ta.cpp in Sources */,
@@ -1481,8 +1494,8 @@
 				9C7A3AF318C806E00070BB5F /* crc32.c in Sources */,
 				9C7A3B5F18C81D090070BB5F /* BrowserTableViewController.m in Sources */,
 				9C7D581019301E140004EA2C /* CloudVMUViewController.m in Sources */,
+				8497BCC01A41A0E900EFB9ED /* nixprof.cpp in Sources */,
 				9C7A3AE118C806E00070BB5F /* zip_set_file_comment.c in Sources */,
-				9C7A3B4118C806E00070BB5F /* audiostream.cpp in Sources */,
 				9C7A3AB118C806E00070BB5F /* pngread.c in Sources */,
 				9C7A3AAC18C806E00070BB5F /* png.c in Sources */,
 				9C7A3AC718C806E00070BB5F /* zip_error_get_sys_type.c in Sources */,
@@ -1496,8 +1509,10 @@
 				9C7A3B1218C806E00070BB5F /* maple_if.cpp in Sources */,
 				9C7A3AC818C806E00070BB5F /* zip_error_strerror.c in Sources */,
 				9C7A3AF518C806E00070BB5F /* infback.c in Sources */,
+				8497BCCF1A41BFD800EFB9ED /* coreio.cpp in Sources */,
 				9C7A3B0E18C806E00070BB5F /* sb_mem.cpp in Sources */,
 				9C7A3B5C18C81BC80070BB5F /* SideDrawerViewController.m in Sources */,
+				8497BCC21A41B02000EFB9ED /* ios_main.mm in Sources */,
 				9C7A3B2C18C806E00070BB5F /* tmu.cpp in Sources */,
 				9C7A3B4C18C806E00070BB5F /* TexCache.cpp in Sources */,
 				9C7A3B1618C806E00070BB5F /* pvr_regs.cpp in Sources */,
@@ -1522,7 +1537,7 @@
 				9C7A3B1D18C806E00070BB5F /* blockmanager.cpp in Sources */,
 				9C7A3B2B18C806E00070BB5F /* serial.cpp in Sources */,
 				9C7A3B4A18C806E00070BB5F /* gltex.cpp in Sources */,
-				87078AA818A47FE90034C7A0 /* EmulatorViewController.m in Sources */,
+				87078AA818A47FE90034C7A0 /* EmulatorViewController.mm in Sources */,
 				9C7A3ACD18C806E00070BB5F /* zip_file_get_offset.c in Sources */,
 				9C7A3B2818C806E00070BB5F /* intc.cpp in Sources */,
 				9C7A3B3A18C806E00070BB5F /* ioctl.cpp in Sources */,
@@ -1546,9 +1561,10 @@
 				9C7A3AF018C806E00070BB5F /* zip_unchange_data.c in Sources */,
 				9C7A3AB218C806E00070BB5F /* pngrio.c in Sources */,
 				9C7A3AC118C806E00070BB5F /* zip_entry_free.c in Sources */,
-				9C7A3B4018C806E00070BB5F /* alsa_audiostream.cpp in Sources */,
 				9C7A3AE518C806E00070BB5F /* zip_source_filep.c in Sources */,
 				9C7A3B0318C806E00070BB5F /* dsp.cpp in Sources */,
+				8497BCC91A41BFBA00EFB9ED /* alsa_audiostream.cpp in Sources */,
+				8497BCBF1A41A0E900EFB9ED /* common.cpp in Sources */,
 				9C7A3B0B18C806E00070BB5F /* holly_intc.cpp in Sources */,
 				87078A9718A47FE90034C7A0 /* main.m in Sources */,
 				9C7A3AC418C806E00070BB5F /* zip_error.c in Sources */,
@@ -1569,12 +1585,10 @@
 				9C7A3B3918C806E00070BB5F /* ImgReader.cpp in Sources */,
 				9C7A3ACC18C806E00070BB5F /* zip_file_error_get.c in Sources */,
 				9C7A3B3F18C806E00070BB5F /* nullDC.cpp in Sources */,
-				9C7A3B4218C806E00070BB5F /* ds_audiostream.cpp in Sources */,
 				9C7A3B0618C806E00070BB5F /* arm_mem.cpp in Sources */,
 				9C7A3AAF18C806E00070BB5F /* pngmem.c in Sources */,
 				9C7A3AAB18C806E00070BB5F /* elf64.cpp in Sources */,
 				9C7A3ADE18C806E00070BB5F /* zip_replace.c in Sources */,
-				9C7A3B4B18C806E00070BB5F /* norend.cpp in Sources */,
 				9C7A3B0C18C806E00070BB5F /* sb.cpp in Sources */,
 				9C7A3B0118C806E00070BB5F /* aica_if.cpp in Sources */,
 				9C7A3ADF18C806E00070BB5F /* zip_set_archive_comment.c in Sources */,
@@ -1583,7 +1597,6 @@
 				9C7A3AC318C806E00070BB5F /* zip_err_str.c in Sources */,
 				9C7A3B4818C806E00070BB5F /* gldraw.cpp in Sources */,
 				9C7A3AE618C806E00070BB5F /* zip_source_free.c in Sources */,
-				9C7A3B4718C806E00070BB5F /* d3d11.cpp in Sources */,
 				9C7A3AAE18C806E00070BB5F /* pngget.c in Sources */,
 				9C7A3AB018C806E00070BB5F /* pngpread.c in Sources */,
 				9C7A3AF118C806E00070BB5F /* adler32.c in Sources */,
@@ -1632,7 +1645,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 5.0;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 2;
 			};
 			name = Debug;
 		};
@@ -1666,7 +1679,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 5.0;
 				SDKROOT = iphoneos;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 2;
 				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
@@ -1689,6 +1702,7 @@
 					"DEBUG=1",
 					"TARGET_IPHONE=1",
 					"$(inherited)",
+					"HOST_NO_REC=1",
 				);
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1703,7 +1717,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
 				TARGETED_DEVICE_FAMILY = "1,2";
-				VALID_ARCHS = "armv7 armv7s";
+				VALID_ARCHS = armv7;
 				WRAPPER_EXTENSION = app;
 			};
 			name = Debug;
@@ -1724,6 +1738,7 @@
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"GLES=1",
 					"TARGET_IPHONE=1",
+					"HOST_NO_REC=1",
 				);
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1738,7 +1753,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
 				TARGETED_DEVICE_FAMILY = "1,2";
-				VALID_ARCHS = "armv7 armv7s";
+				VALID_ARCHS = armv7;
 				WRAPPER_EXTENSION = app;
 			};
 			name = Release;

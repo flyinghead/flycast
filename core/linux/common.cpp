@@ -1,7 +1,10 @@
 #include "types.h"
 #include "cfg/cfg.h"
 
-#if HOST_OS==OS_LINUX
+#if HOST_OS==OS_LINUX || HOST_OS==OS_DARWIN
+#define _XOPEN_SOURCE 1
+#define __USE_GNU 1
+#include <ucontext.h>
 #include <poll.h>
 #include <termios.h>
 //#include <curses.h>
@@ -32,8 +35,9 @@ struct sigcontext uc_mcontext;
 } ucontext_t;
 #endif
 
+
 #if HOST_CPU == CPU_ARM
-#define GET_PC_FROM_CONTEXT(c) (((ucontext_t *)(c))->uc_mcontext.arm_pc)
+#define GET_PC_FROM_CONTEXT(c) (((ucontext_t *)(c))->uc_mcontext->__ss.__pc)
 #elif HOST_CPU == CPU_MIPS
 #ifdef _ANDROID
 #define GET_PC_FROM_CONTEXT(c) (((ucontext_t *)(c))->uc_mcontext.sc_pc)
@@ -44,7 +48,7 @@ struct sigcontext uc_mcontext;
 #ifdef _ANDROID
 #define GET_PC_FROM_CONTEXT(c) (((ucontext_t *)(c))->uc_mcontext.eip)
 #else
-#define GET_PC_FROM_CONTEXT(c) (((ucontext_t *)(c))->uc_mcontext.gregs[REG_EIP])
+#define GET_PC_FROM_CONTEXT(c) (((ucontext_t *)(c))->uc_mcontext->__ss.__eip)
 #endif
 #else
 #error fix ->pc support
@@ -58,8 +62,11 @@ bool BM_LockedWrite(u8* address);
 
 void fault_handler (int sn, siginfo_t * si, void *ctxr)
 {
+    
+#ifndef HOST_NO_REC
 	bool dyna_cde=((u32)GET_PC_FROM_CONTEXT(ctxr)>(u32)CodeCache) && ((u32)GET_PC_FROM_CONTEXT(ctxr)<(u32)(CodeCache+CODE_SIZE));
-
+#endif
+    
 	ucontext_t* ctx=(ucontext_t*)ctxr;
 	//printf("mprot hit @ ptr 0x%08X @@ code: %08X, %d\n",si->si_addr,ctx->uc_mcontext.arm_pc,dyna_cde);
 
@@ -88,7 +95,9 @@ void install_fault_handler (void)
 	act.sa_sigaction = fault_handler;
 	sigemptyset(&act.sa_mask);
 	act.sa_flags = SA_SIGINFO;
-	sigaction(SIGSEGV, &act, &segv_oact);
+
+    //this is broken on osx/ios/mach in general
+    sigaction(SIGSEGV, &act, &segv_oact);
 }
 
 
@@ -116,8 +125,10 @@ cResetEvent::cResetEvent(bool State,bool Auto)
 {
 	//sem_init((sem_t*)hEvent, 0, State?1:0);
 	verify(State==false&&Auto==true);
-	mutx = PTHREAD_MUTEX_INITIALIZER;
-	cond = PTHREAD_COND_INITIALIZER;
+	//mutx = PTHREAD_MUTEX_INITIALIZER;
+	pthread_mutex_init(&mutx, NULL);
+	//cond = PTHREAD_COND_INITIALIZER;
+	pthread_cond_init(&cond, NULL);
 }
 cResetEvent::~cResetEvent()
 {
@@ -158,6 +169,8 @@ void cResetEvent::Wait()//Wait for signal , then reset
 
 void VArray2::LockRegion(u32 offset,u32 size)
 {
+#if HOST_OS != OS_DARWIN
+    //darwin doesn't have sane exception handling, leave this off for now.
   u32 inpage=offset & PAGE_MASK;
 	u32 rv=mprotect (data+offset-inpage, size+inpage, PROT_READ );
 	if (rv!=0)
@@ -165,6 +178,7 @@ void VArray2::LockRegion(u32 offset,u32 size)
 		printf("mprotect(%08X,%08X,R) failed: %d | %d\n",data+offset-inpage,size+inpage,rv,errno);
 		die("mprotect  failed ..\n");
 	}
+#endif
 }
 
 void print_mem_addr()
@@ -216,6 +230,10 @@ double os_GetSeconds()
 	return a.tv_sec-tvs_base+a.tv_usec/1000000.0;
 }
 
+void os_DebugBreak()
+{
+	__builtin_trap();
+}
 
 void enable_runfast()
 {

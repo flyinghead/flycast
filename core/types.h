@@ -438,9 +438,9 @@ using namespace std;
 
 #if DEBUG
 //force
-#define INLINE
+#define INLINE __inline
 //sugest
-#define SINLINE
+#define SINLINE __inline
 #else
 //force
 #define INLINE __forceinline

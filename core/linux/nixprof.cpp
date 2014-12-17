@@ -57,7 +57,7 @@ typedef struct ucontext_t
 #endif
 
 #if HOST_CPU == CPU_ARM
-#define GET_PC_FROM_CONTEXT(c) (((ucontext_t *)(c))->uc_mcontext.arm_pc)
+#define GET_PC_FROM_CONTEXT(c) (((ucontext_t *)(c))->uc_mcontext->__ss.__pc)
 #elif HOST_CPU == CPU_MIPS
 #ifdef _ANDROID
 #define GET_PC_FROM_CONTEXT(c) (((ucontext_t *)(c))->uc_mcontext.sc_pc)
@@ -68,7 +68,7 @@ typedef struct ucontext_t
 #ifdef _ANDROID
 #define GET_PC_FROM_CONTEXT(c) (((ucontext_t *)(c))->uc_mcontext.eip)
 #else
-#define GET_PC_FROM_CONTEXT(c) (((ucontext_t *)(c))->uc_mcontext.gregs[REG_EIP])
+#define GET_PC_FROM_CONTEXT(c) (((ucontext_t *)(c))->uc_mcontext->__ss.__eip)
 #endif
 #else
 #error fix ->pc support
@@ -314,6 +314,8 @@ void* prof(void *ptr)
 
 		fclose(maps);
 		fclose(prof_out);
+
+    return 0;
 }
 
 void sample_Start(int freq)

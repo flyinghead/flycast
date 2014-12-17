@@ -131,7 +131,7 @@ void plugins_Reset(bool Manual)
 
 void* webui_th(void* p)
 {
-	#if (HOST_OS == OS_WINDOWS || HOST_OS == OS_LINUX)  && !defined(TARGET_PANDORA)
+	#if (HOST_OS == OS_WINDOWS || HOST_OS == OS_LINUX)  && !defined(TARGET_PANDORA) && defined(WEBUI)
 		webui_start();
 	#endif
 
@@ -170,7 +170,7 @@ int dc_init(int argc,wchar* argv[])
 	int rv= 0;
 
 
-	if (!LoadRomFiles(GetPath("/data/")))
+	if (!LoadRomFiles(GetPath("/data/")) && !LoadRomFiles(GetPath("/")))
 	{
 		return -3;
 	}

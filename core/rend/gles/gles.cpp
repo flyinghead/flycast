@@ -354,6 +354,7 @@ gl_ctx gl;
 int screen_width;
 int screen_height;
 
+#if HOST_OS != OS_DARWIN
 #ifdef GLES
 // Create a basic GLES context
 bool gl_init(void* wind, void* disp)
@@ -597,6 +598,8 @@ void gl_swap()
 	wglSwapLayerBuffers(ourWindowHandleToDeviceContext,WGL_SWAP_MAIN_PLANE);
 	//SwapBuffers(ourWindowHandleToDeviceContext);
 }
+#endif
+
 #endif
 
 
@@ -903,7 +906,7 @@ bool gles_init()
 	if (!gl_create_resources())
 		return false;
 
-#ifdef GLES
+#if defined(GLES) && HOST_OS != OS_DARWIN
 	#ifdef TARGET_PANDORA
 	fbdev=open("/dev/fb0", O_RDONLY);
 	#else
@@ -1670,7 +1673,10 @@ bool RenderFrame()
 	}
 	else
 	{
+#if HOST_OS != OS_DARWIN
+        //Fix this in a proper way
 		glBindFramebuffer(GL_FRAMEBUFFER,0);
+#endif
 	}
 	
 	//Clear depth
@@ -1678,7 +1684,7 @@ bool RenderFrame()
 	if (settings.rend.WideScreen)
 		glClearColor(pvrrc.verts.head()->col[2]/255.0f,pvrrc.verts.head()->col[1]/255.0f,pvrrc.verts.head()->col[0]/255.0f,1.0f);
 	else
-		glClearColor(0,0,0,1.0f);
+		glClearColor(0,1,0,1.0f);
 
 	glClearDepthf(0.f); glCheck();
 	glClear(GL_COLOR_BUFFER_BIT|GL_STENCIL_BUFFER_BIT|GL_DEPTH_BUFFER_BIT); glCheck();

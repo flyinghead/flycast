@@ -215,7 +215,7 @@ struct fpscr_t
 		};
 		struct
 		{
-			u32 nil   : 2+1+1+1+1+4+8+1;
+			u32 _nil   : 2+1+1+1+1+4+8+1;
 			u32 PR_SZ : 2;
 			u32 nilz  : 11;
 		};

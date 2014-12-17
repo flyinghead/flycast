@@ -2,6 +2,7 @@
 #include <sys/mman.h>
 #include "types.h"
 
+#ifndef HOST_NO_REC
 #include "hw/sh4/sh4_opcode_list.h"
 
 #include "hw/sh4/sh4_mmr.h"
@@ -58,7 +59,7 @@ struct DynaRBI: RuntimeBlockInfo
 #if !defined(ARMCC)
 void CacheFlush(void* code, void* pEnd)
 {
-#ifndef _ANDROID
+#if !defined(_ANDROID) && HOST_OS!=OS_DARWIN
 	__clear_cache((void*)code, pEnd);
 #else
 	void* start=code;
@@ -2217,3 +2218,5 @@ RuntimeBlockInfo* ngen_AllocateBlock()
 {
 	return new DynaRBI();
 };
+
+#endif

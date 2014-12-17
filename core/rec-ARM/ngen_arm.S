@@ -7,13 +7,14 @@
 .equ BM_BLOCKLIST_MASK, 65532 @FFFC
 .equ CPU_RATIO, 5
 
+#define CSYM(n) _##n
 
 @@@@@@@@@@ some helpers @@@@@@@@@@
 
-.global do_sqw_nommu_area_3
+.global CSYM(do_sqw_nommu_area_3)
 @r0: addr
 @r1: sq_both
-do_sqw_nommu_area_3:
+CSYM(do_sqw_nommu_area_3):
 add r3,r1,#0x0C000000	@ get ram ptr from r1, part 1
 and r2,r0,#0x20			@ SQ# selection, isolate
 ubfx r0,r0,#5,#19		@ get ram offset
@@ -24,23 +25,23 @@ vldm r1,{d0-d3}
 vstm r3,{d0-d3}
 bx lr
 
-.global TAWriteSQ
+.global CSYM(TAWriteSQ)
 @r0: addr
 @r1: sq_both
-TAWriteSQ:
+CSYM(TAWriteSQ):
 BIC     R3, R0, #0xFE000000		@clear unused bits
 AND     R0, R0, #0x20			@SQ#, isolate
 CMP     R3, #0x800000			@TA write?
 ADD     R0, R1, R0				@SQ#, add to SQ ptr
-BCC     _Z13ta_vtx_data32Pv	@TA write?
+BCC     CSYM(_Z13ta_vtx_data32Pv)	@TA write?
 
-TAWriteSQ_yuv:
+CSYM(TAWriteSQ_yuv):
 CMP     R3, #0x1000000	@Yuv write ?
-BCS     TAWriteSQ_vram
+BCS     CSYM(TAWriteSQ_vram)
 MOV     R1, #1
-B       _Z8YUV_dataPjj	
+B       CSYM(_Z8YUV_dataPjj)
 
-TAWriteSQ_vram:				@vram write ..
+CSYM(TAWriteSQ_vram):				@vram write ..
 #ifdef TARGET_IPHONE
 bkpt #0
 #else
@@ -54,50 +55,53 @@ vldm r1,{d0-d3}
 vstm r3,{d0-d3}
 bx lr
 
+
+#ifndef HOST_NO_REC
+
 @@@@@@@@@@ ngen_LinkBlock_*****_stub @@@@@@@@@@
 
-.global ngen_LinkBlock_Generic_stub
-ngen_LinkBlock_Generic_stub:
+.global CSYM(ngen_LinkBlock_Generic_stub)
+CSYM(ngen_LinkBlock_Generic_stub):
 
     mov r1,r4	@ djump/pc -> in case we need it ..
-	b ngen_LinkBlock_Shared_stub
+	b CSYM(ngen_LinkBlock_Shared_stub)
 
 
-.global ngen_LinkBlock_cond_Branch_stub
-ngen_LinkBlock_cond_Branch_stub:
+.global CSYM(ngen_LinkBlock_cond_Branch_stub)
+CSYM(ngen_LinkBlock_cond_Branch_stub):
 
 	mov r1,#1
-	b ngen_LinkBlock_Shared_stub
+	b CSYM(ngen_LinkBlock_Shared_stub)
     
-.global ngen_LinkBlock_cond_Next_stub    
-ngen_LinkBlock_cond_Next_stub:
+.global CSYM(ngen_LinkBlock_cond_Next_stub)
+CSYM(ngen_LinkBlock_cond_Next_stub):
 
 	mov r1,#0
-	b ngen_LinkBlock_Shared_stub
+	b CSYM(ngen_LinkBlock_Shared_stub)
 
 
-.global ngen_LinkBlock_Shared_stub
-ngen_LinkBlock_Shared_stub:
+.global CSYM(ngen_LinkBlock_Shared_stub)
+CSYM(ngen_LinkBlock_Shared_stub):
 
 	mov r0,lr
     sub r0,#4                  @go before the call
-    bl rdv_LinkBlock
+    bl CSYM(rdv_LinkBlock)
     bx r0
 
 @@@@@@@@@@ ngen_FailedToFindBlock_ @@@@@@@@@@
 
 
-.global ngen_FailedToFindBlock_
-ngen_FailedToFindBlock_:
+.global CSYM(ngen_FailedToFindBlock_)
+CSYM(ngen_FailedToFindBlock_):
 	mov r0,r4
-    bl rdv_FailedToFindBlock
+    bl CSYM(rdv_FailedToFindBlock)
     bx r0
 
 @@@@@@@@@@ ngen_blockcheckfail @@@@@@@@@@
 
-.global ngen_blockcheckfail
-ngen_blockcheckfail:
-    bl rdv_BlockCheckFail
+.global CSYM(ngen_blockcheckfail)
+CSYM(ngen_blockcheckfail):
+    bl CSYM(rdv_BlockCheckFail)
     bx r0
 
 
@@ -110,8 +114,8 @@ ngen_blockcheckfail:
 
 
 
-.global ngen_mainloop
-ngen_mainloop:
+.global CSYM(ngen_mainloop)
+CSYM(ngen_mainloop):
 
 push { r4-r12,lr }
 
@@ -121,26 +125,26 @@ push { r4-r12,lr }
     mov r8, r0			@Load context
 	ldr r4, [r8,#-184]	@load pc
 	
-	b no_update			@Go to mainloop !
+	b CSYM(no_update)			@Go to mainloop !
 
 
 	@this code is here for fall-through behavior of do_iter
-	.global intc_sched
-intc_sched:        @ next_pc _MUST_ be on ram
+	.global CSYM(intc_sched)
+CSYM(intc_sched):        @ next_pc _MUST_ be on ram
     add r9,r9,#SH4_TIMESLICE
 	mov r4,lr
-    bl UpdateSystem
+    bl CSYM(UpdateSystem)
 	mov lr,r4
 	cmp r0,#0
 	bxeq lr			@faster than bxeq r4 (as it should, call stack cache)
 
 do_iter:
 	mov r0,r4
-	bl rdv_DoInterrupts
+	bl CSYM(rdv_DoInterrupts)
 	mov r4,r0
 
-.global no_update
-no_update:              @ next_pc _MUST_ be on r4 *R4 NOT R0 anymore*
+.global CSYM(no_update)
+CSYM(no_update):              @ next_pc _MUST_ be on r4 *R4 NOT R0 anymore*
 
 	sub r2,r8,#33816576
 	ubfx r1,r4,#1,#23
@@ -156,18 +160,18 @@ bx lr
 end_ngen_mainloop:
 @@@@@@@@@@ ngen_mainloop @@@@@@@@@@
 
-.global arm_compilecode
-arm_compilecode:
-bl CompileCode
-b arm_dispatch
+.global CSYM(arm_compilecode)
+CSYM(arm_compilecode):
+bl CSYM(CompileCode)
+b CSYM(arm_dispatch)
 
 #ifdef TARGET_IPHONE
-Xarm_Reg: .word arm_Reg
-XEntryPoints: .word EntryPoints
+Xarm_Reg: .word CSYM(arm_Reg)
+XEntryPoints: .word CSYM(EntryPoints)
 #endif
 
-.global arm_mainloop
-arm_mainloop: @(cntx,lookup_base,cycles)
+.global CSYM(arm_mainloop)
+CSYM(arm_mainloop): @(cntx,lookup_base,cycles)
 
 push {r4,r5,r8,r9,lr}
 
@@ -182,10 +186,10 @@ push {r4,r5,r8,r9,lr}
 	ldr r5,[r8,#192]	@load cycle count
 	add r5,r0			@add cycles for this timeslice
 
-	b arm_dispatch
+	b CSYM(arm_dispatch)
 
-.global arm_dispatch
-arm_dispatch:
+.global CSYM(arm_dispatch)
+CSYM(arm_dispatch):
 	#ifdef TARGET_IPHONE
 	ldrd r0,r1,[r8,#184]		@load: Next PC, interrupt
 	#else
@@ -199,19 +203,19 @@ arm_dispatch:
 	ldr pc,[r4,r2,lsl #2]
 	
 arm_dofiq:
-	bl CPUFiq
-	b arm_dispatch
+	bl CSYM(CPUFiq)
+	b CSYM(arm_dispatch)
 
-.global arm_exit
-arm_exit:
+.global CSYM(arm_exit)
+CSYM(arm_exit):
 	str r5,[r8,#192]		@if timeslice is over, save remaining cycles
 	pop {r4,r5,r8,r9,pc}	
 
 @@@@@@
 @matrix mul
 #ifndef _ANDROID
-.global ftrv_asm
-ftrv_asm:
+.global CSYM(ftrv_asm)
+CSYM(ftrv_asm):
 
 @r0=dst,r1=vec,r2=mtx
 
@@ -228,8 +232,8 @@ vstm r0,{d4,d5}
 
 bx lr
 
-.global fipr_asm
-fipr_asm:
+.global CSYM(fipr_asm)
+CSYM(fipr_asm):
 
 @ vdot
 @		idp=fr[n+0]*fr[m+0];
@@ -249,5 +253,7 @@ vpadd.f32 d0,d0,d0 @d0={d0[0]+d0[1]+d1[0]+d1[1], d0[0]+d0[1]+d1[0]+d1[1]}
 @store to ret ..
 vmov r0,s0
 bx lr
+
+#endif
 
 #endif
