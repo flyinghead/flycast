@@ -14,13 +14,10 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.Button;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.ScrollView;
-import android.widget.TableRow;
 import android.widget.TextView;
-import at.technikum.mti.fancycoverflow.FancyCoverFlow;
 
 import com.reicast.emulator.GL2JNIActivity;
 import com.reicast.emulator.GL2JNINative;
@@ -438,14 +435,6 @@ public class OnScreenMenu {
 		Drawable image = mContext.getResources().getDrawable(x);
 		image.setBounds(0, 0, 72, 72);
 		but.setCompoundDrawables(image, null, null, null);
-	}
-	
-	void showXMBMenu() {
-		FancyCoverFlow fancyCoverFlow = new FancyCoverFlow(mContext);
-		fancyCoverFlow.setMaxRotation(45);
-		fancyCoverFlow.setUnselectedAlpha(0.3f);
-		fancyCoverFlow.setUnselectedSaturation(0.0f);
-		fancyCoverFlow.setUnselectedScale(0.4f);
 	}
 
 	public class VmuPopup extends PopupWindow {
