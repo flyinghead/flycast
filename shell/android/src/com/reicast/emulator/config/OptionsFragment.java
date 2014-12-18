@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
@@ -20,6 +21,7 @@ import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.ArrayAdapter;
@@ -112,6 +114,7 @@ public class OptionsFragment extends Fragment {
 
 		mainBrowse.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View view) {
+                hideSoftKeyBoard();
 				mCallback.onMainBrowseSelected(home_directory, false);
 			}
 		});
@@ -163,6 +166,7 @@ public class OptionsFragment extends Fragment {
 					game_directory = editGames.getText().toString();
 					//mPrefs.edit().putString("game_directory", game_directory).commit();
 				}
+                hideSoftKeyBoard();
 				mCallback.onMainBrowseSelected(game_directory, true);
 			}
 		});
@@ -513,6 +517,15 @@ public class OptionsFragment extends Fragment {
 
 			}
 		});
+	}
+
+	private void hideSoftKeyBoard() {
+		InputMethodManager iMm = (InputMethodManager) getActivity()
+				.getSystemService(Context.INPUT_METHOD_SERVICE);
+		if (iMm.isAcceptingText()) {
+			iMm.hideSoftInputFromWindow(getActivity().getCurrentFocus()
+					.getWindowToken(), 0);
+		}
 	}
 	
 	private void flashBios(String localized) {
