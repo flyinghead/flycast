@@ -14,6 +14,10 @@
 		8497BCCA1A41BFBA00EFB9ED /* audiostream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8497BCC51A41BFBA00EFB9ED /* audiostream.cpp */; };
 		8497BCCB1A41BFBA00EFB9ED /* ds_audiostream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8497BCC71A41BFBA00EFB9ED /* ds_audiostream.cpp */; };
 		8497BCCF1A41BFD800EFB9ED /* coreio.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8497BCCD1A41BFD800EFB9ED /* coreio.cpp */; };
+		8703BC3B1A44B8DA00E7E939 /* Icon-72.png in Resources */ = {isa = PBXBuildFile; fileRef = 8703BC371A44B8DA00E7E939 /* Icon-72.png */; };
+		8703BC3C1A44B8DA00E7E939 /* Icon-72@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 8703BC381A44B8DA00E7E939 /* Icon-72@2x.png */; };
+		8703BC3D1A44B8DA00E7E939 /* Icon.png in Resources */ = {isa = PBXBuildFile; fileRef = 8703BC391A44B8DA00E7E939 /* Icon.png */; };
+		8703BC3E1A44B8DA00E7E939 /* Icon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 8703BC3A1A44B8DA00E7E939 /* Icon@2x.png */; };
 		87078A8718A47FE90034C7A0 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 87078A8618A47FE90034C7A0 /* Foundation.framework */; };
 		87078A8918A47FE90034C7A0 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 87078A8818A47FE90034C7A0 /* CoreGraphics.framework */; };
 		87078A8B18A47FE90034C7A0 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 87078A8A18A47FE90034C7A0 /* UIKit.framework */; };
@@ -24,7 +28,8 @@
 		87078AA318A47FE90034C7A0 /* Shader.fsh in Resources */ = {isa = PBXBuildFile; fileRef = 87078AA218A47FE90034C7A0 /* Shader.fsh */; };
 		87078AA518A47FE90034C7A0 /* Shader.vsh in Resources */ = {isa = PBXBuildFile; fileRef = 87078AA418A47FE90034C7A0 /* Shader.vsh */; };
 		87078AA818A47FE90034C7A0 /* EmulatorViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 87078AA718A47FE90034C7A0 /* EmulatorViewController.mm */; };
-		87078AAA18A47FE90034C7A0 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 87078AA918A47FE90034C7A0 /* Images.xcassets */; };
+		87C4AA541A440BEB0048DBF4 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 87C4AA531A440BEB0048DBF4 /* libz.dylib */; };
+		87C4AA561A4414070048DBF4 /* AssetsLibrary.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 87C4AA551A4414070048DBF4 /* AssetsLibrary.framework */; };
 		9C7A393318C804A80070BB5F /* reicast.entitlements in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A393218C804A80070BB5F /* reicast.entitlements */; };
 		9C7A3AA218C806E00070BB5F /* cfg.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A395118C806DE0070BB5F /* cfg.cpp */; };
 		9C7A3AA318C806E00070BB5F /* cl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A395318C806DE0070BB5F /* cl.cpp */; };
@@ -231,6 +236,10 @@
 		8497BCC81A41BFBA00EFB9ED /* oslib.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = oslib.h; sourceTree = "<group>"; };
 		8497BCCD1A41BFD800EFB9ED /* coreio.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = coreio.cpp; sourceTree = "<group>"; };
 		8497BCCE1A41BFD800EFB9ED /* coreio.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = coreio.h; sourceTree = "<group>"; };
+		8703BC371A44B8DA00E7E939 /* Icon-72.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Icon-72.png"; sourceTree = "<group>"; };
+		8703BC381A44B8DA00E7E939 /* Icon-72@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Icon-72@2x.png"; sourceTree = "<group>"; };
+		8703BC391A44B8DA00E7E939 /* Icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Icon.png; sourceTree = "<group>"; };
+		8703BC3A1A44B8DA00E7E939 /* Icon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Icon@2x.png"; sourceTree = "<group>"; };
 		87078A8318A47FE90034C7A0 /* emulator.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = emulator.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		87078A8618A47FE90034C7A0 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		87078A8818A47FE90034C7A0 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
@@ -246,8 +255,9 @@
 		87078AA418A47FE90034C7A0 /* Shader.vsh */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; name = Shader.vsh; path = Shaders/Shader.vsh; sourceTree = "<group>"; };
 		87078AA618A47FE90034C7A0 /* EmulatorViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = EmulatorViewController.h; path = emulator/EmulatorViewController.h; sourceTree = "<group>"; };
 		87078AA718A47FE90034C7A0 /* EmulatorViewController.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = EmulatorViewController.mm; path = emulator/EmulatorViewController.mm; sourceTree = "<group>"; };
-		87078AA918A47FE90034C7A0 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = emulator/Images.xcassets; sourceTree = "<group>"; };
 		87078AB018A47FE90034C7A0 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
+		87C4AA531A440BEB0048DBF4 /* libz.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libz.dylib; path = usr/lib/libz.dylib; sourceTree = SDKROOT; };
+		87C4AA551A4414070048DBF4 /* AssetsLibrary.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AssetsLibrary.framework; path = System/Library/Frameworks/AssetsLibrary.framework; sourceTree = SDKROOT; };
 		9C7A393218C804A80070BB5F /* reicast.entitlements */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = reicast.entitlements; sourceTree = "<group>"; };
 		9C7A393A18C806DE0070BB5F /* arm_coding.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = arm_coding.h; sourceTree = "<group>"; };
 		9C7A393B18C806DE0070BB5F /* arm_disasm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = arm_disasm.h; sourceTree = "<group>"; };
@@ -583,6 +593,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				87C4AA561A4414070048DBF4 /* AssetsLibrary.framework in Frameworks */,
+				87C4AA541A440BEB0048DBF4 /* libz.dylib in Frameworks */,
 				87078A8F18A47FE90034C7A0 /* OpenGLES.framework in Frameworks */,
 				87078A8918A47FE90034C7A0 /* CoreGraphics.framework in Frameworks */,
 				87078A8B18A47FE90034C7A0 /* UIKit.framework in Frameworks */,
@@ -626,6 +638,17 @@
 			path = deps/coreio;
 			sourceTree = "<group>";
 		};
+		8703BC361A44B8DA00E7E939 /* assets */ = {
+			isa = PBXGroup;
+			children = (
+				8703BC371A44B8DA00E7E939 /* Icon-72.png */,
+				8703BC381A44B8DA00E7E939 /* Icon-72@2x.png */,
+				8703BC391A44B8DA00E7E939 /* Icon.png */,
+				8703BC3A1A44B8DA00E7E939 /* Icon@2x.png */,
+			);
+			path = assets;
+			sourceTree = "<group>";
+		};
 		87078A7A18A47FE90034C7A0 = {
 			isa = PBXGroup;
 			children = (
@@ -646,6 +669,8 @@
 		87078A8518A47FE90034C7A0 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				87C4AA551A4414070048DBF4 /* AssetsLibrary.framework */,
+				87C4AA531A440BEB0048DBF4 /* libz.dylib */,
 				87078A8618A47FE90034C7A0 /* Foundation.framework */,
 				87078A8818A47FE90034C7A0 /* CoreGraphics.framework */,
 				87078A8A18A47FE90034C7A0 /* UIKit.framework */,
@@ -679,6 +704,7 @@
 		87078A9118A47FE90034C7A0 /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
+				8703BC361A44B8DA00E7E939 /* assets */,
 				87078A9218A47FE90034C7A0 /* emulator-Info.plist */,
 				87078A9618A47FE90034C7A0 /* main.m */,
 				87078A9818A47FE90034C7A0 /* emulator-Prefix.pch */,
@@ -744,7 +770,6 @@
 				9C7A3BFC18C851C50070BB5F /* RTrigger@2x.png */,
 				9C7A3BFD18C851C50070BB5F /* Start.png */,
 				9C7A3BFE18C851C50070BB5F /* Start@2x.png */,
-				87078AA918A47FE90034C7A0 /* Images.xcassets */,
 			);
 			name = Images;
 			path = ..;
@@ -1341,12 +1366,7 @@
 			isa = PBXProject;
 			attributes = {
 				LastUpgradeCheck = 0500;
-				ORGANIZATIONNAME = "Karen Tsai (angelXwind)";
-				TargetAttributes = {
-					87078A8218A47FE90034C7A0 = {
-						DevelopmentTeam = QRT73U549N;
-					};
-				};
+				ORGANIZATIONNAME = reicast;
 			};
 			buildConfigurationList = 87078A7E18A47FE90034C7A0 /* Build configuration list for PBXProject "emulator" */;
 			compatibilityVersion = "Xcode 3.2";
@@ -1373,6 +1393,7 @@
 			files = (
 				9C7A3C1818C851C50070BB5F /* LTrigger@2x.png in Resources */,
 				9C7A3C1318C851C50070BB5F /* JoystickBackground.png in Resources */,
+				8703BC3C1A44B8DA00E7E939 /* Icon-72@2x.png in Resources */,
 				9C7A393318C804A80070BB5F /* reicast.entitlements in Resources */,
 				9C7A3C0018C851C50070BB5F /* 210-octocat@2x.png in Resources */,
 				9C7A3C1718C851C50070BB5F /* LTrigger.png in Resources */,
@@ -1384,11 +1405,13 @@
 				9C7A3C2118C851C50070BB5F /* RTrigger.png in Resources */,
 				9C7A3C1C18C851C50070BB5F /* menuicon@2x.png in Resources */,
 				9C7A3C0118C851C50070BB5F /* 210-twitterbird.png in Resources */,
+				8703BC3D1A44B8DA00E7E939 /* Icon.png in Resources */,
 				9C7A3C0D18C851C50070BB5F /* DPad.png in Resources */,
 				9C7A3C1518C851C50070BB5F /* JoystickButton.png in Resources */,
+				8703BC3E1A44B8DA00E7E939 /* Icon@2x.png in Resources */,
 				9C7A3BFF18C851C50070BB5F /* 210-octocat.png in Resources */,
+				8703BC3B1A44B8DA00E7E939 /* Icon-72.png in Resources */,
 				9C7A3C1618C851C50070BB5F /* JoystickButton@2x.png in Resources */,
-				87078AAA18A47FE90034C7A0 /* Images.xcassets in Resources */,
 				9C7A3C1418C851C50070BB5F /* JoystickBackground@2x.png in Resources */,
 				9C7A3C1918C851C50070BB5F /* menuback.png in Resources */,
 				9C7A3BC418C84EA10070BB5F /* MainStoryboard.storyboard in Resources */,
@@ -1687,14 +1710,9 @@
 		87078AC118A47FE90034C7A0 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = (
-					armv7s,
-					armv7,
-				);
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				ARCHS = "$(ARCHS_STANDARD)";
+				CODE_SIGN_IDENTITY = "";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "emulator/emulator-Prefix.pch";
 				GCC_PREPROCESSOR_DEFINITIONS = (
@@ -1717,7 +1735,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
 				TARGETED_DEVICE_FAMILY = "1,2";
-				VALID_ARCHS = armv7;
+				VALID_ARCHS = "armv7 armv7s";
 				WRAPPER_EXTENSION = app;
 			};
 			name = Debug;
@@ -1725,14 +1743,9 @@
 		87078AC218A47FE90034C7A0 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = (
-					armv7s,
-					armv7,
-				);
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				ARCHS = "$(ARCHS_STANDARD)";
+				CODE_SIGN_IDENTITY = "";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "emulator/emulator-Prefix.pch";
 				GCC_PREPROCESSOR_DEFINITIONS = (
@@ -1753,7 +1766,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
 				TARGETED_DEVICE_FAMILY = "1,2";
-				VALID_ARCHS = armv7;
+				VALID_ARCHS = "armv7 armv7s";
 				WRAPPER_EXTENSION = app;
 			};
 			name = Release;
