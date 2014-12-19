@@ -126,19 +126,21 @@ development and running costs, so follow @reicastdc on twitter for updates
 
 Other Testing
 -------------
-These devices are tested by Karen/angelXwind:
+Devices tested by the reicast team:
 * Apple iPhone 4 GSM Rev0 (N90AP)
 * Apple iPhone 4 CDMA (N92AP)
 * Apple iPod touch 4 (N81AP)
 * Apple iPod touch 3G (N18AP)
 * Apple iPhone 3GS (N88AP)
+* Apple iPhone 5s
+* Apple iPad 3
 * Sony Xperia X10a (es209ra)
 * Amazon Kindle Fire HD 7 (tate-pvt-08)
-
-These devices are tested by contributors regularly:
-* Nvidia Shield
-* Nexus 5 / 7
-* Xperia Play
+* Nvidia Shield portable
+* Nvidia Shield tablet
+* Samsung Galaxy Note 4
+* LG Nexus 5
+* Asus Nexus 7 (2013)
 
 Team
 ----
