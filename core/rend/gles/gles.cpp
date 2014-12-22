@@ -1498,14 +1498,21 @@ bool RenderFrame()
 
 	float scale_x=1, scale_y=1;
 
+	float scissoring_scale_x = 1;
+
 	if (!is_rtt)
 	{
 		scale_x=fb_scale_x;
 		scale_y=fb_scale_y;
 
 		//work out scaling parameters !
+		//Pixel doubling is on VO, so it does not affect any pixel operations
+		//A second scaling is used here for scissoring
 		if (VO_CONTROL.pixel_double)
-			scale_x*=0.5;
+		{
+			scissoring_scale_x = 0.5f;
+			scale_x *= 0.5f;
+		}
 	}
 	
 	if (SCALER_CTL.hscale)
@@ -1549,10 +1556,10 @@ bool RenderFrame()
 	float ds2s_offs_x=(screen_width-dc2s_scale_h*640)/2;
 
 	//-1 -> too much to left
-	ShaderUniforms.scale_coefs[0]=2.0f/(screen_width/dc2s_scale_h);
+	ShaderUniforms.scale_coefs[0]=2.0f/(screen_width/dc2s_scale_h*scale_x);
 	ShaderUniforms.scale_coefs[1]=(is_rtt?2:-2)/dc_height;
 	ShaderUniforms.scale_coefs[2]=1-2*ds2s_offs_x/(screen_width);
-	ShaderUniforms.scale_coefs[3]=is_rtt?1:-1;
+	ShaderUniforms.scale_coefs[3]=(is_rtt?1:-1);
 
 
 	ShaderUniforms.depth_coefs[0]=2/(vtx_max_fZ-vtx_min_fZ);
@@ -1706,6 +1713,9 @@ bool RenderFrame()
 
 	int offs_x=ds2s_offs_x+0.5f;
 	//this needs to be scaled
+	
+	//not all scaling affects pixel operations, scale to adjust for that
+	scale_x *= scissoring_scale_x;
 	glScissor(offs_x+pvrrc.fb_X_CLIP.min/scale_x,(pvrrc.fb_Y_CLIP.min/scale_y)*dc2s_scale_h,(pvrrc.fb_X_CLIP.max-pvrrc.fb_X_CLIP.min+1)/scale_x*dc2s_scale_h,(pvrrc.fb_Y_CLIP.max-pvrrc.fb_Y_CLIP.min+1)/scale_y*dc2s_scale_h);
 	if (settings.rend.WideScreen && pvrrc.fb_X_CLIP.min==0 && ((pvrrc.fb_X_CLIP.max+1)/scale_x==640) && (pvrrc.fb_Y_CLIP.min==0) && ((pvrrc.fb_Y_CLIP.max+1)/scale_y==480 ) )
 	{
@@ -1713,6 +1723,9 @@ bool RenderFrame()
 	}
 	else
 		glEnable(GL_SCISSOR_TEST);
+
+	//restore scale_x
+	scale_x /= scissoring_scale_x;
 
 	DrawStrips();
 
