@@ -108,7 +108,7 @@ union FB_R_SIZE_type
 		u32 fb_x_size  : 10; //0
 		u32 fb_y_size  : 10; //10
 		u32 fb_modulus : 10; //20
-		u32 fb_res     : 12; //30
+		u32 fb_res     : 2; //30
 	};
 	u32 full;
 };
