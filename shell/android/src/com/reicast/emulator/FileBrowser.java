@@ -195,21 +195,9 @@ public class FileBrowser extends Fragment {
 		}
 
 		if (!ImgBrowse && !games) {
-			LocateGames mLocateGames = new LocateGames(R.array.flash);
-			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-				mLocateGames
-				.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, home_directory);
-			} else {
-				mLocateGames.execute(home_directory);
-			}
+			new LocateGames(R.array.flash).execute(home_directory);
 		} else {
-			LocateGames mLocateGames = new LocateGames(R.array.images);
-			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-				mLocateGames
-						.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, game_directory);
-			} else {
-				mLocateGames.execute(game_directory);
-			}
+			new LocateGames(R.array.images).execute(game_directory);
 		}
 	}
 
