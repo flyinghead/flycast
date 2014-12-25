@@ -194,12 +194,14 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 		childview.setTag(game_name);
 	}
 
-	private boolean isNetworkAvailable() {
+	public boolean isNetworkAvailable() {
 		ConnectivityManager connectivityManager = (ConnectivityManager) mContext
 				.getSystemService(Context.CONNECTIVITY_SERVICE);
-		NetworkInfo activeNetworkInfo = connectivityManager
-				.getActiveNetworkInfo();
-		return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+//		NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+		NetworkInfo mWifi = connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+	    NetworkInfo mMobile = connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE);
+//		return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+		return mMobile.isAvailable() || mWifi.isAvailable();
 	}
 
 	public Drawable getGameIcon() {
