@@ -590,6 +590,10 @@ struct RegisterStruct
 
 struct settings_t
 {
+	struct {
+		bool UseReios;
+	} bios;
+
 	struct
 	{
 		bool UseMipmaps;

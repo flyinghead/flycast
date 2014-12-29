@@ -14,8 +14,8 @@
 #include "hw/aica/aica_if.h"
 //#include "naomi/naomi.h"
 
-#include "types.h"
 #include "hw/flashrom/flashrom.h"
+#include "reios/reios.h"
 
 RomChip sys_rom(BIOS_SIZE);
 
@@ -53,6 +53,14 @@ bool LoadRomFiles(const string& root)
 void SaveRomFiles(const string& root)
 {
 	sys_nvmem.Save(root, ROM_PREFIX, "nvmem.bin", "nvmem");
+}
+
+bool LoadHle(const string& root) {
+	if (!sys_nvmem.Load(root, ROM_PREFIX, "%nvmem.bin;%flash_wb.bin;%flash.bin;%flash.bin.bin", "nvram")) {
+		printf("No nvmem loaded\n");
+	}
+
+	return reios_init(sys_rom.data, sys_nvmem.data);
 }
 
 #if (DC_PLATFORM == DC_PLATFORM_NORMAL) || (DC_PLATFORM == DC_PLATFORM_DEV_UNIT) || (DC_PLATFORM == DC_PLATFORM_NAOMI) || (DC_PLATFORM == DC_PLATFORM_NAOMI2)
