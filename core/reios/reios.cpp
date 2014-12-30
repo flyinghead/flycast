@@ -339,9 +339,10 @@ void DYNACALL reios_trap(u32 op) {
 }
 
 u32 hook_addr(hook_fp* fn) {
-	auto pos = hooks_rev.find(fn);
-	
-	return pos != hooks_rev.end() ? pos->second : 0;
+	if (hooks_rev.count(fn))
+		return hooks_rev[fn];
+	else
+		return 0;
 }
 
 bool reios_init(u8* rom, u8* flash) {
