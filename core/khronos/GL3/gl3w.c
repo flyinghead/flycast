@@ -77,7 +77,7 @@ static void *get_proc(const char *proc)
 {
 	void *res;
 
-	res = glXGetProcAddress((const GLubyte *) proc);
+	res = (void*)glXGetProcAddress((const GLubyte *) proc);
 	if (!res)
 		res = dlsym(libgl, proc);
 	return res;
@@ -96,6 +96,7 @@ static int parse_version(void)
 	glGetIntegerv(GL_MAJOR_VERSION, &version.major);
 	glGetIntegerv(GL_MINOR_VERSION, &version.minor);
 
+	printf("GL context version: %d.%d\n", version.major, version.minor);
 	if (version.major < 3)
 		return -1;
 	return 0;

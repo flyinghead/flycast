@@ -37,7 +37,10 @@ CXXFLAGS += -ffast-math -ftree-vectorize
 #-std=c++0x
 
 CXXFLAGS += $(CFLAGS) $(MFLAGS) -fno-exceptions -fno-rtti
-CXXFLAGS += -D SUPPORT_X11 -DGLES
+CXXFLAGS += -D SUPPORT_X11 
+
+# use this to do GLES on x11 (also, update the libs)
+# CXXFLAGS += -DGLES
 
 
 ifdef PGO_MAKE
@@ -61,7 +64,10 @@ INCS	:= -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps -I$(RZDCY_SRC_DIR)/khronos -I
 
 LIBS    := -L../linux-deps/lib/x86 -L./enta_viv 
 #LIBS	+= -lglapi
-LIBS    += -lm -lrt -lEGL -lGLESv2 #-lglslcompiler -lIMGegl -lpvr2d -lsrv_um
+LIBS    += -lm -lrt
+LIBS	+= -ldl -lGL #for desktop gl
+#use this for GLES 
+#LIBS	+= -lEGL -lGLESv2 #-lglslcompiler -lIMGegl -lpvr2d -lsrv_um
 LIBS    += -lpthread -lasound -lX11 -lXdmcp -lXau
 
 
