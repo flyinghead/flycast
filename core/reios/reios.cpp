@@ -11,7 +11,7 @@
 
 #include "gdrom_hle.h"
 
-#include "hw\sh4\sh4_mem.h"
+#include "hw/sh4/sh4_mem.h"
 
 #include <map>
 
