@@ -394,7 +394,7 @@ bool gl_init(void* wind, void* disp)
 		return false;
 	}
 
-	gl.setup.surface = eglCreateWindowSurface(gl.setup.display, config, wind, NULL);
+	gl.setup.surface = eglCreateWindowSurface(gl.setup.display, config, (EGLNativeWindowType)wind, NULL);
 
 	if (eglCheck())
 		return false;

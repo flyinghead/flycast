@@ -37,7 +37,7 @@ CXXFLAGS += -ffast-math -ftree-vectorize
 #-std=c++0x
 
 CXXFLAGS += $(CFLAGS) $(MFLAGS) -fno-exceptions -fno-rtti
-CXXFLAGS += -D SUPPORT_X11
+CXXFLAGS += -D SUPPORT_X11 -DGLES
 
 
 ifdef PGO_MAKE
