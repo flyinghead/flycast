@@ -1,5 +1,10 @@
 /*
 	Extremely primitive bios replacement
+
+	Many thanks to Lars Olsson (jlo@ludd.luth.se) for bios decompile work
+		http://www.ludd.luth.se/~jlo/dc/bootROM.c
+		http://www.ludd.luth.se/~jlo/dc/bootROM.h
+		http://www.ludd.luth.se/~jlo/dc/security_stuff.c
 */
 
 #include "reios.h"
@@ -10,11 +15,14 @@
 
 #include <map>
 
-#define dc_bios_syscall_system          0x8C0000B0
-#define dc_bios_syscall_font            0x8C0000B4
-#define dc_bios_syscall_flashrom        0x8C0000B8
-#define dc_bios_syscall_gd				0x8C0000BC
-#define dc_bios_syscall_misc			0x8c0000E0
+#define dc_bios_syscall_system				0x8C0000B0
+#define dc_bios_syscall_font				0x8C0000B4
+#define dc_bios_syscall_flashrom			0x8C0000B8
+#define dc_bios_syscall_gd					0x8C0000BC
+#define dc_bios_syscall_misc				0x8c0000E0
+
+//At least one game (ooga) uses this directly
+#define dc_bios_entrypoint_gd_do_bioscall	0x8c0010F0
 
 #define SYSINFO_ID_ADDR 0x8C001010
 
@@ -224,6 +232,59 @@ void reios_sys_gd() {
 	gdrom_hle_op();
 }
 
+/*
+	- gdGdcReqCmd, 0
+	- gdGdcGetCmdStat, 1
+	- gdGdcExecServer, 2
+	- gdGdcInitSystem, 3
+	- gdGdcGetDrvStat, 4
+*/
+void gd_do_bioscall()
+{
+	//looks like the "real" entrypoint for this on a dreamcast
+	gdrom_hle_op();
+	return;
+
+	/*
+		int func1, func2, arg1, arg2;
+	*/
+
+	switch (Sh4cntx.r[7]) {
+	case 0:	//gdGdcReqCmd, wth is r6 ?
+		GD_HLE_Command(Sh4cntx.r[4], Sh4cntx.r[5]);
+		Sh4cntx.r[0] = 0xf344312e;
+		break;
+
+	case 1:	//gdGdcGetCmdStat, r4 -> id as returned by gdGdcReqCmd, r5 -> buffer to get status in ram, r6 ?
+		Sh4cntx.r[0] = 0; //All good, no status info
+		break;
+
+	case 2: //gdGdcExecServer
+		//nop? returns something, though.
+		//Bios seems to be based on a cooperative threading model
+		//this is the "context" switch entry point
+		break;
+
+	case 3: //gdGdcInitSystem
+		//nop? returns something, though.
+		break;
+	case 4: //gdGdcGetDrvStat
+		/*
+			Looks to same as GDROM_CHECK_DRIVE
+		*/
+		WriteMem32(Sh4cntx.r[4] + 0, 0x02);	// STANDBY
+		WriteMem32(Sh4cntx.r[4] + 4, 0x80);	// CDROM | 0x80 for GDROM
+		Sh4cntx.r[0] = 0;					// RET SUCCESS
+		break;
+
+	default:
+		printf("gd_do_bioscall: (%d) %d, %d, %d\n", Sh4cntx.r[4], Sh4cntx.r[5], Sh4cntx.r[6], Sh4cntx.r[7]);
+		break;
+	}
+	
+	//gdGdcInitSystem
+}
+
 void reios_sys_misc() {
 	printf("reios_sys_misc - r7: 0x%08X, r4 0x%08X, r5 0x%08X, r6 0x%08X\n", Sh4cntx.r[7], Sh4cntx.r[4], Sh4cntx.r[5], Sh4cntx.r[6]);
 	Sh4cntx.r[0] = 0;
@@ -250,6 +311,7 @@ void reios_boot() {
 	setup_syscall(hook_addr(&reios_sys_gd), dc_bios_syscall_gd);
 	setup_syscall(hook_addr(&reios_sys_misc), dc_bios_syscall_misc);
 
+	WriteMem32(dc_bios_entrypoint_gd_do_bioscall, REIOS_OPCODE);
 	//Infinitive loop for arm !
 	WriteMem32(0x80800000, 0xEAFFFFFE);
 
@@ -299,6 +361,7 @@ bool reios_init(u8* rom, u8* flash) {
 	register_hook(0x8C001006, reios_sys_gd);
 	register_hook(0x8C001008, reios_sys_misc);
 
+	register_hook(dc_bios_entrypoint_gd_do_bioscall, &gd_do_bioscall);
 
 	return true;
 }

@@ -33,6 +33,30 @@ void GDROM_HLE_ReadTOC(u32 Addr)
 	libGDR_GetToc((u32*)pDst, s);
 }
 
+void read_sectors_to(u32 addr, u32 sector, u32 count) {
+	u8 * pDst = GetMemPtr(addr, 0);
+
+	if (pDst) {
+		libGDR_ReadSector(pDst, sector, count, 2048);
+	}
+	else {
+		u8 temp[2048];
+
+		while (count > 0) {
+			libGDR_ReadSector(temp, sector, 1, 2048);
+
+			for (int i = 0; i < 2048 / 4; i += 4) {
+				WriteMem32(addr, temp[i]);
+				addr += 4;
+			}
+
+			sector++;
+			count--;
+		}
+	}
+	
+}
+
 void GDROM_HLE_ReadDMA(u32 addr)
 {
 	u32 s = ReadMem32(addr + 0x00);
@@ -40,10 +64,10 @@ void GDROM_HLE_ReadDMA(u32 addr)
 	u32 b = ReadMem32(addr + 0x08);
 	u32 u = ReadMem32(addr + 0x0C);
 
-	u8 * pDst = GetMemPtr(b, 0);
+	
 
 	//printf("GDROM:\tPIO READ Sector=%d, Num=%d, Buffer=0x%08X, Unk01=0x%08X\n", s, n, b, u);
-	libGDR_ReadSector(pDst, s, n, 2048);
+	read_sectors_to(b, s, n);
 }
 
 void GDROM_HLE_ReadPIO(u32 addr)
@@ -53,11 +77,9 @@ void GDROM_HLE_ReadPIO(u32 addr)
 	u32 b = ReadMem32(addr + 0x08);
 	u32 u = ReadMem32(addr + 0x0C);
 
-	u8 * pDst = GetMemPtr(b, 0);
-
 	//printf("GDROM:\tPIO READ Sector=%d, Num=%d, Buffer=0x%08X, Unk01=0x%08X\n", s, n, b, u);
 
-	libGDR_ReadSector(pDst, s, n, 2048);
+	read_sectors_to(b, s, n);
 }
 
 void GDCC_HLE_GETSCD(u32 addr) {
@@ -74,7 +96,7 @@ void GDCC_HLE_GETSCD(u32 addr) {
 
 u32 SecMode[4];
 
-inline static void GD_HLE_Command(u32 cc, u32 prm)
+void GD_HLE_Command(u32 cc, u32 prm)
 {
 	switch(cc)
 	{
