@@ -20,6 +20,8 @@ import com.bda.controller.Controller;
 import com.bda.controller.ControllerListener;
 import com.bda.controller.MotionEvent;
 import com.bda.controller.StateEvent;
+import com.reicast.emulator.GL2JNIActivity;
+import com.reicast.emulator.GL2JNINative;
 import com.reicast.emulator.R;
 
 /******************************************************************************/
@@ -133,15 +135,26 @@ public final class MOGAInput
 	{
 		public void onKeyEvent(KeyEvent event)
 		{
-			// Handled by the primary controller interface
-//			act.dispatchKeyEvent(new android.view.KeyEvent(0, 0, event.getAction(),
-//				    event.getKeyCode(), 0));
+			boolean keydown = false;
+			if (event.getAction() == KeyEvent.ACTION_DOWN) {
+				keydown = true;
+			}
+			if (act instanceof GL2JNIActivity) {
+				((GL2JNIActivity) act).handle_key(playerNum, event.getKeyCode(), keydown);
+			}
+			if (act instanceof GL2JNINative) {
+				((GL2JNINative) act).handle_key(playerNum, event.getKeyCode(), keydown);
+			}
 		}
 
 		public void onMotionEvent(MotionEvent event)
 		{
-			// Handled by the primary controller interface
-			
+			if (act instanceof GL2JNIActivity) {
+				((GL2JNIActivity) act).motionEventHandler(playerNum, event);
+			}
+			if (act instanceof GL2JNINative) {
+				((GL2JNINative) act).motionEventHandler(playerNum, event);
+			}
 		}
 
 		private void getCompatibilityMap(int playerNum, String id) {
