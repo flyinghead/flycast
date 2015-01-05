@@ -2,22 +2,23 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/menuMain"
-    android:layout_width="match_parent"
+    android:layout_width="280dp"
     android:layout_height="wrap_content"
+    android:background="@android:color/transparent"
     android:gravity="center_horizontal"
     android:orientation="vertical" >
 
     <TableLayout
-        android:layout_width="match_parent"
+        android:layout_width="280dp"
         android:layout_height="wrap_content"
-        android:paddingRight="4dp"
+        android:background="@android:color/transparent"
         android:stretchColumns="*" >
 
         <TableRow
             android:layout_width="wrap_content"
             android:layout_height="72dp"
+            android:layout_margin="1dp"
             android:layout_weight="1"
-            android:background="#66000000"
             android:gravity="center" >
 
             <LinearLayout
@@ -30,8 +31,8 @@
         <TableRow
             android:layout_width="wrap_content"
             android:layout_height="72dp"
+            android:layout_margin="1dp"
             android:layout_weight="1"
-            android:background="#66000000"
             android:gravity="center" >
 
             <Button
@@ -39,6 +40,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
+                android:background="@drawable/rounded"
                 android:ems="8"
                 android:text="@string/popup_button_disk" />
         </TableRow>
@@ -46,8 +48,8 @@
         <TableRow
             android:layout_width="wrap_content"
             android:layout_height="72dp"
+            android:layout_margin="1dp"
             android:layout_weight="1"
-            android:background="#66000000"
             android:gravity="center" >
 
             <Button
@@ -55,6 +57,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
+                android:background="@drawable/rounded"
                 android:ems="8"
                 android:text="@string/popup_button_vmu_swap" />
         </TableRow>
@@ -62,8 +65,8 @@
         <TableRow
             android:layout_width="wrap_content"
             android:layout_height="72dp"
+            android:layout_margin="1dp"
             android:layout_weight="1"
-            android:background="#66000000"
             android:gravity="center" >
 
             <Button
@@ -71,6 +74,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
+                android:background="@drawable/rounded"
                 android:ems="8"
                 android:text="@string/popup_button_options" />
         </TableRow>
@@ -78,8 +82,8 @@
         <TableRow
             android:layout_width="wrap_content"
             android:layout_height="72dp"
+            android:layout_margin="1dp"
             android:layout_weight="1"
-            android:background="#66000000"
             android:gravity="center" >
 
             <Button
@@ -87,6 +91,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
+                android:background="@drawable/rounded"
                 android:ems="8"
                 android:text="@string/popup_button_debugging" />
         </TableRow>
@@ -94,8 +99,8 @@
         <TableRow
             android:layout_width="wrap_content"
             android:layout_height="72dp"
+            android:layout_margin="1dp"
             android:layout_weight="1"
-            android:background="#66000000"
             android:gravity="center" >
 
             <Button
@@ -103,6 +108,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
+                android:background="@drawable/rounded"
                 android:ems="8"
                 android:text="@string/popup_button_screenshot" />
         </TableRow>
@@ -110,8 +116,8 @@
         <TableRow
             android:layout_width="wrap_content"
             android:layout_height="72dp"
+            android:layout_margin="1dp"
             android:layout_weight="1"
-            android:background="#66000000"
             android:gravity="center" >
 
             <Button
@@ -119,6 +125,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
+                android:background="@drawable/rounded"
                 android:ems="8"
                 android:text="@string/popup_button_exit" />
         </TableRow>

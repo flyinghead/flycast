@@ -101,7 +101,7 @@
     <string name="input">Input</string>
     <string name="about">About</string>
     <string name="rateme">Rate Me</string>
-    <string name="messages">Test Suite</string>
+    <string name="messages">Send Logs</string>
     <string name="cloud">Cloud VMU</string>
     
     <string name="textOn">ON</string>
