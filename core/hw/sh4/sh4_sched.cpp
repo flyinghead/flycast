@@ -86,17 +86,25 @@ int sh4_sched_register(int tag, sh4_sched_callback* ssc)
 	return list.size()-1;
 }
 
+/*
+	Return current cycle count, in 32 bits (wraps after 21 dreamcast seconds)
+*/
 u32 sh4_sched_now()
 {
 	return sh4_sched_ffb-Sh4cntx.sh4_sched_next;
 }
 
+/*
+	Return current cycle count, in 64 bits (effectivelly never wraps)
+*/
 u64 sh4_sched_now64()
 {
 	return sh4_sched_ffb-Sh4cntx.sh4_sched_next;
 }
 void sh4_sched_request(int id, int cycles)
 {
+	verify(cycles <= SH4_MAIN_CLOCK);
+
 	list[id].start=sh4_sched_now();
 	list[id].end=list[id].start+cycles;
 

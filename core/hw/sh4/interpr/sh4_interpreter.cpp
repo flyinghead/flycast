@@ -170,6 +170,8 @@ int AicaUpdate(int tag, int c, int j)
 
 	return AICA_TICK;
 }
+
+
 int DreamcastSecond(int tag, int c, int j)
 {
 	settings.dreamcast.RTC++;
@@ -183,7 +185,8 @@ int DreamcastSecond(int tag, int c, int j)
 #endif
 
 	//printf("%d ticks\n",sh4_sched_intr);
-	sh4_sched_intr=0;	return SH4_MAIN_CLOCK;
+	sh4_sched_intr=0;
+	return SH4_MAIN_CLOCK;
 }
 
 int UpdateSystem_rec()
