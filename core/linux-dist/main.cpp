@@ -22,6 +22,12 @@
 	#include <X11/Xlib.h>
 	#include <X11/Xatom.h>
 	#include <X11/Xutil.h>
+
+	#if !defined(GLES)
+		#include <GL/gl.h>
+		#include <GL/glx.h>
+	#endif
+
 #endif
 
 #if !defined(ANDROID)
@@ -476,6 +482,8 @@ void os_SetWindowText(const char * text)
 }
 
 
+void* x11_glc;
+
 int ndcid=0;
 void os_CreateWindow()
 {
@@ -508,15 +516,36 @@ void os_CreateWindow()
 
 			// Gets the window parameters
 			sRootWindow = RootWindow(x11Display, x11Screen);
-			i32Depth = DefaultDepth(x11Display, x11Screen);
-			x11Visual = new XVisualInfo;
-			XMatchVisualInfo( x11Display, x11Screen, i32Depth, TrueColor, x11Visual);
-			if (!x11Visual)
-			{
-				printf("Error: Unable to acquire visual\n");
-				return;
-			}
-			x11Colormap = XCreateColormap( x11Display, sRootWindow, x11Visual->visual, AllocNone );
+			
+			int depth = CopyFromParent;
+
+			#if !defined(GLES)
+				int attr32[] = { GLX_RGBA, GLX_DEPTH_SIZE, 32, GLX_DOUBLEBUFFER, GLX_STENCIL_SIZE, 8, None };
+				int attr24[] = { GLX_RGBA, GLX_DEPTH_SIZE, 24, GLX_DOUBLEBUFFER, GLX_STENCIL_SIZE, 8, None };
+
+				XVisualInfo* vi = glXChooseVisual(x11Display, 0, attr32);
+				if (!vi)
+					vi = glXChooseVisual(x11Display, 0, attr24);
+				
+				if (!vi)
+					die("Failed to glXChooseVisual");
+
+				depth = vi->depth;
+				x11Visual = vi;
+
+				x11Colormap = XCreateColormap(x11Display, RootWindow(x11Display, x11Screen), vi->visual, AllocNone);
+			#else
+				i32Depth = DefaultDepth(x11Display, x11Screen);
+				x11Visual = new XVisualInfo;
+				XMatchVisualInfo( x11Display, x11Screen, i32Depth, TrueColor, x11Visual);
+				if (!x11Visual)
+				{
+					printf("Error: Unable to acquire visual\n");
+					return;
+				}
+				x11Colormap = XCreateColormap( x11Display, sRootWindow, x11Visual->visual, AllocNone );
+			#endif
+
 			sWA.colormap = x11Colormap;
 
 			// Add to these for handling other events
@@ -536,18 +565,24 @@ void os_CreateWindow()
 				width=XDisplayWidth(x11Display,x11Screen);
 				height=XDisplayHeight(x11Display,x11Screen);
 			}
+
 			// Creates the X11 window
 			x11Window = XCreateWindow( x11Display, RootWindow(x11Display, x11Screen), (ndcid%3)*640, (ndcid/3)*480, width, height,
-				0, CopyFromParent, InputOutput, CopyFromParent, ui32Mask, &sWA);
+				0, depth, InputOutput, x11Visual->visual, ui32Mask, &sWA);
 			#ifdef TARGET_PANDORA
-			// fullscreen
-			Atom wmState = XInternAtom(x11Display, "_NET_WM_STATE", False);
-			Atom wmFullscreen = XInternAtom(x11Display, "_NET_WM_STATE_FULLSCREEN", False);
-			XChangeProperty(x11Display, x11Window, wmState, XA_ATOM, 32, PropModeReplace, (unsigned char *)&wmFullscreen, 1);
-			
-			XMapRaised(x11Display, x11Window);
+				// fullscreen
+				Atom wmState = XInternAtom(x11Display, "_NET_WM_STATE", False);
+				Atom wmFullscreen = XInternAtom(x11Display, "_NET_WM_STATE_FULLSCREEN", False);
+				XChangeProperty(x11Display, x11Window, wmState, XA_ATOM, 32, PropModeReplace, (unsigned char *)&wmFullscreen, 1);
+				
+				XMapRaised(x11Display, x11Window);
 			#else
-			XMapWindow(x11Display, x11Window);
+				XMapWindow(x11Display, x11Window);
+
+				#if !defined(GLES)
+					x11_glc = glXCreateContext(x11Display, x11Visual, NULL, GL_TRUE);
+					//glXMakeCurrent(x11Display, x11Window, glc);
+				#endif
 			#endif
 			XFlush(x11Display);
 
@@ -722,3 +757,9 @@ return 1;
 
 int get_mic_data(u8* buffer) { return 0; }
 int push_vmu_screen(u8* buffer) { return 0; }
+
+
+void os_DebugBreak()
+{
+    raise(SIGTRAP);
+}
