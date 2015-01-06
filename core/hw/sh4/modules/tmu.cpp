@@ -76,16 +76,32 @@ void UpdateTMU_i(u32 Cycles)
 
 u32 tmu_ch_base[3];
 
-
 u32 read_TMU_TCNTch(u32 ch)
 {
-	return tmu_ch_base[ch]-((sh4_sched_now64()>>tmu_shift[ch])&tmu_mask[ch]);
+	return tmu_ch_base[ch] - ((sh4_sched_now64() >> tmu_shift[ch])&tmu_mask[ch]);
+}
+
+void sched_chan_tick(int ch)
+{
+	//schedule next interrupt
+	//return TMU_TCOR(ch) << tmu_shift[ch];
+
+	u32 togo = read_TMU_TCNTch(ch);
+	u32 cycles = togo << tmu_shift[ch];
+
+	if (tmu_mask[ch])
+		sh4_sched_request(tmu_sched[ch], min(cycles, SH4_MAIN_CLOCK) );
+	else
+		sh4_sched_request(tmu_sched[ch], -1);
+	//sched_tmu_cb
 }
 
 void write_TMU_TCNTch(u32 ch, u32 data)
 {
 	//u32 TCNT=read_TMU_TCNTch(ch);
 	tmu_ch_base[ch]=data+((sh4_sched_now64()>>tmu_shift[ch])&tmu_mask[ch]);
+
+	sched_chan_tick(ch);
 }
 
 template<u32 ch>
@@ -98,21 +114,6 @@ template<u32 ch>
 void write_TMU_TCNT(u32 addr, u32 data)
 {
 	write_TMU_TCNTch(ch,data);
-}
-
-void sched_chan_tick(int ch)
-{
-	//schedule next interrupt
-	//return TMU_TCOR(ch) << tmu_shift[ch];
-
-	u32 tcor = TMU_TCOR(ch);
-	u32 cycles = tcor << tmu_shift[ch];
-
-	if (tmu_mask[ch])
-		sh4_sched_request(tmu_sched[ch], cycles);
-	else
-		sh4_sched_request(tmu_sched[ch], -1);
-	//sched_tmu_cb
 }
 
 void turn_on_off_ch(u32 ch, bool on)
