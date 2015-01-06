@@ -89,8 +89,11 @@ void sched_chan_tick(int ch)
 	u32 togo = read_TMU_TCNTch(ch);
 	u32 cycles = togo << tmu_shift[ch];
 
+	if (cycles > SH4_MAIN_CLOCK)
+		cycles = SH4_MAIN_CLOCK;
+
 	if (tmu_mask[ch])
-		sh4_sched_request(tmu_sched[ch], min(cycles, SH4_MAIN_CLOCK) );
+		sh4_sched_request(tmu_sched[ch], cycles );
 	else
 		sh4_sched_request(tmu_sched[ch], -1);
 	//sched_tmu_cb
