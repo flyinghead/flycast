@@ -98,6 +98,7 @@ public class GL2JNINative extends NativeActivity {
 		pad.deviceDescriptor_PlayerNum.remove(null);
 
 		moga.onCreate(this, pad);
+		moga.mListener.setPlayerNum(1);
 
 		boolean controllerTwoConnected = false;
 		boolean controllerThreeConnected = false;

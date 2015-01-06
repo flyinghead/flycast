@@ -71,6 +71,7 @@ public class InputFragment extends Fragment {
 		parentActivity = getActivity();
 
 		moga.onCreate(parentActivity, pad);
+		moga.mListener.setPlayerNum(1);
 
 		sharedPreferences = PreferenceManager
 				.getDefaultSharedPreferences(parentActivity);

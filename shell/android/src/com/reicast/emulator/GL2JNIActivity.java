@@ -96,6 +96,7 @@ public class GL2JNIActivity extends Activity {
 		pad.deviceDescriptor_PlayerNum.remove(null);
 
 		moga.onCreate(this, pad);
+		moga.mListener.setPlayerNum(1);
 
 		boolean controllerTwoConnected = false;
 		boolean controllerThreeConnected = false;
