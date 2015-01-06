@@ -212,19 +212,32 @@ int sched_tmu_cb(int ch, int sch_cycl, int jitter)
 {
 	if (tmu_mask[ch]) {
 		
-		//printf("Interrupt for %d, %d cycles\n", ch, sch_cycl);
-
-		//raise interrupt, timer counted down
-		InterruptPend(tmu_intID[ch], 1);
-
 		u32 tcnt = read_TMU_TCNTch(ch);
+
 		u32 tcor = TMU_TCOR(ch);
+
 		u32 cycles = tcor << tmu_shift[ch];
-		//schedule next interrupt
-		return cycles;
+
+		//this is not 100% correct
+		if (abs((s32)tcnt) <= jitter) {
+			//raise interrupt, timer counted down
+			InterruptPend(tmu_intID[ch], 1);
+			
+			//printf("Interrupt for %d, %d cycles\n", ch, sch_cycl);
+
+			//schedule next trigger by writing the TCNT register
+			write_TMU_TCNTch(ch, tcor - tcnt);
+		}
+		else {
+			
+			//schedule next trigger by writing the TCNT register
+			write_TMU_TCNTch(ch, tcnt);
+		}
+
+		return 0;	//has already been scheduled by TCNT write
 	}
 	else {
-		return jitter - 1;
+		return 0;	//this channel is disabled, no need to schedule next event
 	}
 }
 
