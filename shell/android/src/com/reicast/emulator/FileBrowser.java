@@ -195,21 +195,9 @@ public class FileBrowser extends Fragment {
 		}
 
 		if (!ImgBrowse && !games) {
-			LocateGames mLocateGames = new LocateGames(R.array.flash);
-			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-				mLocateGames
-				.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, home_directory);
-			} else {
-				mLocateGames.execute(home_directory);
-			}
+			new LocateGames(R.array.flash).execute(home_directory);
 		} else {
-			LocateGames mLocateGames = new LocateGames(R.array.images);
-			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-				mLocateGames
-						.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, game_directory);
-			} else {
-				mLocateGames.execute(game_directory);
-			}
+			new LocateGames(R.array.images).execute(game_directory);
 		}
 	}
 
@@ -405,14 +393,13 @@ public class FileBrowser extends Fragment {
 							mCallback.onFolderSelected(game != null ? Uri
 									.fromFile(game) : Uri.EMPTY);
 							home_directory = game.getAbsolutePath().substring(0,
-									game.getAbsolutePath().lastIndexOf(File.separator));
+									game.getAbsolutePath().lastIndexOf(File.separator)).replace("/data", "");
 							if (!DataDirectoryBIOS()) {
 								MainActivity.showToastMessage(getActivity(), 
 										getActivity().getString(R.string.config_data, home_directory),
 										Toast.LENGTH_LONG);
 							}
-							mPrefs.edit().putString("home_directory",
-									home_directory.replace("/data", "")).commit();
+							mPrefs.edit().putString("home_directory", home_directory).commit();
 							JNIdc.config(home_directory.replace("/data", ""));
 						}
 					}
@@ -504,7 +491,7 @@ public class FileBrowser extends Fragment {
 											.putString(Config.pref_games,
 													heading).commit();
 								} else {
-									home_directory = heading;
+									home_directory = heading.replace("/data", "");
 									mPrefs.edit()
 											.putString(Config.pref_home,
 													heading).commit();
@@ -544,12 +531,18 @@ public class FileBrowser extends Fragment {
 		if (!data_directory.exists() || !data_directory.isDirectory()) {
 			data_directory.mkdirs();
 			File bios = new File(home_directory, "dc_boot.bin");
-			boolean success = bios.renameTo(new File(home_directory + "/data", "dc_boot.bin"));
+			boolean success = bios.renameTo(new File(home_directory, "data/dc_boot.bin"));
 			File flash = new File(home_directory, "dc_flash.bin");
-			success = flash.renameTo(new File(home_directory + "/data", "dc_flash.bin"));
+			success = flash.renameTo(new File(home_directory, "data/dc_flash.bin"));
 			return success;
 		} else {
-			return true;
+			File bios = new File(home_directory, "data/dc_boot.bin");
+			File flash = new File(home_directory, "data/dc_flash.bin");
+			if (bios.exists() && flash.exists()) {
+				return true;
+			} else {
+				return false;
+			}
 		}
 	}
 }

@@ -106,11 +106,7 @@ public class MainActivity extends SlidingFragmentActivity implements
 				public void uncaughtException(Thread t, Throwable error) {
 					if (error != null) {
 						StringBuilder output = new StringBuilder();
-						output.append("Thread:\n");
-						for (StackTraceElement trace : t.getStackTrace()) {
-							output.append(trace.toString() + "\n");
-						}
-						output.append("\nError:\n");
+						output.append("UncaughtException:\n");
 						for (StackTraceElement trace : error.getStackTrace()) {
 							output.append(trace.toString() + "\n");
 						}
@@ -349,14 +345,7 @@ public class MainActivity extends SlidingFragmentActivity implements
 	}
 	
 	public void generateErrorLog() {
-		GenerateLogs mGenerateLogs = new GenerateLogs(MainActivity.this);
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-			mGenerateLogs.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,
-					getFilesDir().getAbsolutePath());
-		} else {
-			mGenerateLogs.execute(getFilesDir().getAbsolutePath());
-		}
-
+		new GenerateLogs(MainActivity.this).execute(getFilesDir().getAbsolutePath());
 	}
 
 	/**

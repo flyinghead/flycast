@@ -14,12 +14,14 @@ import android.os.Handler;
 import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.util.Log;
-import com.bda.controller.KeyEvent;
 
+import com.bda.controller.KeyEvent;
 import com.bda.controller.Controller;
 import com.bda.controller.ControllerListener;
 import com.bda.controller.MotionEvent;
 import com.bda.controller.StateEvent;
+import com.reicast.emulator.GL2JNIActivity;
+import com.reicast.emulator.GL2JNINative;
 import com.reicast.emulator.R;
 
 /******************************************************************************/
@@ -39,6 +41,7 @@ public final class MOGAInput
 	static final int ACTION_VERSION_MOGAPRO = Controller.ACTION_VERSION_MOGAPRO;
 
 	public Controller mController = null;
+	public ExampleControllerListener mListener;
 	private String notify;
 	private Gamepad pad;
 
@@ -88,7 +91,8 @@ public final class MOGAInput
 
 		mController = Controller.getInstance(act);
 		mController.init();
-		mController.setListener(new ExampleControllerListener(), new Handler());
+		mListener = new ExampleControllerListener();
+		mController.setListener(mListener, new Handler());
 	}
 
 	public void onDestroy()
@@ -129,19 +133,36 @@ public final class MOGAInput
 		*/
 	}
 
-	class ExampleControllerListener implements ControllerListener
+	public class ExampleControllerListener implements ControllerListener
 	{
+		int playerNum;
+		
+		public void setPlayerNum(int playerNum) {
+			this.playerNum = playerNum;
+		}
+		
 		public void onKeyEvent(KeyEvent event)
 		{
-			// Handled by the primary controller interface
-//			act.dispatchKeyEvent(new android.view.KeyEvent(0, 0, event.getAction(),
-//				    event.getKeyCode(), 0));
+			boolean keydown = false;
+			if (event.getAction() == KeyEvent.ACTION_DOWN) {
+				keydown = true;
+			}
+			if (act instanceof GL2JNIActivity) {
+				((GL2JNIActivity) act).handle_key(playerNum, event.getKeyCode(), keydown);
+			}
+			if (act instanceof GL2JNINative) {
+				((GL2JNINative) act).handle_key(playerNum, event.getKeyCode(), keydown);
+			}
 		}
 
 		public void onMotionEvent(MotionEvent event)
 		{
-			// Handled by the primary controller interface
-			
+			if (act instanceof GL2JNIActivity) {
+				((GL2JNIActivity) act).motionEventHandler(playerNum, event);
+			}
+			if (act instanceof GL2JNINative) {
+				((GL2JNINative) act).motionEventHandler(playerNum, event);
+			}
 		}
 
 		private void getCompatibilityMap(int playerNum, String id) {
