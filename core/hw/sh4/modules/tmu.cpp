@@ -221,6 +221,7 @@ int sched_tmu_cb(int ch, int sch_cycl, int jitter)
 		//this is not 100% correct
 		if (abs((s32)tcnt) <= jitter) {
 			//raise interrupt, timer counted down
+			TMU_TCR(ch) |= tmu_underflow;
 			InterruptPend(tmu_intID[ch], 1);
 			
 			//printf("Interrupt for %d, %d cycles\n", ch, sch_cycl);
