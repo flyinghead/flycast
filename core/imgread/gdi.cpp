@@ -1,5 +1,6 @@
 #include "common.h"
 #include <ctype.h>
+#include <sstream>
 
 Disc* load_gdi(const char* file)
 {
@@ -8,13 +9,28 @@ Disc* load_gdi(const char* file)
 	
 	//memset(&gdi_toc,0xFFFFFFFF,sizeof(gdi_toc));
 	//memset(&gdi_ses,0xFFFFFFFF,sizeof(gdi_ses));
-	FILE* t=fopen(file,"rb");
+	core_file* t=core_fopen(file);
 	if (!t)
 		return 0;
-	fscanf(t,"%d\r\n",&iso_tc);
+
+	size_t gdi_len = core_fsize(t);
+
+	char gdi_data[8193] = { 0 };
+
+	if (gdi_len >= sizeof(gdi_data))
+	{
+		core_fclose(t);
+		return 0;
+	}
+
+	core_fread(t, gdi_data, gdi_len);
+	core_fclose(t);
+
+	istringstream gdi(gdi_data);
+
+	gdi >> iso_tc;
 	printf("\nGDI : %d tracks\n",iso_tc);
 
-	char temp[512];
 	char path[512];
 	strcpy(path,file);
 	size_t len=strlen(file);
@@ -30,30 +46,38 @@ Disc* load_gdi(const char* file)
 	s32 OFFSET=0;
 	for (u32 i=0;i<iso_tc;i++)
 	{
+		string track_filename;
+
 		//TRACK FADS CTRL SSIZE file OFFSET
-		fscanf(t,"%d %d %d %d",&TRACK,&FADS,&CTRL,&SSIZE);
-		//%s %d\r\n,temp,&OFFSET);
-		//disc->tracks.push_back(
-		while(isspace(fgetc(t))) ;
-		fseek(t,-1,SEEK_CUR);
-		if (fgetc(t)=='"')
+		gdi >> TRACK;
+		gdi >> FADS;
+		gdi >> CTRL;
+		gdi >> SSIZE;
+
+		char last;
+
+		do {
+			gdi >> last;
+		} while (isspace(last));
+		
+		if (last == '"')
 		{
-			char c;
-			int i=0;
-			while((c=fgetc(t))!='"')
-				temp[i++]=c;
-			temp[i]=0;
+			for(;;) {
+				gdi >> last;
+				if (last == '"')
+					break;
+				track_filename += last;
+			}
 		}
 		else
 		{
-			fseek(t,-1,SEEK_CUR);
-			fscanf(t,"%s",temp);
+			gdi >> track_filename;
+			track_filename = last + track_filename;
 		}
 
-		fscanf(t,"%d\r\n",&OFFSET);
-		printf("file[%d] \"%s\": FAD:%d, CTRL:%d, SSIZE:%d, OFFSET:%d\n",TRACK,temp,FADS,CTRL,SSIZE,OFFSET);
+		gdi >> OFFSET;
 		
-		
+		printf("file[%d] \"%s\": FAD:%d, CTRL:%d, SSIZE:%d, OFFSET:%d\n", TRACK, track_filename.c_str(), FADS, CTRL, SSIZE, OFFSET);
 
 		Track t;
 		t.ADDR=0;
@@ -63,8 +87,8 @@ Disc* load_gdi(const char* file)
 
 		if (SSIZE!=0)
 		{
-			strcpy(pathptr,temp);
-			t.file = new RawTrackFile(fopen(path,"rb"),OFFSET,t.StartFAD,SSIZE);	
+			strcpy(pathptr, track_filename.c_str());
+			t.file = new RawTrackFile(core_fopen(path),OFFSET,t.StartFAD,SSIZE);	
 		}
 		disc->tracks.push_back(t);
 	}

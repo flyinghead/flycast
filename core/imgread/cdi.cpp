@@ -8,7 +8,7 @@
 
 Disc* cdi_parse(const wchar* file)
 {
-	FILE* fsource=fopen(file,"rb");
+	core_file* fsource=core_fopen(file);
 
 	if (!fsource)
 		return 0;
@@ -34,7 +34,7 @@ Disc* cdi_parse(const wchar* file)
 
 		CDI_get_tracks (fsource, &image);
 
-		image.header_position = ftell(fsource);
+		image.header_position = core_ftell(fsource);
 
 		printf("\nSession %d has %d track(s)\n",image.global_current_session,image.tracks);
 
@@ -54,7 +54,7 @@ Disc* cdi_parse(const wchar* file)
 
 				CDI_read_track (fsource, &image, &track);
 
-				image.header_position = ftell(fsource);
+				image.header_position = core_ftell(fsource);
 
 				// Show info
 
@@ -98,7 +98,7 @@ Disc* cdi_parse(const wchar* file)
 				t.CTRL=track.mode==0?0:4;
 				t.StartFAD=track.start_lba+track.pregap_length;
 				t.EndFAD=t.StartFAD+track.length-1;
-				t.file = new RawTrackFile(fopen(file,"rb"),track.position + track.pregap_length * track.sector_size,t.StartFAD,track.sector_size);
+				t.file = new RawTrackFile(core_fopen(file),track.position + track.pregap_length * track.sector_size,t.StartFAD,track.sector_size);
 
 				rv->tracks.push_back(t);
 
@@ -115,21 +115,21 @@ Disc* cdi_parse(const wchar* file)
 					if (track.total_length < track.length + track.pregap_length)
 					{
 						printf("\nThis track seems truncated. Skipping...\n");
-						fseek(fsource, track.position, SEEK_SET);
-						fseek(fsource, track.total_length, SEEK_CUR);
-						track.position = ftell(fsource);
+						core_fseek(fsource, track.position, SEEK_SET);
+						core_fseek(fsource, track.total_length, SEEK_CUR);
+						track.position = core_ftell(fsource);
 					}
 					else
 					{
 						
 						printf("Track position: %d\n",track.position + track.pregap_length * track.sector_size);
-						fseek(fsource, track.position, SEEK_SET);
+						core_fseek(fsource, track.position, SEEK_SET);
 						//     fseek(fsource, track->pregap_length * track->sector_size, SEEK_CUR);
 						//     fseek(fsource, track->length * track->sector_size, SEEK_CUR);
-						fseek(fsource, track.total_length * track.sector_size, SEEK_CUR);
+						core_fseek(fsource, track.total_length * track.sector_size, SEEK_CUR);
 
 						//savetrack(fsource, &image, &track, &opts, &flags);
-						track.position = ftell(fsource);
+						track.position = core_ftell(fsource);
 
 						rv->EndFAD=track.start_lba +track.total_length;
 						// Generate cuesheet entries
@@ -140,7 +140,7 @@ Disc* cdi_parse(const wchar* file)
 					}
 				}
 
-				fseek(fsource, image.header_position, SEEK_SET);
+				core_fseek(fsource, image.header_position, SEEK_SET);
 
 
 				// Close loops
