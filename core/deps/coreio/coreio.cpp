@@ -8,6 +8,7 @@
 #include <sstream>
 #include <string>
 #include <iomanip>
+#include <cctype>
 
 #define TRUE 1
 #define FALSE 0
