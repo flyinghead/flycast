@@ -98,13 +98,7 @@ public class AboutFragment extends Fragment {
 		slidingGithub.setOnDrawerOpenListener(new OnDrawerOpenListener() {
 			@TargetApi(Build.VERSION_CODES.HONEYCOMB)
 			public void onDrawerOpened() {
-				retrieveGitTask queryGithub = new retrieveGitTask();
-				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-					queryGithub.executeOnExecutor(
-							AsyncTask.THREAD_POOL_EXECUTOR, git_api);
-				} else {
-					queryGithub.execute(git_api);
-				}
+				new retrieveGitTask().execute(git_api);
 			}
 		});
 

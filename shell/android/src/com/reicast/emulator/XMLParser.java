@@ -196,12 +196,15 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 
 	public boolean isNetworkAvailable() {
 		ConnectivityManager connectivityManager = (ConnectivityManager) mContext
-				.getSystemService(Context.CONNECTIVITY_SERVICE);
-//		NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+				.getSystemService(Context.CONNECTIVITY_SERVICE);		
 		NetworkInfo mWifi = connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
-	    NetworkInfo mMobile = connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE);
-//		return activeNetworkInfo != null && activeNetworkInfo.isConnected();
-		return mMobile.isAvailable() || mWifi.isAvailable();
+		NetworkInfo mMobile = connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE);
+		NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+		if (mMobile != null && mWifi != null) {
+			return mMobile.isAvailable() || mWifi.isAvailable();
+		} else {
+			return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+		}
 	}
 
 	public Drawable getGameIcon() {
