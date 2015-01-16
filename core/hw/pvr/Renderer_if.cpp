@@ -3,6 +3,8 @@
 #include "hw/pvr/pvr_mem.h"
 #include "rend/TexCache.h"
 
+#include "deps/zlib/zlib.h"
+
 /*
 
 	rendv3 ideas
@@ -72,7 +74,123 @@ int max_idx,max_mvo,max_op,max_pt,max_tr,max_vtx,max_modt, ovrn;
 TA_context* _pvrrc;
 void SetREP(TA_context* cntx);
 
+void dump_frame(const char* file, TA_context* ctx, u8* vram, u8* vram_ref = NULL) {
+	FILE* fw = fopen(file, "wb");
 
+	//append to it
+	fseek(fw, 0, SEEK_END);
+
+	u32 bytes = ctx->tad.End() - ctx->tad.thd_root;
+
+	fwrite("TAFRAME3", 1, 8, fw);
+
+	fwrite(&ctx->rend.isRTT, 1, sizeof(ctx->rend.isRTT), fw);
+	fwrite(&ctx->rend.isAutoSort, 1, sizeof(ctx->rend.isAutoSort), fw);
+	fwrite(&ctx->rend.fb_X_CLIP.full, 1, sizeof(ctx->rend.fb_X_CLIP.full), fw);
+	fwrite(&ctx->rend.fb_Y_CLIP.full, 1, sizeof(ctx->rend.fb_Y_CLIP.full), fw);
+
+	fwrite(ctx->rend.global_param_op.head(), 1, sizeof(PolyParam), fw);
+	fwrite(ctx->rend.verts.head(), 1, 4 * sizeof(Vertex), fw);
+
+	u32 t = VRAM_SIZE;
+	fwrite(&t, 1, sizeof(t), fw);
+	
+	u8* compressed;
+	uLongf compressed_size;
+	u8* src_vram = vram;
+
+	if (vram_ref) {
+		src_vram = (u8*)malloc(VRAM_SIZE);
+
+		for (int i = 0; i < VRAM_SIZE; i++) {
+			src_vram[i] = vram[i] ^ vram_ref[i];
+		}
+	}
+
+	compressed = (u8*)malloc(VRAM_SIZE+16);
+	compressed_size = VRAM_SIZE;
+	verify(compress(compressed, &compressed_size, src_vram, VRAM_SIZE) == Z_OK);
+	fwrite(&compressed_size, 1, sizeof(compressed_size), fw);
+	fwrite(compressed, 1, compressed_size, fw);
+	free(compressed);
+
+	if (src_vram != vram)
+		free(src_vram);
+
+	fwrite(&bytes, 1, sizeof(t), fw);
+	compressed = (u8*)malloc(bytes + 16);
+	compressed_size = VRAM_SIZE;
+	verify(compress(compressed, &compressed_size, ctx->tad.thd_root, bytes) == Z_OK);
+	fwrite(&compressed_size, 1, sizeof(compressed_size), fw);
+	fwrite(compressed, 1, compressed_size, fw);
+	free(compressed);
+
+	fclose(fw);
+}
+
+TA_context* read_frame(const char* file, u8* vram_ref) {
+	
+	FILE* fw = fopen(file, "rb");
+	char id0[8] = { 0 };
+	u32 t = 0;
+	u32 t2 = 0;
+
+	fread(id0, 1, 8, fw);
+
+	if (memcmp(id0, "TAFRAME3", 8) != 0) {
+		fclose(fw);
+		return 0;
+	}
+
+	TA_context* ctx = tactx_Alloc();
+
+	ctx->Reset();
+
+	ctx->tad.Clear();
+
+	fread(&ctx->rend.isRTT, 1, sizeof(ctx->rend.isRTT), fw);
+	fread(&ctx->rend.isAutoSort, 1, sizeof(ctx->rend.isAutoSort), fw);
+	fread(&ctx->rend.fb_X_CLIP.full, 1, sizeof(ctx->rend.fb_X_CLIP.full), fw);
+	fread(&ctx->rend.fb_Y_CLIP.full, 1, sizeof(ctx->rend.fb_Y_CLIP.full), fw);
+
+	fread(ctx->rend.global_param_op.head(), 1, sizeof(PolyParam), fw);
+	fread(ctx->rend.verts.head(), 1, 4 * sizeof(Vertex), fw);
+
+	fread(&t, 1, sizeof(t), fw);
+	verify(t == VRAM_SIZE);
+
+	vram.UnLockRegion(0, VRAM_SIZE);
+
+	fread(&t2, 1, sizeof(t), fw);
+
+	u8* gz_stream = (u8*)malloc(t2);
+	fread(gz_stream, 1, t2, fw);
+	uncompress(vram.data, (uLongf*)&t, gz_stream, t2);
+	free(gz_stream);
+
+
+	fread(&t, 1, sizeof(t), fw);
+	fread(&t2, 1, sizeof(t), fw);
+	gz_stream = (u8*)malloc(t2);
+	fread(gz_stream, 1, t2, fw);
+	uncompress(ctx->tad.thd_data, (uLongf*)&t, gz_stream, t2);
+	free(gz_stream);
+
+	ctx->tad.thd_data += t;
+	fclose(fw);
+}
+
+bool rend_frame(TA_context* ctx, bool draw_osd) {
+	bool proc = renderer->Process(ctx);
+	re.Set();
+
+	bool do_swp = proc && renderer->Render();
+
+	if (do_swp && draw_osd)
+		renderer->DrawOSD();
+
+	return do_swp;
+}
 
 bool rend_single_frame()
 {
@@ -83,14 +201,8 @@ bool rend_single_frame()
 		_pvrrc = DequeueRender();
 	}
 	while (!_pvrrc);
-
-	bool proc = renderer->Process(_pvrrc);
-	re.Set();
 	
-	bool do_swp = proc && renderer->Render();
-		
-	if (do_swp)
-		renderer->DrawOSD();
+	bool do_swp = rend_frame(_pvrrc, true);
 
 	//clear up & free data ..
 	FinishRender(_pvrrc);
