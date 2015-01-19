@@ -8,7 +8,7 @@
         <scene sceneID="h6I-2s-MCy">
             <objects>
                 <viewController storyboardIdentifier="emulatorView" wantsFullScreenLayout="YES" id="WRM-pR-XCP" customClass="ViewController" sceneMemberID="viewController">
-                    <view key="view" contentMode="scaleToFill" id="JQE-db-ZiC" customClass="GLKView">
+                    <view key="view" contentMode="scaleToFill" id="JQE-db-ZiC" customClass="EmulatorView">
                         <rect key="frame" x="0.0" y="0.0" width="568" height="320"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <color key="backgroundColor" cocoaTouchSystemColor="darkTextColor"/>

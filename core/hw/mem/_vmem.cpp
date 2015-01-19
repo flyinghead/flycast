@@ -586,12 +586,13 @@ void _vmem_bm_pagefail(void** ptr,u32 PAGE_SZ);
 u32 pagecnt;
 void _vmem_bm_reset()
 {
+    mprotect(p_sh4rcb, sizeof(p_sh4rcb->fpcb), PROT_READ | PROT_WRITE);
+    return;
 	pagecnt=0;
 
 #if HOST_OS==OS_WINDOWS
 	VirtualFree(p_sh4rcb,sizeof(p_sh4rcb->fpcb),MEM_DECOMMIT);
 #else
-	mprotect(p_sh4rcb, sizeof(p_sh4rcb->fpcb), PROT_NONE);
 	madvise(p_sh4rcb,sizeof(p_sh4rcb->fpcb),MADV_DONTNEED);
     #ifdef MADV_REMOVE
 	madvise(p_sh4rcb,sizeof(p_sh4rcb->fpcb),MADV_REMOVE);

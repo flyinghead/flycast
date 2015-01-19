@@ -56,7 +56,14 @@ struct DynaRBI: RuntimeBlockInfo
 #include <sys/syscall.h>  // for cache flushing.
 #endif
 
-#if !defined(ARMCC)
+#if HOST_OS == OS_DARWIN
+#include <libkern/OSCacheControl.h>
+void CacheFlush(void* code, void* pEnd)
+{
+    sys_dcache_flush(code, (u8*)pEnd - (u8*)code + 1);
+    sys_icache_invalidate(code, (u8*)pEnd - (u8*)code + 1);
+}
+#elif !defined(ARMCC)
 void CacheFlush(void* code, void* pEnd)
 {
 #if !defined(_ANDROID) && HOST_OS!=OS_DARWIN
@@ -250,7 +257,7 @@ EmitAPI StoreSh4Reg64(eReg Rt, shil_param Sh4_Reg, eCC CC=CC_AL)
 
 #include "hw/sh4/dyna/regalloc.h"
 
-eReg alloc_regs[]={r5,r6,r7,r10,r11,(eReg)-1};
+eReg alloc_regs[]={r5,r6,r7,r10,(eReg)-1};
 eFSReg alloc_fpu[]={f16,f17,f18,f19,f20,f21,f22,f23,
 					f24,f25,f26,f27,f28,f29,f30,f31,(eFSReg)-1};
 
@@ -494,8 +501,9 @@ u32 DynaRBI::Relink()
 	}
 
 	CacheFlush(code_start,emit_ptr);
-
-	u32 sz=(u8*)emit_ptr-code_start;
+	
+    u32 sz=(u8*)emit_ptr-code_start;
+    unat offs = (unat)code_start & PAGE_MASK;
 
 	emit_ptr=0;
 	return sz;
@@ -2027,7 +2035,7 @@ void ngen_Compile(RuntimeBlockInfo* block,bool force_checks, bool reset, bool st
 		cyc&=~3;
 	}
 
-	SUB(rfp_r9,rfp_r9,cyc,true,CC_AL);
+	SUB(r11,r11,cyc,true,CC_AL);
 	CALL((u32)intc_sched, CC_LE);
 
 	//compile the block's opcodes
@@ -2115,6 +2123,28 @@ void ngen_ResetBlocks()
 */
 void ngen_init()
 {
+    /*
+    {
+        uint32_t* p;
+        p = (uint32_t*)malloc(1024+4096-1);
+        p = (uint32_t*)(((int)p + 4096 -1) & ~(4096 - 1));
+        
+        if (mprotect(p, 1024, PROT_READ | PROT_WRITE)) {
+            die("failed to mprotect");
+        }
+        
+        if (mprotect(p, 1024, PROT_READ | PROT_EXEC)) {
+            die("failed to mprotect");
+        }
+        
+        if (mprotect(p, 1024, PROT_READ | PROT_WRITE | PROT_EXEC)) {
+            die("failed to mprotect");
+        }
+        p[0] = 0x323232;
+        
+    }
+     */
+    
 	for (int s=0;s<6;s++)
 	{
 		void* fn=s==0?(void*)_vmem_ReadMem8SX32:
@@ -2142,7 +2172,10 @@ void ngen_init()
 				{
 					v=(unat)EMIT_GET_PTR();
 					MOV(r0,(eReg)(i));
-					JUMP((u32)fn);
+                    
+                    JUMP((u32)fn);
+                    //MOV32(r9, (unat)fn);
+                    //BX(r9);
 				}
 			}
 			else
@@ -2153,8 +2186,11 @@ void ngen_init()
 				{
 					v=(unat)EMIT_GET_PTR();
 					MOV(r0,(eReg)(i));
-					JUMP((u32)fn);
-				}
+					
+                    JUMP((u32)fn);
+                    //MOV32(r9, (unat)fn);
+                    //BX(r9);
+                }
 			}
 
 			_mem_hndl[read][s%3][i]=v;
@@ -2175,7 +2211,9 @@ void ngen_init()
 		ADD(r3,r3,r8);
 		CMP(r2,0x38);
 		JUMP((unat)&WriteMem32,CC_NE);
-		STR(r1,r3,rcb_noffs(sq_both));
+        //MOV32(r9, (unat)&WriteMem32);
+        //BX(r9, CC_NE);
+        STR(r1,r3,rcb_noffs(sq_both));
 		BX(LR);
 	}
 

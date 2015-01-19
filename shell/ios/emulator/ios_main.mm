@@ -54,6 +54,8 @@ extern "C" int reicast_main(int argc, wchar* argv[])
     string homedir = [ [[[[NSFileManager defaultManager] URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask] objectAtIndex:0] path] UTF8String];
     SetHomeDir(homedir);
     
+    freopen( (homedir + "/log.txt").c_str(), "wb", stdout);
+    
     printf("Home dir is: %s\n",GetPath("/").c_str());
     
     common_linux_setup();

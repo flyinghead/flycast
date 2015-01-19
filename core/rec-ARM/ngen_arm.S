@@ -120,7 +120,7 @@ CSYM(ngen_mainloop):
 push { r4-r12,lr }
 
 
-	mov r9, #SH4_TIMESLICE @ load cycle counter
+	mov r11, #SH4_TIMESLICE @ load cycle counter
 
     mov r8, r0			@Load context
 	ldr r4, [r8,#-184]	@load pc
@@ -131,7 +131,7 @@ push { r4-r12,lr }
 	@this code is here for fall-through behavior of do_iter
 	.global CSYM(intc_sched)
 CSYM(intc_sched):        @ next_pc _MUST_ be on ram
-    add r9,r9,#SH4_TIMESLICE
+    add r11,r11,#SH4_TIMESLICE
 	mov r4,lr
     bl CSYM(UpdateSystem)
 	mov lr,r4
@@ -173,7 +173,7 @@ XEntryPoints: .word CSYM(EntryPoints)
 .global CSYM(arm_mainloop)
 CSYM(arm_mainloop): @(cntx,lookup_base,cycles)
 
-push {r4,r5,r8,r9,lr}
+push {r4,r5,r8,r11,lr}
 
 	#ifdef TARGET_IPHONE
 	ldr r8,Xarm_Reg			@load cntx
@@ -209,7 +209,7 @@ arm_dofiq:
 .global CSYM(arm_exit)
 CSYM(arm_exit):
 	str r5,[r8,#192]		@if timeslice is over, save remaining cycles
-	pop {r4,r5,r8,r9,pc}	
+	pop {r4,r5,r8,r11,pc}
 
 @@@@@@
 @matrix mul

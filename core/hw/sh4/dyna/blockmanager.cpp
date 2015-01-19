@@ -384,7 +384,7 @@ void bm_Reset()
 	
 	for (u32 i=0;i<(8*1024*1024);i++)
 	{
-		//sh4rcb.fpcb[i]=(void*)ngen_FailedToFindBlock;
+		sh4rcb.fpcb[i]=(void*)ngen_FailedToFindBlock;
 	}
 
 	for (size_t i=0; i<all_blocks.size(); i++)

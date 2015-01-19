@@ -66,7 +66,7 @@ int GetFile(char *szFileName, char *szParse=0,u32 flags=0)
 			//strcpy(szFileName,ofn.lpstrFile);
 		}
 	#else
-		strcpy(szFileName,GetPath("/discs/game.gdi").c_str());
+		strcpy(szFileName,GetPath("/game.chd").c_str());
 	#endif
 #endif
 	}

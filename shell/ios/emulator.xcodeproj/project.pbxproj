@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		846293C61A6CE61900262464 /* EmulatorView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 846293C51A6CE61900262464 /* EmulatorView.mm */; };
 		8497BCBF1A41A0E900EFB9ED /* common.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8497BCBC1A41A0E900EFB9ED /* common.cpp */; };
 		8497BCC01A41A0E900EFB9ED /* nixprof.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8497BCBD1A41A0E900EFB9ED /* nixprof.cpp */; };
 		8497BCC21A41B02000EFB9ED /* ios_main.mm in Sources */ = {isa = PBXBuildFile; fileRef = 8497BCC11A41B02000EFB9ED /* ios_main.mm */; };
@@ -225,6 +226,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		846293C41A6CE61900262464 /* EmulatorView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = EmulatorView.h; path = emulator/EmulatorView.h; sourceTree = "<group>"; };
+		846293C51A6CE61900262464 /* EmulatorView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = EmulatorView.mm; path = emulator/EmulatorView.mm; sourceTree = "<group>"; };
 		8497BCBC1A41A0E900EFB9ED /* common.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = common.cpp; sourceTree = "<group>"; };
 		8497BCBD1A41A0E900EFB9ED /* nixprof.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = nixprof.cpp; sourceTree = "<group>"; };
 		8497BCBE1A41A0E900EFB9ED /* typedefs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = typedefs.h; sourceTree = "<group>"; };
@@ -740,6 +743,8 @@
 				9C7A3B5B18C81BC80070BB5F /* SideDrawerViewController.m */,
 				87078AA618A47FE90034C7A0 /* EmulatorViewController.h */,
 				87078AA718A47FE90034C7A0 /* EmulatorViewController.mm */,
+				846293C41A6CE61900262464 /* EmulatorView.h */,
+				846293C51A6CE61900262464 /* EmulatorView.mm */,
 			);
 			name = "View Controller Subclasses";
 			path = ..;
@@ -1367,6 +1372,11 @@
 			attributes = {
 				LastUpgradeCheck = 0500;
 				ORGANIZATIONNAME = reicast;
+				TargetAttributes = {
+					87078A8218A47FE90034C7A0 = {
+						DevelopmentTeam = QRT73U549N;
+					};
+				};
 			};
 			buildConfigurationList = 87078A7E18A47FE90034C7A0 /* Build configuration list for PBXProject "emulator" */;
 			compatibilityVersion = "Xcode 3.2";
@@ -1577,6 +1587,7 @@
 				9C7A3B1518C806E00070BB5F /* pvr_mem.cpp in Sources */,
 				9C7A3B6218C820630070BB5F /* AboutViewController.m in Sources */,
 				9C7A3AF718C806E00070BB5F /* inflate.c in Sources */,
+				846293C61A6CE61900262464 /* EmulatorView.mm in Sources */,
 				9C7A3AC918C806E00070BB5F /* zip_error_to_str.c in Sources */,
 				9C7A3B0918C806E00070BB5F /* gdrom_response.cpp in Sources */,
 				9C7A3B2218C806E00070BB5F /* sh4_interpreter.cpp in Sources */,
@@ -1711,8 +1722,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ARCHS = "$(ARCHS_STANDARD)";
-				CODE_SIGN_IDENTITY = "";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "emulator/emulator-Prefix.pch";
 				GCC_PREPROCESSOR_DEFINITIONS = (
@@ -1720,7 +1731,6 @@
 					"DEBUG=1",
 					"TARGET_IPHONE=1",
 					"$(inherited)",
-					"HOST_NO_REC=1",
 				);
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1732,6 +1742,7 @@
 				INFOPLIST_FILE = "emulator/emulator-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CFLAGS = "-mno-thumb";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -1744,14 +1755,13 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ARCHS = "$(ARCHS_STANDARD)";
-				CODE_SIGN_IDENTITY = "";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "emulator/emulator-Prefix.pch";
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"GLES=1",
 					"TARGET_IPHONE=1",
-					"HOST_NO_REC=1",
 				);
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1763,6 +1773,7 @@
 				INFOPLIST_FILE = "emulator/emulator-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CFLAGS = "-mno-thumb";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
 				TARGETED_DEVICE_FAMILY = "1,2";

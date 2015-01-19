@@ -60,12 +60,29 @@ u32* ngen_readm_fail_v2(u32* ptr,u32* regs,u32 saddr);
 bool VramLockedWrite(u8* address);
 bool BM_LockedWrite(u8* address);
 
+void sigill_handler(int sn, siginfo_t * si, void *ctxr) {
+    
+    ucontext_t* ctx=(ucontext_t*)ctxr;
+    unat pc = (unat)GET_PC_FROM_CONTEXT(ctxr);
+    bool dyna_cde=((u32)GET_PC_FROM_CONTEXT(ctxr)>(u32)CodeCache) && ((u32)GET_PC_FROM_CONTEXT(ctxr)<(u32)(CodeCache+CODE_SIZE));
+    
+    printf("SIGILL @ %08X, fault_handler+0x%08X ... %08X -> was not in vram, %d\n",GET_PC_FROM_CONTEXT(ctxr), GET_PC_FROM_CONTEXT(ctxr)-(u32)sigill_handler,(unat)si->si_addr, dyna_cde);
+    
+    printf("Entering infiniloop");
+    
+    for(;;);
+    
+    printf("PC is used here %08X\n", pc);
+}
+
 void fault_handler (int sn, siginfo_t * si, void *ctxr)
 {
-    
+
 #ifndef HOST_NO_REC
 	bool dyna_cde=((u32)GET_PC_FROM_CONTEXT(ctxr)>(u32)CodeCache) && ((u32)GET_PC_FROM_CONTEXT(ctxr)<(u32)(CodeCache+CODE_SIZE));
 #endif
+ 
+    //printf("SIGSEGV @ fault_handler+0x%08X ... %08X -> was not in vram, %d\n",GET_PC_FROM_CONTEXT(ctxr)-(u32)fault_handler,(unat)si->si_addr, dyna_cde);
     
 	ucontext_t* ctx=(ucontext_t*)ctxr;
 	//printf("mprot hit @ ptr 0x%08X @@ code: %08X, %d\n",si->si_addr,ctx->uc_mcontext.arm_pc,dyna_cde);
@@ -76,8 +93,9 @@ void fault_handler (int sn, siginfo_t * si, void *ctxr)
 #ifndef HOST_NO_REC
 	else if (dyna_cde)
 	{
-		GET_PC_FROM_CONTEXT(ctxr)=(u32)ngen_readm_fail_v2((u32*)GET_PC_FROM_CONTEXT(ctxr),(u32*)&(ctx->uc_mcontext.arm_r0),(unat)si->si_addr);
-	}
+		GET_PC_FROM_CONTEXT(ctxr)=(u32)ngen_readm_fail_v2((u32*)GET_PC_FROM_CONTEXT(ctxr),(u32*)(ctx->uc_mcontext->__ss.__r),(unat)si->si_addr);
+        //printf("returning at %08X\n", (unat)GET_PC_FROM_CONTEXT(ctxr));
+    }
 #endif
 	else
 	{
@@ -98,6 +116,10 @@ void install_fault_handler (void)
 
     //this is broken on osx/ios/mach in general
     sigaction(SIGSEGV, &act, &segv_oact);
+    sigaction(SIGBUS, &act, &segv_oact);
+    
+    act.sa_sigaction = sigill_handler;
+    sigaction(SIGILL, &act, &segv_oact);
 }
 
 
@@ -169,16 +191,14 @@ void cResetEvent::Wait()//Wait for signal , then reset
 
 void VArray2::LockRegion(u32 offset,u32 size)
 {
-#if HOST_OS != OS_DARWIN
     //darwin doesn't have sane exception handling, leave this off for now.
-  u32 inpage=offset & PAGE_MASK;
+    u32 inpage=offset & PAGE_MASK;
 	u32 rv=mprotect (data+offset-inpage, size+inpage, PROT_READ );
 	if (rv!=0)
 	{
 		printf("mprotect(%08X,%08X,R) failed: %d | %d\n",data+offset-inpage,size+inpage,rv,errno);
 		die("mprotect  failed ..\n");
 	}
-#endif
 }
 
 void print_mem_addr()
@@ -213,7 +233,7 @@ void print_mem_addr()
 
 void VArray2::UnLockRegion(u32 offset,u32 size)
 {
-  u32 inpage=offset & PAGE_MASK;
+    u32 inpage=offset & PAGE_MASK;
 	u32 rv=mprotect (data+offset-inpage, size+inpage, PROT_READ | PROT_WRITE);
 	if (rv!=0)
 	{
