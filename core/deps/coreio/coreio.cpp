@@ -5,6 +5,11 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <sstream>
+#include <string>
+#include <iomanip>
+#include <cctype>
+
 #define TRUE 1
 #define FALSE 0
 
@@ -21,6 +26,27 @@
 	#include <netdb.h>
 	#include <unistd.h>
 #endif
+
+string url_encode(const string &value) {
+	ostringstream escaped;
+	escaped.fill('0');
+	escaped << hex;
+
+	for (string::const_iterator i = value.begin(), n = value.end(); i != n; ++i) {
+		string::value_type c = (*i);
+
+		// Keep alphanumeric and other accepted characters intact
+		if (isalnum(c) || c == '-' || c == '_' || c == '.' || c == '~' || c  == '/' || c =='%' ) {
+			escaped << c;
+			continue;
+		}
+
+		// Any other characters are percent-encoded
+		escaped << '%' << setw(2) << int((unsigned char)c);
+	}
+
+	return escaped.str();
+}
 
 size_t HTTP_GET(string host, int port,string path, size_t offs, size_t len, void* pdata){
     string request;
@@ -97,7 +123,7 @@ size_t HTTP_GET(string host, int port,string path, size_t offs, size_t len, void
 	*/
 	size_t content_length = 0;
 	
-	size_t rv = content_length;
+	size_t rv = 0;
 
 	for (;;) {
 		stringstream ss;
@@ -128,10 +154,10 @@ size_t HTTP_GET(string host, int port,string path, size_t offs, size_t len, void
 _data:
 
 	if (len == 0) {
-
+		rv = content_length;
 	}
 	else {
-		verify(len == content_length);
+		verify(len == content_length); //crash is a bit too harsh here perhaps?
 		u8* ptr = (u8*)pdata;
 		do
 		{
@@ -141,6 +167,8 @@ _data:
 			ptr += rcv;
 		}
 		while (len >0);
+
+		rv = content_length;
 	}
 
 	_cleanup:
@@ -180,7 +208,7 @@ core_file* core_fopen(const char* filename)
 		rv->host = p.substr(7,p.npos);
 		rv->host = rv->host.substr(0, rv->host.find_first_of("/"));
 
-		rv->path = p.substr(p.find("/", 7), p.npos);
+		rv->path = url_encode(p.substr(p.find("/", 7), p.npos));
 		
 		rv->port = 80;
 		size_t pos = rv->host.find_first_of(":");
@@ -198,6 +226,7 @@ core_file* core_fopen(const char* filename)
 		}
 	}
 
+	core_fseek((core_file*)rv, 0, SEEK_SET);
 	return (core_file*)rv;
 }
 
@@ -217,6 +246,10 @@ size_t core_fseek(core_file* fc, size_t offs, size_t origin) {
 	return 0;
 }
 
+size_t core_ftell(core_file* fc) {
+	CORE_FILE* f = (CORE_FILE*)fc;
+	return f->seek_ptr;
+}
 int core_fread(core_file* fc, void* buff, size_t len)
 {
 	CORE_FILE* f = (CORE_FILE*)fc;

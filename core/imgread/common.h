@@ -3,6 +3,8 @@
 #include <vector>
 using namespace std;
 
+#include "deps/coreio/coreio.h"
+
 extern u32 NullDriveDiscType;
 struct TocTrackInfo
 {
@@ -261,12 +263,12 @@ Disc* OpenDisc(const wchar* fn);
 
 struct RawTrackFile : TrackFile
 {
-	FILE* file;
+	core_file* file;
 	s32 offset;
 	u32 fmt;
 	bool cleanup;
 
-	RawTrackFile(FILE* file,u32 file_offs,u32 first_fad,u32 secfmt)
+	RawTrackFile(core_file* file,u32 file_offs,u32 first_fad,u32 secfmt)
 	{
 		verify(file!=0);
 		this->file=file;
@@ -289,13 +291,13 @@ struct RawTrackFile : TrackFile
 			verify(false);
 		}
 
-		fseek(file,offset+FAD*fmt,SEEK_SET);
-		fread(dst,1,fmt,file);
+		core_fseek(file,offset+FAD*fmt,SEEK_SET);
+		core_fread(file, dst, fmt);
 	}
 	virtual ~RawTrackFile()
 	{
 		if (cleanup && file)
-			fclose(file);
+			core_fclose(file);
 	}
 };
 
