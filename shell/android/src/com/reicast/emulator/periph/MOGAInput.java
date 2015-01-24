@@ -90,7 +90,8 @@ public final class MOGAInput
 				.getDefaultSharedPreferences(act.getApplicationContext());
 
 		mController = Controller.getInstance(act);
-		mController.init();
+//		mController.init();
+		MogaHack.init(mController, this.act);
 		mListener = new ExampleControllerListener();
 		mController.setListener(mListener, new Handler());
 	}

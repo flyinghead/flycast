@@ -1,6 +1,7 @@
 package com.reicast.emulator;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
@@ -154,8 +155,25 @@ public class FileBrowser extends Fragment {
 		// setContentView(R.layout.activity_main);
 		parentActivity = getActivity();
 		try {
+			File buttons = null;
+			String theme = mPrefs.getString(Config.pref_theme, null);
+			if (theme != null) {
+				buttons = new File(theme);
+			}
 			File file = new File(home_directory, "data/buttons.png");
-			if (!file.exists()) {
+			if (buttons != null && buttons.exists()) {
+				InputStream in = new FileInputStream(buttons);
+			    OutputStream out = new FileOutputStream(file);
+
+			    // Transfer bytes from in to out
+			    byte[] buf = new byte[1024];
+			    int len;
+			    while ((len = in.read(buf)) > 0) {
+			        out.write(buf, 0, len);
+			    }
+			    in.close();
+			    out.close();
+			} else if (!file.exists()) {
 				file.createNewFile();
 				OutputStream fo = new FileOutputStream(file);
 				InputStream png = parentActivity.getAssets()

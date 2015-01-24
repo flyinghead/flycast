@@ -1,5 +1,7 @@
 package com.reicast.emulator.config;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -403,7 +405,17 @@ public class InputModFragment extends Fragment {
 			System.gc();
 		}
 		try {
-			InputStream bitmap = getResources().getAssets().open("buttons.png");
+			File buttons = null;
+			InputStream bitmap = null;
+			String theme = mPrefs.getString(Config.pref_theme, null);
+			if (theme != null) {
+				buttons = new File(theme);
+			}
+			if (buttons != null && buttons.exists()) {
+				bitmap = new FileInputStream(buttons);
+			} else {
+				bitmap = getResources().getAssets().open("buttons.png");
+			}
 			BitmapFactory.Options options = new BitmapFactory.Options();
 			options.inSampleSize = sS;
 			image = BitmapFactory.decodeStream(bitmap, null, options);
