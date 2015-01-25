@@ -22,6 +22,12 @@
         <item>VGA</item>
     </string-array>
     
+    <string-array name="themes">
+        <item>png</item>
+        <item>jpg</item>
+        <item>jpeg</item>
+    </string-array>
+    
     <string-array name="images">
         <item>cdi</item>
         <item>chd</item>

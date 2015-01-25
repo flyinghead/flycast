@@ -2,15 +2,21 @@ package com.reicast.emulator.config;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
 
 import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
@@ -35,6 +41,7 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.util.FileUtils;
 import com.reicast.emulator.FileBrowser;
 import com.reicast.emulator.R;
 import com.reicast.emulator.emu.GL2JNIView;
@@ -48,6 +55,7 @@ public class OptionsFragment extends Fragment {
 	
 	private Button mainBrowse;
 	private Button gameBrowse;
+	private Spinner mSpnrThemes;
 	private OnClickListener mCallback;
 
 	private SharedPreferences mPrefs;
@@ -140,6 +148,9 @@ public class OptionsFragment extends Fragment {
 			public void onTextChanged(CharSequence s, int start, int before, int count) {
 			}
 		});
+		
+		new LocateThemes().execute(home_directory + "/themes");
+		mSpnrThemes = (Spinner) getView().findViewById(R.id.pick_button_theme);
 		
 		OnCheckedChangeListener details_options = new OnCheckedChangeListener() {
 
@@ -517,6 +528,66 @@ public class OptionsFragment extends Fragment {
 
 			}
 		});
+	}
+	
+	private final class LocateThemes extends AsyncTask<String, Integer, List<File>> {
+
+		@Override
+		protected List<File> doInBackground(String... paths) {
+			File storage = new File(paths[0]);
+
+			// array of valid image file extensions
+			String[] mediaTypes = getResources().getStringArray(R.array.themes);
+			FilenameFilter[] filter = new FilenameFilter[mediaTypes.length];
+
+			int i = 0;
+			for (final String type : mediaTypes) {
+				filter[i] = new FilenameFilter() {
+
+					public boolean accept(File dir, String name) {
+						if (dir.getName().startsWith(".")
+								|| name.startsWith(".")) {
+							return false;
+						} else {
+							return StringUtils.endsWithIgnoreCase(name, "."
+									+ type);
+						}
+					}
+
+				};
+				i++;
+			}
+
+			FileUtils fileUtils = new FileUtils();
+			Collection<File> files = fileUtils.listFiles(storage, filter, 1);
+			return (List<File>) files;
+		}
+
+		@Override
+		protected void onPostExecute(List<File> items) {
+			if (items != null && !items.isEmpty()) {
+				ArrayAdapter<String> themeAdapter = new ArrayAdapter<String>(
+						getActivity(), android.R.layout.simple_spinner_item,
+						items.toArray(new String[items.size()]));
+				themeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+				mSpnrThemes.setAdapter(themeAdapter);
+				mSpnrThemes.setOnItemSelectedListener(new OnItemSelectedListener() {
+					@Override
+					public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
+						String theme = String.valueOf(parentView.getItemAtPosition(position));
+						mPrefs.edit().putString(Config.pref_theme, theme).commit();
+					}
+
+					@Override
+					public void onNothingSelected(AdapterView<?> parentView) {
+
+					}
+
+				});
+			} else {
+				mSpnrThemes.setEnabled(false);
+			}
+		}
 	}
 
 	private void hideSoftKeyBoard() {
