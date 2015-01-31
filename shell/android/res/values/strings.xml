@@ -22,7 +22,8 @@
     <string name="missing_flash">The Dreamcast Flash is missing. A dump of the Dreamcast Flash is required for this emulator to work. Make sure the Flash file is named "dc_flash.bin" and is in %1$s/data/dc_flash.bin</string>
     <string name="require_bios">You have to provide a Dreamcast BIOS.</string>
     <string name="data_folder">The current data folder is assumed.</string>
-    <string name="emu_crash">Emulator Error:\n %1$s</string>
+    <string name="emu_crash">Emulator Error!</string>
+    <string name="emu_toast">Emulator Error:\n %1$s</string>
     
     <string name="folder_bios">Boot BIOS</string>
     <string name="folder_select">Select current folder</string>
