@@ -8,11 +8,12 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical" >
-        
+
         <LinearLayout
-            android:layout_marginTop="10dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginLeft="6dp"
+            android:layout_marginTop="10dp"
             android:orientation="vertical" >
 
             <TextView
@@ -45,9 +46,10 @@
         </LinearLayout>
 
         <LinearLayout
-            android:layout_marginTop="10dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginLeft="6dp"
+            android:layout_marginTop="10dp"
             android:orientation="vertical" >
 
             <TextView
@@ -78,32 +80,41 @@
                     android:text="@string/browse" />
             </LinearLayout>
         </LinearLayout>
-        
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="6dp"
+            android:layout_marginTop="10dp"
+            android:orientation="vertical" >
+
+            <TextView
+                android:id="@+id/button_theme_label"
+                android:layout_width="wrap_content"
+                android:layout_height="0dip"
+                android:layout_weight="1"
+                android:text="@string/button_theme" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal" >
+
+                <Spinner
+                    android:id="@+id/pick_button_theme"
+                    android:layout_width="0dip"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ems="10" >
+                </Spinner>
+            </LinearLayout>
+        </LinearLayout>
+
         <TableLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginLeft="6dp"
             android:stretchColumns="*" >
-            
-             <TableRow
-                android:layout_marginTop="5dp"
-                android:gravity="center_vertical" >
-
-                <TextView
-                    android:id="@+id/button_theme_label"
-                    style="@style/BaseText"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:layout_weight="0.5"
-                    android:text="@string/button_theme" />
-
-                <Spinner
-                    android:id="@+id/pick_button_theme"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="0.5"
-                    android:prompt="@string/button_theme" />
-            </TableRow>
 
             <TableRow
                 android:layout_marginTop="10dp"
@@ -132,12 +143,13 @@
                         android:focusable="true" />
                 </LinearLayout>
             </TableRow>
-            </TableLayout>
+        </TableLayout>
 
         <LinearLayout
-            android:layout_marginTop="20dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginLeft="6dp"
+            android:layout_marginTop="20dp"
             android:orientation="vertical" >
 
             <TextView
