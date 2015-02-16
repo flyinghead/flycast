@@ -220,6 +220,11 @@
 #define FEAT_DSPREC DYNAREC_NONE
 #endif
 
+
+#if defined(TARGET_NO_NIXPROF)
+#define FEAT_HAS_NIXPROF 0
+#endif
+
 //defaults
 #ifndef FEAT_SHREC
 	#define FEAT_SHREC DYNAREC_JIT
@@ -239,6 +244,12 @@
 	#else
 		#define FEAT_DSPREC DYNAREC_NONE
 	#endif
+#endif
+
+#ifndef FEAT_HAS_NIXPROF
+  #if HOST_OS != OS_WINDOWS
+    #define FEAT_HAS_NIXPROF 1
+  #endif
 #endif
 
 //Depricated build configs

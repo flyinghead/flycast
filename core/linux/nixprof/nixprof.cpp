@@ -1,4 +1,6 @@
 #include "types.h"
+
+#if FEAT_HAS_NIXPROF
 #include "cfg/cfg.h"
 
 
@@ -298,3 +300,4 @@ void sample_Stop()
 	}
 	printf("sampling profiler: stopped\n");
 }
+#endif
