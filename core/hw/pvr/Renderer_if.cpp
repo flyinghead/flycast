@@ -184,7 +184,9 @@ TA_context* read_frame(const char* file, u8* vram_ref) {
 
 bool rend_frame(TA_context* ctx, bool draw_osd) {
 	bool proc = renderer->Process(ctx);
+#if !defined(TARGET_NO_THREADS)
 	re.Set();
+#endif
 
 	bool do_swp = proc && renderer->Render();
 
@@ -199,11 +201,12 @@ bool rend_single_frame()
 	//wait render start only if no frame pending
 	do
 	{
+#if !defined(HOST_NO_THREADS)
 		rs.Wait();
+#endif
 		_pvrrc = DequeueRender();
 	}
 	while (!_pvrrc);
-	
 	bool do_swp = rend_frame(_pvrrc, true);
 
 	//clear up & free data ..
@@ -256,8 +259,9 @@ void* rend_thread(void* p)
 	}
 }
 
+#if !defined(TARGET_NO_THREADS)
 cThread rthd(rend_thread,0);
-
+#endif
 
 bool pend_rend = false;
 
@@ -301,7 +305,11 @@ void rend_start_render()
 #endif
 			if (QueueRender(ctx))  {
 				palette_update();
+#if !defined(HOST_NO_THREADS)
 				rs.Set();
+#else
+				rend_single_frame();
+#endif
 				pend_rend = true;
 			}
 		}
@@ -325,8 +333,13 @@ void rend_end_render()
 	#endif
 #endif
 
-	if (pend_rend)
+	if (pend_rend) {
+#if !defined(HOST_NO_THREADS)
 		re.Wait();
+#else
+		renderer->Present();
+#endif
+	}
 }
 
 /*
