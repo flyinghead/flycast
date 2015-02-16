@@ -38,7 +38,11 @@ void Sh4_int_Run()
 
 	s32 l=SH4_TIMESLICE;
 
+#if !defined(TARGET_BOUNDED_EXECUTION)
 	do
+#else
+	for (int i=0; i<10000; i++)
+#endif
 	{
 		do
 		{
@@ -50,10 +54,13 @@ void Sh4_int_Run()
 		} while(l>0);
 		l+=SH4_TIMESLICE;
 		UpdateSystem_INTC();
-
+#if !defined(TARGET_BOUNDED_EXECUTION)
 	} while(sh4_int_bCpuRun);
 
 	sh4_int_bCpuRun=false;
+#else
+	}
+#endif
 }
 
 void Sh4_int_Stop()
