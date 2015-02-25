@@ -36,6 +36,12 @@ u8* flashrom;
 u32 base_fad = 45150;
 bool descrambl = false;
 
+//Read 32 bit 'bi-endian' integer
+//Uses big-endian bytes, that's what the dc bios does too
+u32 read_u32bi(u8* ptr) {
+	return (ptr[4]<<24) | (ptr[5]<<16) | (ptr[6]<<8) | (ptr[7]<<0);
+}
+
 bool reios_locate_bootfile(const char* bootfile="1ST_READ.BIN") {
 	u32 data_len = 2048 * 1024;
 	u8* temp = new u8[data_len];
@@ -43,11 +49,13 @@ bool reios_locate_bootfile(const char* bootfile="1ST_READ.BIN") {
 	libGDR_ReadSector(temp, base_fad + 16, 1, 2048);
 
 	if (memcmp(temp, "\001CD001\001", 7) == 0) {
-		u32 lba = (u32&)temp[156 + 2]; //Root directory lba, should use the big endian one
-		u32 len = (u32&)temp[156 + 10]; //should use the big endian one
+		printf("reios: iso9660 PVD found\n");
+		u32 lba = read_u32bi(&temp[156 + 2]); //make sure to use big endian
+		u32 len = read_u32bi(&temp[156 + 10]); //make sure to use big endian
 		
 		data_len = ((len + 2047) / 2048) *2048;
 
+		printf("reios: iso9660 root_directory, FAD: %d, len: %d\n", 150 + lba, data_len);
 		libGDR_ReadSector(temp, 150 + lba, data_len/2048, 2048);
 	}
 	else {
@@ -57,13 +65,13 @@ bool reios_locate_bootfile(const char* bootfile="1ST_READ.BIN") {
 	for (int i = 0; i < (data_len-20); i++) {
 		if (memcmp(temp+i, bootfile, strlen(bootfile)) == 0){
 			printf("Found %s at %06X\n", bootfile, i);
+
+			u32 lba = read_u32bi(&temp[i - 33 +  2]); //make sure to use big endian
+			u32 len = read_u32bi(&temp[i - 33 + 10]); //make sure to use big endian
 			
 			printf("filename len: %d\n", temp[i - 1]);
-			printf("file LBA: %d, %d\n", (u32&)temp[i - 33 + 2], (u32&)temp[i - 33 + 2 + 4]);
-			printf("file LEN: %d, %d\n", (u32&)temp[i - 33 + 10], (u32&)temp[i - 33 + 10 + 4]);
-
-			u32 lba = (u32&)temp[i - 33 +  2]; //should use the big endian one, but i'm lazy
-			u32 len = (u32&)temp[i - 33 + 10]; //should use the big endian one, but i'm lazy
+			printf("file LBA: %d\n", lba);
+			printf("file LEN: %d\n", len);
 
 			if (descrambl)
 				descrambl_file(lba + 150, len, GetMemPtr(0x8c010000, 0));
@@ -100,10 +108,14 @@ const char* reios_locate_ip() {
 		descrambl = true;
 	}
 
+	printf("reios: loading ip.bin from FAD: %d\n", base_fad);
+
 	libGDR_ReadSector(GetMemPtr(0x8c008000, 0), base_fad, 16, 2048);
 	
 	memset(reios_bootfile, 0, sizeof(reios_bootfile));
 	memcpy(reios_bootfile, GetMemPtr(0x8c008060, 0), 16);
+
+	printf("reios: bootfile is '%s'\n", reios_bootfile);
 
 	for (int i = 15; i >= 0; i--) {
 		if (reios_bootfile[i] != ' ')
@@ -403,7 +415,10 @@ u32 hook_addr(hook_fp* fn);
 
 void setup_syscall(u32 hook_addr, u32 syscall_addr) {
 	WriteMem32(syscall_addr, hook_addr);
-	WriteMem32(hook_addr, REIOS_OPCODE);
+	WriteMem16(hook_addr, REIOS_OPCODE);
+
+	debugf("reios: Patching syscall vector %08X, points to %08X\n", syscall_addr, hook_addr);
+	debugf("reios: - address %08X: data %04X [%04X]\n", hook_addr, ReadMem16(hook_addr), REIOS_OPCODE);
 }
 
 void reios_boot() {
@@ -453,11 +468,16 @@ void DYNACALL reios_trap(u32 op) {
 u32 hook_addr(hook_fp* fn) {
 	if (hooks_rev.count(fn))
 		return hooks_rev[fn];
-	else
+	else {
+		printf("hook_addr: Failed to reverse lookup %08X\n", (unat)fn);
+		verify(false);
 		return 0;
+	}
 }
 
 bool reios_init(u8* rom, u8* flash) {
+
+	printf("reios: Init\n");
 
 	biosrom = rom;
 	flashrom = flash;
