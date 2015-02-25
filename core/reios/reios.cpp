@@ -16,6 +16,10 @@
 
 #include <map>
 
+//#define debugf printf
+
+#define debugf(...) 
+
 #define dc_bios_syscall_system				0x8C0000B0
 #define dc_bios_syscall_font				0x8C0000B4
 #define dc_bios_syscall_flashrom			0x8C0000B8
@@ -66,6 +70,12 @@ bool reios_locate_bootfile(const char* bootfile="1ST_READ.BIN") {
 			else
 				libGDR_ReadSector(GetMemPtr(0x8c010000, 0), lba + 150, (len + 2047) / 2048, 2048);
 
+			if (false) {
+				FILE* f = fopen("z:\\1stboot.bin", "wb");
+				fwrite(GetMemPtr(0x8c010000, 0), 1, len, f);
+				fclose(f);
+			}
+			
 			delete[] temp;
 			return true;
 		}
@@ -100,15 +110,81 @@ const char* reios_locate_ip() {
 			break;
 		reios_bootfile[i] = 0;
 	}
+	/*
+		Post Boot registers from actual bios boot
+	r
+		[0x00000000]	0xac0005d8
+		[0x00000001]	0x00000009
+		[0x00000002]	0xac00940c
+		[0x00000003]	0x00000000
+		[0x00000004]	0xac008300
+		[0x00000005]	0xf4000000
+		[0x00000006]	0xf4002000
+		[0x00000007]	0x00000070
+		[0x00000008]	0x00000000
+		[0x00000009]	0x00000000
+		[0x0000000a]	0x00000000
+		[0x0000000b]	0x00000000
+		[0x0000000c]	0x00000000
+		[0x0000000d]	0x00000000
+		[0x0000000e]	0x00000000
+		[0x0000000f]	0x8d000000
+	mac	
+		l	0x5bfcb024
+		h	0x00000000
+	r_bank
+		[0x00000000]	0xdfffffff
+		[0x00000001]	0x500000f1
+		[0x00000002]	0x00000000
+		[0x00000003]	0x00000000
+		[0x00000004]	0x00000000
+		[0x00000005]	0x00000000
+		[0x00000006]	0x00000000
+		[0x00000007]	0x00000000
+	gbr	0x8c000000
+	ssr	0x40000001
+	spc	0x8c000776
+	sgr	0x8d000000
+	dbr	0x8c000010
+	vbr	0x8c000000
+	pr	0xac00043c
+	fpul	0x00000000
+	pc	0xac008300
 
-	sh4rcb.cntx.pc = 0x8c008300;
+	+		sr	{T=1 status = 0x400000f0}
+	+		fpscr	{full=0x00040001}
+	+		old_sr	{T=1 status=0x400000f0}
+	+		old_fpscr	{full=0x00040001}
+
+	*/
+
+	//Setup registers to immitate a normal boot
+	sh4rcb.cntx.r[15] = 0x8d000000;
+
+	sh4rcb.cntx.gbr = 0x8c000000;
+	sh4rcb.cntx.ssr = 0x40000001;
+	sh4rcb.cntx.spc = 0x8c000776;
+	sh4rcb.cntx.sgr = 0x8d000000;
+	sh4rcb.cntx.dbr = 0x8c000010;
+	sh4rcb.cntx.vbr = 0x8c000000;
+	sh4rcb.cntx.pr = 0xac00043c;
+	sh4rcb.cntx.fpul = 0x00000000;
+	sh4rcb.cntx.pc = 0xac008300;
+
+	sh4rcb.cntx.sr.status = 0x400000f0;
+	sh4rcb.cntx.sr.T = 1;
+
+	sh4rcb.cntx.old_sr.status = 0x400000f0;
+
+	sh4rcb.cntx.fpscr.full = 0x00040001;
+	sh4rcb.cntx.old_fpscr.full = 0x00040001;
 
 	return reios_bootfile;
 }
 
 
 void reios_sys_system() {
-	//printf("reios_sys_system\n");
+	debugf("reios_sys_system\n");
 
 	u32 cmd = Sh4cntx.r[7];
 
@@ -148,7 +224,7 @@ void reios_sys_font() {
 }
 
 void reios_sys_flashrom() {
-	//printf("reios_sys_flashrom\n");
+	debugf("reios_sys_flashrom\n");
 
 	u32 cmd = Sh4cntx.r[7];
 
@@ -355,8 +431,10 @@ void reios_boot() {
 map<u32, hook_fp*> hooks;
 map<hook_fp*, u32> hooks_rev;
 
+#define SYSCALL_ADDR_MAP(addr) ((addr & 0x1FFFFFFF) | 0x80000000)
+
 void register_hook(u32 pc, hook_fp* fn) {
-	hooks[pc] = fn;
+	hooks[SYSCALL_ADDR_MAP(pc)] = fn;
 	hooks_rev[fn] = pc;
 }
 
@@ -365,9 +443,11 @@ void DYNACALL reios_trap(u32 op) {
 	u32 pc = sh4rcb.cntx.pc - 2;
 	sh4rcb.cntx.pc = sh4rcb.cntx.pr;
 
-	//printf("reios: dispatch %08X\n", pc);
+	u32 mapd = SYSCALL_ADDR_MAP(pc);
 
-	hooks[pc]();
+	debugf("reios: dispatch %08X -> %08X\n", pc, mapd);
+
+	hooks[mapd]();
 }
 
 u32 hook_addr(hook_fp* fn) {
@@ -381,6 +461,9 @@ bool reios_init(u8* rom, u8* flash) {
 
 	biosrom = rom;
 	flashrom = flash;
+
+	memset(rom, 0xEA, 2048 * 1024);
+	memset(GetMemPtr(0x8C000000, 0), 0, RAM_SIZE);
 
 	u16* rom16 = (u16*)rom;
 

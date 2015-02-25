@@ -37,7 +37,7 @@ void load(FILE *fh, unsigned char *ptr, unsigned long sz)
 
 void load_chunk(u8* &src, unsigned char *ptr, unsigned long sz)
 {
-	verify(sz < MAXCHUNK);
+	verify(sz <= MAXCHUNK);
 
 	static int idx[MAXCHUNK / 32];
 
@@ -95,7 +95,7 @@ void descrambl_buffer(u8* src, unsigned char *dst, unsigned long filesz)
 
 void descrambl_file(u32 FAD, u32 file_size, u8* dst) {
 	u8* temp_file = new u8[file_size + 2048];
-	libGDR_ReadSector(temp_file, FAD, file_size / 2048, 2048);
+	libGDR_ReadSector(temp_file, FAD, (file_size+2047) / 2048, 2048);
 
 	descrambl_buffer(temp_file, dst, file_size);
 
