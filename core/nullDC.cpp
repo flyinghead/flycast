@@ -249,6 +249,8 @@ void LoadSettings()
 	
 	settings.pvr.ta_skip			= cfgLoadInt("config","ta.skip",0);
 	settings.pvr.rend				= cfgLoadInt("config","pvr.rend",0);
+
+	settings.debug.SerialConsole = cfgLoadInt("config", "Debug.SerialConsoleEnabled", 0) != 0;
 #endif
 
 	settings.bios.UseReios = cfgLoadInt("config", "bios.UseReios", 0);
