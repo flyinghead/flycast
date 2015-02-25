@@ -2,6 +2,13 @@
     package="com.reicast.emulator"
     android:versionCode="7"
     android:versionName="r7" >
+    
+    <supports-screens
+        android:anyDensity="true"
+        android:largeScreens="true"
+        android:normalScreens="true"
+        android:smallScreens="true"
+        android:xlargeScreens="true" />
 
     <uses-sdk
         android:minSdkVersion="8"

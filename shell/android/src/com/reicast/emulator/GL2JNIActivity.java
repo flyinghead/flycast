@@ -96,6 +96,7 @@ public class GL2JNIActivity extends Activity {
 		pad.deviceDescriptor_PlayerNum.remove(null);
 
 		moga.onCreate(this, pad);
+		moga.mListener.setPlayerNum(1);
 
 		boolean controllerTwoConnected = false;
 		boolean controllerThreeConnected = false;
@@ -314,7 +315,73 @@ public class GL2JNIActivity extends Activity {
 		} else {
 			return false;
 		}
+	}
+	
+	public boolean motionEventHandler(Integer playerNum, com.bda.controller.MotionEvent event) {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
 
+			if (playerNum == null || playerNum == -1)
+				return false;
+
+			if (!pad.compat[playerNum]) {
+
+				// do other things with joystick
+				float LS_X = event.getAxisValue(OuyaController.AXIS_LS_X);
+				float LS_Y = event.getAxisValue(OuyaController.AXIS_LS_Y);
+				float RS_X = event.getAxisValue(OuyaController.AXIS_RS_X);
+				float RS_Y = event.getAxisValue(OuyaController.AXIS_RS_Y);
+				float L2 = event.getAxisValue(OuyaController.AXIS_L2);
+				float R2 = event.getAxisValue(OuyaController.AXIS_R2);
+
+				if (!pad.joystick[playerNum]) {
+					pad.previousLS_X[playerNum] = pad.globalLS_X[playerNum];
+					pad.previousLS_Y[playerNum] = pad.globalLS_Y[playerNum];
+					pad.globalLS_X[playerNum] = LS_X;
+					pad.globalLS_Y[playerNum] = LS_Y;
+				}
+
+				GL2JNIView.jx[playerNum] = (int) (LS_X * 126);
+				GL2JNIView.jy[playerNum] = (int) (LS_Y * 126);
+
+				GL2JNIView.lt[playerNum] = (int) (L2 * 255);
+				GL2JNIView.rt[playerNum] = (int) (R2 * 255);
+
+				if (prefs.getBoolean(Gamepad.pref_js_rbuttons + pad.portId[playerNum], true)) {
+					if (RS_Y > 0.25) {
+						handle_key(playerNum, pad.map[playerNum][0]/* A */, true);
+						pad.wasKeyStick[playerNum] = true;
+					} else if (RS_Y < 0.25) {
+						handle_key(playerNum, pad.map[playerNum][1]/* B */, true);
+						pad.wasKeyStick[playerNum] = true;
+					} else if (pad.wasKeyStick[playerNum]){
+						handle_key(playerNum, pad.map[playerNum][0], false);
+						handle_key(playerNum, pad.map[playerNum][1], false);
+						pad.wasKeyStick[playerNum] = false;
+					}
+				} else {
+					if (RS_Y > 0.25) {
+						GL2JNIView.rt[playerNum] = (int) (RS_Y * 255);
+						GL2JNIView.lt[playerNum] = (int) (L2 * 255);
+					} else if (RS_Y < 0.25) {
+						GL2JNIView.rt[playerNum] = (int) (R2 * 255);
+						GL2JNIView.lt[playerNum] = (int) (-(RS_Y) * 255);
+					}
+				}
+
+			}
+			mView.pushInput();
+			if (!pad.joystick[playerNum] && (pad.globalLS_X[playerNum] == pad.previousLS_X[playerNum] && pad.globalLS_Y[playerNum] == pad.previousLS_Y[playerNum])
+					|| (pad.previousLS_X[playerNum] == 0.0f && pad.previousLS_Y[playerNum] == 0.0f))
+				// Only handle Left Stick on an Xbox 360 controller if there was
+				// some actual motion on the stick,
+				// so otherwise the event can be handled as a DPAD event
+				return false;
+			else
+				return true;
+
+		} else {
+			return false;
+		}
 	}
 	
 	public boolean simulatedTouchEvent(int playerNum, float L2, float R2) {

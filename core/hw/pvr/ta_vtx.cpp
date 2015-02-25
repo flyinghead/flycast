@@ -718,7 +718,7 @@ public:
 	{
 		VDECInit();
 		TaCmd=ta_main;
-
+		CurrentList = ListType_None;
 		ListIsFinished[0]=ListIsFinished[1]=ListIsFinished[2]=ListIsFinished[3]=ListIsFinished[4]=false;
 	}
 		

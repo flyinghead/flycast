@@ -2,22 +2,23 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/menuConfig"
-    android:layout_width="match_parent"
+    android:layout_width="280dp"
     android:layout_height="wrap_content"
+    android:background="@android:color/transparent"
     android:gravity="center_horizontal"
     android:orientation="vertical" >
 
     <TableLayout
-        android:layout_width="match_parent"
+        android:layout_width="280dp"
         android:layout_height="wrap_content"
-        android:paddingRight="4dp"
+        android:background="@android:color/transparent"
         android:stretchColumns="*" >
 
         <TableRow
             android:layout_width="wrap_content"
             android:layout_height="72dp"
+            android:layout_margin="1dp"
             android:layout_weight="1"
-            android:background="#66000000"
             android:gravity="center" >
 
             <Button
@@ -25,6 +26,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
+                android:background="@drawable/rounded"
                 android:ems="8"
                 android:text="@string/popup_button_back" />
         </TableRow>
@@ -32,8 +34,8 @@
         <TableRow
             android:layout_width="wrap_content"
             android:layout_height="72dp"
+            android:layout_margin="1dp"
             android:layout_weight="1"
-            android:background="#66000000"
             android:gravity="center" >
 
             <Button
@@ -41,6 +43,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
+                android:background="@drawable/rounded"
                 android:ems="8"
                 android:text="@string/popup_button_widescreen" />
         </TableRow>
@@ -48,8 +51,8 @@
         <TableRow
             android:layout_width="wrap_content"
             android:layout_height="72dp"
+            android:layout_margin="1dp"
             android:layout_weight="1"
-            android:background="#66000000"
             android:gravity="center" >
 
             <Button
@@ -57,6 +60,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
+                android:background="@drawable/rounded"
                 android:ems="8"
                 android:text="@string/popup_button_frames_down" />
         </TableRow>
@@ -64,8 +68,8 @@
         <TableRow
             android:layout_width="wrap_content"
             android:layout_height="72dp"
+            android:layout_margin="1dp"
             android:layout_weight="1"
-            android:background="#66000000"
             android:gravity="center" >
 
             <Button
@@ -73,6 +77,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
+                android:background="@drawable/rounded"
                 android:ems="8"
                 android:text="@string/popup_button_frames_up" />
         </TableRow>
@@ -80,8 +85,8 @@
         <TableRow
             android:layout_width="wrap_content"
             android:layout_height="72dp"
+            android:layout_margin="1dp"
             android:layout_weight="1"
-            android:background="#66000000"
             android:gravity="center" >
 
             <Button
@@ -89,6 +94,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
+                android:background="@drawable/rounded"
                 android:ems="8"
                 android:text="@string/popup_button_frame_limit" />
         </TableRow>
@@ -96,8 +102,8 @@
         <TableRow
             android:layout_width="wrap_content"
             android:layout_height="72dp"
+            android:layout_margin="1dp"
             android:layout_weight="1"
-            android:background="#66000000"
             android:gravity="center" >
 
             <Button
@@ -105,6 +111,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
+                android:background="@drawable/rounded"
                 android:ems="8"
                 android:text="@string/popup_button_audio" />
         </TableRow>
@@ -112,8 +119,8 @@
         <TableRow
             android:layout_width="wrap_content"
             android:layout_height="72dp"
+            android:layout_margin="1dp"
             android:layout_weight="1"
-            android:background="#66000000"
             android:gravity="center" >
 
             <Button
@@ -121,6 +128,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
+                android:background="@drawable/rounded"
                 android:ems="8"
                 android:text="@string/popup_button_turbo" />
         </TableRow>
