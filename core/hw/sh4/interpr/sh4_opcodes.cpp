@@ -61,8 +61,8 @@ void dofoo(sh4_opcode op)
 // 0xxx
 void cpu_iNimp(u32 op, const char* info)
 {
-	printf("\n\nUnimplemented opcode : %X : %X \n", op,next_pc);
-	printf(info);
+	printf("\n\nUnimplemented opcode: %08X next_pc: %08X pr: %08X msg: %s\n", op, next_pc, pr, info);
+	//next_pc = pr; //debug hackfix: try to recover by returning from call
 	die("iNimp reached\n");
 	//sh4_cpu.Stop();
 }
