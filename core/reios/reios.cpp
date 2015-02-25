@@ -10,6 +10,7 @@
 #include "reios.h"
 
 #include "gdrom_hle.h"
+#include "descrambl.h"
 
 #include "hw/sh4/sh4_mem.h"
 
@@ -28,13 +29,28 @@
 
 u8* biosrom;
 u8* flashrom;
+u32 base_fad = 45150;
+bool descrambl = false;
 
 bool reios_locate_bootfile(const char* bootfile="1ST_READ.BIN") {
-	u8* temp = new u8[2048 * 1024];
+	u32 data_len = 2048 * 1024;
+	u8* temp = new u8[data_len];
 
-	libGDR_ReadSector(temp, 45150 + 16, 1024, 2048);
+	libGDR_ReadSector(temp, base_fad + 16, 1, 2048);
 
-	for (int i = 0; i < 2048 * 1023; i++) {
+	if (memcmp(temp, "\001CD001\001", 7) == 0) {
+		u32 lba = (u32&)temp[156 + 2]; //Root directory lba, should use the big endian one
+		u32 len = (u32&)temp[156 + 10]; //should use the big endian one
+		
+		data_len = ((len + 2047) / 2048) *2048;
+
+		libGDR_ReadSector(temp, 150 + lba, data_len/2048, 2048);
+	}
+	else {
+		libGDR_ReadSector(temp, base_fad + 16, data_len / 2048, 2048);
+	}
+
+	for (int i = 0; i < (data_len-20); i++) {
 		if (memcmp(temp+i, bootfile, strlen(bootfile)) == 0){
 			printf("Found %s at %06X\n", bootfile, i);
 			
@@ -45,7 +61,10 @@ bool reios_locate_bootfile(const char* bootfile="1ST_READ.BIN") {
 			u32 lba = (u32&)temp[i - 33 +  2]; //should use the big endian one, but i'm lazy
 			u32 len = (u32&)temp[i - 33 + 10]; //should use the big endian one, but i'm lazy
 
-			libGDR_ReadSector(GetMemPtr(0x8c010000, 0), lba + 150, (len + 2047) / 2048, 2048);
+			if (descrambl)
+				descrambl_file(lba + 150, len, GetMemPtr(0x8c010000, 0));
+			else
+				libGDR_ReadSector(GetMemPtr(0x8c010000, 0), lba + 150, (len + 2047) / 2048, 2048);
 
 			delete[] temp;
 			return true;
@@ -58,7 +77,20 @@ bool reios_locate_bootfile(const char* bootfile="1ST_READ.BIN") {
 
 char reios_bootfile[32];
 const char* reios_locate_ip() {
-	libGDR_ReadSector(GetMemPtr(0x8c008000, 0), 45150, 16, 2048);
+
+	if (libGDR_GetDiscType() == GdRom) {
+		base_fad = 45150;
+		descrambl = false;
+	}
+	else {
+		u8 ses[6];
+		libGDR_GetSessionInfo(ses, 0);
+		libGDR_GetSessionInfo(ses, ses[2]);
+		base_fad = (ses[3] << 16) | (ses[4] << 8) | (ses[5] << 0);
+		descrambl = true;
+	}
+
+	libGDR_ReadSector(GetMemPtr(0x8c008000, 0), base_fad, 16, 2048);
 	
 	memset(reios_bootfile, 0, sizeof(reios_bootfile));
 	memcpy(reios_bootfile, GetMemPtr(0x8c008060, 0), 16);
@@ -316,7 +348,7 @@ void reios_boot() {
 	WriteMem32(0x80800000, 0xEAFFFFFE);
 
 	const char* bootfile = reios_locate_ip();
-	if (!reios_locate_bootfile(bootfile))
+	if (!bootfile || !reios_locate_bootfile(bootfile))
 		msgboxf("Failed to locate bootfile", MBX_ICONERROR);
 }
 

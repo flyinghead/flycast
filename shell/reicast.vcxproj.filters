@@ -405,6 +405,9 @@
     <ClCompile Include="..\core\reios\gdrom_hle.cpp">
       <Filter>reios</Filter>
     </ClCompile>
+    <ClCompile Include="..\core\reios\descrambl.cpp">
+      <Filter>reios</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="hw">
@@ -881,6 +884,9 @@
       <Filter>reios</Filter>
     </ClInclude>
     <ClInclude Include="..\core\reios\gdrom_hle.h">
+      <Filter>reios</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\reios\descrambl.h">
       <Filter>reios</Filter>
     </ClInclude>
   </ItemGroup>
