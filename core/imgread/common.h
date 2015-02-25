@@ -200,7 +200,7 @@ struct Disc
 			}
 			else
 			{
-				printf("Sector Read miss\n");
+				printf("Sector Read miss FAD: %d\n", FAD);
 			}
 			dst+=fmt;
 			FAD++;
