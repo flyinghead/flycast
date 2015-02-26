@@ -212,7 +212,7 @@ DynarecCodeEntry* rdv_CompilePC()
 {
 	u32 pc=next_pc;
 
-	if (emit_FreeSpace()<16*1024 || pc==0x8c0000e0 || pc==0x8c010000 || pc==0x8c008300)
+	if (emit_FreeSpace()<16*1024 || pc==0x8c0000e0 || pc==0xac010000 || pc==0xac008300)
 		recSh4_ClearCache();
 
 	RuntimeBlockInfo* rv=0;

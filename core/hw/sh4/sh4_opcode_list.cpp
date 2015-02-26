@@ -4,7 +4,7 @@
 #include "dyna/decoder_opcodes.h"
 #include "types.h"
 #include "hw/sh4/dyna/shil.h"
-
+#include "reios/reios.h"
 
 OpCallFP* OpPtr[0x10000];
 sh4_opcodelistentry* OpDesc[0x10000];
@@ -124,7 +124,8 @@ sh4_opcodelistentry missing_opcode = {0,iNotImplemented,0,0,ReadWritePC,"missing
 
 sh4_opcodelistentry opcodes[]=
 {
-
+	//HLE
+	{0, reios_trap, Mask_none, REIOS_OPCODE, Branch_dir, "reios_trap", 100, 100, CO, fix_none },
 	//CPU
 	{dec_i0000_nnnn_0010_0011   ,i0000_nnnn_0010_0011   ,Mask_n         ,0x0023 ,Branch_rel_d   ,"braf <REG_N>"                         ,2,3,CO,fix_none},  //braf <REG_N>
 	{dec_i0000_nnnn_0000_0011   ,i0000_nnnn_0000_0011   ,Mask_n         ,0x0003 ,Branch_rel_d   ,"bsrf <REG_N>"                         ,2,3,CO,fix_none},  //bsrf <REG_N>

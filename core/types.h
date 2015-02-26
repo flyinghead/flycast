@@ -590,6 +590,10 @@ struct RegisterStruct
 
 struct settings_t
 {
+	struct {
+		bool UseReios;
+	} bios;
+
 	struct
 	{
 		bool UseMipmaps;
@@ -672,6 +676,10 @@ struct settings_t
 		u32 subdivide_transp;
 		u32 rend;
 	} pvr;
+
+	struct {
+		bool SerialConsole;
+	} debug;
 };
 
 extern settings_t settings;

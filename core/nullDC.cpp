@@ -170,9 +170,12 @@ int dc_init(int argc,wchar* argv[])
 	int rv= 0;
 
 
-	if (!LoadRomFiles(GetPath("/data/")))
+	if (settings.bios.UseReios || !LoadRomFiles(GetPath("/data/")))
 	{
-		return -3;
+		if (!LoadHle(GetPath("/data/")))
+			return -3;
+		else
+			printf("Did not load bios, using reios\n");
 	}
 
 #if !defined(HOST_NO_REC)
@@ -246,7 +249,11 @@ void LoadSettings()
 	
 	settings.pvr.ta_skip			= cfgLoadInt("config","ta.skip",0);
 	settings.pvr.rend				= cfgLoadInt("config","pvr.rend",0);
+
+	settings.debug.SerialConsole = cfgLoadInt("config", "Debug.SerialConsoleEnabled", 0) != 0;
 #endif
+
+	settings.bios.UseReios = cfgLoadInt("config", "bios.UseReios", 0);
 
 #if (HOST_OS != OS_LINUX || defined(_ANDROID) || defined(TARGET_PANDORA))
 	settings.aica.BufferSize=2048;

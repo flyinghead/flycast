@@ -45,8 +45,9 @@ SCLSR2_type SCIF_SCLSR2;
 
 void SerialWrite(u32 addr, u32 data)
 {
-	//WriteSerial((u8)data);
-	//putc(data,stdout);
+	if (settings.debug.SerialConsole) {
+		putc(data, stdout);
+	}
 }
 
 //SCIF_SCFSR2 read

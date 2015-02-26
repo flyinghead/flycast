@@ -157,6 +157,9 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|x64'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="..\core\reios\descrambl.cpp" />
+    <ClCompile Include="..\core\reios\gdrom_hle.cpp" />
+    <ClCompile Include="..\core\reios\reios.cpp" />
     <ClCompile Include="..\core\rend\d3d11\d3d11.cpp" />
     <ClCompile Include="..\core\rend\gles\gldraw.cpp" />
     <ClCompile Include="..\core\rend\gles\gles.cpp" />
@@ -286,6 +289,9 @@
     <ClInclude Include="..\core\oslib\audiostream_rif.h" />
     <ClInclude Include="..\core\oslib\oslib.h" />
     <ClInclude Include="..\core\profiler\profiler.h" />
+    <ClInclude Include="..\core\reios\descrambl.h" />
+    <ClInclude Include="..\core\reios\gdrom_hle.h" />
+    <ClInclude Include="..\core\reios\reios.h" />
     <ClInclude Include="..\core\rend\gles\gles.h" />
     <ClInclude Include="..\core\rend\rend.h" />
     <ClInclude Include="..\core\rend\TexCache.h" />

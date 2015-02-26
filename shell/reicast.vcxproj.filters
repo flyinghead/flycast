@@ -399,6 +399,15 @@
     <ClCompile Include="..\core\deps\coreio\coreio.cpp">
       <Filter>deps\coreio</Filter>
     </ClCompile>
+    <ClCompile Include="..\core\reios\reios.cpp">
+      <Filter>reios</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\reios\gdrom_hle.cpp">
+      <Filter>reios</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\reios\descrambl.cpp">
+      <Filter>reios</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="hw">
@@ -517,6 +526,9 @@
     </Filter>
     <Filter Include="deps\coreio">
       <UniqueIdentifier>{23cfa286-fe88-439d-89de-a6a5a23cacc9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="reios">
+      <UniqueIdentifier>{f614dd66-5d30-4548-a209-f857f95fb505}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -867,6 +879,15 @@
     </ClInclude>
     <ClInclude Include="..\core\deps\coreio\coreio.h">
       <Filter>deps\coreio</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\reios\reios.h">
+      <Filter>reios</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\reios\gdrom_hle.h">
+      <Filter>reios</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\reios\descrambl.h">
+      <Filter>reios</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
