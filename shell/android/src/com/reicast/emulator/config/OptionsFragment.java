@@ -552,17 +552,18 @@ public class OptionsFragment extends Fragment {
 				i++;
 			}
 			FileUtils fileUtils = new FileUtils();
-			Collection<File> files = fileUtils.listFiles(storage, filter, 1);
+			Collection<File> files = fileUtils.listFiles(storage, filter, 0);
 			return (List<File>) files;
 		}
 
 		@Override
 		protected void onPostExecute(List<File> items) {
 			if (items != null && !items.isEmpty()) {
-				String[] themes = new String[items.size()];
+				String[] themes = new String[items.size() + 1];
 				for (int i = 0; i < items.size(); i ++) {
 					themes[i] = items.get(i).getName();
 				}
+				themes[items.size()] = "None";
 				ArrayAdapter<String> themeAdapter = new ArrayAdapter<String>(
 						getActivity(), android.R.layout.simple_spinner_item, themes);
 				themeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -571,8 +572,12 @@ public class OptionsFragment extends Fragment {
 					@Override
 					public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
 						String theme = String.valueOf(parentView.getItemAtPosition(position));
-						String theme_path = home_directory + "/themes/" + theme;
-						mPrefs.edit().putString(Config.pref_theme, theme_path).commit();
+						if (theme.equals("None")) {
+							mPrefs.edit().remove(Config.pref_theme).commit();
+						} else {
+							String theme_path = home_directory + "/themes/" + theme;
+							mPrefs.edit().putString(Config.pref_theme, theme_path).commit();
+						}
 					}
 					@Override
 					public void onNothingSelected(AdapterView<?> parentView) {
