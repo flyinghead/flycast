@@ -21,10 +21,10 @@ LD=${CC}
 MFLAGS := 
 ASFLAGS := 
 
-LDFLAGS	:=	-g -Wl,-Map,$(notdir $@).map,--gc-sections -Wl,-O3 -Wl,--sort-common 
+LDFLAGS	:= -Wl,-Map,$(notdir $@).map,--gc-sections -Wl,-O3 -Wl,--sort-common 
 
 
-CXXFLAGS := -g -O3  -D GLES -D RELEASE -c -D TARGET_EMSCRIPTEN -D TARGET_NO_REC -D TARGET_NO_NVMEM -D TARGET_NO_WEBUI -D TARGET_NO_THREADS -D TARGET_BOUNDED_EXECUTION -D TARGET_NO_EXCEPTIONS
+CXXFLAGS := -O3  -D GLES -D RELEASE -c -D TARGET_EMSCRIPTEN -D TARGET_NO_REC -D TARGET_NO_NVMEM -D TARGET_NO_WEBUI -D TARGET_NO_THREADS -D TARGET_BOUNDED_EXECUTION -D TARGET_NO_EXCEPTIONS
 CXXFLAGS += -fno-strict-aliasing
 CXXFLAGS += -ffast-math
 
@@ -47,7 +47,7 @@ all: $(CPPFILES) $(EXECUTABLE)
 	
 $(EXECUTABLE): $(OBJECTS)
 	echo $(RZDCY_FILES)
-	$(CXX) $(MFLAGS) $(EXTRAFLAGS) $(LDFLAGS)  $(OBJECTS) $(LIBS) -o $@ --preload-file data/dc_boot.bin --preload-file data/dc_flash.bin -s TOTAL_MEMORY=96000000
+	$(CXX) $(MFLAGS) $(EXTRAFLAGS) $(LDFLAGS)  $(OBJECTS) $(LIBS) -o $@ --preload-file data/dc_boot.bin --preload-file data/dc_flash.bin -s TOTAL_MEMORY=96000000 -s NO_EXIT_RUNTIME=1 -O3 
 
 obj/%.build.obj : $(RZDCY_SRC_DIR)/%.cpp
 	mkdir -p $(dir $@)
