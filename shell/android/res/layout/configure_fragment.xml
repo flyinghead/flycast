@@ -80,6 +80,41 @@
                     android:text="@string/browse" />
             </LinearLayout>
         </LinearLayout>
+        
+        <TableLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="6dp"
+            android:stretchColumns="*" >
+
+            <TableRow
+                android:layout_marginTop="10dp"
+                android:gravity="center_vertical" >
+
+                <TextView
+                    android:id="@+id/reios_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="0.5"
+                    android:ems="10"
+                    android:gravity="center_vertical|left"
+                    android:text="@string/select_reios" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="right"
+                    android:orientation="vertical" >
+
+                    <de.ankri.views.Switch
+                        android:id="@+id/reios_option"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:focusable="true" />
+                </LinearLayout>
+            </TableRow>
+        </TableLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -294,41 +329,45 @@
                 </LinearLayout>
             </TableRow>
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+            <TableRow
                 android:layout_marginTop="10dp"
-                android:orientation="vertical" >
+                android:gravity="center_vertical" >
 
                 <TextView
                     android:id="@+id/frameskip_text"
                     android:layout_width="wrap_content"
-                    android:layout_height="0dip"
+                    android:layout_height="wrap_content"
                     android:layout_weight="1"
+                    android:gravity="center_vertical|left"
                     android:text="@string/set_frameskip" />
 
-                <LinearLayout
-                    android:layout_width="match_parent"
+                <EditText
+                   android:id="@+id/current_frames"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal" >
+                    android:layout_marginRight="5dp"
+                    android:layout_weight="1"
+                    android:ems="10"
+                    android:gravity="right"
+                    android:inputType="number" >
+                </EditText>
+            </TableRow>
 
-                    <TextView
-                        android:id="@+id/current_frames"
-                        android:layout_width="0dip"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:ems="10" />
+            <TableRow
+                android:layout_marginTop="5dp"
+                android:gravity="center_vertical" >
 
-                    <SeekBar
-                        android:id="@+id/frame_seekbar"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:ems="10"
-                        android:max="5"
-                        android:progress="0" />
-                </LinearLayout>
-            </LinearLayout>
+                <SeekBar
+                    android:id="@+id/frame_seekbar"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ems="10"
+                    android:gravity="center_vertical|left"
+                    android:max="5"
+                    android:progress="0" />
+                
+            </TableRow>
 
             <TableRow
                 android:layout_marginTop="20dp"

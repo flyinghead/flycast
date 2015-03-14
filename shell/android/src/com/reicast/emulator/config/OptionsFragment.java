@@ -152,6 +152,18 @@ public class OptionsFragment extends Fragment {
 			}
 		});
 		
+		OnCheckedChangeListener reios_options = new OnCheckedChangeListener() {
+
+			public void onCheckedChanged(CompoundButton buttonView,
+					boolean isChecked) {
+				mPrefs.edit().putBoolean(Config.pref_usereios, isChecked).commit();
+			}
+		};
+		Switch reios_opt = (Switch) getView().findViewById(
+				R.id.reios_option);
+		reios_opt.setChecked(mPrefs.getBoolean(Config.pref_usereios, false));
+		reios_opt.setOnCheckedChangeListener(reios_options);
+		
 		OnCheckedChangeListener details_options = new OnCheckedChangeListener() {
 
 			public void onCheckedChanged(CompoundButton buttonView,
@@ -379,10 +391,10 @@ public class OptionsFragment extends Fragment {
 		stretch_view.setChecked(Config.widescreen);
 		stretch_view.setOnCheckedChangeListener(full_screen);
 
-		final TextView mainFrames = (TextView) getView().findViewById(R.id.current_frames);
+		final EditText mainFrames = (EditText) getView().findViewById(R.id.current_frames);
 		mainFrames.setText(String.valueOf(Config.frameskip));
 
-		SeekBar frameSeek = (SeekBar) getView().findViewById(R.id.frame_seekbar);
+		final SeekBar frameSeek = (SeekBar) getView().findViewById(R.id.frame_seekbar);
 		frameSeek.setProgress(Config.frameskip);
 		frameSeek.setIndeterminate(false);
 		frameSeek.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
@@ -398,6 +410,23 @@ public class OptionsFragment extends Fragment {
 				int progress = seekBar.getProgress();
 				mPrefs.edit().putInt(Config.pref_frameskip, progress).commit();
 				Config.frameskip = progress;
+			}
+		});
+		mainFrames.addTextChangedListener(new TextWatcher() {
+			public void afterTextChanged(Editable s) {
+				String frameText = mainFrames.getText().toString();
+				if (frameText != null) {
+					int frames = Integer.parseInt(frameText);
+					frameSeek.setProgress(frames);
+					mPrefs.edit().putInt(Config.pref_frameskip, frames).commit();
+					Config.frameskip = frames;
+				}
+			}
+
+			public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+			}
+
+			public void onTextChanged(CharSequence s, int start, int before, int count) {
 			}
 		});
 

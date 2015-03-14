@@ -31,6 +31,7 @@ public class Config {
 	public static final String pref_frameskip = "frame_skip";
 	public static final String pref_pvrrender = "pvr_render";
 	public static final String pref_cheatdisk = "cheat_disk";
+	public static final String pref_usereios = "use_reios";
 
 	public static final String pref_showfps = "show_fps";
 	public static final String pref_forcegpu = "force_gpu";
@@ -57,6 +58,7 @@ public class Config {
 	public static int frameskip = 0;
 	public static boolean pvrrender = false;
 	public static String cheatdisk = "null";
+	public static boolean usereios = false;
 	public static boolean nativeact = false;
 	public static int vibrationDuration = 20;
 	
@@ -87,6 +89,7 @@ public class Config {
 		Config.frameskip = mPrefs.getInt(pref_frameskip, frameskip);
 		Config.pvrrender = mPrefs.getBoolean(pref_pvrrender, pvrrender);
 		Config.cheatdisk = mPrefs.getString(pref_cheatdisk, cheatdisk);
+		Config.usereios = mPrefs.getBoolean(pref_usereios, usereios);
 		Config.nativeact = mPrefs.getBoolean(pref_nativeact, nativeact);
 	}
 
@@ -109,6 +112,7 @@ public class Config {
 		JNIdc.subdivide(Config.subdivide ? 1 : 0);
 		JNIdc.frameskip(Config.frameskip);
 		JNIdc.pvrrender(Config.pvrrender ? 1 : 0);
+		JNIdc.usereios(Config.usereios ? 1 : 0);
 		JNIdc.cheatdisk(Config.cheatdisk);
 		JNIdc.dreamtime(DreamTime.getDreamtime());
 	}
