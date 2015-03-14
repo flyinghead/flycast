@@ -11,8 +11,8 @@
         android:xlargeScreens="true" />
 
     <uses-sdk
-        android:minSdkVersion="8"
-        android:targetSdkVersion="19" />
+        android:minSdkVersion="9"
+        android:targetSdkVersion="21" />
 
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
@@ -32,11 +32,22 @@
     <uses-feature
         android:name="android.hardware.microphone"
         android:required="false" />
+    <uses-feature 
+        android:name="android.hardware.gamepad" 
+        android:required="false"/>
+    <!--uses-feature
+        android:name="android.software.leanback" 
+        android:required="false" /-->
 
     <application
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
+        <!--
+         android:banner="@drawable/ic_banner"
+         android:logo="@drawable/ic_banner"
+         android:isGame="true"-->
+        
         <meta-data
             android:name="xperiaplayoptimized_content"
             android:resource="@drawable/ic_xperia_play" />
@@ -50,6 +61,7 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
                 <category android:name="tv.ouya.intent.category.GAME" />
+                <!--category android:name="android.intent.category.LEANBACK_LAUNCHER" /-->
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />

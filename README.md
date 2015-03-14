@@ -24,7 +24,7 @@ Tools required:
 * NDK r8b or newer
  - https://developer.android.com/tools/sdk/ndk/index.html
  - If are not using r9c+, comment the "NDK_TOOLCHAIN_VERSION := 4.8" in shell/android/jni/Application.mk and shell/android/xperia/jni/Application.mk
-* Android 4.4 (API 19) & Android 2.3.1 (API 9)
+* Android 5.0.1 (API 21) & Android 2.3.1 (API 9)
  - http://developer.android.com/sdk/installing/adding-packages.html
  - note that API 9 is hidden (you must check to show obsolete in SDK manager)
 * Ant
@@ -36,7 +36,7 @@ export ANDROID_NDK=/ # Type the full path to your NDK here
 
 cd shell/android/
 
-android update project -p . --target "android-19"
+android update project -p . --target "android-21"
 
 ant debug
 ```

@@ -10,7 +10,9 @@ import javax.microedition.khronos.opengles.GL10;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.graphics.Paint;
@@ -692,9 +694,22 @@ public class GL2JNIView extends GLSurfaceView
 			handler.post(new Runnable() {
 				public void run() {
 					Log.d(context.getApplicationContext().getPackageName(), msg);
-					MainActivity.showToastMessage(context, 
-							context.getString(R.string.emu_crash, msg),
-							Toast.LENGTH_LONG);
+//					MainActivity.showToastMessage(context, 
+//							context.getString(R.string.emu_toast, msg),
+//							Toast.LENGTH_LONG);
+					AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(context);
+					alertDialogBuilder.setTitle(context.getString(R.string.emu_crash));
+					alertDialogBuilder
+					.setMessage(msg)
+					.setCancelable(false)
+					.setPositiveButton("Okay...",new DialogInterface.OnClickListener() {
+						public void onClick(DialogInterface dialog,int id) {
+							// if this button is clicked, close current activity
+							// MainActivity.this.finish();
+						}
+					});
+					AlertDialog alertDialog = alertDialogBuilder.create();
+					alertDialog.show();
 				}
 			});
 		}

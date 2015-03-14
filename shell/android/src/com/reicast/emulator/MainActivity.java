@@ -136,8 +136,12 @@ public class MainActivity extends SlidingFragmentActivity implements
 		// When viewing a resource, pass its URI to the native code for opening
 		Intent intent = getIntent();
 		if (intent.getAction() != null) {
-			if (intent.getAction().equals(Intent.ACTION_VIEW))
+			if (intent.getAction().equals(Intent.ACTION_VIEW)) {
 				onGameSelected(Uri.parse(intent.getData().toString()));
+				// Flush the intent to prevent multiple calls
+				getIntent().setData(null);
+		        setIntent(null);
+			}
 		}
 
 		// Check that the activity is using the layout version with

@@ -5,6 +5,8 @@
     <string name="system_path">System Path (location of the data folder with dc_boot.bin/dc_flash.bin inside)</string>
     <string name="browser_path">Default System Path</string>
     <string name="games_path">Storage Path (location of *.gdi, *.chd or *.cdi images)</string>
+    <string name="button_theme">Onscreen Button Theme</string>
+
     <string name="game_path">Default Game Storage</string>
     <string name="config_home">Please configure a home directory.</string>
     <string name="config_data">Please move BIOS to %1$s/data/</string>
@@ -20,13 +22,15 @@
     <string name="missing_flash">The Dreamcast Flash is missing. A dump of the Dreamcast Flash is required for this emulator to work. Make sure the Flash file is named "dc_flash.bin" and is in %1$s/data/dc_flash.bin</string>
     <string name="require_bios">You have to provide a Dreamcast BIOS.</string>
     <string name="data_folder">The current data folder is assumed.</string>
-    <string name="emu_crash">Emulator Error:\n %1$s</string>
+    <string name="emu_crash">Emulator Error!</string>
+    <string name="emu_toast">Emulator Error:\n %1$s</string>
     
     <string name="folder_bios">Boot BIOS</string>
     <string name="folder_select">Select current folder</string>
     
     <string name="optimization_opts">Optimization and Debugging Options</string>
     <string name="experimental_opts">Experimental (May cause widespread panic)</string>
+    <string name="select_reios">Use reios BIOS</string>
     <string name="select_bios">BIOS Region (dc_flash[X].bin)</string>
     <string name="select_details">Enable Game Details</string>
     <string name="select_native">Native Mode [No OSD]</string>
