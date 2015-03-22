@@ -160,6 +160,7 @@
     <ClCompile Include="..\core\reios\descrambl.cpp" />
     <ClCompile Include="..\core\reios\gdrom_hle.cpp" />
     <ClCompile Include="..\core\reios\reios.cpp" />
+    <ClCompile Include="..\core\reios\reios_elf.cpp" />
     <ClCompile Include="..\core\rend\d3d11\d3d11.cpp" />
     <ClCompile Include="..\core\rend\gles\gldraw.cpp" />
     <ClCompile Include="..\core\rend\gles\gles.cpp" />
@@ -292,6 +293,7 @@
     <ClInclude Include="..\core\reios\descrambl.h" />
     <ClInclude Include="..\core\reios\gdrom_hle.h" />
     <ClInclude Include="..\core\reios\reios.h" />
+    <ClInclude Include="..\core\reios\reios_elf.h" />
     <ClInclude Include="..\core\rend\gles\gles.h" />
     <ClInclude Include="..\core\rend\rend.h" />
     <ClInclude Include="..\core\rend\TexCache.h" />

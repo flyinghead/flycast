@@ -9,6 +9,8 @@
 
 #include "reios.h"
 
+#include "reios_elf.h"
+
 #include "gdrom_hle.h"
 #include "descrambl.h"
 
@@ -122,75 +124,6 @@ const char* reios_locate_ip() {
 			break;
 		reios_bootfile[i] = 0;
 	}
-	/*
-		Post Boot registers from actual bios boot
-	r
-		[0x00000000]	0xac0005d8
-		[0x00000001]	0x00000009
-		[0x00000002]	0xac00940c
-		[0x00000003]	0x00000000
-		[0x00000004]	0xac008300
-		[0x00000005]	0xf4000000
-		[0x00000006]	0xf4002000
-		[0x00000007]	0x00000070
-		[0x00000008]	0x00000000
-		[0x00000009]	0x00000000
-		[0x0000000a]	0x00000000
-		[0x0000000b]	0x00000000
-		[0x0000000c]	0x00000000
-		[0x0000000d]	0x00000000
-		[0x0000000e]	0x00000000
-		[0x0000000f]	0x8d000000
-	mac	
-		l	0x5bfcb024
-		h	0x00000000
-	r_bank
-		[0x00000000]	0xdfffffff
-		[0x00000001]	0x500000f1
-		[0x00000002]	0x00000000
-		[0x00000003]	0x00000000
-		[0x00000004]	0x00000000
-		[0x00000005]	0x00000000
-		[0x00000006]	0x00000000
-		[0x00000007]	0x00000000
-	gbr	0x8c000000
-	ssr	0x40000001
-	spc	0x8c000776
-	sgr	0x8d000000
-	dbr	0x8c000010
-	vbr	0x8c000000
-	pr	0xac00043c
-	fpul	0x00000000
-	pc	0xac008300
-
-	+		sr	{T=1 status = 0x400000f0}
-	+		fpscr	{full=0x00040001}
-	+		old_sr	{T=1 status=0x400000f0}
-	+		old_fpscr	{full=0x00040001}
-
-	*/
-
-	//Setup registers to immitate a normal boot
-	sh4rcb.cntx.r[15] = 0x8d000000;
-
-	sh4rcb.cntx.gbr = 0x8c000000;
-	sh4rcb.cntx.ssr = 0x40000001;
-	sh4rcb.cntx.spc = 0x8c000776;
-	sh4rcb.cntx.sgr = 0x8d000000;
-	sh4rcb.cntx.dbr = 0x8c000010;
-	sh4rcb.cntx.vbr = 0x8c000000;
-	sh4rcb.cntx.pr = 0xac00043c;
-	sh4rcb.cntx.fpul = 0x00000000;
-	sh4rcb.cntx.pc = 0xac008300;
-
-	sh4rcb.cntx.sr.status = 0x400000f0;
-	sh4rcb.cntx.sr.T = 1;
-
-	sh4rcb.cntx.old_sr.status = 0x400000f0;
-
-	sh4rcb.cntx.fpscr.full = 0x00040001;
-	sh4rcb.cntx.old_fpscr.full = 0x00040001;
-
 	return reios_bootfile;
 }
 
@@ -421,6 +354,77 @@ void setup_syscall(u32 hook_addr, u32 syscall_addr) {
 	debugf("reios: - address %08X: data %04X [%04X]\n", hook_addr, ReadMem16(hook_addr), REIOS_OPCODE);
 }
 
+void reios_setup_state(u32 boot_addr) {
+	/*
+	Post Boot registers from actual bios boot
+	r
+	[0x00000000]	0xac0005d8
+	[0x00000001]	0x00000009
+	[0x00000002]	0xac00940c
+	[0x00000003]	0x00000000
+	[0x00000004]	0xac008300
+	[0x00000005]	0xf4000000
+	[0x00000006]	0xf4002000
+	[0x00000007]	0x00000070
+	[0x00000008]	0x00000000
+	[0x00000009]	0x00000000
+	[0x0000000a]	0x00000000
+	[0x0000000b]	0x00000000
+	[0x0000000c]	0x00000000
+	[0x0000000d]	0x00000000
+	[0x0000000e]	0x00000000
+	[0x0000000f]	0x8d000000
+	mac
+	l	0x5bfcb024
+	h	0x00000000
+	r_bank
+	[0x00000000]	0xdfffffff
+	[0x00000001]	0x500000f1
+	[0x00000002]	0x00000000
+	[0x00000003]	0x00000000
+	[0x00000004]	0x00000000
+	[0x00000005]	0x00000000
+	[0x00000006]	0x00000000
+	[0x00000007]	0x00000000
+	gbr	0x8c000000
+	ssr	0x40000001
+	spc	0x8c000776
+	sgr	0x8d000000
+	dbr	0x8c000010
+	vbr	0x8c000000
+	pr	0xac00043c
+	fpul	0x00000000
+	pc	0xac008300
+
+	+		sr	{T=1 status = 0x400000f0}
+	+		fpscr	{full=0x00040001}
+	+		old_sr	{T=1 status=0x400000f0}
+	+		old_fpscr	{full=0x00040001}
+
+	*/
+
+	//Setup registers to immitate a normal boot
+	sh4rcb.cntx.r[15] = 0x8d000000;
+
+	sh4rcb.cntx.gbr = 0x8c000000;
+	sh4rcb.cntx.ssr = 0x40000001;
+	sh4rcb.cntx.spc = 0x8c000776;
+	sh4rcb.cntx.sgr = 0x8d000000;
+	sh4rcb.cntx.dbr = 0x8c000010;
+	sh4rcb.cntx.vbr = 0x8c000000;
+	sh4rcb.cntx.pr = 0xac00043c;
+	sh4rcb.cntx.fpul = 0x00000000;
+	sh4rcb.cntx.pc = boot_addr;
+
+	sh4rcb.cntx.sr.status = 0x400000f0;
+	sh4rcb.cntx.sr.T = 1;
+
+	sh4rcb.cntx.old_sr.status = 0x400000f0;
+
+	sh4rcb.cntx.fpscr.full = 0x00040001;
+	sh4rcb.cntx.old_fpscr.full = 0x00040001;
+}
+
 void reios_boot() {
 	//setup syscalls
 	//find boot file
@@ -438,9 +442,19 @@ void reios_boot() {
 	//Infinitive loop for arm !
 	WriteMem32(0x80800000, 0xEAFFFFFE);
 
-	const char* bootfile = reios_locate_ip();
-	if (!bootfile || !reios_locate_bootfile(bootfile))
-		msgboxf("Failed to locate bootfile", MBX_ICONERROR);
+	if (settings.reios.ElfFile.size()) {
+		if (!reios_loadElf(settings.reios.ElfFile)) {
+			msgboxf("Failed to open %s\n", MBX_ICONERROR, settings.reios.ElfFile.c_str());
+		}
+		reios_setup_state(0x8C010000);
+	}
+	
+	else {
+		const char* bootfile = reios_locate_ip();
+		if (!bootfile || !reios_locate_bootfile(bootfile))
+			msgboxf("Failed to locate bootfile", MBX_ICONERROR);
+		reios_setup_state(0xac008300);
+	}
 }
 
 map<u32, hook_fp*> hooks;
