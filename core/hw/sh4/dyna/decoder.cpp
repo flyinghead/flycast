@@ -657,7 +657,7 @@ u32 MatchDiv32(u32 pc , Sh4RegType &reg1,Sh4RegType &reg2 , Sh4RegType &reg3)
 		}
 		else
 		{
-			printf("%s\n",OpDesc[opcode]->diss);
+			//printf("DIV MATCH BROKEN BY: %s\n",OpDesc[opcode]->diss);
 			break;
 		}
 		
