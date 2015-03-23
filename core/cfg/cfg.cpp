@@ -412,6 +412,26 @@ void  cfgLoadStr(const wchar * Section, const wchar * Key, wchar * Return,const 
 	}
 }
 
+string  cfgLoadStr(const wchar * Section, const wchar * Key, const wchar* Default)
+{
+	verify(Section != 0 && strlen(Section) != 0);
+	verify(Key != 0 && strlen(Key) != 0);
+	
+	if (Default == 0)
+		Default = "";
+	ConfigSection* cs = cfgdb.GetEntry(Section);
+	ConfigEntry* ce = cs->FindEntry(Key);
+	if (!ce)
+	{
+		cs->SetEntry(Key, Default, CEM_SAVE);
+		return Default;
+	}
+	else
+	{
+		return ce->GetValue();
+	}
+}
+
 //These are helpers , mainly :)
 s32  cfgLoadInt(const wchar * Section, const wchar * Key,s32 Default)
 {

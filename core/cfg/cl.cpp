@@ -126,6 +126,15 @@ bool ParseCommandLine(int argc,wchar* argv[])
 			cl-=as;
 			arg+=as;
 		}
+		else if (strstr(*arg, ".cdi") || strstr(*arg, ".chd")) {
+			printf("Using '%s' as cd image\n", *arg);
+			cfgSetVitual("config", "image", *arg);
+		}
+		else if (strstr(*arg, ".elf")) {
+			printf("Using '%s' as reios elf file\n", *arg);
+			cfgSetVitual("config", "reios.enabled", "1");
+			cfgSetVitual("reios", "ElfFile", *arg);
+		}
 		else
 		{
 			printf("wtf %s is suposed to do ?\n",*arg);

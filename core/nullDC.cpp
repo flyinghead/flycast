@@ -251,6 +251,8 @@ void LoadSettings()
 	settings.pvr.rend				= cfgLoadInt("config","pvr.rend",0);
 
 	settings.debug.SerialConsole = cfgLoadInt("config", "Debug.SerialConsoleEnabled", 0) != 0;
+
+	settings.reios.ElfFile = cfgLoadStr("reios", "ElfFile","");
 #endif
 
 	settings.bios.UseReios = cfgLoadInt("config", "bios.UseReios", 0);
