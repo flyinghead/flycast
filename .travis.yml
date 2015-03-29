@@ -15,7 +15,7 @@ before_install:
 install:
 - wget http://dl.google.com/android/ndk/android-ndk-r10d-linux-x86_64.bin
 - chmod +x android-ndk-r10d-linux-x86_64.bin
-- ./android-ndk-r10d-linux-x86_64.bin > /dev/null
+- ./android-ndk-r10d-linux-x86_64.bin -y | grep -v Extracting
 - mv android-ndk-r10d android-ndk
 - rm android-ndk-r10d-linux-x86_64.bin
 - download_extract_zip http://dl.google.com/android/adt/adt-bundle-linux-x86_64-20131030.zip
