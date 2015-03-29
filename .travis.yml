@@ -13,13 +13,14 @@ before_install:
 - GIT_HASH=`git log --pretty=format:'%h' -n 1`
 - GIT_BUILD=`git describe --all`-$GIT_HASH
 install:
-- download_extract http://dl.google.com/android/ndk/android-ndk-r9c-linux-x86_64.tar.bz2
-  android-ndk-r9c-linux-x86_64.tar.bz2
+- wget http://dl.google.com/android/ndk/android-ndk-r10d-linux-x86_64.bin
+- chmod +x android-ndk-r10d-linux-x86_64.bin
+- ./android-ndk-r10d-linux-x86_64.bin
+- mv android-ndk-r10d android-ndk
+- rm android-ndk-r10d-linux-x86_64.bin
 - download_extract_zip http://dl.google.com/android/adt/adt-bundle-linux-x86_64-20131030.zip
   adt-bundle-linux-x86_64-20131030.zip
-- mv android-ndk-r9c android-ndk
 - mv adt-bundle-linux-x86_64-20131030/sdk/ android-sdk
-- rm android-ndk-r9c-linux-x86_64.tar.bz2
 - rm adt-bundle-linux-x86_64-20131030.zip
 - export ANDROID_HOME=$(pwd)/android-sdk
 - export NDK=$(pwd)/android-ndk
