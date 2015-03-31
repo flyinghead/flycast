@@ -20,13 +20,9 @@ before_install:
 install:
 - download_extract http://dl.google.com/android/ndk/android-ndk-r9c-linux-x86_64.tar.bz2
   android-ndk-r9c-linux-x86_64.tar.bz2
-- download_extract_zip http://dl.google.com/android/adt/adt-bundle-linux-x86_64-20131030.zip
-  adt-bundle-linux-x86_64-20131030.zip
 - mv android-ndk-r9c android-ndk
 - mv adt-bundle-linux-x86_64-20131030/sdk/ android-sdk
 - rm android-ndk-r9c-linux-x86_64.tar.bz2
-- rm adt-bundle-linux-x86_64-20131030.zip
-- export ANDROID_HOME=$(pwd)/android-sdk
 - export NDK=$(pwd)/android-ndk
 - export ANDROID_NDK=$(pwd)/android-ndk
 - export PATH=${PATH}:$ANDROID_HOME/tools
