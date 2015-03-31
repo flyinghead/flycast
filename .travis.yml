@@ -21,7 +21,6 @@ install:
 - download_extract http://dl.google.com/android/ndk/android-ndk-r9c-linux-x86_64.tar.bz2
   android-ndk-r9c-linux-x86_64.tar.bz2
 - mv android-ndk-r9c android-ndk
-- mv adt-bundle-linux-x86_64-20131030/sdk/ android-sdk
 - rm android-ndk-r9c-linux-x86_64.tar.bz2
 - export NDK=$(pwd)/android-ndk
 - export ANDROID_NDK=$(pwd)/android-ndk
