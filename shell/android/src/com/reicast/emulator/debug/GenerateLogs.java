@@ -31,6 +31,9 @@ public class GenerateLogs extends AsyncTask<String, Integer, String> {
 	public static final String IC = "Ice Cream Sandwich";
 	public static final String JB = "JellyBean";
 	public static final String KK = "KitKat";
+	public static final String LP = "L Preview";
+	public static final String LL = "Lollipop";
+	public static final String NL = "New / No Label";
 	public static final String NF = "Not Found";
 
 	private String unHandledIOE;
@@ -56,7 +59,9 @@ public class GenerateLogs extends AsyncTask<String, Integer, String> {
 		s += "\r\n";
 		if (String.valueOf(build_sdk) != null) {
 			String build_version = NF;
-			if (build_sdk >= 4 && build_sdk < 7) {
+			if (String.valueOf(build_sdk).equals("L")) {
+				build_version = "LP";
+			} else if (build_sdk >= 4 && build_sdk < 7) {
 				build_version = DN;
 			} else if (build_sdk == 7) {
 				build_version = EC;
@@ -70,8 +75,12 @@ public class GenerateLogs extends AsyncTask<String, Integer, String> {
 				build_version = IC;
 			} else if (build_sdk >= 16 && build_sdk < 19) {
 				build_version = JB;
-			} else if (build_sdk >= 19) {
+			} else if (build_sdk >= 19 && build_sdk < 21) {
 				build_version = KK;
+			} else if (build_sdk >= 21 && build_sdk < 22) {
+				build_version = LL;
+			} else if (build_sdk >= 22) {
+				build_version = NL;
 			}
 			s += build_version + " (" + build_sdk + ")";
 		} else {
