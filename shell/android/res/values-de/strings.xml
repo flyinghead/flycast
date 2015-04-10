@@ -92,10 +92,10 @@
     <string name="revision_text">Version: %1$s</string>
     
     <string-array name="controllers">
-    <item>Controller A</item>
-    <item>Controller B</item>
-    <item>Controller C</item>
-    <item>Controller D</item>
+        <item>Controller A</item>
+        <item>Controller B</item>
+        <item>Controller C</item>
+        <item>Controller D</item>
     </string-array>
 
    	<string name="browser">Browser</string>
