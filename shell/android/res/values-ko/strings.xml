@@ -91,7 +91,7 @@
     <string name="popup_button_disk">Disk Swap</string>
     <string name="popup_button_vmu_swap">VMU Swap</string>
     <string name="popup_button_options">설정 메뉴</string>
-    <string name="popup_button_debugging">디버그 메뉴/string>
+    <string name="popup_button_debugging">디버그 메뉴</string>
     <string name="popup_button_screenshot">스크린샷</string>
     <string name="popup_button_exit">종료</string>
     <string name="popup_button_clear_cache">캐시 삭제</string>
