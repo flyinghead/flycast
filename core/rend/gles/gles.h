@@ -26,7 +26,7 @@
 #endif
 
 
-#define glCheck() verify(glGetError()==GL_NO_ERROR)
+#define glCheck() do { if (settings.validate.OpenGlChecks) { verify(glGetError()==GL_NO_ERROR); } } while(0)
 #define eglCheck() false
 
 #define VERTEX_POS_ARRAY 0
