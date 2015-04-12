@@ -183,10 +183,10 @@ typedef ConditionCode eCC;
 #define rfp_r9 r9
 
 
-typedef void FPBinOP        (eFSReg Sd, eFSReg Sn, eFSReg Sm, ConditionCode CC=CC_AL);
-typedef void FPUnOP         (eFSReg Sd, eFSReg Sm,            ConditionCode CC=CC_AL);
-typedef void BinaryOP       (eReg Rd, eReg Rn, eReg Rm,       ConditionCode CC=AL);
-typedef void BinaryOPImm    (eReg Rd, eReg Rn, s32 sImm8,     ConditionCode CC=AL);
+typedef void FPBinOP        (eFSReg Sd, eFSReg Sn, eFSReg Sm, ConditionCode CC);
+typedef void FPUnOP         (eFSReg Sd, eFSReg Sm,            ConditionCode CC);
+typedef void BinaryOP       (eReg Rd, eReg Rn, eReg Rm,       ConditionCode CC);
+typedef void BinaryOPImm    (eReg Rd, eReg Rn, s32 sImm8,     ConditionCode CC);
 typedef void UnaryOP        (eReg Rd, eReg Rs);
 
 
