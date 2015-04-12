@@ -36,18 +36,27 @@ include $(LOCAL_PATH)/../../core/core.mk
 LOCAL_SRC_FILES := $(RZDCY_FILES)
 LOCAL_SRC_FILES += $(wildcard $(LOCAL_PATH)/jni/src/Android.cpp)
 LOCAL_SRC_FILES += $(wildcard $(LOCAL_PATH)/jni/src/utils.cpp)
-LOCAL_CFLAGS  := $(RZDCY_CFLAGS)
-LOCAL_CXXFLAGS  := $(RZDCY_CXXFLAGS)
+LOCAL_CFLAGS  := $(RZDCY_CFLAGS) -fvisibility=hidden -fvisibility-inlines-hidden -ffunction-sections -fdata-sections
+LOCAL_CXXFLAGS  := $(RZDCY_CXXFLAGS) -fvisibility=hidden -fvisibility-inlines-hidden -ffunction-sections -fdata-sections
+LOCAL_CPPFLAGS  := $(RZDCY_CXXFLAGS) -fvisibility=hidden -fvisibility-inlines-hidden -ffunction-sections -fdata-sections
 
+LOCAL_CPP_FEATURES := 
 LOCAL_SHARED_LIBRARIES:= libcutils libutils
 LOCAL_PRELINK_MODULE  := false
 
 LOCAL_MODULE	:= dc
 LOCAL_DISABLE_FORMAT_STRING_CHECKS=true
 LOCAL_ASFLAGS := -fvisibility=hidden
-LOCAL_LDLIBS	:= -llog -lGLESv2 -lEGL -lz
+LOCAL_LDLIBS	:= -llog -lGLESv2 -lEGL -lz 
 #-Wl,-Map,./res/raw/syms.mp3
 LOCAL_ARM_MODE	:= arm
+
+
+ifeq ($(TARGET_ARCH),mips)
+  LOCAL_LDFLAGS += -Wl,--gc-sections
+else
+  LOCAL_LDFLAGS += -Wl,--gc-sections,--icf=safe
+endif
 
 #
 # android has poor support for hardfp calling.
