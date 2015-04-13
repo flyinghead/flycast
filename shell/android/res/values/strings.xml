@@ -114,6 +114,7 @@
     <string name="dismiss">Dismiss</string>
     <string name="manual">Manual</string>
     <string name="options">Options</string>
+    <string name="report">Report</string>
     
     <string name="cloudInfos">With this tool you can upload/download your VMUs to/from Dropbox, in order to sync them with all your devices!</string>
     <string name="uploadWarning">ATTENTION: You are about to upload your VMUs to Dropbox, please notice that this will OVERWRITE your last upload!!</string>

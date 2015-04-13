@@ -59,9 +59,6 @@ public class MainActivity extends SlidingFragmentActivity implements
 	
 	private UncaughtExceptionHandler mUEHandler;
 
-	private Intent debugger;
-	public static boolean debugUser;
-
 	Gamepad pad = new Gamepad();
 
 	@Override
@@ -90,12 +87,6 @@ public class MainActivity extends SlidingFragmentActivity implements
 		}
 
 		mPrefs = PreferenceManager.getDefaultSharedPreferences(this);
-
-		debugger = new Intent("com.reicast.emulator.debug.Debug");
-		debugger.setAction("reicast.emulator.DEBUG");
-		if (isCallable(debugger)) {
-			MainActivity.debugUser = true;
-		}
 
 		String prior_error = mPrefs.getString("prior_error", null);
 		if (prior_error != null) {
@@ -319,23 +310,12 @@ public class MainActivity extends SlidingFragmentActivity implements
 					});
 				}
 				
-
-
-				View messages = findViewById(R.id.message_menu);
-				if (MainActivity.debugUser) {
-					messages.setOnClickListener(new OnClickListener() {
-						public void onClick(View view) {
-							startActivity(debugger);
-						}
-					});
-				} else {
-					messages.setOnClickListener(new OnClickListener() {
+				findViewById(R.id.message_menu).setOnClickListener(new OnClickListener() {
 						public void onClick(View view) {
 							generateErrorLog();
 						}
 					});
 				}
-			}
 		});
 		findViewById(R.id.header_list).setOnTouchListener(new OnTouchListener() {
 			public boolean onTouch(View v, MotionEvent event) {
@@ -364,6 +344,12 @@ public class MainActivity extends SlidingFragmentActivity implements
 		AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
 		builder.setTitle(R.string.report_issue);
 		builder.setMessage(error);
+		builder.setPositiveButton(R.string.report,
+				new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int which) {
+						generateErrorLog();
+					}
+				});
 		builder.setNegativeButton(R.string.dismiss,
 				new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int which) {
