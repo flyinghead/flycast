@@ -485,7 +485,7 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_initControllers(JNIEn
 	env->ReleaseBooleanArrayElements(controllers, controllers_body, 0);
 }
 
-u32 os_Push(void* frame, u32 amt, bool wait)
+u32 PushAudio(void* frame, u32 amt, bool wait)
 {
 	verify(amt==SAMPLE_COUNT);
 	//yeah, do some audio piping magic here !

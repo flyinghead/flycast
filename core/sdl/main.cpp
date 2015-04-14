@@ -515,7 +515,7 @@ int main(int argc, wchar* argv[])
 	return 0;
 }
 
-u32 os_Push(void* frame, u32 samples, bool wait)
+u32 PushAudio(void* frame, u32 samples, bool wait)
 {
 #ifdef USE_OSS
 static bool blocking = true;

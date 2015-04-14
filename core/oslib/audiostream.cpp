@@ -23,7 +23,7 @@ WaveWriter rawout("d:\\aica_out.wav");
 #endif
 
 
-u32 os_Push(void* frame, u32 amt, bool wait);
+u32 PushAudio(void* frame, u32 amt, bool wait);
 //void os_Pull(u32 level)
 
 u32 asRingUsedCount()
@@ -92,7 +92,7 @@ void WriteSample(s16 r, s16 l)
 
 	if (WritePtr==(SAMPLE_COUNT-1))
 	{
-		os_Push(RingBuffer,SAMPLE_COUNT,settings.aica.LimitFPS);
+		PushAudio(RingBuffer,SAMPLE_COUNT,settings.aica.LimitFPS);
 	}
 }
 

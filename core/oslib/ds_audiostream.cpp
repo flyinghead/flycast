@@ -155,7 +155,7 @@ u32 os_Push_nw(void* frame, u32 samplesb)
 	//ds_ring_size
 }
 
-u32 os_Push(void* frame, u32 samples, bool wait)
+u32 PushAudio(void* frame, u32 samples, bool wait)
 {
 
 	u16* f=(u16*)frame;

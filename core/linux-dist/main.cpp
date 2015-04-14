@@ -874,7 +874,7 @@ int main(int argc, wchar* argv[])
 }
 
 u32 alsa_Push(void* frame, u32 samples, bool wait);
-u32 os_Push(void* frame, u32 samples, bool wait)
+u32 PushAudio(void* frame, u32 samples, bool wait)
 {
 	#ifndef TARGET_PANDORA
 		int audio_fd = -1;
