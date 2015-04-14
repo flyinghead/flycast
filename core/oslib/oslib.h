@@ -7,9 +7,6 @@ double os_GetSeconds();
 
 void os_DoEvents();
 void os_CreateWindow();
-bool os_IsAudioBuffered();
-int os_getusedSamples();
-bool os_IsAudioBufferedLots();
 void WriteSample(s16 right, s16 left);
 
 #if BUILD_COMPILER==COMPILER_VC

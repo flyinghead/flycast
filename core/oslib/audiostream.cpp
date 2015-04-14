@@ -2,6 +2,7 @@
 #include "cfg/cfg.h"
 #include "oslib/oslib.h"
 #include "audiostream.h"
+#include "oslib/audiobackend_directsound.h"
 #include "oslib/audiobackend_alsa.h"
 #include "oslib/audiobackend_oss.h"
 
@@ -69,6 +70,9 @@ bool RegisterAudioBackend(audiobackend_t *backend)
 }
 
 void RegisterAllAudioBackends() {
+		#if HOST_OS==OS_WINDOWS
+		RegisterAudioBackend(&audiobackend_directsound);
+		#endif
 		#if USE_OSS
 		RegisterAudioBackend(&audiobackend_oss);
 		#endif
