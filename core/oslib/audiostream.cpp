@@ -16,7 +16,8 @@ volatile u32 ReadPtr;   //next sample to read
 
 u32 gen_samples=0;
 
-double time_diff, time_last;
+double time_diff = 128/44100.0;
+double time_last;
 #ifdef LOG_SOUND
 WaveWriter rawout("d:\\aica_out.wav");
 #endif
@@ -97,7 +98,7 @@ void WriteSample(s16 r, s16 l)
 
 void InitAudio()
 {
-	time_diff=128/44100.0;
+	
 }
 
 void TermAudio()
