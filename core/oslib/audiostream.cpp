@@ -69,6 +69,9 @@ bool RegisterAudioBackend(audiobackend_t *backend)
 }
 
 void RegisterAllAudioBackends() {
+		#if USE_OSS
+		RegisterAudioBackend(&audiobackend_oss);
+		#endif
 		audiobackends_registered = true;
 }
 

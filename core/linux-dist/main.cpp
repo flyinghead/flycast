@@ -110,9 +110,6 @@ void emit_WriteCodeCache();
 
 static int JoyFD    = -1;     // Joystick file descriptor
 static int kbfd = -1; 
-#ifdef TARGET_PANDORA
-static int audio_fd = -1;
-#endif
 
 
 #define MAP_SIZE 32
@@ -755,7 +752,6 @@ void clean_exit(int sig_num) {
 	// close files
 	if (JoyFD>=0) close(JoyFD);
 	if (kbfd>=0) close(kbfd);
-	if(audio_fd>=0) close(audio_fd);
 
 	// Close EGL context ???
 	if (sig_num!=0)
@@ -781,26 +777,6 @@ void clean_exit(int sig_num) {
 	}
 }
 
-void init_sound()
-{
-    if((audio_fd=open("/dev/dsp",O_WRONLY))<0) {
-		printf("Couldn't open /dev/dsp.\n");
-    }
-    else
-	{
-	  printf("sound enabled, dsp openned for write\n");
-	  int tmp=44100;
-	  int err_ret;
-	  err_ret=ioctl(audio_fd,SNDCTL_DSP_SPEED,&tmp);
-	  printf("set Frequency to %i, return %i (rate=%i)\n", 44100, err_ret, tmp);
-	  int channels=2;
-	  err_ret=ioctl(audio_fd, SNDCTL_DSP_CHANNELS, &channels);	  
-	  printf("set dsp to stereo (%i => %i)\n", channels, err_ret);
-	  int format=AFMT_S16_LE;
-	  err_ret=ioctl(audio_fd, SNDCTL_DSP_SETFMT, &format);
-	  printf("set dsp to %s audio (%i/%i => %i)\n", "16bits signed" ,AFMT_S16_LE, format, err_ret);
-	}
-}
 #endif
 
 int main(int argc, wchar* argv[])
@@ -812,11 +788,6 @@ int main(int argc, wchar* argv[])
 #ifdef TARGET_PANDORA
 	signal(SIGSEGV, clean_exit);
 	signal(SIGKILL, clean_exit);
-	
-	init_sound();
-#else
-	void os_InitAudio();
-	os_InitAudio();
 #endif
 
 #if defined(USES_HOMEDIR) && HOST_OS != OS_DARWIN
@@ -873,23 +844,6 @@ int main(int argc, wchar* argv[])
 	return 0;
 }
 
-#if 0
-u32 alsa_Push(void* frame, u32 samples, bool wait);
-u32 PushAudio(void* frame, u32 samples, bool wait)
-{
-	#ifndef TARGET_PANDORA
-		int audio_fd = -1;
-	#endif
-
-	if (audio_fd > 0) {
-		write(audio_fd, frame, samples*4);
-	} else {
-		return alsa_Push(frame, samples, wait);
-	}
-
-	return 1;
-}
-#endif
 #endif
 
 int get_mic_data(u8* buffer) { return 0; }
