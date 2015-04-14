@@ -873,6 +873,7 @@ int main(int argc, wchar* argv[])
 	return 0;
 }
 
+#if 0
 u32 alsa_Push(void* frame, u32 samples, bool wait);
 u32 PushAudio(void* frame, u32 samples, bool wait)
 {
@@ -888,6 +889,7 @@ u32 PushAudio(void* frame, u32 samples, bool wait)
 
 	return 1;
 }
+#endif
 #endif
 
 int get_mic_data(u8* buffer) { return 0; }

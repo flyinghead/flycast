@@ -485,6 +485,7 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_initControllers(JNIEn
 	env->ReleaseBooleanArrayElements(controllers, controllers_body, 0);
 }
 
+#if 0
 u32 PushAudio(void* frame, u32 amt, bool wait)
 {
 	verify(amt==SAMPLE_COUNT);
@@ -492,6 +493,7 @@ u32 PushAudio(void* frame, u32 amt, bool wait)
 	jenv->SetShortArrayRegion(jsamples,0,amt*2,(jshort*)frame);
 	return jenv->CallIntMethod(emu,writemid,jsamples,wait);
 }
+#endif
 
 bool os_IsAudioBuffered()
 {

@@ -155,6 +155,7 @@ u32 os_Push_nw(void* frame, u32 samplesb)
 	//ds_ring_size
 }
 
+#if 0
 u32 PushAudio(void* frame, u32 samples, bool wait)
 {
 
@@ -184,6 +185,8 @@ u32 PushAudio(void* frame, u32 samples, bool wait)
 
 	return 1;
 }
+#endif
+
 void os_TermAudio()
 {
 	buffer->Stop();
