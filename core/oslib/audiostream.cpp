@@ -1,4 +1,4 @@
-#include "audiostream_rif.h"
+#include "audiostream.h"
 #include "stdclass.h"
 #include "oslib/oslib.h"
 

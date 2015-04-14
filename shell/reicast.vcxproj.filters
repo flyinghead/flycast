@@ -751,7 +751,7 @@
     <ClInclude Include="..\core\hw\sh4\sh4_mem.h">
       <Filter>hw\sh4</Filter>
     </ClInclude>
-    <ClInclude Include="..\core\oslib\audiostream_rif.h">
+    <ClInclude Include="..\core\oslib\audiostream.h">
       <Filter>oslib</Filter>
     </ClInclude>
     <ClInclude Include="..\core\hw\sh4\modules\ccn.h">

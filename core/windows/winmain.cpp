@@ -1,5 +1,5 @@
 #include "oslib\oslib.h"
-#include "oslib\audiostream_rif.h"
+#include "oslib\audiostream.h"
 #include "imgread\common.h"
 
 #define _WIN32_WINNT 0x0500 

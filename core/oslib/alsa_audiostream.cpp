@@ -1,5 +1,5 @@
 
-#include "audiostream_rif.h"
+#include "audiostream.h"
 #include "oslib/oslib.h"
 
 #include "cfg/cfg.h"

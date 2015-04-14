@@ -3,7 +3,7 @@
 #if HOST_OS==OS_WINDOWS
 #include <initguid.h>
 #include <dsound.h>
-#include "audiostream_rif.h"
+#include "audiostream.h"
 #include "oslib.h"
 
 void* SoundThread(void* param);
