@@ -7,8 +7,6 @@
 #include "oslib/audiobackend_alsa.h"
 #include "oslib/audiobackend_oss.h"
 
-//cResetEvent speed_limit(true,true);
-
 struct SoundFrame { s16 l;s16 r; };
 #define SAMPLE_COUNT 512
 
@@ -130,7 +128,6 @@ u32 PushAudio(void* frame, u32 amt, bool wait) {
 	}
 	return 0;
 }
-//void os_Pull(u32 level)
 
 u32 asRingUsedCount()
 {
@@ -148,49 +145,6 @@ u32 asRingFreeCount()
 
 void WriteSample(s16 r, s16 l)
 {
-
-#if 0
-	#if HOST_OS==OS_WINDOWS
-		#ifdef LOG_SOUND
-		rawout.Write(l,r);
-		#endif
-
-		if (!asRingFreeCount())
-		{
-			//printf("Buffer overrun\n");
-			if (settings.aica.LimitFPS)
-			{
-				//speed_limit.Wait();
-			}
-			else
-				return;
-		}
-
-		gen_samples++;
-		//while limit on, 128 samples done, there is a buffer ready to be service AND speed is too fast then wait
-		if (settings.aica.LimitFPS==1 && gen_samples>128)
-		{
-			for(;asRingUsedCount()>BufferSampleCount && (os_GetSeconds()-time_last)<=time_diff;)
-				;
-			gen_samples=0;
-			time_last=os_GetSeconds();
-		}
-	#else
-		if (!asRingFreeCount())
-		{
-			if (settings.aica.LimitFPS)
-			{
-				while(!asRingFreeCount()) ;
-			}
-			else
-			{
-				return;
-			}
-		}
-	#endif
-#endif
-
-
 	const u32 ptr=(WritePtr+1)%RingBufferSampleCount;
 	RingBuffer[ptr].r=r;
 	RingBuffer[ptr].l=l;
