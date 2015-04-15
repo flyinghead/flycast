@@ -6,6 +6,7 @@
 #include "oslib/audiobackend_android.h"
 #include "oslib/audiobackend_alsa.h"
 #include "oslib/audiobackend_oss.h"
+#include "oslib/audiobackend_pulseaudio.h"
 
 struct SoundFrame { s16 l;s16 r; };
 #define SAMPLE_COUNT 512
@@ -81,6 +82,9 @@ void RegisterAllAudioBackends() {
 		// FIXME: We should definitely change this to "#if SUPPORT_ALSA" and set SUPPORT_ALSA to 0 or 1 in the Makefile
 		#if HOST_OS==OS_LINUX && !defined(TARGET_NACL32) && !defined(ANDROID)
 		RegisterAudioBackend(&audiobackend_alsa);
+		#endif
+		#if USE_PULSEAUDIO
+		RegisterAudioBackend(&audiobackend_pulseaudio);
 		#endif
 		audiobackends_registered = true;
 }

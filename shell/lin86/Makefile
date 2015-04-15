@@ -6,6 +6,7 @@ X86_REC := 1
 #NO_REC := 1
 #NO_REND := 1
 WEBUI :=1 
+#USE_PULSEAUDIO := 1
 
 RZDCY_SRC_DIR = ../../core
 
@@ -72,6 +73,11 @@ LIBS	+= -ldl -lGL #for desktop gl
 #use this for GLES 
 #LIBS	+= -lEGL -lGLESv2 #-lglslcompiler -lIMGegl -lpvr2d -lsrv_um
 LIBS    += -lpthread -lasound -lX11
+
+ifdef USE_PULSEAUDIO
+	CXXFLAGS += -D USE_PULSEAUDIO
+	LIBS += -lpulse-simple
+endif
 
 
 OBJECTS=$(RZDCY_FILES:.cpp=.build_obj)
