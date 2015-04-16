@@ -1,6 +1,9 @@
 
 LOCAL_PATH := $(call my-dir)
 FOR_LINUX :=1
+USE_ALSA := 1
+USE_OSS := 1
+#USE_PULSEAUDIO := 1
 
 RZDCY_SRC_DIR = ../../newdc
 
@@ -55,7 +58,21 @@ INCS	:= -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps -I$(RZDCY_SRC_DIR)/khronos -I
 
 LIBS    := -L../linux-deps/lib
 LIBS    += -lm -lrt -lEGL -lGLESv2 #-lglslcompiler -lIMGegl -lpvr2d -lsrv_um 
-LIBS    += -lpthread -lasound -lX11 -lXdmcp -lXau
+LIBS    += -lpthread -lX11 -lXdmcp -lXau
+
+ifdef USE_ALSA
+	CXXFLAGS += -D USE_ALSA
+	LIBS += -lasound
+endif
+
+ifdef USE_OSS
+	CXXFLAGS += -D USE_OSS
+endif
+
+ifdef USE_PULSEAUDIO
+	CXXFLAGS += -D USE_PULSEAUDIO
+	LIBS += -lpulse-simple
+endif
 
 
 OBJECTS=$(RZDCY_FILES:.cpp=.build_obj)

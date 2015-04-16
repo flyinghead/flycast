@@ -76,12 +76,11 @@ void RegisterAllAudioBackends() {
 		#if ANDROID
 		RegisterAudioBackend(&audiobackend_android);
 		#endif
+		#if USE_ALSA
+		RegisterAudioBackend(&audiobackend_alsa);
+		#endif
 		#if USE_OSS
 		RegisterAudioBackend(&audiobackend_oss);
-		#endif
-		// FIXME: We should definitely change this to "#if SUPPORT_ALSA" and set SUPPORT_ALSA to 0 or 1 in the Makefile
-		#if HOST_OS==OS_LINUX && !defined(TARGET_NACL32) && !defined(ANDROID)
-		RegisterAudioBackend(&audiobackend_alsa);
 		#endif
 		#if USE_PULSEAUDIO
 		RegisterAudioBackend(&audiobackend_pulseaudio);

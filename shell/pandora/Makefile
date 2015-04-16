@@ -4,7 +4,9 @@ FOR_LINUX :=1
 FOR_ARM :=1
 FOR_PANDORA :=1
 USE_SDL :=1
+#USE_ALSA :=1
 USE_OSS :=1
+#USE_PULSEAUDIO :=1
 #PGO_MAKE :=1
 #PGO_USE :=1
 #USE_CCACHE :=1
@@ -79,10 +81,18 @@ LIBS    += -lm -lrt -lEGL -lGLESv2
 #-lglslcompiler -lIMGegl -lpvr2d -lsrv_um 
 LIBS    += -lpthread
 
-ifdef USE_OSS
-	CXXFLAGS += -DUSE_OSS
-else
+ifdef USE_ALSA
+	CXXFLAGS += -D USE_ALSA
 	LIBS += -lasound
+endif
+
+ifdef USE_OSS
+	CXXFLAGS += -D USE_OSS
+endif
+
+ifdef USE_PULSEAUDIO
+	CXXFLAGS += -D USE_PULSEAUDIO
+	LIBS += -lpulse-simple
 endif
 
 ifdef USE_SDL
