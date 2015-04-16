@@ -6,6 +6,7 @@
     <string name="browser_path">Default System Path</string>
     <string name="games_path">Storage Path (location of *.gdi, *.chd or *.cdi images)</string>
     <string name="button_theme">Onscreen Button Theme</string>
+    <string name="bios_selection">Select a BIOS source</string>
 
     <string name="game_path">Default Game Storage</string>
     <string name="config_home">Please configure a home directory.</string>
@@ -14,6 +15,7 @@
     <string name="unsupported">Unsupported kernel version!</string>
     <string name="locate">Locate</string>
     <string name="browse">Browse</string>
+    <string name="gdrive">Google Drive</string>
     
     <string name="boot_bios">Boot Dreamcast BIOS</string>
     <string name="missing_bios_title">Missing Dreamcast BIOS</string>

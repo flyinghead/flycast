@@ -385,65 +385,7 @@ public class MainActivity extends SlidingFragmentActivity implements
 			msg = getString(R.string.missing_flash, home_directory);
 
 		if (msg != null) {
-			AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
-					this);
-
-			// set title
-			if (!isBiosExisting(MainActivity.this))
-				alertDialogBuilder.setTitle(R.string.missing_bios_title);
-			else if (!isFlashExisting(MainActivity.this))
-				alertDialogBuilder.setTitle(R.string.missing_flash_title);
-
-			// set dialog message
-			alertDialogBuilder
-			.setMessage(msg)
-			.setCancelable(false)
-			.setPositiveButton(R.string.dismiss,
-					new DialogInterface.OnClickListener() {
-				public void onClick(DialogInterface dialog, int id) {
-					// if this button is clicked, close
-					// current activity
-					// MainActivity.this.finish();
-				}
-			})
-			.setNegativeButton(R.string.options,
-					new DialogInterface.OnClickListener() {
-				public void onClick(DialogInterface dialog, int id) {
-					FileBrowser firstFragment = new FileBrowser();
-					Bundle args = new Bundle();
-					// args.putBoolean("ImgBrowse", false);
-					// specify ImgBrowse option. true = images,
-					// false = folders only
-					args.putString("browse_entry", sdcard.toString());
-					// specify a path for selecting folder
-					// options
-					args.putBoolean("games_entry", false);
-					// selecting a BIOS folder, so this is not
-					// games
-
-					firstFragment.setArguments(args);
-					// In case this activity was started with
-					// special instructions from
-					// an Intent, pass the Intent's extras to
-					// the fragment as arguments
-					// firstFragment.setArguments(getIntent().getExtras());
-
-					// Add the fragment to the
-					// 'fragment_container' FrameLayout
-					getSupportFragmentManager()
-					.beginTransaction()
-					.replace(R.id.fragment_container,
-							firstFragment,
-							"MAIN_BROWSER")
-							.addToBackStack(null).commit();
-				}
-			});
-
-			// create alert dialog
-			AlertDialog alertDialog = alertDialogBuilder.create();
-
-			// show it
-			alertDialog.show();
+			launchBIOSdetection();
 		} else {
 			Config.nativeact = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).getBoolean(Config.pref_nativeact, Config.nativeact);
 			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD && Config.nativeact) {
@@ -454,6 +396,51 @@ public class MainActivity extends SlidingFragmentActivity implements
 						GL2JNIActivity.class));
 			}
 		}
+	}
+	
+	private void launchBIOSdetection() {
+		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		builder.setTitle(R.string.bios_selection);
+		builder.setPositiveButton(R.string.browse,
+				new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int which) {
+						FileBrowser firstFragment = new FileBrowser();
+						Bundle args = new Bundle();
+						// args.putBoolean("ImgBrowse", false);
+						// specify ImgBrowse option. true = images,
+						// false = folders only
+						args.putString("browse_entry", sdcard.toString());
+						// specify a path for selecting folder
+						// options
+						args.putBoolean("games_entry", false);
+						// selecting a BIOS folder, so this is not
+						// games
+
+						firstFragment.setArguments(args);
+						// In case this activity was started with
+						// special instructions from
+						// an Intent, pass the Intent's extras to
+						// the fragment as arguments
+						// firstFragment.setArguments(getIntent().getExtras());
+
+						// Add the fragment to the
+						// 'fragment_container' FrameLayout
+						getSupportFragmentManager()
+						.beginTransaction()
+						.replace(R.id.fragment_container,
+								firstFragment,
+								"MAIN_BROWSER")
+								.addToBackStack(null).commit();
+					}
+				});
+		builder.setNegativeButton(R.string.gdrive,
+				new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int which) {
+						Toast.makeText(MainActivity.this, R.string.require_bios, Toast.LENGTH_SHORT).show();
+					}
+				});
+		builder.create();
+		builder.show();
 	}
 
 	public void onFolderSelected(Uri uri) {
