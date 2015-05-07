@@ -118,6 +118,8 @@ void sh4_sched_request(int id, int cycles)
 	else
 	{
 		list[id].end = list[id].start + cycles;
+		if (list[id].end == -1)
+			list[id].end++;
 	}
 
 	sh4_sched_ffts();
