@@ -25,15 +25,9 @@
 	#include <GL3/gl3w.h>
 #endif
 
-//#define OPT_GL_CHECKING 1 //to enable glChecks. Really slow on some drivers
 
-#if defined(OPT_GL_CHECKING)
-#define glCheck() do { if (settings.validate.OpenGlChecks) { verify(glGetError()==GL_NO_ERROR); } } while(0)
-#define eglCheck() do {  } while(0)
-#else
-#define glCheck() do {  } while(0)
-#define eglCheck() do {  } while(0)
-#endif
+#define glCheck() do { if (unlikely(settings.validate.OpenGlChecks)) { verify(glGetError()==GL_NO_ERROR); } } while(0)
+#define eglCheck() false
 
 #define VERTEX_POS_ARRAY 0
 #define VERTEX_COL_BASE_ARRAY 1
