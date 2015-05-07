@@ -108,10 +108,17 @@ u64 sh4_sched_now64()
 }
 void sh4_sched_request(int id, int cycles)
 {
-	verify(cycles <= SH4_MAIN_CLOCK);
+	verify(cycles== -1 || (cycles >= 0 && cycles <= SH4_MAIN_CLOCK));
 
 	list[id].start=sh4_sched_now();
-	list[id].end=list[id].start+cycles;
+
+	if (cycles == -1) {
+		list[id].end = -1;
+	}
+	else
+	{
+		list[id].end = list[id].start + cycles;
+	}
 
 	sh4_sched_ffts();
 }
