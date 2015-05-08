@@ -363,7 +363,7 @@ void PhysicalTrack::Read(u32 FAD,u8* dst,SectorFormat* sector_type,u8* subcode,S
 }
 
 
-Disc* ioctl_parse(wchar* file)
+Disc* ioctl_parse(const wchar* file)
 {
 	
 	if (strlen(file)==3 && GetDriveType(file)==DRIVE_CDROM)

@@ -76,16 +76,35 @@ void UpdateTMU_i(u32 Cycles)
 
 u32 tmu_ch_base[3];
 
-
 u32 read_TMU_TCNTch(u32 ch)
 {
-	return tmu_ch_base[ch]-((sh4_sched_now64()>>tmu_shift[ch])&tmu_mask[ch]);
+	return tmu_ch_base[ch] - ((sh4_sched_now64() >> tmu_shift[ch])&tmu_mask[ch]);
+}
+
+void sched_chan_tick(int ch)
+{
+	//schedule next interrupt
+	//return TMU_TCOR(ch) << tmu_shift[ch];
+
+	u32 togo = read_TMU_TCNTch(ch);
+	u32 cycles = togo << tmu_shift[ch];
+
+	if (cycles > SH4_MAIN_CLOCK)
+		cycles = SH4_MAIN_CLOCK;
+
+	if (tmu_mask[ch])
+		sh4_sched_request(tmu_sched[ch], cycles );
+	else
+		sh4_sched_request(tmu_sched[ch], -1);
+	//sched_tmu_cb
 }
 
 void write_TMU_TCNTch(u32 ch, u32 data)
 {
 	//u32 TCNT=read_TMU_TCNTch(ch);
 	tmu_ch_base[ch]=data+((sh4_sched_now64()>>tmu_shift[ch])&tmu_mask[ch]);
+
+	sched_chan_tick(ch);
 }
 
 template<u32 ch>
@@ -105,24 +124,8 @@ void turn_on_off_ch(u32 ch, bool on)
 	u32 TCNT=read_TMU_TCNTch(ch);
 	tmu_mask[ch]=on?0xFFFFFFFF:0x00000000;
 	write_TMU_TCNTch(ch,TCNT);
-}
 
-void sched_chan_tick(int ch)
-{
-	//max ticks
-	u32 tcnt = read_TMU_TCNTch(ch);
-
-	u64 togo=tcnt;
-
-	togo<<=tmu_shift[ch];
-
-	if (togo>SH4_MAIN_CLOCK)
-		togo=SH4_MAIN_CLOCK;
-
-	if (togo>-sh4_sched_now())
-		togo=-sh4_sched_now();
-
-	sh4_sched_request(tmu_sched[ch],togo);
+	sched_chan_tick(ch);
 }
 
 //Update internal counter registers
@@ -173,6 +176,7 @@ void UpdateTMUCounts(u32 reg)
 	}
 	tmu_shift[reg]+=2;
 	write_TMU_TCNTch(reg,TCNT);
+	sched_chan_tick(reg);
 }
 
 //Write to status registers
@@ -204,25 +208,38 @@ void write_TMU_TSTR(u32 addr, u32 data)
 		turn_on_off_ch(i,data&(1<<i));
 }
 
-int sched_tmu_cb(int tag, int sch_cycl, int jitter)
+int sched_tmu_cb(int ch, int sch_cycl, int jitter)
 {
-	/*
-	static int _target_intvr=200*1000*100;
-	static int sh4_last=-1, long_term;
-	if (sh4_last!=-1)
-	{
-		int eeel=sh4_sched_now()-sh4_last;
-		long_term+=eeel-_target_intvr;
+	if (tmu_mask[ch]) {
+		
+		u32 tcnt = read_TMU_TCNTch(ch);
 
-		//printf("Dreamcast second... %d | lteerr %d\n",eeel,long_term);
+		u32 tcor = TMU_TCOR(ch);
+
+		u32 cycles = tcor << tmu_shift[ch];
+
+		//this is not 100% correct
+		if (abs((s32)tcnt) <= jitter) {
+			//raise interrupt, timer counted down
+			TMU_TCR(ch) |= tmu_underflow;
+			InterruptPend(tmu_intID[ch], 1);
+			
+			//printf("Interrupt for %d, %d cycles\n", ch, sch_cycl);
+
+			//schedule next trigger by writing the TCNT register
+			write_TMU_TCNTch(ch, tcor - tcnt);
+		}
+		else {
+			
+			//schedule next trigger by writing the TCNT register
+			write_TMU_TCNTch(ch, tcnt);
+		}
+
+		return 0;	//has already been scheduled by TCNT write
 	}
-	sh4_last=sh4_sched_now();
-
-	return _target_intvr;
-
-	*/
-
-	return jitter-1;
+	else {
+		return 0;	//this channel is disabled, no need to schedule next event
+	}
 }
 
 //Init/Res/Term
@@ -264,11 +281,10 @@ void tmu_init()
 	//TMU TCPR2 0xFFD8002C 0x1FD8002C 32 Held Held Held Held Pclk
 	sh4_rio_reg(TMU,TMU_TCPR2_addr,RIO_FUNC,32,&TMU_TCPR2_read,&TMU_TCPR2_write);
 
-	for (int i=0;i<1;i++)
-		tmu_sched[i]=sh4_sched_register(i,&sched_tmu_cb);
-
-	sh4_sched_request(tmu_sched[0],-1);
-	
+	for (int i = 0; i < 3; i++) {
+		tmu_sched[i] = sh4_sched_register(i, &sched_tmu_cb);
+		sh4_sched_request(tmu_sched[i], -1);
+	}
 }
 
 

@@ -302,22 +302,6 @@ static const codec_interface codec_interfaces[] =
 	},
 };
 
-
-
-int core_fread(FILE* f, void* buff, size_t len)
-{
-	return fread(buff,1,len,f);
-}
-
-size_t core_fsize(FILE* f)
-{
-	size_t p=ftell(f);
-	fseek(f,0,SEEK_END);
-	size_t rv=ftell(f);
-	fseek(f,p,SEEK_SET);
-	return rv;
-}
-#define core_fseek fseek
 #define MIN min
 #define MAX max
 /***************************************************************************
@@ -593,7 +577,7 @@ chd_error chd_open(const wchar *filename, int mode, chd_file *parent, chd_file *
 	}
 
 	/* open the file */
-	file=fopen(filename, "rb");
+	file=core_fopen(filename);
 	if (file == 0)
 	{
 		err = CHDERR_FILE_NOT_FOUND;
@@ -610,7 +594,7 @@ chd_error chd_open(const wchar *filename, int mode, chd_file *parent, chd_file *
 
 cleanup:
 	if ((err != CHDERR_NONE) && (file != NULL))
-		fclose(file);
+		core_fclose(file);
 	return err;
 }
 
@@ -653,7 +637,7 @@ void chd_close(chd_file *chd)
 
 	/* close the file */
 	if (chd->owns_file && chd->file != NULL)
-		fclose(chd->file);
+		core_fclose(chd->file);
 
 	if (PRINTF_MAX_HUNK) printf("Max hunk = %d/%d\n", chd->maxhunk, chd->header.totalhunks);
 
@@ -807,7 +791,7 @@ chd_error chd_get_metadata(chd_file *chd, UINT32 searchtag, UINT32 searchindex, 
 
 	/* read the metadata */
 	outputlen = min(outputlen, metaentry.length);
-	fseek(chd->file, metaentry.offset + METADATA_HEADER_SIZE, SEEK_SET);
+	core_fseek(chd->file, metaentry.offset + METADATA_HEADER_SIZE, SEEK_SET);
 	count = core_fread(chd->file, output, outputlen);
 	if (count != outputlen)
 		return CHDERR_READ_ERROR;

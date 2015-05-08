@@ -37,7 +37,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
             android:layout_weight="1"
-            android:text="Something Wrong?"
+            android:text="@string/disk_loading"
             android:textAppearance="?android:attr/textAppearanceLarge"
             android:textSize="18dp" />
     </LinearLayout>

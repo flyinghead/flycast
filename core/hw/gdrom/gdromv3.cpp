@@ -1031,7 +1031,9 @@ void WriteMem_gdrom(u32 Addr, u32 data, u32 sz)
 		break;
 
 	case GD_DRVSEL: 
-		printf("GDROM: Write to GD_DRVSEL\n");
+		if (data != 0) {
+			printf("GDROM: Write to GD_DRVSEL, !=0. Value is: %02X\n", data);
+		}
 		DriveSel = data; 
 		break;
 

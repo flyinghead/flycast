@@ -1,13 +1,21 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Fast|Win32">
       <Configuration>Fast</Configuration>
       <Platform>Win32</Platform>
     </ProjectConfiguration>
+    <ProjectConfiguration Include="Fast|x64">
+      <Configuration>Fast</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
     <ProjectConfiguration Include="Slow|Win32">
       <Configuration>Slow</Configuration>
       <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Slow|x64">
+      <Configuration>Slow</Configuration>
+      <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
@@ -15,6 +23,7 @@
     <ClCompile Include="..\core\cfg\cfg.cpp" />
     <ClCompile Include="..\core\deps\chdpsr\cdipsr.cpp" />
     <ClCompile Include="..\core\deps\chdr\chdr.cpp" />
+    <ClCompile Include="..\core\deps\coreio\coreio.cpp" />
     <ClCompile Include="..\core\deps\crypto\md5.cpp" />
     <ClCompile Include="..\core\deps\crypto\sha1.cpp" />
     <ClCompile Include="..\core\deps\libelf\elf.cpp" />
@@ -35,6 +44,25 @@
     <ClCompile Include="..\core\deps\libpng\pngwrite.c" />
     <ClCompile Include="..\core\deps\libpng\pngwtran.c" />
     <ClCompile Include="..\core\deps\libpng\pngwutil.c" />
+    <ClCompile Include="..\core\deps\libwebsocket\base64-decode.c" />
+    <ClCompile Include="..\core\deps\libwebsocket\client-handshake.c" />
+    <ClCompile Include="..\core\deps\libwebsocket\client-parser.c" />
+    <ClCompile Include="..\core\deps\libwebsocket\client.c" />
+    <ClCompile Include="..\core\deps\libwebsocket\context.c" />
+    <ClCompile Include="..\core\deps\libwebsocket\extension-deflate-frame.c" />
+    <ClCompile Include="..\core\deps\libwebsocket\extension-deflate-stream.c" />
+    <ClCompile Include="..\core\deps\libwebsocket\extension.c" />
+    <ClCompile Include="..\core\deps\libwebsocket\handshake.c" />
+    <ClCompile Include="..\core\deps\libwebsocket\libwebsockets.c" />
+    <ClCompile Include="..\core\deps\libwebsocket\lws-plat-unix.c" />
+    <ClCompile Include="..\core\deps\libwebsocket\lws-plat-win.c" />
+    <ClCompile Include="..\core\deps\libwebsocket\output.c" />
+    <ClCompile Include="..\core\deps\libwebsocket\parsers.c" />
+    <ClCompile Include="..\core\deps\libwebsocket\pollfd.c" />
+    <ClCompile Include="..\core\deps\libwebsocket\server-handshake.c" />
+    <ClCompile Include="..\core\deps\libwebsocket\server.c" />
+    <ClCompile Include="..\core\deps\libwebsocket\service.c" />
+    <ClCompile Include="..\core\deps\libwebsocket\sha-1.c" />
     <ClCompile Include="..\core\deps\zlib\adler32.c" />
     <ClCompile Include="..\core\deps\zlib\compress.c" />
     <ClCompile Include="..\core\deps\zlib\crc32.c" />
@@ -108,11 +136,15 @@
     <ClCompile Include="..\core\imgread\ioctl.cpp" />
     <ClCompile Include="..\core\linux\common.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\core\linux\nixprof.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\core\nullDC.cpp" />
     <ClCompile Include="..\core\oslib\alsa_audiostream.cpp" />
@@ -121,14 +153,21 @@
     <ClCompile Include="..\core\profiler\profiler.cpp" />
     <ClCompile Include="..\core\rec-ARM\arm_dyna.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|x64'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="..\core\reios\descrambl.cpp" />
+    <ClCompile Include="..\core\reios\gdrom_hle.cpp" />
+    <ClCompile Include="..\core\reios\reios.cpp" />
+    <ClCompile Include="..\core\reios\reios_elf.cpp" />
     <ClCompile Include="..\core\rend\d3d11\d3d11.cpp" />
     <ClCompile Include="..\core\rend\gles\gldraw.cpp" />
     <ClCompile Include="..\core\rend\gles\gles.cpp" />
     <ClCompile Include="..\core\rend\gles\gltex.cpp" />
     <ClCompile Include="..\core\rend\TexCache.cpp" />
     <ClCompile Include="..\core\stdclass.cpp" />
+    <ClCompile Include="..\core\webui\server.cpp" />
     <ClCompile Include="..\core\windows\win86_driver.cpp" />
     <ClCompile Include="..\core\windows\win86_il.cpp" />
     <ClCompile Include="..\core\windows\win86_ngen.cpp" />
@@ -140,6 +179,7 @@
     <ClInclude Include="..\core\deps\chdpsr\cdipsr.h" />
     <ClInclude Include="..\core\deps\chdr\chd.h" />
     <ClInclude Include="..\core\deps\chdr\coretypes.h" />
+    <ClInclude Include="..\core\deps\coreio\coreio.h" />
     <ClInclude Include="..\core\deps\crypto\md5.h" />
     <ClInclude Include="..\core\deps\crypto\sha1.h" />
     <ClInclude Include="..\core\deps\libelf\debug.h" />
@@ -150,6 +190,11 @@
     <ClInclude Include="..\core\deps\libpng\png.h" />
     <ClInclude Include="..\core\deps\libpng\pngconf.h" />
     <ClInclude Include="..\core\deps\libpng\pngpriv.h" />
+    <ClInclude Include="..\core\deps\libwebsocket\extension-deflate-frame.h" />
+    <ClInclude Include="..\core\deps\libwebsocket\extension-deflate-stream.h" />
+    <ClInclude Include="..\core\deps\libwebsocket\libwebsockets.h" />
+    <ClInclude Include="..\core\deps\libwebsocket\lws_config.h" />
+    <ClInclude Include="..\core\deps\libwebsocket\private-libwebsockets.h" />
     <ClInclude Include="..\core\deps\zlib\crc32.h" />
     <ClInclude Include="..\core\deps\zlib\deflate.h" />
     <ClInclude Include="..\core\deps\zlib\inffast.h" />
@@ -238,23 +283,32 @@
     <ClInclude Include="..\core\imgread\SCSIDEFS.H" />
     <ClInclude Include="..\core\linux\typedefs.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|x64'">true</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="..\core\oslib\audiostream_rif.h" />
     <ClInclude Include="..\core\oslib\oslib.h" />
     <ClInclude Include="..\core\profiler\profiler.h" />
+    <ClInclude Include="..\core\reios\descrambl.h" />
+    <ClInclude Include="..\core\reios\gdrom_hle.h" />
+    <ClInclude Include="..\core\reios\reios.h" />
+    <ClInclude Include="..\core\reios\reios_elf.h" />
     <ClInclude Include="..\core\rend\gles\gles.h" />
     <ClInclude Include="..\core\rend\rend.h" />
     <ClInclude Include="..\core\rend\TexCache.h" />
     <ClInclude Include="..\core\stdclass.h" />
     <ClInclude Include="..\core\types.h" />
+    <ClInclude Include="..\core\webui\server.h" />
     <ClInclude Include="..\core\windows\win86_ngen.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\core\deps\zlib\Makefile" />
     <None Include="..\core\rec-ARM\ngen_arm.S">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|x64'">true</ExcludedFromBuild>
     </None>
   </ItemGroup>
   <PropertyGroup Label="Globals">
@@ -269,11 +323,26 @@
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>MultiByte</CharacterSet>
     <WholeProgramOptimization>true</WholeProgramOptimization>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Fast|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>MultiByte</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <PlatformToolset>v120</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Slow|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Slow|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v120</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -281,7 +350,13 @@
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Fast|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Fast|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Slow|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Slow|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
@@ -289,11 +364,50 @@
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)..\WorkDir\</OutDir>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Fast|x64'">
+    <LinkIncremental>true</LinkIncremental>
+    <OutDir>$(SolutionDir)..\WorkDir\</OutDir>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Slow|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)..\WorkDir\</OutDir>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Slow|x64'">
+    <LinkIncremental>true</LinkIncremental>
+    <OutDir>$(SolutionDir)..\WorkDir\</OutDir>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Fast|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Full</Optimization>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;X86;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>/MP %(AdditionalOptions)</AdditionalOptions>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <OmitFramePointers>true</OmitFramePointers>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions</EnableEnhancedInstructionSet>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <MinimalRebuild>false</MinimalRebuild>
+      <ObjectFileName>$(IntDir)/%(RelativeDir)/</ObjectFileName>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(SolutionDir)..\pvrframe</AdditionalLibraryDirectories>
+      <AdditionalDependencies>Dsound.lib;winmm.lib;wsock32.lib;comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Fast|x64'">
     <ClCompile>
       <PrecompiledHeader>
       </PrecompiledHeader>
@@ -344,7 +458,32 @@
       <AdditionalDependencies>Dsound.lib;winmm.lib;wsock32.lib;comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Slow|x64'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;X86;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <MinimalRebuild>false</MinimalRebuild>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <ObjectFileName>$(IntDir)/%(RelativeDir)/</ObjectFileName>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(SolutionDir)..\pvrframe</AdditionalLibraryDirectories>
+      <AdditionalDependencies>Dsound.lib;winmm.lib;wsock32.lib;comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>

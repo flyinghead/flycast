@@ -15,6 +15,11 @@
 int fbdev = -1;
 #endif
 
+#ifndef GLES
+#include <GL3/gl3w.c>
+#pragma comment(lib,"Opengl32.lib")
+#endif
+
 /*
 GL|ES 2
 Slower, smaller subset of gl2
@@ -57,25 +62,36 @@ float fb_scale_x,fb_scale_y;
 
 volatile bool render_restart = false;
 
+#ifndef GLES
+#define attr "in"
+#define vary "out"
+#else
+#define attr "attribute"
+#define vary "varying"
+#endif
 #if 1
 
 //Fragment and vertex shaders code
 //pretty much 1:1 copy of the d3d ones for now
-const char* VertexShaderSource = "\
+const char* VertexShaderSource = 
+#ifndef GLES
+	"#version 140 \n"
+#endif
+"\
 /* Vertex constants*/  \n\
 uniform highp vec4      scale; \n\
 uniform highp vec4      depth_scale; \n\
 uniform highp float sp_FOG_DENSITY; \n\
-/* Vertex output */ \n\
-attribute highp vec4    in_pos; \n\
-attribute lowp vec4     in_base; \n\
-attribute lowp vec4     in_offs; \n\
-attribute mediump vec2  in_uv; \n\
-/* Transformed input */ \n\
-varying lowp vec4 vtx_base; \n\
-varying lowp vec4 vtx_offs; \n\
-varying mediump vec2 vtx_uv; \n\
-varying highp vec3 vtx_xyz; \n\
+/* Vertex input */ \n\
+" attr " highp vec4    in_pos; \n\
+" attr " lowp vec4     in_base; \n\
+" attr " lowp vec4     in_offs; \n\
+" attr " mediump vec2  in_uv; \n\
+/* output */ \n\
+" vary " lowp vec4 vtx_base; \n\
+" vary " lowp vec4 vtx_offs; \n\
+" vary " mediump vec2 vtx_uv; \n\
+" vary " highp vec3 vtx_xyz; \n\
 void main() \n\
 { \n\
 	vtx_base=in_base; \n\
@@ -199,7 +215,22 @@ lowp float fog_mode2(highp float invW)  \n\
 } \n\
 */
 
-const char* PixelPipelineShader = "\
+#ifndef GLES
+#define FRAGCOL "FragColor"
+#define TEXLOOKUP "texture"
+#define vary "in"
+#else
+#define FRAGCOL "gl_FragColor"
+#define TEXLOOKUP "texture2D"
+#endif
+
+
+const char* PixelPipelineShader = 
+#ifndef GLES
+	"#version 140 \n"
+	"out vec4 FragColor; \n"
+#endif	
+"\
 \
 #define cp_AlphaTest %d \n\
 #define pp_ClipTestMode %d.0 \n\
@@ -217,10 +248,10 @@ uniform lowp vec3 sp_FOG_COL_RAM,sp_FOG_COL_VERT; \n\
 uniform highp vec2 sp_LOG_FOG_COEFS; \n\
 uniform sampler2D tex,fog_table; \n\
 /* Vertex input*/ \n\
-varying lowp vec4 vtx_base; \n\
-varying lowp vec4 vtx_offs; \n\
-varying mediump vec2 vtx_uv; \n\
-varying highp vec3 vtx_xyz; \n\
+" vary " lowp vec4 vtx_base; \n\
+" vary " lowp vec4 vtx_offs; \n\
+" vary " mediump vec2 vtx_uv; \n\
+" vary " highp vec3 vtx_xyz; \n\
 lowp float fog_mode2(highp float val) \n\
 { \n\
 	highp float fog_idx=clamp(val,0.0,127.99); \n\
@@ -237,7 +268,7 @@ void main() \n\
 	#endif\n\
 	#if pp_Texture==1 \n\
 	{ \n\
-		lowp vec4 texcol=texture2D(tex,vtx_uv); \n\
+		lowp vec4 texcol=" TEXLOOKUP "(tex,vtx_uv); \n\
 		\n\
 		#if pp_IgnoreTexA==1 \n\
 			texcol.a=1.0;	 \n\
@@ -284,27 +315,37 @@ void main() \n\
 		if (cp_AlphaTestValue>color.a) discard;\n\
 	#endif  \n\
 	//color.rgb=vec3(vtx_xyz.z/255.0);\n\
-	gl_FragColor=color; \n\
+	" FRAGCOL "=color; \n\
 }";
 
-const char* ModifierVolumeShader = " \
+const char* ModifierVolumeShader = 
+#ifndef GLES
+	"#version 140 \n"
+	"out vec4 FragColor; \n"
+#endif
+" \
 uniform lowp float sp_ShaderColor; \n\
 /* Vertex input*/ \n\
 void main() \n\
 { \n\
-	gl_FragColor=vec4(0.0, 0.0, 0.0, sp_ShaderColor); \n\
+	" FRAGCOL "=vec4(0.0, 0.0, 0.0, sp_ShaderColor); \n\
 }";
 
-const char* OSD_Shader = " \
-varying lowp vec4 vtx_base; \n\
-varying mediump vec2 vtx_uv; \n\
+const char* OSD_Shader = 
+#ifndef GLES
+	"#version 140 \n"
+	"out vec4 FragColor; \n"
+#endif
+" \
+" vary " lowp vec4 vtx_base; \n\
+" vary " mediump vec2 vtx_uv; \n\
 /* Vertex input*/ \n\
 uniform sampler2D tex; \n\
 void main() \n\
 { \n\
 	mediump vec2 uv=vtx_uv; \n\
 	uv.y=1.0-uv.y; \n\
-	gl_FragColor=vtx_base*texture2D(tex,uv); \n\n\
+	" FRAGCOL "=vtx_base*" TEXLOOKUP "(tex,uv.st); \n\n\
 }";
 
 
@@ -313,120 +354,279 @@ gl_ctx gl;
 int screen_width;
 int screen_height;
 
-// Create a basic GLES context
-bool gl_init(EGLNativeWindowType wind, EGLNativeDisplayType disp)
-{
-#if !defined(_ANDROID)
-	gl.setup.native_wind=wind;
-	gl.setup.native_disp=disp;
-
-	//try to get a display
-	gl.setup.display = eglGetDisplay(gl.setup.native_disp);
-
-	//if failed, get the default display (this will not happen in win32)
-	if(gl.setup.display == EGL_NO_DISPLAY)
-		gl.setup.display = eglGetDisplay((EGLNativeDisplayType) EGL_DEFAULT_DISPLAY);
-
-	
-	// Initialise EGL
-	EGLint maj, min;
-	if (!eglInitialize(gl.setup.display, &maj, &min))
+#ifdef GLES
+	// Create a basic GLES context
+	bool gl_init(void* wind, void* disp)
 	{
-		printf("EGL Error: eglInitialize failed\n");
-		return false;
-	}
+	#if !defined(_ANDROID)
+		gl.setup.native_wind=(EGLNativeWindowType)wind;
+		gl.setup.native_disp=(EGLNativeDisplayType)disp;
 
-	printf("Info: EGL version %d.%d\n",maj,min);
+		//try to get a display
+		gl.setup.display = eglGetDisplay(gl.setup.native_disp);
+
+		//if failed, get the default display (this will not happen in win32)
+		if(gl.setup.display == EGL_NO_DISPLAY)
+			gl.setup.display = eglGetDisplay((EGLNativeDisplayType) EGL_DEFAULT_DISPLAY);
+
+		
+		// Initialise EGL
+		EGLint maj, min;
+		if (!eglInitialize(gl.setup.display, &maj, &min))
+		{
+			printf("EGL Error: eglInitialize failed\n");
+			return false;
+		}
+
+		printf("Info: EGL version %d.%d\n",maj,min);
 
 
 
-	EGLint pi32ConfigAttribs[]  = { EGL_SURFACE_TYPE, EGL_WINDOW_BIT, EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT , EGL_DEPTH_SIZE, 24, EGL_STENCIL_SIZE, 8, EGL_NONE };
-	EGLint pi32ContextAttribs[] = { EGL_CONTEXT_CLIENT_VERSION, 2 , EGL_NONE };
-	
-	int num_config;
+		EGLint pi32ConfigAttribs[]  = { EGL_SURFACE_TYPE, EGL_WINDOW_BIT, EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT , EGL_DEPTH_SIZE, 24, EGL_STENCIL_SIZE, 8, EGL_NONE };
+		EGLint pi32ContextAttribs[] = { EGL_CONTEXT_CLIENT_VERSION, 2 , EGL_NONE };
+		
+		int num_config;
 
-	EGLConfig config;
-	if (!eglChooseConfig(gl.setup.display, pi32ConfigAttribs, &config, 1, &num_config) || (num_config != 1))
-	{
-		printf("EGL Error: eglChooseConfig failed\n");
-		return false;
-	}
+		EGLConfig config;
+		if (!eglChooseConfig(gl.setup.display, pi32ConfigAttribs, &config, 1, &num_config) || (num_config != 1))
+		{
+			printf("EGL Error: eglChooseConfig failed\n");
+			return false;
+		}
 
-	gl.setup.surface = eglCreateWindowSurface(gl.setup.display, config, wind, NULL);
+		gl.setup.surface = eglCreateWindowSurface(gl.setup.display, config, (EGLNativeWindowType)wind, NULL);
 
-	if (eglCheck())
-		return false;
+		if (eglCheck())
+			return false;
 
-	eglBindAPI(EGL_OPENGL_ES_API);
-	if (eglCheck())
-		return false;
+		eglBindAPI(EGL_OPENGL_ES_API);
+		if (eglCheck())
+			return false;
 
-	gl.setup.context = eglCreateContext(gl.setup.display, config, NULL, pi32ContextAttribs);
+		gl.setup.context = eglCreateContext(gl.setup.display, config, NULL, pi32ContextAttribs);
 
-	if (eglCheck())
-		return false;
+		if (eglCheck())
+			return false;
 
-#endif
-
-	eglMakeCurrent(gl.setup.display, gl.setup.surface, gl.setup.surface, gl.setup.context);
-
-	if (eglCheck())
-		return false;
-
-	EGLint w,h;
-	eglQuerySurface(gl.setup.display, gl.setup.surface, EGL_WIDTH, &w);
-	eglQuerySurface(gl.setup.display, gl.setup.surface, EGL_HEIGHT, &h);
-
-	screen_width=w;
-	screen_height=h;
-
-	printf("EGL config: %08X, %08X, %08X %dx%d\n",gl.setup.context,gl.setup.display,gl.setup.surface,w,h);
-	return true;
-}
-
-void egl_stealcntx()
-{
-	gl.setup.context=eglGetCurrentContext();
-	gl.setup.display=eglGetCurrentDisplay();
-	gl.setup.surface=eglGetCurrentSurface(EGL_DRAW);
-}
-
-//swap buffers
-void gl_swap()
-{
-	#ifdef TARGET_PANDORA0
-	if (fbdev >= 0)
-	{
-		int arg = 0;
-		ioctl(fbdev,FBIO_WAITFORVSYNC,&arg);
-	}
 	#endif
-	eglSwapBuffers(gl.setup.display, gl.setup.surface);
-}
 
-//destroy the gles context and free resources
-void gl_term()
-{
-#if HOST_OS==OS_WINDOWS
-	ReleaseDC((HWND)gl.setup.native_wind,(HDC)gl.setup.native_disp);
+		eglMakeCurrent(gl.setup.display, gl.setup.surface, gl.setup.surface, gl.setup.context);
+
+		if (eglCheck())
+			return false;
+
+		EGLint w,h;
+		eglQuerySurface(gl.setup.display, gl.setup.surface, EGL_WIDTH, &w);
+		eglQuerySurface(gl.setup.display, gl.setup.surface, EGL_HEIGHT, &h);
+
+		screen_width=w;
+		screen_height=h;
+
+		printf("EGL config: %08X, %08X, %08X %dx%d\n",gl.setup.context,gl.setup.display,gl.setup.surface,w,h);
+		return true;
+	}
+
+	void egl_stealcntx()
+	{
+		gl.setup.context=eglGetCurrentContext();
+		gl.setup.display=eglGetCurrentDisplay();
+		gl.setup.surface=eglGetCurrentSurface(EGL_DRAW);
+	}
+
+	//swap buffers
+	void gl_swap()
+	{
+		#ifdef TARGET_PANDORA0
+		if (fbdev >= 0)
+		{
+			int arg = 0;
+			ioctl(fbdev,FBIO_WAITFORVSYNC,&arg);
+		}
+		#endif
+		eglSwapBuffers(gl.setup.display, gl.setup.surface);
+	}
+
+	//destroy the gles context and free resources
+	void gl_term()
+	{
+	#if HOST_OS==OS_WINDOWS
+		ReleaseDC((HWND)gl.setup.native_wind,(HDC)gl.setup.native_disp);
+	#endif
+	#ifdef TARGET_PANDORA
+		eglMakeCurrent( gl.setup.display, NULL, NULL, EGL_NO_CONTEXT );
+		if (gl.setup.context)
+			eglDestroyContext(gl.setup.display, gl.setup.context);	
+		if (gl.setup.surface)
+			eglDestroySurface(gl.setup.display, gl.setup.surface);
+		if (gl.setup.display)
+			eglTerminate(gl.setup.display);
+		if (fbdev>=0)
+			close( fbdev );
+		
+		fbdev=-1;
+		gl.setup.context=0;
+		gl.setup.surface=0;
+		gl.setup.display=0;
+	#endif
+	}
+#else
+
+	#if HOST_OS == OS_WINDOWS
+		#define WGL_DRAW_TO_WINDOW_ARB         0x2001
+		#define WGL_ACCELERATION_ARB           0x2003
+		#define WGL_SWAP_METHOD_ARB            0x2007
+		#define WGL_SUPPORT_OPENGL_ARB         0x2010
+		#define WGL_DOUBLE_BUFFER_ARB          0x2011
+		#define WGL_PIXEL_TYPE_ARB             0x2013
+		#define WGL_COLOR_BITS_ARB             0x2014
+		#define WGL_DEPTH_BITS_ARB             0x2022
+		#define WGL_STENCIL_BITS_ARB           0x2023
+		#define WGL_FULL_ACCELERATION_ARB      0x2027
+		#define WGL_SWAP_EXCHANGE_ARB          0x2028
+		#define WGL_TYPE_RGBA_ARB              0x202B
+		#define WGL_CONTEXT_MAJOR_VERSION_ARB  0x2091
+		#define WGL_CONTEXT_MINOR_VERSION_ARB  0x2092
+		#define WGL_CONTEXT_FLAGS_ARB              0x2094
+
+		#define		WGL_CONTEXT_PROFILE_MASK_ARB  0x9126
+		#define 	WGL_CONTEXT_MAJOR_VERSION_ARB   0x2091
+		#define 	WGL_CONTEXT_MINOR_VERSION_ARB   0x2092
+		#define 	WGL_CONTEXT_LAYER_PLANE_ARB   0x2093
+		#define 	WGL_CONTEXT_FLAGS_ARB   0x2094
+		#define 	WGL_CONTEXT_DEBUG_BIT_ARB   0x0001
+		#define 	WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB   0x0002
+		#define 	ERROR_INVALID_VERSION_ARB   0x2095
+		#define		WGL_CONTEXT_CORE_PROFILE_BIT_ARB 0x00000001 
+
+		typedef BOOL (WINAPI * PFNWGLCHOOSEPIXELFORMATARBPROC) (HDC hdc, const int *piAttribIList, const FLOAT *pfAttribFList, UINT nMaxFormats, 
+		                                                        int *piFormats, UINT *nNumFormats);
+		typedef HGLRC (WINAPI * PFNWGLCREATECONTEXTATTRIBSARBPROC) (HDC hDC, HGLRC hShareContext, const int *attribList);
+		typedef BOOL (WINAPI * PFNWGLSWAPINTERVALEXTPROC) (int interval);
+
+		PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB;
+		PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB;
+		PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT;
+
+
+		HDC ourWindowHandleToDeviceContext;
+		bool gl_init(void* hwnd, void* hdc)
+		{
+			PIXELFORMATDESCRIPTOR pfd =
+		    {
+		            sizeof(PIXELFORMATDESCRIPTOR),
+		            1,
+		            PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER,    //Flags
+		            PFD_TYPE_RGBA,            //The kind of framebuffer. RGBA or palette.
+		            32,                        //Colordepth of the framebuffer.
+		            0, 0, 0, 0, 0, 0,
+		            0,
+		            0,
+		            0,
+		            0, 0, 0, 0,
+		            24,                        //Number of bits for the depthbuffer
+		            8,                        //Number of bits for the stencilbuffer
+		            0,                        //Number of Aux buffers in the framebuffer.
+		            PFD_MAIN_PLANE,
+		            0,
+		            0, 0, 0
+		    };
+
+		    /*HDC*/ ourWindowHandleToDeviceContext = (HDC)hdc;//GetDC((HWND)hwnd);
+
+		    int  letWindowsChooseThisPixelFormat;
+		    letWindowsChooseThisPixelFormat = ChoosePixelFormat(ourWindowHandleToDeviceContext, &pfd); 
+		    SetPixelFormat(ourWindowHandleToDeviceContext,letWindowsChooseThisPixelFormat, &pfd);
+
+		    HGLRC ourOpenGLRenderingContext = wglCreateContext(ourWindowHandleToDeviceContext);
+		    wglMakeCurrent (ourWindowHandleToDeviceContext, ourOpenGLRenderingContext);
+
+			bool rv = true;
+
+			if (rv) {
+
+				wglChoosePixelFormatARB = (PFNWGLCHOOSEPIXELFORMATARBPROC)wglGetProcAddress("wglChoosePixelFormatARB");
+				if(!wglChoosePixelFormatARB)
+				{
+					return false;
+				}
+
+				wglCreateContextAttribsARB = (PFNWGLCREATECONTEXTATTRIBSARBPROC)wglGetProcAddress("wglCreateContextAttribsARB");
+				if(!wglCreateContextAttribsARB)
+				{
+					return false;
+				}
+
+				wglSwapIntervalEXT = (PFNWGLSWAPINTERVALEXTPROC)wglGetProcAddress("wglSwapIntervalEXT");
+				if(!wglSwapIntervalEXT)
+				{
+					return false;
+				}
+
+				int attribs[] =
+		       {
+		            WGL_CONTEXT_MAJOR_VERSION_ARB, 3,
+		            WGL_CONTEXT_MINOR_VERSION_ARB, 1, 
+		            WGL_CONTEXT_FLAGS_ARB, WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB,
+		            WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
+		            0
+		       };
+
+				HGLRC m_hrc = wglCreateContextAttribsARB(ourWindowHandleToDeviceContext,0, attribs);
+
+				if (m_hrc)
+					wglMakeCurrent(ourWindowHandleToDeviceContext,m_hrc);
+				else
+					rv = false;
+
+				wglDeleteContext(ourOpenGLRenderingContext);
+			}
+
+			if (rv) {
+				rv = gl3wInit() != -1 && gl3wIsSupported(3, 1);
+			}
+
+			RECT r;
+			GetClientRect((HWND)hwnd, &r);
+			screen_width = r.right - r.left;
+			screen_height = r.bottom - r.top;
+
+			return rv;
+		}
+		#include <Wingdi.h>
+		void gl_swap()
+		{
+			wglSwapLayerBuffers(ourWindowHandleToDeviceContext,WGL_SWAP_MAIN_PLANE);
+			//SwapBuffers(ourWindowHandleToDeviceContext);
+		}
+	#else
+		#if defined(SUPPORT_X11)
+			//! windows && X11
+			//let's assume glx for now
+
+			#include <X11/X.h>
+			#include <X11/Xlib.h>
+			#include <GL/gl.h>
+			#include <GL/glx.h>
+
+
+			bool gl_init(void* wind, void* disp)
+			{
+				extern void* x11_glc;
+
+				glXMakeCurrent((Display*)libPvr_GetRenderSurface(), 
+					(GLXDrawable)libPvr_GetRenderTarget(), 
+					(GLXContext)x11_glc);
+
+				return gl3wInit() != -1 && gl3wIsSupported(3, 1);
+			}
+
+			void gl_swap()
+			{
+				glXSwapBuffers((Display*)libPvr_GetRenderSurface(), (GLXDrawable)libPvr_GetRenderTarget());
+			}
+		#endif
+	#endif
 #endif
-#ifdef TARGET_PANDORA
-	eglMakeCurrent( gl.setup.display, NULL, NULL, EGL_NO_CONTEXT );
-	if (gl.setup.context)
-		eglDestroyContext(gl.setup.display, gl.setup.context);	
-	if (gl.setup.surface)
-		eglDestroySurface(gl.setup.display, gl.setup.surface);
-	if (gl.setup.display)
-		eglTerminate(gl.setup.display);
-	if (fbdev>=0)
-		close( fbdev );
-	
-	fbdev=-1;
-	gl.setup.context=0;
-	gl.setup.surface=0;
-	gl.setup.display=0;
-#endif
-}
 
 
 struct ShaderUniforms_t
@@ -508,6 +708,10 @@ GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentShader)
 	glBindAttribLocation(program, VERTEX_COL_BASE_ARRAY, "in_base");
 	glBindAttribLocation(program, VERTEX_COL_OFFS_ARRAY, "in_offs");
 	glBindAttribLocation(program, VERTEX_UV_ARRAY,       "in_uv");
+
+#ifndef GLES
+	glBindFragDataLocation(program, 0, "FragColor");
+#endif
 
 	glLinkProgram(program);
 
@@ -616,6 +820,14 @@ GLuint osd_font;
 
 bool gl_create_resources()
 {
+
+#ifndef GLES
+	//create vao
+	//This is really not "proper", vaos are suposed to be defined once
+	//i keep updating the same one to make the es2 code work in 3.1 context
+	glGenVertexArrays(1, &gl.vbo.vao);
+#endif
+
 	//create vbos
 	glGenBuffers(1, &gl.vbo.geometry);
 	glGenBuffers(1, &gl.vbo.modvols);
@@ -696,8 +908,7 @@ bool gl_create_resources()
 	return true;
 }
 
-//create a basic gles context
-bool gl_init(EGLNativeWindowType wind, EGLNativeDisplayType disp);
+bool gl_init(void* wind, void* disp);
 
 //swap buffers
 void gl_swap();
@@ -713,19 +924,21 @@ bool gl_create_resources();
 
 bool gles_init()
 {
-	if (!gl_init((EGLNativeWindowType)libPvr_GetRenderTarget(),
-		         (EGLNativeDisplayType)libPvr_GetRenderSurface()))
+
+	if (!gl_init((void*)libPvr_GetRenderTarget(),
+		         (void*)libPvr_GetRenderSurface()))
 			return false;
 
 	if (!gl_create_resources())
 		return false;
 
-	
+#ifdef GLES
 	#ifdef TARGET_PANDORA
 	fbdev=open("/dev/fb0", O_RDONLY);
 	#else
 	eglSwapInterval(gl.setup.display,1);
 	#endif
+#endif
 
 	//clean up all buffers ...
 	for (int i=0;i<10;i++)
@@ -1087,7 +1300,7 @@ void OSD_DRAW()
 		glUseProgram(gl.OSD_SHADER.program);
 
 		//reset rendering scale
-
+/*
 		float dc_width=640;
 		float dc_height=480;
 
@@ -1101,7 +1314,7 @@ void OSD_DRAW()
 		ShaderUniforms.scale_coefs[3]=-1;
 		
 		glUniform4fv( gl.OSD_SHADER.scale, 1, ShaderUniforms.scale_coefs);
-
+*/
 
 		glEnable(GL_BLEND);
 		glDisable(GL_DEPTH_TEST);
@@ -1136,6 +1349,8 @@ void OSD_DRAW()
     
     glBindTexture(GL_TEXTURE_2D,osd_font);
     glUseProgram(gl.OSD_SHADER.program);
+  
+  /*
     //-1 -> too much to left
     ShaderUniforms.scale_coefs[0]=2.0f/(screen_width/dc2s_scale_h);
     ShaderUniforms.scale_coefs[1]=-2/dc_height;
@@ -1143,7 +1358,7 @@ void OSD_DRAW()
     ShaderUniforms.scale_coefs[3]=-1;
     
     glUniform4fv( gl.OSD_SHADER.scale, 1, ShaderUniforms.scale_coefs);
-
+*/
 
     glEnable(GL_BLEND);
     glDisable(GL_DEPTH_TEST);
@@ -1166,19 +1381,35 @@ void OSD_DRAW()
 #endif
 }
 
+bool ProcessFrame(TA_context* ctx)
+{
+	//disable RTTs for now ..
+	if (ctx->rend.isRTT)
+		return false;
+
+	ctx->rend_inuse.Lock();
+	ctx->MarkRend();
+
+	if (KillTex)
+	{
+		void killtex();
+		killtex();
+		printf("Texture cache cleared\n");
+	}
+
+	if (!ta_parse_vdrc(ctx))
+		return false;
+
+	CollectCleanup();
+
+	return true;
+}
+
 bool RenderFrame()
 {
-	bool is_rtt=pvrrc.isRTT;//(FB_W_SOF1& 0x1000000)!=0;
+	DoCleanup();
 
-	//disable RTTs for now ..
-	if (is_rtt)
-		return false;
-
-	_pvrrc->rend_inuse.Lock();
-	_pvrrc->MarkRend();
-
-	if (!ta_parse_vdrc(_pvrrc))
-		return false;
+	bool is_rtt=pvrrc.isRTT;
 
 	OSD_HOOK();
 
@@ -1296,14 +1527,21 @@ bool RenderFrame()
 
 	float scale_x=1, scale_y=1;
 
+	float scissoring_scale_x = 1;
+
 	if (!is_rtt)
 	{
 		scale_x=fb_scale_x;
 		scale_y=fb_scale_y;
 
 		//work out scaling parameters !
+		//Pixel doubling is on VO, so it does not affect any pixel operations
+		//A second scaling is used here for scissoring
 		if (VO_CONTROL.pixel_double)
-			scale_x*=0.5;
+		{
+			scissoring_scale_x = 0.5f;
+			scale_x *= 0.5f;
+		}
 	}
 	
 	if (SCALER_CTL.hscale)
@@ -1347,10 +1585,10 @@ bool RenderFrame()
 	float ds2s_offs_x=(screen_width-dc2s_scale_h*640)/2;
 
 	//-1 -> too much to left
-	ShaderUniforms.scale_coefs[0]=2.0f/(screen_width/dc2s_scale_h);
+	ShaderUniforms.scale_coefs[0]=2.0f/(screen_width/dc2s_scale_h*scale_x);
 	ShaderUniforms.scale_coefs[1]=(is_rtt?2:-2)/dc_height;
 	ShaderUniforms.scale_coefs[2]=1-2*ds2s_offs_x/(screen_width);
-	ShaderUniforms.scale_coefs[3]=is_rtt?1:-1;
+	ShaderUniforms.scale_coefs[3]=(is_rtt?1:-1);
 
 
 	ShaderUniforms.depth_coefs[0]=2/(vtx_max_fZ-vtx_min_fZ);
@@ -1470,12 +1708,6 @@ bool RenderFrame()
 	{
 		glBindFramebuffer(GL_FRAMEBUFFER,0);
 	}
-	if (KillTex)
-	{
-		void killtex();
-		killtex();
-		printf("Texture cache cleared\n");
-	}
 	
 	//Clear depth
 	//Color is cleared by the bgp
@@ -1508,10 +1740,11 @@ bool RenderFrame()
 		glBufferData(GL_ARRAY_BUFFER,pvrrc.modtrig.bytes(),pvrrc.modtrig.head(),GL_STREAM_DRAW); glCheck();
 	}
 
-	palette_update();
-
 	int offs_x=ds2s_offs_x+0.5f;
 	//this needs to be scaled
+	
+	//not all scaling affects pixel operations, scale to adjust for that
+	scale_x *= scissoring_scale_x;
 	glScissor(offs_x+pvrrc.fb_X_CLIP.min/scale_x,(pvrrc.fb_Y_CLIP.min/scale_y)*dc2s_scale_h,(pvrrc.fb_X_CLIP.max-pvrrc.fb_X_CLIP.min+1)/scale_x*dc2s_scale_h,(pvrrc.fb_Y_CLIP.max-pvrrc.fb_Y_CLIP.min+1)/scale_y*dc2s_scale_h);
 	if (settings.rend.WideScreen && pvrrc.fb_X_CLIP.min==0 && ((pvrrc.fb_X_CLIP.max+1)/scale_x==640) && (pvrrc.fb_Y_CLIP.min==0) && ((pvrrc.fb_Y_CLIP.max+1)/scale_y==480 ) )
 	{
@@ -1519,6 +1752,9 @@ bool RenderFrame()
 	}
 	else
 		glEnable(GL_SCISSOR_TEST);
+
+	//restore scale_x
+	scale_x /= scissoring_scale_x;
 
 	DrawStrips();
 
@@ -1579,19 +1815,12 @@ struct glesrend : Renderer
 	void Resize(int w, int h) { }
 	void Term() { } 
 
-	bool Render() 
-	{ 
-		bool do_swp=RenderFrame();
-
-		if (do_swp)
-		{
-			OSD_DRAW();
-		}
-
-		return do_swp;
-	}
+	bool Process(TA_context* ctx) { return ProcessFrame(ctx); }
+	bool Render() { return RenderFrame(); }
 
 	void Present() { gl_swap(); }
+
+	void DrawOSD() { OSD_DRAW(); }
 };
 
 

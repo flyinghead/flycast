@@ -125,6 +125,7 @@ int ExeptionHandler(u32 dwCode, void* pExceptionPointers)
 	{
 		return EXCEPTION_CONTINUE_EXECUTION;
 	}
+#ifndef HOST_NO_REC
 	else if ( ngen_Rewrite((unat&)ep->ContextRecord->Eip,*(unat*)ep->ContextRecord->Esp,ep->ContextRecord->Eax) )
 	{
 		//remove the call from call stack
@@ -133,6 +134,7 @@ int ExeptionHandler(u32 dwCode, void* pExceptionPointers)
 		ep->ContextRecord->Ecx=ep->ContextRecord->Eax;
 		return EXCEPTION_CONTINUE_EXECUTION;
 	}
+#endif
 	else
 	{
 		printf("[GPF]Unhandled access to : 0x%X\n",address);
@@ -273,7 +275,7 @@ LRESULT CALLBACK WndProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 // Width and height of the window
 #define WINDOW_WIDTH  1280
-#define WINDOW_HEIGHT 800
+#define WINDOW_HEIGHT 720
 
 
 void* window_win;
@@ -308,7 +310,6 @@ void os_CreateWindow()
 
 	window_win=hWnd;
 
-	void os_InitAudio();
 	os_InitAudio();
 }
 
@@ -438,8 +439,104 @@ void* tick_th(void* p)
 
 cThread tick_thd(&tick_th,0);
 
+void ReserveBottomMemory()
+{
+#if defined(_WIN64) && defined(_DEBUG)
+    static bool s_initialized = false;
+    if ( s_initialized )
+        return;
+    s_initialized = true;
+ 
+    // Start by reserving large blocks of address space, and then
+    // gradually reduce the size in order to capture all of the
+    // fragments. Technically we should continue down to 64 KB but
+    // stopping at 1 MB is sufficient to keep most allocators out.
+ 
+    const size_t LOW_MEM_LINE = 0x100000000LL;
+    size_t totalReservation = 0;
+    size_t numVAllocs = 0;
+    size_t numHeapAllocs = 0;
+    size_t oneMB = 1024 * 1024;
+    for (size_t size = 256 * oneMB; size >= oneMB; size /= 2)
+    {
+        for (;;)
+        {
+            void* p = VirtualAlloc(0, size, MEM_RESERVE, PAGE_NOACCESS);
+            if (!p)
+                break;
+ 
+            if ((size_t)p >= LOW_MEM_LINE)
+            {
+                // We don't need this memory, so release it completely.
+                VirtualFree(p, 0, MEM_RELEASE);
+                break;
+            }
+ 
+            totalReservation += size;
+            ++numVAllocs;
+        }
+    }
+ 
+    // Now repeat the same process but making heap allocations, to use up
+    // the already reserved heap blocks that are below the 4 GB line.
+    HANDLE heap = GetProcessHeap();
+    for (size_t blockSize = 64 * 1024; blockSize >= 16; blockSize /= 2)
+    {
+        for (;;)
+        {
+            void* p = HeapAlloc(heap, 0, blockSize);
+            if (!p)
+                break;
+ 
+            if ((size_t)p >= LOW_MEM_LINE)
+            {
+                // We don't need this memory, so release it completely.
+                HeapFree(heap, 0, p);
+                break;
+            }
+ 
+            totalReservation += blockSize;
+            ++numHeapAllocs;
+        }
+    }
+ 
+    // Perversely enough the CRT doesn't use the process heap. Suck up
+    // the memory the CRT heap has already reserved.
+    for (size_t blockSize = 64 * 1024; blockSize >= 16; blockSize /= 2)
+    {
+        for (;;)
+        {
+            void* p = malloc(blockSize);
+            if (!p)
+                break;
+ 
+            if ((size_t)p >= LOW_MEM_LINE)
+            {
+                // We don't need this memory, so release it completely.
+                free(p);
+                break;
+            }
+ 
+            totalReservation += blockSize;
+            ++numHeapAllocs;
+        }
+    }
+ 
+    // Print diagnostics showing how many allocations we had to make in
+    // order to reserve all of low memory, typically less than 200.
+    char buffer[1000];
+    sprintf_s(buffer, "Reserved %1.3f MB (%d vallocs,"
+                      "%d heap allocs) of low-memory.\n",
+            totalReservation / (1024 * 1024.0),
+            (int)numVAllocs, (int)numHeapAllocs);
+    OutputDebugStringA(buffer);
+#endif
+}
+
 int CALLBACK WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine,int nCmdShowCmd)
 {
+	ReserveBottomMemory();
+
 	tick_thd.Start();
 
 	int argc=0;
@@ -487,6 +584,11 @@ double os_GetSeconds()
 
 	QueryPerformanceCounter(&time_now);
 	return time_now.QuadPart*qpfd;
+}
+
+void os_DebugBreak()
+{
+	__debugbreak();
 }
 
 //#include "plugins/plugin_manager.h"

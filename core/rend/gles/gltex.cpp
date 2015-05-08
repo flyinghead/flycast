@@ -70,18 +70,20 @@ struct TextureCacheData
 
 	GLuint texID;   //gl texture
 
+	u32 Lookups;
+
 	//decoded texture info
-	u32 sa;         //data start address in vram
+	u32 sa;         //pixel data start address in vram (might be offset for mipmaps/etc)
+	u32 sa_tex;		//texture data start address in vram 
 	u32 w,h;        //width & height of the texture
 	u32 size;       //size, in bytes, in vram
 
 	PvrTexInfo* tex;
 	TexConvFP*  texconv;
 
-	bool dirty;
+	u32 dirty;
 	vram_block* lock_block;
 
-	u32 Lookups;
 	u32 Updates;
 
 	//used for palette updates
@@ -128,13 +130,14 @@ struct TextureCacheData
 		//Reset state info ..
 		Lookups=0;
 		Updates=0;
-		dirty=true;
+		dirty=FrameCount;
 		lock_block=0;
 
 		//decode info from tsp/tcw into the texture struct
 		tex=&format[tcw.PixelFmt==7?0:tcw.PixelFmt];		//texture format table entry
 
-		sa=(tcw.TexAddr<<3) & VRAM_MASK; //data start address
+		sa_tex = (tcw.TexAddr<<3) & VRAM_MASK;	//texture start address
+		sa = sa_tex;							//data texture start address (modified for MIPs, as needed)
 		w=8<<tsp.TexU;                   //tex width
 		h=8<<tsp.TexV;                   //tex height
 
@@ -145,7 +148,9 @@ struct TextureCacheData
 		SetRepeatMode(GL_TEXTURE_WRAP_S,tsp.ClampU,tsp.FlipU); // glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, (tsp.ClampU ? GL_CLAMP_TO_EDGE : (tsp.FlipU ? GL_MIRRORED_REPEAT : GL_REPEAT))) ;
 		SetRepeatMode(GL_TEXTURE_WRAP_T,tsp.ClampV,tsp.FlipV); // glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, (tsp.ClampV ? GL_CLAMP_TO_EDGE : (tsp.FlipV ? GL_MIRRORED_REPEAT : GL_REPEAT))) ;
 
+#ifdef GLES
 		glHint(GL_GENERATE_MIPMAP_HINT, GL_NICEST);
+#endif
 
 		//set texture filter mode
 		if ( tsp.FilterMode == 0 )
@@ -242,7 +247,7 @@ struct TextureCacheData
 	{
 		//texture state tracking stuff
 		Updates++;
-		dirty=false;
+		dirty=0;
 
 		GLuint textype=tex->type;
 
@@ -279,7 +284,7 @@ struct TextureCacheData
 		//PrintTextureName();
 
 		//lock the texture to detect changes in it
-		lock_block = libCore_vramlock_Lock(sa,sa+size-1,this);
+		lock_block = libCore_vramlock_Lock(sa_tex,sa+size-1,this);
 
 		//upload to OpenGL !
 		glBindTexture(GL_TEXTURE_2D, texID);
@@ -344,7 +349,11 @@ void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 		m_i32TexSize by m_i32TexSize.
 	*/
 
+#ifdef GLES
 	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24_OES, fbw, fbh);
+#else
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, fbw, fbh);
+#endif
 
 	glGenRenderbuffers(1, &rv.stencilb);
 	glBindRenderbuffer(GL_RENDERBUFFER, rv.stencilb);
@@ -419,6 +428,32 @@ GLuint GetTexture(TSP tsp,TCW tcw)
 	return tf->texID;
 }
 
+void CollectCleanup() {
+	vector<u64> list;
+
+	u32 TargetFrame = max((u32)120,FrameCount) - 120;
+
+	for (TexCacheIter i=TexCache.begin();i!=TexCache.end();i++)
+	{
+		if ( i->second.dirty &&  i->second.dirty < TargetFrame) {
+			list.push_back(i->first);
+		}
+
+		if (list.size() > 5)
+			break;
+	}
+
+	for (size_t i=0; i<list.size(); i++) {
+		//printf("Deleting %d\n",TexCache[list[i]].texID);
+		TexCache[list[i]].Delete();
+
+		TexCache.erase(list[i]);
+	}
+}
+
+void DoCleanup() {
+
+}
 void killtex()
 {
 	for (TexCacheIter i=TexCache.begin();i!=TexCache.end();i++)
@@ -432,7 +467,7 @@ void killtex()
 void rend_text_invl(vram_block* bl)
 {
 	TextureCacheData* tcd = (TextureCacheData*)bl->userdata;
-	tcd->dirty=true;
+	tcd->dirty=FrameCount;
 	tcd->lock_block=0;
 
 	libCore_vramlock_Unlock_block_wb(bl);

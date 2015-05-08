@@ -5,6 +5,7 @@ NOT_ARM := 1
 X86_REC := 1
 #NO_REC := 1
 #NO_REND := 1
+WEBUI :=1 
 
 RZDCY_SRC_DIR = ../../core
 
@@ -38,8 +39,11 @@ CFLAGS += -ffast-math -ftree-vectorize
 
 #-fprefetch-loop-arrays 
 #-std=c++0x
+CXXFLAGS += $(CFLAGS) $(MFLAGS) -fno-exceptions -fno-rtti -fpermissive
+CXXFLAGS += -D SUPPORT_X11 
 
-CXXFLAGS = $(MFLAGS) -fno-exceptions -fno-rtti -fpermissive
+# use this to do GLES on x11 (also, update the libs)
+# CXXFLAGS += -DGLES
 
 
 ifdef PGO_MAKE
@@ -63,8 +67,11 @@ INCS	:= -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps -I$(RZDCY_SRC_DIR)/khronos -I
 
 LIBS    := -L../linux-deps/lib/x86 -L./enta_viv 
 #LIBS	+= -lglapi
-LIBS    += -lm -lrt -lEGL -lGLESv2 #-lglslcompiler -lIMGegl -lpvr2d -lsrv_um
-LIBS    += -lpthread -lasound -lX11 -lXdmcp -lXau
+LIBS    += -lm -lrt
+LIBS	+= -ldl -lGL #for desktop gl
+#use this for GLES 
+#LIBS	+= -lEGL -lGLESv2 #-lglslcompiler -lIMGegl -lpvr2d -lsrv_um
+LIBS    += -lpthread -lasound -lX11
 
 
 OBJECTS=$(RZDCY_FILES:.cpp=.build_obj)

@@ -42,7 +42,6 @@
     <string name="controller_already_in_use">該控制器已被使用!</string>
     <string name="modified_layout">啟用自定義按鍵布局</string>
     <string name="controller_compat">啟用兼容模式</string>
-    <string name="dpad_joystick">搖桿使用方向鍵布局</string>
     <string name="mic_in_port_2">麥克風已插入 Port 2</string>
     <string name="customize_physical_controls">自定義物理控制</string>
     <string name="map_keycode_title">修改控制器</string>

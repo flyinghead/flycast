@@ -502,11 +502,12 @@ using namespace std;
 #define VER_FULLNAME	VER_EMUNAME " rel0" _X_x_X_MMU_VER_STR " (built " __DATE__ "@" __TIME__ ")"
 #define VER_SHORTNAME	VER_EMUNAME " rel0" _X_x_X_MMU_VER_STR
 
+void os_DebugBreak();
+#define dbgbreak os_DebugBreak()
+
 #if COMPILER_VC==BUILD_COMPILER
-#define dbgbreak __debugbreak(); 
 #pragma warning( disable : 4127 4996 /*4244*/)
 #else
-#define dbgbreak { (*(int*)0)=0x33; }
 #define stricmp strcasecmp
 #endif
 
@@ -591,6 +592,14 @@ struct RegisterStruct
 
 struct settings_t
 {
+	struct {
+		bool UseReios;
+	} bios;
+
+	struct {
+		string ElfFile;
+	} reios;
+
 	struct
 	{
 		bool UseMipmaps;
@@ -673,6 +682,10 @@ struct settings_t
 		u32 subdivide_transp;
 		u32 rend;
 	} pvr;
+
+	struct {
+		bool SerialConsole;
+	} debug;
 };
 
 extern settings_t settings;

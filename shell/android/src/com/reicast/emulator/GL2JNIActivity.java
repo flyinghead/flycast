@@ -6,7 +6,6 @@ import java.util.HashMap;
 import tv.ouya.console.api.OuyaController;
 import android.annotation.TargetApi;
 import android.app.Activity;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.net.Uri;
@@ -21,6 +20,7 @@ import android.view.MotionEvent;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup.LayoutParams;
 import android.view.Window;
+import android.view.WindowManager;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 
@@ -53,8 +53,12 @@ public class GL2JNIActivity extends Activity {
 	@Override
 	protected void onCreate(Bundle icicle) {
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
-		
 		prefs = PreferenceManager.getDefaultSharedPreferences(this);
+		if (prefs.getInt(Config.pref_rendertype, 2) == 2) {
+			getWindow().setFlags(
+					WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
+					WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
+		}
 		config = new Config(GL2JNIActivity.this);
 		config.getConfigurationPrefs();
 		menu = new OnScreenMenu(GL2JNIActivity.this, prefs);
@@ -92,6 +96,7 @@ public class GL2JNIActivity extends Activity {
 		pad.deviceDescriptor_PlayerNum.remove(null);
 
 		moga.onCreate(this, pad);
+		moga.mListener.setPlayerNum(1);
 
 		boolean controllerTwoConnected = false;
 		boolean controllerThreeConnected = false;
@@ -146,10 +151,17 @@ public class GL2JNIActivity extends Activity {
 					String id = pad.portId[playerNum];
 					pad.custom[playerNum] = prefs.getBoolean(Gamepad.pref_js_modified + id, false);
 					pad.compat[playerNum] = prefs.getBoolean(Gamepad.pref_js_compat + id, false);
-					pad.joystick[playerNum] = prefs.getBoolean(Gamepad.pref_js_separate + id, true);
-					if (!pad.compat[playerNum]) {
+					pad.joystick[playerNum] = prefs.getBoolean(Gamepad.pref_js_merged + id, false);
+					if (InputDevice.getDevice(joy).getName()
+							.contains(Gamepad.controllers_gamekey)) {
 						if (pad.custom[playerNum]) {
-							pad.map[playerNum] = pad.setModifiedKeys(id, playerNum, prefs);
+							pad.setCustomMapping(id, playerNum, prefs);
+						} else {
+							pad.map[playerNum] = pad.getConsoleController();
+						}
+					} else if (!pad.compat[playerNum]) {
+						if (pad.custom[playerNum]) {
+							pad.setCustomMapping(id, playerNum, prefs);
 						} else if (InputDevice.getDevice(joy).getName()
 								.equals(Gamepad.controllers_sony)) {
 							pad.map[playerNum] = pad.getConsoleController();
@@ -166,27 +178,28 @@ public class GL2JNIActivity extends Activity {
 							pad.map[playerNum] = pad.getOUYAController();
 						}
 					} else {
-						getCompatibilityMap(playerNum, id);
+						pad.getCompatibilityMap(playerNum, id, prefs);
 					}
-					initJoyStickLayout(playerNum);
+					pad.initJoyStickLayout(playerNum);
+				} else {
+					pad.runCompatibilityMode(joy, prefs);
 				}
 			}
 			if (joys.length == 0) {
-				runCompatibilityMode();
+				pad.fullCompatibilityMode(prefs);
 			}
 		} else {
-			runCompatibilityMode();
+			pad.fullCompatibilityMode(prefs);
 		}
 
 		config.loadConfigurationPrefs();
 
 		// When viewing a resource, pass its URI to the native code for opening
-		Intent intent = getIntent();
-		if (intent.getAction().equals(Intent.ACTION_VIEW))
-			fileName = Uri.decode(intent.getData().toString());
+		if (getIntent().getAction().equals("com.reicast.EMULATOR"))
+			fileName = Uri.decode(getIntent().getData().toString());
 
 		// Create the actual GLES view
-		mView = new GL2JNIView(getApplication(), config, fileName, false,
+		mView = new GL2JNIView(GL2JNIActivity.this, config, fileName, false,
 				prefs.getInt(Config.pref_renderdepth, 24), 0, false);
 		setContentView(mView);
 
@@ -220,31 +233,6 @@ public class GL2JNIActivity extends Activity {
 					displayFPS();
 				}
 			});
-		}
-	}
-
-	private void initJoyStickLayout(int playerNum) {
-		if (!pad.joystick[playerNum]) {
-			pad.globalLS_X[playerNum] = pad.previousLS_X[playerNum] = 0.0f;
-			pad.globalLS_Y[playerNum] = pad.previousLS_Y[playerNum] = 0.0f;
-		}
-	}
-	
-	private void runCompatibilityMode() {
-		for (int n = 0; n < 4; n++) {
-			if (pad.compat[n]) {
-				String id = pad.portId[n];
-				pad.joystick[n] = prefs.getBoolean(Gamepad.pref_js_separate + id, false);
-				getCompatibilityMap(n, pad.portId[n]);
-				initJoyStickLayout(n);
-			}
-		}
-	}
-
-	private void getCompatibilityMap(int playerNum, String id) {
-		pad.name[playerNum] = prefs.getInt(Gamepad.pref_pad + id, -1);
-		if (pad.name[playerNum] != -1) {
-			pad.map[playerNum] = pad.setModifiedKeys(id, playerNum, prefs);
 		}
 	}
 
@@ -286,12 +274,15 @@ public class GL2JNIActivity extends Activity {
 
 					GL2JNIView.jx[playerNum] = (int) (LS_X * 126);
 					GL2JNIView.jy[playerNum] = (int) (LS_Y * 126);
+					
+					GL2JNIView.lt[playerNum] = (int) (L2 * 255);
+					GL2JNIView.rt[playerNum] = (int) (R2 * 255);
 
-					if (prefs.getBoolean("right_buttons", true)) {
-						if (RS_Y > 0.5) {
+					if (prefs.getBoolean(Gamepad.pref_js_rbuttons + pad.portId[playerNum], true)) {
+						if (RS_Y > 0.25) {
 							handle_key(playerNum, pad.map[playerNum][0]/* A */, true);
 							pad.wasKeyStick[playerNum] = true;
-						} else if (RS_Y < 0.5) {
+						} else if (RS_Y < 0.25) {
 							handle_key(playerNum, pad.map[playerNum][1]/* B */, true);
 							pad.wasKeyStick[playerNum] = true;
 						} else if (pad.wasKeyStick[playerNum]){
@@ -300,15 +291,12 @@ public class GL2JNIActivity extends Activity {
 							pad.wasKeyStick[playerNum] = false;
 						}
 					} else {
-						if (RS_Y > 0.5) {
+						if (RS_Y > 0.25) {
 							GL2JNIView.rt[playerNum] = (int) (RS_Y * 255);
 							GL2JNIView.lt[playerNum] = (int) (L2 * 255);
-						} else if (RS_Y < 0.5) {
+						} else if (RS_Y < 0.25) {
 							GL2JNIView.rt[playerNum] = (int) (R2 * 255);
 							GL2JNIView.lt[playerNum] = (int) (-(RS_Y) * 255);
-						} else {
-							GL2JNIView.lt[playerNum] = (int) (L2 * 255);
-							GL2JNIView.rt[playerNum] = (int) (R2 * 255);
 						}
 					}
 				}
@@ -327,7 +315,73 @@ public class GL2JNIActivity extends Activity {
 		} else {
 			return false;
 		}
+	}
+	
+	public boolean motionEventHandler(Integer playerNum, com.bda.controller.MotionEvent event) {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
 
+			if (playerNum == null || playerNum == -1)
+				return false;
+
+			if (!pad.compat[playerNum]) {
+
+				// do other things with joystick
+				float LS_X = event.getAxisValue(OuyaController.AXIS_LS_X);
+				float LS_Y = event.getAxisValue(OuyaController.AXIS_LS_Y);
+				float RS_X = event.getAxisValue(OuyaController.AXIS_RS_X);
+				float RS_Y = event.getAxisValue(OuyaController.AXIS_RS_Y);
+				float L2 = event.getAxisValue(OuyaController.AXIS_L2);
+				float R2 = event.getAxisValue(OuyaController.AXIS_R2);
+
+				if (!pad.joystick[playerNum]) {
+					pad.previousLS_X[playerNum] = pad.globalLS_X[playerNum];
+					pad.previousLS_Y[playerNum] = pad.globalLS_Y[playerNum];
+					pad.globalLS_X[playerNum] = LS_X;
+					pad.globalLS_Y[playerNum] = LS_Y;
+				}
+
+				GL2JNIView.jx[playerNum] = (int) (LS_X * 126);
+				GL2JNIView.jy[playerNum] = (int) (LS_Y * 126);
+
+				GL2JNIView.lt[playerNum] = (int) (L2 * 255);
+				GL2JNIView.rt[playerNum] = (int) (R2 * 255);
+
+				if (prefs.getBoolean(Gamepad.pref_js_rbuttons + pad.portId[playerNum], true)) {
+					if (RS_Y > 0.25) {
+						handle_key(playerNum, pad.map[playerNum][0]/* A */, true);
+						pad.wasKeyStick[playerNum] = true;
+					} else if (RS_Y < 0.25) {
+						handle_key(playerNum, pad.map[playerNum][1]/* B */, true);
+						pad.wasKeyStick[playerNum] = true;
+					} else if (pad.wasKeyStick[playerNum]){
+						handle_key(playerNum, pad.map[playerNum][0], false);
+						handle_key(playerNum, pad.map[playerNum][1], false);
+						pad.wasKeyStick[playerNum] = false;
+					}
+				} else {
+					if (RS_Y > 0.25) {
+						GL2JNIView.rt[playerNum] = (int) (RS_Y * 255);
+						GL2JNIView.lt[playerNum] = (int) (L2 * 255);
+					} else if (RS_Y < 0.25) {
+						GL2JNIView.rt[playerNum] = (int) (R2 * 255);
+						GL2JNIView.lt[playerNum] = (int) (-(RS_Y) * 255);
+					}
+				}
+
+			}
+			mView.pushInput();
+			if (!pad.joystick[playerNum] && (pad.globalLS_X[playerNum] == pad.previousLS_X[playerNum] && pad.globalLS_Y[playerNum] == pad.previousLS_Y[playerNum])
+					|| (pad.previousLS_X[playerNum] == 0.0f && pad.previousLS_Y[playerNum] == 0.0f))
+				// Only handle Left Stick on an Xbox 360 controller if there was
+				// some actual motion on the stick,
+				// so otherwise the event can be handled as a DPAD event
+				return false;
+			else
+				return true;
+
+		} else {
+			return false;
+		}
 	}
 	
 	public boolean simulatedTouchEvent(int playerNum, float L2, float R2) {
@@ -387,22 +441,20 @@ public class GL2JNIActivity extends Activity {
 
 	public void toggleVmu() {
 		boolean showFloating = !prefs.getBoolean(Config.pref_vmu, false);
-		if(showFloating){
-			if(popUp.isShowing()){
+		if (showFloating) {
+			if (popUp.isShowing()) {
 				popUp.dismiss();
 			}
 			//remove from popup menu
-			LinearLayout parent = (LinearLayout) popUp.getContentView();
-			parent.removeView(menu.getVmu());
+			popUp.hideVmu();
 			//add to floating window
 			vmuPop.showVmu();
 			vmuPop.showAtLocation(mView, Gravity.TOP | Gravity.RIGHT, 4, 4);
 			vmuPop.update(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
-		}else{
+		} else {
 			vmuPop.dismiss();
 			//remove from floating window
-			LinearLayout parent = (LinearLayout) vmuPop.getContentView();
-			parent.removeView(menu.getVmu());
+			vmuPop.hideVmu();
 			//add back to popup menu
 			popUp.showVmu();
 		}

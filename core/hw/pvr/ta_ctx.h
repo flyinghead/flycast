@@ -20,6 +20,8 @@ struct PolyParam
 
 	//lets see what more :)
 
+	u32 texid;
+
 	TSP tsp;
 	TCW tcw;
 	PCW pcw;
@@ -46,11 +48,29 @@ struct  tad_context
 {
 	u8* thd_data;
 	u8* thd_root;
+	u8* thd_old_data;
 
 	void Clear()
 	{
-		thd_data=thd_root;
+		thd_old_data = thd_data = thd_root;
 	}
+
+	void ClearPartial()
+	{
+		thd_old_data = thd_data;
+		thd_data = thd_root;
+	}
+	
+	u8* End()
+	{
+		return thd_data == thd_root ? thd_old_data : thd_data;
+	}
+
+	void Reset(u8* ptr)
+	{
+		thd_data = thd_root = thd_old_data = ptr;
+	}
+
 };
 
 struct rend_context
@@ -126,12 +146,12 @@ struct TA_context
 
 	void MarkRend()
 	{
-		rend.proc_start = rend.proc_end;
-		rend.proc_end = tad.thd_data;
+		rend.proc_start = tad.thd_root;
+		rend.proc_end = tad.End();
 	}
 	void Alloc()
 	{
-		tad.thd_root=tad.thd_data=(u8*)malloc(2*1024*1024);
+		tad.Reset((u8*)malloc(2*1024*1024));
 
 		rend.verts.InitBytes(1024*1024,&rend.Overrun); //up to 1 mb of vtx data/frame = ~ 38k vtx/frame
 		rend.idx.Init(60*1024,&rend.Overrun);			//up to 60K indexes ( idx have stripification overhead )
@@ -150,7 +170,7 @@ struct TA_context
 		tad.Clear();
 		rend_inuse.Lock();
 		rend.Clear();
-		rend.proc_end = rend.proc_start = tad.thd_data;
+		rend.proc_end = rend.proc_start = tad.thd_root;
 		rend_inuse.Unlock();
 	}
 
@@ -177,6 +197,7 @@ extern rend_context vd_rc;
 TA_context* tactx_Find(u32 addr, bool allocnew=false);
 TA_context* tactx_Pop(u32 addr);
 
+TA_context* tactx_Alloc();
 void tactx_Recycle(TA_context* poped_ctx);
 
 /*
@@ -188,8 +209,9 @@ void tactx_Recycle(TA_context* poped_ctx);
 #define TACTX_NONE (0xFFFFFFFF)
 
 void SetCurrentTARC(u32 addr);
-void QueueRender(TA_context* ctx);
+bool QueueRender(TA_context* ctx);
 TA_context* DequeueRender();
+void FinishRender(TA_context* ctx);
 bool TryDecodeTARC();
 void VDecEnd();
 

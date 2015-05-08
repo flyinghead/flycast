@@ -11,11 +11,21 @@
         <item>24</item>
         <item>32</item>        
     </string-array>
+    
+    <string-array name="flash">
+        <item>bin</item>
+    </string-array>
 
     <string-array name="cable">
         <item>HDMI</item>
         <item>Component</item>
         <item>VGA</item>
+    </string-array>
+    
+    <string-array name="themes">
+        <item>png</item>
+        <item>jpg</item>
+        <item>jpeg</item>
     </string-array>
     
     <string-array name="images">

@@ -4,6 +4,9 @@
 */
 
 #include "types.h"
+
+#ifndef HOST_NO_REC
+
 #include "decoder.h"
 #include "shil.h"
 #include "ngen.h"
@@ -654,7 +657,7 @@ u32 MatchDiv32(u32 pc , Sh4RegType &reg1,Sh4RegType &reg2 , Sh4RegType &reg3)
 		}
 		else
 		{
-			printf("%s\n",OpDesc[opcode]->diss);
+			//printf("DIV MATCH BROKEN BY: %s\n",OpDesc[opcode]->diss);
 			break;
 		}
 		
@@ -1169,7 +1172,7 @@ _end:
 			//Small-n-simple idle loop detector :p
 			if (state.info.has_readm && !state.info.has_writem && !state.info.has_fpu && blk->guest_opcodes<6)
 			{
-				if ((blk->BlockType==BET_Cond_0 || blk->BlockType==BET_Cond_1) && blk->BranchBlock<=blk->addr)
+				if (blk->BlockType==BET_Cond_0 || blk->BlockType==BET_Cond_1 && blk->BranchBlock<=blk->addr)
 				{
 					blk->guest_cycles*=3;
 				}
@@ -1210,3 +1213,4 @@ _end:
 	blk=0;
 }
 
+#endif

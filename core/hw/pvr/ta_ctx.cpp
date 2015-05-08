@@ -4,6 +4,9 @@
 extern u32 fskip;
 extern u32 FrameCount;
 
+int frameskip=0;
+bool FrameSkipping=false;		// global switch to enable/disable frameskip
+
 TA_context* ta_ctx;
 tad_context ta_tad;
 
@@ -32,14 +35,13 @@ void SetCurrentTARC(u32 addr)
 		
 		//clear context
 		ta_ctx=0;
-		ta_tad.thd_data=0;
-		ta_tad.thd_root=0;
+		ta_tad.Reset(0);
 	}
 }
 
 bool TryDecodeTARC()
 {
-	verify(ta_ctx);
+	verify(ta_ctx != 0);
 
 	if (vd_ctx == 0)
 	{
@@ -47,7 +49,7 @@ bool TryDecodeTARC()
 
 		vd_ctx->rend.proc_start = vd_ctx->rend.proc_end + 32;
 		vd_ctx->rend.proc_end = vd_ctx->tad.thd_data;
-
+			
 		vd_ctx->rend_inuse.Lock();
 		vd_rc = vd_ctx->rend;
 
@@ -60,7 +62,7 @@ bool TryDecodeTARC()
 
 void VDecEnd()
 {
-	verify(vd_ctx);
+	verify(vd_ctx != 0);
 
 	vd_ctx->rend = vd_rc;
 
@@ -72,33 +74,53 @@ void VDecEnd()
 cMutex mtx_rqueue;
 TA_context* rqueue;
 
-void QueueRender(TA_context* ctx)
+bool QueueRender(TA_context* ctx)
 {
 	verify(ctx != 0);
 	
+	if (FrameSkipping && frameskip) {
+ 		frameskip=1-frameskip;
+		tactx_Recycle(ctx);
+		fskip++;
+		return false;
+ 	}
+ 	
+	if (rqueue) {
+		tactx_Recycle(ctx);
+		fskip++;
+		return false;
+	}
+
 	mtx_rqueue.Lock();
 	TA_context* old = rqueue;
 	rqueue=ctx;
 	mtx_rqueue.Unlock();
 
-	if (old)
-	{
-		tactx_Recycle(old);
-		fskip++;
-	}
+	verify(!old);
+
+	return true;
 }
 
 TA_context* DequeueRender()
 {
 	mtx_rqueue.Lock();
 	TA_context* rv = rqueue;
-	rqueue = 0;
 	mtx_rqueue.Unlock();
 
 	if (rv)
 		FrameCount++;
 
 	return rv;
+}
+
+void FinishRender(TA_context* ctx)
+{
+	verify(rqueue == ctx);
+	mtx_rqueue.Lock();
+	rqueue = 0;
+	mtx_rqueue.Unlock();
+
+	tactx_Recycle(ctx);
 }
 
 cMutex mtx_pool;

@@ -40,6 +40,12 @@
 
 #define EXPORT_XPLAY __attribute__ ((visibility("default")))
 
+#define TAG "reidc"
+#define LOGW(...) ((void)__android_log_print( ANDROID_LOG_WARN, TAG, __VA_ARGS__ ))
+
+#undef NUM_METHODS
+#define NUM_METHODS(x) (sizeof(x)/sizeof(*(x)))
+
 static JavaVM *jVM;
 
 typedef unsigned char BOOL;
@@ -50,7 +56,7 @@ static jobject		g_pActivity		= 0;
 static jmethodID	javaOnNDKTouch	= 0;
 static jmethodID	javaOnNDKKey	= 0;
 
-int target;
+static bool isXperiaPlay;
 
 /**
  * Our saved state data.
@@ -146,12 +152,15 @@ engine_handle_input( struct android_app* app, AInputEvent* event )
                 touchstate[nPointerId].x = AMotionEvent_getX( event, n );
                 touchstate[nPointerId].y = AMotionEvent_getY( event, n );
             }
-            if( jni && g_pActivity && device == target ) {
-                (*jni)->CallVoidMethod( jni, g_pActivity, javaOnNDKTouch, device, nSourceId, nRawAction, touchstate[nPointerId].x, touchstate[nPointerId].y, newTouch);
+
+            if( jni && g_pActivity && isXperiaPlay) {
+//                (*jni)->CallVoidMethod( jni, g_pActivity, javaOnNDKTouch, device, nSourceId, nRawAction, touchstate[nPointerId].x, touchstate[nPointerId].y, newTouch);
+                (*jni)->CallVoidMethod( jni, g_pActivity, javaOnNDKTouch, device, nSourceId, nRawAction, touchstate[nPointerId].x, touchstate[nPointerId].y);
             }
             newTouch = JNI_FALSE;
         }
-        if( device == target ) {
+
+        if( isXperiaPlay ) {
             return 1;
         } else {
             return 0;
@@ -192,14 +201,6 @@ engine_handle_cmd( struct android_app* app, int32_t cmd )
             //engine_draw_frame( engine );
             break;
     }
-}
-
-static
-bool
-IsXperiaPlay() {
-    char mod[PROP_VALUE_MAX + 1];
-    int lmod = __system_property_get("ro.product.model", mod);
-    return mod == "R800a" || mod == "R800i" || mod == "R800x" || mod == "R800at" || mod == "SO-01D" || mod == "zeus";
 }
 
 /**
@@ -258,25 +259,55 @@ android_main( struct android_app* state )
     }
 }
 
-void EXPORT_XPLAY JNICALL Java_com_reicast_emulator_GL2JNINative_registerNative(JNIEnv *env, jobject clazz)
+static
+int
+RegisterNative( JNIEnv* env, jobject clazz, jboolean touchpad )
 {
-    g_pActivity = (jobject)(*env)->NewGlobalRef(env, clazz);
+	g_pActivity = (jobject)(*env)->NewGlobalRef( env, clazz );
+    isXperiaPlay = (bool) touchpad;
+	return 0;
 }
-void EXPORT_XPLAY JNICALL Java_com_reicast_emulator_GL2JNINative_registerXperia(JNIEnv *env, jobject clazz, jint xperia)
+
+static const JNINativeMethod activity_methods[] =
 {
-    target = xperia;
-}
+    { "RegisterNative",	"(Z)I",	(void*)RegisterNative },
+};
+
 jint EXPORT_XPLAY JNICALL JNI_OnLoad(JavaVM * vm, void * reserved)
 {
     JNIEnv *env;
     jVM = vm;
     if((*vm)->GetEnv(vm, (void**) &env, JNI_VERSION_1_4) != JNI_OK)
     {
+        LOGW("%s - Failed to get the environment using GetEnv()", __FUNCTION__);
         return -1;
     }
     const char* interface_path = "com/reicast/emulator/GL2JNINative";
     jclass java_activity_class = (*env)->FindClass( env, interface_path );
-    javaOnNDKTouch	= (*env)->GetMethodID( env, java_activity_class, "OnNativeMotion", "(IIIIIZ)Z");
+
+    if( !java_activity_class )
+	{
+		LOGW( "%s - Failed to get %s class reference", __FUNCTION__, interface_path );
+		return -1;
+	}
+
+    if( (*env)->RegisterNatives( env, java_activity_class, activity_methods, NUM_METHODS(activity_methods) ) != JNI_OK )
+    {
+		LOGW( "%s - Failed to register native activity methods", __FUNCTION__ );
+		return -1;
+	}
+
+    char device_type[PROP_VALUE_MAX];
+    __system_property_get("ro.product.model", device_type);
+    if( isXperiaPlay ) {
+        LOGW( "%s touchpad enabled", device_type );
+    } else {
+        LOGW( "%s touchpad ignored", device_type );
+    }
+
+//    javaOnNDKTouch	= (*env)->GetMethodID( env, java_activity_class, "OnNativeMotion", "(IIIIIZ)Z");
+    javaOnNDKTouch	= (*env)->GetMethodID( env, java_activity_class, "OnNativeMotion", "(IIIII)Z");
     javaOnNDKKey	= (*env)->GetMethodID( env, java_activity_class, "OnNativeKeyPress", "(IIII)Z");
+
     return JNI_VERSION_1_4;
 }

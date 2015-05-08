@@ -1,13 +1,18 @@
 package com.reicast.emulator.emu;
 
 
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
 import android.annotation.TargetApi;
+import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.graphics.Paint;
@@ -17,6 +22,7 @@ import android.media.AudioManager;
 import android.media.AudioTrack;
 import android.opengl.GLSurfaceView;
 import android.os.Build;
+import android.os.Handler;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
 import android.util.AttributeSet;
@@ -27,10 +33,13 @@ import android.view.ScaleGestureDetector;
 import android.view.ScaleGestureDetector.SimpleOnScaleGestureListener;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.Toast;
 
 import com.android.util.FileUtils;
 import com.reicast.emulator.GL2JNIActivity;
 import com.reicast.emulator.GL2JNINative;
+import com.reicast.emulator.MainActivity;
+import com.reicast.emulator.R;
 import com.reicast.emulator.config.Config;
 import com.reicast.emulator.emu.OnScreenMenu.FpsPopup;
 import com.reicast.emulator.periph.VJoy;
@@ -65,6 +74,7 @@ public class GL2JNIView extends GLSurfaceView
 	private static String fileName;
 	//private AudioThread audioThread;  
 	private EmuThread ethd;
+	private Handler handler = new Handler();
 
 	private static int sWidth;
 	private static int sHeight;
@@ -82,6 +92,7 @@ public class GL2JNIView extends GLSurfaceView
 	Renderer rend;
 
 	private boolean touchVibrationEnabled;
+	private int vibrationDuration;
 	Context context;
 
 	public void restoreCustomVjoyValues(float[][] vjoy_d_cached) {
@@ -120,6 +131,7 @@ public class GL2JNIView extends GLSurfaceView
 								SYSTEM_UI_FLAG_IMMERSIVE_STICKY
 								| SYSTEM_UI_FLAG_FULLSCREEN
 								| SYSTEM_UI_FLAG_HIDE_NAVIGATION);
+						requestLayout();
 					}
 				}
 			});
@@ -149,6 +161,7 @@ public class GL2JNIView extends GLSurfaceView
 		ethd = new EmuThread(!Config.nosound);
 
 		touchVibrationEnabled = prefs.getBoolean(Config.pref_touchvibe, true);
+		vibrationDuration = prefs.getInt(Config.pref_vibrationDuration, 20);
 
 		int renderType = prefs.getInt(Config.pref_rendertype, LAYER_TYPE_HARDWARE);
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
@@ -288,7 +301,7 @@ public class GL2JNIView extends GLSurfaceView
 					vjoy[i][3] = vbase(vjoy_d[i][3],scl);
 				}
 
-				for(int i=0;i<vjoy.length;i++)
+				for(int i=0;i<VJoy.VJoyCount;i++)
 					JNIdc.vjoy(i,vjoy[i][0],vjoy[i][1],vjoy[i][2],vjoy[i][3]);
 
 				reset_analog();
@@ -316,7 +329,7 @@ public class GL2JNIView extends GLSurfaceView
 			else if (buttonId <= 12)
 				return 5; // Analog
 			else
-				return -1; // Invalid
+				return 0; // DPAD diagonials
 	}
 
 	public static int[] kcode_raw = { 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF };
@@ -374,13 +387,20 @@ public class GL2JNIView extends GLSurfaceView
 				{
 					if(x>vjoy[j][0] && x<=(vjoy[j][0]+vjoy[j][2]))
 					{
-						int pre=(int)(event.getPressure(i)*255);
-						if (pre>20)
-						{
-							pre-=20;
-							pre*=7;
-						}
-						if (pre>255) pre=255;
+						/*
+							//Disable pressure sensitive R/L
+							//Doesn't really work properly
+
+							int pre=(int)(event.getPressure(i)*255);
+							if (pre>20)
+							{
+								pre-=20;
+								pre*=7;
+							}
+							if (pre>255) pre=255;
+						*/
+
+						int pre = 255;
 
 						if(y>vjoy[j][1] && y<=(vjoy[j][1]+vjoy[j][3]))
 						{
@@ -388,7 +408,7 @@ public class GL2JNIView extends GLSurfaceView
 							{
 								if (vjoy[j][5]==0)
 									if (!editVjoyMode && touchVibrationEnabled)
-										vib.vibrate(50);
+										vib.vibrate(vibrationDuration);
 								vjoy[j][5]=2;
 							}
 
@@ -561,7 +581,8 @@ public class GL2JNIView extends GLSurfaceView
 
 		public void onSurfaceChanged(GL10 gl,int width,int height)
 		{
-			JNIdc.rendinit(sWidth,sHeight);
+			gl.glViewport(0, 0, width, height);
+			JNIdc.rendinit(width,height);
 		}
 
 		public void onSurfaceCreated(GL10 gl,EGLConfig config)
@@ -668,6 +689,45 @@ public class GL2JNIView extends GLSurfaceView
 
 			return 1;
 		}
+		
+		void showMessage(final String msg) {
+			handler.post(new Runnable() {
+				public void run() {
+					Log.d(context.getApplicationContext().getPackageName(), msg);
+//					MainActivity.showToastMessage(context, 
+//							context.getString(R.string.emu_toast, msg),
+//							Toast.LENGTH_LONG);
+					AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(context);
+					alertDialogBuilder.setTitle(context.getString(R.string.emu_crash));
+					alertDialogBuilder
+					.setMessage(msg)
+					.setCancelable(false)
+					.setPositiveButton("Okay...",new DialogInterface.OnClickListener() {
+						public void onClick(DialogInterface dialog,int id) {
+							// if this button is clicked, close current activity
+							// MainActivity.this.finish();
+						}
+					});
+					AlertDialog alertDialog = alertDialogBuilder.create();
+					alertDialog.show();
+				}
+			});
+		}
+		
+		void coreMessage(byte[] msg) {
+			try {
+				showMessage(new String(msg, "UTF-8"));
+			}
+			catch (UnsupportedEncodingException e) {
+				showMessage("coreMessage: Failed to display error");
+			}
+		}
+
+		void Die() {
+			showMessage("Something went wrong and reicast crashed.\nPlease report this on the reicast forums.");
+			((Activity) context).finish();
+		}
+
 	}
 
 	public void onStop() {
@@ -692,7 +752,9 @@ public class GL2JNIView extends GLSurfaceView
 					| View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
 					| View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
 					| View.SYSTEM_UI_FLAG_FULLSCREEN
-					| View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);}
+					| View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+			requestLayout();
+		}
 	}
 
 	private boolean takeScreenshot = false;

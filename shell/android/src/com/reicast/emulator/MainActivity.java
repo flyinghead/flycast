@@ -6,6 +6,7 @@ import java.util.List;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -13,17 +14,24 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.content.res.Configuration;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
+import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.KeyEvent;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.View.OnSystemUiVisibilityChangeListener;
 import android.view.View.OnTouchListener;
+import android.view.WindowManager;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -31,9 +39,9 @@ import com.jeremyfeinstein.slidingmenu.lib.SlidingMenu;
 import com.jeremyfeinstein.slidingmenu.lib.SlidingMenu.OnOpenListener;
 import com.jeremyfeinstein.slidingmenu.lib.app.SlidingFragmentActivity;
 import com.reicast.emulator.config.Config;
-import com.reicast.emulator.config.ConfigureFragment;
 import com.reicast.emulator.config.InputFragment;
 import com.reicast.emulator.config.OptionsFragment;
+import com.reicast.emulator.debug.GenerateLogs;
 import com.reicast.emulator.emu.JNIdc;
 import com.reicast.emulator.periph.Gamepad;
 
@@ -42,7 +50,7 @@ public class MainActivity extends SlidingFragmentActivity implements
 
 	private SharedPreferences mPrefs;
 	private static File sdcard = Environment.getExternalStorageDirectory();
-	public static String home_directory = sdcard + "/dc";
+	public static String home_directory = sdcard.getAbsolutePath();
 
 	private TextView menuHeading;
 	private boolean hasAndroidMarket = false;
@@ -61,6 +69,25 @@ public class MainActivity extends SlidingFragmentActivity implements
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.mainuilayout_fragment);
 		setBehindContentView(R.layout.drawer_menu);
+		
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+			getWindow().getDecorView().setOnSystemUiVisibilityChangeListener (new OnSystemUiVisibilityChangeListener() {
+				public void onSystemUiVisibilityChange(int visibility) {
+					if ((visibility & View.SYSTEM_UI_FLAG_FULLSCREEN) == 0) {
+						getWindow().getDecorView().setSystemUiVisibility(
+//                            View.SYSTEM_UI_FLAG_LAYOUT_STABLE | 
+								View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                                | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                                | View.SYSTEM_UI_FLAG_FULLSCREEN
+                                | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+					}
+				}
+			});
+		} else {
+			getWindow().setFlags (WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                    WindowManager.LayoutParams.FLAG_FULLSCREEN);
+		}
 
 		mPrefs = PreferenceManager.getDefaultSharedPreferences(this);
 
@@ -79,18 +106,15 @@ public class MainActivity extends SlidingFragmentActivity implements
 				public void uncaughtException(Thread t, Throwable error) {
 					if (error != null) {
 						StringBuilder output = new StringBuilder();
-						output.append("Thread:\n");
-						for (StackTraceElement trace : t.getStackTrace()) {
-							output.append(trace.toString() + "\n");
-						}
-						output.append("\nError:\n");
+						output.append("UncaughtException:\n");
 						for (StackTraceElement trace : error.getStackTrace()) {
 							output.append(trace.toString() + "\n");
 						}
 						String log = output.toString();
 						mPrefs.edit().putString("prior_error", log).commit();
 						error.printStackTrace();
-						MainActivity.this.finish();
+						android.os.Process.killProcess(android.os.Process.myPid());
+						System.exit(0);
 					}
 				}
 			};
@@ -108,6 +132,17 @@ public class MainActivity extends SlidingFragmentActivity implements
 			getFilesDir().mkdir();
 		}
 		JNIdc.config(home_directory);
+		
+		// When viewing a resource, pass its URI to the native code for opening
+		Intent intent = getIntent();
+		if (intent.getAction() != null) {
+			if (intent.getAction().equals(Intent.ACTION_VIEW)) {
+				onGameSelected(Uri.parse(intent.getData().toString()));
+				// Flush the intent to prevent multiple calls
+				getIntent().setData(null);
+		        setIntent(null);
+			}
+		}
 
 		// Check that the activity is using the layout version with
 		// the fragment_container FrameLayout
@@ -180,28 +215,8 @@ public class MainActivity extends SlidingFragmentActivity implements
 					}
 
 				});
-				findViewById(R.id.settings_menu).setOnClickListener(new OnClickListener() {
-					public void onClick(View view) {
-						ConfigureFragment configFrag = (ConfigureFragment) getSupportFragmentManager()
-								.findFragmentByTag("CONFIG_FRAG");
-						if (configFrag != null) {
-							if (configFrag.isVisible()) {
-								return;
-							}
-						}
-						configFrag = new ConfigureFragment();
-						getSupportFragmentManager()
-						.beginTransaction()
-						.replace(R.id.fragment_container, configFrag,
-								"CONFIG_FRAG").addToBackStack(null)
-								.commit();
-						setTitle(R.string.settings);
-						sm.toggle(true);
-					}
 
-				});
-
-				findViewById(R.id.paths_menu).setOnClickListener(
+				findViewById(R.id.settings_menu).setOnClickListener(
 						new OnClickListener() {
 							public void onClick(View view) {
 								OptionsFragment optionsFrag = (OptionsFragment) getSupportFragmentManager()
@@ -217,7 +232,7 @@ public class MainActivity extends SlidingFragmentActivity implements
 								.replace(R.id.fragment_container,
 										optionsFrag, "OPTIONS_FRAG")
 										.addToBackStack(null).commit();
-								setTitle(R.string.paths);
+								setTitle(R.string.settings);
 								sm.toggle(true);
 							}
 
@@ -262,6 +277,27 @@ public class MainActivity extends SlidingFragmentActivity implements
 					}
 
 				});
+				
+				findViewById(R.id.cloud_menu).setOnClickListener(new OnClickListener() {
+					public void onClick(View view) {
+						CloudFragment cloudFrag = (CloudFragment) getSupportFragmentManager()
+								.findFragmentByTag("CLOUD_FRAG");
+						if (cloudFrag != null) {
+							if (cloudFrag.isVisible()) {
+								return;
+							}
+						}
+						cloudFrag = new CloudFragment();
+						getSupportFragmentManager()
+						.beginTransaction()
+						.replace(R.id.fragment_container,
+						cloudFrag, "CLOUD_FRAG")
+							.addToBackStack(null).commit();
+						setTitle(R.string.cloud);
+						sm.toggle(true);
+					}
+
+				});
 
 				View rateMe = findViewById(R.id.rateme_menu);
 				if (!hasAndroidMarket) {
@@ -282,6 +318,8 @@ public class MainActivity extends SlidingFragmentActivity implements
 						}
 					});
 				}
+				
+
 
 				View messages = findViewById(R.id.message_menu);
 				if (MainActivity.debugUser) {
@@ -291,7 +329,11 @@ public class MainActivity extends SlidingFragmentActivity implements
 						}
 					});
 				} else {
-					messages.setVisibility(View.GONE);
+					messages.setOnClickListener(new OnClickListener() {
+						public void onClick(View view) {
+							generateErrorLog();
+						}
+					});
 				}
 			}
 		});
@@ -305,12 +347,18 @@ public class MainActivity extends SlidingFragmentActivity implements
 			}
 		});
 	}
+	
+	public void generateErrorLog() {
+		new GenerateLogs(MainActivity.this).execute(getFilesDir().getAbsolutePath());
+	}
 
 	/**
 	 * Display a dialog to notify the user of prior crash
 	 * 
-	 * @param error
+	 * @param string
 	 *            A generalized summary of the crash cause
+	 * @param bundle
+	 *            The savedInstanceState passed from onCreate
 	 */
 	private void displayLogOutput(final String error) {
 		AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
@@ -326,25 +374,28 @@ public class MainActivity extends SlidingFragmentActivity implements
 		builder.show();
 	}
 
-	public static boolean isBiosExisting() {
-		File bios = new File(home_directory, "data/dc_boot.bin");
-		return bios.exists();
-	}
+    public static boolean isBiosExisting(Context context) {
+        SharedPreferences mPrefs = PreferenceManager.getDefaultSharedPreferences(context);
+        home_directory = mPrefs.getString("home_directory", home_directory);
+        File bios = new File(home_directory, "data/dc_boot.bin");
+        return bios.exists();
+    }
 
-	public static boolean isFlashExisting() {
-		File flash = new File(home_directory, "data/dc_flash.bin");
-		return flash.exists();
-	}
+    public static boolean isFlashExisting(Context context) {
+        SharedPreferences mPrefs = PreferenceManager.getDefaultSharedPreferences(context);
+        home_directory = mPrefs.getString("home_directory", home_directory);
+        File flash = new File(home_directory, "data/dc_flash.bin");
+        return flash.exists();
+    }
 
 	public void onGameSelected(Uri uri) {
 		if (Config.readOutput("uname -a").equals(getString(R.string.error_kernel))) {
-			Toast.makeText(MainActivity.this, R.string.unsupported,
-					Toast.LENGTH_SHORT).show();
+			MainActivity.showToastMessage(MainActivity.this, getString(R.string.unsupported), Toast.LENGTH_SHORT);
 		}
 		String msg = null;
-		if (!isBiosExisting())
+		if (!isBiosExisting(MainActivity.this))
 			msg = getString(R.string.missing_bios, home_directory);
-		else if (!isFlashExisting())
+		else if (!isFlashExisting(MainActivity.this))
 			msg = getString(R.string.missing_flash, home_directory);
 
 		if (msg != null) {
@@ -352,9 +403,9 @@ public class MainActivity extends SlidingFragmentActivity implements
 					this);
 
 			// set title
-			if (!isBiosExisting())
+			if (!isBiosExisting(MainActivity.this))
 				alertDialogBuilder.setTitle(R.string.missing_bios_title);
-			else if (!isFlashExisting())
+			else if (!isFlashExisting(MainActivity.this))
 				alertDialogBuilder.setTitle(R.string.missing_flash_title);
 
 			// set dialog message
@@ -408,11 +459,12 @@ public class MainActivity extends SlidingFragmentActivity implements
 			// show it
 			alertDialog.show();
 		} else {
+			Config.nativeact = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).getBoolean(Config.pref_nativeact, Config.nativeact);
 			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD && Config.nativeact) {
-				startActivity(new Intent(Intent.ACTION_VIEW, uri, getBaseContext(),
+				startActivity(new Intent("com.reicast.EMULATOR", uri, getApplicationContext(),
 						GL2JNINative.class));
 			} else {
-				startActivity(new Intent(Intent.ACTION_VIEW, uri, getBaseContext(),
+				startActivity(new Intent("com.reicast.EMULATOR", uri, getApplicationContext(),
 						GL2JNIActivity.class));
 			}
 		}
@@ -464,16 +516,6 @@ public class MainActivity extends SlidingFragmentActivity implements
 		menuHeading.setText(title);
 	}
 
-	/**
-	 * When using the ActionBarDrawerToggle, you must call it during
-	 * onPostCreate() and onConfigurationChanged()...
-	 */
-
-	@Override
-	public void onPostCreate(Bundle savedInstanceState) {
-		super.onPostCreate(savedInstanceState);
-	}
-
 	@Override
 	public void onConfigurationChanged(Configuration newConfig) {
 		super.onConfigurationChanged(newConfig);
@@ -516,10 +558,9 @@ public class MainActivity extends SlidingFragmentActivity implements
 		args.putString("browse_entry", null);
 		args.putBoolean("games_entry", false);
 		fragment.setArguments(args);
-		getSupportFragmentManager()
-		.beginTransaction()
-		.replace(R.id.fragment_container, fragment,
-				"MAIN_BROWSER").commit();
+		getSupportFragmentManager().beginTransaction()
+				.replace(R.id.fragment_container, fragment, "MAIN_BROWSER")
+				.addToBackStack(null).commit();
 		setTitle(R.string.browser);
 	}
 
@@ -537,7 +578,6 @@ public class MainActivity extends SlidingFragmentActivity implements
 
 	@Override
 	protected void onDestroy() {
-		super.onDestroy();
 		InputFragment fragment = (InputFragment) getSupportFragmentManager()
 				.findFragmentByTag("INPUT_FRAG");
 		if (fragment != null && fragment.isVisible()) {
@@ -545,6 +585,7 @@ public class MainActivity extends SlidingFragmentActivity implements
 				fragment.moga.onDestroy();
 			}
 		}
+		super.onDestroy();
 	}
 
 	@Override
@@ -557,11 +598,62 @@ public class MainActivity extends SlidingFragmentActivity implements
 				fragment.moga.onResume();
 			}
 		}
+		
+		CloudFragment cloudfragment = (CloudFragment) getSupportFragmentManager()
+				.findFragmentByTag("CLOUD_FRAG");
+		if (cloudfragment != null && cloudfragment.isVisible()) {
+			if (cloudfragment != null) {
+				cloudfragment.onResume();
+			}
+		}
+	}
+	
+	@Override
+	public void onPostCreate(Bundle savedInstanceState) {
+		super.onPostCreate(savedInstanceState);
+	}
+	
+	@Override
+	public void onWindowFocusChanged(boolean hasFocus) {
+		super.onWindowFocusChanged(hasFocus);
+		if (hasFocus && Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+			getWindow().getDecorView().setSystemUiVisibility(
+					View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+	                | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+	                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+	                | View.SYSTEM_UI_FLAG_FULLSCREEN
+	                | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+        }
 	}
 
 	public boolean isCallable(Intent intent) {
 		List<ResolveInfo> list = getPackageManager().queryIntentActivities(
 				intent, PackageManager.MATCH_DEFAULT_ONLY);
 		return list.size() > 0;
+	}
+	
+	public static void showToastMessage(Context context, String message,
+			int duration) {
+		LayoutInflater inflater = (LayoutInflater) context
+				.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+		View layout = inflater.inflate(R.layout.toast_layout, null);
+
+		ImageView image = (ImageView) layout.findViewById(R.id.image);
+		image.setImageResource(R.drawable.ic_notification);
+		TextView text = (TextView) layout.findViewById(R.id.text);
+		text.setText(message);
+
+		DisplayMetrics metrics = new DisplayMetrics();
+		WindowManager winman = (WindowManager) context
+				.getSystemService(Context.WINDOW_SERVICE);
+		winman.getDefaultDisplay().getMetrics(metrics);
+		final float scale = context.getResources().getDisplayMetrics().density;
+		int toastPixels = (int) ((metrics.widthPixels * scale + 0.5f) / 18);
+
+		Toast toast = new Toast(context);
+		toast.setGravity(Gravity.BOTTOM, 0, toastPixels);
+		toast.setDuration(duration);
+		toast.setView(layout);
+		toast.show();
 	}
 }

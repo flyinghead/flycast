@@ -8,6 +8,7 @@
 #include "ta.h"
 #include "ta_ctx.h"
 #include "pvr_mem.h"
+#include "rend/gles/gles.h"
 #include "Renderer_if.h"
 
 u32 ta_type_lut[256];
@@ -376,7 +377,9 @@ strip_end:
 	}
 
 public:
-#define group_EN() if (data->pcw.Group_En){ TileClipMode(data->pcw.User_Clip);}
+	
+	//Group_En bit seems ignored, thanks p1pkin 
+#define group_EN() /*if (data->pcw.Group_En) */{ TileClipMode(data->pcw.User_Clip);}
 	static Ta_Dma* TACALL ta_main(Ta_Dma* data,Ta_Dma* data_end)
 	{
 		do
@@ -715,7 +718,7 @@ public:
 	{
 		VDECInit();
 		TaCmd=ta_main;
-
+		CurrentList = ListType_None;
 		ListIsFinished[0]=ListIsFinished[1]=ListIsFinished[2]=ListIsFinished[3]=ListIsFinished[4]=false;
 	}
 		
@@ -786,11 +789,18 @@ public:
 			}
 			d_pp->first=vdrc.idx.used(); 
 			d_pp->count=0; 
+
 			d_pp->isp=pp->isp; 
 			d_pp->tsp=pp->tsp; 
 			d_pp->tcw=pp->tcw;
 			d_pp->pcw=pp->pcw; 
 			d_pp->tileclip=tileclip_val;
+
+			d_pp->texid = -1;
+
+			if (d_pp->pcw.Texture) {
+				d_pp->texid = GetTexture(d_pp->tsp,d_pp->tcw);
+			}
 		}
 	}
 
@@ -1181,6 +1191,12 @@ public:
 		d_pp->pcw=spr->pcw; 
 		d_pp->tileclip=tileclip_val;
 
+		d_pp->texid = -1;
+		
+		if (d_pp->pcw.Texture) {
+			d_pp->texid = GetTexture(d_pp->tsp,d_pp->tcw);
+		}
+
 		SFaceBaseColor=spr->BaseCol;
 		SFaceOffsColor=spr->OffsCol;
 	}
@@ -1392,6 +1408,9 @@ FifoSplitter<0> TAFifo0;
 
 int ta_parse_cnt = 0;
 
+/*
+	Also: gotta stage textures here
+*/
 bool ta_parse_vdrc(TA_context* ctx)
 {
 	bool rv=false;
@@ -1538,6 +1557,8 @@ void FillBGP(TA_context* ctx)
 	//Get vertex ptr
 	u32 vertex_ptr=strip_vert_num*strip_vs+strip_base +3*4;
 	//now , all the info is ready :p
+
+	bgpp->texid = -1;
 
 	bgpp->isp.full=vri(strip_base);
 	bgpp->tsp.full=vri(strip_base+4);

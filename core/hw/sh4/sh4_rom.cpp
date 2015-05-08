@@ -1,4 +1,3 @@
-#pragma once
 #include "types.h"
 #include "sh4_rom.h"
 

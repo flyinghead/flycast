@@ -1,9 +1,17 @@
 #pragma once
 #include "rend/rend.h"
 
+
+#ifdef GLES
+#ifdef TARGET_IPHONE //apple-specific ogles2 headers
+#include <APPLE/egl.h>
+#include <OpenGLES/ES2/gl.h>
+#include <OpenGLES/ES2/glext.h>
+#else
 #include <EGL/egl.h>
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>
+#endif
 
 #ifndef GL_NV_draw_path
 //IMGTEC GLES emulation
@@ -11,9 +19,14 @@
 #pragma comment(lib,"libGLESv2.lib")
 #else /* NV gles emulation*/
 #pragma comment(lib,"libGLES20.lib")
-
 #endif
-#define glCheck() false
+
+#else
+	#include <GL3/gl3w.h>
+#endif
+
+
+#define glCheck() verify(glGetError()==GL_NO_ERROR)
 #define eglCheck() false
 
 #define VERTEX_POS_ARRAY 0
@@ -44,6 +57,7 @@ struct PipelineShader
 
 struct gl_ctx
 {
+#ifdef GLES
 	struct
 	{
 		EGLNativeWindowType native_wind;
@@ -52,6 +66,7 @@ struct gl_ctx
 		EGLSurface surface;
 		EGLContext context;
 	} setup;
+#endif
 
 	struct
 	{
@@ -71,6 +86,9 @@ struct gl_ctx
 	struct
 	{
 		GLuint geometry,modvols,idxs,idxs2;
+#ifndef GLES
+		GLuint vao;
+#endif
 	} vbo;
 
 
@@ -80,6 +98,9 @@ struct gl_ctx
 extern gl_ctx gl;
 
 GLuint GetTexture(TSP tsp,TCW tcw);
+void CollectCleanup();
+void DoCleanup();
+
 void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt);
 int GetProgramID(u32 cp_AlphaTest, u32 pp_ClipTestMode,
 							u32 pp_Texture, u32 pp_UseAlpha, u32 pp_IgnoreTexA, u32 pp_ShadInstr, u32 pp_Offset,

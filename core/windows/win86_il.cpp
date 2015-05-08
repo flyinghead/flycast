@@ -1,3 +1,6 @@
+#include "types.h"
+
+#ifndef HOST_NO_REC
 #include "win86_ngen.h"
 #include "hw/sh4/sh4_mmr.h"
 #include "hw/sh4/sh4_rom.h"
@@ -1527,3 +1530,5 @@ defaulty:
 			verify(false);
 		}
 }
+
+#endif

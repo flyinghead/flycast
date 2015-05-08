@@ -19,6 +19,8 @@ public class VJoy {
 	public static final int LAYER_TYPE_SOFTWARE = 1;
 	public static final int LAYER_TYPE_HARDWARE = 2;
 
+	public static int VJoyCount = 13;
+
 	public static float[][] baseVJoy() {
 		return new float[][] { 
 			new float[] { 24+0,     24+64,   64,64, VJoy.key_CONT_DPAD_LEFT, 0},
@@ -38,6 +40,11 @@ public class VJoy {
 
 			new float[] { 0,   128+224,  128,128, -3, 0},
 			new float[] { 96, 320,  32,32, -4, 0},
+
+			new float[] { 20+0  ,   288+0  ,  64,64, key_CONT_DPAD_LEFT|key_CONT_DPAD_UP, 0},
+			new float[] { 20+128,   288+0  ,  64,64, key_CONT_DPAD_RIGHT|key_CONT_DPAD_UP, 0},
+			new float[] { 20+0  ,   288+128,  64,64, key_CONT_DPAD_LEFT|key_CONT_DPAD_DOWN, 0},
+			new float[] { 20+128,   288+128,  64,64, key_CONT_DPAD_RIGHT|key_CONT_DPAD_DOWN, 0},
 		};
 	}
 
@@ -73,6 +80,11 @@ public class VJoy {
 
 			new float[] { 16+vjoy_d_custom[5][0],   24+32+vjoy_d_custom[5][1],  128*vjoy_d_custom[5][2],128*vjoy_d_custom[5][2], -3},
 			new float[] { 96+vjoy_d_custom[5][0], 320+vjoy_d_custom[5][1],  32*vjoy_d_custom[5][2],32*vjoy_d_custom[5][2], -4},
+
+			new float[] { 20+0*vjoy_d_custom[0][2]+vjoy_d_custom[0][0],     288+0*vjoy_d_custom[0][2]+vjoy_d_custom[0][1],   64*vjoy_d_custom[0][2],64*vjoy_d_custom[0][2], key_CONT_DPAD_LEFT|key_CONT_DPAD_UP},
+			new float[] { 20+128*vjoy_d_custom[0][2]+vjoy_d_custom[0][0],    288+0*vjoy_d_custom[0][2]+vjoy_d_custom[0][1],    64*vjoy_d_custom[0][2],64*vjoy_d_custom[0][2], key_CONT_DPAD_RIGHT|key_CONT_DPAD_UP},
+			new float[] { 20+0*vjoy_d_custom[0][2]+vjoy_d_custom[0][0],   288+128*vjoy_d_custom[0][2]+vjoy_d_custom[0][1],   64*vjoy_d_custom[0][2],64*vjoy_d_custom[0][2], key_CONT_DPAD_LEFT|key_CONT_DPAD_DOWN},
+			new float[] { 20+128*vjoy_d_custom[0][2]+vjoy_d_custom[0][0],    288+128*vjoy_d_custom[0][2]+vjoy_d_custom[0][1],  64*vjoy_d_custom[0][2],64*vjoy_d_custom[0][2], key_CONT_DPAD_RIGHT|key_CONT_DPAD_DOWN},
 		};
 	}
 

@@ -67,6 +67,7 @@ extern u32 samples_gen;
 
 void print_blocks();
 
+#ifndef HOST_NO_REC
 //called every emulated second
 void prof_periodical()
 {
@@ -197,7 +198,9 @@ void prof_periodical()
 	printf("********************\n");
 	memset(&prof.counters,0,sizeof(prof.counters));
 }
-
+#else
+void prof_periodical() { }
+#endif
 /*
 
 	debprof: a remote debugger/profiler

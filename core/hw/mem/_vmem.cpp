@@ -48,7 +48,7 @@ void _vmem_get_ptrs(u32 sz,bool write,void*** vmap,void*** func)
 void* _vmem_get_ptr2(u32 addr,u32& mask)
 {
 	u32   page=addr>>24;
-	u32   iirf=(unat)_vmem_MemInfo_ptr[page];
+	unat  iirf=(unat)_vmem_MemInfo_ptr[page];
 	void* ptr=(void*)(iirf&~HANDLER_MAX);
 
 	if (ptr==0) return 0;
@@ -60,13 +60,13 @@ void* _vmem_get_ptr2(u32 addr,u32& mask)
 void* _vmem_read_const(u32 addr,bool& ismem,u32 sz)
 {
 	u32   page=addr>>24;
-	u32   iirf=(unat)_vmem_MemInfo_ptr[page];
+	unat  iirf=(unat)_vmem_MemInfo_ptr[page];
 	void* ptr=(void*)(iirf&~HANDLER_MAX);
 
 	if (ptr==0)
 	{
 		ismem=false;
-		const u32 id=iirf;
+		const unat id=iirf;
 		if (sz==1)
 		{
 			return (void*)_vmem_RF8[id/4];
@@ -100,13 +100,13 @@ void* _vmem_read_const(u32 addr,bool& ismem,u32 sz)
 void* _vmem_page_info(u32 addr,bool& ismem,u32 sz,u32& page_sz,bool rw)
 {
 	u32   page=addr>>24;
-	u32   iirf=(unat)_vmem_MemInfo_ptr[page];
+	unat  iirf=(unat)_vmem_MemInfo_ptr[page];
 	void* ptr=(void*)(iirf&~HANDLER_MAX);
 	
 	if (ptr==0)
 	{
 		ismem=false;
-		const u32 id=iirf;
+		const unat id=iirf;
 		page_sz=24;
 		if (sz==1)
 		{

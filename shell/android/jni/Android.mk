@@ -20,6 +20,7 @@ LOCAL_PATH:= $(call my-dir)/..
 include $(CLEAR_VARS)
 
 FOR_ANDROID := 1
+WEBUI := 1
 
 ifneq ($(TARGET_ARCH_ABI),armeabi-v7a)
   NOT_ARM := 1
@@ -35,13 +36,13 @@ include $(LOCAL_PATH)/../../core/core.mk
 LOCAL_SRC_FILES := $(RZDCY_FILES)
 LOCAL_SRC_FILES += $(wildcard $(LOCAL_PATH)/jni/src/Android.cpp)
 LOCAL_SRC_FILES += $(wildcard $(LOCAL_PATH)/jni/src/utils.cpp)
+LOCAL_CFLAGS  := $(RZDCY_CFLAGS)
 LOCAL_CXXFLAGS  := $(RZDCY_CXXFLAGS)
 
 LOCAL_SHARED_LIBRARIES:= libcutils libutils
 LOCAL_PRELINK_MODULE  := false
 
 LOCAL_MODULE	:= dc
-LOCAL_CFLAGS	:= $(LOCAL_CXXFLAGS) -DHAS_VMU
 LOCAL_DISABLE_FORMAT_STRING_CHECKS=true
 LOCAL_ASFLAGS := -fvisibility=hidden
 LOCAL_LDLIBS	:= -llog -lGLESv2 -lEGL -lz

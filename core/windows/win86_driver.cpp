@@ -746,7 +746,11 @@ bool ngen_Rewrite(unat& addr,unat retadr,unat acc)
 				{
 					//found !
 
-					if ((acc >> 26) == 0x38) //sq ?
+					if ((acc >> 26) == 0x38 && !w) {
+						printf("WARNING: SQ AREA READ, %08X from sh4:%08X. THIS IS UNDEFINED ON A REAL DREACMAST.\n", acc, bm_GetBlock(x86e->x86_buff)->addr);
+					}
+
+					if ((acc >> 26) == 0x38 && w) //sq ?
 					{
 						verify(w == 1);
 						x86e->Emit(op_call, x86_ptr_imm(mem_code[1][w][i]));

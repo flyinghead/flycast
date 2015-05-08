@@ -1,5 +1,7 @@
 package com.reicast.emulator.config;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -44,6 +46,7 @@ public class InputModFragment extends Fragment {
 	private SharedPreferences mPrefs;
 
 	private Switch switchJoystickDpadEnabled;
+	private Switch switchRightStickLREnabled;
 	private Switch switchModifiedLayoutEnabled;
 	private Switch switchCompatibilityEnabled;
 
@@ -93,18 +96,37 @@ public class InputModFragment extends Fragment {
 		if (b != null) {
 			playerNum = b.getInt("portNumber", -1);
 		}
+		
+		switchJoystickDpadEnabled = (Switch) getView().findViewById(
+				R.id.switchJoystickDpadEnabled);
+		switchRightStickLREnabled = (Switch) getView().findViewById(
+				R.id.switchRightStickLREnabled);
+		switchModifiedLayoutEnabled = (Switch) getView().findViewById(
+				R.id.switchModifiedLayoutEnabled);
+		switchCompatibilityEnabled = (Switch) getView().findViewById(
+				R.id.switchCompatibilityEnabled);
 
 		OnCheckedChangeListener joystick_mode = new OnCheckedChangeListener() {
 			public void onCheckedChanged(CompoundButton buttonView,
 					boolean isChecked) {
 				mPrefs.edit()
-						.putBoolean(Gamepad.pref_js_separate + player,
+						.putBoolean(Gamepad.pref_js_merged + player,
 								isChecked).commit();
 			}
 		};
-		switchJoystickDpadEnabled = (Switch) getView().findViewById(
-				R.id.switchJoystickDpadEnabled);
+		
 		switchJoystickDpadEnabled.setOnCheckedChangeListener(joystick_mode);
+		
+		OnCheckedChangeListener rstick_mode = new OnCheckedChangeListener() {
+			public void onCheckedChanged(CompoundButton buttonView,
+					boolean isChecked) {
+				mPrefs.edit()
+						.putBoolean(Gamepad.pref_js_rbuttons + player,
+								isChecked).commit();
+			}
+		};
+		
+		switchRightStickLREnabled.setOnCheckedChangeListener(rstick_mode);
 
 		OnCheckedChangeListener modified_layout = new OnCheckedChangeListener() {
 			public void onCheckedChanged(CompoundButton buttonView,
@@ -114,25 +136,21 @@ public class InputModFragment extends Fragment {
 								isChecked).commit();
 			}
 		};
-		switchModifiedLayoutEnabled = (Switch) getView().findViewById(
-				R.id.switchModifiedLayoutEnabled);
+		
 		switchModifiedLayoutEnabled.setOnCheckedChangeListener(modified_layout);
 
 		OnCheckedChangeListener compat_mode = new OnCheckedChangeListener() {
 			public void onCheckedChanged(CompoundButton buttonView,
 					boolean isChecked) {
-				if (isChecked) {
-					selectController();
-				} else {
-					mPrefs.edit().remove(Gamepad.pref_pad + player).commit();
-				}
 				mPrefs.edit()
 						.putBoolean(Gamepad.pref_js_compat + player, isChecked)
 						.commit();
+				if (isChecked) {
+					selectController();
+				}
 			}
 		};
-		switchCompatibilityEnabled = (Switch) getView().findViewById(
-				R.id.switchCompatibilityEnabled);
+		
 		switchCompatibilityEnabled.setOnCheckedChangeListener(compat_mode);
 
 		mKey = new mapKeyCode(getActivity());
@@ -381,15 +399,26 @@ public class InputModFragment extends Fragment {
 	 *            The y start value of the image within the atlas
 	 */
 	private Drawable getButtonImage(int x, int y) {
+		Bitmap image = null;
 		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB) {
 			Runtime.getRuntime().freeMemory();
 			System.gc();
 		}
 		try {
-			InputStream bitmap = getResources().getAssets().open("buttons.png");
+			File buttons = null;
+			InputStream bitmap = null;
+			String theme = mPrefs.getString(Config.pref_theme, null);
+			if (theme != null) {
+				buttons = new File(theme);
+			}
+			if (buttons != null && buttons.exists()) {
+				bitmap = new FileInputStream(buttons);
+			} else {
+				bitmap = getResources().getAssets().open("buttons.png");
+			}
 			BitmapFactory.Options options = new BitmapFactory.Options();
 			options.inSampleSize = sS;
-			Bitmap image = BitmapFactory.decodeStream(bitmap, null, options);
+			image = BitmapFactory.decodeStream(bitmap, null, options);
 			bitmap.close();
 			bitmap = null;
 			if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB) {
@@ -409,6 +438,10 @@ public class InputModFragment extends Fragment {
 			e1.printStackTrace();
 		} catch (OutOfMemoryError E) {
 			if (sS == 2) {
+				if (image != null) {
+					image.recycle();
+					image = null;
+				}
 				sS = 4;
 				return getButtonImage(x, y);
 			} else {
@@ -557,7 +590,7 @@ public class InputModFragment extends Fragment {
 
 	private void updateController(String player) {
 		switchJoystickDpadEnabled.setChecked(mPrefs.getBoolean(
-				Gamepad.pref_js_separate + player, false));
+				Gamepad.pref_js_merged + player, false));
 		switchModifiedLayoutEnabled.setChecked(mPrefs.getBoolean(
 				Gamepad.pref_js_modified + player, false));
 		switchCompatibilityEnabled.setChecked(mPrefs.getBoolean(

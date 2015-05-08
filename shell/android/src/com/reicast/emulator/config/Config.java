@@ -4,28 +4,20 @@ import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
-import android.util.DisplayMetrics;
-import android.view.Gravity;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ImageView;
-import android.widget.TextView;
-import android.widget.Toast;
 
 import com.android.util.DreamTime;
-import com.reicast.emulator.R;
 import com.reicast.emulator.emu.JNIdc;
 
 public class Config {
 
 	public static final String pref_home = "home_directory";
 	public static final String pref_games = "game_directory";
+	public static final String pref_theme = "button_theme";
 
+	public static final String pref_gamedetails = "game_details";
 	public static final String pref_nativeact = "enable_native";
 	public static final String pref_dynarecopt = "dynarec_opt";
 	public static final String pref_unstable = "unstable_opt";
@@ -39,6 +31,7 @@ public class Config {
 	public static final String pref_frameskip = "frame_skip";
 	public static final String pref_pvrrender = "pvr_render";
 	public static final String pref_cheatdisk = "cheat_disk";
+	public static final String pref_usereios = "use_reios";
 
 	public static final String pref_showfps = "show_fps";
 	public static final String pref_forcegpu = "force_gpu";
@@ -46,6 +39,7 @@ public class Config {
 	public static final String pref_renderdepth = "depth_render";
 
 	public static final String pref_touchvibe = "touch_vibration_enabled";
+	public static final String pref_vibrationDuration = "vibration_duration";
 	public static final String pref_mic = "mic_plugged_in";
 	public static final String pref_vmu = "vmu_floating";
 
@@ -64,7 +58,13 @@ public class Config {
 	public static int frameskip = 0;
 	public static boolean pvrrender = false;
 	public static String cheatdisk = "null";
+	public static boolean usereios = false;
 	public static boolean nativeact = false;
+	public static int vibrationDuration = 20;
+	
+	public static String git_issues = "https://github.com/reicast/reicast-emulator/issues/";
+	public static String log_url = "http://loungekatt.no-ip.biz:3194/ReicastBot/report/submit.php";
+	public static String report_url = "http://loungekatt.no-ip.biz:3194/ReicastBot/report/logs/";
 
 	private SharedPreferences mPrefs;
 
@@ -89,6 +89,7 @@ public class Config {
 		Config.frameskip = mPrefs.getInt(pref_frameskip, frameskip);
 		Config.pvrrender = mPrefs.getBoolean(pref_pvrrender, pvrrender);
 		Config.cheatdisk = mPrefs.getString(pref_cheatdisk, cheatdisk);
+		Config.usereios = mPrefs.getBoolean(pref_usereios, usereios);
 		Config.nativeact = mPrefs.getBoolean(pref_nativeact, nativeact);
 	}
 
@@ -111,6 +112,7 @@ public class Config {
 		JNIdc.subdivide(Config.subdivide ? 1 : 0);
 		JNIdc.frameskip(Config.frameskip);
 		JNIdc.pvrrender(Config.pvrrender ? 1 : 0);
+		JNIdc.usereios(Config.usereios ? 1 : 0);
 		JNIdc.cheatdisk(Config.cheatdisk);
 		JNIdc.dreamtime(DreamTime.getDreamtime());
 	}

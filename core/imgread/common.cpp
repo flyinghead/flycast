@@ -1,16 +1,16 @@
 #include "common.h"
 
-Disc* chd_parse(wchar* file);
-Disc* gdi_parse(wchar* file);
-Disc* cdi_parse(wchar* file);
+Disc* chd_parse(const wchar* file);
+Disc* gdi_parse(const wchar* file);
+Disc* cdi_parse(const wchar* file);
 #if HOST_OS==OS_WINDOWS
-Disc* ioctl_parse(wchar* file);
+Disc* ioctl_parse(const wchar* file);
 #endif
 
 u32 NullDriveDiscType;
 Disc* disc;
 
-Disc*(*drivers[])(wchar* path)=
+Disc*(*drivers[])(const wchar* path)=
 {
 	chd_parse,
 	gdi_parse,
@@ -25,8 +25,12 @@ u8 q_subchannel[96];
 
 void PatchRegion_0(u8* sector,int size)
 {
+#ifndef NOT_REICAST
 	if (settings.imgread.PatchRegion==0)
 		return;
+#else
+	return;
+#endif
 
 	u8* usersect=sector;
 
@@ -41,8 +45,12 @@ void PatchRegion_0(u8* sector,int size)
 }
 void PatchRegion_6(u8* sector,int size)
 {
+#ifndef NOT_REICAST
 	if (settings.imgread.PatchRegion==0)
 		return;
+#else
+	return;
+#endif
 
 	u8* usersect=sector;
 
@@ -121,18 +129,29 @@ bool ConvertSector(u8* in_buff , u8* out_buff , int from , int to,int sector)
 	return true;
 }
 
+Disc* OpenDisc(const wchar* fn)
+{
+	Disc* rv;
+	
+	for (int i=0;drivers[i] && !(rv=drivers[i](fn));i++) ;
+
+	return rv;
+}
+
 bool InitDrive_(wchar* fn)
 {
 	TermDrive();
 
 	//try all drivers
-	for (int i=0;drivers[i] && !(disc=drivers[i](fn));i++) ;
+	disc = OpenDisc(fn);
 
 	if (disc!=0)
 	{
 		printf("gdrom: Opened image \"%s\"\n",fn);
 		NullDriveDiscType=Busy;
+#ifndef NOT_REICAST
 		libCore_gdrom_disc_change();
+#endif
 //		Sleep(400); //busy for a bit // what, really ?
 		return true;
 	}
@@ -144,6 +163,7 @@ bool InitDrive_(wchar* fn)
 	return false;
 }
 
+#ifndef NOT_REICAST
 bool InitDrive(u32 fileflags)
 {
 	if (settings.imgread.LoadDefaultImage)
@@ -185,11 +205,11 @@ bool InitDrive(u32 fileflags)
 	if (!InitDrive_(fn))
 	{
 		//msgboxf("Selected image failed to load",MBX_ICONERROR);
-		NullDriveDiscType=NoDisk;
-		gd_setdisc();
-		sns_asc=0x29;
-		sns_ascq=0x00;
-		sns_key=0x6;
+			NullDriveDiscType=NoDisk;
+			gd_setdisc();
+			sns_asc=0x29;
+			sns_ascq=0x00;
+			sns_key=0x6;
 		return true;
 	}
 	else
@@ -257,6 +277,7 @@ bool DiscSwap(u32 fileflags)
 		return true;
 	}
 }
+#endif
 
 void TermDrive()
 {

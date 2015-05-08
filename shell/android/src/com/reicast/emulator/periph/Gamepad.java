@@ -1,8 +1,6 @@
 package com.reicast.emulator.periph;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 
 import tv.ouya.console.api.OuyaController;
 import tv.ouya.console.api.OuyaFacade;
@@ -23,7 +21,7 @@ public class Gamepad {
 
 	public static final String pref_js_modified = "modified_key_layout";
 	public static final String pref_js_compat = "controller_compat";
-	public static final String pref_js_separate = "separate_joystick";
+	public static final String pref_js_merged = "merged_joystick";
 	public static final String pref_js_rbuttons = "right_buttons";
 
 	public static final String pref_button_a = "a_button";
@@ -47,6 +45,8 @@ public class Gamepad {
 	public static final String controllers_shield = "NVIDIA Corporation NVIDIA Controller";
 	public static final String controllers_play = "keypad-zeus";
 	public static final String controllers_play_gp = "keypad-game-zeus";
+	public static final String controllers_play_tp = "synaptics_touchpad";
+	public static final String controllers_gamekey = "gamekeyboard";
 
 	public String[] portId = { "_A", "_B", "_C", "_D" };
 	public boolean[] compat = { false, false, false, false };
@@ -65,7 +65,7 @@ public class Gamepad {
 	public boolean isMogaPro[] = { false, false, false, false };
 
 	public SparseArray<Integer> playerNumX = new SparseArray<Integer>();
-	public List<Integer> keypadZeus = new ArrayList<Integer>();
+	public int[] keypadZeus = new int[2];
 
 	public boolean isXperiaPlay;
 	public boolean isOuyaOrTV;
@@ -209,5 +209,40 @@ public class Gamepad {
 		return android.os.Build.MODEL.equals("SHIELD")
 				|| android.os.Build.DEVICE.equals("roth")
 				|| android.os.Build.PRODUCT.equals("thor");
+	}
+	
+	public void setCustomMapping(String id, int playerNum, SharedPreferences prefs) {
+		map[playerNum] = setModifiedKeys(id, playerNum, prefs);
+	}
+
+	public void initJoyStickLayout(int playerNum) {
+		if (!joystick[playerNum]) {
+			globalLS_X[playerNum] = previousLS_X[playerNum] = 0.0f;
+			globalLS_Y[playerNum] = previousLS_Y[playerNum] = 0.0f;
+		}
+	}
+	
+	public void runCompatibilityMode(int joy, SharedPreferences prefs) {
+		for (int n = 0; n < 4; n++) {
+			if (compat[n]) {
+				String id = portId[n];
+				joystick[n] = prefs.getBoolean(Gamepad.pref_js_merged + id, false);
+				getCompatibilityMap(n, portId[n], prefs);
+				initJoyStickLayout(n);
+			}
+		}
+	}
+	
+	public void fullCompatibilityMode(SharedPreferences prefs) {
+		for (int n = 0; n < 4; n++) {
+			runCompatibilityMode(n, prefs);
+		}
+	}
+
+	public void getCompatibilityMap(int playerNum, String id, SharedPreferences prefs) {
+		name[playerNum] = prefs.getInt(Gamepad.pref_pad + id, -1);
+		if (name[playerNum] != -1) {
+			map[playerNum] = setModifiedKeys(id, playerNum, prefs);
+		}
 	}
 }

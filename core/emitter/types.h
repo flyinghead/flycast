@@ -35,6 +35,7 @@ typedef u64 unat;
 //unused parameters
 #pragma warning( disable : 4100)
 
+*/
 //basic includes from runtime lib
 #include <stdlib.h>
 #include <stdio.h>

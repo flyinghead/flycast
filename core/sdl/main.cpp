@@ -101,6 +101,8 @@ void emit_WriteCodeCache();
 
 static SDL_Joystick *JoySDL    = 0;
 
+extern bool FrameSkipping;
+
 #ifdef USE_OSS
 static int audio_fd = -1;
 #endif
@@ -222,6 +224,7 @@ bool HandleEvents(u32 port) {
 					case SDLK_k:		KillTex=true; break;
 					case SDLK_n:    if (value) {mouse_use=(mouse_use+1)%4; snprintf(OSD_Info, 128, "Right Nub mode: %s\n", num_mode[mouse_use]); OSD_Delay=300;}; break;  
 					case SDLK_s:        if (value) {settings.aica.NoSound=!settings.aica.NoSound; snprintf(OSD_Info, 128, "Sound %s\n", (settings.aica.NoSound)?"Off":"On"); OSD_Delay=300;};break;
+					case SDLK_f:		if (value) {FrameSkipping=!FrameSkipping; snprintf(OSD_Info, 128, "FrameSkipping %s\n", (FrameSkipping)?"On":"Off"); OSD_Delay=300;};break;	
 					case SDLK_c:    if (value) {OSD_Counter=1-OSD_Counter;};break;
 
 				#else
@@ -502,6 +505,8 @@ int main(int argc, wchar* argv[])
 	#ifdef USE_OSS	
 		init_sound();
 	#endif
+
+	FrameSkipping=false;
 	
 	dc_run();
 	
