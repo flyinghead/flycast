@@ -617,12 +617,39 @@ int screen_height;
 					(GLXDrawable)libPvr_GetRenderTarget(), 
 					(GLXContext)x11_glc);
 
+				screen_width = 640;
+				screen_height = 480;
 				return gl3wInit() != -1 && gl3wIsSupported(3, 1);
 			}
 
 			void gl_swap()
 			{
 				glXSwapBuffers((Display*)libPvr_GetRenderSurface(), (GLXDrawable)libPvr_GetRenderTarget());
+
+				Window win;
+				int temp;
+				unsigned int tempu, new_w, new_h;
+				XGetGeometry((Display*)libPvr_GetRenderSurface(), (GLXDrawable)libPvr_GetRenderTarget(),
+							&win, &temp, &temp, &new_w, &new_h,&tempu,&tempu);
+
+				//if resized, clear up the draw buffers, to avoid out-of-draw-area junk data
+				if (new_w != screen_width || new_h != screen_height) {
+					screen_width = new_w;
+					screen_height = new_h;
+				}
+
+				#if 0
+					//handy to debug really stupid render-not-working issues ...
+
+					glClearColor( 0, 0.5, 1, 1 );
+					glClear( GL_COLOR_BUFFER_BIT );
+					glXSwapBuffers((Display*)libPvr_GetRenderSurface(), (GLXDrawable)libPvr_GetRenderTarget());
+
+
+					glClearColor ( 1, 0.5, 0, 1 );
+					glClear ( GL_COLOR_BUFFER_BIT );
+					glXSwapBuffers((Display*)libPvr_GetRenderSurface(), (GLXDrawable)libPvr_GetRenderTarget());
+				#endif
 			}
 		#endif
 	#endif
@@ -1411,6 +1438,7 @@ bool RenderFrame()
 
 	bool is_rtt=pvrrc.isRTT;
 
+
 	OSD_HOOK();
 
 	//if (FrameCount&7) return;
@@ -1745,6 +1773,14 @@ bool RenderFrame()
 	
 	//not all scaling affects pixel operations, scale to adjust for that
 	scale_x *= scissoring_scale_x;
+
+	#if 0
+		//handy to debug really stupid render-not-working issues ...
+		printf("SS: %dx%d\n", screen_width, screen_height);
+		printf("SCI: %d, %f\n", pvrrc.fb_X_CLIP.max, dc2s_scale_h);
+		printf("SCI: %f, %f, %f, %f\n", offs_x+pvrrc.fb_X_CLIP.min/scale_x,(pvrrc.fb_Y_CLIP.min/scale_y)*dc2s_scale_h,(pvrrc.fb_X_CLIP.max-pvrrc.fb_X_CLIP.min+1)/scale_x*dc2s_scale_h,(pvrrc.fb_Y_CLIP.max-pvrrc.fb_Y_CLIP.min+1)/scale_y*dc2s_scale_h);
+	#endif 
+
 	glScissor(offs_x+pvrrc.fb_X_CLIP.min/scale_x,(pvrrc.fb_Y_CLIP.min/scale_y)*dc2s_scale_h,(pvrrc.fb_X_CLIP.max-pvrrc.fb_X_CLIP.min+1)/scale_x*dc2s_scale_h,(pvrrc.fb_Y_CLIP.max-pvrrc.fb_Y_CLIP.min+1)/scale_y*dc2s_scale_h);
 	if (settings.rend.WideScreen && pvrrc.fb_X_CLIP.min==0 && ((pvrrc.fb_X_CLIP.max+1)/scale_x==640) && (pvrrc.fb_Y_CLIP.min==0) && ((pvrrc.fb_Y_CLIP.max+1)/scale_y==480 ) )
 	{
@@ -1752,6 +1788,7 @@ bool RenderFrame()
 	}
 	else
 		glEnable(GL_SCISSOR_TEST);
+
 
 	//restore scale_x
 	scale_x /= scissoring_scale_x;
@@ -1812,7 +1849,7 @@ void rend_set_fb_scale(float x,float y)
 struct glesrend : Renderer
 {
 	bool Init() { return gles_init(); }
-	void Resize(int w, int h) { }
+	void Resize(int w, int h) { screen_width=w; screen_height=h; }
 	void Term() { } 
 
 	bool Process(TA_context* ctx) { return ProcessFrame(ctx); }

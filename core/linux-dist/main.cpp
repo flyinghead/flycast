@@ -27,7 +27,9 @@
 		#include <GL/gl.h>
 		#include <GL/glx.h>
 	#endif
-
+	
+	#include <map>
+	map<int, int> x11_keymap;
 #endif
 
 #if !defined(ANDROID)
@@ -403,11 +405,13 @@ static Cursor CreateNullCursor(Display *display, Window root)
 }
 #endif
 
+int x11_dc_buttons = 0xFFFF;
+
 void UpdateInputState(u32 port)
 {
 	static char key = 0;
 
-	kcode[port]=0xFFFF;
+	kcode[port]= x11_dc_buttons;
 	rt[port]=0;
 	lt[port]=0;
 	
@@ -464,7 +468,39 @@ return;
 
 void os_DoEvents()
 {
+	#if defined(SUPPORT_X11)
+		if (x11_win) {
+			//Handle X11
+			XEvent e;
+			if(XCheckWindowEvent((Display*)x11_disp, (Window)x11_win, KeyPressMask | KeyReleaseMask, &e))
+			{
+				switch(e.type)
+				{
 
+					case KeyPress:
+					case KeyRelease:
+					{
+						int dc_key = x11_keymap[e.xkey.keycode];
+
+						if (e.type == KeyPress)
+							x11_dc_buttons &= ~dc_key;
+						else
+							x11_dc_buttons |= dc_key;
+
+						//printf("KEY: %d -> %d: %d\n",e.xkey.keycode, dc_key, x11_dc_buttons );
+					}
+					break;
+
+					
+					{
+						printf("KEYRELEASE\n");
+					}
+					break;
+
+				}
+			}
+		}
+	#endif
 }
 
 void os_SetWindowText(const char * text)
@@ -472,7 +508,7 @@ void os_SetWindowText(const char * text)
 	if (0==x11_win || 0==x11_disp || 1)
 		printf("%s\n",text);
 #if defined(SUPPORT_X11)
-	else {
+	else if (x11_win) {
 		XChangeProperty((Display*)x11_disp, (Window)x11_win,
 			XInternAtom((Display*)x11_disp, "WM_NAME",		False),		//WM_NAME,
 			XInternAtom((Display*)x11_disp, "UTF8_STRING",	False),		//UTF8_STRING,
@@ -490,6 +526,7 @@ void os_CreateWindow()
 #if defined(SUPPORT_X11)
 	if (cfgLoadInt("pvr","nox11",0)==0)
 		{
+			XInitThreads();
 			// X11 variables
 			Window				x11Window	= 0;
 			Display*			x11Display	= 0;
@@ -520,15 +557,51 @@ void os_CreateWindow()
 			int depth = CopyFromParent;
 
 			#if !defined(GLES)
-				int attr32[] = { GLX_RGBA, GLX_DEPTH_SIZE, 32, GLX_DOUBLEBUFFER, GLX_STENCIL_SIZE, 8, None };
-				int attr24[] = { GLX_RGBA, GLX_DEPTH_SIZE, 24, GLX_DOUBLEBUFFER, GLX_STENCIL_SIZE, 8, None };
+				// Get a matching FB config
+				static int visual_attribs[] =
+				{
+					GLX_X_RENDERABLE    , True,
+					GLX_DRAWABLE_TYPE   , GLX_WINDOW_BIT,
+					GLX_RENDER_TYPE     , GLX_RGBA_BIT,
+					GLX_X_VISUAL_TYPE   , GLX_TRUE_COLOR,
+					GLX_RED_SIZE        , 8,
+					GLX_GREEN_SIZE      , 8,
+					GLX_BLUE_SIZE       , 8,
+					GLX_ALPHA_SIZE      , 8,
+					GLX_DEPTH_SIZE      , 24,
+					GLX_STENCIL_SIZE    , 8,
+					GLX_DOUBLEBUFFER    , True,
+					//GLX_SAMPLE_BUFFERS  , 1,
+					//GLX_SAMPLES         , 4,
+					None
+				};
 
-				XVisualInfo* vi = glXChooseVisual(x11Display, 0, attr32);
-				if (!vi)
-					vi = glXChooseVisual(x11Display, 0, attr24);
-				
-				if (!vi)
-					die("Failed to glXChooseVisual");
+				int glx_major, glx_minor;
+
+				// FBConfigs were added in GLX version 1.3.
+				if ( !glXQueryVersion( x11Display, &glx_major, &glx_minor ) || 
+				( ( glx_major == 1 ) && ( glx_minor < 3 ) ) || ( glx_major < 1 ) )
+				{
+					printf("Invalid GLX version");
+					exit(1);
+				}
+
+				int fbcount;
+				GLXFBConfig* fbc = glXChooseFBConfig(x11Display, x11Screen, visual_attribs, &fbcount);
+				if (!fbc)
+				{
+					printf( "Failed to retrieve a framebuffer config\n" );
+					exit(1);
+				}
+				printf( "Found %d matching FB configs.\n", fbcount );
+
+				GLXFBConfig bestFbc = fbc[ 0 ];
+				XFree( fbc );
+ 
+				// Get a visual
+				XVisualInfo *vi = glXGetVisualFromFBConfig( x11Display, bestFbc );
+				printf( "Chosen visual ID = 0x%x\n", vi->visualid );
+
 
 				depth = vi->depth;
 				x11Visual = vi;
@@ -580,8 +653,31 @@ void os_CreateWindow()
 				XMapWindow(x11Display, x11Window);
 
 				#if !defined(GLES)
-					x11_glc = glXCreateContext(x11Display, x11Visual, NULL, GL_TRUE);
-					//glXMakeCurrent(x11Display, x11Window, glc);
+
+					#define GLX_CONTEXT_MAJOR_VERSION_ARB       0x2091
+					#define GLX_CONTEXT_MINOR_VERSION_ARB       0x2092
+					typedef GLXContext (*glXCreateContextAttribsARBProc)(Display*, GLXFBConfig, GLXContext, Bool, const int*);
+ 
+ 					glXCreateContextAttribsARBProc glXCreateContextAttribsARB = 0;
+  					glXCreateContextAttribsARB = (glXCreateContextAttribsARBProc)
+           			glXGetProcAddressARB( (const GLubyte *) "glXCreateContextAttribsARB" );
+
+           			verify( glXCreateContextAttribsARB != 0 );
+
+           			int context_attribs[] = { 
+           				GLX_CONTEXT_MAJOR_VERSION_ARB, 3,
+           				GLX_CONTEXT_MINOR_VERSION_ARB, 1, 
+           				GLX_CONTEXT_FLAGS_ARB, GLX_CONTEXT_DEBUG_BIT_ARB,
+						GLX_CONTEXT_PROFILE_MASK_ARB, GLX_CONTEXT_CORE_PROFILE_BIT_ARB,
+						None
+					};
+
+					x11_glc = glXCreateContextAttribsARB( x11Display, bestFbc, 0, True, context_attribs);
+					XSync( x11Display, False );
+
+					if (!x11_glc) {
+						die("Failed to create GL3.1 context\n");
+					}
 				#endif
 			#endif
 			XFlush(x11Display);
@@ -681,8 +777,9 @@ void clean_exit(int sig_num) {
 
 void init_sound()
 {
-    if((audio_fd=open("/dev/dsp",O_WRONLY))<0)
+    if((audio_fd=open("/dev/dsp",O_WRONLY))<0) {
 		printf("Couldn't open /dev/dsp.\n");
+    }
     else
 	{
 	  printf("sound enabled, dsp openned for write\n");
@@ -711,6 +808,9 @@ int main(int argc, wchar* argv[])
 	signal(SIGKILL, clean_exit);
 	
 	init_sound();
+#else
+	void os_InitAudio();
+	os_InitAudio();
 #endif
 
 #if defined(USES_HOMEDIR)
@@ -726,6 +826,27 @@ int main(int argc, wchar* argv[])
 #else
 	SetHomeDir(".");
 #endif
+
+	#if defined(SUPPORT_X11)
+		x11_keymap[113] = DPad_Left;
+		x11_keymap[114] = DPad_Right;
+
+		x11_keymap[111] = DPad_Up;
+		x11_keymap[116] = DPad_Down;
+
+		x11_keymap[52] = Btn_Y;
+		x11_keymap[53] = Btn_X;
+		x11_keymap[54] = Btn_B;
+		x11_keymap[55] = Btn_A;
+
+		/*
+			//TODO: Fix sliders
+			x11_keymap[38] = DPad_Down;
+			x11_keymap[39] = DPad_Down;
+		*/
+
+		x11_keymap[36] = Btn_Start;
+	#endif
 
 	printf("Home dir is: %s\n",GetPath("/").c_str());
 
@@ -746,12 +867,20 @@ int main(int argc, wchar* argv[])
 	return 0;
 }
 
+u32 alsa_Push(void* frame, u32 samples, bool wait);
 u32 os_Push(void* frame, u32 samples, bool wait)
 {
-#ifdef TARGET_PANDORA
-	write(audio_fd, frame, samples*4);
-#endif
-return 1;
+	#ifndef TARGET_PANDORA
+		int audio_fd = -1;
+	#endif
+
+	if (audio_fd > 0) {
+		write(audio_fd, frame, samples*4);
+	} else {
+		return alsa_Push(frame, samples, wait);
+	}
+
+	return 1;
 }
 #endif
 

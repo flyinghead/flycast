@@ -512,8 +512,16 @@ void update_armintc()
 	reg[INTR_PEND].I=e68k_out && armFiqEnable;
 }
 
+void libAICA_TimeStep();
+
 #ifdef HOST_NO_AREC
-void arm_Run(u32 CycleCount) { arm_Run_(CycleCount); }
+void arm_Run(u32 CycleCount) { 
+	for (int i=0;i<32;i++)
+	{
+		arm_Run_(CycleCount/32);
+		libAICA_TimeStep();
+	}
+}
 #else
 extern "C" void CompileCode();
 
@@ -1594,7 +1602,6 @@ void armv_MOV32(eReg regn, u32 imm)
 
 #endif	// HOST_CPU 
 
-void libAICA_TimeStep();
 //Run a timeslice for ARMREC
 //CycleCount is pretty much fixed to (512*32) for now (might change to a diff constant, but will be constant)
 void arm_Run(u32 CycleCount)
