@@ -253,6 +253,8 @@ void LoadSettings()
 	settings.debug.SerialConsole = cfgLoadInt("config", "Debug.SerialConsoleEnabled", 0) != 0;
 
 	settings.reios.ElfFile = cfgLoadStr("reios", "ElfFile","");
+
+	settings.validate.OpenGlChecks = cfgLoadInt("validate", "OpenGlChecks", 0) != 0;
 #endif
 
 	settings.bios.UseReios = cfgLoadInt("config", "bios.UseReios", 0);

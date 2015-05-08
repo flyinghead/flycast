@@ -686,6 +686,10 @@ struct settings_t
 	struct {
 		bool SerialConsole;
 	} debug;
+
+	struct {
+		bool OpenGlChecks;
+	} validate;
 };
 
 extern settings_t settings;

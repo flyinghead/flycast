@@ -1,7 +1,12 @@
 notifications:
   irc: chat.freenode.net#reicast
-language: cpp
-compiler: gcc
+language: android
+android:
+  components:
+    - platform-tools
+    - tools
+    - build-tools-22.0.0
+    - android-21
 before_install:
 - openssl aes-256-cbc -K $encrypted_c726d225a9d9_key -iv $encrypted_c726d225a9d9_iv
   -in debug.keystore.enc -out debug.keystore -d
@@ -13,15 +18,11 @@ before_install:
 - GIT_HASH=`git log --pretty=format:'%h' -n 1`
 - GIT_BUILD=`git describe --all`-$GIT_HASH
 install:
-- download_extract http://dl.google.com/android/ndk/android-ndk-r9c-linux-x86_64.tar.bz2
-  android-ndk-r9c-linux-x86_64.tar.bz2
-- download_extract_zip http://dl.google.com/android/adt/adt-bundle-linux-x86_64-20131030.zip
-  adt-bundle-linux-x86_64-20131030.zip
-- mv android-ndk-r9c android-ndk
-- mv adt-bundle-linux-x86_64-20131030/sdk/ android-sdk
-- rm android-ndk-r9c-linux-x86_64.tar.bz2
-- rm adt-bundle-linux-x86_64-20131030.zip
-- export ANDROID_HOME=$(pwd)/android-sdk
+- wget http://dl.google.com/android/ndk/android-ndk-r10d-linux-x86_64.bin
+- chmod +x android-ndk-r10d-linux-x86_64.bin
+- ./android-ndk-r10d-linux-x86_64.bin -y | grep -v Extracting
+- mv android-ndk-r10d android-ndk
+- rm android-ndk-r10d-linux-x86_64.bin
 - export NDK=$(pwd)/android-ndk
 - export ANDROID_NDK=$(pwd)/android-ndk
 - export PATH=${PATH}:$ANDROID_HOME/tools
@@ -32,7 +33,7 @@ install:
 before_script: 
 script:
 - cd shell/android
-- android update project -p . --target "android-19"
+- android update project -p . --target "android-21"
 - export NUMBER_OF_PROCESSORS=2
 - ant debug
 before_deploy:

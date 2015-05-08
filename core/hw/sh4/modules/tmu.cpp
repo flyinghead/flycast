@@ -19,6 +19,7 @@ u32 tmu_prescaler_mask[3];
 
 u32 tmu_shift[3];
 u32 tmu_mask[3];
+u64 tmu_mask64[3];
 
 const u32 tmu_ch_bit[3]={1,2,4};
 
@@ -75,10 +76,16 @@ void UpdateTMU_i(u32 Cycles)
 #endif
 
 u32 tmu_ch_base[3];
+u64 tmu_ch_base64[3];
 
 u32 read_TMU_TCNTch(u32 ch)
 {
 	return tmu_ch_base[ch] - ((sh4_sched_now64() >> tmu_shift[ch])&tmu_mask[ch]);
+}
+
+s64 read_TMU_TCNTch64(u32 ch)
+{
+	return tmu_ch_base64[ch] - ((sh4_sched_now64() >> tmu_shift[ch])&tmu_mask64[ch]);
 }
 
 void sched_chan_tick(int ch)
@@ -87,6 +94,10 @@ void sched_chan_tick(int ch)
 	//return TMU_TCOR(ch) << tmu_shift[ch];
 
 	u32 togo = read_TMU_TCNTch(ch);
+
+	if (togo > SH4_MAIN_CLOCK)
+		togo = SH4_MAIN_CLOCK;
+
 	u32 cycles = togo << tmu_shift[ch];
 
 	if (cycles > SH4_MAIN_CLOCK)
@@ -103,6 +114,7 @@ void write_TMU_TCNTch(u32 ch, u32 data)
 {
 	//u32 TCNT=read_TMU_TCNTch(ch);
 	tmu_ch_base[ch]=data+((sh4_sched_now64()>>tmu_shift[ch])&tmu_mask[ch]);
+	tmu_ch_base64[ch] = data + ((sh4_sched_now64() >> tmu_shift[ch])&tmu_mask64[ch]);
 
 	sched_chan_tick(ch);
 }
@@ -123,6 +135,7 @@ void turn_on_off_ch(u32 ch, bool on)
 {
 	u32 TCNT=read_TMU_TCNTch(ch);
 	tmu_mask[ch]=on?0xFFFFFFFF:0x00000000;
+	tmu_mask64[ch] = on ? 0xFFFFFFFFFFFFFFFF : 0x0000000000000000;
 	write_TMU_TCNTch(ch,TCNT);
 
 	sched_chan_tick(ch);
@@ -213,13 +226,15 @@ int sched_tmu_cb(int ch, int sch_cycl, int jitter)
 	if (tmu_mask[ch]) {
 		
 		u32 tcnt = read_TMU_TCNTch(ch);
+		
+		s64 tcnt64 = (s64)read_TMU_TCNTch64(ch);
 
 		u32 tcor = TMU_TCOR(ch);
 
 		u32 cycles = tcor << tmu_shift[ch];
 
-		//this is not 100% correct
-		if (abs((s32)tcnt) <= jitter) {
+		//64 bit maths to differentiate big values from overflows
+		if (tcnt64 <= jitter) {
 			//raise interrupt, timer counted down
 			TMU_TCR(ch) |= tmu_underflow;
 			InterruptPend(tmu_intID[ch], 1);
@@ -227,7 +242,7 @@ int sched_tmu_cb(int ch, int sch_cycl, int jitter)
 			//printf("Interrupt for %d, %d cycles\n", ch, sch_cycl);
 
 			//schedule next trigger by writing the TCNT register
-			write_TMU_TCNTch(ch, tcor - tcnt);
+			write_TMU_TCNTch(ch, tcor + tcnt);
 		}
 		else {
 			

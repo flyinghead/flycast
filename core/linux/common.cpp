@@ -17,6 +17,7 @@
 
 #if defined(_ANDROID)
 #include <asm/sigcontext.h>
+#if 0
 typedef struct ucontext_t {
 unsigned long uc_flags;
 struct ucontext_t *uc_link;
@@ -31,17 +32,18 @@ struct sigcontext uc_mcontext;
 */
 } ucontext_t;
 #endif
+#endif
 
 #if HOST_CPU == CPU_ARM
 #define GET_PC_FROM_CONTEXT(c) (((ucontext_t *)(c))->uc_mcontext.arm_pc)
 #elif HOST_CPU == CPU_MIPS
-#ifdef _ANDROID
+#if 0 && _ANDROID
 #define GET_PC_FROM_CONTEXT(c) (((ucontext_t *)(c))->uc_mcontext.sc_pc)
 #else
 #define GET_PC_FROM_CONTEXT(c) (((ucontext_t *)(c))->uc_mcontext.pc)
 #endif
 #elif HOST_CPU == CPU_X86
-#ifdef _ANDROID
+#if 0 && _ANDROID
 #define GET_PC_FROM_CONTEXT(c) (((ucontext_t *)(c))->uc_mcontext.eip)
 #else
 #define GET_PC_FROM_CONTEXT(c) (((ucontext_t *)(c))->uc_mcontext.gregs[REG_EIP])

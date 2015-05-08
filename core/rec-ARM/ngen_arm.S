@@ -11,6 +11,7 @@
 @@@@@@@@@@ some helpers @@@@@@@@@@
 
 .global do_sqw_nommu_area_3
+.hidden do_sqw_nommu_area_3
 @r0: addr
 @r1: sq_both
 do_sqw_nommu_area_3:
@@ -25,6 +26,7 @@ vstm r3,{d0-d3}
 bx lr
 
 .global TAWriteSQ
+.hidden TAWriteSQ
 @r0: addr
 @r1: sq_both
 TAWriteSQ:
@@ -57,6 +59,7 @@ bx lr
 @@@@@@@@@@ ngen_LinkBlock_*****_stub @@@@@@@@@@
 
 .global ngen_LinkBlock_Generic_stub
+.hidden ngen_LinkBlock_Generic_stub
 ngen_LinkBlock_Generic_stub:
 
     mov r1,r4	@ djump/pc -> in case we need it ..
@@ -64,12 +67,14 @@ ngen_LinkBlock_Generic_stub:
 
 
 .global ngen_LinkBlock_cond_Branch_stub
+.hidden ngen_LinkBlock_cond_Branch_stub
 ngen_LinkBlock_cond_Branch_stub:
 
 	mov r1,#1
 	b ngen_LinkBlock_Shared_stub
     
 .global ngen_LinkBlock_cond_Next_stub    
+.hidden ngen_LinkBlock_cond_Next_stub    
 ngen_LinkBlock_cond_Next_stub:
 
 	mov r1,#0
@@ -77,6 +82,7 @@ ngen_LinkBlock_cond_Next_stub:
 
 
 .global ngen_LinkBlock_Shared_stub
+.hidden ngen_LinkBlock_Shared_stub
 ngen_LinkBlock_Shared_stub:
 
 	mov r0,lr
@@ -88,6 +94,7 @@ ngen_LinkBlock_Shared_stub:
 
 
 .global ngen_FailedToFindBlock_
+.hidden ngen_FailedToFindBlock_
 ngen_FailedToFindBlock_:
 	mov r0,r4
     bl rdv_FailedToFindBlock
@@ -96,6 +103,7 @@ ngen_FailedToFindBlock_:
 @@@@@@@@@@ ngen_blockcheckfail @@@@@@@@@@
 
 .global ngen_blockcheckfail
+.hidden ngen_blockcheckfail
 ngen_blockcheckfail:
     bl rdv_BlockCheckFail
     bx r0
@@ -111,6 +119,7 @@ ngen_blockcheckfail:
 
 
 .global ngen_mainloop
+.hidden ngen_mainloop
 ngen_mainloop:
 
 push { r4-r12,lr }
@@ -125,7 +134,8 @@ push { r4-r12,lr }
 
 
 	@this code is here for fall-through behavior of do_iter
-	.global intc_sched
+.global intc_sched
+.hidden intc_sched
 intc_sched:        @ next_pc _MUST_ be on ram
     add r9,r9,#SH4_TIMESLICE
 	mov r4,lr
@@ -140,6 +150,7 @@ do_iter:
 	mov r4,r0
 
 .global no_update
+.hidden no_update
 no_update:              @ next_pc _MUST_ be on r4 *R4 NOT R0 anymore*
 
 	sub r2,r8,#33816576
@@ -157,6 +168,7 @@ end_ngen_mainloop:
 @@@@@@@@@@ ngen_mainloop @@@@@@@@@@
 
 .global arm_compilecode
+.hidden arm_compilecode
 arm_compilecode:
 bl CompileCode
 b arm_dispatch
@@ -166,7 +178,8 @@ Xarm_Reg: .word arm_Reg
 XEntryPoints: .word EntryPoints
 #endif
 
-.global arm_mainloop
+.global arm_mainloop 
+.hidden arm_mainloop 
 arm_mainloop: @(cntx,lookup_base,cycles)
 
 push {r4,r5,r8,r9,lr}
@@ -185,6 +198,7 @@ push {r4,r5,r8,r9,lr}
 	b arm_dispatch
 
 .global arm_dispatch
+.hidden arm_dispatch
 arm_dispatch:
 	#ifdef TARGET_IPHONE
 	ldrd r0,r1,[r8,#184]		@load: Next PC, interrupt
@@ -203,6 +217,7 @@ arm_dofiq:
 	b arm_dispatch
 
 .global arm_exit
+.hidden arm_exit
 arm_exit:
 	str r5,[r8,#192]		@if timeslice is over, save remaining cycles
 	pop {r4,r5,r8,r9,pc}	
@@ -211,6 +226,7 @@ arm_exit:
 @matrix mul
 #ifndef _ANDROID
 .global ftrv_asm
+.hidden ftrv_asm
 ftrv_asm:
 
 @r0=dst,r1=vec,r2=mtx
@@ -229,6 +245,7 @@ vstm r0,{d4,d5}
 bx lr
 
 .global fipr_asm
+.hidden fipr_asm
 fipr_asm:
 
 @ vdot

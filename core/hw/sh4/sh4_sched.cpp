@@ -36,16 +36,21 @@ vector<sched_list> list;
 
 int sh4_sched_next_id=-1;
 
-u32 sh4_sched_remaining(int id)
+u32 sh4_sched_remaining(int id, u32 reference)
 {
-	if (list[id].end!=-1)
+	if (list[id].end != -1)
 	{
-		return list[id].end-sh4_sched_now();
+		return list[id].end - reference;
 	}
 	else
 	{
 		return -1;
 	}
+}
+
+u32 sh4_sched_remaining(int id)
+{
+	return sh4_sched_remaining(id, sh4_sched_now());
 }
 
 void sh4_sched_ffts()
@@ -103,10 +108,19 @@ u64 sh4_sched_now64()
 }
 void sh4_sched_request(int id, int cycles)
 {
-	verify(cycles <= SH4_MAIN_CLOCK);
+	verify(cycles== -1 || (cycles >= 0 && cycles <= SH4_MAIN_CLOCK));
 
 	list[id].start=sh4_sched_now();
-	list[id].end=list[id].start+cycles;
+
+	if (cycles == -1) {
+		list[id].end = -1;
+	}
+	else
+	{
+		list[id].end = list[id].start + cycles;
+		if (list[id].end == -1)
+			list[id].end++;
+	}
 
 	sh4_sched_ffts();
 }
@@ -150,8 +164,9 @@ void sh4_sched_tick(int cycles)
 		{
 			for (int i=0;i<list.size();i++)
 			{
-				if ((list[i].end-fztime)<=(u32)cycles)
-				{
+				int remaining = sh4_sched_remaining(i, fztime);
+				verify(remaining >= 0 || remaining == -1);
+				if (remaining >= 0 && remaining <= (u32)cycles) {
 					handle_cb(i);
 				}
 			}

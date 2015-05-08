@@ -652,18 +652,30 @@ cResetEvent::~cResetEvent()
 }
 void cResetEvent::Set()//Signal
 {
+	#if defined(DEBUG_THREADS)
+		Sleep(rand() % 10);
+	#endif
 	SetEvent(hEvent);
 }
 void cResetEvent::Reset()//reset
 {
+	#if defined(DEBUG_THREADS)
+		Sleep(rand() % 10);
+	#endif
 	ResetEvent(hEvent);
 }
 void cResetEvent::Wait(u32 msec)//Wait for signal , then reset
 {
+	#if defined(DEBUG_THREADS)
+		Sleep(rand() % 10);
+	#endif
 	WaitForSingleObject(hEvent,msec);
 }
 void cResetEvent::Wait()//Wait for signal , then reset
 {
+	#if defined(DEBUG_THREADS)
+		Sleep(rand() % 10);
+	#endif
 	WaitForSingleObject(hEvent,(u32)-1);
 }
 //End AutoResetEvent
