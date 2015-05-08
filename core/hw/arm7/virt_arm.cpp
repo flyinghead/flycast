@@ -311,7 +311,7 @@ void virt_arm_init()
 	VARM::virt_arm_init();
 }
 
-u32 __fastcall virt_arm_op(u32 opcode)
+u32 DYNACALL virt_arm_op(u32 opcode)
 {
 	return VARM::virt_arm_op(opcode);
 }

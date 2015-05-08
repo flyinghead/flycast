@@ -13,10 +13,8 @@
 
 #if BUILD_COMPILER==COMPILER_VC
 #define DYNACALL  __fastcall
-#define DYNACALL_T
 #else
-#define DYNACALL
-#define DYNACALL_T __attribute__((fastcall))
+#define DYNACALL __attribute__((fastcall))
 #endif
 
 #if BUILD_COMPILER==COMPILER_VC
@@ -511,7 +509,7 @@ void os_DebugBreak();
 #define stricmp strcasecmp
 #endif
 
-//#define __fastcall <nothing useful is here "" must not happen ever>
+#define __fastcall <nothing useful is here "" must not happen ever>
 #ifndef STRIP_TEXT
 #define verify(x) if((x)==false){ msgboxf("Verify Failed  : " #x "\n in %s -> %s : %d \n",MBX_ICONERROR,(__FUNCTION__),(__FILE__),__LINE__); dbgbreak;}
 #define die(reason) { msgboxf("Fatal error : %s\n in %s -> %s : %d \n",MBX_ICONERROR,(reason),(__FUNCTION__),(__FILE__),__LINE__); dbgbreak;}

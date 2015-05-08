@@ -87,24 +87,24 @@ blkmap_t blkmap;
 u32 bm_gc_luc,bm_gcf_luc;
 
 
-#define FPCA(x) ((DynarecCodeEntry*&)sh4rcb.fpcb[(x>>1)&(8*1024*1024-1)])
+#define FPCA(x) ((DynarecCodeEntryPtr&)sh4rcb.fpcb[(x>>1)&(8*1024*1024-1)])
 
-DynarecCodeEntry* DYNACALL bm_GetCode(u32 addr)
+DynarecCodeEntryPtr DYNACALL bm_GetCode(u32 addr)
 {
 	//rdv_FailedToFindBlock_pc=addr;
-	DynarecCodeEntry* rv=(DynarecCodeEntry*)FPCA(addr);
+	DynarecCodeEntryPtr rv=(DynarecCodeEntryPtr)FPCA(addr);
 
-	return (DynarecCodeEntry*)rv;
+	return (DynarecCodeEntryPtr)rv;
 }
 
-DynarecCodeEntry* DYNACALL bm_GetCode2(u32 addr)
+DynarecCodeEntryPtr DYNACALL bm_GetCode2(u32 addr)
 {
-	return (DynarecCodeEntry*)bm_GetCode(addr);
+	return (DynarecCodeEntryPtr)bm_GetCode(addr);
 }
 
 RuntimeBlockInfo* DYNACALL bm_GetBlock(u32 addr)
 {
-	DynarecCodeEntry* cde=bm_GetCode(addr);
+	DynarecCodeEntryPtr cde=bm_GetCode(addr);
 
 	if (cde==ngen_FailedToFindBlock)
 		return 0;

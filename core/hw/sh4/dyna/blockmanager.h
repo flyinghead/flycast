@@ -5,12 +5,12 @@
 #include "decoder.h"
 #pragma once
 
-typedef void DynarecCodeEntry();
+typedef void (*DynarecCodeEntryPtr)();
 
 struct RuntimeBlockInfo_Core
 {
 	u32 addr;
-	DynarecCodeEntry* code;
+	DynarecCodeEntryPtr code;
 	u32 lookups;
 };
 
@@ -81,13 +81,13 @@ struct CachedBlockInfo: RuntimeBlockInfo_Core
 void bm_WriteBlockMap(const string& file);
 
 
-DynarecCodeEntry* DYNACALL bm_GetCode(u32 addr);
+DynarecCodeEntryPtr DYNACALL bm_GetCode(u32 addr);
 
 
 #if HOST_OS==OS_LINUX
 extern "C" {
 #endif
-DynarecCodeEntry* DYNACALL bm_GetCode2(u32 addr);
+DynarecCodeEntryPtr DYNACALL bm_GetCode2(u32 addr);
 #if HOST_OS==OS_LINUX
 }
 #endif

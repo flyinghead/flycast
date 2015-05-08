@@ -1979,7 +1979,7 @@ __default:
 void ngen_Compile(RuntimeBlockInfo* block,bool force_checks, bool reset, bool staging,bool optimise)
 {
 	//printf("Compile: %08X, %d, %d\n",block->addr,staging,optimise);
-	block->code=(DynarecCodeEntry*)EMIT_GET_PTR();
+	block->code=(DynarecCodeEntryPtr)EMIT_GET_PTR();
 
 	//StoreImms(r0,r1,(u32)&last_run_block,(u32)code); //useful when code jumps to random locations ...
 	++blockno;

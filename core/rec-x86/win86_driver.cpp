@@ -301,7 +301,7 @@ void ngen_Compile(RuntimeBlockInfo* block,bool force_checks, bool reset, bool st
 	x86e->x86_size=emit_FreeSpace();
 	x86e->do_realloc=false;
 
-	block->code=(DynarecCodeEntry*)emit_GetCCPtr();
+	block->code=(DynarecCodeEntryPtr)emit_GetCCPtr();
 
 	x86e->Emit(op_add32,&memops_t,block->memops);
 	x86e->Emit(op_add32,&memops_l,block->linkedmemops);

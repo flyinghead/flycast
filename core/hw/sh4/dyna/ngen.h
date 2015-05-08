@@ -63,15 +63,15 @@ void* emit_GetCCPtr();
 void emit_SetBaseAddr();
 
 //Called from ngen_FailedToFindBlock
-DynarecCodeEntry* DYNACALL rdv_FailedToFindBlock(u32 pc);
+DynarecCodeEntryPtr DYNACALL rdv_FailedToFindBlock(u32 pc);
 //Called when a block check failed, and the block needs to be invalidated
-DynarecCodeEntry* DYNACALL rdv_BlockCheckFail(u32 pc);
+DynarecCodeEntryPtr DYNACALL rdv_BlockCheckFail(u32 pc);
 //Called to compile code @pc
-DynarecCodeEntry* rdv_CompilePC();
+DynarecCodeEntryPtr rdv_CompilePC();
 //Returns 0 if there is no code @pc, code ptr otherwise
-DynarecCodeEntry* rdv_FindCode();
+DynarecCodeEntryPtr rdv_FindCode();
 //Finds or compiles code @pc
-DynarecCodeEntry* rdv_FindOrCompile();
+DynarecCodeEntryPtr rdv_FindOrCompile();
 
 //code -> pointer to code of block, dpc -> if dynamic block, pc. if cond, 0 for next, 1 for branch
 void* DYNACALL rdv_LinkBlock(u8* code,u32 dpc);

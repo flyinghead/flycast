@@ -47,6 +47,9 @@ struct sigcontext uc_mcontext;
 #define GET_PC_FROM_CONTEXT(c) (((ucontext_t *)(c))->uc_mcontext.eip)
 #else
 #define GET_PC_FROM_CONTEXT(c) (((ucontext_t *)(c))->uc_mcontext.gregs[REG_EIP])
+#define GET_ESP_FROM_CONTEXT(c) (((ucontext_t *)(c))->uc_mcontext.gregs[REG_ESP])
+#define GET_EAX_FROM_CONTEXT(c) (((ucontext_t *)(c))->uc_mcontext.gregs[REG_EAX])
+#define GET_ECX_FROM_CONTEXT(c) (((ucontext_t *)(c))->uc_mcontext.gregs[REG_ECX])
 #endif
 #else
 #error fix ->pc support
@@ -54,6 +57,7 @@ struct sigcontext uc_mcontext;
 
 #include "hw/sh4/dyna/ngen.h"
 
+bool ngen_Rewrite(unat& addr,unat retadr,unat acc);
 u32* ngen_readm_fail_v2(u32* ptr,u32* regs,u32 saddr);
 bool VramLockedWrite(u8* address);
 bool BM_LockedWrite(u8* address);
@@ -68,12 +72,24 @@ void fault_handler (int sn, siginfo_t * si, void *ctxr)
 	
 	if (VramLockedWrite((u8*)si->si_addr) || BM_LockedWrite((u8*)si->si_addr))
 		return;
-#if !defined( HOST_NO_REC) && HOST_CPU==CPU_ARM
-	else if (dyna_cde)
-	{
-		GET_PC_FROM_CONTEXT(ctxr)=(u32)ngen_readm_fail_v2((u32*)GET_PC_FROM_CONTEXT(ctxr),(u32*)&(ctx->uc_mcontext.arm_r0),(unat)si->si_addr);
-	}
-#endif
+	#if !defined(HOST_NO_REC)
+		#if HOST_CPU==CPU_ARM
+			else if (dyna_cde)
+			{
+				GET_PC_FROM_CONTEXT(ctxr)=(u32)ngen_readm_fail_v2((u32*)GET_PC_FROM_CONTEXT(ctxr),(u32*)&(ctx->uc_mcontext.arm_r0),(unat)si->si_addr);
+			}
+		#elif HOST_CPU==CPU_X86
+			else if ( ngen_Rewrite((unat&)GET_PC_FROM_CONTEXT(ctxr),*(unat*)GET_ESP_FROM_CONTEXT(ctxr),GET_EAX_FROM_CONTEXT(ctxr)) )
+			{
+				//remove the call from call stack
+				GET_ESP_FROM_CONTEXT(ctxr)+=4;
+				//restore the addr from eax to ecx so its valid again
+				GET_ECX_FROM_CONTEXT(ctxr)=GET_EAX_FROM_CONTEXT(ctxr);
+			}
+		#else
+			#error JIT: Not supported arch
+		#endif
+	#endif
 	else
 	{
 		printf("SIGSEGV @ fault_handler+0x%08X ... %08X -> was not in vram\n",GET_PC_FROM_CONTEXT(ctxr)-(u32)fault_handler,si->si_addr);

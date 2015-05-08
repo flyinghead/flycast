@@ -208,7 +208,7 @@ void RuntimeBlockInfo::Setup(u32 rpc,fpscr_t rfpu_cfg)
 	AnalyseBlock(this);
 }
 
-DynarecCodeEntry* rdv_CompilePC()
+DynarecCodeEntryPtr rdv_CompilePC()
 {
 	u32 pc=next_pc;
 
@@ -240,7 +240,7 @@ DynarecCodeEntry* rdv_CompilePC()
 	return rv->code;
 }
 
-DynarecCodeEntry* DYNACALL rdv_FailedToFindBlock(u32 pc)
+DynarecCodeEntryPtr DYNACALL rdv_FailedToFindBlock(u32 pc)
 {
 	//printf("rdv_FailedToFindBlock ~ %08X\n",pc);
 	next_pc=pc;
@@ -269,25 +269,25 @@ u32 DYNACALL rdv_DoInterrupts(void* block_cpde)
 	return next_pc;
 }
 
-DynarecCodeEntry* DYNACALL rdv_BlockCheckFail(u32 pc)
+DynarecCodeEntryPtr DYNACALL rdv_BlockCheckFail(u32 pc)
 {
 	next_pc=pc;
 	recSh4_ClearCache();
 	return rdv_CompilePC();
 }
 
-DynarecCodeEntry* rdv_FindCode()
+DynarecCodeEntryPtr rdv_FindCode()
 {
-	DynarecCodeEntry* rv=bm_GetCode(next_pc);
+	DynarecCodeEntryPtr rv=bm_GetCode(next_pc);
 	if (rv==ngen_FailedToFindBlock)
 		return 0;
 	
 	return rv;
 }
 
-DynarecCodeEntry* rdv_FindOrCompile()
+DynarecCodeEntryPtr rdv_FindOrCompile()
 {
-	DynarecCodeEntry* rv=bm_GetCode(next_pc);
+	DynarecCodeEntryPtr rv=bm_GetCode(next_pc);
 	if (rv==ngen_FailedToFindBlock)
 		rv=rdv_CompilePC();
 	
@@ -324,7 +324,7 @@ void* DYNACALL rdv_LinkBlock(u8* code,u32 dpc)
 			next_pc=rbi->NextBlock;
 	}
 
-	DynarecCodeEntry* rv=rdv_FindOrCompile();
+	DynarecCodeEntryPtr rv=rdv_FindOrCompile();
 
 	bool do_link=bm_GetBlock(code)==rbi;
 

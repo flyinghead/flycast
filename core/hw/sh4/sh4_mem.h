@@ -4,8 +4,6 @@
 //main system mem
 extern VArray2 mem_b;
 
-#define MEMCALL __fastcall
-
 #include "hw/mem/_vmem.h"
 #include "modules/mmu.h"
 
