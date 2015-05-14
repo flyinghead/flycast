@@ -169,6 +169,7 @@ public class OnScreenMenu {
 			addimg(buttonPrintStats, R.drawable.print_stats, clickPrintStats);
 
 			setContentView(shell);
+			shell.setFocusable(true);
 			popups.add(this);
 		}
 	}
@@ -369,6 +370,7 @@ public class OnScreenMenu {
 			}
 
 			setContentView(shell);
+			shell.setFocusable(true);
 			popups.add(this);
 		}
 	}
@@ -556,6 +558,7 @@ public class OnScreenMenu {
 			addimg(buttonExit, R.drawable.close, clickExit);
 
 			setContentView(shell);
+			shell.setFocusable(true);
 			this.setAnimationStyle(R.style.Animation);
 		}
 		
