@@ -24,16 +24,25 @@ WEBUI := 1
 
 ifneq ($(TARGET_ARCH_ABI),armeabi-v7a)
   NOT_ARM := 1
-  ifneq ($(TARGET_ARCH_ABI),x86)
-    NO_REC := 1
-  else
-    X86_REC := 1
-  endif
+else
+  NOT_ARM := 
+endif
+
+ifeq ($(TARGET_ARCH_ABI),x86)
+  X86_REC := 1
+else
+  X86_REC := 
 endif
 
 ifeq ($(TARGET_ARCH_ABI),mips)
   ISMIPS := 1
+  NO_REC := 1
+else
+  ISMIPS :=
+  NO_REC :=
 endif
+
+$(info $$TARGET_ARCH_ABI is [${TARGET_ARCH_ABI}])
 
 include $(LOCAL_PATH)/../../core/core.mk
 
