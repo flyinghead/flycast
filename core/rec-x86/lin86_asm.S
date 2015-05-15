@@ -83,6 +83,11 @@ ngen_FailedToFindBlock_:
 .type ngen_mainloop, @function
 
 ngen_mainloop:
+	# quick hack to maintain 16-byte alignment
+	push esi
+	push esi
+	push esi
+
 	push esi
 	push edi
 	push ebp
@@ -121,6 +126,11 @@ cleanup:
 	pop ebx
 	pop ebp
 	pop edi
+	pop esi
+	
+	# quick hack to maintain 16-byte alignment
+	pop esi
+	pop esi
 	pop esi
 
 	ret

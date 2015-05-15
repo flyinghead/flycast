@@ -411,6 +411,15 @@
     <ClCompile Include="..\core\reios\reios_elf.cpp">
       <Filter>reios</Filter>
     </ClCompile>
+    <ClCompile Include="..\core\rec-x86\win86_driver.cpp">
+      <Filter>rec-x86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\rec-x86\win86_il.cpp">
+      <Filter>rec-x86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\rec-x86\win86_ngen.cpp">
+      <Filter>rec-x86</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="hw">
@@ -532,6 +541,9 @@
     </Filter>
     <Filter Include="reios">
       <UniqueIdentifier>{f614dd66-5d30-4548-a209-f857f95fb505}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="rec-x86">
+      <UniqueIdentifier>{df854851-d3b5-4549-8248-acdfa954be44}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -895,6 +907,9 @@
     <ClInclude Include="..\core\reios\reios_elf.h">
       <Filter>reios</Filter>
     </ClInclude>
+    <ClInclude Include="..\core\rec-x86\win86_ngen.h">
+      <Filter>rec-x86</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\core\deps\zlib\Makefile">
@@ -902,6 +917,9 @@
     </None>
     <None Include="..\core\rec-ARM\ngen_arm.S">
       <Filter>rec-ARM</Filter>
+    </None>
+    <None Include="..\core\rec-x86\lin86_asm.S">
+      <Filter>rec-x86</Filter>
     </None>
   </ItemGroup>
 </Project>

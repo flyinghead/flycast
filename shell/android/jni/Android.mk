@@ -24,7 +24,11 @@ WEBUI := 1
 
 ifneq ($(TARGET_ARCH_ABI),armeabi-v7a)
   NOT_ARM := 1
-  NO_REC := 1
+  ifneq ($(TARGET_ARCH_ABI),x86)
+    NO_REC := 1
+  else
+    X86_REC := 1
+  endif
 endif
 
 ifeq ($(TARGET_ARCH_ABI),mips)
@@ -39,6 +43,12 @@ LOCAL_SRC_FILES += $(wildcard $(LOCAL_PATH)/jni/src/utils.cpp)
 LOCAL_CFLAGS  := $(RZDCY_CFLAGS) -fvisibility=hidden -fvisibility-inlines-hidden -ffunction-sections -fdata-sections
 LOCAL_CXXFLAGS  := $(RZDCY_CXXFLAGS) -fvisibility=hidden -fvisibility-inlines-hidden -ffunction-sections -fdata-sections
 LOCAL_CPPFLAGS  := $(RZDCY_CXXFLAGS) -fvisibility=hidden -fvisibility-inlines-hidden -ffunction-sections -fdata-sections
+
+ifeq ($(TARGET_ARCH_ABI),x86)
+  LOCAL_CFLAGS+= -DHOST_NO_AREC
+  LOCAL_CXXFLAGS+= -DHOST_NO_AREC -fpermissive
+  LOCAL_CPPFLAGS+= -DHOST_NO_AREC
+endif
 
 LOCAL_CPP_FEATURES := 
 LOCAL_SHARED_LIBRARIES:= libcutils libutils
