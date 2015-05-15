@@ -40,7 +40,7 @@ include $(LOCAL_PATH)/../../core/core.mk
 LOCAL_SRC_FILES := $(RZDCY_FILES)
 LOCAL_SRC_FILES += $(wildcard $(LOCAL_PATH)/jni/src/Android.cpp)
 LOCAL_SRC_FILES += $(wildcard $(LOCAL_PATH)/jni/src/utils.cpp)
-LOCAL_CFLAGS  := $(RZDCY_CFLAGS) -fvisibility=hidden -fvisibility-inlines-hidden -ffunction-sections -fdata-sections
+LOCAL_CFLAGS  := $(RZDCY_CFLAGS) -fvisibility=hidden -ffunction-sections -fdata-sections
 LOCAL_CXXFLAGS  := $(RZDCY_CXXFLAGS) -fvisibility=hidden -fvisibility-inlines-hidden -ffunction-sections -fdata-sections
 LOCAL_CPPFLAGS  := $(RZDCY_CXXFLAGS) -fvisibility=hidden -fvisibility-inlines-hidden -ffunction-sections -fdata-sections
 
