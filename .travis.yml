@@ -7,14 +7,10 @@ android:
     - tools
     - build-tools-22.0.0
     - android-21
+sudo: false
 before_install:
 - openssl aes-256-cbc -K $encrypted_c726d225a9d9_key -iv $encrypted_c726d225a9d9_iv
   -in debug.keystore.enc -out debug.keystore -d
-- sudo apt-get install aria2 -qq
-- download_extract() { aria2c -x 16 $1 -o $2 && tar -xf $2; }
-- download_extract_zip() { aria2c -x 16 $1 -o $2 && unzip -qq $2; }
-- sudo apt-get -qq update
-- sudo apt-get -qq -y install openjdk-7-jdk ant lib32z1-dev lib32stdc++6
 - GIT_HASH=`git log --pretty=format:'%h' -n 1`
 - GIT_BUILD=`git describe --all`-$GIT_HASH
 install:
