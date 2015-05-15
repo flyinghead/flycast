@@ -159,12 +159,21 @@
     </ClCompile>
     <ClCompile Include="..\core\rec-x86\win86_driver.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\core\rec-x86\win86_il.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\core\rec-x86\win86_ngen.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\core\reios\descrambl.cpp" />
     <ClCompile Include="..\core\reios\gdrom_hle.cpp" />
@@ -301,6 +310,9 @@
     <ClInclude Include="..\core\profiler\profiler.h" />
     <ClInclude Include="..\core\rec-x86\win86_ngen.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|x64'">true</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="..\core\reios\descrambl.h" />
     <ClInclude Include="..\core\reios\gdrom_hle.h" />
@@ -324,6 +336,9 @@
     </None>
     <None Include="..\core\rec-x86\lin86_asm.S">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|x64'">true</ExcludedFromBuild>
     </None>
   </ItemGroup>
   <PropertyGroup Label="Globals">
