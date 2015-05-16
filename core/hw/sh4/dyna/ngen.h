@@ -49,12 +49,13 @@
 #define CODE_SIZE   (4*1024*1024)
 
 
-#if HOST_OS==OS_LINUX
-extern "C" {
-#endif
 //alternative emit ptr, set to 0 to use the main buffer
 extern u32* emit_ptr;
 extern u8* CodeCache;
+
+#if HOST_OS==OS_LINUX || HOST_OS==OS_DARWIN
+extern "C" {
+#endif
 
 void emit_Write32(u32 data);
 void emit_Skip(u32 sz);
@@ -120,6 +121,6 @@ void ngen_CC_Finish(shil_opcode* op);
 
 RuntimeBlockInfo* ngen_AllocateBlock();
 
-#if HOST_OS==OS_LINUX
+#if HOST_OS==OS_LINUX || HOST_OS==OS_DARWIN
 }
 #endif

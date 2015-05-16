@@ -382,10 +382,13 @@ void bm_Reset()
 
 	_vmem_bm_reset();
 	
+#if HOST_OS == OS_DARWIN
+	//lazy allocation isn't working on iOS
 	for (u32 i=0;i<(8*1024*1024);i++)
 	{
-		//sh4rcb.fpcb[i]=(void*)ngen_FailedToFindBlock;
+		sh4rcb.fpcb[i]=(void*)ngen_FailedToFindBlock;
 	}
+#endif
 
 	for (size_t i=0; i<all_blocks.size(); i++)
 	{

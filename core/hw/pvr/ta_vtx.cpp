@@ -8,7 +8,6 @@
 #include "ta.h"
 #include "ta_ctx.h"
 #include "pvr_mem.h"
-#include "rend/gles/gles.h"
 #include "Renderer_if.h"
 
 u32 ta_type_lut[256];

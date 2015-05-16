@@ -742,15 +742,16 @@ u8* icPtr;
 u8* ICache;
 
 const u32 ICacheSize=1024*1024;
-#if HOST_OS != OS_LINUX
+#if HOST_OS == OS_WINDOWS
 u8 ARM7_TCB[ICacheSize+4096];
 #elif HOST_OS == OS_LINUX
 
-u8 ARM7_TCB[ICacheSize+4096] 
-#ifndef DYNA_OPROF
-__attribute__((section(".text")))
-#endif
-	;
+u8 ARM7_TCB[ICacheSize+4096] __attribute__((section(".text")));
+
+#elif HOST_OS==OS_DARWIN
+u8 ARM7_TCB[ICacheSize+4096] __attribute__((section("__TEXT, .text")));
+#else
+#error ARM7_TCB ALLOC
 #endif
 
 #include "arm_emitter/arm_emitter.h"
@@ -1539,9 +1540,17 @@ void *armGetEmitPtr()
 	return NULL;
 }
 
+#if HOST_OS==OS_DARWIN
+#include <libkern/OSCacheControl.h>
+extern "C" void armFlushICache(void *code, void *pEnd) {
+    sys_dcache_flush(code, (u8*)pEnd - (u8*)code + 1);
+    sys_icache_invalidate(code, (u8*)pEnd - (u8*)code + 1);
+}
+#else
 extern "C" void armFlushICache(void *bgn, void *end) {
 	__clear_cache(bgn, end);
 }
+#endif
 
 
 void armv_imm_to_reg(u32 regn, u32 imm)
@@ -2128,10 +2137,16 @@ void armt_init()
 	//align to next page ..
 	ICache = (u8*)(((unat)ARM7_TCB+4095)& ~4095);
 
+	#if HOST_OS==OS_DARWIN
+		//Can't just mprotect on iOS
+		munmap(ICache, ICacheSize);
+		ICache = (u8*)mmap(ICache, ICacheSize, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_FIXED | MAP_PRIVATE | MAP_ANON, 0, 0);
+	#endif
+
 #if HOST_OS == OS_WINDOWS
 	DWORD old;
 	VirtualProtect(ICache,ICacheSize,PAGE_EXECUTE_READWRITE,&old);
-#elif HOST_OS == OS_LINUX
+#elif HOST_OS == OS_LINUX || HOST_OS == OS_DARWIN
 
 	printf("\n\t ARM7_TCB addr: %p | from: %p | addr here: %p\n", ICache, ARM7_TCB, armt_init);
 

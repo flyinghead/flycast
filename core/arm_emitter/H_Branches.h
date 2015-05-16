@@ -22,6 +22,8 @@ namespace ARM
 
 	EAPI CALL(unat FnAddr, ConditionCode CC=AL)
 	{
+        bool isThumb = FnAddr & 1;
+        FnAddr &= ~1;
 		snat lit = Literal(FnAddr);
 
 		if(0==lit) {
@@ -39,13 +41,22 @@ namespace ARM
 			return;
 		}
 
-		BL(lit,CC);
+        if (isThumb) {
+            verify (CC==CC_EQ);
+            BLX(lit, isThumb);
+        } else {
+            BL(lit,CC);
+        }
 	}
 
 
 
 	EAPI JUMP(unat FnAddr, ConditionCode CC=AL)
 	{
+        bool isThumb = FnAddr & 1;
+        FnAddr &= ~1;
+        
+        verify(!isThumb);
 		snat lit = Literal(FnAddr);
 
 		/*if(0==lit) {
@@ -62,8 +73,7 @@ namespace ARM
 			BX(IP, CC);
 			return;
 		}
-
-		B(lit,CC);     // Note, wont work for THUMB*,  have to use bx which is reg only !
+        B(lit,CC);     // Note, wont work for THUMB*,  have to use bx which is reg only !
 	}
 
 

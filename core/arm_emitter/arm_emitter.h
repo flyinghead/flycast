@@ -34,7 +34,7 @@ namespace ARM
 
 #if defined(_DEBUG) || defined(DEBUG)
 
-	#define EAPI void
+	#define EAPI static void
 	
 	#define DECL_I				\
 	    u32 Instruction=0

@@ -66,7 +66,7 @@ int GetFile(char *szFileName, char *szParse=0,u32 flags=0)
 			//strcpy(szFileName,ofn.lpstrFile);
 		}
 	#else
-		strcpy(szFileName,GetPath("/discs/game.gdi").c_str());
+		strcpy(szFileName,GetPath("/game.chd").c_str());
 	#endif
 #endif
 	}
@@ -131,7 +131,7 @@ void plugins_Reset(bool Manual)
 
 void* webui_th(void* p)
 {
-	#if (HOST_OS == OS_WINDOWS || HOST_OS == OS_LINUX)  && !defined(TARGET_PANDORA)
+	#if (HOST_OS == OS_WINDOWS || HOST_OS == OS_LINUX)  && !defined(TARGET_PANDORA) && defined(WEBUI)
 		webui_start();
 	#endif
 
@@ -170,9 +170,9 @@ int dc_init(int argc,wchar* argv[])
 	int rv= 0;
 
 
-	if (settings.bios.UseReios || !LoadRomFiles(GetPath("/data/")))
+	if (settings.bios.UseReios || !LoadRomFiles(GetPath("/data/")) && !LoadRomFiles(GetPath("/")))
 	{
-		if (!LoadHle(GetPath("/data/")))
+		if (!LoadHle(GetPath("/data/")) || !LoadHle(GetPath("/")))
 			return -3;
 		else
 			printf("Did not load bios, using reios\n");

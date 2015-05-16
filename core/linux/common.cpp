@@ -1,7 +1,11 @@
 #include "types.h"
 #include "cfg/cfg.h"
 
-#if HOST_OS==OS_LINUX
+#if HOST_OS==OS_LINUX || HOST_OS == OS_DARWIN
+#if HOST_OS == OS_DARWIN
+	#define _XOPEN_SOURCE 1
+	#define __USE_GNU 1
+#endif
 #include <poll.h>
 #include <termios.h>
 //#include <curses.h>
@@ -24,6 +28,22 @@ u32* ngen_readm_fail_v2(u32* ptr,u32* regs,u32 saddr);
 bool VramLockedWrite(u8* address);
 bool BM_LockedWrite(u8* address);
 
+#if HOST_OS == OS_DARWIN
++void sigill_handler(int sn, siginfo_t * si, void *ctxr) {
+	
+	ucontext_t* ctx = (ucontext_t*)ctxr;
+	unat pc = (unat)GET_PC_FROM_CONTEXT(ctxr);
+	bool dyna_cde = ((u32)GET_PC_FROM_CONTEXT(ctxr)>(u32)CodeCache) && ((u32)GET_PC_FROM_CONTEXT(ctxr)<(u32)(CodeCache + CODE_SIZE));
+	
+	printf("SIGILL @ %08X, fault_handler+0x%08X ... %08X -> was not in vram, %d\n", GET_PC_FROM_CONTEXT(ctxr), GET_PC_FROM_CONTEXT(ctxr) - (u32)sigill_handler, (unat)si->si_addr, dyna_cde);
+	
+	printf("Entering infiniloop");
+
+	for (;;);
+	printf("PC is used here %08X\n", pc);
+}
+#endif
+
 void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 {
 	rei_host_context_t ctx;
@@ -42,7 +62,7 @@ void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 		#if HOST_CPU==CPU_ARM
 			else if (dyna_cde)
 			{
-				ctx.pc = (u32)ngen_readm_fail_v2((u32*)ctx.pc, (u32*)&(ctx.r0), (unat)si->si_addr);
+				ctx.pc = (u32)ngen_readm_fail_v2((u32*)ctx.pc, ctx.r, (unat)si->si_addr);
 
 				context_to_segfault(&ctx, segfault_ctx);
 			}
@@ -76,6 +96,14 @@ void install_fault_handler (void)
 	sigemptyset(&act.sa_mask);
 	act.sa_flags = SA_SIGINFO;
 	sigaction(SIGSEGV, &act, &segv_oact);
+
+#if HOST_OS == OS_DARWIN
+    //this is broken on osx/ios/mach in general
+    sigaction(SIGBUS, &act, &segv_oact);
+    
+    act.sa_sigaction = sigill_handler;
+    sigaction(SIGILL, &act, &segv_oact);
+#endif
 }
 
 
@@ -103,8 +131,8 @@ cResetEvent::cResetEvent(bool State,bool Auto)
 {
 	//sem_init((sem_t*)hEvent, 0, State?1:0);
 	verify(State==false&&Auto==true);
-	mutx = PTHREAD_MUTEX_INITIALIZER;
-	cond = PTHREAD_COND_INITIALIZER;
+	pthread_mutex_init(&mutx, NULL);
+	pthread_cond_init(&cond, NULL);
 }
 cResetEvent::~cResetEvent()
 {
@@ -203,6 +231,12 @@ double os_GetSeconds()
 	return a.tv_sec-tvs_base+a.tv_usec/1000000.0;
 }
 
+#if !defined(_ANDROID)
+void os_DebugBreak()
+{
+	__builtin_trap();
+}
+#endif
 
 void enable_runfast()
 {

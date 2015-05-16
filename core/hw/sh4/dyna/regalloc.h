@@ -411,6 +411,8 @@ struct RegAlloc
 				return all_spans[sid];
 			}
 		}
+		die("Failed to find span");
+		return NULL;
 	}
 
 	void flush_span(u32 sid)

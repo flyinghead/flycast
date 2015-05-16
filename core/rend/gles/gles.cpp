@@ -354,6 +354,7 @@ gl_ctx gl;
 int screen_width;
 int screen_height;
 
+#if HOST_OS != OS_DARWIN
 #ifdef GLES
 	// Create a basic GLES context
 	bool gl_init(void* wind, void* disp)
@@ -655,6 +656,7 @@ int screen_height;
 	#endif
 #endif
 
+#endif
 
 struct ShaderUniforms_t
 {
@@ -959,7 +961,7 @@ bool gles_init()
 	if (!gl_create_resources())
 		return false;
 
-#ifdef GLES
+#if defined(GLES) && HOST_OS != OS_DARWIN
 	#ifdef TARGET_PANDORA
 	fbdev=open("/dev/fb0", O_RDONLY);
 	#else
@@ -1734,7 +1736,10 @@ bool RenderFrame()
 	}
 	else
 	{
+#if HOST_OS != OS_DARWIN
+        //Fix this in a proper way
 		glBindFramebuffer(GL_FRAMEBUFFER,0);
+#endif
 	}
 	
 	//Clear depth

@@ -341,8 +341,8 @@ void rend_end_wait()
 bool rend_init()
 {
 
-#if NO_REND
-	renderer = rend_norend();
+#ifdef NO_REND
+	rend = rend_norend();
 #else
 
 #if HOST_OS == OS_WINDOWS
@@ -353,7 +353,7 @@ bool rend_init()
 
 #endif
 
-#if !defined(_ANDROID)
+#if !defined(_ANDROID) && HOST_OS != OS_DARWIN
 	rthd.Start();
 #endif
 

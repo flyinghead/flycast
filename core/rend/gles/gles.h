@@ -4,7 +4,7 @@
 
 #ifdef GLES
 #ifdef TARGET_IPHONE //apple-specific ogles2 headers
-#include <APPLE/egl.h>
+//#include <APPLE/egl.h>
 #include <OpenGLES/ES2/gl.h>
 #include <OpenGLES/ES2/glext.h>
 #else
@@ -57,7 +57,7 @@ struct PipelineShader
 
 struct gl_ctx
 {
-#ifdef GLES
+#if defined(GLES) && HOST_OS != OS_DARWIN
 	struct
 	{
 		EGLNativeWindowType native_wind;
