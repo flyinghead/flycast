@@ -344,7 +344,7 @@ bool rend_init()
 {
 
 #ifdef NO_REND
-	rend = rend_norend();
+	renderer	 = rend_norend();
 #else
 
 #if HOST_OS == OS_WINDOWS
