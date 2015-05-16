@@ -1,4 +1,4 @@
-	#include "types.h"
+#include "types.h"
 #include "cfg/cfg.h"
 
 #if HOST_OS==OS_LINUX || HOST_OS == OS_DARWIN
@@ -234,7 +234,7 @@ double os_GetSeconds()
 	return a.tv_sec-tvs_base+a.tv_usec/1000000.0;
 }
 
-#if !defined(_ANDROID)
+#if HOST_OS != OS_LINUX
 void os_DebugBreak()
 {
 	__builtin_trap();

@@ -198,6 +198,8 @@ bool HandleKb(u32 port) {
 	if (kbfd < 0)
 		return false;
 
+	input_event ie;
+
 	#if defined(TARGET_GCW0)
 
                 #define KEY_A           0x1D
