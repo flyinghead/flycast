@@ -420,6 +420,9 @@
     <ClCompile Include="..\core\rec-x86\win86_ngen.cpp">
       <Filter>rec-x86</Filter>
     </ClCompile>
+    <ClCompile Include="..\core\linux\context.cpp">
+      <Filter>linux</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="hw">
@@ -909,6 +912,9 @@
     </ClInclude>
     <ClInclude Include="..\core\rec-x86\win86_ngen.h">
       <Filter>rec-x86</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\linux\context.h">
+      <Filter>linux</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

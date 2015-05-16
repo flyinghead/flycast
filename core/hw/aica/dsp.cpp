@@ -20,7 +20,7 @@
 	See LICENSE & COPYRIGHT files further details
 */
 
-ALIGN(4096) dsp_t dsp;
+DECL_ALIGN(4096) dsp_t dsp;
 
 #if HOST_OS==OS_WINDOWS && !defined(HOST_NO_REC)
 #include "emitter/x86_emitter.h"

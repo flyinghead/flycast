@@ -42,11 +42,11 @@ struct InterptSourceList_Entry
 InterptSourceList_Entry InterruptSourceList[28];
 
 //Maps siid -> EventID
-ALIGN(64) u16 InterruptEnvId[32]= { 0 };
+DECL_ALIGN(64) u16 InterruptEnvId[32] = { 0 };
 //Maps piid -> 1<<siid
-ALIGN(64) u32 InterruptBit[32] = { 0 };
+DECL_ALIGN(64) u32 InterruptBit[32] = { 0 };
 //Maps sh4 interrupt level to inclusive bitfield
-ALIGN(64) u32 InterruptLevelBit[16]= { 0 };
+DECL_ALIGN(64) u32 InterruptLevelBit[16] = { 0 };
 
 bool Do_Interrupt(u32 intEvn);
 bool Do_Exeption(u32 epc, u32 expEvn, u32 CallVect);

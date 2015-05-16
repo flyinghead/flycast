@@ -33,46 +33,7 @@
 #include <set>
 #include "deps/libelf/elf.h"
 
-#if defined(_ANDROID)
-#include <asm/sigcontext.h>
-#if 0
-typedef struct ucontext_t
-{
-	unsigned long uc_flags;
-	struct ucontext_t *uc_link;
-	struct
-	{
-		void *p;
-		int flags;
-		size_t size;
-	} sstack_data;
-
-	struct sigcontext uc_mcontext;
-	/* some 2.6.x kernel has fp data here after a few other fields
-	 * we don't use them for now...
-	 */
-} ucontext_t;
-#endif
-#include <android/log.h> 
-#endif
-
-#if HOST_CPU == CPU_ARM
-#define GET_PC_FROM_CONTEXT(c) (((ucontext_t *)(c))->uc_mcontext.arm_pc)
-#elif HOST_CPU == CPU_MIPS
-#if 0 && _ANDROID
-#define GET_PC_FROM_CONTEXT(c) (((ucontext_t *)(c))->uc_mcontext.sc_pc)
-#else
-#define GET_PC_FROM_CONTEXT(c) (((ucontext_t *)(c))->uc_mcontext.pc)
-#endif
-#elif HOST_CPU == CPU_X86
-#if 0 && _ANDROID
-#define GET_PC_FROM_CONTEXT(c) (((ucontext_t *)(c))->uc_mcontext.eip)
-#else
-#define GET_PC_FROM_CONTEXT(c) (((ucontext_t *)(c))->uc_mcontext.gregs[REG_EIP])
-#endif
-#else
-#error fix ->pc support
-#endif
+#include "context.h"
 
 /** 
 @file      CallStack_Android.h 
@@ -100,13 +61,15 @@ void sample_Syms(u8* data,u32 len)
 
 void prof_handler (int sn, siginfo_t * si, void *ctxr)
 {
-	ucontext_t* ctx=(ucontext_t*)ctxr;
+	rei_host_context_t ctx;
+	context_from_segfault(&ctx, ctxr);
+	
 	int thd=-1;
 	if (pthread_self()==thread[0]) thd=0;
 	else if (pthread_self()==thread[1]) thd=1;
 	else return;
 
-	prof_address[thd]=(void*)GET_PC_FROM_CONTEXT(ctx);
+	prof_address[thd] = (void*)ctx.pc;
 }
 
 

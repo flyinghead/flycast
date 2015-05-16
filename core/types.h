@@ -3,10 +3,10 @@
 #include "build.h"
 
 #if BUILD_COMPILER==COMPILER_VC
-#define ALIGN(x) __declspec(align(x))
+#define DECL_ALIGN(x) __declspec(align(x))
 #else
 #define __forceinline inline
-#define ALIGN(x) __attribute__((aligned(x)))
+#define DECL_ALIGN(x) __attribute__((aligned(x)))
 #define __debugbreak
 #endif
 
