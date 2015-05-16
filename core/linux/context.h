@@ -9,7 +9,7 @@ struct rei_host_context_t {
 	u32 ecx;
 	u32 esp;
 #elif HOST_CPU == CPU_ARM
-	u32 r0;
+	u32 r[15];
 #endif
 };
 
