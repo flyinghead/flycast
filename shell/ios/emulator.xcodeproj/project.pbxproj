@@ -15,6 +15,11 @@
 		8497BCCA1A41BFBA00EFB9ED /* audiostream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8497BCC51A41BFBA00EFB9ED /* audiostream.cpp */; };
 		8497BCCB1A41BFBA00EFB9ED /* ds_audiostream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8497BCC71A41BFBA00EFB9ED /* ds_audiostream.cpp */; };
 		8497BCCF1A41BFD800EFB9ED /* coreio.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8497BCCD1A41BFD800EFB9ED /* coreio.cpp */; };
+		849C0D621B072C07008BAAA4 /* context.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 849C0D601B072C07008BAAA4 /* context.cpp */; };
+		849C0D661B072CF8008BAAA4 /* reios.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 849C0D641B072CF8008BAAA4 /* reios.cpp */; };
+		849C0D6D1B072D14008BAAA4 /* descrambl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 849C0D671B072D14008BAAA4 /* descrambl.cpp */; };
+		849C0D6E1B072D14008BAAA4 /* gdrom_hle.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 849C0D691B072D14008BAAA4 /* gdrom_hle.cpp */; };
+		849C0D6F1B072D14008BAAA4 /* reios_elf.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 849C0D6B1B072D14008BAAA4 /* reios_elf.cpp */; };
 		8703BC3B1A44B8DA00E7E939 /* Icon-72.png in Resources */ = {isa = PBXBuildFile; fileRef = 8703BC371A44B8DA00E7E939 /* Icon-72.png */; };
 		8703BC3C1A44B8DA00E7E939 /* Icon-72@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 8703BC381A44B8DA00E7E939 /* Icon-72@2x.png */; };
 		8703BC3D1A44B8DA00E7E939 /* Icon.png in Resources */ = {isa = PBXBuildFile; fileRef = 8703BC391A44B8DA00E7E939 /* Icon.png */; };
@@ -239,6 +244,16 @@
 		8497BCC81A41BFBA00EFB9ED /* oslib.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = oslib.h; sourceTree = "<group>"; };
 		8497BCCD1A41BFD800EFB9ED /* coreio.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = coreio.cpp; sourceTree = "<group>"; };
 		8497BCCE1A41BFD800EFB9ED /* coreio.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = coreio.h; sourceTree = "<group>"; };
+		849C0D601B072C07008BAAA4 /* context.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = context.cpp; sourceTree = "<group>"; };
+		849C0D611B072C07008BAAA4 /* context.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = context.h; sourceTree = "<group>"; };
+		849C0D641B072CF8008BAAA4 /* reios.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = reios.cpp; path = reios/reios.cpp; sourceTree = "<group>"; };
+		849C0D651B072CF8008BAAA4 /* reios.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = reios.h; path = reios/reios.h; sourceTree = "<group>"; };
+		849C0D671B072D14008BAAA4 /* descrambl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = descrambl.cpp; path = reios/descrambl.cpp; sourceTree = "<group>"; };
+		849C0D681B072D14008BAAA4 /* descrambl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = descrambl.h; path = reios/descrambl.h; sourceTree = "<group>"; };
+		849C0D691B072D14008BAAA4 /* gdrom_hle.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = gdrom_hle.cpp; path = reios/gdrom_hle.cpp; sourceTree = "<group>"; };
+		849C0D6A1B072D14008BAAA4 /* gdrom_hle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = gdrom_hle.h; path = reios/gdrom_hle.h; sourceTree = "<group>"; };
+		849C0D6B1B072D14008BAAA4 /* reios_elf.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = reios_elf.cpp; path = reios/reios_elf.cpp; sourceTree = "<group>"; };
+		849C0D6C1B072D14008BAAA4 /* reios_elf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = reios_elf.h; path = reios/reios_elf.h; sourceTree = "<group>"; };
 		8703BC371A44B8DA00E7E939 /* Icon-72.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Icon-72.png"; sourceTree = "<group>"; };
 		8703BC381A44B8DA00E7E939 /* Icon-72@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Icon-72@2x.png"; sourceTree = "<group>"; };
 		8703BC391A44B8DA00E7E939 /* Icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Icon.png; sourceTree = "<group>"; };
@@ -612,6 +627,8 @@
 		8497BCBB1A41A0E900EFB9ED /* linux */ = {
 			isa = PBXGroup;
 			children = (
+				849C0D601B072C07008BAAA4 /* context.cpp */,
+				849C0D611B072C07008BAAA4 /* context.h */,
 				8497BCBC1A41A0E900EFB9ED /* common.cpp */,
 				8497BCBD1A41A0E900EFB9ED /* nixprof.cpp */,
 				8497BCBE1A41A0E900EFB9ED /* typedefs.h */,
@@ -639,6 +656,21 @@
 			);
 			name = coreio;
 			path = deps/coreio;
+			sourceTree = "<group>";
+		};
+		849C0D631B072CE0008BAAA4 /* reios */ = {
+			isa = PBXGroup;
+			children = (
+				849C0D671B072D14008BAAA4 /* descrambl.cpp */,
+				849C0D681B072D14008BAAA4 /* descrambl.h */,
+				849C0D691B072D14008BAAA4 /* gdrom_hle.cpp */,
+				849C0D6A1B072D14008BAAA4 /* gdrom_hle.h */,
+				849C0D6B1B072D14008BAAA4 /* reios_elf.cpp */,
+				849C0D6C1B072D14008BAAA4 /* reios_elf.h */,
+				849C0D641B072CF8008BAAA4 /* reios.cpp */,
+				849C0D651B072CF8008BAAA4 /* reios.h */,
+			);
+			name = reios;
 			sourceTree = "<group>";
 		};
 		8703BC361A44B8DA00E7E939 /* assets */ = {
@@ -783,6 +815,7 @@
 		9C7A393818C806DE0070BB5F /* Emulator Core Code */ = {
 			isa = PBXGroup;
 			children = (
+				849C0D631B072CE0008BAAA4 /* reios */,
 				8497BCCC1A41BFD800EFB9ED /* coreio */,
 				8497BCC31A41BFBA00EFB9ED /* oslib */,
 				8497BCBB1A41A0E900EFB9ED /* linux */,
@@ -1481,6 +1514,7 @@
 				9C7A3B1018C806E00070BB5F /* maple_devs.cpp in Sources */,
 				9C7A3AE718C806E00070BB5F /* zip_source_function.c in Sources */,
 				9C7A3AE918C806E00070BB5F /* zip_stat.c in Sources */,
+				849C0D661B072CF8008BAAA4 /* reios.cpp in Sources */,
 				9C7A3ABF18C806E00070BB5F /* zip_delete.c in Sources */,
 				9C7A3B0018C806E00070BB5F /* aica.cpp in Sources */,
 				9C7A3B3318C806E00070BB5F /* sh4_rom.cpp in Sources */,
@@ -1508,6 +1542,7 @@
 				9C7A3B1418C806E00070BB5F /* drkPvr.cpp in Sources */,
 				9C7A3AB318C806E00070BB5F /* pngrtran.c in Sources */,
 				9C7A3AEC18C806E00070BB5F /* zip_strerror.c in Sources */,
+				849C0D6F1B072D14008BAAA4 /* reios_elf.cpp in Sources */,
 				9C7A3AB718C806E00070BB5F /* pngwio.c in Sources */,
 				8497BCCB1A41BFBA00EFB9ED /* ds_audiostream.cpp in Sources */,
 				9C7A3B2D18C806E00070BB5F /* ubc.cpp in Sources */,
@@ -1558,6 +1593,7 @@
 				9C7A3B2018C806E00070BB5F /* shil.cpp in Sources */,
 				9C7A3B2518C806E00070BB5F /* ccn.cpp in Sources */,
 				9C7A3B4618C806E00070BB5F /* ngen_arm.S in Sources */,
+				849C0D621B072C07008BAAA4 /* context.cpp in Sources */,
 				9C7A3AD618C806E00070BB5F /* zip_get_file_comment.c in Sources */,
 				9C7A3AEA18C806E00070BB5F /* zip_stat_index.c in Sources */,
 				9C7A3ACF18C806E00070BB5F /* zip_filerange_crc.c in Sources */,
@@ -1592,6 +1628,7 @@
 				9C7A3B0918C806E00070BB5F /* gdrom_response.cpp in Sources */,
 				9C7A3B2218C806E00070BB5F /* sh4_interpreter.cpp in Sources */,
 				9C7A3B3818C806E00070BB5F /* gdi.cpp in Sources */,
+				849C0D6D1B072D14008BAAA4 /* descrambl.cpp in Sources */,
 				9C7A3AF018C806E00070BB5F /* zip_unchange_data.c in Sources */,
 				9C7A3AB218C806E00070BB5F /* pngrio.c in Sources */,
 				9C7A3AC118C806E00070BB5F /* zip_entry_free.c in Sources */,
@@ -1614,6 +1651,7 @@
 				9C7A3AF618C806E00070BB5F /* inffast.c in Sources */,
 				9C7A3B1318C806E00070BB5F /* _vmem.cpp in Sources */,
 				9C7A3B1118C806E00070BB5F /* maple_helper.cpp in Sources */,
+				849C0D6E1B072D14008BAAA4 /* gdrom_hle.cpp in Sources */,
 				9C7A3AD018C806E00070BB5F /* zip_fopen.c in Sources */,
 				9C7A3B1718C806E00070BB5F /* pvr_sb_regs.cpp in Sources */,
 				9C7A3B3918C806E00070BB5F /* ImgReader.cpp in Sources */,

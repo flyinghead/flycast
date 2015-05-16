@@ -277,6 +277,8 @@ void* prof(void *ptr)
 
 		fclose(maps);
 		fclose(prof_out);
+    
+    return 0;
 }
 
 void sample_Start(int freq)

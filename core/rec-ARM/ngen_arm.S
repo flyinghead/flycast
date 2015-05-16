@@ -11,14 +11,16 @@
 
 #if HOST_OS == OS_DARWIN
 #define CSYM(n) _##n
+#define HIDDEN(n)
 #else
 #define CSYM(n) n
+#define HIDDEN(n) .hidden CSYM(n)
 #endif
 
 @@@@@@@@@@ some helpers @@@@@@@@@@
 
 .global CSYM(do_sqw_nommu_area_3)
-.hidden CSYM(do_sqw_nommu_area_3)
+HIDDEN(do_sqw_nommu_area_3)
 @r0: addr
 @r1: sq_both
 CSYM(do_sqw_nommu_area_3):
@@ -33,7 +35,7 @@ vstm r3,{d0-d3}
 bx lr
 
 .global CSYM(TAWriteSQ)
-.hidden TAWriteSQ
+HIDDEN(TAWriteSQ)
 @r0: addr
 @r1: sq_both
 CSYM(TAWriteSQ):
@@ -69,7 +71,7 @@ bx lr
 @@@@@@@@@@ ngen_LinkBlock_*****_stub @@@@@@@@@@
 
 .global CSYM(ngen_LinkBlock_Generic_stub)
-.hidden CSYM(ngen_LinkBlock_Generic_stub)
+HIDDEN(ngen_LinkBlock_Generic_stub)
 CSYM(ngen_LinkBlock_Generic_stub):
 
     mov r1,r4	@ djump/pc -> in case we need it ..
@@ -77,14 +79,14 @@ CSYM(ngen_LinkBlock_Generic_stub):
 
 
 .global CSYM(ngen_LinkBlock_cond_Branch_stub)
-.hidden CSYM(ngen_LinkBlock_cond_Branch_stub)
+HIDDEN(ngen_LinkBlock_cond_Branch_stub)
 CSYM(ngen_LinkBlock_cond_Branch_stub):
 
 	mov r1,#1
 	b CSYM(ngen_LinkBlock_Shared_stub)
     
 .global CSYM(ngen_LinkBlock_cond_Next_stub)
-.hidden CSYM(ngen_LinkBlock_cond_Next_stub)
+HIDDEN(ngen_LinkBlock_cond_Next_stub)
 CSYM(ngen_LinkBlock_cond_Next_stub):
 
 	mov r1,#0
@@ -92,7 +94,7 @@ CSYM(ngen_LinkBlock_cond_Next_stub):
 
 
 .global CSYM(ngen_LinkBlock_Shared_stub)
-.hidden CSYM(ngen_LinkBlock_Shared_stub)
+HIDDEN(ngen_LinkBlock_Shared_stub)
 CSYM(ngen_LinkBlock_Shared_stub):
 
 	mov r0,lr
@@ -104,7 +106,7 @@ CSYM(ngen_LinkBlock_Shared_stub):
 
 
 .global CSYM(ngen_FailedToFindBlock_)
-.hidden CSYM(ngen_FailedToFindBlock_)
+HIDDEN(ngen_FailedToFindBlock_)
 CSYM(ngen_FailedToFindBlock_):
 	mov r0,r4
     bl CSYM(rdv_FailedToFindBlock)
@@ -113,7 +115,7 @@ CSYM(ngen_FailedToFindBlock_):
 @@@@@@@@@@ ngen_blockcheckfail @@@@@@@@@@
 
 .global CSYM(ngen_blockcheckfail)
-.hidden CSYM(ngen_blockcheckfail)
+HIDDEN(ngen_blockcheckfail)
 CSYM(ngen_blockcheckfail):
     bl CSYM(rdv_BlockCheckFail)
     bx r0
@@ -129,7 +131,7 @@ CSYM(ngen_blockcheckfail):
 
 
 .global CSYM(ngen_mainloop)
-.hidden CSYM(ngen_mainloop)
+HIDDEN(ngen_mainloop)
 CSYM(ngen_mainloop):
 
 push { r4-r12,lr }
@@ -149,7 +151,7 @@ push { r4-r12,lr }
 
 	@this code is here for fall-through behavior of do_iter
 	.global CSYM(intc_sched)
-	.hidden CSYM(intc_sched)
+	HIDDEN(intc_sched)
 CSYM(intc_sched):        @ next_pc _MUST_ be on ram
 #if HOST_OS == OS_DARWIN
     add r11,r11,#SH4_TIMESLICE
@@ -168,7 +170,7 @@ do_iter:
 	mov r4,r0
 
 .global CSYM(no_update)
-.hidden CSYM(no_update)
+HIDDEN(no_update)
 CSYM(no_update):              @ next_pc _MUST_ be on r4 *R4 NOT R0 anymore*
 
 	sub r2,r8,#33816576
@@ -186,7 +188,7 @@ end_ngen_mainloop:
 @@@@@@@@@@ ngen_mainloop @@@@@@@@@@
 
 .global CSYM(arm_compilecode)
-.hidden CSYM(arm_compilecode)
+HIDDEN(arm_compilecode)
 CSYM(arm_compilecode):
 bl CSYM(CompileCode)
 b CSYM(arm_dispatch)
@@ -197,7 +199,7 @@ XEntryPoints: .word CSYM(EntryPoints)
 #endif
 
 .global CSYM(arm_mainloop)
-.hidden CSYM(arm_mainloop)
+HIDDEN(arm_mainloop)
 CSYM(arm_mainloop): @(cntx,lookup_base,cycles)
 
 #if HOST_OS == OS_DARWIN
@@ -220,7 +222,7 @@ push {r4,r5,r8,r9,lr}
 	b CSYM(arm_dispatch)
 
 .global CSYM(arm_dispatch)
-.hidden CSYM(arm_dispatch)
+HIDDEN(arm_dispatch)
 CSYM(arm_dispatch):
 	#ifdef TARGET_IPHONE
 	ldrd r0,r1,[r8,#184]		@load: Next PC, interrupt
@@ -239,7 +241,7 @@ arm_dofiq:
 	b CSYM(arm_dispatch)
 
 .global CSYM(arm_exit)
-.hidden CSYM(arm_exit)
+HIDDEN(arm_exit)
 CSYM(arm_exit):
 	str r5,[r8,#192]		@if timeslice is over, save remaining cycles
 #if HOST_OS == OS_DARWIN
@@ -252,7 +254,7 @@ CSYM(arm_exit):
 @matrix mul
 #ifndef _ANDROID
 .global CSYM(ftrv_asm)
-.hidden CSYM(ftrv_asm)
+HIDDEN(ftrv_asm)
 CSYM(ftrv_asm):
 
 @r0=dst,r1=vec,r2=mtx
@@ -271,7 +273,7 @@ vstm r0,{d4,d5}
 bx lr
 
 .global CSYM(fipr_asm)
-.hidden CSYM(fipr_asm)
+HIDDEN(fipr_asm)
 CSYM(fipr_asm):
 
 @ vdot

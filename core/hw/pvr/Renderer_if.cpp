@@ -178,6 +178,8 @@ TA_context* read_frame(const char* file, u8* vram_ref) {
 
 	ctx->tad.thd_data += t;
 	fclose(fw);
+    
+    return ctx;
 }
 
 bool rend_frame(TA_context* ctx, bool draw_osd) {

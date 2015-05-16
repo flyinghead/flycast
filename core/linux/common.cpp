@@ -1,4 +1,4 @@
-#include "types.h"
+	#include "types.h"
 #include "cfg/cfg.h"
 
 #if HOST_OS==OS_LINUX || HOST_OS == OS_DARWIN
@@ -29,13 +29,16 @@ bool VramLockedWrite(u8* address);
 bool BM_LockedWrite(u8* address);
 
 #if HOST_OS == OS_DARWIN
-+void sigill_handler(int sn, siginfo_t * si, void *ctxr) {
+void sigill_handler(int sn, siginfo_t * si, void *segfault_ctx) {
 	
-	ucontext_t* ctx = (ucontext_t*)ctxr;
-	unat pc = (unat)GET_PC_FROM_CONTEXT(ctxr);
-	bool dyna_cde = ((u32)GET_PC_FROM_CONTEXT(ctxr)>(u32)CodeCache) && ((u32)GET_PC_FROM_CONTEXT(ctxr)<(u32)(CodeCache + CODE_SIZE));
+    rei_host_context_t ctx;
+    
+    context_from_segfault(&ctx, segfault_ctx);
+
+	unat pc = (unat)ctx.pc;
+	bool dyna_cde = (pc>(unat)CodeCache) && (pc<(unat)(CodeCache + CODE_SIZE));
 	
-	printf("SIGILL @ %08X, fault_handler+0x%08X ... %08X -> was not in vram, %d\n", GET_PC_FROM_CONTEXT(ctxr), GET_PC_FROM_CONTEXT(ctxr) - (u32)sigill_handler, (unat)si->si_addr, dyna_cde);
+	printf("SIGILL @ %08X, fault_handler+0x%08X ... %08X -> was not in vram, %d\n", pc, pc - (u32)sigill_handler, (unat)si->si_addr, dyna_cde);
 	
 	printf("Entering infiniloop");
 

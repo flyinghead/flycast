@@ -169,10 +169,15 @@ int dc_init(int argc,wchar* argv[])
 
 	int rv= 0;
 
-
-	if (settings.bios.UseReios || !LoadRomFiles(GetPath("/data/")))
+#if HOST_OS != OS_DARWIN
+    #define DATA_PATH "/data/"
+#else
+    #define DATA_PATH "/"
+#endif
+    
+	if (settings.bios.UseReios || !LoadRomFiles(GetPath(DATA_PATH)))
 	{
-		if (!LoadHle(GetPath("/data/")))
+		if (!LoadHle(GetPath(DATA_PATH)))
 			return -3;
 		else
 			printf("Did not load bios, using reios\n");
