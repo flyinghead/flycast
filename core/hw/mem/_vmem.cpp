@@ -600,6 +600,7 @@ void _vmem_bm_reset()
 #if HOST_OS==OS_WINDOWS
 	VirtualFree(p_sh4rcb,sizeof(p_sh4rcb->fpcb),MEM_DECOMMIT);
 #else
+	mprotect(p_sh4rcb, sizeof(p_sh4rcb->fpcb), PROT_NONE);
 	madvise(p_sh4rcb,sizeof(p_sh4rcb->fpcb),MADV_DONTNEED);
     #ifdef MADV_REMOVE
 	madvise(p_sh4rcb,sizeof(p_sh4rcb->fpcb),MADV_REMOVE);
