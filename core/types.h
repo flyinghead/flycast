@@ -3,18 +3,25 @@
 #include "build.h"
 
 #if BUILD_COMPILER==COMPILER_VC
-#define ALIGN(x) __declspec(align(x))
+#define DECL_ALIGN(x) __declspec(align(x))
 #else
 #define __forceinline inline
-#define ALIGN(x) __attribute__((aligned(x)))
+#define DECL_ALIGN(x) __attribute__((aligned(x)))
 #define __debugbreak
 #endif
 
 
-#if BUILD_COMPILER==COMPILER_VC
-#define DYNACALL  __fastcall
+#if HOST_CPU == CPU_X86
+
+	#if BUILD_COMPILER==COMPILER_VC
+	#define DYNACALL  __fastcall
+	#else
+	//android defines fastcall as regparm(3), it doesn't work for us
+	#undef fastcall
+	#define DYNACALL __attribute__((fastcall))
+	#endif
 #else
-#define DYNACALL 
+	#define DYNACALL
 #endif
 
 #if BUILD_COMPILER==COMPILER_VC
@@ -509,7 +516,6 @@ void os_DebugBreak();
 #define stricmp strcasecmp
 #endif
 
-//#define __fastcall <nothing useful is here "" must not happen ever>
 #ifndef STRIP_TEXT
 #define verify(x) if((x)==false){ msgboxf("Verify Failed  : " #x "\n in %s -> %s : %d \n",MBX_ICONERROR,(__FUNCTION__),(__FILE__),__LINE__); dbgbreak;}
 #define die(reason) { msgboxf("Fatal error : %s\n in %s -> %s : %d \n",MBX_ICONERROR,(reason),(__FUNCTION__),(__FILE__),__LINE__); dbgbreak;}

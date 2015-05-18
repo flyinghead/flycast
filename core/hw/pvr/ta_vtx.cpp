@@ -8,7 +8,6 @@
 #include "ta.h"
 #include "ta_ctx.h"
 #include "pvr_mem.h"
-#include "rend/gles/gles.h"
 #include "Renderer_if.h"
 
 u32 ta_type_lut[256];
@@ -84,10 +83,10 @@ PolyParam* CurrentPP=&nullPP;
 List<PolyParam>* CurrentPPlist;
 
 //TA state vars	
-ALIGN(4) static u8 FaceBaseColor[4];
-ALIGN(4) static u8 FaceOffsColor[4];
-ALIGN(4) static u32 SFaceBaseColor;
-ALIGN(4) static u32 SFaceOffsColor;
+DECL_ALIGN(4) static u8 FaceBaseColor[4];
+DECL_ALIGN(4) static u8 FaceOffsColor[4];
+DECL_ALIGN(4) static u32 SFaceBaseColor;
+DECL_ALIGN(4) static u32 SFaceOffsColor;
 
 
 

@@ -39,7 +39,7 @@ union DoubleReg
 	f32 sgl[2];
 };
 
-INLINE f64 GetDR(u32 n)
+static INLINE f64 GetDR(u32 n)
 {
 #ifdef TRACE
 	if (n>7)
@@ -53,7 +53,7 @@ INLINE f64 GetDR(u32 n)
 	return t.dbl;
 }
 
-INLINE f64 GetXD(u32 n)
+static INLINE f64 GetXD(u32 n)
 {
 #ifdef TRACE
 	if (n>7)
@@ -67,7 +67,7 @@ INLINE f64 GetXD(u32 n)
 	return t.dbl;
 }
 
-INLINE void SetDR(u32 n,f64 val)
+static INLINE void SetDR(u32 n,f64 val)
 {
 #ifdef TRACE
 	if (n>7)
@@ -81,7 +81,7 @@ INLINE void SetDR(u32 n,f64 val)
 	fr[(n<<1) | 0]=t.sgl[1];
 }
 
-INLINE void SetXD(u32 n,f64 val)
+static INLINE void SetXD(u32 n,f64 val)
 {
 #ifdef TRACE
 	if (n>7)

@@ -84,3 +84,8 @@
 	#error Invalid Target: TARGET_* not defined
 #endif
 
+#ifdef HOST_NO_REC
+	#ifndef HOST_NO_AREC
+		#define HOST_NO_AREC 1
+	#endif
+#endif

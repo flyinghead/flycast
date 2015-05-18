@@ -107,7 +107,7 @@ u32 csc_sidx=1;
 
 x86_reg alloc_regs[]={EBX,EBP,ESI,EDI,NO_REG};
 x86_reg xmm_alloc_regs[]={XMM7,XMM6,XMM5,XMM4,NO_REG};
-f32 ALIGN(16) thaw_regs[4];
+f32 DECL_ALIGN(16) thaw_regs[4];
 
 
 void x86_reg_alloc::Preload(u32 reg,x86_reg nreg)
@@ -299,7 +299,7 @@ void ngen_Compile(RuntimeBlockInfo* block,bool force_checks, bool reset, bool st
 	x86e->x86_size=emit_FreeSpace();
 	x86e->do_realloc=false;
 
-	block->code=(DynarecCodeEntry*)emit_GetCCPtr();
+	block->code=(DynarecCodeEntryPtr)emit_GetCCPtr();
 
 	x86e->Emit(op_add32,&memops_t,block->memops);
 	x86e->Emit(op_add32,&memops_l,block->linkedmemops);

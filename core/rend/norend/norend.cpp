@@ -15,14 +15,20 @@ struct norend : Renderer
 	void Resize(int w, int h) { }
 	void Term() { }
 
+
+        bool Process(TA_context* ctx) { return true; }
+
+        void DrawOSD() {  }
+
 	bool Render()
 	{
-		return !pvrrc.isRTT;
+		return true;//!pvrrc.isRTT;
 	}
 
-  bool Process(TA_context*) { }
 	void Present() { }
 };
 
 
 Renderer* rend_norend() { return new norend(); }
+
+u32 GetTexture(TSP tsp,TCW tcw) { return 0; }

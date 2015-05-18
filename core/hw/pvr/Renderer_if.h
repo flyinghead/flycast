@@ -14,9 +14,15 @@ void rend_end_render();
 void rend_end_wait();
 
 void rend_set_fb_scale(float x,float y);
-
+void rend_resize(int width, int height);
 void rend_text_invl(vram_block* bl);
 
+#ifdef GLuint
+GLuint
+#else
+u32
+#endif
+GetTexture(TSP tsp,TCW tcw);
 
 
 ///////

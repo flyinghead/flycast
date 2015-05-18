@@ -64,12 +64,12 @@ namespace ARM
 	// This encoding looks correct,  but segfaults,  the pc val is align(pc,4) but this should be right in ARM
 	//
 #if defined(_DEVEL)
-	EAPI BLX(u32 sImm24)   // Form I     * H is derived so not needed, fixup sImm24 so one can just pass a real addr
+	EAPI BLX(u32 sImm24, bool toThumb)   // Form I     * H is derived so not needed, fixup sImm24 so one can just pass a real addr
 	{
 		DECL_Id(0xFA000000);
 
-		//if(sImm24&1)
-		//    I |= 1<<24; // SET_H
+		if(toThumb)
+		    I |= 1<<24; // SET_H
 
 		I |= ((sImm24>>2)&0xFFFFFF);
 		EMIT_I;

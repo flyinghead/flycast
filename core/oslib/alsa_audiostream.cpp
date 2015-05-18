@@ -4,14 +4,37 @@
 
 #include "cfg/cfg.h"
 
-#if 0 && HOST_OS==OS_LINUX && !defined(TARGET_NACL32)
+#if HOST_OS==OS_LINUX && !defined(TARGET_NACL32) && !defined(ANDROID)
 
-#if !defined(ANDROID)
+#if 1
 #include <alsa/asoundlib.h>
 #include <pthread.h>
 
 snd_pcm_t *handle;
 
+u32 alsa_Push(void* frame, u32 samples, bool wait) {
+	
+	snd_pcm_nonblock(handle, wait ? 0 : 1);
+
+	int rc = snd_pcm_writei(handle, frame, samples);
+	if (rc == -EPIPE)
+	{
+		/* EPIPE means underrun */
+		fprintf(stderr, "ALSA: underrun occurred\n");
+		snd_pcm_prepare(handle);
+		alsa_Push(frame, samples * 8, wait);
+	}
+	else if (rc < 0)
+	{
+		fprintf(stderr, "ALSA: error from writei: %s\n", snd_strerror(rc));
+	}
+	else if (rc != samples)
+	{
+		fprintf(stderr, "ALSA: short write, wrote %d frames of %d\n", rc, samples);
+	}
+	return 1;
+}
+#if 0
 u8 Tempbuffer[8192*4];
 void* AudioThread(void*)
 {
@@ -44,6 +67,7 @@ void* AudioThread(void*)
 }
 
 cThread aud_thread(AudioThread,0);
+#endif
 
 void os_InitAudio()
 {
@@ -123,7 +147,7 @@ void os_InitAudio()
 	}
 
 	/* Set period size to settings.aica.BufferSize frames. */
-	frames = settings.aica.BufferSize;
+	frames = 2 * 1024;//settings.aica.BufferSize;
 	rc=snd_pcm_hw_params_set_period_size_near(handle, params, &frames, &dir);
 	if (rc < 0)
 	{
@@ -145,8 +169,6 @@ void os_InitAudio()
 		fprintf(stderr, "Unable to set hw parameters: %s\n", snd_strerror(rc));
 		return;
 	}
-
-	aud_thread.Start();
 }
 
 void os_TermAudio()

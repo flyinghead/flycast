@@ -28,15 +28,14 @@
 #ifndef HOST_NO_REC
 //uh uh
 
-#if HOST_OS != OS_LINUX
-u8 SH4_TCB[2*CODE_SIZE+4096];
+#if HOST_OS == OS_WINDOWS
+	u8 SH4_TCB[2*CODE_SIZE+4096];
 #elif HOST_OS == OS_LINUX
-
-u8 SH4_TCB[2*CODE_SIZE+4096] 
-#ifndef DYNA_OPROF
-__attribute__((section(".text")))
-#endif
-	;
+	u8 SH4_TCB[2*CODE_SIZE+4096] __attribute__((section(".text")));
+#elif HOST_OS==OS_DARWIN
+	u8 SH4_TCB[2*CODE_SIZE+4096] __attribute__((section("__TEXT,.text")));
+#else
+	#error SH4_TCB ALLOC
 #endif
 
 u8* CodeCache;
@@ -208,7 +207,7 @@ void RuntimeBlockInfo::Setup(u32 rpc,fpscr_t rfpu_cfg)
 	AnalyseBlock(this);
 }
 
-DynarecCodeEntry* rdv_CompilePC()
+DynarecCodeEntryPtr rdv_CompilePC()
 {
 	u32 pc=next_pc;
 
@@ -240,7 +239,7 @@ DynarecCodeEntry* rdv_CompilePC()
 	return rv->code;
 }
 
-DynarecCodeEntry* DYNACALL rdv_FailedToFindBlock(u32 pc)
+DynarecCodeEntryPtr DYNACALL rdv_FailedToFindBlock(u32 pc)
 {
 	//printf("rdv_FailedToFindBlock ~ %08X\n",pc);
 	next_pc=pc;
@@ -269,25 +268,25 @@ u32 DYNACALL rdv_DoInterrupts(void* block_cpde)
 	return next_pc;
 }
 
-DynarecCodeEntry* DYNACALL rdv_BlockCheckFail(u32 pc)
+DynarecCodeEntryPtr DYNACALL rdv_BlockCheckFail(u32 pc)
 {
 	next_pc=pc;
 	recSh4_ClearCache();
 	return rdv_CompilePC();
 }
 
-DynarecCodeEntry* rdv_FindCode()
+DynarecCodeEntryPtr rdv_FindCode()
 {
-	DynarecCodeEntry* rv=bm_GetCode(next_pc);
+	DynarecCodeEntryPtr rv=bm_GetCode(next_pc);
 	if (rv==ngen_FailedToFindBlock)
 		return 0;
 	
 	return rv;
 }
 
-DynarecCodeEntry* rdv_FindOrCompile()
+DynarecCodeEntryPtr rdv_FindOrCompile()
 {
-	DynarecCodeEntry* rv=bm_GetCode(next_pc);
+	DynarecCodeEntryPtr rv=bm_GetCode(next_pc);
 	if (rv==ngen_FailedToFindBlock)
 		rv=rdv_CompilePC();
 	
@@ -324,7 +323,7 @@ void* DYNACALL rdv_LinkBlock(u8* code,u32 dpc)
 			next_pc=rbi->NextBlock;
 	}
 
-	DynarecCodeEntry* rv=rdv_FindOrCompile();
+	DynarecCodeEntryPtr rv=rdv_FindOrCompile();
 
 	bool do_link=bm_GetBlock(code)==rbi;
 
@@ -388,6 +387,10 @@ void recSh4_Reset(bool Manual)
 	Sh4_int_Reset(Manual);
 }
 
+#if HOST_OS == OS_DARWIN
+#include <sys/mman.h>
+#endif
+
 void recSh4_Init()
 {
 	printf("recSh4 Init\n");
@@ -407,14 +410,19 @@ void recSh4_Init()
 	//align to next page ..
     CodeCache = (u8*)(((unat)SH4_TCB+4095)& ~4095);
 
+#if HOST_OS == OS_DARWIN
+    munmap(CodeCache, CODE_SIZE*2);
+    CodeCache = (u8*)mmap(CodeCache, 2*CODE_SIZE, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_FIXED | MAP_PRIVATE | MAP_ANON, 0, 0);
+#endif
+
 #if HOST_OS == OS_WINDOWS
 	DWORD old;
 	VirtualProtect(CodeCache,CODE_SIZE*2,PAGE_EXECUTE_READWRITE,&old);
-#elif HOST_OS == OS_LINUX
+#elif HOST_OS == OS_LINUX || HOST_OS == OS_DARWIN
 	
-	printf("\n\t CodeCache addr: %p | from: %p | addr here: %p\n", CodeCache, SH4_TCB, recSh4_Init);
+	printf("\n\t CodeCache addr: %p | from: %p | addr here: %p\n", CodeCache, CodeCache, recSh4_Init);
 
-	if (mprotect(CodeCache, CODE_SIZE*2, PROT_EXEC|PROT_READ|PROT_WRITE))
+	if (mprotect(CodeCache, CODE_SIZE*2, PROT_READ|PROT_WRITE|PROT_EXEC))
 	{
 		perror("\n\tError,Couldn’t mprotect CodeCache!");
 		verify(false);

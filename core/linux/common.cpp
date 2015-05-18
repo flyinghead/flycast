@@ -1,7 +1,11 @@
 #include "types.h"
 #include "cfg/cfg.h"
 
-#if HOST_OS==OS_LINUX
+#if HOST_OS==OS_LINUX || HOST_OS == OS_DARWIN
+#if HOST_OS == OS_DARWIN
+	#define _XOPEN_SOURCE 1
+	#define __USE_GNU 1
+#endif
 #include <poll.h>
 #include <termios.h>
 //#include <curses.h>
@@ -15,70 +19,74 @@
 #include <unistd.h>
 #include "hw/sh4/dyna/blockmanager.h"
 
-#if defined(_ANDROID)
-#include <asm/sigcontext.h>
-#if 0
-typedef struct ucontext_t {
-unsigned long uc_flags;
-struct ucontext_t *uc_link;
-struct {
-void *p;
-int flags;
-size_t size;
-} sstack_data;
-struct sigcontext uc_mcontext;
-/* some 2.6.x kernel has fp data here after a few other fields
-* we don't use them for now...
-*/
-} ucontext_t;
-#endif
-#endif
-
-#if HOST_CPU == CPU_ARM
-#define GET_PC_FROM_CONTEXT(c) (((ucontext_t *)(c))->uc_mcontext.arm_pc)
-#elif HOST_CPU == CPU_MIPS
-#if 0 && _ANDROID
-#define GET_PC_FROM_CONTEXT(c) (((ucontext_t *)(c))->uc_mcontext.sc_pc)
-#else
-#define GET_PC_FROM_CONTEXT(c) (((ucontext_t *)(c))->uc_mcontext.pc)
-#endif
-#elif HOST_CPU == CPU_X86
-#if 0 && _ANDROID
-#define GET_PC_FROM_CONTEXT(c) (((ucontext_t *)(c))->uc_mcontext.eip)
-#else
-#define GET_PC_FROM_CONTEXT(c) (((ucontext_t *)(c))->uc_mcontext.gregs[REG_EIP])
-#endif
-#else
-#error fix ->pc support
-#endif
+#include "linux/context.h"
 
 #include "hw/sh4/dyna/ngen.h"
 
+bool ngen_Rewrite(unat& addr,unat retadr,unat acc);
 u32* ngen_readm_fail_v2(u32* ptr,u32* regs,u32 saddr);
 bool VramLockedWrite(u8* address);
 bool BM_LockedWrite(u8* address);
 
-void fault_handler (int sn, siginfo_t * si, void *ctxr)
-{
-	bool dyna_cde=((u32)GET_PC_FROM_CONTEXT(ctxr)>(u32)CodeCache) && ((u32)GET_PC_FROM_CONTEXT(ctxr)<(u32)(CodeCache+CODE_SIZE));
+#if HOST_OS == OS_DARWIN
+void sigill_handler(int sn, siginfo_t * si, void *segfault_ctx) {
+	
+    rei_host_context_t ctx;
+    
+    context_from_segfault(&ctx, segfault_ctx);
 
-	ucontext_t* ctx=(ucontext_t*)ctxr;
+	unat pc = (unat)ctx.pc;
+	bool dyna_cde = (pc>(unat)CodeCache) && (pc<(unat)(CodeCache + CODE_SIZE));
+	
+	printf("SIGILL @ %08X, fault_handler+0x%08X ... %08X -> was not in vram, %d\n", pc, pc - (u32)sigill_handler, (unat)si->si_addr, dyna_cde);
+	
+	printf("Entering infiniloop");
+
+	for (;;);
+	printf("PC is used here %08X\n", pc);
+}
+#endif
+
+void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
+{
+	rei_host_context_t ctx;
+
+	context_from_segfault(&ctx, segfault_ctx);
+
+	bool dyna_cde = ((unat)ctx.pc>(unat)CodeCache) && ((unat)ctx.pc<(unat)(CodeCache + CODE_SIZE));
+
+	//ucontext_t* ctx=(ucontext_t*)ctxr;
 	//printf("mprot hit @ ptr 0x%08X @@ code: %08X, %d\n",si->si_addr,ctx->uc_mcontext.arm_pc,dyna_cde);
 
 	
 	if (VramLockedWrite((u8*)si->si_addr) || BM_LockedWrite((u8*)si->si_addr))
 		return;
-#ifndef HOST_NO_REC
-	else if (dyna_cde)
-	{
-		GET_PC_FROM_CONTEXT(ctxr)=(u32)ngen_readm_fail_v2((u32*)GET_PC_FROM_CONTEXT(ctxr),(u32*)&(ctx->uc_mcontext.arm_r0),(unat)si->si_addr);
-	}
-#endif
+	#if !defined(HOST_NO_REC)
+		#if HOST_CPU==CPU_ARM
+			else if (dyna_cde)
+			{
+				ctx.pc = (u32)ngen_readm_fail_v2((u32*)ctx.pc, ctx.r, (unat)si->si_addr);
+
+				context_to_segfault(&ctx, segfault_ctx);
+			}
+		#elif HOST_CPU==CPU_X86
+			else if (ngen_Rewrite((unat&)ctx.pc, *(unat*)ctx.esp, ctx.eax))
+			{
+				//remove the call from call stack
+				ctx.esp += 4;
+				//restore the addr from eax to ecx so it's valid again
+				ctx.ecx = ctx.eax;
+
+				context_to_segfault(&ctx, segfault_ctx);
+			}
+		#else
+			#error JIT: Not supported arch
+		#endif
+	#endif
 	else
 	{
-		printf("SIGSEGV @ fault_handler+0x%08X ... %08X -> was not in vram\n",GET_PC_FROM_CONTEXT(ctxr)-(u32)fault_handler,si->si_addr);
+		printf("SIGSEGV @ %08X (fault_handler+0x%08X) ... %08X -> was not in vram\n", ctx.pc, ctx.pc - (unat)fault_handler, si->si_addr);
 		die("segfault");
-//		asm volatile("bkpt 0x0001\n\t");
 		signal(SIGSEGV, SIG_DFL);
 	}
 }
@@ -91,6 +99,14 @@ void install_fault_handler (void)
 	sigemptyset(&act.sa_mask);
 	act.sa_flags = SA_SIGINFO;
 	sigaction(SIGSEGV, &act, &segv_oact);
+
+#if HOST_OS == OS_DARWIN
+    //this is broken on osx/ios/mach in general
+    sigaction(SIGBUS, &act, &segv_oact);
+    
+    act.sa_sigaction = sigill_handler;
+    sigaction(SIGILL, &act, &segv_oact);
+#endif
 }
 
 
@@ -118,8 +134,8 @@ cResetEvent::cResetEvent(bool State,bool Auto)
 {
 	//sem_init((sem_t*)hEvent, 0, State?1:0);
 	verify(State==false&&Auto==true);
-	mutx = PTHREAD_MUTEX_INITIALIZER;
-	cond = PTHREAD_COND_INITIALIZER;
+	pthread_mutex_init(&mutx, NULL);
+	pthread_cond_init(&cond, NULL);
 }
 cResetEvent::~cResetEvent()
 {
@@ -172,7 +188,7 @@ void VArray2::LockRegion(u32 offset,u32 size)
 void print_mem_addr()
 {
     FILE *ifp, *ofp;
-    char *mode = "r";
+    const char *mode = "r";
     char outputFilename[] = "/data/data/com.reicast.emulator/files/mem_alloc.txt";
 
     ifp = fopen("/proc/self/maps", mode);
@@ -218,6 +234,12 @@ double os_GetSeconds()
 	return a.tv_sec-tvs_base+a.tv_usec/1000000.0;
 }
 
+#if HOST_OS != OS_LINUX
+void os_DebugBreak()
+{
+	__builtin_trap();
+}
+#endif
 
 void enable_runfast()
 {

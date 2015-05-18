@@ -2,6 +2,7 @@
 #include <sys/mman.h>
 #include "types.h"
 
+#ifndef HOST_NO_REC
 #include "hw/sh4/sh4_opcode_list.h"
 
 #include "hw/sh4/sh4_mmr.h"
@@ -55,10 +56,17 @@ struct DynaRBI: RuntimeBlockInfo
 #include <sys/syscall.h>  // for cache flushing.
 #endif
 
-#if !defined(ARMCC)
+#if HOST_OS == OS_DARWIN
+#include <libkern/OSCacheControl.h>
 void CacheFlush(void* code, void* pEnd)
 {
-#ifndef _ANDROID
+    sys_dcache_flush(code, (u8*)pEnd - (u8*)code + 1);
+    sys_icache_invalidate(code, (u8*)pEnd - (u8*)code + 1);
+}
+#elif !defined(ARMCC)
+void CacheFlush(void* code, void* pEnd)
+{
+#if !defined(_ANDROID) && HOST_OS!=OS_DARWIN
 	__clear_cache((void*)code, pEnd);
 #else
 	void* start=code;
@@ -249,7 +257,11 @@ EmitAPI StoreSh4Reg64(eReg Rt, shil_param Sh4_Reg, eCC CC=CC_AL)
 
 #include "hw/sh4/dyna/regalloc.h"
 
+#if HOST_OS == OS_DARWIN
+eReg alloc_regs[]={r5,r6,r7,r10,(eReg)-1};
+#else
 eReg alloc_regs[]={r5,r6,r7,r10,r11,(eReg)-1};
+#endif
 eFSReg alloc_fpu[]={f16,f17,f18,f19,f20,f21,f22,f23,
 					f24,f25,f26,f27,f28,f29,f30,f31,(eFSReg)-1};
 
@@ -535,14 +547,14 @@ void ngen_Binary(shil_opcode* op, BinaryOP dtop,BinaryOPImm dtopimm, bool has_im
 	dtop(reg.mapg(op->rd),reg.mapg(op->rs1), rs2, CC_AL);
 }
 
-void ngen_fp_bin(shil_opcode* op, FPBinOP fpop)
+void ngen_fp_bin(shil_opcode* op, const FPBinOP fpop)
 {
 	verify(op->rs1.is_r32f());
 	verify(op->rs2.is_r32f());
 
 	fpop(reg.mapfs(op->rd),reg.mapfs(op->rs1),reg.mapfs(op->rs2),CC_AL);
 }
-void ngen_fp_una(shil_opcode* op, FPUnOP fpop)
+void ngen_fp_una(shil_opcode* op, const FPUnOP fpop)
 {
 	verify(op->rd.is_r32f());
 	verify(op->rs1.is_r32f());
@@ -1979,7 +1991,7 @@ __default:
 void ngen_Compile(RuntimeBlockInfo* block,bool force_checks, bool reset, bool staging,bool optimise)
 {
 	//printf("Compile: %08X, %d, %d\n",block->addr,staging,optimise);
-	block->code=(DynarecCodeEntry*)EMIT_GET_PTR();
+	block->code=(DynarecCodeEntryPtr)EMIT_GET_PTR();
 
 	//StoreImms(r0,r1,(u32)&last_run_block,(u32)code); //useful when code jumps to random locations ...
 	++blockno;
@@ -2026,7 +2038,11 @@ void ngen_Compile(RuntimeBlockInfo* block,bool force_checks, bool reset, bool st
 		cyc&=~3;
 	}
 
+#if HOST_OS == OS_DARWIN
+	SUB(r11,r11,cyc,true,CC_AL);
+#else
 	SUB(rfp_r9,rfp_r9,cyc,true,CC_AL);
+#endif
 	CALL((u32)intc_sched, CC_LE);
 
 	//compile the block's opcodes
@@ -2217,3 +2233,5 @@ RuntimeBlockInfo* ngen_AllocateBlock()
 {
 	return new DynaRBI();
 };
+
+#endif

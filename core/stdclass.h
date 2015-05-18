@@ -220,7 +220,7 @@ public :
 #if HOST_OS==OS_WINDOWS
 		InitializeCriticalSection(&cs);
 #else
-		mutx=PTHREAD_MUTEX_INITIALIZER;
+		pthread_mutex_init ( &mutx, NULL);
 #endif
 	}
 	~cMutex()

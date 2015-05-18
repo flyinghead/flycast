@@ -58,6 +58,11 @@
 	}
 */
 
+#include "build.h"
+
+#if BUILD_COMPILER == COMPILER_GCC
+	#define __fastcall BALLZZ!!
+#endif
 
 
 enum enc_param
@@ -168,7 +173,7 @@ struct encoded_type
 
 struct x86_opcode;
 
-typedef void __fastcall x86_opcode_encoderFP(x86_block* block,const x86_opcode* op,encoded_type* p1,encoded_type* p2,u32 p3);
+typedef void x86_opcode_encoderFP(x86_block* block,const x86_opcode* op,encoded_type* p1,encoded_type* p2,u32 p3);
 
 //enc_param_none is alower w/ params set to implicit registers (ie , mov eax,xxxx is enc_imm , pg1:pg_EAX , pg2:pg_imm
 
@@ -185,7 +190,7 @@ struct x86_opcode
 };
 
 //mod|reg|rm
-void __fastcall encode_modrm(x86_block* block,encoded_type* mrm, u32 extra)
+void encode_modrm(x86_block* block,encoded_type* mrm, u32 extra)
 {
 	if (mrm->type != pg_ModRM)
 	{
@@ -208,7 +213,7 @@ void __fastcall encode_modrm(x86_block* block,encoded_type* mrm, u32 extra)
 }
 #ifdef X64
 //x64 stuff
-void __fastcall encode_rex(x86_block* block,encoded_type* mrm,u32 mrm_reg,u32 ofe=0)
+void encode_rex(x86_block* block,encoded_type* mrm,u32 mrm_reg,u32 ofe=0)
 {
 	u32 flags = (ofe>>3) & 1; //opcode field extension
 
@@ -232,7 +237,7 @@ void __fastcall encode_rex(x86_block* block,encoded_type* mrm,u32 mrm_reg,u32 of
 
 //Encoding function (partially) specialised by templates to gain speed :)
 template < enc_param enc_1,enc_imm enc_2,u32 sz,x86_operand_size enc_op_size>
-void __fastcall x86_encode_opcode_tmpl(x86_block* block, const x86_opcode* op, encoded_type* p1,encoded_type* p2,u32 p3)
+void x86_encode_opcode_tmpl(x86_block* block, const x86_opcode* op, encoded_type* p1,encoded_type* p2,u32 p3)
 {
 	//printf("Encoding : ");
 

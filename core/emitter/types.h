@@ -1,9 +1,8 @@
 #pragma once
 
-#include "../types.h"
-
-/*
-
+#if 1
+#include "types.h"
+#else
 //basic types
 typedef signed __int8  s8;
 typedef signed __int16 s16;
@@ -54,4 +53,5 @@ using namespace std;
 
 #ifndef die
 #define die(reason) { printf("Fatal error : %s\n in %s -> %s : %d \n",reason,__FUNCTION__,__FILE__,__LINE__); dbgbreak;}
+#endif
 #endif

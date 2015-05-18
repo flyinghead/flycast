@@ -86,7 +86,7 @@ struct dsp_t
 	bool dyndirty;
 };
 
-ALIGN(4096)
+DECL_ALIGN(4096)
 extern dsp_t dsp;
 
 void dsp_init();

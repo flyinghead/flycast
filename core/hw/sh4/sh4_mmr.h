@@ -31,7 +31,7 @@ void WriteMem_P4(u32 addr,u32 data,u32 sz);
 //Area7
 u32 ReadMem_area7(u32 addr,u32 sz);
 void WriteMem_area7(u32 addr,u32 data,u32 sz);
-void __fastcall WriteMem_sq_32(u32 address,u32 data);*/
+void DYNACALL WriteMem_sq_32(u32 address,u32 data);*/
 
 //Init/Res/Term
 void sh4_mmr_init();
