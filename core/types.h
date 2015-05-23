@@ -507,7 +507,13 @@ using namespace std;
 #define VER_FULLNAME	VER_EMUNAME " rel0" _X_x_X_MMU_VER_STR " (built " __DATE__ "@" __TIME__ ")"
 #define VER_SHORTNAME	VER_EMUNAME " rel0" _X_x_X_MMU_VER_STR
 
-void os_DebugBreak();
+#if HOST_OS == OS_DARWIN
+    void os_DebugBreak() {
+        raise(SIGTRAP);
+    }
+#else
+    void os_DebugBreak();
+#endif
 #define dbgbreak os_DebugBreak()
 
 #if COMPILER_VC==BUILD_COMPILER
