@@ -19,7 +19,7 @@
             android:layout_height="72dp"
             android:layout_margin="1dp"
             android:layout_weight="1"
-            android:gravity="center" >
+            android:gravity="center">
 
             <Button
                 android:id="@+id/buttonBack"

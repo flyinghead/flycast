@@ -781,7 +781,7 @@ enum OpType
 void armv_call(void* target);
 void armv_setup();
 void armv_intpr(u32 opcd);
-void armv_end(void* codestart);
+void armv_end(void* codestart, u32 cycles);
 void armv_check_pc(u32 pc);
 void armv_check_cache(u32 opcd, u32 pc);
 void armv_imm_to_reg(u32 regn, u32 imm);

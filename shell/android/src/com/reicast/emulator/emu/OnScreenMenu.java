@@ -169,6 +169,7 @@ public class OnScreenMenu {
 			addimg(buttonPrintStats, R.drawable.print_stats, clickPrintStats);
 
 			setContentView(shell);
+			setFocusable(true);
 			popups.add(this);
 		}
 	}
@@ -369,6 +370,7 @@ public class OnScreenMenu {
 			}
 
 			setContentView(shell);
+			setFocusable(true);
 			popups.add(this);
 		}
 	}
@@ -450,6 +452,7 @@ public class OnScreenMenu {
 			vlay = new LinearLayout(mContext);
 			vlay.setOrientation(LinearLayout.HORIZONTAL);
 			setContentView(vlay);
+			setFocusable(true);
 		}
 
 		public void showVmu() {
@@ -556,6 +559,7 @@ public class OnScreenMenu {
 			addimg(buttonExit, R.drawable.close, clickExit);
 
 			setContentView(shell);
+			setFocusable(true);
 			this.setAnimationStyle(R.style.Animation);
 		}
 		
