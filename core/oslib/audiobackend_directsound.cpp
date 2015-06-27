@@ -1,10 +1,8 @@
-#include "types.h"
-
+#include "oslib/audiobackend_directsound.h"
 #if HOST_OS==OS_WINDOWS
+#include "oslib.h"
 #include <initguid.h>
 #include <dsound.h>
-#include "audiostream_rif.h"
-#include "oslib.h"
 
 void* SoundThread(void* param);
 #define V2_BUFFERSZ (16*1024)
@@ -14,7 +12,7 @@ IDirectSoundBuffer8* buffer;
 
 u32 ds_ring_size;
 
-void os_InitAudio()
+static void directsound_init()
 {
 	verifyc(DirectSoundCreate8(NULL,&dsound,NULL));
 
@@ -80,7 +78,7 @@ void os_InitAudio()
 DWORD wc=0;
 
 
-int os_getfreesz()
+static int directsound_getfreesz()
 {
 	DWORD pc,wch;
 
@@ -96,25 +94,12 @@ int os_getfreesz()
 	return fsz;
 }
 
-int os_getusedSamples()
+static int directsound_getusedSamples()
 {
-	return (ds_ring_size-os_getfreesz())/4;
+	return (ds_ring_size-directsound_getfreesz())/4;
 }
 
-
-bool os_IsAudioBuffered()
-{
-	return os_getusedSamples()>=3000;
-}
-
-
-bool os_IsAudioBufferedLots()
-{
-	u32 xxx=os_getusedSamples();
-	return xxx>=4096;
-}
-
-u32 os_Push_nw(void* frame, u32 samplesb)
+static u32 directsound_push_nw(void* frame, u32 samplesb)
 {
 	DWORD pc,wch;
 
@@ -155,7 +140,7 @@ u32 os_Push_nw(void* frame, u32 samplesb)
 	//ds_ring_size
 }
 
-u32 os_Push(void* frame, u32 samples, bool wait)
+static u32 directsound_push(void* frame, u32 samples, bool wait)
 {
 
 	u16* f=(u16*)frame;
@@ -175,16 +160,17 @@ u32 os_Push(void* frame, u32 samples, bool wait)
 
 	int ffs=1;
 	
-	while (os_IsAudioBufferedLots() && wait)
+	while (directsound_IsAudioBufferedLots() && wait)
 		if (ffs == 0)
-			ffs = printf("AUD WAIT %d\n",os_getusedSamples());
+			ffs = printf("AUD WAIT %d\n", directsound_getusedSamples());
 
-	while(!os_Push_nw(frame,samples) && wait)
-		printf("FAILED waiting on audio FAILED %d\n",os_getusedSamples());
+	while(!directsound_Push_nw(frame,samples) && wait)
+		printf("FAILED waiting on audio FAILED %d\n", directsound_getusedSamples());
 
 	return 1;
 }
-void os_TermAudio()
+
+static void directsound_term()
 {
 	buffer->Stop();
 	
@@ -192,4 +178,11 @@ void os_TermAudio()
 	dsound->Release();
 }
 
+audiobackend_t audiobackend_directsound = {
+    "directsound", // Slug
+    "Microsoft DirectSound", // Name
+    &directsound_init,
+    &directsound_push,
+    &directsound_term
+};
 #endif

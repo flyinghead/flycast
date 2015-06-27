@@ -17,11 +17,6 @@
 #include <SDL/SDL.h>
 #include <EGL/egl.h>
 
-#ifdef USE_OSS
-#include <sys/ioctl.h>
-#include <sys/soundcard.h>
-#endif
-
 #include <signal.h>
 #include <execinfo.h>
 
@@ -102,11 +97,6 @@ void emit_WriteCodeCache();
 static SDL_Joystick *JoySDL    = 0;
 
 extern bool FrameSkipping;
-
-#ifdef USE_OSS
-static int audio_fd = -1;
-#endif
-
 
 #define MAP_SIZE 32
 
@@ -426,9 +416,6 @@ void clean_exit(int sig_num) {
 	
 	// close files
 	if (JoySDL) 		SDL_JoystickClose(JoySDL);
-	#ifdef USE_OSS
-	if (audio_fd>=0) 	close(audio_fd);
-	#endif
 
 	// Close EGL context ???
 	if (sig_num!=0)
@@ -436,37 +423,6 @@ void clean_exit(int sig_num) {
 
 	SDL_Quit();
 }
-
-#ifdef USE_OSS
-void init_sound()
-{
-    if((audio_fd=open("/dev/dsp",O_WRONLY))<0)
-		printf("Couldn't open /dev/dsp.\n");
-    else
-	{
-	  printf("sound enabled, dsp openned for write\n");
-	  int tmp=44100;
-	  int err_ret;
-	  err_ret=ioctl(audio_fd,SNDCTL_DSP_SPEED,&tmp);
-	  printf("set Frequency to %i, return %i (rate=%i)\n", 44100, err_ret, tmp);
-	  int channels=2;
-	  err_ret=ioctl(audio_fd, SNDCTL_DSP_CHANNELS, &channels);	  
-	  printf("set dsp to stereo (%i => %i)\n", channels, err_ret);
-	  int format=AFMT_S16_LE;
-	  err_ret=ioctl(audio_fd, SNDCTL_DSP_SETFMT, &format);
-	  printf("set dsp to %s audio (%i/%i => %i)\n", "16bits signed" ,AFMT_S16_LE, format, err_ret);
-	  int frag=(4<<16)|11;
-	  int f=frag;
-	  err_ret=ioctl(audio_fd, SNDCTL_DSP_SETFRAGMENT, &frag);
-	  printf("set dsp fragment to %i of %i bytes (0x%x => %i)\n", "16bits signed" ,(f>>16), 1<<(f&0xff), frag, err_ret);
-	  /*
-	  // this doesn't help stutering, and the emu goes too fast after that
-	  err_ret=ioctl(audio_fd, SNDCTL_DSP_NONBLOCK, NULL);
-	  printf("set dsp to non-blocking ( => %i)\n", err_ret);
-	  */
-	}
-}
-#endif
 
 int main(int argc, wchar* argv[])
 {
@@ -501,10 +457,6 @@ int main(int argc, wchar* argv[])
 	die("error initializing SDL");
 	
 	SetupInput();
-	
-	#ifdef USE_OSS	
-		init_sound();
-	#endif
 
 	FrameSkipping=false;
 	
@@ -513,17 +465,4 @@ int main(int argc, wchar* argv[])
 	clean_exit(0);
 
 	return 0;
-}
-
-u32 os_Push(void* frame, u32 samples, bool wait)
-{
-#ifdef USE_OSS
-static bool blocking = true;
-	if (wait!=blocking) {
-		fcntl(audio_fd, F_SETFD, O_WRONLY | wait?0:O_NONBLOCK);
-		blocking=wait;
-	}
-	write(audio_fd, frame, samples*4);
-#endif
-return 1;
 }

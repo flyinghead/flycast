@@ -1,81 +1,12 @@
-
-#include "audiostream_rif.h"
-#include "oslib/oslib.h"
-
-#include "cfg/cfg.h"
-
-#if HOST_OS==OS_LINUX && !defined(TARGET_NACL32) && !defined(ANDROID)
-
-#if 1
+#include "oslib/audiobackend_alsa.h"
+#if USE_ALSA
 #include <alsa/asoundlib.h>
-#include <pthread.h>
 
 snd_pcm_t *handle;
 
-u32 alsa_Push(void* frame, u32 samples, bool wait) {
-	
-	snd_pcm_nonblock(handle, wait ? 0 : 1);
-
-	int rc = snd_pcm_writei(handle, frame, samples);
-	if (rc == -EPIPE)
-	{
-		/* EPIPE means underrun */
-		fprintf(stderr, "ALSA: underrun occurred\n");
-		snd_pcm_prepare(handle);
-		alsa_Push(frame, samples * 8, wait);
-	}
-	else if (rc < 0)
-	{
-		fprintf(stderr, "ALSA: error from writei: %s\n", snd_strerror(rc));
-	}
-	else if (rc != samples)
-	{
-		fprintf(stderr, "ALSA: short write, wrote %d frames of %d\n", rc, samples);
-	}
-	return 1;
-}
-#if 0
-u8 Tempbuffer[8192*4];
-void* AudioThread(void*)
+// We're making these functions static - there's no need to pollute the global namespace
+static void alsa_init()
 {
-	sched_param sched;
-	int policy;
-	
-	pthread_getschedparam(pthread_self(),&policy,&sched);
-	sched.sched_priority++;//policy=SCHED_RR;
-	pthread_setschedparam(pthread_self(),policy,&sched);
-
-	for(;;)
-	{
-		UpdateBuff(Tempbuffer);
-		int rc = snd_pcm_writei(handle, Tempbuffer, settings.aica.BufferSize);
-		if (rc == -EPIPE)
-		{
-			/* EPIPE means underrun */
-			fprintf(stderr, "underrun occurred\n");
-			snd_pcm_prepare(handle);
-		}
-		else if (rc < 0)
-		{
-			fprintf(stderr, "error from writei: %s\n", snd_strerror(rc));
-		}
-		else if (rc != (int)settings.aica.BufferSize)
-		{
-			fprintf(stderr, "short write, write %d frames\n", rc);
-		}
-	}
-}
-
-cThread aud_thread(AudioThread,0);
-#endif
-
-void os_InitAudio()
-{
-
-	if (cfgLoadInt("audio","disable",0))
-		return;
-
-	cfgSaveInt("audio","disable",0);
 
 	long loops;
 	int size;
@@ -171,12 +102,40 @@ void os_InitAudio()
 	}
 }
 
-void os_TermAudio()
+static u32 alsa_push(void* frame, u32 samples, bool wait)
+{
+	snd_pcm_nonblock(handle, wait ? 0 : 1);
+
+	int rc = snd_pcm_writei(handle, frame, samples);
+	if (rc == -EPIPE)
+	{
+		/* EPIPE means underrun */
+		fprintf(stderr, "ALSA: underrun occurred\n");
+		snd_pcm_prepare(handle);
+		alsa_push(frame, samples * 8, wait);
+	}
+	else if (rc < 0)
+	{
+		fprintf(stderr, "ALSA: error from writei: %s\n", snd_strerror(rc));
+	}
+	else if (rc != samples)
+	{
+		fprintf(stderr, "ALSA: short write, wrote %d frames of %d\n", rc, samples);
+	}
+	return 1;
+}
+
+static void alsa_term()
 {
 	snd_pcm_drain(handle);
 	snd_pcm_close(handle);
 }
-#else
 
-#endif
+audiobackend_t audiobackend_alsa = {
+    "alsa", // Slug
+    "Advanced Linux Sound Architecture", // Name
+    &alsa_init,
+    &alsa_push,
+    &alsa_term
+};
 #endif

@@ -317,7 +317,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|x64'">true</ExcludedFromBuild>
     </ClInclude>
-    <ClInclude Include="..\core\oslib\audiostream_rif.h" />
+    <ClInclude Include="..\core\oslib\audiostream.h" />
     <ClInclude Include="..\core\oslib\oslib.h" />
     <ClInclude Include="..\core\profiler\profiler.h" />
     <ClInclude Include="..\core\rec-x86\win86_ngen.h">

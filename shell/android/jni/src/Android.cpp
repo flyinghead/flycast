@@ -16,6 +16,7 @@
 #include "rend/TexCache.h"
 #include "hw/maple/maple_devs.h"
 #include "hw/maple/maple_if.h"
+#include "oslib/audiobackend_android.h"
 
 #include "util.h"
 
@@ -485,7 +486,8 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_initControllers(JNIEn
 	env->ReleaseBooleanArrayElements(controllers, controllers_body, 0);
 }
 
-u32 os_Push(void* frame, u32 amt, bool wait)
+// Audio Stuff
+u32 androidaudio_push(void* frame, u32 amt, bool wait)
 {
 	verify(amt==SAMPLE_COUNT);
 	//yeah, do some audio piping magic here !
@@ -493,10 +495,28 @@ u32 os_Push(void* frame, u32 amt, bool wait)
 	return jenv->CallIntMethod(emu,writemid,jsamples,wait);
 }
 
+void androidaudio_init()
+{
+  // Nothing to do here...
+}
+
+void androidaudio_term()
+{
+  // Move along, there is nothing to see here!
+}
+
 bool os_IsAudioBuffered()
 {
     return jenv->CallIntMethod(emu,writemid,jsamples,-1)==0;
 }
+
+audiobackend_t audiobackend_android = {
+    "android", // Slug
+    "Android Audio", // Name
+    &androidaudio_init,
+    &androidaudio_push,
+    &androidaudio_term
+};
 
 int get_mic_data(u8* buffer)
 {

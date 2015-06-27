@@ -1,5 +1,5 @@
 #include "oslib\oslib.h"
-#include "oslib\audiostream_rif.h"
+#include "oslib\audiostream.h"
 #include "imgread\common.h"
 
 #define _WIN32_WINNT 0x0500 
@@ -364,48 +364,6 @@ cResetEvent evt_hld(false,true);
 
 double speed_load_mspdf;
 extern double full_rps;
-
-void os_wait_cycl(u32 cycl)
-{
-	if (cycl>8*1000*1000)
-		cycl=8*1000*1000;
-
-	
-	static double trolol=os_GetSeconds();
-
-	double newt=os_GetSeconds();
-	double ets=(newt-trolol)*200*1000*1000;
-
-	bool fast_enough=ets < cycl;
-	
-	bool wait = full_rps >5 && (fast_enough || os_IsAudioBufferedLots());
-
-	speed_load_mspdf=(speed_load_mspdf*0.96235 + ets/cycl*10)/1.96235;
-
-	if (wait &&  os_IsAudioBuffered())
-	{
-		while (cycl_glob<cycl && os_IsAudioBuffered())
-			evt_hld.Wait(8);
-
-		if (cycl_glob>cycl)
-			InterlockedExchangeSubtract(&cycl_glob,cycl);
-	}
-	else //if (os_IsAudioBufferedLots())
-	{
-		//cycl_glob=0;
-	}
-
-
-	static int last_fe=fast_enough;
-	if (!fast_enough || !last_fe)
-		printf("Speed %.2f (%.2f%%) (%d)\n",ets/cycl*10,cycl/ets*100,os_getusedSamples());
-	
-	last_fe=fast_enough;
-
-
-
-	trolol=os_GetSeconds();
-}
 
 
 void os_consume(double t)
