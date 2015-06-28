@@ -550,9 +550,13 @@ public class OnScreenMenu {
 			
 			OnClickListener clickExit = new OnClickListener() {
 				public void onClick(View v) {
-					Intent inte = new Intent(mContext, MainActivity.class);
-					mContext.startActivity(inte);
-					((Activity) mContext).finish();
+					if (Config.externalIntent) {
+						((Activity) mContext).finish();
+					} else {
+						Intent inte = new Intent(mContext, MainActivity.class);
+						mContext.startActivity(inte);
+						((Activity) mContext).finish();
+					}
 				}
 			};
 			Button buttonExit = (Button) hlay.findViewById(R.id.buttonExit);
