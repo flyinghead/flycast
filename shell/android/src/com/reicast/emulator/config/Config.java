@@ -65,6 +65,8 @@ public class Config {
 	public static String git_issues = "https://github.com/reicast/reicast-emulator/issues/";
 	public static String log_url = "http://loungekatt.no-ip.biz:3194/ReicastBot/report/submit.php";
 	public static String report_url = "http://loungekatt.no-ip.biz:3194/ReicastBot/report/logs/";
+	
+	public static boolean externalIntent = false;
 
 	private SharedPreferences mPrefs;
 

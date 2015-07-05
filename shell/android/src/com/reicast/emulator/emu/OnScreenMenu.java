@@ -94,6 +94,7 @@ public class OnScreenMenu {
 			fpsText.setGravity(Gravity.CENTER);
 			fpsText.setText("XX");
 			setContentView(fpsText);
+			setFocusable(false);
 		}
 
 		public void setText(int frames) {
@@ -452,7 +453,7 @@ public class OnScreenMenu {
 			vlay = new LinearLayout(mContext);
 			vlay.setOrientation(LinearLayout.HORIZONTAL);
 			setContentView(vlay);
-			setFocusable(true);
+			setFocusable(false);
 		}
 
 		public void showVmu() {
@@ -550,9 +551,13 @@ public class OnScreenMenu {
 			
 			OnClickListener clickExit = new OnClickListener() {
 				public void onClick(View v) {
-					Intent inte = new Intent(mContext, MainActivity.class);
-					mContext.startActivity(inte);
-					((Activity) mContext).finish();
+					if (Config.externalIntent) {
+						((Activity) mContext).finish();
+					} else {
+						Intent inte = new Intent(mContext, MainActivity.class);
+						mContext.startActivity(inte);
+						((Activity) mContext).finish();
+					}
 				}
 			};
 			Button buttonExit = (Button) hlay.findViewById(R.id.buttonExit);

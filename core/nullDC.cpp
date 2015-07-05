@@ -206,7 +206,11 @@ int dc_init(int argc,wchar* argv[])
 	
 	mem_map_default();
 
+#ifndef _ANDROID
 	mcfg_CreateDevices();
+#else
+    mcfg_CreateDevices();
+#endif
 
 	plugins_Reset(false);
 	mem_Reset(false);

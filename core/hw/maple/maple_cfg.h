@@ -62,5 +62,9 @@ struct IMapleConfigMap
 	virtual ~IMapleConfigMap() {}
 };
 
+#ifndef _ANDROID
 void mcfg_CreateDevices();
+#else
+void mcfg_CreateDevices();
+#endif
 void mcfg_DestroyDevices();

@@ -66,6 +66,7 @@ void mcfg_Create(MapleDeviceType type,u32 bus,u32 port)
 	MapleDevices[bus][port]=dev;
 }
 
+#ifndef _ANDROID
 void mcfg_CreateDevices()
 {
 	mcfg_Create(MDT_SegaController,0,5);
@@ -75,6 +76,15 @@ void mcfg_CreateDevices()
 	mcfg_Create(MDT_SegaVMU,0,1);
 	#endif
 }
+#else
+void mcfg_CreateDevices()
+{
+    mcfg_Create(MDT_SegaController,0,5);
+    
+    mcfg_Create(MDT_SegaVMU,0,0);
+    mcfg_Create(MDT_SegaVMU,0,1);
+}
+#endif
 
 void mcfg_DestroyDevices()
 {

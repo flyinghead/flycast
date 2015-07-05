@@ -234,7 +234,11 @@ double os_GetSeconds()
 	return a.tv_sec-tvs_base+a.tv_usec/1000000.0;
 }
 
-#if HOST_OS != OS_LINUX
+#if HOST_OS == OS_DARWIN
+void os_DebugBreak() {
+    __asm__("trap");
+}
+#elif HOST_OS != OS_LINUX
 void os_DebugBreak()
 {
 	__builtin_trap();

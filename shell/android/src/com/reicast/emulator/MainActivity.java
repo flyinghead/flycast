@@ -132,6 +132,7 @@ public class MainActivity extends SlidingFragmentActivity implements
 				// Flush the intent to prevent multiple calls
 				getIntent().setData(null);
 		        setIntent(null);
+		        Config.externalIntent = true;
 			}
 		}
 
