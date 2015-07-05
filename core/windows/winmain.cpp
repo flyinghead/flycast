@@ -310,7 +310,7 @@ void os_CreateWindow()
 
 	window_win=hWnd;
 
-	os_InitAudio();
+	InitAudio();
 }
 
 void* libPvr_GetRenderTarget() 

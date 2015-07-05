@@ -160,11 +160,13 @@ static u32 directsound_push(void* frame, u32 samples, bool wait)
 
 	int ffs=1;
 	
+	/*
 	while (directsound_IsAudioBufferedLots() && wait)
 		if (ffs == 0)
 			ffs = printf("AUD WAIT %d\n", directsound_getusedSamples());
+	*/
 
-	while(!directsound_Push_nw(frame,samples) && wait)
+	while (!directsound_push_nw(frame, samples) && wait)
 		printf("FAILED waiting on audio FAILED %d\n", directsound_getusedSamples());
 
 	return 1;

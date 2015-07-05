@@ -153,9 +153,8 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\core\nullDC.cpp" />
-    <ClCompile Include="..\core\oslib\alsa_audiostream.cpp" />
+    <ClCompile Include="..\core\oslib\audiobackend_directsound.cpp" />
     <ClCompile Include="..\core\oslib\audiostream.cpp" />
-    <ClCompile Include="..\core\oslib\ds_audiostream.cpp" />
     <ClCompile Include="..\core\profiler\profiler.cpp" />
     <ClCompile Include="..\core\rec-ARM\arm_dyna.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|Win32'">true</ExcludedFromBuild>
@@ -317,6 +316,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|x64'">true</ExcludedFromBuild>
     </ClInclude>
+    <ClInclude Include="..\core\oslib\audiobackend_directsound.h" />
     <ClInclude Include="..\core\oslib\audiostream.h" />
     <ClInclude Include="..\core\oslib\oslib.h" />
     <ClInclude Include="..\core\profiler\profiler.h" />

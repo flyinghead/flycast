@@ -162,13 +162,7 @@
     <ClCompile Include="..\core\hw\sh4\sh4_mem.cpp">
       <Filter>hw\sh4</Filter>
     </ClCompile>
-    <ClCompile Include="..\core\oslib\alsa_audiostream.cpp">
-      <Filter>oslib</Filter>
-    </ClCompile>
     <ClCompile Include="..\core\oslib\audiostream.cpp">
-      <Filter>oslib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\core\oslib\ds_audiostream.cpp">
       <Filter>oslib</Filter>
     </ClCompile>
     <ClCompile Include="..\core\hw\sh4\modules\bsc.cpp">
@@ -422,6 +416,9 @@
     </ClCompile>
     <ClCompile Include="..\core\linux\context.cpp">
       <Filter>linux</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\oslib\audiobackend_directsound.cpp">
+      <Filter>oslib</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -915,6 +912,9 @@
     </ClInclude>
     <ClInclude Include="..\core\linux\context.h">
       <Filter>linux</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\oslib\audiobackend_directsound.h">
+      <Filter>oslib</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
