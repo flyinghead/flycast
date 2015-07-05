@@ -70,7 +70,7 @@ void cpu_iNimp(u32 op, const char* info)
 void cpu_iWarn(u32 op, const char* info)
 {
 	printf("Check opcode : %X : ", op);
-	printf(info);
+	printf("%s", info);
 	printf(" @ %X\n", curr_pc);
 }
 
