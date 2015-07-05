@@ -608,6 +608,8 @@ public class GL2JNINative extends NativeActivity {
 				} else {
 					popUp.dismiss();
 				}
+			} else {
+				popUp.dismiss();
 			}
 		}
 		return true;
