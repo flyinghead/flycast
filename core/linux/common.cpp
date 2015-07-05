@@ -203,7 +203,11 @@ void print_mem_addr()
     if (ofp == NULL) {
         fprintf(stderr, "Can't open output file %s!\n",
                 outputFilename);
+#if HOST_OS == OS_LINUX
+        ofp = stderr;
+#else
         exit(1);
+#endif
     }
 
     char line [ 512 ];
@@ -212,7 +216,8 @@ void print_mem_addr()
     }
 
     fclose(ifp);
-    fclose(ofp);
+    if (ofp != stderr)
+        fclose(ofp);
 }
 
 void VArray2::UnLockRegion(u32 offset,u32 size)
