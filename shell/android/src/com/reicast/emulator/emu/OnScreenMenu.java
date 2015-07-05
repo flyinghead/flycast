@@ -94,6 +94,7 @@ public class OnScreenMenu {
 			fpsText.setGravity(Gravity.CENTER);
 			fpsText.setText("XX");
 			setContentView(fpsText);
+			setFocusable(false);
 		}
 
 		public void setText(int frames) {
@@ -452,7 +453,7 @@ public class OnScreenMenu {
 			vlay = new LinearLayout(mContext);
 			vlay.setOrientation(LinearLayout.HORIZONTAL);
 			setContentView(vlay);
-			setFocusable(true);
+			setFocusable(false);
 		}
 
 		public void showVmu() {
