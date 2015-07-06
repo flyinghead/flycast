@@ -1,4 +1,8 @@
-#include "win86_ngen.h"
+#include "types.h"
+
+#ifndef HOST_NO_REC
+
+#include "rec_x86_ngen.h"
 
 #if HOST_OS == OS_WINDOWS
 
@@ -125,4 +129,5 @@ naked void DYNACALL ngen_blockcheckfail2(u32 addr)
 #else
 	u32 gas_offs=offsetof(Sh4RCB,cntx.jdyn);
 	void (*ngen_FailedToFindBlock)()=&ngen_FailedToFindBlock_;
+#endif
 #endif

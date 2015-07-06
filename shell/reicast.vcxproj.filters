@@ -132,17 +132,8 @@
     <ClCompile Include="..\core\emitter\x86_emitter.cpp">
       <Filter>emitter</Filter>
     </ClCompile>
-    <ClCompile Include="..\core\windows\win86_driver.cpp">
-      <Filter>win86</Filter>
-    </ClCompile>
-    <ClCompile Include="..\core\windows\win86_il.cpp">
-      <Filter>win86</Filter>
-    </ClCompile>
-    <ClCompile Include="..\core\windows\win86_ngen.cpp">
-      <Filter>win86</Filter>
-    </ClCompile>
     <ClCompile Include="..\core\windows\winmain.cpp">
-      <Filter>win86</Filter>
+      <Filter>windows</Filter>
     </ClCompile>
     <ClCompile Include="..\core\profiler\profiler.cpp">
       <Filter>profiler</Filter>
@@ -245,9 +236,6 @@
     </ClCompile>
     <ClCompile Include="..\core\linux\nixprof.cpp">
       <Filter>linux</Filter>
-    </ClCompile>
-    <ClCompile Include="..\core\rec-ARM\arm_dyna.cpp">
-      <Filter>rec-ARM</Filter>
     </ClCompile>
     <ClCompile Include="..\core\deps\chdpsr\cdipsr.cpp">
       <Filter>deps\chdpsr</Filter>
@@ -405,20 +393,23 @@
     <ClCompile Include="..\core\reios\reios_elf.cpp">
       <Filter>reios</Filter>
     </ClCompile>
-    <ClCompile Include="..\core\rec-x86\win86_driver.cpp">
-      <Filter>rec-x86</Filter>
-    </ClCompile>
-    <ClCompile Include="..\core\rec-x86\win86_il.cpp">
-      <Filter>rec-x86</Filter>
-    </ClCompile>
-    <ClCompile Include="..\core\rec-x86\win86_ngen.cpp">
-      <Filter>rec-x86</Filter>
-    </ClCompile>
     <ClCompile Include="..\core\linux\context.cpp">
       <Filter>linux</Filter>
     </ClCompile>
     <ClCompile Include="..\core\oslib\audiobackend_directsound.cpp">
       <Filter>oslib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\rec-ARM\rec_arm.cpp">
+      <Filter>rec-ARM</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\rec-x86\rec_x86_driver.cpp">
+      <Filter>rec-x86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\rec-x86\rec_x86_il.cpp">
+      <Filter>rec-x86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\rec-x86\rec_x86_ngen.cpp">
+      <Filter>rec-x86</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -475,9 +466,6 @@
     </Filter>
     <Filter Include="emitter">
       <UniqueIdentifier>{e14356dc-6635-49f9-94d5-dc14ff1dec70}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="win86">
-      <UniqueIdentifier>{5a7b63eb-8c03-46ac-b6e0-dfd3ade02f11}</UniqueIdentifier>
     </Filter>
     <Filter Include="profiler">
       <UniqueIdentifier>{f96b3c39-1255-4ee8-999e-5c6e8fef21e5}</UniqueIdentifier>
@@ -544,6 +532,9 @@
     </Filter>
     <Filter Include="rec-x86">
       <UniqueIdentifier>{df854851-d3b5-4549-8248-acdfa954be44}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="windows">
+      <UniqueIdentifier>{5a7b63eb-8c03-46ac-b6e0-dfd3ade02f11}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -727,9 +718,6 @@
     <ClInclude Include="..\core\emitter\x86_op_table.h">
       <Filter>emitter</Filter>
     </ClInclude>
-    <ClInclude Include="..\core\windows\win86_ngen.h">
-      <Filter>win86</Filter>
-    </ClInclude>
     <ClInclude Include="..\core\profiler\profiler.h">
       <Filter>profiler</Filter>
     </ClInclude>
@@ -907,14 +895,14 @@
     <ClInclude Include="..\core\reios\reios_elf.h">
       <Filter>reios</Filter>
     </ClInclude>
-    <ClInclude Include="..\core\rec-x86\win86_ngen.h">
-      <Filter>rec-x86</Filter>
-    </ClInclude>
     <ClInclude Include="..\core\linux\context.h">
       <Filter>linux</Filter>
     </ClInclude>
     <ClInclude Include="..\core\oslib\audiobackend_directsound.h">
       <Filter>oslib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\rec-x86\rec_x86_ngen.h">
+      <Filter>rec-x86</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -924,7 +912,7 @@
     <None Include="..\core\rec-ARM\ngen_arm.S">
       <Filter>rec-ARM</Filter>
     </None>
-    <None Include="..\core\rec-x86\lin86_asm.S">
+    <None Include="..\core\rec-x86\rec_lin86_asm.S">
       <Filter>rec-x86</Filter>
     </None>
   </ItemGroup>

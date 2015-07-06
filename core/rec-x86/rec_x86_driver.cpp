@@ -1,7 +1,7 @@
 #include "types.h"
 
 #ifndef HOST_NO_REC
-#include "win86_ngen.h"
+#include "rec_x86_ngen.h"
 
 
 
@@ -640,9 +640,10 @@ void gen_hande(u32 w, u32 sz, u32 mode)
 	{
 		//General
 
-		//maintain 16 byte alignment
-		x86e->Emit(op_sub32, ESP, 12);
-
+		#if HOST_OS != OS_WINDOWS
+			//maintain 16 byte alignment
+			x86e->Emit(op_sub32, ESP, 12);
+		#endif
 		if ((sz==SZ_32F || sz==SZ_64F) && w==1)
 		{
 			if (sz==SZ_32F)
@@ -651,6 +652,10 @@ void gen_hande(u32 w, u32 sz, u32 mode)
 			}
 			else
 			{
+				#if HOST_OS == OS_WINDOWS
+					//on linux, we have scratch space on esp
+					x86e->Emit(op_sub32,ESP,8);
+				#endif
 				x86e->Emit(op_movss,x86_mrm(ESP,x86_ptr::create(+4)),XMM1);
 				x86e->Emit(op_movss,x86_mrm(ESP,x86_ptr::create(-0)),XMM0);
 			}
@@ -666,13 +671,15 @@ void gen_hande(u32 w, u32 sz, u32 mode)
 				x86e->Emit(op_movd_xmm_from_r32,XMM1,EDX);
 			}
 		}
-
-		if ((sz == SZ_64F) && w == 1) {
-			x86e->Emit(op_add32, ESP, 4);
-		}
-		else {
-			x86e->Emit(op_add32, ESP, 12);
-		}
+		#if HOST_OS != OS_WINDOWS
+			//maintain 16 byte alignment
+			if ((sz == SZ_64F) && w == 1) {
+				x86e->Emit(op_add32, ESP, 4);
+			}
+			else {
+				x86e->Emit(op_add32, ESP, 12);
+			}
+		#endif
 	}
 
 	x86e->Emit(op_ret);
@@ -756,6 +763,10 @@ bool ngen_Rewrite(unat& addr,unat retadr,unat acc)
 				if ((u32)mem_code[0][w][i]==ca)
 				{
 					//found !
+
+					if ((acc >> 26) == 0x38 && !w) {
+						printf("WARNING: SQ AREA READ, %08X from sh4:%08X. THIS IS UNDEFINED ON A REAL DREACMAST.\n", acc, bm_GetBlock(x86e->x86_buff)->addr);
+					}
 
 					if ((acc >> 26) == 0x38) //sq ?
 					{
