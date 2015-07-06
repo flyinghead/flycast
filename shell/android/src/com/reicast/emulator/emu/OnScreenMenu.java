@@ -7,6 +7,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Environment;
 import android.view.Gravity;
@@ -120,7 +121,7 @@ public class OnScreenMenu {
 
 		public DebugPopup(Context c) {
 			super(c);
-			setBackgroundDrawable(null);
+			setBackgroundDrawable(new BitmapDrawable());
 
 			View shell = mContext.getLayoutInflater().inflate(R.layout.menu_popup_debug, null);
 			ScrollView hlay = (ScrollView) shell.findViewById(R.id.menuDebug);
@@ -195,7 +196,7 @@ public class OnScreenMenu {
 
 		public ConfigPopup(Context c) {
 			super(c);
-			setBackgroundDrawable(null);
+			setBackgroundDrawable(new BitmapDrawable());
 
 			View shell = mContext.getLayoutInflater().inflate(R.layout.menu_popup_config, null);
 			final ScrollView hlay = (ScrollView) shell.findViewById(R.id.menuConfig);
@@ -485,7 +486,7 @@ public class OnScreenMenu {
 
 		public MainPopup(Context c) {
 			super(c);
-			setBackgroundDrawable(null);
+			setBackgroundDrawable(new BitmapDrawable());
 			
 			View shell = mContext.getLayoutInflater().inflate(R.layout.menu_popup_main, null);
 			ScrollView hlay = (ScrollView) shell.findViewById(R.id.menuMain);
