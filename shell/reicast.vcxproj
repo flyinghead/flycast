@@ -156,30 +156,15 @@
     <ClCompile Include="..\core\oslib\audiobackend_directsound.cpp" />
     <ClCompile Include="..\core\oslib\audiostream.cpp" />
     <ClCompile Include="..\core\profiler\profiler.cpp" />
-    <ClCompile Include="..\core\rec-ARM\arm_dyna.cpp">
+    <ClCompile Include="..\core\rec-ARM\rec_arm.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|x64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="..\core\rec-x86\win86_driver.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|x64'">true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="..\core\rec-x86\win86_il.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|x64'">true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="..\core\rec-x86\win86_ngen.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|x64'">true</ExcludedFromBuild>
-    </ClCompile>
+    <ClCompile Include="..\core\rec-x86\rec_x86_driver.cpp" />
+    <ClCompile Include="..\core\rec-x86\rec_x86_il.cpp" />
+    <ClCompile Include="..\core\rec-x86\rec_x86_ngen.cpp" />
     <ClCompile Include="..\core\reios\descrambl.cpp" />
     <ClCompile Include="..\core\reios\gdrom_hle.cpp" />
     <ClCompile Include="..\core\reios\reios.cpp" />
@@ -191,9 +176,6 @@
     <ClCompile Include="..\core\rend\TexCache.cpp" />
     <ClCompile Include="..\core\stdclass.cpp" />
     <ClCompile Include="..\core\webui\server.cpp" />
-    <ClCompile Include="..\core\windows\win86_driver.cpp" />
-    <ClCompile Include="..\core\windows\win86_il.cpp" />
-    <ClCompile Include="..\core\windows\win86_ngen.cpp" />
     <ClCompile Include="..\core\windows\winmain.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -320,12 +302,7 @@
     <ClInclude Include="..\core\oslib\audiostream.h" />
     <ClInclude Include="..\core\oslib\oslib.h" />
     <ClInclude Include="..\core\profiler\profiler.h" />
-    <ClInclude Include="..\core\rec-x86\win86_ngen.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|x64'">true</ExcludedFromBuild>
-    </ClInclude>
+    <ClInclude Include="..\core\rec-x86\rec_x86_ngen.h" />
     <ClInclude Include="..\core\reios\descrambl.h" />
     <ClInclude Include="..\core\reios\gdrom_hle.h" />
     <ClInclude Include="..\core\reios\reios.h" />
@@ -336,7 +313,6 @@
     <ClInclude Include="..\core\stdclass.h" />
     <ClInclude Include="..\core\types.h" />
     <ClInclude Include="..\core\webui\server.h" />
-    <ClInclude Include="..\core\windows\win86_ngen.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\core\deps\zlib\Makefile" />
@@ -346,7 +322,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|x64'">true</ExcludedFromBuild>
     </None>
-    <None Include="..\core\rec-x86\lin86_asm.S">
+    <None Include="..\core\rec-x86\rec_lin86_asm.S">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|x64'">true</ExcludedFromBuild>

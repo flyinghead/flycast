@@ -1,7 +1,7 @@
 #include "types.h"
 
 #ifndef HOST_NO_REC
-#include "win86_ngen.h"
+#include "rec_x86_ngen.h"
 #include "hw/sh4/sh4_mmr.h"
 #include "hw/sh4/sh4_rom.h"
 

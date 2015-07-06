@@ -23,7 +23,7 @@ void ngen_LinkBlock_Generic_stub();
 void ngen_LinkBlock_cond_Next_stub();
 void ngen_LinkBlock_cond_Branch_stub();
 void ngen_FailedToFindBlock_();
-void ngen_mainloop(void* p);
+void ngen_mainloop(void* cntx);
 
 
 void DYNACALL ngen_blockcheckfail(u32 addr);
