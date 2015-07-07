@@ -1,60 +1,35 @@
-
 LOCAL_PATH := $(call my-dir)
 FOR_LINUX :=1
-FOR_ARM :=1
-FOR_PANDORA :=1
-USE_SDL :=1
-#USE_ALSA :=1
-USE_OSS :=1
-#USE_PULSEAUDIO :=1
-#PGO_MAKE :=1
-#PGO_USE :=1
-#USE_CCACHE :=1
-
-#USE_CCACHE :=1
-#PGO_MAKE :=1
-#PGO_USE :=1
-#USE_CCACHE :=1
-
-#USE_CCACHE :=1
-
-#PGO_MAKE :=1
-PGO_USE :=1
-
+WEBUI :=1
+#NO_REND := 1
+#NO_X11 := 1
 RZDCY_SRC_DIR = ../../core
 
 include $(RZDCY_SRC_DIR)/core.mk
 
-CC_PREFIX ?=
+#CC_PREFIX ?= arm-none-linux-gnueabi-
 
 CXX=${CC_PREFIX}g++
 CC=${CC_PREFIX}gcc
-AS=${CC_PREFIX}as
+AS=${CC_PREFIX}gcc
 STRIP=${CC_PREFIX}strip
 
 LD=${CC}
 
-MFLAGS := -marm -march=armv7-a -mtune=cortex-a8 -mfpu=neon -mfloat-abi=softfp -funroll-loops -fpermissive
+MFLAGS := -marm -march=armv7-a -mtune=cortex-a9 -mfpu=neon -mfloat-abi=hard -funroll-loops
 ASFLAGS := -march=armv7-a -mfpu=neon -mfloat-abi=softfp
 
 LDFLAGS	:=	-g -Wl,-Map,$(notdir $@).map,--gc-sections -Wl,-O3 -Wl,--sort-common 
 
-SOURCES	:=	cfg/ hw/arm7/ hw/aica/ hw/asic/ hw/ hw/gdrom/ hw/maple/ \
- hw/mem/ hw/pvr/ hw/sh4/ hw/sh4/rec_v2/ plugins/ profiler/ serial_ipc/ \
- hw/extdev/ hw/arm/ imgread/ linux/ linux-dist/ ./ rec-ARM/ deps/zlib/ deps/chdr/ deps/crypto/ arm_emitter/ 
 
-
-CXXFLAGS :=  -std=gnu++11 -g -O3  -D RELEASE -c -D TARGET_PANDORA  -D WEIRD_SLOWNESS
+CXXFLAGS := -g -O3  -D RELEASE -c -D TARGET_BEAGLE -D TARGET_LINUX_ARMELv7 -DUSE_ALSA  
 CXXFLAGS += -frename-registers -fno-strict-aliasing -fsingle-precision-constant 
-CXXFLAGS += -ffast-math -ftree-vectorize -fprefetch-loop-arrays  -Wno-write-strings
+CXXFLAGS += -ffast-math -ftree-vectorize -fprefetch-loop-arrays 
 #-std=c++0x
 
 CXXFLAGS += $(CFLAGS) $(MFLAGS) -fno-exceptions -fno-rtti
-CXXFLAGS += -D SUPPORT_X11
+CXXFLAGS +=  -DARM_HARDFP -DGLES
 
-ifdef USE_SDL
-	CXXFLAGS += `sdl-config --cflags`
-endif
 
 ifdef PGO_MAKE
 	CXXFLAGS += -fprofile-generate -pg
@@ -73,33 +48,11 @@ ifdef LTO_TEST
 	LDFLAGS +=-flto -fwhole-program 
 endif
 
-INCS	:= -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps -I$(RZDCY_SRC_DIR)/khronos 
-#-I../linux-deps/include
+INCS	:= -I/opt/vc/include/ -I/opt/vc/include/interface/vmcs_host/linux -I/opt/vc/include/interface/vcos/pthreads  -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps -I$(RZDCY_SRC_DIR)/khronos -I../linux-deps/include
 
-LIBS    := -L../linux-deps/lib
-LIBS    += -lm -lrt -ldl -lEGL -lGLESv2 
-#-lglslcompiler -lIMGegl -lpvr2d -lsrv_um 
-LIBS    += -lpthread
-
-ifdef USE_ALSA
-	CXXFLAGS += -D USE_ALSA
-	LIBS += -lasound
-endif
-
-ifdef USE_OSS
-	CXXFLAGS += -D USE_OSS
-endif
-
-ifdef USE_PULSEAUDIO
-	CXXFLAGS += -D USE_PULSEAUDIO
-	LIBS += -lpulse-simple
-endif
-
-ifdef USE_SDL
-	LIBS += `sdl-config --libs`
-else
-	LIBS    += -lX11 -lXdmcp -lXau
-endif
+LIBS    :=  -L/opt/vc/lib/  -L../linux-deps/lib
+LIBS    += -lm -lrt -ldl -lEGL -lGLESv2 #-lglslcompiler -lIMGegl -lpvr2d -lsrv_um 
+LIBS    += -lpthread -lasound -lX11 -lXdmcp -lXau  -lbcm_host
 
 
 OBJECTS=$(RZDCY_FILES:.cpp=.build_obj)
@@ -112,7 +65,6 @@ EXECUTABLE_STRIPPED=nosym-reicast.elf
 EXECUTABLE=reicast.elf
 
 all: $(CPPFILES) $(EXECUTABLE) $(EXECUTABLE_STRIPPED)
-	echo $(RZDCY_FILES)
 
 $(EXECUTABLE): $(OBJECTS)
 	echo $(RZDCY_FILES)
@@ -131,7 +83,7 @@ obj/%.build_obj : $(RZDCY_SRC_DIR)/%.c
 
 obj/%.build_obj : $(RZDCY_SRC_DIR)/%.S
 	mkdir -p $(dir $@)	
-	$(AS) $(ASFLAGS) $(INCS) $< -o $@
+	$(AS) $(ASFLAGS) $(INCS) $(CXXFLAGS) $< -o $@
 
 
 clean:

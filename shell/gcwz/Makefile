@@ -64,7 +64,7 @@ INCS	:= -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps -I$(RZDCY_SRC_DIR)/khronos -I
 
 LIBS    := -L../linux-deps/lib -L./enta_viv 
 LIBS	+= -lglapi
-LIBS    += -lm -lrt -lEGL -lGLESv2 #-lglslcompiler -lIMGegl -lpvr2d -lsrv_um
+LIBS    += -lm -lrt -ldl -lEGL -lGLESv2 #-lglslcompiler -lIMGegl -lpvr2d -lsrv_um
 LIBS    += -lpthread #-lX11 -lXdmcp -lXau
 
 ifdef USE_ALSA

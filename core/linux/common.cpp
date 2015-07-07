@@ -17,6 +17,7 @@
 #include <sys/mman.h>
 #include <sys/time.h>
 #include <sys/personality.h>
+#include <dlfcn.h>
 #include <unistd.h>
 #include "hw/sh4/dyna/blockmanager.h"
 
@@ -270,11 +271,32 @@ void enable_runfast()
 	#endif
 }
 
+void linux_fix_personality() {
+        printf("Personality: %08X\n", personality(0xFFFFFFFF));
+        personality(~READ_IMPLIES_EXEC & personality(0xFFFFFFFF));
+        printf("Updated personality: %08X\n", personality(0xFFFFFFFF));
+}
+
+void linux_rpi2_init() {
+	void* handle;
+	void (*rpi_bcm_init)(void);
+
+	handle = dlopen("libbcm_host.so", RTLD_LAZY);
+	
+	if (handle) {
+		printf("found libbcm_host\n");
+		*(void**) (&rpi_bcm_init) = dlsym(handle, "bcm_host_init");
+		if (rpi_bcm_init) {
+			printf("rpi2: bcm_init\n");
+			rpi_bcm_init();
+		}
+	}
+}
+
 void common_linux_setup()
 {
-	printf("Personality: %08X\n", personality(0xFFFFFFFF));
-	personality(~READ_IMPLIES_EXEC & personality(0xFFFFFFFF));
-	printf("Updated personality: %08X\n", personality(0xFFFFFFFF));
+	linux_fix_personality();
+	linux_rpi2_init();
 
 	enable_runfast();
 	install_fault_handler();

@@ -70,7 +70,7 @@ INCS	:= -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps -I$(RZDCY_SRC_DIR)/khronos -I
 
 LIBS    := -L../linux-deps/lib/x86 -L./enta_viv 
 #LIBS	+= -lglapi
-LIBS    += -lm -lrt
+LIBS    += -lm -lrt -ldl
 LIBS	+= -ldl -lGL #for desktop gl
 #use this for GLES 
 #LIBS	+= -lEGL -lGLESv2 #-lglslcompiler -lIMGegl -lpvr2d -lsrv_um
