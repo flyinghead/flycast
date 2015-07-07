@@ -16,6 +16,7 @@
 #include <sys/param.h>
 #include <sys/mman.h>
 #include <sys/time.h>
+#include <sys/personality.h>
 #include <unistd.h>
 #include "hw/sh4/dyna/blockmanager.h"
 
@@ -271,6 +272,10 @@ void enable_runfast()
 
 void common_linux_setup()
 {
+	printf("Personality: %08X\n", personality(0xFFFFFFFF));
+	personality(~READ_IMPLIES_EXEC & personality(0xFFFFFFFF));
+	printf("Updated personality: %08X\n", personality(0xFFFFFFFF));
+
 	enable_runfast();
 	install_fault_handler();
 	signal(SIGINT, exit);
