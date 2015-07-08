@@ -118,13 +118,17 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 	protected String doInBackground(String... params) {
 		String filename = game_name = params[0];
 		if (isNetworkAvailable() && mPrefs.getBoolean(Config.pref_gamedetails, false)) {
-			if (params[0].contains("[")) {
-				filename = params[0].substring(0, params[0].lastIndexOf("["));
-			} else {
-				filename = params[0].substring(0, params[0].lastIndexOf("."));
+			if (filename.startsWith("[")) {
+				filename = filename.substring(filename.indexOf("]") + 1, filename.length());
 			}
-			filename = filename.replaceAll("[^\\p{L}\\p{Nd}]", " ");
-			filename = filename.replace(" ", "+");
+			if (filename.contains("[")) {
+				filename = filename.substring(0, filename.indexOf("["));
+			} else {
+				filename = filename.substring(0, filename.lastIndexOf("."));
+			}
+			filename = filename.replace("_", " ").replace(":", " ");
+			filename = filename.replaceAll("[^\\p{Alpha}\\p{Digit}]+"," ");
+			filename = filename.replace("  ", " ").replace(" ", "+");
 			if (filename.endsWith("+")) {
 				filename = filename.substring(0, filename.length() - 1);
 			}
