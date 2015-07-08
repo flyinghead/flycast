@@ -1883,7 +1883,7 @@ GLuint loadPNG(const string& fname, int &width, int &height)
 
 	if (!file)
 	{
-		printf("Error opening %s", filename);
+		printf("Error opening %s\n", filename);
 		return TEXTURE_LOAD_ERROR;
 	}
 
