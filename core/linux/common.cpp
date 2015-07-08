@@ -16,7 +16,9 @@
 #include <sys/param.h>
 #include <sys/mman.h>
 #include <sys/time.h>
-#include <sys/personality.h>
+#if !defined(_ANDROID)
+  #include <sys/personality.h>
+#endif
 #include <dlfcn.h>
 #include <unistd.h>
 #include "hw/sh4/dyna/blockmanager.h"
@@ -272,9 +274,11 @@ void enable_runfast()
 }
 
 void linux_fix_personality() {
-        printf("Personality: %08X\n", personality(0xFFFFFFFF));
-        personality(~READ_IMPLIES_EXEC & personality(0xFFFFFFFF));
-        printf("Updated personality: %08X\n", personality(0xFFFFFFFF));
+        #if !defined(_ANDROID)
+          printf("Personality: %08X\n", personality(0xFFFFFFFF));
+          personality(~READ_IMPLIES_EXEC & personality(0xFFFFFFFF));
+          printf("Updated personality: %08X\n", personality(0xFFFFFFFF));
+        #endif
 }
 
 void linux_rpi2_init() {
