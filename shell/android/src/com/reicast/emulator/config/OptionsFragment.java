@@ -124,6 +124,7 @@ public class OptionsFragment extends Fragment {
 
 		mainBrowse.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View view) {
+				mPrefs.edit().remove(Config.pref_home).commit();
                 hideSoftKeyBoard();
 				mCallback.onMainBrowseSelected(home_directory, false);
 			}
@@ -138,7 +139,7 @@ public class OptionsFragment extends Fragment {
 						Toast.makeText(getActivity(), R.string.data_folder,
 								Toast.LENGTH_SHORT).show();
 					}
-					mPrefs.edit().putString("home_directory", home_directory)
+					mPrefs.edit().putString(Config.pref_home, home_directory)
 							.commit();
 					JNIdc.config(home_directory);
 					new LocateThemes().execute(home_directory + "/themes");
@@ -180,11 +181,12 @@ public class OptionsFragment extends Fragment {
 
 		final EditText editGames = (EditText) getView().findViewById(
 				R.id.game_path);
-		game_directory = mPrefs.getString("game_directory", game_directory);
+		game_directory = mPrefs.getString(Config.pref_games, game_directory);
 		editGames.setText(game_directory);
 
 		gameBrowse.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View view) {
+				mPrefs.edit().remove(Config.pref_games).commit();
 				if (editBrowse.getText() != null) {
 					game_directory = editGames.getText().toString();
 					//mPrefs.edit().putString("game_directory", game_directory).commit();
@@ -198,7 +200,7 @@ public class OptionsFragment extends Fragment {
 			public void afterTextChanged(Editable s) {
 				if (editBrowse.getText() != null) {
 					game_directory = editGames.getText().toString();
-					mPrefs.edit().putString("game_directory", game_directory)
+					mPrefs.edit().putString(Config.pref_games, game_directory)
 					.commit();
 				}
 			}
