@@ -352,7 +352,7 @@ public class FileBrowser extends Fragment {
 		}
 
 		final View headerView = parentActivity.getLayoutInflater().inflate(
-				R.layout.app_list_item, null, false);
+				R.layout.head_list_item, null, false);
 		((ImageView) headerView.findViewById(R.id.item_icon))
 				.setImageResource(R.drawable.open_folder);
 		((TextView) headerView.findViewById(R.id.item_name))
@@ -464,7 +464,7 @@ public class FileBrowser extends Fragment {
 		Collections.addAll(list, flist);
 
 		for (final File file : list) {
-			if (file != null && !file.isDirectory())
+			if (file != null && !file.isDirectory() && !file.getAbsolutePath().equals("/data"))
 				continue;
 			final View childview = parentActivity.getLayoutInflater().inflate(
 					R.layout.app_list_item, null, false);
