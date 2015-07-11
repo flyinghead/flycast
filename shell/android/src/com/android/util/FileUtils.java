@@ -70,7 +70,6 @@ public class FileUtils {
 					if (filter == null
 							|| filefilter.accept(directory, entry.getName())) {
 						files.add(entry);
-						Log.v("ImageViewFlipper", "Added: " + entry.getName());
 					}
 				}
 				if ((recurse <= -1) || (recurse > 0 && entry.isDirectory())) {
