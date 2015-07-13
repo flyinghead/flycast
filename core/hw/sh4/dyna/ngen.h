@@ -92,7 +92,7 @@ void ngen_ResetBlocks();
 //should call rdv_FailedToFindBlock and then jump to the return value
 extern void (*ngen_FailedToFindBlock)();
 //the dynarec mainloop
-void ngen_mainloop(void* cntx);
+extern "C" void ngen_mainloop(void* cntx);
 //ngen features
 struct ngen_features
 {
