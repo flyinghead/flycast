@@ -78,6 +78,7 @@ DynarecCodeEntryPtr rdv_FindOrCompile();
 void* DYNACALL rdv_LinkBlock(u8* code,u32 dpc);
 
 u32 DYNACALL rdv_DoInterrupts(void* block_cpde);
+u32 DYNACALL rdv_DoInterrupts_pc(u32 pc);
 
 //Stuff to be implemented per dynarec core
 
@@ -92,7 +93,7 @@ void ngen_ResetBlocks();
 //should call rdv_FailedToFindBlock and then jump to the return value
 extern void (*ngen_FailedToFindBlock)();
 //the dynarec mainloop
-extern "C" void ngen_mainloop(void* cntx);
+void ngen_mainloop(void* cntx);
 //ngen features
 struct ngen_features
 {

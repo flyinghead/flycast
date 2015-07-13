@@ -162,6 +162,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|x64'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="..\core\rec-x64\rec_x64.cpp" />
     <ClCompile Include="..\core\rec-x86\rec_x86_driver.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|x64'">true</ExcludedFromBuild>
@@ -170,7 +171,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|x64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="..\core\rec-x86\rec_x86_ngen.cpp">
+    <ClCompile Include="..\core\rec-x86\rec_x86_asm.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|x64'">true</ExcludedFromBuild>
     </ClCompile>
@@ -186,7 +187,6 @@
     <ClCompile Include="..\core\stdclass.cpp" />
     <ClCompile Include="..\core\webui\server.cpp" />
     <ClCompile Include="..\core\windows\winmain.cpp" />
-    <ClCompile Include="rec_x64.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\core\build.h" />
@@ -341,9 +341,6 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|x64'">true</ExcludedFromBuild>
     </None>
-    <MASM Include="rec_win64.asm">
-      <FileType>Document</FileType>
-    </MASM>
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{58B14048-EACB-4780-8B1E-9C84C2C30A8E}</ProjectGuid>
