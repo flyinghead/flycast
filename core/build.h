@@ -58,7 +58,11 @@
 
 #ifdef TARGET_WIN86
 	#define HOST_OS OS_WINDOWS
+#if defined(_M_AMD64)
+	#define HOST_CPU CPU_X64
+#else
 	#define HOST_CPU CPU_X86
+#endif
 #elif TARGET_PANDORA
 	#define HOST_OS OS_LINUX
 	#define HOST_CPU CPU_ARM
