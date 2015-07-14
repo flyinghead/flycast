@@ -279,21 +279,23 @@ public class FileBrowser extends Fragment {
 	}
 	
 	private void browseStorage(boolean images) {
-		HashSet<String> extStorage = FileBrowser.getExternalMounts();
-		if (extStorage != null && !extStorage.isEmpty()) {
-			for (Iterator<String> sd = extStorage.iterator(); sd.hasNext();) {
-				String sdCardPath = sd.next().replace("mnt/media_rw", "storage");
-				if (!sdCardPath.equals(sdcard.getAbsolutePath())) {
-					if (new File(sdCardPath).canRead()) {
-						navigate(new File(sdCardPath));
-						return;
-					}
-				}
-			}
-		}
 		if (images) {
 			navigate(new File(home_directory));
 		} else {
+			if (game_directory.equals(sdcard.getAbsolutePath().replace("emulated/0", "sdcard0"))) {
+				HashSet<String> extStorage = FileBrowser.getExternalMounts();
+				if (extStorage != null && !extStorage.isEmpty()) {
+					for (Iterator<String> sd = extStorage.iterator(); sd.hasNext();) {
+						String sdCardPath = sd.next().replace("mnt/media_rw", "storage");
+						if (!sdCardPath.equals(sdcard.getAbsolutePath())) {
+							if (new File(sdCardPath).canRead()) {
+								navigate(new File(sdCardPath));
+								return;
+							}
+						}
+					}
+				}
+			}
 			navigate(new File(game_directory));
 		}
 	}
