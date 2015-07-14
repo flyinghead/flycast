@@ -67,7 +67,7 @@ void ngen_ResetBlocks()
 
 void ngen_GetFeatures(ngen_features* dst)
 {
-	dst->InterpreterFallback = true;
+	dst->InterpreterFallback = false;
 	dst->OnlyDynamicEnds = true;
 }
 
@@ -81,18 +81,88 @@ u32* GetRegPtr(u32 reg)
 	return Sh4_int_GetRegisterPtr((Sh4RegType)reg);
 }
 
-class BlockCompiler : Xbyak::CodeGenerator{
+class BlockCompiler : public Xbyak::CodeGenerator{
 public:
-	BlockCompiler() : Xbyak::CodeGenerator(64 * 1024, emit_GetCCPtr()) {
 
+	vector<Xbyak::Reg32> call_regs;
+	vector<Xbyak::Reg64> call_regs64;
+	vector<Xbyak::Xmm> call_regsxmm;
+
+	BlockCompiler() : Xbyak::CodeGenerator(64 * 1024, emit_GetCCPtr()) {
+		#if HOST_OS == OS_WINDOWS
+			call_regs.push_back(ecx);
+			call_regs.push_back(edx);
+			call_regs.push_back(r8d);
+			call_regs.push_back(r9d);
+
+			call_regs64.push_back(rcx);
+			call_regs64.push_back(rdx);
+			call_regs64.push_back(r8);
+			call_regs64.push_back(r9);
+		#else
+			call_regs.push_back(edi);
+			call_regs.push_back(esi);
+			call_regs.push_back(edx);
+			call_regs.push_back(ecx);
+
+			call_regs64.push_back(rdi);
+			call_regs64.push_back(rsi);
+			call_regs64.push_back(rdx);
+			call_regs64.push_back(rcx);
+		#endif
+
+		call_regsxmm.push_back(xmm0);
+		call_regsxmm.push_back(xmm1);
+		call_regsxmm.push_back(xmm2);
+		call_regsxmm.push_back(xmm3);
 	}
+
+#define sh_to_reg(prm, op, rd) \
+		do {							\
+			if (prm.is_imm()) {				\
+				op(rd, prm._imm);	\
+			}								\
+			else if (prm.is_reg()) {							\
+				mov(rax, (size_t)prm.reg_ptr());	\
+				op(rd, dword[rax]);				\
+			}										\
+			else { \
+				verify(prm.is_null()); \
+			} \
+		} while (0)
+
+#define sh_to_reg_noimm(prm, op, rd) \
+		do {							\
+			if (prm.is_reg()) {							\
+				mov(rax, (size_t)prm.reg_ptr());	\
+				op(rd, dword[rax]);				\
+				}										\
+						else { \
+				verify(prm.is_null()); \
+				} \
+				} while (0)
+
+
+
+
+#define reg_to_sh(prm, rs) \
+		 do {	\
+				 mov(rax, (size_t)prm.reg_ptr());	\
+				 mov(dword[rax], rs);				\
+		 } while (0)
+
+#define reg_to_sh_ss(prm, rs) \
+		 do {	\
+				 mov(rax, (size_t)prm.reg_ptr());	\
+				 movss(dword[rax], rs);				\
+		 		 } while (0)
 
 	void compile(RuntimeBlockInfo* block, bool force_checks, bool reset, bool staging, bool optimise) {
 		mov(rax, (size_t)&cycle_counter);
 
 		sub(dword[rax], block->guest_cycles);
 
-		sub(rsp, 8);
+		sub(rsp, 0x28);
 
 		for (size_t i = 0; i < block->oplist.size(); i++) {
 			shil_opcode& op  = block->oplist[i];
@@ -105,11 +175,7 @@ public:
 					mov(dword[rax], op.rs2._imm);
 				}
 
-				#if HOST_OS == OS_LINUX
-					mov(rdi, op.rs3._imm);
-				#else
-					mov(rcx, op.rs3._imm);
-				#endif
+				mov(call_regs[0], op.rs3._imm);
 
 				call(OpDesc[op.rs3._imm]->oph);
 				break;
@@ -133,18 +199,80 @@ public:
 
 				verify(op.rs1.is_reg() || op.rs1.is_imm());
 
-				if (op.rs1.is_imm()) {
-					mov(ecx, op.rs1._imm);
+				sh_to_reg(op.rs1, mov, ecx);
+
+				reg_to_sh(op.rd, ecx);
+			}
+			break;
+
+			case shop_mov64:
+			{
+				verify(op.rd.is_reg());
+
+				verify(op.rs1.is_reg() || op.rs1.is_imm());
+
+				sh_to_reg(op.rs1, mov, rcx);
+
+				reg_to_sh(op.rd, rcx);
+			}
+			break;
+
+			case shop_readm:
+			{
+				sh_to_reg(op.rs1, mov, call_regs[0]);
+				sh_to_reg(op.rs3, add, call_regs[0]);
+
+				u32 size = op.flags & 0x7f;
+
+				if (size == 1) {
+					call(ReadMem8);
+					movsx(rcx, al);
+				}
+				else if (size == 2) {
+					call(ReadMem16);
+					movsx(rcx, ax);
+				}
+				else if (size == 4) {
+					call(ReadMem32);
+					mov(rcx, rax);
+				}
+				else if (size == 8) {
+					call(ReadMem64);
+					mov(rcx, rax);
 				}
 				else {
-					mov(rax, (size_t)op.rs1.reg_ptr());
-
-					mov(ecx, dword[rax]);
+					die("1..8 bytes");
 				}
 
-				mov(rax, (size_t)op.rd.reg_ptr());
+				if (size != 8)
+					reg_to_sh(op.rd, ecx);
+				else
+					reg_to_sh(op.rd, rcx);
+			}
+			break;
 
-				mov(dword[rax], ecx);
+			case shop_writem:
+			{
+				u32 size = op.flags & 0x7f;
+				sh_to_reg(op.rs1, mov, call_regs[0]);
+				sh_to_reg(op.rs3, add, call_regs[0]);
+
+				if (size != 8)
+					sh_to_reg(op.rs2, mov, call_regs[1]);
+				else
+					sh_to_reg(op.rs2, mov, call_regs64[1]);
+
+				if (size == 1)
+					call(WriteMem8);
+				else if (size == 2)
+					call(WriteMem16);
+				else if (size == 4)
+					call(WriteMem32);
+				else if (size == 8)
+					call(WriteMem32);
+				else {
+					die("1..8 bytes");
+				}
 			}
 			break;
 
@@ -156,7 +284,7 @@ public:
 
 		verify(block->BlockType == BET_DynamicJump);
 
-		add(rsp, 8);
+		add(rsp, 0x28);
 		ret();
 
 		ready();
@@ -165,119 +293,121 @@ public:
 
 		emit_Skip(getSize());
 	}
+
+	struct CC_PS
+	{
+		CanonicalParamType type;
+		shil_param* prm;
+	};
+	vector<CC_PS> CC_pars;
+
+	void ngen_CC_Start(shil_opcode* op)
+	{
+		CC_pars.clear();
+	}
+
+	void ngen_CC_param(shil_opcode& op, shil_param& prm, CanonicalParamType tp) {
+		switch (tp)
+		{
+
+		case CPT_u32:
+		case CPT_ptr:
+		case CPT_f32:
+		{
+			CC_PS t = { tp, &prm };
+			CC_pars.push_back(t);
+		}
+		break;
+
+
+		//store from EAX
+		case CPT_u64rvL:
+		case CPT_u32rv:
+			mov(rcx, rax);
+			reg_to_sh(prm, ecx);
+			break;
+
+		case CPT_u64rvH:
+			shr(rcx, 32);
+			reg_to_sh(prm, ecx);
+			break;
+
+			//Store from ST(0)
+		case CPT_f32rv:
+			reg_to_sh_ss(prm, xmm0);
+			break;
+		}
+	}
+
+	void ngen_CC_Call(shil_opcode*op, void* function)
+	{
+		int regused = 0;
+		int xmmused = 0;
+
+		for (int i = CC_pars.size(); i-- > 0;)
+		{
+			verify(xmmused < 4 && regused < 4);
+			shil_param& prm = *CC_pars[i].prm;
+			switch (CC_pars[i].type) {
+				//push the contents
+
+			case CPT_u32:
+				sh_to_reg(prm, mov, call_regs[regused++]);
+				break;
+
+			case CPT_f32:
+				sh_to_reg_noimm(prm, movss, call_regsxmm[xmmused++]);
+				break;
+
+				//push the ptr itself
+			case CPT_ptr:
+				verify(prm.is_reg());
+
+				mov(call_regs64[regused++], (size_t)prm.reg_ptr());
+
+				//die("FAIL");
+
+				break;
+			}
+		}
+		call(function);
+	}
+
 };
+
+BlockCompiler* compiler;
 
 void ngen_Compile(RuntimeBlockInfo* block, bool force_checks, bool reset, bool staging, bool optimise)
 {
 	verify(emit_FreeSpace() >= 64 * 1024);
 
-	BlockCompiler* compiler = new BlockCompiler();
+	compiler = new BlockCompiler();
 
 	
 	compiler->compile(block, force_checks, reset, staging, optimise);
+
+	delete compiler;
 }
 
-u32 ngen_CC_BytesPushed;
+
+
 void ngen_CC_Start(shil_opcode* op)
 {
-	ngen_CC_BytesPushed = 0;
+	compiler->ngen_CC_Start(op);
 }
 
 void ngen_CC_Param(shil_opcode* op, shil_param* par, CanonicalParamType tp)
 {
-#if 0
-	switch (tp)
-	{
-		//push the contents
-	case CPT_u32:
-	case CPT_f32:
-		if (par->is_reg())
-		{
-			if (reg.IsAllocg(*par))
-				x86e->Emit(op_push32, reg.mapg(*par));
-			else if (reg.IsAllocf(*par))
-			{
-				x86e->Emit(op_sub32, ESP, 4);
-				x86e->Emit(op_movss, x86_mrm(ESP), reg.mapf(*par));
-			}
-			else
-			{
-				die("Must not happen !\n");
-				x86e->Emit(op_push32, x86_ptr(par->reg_ptr()));
-			}
-		}
-		else if (par->is_imm())
-			x86e->Emit(op_push, par->_imm);
-		else
-			die("invalid combination");
-		ngen_CC_BytesPushed += 4;
-		break;
-		//push the ptr itself
-	case CPT_ptr:
-		verify(par->is_reg());
-
-		die("FAIL");
-		x86e->Emit(op_push, (unat)par->reg_ptr());
-
-		for (u32 ri = 0; ri<(*par).count(); ri++)
-		{
-			if (reg.IsAllocf(*par, ri))
-			{
-				x86e->Emit(op_sub32, ESP, 4);
-				x86e->Emit(op_movss, x86_mrm(ESP), reg.mapfv(*par, ri));
-			}
-			else
-			{
-				verify(!reg.IsAllocAny((Sh4RegType)(par->_reg + ri)));
-			}
-		}
-
-
-		ngen_CC_BytesPushed += 4;
-		break;
-
-		//store from EAX
-	case CPT_u64rvL:
-	case CPT_u32rv:
-		if (reg.IsAllocg(*par))
-			x86e->Emit(op_mov32, reg.mapg(*par), EAX);
-		/*else if (reg.IsAllocf(*par))
-		x86e->Emit(op_movd_xmm_from_r32,reg.mapf(*par),EAX);*/
-		else
-			die("Must not happen!\n");
-		break;
-
-	case CPT_u64rvH:
-		if (reg.IsAllocg(*par))
-			x86e->Emit(op_mov32, reg.mapg(*par), EDX);
-		else
-			die("Must not happen!\n");
-		break;
-
-		//Store from ST(0)
-	case CPT_f32rv:
-		verify(reg.IsAllocf(*par));
-		x86e->Emit(op_fstp32f, x86_ptr(par->reg_ptr()));
-		x86e->Emit(op_movss, reg.mapf(*par), x86_ptr(par->reg_ptr()));
-		break;
-
-	}
-
-#endif
+	compiler->ngen_CC_param(*op, *par, tp);
 }
 
 void ngen_CC_Call(shil_opcode*op, void* function)
 {
-	/*
-		reg.FreezeXMM();
-		x86e->Emit(op_call, x86_ptr_imm(function));
-		reg.ThawXMM();
-	*/
+	compiler->ngen_CC_Call(op, function);
 }
+
 void ngen_CC_Finish(shil_opcode* op)
 {
-	/*
-		x86e->Emit(op_add32, ESP, ngen_CC_BytesPushed);
-	*/
+
 }
 #endif
