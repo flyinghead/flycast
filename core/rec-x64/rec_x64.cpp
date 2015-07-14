@@ -1,4 +1,4 @@
-#include "xbyak\xbyak.h"
+#include "xbyak/xbyak.h"
 
 #include "types.h"
 
@@ -39,13 +39,13 @@ void(*ngen_FailedToFindBlock)() = &ngen_FailedToFindBlock_internal;
 
 void ngen_mainloop(void* v_cntx)
 {
-	auto ctx = (Sh4RCB*)((u8*)v_cntx - sizeof(Sh4RCB));
+	Sh4RCB* ctx = (Sh4RCB*)((u8*)v_cntx - sizeof(Sh4RCB));
 
 	cycle_counter = SH4_TIMESLICE;
 
 	for (;;) {
 		do {
-			auto rcb = bm_GetCode(ctx->cntx.pc);
+			DynarecCodeEntryPtr rcb = bm_GetCode(ctx->cntx.pc);
 			rcb();
 		} while (cycle_counter > 0);
 
@@ -92,7 +92,8 @@ public:
 
 		sub(rsp, 8);
 
-		for (auto op : block->oplist) {
+		for (size_t i = 0; i < block->oplist.size(); i++) {
+			shil_opcode& op  = block->oplist[i];
 			switch (op.op) {
 
 			case shop_ifb:
@@ -102,7 +103,11 @@ public:
 					mov(dword[rax], op.rs2._imm);
 				}
 
-				mov(rcx, op.rs3._imm);
+				#if HOST_OS == OS_LINUX
+					mov(rdi, op.rs3._imm);
+				#else
+					mov(rcx, op.rs3._imm);
+				#endif
 
 				call(OpDesc[op.rs3._imm]->oph);
 				break;
@@ -164,7 +169,7 @@ void ngen_Compile(RuntimeBlockInfo* block, bool force_checks, bool reset, bool s
 {
 	verify(emit_FreeSpace() >= 64 * 1024);
 
-	auto compiler = new BlockCompiler();
+	BlockCompiler* compiler = new BlockCompiler();
 
 	
 	compiler->compile(block, force_checks, reset, staging, optimise);

@@ -83,6 +83,8 @@ void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 
 				context_to_segfault(&ctx, segfault_ctx);
 			}
+		#elif HOST_CPU == CPU_X64
+			//x64 has no rewrite support
 		#else
 			#error JIT: Not supported arch
 		#endif

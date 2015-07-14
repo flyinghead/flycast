@@ -33,6 +33,10 @@ ifdef X86_REC
     RZDCY_MODULES += rec-x86/ emitter/
 endif
 
+ifdef X64_REC
+    RZDCY_MODULES += rec-x64/
+endif
+
 ifndef NO_REND
     RZDCY_MODULES += rend/gles/
 else
