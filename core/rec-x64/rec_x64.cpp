@@ -41,9 +41,10 @@ void ngen_mainloop(void* v_cntx)
 {
 	Sh4RCB* ctx = (Sh4RCB*)((u8*)v_cntx - sizeof(Sh4RCB));
 
-	cycle_counter = SH4_TIMESLICE;
+	cycle_counter = 0;
 
 	for (;;) {
+		cycle_counter = SH4_TIMESLICE;
 		do {
 			DynarecCodeEntryPtr rcb = bm_GetCode(ctx->cntx.pc);
 			rcb();
