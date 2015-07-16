@@ -153,39 +153,23 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 	@Override
 	protected void onPostExecute(String gameData) {
 		if (gameData != null) {
-			Document doc = getDomElement(gameData);
-			if (doc != null && doc.getElementsByTagName("Game") != null) {
+			try {
+				Document doc = getDomElement(gameData);
 				Element root = (Element) doc.getElementsByTagName("Game").item(
 						0);
 				game_name = getValue(root, "GameTitle");
 				String details = getValue(root, "Overview");
 				game_details.put(index, details);
-				Element boxart = (Element) root.getElementsByTagName("Images")
-						.item(0);
-				String image = "http://thegamesdb.net/banners/"
-						+ getValue(boxart, "boxart");
-				try {
-					game_preview.put(index, decodeBitmapIcon(image));
-					game_icon = new BitmapDrawable(decodeBitmapIcon(image));
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+				Element images = (Element) root.getElementsByTagName("Images").item(0);
+				Element boxart = (Element) images.getElementsByTagName("boxart").item(1);
+				String image = "http://thegamesdb.net/banners/" + getElementValue(boxart);
+				game_preview.put(index, decodeBitmapIcon(image));
+				game_icon = new BitmapDrawable(decodeBitmapIcon(image));
+			} catch (IOException e) {
+				initializeDefaults();
 			}
 		} else {
-			game_details.put(index,
-					mContext.getString(R.string.info_unavailable));
-			final String nameLower = game.getName().toLowerCase(
-					Locale.getDefault());
-			if (Build.VERSION.SDK_INT < 21) {
-				game_icon = mContext.getResources().getDrawable(
-						game.isDirectory() ? R.drawable.open_folder : nameLower
-								.endsWith(".gdi") ? R.drawable.gdi : nameLower
-								.endsWith(".cdi") ? R.drawable.cdi : nameLower
-								.endsWith(".chd") ? R.drawable.chd
-								: R.drawable.disk_unknown);
-			}
-
+			initializeDefaults();
 		}
 
 		((TextView) childview.findViewById(R.id.item_name)).setText(game_name);
@@ -196,6 +180,21 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 		}
 
 		childview.setTag(game_name);
+	}
+	
+	private void initializeDefaults() {
+		game_details.put(index,
+				mContext.getString(R.string.info_unavailable));
+		final String nameLower = game.getName().toLowerCase(
+				Locale.getDefault());
+		if (Build.VERSION.SDK_INT < 21) {
+			game_icon = mContext.getResources().getDrawable(
+					game.isDirectory() ? R.drawable.open_folder : nameLower
+							.endsWith(".gdi") ? R.drawable.gdi : nameLower
+							.endsWith(".cdi") ? R.drawable.cdi : nameLower
+							.endsWith(".chd") ? R.drawable.chd
+							: R.drawable.disk_unknown);
+		}
 	}
 
 	public boolean isNetworkAvailable() {
