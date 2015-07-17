@@ -16,6 +16,6 @@ void  cfgLoadStr(const wchar * lpSection, const wchar * lpKey, wchar * lpReturn,
 string  cfgLoadStr(const wchar * Section, const wchar * Key, const wchar* Default);
 void  cfgSaveStr(const wchar * lpSection, const wchar * lpKey, const wchar * lpString);
 s32  cfgExists(const wchar * Section, const wchar * Key);
-void cfgSetVitual(const wchar * lpSection, const wchar * lpKey, const wchar * lpString);
+void cfgSetVirtual(const wchar * lpSection, const wchar * lpKey, const wchar * lpString);
 
 bool ParseCommandLine(int argc,wchar* argv[]);
