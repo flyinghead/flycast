@@ -408,7 +408,7 @@ public class FileBrowser extends Fragment {
 							builder.setCancelable(true);
 							builder.setTitle(getString(R.string.game_details,
 									xmlParser.getGameTitle()));
-							builder.setMessage(xmlParser.game_details.get(index));
+							builder.setMessage(xmlParser.getGameDetails());
 							builder.setIcon(xmlParser.getGameIcon());
 							builder.setPositiveButton("Close",
 									new DialogInterface.OnClickListener() {

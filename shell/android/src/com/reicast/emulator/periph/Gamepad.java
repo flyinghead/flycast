@@ -4,9 +4,11 @@ import java.util.HashMap;
 
 import tv.ouya.console.api.OuyaController;
 import tv.ouya.console.api.OuyaFacade;
+import android.app.UiModeManager;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.os.Build;
 import android.util.SparseArray;
 import android.view.KeyEvent;
@@ -180,6 +182,13 @@ public class Gamepad {
 	}
 
 	public boolean IsOuyaOrTV(Context context) {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
+			UiModeManager uiModeManager = (UiModeManager) 
+					context.getSystemService(Context.UI_MODE_SERVICE);
+			if (uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION) {
+				return true;
+			}
+		}
 		PackageManager pMan = context.getPackageManager();
 		if (pMan.hasSystemFeature(PackageManager.FEATURE_TELEVISION)) {
 			return true;

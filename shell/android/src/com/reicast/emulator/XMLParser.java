@@ -56,8 +56,8 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 	private Drawable game_icon;
 
 	private static final String game_index = "http://thegamesdb.net/api/GetGame.php?platform=sega+dreamcast&name=";
-	public SparseArray<String> game_details = new SparseArray<String>();
-	public SparseArray<Bitmap> game_preview = new SparseArray<Bitmap>();
+	private SparseArray<String> game_details = new SparseArray<String>();
+	private SparseArray<Bitmap> game_preview = new SparseArray<Bitmap>();
 
 	public XMLParser(File game, int index, SharedPreferences mPrefs) {
 		this.mPrefs = mPrefs;
@@ -216,6 +216,14 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 
 	public String getGameTitle() {
 		return game_name;
+	}
+	
+	public String getGameDetails() {
+		return game_details.get(index);
+	}
+	
+	public Bitmap getGamePreview() {
+		return game_preview.get(index);
 	}
 
 	public Document getDomElement(String xml) {
