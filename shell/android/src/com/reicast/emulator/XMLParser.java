@@ -155,17 +155,20 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 		if (gameData != null) {
 			try {
 				Document doc = getDomElement(gameData);
-				Element root = (Element) doc.getElementsByTagName("Game").item(
-						0);
-				game_name = getValue(root, "GameTitle");
-				String details = getValue(root, "Overview");
-				game_details.put(index, details);
-				Element images = (Element) root.getElementsByTagName("Images").item(0);
-				Element boxart = (Element) images.getElementsByTagName("boxart").item(1);
-				String image = "http://thegamesdb.net/banners/" + getElementValue(boxart);
-				game_preview.put(index, decodeBitmapIcon(image));
-				game_icon = new BitmapDrawable(decodeBitmapIcon(image));
-			} catch (IOException e) {
+				if (doc.getElementsByTagName("Game") != null) {
+					Element root = (Element) doc.getElementsByTagName("Game").item(0);
+					game_name = getValue(root, "GameTitle");
+					String details = getValue(root, "Overview");
+					game_details.put(index, details);
+					Element images = (Element) root.getElementsByTagName("Images").item(0);
+					Element boxart = (Element) images.getElementsByTagName("boxart").item(1);
+					String image = "http://thegamesdb.net/banners/" + getElementValue(boxart);
+					game_preview.put(index, decodeBitmapIcon(image));
+					game_icon = new BitmapDrawable(decodeBitmapIcon(image));
+				} else {
+					initializeDefaults();
+				}
+			} catch (Exception e) {
 				initializeDefaults();
 			}
 		} else {
