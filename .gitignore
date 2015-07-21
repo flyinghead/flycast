@@ -49,3 +49,7 @@ Workdir/lib*ant.properties
 shell/lin86/.map
 shell/lin86/nosym-reicast.elf
 shell/lin86/reicast.elf
+
+shell/lin64/.map
+shell/lin64/nosym-reicast.elf
+shell/lin64/reicast.elf
