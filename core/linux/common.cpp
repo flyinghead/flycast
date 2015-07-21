@@ -91,7 +91,7 @@ void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 	#endif
 	else
 	{
-		printf("SIGSEGV @ %08X (fault_handler+0x%08X) ... %08X -> was not in vram\n", ctx.pc, ctx.pc - (unat)fault_handler, si->si_addr);
+		printf("SIGSEGV @ %p (fault_handler+0x%p) ... %p -> was not in vram\n", ctx.pc, ctx.pc - (unat)fault_handler, si->si_addr);
 		die("segfault");
 		signal(SIGSEGV, SIG_DFL);
 	}
