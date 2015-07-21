@@ -410,7 +410,7 @@ public class FileBrowser extends Fragment {
 									xmlParser.getGameTitle()));
 							builder.setMessage(xmlParser.getGameDetails());
 							builder.setIcon(xmlParser.getGameIcon());
-							builder.setPositiveButton("Close",
+							builder.setNegativeButton("Close",
 									new DialogInterface.OnClickListener() {
 										public void onClick(DialogInterface dialog, int which) {
 											dialog.dismiss();
