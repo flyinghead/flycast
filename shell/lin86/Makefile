@@ -45,10 +45,6 @@ CFLAGS += -ffast-math -ftree-vectorize
 CXXFLAGS += $(CFLAGS) $(MFLAGS) -fno-exceptions -fno-rtti -fpermissive
 CXXFLAGS += -D SUPPORT_X11 
 
-# use this to do GLES on x11 (also, update the libs)
-# CXXFLAGS += -DGLES
-
-
 ifdef PGO_MAKE
 	CFLAGS += -fprofile-generate -pg
 	LDFLAGS	+= -fprofile-generate
@@ -66,15 +62,12 @@ ifdef LTO_TEST
 	LDFLAGS +=-flto -fwhole-program 
 endif
 
-INCS	:= -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps -I$(RZDCY_SRC_DIR)/khronos -I../linux-deps/include
+INCS	:= -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps -I$(RZDCY_SRC_DIR)/khronos
 
-LIBS    := -L../linux-deps/lib/x86 -L./enta_viv 
-#LIBS	+= -lglapi
+LIBS    := # use system libs
 LIBS    += -lm -lrt -ldl
-LIBS	+= -ldl -lGL #for desktop gl
-#use this for GLES 
-#LIBS	+= -lEGL -lGLESv2 #-lglslcompiler -lIMGegl -lpvr2d -lsrv_um
 LIBS    += -lpthread -lX11
+
 
 ifdef USE_ALSA
 	CXXFLAGS += -D USE_ALSA
@@ -89,6 +82,16 @@ ifdef USE_PULSEAUDIO
 	CXXFLAGS += -D USE_PULSEAUDIO
 	LIBS += -lpulse-simple
 endif
+
+
+# GLES on x11?
+ifdef USE_GLES
+	CXXFLAGS += -DGLES
+	LIBS	+= -lEGL -lGLESv2
+else
+	LIBS	+= -ldl -lGL
+endif
+
 
 
 OBJECTS=$(RZDCY_FILES:.cpp=.build_obj)
