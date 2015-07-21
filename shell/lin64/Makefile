@@ -33,17 +33,13 @@ CFLAGS :=  -g -O3  -D RELEASE -c -D TARGET_LINUX_x64 -D USES_HOMEDIR -D HOST_NO_
 CFLAGS += -D SUPPORT_X11
 CFLAGS += -frename-registers -fno-strict-aliasing -fsingle-precision-constant 
 CFLAGS += -ffast-math -ftree-vectorize 
-CFLAGS += -fno-operator-names
 
 
 #-fprefetch-loop-arrays 
 #-std=c++0x
 CXXFLAGS += $(CFLAGS) $(MFLAGS) -fexceptions -fno-rtti -fpermissive
 CXXFLAGS += -D SUPPORT_X11 
-
-# use this to do GLES on x11 (also, update the libs)
-# CXXFLAGS += -DGLES
-
+CXXFLAGS += -fno-operator-names
 
 ifdef PGO_MAKE
 	CFLAGS += -fprofile-generate -pg
@@ -62,14 +58,10 @@ ifdef LTO_TEST
 	LDFLAGS +=-flto -fwhole-program 
 endif
 
-INCS	:= -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps -I$(RZDCY_SRC_DIR)/khronos -I../linux-deps/include
+INCS	:= -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps -I$(RZDCY_SRC_DIR)/khronos
 
-LIBS    := -L../linux-deps/lib/x86 -L./enta_viv 
-#LIBS	+= -lglapi
+LIBS    := # use system libs
 LIBS    += -lm -lrt -ldl
-LIBS	+= -ldl -lGL #for desktop gl
-#use this for GLES 
-#LIBS	+= -lEGL -lGLESv2 #-lglslcompiler -lIMGegl -lpvr2d -lsrv_um
 LIBS    += -lpthread -lX11
 
 ifdef USE_ALSA
@@ -84,6 +76,13 @@ endif
 ifdef USE_PULSEAUDIO
 	CXXFLAGS += -D USE_PULSEAUDIO
 	LIBS += -lpulse-simple
+endif
+
+ifdef USE_GLES
+	CXXFLAGS += -DGLES
+	LIBS	+= -lEGL -lGLESv2
+else
+	LIBS	+= -ldl -lGL #for desktop gl
 endif
 
 
