@@ -146,11 +146,7 @@ INLINE Trv DYNACALL _vmem_readt(u32 addr)
 	u32   page=addr>>24;	//1 op, shift/extract
 	unat  iirf=(unat)_vmem_MemInfo_ptr[page]; //2 ops, insert + read [vmem table will be on reg ]
 	void* ptr=(void*)(iirf&~HANDLER_MAX);     //2 ops, and // 1 op insert
-	//u32   mask=(u32)0xFFFFFFFF>>iirf;       //2 ops, load -1 and shift
-	//1 op for the mask
-	//1 op for the add
-	//1 op for ret
-	//1 op for ram read (dslot)
+
 	if (likely(ptr!=0))
 	{
 		addr<<=iirf;
@@ -195,12 +191,7 @@ INLINE void DYNACALL _vmem_writet(u32 addr,T data)
 	u32 page=addr>>24;
 	unat  iirf=(unat)_vmem_MemInfo_ptr[page];
 	void* ptr=(void*)(iirf&~HANDLER_MAX);
-	//u32   mask=(u32)0xFFFFFFFF>>iirf;
 
-	if (sz==8 && ((u32)data==0x80000001 || (data>>32)==0x80000001) && addr != 0x0c1a5e18 )
-	{
-		//printf("WUT WUT %08X\n",iirf);
-	}
 	if (likely(ptr!=0))
 	{
 		addr<<=iirf;
