@@ -249,23 +249,28 @@ DynarecCodeEntryPtr DYNACALL rdv_FailedToFindBlock(u32 pc)
 
 extern u32 rebuild_counter;
 
-void bm_Rebuild();
-u32 DYNACALL rdv_DoInterrupts(void* block_cpde)
-{
-	RuntimeBlockInfo* rbi=bm_GetBlock(block_cpde);
-	next_pc=rbi->addr;
+
+u32 DYNACALL rdv_DoInterrupts_pc(u32 pc) {
+	next_pc = pc;
 	UpdateINTC();
 
 	//We can only safely relocate/etc stuff here, as in other generic update cases
 	//There's a RET, meaning the code can't move around
 	//Interrupts happen at least 50 times/second, so its not a problem ..
-	if (rebuild_counter==0)
+	if (rebuild_counter == 0)
 	{
 		// TODO: Why is this commented, etc.
 		//bm_Rebuild();
 	}
 
 	return next_pc;
+}
+
+void bm_Rebuild();
+u32 DYNACALL rdv_DoInterrupts(void* block_cpde)
+{
+	RuntimeBlockInfo* rbi = bm_GetBlock(block_cpde);
+	return rdv_DoInterrupts_pc(rbi->addr);
 }
 
 DynarecCodeEntryPtr DYNACALL rdv_BlockCheckFail(u32 pc)
@@ -398,11 +403,16 @@ void recSh4_Init()
 	bm_Init();
 	bm_Reset();
 
-	verify(rcb_noffs(p_sh4rcb->fpcb)==-33816576);
-	verify(rcb_noffs(p_sh4rcb->sq_buffer)==-512);
+#if HOST_CPU == CPU_X64
+	verify(rcb_noffs(p_sh4rcb->fpcb) == -67371008);
+#else
+	verify(rcb_noffs(p_sh4rcb->fpcb) == -33816576);
+#endif
 
-	verify(rcb_noffs(&p_sh4rcb->cntx.sh4_sched_next)==-152);
-	verify(rcb_noffs(&p_sh4rcb->cntx.interrupt_pend)==-148);
+	verify(rcb_noffs(p_sh4rcb->sq_buffer) == -512);
+
+	verify(rcb_noffs(&p_sh4rcb->cntx.sh4_sched_next) == -152);
+	verify(rcb_noffs(&p_sh4rcb->cntx.interrupt_pend) == -148);
 	
 
 	verify(mem_b.data==((u8*)p_sh4rcb->sq_buffer+512+0x0C000000));

@@ -408,8 +408,11 @@
     <ClCompile Include="..\core\rec-x86\rec_x86_il.cpp">
       <Filter>rec-x86</Filter>
     </ClCompile>
-    <ClCompile Include="..\core\rec-x86\rec_x86_ngen.cpp">
+    <ClCompile Include="..\core\rec-x86\rec_x86_asm.cpp">
       <Filter>rec-x86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\rec-x64\rec_x64.cpp">
+      <Filter>rec-x64</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -535,6 +538,9 @@
     </Filter>
     <Filter Include="windows">
       <UniqueIdentifier>{5a7b63eb-8c03-46ac-b6e0-dfd3ade02f11}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="rec-x64">
+      <UniqueIdentifier>{f73263e9-dbe8-4a6f-8b73-335af8307551}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

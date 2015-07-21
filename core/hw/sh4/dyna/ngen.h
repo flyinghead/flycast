@@ -78,6 +78,7 @@ DynarecCodeEntryPtr rdv_FindOrCompile();
 void* DYNACALL rdv_LinkBlock(u8* code,u32 dpc);
 
 u32 DYNACALL rdv_DoInterrupts(void* block_cpde);
+u32 DYNACALL rdv_DoInterrupts_pc(u32 pc);
 
 //Stuff to be implemented per dynarec core
 

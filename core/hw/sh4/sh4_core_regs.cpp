@@ -6,6 +6,7 @@
 #include "sh4_core.h"
 #include "sh4_interrupts.h"
 
+
 Sh4RCB* p_sh4rcb;
 sh4_if  sh4_cpu;
 u8* sh4_dyna_rcb;
@@ -76,18 +77,24 @@ void SetFloatStatusReg()
 
 		//TODO: Implement this (needed for SOTB)
 #if HOST_CPU==CPU_X86
-		if (fpscr.RM==1)  //if round to 0 , set the flag
-			temp|=(3<<13);
-
-		if (fpscr.DN)     //denormals are considered 0
-			temp|=(1<<15);
 
 		#if BUILD_COMPILER == COMPILER_VC
-				_asm
-				{
-					ldmxcsr temp; //load the float status :)
-				}
+				if (fpscr.RM == 1)  //if round to 0 , set the flag
+					_controlfp(_RC_CHOP, _MCW_RC);
+				else
+					_controlfp(_RC_NEAR, _MCW_RC);
+
+				if (fpscr.DN)     //denormals are considered 0
+					_controlfp(_DN_FLUSH, _MCW_DN);
+				else
+					_controlfp(_DN_SAVE, _MCW_DN);
 		#else
+			if (fpscr.RM==1)  //if round to 0 , set the flag
+				temp|=(3<<13);
+
+			if (fpscr.DN)     //denormals are considered 0
+				temp|=(1<<15);
+
 			asm("ldmxcsr %0" : : "m"(temp));
 		#endif
 #elif HOST_CPU==CPU_ARM

@@ -125,15 +125,15 @@ int ExeptionHandler(u32 dwCode, void* pExceptionPointers)
 	{
 		return EXCEPTION_CONTINUE_EXECUTION;
 	}
-#ifndef HOST_NO_REC
-	else if ( ngen_Rewrite((unat&)ep->ContextRecord->Eip,*(unat*)ep->ContextRecord->Esp,ep->ContextRecord->Eax) )
-	{
-		//remove the call from call stack
-		ep->ContextRecord->Esp+=4;
-		//restore the addr from eax to ecx so its valid again
-		ep->ContextRecord->Ecx=ep->ContextRecord->Eax;
-		return EXCEPTION_CONTINUE_EXECUTION;
-	}
+#if !defined(HOST_NO_REC) && HOST_CPU != CPU_X64
+		else if ( ngen_Rewrite((unat&)ep->ContextRecord->Eip,*(unat*)ep->ContextRecord->Esp,ep->ContextRecord->Eax) )
+		{
+			//remove the call from call stack
+			ep->ContextRecord->Esp+=4;
+			//restore the addr from eax to ecx so its valid again
+			ep->ContextRecord->Ecx=ep->ContextRecord->Eax;
+			return EXCEPTION_CONTINUE_EXECUTION;
+		}
 #endif
 	else
 	{

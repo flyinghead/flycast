@@ -71,7 +71,7 @@ void print_blocks();
 //called every emulated second
 void prof_periodical()
 {
-
+#if defined(HAS_PROFILE)
 #if 0
 	printf("SQW %d,DMAW %d\n",SQW,DMAW);
 	DMAW=SQW=0;
@@ -197,6 +197,7 @@ void prof_periodical()
 
 	printf("********************\n");
 	memset(&prof.counters,0,sizeof(prof.counters));
+#endif
 }
 #else
 void prof_periodical() { }
