@@ -269,7 +269,7 @@ public:
 				else if (size == 4)
 					call(WriteMem32);
 				else if (size == 8)
-					call(WriteMem32);
+					call(WriteMem64);
 				else {
 					die("1..8 bytes");
 				}
