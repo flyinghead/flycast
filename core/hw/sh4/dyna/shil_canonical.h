@@ -61,7 +61,7 @@ extern "C" f32 fipr_asm(float* fn, float* fm);
 	#define shil_opc(name) struct shil_opcl_##name { 
 	#define shil_opc_end() };
 
-	#define shil_canonical(rv,name,args,code) static rv cimpl_##name args;
+	#define shil_canonical(rv,name,args,code) static rv name args;
 	#define shil_compile(code) static void compile(shil_opcode* op);
 #elif  SHIL_MODE==3
 	//generate struct list ...
@@ -93,7 +93,7 @@ extern "C" f32 fipr_asm(float* fn, float* fm);
 
 
 
-#if SHIL_MODE==1
+#if SHIL_MODE==1 || SHIL_MODE==2
 //only in structs we use the code :)
 #include <math.h>
 #include "types.h"
@@ -981,7 +981,7 @@ shil_opc_end()
 
 
 
-//shop_ftrv
+//shop_frswap
 shil_opc(frswap)
 shil_canonical
 (
