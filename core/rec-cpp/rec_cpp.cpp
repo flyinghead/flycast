@@ -98,291 +98,337 @@ struct CC_PS
 
 typedef vector<CC_PS> CC_pars_t;
 
-struct opcode_cc_aBaCbC : public opcodeExec {
-	void* fn;
-	u32* rs1;
-	u32 rs2;
-	u32* rd;
-	void execute()  {
-		*rd = ((u32(*)(u32, u32))fn)(*rs1, rs2);
-	}
 
-	void setup(const CC_pars_t& prms, void* fun) {
-		fn = fun;
-		rs2 = prms[0].prm->imm_value();
-		rs1 = prms[1].prm->reg_ptr();
-		rd = prms[2].prm->reg_ptr();
-		verify(prms.size() == 3);
-	}
+struct opcode_cc_aBaCbC {
+	template <int id>
+	struct opex : public opcodeExec {
+		void* fn;
+		u32* rs1;
+		u32 rs2;
+		u32* rd;
+		void execute()  {
+			*rd = ((u32(*)(u32, u32))fn)(*rs1, rs2);
+		}
+
+		void setup(const CC_pars_t& prms, void* fun) {
+			fn = fun;
+			rs2 = prms[0].prm->imm_value();
+			rs1 = prms[1].prm->reg_ptr();
+			rd = prms[2].prm->reg_ptr();
+			verify(prms.size() == 3);
+		}
+	};
 };
 
-struct opcode_cc_aCaCbC : public opcodeExec {
-	void* fn;
-	u32* rs1;
-	u32* rs2;
-	u32* rd;
-	void execute()  {
-		*rd = ((u32(*)(u32, u32))fn)(*rs1, *rs2);
-	}
+struct opcode_cc_aCaCbC {
+	template <int id>
+	struct opex : public opcodeExec {
+		void* fn;
+		u32* rs1;
+		u32* rs2;
+		u32* rd;
+		void execute()  {
+			*rd = ((u32(*)(u32, u32))fn)(*rs1, *rs2);
+		}
 
-	void setup(const CC_pars_t& prms, void* fun) {
-		fn = fun;
-		rs2 = prms[0].prm->reg_ptr();
-		rs1 = prms[1].prm->reg_ptr();
-		rd = prms[2].prm->reg_ptr();
-		verify(prms.size() == 3);
-	}
+		void setup(const CC_pars_t& prms, void* fun) {
+			fn = fun;
+			rs2 = prms[0].prm->reg_ptr();
+			rs1 = prms[1].prm->reg_ptr();
+			rd = prms[2].prm->reg_ptr();
+			verify(prms.size() == 3);
+		}
+	};
 };
 
-struct opcode_cc_aCbC : public opcodeExec {
-	void* fn;
-	u32* rs1;
-	u32* rd;
-	void execute()  {
-		*rd = ((u32(*)(u32))fn)(*rs1);
-	}
+struct opcode_cc_aCbC {
+	template <int id>
+	struct opex : public opcodeExec {
+		void* fn;
+		u32* rs1;
+		u32* rd;
+		void execute()  {
+			*rd = ((u32(*)(u32))fn)(*rs1);
+		}
 
-	void setup(const CC_pars_t& prms, void* fun) {
-		fn = fun;
-		rs1 = prms[0].prm->reg_ptr();
-		rd = prms[1].prm->reg_ptr();
-		verify(prms.size() == 2);
-	}
+		void setup(const CC_pars_t& prms, void* fun) {
+			fn = fun;
+			rs1 = prms[0].prm->reg_ptr();
+			rd = prms[1].prm->reg_ptr();
+			verify(prms.size() == 2);
+		}
+	};
 };
 
-struct opcode_cc_aC : public opcodeExec {
-	void* fn;
-	u32* rs1;
-	void execute()  {
-		((void(*)(u32))fn)(*rs1);
-	}
+struct opcode_cc_aC {
+	template <int id>
+	struct opex : public opcodeExec {
+		void* fn;
+		u32* rs1;
+		void execute()  {
+			((void(*)(u32))fn)(*rs1);
+		}
 
-	void setup(const CC_pars_t& prms, void* fun) {
-		fn = fun;
-		rs1 = prms[0].prm->reg_ptr();
-		verify(prms.size() == 1);
-	}
+		void setup(const CC_pars_t& prms, void* fun) {
+			fn = fun;
+			rs1 = prms[0].prm->reg_ptr();
+			verify(prms.size() == 1);
+		}
+	};
 };
 
-struct opcode_cc_aCaCaCbC : public opcodeExec {
-	void* fn;
-	u32* rs1;
-	u32* rs2;
-	u32* rs3;
-	u32* rd;
-	void execute()  {
-		*rd = ((u32(*)(u32, u32, u32))fn)(*rs1, *rs2, *rs3);
-	}
+struct opcode_cc_aCaCaCbC {
+	template <int id>
+	struct opex : public opcodeExec {
+		void* fn;
+		u32* rs1;
+		u32* rs2;
+		u32* rs3;
+		u32* rd;
+		void execute()  {
+			*rd = ((u32(*)(u32, u32, u32))fn)(*rs1, *rs2, *rs3);
+		}
 
-	void setup(const CC_pars_t& prms, void* fun) {
-		fn = fun;
-		rs3 = prms[0].prm->reg_ptr();
-		rs2 = prms[1].prm->reg_ptr();
-		rs1 = prms[2].prm->reg_ptr();
-		rd = prms[3].prm->reg_ptr();
-		verify(prms.size() == 4);
-	}
+		void setup(const CC_pars_t& prms, void* fun) {
+			fn = fun;
+			rs3 = prms[0].prm->reg_ptr();
+			rs2 = prms[1].prm->reg_ptr();
+			rs1 = prms[2].prm->reg_ptr();
+			rd = prms[3].prm->reg_ptr();
+			verify(prms.size() == 4);
+		}
+	};
 };
 
-//split this to two cases, u64 and u64L/u32H
-struct opcode_cc_aCaCaCcCdC : public opcodeExec {
-	void* fn;
-	u32* rs1;
-	u32* rs2;
-	u32* rs3;
-	u32* rd;
-	u32* rd2;
-	void execute()  {
-		auto rv = ((u64(*)(u32, u32, u32))fn)(*rs1, *rs2, *rs3);
+struct opcode_cc_aCaCaCcCdC {
+	//split this to two cases, u64 and u64L/u32H
+	template <int id>
+	struct opex : public opcodeExec {
+		void* fn;
+		u32* rs1;
+		u32* rs2;
+		u32* rs3;
+		u32* rd;
+		u32* rd2;
+		void execute()  {
+			auto rv = ((u64(*)(u32, u32, u32))fn)(*rs1, *rs2, *rs3);
 
-		*rd = rv;
-		*rd2 = rv >> 32;
-	}
+			*rd = (u32)rv;
+			*rd2 = rv >> 32;
+		}
 
-	void setup(const CC_pars_t& prms, void* fun) {
-		fn = fun;
-		rs3 = prms[0].prm->reg_ptr();
-		rs2 = prms[1].prm->reg_ptr();
-		rs1 = prms[2].prm->reg_ptr();
-		rd = prms[3].prm->reg_ptr();
-		rd2 = prms[4].prm->reg_ptr();
+		void setup(const CC_pars_t& prms, void* fun) {
+			fn = fun;
+			rs3 = prms[0].prm->reg_ptr();
+			rs2 = prms[1].prm->reg_ptr();
+			rs1 = prms[2].prm->reg_ptr();
+			rd = prms[3].prm->reg_ptr();
+			rd2 = prms[4].prm->reg_ptr();
 
-		//verify((u64*)(rd2 - 1) == rd);
-		verify(prms.size() == 5);
-	}
+			//verify((u64*)(rd2 - 1) == rd);
+			verify(prms.size() == 5);
+		}
+	};
 };
 
+struct opcode_cc_aCaCcCdC {
+	template <int id>
+	struct opex : public opcodeExec {
+		void* fn;
+		u32* rs1;
+		u32* rs2;
+		u32* rd;
+		u32* rd2;
+		void execute()  {
+			auto rv = ((u64(*)(u32, u32))fn)(*rs1, *rs2);
+			*rd = (u32)rv;
+			*rd2 = rv >> 32;
+		}
 
-struct opcode_cc_aCaCcCdC : public opcodeExec {
-	void* fn;
-	u32* rs1;
-	u32* rs2;
-	u32* rd;
-	u32* rd2;
-	void execute()  {
-		auto rv = ((u64(*)(u32, u32))fn)(*rs1, *rs2);
-		*rd = rv;
-		*rd2 = rv >> 32;
-	}
+		void setup(const CC_pars_t& prms, void* fun) {
+			fn = fun;
+			rs2 = prms[0].prm->reg_ptr();
+			rs1 = prms[1].prm->reg_ptr();
+			rd = prms[2].prm->reg_ptr();
+			rd2 = prms[3].prm->reg_ptr();
 
-	void setup(const CC_pars_t& prms, void* fun) {
-		fn = fun;
-		rs2 = prms[0].prm->reg_ptr();
-		rs1 = prms[1].prm->reg_ptr();
-		rd = prms[2].prm->reg_ptr();
-		rd2 = prms[3].prm->reg_ptr();
-
-		verify(prms.size() == 4);
-	}
+			verify(prms.size() == 4);
+		}
+	};
 };
 
+struct opcode_cc_eDeDeDfD {
+	template <int id>
+	struct opex : public opcodeExec {
+		void* fn;
+		f32* rs1;
+		f32* rs2;
+		f32* rs3;
+		f32* rd;
+		void execute()  {
+			*rd = ((f32(*)(f32, f32, f32))fn)(*rs1, *rs2, *rs3);
+		}
 
-struct opcode_cc_eDeDeDfD : public opcodeExec {
-	void* fn;
-	f32* rs1;
-	f32* rs2;
-	f32* rs3;
-	f32* rd;
-	void execute()  {
-		*rd = ((f32(*)(f32, f32, f32))fn)(*rs1, *rs2, *rs3);
-	}
-
-	void setup(const CC_pars_t& prms, void* fun) {
-		fn = fun;
-		rs3 = (f32*)prms[0].prm->reg_ptr();
-		rs2 = (f32*)prms[1].prm->reg_ptr();
-		rs1 = (f32*)prms[2].prm->reg_ptr();
-		rd = (f32*)prms[3].prm->reg_ptr();
-	}
+		void setup(const CC_pars_t& prms, void* fun) {
+			fn = fun;
+			rs3 = (f32*)prms[0].prm->reg_ptr();
+			rs2 = (f32*)prms[1].prm->reg_ptr();
+			rs1 = (f32*)prms[2].prm->reg_ptr();
+			rd = (f32*)prms[3].prm->reg_ptr();
+		}
+	};
 };
 
+struct opcode_cc_eDeDfD {
+	template <int id>
+	struct opex : public opcodeExec {
+		void* fn;
+		f32* rs1;
+		f32* rs2;
+		f32* rd;
+		void execute()  {
+			*rd = ((f32(*)(f32, f32))fn)(*rs1, *rs2);
+		}
 
-struct opcode_cc_eDeDfD : public opcodeExec {
-	void* fn;
-	f32* rs1;
-	f32* rs2;
-	f32* rd;
-	void execute()  {
-		*rd = ((f32(*)(f32, f32))fn)(*rs1, *rs2);
-	}
-
-	void setup(const CC_pars_t& prms, void* fun) {
-		fn = fun;
-		rs2 = (f32*)prms[0].prm->reg_ptr();
-		rs1 = (f32*)prms[1].prm->reg_ptr();
-		rd = (f32*)prms[2].prm->reg_ptr();
-	}
+		void setup(const CC_pars_t& prms, void* fun) {
+			fn = fun;
+			rs2 = (f32*)prms[0].prm->reg_ptr();
+			rs1 = (f32*)prms[1].prm->reg_ptr();
+			rd = (f32*)prms[2].prm->reg_ptr();
+		}
+	};
 };
 
-struct opcode_cc_eDeDbC : public opcodeExec {
-	void* fn;
-	f32* rs1;
-	f32* rs2;
-	u32* rd;
-	void execute()  {
-		*rd = ((u32(*)(f32, f32))fn)(*rs1, *rs2);
-	}
+struct opcode_cc_eDeDbC {
+	template <int id>
+	struct opex : public opcodeExec {
+		void* fn;
+		f32* rs1;
+		f32* rs2;
+		u32* rd;
+		void execute()  {
+			*rd = ((u32(*)(f32, f32))fn)(*rs1, *rs2);
+		}
 
-	void setup(const CC_pars_t& prms, void* fun) {
-		fn = fun;
-		rs2 = (f32*)prms[0].prm->reg_ptr();
-		rs1 = (f32*)prms[1].prm->reg_ptr();
-		rd = (u32*)prms[2].prm->reg_ptr();
-	}
+		void setup(const CC_pars_t& prms, void* fun) {
+			fn = fun;
+			rs2 = (f32*)prms[0].prm->reg_ptr();
+			rs1 = (f32*)prms[1].prm->reg_ptr();
+			rd = (u32*)prms[2].prm->reg_ptr();
+		}
+	};
 };
 
-struct opcode_cc_eDbC : public opcodeExec {
-	void* fn;
-	f32* rs1;
-	u32* rd;
-	void execute()  {
-		*rd = ((u32(*)(f32))fn)(*rs1);
-	}
+struct opcode_cc_eDbC {
+	template <int id>
+	struct opex : public opcodeExec {
+		void* fn;
+		f32* rs1;
+		u32* rd;
+		void execute()  {
+			*rd = ((u32(*)(f32))fn)(*rs1);
+		}
 
-	void setup(const CC_pars_t& prms, void* fun) {
-		fn = fun;
-		rs1 = (f32*)prms[0].prm->reg_ptr();
-		rd = (u32*)prms[1].prm->reg_ptr();
-	}
+		void setup(const CC_pars_t& prms, void* fun) {
+			fn = fun;
+			rs1 = (f32*)prms[0].prm->reg_ptr();
+			rd = (u32*)prms[1].prm->reg_ptr();
+		}
+	};
 };
 
-struct opcode_cc_aCfD : public opcodeExec {
-	void* fn;
-	u32* rs1;
-	f32* rd;
-	void execute()  {
-		*rd = ((f32(*)(u32))fn)(*rs1);
-	}
+struct opcode_cc_aCfD {
+	template <int id>
+	struct opex : public opcodeExec {
+		void* fn;
+		u32* rs1;
+		f32* rd;
+		void execute()  {
+			*rd = ((f32(*)(u32))fn)(*rs1);
+		}
 
-	void setup(const CC_pars_t& prms, void* fun) {
-		fn = fun;
-		rs1 = (u32*)prms[0].prm->reg_ptr();
-		rd = (f32*)prms[1].prm->reg_ptr();
-	}
+		void setup(const CC_pars_t& prms, void* fun) {
+			fn = fun;
+			rs1 = (u32*)prms[0].prm->reg_ptr();
+			rd = (f32*)prms[1].prm->reg_ptr();
+		}
+	};
 };
 
-struct opcode_cc_eDfD : public opcodeExec {
-	void* fn;
-	f32* rs1;
-	f32* rd;
-	void execute()  {
-		*rd = ((f32(*)(f32))fn)(*rs1);
-	}
+struct opcode_cc_eDfD {
+	template <int id>
+	struct opex : public opcodeExec {
+		void* fn;
+		f32* rs1;
+		f32* rd;
+		void execute()  {
+			*rd = ((f32(*)(f32))fn)(*rs1);
+		}
 
-	void setup(const CC_pars_t& prms, void* fun) {
-		fn = fun;
-		rs1 = (f32*)prms[0].prm->reg_ptr();
-		rd = (f32*)prms[1].prm->reg_ptr();
-	}
+		void setup(const CC_pars_t& prms, void* fun) {
+			fn = fun;
+			rs1 = (f32*)prms[0].prm->reg_ptr();
+			rd = (f32*)prms[1].prm->reg_ptr();
+		}
+	};
 };
 
-struct opcode_cc_aCgE : public opcodeExec {
-	void* fn;
-	u32* rs1;
-	f32* rd;
-	void execute()  {
-		((void(*)(f32*, u32))fn)(rd, *rs1);
-	}
+struct opcode_cc_aCgE {
+	template <int id>
+	struct opex : public opcodeExec {
+		void* fn;
+		u32* rs1;
+		f32* rd;
+		void execute()  {
+			((void(*)(f32*, u32))fn)(rd, *rs1);
+		}
 
-	void setup(const CC_pars_t& prms, void* fun) {
-		fn = fun;
-		rs1 = (u32*)prms[0].prm->reg_ptr();
-		rd = (f32*)prms[1].prm->reg_ptr();
-	}
+		void setup(const CC_pars_t& prms, void* fun) {
+			fn = fun;
+			rs1 = (u32*)prms[0].prm->reg_ptr();
+			rd = (f32*)prms[1].prm->reg_ptr();
+		}
+	};
 };
 
-struct opcode_cc_gJgHgH : public opcodeExec {
-	void* fn;
-	f32* rs2;
-	f32* rs1;
-	f32* rd;
-	void execute()  {
-		((void(*)(f32*, f32*, f32*))fn)(rd, rs1, rs2);
-	}
+struct opcode_cc_gJgHgH {
+	template <int id>
+	struct opex : public opcodeExec {
+		void* fn;
+		f32* rs2;
+		f32* rs1;
+		f32* rd;
+		void execute()  {
+			((void(*)(f32*, f32*, f32*))fn)(rd, rs1, rs2);
+		}
 
-	void setup(const CC_pars_t& prms, void* fun) {
-		fn = fun;
-		rs2 = (f32*)prms[0].prm->reg_ptr();
-		rs1 = (f32*)prms[1].prm->reg_ptr();
-		rd = (f32*)prms[2].prm->reg_ptr();
-	}
+		void setup(const CC_pars_t& prms, void* fun) {
+			fn = fun;
+			rs2 = (f32*)prms[0].prm->reg_ptr();
+			rs1 = (f32*)prms[1].prm->reg_ptr();
+			rd = (f32*)prms[2].prm->reg_ptr();
+		}
+	};
 };
 
-struct opcode_cc_gHgHfD : public opcodeExec {
-	void* fn;
-	f32* rs2;
-	f32* rs1;
-	f32* rd;
-	void execute()  {
-		*rd = ((f32(*)(f32*, f32*))fn)(rs1, rs2);
-	}
+struct opcode_cc_gHgHfD {
+	template <int id>
+	struct opex : public opcodeExec {
+		void* fn;
+		f32* rs2;
+		f32* rs1;
+		f32* rd;
+		void execute()  {
+			*rd = ((f32(*)(f32*, f32*))fn)(rs1, rs2);
+		}
 
-	void setup(const CC_pars_t& prms, void* fun) {
-		fn = fun;
-		rs2 = (f32*)prms[0].prm->reg_ptr();
-		rs1 = (f32*)prms[1].prm->reg_ptr();
-		rd = (f32*)prms[2].prm->reg_ptr();
-	}
+		void setup(const CC_pars_t& prms, void* fun) {
+			fn = fun;
+			rs2 = (f32*)prms[0].prm->reg_ptr();
+			rs1 = (f32*)prms[1].prm->reg_ptr();
+			rd = (f32*)prms[2].prm->reg_ptr();
+		}
+	};
 };
 
 struct opcode_ifb_pc : public opcodeExec {
@@ -589,12 +635,39 @@ fnrv fnnCtor<0>(int cycles) {
 	return rvb;
 }
 
-template <typename CTR>
+
+#define XREP_1(x, phrase) &createType<x, CTR>
+#define XREP_2(x, phrase) XREP_1(x, phrase), XREP_1(x+1, phrase)
+#define XREP_4(x, phrase) XREP_2(x, phrase), XREP_2(x+2, phrase)
+#define XREP_8(x, phrase) XREP_4(x, phrase), XREP_4(x+4, phrase)
+#define XREP_16(x, phrase) XREP_8(x, phrase), XREP_8(x+8, phrase)
+#define XREP_32(x, phrase) XREP_16(x, phrase), XREP_16(x+16, phrase)
+#define XREP_64(x, phrase) XREP_32(x, phrase), XREP_32(x+32, phrase)
+
+template <int id, typename CTR>
 opcodeExec* createType(const CC_pars_t& prms, void* fun) {
-	auto rv = new CTR();
+	auto rv = new CTR::opex<id>();
 
 	rv->setup(prms, fun);
 	return rv;
+}
+
+
+map<void*, int> funs;
+int funs_id_count;
+
+template <typename CTR>
+opcodeExec* createType(const CC_pars_t& prms, void* fun) {
+
+	if (!funs.count(fun)) {
+		funs[fun] = funs_id_count++;
+	}
+
+	static opcodeExec* (*ctors[])(const CC_pars_t& prms, void* fun) = { XREP_64(0, phrase) };
+
+	int id = funs[fun];
+
+	return ctors[id](prms, fun);
 }
 
 map< string, opcodeExec*(*)(const CC_pars_t& prms, void* fun)> unmap = {
