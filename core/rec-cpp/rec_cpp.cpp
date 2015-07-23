@@ -65,7 +65,7 @@ void ngen_init()
 
 void ngen_GetFeatures(ngen_features* dst)
 {
-	dst->InterpreterFallback = true;
+	dst->InterpreterFallback = false;
 	dst->OnlyDynamicEnds = true;
 }
 
@@ -87,6 +87,301 @@ class opcodeExec {
 class opcodeDie : public opcodeExec {
 	void execute()  {
 		die("death opcode");
+	}
+};
+
+struct CC_PS
+{
+	CanonicalParamType type;
+	shil_param* prm;
+};
+
+typedef vector<CC_PS> CC_pars_t;
+
+struct opcode_cc_aBaCbC : public opcodeExec {
+	void* fn;
+	u32* rs1;
+	u32 rs2;
+	u32* rd;
+	void execute()  {
+		*rd = ((u32(*)(u32, u32))fn)(*rs1, rs2);
+	}
+
+	void setup(const CC_pars_t& prms, void* fun) {
+		fn = fun;
+		rs2 = prms[0].prm->imm_value();
+		rs1 = prms[1].prm->reg_ptr();
+		rd = prms[2].prm->reg_ptr();
+		verify(prms.size() == 3);
+	}
+};
+
+struct opcode_cc_aCaCbC : public opcodeExec {
+	void* fn;
+	u32* rs1;
+	u32* rs2;
+	u32* rd;
+	void execute()  {
+		*rd = ((u32(*)(u32, u32))fn)(*rs1, *rs2);
+	}
+
+	void setup(const CC_pars_t& prms, void* fun) {
+		fn = fun;
+		rs2 = prms[0].prm->reg_ptr();
+		rs1 = prms[1].prm->reg_ptr();
+		rd = prms[2].prm->reg_ptr();
+		verify(prms.size() == 3);
+	}
+};
+
+struct opcode_cc_aCbC : public opcodeExec {
+	void* fn;
+	u32* rs1;
+	u32* rd;
+	void execute()  {
+		*rd = ((u32(*)(u32))fn)(*rs1);
+	}
+
+	void setup(const CC_pars_t& prms, void* fun) {
+		fn = fun;
+		rs1 = prms[0].prm->reg_ptr();
+		rd = prms[1].prm->reg_ptr();
+		verify(prms.size() == 2);
+	}
+};
+
+struct opcode_cc_aC : public opcodeExec {
+	void* fn;
+	u32* rs1;
+	void execute()  {
+		((void(*)(u32))fn)(*rs1);
+	}
+
+	void setup(const CC_pars_t& prms, void* fun) {
+		fn = fun;
+		rs1 = prms[0].prm->reg_ptr();
+		verify(prms.size() == 1);
+	}
+};
+
+struct opcode_cc_aCaCaCbC : public opcodeExec {
+	void* fn;
+	u32* rs1;
+	u32* rs2;
+	u32* rs3;
+	u32* rd;
+	void execute()  {
+		*rd = ((u32(*)(u32, u32, u32))fn)(*rs1, *rs2, *rs3);
+	}
+
+	void setup(const CC_pars_t& prms, void* fun) {
+		fn = fun;
+		rs3 = prms[0].prm->reg_ptr();
+		rs2 = prms[1].prm->reg_ptr();
+		rs1 = prms[2].prm->reg_ptr();
+		rd = prms[3].prm->reg_ptr();
+		verify(prms.size() == 4);
+	}
+};
+
+//split this to two cases, u64 and u64L/u32H
+struct opcode_cc_aCaCaCcCdC : public opcodeExec {
+	void* fn;
+	u32* rs1;
+	u32* rs2;
+	u32* rs3;
+	u32* rd;
+	u32* rd2;
+	void execute()  {
+		auto rv = ((u64(*)(u32, u32, u32))fn)(*rs1, *rs2, *rs3);
+
+		*rd = rv;
+		*rd2 = rv >> 32;
+	}
+
+	void setup(const CC_pars_t& prms, void* fun) {
+		fn = fun;
+		rs3 = prms[0].prm->reg_ptr();
+		rs2 = prms[1].prm->reg_ptr();
+		rs1 = prms[2].prm->reg_ptr();
+		rd = prms[3].prm->reg_ptr();
+		rd2 = prms[4].prm->reg_ptr();
+
+		//verify((u64*)(rd2 - 1) == rd);
+		verify(prms.size() == 5);
+	}
+};
+
+
+struct opcode_cc_aCaCcCdC : public opcodeExec {
+	void* fn;
+	u32* rs1;
+	u32* rs2;
+	u32* rd;
+	u32* rd2;
+	void execute()  {
+		auto rv = ((u64(*)(u32, u32))fn)(*rs1, *rs2);
+		*rd = rv;
+		*rd2 = rv >> 32;
+	}
+
+	void setup(const CC_pars_t& prms, void* fun) {
+		fn = fun;
+		rs2 = prms[0].prm->reg_ptr();
+		rs1 = prms[1].prm->reg_ptr();
+		rd = prms[2].prm->reg_ptr();
+		rd2 = prms[3].prm->reg_ptr();
+
+		verify(prms.size() == 4);
+	}
+};
+
+
+struct opcode_cc_eDeDeDfD : public opcodeExec {
+	void* fn;
+	f32* rs1;
+	f32* rs2;
+	f32* rs3;
+	f32* rd;
+	void execute()  {
+		*rd = ((f32(*)(f32, f32, f32))fn)(*rs1, *rs2, *rs3);
+	}
+
+	void setup(const CC_pars_t& prms, void* fun) {
+		fn = fun;
+		rs3 = (f32*)prms[0].prm->reg_ptr();
+		rs2 = (f32*)prms[1].prm->reg_ptr();
+		rs1 = (f32*)prms[2].prm->reg_ptr();
+		rd = (f32*)prms[3].prm->reg_ptr();
+	}
+};
+
+
+struct opcode_cc_eDeDfD : public opcodeExec {
+	void* fn;
+	f32* rs1;
+	f32* rs2;
+	f32* rd;
+	void execute()  {
+		*rd = ((f32(*)(f32, f32))fn)(*rs1, *rs2);
+	}
+
+	void setup(const CC_pars_t& prms, void* fun) {
+		fn = fun;
+		rs2 = (f32*)prms[0].prm->reg_ptr();
+		rs1 = (f32*)prms[1].prm->reg_ptr();
+		rd = (f32*)prms[2].prm->reg_ptr();
+	}
+};
+
+struct opcode_cc_eDeDbC : public opcodeExec {
+	void* fn;
+	f32* rs1;
+	f32* rs2;
+	u32* rd;
+	void execute()  {
+		*rd = ((u32(*)(f32, f32))fn)(*rs1, *rs2);
+	}
+
+	void setup(const CC_pars_t& prms, void* fun) {
+		fn = fun;
+		rs2 = (f32*)prms[0].prm->reg_ptr();
+		rs1 = (f32*)prms[1].prm->reg_ptr();
+		rd = (u32*)prms[2].prm->reg_ptr();
+	}
+};
+
+struct opcode_cc_eDbC : public opcodeExec {
+	void* fn;
+	f32* rs1;
+	u32* rd;
+	void execute()  {
+		*rd = ((u32(*)(f32))fn)(*rs1);
+	}
+
+	void setup(const CC_pars_t& prms, void* fun) {
+		fn = fun;
+		rs1 = (f32*)prms[0].prm->reg_ptr();
+		rd = (u32*)prms[1].prm->reg_ptr();
+	}
+};
+
+struct opcode_cc_aCfD : public opcodeExec {
+	void* fn;
+	u32* rs1;
+	f32* rd;
+	void execute()  {
+		*rd = ((f32(*)(u32))fn)(*rs1);
+	}
+
+	void setup(const CC_pars_t& prms, void* fun) {
+		fn = fun;
+		rs1 = (u32*)prms[0].prm->reg_ptr();
+		rd = (f32*)prms[1].prm->reg_ptr();
+	}
+};
+
+struct opcode_cc_eDfD : public opcodeExec {
+	void* fn;
+	f32* rs1;
+	f32* rd;
+	void execute()  {
+		*rd = ((f32(*)(f32))fn)(*rs1);
+	}
+
+	void setup(const CC_pars_t& prms, void* fun) {
+		fn = fun;
+		rs1 = (f32*)prms[0].prm->reg_ptr();
+		rd = (f32*)prms[1].prm->reg_ptr();
+	}
+};
+
+struct opcode_cc_aCgE : public opcodeExec {
+	void* fn;
+	u32* rs1;
+	f32* rd;
+	void execute()  {
+		((void(*)(f32*, u32))fn)(rd, *rs1);
+	}
+
+	void setup(const CC_pars_t& prms, void* fun) {
+		fn = fun;
+		rs1 = (u32*)prms[0].prm->reg_ptr();
+		rd = (f32*)prms[1].prm->reg_ptr();
+	}
+};
+
+struct opcode_cc_gJgHgH : public opcodeExec {
+	void* fn;
+	f32* rs2;
+	f32* rs1;
+	f32* rd;
+	void execute()  {
+		((void(*)(f32*, f32*, f32*))fn)(rd, rs1, rs2);
+	}
+
+	void setup(const CC_pars_t& prms, void* fun) {
+		fn = fun;
+		rs2 = (f32*)prms[0].prm->reg_ptr();
+		rs1 = (f32*)prms[1].prm->reg_ptr();
+		rd = (f32*)prms[2].prm->reg_ptr();
+	}
+};
+
+struct opcode_cc_gHgHfD : public opcodeExec {
+	void* fn;
+	f32* rs2;
+	f32* rs1;
+	f32* rd;
+	void execute()  {
+		*rd = ((f32(*)(f32*, f32*))fn)(rs1, rs2);
+	}
+
+	void setup(const CC_pars_t& prms, void* fun) {
+		fn = fun;
+		rs2 = (f32*)prms[0].prm->reg_ptr();
+		rs1 = (f32*)prms[1].prm->reg_ptr();
+		rd = (f32*)prms[2].prm->reg_ptr();
 	}
 };
 
@@ -143,6 +438,113 @@ struct opcode_mov32_imm : public opcodeExec {
 	}
 };
 
+struct opcode_mov64 : public opcodeExec {
+	u64* src;
+	u64* dst;
+
+	void execute()  {
+		*dst = *src;
+	}
+};
+
+#define do_readm(d, a, sz) do { if (sz == 1) { *d = (s32)(s8)ReadMem8(a); } else if (sz == 2) { *d = (s32)(s16)ReadMem16(a); } \
+								else if (sz == 4) { *d = ReadMem32(a);} else if (sz == 8) { *(u64*)d = ReadMem64(a); } \
+							  } while(0)
+template <int sz>
+struct opcode_readm : public opcodeExec {
+	u32* src;
+	u32* dst;
+
+	void execute()  {
+		auto a = *src;
+		do_readm(dst, a, sz);
+	}
+};
+
+template <int sz>
+struct opcode_readm_imm : public opcodeExec {
+	u32 src;
+	u32* dst;
+
+	void execute()  {
+		auto a = src;
+		do_readm(dst, a, sz);
+	}
+};
+
+template <int sz>
+struct opcode_readm_offs : public opcodeExec {
+	u32* src;
+	u32* dst;
+	u32* offs;
+
+	void execute()  {
+		auto a = *src + *offs;
+		do_readm(dst, a, sz);
+	}
+};
+
+template <int sz>
+struct opcode_readm_offs_imm : public opcodeExec {
+	u32* src;
+	u32* dst;
+	u32 offs;
+
+	void execute()  {
+		auto a = *src + offs;
+		do_readm(dst, a, sz);
+	}
+};
+
+#define do_writem(d, a, sz) do { if (sz == 1) { WriteMem8(a, *d);} else if (sz == 2) { WriteMem16(a, *d); } \
+										else if (sz == 4) { WriteMem32(a, *d);} else if (sz == 8) { WriteMem64(a, *(u64*)d); } \
+							  } while(0)
+template <int sz>
+struct opcode_writem : public opcodeExec {
+	u32* src;
+	u32* src2;
+
+	void execute()  {
+		auto a = *src;
+		do_writem(src2, a, sz);
+	}
+};
+
+template <int sz>
+struct opcode_writem_imm : public opcodeExec {
+	u32 src;
+	u32* src2;
+
+	void execute()  {
+		auto a = src;
+		do_writem(src2, a, sz);
+	}
+};
+
+template <int sz>
+struct opcode_writem_offs : public opcodeExec {
+	u32* src;
+	u32* src2;
+	u32* offs;
+
+	void execute()  {
+		auto a = *src + *offs;
+		do_writem(src2, a, sz);
+	}
+};
+
+template <int sz>
+struct opcode_writem_offs_imm : public opcodeExec {
+	u32* src;
+	u32* src2;
+	u32 offs;
+
+	void execute()  {
+		auto a = *src + offs;
+		do_writem(src2, a, sz);
+	}
+};
+
 template <int cnt>
 class fnblock {
 public:
@@ -188,12 +590,35 @@ fnrv fnnCtor<0>(int cycles) {
 }
 
 template <typename CTR>
-opcodeExec* createType() {
-	return new CTR();
+opcodeExec* createType(const CC_pars_t& prms, void* fun) {
+	auto rv = new CTR();
+
+	rv->setup(prms, fun);
+	return rv;
 }
 
-map< const char*, opcodeExec*(*)()> unmap = {
-	{ "uru", &createType<opcodeDie> },
+map< string, opcodeExec*(*)(const CC_pars_t& prms, void* fun)> unmap = {
+	{ "aBaCbC", &createType<opcode_cc_aBaCbC> },
+	{ "aCaCbC", &createType<opcode_cc_aCaCbC> },
+	{ "aCbC", &createType<opcode_cc_aCbC> },
+	{ "aC", &createType<opcode_cc_aC> },
+
+	{ "eDeDeDfD", &createType<opcode_cc_eDeDeDfD> },
+	{ "eDeDfD", &createType<opcode_cc_eDeDfD> },
+
+	{ "aCaCaCbC", &createType<opcode_cc_aCaCaCbC> },
+	{ "aCaCcCdC", &createType<opcode_cc_aCaCcCdC> },
+	{ "aCaCaCcCdC", &createType<opcode_cc_aCaCaCcCdC> },
+
+	{ "eDbC", &createType<opcode_cc_eDbC> },
+	{ "aCfD", &createType<opcode_cc_aCfD> },
+
+	{ "eDeDbC", &createType<opcode_cc_eDeDbC> },
+	{ "eDfD", &createType<opcode_cc_eDfD> },
+
+	{ "aCgE", &createType<opcode_cc_aCgE> },
+	{ "gJgHgH", &createType<opcode_cc_gJgHgH> },
+	{ "gHgHfD", &createType<opcode_cc_gHgHfD> },
 };
 
 struct {
@@ -237,7 +662,7 @@ DynarecCodeEntryPtr getndpn_forreal(int n) {
 		return FNS[n];
 }
 
-FNAFB fnnCtor_forreal(int n) {
+FNAFB fnnCtor_forreal(size_t n) {
 	if (n > 512)
 		return 0;
 	else
@@ -247,9 +672,13 @@ FNAFB fnnCtor_forreal(int n) {
 class BlockCompiler {
 public:
 
+	size_t opcode_index;
+	opcodeExec** ptrsg;
 	void compile(RuntimeBlockInfo* block, bool force_checks, bool reset, bool staging, bool optimise) {
 		
 		auto ptrs = fnnCtor_forreal(block->oplist.size())(block->guest_cycles);
+
+		ptrsg = ptrs.ptrs;
 
 		dispatchb[idxnxx].fnb = ptrs.fnb;
 		dispatchb[idxnxx].runner = ptrs.runner;
@@ -257,27 +686,28 @@ public:
 		block->code = getndpn_forreal(idxnxx++);
 
 		for (size_t i = 0; i < block->oplist.size(); i++) {
+			opcode_index = i;
 			shil_opcode& op = block->oplist[i];
 			switch (op.op) {
 
 			case shop_ifb:
 			{
-				if (op.rs1._imm) {
+				if (op.rs1.imm_value()) {
 					auto opc = new opcode_ifb_pc();
 					ptrs.ptrs[i] = opc;
 					
-					opc->pc = op.rs2._imm;
-					opc->opcode = op.rs3._imm;
+					opc->pc = op.rs2.imm_value();
+					opc->opcode = op.rs3.imm_value();
 
-					opc->oph = OpDesc[op.rs3._imm]->oph;
+					opc->oph = OpDesc[op.rs3.imm_value()]->oph;
 				}
 				else {
 					auto opc = new opcode_ifb();
 					ptrs.ptrs[i] = opc;
 
-					opc->opcode = op.rs3._imm;
+					opc->opcode = op.rs3.imm_value();
 
-					opc->oph = OpDesc[op.rs3._imm]->oph;
+					opc->oph = OpDesc[op.rs3.imm_value()]->oph;
 				}
 			}
 			break;
@@ -289,7 +719,7 @@ public:
 					ptrs.ptrs[i] = opc;
 
 					opc->src = op.rs1.reg_ptr();
-					opc->imm = op.rs2._imm;
+					opc->imm = op.rs2.imm_value();
 				}
 				else {
 					auto opc = new opcode_jdyn();
@@ -312,7 +742,7 @@ public:
 					auto opc = new opcode_mov32_imm();
 					ptrs.ptrs[i] = opc;
 
-					opc->src = op.rs1._imm;
+					opc->src = op.rs1.imm_value();
 					opc->dst = op.rd.reg_ptr();
 				}
 				else {
@@ -327,90 +757,184 @@ public:
 			}
 			break;
 
-			/*
-			case shop_mov32:
-			{
-				verify(op.rd.is_reg());
-
-				verify(op.rs1.is_reg() || op.rs1.is_imm());
-
-				sh_to_reg(op.rs1, mov, ecx);
-
-				reg_to_sh(op.rd, ecx);
-			}
-			break;
-
 			case shop_mov64:
 			{
 				verify(op.rd.is_reg());
 
-				verify(op.rs1.is_reg() || op.rs1.is_imm());
+				verify(op.rs1.is_reg());
 
-				sh_to_reg(op.rs1, mov, rcx);
+				auto opc = new opcode_mov64();
+				ptrs.ptrs[i] = opc;
 
-				reg_to_sh(op.rd, rcx);
+				opc->src = (u64*) op.rs1.reg_ptr();
+				opc->dst = (u64*)op.rd.reg_ptr();
 			}
 			break;
 
 			case shop_readm:
 			{
-				sh_to_reg(op.rs1, mov, call_regs[0]);
-				sh_to_reg(op.rs3, add, call_regs[0]);
-
 				u32 size = op.flags & 0x7f;
+				if (op.rs1.is_imm()) {
+					verify(op.rs2.is_null() && op.rs3.is_null());
 
-				if (size == 1) {
-					call(ReadMem8);
-					movsx(rcx, al);
+					if (size == 1)
+					{
+						auto opc = new opcode_readm_imm<1>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.imm_value(); opc->dst = op.rd.reg_ptr();
+					}
+					else if (size == 2)
+					{
+						auto opc = new opcode_readm_imm<2>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.imm_value(); opc->dst = op.rd.reg_ptr();
+					}
+					else if (size == 4)
+					{
+						auto opc = new opcode_readm_imm<4>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.imm_value(); opc->dst = op.rd.reg_ptr();
+					}
+					else if (size == 8)
+					{
+						auto opc = new opcode_readm_imm<8>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.imm_value(); opc->dst = op.rd.reg_ptr();
+					}
 				}
-				else if (size == 2) {
-					call(ReadMem16);
-					movsx(rcx, ax);
+				else if (op.rs3.is_imm()) {
+					verify(op.rs2.is_null());
+					if (size == 1)
+					{
+						auto opc = new opcode_readm_offs_imm<1>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->offs = op.rs3.imm_value(); opc->dst = op.rd.reg_ptr();
+					}
+					else if (size == 2)
+					{
+						auto opc = new opcode_readm_offs_imm<2>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->offs = op.rs3.imm_value(); opc->dst = op.rd.reg_ptr();
+					}
+					else if (size == 4)
+					{
+						auto opc = new opcode_readm_offs_imm<4>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->offs = op.rs3.imm_value(); opc->dst = op.rd.reg_ptr();
+					}
+					else if (size == 8)
+					{
+						auto opc = new opcode_readm_offs_imm<8>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->offs = op.rs3.imm_value(); opc->dst = op.rd.reg_ptr();
+					}
 				}
-				else if (size == 4) {
-					call(ReadMem32);
-					mov(rcx, rax);
-				}
-				else if (size == 8) {
-					call(ReadMem64);
-					mov(rcx, rax);
+				else if (op.rs3.is_reg()) {
+					verify(op.rs2.is_null());
+					if (size == 1)
+					{
+						auto opc = new opcode_readm_offs<1>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->offs = op.rs3.reg_ptr(); opc->dst = op.rd.reg_ptr();
+					}
+					else if (size == 2)
+					{
+						auto opc = new opcode_readm_offs<2>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->offs = op.rs3.reg_ptr(); opc->dst = op.rd.reg_ptr();
+					}
+					else if (size == 4)
+					{
+						auto opc = new opcode_readm_offs<4>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->offs = op.rs3.reg_ptr(); opc->dst = op.rd.reg_ptr();
+					}
+					else if (size == 8)
+					{
+						auto opc = new opcode_readm_offs<8>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->offs = op.rs3.reg_ptr(); opc->dst = op.rd.reg_ptr();
+					}
 				}
 				else {
-					die("1..8 bytes");
+					verify(op.rs2.is_null() && op.rs3.is_null());
+					if (size == 1)
+					{
+						auto opc = new opcode_readm<1>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->dst = op.rd.reg_ptr();
+					}
+					else if (size == 2)
+					{
+						auto opc = new opcode_readm<2>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->dst = op.rd.reg_ptr();
+					}
+					else if (size == 4)
+					{
+						auto opc = new opcode_readm<4>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->dst = op.rd.reg_ptr();
+					}
+					else if (size == 8)
+					{
+						auto opc = new opcode_readm<8>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->dst = op.rd.reg_ptr();
+					}
 				}
-
-				if (size != 8)
-					reg_to_sh(op.rd, ecx);
-				else
-					reg_to_sh(op.rd, rcx);
 			}
 			break;
 
 			case shop_writem:
 			{
 				u32 size = op.flags & 0x7f;
-				sh_to_reg(op.rs1, mov, call_regs[0]);
-				sh_to_reg(op.rs3, add, call_regs[0]);
-
-				if (size != 8)
-					sh_to_reg(op.rs2, mov, call_regs[1]);
-				else
-					sh_to_reg(op.rs2, mov, call_regs64[1]);
-
-				if (size == 1)
-					call(WriteMem8);
-				else if (size == 2)
-					call(WriteMem16);
-				else if (size == 4)
-					call(WriteMem32);
-				else if (size == 8)
-					call(WriteMem64);
+				
+				if (op.rs1.is_imm()) {
+					verify(op.rs3.is_null());
+					if (size == 1)
+					{
+						auto opc = new opcode_writem_imm<1>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.imm_value(); opc->src2 = op.rs2.reg_ptr();
+					}
+					else if (size == 2)
+					{
+						auto opc = new opcode_writem_imm<2>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.imm_value(); opc->src2 = op.rs2.reg_ptr();
+					}
+					else if (size == 4)
+					{
+						auto opc = new opcode_writem_imm<4>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.imm_value(); opc->src2 = op.rs2.reg_ptr();
+					}
+					else if (size == 8)
+					{
+						auto opc = new opcode_writem_imm<8>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.imm_value(); opc->src2 = op.rs2.reg_ptr();
+					}
+				}
+				else if (op.rs3.is_imm()) {
+					if (size == 1)
+					{
+						auto opc = new opcode_writem_offs_imm<1>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->offs = op.rs3.imm_value(); opc->src2 = op.rs2.reg_ptr();
+					}
+					else if (size == 2)
+					{
+						auto opc = new opcode_writem_offs_imm<2>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->offs = op.rs3.imm_value(); opc->src2 = op.rs2.reg_ptr();
+					}
+					else if (size == 4)
+					{
+						auto opc = new opcode_writem_offs_imm<4>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->offs = op.rs3.imm_value(); opc->src2 = op.rs2.reg_ptr();
+					}
+					else if (size == 8)
+					{
+						auto opc = new opcode_writem_offs_imm<8>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->offs = op.rs3.imm_value(); opc->src2 = op.rs2.reg_ptr();
+					}
+				}
+				else if (op.rs3.is_reg()) {
+					if (size == 1)
+					{
+						auto opc = new opcode_writem_offs<1>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->offs = op.rs3.reg_ptr(); opc->src2 = op.rs2.reg_ptr();
+					}
+					else if (size == 2)
+					{
+						auto opc = new opcode_writem_offs<2>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->offs = op.rs3.reg_ptr(); opc->src2 = op.rs2.reg_ptr();
+					}
+					else if (size == 4)
+					{
+						auto opc = new opcode_writem_offs<4>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->offs = op.rs3.reg_ptr(); opc->src2 = op.rs2.reg_ptr();
+					}
+					else if (size == 8)
+					{
+						auto opc = new opcode_writem_offs<8>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->offs = op.rs3.reg_ptr(); opc->src2 = op.rs2.reg_ptr();
+					}
+				}
 				else {
-					die("1..8 bytes");
+					verify(op.rs3.is_null());
+					if (size == 1)
+					{
+						auto opc = new opcode_writem<1>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->src2 = op.rs2.reg_ptr();
+					}
+					else if (size == 2)
+					{
+						auto opc = new opcode_writem<2>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->src2 = op.rs2.reg_ptr();
+					}
+					else if (size == 4)
+					{
+						auto opc = new opcode_writem<4>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->src2 = op.rs2.reg_ptr();
+					}
+					else if (size == 8)
+					{
+						auto opc = new opcode_writem<8>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->src2 = op.rs2.reg_ptr();
+					}
 				}
 			}
 			break;
-			*/
+			
 			default:
 				shil_chf[op.op](&op);
 				break;
@@ -422,13 +946,7 @@ public:
 		//emit_Skip(getSize());
 	}
 
-	struct CC_PS
-	{
-		CanonicalParamType type;
-		shil_param* prm;
-	};
-
-	vector<CC_PS> CC_pars;
+	CC_pars_t CC_pars;
 	void* ccfn;
 
 	void ngen_CC_Start(shil_opcode* op)
@@ -449,8 +967,19 @@ public:
 
 	void ngen_CC_Finish(shil_opcode* op)
 	{
-		//lookup
-		die("false");
+		string nm = "";
+		for (auto m : CC_pars) {
+			nm += (char)(m.type + 'a');
+			nm += (char)(m.prm->type + 'A');
+		}
+		
+		if (unmap.count(nm)) {
+			ptrsg[opcode_index] = unmap[nm](CC_pars, ccfn);
+		}
+		else {
+			printf("IMPLEMENT CC_CALL CLASS: %s\n", nm.c_str());
+			ptrsg[opcode_index] = new opcodeDie();
+		}
 	}
 
 };
