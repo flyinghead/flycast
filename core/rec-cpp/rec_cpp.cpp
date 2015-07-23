@@ -656,7 +656,7 @@ typedef fnrv(*FNAFB)(int cycles);
 FNAFB FNA[] = { REP_512(0, &fnnCtor) };
 
 DynarecCodeEntryPtr getndpn_forreal(int n) {
-	if (n > 8192)
+	if (n >= 8192)
 		return 0;
 	else
 		return FNS[n];
@@ -684,6 +684,10 @@ public:
 		dispatchb[idxnxx].runner = ptrs.runner;
 
 		block->code = getndpn_forreal(idxnxx++);
+
+		if (getndpn_forreal(idxnxx) == 0) {
+			emit_Skip(emit_FreeSpace()-16);
+		}
 
 		for (size_t i = 0; i < block->oplist.size(); i++) {
 			opcode_index = i;
