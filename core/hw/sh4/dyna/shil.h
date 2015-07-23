@@ -118,8 +118,10 @@ struct shil_param
 	bool is_imm_u16() const { return is_imm() && is_u16(_imm); }
 
 	u32* reg_ptr()  const { verify(is_reg()); return GetRegPtr(_reg); }
-	s32  reg_nofs()  const { verify(is_reg()); return (u8*)GetRegPtr(_reg) - (u8*)GetRegPtr(reg_xf_0)-sizeof(Sh4cntx); }
+	s32  reg_nofs()  const { verify(is_reg()); return (s32)((u8*)GetRegPtr(_reg) - (u8*)GetRegPtr(reg_xf_0)-sizeof(Sh4cntx)); }
 	u32  reg_aofs()  const { return -reg_nofs(); }
+
+	u32 imm_value() { verify(is_imm()); return _imm; }
 
 	bool is_vector() const { return type>=FMT_VECTOR_BASE; }
 
