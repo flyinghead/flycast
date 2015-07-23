@@ -16,6 +16,8 @@
 #include "profiler/profiler.h"
 #include "oslib/oslib.h"
 
+#define SHIL_MODE 2
+#include "hw/sh4/dyna/shil_canonical.h"
 
 struct DynaRBI : RuntimeBlockInfo
 {
@@ -118,6 +120,13 @@ struct opcode_cc_aBaCbC {
 			verify(prms.size() == 3);
 		}
 	};
+
+	template <typename T>
+	struct opex2 : public opex<64> {
+		void execute()  {
+			*rd = ((u32(*)(u32, u32))&T::f1)(*rs1, rs2);
+		}
+	};
 };
 
 struct opcode_cc_aCaCbC {
@@ -139,6 +148,13 @@ struct opcode_cc_aCaCbC {
 			verify(prms.size() == 3);
 		}
 	};
+
+	template <typename T>
+	struct opex2 : public opex<64> {
+		void execute()  {
+			*rd = ((u32(*)(u32, u32))&T::f1)(*rs1, *rs2);
+		}
+	};
 };
 
 struct opcode_cc_aCbC {
@@ -158,6 +174,14 @@ struct opcode_cc_aCbC {
 			verify(prms.size() == 2);
 		}
 	};
+
+	template <typename T>
+	struct opex2 : public opex<64> {
+		void execute()  {
+			*rd = ((u32(*)(u32))&T::f1)(*rs1);
+		}
+	};
+
 };
 
 struct opcode_cc_aC {
@@ -198,6 +222,13 @@ struct opcode_cc_aCaCaCbC {
 			verify(prms.size() == 4);
 		}
 	};
+
+	template <typename T>
+	struct opex2 : public opex<64> {
+		void execute()  {
+			*rd = ((u32(*)(u32, u32, u32))&T::f1)(*rs1, *rs2, *rs3);
+		}
+	};
 };
 
 struct opcode_cc_aCaCaCcCdC {
@@ -229,6 +260,16 @@ struct opcode_cc_aCaCaCcCdC {
 			verify(prms.size() == 5);
 		}
 	};
+	template <typename T>
+	struct opex2 : public opex<64> {
+		void execute()  {
+			auto rv = ((u64(*)(u32, u32, u32))&T::f1)(*rs1, *rs2, *rs3);
+
+			*rd = (u32)rv;
+			*rd2 = rv >> 32;
+		}
+	};
+
 };
 
 struct opcode_cc_aCaCcCdC {
@@ -255,6 +296,15 @@ struct opcode_cc_aCaCcCdC {
 			verify(prms.size() == 4);
 		}
 	};
+
+	template <typename T>
+	struct opex2 : public opex<64> {
+		void execute()  {
+			auto rv = ((u64(*)(u32, u32))T::f1)(*rs1, *rs2);
+			*rd = (u32)rv;
+			*rd2 = rv >> 32;
+		}
+	};
 };
 
 struct opcode_cc_eDeDeDfD {
@@ -277,6 +327,14 @@ struct opcode_cc_eDeDeDfD {
 			rd = (f32*)prms[3].prm->reg_ptr();
 		}
 	};
+
+	template <typename T>
+	struct opex2 : public opex<64> {
+		void execute()  {
+			*rd = ((f32(*)(f32, f32, f32))&T::f1)(*rs1, *rs2, *rs3);
+		}
+	};
+
 };
 
 struct opcode_cc_eDeDfD {
@@ -297,6 +355,13 @@ struct opcode_cc_eDeDfD {
 			rd = (f32*)prms[2].prm->reg_ptr();
 		}
 	};
+
+	template <typename T>
+	struct opex2 : public opex<64> {
+		void execute()  {
+			*rd = ((f32(*)(f32, f32))&T::f1)(*rs1, *rs2);
+		}
+	};
 };
 
 struct opcode_cc_eDeDbC {
@@ -315,6 +380,13 @@ struct opcode_cc_eDeDbC {
 			rs2 = (f32*)prms[0].prm->reg_ptr();
 			rs1 = (f32*)prms[1].prm->reg_ptr();
 			rd = (u32*)prms[2].prm->reg_ptr();
+		}
+	};
+
+	template <typename T>
+	struct opex2 : public opex<64> {
+		void execute()  {
+			*rd = ((u32(*)(f32, f32))&T::f1)(*rs1, *rs2);
 		}
 	};
 };
@@ -369,6 +441,13 @@ struct opcode_cc_eDfD {
 			fn = fun;
 			rs1 = (f32*)prms[0].prm->reg_ptr();
 			rd = (f32*)prms[1].prm->reg_ptr();
+		}
+	};
+
+	template <typename T>
+	struct opex2 : public opex<64> {
+		void execute()  {
+			*rd = ((f32(*)(f32))&T::f1)(*rs1);
 		}
 	};
 };
@@ -427,6 +506,13 @@ struct opcode_cc_gHgHfD {
 			rs2 = (f32*)prms[0].prm->reg_ptr();
 			rs1 = (f32*)prms[1].prm->reg_ptr();
 			rd = (f32*)prms[2].prm->reg_ptr();
+		}
+	};
+
+	template <typename T>
+	struct opex2 : public opex<64> {
+		void execute()  {
+			*rd = ((f32(*)(f32*, f32*))&T::f1)(rs1, rs2);
 		}
 	};
 };
@@ -652,18 +738,151 @@ opcodeExec* createType(const CC_pars_t& prms, void* fun) {
 	return rv;
 }
 
+template <typename shilop, typename CTR>
+opcodeExec* createType2(const CC_pars_t& prms, void* fun) {
+	auto rv = new CTR::opex2<shilop>();
+
+	rv->setup(prms, fun);
+	return rv;
+}
+
 
 map<void*, int> funs;
+
+
 int funs_id_count;
 
 template <typename CTR>
+opcodeExec* createType_fast(const CC_pars_t& prms, void* fun) {
+	return 0;
+}
+
+#define FAST_sig(sig, ...) \
+template <> \
+opcodeExec* createType_fast<opcode_cc_##sig>(const CC_pars_t& prms, void* fun) { \
+	using CTR = opcode_cc_##sig; \
+	\
+	static map<void*, opcodeExec* (*)(const CC_pars_t& prms, void* fun)> funsf = {\
+		
+#define FAST_gis \
+};\
+	\
+	if (funsf.count(fun)) { \
+		return funsf[fun](prms, fun); \
+	} \
+	else { \
+		return 0; \
+	} \
+}
+
+#define FAST_po(n) { &shil_opcl_##n::f1, &createType2 < shil_opcl_##n, CTR > },
+
+FAST_sig(aCaCbC)
+FAST_po(and)
+FAST_po(or)
+FAST_po(xor)
+FAST_po(add)
+FAST_po(sub)
+FAST_po(ror)
+FAST_po(shl)
+FAST_po(shr)
+FAST_po(sar)
+FAST_po(shad)
+FAST_po(shld)
+FAST_po(test)
+FAST_po(seteq)
+FAST_po(setge)
+FAST_po(setgt)
+FAST_po(setae)
+FAST_po(setab)
+FAST_po(setpeq)
+FAST_po(mul_u16)
+FAST_po(mul_s16)
+FAST_po(mul_i32)
+FAST_gis
+
+FAST_sig(aBaCbC)
+FAST_po(and)
+FAST_po(or)
+FAST_po(xor)
+FAST_po(add)
+FAST_po(sub)
+FAST_po(ror)
+FAST_po(shl)
+FAST_po(shr)
+FAST_po(sar)
+FAST_po(shad)
+FAST_po(shld)
+FAST_po(test)
+FAST_po(seteq)
+FAST_po(setge)
+FAST_po(setgt)
+FAST_po(setae)
+FAST_po(setab)
+FAST_po(setpeq)
+FAST_po(mul_u16)
+FAST_po(mul_s16)
+FAST_po(mul_i32)
+FAST_gis
+
+FAST_sig(eDeDfD)
+FAST_po(fadd)
+FAST_po(fsub)
+FAST_po(fmul)
+FAST_po(fdiv)
+FAST_gis
+
+FAST_sig(eDfD)
+FAST_po(fneg)
+FAST_po(fabs)
+FAST_po(fsrra)
+FAST_gis
+
+
+FAST_sig(eDeDbC)
+FAST_po(fseteq)
+FAST_po(fsetgt)
+FAST_gis
+
+FAST_sig(eDeDeDfD)
+FAST_po(fmac)
+FAST_gis
+
+FAST_sig(gHgHfD)
+FAST_po(fipr)
+FAST_gis
+
+FAST_sig(aCaCcCdC)
+FAST_po(div32u)
+FAST_gis
+
+FAST_sig(aCaCaCcCdC)
+FAST_po(adc)
+FAST_po(sbc)
+FAST_gis
+
+FAST_sig(aCaCaCbC)
+FAST_po(div32p2)
+FAST_gis
+
+FAST_sig(aCbC)
+FAST_po(neg)
+FAST_po(not)
+FAST_po(ext_s16)
+FAST_gis
+
+template <typename CTR>
 opcodeExec* createType(const CC_pars_t& prms, void* fun) {
+
+	auto frv = createType_fast<CTR>(prms, fun);
+	if (frv)
+		return frv;
 
 	if (!funs.count(fun)) {
 		funs[fun] = funs_id_count++;
 	}
 
-	static opcodeExec* (*ctors[])(const CC_pars_t& prms, void* fun) = { XREP_64(0, phrase) };
+	static opcodeExec* (*ctors[])(const CC_pars_t& prms, void* fun) = { XREP_64(0, __noop) };
 
 	int id = funs[fun];
 
