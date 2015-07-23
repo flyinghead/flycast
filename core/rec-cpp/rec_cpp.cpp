@@ -677,6 +677,17 @@ struct opcode_writem_offs_imm : public opcodeExec {
 	}
 };
 
+#define DREP_1(x, phrase) if (x < cnt) ops[x]->execute();
+#define DREP_2(x, phrase) DREP_1(x, phrase) DREP_1(x+1, phrase)
+#define DREP_4(x, phrase) DREP_2(x, phrase) DREP_2(x+2, phrase)
+#define DREP_8(x, phrase) DREP_4(x, phrase) DREP_4(x+4, phrase)
+#define DREP_16(x, phrase) DREP_8(x, phrase) DREP_8(x+8, phrase)
+#define DREP_32(x, phrase) DREP_16(x, phrase) DREP_16(x+16, phrase)
+#define DREP_64(x, phrase) DREP_32(x, phrase) DREP_32(x+32, phrase)
+#define DREP_128(x, phrase) DREP_64(x, phrase) DREP_64(x+64, phrase)
+#define DREP_256(x, phrase) DREP_128(x, phrase) DREP_128(x+128, phrase)
+#define DREP_512(x, phrase) DREP_256(x, phrase) DREP_256(x+256, phrase)
+
 template <int cnt>
 class fnblock {
 public:
@@ -684,9 +695,8 @@ public:
 	int cc;
 	void execute() {
 		cycle_counter -= cc;
-		for (int i = 0; i < cnt; i++) {
-			ops[i]->execute();
-		}
+
+		DREP_512(0, phrase);
 	}
 
 	static void runner(void* fnb) {
