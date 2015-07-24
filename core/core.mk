@@ -37,6 +37,10 @@ ifdef X64_REC
     RZDCY_MODULES += rec-x64/
 endif
 
+ifdef CPP_REC
+    RZDCY_MODULES += rec-cpp/
+endif
+
 ifndef NO_REND
     RZDCY_MODULES += rend/gles/
 else

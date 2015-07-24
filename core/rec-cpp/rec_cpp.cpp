@@ -742,7 +742,8 @@ fnrv fnnCtor<0>(int cycles) {
 
 template <int id, typename CTR>
 opcodeExec* createType(const CC_pars_t& prms, void* fun) {
-	auto rv = new CTR::opex<id>();
+	typedef typename CTR::template opex<id> thetype;
+	auto rv = new thetype();
 
 	rv->setup(prms, fun);
 	return rv;
@@ -750,7 +751,8 @@ opcodeExec* createType(const CC_pars_t& prms, void* fun) {
 
 template <typename shilop, typename CTR>
 opcodeExec* createType2(const CC_pars_t& prms, void* fun) {
-	auto rv = new CTR::opex2<shilop>();
+	typedef typename CTR::template opex2<shilop> thetype;
+	auto rv = new thetype();
 
 	rv->setup(prms, fun);
 	return rv;
@@ -767,10 +769,12 @@ opcodeExec* createType_fast(const CC_pars_t& prms, void* fun) {
 	return 0;
 }
 
+#define OPCODE_CC(sig) opcode_cc_##sig
+
 #define FAST_sig(sig, ...) \
 template <> \
-opcodeExec* createType_fast<opcode_cc_##sig>(const CC_pars_t& prms, void* fun) { \
-	using CTR = opcode_cc_##sig; \
+opcodeExec* createType_fast<OPCODE_CC(sig)>(const CC_pars_t& prms, void* fun) { \
+	typedef OPCODE_CC(sig) CTR; \
 	\
 	static map<void*, opcodeExec* (*)(const CC_pars_t& prms, void* fun)> funsf = {\
 		
@@ -785,7 +789,7 @@ opcodeExec* createType_fast<opcode_cc_##sig>(const CC_pars_t& prms, void* fun) {
 	} \
 }
 
-#define FAST_po(n) { &shil_opcl_##n::f1, &createType2 < shil_opcl_##n, CTR > },
+#define FAST_po(n) { (void*)&shil_opcl_##n::f1, &createType2 < shil_opcl_##n, CTR > },
 
 FAST_sig(aCaCbC)
 FAST_po(and)
