@@ -26,14 +26,20 @@ public class GLCFactory6 {
 		private static final int EGL_CONTEXT_CLIENT_VERSION = 0x3098;
 
 		public EGLContext createContext(EGL10 egl,EGLDisplay display,EGLConfig eglConfig)
-		{
-			int[] attrList = { EGL_CONTEXT_CLIENT_VERSION, 2, EGL14.EGL_NONE };
+		{	
+			EGLContext context = EGL10.EGL_NO_CONTEXT;
+			for ( int clientVersion = 3; clientVersion >= 2; clientVersion-- ) {
+				int[] attrList = { EGL_CONTEXT_CLIENT_VERSION, clientVersion, EGL14.EGL_NONE };
 
-			LOGI("Creating OpenGL ES X context");
+				LOGI("Creating OpenGL ES " + clientVersion + " context");
 
-			checkEglError("Before eglCreateContext",egl);
-			EGLContext context = egl.eglCreateContext(display,eglConfig,EGL10.EGL_NO_CONTEXT,attrList);
-			checkEglError("After eglCreateContext",egl);
+				checkEglError("Before eglCreateContext",egl);
+				context = egl.eglCreateContext(display,eglConfig,EGL10.EGL_NO_CONTEXT,attrList);
+				checkEglError("After eglCreateContext",egl);
+				if (context != EGL10.EGL_NO_CONTEXT) {
+					break;
+				}
+			}
 			return(context);
 		}
 
