@@ -12,9 +12,9 @@ import android.util.Log;
 
 public class GLCFactory {
 
-	private static void LOGI(String S) { Log.i("GL2JNIView-v6",S); }
-	private static void LOGW(String S) { Log.w("GL2JNIView-v6",S); }
-	private static void LOGE(String S) { Log.e("GL2JNIView-v6",S); }
+	private static void LOGI(String S) { Log.i("GL2JNIView",S); }
+	private static void LOGW(String S) { Log.w("GL2JNIView",S); }
+	private static void LOGE(String S) { Log.e("GL2JNIView",S); }
 
 	public static class ContextFactory implements GLSurfaceView.EGLContextFactory
 	{
