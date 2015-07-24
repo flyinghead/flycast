@@ -38,6 +38,7 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.View.OnLongClickListener;
 import android.view.View.OnTouchListener;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -279,21 +280,23 @@ public class FileBrowser extends Fragment {
 	}
 	
 	private void browseStorage(boolean images) {
-		HashSet<String> extStorage = FileBrowser.getExternalMounts();
-		if (extStorage != null && !extStorage.isEmpty()) {
-			for (Iterator<String> sd = extStorage.iterator(); sd.hasNext();) {
-				String sdCardPath = sd.next().replace("mnt/media_rw", "storage");
-				if (!sdCardPath.equals(sdcard.getAbsolutePath())) {
-					if (new File(sdCardPath).canRead()) {
-						navigate(new File(sdCardPath));
-						return;
-					}
-				}
-			}
-		}
 		if (images) {
 			navigate(new File(home_directory));
 		} else {
+			if (game_directory.equals(sdcard.getAbsolutePath().replace("emulated/0", "sdcard0"))) {
+				HashSet<String> extStorage = FileBrowser.getExternalMounts();
+				if (extStorage != null && !extStorage.isEmpty()) {
+					for (Iterator<String> sd = extStorage.iterator(); sd.hasNext();) {
+						String sdCardPath = sd.next().replace("mnt/media_rw", "storage");
+						if (!sdCardPath.equals(sdcard.getAbsolutePath())) {
+							if (new File(sdCardPath).canRead()) {
+								navigate(new File(sdCardPath));
+								return;
+							}
+						}
+					}
+				}
+			}
 			navigate(new File(game_directory));
 		}
 	}
@@ -352,7 +355,7 @@ public class FileBrowser extends Fragment {
 		}
 
 		final View headerView = parentActivity.getLayoutInflater().inflate(
-				R.layout.app_list_item, null, false);
+				R.layout.head_list_item, null, false);
 		((ImageView) headerView.findViewById(R.id.item_icon))
 				.setImageResource(R.drawable.open_folder);
 		((TextView) headerView.findViewById(R.id.item_name))
@@ -375,15 +378,39 @@ public class FileBrowser extends Fragment {
 				new OnClickListener() {
 					public void onClick(View view) {
 						if (isGame) {
-						vib.vibrate(50);
-						if (mPrefs.getBoolean(Config.pref_gamedetails, false)) {
+							vib.vibrate(50);
+							mCallback.onGameSelected(game != null ? Uri
+									.fromFile(game) : Uri.EMPTY);
+							vib.vibrate(250);
+						} else {
+							vib.vibrate(50);
+							mCallback.onFolderSelected(game != null ? Uri
+									.fromFile(game) : Uri.EMPTY);
+							home_directory = game.getAbsolutePath().substring(0,
+									game.getAbsolutePath().lastIndexOf(File.separator)).replace("/data", "");
+							if (!DataDirectoryBIOS()) {
+								MainActivity.showToastMessage(getActivity(), 
+										getActivity().getString(R.string.config_data, home_directory),
+										Toast.LENGTH_LONG);
+							}
+							mPrefs.edit().putString("home_directory", home_directory).commit();
+							JNIdc.config(home_directory.replace("/data", ""));
+						}
+					}
+				});
+		
+		if (mPrefs.getBoolean(Config.pref_gamedetails, false) && isGame) {
+			childview.findViewById(R.id.childview).setOnLongClickListener(
+					new OnLongClickListener() {
+						public boolean onLongClick(View view) {
+							vib.vibrate(50);
 							final AlertDialog.Builder builder = new AlertDialog.Builder(parentActivity);
 							builder.setCancelable(true);
 							builder.setTitle(getString(R.string.game_details,
 									xmlParser.getGameTitle()));
-							builder.setMessage(xmlParser.game_details.get(index));
+							builder.setMessage(xmlParser.getGameDetails());
 							builder.setIcon(xmlParser.getGameIcon());
-							builder.setPositiveButton("Close",
+							builder.setNegativeButton("Close",
 									new DialogInterface.OnClickListener() {
 										public void onClick(DialogInterface dialog, int which) {
 											dialog.dismiss();
@@ -401,27 +428,10 @@ public class FileBrowser extends Fragment {
 										}
 									});
 							builder.create().show();
-						} else {
-							mCallback.onGameSelected(game != null ? Uri
-									.fromFile(game) : Uri.EMPTY);
-							vib.vibrate(250);
+							return true;
 						}
-						} else {
-							vib.vibrate(50);
-							mCallback.onFolderSelected(game != null ? Uri
-									.fromFile(game) : Uri.EMPTY);
-							home_directory = game.getAbsolutePath().substring(0,
-									game.getAbsolutePath().lastIndexOf(File.separator)).replace("/data", "");
-							if (!DataDirectoryBIOS()) {
-								MainActivity.showToastMessage(getActivity(), 
-										getActivity().getString(R.string.config_data, home_directory),
-										Toast.LENGTH_LONG);
-							}
-							mPrefs.edit().putString("home_directory", home_directory).commit();
-							JNIdc.config(home_directory.replace("/data", ""));
-						}
-					}
-				});
+					});
+		}
 
 		childview.findViewById(R.id.childview).setOnTouchListener(
 				new OnTouchListener() {
@@ -464,7 +474,7 @@ public class FileBrowser extends Fragment {
 		Collections.addAll(list, flist);
 
 		for (final File file : list) {
-			if (file != null && !file.isDirectory())
+			if (file != null && !file.isDirectory() && !file.getAbsolutePath().equals("/data"))
 				continue;
 			final View childview = parentActivity.getLayoutInflater().inflate(
 					R.layout.app_list_item, null, false);

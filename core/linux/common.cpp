@@ -16,7 +16,7 @@
 #include <sys/param.h>
 #include <sys/mman.h>
 #include <sys/time.h>
-#if !defined(_ANDROID)
+#if !defined(_ANDROID) && !TARGET_OS_IPHONE
   #include <sys/personality.h>
 #endif
 #include <dlfcn.h>
@@ -245,7 +245,7 @@ double os_GetSeconds()
 	return a.tv_sec-tvs_base+a.tv_usec/1000000.0;
 }
 
-#if HOST_OS == OS_DARWIN
+#if TARGET_OS_IPHONE
 void os_DebugBreak() {
     __asm__("trap");
 }
@@ -276,7 +276,7 @@ void enable_runfast()
 }
 
 void linux_fix_personality() {
-        #if !defined(_ANDROID)
+        #if !defined(_ANDROID) && !TARGET_OS_IPHONE
           printf("Personality: %08X\n", personality(0xFFFFFFFF));
           personality(~READ_IMPLIES_EXEC & personality(0xFFFFFFFF));
           printf("Updated personality: %08X\n", personality(0xFFFFFFFF));

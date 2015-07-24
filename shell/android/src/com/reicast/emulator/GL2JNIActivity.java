@@ -559,6 +559,8 @@ public class GL2JNIActivity extends Activity {
 				} else {
 					popUp.dismiss();
 				}
+			} else {
+				popUp.dismiss();
 			}
 		}
 		return true;

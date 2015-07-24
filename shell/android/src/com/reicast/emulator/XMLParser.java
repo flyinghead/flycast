@@ -56,8 +56,8 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 	private Drawable game_icon;
 
 	private static final String game_index = "http://thegamesdb.net/api/GetGame.php?platform=sega+dreamcast&name=";
-	public SparseArray<String> game_details = new SparseArray<String>();
-	public SparseArray<Bitmap> game_preview = new SparseArray<Bitmap>();
+	private SparseArray<String> game_details = new SparseArray<String>();
+	private SparseArray<Bitmap> game_preview = new SparseArray<Bitmap>();
 
 	public XMLParser(File game, int index, SharedPreferences mPrefs) {
 		this.mPrefs = mPrefs;
@@ -118,13 +118,17 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 	protected String doInBackground(String... params) {
 		String filename = game_name = params[0];
 		if (isNetworkAvailable() && mPrefs.getBoolean(Config.pref_gamedetails, false)) {
-			if (params[0].contains("[")) {
-				filename = params[0].substring(0, params[0].lastIndexOf("["));
-			} else {
-				filename = params[0].substring(0, params[0].lastIndexOf("."));
+			if (filename.startsWith("[")) {
+				filename = filename.substring(filename.indexOf("]") + 1, filename.length());
 			}
-			filename = filename.replaceAll("[^\\p{L}\\p{Nd}]", " ");
-			filename = filename.replace(" ", "+");
+			if (filename.contains("[")) {
+				filename = filename.substring(0, filename.indexOf("["));
+			} else {
+				filename = filename.substring(0, filename.lastIndexOf("."));
+			}
+			filename = filename.replace("_", " ").replace(":", " ");
+			filename = filename.replaceAll("[^\\p{Alpha}\\p{Digit}]+"," ");
+			filename = filename.replace("  ", " ").replace(" ", "+");
 			if (filename.endsWith("+")) {
 				filename = filename.substring(0, filename.length() - 1);
 			}
@@ -149,39 +153,26 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 	@Override
 	protected void onPostExecute(String gameData) {
 		if (gameData != null) {
-			Document doc = getDomElement(gameData);
-			if (doc != null && doc.getElementsByTagName("Game") != null) {
-				Element root = (Element) doc.getElementsByTagName("Game").item(
-						0);
-				game_name = getValue(root, "GameTitle");
-				String details = getValue(root, "Overview");
-				game_details.put(index, details);
-				Element boxart = (Element) root.getElementsByTagName("Images")
-						.item(0);
-				String image = "http://thegamesdb.net/banners/"
-						+ getValue(boxart, "boxart");
-				try {
+			try {
+				Document doc = getDomElement(gameData);
+				if (doc.getElementsByTagName("Game") != null) {
+					Element root = (Element) doc.getElementsByTagName("Game").item(0);
+					game_name = getValue(root, "GameTitle");
+					String details = getValue(root, "Overview");
+					game_details.put(index, details);
+					Element images = (Element) root.getElementsByTagName("Images").item(0);
+					Element boxart = (Element) images.getElementsByTagName("boxart").item(1);
+					String image = "http://thegamesdb.net/banners/" + getElementValue(boxart);
 					game_preview.put(index, decodeBitmapIcon(image));
 					game_icon = new BitmapDrawable(decodeBitmapIcon(image));
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+				} else {
+					initializeDefaults();
 				}
+			} catch (Exception e) {
+				initializeDefaults();
 			}
 		} else {
-			game_details.put(index,
-					mContext.getString(R.string.info_unavailable));
-			final String nameLower = game.getName().toLowerCase(
-					Locale.getDefault());
-			if (Build.VERSION.SDK_INT < 21) {
-				game_icon = mContext.getResources().getDrawable(
-						game.isDirectory() ? R.drawable.open_folder : nameLower
-								.endsWith(".gdi") ? R.drawable.gdi : nameLower
-								.endsWith(".cdi") ? R.drawable.cdi : nameLower
-								.endsWith(".chd") ? R.drawable.chd
-								: R.drawable.disk_unknown);
-			}
-
+			initializeDefaults();
 		}
 
 		((TextView) childview.findViewById(R.id.item_name)).setText(game_name);
@@ -192,6 +183,21 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 		}
 
 		childview.setTag(game_name);
+	}
+	
+	private void initializeDefaults() {
+		game_details.put(index,
+				mContext.getString(R.string.info_unavailable));
+		final String nameLower = game.getName().toLowerCase(
+				Locale.getDefault());
+		if (Build.VERSION.SDK_INT < 21) {
+			game_icon = mContext.getResources().getDrawable(
+					game.isDirectory() ? R.drawable.open_folder : nameLower
+							.endsWith(".gdi") ? R.drawable.gdi : nameLower
+							.endsWith(".cdi") ? R.drawable.cdi : nameLower
+							.endsWith(".chd") ? R.drawable.chd
+							: R.drawable.disk_unknown);
+		}
 	}
 
 	public boolean isNetworkAvailable() {
@@ -213,6 +219,14 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 
 	public String getGameTitle() {
 		return game_name;
+	}
+	
+	public String getGameDetails() {
+		return game_details.get(index);
+	}
+	
+	public Bitmap getGamePreview() {
+		return game_preview.get(index);
 	}
 
 	public Document getDomElement(String xml) {
