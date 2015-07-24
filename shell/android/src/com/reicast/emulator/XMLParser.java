@@ -2,8 +2,10 @@ package com.reicast.emulator;
 
 import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
@@ -79,39 +81,52 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 	}
 
 	public Bitmap decodeBitmapIcon(String filename) throws IOException {
-		URL updateURL = new URL(filename);
-		URLConnection conn1 = updateURL.openConnection();
-		InputStream im = conn1.getInputStream();
-		BufferedInputStream bis = new BufferedInputStream(im, 512);
-
-		BitmapFactory.Options options = new BitmapFactory.Options();
-		options.inJustDecodeBounds = true;
-		Bitmap bitmap = BitmapFactory.decodeStream(bis, null, options);
-
-		int heightRatio = (int) Math.ceil(options.outHeight / (float) 72);
-		int widthRatio = (int) Math.ceil(options.outWidth / (float) 72);
-
-		if (heightRatio > 1 || widthRatio > 1) {
-			if (heightRatio > widthRatio) {
-				options.inSampleSize = heightRatio;
-			} else {
-				options.inSampleSize = widthRatio;
+		String index = filename.substring(filename.lastIndexOf("/") + 1, filename.lastIndexOf("."));
+		File file = new File(mContext.getExternalFilesDir(null) + "/images", index + ".png");
+		if (file.exists()) {
+			return BitmapFactory.decodeFile(file.getAbsolutePath());
+		} else {
+			URL updateURL = new URL(filename);
+			URLConnection conn1 = updateURL.openConnection();
+			InputStream im = conn1.getInputStream();
+			BufferedInputStream bis = new BufferedInputStream(im, 512);
+			BitmapFactory.Options options = new BitmapFactory.Options();
+			options.inJustDecodeBounds = true;
+			Bitmap bitmap = BitmapFactory.decodeStream(bis, null, options);
+			int heightRatio = (int) Math.ceil(options.outHeight / (float) 72);
+			int widthRatio = (int) Math.ceil(options.outWidth / (float) 72);
+			if (heightRatio > 1 || widthRatio > 1) {
+				if (heightRatio > widthRatio) {
+					options.inSampleSize = heightRatio;
+				} else {
+					options.inSampleSize = widthRatio;
+				}
 			}
+			options.inJustDecodeBounds = false;
+			bis.close();
+			im.close();
+			conn1 = updateURL.openConnection();
+			im = conn1.getInputStream();
+			bis = new BufferedInputStream(im, 512);
+			bitmap = BitmapFactory.decodeStream(bis, null, options);
+			bis.close();
+			im.close();
+			bis = null;
+			im = null;
+			OutputStream fOut = null;
+			if (!file.getParentFile().exists()) {
+				file.getParentFile().mkdir();
+			}
+			try {
+				fOut = new FileOutputStream(file, false);
+				bitmap.compress(Bitmap.CompressFormat.PNG, 100, fOut);
+				fOut.flush();
+				fOut.close();
+			} catch (Exception ex) {
+				
+			}
+			return bitmap;
 		}
-
-		options.inJustDecodeBounds = false;
-		bis.close();
-		im.close();
-		conn1 = updateURL.openConnection();
-		im = conn1.getInputStream();
-		bis = new BufferedInputStream(im, 512);
-		bitmap = BitmapFactory.decodeStream(bis, null, options);
-
-		bis.close();
-		im.close();
-		bis = null;
-		im = null;
-		return bitmap;
 	}
 
 	@Override
@@ -161,10 +176,17 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 					String details = getValue(root, "Overview");
 					game_details.put(index, details);
 					Element images = (Element) root.getElementsByTagName("Images").item(0);
-					Element boxart = (Element) images.getElementsByTagName("boxart").item(1);
-					String image = "http://thegamesdb.net/banners/" + getElementValue(boxart);
-					game_preview.put(index, decodeBitmapIcon(image));
-					game_icon = new BitmapDrawable(decodeBitmapIcon(image));
+					Element boxart = null;
+					if (images.getElementsByTagName("boxart").getLength() > 1) {
+						boxart = (Element) images.getElementsByTagName("boxart").item(1);
+					} else if (images.getElementsByTagName("boxart").getLength() == 1) {
+						boxart = (Element) images.getElementsByTagName("boxart").item(0);
+					}
+					if (boxart != null) {
+						String image = "http://thegamesdb.net/banners/" + getElementValue(boxart);
+						game_preview.put(index, decodeBitmapIcon(image));
+						game_icon = new BitmapDrawable(decodeBitmapIcon(image));
+					}
 				} else {
 					initializeDefaults();
 				}
