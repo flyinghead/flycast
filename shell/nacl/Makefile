@@ -23,7 +23,7 @@ LDFLAGS:=-lppapi_gles2 -lppapi_cpp -lppapi
 WARNINGS:=-Wno-long-long -Wswitch-enum
 CXXFLAGS:=-pthread -std=gnu++0x $(WARNINGS)
 
-CXXFLAGS	+= -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps -I$(RZDCY_SRC_DIR)/khronos -I../linux-deps/include -D RELEASE -D HOST_NO_REC -D TARGET_NACL32
+CXXFLAGS	+= -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps -I$(RZDCY_SRC_DIR)/khronos -I../linux-deps/include -D RELEASE -D TARGET_NO_REC -D TARGET_NACL32
 
 #
 # Compute tool paths

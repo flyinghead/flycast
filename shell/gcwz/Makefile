@@ -33,7 +33,7 @@ SOURCES	:=	cfg/ hw/arm7/ hw/aica/ hw/asic/ hw/ hw/gdrom/ hw/maple/ \
  hw/extdev/ hw/arm/ imgread/ linux/ linux-dist/ ./ rec-ARM/ deps/zlib/ deps/chdr/ deps/crypto/ arm_emitter/ 
 
 
-CXXFLAGS := -g -O3  -D RELEASE -c -D TARGET_GCW0 -D USES_HOMEDIR -D HOST_NO_REC #-D NO_REND
+CXXFLAGS := -g -O3  -D RELEASE -c -D TARGET_GCW0 -D USES_HOMEDIR -D TARGET_NO_REC #-D NO_REND
 CXXFLAGS += -frename-registers -fno-strict-aliasing -fsingle-precision-constant 
 CXXFLAGS += -ffast-math -ftree-vectorize 
 #-fprefetch-loop-arrays 

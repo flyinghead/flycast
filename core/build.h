@@ -208,6 +208,12 @@
 #define FEAT_DSPREC DYNAREC_NONE
 #endif
 
+#if defined(TARGET_NO_AREC)
+#define FEAT_SHREC DYNAREC_JIT
+#define FEAT_AREC DYNAREC_NONE
+#define FEAT_DSPREC DYNAREC_NONE
+#endif
+
 #if defined(TARGET_NO_JIT)
 #define FEAT_SHREC DYNAREC_CPP
 #define FEAT_AREC DYNAREC_NONE
@@ -237,9 +243,9 @@
 
 //Depricated build configs
 #ifdef HOST_NO_REC
-#error Outdated build config
+#error Dont use HOST_NO_REC
 #endif
 
 #ifdef HOST_NO_AREC
-#error Outdated build config
+#error Dont use HOST_NO_AREC
 #endif

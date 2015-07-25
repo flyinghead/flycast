@@ -54,9 +54,9 @@ LOCAL_CXXFLAGS  := $(RZDCY_CXXFLAGS) -fvisibility=hidden -fvisibility-inlines-hi
 LOCAL_CPPFLAGS  := $(RZDCY_CXXFLAGS) -fvisibility=hidden -fvisibility-inlines-hidden -ffunction-sections -fdata-sections
 
 ifeq ($(TARGET_ARCH_ABI),x86)
-  LOCAL_CFLAGS+= -DHOST_NO_AREC
-  LOCAL_CXXFLAGS+= -DHOST_NO_AREC -fpermissive
-  LOCAL_CPPFLAGS+= -DHOST_NO_AREC
+  LOCAL_CFLAGS+= -DTARGET_NO_AREC
+  LOCAL_CXXFLAGS+= -DTARGET_NO_AREC -fpermissive
+  LOCAL_CPPFLAGS+= -DTARGET_NO_AREC
 endif
 
 LOCAL_CPP_FEATURES := 
