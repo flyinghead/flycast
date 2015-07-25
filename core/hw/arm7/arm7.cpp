@@ -188,7 +188,7 @@ void armt_init();
 //void CreateTables();
 void arm_Init()
 {
-#if !defined(HOST_NO_AREC)
+#if FEAT_AREC != DYNAREC_NONE
 	armt_init();
 #endif
 	//CreateTables();
@@ -398,7 +398,7 @@ void FlushCache();
 
 void arm_Reset()
 {
-#if !defined(HOST_NO_AREC)
+#if FEAT_AREC != DYNAREC_NONE
 	FlushCache();
 #endif
 	Arm7Enabled = false;
@@ -514,7 +514,7 @@ void update_armintc()
 
 void libAICA_TimeStep();
 
-#ifdef HOST_NO_AREC
+#if FEAT_AREC == DYNAREC_NONE
 void arm_Run(u32 CycleCount) { 
 	for (int i=0;i<32;i++)
 	{
@@ -798,7 +798,7 @@ u32 DYNACALL DoMemOp(u32 addr,u32 data)
 {
 	u32 rv=0;
 
-#if HOST_CPU==CPU_X86 && !defined(HOST_NO_AREC)
+#if HOST_CPU==CPU_X86 && FEAT_AREC != DYNAREC_NONE
 	addr=virt_arm_reg(0);
 	data=virt_arm_reg(1);
 #endif
@@ -818,7 +818,7 @@ u32 DYNACALL DoMemOp(u32 addr,u32 data)
 			arm_WriteMem32(addr,data);
 	}
 
-	#if HOST_CPU==CPU_X86 && !defined(HOST_NO_AREC)
+	#if HOST_CPU==CPU_X86 && FEAT_AREC != DYNAREC_NONE
 		virt_arm_reg(0)=rv;
 	#endif
 

@@ -1,6 +1,6 @@
 #include "types.h"
 
-#ifndef HOST_NO_REC
+#if FEAT_SHREC == DYNAREC_JIT && HOST_CPU == CPU_X86
 #include "rec_x86_ngen.h"
 
 
