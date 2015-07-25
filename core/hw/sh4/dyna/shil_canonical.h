@@ -207,18 +207,26 @@ shil_opc_end()
 
 //Canonical impl. opcodes !
 shil_opc(sync_sr)
+shil_canonical
+(
+void, f1, (),
+	UpdateSR();
+)
 shil_compile
 (
-	shil_cf_ext(UpdateSR);
-	//die();
+	shil_cf(f1);
 )
 shil_opc_end()
 
 shil_opc(sync_fpscr)
+shil_canonical
+(
+void, f1, (),
+	UpdateFPSCR();
+)
 shil_compile
 (
-	shil_cf_ext(UpdateFPSCR);
-	//die();
+	shil_cf(f1);
 )
 shil_opc_end()
 
