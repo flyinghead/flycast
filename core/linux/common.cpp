@@ -65,7 +65,7 @@ void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 	
 	if (VramLockedWrite((u8*)si->si_addr) || BM_LockedWrite((u8*)si->si_addr))
 		return;
-	#if !defined(HOST_NO_REC)
+	#if FEAT_SHREC != DYNAREC_NONE
 		#if HOST_CPU==CPU_ARM
 			else if (dyna_cde)
 			{

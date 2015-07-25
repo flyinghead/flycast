@@ -180,7 +180,7 @@ int DreamcastSecond(int tag, int c, int j)
 	prof_periodical();
 #endif
 
-#if !defined(HOST_NO_REC)
+#if FEAT_SHREC != DYNAREC_NONE
 	bm_Periodical_1s();
 #endif
 

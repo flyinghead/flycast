@@ -387,12 +387,12 @@ JNIEXPORT jint JNICALL Java_com_reicast_emulator_emu_JNIdc_send(JNIEnv *env,jobj
 
 		if (param==1)
 		{
-	  settings.pvr.ta_skip^=1;
-	  printf("settings.pvr.ta_skip: %d\n",settings.pvr.ta_skip);
+			settings.pvr.ta_skip^=1;
+			printf("settings.pvr.ta_skip: %d\n",settings.pvr.ta_skip);
 		}
 		if (param==2)
 		{
-		#if !defined(HOST_NO_REC)
+		#if FEAT_SHREC != DYNAREC_NONE
 			print_stats=true;
 			printf("Storing blocks ...\n");
 		#endif

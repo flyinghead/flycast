@@ -125,7 +125,7 @@ int ExeptionHandler(u32 dwCode, void* pExceptionPointers)
 	{
 		return EXCEPTION_CONTINUE_EXECUTION;
 	}
-#if !defined(HOST_NO_REC) && HOST_CPU != CPU_X64
+#if FEAT_SHREC == DYNAREC_JIT && HOST_CPU == CPU_X86
 		else if ( ngen_Rewrite((unat&)ep->ContextRecord->Eip,*(unat*)ep->ContextRecord->Esp,ep->ContextRecord->Eax) )
 		{
 			//remove the call from call stack

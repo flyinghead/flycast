@@ -116,7 +116,6 @@
 */
 
 #define NO_MMU
-//#define HOST_NO_REC
 
 #define DC_PLATFORM_MASK        7
 #define DC_PLATFORM_NORMAL      0   /* Works, for the most part */
@@ -146,7 +145,7 @@
 #define COMPILER_VC  0x30000001
 #define COMPILER_GCC 0x30000002
 
-//FEAT_SHREC, FEAT_AREC
+//FEAT_SHREC, FEAT_AREC, FEAT_DSPREC
 #define DYNAREC_NONE	0x40000001
 #define DYNAREC_JIT		0x40000002
 #define DYNAREC_CPP		0x40000003
@@ -206,16 +205,18 @@
 #if defined(TARGET_NO_REC)
 #define FEAT_SHREC DYNAREC_NONE
 #define FEAT_AREC DYNAREC_NONE
+#define FEAT_DSPREC DYNAREC_NONE
 #endif
 
 #if defined(TARGET_NO_JIT)
 #define FEAT_SHREC DYNAREC_CPP
 #define FEAT_AREC DYNAREC_NONE
+#define FEAT_DSPREC DYNAREC_NONE
 #endif
 
 //defaults
 #ifndef FEAT_SHREC
-#define FEAT_SHREC DYNAREC_JIT
+	#define FEAT_SHREC DYNAREC_JIT
 #endif
 
 #ifndef FEAT_AREC
@@ -223,6 +224,14 @@
 		#define FEAT_AREC DYNAREC_JIT
 	#else
 		#define FEAT_AREC DYNAREC_NONE
+	#endif
+#endif
+
+#ifndef FEAT_DSPREC
+	#if HOST_CPU == CPU_X86
+		#define FEAT_DSPREC DYNAREC_JIT
+	#else
+		#define FEAT_DSPREC DYNAREC_NONE
 	#endif
 #endif
 

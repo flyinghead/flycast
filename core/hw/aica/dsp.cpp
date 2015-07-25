@@ -22,7 +22,7 @@
 
 DECL_ALIGN(4096) dsp_t dsp;
 
-#if HOST_OS==OS_WINDOWS && !defined(HOST_NO_REC)
+#if HOST_CPU == CPU_X86 && FEAT_DSPREC == DYNAREC_JIT
 #include "emitter/x86_emitter.h"
 
 const bool SUPPORT_NOFL=false;

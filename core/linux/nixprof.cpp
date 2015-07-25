@@ -249,7 +249,7 @@ void* prof(void *ptr)
 		//Write shrec syms file !
 		prof_head(prof_out, "jitsym", "SH4");
 		
-		#if !defined(HOST_NO_REC)
+		#if FEAT_SHREC != DYNAREC_NONE
 		sh4_jitsym(prof_out);
 		#endif
 

@@ -66,7 +66,7 @@ vstm r3,{d0-d3}
 bx lr
 
 
-#ifndef HOST_NO_REC
+#if FEAT_SHREC != DYNAREC_NONE
 
 @@@@@@@@@@ ngen_LinkBlock_*****_stub @@@@@@@@@@
 

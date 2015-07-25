@@ -67,7 +67,7 @@ extern u32 samples_gen;
 
 void print_blocks();
 
-#ifndef HOST_NO_REC
+#if FEAT_SHREC != DYNAREC_NONE
 //called every emulated second
 void prof_periodical()
 {
@@ -77,7 +77,7 @@ void prof_periodical()
 	DMAW=SQW=0;
 #endif
 
-#if !defined(HOST_NO_REC)
+#if FEAT_SHREC != DYNAREC_NONE
 	print_blocks();
 #endif
 

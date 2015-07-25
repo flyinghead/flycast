@@ -460,7 +460,7 @@ return;
 
 		if ('a' == key) rt[port]=255;
 		if ('s' == key) lt[port]=255;
-#if !defined(HOST_NO_REC)
+#if FEAT_SHREC != DYNAREC_NONE
 		if ('b' == key)	emit_WriteCodeCache();
 		if ('n' == key)	bm_Reset();
 		if ('m' == key)	bm_Sort();

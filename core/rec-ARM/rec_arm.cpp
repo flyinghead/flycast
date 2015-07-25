@@ -2,7 +2,7 @@
 #include <sys/mman.h>
 #include "types.h"
 
-#ifndef HOST_NO_REC
+#if FEAT_SHREC == DYNAREC_JIT
 #include "hw/sh4/sh4_opcode_list.h"
 
 #include "hw/sh4/sh4_mmr.h"
