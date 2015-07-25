@@ -227,13 +227,13 @@ void UpdateInputState(u32 port)
 		if (GetAsyncKeyState(VK_RIGHT))
 			kcode[port]&=~key_CONT_DPAD_RIGHT;
 
-		if (GetAsyncKeyState('1'))
-			settings.pvr.ta_skip = 1;
+		if (GetAsyncKeyState(VK_F1))
+			settings.pvr.ta_skip = 100;
 
-		if (GetAsyncKeyState('2'))
+		if (GetAsyncKeyState(VK_F2))
 			settings.pvr.ta_skip = 0;
 
-		if (GetAsyncKeyState('0'))
+		if (GetAsyncKeyState(VK_F10))
 			DiscSwap();
 	}
 
