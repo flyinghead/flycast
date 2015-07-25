@@ -13,23 +13,23 @@ u8* sh4_dyna_rcb;
 
 INLINE void ChangeGPR()
 {
-	u32 temp[8];
+	u32 temp;
 	for (int i=0;i<8;i++)
 	{
-		temp[i]=r[i];
+		temp=r[i];
 		r[i]=r_bank[i];
-		r_bank[i]=temp[i];
+		r_bank[i]=temp;
 	}
 }
 
 INLINE void ChangeFP()
 {
-	u32 temp[16];
+	u32 temp;
 	for (int i=0;i<16;i++)
 	{
-		temp[i]=fr_hex[i];
+		temp=fr_hex[i];
 		fr_hex[i]=xf_hex[i];
-		xf_hex[i]=temp[i];
+		xf_hex[i]=temp;
 	}
 }
 
