@@ -2,6 +2,7 @@
 #include "types.h"
 
 #include <map>
+#include <algorithm>
 
 #if FEAT_SHREC == DYNAREC_CPP
 #include "hw/sh4/sh4_opcode_list.h"
@@ -106,35 +107,27 @@ typedef vector<CC_PS> CC_pars_t;
 
 
 struct opcode_cc_aBaCbC {
-	template <int id>
-	struct opex : public opcodeExec {
-		void* fn;
-		u32* rs1;
+	template <typename T>
+	struct opex2 : public opcodeExec  {
+		
 		u32 rs2;
+		u32* rs1;
 		u32* rd;
-		void execute()  {
-			*rd = ((u32(*)(u32, u32))fn)(*rs1, rs2);
-		}
 
 		void setup(const CC_pars_t& prms, void* fun) {
-			fn = fun;
 			rs2 = prms[0].prm->imm_value();
 			rs1 = prms[1].prm->reg_ptr();
 			rd = prms[2].prm->reg_ptr();
 			verify(prms.size() == 3);
 		}
-	};
 
-	template <typename T>
-	struct opex2 : public opex<64> {
 		void execute()  {
-			*rd = ((u32(*)(u32, u32))&T::f1)(*rs1, rs2);
+			*rd = ((u32(*)(u32, u32))&T::impl)(*rs1, rs2);
 		}
 	};
 };
 
 struct opcode_cc_aCaCbC {
-	template <int id>
 	struct opex : public opcodeExec {
 		void* fn;
 		u32* rs1;
@@ -154,15 +147,14 @@ struct opcode_cc_aCaCbC {
 	};
 
 	template <typename T>
-	struct opex2 : public opex<64> {
+	struct opex2 : public opex {
 		void execute()  {
-			*rd = ((u32(*)(u32, u32))&T::f1)(*rs1, *rs2);
+			*rd = ((u32(*)(u32, u32))&T::impl)(*rs1, *rs2);
 		}
 	};
 };
 
 struct opcode_cc_aCbC {
-	template <int id>
 	struct opex : public opcodeExec {
 		void* fn;
 		u32* rs1;
@@ -180,16 +172,14 @@ struct opcode_cc_aCbC {
 	};
 
 	template <typename T>
-	struct opex2 : public opex<64> {
+	struct opex2 : public opex {
 		void execute()  {
-			*rd = ((u32(*)(u32))&T::f1)(*rs1);
+			*rd = ((u32(*)(u32))&T::impl)(*rs1);
 		}
 	};
-
 };
 
 struct opcode_cc_aC {
-	template <int id>
 	struct opex : public opcodeExec {
 		void* fn;
 		u32* rs1;
@@ -203,10 +193,16 @@ struct opcode_cc_aC {
 			verify(prms.size() == 1);
 		}
 	};
+
+	template <typename T>
+	struct opex2 : public opex {
+		void execute()  {
+			((void(*)(u32))&T::impl)(*rs1);
+		}
+	};
 };
 
 struct opcode_cc_aCaCaCbC {
-	template <int id>
 	struct opex : public opcodeExec {
 		void* fn;
 		u32* rs1;
@@ -228,16 +224,15 @@ struct opcode_cc_aCaCaCbC {
 	};
 
 	template <typename T>
-	struct opex2 : public opex<64> {
+	struct opex2 : public opex {
 		void execute()  {
-			*rd = ((u32(*)(u32, u32, u32))&T::f1)(*rs1, *rs2, *rs3);
+			*rd = ((u32(*)(u32, u32, u32))&T::impl)(*rs1, *rs2, *rs3);
 		}
 	};
 };
 
 struct opcode_cc_aCaCaCcCdC {
 	//split this to two cases, u64 and u64L/u32H
-	template <int id>
 	struct opex : public opcodeExec {
 		void* fn;
 		u32* rs1;
@@ -265,9 +260,9 @@ struct opcode_cc_aCaCaCcCdC {
 		}
 	};
 	template <typename T>
-	struct opex2 : public opex<64> {
+	struct opex2 : public opex {
 		void execute()  {
-			auto rv = ((u64(*)(u32, u32, u32))&T::f1)(*rs1, *rs2, *rs3);
+			auto rv = ((u64(*)(u32, u32, u32))&T::impl)(*rs1, *rs2, *rs3);
 
 			*rd = (u32)rv;
 			*rd2 = rv >> 32;
@@ -277,7 +272,6 @@ struct opcode_cc_aCaCaCcCdC {
 };
 
 struct opcode_cc_aCaCcCdC {
-	template <int id>
 	struct opex : public opcodeExec {
 		void* fn;
 		u32* rs1;
@@ -302,9 +296,9 @@ struct opcode_cc_aCaCcCdC {
 	};
 
 	template <typename T>
-	struct opex2 : public opex<64> {
+	struct opex2 : public opex {
 		void execute()  {
-			auto rv = ((u64(*)(u32, u32))T::f1)(*rs1, *rs2);
+			auto rv = ((u64(*)(u32, u32))&T::impl)(*rs1, *rs2);
 			*rd = (u32)rv;
 			*rd2 = rv >> 32;
 		}
@@ -312,7 +306,6 @@ struct opcode_cc_aCaCcCdC {
 };
 
 struct opcode_cc_eDeDeDfD {
-	template <int id>
 	struct opex : public opcodeExec {
 		void* fn;
 		f32* rs1;
@@ -333,16 +326,15 @@ struct opcode_cc_eDeDeDfD {
 	};
 
 	template <typename T>
-	struct opex2 : public opex<64> {
+	struct opex2 : public opex {
 		void execute()  {
-			*rd = ((f32(*)(f32, f32, f32))&T::f1)(*rs1, *rs2, *rs3);
+			*rd = ((f32(*)(f32, f32, f32))&T::impl)(*rs1, *rs2, *rs3);
 		}
 	};
 
 };
 
 struct opcode_cc_eDeDfD {
-	template <int id>
 	struct opex : public opcodeExec {
 		void* fn;
 		f32* rs1;
@@ -361,15 +353,14 @@ struct opcode_cc_eDeDfD {
 	};
 
 	template <typename T>
-	struct opex2 : public opex<64> {
+	struct opex2 : public opex {
 		void execute()  {
-			*rd = ((f32(*)(f32, f32))&T::f1)(*rs1, *rs2);
+			*rd = ((f32(*)(f32, f32))&T::impl)(*rs1, *rs2);
 		}
 	};
 };
 
 struct opcode_cc_eDeDbC {
-	template <int id>
 	struct opex : public opcodeExec {
 		void* fn;
 		f32* rs1;
@@ -388,15 +379,14 @@ struct opcode_cc_eDeDbC {
 	};
 
 	template <typename T>
-	struct opex2 : public opex<64> {
+	struct opex2 : public opex {
 		void execute()  {
-			*rd = ((u32(*)(f32, f32))&T::f1)(*rs1, *rs2);
+			*rd = ((u32(*)(f32, f32))&T::impl)(*rs1, *rs2);
 		}
 	};
 };
 
 struct opcode_cc_eDbC {
-	template <int id>
 	struct opex : public opcodeExec {
 		void* fn;
 		f32* rs1;
@@ -411,10 +401,16 @@ struct opcode_cc_eDbC {
 			rd = (u32*)prms[1].prm->reg_ptr();
 		}
 	};
+
+	template <typename T>
+	struct opex2 : public opex {
+		void execute()  {
+			*rd = ((u32(*)(f32))&T::impl)(*rs1);
+		}
+	};
 };
 
 struct opcode_cc_aCfD {
-	template <int id>
 	struct opex : public opcodeExec {
 		void* fn;
 		u32* rs1;
@@ -429,10 +425,16 @@ struct opcode_cc_aCfD {
 			rd = (f32*)prms[1].prm->reg_ptr();
 		}
 	};
+
+	template <typename T>
+	struct opex2 : public opex {
+		void execute()  {
+			*rd = ((f32(*)(u32))&T::impl)(*rs1);
+		}
+	};
 };
 
 struct opcode_cc_eDfD {
-	template <int id>
 	struct opex : public opcodeExec {
 		void* fn;
 		f32* rs1;
@@ -449,15 +451,14 @@ struct opcode_cc_eDfD {
 	};
 
 	template <typename T>
-	struct opex2 : public opex<64> {
+	struct opex2 : public opex {
 		void execute()  {
-			*rd = ((f32(*)(f32))&T::f1)(*rs1);
+			*rd = ((f32(*)(f32))&T::impl)(*rs1);
 		}
 	};
 };
 
 struct opcode_cc_aCgE {
-	template <int id>
 	struct opex : public opcodeExec {
 		void* fn;
 		u32* rs1;
@@ -472,10 +473,16 @@ struct opcode_cc_aCgE {
 			rd = (f32*)prms[1].prm->reg_ptr();
 		}
 	};
+
+	template <typename T>
+	struct opex2 : public opex {
+		void execute()  {
+			((void(*)(f32*, u32))&T::impl)(rd, *rs1);
+		}
+	};
 };
 
 struct opcode_cc_gJgHgH {
-	template <int id>
 	struct opex : public opcodeExec {
 		void* fn;
 		f32* rs2;
@@ -492,10 +499,16 @@ struct opcode_cc_gJgHgH {
 			rd = (f32*)prms[2].prm->reg_ptr();
 		}
 	};
+
+	template <typename T>
+	struct opex2 : public opex {
+		void execute()  {
+			((void(*)(f32*, f32*, f32*))&T::impl)(rd, rs1, rs2);
+		}
+	};
 };
 
 struct opcode_cc_gHgHfD {
-	template <int id>
 	struct opex : public opcodeExec {
 		void* fn;
 		f32* rs2;
@@ -514,9 +527,9 @@ struct opcode_cc_gHgHfD {
 	};
 
 	template <typename T>
-	struct opex2 : public opex<64> {
+	struct opex2 : public opex {
 		void execute()  {
-			*rd = ((f32(*)(f32*, f32*))&T::f1)(rs1, rs2);
+			*rd = ((f32(*)(f32*, f32*))&T::impl)(rs1, rs2);
 		}
 	};
 };
@@ -682,7 +695,7 @@ struct opcode_writem_offs_imm : public opcodeExec {
 };
 
 #if !defined(_DEBUG)
-	#define DREP_1(x, phrase) if (x < cnt) ops[x]->execute();
+	#define DREP_1(x, phrase) if (x < cnt) ops[x]->execute(); else return;
 	#define DREP_2(x, phrase) DREP_1(x, phrase) DREP_1(x+1, phrase)
 	#define DREP_4(x, phrase) DREP_2(x, phrase) DREP_2(x+2, phrase)
 	#define DREP_8(x, phrase) DREP_4(x, phrase) DREP_4(x+4, phrase)
@@ -743,24 +756,6 @@ fnrv fnnCtor<0>(int cycles) {
 	return rvb;
 }
 
-
-#define XREP_1(x, phrase) &createType<x, CTR>
-#define XREP_2(x, phrase) XREP_1(x, phrase), XREP_1(x+1, phrase)
-#define XREP_4(x, phrase) XREP_2(x, phrase), XREP_2(x+2, phrase)
-#define XREP_8(x, phrase) XREP_4(x, phrase), XREP_4(x+4, phrase)
-#define XREP_16(x, phrase) XREP_8(x, phrase), XREP_8(x+8, phrase)
-#define XREP_32(x, phrase) XREP_16(x, phrase), XREP_16(x+16, phrase)
-#define XREP_64(x, phrase) XREP_32(x, phrase), XREP_32(x+32, phrase)
-
-template <int id, typename CTR>
-opcodeExec* createType(const CC_pars_t& prms, void* fun) {
-	typedef typename CTR::template opex<id> thetype;
-	auto rv = new thetype();
-
-	rv->setup(prms, fun);
-	return rv;
-}
-
 template <typename shilop, typename CTR>
 opcodeExec* createType2(const CC_pars_t& prms, void* fun) {
 	typedef typename CTR::template opex2<shilop> thetype;
@@ -777,7 +772,7 @@ map<void*, int> funs;
 int funs_id_count;
 
 template <typename CTR>
-opcodeExec* createType_fast(const CC_pars_t& prms, void* fun) {
+opcodeExec* createType_fast(const CC_pars_t& prms, void* fun, shil_opcode* opcode) {
 	return 0;
 }
 
@@ -785,7 +780,7 @@ opcodeExec* createType_fast(const CC_pars_t& prms, void* fun) {
 
 #define FAST_sig(sig, ...) \
 template <> \
-opcodeExec* createType_fast<OPCODE_CC(sig)>(const CC_pars_t& prms, void* fun) { \
+opcodeExec* createType_fast<OPCODE_CC(sig)>(const CC_pars_t& prms, void* fun, shil_opcode* opcode) { \
 	typedef OPCODE_CC(sig) CTR; \
 	\
 	static map<void*, opcodeExec* (*)(const CC_pars_t& prms, void* fun)> funsf = {\
@@ -801,7 +796,8 @@ opcodeExec* createType_fast<OPCODE_CC(sig)>(const CC_pars_t& prms, void* fun) { 
 	} \
 }
 
-#define FAST_po(n) { (void*)&shil_opcl_##n::f1, &createType2 < shil_opcl_##n, CTR > },
+#define FAST_po2(n,fn) { (void*)&shil_opcl_##n::fn::impl, &createType2 < shil_opcl_##n::fn, CTR > },
+#define FAST_po(n) FAST_po2(n, f1)
 
 FAST_sig(aCaCbC)
 FAST_po(and)
@@ -862,6 +858,7 @@ FAST_sig(eDfD)
 FAST_po(fneg)
 FAST_po(fabs)
 FAST_po(fsrra)
+FAST_po(fsqrt)
 FAST_gis
 
 
@@ -880,6 +877,7 @@ FAST_gis
 
 FAST_sig(aCaCcCdC)
 FAST_po(div32u)
+FAST_po(div32s)
 FAST_gis
 
 FAST_sig(aCaCaCcCdC)
@@ -894,29 +892,60 @@ FAST_gis
 FAST_sig(aCbC)
 FAST_po(neg)
 FAST_po(not)
+FAST_po(ext_s8)
 FAST_po(ext_s16)
+FAST_po(swaplb)
 FAST_gis
 
-template <typename CTR>
-opcodeExec* createType(const CC_pars_t& prms, void* fun) {
+FAST_sig(aCfD)
+FAST_po(cvt_i2f_z)
+FAST_po(cvt_i2f_n)
+FAST_gis
 
-	auto frv = createType_fast<CTR>(prms, fun);
+
+FAST_sig(aCgE)
+FAST_po2(fsca, fsca_table)
+FAST_gis
+
+FAST_sig(eDbC)
+FAST_po(cvt_f2i_t)
+FAST_gis
+
+FAST_sig(gJgHgH)
+FAST_po(ftrv)
+FAST_gis
+
+FAST_sig(aC)
+FAST_po2(pref, f1)
+FAST_po2(pref, f2)
+FAST_gis
+
+typedef opcodeExec*(*foas)(const CC_pars_t& prms, void* fun, shil_opcode* opcode);
+
+string getCTN(foas code);
+
+template <typename CTR>
+opcodeExec* createType(const CC_pars_t& prms, void* fun, shil_opcode* opcode) {
+
+	auto frv = createType_fast<CTR>(prms, fun, opcode);
 	if (frv)
 		return frv;
 
 	if (!funs.count(fun)) {
 		funs[fun] = funs_id_count++;
+
+		printf("DEFINE %s: FAST_po(%s)\n", getCTN(&createType<CTR>).c_str(), shil_opcode_name(opcode->op));
 	}
 
-	static opcodeExec* (*ctors[])(const CC_pars_t& prms, void* fun) = { XREP_64(0, __noop) };
+	typedef typename CTR::opex thetype;
+	auto rv = new thetype();
 
-	int id = funs[fun];
-
-	return ctors[id](prms, fun);
+	rv->setup(prms, fun);
+	return rv;
 }
 
-map< string, opcodeExec*(*)(const CC_pars_t& prms, void* fun)> unmap = {
-	{ "aBaCbC", &createType<opcode_cc_aBaCbC> },
+map< string, foas> unmap = {
+	{ "aBaCbC", &createType_fast<opcode_cc_aBaCbC> },
 	{ "aCaCbC", &createType<opcode_cc_aCaCbC> },
 	{ "aCbC", &createType<opcode_cc_aCbC> },
 	{ "aC", &createType<opcode_cc_aC> },
@@ -938,6 +967,12 @@ map< string, opcodeExec*(*)(const CC_pars_t& prms, void* fun)> unmap = {
 	{ "gJgHgH", &createType<opcode_cc_gJgHgH> },
 	{ "gHgHfD", &createType<opcode_cc_gHgHfD> },
 };
+
+string getCTN(foas f) {
+	auto it = find_if(unmap.begin(), unmap.end(), [f](const map< string, foas>::value_type& s) { return s.second == f; });
+
+	return it->first;
+}
 
 struct {
 	void* fnb;
@@ -1296,7 +1331,7 @@ public:
 		}
 		
 		if (unmap.count(nm)) {
-			ptrsg[opcode_index] = unmap[nm](CC_pars, ccfn);
+			ptrsg[opcode_index] = unmap[nm](CC_pars, ccfn, op);
 		}
 		else {
 			printf("IMPLEMENT CC_CALL CLASS: %s\n", nm.c_str());
