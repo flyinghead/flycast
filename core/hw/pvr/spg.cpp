@@ -86,6 +86,8 @@ extern double speed_load_mspdf;
 double speed_load_mspdf;
 #endif
 
+int mips_counter;
+
 double full_rps;
 
 u32 fskip=0;
@@ -184,12 +186,13 @@ int spg_line_sched(int tag, int cycl, int jit)
 					spd_cpu*100/200,spd_vbs,
 					mode,res,fullvbs,
 					spd_fps,fskip/ts);
-				#else					
-				sprintf(fpsStr,"%s/%c - %4.2f (%4.2f) - %4.2f - V: %4.2f (%.2f, %s%s%4.2f) R: %4.2f+%4.2f VTX: %4.2f%c", 
+				#else
+				sprintf(fpsStr,"%s/%c - %4.2f (%4.2f) - %4.2f - V: %4.2f (%.2f, %s%s%4.2f) R: %4.2f+%4.2f VTX: %4.2f%c, MIPS: %.2f", 
 					VER_SHORTNAME,'n',mspdf,speed_load_mspdf,spd_cpu*100/200,spd_vbs,
 					spd_vbs/full_rps,mode,res,fullvbs,
 					spd_fps,fskip/ts
-					,mv,mv_c);
+					, mv, mv_c, mips_counter/ 1024.0 / 1024.0);
+					mips_counter = 0;
 				#endif
 				
 				fskip=0;

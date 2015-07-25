@@ -19,6 +19,9 @@
 #define SHIL_MODE 2
 #include "hw/sh4/dyna/shil_canonical.h"
 
+
+#define MIPS_COUNTER 0
+
 struct DynaRBI : RuntimeBlockInfo
 {
 	virtual u32 Relink() {
@@ -34,6 +37,7 @@ struct DynaRBI : RuntimeBlockInfo
 
 
 int cycle_counter;
+extern int mips_counter;
 
 void ngen_FailedToFindBlock_internal() {
 	rdv_FailedToFindBlock(Sh4cntx.pc);
@@ -677,16 +681,20 @@ struct opcode_writem_offs_imm : public opcodeExec {
 	}
 };
 
-#define DREP_1(x, phrase) if (x < cnt) ops[x]->execute();
-#define DREP_2(x, phrase) DREP_1(x, phrase) DREP_1(x+1, phrase)
-#define DREP_4(x, phrase) DREP_2(x, phrase) DREP_2(x+2, phrase)
-#define DREP_8(x, phrase) DREP_4(x, phrase) DREP_4(x+4, phrase)
-#define DREP_16(x, phrase) DREP_8(x, phrase) DREP_8(x+8, phrase)
-#define DREP_32(x, phrase) DREP_16(x, phrase) DREP_16(x+16, phrase)
-#define DREP_64(x, phrase) DREP_32(x, phrase) DREP_32(x+32, phrase)
-#define DREP_128(x, phrase) DREP_64(x, phrase) DREP_64(x+64, phrase)
-#define DREP_256(x, phrase) DREP_128(x, phrase) DREP_128(x+128, phrase)
-#define DREP_512(x, phrase) DREP_256(x, phrase) DREP_256(x+256, phrase)
+#if !defined(_DEBUG)
+	#define DREP_1(x, phrase) if (x < cnt) ops[x]->execute();
+	#define DREP_2(x, phrase) DREP_1(x, phrase) DREP_1(x+1, phrase)
+	#define DREP_4(x, phrase) DREP_2(x, phrase) DREP_2(x+2, phrase)
+	#define DREP_8(x, phrase) DREP_4(x, phrase) DREP_4(x+4, phrase)
+	#define DREP_16(x, phrase) DREP_8(x, phrase) DREP_8(x+8, phrase)
+	#define DREP_32(x, phrase) DREP_16(x, phrase) DREP_16(x+16, phrase)
+	#define DREP_64(x, phrase) DREP_32(x, phrase) DREP_32(x+32, phrase)
+	#define DREP_128(x, phrase) DREP_64(x, phrase) DREP_64(x+64, phrase)
+	#define DREP_256(x, phrase) DREP_128(x, phrase) DREP_128(x+128, phrase)
+	#define DREP_512(x, phrase) DREP_256(x, phrase) DREP_256(x+256, phrase)
+#else
+	#define DREP_512(x, phrase) for (int i=0; i<cnt; i++) ops[i]->execute();
+#endif
 
 template <int cnt>
 class fnblock {
@@ -695,6 +703,10 @@ public:
 	int cc;
 	void execute() {
 		cycle_counter -= cc;
+
+#if MIPS_COUNTER
+		mips_counter += cnt;
+#endif
 
 		DREP_512(0, phrase);
 	}
