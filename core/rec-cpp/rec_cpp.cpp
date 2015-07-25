@@ -73,7 +73,7 @@ void ngen_init()
 void ngen_GetFeatures(ngen_features* dst)
 {
 	dst->InterpreterFallback = false;
-	dst->OnlyDynamicEnds = true;
+	dst->OnlyDynamicEnds = false;
 }
 
 RuntimeBlockInfo* ngen_AllocateBlock()
@@ -534,6 +534,57 @@ struct opcode_cc_gHgHfD {
 	};
 };
 
+struct opcode_cc_vV {
+	struct opex : public opcodeExec {
+		void* fn;
+		
+		void execute()  {
+			((void(*)())fn)();
+		}
+
+		void setup(const CC_pars_t& prms, void* fun) {
+			fn = fun;
+		}
+	};
+
+	template <typename T>
+	struct opex2 : public opex {
+		void execute()  {
+			((void(*)())&T::impl)();
+		}
+	};
+};
+
+//u64* fd1,u64* fd2,u64* fs1,u64* fs2
+//slightly violates the type, as it's FV4PTR but we pass u64*
+struct opcode_cc_gJgJgJgJ {
+	struct opex : public opcodeExec {
+		void* fn;
+		u64* rs2;
+		u64* rs1;
+		u64* rd;
+		u64* rd2;
+		void execute()  {
+			((void(*)(u64*, u64*, u64*, u64*))fn)(rd, rd2, rs1, rs2);
+		}
+
+		void setup(const CC_pars_t& prms, void* fun) {
+			fn = fun;
+			rs2 = (u64*)prms[0].prm->reg_ptr();
+			rs1 = (u64*)prms[1].prm->reg_ptr();
+			rd2 = (u64*)prms[2].prm->reg_ptr();
+			rd = (u64*)prms[3].prm->reg_ptr();
+		}
+	};
+
+	template <typename T>
+	struct opex2 : public opex {
+		void execute()  {
+			((void(*)(u64*, u64*, u64*, u64*))&T::impl)(rd, rd2, rs1, rs2);
+		}
+	};
+};
+
 struct opcode_ifb_pc : public opcodeExec {
 	OpCallFP* oph;
 	u32 pc;
@@ -557,7 +608,7 @@ struct opcode_ifb : public opcodeExec {
 struct opcode_jdyn : public opcodeExec {
 	u32* src;
 	void execute()  {
-		next_pc = *src;
+		Sh4cntx.jdyn = *src;
 	}
 };
 
@@ -565,7 +616,7 @@ struct opcode_jdyn_imm : public opcodeExec {
 	u32* src;
 	u32 imm;
 	void execute()  {
-		next_pc = *src + imm;
+		Sh4cntx.jdyn = *src + imm;
 	}
 };
 
@@ -691,6 +742,70 @@ struct opcode_writem_offs_imm : public opcodeExec {
 	void execute()  {
 		auto a = *src + offs;
 		do_writem(src2, a, sz);
+	}
+};
+
+template<int end_type>
+struct opcode_blockend : public opcodeExec {
+	int next_pc_value;
+	int branch_pc_value;
+	u32* jdyn;
+
+	opcodeExec* setup(RuntimeBlockInfo* block) {
+		next_pc_value = block->NextBlock;
+		branch_pc_value = block->BranchBlock;
+
+		jdyn = &Sh4cntx.jdyn;
+		if (!block->has_jcond && BET_GET_CLS(block->BlockType) == BET_CLS_COND) {
+			jdyn = &sr.T;
+		}
+		return this;
+	}
+
+	void execute()  {
+		//do whatever
+		
+
+		switch (end_type) {
+
+		case BET_StaticJump:
+		case BET_StaticCall:
+			next_pc = branch_pc_value;
+			break;
+
+		case BET_Cond_0:
+			if (*jdyn != 0)
+				next_pc = next_pc_value;
+			else
+				next_pc = branch_pc_value;
+			break;
+
+		case BET_Cond_1:
+			if (*jdyn != 1)
+				next_pc = next_pc_value;
+			else
+				next_pc = branch_pc_value;
+			break;
+
+		case BET_DynamicJump:
+		case BET_DynamicCall:
+		case BET_DynamicRet:
+			next_pc = *jdyn;
+			break;
+
+		case BET_DynamicIntr:
+		case BET_StaticIntr:
+			if (end_type == BET_DynamicIntr)
+				next_pc = *jdyn;
+			else
+				next_pc = next_pc_value;
+
+			UpdateINTC();
+			break;
+
+		default:
+			die("NOT GONNA HAPPEN TODAY, ALRIGHY?");
+		}
 	}
 };
 
@@ -920,6 +1035,16 @@ FAST_po2(pref, f1)
 FAST_po2(pref, f2)
 FAST_gis
 
+FAST_sig(vV)
+FAST_po(sync_sr)
+FAST_po(sync_fpscr)
+FAST_gis
+
+FAST_sig(gJgJgJgJ)
+FAST_po(frswap)
+FAST_gis
+
+
 typedef opcodeExec*(*foas)(const CC_pars_t& prms, void* fun, shil_opcode* opcode);
 
 string getCTN(foas code);
@@ -966,6 +1091,8 @@ map< string, foas> unmap = {
 	{ "aCgE", &createType<opcode_cc_aCgE> },
 	{ "gJgHgH", &createType<opcode_cc_gJgHgH> },
 	{ "gHgHfD", &createType<opcode_cc_gHgHfD> },
+	{ "gJgJgJgJ", &createType<opcode_cc_gJgJgJgJ> },
+	{ "vV", &createType<opcode_cc_vV> },
 };
 
 string getCTN(foas f) {
@@ -1029,7 +1156,8 @@ public:
 	opcodeExec** ptrsg;
 	void compile(RuntimeBlockInfo* block, bool force_checks, bool reset, bool staging, bool optimise) {
 		
-		auto ptrs = fnnCtor_forreal(block->oplist.size())(block->guest_cycles);
+		//we need an extra one for the end opcode
+		auto ptrs = fnnCtor_forreal(block->oplist.size() + 1)(block->guest_cycles);
 
 		ptrsg = ptrs.ptrs;
 
@@ -1068,7 +1196,8 @@ public:
 				}
 			}
 			break;
-				
+			
+			case shop_jcond:
 			case shop_jdyn:
 			{
 				if (op.rs2.is_imm()) {
@@ -1298,9 +1427,29 @@ public:
 			}
 		}
 
-		verify(block->BlockType == BET_DynamicJump);
+		//Block end opcode
+		{
+			opcodeExec* op;
 
-		//emit_Skip(getSize());
+			#define CASEWS(n) case n: op = (new opcode_blockend<n>())->setup(block); break
+
+			switch (block->BlockType) {
+				CASEWS(BET_StaticJump);
+				CASEWS(BET_StaticCall);
+				CASEWS(BET_StaticIntr);
+
+				CASEWS(BET_DynamicJump);
+				CASEWS(BET_DynamicCall);
+				CASEWS(BET_DynamicRet);
+				CASEWS(BET_DynamicIntr);
+
+				CASEWS(BET_Cond_0);
+				CASEWS(BET_Cond_1);
+			}
+
+			ptrs.ptrs[block->oplist.size()] = op;
+		}
+
 	}
 
 	CC_pars_t CC_pars;
@@ -1329,6 +1478,8 @@ public:
 			nm += (char)(m.type + 'a');
 			nm += (char)(m.prm->type + 'A');
 		}
+		if (!nm.size())
+			nm = "vV";
 		
 		if (unmap.count(nm)) {
 			ptrsg[opcode_index] = unmap[nm](CC_pars, ccfn, op);
