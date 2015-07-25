@@ -25,7 +25,7 @@
 op_agent_t          oprofHandle;
 #endif
 
-#ifndef HOST_NO_REC
+#if FEAT_SHREC != DYNAREC_NONE
 
 
 typedef vector<RuntimeBlockInfo*> bm_List;
@@ -683,5 +683,5 @@ void print_blocks()
 
 	if (f) fclose(f);
 }
-#endif //#ifndef HOST_NO_REC
+#endif
 

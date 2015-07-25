@@ -5,7 +5,7 @@
 
 #include "types.h"
 
-#ifndef HOST_NO_REC
+#if FEAT_SHREC != DYNAREC_NONE
 
 #include "decoder.h"
 #include "shil.h"
@@ -1040,9 +1040,7 @@ void dec_DecodeBlock(RuntimeBlockInfo* rbi,u32 max_cycles)
 {
 	blk=rbi;
 	state.Setup(blk->addr,blk->fpu_cfg);
-#ifndef HOST_NO_REC
 	ngen_GetFeatures(&state.ngen);
-#endif
 	
 	blk->guest_opcodes=0;
 	

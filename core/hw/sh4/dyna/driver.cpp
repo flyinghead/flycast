@@ -25,7 +25,7 @@
 #include "ngen.h"
 #include "decoder.h"
 
-#ifndef HOST_NO_REC
+#if FEAT_SHREC != DYNAREC_NONE
 //uh uh
 
 #if HOST_OS == OS_WINDOWS
@@ -459,24 +459,19 @@ bool recSh4_IsCpuRunning()
 {
 	return Sh4_int_IsCpuRunning();
 }
-#endif
 
 void Get_Sh4Recompiler(sh4_if* rv)
 {
-	#ifdef HOST_NO_REC
-	Get_Sh4Interpreter(rv);
-	#else
-	rv->Run=recSh4_Run;
-	rv->Stop=recSh4_Stop;
-	rv->Step=recSh4_Step;
-	rv->Skip=recSh4_Skip;
-	rv->Reset=recSh4_Reset;
-	rv->Init=recSh4_Init;
-	rv->Term=recSh4_Term;
-	rv->IsCpuRunning=recSh4_IsCpuRunning;
+	rv->Run = recSh4_Run;
+	rv->Stop = recSh4_Stop;
+	rv->Step = recSh4_Step;
+	rv->Skip = recSh4_Skip;
+	rv->Reset = recSh4_Reset;
+	rv->Init = recSh4_Init;
+	rv->Term = recSh4_Term;
+	rv->IsCpuRunning = recSh4_IsCpuRunning;
 	//rv->GetRegister=Sh4_int_GetRegister;
 	//rv->SetRegister=Sh4_int_SetRegister;
-	rv->ResetCache=recSh4_ClearCache;
-	#endif
+	rv->ResetCache = recSh4_ClearCache;
 }
-
+#endif

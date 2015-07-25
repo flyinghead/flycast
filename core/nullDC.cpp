@@ -183,7 +183,7 @@ int dc_init(int argc,wchar* argv[])
 			printf("Did not load bios, using reios\n");
 	}
 
-#if !defined(HOST_NO_REC)
+#if FEAT_SHREC != DYNAREC_NONE
 	if(settings.dynarec.Enable)
 	{
 		Get_Sh4Recompiler(&sh4_cpu);
