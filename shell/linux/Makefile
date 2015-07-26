@@ -2,7 +2,7 @@
 LOCAL_PATH := $(call my-dir)
 FOR_LINUX :=1
 NOT_ARM := 1
-X64_REC := 1
+
 #NO_REC := 1
 #NO_REND := 1
 WEBUI :=1 
@@ -10,10 +10,31 @@ USE_ALSA := 1
 USE_OSS := 1
 #USE_PULSEAUDIO := 1
 
+MFLAGS := 
+ASFLAGS := 
+LDFLAGS :=
+CFLAGS := 
+CXXFLAGS :=
+
+ifeq (,$(ARCH))
+	ARCH = $(shell uname -m)
+endif
+
+ifeq ($(ARCH), $(filter $(ARCH), i386 i686))
+		X86_REC := 1
+		MFLAGS += -m32
+		ASFLAGS += -32
+		LDFLAGS += -m32
+		CFLAGS += -m32 -D TARGET_LINUX_x86
+		CXXFLAGS += -fno-exceptions
+else
+		X64_REC := 1
+		CFLAGS += -D TARGET_LINUX_x64
+		CXXFLAGS += -fexceptions
+endif
+
 RZDCY_SRC_DIR = ../../core
-
 include $(RZDCY_SRC_DIR)/core.mk
-
 
 CXX=${CC_PREFIX}g++
 CC=${CC_PREFIX}gcc
@@ -22,26 +43,15 @@ STRIP=${CC_PREFIX}strip
 
 LD=${CC}
 
-MFLAGS := #-m32
-#-marm -march=armv7-a -mtune=cortex-a9 -mfpu=neon -mfloat-abi=softfp -funroll-loops
-ASFLAGS := 
-#-march=armv7-a -mfpu=neon -mfloat-abi=softfp
-
-LDFLAGS := 
 LDFLAGS += -g -Wl,-Map,$(notdir $@).map,--gc-sections -Wl,-O3 -Wl,--sort-common
 
-CFLAGS := 
-CFLAGS += -g -O3 -D RELEASE -c -D TARGET_LINUX_x86 -D USES_HOMEDIR -D TARGET_NO_AREC #-D NO_REND
+CFLAGS += -g -O3 -D RELEASE -c -D USES_HOMEDIR -D TARGET_NO_AREC #-D NO_REND
 CFLAGS += -D SUPPORT_X11
 CFLAGS += -frename-registers -fno-strict-aliasing -fsingle-precision-constant 
 CFLAGS += -ffast-math -ftree-vectorize 
 
-
-#-fprefetch-loop-arrays 
-#-std=c++0x
-CXXFLAGS += $(CFLAGS) $(MFLAGS) -fexceptions -fno-rtti -fpermissive
+CXXFLAGS += $(CFLAGS) $(MFLAGS) -fno-rtti -fpermissive -fno-operator-names
 CXXFLAGS += -D SUPPORT_X11 
-CXXFLAGS += -fno-operator-names
 
 ifdef PGO_MAKE
 	CFLAGS += -fprofile-generate -pg
