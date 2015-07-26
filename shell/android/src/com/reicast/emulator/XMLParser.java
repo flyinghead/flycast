@@ -10,6 +10,7 @@ import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.URLEncoder;
 import java.util.Locale;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -56,12 +57,16 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 	private Context mContext;
 	private String game_name;
 	private Drawable game_icon;
+	private boolean getId;
+	private String gameId;
 
-	private static final String game_index = "http://thegamesdb.net/api/GetGame.php?platform=sega+dreamcast&name=";
+	private static final String game_index = "http://thegamesdb.net/api/GetGamesList.php?platform=sega+dreamcast&name=";
+	private static final String game_id = "http://thegamesdb.net/api/GetGame.php?platform=sega+dreamcast&id=";
 	private SparseArray<String> game_details = new SparseArray<String>();
 	private SparseArray<Bitmap> game_preview = new SparseArray<Bitmap>();
 
 	public XMLParser(File game, int index, SharedPreferences mPrefs) {
+		this.getId = false;
 		this.mPrefs = mPrefs;
 		this.game = game;
 		this.index = index;
@@ -70,6 +75,10 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 	public void setViewParent(Context mContext, View childview) {
 		this.mContext = mContext;
 		this.childview = childview;
+	}
+	
+	public void setGameID(String id) {
+		this.gameId = id;
 	}
 
 	protected void onPreExecute() {
@@ -133,24 +142,21 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 	protected String doInBackground(String... params) {
 		String filename = game_name = params[0];
 		if (isNetworkAvailable() && mPrefs.getBoolean(Config.pref_gamedetails, false)) {
-			if (filename.startsWith("[")) {
-				filename = filename.substring(filename.indexOf("]") + 1, filename.length());
-			}
-			if (filename.contains("[")) {
-				filename = filename.substring(0, filename.indexOf("["));
+			DefaultHttpClient httpClient = new DefaultHttpClient();
+			HttpPost httpPost;
+			if (gameId != null) {
+				httpPost = new HttpPost(game_id + gameId);
 			} else {
+				getId = true;
 				filename = filename.substring(0, filename.lastIndexOf("."));
-			}
-			filename = filename.replace("_", " ").replace(":", " ");
-			filename = filename.replaceAll("[^\\p{Alpha}\\p{Digit}]+"," ");
-			filename = filename.replace("  ", " ").replace(" ", "+");
-			if (filename.endsWith("+")) {
-				filename = filename.substring(0, filename.length() - 1);
+				try {
+					filename = URLEncoder.encode(filename, "UTF-8");
+				} catch (UnsupportedEncodingException e) {
+					filename = filename.replace(" ", "+");
+				}
+				httpPost = new HttpPost(game_index + filename);
 			}
 			try {
-				DefaultHttpClient httpClient = new DefaultHttpClient();
-				HttpPost httpPost = new HttpPost(game_index + filename);
-
 				HttpResponse httpResponse = httpClient.execute(httpPost);
 				HttpEntity httpEntity = httpResponse.getEntity();
 				return EntityUtils.toString(httpEntity);
@@ -172,20 +178,27 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 				Document doc = getDomElement(gameData);
 				if (doc.getElementsByTagName("Game") != null) {
 					Element root = (Element) doc.getElementsByTagName("Game").item(0);
-					game_name = getValue(root, "GameTitle");
-					String details = getValue(root, "Overview");
-					game_details.put(index, details);
-					Element images = (Element) root.getElementsByTagName("Images").item(0);
-					Element boxart = null;
-					if (images.getElementsByTagName("boxart").getLength() > 1) {
-						boxart = (Element) images.getElementsByTagName("boxart").item(1);
-					} else if (images.getElementsByTagName("boxart").getLength() == 1) {
-						boxart = (Element) images.getElementsByTagName("boxart").item(0);
-					}
-					if (boxart != null) {
-						String image = "http://thegamesdb.net/banners/" + getElementValue(boxart);
-						game_preview.put(index, decodeBitmapIcon(image));
-						game_icon = new BitmapDrawable(decodeBitmapIcon(image));
+					if (getId) {
+						XMLParser xmlParser = new XMLParser(game, index, mPrefs);
+						xmlParser.setViewParent(mContext, childview);
+						xmlParser.setGameID(getValue(root, "id"));
+						xmlParser.execute(game_name);
+					} else {
+						game_name = getValue(root, "GameTitle");
+						String details = getValue(root, "Overview");
+						game_details.put(index, details);
+						Element images = (Element) root.getElementsByTagName("Images").item(0);
+						Element boxart = null;
+						if (images.getElementsByTagName("boxart").getLength() > 1) {
+							boxart = (Element) images.getElementsByTagName("boxart").item(1);
+						} else if (images.getElementsByTagName("boxart").getLength() == 1) {
+							boxart = (Element) images.getElementsByTagName("boxart").item(0);
+						}
+						if (boxart != null) {
+							String image = "http://thegamesdb.net/banners/" + getElementValue(boxart);
+							game_preview.put(index, decodeBitmapIcon(image));
+							game_icon = new BitmapDrawable(decodeBitmapIcon(image));
+						}
 					}
 				} else {
 					initializeDefaults();
