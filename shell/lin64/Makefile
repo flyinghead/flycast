@@ -31,7 +31,7 @@ LDFLAGS :=
 LDFLAGS += -g -Wl,-Map,$(notdir $@).map,--gc-sections -Wl,-O3 -Wl,--sort-common
 
 CFLAGS := 
-CFLAGS += -g -O3 -D RELEASE -c -D TARGET_LINUX_x86 -D USES_HOMEDIR -D HOST_NO_AREC #-D NO_REND
+CFLAGS += -g -O3 -D RELEASE -c -D TARGET_LINUX_x86 -D USES_HOMEDIR -D TARGET_NO_AREC #-D NO_REND
 CFLAGS += -D SUPPORT_X11
 CFLAGS += -frename-registers -fno-strict-aliasing -fsingle-precision-constant 
 CFLAGS += -ffast-math -ftree-vectorize 
