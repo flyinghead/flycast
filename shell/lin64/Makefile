@@ -27,9 +27,11 @@ MFLAGS := #-m32
 ASFLAGS := 
 #-march=armv7-a -mfpu=neon -mfloat-abi=softfp
 
-LDFLAGS	:= 	-g -Wl,-Map,$(notdir $@).map,--gc-sections -Wl,-O3 -Wl,--sort-common 
+LDFLAGS := 
+LDFLAGS += -g -Wl,-Map,$(notdir $@).map,--gc-sections -Wl,-O3 -Wl,--sort-common
 
-CFLAGS :=  -g -O3  -D RELEASE -c -D TARGET_LINUX_x64 -D USES_HOMEDIR -D HOST_NO_AREC #-D NO_REND
+CFLAGS := 
+CFLAGS += -g -O3 -D RELEASE -c -D TARGET_LINUX_x86 -D USES_HOMEDIR -D HOST_NO_AREC #-D NO_REND
 CFLAGS += -D SUPPORT_X11
 CFLAGS += -frename-registers -fno-strict-aliasing -fsingle-precision-constant 
 CFLAGS += -ffast-math -ftree-vectorize 
@@ -51,7 +53,6 @@ endif
 ifdef PGO_USE
 	CFLAGS += -fprofile-use
 endif
-
 
 ifdef LTO_TEST
 	CFLAGS += -flto -fwhole-program 
@@ -78,6 +79,7 @@ ifdef USE_PULSEAUDIO
 	LIBS += -lpulse-simple
 endif
 
+# GLES on x11?
 ifdef USE_GLES
 	CXXFLAGS += -DGLES
 	LIBS	+= -lEGL -lGLESv2

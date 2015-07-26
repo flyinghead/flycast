@@ -27,14 +27,11 @@ MFLAGS := -m32
 ASFLAGS := -32
 #-march=armv7-a -mfpu=neon -mfloat-abi=softfp
 
-LDFLAGS	:= -m32	-g -Wl,-Map,$(notdir $@).map,--gc-sections -Wl,-O3 -Wl,--sort-common 
+LDFLAGS := -m32
+LDFLAGS += -g -Wl,-Map,$(notdir $@).map,--gc-sections -Wl,-O3 -Wl,--sort-common
 
-SOURCES	:=	cfg/ hw/arm7/ hw/aica/ hw/asic/ hw/ hw/gdrom/ hw/maple/ \
- hw/mem/ hw/pvr/ hw/sh4/ hw/sh4/rec_v2/ plugins/ profiler/ serial_ipc/ \
- hw/extdev/ hw/arm/ imgread/ linux/ linux-dist/ ./ rec-x86/ deps/zlib/ deps/chdr/ deps/crypto/ arm_emitter/
-
-
-CFLAGS :=  -m32 -g -O3  -D RELEASE -c -D TARGET_LINUX_x86 -D USES_HOMEDIR -D HOST_NO_AREC #-D NO_REND
+CFLAGS := -m32
+CFLAGS += -g -O3 -D RELEASE -c -D TARGET_LINUX_x86 -D USES_HOMEDIR -D HOST_NO_AREC #-D NO_REND
 CFLAGS += -D SUPPORT_X11
 CFLAGS += -frename-registers -fno-strict-aliasing -fsingle-precision-constant 
 CFLAGS += -ffast-math -ftree-vectorize 
@@ -56,7 +53,6 @@ ifdef PGO_USE
 	CFLAGS += -fprofile-use
 endif
 
-
 ifdef LTO_TEST
 	CFLAGS += -flto -fwhole-program 
 	LDFLAGS +=-flto -fwhole-program 
@@ -67,7 +63,6 @@ INCS	:= -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps -I$(RZDCY_SRC_DIR)/khronos
 LIBS    := # use system libs
 LIBS    += -lm -lrt -ldl
 LIBS    += -lpthread -lX11
-
 
 ifdef USE_ALSA
 	CXXFLAGS += -D USE_ALSA
@@ -83,15 +78,13 @@ ifdef USE_PULSEAUDIO
 	LIBS += -lpulse-simple
 endif
 
-
 # GLES on x11?
 ifdef USE_GLES
 	CXXFLAGS += -DGLES
 	LIBS	+= -lEGL -lGLESv2
 else
-	LIBS	+= -ldl -lGL
+	LIBS	+= -ldl -lGL #for desktop gl
 endif
-
 
 
 OBJECTS=$(RZDCY_FILES:.cpp=.build_obj)
