@@ -17,13 +17,35 @@ LIBS :=
 CFLAGS := 
 CXXFLAGS :=
 
-ifeq (,$(ARCH))
+# Platform auto-detection
+# Can be overridden by using:
+#   make platform=AMD64
+ifeq (,$(platform))
     ARCH = $(shell uname -m)
+    ifeq ($(ARCH), $(filter $(ARCH), i386 i686))
+        platform = i686
+    else ifeq ($(ARCH), $(filter $(ARCH), x86_64 AMD64))
+        platform = AMD64
+    else ifneq (,$(findstring arm,$(ARCH)))
+        HARDWARE = $(shell grep Hardware /proc/cpuinfo)
+        ifneq (,$(findstring BCM2709,$(HARDWARE)))
+            platform = rpi2
+        else ifneq (,$(findstring AM33XX,$(HARDWARE)))
+            platform = beagle
+        else ifneq (,$(findstring Pandora,$(HARDWARE)))
+            platform = pandora
+        else
+            $(error Unsupported Hardware)
+        endif
+    else
+        $(error Unsupported CPU architecture)
+    endif
 endif
 
-$(info Building arch: $(ARCH))
-# x86 (32 Bit)
-ifeq ($(ARCH), $(filter $(ARCH), i386 i686))
+$(info Platform: $(platform))
+
+# Generic x86 (32 bit)
+ifneq (,$(findstring i686,$(platform)))
     X86_REC := 1
     NOT_ARM := 1
     MFLAGS += -m32
@@ -32,52 +54,43 @@ ifeq ($(ARCH), $(filter $(ARCH), i386 i686))
     CFLAGS += -m32 -D TARGET_LINUX_x86 -D TARGET_NO_AREC
     CXXFLAGS += -fno-exceptions
 
-# x86_64 (64 Bit)
-else ifeq ($(ARCH), $(filter $(ARCH), x86_64 AMD64))
+# Generic x86_64 (64 bit)
+else ifneq (,$(findstring AMD64,$(platform)))
     X64_REC := 1
     NOT_ARM := 1
     CFLAGS += -D TARGET_LINUX_x64 -D TARGET_NO_AREC
     CXXFLAGS += -fexceptions
 
-# ARM
-else ifneq (,$(findstring arm,$(ARCH)))
-    ifeq (,$(HARDWARE))
-        HARDWARE = $(shell grep Hardware /proc/cpuinfo)
-    endif
+# Raspberry Pi 2
+else ifneq (,$(findstring rpi2,$(platform)))
+    MFLAGS += -marm -march=armv7-a -mtune=cortex-a9 -mfpu=neon -mfloat-abi=hard -funroll-loops
+    ASFLAGS += -march=armv7-a -mfpu=neon -mfloat-abi=softfp
+    CFLAGS += -D TARGET_BEAGLE -D TARGET_LINUX_ARMELv7 -DARM_HARDFP
+    INCS += -I/opt/vc/include/ -I/opt/vc/include/interface/vmcs_host/linux -I/opt/vc/include/interface/vcos/pthreads -I../linux-deps/include
+    LIBS += -L/opt/vc/lib/  -L../linux-deps/lib -lbcm_host
+    USE_GLES := 1
 
-    # Raspberry Pi 2
-    ifneq (,$(findstring BCM2709,$(HARDWARE)))
-        MFLAGS += -marm -march=armv7-a -mtune=cortex-a9 -mfpu=neon -mfloat-abi=hard -funroll-loops
-        ASFLAGS += -march=armv7-a -mfpu=neon -mfloat-abi=softfp
-        CFLAGS += -D TARGET_BEAGLE -D TARGET_LINUX_ARMELv7 -DARM_HARDFP
-        INCS += -I/opt/vc/include/ -I/opt/vc/include/interface/vmcs_host/linux -I/opt/vc/include/interface/vcos/pthreads -I../linux-deps/include
-				LIBS += -L/opt/vc/lib/  -L../linux-deps/lib -lbcm_host
-        USE_GLES := 1
+# BeagleBone Black
+else ifneq (,$(findstring beagle,$(platform)))
+    CC_PREFIX ?= arm-none-linux-gnueabi-
+    MFLAGS += -marm -march=armv7-a -mtune=cortex-a9 -mfpu=neon -mfloat-abi=softfp -funroll-loops
+    ASFLAGS := -march=armv7-a -mfpu=neon -mfloat-abi=softfp
+    CFLAGS += -D TARGET_BEAGLE
+    USE_GLES := 1
 
-    # BeagleBone Black
-    else ifneq (,$(findstring AM33XX,$(HARDWARE)))
-        CC_PREFIX ?= arm-none-linux-gnueabi-
-        MFLAGS += -marm -march=armv7-a -mtune=cortex-a9 -mfpu=neon -mfloat-abi=softfp -funroll-loops
-        ASFLAGS := -march=armv7-a -mfpu=neon -mfloat-abi=softfp
-        CFLAGS += -D TARGET_BEAGLE
-        USE_GLES := 1
+# Pandora
+else ifneq (,$(findstring pandora,$(platform)))
+    FOR_ARM := 1
+    FOR_PANDORA := 1
+    USE_SDL := 1
+    PGO_USE := 1
+    USE_GLES := 1
+    MFLAGS +== -marm -march=armv7-a -mtune=cortex-a8 -mfpu=neon -mfloat-abi=softfp -funroll-loops -fpermissive
+    ASFLAGS += -march=armv7-a -mfpu=neon -mfloat-abi=softfp
+    CFLAGS += -D TARGET_PANDORA  -D WEIRD_SLOWNESS
 
-    # Pandora
-    else ifneq (,$(findstring Pandora,$(HARDWARE)))
-    	  FOR_ARM := 1
-        FOR_PANDORA := 1
-        USE_SDL := 1
-        PGO_USE := 1
-        USE_GLES := 1
-        MFLAGS +== -marm -march=armv7-a -mtune=cortex-a8 -mfpu=neon -mfloat-abi=softfp -funroll-loops -fpermissive
-        ASFLAGS += -march=armv7-a -mfpu=neon -mfloat-abi=softfp
-        CFLAGS += -D TARGET_PANDORA  -D WEIRD_SLOWNESS
-
-    else
-        $(error Unsupported Hardware)
-    endif
 else
-    $(error Unsupported CPU architecture)
+    $(error Unknown platform)
 endif
 
 RZDCY_SRC_DIR = ../../core
@@ -160,8 +173,6 @@ OBJECTS:=$(patsubst $(RZDCY_SRC_DIR)/%,obj/%,$(OBJECTS))
 
 EXECUTABLE_STRIPPED=nosym-reicast.elf
 EXECUTABLE=reicast.elf
-
-PACKAGE_FILES=$(EXECUTABLE_STRIPPED) default.gcw0.desktop icon-32.png
 
 all: $(CPPFILES) $(EXECUTABLE) $(EXECUTABLE_STRIPPED)
 	
