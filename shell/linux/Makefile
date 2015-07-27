@@ -119,7 +119,7 @@ CFLAGS += -g -O3 -D RELEASE -c -D USES_HOMEDIR #-D NO_REND
 CFLAGS += -frename-registers -fno-strict-aliasing -fsingle-precision-constant 
 CFLAGS += -ffast-math -ftree-vectorize
 
-CXXFLAGS += $(CFLAGS) $(MFLAGS) -fno-rtti -fpermissive -fno-operator-names
+CXXFLAGS += -fno-rtti -fpermissive -fno-operator-names
 
 INCS += -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps -I$(RZDCY_SRC_DIR)/khronos
 
@@ -198,7 +198,7 @@ $(EXECUTABLE_STRIPPED): $(EXECUTABLE)
 
 obj/%.build_obj : $(RZDCY_SRC_DIR)/%.cpp
 	mkdir -p $(dir $@)
-	$(CXX) $(EXTRAFLAGS) $(INCS) $(CFLAGS) $(CXXFLAGS) $< -o $@
+	$(CXX) $(EXTRAFLAGS) $(INCS) $(CFLAGS) $(MFLAGS) $(CXXFLAGS) $< -o $@
 	
 obj/%.build_obj : $(RZDCY_SRC_DIR)/%.c
 	mkdir -p $(dir $@)
