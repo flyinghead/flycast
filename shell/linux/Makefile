@@ -127,7 +127,7 @@ LIBS += -lm -lrt -ldl
 LIBS  += -lpthread
 
 ifdef USE_SDL
-	  CXXFLAGS += `sdl-config --cflags`
+    CXXFLAGS += `sdl-config --cflags`
     LIBS += `sdl-config --libs`
 endif
 
@@ -181,9 +181,9 @@ OBJECTS:=$(OBJECTS:.c=.build_obj)
 OBJECTS:=$(OBJECTS:.S=.build_obj)
 OBJECTS:=$(patsubst $(RZDCY_SRC_DIR)/%,obj/%,$(OBJECTS))
 
-
 EXECUTABLE_STRIPPED=nosym-reicast.elf
 EXECUTABLE=reicast.elf
+
 
 all: $(CPPFILES) $(EXECUTABLE) $(EXECUTABLE_STRIPPED)
 ifneq (,$(findstring gcwz,$(platform)))
@@ -207,7 +207,6 @@ obj/%.build_obj : $(RZDCY_SRC_DIR)/%.c
 obj/%.build_obj : $(RZDCY_SRC_DIR)/%.S
 	mkdir -p $(dir $@)	
 	$(AS) $(ASFLAGS) $(INCS) $< -o $@
-
 
 clean:
 	rm $(OBJECTS) $(EXECUTABLE) -f
