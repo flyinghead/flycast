@@ -17,20 +17,20 @@ CFLAGS :=
 CXXFLAGS :=
 
 ifeq (,$(ARCH))
-	ARCH = $(shell uname -m)
+    ARCH = $(shell uname -m)
 endif
 
 ifeq ($(ARCH), $(filter $(ARCH), i386 i686))
-		X86_REC := 1
-		MFLAGS += -m32
-		ASFLAGS += -32
-		LDFLAGS += -m32
-		CFLAGS += -m32 -D TARGET_LINUX_x86
-		CXXFLAGS += -fno-exceptions
+    X86_REC := 1
+    MFLAGS += -m32
+    ASFLAGS += -32
+    LDFLAGS += -m32
+    CFLAGS += -m32 -D TARGET_LINUX_x86
+    CXXFLAGS += -fno-exceptions
 else
-		X64_REC := 1
-		CFLAGS += -D TARGET_LINUX_x64
-		CXXFLAGS += -fexceptions
+    X64_REC := 1
+    CFLAGS += -D TARGET_LINUX_x64
+    CXXFLAGS += -fexceptions
 endif
 
 RZDCY_SRC_DIR = ../../core
@@ -54,19 +54,19 @@ CXXFLAGS += $(CFLAGS) $(MFLAGS) -fno-rtti -fpermissive -fno-operator-names
 CXXFLAGS += -D SUPPORT_X11 
 
 ifdef PGO_MAKE
-	CFLAGS += -fprofile-generate -pg
-	LDFLAGS	+= -fprofile-generate
+    CFLAGS += -fprofile-generate -pg
+    LDFLAGS += -fprofile-generate
 else
-	CFLAGS += -fomit-frame-pointer
+    CFLAGS += -fomit-frame-pointer
 endif
 
 ifdef PGO_USE
-	CFLAGS += -fprofile-use
+    CFLAGS += -fprofile-use
 endif
 
 ifdef LTO_TEST
-	CFLAGS += -flto -fwhole-program 
-	LDFLAGS +=-flto -fwhole-program 
+    CFLAGS += -flto -fwhole-program 
+    LDFLAGS +=-flto -fwhole-program 
 endif
 
 INCS	:= -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps -I$(RZDCY_SRC_DIR)/khronos
@@ -76,25 +76,25 @@ LIBS    += -lm -lrt -ldl
 LIBS    += -lpthread -lX11
 
 ifdef USE_ALSA
-	CXXFLAGS += -D USE_ALSA
-	LIBS += -lasound
+    CXXFLAGS += -D USE_ALSA
+    LIBS += -lasound
 endif
 
 ifdef USE_OSS
-	CXXFLAGS += -D USE_OSS
+    CXXFLAGS += -D USE_OSS
 endif
 
 ifdef USE_PULSEAUDIO
-	CXXFLAGS += -D USE_PULSEAUDIO
-	LIBS += -lpulse-simple
+    CXXFLAGS += -D USE_PULSEAUDIO
+    LIBS += -lpulse-simple
 endif
 
 # GLES on x11?
 ifdef USE_GLES
-	CXXFLAGS += -DGLES
-	LIBS	+= -lEGL -lGLESv2
+    CXXFLAGS += -DGLES
+    LIBS += -lEGL -lGLESv2
 else
-	LIBS	+= -ldl -lGL #for desktop gl
+    LIBS += -ldl -lGL #for desktop gl
 endif
 
 
