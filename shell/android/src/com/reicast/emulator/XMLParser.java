@@ -59,11 +59,10 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 	private Drawable game_icon;
 	private boolean getId;
 	private String gameId;
+	private String game_details;
 
 	private static final String game_index = "http://thegamesdb.net/api/GetGamesList.php?platform=sega+dreamcast&name=";
 	private static final String game_id = "http://thegamesdb.net/api/GetGame.php?platform=sega+dreamcast&id=";
-	private SparseArray<String> game_details = new SparseArray<String>();
-	private SparseArray<Bitmap> game_preview = new SparseArray<Bitmap>();
 
 	public XMLParser(File game, int index, SharedPreferences mPrefs) {
 		this.getId = false;
@@ -79,6 +78,7 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 	
 	public void setGameID(String id) {
 		this.gameId = id;
+		initializeDefaults();
 	}
 
 	protected void onPreExecute() {
@@ -185,8 +185,7 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 						xmlParser.execute(game_name);
 					} else {
 						game_name = getValue(root, "GameTitle");
-						String details = getValue(root, "Overview");
-						game_details.put(index, details);
+						game_details = getValue(root, "Overview");
 						Element images = (Element) root.getElementsByTagName("Images").item(0);
 						Element boxart = null;
 						if (images.getElementsByTagName("boxart").getLength() > 1) {
@@ -195,19 +194,14 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 							boxart = (Element) images.getElementsByTagName("boxart").item(0);
 						}
 						if (boxart != null) {
-							String image = "http://thegamesdb.net/banners/" + getElementValue(boxart);
-							game_preview.put(index, decodeBitmapIcon(image));
-							game_icon = new BitmapDrawable(decodeBitmapIcon(image));
+							Bitmap image = decodeBitmapIcon("http://thegamesdb.net/banners/" + getElementValue(boxart));
+							game_icon = new BitmapDrawable(image);
 						}
 					}
-				} else {
-					initializeDefaults();
 				}
 			} catch (Exception e) {
-				initializeDefaults();
+				
 			}
-		} else {
-			initializeDefaults();
 		}
 
 		((TextView) childview.findViewById(R.id.item_name)).setText(game_name);
@@ -221,8 +215,7 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 	}
 	
 	private void initializeDefaults() {
-		game_details.put(index,
-				mContext.getString(R.string.info_unavailable));
+		game_details = mContext.getString(R.string.info_unavailable);
 		final String nameLower = game.getName().toLowerCase(
 				Locale.getDefault());
 		if (Build.VERSION.SDK_INT < 21) {
@@ -257,11 +250,7 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 	}
 	
 	public String getGameDetails() {
-		return game_details.get(index);
-	}
-	
-	public Bitmap getGamePreview() {
-		return game_preview.get(index);
+		return game_details;
 	}
 
 	public Document getDomElement(String xml) {
