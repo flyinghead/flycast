@@ -2,18 +2,41 @@
 LOCAL_PATH := $(call my-dir)
 FOR_LINUX :=1
 NOT_ARM := 1
-X64_REC := 1
+
 #NO_REC := 1
 #NO_REND := 1
 WEBUI :=1 
 USE_ALSA := 1
 USE_OSS := 1
 #USE_PULSEAUDIO := 1
+USE_X11 := 1
+
+MFLAGS := 
+ASFLAGS := 
+LDFLAGS :=
+CFLAGS := 
+CXXFLAGS :=
+
+ifeq (,$(ARCH))
+    ARCH = $(shell uname -m)
+endif
+
+$(info Building arch: $(ARCH))
+ifeq ($(ARCH), $(filter $(ARCH), i386 i686))
+    X86_REC := 1
+    MFLAGS += -m32
+    ASFLAGS += -32
+    LDFLAGS += -m32
+    CFLAGS += -m32 -D TARGET_LINUX_x86
+    CXXFLAGS += -fno-exceptions
+else
+    X64_REC := 1
+    CFLAGS += -D TARGET_LINUX_x64
+    CXXFLAGS += -fexceptions
+endif
 
 RZDCY_SRC_DIR = ../../core
-
 include $(RZDCY_SRC_DIR)/core.mk
-
 
 CXX=${CC_PREFIX}g++
 CC=${CC_PREFIX}gcc
@@ -22,67 +45,62 @@ STRIP=${CC_PREFIX}strip
 
 LD=${CC}
 
-MFLAGS := #-m32
-#-marm -march=armv7-a -mtune=cortex-a9 -mfpu=neon -mfloat-abi=softfp -funroll-loops
-ASFLAGS := 
-#-march=armv7-a -mfpu=neon -mfloat-abi=softfp
+LDFLAGS += -g -Wl,-Map,$(notdir $@).map,--gc-sections -Wl,-O3 -Wl,--sort-common
 
-LDFLAGS	:= 	-g -Wl,-Map,$(notdir $@).map,--gc-sections -Wl,-O3 -Wl,--sort-common 
-
-CFLAGS :=  -g -O3  -D RELEASE -c -D TARGET_LINUX_x64 -D USES_HOMEDIR -D HOST_NO_AREC #-D NO_REND
-CFLAGS += -D SUPPORT_X11
+CFLAGS += -g -O3 -D RELEASE -c -D USES_HOMEDIR -D TARGET_NO_AREC #-D NO_REND
 CFLAGS += -frename-registers -fno-strict-aliasing -fsingle-precision-constant 
 CFLAGS += -ffast-math -ftree-vectorize 
 
-
-#-fprefetch-loop-arrays 
-#-std=c++0x
-CXXFLAGS += $(CFLAGS) $(MFLAGS) -fexceptions -fno-rtti -fpermissive
-CXXFLAGS += -D SUPPORT_X11 
-CXXFLAGS += -fno-operator-names
+CXXFLAGS += $(CFLAGS) $(MFLAGS) -fno-rtti -fpermissive -fno-operator-names
 
 ifdef PGO_MAKE
-	CFLAGS += -fprofile-generate -pg
-	LDFLAGS	+= -fprofile-generate
+    CFLAGS += -fprofile-generate -pg
+    LDFLAGS += -fprofile-generate
 else
-	CFLAGS += -fomit-frame-pointer
+    CFLAGS += -fomit-frame-pointer
 endif
 
 ifdef PGO_USE
-	CFLAGS += -fprofile-use
+    CFLAGS += -fprofile-use
 endif
 
-
 ifdef LTO_TEST
-	CFLAGS += -flto -fwhole-program 
-	LDFLAGS +=-flto -fwhole-program 
+    CFLAGS += -flto -fwhole-program 
+    LDFLAGS +=-flto -fwhole-program 
 endif
 
 INCS	:= -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps -I$(RZDCY_SRC_DIR)/khronos
 
 LIBS    := # use system libs
 LIBS    += -lm -lrt -ldl
-LIBS    += -lpthread -lX11
+LIBS    += -lpthread
+
+ifdef USE_X11
+    CFLAGS += -D SUPPORT_X11
+    CXXFLAGS += -D SUPPORT_X11 
+    LIBS += -lX11
+endif
 
 ifdef USE_ALSA
-	CXXFLAGS += -D USE_ALSA
-	LIBS += -lasound
+    CXXFLAGS += -D USE_ALSA
+    LIBS += -lasound
 endif
 
 ifdef USE_OSS
-	CXXFLAGS += -D USE_OSS
+    CXXFLAGS += -D USE_OSS
 endif
 
 ifdef USE_PULSEAUDIO
-	CXXFLAGS += -D USE_PULSEAUDIO
-	LIBS += -lpulse-simple
+    CXXFLAGS += -D USE_PULSEAUDIO
+    LIBS += -lpulse-simple
 endif
 
+# GLES on x11?
 ifdef USE_GLES
-	CXXFLAGS += -DGLES
-	LIBS	+= -lEGL -lGLESv2
+    CXXFLAGS += -DGLES
+    LIBS += -lEGL -lGLESv2
 else
-	LIBS	+= -ldl -lGL #for desktop gl
+    LIBS += -ldl -lGL #for desktop gl
 endif
 
 
