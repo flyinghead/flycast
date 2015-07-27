@@ -1,8 +1,6 @@
 
 LOCAL_PATH := $(call my-dir)
 FOR_LINUX :=1
-NOT_ARM := 1
-
 #NO_REC := 1
 #NO_REND := 1
 WEBUI :=1 
@@ -14,6 +12,8 @@ USE_X11 := 1
 MFLAGS := 
 ASFLAGS := 
 LDFLAGS :=
+INCS :=
+LIBS :=
 CFLAGS := 
 CXXFLAGS :=
 
@@ -22,17 +22,62 @@ ifeq (,$(ARCH))
 endif
 
 $(info Building arch: $(ARCH))
+# x86 (32 Bit)
 ifeq ($(ARCH), $(filter $(ARCH), i386 i686))
     X86_REC := 1
+    NOT_ARM := 1
     MFLAGS += -m32
     ASFLAGS += -32
     LDFLAGS += -m32
-    CFLAGS += -m32 -D TARGET_LINUX_x86
+    CFLAGS += -m32 -D TARGET_LINUX_x86 -D TARGET_NO_AREC
     CXXFLAGS += -fno-exceptions
-else
+
+# x86_64 (64 Bit)
+else ifeq ($(ARCH), $(filter $(ARCH), x86_64 AMD64))
     X64_REC := 1
-    CFLAGS += -D TARGET_LINUX_x64
+    NOT_ARM := 1
+    CFLAGS += -D TARGET_LINUX_x64 -D TARGET_NO_AREC
     CXXFLAGS += -fexceptions
+
+# ARM
+else ifneq (,$(findstring arm,$(ARCH)))
+    ifeq (,$(HARDWARE))
+        HARDWARE = $(shell grep Hardware /proc/cpuinfo)
+    endif
+
+    # Raspberry Pi 2
+    ifneq (,$(findstring BCM2709,$(HARDWARE)))
+        MFLAGS += -marm -march=armv7-a -mtune=cortex-a9 -mfpu=neon -mfloat-abi=hard -funroll-loops
+        ASFLAGS += -march=armv7-a -mfpu=neon -mfloat-abi=softfp
+        CFLAGS += -D TARGET_BEAGLE -D TARGET_LINUX_ARMELv7 -DARM_HARDFP
+        INCS += -I/opt/vc/include/ -I/opt/vc/include/interface/vmcs_host/linux -I/opt/vc/include/interface/vcos/pthreads -I../linux-deps/include
+				LIBS += -L/opt/vc/lib/  -L../linux-deps/lib -lbcm_host
+        USE_GLES := 1
+
+    # BeagleBone Black
+    else ifneq (,$(findstring AM33XX,$(HARDWARE)))
+        CC_PREFIX ?= arm-none-linux-gnueabi-
+        MFLAGS += -marm -march=armv7-a -mtune=cortex-a9 -mfpu=neon -mfloat-abi=softfp -funroll-loops
+        ASFLAGS := -march=armv7-a -mfpu=neon -mfloat-abi=softfp
+        CFLAGS += -D TARGET_BEAGLE
+        USE_GLES := 1
+
+    # Pandora
+    else ifneq (,$(findstring Pandora,$(HARDWARE)))
+    	  FOR_ARM := 1
+        FOR_PANDORA := 1
+        USE_SDL := 1
+        PGO_USE := 1
+        USE_GLES := 1
+        MFLAGS +== -marm -march=armv7-a -mtune=cortex-a8 -mfpu=neon -mfloat-abi=softfp -funroll-loops -fpermissive
+        ASFLAGS += -march=armv7-a -mfpu=neon -mfloat-abi=softfp
+        CFLAGS += -D TARGET_PANDORA  -D WEIRD_SLOWNESS
+
+    else
+        $(error Unsupported Hardware)
+    endif
+else
+    $(error Unsupported CPU architecture)
 endif
 
 RZDCY_SRC_DIR = ../../core
@@ -42,16 +87,25 @@ CXX=${CC_PREFIX}g++
 CC=${CC_PREFIX}gcc
 AS=${CC_PREFIX}as
 STRIP=${CC_PREFIX}strip
-
 LD=${CC}
 
 LDFLAGS += -g -Wl,-Map,$(notdir $@).map,--gc-sections -Wl,-O3 -Wl,--sort-common
 
-CFLAGS += -g -O3 -D RELEASE -c -D USES_HOMEDIR -D TARGET_NO_AREC #-D NO_REND
+CFLAGS += -g -O3 -D RELEASE -c -D USES_HOMEDIR #-D NO_REND
 CFLAGS += -frename-registers -fno-strict-aliasing -fsingle-precision-constant 
-CFLAGS += -ffast-math -ftree-vectorize 
+CFLAGS += -ffast-math -ftree-vectorize
 
 CXXFLAGS += $(CFLAGS) $(MFLAGS) -fno-rtti -fpermissive -fno-operator-names
+
+INCS += -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps -I$(RZDCY_SRC_DIR)/khronos
+
+LIBS += -lm -lrt -ldl
+LIBS  += -lpthread
+
+ifdef USE_SDL
+	  CXXFLAGS += `sdl-config --cflags`
+    LIBS += `sdl-config --libs`
+endif
 
 ifdef PGO_MAKE
     CFLAGS += -fprofile-generate -pg
@@ -68,12 +122,6 @@ ifdef LTO_TEST
     CFLAGS += -flto -fwhole-program 
     LDFLAGS +=-flto -fwhole-program 
 endif
-
-INCS	:= -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps -I$(RZDCY_SRC_DIR)/khronos
-
-LIBS    := # use system libs
-LIBS    += -lm -lrt -ldl
-LIBS    += -lpthread
 
 ifdef USE_X11
     CFLAGS += -D SUPPORT_X11
