@@ -9,6 +9,7 @@ WEBUI :=1
 USE_ALSA := 1
 USE_OSS := 1
 #USE_PULSEAUDIO := 1
+USE_X11 := 1
 
 MFLAGS := 
 ASFLAGS := 
@@ -47,12 +48,10 @@ LD=${CC}
 LDFLAGS += -g -Wl,-Map,$(notdir $@).map,--gc-sections -Wl,-O3 -Wl,--sort-common
 
 CFLAGS += -g -O3 -D RELEASE -c -D USES_HOMEDIR -D TARGET_NO_AREC #-D NO_REND
-CFLAGS += -D SUPPORT_X11
 CFLAGS += -frename-registers -fno-strict-aliasing -fsingle-precision-constant 
 CFLAGS += -ffast-math -ftree-vectorize 
 
 CXXFLAGS += $(CFLAGS) $(MFLAGS) -fno-rtti -fpermissive -fno-operator-names
-CXXFLAGS += -D SUPPORT_X11 
 
 ifdef PGO_MAKE
     CFLAGS += -fprofile-generate -pg
@@ -74,7 +73,13 @@ INCS	:= -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps -I$(RZDCY_SRC_DIR)/khronos
 
 LIBS    := # use system libs
 LIBS    += -lm -lrt -ldl
-LIBS    += -lpthread -lX11
+LIBS    += -lpthread
+
+ifdef USE_X11
+    CFLAGS += -D SUPPORT_X11
+    CXXFLAGS += -D SUPPORT_X11 
+    LIBS += -lX11
+endif
 
 ifdef USE_ALSA
     CXXFLAGS += -D USE_ALSA
