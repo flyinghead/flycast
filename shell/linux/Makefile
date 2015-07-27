@@ -37,6 +37,8 @@ ifeq (,$(platform))
         else
             $(error Unsupported Hardware)
         endif
+    else ifneq (,$(findstring mips,$(ARCH)))
+        platform = gcwz
     else
         $(error Unsupported CPU architecture)
     endif
@@ -89,6 +91,15 @@ else ifneq (,$(findstring pandora,$(platform)))
     ASFLAGS += -march=armv7-a -mfpu=neon -mfloat-abi=softfp
     CFLAGS += -D TARGET_PANDORA  -D WEIRD_SLOWNESS
 
+# GCW Zero
+else ifneq (,$(findstring gcwz,$(platform)))
+    NOT_ARM := 1
+    NO_REC := 1
+    CC_PREFIX ?= /opt/gcw0-toolchain/usr/bin/mipsel-gcw0-linux-uclibc-
+    CFLAGS += -D TARGET_GCW0 -D TARGET_NO_REC
+    LIBS += -L../linux-deps/lib -L./enta_viv -lglapi
+    GCWZ_PKG = reicast-gcwz.opk
+    GCWZ_PKG_FILES = gcwz/default.gcw0.desktop gcwz/icon-32.png
 else
     $(error Unknown platform)
 endif
@@ -175,6 +186,9 @@ EXECUTABLE_STRIPPED=nosym-reicast.elf
 EXECUTABLE=reicast.elf
 
 all: $(CPPFILES) $(EXECUTABLE) $(EXECUTABLE_STRIPPED)
+ifneq (,$(findstring gcwz,$(platform)))
+	mksquashfs $(EXECUTABLE_STRIPPED) $(GCWZ_PKG_FILES) $(GCWZ_PKG) -all-root
+endif
 	
 $(EXECUTABLE): $(OBJECTS)
 	$(CXX) $(MFLAGS) $(EXTRAFLAGS) $(LDFLAGS)  $(OBJECTS) $(LIBS) -o $@
