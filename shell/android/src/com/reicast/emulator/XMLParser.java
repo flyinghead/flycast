@@ -30,9 +30,9 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-import com.reicast.emulator.config.Config;
-
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -40,13 +40,18 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.StrictMode;
-import android.util.SparseArray;
+import android.os.Vibrator;
 import android.view.View;
+import android.view.View.OnLongClickListener;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import com.reicast.emulator.FileBrowser.OnItemSelectedListener;
+import com.reicast.emulator.config.Config;
 
 public class XMLParser extends AsyncTask<String, Integer, String> {
 
@@ -54,10 +59,11 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 	private File game;
 	private int index;
 	private View childview;
+	private OnItemSelectedListener mCallback;
 	private Context mContext;
 	private String game_name;
+	private Bitmap coverart;
 	private Drawable game_icon;
-	private boolean getId;
 	private String gameId;
 	private String game_details;
 
@@ -65,15 +71,15 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 	private static final String game_id = "http://thegamesdb.net/api/GetGame.php?platform=sega+dreamcast&id=";
 
 	public XMLParser(File game, int index, SharedPreferences mPrefs) {
-		this.getId = false;
 		this.mPrefs = mPrefs;
 		this.game = game;
 		this.index = index;
 	}
 
-	public void setViewParent(Context mContext, View childview) {
+	public void setViewParent(Context mContext, View childview, OnItemSelectedListener mCallback) {
 		this.mContext = mContext;
 		this.childview = childview;
+		this.mCallback = mCallback;
 	}
 	
 	public void setGameID(String id) {
@@ -147,7 +153,6 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 			if (gameId != null) {
 				httpPost = new HttpPost(game_id + gameId);
 			} else {
-				getId = true;
 				filename = filename.substring(0, filename.lastIndexOf("."));
 				try {
 					filename = URLEncoder.encode(filename, "UTF-8");
@@ -178,9 +183,9 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 				Document doc = getDomElement(gameData);
 				if (doc.getElementsByTagName("Game") != null) {
 					Element root = (Element) doc.getElementsByTagName("Game").item(0);
-					if (getId) {
+					if (gameId == null) {
 						XMLParser xmlParser = new XMLParser(game, index, mPrefs);
-						xmlParser.setViewParent(mContext, childview);
+						xmlParser.setViewParent(mContext, childview, mCallback);
 						xmlParser.setGameID(getValue(root, "id"));
 						xmlParser.execute(game_name);
 					} else {
@@ -194,8 +199,8 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 							boxart = (Element) images.getElementsByTagName("boxart").item(0);
 						}
 						if (boxart != null) {
-							Bitmap image = decodeBitmapIcon("http://thegamesdb.net/banners/" + getElementValue(boxart));
-							game_icon = new BitmapDrawable(image);
+							coverart = decodeBitmapIcon("http://thegamesdb.net/banners/" + getElementValue(boxart));
+							game_icon = new BitmapDrawable(coverart);
 						}
 					}
 				}
@@ -207,8 +212,40 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 		((TextView) childview.findViewById(R.id.item_name)).setText(game_name);
 
 		if (Build.VERSION.SDK_INT < 21) {
-			((ImageView) childview.findViewById(R.id.item_icon))
-					.setImageDrawable(game_icon);
+			((ImageView) childview.findViewById(R.id.item_icon)).setImageDrawable(game_icon);
+		} else {
+			((ImageView) childview.findViewById(R.id.item_icon)).setImageBitmap(coverart);
+		}
+		
+		if (mPrefs.getBoolean(Config.pref_gamedetails, false)) {
+			childview.findViewById(R.id.childview).setOnLongClickListener(
+					new OnLongClickListener() {
+						public boolean onLongClick(View view) {
+							final AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
+							builder.setCancelable(true);
+							builder.setTitle(mContext.getString(R.string.game_details, game_name));
+							builder.setMessage(game_details);
+							builder.setIcon(game_icon);
+							builder.setNegativeButton("Close",
+									new DialogInterface.OnClickListener() {
+										public void onClick(DialogInterface dialog, int which) {
+											dialog.dismiss();
+											return;
+										}
+									});
+							builder.setPositiveButton("Launch",
+									new DialogInterface.OnClickListener() {
+										public void onClick(DialogInterface dialog, int which) {
+											dialog.dismiss();
+											mCallback.onGameSelected(game != null ? Uri.fromFile(game) : Uri.EMPTY);
+											((Vibrator) mContext.getSystemService(Context.VIBRATOR_SERVICE)).vibrate(250);
+											return;
+										}
+									});
+							builder.create().show();
+							return true;
+						}
+					});
 		}
 
 		childview.setTag(game_name);
@@ -243,6 +280,10 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 
 	public Drawable getGameIcon() {
 		return game_icon;
+	}
+	
+	public Bitmap getGameCover() {
+		return coverart;
 	}
 
 	public String getGameTitle() {
