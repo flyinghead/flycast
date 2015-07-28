@@ -126,8 +126,6 @@ static audiobackend_t* GetAudioBackend(std::string slug)
 u32 PushAudio(void* frame, u32 amt, bool wait) {
 	if (audiobackend_current != NULL) {
 		return audiobackend_current->push(frame, amt, wait);
-	} else {
-		printf("AUDIO: Backend is NULL!\n");
 	}
 	return 0;
 }
