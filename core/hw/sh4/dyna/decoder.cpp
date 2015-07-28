@@ -15,6 +15,9 @@
 #include "hw/sh4/sh4_mem.h"
 #include "decoder_opcodes.h"
 
+#define BLOCK_MAX_SH_OPS_SOFT 500
+#define BLOCK_MAX_SH_OPS_HARD 511
+
 RuntimeBlockInfo* blk;
 
 
@@ -1054,7 +1057,10 @@ void dec_DecodeBlock(RuntimeBlockInfo* rbi,u32 max_cycles)
 			//there is no break here by design
 		case NDO_NextOp:
 			{
-				if (blk->guest_cycles>=max_cycles && !state.cpu.is_delayslot)
+				if ( 
+					( (blk->oplist.size() >= BLOCK_MAX_SH_OPS_SOFT) || (blk->guest_cycles >= max_cycles) )
+					&& !state.cpu.is_delayslot
+					)
 				{
 					dec_End(state.cpu.rpc,BET_StaticJump,false);
 				}
@@ -1142,6 +1148,8 @@ _end:
 	blk->NextBlock=state.NextAddr;
 	blk->BranchBlock=state.JumpAddr;
 	blk->BlockType=state.BlockType;
+
+	verify(blk->oplist.size() <= BLOCK_MAX_SH_OPS_HARD);
 	
 #if HOST_OS == OS_WINDOWS
 	switch(rbi->addr)
