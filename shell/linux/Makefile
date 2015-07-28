@@ -9,6 +9,12 @@ USE_OSS := 1
 #USE_PULSEAUDIO := 1
 USE_X11 := 1
 
+CXX=${CC_PREFIX}g++
+CC=${CC_PREFIX}gcc
+AS=${CC_PREFIX}as
+STRIP=${CC_PREFIX}strip
+LD=${CC}
+
 MFLAGS := 
 ASFLAGS := 
 LDFLAGS :=
@@ -65,6 +71,7 @@ else ifneq (,$(findstring AMD64,$(platform)))
 
 # Raspberry Pi 2
 else ifneq (,$(findstring rpi2,$(platform)))
+    AS=${CC_PREFIX}gcc
     MFLAGS += -marm -march=armv7-a -mtune=cortex-a9 -mfpu=neon -mfloat-abi=hard -funroll-loops
     ASFLAGS += -march=armv7-a -mfpu=neon -mfloat-abi=softfp
     CFLAGS += -D TARGET_BEAGLE -D TARGET_LINUX_ARMELv7 -DARM_HARDFP
@@ -105,12 +112,6 @@ endif
 
 RZDCY_SRC_DIR = ../../core
 include $(RZDCY_SRC_DIR)/core.mk
-
-CXX=${CC_PREFIX}g++
-CC=${CC_PREFIX}gcc
-AS=${CC_PREFIX}as
-STRIP=${CC_PREFIX}strip
-LD=${CC}
 
 LDFLAGS += -g -Wl,-Map,$(notdir $@).map,--gc-sections -Wl,-O3 -Wl,--sort-common
 
