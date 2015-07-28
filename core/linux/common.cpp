@@ -6,8 +6,10 @@
 	#define _XOPEN_SOURCE 1
 	#define __USE_GNU 1
 #endif
+#if !defined(TARGET_NACL32)
 #include <poll.h>
 #include <termios.h>
+#endif  
 //#include <curses.h>
 #include <fcntl.h>
 #include <semaphore.h>
@@ -16,10 +18,10 @@
 #include <sys/param.h>
 #include <sys/mman.h>
 #include <sys/time.h>
-#if !defined(_ANDROID) && !TARGET_OS_IPHONE
+#if !defined(_ANDROID) && !defined(TARGET_OS_IPHONE) && !defined(TARGET_NACL32) && !defined(TARGET_EMSCRIPTEN)
   #include <sys/personality.h>
+  #include <dlfcn.h>
 #endif
-#include <dlfcn.h>
 #include <unistd.h>
 #include "hw/sh4/dyna/blockmanager.h"
 
@@ -52,6 +54,7 @@ void sigill_handler(int sn, siginfo_t * si, void *segfault_ctx) {
 }
 #endif
 
+#if defined(TARGET_NO_EXCEPTIONS)
 void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 {
 	rei_host_context_t ctx;
@@ -99,6 +102,7 @@ void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 }
 #endif
 
+#endif
 void install_fault_handler (void)
 {
 #if !defined(TARGET_NO_EXCEPTIONS)
@@ -281,7 +285,7 @@ void enable_runfast()
 }
 
 void linux_fix_personality() {
-        #if HOST_OS == OS_LINUX && !defined(_ANDROID)
+        #if HOST_OS == OS_LINUX && !defined(_ANDROID) && !defined(TARGET_OS_IPHONE) && !defined(TARGET_NACL32) && !defined(TARGET_EMSCRIPTEN)
           printf("Personality: %08X\n", personality(0xFFFFFFFF));
           personality(~READ_IMPLIES_EXEC & personality(0xFFFFFFFF));
           printf("Updated personality: %08X\n", personality(0xFFFFFFFF));
@@ -289,6 +293,7 @@ void linux_fix_personality() {
 }
 
 void linux_rpi2_init() {
+#if HOST_OS == OS_LINUX && !defined(TARGET_NACL32) && !defined(TARGET_EMSCRIPTEN)
 	void* handle;
 	void (*rpi_bcm_init)(void);
 
@@ -302,6 +307,7 @@ void linux_rpi2_init() {
 			rpi_bcm_init();
 		}
 	}
+#endif
 }
 
 void common_linux_setup()

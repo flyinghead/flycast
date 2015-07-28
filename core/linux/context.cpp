@@ -8,7 +8,9 @@
 		#define __USE_GNU 1
 	#endif
 
-	#include <ucontext.h>
+  #if !defined(TARGET_NO_EXCEPTIONS)
+    #include <ucontext.h>
+  #endif
 #endif
 
 
@@ -27,6 +29,7 @@ void bicopy(Ta& rei, Tb& seg, bool to_segfault) {
 
 void context_segfault(rei_host_context_t* reictx, void* segfault_ctx, bool to_segfault) {
 
+#if !defined(TARGET_NO_EXCEPTIONS)
 #if HOST_CPU == CPU_ARM
 	#if HOST_OS == OS_LINUX
 		bicopy(reictx->pc, MCTX(.arm_pc), to_segfault);
@@ -64,6 +67,7 @@ void context_segfault(rei_host_context_t* reictx, void* segfault_ctx, bool to_se
 #else
 	#error Unsupported HOST_CPU
 #endif
+	#endif
 	
 }
 
