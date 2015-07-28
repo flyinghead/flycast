@@ -59,7 +59,7 @@ struct PipelineShader
 
 struct gl_ctx
 {
-#if defined(GLES) && HOST_OS != OS_DARWIN
+#if defined(GLES) && HOST_OS != OS_DARWIN && !defined(TARGET_NACL32)
 	struct
 	{
 		EGLNativeWindowType native_wind;
