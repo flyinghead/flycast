@@ -27,6 +27,7 @@
 
 #include "hw/sh4/dyna/ngen.h"
 
+#if !defined(TARGET_NO_EXCEPTIONS)
 bool ngen_Rewrite(unat& addr,unat retadr,unat acc);
 u32* ngen_readm_fail_v2(u32* ptr,u32* regs,u32 saddr);
 bool VramLockedWrite(u8* address);
@@ -96,16 +97,17 @@ void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 		signal(SIGSEGV, SIG_DFL);
 	}
 }
+#endif
 
 void install_fault_handler (void)
 {
+#if !defined(TARGET_NO_EXCEPTIONS)
 	struct sigaction act, segv_oact;
 	memset(&act, 0, sizeof(act));
 	act.sa_sigaction = fault_handler;
 	sigemptyset(&act.sa_mask);
 	act.sa_flags = SA_SIGINFO;
 	sigaction(SIGSEGV, &act, &segv_oact);
-
 #if HOST_OS == OS_DARWIN
     //this is broken on osx/ios/mach in general
     sigaction(SIGBUS, &act, &segv_oact);
@@ -113,8 +115,10 @@ void install_fault_handler (void)
     act.sa_sigaction = sigill_handler;
     sigaction(SIGILL, &act, &segv_oact);
 #endif
+#endif
 }
 
+#if !defined(TARGET_NO_THREADS)
 
 //Thread class
 cThread::cThread(ThreadEntryFP* function,void* prm)
@@ -134,6 +138,7 @@ void cThread::WaitToEnd()
 }
 
 //End thread class
+#endif
 
 //cResetEvent Calss
 cResetEvent::cResetEvent(bool State,bool Auto)
@@ -276,7 +281,7 @@ void enable_runfast()
 }
 
 void linux_fix_personality() {
-        #if !defined(_ANDROID) && !TARGET_OS_IPHONE
+        #if HOST_OS == OS_LINUX && !defined(_ANDROID)
           printf("Personality: %08X\n", personality(0xFFFFFFFF));
           personality(~READ_IMPLIES_EXEC & personality(0xFFFFFFFF));
           printf("Updated personality: %08X\n", personality(0xFFFFFFFF));
