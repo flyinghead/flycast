@@ -286,8 +286,12 @@ struct maple_sega_vmu: maple_base
 		{
 			printf("Unable to open VMU save file \"%s\", creating new file\n",apath.c_str());
 			file=fopen(apath.c_str(),"wb");
-			fwrite(flash_data, sizeof(flash_data), 1, file);
-			fseek(file,0,SEEK_SET);
+			if (file) {
+				fwrite(flash_data, sizeof(flash_data), 1, file);
+				fseek(file,0,SEEK_SET);
+			} else {
+				printf("Unable to create vmu\n");
+			}
 		}
 
 		if (!file)
