@@ -581,8 +581,12 @@ void _vmem_bm_pagefail(void** ptr,u32 PAGE_SZ);
 u32 pagecnt;
 void _vmem_bm_reset()
 {
-	#if HOST_OS == OS_DARWIN
-		//On iOS we allways allocate all of the mapping table
+	#if defined(TARGET_NO_NVMEM)
+		return;
+	#endif
+
+	#if (HOST_OS == OS_DARWIN)
+		//On iOS & nacl we allways allocate all of the mapping table
 		mprotect(p_sh4rcb, sizeof(p_sh4rcb->fpcb), PROT_READ | PROT_WRITE);
 		return;
 	#endif

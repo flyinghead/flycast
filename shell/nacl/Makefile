@@ -5,9 +5,8 @@ CONFIG ?= Debug
 include $(NACL_SDK_ROOT)/tools/common.mk
 
 LOCAL_PATH := $(call my-dir)
-#FOR_LINUX :=1
 NOT_ARM := 1
-NO_REC := 1
+CPP_REC := 1
 NO_REND := 1
 
 
@@ -21,7 +20,7 @@ LIBS = ppapi_gles2 ppapi_cpp ppapi pthread nacl_io
 
 CFLAGS  =  -Wno-error -Wno-ignored-attributes 
 CFLAGS += -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps
-CFLAGS += -D RELEASE -D TARGET_NO_REC -D TARGET_NACL32 -DNO_REND
+CFLAGS += -D RELEASE -D TARGET_NO_JIT -D TARGET_NACL32 -DNO_REND
 CFLAGS += -D TARGET_NO_EXCEPTIONS -D TARGET_NO_NVMEM
 
 SOURCES = $(RZDCY_FILES) ../../core/nacl/nacl.cpp

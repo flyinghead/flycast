@@ -380,9 +380,11 @@ void bm_Reset()
 		blocks_page[i].clear();
 	}
 
+	#if !defined(TARGET_NO_NVMEM)
 	_vmem_bm_reset();
+	#endif
 	
-#if HOST_OS == OS_DARWIN
+#if (HOST_OS == OS_DARWIN) || defined(TARGET_NO_NVMEM)
 	//lazy allocation isn't working on iOS
 	for (u32 i=0;i<(8*1024*1024);i++)
 	{
