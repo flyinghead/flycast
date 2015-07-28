@@ -82,7 +82,6 @@ else ifneq (,$(findstring beagle,$(platform)))
 
 # Pandora
 else ifneq (,$(findstring pandora,$(platform)))
-    FOR_ARM := 1
     FOR_PANDORA := 1
     USE_SDL := 1
     PGO_USE := 1
