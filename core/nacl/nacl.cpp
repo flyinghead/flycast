@@ -6,6 +6,10 @@
 #include "ppapi/cpp/module.h"
 #include "ppapi/cpp/var.h"
 
+#include <sys/mount.h>
+#include "nacl_io/ioctl.h"
+#include "nacl_io/nacl_io.h"
+
 #include "types.h"	
 
 int msgboxf(const wchar* text,unsigned int type,...)
@@ -24,6 +28,20 @@ int msgboxf(const wchar* text,unsigned int type,...)
 int dc_init(int argc,wchar* argv[]);
 void dc_run();
 
+pthread_t emut;
+
+void* emuthread(void* ) {
+  printf("Emu thread starting up");
+  char *Args[3];
+  Args[0] = "dc";
+  
+  SetHomeDir("/http");
+
+  dc_init(1,Args);
+  dc_run();
+
+  return 0;
+}
 
 namespace hello_world
 {
@@ -34,6 +52,19 @@ class HelloWorldInstance : public pp::Instance {
   explicit HelloWorldInstance(PP_Instance instance) : pp::Instance(instance) {
     rei_instance = this;
     printf("Reicast NACL loaded\n");
+    nacl_io_init_ppapi(instance, pp::Module::Get()->get_browser_interface());
+
+    umount("/");
+    mount("", "/", "memfs", 0, "");
+
+    mount("",       /* source. Use relative URL */
+          "/http",  /* target */
+          "httpfs", /* filesystemtype */
+          0,        /* mountflags */
+          "");      /* data */
+
+
+    pthread_create(&emut, NULL, emuthread, 0);
   }
   virtual ~HelloWorldInstance() {}
 
@@ -53,19 +84,12 @@ void HelloWorldInstance::HandleMessage(const pp::Var& var_message) {
     return;
   }
 
-  pp::Var return_var = "starting";
-
   // Post the return result back to the browser.  Note that HandleMessage() is
   // always called on the main thread, so it's OK to post the return message
   // directly from here.  The return post is asynhronous: PostMessage returns
   // immediately.
-  PostMessage(return_var);
 
-  char *Args[3];
-  Args[0] = "dc";
-
-  dc_init(1,Args);
-  dc_run();
+  //PostMessage(return_var);
 }
 
 /// The Module class.  The browser calls the CreateInstance() method to create
@@ -126,7 +150,7 @@ int get_mic_data(u8* buffer) { return 0; }
 int push_vmu_screen(u8* buffer) { return 0; }
 
 void os_SetWindowText(const char * text) {
-
+  puts(text);
 }
 
 void os_DoEvents() {
