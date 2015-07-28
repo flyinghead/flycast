@@ -993,6 +993,8 @@ FAST_gis
 FAST_sig(aCaCcCdC)
 FAST_po(div32u)
 FAST_po(div32s)
+FAST_po(rocr)
+FAST_po(rocl)
 FAST_gis
 
 FAST_sig(aCaCaCcCdC)
