@@ -206,7 +206,7 @@ obj/%.build_obj : $(RZDCY_SRC_DIR)/%.c
 
 obj/%.build_obj : $(RZDCY_SRC_DIR)/%.S
 	mkdir -p $(dir $@)	
-	$(AS) $(ASFLAGS) $(INCS) $< -o $@
+	$(AS) $(ASFLAGS) $(INCS) $(CFLAGS) $< -o $@
 
 clean:
 	rm $(OBJECTS) $(EXECUTABLE) -f
