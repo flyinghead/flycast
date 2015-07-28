@@ -14,12 +14,6 @@ function attachListeners() {
 
 // Handle a message coming from the NaCl module.
 function handleMessage(event) {
-  console.log(event);
+  console.log(event.data);
   $("status").textContent = event.data;
-  $("log").textContent += event.data;
-
-  if (!(event.data instanceof Array))
-    return;
-  if (event.data.length != 2)
-    return;
 }
