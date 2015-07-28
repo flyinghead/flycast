@@ -39,6 +39,8 @@ ifeq (,$(platform))
             platform = beagle
         else ifneq (,$(findstring Pandora,$(HARDWARE)))
             platform = pandora
+        else ifneq (,$(findstring ODROIDC,$(HARDWARE)))
+            platform = odroidc1
         else
             $(error Unsupported Hardware)
         endif
@@ -106,6 +108,14 @@ else ifneq (,$(findstring pandora,$(platform)))
     MFLAGS +== -marm -march=armv7-a -mtune=cortex-a8 -mfpu=neon -mfloat-abi=softfp -funroll-loops -fpermissive
     ASFLAGS += -march=armv7-a -mfpu=neon -mfloat-abi=softfp
     CFLAGS += -D TARGET_PANDORA  -D WEIRD_SLOWNESS -fsingle-precision-constant
+
+# ODROID-C1
+else ifneq (,$(findstring odroidc1,$(platform)))
+    AS=${CC_PREFIX}gcc
+    MFLAGS += -marm -march=armv7-a -mtune=cortex-a5 -mfpu=neon -mfloat-abi=hard -funroll-loops
+    ASFLAGS += -march=armv7-a -mfpu=neon -mfloat-abi=hard
+    CFLAGS += -D TARGET_BEAGLE -D TARGET_LINUX_ARMELv7 -DARM_HARDFP
+    USE_GLES := 1
 
 # GCW Zero
 else ifneq (,$(findstring gcwz,$(platform)))
