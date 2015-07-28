@@ -28,12 +28,13 @@
 #if FEAT_SHREC != DYNAREC_NONE
 //uh uh
 
-#if HOST_OS == OS_WINDOWS
-	u8 SH4_TCB[2*CODE_SIZE+4096];
+u8 SH4_TCB[2*CODE_SIZE+4096]
+#if HOST_OS == OS_WINDOWS || FEAT_SHREC != DYNAREC_JIT
+	;
 #elif HOST_OS == OS_LINUX
-	u8 SH4_TCB[2*CODE_SIZE+4096] __attribute__((section(".text")));
+	__attribute__((section(".text")));
 #elif HOST_OS==OS_DARWIN
-	u8 SH4_TCB[2*CODE_SIZE+4096] __attribute__((section("__TEXT,.text")));
+	__attribute__((section("__TEXT,.text")));
 #else
 	#error SH4_TCB ALLOC
 #endif
