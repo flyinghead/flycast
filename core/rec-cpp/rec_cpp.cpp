@@ -1135,10 +1135,6 @@ int idxnxx = 0;
 
 DynarecCodeEntryPtr FNS[] = { REP_8192(0, &disaptchn) };
 
-typedef fnrv(*FNAFB)(int cycles);
-
-FNAFB FNA[] = { REP_512(0, &fnnCtor) };
-
 DynarecCodeEntryPtr getndpn_forreal(int n) {
 	if (n >= 8192)
 		return 0;
@@ -1146,11 +1142,14 @@ DynarecCodeEntryPtr getndpn_forreal(int n) {
 		return FNS[n];
 }
 
+typedef fnrv(*FNAFB)(int cycles);
+
+FNAFB FNA[] = { REP_512(1, &fnnCtor) };
+
 FNAFB fnnCtor_forreal(size_t n) {
-	if (n > 512)
-		return 0;
-	else
-		return FNA[n];
+	verify(n > 0);
+	verify(n <= 512);
+	return FNA[n - 1];
 }
 
 class BlockCompiler {
