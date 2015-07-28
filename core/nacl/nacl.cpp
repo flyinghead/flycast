@@ -21,13 +21,19 @@ int msgboxf(const wchar* text,unsigned int type,...)
 	return 0;
 }
 
+int dc_init(int argc,wchar* argv[]);
+void dc_run();
+
 
 namespace hello_world
 {
+  class HelloWorldInstance;
+  HelloWorldInstance* rei_instance;
 class HelloWorldInstance : public pp::Instance {
  public:
   explicit HelloWorldInstance(PP_Instance instance) : pp::Instance(instance) {
-    printf("HelloWorldInstance.\n");
+    rei_instance = this;
+    printf("Reicast NACL loaded\n");
   }
   virtual ~HelloWorldInstance() {}
 
@@ -47,13 +53,19 @@ void HelloWorldInstance::HandleMessage(const pp::Var& var_message) {
     return;
   }
 
-  pp::Var return_var;
+  pp::Var return_var = "starting";
 
   // Post the return result back to the browser.  Note that HandleMessage() is
   // always called on the main thread, so it's OK to post the return message
   // directly from here.  The return post is asynhronous: PostMessage returns
   // immediately.
   PostMessage(return_var);
+
+  char *Args[3];
+  Args[0] = "dc";
+
+  dc_init(1,Args);
+  dc_run();
 }
 
 /// The Module class.  The browser calls the CreateInstance() method to create
@@ -63,7 +75,7 @@ void HelloWorldInstance::HandleMessage(const pp::Var& var_message) {
 class HelloWorldModule : public pp::Module {
  public:
   HelloWorldModule() : pp::Module() {
-    printf("Got here.\n");
+    
   }
   virtual ~HelloWorldModule() {}
 
@@ -77,6 +89,19 @@ class HelloWorldModule : public pp::Module {
 };
 }  // namespace hello_world
 
+int nacl_printf(const wchar* text,...)
+{
+  va_list args;
+
+  wchar temp[2048];
+  va_start(args, text);
+  int rv = vsprintf(temp, text, args);
+  va_end(args);
+
+  if (hello_world::rei_instance)
+    hello_world::rei_instance->PostMessage(pp::Var(temp));
+  return rv;
+}
 
 namespace pp {
 /// Factory function called by the browser when the module is first loaded.
@@ -105,7 +130,7 @@ void os_SetWindowText(const char * text) {
 }
 
 void os_DoEvents() {
-  
+
 }
 
 
