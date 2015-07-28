@@ -995,6 +995,8 @@ FAST_po(div32u)
 FAST_po(div32s)
 FAST_po(rocr)
 FAST_po(rocl)
+FAST_po(mul_u64)
+FAST_po(mul_s64)
 FAST_gis
 
 FAST_sig(aCaCaCcCdC)
