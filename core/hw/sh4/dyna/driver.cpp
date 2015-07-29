@@ -88,7 +88,9 @@ void recSh4_Run()
 	verify(rcb_noffs(&next_pc)==-184);
 	ngen_mainloop(sh4_dyna_rcb);
 
+#if !defined(TARGET_BOUNDED_EXECUTION)
 	sh4_int_bCpuRun=false;
+#endif
 }
 
 void emit_Write32(u32 data)
