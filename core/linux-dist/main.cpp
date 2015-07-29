@@ -15,6 +15,9 @@
 #include "hw/sh4/dyna/blockmanager.h"
 #include <unistd.h>
 
+#if defined(TARGET_EMSCRIPTEN)
+	#include <emscripten.h>
+#endif
 
 
 
@@ -416,6 +419,10 @@ void UpdateInputState(u32 port)
 	kcode[port]= x11_dc_buttons;
 	rt[port]=0;
 	lt[port]=0;
+
+#if defined(TARGET_EMSCRIPTEN)
+	return;
+#endif
 	
 #if defined(TARGET_GCW0) || defined(TARGET_PANDORA)
 	HandleJoystick(port);
@@ -835,9 +842,9 @@ int main(int argc, wchar* argv[])
 	dc_init(argc,argv);
 
 #if !defined(TARGET_EMSCRIPTEN)
-	
+	dc_run();
 #else
-	dc_run();emscripten_set_main_loop(&dc_run, 100, false);
+	emscripten_set_main_loop(&dc_run, 100, false);
 #endif
 	
 	
@@ -858,7 +865,7 @@ void os_DebugBreak()
 {
 #if !defined(TARGET_EMSCRIPTEN)
     raise(SIGTRAP);
-#endif
+#else
 	printf("DEBUGBREAK!\n");
 	exit(-1);
 #endif
