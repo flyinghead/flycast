@@ -414,6 +414,9 @@
     <ClCompile Include="..\core\rec-x64\rec_x64.cpp">
       <Filter>rec-x64</Filter>
     </ClCompile>
+    <ClCompile Include="..\core\rec-cpp\rec_cpp.cpp">
+      <Filter>rec-cpp</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="hw">
@@ -541,6 +544,9 @@
     </Filter>
     <Filter Include="rec-x64">
       <UniqueIdentifier>{f73263e9-dbe8-4a6f-8b73-335af8307551}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="rec-cpp">
+      <UniqueIdentifier>{63d1fcf2-64b4-4973-995f-cd471f51117c}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

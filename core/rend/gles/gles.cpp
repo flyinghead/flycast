@@ -1034,7 +1034,7 @@ void tryfit(float* x,float* y)
 	for (int i=0;i<128;i++)
 	{
 		float diff=min(max(b*logf(x[i])/logf(2.0)+a,(double)0),(double)1)-y[i];
-		maxdev=max((float)abs(diff),(float)maxdev);
+		maxdev=max((float)fabs((float)diff),(float)maxdev);
 	}
 	printf("FOG TABLE Curve match: maxdev: %.02f cents\n",maxdev*100);
 	fog_coefs[0]=a;

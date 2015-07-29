@@ -265,6 +265,7 @@ u32* GetRegPtr(u32 reg)
 u32 cvld;
 u32 rdmt[6];
 extern u32 memops_t,memops_l;
+extern int mips_counter;
 
 void CheckBlock(RuntimeBlockInfo* block,x86_ptr_imm place)
 {
@@ -286,6 +287,8 @@ void CheckBlock(RuntimeBlockInfo* block,x86_ptr_imm place)
 	}
 	
 }
+
+
 void ngen_Compile(RuntimeBlockInfo* block,bool force_checks, bool reset, bool staging,bool optimise)
 {
 	//initialise stuff
@@ -305,7 +308,11 @@ void ngen_Compile(RuntimeBlockInfo* block,bool force_checks, bool reset, bool st
 
 	x86e->Emit(op_add32,&memops_t,block->memops);
 	x86e->Emit(op_add32,&memops_l,block->linkedmemops);
-	
+
+#ifdef MIPS_COUNTER
+	x86e->Emit(op_add32, &mips_counter, block->oplist.size());
+#endif
+
 	//run register allocator
 	reg.DoAlloc(block,alloc_regs,xmm_alloc_regs);
 	
