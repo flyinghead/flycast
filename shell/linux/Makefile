@@ -25,13 +25,13 @@ CXXFLAGS :=
 
 # Platform auto-detection
 # Can be overridden by using:
-#   make platform=AMD64
+#   make platform=x64
 ifeq (,$(platform))
     ARCH = $(shell uname -m)
     ifeq ($(ARCH), $(filter $(ARCH), i386 i686))
-        platform = i686
+        platform = x86
     else ifeq ($(ARCH), $(filter $(ARCH), x86_64 AMD64))
-        platform = AMD64
+        platform = x64
     else ifneq (,$(findstring arm,$(ARCH)))
         HARDWARE = $(shell grep Hardware /proc/cpuinfo)
         ifneq (,$(findstring BCM2709,$(HARDWARE)))
@@ -52,8 +52,8 @@ endif
 
 $(info Platform: $(platform))
 
-# Generic x86 (32 bit)
-ifneq (,$(findstring i686,$(platform)))
+# Generic 32 bit x86 (a.k.a. i386/i486/i686)
+ifneq (,$(findstring x86,$(platform)))
     X86_REC := 1
     NOT_ARM := 1
     MFLAGS += -m32
@@ -62,8 +62,8 @@ ifneq (,$(findstring i686,$(platform)))
     CFLAGS += -m32 -D TARGET_LINUX_x86 -D TARGET_NO_AREC
     CXXFLAGS += -fno-exceptions
 
-# Generic x86_64 (64 bit)
-else ifneq (,$(findstring AMD64,$(platform)))
+# Generic 64 bit x86 (a.k.a. x64/AMD64/x86_64/Intel64/EM64T)
+else ifneq (,$(findstring x64,$(platform)))
     X64_REC := 1
     NOT_ARM := 1
     CFLAGS += -D TARGET_LINUX_x64 -D TARGET_NO_AREC
