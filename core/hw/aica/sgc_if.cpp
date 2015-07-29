@@ -563,7 +563,7 @@ struct ChannelEx
 	{
 		u32 oct=ccd->OCT;
 
-		update_rate = 1024 | ccd->FNS;
+		u32 update_rate = 1024 | ccd->FNS;
 		if (oct& 8)
 			update_rate>>=(16-oct);
 		else

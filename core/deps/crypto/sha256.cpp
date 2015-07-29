@@ -14,7 +14,7 @@
 
 /*************************** HEADER FILES ***************************/
 #include <stdlib.h>
-#include <memory.h>
+#include <string.h>
 #include "sha256.h"
 
 #define WORD uint32_t

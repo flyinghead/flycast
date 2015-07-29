@@ -78,8 +78,9 @@ int setconfig(wchar** arg,int cl)
 			return rv;
 		}
 
-		if (value==0)
-			value="";
+		const wchar* constval = value;
+		if (constval==0)
+			constval="";
 		printf("Virtual cfg %s:%s=%s\n",sect,key,value);
 
 		cfgSetVitual(sect,key,value);
