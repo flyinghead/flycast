@@ -28,7 +28,6 @@ import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Vibrator;
@@ -38,7 +37,6 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.view.View.OnLongClickListener;
 import android.view.View.OnTouchListener;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -370,8 +368,8 @@ public class FileBrowser extends Fragment {
 		final View childview = parentActivity.getLayoutInflater().inflate(
 				R.layout.app_list_item, null, false);
 		
-		final XMLParser xmlParser = new XMLParser(game, index, mPrefs);
-		xmlParser.setViewParent(parentActivity, childview);
+		XMLParser xmlParser = new XMLParser(game, index, mPrefs);
+		xmlParser.setViewParent(parentActivity, childview, mCallback);
 		orig_bg = childview.getBackground();
 
 		childview.findViewById(R.id.childview).setOnClickListener(
@@ -398,40 +396,6 @@ public class FileBrowser extends Fragment {
 						}
 					}
 				});
-		
-		if (mPrefs.getBoolean(Config.pref_gamedetails, false) && isGame) {
-			childview.findViewById(R.id.childview).setOnLongClickListener(
-					new OnLongClickListener() {
-						public boolean onLongClick(View view) {
-							vib.vibrate(50);
-							final AlertDialog.Builder builder = new AlertDialog.Builder(parentActivity);
-							builder.setCancelable(true);
-							builder.setTitle(getString(R.string.game_details,
-									xmlParser.getGameTitle()));
-							builder.setMessage(xmlParser.getGameDetails());
-							builder.setIcon(xmlParser.getGameIcon());
-							builder.setNegativeButton("Close",
-									new DialogInterface.OnClickListener() {
-										public void onClick(DialogInterface dialog, int which) {
-											dialog.dismiss();
-											return;
-										}
-									});
-							builder.setPositiveButton("Launch",
-									new DialogInterface.OnClickListener() {
-										public void onClick(DialogInterface dialog, int which) {
-											dialog.dismiss();
-											mCallback.onGameSelected(game != null ? Uri
-													.fromFile(game) : Uri.EMPTY);
-											vib.vibrate(250);
-											return;
-										}
-									});
-							builder.create().show();
-							return true;
-						}
-					});
-		}
 
 		childview.findViewById(R.id.childview).setOnTouchListener(
 				new OnTouchListener() {

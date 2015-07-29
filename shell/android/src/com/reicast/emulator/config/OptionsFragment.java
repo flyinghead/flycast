@@ -170,6 +170,14 @@ public class OptionsFragment extends Fragment {
 			public void onCheckedChanged(CompoundButton buttonView,
 					boolean isChecked) {
 				mPrefs.edit().putBoolean(Config.pref_gamedetails, isChecked).commit();
+				if (!isChecked) {
+					File dir = new File(getActivity().getExternalFilesDir(null), "images");
+					for (File file : dir.listFiles()) {
+						if (!file.isDirectory()) {
+							file.delete();
+						}
+					}
+				}
 			}
 		};
 		Switch details_opt = (Switch) getView().findViewById(
