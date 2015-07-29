@@ -54,7 +54,7 @@ void sigill_handler(int sn, siginfo_t * si, void *segfault_ctx) {
 }
 #endif
 
-#if defined(TARGET_NO_EXCEPTIONS)
+#if !defined(TARGET_NO_EXCEPTIONS)
 void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 {
 	rei_host_context_t ctx;
@@ -302,7 +302,7 @@ void linux_fix_personality() {
 }
 
 void linux_rpi2_init() {
-#if HOST_OS == OS_LINUX && !defined(TARGET_NACL32) && !defined(TARGET_EMSCRIPTEN)
+#if (HOST_OS == OS_LINUX) && !defined(_ANDROID) && !defined(TARGET_NACL32) && !defined(TARGET_EMSCRIPTEN)
 	void* handle;
 	void (*rpi_bcm_init)(void);
 
