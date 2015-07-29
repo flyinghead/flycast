@@ -8,6 +8,7 @@ LOCAL_PATH := $(call my-dir)
 NOT_ARM := 1
 CPP_REC := 1
 #NO_REND := 1
+NO_NIXPROF := 1
 
 
 RZDCY_SRC_DIR = ../../core
@@ -22,7 +23,7 @@ CFLAGS  = -Wno-error -Wno-ignored-attributes
 CFLAGS += -O3 -fno-strict-aliasing -ffast-math
 CFLAGS += -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps
 CFLAGS += -D RELEASE -D TARGET_NO_JIT -D TARGET_NACL32 -DGLES
-CFLAGS += -D TARGET_NO_EXCEPTIONS -D TARGET_NO_NVMEM
+CFLAGS += -D TARGET_NO_EXCEPTIONS -D TARGET_NO_NVMEM -D TARGET_NO_WEBUI
 
 SOURCES = $(RZDCY_FILES) ../../core/nacl/nacl.cpp
 

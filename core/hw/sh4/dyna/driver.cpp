@@ -434,7 +434,7 @@ void recSh4_Init()
 	
 	printf("\n\t CodeCache addr: %p | from: %p | addr here: %p\n", CodeCache, CodeCache, recSh4_Init);
 
-	#if !defined(FEAT_SHREC == DYNAREC_JIT)
+	#if FEAT_SHREC == DYNAREC_JIT
 		if (mprotect(CodeCache, CODE_SIZE*2, PROT_READ|PROT_WRITE|PROT_EXEC))
 		{
 			perror("\n\tError,Couldn’t mprotect CodeCache!");

@@ -140,6 +140,7 @@
 #define CPU_ARM      0x20000002
 #define CPU_MIPS     0x20000003
 #define CPU_X64      0x20000004
+#define CPU_GENERIC  0x20000005 //used for pnacl, emscripten, etc
 
 //BUILD_COMPILER
 #define COMPILER_VC  0x30000001
@@ -192,9 +193,9 @@
 #elif defined(TARGET_GCW0)
 	#define HOST_OS OS_LINUX
 	#define HOST_CPU CPU_MIPS
-#elif defined(TARGET_NACL32)
+#elif defined(TARGET_NACL32) || defined(TARGET_EMSCRIPTEN)
 	#define HOST_OS OS_LINUX
-	#define HOST_CPU CPU_X86
+	#define HOST_CPU CPU_GENERIC
 #elif defined(TARGET_IPHONE)
     #define HOST_OS OS_DARWIN
     #define HOST_CPU CPU_ARM
