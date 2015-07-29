@@ -179,7 +179,7 @@ endif
 OBJECTS=$(RZDCY_FILES:.cpp=.build_obj)
 OBJECTS:=$(OBJECTS:.c=.build_obj)
 OBJECTS:=$(OBJECTS:.S=.build_obj)
-OBJECTS:=$(patsubst $(RZDCY_SRC_DIR)/%,obj/%,$(OBJECTS))
+OBJECTS:=$(patsubst $(RZDCY_SRC_DIR)/%,obj-$(platform)/%,$(OBJECTS))
 
 EXECUTABLE_STRIPPED=nosym-reicast.elf
 EXECUTABLE=reicast.elf
@@ -196,15 +196,15 @@ $(EXECUTABLE): $(OBJECTS)
 $(EXECUTABLE_STRIPPED): $(EXECUTABLE)
 	cp $< $@ && $(STRIP) $@
 
-obj/%.build_obj : $(RZDCY_SRC_DIR)/%.cpp
+obj-$(platform)/%.build_obj : $(RZDCY_SRC_DIR)/%.cpp
 	mkdir -p $(dir $@)
 	$(CXX) $(EXTRAFLAGS) $(INCS) $(CFLAGS) $(MFLAGS) $(CXXFLAGS) $< -o $@
 	
-obj/%.build_obj : $(RZDCY_SRC_DIR)/%.c
+obj-$(platform)/%.build_obj : $(RZDCY_SRC_DIR)/%.c
 	mkdir -p $(dir $@)
 	$(CC) $(EXTRAFLAGS) $(INCS) $(CFLAGS) $< -o $@
 
-obj/%.build_obj : $(RZDCY_SRC_DIR)/%.S
+obj-$(platform)/%.build_obj : $(RZDCY_SRC_DIR)/%.S
 	mkdir -p $(dir $@)	
 	$(AS) $(ASFLAGS) $(INCS) $(CFLAGS) $< -o $@
 
