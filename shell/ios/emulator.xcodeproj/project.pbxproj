@@ -40,6 +40,7 @@
 		877652CA1B6157FC00437F10 /* rec_arm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 877652C81B6157FC00437F10 /* rec_arm.cpp */; };
 		87C4AA541A440BEB0048DBF4 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 87C4AA531A440BEB0048DBF4 /* libz.dylib */; };
 		87C4AA561A4414070048DBF4 /* AssetsLibrary.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 87C4AA551A4414070048DBF4 /* AssetsLibrary.framework */; };
+		87C64DDC1B6E80A400FDD99A /* iCadeReaderView.m in Sources */ = {isa = PBXBuildFile; fileRef = 87C64DDA1B6E80A400FDD99A /* iCadeReaderView.m */; };
 		9C7A393318C804A80070BB5F /* reicast.entitlements in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A393218C804A80070BB5F /* reicast.entitlements */; };
 		9C7A3AA218C806E00070BB5F /* cfg.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A395118C806DE0070BB5F /* cfg.cpp */; };
 		9C7A3AA318C806E00070BB5F /* cl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A395318C806DE0070BB5F /* cl.cpp */; };
@@ -288,6 +289,9 @@
 		877652CC1B615AE800437F10 /* fp.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = fp.h; sourceTree = "<group>"; };
 		87C4AA531A440BEB0048DBF4 /* libz.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libz.dylib; path = usr/lib/libz.dylib; sourceTree = SDKROOT; };
 		87C4AA551A4414070048DBF4 /* AssetsLibrary.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AssetsLibrary.framework; path = System/Library/Frameworks/AssetsLibrary.framework; sourceTree = SDKROOT; };
+		87C64DD91B6E80A400FDD99A /* iCadeReaderView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iCadeReaderView.h; sourceTree = "<group>"; };
+		87C64DDA1B6E80A400FDD99A /* iCadeReaderView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iCadeReaderView.m; sourceTree = "<group>"; };
+		87C64DDB1B6E80A400FDD99A /* iCadeState.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iCadeState.h; sourceTree = "<group>"; };
 		9C7A393218C804A80070BB5F /* reicast.entitlements */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = reicast.entitlements; sourceTree = "<group>"; };
 		9C7A393A18C806DE0070BB5F /* arm_coding.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = arm_coding.h; sourceTree = "<group>"; };
 		9C7A393B18C806DE0070BB5F /* arm_disasm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = arm_disasm.h; sourceTree = "<group>"; };
@@ -742,6 +746,7 @@
 				9C7A393218C804A80070BB5F /* reicast.entitlements */,
 				87078AA218A47FE90034C7A0 /* Shader.fsh */,
 				87078AA418A47FE90034C7A0 /* Shader.vsh */,
+				87C64DC11B6E7FC600FDD99A /* iCade-iOS */,
 				9C7A393618C805F70070BB5F /* View Controller Subclasses */,
 				9C7A393718C806060070BB5F /* Images */,
 				9C7A393418C805980070BB5F /* Third-Party Frameworks */,
@@ -762,6 +767,16 @@
 				87078A9818A47FE90034C7A0 /* emulator-Prefix.pch */,
 			);
 			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		87C64DC11B6E7FC600FDD99A /* iCade-iOS */ = {
+			isa = PBXGroup;
+			children = (
+				87C64DD91B6E80A400FDD99A /* iCadeReaderView.h */,
+				87C64DDA1B6E80A400FDD99A /* iCadeReaderView.m */,
+				87C64DDB1B6E80A400FDD99A /* iCadeState.h */,
+			);
+			path = "iCade-iOS";
 			sourceTree = "<group>";
 		};
 		9C7A393418C805980070BB5F /* Third-Party Frameworks */ = {
@@ -1556,6 +1571,7 @@
 				9C7A3B4918C806E00070BB5F /* gles.cpp in Sources */,
 				9C7A3ADD18C806E00070BB5F /* zip_rename.c in Sources */,
 				9C7A3ADB18C806E00070BB5F /* zip_new.c in Sources */,
+				87C64DDC1B6E80A400FDD99A /* iCadeReaderView.m in Sources */,
 				9C7A3AD718C806E00070BB5F /* zip_get_name.c in Sources */,
 				877652C61B6157BD00437F10 /* audiostream.cpp in Sources */,
 				877652C51B6157BD00437F10 /* audiobackend_pulseaudio.cpp in Sources */,

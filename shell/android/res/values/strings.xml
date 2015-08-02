@@ -108,9 +108,6 @@
     <string name="rateme">Rate Me</string>
     <string name="messages">Send Logs</string>
     <string name="cloud">Cloud VMU</string>
-    
-    <string name="textOn">ON</string>
-    <string name="textOff">OFF</string>
 
     <string name="cancel">Cancel</string>
     <string name="dismiss">Dismiss</string>
