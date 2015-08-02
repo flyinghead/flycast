@@ -448,7 +448,7 @@ void  cfgSaveInt(const wchar * Section, const wchar * Key, s32 Int)
 	sprintf(tmp,"%d", Int);
 	cfgSaveStr(Section,Key,tmp);
 }
-void cfgSetVitual(const wchar * Section, const wchar * Key, const wchar * String)
+void cfgSetVirtual(const wchar * Section, const wchar * Key, const wchar * String)
 {
 	vlist.push_back(vitem(Section,Key,String));
 	//cfgdb.GetEntry(Section,CEM_VIRTUAL)->SetEntry(Key,String,CEM_VIRTUAL);

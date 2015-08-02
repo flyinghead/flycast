@@ -4,6 +4,7 @@
 //initialse Emu
 #include "types.h"
 #include "oslib/oslib.h"
+#include "oslib/audiostream.h"
 #include "hw/mem/_vmem.h"
 #include "stdclass.h"
 #include "cfg/cfg.h"
@@ -196,7 +197,6 @@ int dc_init(int argc,wchar* argv[])
 		printf("Using Interpreter\n");
 	}
 	
-	  void InitAudio();
   InitAudio();
 
 	sh4_cpu.Init();
