@@ -88,7 +88,9 @@ void recSh4_Run()
 	verify(rcb_noffs(&next_pc)==-184);
 	ngen_mainloop(sh4_dyna_rcb);
 
+#if !defined(TARGET_BOUNDED_EXECUTION)
 	sh4_int_bCpuRun=false;
+#endif
 }
 
 void emit_Write32(u32 data)
@@ -415,9 +417,10 @@ void recSh4_Init()
 	verify(rcb_noffs(&p_sh4rcb->cntx.sh4_sched_next) == -152);
 	verify(rcb_noffs(&p_sh4rcb->cntx.interrupt_pend) == -148);
 	
-
+#if !defined(TARGET_NO_NVMEM)
 	verify(mem_b.data==((u8*)p_sh4rcb->sq_buffer+512+0x0C000000));
-
+#endif
+	
 	//align to next page ..
     CodeCache = (u8*)(((unat)SH4_TCB+4095)& ~4095);
 
@@ -433,11 +436,13 @@ void recSh4_Init()
 	
 	printf("\n\t CodeCache addr: %p | from: %p | addr here: %p\n", CodeCache, CodeCache, recSh4_Init);
 
-	if (mprotect(CodeCache, CODE_SIZE*2, PROT_READ|PROT_WRITE|PROT_EXEC))
-	{
-		perror("\n\tError,Couldn’t mprotect CodeCache!");
-		verify(false);
-	}
+	#if FEAT_SHREC == DYNAREC_JIT
+		if (mprotect(CodeCache, CODE_SIZE*2, PROT_READ|PROT_WRITE|PROT_EXEC))
+		{
+			perror("\n\tError,Couldn’t mprotect CodeCache!");
+			die("Couldn’t mprotect CodeCache");
+		}
+	#endif
 
 	memset(CodeCache,0xFF,CODE_SIZE*2);
 

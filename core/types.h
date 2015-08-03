@@ -430,6 +430,12 @@ struct maple_device_instance
 #include <stdlib.h>
 #include <stdio.h>
 
+#if defined(TARGET_NACL32)
+	int nacl_printf(const wchar* Text,...);
+	#define printf nacl_printf
+	#define puts(X) printf("%s\n", X)
+#endif
+
 //includes from c++rt
 #include <vector>
 #include <string>

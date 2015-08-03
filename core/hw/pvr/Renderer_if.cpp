@@ -66,8 +66,11 @@ u32 VertexCount=0;
 u32 FrameCount=1;
 
 Renderer* renderer;
+
+#if !defined(TARGET_NO_THREADS)
 cResetEvent rs(false,true);
 cResetEvent re(false,true);
+#endif
 
 int max_idx,max_mvo,max_op,max_pt,max_tr,max_vtx,max_modt, ovrn;
 
@@ -184,7 +187,9 @@ TA_context* read_frame(const char* file, u8* vram_ref) {
 
 bool rend_frame(TA_context* ctx, bool draw_osd) {
 	bool proc = renderer->Process(ctx);
+#if !defined(TARGET_NO_THREADS)
 	re.Set();
+#endif
 
 	bool do_swp = proc && renderer->Render();
 
@@ -199,11 +204,12 @@ bool rend_single_frame()
 	//wait render start only if no frame pending
 	do
 	{
+#if !defined(TARGET_NO_THREADS)
 		rs.Wait();
+#endif
 		_pvrrc = DequeueRender();
 	}
 	while (!_pvrrc);
-	
 	bool do_swp = rend_frame(_pvrrc, true);
 
 	//clear up & free data ..
@@ -256,8 +262,9 @@ void* rend_thread(void* p)
 	}
 }
 
+#if !defined(TARGET_NO_THREADS)
 cThread rthd(rend_thread,0);
-
+#endif
 
 bool pend_rend = false;
 
@@ -301,7 +308,11 @@ void rend_start_render()
 #endif
 			if (QueueRender(ctx))  {
 				palette_update();
+#if !defined(TARGET_NO_THREADS)
 				rs.Set();
+#else
+				rend_single_frame();
+#endif
 				pend_rend = true;
 			}
 		}
@@ -325,8 +336,13 @@ void rend_end_render()
 	#endif
 #endif
 
-	if (pend_rend)
+	if (pend_rend) {
+#if !defined(TARGET_NO_THREADS)
 		re.Wait();
+#else
+		renderer->Present();
+#endif
+	}
 }
 
 /*
@@ -356,7 +372,13 @@ bool rend_init()
 #endif
 
 #if !defined(_ANDROID) && HOST_OS != OS_DARWIN
-	rthd.Start();
+  #if !defined(TARGET_NO_THREADS)
+    rthd.Start();
+  #else
+    if (!renderer->Init()) die("rend->init() failed\n");
+
+    renderer->Resize(640, 480);
+  #endif
 #endif
 
 #if SET_AFNT

@@ -354,7 +354,7 @@ gl_ctx gl;
 int screen_width;
 int screen_height;
 
-#if HOST_OS != OS_DARWIN
+#if (HOST_OS != OS_DARWIN) && !defined(TARGET_NACL32)
 #ifdef GLES
 	// Create a basic GLES context
 	bool gl_init(void* wind, void* disp)
@@ -755,11 +755,12 @@ GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentShader)
 	{
 		if (compile_log_len==0)
 			compile_log_len=1;
+		compile_log_len+= 1024;
 		char* compile_log=(char*)malloc(compile_log_len);
 		*compile_log=0;
 
 		glGetProgramInfoLog(program, compile_log_len, &compile_log_len, compile_log);
-		printf("Shader linking: %s \n%s\n",result?"linked":"failed to link",compile_log);
+		printf("Shader linking: %s \n (%d bytes), - %s -\n",result?"linked":"failed to link", compile_log_len,compile_log);
 
 		free(compile_log);
 		die("shader compile fail\n");
@@ -961,7 +962,7 @@ bool gles_init()
 	if (!gl_create_resources())
 		return false;
 
-#if defined(GLES) && HOST_OS != OS_DARWIN
+#if defined(GLES) && HOST_OS != OS_DARWIN && !defined(TARGET_NACL32)
 	#ifdef TARGET_PANDORA
 	fbdev=open("/dev/fb0", O_RDONLY);
 	#else

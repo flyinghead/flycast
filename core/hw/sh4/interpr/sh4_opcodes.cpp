@@ -1301,7 +1301,11 @@ void DYNACALL do_sqw_mmu(u32 dst) { do_sqw<true>(dst); }
 #if HOST_CPU!=CPU_ARM
 extern "C" void DYNACALL do_sqw_nommu_area_3(u32 dst,u8* sqb)
 {
+	#if defined (TARGET_NO_NVMEM)
+	u8* pmem = mem_b.data;
+	#else
 	u8* pmem=sqb+512+0x0C000000;
+	#endif
 
 	memcpy((u64*)&pmem[dst&(RAM_MASK-0x1F)],(u64*)&sqb[dst & 0x20],32);
 }

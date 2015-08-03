@@ -15,6 +15,9 @@
 #include "hw/sh4/dyna/blockmanager.h"
 #include <unistd.h>
 
+#if defined(TARGET_EMSCRIPTEN)
+	#include <emscripten.h>
+#endif
 
 
 
@@ -32,7 +35,7 @@
 	map<int, int> x11_keymap;
 #endif
 
-#if !defined(ANDROID) && HOST_OS != OS_DARWIN
+#if !defined(ANDROID) && HOST_OS != OS_DARWIN && !defined(TARGET_EMSCRIPTEN)
 	#include <linux/joystick.h>
 	#include <sys/stat.h> 
 	#include <sys/types.h> 
@@ -138,8 +141,7 @@ void SetupInput()
 		rt[port]=0;
 		lt[port]=0;
 	}
-
-#if HOST_OS != OS_DARWIN
+#if HOST_OS != OS_DARWIN && !defined(TARGET_EMSCRIPTEN)
 	if (true) {
 		#ifdef TARGET_PANDORA
 		const char* device = "/dev/input/event4";
@@ -160,10 +162,10 @@ void SetupInput()
 		else
 			perror("evdev open");
 	}
-#endif
+
 	// Open joystick device
 	JoyFD = open("/dev/input/js0",O_RDONLY);
-#if HOST_OS != OS_DARWIN		
+	
 	if(JoyFD>=0)
 	{
 		int AxisCount,ButtonCount;
@@ -191,7 +193,7 @@ void SetupInput()
 }
 
 bool HandleKb(u32 port) {
-#if HOST_OS != OS_DARWIN
+#if HOST_OS != OS_DARWIN && !defined(TARGET_EMSCRIPTEN)
 	if (kbfd < 0)
 		return false;
 
@@ -297,7 +299,7 @@ bool HandleJoystick(u32 port)
   // Joystick must be connected
   if(JoyFD<0) return false;
 
-#if HOST_OS != OS_DARWIN
+#if HOST_OS != OS_DARWIN && !defined(TARGET_EMSCRIPTEN)
   struct js_event JE;
   while(read(JoyFD,&JE,sizeof(JE))==sizeof(JE))
 	  if (JE.number<MAP_SIZE)
@@ -417,6 +419,10 @@ void UpdateInputState(u32 port)
 	kcode[port]= x11_dc_buttons;
 	rt[port]=0;
 	lt[port]=0;
+
+#if defined(TARGET_EMSCRIPTEN)
+	return;
+#endif
 	
 #if defined(TARGET_GCW0) || defined(TARGET_PANDORA)
 	HandleJoystick(port);
@@ -784,13 +790,13 @@ int main(int argc, wchar* argv[])
 	//if (argc==2) 
 		//ndcid=atoi(argv[1]);
 
-	if (setup_curses() < 0) die("failed to setup curses!\n");
+	if (setup_curses() < 0) printf("failed to setup curses!\n");
 #ifdef TARGET_PANDORA
 	signal(SIGSEGV, clean_exit);
 	signal(SIGKILL, clean_exit);
 #endif
 
-#if defined(USES_HOMEDIR) && HOST_OS != OS_DARWIN
+#if defined(USES_HOMEDIR) && HOST_OS != OS_DARWIN && !defined(TARGET_EMSCRIPTEN)
 	string home = (string)getenv("HOME");
 	if(home.c_str())
 	{
@@ -835,7 +841,12 @@ int main(int argc, wchar* argv[])
 		
 	dc_init(argc,argv);
 
+#if !defined(TARGET_EMSCRIPTEN)
 	dc_run();
+#else
+	emscripten_set_main_loop(&dc_run, 100, false);
+#endif
+	
 	
 #ifdef TARGET_PANDORA
 	clean_exit(0);
@@ -852,5 +863,10 @@ int push_vmu_screen(u8* buffer) { return 0; }
 
 void os_DebugBreak()
 {
+#if !defined(TARGET_EMSCRIPTEN)
     raise(SIGTRAP);
+#else
+	printf("DEBUGBREAK!\n");
+	exit(-1);
+#endif
 }

@@ -13,20 +13,24 @@
 #define TRUE 1
 #define FALSE 0
 
-#pragma comment (lib, "wsock32.lib")
 
 #include <string>
 #include <sstream>
 
-#if HOST_OS == OS_LINUX || HOST_OS == OS_DARWIN
-	#include <sys/socket.h>
-	#include <netinet/in.h>
-	#include <netinet/ip.h>
-	#include <netinet/tcp.h>
-	#include <netdb.h>
-	#include <unistd.h>
+#if FEAT_HAS_COREIO_HTTP
+	#if HOST_OS == OS_LINUX
+		#include <sys/socket.h>
+		#include <netinet/in.h>
+		#include <netinet/ip.h>
+		#include <netinet/tcp.h>
+		#include <netdb.h>
+		#include <unistd.h>
+	#else
+		#pragma comment (lib, "wsock32.lib")
+	#endif
 #endif
 
+#if FEAT_HAS_COREIO_HTTP
 string url_encode(const string &value) {
 	ostringstream escaped;
 	escaped.fill('0');
@@ -186,6 +190,7 @@ _data:
 
     return  rv;
 }
+#endif
 
 struct CORE_FILE {
 	FILE* f;
@@ -203,7 +208,7 @@ core_file* core_fopen(const char* filename)
 	CORE_FILE* rv = new CORE_FILE();
 	rv->f = 0;
 	rv->path = p;
-
+#if FEAT_HAS_COREIO_HTTP
 	if (p.substr(0,7)=="http://") {
 		rv->host = p.substr(7,p.npos);
 		rv->host = rv->host.substr(0, rv->host.find_first_of("/"));
@@ -217,7 +222,9 @@ core_file* core_fopen(const char* filename)
 			rv->host = rv->host.substr(0, rv->host.find_first_of(":"));
 			sscanf(port.c_str(),"%d",&rv->port);
 		}
-	} else {
+	} else
+#endif	
+  {
 		rv->f = fopen(filename, "rb");
 
 		if (!rv->f) {
@@ -257,7 +264,9 @@ int core_fread(core_file* fc, void* buff, size_t len)
 	if (f->f) {
 		fread(buff,1,len,f->f);
 	} else {
+	#if FEAT_HAS_COREIO_HTTP
 		HTTP_GET(f->host, f->port, f->path, f->seek_ptr, len, buff);
+	#endif
 	}
 
 	f->seek_ptr += len;
@@ -293,6 +302,8 @@ size_t core_fsize(core_file* fc)
 		return rv;
 	}
 	else {
+	#if FEAT_HAS_COREIO_HTTP
 		return HTTP_GET(f->host, f->port, f->path, 0, 0,0);
+	#endif
 	}	
 }

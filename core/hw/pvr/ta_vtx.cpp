@@ -111,7 +111,7 @@ const u32 SZ64=2;
 #include "ta_structs.h"
 
 typedef Ta_Dma* DYNACALL TaListFP(Ta_Dma* data,Ta_Dma* data_end);
-typedef u32 TACALL TaPolyParamFP(void* ptr);
+typedef void TACALL TaPolyParamFP(void* ptr);
 
 //#define TaCmd ((TaListFP*&)sh4rcb.tacmd_void)
 TaListFP* TaCmd;
@@ -351,14 +351,18 @@ strip_end:
 		return data+poly_size;
 	}
 
-	static void TACALL AppendPolyParam2Full(Ta_Dma* pp)
+	static void TACALL AppendPolyParam2Full(void* vpp)
 	{
+		Ta_Dma* pp=(Ta_Dma*)vpp;
+
 		AppendPolyParam2A((TA_PolyParam2A*)&pp[0]);
 		AppendPolyParam2B((TA_PolyParam2B*)&pp[1]);
 	}
 
-	static void TACALL AppendPolyParam4Full(Ta_Dma* pp)
+	static void TACALL AppendPolyParam4Full(void* vpp)
 	{
+		Ta_Dma* pp=(Ta_Dma*)vpp;
+
 		AppendPolyParam4A((TA_PolyParam4A*)&pp[0]);
 		AppendPolyParam4B((TA_PolyParam4B*)&pp[1]);
 	}
@@ -390,6 +394,7 @@ public:
 				//32Bw3
 			case ParamType_End_Of_List:
 				{
+
 					if (CurrentList==ListType_None)
 					{
 						CurrentList=data->pcw.ListType;
@@ -412,16 +417,17 @@ public:
 				//32B
 			case ParamType_User_Tile_Clip:
 				{
+
 					SetTileClip(data->data_32[3]&63,data->data_32[4]&31,data->data_32[5]&63,data->data_32[6]&31);
-					//*cough* ignore it :p
 					data+=SZ32;
 				}
 				break;
 				//32B
 			case ParamType_Object_List_Set:
 				{
+
 					die("ParamType_Object_List_Set");
-					//*cough* ignore it :p
+					// *cough* ignore it :p
 					data+=SZ32;
 				}
 				break;
@@ -431,6 +437,7 @@ public:
 				//PolyType :32B/64B
 			case ParamType_Polygon_or_Modifier_Volume:
 				{
+
 					TA_PP;
 					group_EN();
 					//Yep , C++ IS lame & limited
@@ -458,12 +465,14 @@ public:
 
 						if (data != data_end || psz==1)
 						{
+
 							//poly , 32B/64B
 							ta_poly_param_lut[ppid](data);
 							data+=psz;
 						}
 						else
 						{
+
 							//AppendPolyParam64A((TA_PolyParamA*)data);
 							//64b , first part
 							ta_poly_param_a_lut[ppid](data);
@@ -478,6 +487,7 @@ public:
 				//Sets Sprite info , and switches to ta_sprite_data function
 			case ParamType_Sprite:
 				{
+
 					TA_SP;
 					group_EN();
 					if (CurrentList==ListType_None)
@@ -494,6 +504,7 @@ public:
 			case ParamType_Vertex_Parameter:
 				//log ("vtx");
 				{
+
 					//printf("VTX:0x%08X\n",VerxexDataFP);
 					//verify(VerxexDataFP!=NullVertexData);
 					data=VerxexDataFP(data,data_end);
@@ -817,40 +828,54 @@ public:
 
 	//poly param handling
 	__forceinline
-		static void TACALL AppendPolyParam0(TA_PolyParam0* pp)
+		static void TACALL AppendPolyParam0(void* vpp)
 	{
+		TA_PolyParam0* pp=(TA_PolyParam0*)vpp;
+
 		glob_param_bdc(pp);
 	}
 	__forceinline
-		static void TACALL AppendPolyParam1(TA_PolyParam1* pp)
+		static void TACALL AppendPolyParam1(void* vpp)
 	{
+		TA_PolyParam1* pp=(TA_PolyParam1*)vpp;
+
 		glob_param_bdc(pp);
 		poly_float_color(FaceBaseColor,FaceColor);
 	}
 	__forceinline
-		static void TACALL AppendPolyParam2A(TA_PolyParam2A* pp)
+		static void TACALL AppendPolyParam2A(void* vpp)
 	{
+		TA_PolyParam2A* pp=(TA_PolyParam2A*)vpp;
+
 		glob_param_bdc(pp);
 	}
 	__forceinline
-		static void TACALL AppendPolyParam2B(TA_PolyParam2B* pp)
+		static void TACALL AppendPolyParam2B(void* vpp)
 	{
+		TA_PolyParam2B* pp=(TA_PolyParam2B*)vpp;
+
 		poly_float_color(FaceBaseColor,FaceColor);
 		poly_float_color(FaceOffsColor,FaceOffset);
 	}
 	__forceinline
-		static void TACALL AppendPolyParam3(TA_PolyParam3* pp)
+		static void TACALL AppendPolyParam3(void* vpp)
 	{
+		TA_PolyParam3* pp=(TA_PolyParam3*)vpp;
+
 		glob_param_bdc(pp);
 	}
 	__forceinline
-		static void TACALL AppendPolyParam4A(TA_PolyParam4A* pp)
+		static void TACALL AppendPolyParam4A(void* vpp)
 	{
+		TA_PolyParam4A* pp=(TA_PolyParam4A*)vpp;
+
 		glob_param_bdc(pp);
 	}
 	__forceinline
-		static void TACALL AppendPolyParam4B(TA_PolyParam4B* pp)
+		static void TACALL AppendPolyParam4B(void* vpp)
 	{
+		TA_PolyParam4B* pp=(TA_PolyParam4B*)vpp;
+
 		poly_float_color(FaceBaseColor,FaceColor0);
 	}
 
@@ -1419,7 +1444,6 @@ bool ta_parse_vdrc(TA_context* ctx)
 	vd_rc = vd_ctx->rend;
 	
 	ta_parse_cnt++;
- 
 	if (0 == (ta_parse_cnt %  ( settings.pvr.ta_skip + 1)))
 	{
 		TAFifo0.vdec_init();
@@ -1430,6 +1454,7 @@ bool ta_parse_vdrc(TA_context* ctx)
 		do
 		{
 			ta_data =TaCmd(ta_data,ta_data_end);
+
 		}
 		while(ta_data<=ta_data_end);
 

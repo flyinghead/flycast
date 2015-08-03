@@ -140,6 +140,7 @@
 #define CPU_ARM      0x20000002
 #define CPU_MIPS     0x20000003
 #define CPU_X64      0x20000004
+#define CPU_GENERIC  0x20000005 //used for pnacl, emscripten, etc
 
 //BUILD_COMPILER
 #define COMPILER_VC  0x30000001
@@ -192,9 +193,9 @@
 #elif defined(TARGET_GCW0)
 	#define HOST_OS OS_LINUX
 	#define HOST_CPU CPU_MIPS
-#elif defined(TARGET_NACL32)
+#elif defined(TARGET_NACL32) || defined(TARGET_EMSCRIPTEN)
 	#define HOST_OS OS_LINUX
-	#define HOST_CPU CPU_X86
+	#define HOST_CPU CPU_GENERIC
 #elif defined(TARGET_IPHONE)
     #define HOST_OS OS_DARWIN
     #define HOST_CPU CPU_ARM
@@ -220,6 +221,15 @@
 #define FEAT_DSPREC DYNAREC_NONE
 #endif
 
+
+#if defined(TARGET_NO_NIXPROF)
+#define FEAT_HAS_NIXPROF 0
+#endif
+
+#if defined(TARGET_NO_COREIO_HTTP)
+#define FEAT_HAS_COREIO_HTTP 0
+#endif
+
 //defaults
 #ifndef FEAT_SHREC
 	#define FEAT_SHREC DYNAREC_JIT
@@ -239,6 +249,16 @@
 	#else
 		#define FEAT_DSPREC DYNAREC_NONE
 	#endif
+#endif
+
+#ifndef FEAT_HAS_NIXPROF
+  #if HOST_OS != OS_WINDOWS
+    #define FEAT_HAS_NIXPROF 1
+  #endif
+#endif
+
+#ifndef FEAT_HAS_COREIO_HTTP
+	#define FEAT_HAS_COREIO_HTTP 1
 #endif
 
 //Depricated build configs

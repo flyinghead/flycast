@@ -6,8 +6,10 @@
 	#define _XOPEN_SOURCE 1
 	#define __USE_GNU 1
 #endif
+#if !defined(TARGET_NACL32)
 #include <poll.h>
 #include <termios.h>
+#endif  
 //#include <curses.h>
 #include <fcntl.h>
 #include <semaphore.h>
@@ -16,10 +18,10 @@
 #include <sys/param.h>
 #include <sys/mman.h>
 #include <sys/time.h>
-#if !defined(_ANDROID) && !TARGET_OS_IPHONE
+#if !defined(_ANDROID) && !defined(TARGET_OS_IPHONE) && !defined(TARGET_NACL32) && !defined(TARGET_EMSCRIPTEN)
   #include <sys/personality.h>
+  #include <dlfcn.h>
 #endif
-#include <dlfcn.h>
 #include <unistd.h>
 #include "hw/sh4/dyna/blockmanager.h"
 
@@ -27,6 +29,7 @@
 
 #include "hw/sh4/dyna/ngen.h"
 
+#if !defined(TARGET_NO_EXCEPTIONS)
 bool ngen_Rewrite(unat& addr,unat retadr,unat acc);
 u32* ngen_readm_fail_v2(u32* ptr,u32* regs,u32 saddr);
 bool VramLockedWrite(u8* address);
@@ -51,6 +54,7 @@ void sigill_handler(int sn, siginfo_t * si, void *segfault_ctx) {
 }
 #endif
 
+#if !defined(TARGET_NO_EXCEPTIONS)
 void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 {
 	rei_host_context_t ctx;
@@ -96,16 +100,18 @@ void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 		signal(SIGSEGV, SIG_DFL);
 	}
 }
+#endif
 
+#endif
 void install_fault_handler (void)
 {
+#if !defined(TARGET_NO_EXCEPTIONS)
 	struct sigaction act, segv_oact;
 	memset(&act, 0, sizeof(act));
 	act.sa_sigaction = fault_handler;
 	sigemptyset(&act.sa_mask);
 	act.sa_flags = SA_SIGINFO;
 	sigaction(SIGSEGV, &act, &segv_oact);
-
 #if HOST_OS == OS_DARWIN
     //this is broken on osx/ios/mach in general
     sigaction(SIGBUS, &act, &segv_oact);
@@ -113,8 +119,10 @@ void install_fault_handler (void)
     act.sa_sigaction = sigill_handler;
     sigaction(SIGILL, &act, &segv_oact);
 #endif
+#endif
 }
 
+#if !defined(TARGET_NO_THREADS)
 
 //Thread class
 cThread::cThread(ThreadEntryFP* function,void* prm)
@@ -134,6 +142,7 @@ void cThread::WaitToEnd()
 }
 
 //End thread class
+#endif
 
 //cResetEvent Calss
 cResetEvent::cResetEvent(bool State,bool Auto)
@@ -182,6 +191,7 @@ void cResetEvent::Wait()//Wait for signal , then reset
 
 void VArray2::LockRegion(u32 offset,u32 size)
 {
+	#if !defined(TARGET_NO_EXCEPTIONS)
   u32 inpage=offset & PAGE_MASK;
 	u32 rv=mprotect (data+offset-inpage, size+inpage, PROT_READ );
 	if (rv!=0)
@@ -189,6 +199,10 @@ void VArray2::LockRegion(u32 offset,u32 size)
 		printf("mprotect(%08X,%08X,R) failed: %d | %d\n",data+offset-inpage,size+inpage,rv,errno);
 		die("mprotect  failed ..\n");
 	}
+
+	#else
+		printf("VA2: LockRegion\n");
+	#endif
 }
 
 void print_mem_addr()
@@ -228,6 +242,7 @@ void print_mem_addr()
 
 void VArray2::UnLockRegion(u32 offset,u32 size)
 {
+	#if !defined(TARGET_NO_EXCEPTIONS)
   u32 inpage=offset & PAGE_MASK;
 	u32 rv=mprotect (data+offset-inpage, size+inpage, PROT_READ | PROT_WRITE);
 	if (rv!=0)
@@ -236,6 +251,9 @@ void VArray2::UnLockRegion(u32 offset,u32 size)
 		printf("mprotect(%08X,%08X,RW) failed: %d | %d\n",data+offset-inpage,size+inpage,rv,errno);
 		die("mprotect  failed ..\n");
 	}
+	#else
+		printf("VA2: UnLockRegion\n");
+	#endif
 }
 double os_GetSeconds()
 {
@@ -276,7 +294,7 @@ void enable_runfast()
 }
 
 void linux_fix_personality() {
-        #if !defined(_ANDROID) && !TARGET_OS_IPHONE
+        #if HOST_OS == OS_LINUX && !defined(_ANDROID) && !defined(TARGET_OS_IPHONE) && !defined(TARGET_NACL32) && !defined(TARGET_EMSCRIPTEN)
           printf("Personality: %08X\n", personality(0xFFFFFFFF));
           personality(~READ_IMPLIES_EXEC & personality(0xFFFFFFFF));
           printf("Updated personality: %08X\n", personality(0xFFFFFFFF));
@@ -284,6 +302,7 @@ void linux_fix_personality() {
 }
 
 void linux_rpi2_init() {
+#if (HOST_OS == OS_LINUX) && !defined(_ANDROID) && !defined(TARGET_NACL32) && !defined(TARGET_EMSCRIPTEN)
 	void* handle;
 	void (*rpi_bcm_init)(void);
 
@@ -297,6 +316,7 @@ void linux_rpi2_init() {
 			rpi_bcm_init();
 		}
 	}
+#endif
 }
 
 void common_linux_setup()

@@ -393,7 +393,7 @@ void _vmem_term()
 #include "hw/pvr/pvr_mem.h"
 #include "hw/sh4/sh4_mem.h"
 
-#ifndef TARGET_NACL32
+#if !defined(TARGET_NO_NVMEM)
 
 #define MAP_RAM_START_OFFSET  0
 #define MAP_VRAM_START_OFFSET (MAP_RAM_START_OFFSET+RAM_SIZE)
@@ -581,8 +581,12 @@ void _vmem_bm_pagefail(void** ptr,u32 PAGE_SZ);
 u32 pagecnt;
 void _vmem_bm_reset()
 {
-	#if HOST_OS == OS_DARWIN
-		//On iOS we allways allocate all of the mapping table
+	#if defined(TARGET_NO_NVMEM)
+		return;
+	#endif
+
+	#if (HOST_OS == OS_DARWIN)
+		//On iOS & nacl we allways allocate all of the mapping table
 		mprotect(p_sh4rcb, sizeof(p_sh4rcb->fpcb), PROT_READ | PROT_WRITE);
 		return;
 	#endif
@@ -726,16 +730,27 @@ bool _vmem_reserve()
 }
 #else
 
+void* malloc_pages(size_t size) {
+
+	u8* rv = (u8*)malloc(size + PAGE_SIZE);
+
+	return rv + PAGE_SIZE - ((unat)rv % PAGE_SIZE);
+}
+
 bool _vmem_reserve()
 {
+	p_sh4rcb=(Sh4RCB*)malloc_pages(sizeof(Sh4RCB));
+
 	mem_b.size=RAM_SIZE;
-	mem_b.data=(u8*)malloc(RAM_SIZE);
+	mem_b.data=(u8*)malloc_pages(RAM_SIZE);
 
 	vram.size=VRAM_SIZE;
-	vram.data=(u8*)malloc(VRAM_SIZE);
+	vram.data=(u8*)malloc_pages(VRAM_SIZE);
 
 	aica_ram.size=ARAM_SIZE;
-	aica_ram.data=(u8*)malloc(ARAM_SIZE);
+	aica_ram.data=(u8*)malloc_pages(ARAM_SIZE);
+
+	return true;
 }
 #endif
 

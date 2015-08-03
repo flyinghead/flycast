@@ -52,7 +52,11 @@ void ngen_mainloop(void* v_cntx)
 
 	cycle_counter = 0;
 
+#if !defined(TARGET_BOUNDED_EXECUTION)
 	for (;;) {
+#else
+	for (int i=0; i<10000; i++) {
+#endif
 		cycle_counter = SH4_TIMESLICE;
 		do {
 			DynarecCodeEntryPtr rcb = bm_GetCode(ctx->cntx.pc);

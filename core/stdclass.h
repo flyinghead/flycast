@@ -163,6 +163,7 @@ public:
 //Windoze code
 //Threads
 
+#if !defined(HOST_NO_THREADS)
 typedef  void* ThreadEntryFP(void* param);
 
 typedef void* THREADHANDLE;
@@ -179,7 +180,7 @@ public :
 	void Start();
 	void WaitToEnd();
 };
-
+#endif
 //Wait Events
 typedef void* EVENTHANDLE;
 class cResetEvent

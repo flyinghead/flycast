@@ -1,4 +1,6 @@
 #include "types.h"
+
+#if FEAT_HAS_NIXPROF
 #include "cfg/cfg.h"
 
 
@@ -33,7 +35,7 @@
 #include <set>
 #include "deps/libelf/elf.h"
 
-#include "context.h"
+#include "linux/context.h"
 
 /** 
 @file      CallStack_Android.h 
@@ -298,3 +300,4 @@ void sample_Stop()
 	}
 	printf("sampling profiler: stopped\n");
 }
+#endif

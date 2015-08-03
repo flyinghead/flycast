@@ -113,6 +113,14 @@ TA_context* DequeueRender()
 	return rv;
 }
 
+bool rend_framePending() {
+	mtx_rqueue.Lock();
+	TA_context* rv = rqueue;
+	mtx_rqueue.Unlock();
+
+	return rv != 0;
+}
+
 void FinishRender(TA_context* ctx)
 {
 	verify(rqueue == ctx);
