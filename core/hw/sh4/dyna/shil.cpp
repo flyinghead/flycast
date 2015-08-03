@@ -697,7 +697,7 @@ void dejcond(RuntimeBlockInfo* blk)
 
 		if (found)
 		{
-			if (op->rd.is_reg() && op->rd._reg==reg_sr_T ||  op->op==shop_ifb)
+			if ((op->rd.is_reg() && op->rd._reg==reg_sr_T) ||  op->op==shop_ifb)
 			{
 				found=false;
 			}
@@ -840,9 +840,9 @@ void srt_waw(RuntimeBlockInfo* blk)
 
 		if (found)
 		{
-			if (op->rs1.is_reg() && op->rs1._reg==reg_sr_T
-				|| op->rs2.is_reg() && op->rs2._reg==reg_sr_T
-				|| op->rs3.is_reg() && op->rs3._reg==reg_sr_T
+			if ((op->rs1.is_reg() && op->rs1._reg==reg_sr_T)
+				|| (op->rs2.is_reg() && op->rs2._reg==reg_sr_T)
+				|| (op->rs3.is_reg() && op->rs3._reg==reg_sr_T)
 				|| op->op==shop_ifb)
 			{
 				found=false;
