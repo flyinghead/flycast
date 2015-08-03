@@ -53,7 +53,7 @@ void ngen_mainloop(void* v_cntx)
 	cycle_counter = 0;
 
 #if !defined(TARGET_BOUNDED_EXECUTION)
-	do
+	for (;;) {
 #else
 	for (int i=0; i<10000; i++) {
 #endif
