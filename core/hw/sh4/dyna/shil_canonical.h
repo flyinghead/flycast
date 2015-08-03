@@ -7,7 +7,8 @@
 	d) Cookies (if you're really lucky)
 
 */
-#if HOST_CPU == CPU_ARM && !defined(_ANDROID)
+#if HOST_CPU == CPU_ARM && !defined(_ANDROID) && 0
+//FIXME: Fix extern function support on shil, or remove these
 extern "C" void ftrv_asm(float* fd,float* fn, float* fm);
 extern "C" f32 fipr_asm(float* fn, float* fm);
 #define ftrv_impl ftrv_asm
