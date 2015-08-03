@@ -226,6 +226,10 @@
 #define FEAT_HAS_NIXPROF 0
 #endif
 
+#if defined(TARGET_NO_COREIO_HTTP)
+#define FEAT_HAS_COREIO_HTTP 0
+#endif
+
 //defaults
 #ifndef FEAT_SHREC
 	#define FEAT_SHREC DYNAREC_JIT
@@ -251,6 +255,10 @@
   #if HOST_OS != OS_WINDOWS
     #define FEAT_HAS_NIXPROF 1
   #endif
+#endif
+
+#ifndef FEAT_HAS_COREIO_HTTP
+	#define FEAT_HAS_COREIO_HTTP 1
 #endif
 
 //Depricated build configs

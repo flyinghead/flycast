@@ -13,18 +13,21 @@
 #define TRUE 1
 #define FALSE 0
 
-#pragma comment (lib, "wsock32.lib")
 
 #include <string>
 #include <sstream>
 
 #if FEAT_HAS_COREIO_HTTP
-	#include <sys/socket.h>
-	#include <netinet/in.h>
-	#include <netinet/ip.h>
-	#include <netinet/tcp.h>
-	#include <netdb.h>
-	#include <unistd.h>
+	#if HOST_OS == OS_LINUX
+		#include <sys/socket.h>
+		#include <netinet/in.h>
+		#include <netinet/ip.h>
+		#include <netinet/tcp.h>
+		#include <netdb.h>
+		#include <unistd.h>
+	#else
+		#pragma comment (lib, "wsock32.lib")
+	#endif
 #endif
 
 #if FEAT_HAS_COREIO_HTTP
