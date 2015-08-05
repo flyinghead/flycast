@@ -99,7 +99,7 @@ struct gl_ctx
 
 extern gl_ctx gl;
 
-GLuint GetTexture(TSP tsp,TCW tcw);
+GLuint gl_GetTexture(TSP tsp,TCW tcw);
 void CollectCleanup();
 void DoCleanup();
 

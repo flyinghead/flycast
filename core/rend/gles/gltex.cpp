@@ -386,7 +386,7 @@ void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 	verify(uStatus == GL_FRAMEBUFFER_COMPLETE);
 }
 
-GLuint GetTexture(TSP tsp,TCW tcw)
+GLuint gl_GetTexture(TSP tsp, TCW tcw)
 {
 	if (tcw.TexAddr==fb_rtt.TexAddr && fb_rtt.tex)
 	{

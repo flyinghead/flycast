@@ -60,8 +60,6 @@ void GenSorted();
 
 float fb_scale_x,fb_scale_y;
 
-volatile bool render_restart = false;
-
 #ifndef GLES
 #define attr "in"
 #define vary "out"
@@ -1864,6 +1862,10 @@ struct glesrend : Renderer
 	void Present() { gl_swap(); }
 
 	void DrawOSD() { OSD_DRAW(); }
+
+	virtual u32 GetTexture(TSP tsp, TCW tcw) { 
+		return gl_GetTexture(tsp, tcw);
+	}
 };
 
 

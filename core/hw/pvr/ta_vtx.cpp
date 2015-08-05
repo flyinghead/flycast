@@ -809,7 +809,7 @@ public:
 			d_pp->texid = -1;
 
 			if (d_pp->pcw.Texture) {
-				d_pp->texid = GetTexture(d_pp->tsp,d_pp->tcw);
+				d_pp->texid = renderer->GetTexture(d_pp->tsp,d_pp->tcw);
 			}
 		}
 	}
@@ -1218,7 +1218,7 @@ public:
 		d_pp->texid = -1;
 		
 		if (d_pp->pcw.Texture) {
-			d_pp->texid = GetTexture(d_pp->tsp,d_pp->tcw);
+			d_pp->texid = renderer->GetTexture(d_pp->tsp,d_pp->tcw);
 		}
 
 		SFaceBaseColor=spr->BaseCol;
