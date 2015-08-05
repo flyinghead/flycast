@@ -419,7 +419,7 @@ union FPU_SHAD_SCALE_type
 
 
 #define FPU_SHAD_SCALE    PvrReg(FPU_SHAD_SCALE_addr,FPU_SHAD_SCALE_type) // RW  Intensity Volume mode
-#define FPU_CULL_VAL      PvrReg(FPU_CULL_VAL_addr,u32)                   // RW  Comparison value for culling
+#define FPU_CULL_VAL      PvrReg(FPU_CULL_VAL_addr,f32)                   // RW  Comparison value for culling
 #define FPU_PARAM_CFG     PvrReg(FPU_PARAM_CFG_addr,u32)                  // RW  Parameter read control
 #define HALF_OFFSET       PvrReg(HALF_OFFSET_addr,u32)                    // RW  Pixel sampling control
 #define FPU_PERP_VAL      PvrReg(FPU_PERP_VAL_addr,u32)                   // RW  Comparison value for perpendicular polygons

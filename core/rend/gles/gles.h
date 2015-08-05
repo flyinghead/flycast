@@ -100,8 +100,17 @@ struct gl_ctx
 extern gl_ctx gl;
 
 GLuint gl_GetTexture(TSP tsp,TCW tcw);
+struct text_info {
+	u16* pdata;
+	u32 width;
+	u32 height;
+	u32 textype; // 0 565, 1 1555, 2 4444
+};
+
+text_info raw_GetTexture(TSP tsp, TCW tcw);
 void CollectCleanup();
 void DoCleanup();
+void SortPParams();
 
 void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt);
 int GetProgramID(u32 cp_AlphaTest, u32 pp_ClipTestMode,
