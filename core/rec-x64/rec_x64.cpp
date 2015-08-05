@@ -68,7 +68,7 @@ void ngen_ResetBlocks()
 void ngen_GetFeatures(ngen_features* dst)
 {
 	dst->InterpreterFallback = false;
-	dst->OnlyDynamicEnds = true;
+	dst->OnlyDynamicEnds = false;
 }
 
 RuntimeBlockInfo* ngen_AllocateBlock()
@@ -180,6 +180,7 @@ public:
 				call(OpDesc[op.rs3._imm]->oph);
 				break;
 
+			case shop_jcond:
 			case shop_jdyn:
 				{
 					mov(rax, (size_t)op.rs1.reg_ptr());
@@ -189,7 +190,9 @@ public:
 					if (op.rs2.is_imm()) {
 						add(ecx, op.rs2._imm);
 					}
-					mov(dword[rax], ecx);
+
+					mov(rdx, (size_t)op.rd.reg_ptr());
+					mov(dword[rdx], ecx);
 				}
 				break;
 
@@ -282,7 +285,68 @@ public:
 			}
 		}
 
-		verify(block->BlockType == BET_DynamicJump);
+		mov(rax, (size_t)&next_pc);
+
+		switch (block->BlockType) {
+
+		case BET_StaticJump:
+		case BET_StaticCall:
+			//next_pc = block->BranchBlock;
+			mov(dword[rax], block->BranchBlock);
+			break;
+
+		case BET_Cond_0:
+		case BET_Cond_1:
+			{
+				//next_pc = next_pc_value;
+				//if (*jdyn == 0)
+				//next_pc = branch_pc_value;
+
+				mov(dword[rax], block->NextBlock);
+
+				if (block->has_jcond)
+					mov(rdx, (size_t)&Sh4cntx.jdyn);
+				else
+					mov(rdx, (size_t)&sr.T);
+
+				cmp(dword[rdx], block->BlockType & 1);
+				Xbyak::Label branch_not_taken;
+
+				jne(branch_not_taken, T_SHORT);
+				mov(dword[rax], block->BranchBlock);
+				L(branch_not_taken);
+			}
+			break;
+
+		case BET_DynamicJump:
+		case BET_DynamicCall:
+		case BET_DynamicRet:
+			//next_pc = *jdyn;
+			mov(rdx, (size_t)&Sh4cntx.jdyn);
+			mov(edx, dword[rdx]);
+			mov(dword[rax], edx);
+			break;
+
+		case BET_DynamicIntr:
+		case BET_StaticIntr:
+			if (block->BlockType == BET_DynamicIntr) {
+				//next_pc = *jdyn;
+				mov(rdx, (size_t)&Sh4cntx.jdyn);
+				mov(edx, dword[rdx]);
+				mov(dword[rax], edx);
+			}
+			else {
+				//next_pc = next_pc_value;
+				mov(dword[rax], block->NextBlock);
+			}
+
+			call((void*)UpdateINTC);
+			break;
+
+		default:
+			die("Invalid block end type");
+		}
+
 
 		add(rsp, 0x28);
 		ret();
