@@ -417,6 +417,9 @@
     <ClCompile Include="..\core\rec-cpp\rec_cpp.cpp">
       <Filter>rec-cpp</Filter>
     </ClCompile>
+    <ClCompile Include="..\core\rend\soft\softrend.cpp">
+      <Filter>rend\soft</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="hw">
@@ -547,6 +550,9 @@
     </Filter>
     <Filter Include="rec-cpp">
       <UniqueIdentifier>{63d1fcf2-64b4-4973-995f-cd471f51117c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="rend\soft">
+      <UniqueIdentifier>{6c4b2d69-54c0-4660-9969-a98fd0339a15}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

@@ -44,9 +44,14 @@ struct Renderer
 	virtual void Present()=0;
 
 	virtual void DrawOSD() { }
+
+	virtual u32 GetTexture(TSP tsp, TCW tcw) { return 0; }
 };
+
+extern Renderer* renderer;
 
 
 Renderer* rend_D3D11();
 Renderer* rend_GLES2();
 Renderer* rend_norend();
+Renderer* rend_softrend();
