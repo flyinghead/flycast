@@ -41,6 +41,8 @@ int dpad_or_btn = 0;
 
 -(void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event {
     
+    //	[event allTouches];
+    
     if (dpad_or_btn &1)
         kcode[0] |= (key_CONT_START|key_CONT_A);
     else

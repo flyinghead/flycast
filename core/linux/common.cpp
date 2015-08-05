@@ -18,7 +18,7 @@
 #include <sys/param.h>
 #include <sys/mman.h>
 #include <sys/time.h>
-#if !defined(_ANDROID) && !defined(TARGET_OS_IPHONE) && !defined(TARGET_NACL32) && !defined(TARGET_EMSCRIPTEN)
+#if !defined(_ANDROID) && !defined(TARGET_OS_IPHONE) && !defined(TARGET_NACL32) && !defined(TARGET_EMSCRIPTEN) && !defined(TARGET_OSX)
   #include <sys/personality.h>
   #include <dlfcn.h>
 #endif
@@ -45,7 +45,7 @@ void sigill_handler(int sn, siginfo_t * si, void *segfault_ctx) {
 	unat pc = (unat)ctx.pc;
 	bool dyna_cde = (pc>(unat)CodeCache) && (pc<(unat)(CodeCache + CODE_SIZE));
 	
-	printf("SIGILL @ %08X, fault_handler+0x%08X ... %08X -> was not in vram, %d\n", pc, pc - (u32)sigill_handler, (unat)si->si_addr, dyna_cde);
+	printf("SIGILL @ %08X, fault_handler+0x%08X ... %08X -> was not in vram, %d\n", pc, pc - (unat)sigill_handler, (unat)si->si_addr, dyna_cde);
 	
 	printf("Entering infiniloop");
 
@@ -69,7 +69,7 @@ void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 	
 	if (VramLockedWrite((u8*)si->si_addr) || BM_LockedWrite((u8*)si->si_addr))
 		return;
-	#if FEAT_SHREC != DYNAREC_NONE
+	#if FEAT_SHREC == DYNAREC_JIT
 		#if HOST_CPU==CPU_ARM
 			else if (dyna_cde)
 			{

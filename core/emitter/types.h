@@ -1,7 +1,7 @@
 #pragma once
 
 #if 1
-#include "types.h"
+#include "../types.h"
 #else
 //basic types
 typedef signed __int8  s8;
