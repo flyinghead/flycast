@@ -331,7 +331,7 @@ struct softrend : Renderer
 	}
 	//u32 nok,fok;
 	template <bool alpha_blend>
-	void Rendtriangle(const Vertex &v1, const Vertex &v2, const Vertex &v3, u32* colorBuffer)
+	void Rendtriangle(PolyParam* pp, int vertex_offset, const Vertex &v1, const Vertex &v2, const Vertex &v3, u32* colorBuffer)
 	{
 		const int stride = 640 * 4;
 		//Plane equation
@@ -351,9 +351,27 @@ struct softrend : Renderer
 		// Deltas
 		{
 			//area: (X1-X3)*(Y2-Y3)-(Y1-Y3)*(X2-X3)
+			float area = ((X1 - X3)*(Y2 - Y3) - (Y1 - Y3)*(X2 - X3));
 
-			if (((X1 - X3)*(Y2 - Y3) - (Y1 - Y3)*(X2 - X3))>0)
+			if (area>0)
 				sgn = -1;
+
+			if (pp->isp.CullMode != 0) {
+				float abs_area = fabsf(area);
+
+				if (abs_area < FPU_CULL_VAL)
+					return;
+
+				if (pp->isp.CullMode >= 2) {
+					u32 mode = vertex_offset ^ pp->isp.CullMode & 1;
+
+					if (
+						(mode == 0 && area < 0) ||
+						(mode == 1 && area > 0)) {
+						return;
+					}
+				}
+			}
 		}
 
 		const float DX12 = sgn*(X1 - X2);
@@ -555,7 +573,7 @@ struct softrend : Renderer
 
 			for (int v = 0; v < vertex_count; v++) {
 
-				Rendtriangle<alpha_blend>(verts[poly_idx[v]], verts[poly_idx[v + 1]], verts[poly_idx[v + 2]], render_buffer);
+				Rendtriangle<alpha_blend>(&params[i], v, verts[poly_idx[v]], verts[poly_idx[v + 1]], verts[poly_idx[v + 2]], render_buffer);
 			}
 		}
 	}
