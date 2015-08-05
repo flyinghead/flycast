@@ -221,7 +221,7 @@ struct softrend : Renderer
 
 
 
-	template<bool useoldmsk>
+	template<bool useoldmsk, bool alpha_blend>
 	__forceinline void PixelFlush(__m128 x, __m128 y, u8* cb, __m128 oldmask)
 	{
 		x = _mm_shuffle_ps(x, x, 0);
@@ -239,7 +239,7 @@ struct softrend : Renderer
 
 		__m128* zb = (__m128*)&cb[640 * 480 * 4];
 
-		__m128 ZMask = _mm_cmpgt_ps(invW, *zb);
+		__m128 ZMask = _mm_cmpge_ps(invW, *zb);
 		if (useoldmsk)
 			ZMask = _mm_and_ps(oldmask, ZMask);
 		u32 msk = _mm_movemask_ps(ZMask);//0xF
@@ -272,6 +272,47 @@ struct softrend : Renderer
 
 		//__m128i rv=ip.col;//_mm_xor_si128(_mm_cvtps_epi32(_mm_mul_ps(x,Z.c)),_mm_cvtps_epi32(y));
 
+		if (alpha_blend) {
+			__m128i fb = *(__m128i*)cb;
+#if 0
+			for (int i = 0; i < 16; i+=4) {
+				u8 src_blend[4] = { rv.m128i_u8[i + 3], rv.m128i_u8[i + 3], rv.m128i_u8[i + 3], rv.m128i_u8[i + 3] };
+				u8 dst_blend[4] = { 255 - rv.m128i_u8[i + 3], 255 - rv.m128i_u8[i + 3], 255 - rv.m128i_u8[i + 3], 255 - rv.m128i_u8[i + 3] };
+				for (int j = 0; j < 4; j++) {
+					rv.m128i_u8[i + j] = (rv.m128i_u8[i + j] * src_blend[j])/256 + (fb.m128i_u8[i + j] * dst_blend[j])/256;
+				}
+			}
+#else
+			static __m128i shuffle_alpha = {
+				0x0E, 0x80, 0x0E, 0x80, 0x0E, 0x80, 0x0E, 0x80,
+				0x06, 0x80, 0x06, 0x80, 0x06, 0x80, 0x06, 0x80
+			};
+			
+			
+			__m128i lo_rv = _mm_cvtepu8_epi16(rv);
+			__m128i hi_rv = _mm_cvtepu8_epi16(_mm_shuffle_epi32(rv, _MM_SHUFFLE(1, 0, 3, 2)));
+
+
+			__m128i lo_fb = _mm_cvtepu8_epi16(fb);
+			__m128i hi_fb = _mm_cvtepu8_epi16(_mm_shuffle_epi32(fb, _MM_SHUFFLE(1, 0, 3, 2)));
+
+			__m128i lo_rv_alpha = _mm_shuffle_epi8(lo_rv, shuffle_alpha);
+			__m128i hi_rv_alpha = _mm_shuffle_epi8(hi_rv, shuffle_alpha);
+
+			__m128i lo_fb_alpha = _mm_sub_epi16(_mm_set1_epi16(255), lo_rv_alpha);
+			__m128i hi_fb_alpha = _mm_sub_epi16(_mm_set1_epi16(255), hi_rv_alpha);
+
+			
+			lo_rv = _mm_mullo_epi16(lo_rv, lo_rv_alpha);
+			hi_rv = _mm_mullo_epi16(hi_rv, hi_rv_alpha);
+
+			lo_fb = _mm_mullo_epi16(lo_fb, lo_fb_alpha);
+			hi_fb = _mm_mullo_epi16(hi_fb, hi_fb_alpha);
+
+			rv = _mm_packus_epi16(_mm_srli_epi16(_mm_adds_epu16(lo_rv, lo_fb), 8), _mm_srli_epi16(_mm_adds_epu16(hi_rv, hi_fb), 8));
+#endif
+		}
+		
 		if (msk != 0xF)
 		{
 			rv = _mm_and_si128(rv, *(__m128i*)&ZMask);
@@ -285,6 +326,7 @@ struct softrend : Renderer
 		*(__m128i*)cb = rv;
 	}
 	//u32 nok,fok;
+	template <bool alpha_blend>
 	void Rendtriangle(const Vertex &v1, const Vertex &v2, const Vertex &v3, u32* colorBuffer)
 	{
 		const int stride = 640 * 4;
@@ -424,7 +466,7 @@ struct softrend : Renderer
 					__m128 yl_ps = y_ps;
 					for (int iy = q; iy > 0; iy--)
 					{
-						PixelFlush<false>(x_ps, yl_ps, cb_x, x_ps);
+						PixelFlush<false, alpha_blend>(x_ps, yl_ps, cb_x, x_ps);
 						yl_ps = _mm_add_ps(yl_ps, *(__m128*)ones_ps);
 						cb_x += sizeof(__m128);
 					}
@@ -454,7 +496,7 @@ struct softrend : Renderer
 						int msk = _mm_movemask_ps(*(__m128*)&a);
 						if (msk != 0)
 						{
-							PixelFlush<true>(x_ps, yl_ps, cb_x, *(__m128*)&a);
+							PixelFlush<true, alpha_blend>(x_ps, yl_ps, cb_x, *(__m128*)&a);
 						}
 
 						yl_ps = _mm_add_ps(yl_ps, *(__m128*)ones_ps);
@@ -487,6 +529,7 @@ struct softrend : Renderer
 		}
 	}
 
+	template <bool alpha_blend>
 	void RenderParamList(List<PolyParam>* param_list) {
 		
 		Vertex* verts = pvrrc.verts.head();
@@ -503,7 +546,7 @@ struct softrend : Renderer
 
 			for (int v = 0; v < vertex_count; v++) {
 
-				Rendtriangle(verts[poly_idx[v]], verts[poly_idx[v + 1]], verts[poly_idx[v + 2]], render_buffer);
+				Rendtriangle<alpha_blend>(verts[poly_idx[v]], verts[poly_idx[v + 1]], verts[poly_idx[v + 2]], render_buffer);
 			}
 		}
 	}
@@ -516,9 +559,9 @@ struct softrend : Renderer
 			return false;
 	
 
-		RenderParamList(&pvrrc.global_param_op);
-		RenderParamList(&pvrrc.global_param_pt);
-		RenderParamList(&pvrrc.global_param_tr);
+		RenderParamList<false>(&pvrrc.global_param_op);
+		RenderParamList<false>(&pvrrc.global_param_pt);
+		RenderParamList<true>(&pvrrc.global_param_tr);
 		
 
 		/*
