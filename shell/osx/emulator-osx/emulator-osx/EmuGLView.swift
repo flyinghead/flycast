@@ -49,6 +49,9 @@ class EmuGLView: NSOpenGLView {
         
         self.pixelFormat = pf;
         self.openGLContext = context;
+        
+        openGLContext.makeCurrentContext()
+        emu_gles_init();
     }
     
    

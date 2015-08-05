@@ -11,4 +11,5 @@
 
 void emu_main();
 bool emu_single_frame(int w, int h);
+void emu_gles_init();
 #endif

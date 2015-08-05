@@ -104,6 +104,7 @@ extern "C" void emu_main() {
 
 extern int screen_width,screen_height;
 bool rend_single_frame();
+bool gles_init();
 
 extern "C" bool emu_single_frame(int w, int h) {
     if (!has_init)
@@ -111,4 +112,8 @@ extern "C" bool emu_single_frame(int w, int h) {
     screen_width = w;
     screen_height = h;
     return rend_single_frame();
+}
+
+extern "C" void emu_gles_init() {
+    gles_init();
 }
