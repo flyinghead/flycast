@@ -38,11 +38,15 @@ struct softrend : Renderer
 	DECL_ALIGN(32) u32 render_buffer[640 * 480 * 2 * 4]; //Color + depth
 	DECL_ALIGN(32) u32 pixels[640 * 480 * 4];
 
-	static __m128i _mm_load_scaled(int v, int s)
+	static __m128 _mm_load_scaled_float(float v, float s)
 	{
-		return _mm_setr_epi32(v, v + s, v + s + s, v + s + s + s);
+		return _mm_setr_ps(v, v + s, v + s + s, v + s + s + s);
 	}
-	static __m128i _mm_broadcast(int v)
+	static __m128 _mm_broadcast_float(float v)
+	{
+		return _mm_setr_ps(v, v, v, v);
+	}
+	static __m128i _mm_broadcast_int(int v)
 	{
 		__m128i rv = _mm_cvtsi32_si128(v);
 		return _mm_shuffle_epi32(rv, 0);
@@ -63,14 +67,14 @@ struct softrend : Renderer
 		return _mm_cvtt_ss2si(_mm_load_ss(&x));
 	}
 
-	int mmin(int a, int b, int c, int d)
+	float mmin(float a, float b, float c, float d)
 	{
 		int rv = min(a, b);
 		rv = min(c, rv);
 		return max(d, rv);
 	}
 
-	int mmax(int a, int b, int c, int d)
+	float mmax(float a, float b, float c, float d)
 	{
 		int rv = max(a, b);
 		rv = max(c, rv);
@@ -79,7 +83,7 @@ struct softrend : Renderer
 
 	//i think this gives false positives ...
 	//yup, if ANY of the 3 tests fail the ANY tests fails.
-	__forceinline void EvalHalfSpace(bool& all, bool& any, int cp, int sv, int lv)
+	__forceinline void EvalHalfSpace(bool& all, bool& any, float cp, float sv, float lv)
 	{
 		//bool a00 = C1 + DX12 * y0 - DY12 * x0 > 0;
 		//bool a10 = C1 + DX12 * y0 - DY12 * x0 > qDY12;
@@ -98,31 +102,31 @@ struct softrend : Renderer
 	}
 
 	//return true if any is positive
-	__forceinline bool EvalHalfSpaceFAny(int cp12, int cp23, int cp31)
+	__forceinline bool EvalHalfSpaceFAny(float cp12, float cp23, float cp31)
 	{
-		int svt = cp12; //needed for ANY
-		svt |= cp23;
-		svt |= cp31;
+		bool svt = cp12 > 0; //needed for ANY
+		svt |= cp23 > 0;
+		svt |= cp31 > 0;
 
-		return svt>0;
+		return svt;
 	}
 
-	__forceinline bool EvalHalfSpaceFAll(int cp12, int cp23, int cp31, int lv12, int lv23, int lv31)
+	__forceinline bool EvalHalfSpaceFAll(float cp12, float cp23, float cp31, float lv12, float lv23, float lv31)
 	{
-		int lvt = cp12 - lv12;
-		lvt |= cp23 - lv23;
-		lvt |= cp31 - lv31;	//needed for all
+		bool lvt = (cp12 - lv12) > 0;
+		lvt &= (cp23 - lv23) > 0;
+		lvt &= (cp31 - lv31) > 0;	//needed for all
 
-		return lvt>0;
+		return lvt;
 	}
 
-	__forceinline void PlaneMinMax(int& MIN, int& MAX, int DX, int DY, int q)
+	__forceinline void PlaneMinMax(float& MIN, float& MAX, float DX, float DY, float q)
 	{
-		int q_fp = (q - 1) << 4;
-		int v1 = 0;
-		int v2 = q_fp*DY;
-		int v3 = -q_fp*DX;
-		int v4 = q_fp*(DY - DX);
+		float q_fp = (q - 1);
+		float v1 = 0;
+		float v2 = q_fp*DY;
+		float v3 = -q_fp*DX;
+		float v4 = q_fp*(DY - DX);
 
 		MIN = min(v1, min(v2, min(v3, v4)));
 		MAX = max(v1, max(v2, max(v3, v4)));
@@ -334,13 +338,13 @@ struct softrend : Renderer
 
 
 		// 28.4 fixed-point coordinates
-		const int Y1 = iround(16.0f * v1.y);
-		const int Y2 = iround(16.0f * v2.y);
-		const int Y3 = iround(16.0f * v3.y);
+		const float Y1 = v1.y;// iround(16.0f * v1.y);
+		const float Y2 = v2.y;// iround(16.0f * v2.y);
+		const float Y3 = v3.y;// iround(16.0f * v3.y);
 
-		const int X1 = iround(16.0f * v1.x);
-		const int X2 = iround(16.0f * v2.x);
-		const int X3 = iround(16.0f * v3.x);
+		const float X1 = v1.x;// iround(16.0f * v1.x);
+		const float X2 = v2.x;// iround(16.0f * v2.x);
+		const float X3 = v3.x;// iround(16.0f * v3.x);
 
 		int sgn = 1;
 
@@ -352,93 +356,93 @@ struct softrend : Renderer
 				sgn = -1;
 		}
 
-		const int DX12 = sgn*(X1 - X2);
-		const int DX23 = sgn*(X2 - X3);
-		const int DX31 = sgn*(X3 - X1);
+		const float DX12 = sgn*(X1 - X2);
+		const float DX23 = sgn*(X2 - X3);
+		const float DX31 = sgn*(X3 - X1);
 
-		const int DY12 = sgn*(Y1 - Y2);
-		const int DY23 = sgn*(Y2 - Y3);
-		const int DY31 = sgn*(Y3 - Y1);
+		const float DY12 = sgn*(Y1 - Y2);
+		const float DY23 = sgn*(Y2 - Y3);
+		const float DY31 = sgn*(Y3 - Y1);
 
 		// Fixed-point deltas
-		const int FDX12 = DX12 << 4;
-		const int FDX23 = DX23 << 4;
-		const int FDX31 = DX31 << 4;
+		const float FDX12 = DX12;// << 4;
+		const float FDX23 = DX23;// << 4;
+		const float FDX31 = DX31;// << 4;
 
-		const int FDY12 = DY12 << 4;
-		const int FDY23 = DY23 << 4;
-		const int FDY31 = DY31 << 4;
+		const float FDY12 = DY12;// << 4;
+		const float FDY23 = DY23;// << 4;
+		const float FDY31 = DY31;// << 4;
 
 		// Block size, standard 4x4 (must be power of two)
 		const int q = 4;
 
 		// Bounding rectangle
-		int minx = (mmin(X1, X2, X3, 0) + 0xF) >> 4;
-		int miny = (mmin(Y1, Y2, Y3, 0) + 0xF) >> 4;
+		int minx = iround(mmin(X1, X2, X3, 0) );// +0xF) >> 4;
+		int miny = iround(mmin(Y1, Y2, Y3, 0) );// +0xF) >> 4;
 
 		// Start in corner of block
 		minx &= ~(q - 1);
 		miny &= ~(q - 1);
 
-		int spanx = ((mmax(X1, X2, X3, 640 << 4) + 0xF) >> 4) - minx;
-		int spany = ((mmax(Y1, Y2, Y3, 480 << 4) + 0xF) >> 4) - miny;
+		int spanx = iround(mmax(X1 + 0.5f, X2 + 0.5f, X3 + 0.5f, 640)) - minx;
+		int spany = iround(mmax(Y1 + 0.5f, Y2 + 0.5f, Y3 + 0.5f, 480)) - miny;
 
 		// Half-edge constants
-		int C1 = DY12 * X1 - DX12 * Y1;
-		int C2 = DY23 * X2 - DX23 * Y2;
-		int C3 = DY31 * X3 - DX31 * Y3;
+		float C1 = DY12 * X1 - DX12 * Y1;
+		float C2 = DY23 * X2 - DX23 * Y2;
+		float C3 = DY31 * X3 - DX31 * Y3;
 
 		// Correct for fill convention
 		if (DY12 < 0 || (DY12 == 0 && DX12 > 0)) C1++;
 		if (DY23 < 0 || (DY23 == 0 && DX23 > 0)) C2++;
 		if (DY31 < 0 || (DY31 == 0 && DX31 > 0)) C3++;
 
-		int MAX_12, MAX_23, MAX_31, MIN_12, MIN_23, MIN_31;
+		float MAX_12, MAX_23, MAX_31, MIN_12, MIN_23, MIN_31;
 
 		PlaneMinMax(MIN_12, MAX_12, DX12, DY12, q);
 		PlaneMinMax(MIN_23, MAX_23, DX23, DY23, q);
 		PlaneMinMax(MIN_31, MAX_31, DX31, DY31, q);
 
-		const int FDqX12 = FDX12 * q;
-		const int FDqX23 = FDX23 * q;
-		const int FDqX31 = FDX31 * q;
+		const float FDqX12 = FDX12 * q;
+		const float FDqX23 = FDX23 * q;
+		const float FDqX31 = FDX31 * q;
 
-		const int FDqY12 = FDY12 * q;
-		const int FDqY23 = FDY23 * q;
-		const int FDqY31 = FDY31 * q;
+		const float FDqY12 = FDY12 * q;
+		const float FDqY23 = FDY23 * q;
+		const float FDqY31 = FDY31 * q;
 
-		const int FDX12mq = FDX12 + FDY12*q;
-		const int FDX23mq = FDX23 + FDY23*q;
-		const int FDX31mq = FDX31 + FDY31*q;
+		const float FDX12mq = FDX12 + FDY12*q;
+		const float FDX23mq = FDX23 + FDY23*q;
+		const float FDX31mq = FDX31 + FDY31*q;
 
-		int hs12 = C1 + FDX12 * miny - FDY12 * minx + FDqY12 - MIN_12;
-		int hs23 = C2 + FDX23 * miny - FDY23 * minx + FDqY23 - MIN_23;
-		int hs31 = C3 + FDX31 * miny - FDY31 * minx + FDqY31 - MIN_31;
+		float hs12 = C1 + FDX12 * (miny+0.5f) - FDY12 * (minx+0.5f) + FDqY12 - MIN_12;
+		float hs23 = C2 + FDX23 * (miny+0.5f) - FDY23 * (minx+0.5f) + FDqY23 - MIN_23;
+		float hs31 = C3 + FDX31 * (miny+0.5f) - FDY31 * (minx+0.5f) + FDqY31 - MIN_31;
 
 		MAX_12 -= MIN_12;
 		MAX_23 -= MIN_23;
 		MAX_31 -= MIN_31;
 
-		int C1_pm = MIN_12;
-		int C2_pm = MIN_23;
-		int C3_pm = MIN_31;
+		float C1_pm = MIN_12;
+		float C2_pm = MIN_23;
+		float C3_pm = MIN_31;
 
 
 		u8* cb_y = (u8*)colorBuffer;
 		cb_y += miny*stride + minx*(q * 4);
 
 		ip.Setup(v1, v2, v3, minx, miny, q);
-		__m128 y_ps = _mm_cvtepi32_ps(_mm_broadcast(miny));
-		__m128 minx_ps = _mm_cvtepi32_ps(_mm_load_scaled(minx - q, 1));
+		__m128 y_ps = _mm_broadcast_float(miny);
+		__m128 minx_ps = _mm_load_scaled_float(minx - q, 1);
 		static __declspec(align(16)) float ones_ps[4] = { 1, 1, 1, 1 };
 		static __declspec(align(16)) float q_ps[4] = { q, q, q, q };
 
 		// Loop through blocks
 		for (int y = spany; y > 0; y -= q)
 		{
-			int Xhs12 = hs12;
-			int Xhs23 = hs23;
-			int Xhs31 = hs31;
+			float Xhs12 = hs12;
+			float Xhs23 = hs23;
+			float Xhs31 = hs31;
 			u8* cb_x = cb_y;
 			__m128 x_ps = minx_ps;
 			for (int x = spanx; x > 0; x -= q)
@@ -447,7 +451,7 @@ struct softrend : Renderer
 				Xhs23 -= FDqY23;
 				Xhs31 -= FDqY31;
 				x_ps = _mm_add_ps(x_ps, *(__m128*)q_ps);
-
+				
 				// Corners of block
 				bool any = EvalHalfSpaceFAny(Xhs12, Xhs23, Xhs31);
 
@@ -459,7 +463,7 @@ struct softrend : Renderer
 				}
 
 				bool all = EvalHalfSpaceFAll(Xhs12, Xhs23, Xhs31, MAX_12, MAX_23, MAX_31);
-
+				
 				// Accept whole block when totally covered
 				if (all)
 				{
@@ -473,27 +477,32 @@ struct softrend : Renderer
 				}
 				else // Partially covered block
 				{
-					int CY1 = C1_pm + Xhs12;
-					int CY2 = C2_pm + Xhs23;
-					int CY3 = C3_pm + Xhs31;
+					float CY1 = C1_pm + Xhs12;
+					float CY2 = C2_pm + Xhs23;
+					float CY3 = C3_pm + Xhs31;
 
-					__m128i pfdx12 = _mm_broadcast(FDX12);
-					__m128i pfdx23 = _mm_broadcast(FDX23);
-					__m128i pfdx31 = _mm_broadcast(FDX31);
+					__m128 pfdx12 = _mm_broadcast_float(FDX12);
+					__m128 pfdx23 = _mm_broadcast_float(FDX23);
+					__m128 pfdx31 = _mm_broadcast_float(FDX31);
 
-					__m128i pcy1 = _mm_load_scaled(CY1, -FDY12);
-					__m128i pcy2 = _mm_load_scaled(CY2, -FDY23);
-					__m128i pcy3 = _mm_load_scaled(CY3, -FDY31);
+					__m128 pcy1 = _mm_load_scaled_float(CY1, -FDY12);
+					__m128 pcy2 = _mm_load_scaled_float(CY2, -FDY23);
+					__m128 pcy3 = _mm_load_scaled_float(CY3, -FDY31);
 
-					__m128i pzero = _mm_setzero_si128();
+					__m128 pzero = _mm_setzero_ps();
 
 					//bool ok=false;
 					__m128 yl_ps = y_ps;
 
 					for (int iy = q; iy > 0; iy--)
 					{
-						__m128i a = _mm_cmpgt_epi32(_mm_or_si128(_mm_or_si128(pcy1, pcy2), pcy3), pzero);
-						int msk = _mm_movemask_ps(*(__m128*)&a);
+						__m128 mask1 = _mm_cmple_ps(pcy1, pzero);
+						__m128 mask2 = _mm_cmple_ps(pcy2, pzero);
+						__m128 mask3 = _mm_cmple_ps(pcy3, pzero);
+						__m128 summary = _mm_or_ps(mask3, _mm_or_ps(mask2, mask1));
+
+						__m128i a = _mm_cmpeq_epi32((__m128i&)summary, (__m128i&)pzero);
+						int msk = _mm_movemask_ps((__m128&)a);
 						if (msk != 0)
 						{
 							PixelFlush<true, alpha_blend>(x_ps, yl_ps, cb_x, *(__m128*)&a);
@@ -505,9 +514,9 @@ struct softrend : Renderer
 						//CY1 += FDX12mq;
 						//CY2 += FDX23mq;
 						//CY3 += FDX31mq;
-						pcy1 = _mm_add_epi32(pcy1, pfdx12);
-						pcy2 = _mm_add_epi32(pcy2, pfdx23);
-						pcy3 = _mm_add_epi32(pcy3, pfdx31);
+						pcy1 = _mm_add_ps(pcy1, pfdx12);
+						pcy2 = _mm_add_ps(pcy2, pfdx23);
+						pcy3 = _mm_add_ps(pcy3, pfdx31);
 					}
 					/*
 					if (!ok)
