@@ -28,7 +28,8 @@
 #if FEAT_SHREC != DYNAREC_NONE
 //uh uh
 
-u8 SH4_TCB[2*CODE_SIZE+4096]
+#if !defined(_WIN64)
+u8 SH4_TCB[CODE_SIZE+4096]
 #if HOST_OS == OS_WINDOWS || FEAT_SHREC != DYNAREC_JIT
 	;
 #elif HOST_OS == OS_LINUX
@@ -37,6 +38,7 @@ u8 SH4_TCB[2*CODE_SIZE+4096]
 	__attribute__((section("__TEXT,.text")));
 #else
 	#error SH4_TCB ALLOC
+#endif
 #endif
 
 u8* CodeCache;
@@ -421,30 +423,43 @@ void recSh4_Init()
 	verify(mem_b.data==((u8*)p_sh4rcb->sq_buffer+512+0x0C000000));
 #endif
 	
-	//align to next page ..
-    CodeCache = (u8*)(((unat)SH4_TCB+4095)& ~4095);
+#if defined(_WIN64)
+	for (int i = 10; i < 1300; i++) {
+
+
+		//align to next page ..
+		u8* ptr = (u8*)recSh4_Init - i * 1024 * 1024;
+
+		CodeCache = (u8*)VirtualAlloc(ptr, CODE_SIZE, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);//; (u8*)(((unat)SH4_TCB+4095)& ~4095);
+
+		if (CodeCache)
+			break;
+	}
+#else
+	CodeCache = (u8*)(((unat)SH4_TCB+4095)& ~4095);
+#endif
 
 #if HOST_OS == OS_DARWIN
-    munmap(CodeCache, CODE_SIZE*2);
-    CodeCache = (u8*)mmap(CodeCache, 2*CODE_SIZE, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_FIXED | MAP_PRIVATE | MAP_ANON, 0, 0);
+    munmap(CodeCache, CODE_SIZE);
+    CodeCache = (u8*)mmap(CodeCache, CODE_SIZE, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_FIXED | MAP_PRIVATE | MAP_ANON, 0, 0);
 #endif
 
 #if HOST_OS == OS_WINDOWS
 	DWORD old;
-	VirtualProtect(CodeCache,CODE_SIZE*2,PAGE_EXECUTE_READWRITE,&old);
+	VirtualProtect(CodeCache,CODE_SIZE,PAGE_EXECUTE_READWRITE,&old);
 #elif HOST_OS == OS_LINUX || HOST_OS == OS_DARWIN
 	
 	printf("\n\t CodeCache addr: %p | from: %p | addr here: %p\n", CodeCache, CodeCache, recSh4_Init);
 
 	#if FEAT_SHREC == DYNAREC_JIT
-		if (mprotect(CodeCache, CODE_SIZE*2, PROT_READ|PROT_WRITE|PROT_EXEC))
+		if (mprotect(CodeCache, CODE_SIZE, PROT_READ|PROT_WRITE|PROT_EXEC))
 		{
 			perror("\n\tError,Couldn’t mprotect CodeCache!");
 			die("Couldn’t mprotect CodeCache");
 		}
 	#endif
 
-	memset(CodeCache,0xFF,CODE_SIZE*2);
+	memset(CodeCache,0xFF,CODE_SIZE);
 
 #endif
 	ngen_init();
