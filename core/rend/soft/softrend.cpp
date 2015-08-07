@@ -23,10 +23,17 @@ BITMAPINFOHEADER bi = { sizeof(BITMAPINFOHEADER), 0, 0, 1, 32, BI_RGB };
 
 u32 decoded_colors[3][65536];
 
-DECL_ALIGN(32) u32 render_buffer[640 * 480 * 2 * 4]; //Color + depth
-DECL_ALIGN(32) u32 pixels[640 * 480 * 4];
+#define MAX_RENDER_WIDTH 640
+#define MAX_RENDER_HEIGHT 480
+#define MAX_RENDER_PIXELS (MAX_RENDER_WIDTH * MAX_RENDER_HEIGHT)
 
-#define Z_BUFFER_OFFSET (640 * 480 * 4)
+#define STRIDE_PIXEL_OFFSET MAX_RENDER_WIDTH
+#define Z_BUFFER_PIXEL_OFFSET MAX_RENDER_PIXELS
+
+DECL_ALIGN(32) u32 render_buffer[MAX_RENDER_PIXELS * 2]; //Color + depth
+DECL_ALIGN(32) u32 pixels[MAX_RENDER_PIXELS];
+
+
 
 static __m128 _mm_load_scaled_float(float v, float s)
 {
@@ -227,7 +234,7 @@ IPs __declspec(align(64)) ip;
 
 
 //<alpha_blend, pp_UseAlpha, pp_Texture, pp_IgnoreTexA, pp_ShadInstr, pp_Offset >
-typedef void(*RendtriangleFn)(PolyParam* pp, int vertex_offset, const Vertex &v1, const Vertex &v2, const Vertex &v3, u32* colorBuffer);
+typedef void(*RendtriangleFn)(PolyParam* pp, int vertex_offset, const Vertex &v1, const Vertex &v2, const Vertex &v3, u32* colorBuffer, RECT* area);
 RendtriangleFn RendtriangleFns[3][2][2][2][4][2];
 
 
@@ -256,7 +263,7 @@ static void PixelFlush(PolyParam* pp, text_info* texture, __m128 x, __m128 y, u8
 	//v    : {v1,v2,v3,v4}
 	//wx   : {?,?,?,?}
 
-	__m128* zb = (__m128*)&cb[Z_BUFFER_OFFSET];
+	__m128* zb = (__m128*)&cb[Z_BUFFER_PIXEL_OFFSET * 4];
 
 	__m128 ZMask = _mm_cmpge_ps(invW, *zb);
 	if (useoldmsk)
@@ -533,7 +540,7 @@ static void PixelFlush(PolyParam* pp, text_info* texture, __m128 x, __m128 y, u8
 
 //u32 nok,fok;
 TPL_DECL_triangle
-static void Rendtriangle(PolyParam* pp, int vertex_offset, const Vertex &v1, const Vertex &v2, const Vertex &v3, u32* colorBuffer)
+static void Rendtriangle(PolyParam* pp, int vertex_offset, const Vertex &v1, const Vertex &v2, const Vertex &v3, u32* colorBuffer, RECT* area)
 {
 	text_info texture = { 0 };
 
@@ -541,7 +548,7 @@ static void Rendtriangle(PolyParam* pp, int vertex_offset, const Vertex &v1, con
 		texture = raw_GetTexture(pp->tsp, pp->tcw);
 	}
 
-	const int stride = 640 * 4;
+	const int stride_bytes = STRIDE_PIXEL_OFFSET * 4;
 	//Plane equation
 
 
@@ -603,15 +610,15 @@ static void Rendtriangle(PolyParam* pp, int vertex_offset, const Vertex &v1, con
 	const int q = 4;
 
 	// Bounding rectangle
-	int minx = iround(mmin(X1, X2, X3, 0));// +0xF) >> 4;
-	int miny = iround(mmin(Y1, Y2, Y3, 0));// +0xF) >> 4;
+	int minx = iround(mmin(X1, X2, X3, area->left));// +0xF) >> 4;
+	int miny = iround(mmin(Y1, Y2, Y3, area->top));// +0xF) >> 4;
 
 	// Start in corner of block
 	minx &= ~(q - 1);
 	miny &= ~(q - 1);
 
-	int spanx = iround(mmax(X1 + 0.5f, X2 + 0.5f, X3 + 0.5f, 640)) - minx;
-	int spany = iround(mmax(Y1 + 0.5f, Y2 + 0.5f, Y3 + 0.5f, 480)) - miny;
+	int spanx = iround(mmax(X1 + 0.5f, X2 + 0.5f, X3 + 0.5f, area->right)) - minx;
+	int spany = iround(mmax(Y1 + 0.5f, Y2 + 0.5f, Y3 + 0.5f, area->bottom)) - miny;
 
 	// Half-edge constants
 	float C1 = DY12 * X1 - DX12 * Y1;
@@ -655,7 +662,7 @@ static void Rendtriangle(PolyParam* pp, int vertex_offset, const Vertex &v1, con
 
 
 	u8* cb_y = (u8*)colorBuffer;
-	cb_y += miny*stride + minx*(q * 4);
+	cb_y += miny*stride_bytes + minx*(q * 4);
 
 	ip.Setup(pp, &texture, v1, v2, v3, minx, miny, q);
 	__m128 y_ps = _mm_broadcast_float(miny);
@@ -763,7 +770,7 @@ static void Rendtriangle(PolyParam* pp, int vertex_offset, const Vertex &v1, con
 		hs12 += FDqX12;
 		hs23 += FDqX23;
 		hs31 += FDqX31;
-		cb_y += stride*q;
+		cb_y += stride_bytes*q;
 		y_ps = _mm_add_ps(y_ps, *(__m128*)q_ps);
 	}
 }
@@ -788,7 +795,7 @@ struct softrend : Renderer
 	
 
 	template <int alpha_mode>
-	void RenderParamList(List<PolyParam>* param_list) {
+	void RenderParamList(List<PolyParam>* param_list, RECT* area) {
 		
 		Vertex* verts = pvrrc.verts.head();
 		u16* idx = pvrrc.idx.head();
@@ -806,7 +813,7 @@ struct softrend : Renderer
 				////<alpha_blend, pp_UseAlpha, pp_Texture, pp_IgnoreTexA, pp_ShadInstr, pp_Offset >
 				RendtriangleFn fn = RendtriangleFns[alpha_mode][params[i].tsp.UseAlpha][params[i].pcw.Texture][params[i].tsp.IgnoreTexA][params[i].tsp.ShadInstr][params[i].pcw.Offset];
 
-				fn(&params[i], v, verts[poly_idx[v]], verts[poly_idx[v + 1]], verts[poly_idx[v + 2]], render_buffer);
+				fn(&params[i], v, verts[poly_idx[v]], verts[poly_idx[v + 1]], verts[poly_idx[v + 2]], render_buffer, area);
 			}
 		}
 	}
@@ -818,13 +825,13 @@ struct softrend : Renderer
 		if (pvrrc.verts.used()<3)
 			return false;
 	
-
-		RenderParamList<0>(&pvrrc.global_param_op);
-		RenderParamList<1>(&pvrrc.global_param_pt);
+		RECT area = { 0, 0, 640, 480 };
+		RenderParamList<0>(&pvrrc.global_param_op, &area);
+		RenderParamList<1>(&pvrrc.global_param_pt, &area);
 		if (pvrrc.isAutoSort)
 			SortPParams();
 
-		RenderParamList<2>(&pvrrc.global_param_tr);
+		RenderParamList<2>(&pvrrc.global_param_tr, &area);
 		
 
 		/*
@@ -1093,10 +1100,10 @@ struct softrend : Renderer
 		__m128* psrc = (__m128*)render_buffer;
 		__m128* pdst = (__m128*)pixels;
 
-		const int stride = 640 / 4;
-		for (int y = 0; y<480; y += 4)
+		const int stride = STRIDE_PIXEL_OFFSET / 4;
+		for (int y = 0; y<MAX_RENDER_HEIGHT; y += 4)
 		{
-			for (int x = 0; x<640; x += 4)
+			for (int x = 0; x<MAX_RENDER_WIDTH; x += 4)
 			{
 				pdst[(480 - (y + 0))*stride + x / 4] = *psrc++;
 				pdst[(480 - (y + 1))*stride + x / 4] = *psrc++;
