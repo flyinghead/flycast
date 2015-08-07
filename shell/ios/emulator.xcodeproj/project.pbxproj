@@ -9,7 +9,6 @@
 /* Begin PBXBuildFile section */
 		846293C61A6CE61900262464 /* EmulatorView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 846293C51A6CE61900262464 /* EmulatorView.mm */; };
 		8497BCBF1A41A0E900EFB9ED /* common.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8497BCBC1A41A0E900EFB9ED /* common.cpp */; };
-		8497BCC01A41A0E900EFB9ED /* nixprof.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8497BCBD1A41A0E900EFB9ED /* nixprof.cpp */; };
 		8497BCC21A41B02000EFB9ED /* ios_main.mm in Sources */ = {isa = PBXBuildFile; fileRef = 8497BCC11A41B02000EFB9ED /* ios_main.mm */; };
 		8497BCCF1A41BFD800EFB9ED /* coreio.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8497BCCD1A41BFD800EFB9ED /* coreio.cpp */; };
 		849C0D621B072C07008BAAA4 /* context.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 849C0D601B072C07008BAAA4 /* context.cpp */; };
@@ -40,7 +39,9 @@
 		877652CA1B6157FC00437F10 /* rec_arm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 877652C81B6157FC00437F10 /* rec_arm.cpp */; };
 		87C4AA541A440BEB0048DBF4 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 87C4AA531A440BEB0048DBF4 /* libz.dylib */; };
 		87C4AA561A4414070048DBF4 /* AssetsLibrary.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 87C4AA551A4414070048DBF4 /* AssetsLibrary.framework */; };
-		87C64DDC1B6E80A400FDD99A /* iCadeReaderView.m in Sources */ = {isa = PBXBuildFile; fileRef = 87C64DDA1B6E80A400FDD99A /* iCadeReaderView.m */; };
+		87C4CC5B1B75491400CE6D3C /* nixprof.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 87C4CC5A1B75491400CE6D3C /* nixprof.cpp */; };
+		87C4CC5D1B75499700CE6D3C /* GameController.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 87C4CC5C1B75499700CE6D3C /* GameController.framework */; };
+		87C64DDC1B6E80A400FDD99A /* iCadeReaderView.m in Sources */ = {isa = PBXBuildFile; fileRef = 87C64DDA1B6E80A400FDD99A /* iCadeReaderView.m */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
 		9C7A393318C804A80070BB5F /* reicast.entitlements in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A393218C804A80070BB5F /* reicast.entitlements */; };
 		9C7A3AA218C806E00070BB5F /* cfg.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A395118C806DE0070BB5F /* cfg.cpp */; };
 		9C7A3AA318C806E00070BB5F /* cl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A395318C806DE0070BB5F /* cl.cpp */; };
@@ -237,7 +238,6 @@
 		846293C41A6CE61900262464 /* EmulatorView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = EmulatorView.h; path = emulator/EmulatorView.h; sourceTree = "<group>"; };
 		846293C51A6CE61900262464 /* EmulatorView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = EmulatorView.mm; path = emulator/EmulatorView.mm; sourceTree = "<group>"; };
 		8497BCBC1A41A0E900EFB9ED /* common.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = common.cpp; sourceTree = "<group>"; };
-		8497BCBD1A41A0E900EFB9ED /* nixprof.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = nixprof.cpp; sourceTree = "<group>"; };
 		8497BCBE1A41A0E900EFB9ED /* typedefs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = typedefs.h; sourceTree = "<group>"; };
 		8497BCC11A41B02000EFB9ED /* ios_main.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ios_main.mm; sourceTree = "<group>"; };
 		8497BCCD1A41BFD800EFB9ED /* coreio.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = coreio.cpp; sourceTree = "<group>"; };
@@ -289,6 +289,8 @@
 		877652CC1B615AE800437F10 /* fp.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = fp.h; sourceTree = "<group>"; };
 		87C4AA531A440BEB0048DBF4 /* libz.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libz.dylib; path = usr/lib/libz.dylib; sourceTree = SDKROOT; };
 		87C4AA551A4414070048DBF4 /* AssetsLibrary.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AssetsLibrary.framework; path = System/Library/Frameworks/AssetsLibrary.framework; sourceTree = SDKROOT; };
+		87C4CC5A1B75491400CE6D3C /* nixprof.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = nixprof.cpp; sourceTree = "<group>"; };
+		87C4CC5C1B75499700CE6D3C /* GameController.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GameController.framework; path = System/Library/Frameworks/GameController.framework; sourceTree = SDKROOT; };
 		87C64DD91B6E80A400FDD99A /* iCadeReaderView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iCadeReaderView.h; sourceTree = "<group>"; };
 		87C64DDA1B6E80A400FDD99A /* iCadeReaderView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iCadeReaderView.m; sourceTree = "<group>"; };
 		87C64DDB1B6E80A400FDD99A /* iCadeState.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iCadeState.h; sourceTree = "<group>"; };
@@ -625,6 +627,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				87C4CC5D1B75499700CE6D3C /* GameController.framework in Frameworks */,
 				87C4AA561A4414070048DBF4 /* AssetsLibrary.framework in Frameworks */,
 				87C4AA541A440BEB0048DBF4 /* libz.dylib in Frameworks */,
 				87078A8F18A47FE90034C7A0 /* OpenGLES.framework in Frameworks */,
@@ -641,10 +644,10 @@
 		8497BCBB1A41A0E900EFB9ED /* linux */ = {
 			isa = PBXGroup;
 			children = (
+				87C4CC591B75491400CE6D3C /* nixprof */,
 				849C0D601B072C07008BAAA4 /* context.cpp */,
 				849C0D611B072C07008BAAA4 /* context.h */,
 				8497BCBC1A41A0E900EFB9ED /* common.cpp */,
-				8497BCBD1A41A0E900EFB9ED /* nixprof.cpp */,
 				8497BCBE1A41A0E900EFB9ED /* typedefs.h */,
 			);
 			path = linux;
@@ -725,6 +728,7 @@
 		87078A8518A47FE90034C7A0 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				87C4CC5C1B75499700CE6D3C /* GameController.framework */,
 				87C4AA551A4414070048DBF4 /* AssetsLibrary.framework */,
 				87C4AA531A440BEB0048DBF4 /* libz.dylib */,
 				87078A8618A47FE90034C7A0 /* Foundation.framework */,
@@ -767,6 +771,14 @@
 				87078A9818A47FE90034C7A0 /* emulator-Prefix.pch */,
 			);
 			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		87C4CC591B75491400CE6D3C /* nixprof */ = {
+			isa = PBXGroup;
+			children = (
+				87C4CC5A1B75491400CE6D3C /* nixprof.cpp */,
+			);
+			path = nixprof;
 			sourceTree = "<group>";
 		};
 		87C64DC11B6E7FC600FDD99A /* iCade-iOS */ = {
@@ -1597,7 +1609,6 @@
 				9C7A3AF318C806E00070BB5F /* crc32.c in Sources */,
 				9C7A3B5F18C81D090070BB5F /* BrowserTableViewController.m in Sources */,
 				9C7D581019301E140004EA2C /* CloudVMUViewController.m in Sources */,
-				8497BCC01A41A0E900EFB9ED /* nixprof.cpp in Sources */,
 				9C7A3AE118C806E00070BB5F /* zip_set_file_comment.c in Sources */,
 				9C7A3AB118C806E00070BB5F /* pngread.c in Sources */,
 				9C7A3AAC18C806E00070BB5F /* png.c in Sources */,
@@ -1605,6 +1616,7 @@
 				9C7A3B3618C806E00070BB5F /* chd.cpp in Sources */,
 				9C7A3B2118C806E00070BB5F /* sh4_fpu.cpp in Sources */,
 				9C7A3B3218C806E00070BB5F /* sh4_opcode_list.cpp in Sources */,
+				87C4CC5B1B75491400CE6D3C /* nixprof.cpp in Sources */,
 				9C7A3AA918C806E00070BB5F /* elf.cpp in Sources */,
 				9C7A3AA618C806E00070BB5F /* chdr.cpp in Sources */,
 				9C7A3AA518C806E00070BB5F /* cdipsr.cpp in Sources */,
@@ -1805,6 +1817,7 @@
 					"DEBUG=1",
 					"TARGET_IPHONE=1",
 					"$(inherited)",
+					"TARGET_NO_WEBUI=1",
 				);
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1836,6 +1849,7 @@
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"GLES=1",
 					"TARGET_IPHONE=1",
+					"TARGET_NO_WEBUI=1",
 				);
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",

@@ -8,7 +8,12 @@
 
 #import <UIKit/UIKit.h>
 #import <GLKit/GLKit.h>
+#import <GameController/GameController.h>
+#import "iCadeReaderView.h"
 
-@interface ViewController : GLKViewController
+@interface ViewController : GLKViewController <iCadeEventDelegate>
+
+@property (nonatomic) iCadeReaderView* iCadeReader;
+@property (nonatomic) GCController *gController __attribute__((weak_import));
 
 @end
