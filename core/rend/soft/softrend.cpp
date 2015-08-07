@@ -1,3 +1,4 @@
+#include <omp.h>
 #include "hw\pvr\Renderer_if.h"
 #include "hw\pvr\pvr_mem.h"
 #include "oslib\oslib.h"
@@ -50,7 +51,7 @@ static __m128i _mm_broadcast_int(int v)
 }
 static __m128 _mm_load_ps_r(float a, float b, float c, float d)
 {
-	static __declspec(align(128)) float v[4];
+	__declspec(align(128)) float v[4];
 	v[0] = a;
 	v[1] = b;
 	v[2] = c;
@@ -224,8 +225,6 @@ struct IPs
 };
 
 
-IPs __declspec(align(64)) ip;
-
 #define TPL_DECL_pixel template<bool useoldmsk, int alpha_mode, bool pp_UseAlpha, bool pp_Texture, bool pp_IgnoreTexA, int pp_ShadInstr, bool pp_Offset >
 #define TPL_DECL_triangle template<int alpha_mode, bool pp_UseAlpha, bool pp_Texture, bool pp_IgnoreTexA, int pp_ShadInstr, bool pp_Offset >
 
@@ -245,7 +244,7 @@ __m128i shuffle_alpha = {
 };
 
 TPL_DECL_pixel
-static void PixelFlush(PolyParam* pp, text_info* texture, __m128 x, __m128 y, u8* cb, __m128 oldmask)
+static void PixelFlush(PolyParam* pp, text_info* texture, __m128 x, __m128 y, u8* cb, __m128 oldmask, IPs& ip)
 {
 	x = _mm_shuffle_ps(x, x, 0);
 	__m128 invW = ip.ZUV.Ip(x, y);
@@ -545,7 +544,12 @@ static void Rendtriangle(PolyParam* pp, int vertex_offset, const Vertex &v1, con
 	text_info texture = { 0 };
 
 	if (pp_Texture) {
-		texture = raw_GetTexture(pp->tsp, pp->tcw);
+
+		#pragma omp critical (texture_lookup)
+		{
+			texture = raw_GetTexture(pp->tsp, pp->tcw);
+		}
+			
 	}
 
 	const int stride_bytes = STRIDE_PIXEL_OFFSET * 4;
@@ -620,6 +624,11 @@ static void Rendtriangle(PolyParam* pp, int vertex_offset, const Vertex &v1, con
 	int spanx = iround(mmax(X1 + 0.5f, X2 + 0.5f, X3 + 0.5f, area->right)) - minx;
 	int spany = iround(mmax(Y1 + 0.5f, Y2 + 0.5f, Y3 + 0.5f, area->bottom)) - miny;
 
+	//Inside scissor area?
+	if (spanx < 0 || spany < 0)
+		return;
+
+
 	// Half-edge constants
 	float C1 = DY12 * X1 - DX12 * Y1;
 	float C2 = DY23 * X2 - DX23 * Y2;
@@ -664,7 +673,11 @@ static void Rendtriangle(PolyParam* pp, int vertex_offset, const Vertex &v1, con
 	u8* cb_y = (u8*)colorBuffer;
 	cb_y += miny*stride_bytes + minx*(q * 4);
 
+	IPs __declspec(align(64)) ip;
+
 	ip.Setup(pp, &texture, v1, v2, v3, minx, miny, q);
+	
+	
 	__m128 y_ps = _mm_broadcast_float(miny);
 	__m128 minx_ps = _mm_load_scaled_float(minx - q, 1);
 	static __declspec(align(16)) float ones_ps[4] = { 1, 1, 1, 1 };
@@ -703,7 +716,7 @@ static void Rendtriangle(PolyParam* pp, int vertex_offset, const Vertex &v1, con
 				__m128 yl_ps = y_ps;
 				for (int iy = q; iy > 0; iy--)
 				{
-					PixelFlush TPL_PRMS_pixel(false) (pp, &texture, x_ps, yl_ps, cb_x, x_ps);
+					PixelFlush TPL_PRMS_pixel(false) (pp, &texture, x_ps, yl_ps, cb_x, x_ps, ip);
 					yl_ps = _mm_add_ps(yl_ps, *(__m128*)ones_ps);
 					cb_x += sizeof(__m128);
 				}
@@ -740,9 +753,9 @@ static void Rendtriangle(PolyParam* pp, int vertex_offset, const Vertex &v1, con
 					if (msk != 0)
 					{
 						if (msk != 0xF)
-							PixelFlush TPL_PRMS_pixel(true) (pp, &texture, x_ps, yl_ps, cb_x, *(__m128*)&a);
+							PixelFlush TPL_PRMS_pixel(true) (pp, &texture, x_ps, yl_ps, cb_x, *(__m128*)&a, ip);
 						else
-							PixelFlush TPL_PRMS_pixel(false) (pp, &texture, x_ps, yl_ps, cb_x, *(__m128*)&a);
+							PixelFlush TPL_PRMS_pixel(false) (pp, &texture, x_ps, yl_ps, cb_x, *(__m128*)&a, ip);
 					}
 
 					yl_ps = _mm_add_ps(yl_ps, *(__m128*)ones_ps);
@@ -824,14 +837,28 @@ struct softrend : Renderer
 
 		if (pvrrc.verts.used()<3)
 			return false;
-	
-		RECT area = { 0, 0, 640, 480 };
-		RenderParamList<0>(&pvrrc.global_param_op, &area);
-		RenderParamList<1>(&pvrrc.global_param_pt, &area);
+
 		if (pvrrc.isAutoSort)
 			SortPParams();
 
-		RenderParamList<2>(&pvrrc.global_param_tr, &area);
+		int tcount = omp_get_num_procs() - 1;
+		if (tcount == 0) tcount = 1;
+		if (tcount > settings.pvr.MaxThreads) tcount = settings.pvr.MaxThreads;
+#pragma omp parallel num_threads(tcount)
+		{
+			int thd = omp_get_thread_num();
+			int y_offs = 480 % omp_get_num_threads();
+			int y_thd = 480 / omp_get_num_threads();
+			int y_start = (!!thd) * y_offs + y_thd * thd;
+			int y_end =  y_offs + y_thd * (thd + 1);
+
+			RECT area = { 0, y_start, 640, y_end };
+			RenderParamList<0>(&pvrrc.global_param_op, &area);
+			RenderParamList<1>(&pvrrc.global_param_pt, &area);
+			RenderParamList<2>(&pvrrc.global_param_tr, &area);
+		}
+
+		
 		
 
 		/*
@@ -1105,10 +1132,10 @@ struct softrend : Renderer
 		{
 			for (int x = 0; x<MAX_RENDER_WIDTH; x += 4)
 			{
-				pdst[(480 - (y + 0))*stride + x / 4] = *psrc++;
-				pdst[(480 - (y + 1))*stride + x / 4] = *psrc++;
-				pdst[(480 - (y + 2))*stride + x / 4] = *psrc++;
-				pdst[(480 - (y + 3))*stride + x / 4] = *psrc++;
+				pdst[(479 - (y + 0))*stride + x / 4] = *psrc++;
+				pdst[(479 - (y + 1))*stride + x / 4] = *psrc++;
+				pdst[(479 - (y + 2))*stride + x / 4] = *psrc++;
+				pdst[(479 - (y + 3))*stride + x / 4] = *psrc++;
 			}
 		}
 		
