@@ -21,6 +21,7 @@ Compression
 */
 
 u16 temp_tex_buffer[1024*1024];
+extern u32 decoded_colors[3][65536];
 
 typedef void TexConvFP(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height);
 
@@ -315,11 +316,20 @@ struct TextureCacheData
 				tex_type = 2;
 
 			if (pData) {
-				free(pData);
+				_mm_free(pData);
 			}
 
-			pData = (u16*)malloc(w * h * 2);
-			memcpy(pData, temp_tex_buffer, w * h * 2);
+			pData = (u16*)_mm_malloc(w * h * 16, 16);
+			for (int y = 0; y < h; y++) {
+				for (int x = 0; x < w; x++) {
+					u32* data = (u32*)&pData[(x + y*w) * 8];
+
+					data[0] = decoded_colors[tex_type][temp_tex_buffer[(x + 1) % w + (y + 1) % h * w]];
+					data[1] = decoded_colors[tex_type][temp_tex_buffer[(x + 0) % w + (y + 1) % h * w]];
+					data[2] = decoded_colors[tex_type][temp_tex_buffer[(x + 1) % w + (y + 0) % h * w]];
+					data[3] = decoded_colors[tex_type][temp_tex_buffer[(x + 0) % w + (y + 0) % h * w]];
+				}
+			}
 		}
 	}
 
@@ -329,7 +339,7 @@ struct TextureCacheData
 	void Delete()
 	{
 		if (pData) {
-			free(pData);
+			_mm_free(pData);
 			pData = 0;
 		}
 		if (texID) {

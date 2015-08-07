@@ -26,6 +26,8 @@ u32 decoded_colors[3][65536];
 DECL_ALIGN(32) u32 render_buffer[640 * 480 * 2 * 4]; //Color + depth
 DECL_ALIGN(32) u32 pixels[640 * 480 * 4];
 
+#define Z_BUFFER_OFFSET (640 * 480 * 4)
+
 static __m128 _mm_load_scaled_float(float v, float s)
 {
 	return _mm_setr_ps(v, v + s, v + s + s, v + s + s + s);
@@ -201,8 +203,8 @@ struct IPs
 
 		ZUV.Setup(v1, v2, v3, minx, miny, q,
 			v1.z, v2.z, v3.z,
-			v1.u * w, v2.u * w, v3.u * w,
-			v1.v * h, v2.v * h, v3.v * h,
+			v1.u * w * v1.z, v2.u * w* v2.z, v3.u * w* v3.z,
+			v1.v * h* v1.z, v2.v * h* v2.z, v3.v * h* v3.z,
 			0, -1, 1);
 
 		Col.Setup(v1, v2, v3, minx, miny, q,
@@ -217,16 +219,16 @@ struct IPs
 
 IPs __declspec(align(64)) ip;
 
-#define TPL_DECL_pixel template<bool useoldmsk, bool alpha_blend, bool pp_UseAlpha, bool pp_Texture, bool pp_IgnoreTexA, int pp_ShadInstr, bool pp_Offset >
-#define TPL_DECL_triangle template<bool alpha_blend, bool pp_UseAlpha, bool pp_Texture, bool pp_IgnoreTexA, int pp_ShadInstr, bool pp_Offset >
+#define TPL_DECL_pixel template<bool useoldmsk, int alpha_mode, bool pp_UseAlpha, bool pp_Texture, bool pp_IgnoreTexA, int pp_ShadInstr, bool pp_Offset >
+#define TPL_DECL_triangle template<int alpha_mode, bool pp_UseAlpha, bool pp_Texture, bool pp_IgnoreTexA, int pp_ShadInstr, bool pp_Offset >
 
-#define TPL_PRMS_pixel(useoldmsk) <useoldmsk, alpha_blend, pp_UseAlpha, pp_Texture, pp_IgnoreTexA, pp_ShadInstr, pp_Offset >
-#define TPL_PRMS_triangle <alpha_blend, pp_UseAlpha, pp_Texture, pp_IgnoreTexA, pp_ShadInstr, pp_Offset >
+#define TPL_PRMS_pixel(useoldmsk) <useoldmsk, alpha_mode, pp_UseAlpha, pp_Texture, pp_IgnoreTexA, pp_ShadInstr, pp_Offset >
+#define TPL_PRMS_triangle <alpha_mode, pp_UseAlpha, pp_Texture, pp_IgnoreTexA, pp_ShadInstr, pp_Offset >
 
 
 //<alpha_blend, pp_UseAlpha, pp_Texture, pp_IgnoreTexA, pp_ShadInstr, pp_Offset >
 typedef void(*RendtriangleFn)(PolyParam* pp, int vertex_offset, const Vertex &v1, const Vertex &v2, const Vertex &v3, u32* colorBuffer);
-RendtriangleFn RendtriangleFns[2][2][2][2][4][2];
+RendtriangleFn RendtriangleFns[3][2][2][2][4][2];
 
 
 __m128i const_setAlpha = { 0xFF000000, 0xFF000000, 0xFF000000, 0xFF000000, 0xFF000000 };
@@ -246,12 +248,15 @@ static void PixelFlush(PolyParam* pp, text_info* texture, __m128 x, __m128 y, u8
 
 	_MM_TRANSPOSE4_PS(invW, u, v, ws);
 
+	u = _mm_div_ps(u, invW);
+	v = _mm_div_ps(v, invW);
+
 	//invW : {z1,z2,z3,z4}
 	//u    : {u1,u2,u3,u4}
 	//v    : {v1,v2,v3,v4}
 	//wx   : {?,?,?,?}
 
-	__m128* zb = (__m128*)&cb[640 * 480 * 4];
+	__m128* zb = (__m128*)&cb[Z_BUFFER_OFFSET];
 
 	__m128 ZMask = _mm_cmpge_ps(invW, *zb);
 	if (useoldmsk)
@@ -285,6 +290,12 @@ static void PixelFlush(PolyParam* pp, text_info* texture, __m128 x, __m128 y, u8
 			__m128i ui = _mm_cvttps_epi32(u);
 			__m128i vi = _mm_cvttps_epi32(v);
 
+			__m128 uf = _mm_sub_ps(u, _mm_cvtepi32_ps(ui));
+			__m128 vf = _mm_sub_ps(v, _mm_cvtepi32_ps(vi));
+
+			__m128i ufi = _mm_cvttps_epi32(_mm_mul_ps(uf, _mm_set1_ps(256)));
+			__m128i vfi = _mm_cvttps_epi32(_mm_mul_ps(vf, _mm_set1_ps(256)));
+
 			//(int)v<<x+(int)u
 			__m128i textadr = _mm_add_epi32(_mm_slli_epi32(vi, 16), ui);//texture addresses ! 4x of em !
 			__m128i textel;
@@ -292,15 +303,76 @@ static void PixelFlush(PolyParam* pp, text_info* texture, __m128 x, __m128 y, u8
 			for (int i = 0; i < 4; i++) {
 				u32 u = textadr.m128i_i16[i * 2 + 0];
 				u32 v = textadr.m128i_i16[i * 2 + 1];
+				
+				__m128i mufi_ = _mm_shuffle_epi32(ufi, _MM_SHUFFLE(0, 0, 0, 0));
+				__m128i mufi_n = _mm_sub_epi32(_mm_set1_epi32(255), mufi_);
+
+				__m128i mvfi_ = _mm_shuffle_epi32(vfi, _MM_SHUFFLE(0, 0, 0, 0));
+				__m128i mvfi_n = _mm_sub_epi32(_mm_set1_epi32(255), mvfi_);
+				
+				ufi = _mm_shuffle_epi32(ufi, _MM_SHUFFLE(0,3,2,1));
+				vfi = _mm_shuffle_epi32(vfi, _MM_SHUFFLE(0,3,2,1));
+
+				u32 pixel;
+				
+#if 0
 				u32 textel_size = 2;
+				
+				u32 pixel00 = decoded_colors[texture->textype][texture->pdata[((u + 1) % texture->width + (v + 1) % texture->height * texture->width)]];
+				u32 pixel01 = decoded_colors[texture->textype][texture->pdata[((u + 0) % texture->width + (v + 1) % texture->height * texture->width)]];
+				u32 pixel10 = decoded_colors[texture->textype][texture->pdata[((u + 1) % texture->width + (v + 0) % texture->height * texture->width)]];
+				u32 pixel11 = decoded_colors[texture->textype][texture->pdata[((u + 0) % texture->width + (v + 0) % texture->height * texture->width)]];
 
-				u %= texture->width;
-				v %= texture->height;
+				
+				for (int j = 0; j < 4; j++) {
+				((u8*)&pixel)[j] =
+				
+				(((u8*)&pixel00)[j] * uf.m128_f32[i] + ((u8*)&pixel01)[j] * (1 - uf.m128_f32[i])) * vf.m128_f32[i] + (((u8*)&pixel10)[j] * uf.m128_f32[i] + ((u8*)&pixel11)[j] * (1 - uf.m128_f32[i])) * (1 - vf.m128_f32[i]);
+				}
+#endif
+
+				__m128i px = ((__m128i*)texture->pdata)[((u + 0) % texture->width + (v + 0) % texture->height * texture->width)];
 
 
-				u32 pixel = decoded_colors[texture->textype][texture->pdata[(u + v * texture->width)]];
+				
+				__m128i tex_00 = _mm_cvtepu8_epi32(px);
+				__m128i tex_01 = _mm_cvtepu8_epi32(_mm_shuffle_epi32(px, _MM_SHUFFLE(0, 0, 0, 1)));
+				__m128i tex_10 = _mm_cvtepu8_epi32(_mm_shuffle_epi32(px, _MM_SHUFFLE(0, 0, 0, 2)));
+				__m128i tex_11 = _mm_cvtepu8_epi32(_mm_shuffle_epi32(px, _MM_SHUFFLE(0, 0, 0, 3)));
+
+				tex_00 = _mm_add_epi32(_mm_mullo_epi32(tex_00, mufi_), _mm_mullo_epi32(tex_01, mufi_n));
+				tex_10 = _mm_add_epi32(_mm_mullo_epi32(tex_10, mufi_), _mm_mullo_epi32(tex_10, mufi_n));
+				
+				tex_00 = _mm_add_epi32(_mm_mullo_epi32(tex_00, mvfi_), _mm_mullo_epi32(tex_10, mvfi_n));
+				tex_00 = _mm_srli_epi32(tex_00, 16);
+
+				tex_00 = _mm_packus_epi32(tex_00, tex_00);
+				tex_00 = _mm_packus_epi16(tex_00, tex_00);
+				pixel = _mm_cvtsi128_si32(tex_00);
+#if 0
+				//top    = c0 * a + c1 * (1-a)
+				//bottom = c2 * a + c3 * (1-a)
+
+				//[c0 c2] [c1 c3]
+				//[c0 c2]*a + [c1 c3] * (1 - a) = [cx cy]
+				//[cx * d + cy * (1-d)]
+				//cf
+				_mm_unpacklo_epi8()
+				__m128i y = _mm_cvtps_epi32(x);    // Convert them to 32-bit ints
+				y = _mm_packus_epi32(y, y);        // Pack down to 16 bits
+				y = _mm_packus_epi16(y, y);        // Pack down to 8 bits
+				*(int*)out = _mm_cvtsi128_si32(y); // Store the lower 32 bits
+
+				// 0x000000FF * 0x00010001 = 0x00FF00FF
+				
+				
 
 
+				__m128i px = ((__m128i*)texture->pdata)[((u) & ( texture->width - 1) + (v) & (texture->height-1) * texture->width)];
+
+				__m128i lo_px = _mm_cvtepu8_epi16(px);
+				__m128i hi_px = _mm_cvtepu8_epi16(_mm_shuffle_epi32(px, _MM_SHUFFLE(1, 0, 3, 2)));
+#endif
 				textel.m128i_i32[i] = pixel;
 			}
 
@@ -388,7 +460,28 @@ static void PixelFlush(PolyParam* pp, text_info* texture, __m128 x, __m128 y, u8
 
 	//__m128i rv=ip.col;//_mm_xor_si128(_mm_cvtps_epi32(_mm_mul_ps(x,Z.c)),_mm_cvtps_epi32(y));
 
-	if (alpha_blend) {
+	//Alpha test
+	if (alpha_mode == 1) {
+		__m128i fb = *(__m128i*)cb;
+
+#if 1
+		//ALPHA_TEST
+		for (int i = 0; i < 4; i++) {
+			if (rv.m128i_i8[i * 4 + 3] < PT_ALPHA_REF) {
+				rv.m128i_u32[i] = fb.m128i_u32[i];
+			}
+		}
+#else
+		__m128i ALPHA_TEST = _mm_set1_epi8(PT_ALPHA_REF);
+		__m128i mask = _mm_cmplt_epi8(_mm_subs_epu16(ALPHA_TEST, rv), _mm_setzero_si128());
+
+		mask = _mm_srai_epi32(mask, 31); //FF on the pixels we want to keep
+
+		rv = _mm_or_si128(_mm_and_si128(rv, mask), _mm_andnot_si128(mask, cb));
+#endif
+
+	}
+	else if (alpha_mode == 2) {
 		__m128i fb = *(__m128i*)cb;
 #if 0
 		for (int i = 0; i < 16; i += 4) {
@@ -636,9 +729,13 @@ static void Rendtriangle(PolyParam* pp, int vertex_offset, const Vertex &v1, con
 
 					__m128i a = _mm_cmpeq_epi32((__m128i&)summary, (__m128i&)pzero);
 					int msk = _mm_movemask_ps((__m128&)a);
+
 					if (msk != 0)
 					{
-						PixelFlush TPL_PRMS_pixel(true) (pp, &texture, x_ps, yl_ps, cb_x, *(__m128*)&a);
+						if (msk != 0xF)
+							PixelFlush TPL_PRMS_pixel(true) (pp, &texture, x_ps, yl_ps, cb_x, *(__m128*)&a);
+						else
+							PixelFlush TPL_PRMS_pixel(false) (pp, &texture, x_ps, yl_ps, cb_x, *(__m128*)&a);
 					}
 
 					yl_ps = _mm_add_ps(yl_ps, *(__m128*)ones_ps);
@@ -690,7 +787,7 @@ struct softrend : Renderer
 
 	
 
-	template <bool alpha_blend>
+	template <int alpha_mode>
 	void RenderParamList(List<PolyParam>* param_list) {
 		
 		Vertex* verts = pvrrc.verts.head();
@@ -707,7 +804,7 @@ struct softrend : Renderer
 
 			for (int v = 0; v < vertex_count; v++) {
 				////<alpha_blend, pp_UseAlpha, pp_Texture, pp_IgnoreTexA, pp_ShadInstr, pp_Offset >
-				RendtriangleFn fn = RendtriangleFns[alpha_blend][params[i].tsp.UseAlpha][params[i].pcw.Texture][params[i].tsp.IgnoreTexA][params[i].tsp.ShadInstr][params[i].pcw.Offset];
+				RendtriangleFn fn = RendtriangleFns[alpha_mode][params[i].tsp.UseAlpha][params[i].pcw.Texture][params[i].tsp.IgnoreTexA][params[i].tsp.ShadInstr][params[i].pcw.Offset];
 
 				fn(&params[i], v, verts[poly_idx[v]], verts[poly_idx[v + 1]], verts[poly_idx[v + 2]], render_buffer);
 			}
@@ -722,12 +819,12 @@ struct softrend : Renderer
 			return false;
 	
 
-		RenderParamList<false>(&pvrrc.global_param_op);
-		RenderParamList<false>(&pvrrc.global_param_pt);
+		RenderParamList<0>(&pvrrc.global_param_op);
+		RenderParamList<1>(&pvrrc.global_param_pt);
 		if (pvrrc.isAutoSort)
 			SortPParams();
 
-		RenderParamList<true>(&pvrrc.global_param_tr);
+		RenderParamList<2>(&pvrrc.global_param_tr);
 		
 
 		/*
@@ -775,7 +872,7 @@ struct softrend : Renderer
 			//565
 			decoded_colors[0][c] = 0xFF000000 | (REP_32((c >> 11) % 32) << 16) | (REP_64((c >> 5) % 64) << 8) | (REP_32((c >> 0) % 32) << 0);
 			//1555
-			decoded_colors[1][c] = ((c >> 0) % 2 * 255 << 24) | (REP_32((c >> 10) % 32) << 16) | (REP_32((c >> 5) % 32) << 8) | (REP_32((c >> 1) % 32) << 0);
+			decoded_colors[1][c] = ((c >> 0) % 2 * 255 << 24) | (REP_32((c >> 11) % 32) << 16) | (REP_32((c >> 6) % 32) << 8) | (REP_32((c >> 1) % 32) << 0);
 			//4444
 			decoded_colors[2][c] = (REP_16((c >> 0) % 16) << 24) | (REP_16((c >> 12) % 16) << 16) | (REP_16((c >> 8) % 16) << 8) | (REP_16((c >> 4) % 16) << 0);
 		}
@@ -909,6 +1006,72 @@ struct softrend : Renderer
 			RendtriangleFns[1][1][0][1][2][1] = &Rendtriangle<1, 1, 0, 1, 2, 1>;
 			RendtriangleFns[1][1][0][1][3][0] = &Rendtriangle<1, 1, 0, 1, 3, 0>;
 			RendtriangleFns[1][1][0][1][3][1] = &Rendtriangle<1, 1, 0, 1, 3, 1>;
+
+
+			RendtriangleFns[2][0][1][0][0][0] = &Rendtriangle<2, 0, 1, 0, 0, 0>;
+			RendtriangleFns[2][0][1][0][0][1] = &Rendtriangle<2, 0, 1, 0, 0, 1>;
+			RendtriangleFns[2][0][1][0][1][0] = &Rendtriangle<2, 0, 1, 0, 1, 0>;
+			RendtriangleFns[2][0][1][0][1][1] = &Rendtriangle<2, 0, 1, 0, 1, 1>;
+			RendtriangleFns[2][0][1][0][2][0] = &Rendtriangle<2, 0, 1, 0, 2, 0>;
+			RendtriangleFns[2][0][1][0][2][1] = &Rendtriangle<2, 0, 1, 0, 2, 1>;
+			RendtriangleFns[2][0][1][0][3][0] = &Rendtriangle<2, 0, 1, 0, 3, 0>;
+			RendtriangleFns[2][0][1][0][3][1] = &Rendtriangle<2, 0, 1, 0, 3, 1>;
+			RendtriangleFns[2][0][1][1][0][0] = &Rendtriangle<2, 0, 1, 1, 0, 0>;
+			RendtriangleFns[2][0][1][1][0][1] = &Rendtriangle<2, 0, 1, 1, 0, 1>;
+			RendtriangleFns[2][0][1][1][1][0] = &Rendtriangle<2, 0, 1, 1, 1, 0>;
+			RendtriangleFns[2][0][1][1][1][1] = &Rendtriangle<2, 0, 1, 1, 1, 1>;
+			RendtriangleFns[2][0][1][1][2][0] = &Rendtriangle<2, 0, 1, 1, 2, 0>;
+			RendtriangleFns[2][0][1][1][2][1] = &Rendtriangle<2, 0, 1, 1, 2, 1>;
+			RendtriangleFns[2][0][1][1][3][0] = &Rendtriangle<2, 0, 1, 1, 3, 0>;
+			RendtriangleFns[2][0][1][1][3][1] = &Rendtriangle<2, 0, 1, 1, 3, 1>;
+			RendtriangleFns[2][0][0][0][0][0] = &Rendtriangle<2, 0, 0, 0, 0, 0>;
+			RendtriangleFns[2][0][0][0][0][1] = &Rendtriangle<2, 0, 0, 0, 0, 1>;
+			RendtriangleFns[2][0][0][0][1][0] = &Rendtriangle<2, 0, 0, 0, 1, 0>;
+			RendtriangleFns[2][0][0][0][1][1] = &Rendtriangle<2, 0, 0, 0, 1, 1>;
+			RendtriangleFns[2][0][0][0][2][0] = &Rendtriangle<2, 0, 0, 0, 2, 0>;
+			RendtriangleFns[2][0][0][0][2][1] = &Rendtriangle<2, 0, 0, 0, 2, 1>;
+			RendtriangleFns[2][0][0][0][3][0] = &Rendtriangle<2, 0, 0, 0, 3, 0>;
+			RendtriangleFns[2][0][0][0][3][1] = &Rendtriangle<2, 0, 0, 0, 3, 1>;
+			RendtriangleFns[2][0][0][1][0][0] = &Rendtriangle<2, 0, 0, 1, 0, 0>;
+			RendtriangleFns[2][0][0][1][0][1] = &Rendtriangle<2, 0, 0, 1, 0, 1>;
+			RendtriangleFns[2][0][0][1][1][0] = &Rendtriangle<2, 0, 0, 1, 1, 0>;
+			RendtriangleFns[2][0][0][1][1][1] = &Rendtriangle<2, 0, 0, 1, 1, 1>;
+			RendtriangleFns[2][0][0][1][2][0] = &Rendtriangle<2, 0, 0, 1, 2, 0>;
+			RendtriangleFns[2][0][0][1][2][1] = &Rendtriangle<2, 0, 0, 1, 2, 1>;
+			RendtriangleFns[2][0][0][1][3][0] = &Rendtriangle<2, 0, 0, 1, 3, 0>;
+			RendtriangleFns[2][0][0][1][3][1] = &Rendtriangle<2, 0, 0, 1, 3, 1>;
+			RendtriangleFns[2][1][1][0][0][0] = &Rendtriangle<2, 1, 1, 0, 0, 0>;
+			RendtriangleFns[2][1][1][0][0][1] = &Rendtriangle<2, 1, 1, 0, 0, 1>;
+			RendtriangleFns[2][1][1][0][1][0] = &Rendtriangle<2, 1, 1, 0, 1, 0>;
+			RendtriangleFns[2][1][1][0][1][1] = &Rendtriangle<2, 1, 1, 0, 1, 1>;
+			RendtriangleFns[2][1][1][0][2][0] = &Rendtriangle<2, 1, 1, 0, 2, 0>;
+			RendtriangleFns[2][1][1][0][2][1] = &Rendtriangle<2, 1, 1, 0, 2, 1>;
+			RendtriangleFns[2][1][1][0][3][0] = &Rendtriangle<2, 1, 1, 0, 3, 0>;
+			RendtriangleFns[2][1][1][0][3][1] = &Rendtriangle<2, 1, 1, 0, 3, 1>;
+			RendtriangleFns[2][1][1][1][0][0] = &Rendtriangle<2, 1, 1, 1, 0, 0>;
+			RendtriangleFns[2][1][1][1][0][1] = &Rendtriangle<2, 1, 1, 1, 0, 1>;
+			RendtriangleFns[2][1][1][1][1][0] = &Rendtriangle<2, 1, 1, 1, 1, 0>;
+			RendtriangleFns[2][1][1][1][1][1] = &Rendtriangle<2, 1, 1, 1, 1, 1>;
+			RendtriangleFns[2][1][1][1][2][0] = &Rendtriangle<2, 1, 1, 1, 2, 0>;
+			RendtriangleFns[2][1][1][1][2][1] = &Rendtriangle<2, 1, 1, 1, 2, 1>;
+			RendtriangleFns[2][1][1][1][3][0] = &Rendtriangle<2, 1, 1, 1, 3, 0>;
+			RendtriangleFns[2][1][1][1][3][1] = &Rendtriangle<2, 1, 1, 1, 3, 1>;
+			RendtriangleFns[2][1][0][0][0][0] = &Rendtriangle<2, 1, 0, 0, 0, 0>;
+			RendtriangleFns[2][1][0][0][0][1] = &Rendtriangle<2, 1, 0, 0, 0, 1>;
+			RendtriangleFns[2][1][0][0][1][0] = &Rendtriangle<2, 1, 0, 0, 1, 0>;
+			RendtriangleFns[2][1][0][0][1][1] = &Rendtriangle<2, 1, 0, 0, 1, 1>;
+			RendtriangleFns[2][1][0][0][2][0] = &Rendtriangle<2, 1, 0, 0, 2, 0>;
+			RendtriangleFns[2][1][0][0][2][1] = &Rendtriangle<2, 1, 0, 0, 2, 1>;
+			RendtriangleFns[2][1][0][0][3][0] = &Rendtriangle<2, 1, 0, 0, 3, 0>;
+			RendtriangleFns[2][1][0][0][3][1] = &Rendtriangle<2, 1, 0, 0, 3, 1>;
+			RendtriangleFns[2][1][0][1][0][0] = &Rendtriangle<2, 1, 0, 1, 0, 0>;
+			RendtriangleFns[2][1][0][1][0][1] = &Rendtriangle<2, 1, 0, 1, 0, 1>;
+			RendtriangleFns[2][1][0][1][1][0] = &Rendtriangle<2, 1, 0, 1, 1, 0>;
+			RendtriangleFns[2][1][0][1][1][1] = &Rendtriangle<2, 1, 0, 1, 1, 1>;
+			RendtriangleFns[2][1][0][1][2][0] = &Rendtriangle<2, 1, 0, 1, 2, 0>;
+			RendtriangleFns[2][1][0][1][2][1] = &Rendtriangle<2, 1, 0, 1, 2, 1>;
+			RendtriangleFns[2][1][0][1][3][0] = &Rendtriangle<2, 1, 0, 1, 3, 0>;
+			RendtriangleFns[2][1][0][1][3][1] = &Rendtriangle<2, 1, 0, 1, 3, 1>;
 		}
 
 		return true;
