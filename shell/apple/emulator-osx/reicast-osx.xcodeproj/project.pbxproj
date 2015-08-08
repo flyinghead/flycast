@@ -196,17 +196,17 @@
 			containerPortal = 84A388AB1B1CDD3E000166C0 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 84A388B21B1CDD3E000166C0;
-			remoteInfo = "emulator-osx";
+			remoteInfo = "reicast-osx";
 		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		84A388B31B1CDD3E000166C0 /* emulator-osx.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "emulator-osx.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		84A388B31B1CDD3E000166C0 /* reicast-osx.temp_caseinsensitive_rename.temp_caseinsensitive_rename.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "reicast-osx.temp_caseinsensitive_rename.temp_caseinsensitive_rename.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		84A388B71B1CDD3E000166C0 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		84A388B81B1CDD3E000166C0 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		84A388BA1B1CDD3E000166C0 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		84A388BD1B1CDD3E000166C0 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/MainMenu.xib; sourceTree = "<group>"; };
-		84A388C31B1CDD3F000166C0 /* emulator-osxTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "emulator-osxTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		84A388C31B1CDD3F000166C0 /* reicast-osx.temp_caseinsensitive_rename.temp_caseinsensitive_renameTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "reicast-osx.temp_caseinsensitive_rename.temp_caseinsensitive_renameTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		84A388C81B1CDD3F000166C0 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		84A388C91B1CDD3F000166C0 /* emulator_osxTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = emulator_osxTests.swift; sourceTree = "<group>"; };
 		84B7BD121B72720100F9733F /* build.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = build.h; path = ../../../core/build.h; sourceTree = "<group>"; };
@@ -546,8 +546,8 @@
 			isa = PBXGroup;
 			children = (
 				84B7BD111B7271CF00F9733F /* core */,
-				84A388B51B1CDD3E000166C0 /* emulator-osx */,
-				84A388C61B1CDD3F000166C0 /* emulator-osxTests */,
+				84A388B51B1CDD3E000166C0 /* reicast-osx */,
+				84A388C61B1CDD3F000166C0 /* reicast-osxTests */,
 				84A388B41B1CDD3E000166C0 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -555,13 +555,13 @@
 		84A388B41B1CDD3E000166C0 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				84A388B31B1CDD3E000166C0 /* emulator-osx.app */,
-				84A388C31B1CDD3F000166C0 /* emulator-osxTests.xctest */,
+				84A388B31B1CDD3E000166C0 /* reicast-osx.temp_caseinsensitive_rename.temp_caseinsensitive_rename.app */,
+				84A388C31B1CDD3F000166C0 /* reicast-osx.temp_caseinsensitive_rename.temp_caseinsensitive_renameTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
-		84A388B51B1CDD3E000166C0 /* emulator-osx */ = {
+		84A388B51B1CDD3E000166C0 /* reicast-osx */ = {
 			isa = PBXGroup;
 			children = (
 				84A388B81B1CDD3E000166C0 /* AppDelegate.swift */,
@@ -572,6 +572,7 @@
 				84B7BF841B72821900F9733F /* emulator-osx-Bridging-Header.h */,
 				84B7BF851B72871600F9733F /* EmuGLView.swift */,
 			);
+			name = "reicast-osx";
 			path = "emulator-osx";
 			sourceTree = "<group>";
 		};
@@ -583,12 +584,13 @@
 			name = "Supporting Files";
 			sourceTree = "<group>";
 		};
-		84A388C61B1CDD3F000166C0 /* emulator-osxTests */ = {
+		84A388C61B1CDD3F000166C0 /* reicast-osxTests */ = {
 			isa = PBXGroup;
 			children = (
 				84A388C91B1CDD3F000166C0 /* emulator_osxTests.swift */,
 				84A388C71B1CDD3F000166C0 /* Supporting Files */,
 			);
+			name = "reicast-osxTests";
 			path = "emulator-osxTests";
 			sourceTree = "<group>";
 		};
@@ -1244,9 +1246,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		84A388B21B1CDD3E000166C0 /* emulator-osx */ = {
+		84A388B21B1CDD3E000166C0 /* reicast-osx.temp_caseinsensitive_rename.temp_caseinsensitive_rename */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 84A388CD1B1CDD3F000166C0 /* Build configuration list for PBXNativeTarget "emulator-osx" */;
+			buildConfigurationList = 84A388CD1B1CDD3F000166C0 /* Build configuration list for PBXNativeTarget "reicast-osx.temp_caseinsensitive_rename.temp_caseinsensitive_rename" */;
 			buildPhases = (
 				84A388AF1B1CDD3E000166C0 /* Sources */,
 				84A388B01B1CDD3E000166C0 /* Frameworks */,
@@ -1256,14 +1258,14 @@
 			);
 			dependencies = (
 			);
-			name = "emulator-osx";
-			productName = "emulator-osx";
-			productReference = 84A388B31B1CDD3E000166C0 /* emulator-osx.app */;
+			name = "reicast-osx.temp_caseinsensitive_rename.temp_caseinsensitive_rename";
+			productName = "reicast-osx";
+			productReference = 84A388B31B1CDD3E000166C0 /* reicast-osx.temp_caseinsensitive_rename.temp_caseinsensitive_rename.app */;
 			productType = "com.apple.product-type.application";
 		};
-		84A388C21B1CDD3F000166C0 /* emulator-osxTests */ = {
+		84A388C21B1CDD3F000166C0 /* reicast-osx.temp_caseinsensitive_rename.temp_caseinsensitive_renameTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 84A388D01B1CDD3F000166C0 /* Build configuration list for PBXNativeTarget "emulator-osxTests" */;
+			buildConfigurationList = 84A388D01B1CDD3F000166C0 /* Build configuration list for PBXNativeTarget "reicast-osx.temp_caseinsensitive_rename.temp_caseinsensitive_renameTests" */;
 			buildPhases = (
 				84A388BF1B1CDD3F000166C0 /* Sources */,
 				84A388C01B1CDD3F000166C0 /* Frameworks */,
@@ -1274,9 +1276,9 @@
 			dependencies = (
 				84A388C51B1CDD3F000166C0 /* PBXTargetDependency */,
 			);
-			name = "emulator-osxTests";
-			productName = "emulator-osxTests";
-			productReference = 84A388C31B1CDD3F000166C0 /* emulator-osxTests.xctest */;
+			name = "reicast-osx.temp_caseinsensitive_rename.temp_caseinsensitive_renameTests";
+			productName = "reicast-osxTests";
+			productReference = 84A388C31B1CDD3F000166C0 /* reicast-osx.temp_caseinsensitive_rename.temp_caseinsensitive_renameTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
 /* End PBXNativeTarget section */
@@ -1297,7 +1299,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 84A388AE1B1CDD3E000166C0 /* Build configuration list for PBXProject "emulator-osx" */;
+			buildConfigurationList = 84A388AE1B1CDD3E000166C0 /* Build configuration list for PBXProject "reicast-osx" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
@@ -1310,8 +1312,8 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				84A388B21B1CDD3E000166C0 /* emulator-osx */,
-				84A388C21B1CDD3F000166C0 /* emulator-osxTests */,
+				84A388B21B1CDD3E000166C0 /* reicast-osx.temp_caseinsensitive_rename.temp_caseinsensitive_rename */,
+				84A388C21B1CDD3F000166C0 /* reicast-osx.temp_caseinsensitive_rename.temp_caseinsensitive_renameTests */,
 			);
 		};
 /* End PBXProject section */
@@ -1534,7 +1536,7 @@
 /* Begin PBXTargetDependency section */
 		84A388C51B1CDD3F000166C0 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 84A388B21B1CDD3E000166C0 /* emulator-osx */;
+			target = 84A388B21B1CDD3E000166C0 /* reicast-osx.temp_caseinsensitive_rename.temp_caseinsensitive_rename */;
 			targetProxy = 84A388C41B1CDD3F000166C0 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -1651,7 +1653,7 @@
 				);
 				INFOPLIST_FILE = "emulator-osx/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_NAME = "reicast-osx.temp_caseinsensitive_rename.temp_caseinsensitive_rename";
 				SWIFT_OBJC_BRIDGING_HEADER = "emulator-osx/emulator-osx-Bridging-Header.h";
 			};
 			name = Debug;
@@ -1679,7 +1681,7 @@
 				);
 				INFOPLIST_FILE = "emulator-osx/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_NAME = "reicast-osx.temp_caseinsensitive_rename.temp_caseinsensitive_rename";
 				SWIFT_OBJC_BRIDGING_HEADER = "emulator-osx/emulator-osx-Bridging-Header.h";
 			};
 			name = Release;
@@ -1699,8 +1701,8 @@
 				);
 				INFOPLIST_FILE = "emulator-osxTests/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/emulator-osx.app/Contents/MacOS/emulator-osx";
+				PRODUCT_NAME = "reicast-osx.temp_caseinsensitive_rename.temp_caseinsensitive_renameTests";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/reicast-osx.app/Contents/MacOS/reicast-osx";
 			};
 			name = Debug;
 		};
@@ -1715,15 +1717,15 @@
 				);
 				INFOPLIST_FILE = "emulator-osxTests/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/emulator-osx.app/Contents/MacOS/emulator-osx";
+				PRODUCT_NAME = "reicast-osx.temp_caseinsensitive_rename.temp_caseinsensitive_renameTests";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/reicast-osx.app/Contents/MacOS/reicast-osx";
 			};
 			name = Release;
 		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		84A388AE1B1CDD3E000166C0 /* Build configuration list for PBXProject "emulator-osx" */ = {
+		84A388AE1B1CDD3E000166C0 /* Build configuration list for PBXProject "reicast-osx" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				84A388CB1B1CDD3F000166C0 /* Debug */,
@@ -1732,7 +1734,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		84A388CD1B1CDD3F000166C0 /* Build configuration list for PBXNativeTarget "emulator-osx" */ = {
+		84A388CD1B1CDD3F000166C0 /* Build configuration list for PBXNativeTarget "reicast-osx.temp_caseinsensitive_rename.temp_caseinsensitive_rename" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				84A388CE1B1CDD3F000166C0 /* Debug */,
@@ -1741,7 +1743,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		84A388D01B1CDD3F000166C0 /* Build configuration list for PBXNativeTarget "emulator-osxTests" */ = {
+		84A388D01B1CDD3F000166C0 /* Build configuration list for PBXNativeTarget "reicast-osx.temp_caseinsensitive_rename.temp_caseinsensitive_renameTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				84A388D11B1CDD3F000166C0 /* Debug */,
