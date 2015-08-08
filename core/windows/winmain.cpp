@@ -309,8 +309,6 @@ void os_CreateWindow()
 		0, 0, sRect.right-sRect.left, sRect.bottom-sRect.top, NULL, NULL, sWC.hInstance, NULL);
 
 	window_win=hWnd;
-
-	InitAudio();
 }
 
 void* libPvr_GetRenderTarget() 
