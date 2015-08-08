@@ -186,7 +186,7 @@
 		84B7BF7B1B72720200F9733F /* gltex.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BE9F1B72720200F9733F /* gltex.cpp */; };
 		84B7BF7E1B72720200F9733F /* TexCache.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BEA51B72720200F9733F /* TexCache.cpp */; };
 		84B7BF7F1B72720200F9733F /* stdclass.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BEA71B72720200F9733F /* stdclass.cpp */; };
-		84B7BF831B727AD700F9733F /* osx-main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BF821B727AD700F9733F /* osx-main.cpp */; };
+		84B7BF831B727AD700F9733F /* osx-main.mm in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BF821B727AD700F9733F /* osx-main.mm */; };
 		84B7BF861B72871600F9733F /* EmuGLView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BF851B72871600F9733F /* EmuGLView.swift */; };
 /* End PBXBuildFile section */
 
@@ -519,7 +519,7 @@
 		84B7BEA71B72720200F9733F /* stdclass.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = stdclass.cpp; path = ../../../core/stdclass.cpp; sourceTree = "<group>"; };
 		84B7BEA81B72720200F9733F /* stdclass.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = stdclass.h; path = ../../../core/stdclass.h; sourceTree = "<group>"; };
 		84B7BEA91B72720200F9733F /* types.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = types.h; path = ../../../core/types.h; sourceTree = "<group>"; };
-		84B7BF821B727AD700F9733F /* osx-main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = "osx-main.cpp"; sourceTree = "<group>"; };
+		84B7BF821B727AD700F9733F /* osx-main.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "osx-main.mm"; sourceTree = "<group>"; };
 		84B7BF841B72821900F9733F /* emulator-osx-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "emulator-osx-Bridging-Header.h"; sourceTree = "<group>"; };
 		84B7BF851B72871600F9733F /* EmuGLView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EmuGLView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -568,7 +568,7 @@
 				84A388BA1B1CDD3E000166C0 /* Images.xcassets */,
 				84A388BC1B1CDD3E000166C0 /* MainMenu.xib */,
 				84A388B61B1CDD3E000166C0 /* Supporting Files */,
-				84B7BF821B727AD700F9733F /* osx-main.cpp */,
+				84B7BF821B727AD700F9733F /* osx-main.mm */,
 				84B7BF841B72821900F9733F /* emulator-osx-Bridging-Header.h */,
 				84B7BF851B72871600F9733F /* EmuGLView.swift */,
 			);
@@ -1440,7 +1440,7 @@
 				84B7BEB61B72720200F9733F /* sha256.cpp in Sources */,
 				84B7BF5A1B72720200F9733F /* cdi.cpp in Sources */,
 				84B7BEF91B72720200F9733F /* zip_get_archive_comment.c in Sources */,
-				84B7BF831B727AD700F9733F /* osx-main.cpp in Sources */,
+				84B7BF831B727AD700F9733F /* osx-main.mm in Sources */,
 				84B7BEE51B72720200F9733F /* zip_dirent.c in Sources */,
 				84B7BF761B72720200F9733F /* reios.cpp in Sources */,
 				84B7BEBF1B72720200F9733F /* pngmem.c in Sources */,

@@ -448,17 +448,7 @@ return;
 		if ('D' == key) { kcode[port] &= ~DPad_Left;  }
 		if ('C' == key) { kcode[port] &= ~DPad_Right; }
 #else
-		if ('b' == key) { kcode[port] &= ~Btn_C; }
-		if ('v' == key) { kcode[port] &= ~Btn_A; }
-		if ('c' == key) { kcode[port] &= ~Btn_B; }
-		if ('x' == key) { kcode[port] &= ~Btn_Y; }
-		if ('z' == key) { kcode[port] &= ~Btn_X; }
-		if ('i' == key) { kcode[port] &= ~DPad_Up;    }
-		if ('k' == key) { kcode[port] &= ~DPad_Down;  }
-		if ('j' == key) { kcode[port] &= ~DPad_Left;  }
-		if ('l' == key) { kcode[port] &= ~DPad_Right; }
-#endif
-		if (0x0A== key) { kcode[port] &= ~Btn_Start;  }
+ 
 #ifdef TARGET_PANDORA
 		if ('q' == key){ die("death by escape key"); } 
 #endif

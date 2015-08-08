@@ -5,6 +5,7 @@
 //  Created by admin on 8/5/15.
 //  Copyright (c) 2015 reicast. All rights reserved.
 //
+#import <Carbon/Carbon.h>
 
 #include "types.h"
 #include <sys/stat.h>
@@ -25,7 +26,7 @@ int msgboxf(const wchar* text,unsigned int type,...)
 }
 
 
-u16 kcode[4];
+u16 kcode[4] = { 0xFFFF };
 u32 vks[4];
 s8 joyx[4],joyy[4];
 u8 rt[4],lt[4];
@@ -116,4 +117,61 @@ extern "C" bool emu_single_frame(int w, int h) {
 
 extern "C" void emu_gles_init() {
     gles_init();
+}
+
+enum DCPad {
+    Btn_C		= 1,
+    Btn_B		= 1<<1,
+    Btn_A		= 1<<2,
+    Btn_Start	= 1<<3,
+    DPad_Up		= 1<<4,
+    DPad_Down	= 1<<5,
+    DPad_Left	= 1<<6,
+    DPad_Right	= 1<<7,
+    Btn_Z		= 1<<8,
+    Btn_Y		= 1<<9,
+    Btn_X		= 1<<10,
+    Btn_D		= 1<<11,
+    DPad2_Up	= 1<<12,
+    DPad2_Down	= 1<<13,
+    DPad2_Left	= 1<<14,
+    DPad2_Right	= 1<<15,
+    
+    Axis_LT= 0x10000,
+    Axis_RT= 0x10001,
+    Axis_X= 0x20000,
+    Axis_Y= 0x20001,
+};
+
+void handle_key(int dckey, int state) {
+    if (state)
+        kcode[0] &= ~dckey;
+    else
+        kcode[0] |= dckey;
+}
+
+void handle_trig(u8* dckey, int state) {
+    if (state)
+        dckey[0] = 255;
+    else
+        dckey[0] = 0;
+}
+
+extern "C" void emu_key_input(char* keyt, int state) {
+    int key = keyt[0];
+    switch(key) {
+        case 'z':     handle_key(Btn_X, state); break;
+        case 'x':     handle_key(Btn_Y, state); break;
+        case 'c':     handle_key(Btn_B, state); break;
+        case 'v':     handle_key(Btn_A, state); break;
+        
+        case 'a':     handle_trig(lt, state); break;
+        case 's':     handle_trig(rt, state); break;
+            
+        case 'j':     handle_key(DPad_Left, state); break;
+        case 'k':     handle_key(DPad_Down, state); break;
+        case 'l':     handle_key(DPad_Right, state); break;
+        case 'i':     handle_key(DPad_Up, state); break;
+        case 0xa:     handle_key(Btn_Start, state); break;
+    }
 }

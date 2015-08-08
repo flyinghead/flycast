@@ -10,6 +10,10 @@ import Cocoa
 
 class EmuGLView: NSOpenGLView {
 
+    override var acceptsFirstResponder: Bool {
+        return true;
+    }
+    
     override func drawRect(dirtyRect: NSRect) {
         super.drawRect(dirtyRect)
 
@@ -57,6 +61,14 @@ class EmuGLView: NSOpenGLView {
    
     func timerTick() {
         self.needsDisplay = true;
+    }
+    
+    override func keyDown(e: NSEvent) {
+        emu_key_input(e.characters!, 1);
+    }
+    
+    override func keyUp(e: NSEvent) {
+        emu_key_input(e.characters!, 0);
     }
     
 }
