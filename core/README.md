@@ -1,4 +1,4 @@
-newdc
+core
 ===========
 
-The core of the emulator
+All of the interesting bits are here
