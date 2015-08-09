@@ -570,8 +570,8 @@ struct maple_sega_vmu: maple_base
 							lgLcdBitmap160x43x1 bmp;
 							bmp.hdr.Format = LGLCD_BMP_FORMAT_160x43x1;
 
-							const BYTE white=0x00;
-							const BYTE black=0xFF;
+							const u8 white=0x00;
+							const u8 black=0xFF;
 
 							//make it all black...
 							memset(bmp.pixels,black,sizeof(bmp.pixels));
@@ -579,11 +579,11 @@ struct maple_sega_vmu: maple_base
 							//decode from the VMU
 							for(int y=0;y<32;++y)
 							{
-								BYTE *dst=bmp.pixels+5816+((-y)*(48+112)); //ugly way to make things look right :p
-								BYTE *src=dev->lcd.data+6*y+5;
+								u8 *dst=bmp.pixels+5816+((-y)*(48+112)); //ugly way to make things look right :p
+								u8 *src=dev->lcd.data+6*y+5;
 								for(int x=0;x<48/8;++x)
 								{
-									BYTE val=*src;
+									u8 val=*src;
 									for(int m=0;m<8;++m)
 									{
 										if(val&(1<<(m)))
@@ -849,9 +849,9 @@ bool EEPROM_loaded = false;
 
 struct _NaomiState
 {
-	BYTE Cmd;
-	BYTE Mode;
-	BYTE Node;
+	u8 Cmd;
+	u8 Mode;
+	u8 Node;
 };
 _NaomiState State;
 
@@ -969,7 +969,7 @@ struct maple_naomi_jamma : maple_sega_controller
 					case 0x10:
 					{
 						static char ID1[102] = "nullDC Team; I/O Plugin-1; ver0.2; for nullDC or other emus";
-						buffer_out_b[0x8 + 0x10] = (BYTE)strlen(ID1) + 3;
+						buffer_out_b[0x8 + 0x10] = (u8)strlen(ID1) + 3;
 						for (int i = 0; ID1[i] != 0; ++i)
 						{
 							buffer_out_b[0x8 + 0x13 + i] = ID1[i];
@@ -1037,9 +1037,10 @@ struct maple_naomi_jamma : maple_sega_controller
 					static unsigned char LastKey[256];
 					static unsigned short coin1 = 0x0000;
 					static unsigned short coin2 = 0x0000;
-					unsigned char Key[256];
+					unsigned char Key[256] = { 0 };
+#if HOST_OS == OS_WINDOWS
 					GetKeyboardState(Key);
-
+#endif
 					if (keycode&NAOMI_SERVICE_KEY_1)			//Service ?
 						glbl |= 0x80;
 					if (keycode&NAOMI_TEST_KEY_1)			//Test

@@ -12,18 +12,16 @@
 #include "naomi_regs.h"
 
 u32 naomi_updates;
-//For file memory mapping :p
-#include <windows.h>
 
 //#define NAOMI_COMM
 
 u32 RomPioOffset=0;
 
-DWORD DmaOffset;
-DWORD DmaCount;
+u32 DmaOffset;
+u32 DmaCount;
 
-DWORD BoardID=0x980055AA;
-DWORD GSerialBuffer=0,BSerialBuffer=0;
+u32 BoardID=0x980055AA;
+u32 GSerialBuffer=0,BSerialBuffer=0;
 int GBufPos=0,BBufPos=0;
 int GState=0,BState=0;
 int GOldClk=0,BOldClk=0;
@@ -84,7 +82,7 @@ void NaomiInit()
 	DmaCount=0xffff;
 	DmaOffset=0;
 
-	WORD CRC;
+	u16 CRC;
 	CRC=CRCSerial(BSerial+2,0x2E);
 	BSerial[0]=(u8)(CRC>>8);
 	BSerial[1]=(u8)(CRC);
@@ -150,7 +148,7 @@ u16 NaomiBoardIDRead()
 	return (BSerialBuffer&(1<<(31-BBufPos)))?8:0;
 }
 
-static DWORD AdaptByte(BYTE val)
+static u32 AdaptByte(u8 val)
 {
 	return val<<24;
 }
@@ -283,7 +281,7 @@ void NaomiGameIDProcessCmd()
 }
 
 
-void NaomiGameIDWrite(const WORD Data)
+void NaomiGameIDWrite(const u16 Data)
 {
 	int Dat=Data&0x01;
 	int Clk=Data&0x02;
@@ -344,7 +342,7 @@ void NaomiGameIDWrite(const WORD Data)
 
 }
 
-WORD NaomiGameIDRead()
+u16 NaomiGameIDRead()
 {
 	return (GSerialBuffer&(1<<(31-GBufPos)))?1:0;
 }
@@ -459,7 +457,7 @@ u32  ReadMem_naomi(u32 Addr, u32 sz)
 		break;
 
 	case NAOMI_DMA_COUNT_addr&255:
-		return (WORD) DmaCount;
+		return (u16) DmaCount;
 
 	case NAOMI_BOARDID_READ_addr&255:
 		return NaomiGameIDRead()?0x8000:0x0000;

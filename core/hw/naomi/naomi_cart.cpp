@@ -4,12 +4,21 @@
 u8* RomPtr;
 u32 RomSize;
 
-HANDLE*	RomCacheMap;
+#if HOST_OS == OS_WINDOWS
+	typedef HANDLE fd_t;
+	#define INVALID_FD INVALID_HANDLE_VALUE
+#else
+	typedef int fd_t;
+	#define INVALID_FD -1
+
+	#include <unistd.h>
+	#include <fcntl.h>
+#endif
+
+fd_t*	RomCacheMap;
 u32		RomCacheMapCount;
 
 char SelectedFile[512];
-
-OPENFILENAME ofn;
 
 bool naomi_cart_LoadRom(char* file)
 {
@@ -80,14 +89,19 @@ bool naomi_cart_LoadRom(char* file)
 	}
 
 	RomCacheMapCount = (u32)files.size();
-	RomCacheMap = new HANDLE[files.size()];
+	RomCacheMap = new fd_t[files.size()];
 
 	strcpy(t, file);
 	t[folder_pos] = 0;
 	strcat(t, "ndcn-composed.cache");
 
 	//Allocate space for the ram, so we are sure we have a segment of continius ram
+#if HOST_OS == OS_WINDOWS
 	RomPtr = (u8*)VirtualAlloc(0, RomSize, MEM_RESERVE, PAGE_NOACCESS);
+#else
+	RomPtr = (u8*)mmap(0, RomSize, PROT_NONE, MAP_PRIVATE, 0, 0);
+#endif
+
 	verify(RomPtr != 0);
 
 	strcpy(t, file);
@@ -97,50 +111,71 @@ bool naomi_cart_LoadRom(char* file)
 	{
 		t[folder_pos] = 0;
 		strcat(t, files[i].c_str());
-		HANDLE RomCache;
+		fd_t RomCache;
 
 		if (strcmp(files[i].c_str(), "null") == 0)
 		{
-			RomCacheMap[i] = INVALID_HANDLE_VALUE;
+			RomCacheMap[i] = INVALID_FD;
 			continue;
 		}
-
+#if HOST_OS == OS_WINDOWS
 		RomCache = CreateFile(t, FILE_READ_ACCESS, FILE_SHARE_READ, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
-
-		if (RomCache == INVALID_HANDLE_VALUE)
+#else
+		RomCache = open(t, O_RDONLY);
+#endif
+		if (RomCache == INVALID_FD)
 		{
 			wprintf(L"-Unable to read file %s\n", files[i].c_str());
-			RomCacheMap[i] = INVALID_HANDLE_VALUE;
+			RomCacheMap[i] = INVALID_FD;
 			continue;
 		}
 
-
+#if HOST_OS == OS_WINDOWS
 		RomCacheMap[i] = CreateFileMapping(RomCache, 0, PAGE_READONLY, 0, fsize[i], 0);
-		verify(RomCacheMap[i] != INVALID_HANDLE_VALUE);
-		wprintf(L"-Preparing \"%s\" at 0x%08X, size 0x%08X\n", files[i].c_str(), fstart[i], fsize[i]);
-
 		verify(CloseHandle(RomCache));
+#else
+		RomCacheMap[i] = RomCache;
+#endif
+
+		verify(RomCacheMap[i] != INVALID_FD);
+		wprintf(L"-Preparing \"%s\" at 0x%08X, size 0x%08X\n", files[i].c_str(), fstart[i], fsize[i]);
 	}
 
 	//We have all file mapping objects, we start to map the ram
 	printf("+Mapping ROM\n");
 	//Release the segment we reserved so we can map the files there
+#if HOST_OS == OS_WINDOWS
 	verify(VirtualFree(RomPtr, 0, MEM_RELEASE));
+#else
+	munmap(RomPtr, RomSize);
+#endif
 
 	//Map the files into the segment of the ram that was reserved
 	for (size_t i = 0; i<RomCacheMapCount; i++)
 	{
 		u8* RomDest = RomPtr + fstart[i];
 
-		if (RomCacheMap[i] == INVALID_HANDLE_VALUE)
+		if (RomCacheMap[i] == INVALID_FD)
 		{
 			wprintf(L"-Reserving ram at 0x%08X, size 0x%08X\n", fstart[i], fsize[i]);
-			verify(VirtualAlloc(RomDest, fsize[i], MEM_RESERVE, PAGE_NOACCESS));
+			
+#if HOST_OS == OS_WINDOWS
+			bool mapped = RomDest == VirtualAlloc(RomDest, fsize[i], MEM_RESERVE, PAGE_NOACCESS);
+#else
+			bool mapped = RomDest == (u8*)mmap(RomDest, RomSize, PROT_NONE, MAP_PRIVATE, 0, 0);
+#endif
+
+			verify(mapped);
 		}
 		else
 		{
 			wprintf(L"-Mapping \"%s\" at 0x%08X, size 0x%08X\n", files[i].c_str(), fstart[i], fsize[i]);
-			if (RomDest != MapViewOfFileEx(RomCacheMap[i], FILE_MAP_READ, 0, 0, fsize[i], RomDest))
+#if HOST_OS == OS_WINDOWS
+			bool mapped = RomDest != MapViewOfFileEx(RomCacheMap[i], FILE_MAP_READ, 0, 0, fsize[i], RomDest);
+#else
+			bool mapped = RomDest != mmap(RomDest, fsize[i], PROT_READ, MAP_PRIVATE, RomCacheMap[i], 0 );
+#endif
+			if (!mapped)
 			{
 				printf("-Mapping ROM FAILED\n");
 				//unmap file
@@ -158,20 +193,24 @@ bool naomi_cart_LoadRom(char* file)
 
 bool naomi_cart_SelectFile(void* handle)
 {
+	cfgLoadStr("config", "image", SelectedFile, "null");
+	
+#if HOST_OS == OS_WINDOWS
+	if (strcmp(SelectedFile, "null") == 0) {
+		OPENFILENAME ofn = { 0 };
+		ofn.lStructSize = sizeof(OPENFILENAME);
+		ofn.hInstance = (HINSTANCE)GetModuleHandle(0);
+		ofn.lpstrFile = SelectedFile;
+		ofn.nMaxFile = MAX_PATH;
+		ofn.lpstrFilter = "*.lst\0*.lst\0\0";
+		ofn.nFilterIndex = 0;
+		ofn.hwndOwner = (HWND)handle;
+		ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
 
-	ZeroMemory(&ofn, sizeof(OPENFILENAME));
-	ofn.lStructSize = sizeof(OPENFILENAME);
-	ofn.hInstance = (HINSTANCE)GetModuleHandle(0);
-	ofn.lpstrFile = SelectedFile;
-	ofn.nMaxFile = MAX_PATH;
-	ofn.lpstrFilter = "*.lst\0*.lst\0\0";
-	ofn.nFilterIndex = 0;
-	ofn.hwndOwner = (HWND)handle;
-	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
-
-	if (GetOpenFileName(&ofn) <= 0)
-		return true;
-
+		if (GetOpenFileName(&ofn) <= 0)
+			return true;
+	}
+#endif
 	if (!naomi_cart_LoadRom(SelectedFile))
 	{
 		cfgSaveStr("emu", "gamefile", "naomi_bios");
