@@ -16,7 +16,6 @@ void WriteMem_naomi(u32 Addr, u32 data, u32 sz);
 void NaomiBoardIDWrite(const u16 Data);
 void NaomiBoardIDWriteControl(const u16 Data);
 u16 NaomiBoardIDRead();
-bool NaomiSelectFile(void* handle);
 
 
 

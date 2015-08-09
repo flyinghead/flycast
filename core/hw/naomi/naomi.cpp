@@ -6,7 +6,9 @@
 #include "hw/holly/sb.h"
 #include "hw/sh4/sh4_mem.h"
 #include "hw/holly/holly_intc.h"
+
 #include "naomi.h"
+#include "naomi_cart.h"
 #include "naomi_regs.h"
 
 u32 naomi_updates;
@@ -14,10 +16,6 @@ u32 naomi_updates;
 #include <windows.h>
 
 //#define NAOMI_COMM
-
-u8* RomPtr;
-HANDLE*	RomCacheMap;
-u32		RomCacheMapCount;
 
 u32 RomPioOffset=0;
 
@@ -450,14 +448,15 @@ u32  ReadMem_naomi(u32 Addr, u32 sz)
 	case NAOMI_ROM_OFFSETL_addr&255:
 		return RomPioOffset&0xFFFF;
 
-	case NAOMI_ROM_DATA_addr&255:
-		u32 rv;
-		if (RomPtr)
-			rv=*(u16*)&RomPtr[RomPioOffset&0x0FFFffff];
-		else
-			rv=0;
-		RomPioOffset+=2;
-		return rv;
+	case NAOMI_ROM_DATA_addr & 255: 
+		{
+			u32 rv = 0;
+			naomi_cart_Read(RomPioOffset, 2, &rv);
+			RomPioOffset += 2;
+
+			return rv;
+		}
+		break;
 
 	case NAOMI_DMA_COUNT_addr&255:
 		return (WORD) DmaCount;
@@ -629,187 +628,6 @@ u32 NAOMI_BOARDID_READ;
 u32 NAOMI_COMM_OFFSET;
 u32 NAOMI_COMM_DATA;
 
-char SelectedFile[512];
-
-OPENFILENAME ofn;
-
-
-
-bool naomi_LoadRom(char* file)
-{
-	
-	printf("\nnullDC-Naomi rom loader v1.2\n");
-
-	size_t folder_pos=strlen(file)-1;
-	while(folder_pos>1 && file[folder_pos]!='\\')
-		folder_pos--;
-
-	folder_pos++;
-
-	char t[512];
-	strcpy(t,file);
-	FILE* fl=fopen(t,"r");
-	if (!fl)
-		return false;
-
-	char* line=fgets(t,512,fl);
-	if (!line)	
-	{
-		fclose(fl);
-		return false;
-	}
-
-	char* eon=strstr(line,"\n");
-	if (!eon)
-		printf("+Loading naomi rom that has no name\n",line);
-	else
-		*eon=0;
-
-	printf("+Loading naomi rom : %s\n",line);
-
-	line=fgets(t,512,fl);
-	if (!line)	
-	{
-		fclose(fl);
-		return false;
-	}
-
-	vector<string> files;
-	vector<u32> fstart;
-	vector<u32> fsize;
-
-	u32 setsize=0;
-	u32 max_load_addr=0;
-
-	while(line)
-	{
-		char filename[512];
-		u32 addr,sz;
-		sscanf(line,"\"%[^\"]\",%x,%x",filename,&addr,&sz);
-		files.push_back(filename);
-		fstart.push_back(addr);
-		fsize.push_back(sz);
-		setsize+=sz;
-		max_load_addr=max(max_load_addr,(addr+sz));
-		line=fgets(t,512,fl);
-	}
-	fclose(fl);
-
-	printf("+%d romfiles, %.2f MB set size, %.2f MB set address space\n",files.size(),setsize/1024.f/1024.f,max_load_addr/1024.f/1024.f);
-
-	if (RomCacheMap)
-	{
-		RomCacheMapCount=0;
-		delete RomCacheMap;
-	}
-
-	RomCacheMapCount = (u32)files.size();
-	RomCacheMap = new HANDLE[files.size()];
-
-	strcpy(t, file);
-	t[folder_pos]=0;
-	strcat(t,"ndcn-composed.cache");
-
-	//Allocate space for the ram, so we are sure we have a segment of continius ram
-	RomPtr=(u8*)VirtualAlloc(0,max_load_addr,MEM_RESERVE,PAGE_NOACCESS);
-	verify(RomPtr!=0);
-
-	strcpy(t,file);
-	
-	//Create File Mapping Objects
-	for (size_t i=0;i<files.size();i++)
-	{
-		t[folder_pos]=0;
-		strcat(t,files[i].c_str());
-		HANDLE RomCache;
-		
-		if (strcmp(files[i].c_str(),"null")==0)
-		{
-			RomCacheMap[i]=INVALID_HANDLE_VALUE;
-			continue;
-		}
-
-		RomCache=CreateFile(t,FILE_READ_ACCESS,FILE_SHARE_READ,0,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,0);
-		
-		if (RomCache==INVALID_HANDLE_VALUE)
-		{
-			wprintf(L"-Unable to read file %s\n",files[i].c_str());
-			RomCacheMap[i]=INVALID_HANDLE_VALUE;
-			continue;
-		}
-
-
-		RomCacheMap[i]=CreateFileMapping(RomCache,0,PAGE_READONLY,0,fsize[i],0);
-		verify(RomCacheMap[i]!=INVALID_HANDLE_VALUE);
-		wprintf(L"-Preparing \"%s\" at 0x%08X, size 0x%08X\n",files[i].c_str(),fstart[i],fsize[i]);
-		
-		verify(CloseHandle(RomCache));
-	}
-
-	//We have all file mapping objects, we start to map the ram
-	printf("+Mapping ROM\n");
-	//Release the segment we reserved so we can map the files there
-	verify(VirtualFree(RomPtr,0,MEM_RELEASE));
-
-	//Map the files into the segment of the ram that was reserved
-	for (size_t i=0;i<RomCacheMapCount;i++)
-	{
-		u8* RomDest=RomPtr+fstart[i];
-
-		if (RomCacheMap[i]==INVALID_HANDLE_VALUE)
-		{
-			wprintf(L"-Reserving ram at 0x%08X, size 0x%08X\n",fstart[i],fsize[i]);
-			verify(VirtualAlloc(RomDest,fsize[i],MEM_RESERVE,PAGE_NOACCESS));
-		}
-		else
-		{
-			wprintf(L"-Mapping \"%s\" at 0x%08X, size 0x%08X\n",files[i].c_str(),fstart[i],fsize[i]);
-			if (RomDest!=MapViewOfFileEx(RomCacheMap[i],FILE_MAP_READ,0,0,fsize[i],RomDest))
-			{
-				printf("-Mapping ROM FAILED\n");
-				//unmap file
-				return false;
-			}
-		}
-	}
-
-	//done :)
-	printf("\nMapped ROM Successfully !\n\n");
-	
-	
-	return true;
-}
-
-bool NaomiSelectFile(void* handle)
-{
-	
-	ZeroMemory(&ofn, sizeof(OPENFILENAME));
-	ofn.lStructSize		= sizeof(OPENFILENAME);
-	ofn.hInstance		= (HINSTANCE)GetModuleHandle(0);
-	ofn.lpstrFile		= SelectedFile;
-	ofn.nMaxFile		= MAX_PATH;
-	ofn.lpstrFilter		= "*.lst\0*.lst\0\0";
-	ofn.nFilterIndex	= 0;
-	ofn.hwndOwner		=(HWND)handle;
-	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
-
-	if(GetOpenFileName(&ofn)<=0)
-		return true;
-
-	if (!naomi_LoadRom(SelectedFile))
-	{
-		cfgSaveStr("emu","gamefile","naomi_bios");
-	}
-	else
-	{
-		cfgSaveStr("emu","gamefile",SelectedFile);
-	}
-
-
-	printf("EEPROM file : %s.eeprom\n",SelectedFile);
-
-	return true;
-}
 //Dma Start
 void Naomi_DmaStart(u32 addr, u32 data)
 {
@@ -830,7 +648,8 @@ void Naomi_DmaStart(u32 addr, u32 data)
 		
 		SB_GDLEND=SB_GDLEN;
 		SB_GDST=0;
-		WriteMemBlock_nommu_ptr(SB_GDSTAR,(u32*)(RomPtr+(DmaOffset&0x0FFFffff)),SB_GDLEN);
+		void* ptr = naomi_cart_GetPtr(DmaOffset & 0x0FFFffff, SB_GDLEN);
+		WriteMemBlock_nommu_ptr(SB_GDSTAR, (u32*)ptr, SB_GDLEN);
 
 		asic_RaiseInterrupt(holly_GDROM_DMA);
 	}

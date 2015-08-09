@@ -423,6 +423,9 @@
     <ClCompile Include="..\core\hw\naomi\naomi.cpp">
       <Filter>hw\naomi</Filter>
     </ClCompile>
+    <ClCompile Include="..\core\hw\naomi\naomi_cart.cpp">
+      <Filter>hw\naomi</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="hw">
@@ -932,6 +935,9 @@
       <Filter>hw\naomi</Filter>
     </ClInclude>
     <ClInclude Include="..\core\hw\naomi\naomi_regs.h">
+      <Filter>hw\naomi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\hw\naomi\naomi_cart.h">
       <Filter>hw\naomi</Filter>
     </ClInclude>
   </ItemGroup>
