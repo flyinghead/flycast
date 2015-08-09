@@ -179,7 +179,9 @@ void DYNACALL VERIFYME(u32 addr)
 	verify((addr>>26)==0x38);
 }
 
+#if !defined(TARGET_NO_NVMEM)
 extern u8* virt_ram_base;
+#endif
 
 /*
 
@@ -500,6 +502,8 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 
 					if (size==8 && optimise)
 					{
+						die("unreachable");
+#ifdef OPTIMIZATION_GRAVEYARD
 						verify(op->rd.count()==2 && reg.IsAllocf(op->rd,0) && reg.IsAllocf(op->rd,1));
 
 						x86e->Emit(op_mov32,EDX,ECX);
@@ -507,6 +511,7 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 						x86e->Emit(op_movss,reg.mapfv(op->rd,0),x86_mrm(EDX,x86_ptr(virt_ram_base)));
 						x86e->Emit(op_movss,reg.mapfv(op->rd,1),x86_mrm(EDX,x86_ptr(4+virt_ram_base)));
 						break;
+#endif
 					}
 					if (!isram)
 					{
@@ -649,7 +654,7 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 					break;
 				}
 #endif
-
+#ifdef OPTIMIZATION_GRAVEYARD
 				die("woohoo");
 				/*
 				if (size==8 && optimise)
@@ -827,6 +832,7 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 					}
 					reg.ThawXMM();
 				}
+#endif
 			}
 			done_writem:
 			break;
