@@ -25,8 +25,6 @@ const char* maple_sega_mic_name = "MicDevice for Dreameye";
 
 const char* maple_sega_brand = "Produced By or Under License From SEGA ENTERPRISES,LTD.";
 
-#define HAS_VMU
-
 enum MapleFunctionID
 {
 	MFID_0_Input       = 0x01000000, //DC Controller, Lightgun buttons, arcade stick .. stuff like that
@@ -243,7 +241,7 @@ struct maple_sega_controller: maple_base
 	Sega Dreamcast Visual Memory Unit
 	This is pretty much done (?)
 */
-#ifdef HAS_VMU
+
 
 u8 vmu_default[] = {
 	0x78,0x9c,0xed,0xd2,0x31,0x4e,0x02,0x61,0x10,0x06,0xd0,0x8f,0x04,0x28,0x4c,0x2c,
@@ -664,7 +662,7 @@ struct maple_sega_vmu: maple_base
 		}
 	}	
 };
-#endif
+
 
 struct maple_microphone: maple_base
 {
@@ -846,6 +844,441 @@ struct maple_microphone: maple_base
 	}	
 };
 
+char EEPROM[0x100];
+bool EEPROM_loaded = false;
+
+struct _NaomiState
+{
+	BYTE Cmd;
+	BYTE Mode;
+	BYTE Node;
+};
+_NaomiState State;
+
+
+enum NAOMI_KEYS
+{
+	NAOMI_SERVICE_KEY_1 = 1 << 0,
+	NAOMI_TEST_KEY_1 = 1 << 1,
+	NAOMI_SERVICE_KEY_2 = 1 << 2,
+	NAOMI_TEST_KEY_2 = 1 << 3,
+
+	NAOMI_START_KEY = 1 << 4,
+
+	NAOMI_UP_KEY = 1 << 5,
+	NAOMI_DOWN_KEY = 1 << 6,
+	NAOMI_LEFT_KEY = 1 << 7,
+	NAOMI_RIGHT_KEY = 1 << 8,
+
+	NAOMI_BTN0_KEY = 1 << 9,
+	NAOMI_BTN1_KEY = 1 << 10,
+	NAOMI_BTN2_KEY = 1 << 11,
+	NAOMI_BTN3_KEY = 1 << 12,
+	NAOMI_BTN4_KEY = 1 << 13,
+	NAOMI_BTN5_KEY = 1 << 14,
+	NAOMI_COIN_KEY = 1 << 15,
+};
+
+
+void printState(u32 cmd, u32* buffer_in, u32 buffer_in_len)
+{
+	printf("Command : 0x%X", cmd);
+	if (buffer_in_len>0)
+		printf(",Data : %d bytes\n", buffer_in_len);
+	else
+		printf("\n");
+	buffer_in_len >>= 2;
+	while (buffer_in_len-->0)
+	{
+		printf("%08X ", *buffer_in++);
+		if (buffer_in_len == 0)
+			printf("\n");
+	}
+}
+
+/*
+Sega Dreamcast Controller
+No error checking of any kind, but works just fine
+*/
+struct maple_naomi_jamma : maple_sega_controller
+{
+	virtual u32 dma(u32 cmd)
+	{
+		u32* buffer_in = (u32*)dma_buffer_in;
+		u32* buffer_out = (u32*)dma_buffer_out;
+		
+		u8* buffer_in_b = dma_buffer_in;
+		u8* buffer_out_b = dma_buffer_out;
+
+		u32& buffer_out_len = *dma_count_out;
+		u32 buffer_in_len = dma_count_in;
+
+		switch (cmd)
+		{
+		case 0x86:
+		{
+			u32 subcode = *(u8*)buffer_in;
+			//printf("Naomi 0x86 : %x\n",SubCode);
+			switch (subcode)
+			{
+			case 0x15:
+			case 0x33:
+			{
+				buffer_out[0] = 0xffffffff;
+				buffer_out[1] = 0xffffffff;
+				u32 keycode = 0;// ~kcode[0];
+				u32 keycode2 = 0;// ~kcode[1];
+				/*
+				if (keycode&NAOMI_SERVICE_KEY_2)		//Service
+					buffer_out[0] &= ~(1 << 0x1b);
+
+				if (keycode&NAOMI_TEST_KEY_2)		//Test
+					buffer_out[0] &= ~(1 << 0x1a);
+				*/
+				if (State.Mode == 0 && subcode != 0x33)	//Get Caps
+				{
+					buffer_out_b[0x11 + 1] = 0x8E;	//Valid data check
+					buffer_out_b[0x11 + 2] = 0x01;
+					buffer_out_b[0x11 + 3] = 0x00;
+					buffer_out_b[0x11 + 4] = 0xFF;
+					buffer_out_b[0x11 + 5] = 0xE0;
+					buffer_out_b[0x11 + 8] = 0x01;
+
+					switch (State.Cmd)
+					{
+						//Reset, in : 2 bytes, out : 0
+					case 0xF0:
+						break;
+
+						//Find nodes?
+						//In addressing Slave address, in : 2 bytes, out : 1
+					case 0xF1:
+					{
+						buffer_out_len = 4 * 4;
+					}
+					break;
+
+					//Speed Change, in : 2 bytes, out : 0
+					case 0xF2:
+						break;
+
+						//Name
+						//"In the I / O ID" "Reading each slave ID data"
+						//"NAMCO LTD.; I / O PCB-1000; ver1.0; for domestic only, no analog input"
+						//in : 1 byte, out : max 102
+					case 0x10:
+					{
+						static char ID1[102] = "nullDC Team; I/O Plugin-1; ver0.2; for nullDC or other emus";
+						buffer_out_b[0x8 + 0x10] = (BYTE)strlen(ID1) + 3;
+						for (int i = 0; ID1[i] != 0; ++i)
+						{
+							buffer_out_b[0x8 + 0x13 + i] = ID1[i];
+						}
+					}
+					break;
+
+					//CMD Version
+					//REV in command|Format command to read the (revision)|One|Two 
+					//in : 1 byte, out : 2 bytes
+					case 0x11:
+					{
+						buffer_out_b[0x8 + 0x13] = 0x13;
+					}
+					break;
+
+					//JVS Version
+					//In JV REV|JAMMA VIDEO standard reading (revision)|One|Two 
+					//in : 1 byte, out : 2 bytes
+					case 0x12:
+					{
+						buffer_out_b[0x8 + 0x13] = 0x30;
+					}
+					break;
+
+					//COM Version
+					//VER in the communication system|Read a communication system compliant version of |One|Two
+					//in : 1 byte, out : 2 bytes
+					case 0x13:
+					{
+						buffer_out_b[0x8 + 0x13] = 0x10;
+					}
+					break;
+
+					//Features
+					//Check in feature |Each features a slave to read |One |6 to
+					//in : 1 byte, out : 6 + (?)
+					case 0x14:
+					{
+						unsigned char *FeatPtr = buffer_out_b + 0x8 + 0x13;
+						buffer_out_b[0x8 + 0x9 + 0x3] = 0x0;
+						buffer_out_b[0x8 + 0x9 + 0x9] = 0x1;
+#define ADDFEAT(Feature,Count1,Count2,Count3)	*FeatPtr++=Feature; *FeatPtr++=Count1; *FeatPtr++=Count2; *FeatPtr++=Count3;
+						ADDFEAT(1, 2, 12, 0);	//Feat 1=Digital Inputs.  2 Players. 10 bits
+						ADDFEAT(2, 2, 0, 0);	//Feat 2=Coin inputs. 2 Inputs
+						ADDFEAT(3, 2, 0, 0);	//Feat 3=Analog. 2 Chans
+
+						ADDFEAT(0, 0, 0, 0);	//End of list
+					}
+					break;
+
+					default:
+						printf("unknown CAP %X\n", State.Cmd);
+						return 0;
+					}
+					buffer_out_len = 4 * 4;
+				}
+				else if (State.Mode == 1 || State.Mode == 2 || subcode == 0x33)	//Get Data
+				{
+					unsigned char glbl = 0x00;
+					unsigned char p1_1 = 0x00;
+					unsigned char p1_2 = 0x00;
+					unsigned char p2_1 = 0x00;
+					unsigned char p2_2 = 0x00;
+					static unsigned char LastKey[256];
+					static unsigned short coin1 = 0x0000;
+					static unsigned short coin2 = 0x0000;
+					unsigned char Key[256];
+					GetKeyboardState(Key);
+
+					if (keycode&NAOMI_SERVICE_KEY_1)			//Service ?
+						glbl |= 0x80;
+					if (keycode&NAOMI_TEST_KEY_1)			//Test
+						p1_1 |= 0x40;
+					if (keycode&NAOMI_START_KEY)			//start ?
+						p1_1 |= 0x80;
+					if (keycode&NAOMI_UP_KEY)			//up
+						p1_1 |= 0x20;
+					if (keycode&NAOMI_DOWN_KEY)		//down
+						p1_1 |= 0x10;
+					if (keycode&NAOMI_LEFT_KEY)		//left
+						p1_1 |= 0x08;
+					if (keycode&NAOMI_RIGHT_KEY)		//right
+						p1_1 |= 0x04;
+					if (keycode&NAOMI_BTN0_KEY)			//btn1
+						p1_1 |= 0x02;
+					if (keycode&NAOMI_BTN1_KEY)			//btn2
+						p1_1 |= 0x01;
+					if (keycode&NAOMI_BTN2_KEY)			//btn3
+						p1_2 |= 0x80;
+					if (keycode&NAOMI_BTN3_KEY)			//btn4
+						p1_2 |= 0x40;
+					if (keycode&NAOMI_BTN4_KEY)			//btn5
+						p1_2 |= 0x20;
+					if (keycode&NAOMI_BTN5_KEY)			//btn6
+						p1_2 |= 0x10;
+
+					if (keycode2&NAOMI_TEST_KEY_1)			//Test
+						p2_1 |= 0x40;
+					if (keycode2&NAOMI_START_KEY)			//start ?
+						p2_1 |= 0x80;
+					if (keycode2&NAOMI_UP_KEY)			//up
+						p2_1 |= 0x20;
+					if (keycode2&NAOMI_DOWN_KEY)		//down
+						p2_1 |= 0x10;
+					if (keycode2&NAOMI_LEFT_KEY)		//left
+						p2_1 |= 0x08;
+					if (keycode2&NAOMI_RIGHT_KEY)		//right
+						p2_1 |= 0x04;
+					if (keycode2&NAOMI_BTN0_KEY)			//btn1
+						p2_1 |= 0x02;
+					if (keycode2&NAOMI_BTN1_KEY)			//btn2
+						p2_1 |= 0x01;
+					if (keycode2&NAOMI_BTN2_KEY)			//btn3
+						p2_2 |= 0x80;
+					if (keycode2&NAOMI_BTN3_KEY)			//btn4
+						p2_2 |= 0x40;
+					if (keycode2&NAOMI_BTN4_KEY)			//btn5
+						p2_2 |= 0x20;
+					if (keycode2&NAOMI_BTN5_KEY)			//btn6
+						p2_2 |= 0x10;
+
+					static bool old_coin = false;
+					static bool old_coin2 = false;
+
+					if ((old_coin == false) && (keycode&NAOMI_COIN_KEY))
+						coin1++;
+					old_coin = (keycode&NAOMI_COIN_KEY) ? true : false;
+
+					if ((old_coin2 == false) && (keycode2&NAOMI_COIN_KEY))
+						coin2++;
+					old_coin2 = (keycode2&NAOMI_COIN_KEY) ? true : false;
+
+					buffer_out_b[0x11 + 0] = 0x00;
+					buffer_out_b[0x11 + 1] = 0x8E;	//Valid data check
+					buffer_out_b[0x11 + 2] = 0x01;
+					buffer_out_b[0x11 + 3] = 0x00;
+					buffer_out_b[0x11 + 4] = 0xFF;
+					buffer_out_b[0x11 + 5] = 0xE0;
+					buffer_out_b[0x11 + 8] = 0x01;
+
+					//memset(OutData+8+0x11,0x00,0x100);
+
+					buffer_out_b[8 + 0x12 + 0] = 1;
+					buffer_out_b[8 + 0x12 + 1] = glbl;
+					buffer_out_b[8 + 0x12 + 2] = p1_1;
+					buffer_out_b[8 + 0x12 + 3] = p1_2;
+					buffer_out_b[8 + 0x12 + 4] = p2_1;
+					buffer_out_b[8 + 0x12 + 5] = p2_2;
+					buffer_out_b[8 + 0x12 + 6] = 1;
+					buffer_out_b[8 + 0x12 + 7] = coin1 >> 8;
+					buffer_out_b[8 + 0x12 + 8] = coin1 & 0xff;
+					buffer_out_b[8 + 0x12 + 9] = coin2 >> 8;
+					buffer_out_b[8 + 0x12 + 10] = coin2 & 0xff;
+					buffer_out_b[8 + 0x12 + 11] = 1;
+					buffer_out_b[8 + 0x12 + 12] = 0x00;
+					buffer_out_b[8 + 0x12 + 13] = 0x00;
+					buffer_out_b[8 + 0x12 + 14] = 0x00;
+					buffer_out_b[8 + 0x12 + 15] = 0x00;
+					buffer_out_b[8 + 0x12 + 16] = 0x00;
+					buffer_out_b[8 + 0x12 + 17] = 0x00;
+					buffer_out_b[8 + 0x12 + 18] = 0x00;
+					buffer_out_b[8 + 0x12 + 19] = 0x00;
+					buffer_out_b[8 + 0x12 + 20] = 0x00;
+
+					memcpy(LastKey, Key, sizeof(Key));
+
+					if (State.Mode == 1)
+					{
+						buffer_out_b[0x11 + 0x7] = 19;
+						buffer_out_b[0x11 + 0x4] = 19 + 5;
+					}
+					else
+					{
+						buffer_out_b[0x11 + 0x7] = 17;
+						buffer_out_b[0x11 + 0x4] = 17 - 1;
+					}
+
+					//OutLen=8+0x11+16;
+					buffer_out_len = 8 + 0x12 + 22;
+				}
+				/*ID.Keys=0xFFFFFFFF;
+				if(GetKeyState(VK_F1)&0x8000)		//Service
+				ID.Keys&=~(1<<0x1b);
+				if(GetKeyState(VK_F2)&0x8000)		//Test
+				ID.Keys&=~(1<<0x1a);
+				memcpy(OutData,&ID,sizeof(ID));
+				OutData[0x12]=0x8E;
+				OutLen=sizeof(ID);
+				*/
+			}
+			return 8;
+
+			case 0x17:	//Select Subdevice
+			{
+				State.Mode = 0;
+				State.Cmd = buffer_in_b[8];
+				State.Node = buffer_in_b[9];
+				buffer_out_len = 0;
+			}
+			return (7);
+
+			case 0x27:	//Transfer request
+			{
+				State.Mode = 1;
+				State.Cmd = buffer_in_b[8];
+				State.Node = buffer_in_b[9];
+				buffer_out_len = 0;
+			}
+			return (7);
+			case 0x21:		//Transfer request with repeat
+			{
+				State.Mode = 2;
+				State.Cmd = buffer_in_b[8];
+				State.Node = buffer_in_b[9];
+				buffer_out_len = 0;
+			}
+			return (7);
+
+			case 0x0B:	//EEPROM write
+			{
+				int address = buffer_in_b[1];
+				int size = buffer_in_b[2];
+				//printf("EEprom write %08X %08X\n",address,size);
+				//printState(Command,buffer_in,buffer_in_len);
+				memcpy(EEPROM + address, buffer_in_b + 4, size);
+
+#ifdef SAVE_EPPROM
+				wchar eeprom_file[512];
+				host.ConfigLoadStr(L"emu", L"gamefile", eeprom_file, L"");
+				wcscat(eeprom_file, L".eeprom");
+				FILE* f = _wfopen(eeprom_file, L"wb");
+				if (f)
+				{
+					fwrite(EEPROM, 1, 0x80, f);
+					fclose(f);
+					wprintf(L"SAVED EEPROM to %s\n", eeprom_file);
+				}
+#endif
+			}
+			return (7);
+			case 0x3:	//EEPROM read
+			{
+#ifdef SAVE_EPPROM
+				if (!EEPROM_loaded)
+				{
+					EEPROM_loaded = true;
+					wchar eeprom_file[512];
+					host.ConfigLoadStr(L"emu", L"gamefile", eeprom_file, L"");
+					wcscat(eeprom_file, L".eeprom");
+					FILE* f = _wfopen(eeprom_file, L"rb");
+					if (f)
+					{
+						fread(EEPROM, 1, 0x80, f);
+						fclose(f);
+						wprintf(L"LOADED EEPROM from %s\n", eeprom_file);
+					}
+				}
+#endif
+				//printf("EEprom READ ?\n");
+				int address = buffer_in_b[1];
+				//printState(Command,buffer_in,buffer_in_len);
+				memcpy(buffer_out, EEPROM + address, 0x80);
+				buffer_out_len = 0x80;
+			}
+			return 8;
+			//IF I return all FF, then board runs in low res
+			case 0x31:
+			{
+				buffer_out[0] = 0xffffffff;
+				buffer_out[1] = 0xffffffff;
+			}
+			return (8);
+
+			//case 0x3:
+			//	break;
+
+			//case 0x1:
+			//	break;
+			default:
+				printf("Unknown 0x86 : SubCommand 0x%X - State: Cmd 0x%X Mode :  0x%X Node : 0x%X\n", subcode, State.Cmd, State.Mode, State.Node);
+				printState(cmd, buffer_in, buffer_in_len);
+			}
+
+			return 8;//MAPLE_RESPONSE_DATATRF
+		}
+		break;
+		case 0x82:
+		{
+			const char *ID = "315-6149    COPYRIGHT SEGA E\x83\x00\x20\x05NTERPRISES CO,LTD.  ";
+			memset(buffer_out_b, 0x20, 256);
+			memcpy(buffer_out_b, ID, 0x38 - 4);
+			buffer_out_len = 256;
+			return (0x83);
+		}
+		
+		case 1:
+		case 9:
+			return maple_sega_controller::dma(cmd);
+
+
+		default:
+			printf("unknown MAPLE Frame\n");
+			//printState(Command, buffer_in, buffer_in_len);
+			break;
+		}
+		return MDRE_UnknownFunction;
+	}
+};
 maple_device* maple_Create(MapleDeviceType type)
 {
 	maple_device* rv=0;
@@ -854,14 +1287,19 @@ maple_device* maple_Create(MapleDeviceType type)
 	case MDT_SegaController:
 		rv=new maple_sega_controller();
 		break;
+
 	case MDT_Microphone:
 		rv=new maple_microphone();
 		break;
-#ifdef HAS_VMU
+
 	case MDT_SegaVMU:
 		rv = new maple_sega_vmu();
 		break;
-#endif
+
+
+	case MDT_NaomiJamma:
+		rv = new maple_naomi_jamma();
+		break;
 
 	default:
 		return 0;

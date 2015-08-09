@@ -95,6 +95,7 @@
     <ClCompile Include="..\core\hw\maple\maple_helper.cpp" />
     <ClCompile Include="..\core\hw\maple\maple_if.cpp" />
     <ClCompile Include="..\core\hw\mem\_vmem.cpp" />
+    <ClCompile Include="..\core\hw\naomi\naomi.cpp" />
     <ClCompile Include="..\core\hw\pvr\drkPvr.cpp" />
     <ClCompile Include="..\core\hw\pvr\pvr_mem.cpp" />
     <ClCompile Include="..\core\hw\pvr\pvr_regs.cpp" />
@@ -258,6 +259,8 @@
     <ClInclude Include="..\core\hw\maple\maple_helper.h" />
     <ClInclude Include="..\core\hw\maple\maple_if.h" />
     <ClInclude Include="..\core\hw\mem\_vmem.h" />
+    <ClInclude Include="..\core\hw\naomi\naomi.h" />
+    <ClInclude Include="..\core\hw\naomi\naomi_regs.h" />
     <ClInclude Include="..\core\hw\pvr\config.h" />
     <ClInclude Include="..\core\hw\pvr\drkPvr.h" />
     <ClInclude Include="..\core\hw\pvr\helper_classes.h" />

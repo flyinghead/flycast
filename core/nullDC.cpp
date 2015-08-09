@@ -14,6 +14,7 @@
 #include "hw/sh4/sh4_mem.h"
 
 #include "webui/server.h"
+#include "hw/naomi/naomi.h"
 
 settings_t settings;
 
@@ -90,9 +91,8 @@ s32 plugins_Init()
 
 	if (s32 rv = libGDR_Init())
 		return rv;
-	
-	#ifdef BUILD_NAOMI
-	if (!NaomiSelectFile(GetRenderTargetHandle()))
+	#if DC_PLATFORM == DC_PLATFORM_NAOMI
+	if (!NaomiSelectFile(libPvr_GetRenderTarget()))
 		return rv_serror;
 	#endif
 

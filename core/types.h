@@ -201,7 +201,7 @@ struct vram_block
 };
 
 
-#if (DC_PLATFORM==DC_PLATFORM_NORMAL)
+#if (DC_PLATFORM==DC_PLATFORM_DREAMCAST)
 
 	#define BUILD_DREAMCAST 1
 	
@@ -232,9 +232,6 @@ struct vram_block
 	#define NVR_OPTIONAL 0
 
 #elif  (DC_PLATFORM==DC_PLATFORM_NAOMI)
-	
-	#define BUILD_NAOMI 1
-	#define BUILD_NAOMI1 1
 
 	//Naomi : 32 mb ram, 16 mb vram, 8 mb aram, 2 mb bios, ? flash
 	#define RAM_SIZE (32*1024*1024)
@@ -248,9 +245,6 @@ struct vram_block
 	#define NVR_OPTIONAL 1
 
 #elif  (DC_PLATFORM==DC_PLATFORM_NAOMI2)
-	
-	#define BUILD_NAOMI 1
-	#define BUILD_NAOMI2 1
 
 	//Naomi2 : 32 mb ram, 16 mb vram, 8 mb aram, 2 mb bios, ? flash
 	#define RAM_SIZE (32*1024*1024)

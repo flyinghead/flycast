@@ -11,9 +11,7 @@
 #include "hw/maple/maple_if.h"
 #include "hw/aica/aica_if.h"
 
-#if defined(BUILD_NAOMI) || defined(BUILD_ATOMISWAVE)
-#include "../../naomi/naomi.h"
-#endif
+#include "hw/naomi/naomi.h"
 
 Array<RegisterStruct> sb_regs(0x540);
 
