@@ -87,7 +87,7 @@ blkmap_t blkmap;
 u32 bm_gc_luc,bm_gcf_luc;
 
 
-#define FPCA(x) ((DynarecCodeEntryPtr&)sh4rcb.fpcb[(x>>1)&(8*1024*1024-1)])
+#define FPCA(x) ((DynarecCodeEntryPtr&)sh4rcb.fpcb[(x>>1)&FPCB_MASK])
 
 DynarecCodeEntryPtr DYNACALL bm_GetCode(u32 addr)
 {
@@ -386,7 +386,7 @@ void bm_Reset()
 	
 #if (HOST_OS == OS_DARWIN) || defined(TARGET_NO_NVMEM)
 	//lazy allocation isn't working on iOS
-	for (u32 i=0;i<(8*1024*1024);i++)
+	for (u32 i=0;i<FPCB_SIZE;i++)
 	{
 		sh4rcb.fpcb[i]=(void*)ngen_FailedToFindBlock;
 	}
