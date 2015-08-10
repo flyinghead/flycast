@@ -428,7 +428,9 @@ void _vmem_bm_reset() {
 		#if !defined(TARGET_NO_NVMEM)
 			_vmem_bm_reset_nvmem();
 		#endif
-	} else {
+	}
+    
+    if (!virt_ram_base || HOST_OS == OS_DARWIN) {
 		bm_vmem_pagefill((void**)p_sh4rcb->fpcb, FPCB_SIZE);
 	}
 }

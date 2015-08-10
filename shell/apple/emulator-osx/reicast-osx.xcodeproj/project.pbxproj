@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		8491687F1B782B2D00F3F2B4 /* ini.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8491687D1B782B2D00F3F2B4 /* ini.cpp */; };
 		84A388B91B1CDD3E000166C0 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84A388B81B1CDD3E000166C0 /* AppDelegate.swift */; };
 		84A388BB1B1CDD3E000166C0 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 84A388BA1B1CDD3E000166C0 /* Images.xcassets */; };
 		84A388BE1B1CDD3E000166C0 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 84A388BC1B1CDD3E000166C0 /* MainMenu.xib */; };
@@ -201,12 +202,14 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		84A388B31B1CDD3E000166C0 /* reicast-osx.temp_caseinsensitive_rename.temp_caseinsensitive_rename.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "reicast-osx.temp_caseinsensitive_rename.temp_caseinsensitive_rename.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		8491687D1B782B2D00F3F2B4 /* ini.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ini.cpp; sourceTree = "<group>"; };
+		8491687E1B782B2D00F3F2B4 /* ini.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ini.h; sourceTree = "<group>"; };
+		84A388B31B1CDD3E000166C0 /* reicast-osx.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "reicast-osx.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		84A388B71B1CDD3E000166C0 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		84A388B81B1CDD3E000166C0 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		84A388BA1B1CDD3E000166C0 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		84A388BD1B1CDD3E000166C0 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/MainMenu.xib; sourceTree = "<group>"; };
-		84A388C31B1CDD3F000166C0 /* reicast-osx.temp_caseinsensitive_rename.temp_caseinsensitive_renameTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "reicast-osx.temp_caseinsensitive_rename.temp_caseinsensitive_renameTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		84A388C31B1CDD3F000166C0 /* reicast-osxTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "reicast-osxTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		84A388C81B1CDD3F000166C0 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		84A388C91B1CDD3F000166C0 /* emulator_osxTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = emulator_osxTests.swift; sourceTree = "<group>"; };
 		84B7BD121B72720100F9733F /* build.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = build.h; path = ../../../core/build.h; sourceTree = "<group>"; };
@@ -555,8 +558,8 @@
 		84A388B41B1CDD3E000166C0 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				84A388B31B1CDD3E000166C0 /* reicast-osx.temp_caseinsensitive_rename.temp_caseinsensitive_rename.app */,
-				84A388C31B1CDD3F000166C0 /* reicast-osx.temp_caseinsensitive_rename.temp_caseinsensitive_renameTests.xctest */,
+				84A388B31B1CDD3E000166C0 /* reicast-osx.app */,
+				84A388C31B1CDD3F000166C0 /* reicast-osxTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -630,6 +633,8 @@
 		84B7BD131B72720100F9733F /* cfg */ = {
 			isa = PBXGroup;
 			children = (
+				8491687D1B782B2D00F3F2B4 /* ini.cpp */,
+				8491687E1B782B2D00F3F2B4 /* ini.h */,
 				84B7BD141B72720100F9733F /* cfg.cpp */,
 				84B7BD151B72720100F9733F /* cfg.h */,
 				84B7BD161B72720100F9733F /* cl.cpp */,
@@ -1246,9 +1251,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		84A388B21B1CDD3E000166C0 /* reicast-osx.temp_caseinsensitive_rename.temp_caseinsensitive_rename */ = {
+		84A388B21B1CDD3E000166C0 /* reicast-osx */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 84A388CD1B1CDD3F000166C0 /* Build configuration list for PBXNativeTarget "reicast-osx.temp_caseinsensitive_rename.temp_caseinsensitive_rename" */;
+			buildConfigurationList = 84A388CD1B1CDD3F000166C0 /* Build configuration list for PBXNativeTarget "reicast-osx" */;
 			buildPhases = (
 				84A388AF1B1CDD3E000166C0 /* Sources */,
 				84A388B01B1CDD3E000166C0 /* Frameworks */,
@@ -1258,14 +1263,14 @@
 			);
 			dependencies = (
 			);
-			name = "reicast-osx.temp_caseinsensitive_rename.temp_caseinsensitive_rename";
+			name = "reicast-osx";
 			productName = "reicast-osx";
-			productReference = 84A388B31B1CDD3E000166C0 /* reicast-osx.temp_caseinsensitive_rename.temp_caseinsensitive_rename.app */;
+			productReference = 84A388B31B1CDD3E000166C0 /* reicast-osx.app */;
 			productType = "com.apple.product-type.application";
 		};
-		84A388C21B1CDD3F000166C0 /* reicast-osx.temp_caseinsensitive_rename.temp_caseinsensitive_renameTests */ = {
+		84A388C21B1CDD3F000166C0 /* reicast-osxTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 84A388D01B1CDD3F000166C0 /* Build configuration list for PBXNativeTarget "reicast-osx.temp_caseinsensitive_rename.temp_caseinsensitive_renameTests" */;
+			buildConfigurationList = 84A388D01B1CDD3F000166C0 /* Build configuration list for PBXNativeTarget "reicast-osxTests" */;
 			buildPhases = (
 				84A388BF1B1CDD3F000166C0 /* Sources */,
 				84A388C01B1CDD3F000166C0 /* Frameworks */,
@@ -1276,9 +1281,9 @@
 			dependencies = (
 				84A388C51B1CDD3F000166C0 /* PBXTargetDependency */,
 			);
-			name = "reicast-osx.temp_caseinsensitive_rename.temp_caseinsensitive_renameTests";
+			name = "reicast-osxTests";
 			productName = "reicast-osxTests";
-			productReference = 84A388C31B1CDD3F000166C0 /* reicast-osx.temp_caseinsensitive_rename.temp_caseinsensitive_renameTests.xctest */;
+			productReference = 84A388C31B1CDD3F000166C0 /* reicast-osxTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
 /* End PBXNativeTarget section */
@@ -1312,8 +1317,8 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				84A388B21B1CDD3E000166C0 /* reicast-osx.temp_caseinsensitive_rename.temp_caseinsensitive_rename */,
-				84A388C21B1CDD3F000166C0 /* reicast-osx.temp_caseinsensitive_rename.temp_caseinsensitive_renameTests */,
+				84A388B21B1CDD3E000166C0 /* reicast-osx */,
+				84A388C21B1CDD3F000166C0 /* reicast-osxTests */,
 			);
 		};
 /* End PBXProject section */
@@ -1428,6 +1433,7 @@
 				84B7BEE01B72720200F9733F /* mkstemp.c in Sources */,
 				84B7BF261B72720200F9733F /* aica_if.cpp in Sources */,
 				84B7BF171B72720200F9733F /* compress.c in Sources */,
+				8491687F1B782B2D00F3F2B4 /* ini.cpp in Sources */,
 				84B7BF341B72720200F9733F /* maple_cfg.cpp in Sources */,
 				84B7BF401B72720200F9733F /* ta_ctx.cpp in Sources */,
 				84B7BF011B72720200F9733F /* zip_open.c in Sources */,
@@ -1536,7 +1542,7 @@
 /* Begin PBXTargetDependency section */
 		84A388C51B1CDD3F000166C0 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 84A388B21B1CDD3E000166C0 /* reicast-osx.temp_caseinsensitive_rename.temp_caseinsensitive_rename */;
+			target = 84A388B21B1CDD3E000166C0 /* reicast-osx */;
 			targetProxy = 84A388C41B1CDD3F000166C0 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -1653,7 +1659,7 @@
 				);
 				INFOPLIST_FILE = "emulator-osx/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
-				PRODUCT_NAME = "reicast-osx.temp_caseinsensitive_rename.temp_caseinsensitive_rename";
+				PRODUCT_NAME = "reicast-osx";
 				SWIFT_OBJC_BRIDGING_HEADER = "emulator-osx/emulator-osx-Bridging-Header.h";
 			};
 			name = Debug;
@@ -1681,7 +1687,7 @@
 				);
 				INFOPLIST_FILE = "emulator-osx/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
-				PRODUCT_NAME = "reicast-osx.temp_caseinsensitive_rename.temp_caseinsensitive_rename";
+				PRODUCT_NAME = "reicast-osx";
 				SWIFT_OBJC_BRIDGING_HEADER = "emulator-osx/emulator-osx-Bridging-Header.h";
 			};
 			name = Release;
@@ -1701,7 +1707,7 @@
 				);
 				INFOPLIST_FILE = "emulator-osxTests/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
-				PRODUCT_NAME = "reicast-osx.temp_caseinsensitive_rename.temp_caseinsensitive_renameTests";
+				PRODUCT_NAME = "reicast-osxTests";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/reicast-osx.app/Contents/MacOS/reicast-osx";
 			};
 			name = Debug;
@@ -1717,7 +1723,7 @@
 				);
 				INFOPLIST_FILE = "emulator-osxTests/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
-				PRODUCT_NAME = "reicast-osx.temp_caseinsensitive_rename.temp_caseinsensitive_renameTests";
+				PRODUCT_NAME = "reicast-osxTests";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/reicast-osx.app/Contents/MacOS/reicast-osx";
 			};
 			name = Release;
@@ -1734,7 +1740,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		84A388CD1B1CDD3F000166C0 /* Build configuration list for PBXNativeTarget "reicast-osx.temp_caseinsensitive_rename.temp_caseinsensitive_rename" */ = {
+		84A388CD1B1CDD3F000166C0 /* Build configuration list for PBXNativeTarget "reicast-osx" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				84A388CE1B1CDD3F000166C0 /* Debug */,
@@ -1743,7 +1749,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		84A388D01B1CDD3F000166C0 /* Build configuration list for PBXNativeTarget "reicast-osx.temp_caseinsensitive_rename.temp_caseinsensitive_renameTests" */ = {
+		84A388D01B1CDD3F000166C0 /* Build configuration list for PBXNativeTarget "reicast-osxTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				84A388D11B1CDD3F000166C0 /* Debug */,
