@@ -427,7 +427,7 @@ u32  ReadMem_naomi(u32 Addr, u32 sz)
 	switch(Addr&255)
 	{
 	case 0x3c:
-		printf("naomi GD? READ: %X, %d\n", Addr, sz);
+		//printf("naomi GD? READ: %X, %d\n", Addr, sz);
 		return reg_dimm_3c | (NaomiDataRead ? 0 : -1); //pretend the board isn't there for the bios
 	case 0x40:
 		printf("naomi GD? READ: %X, %d\n", Addr, sz);
