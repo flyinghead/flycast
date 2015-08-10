@@ -924,17 +924,20 @@ struct maple_naomi_jamma : maple_sega_controller
 			case 0x15:
 			case 0x33:
 			{
+				PlainJoystickState pjs;
+				config->GetInput(&pjs);
+
 				buffer_out[0] = 0xffffffff;
 				buffer_out[1] = 0xffffffff;
-				u32 keycode = 0;// ~kcode[0];
-				u32 keycode2 = 0;// ~kcode[1];
-				/*
+				u32 keycode = ~pjs.kcode;
+				u32 keycode2 = ~pjs.kcode;
+
 				if (keycode&NAOMI_SERVICE_KEY_2)		//Service
 					buffer_out[0] &= ~(1 << 0x1b);
 
 				if (keycode&NAOMI_TEST_KEY_2)		//Test
 					buffer_out[0] &= ~(1 << 0x1a);
-				*/
+
 				if (State.Mode == 0 && subcode != 0x33)	//Get Caps
 				{
 					buffer_out_b[0x11 + 1] = 0x8E;	//Valid data check
