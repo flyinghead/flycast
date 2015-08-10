@@ -53,3 +53,5 @@ shell/lin86/reicast.elf
 shell/lin64/.map
 shell/lin64/nosym-reicast.elf
 shell/lin64/reicast.elf
+
+reicast-ios.xccheckout

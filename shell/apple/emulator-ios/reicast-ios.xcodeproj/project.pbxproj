@@ -7,9 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		846293C61A6CE61900262464 /* EmulatorView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 846293C51A6CE61900262464 /* EmulatorView.mm */; };
 		8497BCBF1A41A0E900EFB9ED /* common.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8497BCBC1A41A0E900EFB9ED /* common.cpp */; };
-		8497BCC21A41B02000EFB9ED /* ios_main.mm in Sources */ = {isa = PBXBuildFile; fileRef = 8497BCC11A41B02000EFB9ED /* ios_main.mm */; };
+		8497BCC01A41A0E900EFB9ED /* nixprof.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8497BCBD1A41A0E900EFB9ED /* nixprof.cpp */; };
 		8497BCCF1A41BFD800EFB9ED /* coreio.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8497BCCD1A41BFD800EFB9ED /* coreio.cpp */; };
 		849C0D621B072C07008BAAA4 /* context.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 849C0D601B072C07008BAAA4 /* context.cpp */; };
 		849C0D661B072CF8008BAAA4 /* reios.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 849C0D641B072CF8008BAAA4 /* reios.cpp */; };
@@ -29,7 +28,6 @@
 		87078A9B18A47FE90034C7A0 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 87078A9A18A47FE90034C7A0 /* AppDelegate.m */; };
 		87078AA318A47FE90034C7A0 /* Shader.fsh in Resources */ = {isa = PBXBuildFile; fileRef = 87078AA218A47FE90034C7A0 /* Shader.fsh */; };
 		87078AA518A47FE90034C7A0 /* Shader.vsh in Resources */ = {isa = PBXBuildFile; fileRef = 87078AA418A47FE90034C7A0 /* Shader.vsh */; };
-		87078AA818A47FE90034C7A0 /* EmulatorViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 87078AA718A47FE90034C7A0 /* EmulatorViewController.mm */; };
 		877652C21B6157BD00437F10 /* audiobackend_alsa.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 877652B61B6157BD00437F10 /* audiobackend_alsa.cpp */; };
 		877652C31B6157BD00437F10 /* audiobackend_directsound.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 877652B91B6157BD00437F10 /* audiobackend_directsound.cpp */; };
 		877652C41B6157BD00437F10 /* audiobackend_oss.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 877652BB1B6157BD00437F10 /* audiobackend_oss.cpp */; };
@@ -39,9 +37,42 @@
 		877652CA1B6157FC00437F10 /* rec_arm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 877652C81B6157FC00437F10 /* rec_arm.cpp */; };
 		87C4AA541A440BEB0048DBF4 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 87C4AA531A440BEB0048DBF4 /* libz.dylib */; };
 		87C4AA561A4414070048DBF4 /* AssetsLibrary.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 87C4AA551A4414070048DBF4 /* AssetsLibrary.framework */; };
-		87C4CC5B1B75491400CE6D3C /* nixprof.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 87C4CC5A1B75491400CE6D3C /* nixprof.cpp */; };
-		87C4CC5D1B75499700CE6D3C /* GameController.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 87C4CC5C1B75499700CE6D3C /* GameController.framework */; };
-		87C64DDC1B6E80A400FDD99A /* iCadeReaderView.m in Sources */ = {isa = PBXBuildFile; fileRef = 87C64DDA1B6E80A400FDD99A /* iCadeReaderView.m */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
+		87D92EA81B7839E600D8FD9E /* ios_main.mm in Sources */ = {isa = PBXBuildFile; fileRef = 87D92EA71B7839E600D8FD9E /* ios_main.mm */; };
+		87D92F171B7A1B3400D8FD9E /* AboutViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 87D92F041B7A1B3400D8FD9E /* AboutViewController.m */; };
+		87D92F181B7A1B3400D8FD9E /* BrowserTableViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 87D92F061B7A1B3400D8FD9E /* BrowserTableViewController.m */; };
+		87D92F191B7A1B3400D8FD9E /* CloudVMUViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 87D92F081B7A1B3400D8FD9E /* CloudVMUViewController.m */; };
+		87D92F1A1B7A1B3400D8FD9E /* EmulatorView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 87D92F0A1B7A1B3400D8FD9E /* EmulatorView.mm */; };
+		87D92F1B1B7A1B3400D8FD9E /* EmulatorViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 87D92F0C1B7A1B3400D8FD9E /* EmulatorViewController.mm */; };
+		87D92F1C1B7A1B3400D8FD9E /* InputViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 87D92F0E1B7A1B3400D8FD9E /* InputViewController.m */; };
+		87D92F1D1B7A1B3400D8FD9E /* PathsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 87D92F101B7A1B3400D8FD9E /* PathsViewController.m */; };
+		87D92F1E1B7A1B3400D8FD9E /* SettingsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 87D92F121B7A1B3400D8FD9E /* SettingsViewController.m */; };
+		87D92F1F1B7A1B3400D8FD9E /* SideDrawerViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 87D92F141B7A1B3400D8FD9E /* SideDrawerViewController.m */; };
+		87D92F201B7A1B3400D8FD9E /* SWRevealViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 87D92F161B7A1B3400D8FD9E /* SWRevealViewController.m */; };
+		87D92F371B7A1B4800D8FD9E /* 210-octocat.png in Resources */ = {isa = PBXBuildFile; fileRef = 87D92F211B7A1B4800D8FD9E /* 210-octocat.png */; };
+		87D92F381B7A1B4800D8FD9E /* 210-octocat@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 87D92F221B7A1B4800D8FD9E /* 210-octocat@2x.png */; };
+		87D92F391B7A1B4800D8FD9E /* 210-twitterbird.png in Resources */ = {isa = PBXBuildFile; fileRef = 87D92F231B7A1B4800D8FD9E /* 210-twitterbird.png */; };
+		87D92F3A1B7A1B4800D8FD9E /* 210-twitterbird@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 87D92F241B7A1B4800D8FD9E /* 210-twitterbird@2x.png */; };
+		87D92F3B1B7A1B4800D8FD9E /* ABXYPad.png in Resources */ = {isa = PBXBuildFile; fileRef = 87D92F251B7A1B4800D8FD9E /* ABXYPad.png */; };
+		87D92F3C1B7A1B4800D8FD9E /* ABXYPad@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 87D92F261B7A1B4800D8FD9E /* ABXYPad@2x.png */; };
+		87D92F3D1B7A1B4800D8FD9E /* DPad.png in Resources */ = {isa = PBXBuildFile; fileRef = 87D92F271B7A1B4800D8FD9E /* DPad.png */; };
+		87D92F3E1B7A1B4800D8FD9E /* DPad@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 87D92F281B7A1B4800D8FD9E /* DPad@2x.png */; };
+		87D92F3F1B7A1B4800D8FD9E /* JoystickBackground.png in Resources */ = {isa = PBXBuildFile; fileRef = 87D92F291B7A1B4800D8FD9E /* JoystickBackground.png */; };
+		87D92F401B7A1B4800D8FD9E /* JoystickBackground@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 87D92F2A1B7A1B4800D8FD9E /* JoystickBackground@2x.png */; };
+		87D92F411B7A1B4800D8FD9E /* JoystickButton.png in Resources */ = {isa = PBXBuildFile; fileRef = 87D92F2B1B7A1B4800D8FD9E /* JoystickButton.png */; };
+		87D92F421B7A1B4800D8FD9E /* JoystickButton@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 87D92F2C1B7A1B4800D8FD9E /* JoystickButton@2x.png */; };
+		87D92F431B7A1B4800D8FD9E /* LTrigger.png in Resources */ = {isa = PBXBuildFile; fileRef = 87D92F2D1B7A1B4800D8FD9E /* LTrigger.png */; };
+		87D92F441B7A1B4800D8FD9E /* LTrigger@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 87D92F2E1B7A1B4800D8FD9E /* LTrigger@2x.png */; };
+		87D92F451B7A1B4800D8FD9E /* menuback.png in Resources */ = {isa = PBXBuildFile; fileRef = 87D92F2F1B7A1B4800D8FD9E /* menuback.png */; };
+		87D92F461B7A1B4800D8FD9E /* menuback@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 87D92F301B7A1B4800D8FD9E /* menuback@2x.png */; };
+		87D92F471B7A1B4800D8FD9E /* menuicon.png in Resources */ = {isa = PBXBuildFile; fileRef = 87D92F311B7A1B4800D8FD9E /* menuicon.png */; };
+		87D92F481B7A1B4800D8FD9E /* menuicon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 87D92F321B7A1B4800D8FD9E /* menuicon@2x.png */; };
+		87D92F491B7A1B4800D8FD9E /* RTrigger.png in Resources */ = {isa = PBXBuildFile; fileRef = 87D92F331B7A1B4800D8FD9E /* RTrigger.png */; };
+		87D92F4A1B7A1B4800D8FD9E /* RTrigger@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 87D92F341B7A1B4800D8FD9E /* RTrigger@2x.png */; };
+		87D92F4B1B7A1B4800D8FD9E /* Start.png in Resources */ = {isa = PBXBuildFile; fileRef = 87D92F351B7A1B4800D8FD9E /* Start.png */; };
+		87D92F4C1B7A1B4800D8FD9E /* Start@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 87D92F361B7A1B4800D8FD9E /* Start@2x.png */; };
+		87D92F4E1B7A1B5700D8FD9E /* GameController.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 87D92F4D1B7A1B5700D8FD9E /* GameController.framework */; };
+		87D92F541B7A1BB100D8FD9E /* iCadeReaderView.m in Sources */ = {isa = PBXBuildFile; fileRef = 87D92F511B7A1BB100D8FD9E /* iCadeReaderView.m */; };
+		87D92F551B7A1BB100D8FD9E /* LICENSE in Resources */ = {isa = PBXBuildFile; fileRef = 87D92F531B7A1BB100D8FD9E /* LICENSE */; };
 		9C7A393318C804A80070BB5F /* reicast.entitlements in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A393218C804A80070BB5F /* reicast.entitlements */; };
 		9C7A3AA218C806E00070BB5F /* cfg.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A395118C806DE0070BB5F /* cfg.cpp */; };
 		9C7A3AA318C806E00070BB5F /* cl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A395318C806DE0070BB5F /* cl.cpp */; };
@@ -202,44 +233,13 @@
 		9C7A3B4C18C806E00070BB5F /* TexCache.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A3A9518C806E00070BB5F /* TexCache.cpp */; };
 		9C7A3B4E18C806E00070BB5F /* stdclass.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A3A9918C806E00070BB5F /* stdclass.cpp */; };
 		9C7A3B5918C81A4F0070BB5F /* SWRevealViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A3B5818C81A4F0070BB5F /* SWRevealViewController.m */; };
-		9C7A3B5C18C81BC80070BB5F /* SideDrawerViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A3B5B18C81BC80070BB5F /* SideDrawerViewController.m */; };
-		9C7A3B5F18C81D090070BB5F /* BrowserTableViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A3B5E18C81D090070BB5F /* BrowserTableViewController.m */; };
-		9C7A3B6218C820630070BB5F /* AboutViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A3B6118C820630070BB5F /* AboutViewController.m */; };
-		9C7A3B6818C8208D0070BB5F /* SettingsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A3B6718C8208D0070BB5F /* SettingsViewController.m */; };
-		9C7A3B6B18C8209E0070BB5F /* PathsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A3B6A18C8209E0070BB5F /* PathsViewController.m */; };
-		9C7A3B6E18C820B40070BB5F /* InputViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A3B6D18C820B40070BB5F /* InputViewController.m */; };
 		9C7A3BC418C84EA10070BB5F /* MainStoryboard.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BC318C84EA10070BB5F /* MainStoryboard.storyboard */; };
-		9C7A3BFF18C851C50070BB5F /* 210-octocat.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BD918C851C50070BB5F /* 210-octocat.png */; };
-		9C7A3C0018C851C50070BB5F /* 210-octocat@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BDA18C851C50070BB5F /* 210-octocat@2x.png */; };
-		9C7A3C0118C851C50070BB5F /* 210-twitterbird.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BDB18C851C50070BB5F /* 210-twitterbird.png */; };
-		9C7A3C0218C851C50070BB5F /* 210-twitterbird@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BDC18C851C50070BB5F /* 210-twitterbird@2x.png */; };
-		9C7A3C0318C851C50070BB5F /* ABXYPad.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BDD18C851C50070BB5F /* ABXYPad.png */; };
-		9C7A3C0418C851C50070BB5F /* ABXYPad@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BDE18C851C50070BB5F /* ABXYPad@2x.png */; };
-		9C7A3C0D18C851C50070BB5F /* DPad.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BE718C851C50070BB5F /* DPad.png */; };
-		9C7A3C0E18C851C50070BB5F /* DPad@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BE818C851C50070BB5F /* DPad@2x.png */; };
-		9C7A3C1318C851C50070BB5F /* JoystickBackground.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BED18C851C50070BB5F /* JoystickBackground.png */; };
-		9C7A3C1418C851C50070BB5F /* JoystickBackground@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BEE18C851C50070BB5F /* JoystickBackground@2x.png */; };
-		9C7A3C1518C851C50070BB5F /* JoystickButton.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BEF18C851C50070BB5F /* JoystickButton.png */; };
-		9C7A3C1618C851C50070BB5F /* JoystickButton@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BF018C851C50070BB5F /* JoystickButton@2x.png */; };
-		9C7A3C1718C851C50070BB5F /* LTrigger.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BF118C851C50070BB5F /* LTrigger.png */; };
-		9C7A3C1818C851C50070BB5F /* LTrigger@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BF218C851C50070BB5F /* LTrigger@2x.png */; };
-		9C7A3C1918C851C50070BB5F /* menuback.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BF318C851C50070BB5F /* menuback.png */; };
-		9C7A3C1A18C851C50070BB5F /* menuback@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BF418C851C50070BB5F /* menuback@2x.png */; };
-		9C7A3C1B18C851C50070BB5F /* menuicon.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BF518C851C50070BB5F /* menuicon.png */; };
-		9C7A3C1C18C851C50070BB5F /* menuicon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BF618C851C50070BB5F /* menuicon@2x.png */; };
-		9C7A3C2118C851C50070BB5F /* RTrigger.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BFB18C851C50070BB5F /* RTrigger.png */; };
-		9C7A3C2218C851C50070BB5F /* RTrigger@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BFC18C851C50070BB5F /* RTrigger@2x.png */; };
-		9C7A3C2318C851C50070BB5F /* Start.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BFD18C851C50070BB5F /* Start.png */; };
-		9C7A3C2418C851C50070BB5F /* Start@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BFE18C851C50070BB5F /* Start@2x.png */; };
-		9C7D581019301E140004EA2C /* CloudVMUViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 9C7D580F19301E140004EA2C /* CloudVMUViewController.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		846293C41A6CE61900262464 /* EmulatorView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = EmulatorView.h; path = emulator/EmulatorView.h; sourceTree = "<group>"; };
-		846293C51A6CE61900262464 /* EmulatorView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = EmulatorView.mm; path = emulator/EmulatorView.mm; sourceTree = "<group>"; };
 		8497BCBC1A41A0E900EFB9ED /* common.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = common.cpp; sourceTree = "<group>"; };
+		8497BCBD1A41A0E900EFB9ED /* nixprof.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = nixprof.cpp; sourceTree = "<group>"; };
 		8497BCBE1A41A0E900EFB9ED /* typedefs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = typedefs.h; sourceTree = "<group>"; };
-		8497BCC11A41B02000EFB9ED /* ios_main.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ios_main.mm; sourceTree = "<group>"; };
 		8497BCCD1A41BFD800EFB9ED /* coreio.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = coreio.cpp; sourceTree = "<group>"; };
 		8497BCCE1A41BFD800EFB9ED /* coreio.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = coreio.h; sourceTree = "<group>"; };
 		849C0D601B072C07008BAAA4 /* context.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = context.cpp; sourceTree = "<group>"; };
@@ -269,8 +269,6 @@
 		87078A9A18A47FE90034C7A0 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
 		87078AA218A47FE90034C7A0 /* Shader.fsh */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; name = Shader.fsh; path = Shaders/Shader.fsh; sourceTree = "<group>"; };
 		87078AA418A47FE90034C7A0 /* Shader.vsh */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; name = Shader.vsh; path = Shaders/Shader.vsh; sourceTree = "<group>"; };
-		87078AA618A47FE90034C7A0 /* EmulatorViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = EmulatorViewController.h; path = emulator/EmulatorViewController.h; sourceTree = "<group>"; };
-		87078AA718A47FE90034C7A0 /* EmulatorViewController.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = EmulatorViewController.mm; path = emulator/EmulatorViewController.mm; sourceTree = "<group>"; };
 		87078AB018A47FE90034C7A0 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
 		877652B61B6157BD00437F10 /* audiobackend_alsa.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = audiobackend_alsa.cpp; sourceTree = "<group>"; };
 		877652B71B6157BD00437F10 /* audiobackend_alsa.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = audiobackend_alsa.h; sourceTree = "<group>"; };
@@ -289,11 +287,54 @@
 		877652CC1B615AE800437F10 /* fp.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = fp.h; sourceTree = "<group>"; };
 		87C4AA531A440BEB0048DBF4 /* libz.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libz.dylib; path = usr/lib/libz.dylib; sourceTree = SDKROOT; };
 		87C4AA551A4414070048DBF4 /* AssetsLibrary.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AssetsLibrary.framework; path = System/Library/Frameworks/AssetsLibrary.framework; sourceTree = SDKROOT; };
-		87C4CC5A1B75491400CE6D3C /* nixprof.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = nixprof.cpp; sourceTree = "<group>"; };
-		87C4CC5C1B75499700CE6D3C /* GameController.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GameController.framework; path = System/Library/Frameworks/GameController.framework; sourceTree = SDKROOT; };
-		87C64DD91B6E80A400FDD99A /* iCadeReaderView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iCadeReaderView.h; sourceTree = "<group>"; };
-		87C64DDA1B6E80A400FDD99A /* iCadeReaderView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iCadeReaderView.m; sourceTree = "<group>"; };
-		87C64DDB1B6E80A400FDD99A /* iCadeState.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iCadeState.h; sourceTree = "<group>"; };
+		87D92EA71B7839E600D8FD9E /* ios_main.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ios_main.mm; sourceTree = SOURCE_ROOT; };
+		87D92F031B7A1B3400D8FD9E /* AboutViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AboutViewController.h; sourceTree = "<group>"; };
+		87D92F041B7A1B3400D8FD9E /* AboutViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AboutViewController.m; sourceTree = "<group>"; };
+		87D92F051B7A1B3400D8FD9E /* BrowserTableViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BrowserTableViewController.h; sourceTree = "<group>"; };
+		87D92F061B7A1B3400D8FD9E /* BrowserTableViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BrowserTableViewController.m; sourceTree = "<group>"; };
+		87D92F071B7A1B3400D8FD9E /* CloudVMUViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CloudVMUViewController.h; sourceTree = "<group>"; };
+		87D92F081B7A1B3400D8FD9E /* CloudVMUViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CloudVMUViewController.m; sourceTree = "<group>"; };
+		87D92F091B7A1B3400D8FD9E /* EmulatorView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EmulatorView.h; sourceTree = "<group>"; };
+		87D92F0A1B7A1B3400D8FD9E /* EmulatorView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = EmulatorView.mm; sourceTree = "<group>"; };
+		87D92F0B1B7A1B3400D8FD9E /* EmulatorViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EmulatorViewController.h; sourceTree = "<group>"; };
+		87D92F0C1B7A1B3400D8FD9E /* EmulatorViewController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = EmulatorViewController.mm; sourceTree = "<group>"; };
+		87D92F0D1B7A1B3400D8FD9E /* InputViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = InputViewController.h; sourceTree = "<group>"; };
+		87D92F0E1B7A1B3400D8FD9E /* InputViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = InputViewController.m; sourceTree = "<group>"; };
+		87D92F0F1B7A1B3400D8FD9E /* PathsViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PathsViewController.h; sourceTree = "<group>"; };
+		87D92F101B7A1B3400D8FD9E /* PathsViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PathsViewController.m; sourceTree = "<group>"; };
+		87D92F111B7A1B3400D8FD9E /* SettingsViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SettingsViewController.h; sourceTree = "<group>"; };
+		87D92F121B7A1B3400D8FD9E /* SettingsViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SettingsViewController.m; sourceTree = "<group>"; };
+		87D92F131B7A1B3400D8FD9E /* SideDrawerViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SideDrawerViewController.h; sourceTree = "<group>"; };
+		87D92F141B7A1B3400D8FD9E /* SideDrawerViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SideDrawerViewController.m; sourceTree = "<group>"; };
+		87D92F151B7A1B3400D8FD9E /* SWRevealViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SWRevealViewController.h; sourceTree = "<group>"; };
+		87D92F161B7A1B3400D8FD9E /* SWRevealViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SWRevealViewController.m; sourceTree = "<group>"; };
+		87D92F211B7A1B4800D8FD9E /* 210-octocat.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "210-octocat.png"; path = "Images/210-octocat.png"; sourceTree = "<group>"; };
+		87D92F221B7A1B4800D8FD9E /* 210-octocat@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "210-octocat@2x.png"; path = "Images/210-octocat@2x.png"; sourceTree = "<group>"; };
+		87D92F231B7A1B4800D8FD9E /* 210-twitterbird.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "210-twitterbird.png"; path = "Images/210-twitterbird.png"; sourceTree = "<group>"; };
+		87D92F241B7A1B4800D8FD9E /* 210-twitterbird@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "210-twitterbird@2x.png"; path = "Images/210-twitterbird@2x.png"; sourceTree = "<group>"; };
+		87D92F251B7A1B4800D8FD9E /* ABXYPad.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = ABXYPad.png; path = Images/ABXYPad.png; sourceTree = "<group>"; };
+		87D92F261B7A1B4800D8FD9E /* ABXYPad@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "ABXYPad@2x.png"; path = "Images/ABXYPad@2x.png"; sourceTree = "<group>"; };
+		87D92F271B7A1B4800D8FD9E /* DPad.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = DPad.png; path = Images/DPad.png; sourceTree = "<group>"; };
+		87D92F281B7A1B4800D8FD9E /* DPad@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "DPad@2x.png"; path = "Images/DPad@2x.png"; sourceTree = "<group>"; };
+		87D92F291B7A1B4800D8FD9E /* JoystickBackground.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = JoystickBackground.png; path = Images/JoystickBackground.png; sourceTree = "<group>"; };
+		87D92F2A1B7A1B4800D8FD9E /* JoystickBackground@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "JoystickBackground@2x.png"; path = "Images/JoystickBackground@2x.png"; sourceTree = "<group>"; };
+		87D92F2B1B7A1B4800D8FD9E /* JoystickButton.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = JoystickButton.png; path = Images/JoystickButton.png; sourceTree = "<group>"; };
+		87D92F2C1B7A1B4800D8FD9E /* JoystickButton@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "JoystickButton@2x.png"; path = "Images/JoystickButton@2x.png"; sourceTree = "<group>"; };
+		87D92F2D1B7A1B4800D8FD9E /* LTrigger.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = LTrigger.png; path = Images/LTrigger.png; sourceTree = "<group>"; };
+		87D92F2E1B7A1B4800D8FD9E /* LTrigger@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "LTrigger@2x.png"; path = "Images/LTrigger@2x.png"; sourceTree = "<group>"; };
+		87D92F2F1B7A1B4800D8FD9E /* menuback.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = menuback.png; path = Images/menuback.png; sourceTree = "<group>"; };
+		87D92F301B7A1B4800D8FD9E /* menuback@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "menuback@2x.png"; path = "Images/menuback@2x.png"; sourceTree = "<group>"; };
+		87D92F311B7A1B4800D8FD9E /* menuicon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = menuicon.png; path = Images/menuicon.png; sourceTree = "<group>"; };
+		87D92F321B7A1B4800D8FD9E /* menuicon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "menuicon@2x.png"; path = "Images/menuicon@2x.png"; sourceTree = "<group>"; };
+		87D92F331B7A1B4800D8FD9E /* RTrigger.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = RTrigger.png; path = Images/RTrigger.png; sourceTree = "<group>"; };
+		87D92F341B7A1B4800D8FD9E /* RTrigger@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "RTrigger@2x.png"; path = "Images/RTrigger@2x.png"; sourceTree = "<group>"; };
+		87D92F351B7A1B4800D8FD9E /* Start.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Start.png; path = Images/Start.png; sourceTree = "<group>"; };
+		87D92F361B7A1B4800D8FD9E /* Start@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Start@2x.png"; path = "Images/Start@2x.png"; sourceTree = "<group>"; };
+		87D92F4D1B7A1B5700D8FD9E /* GameController.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GameController.framework; path = System/Library/Frameworks/GameController.framework; sourceTree = SDKROOT; };
+		87D92F501B7A1BB100D8FD9E /* iCadeReaderView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iCadeReaderView.h; sourceTree = "<group>"; };
+		87D92F511B7A1BB100D8FD9E /* iCadeReaderView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iCadeReaderView.m; sourceTree = "<group>"; };
+		87D92F521B7A1BB100D8FD9E /* iCadeState.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iCadeState.h; sourceTree = "<group>"; };
+		87D92F531B7A1BB100D8FD9E /* LICENSE */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
 		9C7A393218C804A80070BB5F /* reicast.entitlements */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = reicast.entitlements; sourceTree = "<group>"; };
 		9C7A393A18C806DE0070BB5F /* arm_coding.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = arm_coding.h; sourceTree = "<group>"; };
 		9C7A393B18C806DE0070BB5F /* arm_disasm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = arm_disasm.h; sourceTree = "<group>"; };
@@ -583,43 +624,7 @@
 		9C7A3A9B18C806E00070BB5F /* types.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = types.h; sourceTree = "<group>"; };
 		9C7A3B5718C81A4F0070BB5F /* SWRevealViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SWRevealViewController.h; sourceTree = "<group>"; };
 		9C7A3B5818C81A4F0070BB5F /* SWRevealViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SWRevealViewController.m; sourceTree = "<group>"; };
-		9C7A3B5A18C81BC80070BB5F /* SideDrawerViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SideDrawerViewController.h; path = emulator/SideDrawerViewController.h; sourceTree = "<group>"; };
-		9C7A3B5B18C81BC80070BB5F /* SideDrawerViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SideDrawerViewController.m; path = emulator/SideDrawerViewController.m; sourceTree = "<group>"; };
-		9C7A3B5D18C81D090070BB5F /* BrowserTableViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BrowserTableViewController.h; path = emulator/BrowserTableViewController.h; sourceTree = "<group>"; };
-		9C7A3B5E18C81D090070BB5F /* BrowserTableViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = BrowserTableViewController.m; path = emulator/BrowserTableViewController.m; sourceTree = "<group>"; };
-		9C7A3B6018C820630070BB5F /* AboutViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AboutViewController.h; path = emulator/AboutViewController.h; sourceTree = "<group>"; };
-		9C7A3B6118C820630070BB5F /* AboutViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = AboutViewController.m; path = emulator/AboutViewController.m; sourceTree = "<group>"; };
-		9C7A3B6618C8208D0070BB5F /* SettingsViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SettingsViewController.h; path = emulator/SettingsViewController.h; sourceTree = "<group>"; };
-		9C7A3B6718C8208D0070BB5F /* SettingsViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SettingsViewController.m; path = emulator/SettingsViewController.m; sourceTree = "<group>"; };
-		9C7A3B6918C8209E0070BB5F /* PathsViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PathsViewController.h; path = emulator/PathsViewController.h; sourceTree = "<group>"; };
-		9C7A3B6A18C8209E0070BB5F /* PathsViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = PathsViewController.m; path = emulator/PathsViewController.m; sourceTree = "<group>"; };
-		9C7A3B6C18C820B40070BB5F /* InputViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = InputViewController.h; path = emulator/InputViewController.h; sourceTree = "<group>"; };
-		9C7A3B6D18C820B40070BB5F /* InputViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = InputViewController.m; path = emulator/InputViewController.m; sourceTree = "<group>"; };
 		9C7A3BC318C84EA10070BB5F /* MainStoryboard.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; path = MainStoryboard.storyboard; sourceTree = "<group>"; };
-		9C7A3BD918C851C50070BB5F /* 210-octocat.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "210-octocat.png"; path = "emulator/Images/210-octocat.png"; sourceTree = "<group>"; };
-		9C7A3BDA18C851C50070BB5F /* 210-octocat@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "210-octocat@2x.png"; path = "emulator/Images/210-octocat@2x.png"; sourceTree = "<group>"; };
-		9C7A3BDB18C851C50070BB5F /* 210-twitterbird.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "210-twitterbird.png"; path = "emulator/Images/210-twitterbird.png"; sourceTree = "<group>"; };
-		9C7A3BDC18C851C50070BB5F /* 210-twitterbird@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "210-twitterbird@2x.png"; path = "emulator/Images/210-twitterbird@2x.png"; sourceTree = "<group>"; };
-		9C7A3BDD18C851C50070BB5F /* ABXYPad.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = ABXYPad.png; path = emulator/Images/ABXYPad.png; sourceTree = "<group>"; };
-		9C7A3BDE18C851C50070BB5F /* ABXYPad@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "ABXYPad@2x.png"; path = "emulator/Images/ABXYPad@2x.png"; sourceTree = "<group>"; };
-		9C7A3BE718C851C50070BB5F /* DPad.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = DPad.png; path = emulator/Images/DPad.png; sourceTree = "<group>"; };
-		9C7A3BE818C851C50070BB5F /* DPad@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "DPad@2x.png"; path = "emulator/Images/DPad@2x.png"; sourceTree = "<group>"; };
-		9C7A3BED18C851C50070BB5F /* JoystickBackground.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = JoystickBackground.png; path = emulator/Images/JoystickBackground.png; sourceTree = "<group>"; };
-		9C7A3BEE18C851C50070BB5F /* JoystickBackground@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "JoystickBackground@2x.png"; path = "emulator/Images/JoystickBackground@2x.png"; sourceTree = "<group>"; };
-		9C7A3BEF18C851C50070BB5F /* JoystickButton.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = JoystickButton.png; path = emulator/Images/JoystickButton.png; sourceTree = "<group>"; };
-		9C7A3BF018C851C50070BB5F /* JoystickButton@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "JoystickButton@2x.png"; path = "emulator/Images/JoystickButton@2x.png"; sourceTree = "<group>"; };
-		9C7A3BF118C851C50070BB5F /* LTrigger.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = LTrigger.png; path = emulator/Images/LTrigger.png; sourceTree = "<group>"; };
-		9C7A3BF218C851C50070BB5F /* LTrigger@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "LTrigger@2x.png"; path = "emulator/Images/LTrigger@2x.png"; sourceTree = "<group>"; };
-		9C7A3BF318C851C50070BB5F /* menuback.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = menuback.png; path = emulator/Images/menuback.png; sourceTree = "<group>"; };
-		9C7A3BF418C851C50070BB5F /* menuback@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "menuback@2x.png"; path = "emulator/Images/menuback@2x.png"; sourceTree = "<group>"; };
-		9C7A3BF518C851C50070BB5F /* menuicon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = menuicon.png; path = emulator/Images/menuicon.png; sourceTree = "<group>"; };
-		9C7A3BF618C851C50070BB5F /* menuicon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "menuicon@2x.png"; path = "emulator/Images/menuicon@2x.png"; sourceTree = "<group>"; };
-		9C7A3BFB18C851C50070BB5F /* RTrigger.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = RTrigger.png; path = emulator/Images/RTrigger.png; sourceTree = "<group>"; };
-		9C7A3BFC18C851C50070BB5F /* RTrigger@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "RTrigger@2x.png"; path = "emulator/Images/RTrigger@2x.png"; sourceTree = "<group>"; };
-		9C7A3BFD18C851C50070BB5F /* Start.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Start.png; path = emulator/Images/Start.png; sourceTree = "<group>"; };
-		9C7A3BFE18C851C50070BB5F /* Start@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Start@2x.png"; path = "emulator/Images/Start@2x.png"; sourceTree = "<group>"; };
-		9C7D580E19301E140004EA2C /* CloudVMUViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CloudVMUViewController.h; path = emulator/CloudVMUViewController.h; sourceTree = "<group>"; };
-		9C7D580F19301E140004EA2C /* CloudVMUViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = CloudVMUViewController.m; path = emulator/CloudVMUViewController.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -627,7 +632,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				87C4CC5D1B75499700CE6D3C /* GameController.framework in Frameworks */,
+				87D92F4E1B7A1B5700D8FD9E /* GameController.framework in Frameworks */,
 				87C4AA561A4414070048DBF4 /* AssetsLibrary.framework in Frameworks */,
 				87C4AA541A440BEB0048DBF4 /* libz.dylib in Frameworks */,
 				87078A8F18A47FE90034C7A0 /* OpenGLES.framework in Frameworks */,
@@ -644,10 +649,10 @@
 		8497BCBB1A41A0E900EFB9ED /* linux */ = {
 			isa = PBXGroup;
 			children = (
-				87C4CC591B75491400CE6D3C /* nixprof */,
 				849C0D601B072C07008BAAA4 /* context.cpp */,
 				849C0D611B072C07008BAAA4 /* context.h */,
 				8497BCBC1A41A0E900EFB9ED /* common.cpp */,
+				8497BCBD1A41A0E900EFB9ED /* nixprof.cpp */,
 				8497BCBE1A41A0E900EFB9ED /* typedefs.h */,
 			);
 			path = linux;
@@ -728,7 +733,7 @@
 		87078A8518A47FE90034C7A0 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				87C4CC5C1B75499700CE6D3C /* GameController.framework */,
+				87D92F4D1B7A1B5700D8FD9E /* GameController.framework */,
 				87C4AA551A4414070048DBF4 /* AssetsLibrary.framework */,
 				87C4AA531A440BEB0048DBF4 /* libz.dylib */,
 				87078A8618A47FE90034C7A0 /* Foundation.framework */,
@@ -750,13 +755,13 @@
 				9C7A393218C804A80070BB5F /* reicast.entitlements */,
 				87078AA218A47FE90034C7A0 /* Shader.fsh */,
 				87078AA418A47FE90034C7A0 /* Shader.vsh */,
-				87C64DC11B6E7FC600FDD99A /* iCade-iOS */,
+				87D92F4F1B7A1BB100D8FD9E /* iCade-iOS */,
 				9C7A393618C805F70070BB5F /* View Controller Subclasses */,
 				9C7A393718C806060070BB5F /* Images */,
 				9C7A393418C805980070BB5F /* Third-Party Frameworks */,
 				87078A9118A47FE90034C7A0 /* Supporting Files */,
 				9C7A393818C806DE0070BB5F /* Emulator Core Code */,
-				8497BCC11A41B02000EFB9ED /* ios_main.mm */,
+				87D92EA71B7839E600D8FD9E /* ios_main.mm */,
 			);
 			name = reicast;
 			path = emulator;
@@ -773,23 +778,16 @@
 			name = "Supporting Files";
 			sourceTree = "<group>";
 		};
-		87C4CC591B75491400CE6D3C /* nixprof */ = {
+		87D92F4F1B7A1BB100D8FD9E /* iCade-iOS */ = {
 			isa = PBXGroup;
 			children = (
-				87C4CC5A1B75491400CE6D3C /* nixprof.cpp */,
-			);
-			path = nixprof;
-			sourceTree = "<group>";
-		};
-		87C64DC11B6E7FC600FDD99A /* iCade-iOS */ = {
-			isa = PBXGroup;
-			children = (
-				87C64DD91B6E80A400FDD99A /* iCadeReaderView.h */,
-				87C64DDA1B6E80A400FDD99A /* iCadeReaderView.m */,
-				87C64DDB1B6E80A400FDD99A /* iCadeState.h */,
+				87D92F501B7A1BB100D8FD9E /* iCadeReaderView.h */,
+				87D92F511B7A1BB100D8FD9E /* iCadeReaderView.m */,
+				87D92F521B7A1BB100D8FD9E /* iCadeState.h */,
+				87D92F531B7A1BB100D8FD9E /* LICENSE */,
 			);
 			path = "iCade-iOS";
-			sourceTree = "<group>";
+			sourceTree = SOURCE_ROOT;
 		};
 		9C7A393418C805980070BB5F /* Third-Party Frameworks */ = {
 			isa = PBXGroup;
@@ -803,24 +801,26 @@
 		9C7A393618C805F70070BB5F /* View Controller Subclasses */ = {
 			isa = PBXGroup;
 			children = (
-				9C7D580E19301E140004EA2C /* CloudVMUViewController.h */,
-				9C7D580F19301E140004EA2C /* CloudVMUViewController.m */,
-				9C7A3B6C18C820B40070BB5F /* InputViewController.h */,
-				9C7A3B6D18C820B40070BB5F /* InputViewController.m */,
-				9C7A3B6618C8208D0070BB5F /* SettingsViewController.h */,
-				9C7A3B6718C8208D0070BB5F /* SettingsViewController.m */,
-				9C7A3B6918C8209E0070BB5F /* PathsViewController.h */,
-				9C7A3B6A18C8209E0070BB5F /* PathsViewController.m */,
-				9C7A3B6018C820630070BB5F /* AboutViewController.h */,
-				9C7A3B6118C820630070BB5F /* AboutViewController.m */,
-				9C7A3B5D18C81D090070BB5F /* BrowserTableViewController.h */,
-				9C7A3B5E18C81D090070BB5F /* BrowserTableViewController.m */,
-				9C7A3B5A18C81BC80070BB5F /* SideDrawerViewController.h */,
-				9C7A3B5B18C81BC80070BB5F /* SideDrawerViewController.m */,
-				87078AA618A47FE90034C7A0 /* EmulatorViewController.h */,
-				87078AA718A47FE90034C7A0 /* EmulatorViewController.mm */,
-				846293C41A6CE61900262464 /* EmulatorView.h */,
-				846293C51A6CE61900262464 /* EmulatorView.mm */,
+				87D92F031B7A1B3400D8FD9E /* AboutViewController.h */,
+				87D92F041B7A1B3400D8FD9E /* AboutViewController.m */,
+				87D92F051B7A1B3400D8FD9E /* BrowserTableViewController.h */,
+				87D92F061B7A1B3400D8FD9E /* BrowserTableViewController.m */,
+				87D92F071B7A1B3400D8FD9E /* CloudVMUViewController.h */,
+				87D92F081B7A1B3400D8FD9E /* CloudVMUViewController.m */,
+				87D92F091B7A1B3400D8FD9E /* EmulatorView.h */,
+				87D92F0A1B7A1B3400D8FD9E /* EmulatorView.mm */,
+				87D92F0B1B7A1B3400D8FD9E /* EmulatorViewController.h */,
+				87D92F0C1B7A1B3400D8FD9E /* EmulatorViewController.mm */,
+				87D92F0D1B7A1B3400D8FD9E /* InputViewController.h */,
+				87D92F0E1B7A1B3400D8FD9E /* InputViewController.m */,
+				87D92F0F1B7A1B3400D8FD9E /* PathsViewController.h */,
+				87D92F101B7A1B3400D8FD9E /* PathsViewController.m */,
+				87D92F111B7A1B3400D8FD9E /* SettingsViewController.h */,
+				87D92F121B7A1B3400D8FD9E /* SettingsViewController.m */,
+				87D92F131B7A1B3400D8FD9E /* SideDrawerViewController.h */,
+				87D92F141B7A1B3400D8FD9E /* SideDrawerViewController.m */,
+				87D92F151B7A1B3400D8FD9E /* SWRevealViewController.h */,
+				87D92F161B7A1B3400D8FD9E /* SWRevealViewController.m */,
 			);
 			name = "View Controller Subclasses";
 			path = ..;
@@ -829,28 +829,28 @@
 		9C7A393718C806060070BB5F /* Images */ = {
 			isa = PBXGroup;
 			children = (
-				9C7A3BD918C851C50070BB5F /* 210-octocat.png */,
-				9C7A3BDA18C851C50070BB5F /* 210-octocat@2x.png */,
-				9C7A3BDB18C851C50070BB5F /* 210-twitterbird.png */,
-				9C7A3BDC18C851C50070BB5F /* 210-twitterbird@2x.png */,
-				9C7A3BDD18C851C50070BB5F /* ABXYPad.png */,
-				9C7A3BDE18C851C50070BB5F /* ABXYPad@2x.png */,
-				9C7A3BE718C851C50070BB5F /* DPad.png */,
-				9C7A3BE818C851C50070BB5F /* DPad@2x.png */,
-				9C7A3BED18C851C50070BB5F /* JoystickBackground.png */,
-				9C7A3BEE18C851C50070BB5F /* JoystickBackground@2x.png */,
-				9C7A3BEF18C851C50070BB5F /* JoystickButton.png */,
-				9C7A3BF018C851C50070BB5F /* JoystickButton@2x.png */,
-				9C7A3BF118C851C50070BB5F /* LTrigger.png */,
-				9C7A3BF218C851C50070BB5F /* LTrigger@2x.png */,
-				9C7A3BF318C851C50070BB5F /* menuback.png */,
-				9C7A3BF418C851C50070BB5F /* menuback@2x.png */,
-				9C7A3BF518C851C50070BB5F /* menuicon.png */,
-				9C7A3BF618C851C50070BB5F /* menuicon@2x.png */,
-				9C7A3BFB18C851C50070BB5F /* RTrigger.png */,
-				9C7A3BFC18C851C50070BB5F /* RTrigger@2x.png */,
-				9C7A3BFD18C851C50070BB5F /* Start.png */,
-				9C7A3BFE18C851C50070BB5F /* Start@2x.png */,
+				87D92F211B7A1B4800D8FD9E /* 210-octocat.png */,
+				87D92F221B7A1B4800D8FD9E /* 210-octocat@2x.png */,
+				87D92F231B7A1B4800D8FD9E /* 210-twitterbird.png */,
+				87D92F241B7A1B4800D8FD9E /* 210-twitterbird@2x.png */,
+				87D92F251B7A1B4800D8FD9E /* ABXYPad.png */,
+				87D92F261B7A1B4800D8FD9E /* ABXYPad@2x.png */,
+				87D92F271B7A1B4800D8FD9E /* DPad.png */,
+				87D92F281B7A1B4800D8FD9E /* DPad@2x.png */,
+				87D92F291B7A1B4800D8FD9E /* JoystickBackground.png */,
+				87D92F2A1B7A1B4800D8FD9E /* JoystickBackground@2x.png */,
+				87D92F2B1B7A1B4800D8FD9E /* JoystickButton.png */,
+				87D92F2C1B7A1B4800D8FD9E /* JoystickButton@2x.png */,
+				87D92F2D1B7A1B4800D8FD9E /* LTrigger.png */,
+				87D92F2E1B7A1B4800D8FD9E /* LTrigger@2x.png */,
+				87D92F2F1B7A1B4800D8FD9E /* menuback.png */,
+				87D92F301B7A1B4800D8FD9E /* menuback@2x.png */,
+				87D92F311B7A1B4800D8FD9E /* menuicon.png */,
+				87D92F321B7A1B4800D8FD9E /* menuicon@2x.png */,
+				87D92F331B7A1B4800D8FD9E /* RTrigger.png */,
+				87D92F341B7A1B4800D8FD9E /* RTrigger@2x.png */,
+				87D92F351B7A1B4800D8FD9E /* Start.png */,
+				87D92F361B7A1B4800D8FD9E /* Start@2x.png */,
 			);
 			name = Images;
 			path = ..;
@@ -1479,38 +1479,39 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				9C7A3C1818C851C50070BB5F /* LTrigger@2x.png in Resources */,
-				9C7A3C1318C851C50070BB5F /* JoystickBackground.png in Resources */,
+				87D92F461B7A1B4800D8FD9E /* menuback@2x.png in Resources */,
+				87D92F491B7A1B4800D8FD9E /* RTrigger.png in Resources */,
+				87D92F4B1B7A1B4800D8FD9E /* Start.png in Resources */,
 				8703BC3C1A44B8DA00E7E939 /* Icon-72@2x.png in Resources */,
 				9C7A393318C804A80070BB5F /* reicast.entitlements in Resources */,
-				9C7A3C0018C851C50070BB5F /* 210-octocat@2x.png in Resources */,
-				9C7A3C1718C851C50070BB5F /* LTrigger.png in Resources */,
-				9C7A3C0218C851C50070BB5F /* 210-twitterbird@2x.png in Resources */,
+				87D92F391B7A1B4800D8FD9E /* 210-twitterbird.png in Resources */,
+				87D92F3A1B7A1B4800D8FD9E /* 210-twitterbird@2x.png in Resources */,
+				87D92F3D1B7A1B4800D8FD9E /* DPad.png in Resources */,
+				87D92F3C1B7A1B4800D8FD9E /* ABXYPad@2x.png in Resources */,
+				87D92F401B7A1B4800D8FD9E /* JoystickBackground@2x.png in Resources */,
 				9C7A3AA418C806E00070BB5F /* core.mk in Resources */,
-				9C7A3C2218C851C50070BB5F /* RTrigger@2x.png in Resources */,
-				9C7A3C0E18C851C50070BB5F /* DPad@2x.png in Resources */,
+				87D92F421B7A1B4800D8FD9E /* JoystickButton@2x.png in Resources */,
+				87D92F3F1B7A1B4800D8FD9E /* JoystickBackground.png in Resources */,
+				87D92F4A1B7A1B4800D8FD9E /* RTrigger@2x.png in Resources */,
 				87078AA318A47FE90034C7A0 /* Shader.fsh in Resources */,
-				9C7A3C2118C851C50070BB5F /* RTrigger.png in Resources */,
-				9C7A3C1C18C851C50070BB5F /* menuicon@2x.png in Resources */,
-				9C7A3C0118C851C50070BB5F /* 210-twitterbird.png in Resources */,
 				8703BC3D1A44B8DA00E7E939 /* Icon.png in Resources */,
-				9C7A3C0D18C851C50070BB5F /* DPad.png in Resources */,
-				9C7A3C1518C851C50070BB5F /* JoystickButton.png in Resources */,
 				8703BC3E1A44B8DA00E7E939 /* Icon@2x.png in Resources */,
-				9C7A3BFF18C851C50070BB5F /* 210-octocat.png in Resources */,
 				8703BC3B1A44B8DA00E7E939 /* Icon-72.png in Resources */,
-				9C7A3C1618C851C50070BB5F /* JoystickButton@2x.png in Resources */,
-				9C7A3C1418C851C50070BB5F /* JoystickBackground@2x.png in Resources */,
-				9C7A3C1918C851C50070BB5F /* menuback.png in Resources */,
 				9C7A3BC418C84EA10070BB5F /* MainStoryboard.storyboard in Resources */,
-				9C7A3C1A18C851C50070BB5F /* menuback@2x.png in Resources */,
+				87D92F381B7A1B4800D8FD9E /* 210-octocat@2x.png in Resources */,
+				87D92F431B7A1B4800D8FD9E /* LTrigger.png in Resources */,
+				87D92F3E1B7A1B4800D8FD9E /* DPad@2x.png in Resources */,
 				9C7A3B4418C806E00070BB5F /* README.md in Resources */,
-				9C7A3C1B18C851C50070BB5F /* menuicon.png in Resources */,
-				9C7A3C0418C851C50070BB5F /* ABXYPad@2x.png in Resources */,
+				87D92F4C1B7A1B4800D8FD9E /* Start@2x.png in Resources */,
+				87D92F471B7A1B4800D8FD9E /* menuicon.png in Resources */,
+				87D92F411B7A1B4800D8FD9E /* JoystickButton.png in Resources */,
+				87D92F441B7A1B4800D8FD9E /* LTrigger@2x.png in Resources */,
+				87D92F551B7A1BB100D8FD9E /* LICENSE in Resources */,
+				87D92F451B7A1B4800D8FD9E /* menuback.png in Resources */,
 				87078AA518A47FE90034C7A0 /* Shader.vsh in Resources */,
-				9C7A3C0318C851C50070BB5F /* ABXYPad.png in Resources */,
-				9C7A3C2418C851C50070BB5F /* Start@2x.png in Resources */,
-				9C7A3C2318C851C50070BB5F /* Start.png in Resources */,
+				87D92F3B1B7A1B4800D8FD9E /* ABXYPad.png in Resources */,
+				87D92F481B7A1B4800D8FD9E /* menuicon@2x.png in Resources */,
+				87D92F371B7A1B4800D8FD9E /* 210-octocat.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1552,6 +1553,7 @@
 				9C7A3B0718C806E00070BB5F /* vbaARM.cpp in Sources */,
 				9C7A3AD218C806E00070BB5F /* zip_fread.c in Sources */,
 				9C7A3B0418C806E00070BB5F /* sgc_if.cpp in Sources */,
+				87D92F1E1B7A1B3400D8FD9E /* SettingsViewController.m in Sources */,
 				9C7A3B1E18C806E00070BB5F /* decoder.cpp in Sources */,
 				9C7A3B2A18C806E00070BB5F /* rtc.cpp in Sources */,
 				877652C41B6157BD00437F10 /* audiobackend_oss.cpp in Sources */,
@@ -1571,6 +1573,7 @@
 				9C7A3B2318C806E00070BB5F /* sh4_opcodes.cpp in Sources */,
 				9C7A3ADA18C806E00070BB5F /* zip_name_locate.c in Sources */,
 				9C7A3B1B18C806E00070BB5F /* ta_ctx.cpp in Sources */,
+				87D92F1A1B7A1B3400D8FD9E /* EmulatorView.mm in Sources */,
 				9C7A3AE018C806E00070BB5F /* zip_set_archive_flag.c in Sources */,
 				9C7A3B3518C806E00070BB5F /* cdi.cpp in Sources */,
 				9C7A3AE818C806E00070BB5F /* zip_source_zip.c in Sources */,
@@ -1583,13 +1586,14 @@
 				9C7A3B4918C806E00070BB5F /* gles.cpp in Sources */,
 				9C7A3ADD18C806E00070BB5F /* zip_rename.c in Sources */,
 				9C7A3ADB18C806E00070BB5F /* zip_new.c in Sources */,
-				87C64DDC1B6E80A400FDD99A /* iCadeReaderView.m in Sources */,
 				9C7A3AD718C806E00070BB5F /* zip_get_name.c in Sources */,
 				877652C61B6157BD00437F10 /* audiostream.cpp in Sources */,
 				877652C51B6157BD00437F10 /* audiobackend_pulseaudio.cpp in Sources */,
 				9C7A3ABD18C806E00070BB5F /* zip_add_dir.c in Sources */,
+				87D92F541B7A1BB100D8FD9E /* iCadeReaderView.m in Sources */,
 				9C7A3B1418C806E00070BB5F /* drkPvr.cpp in Sources */,
 				9C7A3AB318C806E00070BB5F /* pngrtran.c in Sources */,
+				87D92F1F1B7A1B3400D8FD9E /* SideDrawerViewController.m in Sources */,
 				9C7A3AEC18C806E00070BB5F /* zip_strerror.c in Sources */,
 				849C0D6F1B072D14008BAAA4 /* reios_elf.cpp in Sources */,
 				9C7A3AB718C806E00070BB5F /* pngwio.c in Sources */,
@@ -1607,16 +1611,15 @@
 				9C7A3B5918C81A4F0070BB5F /* SWRevealViewController.m in Sources */,
 				9C7A3B0F18C806E00070BB5F /* maple_cfg.cpp in Sources */,
 				9C7A3AF318C806E00070BB5F /* crc32.c in Sources */,
-				9C7A3B5F18C81D090070BB5F /* BrowserTableViewController.m in Sources */,
-				9C7D581019301E140004EA2C /* CloudVMUViewController.m in Sources */,
+				8497BCC01A41A0E900EFB9ED /* nixprof.cpp in Sources */,
 				9C7A3AE118C806E00070BB5F /* zip_set_file_comment.c in Sources */,
 				9C7A3AB118C806E00070BB5F /* pngread.c in Sources */,
 				9C7A3AAC18C806E00070BB5F /* png.c in Sources */,
 				9C7A3AC718C806E00070BB5F /* zip_error_get_sys_type.c in Sources */,
+				87D92F171B7A1B3400D8FD9E /* AboutViewController.m in Sources */,
 				9C7A3B3618C806E00070BB5F /* chd.cpp in Sources */,
 				9C7A3B2118C806E00070BB5F /* sh4_fpu.cpp in Sources */,
 				9C7A3B3218C806E00070BB5F /* sh4_opcode_list.cpp in Sources */,
-				87C4CC5B1B75491400CE6D3C /* nixprof.cpp in Sources */,
 				9C7A3AA918C806E00070BB5F /* elf.cpp in Sources */,
 				9C7A3AA618C806E00070BB5F /* chdr.cpp in Sources */,
 				9C7A3AA518C806E00070BB5F /* cdipsr.cpp in Sources */,
@@ -1627,8 +1630,6 @@
 				9C7A3AF518C806E00070BB5F /* infback.c in Sources */,
 				8497BCCF1A41BFD800EFB9ED /* coreio.cpp in Sources */,
 				9C7A3B0E18C806E00070BB5F /* sb_mem.cpp in Sources */,
-				9C7A3B5C18C81BC80070BB5F /* SideDrawerViewController.m in Sources */,
-				8497BCC21A41B02000EFB9ED /* ios_main.mm in Sources */,
 				9C7A3B2C18C806E00070BB5F /* tmu.cpp in Sources */,
 				9C7A3B4C18C806E00070BB5F /* TexCache.cpp in Sources */,
 				9C7A3B1618C806E00070BB5F /* pvr_regs.cpp in Sources */,
@@ -1645,23 +1646,23 @@
 				9C7A3AD618C806E00070BB5F /* zip_get_file_comment.c in Sources */,
 				9C7A3AEA18C806E00070BB5F /* zip_stat_index.c in Sources */,
 				9C7A3ACF18C806E00070BB5F /* zip_filerange_crc.c in Sources */,
+				87D92F201B7A1B3400D8FD9E /* SWRevealViewController.m in Sources */,
+				87D92F1D1B7A1B3400D8FD9E /* PathsViewController.m in Sources */,
 				9C7A3ABA18C806E00070BB5F /* pngwutil.c in Sources */,
 				9C7A3B2918C806E00070BB5F /* mmu.cpp in Sources */,
-				9C7A3B6B18C8209E0070BB5F /* PathsViewController.m in Sources */,
 				9C7A3AEB18C806E00070BB5F /* zip_stat_init.c in Sources */,
-				9C7A3B6818C8208D0070BB5F /* SettingsViewController.m in Sources */,
 				877652C21B6157BD00437F10 /* audiobackend_alsa.cpp in Sources */,
 				9C7A3B2E18C806E00070BB5F /* sh4_core_regs.cpp in Sources */,
 				9C7A3B1D18C806E00070BB5F /* blockmanager.cpp in Sources */,
 				9C7A3B2B18C806E00070BB5F /* serial.cpp in Sources */,
 				9C7A3B4A18C806E00070BB5F /* gltex.cpp in Sources */,
-				87078AA818A47FE90034C7A0 /* EmulatorViewController.mm in Sources */,
 				9C7A3ACD18C806E00070BB5F /* zip_file_get_offset.c in Sources */,
 				9C7A3B2818C806E00070BB5F /* intc.cpp in Sources */,
 				9C7A3B3A18C806E00070BB5F /* ioctl.cpp in Sources */,
 				9C7A3AF818C806E00070BB5F /* inftrees.c in Sources */,
 				9C7A3AE418C806E00070BB5F /* zip_source_file.c in Sources */,
 				9C7A3AD918C806E00070BB5F /* zip_memdup.c in Sources */,
+				87D92F181B7A1B3400D8FD9E /* BrowserTableViewController.m in Sources */,
 				87078A9B18A47FE90034C7A0 /* AppDelegate.m in Sources */,
 				9C7A3B0218C806E00070BB5F /* aica_mem.cpp in Sources */,
 				9C7A3ACA18C806E00070BB5F /* zip_fclose.c in Sources */,
@@ -1670,9 +1671,7 @@
 				9C7A3AA718C806E00070BB5F /* md5.cpp in Sources */,
 				9C7A3AB818C806E00070BB5F /* pngwrite.c in Sources */,
 				9C7A3B1518C806E00070BB5F /* pvr_mem.cpp in Sources */,
-				9C7A3B6218C820630070BB5F /* AboutViewController.m in Sources */,
 				9C7A3AF718C806E00070BB5F /* inflate.c in Sources */,
-				846293C61A6CE61900262464 /* EmulatorView.mm in Sources */,
 				9C7A3AC918C806E00070BB5F /* zip_error_to_str.c in Sources */,
 				9C7A3B0918C806E00070BB5F /* gdrom_response.cpp in Sources */,
 				9C7A3B2218C806E00070BB5F /* sh4_interpreter.cpp in Sources */,
@@ -1684,16 +1683,17 @@
 				9C7A3AE518C806E00070BB5F /* zip_source_filep.c in Sources */,
 				9C7A3B0318C806E00070BB5F /* dsp.cpp in Sources */,
 				8497BCBF1A41A0E900EFB9ED /* common.cpp in Sources */,
+				87D92F1C1B7A1B3400D8FD9E /* InputViewController.m in Sources */,
 				9C7A3B0B18C806E00070BB5F /* holly_intc.cpp in Sources */,
 				87078A9718A47FE90034C7A0 /* main.m in Sources */,
 				9C7A3AC418C806E00070BB5F /* zip_error.c in Sources */,
 				9C7A3AEE18C806E00070BB5F /* zip_unchange_all.c in Sources */,
 				9C7A3ABE18C806E00070BB5F /* zip_close.c in Sources */,
 				9C7A3B0818C806E00070BB5F /* virt_arm.cpp in Sources */,
-				9C7A3B6E18C820B40070BB5F /* InputViewController.m in Sources */,
 				9C7A3B4E18C806E00070BB5F /* stdclass.cpp in Sources */,
 				9C7A3ABC18C806E00070BB5F /* zip_add.c in Sources */,
 				9C7A3AD418C806E00070BB5F /* zip_get_archive_comment.c in Sources */,
+				87D92F1B1B7A1B3400D8FD9E /* EmulatorViewController.mm in Sources */,
 				9C7A3AEF18C806E00070BB5F /* zip_unchange_archive.c in Sources */,
 				9C7A3AD118C806E00070BB5F /* zip_fopen_index.c in Sources */,
 				9C7A3AF618C806E00070BB5F /* inffast.c in Sources */,
@@ -1701,8 +1701,10 @@
 				9C7A3B1118C806E00070BB5F /* maple_helper.cpp in Sources */,
 				849C0D6E1B072D14008BAAA4 /* gdrom_hle.cpp in Sources */,
 				9C7A3AD018C806E00070BB5F /* zip_fopen.c in Sources */,
+				87D92F191B7A1B3400D8FD9E /* CloudVMUViewController.m in Sources */,
 				9C7A3B1718C806E00070BB5F /* pvr_sb_regs.cpp in Sources */,
 				9C7A3B3918C806E00070BB5F /* ImgReader.cpp in Sources */,
+				87D92EA81B7839E600D8FD9E /* ios_main.mm in Sources */,
 				9C7A3ACC18C806E00070BB5F /* zip_file_error_get.c in Sources */,
 				9C7A3B3F18C806E00070BB5F /* nullDC.cpp in Sources */,
 				9C7A3B0618C806E00070BB5F /* arm_mem.cpp in Sources */,
@@ -1811,7 +1813,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = "emulator/reicast-ios-Prefix.pch";
+				GCC_PREFIX_HEADER = "reicast-ios-Prefix.pch";
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"GLES=1",
 					"DEBUG=1",
@@ -1826,7 +1828,7 @@
 					../../core/deps/,
 					../../core/khronos/,
 				);
-				INFOPLIST_FILE = "emulator/reicast-ios-Info.plist";
+				INFOPLIST_FILE = "reicast-ios-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				ONLY_ACTIVE_ARCH = NO;
 				OTHER_CFLAGS = "-mno-thumb";
@@ -1845,7 +1847,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = "emulator/reicast-ios-Prefix.pch";
+				GCC_PREFIX_HEADER = "reicast-ios-Prefix.pch";
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"GLES=1",
 					"TARGET_IPHONE=1",
@@ -1858,7 +1860,7 @@
 					../../core/deps/,
 					../../core/khronos/,
 				);
-				INFOPLIST_FILE = "emulator/reicast-ios-Info.plist";
+				INFOPLIST_FILE = "reicast-ios-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				ONLY_ACTIVE_ARCH = NO;
 				OTHER_CFLAGS = "-mno-thumb";
