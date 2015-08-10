@@ -408,8 +408,14 @@ u32 DynaRBI::Relink()
 	case BET_DynamicJump:
     {
 #ifdef CALLSTACK
-		SUB(r2,r8,33816576);
-		UBFX(r1,r4,1,23);
+#error offset broken
+#if RAM_SIZE == 33554432
+		SUB(r2, r8, 67371008);
+		UBFX(r1, r4, 1, 24);
+#else
+		SUB(r2, r8, 33816576);
+		UBFX(r1, r4, 1, 23);
+#endif
 
 		if (BlockType==BET_DynamicRet)
 		{
@@ -431,8 +437,13 @@ u32 DynaRBI::Relink()
 #if 1
 			//this is faster
 			//why ? (Icache ?)
-			SUB(r2,r8,33816576);
-			UBFX(r1,r4,1,23);
+#if RAM_SIZE == 33554432
+			SUB(r2, r8, 67371008);
+			UBFX(r1, r4, 1, 24);
+#else
+			SUB(r2, r8, 33816576);
+			UBFX(r1, r4, 1, 23);
+#endif
 			LDR(r15,r2,r1,Offset,true,S_LSL,2);
 			
 #else
@@ -445,8 +456,13 @@ u32 DynaRBI::Relink()
 			}
 			else
 			{
-				SUB(r2,r8,33816576);                    //1
-				UBFX(r1,r4,1,23);                       //1
+#if RAM_SIZE == 33554432
+				SUB(r2, r8, 67371008);
+				UBFX(r1, r4, 1, 24);
+#else
+				SUB(r2, r8, 33816576);
+				UBFX(r1, r4, 1, 23);
+#endif
 				NOP();NOP();                            //2
 				LDR(r15,r2,r1,Offset,true,S_LSL,2);     //1
 			}
@@ -456,8 +472,13 @@ u32 DynaRBI::Relink()
 		{
 			verify(pBranchBlock==0);
 			
-			SUB(r2,r8,33816576);
-			UBFX(r1,r4,1,23);
+#if RAM_SIZE == 33554432
+			SUB(r2, r8, 67371008);
+			UBFX(r1, r4, 1, 24);
+#else
+			SUB(r2, r8, 33816576);
+			UBFX(r1, r4, 1, 23);
+#endif
 			LDR(r15,r2,r1,Offset,true,S_LSL,2);
 		}
 #endif
