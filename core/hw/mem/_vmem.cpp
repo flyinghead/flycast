@@ -336,7 +336,7 @@ void _vmem_map_block(void* base,u32 start,u32 end,u32 mask)
 	u32 j=0;
 	for (u32 i=start;i<=end;i++)
 	{
-		_vmem_MemInfo_ptr[i]=&(((u8*)base)[j]) + FindMask(mask);
+		_vmem_MemInfo_ptr[i]=&(((u8*)base)[j&mask]) + FindMask(mask) - (j & mask);
 		j+=0x1000000;
 	}
 }
