@@ -192,7 +192,11 @@ vram_block* libCore_vramlock_Lock(u32 start_offset64,u32 end_offset64,void* user
 		vramlist_lock.Lock();
 	
 		vram.LockRegion(block->start,block->len);
-		vram.LockRegion(block->start + VRAM_SIZE,block->len);
+
+		if (VRAM_SIZE == 0x800000) {
+			vram.LockRegion(block->start + VRAM_SIZE, block->len);
+		}
+		
 		vramlock_list_add(block);
 		
 		vramlist_lock.Unlock();
