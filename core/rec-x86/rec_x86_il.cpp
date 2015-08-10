@@ -105,7 +105,6 @@ void ngen_CC_Param(shil_opcode* op,shil_param* par,CanonicalParamType tp)
 		case CPT_ptr:
 			verify(par->is_reg());
 
-			die("FAIL");
 			x86e->Emit(op_push,(unat)par->reg_ptr());
 
 			for (u32 ri=0; ri<(*par).count(); ri++)
