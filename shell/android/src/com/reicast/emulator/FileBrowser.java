@@ -239,12 +239,11 @@ public class FileBrowser extends Fragment {
 				filter[i] = new FilenameFilter() {
 
 					public boolean accept(File dir, String name) {
-						if (dir.getName().startsWith(".")
-								|| name.startsWith(".")) {
+						if (dir.getName().equals("obb") || dir.getName().equals("cache") 
+							|| dir.getName().startsWith(".") || name.startsWith(".")) {
 							return false;
 						} else {
-							return StringUtils.endsWithIgnoreCase(name, "."
-									+ type);
+							return StringUtils.endsWithIgnoreCase(name, "." + type);
 						}
 					}
 
@@ -253,7 +252,11 @@ public class FileBrowser extends Fragment {
 			}
 
 			FileUtils fileUtils = new FileUtils();
-			Collection<File> files = fileUtils.listFiles(storage, filter, 1);
+			int recurse = 2;
+			if (array != R.array.images) {
+				recurse = 4;
+			}
+			Collection<File> files = fileUtils.listFiles(storage, filter, recurse);
 			return (List<File>) files;
 		}
 
