@@ -142,25 +142,26 @@ void SetupInput()
 		lt[port]=0;
 	}
 #if HOST_OS != OS_DARWIN && !defined(TARGET_EMSCRIPTEN)
-	if (true) {
-		#ifdef TARGET_PANDORA
-		const char* device = "/dev/input/event4";
-		#else
-		const char* device = "/dev/event2";
-		#endif
-		char name[256]= "Unknown";
+	#ifdef TARGET_PANDORA
+	const char* device = "/dev/input/event4";
+	#else
+	const char* device = "/dev/event2";
+	#endif
+	char name[256]= "Unknown";
 
-		if ((kbfd = open(device, O_RDONLY)) > 0) {
-			fcntl(kbfd,F_SETFL,O_NONBLOCK);
-			if(ioctl(kbfd, EVIOCGNAME(sizeof(name)), name) < 0) {
-				perror("evdev ioctl");
-			}
-
-			printf("The device on %s says its name is %s\n",device, name);
-
+  
+	if ((kbfd = open(device, O_RDONLY)) > 0) {
+		fcntl(kbfd,F_SETFL,O_NONBLOCK);
+		if(ioctl(kbfd, EVIOCGNAME(sizeof(name)), name) < 0) {
+			perror("evdev ioctl");
 		}
-		else
-			perror("evdev open");
+
+		printf("The device on %s says its name is %s\n",device, name);
+
+	}
+	else
+	{
+		perror("evdev open");
 	}
 
 	// Open joystick device
@@ -785,19 +786,16 @@ int main(int argc, wchar* argv[])
 	signal(SIGKILL, clean_exit);
 #endif
 
-#if defined(USES_HOMEDIR) && HOST_OS != OS_DARWIN && !defined(TARGET_EMSCRIPTEN)
-	string home = (string)getenv("HOME");
-	if(home.c_str())
-	{
-		home += "/.reicast";
-		mkdir(home.c_str(), 0755); // create the directory if missing
-		SetHomeDir(home);
-	}
-	else
-		SetHomeDir(".");
-#else
-	SetHomeDir(".");
-#endif
+  string home = ".";
+  #if defined(USES_HOMEDIR)
+	  if(getenv("HOME") != NULL)
+	  {
+		  home = (string)getenv("HOME") + "/.reicast";
+		  mkdir(home.c_str(), 0755); // create the directory if missing
+	  }
+  #endif
+	SetHomeDir(home);
+	printf("Home dir is: %s\n", GetPath("/").c_str());
 
 	#if defined(SUPPORT_X11)
 		x11_keymap[113] = DPad_Left;
@@ -819,8 +817,6 @@ int main(int argc, wchar* argv[])
 
 		x11_keymap[36] = Btn_Start;
 	#endif
-
-	printf("Home dir is: %s\n",GetPath("/").c_str());
 
 	common_linux_setup();
 
