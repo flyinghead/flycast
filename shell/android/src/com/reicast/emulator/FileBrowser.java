@@ -242,6 +242,8 @@ public class FileBrowser extends Fragment {
 						if (dir.getName().equals("obb") || dir.getName().equals("cache") 
 							|| dir.getName().startsWith(".") || name.startsWith(".")) {
 							return false;
+						} else if (array == R.array.flash && !name.startsWith("dc_")) {
+							return false;
 						} else {
 							return StringUtils.endsWithIgnoreCase(name, "." + type);
 						}
@@ -253,7 +255,7 @@ public class FileBrowser extends Fragment {
 
 			FileUtils fileUtils = new FileUtils();
 			int recurse = 2;
-			if (array != R.array.images) {
+			if (array == R.array.flash) {
 				recurse = 4;
 			}
 			Collection<File> files = fileUtils.listFiles(storage, filter, recurse);
