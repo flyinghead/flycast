@@ -1,57 +1,145 @@
 
 LOCAL_PATH := $(call my-dir)
 FOR_LINUX :=1
-NOT_ARM := 1
-
 #NO_REC := 1
 #NO_REND := 1
 WEBUI :=1 
 USE_ALSA := 1
 USE_OSS := 1
 #USE_PULSEAUDIO := 1
-USE_X11 := 1
-
-MFLAGS := 
-ASFLAGS := 
-LDFLAGS :=
-CFLAGS := 
-CXXFLAGS :=
-
-ifeq (,$(ARCH))
-    ARCH = $(shell uname -m)
-endif
-
-$(info Building arch: $(ARCH))
-ifeq ($(ARCH), $(filter $(ARCH), i386 i686))
-    X86_REC := 1
-    MFLAGS += -m32
-    ASFLAGS += -32
-    LDFLAGS += -m32
-    CFLAGS += -m32 -D TARGET_LINUX_x86
-    CXXFLAGS += -fno-exceptions
-else
-    X64_REC := 1
-    CFLAGS += -D TARGET_LINUX_x64
-    CXXFLAGS += -fexceptions
-endif
-
-RZDCY_SRC_DIR = ../../core
-include $(RZDCY_SRC_DIR)/core.mk
 
 CXX=${CC_PREFIX}g++
 CC=${CC_PREFIX}gcc
 AS=${CC_PREFIX}as
 STRIP=${CC_PREFIX}strip
-
 LD=${CC}
+
+MFLAGS := 
+ASFLAGS := 
+LDFLAGS :=
+INCS :=
+LIBS :=
+CFLAGS := 
+CXXFLAGS :=
+
+# Platform auto-detection
+# Can be overridden by using:
+#   make platform=x64
+ifeq (,$(platform))
+    ARCH = $(shell uname -m)
+    ifeq ($(ARCH), $(filter $(ARCH), i386 i686))
+        platform = x86
+    else ifeq ($(ARCH), $(filter $(ARCH), x86_64 AMD64))
+        platform = x64
+    else ifneq (,$(findstring arm,$(ARCH)))
+        HARDWARE = $(shell grep Hardware /proc/cpuinfo)
+        ifneq (,$(findstring BCM2709,$(HARDWARE)))
+            platform = rpi2
+        else ifneq (,$(findstring AM33XX,$(HARDWARE)))
+            platform = beagle
+        else ifneq (,$(findstring Pandora,$(HARDWARE)))
+            platform = pandora
+        else
+            $(error Unsupported Hardware)
+        endif
+    else ifneq (,$(findstring mips,$(ARCH)))
+        platform = gcwz
+    else
+        $(error Unsupported CPU architecture)
+    endif
+endif
+
+$(info Platform: $(platform))
+
+# Generic 32 bit x86 (a.k.a. i386/i486/i686)
+ifneq (,$(findstring x86,$(platform)))
+    X86_REC := 1
+    NOT_ARM := 1
+    USE_X11 := 1
+    MFLAGS += -m32
+    ASFLAGS += -32
+    LDFLAGS += -m32
+    CFLAGS += -m32 -D TARGET_LINUX_x86 -D TARGET_NO_AREC -fsingle-precision-constant
+    CXXFLAGS += -fno-exceptions
+
+# Generic 64 bit x86 (a.k.a. x64/AMD64/x86_64/Intel64/EM64T)
+else ifneq (,$(findstring x64,$(platform)))
+    X64_REC := 1
+    NOT_ARM := 1
+    USE_X11 := 1
+    CFLAGS += -D TARGET_LINUX_x64 -D TARGET_NO_AREC -fsingle-precision-constant
+    CXXFLAGS += -fexceptions
+
+# LinCPP
+else ifneq (,$(findstring lincpp,$(platform)))
+    CPP_REC := 1
+    NOT_ARM := 1
+    USE_X11 := 1
+    CFLAGS += -D TARGET_LINUX_x64 -D TARGET_NO_JIT
+    CXXFLAGS += -fexceptions -std=gnu++11
+
+# Raspberry Pi 2
+else ifneq (,$(findstring rpi2,$(platform)))
+    AS=${CC_PREFIX}gcc
+    MFLAGS += -marm -march=armv7-a -mtune=cortex-a9 -mfpu=neon -mfloat-abi=hard -funroll-loops
+    ASFLAGS += -march=armv7-a -mfpu=neon -mfloat-abi=softfp
+    CFLAGS += -D TARGET_BEAGLE -D TARGET_LINUX_ARMELv7 -DARM_HARDFP -fsingle-precision-constant
+    INCS += -I/opt/vc/include/ -I/opt/vc/include/interface/vmcs_host/linux -I/opt/vc/include/interface/vcos/pthreads -I../linux-deps/include
+    LIBS += -L/opt/vc/lib/  -L../linux-deps/lib -lbcm_host
+    USE_GLES := 1
+
+# BeagleBone Black
+else ifneq (,$(findstring beagle,$(platform)))
+    CC_PREFIX ?= arm-none-linux-gnueabi-
+    MFLAGS += -marm -march=armv7-a -mtune=cortex-a9 -mfpu=neon -mfloat-abi=softfp -funroll-loops
+    ASFLAGS := -march=armv7-a -mfpu=neon -mfloat-abi=softfp
+    CFLAGS += -D TARGET_BEAGLE -fsingle-precision-constant
+    USE_GLES := 1
+
+# Pandora
+else ifneq (,$(findstring pandora,$(platform)))
+    FOR_PANDORA := 1
+    USE_X11 := 1
+    USE_SDL := 1
+    PGO_USE := 1
+    USE_GLES := 1
+    MFLAGS +== -marm -march=armv7-a -mtune=cortex-a8 -mfpu=neon -mfloat-abi=softfp -funroll-loops -fpermissive
+    ASFLAGS += -march=armv7-a -mfpu=neon -mfloat-abi=softfp
+    CFLAGS += -D TARGET_PANDORA  -D WEIRD_SLOWNESS -fsingle-precision-constant
+
+# GCW Zero
+else ifneq (,$(findstring gcwz,$(platform)))
+    NOT_ARM := 1
+    NO_REC := 1
+    CC_PREFIX ?= /opt/gcw0-toolchain/usr/bin/mipsel-gcw0-linux-uclibc-
+    CFLAGS += -D TARGET_GCW0 -D TARGET_NO_REC -fsingle-precision-constant
+    LIBS += -L../linux-deps/lib -L./enta_viv -lglapi
+    GCWZ_PKG = reicast-gcwz.opk
+    GCWZ_PKG_FILES = gcwz/default.gcw0.desktop gcwz/icon-32.png
+else
+    $(error Unknown platform)
+endif
+
+RZDCY_SRC_DIR = ../../core
+include $(RZDCY_SRC_DIR)/core.mk
 
 LDFLAGS += -g -Wl,-Map,$(notdir $@).map,--gc-sections -Wl,-O3 -Wl,--sort-common
 
-CFLAGS += -g -O3 -D RELEASE -c -D USES_HOMEDIR -D TARGET_NO_AREC #-D NO_REND
-CFLAGS += -frename-registers -fno-strict-aliasing -fsingle-precision-constant 
-CFLAGS += -ffast-math -ftree-vectorize 
+CFLAGS += -g -O3 -D RELEASE -c -D USES_HOMEDIR #-D NO_REND
+CFLAGS += -frename-registers -fno-strict-aliasing
+CFLAGS += -ffast-math -ftree-vectorize
 
-CXXFLAGS += $(CFLAGS) $(MFLAGS) -fno-rtti -fpermissive -fno-operator-names
+CXXFLAGS += -fno-rtti -fpermissive -fno-operator-names
+
+INCS += -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps -I$(RZDCY_SRC_DIR)/khronos
+
+LIBS += -lm -lrt -ldl
+LIBS  += -lpthread
+
+ifdef USE_SDL
+    CXXFLAGS += `sdl-config --cflags`
+    LIBS += `sdl-config --libs`
+endif
 
 ifdef PGO_MAKE
     CFLAGS += -fprofile-generate -pg
@@ -68,12 +156,6 @@ ifdef LTO_TEST
     CFLAGS += -flto -fwhole-program 
     LDFLAGS +=-flto -fwhole-program 
 endif
-
-INCS	:= -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps -I$(RZDCY_SRC_DIR)/khronos
-
-LIBS    := # use system libs
-LIBS    += -lm -lrt -ldl
-LIBS    += -lpthread
 
 ifdef USE_X11
     CFLAGS += -D SUPPORT_X11
@@ -107,15 +189,16 @@ endif
 OBJECTS=$(RZDCY_FILES:.cpp=.build_obj)
 OBJECTS:=$(OBJECTS:.c=.build_obj)
 OBJECTS:=$(OBJECTS:.S=.build_obj)
-OBJECTS:=$(patsubst $(RZDCY_SRC_DIR)/%,obj/%,$(OBJECTS))
-
+OBJECTS:=$(patsubst $(RZDCY_SRC_DIR)/%,obj-$(platform)/%,$(OBJECTS))
 
 EXECUTABLE_STRIPPED=nosym-reicast.elf
 EXECUTABLE=reicast.elf
 
-PACKAGE_FILES=$(EXECUTABLE_STRIPPED) default.gcw0.desktop icon-32.png
 
 all: $(CPPFILES) $(EXECUTABLE) $(EXECUTABLE_STRIPPED)
+ifneq (,$(findstring gcwz,$(platform)))
+	mksquashfs $(EXECUTABLE_STRIPPED) $(GCWZ_PKG_FILES) $(GCWZ_PKG) -all-root
+endif
 	
 $(EXECUTABLE): $(OBJECTS)
 	$(CXX) $(MFLAGS) $(EXTRAFLAGS) $(LDFLAGS)  $(OBJECTS) $(LIBS) -o $@
@@ -123,18 +206,17 @@ $(EXECUTABLE): $(OBJECTS)
 $(EXECUTABLE_STRIPPED): $(EXECUTABLE)
 	cp $< $@ && $(STRIP) $@
 
-obj/%.build_obj : $(RZDCY_SRC_DIR)/%.cpp
+obj-$(platform)/%.build_obj : $(RZDCY_SRC_DIR)/%.cpp
 	mkdir -p $(dir $@)
-	$(CXX) $(EXTRAFLAGS) $(INCS) $(CFLAGS) $(CXXFLAGS) $< -o $@
+	$(CXX) $(EXTRAFLAGS) $(INCS) $(CFLAGS) $(MFLAGS) $(CXXFLAGS) $< -o $@
 	
-obj/%.build_obj : $(RZDCY_SRC_DIR)/%.c
+obj-$(platform)/%.build_obj : $(RZDCY_SRC_DIR)/%.c
 	mkdir -p $(dir $@)
 	$(CC) $(EXTRAFLAGS) $(INCS) $(CFLAGS) $< -o $@
 
-obj/%.build_obj : $(RZDCY_SRC_DIR)/%.S
+obj-$(platform)/%.build_obj : $(RZDCY_SRC_DIR)/%.S
 	mkdir -p $(dir $@)	
-	$(AS) $(ASFLAGS) $(INCS) $< -o $@
-
+	$(AS) $(ASFLAGS) $(INCS) $(CFLAGS) $< -o $@
 
 clean:
 	rm $(OBJECTS) $(EXECUTABLE) -f
