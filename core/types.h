@@ -491,7 +491,7 @@ using namespace std;
 #endif
 
 
-#if DC_PLATFORM==DC_PLATFORM_NORMAL
+#if DC_PLATFORM==DC_PLATFORM_DREAMCAST
 	#define VER_EMUNAME		"newdc"
 #elif DC_PLATFORM==DC_PLATFORM_DEV_UNIT
 	#define VER_EMUNAME		"newdc-DevKit-SET5.21"
