@@ -239,12 +239,13 @@ public class FileBrowser extends Fragment {
 				filter[i] = new FilenameFilter() {
 
 					public boolean accept(File dir, String name) {
-						if (dir.getName().startsWith(".")
-								|| name.startsWith(".")) {
+						if (dir.getName().equals("obb") || dir.getName().equals("cache") 
+							|| dir.getName().startsWith(".") || name.startsWith(".")) {
+							return false;
+						} else if (array == R.array.flash && !name.startsWith("dc_")) {
 							return false;
 						} else {
-							return StringUtils.endsWithIgnoreCase(name, "."
-									+ type);
+							return StringUtils.endsWithIgnoreCase(name, "." + type);
 						}
 					}
 
@@ -253,7 +254,11 @@ public class FileBrowser extends Fragment {
 			}
 
 			FileUtils fileUtils = new FileUtils();
-			Collection<File> files = fileUtils.listFiles(storage, filter, 1);
+			int recurse = 2;
+			if (array == R.array.flash) {
+				recurse = 4;
+			}
+			Collection<File> files = fileUtils.listFiles(storage, filter, recurse);
 			return (List<File>) files;
 		}
 
@@ -382,8 +387,6 @@ public class FileBrowser extends Fragment {
 							vib.vibrate(250);
 						} else {
 							vib.vibrate(50);
-							mCallback.onFolderSelected(game != null ? Uri
-									.fromFile(game) : Uri.EMPTY);
 							home_directory = game.getAbsolutePath().substring(0,
 									game.getAbsolutePath().lastIndexOf(File.separator)).replace("/data", "");
 							if (!DataDirectoryBIOS()) {
@@ -392,7 +395,8 @@ public class FileBrowser extends Fragment {
 										Toast.LENGTH_LONG);
 							}
 							mPrefs.edit().putString("home_directory", home_directory).commit();
-							JNIdc.config(home_directory.replace("/data", ""));
+                            mCallback.onFolderSelected(Uri.fromFile(new File(home_directory)));
+							JNIdc.config(home_directory);
 						}
 					}
 				});
@@ -473,29 +477,24 @@ public class FileBrowser extends Fragment {
 								sv.scrollTo(0, 0);
 								vib.vibrate(50);
 							} else if (view.getTag() == null) {
-								vib.vibrate(50);
-
-								mCallback.onFolderSelected(Uri
-										.fromFile(new File(heading)));
 								vib.vibrate(250);
 
 								if (games) {
 									game_directory = heading;
-									mPrefs.edit()
-											.putString(Config.pref_games,
-													heading).commit();
+									mPrefs.edit().putString(Config.pref_games, heading).commit();
+									mCallback.onFolderSelected(Uri.fromFile(new File(game_directory)));
 								} else {
 									home_directory = heading.replace("/data", "");
-									mPrefs.edit()
-											.putString(Config.pref_home,
-													heading).commit();
+									mPrefs.edit().putString(Config.pref_home, home_directory).commit();
 									if (!DataDirectoryBIOS()) {
 										MainActivity.showToastMessage(getActivity(), 
 												getActivity().getString(R.string.config_data, home_directory),
 												Toast.LENGTH_LONG);
 									}
-									JNIdc.config(heading);
+                                    mCallback.onFolderSelected(Uri.fromFile(new File(home_directory)));
+									JNIdc.config(home_directory);
 								}
+								
 							}
 						}
 					});
