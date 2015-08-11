@@ -21,6 +21,7 @@ include $(CLEAR_VARS)
 
 FOR_ANDROID := 1
 WEBUI := 1
+USE_GLES := 1
 
 ifneq ($(TARGET_ARCH_ABI),armeabi-v7a)
   NOT_ARM := 1
