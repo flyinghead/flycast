@@ -7,7 +7,6 @@ WEBUI :=1
 USE_ALSA := 1
 USE_OSS := 1
 #USE_PULSEAUDIO := 1
-USE_X11 := 1
 
 CXX=${CC_PREFIX}g++
 CC=${CC_PREFIX}gcc
@@ -56,6 +55,7 @@ $(info Platform: $(platform))
 ifneq (,$(findstring x86,$(platform)))
     X86_REC := 1
     NOT_ARM := 1
+    USE_X11 := 1
     MFLAGS += -m32
     ASFLAGS += -32
     LDFLAGS += -m32
@@ -66,6 +66,7 @@ ifneq (,$(findstring x86,$(platform)))
 else ifneq (,$(findstring x64,$(platform)))
     X64_REC := 1
     NOT_ARM := 1
+    USE_X11 := 1
     CFLAGS += -D TARGET_LINUX_x64 -D TARGET_NO_AREC -fsingle-precision-constant
     CXXFLAGS += -fexceptions
 
@@ -73,6 +74,7 @@ else ifneq (,$(findstring x64,$(platform)))
 else ifneq (,$(findstring lincpp,$(platform)))
     CPP_REC := 1
     NOT_ARM := 1
+    USE_X11 := 1
     CFLAGS += -D TARGET_LINUX_x64 -D TARGET_NO_JIT
     CXXFLAGS += -fexceptions -std=gnu++11
 
@@ -97,6 +99,7 @@ else ifneq (,$(findstring beagle,$(platform)))
 # Pandora
 else ifneq (,$(findstring pandora,$(platform)))
     FOR_PANDORA := 1
+    USE_X11 := 1
     USE_SDL := 1
     PGO_USE := 1
     USE_GLES := 1
