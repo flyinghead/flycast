@@ -18,7 +18,7 @@
 #include <sstream>
 
 #if FEAT_HAS_COREIO_HTTP
-	#if HOST_OS == OS_LINUX
+	#if HOST_OS == OS_LINUX || HOST_OS == OS_DARWIN
 		#include <sys/socket.h>
 		#include <netinet/in.h>
 		#include <netinet/ip.h>

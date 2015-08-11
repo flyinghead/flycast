@@ -23,7 +23,6 @@
     <string name="require_bios">Es muss ein BIOS bereitgestellt werden.</string>
     <string name="data_folder">Das aktuelle Datenverzeichnis wird überprüft.</string>
     <string name="emu_crash">Emulator-Fehler!</string>
-    <string name="emu_toast">Emulator-Fehler:\n %1$s</string>
     
     <string name="folder_bios">BIOS STARTEN</string>
     <string name="folder_select">AKTUELLES VERZEICHNIS WÄHLEN</string>

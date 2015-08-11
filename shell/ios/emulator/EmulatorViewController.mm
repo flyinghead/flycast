@@ -64,6 +64,11 @@ extern "C" int reicast_main(int argc, char* argv[]);
     GLKView *view = (GLKView *)self.view;
     view.context = self.context;
     view.drawableDepthFormat = GLKViewDrawableDepthFormat24;
+	
+	self.iCadeReader = [[iCadeReaderView alloc] init];
+	[self.view addSubview:self.iCadeReader];
+	self.iCadeReader.delegate = self;
+	self.iCadeReader.active = YES;
     
     [self setupGL];
     
