@@ -408,7 +408,7 @@ void recSh4_Init()
 	bm_Init();
 	bm_Reset();
 
-	verify(rcb_noffs(p_sh4rcb->fpcb) == -(FPCB_SIZE*sizeof(void*) + 0x40000));
+	verify(rcb_noffs(p_sh4rcb->fpcb) == FPCB_OFFSET);
 
 	verify(rcb_noffs(p_sh4rcb->sq_buffer) == -512);
 

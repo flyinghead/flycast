@@ -13,6 +13,7 @@ u32 RomSize;
 
 	#include <unistd.h>
 	#include <fcntl.h>
+	#include <sys/mman.h>
 #endif
 
 fd_t*	RomCacheMap;
@@ -26,7 +27,7 @@ bool naomi_cart_LoadRom(char* file)
 	printf("\nnullDC-Naomi rom loader v1.2\n");
 
 	size_t folder_pos = strlen(file) - 1;
-	while (folder_pos>1 && file[folder_pos] != '\\')
+	while (folder_pos>1 && (file[folder_pos] != '\\' && file[folder_pos] != '/'))
 		folder_pos--;
 
 	folder_pos++;
@@ -99,10 +100,11 @@ bool naomi_cart_LoadRom(char* file)
 #if HOST_OS == OS_WINDOWS
 	RomPtr = (u8*)VirtualAlloc(0, RomSize, MEM_RESERVE, PAGE_NOACCESS);
 #else
-	RomPtr = (u8*)mmap(0, RomSize, PROT_NONE, MAP_PRIVATE, 0, 0);
+	RomPtr = (u8*)mmap(0, RomSize, PROT_NONE, MAP_PRIVATE | MAP_ANON, -1, 0);
 #endif
 
 	verify(RomPtr != 0);
+	verify(RomPtr != (void*)-1);
 
 	strcpy(t, file);
 
