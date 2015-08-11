@@ -430,14 +430,14 @@ public class FileBrowser extends Fragment {
 
 		list.add(null);
 
-        if (parent != null) {
+		if (parent != null) {
 			list.add(parent);
-        }
+		}
 
-        if (flist != null) {
-            Arrays.sort(flist, new DirSort());
-            Collections.addAll(list, flist);
-        }
+		if (flist != null) {
+			Arrays.sort(flist, new DirSort());
+			Collections.addAll(list, flist);
+		}
 
 		for (final File file : list) {
 			if (file != null && !file.isDirectory() && !file.getAbsolutePath().equals("/data"))
