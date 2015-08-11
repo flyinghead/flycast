@@ -39,6 +39,20 @@ ifeq (,$(platform))
             platform = beagle
         else ifneq (,$(findstring Pandora,$(HARDWARE)))
             platform = pandora
+        else ifneq (,$(findstring ODROIDC,$(HARDWARE)))
+            platform = odroidc1
+        else ifneq (,$(findstring ODROID-XU3,$(HARDWARE)))
+            platform = odroidxu3
+        else ifneq (,$(findstring ODROIDXU,$(HARDWARE)))
+            platform = odroidxu
+        else ifneq (,$(findstring ODROIDX2,$(HARDWARE)))
+            platform = odroidx2
+        else ifneq (,$(findstring ODROIDX,$(HARDWARE)))
+            platform = odroidx
+        else ifneq (,$(findstring ODROID-U2/U3,$(HARDWARE)))
+            platform = odroidu2
+        else ifneq (,$(findstring ODROIDU2,$(HARDWARE)))
+            platform = odroidu2
         else
             $(error Unsupported Hardware)
         endif
@@ -106,6 +120,35 @@ else ifneq (,$(findstring pandora,$(platform)))
     MFLAGS +== -marm -march=armv7-a -mtune=cortex-a8 -mfpu=neon -mfloat-abi=softfp -funroll-loops -fpermissive
     ASFLAGS += -march=armv7-a -mfpu=neon -mfloat-abi=softfp
     CFLAGS += -D TARGET_PANDORA  -D WEIRD_SLOWNESS -fsingle-precision-constant
+
+# ODROIDs
+else ifneq (,$(findstring odroid,$(platform)))
+    AS=${CC_PREFIX}gcc
+    MFLAGS += -marm -mfpu=neon -mfloat-abi=hard -funroll-loops
+    ASFLAGS += -mfpu=neon -mfloat-abi=hard
+    CFLAGS += -D TARGET_BEAGLE -D TARGET_LINUX_ARMELv7 -DARM_HARDFP -fsingle-precision-constant
+    USE_GLES := 1
+
+    # ODROID-XU3, -XU3 Lite & -XU4
+    ifneq (,$(findstring odroidxu3,$(platform)))
+        MFLAGS += -march=armv7ve -mtune=cortex-a15.cortex-a7
+        ASFLAGS += -march=armv7ve
+
+    # Other ODROIDs
+    else
+        MFLAGS += -march=armv7-a
+        ASFLAGS += -march=armv7-a
+
+        # ODROID-C1 & -C1+
+        ifneq (,$(findstring odroidc1,$(platform)))
+            MFLAGS += -mtune=cortex-a5
+
+        # ODROID-U2, -U3, -X & -X2
+        else
+            MFLAGS += -mtune=cortex-a9
+
+        endif
+    endif
 
 # GCW Zero
 else ifneq (,$(findstring gcwz,$(platform)))
