@@ -40,7 +40,7 @@
 
 #define EXPORT_XPLAY __attribute__ ((visibility("default")))
 
-#define TAG "reidc"
+#define TAG "reicast"
 #define LOGW(...) ((void)__android_log_print( ANDROID_LOG_WARN, TAG, __VA_ARGS__ ))
 
 #undef NUM_METHODS

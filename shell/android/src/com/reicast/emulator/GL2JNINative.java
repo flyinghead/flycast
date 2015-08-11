@@ -137,8 +137,8 @@ public class GL2JNINative extends NativeActivity {
 				} else {
 					descriptor = InputDevice.getDevice(joy).getName();
 				}
-				Log.d("reidc", "InputDevice ID: " + joy);
-				Log.d("reidc",
+				Log.d("reicast", "InputDevice ID: " + joy);
+				Log.d("reicast",
 						"InputDevice Name: "
 								+ InputDevice.getDevice(joy).getName());
 				if (pad.isXperiaPlay) {
@@ -151,7 +151,7 @@ public class GL2JNINative extends NativeActivity {
 						pad.keypadZeus[1] = joy;
 					}
 				}
-				Log.d("reidc", "InputDevice Descriptor: " + descriptor);
+				Log.d("reicast", "InputDevice Descriptor: " + descriptor);
 				pad.deviceId_deviceDescriptor.put(joy, descriptor);
 			}
 
@@ -561,7 +561,7 @@ public class GL2JNINative extends NativeActivity {
 			int y) {
 		Integer playerNum = pad.playerNumX.get(device);
 		if (playerNum != null && playerNum != -1) {
-			Log.d("reidc", playerNum + " - " + device + ": " + source);
+			Log.d("reicast", playerNum + " - " + device + ": " + source);
 //			if (newEvent && source == Gamepad.Xperia_Touchpad) {
 			if (source == Gamepad.Xperia_Touchpad) {
 				if (action == MotionEvent.ACTION_UP) {

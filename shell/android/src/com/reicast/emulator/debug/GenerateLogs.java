@@ -192,7 +192,7 @@ public class GenerateLogs extends AsyncTask<String, Integer, String> {
 			mLogcatProc = null;
 			reader = null;
 			mLogcatProc = Runtime.getRuntime().exec(
-					new String[] { "logcat", "-d", "reidc:V *:S" });
+					new String[] { "logcat", "-d", "reicast:V *:S" });
 			reader = new BufferedReader(new InputStreamReader(
 					mLogcatProc.getInputStream()));
 			log.append(separator);
