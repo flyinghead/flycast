@@ -173,8 +173,13 @@ do_iter:
 HIDDEN(no_update)
 CSYM(no_update):              @ next_pc _MUST_ be on r4 *R4 NOT R0 anymore*
 
+#if DC_PLATFORM == DC_PLATFORM_NAOMI
+	sub r2,r8,#0x4100000
+	ubfx r1,r4,#1,#24
+#else
 	sub r2,r8,#33816576
 	ubfx r1,r4,#1,#23
+#endif
 	ldr pc,[r2,r1,lsl #2]
 
 	@bic r1,r4,#0xFF000000

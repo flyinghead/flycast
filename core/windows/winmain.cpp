@@ -126,10 +126,12 @@ LONG ExeptionHandler(EXCEPTION_POINTERS *ExceptionInfo)
 	{
 		return EXCEPTION_CONTINUE_EXECUTION;
 	}
+#ifndef TARGET_NO_NVMEM
 	else if (BM_LockedWrite(address))
 	{
 		return EXCEPTION_CONTINUE_EXECUTION;
 	}
+#endif
 #if FEAT_SHREC == DYNAREC_JIT && HOST_CPU == CPU_X86
 		else if ( ngen_Rewrite((unat&)ep->ContextRecord->Eip,*(unat*)ep->ContextRecord->Esp,ep->ContextRecord->Eax) )
 		{

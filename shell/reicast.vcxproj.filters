@@ -420,6 +420,12 @@
     <ClCompile Include="..\core\rend\soft\softrend.cpp">
       <Filter>rend\soft</Filter>
     </ClCompile>
+    <ClCompile Include="..\core\hw\naomi\naomi.cpp">
+      <Filter>hw\naomi</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\hw\naomi\naomi_cart.cpp">
+      <Filter>hw\naomi</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="hw">
@@ -553,6 +559,9 @@
     </Filter>
     <Filter Include="rend\soft">
       <UniqueIdentifier>{6c4b2d69-54c0-4660-9969-a98fd0339a15}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="hw\naomi">
+      <UniqueIdentifier>{1752487d-0739-47bf-8c6b-1d38e6f389f7}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -921,6 +930,15 @@
     </ClInclude>
     <ClInclude Include="..\core\rec-x86\rec_x86_ngen.h">
       <Filter>rec-x86</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\hw\naomi\naomi.h">
+      <Filter>hw\naomi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\hw\naomi\naomi_regs.h">
+      <Filter>hw\naomi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\hw\naomi\naomi_cart.h">
+      <Filter>hw\naomi</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -172,7 +172,7 @@ struct DCFlashChip : MemChip // I think its Micronix :p
 	{
 		u32 rv=MemChip::Read8(addr);
 
-		#if DC_PLATFORM==DC_PLATFORM_NORMAL
+		#if DC_PLATFORM==DC_PLATFORM_DREAMCAST
 			if ((addr==0x1A002 || addr==0x1A0A2) && settings.dreamcast.region<=2)
 				return '0' + settings.dreamcast.region;
 			else if ((addr==0x1A004 || addr==0x1A0A4) && settings.dreamcast.broadcast<=3)

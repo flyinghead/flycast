@@ -7,6 +7,8 @@ enum MapleDeviceType
 	MDT_SegaVMU,
 	MDT_Microphone,
 
+	MDT_NaomiJamma,
+
 	MDT_Count
 };
 

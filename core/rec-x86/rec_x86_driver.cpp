@@ -438,7 +438,70 @@ u32 DynaRBI::Relink()
 	x86e->x86_size=512;
 	x86e->do_realloc=false;
 
-	if (BlockType==BET_StaticCall || BlockType==BET_DynamicCall)
+//#define SIMPLELINK
+#ifdef SIMPLELINK
+	switch (BlockType) {
+
+	case BET_StaticJump:
+	case BET_StaticCall:
+		//next_pc = block->BranchBlock;
+		x86e->Emit(op_mov32, ECX, BranchBlock);
+		break;
+
+	case BET_Cond_0:
+	case BET_Cond_1:
+	{
+		//next_pc = next_pc_value;
+		//if (*jdyn == 0)
+		//next_pc = branch_pc_value;
+
+		x86e->Emit(op_mov32, ECX, NextBlock);
+
+		u32* ptr = &sr.T;
+		if (has_jcond)
+			ptr = &Sh4cntx.jdyn;
+
+		x86e->Emit(op_cmp32, ptr, BlockType & 1);
+
+		x86_Label* lbl = x86e->CreateLabel(false, 8);
+		x86e->Emit(op_jne, lbl);
+		x86e->Emit(op_mov32, ECX, BranchBlock);
+		x86e->MarkLabel(lbl);
+	}
+	break;
+
+	case BET_DynamicJump:
+	case BET_DynamicCall:
+	case BET_DynamicRet:
+		//next_pc = *jdyn;
+		x86e->Emit(op_mov32, ECX, &Sh4cntx.jdyn);
+		break;
+
+	case BET_DynamicIntr:
+	case BET_StaticIntr:
+		if (BlockType == BET_StaticIntr)
+		{
+			x86e->Emit(op_mov32, &next_pc, NextBlock);
+		}
+		else
+		{
+			x86e->Emit(op_mov32, EAX, GetRegPtr(reg_pc_dyn));
+			x86e->Emit(op_mov32, &next_pc, EAX);
+		}
+		x86e->Emit(op_call, x86_ptr_imm(UpdateINTC));
+
+		x86e->Emit(op_mov32, ECX, &next_pc);
+
+		break;
+
+	default:
+		die("Invalid block end type");
+	}
+
+	x86e->Emit(op_jmp, x86_ptr_imm(loop_no_update));
+
+#else
+	if (BlockType == BET_StaticCall || BlockType == BET_DynamicCall)
 	{
 		//csc_push(this);
 	}
@@ -532,6 +595,7 @@ u32 DynaRBI::Relink()
 
 		break;
 	}
+#endif
 
 
 
@@ -556,7 +620,10 @@ u32 DynaRBI::Relink()
 	W F32v2 B,S{,M}
 */
 
+#if !defined(TARGET_NO_NVMEM)
 extern u8* virt_ram_base;
+#endif
+
 #include "hw/sh4/sh4_mmr.h"
 
 enum mem_op_type
@@ -584,6 +651,7 @@ void gen_hande(u32 w, u32 sz, u32 mode)
 
 	u32 si=x86e->x86_indx;
 
+#ifndef TARGET_NO_NVMEM
 	if (mode==0)
 	{
 		//Buffer
@@ -616,7 +684,9 @@ void gen_hande(u32 w, u32 sz, u32 mode)
 			}
 		}	
 	}
-	else if (mode==1)
+	else
+#endif
+	if (mode==1)
 	{
 		//SQ
 		verify(w==1);

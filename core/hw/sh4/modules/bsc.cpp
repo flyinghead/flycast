@@ -3,13 +3,15 @@
 #include "types.h"
 #include "hw/sh4/sh4_mmr.h"
 
+#include "hw/naomi/naomi.h"
+
 BSC_PDTRA_type BSC_PDTRA;
 
 
 void write_BSC_PCTRA(u32 addr, u32 data)
 {
 	BSC_PCTRA.full=(u16)data;
-	#if defined(BUILD_NAOMI	) || defined(BUILD_ATOMISWAVE)
+	#if DC_PLATFORM == DC_PLATFORM_NAOMI
 		NaomiBoardIDWriteControl((u16)data);
 	#else
 	//printf("C:BSC_PCTRA = %08X\n",data);
@@ -21,14 +23,14 @@ void write_BSC_PDTRA(u32 addr, u32 data)
 	BSC_PDTRA.full=(u16)data;
 	//printf("D:BSC_PDTRA = %08X\n",data);
 
-	#if defined(BUILD_NAOMI	) || defined(BUILD_ATOMISWAVE)
+	#if DC_PLATFORM == DC_PLATFORM_NAOMI
 		NaomiBoardIDWrite((u16)data);
 	#endif
 }
 
 u32 read_BSC_PDTRA(u32 addr)
 {
-	#if defined(BUILD_NAOMI	) || defined(BUILD_ATOMISWAVE)
+	#if DC_PLATFORM == DC_PLATFORM_NAOMI
 
 		return NaomiBoardIDRead();
 
@@ -111,6 +113,11 @@ void bsc_init()
 	sh4_rio_reg(BSC,BSC_GPIOIC_addr,RIO_DATA,16);
 
 	//note: naomi//aw might depend on rfcr
+	
+#if DC_PLATFORM == DC_PLATFORM_NAOMI
+	sh4_rio_reg(BSC, BSC_RFCR_addr, RIO_RO, 16);
+	BSC_RFCR.full = 17;
+#endif
 }
 
 

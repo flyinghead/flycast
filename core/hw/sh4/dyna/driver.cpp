@@ -408,13 +408,7 @@ void recSh4_Init()
 	bm_Init();
 	bm_Reset();
 
-#if HOST_CPU == CPU_X64
-	verify(rcb_noffs(p_sh4rcb->fpcb) == -67371008);
-#elif HOST_CPU == CPU_GENERIC
-    verify(rcb_noffs(p_sh4rcb->fpcb) == -33816576 || rcb_noffs(p_sh4rcb->fpcb) == -67371008);
-#else
-	verify(rcb_noffs(p_sh4rcb->fpcb) == -33816576);
-#endif
+	verify(rcb_noffs(p_sh4rcb->fpcb) == FPCB_OFFSET);
 
 	verify(rcb_noffs(p_sh4rcb->sq_buffer) == -512);
 

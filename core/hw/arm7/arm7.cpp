@@ -2114,8 +2114,9 @@ s32 ARM::imma;
 
 void armEmit32(u32 emit32)
 {
-	if (icPtr >= (ICache+ICacheSize-1024))
+	if (icPtr >= (ICache + ICacheSize - 64*1024)) {
 		die("ICache is full, invalidate old entries ...");	//ifdebug
+	}
 
 	x86e->Emit(op_mov32,ECX,emit32);
 	x86e->Emit(op_call,x86_ptr_imm(virt_arm_op));
