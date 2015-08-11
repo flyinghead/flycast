@@ -142,26 +142,25 @@ void SetupInput()
 		lt[port]=0;
 	}
 #if HOST_OS != OS_DARWIN && !defined(TARGET_EMSCRIPTEN)
-	if (true) {
-		#ifdef TARGET_PANDORA
-		const char* device = "/dev/input/event4";
-		#else
-		const char* device = "/dev/event2";
-		#endif
-		char name[256]= "Unknown";
+	#ifdef TARGET_PANDORA
+	const char* device = "/dev/input/event4";
+	#else
+	const char* device = "/dev/event2";
+	#endif
+	char name[256]= "Unknown";
 
-		if ((kbfd = open(device, O_RDONLY)) > 0) {
-			fcntl(kbfd,F_SETFL,O_NONBLOCK);
-			if(ioctl(kbfd, EVIOCGNAME(sizeof(name)), name) < 0) {
-				perror("evdev ioctl");
-			}
-
-			printf("The device on %s says its name is %s\n",device, name);
-
+  
+	if ((kbfd = open(device, O_RDONLY)) > 0) {
+		fcntl(kbfd,F_SETFL,O_NONBLOCK);
+		if(ioctl(kbfd, EVIOCGNAME(sizeof(name)), name) < 0) {
+			perror("evdev ioctl");
 		}
-		else
-			perror("evdev open");
+
+		printf("The device on %s says its name is %s\n",device, name);
+
 	}
+	else
+		perror("evdev open");
 
 	// Open joystick device
 	JoyFD = open("/dev/input/js0",O_RDONLY);
