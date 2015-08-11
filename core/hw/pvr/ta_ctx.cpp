@@ -1,6 +1,8 @@
 #include "ta.h"
 #include "ta_ctx.h"
 
+#include "hw/sh4/sh4_sched.h"
+
 extern u32 fskip;
 extern u32 FrameCount;
 
@@ -73,6 +75,10 @@ void VDecEnd()
 
 cMutex mtx_rqueue;
 TA_context* rqueue;
+cResetEvent frame_finished(false, true);
+
+double last_frame = 0;
+u64 last_cyces = 0;
 
 bool QueueRender(TA_context* ctx)
 {
@@ -85,12 +91,32 @@ bool QueueRender(TA_context* ctx)
 		return false;
  	}
  	
+ 	//Try to limit speed to a "sane" level
+ 	//Speed is also limited via audio, but audio
+ 	//is sometimes not accurate enough (android, vista+)
+ 	u32 cycle_span = sh4_sched_now64() - last_cyces;
+ 	last_cyces = sh4_sched_now64();
+ 	double time_span = os_GetSeconds() - last_frame;
+ 	last_frame = os_GetSeconds();
+
+ 	bool too_fast = (cycle_span / time_span) > (SH4_MAIN_CLOCK * 1.2);
+	
+	if (rqueue && too_fast && settings.pvr.SynchronousRendering) {
+		//wait for a frame if
+		//  we have another one queue'd and
+		//  sh4 run at > 120% on the last slice
+		//  and SynchronousRendering is enabled
+		frame_finished.Wait();
+		verify(!rqueue);
+	} 
+
 	if (rqueue) {
 		tactx_Recycle(ctx);
 		fskip++;
 		return false;
 	}
 
+	frame_finished.Reset();
 	mtx_rqueue.Lock();
 	TA_context* old = rqueue;
 	rqueue=ctx;
@@ -129,6 +155,7 @@ void FinishRender(TA_context* ctx)
 	mtx_rqueue.Unlock();
 
 	tactx_Recycle(ctx);
+	frame_finished.Set();
 }
 
 cMutex mtx_pool;

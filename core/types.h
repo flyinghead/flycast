@@ -688,6 +688,7 @@ struct settings_t
 		u32 rend;
 		
 		u32 MaxThreads;
+		u32 SynchronousRendering;
 	} pvr;
 
 	struct {
