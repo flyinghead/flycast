@@ -362,9 +362,7 @@ void bm_Rebuild()
 	rebuild_counter=30;
 }
 
-void _vmem_bm_reset();
-
-void _vmem_bm_pagefail(void** ptr,u32 PAGE_SZ)
+void bm_vmem_pagefill(void** ptr,u32 PAGE_SZ)
 {
 	for (size_t i=0; i<PAGE_SZ/sizeof(ptr[0]); i++)
 	{
@@ -380,17 +378,7 @@ void bm_Reset()
 		blocks_page[i].clear();
 	}
 
-	#if !defined(TARGET_NO_NVMEM)
 	_vmem_bm_reset();
-	#endif
-	
-#if (HOST_OS == OS_DARWIN) || defined(TARGET_NO_NVMEM)
-	//lazy allocation isn't working on iOS
-	for (u32 i=0;i<FPCB_SIZE;i++)
-	{
-		sh4rcb.fpcb[i]=(void*)ngen_FailedToFindBlock;
-	}
-#endif
 
 	for (size_t i=0; i<all_blocks.size(); i++)
 	{

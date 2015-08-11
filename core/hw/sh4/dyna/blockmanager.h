@@ -105,3 +105,4 @@ void bm_Sort();
 void bm_Init();
 void bm_Term();
 
+void bm_vmem_pagefill(void** ptr,u32 PAGE_SZ);

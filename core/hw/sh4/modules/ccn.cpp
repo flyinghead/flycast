@@ -7,6 +7,7 @@
 #include "ccn.h"
 #include "../sh4_core.h"
 #include "hw/pvr/pvr_mem.h"
+#include "hw/mem/_vmem.h"
 
 
 //Types
@@ -26,8 +27,16 @@ void CCN_QACR_write(u32 addr, u32 value)
 
 	switch(area)
 	{
-		case 3:  do_sqw_nommu=&do_sqw_nommu_area_3; break;
-		case 4:  do_sqw_nommu=(sqw_fp*)&TAWriteSQ; break;
+		case 3: 
+			if (_nvmem_enabled())
+				do_sqw_nommu=&do_sqw_nommu_area_3;
+			else
+				do_sqw_nommu=&do_sqw_nommu_area_3_nonvmem;
+		break;
+
+		case 4:
+			do_sqw_nommu=(sqw_fp*)&TAWriteSQ;
+			break;
 		default: do_sqw_nommu=&do_sqw_nommu_full;
 	}
 }
