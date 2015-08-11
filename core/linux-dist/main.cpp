@@ -424,9 +424,10 @@ void UpdateInputState(u32 port)
 	return;
 #endif
 	
-#if defined(TARGET_GCW0) || defined(TARGET_PANDORA)
 	HandleJoystick(port);
 	HandleKb(port);
+
+#if defined(TARGET_GCW0) || defined(TARGET_PANDORA)
 return;
 #endif
 	for(;;)
