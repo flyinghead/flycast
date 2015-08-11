@@ -260,6 +260,9 @@ void LoadSettings()
 	settings.pvr.ta_skip			= cfgLoadInt("config","ta.skip",0);
 	settings.pvr.rend				= cfgLoadInt("config","pvr.rend",0);
 
+	settings.pvr.MaxThreads			= cfgLoadInt("config", "pvr.MaxThreads", 3);
+	
+
 	settings.debug.SerialConsole = cfgLoadInt("config", "Debug.SerialConsoleEnabled", 0) != 0;
 
 	settings.reios.ElfFile = cfgLoadStr("reios", "ElfFile","");
