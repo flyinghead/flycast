@@ -492,20 +492,20 @@ using namespace std;
 
 
 #if DC_PLATFORM==DC_PLATFORM_DREAMCAST
-	#define VER_EMUNAME		"newdc"
+	#define VER_EMUNAME		"reicast"
 #elif DC_PLATFORM==DC_PLATFORM_DEV_UNIT
-	#define VER_EMUNAME		"newdc-DevKit-SET5.21"
+	#define VER_EMUNAME		"reicast-DevKit-SET5.21"
 #elif DC_PLATFORM==DC_PLATFORM_NAOMI
-	#define VER_EMUNAME		"newdc-Naomi"
+	#define VER_EMUNAME		"reicast-Naomi"
 #elif DC_PLATFORM==DC_PLATFORM_ATOMISWAVE
-	#define VER_EMUNAME		"newdc-AtomisWave"
+	#define VER_EMUNAME		"reicast-AtomisWave"
 #else
 	#error unknown target platform
 #endif
 
 
-#define VER_FULLNAME	VER_EMUNAME " rel0" _X_x_X_MMU_VER_STR " (built " __DATE__ "@" __TIME__ ")"
-#define VER_SHORTNAME	VER_EMUNAME " rel0" _X_x_X_MMU_VER_STR
+#define VER_FULLNAME	VER_EMUNAME " git" _X_x_X_MMU_VER_STR " (built " __DATE__ "@" __TIME__ ")"
+#define VER_SHORTNAME	VER_EMUNAME " git" _X_x_X_MMU_VER_STR
 
 
 void os_DebugBreak();
@@ -726,7 +726,7 @@ static inline void do_nada(...) { }
 #undef puts
 #endif
 
-#define LOG_TAG   "newdc"
+#define LOG_TAG   "reicast"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO,LOG_TAG,__VA_ARGS__)
 #define LOGW(...) __android_log_print(ANDROID_LOG_WARN,LOG_TAG,__VA_ARGS__)
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR,LOG_TAG,__VA_ARGS__)

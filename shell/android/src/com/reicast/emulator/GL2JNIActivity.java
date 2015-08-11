@@ -135,11 +135,11 @@ public class GL2JNIActivity extends Activity {
 				} else {
 					descriptor = InputDevice.getDevice(joy).getName();
 				}
-				Log.d("reidc", "InputDevice ID: " + joy);
-				Log.d("reidc",
+				Log.d("reicast", "InputDevice ID: " + joy);
+				Log.d("reicast",
 						"InputDevice Name: "
 								+ InputDevice.getDevice(joy).getName());
-				Log.d("reidc", "InputDevice Descriptor: " + descriptor);
+				Log.d("reicast", "InputDevice Descriptor: " + descriptor);
 				pad.deviceId_deviceDescriptor.put(joy, descriptor);
 			}
 
