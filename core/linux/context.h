@@ -2,7 +2,7 @@
 
 
 struct rei_host_context_t {
-#if HOST_CPI != CPU_GENERIC
+#if HOST_CPU != CPU_GENERIC
 	unat pc;
 #endif
 
