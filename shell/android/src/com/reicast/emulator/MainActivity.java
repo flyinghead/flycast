@@ -449,7 +449,6 @@ public class MainActivity extends SlidingFragmentActivity implements
 				.findFragmentByTag("MAIN_BROWSER");
 		if (browserFrag != null) {
 			if (browserFrag.isVisible()) {
-
 				Log.d("reicast", "Main folder: " + uri.toString());
 				// return;
 			}
