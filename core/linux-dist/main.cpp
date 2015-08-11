@@ -160,7 +160,9 @@ void SetupInput()
 
 	}
 	else
+	{
 		perror("evdev open");
+	}
 
 	// Open joystick device
 	JoyFD = open("/dev/input/js0",O_RDONLY);
