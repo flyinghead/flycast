@@ -447,9 +447,7 @@ return;
 		if ('B' == key) { kcode[port] &= ~DPad_Down;  }
 		if ('D' == key) { kcode[port] &= ~DPad_Left;  }
 		if ('C' == key) { kcode[port] &= ~DPad_Right; }
-#else
- 
-#ifdef TARGET_PANDORA
+
 		if ('q' == key){ die("death by escape key"); } 
 #endif
 		//if (0x1b == key){ die("death by escape key"); } //this actually quits when i press left for some reason
