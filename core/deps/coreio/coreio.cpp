@@ -305,5 +305,6 @@ size_t core_fsize(core_file* fc)
 	#if FEAT_HAS_COREIO_HTTP
 		return HTTP_GET(f->host, f->port, f->path, 0, 0,0);
 	#endif
-	}	
+	}
+    return 0;
 }

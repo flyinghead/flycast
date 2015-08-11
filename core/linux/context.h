@@ -2,7 +2,9 @@
 
 
 struct rei_host_context_t {
+#if HOST_CPU != CPU_GENERIC
 	unat pc;
+#endif
 
 #if HOST_CPU == CPU_X86
 	u32 eax;

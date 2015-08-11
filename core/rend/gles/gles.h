@@ -24,7 +24,11 @@
 #endif
 
 #else
+#if HOST_OS == OS_DARWIN
+    #include <OpenGL/gl3.h>
+#else
 	#include <GL3/gl3w.h>
+#endif
 #endif
 
 

@@ -199,6 +199,9 @@
 #elif defined(TARGET_IPHONE)
     #define HOST_OS OS_DARWIN
     #define HOST_CPU CPU_ARM
+#elif defined(TARGET_OSX)
+    #define HOST_OS OS_DARWIN
+    #define HOST_CPU CPU_GENERIC
 #else
 	#error Invalid Target: TARGET_* not defined
 #endif

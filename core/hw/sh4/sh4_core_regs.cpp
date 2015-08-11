@@ -72,32 +72,31 @@ void SetFloatStatusReg()
 	{
 		old_rm=fpscr.RM ;
 		old_dn=fpscr.DN ;
-		u32 temp=0x1f80;	//no flush to zero && round to nearest
+        
+        //Correct rounding is required by some games (SOTB, etc)
+#if BUILD_COMPILER == COMPILER_VC
+        if (fpscr.RM == 1)  //if round to 0 , set the flag
+            _controlfp(_RC_CHOP, _MCW_RC);
+        else
+            _controlfp(_RC_NEAR, _MCW_RC);
+        
+        if (fpscr.DN)     //denormals are considered 0
+            _controlfp(_DN_FLUSH, _MCW_DN);
+        else
+            _controlfp(_DN_SAVE, _MCW_DN);
+#else
 
+    #if HOST_CPU==CPU_X86 || HOST_CPU==CPU_X64
 
-		//TODO: Implement this (needed for SOTB)
-#if HOST_CPU==CPU_X86
+            u32 temp=0x1f80;	//no flush to zero && round to nearest
 
-		#if BUILD_COMPILER == COMPILER_VC
-				if (fpscr.RM == 1)  //if round to 0 , set the flag
-					_controlfp(_RC_CHOP, _MCW_RC);
-				else
-					_controlfp(_RC_NEAR, _MCW_RC);
-
-				if (fpscr.DN)     //denormals are considered 0
-					_controlfp(_DN_FLUSH, _MCW_DN);
-				else
-					_controlfp(_DN_SAVE, _MCW_DN);
-		#else
 			if (fpscr.RM==1)  //if round to 0 , set the flag
 				temp|=(3<<13);
 
 			if (fpscr.DN)     //denormals are considered 0
 				temp|=(1<<15);
-
 			asm("ldmxcsr %0" : : "m"(temp));
-		#endif
-#elif HOST_CPU==CPU_ARM
+    #elif HOST_CPU==CPU_ARM
 		static const unsigned int x = 0x04086060;
 		unsigned int y = 0x02000000;
 		if (fpscr.RM==1)  //if round to 0 , set the flag
@@ -118,6 +117,9 @@ void SetFloatStatusReg()
 				: "=r"(raa)
 				: "r"(x), "r"(y)
 			);
+    #else
+        printf("SetFloatStatusReg: Unsupported platform\n");
+    #endif
 #endif
 
 	}

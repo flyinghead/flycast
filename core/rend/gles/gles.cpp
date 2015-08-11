@@ -16,8 +16,10 @@ int fbdev = -1;
 #endif
 
 #ifndef GLES
+#if HOST_OS != OS_DARWIN
 #include <GL3/gl3w.c>
 #pragma comment(lib,"Opengl32.lib")
+#endif
 #endif
 
 /*
