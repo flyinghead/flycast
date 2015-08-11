@@ -787,7 +787,7 @@ int main(int argc, wchar* argv[])
 #endif
 
   string home = ".";
-  #if defined(USES_HOMEDIR) && HOST_OS != OS_DARWIN && !defined(TARGET_EMSCRIPTEN)
+  #if defined(USES_HOMEDIR)
 	  if(getenv("HOME") != NULL)
 	  {
 		  home = (string)getenv("HOME") + "/.reicast";
