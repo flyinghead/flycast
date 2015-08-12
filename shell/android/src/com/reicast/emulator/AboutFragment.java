@@ -36,12 +36,12 @@ import android.widget.SlidingDrawer;
 import android.widget.SlidingDrawer.OnDrawerOpenListener;
 import android.widget.TextView;
 
+import com.reicast.emulator.config.Config;
 import com.reicast.emulator.debug.GitAdapter;
 
 public class AboutFragment extends Fragment {
 
 	String buildId = "";
-	String git_api = "https://api.github.com/repos/reicast/reicast-emulator/commits";
 	SlidingDrawer slidingGithub;
 	private ListView list;
 	private GitAdapter adapter;
@@ -98,7 +98,7 @@ public class AboutFragment extends Fragment {
 		slidingGithub.setOnDrawerOpenListener(new OnDrawerOpenListener() {
 			@TargetApi(Build.VERSION_CODES.HONEYCOMB)
 			public void onDrawerOpened() {
-				new retrieveGitTask().execute(git_api);
+				new retrieveGitTask().execute(Config.git_api);
 			}
 		});
 
@@ -224,6 +224,7 @@ public class AboutFragment extends Fragment {
 				list.setOnItemClickListener(new OnItemClickListener() {
 					public void onItemClick(AdapterView<?> parent, View view,
 							int position, long id) {
+						slidingGithub.open();
 					}
 				});
 			}

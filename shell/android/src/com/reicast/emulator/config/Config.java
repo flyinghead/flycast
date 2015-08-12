@@ -61,7 +61,8 @@ public class Config {
 	public static boolean usereios = false;
 	public static boolean nativeact = false;
 	public static int vibrationDuration = 20;
-	
+
+	public static String git_api = "https://api.github.com/repos/reicast/reicast-emulator/commits";
 	public static String git_issues = "https://github.com/reicast/reicast-emulator/issues/";
 	public static String log_url = "http://loungekatt.no-ip.biz:3194/ReicastBot/report/submit.php";
 	public static String report_url = "http://loungekatt.no-ip.biz:3194/ReicastBot/report/logs/";

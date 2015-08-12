@@ -91,6 +91,7 @@
     
     <string name="about_text">reicast is a multi-platform Dreamcast emulator.</string>
     <string name="revision_text">Version: %1$s [%2$s]</string>
+    <string name="git_broken">Github API not available</string>
     
     <string-array name="controllers">
         <item>Controller A</item>
