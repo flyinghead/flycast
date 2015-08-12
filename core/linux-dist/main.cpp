@@ -112,8 +112,8 @@ enum DCPad
 
 void emit_WriteCodeCache();
 
-static int JoyFD = -1; // Joystick file descriptor
-static int kbfd = -1;
+static int joystick_fd = -1; // Joystick file descriptor
+static int evdev_fd = -1;
 
 
 #define MAP_SIZE 32
@@ -196,15 +196,15 @@ void SetupInput()
     #else
       #define EVDEV_DEVICE "/dev/event2"
     #endif
-    kbfd = setup_input_evdev(EVDEV_DEVICE);
-    JoyFD = setup_input_joystick("/dev/input/js0");
+    evdev_fd = setup_input_evdev(EVDEV_DEVICE);
+    joystick_fd = setup_input_joystick("/dev/input/js0");
   #endif
 }
 
 bool HandleKb(u32 port)
 {
   #if HOST_OS != OS_DARWIN && !defined(TARGET_EMSCRIPTEN)
-    if (kbfd < 0)
+    if (evdev_fd < 0)
     {
       return false;
     }
@@ -227,7 +227,7 @@ bool HandleKb(u32 port)
       #define KEY_LOCK   0x77    // Note that KEY_LOCK is a switch and remains pressed until it's switched back
 
       static int keys[13];
-      while(read(kbfd, &ie, sizeof(ie)) == sizeof(ie))
+      while(read(evdev_fd, &ie, sizeof(ie)) == sizeof(ie))
       {
         //printf("type %i key %i state %i\n", ie.type, ie.code, ie.value);
         if (ie.type = EV_KEY)
@@ -264,7 +264,7 @@ bool HandleKb(u32 port)
 
     #elif defined(TARGET_PANDORA)
       static int keys[13];
-      while(read(kbfd,&ie,sizeof(ie))==sizeof(ie))
+      while(read(evdev_fd,&ie,sizeof(ie))==sizeof(ie))
       {
         if (ie.type=EV_KEY)
         //printf("type %i key %i state %i\n", ie.type, ie.code, ie.value);
@@ -301,7 +301,7 @@ bool HandleKb(u32 port)
 
       return true;
     #else
-      while(read(kbfd, &ie, sizeof(ie)) == sizeof(ie))
+      while(read(evdev_fd, &ie, sizeof(ie)) == sizeof(ie))
       {
         printf("type %i key %i state %i\n", ie.type, ie.code, ie.value);
       }
@@ -314,13 +314,13 @@ bool HandleKb(u32 port)
 bool HandleJoystick(u32 port)
 {
   // Joystick must be connected
-  if(JoyFD < 0) {
+  if(joystick_fd < 0) {
     return false;
   }
 
   #if HOST_OS != OS_DARWIN && !defined(TARGET_EMSCRIPTEN)
     struct js_event JE;
-    while(read(JoyFD, &JE, sizeof(JE)) == sizeof(JE))
+    while(read(joystick_fd, &JE, sizeof(JE)) == sizeof(JE))
     if (JE.number < MAP_SIZE)
     {
       switch(JE.type & ~JS_EVENT_INIT)
@@ -794,8 +794,8 @@ void dc_run();
     size_t size;
 
     // close files
-    if (JoyFD >= 0) { close(JoyFD); }
-    if (kbfd >= 0) { close(kbfd); }
+    if (joystick_fd >= 0) { close(joystick_fd); }
+    if (evdev_fd >= 0) { close(evdev_fd); }
 
     // Close EGL context ???
     if (sig_num!=0)
