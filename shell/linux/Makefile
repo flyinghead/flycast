@@ -7,6 +7,8 @@ WEBUI :=1
 USE_ALSA := 1
 USE_OSS := 1
 #USE_PULSEAUDIO := 1
+USE_EVDEV := 1
+USE_JOYSTICK := 1
 
 CXX=${CC_PREFIX}g++
 CC=${CC_PREFIX}gcc
@@ -207,6 +209,14 @@ ifdef USE_X11
     CFLAGS += -D SUPPORT_X11
     CXXFLAGS += -D SUPPORT_X11 
     LIBS += -lX11
+endif
+
+ifdef USE_EVDEV
+		CXXFLAGS += -D USE_EVDEV
+endif
+
+ifdef USE_JOYSTICK
+		CXXFLAGS += -D USE_JOYSTICK
 endif
 
 ifdef USE_ALSA

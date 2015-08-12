@@ -34,9 +34,20 @@
 #endif
 
 #if !defined(ANDROID) && HOST_OS != OS_DARWIN && !defined(TARGET_EMSCRIPTEN)
-  #include <linux/joystick.h>
   #include <sys/stat.h>
   #include <sys/types.h>
+#endif
+
+#if defined(USE_EVDEV)
+  #ifdef TARGET_PANDORA
+    #define EVDEV_DEVICE "/dev/input/event4"
+  #else
+    #define EVDEV_DEVICE "/dev/event2"
+  #endif
+#endif
+
+#if defined(USE_JOYSTICK)
+  #include <linux/joystick.h>
 #endif
 
 #ifdef TARGET_PANDORA
@@ -190,20 +201,18 @@ int setup_input_joystick(const char* device)
 
 void SetupInput()
 {
-  #if HOST_OS != OS_DARWIN && !defined(TARGET_EMSCRIPTEN)
-    #ifdef TARGET_PANDORA
-      #define EVDEV_DEVICE "/dev/input/event4"
-    #else
-      #define EVDEV_DEVICE "/dev/event2"
-    #endif
+  #if defined(USE_EVDEV)
     evdev_fd = setup_input_evdev(EVDEV_DEVICE);
+  #endif
+
+  #if defined(USE_JOYSTICK)
     joystick_fd = setup_input_joystick("/dev/input/js0");
   #endif
 }
 
 bool HandleKb(u32 port)
 {
-  #if HOST_OS != OS_DARWIN && !defined(TARGET_EMSCRIPTEN)
+  #if defined(USE_EVDEV)
     if (evdev_fd < 0)
     {
       return false;
@@ -318,7 +327,7 @@ bool HandleJoystick(u32 port)
     return false;
   }
 
-  #if HOST_OS != OS_DARWIN && !defined(TARGET_EMSCRIPTEN)
+  #if defined(USE_JOYSTICK)
     struct js_event JE;
     while(read(joystick_fd, &JE, sizeof(JE)) == sizeof(JE))
     if (JE.number < MAP_SIZE)
