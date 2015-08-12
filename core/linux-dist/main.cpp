@@ -173,87 +173,60 @@ static int evdev_fd = -1;
       #define KEY_UP     0x67
       #define KEY_DOWN   0x6C
       #define KEY_LOCK   0x77    // Note that KEY_LOCK is a switch and remains pressed until it's switched back
+    #endif
 
       static int keys[13];
       while(read(fd, &ie, sizeof(ie)) == sizeof(ie))
       {
-        //printf("type %i key %i state %i\n", ie.type, ie.code, ie.value);
-        if (ie.type = EV_KEY)
-        {
-          switch (ie.code)
+        #if defined(TARGET_GCW0) || defined(TARGET_PANDORA)
+          if (ie.type = EV_KEY)
           {
-            case KEY_SELECT: keys[ 9] = ie.value; break;
-            case KEY_UP:     keys[ 1] = ie.value; break;
-            case KEY_DOWN:   keys[ 2] = ie.value; break;
-            case KEY_LEFT:   keys[ 3] = ie.value; break;
-            case KEY_RIGHT:  keys[ 4] = ie.value; break;
-            case KEY_Y:      keys[ 5] = ie.value; break;
-            case KEY_B:      keys[ 6] = ie.value; break;
-            case KEY_A:      keys[ 7] = ie.value; break;
-            case KEY_X:      keys[ 8] = ie.value; break;
-            case KEY_START:  keys[12] = ie.value; break;
+            switch (ie.code)
+            {
+              case KEY_UP:     keys[ 1] = ie.value; break;
+              case KEY_DOWN:   keys[ 2] = ie.value; break;
+              case KEY_LEFT:   keys[ 3] = ie.value; break;
+              case KEY_RIGHT:  keys[ 4] = ie.value; break;
+
+              #if defined(TARGET_GCW0)
+                case KEY_Y:      keys[ 5] = ie.value; break;
+                case KEY_B:      keys[ 6] = ie.value; break;
+                case KEY_A:      keys[ 7] = ie.value; break;
+                case KEY_X:      keys[ 8] = ie.value; break;
+                case KEY_SELECT: keys[ 9] = ie.value; break;
+                case KEY_START:  keys[12] = ie.value; break;
+              #elif  defined(TARGET_PANDORA)
+                case KEY_SPACE:      keys[ 0] = ie.value; break;
+                case KEY_PAGEUP:     keys[ 5] = ie.value; break;
+                case KEY_PAGEDOWN:   keys[ 6] = ie.value; break;
+                case KEY_END:        keys[ 7] = ie.value; break;
+                case KEY_HOME:       keys[ 8] = ie.value; break;
+                case KEY_MENU:       keys[ 9] = ie.value; break;
+                case KEY_RIGHTSHIFT: keys[10] = ie.value; break;
+                case KEY_RIGHTCTRL:  keys[11] = ie.value; break;
+                case KEY_LEFTALT:    keys[12] = ie.value; break;
+              #endif
+            }
           }
         }
-      }
-      if (keys[ 6]) { kcode[port] &= ~Btn_A; }
-      if (keys[ 7]) { kcode[port] &= ~Btn_B; }
-      if (keys[ 5]) { kcode[port] &= ~Btn_Y; }
-      if (keys[ 8]) { kcode[port] &= ~Btn_X; }
-      if (keys[ 1]) { kcode[port] &= ~DPad_Up; }
-      if (keys[ 2]) { kcode[port] &= ~DPad_Down; }
-      if (keys[ 3]) { kcode[port] &= ~DPad_Left; }
-      if (keys[ 4]) { kcode[port] &= ~DPad_Right; }
-      if (keys[12]) { kcode[port] &= ~Btn_Start; }
-      if (keys[ 9]) { die("death by escape key"); }
-      if (keys[10]) { rt[port] = 255; }
-      if (keys[11]) { lt[port] = 255; }
-
-      return true;
-
-    #elif defined(TARGET_PANDORA)
-      static int keys[13];
-      while(read(fd,&ie,sizeof(ie))==sizeof(ie))
-      {
-        if (ie.type=EV_KEY)
-        //printf("type %i key %i state %i\n", ie.type, ie.code, ie.value);
-        switch (ie.code) {
-          case KEY_SPACE:      keys[ 0] = ie.value; break;
-          case KEY_UP:         keys[ 1] = ie.value; break;
-          case KEY_DOWN:       keys[ 2] = ie.value; break;
-          case KEY_LEFT:       keys[ 3] = ie.value; break;
-          case KEY_RIGHT:      keys[ 4] = ie.value; break;
-          case KEY_PAGEUP:     keys[ 5] = ie.value; break;
-          case KEY_PAGEDOWN:   keys[ 6] = ie.value; break;
-          case KEY_END:        keys[ 7] = ie.value; break;
-          case KEY_HOME:       keys[ 8] = ie.value; break;
-          case KEY_MENU:       keys[ 9] = ie.value; break;
-          case KEY_RIGHTSHIFT: keys[10] = ie.value; break;
-          case KEY_RIGHTCTRL:  keys[11] = ie.value; break;
-          case KEY_LEFTALT:    keys[12] = ie.value; break;
-        }
-      }
-
-      if (keys[ 0]) { kcode[port] &= ~Btn_C; }
-      if (keys[ 6]) { kcode[port] &= ~Btn_A; }
-      if (keys[ 7]) { kcode[port] &= ~Btn_B; }
-      if (keys[ 5]) { kcode[port] &= ~Btn_Y; }
-      if (keys[ 8]) { kcode[port] &= ~Btn_X; }
-      if (keys[ 1]) { kcode[port] &= ~DPad_Up; }
-      if (keys[ 2]) { kcode[port] &= ~DPad_Down; }
-      if (keys[ 3]) { kcode[port] &= ~DPad_Left; }
-      if (keys[ 4]) { kcode[port] &= ~DPad_Right; }
-      if (keys[12]) { kcode[port] &= ~Btn_Start; }
-      if (keys[ 9]) { die("death by escape key"); }
-      if (keys[10]) { rt[port] = 255; }
-      if (keys[11]) { lt[port] = 255; }
-
-      return true;
-    #else
-      while(read(fd, &ie, sizeof(ie)) == sizeof(ie))
-      {
+        if (keys[ 0]) { kcode[port] &= ~Btn_C; }
+        if (keys[ 6]) { kcode[port] &= ~Btn_A; }
+        if (keys[ 7]) { kcode[port] &= ~Btn_B; }
+        if (keys[ 5]) { kcode[port] &= ~Btn_Y; }
+        if (keys[ 8]) { kcode[port] &= ~Btn_X; }
+        if (keys[ 1]) { kcode[port] &= ~DPad_Up; }
+        if (keys[ 2]) { kcode[port] &= ~DPad_Down; }
+        if (keys[ 3]) { kcode[port] &= ~DPad_Left; }
+        if (keys[ 4]) { kcode[port] &= ~DPad_Right; }
+        if (keys[12]) { kcode[port] &= ~Btn_Start; }
+        if (keys[ 9]) { die("death by escape key"); }
+        if (keys[10]) { rt[port] = 255; }
+        if (keys[11]) { lt[port] = 255; }
+        return true;
+      #else
         printf("type %i key %i state %i\n", ie.type, ie.code, ie.value);
-      }
-    #endif
+      #endif
+    }
 
     return true;
   }
