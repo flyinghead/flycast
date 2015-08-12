@@ -123,97 +123,36 @@ enum DCPad
 
 void emit_WriteCodeCache();
 
-static int joystick_fd = -1; // Joystick file descriptor
+/* evdev input */
 static int evdev_fd = -1;
 
-
-#define MAP_SIZE 32
-
-const u32 JMapBtn_USB[MAP_SIZE] =
-  { Btn_Y,Btn_B,Btn_A,Btn_X,0,0,0,0,0,Btn_Start };
-
-const u32 JMapAxis_USB[MAP_SIZE] =
-  { Axis_X,Axis_Y,0,0,0,0,0,0,0,0 };
-
-const u32 JMapBtn_360[MAP_SIZE] =
-  { Btn_A,Btn_B,Btn_X,Btn_Y,0,0,0,Btn_Start,0,0 };
-
-const u32 JMapAxis_360[MAP_SIZE] =
-  { Axis_X,Axis_Y,Axis_LT,0,0,Axis_RT,DPad_Left,DPad_Up,0,0 };
-
-const u32* JMapBtn=JMapBtn_USB;
-const u32* JMapAxis=JMapAxis_USB;
-
-int setup_input_evdev(const char* device)
-{
-  char name[256] = "Unknown";
-
-  int fd = open(device, O_RDONLY);
-
-  if (fd >= 0)
+#if defined(USE_EVDEV)
+  int input_evdev_init(const char* device)
   {
-    fcntl(fd, F_SETFL, O_NONBLOCK);
-    if(ioctl(fd, EVIOCGNAME(sizeof(name)), name) < 0)
+    char name[256] = "Unknown";
+
+    int fd = open(device, O_RDONLY);
+
+    if (fd >= 0)
     {
-      perror("evdev: ioctl");
+      fcntl(fd, F_SETFL, O_NONBLOCK);
+      if(ioctl(fd, EVIOCGNAME(sizeof(name)), name) < 0)
+      {
+        perror("evdev: ioctl");
+      }
+      printf("evdev: Found '%s' at '%s'\n", name, device);
     }
-    printf("evdev: Found '%s' at '%s'\n", name, device);
-  }
-  else
-  {
-    perror("evdev: open");
-  }
-
-  return fd;
-}
-
-int setup_input_joystick(const char* device)
-{
-  int axis_count = 0;
-  int button_count = 0;
-  char name[128] = "Unknown";
-
-  int fd = open(device, O_RDONLY);
-
-  if(fd >= 0)
-  {
-    fcntl(fd, F_SETFL, O_NONBLOCK);
-    ioctl(fd, JSIOCGAXES, &axis_count);
-    ioctl(fd, JSIOCGBUTTONS, &button_count);
-    ioctl(fd, JSIOCGNAME(sizeof(name)), &name);
-
-    printf("joystick: Found '%s' with %d axis and %d buttons at '%s'.\n", name, axis_count, button_count, device);
-
-    if (strcmp(name, "Microsoft X-Box 360 pad") == 0)
+    else
     {
-      JMapBtn = JMapBtn_360;
-      JMapAxis = JMapAxis_360;
-      printf("joystick: Using Xbox 360 map\n");
+      perror("evdev: open");
     }
+
+    return fd;
   }
-  else
+
+  bool input_evdev_handle(int fd, u32 port)
   {
-    perror("joystick: open");
-  }
-
-  return fd;
-}
-
-void SetupInput()
-{
-  #if defined(USE_EVDEV)
-    evdev_fd = setup_input_evdev(EVDEV_DEVICE);
-  #endif
-
-  #if defined(USE_JOYSTICK)
-    joystick_fd = setup_input_joystick("/dev/input/js0");
-  #endif
-}
-
-bool HandleKb(u32 port)
-{
-  #if defined(USE_EVDEV)
-    if (evdev_fd < 0)
+    if (fd < 0)
     {
       return false;
     }
@@ -236,7 +175,7 @@ bool HandleKb(u32 port)
       #define KEY_LOCK   0x77    // Note that KEY_LOCK is a switch and remains pressed until it's switched back
 
       static int keys[13];
-      while(read(evdev_fd, &ie, sizeof(ie)) == sizeof(ie))
+      while(read(fd, &ie, sizeof(ie)) == sizeof(ie))
       {
         //printf("type %i key %i state %i\n", ie.type, ie.code, ie.value);
         if (ie.type = EV_KEY)
@@ -273,7 +212,7 @@ bool HandleKb(u32 port)
 
     #elif defined(TARGET_PANDORA)
       static int keys[13];
-      while(read(evdev_fd,&ie,sizeof(ie))==sizeof(ie))
+      while(read(fd,&ie,sizeof(ie))==sizeof(ie))
       {
         if (ie.type=EV_KEY)
         //printf("type %i key %i state %i\n", ie.type, ie.code, ie.value);
@@ -310,34 +249,81 @@ bool HandleKb(u32 port)
 
       return true;
     #else
-      while(read(evdev_fd, &ie, sizeof(ie)) == sizeof(ie))
+      while(read(fd, &ie, sizeof(ie)) == sizeof(ie))
       {
         printf("type %i key %i state %i\n", ie.type, ie.code, ie.value);
       }
     #endif
-  #endif
 
-  return true;
-}
+    return true;
+  }
+#endif
 
-bool HandleJoystick(u32 port)
-{
-  // Joystick must be connected
-  if(joystick_fd < 0) {
-    return false;
+
+/* legacy joystick input */
+static int joystick_fd = -1; // Joystick file descriptor
+
+#if defined(USE_JOYSTICK)
+  #define JOYSTICK_MAP_SIZE 32
+
+  const u32 joystick_map_btn_usb[JOYSTICK_MAP_SIZE]      = { Btn_Y, Btn_B, Btn_A, Btn_X, 0, 0, 0, 0, 0, Btn_Start };
+  const u32 joystick_map_axis_usb[JOYSTICK_MAP_SIZE]     = { Axis_X, Axis_Y, 0, 0, 0, 0, 0, 0, 0, 0 };
+
+  const u32 joystick_map_btn_xbox360[JOYSTICK_MAP_SIZE]  = { Btn_A, Btn_B, Btn_X, Btn_Y, 0, 0, 0, Btn_Start, 0, 0 };
+  const u32 joystick_map_axis_xbox360[JOYSTICK_MAP_SIZE] = { Axis_X, Axis_Y, Axis_LT, 0, 0, Axis_RT, DPad_Left, DPad_Up, 0, 0 };
+
+  const u32* joystick_map_btn = joystick_map_btn_usb;
+  const u32* joystick_map_axis = joystick_map_axis_usb;
+
+  int input_joystick_init(const char* device)
+  {
+    int axis_count = 0;
+    int button_count = 0;
+    char name[128] = "Unknown";
+
+    int fd = open(device, O_RDONLY);
+
+    if(fd >= 0)
+    {
+      fcntl(fd, F_SETFL, O_NONBLOCK);
+      ioctl(fd, JSIOCGAXES, &axis_count);
+      ioctl(fd, JSIOCGBUTTONS, &button_count);
+      ioctl(fd, JSIOCGNAME(sizeof(name)), &name);
+
+      printf("joystick: Found '%s' with %d axis and %d buttons at '%s'.\n", name, axis_count, button_count, device);
+
+      if (strcmp(name, "Microsoft X-Box 360 pad") == 0)
+      {
+        joystick_map_btn = joystick_map_btn_xbox360;
+        joystick_map_axis = joystick_map_axis_xbox360;
+        printf("joystick: Using Xbox 360 map\n");
+      }
+    }
+    else
+    {
+      perror("joystick: open");
+    }
+
+    return fd;
   }
 
-  #if defined(USE_JOYSTICK)
+  bool input_joystick_handle(int fd, u32 port)
+  {
+    // Joystick must be connected
+    if(fd < 0) {
+      return false;
+    }
+
     struct js_event JE;
-    while(read(joystick_fd, &JE, sizeof(JE)) == sizeof(JE))
-    if (JE.number < MAP_SIZE)
+    while(read(fd, &JE, sizeof(JE)) == sizeof(JE))
+    if (JE.number < JOYSTICK_MAP_SIZE)
     {
       switch(JE.type & ~JS_EVENT_INIT)
       {
         case JS_EVENT_AXIS:
         {
-          u32 mt = JMapAxis[JE.number] >> 16;
-          u32 mo = JMapAxis[JE.number] & 0xFFFF;
+          u32 mt = joystick_map_axis[JE.number] >> 16;
+          u32 mo = joystick_map_axis[JE.number] & 0xFFFF;
 
           //printf("AXIS %d,%d\n",JE.number,JE.value);
           s8 v=(s8)(JE.value/256); //-127 ... + 127 range
@@ -390,8 +376,8 @@ bool HandleJoystick(u32 port)
 
         case JS_EVENT_BUTTON:
         {
-          u32 mt = JMapBtn[JE.number] >> 16;
-          u32 mo = JMapBtn[JE.number] & 0xFFFF;
+          u32 mt = joystick_map_btn[JE.number] >> 16;
+          u32 mo = joystick_map_btn[JE.number] & 0xFFFF;
 
           // printf("BUTTON %d,%d\n",JE.number,JE.value);
 
@@ -423,9 +409,20 @@ bool HandleJoystick(u32 port)
         break;
       }
     }
+
+    return true;
+  }
+#endif
+
+void SetupInput()
+{
+  #if defined(USE_EVDEV)
+    evdev_fd = input_evdev_init(EVDEV_DEVICE);
   #endif
 
-  return true;
+  #if defined(USE_JOYSTICK)
+    joystick_fd = input_joystick_init("/dev/input/js0");
+  #endif
 }
 
 extern bool KillTex;
@@ -467,8 +464,13 @@ void UpdateInputState(u32 port)
     return;
   #endif
 
-  HandleJoystick(port);
-  HandleKb(port);
+  #if defined(USE_JOYSTICK)
+    input_joystick_handle(joystick_fd, port);
+  #endif
+
+  #if defined(USE_EVDEV)
+    input_evdev_handle(evdev_fd, port);
+  #endif
 
   #if defined(TARGET_GCW0) || defined(TARGET_PANDORA)
     return;
@@ -802,7 +804,6 @@ void dc_run();
     void* array[10];
     size_t size;
 
-    // close files
     if (joystick_fd >= 0) { close(joystick_fd); }
     if (evdev_fd >= 0) { close(evdev_fd); }
 
