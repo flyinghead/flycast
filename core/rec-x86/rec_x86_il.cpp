@@ -178,10 +178,6 @@ void DYNACALL VERIFYME(u32 addr)
 	verify((addr>>26)==0x38);
 }
 
-#if !defined(TARGET_NO_NVMEM)
-extern u8* virt_ram_base;
-#endif
-
 /*
 
 	ReadM

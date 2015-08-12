@@ -1,5 +1,6 @@
 #include "TexCache.h"
 #include "hw/pvr/pvr_regs.h"
+#include "hw/mem/_vmem.h"
 
 u8* vq_codebook;
 u32 palette_index;
@@ -193,7 +194,8 @@ vram_block* libCore_vramlock_Lock(u32 start_offset64,u32 end_offset64,void* user
 	
 		vram.LockRegion(block->start,block->len);
 
-		if (VRAM_SIZE == 0x800000) {
+		//TODO: Fix this for 32M wrap as well
+		if (_nvmem_enabled() && VRAM_SIZE == 0x800000) {
 			vram.LockRegion(block->start + VRAM_SIZE, block->len);
 		}
 		
@@ -236,7 +238,11 @@ bool VramLockedWrite(u8* address)
 			list->clear();
 
 			vram.UnLockRegion((u32)offset&(~(PAGE_SIZE-1)),PAGE_SIZE);
-			vram.UnLockRegion((u32)offset&(~(PAGE_SIZE-1)) + VRAM_SIZE,PAGE_SIZE);
+
+			//TODO: Fix this for 32M wrap as well
+			if (_nvmem_enabled() && VRAM_SIZE == 0x800000) {
+				vram.UnLockRegion((u32)offset&(~(PAGE_SIZE-1)) + VRAM_SIZE,PAGE_SIZE);
+			}
 			
 			vramlist_lock.Unlock();
 		}

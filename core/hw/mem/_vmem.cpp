@@ -1,6 +1,7 @@
 
 #include "_vmem.h"
 #include "hw/aica/aica_if.h"
+#include "hw/sh4/dyna/blockmanager.h"
 
 #define HANDLER_MAX 0x1F
 #define HANDLER_COUNT (HANDLER_MAX+1)
@@ -393,13 +394,51 @@ void _vmem_term()
 #include "hw/pvr/pvr_mem.h"
 #include "hw/sh4/sh4_mem.h"
 
+u8* virt_ram_base;
+
+void* malloc_pages(size_t size) {
+
+	u8* rv = (u8*)malloc(size + PAGE_SIZE);
+
+	return rv + PAGE_SIZE - ((unat)rv % PAGE_SIZE);
+}
+
+bool _vmem_reserve_nonvmem()
+{
+	virt_ram_base = 0;
+
+	p_sh4rcb=(Sh4RCB*)malloc_pages(sizeof(Sh4RCB));
+
+	mem_b.size=RAM_SIZE;
+	mem_b.data=(u8*)malloc_pages(RAM_SIZE);
+
+	vram.size=VRAM_SIZE;
+	vram.data=(u8*)malloc_pages(VRAM_SIZE);
+
+	aica_ram.size=ARAM_SIZE;
+	aica_ram.data=(u8*)malloc_pages(ARAM_SIZE);
+
+	return true;
+}
+
+void _vmem_bm_reset_nvmem();
+
+void _vmem_bm_reset() {
+	if (virt_ram_base) {
+		#if !defined(TARGET_NO_NVMEM)
+			_vmem_bm_reset_nvmem();
+		#endif
+	} else {
+		bm_vmem_pagefill((void**)p_sh4rcb->fpcb, FPCB_SIZE);
+	}
+}
+
 #if !defined(TARGET_NO_NVMEM)
 
 #define MAP_RAM_START_OFFSET  0
 #define MAP_VRAM_START_OFFSET (MAP_RAM_START_OFFSET+RAM_SIZE)
 #define MAP_ARAM_START_OFFSET (MAP_VRAM_START_OFFSET+VRAM_SIZE)
 
-u8* virt_ram_base;
 #if HOST_OS==OS_WINDOWS
 #include <Windows.h>
 HANDLE mem_handle;
@@ -576,10 +615,8 @@ error:
 #define map_buffer(dsts,dste,offset,sz,w) {ptr=_nvmem_map_buffer(dsts,dste-dsts,offset,sz,w);if (!ptr) return false;}
 #define unused_buffer(start,end) {ptr=_nvmem_unused_buffer(start,end);if (!ptr) return false;}
 
-void _vmem_bm_pagefail(void** ptr,u32 PAGE_SZ);
-
 u32 pagecnt;
-void _vmem_bm_reset()
+void _vmem_bm_reset_nvmem()
 {
 	#if defined(TARGET_NO_NVMEM)
 		return;
@@ -610,6 +647,9 @@ void _vmem_bm_reset()
 
 bool BM_LockedWrite(u8* address)
 {
+	if (!_nvmem_enabled())
+		return false;
+	
 #if FEAT_SHREC != DYNAREC_NONE
 	u32 addr=address-(u8*)p_sh4rcb->fpcb;
 
@@ -625,7 +665,7 @@ bool BM_LockedWrite(u8* address)
 		mprotect (address, PAGE_SIZE, PROT_READ | PROT_WRITE);
 #endif
 
-		_vmem_bm_pagefail((void**)address,PAGE_SIZE);
+		bm_vmem_pagefill((void**)address,PAGE_SIZE);
 		
 		return true;
 	}
@@ -641,10 +681,13 @@ bool _vmem_reserve()
 
 	verify((sizeof(Sh4RCB)%PAGE_SIZE)==0);
 
+	if (settings.dynarec.disable_nvmem)
+		return _vmem_reserve_nonvmem();
+
 	virt_ram_base=(u8*)_nvmem_alloc_mem();
 
 	if (virt_ram_base==0)
-		return false;
+		return _vmem_reserve_nonvmem();
 	
 	p_sh4rcb=(Sh4RCB*)virt_ram_base;
 
@@ -730,27 +773,9 @@ bool _vmem_reserve()
 }
 #else
 
-void* malloc_pages(size_t size) {
-
-	u8* rv = (u8*)malloc(size + PAGE_SIZE);
-
-	return rv + PAGE_SIZE - ((unat)rv % PAGE_SIZE);
-}
-
 bool _vmem_reserve()
 {
-	p_sh4rcb=(Sh4RCB*)malloc_pages(sizeof(Sh4RCB));
-
-	mem_b.size=RAM_SIZE;
-	mem_b.data=(u8*)malloc_pages(RAM_SIZE);
-
-	vram.size=VRAM_SIZE;
-	vram.data=(u8*)malloc_pages(VRAM_SIZE);
-
-	aica_ram.size=ARAM_SIZE;
-	aica_ram.data=(u8*)malloc_pages(ARAM_SIZE);
-
-	return true;
+	return _vmem_reserve_nonvmem();
 }
 #endif
 

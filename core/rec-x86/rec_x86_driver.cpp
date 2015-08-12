@@ -620,10 +620,6 @@ u32 DynaRBI::Relink()
 	W F32v2 B,S{,M}
 */
 
-#if !defined(TARGET_NO_NVMEM)
-extern u8* virt_ram_base;
-#endif
-
 #include "hw/sh4/sh4_mmr.h"
 
 enum mem_op_type
@@ -651,8 +647,7 @@ void gen_hande(u32 w, u32 sz, u32 mode)
 
 	u32 si=x86e->x86_indx;
 
-#ifndef TARGET_NO_NVMEM
-	if (mode==0)
+	if (mode==0 && _nvmem_enabled())
 	{
 		//Buffer
 		x86e->Emit(op_mov32,EAX,ECX);
@@ -684,9 +679,7 @@ void gen_hande(u32 w, u32 sz, u32 mode)
 			}
 		}	
 	}
-	else
-#endif
-	if (mode==1)
+	else if (mode==1)
 	{
 		//SQ
 		verify(w==1);

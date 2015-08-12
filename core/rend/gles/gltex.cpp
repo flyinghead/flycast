@@ -223,7 +223,7 @@ struct TextureCacheData
 				//Call the format specific conversion code
 				texconv=tex->PL;
 				//calculate the size, in bytes, for the locking
-				size=w*h*tex->bpp/8;
+				size=stride*h*tex->bpp/8;
 			}
 			else
 			{
