@@ -81,33 +81,32 @@ int msgboxf(const wchar* text, unsigned int type, ...)
 u16 kcode[4] = {0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF};
 u8 rt[4] = {0, 0, 0, 0};
 u8 lt[4] = {0, 0, 0, 0};
-
 u32 vks[4];
-s8 joyx[4],joyy[4];
+s8 joyx[4], joyy[4];
 
 enum DCPad
 {
-  Btn_C   = 1,
-  Btn_B   = 1<<1,
-  Btn_A   = 1<<2,
-  Btn_Start = 1<<3,
-  DPad_Up   = 1<<4,
-  DPad_Down = 1<<5,
-  DPad_Left = 1<<6,
+  Btn_C       = 1,
+  Btn_B       = 1<<1,
+  Btn_A       = 1<<2,
+  Btn_Start   = 1<<3,
+  DPad_Up     = 1<<4,
+  DPad_Down   = 1<<5,
+  DPad_Left   = 1<<6,
   DPad_Right  = 1<<7,
-  Btn_Z   = 1<<8,
-  Btn_Y   = 1<<9,
-  Btn_X   = 1<<10,
-  Btn_D   = 1<<11,
-  DPad2_Up  = 1<<12,
+  Btn_Z       = 1<<8,
+  Btn_Y       = 1<<9,
+  Btn_X       = 1<<10,
+  Btn_D       = 1<<11,
+  DPad2_Up    = 1<<12,
   DPad2_Down  = 1<<13,
   DPad2_Left  = 1<<14,
   DPad2_Right = 1<<15,
 
-  Axis_LT= 0x10000,
-  Axis_RT= 0x10001,
-  Axis_X= 0x20000,
-  Axis_Y= 0x20001,
+  Axis_LT = 0x10000,
+  Axis_RT = 0x10001,
+  Axis_X  = 0x20000,
+  Axis_Y  = 0x20001,
 };
 
 
@@ -388,7 +387,7 @@ bool HandleJoystick(u32 port)
               kcode[port] |= mo;
             }
           }
-          else if (mt==1)
+          else if (mt == 1)
           {
             // printf("Mapped to %d %d\n",mo,JE.value?255:0);
             if (mo==0)
@@ -422,13 +421,12 @@ extern bool KillTex;
 
     cursormask = XCreatePixmap(display, root, 1, 1, 1/*depth*/);
     xgc.function = GXclear;
-    gc =  XCreateGC(display, cursormask, GCFunction, &xgc);
+    gc = XCreateGC(display, cursormask, GCFunction, &xgc);
     XFillRectangle(display, cursormask, gc, 0, 0, 1, 1);
     dummycolour.pixel = 0;
     dummycolour.red = 0;
     dummycolour.flags = 04;
-    cursor = XCreatePixmapCursor(display, cursormask, cursormask,
-    &dummycolour,&dummycolour, 0,0);
+    cursor = XCreatePixmapCursor(display, cursormask, cursormask, &dummycolour,&dummycolour, 0,0);
     XFreePixmap(display,cursormask);
     XFreeGC(display,gc);
     return cursor;
@@ -547,8 +545,8 @@ void os_SetWindowText(const char * text)
   else if (x11_win)
   {
     XChangeProperty((Display*)x11_disp, (Window)x11_win,
-      XInternAtom((Display*)x11_disp, "WM_NAME",    False),   //WM_NAME,
-      XInternAtom((Display*)x11_disp, "UTF8_STRING",  False),   //UTF8_STRING,
+      XInternAtom((Display*)x11_disp, "WM_NAME", False),     //WM_NAME,
+      XInternAtom((Display*)x11_disp, "UTF8_STRING", False), //UTF8_STRING,
       8, PropModeReplace, (const unsigned char *)text, strlen(text));
   }
   #endif
