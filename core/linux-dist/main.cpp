@@ -133,60 +133,71 @@ const u32 JMapAxis_360[MAP_SIZE] =
 const u32* JMapBtn=JMapBtn_USB;
 const u32* JMapAxis=JMapAxis_USB;
 
+int setup_input_evdev(const char* device)
+{
+  char name[256] = "Unknown";
+
+  int fd = open(device, O_RDONLY);
+
+  if (fd >= 0)
+  {
+    fcntl(fd, F_SETFL, O_NONBLOCK);
+    if(ioctl(fd, EVIOCGNAME(sizeof(name)), name) < 0)
+    {
+      perror("evdev: ioctl");
+    }
+    printf("evdev: Found '%s' at '%s'\n", name, device);
+  }
+  else
+  {
+    perror("evdev: open");
+  }
+
+  return fd;
+}
+
+int setup_input_joystick(const char* device)
+{
+  int axis_count = 0;
+  int button_count = 0;
+  char name[128] = "Unknown";
+
+  int fd = open(device, O_RDONLY);
+
+  if(fd >= 0)
+  {
+    fcntl(fd, F_SETFL, O_NONBLOCK);
+    ioctl(fd, JSIOCGAXES, &axis_count);
+    ioctl(fd, JSIOCGBUTTONS, &button_count);
+    ioctl(fd, JSIOCGNAME(sizeof(name)), &name);
+
+    printf("joystick: Found '%s' with %d axis and %d buttons at '%s'.\n", name, axis_count, button_count, device);
+
+    if (strcmp(name, "Microsoft X-Box 360 pad") == 0)
+    {
+      JMapBtn = JMapBtn_360;
+      JMapAxis = JMapAxis_360;
+      printf("joystick: Using Xbox 360 map\n");
+    }
+  }
+  else
+  {
+    perror("joystick: open");
+  }
+
+  return fd;
+}
 
 void SetupInput()
 {
   #if HOST_OS != OS_DARWIN && !defined(TARGET_EMSCRIPTEN)
     #ifdef TARGET_PANDORA
-      const char* device = "/dev/input/event4";
+      #define EVDEV_DEVICE "/dev/input/event4"
     #else
-      const char* device = "/dev/event2";
+      #define EVDEV_DEVICE "/dev/event2"
     #endif
-    char name[256]= "Unknown";
-
-
-    if ((kbfd = open(device, O_RDONLY)) > 0)
-    {
-      fcntl(kbfd, F_SETFL, O_NONBLOCK);
-      if(ioctl(kbfd, EVIOCGNAME(sizeof(name)), name) < 0)
-      {
-        perror("evdev ioctl");
-      }
-
-      printf("The device on %s says its name is %s\n", device, name);
-
-    }
-    else
-    {
-      perror("evdev open");
-    }
-
-    // Open joystick device
-    JoyFD = open("/dev/input/js0", O_RDONLY);
-
-    if(JoyFD >= 0)
-    {
-      int AxisCount, ButtonCount;
-      char Name[128];
-
-      AxisCount   = 0;
-      ButtonCount = 0;
-      Name[0]     = '\0';
-
-      fcntl(JoyFD, F_SETFL, O_NONBLOCK);
-      ioctl(JoyFD, JSIOCGAXES, &AxisCount);
-      ioctl(JoyFD, JSIOCGBUTTONS, &ButtonCount);
-      ioctl(JoyFD, JSIOCGNAME(sizeof(Name)), &Name);
-
-      printf("SDK: Found '%s' joystick with %d axis and %d buttons\n", Name, AxisCount, ButtonCount);
-
-      if (strcmp(Name, "Microsoft X-Box 360 pad") == 0)
-      {
-        JMapBtn = JMapBtn_360;
-        JMapAxis = JMapAxis_360;
-        printf("Using Xbox 360 map\n");
-      }
-    }
+    kbfd = setup_input_evdev(EVDEV_DEVICE);
+    JoyFD = setup_input_joystick("/dev/input/js0");
   #endif
 }
 
