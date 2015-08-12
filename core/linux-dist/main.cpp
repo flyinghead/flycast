@@ -449,42 +449,46 @@ void UpdateInputState(u32 port)
     return;
   #endif
 
-  for(;;)
+  bool done = false;
+  while(!done)
   {
     key = 0;
     read(STDIN_FILENO, &key, 1);
 
-    if (0  == key || EOF == key) { break; }
-    if ('k' == key) { KillTex=true; }
-
-    #ifdef TARGET_PANDORA
-        if (' ' == key) { kcode[port] &= ~Btn_C; }
-        if ('6' == key) { kcode[port] &= ~Btn_A; }
-        if ('O' == key) { kcode[port] &= ~Btn_B; }
-        if ('5' == key) { kcode[port] &= ~Btn_Y; }
-        if ('H' == key) { kcode[port] &= ~Btn_X; }
-        if ('A' == key) { kcode[port] &= ~DPad_Up; }
-        if ('B' == key) { kcode[port] &= ~DPad_Down; }
-        if ('D' == key) { kcode[port] &= ~DPad_Left; }
-        if ('C' == key) { kcode[port] &= ~DPad_Right; }
-
-        if ('q' == key) { die("death by escape key"); }
-    #endif
-    //if (0x1b == key){ die("death by escape key"); } //this actually quits when i press left for some reason
-
-    if ('a' == key) { rt[port] = 255; }
-    if ('s' == key) { lt[port] = 255; }
-
-    #if FEAT_SHREC != DYNAREC_NONE
-      if ('b' == key) { emit_WriteCodeCache(); }
-      if ('n' == key) { bm_Reset(); }
-      if ('m' == key) { bm_Sort(); }
-      if (',' == key)
-      {
-        emit_WriteCodeCache();
-        bm_Sort();
-      }
-    #endif
+    switch(key)
+    {
+      case 0:
+      case EOF:
+        done = true;
+        break;
+      case 'k': KillTex=true; break;
+      case 'a': rt[port] = 255; break;
+      case 's': lt[port] = 255; break;
+      //case 0x1b: die("death by escape key"); break; //this actually quits when i press left for some reason
+      
+      #ifdef TARGET_PANDORA
+        case ' ': kcode[port] &= ~Btn_C; break;
+        case '6': kcode[port] &= ~Btn_A; break;
+        case 'O': kcode[port] &= ~Btn_B; break;
+        case '5': kcode[port] &= ~Btn_Y; break;
+        case 'H': kcode[port] &= ~Btn_X; break;
+        case 'A': kcode[port] &= ~DPad_Up; break;
+        case 'B': kcode[port] &= ~DPad_Down; break;
+        case 'D': kcode[port] &= ~DPad_Left; break;
+        case 'C': kcode[port] &= ~DPad_Right; break;
+        case 'q': die("death by escape key"); break;
+      #endif
+      
+      #if FEAT_SHREC != DYNAREC_NONE
+        case 'b': emit_WriteCodeCache(); break;
+        case 'n': bm_Reset(); break;
+        case 'm': bm_Sort(); break;
+        case ',':
+          emit_WriteCodeCache();
+          bm_Sort();
+        break;
+      #endif
+    }
   }
 }
 
