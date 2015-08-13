@@ -8,7 +8,7 @@
 <item>
 <bitmap xmlns:android="http://schemas.android.com/apk/res/android"
     android:gravity="center"
-    android:src="@drawable/menuback"
-    android:tileMode="disabled" />
+    android:src="@drawable/menutile"
+    android:tileMode="repeat" />
 </item>
 </layer-list>
