@@ -100,6 +100,8 @@
         <item>Controller D</item>
     </string-array>
     
+    <string name="drawer_open">Menu Opened</string>
+	<string name="drawer_shut">Menu Closed</string>	
     <string name="browser">Browser</string>
     <string name="settings">Settings</string>
     <string name="paths">Paths</string>
