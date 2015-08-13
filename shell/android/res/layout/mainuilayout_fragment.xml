@@ -7,53 +7,59 @@
     <!-- The main content view -->
 
     <FrameLayout
-        android:id="@+id/root_list"
+        android:id="@+id/content_frame"
         android:layout_width="match_parent"
         android:layout_height="match_parent" >
 
         <LinearLayout
-            android:id="@+id/header_list"
+            android:id="@+id/root_list"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="2dp"
-            android:orientation="horizontal" >
+            android:layout_height="match_parent"
+            android:orientation="vertical" >
 
             <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="48dp"
+                android:id="@+id/header_list"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
                 android:layout_marginBottom="2dp"
                 android:orientation="horizontal" >
 
-                <ImageView
-                    android:id="@+id/header_menu"
+                <LinearLayout
                     android:layout_width="wrap_content"
-                    android:layout_height="fill_parent"
-                    android:src="@drawable/ic_drawer" />
+                    android:layout_height="48dp"
+                    android:layout_marginBottom="2dp"
+                    android:orientation="horizontal" >
 
-                <ImageView
-                    android:id="@+id/header_icon"
+                    <ImageView
+                        android:id="@+id/header_menu"
+                        android:layout_width="wrap_content"
+                        android:layout_height="fill_parent"
+                        android:src="@drawable/ic_drawer" />
+
+                    <ImageView
+                        android:id="@+id/header_icon"
+                        android:layout_width="wrap_content"
+                        android:layout_height="fill_parent"
+                        android:src="@drawable/ic_launcher" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/menu_heading"
                     android:layout_width="wrap_content"
-                    android:layout_height="fill_parent"
-                    android:src="@drawable/ic_launcher" />
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginLeft="4dp"
+                    android:layout_weight="1"
+                    android:text="@string/app_name"
+                    android:textAppearance="?android:attr/textAppearanceLarge"
+                    android:textSize="32dp" />
             </LinearLayout>
 
-            <TextView
-                android:id="@+id/menu_heading"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical"
-                android:layout_marginLeft="4dp"
-                android:layout_weight="1"
-                android:text="@string/app_name"
-                android:textAppearance="?android:attr/textAppearanceLarge"
-                android:textSize="32dp" />
+            <FrameLayout
+                android:id="@+id/fragment_container"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
         </LinearLayout>
-
-        <FrameLayout
-            android:id="@+id/fragment_container"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_below="@+id/root_list" />
     </FrameLayout>
     <!-- The navigation drawer -->
 
