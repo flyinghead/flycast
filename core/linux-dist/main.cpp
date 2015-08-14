@@ -130,7 +130,7 @@ static int evdev_fd = -1;
   {
     char name[256] = "Unknown";
 
-    printf("evdev: Trying to open device at '%s'", device);
+    printf("evdev: Trying to open device at '%s'\n", device);
 
     int fd = open(device, O_RDONLY);
 
@@ -257,7 +257,7 @@ static int joystick_fd = -1; // Joystick file descriptor
     int button_count = 0;
     char name[128] = "Unknown";
 
-    printf("joystick: Trying to open device at '%s'", device);
+    printf("joystick: Trying to open device at '%s'\n", device);
 
     int fd = open(device, O_RDONLY);
 
