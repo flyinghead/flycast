@@ -316,7 +316,9 @@ static int joystick_fd = -1; // Joystick file descriptor
 
       printf("joystick: Found '%s' with %d axis and %d buttons at '%s'.\n", name, axis_count, button_count, device);
 
-      if (strcmp(name, "Microsoft X-Box 360 pad") == 0)
+      if (strcmp(name, "Microsoft X-Box 360 pad") == 0 ||
+          strcmp(name, "Xbox Gamepad (userspace driver)") == 0 ||
+          strcmp(name, "Xbox 360 Wireless Receiver (XBOX)") == 0)
       {
         joystick_map_btn = joystick_map_btn_xbox360;
         joystick_map_axis = joystick_map_axis_xbox360;
