@@ -20,11 +20,15 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentManager;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -35,9 +39,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.jeremyfeinstein.slidingmenu.lib.SlidingMenu;
-import com.jeremyfeinstein.slidingmenu.lib.SlidingMenu.OnOpenListener;
-import com.jeremyfeinstein.slidingmenu.lib.app.SlidingFragmentActivity;
 import com.reicast.emulator.config.Config;
 import com.reicast.emulator.config.InputFragment;
 import com.reicast.emulator.config.OptionsFragment;
@@ -45,8 +46,14 @@ import com.reicast.emulator.debug.GenerateLogs;
 import com.reicast.emulator.emu.JNIdc;
 import com.reicast.emulator.periph.Gamepad;
 
-public class MainActivity extends SlidingFragmentActivity implements
+import android.support.v4.app.ActionBarDrawerToggle;
+import android.support.v4.widget.DrawerLayout;
+
+public class MainActivity extends FragmentActivity implements
 		FileBrowser.OnItemSelectedListener, OptionsFragment.OnClickListener {
+	
+	private DrawerLayout mDrawerLayout;
+	private ActionBarDrawerToggle mDrawerToggle;
 
 	private SharedPreferences mPrefs;
 	private static File sdcard = Environment.getExternalStorageDirectory();
@@ -54,8 +61,6 @@ public class MainActivity extends SlidingFragmentActivity implements
 
 	private TextView menuHeading;
 	private boolean hasAndroidMarket = false;
-	
-	private SlidingMenu sm;
 	
 	private UncaughtExceptionHandler mUEHandler;
 
@@ -65,7 +70,6 @@ public class MainActivity extends SlidingFragmentActivity implements
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.mainuilayout_fragment);
-		setBehindContentView(R.layout.drawer_menu);
 		
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
 			getWindow().getDecorView().setOnSystemUiVisibilityChangeListener (new OnSystemUiVisibilityChangeListener() {
@@ -171,15 +175,23 @@ public class MainActivity extends SlidingFragmentActivity implements
 		}
 
 		menuHeading = (TextView) findViewById(R.id.menu_heading);
-
-		sm = getSlidingMenu();
-		sm.setShadowWidthRes(R.dimen.shadow_width);
-		sm.setShadowDrawable(R.drawable.shadow);
-		sm.setBehindOffsetRes(R.dimen.slidingmenu_offset);
-		sm.setFadeDegree(0.35f);
-		sm.setTouchModeAbove(SlidingMenu.TOUCHMODE_MARGIN);
-		sm.setOnOpenListener(new OnOpenListener() {
-			public void onOpen() {
+		
+		mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+		mDrawerToggle = new ActionBarDrawerToggle(
+			MainActivity.this,      /* host Activity */
+			mDrawerLayout,			/* DrawerLayout object */
+			R.drawable.ic_drawer,	/* nav drawer icon to replace 'Up' caret */
+			R.string.drawer_open,	/* "open drawer" description */
+			R.string.drawer_shut	/* "close drawer" description */
+		) {
+			/** Called when a drawer has settled in a completely closed state. */
+			public void onDrawerClosed(View view) {
+				super.onDrawerClosed(view);
+			}
+			
+			/** Called when a drawer has settled in a completely open state. */
+			public void onDrawerOpened(View drawerView) {
+				super.onDrawerOpened(drawerView);
 				findViewById(R.id.browser_menu).setOnClickListener(new OnClickListener() {
 					public void onClick(View view) {
 						FileBrowser browseFrag = (FileBrowser) getSupportFragmentManager()
@@ -203,7 +215,7 @@ public class MainActivity extends SlidingFragmentActivity implements
 								"MAIN_BROWSER").addToBackStack(null)
 								.commit();
 						setTitle(R.string.browser);
-						sm.toggle(true);
+						toggleDrawer(true);
 					}
 
 				});
@@ -225,7 +237,7 @@ public class MainActivity extends SlidingFragmentActivity implements
 										optionsFrag, "OPTIONS_FRAG")
 										.addToBackStack(null).commit();
 								setTitle(R.string.settings);
-								sm.toggle(true);
+								toggleDrawer(true);
 							}
 
 						});
@@ -245,7 +257,7 @@ public class MainActivity extends SlidingFragmentActivity implements
 						.replace(R.id.fragment_container, inputFrag,
 								"INPUT_FRAG").addToBackStack(null).commit();
 						setTitle(R.string.input);
-						sm.toggle(true);
+						toggleDrawer(true);
 					}
 
 				});
@@ -265,7 +277,7 @@ public class MainActivity extends SlidingFragmentActivity implements
 						.replace(R.id.fragment_container, aboutFrag,
 								"ABOUT_FRAG").addToBackStack(null).commit();
 						setTitle(R.string.about);
-						sm.toggle(true);
+						toggleDrawer(true);
 					}
 
 				});
@@ -286,7 +298,7 @@ public class MainActivity extends SlidingFragmentActivity implements
 						cloudFrag, "CLOUD_FRAG")
 							.addToBackStack(null).commit();
 						setTitle(R.string.cloud);
-						sm.toggle(true);
+						toggleDrawer(true);
 					}
 
 				});
@@ -300,10 +312,9 @@ public class MainActivity extends SlidingFragmentActivity implements
 							if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
 								// vib.vibrate(50);
 								startActivity(new Intent(Intent.ACTION_VIEW, Uri
-										.parse("market://details?id="
-												+ getPackageName())));
+										.parse("market://details?id=" + getPackageName())));
 								//setTitle(R.string.rateme);
-								sm.toggle(true);
+								toggleDrawer(true);
 								return true;
 							} else
 								return false;
@@ -317,11 +328,15 @@ public class MainActivity extends SlidingFragmentActivity implements
 						}
 					});
 				}
-		});
+		};
+		
+		// Set the drawer toggle as the DrawerListener
+		mDrawerLayout.setDrawerListener(mDrawerToggle);
+
 		findViewById(R.id.header_list).setOnTouchListener(new OnTouchListener() {
 			public boolean onTouch(View v, MotionEvent event) {
 				if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
-					sm.toggle(true);
+					toggleDrawer(false);
 					return true;
 				} else
 					return false;
@@ -329,6 +344,14 @@ public class MainActivity extends SlidingFragmentActivity implements
 		});
 	}
 	
+	public void toggleDrawer(boolean close) {
+		if (mDrawerLayout.isDrawerOpen(Gravity.LEFT)) {
+			mDrawerLayout.closeDrawer(Gravity.LEFT);
+		} else if (!close) {
+			mDrawerLayout.openDrawer(Gravity.LEFT);
+		}
+	}
+
 	public void generateErrorLog() {
 		new GenerateLogs(MainActivity.this).execute(getFilesDir().getAbsolutePath());
 	}
@@ -492,6 +515,7 @@ public class MainActivity extends SlidingFragmentActivity implements
 	@Override
 	public void onConfigurationChanged(Configuration newConfig) {
 		super.onConfigurationChanged(newConfig);
+		mDrawerToggle.onConfigurationChanged(newConfig);
 	}
 
 	@Override
@@ -518,7 +542,7 @@ public class MainActivity extends SlidingFragmentActivity implements
 
 		}
 		if (keyCode == KeyEvent.KEYCODE_MENU) {
-			sm.toggle(true);
+			toggleDrawer(false);
 		}
 
 		return super.onKeyDown(keyCode, event);
@@ -584,6 +608,7 @@ public class MainActivity extends SlidingFragmentActivity implements
 	@Override
 	public void onPostCreate(Bundle savedInstanceState) {
 		super.onPostCreate(savedInstanceState);
+		mDrawerToggle.syncState();
 	}
 	
 	@Override
