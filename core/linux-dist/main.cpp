@@ -115,15 +115,16 @@ enum DCPad
 void emit_WriteCodeCache();
 
 /* evdev input */
-static int evdev_fd = -1;
+static int evdev_fd[4] = { -1, -1, -1, -1 };
 
 #if defined(USE_EVDEV)
   #define EVDEV_DEVICE_STRING "/dev/input/event%d"
   #ifdef TARGET_PANDORA
-    #define EVDEV_DEFAULT_DEVICE_ID 4
+    #define EVDEV_DEFAULT_DEVICE_ID_1 4
   #else
-    #define EVDEV_DEFAULT_DEVICE_ID 0
+    #define EVDEV_DEFAULT_DEVICE_ID_1 0
   #endif
+  #define EVDEV_DEFAULT_DEVICE_ID(port) (port == 1 ? EVDEV_DEFAULT_DEVICE_ID_1 : -1)
 
   int input_evdev_init(const char* device)
   {
@@ -175,51 +176,51 @@ static int evdev_fd = -1;
       #define KEY_LOCK   0x77    // Note that KEY_LOCK is a switch and remains pressed until it's switched back
     #endif
 
-    static int keys[13];
+    static int keys[4][13];
     static int dpad_btn[2];
     static s8 axisval;
     while(read(fd, &ie, sizeof(ie)) == sizeof(ie))
     {
-      printf("type %i key %i state %i\n", ie.type, ie.code, ie.value);
+      //printf("type %i key %i state %i\n", ie.type, ie.code, ie.value);
       switch(ie.type)
       {
         case EV_KEY:
           switch (ie.code)
           {
-            case KEY_UP:     keys[ 1] = ie.value; break;
-            case KEY_DOWN:   keys[ 2] = ie.value; break;
-            case KEY_LEFT:   keys[ 3] = ie.value; break;
-            case KEY_RIGHT:  keys[ 4] = ie.value; break;
+            case KEY_UP:     keys[port][ 1] = ie.value; break;
+            case KEY_DOWN:   keys[port][ 2] = ie.value; break;
+            case KEY_LEFT:   keys[port][ 3] = ie.value; break;
+            case KEY_RIGHT:  keys[port][ 4] = ie.value; break;
 
             //xbox360
-            case BTN_Y:      keys[ 5] = ie.value; break;
-            case BTN_A:      keys[ 6] = ie.value; break;
-            case BTN_B:      keys[ 7] = ie.value; break;
-            case BTN_X:      keys[ 8] = ie.value; break;
-            case BTN_SELECT: keys[ 9] = ie.value; break;
-            case BTN_START:  keys[12] = ie.value; break;
-            case BTN_TRIGGER_HAPPY1: keys[3] = ie.value; break;
-            case BTN_TRIGGER_HAPPY2: keys[4] = ie.value; break;
-            case BTN_TRIGGER_HAPPY3: keys[1] = ie.value; break;
-            case BTN_TRIGGER_HAPPY4: keys[2] = ie.value; break;
+            case BTN_Y:      keys[port][ 5] = ie.value; break;
+            case BTN_A:      keys[port][ 6] = ie.value; break;
+            case BTN_B:      keys[port][ 7] = ie.value; break;
+            case BTN_X:      keys[port][ 8] = ie.value; break;
+            case BTN_SELECT: keys[port][ 9] = ie.value; break;
+            case BTN_START:  keys[port][12] = ie.value; break;
+            case BTN_TRIGGER_HAPPY1: keys[port][3] = ie.value; break;
+            case BTN_TRIGGER_HAPPY2: keys[port][4] = ie.value; break;
+            case BTN_TRIGGER_HAPPY3: keys[port][1] = ie.value; break;
+            case BTN_TRIGGER_HAPPY4: keys[port][2] = ie.value; break;
 
             #if defined(TARGET_GCW0)
-              case KEY_Y:      keys[ 5] = ie.value; break;
-              case KEY_B:      keys[ 6] = ie.value; break;
-              case KEY_A:      keys[ 7] = ie.value; break;
-              case KEY_X:      keys[ 8] = ie.value; break;
-              case KEY_SELECT: keys[ 9] = ie.value; break;
-              case KEY_START:  keys[12] = ie.value; break;
+              case KEY_Y:      keys[port][ 5] = ie.value; break;
+              case KEY_B:      keys[port][ 6] = ie.value; break;
+              case KEY_A:      keys[port][ 7] = ie.value; break;
+              case KEY_X:      keys[port][ 8] = ie.value; break;
+              case KEY_SELECT: keys[port][ 9] = ie.value; break;
+              case KEY_START:  keys[port][12] = ie.value; break;
             #elif  defined(TARGET_PANDORA)
-              case KEY_SPACE:      keys[ 0] = ie.value; break;
-              case KEY_PAGEUP:     keys[ 5] = ie.value; break;
-              case KEY_PAGEDOWN:   keys[ 6] = ie.value; break;
-              case KEY_END:        keys[ 7] = ie.value; break;
-              case KEY_HOME:       keys[ 8] = ie.value; break;
-              case KEY_MENU:       keys[ 9] = ie.value; break;
-              case KEY_RIGHTSHIFT: keys[10] = ie.value; break;
-              case KEY_RIGHTCTRL:  keys[11] = ie.value; break;
-              case KEY_LEFTALT:    keys[12] = ie.value; break;
+              case KEY_SPACE:      keys[port][ 0] = ie.value; break;
+              case KEY_PAGEUP:     keys[port][ 5] = ie.value; break;
+              case KEY_PAGEDOWN:   keys[port][ 6] = ie.value; break;
+              case KEY_END:        keys[port][ 7] = ie.value; break;
+              case KEY_HOME:       keys[port][ 8] = ie.value; break;
+              case KEY_MENU:       keys[port][ 9] = ie.value; break;
+              case KEY_RIGHTSHIFT: keys[port][10] = ie.value; break;
+              case KEY_RIGHTCTRL:  keys[port][11] = ie.value; break;
+              case KEY_LEFTALT:    keys[port][12] = ie.value; break;
             #endif
           }
           break;
@@ -249,16 +250,16 @@ static int evdev_fd = -1;
               switch(ie.value)
               {
                 case -1:
-                    keys[dpad_btn[0]] = 1;
-                    keys[dpad_btn[1]] = 0;
+                    keys[port][dpad_btn[0]] = 1;
+                    keys[port][dpad_btn[1]] = 0;
                     break;
                 case 0:
-                    keys[dpad_btn[0]] = 0;
-                    keys[dpad_btn[1]] = 0;
+                    keys[port][dpad_btn[0]] = 0;
+                    keys[port][dpad_btn[1]] = 0;
                     break;
                 case 1:
-                    keys[dpad_btn[0]] = 0;
-                    keys[dpad_btn[1]] = 1;
+                    keys[port][dpad_btn[0]] = 0;
+                    keys[port][dpad_btn[1]] = 1;
                     break;
               }
               break;
@@ -266,19 +267,19 @@ static int evdev_fd = -1;
 
       }
     }
-    if (keys[ 0]) { kcode[port] &= ~Btn_C; }
-    if (keys[ 6]) { kcode[port] &= ~Btn_A; }
-    if (keys[ 7]) { kcode[port] &= ~Btn_B; }
-    if (keys[ 5]) { kcode[port] &= ~Btn_Y; }
-    if (keys[ 8]) { kcode[port] &= ~Btn_X; }
-    if (keys[ 1]) { kcode[port] &= ~DPad_Up; }
-    if (keys[ 2]) { kcode[port] &= ~DPad_Down; }
-    if (keys[ 3]) { kcode[port] &= ~DPad_Left; }
-    if (keys[ 4]) { kcode[port] &= ~DPad_Right; }
-    if (keys[12]) { kcode[port] &= ~Btn_Start; }
-    if (keys[ 9]) { die("death by escape key"); }
-    if (keys[10]) { rt[port] = 255; }
-    if (keys[11]) { lt[port] = 255; }
+    if (keys[port][ 0]) { kcode[port] &= ~Btn_C; }
+    if (keys[port][ 6]) { kcode[port] &= ~Btn_A; }
+    if (keys[port][ 7]) { kcode[port] &= ~Btn_B; }
+    if (keys[port][ 5]) { kcode[port] &= ~Btn_Y; }
+    if (keys[port][ 8]) { kcode[port] &= ~Btn_X; }
+    if (keys[port][ 1]) { kcode[port] &= ~DPad_Up; }
+    if (keys[port][ 2]) { kcode[port] &= ~DPad_Down; }
+    if (keys[port][ 3]) { kcode[port] &= ~DPad_Left; }
+    if (keys[port][ 4]) { kcode[port] &= ~DPad_Right; }
+    if (keys[port][12]) { kcode[port] &= ~Btn_Start; }
+    if (keys[port][ 9]) { die("death by escape key"); }
+    if (keys[port][10]) { rt[port] = 255; }
+    if (keys[port][11]) { lt[port] = 255; }
     return true;
   }
 #endif
@@ -447,17 +448,38 @@ static int joystick_fd = -1; // Joystick file descriptor
 void SetupInput()
 {
   #if defined(USE_EVDEV)
-    int evdev_device_id = cfgLoadInt("input", "evdev_device_id", EVDEV_DEFAULT_DEVICE_ID);
-    if (evdev_device_id < 0) {
-      puts("evdev input disabled by config.\n");
-    }
-    else
+    char evdev_config_key[17];
+    int evdev_device_id[4] = { -1, -1, -1, -1 };
+    
+    int evdev_device_length, port, i;
+    char* evdev_device;
+    
+    for (port = 0; port < 4; port++)
     {
-      int evdev_device_length = snprintf(NULL, 0, EVDEV_DEVICE_STRING, evdev_device_id);
-      char* evdev_device = (char*)malloc(evdev_device_length + 1);
-      sprintf(evdev_device, EVDEV_DEVICE_STRING, evdev_device_id);
-      evdev_fd = input_evdev_init(evdev_device);
-      free(evdev_device);
+      sprintf(evdev_config_key, "evdev_device_id_%d", port+1);
+      evdev_device_id[port] = cfgLoadInt("input", evdev_config_key, EVDEV_DEFAULT_DEVICE_ID(port+1));
+      
+      // Check if the same device is already in use on another port
+      if (evdev_device_id[port] < 0)
+      {
+        printf("evdev: Controller %d disabled by config.\n", port + 1);
+      }
+      else
+      {
+        for (i = 0; i < port; i++)
+        {
+            if (evdev_device_id[port] == evdev_device_id[i])
+            {
+                die("You can't assign the same device to multiple ports!\n");
+            }
+        }
+
+        evdev_device_length = snprintf(NULL, 0, EVDEV_DEVICE_STRING, evdev_device_id[port]);
+        evdev_device = (char*)malloc(evdev_device_length + 1);
+        sprintf(evdev_device, EVDEV_DEVICE_STRING, evdev_device_id[port]);
+        evdev_fd[i] = input_evdev_init(evdev_device);
+        free(evdev_device);
+      }
     }
   #endif
 
@@ -519,7 +541,7 @@ void UpdateInputState(u32 port)
   #endif
 
   #if defined(USE_EVDEV)
-    input_evdev_handle(evdev_fd, port);
+    input_evdev_handle(evdev_fd[port], port);
   #endif
 
   #if defined(TARGET_GCW0) || defined(TARGET_PANDORA)
@@ -859,7 +881,13 @@ void dc_run();
     size_t size;
 
     if (joystick_fd >= 0) { close(joystick_fd); }
-    if (evdev_fd >= 0) { close(evdev_fd); }
+    for (int port = 0; port < 4 ; port++)
+    {
+      if (evdev_fd[port] >= 0)
+      {
+        close(evdev_fd[port]);
+      }
+    }
 
     // Close EGL context ???
     if (sig_num!=0)
