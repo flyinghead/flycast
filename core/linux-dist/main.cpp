@@ -112,7 +112,6 @@ enum DCPad
   Axis_Y  = 0x20001,
 };
 
-
 void emit_WriteCodeCache();
 
 /* evdev input */
@@ -176,59 +175,106 @@ static int evdev_fd = -1;
       #define KEY_LOCK   0x77    // Note that KEY_LOCK is a switch and remains pressed until it's switched back
     #endif
 
-      static int keys[13];
-      while(read(fd, &ie, sizeof(ie)) == sizeof(ie))
+    static int keys[13];
+    static int dpad_btn[2];
+    static s8 axisval;
+    while(read(fd, &ie, sizeof(ie)) == sizeof(ie))
+    {
+      printf("type %i key %i state %i\n", ie.type, ie.code, ie.value);
+      switch(ie.type)
       {
-        #if defined(TARGET_GCW0) || defined(TARGET_PANDORA)
-          if (ie.type = EV_KEY)
+        case EV_KEY:
+          switch (ie.code)
           {
-            switch (ie.code)
-            {
-              case KEY_UP:     keys[ 1] = ie.value; break;
-              case KEY_DOWN:   keys[ 2] = ie.value; break;
-              case KEY_LEFT:   keys[ 3] = ie.value; break;
-              case KEY_RIGHT:  keys[ 4] = ie.value; break;
+            case KEY_UP:     keys[ 1] = ie.value; break;
+            case KEY_DOWN:   keys[ 2] = ie.value; break;
+            case KEY_LEFT:   keys[ 3] = ie.value; break;
+            case KEY_RIGHT:  keys[ 4] = ie.value; break;
 
-              #if defined(TARGET_GCW0)
-                case KEY_Y:      keys[ 5] = ie.value; break;
-                case KEY_B:      keys[ 6] = ie.value; break;
-                case KEY_A:      keys[ 7] = ie.value; break;
-                case KEY_X:      keys[ 8] = ie.value; break;
-                case KEY_SELECT: keys[ 9] = ie.value; break;
-                case KEY_START:  keys[12] = ie.value; break;
-              #elif  defined(TARGET_PANDORA)
-                case KEY_SPACE:      keys[ 0] = ie.value; break;
-                case KEY_PAGEUP:     keys[ 5] = ie.value; break;
-                case KEY_PAGEDOWN:   keys[ 6] = ie.value; break;
-                case KEY_END:        keys[ 7] = ie.value; break;
-                case KEY_HOME:       keys[ 8] = ie.value; break;
-                case KEY_MENU:       keys[ 9] = ie.value; break;
-                case KEY_RIGHTSHIFT: keys[10] = ie.value; break;
-                case KEY_RIGHTCTRL:  keys[11] = ie.value; break;
-                case KEY_LEFTALT:    keys[12] = ie.value; break;
-              #endif
-            }
+            //xbox360
+            case BTN_Y:      keys[ 5] = ie.value; break;
+            case BTN_A:      keys[ 6] = ie.value; break;
+            case BTN_B:      keys[ 7] = ie.value; break;
+            case BTN_X:      keys[ 8] = ie.value; break;
+            case BTN_SELECT: keys[ 9] = ie.value; break;
+            case BTN_START:  keys[12] = ie.value; break;
+
+            #if defined(TARGET_GCW0)
+              case KEY_Y:      keys[ 5] = ie.value; break;
+              case KEY_B:      keys[ 6] = ie.value; break;
+              case KEY_A:      keys[ 7] = ie.value; break;
+              case KEY_X:      keys[ 8] = ie.value; break;
+              case KEY_SELECT: keys[ 9] = ie.value; break;
+              case KEY_START:  keys[12] = ie.value; break;
+            #elif  defined(TARGET_PANDORA)
+              case KEY_SPACE:      keys[ 0] = ie.value; break;
+              case KEY_PAGEUP:     keys[ 5] = ie.value; break;
+              case KEY_PAGEDOWN:   keys[ 6] = ie.value; break;
+              case KEY_END:        keys[ 7] = ie.value; break;
+              case KEY_HOME:       keys[ 8] = ie.value; break;
+              case KEY_MENU:       keys[ 9] = ie.value; break;
+              case KEY_RIGHTSHIFT: keys[10] = ie.value; break;
+              case KEY_RIGHTCTRL:  keys[11] = ie.value; break;
+              case KEY_LEFTALT:    keys[12] = ie.value; break;
+            #endif
           }
-        }
-        if (keys[ 0]) { kcode[port] &= ~Btn_C; }
-        if (keys[ 6]) { kcode[port] &= ~Btn_A; }
-        if (keys[ 7]) { kcode[port] &= ~Btn_B; }
-        if (keys[ 5]) { kcode[port] &= ~Btn_Y; }
-        if (keys[ 8]) { kcode[port] &= ~Btn_X; }
-        if (keys[ 1]) { kcode[port] &= ~DPad_Up; }
-        if (keys[ 2]) { kcode[port] &= ~DPad_Down; }
-        if (keys[ 3]) { kcode[port] &= ~DPad_Left; }
-        if (keys[ 4]) { kcode[port] &= ~DPad_Right; }
-        if (keys[12]) { kcode[port] &= ~Btn_Start; }
-        if (keys[ 9]) { die("death by escape key"); }
-        if (keys[10]) { rt[port] = 255; }
-        if (keys[11]) { lt[port] = 255; }
-        return true;
-      #else
-        printf("type %i key %i state %i\n", ie.type, ie.code, ie.value);
-      #endif
-    }
+          break;
+        case EV_ABS:
+          switch(ie.code)
+          {
+            case ABS_X:
+            case ABS_RX:
+              joyx[port] = (s8)(ie.value/256);
+              break;
+            case ABS_Y:
+            case ABS_RY:
+              joyy[port] = (s8)(ie.value/256);
+              break;
+            case ABS_BRAKE:
+            case ABS_Z:
+              lt[port] = (s8)ie.value;
+              break;
+            case ABS_GAS:
+            case ABS_RZ:
+              rt[port] = (s8)ie.value;
+              break;
+            case ABS_HAT0X:
+            case ABS_HAT0Y:
+              dpad_btn[0] = (ie.code == ABS_HAT0Y ? 1 : 3);
+              dpad_btn[1] = (ie.code == ABS_HAT0Y ? 2 : 4);
+              switch(ie.value)
+              {
+                case -1:
+                    keys[dpad_btn[0]] = 1;
+                    keys[dpad_btn[1]] = 0;
+                    break;
+                case 0:
+                    keys[dpad_btn[0]] = 0;
+                    keys[dpad_btn[1]] = 0;
+                    break;
+                case 1:
+                    keys[dpad_btn[0]] = 0;
+                    keys[dpad_btn[1]] = 1;
+                    break;
+              }
+              break;
+          }
 
+      }
+    }
+    if (keys[ 0]) { kcode[port] &= ~Btn_C; }
+    if (keys[ 6]) { kcode[port] &= ~Btn_A; }
+    if (keys[ 7]) { kcode[port] &= ~Btn_B; }
+    if (keys[ 5]) { kcode[port] &= ~Btn_Y; }
+    if (keys[ 8]) { kcode[port] &= ~Btn_X; }
+    if (keys[ 1]) { kcode[port] &= ~DPad_Up; }
+    if (keys[ 2]) { kcode[port] &= ~DPad_Down; }
+    if (keys[ 3]) { kcode[port] &= ~DPad_Left; }
+    if (keys[ 4]) { kcode[port] &= ~DPad_Right; }
+    if (keys[12]) { kcode[port] &= ~Btn_Start; }
+    if (keys[ 9]) { die("death by escape key"); }
+    if (keys[10]) { rt[port] = 255; }
+    if (keys[11]) { lt[port] = 255; }
     return true;
   }
 #endif
