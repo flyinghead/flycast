@@ -198,6 +198,10 @@ static int evdev_fd = -1;
             case BTN_X:      keys[ 8] = ie.value; break;
             case BTN_SELECT: keys[ 9] = ie.value; break;
             case BTN_START:  keys[12] = ie.value; break;
+            case BTN_TRIGGER_HAPPY1: keys[3] = ie.value; break;
+            case BTN_TRIGGER_HAPPY2: keys[4] = ie.value; break;
+            case BTN_TRIGGER_HAPPY3: keys[1] = ie.value; break;
+            case BTN_TRIGGER_HAPPY4: keys[2] = ie.value; break;
 
             #if defined(TARGET_GCW0)
               case KEY_Y:      keys[ 5] = ie.value; break;
