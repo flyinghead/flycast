@@ -503,8 +503,6 @@ void UpdateInputState(u32 port)
   static char key = 0;
 
   kcode[port] = x11_dc_buttons;
-  rt[port] = 0;
-  lt[port] = 0;
 
   #if defined(TARGET_EMSCRIPTEN)
     return;
