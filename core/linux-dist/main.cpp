@@ -38,14 +38,6 @@
   #include <sys/types.h>
 #endif
 
-#if defined(USE_EVDEV)
-  #ifdef TARGET_PANDORA
-    #define EVDEV_DEVICE "/dev/input/event4"
-  #else
-    #define EVDEV_DEVICE "/dev/event2"
-  #endif
-#endif
-
 #if defined(USE_JOYSTICK)
   #include <linux/joystick.h>
 #endif
@@ -127,9 +119,18 @@ void emit_WriteCodeCache();
 static int evdev_fd = -1;
 
 #if defined(USE_EVDEV)
+  #define EVDEV_DEVICE_STRING "/dev/input/event%d"
+  #ifdef TARGET_PANDORA
+    #define EVDEV_DEFAULT_DEVICE_ID 4
+  #else
+    #define EVDEV_DEFAULT_DEVICE_ID 0
+  #endif
+
   int input_evdev_init(const char* device)
   {
     char name[256] = "Unknown";
+
+    printf("evdev: Trying to open device at '%s'", device);
 
     int fd = open(device, O_RDONLY);
 
@@ -237,6 +238,8 @@ static int evdev_fd = -1;
 static int joystick_fd = -1; // Joystick file descriptor
 
 #if defined(USE_JOYSTICK)
+  #define JOYSTICK_DEVICE_STRING "/dev/input/js%d"
+  #define JOYSTICK_DEFAULT_DEVICE_ID 0
   #define JOYSTICK_MAP_SIZE 32
 
   const u32 joystick_map_btn_usb[JOYSTICK_MAP_SIZE]      = { Btn_Y, Btn_B, Btn_A, Btn_X, 0, 0, 0, 0, 0, Btn_Start };
@@ -253,6 +256,8 @@ static int joystick_fd = -1; // Joystick file descriptor
     int axis_count = 0;
     int button_count = 0;
     char name[128] = "Unknown";
+
+    printf("joystick: Trying to open device at '%s'", device);
 
     int fd = open(device, O_RDONLY);
 
@@ -274,7 +279,7 @@ static int joystick_fd = -1; // Joystick file descriptor
     }
     else
     {
-      perror("joystick: open");
+      perror("joystick open");
     }
 
     return fd;
@@ -390,11 +395,33 @@ static int joystick_fd = -1; // Joystick file descriptor
 void SetupInput()
 {
   #if defined(USE_EVDEV)
-    evdev_fd = input_evdev_init(EVDEV_DEVICE);
+    int evdev_device_id = cfgLoadInt("input", "evdev_device_id", EVDEV_DEFAULT_DEVICE_ID);
+    if (evdev_device_id < 0) {
+      puts("evdev input disabled by config.\n");
+    }
+    else
+    {
+      int evdev_device_length = snprintf(NULL, 0, EVDEV_DEVICE_STRING, evdev_device_id);
+      char* evdev_device = (char*)malloc(evdev_device_length + 1);
+      sprintf(evdev_device, EVDEV_DEVICE_STRING, evdev_device_id);
+      evdev_fd = input_evdev_init(evdev_device);
+      free(evdev_device);
+    }
   #endif
 
   #if defined(USE_JOYSTICK)
-    joystick_fd = input_joystick_init("/dev/input/js0");
+    int joystick_device_id = cfgLoadInt("input", "joystick_device_id", JOYSTICK_DEFAULT_DEVICE_ID);
+    if (joystick_device_id < 0) {
+      puts("joystick input disabled by config.\n");
+    }
+    else
+    {
+      int joystick_device_length = snprintf(NULL, 0, JOYSTICK_DEVICE_STRING, joystick_device_id);
+      char* joystick_device = (char*)malloc(joystick_device_length + 1);
+      sprintf(joystick_device, JOYSTICK_DEVICE_STRING, joystick_device_id);
+      joystick_fd = input_joystick_init(joystick_device);
+      free(joystick_device);
+    }
   #endif
 }
 
@@ -463,7 +490,7 @@ void UpdateInputState(u32 port)
         break;
       case 'k': KillTex=true; break;
       case 'a': rt[port] = 255; break;
-      case 's': lt[port] = 255; break;
+      case 's': lt[port] = 255; break; 
       //case 0x1b: die("death by escape key"); break; //this actually quits when i press left for some reason
       
       #ifdef TARGET_PANDORA
@@ -860,11 +887,11 @@ int main(int argc, wchar* argv[])
 
   common_linux_setup();
 
-  SetupInput();
-
   settings.profile.run_counts=0;
 
   dc_init(argc,argv);
+
+  SetupInput();
 
   #if !defined(TARGET_EMSCRIPTEN)
     dc_run();
