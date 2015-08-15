@@ -216,7 +216,7 @@ void  DYNACALL WriteMem_area0(u32 addr,T data)
 	const u32 base=(addr>>16);
 
 	//map 0x0000 to 0x001F
-	if ((base >=0x0000) && (base <=0x001F) /*&& (addr<=0x001FFFFF)*/)// :MPX System/Boot ROM
+	if ((base <=0x001F) /*&& (addr<=0x001FFFFF)*/)// :MPX System/Boot ROM
 	{
 		//EMUERROR4("Write to  [MPX	System/Boot ROM] is not possible, addr=%x,data=%x,size=%d",addr,data,sz);
 		WriteBios(addr,data,sz);

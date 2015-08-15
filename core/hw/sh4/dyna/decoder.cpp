@@ -1178,7 +1178,7 @@ _end:
 			//Small-n-simple idle loop detector :p
 			if (state.info.has_readm && !state.info.has_writem && !state.info.has_fpu && blk->guest_opcodes<6)
 			{
-				if (blk->BlockType==BET_Cond_0 || blk->BlockType==BET_Cond_1 && blk->BranchBlock<=blk->addr)
+				if (blk->BlockType==BET_Cond_0 || (blk->BlockType==BET_Cond_1 && blk->BranchBlock<=blk->addr))
 				{
 					blk->guest_cycles*=3;
 				}

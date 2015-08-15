@@ -177,7 +177,7 @@ public:
 
 				mov(call_regs[0], op.rs3._imm);
 
-				call(OpDesc[op.rs3._imm]->oph);
+				call((void*)OpDesc[op.rs3._imm]->oph);
 				break;
 
 			case shop_jcond:
@@ -228,19 +228,19 @@ public:
 				u32 size = op.flags & 0x7f;
 
 				if (size == 1) {
-					call(ReadMem8);
+					call((void*)ReadMem8);
 					movsx(rcx, al);
 				}
 				else if (size == 2) {
-					call(ReadMem16);
+					call((void*)ReadMem16);
 					movsx(rcx, ax);
 				}
 				else if (size == 4) {
-					call(ReadMem32);
+					call((void*)ReadMem32);
 					mov(rcx, rax);
 				}
 				else if (size == 8) {
-					call(ReadMem64);
+					call((void*)ReadMem64);
 					mov(rcx, rax);
 				}
 				else {
@@ -266,13 +266,13 @@ public:
 					sh_to_reg(op.rs2, mov, call_regs64[1]);
 
 				if (size == 1)
-					call(WriteMem8);
+					call((void*)WriteMem8);
 				else if (size == 2)
-					call(WriteMem16);
+					call((void*)WriteMem16);
 				else if (size == 4)
-					call(WriteMem32);
+					call((void*)WriteMem32);
 				else if (size == 8)
-					call(WriteMem64);
+					call((void*)WriteMem64);
 				else {
 					die("1..8 bytes");
 				}
