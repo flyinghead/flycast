@@ -23,6 +23,7 @@
 
 map<int, int> x11_keymap;
 int x11_dc_buttons = 0xFFFF;
+int x11_keyboard_input = 0;
 
 int ndcid = 0;
 void* x11_glc;
@@ -51,7 +52,7 @@ void* x11_glc;
 #endif
 
 void input_x11_handle() {
-    if (x11_win)
+    if (x11_win && x11_keyboard_input)
     {
       //Handle X11
       XEvent e;
@@ -108,6 +109,8 @@ void input_x11_init()
     */
 
     x11_keymap[36] = DC_BTN_START;
+
+    x11_keyboard_input = cfgLoadInt("input", "enable_x11_keyboard", 1);
 }
 
 void x11_window_create()

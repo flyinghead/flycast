@@ -33,6 +33,29 @@
     ABS_RZ,
   };
 
+  ControllerMapping controller_mapping_keyboard = {
+    "Generic Keyboard",
+    KEY_A,
+    KEY_B,
+    KEY_C,
+    KEY_D,
+    KEY_X,
+    KEY_Y,
+    KEY_Z,
+    KEY_ENTER,
+    KEY_ESC,
+    KEY_LEFT,
+    KEY_RIGHT,
+    KEY_UP,
+    KEY_DOWN,
+    -1,
+    -1,
+    -1,
+    -1,
+    KEY_LEFTCTRL,
+    KEY_RIGHTCTRL
+  };
+
   ControllerMapping controller_mapping_xbox360 = {
     "XBox360 Controller",
     BTN_A,

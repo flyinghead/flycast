@@ -39,6 +39,11 @@
           {
               controller->mapping = &controller_mapping_xbox360;
           }
+          else if (strstr(name, "keyboard") != NULL ||
+                   strstr(name, "Keyboard") != NULL)
+          {
+              controller->mapping = &controller_mapping_keyboard;
+          }
           else
           {
               controller->mapping = &controller_mapping_generic;
