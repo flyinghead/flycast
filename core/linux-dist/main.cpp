@@ -38,6 +38,10 @@
   #include <sys/types.h>
 #endif
 
+#if defined(USE_EVDEV)
+  #include "linux-dist/evdev_mappings.h"
+#endif
+
 #if defined(USE_JOYSTICK)
   #include <linux/joystick.h>
 #endif
@@ -87,46 +91,64 @@ u8 lt[4] = {0, 0, 0, 0};
 u32 vks[4];
 s8 joyx[4], joyy[4];
 
-enum DCPad
+enum DreamcastController
 {
-  Btn_C       = 1,
-  Btn_B       = 1<<1,
-  Btn_A       = 1<<2,
-  Btn_Start   = 1<<3,
-  DPad_Up     = 1<<4,
-  DPad_Down   = 1<<5,
-  DPad_Left   = 1<<6,
-  DPad_Right  = 1<<7,
-  Btn_Z       = 1<<8,
-  Btn_Y       = 1<<9,
-  Btn_X       = 1<<10,
-  Btn_D       = 1<<11,
-  DPad2_Up    = 1<<12,
-  DPad2_Down  = 1<<13,
-  DPad2_Left  = 1<<14,
-  DPad2_Right = 1<<15,
+  DC_BTN_C       = 1,
+  DC_BTN_B       = 1<<1,
+  DC_BTN_A       = 1<<2,
+  DC_BTN_START   = 1<<3,
+  DC_DPAD_UP     = 1<<4,
+  DC_DPAD_DOWN   = 1<<5,
+  DC_DPAD_LEFT   = 1<<6,
+  DC_DPAD_RIGHT  = 1<<7,
+  DC_BTN_Z       = 1<<8,
+  DC_BTN_Y       = 1<<9,
+  DC_BTN_X       = 1<<10,
+  DC_BTN_D       = 1<<11,
+  DC_DPAD2_UP    = 1<<12,
+  DC_DPAD2_DOWN  = 1<<13,
+  DC_DPAD2_LEFT  = 1<<14,
+  DC_DPAD2_RIGHT = 1<<15,
 
-  Axis_LT = 0x10000,
-  Axis_RT = 0x10001,
-  Axis_X  = 0x20000,
-  Axis_Y  = 0x20001,
+  DC_AXIS_LT = 0X10000,
+  DC_AXIS_RT = 0X10001,
+  DC_AXIS_X  = 0X20000,
+  DC_AXIS_Y  = 0X20001,
 };
 
 void emit_WriteCodeCache();
 
 /* evdev input */
-static int evdev_fd[4] = { -1, -1, -1, -1 };
 
 #if defined(USE_EVDEV)
+
+  struct s_controller
+  {
+    int fd;
+    ControllerMapping* mapping;
+  };
+
+  typedef struct s_controller Controller;
+
+  /* evdev input */
+  static Controller controllers[4] = {
+    { -1, NULL },
+    { -1, NULL },
+    { -1, NULL },
+    { -1, NULL }
+  };
+
   #define EVDEV_DEVICE_STRING "/dev/input/event%d"
+
   #ifdef TARGET_PANDORA
     #define EVDEV_DEFAULT_DEVICE_ID_1 4
   #else
     #define EVDEV_DEFAULT_DEVICE_ID_1 0
   #endif
+
   #define EVDEV_DEFAULT_DEVICE_ID(port) (port == 1 ? EVDEV_DEFAULT_DEVICE_ID_1 : -1)
 
-  int input_evdev_init(const char* device)
+  int input_evdev_init(Controller* controller, const char* device)
   {
     char name[256] = "Unknown";
 
@@ -140,147 +162,175 @@ static int evdev_fd[4] = { -1, -1, -1, -1 };
       if(ioctl(fd, EVIOCGNAME(sizeof(name)), name) < 0)
       {
         perror("evdev: ioctl");
+        return -2;
       }
-      printf("evdev: Found '%s' at '%s'\n", name, device);
+      else
+      {
+        printf("evdev: Found '%s' at '%s'\n", name, device);
+
+        controller->fd = fd;
+
+        #if defined(TARGET_PANDORA)
+          *controller.mapping = &controller_mapping_pandora;
+        #elif defined(TARGET_GCW0)
+          *controller.mapping = &controller_mapping_gcwz;
+        #else
+          if (strcmp(name, "Microsoft X-Box 360 pad") == 0 ||
+              strcmp(name, "Xbox Gamepad (userspace driver)") == 0 ||
+              strcmp(name, "Xbox 360 Wireless Receiver (XBOX)") == 0)
+          {
+              controller->mapping = &controller_mapping_xbox360;
+          }
+          else
+          {
+              controller->mapping = &controller_mapping_generic;
+          }
+        #endif
+        printf("evdev: Using '%s' mapping\n", controller->mapping->name);
+
+        return 0;
+      }
     }
     else
     {
       perror("evdev: open");
+      return -1;
     }
-
-    return fd;
   }
 
-  bool input_evdev_handle(int fd, u32 port)
+  bool input_evdev_handle(Controller* controller, u32 port)
   {
-    if (fd < 0)
+    #define SET_FLAG(field, mask, expr) field =((expr) ? (field & ~mask) : (field | mask))
+    if (controller->fd < 0 || controller->mapping == NULL)
     {
       return false;
     }
 
     input_event ie;
 
-    #if defined(TARGET_GCW0)
-      #define KEY_A      0x1D
-      #define KEY_B      0x38
-      #define KEY_X      0x2A
-      #define KEY_Y      0x39
-      #define KEY_L      0xF
-      #define KEY_R      0xE
-      #define KEY_SELECT 0x1
-      #define KEY_START  0x1C
-      #define KEY_LEFT   0x69
-      #define KEY_RIGHT  0x6A
-      #define KEY_UP     0x67
-      #define KEY_DOWN   0x6C
-      #define KEY_LOCK   0x77    // Note that KEY_LOCK is a switch and remains pressed until it's switched back
-    #endif
-
-    static int keys[4][13];
-    static int dpad_btn[2];
-    static s8 axisval;
-    while(read(fd, &ie, sizeof(ie)) == sizeof(ie))
+    while(read(controller->fd, &ie, sizeof(ie)) == sizeof(ie))
     {
-      //printf("type %i key %i state %i\n", ie.type, ie.code, ie.value);
+      printf("type %i key %i state %i\n", ie.type, ie.code, ie.value);
       switch(ie.type)
       {
         case EV_KEY:
-          switch (ie.code)
-          {
-            case KEY_UP:     keys[port][ 1] = ie.value; break;
-            case KEY_DOWN:   keys[port][ 2] = ie.value; break;
-            case KEY_LEFT:   keys[port][ 3] = ie.value; break;
-            case KEY_RIGHT:  keys[port][ 4] = ie.value; break;
-
-            //xbox360
-            case BTN_Y:      keys[port][ 5] = ie.value; break;
-            case BTN_A:      keys[port][ 6] = ie.value; break;
-            case BTN_B:      keys[port][ 7] = ie.value; break;
-            case BTN_X:      keys[port][ 8] = ie.value; break;
-            case BTN_SELECT: keys[port][ 9] = ie.value; break;
-            case BTN_START:  keys[port][12] = ie.value; break;
-            case BTN_TRIGGER_HAPPY1: keys[port][3] = ie.value; break;
-            case BTN_TRIGGER_HAPPY2: keys[port][4] = ie.value; break;
-            case BTN_TRIGGER_HAPPY3: keys[port][1] = ie.value; break;
-            case BTN_TRIGGER_HAPPY4: keys[port][2] = ie.value; break;
-
-            #if defined(TARGET_GCW0)
-              case KEY_Y:      keys[port][ 5] = ie.value; break;
-              case KEY_B:      keys[port][ 6] = ie.value; break;
-              case KEY_A:      keys[port][ 7] = ie.value; break;
-              case KEY_X:      keys[port][ 8] = ie.value; break;
-              case KEY_SELECT: keys[port][ 9] = ie.value; break;
-              case KEY_START:  keys[port][12] = ie.value; break;
-            #elif  defined(TARGET_PANDORA)
-              case KEY_SPACE:      keys[port][ 0] = ie.value; break;
-              case KEY_PAGEUP:     keys[port][ 5] = ie.value; break;
-              case KEY_PAGEDOWN:   keys[port][ 6] = ie.value; break;
-              case KEY_END:        keys[port][ 7] = ie.value; break;
-              case KEY_HOME:       keys[port][ 8] = ie.value; break;
-              case KEY_MENU:       keys[port][ 9] = ie.value; break;
-              case KEY_RIGHTSHIFT: keys[port][10] = ie.value; break;
-              case KEY_RIGHTCTRL:  keys[port][11] = ie.value; break;
-              case KEY_LEFTALT:    keys[port][12] = ie.value; break;
-            #endif
+          if (ie.code == controller->mapping->Btn_A) {
+            SET_FLAG(kcode[port], DC_BTN_A, ie.value);
+          } else if (ie.code == controller->mapping->Btn_B) {
+            SET_FLAG(kcode[port], DC_BTN_B, ie.value);
+          } else if (ie.code == controller->mapping->Btn_C) {
+            SET_FLAG(kcode[port], DC_BTN_C, ie.value);
+          } else if (ie.code == controller->mapping->Btn_D) {
+            SET_FLAG(kcode[port], DC_BTN_D, ie.value);
+          } else if (ie.code == controller->mapping->Btn_X) {
+            SET_FLAG(kcode[port], DC_BTN_X, ie.value);
+          } else if (ie.code == controller->mapping->Btn_Y) {
+            SET_FLAG(kcode[port], DC_BTN_Y, ie.value);
+          } else if (ie.code == controller->mapping->Btn_Z) {
+            SET_FLAG(kcode[port], DC_BTN_Z, ie.value);
+          } else if (ie.code == controller->mapping->Btn_Start) {
+            SET_FLAG(kcode[port], DC_BTN_START, ie.value);
+          } else if (ie.code == controller->mapping->Btn_Escape) {
+            die("death by escape key");
+          } else if (ie.code == controller->mapping->Btn_DPad_Left) {
+            SET_FLAG(kcode[port], DC_DPAD_LEFT, ie.value);
+          } else if (ie.code == controller->mapping->Btn_DPad_Right) {
+            SET_FLAG(kcode[port], DC_DPAD_RIGHT, ie.value);
+          } else if (ie.code == controller->mapping->Btn_DPad_Up) {
+            SET_FLAG(kcode[port], DC_DPAD_UP, ie.value);
+          } else if (ie.code == controller->mapping->Btn_DPad_Down) {
+            SET_FLAG(kcode[port], DC_DPAD_DOWN, ie.value);
+          } else if (ie.code == controller->mapping->Btn_DPad2_Left) {
+            SET_FLAG(kcode[port], DC_DPAD2_LEFT, ie.value);
+          } else if (ie.code == controller->mapping->Btn_DPad2_Right) {
+            SET_FLAG(kcode[port], DC_DPAD2_RIGHT, ie.value);
+          } else if (ie.code == controller->mapping->Btn_DPad2_Up) {
+            SET_FLAG(kcode[port], DC_DPAD2_UP, ie.value);
+          } else if (ie.code == controller->mapping->Btn_DPad2_Down) {
+            SET_FLAG(kcode[port], DC_DPAD2_DOWN, ie.value);
+          } else if (ie.code == controller->mapping->Btn_Trigger_Left) {
+            lt[port] = (ie.value ? 255 : 0);
+          } else if (ie.code == controller->mapping->Btn_Trigger_Right) {
+            rt[port] = (ie.value ? 255 : 0);
           }
           break;
         case EV_ABS:
-          switch(ie.code)
-          {
-            case ABS_X:
-            case ABS_RX:
-              joyx[port] = (s8)(ie.value/256);
-              break;
-            case ABS_Y:
-            case ABS_RY:
-              joyy[port] = (s8)(ie.value/256);
-              break;
-            case ABS_BRAKE:
-            case ABS_Z:
-              lt[port] = (s8)ie.value;
-              break;
-            case ABS_GAS:
-            case ABS_RZ:
-              rt[port] = (s8)ie.value;
-              break;
-            case ABS_HAT0X:
-            case ABS_HAT0Y:
-              dpad_btn[0] = (ie.code == ABS_HAT0Y ? 1 : 3);
-              dpad_btn[1] = (ie.code == ABS_HAT0Y ? 2 : 4);
-              switch(ie.value)
-              {
-                case -1:
-                    keys[port][dpad_btn[0]] = 1;
-                    keys[port][dpad_btn[1]] = 0;
-                    break;
-                case 0:
-                    keys[port][dpad_btn[0]] = 0;
-                    keys[port][dpad_btn[1]] = 0;
-                    break;
-                case 1:
-                    keys[port][dpad_btn[0]] = 0;
-                    keys[port][dpad_btn[1]] = 1;
-                    break;
-              }
-              break;
+          if (ie.code == controller->mapping->Axis_DPad_X) {
+            switch(ie.value)
+            {
+              case -1:
+                  SET_FLAG(kcode[port], DC_DPAD_LEFT,  1);
+                  SET_FLAG(kcode[port], DC_DPAD_RIGHT, 0);
+                  break;
+              case 0:
+                  SET_FLAG(kcode[port], DC_DPAD_LEFT,  0);
+                  SET_FLAG(kcode[port], DC_DPAD_RIGHT, 0);
+                  break;
+              case 1:
+                  SET_FLAG(kcode[port], DC_DPAD_LEFT,  0);
+                  SET_FLAG(kcode[port], DC_DPAD_RIGHT, 1);
+                  break;
+            }
+          } else if (ie.code == controller->mapping->Axis_DPad_Y) {
+            switch(ie.value)
+            {
+              case -1:
+                  SET_FLAG(kcode[port], DC_DPAD_UP,   1);
+                  SET_FLAG(kcode[port], DC_DPAD_DOWN, 0);
+                  break;
+              case 0:
+                  SET_FLAG(kcode[port], DC_DPAD_UP,  0);
+                  SET_FLAG(kcode[port], DC_DPAD_DOWN, 0);
+                  break;
+              case 1:
+                  SET_FLAG(kcode[port], DC_DPAD_UP,  0);
+                  SET_FLAG(kcode[port], DC_DPAD_DOWN, 1);
+                  break;
+            }
+          } else if (ie.code == controller->mapping->Axis_DPad2_X) {
+            switch(ie.value)
+            {
+              case -1:
+                  SET_FLAG(kcode[port], DC_DPAD2_LEFT,  1);
+                  SET_FLAG(kcode[port], DC_DPAD2_RIGHT, 0);
+                  break;
+              case 0:
+                  SET_FLAG(kcode[port], DC_DPAD2_LEFT,  0);
+                  SET_FLAG(kcode[port], DC_DPAD2_RIGHT, 0);
+                  break;
+              case 1:
+                  SET_FLAG(kcode[port], DC_DPAD2_LEFT,  0);
+                  SET_FLAG(kcode[port], DC_DPAD2_RIGHT, 1);
+                  break;
+            }
+          } else if (ie.code == controller->mapping->Axis_DPad2_X) {
+            switch(ie.value)
+            {
+              case -1:
+                  SET_FLAG(kcode[port], DC_DPAD2_UP,   1);
+                  SET_FLAG(kcode[port], DC_DPAD2_DOWN, 0);
+                  break;
+              case 0:
+                  SET_FLAG(kcode[port], DC_DPAD2_UP,  0);
+                  SET_FLAG(kcode[port], DC_DPAD2_DOWN, 0);
+                  break;
+              case 1:
+                  SET_FLAG(kcode[port], DC_DPAD2_UP,  0);
+                  SET_FLAG(kcode[port], DC_DPAD2_DOWN, 1);
+                  break;
+            }
+          } else if (ie.code == controller->mapping->Axis_Analog_X) {
+            joyx[port] = (s8)(ie.value/256);
+          } else if (ie.code == controller->mapping->Axis_Analog_Y) {
+            joyy[port] = (s8)(ie.value/256);
+          } else if (ie.code == controller->mapping->Axis_Trigger_Left) {
+            lt[port] = (s8)ie.value;
+          } else if (ie.code == controller->mapping->Axis_Trigger_Right) {
+            rt[port] = (s8)ie.value;
           }
-
+          break;
       }
     }
-    if (keys[port][ 0]) { kcode[port] &= ~Btn_C; }
-    if (keys[port][ 6]) { kcode[port] &= ~Btn_A; }
-    if (keys[port][ 7]) { kcode[port] &= ~Btn_B; }
-    if (keys[port][ 5]) { kcode[port] &= ~Btn_Y; }
-    if (keys[port][ 8]) { kcode[port] &= ~Btn_X; }
-    if (keys[port][ 1]) { kcode[port] &= ~DPad_Up; }
-    if (keys[port][ 2]) { kcode[port] &= ~DPad_Down; }
-    if (keys[port][ 3]) { kcode[port] &= ~DPad_Left; }
-    if (keys[port][ 4]) { kcode[port] &= ~DPad_Right; }
-    if (keys[port][12]) { kcode[port] &= ~Btn_Start; }
-    if (keys[port][ 9]) { die("death by escape key"); }
-    if (keys[port][10]) { rt[port] = 255; }
-    if (keys[port][11]) { lt[port] = 255; }
-    return true;
   }
 #endif
 
@@ -293,11 +343,11 @@ static int joystick_fd = -1; // Joystick file descriptor
   #define JOYSTICK_DEFAULT_DEVICE_ID 0
   #define JOYSTICK_MAP_SIZE 32
 
-  const u32 joystick_map_btn_usb[JOYSTICK_MAP_SIZE]      = { Btn_Y, Btn_B, Btn_A, Btn_X, 0, 0, 0, 0, 0, Btn_Start };
-  const u32 joystick_map_axis_usb[JOYSTICK_MAP_SIZE]     = { Axis_X, Axis_Y, 0, 0, 0, 0, 0, 0, 0, 0 };
+  const u32 joystick_map_btn_usb[JOYSTICK_MAP_SIZE]      = { DC_BTN_Y, DC_BTN_B, DC_BTN_A, DC_BTN_X, 0, 0, 0, 0, 0, DC_BTN_START };
+  const u32 joystick_map_axis_usb[JOYSTICK_MAP_SIZE]     = { DC_AXIS_X, DC_AXIS_Y, 0, 0, 0, 0, 0, 0, 0, 0 };
 
-  const u32 joystick_map_btn_xbox360[JOYSTICK_MAP_SIZE]  = { Btn_A, Btn_B, Btn_X, Btn_Y, 0, 0, 0, Btn_Start, 0, 0 };
-  const u32 joystick_map_axis_xbox360[JOYSTICK_MAP_SIZE] = { Axis_X, Axis_Y, Axis_LT, 0, 0, Axis_RT, DPad_Left, DPad_Up, 0, 0 };
+  const u32 joystick_map_btn_xbox360[JOYSTICK_MAP_SIZE]  = { DC_BTN_A, DC_BTN_B, DC_BTN_X, DC_BTN_Y, 0, 0, 0, DC_BTN_START, 0, 0 };
+  const u32 joystick_map_axis_xbox360[JOYSTICK_MAP_SIZE] = { DC_AXIS_X, DC_AXIS_Y, DC_AXIS_LT, 0, 0, DC_AXIS_RT, DC_DPAD_LEFT, DC_DPAD_UP, 0, 0 };
 
   const u32* joystick_map_btn = joystick_map_btn_usb;
   const u32* joystick_map_axis = joystick_map_axis_usb;
@@ -477,7 +527,7 @@ void SetupInput()
         evdev_device_length = snprintf(NULL, 0, EVDEV_DEVICE_STRING, evdev_device_id[port]);
         evdev_device = (char*)malloc(evdev_device_length + 1);
         sprintf(evdev_device, EVDEV_DEVICE_STRING, evdev_device_id[port]);
-        evdev_fd[i] = input_evdev_init(evdev_device);
+        input_evdev_init(&controllers[port], evdev_device);
         free(evdev_device);
       }
     }
@@ -528,10 +578,6 @@ int x11_dc_buttons = 0xFFFF;
 
 void UpdateInputState(u32 port)
 {
-  static char key = 0;
-
-  kcode[port] = x11_dc_buttons;
-
   #if defined(TARGET_EMSCRIPTEN)
     return;
   #endif
@@ -541,54 +587,8 @@ void UpdateInputState(u32 port)
   #endif
 
   #if defined(USE_EVDEV)
-    input_evdev_handle(evdev_fd[port], port);
+    input_evdev_handle(&controllers[port], port);
   #endif
-
-  #if defined(TARGET_GCW0) || defined(TARGET_PANDORA)
-    return;
-  #endif
-
-  bool done = false;
-  while(!done)
-  {
-    key = 0;
-    read(STDIN_FILENO, &key, 1);
-
-    switch(key)
-    {
-      case 0:
-      case EOF:
-        done = true;
-        break;
-      case 'k': KillTex=true; break;
-      case 'a': rt[port] = 255; break;
-      case 's': lt[port] = 255; break; 
-      //case 0x1b: die("death by escape key"); break; //this actually quits when i press left for some reason
-      
-      #ifdef TARGET_PANDORA
-        case ' ': kcode[port] &= ~Btn_C; break;
-        case '6': kcode[port] &= ~Btn_A; break;
-        case 'O': kcode[port] &= ~Btn_B; break;
-        case '5': kcode[port] &= ~Btn_Y; break;
-        case 'H': kcode[port] &= ~Btn_X; break;
-        case 'A': kcode[port] &= ~DPad_Up; break;
-        case 'B': kcode[port] &= ~DPad_Down; break;
-        case 'D': kcode[port] &= ~DPad_Left; break;
-        case 'C': kcode[port] &= ~DPad_Right; break;
-        case 'q': die("death by escape key"); break;
-      #endif
-      
-      #if FEAT_SHREC != DYNAREC_NONE
-        case 'b': emit_WriteCodeCache(); break;
-        case 'n': bm_Reset(); break;
-        case 'm': bm_Sort(); break;
-        case ',':
-          emit_WriteCodeCache();
-          bm_Sort();
-        break;
-      #endif
-    }
-  }
 }
 
 void os_DoEvents()
@@ -610,11 +610,11 @@ void os_DoEvents()
 
             if (e.type == KeyPress)
             {
-              x11_dc_buttons &= ~dc_key;
+              kcode[0] &= ~dc_key;
             }
             else
             {
-              x11_dc_buttons |= dc_key;
+              kcode[0] |= dc_key;
             }
 
             //printf("KEY: %d -> %d: %d\n",e.xkey.keycode, dc_key, x11_dc_buttons );
@@ -943,16 +943,15 @@ int main(int argc, wchar* argv[])
   printf("Home dir is: %s\n", GetPath("/").c_str());
 
   #if defined(SUPPORT_X11)
-    x11_keymap[113] = DPad_Left;
-    x11_keymap[114] = DPad_Right;
+    x11_keymap[113] = DC_DPAD_LEFT;
+    x11_keymap[114] = DC_DPAD_RIGHT;
 
-    x11_keymap[111] = DPad_Up;
-    x11_keymap[116] = DPad_Down;
+    x11_keymap[111] = DC_DPAD_UP;
+    x11_keymap[116] = DC_DPAD_DOWN;
 
-    x11_keymap[52] = Btn_Y;
-    x11_keymap[53] = Btn_X;
-    x11_keymap[54] = Btn_B;
-    x11_keymap[55] = Btn_A;
+    x11_keymap[53] = DC_BTN_X;
+    x11_keymap[54] = DC_BTN_B;
+    x11_keymap[55] = DC_BTN_A;
 
     /*
       //TODO: Fix sliders
@@ -960,7 +959,7 @@ int main(int argc, wchar* argv[])
       x11_keymap[39] = DPad_Down;
     */
 
-    x11_keymap[36] = Btn_Start;
+    x11_keymap[36] = DC_BTN_START;
   #endif
 
   common_linux_setup();
