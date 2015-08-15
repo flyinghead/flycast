@@ -152,8 +152,6 @@ void SetupInput()
   #endif
 }
 
-extern bool KillTex;
-
 void UpdateInputState(u32 port)
 {
   #if defined(TARGET_EMSCRIPTEN)
@@ -248,9 +246,9 @@ void dc_run();
     if (joystick_fd >= 0) { close(joystick_fd); }
     for (int port = 0; port < 4 ; port++)
     {
-      if (evdev_fd[port] >= 0)
+      if (controllers[port]->fd >= 0)
       {
-        close(evdev_fd[port]);
+        close(controllers[port]->fd);
       }
     }
 
