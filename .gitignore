@@ -46,12 +46,8 @@ Workdir/emu.cfg
 Workdir/lib*ant.properties
 
 # Linux stuff
-shell/lin86/.map
-shell/lin86/nosym-reicast.elf
-shell/lin86/reicast.elf
-
-shell/lin64/.map
-shell/lin64/nosym-reicast.elf
-shell/lin64/reicast.elf
+shell/linux/.map
+shell/linux/nosym-reicast.elf
+shell/linux/reicast.elf
 
 reicast-ios.xccheckout
