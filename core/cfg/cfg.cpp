@@ -31,48 +31,32 @@ struct vitem
 vector<vitem> vlist;
 wchar* trim_ws(wchar* str);
 
-struct ConfigEntry
-{
-	ConfigEntry(ConfigEntry* pp)
+ConfigEntry::ConfigEntry(ConfigEntry* pp)
 	{
 		next=pp;
 		flags=0;
 	}
-
-
-	u32 flags;
-	string name;
-	string value;
-	string valueVirtual;
-	ConfigEntry* next;
-	void SaveFile(FILE* file)
+void ConfigEntry::SaveFile(FILE* file)
 	{
 		if (flags & CEM_SAVE)
 			fprintf(file,"%s=%s\n",name.c_str(),value.c_str());
 	} 
 
-	string GetValue()
+string ConfigEntry::GetValue()
 	{
 		if (flags&CEM_VIRTUAL)
 			return valueVirtual;
 		else
 			return value;
 	}
-};
-struct ConfigSection
-{
-	u32 flags;
-	string name;
-	ConfigEntry* entrys;
-	ConfigSection* next;
-	
-	ConfigSection(ConfigSection* pp)
+
+ConfigSection::ConfigSection(ConfigSection* pp)
 	{
 		next=pp;
 		flags=0;
 		entrys=0;
 	}
-	ConfigEntry* FindEntry(string name)
+ConfigEntry* ConfigSection::FindEntry(string name)
 	{
 		ConfigEntry* c=	entrys;
 		while(c)
@@ -83,7 +67,7 @@ struct ConfigSection
 		}
 		return 0;
 	}
-	void SetEntry(string name,string value,u32 eflags)
+void ConfigSection::SetEntry(string name,string value,u32 eflags)
 	{
 		ConfigEntry* c=FindEntry(name);
 		if (c)
@@ -131,7 +115,7 @@ struct ConfigSection
 		}
 		
 	}
-	~ConfigSection()
+ConfigSection::~ConfigSection()
 	{
 		ConfigEntry* n=entrys;
 		
@@ -142,7 +126,7 @@ struct ConfigSection
 			delete p;
 		}
 	}
-	void SaveFile(FILE* file)
+void ConfigSection::SaveFile(FILE* file)
 	{
 		if (flags&CEM_SAVE)
 		{
@@ -167,11 +151,7 @@ struct ConfigSection
 		}
 	}
 
-};
-struct ConfigFile
-{
-	ConfigSection* entrys;
-	ConfigSection* FindSection(string name)
+ConfigSection* ConfigFile::FindSection(string name)
 	{
 		ConfigSection* c=	entrys;
 		while(c)
@@ -182,7 +162,7 @@ struct ConfigFile
 		}
 		return 0;
 	}
-	ConfigSection* GetEntry(string name)
+ConfigSection* ConfigFile::GetEntry(string name)
 	{
 		ConfigSection* c=FindSection(name);
 		if (!c)
@@ -193,7 +173,7 @@ struct ConfigFile
 
 		return c;
 	}
-	~ConfigFile()
+ConfigFile::~ConfigFile()
 	{
 		ConfigSection* n=entrys;
 		
@@ -205,7 +185,7 @@ struct ConfigFile
 		}
 	}
 
-	void ParseFile(FILE* file)
+void ConfigFile::ParseFile(FILE* file)
 	{
     wchar line[512];
     wchar cur_sect[512]={0};
@@ -258,7 +238,7 @@ struct ConfigFile
       }
     }
 	}
-	void SaveFile(FILE* file)
+void ConfigFile::SaveFile(FILE* file)
 	{
 		vector<ConfigSection*> stuff;
 
@@ -276,7 +256,7 @@ struct ConfigFile
 				stuff[i]->SaveFile(file);
 		}
 	}
-  s32  Exists(const wchar * Section, const wchar * Key)
+s32 ConfigFile::Exists(const wchar * Section, const wchar * Key)
   {
     if (Section==0)
       return -1;
@@ -294,7 +274,7 @@ struct ConfigFile
     else
       return 0;
   }
-  void  LoadStr(const wchar * Section, const wchar * Key, wchar * Return,const wchar* Default)
+void ConfigFile::LoadStr(const wchar * Section, const wchar * Key, wchar * Return,const wchar* Default)
   {
     verify(Section!=0 && strlen(Section)!=0);
     verify(Key!=0 && strlen(Key)!=0);
@@ -314,7 +294,7 @@ struct ConfigFile
     }
   }
 
-  string  LoadStr(const wchar * Section, const wchar * Key, const wchar* Default)
+string ConfigFile::LoadStr(const wchar * Section, const wchar * Key, const wchar* Default)
   {
     verify(Section != 0 && strlen(Section) != 0);
     verify(Key != 0 && strlen(Key) != 0);
@@ -334,15 +314,14 @@ struct ConfigFile
     }
   }
 
-  s32  LoadInt(const wchar * Section, const wchar * Key,s32 Default)
+s32 ConfigFile::LoadInt(const wchar * Section, const wchar * Key,s32 Default)
   {
     wchar temp_d[30];
     wchar temp_o[30];
     sprintf(temp_d,"%d",Default);
-    cfgLoadStr(Section,Key,temp_o,temp_d);
+    this->LoadStr(Section,Key,temp_o,temp_d);
     return atoi(temp_o);
   }
-};
 
 ConfigFile cfgdb;
 
