@@ -73,7 +73,7 @@
 
     while(read(controller->fd, &ie, sizeof(ie)) == sizeof(ie))
     {
-      if(ie.type != EV_SYN)
+      if(ie.type != EV_SYN && ie.type != EV_MSC)
       {
         printf("type %i key %i state %i\n", ie.type, ie.code, ie.value);
       }
