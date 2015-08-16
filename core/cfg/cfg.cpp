@@ -21,6 +21,16 @@ string cfgPath;
 //the move is from loading ?
 #define CEM_LOAD 8
 
+struct vitem
+{
+  string s;
+  string n;
+  string v;
+  vitem(string a,string b,string c){s=a;n=b;v=c;}
+};
+vector<vitem> vlist;
+wchar* trim_ws(wchar* str);
+
 struct ConfigEntry
 {
 	ConfigEntry(ConfigEntry* pp)
@@ -197,7 +207,56 @@ struct ConfigFile
 
 	void ParseFile(FILE* file)
 	{
-		
+    wchar line[512];
+    wchar cur_sect[512]={0};
+    int cline=0;
+    while(file && !feof(file))
+    {
+      fgets(line,512,file);
+      if (feof(file))
+        break;
+
+      cline++;
+
+      if (strlen(line)<3)
+        continue;
+      if (line[strlen(line)-1]=='\r' || line[strlen(line)-1]=='\n')
+        line[strlen(line)-1]=0;
+
+      wchar* tl=trim_ws(line);
+      if (tl[0]=='[' && tl[strlen(tl)-1]==']')
+      {
+        tl[strlen(tl)-1]=0;
+        strcpy(cur_sect,tl+1);
+        trim_ws(cur_sect);
+      }
+      else
+      {
+        if (cur_sect[0]==0)
+          continue;//no open section
+        wchar* str1=strstr(tl,"=");
+        if (!str1)
+        {
+          printf("Malformed entry on config - ignoring @ %d(%s)\n",cline,tl);
+          continue;
+        }
+        *str1=0;
+        str1++;
+        wchar* v=trim_ws(str1);
+        wchar* k=trim_ws(tl);
+        if (v && k)
+        {
+          ConfigSection*cs=this->GetEntry(cur_sect);
+          
+          //if (!cs->FindEntry(k))
+          cs->SetEntry(k,v,CEM_SAVE|CEM_LOAD);
+        }
+        else
+        {
+          printf("Malformed entry on config - ignoring @ %d(%s)\n",cline,tl);
+        }
+      }
+    }
 	}
 	void SaveFile(FILE* file)
 	{
@@ -277,15 +336,6 @@ void  cfgSaveStr(const wchar * Section, const wchar * Key, const wchar * String)
 **	This will verify there is a working file @ ./szIniFn
 **	- if not present, it will write defaults
 */
-struct vitem
-{
-	string s;
-	string n;
-	string v;
-	vitem(string a,string b,string c){s=a;n=b;v=c;}
-};
-vector<vitem> vlist;
-wchar* trim_ws(wchar* str);
 
 bool cfgOpen()
 {
@@ -305,61 +355,13 @@ bool cfgOpen()
 		}
 	}
 
-	wchar line[512];
-	wchar cur_sect[512]={0};
-	int cline=0;
-	while(cfgfile && !feof(cfgfile))
-	{
-		fgets(line,512,cfgfile);
-		if (feof(cfgfile))
-			break;
+  cfgdb.ParseFile(cfgfile);
 
-		cline++;
+  for (size_t i=0;i<vlist.size();i++)
+  {
+    cfgdb.GetEntry(vlist[i].s)->SetEntry(vlist[i].n,vlist[i].v,CEM_VIRTUAL);
+  }
 
-		if (strlen(line)<3)
-			continue;
-		if (line[strlen(line)-1]=='\r' || line[strlen(line)-1]=='\n')
-			line[strlen(line)-1]=0;
-
-		wchar* tl=trim_ws(line);
-		if (tl[0]=='[' && tl[strlen(tl)-1]==']')
-		{
-			tl[strlen(tl)-1]=0;
-			strcpy(cur_sect,tl+1);
-			trim_ws(cur_sect);
-		}
-		else
-		{
-			if (cur_sect[0]==0)
-				continue;//no open section
-			wchar* str1=strstr(tl,"=");
-			if (!str1)
-			{
-				printf("Malformed entry on config - ignoring @ %d(%s)\n",cline,tl);
-				continue;
-			}
-			*str1=0;
-			str1++;
-			wchar* v=trim_ws(str1);
-			wchar* k=trim_ws(tl);
-			if (v && k)
-			{
-				ConfigSection*cs=cfgdb.GetEntry(cur_sect);
-				
-				//if (!cs->FindEntry(k))
-				cs->SetEntry(k,v,CEM_SAVE|CEM_LOAD);
-			}
-			else
-			{
-				printf("Malformed entry on config - ignoring @ %d(%s)\n",cline,tl);
-			}
-		}
-	}
-
-	for (size_t i=0;i<vlist.size();i++)
-	{
-		cfgdb.GetEntry(vlist[i].s)->SetEntry(vlist[i].n,vlist[i].v,CEM_VIRTUAL);
-	}
 	if (cfgfile)
 	{
 		cfgdb.SaveFile(cfgfile);
