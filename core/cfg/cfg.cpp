@@ -276,22 +276,9 @@ s32 ConfigFile::Exists(const wchar * Section, const wchar * Key)
   }
 void ConfigFile::LoadStr(const wchar * Section, const wchar * Key, wchar * Return,const wchar* Default)
   {
-    verify(Section!=0 && strlen(Section)!=0);
-    verify(Key!=0 && strlen(Key)!=0);
     verify(Return!=0);
-    if (Default==0)
-      Default="";
-    ConfigSection* cs= this->GetEntry(Section);
-    ConfigEntry* ce=cs->FindEntry(Key);
-    if (!ce)
-    {
-      cs->SetEntry(Key,Default,CEM_SAVE);
-      strcpy(Return,Default);
-    }
-    else
-    {
-      strcpy(Return,ce->GetValue().c_str());
-    }
+    string value = this->LoadStr(Section, Key, Default);
+    strcpy(Return, value.c_str());
   }
 
 string ConfigFile::LoadStr(const wchar * Section, const wchar * Key, const wchar* Default)
