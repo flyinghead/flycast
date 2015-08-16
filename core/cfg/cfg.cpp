@@ -276,6 +276,72 @@ struct ConfigFile
 				stuff[i]->SaveFile(file);
 		}
 	}
+  s32  Exists(const wchar * Section, const wchar * Key)
+  {
+    if (Section==0)
+      return -1;
+    //return cfgRead(Section,Key,0);
+    ConfigSection*cs= this->FindSection(Section);
+    if (cs ==  0)
+      return 0;
+
+    if (Key==0)
+      return 1;
+
+    ConfigEntry* ce=cs->FindEntry(Key);
+    if (ce!=0)
+      return 2;
+    else
+      return 0;
+  }
+  void  LoadStr(const wchar * Section, const wchar * Key, wchar * Return,const wchar* Default)
+  {
+    verify(Section!=0 && strlen(Section)!=0);
+    verify(Key!=0 && strlen(Key)!=0);
+    verify(Return!=0);
+    if (Default==0)
+      Default="";
+    ConfigSection* cs= this->GetEntry(Section);
+    ConfigEntry* ce=cs->FindEntry(Key);
+    if (!ce)
+    {
+      cs->SetEntry(Key,Default,CEM_SAVE);
+      strcpy(Return,Default);
+    }
+    else
+    {
+      strcpy(Return,ce->GetValue().c_str());
+    }
+  }
+
+  string  LoadStr(const wchar * Section, const wchar * Key, const wchar* Default)
+  {
+    verify(Section != 0 && strlen(Section) != 0);
+    verify(Key != 0 && strlen(Key) != 0);
+
+    if (Default == 0)
+      Default = "";
+    ConfigSection* cs = this->GetEntry(Section);
+    ConfigEntry* ce = cs->FindEntry(Key);
+    if (!ce)
+    {
+      cs->SetEntry(Key, Default, CEM_SAVE);
+      return Default;
+    }
+    else
+    {
+      return ce->GetValue();
+    }
+  }
+
+  s32  LoadInt(const wchar * Section, const wchar * Key,s32 Default)
+  {
+    wchar temp_d[30];
+    wchar temp_o[30];
+    sprintf(temp_d,"%d",Default);
+    cfgLoadStr(Section,Key,temp_o,temp_d);
+    return atoi(temp_o);
+  }
 };
 
 ConfigFile cfgdb;
@@ -378,70 +444,22 @@ bool cfgOpen()
 //2 : found section & key
 s32  cfgExists(const wchar * Section, const wchar * Key)
 {
-	if (Section==0)
-		return -1;
-	//return cfgRead(Section,Key,0);
-	ConfigSection*cs= cfgdb.FindSection(Section);
-	if (cs ==  0)
-		return 0;
-
-	if (Key==0)
-		return 1;
-
-	ConfigEntry* ce=cs->FindEntry(Key);
-	if (ce!=0)
-		return 2;
-	else
-		return 0;
+	return cfgdb.Exists(Section, Key);
 }
 void  cfgLoadStr(const wchar * Section, const wchar * Key, wchar * Return,const wchar* Default)
 {
-	verify(Section!=0 && strlen(Section)!=0);
-	verify(Key!=0 && strlen(Key)!=0);
-	verify(Return!=0);
-	if (Default==0)
-		Default="";
-	ConfigSection* cs= cfgdb.GetEntry(Section);
-	ConfigEntry* ce=cs->FindEntry(Key);
-	if (!ce)
-	{
-		cs->SetEntry(Key,Default,CEM_SAVE);
-		strcpy(Return,Default);
-	}
-	else
-	{
-		strcpy(Return,ce->GetValue().c_str());
-	}
+	return cfgdb.LoadStr(Section, Key, Return, Default);
 }
 
 string  cfgLoadStr(const wchar * Section, const wchar * Key, const wchar* Default)
 {
-	verify(Section != 0 && strlen(Section) != 0);
-	verify(Key != 0 && strlen(Key) != 0);
-	
-	if (Default == 0)
-		Default = "";
-	ConfigSection* cs = cfgdb.GetEntry(Section);
-	ConfigEntry* ce = cs->FindEntry(Key);
-	if (!ce)
-	{
-		cs->SetEntry(Key, Default, CEM_SAVE);
-		return Default;
-	}
-	else
-	{
-		return ce->GetValue();
-	}
+	return cfgdb.LoadStr(Section, Key, Default);
 }
 
 //These are helpers , mainly :)
 s32  cfgLoadInt(const wchar * Section, const wchar * Key,s32 Default)
 {
-	wchar temp_d[30];
-	wchar temp_o[30];
-	sprintf(temp_d,"%d",Default);
-	cfgLoadStr(Section,Key,temp_o,temp_d);
-	return atoi(temp_o);
+	return cfgdb.LoadInt(Section, Key, Default);
 }
 
 void  cfgSaveInt(const wchar * Section, const wchar * Key, s32 Int)
