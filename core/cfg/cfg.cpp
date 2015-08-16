@@ -320,7 +320,14 @@ s32 ConfigFile::LoadInt(const wchar * Section, const wchar * Key,s32 Default)
     wchar temp_o[30];
     sprintf(temp_d,"%d",Default);
     this->LoadStr(Section,Key,temp_o,temp_d);
-    return atoi(temp_o);
+    if (strstr(temp_o, "0x") != NULL)
+    {
+      return strtol(temp_o, NULL, 16);
+    }
+    else
+    {
+      return atoi(temp_o);
+    }
   }
 
 ConfigFile cfgdb;
