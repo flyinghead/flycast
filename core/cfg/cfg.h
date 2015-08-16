@@ -22,39 +22,39 @@ bool ParseCommandLine(int argc,wchar* argv[]);
 
 struct ConfigEntry
 {
-  u32 flags;
-  string name;
-  string value;
-  string valueVirtual;
-  ConfigEntry* next;
-  ConfigEntry(ConfigEntry*);
-  string GetValue();
-  void SaveFile(FILE*);
+	u32 flags;
+	string name;
+	string value;
+	string valueVirtual;
+	ConfigEntry* next;
+	ConfigEntry(ConfigEntry*);
+	string GetValue();
+	void SaveFile(FILE*);
 };
 
 struct ConfigSection
 {
-  u32 flags;
-  string name;
-  ConfigEntry* entrys;
-  ConfigSection* next;
-  ~ConfigSection();
-  ConfigSection(ConfigSection*);
-  ConfigEntry* FindEntry(string);
-  void SetEntry(string, string, u32);
-  void SaveFile(FILE*);
+	u32 flags;
+	string name;
+	ConfigEntry* entrys;
+	ConfigSection* next;
+	~ConfigSection();
+	ConfigSection(ConfigSection*);
+	ConfigEntry* FindEntry(string);
+	void SetEntry(string, string, u32);
+	void SaveFile(FILE*);
 };
 
 struct ConfigFile
 {
-  ConfigSection* entrys;
-  ~ConfigFile();
-  void ParseFile(FILE*);
-  void SaveFile(FILE*);
-  ConfigSection* FindSection(string);
-  ConfigSection* GetEntry(string);
-  s32 Exists(const wchar *, const wchar *);
-  void  LoadStr(const wchar *, const wchar *, wchar *,const wchar*);
-  string  LoadStr(const wchar *, const wchar *, const wchar*);
-  s32  LoadInt(const wchar *, const wchar *,s32);
+	ConfigSection* entrys;
+	~ConfigFile();
+	void ParseFile(FILE*);
+	void SaveFile(FILE*);
+	ConfigSection* FindSection(string);
+	ConfigSection* GetEntry(string);
+	s32 Exists(const wchar *, const wchar *);
+	void  LoadStr(const wchar *, const wchar *, wchar *,const wchar*);
+	string  LoadStr(const wchar *, const wchar *, const wchar*);
+	s32  LoadInt(const wchar *, const wchar *,s32);
 };
