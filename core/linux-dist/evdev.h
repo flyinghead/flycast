@@ -5,8 +5,8 @@
 
 struct s_controller
 {
-  int fd;
-  ControllerMapping* mapping;
+	int fd;
+	ControllerMapping* mapping;
 };
 
 typedef struct s_controller Controller;
@@ -14,9 +14,9 @@ typedef struct s_controller Controller;
 #define EVDEV_DEVICE_STRING "/dev/input/event%d"
 
 #ifdef TARGET_PANDORA
-  #define EVDEV_DEFAULT_DEVICE_ID_1 4
+	#define EVDEV_DEFAULT_DEVICE_ID_1 4
 #else
-  #define EVDEV_DEFAULT_DEVICE_ID_1 0
+	#define EVDEV_DEFAULT_DEVICE_ID_1 0
 #endif
 
 #define EVDEV_DEFAULT_DEVICE_ID(port) (port == 1 ? EVDEV_DEFAULT_DEVICE_ID_1 : -1)
