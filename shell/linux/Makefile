@@ -94,7 +94,6 @@ else ifneq (,$(findstring lincpp,$(platform)))
 
 # Raspberry Pi 2
 else ifneq (,$(findstring rpi2,$(platform)))
-    AS=${CC_PREFIX}gcc
     MFLAGS += -marm -march=armv7-a -mtune=cortex-a9 -mfpu=neon -mfloat-abi=hard -funroll-loops
     ASFLAGS += -march=armv7-a -mfpu=neon -mfloat-abi=softfp
     CFLAGS += -D TARGET_BEAGLE -D TARGET_LINUX_ARMELv7 -DARM_HARDFP -fsingle-precision-constant
@@ -123,7 +122,6 @@ else ifneq (,$(findstring pandora,$(platform)))
 
 # ODROIDs
 else ifneq (,$(findstring odroid,$(platform)))
-    AS=${CC_PREFIX}gcc
     MFLAGS += -marm -mfpu=neon -mfloat-abi=hard -funroll-loops
     ASFLAGS += -mfpu=neon -mfloat-abi=hard
     CFLAGS += -D TARGET_BEAGLE -D TARGET_LINUX_ARMELv7 -DARM_HARDFP -fsingle-precision-constant
@@ -178,6 +176,11 @@ INCS += -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps -I$(RZDCY_SRC_DIR)/khronos
 
 LIBS += -lm -lrt -ldl
 LIBS  += -lpthread
+
+ifndef NOT_ARM
+    AS=${CC_PREFIX}gcc
+    ASFLAGS += $(CFLAGS)
+endif
 
 ifdef USE_SDL
     CXXFLAGS += `sdl-config --cflags`
@@ -259,7 +262,7 @@ obj-$(platform)/%.build_obj : $(RZDCY_SRC_DIR)/%.c
 
 obj-$(platform)/%.build_obj : $(RZDCY_SRC_DIR)/%.S
 	mkdir -p $(dir $@)	
-	$(AS) $(ASFLAGS) $(INCS) $(CFLAGS) $< -o $@
+	$(AS) $(ASFLAGS) $(INCS) $< -o $@
 
 clean:
 	rm $(OBJECTS) $(EXECUTABLE) -f
