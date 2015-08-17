@@ -53,7 +53,15 @@
     -1,
     -1,
     KEY_LEFTCTRL,
-    KEY_RIGHTCTRL
+    KEY_RIGHTCTRL,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1
   };
 
   ControllerMapping controller_mapping_xpad = {
