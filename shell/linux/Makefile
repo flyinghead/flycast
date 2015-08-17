@@ -71,7 +71,7 @@ ifneq (,$(findstring x86,$(platform)))
     NOT_ARM := 1
     USE_X11 := 1
     MFLAGS += -m32
-    ASFLAGS += -32
+    ASFLAGS += --32
     LDFLAGS += -m32
     CFLAGS += -m32 -D TARGET_LINUX_x86 -D TARGET_NO_AREC -fsingle-precision-constant
     CXXFLAGS += -fno-exceptions
