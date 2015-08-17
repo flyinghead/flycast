@@ -61,10 +61,6 @@ xcodebuild -configuration Release
 
 Building for Linux
 ------------------
-
-The code is only currently compatible with 32bit architectures so you will need
-to install 32bit libs to build reicast.
-
 Requirements:
 * build-essential
 * libasound
@@ -72,7 +68,13 @@ Requirements:
 * libgles2-mesa-dev
 * libasound2-dev
 
-To build the project, go to shell/lin86 and run make
+From project root directory:
+
+```
+cd shell/linux
+
+make
+```
 
 
 Translations
