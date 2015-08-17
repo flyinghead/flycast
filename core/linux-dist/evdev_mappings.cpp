@@ -56,8 +56,8 @@
     KEY_RIGHTCTRL
   };
 
-  ControllerMapping controller_mapping_xbox360 = {
-    "XBox360 Controller",
+  ControllerMapping controller_mapping_xpad = {
+    "Xbox 360 Controller (xpad driver)",
     BTN_A,
     BTN_B,
     BTN_TL,
@@ -85,6 +85,37 @@
     ABS_Y,
     ABS_Z,
     ABS_RZ
+  };
+
+  ControllerMapping controller_mapping_xboxdrv = {
+    "Xbox 360 Controller (xboxdrv userspace driver)",
+    BTN_A,
+    BTN_B,
+    BTN_TL,
+    BTN_TR,
+    BTN_X,
+    BTN_Y,
+    BTN_THUMBL,
+    BTN_START,
+    BTN_SELECT,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    ABS_HAT0X,
+    ABS_HAT0Y,
+    ABS_HAT1X,
+    ABS_HAT1Y,
+    ABS_X,
+    ABS_Y,
+    ABS_BRAKE,
+    ABS_GAS
   };
 
   ControllerMapping controller_mapping_gcwz = {

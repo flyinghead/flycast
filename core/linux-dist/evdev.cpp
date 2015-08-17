@@ -34,10 +34,14 @@
           *controller.mapping = &controller_mapping_gcwz;
         #else
           if (strcmp(name, "Microsoft X-Box 360 pad") == 0 ||
-              strcmp(name, "Xbox 360 Wireless Receiver (XBOX)") == 0 ||
-              strstr(name, "Xbox Gamepad (userspace driver)") != NULL)
+              strcmp(name, "Xbox 360 Wireless Receiver") == 0 ||
+              strcmp(name, "Xbox 360 Wireless Receiver (XBOX)") == 0)
           {
-              controller->mapping = &controller_mapping_xbox360;
+              controller->mapping = &controller_mapping_xpad;
+          }
+          else if (strstr(name, "Xbox Gamepad (userspace driver)") != NULL)
+          {
+              controller->mapping = &controller_mapping_xboxdrv;
           }
           else if (strstr(name, "keyboard") != NULL ||
                    strstr(name, "Keyboard") != NULL)

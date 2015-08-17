@@ -36,6 +36,7 @@ typedef struct s_evdev_controller_mapping ControllerMapping;
 
 extern ControllerMapping controller_mapping_generic;
 extern ControllerMapping controller_mapping_keyboard;
-extern ControllerMapping controller_mapping_xbox360;
+extern ControllerMapping controller_mapping_xpad;
+extern ControllerMapping controller_mapping_xboxdrv;
 extern ControllerMapping controller_mapping_gcwz;
 extern ControllerMapping controller_mapping_pandora;
