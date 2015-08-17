@@ -248,7 +248,7 @@ void VArray2::UnLockRegion(u32 offset,u32 size)
 	if (rv!=0)
 	{
         print_mem_addr();
-		printf("mprotect(%08X,%08X,RW) failed: %d | %d\n",data+offset-inpage,size+inpage,rv,errno);
+		printf("mprotect(%8p,%08X,RW) failed: %d | %d\n",data+offset-inpage,size+inpage,rv,errno);
 		die("mprotect  failed ..\n");
 	}
 	#else

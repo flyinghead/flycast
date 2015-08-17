@@ -53,7 +53,7 @@ void emit_SetBaseAddr() { LastAddr_min = LastAddr; }
 void emit_WriteCodeCache()
 {
 	wchar path[512];
-	sprintf(path,"/code_cache_%08X.bin",CodeCache);
+	sprintf(path,"/code_cache_%8p.bin",CodeCache);
 	string pt2=GetPath(path);
 	printf("Writing code cache to %s\n",pt2.c_str());
 	FILE*f=fopen(pt2.c_str(),"wb");

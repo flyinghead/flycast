@@ -24,6 +24,7 @@
 		87078A9B18A47FE90034C7A0 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 87078A9A18A47FE90034C7A0 /* AppDelegate.m */; };
 		87078AA318A47FE90034C7A0 /* Shader.fsh in Resources */ = {isa = PBXBuildFile; fileRef = 87078AA218A47FE90034C7A0 /* Shader.fsh */; };
 		87078AA518A47FE90034C7A0 /* Shader.vsh in Resources */ = {isa = PBXBuildFile; fileRef = 87078AA418A47FE90034C7A0 /* Shader.vsh */; };
+		876AA3771B818A4000617242 /* ini.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 876AA3751B818A4000617242 /* ini.cpp */; };
 		877652C21B6157BD00437F10 /* audiobackend_alsa.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 877652B61B6157BD00437F10 /* audiobackend_alsa.cpp */; };
 		877652C31B6157BD00437F10 /* audiobackend_directsound.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 877652B91B6157BD00437F10 /* audiobackend_directsound.cpp */; };
 		877652C41B6157BD00437F10 /* audiobackend_oss.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 877652BB1B6157BD00437F10 /* audiobackend_oss.cpp */; };
@@ -269,6 +270,8 @@
 		87078AA218A47FE90034C7A0 /* Shader.fsh */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; name = Shader.fsh; path = Shaders/Shader.fsh; sourceTree = "<group>"; };
 		87078AA418A47FE90034C7A0 /* Shader.vsh */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; name = Shader.vsh; path = Shaders/Shader.vsh; sourceTree = "<group>"; };
 		87078AB018A47FE90034C7A0 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
+		876AA3751B818A4000617242 /* ini.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ini.cpp; sourceTree = "<group>"; };
+		876AA3761B818A4000617242 /* ini.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ini.h; sourceTree = "<group>"; };
 		877652B61B6157BD00437F10 /* audiobackend_alsa.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = audiobackend_alsa.cpp; sourceTree = "<group>"; };
 		877652B71B6157BD00437F10 /* audiobackend_alsa.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = audiobackend_alsa.h; sourceTree = "<group>"; };
 		877652B81B6157BD00437F10 /* audiobackend_android.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = audiobackend_android.h; sourceTree = "<group>"; };
@@ -912,6 +915,8 @@
 		9C7A395018C806DE0070BB5F /* cfg */ = {
 			isa = PBXGroup;
 			children = (
+				876AA3751B818A4000617242 /* ini.cpp */,
+				876AA3761B818A4000617242 /* ini.h */,
 				9C7A395118C806DE0070BB5F /* cfg.cpp */,
 				9C7A395218C806DE0070BB5F /* cfg.h */,
 				9C7A395318C806DE0070BB5F /* cl.cpp */,
@@ -1613,6 +1618,7 @@
 				9C7A3AB118C806E00070BB5F /* pngread.c in Sources */,
 				9C7A3AAC18C806E00070BB5F /* png.c in Sources */,
 				9C7A3AC718C806E00070BB5F /* zip_error_get_sys_type.c in Sources */,
+				876AA3771B818A4000617242 /* ini.cpp in Sources */,
 				9C7A3B3618C806E00070BB5F /* chd.cpp in Sources */,
 				9C7A3B2118C806E00070BB5F /* sh4_fpu.cpp in Sources */,
 				9C7A3B3218C806E00070BB5F /* sh4_opcode_list.cpp in Sources */,
