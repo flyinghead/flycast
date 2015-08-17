@@ -127,18 +127,27 @@ bool ParseCommandLine(int argc,wchar* argv[])
 			cl-=as;
 			arg+=as;
 		}
-		else if (strstr(*arg, ".cdi") || strstr(*arg, ".chd")) {
-			printf("Using '%s' as cd image\n", *arg);
-			cfgSetVirtual("config", "image", *arg);
-		}
-		else if (strstr(*arg, ".elf")) {
-			printf("Using '%s' as reios elf file\n", *arg);
-			cfgSetVirtual("config", "reios.enabled", "1");
-			cfgSetVirtual("reios", "ElfFile", *arg);
-		}
 		else
 		{
-			printf("wtf %s is suposed to do ?\n",*arg);
+			char* extension = strrchr(*arg, '.');
+
+			if (extension
+				&& (stricmp(extension, ".cdi") == 0 || stricmp(extension, ".chd") == 0
+					|| stricmp(extension, ".gdi") == 0))
+			{
+				printf("Using '%s' as cd image\n", *arg);
+				cfgSetVirtual("config", "image", *arg);
+			}
+			else if (extension && stricmp(extension, ".elf") == 0)
+			{
+				printf("Using '%s' as reios elf file\n", *arg);
+				cfgSetVirtual("config", "reios.enabled", "1");
+				cfgSetVirtual("reios", "ElfFile", *arg);
+			}
+			else
+			{
+				printf("wtf %s is suposed to do ?\n",*arg);
+			}
 		}
 		arg++;
 		cl--;
