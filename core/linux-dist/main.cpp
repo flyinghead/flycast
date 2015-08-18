@@ -96,11 +96,9 @@ void SetupInput()
 {
 	#if defined(USE_EVDEV)
 		evdev_init_keycodes(); //FIXME: This sucks, but initializer lists for maps are only available with std=c++0x
-		
+
 		int evdev_device_id[4] = { -1, -1, -1, -1 };
-		char* mapping = NULL;
 		size_t size_needed;
-		int evdev_device_length, port, i;
 		int port, i;
 
 		char* evdev_device;
@@ -132,24 +130,14 @@ void SetupInput()
 				evdev_device = (char*)malloc(size_needed);
 				sprintf(evdev_device, EVDEV_DEVICE_STRING, evdev_device_id[port]);
 
-				mapping = NULL;
-
 				size_needed = snprintf(NULL, 0, EVDEV_MAPPING_CONFIG_KEY, port+1) + 1;
 				evdev_config_key = (char*)malloc(size_needed);
 				sprintf(evdev_config_key, EVDEV_MAPPING_CONFIG_KEY, port+1);
-				if (cfgExists("input", evdev_config_key) == 2)
-				{
-						string mapping_name = cfgLoadStr("input", evdev_config_key, "");
-
-						size_needed = snprintf(NULL, 0, EVDEV_MAPPING_PATH, mapping_name.c_str()) + 1;
-						char* evdev_mapping_fname = (char*)malloc(size_needed);
-						sprintf(evdev_mapping_fname, EVDEV_MAPPING_PATH, mapping_name.c_str());
-						mapping = (char*)GetPath(evdev_mapping_fname).c_str();
-						free(evdev_mapping_fname);
-				}
+				const char* mapping = (cfgExists("input", evdev_config_key) == 2 ? cfgLoadStr("input", evdev_config_key, "").c_str() : NULL);
 				free(evdev_config_key);
 
 				input_evdev_init(&controllers[port], evdev_device, mapping);
+
 				free(evdev_device);
 			}
 		}

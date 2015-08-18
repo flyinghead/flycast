@@ -75,7 +75,7 @@
 		return mapping;
 	}
 
-	int input_evdev_init(Controller* controller, const char* device, const char* mapping_fname = NULL)
+	int input_evdev_init(Controller* controller, const char* device, const char* custom_mapping_fname = NULL)
 	{
 		char name[256] = "Unknown";
 
@@ -97,53 +97,61 @@
 
 				controller->fd = fd;
 
-				if(mapping_fname != NULL)
+				const char* mapping_fname;
+
+				if(custom_mapping_fname != NULL)
 				{
-					if(loaded_mappings.count(string(mapping_fname)) == 0)
-					{
-						FILE* mapping_fd = fopen(mapping_fname, "r");
-						if(mapping_fd != NULL)
-						{
-							printf("evdev: reading custom mapping file: '%s'\n", mapping_fname);
-							loaded_mappings.insert(std::make_pair(string(mapping_fname), load_mapping(mapping_fd)));
-							fclose(mapping_fd);
-						}
-						else
-						{
-							printf("evdev: unable to open custom mapping file '%s'\n", mapping_fname);
-							return -3;
-						}
-					}
-					controller->mapping = &loaded_mappings[string(mapping_fname)];
+					mapping_fname = custom_mapping_fname;
 				}
 				else
 				{
 					#if defined(TARGET_PANDORA)
-						*controller.mapping = &controller_mapping_pandora;
+						mapping_fname = "controller_pandora.cfg";
 					#elif defined(TARGET_GCW0)
-						*controller.mapping = &controller_mapping_gcwz;
+						mapping_fname = "controller_gcwz.cfg";
 					#else
 						if (strcmp(name, "Microsoft X-Box 360 pad") == 0 ||
 							strcmp(name, "Xbox 360 Wireless Receiver") == 0 ||
 							strcmp(name, "Xbox 360 Wireless Receiver (XBOX)") == 0)
 						{
-							controller->mapping = &controller_mapping_xpad;
+							mapping_fname = "controller_xpad.cfg";
 						}
 						else if (strstr(name, "Xbox Gamepad (userspace driver)") != NULL)
 						{
-							controller->mapping = &controller_mapping_xboxdrv;
+							mapping_fname = "controller_xboxdrv.cfg";
 						}
 						else if (strstr(name, "keyboard") != NULL ||
-										 strstr(name, "Keyboard") != NULL)
+								 strstr(name, "Keyboard") != NULL)
 						{
-							controller->mapping = &controller_mapping_keyboard;
+							mapping_fname = "keyboard.cfg";
 						}
 						else
 						{
-							controller->mapping = &controller_mapping_generic;
+							mapping_fname = "controller_generic.cfg";
 						}
 					#endif
 				}
+				if(loaded_mappings.count(string(mapping_fname)) == 0)
+				{
+					size_t size_needed = snprintf(NULL, 0, EVDEV_MAPPING_PATH, mapping_fname) + 1;
+					char* mapping_path = (char*)malloc(size_needed);
+					sprintf(mapping_path, EVDEV_MAPPING_PATH, mapping_fname);
+					FILE* mapping_fd = fopen(GetPath(mapping_path).c_str(), "r");
+					free(mapping_path);
+					
+					if(mapping_fd != NULL)
+					{
+						printf("evdev: reading mapping file: '%s'\n", mapping_fname);
+						loaded_mappings.insert(std::make_pair(string(mapping_fname), load_mapping(mapping_fd)));
+						fclose(mapping_fd);
+					}
+					else
+					{
+						printf("evdev: unable to open mapping file '%s'\n", mapping_fname);
+						return -3;
+					}
+				}
+				controller->mapping = &loaded_mappings[string(mapping_fname)];
 				printf("evdev: Using '%s' mapping\n", controller->mapping->name);
 				return 0;
 			}
