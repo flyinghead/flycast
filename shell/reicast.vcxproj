@@ -21,6 +21,7 @@
   <ItemGroup>
     <ClCompile Include="..\core\cfg\cl.cpp" />
     <ClCompile Include="..\core\cfg\cfg.cpp" />
+    <ClCompile Include="..\core\cfg\ini.cpp" />
     <ClCompile Include="..\core\deps\chdpsr\cdipsr.cpp" />
     <ClCompile Include="..\core\deps\chdr\chdr.cpp" />
     <ClCompile Include="..\core\deps\coreio\coreio.cpp" />
@@ -198,6 +199,7 @@
   <ItemGroup>
     <ClInclude Include="..\core\build.h" />
     <ClInclude Include="..\core\cfg\cfg.h" />
+    <ClInclude Include="..\core\cfg\ini.h" />
     <ClInclude Include="..\core\deps\chdpsr\cdipsr.h" />
     <ClInclude Include="..\core\deps\chdr\chd.h" />
     <ClInclude Include="..\core\deps\chdr\coretypes.h" />
@@ -405,26 +407,26 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Fast|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)..\WorkDir\</OutDir>
-    <IntDir>$(Platform)\$(Configuration)\generated\objs</IntDir>
+    <IntDir>$(Platform)\$(Configuration)\generated\objs\</IntDir>
     <TargetName>$(ProjectName)_$(Platform)_$(Configuration)</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Fast|x64'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)..\WorkDir\</OutDir>
     <TargetName>$(ProjectName)_$(Platform)_$(Configuration)</TargetName>
-    <IntDir>$(Platform)\$(Configuration)\generated\objs</IntDir>
+    <IntDir>$(Platform)\$(Configuration)\generated\objs\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Slow|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)..\WorkDir\</OutDir>
-    <IntDir>$(Platform)\$(Configuration)\generated\objs</IntDir>
+    <IntDir>$(Platform)\$(Configuration)\generated\objs\</IntDir>
     <TargetName>$(ProjectName)_$(Platform)_$(Configuration)</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Slow|x64'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)..\WorkDir\</OutDir>
     <TargetName>$(ProjectName)_$(Platform)_$(Configuration)</TargetName>
-    <IntDir>$(Platform)\$(Configuration)\generated\objs</IntDir>
+    <IntDir>$(Platform)\$(Configuration)\generated\objs\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Fast|Win32'">
     <ClCompile>
@@ -527,6 +529,7 @@
       <ObjectFileName>$(IntDir)/%(RelativeDir)/</ObjectFileName>
       <UndefinePreprocessorDefinitions>
       </UndefinePreprocessorDefinitions>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <OpenMPSupport>true</OpenMPSupport>
     </ClCompile>
     <Link>
