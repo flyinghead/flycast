@@ -16,6 +16,8 @@
 
 #include "hw/sh4/sh4_mem.h"
 
+#include "hw/naomi/naomi_cart.h"
+
 #include <map>
 
 //#define debugf printf
@@ -425,7 +427,130 @@ void reios_setup_state(u32 boot_addr) {
 	sh4rcb.cntx.old_fpscr.full = 0x00040001;
 }
 
+void reios_setuo_naomi(u32 boot_addr) {
+	/*
+		SR 0x60000000 0x00000001
+		FPSRC 0x00040001
+
+		-		xffr	0x13e1fe40	float [32]
+		[0x0]	1.00000000	float
+		[0x1]	0.000000000	float
+		[0x2]	0.000000000	float
+		[0x3]	0.000000000	float
+		[0x4]	0.000000000	float
+		[0x5]	1.00000000	float
+		[0x6]	0.000000000	float
+		[0x7]	0.000000000	float
+		[0x8]	0.000000000	float
+		[0x9]	0.000000000	float
+		[0xa]	1.00000000	float
+		[0xb]	0.000000000	float
+		[0xc]	0.000000000	float
+		[0xd]	0.000000000	float
+		[0xe]	0.000000000	float
+		[0xf]	1.00000000	float
+		[0x10]	1.00000000	float
+		[0x11]	2.14748365e+009	float
+		[0x12]	0.000000000	float
+		[0x13]	480.000000	float
+		[0x14]	9.99999975e-006	float
+		[0x15]	0.000000000	float
+		[0x16]	0.00208333321	float
+		[0x17]	0.000000000	float
+		[0x18]	0.000000000	float
+		[0x19]	2.14748365e+009	float
+		[0x1a]	1.00000000	float
+		[0x1b]	-1.00000000	float
+		[0x1c]	0.000000000	float
+		[0x1d]	0.000000000	float
+		[0x1e]	0.000000000	float
+		[0x1f]	0.000000000	float
+		
+		-		r	0x13e1fec0	unsigned int [16]
+		[0x0]	0x0c021000	unsigned int
+		[0x1]	0x0c01f820	unsigned int
+		[0x2]	0xa0710004	unsigned int
+		[0x3]	0x0c01f130	unsigned int
+		[0x4]	0x5bfccd08	unsigned int
+		[0x5]	0xa05f7000	unsigned int
+		[0x6]	0xa05f7008	unsigned int
+		[0x7]	0x00000007	unsigned int
+		[0x8]	0x00000000	unsigned int
+		[0x9]	0x00002000	unsigned int
+		[0xa]	0xffffffff	unsigned int
+		[0xb]	0x0c0e0000	unsigned int
+		[0xc]	0x00000000	unsigned int
+		[0xd]	0x00000000	unsigned int
+		[0xe]	0x00000000	unsigned int
+		[0xf]	0x0cc00000	unsigned int
+
+		-		mac	{full=0x0000000000002000 l=0x00002000 h=0x00000000 }	Sh4Context::<unnamed-tag>::<unnamed-tag>::<unnamed-type-mac>
+		full	0x0000000000002000	unsigned __int64
+		l	0x00002000	unsigned int
+		h	0x00000000	unsigned int
+		
+		-		r_bank	0x13e1ff08	unsigned int [8]
+		[0x0]	0x00000000	unsigned int
+		[0x1]	0x00000000	unsigned int
+		[0x2]	0x00000000	unsigned int
+		[0x3]	0x00000000	unsigned int
+		[0x4]	0x00000000	unsigned int
+		[0x5]	0x00000000	unsigned int
+		[0x6]	0x00000000	unsigned int
+		[0x7]	0x00000000	unsigned int
+		gbr	0x0c2abcc0	unsigned int
+		ssr	0x60000000	unsigned int
+		spc	0x0c041738	unsigned int
+		sgr	0x0cbfffb0	unsigned int
+		dbr	0x00000fff	unsigned int
+		vbr	0x0c000000	unsigned int
+		pr	0xac0195ee	unsigned int
+		fpul	0x000001e0	unsigned int
+		pc	0x0c021000	unsigned int
+		jdyn	0x0c021000	unsigned int
+
+	*/
+
+	//Setup registers to immitate a normal boot
+	sh4rcb.cntx.r[0] = 0x0c021000;
+	sh4rcb.cntx.r[1] = 0x0c01f820;
+	sh4rcb.cntx.r[2] = 0xa0710004;
+	sh4rcb.cntx.r[3] = 0x0c01f130;
+	sh4rcb.cntx.r[4] = 0x5bfccd08;
+	sh4rcb.cntx.r[5] = 0xa05f7000;
+	sh4rcb.cntx.r[6] = 0xa05f7008;
+	sh4rcb.cntx.r[7] = 0x00000007;
+	sh4rcb.cntx.r[8] = 0x00000000;
+	sh4rcb.cntx.r[9] = 0x00002000;
+	sh4rcb.cntx.r[10] = 0xffffffff;
+	sh4rcb.cntx.r[11] = 0x0c0e0000;
+	sh4rcb.cntx.r[12] = 0x00000000;
+	sh4rcb.cntx.r[13] = 0x00000000;
+	sh4rcb.cntx.r[14] = 0x00000000;
+	sh4rcb.cntx.r[15] = 0x0cc00000;
+
+	sh4rcb.cntx.gbr = 0x0c2abcc0;
+	sh4rcb.cntx.ssr = 0x60000000;
+	sh4rcb.cntx.spc = 0x0c041738;
+	sh4rcb.cntx.sgr = 0x0cbfffb0;
+	sh4rcb.cntx.dbr = 0x00000fff;
+	sh4rcb.cntx.vbr = 0x0c000000;
+	sh4rcb.cntx.pr = 0xac0195ee;
+	sh4rcb.cntx.fpul = 0x000001e0;
+	sh4rcb.cntx.pc = boot_addr;
+
+	sh4rcb.cntx.sr.status = 0x60000000;
+	sh4rcb.cntx.sr.T = 1;
+
+	sh4rcb.cntx.old_sr.status = 0x60000000;
+
+	sh4rcb.cntx.fpscr.full = 0x00040001;
+	sh4rcb.cntx.old_fpscr.full = 0x00040001;
+}
 void reios_boot() {
+	printf("-----------------\n");
+	printf("REIOS: Booting up\n");
+	printf("-----------------\n");
 	//setup syscalls
 	//find boot file
 	//boot it
@@ -448,12 +573,29 @@ void reios_boot() {
 		}
 		reios_setup_state(0x8C010000);
 	}
-	
 	else {
-		const char* bootfile = reios_locate_ip();
-		if (!bootfile || !reios_locate_bootfile(bootfile))
-			msgboxf("Failed to locate bootfile", MBX_ICONERROR);
-		reios_setup_state(0xac008300);
+		if (DC_PLATFORM == DC_PLATFORM_DREAMCAST) {
+			const char* bootfile = reios_locate_ip();
+			if (!bootfile || !reios_locate_bootfile(bootfile))
+				msgboxf("Failed to locate bootfile", MBX_ICONERROR);
+			reios_setup_state(0xac008300);
+		}
+		else {
+			verify(DC_PLATFORM == DC_PLATFORM_NAOMI);
+			
+			u32* sz = (u32*)naomi_cart_GetPtr(0x368, 4);
+			if (!sz) {
+				msgboxf("Naomi boot failure", MBX_ICONERROR);
+			}
+
+			int size = *sz;
+
+			verify(size < RAM_SIZE && naomi_cart_GetPtr(size - 1, 1) && "Invalid cart size");
+
+			WriteMemBlock_nommu_ptr(0x0c020000, (u32*)naomi_cart_GetPtr(0, size), size);
+
+			reios_setuo_naomi(0x0c021000);
+		}
 	}
 }
 
