@@ -3,10 +3,79 @@
 #include <linux/input.h>
 #include "linux-dist/evdev.h"
 #include "linux-dist/main.h"
+#include "cfg/ini.h"
+#include <vector>
+#include <map>
 
 #if defined(USE_EVDEV)
+	std::map<std::string, ControllerMapping> loaded_mappings;
 
-	int input_evdev_init(Controller* controller, const char* device)
+	int load_keycode(ConfigFile* cfg, string section, string dc_key)
+	{
+		int code;
+		string keycode = cfg->get(section, dc_key, "-1");
+		if (strstr(keycode.c_str(), "KEY_") != NULL ||
+			strstr(keycode.c_str(), "BTN_") != NULL ||
+			strstr(keycode.c_str(), "ABS_") != NULL)
+		{
+			if(evdev_keycodes.count(keycode.c_str()) == 1)
+			{
+				code = evdev_keycodes[keycode.c_str()];
+				printf("%s = %s (%d)\n", dc_key.c_str(), keycode.c_str(), code);
+			}
+			else
+			{
+				code = -1;
+				printf("evdev: failed to find keycode for '%s'", keycode.c_str());
+			}
+		}
+		else
+		{
+			code = cfg->get_int(section, dc_key, -1);
+			printf("%s = %d\n", dc_key.c_str(), code);
+		}
+		return code;
+	}
+
+	ControllerMapping load_mapping(FILE* fd)
+	{
+		ConfigFile mf;
+		mf.parse(fd);
+
+		ControllerMapping mapping = {
+			mf.get("emulator", "mapping_name", "<Unknown>").c_str(),
+			load_keycode(&mf, "dreamcast", "btn_a"),
+			load_keycode(&mf, "dreamcast", "btn_b"),
+			load_keycode(&mf, "dreamcast", "btn_c"),
+			load_keycode(&mf, "dreamcast", "btn_d"),
+			load_keycode(&mf, "dreamcast", "btn_x"),
+			load_keycode(&mf, "dreamcast", "btn_y"),
+			load_keycode(&mf, "dreamcast", "btn_z"),
+			load_keycode(&mf, "dreamcast", "btn_start"),
+			load_keycode(&mf, "emulator",  "btn_escape"),
+			load_keycode(&mf, "dreamcast", "dpad_left"),
+			load_keycode(&mf, "dreamcast", "dpad_right"),
+			load_keycode(&mf, "dreamcast", "dpad_up"),
+			load_keycode(&mf, "dreamcast", "dpad_down"),
+			load_keycode(&mf, "dreamcast", "dpad2_left"),
+			load_keycode(&mf, "dreamcast", "dpad2_right"),
+			load_keycode(&mf, "dreamcast", "dpad2_up"),
+			load_keycode(&mf, "dreamcast", "dpad2_down"),
+			load_keycode(&mf, "compat",    "btn_trigger_left"),
+			load_keycode(&mf, "compat",    "btn_trigger_right"),
+			load_keycode(&mf, "compat",    "axis_dpad_x"),
+			load_keycode(&mf, "compat",    "axis_dpad_y"),
+			load_keycode(&mf, "compat",    "axis_dpad2_x"),
+			load_keycode(&mf, "compat",    "axis_dpad2_y"),
+			load_keycode(&mf, "dreamcast", "axis_x"),
+			load_keycode(&mf, "dreamcast", "axis_y"),
+			load_keycode(&mf, "dreamcast", "axis_trigger_left"),
+			load_keycode(&mf, "dreamcast", "axis_trigger_right")
+		};
+		return mapping;
+	}
+
+	int input_evdev_init(Controller* controller, const char* device, const char* mapping_fname = NULL)
 	{
 		char name[256] = "Unknown";
 
@@ -28,33 +97,54 @@
 
 				controller->fd = fd;
 
-				#if defined(TARGET_PANDORA)
-					*controller.mapping = &controller_mapping_pandora;
-				#elif defined(TARGET_GCW0)
-					*controller.mapping = &controller_mapping_gcwz;
-				#else
-					if (strcmp(name, "Microsoft X-Box 360 pad") == 0 ||
-						strcmp(name, "Xbox 360 Wireless Receiver") == 0 ||
-						strcmp(name, "Xbox 360 Wireless Receiver (XBOX)") == 0)
+				if(mapping_fname != NULL)
+				{
+					if(loaded_mappings.count(string(mapping_fname)) == 0)
 					{
-						controller->mapping = &controller_mapping_xpad;
+						FILE* mapping_fd = fopen(mapping_fname, "r");
+						if(mapping_fd != NULL)
+						{
+							printf("evdev: reading custom mapping file: '%s'\n", mapping_fname);
+							loaded_mappings.insert(std::make_pair(string(mapping_fname), load_mapping(mapping_fd)));
+							fclose(mapping_fd);
+						}
+						else
+						{
+							printf("evdev: unable to open custom mapping file '%s'\n", mapping_fname);
+							return -3;
+						}
 					}
-					else if (strstr(name, "Xbox Gamepad (userspace driver)") != NULL)
-					{
-						controller->mapping = &controller_mapping_xboxdrv;
-					}
-					else if (strstr(name, "keyboard") != NULL ||
-									 strstr(name, "Keyboard") != NULL)
-					{
-						controller->mapping = &controller_mapping_keyboard;
-					}
-					else
-					{
-						controller->mapping = &controller_mapping_generic;
-					}
-				#endif
+					controller->mapping = &loaded_mappings[string(mapping_fname)];
+				}
+				else
+				{
+					#if defined(TARGET_PANDORA)
+						*controller.mapping = &controller_mapping_pandora;
+					#elif defined(TARGET_GCW0)
+						*controller.mapping = &controller_mapping_gcwz;
+					#else
+						if (strcmp(name, "Microsoft X-Box 360 pad") == 0 ||
+							strcmp(name, "Xbox 360 Wireless Receiver") == 0 ||
+							strcmp(name, "Xbox 360 Wireless Receiver (XBOX)") == 0)
+						{
+							controller->mapping = &controller_mapping_xpad;
+						}
+						else if (strstr(name, "Xbox Gamepad (userspace driver)") != NULL)
+						{
+							controller->mapping = &controller_mapping_xboxdrv;
+						}
+						else if (strstr(name, "keyboard") != NULL ||
+										 strstr(name, "Keyboard") != NULL)
+						{
+							controller->mapping = &controller_mapping_keyboard;
+						}
+						else
+						{
+							controller->mapping = &controller_mapping_generic;
+						}
+					#endif
+				}
 				printf("evdev: Using '%s' mapping\n", controller->mapping->name);
-
 				return 0;
 			}
 		}
@@ -219,3 +309,12 @@
 		}
 	}
 #endif
+
+
+
+
+
+
+
+
+

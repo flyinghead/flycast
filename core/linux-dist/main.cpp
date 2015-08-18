@@ -95,10 +95,14 @@ void emit_WriteCodeCache();
 void SetupInput()
 {
 	#if defined(USE_EVDEV)
+		evdev_init_keycodes(); //FIXME: This sucks, but initializer lists for maps are only available with std=c++0x
+		
 		int evdev_device_id[4] = { -1, -1, -1, -1 };
+		char* mapping = NULL;
 		size_t size_needed;
-
 		int evdev_device_length, port, i;
+		int port, i;
+
 		char* evdev_device;
 
 		for (port = 0; port < 4; port++)
@@ -106,8 +110,8 @@ void SetupInput()
 			size_needed = snprintf(NULL, 0, EVDEV_DEVICE_CONFIG_KEY, port+1) + 1;
 			char* evdev_config_key = (char*)malloc(size_needed);
 			sprintf(evdev_config_key, EVDEV_DEVICE_CONFIG_KEY, port+1);
-
 			evdev_device_id[port] = cfgLoadInt("input", evdev_config_key, EVDEV_DEFAULT_DEVICE_ID(port+1));
+			free(evdev_config_key);
 
 			// Check if the same device is already in use on another port
 			if (evdev_device_id[port] < 0)
@@ -124,14 +128,30 @@ void SetupInput()
 						}
 				}
 
-				evdev_device_length = snprintf(NULL, 0, EVDEV_DEVICE_STRING, evdev_device_id[port]);
-				evdev_device = (char*)malloc(evdev_device_length + 1);
+				size_needed = snprintf(NULL, 0, EVDEV_DEVICE_STRING, evdev_device_id[port]) + 1;
+				evdev_device = (char*)malloc(size_needed);
 				sprintf(evdev_device, EVDEV_DEVICE_STRING, evdev_device_id[port]);
-				input_evdev_init(&controllers[port], evdev_device);
+
+				mapping = NULL;
+
+				size_needed = snprintf(NULL, 0, EVDEV_MAPPING_CONFIG_KEY, port+1) + 1;
+				evdev_config_key = (char*)malloc(size_needed);
+				sprintf(evdev_config_key, EVDEV_MAPPING_CONFIG_KEY, port+1);
+				if (cfgExists("input", evdev_config_key) == 2)
+				{
+						string mapping_name = cfgLoadStr("input", evdev_config_key, "");
+
+						size_needed = snprintf(NULL, 0, EVDEV_MAPPING_PATH, mapping_name.c_str()) + 1;
+						char* evdev_mapping_fname = (char*)malloc(size_needed);
+						sprintf(evdev_mapping_fname, EVDEV_MAPPING_PATH, mapping_name.c_str());
+						mapping = (char*)GetPath(evdev_mapping_fname).c_str();
+						free(evdev_mapping_fname);
+				}
+				free(evdev_config_key);
+
+				input_evdev_init(&controllers[port], evdev_device, mapping);
 				free(evdev_device);
 			}
-
-			free(evdev_config_key);
 		}
 	#endif
 
@@ -287,3 +307,5 @@ void os_DebugBreak()
 		exit(-1);
 	#endif
 }
+
+
