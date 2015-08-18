@@ -21,6 +21,7 @@
   <ItemGroup>
     <ClCompile Include="..\core\cfg\cl.cpp" />
     <ClCompile Include="..\core\cfg\cfg.cpp" />
+    <ClCompile Include="..\core\cfg\ini.cpp" />
     <ClCompile Include="..\core\deps\chdpsr\cdipsr.cpp" />
     <ClCompile Include="..\core\deps\chdr\chdr.cpp" />
     <ClCompile Include="..\core\deps\coreio\coreio.cpp" />
@@ -198,6 +199,7 @@
   <ItemGroup>
     <ClInclude Include="..\core\build.h" />
     <ClInclude Include="..\core\cfg\cfg.h" />
+    <ClInclude Include="..\core\cfg\ini.h" />
     <ClInclude Include="..\core\deps\chdpsr\cdipsr.h" />
     <ClInclude Include="..\core\deps\chdr\chd.h" />
     <ClInclude Include="..\core\deps\chdr\coretypes.h" />
