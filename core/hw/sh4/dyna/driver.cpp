@@ -455,7 +455,11 @@ void recSh4_Init()
 		}
 	#endif
 
+#if TARGET_IPHONE
+	memset((u8*)mmap(CodeCache, CODE_SIZE, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_FIXED | MAP_PRIVATE | MAP_ANON, 0, 0),0xFF,CODE_SIZE);
+#else
 	memset(CodeCache,0xFF,CODE_SIZE);
+#endif
 
 #endif
 	ngen_init();
