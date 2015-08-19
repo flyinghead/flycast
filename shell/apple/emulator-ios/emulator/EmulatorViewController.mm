@@ -16,6 +16,33 @@
 #include "hw/maple/maple_devs.h"
 #include "hw/maple/maple_if.h"
 
+extern u16 kcode[4];
+extern u32 vks[4];
+extern s8 joyx[4],joyy[4];
+extern u8 rt[4],lt[4];
+
+#define DC_BTN_C		(1)
+#define DC_BTN_B		(1<<1)
+#define DC_BTN_A		(1<<2)
+#define DC_BTN_START	(1<<3)
+#define DC_DPAD_UP		(1<<4)
+#define DC_DPAD_DOWN	(1<<5)
+#define DC_DPAD_LEFT	(1<<6)
+#define DC_DPAD_RIGHT	(1<<7)
+#define DC_BTN_Z		(1<<8)
+#define DC_BTN_Y		(1<<9)
+#define DC_BTN_X		(1<<10)
+#define DC_BTN_D		(1<<11)
+#define DC_DPAD2_UP		(1<<12)
+#define DC_DPAD2_DOWN	(1<<13)
+#define DC_DPAD2_LEFT	(1<<14)
+#define DC_DPAD2_RIGHT	(1<<15)
+
+#define DC_AXIS_LT		(0X10000)
+#define DC_AXIS_RT		(0X10001)
+#define DC_AXIS_X		(0X20000)
+#define DC_AXIS_Y		(0X20001)
+
 @interface ViewController () {
 }
 
@@ -64,11 +91,26 @@ extern "C" int reicast_main(int argc, char* argv[]);
     GLKView *view = (GLKView *)self.view;
     view.context = self.context;
     view.drawableDepthFormat = GLKViewDrawableDepthFormat24;
-	
-	self.iCadeReader = [[iCadeReaderView alloc] init];
-	[self.view addSubview:self.iCadeReader];
-	self.iCadeReader.delegate = self;
-	self.iCadeReader.active = YES;
+    
+    self.connectObserver = [[NSNotificationCenter defaultCenter] addObserverForName:GCControllerDidConnectNotification object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *note) {
+        if ([[GCController controllers] count] == 1) {
+            [self toggleHardwareController:YES];
+        }
+    }];
+    self.disconnectObserver = [[NSNotificationCenter defaultCenter] addObserverForName:GCControllerDidDisconnectNotification object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *note) {
+        if (![[GCController controllers] count]) {
+            [self toggleHardwareController:NO];
+        }
+    }];
+    
+    if ([[GCController controllers] count]) {
+        [self toggleHardwareController:YES];
+    }
+    
+    self.iCadeReader = [[iCadeReaderView alloc] init];
+    [self.view addSubview:self.iCadeReader];
+    self.iCadeReader.delegate = self;
+    self.iCadeReader.active = YES;
     
     [self setupGL];
     
@@ -127,6 +169,124 @@ extern "C" int reicast_main(int argc, char* argv[]);
 
 }
 
+- (void)toggleHardwareController:(BOOL)useHardware {
+    if (useHardware) {
+        self.gController = [GCController controllers][0];
+        if (self.gController.gamepad) {
+            [self.gController.gamepad.buttonA setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
+				if (pressed && value >= 0.1) {
+					kcode[0] &= ~(DC_BTN_A);
+				} else {
+					kcode[0] |= (DC_BTN_A);
+				}
+            }];
+            [self.gController.gamepad.buttonB setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
+				if (pressed && value >= 0.1) {
+					kcode[0] &= ~(DC_BTN_B);
+				} else {
+					kcode[0] |= (DC_BTN_B);
+				}
+            }];
+            [self.gController.gamepad.buttonX setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
+				if (pressed && value >= 0.1) {
+					kcode[0] &= ~(DC_BTN_X);
+				} else {
+					kcode[0] |= (DC_BTN_X);
+				}
+            }];
+            [self.gController.gamepad.buttonY setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
+				if (pressed && value >= 0.1) {
+					kcode[0] &= ~(DC_BTN_Y);
+				} else {
+					kcode[0] |= (DC_BTN_Y);
+				}
+            }];
+            [self.gController.gamepad.dpad setValueChangedHandler:^(GCControllerDirectionPad *dpad, float xValue, float yValue){
+				if (xValue >= 0.1) {
+					kcode[0] &= ~(DC_DPAD_RIGHT);
+				} else {
+					kcode[0] |= ~(DC_DPAD_RIGHT);
+				}
+				if (xValue <= -0.1) {
+					kcode[0] &= ~(DC_DPAD_LEFT);
+				} else {
+					kcode[0] |= ~(DC_DPAD_LEFT);
+				}
+				if (yValue >= 0.1) {
+					kcode[0] &= ~(DC_DPAD_UP);
+				} else {
+					kcode[0] |= ~(DC_DPAD_UP);
+				}
+				if (yValue <= -0.1) {
+					kcode[0] &= ~(DC_DPAD_DOWN);
+				} else {
+					kcode[0] |= ~(DC_DPAD_DOWN);
+				}
+            }];
+            //Add controller pause handler here
+        }
+        if (self.gController.extendedGamepad) {
+            [self.gController.extendedGamepad.buttonA setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
+				if (pressed && value >= 0.1) {
+					kcode[0] &= ~(DC_BTN_A);
+				} else {
+					kcode[0] |= (DC_BTN_A);
+				}
+            }];
+            [self.gController.extendedGamepad.buttonB setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
+				if (pressed && value >= 0.1) {
+					kcode[0] &= ~(DC_BTN_B);
+				} else {
+					kcode[0] |= (DC_BTN_B);
+				}
+            }];
+            [self.gController.extendedGamepad.buttonX setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
+				if (pressed && value >= 0.1) {
+					kcode[0] &= ~(DC_BTN_X);
+				} else {
+					kcode[0] |= (DC_BTN_X);
+				}
+            }];
+            [self.gController.extendedGamepad.buttonY setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
+				if (pressed && value >= 0.1) {
+					kcode[0] &= ~(DC_BTN_Y);
+				} else {
+					kcode[0] |= (DC_BTN_Y);
+				}
+            }];
+            [self.gController.extendedGamepad.dpad setValueChangedHandler:^(GCControllerDirectionPad *dpad, float xValue, float yValue){
+				if (xValue >= 0.1) {
+					 kcode[0] &= ~(DC_DPAD_RIGHT);
+				} else {
+					kcode[0] |= ~(DC_DPAD_RIGHT);
+				}
+				if (xValue <= -0.1) {
+					kcode[0] &= ~(DC_DPAD_LEFT);
+				} else {
+					kcode[0] |= ~(DC_DPAD_LEFT);
+				}
+				if (yValue >= 0.1) {
+					kcode[0] &= ~(DC_DPAD_UP);
+				} else {
+					kcode[0] |= ~(DC_DPAD_UP);
+				}
+				if (yValue <= -0.1) {
+					kcode[0] &= ~(DC_DPAD_DOWN);
+				} else {
+					kcode[0] |= ~(DC_DPAD_DOWN);
+				}
+            }];
+            [self.gController.extendedGamepad.leftThumbstick.xAxis setValueChangedHandler:^(GCControllerAxisInput *axis, float value){
+                
+            }];
+            [self.gController.extendedGamepad.leftThumbstick.yAxis setValueChangedHandler:^(GCControllerAxisInput *axis, float value){
+                
+            }];
+        }
+    } else {
+        self.gController = nil;
+    }
+}
 
 - (void)glkView:(GLKView *)view drawInRect:(CGRect)rect
 {
