@@ -27,6 +27,16 @@ int x11_keyboard_input = 0;
 
 int ndcid = 0;
 void* x11_glc;
+bool x11_fullscreen = false;
+int x11_width;
+int x11_height;
+
+enum
+{
+	_NET_WM_STATE_REMOVE =0,
+	_NET_WM_STATE_ADD = 1,
+	_NET_WM_STATE_TOGGLE =2
+};
 
 #ifdef TARGET_PANDORA
 	static Cursor CreateNullCursor(Display *display, Window root)
@@ -51,6 +61,23 @@ void* x11_glc;
 	}
 #endif
 
+void x11_window_set_fullscreen(bool fullscreen)
+{
+		XEvent xev;
+		xev.xclient.type         = ClientMessage;
+		xev.xclient.window       = x11_win;
+		xev.xclient.message_type = XInternAtom(x11_disp, "_NET_WM_STATE", False);
+		xev.xclient.format = 32;
+		xev.xclient.data.l[0] = 2;    // _NET_WM_STATE_TOGGLE
+		xev.xclient.data.l[1] = XInternAtom(x11_disp, "_NET_WM_STATE_FULLSCREEN", True);
+		xev.xclient.data.l[2] = 0;    // no second property to toggle
+		xev.xclient.data.l[3] = 1;
+		xev.xclient.data.l[4] = 0;
+
+		printf("x11: setting fullscreen to %d\n", fullscreen);
+		XSendEvent(x11_disp, DefaultRootWindow(x11_disp), False, SubstructureNotifyMask, &xev);
+}
+
 void input_x11_handle()
 {
 	if (x11_win && x11_keyboard_input)
@@ -64,28 +91,25 @@ void input_x11_handle()
 			{
 				case KeyPress:
 				case KeyRelease:
-				{
-					int dc_key = x11_keymap[e.xkey.keycode];
-
-					if (e.type == KeyPress)
+					if (e.type == KeyRelease && e.xkey.keycode == 95) // F11 button
 					{
-						kcode[0] &= ~dc_key;
+						x11_fullscreen = !x11_fullscreen;
+						x11_window_set_fullscreen(x11_fullscreen);
 					}
 					else
 					{
-						kcode[0] |= dc_key;
+						int dc_key = x11_keymap[e.xkey.keycode];
+						if (e.type == KeyPress)
+						{
+							kcode[0] &= ~dc_key;
+						}
+						else
+						{
+							kcode[0] |= dc_key;
+						}
 					}
-
 					//printf("KEY: %d -> %d: %d\n",e.xkey.keycode, dc_key, x11_dc_buttons );
-				}
-				break;
-
-
-				{
-					printf("KEYRELEASE\n");
-				}
-				break;
-
+					break;
 			}
 		}
 	}
@@ -218,31 +242,35 @@ void x11_window_create()
 		ui32Mask = CWBackPixel | CWBorderPixel | CWEventMask | CWColormap;
 
 		#ifdef TARGET_PANDORA
-			int width = 800;
-			int height = 480;
+			x11_width = 800;
+			x11_height = 480;
 		#else
-			int width = cfgLoadInt("x11", "width", WINDOW_WIDTH);
-			int height = cfgLoadInt("x11", "height", WINDOW_HEIGHT);
+			x11_width = cfgLoadInt("x11", "width", WINDOW_WIDTH);
+			x11_height = cfgLoadInt("x11", "height", WINDOW_HEIGHT);
 		#endif
 
-		if (width == -1)
+		if (x11_width < 0 || x11_height < 0)
 		{
-			width = XDisplayWidth(x11Display, x11Screen);
-			height = XDisplayHeight(x11Display, x11Screen);
+			x11_width = XDisplayWidth(x11Display, x11Screen);
+			x11_height = XDisplayHeight(x11Display, x11Screen);
 		}
 
 		// Creates the X11 window
-		x11Window = XCreateWindow(x11Display, RootWindow(x11Display, x11Screen), (ndcid%3)*640, (ndcid/3)*480, width, height,
+		x11Window = XCreateWindow(x11Display, RootWindow(x11Display, x11Screen), (ndcid%3)*640, (ndcid/3)*480, x11_width, x11_height,
 			0, depth, InputOutput, x11Visual->visual, ui32Mask, &sWA);
 
-		#ifdef TARGET_PANDORA
+		if(x11_fullscreen)
+		{
+
 			// fullscreen
 			Atom wmState = XInternAtom(x11Display, "_NET_WM_STATE", False);
 			Atom wmFullscreen = XInternAtom(x11Display, "_NET_WM_STATE_FULLSCREEN", False);
 			XChangeProperty(x11Display, x11Window, wmState, XA_ATOM, 32, PropModeReplace, (unsigned char *)&wmFullscreen, 1);
 
 			XMapRaised(x11Display, x11Window);
-		#else
+		}
+		else
+		{
 			XMapWindow(x11Display, x11Window);
 
 			#if !defined(GLES)
@@ -270,7 +298,7 @@ void x11_window_create()
 					die("Failed to create GL3.1 context\n");
 				}
 			#endif
-		#endif
+		}
 
 		XFlush(x11Display);
 
