@@ -8,6 +8,39 @@
 #include <map>
 
 #if defined(USE_EVDEV)
+	s8 AxisData::convert(s32 value)
+	{
+		return (((value - min) * 255) / range);
+	}
+
+	void AxisData::init(int fd, int code)
+	{
+		struct input_absinfo abs;
+		if(code < 0 || ioctl(fd, EVIOCGABS(code), &abs))
+		{
+			if(code >= 0)
+			{
+				perror("evdev ioctl");
+			}
+			this->range = 255;
+			this->min = 0;
+			return;
+		}
+		s32 min = abs.minimum;
+		s32 max = abs.maximum;
+		printf("evdev: range of axis %d is from %d to %d\n", code, min, max);
+		this->range = (max - min);
+		this->min = min;
+	}
+
+	void Controller::init()
+	{
+		this->data_x.init(this->fd, this->mapping->Axis_Analog_X);
+		this->data_y.init(this->fd, this->mapping->Axis_Analog_Y);
+		this->data_trigger_left.init(this->fd, this->mapping->Axis_Trigger_Left);
+		this->data_trigger_right.init(this->fd, this->mapping->Axis_Trigger_Right);
+	}
+
 	std::map<std::string, ControllerMapping> loaded_mappings;
 
 	int load_keycode(ConfigFile* cfg, string section, string dc_key)
@@ -144,6 +177,7 @@
 						printf("evdev: reading mapping file: '%s'\n", mapping_fname);
 						loaded_mappings.insert(std::make_pair(string(mapping_fname), load_mapping(mapping_fd)));
 						fclose(mapping_fd);
+
 					}
 					else
 					{
@@ -153,6 +187,8 @@
 				}
 				controller->mapping = &loaded_mappings[string(mapping_fname)];
 				printf("evdev: Using '%s' mapping\n", controller->mapping->name);
+				controller->init();
+
 				return 0;
 			}
 		}
@@ -175,10 +211,6 @@
 
 		while(read(controller->fd, &ie, sizeof(ie)) == sizeof(ie))
 		{
-			if(ie.type != EV_SYN && ie.type != EV_MSC)
-			{
-				printf("type %i key %i state %i\n", ie.type, ie.code, ie.value);
-			}
 			switch(ie.type)
 			{
 				case EV_KEY:
@@ -297,32 +329,22 @@
 					}
 					else if (ie.code == controller->mapping->Axis_Analog_X)
 					{
-						printf("%d", ie.value);
-						joyx[port] = (s8)(ie.value/256);
+						joyx[port] = (controller->data_x.convert(ie.value) + 128);
 					}
 					else if (ie.code == controller->mapping->Axis_Analog_Y)
 					{
-						joyy[port] = (s8)(ie.value/256);
+						joyy[port] = (controller->data_y.convert(ie.value) + 128);
 					}
 					else if (ie.code == controller->mapping->Axis_Trigger_Left)
 					{
-						lt[port] = (s8)ie.value;
+						lt[port] = controller->data_trigger_left.convert(ie.value);
 					}
 					else if (ie.code == controller->mapping->Axis_Trigger_Right)
 					{
-						rt[port] = (s8)ie.value;
+						rt[port] = controller->data_trigger_right.convert(ie.value);
 					}
 					break;
 			}
 		}
 	}
 #endif
-
-
-
-
-
-
-
-
-

@@ -5,13 +5,24 @@
 
 #pragma once
 
-struct s_controller
+struct AxisData
+{
+	s32 range; // smaller size than 32 bit might cause integer overflows
+	s32 min;
+	void init(int fd, int code);
+	s8 convert(int value);
+};
+
+struct Controller
 {
 	int fd;
 	ControllerMapping* mapping;
+	AxisData data_x;
+	AxisData data_y;
+	AxisData data_trigger_left;
+	AxisData data_trigger_right;
+	void init();
 };
-
-typedef struct s_controller Controller;
 
 #define EVDEV_DEVICE_CONFIG_KEY "evdev_device_id_%d"
 #define EVDEV_MAPPING_CONFIG_KEY "evdev_mapping_%d"
@@ -28,5 +39,6 @@ typedef struct s_controller Controller;
 
 extern int input_evdev_init(Controller* controller, const char* device, const char* mapping_fname);
 extern bool input_evdev_handle(Controller* controller, u32 port);
+
 
 
