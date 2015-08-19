@@ -52,12 +52,12 @@
 		libevdev_available = true;
 	}
 
-	s8 AxisData::convert(s32 value)
+	s8 EvdevAxisData::convert(s32 value)
 	{
 		return (((value - min) * 255) / range);
 	}
 
-	void AxisData::init(int fd, int code, bool inverted)
+	void EvdevAxisData::init(int fd, int code, bool inverted)
 	{
 		struct input_absinfo abs;
 		if(code < 0 || ioctl(fd, EVIOCGABS(code), &abs))
@@ -85,7 +85,7 @@
 		}
 	}
 
-	void Controller::init()
+	void EvdevController::init()
 	{
 		this->data_x.init(this->fd, this->mapping->Axis_Analog_X, this->mapping->Axis_Analog_X_Inverted);
 		this->data_y.init(this->fd, this->mapping->Axis_Analog_Y, this->mapping->Axis_Analog_Y_Inverted);
@@ -93,7 +93,7 @@
 		this->data_trigger_right.init(this->fd, this->mapping->Axis_Trigger_Right, this->mapping->Axis_Trigger_Right_Inverted);
 	}
 
-	std::map<std::string, ControllerMapping> loaded_mappings;
+	std::map<std::string, EvdevControllerMapping> loaded_mappings;
 
 	int load_keycode(ConfigFile* cfg, string section, string dc_key)
 	{
@@ -125,12 +125,12 @@
 		return code;
 	}
 
-	ControllerMapping load_mapping(FILE* fd)
+	EvdevControllerMapping load_mapping(FILE* fd)
 	{
 		ConfigFile mf;
 		mf.parse(fd);
 
-		ControllerMapping mapping = {
+		EvdevControllerMapping mapping = {
 			mf.get("emulator", "mapping_name", "<Unknown>").c_str(),
 			load_keycode(&mf, "dreamcast", "btn_a"),
 			load_keycode(&mf, "dreamcast", "btn_b"),
@@ -167,7 +167,7 @@
 		return mapping;
 	}
 
-	int input_evdev_init(Controller* controller, const char* device, const char* custom_mapping_fname = NULL)
+	int input_evdev_init(EvdevController* controller, const char* device, const char* custom_mapping_fname = NULL)
 	{
 		load_libevdev();
 
@@ -260,7 +260,7 @@
 		}
 	}
 
-	bool input_evdev_handle(Controller* controller, u32 port)
+	bool input_evdev_handle(EvdevController* controller, u32 port)
 	{
 		#define SET_FLAG(field, mask, expr) field =((expr) ? (field & ~mask) : (field | mask))
 		if (controller->fd < 0 || controller->mapping == NULL)

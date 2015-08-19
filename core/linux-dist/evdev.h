@@ -1,10 +1,44 @@
-#include "types.h"
-#include "linux-dist/evdev_mappings.h"
-#include <linux/input.h>
-
 #pragma once
+#include <linux/input.h>
+#include "types.h"
 
-struct AxisData
+struct EvdevControllerMapping
+{
+	const char* name;
+	const int Btn_A;
+	const int Btn_B;
+	const int Btn_C;
+	const int Btn_D;
+	const int Btn_X;
+	const int Btn_Y;
+	const int Btn_Z;
+	const int Btn_Start;
+	const int Btn_Escape;
+	const int Btn_DPad_Left;
+	const int Btn_DPad_Right;
+	const int Btn_DPad_Up;
+	const int Btn_DPad_Down;
+	const int Btn_DPad2_Left;
+	const int Btn_DPad2_Right;
+	const int Btn_DPad2_Up;
+	const int Btn_DPad2_Down;
+	const int Btn_Trigger_Left;
+	const int Btn_Trigger_Right;
+	const int Axis_DPad_X;
+	const int Axis_DPad_Y;
+	const int Axis_DPad2_X;
+	const int Axis_DPad2_Y;
+	const int Axis_Analog_X;
+	const int Axis_Analog_Y;
+	const int Axis_Trigger_Left;
+	const int Axis_Trigger_Right;
+	const bool Axis_Analog_X_Inverted;
+	const bool Axis_Analog_Y_Inverted;
+	const bool Axis_Trigger_Left_Inverted;
+	const bool Axis_Trigger_Right_Inverted;
+};
+
+struct EvdevAxisData
 {
 	s32 range; // smaller size than 32 bit might cause integer overflows
 	s32 min;
@@ -12,14 +46,14 @@ struct AxisData
 	s8 convert(int value);
 };
 
-struct Controller
+struct EvdevController
 {
 	int fd;
-	ControllerMapping* mapping;
-	AxisData data_x;
-	AxisData data_y;
-	AxisData data_trigger_left;
-	AxisData data_trigger_right;
+	EvdevControllerMapping* mapping;
+	EvdevAxisData data_x;
+	EvdevAxisData data_y;
+	EvdevAxisData data_trigger_left;
+	EvdevAxisData data_trigger_right;
 	void init();
 };
 
@@ -36,8 +70,8 @@ struct Controller
 
 #define EVDEV_DEFAULT_DEVICE_ID(port) (port == 1 ? EVDEV_DEFAULT_DEVICE_ID_1 : -1)
 
-extern int input_evdev_init(Controller* controller, const char* device, const char* mapping_fname);
-extern bool input_evdev_handle(Controller* controller, u32 port);
+extern int input_evdev_init(EvdevController* controller, const char* device, const char* mapping_fname);
+extern bool input_evdev_handle(EvdevController* controller, u32 port);
 
 
 

@@ -79,7 +79,7 @@ void emit_WriteCodeCache();
 
 #if defined(USE_EVDEV)
 	/* evdev input */
-	static Controller controllers[4] = {
+	static EvdevController evdev_controllers[4] = {
 		{ -1, NULL },
 		{ -1, NULL },
 		{ -1, NULL },
@@ -134,7 +134,7 @@ void SetupInput()
 				const char* mapping = (cfgExists("input", evdev_config_key) == 2 ? cfgLoadStr("input", evdev_config_key, "").c_str() : NULL);
 				free(evdev_config_key);
 
-				input_evdev_init(&controllers[port], evdev_device, mapping);
+				input_evdev_init(&evdev_controllers[port], evdev_device, mapping);
 
 				free(evdev_device);
 			}
@@ -172,7 +172,7 @@ void UpdateInputState(u32 port)
 	#endif
 
 	#if defined(USE_EVDEV)
-		input_evdev_handle(&controllers[port], port);
+		input_evdev_handle(&evdev_controllers[port], port);
 	#endif
 }
 
@@ -213,9 +213,9 @@ void dc_run();
 		if (joystick_fd >= 0) { close(joystick_fd); }
 		for (int port = 0; port < 4 ; port++)
 		{
-			if (controllers[port]->fd >= 0)
+			if (evdev_controllers[port]->fd >= 0)
 			{
-				close(controllers[port]->fd);
+				close(evdev_controllers[port]->fd);
 			}
 		}
 
