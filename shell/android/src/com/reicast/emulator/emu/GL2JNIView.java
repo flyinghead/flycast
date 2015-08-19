@@ -37,7 +37,6 @@ import com.android.util.FileUtils;
 import com.reicast.emulator.GL2JNIActivity;
 import com.reicast.emulator.GL2JNINative;
 import com.reicast.emulator.MainActivity;
-import com.reicast.emulator.R;
 import com.reicast.emulator.config.Config;
 import com.reicast.emulator.emu.OnScreenMenu.FpsPopup;
 import com.reicast.emulator.periph.VJoy;
@@ -186,7 +185,7 @@ public class GL2JNIView extends GLSurfaceView
 		// This is the game we are going to run
 		fileName = newFileName;
 
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD && Config.nativeact) {
 			if (GL2JNINative.syms != null)
 				JNIdc.data(1, GL2JNINative.syms);
 		} else {
