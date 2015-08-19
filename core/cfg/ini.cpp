@@ -69,7 +69,7 @@ bool ConfigFile::has_section(string name)
 bool ConfigFile::has_entry(string section_name, string entry_name)
 {
 	ConfigSection* section = this->get_section(section_name);
-	return ((section == NULL) ? false : section->has_entry(entry_name));
+	return ((section != NULL) && section->has_entry(entry_name));
 }
 
 ConfigSection* ConfigFile::add_section(string name)
@@ -250,3 +250,4 @@ void ConfigFile::save(FILE* file)
 		fputs("\n", file);
 	}
 }
+
