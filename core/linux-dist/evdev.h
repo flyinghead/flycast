@@ -72,8 +72,3 @@ struct EvdevController
 
 extern int input_evdev_init(EvdevController* controller, const char* device, const char* mapping_fname);
 extern bool input_evdev_handle(EvdevController* controller, u32 port);
-
-
-
-
-
