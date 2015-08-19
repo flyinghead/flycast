@@ -57,7 +57,7 @@
 		return (((value - min) * 255) / range);
 	}
 
-	void AxisData::init(int fd, int code)
+	void AxisData::init(int fd, int code, bool inverted)
 	{
 		struct input_absinfo abs;
 		if(code < 0 || ioctl(fd, EVIOCGABS(code), &abs))
@@ -73,16 +73,24 @@
 		s32 min = abs.minimum;
 		s32 max = abs.maximum;
 		printf("evdev: range of axis %d is from %d to %d\n", code, min, max);
-		this->range = (max - min);
-		this->min = min;
+		if(inverted)
+		{
+			this->range = (min - max);
+			this->min = max;
+		}
+		else
+		{
+			this->range = (max - min);
+			this->min = min;
+		}
 	}
 
 	void Controller::init()
 	{
-		this->data_x.init(this->fd, this->mapping->Axis_Analog_X);
-		this->data_y.init(this->fd, this->mapping->Axis_Analog_Y);
-		this->data_trigger_left.init(this->fd, this->mapping->Axis_Trigger_Left);
-		this->data_trigger_right.init(this->fd, this->mapping->Axis_Trigger_Right);
+		this->data_x.init(this->fd, this->mapping->Axis_Analog_X, this->mapping->Axis_Analog_X_Inverted);
+		this->data_y.init(this->fd, this->mapping->Axis_Analog_Y, this->mapping->Axis_Analog_Y_Inverted);
+		this->data_trigger_left.init(this->fd, this->mapping->Axis_Trigger_Left, this->mapping->Axis_Trigger_Left_Inverted);
+		this->data_trigger_right.init(this->fd, this->mapping->Axis_Trigger_Right, this->mapping->Axis_Trigger_Right_Inverted);
 	}
 
 	std::map<std::string, ControllerMapping> loaded_mappings;
@@ -150,7 +158,11 @@
 			load_keycode(&mf, "dreamcast", "axis_x"),
 			load_keycode(&mf, "dreamcast", "axis_y"),
 			load_keycode(&mf, "dreamcast", "axis_trigger_left"),
-			load_keycode(&mf, "dreamcast", "axis_trigger_right")
+			load_keycode(&mf, "dreamcast", "axis_trigger_right"),
+			mf.get_bool("dreamcast", "axis_x_inverted", false),
+			mf.get_bool("dreamcast", "axis_y_inverted", false),
+			mf.get_bool("dreamcast", "axis_trigger_left_inverted", false),
+			mf.get_bool("dreamcast", "axis_trigger_right_inverted", false)
 		};
 		return mapping;
 	}
@@ -397,3 +409,4 @@
 		}
 	}
 #endif
+

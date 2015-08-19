@@ -30,5 +30,9 @@ struct s_evdev_controller_mapping
 	const int Axis_Analog_Y;
 	const int Axis_Trigger_Left;
 	const int Axis_Trigger_Right;
+	const bool Axis_Analog_X_Inverted;
+	const bool Axis_Analog_Y_Inverted;
+	const bool Axis_Trigger_Left_Inverted;
+	const bool Axis_Trigger_Right_Inverted;
 };
 typedef struct s_evdev_controller_mapping ControllerMapping;

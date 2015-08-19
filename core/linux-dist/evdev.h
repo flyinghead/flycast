@@ -8,7 +8,7 @@ struct AxisData
 {
 	s32 range; // smaller size than 32 bit might cause integer overflows
 	s32 min;
-	void init(int fd, int code);
+	void init(int fd, int code, bool inverted);
 	s8 convert(int value);
 };
 
@@ -38,6 +38,7 @@ struct Controller
 
 extern int input_evdev_init(Controller* controller, const char* device, const char* mapping_fname);
 extern bool input_evdev_handle(Controller* controller, u32 port);
+
 
 
 
