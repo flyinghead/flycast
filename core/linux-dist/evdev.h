@@ -1,7 +1,6 @@
 #include "types.h"
 #include "linux-dist/evdev_mappings.h"
 #include <linux/input.h>
-#include "evdev_keycodes.h"
 
 #pragma once
 
@@ -39,6 +38,7 @@ struct Controller
 
 extern int input_evdev_init(Controller* controller, const char* device, const char* mapping_fname);
 extern bool input_evdev_handle(Controller* controller, u32 port);
+
 
 
 

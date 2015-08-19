@@ -6,8 +6,52 @@
 #include "cfg/ini.h"
 #include <vector>
 #include <map>
+#include <dlfcn.h>
 
 #if defined(USE_EVDEV)
+	bool libevdev_tried = false;
+	bool libevdev_available = false;
+	typedef int (*libevdev_func_t)(int, const char*);
+	libevdev_func_t libevdev_event_code_from_name;
+
+	void load_libevdev()
+	{
+		if (libevdev_tried)
+		{
+			return;
+		}
+
+		libevdev_tried = true;
+		void* lib_handle = dlopen("libevdev.so", RTLD_NOW);
+
+		bool failed = false;
+
+		if (!lib_handle)
+		{
+			fprintf(stderr, "%s\n", dlerror());
+			failed = true;
+		}
+		else
+		{
+			libevdev_event_code_from_name = reinterpret_cast<libevdev_func_t>(dlsym(lib_handle, "libevdev_event_code_from_name"));
+
+			const char* error = dlerror();
+			if (error != NULL)
+			{
+				fprintf(stderr, "%s\n", error);
+				failed = true;
+			}
+		}
+
+		if(failed)
+		{
+			puts("WARNING: libevdev is not available. You'll not be able to use button names instead of numeric codes in your controller mappings!\n");
+			return;
+		}
+
+		libevdev_available = true;
+	}
+
 	s8 AxisData::convert(s32 value)
 	{
 		return (((value - min) * 255) / range);
@@ -45,28 +89,31 @@
 
 	int load_keycode(ConfigFile* cfg, string section, string dc_key)
 	{
-		int code;
+		int code = -1;
+
 		string keycode = cfg->get(section, dc_key, "-1");
 		if (strstr(keycode.c_str(), "KEY_") != NULL ||
 			strstr(keycode.c_str(), "BTN_") != NULL ||
 			strstr(keycode.c_str(), "ABS_") != NULL)
 		{
-			if(evdev_keycodes.count(keycode.c_str()) == 1)
+			if(libevdev_available)
 			{
-				code = evdev_keycodes[keycode.c_str()];
-				printf("%s = %s (%d)\n", dc_key.c_str(), keycode.c_str(), code);
+				int type = ((strstr(keycode.c_str(), "ABS_") != NULL) ? EV_ABS : EV_KEY);
+				code = libevdev_event_code_from_name(type, keycode.c_str());
+			}
+			if(code < 0)
+			{
+				printf("evdev: failed to find keycode for '%s'\n", keycode.c_str());
 			}
 			else
 			{
-				code = -1;
-				printf("evdev: failed to find keycode for '%s'", keycode.c_str());
+				printf("%s = %s (%d)\n", dc_key.c_str(), keycode.c_str(), code);
 			}
+			return code;
 		}
-		else
-		{
-			code = cfg->get_int(section, dc_key, -1);
-			printf("%s = %d\n", dc_key.c_str(), code);
-		}
+
+		code = cfg->get_int(section, dc_key, -1);
+		printf("%s = %d\n", dc_key.c_str(), code);
 		return code;
 	}
 
@@ -110,6 +157,8 @@
 
 	int input_evdev_init(Controller* controller, const char* device, const char* custom_mapping_fname = NULL)
 	{
+		load_libevdev();
+
 		char name[256] = "Unknown";
 
 		printf("evdev: Trying to open device at '%s'\n", device);

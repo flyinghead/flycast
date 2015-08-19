@@ -95,8 +95,6 @@ void emit_WriteCodeCache();
 void SetupInput()
 {
 	#if defined(USE_EVDEV)
-		evdev_init_keycodes(); //FIXME: This sucks, but initializer lists for maps are only available with std=c++0x
-
 		int evdev_device_id[4] = { -1, -1, -1, -1 };
 		size_t size_needed;
 		int port, i;
@@ -295,5 +293,6 @@ void os_DebugBreak()
 		exit(-1);
 	#endif
 }
+
 
 
