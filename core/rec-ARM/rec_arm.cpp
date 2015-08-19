@@ -2232,6 +2232,9 @@ void ngen_ResetBlocks()
 */
 void ngen_init()
 {
+    verify(FPCB_OFFSET == -0x2100000 || FPCB_OFFSET == -0x4100000);
+    verify(rcb_noffs(p_sh4rcb->fpcb) == FPCB_OFFSET);
+    
 	for (int s=0;s<6;s++)
 	{
 		void* fn=s==0?(void*)_vmem_ReadMem8SX32:

@@ -53,7 +53,7 @@ void emit_SetBaseAddr() { LastAddr_min = LastAddr; }
 void emit_WriteCodeCache()
 {
 	wchar path[512];
-	sprintf(path,"/code_cache_%08X.bin",CodeCache);
+	sprintf(path,"/code_cache_%8p.bin",CodeCache);
 	string pt2=GetPath(path);
 	printf("Writing code cache to %s\n",pt2.c_str());
 	FILE*f=fopen(pt2.c_str(),"wb");
@@ -455,7 +455,11 @@ void recSh4_Init()
 		}
 	#endif
 
+#if TARGET_IPHONE
+	memset((u8*)mmap(CodeCache, CODE_SIZE, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_FIXED | MAP_PRIVATE | MAP_ANON, 0, 0),0xFF,CODE_SIZE);
+#else
 	memset(CodeCache,0xFF,CODE_SIZE);
+#endif
 
 #endif
 	ngen_init();

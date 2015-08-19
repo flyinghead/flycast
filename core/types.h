@@ -430,6 +430,12 @@ struct maple_device_instance
 	#define puts(X) printf("%s\n", X)
 #endif
 
+#if HOST_OS == OS_DARWIN
+int darw_printf(const wchar* Text,...);
+#define printf darw_printf
+#define puts(X) printf("%s\n", X)
+#endif
+
 //includes from c++rt
 #include <vector>
 #include <string>

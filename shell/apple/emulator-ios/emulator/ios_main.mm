@@ -37,6 +37,20 @@ int msgboxf(const wchar* text,unsigned int type,...)
     return 0;
 }
 
+int darw_printf(const wchar* text,...) {
+    va_list args;
+    
+    wchar temp[2048];
+    va_start(args, text);
+    vsprintf(temp, text, args);
+    va_end(args);
+    
+    NSLog(@"%s", temp);
+    
+    return 0;
+}
+
+
 void common_linux_setup();
 int dc_init(int argc,wchar* argv[]);
 void dc_run();
