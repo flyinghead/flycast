@@ -53,49 +53,76 @@ ConfigEntry* ConfigSection::get_entry(string name)
 	return NULL;
 };
 
-void ConfigSection::set(string name, string value, int flags)
+void ConfigSection::set(string name, string value)
 {
-	ConfigEntry new_entry = { value, flags };
+	ConfigEntry new_entry = { value };
 	this->entries[name] = new_entry;
 };
 
 /* ConfigFile */
 
-bool ConfigFile::has_section(string name)
-{
-	return (this->sections.count(name) == 1);
-};
-
-bool ConfigFile::has_entry(string section_name, string entry_name)
-{
-	ConfigSection* section = this->get_section(section_name);
-	return ((section != NULL) && section->has_entry(entry_name));
-}
-
-ConfigSection* ConfigFile::add_section(string name)
+ConfigSection* ConfigFile::add_section(string name, bool is_virtual)
 {
 	ConfigSection new_section;
+	if (is_virtual)
+	{
+		this->virtual_sections.insert(std::make_pair(name, new_section));
+		return &this->virtual_sections[name];
+	}
 	this->sections.insert(std::make_pair(name, new_section));
 	return &this->sections[name];
 };
 
-ConfigSection* ConfigFile::get_section(string name)
+bool ConfigFile::has_section(string name)
 {
-	if(this->has_section(name))
+	return (this->virtual_sections.count(name) == 1 || this->sections.count(name) == 1);
+}
+
+bool ConfigFile::has_entry(string section_name, string entry_name)
+{
+	ConfigSection* section = this->get_section(section_name, true);
+	if ((section != NULL) && section->has_entry(entry_name))
 	{
-		return &this->sections[name];
+		return true;
+	}
+	section = this->get_section(section_name, false);
+	return ((section != NULL) && section->has_entry(entry_name));
+}
+
+ConfigSection* ConfigFile::get_section(string name, bool is_virtual)
+{
+	if(is_virtual)
+	{
+		if (this->virtual_sections.count(name) == 1)
+		{
+			return &this->virtual_sections[name];
+		}
+	}
+	else
+	{
+		if (this->sections.count(name) == 1)
+		{
+			return &this->sections[name];
+		}
 	}
 	return NULL;
 };
 
 ConfigEntry* ConfigFile::get_entry(string section_name, string entry_name)
 {
-	ConfigSection* section = this->get_section(section_name);
-	if(section == NULL)
+	ConfigSection* section = this->get_section(section_name, true);
+	if(section != NULL)
 	{
-		return NULL;
+		return section->get_entry(entry_name);
 	}
-	return section->get_entry(entry_name);
+
+		section = this->get_section(section_name, false);
+	if(section != NULL)
+	{
+		return section->get_entry(entry_name);
+	}
+	return NULL;
+
 }
 
 string ConfigFile::get(string section_name, string entry_name, string default_value)
@@ -137,27 +164,27 @@ bool ConfigFile::get_bool(string section_name, string entry_name, bool default_v
 	}
 }
 
-void ConfigFile::set(string section_name, string entry_name, string value, int flags)
+void ConfigFile::set(string section_name, string entry_name, string value, bool is_virtual)
 {
-	ConfigSection* section = this->get_section(section_name);
+	ConfigSection* section = this->get_section(section_name, is_virtual);
 	if(section == NULL)
 	{
-		section = this->add_section(section_name);
+		section = this->add_section(section_name, is_virtual);
 	}
-	section->set(entry_name, value, flags);
+	section->set(entry_name, value);
 };
 
-void ConfigFile::set_int(string section_name, string entry_name, int value, int flags)
+void ConfigFile::set_int(string section_name, string entry_name, int value, bool is_virtual)
 {
 	std::stringstream str_value;
 	str_value << value;
-	this->set(section_name, entry_name, str_value.str());
+	this->set(section_name, entry_name, str_value.str(), is_virtual);
 }
 
-void ConfigFile::set_bool(string section_name, string entry_name, bool value, int flags)
+void ConfigFile::set_bool(string section_name, string entry_name, bool value, bool is_virtual)
 {
 	string str_value = (value ? "yes" : "no");
-	this->set(section_name, entry_name, str_value);
+	this->set(section_name, entry_name, str_value, is_virtual);
 }
 
 void ConfigFile::parse(FILE* file)
@@ -237,6 +264,7 @@ void ConfigFile::save(FILE* file)
 	{
 		string section_name = section_it->first;
 		ConfigSection section = section_it->second;
+
 		fprintf(file, "[%s]\n", section_name.c_str());
 
 		for(std::map<string, ConfigEntry>::iterator entry_it = section.entries.begin();
@@ -250,4 +278,3 @@ void ConfigFile::save(FILE* file)
 		fputs("\n", file);
 	}
 }
-

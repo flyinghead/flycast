@@ -10,15 +10,6 @@
 
 string cfgPath;
 
-struct vitem
-{
-	string s;
-	string n;
-	string v;
-	vitem(string a,string b,string c){s=a;n=b;v=c;}
-};
-vector<vitem> vlist;
-
 ConfigFile cfgdb;
 
 void savecfgf()
@@ -98,11 +89,6 @@ bool cfgOpen()
 
 	cfgdb.parse(cfgfile);
 
-	/*for (size_t i=0;i<vlist.size();i++)
-	{
-		cfgdb.GetEntry(vlist[i].s)->SetEntry(vlist[i].n,vlist[i].v,CEM_VIRTUAL);
-	}*/
-
 	if (cfgfile)
 	{
 		cfgdb.save(cfgfile);
@@ -160,7 +146,5 @@ s32  cfgLoadInt(const wchar * Section, const wchar * Key,s32 Default)
 
 void cfgSetVirtual(const wchar * Section, const wchar * Key, const wchar * String)
 {
-	//vlist.push_back(vitem(Section,Key,String));
-	//cfgdb.GetEntry(Section,CEM_VIRTUAL)->SetEntry(Key,String,CEM_VIRTUAL);
+	cfgdb.set(string(Section), string(Key), string(String), true);
 }
-
