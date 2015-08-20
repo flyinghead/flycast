@@ -1,0 +1,12 @@
+box: ubuntu
+
+build:
+    steps:
+        - install-packages:
+            packages: build-essential libasound2-dev libgl1-mesa-dev libx11-dev
+        - script:
+            name: gcc-version
+            code: gcc --version
+        - script:
+            name: reicast x64 build
+            code: make -C shell/linux platform=x64
