@@ -87,7 +87,11 @@ Translations can be submitted as a pull request
 
 Beta versions
 -------------
+Android
 [![Build Status](https://travis-ci.org/reicast/reicast-emulator.svg?branch=master)](https://travis-ci.org/reicast/reicast-emulator)
+
+iOS
+[![Build Status](https://app.ship.io/jobs/ttUMMV6QrHOy4_yx/build_status.png)](https://app.ship.io/dashboard#/jobs/9843/history)
 
 Official builds from the reicast ci service can be found at http://builds.reicast.com/
 
