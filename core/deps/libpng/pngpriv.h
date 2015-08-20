@@ -48,7 +48,7 @@
       * <fp.h> if possible.
       */
 #    if !defined(__MATH_H__) && !defined(__MATH_H) && !defined(__cmath__)
-#        if TARGET_OS_IPHONE
+#        if TARGET_IPHONE
 #          include "fp.h"
 #        else
 #          include <fp.h>
