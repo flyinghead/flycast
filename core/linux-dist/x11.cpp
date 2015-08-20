@@ -159,7 +159,7 @@ void x11_window_create()
 		int i32Depth;
 
 		// Initializes the display and screen
-		x11Display = XOpenDisplay(0);
+		x11Display = XOpenDisplay(NULL);
 		if (!x11Display && !(x11Display = XOpenDisplay(":0")))
 		{
 			printf("Error: Unable to open X display\n");
