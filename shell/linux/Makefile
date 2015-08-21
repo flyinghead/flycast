@@ -275,4 +275,4 @@ obj-$(platform)/%.build_obj : $(RZDCY_SRC_DIR)/%.S
 	$(AS) $(ASFLAGS) $(INCS) $< -o $@
 
 clean:
-	rm -f $(OBJECTS) $(EXECUTABLE) .map
+	rm -f $(OBJECTS) $(EXECUTABLE) $(EXECUTABLE_STRIPPED) .map
