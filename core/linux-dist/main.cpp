@@ -95,15 +95,18 @@ void emit_WriteCodeCache();
 void SetupInput()
 {
 	#if defined(USE_EVDEV)
-		char evdev_config_key[17];
 		int evdev_device_id[4] = { -1, -1, -1, -1 };
+		size_t size_needed;
 		
 		int evdev_device_length, port, i;
 		char* evdev_device;
 		
 		for (port = 0; port < 4; port++)
 		{
-			sprintf(evdev_config_key, "evdev_device_id_%d", port+1);
+			size_needed = snprintf(NULL, 0, EVDEV_DEVICE_CONFIG_KEY, port+1) + 1;
+			char* evdev_config_key = (char*)malloc(size_needed);
+			sprintf(evdev_config_key, EVDEV_DEVICE_CONFIG_KEY, port+1);
+
 			evdev_device_id[port] = cfgLoadInt("input", evdev_config_key, EVDEV_DEFAULT_DEVICE_ID(port+1));
 			
 			// Check if the same device is already in use on another port
@@ -127,6 +130,8 @@ void SetupInput()
 				input_evdev_init(&controllers[port], evdev_device);
 				free(evdev_device);
 			}
+
+			free(evdev_config_key);
 		}
 	#endif
 
