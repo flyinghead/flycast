@@ -15,11 +15,13 @@
 #include "linux-dist/main.h"
 
 #if defined(TARGET_PANDORA)
-	#define WINDOW_WIDTH  800
+	#define DEFAULT_FULLSCREEN    1
+	#define DEFAULT_WINDOW_WIDTH  800
 #else
-	#define WINDOW_WIDTH  640
+	#define DEFAULT_FULLSCREEN    0
+	#define DEFAULT_WINDOW_WIDTH  640
 #endif
-#define WINDOW_HEIGHT 480
+#define DEFAULT_WINDOW_HEIGHT   480
 
 map<int, int> x11_keymap;
 int x11_dc_buttons = 0xFFFF;
@@ -27,29 +29,31 @@ int x11_keyboard_input = 0;
 
 int ndcid = 0;
 void* x11_glc;
+bool x11_fullscreen = false;
 
-#ifdef TARGET_PANDORA
-	static Cursor CreateNullCursor(Display *display, Window root)
-	{
-		Pixmap cursormask;
-		XGCValues xgc;
-		GC gc;
-		XColor dummycolour;
-		Cursor cursor;
+enum
+{
+	_NET_WM_STATE_REMOVE =0,
+	_NET_WM_STATE_ADD = 1,
+	_NET_WM_STATE_TOGGLE =2
+};
 
-		cursormask = XCreatePixmap(display, root, 1, 1, 1/*depth*/);
-		xgc.function = GXclear;
-		gc = XCreateGC(display, cursormask, GCFunction, &xgc);
-		XFillRectangle(display, cursormask, gc, 0, 0, 1, 1);
-		dummycolour.pixel = 0;
-		dummycolour.red = 0;
-		dummycolour.flags = 04;
-		cursor = XCreatePixmapCursor(display, cursormask, cursormask, &dummycolour,&dummycolour, 0,0);
-		XFreePixmap(display,cursormask);
-		XFreeGC(display,gc);
-		return cursor;
-	}
-#endif
+void x11_window_set_fullscreen(bool fullscreen)
+{
+		XEvent xev;
+		xev.xclient.type         = ClientMessage;
+		xev.xclient.window       = (Window)x11_win;
+		xev.xclient.message_type = XInternAtom((Display*)x11_disp, "_NET_WM_STATE", False);
+		xev.xclient.format = 32;
+		xev.xclient.data.l[0] = 2;    // _NET_WM_STATE_TOGGLE
+		xev.xclient.data.l[1] = XInternAtom((Display*)x11_disp, "_NET_WM_STATE_FULLSCREEN", True);
+		xev.xclient.data.l[2] = 0;    // no second property to toggle
+		xev.xclient.data.l[3] = 1;
+		xev.xclient.data.l[4] = 0;
+
+		printf("x11: setting fullscreen to %d\n", fullscreen);
+		XSendEvent((Display*)x11_disp, DefaultRootWindow((Display*)x11_disp), False, SubstructureNotifyMask, &xev);
+}
 
 void input_x11_handle()
 {
@@ -64,28 +68,25 @@ void input_x11_handle()
 			{
 				case KeyPress:
 				case KeyRelease:
-				{
-					int dc_key = x11_keymap[e.xkey.keycode];
-
-					if (e.type == KeyPress)
+					if (e.type == KeyRelease && e.xkey.keycode == 95) // F11 button
 					{
-						kcode[0] &= ~dc_key;
+						x11_fullscreen = !x11_fullscreen;
+						x11_window_set_fullscreen(x11_fullscreen);
 					}
 					else
 					{
-						kcode[0] |= dc_key;
+						int dc_key = x11_keymap[e.xkey.keycode];
+						if (e.type == KeyPress)
+						{
+							kcode[0] &= ~dc_key;
+						}
+						else
+						{
+							kcode[0] |= dc_key;
+						}
 					}
-
 					//printf("KEY: %d -> %d: %d\n",e.xkey.keycode, dc_key, x11_dc_buttons );
-				}
-				break;
-
-
-				{
-					printf("KEYRELEASE\n");
-				}
-				break;
-
+					break;
 			}
 		}
 	}
@@ -135,7 +136,7 @@ void x11_window_create()
 		int i32Depth;
 
 		// Initializes the display and screen
-		x11Display = XOpenDisplay(0);
+		x11Display = XOpenDisplay(NULL);
 		if (!x11Display && !(x11Display = XOpenDisplay(":0")))
 		{
 			printf("Error: Unable to open X display\n");
@@ -217,59 +218,59 @@ void x11_window_create()
 		sWA.event_mask = StructureNotifyMask | ExposureMask | ButtonPressMask | ButtonReleaseMask | KeyPressMask | KeyReleaseMask;
 		ui32Mask = CWBackPixel | CWBorderPixel | CWEventMask | CWColormap;
 
-		#ifdef TARGET_PANDORA
-			int width = 800;
-			int height = 480;
-		#else
-			int width = cfgLoadInt("x11", "width", WINDOW_WIDTH);
-			int height = cfgLoadInt("x11", "height", WINDOW_HEIGHT);
-		#endif
+		int x11_width = cfgLoadInt("x11", "width", DEFAULT_WINDOW_WIDTH);
+		int x11_height = cfgLoadInt("x11", "height", DEFAULT_WINDOW_HEIGHT);
+		x11_fullscreen = (cfgLoadInt("x11", "fullscreen", DEFAULT_FULLSCREEN) > 0);
 
-		if (width == -1)
+		if (x11_width < 0 || x11_height < 0)
 		{
-			width = XDisplayWidth(x11Display, x11Screen);
-			height = XDisplayHeight(x11Display, x11Screen);
+			x11_width = XDisplayWidth(x11Display, x11Screen);
+			x11_height = XDisplayHeight(x11Display, x11Screen);
 		}
 
 		// Creates the X11 window
-		x11Window = XCreateWindow(x11Display, RootWindow(x11Display, x11Screen), (ndcid%3)*640, (ndcid/3)*480, width, height,
+		x11Window = XCreateWindow(x11Display, RootWindow(x11Display, x11Screen), (ndcid%3)*640, (ndcid/3)*480, x11_width, x11_height,
 			0, depth, InputOutput, x11Visual->visual, ui32Mask, &sWA);
 
-		#ifdef TARGET_PANDORA
+		if(x11_fullscreen)
+		{
+
 			// fullscreen
 			Atom wmState = XInternAtom(x11Display, "_NET_WM_STATE", False);
 			Atom wmFullscreen = XInternAtom(x11Display, "_NET_WM_STATE_FULLSCREEN", False);
 			XChangeProperty(x11Display, x11Window, wmState, XA_ATOM, 32, PropModeReplace, (unsigned char *)&wmFullscreen, 1);
 
 			XMapRaised(x11Display, x11Window);
-		#else
+		}
+		else
+		{
 			XMapWindow(x11Display, x11Window);
+		}
 
-			#if !defined(GLES)
-				#define GLX_CONTEXT_MAJOR_VERSION_ARB       0x2091
-				#define GLX_CONTEXT_MINOR_VERSION_ARB       0x2092
-				typedef GLXContext (*glXCreateContextAttribsARBProc)(Display*, GLXFBConfig, GLXContext, Bool, const int*);
+		#if !defined(GLES)
+			#define GLX_CONTEXT_MAJOR_VERSION_ARB       0x2091
+			#define GLX_CONTEXT_MINOR_VERSION_ARB       0x2092
+			typedef GLXContext (*glXCreateContextAttribsARBProc)(Display*, GLXFBConfig, GLXContext, Bool, const int*);
 
-				glXCreateContextAttribsARBProc glXCreateContextAttribsARB = 0;
-				glXCreateContextAttribsARB = (glXCreateContextAttribsARBProc)glXGetProcAddressARB((const GLubyte*)"glXCreateContextAttribsARB");
-				verify(glXCreateContextAttribsARB != 0);
-				int context_attribs[] =
-				{
-					GLX_CONTEXT_MAJOR_VERSION_ARB, 3,
-					GLX_CONTEXT_MINOR_VERSION_ARB, 1,
-					GLX_CONTEXT_FLAGS_ARB, GLX_CONTEXT_DEBUG_BIT_ARB,
-					GLX_CONTEXT_PROFILE_MASK_ARB, GLX_CONTEXT_CORE_PROFILE_BIT_ARB,
-					None
-				};
+			glXCreateContextAttribsARBProc glXCreateContextAttribsARB = 0;
+			glXCreateContextAttribsARB = (glXCreateContextAttribsARBProc)glXGetProcAddressARB((const GLubyte*)"glXCreateContextAttribsARB");
+			verify(glXCreateContextAttribsARB != 0);
+			int context_attribs[] =
+			{
+				GLX_CONTEXT_MAJOR_VERSION_ARB, 3,
+				GLX_CONTEXT_MINOR_VERSION_ARB, 1,
+				GLX_CONTEXT_FLAGS_ARB, GLX_CONTEXT_DEBUG_BIT_ARB,
+				GLX_CONTEXT_PROFILE_MASK_ARB, GLX_CONTEXT_CORE_PROFILE_BIT_ARB,
+				None
+			};
 
-				x11_glc = glXCreateContextAttribsARB(x11Display, bestFbc, 0, True, context_attribs);
-				XSync(x11Display, False);
+			x11_glc = glXCreateContextAttribsARB(x11Display, bestFbc, 0, True, context_attribs);
+			XSync(x11Display, False);
 
-				if (!x11_glc)
-				{
-					die("Failed to create GL3.1 context\n");
-				}
-			#endif
+			if (!x11_glc)
+			{
+				die("Failed to create GL3.1 context\n");
+			}
 		#endif
 
 		XFlush(x11Display);
@@ -300,12 +301,12 @@ void x11_window_destroy()
 	// close XWindow
 	if (x11_win)
 	{
-		XDestroyWindow(x11_disp, x11_win);
+		XDestroyWindow((Display*)x11_disp, (Window)x11_win);
 		x11_win = 0;
 	}
 	if (x11_disp)
 	{
-		XCloseDisplay(x11_disp);
+		XCloseDisplay((Display*)x11_disp);
 		x11_disp = 0;
 	}
 }
