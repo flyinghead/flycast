@@ -1,5 +1,6 @@
 #include "types.h"
 #include "linux-dist/evdev_mappings.h"
+#include <linux/input.h>
 
 #pragma once
 

@@ -4,56 +4,56 @@
 
 	ControllerMapping controller_mapping_generic = {
 		"Generic Controller",
-		BTN_A,
-		BTN_B,
-		BTN_C,
-		BTN_THUMBL,
-		BTN_X,
-		BTN_Y,
-		BTN_Z,
-		BTN_START,
-		BTN_SELECT,
-		BTN_DPAD_LEFT,
-		BTN_DPAD_RIGHT,
-		BTN_DPAD_UP,
-		BTN_DPAD_DOWN,
+		0x130, // BTN_A
+		0x131, // BTN_B
+		0x132, // BTN_C
+		0x13d, // BTN_THUMBL
+		0x133, // BTN_X
+		0x134, // BTN_Y
+		0x135, // BTN_Z
+		0x13b, // BTN_START
+		0x13a, // BTN_SELECT
+		0x220, // BTN_DPAD_LEFT
+		0x221, // BTN_DPAD_RIGHT
+		0x222, // BTN_DPAD_UP
+		0x223, // BTN_DPAD_DOWN
 		-1,
 		-1,
 		-1,
 		-1,
-		BTN_TL,
-		BTN_TR,
-		ABS_HAT0X,
-		ABS_HAT0Y,
-		ABS_HAT1X,
-		ABS_HAT1Y,
-		ABS_X,
-		ABS_Y,
-		ABS_Z,
-		ABS_RZ,
+		0x136, // BTN_TL
+		0x137, // BTN_TR
+		0x10,  // ABS_HAT0X
+		0x11,  // ABS_HAT0Y
+		0x12,  // ABS_HAT1X
+		0x13,  // ABS_HAT1Y
+		0x00,  // ABS_X
+		0x01,  // ABS_Y
+		0x02,  // ABS_Z
+		0x05,  // ABS_RZ
 	};
 
 	ControllerMapping controller_mapping_keyboard = {
 		"Generic Keyboard",
-		KEY_A,
-		KEY_B,
-		KEY_C,
-		KEY_D,
-		KEY_X,
-		KEY_Y,
-		KEY_Z,
-		KEY_ENTER,
-		KEY_ESC,
-		KEY_LEFT,
-		KEY_RIGHT,
-		KEY_UP,
-		KEY_DOWN,
+		30,  // KEY_A
+		48,  // KEY_B
+		46,  // KEY_C
+		32,  // KEY_D
+		45,  // KEY_X
+		21,  // KEY_Y
+		44,  // KEY_Z
+		28,  // KEY_ENTER
+		1,   // KEY_ESC
+		105, // KEY_LEFT
+		106, // KEY_RIGHT
+		103, // KEY_UP
+		108, // KEY_DOWN
 		-1,
 		-1,
 		-1,
 		-1,
-		KEY_LEFTCTRL,
-		KEY_RIGHTCTRL,
+		29,  // KEY_LEFTCTRL
+		97,  // KEY_RIGHTCTRL
 		-1,
 		-1,
 		-1,
@@ -66,46 +66,46 @@
 
 	ControllerMapping controller_mapping_xpad = {
 		"Xbox 360 Controller (xpad driver)",
-		BTN_A,
-		BTN_B,
-		BTN_TL,
-		BTN_TR,
-		BTN_X,
-		BTN_Y,
-		BTN_THUMBL,
-		BTN_START,
-		BTN_SELECT,
-		BTN_TRIGGER_HAPPY1,
-		BTN_TRIGGER_HAPPY2,
-		BTN_TRIGGER_HAPPY3,
-		BTN_TRIGGER_HAPPY4,
+		0x130, // BTN_A
+		0x131, // BTN_B
+		0x136, // BTN_TL
+		0x137, // BTN_TR
+		0x133, // BTN_X
+		0x134, // BTN_Y
+		0x13d, // BTN_THUMBL
+		0x13b, // BTN_START
+		0x13a, // BTN_SELECT
+		0x2c0, // BTN_TRIGGER_HAPPY1
+		0x2c1, // BTN_TRIGGER_HAPPY2
+		0x2c2, // BTN_TRIGGER_HAPPY3
+		0x2c3, // BTN_TRIGGER_HAPPY4
 		-1,
 		-1,
 		-1,
 		-1,
 		-1,
 		-1,
-		ABS_HAT0X,
-		ABS_HAT0Y,
-		ABS_HAT1X,
-		ABS_HAT1Y,
-		ABS_X,
-		ABS_Y,
-		ABS_Z,
-		ABS_RZ
+		0x10,  // ABS_HAT0X
+		0x11,  // ABS_HAT0Y
+		0x12,  // ABS_HAT1X
+		0x13,  // ABS_HAT1Y
+		0x00,  // ABS_X
+		0x01,  // ABS_Y
+		0x02,  // ABS_Z
+		0x05,  // ABS_RZ
 	};
 
 	ControllerMapping controller_mapping_xboxdrv = {
 		"Xbox 360 Controller (xboxdrv userspace driver)",
-		BTN_A,
-		BTN_B,
-		BTN_TL,
-		BTN_TR,
-		BTN_X,
-		BTN_Y,
-		BTN_THUMBL,
-		BTN_START,
-		BTN_SELECT,
+		0x130, // BTN_A
+		0x131, // BTN_B
+		0x136, // BTN_TL
+		0x137, // BTN_TR
+		0x133, // BTN_X
+		0x134, // BTN_Y
+		0x13d, // BTN_THUMBL
+		0x13b, // BTN_START
+		0x13a, // BTN_SELECT
 		-1,
 		-1,
 		-1,
@@ -116,14 +116,14 @@
 		-1,
 		-1,
 		-1,
-		ABS_HAT0X,
-		ABS_HAT0Y,
-		ABS_HAT1X,
-		ABS_HAT1Y,
-		ABS_X,
-		ABS_Y,
-		ABS_BRAKE,
-		ABS_GAS
+		0x10,  // ABS_HAT0X
+		0x11,  // ABS_HAT0Y
+		0x12,  // ABS_HAT1X
+		0x13,  // ABS_HAT1Y
+		0x00,  // ABS_X
+		0x01,  // ABS_Y
+		0x0a,  // ABS_BRAKE
+		0x09,  // ABS_GAS
 	};
 
 	ControllerMapping controller_mapping_gcwz = {
@@ -159,25 +159,25 @@
 
 	ControllerMapping controller_mapping_pandora = {
 		"Pandora",
-		KEY_PAGEDOWN,
-		KEY_END,
-		KEY_SPACE,
+		109, // KEY_PAGEDOWN
+		107, // KEY_END
+		57,  // KEY_SPACE
 		-1,
-		KEY_HOME,
-		KEY_PAGEUP,
+		102, // KEY_HOME
+		104, // KEY_PAGEUP
 		-1,
-		KEY_LEFTALT,
-		KEY_MENU,
-		KEY_LEFT,
-		KEY_RIGHT,
-		KEY_UP,
-		KEY_DOWN,
-		-1,
-		-1,
+		56,  // KEY_LEFTALT
+		139, // KEY_MENU,
+		105, // KEY_LEFT
+		106, // KEY_RIGHT
+		103, // KEY_UP
+		108, // KEY_DOWN
 		-1,
 		-1,
-		KEY_RIGHTSHIFT,
-		KEY_RIGHTCTRL,
+		-1,
+		-1,
+		54,  // KEY_RIGHTSHIFT
+		97,  // KEY_RIGHTCTRL
 		-1,
 		-1,
 		-1,
