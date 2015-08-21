@@ -38,29 +38,6 @@ enum
 	_NET_WM_STATE_TOGGLE =2
 };
 
-#ifdef TARGET_PANDORA
-	static Cursor CreateNullCursor(Display *display, Window root)
-	{
-		Pixmap cursormask;
-		XGCValues xgc;
-		GC gc;
-		XColor dummycolour;
-		Cursor cursor;
-
-		cursormask = XCreatePixmap(display, root, 1, 1, 1/*depth*/);
-		xgc.function = GXclear;
-		gc = XCreateGC(display, cursormask, GCFunction, &xgc);
-		XFillRectangle(display, cursormask, gc, 0, 0, 1, 1);
-		dummycolour.pixel = 0;
-		dummycolour.red = 0;
-		dummycolour.flags = 04;
-		cursor = XCreatePixmapCursor(display, cursormask, cursormask, &dummycolour,&dummycolour, 0,0);
-		XFreePixmap(display,cursormask);
-		XFreeGC(display,gc);
-		return cursor;
-	}
-#endif
-
 void x11_window_set_fullscreen(bool fullscreen)
 {
 		XEvent xev;
