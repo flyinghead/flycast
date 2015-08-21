@@ -38,7 +38,7 @@
 #ifdef TARGET_PANDORA
 	#include <signal.h>
 	#include <execinfo.h>
-	#include <sys/soundcard.h>  
+	#include <sys/soundcard.h>
 #endif
 
 
@@ -97,10 +97,10 @@ void SetupInput()
 	#if defined(USE_EVDEV)
 		int evdev_device_id[4] = { -1, -1, -1, -1 };
 		size_t size_needed;
-		
+
 		int evdev_device_length, port, i;
 		char* evdev_device;
-		
+
 		for (port = 0; port < 4; port++)
 		{
 			size_needed = snprintf(NULL, 0, EVDEV_DEVICE_CONFIG_KEY, port+1) + 1;
@@ -108,7 +108,7 @@ void SetupInput()
 			sprintf(evdev_config_key, EVDEV_DEVICE_CONFIG_KEY, port+1);
 
 			evdev_device_id[port] = cfgLoadInt("input", evdev_config_key, EVDEV_DEFAULT_DEVICE_ID(port+1));
-			
+
 			// Check if the same device is already in use on another port
 			if (evdev_device_id[port] < 0)
 			{
@@ -192,48 +192,6 @@ void os_CreateWindow()
 	#endif
 }
 
-termios tios, orig_tios;
-
-int setup_curses()
-{
-	//initscr();
-	//cbreak();
-	//noecho();
-
-
-	/* Get current terminal settings */
-	if (tcgetattr(STDIN_FILENO, &orig_tios)) {
-		printf("Error getting current terminal settings\n");
-		return -1;
-	}
-
-	memcpy(&tios, &orig_tios, sizeof(struct termios));
-	tios.c_lflag &= ~ICANON;    //(ECHO|ICANON);&= ~(ICANON | ECHO | ECHOE | ECHOK | ECHONL | ECHOPRT | ECHOKE | ICRNL);
-
-	tios.c_cc[VTIME] = 0;
-	tios.c_cc[VMIN]  = 0;
-
-	if (tcsetattr(STDIN_FILENO, TCSANOW, &tios)) {
-		printf("Error applying terminal settings\n");
-		return -2;
-	}
-
-	if (tcgetattr(STDIN_FILENO, &tios)) {
-		tcsetattr(0, TCSANOW, &orig_tios);
-		printf("Error while asserting terminal settings\n");
-		return -3;
-	}
-
-	if ((tios.c_lflag & ICANON) || !(tios.c_lflag & ECHO)) {
-		tcsetattr(STDIN_FILENO, TCSANOW, &orig_tios);
-		printf("Could not apply all terminal settings\n");
-		return -4;
-	}
-
-	fcntl(STDIN_FILENO, F_SETFL, O_NONBLOCK);
-	return 1;
-}
-
 void common_linux_setup();
 int dc_init(int argc,wchar* argv[]);
 void dc_run();
@@ -277,10 +235,6 @@ void dc_run();
 
 int main(int argc, wchar* argv[])
 {
-	if (setup_curses() < 0)
-	{
-		printf("failed to setup curses!\n");
-	}
 	#ifdef TARGET_PANDORA
 		signal(SIGSEGV, clean_exit);
 		signal(SIGKILL, clean_exit);
