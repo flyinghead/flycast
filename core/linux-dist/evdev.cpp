@@ -11,8 +11,10 @@
 #if defined(USE_EVDEV)
 	bool libevdev_tried = false;
 	bool libevdev_available = false;
-	typedef int (*libevdev_func_t)(int, const char*);
-	libevdev_func_t libevdev_event_code_from_name;
+	typedef int (*libevdev_func1_t)(int, const char*);
+	typedef const char* (*libevdev_func2_t)(int, int);
+	libevdev_func1_t libevdev_event_code_from_name;
+	libevdev_func2_t libevdev_event_code_get_name;
 
 	void load_libevdev()
 	{
@@ -33,12 +35,21 @@
 		}
 		else
 		{
-			libevdev_event_code_from_name = reinterpret_cast<libevdev_func_t>(dlsym(lib_handle, "libevdev_event_code_from_name"));
+			libevdev_event_code_from_name = reinterpret_cast<libevdev_func1_t>(dlsym(lib_handle, "libevdev_event_code_from_name"));
 
-			const char* error = dlerror();
-			if (error != NULL)
+			const char* error1 = dlerror();
+			if (error1 != NULL)
 			{
-				fprintf(stderr, "%s\n", error);
+				fprintf(stderr, "%s\n", error1);
+				failed = true;
+			}
+
+			libevdev_event_code_get_name = reinterpret_cast<libevdev_func2_t>(dlsym(lib_handle, "libevdev_event_code_get_name"));
+
+			const char* error2 = dlerror();
+			if (error2 != NULL)
+			{
+				fprintf(stderr, "%s\n", error2);
 				failed = true;
 			}
 		}
@@ -121,7 +132,23 @@
 		}
 
 		code = cfg->get_int(section, dc_key, -1);
-		printf("%s = %d\n", dc_key.c_str(), code);
+		if(code >= 0)
+		{
+			char* name = NULL;
+			if(libevdev_available)
+			{
+				int type = ((strstr(dc_key.c_str(), "axis_") != NULL) ? EV_ABS : EV_KEY);
+				name = (char*)libevdev_event_code_get_name(type, code);
+			}
+			if (name != NULL)
+			{
+				printf("%s = %s (%d)\n", dc_key.c_str(), name, code);
+			}
+			else
+			{
+				printf("%s = %d\n", dc_key.c_str(), code);
+			}
+		}
 		return code;
 	}
 
