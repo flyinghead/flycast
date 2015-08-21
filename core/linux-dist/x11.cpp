@@ -15,11 +15,13 @@
 #include "linux-dist/main.h"
 
 #if defined(TARGET_PANDORA)
-	#define WINDOW_WIDTH  800
+	#define DEFAULT_FULLSCREEN    1
+	#define DEFAULT_WINDOW_WIDTH  800
 #else
-	#define WINDOW_WIDTH  640
+	#define DEFAULT_FULLSCREEN    0
+	#define DEFAULT_WINDOW_WIDTH  640
 #endif
-#define WINDOW_HEIGHT 480
+#define DEFAULT_WINDOW_HEIGHT   480
 
 map<int, int> x11_keymap;
 int x11_dc_buttons = 0xFFFF;
@@ -28,8 +30,6 @@ int x11_keyboard_input = 0;
 int ndcid = 0;
 void* x11_glc;
 bool x11_fullscreen = false;
-int x11_width;
-int x11_height;
 
 enum
 {
@@ -218,15 +218,9 @@ void x11_window_create()
 		sWA.event_mask = StructureNotifyMask | ExposureMask | ButtonPressMask | ButtonReleaseMask | KeyPressMask | KeyReleaseMask;
 		ui32Mask = CWBackPixel | CWBorderPixel | CWEventMask | CWColormap;
 
-		#ifdef TARGET_PANDORA
-			x11_width = 800;
-			x11_height = 480;
-			x11_fullscreen = true;
-		#else
-			x11_width = cfgLoadInt("x11", "width", WINDOW_WIDTH);
-			x11_height = cfgLoadInt("x11", "height", WINDOW_HEIGHT);
-			x11_fullscreen = (cfgLoadInt("x11", "fullscreen", 0) > 0);
-		#endif
+		int x11_width = cfgLoadInt("x11", "width", DEFAULT_WINDOW_WIDTH);
+		int x11_height = cfgLoadInt("x11", "height", DEFAULT_WINDOW_HEIGHT);
+		x11_fullscreen = (cfgLoadInt("x11", "fullscreen", DEFAULT_FULLSCREEN) > 0);
 
 		if (x11_width < 0 || x11_height < 0)
 		{
