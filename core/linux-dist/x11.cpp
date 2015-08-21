@@ -42,17 +42,17 @@ void x11_window_set_fullscreen(bool fullscreen)
 {
 		XEvent xev;
 		xev.xclient.type         = ClientMessage;
-		xev.xclient.window       = x11_win;
-		xev.xclient.message_type = XInternAtom(x11_disp, "_NET_WM_STATE", False);
+		xev.xclient.window       = (Window)x11_win;
+		xev.xclient.message_type = XInternAtom((Display*)x11_disp, "_NET_WM_STATE", False);
 		xev.xclient.format = 32;
 		xev.xclient.data.l[0] = 2;    // _NET_WM_STATE_TOGGLE
-		xev.xclient.data.l[1] = XInternAtom(x11_disp, "_NET_WM_STATE_FULLSCREEN", True);
+		xev.xclient.data.l[1] = XInternAtom((Display*)x11_disp, "_NET_WM_STATE_FULLSCREEN", True);
 		xev.xclient.data.l[2] = 0;    // no second property to toggle
 		xev.xclient.data.l[3] = 1;
 		xev.xclient.data.l[4] = 0;
 
 		printf("x11: setting fullscreen to %d\n", fullscreen);
-		XSendEvent(x11_disp, DefaultRootWindow(x11_disp), False, SubstructureNotifyMask, &xev);
+		XSendEvent((Display*)x11_disp, DefaultRootWindow((Display*)x11_disp), False, SubstructureNotifyMask, &xev);
 }
 
 void input_x11_handle()
@@ -301,12 +301,12 @@ void x11_window_destroy()
 	// close XWindow
 	if (x11_win)
 	{
-		XDestroyWindow(x11_disp, x11_win);
+		XDestroyWindow((Display*)x11_disp, (Window)x11_win);
 		x11_win = 0;
 	}
 	if (x11_disp)
 	{
-		XCloseDisplay(x11_disp);
+		XCloseDisplay((Display*)x11_disp);
 		x11_disp = 0;
 	}
 }
