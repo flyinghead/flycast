@@ -1,4 +1,3 @@
-#include <linux/input.h>
 #pragma once
 
 struct s_evdev_controller_mapping
