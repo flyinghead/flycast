@@ -85,15 +85,31 @@ All we ask is that you not use “regional” phrases that may not be generally 
 Translations can be submitted as a pull request
 
 
-Beta versions
+Development/Beta versions
 -------------
 Android
+
 [![Build Status](https://travis-ci.org/reicast/reicast-emulator.svg?branch=master)](https://travis-ci.org/reicast/reicast-emulator)
 
 iOS
+
 [![Build Status](https://app.ship.io/jobs/ttUMMV6QrHOy4_yx/build_status.png)](https://app.ship.io/dashboard#/jobs/9843/history)
 
-Official builds from the reicast ci service can be found at http://builds.reicast.com/
+
+Windows
+
+[![Build status](https://ci.appveyor.com/api/projects/status/353mwl73ki74tb58/branch/master?svg=true)](https://ci.appveyor.com/project/skmp/reicast-emulator/branch/master)
+
+Linux
+
+[![wercker status](https://app.wercker.com/status/bcabca642a2de044c6f58203b975878b/s/master "wercker status")](https://app.wercker.com/project/bykey/bcabca642a2de044c6f58203b975878b)
+
+OSX
+
+TODO
+
+
+Official android builds from the reicast ci service can be found at http://builds.reicast.com/
 
 Additional builds (iOS & android) can be found at [angelxwind's](http://reicast.angelxwind.net/) buildbot
 
