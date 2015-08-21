@@ -11,6 +11,7 @@ struct s_controller
 
 typedef struct s_controller Controller;
 
+#define EVDEV_DEVICE_CONFIG_KEY "evdev_device_id_%d"
 #define EVDEV_DEVICE_STRING "/dev/input/event%d"
 
 #ifdef TARGET_PANDORA
