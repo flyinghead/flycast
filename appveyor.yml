@@ -1,0 +1,9 @@
+version: git-{branch}-{build}
+configuration: Debug
+platform:
+- x86
+- x64
+build:
+  project: shell/reicast.sln
+  parallel: true
+  verbosity: minimal
