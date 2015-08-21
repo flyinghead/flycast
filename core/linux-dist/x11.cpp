@@ -244,9 +244,11 @@ void x11_window_create()
 		#ifdef TARGET_PANDORA
 			x11_width = 800;
 			x11_height = 480;
+			x11_fullscreen = true;
 		#else
 			x11_width = cfgLoadInt("x11", "width", WINDOW_WIDTH);
 			x11_height = cfgLoadInt("x11", "height", WINDOW_HEIGHT);
+			x11_fullscreen = (cfgLoadInt("x11", "fullscreen", 0) > 0);
 		#endif
 
 		if (x11_width < 0 || x11_height < 0)
@@ -272,33 +274,33 @@ void x11_window_create()
 		else
 		{
 			XMapWindow(x11Display, x11Window);
-
-			#if !defined(GLES)
-				#define GLX_CONTEXT_MAJOR_VERSION_ARB       0x2091
-				#define GLX_CONTEXT_MINOR_VERSION_ARB       0x2092
-				typedef GLXContext (*glXCreateContextAttribsARBProc)(Display*, GLXFBConfig, GLXContext, Bool, const int*);
-
-				glXCreateContextAttribsARBProc glXCreateContextAttribsARB = 0;
-				glXCreateContextAttribsARB = (glXCreateContextAttribsARBProc)glXGetProcAddressARB((const GLubyte*)"glXCreateContextAttribsARB");
-				verify(glXCreateContextAttribsARB != 0);
-				int context_attribs[] =
-				{
-					GLX_CONTEXT_MAJOR_VERSION_ARB, 3,
-					GLX_CONTEXT_MINOR_VERSION_ARB, 1,
-					GLX_CONTEXT_FLAGS_ARB, GLX_CONTEXT_DEBUG_BIT_ARB,
-					GLX_CONTEXT_PROFILE_MASK_ARB, GLX_CONTEXT_CORE_PROFILE_BIT_ARB,
-					None
-				};
-
-				x11_glc = glXCreateContextAttribsARB(x11Display, bestFbc, 0, True, context_attribs);
-				XSync(x11Display, False);
-
-				if (!x11_glc)
-				{
-					die("Failed to create GL3.1 context\n");
-				}
-			#endif
 		}
+
+		#if !defined(GLES)
+			#define GLX_CONTEXT_MAJOR_VERSION_ARB       0x2091
+			#define GLX_CONTEXT_MINOR_VERSION_ARB       0x2092
+			typedef GLXContext (*glXCreateContextAttribsARBProc)(Display*, GLXFBConfig, GLXContext, Bool, const int*);
+
+			glXCreateContextAttribsARBProc glXCreateContextAttribsARB = 0;
+			glXCreateContextAttribsARB = (glXCreateContextAttribsARBProc)glXGetProcAddressARB((const GLubyte*)"glXCreateContextAttribsARB");
+			verify(glXCreateContextAttribsARB != 0);
+			int context_attribs[] =
+			{
+				GLX_CONTEXT_MAJOR_VERSION_ARB, 3,
+				GLX_CONTEXT_MINOR_VERSION_ARB, 1,
+				GLX_CONTEXT_FLAGS_ARB, GLX_CONTEXT_DEBUG_BIT_ARB,
+				GLX_CONTEXT_PROFILE_MASK_ARB, GLX_CONTEXT_CORE_PROFILE_BIT_ARB,
+				None
+			};
+
+			x11_glc = glXCreateContextAttribsARB(x11Display, bestFbc, 0, True, context_attribs);
+			XSync(x11Display, False);
+
+			if (!x11_glc)
+			{
+				die("Failed to create GL3.1 context\n");
+			}
+		#endif
 
 		XFlush(x11Display);
 
