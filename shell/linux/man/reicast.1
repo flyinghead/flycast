@@ -1,0 +1,77 @@
+.\" retroarch.1:
+
+.TH  "REICAST" "1" "August 22, 2015" "REICAST" "System Manager's Manual: reicast"
+
+.SH NAME
+
+reicast \- The Sega Dreamcast Emulator.
+
+.SH SYNOPSIS
+
+\fBreicast\fR [OPTIONS]... [IMAGE FILE]
+
+.SH "DESCRIPTION"
+
+\fBreicast\fR is a multi-platform emulator for the Sega Dreamcast.
+
+.SH "EXAMPLE COMMANDLINE"
+
+.TP
+\fBNo command line options will start reicast in menu mode.\fR
+reicast
+
+.TP
+\fBOverride the image specified in the config file to load a specific image.\fR
+reicast /path/to/your/image.cdi
+
+.TP
+\fBStart reicast on X11 in full screen.\fR
+reicast -config x11:fullscreen=1
+
+.SH "CONTROLS"
+
+.TP
+\fBreicast\fR uses the kernel event devices for capturing input. You can define the evdev device id in the config file:
+.IP
+[input]
+.br
+evdev_device_id_1 = X
+.LP
+
+If the evdev input works for you, it's probably best to deaktivate the legacy joystick API input:
+
+.IP
+[input]
+.br
+joystick_device_id =-1
+.LP
+
+If your version of \fBreicast\fR is compiled against X11, you might want to disable the built-in X11 keyboard support:
+.IP
+[input]
+.br
+enable_x11_keyboard = -1
+.LP
+
+.SH "GENERAL OPTIONS"
+
+.TP
+\fB-config section:option=value\fR
+Temporarily override a value of the config file.
+
+.TP
+\fB[IMAGE FILE]\fR
+Load a specific image file. If no image is given on the command line, reicast will use the value of the "image" option in the "config" section of the config file.
+
+.SH "AUTHOR"
+
+.TP
+\fBreicast\fR is developed by a number of people. A list of contributors can be obtained at:
+\fIhttps://github.com/reicast/reicast-emulator/graphs/contributors\fP
+
+.TP
+Head over to reicast's git repository if you want to contibute:
+\fIhttps://github.com/reicast/reicast-emulator\fP
+
+.TP
+This is free software; you can redistribute it and/or modify it under the terms of the GNU Public License (Version 2).

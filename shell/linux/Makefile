@@ -180,6 +180,7 @@ LIBS += -lm -lrt -ldl
 LIBS  += -lpthread
 
 PREFIX ?= /usr/local
+MAN_DIR ?= ${PREFIX}/share/man/man1
 
 ifndef NOT_ARM
     AS=${CC_PREFIX}gcc
@@ -278,10 +279,13 @@ obj-$(platform)/%.build_obj : $(RZDCY_SRC_DIR)/%.S
 
 install: $(EXECUTABLE)
 	mkdir -p $(DESTDIR)$(PREFIX)/bin 2>/dev/null || /bin/true
+	mkdir -p $(DESTDIR)$(MAN_DIR) 2>/dev/null || /bin/true
 	install -m755 $(EXECUTABLE) $(DESTDIR)$(PREFIX)/bin
+	install -m644 man/reicast.1 $(DESTDIR)$(MAN_DIR)
 
 uninstall:
 	rm -f $(DESTDIR)$(PREFIX)/bin/$(EXECUTABLE)
+	rm -f $(DESTDIR)$(MAN_DIR)/reicast.1
 
 clean:
 	rm -f $(OBJECTS) $(EXECUTABLE) $(EXECUTABLE_STRIPPED) .map
