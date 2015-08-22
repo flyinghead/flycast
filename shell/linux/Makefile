@@ -90,6 +90,10 @@ else ifneq (,$(findstring x64,$(platform)))
 else ifneq (,$(findstring armv7h,$(platform)))
     MFLAGS += -marm -mfloat-abi=hard -march=armv7-a -funroll-loops
     ASFLAGS += -mfloat-abi=hard -march=armv7-a
+    ifneq (,$(findstring neon,$(platform)))
+        MFLAGS += -mfpu=neon
+        ASFLAGS += -mfpu=neon
+    endif
     CFLAGS += -D TARGET_BEAGLE -D TARGET_LINUX_ARMELv7 -DARM_HARDFP -fsingle-precision-constant
     USE_GLES := 1
 
