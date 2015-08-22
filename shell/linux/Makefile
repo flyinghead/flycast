@@ -88,11 +88,10 @@ else ifneq (,$(findstring x64,$(platform)))
 
 # Generic 32 bit ARMhf (a.k.a. ARMv7h)
 else ifneq (,$(findstring armv7h,$(platform)))
-    MFLAGS += -marm -mfpu=neon -mfloat-abi=hard -funroll-loops -march=armv7-a
-    ASFLAGS += -mfpu=neon -mfloat-abi=hard -march=armv7-a
+    MFLAGS += -marm -mfloat-abi=hard -march=armv7-a -funroll-loops
+    ASFLAGS += -mfloat-abi=hard -march=armv7-a
     CFLAGS += -D TARGET_BEAGLE -D TARGET_LINUX_ARMELv7 -DARM_HARDFP -fsingle-precision-constant
     USE_GLES := 1
-    USE_X11 := 1
 
 # LinCPP
 else ifneq (,$(findstring lincpp,$(platform)))
