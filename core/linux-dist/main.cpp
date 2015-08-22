@@ -239,6 +239,49 @@ void dc_run();
 	}
 #endif
 
+string get_config_dir()
+{
+	#ifdef USES_HOMEDIR
+		struct stat info;
+		string home = "";
+		if(getenv("HOME") != NULL)
+		{
+			// Support for the legacy config dir at "$HOME/.reicast"
+			string legacy_home = (string)getenv("HOME") + "/.reicast";
+			if((stat(legacy_home.c_str(), &info) == 0) && (info.st_mode & S_IFDIR))
+			{
+				// "$HOME/.reicast" already exists, let's use it!
+				return legacy_home;
+			}
+
+			/* If $XDG_CONFIG_HOME is not set, we're supposed to use "$HOME/.config" instead.
+			 * Consult the XDG Base Directory Specification for details:
+			 *   http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html#variables
+			 */
+			home = (string)getenv("HOME") + "/.config/reicast";
+			
+		}
+		if(getenv("XDG_CONFIG_HOME") != NULL)
+		{
+			// If XDG_CONFIG_HOME is set explicitly, we'll use that instead of $HOME/.config
+			home = (string)getenv("XDG_CONFIG_HOME") + "/reicast";
+		}
+		
+		if(!home.empty())
+		{
+			if((stat(home.c_str(), &info) != 0) || !(info.st_mode & S_IFDIR))
+			{
+				// If the directory doesn't exist yet, create it!
+				mkdir(home.c_str(), 0755);
+			}
+			return home;
+		}
+	#endif
+		
+	// Unable to detect config dir, use the current folder
+	return ".";
+}
+
 int main(int argc, wchar* argv[])
 {
 	#ifdef TARGET_PANDORA
@@ -247,15 +290,7 @@ int main(int argc, wchar* argv[])
 	#endif
 
 	/* Set home dir */
-	string home = ".";
-	#if defined(USES_HOMEDIR)
-		if(getenv("HOME") != NULL)
-		{
-			home = (string)getenv("HOME") + "/.reicast";
-			mkdir(home.c_str(), 0755); // create the directory if missing
-		}
-	#endif
-	SetHomeDir(home);
+	SetHomeDir(get_config_dir());
 	printf("Home dir is: %s\n", GetPath("/").c_str());
 
 	common_linux_setup();
