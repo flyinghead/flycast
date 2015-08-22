@@ -52,6 +52,7 @@
 		877652C61B6157BD00437F10 /* audiostream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 877652BF1B6157BD00437F10 /* audiostream.cpp */; };
 		877652C91B6157FC00437F10 /* ngen_arm.S in Sources */ = {isa = PBXBuildFile; fileRef = 877652C71B6157FC00437F10 /* ngen_arm.S */; };
 		877652CA1B6157FC00437F10 /* rec_arm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 877652C81B6157FC00437F10 /* rec_arm.cpp */; };
+		8794D9C31B88F3D600B1B3A3 /* DiskViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 8794D9C21B88F3D600B1B3A3 /* DiskViewCell.m */; };
 		87C208D71B7A4BFA00638BDD /* AboutViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 87C208C61B7A4BFA00638BDD /* AboutViewController.m */; };
 		87C208D81B7A4BFA00638BDD /* BrowserTableViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 87C208C81B7A4BFA00638BDD /* BrowserTableViewController.m */; };
 		87C208D91B7A4BFA00638BDD /* CloudVMUViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 87C208CA1B7A4BFA00638BDD /* CloudVMUViewController.m */; };
@@ -323,6 +324,9 @@
 		877652C11B6157BD00437F10 /* oslib.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = oslib.h; sourceTree = "<group>"; };
 		877652C71B6157FC00437F10 /* ngen_arm.S */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; path = ngen_arm.S; sourceTree = "<group>"; };
 		877652C81B6157FC00437F10 /* rec_arm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = rec_arm.cpp; sourceTree = "<group>"; };
+		877652CC1B615AE800437F10 /* fp.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = fp.h; sourceTree = "<group>"; };
+		8794D9C11B88F3D600B1B3A3 /* DiskViewCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DiskViewCell.h; path = emulator/DiskViewCell.h; sourceTree = "<group>"; };
+		8794D9C21B88F3D600B1B3A3 /* DiskViewCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = DiskViewCell.m; path = emulator/DiskViewCell.m; sourceTree = "<group>"; };
 		87C208C51B7A4BFA00638BDD /* AboutViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AboutViewController.h; path = emulator/AboutViewController.h; sourceTree = "<group>"; };
 		87C208C61B7A4BFA00638BDD /* AboutViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = AboutViewController.m; path = emulator/AboutViewController.m; sourceTree = "<group>"; };
 		87C208C71B7A4BFA00638BDD /* BrowserTableViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BrowserTableViewController.h; path = emulator/BrowserTableViewController.h; sourceTree = "<group>"; };
@@ -839,6 +843,8 @@
 		9C7A393618C805F70070BB5F /* View Controller Subclasses */ = {
 			isa = PBXGroup;
 			children = (
+				8794D9C11B88F3D600B1B3A3 /* DiskViewCell.h */,
+				8794D9C21B88F3D600B1B3A3 /* DiskViewCell.m */,
 				872EF6FF1B852EB200A0F617 /* VirtualViewController.h */,
 				872EF7001B852EB200A0F617 /* VirtualViewController.m */,
 				872EF7011B852EB200A0F617 /* VirtualViewController.xib */,
@@ -1621,6 +1627,7 @@
 				9C7A3B2318C806E00070BB5F /* sh4_opcodes.cpp in Sources */,
 				84967C951B8F492C005F1140 /* pngmem.c in Sources */,
 				9C7A3ADA18C806E00070BB5F /* zip_name_locate.c in Sources */,
+				8794D9C31B88F3D600B1B3A3 /* DiskViewCell.m in Sources */,
 				9C7A3B1B18C806E00070BB5F /* ta_ctx.cpp in Sources */,
 				9C7A3AE018C806E00070BB5F /* zip_set_archive_flag.c in Sources */,
 				9C7A3B3518C806E00070BB5F /* cdi.cpp in Sources */,

@@ -9,6 +9,7 @@
 #import "PathsViewController.h"
 #import "SWRevealViewController.h"
 #import "EmulatorViewController.h"
+#import "DiskViewCell.h"
 
 @interface PathsViewController ()
 
@@ -77,7 +78,7 @@
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
-	return 160;
+	return 80;
 	// Assign the specific cell height to prevent issues with custom size
 }
 
@@ -85,16 +86,10 @@
 {
 	static NSString *CellIdentifier = @"Cell";
 	
-	UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier: CellIdentifier];
-	if(cell == nil)
-	{
-		cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier: CellIdentifier];
-	}
-	
-	assert(indexPath.row < [self.diskImages count]);
+	DiskViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier forIndexPath:indexPath];
 	NSString* imagePath = [self.diskImages objectAtIndex: indexPath.row];
 	
-	cell.textLabel.text = [imagePath lastPathComponent];
+	cell.nameLabel.text = [imagePath lastPathComponent];
 	
 	return cell;
 }
