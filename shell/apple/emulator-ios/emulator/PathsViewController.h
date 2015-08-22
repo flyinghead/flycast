@@ -11,4 +11,6 @@
 @interface PathsViewController : UITableViewController
 @property (weak, nonatomic) IBOutlet UIBarButtonItem *sidebarButton;
 
+@property (nonatomic, strong) NSMutableArray* diskImages;
+
 @end

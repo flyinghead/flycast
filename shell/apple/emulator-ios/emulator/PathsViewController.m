@@ -8,6 +8,7 @@
 
 #import "PathsViewController.h"
 #import "SWRevealViewController.h"
+#import "EmulatorViewController.h"
 
 @interface PathsViewController ()
 
@@ -32,7 +33,7 @@
     // Set the side bar button action. When it's tapped, it'll show up the sidebar.
     _sidebarButton.target = self.revealViewController;
     _sidebarButton.action = @selector(revealToggle:);
-    
+
     // Set the gesture
     [self.view addGestureRecognizer:self.revealViewController.panGestureRecognizer];
     // Uncomment the following line to preserve selection between presentations.
@@ -40,6 +41,13 @@
  
     // Uncomment the following line to display an Edit button in the navigation bar for this view controller.
     // self.navigationItem.rightBarButtonItem = self.editButtonItem;
+	
+	self.diskImages = [[NSMutableArray alloc] init];
+	NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+	NSString *documents = [paths objectAtIndex:0];
+	NSArray *files = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:documents error:NULL];
+	NSPredicate *filter = [NSPredicate predicateWithFormat:@"self ENDSWITH '.chd'"];
+	self.diskImages = [NSMutableArray arrayWithArray:[files filteredArrayUsingPredicate:filter]];
 }
 
 - (void)didReceiveMemoryWarning
@@ -50,6 +58,47 @@
 
 #pragma mark - Table view data source
 
-// TODO: paths view controller logic
+-(NSInteger)numberOfSectionsInTableView: (UITableView*)tableView
+{
+	return 1;
+}
+
+-(NSInteger)tableView: (UITableView *)tableView numberOfRowsInSection: (NSInteger)section
+{
+	return [self.diskImages count];
+}
+
+-(NSString*)tableView: (UITableView*)tableView titleForHeaderInSection: (NSInteger)section
+{
+	return @"";
+}
+
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
+	return 160;
+	// Assign the specific cell height to prevent issues with custom size
+}
+
+-(UITableViewCell*)tableView: (UITableView*)tableView cellForRowAtIndexPath: (NSIndexPath*)indexPath
+{
+	static NSString *CellIdentifier = @"Cell";
+	
+	UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier: CellIdentifier];
+	if(cell == nil)
+	{
+		cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier: CellIdentifier];
+	}
+	
+	assert(indexPath.row < [self.diskImages count]);
+	NSString* imagePath = [self.diskImages objectAtIndex: indexPath.row];
+	
+	cell.textLabel.text = [imagePath lastPathComponent];
+	
+	return cell;
+}
+
+-(void)tableView: (UITableView*)tableView didSelectRowAtIndexPath: (NSIndexPath*)indexPath
+{
+	[self performSegueWithIdentifier: @"emulatorView" sender: self];
+}
 
 @end

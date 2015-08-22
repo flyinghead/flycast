@@ -81,6 +81,8 @@ extern "C" int reicast_main(int argc, char* argv[]);
 - (void)viewDidLoad
 {
     [super viewDidLoad];
+	
+	self.controller = [[VirtualViewController alloc] initWithNibName:@"VirtualViewController" bundle:nil];
     
     self.context = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2];
 
@@ -94,24 +96,32 @@ extern "C" int reicast_main(int argc, char* argv[]);
     
     self.connectObserver = [[NSNotificationCenter defaultCenter] addObserverForName:GCControllerDidConnectNotification object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *note) {
         if ([[GCController controllers] count] == 1) {
+			if ([self.controller pollController]) {
+				[self.controller hideController];
+			}
             [self toggleHardwareController:YES];
         }
     }];
     self.disconnectObserver = [[NSNotificationCenter defaultCenter] addObserverForName:GCControllerDidDisconnectNotification object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *note) {
         if (![[GCController controllers] count]) {
             [self toggleHardwareController:NO];
+			if (![self.controller pollController]) {
+				[self.controller showController:self.view];
+			}
         }
     }];
     
     if ([[GCController controllers] count]) {
         [self toggleHardwareController:YES];
-    }
-    
+	} else if (![self.controller pollController]) {
+		[self.controller showController:self.view];
+	}
+		
     self.iCadeReader = [[iCadeReaderView alloc] init];
     [self.view addSubview:self.iCadeReader];
     self.iCadeReader.delegate = self;
     self.iCadeReader.active = YES;
-    
+	
     [self setupGL];
     
     if (!gles_init())
@@ -124,7 +134,10 @@ extern "C" int reicast_main(int argc, char* argv[]);
 }
 
 - (void)dealloc
-{    
+{
+	if ([self.controller pollController]) {
+		[self.controller hideController];
+	}
     [self tearDownGL];
     
     if ([EAGLContext currentContext] == self.context) {
