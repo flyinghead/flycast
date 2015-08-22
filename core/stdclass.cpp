@@ -1,22 +1,88 @@
 
 #include <string.h>
+#include <vector>
+#include <sys/stat.h>
 
 #include "types.h"
 
 #include "hw/mem/_vmem.h"
 #include "types.h"
 
-string home_dir;
+string user_config_dir;
+string user_data_dir;
+std::vector<string> system_config_dirs;
+std::vector<string> system_data_dirs;
 
-void SetHomeDir(const string& home)
+bool file_exists(const string& filename)
 {
-	home_dir=home;
+	struct stat info;
+	return (stat (filename.c_str(), &info) == 0);
 }
 
-//subpath format: /data/fsca-table.bit
-string GetPath(const string& subpath)
+void set_user_config_dir(const string& dir)
 {
-	return (home_dir+subpath);
+	user_config_dir = dir;
+}
+
+void set_user_data_dir(const string& dir)
+{
+	user_data_dir = dir;
+}
+
+void add_system_config_dir(const string& dir)
+{
+	system_config_dirs.push_back(dir);
+}
+
+void add_system_data_dir(const string& dir)
+{
+	system_data_dirs.push_back(dir);
+}
+
+string get_config_path(const string& filename, bool user_writable)
+{
+	if(user_writable)
+	{
+		/* Only stuff in the user_config_dir is supposed to be writable,
+		 * so we always return that.
+		 */
+		return (user_config_dir + filename);
+	}
+
+	string filepath;
+	for (unsigned int i = 0; i < system_config_dirs.size(); i++) {
+		filepath = system_config_dirs[i] + filename;
+		if (file_exists(filepath))
+		{
+			return filepath;
+		}
+	}
+
+	// Not found, so we return the user variant
+	return (user_config_dir + filename);
+}
+
+string get_data_path(const string& filename, bool user_writable)
+{
+	if(user_writable)
+	{
+		/* Only stuff in the user_data_dir is supposed to be writable,
+		 * so we always return that.
+		 */
+		return (user_data_dir + filename);
+	}
+
+	string filepath;
+	for (unsigned int i = 0; i < system_data_dirs.size(); i++) {
+		filepath = system_data_dirs[i] + filename;
+		if (file_exists(filepath))
+		{
+			return filepath;
+		}
+	}
+
+	// Not found, so we return the user variant
+	return (user_data_dir + filename);
 }
 
 

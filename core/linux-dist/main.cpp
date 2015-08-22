@@ -239,7 +239,7 @@ void dc_run();
 	}
 #endif
 
-string get_config_dir()
+string find_user_config_dir()
 {
 	#ifdef USES_HOMEDIR
 		struct stat info;
@@ -259,14 +259,13 @@ string get_config_dir()
 			 *   http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html#variables
 			 */
 			home = (string)getenv("HOME") + "/.config/reicast";
-			
 		}
 		if(getenv("XDG_CONFIG_HOME") != NULL)
 		{
 			// If XDG_CONFIG_HOME is set explicitly, we'll use that instead of $HOME/.config
 			home = (string)getenv("XDG_CONFIG_HOME") + "/reicast";
 		}
-		
+
 		if(!home.empty())
 		{
 			if((stat(home.c_str(), &info) != 0) || !(info.st_mode & S_IFDIR))
@@ -277,10 +276,104 @@ string get_config_dir()
 			return home;
 		}
 	#endif
-		
+
 	// Unable to detect config dir, use the current folder
 	return ".";
 }
+
+string find_user_data_dir()
+{
+	#ifdef USES_HOMEDIR
+		struct stat info;
+		string data = "";
+		if(getenv("HOME") != NULL)
+		{
+			// Support for the legacy config dir at "$HOME/.reicast"
+			string legacy_data = (string)getenv("HOME") + "/.reicast";
+			if((stat(legacy_data.c_str(), &info) == 0) && (info.st_mode & S_IFDIR))
+			{
+				// "$HOME/.reicast" already exists, let's use it!
+				return legacy_data;
+			}
+
+			/* If $XDG_DATA_HOME is not set, we're supposed to use "$HOME/.local/share" instead.
+			 * Consult the XDG Base Directory Specification for details:
+			 *   http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html#variables
+			 */
+			data = (string)getenv("HOME") + "/.local/share/reicast";
+		}
+		if(getenv("XDG_DATA_HOME") != NULL)
+		{
+			// If XDG_DATA_HOME is set explicitly, we'll use that instead of $HOME/.config
+			data = (string)getenv("XDG_DATA_HOME") + "/reicast";
+		}
+		
+		if(!data.empty())
+		{
+			if((stat(data.c_str(), &info) != 0) || !(info.st_mode & S_IFDIR))
+			{
+				// If the directory doesn't exist yet, create it!
+				mkdir(data.c_str(), 0755);
+			}
+			return data;
+		}
+	#endif
+
+	// Unable to detect config dir, use the current folder
+	return ".";
+}
+
+std::vector<string> find_system_config_dirs()
+{
+	std::vector<string> dirs;
+	if (getenv("XDG_DATA_DIRS") != NULL)
+	{
+		string s = (string)getenv("XDG_CONFIG_DIRS");
+
+		string::size_type pos = 0;
+		string::size_type n = s.find(":", pos);
+		while(n != std::string::npos)
+		{
+			dirs.push_back(s.substr(pos, n-pos) + "/reicast");
+			pos = n + 1;
+			n = s.find(":", pos);
+		}
+		// Separator not found
+		dirs.push_back(s.substr(pos) + "/reicast");
+	}
+	else
+	{
+		dirs.push_back("/etc/xdg/reicast");
+	}
+	return dirs;
+}
+
+std::vector<string> find_system_data_dirs()
+{
+	std::vector<string> dirs;
+	if (getenv("XDG_DATA_DIRS") != NULL)
+	{
+		string s = (string)getenv("XDG_DATA_DIRS");
+
+		string::size_type pos = 0;
+		string::size_type n = s.find(":", pos);
+		while(n != std::string::npos)
+		{
+			dirs.push_back(s.substr(pos, n-pos) + "/reicast");
+			pos = n + 1;
+			n = s.find(":", pos);
+		}
+		// Separator not found
+		dirs.push_back(s.substr(pos) + "/reicast");
+	}
+	else
+	{
+		dirs.push_back("/usr/local/share/reicast");
+		dirs.push_back("/usr/share/reicast");
+	}
+	return dirs;
+}
+
 
 int main(int argc, wchar* argv[])
 {
@@ -289,9 +382,22 @@ int main(int argc, wchar* argv[])
 		signal(SIGKILL, clean_exit);
 	#endif
 
-	/* Set home dir */
-	SetHomeDir(get_config_dir());
-	printf("Home dir is: %s\n", GetPath("/").c_str());
+	/* Set directories */
+	set_user_config_dir(find_user_config_dir());
+	set_user_data_dir(find_user_data_dir());
+	std::vector<string> dirs;
+	dirs = find_system_config_dirs();
+	for(unsigned int i = 0; i < dirs.size(); i++)
+	{
+		add_system_data_dir(dirs[i]);
+	}
+	dirs = find_system_data_dirs();
+	for(unsigned int i = 0; i < dirs.size(); i++)
+	{
+		add_system_data_dir(dirs[i]);
+	}
+	printf("Config dir is: %s\n", get_config_path("/").c_str());
+	printf("Data dir is:   %s\n", get_data_path("/").c_str());
 
 	common_linux_setup();
 

@@ -157,7 +157,8 @@ void SetupPath()
 	GetModuleFileName(0,fname,512);
 	string fn=string(fname);
 	fn=fn.substr(0,fn.find_last_of('\\'));
-	SetHomeDir(fn);
+	set_user_config_dir(fn);
+	set_user_data_dir(fn);
 }
 
 int msgboxf(const wchar* text,unsigned int type,...)

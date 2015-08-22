@@ -48,7 +48,8 @@ void* emuthread(void* ) {
   char *Args[3];
   Args[0] = "dc";
   
-  SetHomeDir("/http");
+	set_user_config_dir("/http");
+	set_user_data_dir("/http");
 
   dc_init(1,Args);
   dc_run();

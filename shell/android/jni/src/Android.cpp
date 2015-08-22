@@ -253,8 +253,10 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_config(JNIEnv *env,jo
 {
   // Set home directory based on User config
   const char* D = dirName? env->GetStringUTFChars(dirName,0):0;
-  SetHomeDir(D);
-  printf("Home dir is: '%s'\n",GetPath("/").c_str());
+	set_user_config_dir(D);
+	set_user_data_dir(D);
+	printf("Config dir is: %s\n", get_config_path("/").c_str());
+	printf("Data dir is:   %s\n", get_data_path("/").c_str());
   env->ReleaseStringUTFChars(dirName,D);
 }
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_init(JNIEnv *env,jobject obj,jstring fileName)

@@ -79,7 +79,7 @@ enum demo_protocols {
 	DEMO_PROTOCOL_COUNT
 };
 
-#define WEBUI_PATH GetPath("/webui")
+#define WEBUI_PATH get_data_path("/webui")
 
 /*
  * We take a strict whitelist approach to stop ../ attacks

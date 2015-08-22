@@ -251,9 +251,14 @@ public :
 };
 
 //Set the path !
-void SetHomeDir(const string& home);
+void set_user_config_dir(const string& dir);
+void set_user_data_dir(const string& dir);
+void add_system_config_dir(const string& dir);
+void add_system_data_dir(const string& dir);
+
 //subpath format: /data/fsca-table.bit
-string GetPath(const string& subpath);
+string get_config_path(const string& filename, bool user_writable = true);
+string get_data_path(const string& filename, bool user_writable = true);
 
 
 class VArray2

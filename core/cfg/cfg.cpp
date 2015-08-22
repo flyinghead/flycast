@@ -78,7 +78,7 @@ void  cfgSaveStr(const wchar * Section, const wchar * Key, const wchar * String)
 
 bool cfgOpen()
 {
-	cfgPath=GetPath("/emu.cfg");
+	cfgPath=get_config_path("/emu.cfg");
 	FILE* cfgfile = fopen(cfgPath.c_str(),"r");
 
 	if(cfgfile != NULL) {
