@@ -46,8 +46,11 @@
 	NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
 	NSString *documents = [paths objectAtIndex:0];
 	NSArray *files = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:documents error:NULL];
-	NSPredicate *filter = [NSPredicate predicateWithFormat:@"self ENDSWITH '.chd'"];
-	self.diskImages = [NSMutableArray arrayWithArray:[files filteredArrayUsingPredicate:filter]];
+	NSArray *filters = @[[NSPredicate predicateWithFormat:@"self ENDSWITH '.chd'"],
+						 [NSPredicate predicateWithFormat:@"self ENDSWITH '.gdi'"],
+						 [NSPredicate predicateWithFormat:@"self ENDSWITH '.cdi'"]];
+	NSPredicate *compoundPredicate = [NSCompoundPredicate andPredicateWithSubpredicates:filters];
+	self.diskImages = [NSMutableArray arrayWithArray:[files filteredArrayUsingPredicate:compoundPredicate]];
 }
 
 - (void)didReceiveMemoryWarning
