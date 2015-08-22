@@ -179,6 +179,8 @@ INCS += -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps -I$(RZDCY_SRC_DIR)/khronos
 LIBS += -lm -lrt -ldl
 LIBS  += -lpthread
 
+PREFIX ?= /usr/local
+
 ifndef NOT_ARM
     AS=${CC_PREFIX}gcc
     ASFLAGS += $(CFLAGS)
@@ -248,7 +250,7 @@ OBJECTS:=$(OBJECTS:.S=.build_obj)
 OBJECTS:=$(patsubst $(RZDCY_SRC_DIR)/%,obj-$(platform)/%,$(OBJECTS))
 
 EXECUTABLE_STRIPPED=nosym-reicast.elf
-EXECUTABLE=reicast.elf
+EXECUTABLE=reicast
 
 
 all: $(CPPFILES) $(EXECUTABLE) $(EXECUTABLE_STRIPPED)
@@ -273,6 +275,13 @@ obj-$(platform)/%.build_obj : $(RZDCY_SRC_DIR)/%.c
 obj-$(platform)/%.build_obj : $(RZDCY_SRC_DIR)/%.S
 	mkdir -p $(dir $@)	
 	$(AS) $(ASFLAGS) $(INCS) $< -o $@
+
+install: $(EXECUTABLE)
+	mkdir -p $(DESTDIR)$(PREFIX)/bin 2>/dev/null || /bin/true
+	install -m755 $(EXECUTABLE) $(DESTDIR)$(PREFIX)/bin
+
+uninstall:
+	rm -f $(DESTDIR)$(PREFIX)/bin/$(EXECUTABLE)
 
 clean:
 	rm -f $(OBJECTS) $(EXECUTABLE) $(EXECUTABLE_STRIPPED) .map
