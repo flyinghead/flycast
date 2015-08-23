@@ -36,7 +36,7 @@
                                 <connections>
                                     <outlet property="diskImage" destination="6Qh-mW-Z9j" id="kv2-En-yNt"/>
                                     <outlet property="nameLabel" destination="Epl-iu-f5s" id="Tyn-LD-ioh"/>
-                                    <segue destination="WRM-pR-XCP" kind="push" identifier="emulatorView" id="xKH-h0-TDD"/>
+                                    <segue destination="WRM-pR-XCP" kind="modal" identifier="emulatorView" id="xKH-h0-TDD"/>
                                 </connections>
                             </tableViewCell>
                         </prototypes>

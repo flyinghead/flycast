@@ -8,7 +8,7 @@
 
 #import <UIKit/UIKit.h>
 
-@interface PathsViewController : UITableViewController
+@interface PathsViewController : UITableViewController <UITableViewDelegate, UITableViewDataSource>
 @property (weak, nonatomic) IBOutlet UIBarButtonItem *sidebarButton;
 
 @property (nonatomic, strong) NSMutableArray* diskImages;

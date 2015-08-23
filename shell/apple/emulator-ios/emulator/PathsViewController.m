@@ -7,7 +7,7 @@
 //
 
 #import "PathsViewController.h"
-#import "SWRevealViewController.h"
+//#import "SWRevealViewController.h"
 #import "EmulatorViewController.h"
 #import "DiskViewCell.h"
 
@@ -26,17 +26,22 @@
     return self;
 }
 
+- (NSURL *)documents
+{
+	return [[[NSFileManager defaultManager] URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask] lastObject];
+}
+
 - (void)viewDidLoad
 {
     [super viewDidLoad];
     self.title = @"Paths";
     
     // Set the side bar button action. When it's tapped, it'll show up the sidebar.
-    _sidebarButton.target = self.revealViewController;
-    _sidebarButton.action = @selector(revealToggle:);
+//    _sidebarButton.target = self.revealViewController;
+//    _sidebarButton.action = @selector(revealToggle:);
 
     // Set the gesture
-    [self.view addGestureRecognizer:self.revealViewController.panGestureRecognizer];
+//    [self.view addGestureRecognizer:self.revealViewController.panGestureRecognizer];
     // Uncomment the following line to preserve selection between presentations.
     // self.clearsSelectionOnViewWillAppear = NO;
  
@@ -44,14 +49,9 @@
     // self.navigationItem.rightBarButtonItem = self.editButtonItem;
 	
 	self.diskImages = [[NSMutableArray alloc] init];
-	NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
-	NSString *documents = [paths objectAtIndex:0];
-	NSArray *files = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:documents error:NULL];
-	NSArray *filters = @[[NSPredicate predicateWithFormat:@"self ENDSWITH '.chd'"],
-						 [NSPredicate predicateWithFormat:@"self ENDSWITH '.gdi'"],
-						 [NSPredicate predicateWithFormat:@"self ENDSWITH '.cdi'"]];
-	NSPredicate *compoundPredicate = [NSCompoundPredicate andPredicateWithSubpredicates:filters];
-	self.diskImages = [NSMutableArray arrayWithArray:[files filteredArrayUsingPredicate:compoundPredicate]];
+	NSArray *files = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:[self documents].path error:NULL];
+	NSPredicate *diskPredicate = [NSPredicate predicateWithFormat:@"self ENDSWITH '.chd' || self ENDSWITH '.gdi' || self ENDSWITH '.cdi' || self ENDSWITH '.CHD' || self ENDSWITH '.GDI' || self ENDSWITH '.CDI'"];
+	self.diskImages = [NSMutableArray arrayWithArray:[files filteredArrayUsingPredicate:diskPredicate]];
 }
 
 - (void)didReceiveMemoryWarning
