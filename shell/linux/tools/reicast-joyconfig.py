@@ -41,9 +41,14 @@ def list_devices():
 
 
 def clear_events(dev):
-    event = dev.read_one()
-    while(event is not None):
+    try:
         event = dev.read_one()
+        while(event is not None):
+            event = dev.read_one()
+    except BlockingIOError:
+        # BlockingIOErrors should only occur if someone uses the evdev
+        # module < v0.4.4
+        pass
 
 
 def read_button(dev):
