@@ -19,6 +19,7 @@ except ImportError:
     print("Can't import evdev module. Please install it.")
     print("You can do this via:")
     print("  pip install evdev")
+    sys.exit(1)
 
 DEV_ID_PATTERN = re.compile('(\d+)')
 DREAMCAST_BUTTONS = ['A', 'B', 'C', 'D', 'X', 'Y', 'Z', 'START']
@@ -235,3 +236,5 @@ if __name__ == "__main__":
     else:
         print("\nHere's your mapping file:\n")
         mapping.write(sys.stdout)
+
+    sys.exit(0)
