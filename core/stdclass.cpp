@@ -1,12 +1,17 @@
-
 #include <string.h>
 #include <vector>
 #include <sys/stat.h>
-
 #include "types.h"
+
+#if BUILD_COMPILER==COMPILER_VC
+	#include <io.h>
+	#define access _access
+	#define R_OK   4
+#else
+	#include <unistd.h>
+#endif
 
 #include "hw/mem/_vmem.h"
-#include "types.h"
 
 string user_config_dir;
 string user_data_dir;
@@ -15,8 +20,7 @@ std::vector<string> system_data_dirs;
 
 bool file_exists(const string& filename)
 {
-	struct stat info;
-	return (stat (filename.c_str(), &info) == 0);
+	return (access(filename.c_str(), R_OK) == 0);
 }
 
 void set_user_config_dir(const string& dir)
