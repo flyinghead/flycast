@@ -1,17 +1,24 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+from __future__ import print_function
+
+import sys
+import re
+import os
+if sys.version_info < (3, 0):
+    import ConfigParser as configparser
+    INPUT_FUNC = raw_input
+else:
+    import configparser
+    INPUT_FUNC = input
+
 try:
     import evdev
 except ImportError:
     print("Can't import evdev module. Please install it.")
     print("You can do this via:")
     print("  pip install evdev")
-
-import re
-import configparser
-import sys
-import os
 
 DEV_ID_PATTERN = re.compile('(\d+)')
 DREAMCAST_BUTTONS = ['A', 'B', 'C', 'D', 'X', 'Y', 'Z', 'START']
@@ -194,7 +201,7 @@ def ask_yes_no(question, default=True):
 
     while True:
         print("%s [%s] " % (question, prompt), end='')
-        choice = input().lower()
+        choice = INPUT_FUNC().lower()
         if choice == '':
             return default
         if choice in valid:
