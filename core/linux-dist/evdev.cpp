@@ -254,11 +254,21 @@
 				}
 				if(loaded_mappings.count(string(mapping_fname)) == 0)
 				{
-					size_t size_needed = snprintf(NULL, 0, EVDEV_MAPPING_PATH, mapping_fname) + 1;
-					char* mapping_path = (char*)malloc(size_needed);
-					sprintf(mapping_path, EVDEV_MAPPING_PATH, mapping_fname);
-					FILE* mapping_fd = fopen(GetPath(mapping_path).c_str(), "r");
-					free(mapping_path);
+					FILE* mapping_fd = NULL;
+					if(mapping_fname[0] == '/')
+					{
+						// Absolute mapping
+						mapping_fd = fopen(mapping_fname, "r");
+					}
+					else
+					{
+						// Mapping from ~/.reicast/mappings/
+						size_t size_needed = snprintf(NULL, 0, EVDEV_MAPPING_PATH, mapping_fname) + 1;
+						char* mapping_path = (char*)malloc(size_needed);
+						sprintf(mapping_path, EVDEV_MAPPING_PATH, mapping_fname);
+						mapping_fd = fopen(GetPath(mapping_path).c_str(), "r");
+						free(mapping_path);
+					}
 					
 					if(mapping_fd != NULL)
 					{
