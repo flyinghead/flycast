@@ -280,6 +280,7 @@
 					else
 					{
 						printf("evdev: unable to open mapping file '%s'\n", mapping_fname);
+						perror("evdev");
 						return -3;
 					}
 				}
