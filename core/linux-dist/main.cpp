@@ -343,6 +343,7 @@ std::vector<string> find_system_config_dirs()
 	}
 	else
 	{
+		dirs.push_back("/etc/reicast"); // This isn't part of the XDG spec, but much more common than /etc/xdg/
 		dirs.push_back("/etc/xdg/reicast");
 	}
 	return dirs;
