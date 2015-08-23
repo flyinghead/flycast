@@ -24,10 +24,10 @@ int ConfigEntry::get_int()
 
 bool ConfigEntry::get_bool()
 {
-	if (strcmp(this->value.c_str(), "yes") == 0 ||
-		  strcmp(this->value.c_str(), "true") == 0 ||
-		  strcmp(this->value.c_str(), "on") == 0 ||
-		  strcmp(this->value.c_str(), "1") == 0)
+	if (stricmp(this->value.c_str(), "yes") == 0 ||
+		  stricmp(this->value.c_str(), "true") == 0 ||
+		  stricmp(this->value.c_str(), "on") == 0 ||
+		  stricmp(this->value.c_str(), "1") == 0)
 	{
 		return true;
 	}
