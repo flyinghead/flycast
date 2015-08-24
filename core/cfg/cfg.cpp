@@ -73,27 +73,15 @@ bool cfgOpen()
 {
 	cfgPath=GetPath("/emu.cfg");
 	FILE* cfgfile = fopen(cfgPath.c_str(),"r");
+
 	if(!cfgfile) {
-		cfgfile = fopen(cfgPath.c_str(),"wt");
-		if(!cfgfile)
 			printf("Unable to open the config file for reading or writing\nfile : %s\n",cfgPath.c_str());
-		else
-		{
-			fseek(cfgfile,0,SEEK_SET);
-			fclose(cfgfile);
-			cfgfile = fopen(cfgPath.c_str(),"r");
-			if(!cfgfile)
-				printf("Unable to open the config file for reading\nfile : %s\n",cfgPath.c_str());
-		}
+			return false;
 	}
 
 	cfgdb.parse(cfgfile);
+	fclose(cfgfile);
 
-	if (cfgfile)
-	{
-		cfgdb.save(cfgfile);
-		fclose(cfgfile);
-	}
 	return true;
 }
 
