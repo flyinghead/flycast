@@ -198,8 +198,7 @@ void ConfigFile::parse(FILE* file)
 	int cline = 0;
 	while(file && !feof(file))
 	{
-		fgets(line, 512, file);
-		if (feof(file))
+		if (fgets(line, 512, file) == NULL || feof(file))
 		{
 			break;
 		}
