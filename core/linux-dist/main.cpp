@@ -41,6 +41,9 @@
 	#include <sys/soundcard.h>
 #endif
 
+#if FEAT_HAS_NIXPROF
+#include "profiler/profiler.h"
+#endif
 
 int msgboxf(const wchar* text, unsigned int type, ...)
 {
@@ -267,6 +270,9 @@ int main(int argc, wchar* argv[])
 	SetupInput();
 
 	#if !defined(TARGET_EMSCRIPTEN)
+		#if FEAT_HAS_NIXPROF
+		install_prof_handler(0);
+		#endif
 		dc_run();
 	#else
 		emscripten_set_main_loop(&dc_run, 100, false);

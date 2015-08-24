@@ -34,6 +34,7 @@
 #include "hw/sh4/dyna/blockmanager.h"
 #include <set>
 #include "deps/libelf/elf.h"
+#include "profiler/profiler.h"
 
 #include "linux/context.h"
 
@@ -202,7 +203,7 @@ static int str_ends_with(const char * str, const char * suffix)
 
 void sh4_jitsym(FILE* out);
 
-static void* prof(void *ptr)
+static void* profiler_main(void *ptr)
 {
 	FILE* prof_out;
 	char line[512];
@@ -265,11 +266,11 @@ static void* prof(void *ptr)
 		do
 		{
 			tick_count++;
-			//printf("Sending SIGPROF %08X %08X\n",thread[0],thread[1]);
+			// printf("Sending SIGPROF %08X %08X\n",thread[0],thread[1]);
 			for (int i = 0; i < 2; i++) pthread_kill(thread[i], SIGPROF);
-			//printf("Sent SIGPROF\n");
+			// printf("Sent SIGPROF\n");
 			usleep(prof_wait);
-			//fwrite(&prof_address[0],1,sizeof(prof_address[0])*2,prof_out);
+			// fwrite(&prof_address[0],1,sizeof(prof_address[0])*2,prof_out);
 			fprintf(prof_out, "%p %p\n", prof_address[0], prof_address[1]);
 
 			if (!(tick_count % 10000))
@@ -285,12 +286,24 @@ static void* prof(void *ptr)
     return 0;
 }
 
+bool sample_Switch(int freq)
+{
+	if (prof_run) {
+		sample_Stop();
+	} else {
+		sample_Start(freq);
+	}
+	return prof_run;
+}
+
 void sample_Start(int freq)
 {
+	if (prof_run)
+		return;
 	prof_wait = 1000000 / freq;
 	printf("sampling profiler: starting %d hz %d wait\n", freq, prof_wait);
 	prof_run = true;
-	pthread_create(&proft, NULL, prof, 0);
+	pthread_create(&proft, NULL, profiler_main, 0);
 }
 
 void sample_Stop()
