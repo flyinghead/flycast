@@ -10,7 +10,6 @@
 #import <GLKit/GLKit.h>
 #import <GameController/GameController.h>
 #import "iCadeReaderView.h"
-#import "VirtualViewController.h"
 
 @interface ViewController : GLKViewController <iCadeEventDelegate>
 
@@ -19,6 +18,23 @@
 @property (nonatomic) GCController *gController __attribute__((weak_import));
 @property (nonatomic, strong) id connectObserver;
 @property (nonatomic, strong) id disconnectObserver;
-@property (nonatomic, strong) VirtualViewController *controller;
+@property (nonatomic, strong) UIView *controllerView;
+
+@property (nonatomic, strong) IBOutlet UIButton* img_dpad_l;
+@property (nonatomic, strong) IBOutlet UIButton* img_dpad_r;
+@property (nonatomic, strong) IBOutlet UIButton* img_dpad_u;
+@property (nonatomic, strong) IBOutlet UIButton* img_dpad_d;
+@property (nonatomic, strong) IBOutlet UIButton* img_abxy_a;
+@property (nonatomic, strong) IBOutlet UIButton* img_abxy_b;
+@property (nonatomic, strong) IBOutlet UIButton* img_abxy_x;
+@property (nonatomic, strong) IBOutlet UIButton* img_abxy_y;
+@property (nonatomic, strong) IBOutlet UIButton* img_vjoy;
+@property (nonatomic, strong) IBOutlet UIButton* img_lt;
+@property (nonatomic, strong) IBOutlet UIButton* img_rt;
+@property (nonatomic, strong) IBOutlet UIButton* img_start;
+
+- (void) showController:(UIView *)parentView;
+- (void) hideController;
+- (BOOL) pollController;
 
 @end

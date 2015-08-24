@@ -42,7 +42,6 @@
 		87078A9B18A47FE90034C7A0 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 87078A9A18A47FE90034C7A0 /* AppDelegate.m */; };
 		87078AA318A47FE90034C7A0 /* Shader.fsh in Resources */ = {isa = PBXBuildFile; fileRef = 87078AA218A47FE90034C7A0 /* Shader.fsh */; };
 		87078AA518A47FE90034C7A0 /* Shader.vsh in Resources */ = {isa = PBXBuildFile; fileRef = 87078AA418A47FE90034C7A0 /* Shader.vsh */; };
-		872EF7021B852EB200A0F617 /* VirtualViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 872EF7001B852EB200A0F617 /* VirtualViewController.m */; };
 		876AA3771B818A4000617242 /* ini.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 876AA3751B818A4000617242 /* ini.cpp */; };
 		877652C21B6157BD00437F10 /* audiobackend_alsa.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 877652B61B6157BD00437F10 /* audiobackend_alsa.cpp */; };
 		877652C31B6157BD00437F10 /* audiobackend_directsound.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 877652B91B6157BD00437F10 /* audiobackend_directsound.cpp */; };
@@ -304,8 +303,6 @@
 		87078AA218A47FE90034C7A0 /* Shader.fsh */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; name = Shader.fsh; path = Shaders/Shader.fsh; sourceTree = "<group>"; };
 		87078AA418A47FE90034C7A0 /* Shader.vsh */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; name = Shader.vsh; path = Shaders/Shader.vsh; sourceTree = "<group>"; };
 		87078AB018A47FE90034C7A0 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
-		872EF6FF1B852EB200A0F617 /* VirtualViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = VirtualViewController.h; path = emulator/VirtualViewController.h; sourceTree = "<group>"; };
-		872EF7001B852EB200A0F617 /* VirtualViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = VirtualViewController.m; path = emulator/VirtualViewController.m; sourceTree = "<group>"; };
 		876AA3751B818A4000617242 /* ini.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ini.cpp; sourceTree = "<group>"; };
 		876AA3761B818A4000617242 /* ini.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ini.h; sourceTree = "<group>"; };
 		877652B61B6157BD00437F10 /* audiobackend_alsa.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = audiobackend_alsa.cpp; sourceTree = "<group>"; };
@@ -843,8 +840,6 @@
 			children = (
 				8794D9C11B88F3D600B1B3A3 /* DiskViewCell.h */,
 				8794D9C21B88F3D600B1B3A3 /* DiskViewCell.m */,
-				872EF6FF1B852EB200A0F617 /* VirtualViewController.h */,
-				872EF7001B852EB200A0F617 /* VirtualViewController.m */,
 				87C208C51B7A4BFA00638BDD /* AboutViewController.h */,
 				87C208C61B7A4BFA00638BDD /* AboutViewController.m */,
 				87C208C71B7A4BFA00638BDD /* BrowserTableViewController.h */,
@@ -1772,7 +1767,6 @@
 				9C7A3B1818C806E00070BB5F /* Renderer_if.cpp in Sources */,
 				9C7A3AC518C806E00070BB5F /* zip_error_clear.c in Sources */,
 				9C7A3AC318C806E00070BB5F /* zip_err_str.c in Sources */,
-				872EF7021B852EB200A0F617 /* VirtualViewController.m in Sources */,
 				9C7A3B4818C806E00070BB5F /* gldraw.cpp in Sources */,
 				9C7A3AE618C806E00070BB5F /* zip_source_free.c in Sources */,
 				9C7A3AF118C806E00070BB5F /* adler32.c in Sources */,
