@@ -116,6 +116,15 @@ struct elf_symbol {
   uint16_t st_shndx;              // Section index
 };
 
+struct elf64_symbol {
+  uint32_t      st_name;
+  unsigned char st_info;
+  unsigned char st_other;
+  uint16_t      st_shndx;
+  uint64_t      st_value;
+  uint64_t      st_size;
+};
+
 /*
  * constants for Elf32_Phdr.p_flags 
  */

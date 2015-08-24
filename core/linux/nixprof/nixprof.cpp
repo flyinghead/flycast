@@ -3,6 +3,7 @@
 #if FEAT_HAS_NIXPROF
 #include "cfg/cfg.h"
 
+#include <inttypes.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -178,16 +179,24 @@ static void elf_syms(FILE* out,const char* libfile)
 			prof_head(out,"libsym",libfile);
 			// printf("Found dymsym %d, and dynstr %d!\n",dynsym,dynstr);
 			elf_symbol* sym=(elf_symbol*)elf_getSection(data,dynsym);
-			int symcnt=elf_getSectionSize(data,dynsym)/sizeof(elf_symbol);
+			elf64_symbol* sym64 = (elf64_symbol*) sym;
 
-			for (int i=0;i<symcnt;i++)
+			bool elf32 = ((struct Elf32_Header*)data)->e_ident[EI_CLASS] == ELFCLASS32;
+			size_t symbol_size = elf32 ? sizeof(elf_symbol) : sizeof(elf64_symbol);
+			int symcnt = elf_getSectionSize(data,dynsym) / symbol_size;
+
+			for (int i=0; i < symcnt; i++)
 			{
-				if (sym[i].st_value && sym[i].st_name && sym[i].st_shndx)
+				uint64_t st_value =  elf32 ? sym[i].st_value : sym64[i].st_value;
+				uint32_t st_name  =  elf32 ? sym[i].st_name  : sym64[i].st_name;
+				uint16_t st_shndx =  elf32 ? sym[i].st_shndx : sym64[i].st_shndx;
+				uint64_t st_size  =  elf32 ? sym[i].st_size  : sym64[i].st_size;
+				if (st_value && st_name && st_shndx)
 				{
 					char* name=(char*)elf_getSection(data,dynstr);// sym[i].st_shndx
-
-					// printf("Symbol %d: %s, %08X, %d bytes\n",i,name+sym[i].st_name,sym[i].st_value,sym[i].st_size);
-					fprintf(out,"%08X %d %s\n",sym[i].st_value,sym[i].st_size,name+sym[i].st_name);
+					// printf("Symbol %d: %s, %08" PRIx64 ", % " PRIi64 " bytes\n",
+						// i, name + st_name, st_value, st_size);
+					fprintf(out,"%08" PRIX64 "%" PRIi64 " %s\n", st_value, st_size, name + st_name);
 				}
 			}
 		}
