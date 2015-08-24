@@ -17,7 +17,7 @@ reicast \- The Sega Dreamcast Emulator.
 .SH "EXAMPLE COMMANDLINE"
 
 .TP
-\fBNo command line options will start reicast in menu mode.\fR
+\fBNo command line options will start reicast and load all values from the config file.\fR
 reicast
 
 .TP
@@ -27,6 +27,19 @@ reicast /path/to/your/image.cdi
 .TP
 \fBStart reicast on X11 in full screen.\fR
 reicast -config x11:fullscreen=1
+
+.SH "BIOS AND FLASH ROMS"
+
+.TP
+\fBreicast\fR currently needs BIOS/Flash ROMs of the original Dreamcast. For copyright reasons it is not possible to distribute them bundled with \fBreicast\fR, so you have to dump them from your own Dreamcast. \fBreicast\fR will look for these files in:
+
+.IP
+~/.reicast/data/dc_boot.bin
+.br
+~/.reicast/data/dc_flash.bin
+.LP
+
+If you do not supply these files, \fBreicast\fR will fall back to reios, an experimental replacement for the original Dreamcast BIOS. However, your experience might not be as stable and some feature might be missing (e.g. booting to the Dreamcast menu will NOT work).
 
 .SH "CONTROLS"
 
