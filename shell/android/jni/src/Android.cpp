@@ -58,6 +58,7 @@ extern "C"
     JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_subdivide(JNIEnv *env,jobject obj, jint subdivide)  __attribute__((visibility("default")));
     JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_frameskip(JNIEnv *env,jobject obj, jint frames)  __attribute__((visibility("default")));
     JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_pvrrender(JNIEnv *env,jobject obj, jint render)  __attribute__((visibility("default")));
+    JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_syncedrender(JNIEnv *env,jobject obj, jint sync)  __attribute__((visibility("default")));
     JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_cheatdisk(JNIEnv *env,jobject obj, jstring disk)  __attribute__((visibility("default")));
     JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_usereios(JNIEnv *env,jobject obj, jint reios)  __attribute__((visibility("default")));
     JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_dreamtime(JNIEnv *env,jobject obj, jlong clock)  __attribute__((visibility("default")));
@@ -131,6 +132,11 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_frameskip(JNIEnv *env
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_pvrrender(JNIEnv *env,jobject obj, jint render)
 {
     settings.pvr.rend = render;
+}
+
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_syncedrender(JNIEnv *env,jobject obj, jint sync)
+{
+    settings.pvr.SynchronousRendering = sync;
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_cheatdisk(JNIEnv *env,jobject obj, jstring disk)

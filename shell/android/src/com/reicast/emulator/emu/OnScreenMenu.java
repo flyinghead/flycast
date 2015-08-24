@@ -45,6 +45,7 @@ public class OnScreenMenu {
 	private boolean audio;
 	private boolean masteraudio;
 	private boolean boosted = false;
+	private boolean syncedrender;
 
 	public OnScreenMenu(Activity context, SharedPreferences prefs) {
 		if (context instanceof GL2JNINative) {
@@ -59,6 +60,7 @@ public class OnScreenMenu {
 			home_directory = prefs.getString(Config.pref_home, home_directory);
 			masteraudio = !Config.nosound;
 			audio = masteraudio;
+			syncedrender = Config.syncedrender;
 		}
 		vmuLcd = new VmuLcd(mContext);
 		vmuLcd.setOnClickListener(new OnClickListener() {
@@ -369,6 +371,9 @@ public class OnScreenMenu {
 				addimg(fastforward, R.drawable.reset, clickTurbo);
 			} else {
 				addimg(fastforward, R.drawable.star, clickTurbo);
+			}
+			if (syncedrender) {
+				fastforward.setEnabled(false);
 			}
 
 			setContentView(shell);

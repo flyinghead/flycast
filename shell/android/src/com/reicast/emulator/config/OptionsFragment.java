@@ -451,6 +451,16 @@ public class OptionsFragment extends Fragment {
 		pvr_render.setChecked(Config.pvrrender);
 		pvr_render.setOnCheckedChangeListener(pvr_rendering);
 
+        OnCheckedChangeListener synchronous = new OnCheckedChangeListener() {
+			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+				mPrefs.edit().putBoolean(Config.pref_syncedrender, isChecked).commit();
+				Config.syncedrender = isChecked;
+			}
+		};
+		Switch synced_render = (Switch) getView().findViewById(R.id.syncrender_option);
+		synced_render.setChecked(Config.syncedrender);
+		synced_render.setOnCheckedChangeListener(synchronous);
+
 		final EditText cheatEdit = (EditText) getView().findViewById(R.id.cheat_disk);
 		String disk = Config.cheatdisk;
 		if (disk != null && disk.contains("/")) {
