@@ -176,6 +176,9 @@ struct elf64_symbol {
 #define ELF_PRINT_SECTIONS 2
 #define ELF_PRINT_ALL (ELF_PRINT_PROGRAM_HEADERS | ELF_PRINT_SECTIONS)
 
+/* Symbol types */
+#define STT_FUNC 2 /* Function, code */
+
 /**
  * Checks that elfFile points to a valid elf file. 
  *

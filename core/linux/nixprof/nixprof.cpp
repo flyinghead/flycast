@@ -190,8 +190,9 @@ static void elf_syms(FILE* out,const char* libfile)
 				uint64_t st_value =  elf32 ? sym[i].st_value : sym64[i].st_value;
 				uint32_t st_name  =  elf32 ? sym[i].st_name  : sym64[i].st_name;
 				uint16_t st_shndx =  elf32 ? sym[i].st_shndx : sym64[i].st_shndx;
+				uint16_t st_type  = (elf32 ? sym[i].st_info  : sym64[i].st_info) & 0xf;
 				uint64_t st_size  =  elf32 ? sym[i].st_size  : sym64[i].st_size;
-				if (st_value && st_name && st_shndx)
+				if (st_type == STT_FUNC && st_value && st_name && st_shndx)
 				{
 					char* name=(char*)elf_getSection(data,dynstr);// sym[i].st_shndx
 					// printf("Symbol %d: %s, %08" PRIx64 ", % " PRIi64 " bytes\n",
