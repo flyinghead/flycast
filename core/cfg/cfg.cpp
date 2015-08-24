@@ -141,7 +141,11 @@ string  cfgLoadStr(const wchar * Section, const wchar * Key, const wchar* Defaul
 //These are helpers , mainly :)
 void  cfgSaveInt(const wchar * Section, const wchar * Key, s32 Int)
 {
-	return cfgdb.set_int(string(Section), string(Key), Int);
+	cfgdb.set_int(string(Section), string(Key), Int);
+	if(save_config)
+	{
+		savecfgf();
+	}
 }
 
 s32  cfgLoadInt(const wchar * Section, const wchar * Key,s32 Default)
