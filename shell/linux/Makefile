@@ -181,6 +181,8 @@ LIBS  += -lpthread
 
 PREFIX ?= /usr/local
 MAN_DIR ?= ${PREFIX}/share/man/man1
+MENUENTRY_DIR ?= ${PREFIX}/share/applications
+ICON_DIR ?= ${PREFIX}/share/pixmaps
 
 ifndef NOT_ARM
     AS=${CC_PREFIX}gcc
@@ -280,8 +282,12 @@ obj-$(platform)/%.build_obj : $(RZDCY_SRC_DIR)/%.S
 install: $(EXECUTABLE)
 	mkdir -p $(DESTDIR)$(PREFIX)/bin 2>/dev/null || /bin/true
 	mkdir -p $(DESTDIR)$(MAN_DIR) 2>/dev/null || /bin/true
+	mkdir -p $(DESTDIR)$(MENUENTRY_DIR) 2>/dev/null || /bin/true
+	mkdir -p $(DESTDIR)$(ICON_DIR) 2>/dev/null || /bin/true
 	install -m755 $(EXECUTABLE) $(DESTDIR)$(PREFIX)/bin
 	install -m644 man/reicast.1 $(DESTDIR)$(MAN_DIR)
+	install -m644 reicast.desktop $(DESTDIR)$(MENUENTRY_DIR)
+	install -m644 reicast.png $(DESTDIR)$(ICON_DIR)
 
 uninstall:
 	rm -f $(DESTDIR)$(PREFIX)/bin/$(EXECUTABLE)
