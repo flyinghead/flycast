@@ -5,10 +5,12 @@
 */
 
 #define _CRT_SECURE_NO_DEPRECATE (1)
+#include <errno.h>
 #include "cfg.h"
 #include "ini.h"
 
 string cfgPath;
+bool save_config = true;
 
 ConfigFile cfgdb;
 
@@ -26,7 +28,10 @@ void savecfgf()
 void  cfgSaveStr(const wchar * Section, const wchar * Key, const wchar * String)
 {
 	cfgdb.set(string(Section), string(Key), string(String));
-	savecfgf();
+	if(save_config)
+	{
+		savecfgf();
+	}
 	//WritePrivateProfileString(Section,Key,String,cfgPath);
 }
 //New config code
@@ -74,17 +79,27 @@ bool cfgOpen()
 	cfgPath=GetPath("/emu.cfg");
 	FILE* cfgfile = fopen(cfgPath.c_str(),"r");
 
-	if (!cfgfile) {
-		cfgfile = fopen(cfgPath.c_str(), "wt");
+	if(cfgfile != NULL) {
+		cfgdb.parse(cfgfile);
+		fclose(cfgfile);
 	}
-
-	if(!cfgfile) {
-			printf("Unable to open the config file for reading or writing\nfile : %s\n",cfgPath.c_str());
-			return false;
+	else
+	{
+		// Config file can't be opened
+		int error_code = errno;
+		printf("Warning: Unable to open the config file '%s' for reading (%s)\n", cfgPath.c_str(), strerror(error_code));
+		if (error_code == ENOENT)
+		{
+			// Config file didn't exist
+			printf("Creating new empty config file at '%s'\n", cfgPath.c_str());
+			savecfgf();
+		}
+		else
+		{
+			// There was some other error (may be a permissions problem or something like that)
+			save_config = false;
+		}
 	}
-
-	cfgdb.parse(cfgfile);
-	fclose(cfgfile);
 
 	return true;
 }
