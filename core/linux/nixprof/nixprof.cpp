@@ -131,23 +131,33 @@ static void elf_syms(FILE* out,const char* libfile)
 
 		int dynsym=-1;
 		int dynstr=-1;
+		int strtab=-1;
+		int symtab=-1;
 
-		/*
-			Section: 2 -> .dynsym
-			Section: 3 -> .dynstr
-		*/
 		if (elf_checkFile(data)>=0)
 		{
 			int scnt=elf_getNumSections(data);
 
 			for (int si=0;si<scnt;si++)
 			{
-				if (strcmp(".dynsym",elf_getSectionName(data,si))==0)
-					dynsym=si;
-
-			
-				if (strcmp(".dynstr",elf_getSectionName(data,si))==0)
-					dynstr=si;
+				uint32_t section_type = elf_getSectionType(data, si);
+				uint64_t section_link = elf_getSectionLink(data, si);
+				switch (section_type) {
+				case SHT_DYNSYM:
+					fprintf(stderr, "DYNSYM");
+					dynsym = si;
+					if (section_link < scnt)
+						dynstr = section_link;
+					break;
+				case SHT_SYMTAB:
+					fprintf(stderr, "SYMTAB");
+					symtab = si;
+					if (section_link < scnt)
+						strtab = section_link;
+					break;
+				default:
+					break;;
+				}
 			}
 		}
 		else
@@ -155,10 +165,18 @@ static void elf_syms(FILE* out,const char* libfile)
 			printf("Invalid elf file\n");
 		}
 
+		// Use SHT_SYMTAB if available insteaf of SHT_DYNSYM
+		// (there is more info here):
+		if (symtab >= 0 && strtab >= 0)
+		{
+			dynsym = symtab;
+			dynstr = strtab;
+		}
+
 		if (dynsym >= 0)
 		{
 			prof_head(out,"libsym",libfile);
-		//	printf("Found dymsym %d, and dynstr %d!\n",dynsym,dynstr);
+			// printf("Found dymsym %d, and dynstr %d!\n",dynsym,dynstr);
 			elf_symbol* sym=(elf_symbol*)elf_getSection(data,dynsym);
 			int symcnt=elf_getSectionSize(data,dynsym)/sizeof(elf_symbol);
 
@@ -168,7 +186,7 @@ static void elf_syms(FILE* out,const char* libfile)
 				{
 					char* name=(char*)elf_getSection(data,dynstr);// sym[i].st_shndx
 
-				//	printf("Symbol %d: %s, %08X, %d bytes\n",i,name+sym[i].st_name,sym[i].st_value,sym[i].st_size);
+					// printf("Symbol %d: %s, %08X, %d bytes\n",i,name+sym[i].st_name,sym[i].st_value,sym[i].st_size);
 					fprintf(out,"%08X %d %s\n",sym[i].st_value,sym[i].st_size,name+sym[i].st_name);
 				}
 			}
@@ -181,8 +199,6 @@ static void elf_syms(FILE* out,const char* libfile)
 		munmap(data,statbuf.st_size);
 	}
 }
-
-
 
 static volatile bool prof_run;
 
