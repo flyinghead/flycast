@@ -7,7 +7,6 @@
 //
 
 #import "EmulatorViewController.h"
-#import "EmulatorView.h"
 #import <OpenGLES/ES2/glext.h>
 
 #include "types.h"
@@ -99,25 +98,19 @@ extern "C" int reicast_main(int argc, char* argv[]);
     
     self.connectObserver = [[NSNotificationCenter defaultCenter] addObserverForName:GCControllerDidConnectNotification object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *note) {
         if ([[GCController controllers] count] == 1) {
-			if ([self pollController]) {
-				[self hideController];
-			}
             [self toggleHardwareController:YES];
         }
     }];
     self.disconnectObserver = [[NSNotificationCenter defaultCenter] addObserverForName:GCControllerDidDisconnectNotification object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *note) {
         if (![[GCController controllers] count]) {
             [self toggleHardwareController:NO];
-			if (![self pollController]) {
-				[self showController:self.view];
-			}
         }
     }];
     
     if ([[GCController controllers] count]) {
         [self toggleHardwareController:YES];
-	} else if (![self pollController]) {
-		[self showController:self.view];
+	} else {
+		[self toggleHardwareController:NO];
 	}
 		
     self.iCadeReader = [[iCadeReaderView alloc] init];
@@ -138,30 +131,11 @@ extern "C" int reicast_main(int argc, char* argv[]);
 
 - (void)dealloc
 {
-	if ([self pollController]) {
-		[self hideController];
-	}
     [self tearDownGL];
     
     if ([EAGLContext currentContext] == self.context) {
         [EAGLContext setCurrentContext:nil];
     }
-}
-
-- (void)showController:(UIView *)parentView
-{
-	[parentView addSubview:self.controllerView];
-}
-
-- (void)hideController {
-	[self.controllerView removeFromSuperview];
-}
-
-- (BOOL)pollController {
-	if (self.controllerView.window != nil) {
-		return YES;
-	}
-	return NO;
 }
 
 - (void)didReceiveMemoryWarning
@@ -202,6 +176,7 @@ extern "C" int reicast_main(int argc, char* argv[]);
 }
 
 - (void)toggleHardwareController:(BOOL)useHardware {
+	[self.controllerView setHidden:useHardware];
     if (useHardware) {
         self.gController = [GCController controllers][0];
         if (self.gController.gamepad) {
