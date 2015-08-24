@@ -43,7 +43,6 @@
 		87078AA318A47FE90034C7A0 /* Shader.fsh in Resources */ = {isa = PBXBuildFile; fileRef = 87078AA218A47FE90034C7A0 /* Shader.fsh */; };
 		87078AA518A47FE90034C7A0 /* Shader.vsh in Resources */ = {isa = PBXBuildFile; fileRef = 87078AA418A47FE90034C7A0 /* Shader.vsh */; };
 		872EF7021B852EB200A0F617 /* VirtualViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 872EF7001B852EB200A0F617 /* VirtualViewController.m */; };
-		872EF7031B852EB200A0F617 /* VirtualViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 872EF7011B852EB200A0F617 /* VirtualViewController.xib */; };
 		876AA3771B818A4000617242 /* ini.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 876AA3751B818A4000617242 /* ini.cpp */; };
 		877652C21B6157BD00437F10 /* audiobackend_alsa.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 877652B61B6157BD00437F10 /* audiobackend_alsa.cpp */; };
 		877652C31B6157BD00437F10 /* audiobackend_directsound.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 877652B91B6157BD00437F10 /* audiobackend_directsound.cpp */; };
@@ -307,7 +306,6 @@
 		87078AB018A47FE90034C7A0 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
 		872EF6FF1B852EB200A0F617 /* VirtualViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = VirtualViewController.h; path = emulator/VirtualViewController.h; sourceTree = "<group>"; };
 		872EF7001B852EB200A0F617 /* VirtualViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = VirtualViewController.m; path = emulator/VirtualViewController.m; sourceTree = "<group>"; };
-		872EF7011B852EB200A0F617 /* VirtualViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = VirtualViewController.xib; path = emulator/VirtualViewController.xib; sourceTree = "<group>"; };
 		876AA3751B818A4000617242 /* ini.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ini.cpp; sourceTree = "<group>"; };
 		876AA3761B818A4000617242 /* ini.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ini.h; sourceTree = "<group>"; };
 		877652B61B6157BD00437F10 /* audiobackend_alsa.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = audiobackend_alsa.cpp; sourceTree = "<group>"; };
@@ -847,7 +845,6 @@
 				8794D9C21B88F3D600B1B3A3 /* DiskViewCell.m */,
 				872EF6FF1B852EB200A0F617 /* VirtualViewController.h */,
 				872EF7001B852EB200A0F617 /* VirtualViewController.m */,
-				872EF7011B852EB200A0F617 /* VirtualViewController.xib */,
 				87C208C51B7A4BFA00638BDD /* AboutViewController.h */,
 				87C208C61B7A4BFA00638BDD /* AboutViewController.m */,
 				87C208C71B7A4BFA00638BDD /* BrowserTableViewController.h */,
@@ -1557,7 +1554,6 @@
 				87D92F4C1B7A1B4800D8FD9E /* Start@2x.png in Resources */,
 				87D92F471B7A1B4800D8FD9E /* menuicon.png in Resources */,
 				87D92F411B7A1B4800D8FD9E /* JoystickButton.png in Resources */,
-				872EF7031B852EB200A0F617 /* VirtualViewController.xib in Resources */,
 				87D92F441B7A1B4800D8FD9E /* LTrigger@2x.png in Resources */,
 				87D92F551B7A1BB100D8FD9E /* LICENSE in Resources */,
 				87D92F451B7A1B4800D8FD9E /* menuback.png in Resources */,

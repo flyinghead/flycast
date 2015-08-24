@@ -7,6 +7,7 @@
 //
 
 #import "EmulatorViewController.h"
+#import "EmulatorView.h"
 #import <OpenGLES/ES2/glext.h>
 
 #include "types.h"
@@ -67,14 +68,18 @@ extern "C" int reicast_main(int argc, char* argv[]);
 -(void)emuThread
 {
     install_prof_handler(1);
-    
 
     //This looks like the right place, rite?
     char text[2]="";
-    
+
     char* prms[2];
     prms[0]=text;
-    
+
+	if (self.diskImage != nil) {
+		NSString *file = [NSString stringWithFormat:@"config:image=%@", self.diskImage];
+		strcpy(prms[1], [file UTF8String]);
+	}
+
     reicast_main(1, prms);
 }
 
