@@ -46,14 +46,14 @@
 #include <stdio.h> 
 #include <string.h> 
 
-int tick_count=0;
-pthread_t proft;
-pthread_t thread[2];
-void*     prof_address[2];
-u32 prof_wait;
+static int tick_count=0;
+static pthread_t proft;
+static pthread_t thread[2];
+static void*     prof_address[2];
+static u32 prof_wait;
 
-u8* syms_ptr;
-int syms_len;
+static u8* syms_ptr;
+static int syms_len;
 
 void sample_Syms(u8* data,u32 len)
 {
@@ -88,16 +88,17 @@ void install_prof_handler(int id)
 	thread[id]=pthread_self();
 }
 
-void prof_head(FILE* out, const char* type, const char* name)
+static void prof_head(FILE* out, const char* type, const char* name)
 {
 	fprintf(out,"==xx==xx==\n%s:%s\n",type,name);
 }
-void prof_head(FILE* out, const char* type, int d)
+
+static void prof_head(FILE* out, const char* type, int d)
 {
 	fprintf(out,"==xx==xx==\n%s:%d\n",type,d);
 }
 
-void elf_syms(FILE* out,const char* libfile)
+static void elf_syms(FILE* out,const char* libfile)
 {
 	struct stat statbuf;
 
@@ -182,9 +183,10 @@ void elf_syms(FILE* out,const char* libfile)
 
 
 
-volatile bool prof_run;
+static volatile bool prof_run;
 
-int str_ends_with(const char * str, const char * suffix)
+// This is not used:
+static int str_ends_with(const char * str, const char * suffix)
 {
 	if (str == NULL || suffix == NULL)
 		return 0;
@@ -200,7 +202,7 @@ int str_ends_with(const char * str, const char * suffix)
 
 void sh4_jitsym(FILE* out);
 
-void* prof(void *ptr)
+static void* prof(void *ptr)
 {
 	FILE* prof_out;
 	char line[512];
