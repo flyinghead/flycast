@@ -18,7 +18,9 @@ void savecfgf()
 {
 	FILE* cfgfile = fopen(cfgPath.c_str(),"wt");
 	if (!cfgfile)
+	{
 		printf("Error : Unable to open file for saving \n");
+	}
 	else
 	{
 		cfgdb.save(cfgfile);
