@@ -74,6 +74,10 @@ bool cfgOpen()
 	cfgPath=GetPath("/emu.cfg");
 	FILE* cfgfile = fopen(cfgPath.c_str(),"r");
 
+	if (!cfgfile) {
+		cfgfile = fopen(cfgPath.c_str(), "wt");
+	}
+
 	if(!cfgfile) {
 			printf("Unable to open the config file for reading or writing\nfile : %s\n",cfgPath.c_str());
 			return false;
