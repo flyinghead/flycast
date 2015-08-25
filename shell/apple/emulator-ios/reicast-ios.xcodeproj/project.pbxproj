@@ -51,6 +51,7 @@
 		877652C91B6157FC00437F10 /* ngen_arm.S in Sources */ = {isa = PBXBuildFile; fileRef = 877652C71B6157FC00437F10 /* ngen_arm.S */; };
 		877652CA1B6157FC00437F10 /* rec_arm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 877652C81B6157FC00437F10 /* rec_arm.cpp */; };
 		878B0CFC1B8BB5B400A8D1C5 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 878B0CFB1B8BB5B400A8D1C5 /* Images.xcassets */; };
+		878B0D001B8BFE6200A8D1C5 /* disk_unknown.png in Resources */ = {isa = PBXBuildFile; fileRef = 878B0CFF1B8BFE6200A8D1C5 /* disk_unknown.png */; };
 		8794D9C31B88F3D600B1B3A3 /* DiskViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 8794D9C21B88F3D600B1B3A3 /* DiskViewCell.m */; };
 		87C208D71B7A4BFA00638BDD /* AboutViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 87C208C61B7A4BFA00638BDD /* AboutViewController.m */; };
 		87C208D81B7A4BFA00638BDD /* BrowserTableViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 87C208C81B7A4BFA00638BDD /* BrowserTableViewController.m */; };
@@ -314,6 +315,7 @@
 		877652C81B6157FC00437F10 /* rec_arm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = rec_arm.cpp; sourceTree = "<group>"; };
 		877652CC1B615AE800437F10 /* fp.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = fp.h; sourceTree = "<group>"; };
 		878B0CFB1B8BB5B400A8D1C5 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = "../reicast-ios/Images.xcassets"; sourceTree = "<group>"; };
+		878B0CFF1B8BFE6200A8D1C5 /* disk_unknown.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = disk_unknown.png; path = emulator/Images/disk_unknown.png; sourceTree = "<group>"; };
 		8794D9C11B88F3D600B1B3A3 /* DiskViewCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DiskViewCell.h; path = emulator/DiskViewCell.h; sourceTree = "<group>"; };
 		8794D9C21B88F3D600B1B3A3 /* DiskViewCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = DiskViewCell.m; path = emulator/DiskViewCell.m; sourceTree = "<group>"; };
 		87C208C51B7A4BFA00638BDD /* AboutViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AboutViewController.h; path = emulator/AboutViewController.h; sourceTree = "<group>"; };
@@ -860,6 +862,7 @@
 				87D92F291B7A1B4800D8FD9E /* JoystickBackground.png */,
 				87D92F2A1B7A1B4800D8FD9E /* JoystickBackground@2x.png */,
 				87D92F2B1B7A1B4800D8FD9E /* JoystickButton.png */,
+				878B0CFF1B8BFE6200A8D1C5 /* disk_unknown.png */,
 				87D92F2C1B7A1B4800D8FD9E /* JoystickButton@2x.png */,
 				87D92F2D1B7A1B4800D8FD9E /* LTrigger.png */,
 				87D92F2E1B7A1B4800D8FD9E /* LTrigger@2x.png */,
@@ -1533,6 +1536,7 @@
 				87D92F551B7A1BB100D8FD9E /* LICENSE in Resources */,
 				87D92F451B7A1B4800D8FD9E /* menuback.png in Resources */,
 				87078AA518A47FE90034C7A0 /* Shader.vsh in Resources */,
+				878B0D001B8BFE6200A8D1C5 /* disk_unknown.png in Resources */,
 				87D92F3B1B7A1B4800D8FD9E /* ABXYPad.png in Resources */,
 				87D92F481B7A1B4800D8FD9E /* menuicon@2x.png in Resources */,
 				87D92F371B7A1B4800D8FD9E /* 210-octocat.png in Resources */,
