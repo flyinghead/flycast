@@ -178,6 +178,66 @@ extern "C" int reicast_main(int argc, char* argv[]);
 
 }
 
+- (IBAction)keycode:(id)sender
+{
+	UIButton *instance = (UIButton*)sender;
+	if (instance == self.img_dpad_l) {
+		kcode[0] &= ~(DC_DPAD_LEFT);
+	} else {
+		kcode[0] |= ~(DC_DPAD_LEFT);
+	}
+	if (instance == self.img_dpad_r) {
+		kcode[0] &= ~(DC_DPAD_RIGHT);
+	} else {
+		kcode[0] |= ~(DC_DPAD_RIGHT);
+	}
+	if (instance == self.img_dpad_u) {
+		kcode[0] &= ~(DC_DPAD_UP);
+	} else {
+		kcode[0] |= ~(DC_DPAD_UP);
+	}
+	if (instance == self.img_dpad_d) {
+		kcode[0] &= ~(DC_DPAD_DOWN);
+	} else {
+		kcode[0] |= ~(DC_DPAD_DOWN);
+	}
+	if (instance == self.img_abxy_a) {
+		kcode[0] &= ~(DC_BTN_A);
+	} else {
+		kcode[0] |= (DC_BTN_A);
+	}
+	if (instance == self.img_abxy_b) {
+		kcode[0] &= ~(DC_BTN_B);
+	} else {
+		kcode[0] |= (DC_BTN_B);
+	}
+	if (instance == self.img_abxy_x) {
+		kcode[0] &= ~(DC_BTN_X);
+	} else {
+		kcode[0] |= (DC_BTN_X);
+	}
+	if (instance == self.img_abxy_y) {
+		kcode[0] &= ~(DC_BTN_Y);
+	} else {
+		kcode[0] |= (DC_BTN_Y);
+	}
+	if (instance == self.img_lt) {
+		kcode[0] &= ~(DC_AXIS_LT);
+	} else {
+		kcode[0] |= (DC_AXIS_LT);
+	}
+	if (instance == self.img_rt) {
+		kcode[0] &= ~(DC_AXIS_RT);
+	} else {
+		kcode[0] |= (DC_AXIS_RT);
+	}
+	if (instance == self.img_start) {
+		kcode[0] &= ~(DC_BTN_START);
+	} else {
+		kcode[0] |= (DC_BTN_START);
+	}
+}
+
 - (void)toggleHardwareController:(BOOL)useHardware {
 	[self.controllerView setHidden:useHardware];
     if (useHardware) {
