@@ -144,7 +144,7 @@ void SetupInput()
 	#if defined(USE_JOYSTICK)
 		int joystick_device_id = cfgLoadInt("input", "joystick_device_id", JOYSTICK_DEFAULT_DEVICE_ID);
 		if (joystick_device_id < 0) {
-			puts("joystick input disabled by config.\n");
+			puts("Legacy Joystick input disabled by config.\n");
 		}
 		else
 		{
