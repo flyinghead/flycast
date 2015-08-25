@@ -1,299 +1,279 @@
 #include "ini.h"
+#include <sstream>
 
 wchar* trim_ws(wchar* str);
 
-ConfigEntry::ConfigEntry(ConfigEntry* pp)
+/* ConfigEntry */
+
+string ConfigEntry::get_string()
 {
-	next=pp;
-	flags=0;
+	return this->value;
 }
 
-void ConfigEntry::SaveFile(FILE* file)
+int ConfigEntry::get_int()
 {
-	if (flags & CEM_SAVE)
-		fprintf(file,"%s=%s\n",name.c_str(),value.c_str());
-}
-
-string ConfigEntry::GetValue()
-{
-	if (flags&CEM_VIRTUAL)
-		return valueVirtual;
-	else
-		return value;
-}
-
-ConfigSection::ConfigSection(ConfigSection* pp)
-{
-	next=pp;
-	flags=0;
-	entrys=0;
-}
-
-ConfigEntry* ConfigSection::FindEntry(string name)
-{
-	ConfigEntry* c= entrys;
-	while(c)
+	if (strstr(this->value.c_str(), "0x") != NULL)
 	{
-		if (stricmp(name.c_str(),c->name.c_str())==0)
-			return c;
-		c=c->next;
+		return strtol(this->value.c_str(), NULL, 16);
 	}
-	return 0;
+	else
+	{
+		return atoi(this->value.c_str());
+	}
 }
 
-void ConfigSection::SetEntry(string name,string value,u32 eflags)
+bool ConfigEntry::get_bool()
 {
-	ConfigEntry* c=FindEntry(name);
-	if (c)
+	if (stricmp(this->value.c_str(), "yes") == 0 ||
+		  stricmp(this->value.c_str(), "true") == 0 ||
+		  stricmp(this->value.c_str(), "on") == 0 ||
+		  stricmp(this->value.c_str(), "1") == 0)
 	{
-		//readonly is read only =)
-		if (c->flags & CEM_READONLY)
-			return;
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
 
-		//virtual : save only if different value
-		if (c->flags & CEM_VIRTUAL)
+/* ConfigSection */
+
+bool ConfigSection::has_entry(string name)
+{
+	return (this->entries.count(name) == 1);
+};
+
+ConfigEntry* ConfigSection::get_entry(string name)
+{
+	if(this->has_entry(name))
+	{
+		return &this->entries[name];
+	}
+	return NULL;
+};
+
+void ConfigSection::set(string name, string value)
+{
+	ConfigEntry new_entry = { value };
+	this->entries[name] = new_entry;
+};
+
+/* ConfigFile */
+
+ConfigSection* ConfigFile::add_section(string name, bool is_virtual)
+{
+	ConfigSection new_section;
+	if (is_virtual)
+	{
+		this->virtual_sections.insert(std::make_pair(name, new_section));
+		return &this->virtual_sections[name];
+	}
+	this->sections.insert(std::make_pair(name, new_section));
+	return &this->sections[name];
+};
+
+bool ConfigFile::has_section(string name)
+{
+	return (this->virtual_sections.count(name) == 1 || this->sections.count(name) == 1);
+}
+
+bool ConfigFile::has_entry(string section_name, string entry_name)
+{
+	ConfigSection* section = this->get_section(section_name, true);
+	if ((section != NULL) && section->has_entry(entry_name))
+	{
+		return true;
+	}
+	section = this->get_section(section_name, false);
+	return ((section != NULL) && section->has_entry(entry_name));
+}
+
+ConfigSection* ConfigFile::get_section(string name, bool is_virtual)
+{
+	if(is_virtual)
+	{
+		if (this->virtual_sections.count(name) == 1)
 		{
-
-			if(stricmp(c->valueVirtual.c_str(),value.c_str())==0)
-				return;
-			c->flags&=~CEM_VIRTUAL;
+			return &this->virtual_sections[name];
 		}
 	}
 	else
 	{
-		entrys=c= new ConfigEntry(entrys);
-		c->name=name;
+		if (this->sections.count(name) == 1)
+		{
+			return &this->sections[name];
+		}
+	}
+	return NULL;
+};
+
+ConfigEntry* ConfigFile::get_entry(string section_name, string entry_name)
+{
+	ConfigSection* section = this->get_section(section_name, true);
+	if(section != NULL)
+	{
+		return section->get_entry(entry_name);
 	}
 
-	verify(!(c->flags&(CEM_VIRTUAL|CEM_READONLY)));
-	//Virtual
-	//Virtual | ReadOnly
-	//Save
-	if (eflags & CEM_VIRTUAL)
+		section = this->get_section(section_name, false);
+	if(section != NULL)
 	{
-		verify(!(eflags & CEM_SAVE));
-		c->flags|=eflags;
-		c->valueVirtual=value;
+		return section->get_entry(entry_name);
 	}
-	else if (eflags & CEM_SAVE)
-	{
-		verify(!(eflags & (CEM_VIRTUAL|CEM_READONLY)));
-		flags|=CEM_SAVE;
-		c->flags|=CEM_SAVE;
+	return NULL;
 
-		c->value=value;
+}
+
+string ConfigFile::get(string section_name, string entry_name, string default_value)
+{
+	ConfigEntry* entry = this->get_entry(section_name, entry_name);
+	if (entry == NULL)
+	{
+		return default_value;
 	}
 	else
 	{
-		die("Invalid eflags value");
+		return entry->get_string();
 	}
-	
 }
 
-ConfigSection::~ConfigSection()
+int ConfigFile::get_int(string section_name, string entry_name, int default_value)
 {
-	ConfigEntry* n=entrys;
-	
-	while(n)
+	ConfigEntry* entry = this->get_entry(section_name, entry_name);
+	if (entry == NULL)
 	{
-		ConfigEntry* p=n; 
-		n=n->next;
-		delete p;
+		return default_value;
 	}
-}
-
-void ConfigSection::SaveFile(FILE* file)
-{
-	if (flags&CEM_SAVE)
+	else
 	{
-		fprintf(file,"[%s]\n",name.c_str());
-
-		vector<ConfigEntry*> stuff;
-
-		ConfigEntry* n=entrys;
-
-		while(n)
-		{
-			stuff.push_back(n);
-			n=n->next;
-		}
-
-		for (int i=stuff.size()-1;i>=0;i--)
-		{
-			stuff[i]->SaveFile(file);
-		}
-
-		fprintf(file,"\n");
+		return entry->get_int();
 	}
 }
 
-ConfigSection* ConfigFile::FindSection(string name)
+bool ConfigFile::get_bool(string section_name, string entry_name, bool default_value)
 {
-	ConfigSection* c= entrys;
-	while(c)
+	ConfigEntry* entry = this->get_entry(section_name, entry_name);
+	if (entry == NULL)
 	{
-		if (stricmp(name.c_str(),c->name.c_str())==0)
-			return c;
-		c=c->next;
+		return default_value;
 	}
-	return 0;
-}
-
-ConfigSection* ConfigFile::GetEntry(string name)
-{
-	ConfigSection* c=FindSection(name);
-	if (!c)
+	else
 	{
-		entrys=c= new ConfigSection(entrys);
-		c->name=name;
+		return entry->get_bool();
 	}
-
-	return c;
 }
 
-ConfigFile::~ConfigFile()
+void ConfigFile::set(string section_name, string entry_name, string value, bool is_virtual)
 {
-	ConfigSection* n=entrys;
-	
-	while(n)
+	ConfigSection* section = this->get_section(section_name, is_virtual);
+	if(section == NULL)
 	{
-		ConfigSection* p=n; 
-		n=n->next;
-		delete p;
+		section = this->add_section(section_name, is_virtual);
 	}
+	section->set(entry_name, value);
+};
+
+void ConfigFile::set_int(string section_name, string entry_name, int value, bool is_virtual)
+{
+	std::stringstream str_value;
+	str_value << value;
+	this->set(section_name, entry_name, str_value.str(), is_virtual);
 }
 
-void ConfigFile::ParseFile(FILE* file)
+void ConfigFile::set_bool(string section_name, string entry_name, bool value, bool is_virtual)
 {
-	wchar line[512];
-	wchar cur_sect[512]={0};
-	int cline=0;
+	string str_value = (value ? "yes" : "no");
+	this->set(section_name, entry_name, str_value, is_virtual);
+}
+
+void ConfigFile::parse(FILE* file)
+{
+	if(file == NULL)
+	{
+		return;
+	}
+	char line[512];
+	char current_section[512] = { '\0' };
+	int cline = 0;
 	while(file && !feof(file))
 	{
-		fgets(line,512,file);
-		if (feof(file))
+		if (fgets(line, 512, file) == NULL || feof(file))
+		{
 			break;
+		}
 
 		cline++;
 
-		if (strlen(line)<3)
-			continue;
-		if (line[strlen(line)-1]=='\r' || line[strlen(line)-1]=='\n')
-			line[strlen(line)-1]=0;
-
-		wchar* tl=trim_ws(line);
-		if (tl[0]=='[' && tl[strlen(tl)-1]==']')
+		if (strlen(line) < 3)
 		{
-			tl[strlen(tl)-1]=0;
-			strcpy(cur_sect,tl+1);
-			trim_ws(cur_sect);
+			continue;
+		}
+
+		if (line[strlen(line)-1] == '\r' ||
+			  line[strlen(line)-1] == '\n')
+		{
+			line[strlen(line)-1] = '\0';
+		}
+
+		char* tl = trim_ws(line);
+
+		if (tl[0] == '[' && tl[strlen(tl)-1] == ']')
+		{
+			tl[strlen(tl)-1] = '\0';
+			strcpy(current_section, tl+1);
+			trim_ws(current_section);
 		}
 		else
 		{
-			if (cur_sect[0]==0)
-				continue;//no open section
-			wchar* str1=strstr(tl,"=");
-			if (!str1)
+			if (strlen(current_section) == 0)
 			{
-				printf("Malformed entry on config - ignoring @ %d(%s)\n",cline,tl);
+				continue; //no open section
+			}
+
+			char* separator = strstr(tl, "=");
+
+			if (!separator)
+			{
+				printf("Malformed entry on config - ignoring @ %d(%s)\n",cline, tl);
 				continue;
 			}
-			*str1=0;
-			str1++;
-			wchar* v=trim_ws(str1);
-			wchar* k=trim_ws(tl);
-			if (v && k)
+
+			*separator = '\0';
+
+			char* name = trim_ws(tl);
+			char* value = trim_ws(separator + 1);
+			if (name == NULL || value == NULL)
 			{
-				ConfigSection*cs=this->GetEntry(cur_sect);
-				
-				//if (!cs->FindEntry(k))
-				cs->SetEntry(k,v,CEM_SAVE|CEM_LOAD);
+				printf("Malformed entry on config - ignoring @ %d(%s)\n",cline, tl);
+				continue;
 			}
 			else
 			{
-				printf("Malformed entry on config - ignoring @ %d(%s)\n",cline,tl);
+				this->set(string(current_section), string(name), string(value));
 			}
 		}
 	}
 }
 
-void ConfigFile::SaveFile(FILE* file)
+void ConfigFile::save(FILE* file)
 {
-	vector<ConfigSection*> stuff;
-
-	ConfigSection* n=entrys;
-	
-	while(n)
+	for(std::map<string, ConfigSection>::iterator section_it = this->sections.begin();
+		  section_it != this->sections.end(); section_it++)
 	{
-		stuff.push_back(n);
-		n=n->next;
-	}
+		string section_name = section_it->first;
+		ConfigSection section = section_it->second;
 
-	for (int i=stuff.size()-1;i>=0;i--)
-	{
-		if (stuff[i]->name!="emu")
-			stuff[i]->SaveFile(file);
-	}
-}
+		fprintf(file, "[%s]\n", section_name.c_str());
 
-s32 ConfigFile::Exists(const wchar * Section, const wchar * Key)
-{
-	if (Section==0)
-		return -1;
-	//return cfgRead(Section,Key,0);
-	ConfigSection*cs= this->FindSection(Section);
-	if (cs ==  0)
-		return 0;
+		for(std::map<string, ConfigEntry>::iterator entry_it = section.entries.begin();
+			  entry_it != section.entries.end(); entry_it++)
+		{
+			string entry_name = entry_it->first;
+			ConfigEntry entry = entry_it->second;
+			fprintf(file, "%s = %s\n", entry_name.c_str(), entry.get_string().c_str());
+		}
 
-	if (Key==0)
-		return 1;
-
-	ConfigEntry* ce=cs->FindEntry(Key);
-	if (ce!=0)
-		return 2;
-	else
-		return 0;
-}
-
-void ConfigFile::LoadStr(const wchar * Section, const wchar * Key, wchar * Return,const wchar* Default)
-{
-	verify(Return!=0);
-	string value = this->LoadStr(Section, Key, Default);
-	strcpy(Return, value.c_str());
-}
-
-string ConfigFile::LoadStr(const wchar * Section, const wchar * Key, const wchar* Default)
-{
-	verify(Section != 0 && strlen(Section) != 0);
-	verify(Key != 0 && strlen(Key) != 0);
-
-	if (Default == 0)
-		Default = "";
-	ConfigSection* cs = this->GetEntry(Section);
-	ConfigEntry* ce = cs->FindEntry(Key);
-	if (!ce)
-	{
-		cs->SetEntry(Key, Default, CEM_SAVE);
-		return Default;
-	}
-	else
-	{
-		return ce->GetValue();
-	}
-}
-
-s32 ConfigFile::LoadInt(const wchar * Section, const wchar * Key,s32 Default)
-{
-	wchar temp_d[30];
-	wchar temp_o[30];
-	sprintf(temp_d,"%d",Default);
-	this->LoadStr(Section,Key,temp_o,temp_d);
-	if (strstr(temp_o, "0x") != NULL)
-	{
-		return strtol(temp_o, NULL, 16);
-	}
-	else
-	{
-		return atoi(temp_o);
+		fputs("\n", file);
 	}
 }

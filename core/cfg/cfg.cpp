@@ -5,19 +5,12 @@
 */
 
 #define _CRT_SECURE_NO_DEPRECATE (1)
+#include <errno.h>
 #include "cfg.h"
 #include "ini.h"
 
 string cfgPath;
-
-struct vitem
-{
-	string s;
-	string n;
-	string v;
-	vitem(string a,string b,string c){s=a;n=b;v=c;}
-};
-vector<vitem> vlist;
+bool save_config = true;
 
 ConfigFile cfgdb;
 
@@ -25,24 +18,29 @@ void savecfgf()
 {
 	FILE* cfgfile = fopen(cfgPath.c_str(),"wt");
 	if (!cfgfile)
+	{
 		printf("Error : Unable to open file for saving \n");
+	}
 	else
 	{
-		cfgdb.SaveFile(cfgfile);
+		cfgdb.save(cfgfile);
 		fclose(cfgfile);
 	}
 }
 void  cfgSaveStr(const wchar * Section, const wchar * Key, const wchar * String)
 {
-	cfgdb.GetEntry(Section)->SetEntry(Key,String,CEM_SAVE);
-	savecfgf();
+	cfgdb.set(string(Section), string(Key), string(String));
+	if(save_config)
+	{
+		savecfgf();
+	}
 	//WritePrivateProfileString(Section,Key,String,cfgPath);
 }
 //New config code
 
 /*
 	I want config to be really flexible .. so , here is the new implementation :
-	
+
 	Functions :
 	cfgLoadInt  : Load an int , if it does not exist save the default value to it and return it
 	cfgSaveInt  : Save an int
@@ -82,32 +80,29 @@ bool cfgOpen()
 {
 	cfgPath=GetPath("/emu.cfg");
 	FILE* cfgfile = fopen(cfgPath.c_str(),"r");
-	if(!cfgfile) {
-		cfgfile = fopen(cfgPath.c_str(),"wt");
-		if(!cfgfile) 
-			printf("Unable to open the config file for reading or writing\nfile : %s\n",cfgPath.c_str());
+
+	if(cfgfile != NULL) {
+		cfgdb.parse(cfgfile);
+		fclose(cfgfile);
+	}
+	else
+	{
+		// Config file can't be opened
+		int error_code = errno;
+		printf("Warning: Unable to open the config file '%s' for reading (%s)\n", cfgPath.c_str(), strerror(error_code));
+		if (error_code == ENOENT)
+		{
+			// Config file didn't exist
+			printf("Creating new empty config file at '%s'\n", cfgPath.c_str());
+			savecfgf();
+		}
 		else
 		{
-			fseek(cfgfile,0,SEEK_SET);
-			fclose(cfgfile);
-			cfgfile = fopen(cfgPath.c_str(),"r");
-			if(!cfgfile) 
-				printf("Unable to open the config file for reading\nfile : %s\n",cfgPath.c_str());
+			// There was some other error (may be a permissions problem or something like that)
+			save_config = false;
 		}
 	}
 
-	cfgdb.ParseFile(cfgfile);
-
-	for (size_t i=0;i<vlist.size();i++)
-	{
-		cfgdb.GetEntry(vlist[i].s)->SetEntry(vlist[i].n,vlist[i].v,CEM_VIRTUAL);
-	}
-
-	if (cfgfile)
-	{
-		cfgdb.SaveFile(cfgfile);
-		fclose(cfgfile);
-	}
 	return true;
 }
 
@@ -119,32 +114,50 @@ bool cfgOpen()
 //2 : found section & key
 s32  cfgExists(const wchar * Section, const wchar * Key)
 {
-	return cfgdb.Exists(Section, Key);
+	if(cfgdb.has_entry(string(Section), string(Key)))
+	{
+		return 2;
+	}
+	else
+	{
+		return (cfgdb.has_section(string(Section)) ? 1 : 0);
+	}
 }
 void  cfgLoadStr(const wchar * Section, const wchar * Key, wchar * Return,const wchar* Default)
 {
-	return cfgdb.LoadStr(Section, Key, Return, Default);
+	string value = cfgdb.get(Section, Key, Default);
+	strcpy(Return, value.c_str());
 }
 
 string  cfgLoadStr(const wchar * Section, const wchar * Key, const wchar* Default)
 {
-	return cfgdb.LoadStr(Section, Key, Default);
+	if(!cfgdb.has_entry(string(Section), string(Key)))
+	{
+			cfgSaveStr(Section, Key, Default);
+	}
+	return cfgdb.get(string(Section), string(Key), string(Default));
 }
 
 //These are helpers , mainly :)
-s32  cfgLoadInt(const wchar * Section, const wchar * Key,s32 Default)
-{
-	return cfgdb.LoadInt(Section, Key, Default);
-}
-
 void  cfgSaveInt(const wchar * Section, const wchar * Key, s32 Int)
 {
-	wchar tmp[32];
-	sprintf(tmp,"%d", Int);
-	cfgSaveStr(Section,Key,tmp);
+	cfgdb.set_int(string(Section), string(Key), Int);
+	if(save_config)
+	{
+		savecfgf();
+	}
 }
+
+s32  cfgLoadInt(const wchar * Section, const wchar * Key,s32 Default)
+{
+	if(!cfgdb.has_entry(string(Section), string(Key)))
+	{
+			cfgSaveInt(Section, Key, Default);
+	}
+	return cfgdb.get_int(string(Section), string(Key), Default);
+}
+
 void cfgSetVirtual(const wchar * Section, const wchar * Key, const wchar * String)
 {
-	vlist.push_back(vitem(Section,Key,String));
-	//cfgdb.GetEntry(Section,CEM_VIRTUAL)->SetEntry(Key,String,CEM_VIRTUAL);
+	cfgdb.set(string(Section), string(Key), string(String), true);
 }
