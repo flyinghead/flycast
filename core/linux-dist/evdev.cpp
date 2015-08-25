@@ -186,10 +186,10 @@
 			load_keycode(&mf, "dreamcast", "axis_y"),
 			load_keycode(&mf, "dreamcast", "axis_trigger_left"),
 			load_keycode(&mf, "dreamcast", "axis_trigger_right"),
-			mf.get_bool("dreamcast", "axis_x_inverted", false),
-			mf.get_bool("dreamcast", "axis_y_inverted", false),
-			mf.get_bool("dreamcast", "axis_trigger_left_inverted", false),
-			mf.get_bool("dreamcast", "axis_trigger_right_inverted", false)
+			mf.get_bool("compat", "axis_x_inverted", false),
+			mf.get_bool("compat", "axis_y_inverted", false),
+			mf.get_bool("compat", "axis_trigger_left_inverted", false),
+			mf.get_bool("compat", "axis_trigger_right_inverted", false)
 		};
 		return mapping;
 	}
