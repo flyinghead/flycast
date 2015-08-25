@@ -68,18 +68,21 @@ extern "C" int reicast_main(int argc, char* argv[]);
 {
     install_prof_handler(1);
 
-    //This looks like the right place, rite?
-    char text[2]="";
+	char *Args[3];
+	const char *P;
 
-    char* prms[2];
-    prms[0]=text;
+	P = (const char *)[self.diskImage UTF8String];
+	Args[0] = "dc";
+	Args[1] = "-config";
+	Args[2] = P&&P[0]? (char *)malloc(strlen(P)+32):0;
 
-	if (self.diskImage != nil) {
-		NSString *file = [NSString stringWithFormat:@"config:image=%@", self.diskImage];
-		strcpy(prms[1], [file UTF8String]);
+	if(Args[2])
+	{
+		strcpy(Args[2],"config:image=");
+		strcat(Args[2],P);
 	}
 
-    reicast_main(1, prms);
+	reicast_main(Args[2]? 3:1,Args);
 }
 
 - (void)viewDidLoad
