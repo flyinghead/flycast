@@ -11,8 +11,8 @@ build:
 after_build:
   - cmd: mkdir artifacts
   - cmd: set PLATFORM2=%PLATFORM:x86=Win32%
-  - cmd: move WorkDir\reicast_%PLATFORM2%_Slow.exe artifacts/reicast-%PLATFORM%-%APPVEYOR_REPO_COMMIT%.exe
+  - cmd: move WorkDir\reicast_%PLATFORM2%_Slow.exe artifacts/reicast-%PLATFORM%-%APPVEYOR_REPO_COMMIT%-slow.exe
 
 artifacts:
   - path: artifacts
-    name: reicast-$(platform)
+    name: reicast-$(platform)-slow
