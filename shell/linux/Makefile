@@ -285,6 +285,7 @@ install: $(EXECUTABLE)
 	mkdir -p $(DESTDIR)$(MENUENTRY_DIR) 2>/dev/null || /bin/true
 	mkdir -p $(DESTDIR)$(ICON_DIR) 2>/dev/null || /bin/true
 	install -m755 $(EXECUTABLE) $(DESTDIR)$(PREFIX)/bin
+	install -m755 tools/reicast-joyinfo.py $(DESTDIR)$(PREFIX)/bin/reicast-joyinfo
 	install -m644 man/reicast.1 $(DESTDIR)$(MAN_DIR)
 	install -m644 reicast.desktop $(DESTDIR)$(MENUENTRY_DIR)
 	install -m644 reicast.png $(DESTDIR)$(ICON_DIR)
