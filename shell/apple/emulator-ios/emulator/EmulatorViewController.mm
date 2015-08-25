@@ -88,6 +88,8 @@ extern "C" int reicast_main(int argc, char* argv[]);
 - (void)viewDidLoad
 {
     [super viewDidLoad];
+	
+	self.controllerView = [[PadViewController alloc] initWithNibName:@"PadViewController" bundle:nil];
     
     self.context = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2];
 
@@ -112,9 +114,8 @@ extern "C" int reicast_main(int argc, char* argv[]);
     
     if ([[GCController controllers] count]) {
         [self toggleHardwareController:YES];
-	} else {
-		[self toggleHardwareController:NO];
 	}
+	[self.controllerView showController:self.view];
 		
     self.iCadeReader = [[iCadeReaderView alloc] init];
     [self.view addSubview:self.iCadeReader];
@@ -178,60 +179,59 @@ extern "C" int reicast_main(int argc, char* argv[]);
 
 }
 
-- (IBAction)keycode:(id)sender
+- (void)handleKeycode:(UIButton*)button
 {
-	UIButton *instance = (UIButton*)sender;
-	if (instance == self.img_dpad_l) {
+	if (button == self.controllerView.img_dpad_l) {
 		kcode[0] &= ~(DC_DPAD_LEFT);
 	} else {
 		kcode[0] |= ~(DC_DPAD_LEFT);
 	}
-	if (instance == self.img_dpad_r) {
+	if (button == self.controllerView.img_dpad_r) {
 		kcode[0] &= ~(DC_DPAD_RIGHT);
 	} else {
 		kcode[0] |= ~(DC_DPAD_RIGHT);
 	}
-	if (instance == self.img_dpad_u) {
+	if (button == self.controllerView.img_dpad_u) {
 		kcode[0] &= ~(DC_DPAD_UP);
 	} else {
 		kcode[0] |= ~(DC_DPAD_UP);
 	}
-	if (instance == self.img_dpad_d) {
+	if (button == self.controllerView.img_dpad_d) {
 		kcode[0] &= ~(DC_DPAD_DOWN);
 	} else {
 		kcode[0] |= ~(DC_DPAD_DOWN);
 	}
-	if (instance == self.img_abxy_a) {
+	if (button == self.controllerView.img_abxy_a) {
 		kcode[0] &= ~(DC_BTN_A);
 	} else {
 		kcode[0] |= (DC_BTN_A);
 	}
-	if (instance == self.img_abxy_b) {
+	if (button == self.controllerView.img_abxy_b) {
 		kcode[0] &= ~(DC_BTN_B);
 	} else {
 		kcode[0] |= (DC_BTN_B);
 	}
-	if (instance == self.img_abxy_x) {
+	if (button == self.controllerView.img_abxy_x) {
 		kcode[0] &= ~(DC_BTN_X);
 	} else {
 		kcode[0] |= (DC_BTN_X);
 	}
-	if (instance == self.img_abxy_y) {
+	if (button == self.controllerView.img_abxy_y) {
 		kcode[0] &= ~(DC_BTN_Y);
 	} else {
 		kcode[0] |= (DC_BTN_Y);
 	}
-	if (instance == self.img_lt) {
+	if (button == self.controllerView.img_lt) {
 		kcode[0] &= ~(DC_AXIS_LT);
 	} else {
 		kcode[0] |= (DC_AXIS_LT);
 	}
-	if (instance == self.img_rt) {
+	if (button == self.controllerView.img_rt) {
 		kcode[0] &= ~(DC_AXIS_RT);
 	} else {
 		kcode[0] |= (DC_AXIS_RT);
 	}
-	if (instance == self.img_start) {
+	if (button == self.controllerView.img_start) {
 		kcode[0] &= ~(DC_BTN_START);
 	} else {
 		kcode[0] |= (DC_BTN_START);
@@ -239,8 +239,8 @@ extern "C" int reicast_main(int argc, char* argv[]);
 }
 
 - (void)toggleHardwareController:(BOOL)useHardware {
-	[self.controllerView setHidden:useHardware];
     if (useHardware) {
+//		[self.controllerView hideController];
         self.gController = [GCController controllers][0];
         if (self.gController.gamepad) {
             [self.gController.gamepad.buttonA setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
@@ -355,6 +355,7 @@ extern "C" int reicast_main(int argc, char* argv[]);
         }
     } else {
         self.gController = nil;
+//		[self.controllerView showController:self.view];
     }
 }
 

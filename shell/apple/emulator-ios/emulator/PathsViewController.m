@@ -89,7 +89,7 @@
 	DiskViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier forIndexPath:indexPath];
 	NSString* imagePath = [self.diskImages objectAtIndex: indexPath.row];
 	
-	cell.nameLabel.text = [imagePath lastPathComponent];
+	cell.nameLabel.text = [[imagePath lastPathComponent] stringByDeletingPathExtension];
 	
 	return cell;
 }

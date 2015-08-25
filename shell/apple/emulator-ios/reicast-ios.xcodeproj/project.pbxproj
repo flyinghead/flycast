@@ -90,6 +90,8 @@
 		87D92F4E1B7A1B5700D8FD9E /* GameController.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 87D92F4D1B7A1B5700D8FD9E /* GameController.framework */; };
 		87D92F541B7A1BB100D8FD9E /* iCadeReaderView.m in Sources */ = {isa = PBXBuildFile; fileRef = 87D92F511B7A1BB100D8FD9E /* iCadeReaderView.m */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
 		87D92F551B7A1BB100D8FD9E /* LICENSE in Resources */ = {isa = PBXBuildFile; fileRef = 87D92F531B7A1BB100D8FD9E /* LICENSE */; };
+		87FA52E91B8CE18600CEFC32 /* PadViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 87FA52E71B8CE18600CEFC32 /* PadViewController.m */; };
+		87FA52EA1B8CE18600CEFC32 /* PadViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 87FA52E81B8CE18600CEFC32 /* PadViewController.xib */; };
 		9C7A393318C804A80070BB5F /* reicast.entitlements in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A393218C804A80070BB5F /* reicast.entitlements */; };
 		9C7A3AA218C806E00070BB5F /* cfg.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A395118C806DE0070BB5F /* cfg.cpp */; };
 		9C7A3AA318C806E00070BB5F /* cl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A395318C806DE0070BB5F /* cl.cpp */; };
@@ -366,6 +368,9 @@
 		87D92F511B7A1BB100D8FD9E /* iCadeReaderView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iCadeReaderView.m; sourceTree = "<group>"; };
 		87D92F521B7A1BB100D8FD9E /* iCadeState.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iCadeState.h; sourceTree = "<group>"; };
 		87D92F531B7A1BB100D8FD9E /* LICENSE */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
+		87FA52E61B8CE18600CEFC32 /* PadViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PadViewController.h; path = emulator/PadViewController.h; sourceTree = "<group>"; };
+		87FA52E71B8CE18600CEFC32 /* PadViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = PadViewController.m; path = emulator/PadViewController.m; sourceTree = "<group>"; };
+		87FA52E81B8CE18600CEFC32 /* PadViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = PadViewController.xib; path = emulator/PadViewController.xib; sourceTree = "<group>"; };
 		9C7A393218C804A80070BB5F /* reicast.entitlements */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = reicast.entitlements; sourceTree = "<group>"; };
 		9C7A393A18C806DE0070BB5F /* arm_coding.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = arm_coding.h; sourceTree = "<group>"; };
 		9C7A393B18C806DE0070BB5F /* arm_disasm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = arm_disasm.h; sourceTree = "<group>"; };
@@ -823,6 +828,9 @@
 		9C7A393618C805F70070BB5F /* View Controller Subclasses */ = {
 			isa = PBXGroup;
 			children = (
+				87FA52E61B8CE18600CEFC32 /* PadViewController.h */,
+				87FA52E71B8CE18600CEFC32 /* PadViewController.m */,
+				87FA52E81B8CE18600CEFC32 /* PadViewController.xib */,
 				8794D9C11B88F3D600B1B3A3 /* DiskViewCell.h */,
 				8794D9C21B88F3D600B1B3A3 /* DiskViewCell.m */,
 				87C208C51B7A4BFA00638BDD /* AboutViewController.h */,
@@ -1535,6 +1543,7 @@
 				87D92F441B7A1B4800D8FD9E /* LTrigger@2x.png in Resources */,
 				87D92F551B7A1BB100D8FD9E /* LICENSE in Resources */,
 				87D92F451B7A1B4800D8FD9E /* menuback.png in Resources */,
+				87FA52EA1B8CE18600CEFC32 /* PadViewController.xib in Resources */,
 				87078AA518A47FE90034C7A0 /* Shader.vsh in Resources */,
 				878B0D001B8BFE6200A8D1C5 /* disk_unknown.png in Resources */,
 				87D92F3B1B7A1B4800D8FD9E /* ABXYPad.png in Resources */,
@@ -1637,6 +1646,7 @@
 				9C7A3B5918C81A4F0070BB5F /* SWRevealViewController.m in Sources */,
 				9C7A3B0F18C806E00070BB5F /* maple_cfg.cpp in Sources */,
 				9C7A3AF318C806E00070BB5F /* crc32.c in Sources */,
+				87FA52E91B8CE18600CEFC32 /* PadViewController.m in Sources */,
 				8497BCC01A41A0E900EFB9ED /* nixprof.cpp in Sources */,
 				9C7A3AE118C806E00070BB5F /* zip_set_file_comment.c in Sources */,
 				84967C9A1B8F492C005F1140 /* pngrutil.c in Sources */,
