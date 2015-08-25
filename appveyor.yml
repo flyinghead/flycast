@@ -7,3 +7,12 @@ build:
   project: shell/reicast.sln
   parallel: true
   verbosity: minimal
+
+after_build:
+  - cmd: mkdir artifacts
+  - cmd: set PLATFORM2=%PLATFORM:x86=Win32%
+  - cmd: move WorkDir\reicast_%PLATFORM2%_Slow.exe artifacts/reicast-%PLATFORM%-%APPVEYOR_REPO_COMMIT%.exe
+
+artifacts:
+  - path: artifacts
+    name: reicast-$(platform)
