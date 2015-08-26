@@ -286,7 +286,7 @@ install: $(EXECUTABLE)
 	mkdir -p $(DESTDIR)$(MENUENTRY_DIR) 2>/dev/null || /bin/true
 	mkdir -p $(DESTDIR)$(ICON_DIR) 2>/dev/null || /bin/true
 	install -m755 $(EXECUTABLE) $(DESTDIR)$(PREFIX)/bin
-	install -m755 tools/reicast-joyinfo.py $(DESTDIR)$(PREFIX)/bin/reicast-joyinfo
+	install -m755 tools/reicast-joyconfig.py $(DESTDIR)$(PREFIX)/bin/reicast-joyconfig
 	install -m644 mappings/controller_gcwz.cfg $(DESTDIR)$(PREFIX)/share/reicast/mappings
 	install -m644 mappings/controller_generic.cfg $(DESTDIR)$(PREFIX)/share/reicast/mappings
 	install -m644 mappings/controller_pandora.cfg $(DESTDIR)$(PREFIX)/share/reicast/mappings
