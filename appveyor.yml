@@ -11,8 +11,19 @@ build:
 after_build:
   - cmd: mkdir artifacts
   - cmd: set PLATFORM2=%PLATFORM:x86=Win32%
-  - cmd: move WorkDir\reicast_%PLATFORM2%_Slow.exe artifacts/reicast-win-%PLATFORM%-%APPVEYOR_REPO_COMMIT%-slow.exe
+  - cmd: move WorkDir\reicast_%PLATFORM2%_Slow.exe artifacts/reicast-win_%PLATFORM%-slow-%APPVEYOR_REPO_COMMIT%.exe
 
 artifacts:
   - path: artifacts
-    name: reicast-win-$(platform)-slow
+    name: reicast-win_$(platform)-slow-$(APPVEYOR_REPO_COMMIT)
+
+deploy:
+- provider: S3
+  access_key_id: AKIAJETEBUZSLZF3YNKA
+  secret_access_key:
+    secure: ZxrysCeqMK99dOOzKyoeN4R5aO8JjA4RTrwVAQPQHz8sjyyKuVDZT2fC+9m6lUIi
+  region: 
+  bucket: reicast-builds-windows
+  folder: 'builds/heads/$(APPVEYOR_REPO_BRANCH)-$(APPVEYOR_REPO_COMMIT)'
+  artifact: reicast-win_$(platform)-slow-$(APPVEYOR_REPO_COMMIT)
+  set_public: true
