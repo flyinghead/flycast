@@ -327,7 +327,7 @@ void sample_Start(int freq)
 	if (prof_run)
 		return;
 	prof_wait = 1000000 / freq;
-	printf("sampling profiler: starting %d hz %d wait\n", freq, prof_wait);
+	printf("sampling profiler: starting %d Hz %d wait\n", freq, prof_wait);
 	prof_run = true;
 	pthread_create(&proft, NULL, profiler_main, 0);
 }
