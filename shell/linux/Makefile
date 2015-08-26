@@ -281,10 +281,18 @@ obj-$(platform)/%.build_obj : $(RZDCY_SRC_DIR)/%.S
 
 install: $(EXECUTABLE)
 	mkdir -p $(DESTDIR)$(PREFIX)/bin 2>/dev/null || /bin/true
+	mkdir -p $(DESTDIR)$(PREFIX)/share/reicast/mappings 2>/dev/null || /bin/true
 	mkdir -p $(DESTDIR)$(MAN_DIR) 2>/dev/null || /bin/true
 	mkdir -p $(DESTDIR)$(MENUENTRY_DIR) 2>/dev/null || /bin/true
 	mkdir -p $(DESTDIR)$(ICON_DIR) 2>/dev/null || /bin/true
 	install -m755 $(EXECUTABLE) $(DESTDIR)$(PREFIX)/bin
+	install -m755 tools/reicast-joyinfo.py $(DESTDIR)$(PREFIX)/bin/reicast-joyinfo
+	install -m644 mappings/controller_gcwz.cfg $(DESTDIR)$(PREFIX)/share/reicast/mappings
+	install -m644 mappings/controller_generic.cfg $(DESTDIR)$(PREFIX)/share/reicast/mappings
+	install -m644 mappings/controller_pandora.cfg $(DESTDIR)$(PREFIX)/share/reicast/mappings
+	install -m644 mappings/controller_xboxdrv.cfg $(DESTDIR)$(PREFIX)/share/reicast/mappings
+	install -m644 mappings/controller_xpad.cfg $(DESTDIR)$(PREFIX)/share/reicast/mappings
+	install -m644 mappings/keyboard.cfg $(DESTDIR)$(PREFIX)/share/reicast/mappings
 	install -m644 man/reicast.1 $(DESTDIR)$(MAN_DIR)
 	install -m644 reicast.desktop $(DESTDIR)$(MENUENTRY_DIR)
 	install -m644 reicast.png $(DESTDIR)$(ICON_DIR)

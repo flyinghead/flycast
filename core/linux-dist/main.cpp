@@ -79,7 +79,7 @@ void emit_WriteCodeCache();
 
 #if defined(USE_EVDEV)
 	/* evdev input */
-	static Controller controllers[4] = {
+	static EvdevController evdev_controllers[4] = {
 		{ -1, NULL },
 		{ -1, NULL },
 		{ -1, NULL },
@@ -97,8 +97,8 @@ void SetupInput()
 	#if defined(USE_EVDEV)
 		int evdev_device_id[4] = { -1, -1, -1, -1 };
 		size_t size_needed;
+		int port, i;
 
-		int evdev_device_length, port, i;
 		char* evdev_device;
 
 		for (port = 0; port < 4; port++)
@@ -106,8 +106,8 @@ void SetupInput()
 			size_needed = snprintf(NULL, 0, EVDEV_DEVICE_CONFIG_KEY, port+1) + 1;
 			char* evdev_config_key = (char*)malloc(size_needed);
 			sprintf(evdev_config_key, EVDEV_DEVICE_CONFIG_KEY, port+1);
-
 			evdev_device_id[port] = cfgLoadInt("input", evdev_config_key, EVDEV_DEFAULT_DEVICE_ID(port+1));
+			free(evdev_config_key);
 
 			// Check if the same device is already in use on another port
 			if (evdev_device_id[port] < 0)
@@ -124,21 +124,27 @@ void SetupInput()
 						}
 				}
 
-				evdev_device_length = snprintf(NULL, 0, EVDEV_DEVICE_STRING, evdev_device_id[port]);
-				evdev_device = (char*)malloc(evdev_device_length + 1);
+				size_needed = snprintf(NULL, 0, EVDEV_DEVICE_STRING, evdev_device_id[port]) + 1;
+				evdev_device = (char*)malloc(size_needed);
 				sprintf(evdev_device, EVDEV_DEVICE_STRING, evdev_device_id[port]);
-				input_evdev_init(&controllers[port], evdev_device);
+
+				size_needed = snprintf(NULL, 0, EVDEV_MAPPING_CONFIG_KEY, port+1) + 1;
+				evdev_config_key = (char*)malloc(size_needed);
+				sprintf(evdev_config_key, EVDEV_MAPPING_CONFIG_KEY, port+1);
+				const char* mapping = (cfgExists("input", evdev_config_key) == 2 ? cfgLoadStr("input", evdev_config_key, "").c_str() : NULL);
+				free(evdev_config_key);
+
+				input_evdev_init(&evdev_controllers[port], evdev_device, mapping);
+
 				free(evdev_device);
 			}
-
-			free(evdev_config_key);
 		}
 	#endif
 
 	#if defined(USE_JOYSTICK)
 		int joystick_device_id = cfgLoadInt("input", "joystick_device_id", JOYSTICK_DEFAULT_DEVICE_ID);
 		if (joystick_device_id < 0) {
-			puts("joystick input disabled by config.\n");
+			puts("Legacy Joystick input disabled by config.\n");
 		}
 		else
 		{
@@ -166,7 +172,7 @@ void UpdateInputState(u32 port)
 	#endif
 
 	#if defined(USE_EVDEV)
-		input_evdev_handle(&controllers[port], port);
+		input_evdev_handle(&evdev_controllers[port], port);
 	#endif
 }
 
@@ -207,9 +213,9 @@ void dc_run();
 		if (joystick_fd >= 0) { close(joystick_fd); }
 		for (int port = 0; port < 4 ; port++)
 		{
-			if (controllers[port]->fd >= 0)
+			if (evdev_controllers[port]->fd >= 0)
 			{
-				close(controllers[port]->fd);
+				close(evdev_controllers[port]->fd);
 			}
 		}
 
@@ -287,3 +293,6 @@ void os_DebugBreak()
 		exit(-1);
 	#endif
 }
+
+
+
