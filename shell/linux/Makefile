@@ -305,12 +305,23 @@ install: $(EXECUTABLE)
 	install -m644 mappings/controller_xpad.cfg $(DESTDIR)$(PREFIX)/share/reicast/mappings
 	install -m644 mappings/keyboard.cfg $(DESTDIR)$(PREFIX)/share/reicast/mappings
 	install -m644 man/reicast.1 $(DESTDIR)$(MAN_DIR)
+	install -m644 man/reicast-joyconfig.1 $(DESTDIR)$(MAN_DIR)
 	install -m644 reicast.desktop $(DESTDIR)$(MENUENTRY_DIR)
 	install -m644 reicast.png $(DESTDIR)$(ICON_DIR)
 
 uninstall:
 	rm -f $(DESTDIR)$(PREFIX)/bin/$(EXECUTABLE)
+	rm -f $(DESTDIR)$(PREFIX)/bin/reicast-joyconfig
+	rm -f $(DESTDIR)$(PREFIX)/share/reicast/mappings/controller_gcwz.cfg
+	rm -f $(DESTDIR)$(PREFIX)/share/reicast/mappings/controller_generic.cfg
+	rm -f $(DESTDIR)$(PREFIX)/share/reicast/mappings/controller_pandora.cfg
+	rm -f $(DESTDIR)$(PREFIX)/share/reicast/mappings/controller_xboxdrv.cfg
+	rm -f $(DESTDIR)$(PREFIX)/share/reicast/mappings/controller_xpad.cfg
+	rm -f $(DESTDIR)$(PREFIX)/share/reicast/mappings/keyboard.cfg
 	rm -f $(DESTDIR)$(MAN_DIR)/reicast.1
+	rm -f $(DESTDIR)$(MAN_DIR)/reicast-joyconfig.1
+	rm -f $(DESTDIR)$(MENUENTRY_DIR)/reicast.desktop
+	rm -f $(DESTDIR)$(ICON_DIR)/reicast.png
 
 clean:
 	rm -f $(OBJECTS) $(EXECUTABLE) $(EXECUTABLE_STRIPPED) .map
