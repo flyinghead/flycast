@@ -264,8 +264,14 @@ OBJECTS:=$(OBJECTS:.S=.build_obj)
 OBJECTS:=$(patsubst $(RZDCY_SRC_DIR)/%,obj-$(platform)/%,$(OBJECTS))
 
 EXECUTABLE_STRIPPED=nosym-reicast.elf
-EXECUTABLE=reicast.elf
-EXECUTABLE_NAME=reicast
+ifdef NAOMI
+    CFLAGS += -D TARGET_NAOMI
+    EXECUTABLE=reicast_naomi.elf
+    EXECUTABLE_NAME=reicast-naomi
+else
+    EXECUTABLE=reicast.elf
+    EXECUTABLE_NAME=reicast
+endif
 
 all: $(CPPFILES) $(EXECUTABLE) $(EXECUTABLE_STRIPPED)
 ifneq (,$(findstring gcwz,$(platform)))
