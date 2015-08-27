@@ -310,7 +310,7 @@ install: $(EXECUTABLE)
 	install -m644 reicast.png $(DESTDIR)$(ICON_DIR)
 
 uninstall:
-	rm -f $(DESTDIR)$(PREFIX)/bin/$(EXECUTABLE)
+	rm -f $(DESTDIR)$(PREFIX)/bin/$(EXECUTABLE_NAME)
 	rm -f $(DESTDIR)$(PREFIX)/bin/reicast-joyconfig
 	rm -f $(DESTDIR)$(PREFIX)/share/reicast/mappings/controller_gcwz.cfg
 	rm -f $(DESTDIR)$(PREFIX)/share/reicast/mappings/controller_generic.cfg
