@@ -264,8 +264,8 @@ OBJECTS:=$(OBJECTS:.S=.build_obj)
 OBJECTS:=$(patsubst $(RZDCY_SRC_DIR)/%,obj-$(platform)/%,$(OBJECTS))
 
 EXECUTABLE_STRIPPED=nosym-reicast.elf
-EXECUTABLE=reicast
-
+EXECUTABLE=reicast.elf
+EXECUTABLE_NAME=reicast
 
 all: $(CPPFILES) $(EXECUTABLE) $(EXECUTABLE_STRIPPED)
 ifneq (,$(findstring gcwz,$(platform)))
@@ -296,7 +296,7 @@ install: $(EXECUTABLE)
 	mkdir -p $(DESTDIR)$(MAN_DIR) 2>/dev/null || /bin/true
 	mkdir -p $(DESTDIR)$(MENUENTRY_DIR) 2>/dev/null || /bin/true
 	mkdir -p $(DESTDIR)$(ICON_DIR) 2>/dev/null || /bin/true
-	install -m755 $(EXECUTABLE) $(DESTDIR)$(PREFIX)/bin
+	install -m755 $(EXECUTABLE) $(DESTDIR)$(PREFIX)/bin/$(EXECUTABLE_NAME)
 	install -m755 tools/reicast-joyconfig.py $(DESTDIR)$(PREFIX)/bin/reicast-joyconfig
 	install -m644 mappings/controller_gcwz.cfg $(DESTDIR)$(PREFIX)/share/reicast/mappings
 	install -m644 mappings/controller_generic.cfg $(DESTDIR)$(PREFIX)/share/reicast/mappings
