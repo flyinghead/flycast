@@ -56,7 +56,7 @@ ifeq (,$(platform))
         else ifneq (,$(findstring ODROIDU2,$(HARDWARE)))
             platform = odroidu2
         else
-            $(error Unsupported Hardware)
+            platform = armv7h
         endif
     else ifneq (,$(findstring mips,$(ARCH)))
         platform = gcwz
@@ -85,6 +85,17 @@ else ifneq (,$(findstring x64,$(platform)))
     USE_X11 := 1
     CFLAGS += -D TARGET_LINUX_x64 -D TARGET_NO_AREC -fsingle-precision-constant
     CXXFLAGS += -fexceptions
+
+# Generic 32 bit ARMhf (a.k.a. ARMv7h)
+else ifneq (,$(findstring armv7h,$(platform)))
+    MFLAGS += -marm -mfloat-abi=hard -march=armv7-a -funroll-loops
+    ASFLAGS += -mfloat-abi=hard -march=armv7-a
+    ifneq (,$(findstring neon,$(platform)))
+        MFLAGS += -mfpu=neon
+        ASFLAGS += -mfpu=neon
+    endif
+    CFLAGS += -D TARGET_BEAGLE -D TARGET_LINUX_ARMELv7 -DARM_HARDFP -fsingle-precision-constant
+    USE_GLES := 1
 
 # LinCPP
 else ifneq (,$(findstring lincpp,$(platform)))
