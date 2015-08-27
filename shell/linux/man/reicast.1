@@ -49,9 +49,22 @@ If you do not supply these files, \fBreicast\fR will fall back to reios, an expe
 [input]
 .br
 evdev_device_id_1 = X
+.br
+evdev_mapping_1 = my_mapping.cfg
 .LP
 
-If the evdev input works for you, it's probably best to deaktivate the legacy joystick API input:
+You can create your own mappings with the \fBreicast-joyconfig\fR tool. You should either put them into the "mappings" folder inside the reicast config directory. As an alternative, you can specify an absolute path (which has to begin with a leading slash "/"):
+.IP
+[input]
+.br
+evdev_device_id_1 = X
+.br
+evdev_mapping_1 = /path/to/my_mapping.cfg
+.LP
+
+If you don't specify a mapping file, \fBreicast\fR will use one of the pre-defined mapping files (e.g. for Xbox 360 controllers).
+
+If the evdev input works for you, it's probably best to deactivate the legacy joystick API input:
 
 .IP
 [input]
