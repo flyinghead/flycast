@@ -258,3 +258,17 @@ void Sh4_int_Term()
 	Sh4_int_Stop();
 	printf("Sh4 Term\n");
 }
+
+/*
+bool sh4_exept_raised;
+void sh4_int_RaiseExeption(u32 ExeptionCode, u32 VectorAddress)
+{
+	sh4_exept_raised = true;
+
+	sh4_ex_ExeptionCode = ExeptionCode;
+	sh4_ex_VectorAddress = VectorAddress;
+
+	//save reg context
+	SaveSh4Regs(&sh4_ex_SRC);
+}
+*/

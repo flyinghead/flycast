@@ -775,9 +775,6 @@
     <ClInclude Include="..\core\hw\sh4\modules\dmac.h">
       <Filter>hw\sh4\modules</Filter>
     </ClInclude>
-    <ClInclude Include="..\core\hw\sh4\modules\intc.h">
-      <Filter>hw\sh4\modules</Filter>
-    </ClInclude>
     <ClInclude Include="..\core\hw\sh4\modules\mmu.h">
       <Filter>hw\sh4\modules</Filter>
     </ClInclude>
@@ -945,6 +942,9 @@
     </ClInclude>
     <ClInclude Include="..\core\cfg\ini.h">
       <Filter>cfg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\hw\sh4\modules\mmu_impl.h">
+      <Filter>hw\sh4\modules</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

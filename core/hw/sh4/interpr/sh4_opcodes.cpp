@@ -1265,7 +1265,8 @@ INLINE void DYNACALL do_sqw(u32 Dest)
 	//Translate the SQ addresses as needed
 	if (mmu_on)
 	{
-		Address=mmu_TranslateSQW(Dest);
+		if (!mmu_TranslateSQW(Dest, &Address))
+			return;
 	}
 	else
 	{
