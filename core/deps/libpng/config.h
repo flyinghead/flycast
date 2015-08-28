@@ -4,6 +4,9 @@
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #define HAVE_DLFCN_H 0
 
+/* Define to 1 if you have the `feenableexcept' function. */
+#define HAVE_FEENABLEEXCEPT 1
+
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 0
 
@@ -12,9 +15,6 @@
 
 /* Define to 1 if you have the `z' library (-lz). */
 #define HAVE_LIBZ 1
-
-/* Define to 1 if you have the <malloc.h> header file. */
-#define HAVE_MALLOC_H 1
 
 /* Define to 1 if you have the <memory.h> header file. */
 #define HAVE_MEMORY_H 0
@@ -46,8 +46,7 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #define HAVE_UNISTD_H 1
 
-/* Define to the sub-directory in which libtool stores uninstalled libraries.
-   */
+/* Define to the sub-directory where libtool stores uninstalled libraries. */
 #define LT_OBJDIR ".libs/"
 
 /* Name of package */
@@ -60,7 +59,7 @@
 #define PACKAGE_NAME "libpng"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "libpng 1.4.1"
+#define PACKAGE_STRING "libpng 1.6.18"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "libpng"
@@ -69,7 +68,16 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.4.1"
+#define PACKAGE_VERSION "1.6.18"
+
+/* Turn on ARM Neon optimizations at run-time */
+/* #undef PNG_ARM_NEON_API_SUPPORTED */
+
+/* Check for ARM Neon support at run-time */
+/* #undef PNG_ARM_NEON_CHECK_SUPPORTED */
+
+/* Enable ARM Neon optimizations */
+/* #undef PNG_ARM_NEON_OPT */
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
@@ -78,10 +86,24 @@
 /* #undef TM_IN_SYS_TIME */
 
 /* Version number of package */
-#define VERSION "1.4.1"
+#define VERSION "1.6.18"
 
 /* Define to empty if `const' does not conform to ANSI C. */
 /* #undef const */
+
+/* Define to the equivalent of the C99 'restrict' keyword, or to
+   nothing if this is not supported.  Do not define if restrict is
+   supported directly.  */
+#define restrict __restrict
+/* Work around a bug in Sun C++: it does not support _Restrict or
+   __restrict__, even though the corresponding Sun C compiler ends up with
+   "#define restrict _Restrict" or "#define restrict __restrict__" in the
+   previous line.  Perhaps some future version of Sun C++ will work with
+   restrict; if so, hopefully it defines __RESTRICT like Sun C does.  */
+#if defined __SUNPRO_CC && !defined __RESTRICT
+# define _Restrict
+# define __restrict__
+#endif
 
 /* Define to `unsigned int' if <sys/types.h> does not define. */
 /* #undef size_t */
