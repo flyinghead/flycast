@@ -257,15 +257,22 @@ else
     LIBS += -ldl -lGL #for desktop gl
 endif
 
+EXECUTABLE_STRIPPED=nosym-reicast.elf
+ifdef NAOMI
+    CFLAGS += -D TARGET_NAOMI
+    DC_PLATFORM=naomi
+    EXECUTABLE=reicast_naomi.elf
+    EXECUTABLE_NAME=reicast-naomi
+else
+    DC_PLATFORM=dreamcast
+    EXECUTABLE=reicast.elf
+    EXECUTABLE_NAME=reicast
+endif
 
 OBJECTS=$(RZDCY_FILES:.cpp=.build_obj)
 OBJECTS:=$(OBJECTS:.c=.build_obj)
 OBJECTS:=$(OBJECTS:.S=.build_obj)
-OBJECTS:=$(patsubst $(RZDCY_SRC_DIR)/%,obj-$(platform)/%,$(OBJECTS))
-
-EXECUTABLE_STRIPPED=nosym-reicast.elf
-EXECUTABLE=reicast.elf
-EXECUTABLE_NAME=reicast
+OBJECTS:=$(patsubst $(RZDCY_SRC_DIR)/%,obj-$(DC_PLATFORM)-$(platform)/%,$(OBJECTS))
 
 all: $(CPPFILES) $(EXECUTABLE) $(EXECUTABLE_STRIPPED)
 ifneq (,$(findstring gcwz,$(platform)))
