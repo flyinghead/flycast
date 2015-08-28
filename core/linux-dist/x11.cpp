@@ -68,7 +68,11 @@ void input_x11_handle()
 			{
 				case KeyPress:
 				case KeyRelease:
-					if (e.type == KeyRelease && e.xkey.keycode == 95) // F11 button
+					if (e.type == KeyRelease && e.xkey.keycode == 9) // ESC button
+					{
+						die("death by escape key");
+					}
+					else if (e.type == KeyRelease && e.xkey.keycode == 95) // F11 button
 					{
 						x11_fullscreen = !x11_fullscreen;
 						x11_window_set_fullscreen(x11_fullscreen);
