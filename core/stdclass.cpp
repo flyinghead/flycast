@@ -43,14 +43,20 @@ void add_system_data_dir(const string& dir)
 	system_data_dirs.push_back(dir);
 }
 
-string get_config_path(const string& filename, bool user_writable)
+string get_writable_config_path(const string& filename)
 {
-	if(user_writable)
+	/* Only stuff in the user_config_dir is supposed to be writable,
+	 * so we always return that.
+	 */
+	return (user_config_dir + filename);
+}
+
+string get_readonly_config_path(const string& filename)
+{
+	string user_filepath = get_writable_config_path(filename);
+	if(file_exists(user_filepath))
 	{
-		/* Only stuff in the user_config_dir is supposed to be writable,
-		 * so we always return that.
-		 */
-		return (user_config_dir + filename);
+		return user_filepath;
 	}
 
 	string filepath;
@@ -63,17 +69,23 @@ string get_config_path(const string& filename, bool user_writable)
 	}
 
 	// Not found, so we return the user variant
-	return (user_config_dir + filename);
+	return user_filepath;
 }
 
-string get_data_path(const string& filename, bool user_writable)
+string get_writable_data_path(const string& filename)
 {
-	if(user_writable)
+	/* Only stuff in the user_data_dir is supposed to be writable,
+	 * so we always return that.
+	 */
+	return (user_data_dir + filename);
+}
+
+string get_readonly_data_path(const string& filename)
+{
+	string user_filepath = get_writable_data_path(filename);
+	if(file_exists(user_filepath))
 	{
-		/* Only stuff in the user_data_dir is supposed to be writable,
-		 * so we always return that.
-		 */
-		return (user_data_dir + filename);
+		return user_filepath;
 	}
 
 	string filepath;
@@ -86,7 +98,7 @@ string get_data_path(const string& filename, bool user_writable)
 	}
 
 	// Not found, so we return the user variant
-	return (user_data_dir + filename);
+	return user_filepath;
 }
 
 

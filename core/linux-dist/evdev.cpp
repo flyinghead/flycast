@@ -266,7 +266,7 @@
 						size_t size_needed = snprintf(NULL, 0, EVDEV_MAPPING_PATH, mapping_fname) + 1;
 						char* mapping_path = (char*)malloc(size_needed);
 						sprintf(mapping_path, EVDEV_MAPPING_PATH, mapping_fname);
-						mapping_fd = fopen(GetPath(mapping_path).c_str(), "r");
+						mapping_fd = fopen(get_readonly_data_path(mapping_path).c_str(), "r");
 						free(mapping_path);
 					}
 					

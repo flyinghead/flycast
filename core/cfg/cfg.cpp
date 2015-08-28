@@ -78,9 +78,11 @@ void  cfgSaveStr(const wchar * Section, const wchar * Key, const wchar * String)
 
 bool cfgOpen()
 {
-	cfgPath=get_config_path("/emu.cfg");
-	FILE* cfgfile = fopen(cfgPath.c_str(),"r");
+	const char* filename = "/emu.cfg";
+	string config_path_read = get_readonly_config_path(filename);
+	cfgPath = get_writable_config_path(filename);
 
+	FILE* cfgfile = fopen(config_path_read.c_str(),"r");
 	if(cfgfile != NULL) {
 		cfgdb.parse(cfgfile);
 		fclose(cfgfile);
@@ -89,8 +91,8 @@ bool cfgOpen()
 	{
 		// Config file can't be opened
 		int error_code = errno;
-		printf("Warning: Unable to open the config file '%s' for reading (%s)\n", cfgPath.c_str(), strerror(error_code));
-		if (error_code == ENOENT)
+		printf("Warning: Unable to open the config file '%s' for reading (%s)\n", config_path_read.c_str(), strerror(error_code));
+		if (error_code == ENOENT || cfgPath != config_path_read)
 		{
 			// Config file didn't exist
 			printf("Creating new empty config file at '%s'\n", cfgPath.c_str());

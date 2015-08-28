@@ -580,7 +580,7 @@ error:
 	{
         
 #if HOST_OS == OS_DARWIN
-		string path = get_data_path("/dcnzorz_mem");
+		string path = get_writable_data_path("/dcnzorz_mem");
         fd = open(path.c_str(),O_CREAT|O_RDWR|O_TRUNC,S_IRWXU|S_IRWXG|S_IRWXO);
         unlink(path.c_str());
         verify(ftruncate(fd,RAM_SIZE + VRAM_SIZE +ARAM_SIZE)==0);

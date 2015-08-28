@@ -71,8 +71,8 @@ extern "C" int reicast_main(int argc, wchar* argv[])
     
     freopen( (homedir + "/log.txt").c_str(), "wb", stdout);
     
-    printf("Config dir is: %s\n", get_config_path("/").c_str());
-    printf("Data dir is:   %s\n", get_data_path("/").c_str());
+    printf("Config dir is: %s\n", get_writable_config_path("/").c_str());
+    printf("Data dir is:   %s\n", get_writable_data_path("/").c_str());
     
     common_linux_setup();
     

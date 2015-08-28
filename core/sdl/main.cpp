@@ -446,8 +446,8 @@ int main(int argc, wchar* argv[])
 	set_user_data_dir(".");
 #endif
 
-	printf("Config dir is: %s\n", get_config_path("/").c_str());
-	printf("Data dir is:   %s\n", get_data_path("/").c_str());
+	printf("Config dir is: %s\n", get_writable_config_path("/").c_str());
+	printf("Data dir is:   %s\n", get_writable_data_path("/").c_str());
 
 	common_linux_setup();
 
