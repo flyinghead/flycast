@@ -1,4 +1,5 @@
 
+
 LOCAL_PATH := $(call my-dir)
 FOR_LINUX :=1
 #NO_REC := 1
@@ -201,7 +202,7 @@ ifndef NOT_ARM
 endif
 
 ifdef USE_SDL
-    CXXFLAGS += `sdl-config --cflags`
+    CXXFLAGS += `sdl-config --cflags` -D USE_SDL
     LIBS += `sdl-config --libs`
 endif
 
