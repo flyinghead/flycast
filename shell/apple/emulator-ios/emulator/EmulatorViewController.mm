@@ -16,34 +16,7 @@
 #include "hw/maple/maple_devs.h"
 #include "hw/maple/maple_if.h"
 
-extern u16 kcode[4];
-extern u32 vks[4];
-extern s8 joyx[4],joyy[4];
-extern u8 rt[4],lt[4];
-
-#define DC_BTN_C		(1)
-#define DC_BTN_B		(1<<1)
-#define DC_BTN_A		(1<<2)
-#define DC_BTN_START	(1<<3)
-#define DC_DPAD_UP		(1<<4)
-#define DC_DPAD_DOWN	(1<<5)
-#define DC_DPAD_LEFT	(1<<6)
-#define DC_DPAD_RIGHT	(1<<7)
-#define DC_BTN_Z		(1<<8)
-#define DC_BTN_Y		(1<<9)
-#define DC_BTN_X		(1<<10)
-#define DC_BTN_D		(1<<11)
-#define DC_DPAD2_UP		(1<<12)
-#define DC_DPAD2_DOWN	(1<<13)
-#define DC_DPAD2_LEFT	(1<<14)
-#define DC_DPAD2_RIGHT	(1<<15)
-
-#define DC_AXIS_LT		(0X10000)
-#define DC_AXIS_RT		(0X10001)
-#define DC_AXIS_X		(0X20000)
-#define DC_AXIS_Y		(0X20001)
-
-@interface ViewController () {
+@interface EmulatorViewController () {
 }
 
 @property (strong, nonatomic) EAGLContext *context;
@@ -62,7 +35,7 @@ bool gles_init();
 extern "C" int reicast_main(int argc, char* argv[]);
 
 
-@implementation ViewController
+@implementation EmulatorViewController
 
 -(void)emuThread
 {
@@ -97,9 +70,11 @@ extern "C" int reicast_main(int argc, char* argv[]);
         NSLog(@"Failed to create ES context");
     }
     
-    GLKView *view = (GLKView *)self.view;
-    view.context = self.context;
-    view.drawableDepthFormat = GLKViewDrawableDepthFormat24;
+    self.emuView = (EmulatorView *)self.view;
+    self.emuView.context = self.context;
+    self.emuView.drawableDepthFormat = GLKViewDrawableDepthFormat24;
+	
+	[self.controllerView setControlOutput:self.emuView];
     
     self.connectObserver = [[NSNotificationCenter defaultCenter] addObserverForName:GCControllerDidConnectNotification object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *note) {
         if ([[GCController controllers] count] == 1) {
@@ -179,65 +154,6 @@ extern "C" int reicast_main(int argc, char* argv[]);
 
 }
 
-- (void)handleKeycode:(UIButton*)button
-{
-	if (button == self.controllerView.img_dpad_l) {
-		kcode[0] &= ~(DC_DPAD_LEFT);
-	} else {
-		kcode[0] |= ~(DC_DPAD_LEFT);
-	}
-	if (button == self.controllerView.img_dpad_r) {
-		kcode[0] &= ~(DC_DPAD_RIGHT);
-	} else {
-		kcode[0] |= ~(DC_DPAD_RIGHT);
-	}
-	if (button == self.controllerView.img_dpad_u) {
-		kcode[0] &= ~(DC_DPAD_UP);
-	} else {
-		kcode[0] |= ~(DC_DPAD_UP);
-	}
-	if (button == self.controllerView.img_dpad_d) {
-		kcode[0] &= ~(DC_DPAD_DOWN);
-	} else {
-		kcode[0] |= ~(DC_DPAD_DOWN);
-	}
-	if (button == self.controllerView.img_abxy_a) {
-		kcode[0] &= ~(DC_BTN_A);
-	} else {
-		kcode[0] |= (DC_BTN_A);
-	}
-	if (button == self.controllerView.img_abxy_b) {
-		kcode[0] &= ~(DC_BTN_B);
-	} else {
-		kcode[0] |= (DC_BTN_B);
-	}
-	if (button == self.controllerView.img_abxy_x) {
-		kcode[0] &= ~(DC_BTN_X);
-	} else {
-		kcode[0] |= (DC_BTN_X);
-	}
-	if (button == self.controllerView.img_abxy_y) {
-		kcode[0] &= ~(DC_BTN_Y);
-	} else {
-		kcode[0] |= (DC_BTN_Y);
-	}
-	if (button == self.controllerView.img_lt) {
-		kcode[0] &= ~(DC_AXIS_LT);
-	} else {
-		kcode[0] |= (DC_AXIS_LT);
-	}
-	if (button == self.controllerView.img_rt) {
-		kcode[0] &= ~(DC_AXIS_RT);
-	} else {
-		kcode[0] |= (DC_AXIS_RT);
-	}
-	if (button == self.controllerView.img_start) {
-		kcode[0] &= ~(DC_BTN_START);
-	} else {
-		kcode[0] |= (DC_BTN_START);
-	}
-}
-
 - (void)toggleHardwareController:(BOOL)useHardware {
     if (useHardware) {
 //		[self.controllerView hideController];
@@ -245,52 +161,52 @@ extern "C" int reicast_main(int argc, char* argv[]);
         if (self.gController.gamepad) {
             [self.gController.gamepad.buttonA setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
 				if (pressed && value >= 0.1) {
-					kcode[0] &= ~(DC_BTN_A);
+					[self.emuView handleKeyDown:self.controllerView.img_abxy_a];
 				} else {
-					kcode[0] |= (DC_BTN_A);
+					[self.emuView handleKeyUp:self.controllerView.img_abxy_a];
 				}
             }];
             [self.gController.gamepad.buttonB setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
 				if (pressed && value >= 0.1) {
-					kcode[0] &= ~(DC_BTN_B);
+					[self.emuView handleKeyDown:self.controllerView.img_abxy_b];
 				} else {
-					kcode[0] |= (DC_BTN_B);
+					[self.emuView handleKeyUp:self.controllerView.img_abxy_b];
 				}
             }];
             [self.gController.gamepad.buttonX setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
 				if (pressed && value >= 0.1) {
-					kcode[0] &= ~(DC_BTN_X);
+					[self.emuView handleKeyDown:self.controllerView.img_abxy_x];
 				} else {
-					kcode[0] |= (DC_BTN_X);
+					[self.emuView handleKeyUp:self.controllerView.img_abxy_x];
 				}
             }];
             [self.gController.gamepad.buttonY setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
 				if (pressed && value >= 0.1) {
-					kcode[0] &= ~(DC_BTN_Y);
+					[self.emuView handleKeyDown:self.controllerView.img_abxy_y];
 				} else {
-					kcode[0] |= (DC_BTN_Y);
+					[self.emuView handleKeyUp:self.controllerView.img_abxy_y];
 				}
             }];
             [self.gController.gamepad.dpad setValueChangedHandler:^(GCControllerDirectionPad *dpad, float xValue, float yValue){
 				if (xValue >= 0.1) {
-					kcode[0] &= ~(DC_DPAD_RIGHT);
+					[self.emuView handleKeyDown:self.controllerView.img_dpad_r];
 				} else {
-					kcode[0] |= ~(DC_DPAD_RIGHT);
+					[self.emuView handleKeyUp:self.controllerView.img_dpad_r];
 				}
 				if (xValue <= -0.1) {
-					kcode[0] &= ~(DC_DPAD_LEFT);
+					[self.emuView handleKeyDown:self.controllerView.img_dpad_l];
 				} else {
-					kcode[0] |= ~(DC_DPAD_LEFT);
+					[self.emuView handleKeyUp:self.controllerView.img_dpad_l];
 				}
 				if (yValue >= 0.1) {
-					kcode[0] &= ~(DC_DPAD_UP);
+					[self.emuView handleKeyDown:self.controllerView.img_dpad_u];
 				} else {
-					kcode[0] |= ~(DC_DPAD_UP);
+					[self.emuView handleKeyUp:self.controllerView.img_dpad_u];
 				}
 				if (yValue <= -0.1) {
-					kcode[0] &= ~(DC_DPAD_DOWN);
+					[self.emuView handleKeyDown:self.controllerView.img_dpad_d];
 				} else {
-					kcode[0] |= ~(DC_DPAD_DOWN);
+					[self.emuView handleKeyUp:self.controllerView.img_dpad_d];
 				}
             }];
             //Add controller pause handler here
@@ -298,52 +214,52 @@ extern "C" int reicast_main(int argc, char* argv[]);
         if (self.gController.extendedGamepad) {
             [self.gController.extendedGamepad.buttonA setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
 				if (pressed && value >= 0.1) {
-					kcode[0] &= ~(DC_BTN_A);
+					[self.emuView handleKeyDown:self.controllerView.img_abxy_a];
 				} else {
-					kcode[0] |= (DC_BTN_A);
+					[self.emuView handleKeyUp:self.controllerView.img_abxy_a];
 				}
             }];
             [self.gController.extendedGamepad.buttonB setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
 				if (pressed && value >= 0.1) {
-					kcode[0] &= ~(DC_BTN_B);
+					[self.emuView handleKeyDown:self.controllerView.img_abxy_b];
 				} else {
-					kcode[0] |= (DC_BTN_B);
+					[self.emuView handleKeyUp:self.controllerView.img_abxy_b];
 				}
             }];
             [self.gController.extendedGamepad.buttonX setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
 				if (pressed && value >= 0.1) {
-					kcode[0] &= ~(DC_BTN_X);
+					[self.emuView handleKeyDown:self.controllerView.img_abxy_x];
 				} else {
-					kcode[0] |= (DC_BTN_X);
+					[self.emuView handleKeyUp:self.controllerView.img_abxy_x];
 				}
             }];
             [self.gController.extendedGamepad.buttonY setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
 				if (pressed && value >= 0.1) {
-					kcode[0] &= ~(DC_BTN_Y);
+					[self.emuView handleKeyDown:self.controllerView.img_abxy_y];
 				} else {
-					kcode[0] |= (DC_BTN_Y);
+					[self.emuView handleKeyUp:self.controllerView.img_abxy_y];
 				}
             }];
             [self.gController.extendedGamepad.dpad setValueChangedHandler:^(GCControllerDirectionPad *dpad, float xValue, float yValue){
 				if (xValue >= 0.1) {
-					 kcode[0] &= ~(DC_DPAD_RIGHT);
+					 [self.emuView handleKeyDown:self.controllerView.img_dpad_r];
 				} else {
-					kcode[0] |= ~(DC_DPAD_RIGHT);
+					[self.emuView handleKeyUp:self.controllerView.img_dpad_r];
 				}
 				if (xValue <= -0.1) {
-					kcode[0] &= ~(DC_DPAD_LEFT);
+					[self.emuView handleKeyDown:self.controllerView.img_dpad_l];
 				} else {
-					kcode[0] |= ~(DC_DPAD_LEFT);
+					[self.emuView handleKeyUp:self.controllerView.img_dpad_l];
 				}
 				if (yValue >= 0.1) {
-					kcode[0] &= ~(DC_DPAD_UP);
+					[self.emuView handleKeyDown:self.controllerView.img_dpad_u];
 				} else {
-					kcode[0] |= ~(DC_DPAD_UP);
+					[self.emuView handleKeyUp:self.controllerView.img_dpad_u];
 				}
 				if (yValue <= -0.1) {
-					kcode[0] &= ~(DC_DPAD_DOWN);
+					[self.emuView handleKeyDown:self.controllerView.img_dpad_d];
 				} else {
-					kcode[0] |= ~(DC_DPAD_DOWN);
+					[self.emuView handleKeyUp:self.controllerView.img_dpad_d];
 				}
             }];
             [self.gController.extendedGamepad.leftThumbstick.xAxis setValueChangedHandler:^(GCControllerAxisInput *axis, float value){

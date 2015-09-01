@@ -70,11 +70,11 @@
             </objects>
             <point key="canvasLocation" x="-692" y="-692"/>
         </scene>
-        <!--View Controller-->
+        <!--Emulator View Controller-->
         <scene sceneID="h6I-2s-MCy">
             <objects>
-                <viewController storyboardIdentifier="emulatorView" wantsFullScreenLayout="YES" id="WRM-pR-XCP" customClass="ViewController" sceneMemberID="viewController">
-                    <view key="view" userInteractionEnabled="NO" contentMode="scaleToFill" id="JQE-db-ZiC" customClass="EmulatorView">
+                <viewController storyboardIdentifier="emulatorView" wantsFullScreenLayout="YES" id="WRM-pR-XCP" customClass="EmulatorViewController" sceneMemberID="viewController">
+                    <view key="view" multipleTouchEnabled="YES" contentMode="scaleToFill" id="JQE-db-ZiC" customClass="EmulatorView">
                         <rect key="frame" x="0.0" y="0.0" width="568" height="320"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <color key="backgroundColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>

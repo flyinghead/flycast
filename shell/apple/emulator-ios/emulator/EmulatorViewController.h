@@ -11,17 +11,17 @@
 #import <GameController/GameController.h>
 #import "iCadeReaderView.h"
 #import "PadViewController.h"
+#import "EmulatorView.h"
 
-@interface ViewController : GLKViewController <iCadeEventDelegate>
+@interface EmulatorViewController : GLKViewController <iCadeEventDelegate>
 
 @property NSString* diskImage;
 @property (nonatomic) iCadeReaderView* iCadeReader;
 @property (nonatomic) GCController *gController __attribute__((weak_import));
 @property (nonatomic, strong) id connectObserver;
 @property (nonatomic, strong) id disconnectObserver;
+@property (nonatomic, strong) EmulatorView *emuView;
 
 @property (nonatomic, strong) PadViewController *controllerView;
-
-- (void)handleKeycode:(UIButton*)button;
 
 @end

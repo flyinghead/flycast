@@ -24,8 +24,11 @@
 @property (nonatomic, strong) IBOutlet UIButton* img_rt;
 @property (nonatomic, strong) IBOutlet UIButton* img_start;
 
+@property (nonatomic, strong) EmulatorView *handler;
+
 - (void) showController:(UIView *)parentView;
 - (void) hideController;
 - (BOOL) isControllerVisible;
+- (void) setControlOutput:(EmulatorView *)output;
 
 @end

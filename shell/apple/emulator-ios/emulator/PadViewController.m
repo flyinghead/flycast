@@ -7,7 +7,7 @@
 //
 
 #import "PadViewController.h"
-#import "EmulatorViewController.h"
+#import "EmulatorView.h"
 
 @interface PadViewController ()
 
@@ -17,7 +17,6 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    // Do any additional setup after loading the view from its nib.
 }
 
 - (void)didReceiveMemoryWarning {
@@ -30,7 +29,8 @@
 	[parentView addSubview:self.view];
 }
 
-- (void)hideController {
+- (void)hideController
+{
 	[self.view removeFromSuperview];
 }
 
@@ -41,10 +41,19 @@
 	return NO;
 }
 
-- (IBAction)keycode:(id)sender
+- (void)setControlOutput:(EmulatorView *)output
 {
-	ViewController *emulatorView = [[ViewController alloc] init];
-	[emulatorView handleKeycode:(UIButton*)sender];
+	self.handler = output;
+}
+
+- (IBAction)keycodeDown:(id)sender
+{
+	[self.handler handleKeyDown:(UIButton*)sender];
+}
+
+- (IBAction)keycodeUp:(id)sender
+{
+	[self.handler handleKeyUp:(UIButton*)sender];
 }
 
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil

@@ -100,7 +100,7 @@
 		NSIndexPath* indexPath = self.tableView.indexPathForSelectedRow;
 		NSString* filePath = [self.diskImages objectAtIndex: indexPath.row];
 		NSString* diskPath = [[self documents].path stringByAppendingPathComponent: filePath];
-		ViewController* emulatorView = segue.destinationViewController;
+		EmulatorViewController* emulatorView = segue.destinationViewController;
 		emulatorView.diskImage = diskPath;
 	}
 }
