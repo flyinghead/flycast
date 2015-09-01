@@ -247,7 +247,6 @@
 		84967C751B8F492C005F1140 /* filter_neon.S */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; path = filter_neon.S; sourceTree = "<group>"; };
 		84967C761B8F492C005F1140 /* filter_neon_intrinsics.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = filter_neon_intrinsics.c; sourceTree = "<group>"; };
 		84967C771B8F492C005F1140 /* config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = config.h; sourceTree = "<group>"; };
-		84967C781B8F492C005F1140 /* fp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = fp.h; sourceTree = "<group>"; };
 		84967C791B8F492C005F1140 /* png.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = png.c; sourceTree = "<group>"; };
 		84967C7A1B8F492C005F1140 /* png.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = png.h; sourceTree = "<group>"; };
 		84967C7B1B8F492C005F1140 /* pngconf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pngconf.h; sourceTree = "<group>"; };
@@ -315,7 +314,6 @@
 		877652C11B6157BD00437F10 /* oslib.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = oslib.h; sourceTree = "<group>"; };
 		877652C71B6157FC00437F10 /* ngen_arm.S */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; path = ngen_arm.S; sourceTree = "<group>"; };
 		877652C81B6157FC00437F10 /* rec_arm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = rec_arm.cpp; sourceTree = "<group>"; };
-		877652CC1B615AE800437F10 /* fp.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = fp.h; sourceTree = "<group>"; };
 		878B0CFB1B8BB5B400A8D1C5 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = "../reicast-ios/Images.xcassets"; sourceTree = "<group>"; };
 		878B0CFF1B8BFE6200A8D1C5 /* disk_unknown.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = disk_unknown.png; path = emulator/Images/disk_unknown.png; sourceTree = "<group>"; };
 		8794D9C11B88F3D600B1B3A3 /* DiskViewCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DiskViewCell.h; path = emulator/DiskViewCell.h; sourceTree = "<group>"; };
@@ -389,7 +387,6 @@
 		9C7A394818C806DE0070BB5F /* E_VLoadStore.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = E_VLoadStore.h; sourceTree = "<group>"; };
 		9C7A394918C806DE0070BB5F /* E_VRegXfer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = E_VRegXfer.h; sourceTree = "<group>"; };
 		9C7A394A18C806DE0070BB5F /* H_Branches.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = H_Branches.h; sourceTree = "<group>"; };
-		9C7A394B18C806DE0070BB5F /* H_fp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = H_fp.h; sourceTree = "<group>"; };
 		9C7A394C18C806DE0070BB5F /* H_LoadStore.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = H_LoadStore.h; sourceTree = "<group>"; };
 		9C7A394D18C806DE0070BB5F /* H_psuedo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = H_psuedo.h; sourceTree = "<group>"; };
 		9C7A394E18C806DE0070BB5F /* H_state.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = H_state.h; sourceTree = "<group>"; };
@@ -935,7 +932,6 @@
 				9C7A394818C806DE0070BB5F /* E_VLoadStore.h */,
 				9C7A394918C806DE0070BB5F /* E_VRegXfer.h */,
 				9C7A394A18C806DE0070BB5F /* H_Branches.h */,
-				9C7A394B18C806DE0070BB5F /* H_fp.h */,
 				9C7A394C18C806DE0070BB5F /* H_LoadStore.h */,
 				9C7A394D18C806DE0070BB5F /* H_psuedo.h */,
 				9C7A394E18C806DE0070BB5F /* H_state.h */,
@@ -1018,7 +1014,6 @@
 			children = (
 				84967C731B8F492C005F1140 /* arm */,
 				84967C771B8F492C005F1140 /* config.h */,
-				84967C781B8F492C005F1140 /* fp.h */,
 				84967C791B8F492C005F1140 /* png.c */,
 				84967C7A1B8F492C005F1140 /* png.h */,
 				84967C7B1B8F492C005F1140 /* pngconf.h */,
