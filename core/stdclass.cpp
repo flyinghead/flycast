@@ -1,22 +1,104 @@
-
 #include <string.h>
-
+#include <vector>
+#include <sys/stat.h>
 #include "types.h"
+
+#if BUILD_COMPILER==COMPILER_VC
+	#include <io.h>
+	#define access _access
+	#define R_OK   4
+#else
+	#include <unistd.h>
+#endif
 
 #include "hw/mem/_vmem.h"
-#include "types.h"
 
-string home_dir;
+string user_config_dir;
+string user_data_dir;
+std::vector<string> system_config_dirs;
+std::vector<string> system_data_dirs;
 
-void SetHomeDir(const string& home)
+bool file_exists(const string& filename)
 {
-	home_dir=home;
+	return (access(filename.c_str(), R_OK) == 0);
 }
 
-//subpath format: /data/fsca-table.bit
-string GetPath(const string& subpath)
+void set_user_config_dir(const string& dir)
 {
-	return (home_dir+subpath);
+	user_config_dir = dir;
+}
+
+void set_user_data_dir(const string& dir)
+{
+	user_data_dir = dir;
+}
+
+void add_system_config_dir(const string& dir)
+{
+	system_config_dirs.push_back(dir);
+}
+
+void add_system_data_dir(const string& dir)
+{
+	system_data_dirs.push_back(dir);
+}
+
+string get_writable_config_path(const string& filename)
+{
+	/* Only stuff in the user_config_dir is supposed to be writable,
+	 * so we always return that.
+	 */
+	return (user_config_dir + filename);
+}
+
+string get_readonly_config_path(const string& filename)
+{
+	string user_filepath = get_writable_config_path(filename);
+	if(file_exists(user_filepath))
+	{
+		return user_filepath;
+	}
+
+	string filepath;
+	for (unsigned int i = 0; i < system_config_dirs.size(); i++) {
+		filepath = system_config_dirs[i] + filename;
+		if (file_exists(filepath))
+		{
+			return filepath;
+		}
+	}
+
+	// Not found, so we return the user variant
+	return user_filepath;
+}
+
+string get_writable_data_path(const string& filename)
+{
+	/* Only stuff in the user_data_dir is supposed to be writable,
+	 * so we always return that.
+	 */
+	return (user_data_dir + filename);
+}
+
+string get_readonly_data_path(const string& filename)
+{
+	string user_filepath = get_writable_data_path(filename);
+	if(file_exists(user_filepath))
+	{
+		return user_filepath;
+	}
+
+	string filepath;
+	for (unsigned int i = 0; i < system_data_dirs.size(); i++) {
+		filepath = system_data_dirs[i] + filename;
+		if (file_exists(filepath))
+		{
+			return filepath;
+		}
+	}
+
+	// Not found, so we return the user variant
+	return user_filepath;
 }
 
 

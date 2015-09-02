@@ -165,9 +165,9 @@ int dc_init(int argc,wchar* argv[])
     #define DATA_PATH "/"
 #endif
     
-	if (settings.bios.UseReios || !LoadRomFiles(GetPath(DATA_PATH)))
+	if (settings.bios.UseReios || !LoadRomFiles(get_readonly_data_path(DATA_PATH)))
 	{
-		if (!LoadHle(GetPath(DATA_PATH)))
+		if (!LoadHle(get_readonly_data_path(DATA_PATH)))
 			return -3;
 		else
 			printf("Did not load bios, using reios\n");
@@ -224,7 +224,7 @@ void dc_term()
 #ifndef _ANDROID
 	SaveSettings();
 #endif
-	SaveRomFiles(GetPath("/data/"));
+	SaveRomFiles(get_writable_data_path("/data/"));
 }
 
 void LoadSettings()

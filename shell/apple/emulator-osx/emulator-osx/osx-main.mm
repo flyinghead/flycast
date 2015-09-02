@@ -95,10 +95,14 @@ void* emuthread(void*) {
     {
         home += "/.reicast";
         mkdir(home.c_str(), 0755); // create the directory if missing
-        SetHomeDir(home);
+        set_user_config_dir(home);
+        set_user_data_dir(home);
     }
     else
-        SetHomeDir(".");
+    {
+        set_user_config_dir(".");
+        set_user_data_dir(".");
+    }
     char* argv[] = { "reicast" };
     
     dc_init(1,argv);

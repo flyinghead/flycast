@@ -435,15 +435,19 @@ int main(int argc, wchar* argv[])
 	{
 		home += "/.reicast";
 		mkdir(home.c_str(), 0755); // create the directory if missing
-		SetHomeDir(home);
+		set_user_config_dir(home);
+		set_user_data_dir(home);
 	}
 	else
-		SetHomeDir(".");
+		set_user_config_dir(".");
+		set_user_data_dir(".");
 #else
-	SetHomeDir(".");
+	set_user_config_dir(".");
+	set_user_data_dir(".");
 #endif
 
-	printf("Home dir is: %s\n",GetPath("/").c_str());
+	printf("Config dir is: %s\n", get_writable_config_path("/").c_str());
+	printf("Data dir is:   %s\n", get_writable_data_path("/").c_str());
 
 	common_linux_setup();
 

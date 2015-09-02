@@ -607,7 +607,7 @@ void print_blocks()
 
 	if (print_stats)
 	{
-		f=fopen(GetPath("/blkmap.lst").c_str(),"w");
+		f=fopen(get_writable_data_path("/blkmap.lst").c_str(),"w");
 		print_stats=0;
 
 		printf("Writing blocks to %p\n",f);

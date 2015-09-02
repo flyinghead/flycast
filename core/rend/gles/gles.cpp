@@ -930,9 +930,9 @@ bool gl_create_resources()
 	#endif
 
 	int w, h;
-	osd_tex=loadPNG(GetPath("/data/buttons.png"),w,h);
+	osd_tex=loadPNG(get_readonly_data_path("/data/buttons.png"),w,h);
 #ifdef TARGET_PANDORA
-	osd_font=loadPNG(GetPath("/font2.png"),w,h);
+	osd_font=loadPNG(get_readonly_data_path("/font2.png"),w,h);
 #endif
 
 	return true;

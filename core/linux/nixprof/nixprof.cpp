@@ -207,7 +207,7 @@ void* prof(void *ptr)
 
 	sprintf(line, "/%d.reprof", tick_count);
 
-		string logfile=GetPath(line);
+		string logfile=get_writable_data_path(line);
 
 
 		printf("Profiler thread logging to -> %s\n", logfile.c_str());
