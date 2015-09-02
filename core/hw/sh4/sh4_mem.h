@@ -21,6 +21,7 @@ extern VArray2 mem_b;
 #define WriteMem64 _vmem_WriteMem64
 //#define WriteMem64(addr,reg) {  _vmem_WriteMem32(addr,((u32*)reg)[0]);_vmem_WriteMem32((addr)+4, ((u32*)reg)[1]); }
 #else
+#include "modules/mmu.h"
 #define ReadMem8 mmu_ReadMem8
 #define ReadMem16 mmu_ReadMem16
 #define IReadMem16 mmu_IReadMem16

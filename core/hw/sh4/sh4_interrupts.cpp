@@ -172,6 +172,7 @@ bool Do_Exeption(u32 epc, u32 expEvn, u32 CallVect)
 
 	next_pc = vbr + CallVect;
 
+	printf("RaiseException: from %08X , pc errh %08X\n", spc, epc);
 	return true;
 }
 

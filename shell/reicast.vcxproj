@@ -288,8 +288,8 @@
     <ClInclude Include="..\core\hw\sh4\interpr\sh4_opcodes.h" />
     <ClInclude Include="..\core\hw\sh4\modules\ccn.h" />
     <ClInclude Include="..\core\hw\sh4\modules\dmac.h" />
-    <ClInclude Include="..\core\hw\sh4\modules\intc.h" />
     <ClInclude Include="..\core\hw\sh4\modules\mmu.h" />
+    <ClInclude Include="..\core\hw\sh4\modules\mmu_impl.h" />
     <ClInclude Include="..\core\hw\sh4\modules\modules.h" />
     <ClInclude Include="..\core\hw\sh4\modules\tmu.h" />
     <ClInclude Include="..\core\hw\sh4\sh4_if.h" />
