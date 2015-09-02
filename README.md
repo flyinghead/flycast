@@ -96,7 +96,7 @@ Development/Beta versions
 | ![OSX](http://i.imgur.com/0YoI5Vm.png) OSX         | *TODO* | *TODO*
 
 
-Additional builds (iOS & android) can be found at [angelxwind's](http://reicast.angelxwind.net/) buildbot
+Additional builds (iOS & android) can be found at [angelxwind's](http://reicast.angelxwind.net/) buildbot and [Random Stuff "Daily/Nightly/Testing" PPA](https://launchpad.net/~random-stuff/+archive/ubuntu/ppa) (for Ubuntu).
 
 
 Donations and stuff
