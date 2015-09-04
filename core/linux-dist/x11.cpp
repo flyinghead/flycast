@@ -14,6 +14,10 @@
 #include "linux-dist/x11.h"
 #include "linux-dist/main.h"
 
+#if FEAT_HAS_NIXPROF
+#include "profiler/profiler.h"
+#endif
+
 #if defined(TARGET_PANDORA)
 	#define DEFAULT_FULLSCREEN    1
 	#define DEFAULT_WINDOW_WIDTH  800
@@ -72,6 +76,16 @@ void input_x11_handle()
 					{
 						die("death by escape key");
 					}
+#if FEAT_HAS_NIXPROF
+					else if (e.type == KeyRelease && e.xkey.keycode == 76) // F10 button
+					{
+						if (sample_Switch(3000)) {
+							printf("Starting profiling\n");
+						} else {
+							printf("Stopping profiling\n");
+						}
+					}
+#endif
 					else if (e.type == KeyRelease && e.xkey.keycode == 95) // F11 button
 					{
 						x11_fullscreen = !x11_fullscreen;

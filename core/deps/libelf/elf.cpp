@@ -229,7 +229,7 @@ elf_getSectionLink(void *elfFile, int i)
 {
 	return ISELF32 (elfFile)
 		? elf32_getSectionLink((Elf32_Header*)elfFile, i)
-		: 0;
+		: elf64_getSectionLink((Elf64_Header*)elfFile, i);
 }
 
 uint64_t

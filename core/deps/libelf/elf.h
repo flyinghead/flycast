@@ -116,6 +116,15 @@ struct elf_symbol {
   uint16_t st_shndx;              // Section index
 };
 
+struct elf64_symbol {
+  uint32_t      st_name;
+  unsigned char st_info;
+  unsigned char st_other;
+  uint16_t      st_shndx;
+  uint64_t      st_value;
+  uint64_t      st_size;
+};
+
 /*
  * constants for Elf32_Phdr.p_flags 
  */
@@ -166,6 +175,9 @@ struct elf_symbol {
 #define ELF_PRINT_PROGRAM_HEADERS 1
 #define ELF_PRINT_SECTIONS 2
 #define ELF_PRINT_ALL (ELF_PRINT_PROGRAM_HEADERS | ELF_PRINT_SECTIONS)
+
+/* Symbol types */
+#define STT_FUNC 2 /* Function, code */
 
 /**
  * Checks that elfFile points to a valid elf file. 

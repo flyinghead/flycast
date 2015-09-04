@@ -3,6 +3,7 @@
 #if FEAT_HAS_NIXPROF
 #include "cfg/cfg.h"
 
+#include <inttypes.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,6 +35,7 @@
 #include "hw/sh4/dyna/blockmanager.h"
 #include <set>
 #include "deps/libelf/elf.h"
+#include "profiler/profiler.h"
 
 #include "linux/context.h"
 
@@ -46,14 +48,14 @@
 #include <stdio.h> 
 #include <string.h> 
 
-int tick_count=0;
-pthread_t proft;
-pthread_t thread[2];
-void*     prof_address[2];
-u32 prof_wait;
+static int tick_count=0;
+static pthread_t proft;
+static pthread_t thread[2];
+static void*     prof_address[2];
+static u32 prof_wait;
 
-u8* syms_ptr;
-int syms_len;
+static u8* syms_ptr;
+static int syms_len;
 
 void sample_Syms(u8* data,u32 len)
 {
@@ -88,16 +90,17 @@ void install_prof_handler(int id)
 	thread[id]=pthread_self();
 }
 
-void prof_head(FILE* out, const char* type, const char* name)
+static void prof_head(FILE* out, const char* type, const char* name)
 {
 	fprintf(out,"==xx==xx==\n%s:%s\n",type,name);
 }
-void prof_head(FILE* out, const char* type, int d)
+
+static void prof_head(FILE* out, const char* type, int d)
 {
 	fprintf(out,"==xx==xx==\n%s:%d\n",type,d);
 }
 
-void elf_syms(FILE* out,const char* libfile)
+static void elf_syms(FILE* out,const char* libfile)
 {
 	struct stat statbuf;
 
@@ -129,23 +132,33 @@ void elf_syms(FILE* out,const char* libfile)
 
 		int dynsym=-1;
 		int dynstr=-1;
+		int strtab=-1;
+		int symtab=-1;
 
-		/*
-			Section: 2 -> .dynsym
-			Section: 3 -> .dynstr
-		*/
 		if (elf_checkFile(data)>=0)
 		{
 			int scnt=elf_getNumSections(data);
 
 			for (int si=0;si<scnt;si++)
 			{
-				if (strcmp(".dynsym",elf_getSectionName(data,si))==0)
-					dynsym=si;
-
-			
-				if (strcmp(".dynstr",elf_getSectionName(data,si))==0)
-					dynstr=si;
+				uint32_t section_type = elf_getSectionType(data, si);
+				uint64_t section_link = elf_getSectionLink(data, si);
+				switch (section_type) {
+				case SHT_DYNSYM:
+					fprintf(stderr, "DYNSYM");
+					dynsym = si;
+					if (section_link < scnt)
+						dynstr = section_link;
+					break;
+				case SHT_SYMTAB:
+					fprintf(stderr, "SYMTAB");
+					symtab = si;
+					if (section_link < scnt)
+						strtab = section_link;
+					break;
+				default:
+					break;;
+				}
 			}
 		}
 		else
@@ -153,21 +166,38 @@ void elf_syms(FILE* out,const char* libfile)
 			printf("Invalid elf file\n");
 		}
 
+		// Use SHT_SYMTAB if available insteaf of SHT_DYNSYM
+		// (there is more info here):
+		if (symtab >= 0 && strtab >= 0)
+		{
+			dynsym = symtab;
+			dynstr = strtab;
+		}
+
 		if (dynsym >= 0)
 		{
 			prof_head(out,"libsym",libfile);
-		//	printf("Found dymsym %d, and dynstr %d!\n",dynsym,dynstr);
+			// printf("Found dymsym %d, and dynstr %d!\n",dynsym,dynstr);
 			elf_symbol* sym=(elf_symbol*)elf_getSection(data,dynsym);
-			int symcnt=elf_getSectionSize(data,dynsym)/sizeof(elf_symbol);
+			elf64_symbol* sym64 = (elf64_symbol*) sym;
 
-			for (int i=0;i<symcnt;i++)
+			bool elf32 = ((struct Elf32_Header*)data)->e_ident[EI_CLASS] == ELFCLASS32;
+			size_t symbol_size = elf32 ? sizeof(elf_symbol) : sizeof(elf64_symbol);
+			int symcnt = elf_getSectionSize(data,dynsym) / symbol_size;
+
+			for (int i=0; i < symcnt; i++)
 			{
-				if (sym[i].st_value && sym[i].st_name && sym[i].st_shndx)
+				uint64_t st_value =  elf32 ? sym[i].st_value : sym64[i].st_value;
+				uint32_t st_name  =  elf32 ? sym[i].st_name  : sym64[i].st_name;
+				uint16_t st_shndx =  elf32 ? sym[i].st_shndx : sym64[i].st_shndx;
+				uint16_t st_type  = (elf32 ? sym[i].st_info  : sym64[i].st_info) & 0xf;
+				uint64_t st_size  =  elf32 ? sym[i].st_size  : sym64[i].st_size;
+				if (st_type == STT_FUNC && st_value && st_name && st_shndx)
 				{
 					char* name=(char*)elf_getSection(data,dynstr);// sym[i].st_shndx
-
-				//	printf("Symbol %d: %s, %08X, %d bytes\n",i,name+sym[i].st_name,sym[i].st_value,sym[i].st_size);
-					fprintf(out,"%08X %d %s\n",sym[i].st_value,sym[i].st_size,name+sym[i].st_name);
+					// printf("Symbol %d: %s, %08" PRIx64 ", % " PRIi64 " bytes\n",
+						// i, name + st_name, st_value, st_size);
+					fprintf(out,"%08" PRIX64 "%" PRIi64 " %s\n", st_value, st_size, name + st_name);
 				}
 			}
 		}
@@ -180,11 +210,10 @@ void elf_syms(FILE* out,const char* libfile)
 	}
 }
 
+static volatile bool prof_run;
 
-
-volatile bool prof_run;
-
-int str_ends_with(const char * str, const char * suffix)
+// This is not used:
+static int str_ends_with(const char * str, const char * suffix)
 {
 	if (str == NULL || suffix == NULL)
 		return 0;
@@ -200,7 +229,7 @@ int str_ends_with(const char * str, const char * suffix)
 
 void sh4_jitsym(FILE* out);
 
-void* prof(void *ptr)
+static void* profiler_main(void *ptr)
 {
 	FILE* prof_out;
 	char line[512];
@@ -263,11 +292,11 @@ void* prof(void *ptr)
 		do
 		{
 			tick_count++;
-			//printf("Sending SIGPROF %08X %08X\n",thread[0],thread[1]);
+			// printf("Sending SIGPROF %08X %08X\n",thread[0],thread[1]);
 			for (int i = 0; i < 2; i++) pthread_kill(thread[i], SIGPROF);
-			//printf("Sent SIGPROF\n");
+			// printf("Sent SIGPROF\n");
 			usleep(prof_wait);
-			//fwrite(&prof_address[0],1,sizeof(prof_address[0])*2,prof_out);
+			// fwrite(&prof_address[0],1,sizeof(prof_address[0])*2,prof_out);
 			fprintf(prof_out, "%p %p\n", prof_address[0], prof_address[1]);
 
 			if (!(tick_count % 10000))
@@ -283,12 +312,24 @@ void* prof(void *ptr)
     return 0;
 }
 
+bool sample_Switch(int freq)
+{
+	if (prof_run) {
+		sample_Stop();
+	} else {
+		sample_Start(freq);
+	}
+	return prof_run;
+}
+
 void sample_Start(int freq)
 {
+	if (prof_run)
+		return;
 	prof_wait = 1000000 / freq;
-	printf("sampling profiler: starting %d hz %d wait\n", freq, prof_wait);
+	printf("sampling profiler: starting %d Hz %d wait\n", freq, prof_wait);
 	prof_run = true;
-	pthread_create(&proft, NULL, prof, 0);
+	pthread_create(&proft, NULL, profiler_main, 0);
 }
 
 void sample_Stop()

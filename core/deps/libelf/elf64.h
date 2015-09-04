@@ -165,6 +165,12 @@ elf64_getSectionType(struct Elf64_Header *file, uint16_t s)
 	return elf64_getSectionTable(file)[s].sh_type;
 }
 
+static inline
+uint32_t elf64_getSectionLink(struct Elf64_Header *file, int s)
+{
+	return elf64_getSectionTable(file)[s].sh_link;
+}
+
 static inline uint32_t 
 elf64_getSectionFlags(struct Elf64_Header *file, uint16_t s)
 {
