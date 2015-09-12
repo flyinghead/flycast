@@ -5,6 +5,18 @@
 #include "sdl/sdl.h"
 #ifdef GLES
 	#include <EGL/egl.h>
+#else
+	#ifndef USE_SDL2
+		#error "Our SDL1.2 implementation only supports GLES. You need SDL2 for OpenGL 3 support!"
+	#endif
+	#include "khronos/GL3/gl3w.h"
+#endif
+
+#ifdef USE_SDL2
+	static SDL_Window* window = NULL;
+	static SDL_GLContext glcontext;
+#else
+	SDL_Surface *screen = NULL;
 #endif
 
 #ifdef TARGET_PANDORA
@@ -13,8 +25,6 @@
 	#define WINDOW_WIDTH  640
 #endif
 #define WINDOW_HEIGHT  480
-
-SDL_Surface *screen = NULL;
 
 static SDL_Joystick *JoySDL = 0;
 
@@ -80,11 +90,15 @@ void input_sdl_init()
 
 		AxisCount = SDL_JoystickNumAxes(JoySDL);
 		ButtonCount = SDL_JoystickNumButtons(JoySDL);
-		Name = SDL_JoystickName(0);
-		
+		#ifdef USE_SDL2
+			Name = SDL_JoystickName(JoySDL);
+		#else
+			Name = SDL_JoystickName(0);
+		#endif
+
 		printf("SDK: Found '%s' joystick with %d axes and %d buttons\n", Name, AxisCount, ButtonCount);
 
-		if (strcmp(Name,"Microsoft X-Box 360 pad")==0)
+		if (Name != NULL && strcmp(Name,"Microsoft X-Box 360 pad")==0)
 		{
 			sdl_map_btn  = sdl_map_btn_xbox360;
 			sdl_map_axis = sdl_map_axis_xbox360;
@@ -113,12 +127,16 @@ void input_sdl_init()
 		}
 	#endif
 	
-	SDL_ShowCursor(0);
+	#ifndef USE_SDL2
+		SDL_ShowCursor(0);
 
-	if (SDL_WM_GrabInput( SDL_GRAB_ON ) != SDL_GRAB_ON)
-	{
-		printf("SDK: Error while grabbing mouse\n");
-	}
+		if (SDL_WM_GrabInput( SDL_GRAB_ON ) != SDL_GRAB_ON)
+		{
+			printf("SDL: Error while grabbing mouse\n");
+		}
+	#else
+		SDL_SetRelativeMouseMode(SDL_TRUE);
+	#endif
 }
 
 void input_sdl_handle(u32 port)
@@ -397,7 +415,14 @@ void sdl_window_set_text(const char* text)
 	#ifdef TARGET_PANDORA
 		strncpy(OSD_Counters, text, 256);
 	#else
-		SDL_WM_SetCaption(text, NULL);    // *TODO*  Set Icon also...
+		#ifdef USE_SDL2
+			if(window)
+			{
+				SDL_SetWindowTitle(window, text);    // *TODO*  Set Icon also...
+			}
+		#else
+			SDL_WM_SetCaption(text, NULL);
+		#endif
 	#endif
 }
 
@@ -415,17 +440,79 @@ void sdl_window_create()
 
 	int window_width  = cfgLoadInt("x11","width", WINDOW_WIDTH);
 	int window_height = cfgLoadInt("x11","height", WINDOW_HEIGHT);
+
 	#ifdef TARGET_PANDORA
 		int flags = SDL_FULLSCREEN;
 	#else
 		int flags = SDL_SWSURFACE;
 	#endif
-	screen = SDL_SetVideoMode(window_width, window_height, 0, flags);
-	if (!screen)
-	{
-		die("error creating SDL screen");
-	}
-	x11_disp = EGL_DEFAULT_DISPLAY;
-	printf("Created SDL Windows (%ix%i) successfully\n", window_width, window_height);
+
+	#if !defined(GLES) && defined(USE_SDL2)
+		flags |= SDL_WINDOW_OPENGL;
+
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
+		SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
+		SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
+		SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
+		SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
+		SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+		SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
+		SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+
+		window = SDL_CreateWindow("Reicast Emulator", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,	window_width, window_height, flags);
+		if (!window)
+		{
+			die("error creating SDL window");
+		}
+
+		glcontext = SDL_GL_CreateContext(window);
+		if (!glcontext)
+		{
+			die("Error creating SDL GL context");
+		}
+		SDL_GL_MakeCurrent(window, NULL);
+	#else
+		screen = SDL_SetVideoMode(window_width, window_height, 0, flags);
+		if (!screen)
+		{
+			die("error creating SDL screen");
+		}
+
+		x11_disp = EGL_DEFAULT_DISPLAY;
+	#endif
+
+	printf("Created SDL Window (%ix%i) and GL Context successfully\n", window_width, window_height);
 }
+#endif
+
+#if !defined(GLES) && defined(USE_SDL2)
+	extern int screen_width, screen_height;
+
+	bool gl_init(void* wind, void* disp)
+	{
+		SDL_GL_MakeCurrent(window, glcontext);
+		return gl3wInit() != -1 && gl3wIsSupported(3, 1);
+	}
+
+	void gl_swap()
+	{
+		SDL_GL_SwapWindow(window);
+
+		/* Check if drawable has been resized */
+		int new_width, new_height;
+		SDL_GL_GetDrawableSize(window, &new_width, &new_height);
+
+		if (new_width != screen_width || new_height != screen_height)
+		{
+			screen_width = new_width;
+			screen_height = new_height;
+		}
+	}
+
+	void gl_term()
+	{
+		SDL_GL_DeleteContext(glcontext);
+	}
 #endif
