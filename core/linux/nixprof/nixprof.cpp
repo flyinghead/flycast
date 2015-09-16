@@ -197,7 +197,8 @@ static void elf_syms(FILE* out,const char* libfile)
 					char* name=(char*)elf_getSection(data,dynstr);// sym[i].st_shndx
 					// printf("Symbol %d: %s, %08" PRIx64 ", % " PRIi64 " bytes\n",
 						// i, name + st_name, st_value, st_size);
-					fprintf(out,"%08" PRIX64 "%" PRIi64 " %s\n", st_value, st_size, name + st_name);
+					//PRIx64 & friends not in android ndk (yet?)
+					fprintf(out,"%08x %d %s\n", (int)st_value, (int)st_size, name + st_name);
 				}
 			}
 		}
