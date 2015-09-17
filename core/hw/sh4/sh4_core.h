@@ -102,3 +102,9 @@ void SetFloatStatusReg();
 
 bool Do_Interrupt(u32 intEvn);
 bool Do_Exeption(u32 epc, u32 expEvn, u32 CallVect);
+
+struct SH4ThrownException {
+	u32 epc;
+	u32 expEvn;
+	u32 callVect;
+};

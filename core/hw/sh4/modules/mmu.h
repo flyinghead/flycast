@@ -16,6 +16,8 @@ extern u32 sq_remap[64];
 bool UTLB_Sync(u32 entry);
 void ITLB_Sync(u32 entry);
 
+bool mmu_match(u32 va, CCN_PTEH_type Address, CCN_PTEL_type Data);
+
 #if defined(NO_MMU)
 	bool inline mmu_TranslateSQW(u32 addr, u32* mapped) {
 		*mapped = sq_remap[(addr>>20)&0x3F] | (addr & 0xFFFE0);
