@@ -111,7 +111,7 @@ void ResetInterruptMask(InterruptID intr);
 int UpdateINTC();
 //extern u32 interrupt_pend;    //nonzero if there are pending interrupts
 
-bool Do_Exeption(u32 lvl, u32 expEvn, u32 CallVect);
+bool Do_Exception(u32 lvl, u32 expEvn, u32 CallVect);
 
 
 

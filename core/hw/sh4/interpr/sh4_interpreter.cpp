@@ -58,7 +58,7 @@ void Sh4_int_Run()
 			UpdateSystem_INTC();
 		}
 		catch (SH4ThrownException ex) {
-			Do_Exeption(ex.epc, ex.expEvn, ex.callVect);
+			Do_Exception(ex.epc, ex.expEvn, ex.callVect);
 			l -= CPU_RATIO * 5;
 		}
 #if !defined(TARGET_BOUNDED_EXECUTION)
@@ -150,7 +150,7 @@ void ExecuteDelayslot()
 	}
 	catch (SH4ThrownException ex) {
 		ex.epc -= 2;
-		printf("Delay slot exception\n");
+		//printf("Delay slot exception\n");
 		throw ex;
 	}
 }

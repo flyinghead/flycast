@@ -345,7 +345,10 @@ void DYNACALL WriteMem_P4(u32 addr,T data)
 		{
 			if (addr&0x80)
 			{
-				printf("Unhandled p4 Write [Unified TLB address array, Associative Write] 0x%x = %x\n",addr,data);
+				#ifdef NO_MMU
+					printf("Unhandled p4 Write [Unified TLB address array, Associative Write] 0x%x = %x\n",addr,data);
+				#endif
+
 				CCN_PTEH_type t;
 				t.reg_data=data;
 

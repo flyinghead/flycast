@@ -1030,7 +1030,7 @@ sh4op(i1100_0011_iiii_iiii)
 {
 	//printf("trapa 0x%X\n",(GetImm8(op) << 2));
 	CCN_TRA = (GetImm8(op) << 2);
-	Do_Exeption(next_pc,0x160,0x100);
+	Do_Exception(next_pc,0x160,0x100);
 }
 
 //jmp @<REG_N>
@@ -1226,7 +1226,7 @@ sh4op(i0000_0000_0000_1001)
 //ldtlb
 sh4op(i0000_0000_0011_1000)
 {
-	printf("ldtlb %d/%d\n",CCN_MMUCR.URC,CCN_MMUCR.URB);
+	//printf("ldtlb %d/%d\n",CCN_MMUCR.URC,CCN_MMUCR.URB);
 	UTLB[CCN_MMUCR.URC].Data=CCN_PTEL;
 	UTLB[CCN_MMUCR.URC].Address=CCN_PTEH;
 
