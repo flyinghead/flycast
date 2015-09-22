@@ -45,9 +45,11 @@ def clear_events(dev):
         event = dev.read_one()
         while(event is not None):
             event = dev.read_one()
-    except BlockingIOError:
+    except (OSError, IOError):
         # BlockingIOErrors should only occur if someone uses the evdev
-        # module < v0.4.4
+        # module < v0.4.4. BlockingIOError inherits from OSError, so we
+        # catch that for Python 2 compatibility. We also catch IOError,
+        # just in case.
         pass
 
 
