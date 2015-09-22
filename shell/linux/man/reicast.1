@@ -87,7 +87,11 @@ Temporarily override a value of the config file.
 
 .TP
 \fB[IMAGE FILE]\fR
-Load a specific image file. If no image is given on the command line, reicast will use the value of the "image" option in the "config" section of the config file.
+Load a specific image file.
+
+Although \fBReicast\fR supports images in GDI, CHDv4 and CDI format, you should avoid CDI images since they often have issues.
+
+If no image is given on the command line, reicast will use the value of the "image" option in the "config" section of the config file.
 
 .SH "AUTHOR"
 
