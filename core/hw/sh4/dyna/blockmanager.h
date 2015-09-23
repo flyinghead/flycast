@@ -71,6 +71,7 @@ struct RuntimeBlockInfo: RuntimeBlockInfo_Core
 
 	u32 memops;
 	u32 linkedmemops;
+	bool entry_block;
 };
 
 struct CachedBlockInfo: RuntimeBlockInfo_Core

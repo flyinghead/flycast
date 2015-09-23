@@ -189,6 +189,18 @@ void UpdateInputState(u32 port)
 	#if defined(USE_SDL)
 		input_sdl_handle(port);
 	#endif
+	
+	//Whatever happened to these?
+#if FEAT_SHREC != DYNAREC_NONE
+	/*
+		void print_graphs();
+		if ('b' == key)	emit_WriteCodeCache();
+		if ('n' == key)	bm_Reset();
+		if ('m' == key)	bm_Sort();
+		if (',' == key)	{ emit_WriteCodeCache(); bm_Sort(); }
+		if ('q' == key)	print_graphs();
+	*/
+#endif
 }
 
 void os_DoEvents()

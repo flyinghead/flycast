@@ -122,7 +122,11 @@ RuntimeBlockInfo* bm_GetBlock(void* dynarec_code)
 	}
 	else
 	{
-		printf("bm_GetBlock(%08X) failed ..\n",dynarec_code);
+		for (iter = blkmap.begin(); iter != blkmap.end(); iter++) {
+			if ((*iter)->contains_code((u8*)dynarec_code))
+				return *iter;
+		}
+		//printf("bm_GetBlock(%p, %p) failed ..\n",dynarec_code, ngen_FailedToFindBlock);
 		return 0;
 	}
 }
@@ -157,6 +161,8 @@ void bm_AddBlock(RuntimeBlockInfo* blk)
 
 	verify((void*)bm_GetCode(blk->addr)==(void*)ngen_FailedToFindBlock);
 	FPCA(blk->addr)=blk->code;
+
+	verify(bm_GetBlock(blk->addr) == blk);
 
 #ifdef DYNA_OPROF
 	if (oprofHandle)

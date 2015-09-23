@@ -72,10 +72,23 @@ void RASDASD()
 	LastAddr=LastAddr_min;
 	memset(emit_GetCCPtr(),0xCC,emit_FreeSpace());
 }
+
+#include <map>
+#include <algorithm>
+#include <set>
+
+typedef map<u32, RuntimeBlockInfo*> BlockGraph;
+
+vector<BlockGraph*> graphs;
+map<u32, BlockGraph*> blockgraphs;
+
 void recSh4_ClearCache()
 {
 	LastAddr=LastAddr_min;
 	bm_Reset();
+
+	graphs.clear();
+	blockgraphs.clear();
 
 	printf("recSh4:Dynarec Cache clear at %08X\n",curr_pc);
 }
@@ -212,9 +225,145 @@ void RuntimeBlockInfo::Setup(u32 rpc,fpscr_t rfpu_cfg)
 	AnalyseBlock(this);
 }
 
+void merge_graphs(BlockGraph* one, BlockGraph* two) {
+	for (BlockGraph::iterator it = two->begin(); it != two->end(); it++) {
+		blockgraphs[it->second->addr] = one;
+		(*one)[it->second->addr] = it->second;
+	}
+	graphs.erase(find(graphs.begin(), graphs.end(), two));
+}
+
+void discover_graph(u32 bootstrap) {
+	BlockGraph* graph;
+	set<u32> resolved;
+	vector<u32> unresolved;
+
+	if (blockgraphs.count(bootstrap)) {
+		graph = blockgraphs[bootstrap];
+		(*graph)[bootstrap]->entry_block = true;
+		return;
+	} else {
+		graph = new BlockGraph();
+
+		graphs.push_back(graph);
+	}
+
+	unresolved.push_back(bootstrap);
+
+	while (unresolved.size()) {
+		u32 pc = unresolved[unresolved.size()-1];
+		unresolved.pop_back();
+
+		if (resolved.count(pc))
+			continue;
+
+		if (graph->count(pc))
+			continue;
+
+		if (blockgraphs.count(pc)) {
+			verify(blockgraphs[pc] != graph);
+			merge_graphs(blockgraphs[pc], graph);
+			graph = blockgraphs[pc];
+			resolved.clear();
+			continue;
+		}
+
+		resolved.insert(pc);
+		//printf("resolving %08X\n", pc);
+
+		RuntimeBlockInfo* rbi = ngen_AllocateBlock();
+		rbi->Setup(pc,fpscr);
+		rbi->entry_block = pc == bootstrap;
+
+		if (rbi->addr == -1)
+			continue;
+
+		(*graph)[pc] = rbi;
+		blockgraphs[pc] = graph;
+
+		if (rbi->BranchBlock !=-1 && rbi->BlockType != BET_StaticCall)
+			unresolved.push_back(rbi->BranchBlock);
+
+		if (rbi->NextBlock != -1)
+			unresolved.push_back(rbi->NextBlock);
+	}
+
+	int entrypoints = 0;
+	
+	for (BlockGraph::iterator it = graph->begin(); it != graph->end(); it++) {
+		entrypoints += it->second->entry_block;
+	}
+
+	//printf("Graph: %d blocks w/ %d entrypoints, %d graphs\n", graph->size(), entrypoints, graphs.size());
+}
+
+void print_graphs() {
+	int top_runs = 0;
+	int total_runs = 0;
+	map<BlockGraph*, u32> graph_runs;
+
+	for (size_t i = 0; i < graphs.size(); i++) {
+		BlockGraph* graph = graphs[i];
+		for (BlockGraph::iterator it = graphs[i]->begin(); it != graphs[i]->end(); it++) {
+
+			RuntimeBlockInfo* natblock = bm_GetBlock(it->first);
+			if (!natblock || natblock->runs == 0)
+				continue;
+
+			if (natblock->runs > top_runs)
+				top_runs = natblock->runs;
+
+			total_runs += natblock->runs;
+
+			graph_runs[graph] += natblock->runs;
+		}
+	}
+
+	int baseline = top_runs / 100;
+
+	printf("<Graphdump\n");
+	for (size_t i = 0; i < graphs.size(); i++) {
+		BlockGraph* graph = graphs[i];
+		if (graph_runs[graph] < baseline)
+			continue;
+		printf("\tGraph: %p\n", graphs[i]);
+		
+		int cnt = 0;
+		int cnt2 = 0;
+		for (BlockGraph::iterator it = graphs[i]->begin(); it != graphs[i]->end(); it++) {
+			
+			RuntimeBlockInfo* natblock = bm_GetBlock(it->first);
+			if (!natblock || natblock->runs == 0 || natblock->runs < baseline) {
+				if (natblock) {
+					cnt2++;
+					natblock->runs = 0;
+				} else {
+					cnt++;
+				}
+				continue;
+			}
+			printf("\t\tBlock %08X, compiled: %d, entrypoint: %d, type: %d, len: %d, cycles: %d, runs %d, loop %d\n", 
+					it->first, natblock != 0, it->second->entry_block, it->second->BlockType, it->second->oplist.size(),
+					it->second->guest_cycles, natblock ? natblock->runs : 0, 
+					(it->second->BlockType == BET_Cond_0 || it->second->BlockType == BET_Cond_1) && graph->count(it->second->BranchBlock) );
+
+			if (natblock)
+				natblock->runs = 0;
+		}
+		if (cnt2) {
+			printf("\t\t and %d more not worth mentioning\n", cnt2);
+		}
+		if (cnt) {
+			printf("\t\t and %d more that never run\n", cnt);
+		}
+	}
+	printf("Graphdump>\n");
+}
+
 DynarecCodeEntryPtr rdv_CompilePC()
 {
 	u32 pc=next_pc;
+	discover_graph(pc);
 
 	if (emit_FreeSpace()<16*1024 || pc==0x8c0000e0 || pc==0xac010000 || pc==0xac008300)
 		recSh4_ClearCache();
@@ -232,6 +381,7 @@ DynarecCodeEntryPtr rdv_CompilePC()
 		rbi->staging_runs=do_opts?100:-100;
 		ngen_Compile(rbi,DoCheck(rbi->addr),(pc&0xFFFFFF)==0x08300 || (pc&0xFFFFFF)==0x10000,false,do_opts);
 		verify(rbi->code!=0);
+		verify(rbi->host_code_size!=0);
 
 		bm_AddBlock(rbi);
 

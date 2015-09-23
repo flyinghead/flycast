@@ -162,6 +162,10 @@ public:
 
 		sub(dword[rax], block->guest_cycles);
 
+		mov(rax, (size_t)&block->runs);
+		add(dword[rax], 1);
+
+
 		sub(rsp, 0x28);
 
 		for (size_t i = 0; i < block->oplist.size(); i++) {
@@ -355,6 +359,7 @@ public:
 
 		block->code = (DynarecCodeEntryPtr)getCode();
 
+		block->host_code_size = getSize();
 		emit_Skip(getSize());
 	}
 

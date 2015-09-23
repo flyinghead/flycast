@@ -14,6 +14,7 @@
 #include "hw/sh4/sh4_core.h"
 #include "hw/sh4/sh4_mem.h"
 #include "decoder_opcodes.h"
+#include "../interpr/sh4_opcodes.h"
 
 #define BLOCK_MAX_SH_OPS_SOFT 500
 #define BLOCK_MAX_SH_OPS_HARD 511
@@ -1098,6 +1099,13 @@ void dec_DecodeBlock(RuntimeBlockInfo* rbi,u32 max_cycles)
 						else
 							blk->guest_cycles+=CPU_RATIO;
 
+						if ((state.cpu.is_delayslot && OpDesc[op]->SetPC()) ||
+							OpDesc[op]->oph == iNotImplemented) {
+							blk->addr = -1;
+							return;
+						}
+
+
 						verify(!(state.cpu.is_delayslot && OpDesc[op]->SetPC()));
 						if (state.ngen.OnlyDynamicEnds || !OpDesc[op]->rec_oph)
 						{
@@ -1168,6 +1176,8 @@ _end:
 	if (settings.dynarec.idleskip)
 	{
 		//Experimental hash-id based idle skip
+		if (blk->addr == 0x8C0B926A)
+			blk->guest_cycles *= 100;
 		if (strstr(idle_hash,blk->hash(false,true)))
 		{
 			//printf("IDLESKIP: %08X reloc match %s\n",blk->addr,blk->hash(false,true));
