@@ -55,12 +55,12 @@ ifdef FOR_ANDROID
     RZDCY_MODULES += android/ deps/libandroid/ deps/libzip/
 endif
 
+ifdef USE_SDL
+    RZDCY_MODULES += sdl/
+endif
+
 ifdef FOR_LINUX
-	ifdef USE_SDL
-		RZDCY_MODULES += sdl/
-	else
-		RZDCY_MODULES += linux-dist/
-	endif
+    RZDCY_MODULES += linux-dist/
 endif
 
 RZDCY_FILES := $(foreach dir,$(addprefix $(RZDCY_SRC_DIR)/,$(RZDCY_MODULES)),$(wildcard $(dir)*.cpp))
