@@ -24,11 +24,11 @@ class EmuGLView: NSOpenGLView {
         //glClearColor(0.65f, 0.65f, 0.65f, 1.0f);
         //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
-        openGLContext.makeCurrentContext()
+        openGLContext!.makeCurrentContext()
         
         while !emu_single_frame(Int32(dirtyRect.width), Int32(dirtyRect.height)) { }
         
-        openGLContext.flushBuffer()
+        openGLContext!.flushBuffer()
     }
     
     override func awakeFromNib() {
@@ -49,12 +49,12 @@ class EmuGLView: NSOpenGLView {
         
         let pf = NSOpenGLPixelFormat(attributes:attrs)
         
-        let context = NSOpenGLContext(format: pf, shareContext: nil);
+        let context = NSOpenGLContext(format: pf!, shareContext: nil);
         
         self.pixelFormat = pf;
         self.openGLContext = context;
         
-        openGLContext.makeCurrentContext()
+        openGLContext!.makeCurrentContext()
         emu_gles_init();
     }
     
