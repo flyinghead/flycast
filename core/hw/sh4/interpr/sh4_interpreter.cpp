@@ -44,7 +44,9 @@ void Sh4_int_Run()
 	for (int i=0; i<10000; i++)
 #endif
 	{
+#if !defined(NO_MMU)
 		try {
+#endif
 			do
 			{
 				u32 addr = next_pc;
@@ -56,11 +58,13 @@ void Sh4_int_Run()
 			} while (l > 0);
 			l += SH4_TIMESLICE;
 			UpdateSystem_INTC();
+#if !defined(NO_MMU)
 		}
 		catch (SH4ThrownException ex) {
 			Do_Exception(ex.epc, ex.expEvn, ex.callVect);
 			l -= CPU_RATIO * 5;
 		}
+#endif
 #if !defined(TARGET_BOUNDED_EXECUTION)
 	} while(sh4_int_bCpuRun);
 
@@ -141,33 +145,40 @@ bool Sh4_int_IsCpuRunning()
 //TODO : Check for valid delayslot instruction
 void ExecuteDelayslot()
 {
+#if !defined(NO_MMU)
 	try {
+#endif
 		u32 addr = next_pc;
 		next_pc += 2;
 		u32 op = IReadMem16(addr);
 		if (op != 0)
 			ExecuteOpcode(op);
+#if !defined(NO_MMU)
 	}
 	catch (SH4ThrownException ex) {
 		ex.epc -= 2;
 		//printf("Delay slot exception\n");
 		throw ex;
 	}
+#endif
 }
 
 void ExecuteDelayslot_RTE()
 {
 	u32 oldsr = sr.GetFull();
 
+#if !defined(NO_MMU)
 	try {
-
+#endif
 		sr.SetFull(ssr);
 
 		ExecuteDelayslot();
+#if !defined(NO_MMU)
 	}
 	catch (SH4ThrownException ex) {
 		msgboxf("RTE Exception", MBX_ICONERROR);
 	}
+#endif
 }
 
 //General update

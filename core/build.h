@@ -115,7 +115,7 @@
 
 */
 
-//#define NO_MMU
+#define NO_MMU
 
 #define DC_PLATFORM_MASK        7
 #define DC_PLATFORM_DREAMCAST   0   /* Works, for the most part */
