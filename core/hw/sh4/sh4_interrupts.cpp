@@ -49,7 +49,7 @@ DECL_ALIGN(64) u32 InterruptBit[32] = { 0 };
 DECL_ALIGN(64) u32 InterruptLevelBit[16] = { 0 };
 
 bool Do_Interrupt(u32 intEvn);
-bool Do_Exeption(u32 epc, u32 expEvn, u32 CallVect);
+bool Do_Exception(u32 epc, u32 expEvn, u32 CallVect);
 
 u32 interrupt_vpend; // Vector of pending interrupts
 u32 interrupt_vmask; // Vector of masked interrupts             (-1 inhibits all interrupts)
@@ -158,8 +158,9 @@ bool Do_Interrupt(u32 intEvn)
 	return true;
 }
 
-bool Do_Exeption(u32 epc, u32 expEvn, u32 CallVect)
+bool Do_Exception(u32 epc, u32 expEvn, u32 CallVect)
 {
+	verify(sr.BL == 0);
 	CCN_EXPEVT = expEvn;
 
 	ssr = sr.GetFull();
@@ -172,7 +173,7 @@ bool Do_Exeption(u32 epc, u32 expEvn, u32 CallVect)
 
 	next_pc = vbr + CallVect;
 
-	printf("RaiseException: from %08X , pc errh %08X\n", spc, epc);
+	//printf("RaiseException: from %08X , pc errh %08X, %08X vect\n", spc, epc, next_pc);
 	return true;
 }
 

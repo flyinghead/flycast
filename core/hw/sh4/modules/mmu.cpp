@@ -71,8 +71,8 @@ defining NO_MMU disables the full mmu emulation
 
 #include "hw/mem/_vmem.h"
 
-#define printf_mmu
-#define printf_win32 log
+#define printf_mmu(...)
+#define printf_win32(...)
 
 //SQ fast remap , mailny hackish , assumes 1 mb pages
 //max 64 mb can be remapped on SQ
@@ -145,8 +145,13 @@ void ITLB_Sync(u32 entry)
 	printf_mmu("ITLB MEM remap %d : 0x%X to 0x%X : %d\n", entry, ITLB[entry].Address.VPN << 10, ITLB[entry].Data.PPN << 10, ITLB[entry].Data.V);
 }
 
-void RaiseException(u32 a, u32 b) {
+void RaiseException(u32 expEvnt, u32 callVect) {
+#if !defined(NO_MMU)
+	SH4ThrownException ex = { next_pc - 2, expEvnt, callVect };
+	throw ex;
+#else
 	msgboxf("Can't raise exceptions yet", MBX_ICONERROR);
+#endif
 }
 
 u32 mmu_error_TT;
@@ -217,7 +222,7 @@ void mmu_raise_exeption(u32 mmu_error, u32 address, u32 am)
 			RaiseException(0xE0, 0x100);
 		else							//IADDERR - Instruction Address Error
 		{
-			printf("MMU_ERROR_BADADDR(i) 0x%X\n", address);
+			printf_mmu("MMU_ERROR_BADADDR(i) 0x%X\n", address);
 			RaiseException(0xE0, 0x100);
 			return;
 		}

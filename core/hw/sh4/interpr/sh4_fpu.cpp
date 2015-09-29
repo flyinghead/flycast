@@ -346,24 +346,28 @@ sh4op(i1111_nnnn_mmmm_1011)
 		u32 n = GetN(op);
 		u32 m = GetM(op);
 
-		r[n] -= 4;
+		u32 addr = r[n] - 4;
 
-		WriteMemU32(r[n], fr_hex[m]);
+		WriteMemU32(addr, fr_hex[m]);
+
+		r[n] = addr;
 	}
 	else
 	{
 		u32 n = GetN(op);
 		u32 m = GetM(op)>>1;
 
-		r[n] -= 8;
+		u32 addr = r[n] - 8;
 		if (((op >> 4) & 0x1) == 0)
 		{
-			WriteMemU64(r[n] , dr_hex[m]);
+			WriteMemU64(addr, dr_hex[m]);
 		}
 		else
 		{
-			WriteMemU64(r[n] , xd_hex[m]);
+			WriteMemU64(addr, xd_hex[m]);
 		}
+
+		r[n] = addr;
 	}
 }
 
