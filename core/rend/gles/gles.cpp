@@ -355,7 +355,7 @@ int screen_width;
 int screen_height;
 
 #if (HOST_OS != OS_DARWIN) && !defined(TARGET_NACL32)
-#ifdef GLES
+#if defined(GLES) && !defined(USE_SDL)
 	// Create a basic GLES context
 	bool gl_init(void* wind, void* disp)
 	{

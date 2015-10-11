@@ -175,10 +175,6 @@ else
     $(error Unknown platform)
 endif
 
-ifdef USE_SDL2
-    USE_SDL := 1
-endif
-
 RZDCY_SRC_DIR = ../../core
 include $(RZDCY_SRC_DIR)/core.mk
 
@@ -206,14 +202,8 @@ ifndef NOT_ARM
 endif
 
 ifdef USE_SDL
-    CXXFLAGS += -D USE_SDL
-    ifdef USE_SDL2
-        CXXFLAGS += `sdl2-config --cflags` -D USE_SDL2
-        LIBS += `sdl2-config --libs`
-    else
-        CXXFLAGS += `sdl-config --cflags`
-        LIBS += `sdl-config --libs`
-    endif
+    CXXFLAGS += `sdl2-config --cflags` -D USE_SDL
+    LIBS += `sdl2-config --libs`
 endif
 
 ifdef PGO_MAKE
