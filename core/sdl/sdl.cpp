@@ -401,8 +401,6 @@ void sdl_window_set_text(const char* text)
 	#endif
 }
 
-int ndcid = 0;
-
 void sdl_window_create()
 {
 	if (SDL_WasInit(SDL_INIT_VIDEO) == 0)
