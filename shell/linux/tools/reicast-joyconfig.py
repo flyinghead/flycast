@@ -87,10 +87,10 @@ def read_axis_or_key(dev, absinfos):
 def print_mapped_button(name, event):
     try:
         code_id = evdev.ecodes.BTN[event.code]
-    except IndexError:
+    except (IndexError, KeyError):
         try:
             code_id = evdev.ecodes.KEY[event.code]
-        except IndexError:
+        except (IndexError, KeyError):
             code_id = None
     if type(code_id) is list:
         code_id = code_id[0]
@@ -101,7 +101,7 @@ def print_mapped_button(name, event):
 def print_mapped_axis(name, event, axis_inverted=False):
     try:
         code_id = evdev.ecodes.ABS[event.code]
-    except IndexError:
+    except (IndexError, KeyError):
         code_id = None
     if type(code_id) is list:
         code_id = code_id[0]
