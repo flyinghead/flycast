@@ -63,10 +63,12 @@ Building for Linux
 ------------------
 Requirements:
 * build-essential
-* libasound
+* libasound2
 * libegl1-mesa-dev
 * libgles2-mesa-dev
 * libasound2-dev
+* mesa-common-dev
+* libgl1-mesa-dev
 
 From project root directory:
 
