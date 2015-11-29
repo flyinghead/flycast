@@ -134,7 +134,7 @@ def setup_device(dev_id):
         clear_events(dev)
         print("Press the that button now...")
         event = read_button(dev)
-        mapping.set("dreamcast", "btn_escape", event.code)
+        mapping.set("emulator", "btn_escape", event.code)
         print_mapped_button("emulator escape button", event)
 
     # Regular dreamcast buttons
