@@ -41,6 +41,8 @@ ifdef CPP_REC
     RZDCY_MODULES += rec-cpp/
 endif
 
+	RZDCY_MODULES += rend/soft/
+
 ifndef NO_REND
     RZDCY_MODULES += rend/gles/
 else

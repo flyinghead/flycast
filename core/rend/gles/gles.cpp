@@ -625,6 +625,17 @@ int screen_height;
 
 			void gl_swap()
 			{
+				static FILE* fd = fopen(cfgLoadStr("record", "rawvid","").c_str(), "wb");
+
+				if (fd) {
+					int bytesz = screen_width* screen_height * 3;
+					u8* img = new u8[bytesz];
+
+					glReadPixels(0,0,screen_width,screen_height,GL_RGB, GL_UNSIGNED_BYTE,img);
+					fwrite(img, 1, bytesz, fd);
+					fflush(fd);
+				}
+
 				glXSwapBuffers((Display*)libPvr_GetRenderSurface(), (GLXDrawable)libPvr_GetRenderTarget());
 
 				Window win;

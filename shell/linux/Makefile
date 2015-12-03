@@ -84,8 +84,9 @@ else ifneq (,$(findstring x64,$(platform)))
     X64_REC := 1
     NOT_ARM := 1
     USE_X11 := 1
-    CFLAGS += -D TARGET_LINUX_x64 -D TARGET_NO_AREC -fsingle-precision-constant
+    CFLAGS += -D TARGET_LINUX_x64 -D TARGET_NO_AREC -fsingle-precision-constant -msse4.1 -fopenmp
     CXXFLAGS += -fexceptions
+    LDFLAGS += -fopenmp
 
 # Generic 32 bit ARMhf (a.k.a. ARMv7h)
 else ifneq (,$(findstring armv7h,$(platform)))

@@ -21,7 +21,7 @@
 #include "hw/sh4/dyna/shil_canonical.h"
 
 
-#define MIPS_COUNTER 0
+#define MIPS_COUNTER 1
 
 struct DynaRBI : RuntimeBlockInfo
 {

@@ -20,6 +20,8 @@ Compression
 	look into it, but afaik PVRC is not realtime doable
 */
 
+#include <xmmintrin.h>
+
 u16 temp_tex_buffer[1024*1024];
 extern u32 decoded_colors[3][65536];
 
@@ -308,32 +310,28 @@ struct TextureCacheData
 				glGenerateMipmap(GL_TEXTURE_2D);
 		}
 		else {
-			#if HOST_OS == OS_WINDOWS
-				if (textype == GL_UNSIGNED_SHORT_5_6_5)
-					tex_type = 0;
-				else if (textype == GL_UNSIGNED_SHORT_5_5_5_1)
-					tex_type = 1;
-				else if (textype == GL_UNSIGNED_SHORT_4_4_4_4)
-					tex_type = 2;
-	
-				if (pData) {
-					_mm_free(pData);
+			if (textype == GL_UNSIGNED_SHORT_5_6_5)
+				tex_type = 0;
+			else if (textype == GL_UNSIGNED_SHORT_5_5_5_1)
+				tex_type = 1;
+			else if (textype == GL_UNSIGNED_SHORT_4_4_4_4)
+				tex_type = 2;
+
+			if (pData) {
+				_mm_free(pData);
+			}
+
+			pData = (u16*)_mm_malloc(w * h * 16, 16);
+			for (int y = 0; y < h; y++) {
+				for (int x = 0; x < w; x++) {
+					u32* data = (u32*)&pData[(x + y*w) * 8];
+
+					data[0] = decoded_colors[tex_type][temp_tex_buffer[(x + 1) % w + (y + 1) % h * w]];
+					data[1] = decoded_colors[tex_type][temp_tex_buffer[(x + 0) % w + (y + 1) % h * w]];
+					data[2] = decoded_colors[tex_type][temp_tex_buffer[(x + 1) % w + (y + 0) % h * w]];
+					data[3] = decoded_colors[tex_type][temp_tex_buffer[(x + 0) % w + (y + 0) % h * w]];
 				}
-	
-				pData = (u16*)_mm_malloc(w * h * 16, 16);
-				for (int y = 0; y < h; y++) {
-					for (int x = 0; x < w; x++) {
-						u32* data = (u32*)&pData[(x + y*w) * 8];
-	
-						data[0] = decoded_colors[tex_type][temp_tex_buffer[(x + 1) % w + (y + 1) % h * w]];
-						data[1] = decoded_colors[tex_type][temp_tex_buffer[(x + 0) % w + (y + 1) % h * w]];
-						data[2] = decoded_colors[tex_type][temp_tex_buffer[(x + 1) % w + (y + 0) % h * w]];
-						data[3] = decoded_colors[tex_type][temp_tex_buffer[(x + 0) % w + (y + 0) % h * w]];
-					}
-				}
-			#else
-				die("Softrend only works for windows");
-			#endif
+			}
 		}
 	}
 
@@ -342,12 +340,11 @@ struct TextureCacheData
 	
 	void Delete()
 	{
-		#if HOST_OS == OS_WINDOWS
-			if (pData) {
-				_mm_free(pData);
-				pData = 0;
-			}
-		#endif
+		if (pData) {
+			_mm_free(pData);
+			pData = 0;
+		}
+
 		if (texID) {
 			glDeleteTextures(1, &texID);
 		}

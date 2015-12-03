@@ -371,24 +371,21 @@ bool rend_init()
 	renderer	 = rend_norend();
 #else
 
-#if HOST_OS == OS_WINDOWS
+
 	switch (settings.pvr.rend) {
 		default:
 		case 0:
 			renderer = rend_GLES2();
 			break;
-
+#if HOST_OS == OS_WINDOWS
 		case 1:
 			renderer = rend_D3D11();
 			break;
-
+#endif
 		case 2:
 			renderer = rend_softrend();
 			break;
 	}
-#else
-	renderer = rend_GLES2();
-#endif
 
 #endif
 
