@@ -5,6 +5,8 @@
 #define _WIN32_WINNT 0x0500 
 #include <windows.h>
 
+#include <Xinput.h>
+#pragma comment(lib, "XInput9_1_0.lib")
 
 PCHAR*
 	CommandLineToArgvA(
@@ -105,7 +107,7 @@ PCHAR*
 bool VramLockedWrite(u8* address);
 bool ngen_Rewrite(unat& addr,unat retadr,unat acc);
 bool BM_LockedWrite(u8* address);
-
+void UpdateController(u32 port);
 
 LONG ExeptionHandler(EXCEPTION_POINTERS *ExceptionInfo)
 {
@@ -235,6 +237,8 @@ void UpdateInputState(u32 port)
 		if (GetAsyncKeyState(VK_RIGHT))
 			kcode[port]&=~key_CONT_DPAD_RIGHT;
 
+		UpdateController(port);
+
 		if (GetAsyncKeyState(VK_F1))
 			settings.pvr.ta_skip = 100;
 
@@ -243,6 +247,43 @@ void UpdateInputState(u32 port)
 
 		if (GetAsyncKeyState(VK_F10))
 			DiscSwap();
+	}
+
+void UpdateController(u32 port)
+	{
+		XINPUT_STATE state;
+		
+		if (XInputGetState(port, &state) == 0)
+		{
+			WORD xbutton = state.Gamepad.wButtons;
+
+			if (xbutton & XINPUT_GAMEPAD_A) 
+				kcode[port] &= ~key_CONT_A;
+			if (xbutton & XINPUT_GAMEPAD_B)
+				kcode[port] &= ~key_CONT_B;
+			if (xbutton & XINPUT_GAMEPAD_Y)
+				kcode[port] &= ~key_CONT_Y;
+			if (xbutton & XINPUT_GAMEPAD_X)
+				kcode[port] &= ~key_CONT_X;
+
+			if (xbutton & XINPUT_GAMEPAD_START)
+				kcode[port] &= ~key_CONT_START;
+
+			if (xbutton & XINPUT_GAMEPAD_DPAD_UP)
+				kcode[port] &= ~key_CONT_DPAD_UP;
+			if (xbutton & XINPUT_GAMEPAD_DPAD_DOWN)
+				kcode[port] &= ~key_CONT_DPAD_DOWN;
+			if (xbutton & XINPUT_GAMEPAD_DPAD_LEFT)
+				kcode[port] &= ~key_CONT_DPAD_LEFT;
+			if (xbutton & XINPUT_GAMEPAD_DPAD_RIGHT)
+				kcode[port] &= ~key_CONT_DPAD_RIGHT;
+
+			lt[port] |= state.Gamepad.bLeftTrigger;
+			rt[port] |= state.Gamepad.bRightTrigger;
+
+			joyx[port] |=  state.Gamepad.sThumbLX / 257;
+			joyy[port] |= -state.Gamepad.sThumbLY / 257;
+		}
 	}
 
 
