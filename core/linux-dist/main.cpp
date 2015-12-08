@@ -191,6 +191,11 @@ void UpdateInputState(u32 port)
 	#endif
 }
 
+void UpdateVibration(u32 port, u32 value)
+{
+	
+}
+
 void os_DoEvents()
 {
 	#if defined(SUPPORT_X11)

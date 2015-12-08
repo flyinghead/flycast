@@ -59,6 +59,10 @@ void UpdateInputState(u32 port) {
     
 }
 
+void UpdateVibration(u32 port, u32 value) {
+
+}
+
 void os_CreateWindow() {
     
 }
