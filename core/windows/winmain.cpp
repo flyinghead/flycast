@@ -286,7 +286,29 @@ void UpdateController(u32 port)
 		}
 	}
 
+void UpdateVibration(u32 port, u32 value)
+{
+		const u8 freq_l = 0x16;
+		//const u8 freq_h = 0x31;
 
+		u8 POW_POS = (value >> 8) & 0x3;
+		u8 POW_NEG = (value >> 12) & 0x3;
+		u8 FREQ = (value >> 16) & 0xFF;
+
+		XINPUT_VIBRATION vib;
+
+		double pow = (POW_POS + POW_NEG) / 7.0;
+		double pow_l = pow * (0x3B - FREQ) / 17.0;
+		double pow_r = pow * (FREQ / (double)freq_l);
+
+		if (pow_l > 1.0) pow_l = 1.0;
+		if (pow_r > 1.0) pow_r = 1.0;
+
+		vib.wLeftMotorSpeed = (u16)(65535 * pow_l);
+		vib.wRightMotorSpeed = (u16)(65535 * pow_r);
+
+		XInputSetState(port, &vib);
+}
 
 LRESULT CALLBACK WndProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {

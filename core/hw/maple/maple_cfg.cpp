@@ -21,6 +21,7 @@ Plugins:
 		ImageUpdate(data);
 */
 void UpdateInputState(u32 port);
+void UpdateVibration(u32 port, u32 value);
 
 extern u16 kcode[4];
 extern u32 vks[4];
@@ -39,6 +40,11 @@ struct MapleConfigMap : IMapleConfigMap
 	MapleConfigMap(maple_device* dev)
 	{
 		this->dev=dev;
+	}
+
+	void SetVibration(u32 value)
+	{
+		UpdateVibration(dev->bus_id, value);
 	}
 
 	void GetInput(PlainJoystickState* pjs)
@@ -72,7 +78,7 @@ void mcfg_CreateDevices()
 	mcfg_Create(MDT_SegaController,0,5);
 
 	mcfg_Create(MDT_SegaVMU,0,0);
-	mcfg_Create(MDT_SegaVMU,0,1);
+	mcfg_Create(MDT_PurupuruPack,0,1);
 #else
 	mcfg_Create(MDT_NaomiJamma, 0, 5);
 #endif
