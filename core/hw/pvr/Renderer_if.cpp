@@ -382,9 +382,12 @@ bool rend_init()
 			renderer = rend_D3D11();
 			break;
 #endif
+
+#if FEAT_HAS_SOFTREND
 		case 2:
 			renderer = rend_softrend();
 			break;
+#endif
 	}
 
 #endif
