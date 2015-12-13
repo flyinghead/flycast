@@ -31,9 +31,14 @@ map<int, int> x11_keymap;
 int x11_dc_buttons = 0xFFFF;
 int x11_keyboard_input = 0;
 
+int x11_width;
+int x11_height;
+
 int ndcid = 0;
 void* x11_glc;
 bool x11_fullscreen = false;
+
+void* x11_vis;
 
 enum
 {
@@ -236,8 +241,8 @@ void x11_window_create()
 		sWA.event_mask = StructureNotifyMask | ExposureMask | ButtonPressMask | ButtonReleaseMask | KeyPressMask | KeyReleaseMask;
 		ui32Mask = CWBackPixel | CWBorderPixel | CWEventMask | CWColormap;
 
-		int x11_width = cfgLoadInt("x11", "width", DEFAULT_WINDOW_WIDTH);
-		int x11_height = cfgLoadInt("x11", "height", DEFAULT_WINDOW_HEIGHT);
+		x11_width = cfgLoadInt("x11", "width", DEFAULT_WINDOW_WIDTH);
+		x11_height = cfgLoadInt("x11", "height", DEFAULT_WINDOW_HEIGHT);
 		x11_fullscreen = (cfgLoadInt("x11", "fullscreen", DEFAULT_FULLSCREEN) > 0);
 
 		if (x11_width < 0 || x11_height < 0)
@@ -296,6 +301,7 @@ void x11_window_create()
 		//(EGLNativeDisplayType)x11Display;
 		x11_disp = (void*)x11Display;
 		x11_win = (void*)x11Window;
+		x11_vis = (void*)x11Visual->visual;
 	}
 	else
 	{

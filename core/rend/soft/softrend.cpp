@@ -38,8 +38,10 @@ DECL_ALIGN(32) u32 pixels[MAX_RENDER_PIXELS];
 #if HOST_OS != OS_WINDOWS
 
 struct RECT {
-	int top, left, bottom, right;
+	int left, top, right, bottom;
 };
+
+#include     <X11/Xlib.h>
 #endif
 
 union m128i {
@@ -253,14 +255,7 @@ RendtriangleFn RendtriangleFns[3][2][2][2][4][2];
 
 __m128i const_setAlpha;
 
-__m128i shuffle_alpha
-#if HOST_OS == OS_WINDOWS
- = {
-	0x0E, 0x80, 0x0E, 0x80, 0x0E, 0x80, 0x0E, 0x80,
-	0x06, 0x80, 0x06, 0x80, 0x06, 0x80, 0x06, 0x80
-}
-#endif
-;
+__m128i shuffle_alpha;
 
 
 TPL_DECL_pixel
@@ -910,7 +905,9 @@ struct softrend : Renderer
 	virtual bool Init() {
 
 		const_setAlpha = _mm_set1_epi32(0xFF000000);
-
+		u8 ushuffle[] = { 0x0E, 0x80, 0x0E, 0x80, 0x0E, 0x80, 0x0E, 0x80, 0x06, 0x80, 0x06, 0x80, 0x06, 0x80, 0x06, 0x80};
+		memcpy(&shuffle_alpha, ushuffle, sizeof(shuffle_alpha));
+		
 #if HOST_OS == OS_WINDOWS
 		hWnd = (HWND)libPvr_GetRenderTarget();
 
@@ -1159,20 +1156,37 @@ struct softrend : Renderer
 #endif
 	}
 
+	#define RR(x, a, b, c, d) (x + a), (x + b), (x + c), (x + d)
+	#define R(a, b, c, d) RR(12, a, b, c, d), RR(8, a, b, c, d), RR(4, a, b, c, d),  RR(0, a, b, c, d)
+
+	//R coefs should be adjusted to match pixel format
+	INLINE __m128 shuffle_pixel(__m128 v) {
+		return (__m128)_mm_shuffle_epi8((__m128i)v, _mm_set_epi8(R(0x80,2,1, 0)));
+	}
+
 	virtual void Present() {
 
 		__m128* psrc = (__m128*)render_buffer;
 		__m128* pdst = (__m128*)pixels;
+
+		#define SHUFFL(v) v
+		//	#define SHUFFL(v) shuffle_pixel(v)
+
+		#if HOST_OS == OS_WINDOWS
+			#define FLIP_Y 479 - 
+		#else
+			#define FLIP_Y
+		#endif
 
 		const int stride = STRIDE_PIXEL_OFFSET / 4;
 		for (int y = 0; y<MAX_RENDER_HEIGHT; y += 4)
 		{
 			for (int x = 0; x<MAX_RENDER_WIDTH; x += 4)
 			{
-				pdst[(479 - (y + 0))*stride + x / 4] = *psrc++;
-				pdst[(479 - (y + 1))*stride + x / 4] = *psrc++;
-				pdst[(479 - (y + 2))*stride + x / 4] = *psrc++;
-				pdst[(479 - (y + 3))*stride + x / 4] = *psrc++;
+				pdst[(FLIP_Y (y + 0))*stride + x / 4] = SHUFFL(*psrc++);
+				pdst[(FLIP_Y (y + 1))*stride + x / 4] = SHUFFL(*psrc++);
+				pdst[(FLIP_Y (y + 2))*stride + x / 4] = SHUFFL(*psrc++);
+				pdst[(FLIP_Y (y + 3))*stride + x / 4] = SHUFFL(*psrc++);
 			}
 		}
 		
@@ -1191,6 +1205,23 @@ struct softrend : Renderer
 
 		BitBlt(hdc, x, y, 640 , 480 , hmem, 0, 0, SRCCOPY);
 		ReleaseDC(hWnd, hdc);
+#else
+		extern Window x11_win;
+		extern Display* x11_disp;
+		extern Visual* x11_vis;
+
+		int width = 640;
+		int height = 480;
+		
+		extern int x11_width;
+		extern int x11_height;
+
+		XImage* ximage = XCreateImage(x11_disp, x11_vis, 24, ZPixmap, 0, (char *)pixels, width, height, 32, width * 4);
+
+		GC gc = XCreateGC(x11_disp, x11_win, 0, 0);
+		XPutImage(x11_disp, x11_win, gc, ximage, 0, 0, (x11_width - width)/2, (x11_height - height)/2, width, height);
+		XFree(ximage);
+		XFreeGC(x11_disp, gc);
 #endif
 	}
 };
