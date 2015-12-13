@@ -76,8 +76,9 @@ ifneq (,$(findstring x86,$(platform)))
     MFLAGS += -m32
     ASFLAGS += --32
     LDFLAGS += -m32
-    CFLAGS += -m32 -D TARGET_LINUX_x86 -D TARGET_NO_AREC -fsingle-precision-constant
+    CFLAGS += -m32 -D TARGET_LINUX_x86 -D TARGET_NO_AREC -fsingle-precision-constant -msse4.1
     CXXFLAGS += -fno-exceptions
+    LDFLAGS += -fopenmp
 
 # Generic 64 bit x86 (a.k.a. x64/AMD64/x86_64/Intel64/EM64T)
 else ifneq (,$(findstring x64,$(platform)))
