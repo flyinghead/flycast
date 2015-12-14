@@ -64,6 +64,11 @@ ifeq (,$(platform))
     else
         $(error Unsupported CPU architecture)
     endif
+
+    FLAGS = $(shell grep flags /proc/cpuinfo)
+    ifneq (,$(findstring sse4_1,$(FLAGS)))
+        platform += sse4_1
+    endif
 endif
 
 $(info Platform: $(platform))
@@ -79,6 +84,10 @@ ifneq (,$(findstring x86,$(platform)))
     CFLAGS += -m32 -D TARGET_LINUX_x86 -D TARGET_NO_AREC -fsingle-precision-constant
     CXXFLAGS += -fno-exceptions
 
+    ifneq (,$(findstring sse4_1,$(platform)))
+		HAS_SOFTREND := 1
+	endif
+
 # Generic 64 bit x86 (a.k.a. x64/AMD64/x86_64/Intel64/EM64T)
 else ifneq (,$(findstring x64,$(platform)))
     X64_REC := 1
@@ -86,6 +95,10 @@ else ifneq (,$(findstring x64,$(platform)))
     USE_X11 := 1
     CFLAGS += -D TARGET_LINUX_x64 -D TARGET_NO_AREC -fsingle-precision-constant
     CXXFLAGS += -fexceptions
+
+    ifneq (,$(findstring sse4_1,$(platform)))
+		HAS_SOFTREND := 1
+	endif
 
 # Generic 32 bit ARMhf (a.k.a. ARMv7h)
 else ifneq (,$(findstring armv7h,$(platform)))
@@ -250,12 +263,24 @@ ifdef USE_PULSEAUDIO
     LIBS += -lpulse-simple
 endif
 
+ifdef HAS_SOFTREND
+	CFLAGS += -fopenmp -msse4.1
+    LDFLAGS += -fopenmp
+endif
+
+# these are also handled on core.mk, but ignored here
+
 # GLES on x11?
 ifdef USE_GLES
     CXXFLAGS += -DGLES
     LIBS += -lEGL -lGLESv2
 else
     LIBS += -ldl -lGL #for desktop gl
+endif
+
+#softrend?
+ifdef HAS_SOFTREND
+	CXXFLAGS += -DTARGET_SOFTREND
 endif
 
 EXECUTABLE_STRIPPED=nosym-reicast.elf

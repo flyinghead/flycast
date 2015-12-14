@@ -235,6 +235,10 @@
 #define FEAT_HAS_COREIO_HTTP 0
 #endif
 
+#if defined(TARGET_SOFTREND)
+	#define FEAT_HAS_SOFTREND 1
+#endif
+
 //defaults
 
 #ifndef DC_PLATFORM 
@@ -269,6 +273,10 @@
 
 #ifndef FEAT_HAS_COREIO_HTTP
 	#define FEAT_HAS_COREIO_HTTP 1
+#endif
+
+#ifndef FEAT_HAS_SOFTREND
+	#define FEAT_HAS_SOFTREND BUILD_COMPILER == COMPILER_VC	//GCC wants us to enable sse4 globaly to enable intrins
 #endif
 
 //Depricated build configs

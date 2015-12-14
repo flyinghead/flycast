@@ -47,6 +47,10 @@ else
     RZDCY_MODULES += rend/norend/
 endif
 
+ifdef HAS_SOFTREND
+	RZDCY_MODULES += rend/soft/
+endif
+
 ifndef NO_NIXPROF
     RZDCY_MODULES += linux/nixprof/
 endif
@@ -101,6 +105,10 @@ endif
 
 ifdef USE_GLES
   RZDCY_CFLAGS += -DGLES
+endif
+
+ifdef HAS_SOFTREND
+	RZDCY_CFLAGS += -DTARGET_SOFTREND
 endif
 
 RZDCY_CXXFLAGS := $(RZDCY_CFLAGS) -fno-exceptions -fno-rtti -std=gnu++11
