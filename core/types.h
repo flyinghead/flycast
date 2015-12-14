@@ -696,6 +696,9 @@ struct settings_t
 		
 		u32 MaxThreads;
 		u32 SynchronousRendering;
+
+		string HashLogFile;
+		string HashCheckFile;
 	} pvr;
 
 	struct {

@@ -260,6 +260,8 @@ void LoadSettings()
 #endif
 
 	settings.bios.UseReios = cfgLoadInt("config", "bios.UseReios", 0);
+	settings.pvr.HashLogFile = cfgLoadStr("testing", "ta.HashLogFile", "");
+	settings.pvr.HashCheckFile = cfgLoadStr("testing", "ta.HashCheckFile", "");
 
 #if (HOST_OS != OS_LINUX || defined(_ANDROID) || defined(TARGET_PANDORA))
 	settings.aica.BufferSize=2048;
