@@ -193,7 +193,26 @@ void UpdateInputState(u32 port)
 
 void UpdateVibration(u32 port, u32 value)
 {
-	
+	#if defined(USE_EVDEV)
+		const u8 freq_l = 0x16;
+		//const u8 freq_h = 0x31;
+
+		u8 POW_POS = (value >> 8) & 0x3;
+		u8 POW_NEG = (value >> 12) & 0x3;
+		u8 FREQ = (value >> 16) & 0xFF;
+
+		double pow = (POW_POS + POW_NEG) / 7.0;
+		double pow_l = pow * (0x3B - FREQ) / 17.0;
+		double pow_r = pow * (FREQ / (double)freq_l);
+
+		if (pow_l > 1.0) pow_l = 1.0;
+		if (pow_r > 1.0) pow_r = 1.0;
+
+		u16 pow_strong = (u16)(65535 * pow_l);
+		u16 pow_weak = (u16)(65535 * pow_r);
+
+		input_evdev_rumble(&evdev_controllers[port], pow_strong, pow_weak);
+	#endif
 }
 
 void os_DoEvents()

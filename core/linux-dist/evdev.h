@@ -54,6 +54,7 @@ struct EvdevController
 	EvdevAxisData data_y;
 	EvdevAxisData data_trigger_left;
 	EvdevAxisData data_trigger_right;
+	int rumble_effect_id;
 	void init();
 };
 
@@ -72,3 +73,4 @@ struct EvdevController
 
 extern int input_evdev_init(EvdevController* controller, const char* device, const char* mapping_fname);
 extern bool input_evdev_handle(EvdevController* controller, u32 port);
+extern void input_evdev_rumble(EvdevController* controller, u16 pow_strong, u16 pow_weak);
