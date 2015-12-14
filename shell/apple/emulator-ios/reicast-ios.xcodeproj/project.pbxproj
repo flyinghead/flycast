@@ -237,6 +237,8 @@
 		9C7A3B4E18C806E00070BB5F /* stdclass.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A3A9918C806E00070BB5F /* stdclass.cpp */; };
 		9C7A3B5918C81A4F0070BB5F /* SWRevealViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A3B5818C81A4F0070BB5F /* SWRevealViewController.m */; };
 		9C7A3BC418C84EA10070BB5F /* MainStoryboard.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BC318C84EA10070BB5F /* MainStoryboard.storyboard */; };
+		EBDF37561BB96E1B001191B5 /* audiobackend_coreaudio.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EBDF37541BB96E1B001191B5 /* audiobackend_coreaudio.cpp */; settings = {ASSET_TAGS = (); }; };
+		EBDF375A1BB96ECD001191B5 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EBDF37591BB96ECD001191B5 /* AudioToolbox.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -635,6 +637,10 @@
 		9C7A3B5718C81A4F0070BB5F /* SWRevealViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SWRevealViewController.h; sourceTree = "<group>"; };
 		9C7A3B5818C81A4F0070BB5F /* SWRevealViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SWRevealViewController.m; sourceTree = "<group>"; };
 		9C7A3BC318C84EA10070BB5F /* MainStoryboard.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; path = MainStoryboard.storyboard; sourceTree = "<group>"; };
+		EBDF37541BB96E1B001191B5 /* audiobackend_coreaudio.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = audiobackend_coreaudio.cpp; sourceTree = "<group>"; };
+		EBDF37551BB96E1B001191B5 /* audiobackend_coreaudio.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = audiobackend_coreaudio.h; sourceTree = "<group>"; };
+		EBDF37571BB96E75001191B5 /* AudioUnit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioUnit.framework; path = System/Library/Frameworks/AudioUnit.framework; sourceTree = SDKROOT; };
+		EBDF37591BB96ECD001191B5 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -642,6 +648,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				EBDF375A1BB96ECD001191B5 /* AudioToolbox.framework in Frameworks */,
 				87D92F4E1B7A1B5700D8FD9E /* GameController.framework in Frameworks */,
 				87C4AA561A4414070048DBF4 /* AssetsLibrary.framework in Frameworks */,
 				87C4AA541A440BEB0048DBF4 /* libz.dylib in Frameworks */,
@@ -681,6 +688,8 @@
 		8497BCC31A41BFBA00EFB9ED /* oslib */ = {
 			isa = PBXGroup;
 			children = (
+				EBDF37541BB96E1B001191B5 /* audiobackend_coreaudio.cpp */,
+				EBDF37551BB96E1B001191B5 /* audiobackend_coreaudio.h */,
 				877652B61B6157BD00437F10 /* audiobackend_alsa.cpp */,
 				877652B71B6157BD00437F10 /* audiobackend_alsa.h */,
 				877652B81B6157BD00437F10 /* audiobackend_android.h */,
@@ -753,6 +762,8 @@
 		87078A8518A47FE90034C7A0 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				EBDF37591BB96ECD001191B5 /* AudioToolbox.framework */,
+				EBDF37571BB96E75001191B5 /* AudioUnit.framework */,
 				87D92F4D1B7A1B5700D8FD9E /* GameController.framework */,
 				87C4AA551A4414070048DBF4 /* AssetsLibrary.framework */,
 				87C4AA531A440BEB0048DBF4 /* libz.dylib */,
@@ -1642,6 +1653,7 @@
 				84967C901B8F492C005F1140 /* filter_neon.S in Sources */,
 				876AA3771B818A4000617242 /* ini.cpp in Sources */,
 				84967C9B1B8F492C005F1140 /* pngset.c in Sources */,
+				EBDF37561BB96E1B001191B5 /* audiobackend_coreaudio.cpp in Sources */,
 				9C7A3B3618C806E00070BB5F /* chd.cpp in Sources */,
 				9C7A3B2118C806E00070BB5F /* sh4_fpu.cpp in Sources */,
 				9C7A3B3218C806E00070BB5F /* sh4_opcode_list.cpp in Sources */,

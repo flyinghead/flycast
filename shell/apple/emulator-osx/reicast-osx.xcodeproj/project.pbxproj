@@ -192,6 +192,9 @@
 		84B7BF7F1B72720200F9733F /* stdclass.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BEA71B72720200F9733F /* stdclass.cpp */; };
 		84B7BF831B727AD700F9733F /* osx-main.mm in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BF821B727AD700F9733F /* osx-main.mm */; };
 		84B7BF861B72871600F9733F /* EmuGLView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BF851B72871600F9733F /* EmuGLView.swift */; };
+		EBDF374F1BB96581001191B5 /* audiobackend_coreaudio.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EBDF374D1BB96581001191B5 /* audiobackend_coreaudio.cpp */; settings = {ASSET_TAGS = (); }; };
+		EBDF37511BB969EE001191B5 /* CoreAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EBDF37501BB969EE001191B5 /* CoreAudio.framework */; };
+		EBDF37531BB969F8001191B5 /* AudioUnit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EBDF37521BB969F8001191B5 /* AudioUnit.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -536,6 +539,10 @@
 		84B7BF821B727AD700F9733F /* osx-main.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "osx-main.mm"; sourceTree = "<group>"; };
 		84B7BF841B72821900F9733F /* emulator-osx-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "emulator-osx-Bridging-Header.h"; sourceTree = "<group>"; };
 		84B7BF851B72871600F9733F /* EmuGLView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EmuGLView.swift; sourceTree = "<group>"; };
+		EBDF374D1BB96581001191B5 /* audiobackend_coreaudio.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = audiobackend_coreaudio.cpp; sourceTree = "<group>"; };
+		EBDF374E1BB96581001191B5 /* audiobackend_coreaudio.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = audiobackend_coreaudio.h; sourceTree = "<group>"; };
+		EBDF37501BB969EE001191B5 /* CoreAudio.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreAudio.framework; path = System/Library/Frameworks/CoreAudio.framework; sourceTree = SDKROOT; };
+		EBDF37521BB969F8001191B5 /* AudioUnit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioUnit.framework; path = System/Library/Frameworks/AudioUnit.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -543,6 +550,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				EBDF37531BB969F8001191B5 /* AudioUnit.framework in Frameworks */,
+				EBDF37511BB969EE001191B5 /* CoreAudio.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -569,6 +578,8 @@
 		84A388AA1B1CDD3E000166C0 = {
 			isa = PBXGroup;
 			children = (
+				EBDF37521BB969F8001191B5 /* AudioUnit.framework */,
+				EBDF37501BB969EE001191B5 /* CoreAudio.framework */,
 				84B7BD111B7271CF00F9733F /* core */,
 				84A388B51B1CDD3E000166C0 /* reicast-osx */,
 				84A388C61B1CDD3F000166C0 /* reicast-osxTests */,
@@ -1212,6 +1223,8 @@
 				84B7BE791B72720200F9733F /* audiostream.cpp */,
 				84B7BE7A1B72720200F9733F /* audiostream.h */,
 				84B7BE7B1B72720200F9733F /* oslib.h */,
+				EBDF374D1BB96581001191B5 /* audiobackend_coreaudio.cpp */,
+				EBDF374E1BB96581001191B5 /* audiobackend_coreaudio.h */,
 			);
 			name = oslib;
 			path = ../../../core/oslib;
@@ -1319,6 +1332,7 @@
 		84A388AB1B1CDD3E000166C0 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
+				LastSwiftUpdateCheck = 0700;
 				LastUpgradeCheck = 0610;
 				ORGANIZATIONNAME = reicast;
 				TargetAttributes = {
@@ -1401,6 +1415,7 @@
 				84B7BF431B72720200F9733F /* decoder.cpp in Sources */,
 				84B7BEBB1B72720200F9733F /* elf64.cpp in Sources */,
 				84B7BF1B1B72720200F9733F /* inffast.c in Sources */,
+				EBDF374F1BB96581001191B5 /* audiobackend_coreaudio.cpp in Sources */,
 				84967CC31B8F49EE005F1140 /* pngmem.c in Sources */,
 				84B7BF581B72720200F9733F /* sh4_rom.cpp in Sources */,
 				84B7BF441B72720200F9733F /* driver.cpp in Sources */,
