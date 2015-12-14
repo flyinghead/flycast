@@ -276,7 +276,7 @@
 #endif
 
 #ifndef FEAT_HAS_SOFTREND
-	#define FEAT_HAS_SOFTREND 0
+	#define FEAT_HAS_SOFTREND BUILD_COMPILER == COMPILER_VC	//GCC wants us to enable sse4 globaly to enable intrins
 #endif
 
 //Depricated build configs

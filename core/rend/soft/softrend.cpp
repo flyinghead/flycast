@@ -46,6 +46,7 @@ struct RECT {
 
 union m128i {
 	__m128i mm;
+	int8_t m128i_u8[16];
 	int8_t m128i_i8[16];
 	int16_t m128i_i16[8];
 	int32_t m128i_i32[4];
@@ -493,7 +494,7 @@ static void PixelFlush(PolyParam* pp, text_info* texture, __m128 x, __m128 y, u8
 		mm_fb.mm = fb;
 		//ALPHA_TEST
 		for (int i = 0; i < 4; i++) {
-			if (mm_rv.m128i_i8[i * 4 + 3] < PT_ALPHA_REF) {
+			if (mm_rv.m128i_u8[i * 4 + 3] < PT_ALPHA_REF) {
 				mm_rv.m128i_u32[i] = mm_fb.m128i_u32[i];
 			}
 		}
@@ -810,6 +811,10 @@ static void Rendtriangle(PolyParam* pp, int vertex_offset, const Vertex &v1, con
 	}
 }
 
+#if HOST_OS == OS_WINDOWS
+	BITMAPINFOHEADER bi = { sizeof(BITMAPINFOHEADER), 0, 0, 1, 32, BI_RGB };
+#endif
+
 
 struct softrend : Renderer
 {
@@ -897,8 +902,6 @@ struct softrend : Renderer
 	HWND hWnd;
 	HBITMAP hBMP = 0, holdBMP;
 	HDC hmem;
-
-	BITMAPINFOHEADER bi = { sizeof(BITMAPINFOHEADER), 0, 0, 1, 32, BI_RGB };
 #endif
 	
 
@@ -1161,7 +1164,7 @@ struct softrend : Renderer
 
 	//R coefs should be adjusted to match pixel format
 	INLINE __m128 shuffle_pixel(__m128 v) {
-		return (__m128)_mm_shuffle_epi8((__m128i)v, _mm_set_epi8(R(0x80,2,1, 0)));
+		return (__m128&)_mm_shuffle_epi8((__m128i&)v, _mm_set_epi8(R(0x80,2,1, 0)));
 	}
 
 	virtual void Present() {
