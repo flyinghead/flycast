@@ -1,5 +1,3 @@
-
-
 LOCAL_PATH := $(call my-dir)
 FOR_LINUX :=1
 #NO_REC := 1
@@ -85,8 +83,8 @@ ifneq (,$(findstring x86,$(platform)))
     CXXFLAGS += -fno-exceptions
 
     ifneq (,$(findstring sse4_1,$(platform)))
-		HAS_SOFTREND := 1
-	endif
+        HAS_SOFTREND := 1
+    endif
 
 # Generic 64 bit x86 (a.k.a. x64/AMD64/x86_64/Intel64/EM64T)
 else ifneq (,$(findstring x64,$(platform)))
@@ -97,8 +95,8 @@ else ifneq (,$(findstring x64,$(platform)))
     CXXFLAGS += -fexceptions
 
     ifneq (,$(findstring sse4_1,$(platform)))
-		HAS_SOFTREND := 1
-	endif
+        HAS_SOFTREND := 1
+    endif
 
 # Generic 32 bit ARMhf (a.k.a. ARMv7h)
 else ifneq (,$(findstring armv7h,$(platform)))
@@ -242,11 +240,11 @@ ifdef USE_X11
 endif
 
 ifdef USE_EVDEV
-		CXXFLAGS += -D USE_EVDEV
+    CXXFLAGS += -D USE_EVDEV
 endif
 
 ifdef USE_JOYSTICK
-		CXXFLAGS += -D USE_JOYSTICK
+    CXXFLAGS += -D USE_JOYSTICK
 endif
 
 ifdef USE_ALSA
@@ -264,7 +262,7 @@ ifdef USE_PULSEAUDIO
 endif
 
 ifdef HAS_SOFTREND
-	CFLAGS += -fopenmp -msse4.1
+    CFLAGS += -fopenmp -msse4.1
     LDFLAGS += -fopenmp
 endif
 
@@ -280,7 +278,7 @@ endif
 
 #softrend?
 ifdef HAS_SOFTREND
-	CXXFLAGS += -DTARGET_SOFTREND
+    CXXFLAGS += -DTARGET_SOFTREND
 endif
 
 EXECUTABLE_STRIPPED=nosym-reicast.elf
