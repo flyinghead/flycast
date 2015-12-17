@@ -293,10 +293,14 @@ else
     EXECUTABLE_NAME=reicast
 endif
 
+CHAR_EMPTY:=
+CHAR_SPACE:=$(CHAR_EMPTY) $(CHAR_EMPTY)
+BUILDDIR:=obj-$(DC_PLATFORM)-$(subst $(CHAR_SPACE),-,$(platform))
+
 OBJECTS=$(RZDCY_FILES:.cpp=.build_obj)
 OBJECTS:=$(OBJECTS:.c=.build_obj)
 OBJECTS:=$(OBJECTS:.S=.build_obj)
-OBJECTS:=$(patsubst $(RZDCY_SRC_DIR)/%,obj-$(DC_PLATFORM)-$(platform)/%,$(OBJECTS))
+OBJECTS:=$(patsubst $(RZDCY_SRC_DIR)/%,$(BUILDDIR)/%,$(OBJECTS))
 
 all: $(CPPFILES) $(EXECUTABLE) $(EXECUTABLE_STRIPPED)
 ifneq (,$(findstring gcwz,$(platform)))
@@ -309,15 +313,15 @@ $(EXECUTABLE): $(OBJECTS)
 $(EXECUTABLE_STRIPPED): $(EXECUTABLE)
 	cp $< $@ && $(STRIP) $@
 
-obj-$(DC_PLATFORM)-$(platform)/%.build_obj : $(RZDCY_SRC_DIR)/%.cpp
+$(BUILDDIR)/%.build_obj : $(RZDCY_SRC_DIR)/%.cpp
 	mkdir -p $(dir $@)
 	$(CXX) $(EXTRAFLAGS) $(INCS) $(CFLAGS) $(MFLAGS) $(CXXFLAGS) $< -o $@
 	
-obj-$(DC_PLATFORM)-$(platform)/%.build_obj : $(RZDCY_SRC_DIR)/%.c
+$(BUILDDIR)/%.build_obj : $(RZDCY_SRC_DIR)/%.c
 	mkdir -p $(dir $@)
 	$(CC) $(EXTRAFLAGS) $(INCS) $(CFLAGS) $< -o $@
 
-obj-$(DC_PLATFORM)-$(platform)/%.build_obj : $(RZDCY_SRC_DIR)/%.S
+$(BUILDDIR)/%.build_obj : $(RZDCY_SRC_DIR)/%.S
 	mkdir -p $(dir $@)	
 	$(AS) $(ASFLAGS) $(INCS) $< -o $@
 
