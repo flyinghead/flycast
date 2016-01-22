@@ -288,9 +288,6 @@ void UpdateController(u32 port)
 
 void UpdateVibration(u32 port, u32 value)
 {
-		const u8 freq_l = 0x16;
-		//const u8 freq_h = 0x31;
-
 		u8 POW_POS = (value >> 8) & 0x3;
 		u8 POW_NEG = (value >> 12) & 0x3;
 		u8 FREQ = (value >> 16) & 0xFF;
