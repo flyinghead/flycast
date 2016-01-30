@@ -347,7 +347,7 @@ string find_user_data_dir()
 std::vector<string> find_system_config_dirs()
 {
 	std::vector<string> dirs;
-	if (getenv("XDG_DATA_DIRS") != NULL)
+	if (getenv("XDG_CONFIG_DIRS") != NULL)
 	{
 		string s = (string)getenv("XDG_CONFIG_DIRS");
 
