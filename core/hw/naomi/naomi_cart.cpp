@@ -32,8 +32,11 @@ bool naomi_cart_LoadRom(char* file)
 
 	folder_pos++;
 
+	// FIXME: Data loss if buffer is too small
 	char t[512];
-	strcpy(t, file);
+	strncpy(t, file, sizeof(t));
+	t[sizeof(t) - 1] = '\0';
+
 	FILE* fl = fopen(t, "r");
 	if (!fl)
 		return false;
@@ -92,7 +95,10 @@ bool naomi_cart_LoadRom(char* file)
 	RomCacheMapCount = (u32)files.size();
 	RomCacheMap = new fd_t[files.size()];
 
-	strcpy(t, file);
+	// FIXME: Data loss if buffer is too small
+	strncpy(t, file, sizeof(t));
+	t[sizeof(t) - 1] = '\0';
+
 	t[folder_pos] = 0;
 	strcat(t, "ndcn-composed.cache");
 
@@ -106,7 +112,9 @@ bool naomi_cart_LoadRom(char* file)
 	verify(RomPtr != 0);
 	verify(RomPtr != (void*)-1);
 
-	strcpy(t, file);
+	// FIXME: Data loss if buffer is too small
+	strncpy(t, file, sizeof(t));
+	t[sizeof(t) - 1] = '\0';
 
 	//Create File Mapping Objects
 	for (size_t i = 0; i<files.size(); i++)
