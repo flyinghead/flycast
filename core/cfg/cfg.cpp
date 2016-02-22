@@ -128,6 +128,7 @@ s32  cfgExists(const wchar * Section, const wchar * Key)
 void  cfgLoadStr(const wchar * Section, const wchar * Key, wchar * Return,const wchar* Default)
 {
 	string value = cfgdb.get(Section, Key, Default);
+	// FIXME: Buffer overflow possible
 	strcpy(Return, value.c_str());
 }
 
