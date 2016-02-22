@@ -178,8 +178,11 @@ bool InitDrive(u32 fileflags)
 			return true;
 	}
 
+	// FIXME: Data loss if buffer is too small
 	wchar fn[512];
-	strcpy(fn,settings.imgread.LastImage);
+	strncpy(fn,settings.imgread.LastImage, sizeof(fn));
+	fn[sizeof(fn) - 1] = '\0';
+
 #ifdef BUILD_DREAMCAST
 	int gfrv=GetFile(fn,0,fileflags);
 #else
@@ -199,7 +202,10 @@ bool InitDrive(u32 fileflags)
 		return false;
 	}
 
-	strcpy(settings.imgread.LastImage,fn);
+	// FIXME: Data loss if buffer is too small
+	strncpy(settings.imgread.LastImage, fn, sizeof(settings.imgread.LastImage));
+	settings.imgread.LastImage[sizeof(settings.imgread.LastImage) - 1] = '\0';
+
 	SaveSettings();
 
 	if (!InitDrive_(fn))
@@ -232,8 +238,12 @@ bool DiscSwap(u32 fileflags)
 			return true;
 	}
 
+	// FIXME: Data loss if buffer is too small
 	wchar fn[512];
-	strcpy(fn,settings.imgread.LastImage);
+	strncpy(fn, settings.imgread.LastImage, sizeof(fn));
+	fn[sizeof(fn) - 1] = '\0';
+
+
 #ifdef BUILD_DREAMCAST
 	int gfrv=GetFile(fn,0,fileflags);
 #else
@@ -256,7 +266,11 @@ bool DiscSwap(u32 fileflags)
 		return false;
 	}
 
-	strcpy(settings.imgread.LastImage,fn);
+	// FIXME: Data loss if buffer is too small
+	strncpy(settings.imgread.LastImage, fn, sizeof(settings.imgread.LastImage));
+	settings.imgread.LastImage[sizeof(settings.imgread.LastImage) - 1] = '\0';
+
+
 	SaveSettings();
 
 	if (!InitDrive_(fn))
