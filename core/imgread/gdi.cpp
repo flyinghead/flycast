@@ -31,9 +31,13 @@ Disc* load_gdi(const char* file)
 	gdi >> iso_tc;
 	printf("\nGDI : %d tracks\n",iso_tc);
 
+	// FIXME: Data loss if buffer is too small
 	char path[512];
-	strcpy(path,file);
-	size_t len=strlen(file);
+	strncpy(path, file, sizeof(path));
+	path[sizeof(path) - 1] = '\0';
+
+	size_t len = strlen(path);
+
 	while (len>2)
 	{
 		if (path[len]=='\\' || path[len]=='/')
