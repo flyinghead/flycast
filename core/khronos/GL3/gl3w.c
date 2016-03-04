@@ -1,6 +1,25 @@
 #include <GL3/gl3w.h>
 
-#ifdef _WIN32
+#if defined(USE_SDL)
+	#include <SDL2/SDL.h>
+	static void open_libgl(void)
+	{
+		SDL_GL_LoadLibrary(NULL);
+	}
+
+	static void close_libgl(void)
+	{
+		SDL_GL_UnloadLibrary();
+	}
+
+	static void *get_proc(const char *proc)
+	{
+		void *res = NULL;
+		res = (void*)SDL_GL_GetProcAddress(proc);
+		return res;
+	}
+
+#elif defined(_WIN32)
 #define WIN32_LEAN_AND_MEAN 1
 #include <windows.h>
 

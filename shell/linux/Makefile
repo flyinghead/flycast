@@ -213,8 +213,8 @@ ifndef NOT_ARM
 endif
 
 ifdef USE_SDL
-    CXXFLAGS += `sdl-config --cflags` -D USE_SDL
-    LIBS += `sdl-config --libs`
+    CXXFLAGS += `sdl2-config --cflags` -D USE_SDL
+    LIBS += `sdl2-config --libs`
 endif
 
 ifdef PGO_MAKE
