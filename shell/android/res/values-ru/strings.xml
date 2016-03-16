@@ -118,7 +118,7 @@
     <string name="options">Опции</string>
     <string name="report">Сообщить</string>
     
-    <string name="cloudInfos">Данная утилита позволяет загружать и скачивать файлы карт памяти (VMU) с Dropbox для синхронизации с другими устройствамию./string>
+    <string name="cloudInfos">Данная утилита позволяет загружать и скачивать файлы карт памяти (VMU) с Dropbox для синхронизации с другими устройствамию.</string>
     <string name="uploadWarning">ВНИМАНИЕ: вы собираетесь загрузить VMU на Dropbox. Это действие ЗАМЕНИТ загруженные ранее файлы!!</string>
     <string name="downloadWarning">ВНИМАНИЕ: вы собираетесь скачать VMU с Dropbox. Это действие ЗАМЕНИТ скачанные ранее файлы!! Копия файлов будет сохранена 
         в папке VmuBackups</string>
