@@ -1164,7 +1164,7 @@ struct softrend : Renderer
 
 	//R coefs should be adjusted to match pixel format
 	INLINE __m128 shuffle_pixel(__m128 v) {
-		return (__m128&)_mm_shuffle_epi8((__m128i&)v, _mm_set_epi8(R(0x80,2,1, 0)));
+		return _mm_cvtepi32_ps(_mm_shuffle_epi8(_mm_cvtps_epi32(v), _mm_set_epi8(R(0x80, 2, 1, 0))));
 	}
 
 	virtual void Present() {
