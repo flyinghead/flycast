@@ -70,6 +70,7 @@ void mcfg_CreateDevices()
 {
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST
 	mcfg_Create(MDT_SegaController,0,5);
+	mcfg_Create(MDT_SegaController,1,5);
 
 	mcfg_Create(MDT_SegaVMU,0,0);
 	mcfg_Create(MDT_SegaVMU,0,1);
