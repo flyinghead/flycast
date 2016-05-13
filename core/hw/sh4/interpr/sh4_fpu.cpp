@@ -628,7 +628,7 @@ sh4op(i1111_nnnn_0011_1101)
 	if (fpscr.PR == 0)
 	{
 		u32 n = GetN(op);
-		fpul = (u32)(s32)fr[n];
+		fpul = (u32)(s32)min(fr[n],(float)0x7FFFFFBF);
 
 		if (fpul==0x80000000) //this is actually a x86-specific fix. I think ARM saturates
 		{
