@@ -1448,13 +1448,17 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 			break;
 
 		case shop_cvt_f2i_t:
+		{
 			verify(op->rd.is_r32i());
 			verify(op->rs1.is_r32f());
 			verify(reg.IsAllocg(op->rd));
 			verify(reg.IsAllocf(op->rs1));
-
-			x86e->Emit(op_cvttss2si,reg.mapg(op->rd),reg.mapf(op->rs1));
-			break;
+			static f32 sse_ftrc_saturate = 0x7FFFFFBF;//1.11111111111111111111111 << 31
+			x86e->Emit(op_movaps, XMM0, reg.mapf(op->rs1));
+			x86e->Emit(op_minss, XMM0, &sse_ftrc_saturate);
+			x86e->Emit(op_cvttss2si, reg.mapg(op->rd), XMM0);
+		}
+		break;
 
 			//i hope that the round mode bit is set properly here :p
 		case shop_cvt_i2f_n:
