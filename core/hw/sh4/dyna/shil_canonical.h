@@ -677,6 +677,8 @@ shil_opc(cvt_f2i_t)
 shil_canonical
 (
 u32,f1,(f32 f1),
+	if (f1 > 0x7FFFFFBF)
+		f1 = 0x7FFFFFBF;
 	return (s32)f1;
 )
 
