@@ -9,7 +9,6 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.graphics.PorterDuff;
 import android.os.Build;
 import android.view.LayoutInflater;
@@ -114,7 +113,7 @@ public class GitAdapter extends BaseAdapter {
 		return vi;
 	}
 
-	public static void displayCommit(final String title, String message, String url,
+	private void displayCommit(final String title, String message, String url,
 			Context context) {
 		final AlertDialog.Builder builder = new AlertDialog.Builder(context);
 		builder.setCancelable(true);

@@ -34,12 +34,11 @@ import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.ImageView;
 import android.widget.Spinner;
+import android.widget.Switch;
 import android.widget.TextView;
 
 import com.reicast.emulator.R;
 import com.reicast.emulator.periph.Gamepad;
-
-import de.ankri.views.Switch;
 
 public class InputModFragment extends Fragment {
 

@@ -18,10 +18,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import android.annotation.TargetApi;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.app.Fragment;
@@ -32,8 +30,6 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ListView;
-import android.widget.SlidingDrawer;
-import android.widget.SlidingDrawer.OnDrawerOpenListener;
 import android.widget.TextView;
 
 import com.reicast.emulator.config.Config;

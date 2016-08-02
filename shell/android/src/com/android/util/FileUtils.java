@@ -23,7 +23,6 @@ import android.graphics.Bitmap;
 import android.media.MediaScannerConnection;
 import android.media.MediaScannerConnection.OnScanCompletedListener;
 import android.net.Uri;
-import android.util.Log;
 
 import com.reicast.emulator.MainActivity;
 
