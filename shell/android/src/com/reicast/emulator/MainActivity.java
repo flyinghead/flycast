@@ -394,7 +394,7 @@ public class MainActivity extends FragmentActivity implements
 
 	public void onGameSelected(Uri uri) {
 		if (Config.readOutput("uname -a").equals(getString(R.string.error_kernel))) {
-			MainActivity.showToastMessage(MainActivity.this, getString(R.string.unsupported), Toast.LENGTH_SHORT);
+			MainActivity.showToastMessage(MainActivity.this, getString(R.string.unsupported), R.drawable.ic_notification, Toast.LENGTH_SHORT);
 		}
 		String msg = null;
 		if (!isBiosExisting(MainActivity.this))
@@ -625,13 +625,13 @@ public class MainActivity extends FragmentActivity implements
 	}
 	
 	public static void showToastMessage(Context context, String message,
-			int duration) {
+			int resource, int duration) {
 		LayoutInflater inflater = (LayoutInflater) context
 				.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 		View layout = inflater.inflate(R.layout.toast_layout, null);
 
 		ImageView image = (ImageView) layout.findViewById(R.id.image);
-		image.setImageResource(R.drawable.ic_notification);
+		image.setImageResource(resource);
 		TextView text = (TextView) layout.findViewById(R.id.text);
 		text.setText(message);
 
