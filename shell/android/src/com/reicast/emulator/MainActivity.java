@@ -632,6 +632,7 @@ public class MainActivity extends FragmentActivity implements
 
 		ImageView image = (ImageView) layout.findViewById(R.id.image);
 		image.setImageResource(resource);
+
 		TextView text = (TextView) layout.findViewById(R.id.text);
 		text.setText(message);
 
