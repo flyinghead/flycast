@@ -146,6 +146,7 @@ endif()
 
 if(USE_PULSEAUDIO)
   add_definitions(-DUSE_PULSEAUDIO)
+  list(APPEND libs pulse-simple)
 endif()
 
 # Graphic stuffs:
