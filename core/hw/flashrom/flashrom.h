@@ -63,7 +63,11 @@ struct MemChip
 		wchar base[512];
 		wchar temp[512];
 		wchar names[512];
-		strcpy(names,names_ro.c_str());
+
+		// FIXME: Data loss if buffer is too small
+		strncpy(names,names_ro.c_str(), sizeof(names));
+		names[sizeof(names) - 1] = '\0';
+
 		sprintf(base,"%s",root.c_str());
 
 		wchar* curr=names;

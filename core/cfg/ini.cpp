@@ -221,7 +221,11 @@ void ConfigFile::parse(FILE* file)
 		if (tl[0] == '[' && tl[strlen(tl)-1] == ']')
 		{
 			tl[strlen(tl)-1] = '\0';
-			strcpy(current_section, tl+1);
+
+			// FIXME: Data loss if buffer is too small
+			strncpy(current_section, tl+1, sizeof(current_section));
+			current_section[sizeof(current_section) - 1] = '\0';
+
 			trim_ws(current_section);
 		}
 		else

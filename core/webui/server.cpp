@@ -288,7 +288,11 @@ static int callback_http(struct libwebsocket_context *context,
 		}
 
 		/* if not, send a file the easy way */
-		strcpy(buf, resource_path);
+
+		// FIXME: Data loss if buffer is too small
+		strncpy(buf, resource_path, sizeof(buf));
+		buf[sizeof(buf) - 1] = '\0';
+
 		if (strcmp((const char*)in, "/")) {
 			if (*((const char *)in) != '/')
 				strcat(buf, "/");
