@@ -6,6 +6,7 @@ from __future__ import print_function
 import sys
 import re
 import os
+import select
 if sys.version_info < (3, 0):
     import ConfigParser as configparser
     INPUT_FUNC = raw_input
@@ -42,9 +43,17 @@ def list_devices():
 
 def clear_events(dev):
     try:
-        event = dev.read_one()
-        while(event is not None):
-            event = dev.read_one()
+        # This is kinda hacky, but fixes issue #962:
+        # https://github.com/reicast/reicast-emulator/issues/962
+        # First, we read all available input events, then we wait for up to a
+        # quarter second, then we attempt to read event more input events. This
+        # should make sure that all available input events have been read (and
+        # discarded).
+        for event in iter(dev.read_one, None):
+            pass
+        select.select([dev], [], [], 0.50)
+        for event in iter(dev.read_one, None):
+            pass
     except (OSError, IOError):
         # BlockingIOErrors should only occur if someone uses the evdev
         # module < v0.4.4. BlockingIOError inherits from OSError, so we
