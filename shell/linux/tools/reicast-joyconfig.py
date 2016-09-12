@@ -22,6 +22,11 @@ except ImportError:
     print("  pip install evdev")
     sys.exit(1)
 
+try:
+    import termios
+except ImportError:
+    termios = None
+
 DEV_ID_PATTERN = re.compile('(\d+)')
 DREAMCAST_BUTTONS = ['A', 'B', 'C', 'D', 'X', 'Y', 'Z', 'START']
 DREAMCAST_DPAD = [('X', 'LEFT', 'RIGHT'), ('Y', 'UP', 'DOWN')]
@@ -212,6 +217,10 @@ def setup_device(dev_id):
 
 
 def ask_yes_no(question, default=True):
+    # Flush stdin (if possible)
+    if termios is not None:
+        termios.tcflush(sys.stdin, termios.TCIFLUSH)
+
     valid = {"yes": True, "y": True, "ye": True,
              "no": False, "n": False}
     prompt = "Y/n" if default else "y/N"
