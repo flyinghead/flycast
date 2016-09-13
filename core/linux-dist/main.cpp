@@ -203,7 +203,7 @@ void UpdateVibration(u32 port, u32 value)
 
 		double pow = (POW_POS + POW_NEG) / 7.0;
 		double pow_l = pow * (0x3B - FREQ) / 17.0;
-		double pow_r = pow * (FREQ / (double)freq_l);
+		double pow_r = pow * (FREQ - 0x07) / 15.0;
 
 		if (pow_l > 1.0) pow_l = 1.0;
 		if (pow_r > 1.0) pow_r = 1.0;
