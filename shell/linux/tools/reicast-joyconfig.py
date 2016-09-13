@@ -6,6 +6,8 @@ from __future__ import print_function
 import sys
 import re
 import os
+import select
+import contextlib
 if sys.version_info < (3, 0):
     import ConfigParser as configparser
     INPUT_FUNC = raw_input
@@ -20,6 +22,11 @@ except ImportError:
     print("You can do this via:")
     print("  pip install evdev")
     sys.exit(1)
+
+try:
+    import termios
+except ImportError:
+    termios = None
 
 DEV_ID_PATTERN = re.compile('(\d+)')
 DREAMCAST_BUTTONS = ['A', 'B', 'C', 'D', 'X', 'Y', 'Z', 'START']
@@ -42,15 +49,55 @@ def list_devices():
 
 def clear_events(dev):
     try:
-        event = dev.read_one()
-        while(event is not None):
-            event = dev.read_one()
+        # This is kinda hacky, but fixes issue #962:
+        # https://github.com/reicast/reicast-emulator/issues/962
+        # First, we read all available input events, then we wait for up to a
+        # quarter second, then we attempt to read event more input events. This
+        # should make sure that all available input events have been read (and
+        # discarded).
+        for event in iter(dev.read_one, None):
+            pass
+        select.select([dev], [], [], 0.50)
+        for event in iter(dev.read_one, None):
+            pass
     except (OSError, IOError):
         # BlockingIOErrors should only occur if someone uses the evdev
         # module < v0.4.4. BlockingIOError inherits from OSError, so we
         # catch that for Python 2 compatibility. We also catch IOError,
         # just in case.
         pass
+
+@contextlib.contextmanager
+def noecho():
+    # This function is largely based on unix_getpass():
+    # https://github.com/python/cpython/blob/master/Lib/getpass.py#L30
+    try:
+        fd = os.open('/dev/tty', os.O_RDWR | os.O_NOCTTY)
+        stream = os.fdopen(fd, 'w+', 1)
+    except EnvironmentError:
+        try:
+            fd = sys.stdin.fileno()
+            stream = sys.stderr
+        except (AttributeError, ValueError):
+            fd = None
+            stream = None
+    if termios is None or fd is None:
+        yield
+    else:
+        old = termios.tcgetattr(fd)     # a copy to save
+        new = old[:]
+        new[3] &= ~termios.ECHO  # 3 == 'lflags'
+        tcsetattr_flags = termios.TCSAFLUSH
+        if hasattr(termios, 'TCSASOFT'):
+            tcsetattr_flags |= termios.TCSASOFT
+
+        try:
+            termios.tcsetattr(fd, tcsetattr_flags, new)
+            yield
+        finally:
+            termios.tcsetattr(fd, tcsetattr_flags, old)
+            if stream is not None:
+                stream.flush()  # issue7208
 
 
 def read_button(dev):
@@ -131,18 +178,20 @@ def setup_device(dev_id):
 
     # Emulator escape button
     if ask_yes_no("Do you want to map a button to exit the emulator"):
-        clear_events(dev)
-        print("Press the that button now...")
-        event = read_button(dev)
+        with noecho():
+            clear_events(dev)
+            print("Press the that button now...")
+            event = read_button(dev)
         mapping.set("emulator", "btn_escape", event.code)
         print_mapped_button("emulator escape button", event)
 
     # Regular dreamcast buttons
     for button in DREAMCAST_BUTTONS:
         if ask_yes_no("Do you want to map the %s button?" % button):
-            clear_events(dev)
-            print("Press the %s button now..." % button)
-            event = read_button(dev)
+            with noecho():
+                clear_events(dev)
+                print("Press the %s button now..." % button)
+                event = read_button(dev)
             mapping.set("dreamcast", "btn_%s" % button.lower(), event.code)
             print_mapped_button("%s button" % button, event)
 
@@ -150,9 +199,10 @@ def setup_device(dev_id):
     for i in range(1, 3):
         if ask_yes_no("Do you want to map DPad %d?" % i):
             for axis, button1, button2 in DREAMCAST_DPAD:
-                clear_events(dev)
-                print("Press the %s button of DPad %d now..." % (button1, i))
-                event, axis_inverted = read_axis_or_key(dev, absinfos)
+                with noecho():
+                    clear_events(dev)
+                    print("Press the %s button of DPad %d now..." % (button1, i))
+                    event, axis_inverted = read_axis_or_key(dev, absinfos)
                 if event.type == evdev.ecodes.EV_ABS:
                     axisname = "axis_dpad%d_%s" % (i, axis.lower())
                     mapping.set("compat", axisname, event.code)
@@ -171,9 +221,10 @@ def setup_device(dev_id):
     # Triggers
     for trigger in DREAMCAST_TRIGGERS:
         if ask_yes_no("Do you want to map %s?" % trigger):
-            clear_events(dev)
-            print("Press the %s now..." % trigger)
-            event, axis_inverted = read_axis_or_key(dev, absinfos)
+            with noecho():
+                clear_events(dev)
+                print("Press the %s now..." % trigger)
+                event, axis_inverted = read_axis_or_key(dev, absinfos)
             axis_inverted = not axis_inverted
             if event.type == evdev.ecodes.EV_ABS:
                 axisname = "axis_%s" % trigger.lower()
@@ -187,9 +238,10 @@ def setup_device(dev_id):
     # Stick
     if ask_yes_no("Do you want to map the analog stick?"):
         for axis, axis_dir in DREAMCAST_STICK_AXES:
-            clear_events(dev)
-            print("Please move the analog stick as far %s as possible now..." % axis_dir)
-            event, axis_inverted = read_axis(dev, absinfos)
+            with noecho():
+                clear_events(dev)
+                print("Please move the analog stick as far %s as possible now..." % axis_dir)
+                event, axis_inverted = read_axis(dev, absinfos)
             axisname = "axis_%s" % axis.lower()
             mapping.set("dreamcast", axisname, event.code)
             mapping.set("compat", "%s_inverted" % axisname, "yes" if axis_inverted else "no")
@@ -203,6 +255,10 @@ def setup_device(dev_id):
 
 
 def ask_yes_no(question, default=True):
+    # Flush stdin (if possible)
+    if termios is not None:
+        termios.tcflush(sys.stdin, termios.TCIFLUSH)
+
     valid = {"yes": True, "y": True, "ye": True,
              "no": False, "n": False}
     prompt = "Y/n" if default else "y/N"
