@@ -18,8 +18,8 @@
     <TextView
         android:id="@+id/text"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerVertical="true"
+        android:layout_height="match_parent"
+        android:gravity="center_vertical"
         android:layout_marginLeft="5dip"
         android:layout_marginTop="2dip"
         android:layout_toRightOf="@+id/ImageView01"

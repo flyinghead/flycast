@@ -106,7 +106,7 @@ public class AboutFragment extends Fragment {
 	}
 
 	public class retrieveGitTask extends
-	AsyncTask<String, Integer, ArrayList<HashMap<String, String>>> {
+			AsyncTask<String, Integer, ArrayList<HashMap<String, String>>> {
 
 		@Override
 		protected void onPreExecute() {
@@ -231,33 +231,33 @@ public class AboutFragment extends Fragment {
 			}
 
 		}
-	}
-
-	private JSONArray getContent(String urlString) throws IOException,
-	JSONException {
-		StringBuilder builder = new StringBuilder();
-		HttpClient client = new DefaultHttpClient();
-		HttpGet httpGet = new HttpGet(urlString);
-		try {
-			HttpResponse response = client.execute(httpGet);
-			StatusLine statusLine = response.getStatusLine();
-			int statusCode = statusLine.getStatusCode();
-			if (statusCode == 200) {
-				HttpEntity entity = response.getEntity();
-				InputStream content = entity.getContent();
-				BufferedReader reader = new BufferedReader(
-						new InputStreamReader(content));
-				String line;
-				while ((line = reader.readLine()) != null) {
-					builder.append(line);
+		
+		private JSONArray getContent(String urlString) 
+				throws IOException, JSONException {
+			StringBuilder builder = new StringBuilder();
+			HttpClient client = new DefaultHttpClient();
+			HttpGet httpGet = new HttpGet(urlString);
+			try {
+				HttpResponse response = client.execute(httpGet);
+				StatusLine statusLine = response.getStatusLine();
+				int statusCode = statusLine.getStatusCode();
+				if (statusCode == 200) {
+					HttpEntity entity = response.getEntity();
+					InputStream content = entity.getContent();
+					BufferedReader reader = new BufferedReader(
+							new InputStreamReader(content));
+					String line;
+					while ((line = reader.readLine()) != null) {
+						builder.append(line);
+					}
+				} else {
 				}
-			} else {
+			} catch (ClientProtocolException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
 			}
-		} catch (ClientProtocolException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
+			return new JSONArray(builder.toString());
 		}
-		return new JSONArray(builder.toString());
 	}
 }

@@ -99,8 +99,7 @@ public class MainActivity extends FragmentActivity implements
 						for (StackTraceElement trace : error.getStackTrace()) {
 							output.append(trace.toString() + "\n");
 						}
-						String log = output.toString();
-						mPrefs.edit().putString("prior_error", log).commit();
+						mPrefs.edit().putString("prior_error", output.toString()).commit();
 						error.printStackTrace();
 						android.os.Process.killProcess(android.os.Process.myPid());
 						System.exit(0);
