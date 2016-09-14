@@ -9,7 +9,6 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.graphics.PorterDuff;
 import android.os.Build;
 import android.view.LayoutInflater;
@@ -105,7 +104,7 @@ public class GitAdapter extends BaseAdapter {
 		vi.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
 				System.gc();
-				String output = message + "\n\n" + " - " + author;
+				String output = title + "\n\n" + message + "\n\n" + " - " + author;
 				displayCommit(sha, output, url, v.getContext());
 			}
 		});
@@ -114,11 +113,11 @@ public class GitAdapter extends BaseAdapter {
 		return vi;
 	}
 
-	public static void displayCommit(final String title, String message, String url,
+	private void displayCommit(final String sha, String message, String url,
 			Context context) {
 		final AlertDialog.Builder builder = new AlertDialog.Builder(context);
 		builder.setCancelable(true);
-		builder.setTitle(title);
+		builder.setTitle(sha.substring(0,7));
 		builder.setMessage(message);
 		LayoutInflater infalter = LayoutInflater.from(context);
 		final View popWebView = infalter.inflate(R.layout.webview, null);
@@ -138,7 +137,7 @@ public class GitAdapter extends BaseAdapter {
 	@TargetApi(Build.VERSION_CODES.HONEYCOMB)
 	@SuppressLint("SetJavaScriptEnabled")
 	@SuppressWarnings("deprecation")
-	public static WebView configureWebview(String url, Context context,
+	private WebView configureWebview(String url, Context context,
 			WebView mWebView) {
 		mWebView.getSettings().setSupportZoom(true);
 		mWebView.getSettings().setBuiltInZoomControls(true);

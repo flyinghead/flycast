@@ -35,6 +35,7 @@ import android.widget.ListView;
 import android.widget.SlidingDrawer;
 import android.widget.SlidingDrawer.OnDrawerOpenListener;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.reicast.emulator.config.Config;
 import com.reicast.emulator.debug.GitAdapter;
@@ -190,7 +191,7 @@ public class AboutFragment extends Fragment {
 					public void run() {
 						MainActivity.showToastMessage(getActivity(),
 								getActivity().getString(R.string.git_broken),
-								R.drawable.ic_github);
+								R.drawable.ic_github, Toast.LENGTH_SHORT);
 						slidingGithub.close();
 					}
 				});
@@ -200,7 +201,7 @@ public class AboutFragment extends Fragment {
 					public void run() {
 						MainActivity.showToastMessage(getActivity(),
 								getActivity().getString(R.string.git_broken),
-								R.drawable.ic_github);
+								R.drawable.ic_github, Toast.LENGTH_SHORT);
 						slidingGithub.close();
 					}
 				});

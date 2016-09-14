@@ -14,21 +14,19 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.content.res.Configuration;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
+import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
-import android.support.v4.app.FragmentManager;
+import android.support.v4.widget.DrawerLayout;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -45,9 +43,6 @@ import com.reicast.emulator.config.OptionsFragment;
 import com.reicast.emulator.debug.GenerateLogs;
 import com.reicast.emulator.emu.JNIdc;
 import com.reicast.emulator.periph.Gamepad;
-
-import android.support.v4.app.ActionBarDrawerToggle;
-import android.support.v4.widget.DrawerLayout;
 
 public class MainActivity extends FragmentActivity implements
 		FileBrowser.OnItemSelectedListener, OptionsFragment.OnClickListener {
@@ -101,7 +96,6 @@ public class MainActivity extends FragmentActivity implements
 				public void uncaughtException(Thread t, Throwable error) {
 					if (error != null) {
 						StringBuilder output = new StringBuilder();
-						output.append("UncaughtException:\n");
 						for (StackTraceElement trace : error.getStackTrace()) {
 							output.append(trace.toString() + "\n");
 						}
@@ -400,7 +394,7 @@ public class MainActivity extends FragmentActivity implements
 
 	public void onGameSelected(Uri uri) {
 		if (Config.readOutput("uname -a").equals(getString(R.string.error_kernel))) {
-			MainActivity.showToastMessage(MainActivity.this, getString(R.string.unsupported), Toast.LENGTH_SHORT);
+			MainActivity.showToastMessage(MainActivity.this, getString(R.string.unsupported), R.drawable.ic_notification, Toast.LENGTH_SHORT);
 		}
 		String msg = null;
 		if (!isBiosExisting(MainActivity.this))
@@ -631,13 +625,14 @@ public class MainActivity extends FragmentActivity implements
 	}
 	
 	public static void showToastMessage(Context context, String message,
-			int duration) {
+			int resource, int duration) {
 		LayoutInflater inflater = (LayoutInflater) context
 				.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 		View layout = inflater.inflate(R.layout.toast_layout, null);
 
 		ImageView image = (ImageView) layout.findViewById(R.id.image);
-		image.setImageResource(R.drawable.ic_notification);
+		image.setImageResource(resource);
+
 		TextView text = (TextView) layout.findViewById(R.id.text);
 		text.setText(message);
 
