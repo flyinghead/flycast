@@ -20,7 +20,9 @@ import java.util.Locale;
 import org.apache.commons.lang3.StringUtils;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
