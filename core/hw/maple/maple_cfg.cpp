@@ -22,6 +22,7 @@ Plugins:
 		ImageUpdate(data);
 */
 void UpdateInputState(u32 port);
+void UpdateVibration(u32 port, u32 value);
 
 extern u16 kcode[4];
 extern u32 vks[4];
@@ -40,6 +41,11 @@ struct MapleConfigMap : IMapleConfigMap
 	MapleConfigMap(maple_device* dev)
 	{
 		this->dev=dev;
+	}
+
+	void SetVibration(u32 value)
+	{
+		UpdateVibration(dev->bus_id, value);
 	}
 
 	void GetInput(PlainJoystickState* pjs)

@@ -22,6 +22,7 @@ const char* maple_sega_mouse_name = "Emulated Dreamcast Mouse";
 const char* maple_sega_dreameye_name_1 = "Dreamcast Camera Flash  Devic";
 const char* maple_sega_dreameye_name_2 = "Dreamcast Camera Flash LDevic";
 const char* maple_sega_mic_name = "MicDevice for Dreameye";
+const char* maple_sega_purupuru_name = "Puru Puru Pack";
 
 const char* maple_sega_brand = "Produced By or Under License From SEGA ENTERPRISES,LTD.";
 
@@ -844,6 +845,98 @@ struct maple_microphone: maple_base
 	}	
 };
 
+
+struct maple_sega_purupuru : maple_base
+{
+	u16 AST, AST_ms;
+	u32 VIBSET;
+
+	virtual u32 dma(u32 cmd)
+	{
+		switch (cmd)
+		{
+		case MDC_DeviceRequest:
+			//caps
+			//4
+			w32(MFID_8_Vibration);
+
+			//struct data
+			//3*4
+			w32(0x00000101);
+			w32(0);
+			w32(0);
+
+			//1	area code
+			w8(0xFF);
+
+			//1	direction
+			w8(0);
+
+			//30
+			wstr(maple_sega_purupuru_name, 30);
+
+			//60
+			wstr(maple_sega_brand, 60);
+
+			//2
+			w16(0x00C8);
+
+			//2
+			w16(0x0640);
+
+			return MDRS_DeviceStatus;
+
+			//get last vibration
+		case MDCF_GetCondition:
+			
+			w32(MFID_8_Vibration);
+
+			w32(VIBSET);
+
+			return MDRS_DataTransfer;
+
+		case MDCF_GetMediaInfo:
+
+			w32(MFID_8_Vibration);
+
+			// PuruPuru vib specs
+			w32(0x3B07E010); 
+
+			return MDRS_DataTransfer;
+
+		case MDCF_BlockRead:
+
+			w32(MFID_8_Vibration);
+			w32(0);
+
+			w16(2);
+			w16(AST);
+
+			return MDRS_DataTransfer;
+
+		case MDCF_BlockWrite:
+			
+			//Auto-stop time
+			AST = dma_buffer_in[10];
+			AST_ms = AST * 250 + 250;
+
+			return MDRS_DeviceReply;
+
+		case MDCF_SetCondition:
+			
+			VIBSET = *(u32*)&dma_buffer_in[4];
+			//Do the rumble thing!
+			config->SetVibration(VIBSET);
+
+			return MDRS_DeviceReply;
+
+		default:
+			//printf("UNKOWN MAPLE COMMAND %d\n",cmd);
+			return MDRE_UnknownFunction;
+		}
+	}
+};
+
 char EEPROM[0x100];
 bool EEPROM_loaded = false;
 
@@ -1299,6 +1392,11 @@ maple_device* maple_Create(MapleDeviceType type)
 	case MDT_SegaVMU:
 		rv = new maple_sega_vmu();
 		break;
+
+	case MDT_PurupuruPack:
+		rv = new maple_sega_purupuru();
+		break;
+
 
 
 	case MDT_NaomiJamma:

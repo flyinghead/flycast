@@ -231,6 +231,11 @@ void UpdateInputState(u32 Port)
   // @@@ Nothing here yet
 }
 
+void UpdateVibration(u32 port, u32 value)
+{
+	
+}
+
 void *libPvr_GetRenderTarget() 
 {
   // No X11 window in Android 

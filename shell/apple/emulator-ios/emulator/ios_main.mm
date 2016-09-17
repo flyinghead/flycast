@@ -106,6 +106,10 @@ void UpdateInputState(u32 port) {
     
 }
 
+void UpdateVibration(u32 port, u32 value) {
+
+}
+
 void get_mic_data(u8* ) {
 
 }
