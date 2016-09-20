@@ -102,6 +102,7 @@
 		this->data_y.init(this->fd, this->mapping->Axis_Analog_Y, this->mapping->Axis_Analog_Y_Inverted);
 		this->data_trigger_left.init(this->fd, this->mapping->Axis_Trigger_Left, this->mapping->Axis_Trigger_Left_Inverted);
 		this->data_trigger_right.init(this->fd, this->mapping->Axis_Trigger_Right, this->mapping->Axis_Trigger_Right_Inverted);
+		this->rumble_effect_id = -1;
 	}
 
 	std::map<std::string, EvdevControllerMapping> loaded_mappings;
@@ -202,7 +203,7 @@
 
 		printf("evdev: Trying to open device at '%s'\n", device);
 
-		int fd = open(device, O_RDONLY);
+		int fd = open(device, O_RDWR);
 
 		if (fd >= 0)
 		{
@@ -443,6 +444,44 @@
 						rt[port] = controller->data_trigger_right.convert(ie.value);
 					}
 					break;
+			}
+		}
+	}
+
+	void input_evdev_rumble(EvdevController* controller, u16 pow_strong, u16 pow_weak)
+	{
+		if (controller->fd < 0 || controller->rumble_effect_id == -2)
+		{
+			// Either the controller is not used or previous rumble effect failed
+			printf("RUMBLE: %s\n", "Skipped!");
+			return;
+		}
+		printf("RUMBLE: %u / %u (%d)\n", pow_strong, pow_weak, controller->rumble_effect_id);
+		struct ff_effect effect;
+		effect.type = FF_RUMBLE;
+		effect.id = controller->rumble_effect_id;
+		effect.u.rumble.strong_magnitude = pow_strong;
+		effect.u.rumble.weak_magnitude = pow_weak;
+		effect.replay.length = 0;
+		effect.replay.delay = 0;
+		if (ioctl(controller->fd, EVIOCSFF, &effect) == -1)
+		{
+			perror("evdev: Force feedback error");
+			controller->rumble_effect_id = -2;
+		}
+		else
+		{
+			controller->rumble_effect_id = effect.id;
+
+			// Let's play the effect
+			input_event play;
+			play.type = EV_FF;
+			play.code = effect.id;
+			play.value = 1;
+			if (write(controller->fd, (const void*) &play, sizeof(play)) == -1)
+			{
+				perror("evdev: Force feedback error");
+				controller->rumble_effect_id = -2;
 			}
 		}
 	}
