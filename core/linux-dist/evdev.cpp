@@ -285,7 +285,7 @@
 						return -3;
 					}
 				}
-				controller->mapping = &loaded_mappings[string(mapping_fname)];
+				controller->mapping = &loaded_mappings.find(string(mapping_fname))->second;
 				printf("evdev: Using '%s' mapping\n", controller->mapping->name);
 				controller->init();
 
