@@ -26,10 +26,11 @@ import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
-import android.widget.Switch;
 import android.widget.TableLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import de.ankri.views.Switch;
 
 import com.bda.controller.Controller;
 import com.bda.controller.ControllerListener;
