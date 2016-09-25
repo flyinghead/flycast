@@ -34,8 +34,9 @@ import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.ImageView;
 import android.widget.Spinner;
-import android.widget.Switch;
 import android.widget.TextView;
+
+import de.ankri.views.Switch;
 
 import com.reicast.emulator.R;
 import com.reicast.emulator.periph.Gamepad;

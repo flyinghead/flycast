@@ -38,8 +38,9 @@ import android.widget.EditText;
 import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.Spinner;
-import android.widget.Switch;
 import android.widget.Toast;
+
+import de.ankri.views.Switch;
 
 import com.android.util.FileUtils;
 import com.reicast.emulator.FileBrowser;
