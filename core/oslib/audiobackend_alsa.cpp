@@ -13,7 +13,7 @@ static void alsa_init()
 
 	snd_pcm_hw_params_t *params;
 	unsigned int val;
-	int dir;
+	int dir=-1;
 	snd_pcm_uframes_t frames;
 
 	/* Open PCM device for playback. */
