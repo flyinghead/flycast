@@ -14,8 +14,8 @@ class EmuGLView: NSOpenGLView {
         return true;
     }
     
-    override func drawRect(dirtyRect: NSRect) {
-        super.drawRect(dirtyRect)
+    override func draw(_ dirtyRect: NSRect) {
+        super.draw(dirtyRect)
 
         // Drawing code here.
         // screen_width = view.drawableWidth;
@@ -26,16 +26,16 @@ class EmuGLView: NSOpenGLView {
         
         openGLContext!.makeCurrentContext()
         
-        while !emu_single_frame(Int32(dirtyRect.width), Int32(dirtyRect.height)) { }
+        while 0==emu_single_frame(Int32(dirtyRect.width), Int32(dirtyRect.height)) { }
         
         openGLContext!.flushBuffer()
     }
     
     override func awakeFromNib() {
-        var renderTimer = NSTimer.scheduledTimerWithTimeInterval(0.001, target: self, selector: Selector("timerTick"), userInfo: nil, repeats: true)
+        var renderTimer = Timer.scheduledTimer(timeInterval: 0.001, target: self, selector: #selector(EmuGLView.timerTick), userInfo: nil, repeats: true)
         
-        NSRunLoop.currentRunLoop().addTimer(renderTimer, forMode: NSDefaultRunLoopMode);
-        NSRunLoop.currentRunLoop().addTimer(renderTimer, forMode: NSEventTrackingRunLoopMode);
+        RunLoop.current.add(renderTimer, forMode: RunLoopMode.defaultRunLoopMode);
+        RunLoop.current.add(renderTimer, forMode: RunLoopMode.eventTrackingRunLoopMode);
         
         let attrs:[NSOpenGLPixelFormatAttribute] =
         [
@@ -49,7 +49,7 @@ class EmuGLView: NSOpenGLView {
         
         let pf = NSOpenGLPixelFormat(attributes:attrs)
         
-        let context = NSOpenGLContext(format: pf!, shareContext: nil);
+        let context = NSOpenGLContext(format: pf!, share: nil);
         
         self.pixelFormat = pf;
         self.openGLContext = context;
@@ -63,11 +63,11 @@ class EmuGLView: NSOpenGLView {
         self.needsDisplay = true;
     }
     
-    override func keyDown(e: NSEvent) {
+    override func keyDown(with e: NSEvent) {
         emu_key_input(e.characters!, 1);
     }
     
-    override func keyUp(e: NSEvent) {
+    override func keyUp(with e: NSEvent) {
         emu_key_input(e.characters!, 0);
     }
     

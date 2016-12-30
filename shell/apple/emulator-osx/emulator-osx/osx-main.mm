@@ -127,7 +127,7 @@ extern int screen_width,screen_height;
 bool rend_single_frame();
 bool gles_init();
 
-extern "C" bool emu_single_frame(int w, int h) {
+extern "C" int emu_single_frame(int w, int h) {
     if (!has_init)
         return true;
     screen_width = w;
