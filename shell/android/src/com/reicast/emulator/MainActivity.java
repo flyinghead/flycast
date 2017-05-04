@@ -639,11 +639,10 @@ public class MainActivity extends FragmentActivity implements
 		WindowManager winman = (WindowManager) context
 				.getSystemService(Context.WINDOW_SERVICE);
 		winman.getDefaultDisplay().getMetrics(metrics);
-		final float scale = context.getResources().getDisplayMetrics().density;
-		int toastPixels = (int) ((metrics.widthPixels * scale + 0.5f) / 18);
 
 		Toast toast = new Toast(context);
-		toast.setGravity(Gravity.BOTTOM, 0, toastPixels);
+		toast.setGravity(Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL, 0,
+						(int) (72 * metrics.density + 0.5f));
 		toast.setDuration(duration);
 		toast.setView(layout);
 		toast.show();

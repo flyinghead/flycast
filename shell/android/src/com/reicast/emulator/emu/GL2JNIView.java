@@ -141,11 +141,6 @@ public class GL2JNIView extends GLSurfaceView
 
 		vib=(Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
 
-		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB) {
-			Runtime.getRuntime().freeMemory();
-			System.gc();
-		}
-
 		DisplayMetrics metrics = new DisplayMetrics();
 		//((Activity) context).getWindowManager().getDefaultDisplay().getMetrics(metrics);
 		((WindowManager) context.getSystemService(Context.WINDOW_SERVICE))
