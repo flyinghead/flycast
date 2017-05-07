@@ -1,4 +1,6 @@
-<resources>
+<resources
+  xmlns:tools="http://schemas.android.com/tools"
+  tools:ignore="MissingTranslation" >
     
     <string name="menu_settings">Settings</string>
     

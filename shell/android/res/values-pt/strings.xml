@@ -22,7 +22,6 @@
     <string name="missing_flash">Arquivo de Flash está faltando. A Flash do Dreamcast é necessária para este emulador funcionar. Coloque o arquivo Flash em %1$s/data/dc_flash.bin</string>
     <string name="require_bios">Você tem que informar a localização da BIOS do Dreamcast</string>
     <string name="data_folder">A pasta de dados atual está selecionada.</string>
-    <string name="emu_crash">Erro do emulador:\n %1$s</string>	
     
     <string name="folder_bios">Iniciar BIOS</string>
     <string name="folder_select">Selecionar diretório atual</string>

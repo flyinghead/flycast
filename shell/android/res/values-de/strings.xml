@@ -22,7 +22,6 @@
     <string name="missing_flash">Für einen funktionsfähigen Emulator ist der Dreamcast-Flash erforderlich. Legen Sie die Flash-Datei unter %1$s/data/dc_flash.bin ab.</string>
     <string name="require_bios">Es muss ein BIOS bereitgestellt werden.</string>
     <string name="data_folder">Das aktuelle Datenverzeichnis wird überprüft.</string>
-    <string name="emu_crash">Emulator-Fehler!</string>
     
     <string name="folder_bios">BIOS STARTEN</string>
     <string name="folder_select">AKTUELLES VERZEICHNIS WÄHLEN</string>
