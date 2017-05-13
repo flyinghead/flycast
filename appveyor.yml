@@ -22,7 +22,7 @@ deploy:
   access_key_id: AKIAJETEBUZSLZF3YNKA
   secret_access_key:
     secure: ZxrysCeqMK99dOOzKyoeN4R5aO8JjA4RTrwVAQPQHz8sjyyKuVDZT2fC+9m6lUIi
-  region: 
+  region: eu-west-1
   bucket: reicast-builds-windows
   folder: 'builds/heads/$(APPVEYOR_REPO_BRANCH)-$(APPVEYOR_REPO_COMMIT)'
   artifact: reicast-win_$(platform)-slow-$(APPVEYOR_REPO_COMMIT)
