@@ -22,14 +22,20 @@ extern u32 SQW,DMAW;
 
 #if HOST_CPU == CPU_X86
 #include <xmmintrin.h>
-typedef __m128 simd128_t;
+struct simd256_t
+{
+	DECL_ALIGN(32) __m128 data[2];
+};
 #elif HOST_CPU == CPU_ARM && defined(__ARM_NEON__)
 #include <arm_neon.h>
-typedef uint64x2_t simd128_t;
-#else
-struct simd128_t
+struct simd256_t
 {
-DECL_ALIGN(32) u64 data[2];
+	DECL_ALIGN(32) uint64x2_t data[2];
+};
+#else
+struct simd256_t
+{
+DECL_ALIGN(32) u64 data[4];
 };
 #endif
 
@@ -288,16 +294,18 @@ void ta_vtx_SoftReset()
 INLINE
 void DYNACALL ta_thd_data32_i(void* data)
 {
-	simd128_t* dst = (simd128_t*)ta_tad.thd_data;
-	simd128_t* src = (simd128_t*)data;
+	simd256_t* dst = (simd256_t*)ta_tad.thd_data;
+	simd256_t* src = (simd256_t*)data;
 
-	PCW pcw = *(PCW*)src;
+	// First byte is PCW
+	PCW pcw = *(PCW*)data;
 	
-	dst[0] = src[0];
-	dst[1] = src[1];
+	// Copy the TA data
+	*dst = *src;
 
 	ta_tad.thd_data += 32;
 
+	//process TA state
 	u32 state_in = (ta_cur_state << 8) | (pcw.ParaType << 5) | ((pcw.obj_ctrl >> 2) & 31);
 
 	u32 trans = ta_fsm[state_in];
@@ -305,7 +313,7 @@ void DYNACALL ta_thd_data32_i(void* data)
 	bool must_handle = trans & 0xF0;
 
 
-	if (!unlikely(must_handle))
+	if (likely(!must_handle))
 	{
 		return;
 	}
