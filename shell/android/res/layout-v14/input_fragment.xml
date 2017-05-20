@@ -59,7 +59,7 @@
                     android:gravity="right"
                     android:orientation="vertical" >
 
-                    <Checkbox
+                    <Switch
                         android:id="@+id/switchTouchVibrationEnabled"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -183,7 +183,7 @@
                     android:gravity="right"
                     android:orientation="vertical" >
 
-                    <Checkbox
+                    <Switch
                         android:id="@+id/micInPort2"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"

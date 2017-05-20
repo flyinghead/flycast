@@ -36,8 +36,6 @@ import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.TextView;
 
-import de.ankri.views.Switch;
-
 import com.reicast.emulator.R;
 import com.reicast.emulator.periph.Gamepad;
 
@@ -45,10 +43,10 @@ public class InputModFragment extends Fragment {
 
 	private SharedPreferences mPrefs;
 
-	private Switch switchJoystickDpadEnabled;
-	private Switch switchRightStickLREnabled;
-	private Switch switchModifiedLayoutEnabled;
-	private Switch switchCompatibilityEnabled;
+	private CompoundButton switchJoystickDpadEnabled;
+	private CompoundButton switchRightStickLREnabled;
+	private CompoundButton switchModifiedLayoutEnabled;
+	private CompoundButton switchCompatibilityEnabled;
 
 	private TextView a_button_text;
 	private TextView b_button_text;
@@ -97,13 +95,13 @@ public class InputModFragment extends Fragment {
 			playerNum = b.getInt("portNumber", -1);
 		}
 		
-		switchJoystickDpadEnabled = (Switch) getView().findViewById(
+		switchJoystickDpadEnabled = (CompoundButton) getView().findViewById(
 				R.id.switchJoystickDpadEnabled);
-		switchRightStickLREnabled = (Switch) getView().findViewById(
+		switchRightStickLREnabled = (CompoundButton) getView().findViewById(
 				R.id.switchRightStickLREnabled);
-		switchModifiedLayoutEnabled = (Switch) getView().findViewById(
+		switchModifiedLayoutEnabled = (CompoundButton) getView().findViewById(
 				R.id.switchModifiedLayoutEnabled);
-		switchCompatibilityEnabled = (Switch) getView().findViewById(
+		switchCompatibilityEnabled = (CompoundButton) getView().findViewById(
 				R.id.switchCompatibilityEnabled);
 
 		OnCheckedChangeListener joystick_mode = new OnCheckedChangeListener() {

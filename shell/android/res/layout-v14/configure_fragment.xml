@@ -107,7 +107,7 @@
                     android:gravity="right"
                     android:orientation="vertical" >
 
-                    <Checkbox
+                    <Switch
                         android:id="@+id/reios_option"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -171,7 +171,7 @@
                     android:gravity="right"
                     android:orientation="vertical" >
 
-                    <Checkbox
+                    <Switch
                         android:id="@+id/details_option"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -237,7 +237,7 @@
                     android:gravity="right"
                     android:orientation="vertical" >
 
-                    <Checkbox
+                    <Switch
                         android:id="@+id/native_option"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -265,7 +265,7 @@
                     android:gravity="right"
                     android:orientation="vertical" >
 
-                    <Checkbox
+                    <Switch
                         android:id="@+id/unstable_option"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -293,7 +293,7 @@
                     android:gravity="right"
                     android:orientation="vertical" >
 
-                    <Checkbox
+                    <Switch
                         android:id="@+id/mipmaps_option"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -321,7 +321,7 @@
                     android:gravity="right"
                     android:orientation="vertical" >
 
-                    <Checkbox
+                    <Switch
                         android:id="@+id/stretch_option"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -408,7 +408,7 @@
                     android:gravity="right"
                     android:orientation="vertical" >
 
-                    <Checkbox
+                    <Switch
                         android:id="@+id/fps_option"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -436,7 +436,7 @@
                     android:gravity="right"
                     android:orientation="vertical" >
 
-                    <Checkbox
+                    <Switch
                         android:id="@+id/software_option"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -464,7 +464,7 @@
                     android:gravity="right"
                     android:orientation="vertical" >
 
-                    <Checkbox
+                    <Switch
                         android:id="@+id/sound_option"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -521,7 +521,7 @@
                     android:gravity="right"
                     android:orientation="vertical" >
 
-                    <Checkbox
+                    <Switch
                         android:id="@+id/force_gpu_option"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -568,7 +568,7 @@
                     android:gravity="right"
                     android:orientation="vertical" >
 
-                    <Checkbox
+                    <Switch
                         android:id="@+id/dynarec_option"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -683,7 +683,7 @@
                     android:gravity="right"
                     android:orientation="vertical" >
 
-                    <Checkbox
+                    <Switch
                         android:id="@+id/limitfps_option"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -711,7 +711,7 @@
                     android:gravity="right"
                     android:orientation="vertical" >
 
-                    <Checkbox
+                    <Switch
                         android:id="@+id/render_option"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -739,7 +739,7 @@
                     android:gravity="right"
                     android:orientation="vertical" >
 
-                    <Checkbox
+                    <Switch
                         android:id="@+id/syncrender_option"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"

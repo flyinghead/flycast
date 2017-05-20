@@ -30,8 +30,6 @@ import android.widget.TableLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import de.ankri.views.Switch;
-
 import com.bda.controller.Controller;
 import com.bda.controller.ControllerListener;
 import com.bda.controller.MotionEvent;
@@ -47,8 +45,8 @@ public class InputFragment extends Fragment {
 	private int listenForButton = 0;
 	private AlertDialog alertDialogSelectController;
 	private SharedPreferences sharedPreferences;
-	private Switch switchTouchVibrationEnabled;
-	private Switch micPluggedIntoFirstController;
+	private CompoundButton switchTouchVibrationEnabled;
+	private CompoundButton micPluggedIntoFirstController;
 
 	private Gamepad pad = new Gamepad();
 	public MOGAInput moga = new MOGAInput();
@@ -144,7 +142,7 @@ public class InputFragment extends Fragment {
 				vibLay.setVisibility( isChecked ? View.VISIBLE : View.GONE );
 			}
 		};
-		switchTouchVibrationEnabled = (Switch) getView().findViewById(
+		switchTouchVibrationEnabled = (CompoundButton) getView().findViewById(
 				R.id.switchTouchVibrationEnabled);
 		boolean vibrate = sharedPreferences.getBoolean(Config.pref_touchvibe, true);
 		if (vibrate) {
@@ -154,7 +152,7 @@ public class InputFragment extends Fragment {
 		}
 		switchTouchVibrationEnabled.setOnCheckedChangeListener(touch_vibration);
 
-		micPluggedIntoFirstController = (Switch) getView().findViewById(
+		micPluggedIntoFirstController = (CompoundButton) getView().findViewById(
 				R.id.micInPort2);
 		boolean micPluggedIn = sharedPreferences.getBoolean(Config.pref_mic,
 				false);

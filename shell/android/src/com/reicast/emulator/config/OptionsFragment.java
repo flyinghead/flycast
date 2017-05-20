@@ -40,8 +40,6 @@ import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.Spinner;
 import android.widget.Toast;
 
-import de.ankri.views.Switch;
-
 import com.android.util.FileUtils;
 import com.reicast.emulator.FileBrowser;
 import com.reicast.emulator.R;
@@ -159,7 +157,7 @@ public class OptionsFragment extends Fragment {
 				mPrefs.edit().putBoolean(Config.pref_usereios, isChecked).commit();
 			}
 		};
-		Switch reios_opt = (Switch) getView().findViewById(
+		CompoundButton reios_opt = (CompoundButton) getView().findViewById(
 				R.id.reios_option);
 		reios_opt.setChecked(mPrefs.getBoolean(Config.pref_usereios, false));
 		reios_opt.setOnCheckedChangeListener(reios_options);
@@ -179,7 +177,7 @@ public class OptionsFragment extends Fragment {
 				}
 			}
 		};
-		Switch details_opt = (Switch) getView().findViewById(
+		CompoundButton details_opt = (CompoundButton) getView().findViewById(
 				R.id.details_option);
 		details_opt.setChecked(mPrefs.getBoolean(Config.pref_gamedetails, false));
 		details_opt.setOnCheckedChangeListener(details_options);
@@ -251,7 +249,7 @@ public class OptionsFragment extends Fragment {
 				Config.nativeact = isChecked;
 			}
 		};
-		Switch native_opt = (Switch) getView().findViewById(
+		CompoundButton native_opt = (CompoundButton) getView().findViewById(
 				R.id.native_option);
 		native_opt.setChecked(Config.nativeact);
 		native_opt.setOnCheckedChangeListener(native_options);
@@ -264,7 +262,7 @@ public class OptionsFragment extends Fragment {
 				Config.dynarecopt = isChecked;
 			}
 		};
-		Switch dynarec_opt = (Switch) getView().findViewById(
+		CompoundButton dynarec_opt = (CompoundButton) getView().findViewById(
 				R.id.dynarec_option);
 		dynarec_opt.setChecked(Config.dynarecopt);
 		dynarec_opt.setOnCheckedChangeListener(dynarec_options);
@@ -277,7 +275,7 @@ public class OptionsFragment extends Fragment {
 				Config.unstableopt = isChecked;
 			}
 		};
-		Switch unstable_opt = (Switch) getView().findViewById(
+		CompoundButton unstable_opt = (CompoundButton) getView().findViewById(
 				R.id.unstable_option);
 		if (Config.unstableopt) {
 			unstable_opt.setChecked(true);
@@ -374,7 +372,7 @@ public class OptionsFragment extends Fragment {
 				Config.limitfps = isChecked;
 			}
 		};
-		Switch limit_fps = (Switch) getView().findViewById(R.id.limitfps_option);
+		CompoundButton limit_fps = (CompoundButton) getView().findViewById(R.id.limitfps_option);
 		limit_fps.setChecked(Config.limitfps);
 		limit_fps.setOnCheckedChangeListener(limitfps_option);
 
@@ -385,7 +383,7 @@ public class OptionsFragment extends Fragment {
 				Config.mipmaps = isChecked;
 			}
 		};
-		Switch mipmap_opt = (Switch) getView().findViewById(R.id.mipmaps_option);
+		CompoundButton mipmap_opt = (CompoundButton) getView().findViewById(R.id.mipmaps_option);
 		mipmap_opt.setChecked(Config.mipmaps);
 		mipmap_opt.setOnCheckedChangeListener(mipmaps_option);
 
@@ -396,7 +394,7 @@ public class OptionsFragment extends Fragment {
 				Config.widescreen = isChecked;
 			}
 		};
-		Switch stretch_view = (Switch) getView().findViewById(R.id.stretch_option);
+		CompoundButton stretch_view = (CompoundButton) getView().findViewById(R.id.stretch_option);
 		stretch_view.setChecked(Config.widescreen);
 		stretch_view.setOnCheckedChangeListener(full_screen);
 
@@ -446,7 +444,7 @@ public class OptionsFragment extends Fragment {
 				Config.pvrrender = isChecked;
 			}
 		};
-		Switch pvr_render = (Switch) getView().findViewById(R.id.render_option);
+		CompoundButton pvr_render = (CompoundButton) getView().findViewById(R.id.render_option);
 		pvr_render.setChecked(Config.pvrrender);
 		pvr_render.setOnCheckedChangeListener(pvr_rendering);
 
@@ -456,7 +454,7 @@ public class OptionsFragment extends Fragment {
 				Config.syncedrender = isChecked;
 			}
 		};
-		Switch synced_render = (Switch) getView().findViewById(R.id.syncrender_option);
+		CompoundButton synced_render = (CompoundButton) getView().findViewById(R.id.syncrender_option);
 		synced_render.setChecked(Config.syncedrender);
 		synced_render.setOnCheckedChangeListener(synchronous);
 
@@ -491,7 +489,7 @@ public class OptionsFragment extends Fragment {
 			}
 		});
 
-		final Switch fps_opt = (Switch) getView().findViewById(R.id.fps_option);
+		final CompoundButton fps_opt = (CompoundButton) getView().findViewById(R.id.fps_option);
 		OnCheckedChangeListener fps_options = new OnCheckedChangeListener() {
 
 			public void onCheckedChanged(CompoundButton buttonView,
@@ -503,7 +501,7 @@ public class OptionsFragment extends Fragment {
 		fps_opt.setChecked(counter);
 		fps_opt.setOnCheckedChangeListener(fps_options);
 
-		final Switch force_gpu_opt = (Switch) getView().findViewById(R.id.force_gpu_option);
+		final CompoundButton force_gpu_opt = (CompoundButton) getView().findViewById(R.id.force_gpu_option);
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
 			OnCheckedChangeListener force_gpu_options = new OnCheckedChangeListener() {
 
@@ -518,7 +516,7 @@ public class OptionsFragment extends Fragment {
 			force_gpu_opt.setEnabled(false);
 		}
 
-		Switch force_software_opt = (Switch) getView().findViewById(
+		CompoundButton force_software_opt = (CompoundButton) getView().findViewById(
 				R.id.software_option);
 		OnCheckedChangeListener force_software = new OnCheckedChangeListener() {
 
@@ -542,7 +540,7 @@ public class OptionsFragment extends Fragment {
 		force_software_opt.setChecked(software == GL2JNIView.LAYER_TYPE_SOFTWARE);
 		force_software_opt.setOnCheckedChangeListener(force_software);
 
-		Switch sound_opt = (Switch) getView().findViewById(R.id.sound_option);
+		CompoundButton sound_opt = (CompoundButton) getView().findViewById(R.id.sound_option);
 		OnCheckedChangeListener emu_sound = new OnCheckedChangeListener() {
 
 			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
