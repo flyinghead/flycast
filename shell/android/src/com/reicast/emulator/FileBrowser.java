@@ -60,8 +60,8 @@ public class FileBrowser extends Fragment {
 
 	private SharedPreferences mPrefs;
 	private File sdcard = Environment.getExternalStorageDirectory();
-	private String home_directory = sdcard.getAbsolutePath().replace("emulated/0", "sdcard0");
-	private String game_directory = sdcard.getAbsolutePath().replace("emulated/0", "sdcard0");
+	private String home_directory = sdcard.getAbsolutePath();
+	private String game_directory = sdcard.getAbsolutePath();
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -286,7 +286,7 @@ public class FileBrowser extends Fragment {
 		if (images) {
 			navigate(new File(home_directory));
 		} else {
-			if (game_directory.equals(sdcard.getAbsolutePath().replace("emulated/0", "sdcard0"))) {
+			if (game_directory.equals(sdcard.getAbsolutePath())) {
 				HashSet<String> extStorage = FileBrowser.getExternalMounts();
 				if (extStorage != null && !extStorage.isEmpty()) {
 					for (Iterator<String> sd = extStorage.iterator(); sd.hasNext();) {

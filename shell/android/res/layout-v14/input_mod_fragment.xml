@@ -48,7 +48,7 @@
                     android:gravity="right"
                     android:orientation="vertical" >
 
-                    <Checkbox
+                    <Switch
                         android:id="@+id/switchModifiedLayoutEnabled"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -75,7 +75,7 @@
                     android:gravity="right"
                     android:orientation="vertical" >
 
-                    <Checkbox
+                    <Switch
                         android:id="@+id/switchCompatibilityEnabled"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -102,7 +102,7 @@
                     android:gravity="right"
                     android:orientation="vertical" >
 
-                    <Checkbox
+                    <Switch
                         android:id="@+id/switchRightStickLREnabled"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -130,7 +130,7 @@
                     android:gravity="right"
                     android:orientation="vertical" >
 
-                    <Checkbox
+                    <Switch
                         android:id="@+id/switchJoystickDpadEnabled"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
