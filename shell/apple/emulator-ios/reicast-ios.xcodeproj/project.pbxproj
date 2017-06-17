@@ -157,18 +157,6 @@
 		9C7A3AEE18C806E00070BB5F /* zip_unchange_all.c in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A39B418C806DF0070BB5F /* zip_unchange_all.c */; };
 		9C7A3AEF18C806E00070BB5F /* zip_unchange_archive.c in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A39B518C806DF0070BB5F /* zip_unchange_archive.c */; };
 		9C7A3AF018C806E00070BB5F /* zip_unchange_data.c in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A39B618C806DF0070BB5F /* zip_unchange_data.c */; };
-		9C7A3AF118C806E00070BB5F /* adler32.c in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A39B918C806DF0070BB5F /* adler32.c */; };
-		9C7A3AF218C806E00070BB5F /* compress.c in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A39BA18C806DF0070BB5F /* compress.c */; };
-		9C7A3AF318C806E00070BB5F /* crc32.c in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A39BB18C806DF0070BB5F /* crc32.c */; };
-		9C7A3AF418C806E00070BB5F /* deflate.c in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A39BD18C806DF0070BB5F /* deflate.c */; };
-		9C7A3AF518C806E00070BB5F /* infback.c in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A39BF18C806DF0070BB5F /* infback.c */; };
-		9C7A3AF618C806E00070BB5F /* inffast.c in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A39C018C806DF0070BB5F /* inffast.c */; };
-		9C7A3AF718C806E00070BB5F /* inflate.c in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A39C318C806DF0070BB5F /* inflate.c */; };
-		9C7A3AF818C806E00070BB5F /* inftrees.c in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A39C518C806DF0070BB5F /* inftrees.c */; };
-		9C7A3AF918C806E00070BB5F /* Makefile in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A39C718C806DF0070BB5F /* Makefile */; };
-		9C7A3AFA18C806E00070BB5F /* trees.c in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A39C818C806DF0070BB5F /* trees.c */; };
-		9C7A3AFB18C806E00070BB5F /* uncompr.c in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A39CA18C806DF0070BB5F /* uncompr.c */; };
-		9C7A3AFC18C806E00070BB5F /* zutil.c in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A39CE18C806DF0070BB5F /* zutil.c */; };
 		9C7A3B0018C806E00070BB5F /* aica.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A39E018C806DF0070BB5F /* aica.cpp */; };
 		9C7A3B0118C806E00070BB5F /* aica_if.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A39E218C806DF0070BB5F /* aica_if.cpp */; };
 		9C7A3B0218C806E00070BB5F /* aica_mem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A39E418C806DF0070BB5F /* aica_mem.cpp */; };
@@ -238,7 +226,7 @@
 		9C7A3B4E18C806E00070BB5F /* stdclass.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A3A9918C806E00070BB5F /* stdclass.cpp */; };
 		9C7A3B5918C81A4F0070BB5F /* SWRevealViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A3B5818C81A4F0070BB5F /* SWRevealViewController.m */; };
 		9C7A3BC418C84EA10070BB5F /* MainStoryboard.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BC318C84EA10070BB5F /* MainStoryboard.storyboard */; };
-		EBDF37561BB96E1B001191B5 /* audiobackend_coreaudio.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EBDF37541BB96E1B001191B5 /* audiobackend_coreaudio.cpp */; settings = {ASSET_TAGS = (); }; };
+		EBDF37561BB96E1B001191B5 /* audiobackend_coreaudio.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EBDF37541BB96E1B001191B5 /* audiobackend_coreaudio.cpp */; };
 		EBDF375A1BB96ECD001191B5 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EBDF37591BB96ECD001191B5 /* AudioToolbox.framework */; };
 /* End PBXBuildFile section */
 
@@ -338,6 +326,7 @@
 		87C208D61B7A4BFA00638BDD /* SideDrawerViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SideDrawerViewController.m; path = emulator/SideDrawerViewController.m; sourceTree = "<group>"; };
 		87C4AA531A440BEB0048DBF4 /* libz.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libz.dylib; path = usr/lib/libz.dylib; sourceTree = SDKROOT; };
 		87C4AA551A4414070048DBF4 /* AssetsLibrary.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AssetsLibrary.framework; path = System/Library/Frameworks/AssetsLibrary.framework; sourceTree = SDKROOT; };
+		87D776E41EF5623300E08B55 /* zlib.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = zlib.xcodeproj; path = deps/zlib/zlib.xcodeproj; sourceTree = "<group>"; };
 		87D92EA71B7839E600D8FD9E /* ios_main.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = ios_main.mm; path = emulator/ios_main.mm; sourceTree = SOURCE_ROOT; };
 		87D92F211B7A1B4800D8FD9E /* 210-octocat.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "210-octocat.png"; path = "emulator/Images/210-octocat.png"; sourceTree = "<group>"; };
 		87D92F221B7A1B4800D8FD9E /* 210-octocat@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "210-octocat@2x.png"; path = "emulator/Images//210-octocat@2x.png"; sourceTree = "<group>"; };
@@ -468,29 +457,6 @@
 		9C7A39B518C806DF0070BB5F /* zip_unchange_archive.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = zip_unchange_archive.c; sourceTree = "<group>"; };
 		9C7A39B618C806DF0070BB5F /* zip_unchange_data.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = zip_unchange_data.c; sourceTree = "<group>"; };
 		9C7A39B718C806DF0070BB5F /* zipint.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zipint.h; sourceTree = "<group>"; };
-		9C7A39B918C806DF0070BB5F /* adler32.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = adler32.c; sourceTree = "<group>"; };
-		9C7A39BA18C806DF0070BB5F /* compress.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = compress.c; sourceTree = "<group>"; };
-		9C7A39BB18C806DF0070BB5F /* crc32.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = crc32.c; sourceTree = "<group>"; };
-		9C7A39BC18C806DF0070BB5F /* crc32.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = crc32.h; sourceTree = "<group>"; };
-		9C7A39BD18C806DF0070BB5F /* deflate.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = deflate.c; sourceTree = "<group>"; };
-		9C7A39BE18C806DF0070BB5F /* deflate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = deflate.h; sourceTree = "<group>"; };
-		9C7A39BF18C806DF0070BB5F /* infback.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = infback.c; sourceTree = "<group>"; };
-		9C7A39C018C806DF0070BB5F /* inffast.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = inffast.c; sourceTree = "<group>"; };
-		9C7A39C118C806DF0070BB5F /* inffast.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = inffast.h; sourceTree = "<group>"; };
-		9C7A39C218C806DF0070BB5F /* inffixed.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = inffixed.h; sourceTree = "<group>"; };
-		9C7A39C318C806DF0070BB5F /* inflate.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = inflate.c; sourceTree = "<group>"; };
-		9C7A39C418C806DF0070BB5F /* inflate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = inflate.h; sourceTree = "<group>"; };
-		9C7A39C518C806DF0070BB5F /* inftrees.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = inftrees.c; sourceTree = "<group>"; };
-		9C7A39C618C806DF0070BB5F /* inftrees.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = inftrees.h; sourceTree = "<group>"; };
-		9C7A39C718C806DF0070BB5F /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
-		9C7A39C818C806DF0070BB5F /* trees.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = trees.c; sourceTree = "<group>"; };
-		9C7A39C918C806DF0070BB5F /* trees.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = trees.h; sourceTree = "<group>"; };
-		9C7A39CA18C806DF0070BB5F /* uncompr.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = uncompr.c; sourceTree = "<group>"; };
-		9C7A39CB18C806DF0070BB5F /* zconf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zconf.h; sourceTree = "<group>"; };
-		9C7A39CC18C806DF0070BB5F /* zconf.in.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zconf.in.h; sourceTree = "<group>"; };
-		9C7A39CD18C806DF0070BB5F /* zlib.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zlib.h; sourceTree = "<group>"; };
-		9C7A39CE18C806DF0070BB5F /* zutil.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = zutil.c; sourceTree = "<group>"; };
-		9C7A39CF18C806DF0070BB5F /* zutil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zutil.h; sourceTree = "<group>"; };
 		9C7A39E018C806DF0070BB5F /* aica.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = aica.cpp; sourceTree = "<group>"; };
 		9C7A39E118C806DF0070BB5F /* aica.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = aica.h; sourceTree = "<group>"; };
 		9C7A39E218C806DF0070BB5F /* aica_if.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = aica_if.cpp; sourceTree = "<group>"; };
@@ -801,6 +767,13 @@
 			path = ..;
 			sourceTree = "<group>";
 		};
+		87D776E51EF5623300E08B55 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
 		87D92F4F1B7A1BB100D8FD9E /* iCade-iOS */ = {
 			isa = PBXGroup;
 			children = (
@@ -887,6 +860,7 @@
 		9C7A393818C806DE0070BB5F /* Emulator Core Code */ = {
 			isa = PBXGroup;
 			children = (
+				87D776E41EF5623300E08B55 /* zlib.xcodeproj */,
 				849C0D631B072CE0008BAAA4 /* reios */,
 				8497BCCC1A41BFD800EFB9ED /* coreio */,
 				8497BCC31A41BFBA00EFB9ED /* oslib */,
@@ -960,7 +934,6 @@
 				9C7A396218C806DE0070BB5F /* libelf */,
 				9C7A396A18C806DE0070BB5F /* libpng */,
 				9C7A397E18C806DF0070BB5F /* libzip */,
-				9C7A39B818C806DF0070BB5F /* zlib */,
 			);
 			path = deps;
 			sourceTree = "<group>";
@@ -1102,36 +1075,6 @@
 				9C7A39B718C806DF0070BB5F /* zipint.h */,
 			);
 			path = libzip;
-			sourceTree = "<group>";
-		};
-		9C7A39B818C806DF0070BB5F /* zlib */ = {
-			isa = PBXGroup;
-			children = (
-				9C7A39B918C806DF0070BB5F /* adler32.c */,
-				9C7A39BA18C806DF0070BB5F /* compress.c */,
-				9C7A39BB18C806DF0070BB5F /* crc32.c */,
-				9C7A39BC18C806DF0070BB5F /* crc32.h */,
-				9C7A39BD18C806DF0070BB5F /* deflate.c */,
-				9C7A39BE18C806DF0070BB5F /* deflate.h */,
-				9C7A39BF18C806DF0070BB5F /* infback.c */,
-				9C7A39C018C806DF0070BB5F /* inffast.c */,
-				9C7A39C118C806DF0070BB5F /* inffast.h */,
-				9C7A39C218C806DF0070BB5F /* inffixed.h */,
-				9C7A39C318C806DF0070BB5F /* inflate.c */,
-				9C7A39C418C806DF0070BB5F /* inflate.h */,
-				9C7A39C518C806DF0070BB5F /* inftrees.c */,
-				9C7A39C618C806DF0070BB5F /* inftrees.h */,
-				9C7A39C718C806DF0070BB5F /* Makefile */,
-				9C7A39C818C806DF0070BB5F /* trees.c */,
-				9C7A39C918C806DF0070BB5F /* trees.h */,
-				9C7A39CA18C806DF0070BB5F /* uncompr.c */,
-				9C7A39CB18C806DF0070BB5F /* zconf.h */,
-				9C7A39CC18C806DF0070BB5F /* zconf.in.h */,
-				9C7A39CD18C806DF0070BB5F /* zlib.h */,
-				9C7A39CE18C806DF0070BB5F /* zutil.c */,
-				9C7A39CF18C806DF0070BB5F /* zutil.h */,
-			);
-			path = zlib;
 			sourceTree = "<group>";
 		};
 		9C7A39DE18C806DF0070BB5F /* hw */ = {
@@ -1500,6 +1443,12 @@
 			mainGroup = 87078A7A18A47FE90034C7A0;
 			productRefGroup = 87078A8418A47FE90034C7A0 /* Products */;
 			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = 87D776E51EF5623300E08B55 /* Products */;
+					ProjectRef = 87D776E41EF5623300E08B55 /* zlib.xcodeproj */;
+				},
+			);
 			projectRoot = "";
 			targets = (
 				87078A8218A47FE90034C7A0 /* reicast-ios */,
@@ -1570,16 +1519,13 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				9C7A3AF918C806E00070BB5F /* Makefile in Sources */,
 				9C7A3B0D18C806E00070BB5F /* sb_dma.cpp in Sources */,
 				87C208D81B7A4BFA00638BDD /* BrowserTableViewController.m in Sources */,
 				9C7A3ADC18C806E00070BB5F /* zip_open.c in Sources */,
 				84967C9F1B8F492C005F1140 /* pngwtran.c in Sources */,
-				9C7A3AF218C806E00070BB5F /* compress.c in Sources */,
 				9C7A3B2718C806E00070BB5F /* dmac.cpp in Sources */,
 				9C7A3B3118C806E00070BB5F /* sh4_mmr.cpp in Sources */,
 				87C208DE1B7A4BFA00638BDD /* SettingsViewController.m in Sources */,
-				9C7A3AFC18C806E00070BB5F /* zutil.c in Sources */,
 				9C7A3AAA18C806E00070BB5F /* elf32.cpp in Sources */,
 				9C7A3AE218C806E00070BB5F /* zip_set_name.c in Sources */,
 				9C7A3B1C18C806E00070BB5F /* ta_vtx.cpp in Sources */,
@@ -1640,7 +1586,6 @@
 				9C7A3ABB18C806E00070BB5F /* mkstemp.c in Sources */,
 				9C7A3B5918C81A4F0070BB5F /* SWRevealViewController.m in Sources */,
 				9C7A3B0F18C806E00070BB5F /* maple_cfg.cpp in Sources */,
-				9C7A3AF318C806E00070BB5F /* crc32.c in Sources */,
 				87FA52E91B8CE18600CEFC32 /* PadViewController.m in Sources */,
 				8497BCC01A41A0E900EFB9ED /* nixprof.cpp in Sources */,
 				9C7A3AE118C806E00070BB5F /* zip_set_file_comment.c in Sources */,
@@ -1657,11 +1602,9 @@
 				87C208DF1B7A4BFA00638BDD /* SideDrawerViewController.m in Sources */,
 				9C7A3AA618C806E00070BB5F /* chdr.cpp in Sources */,
 				9C7A3AA518C806E00070BB5F /* cdipsr.cpp in Sources */,
-				9C7A3AFB18C806E00070BB5F /* uncompr.c in Sources */,
 				9C7A3B1218C806E00070BB5F /* maple_if.cpp in Sources */,
 				9C7A3AC818C806E00070BB5F /* zip_error_strerror.c in Sources */,
 				877652CA1B6157FC00437F10 /* rec_arm.cpp in Sources */,
-				9C7A3AF518C806E00070BB5F /* infback.c in Sources */,
 				8497BCCF1A41BFD800EFB9ED /* coreio.cpp in Sources */,
 				84967C9D1B8F492C005F1140 /* pngwio.c in Sources */,
 				9C7A3B0E18C806E00070BB5F /* sb_mem.cpp in Sources */,
@@ -1674,8 +1617,6 @@
 				9C7A3AED18C806E00070BB5F /* zip_unchange.c in Sources */,
 				877652C31B6157BD00437F10 /* audiobackend_directsound.cpp in Sources */,
 				9C7A3B1F18C806E00070BB5F /* driver.cpp in Sources */,
-				9C7A3AFA18C806E00070BB5F /* trees.c in Sources */,
-				9C7A3AF418C806E00070BB5F /* deflate.c in Sources */,
 				9C7A3B2018C806E00070BB5F /* shil.cpp in Sources */,
 				9C7A3B2518C806E00070BB5F /* ccn.cpp in Sources */,
 				849C0D621B072C07008BAAA4 /* context.cpp in Sources */,
@@ -1698,7 +1639,6 @@
 				9C7A3ACD18C806E00070BB5F /* zip_file_get_offset.c in Sources */,
 				9C7A3B2818C806E00070BB5F /* intc.cpp in Sources */,
 				9C7A3B3A18C806E00070BB5F /* ioctl.cpp in Sources */,
-				9C7A3AF818C806E00070BB5F /* inftrees.c in Sources */,
 				9C7A3AE418C806E00070BB5F /* zip_source_file.c in Sources */,
 				9C7A3AD918C806E00070BB5F /* zip_memdup.c in Sources */,
 				87078A9B18A47FE90034C7A0 /* AppDelegate.m in Sources */,
@@ -1708,7 +1648,6 @@
 				9C7A3B0518C806E00070BB5F /* arm7.cpp in Sources */,
 				9C7A3AA718C806E00070BB5F /* md5.cpp in Sources */,
 				9C7A3B1518C806E00070BB5F /* pvr_mem.cpp in Sources */,
-				9C7A3AF718C806E00070BB5F /* inflate.c in Sources */,
 				9C7A3AC918C806E00070BB5F /* zip_error_to_str.c in Sources */,
 				9C7A3B0918C806E00070BB5F /* gdrom_response.cpp in Sources */,
 				84967C971B8F492C005F1140 /* pngread.c in Sources */,
@@ -1732,7 +1671,6 @@
 				9C7A3AD418C806E00070BB5F /* zip_get_archive_comment.c in Sources */,
 				9C7A3AEF18C806E00070BB5F /* zip_unchange_archive.c in Sources */,
 				9C7A3AD118C806E00070BB5F /* zip_fopen_index.c in Sources */,
-				9C7A3AF618C806E00070BB5F /* inffast.c in Sources */,
 				9C7A3B1318C806E00070BB5F /* _vmem.cpp in Sources */,
 				9C7A3B1118C806E00070BB5F /* maple_helper.cpp in Sources */,
 				849C0D6E1B072D14008BAAA4 /* gdrom_hle.cpp in Sources */,
@@ -1758,7 +1696,6 @@
 				9C7A3AC318C806E00070BB5F /* zip_err_str.c in Sources */,
 				9C7A3B4818C806E00070BB5F /* gldraw.cpp in Sources */,
 				9C7A3AE618C806E00070BB5F /* zip_source_free.c in Sources */,
-				9C7A3AF118C806E00070BB5F /* adler32.c in Sources */,
 				9C7A3B0A18C806E00070BB5F /* gdromv3.cpp in Sources */,
 				9C7A3B3418C806E00070BB5F /* sh4_sched.cpp in Sources */,
 				87C208DB1B7A4BFA00638BDD /* EmulatorViewController.mm in Sources */,
