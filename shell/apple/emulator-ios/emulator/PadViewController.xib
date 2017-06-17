@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="7706" systemVersion="14F2109" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none">
+    <dependencies>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="7703"/>
+    </dependencies>
+    <objects>
+        <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="PadViewController">
+            <connections>
+                <outlet property="img_abxy_a" destination="iKO-3z-Ias" id="ENi-No-2tP"/>
+                <outlet property="img_abxy_b" destination="7LB-OY-vh3" id="pGH-6d-IgP"/>
+                <outlet property="img_abxy_x" destination="iwO-7q-c8H" id="ZhP-Zp-Qnj"/>
+                <outlet property="img_abxy_y" destination="hGZ-v7-VA5" id="5qv-nJ-V1w"/>
+                <outlet property="img_dpad_d" destination="s7g-nq-lRU" id="9MP-1k-eUW"/>
+                <outlet property="img_dpad_l" destination="rp6-Nd-1qa" id="LNo-9e-3og"/>
+                <outlet property="img_dpad_r" destination="CVH-hw-R8F" id="vbf-4S-SBb"/>
+                <outlet property="img_dpad_u" destination="WMD-Fv-ibu" id="1kE-zb-8gR"/>
+                <outlet property="img_lt" destination="8Gl-Iv-u8L" id="4R8-pf-PYz"/>
+                <outlet property="img_rt" destination="V8J-vG-dlF" id="Bn6-Zm-Ojo"/>
+                <outlet property="img_start" destination="VtI-tC-PSX" id="o3u-Cb-G2g"/>
+                <outlet property="view" destination="3M7-1s-N5r" id="Tac-YU-UYE"/>
+            </connections>
+        </placeholder>
+        <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
+        <view multipleTouchEnabled="YES" contentMode="scaleToFill" id="3M7-1s-N5r">
+            <rect key="frame" x="0.0" y="0.0" width="568" height="320"/>
+            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+            <subviews>
+                <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="LTrigger.png" id="H57-MD-elm">
+                    <rect key="frame" x="0.0" y="0.0" width="80" height="40"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                </imageView>
+                <button opaque="NO" multipleTouchEnabled="YES" tag="9" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" id="8Gl-Iv-u8L" userLabel="LT-Button">
+                    <rect key="frame" x="0.0" y="0.0" width="80" height="40"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                    <state key="normal">
+                        <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
+                    </state>
+                    <connections>
+                        <action selector="keycodeDown:" destination="-1" eventType="touchDown" id="34L-sO-g81"/>
+                        <action selector="keycodeUp:" destination="-1" eventType="touchUpInside" id="iDv-U3-6OX"/>
+                    </connections>
+                </button>
+                <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="RTrigger.png" id="Cjn-zx-eSs">
+                    <rect key="frame" x="488" y="0.0" width="80" height="40"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                </imageView>
+                <button opaque="NO" multipleTouchEnabled="YES" tag="10" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" id="V8J-vG-dlF" userLabel="RT-Button">
+                    <rect key="frame" x="488" y="0.0" width="80" height="40"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                    <state key="normal">
+                        <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
+                    </state>
+                    <connections>
+                        <action selector="keycodeDown:" destination="-1" eventType="touchDown" id="vPf-qF-m13"/>
+                        <action selector="keycodeUp:" destination="-1" eventType="touchUpInside" id="hQh-8f-5jG"/>
+                    </connections>
+                </button>
+                <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="JoystickButton.png" id="ivh-8r-bw3" userLabel="JoystickThumbpad.png">
+                    <rect key="frame" x="20" y="206" width="100" height="100"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                </imageView>
+                <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="JoystickBackground.png" id="OMP-L6-n0A">
+                    <rect key="frame" x="6" y="192" width="128" height="128"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                </imageView>
+                <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="DPad.png" id="FLe-Gr-hny">
+                    <rect key="frame" x="0.0" y="44" width="140" height="140"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                </imageView>
+                <button opaque="NO" multipleTouchEnabled="YES" tag="7" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" id="rp6-Nd-1qa" userLabel="L-Button">
+                    <rect key="frame" x="0.0" y="94" width="46" height="40"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                    <state key="normal">
+                        <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
+                    </state>
+                    <connections>
+                        <action selector="keycodeDown:" destination="-1" eventType="touchDown" id="3Yw-AP-xVf"/>
+                        <action selector="keycodeUp:" destination="-1" eventType="touchUpInside" id="5gI-j0-ANf"/>
+                    </connections>
+                </button>
+                <button opaque="NO" multipleTouchEnabled="YES" tag="8" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" id="CVH-hw-R8F" userLabel="R-Button">
+                    <rect key="frame" x="94" y="94" width="46" height="40"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                    <state key="normal">
+                        <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
+                    </state>
+                    <connections>
+                        <action selector="keycodeDown:" destination="-1" eventType="touchDown" id="2Dv-zb-f8V"/>
+                        <action selector="keycodeUp:" destination="-1" eventType="touchUpInside" id="woi-3Y-IfD"/>
+                    </connections>
+                </button>
+                <button opaque="NO" multipleTouchEnabled="YES" tag="5" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" id="WMD-Fv-ibu" userLabel="U-Button">
+                    <rect key="frame" x="50" y="44" width="40" height="40"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                    <state key="normal">
+                        <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
+                    </state>
+                    <connections>
+                        <action selector="keycodeDown:" destination="-1" eventType="touchDown" id="kT6-yy-ZtY"/>
+                        <action selector="keycodeUp:" destination="-1" eventType="touchUpInside" id="R0R-dl-GAG"/>
+                    </connections>
+                </button>
+                <button opaque="NO" multipleTouchEnabled="YES" tag="6" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" id="s7g-nq-lRU" userLabel="D-Button">
+                    <rect key="frame" x="50" y="144" width="40" height="40"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                    <state key="normal">
+                        <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
+                    </state>
+                    <connections>
+                        <action selector="keycodeDown:" destination="-1" eventType="touchDown" id="Wck-mk-4Py"/>
+                        <action selector="keycodeUp:" destination="-1" eventType="touchUpInside" id="Qox-hz-p3A"/>
+                    </connections>
+                </button>
+                <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="ABXYPad.png" id="xbP-E4-fCE">
+                    <rect key="frame" x="408" y="159" width="160" height="161"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                </imageView>
+                <button opaque="NO" multipleTouchEnabled="YES" tag="3" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" id="iwO-7q-c8H" userLabel="X-Button">
+                    <rect key="frame" x="408" y="210" width="60" height="60"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                    <state key="normal">
+                        <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
+                    </state>
+                    <connections>
+                        <action selector="keycodeDown:" destination="-1" eventType="touchDown" id="IBH-TK-vfV"/>
+                        <action selector="keycodeUp:" destination="-1" eventType="touchUpInside" id="dhr-NT-lcF"/>
+                    </connections>
+                </button>
+                <button opaque="NO" multipleTouchEnabled="YES" tag="2" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" id="7LB-OY-vh3" userLabel="B-Button">
+                    <rect key="frame" x="508" y="210" width="60" height="60"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                    <state key="normal">
+                        <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
+                    </state>
+                    <connections>
+                        <action selector="keycodeDown:" destination="-1" eventType="touchDown" id="dhg-58-L8C"/>
+                        <action selector="keycodeUp:" destination="-1" eventType="touchUpInside" id="zqg-KK-Wxb"/>
+                    </connections>
+                </button>
+                <button opaque="NO" multipleTouchEnabled="YES" tag="4" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" id="hGZ-v7-VA5" userLabel="Y-Button">
+                    <rect key="frame" x="458" y="159" width="60" height="60"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                    <state key="normal">
+                        <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
+                    </state>
+                    <connections>
+                        <action selector="keycodeDown:" destination="-1" eventType="touchDown" id="tyb-H4-TqJ"/>
+                        <action selector="keycodeUp:" destination="-1" eventType="touchUpInside" id="oai-Xb-scl"/>
+                    </connections>
+                </button>
+                <button opaque="NO" multipleTouchEnabled="YES" tag="1" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" id="iKO-3z-Ias" userLabel="A-Button">
+                    <rect key="frame" x="458" y="260" width="60" height="60"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                    <state key="normal">
+                        <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
+                    </state>
+                    <connections>
+                        <action selector="keycodeDown:" destination="-1" eventType="touchDown" id="Ysa-m4-KnN"/>
+                        <action selector="keycodeUp:" destination="-1" eventType="touchUpInside" id="MTf-ND-WNy"/>
+                    </connections>
+                </button>
+                <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="Start.png" id="9K0-cV-7zu">
+                    <rect key="frame" x="244" y="272" width="80" height="40"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                </imageView>
+                <button opaque="NO" multipleTouchEnabled="YES" tag="11" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" id="VtI-tC-PSX" userLabel="S-Button">
+                    <rect key="frame" x="257" y="272" width="54" height="40"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                    <state key="normal">
+                        <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
+                    </state>
+                    <connections>
+                        <action selector="keycodeDown:" destination="-1" eventType="touchDown" id="kwd-jB-5Wn"/>
+                        <action selector="keycodeUp:" destination="-1" eventType="touchUpInside" id="gHx-tA-QlF"/>
+                    </connections>
+                </button>
+            </subviews>
+            <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
+            <simulatedOrientationMetrics key="simulatedOrientationMetrics" orientation="landscapeRight"/>
+            <point key="canvasLocation" x="325" y="329"/>
+        </view>
+    </objects>
+    <resources>
+        <image name="ABXYPad.png" width="120" height="120"/>
+        <image name="DPad.png" width="120" height="120"/>
+        <image name="JoystickBackground.png" width="120" height="120"/>
+        <image name="JoystickButton.png" width="56" height="56"/>
+        <image name="LTrigger.png" width="67" height="44"/>
+        <image name="RTrigger.png" width="67" height="44"/>
+        <image name="Start.png" width="48" height="26"/>
+    </resources>
+    <simulatedMetricsContainer key="defaultSimulatedMetrics">
+        <simulatedStatusBarMetrics key="statusBar"/>
+        <simulatedOrientationMetrics key="orientation"/>
+        <simulatedScreenMetrics key="destination" type="retina4"/>
+    </simulatedMetricsContainer>
+</document>

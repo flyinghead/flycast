@@ -10,4 +10,9 @@
 
 @interface EmulatorView : GLKView
 
+- (void)handleKeyDown:(UIButton*)button;
+- (void)handleKeyUp:(UIButton*)button;
+
+@property (nonatomic, strong) UIViewController *controllerView;
+
 @end
