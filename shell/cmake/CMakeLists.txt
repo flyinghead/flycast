@@ -22,6 +22,8 @@ option(USE_GLES "Use GL ES" OFF)
 option(USE_PULSEAUDIO "Use PulseAudio" OFF)
 option(USE_WEBUI "Use WebUI" ON)
 option(USE_REND "Use some rendering" ON)
+option(USE_EVDEV "Use EVDEV" ON)
+option(USE_JOYSTICK "Use Joystick" ON)
 
 # Flags
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive -fno-rtti -fno-operator-names")
@@ -159,7 +161,7 @@ endif()
 
 if(USE_GLES)
   add_definitions(-DGLES)
-	list(APPEND libs EGL GLESv2)
+  list(APPEND libs EGL GLESv2)
 else()
   list(APPEND libs dl GL)
 endif()
@@ -187,6 +189,14 @@ if(USE_WEBUI)
   add_directory(core/webui)
   add_directory(core/deps/libwebsocket)
   # TODO, deps/ifaddrs/ for Android
+endif()
+
+if(USE_EVDEV)
+  add_definitions(-DUSE_EVDEV)
+endif()
+
+if(USE_JOYSTICK)
+  add_definitions(-DUSE_JOYSTICK)
 endif()
 
 # Executable
