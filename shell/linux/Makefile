@@ -44,6 +44,8 @@ ifeq (,$(platform))
             platform = odroidc1
         else ifneq (,$(findstring ODROID-XU3,$(HARDWARE)))
             platform = odroidxu3
+	else ifneq (,$(findstring ODROID-XU4,$(HARDWARE)))
+            platform = odroidxu3
         else ifneq (,$(findstring ODROIDXU,$(HARDWARE)))
             platform = odroidxu
         else ifneq (,$(findstring ODROIDX2,$(HARDWARE)))
