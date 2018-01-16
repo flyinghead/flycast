@@ -32,6 +32,15 @@ ifeq (,$(platform))
         platform = x86
     else ifeq ($(ARCH), $(filter $(ARCH), x86_64 AMD64))
         platform = x64
+    else ifneq (,$(findstring aarch64,$(ARCH)))
+        HARDWARE = $(shell grep Hardware /proc/cpuinfo)
+        ifneq (,$(findstring Vero4K,$(HARDWARE)))
+            platform = vero4k
+            FEATURES = $(shell grep Features /proc/cpuinfo)
+            ifneq (,$(findstring neon,$(FEATURES)))
+                platform += neon
+            endif
+        endif
     else ifneq (,$(findstring arm,$(ARCH)))
         HARDWARE = $(shell grep Hardware /proc/cpuinfo)
         ifneq (,$(findstring BCM2709,$(HARDWARE)))
@@ -184,6 +193,21 @@ else ifneq (,$(findstring gcwz,$(platform)))
     LIBS += -L../linux-deps/lib -L./enta_viv -lglapi
     GCWZ_PKG = reicast-gcwz.opk
     GCWZ_PKG_FILES = gcwz/default.gcw0.desktop gcwz/icon-32.png
+
+# Vero4K
+else ifneq (,$(findstring vero4k,$(platform)))
+    MFLAGS += -marm -march=armv8-a+crc -mtune=cortex-a53 -mfloat-abi=hard -funsafe-math-optimizations -funroll-loops
+    ASFLAGS += -mfloat-abi=hard
+    ifneq (,$(findstring neon,$(platform)))
+        MFLAGS += -mfpu=neon
+        ASFLAGS += -mfpu=neon
+    endif
+    CFLAGS += -D TARGET_BEAGLE -D TARGET_LINUX_ARMELv7 -DARM_HARDFP -fsingle-precision-constant
+    INCS += -I/opt/vero3/include/
+    LIBS += -L/opt/vero3/lib/ -lEGL -lGLESv2
+    USE_GLES := 1
+    USE_SDL := 1
+
 else
     $(error Unknown platform)
 endif
