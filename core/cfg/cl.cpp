@@ -103,7 +103,7 @@ int showhelp(wchar** arg,int cl)
 {
 	printf("Available commands :\n");
 
-	printf("-config	section:key=value [, ..]: add a virtual config value\n Virtual config values wont be saved to the .cfg file\n unless a different value is writen to em\nNote :\n You can specify many settings in the xx:yy=zz , gg:hh=jj , ...\n format.The spaces betwen the values and ',' are needed.");
+	printf("-config	section:key=value [, ..]: add a virtual config value\n Virtual config values won't be saved to the .cfg file\n unless a different value is written to em\nNote :\n You can specify many settings in the xx:yy=zz , gg:hh=jj , ...\n format.The spaces between the values and ',' are needed.");
 
 	return 0;
 }
@@ -146,7 +146,7 @@ bool ParseCommandLine(int argc,wchar* argv[])
 			}
 			else
 			{
-				printf("wtf %s is suposed to do ?\n",*arg);
+				printf("wtf %s is supposed to do ?\n",*arg);
 			}
 		}
 		arg++;

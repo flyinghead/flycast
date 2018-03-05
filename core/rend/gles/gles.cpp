@@ -853,7 +853,7 @@ bool gl_create_resources()
 
 #ifndef GLES
 	//create vao
-	//This is really not "proper", vaos are suposed to be defined once
+	//This is really not "proper", vaos are supposed to be defined once
 	//i keep updating the same one to make the es2 code work in 3.1 context
 	glGenVertexArrays(1, &gl.vbo.vao);
 #endif

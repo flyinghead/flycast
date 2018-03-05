@@ -389,7 +389,7 @@ void _WriteMem_naomi(u32 Addr, u32 data, u32 sz)
 //n1 bios writes the value -1, meaning it expects the bit 0 to be set
 //.//
 
-u32 reg_dimm_3c;	//IO window ! writen, 0x1E03 some flag ?
+u32 reg_dimm_3c;	//IO window ! written, 0x1E03 some flag ?
 u32 reg_dimm_40;	//parameters
 u32 reg_dimm_44;	//parameters
 u32 reg_dimm_48;	//parameters
