@@ -31,7 +31,12 @@ void context_segfault(rei_host_context_t* reictx, void* segfault_ctx, bool to_se
 
 #if !defined(TARGET_NO_EXCEPTIONS)
 #if HOST_CPU == CPU_ARM
-	#if HOST_OS == OS_LINUX
+	#if defined(__FreeBSD__)
+		bicopy(reictx->pc, MCTX(.__gregs[_REG_PC]), to_segfault);
+
+		for (int i = 0; i < 15; i++)
+			bicopy(reictx->r[i], MCTX(.__gregs[i]), to_segfault);
+	#elif HOST_OS == OS_LINUX
 		bicopy(reictx->pc, MCTX(.arm_pc), to_segfault);
 		u32* r =(u32*) &MCTX(.arm_r0);
 
@@ -47,7 +52,12 @@ void context_segfault(rei_host_context_t* reictx, void* segfault_ctx, bool to_se
 		#error HOST_OS
 	#endif
 #elif HOST_CPU == CPU_X86
-	#if HOST_OS == OS_LINUX
+	#if defined(__FreeBSD__)
+		bicopy(reictx->pc, MCTX(.mc_eip), to_segfault);
+		bicopy(reictx->esp, MCTX(.mc_esp), to_segfault);
+		bicopy(reictx->eax, MCTX(.mc_eax), to_segfault);
+		bicopy(reictx->ecx, MCTX(.mc_ecx), to_segfault);
+	#elif HOST_OS == OS_LINUX
 		bicopy(reictx->pc, MCTX(.gregs[REG_EIP]), to_segfault);
 		bicopy(reictx->esp, MCTX(.gregs[REG_ESP]), to_segfault);
 		bicopy(reictx->eax, MCTX(.gregs[REG_EAX]), to_segfault);
@@ -61,7 +71,15 @@ void context_segfault(rei_host_context_t* reictx, void* segfault_ctx, bool to_se
 		#error HOST_OS
 	#endif
 #elif HOST_CPU == CPU_X64
-	bicopy(reictx->pc, MCTX(.gregs[REG_RIP]), to_segfault);
+	#if defined(__FreeBSD__) || defined(__DragonFly__)
+		bicopy(reictx->pc, MCTX(.mc_rip), to_segfault);
+	#elif defined(__NetBSD__)
+		bicopy(reictx->pc, MCTX(.__gregs[_REG_RIP]), to_segfault);
+	#elif HOST_OS == OS_LINUX
+		bicopy(reictx->pc, MCTX(.gregs[REG_RIP]), to_segfault);
+	#else
+		#error HOST_OS
+	#endif
 #elif HOST_CPU == CPU_MIPS
 	bicopy(reictx->pc, MCTX(.pc), to_segfault);
 #elif HOST_CPU == CPU_GENERIC
