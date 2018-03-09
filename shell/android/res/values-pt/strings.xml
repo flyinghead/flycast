@@ -2,18 +2,20 @@
 
     <string name="menu_settings">Configurações</string>
 
-    <string name="system_path">Diretório da BIOS (local dos arquivos dc_boot.bin/dc_flash.bin)</string>
-    <string name="browser_path">Diretório padrão de jogos</string>
-    <string name="games_path">Diretório dos jogos (local das imagens .gdi, .chd ou .cdi)</string>
+    <string name="system_path">Pasta da BIOS (local dos arquivos dc_boot.bin/dc_flash.bin)</string>
+    <string name="browser_path">Pasta padrão dos jogos</string>
+    <string name="games_path">Pasta dos jogos (local das imagens .gdi, .chd ou .cdi)</string>
     <string name="button_theme">Tema dos botões na tela</string>
+    <string name="bios_selection">Selecione a fonte da BIOS</string>
 	
-    <string name="game_path">Diretório padrão de jogos</string>	
-    <string name="config_home">Por favor configure um diretório principal.</string>
+    <string name="game_path">Pasta padrão dos jogos</string>	
+    <string name="config_home">Por favor configure a pasta padrão.</string>
     <string name="config_data">Por favor mova a BIOS para %1$s/data/</string>
-    <string name="config_game">Por favor configure o diretório dos jogos.</string>
+    <string name="config_game">Por favor configure a pasta dos jogos.</string>
     <string name="unsupported">Versão do kernel não suportada!</string>
     <string name="locate">Localizar</string>
     <string name="browse">Procurar</string>	
+    <string name="gdrive">Google Drive</string>
     
     <string name="boot_bios">Iniciar Bios do Dreamcast</string>
     <string name="missing_bios_title">Faltando BIOS do Dreamcast</string>	
@@ -24,7 +26,7 @@
     <string name="data_folder">A pasta de dados atual está selecionada.</string>
     
     <string name="folder_bios">Iniciar BIOS</string>
-    <string name="folder_select">Selecionar diretório atual</string>
+    <string name="folder_select">Selecionar pasta atual</string>
 
     <string name="optimization_opts">Opções de Otimização e Depuração</string>
 	<string name="experimental_opts">Experimental (Pode causar problemas)</string>
@@ -36,11 +38,12 @@
     <string name="select_unstable">Otimizações instáveis</string>
     <string name="select_cable">Tipo de cabo</string>	
     <string name="select_region">Região DC</string>
-    <string name="select_broadcast">Transmissão</string>	
+    <string name="select_broadcast">Região</string>	
     <string name="select_limitfps">Limitar FPS</string>
     <string name="select_mipmaps">Usar Mipmaps (correção para o GPU SGX540)</string>
     <string name="select_stretch">Modo Widescreen</string>
     <string name="set_frameskip">Pulo de Frames</string>
+    <string name="select_syncrender">Renderização simultânea</string>
     <string name="select_render">Renderização PVR (não faz nada por enquanto)</string>
     <string name="select_fps">Mostrar FPS na tela</string>
     <string name="select_software">Forçar Renderização por Software</string>
@@ -89,6 +92,7 @@
 
     <string name="about_text">reicast é um emulador multi-plataforma de Dreamcast</string>
     <string name="revision_text">Versão: %1$s [%2$s]</string>
+    <string name="git_broken">API do Github não disponível</string>
     
     <string-array name="controllers">
     <item>Controle A</item>
@@ -97,6 +101,8 @@
     <item>Controle D</item>
     </string-array>
     
+    <string name="drawer_open">Menu Aberto</string>
+	<string name="drawer_shut">Menu Fechado</string>	
     <string name="browser">Selecionar Jogos</string>
     <string name="settings">Configurações</string>
     <string name="paths">Diretórios</string>
@@ -105,15 +111,13 @@
     <string name="rateme">Avaliar</string>
     <string name="messages">Enviar Logs</string>
     <string name="cloud">VMU na Nuvem</string>	
-    
-    <string name="textOn">LIG</string>
-    <string name="textOff">DESL</string>
-    
+	
     <string name="cancel">Cancelar</string>
-    <string name="dismiss">Destituir</string>	
+    <string name="dismiss">Dispensar</string>	
     <string name="manual">Manual</string>
     <string name="options">Opções</string>	
-
+    <string name="report">Relatório</string>
+	
     <string name="cloudInfos">Com esta ferramenta você pode fazer o upload e download de seu VMUs para o Dropbox, para sincronizá-los com todos os seus dispositivos!</string>
     <string name="uploadWarning">ATENÇÃO: Você está prestes a fazer upload de seu VMUs para o Dropbox, por favor, note que este irá SUBSTITUIR o seu último carregamento!!</string>
     <string name="downloadWarning">ATENÇÃO: Você está prestes a fazer download do VMUs do Dropbox, por favor, note que este irá SUBSTITUIR o atual VMUs !! Uma cópia de backup será 
@@ -142,6 +146,4 @@
     <string name="popup_button_frame_limit">Limitar frames</string>
     <string name="popup_button_audio">Som do emulador</string>
     <string name="popup_button_turbo">Modo Turbo</string>
-    
-    <string name="git_broken">GitHub Nativo está indisponível!</string>
 </resources>
