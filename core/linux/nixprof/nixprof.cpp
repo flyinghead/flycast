@@ -302,7 +302,7 @@ static void* profiler_main(void *ptr)
 
 			if (!(tick_count % 10000))
 			{
-				printf("Profiler: %d ticks, flusing ..\n", tick_count);
+				printf("Profiler: %d ticks, flushing ..\n", tick_count);
 				fflush(prof_out);
 			}
 		} while (prof_run);

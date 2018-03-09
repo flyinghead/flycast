@@ -61,7 +61,7 @@ void emit_WriteCodeCache()
 	{
 		fwrite(CodeCache,LastAddr,1,f);
 		fclose(f);
-		printf("Writen!\n");
+		printf("Written!\n");
 	}
 
 	bm_WriteBlockMap(pt2+".map");

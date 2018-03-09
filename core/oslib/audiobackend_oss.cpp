@@ -16,7 +16,7 @@ static void oss_init()
 	}
 	else
 	{
-		printf("sound enabled, dsp openned for write\n");
+		printf("sound enabled, dsp opened for write\n");
 		int tmp=44100;
 		int err_ret;
 		err_ret=ioctl(oss_audio_fd,SNDCTL_DSP_SPEED,&tmp);
