@@ -219,6 +219,7 @@ static void *ThreadHandler(void *UserData)
 
   // Run nullDC emulator
   dc_init(Args[2]? 3:1,Args);
+    return 0;
 }
 
 //
