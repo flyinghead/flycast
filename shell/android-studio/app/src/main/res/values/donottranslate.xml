@@ -1,0 +1,68 @@
+<resources>
+
+    <string name="app_name">reicast</string>
+
+    <string name="app_site">Homepage: http://reicast.com</string>
+
+    <string name="error_kernel"></string>
+
+    <string-array name="depth">
+        <item>16</item>
+        <item>24</item>
+        <item>32</item>        
+    </string-array>
+    
+    <string-array name="flash">
+        <item>bin</item>
+    </string-array>
+
+    <string-array name="cable">
+        <item>HDMI</item>
+        <item>Component</item>
+        <item>VGA</item>
+    </string-array>
+    
+    <string-array name="themes">
+        <item>png</item>
+        <item>jpg</item>
+        <item>jpeg</item>
+    </string-array>
+    
+    <string-array name="images">
+        <item>cdi</item>
+        <item>chd</item>
+        <item>gdi</item>
+    </string-array>
+
+   	<string-array name="region">
+        <item>NTSC-J</item>
+        <item>NTSC-U/PAL-M/PAL-N</item>
+        <item>PAL-E</item>
+        <item>reicast</item>
+    </string-array>
+
+    <string-array name="bios">
+        <item>NTSC-J</item>
+        <item>NTSC-U/PAL-M/PAL-N</item>
+        <item>PAL-E</item>
+        <item>reicast</item>
+        <item>Katana</item>
+    </string-array>
+ 
+    <string-array name="broadcast">
+        <item>0 - NTSC-J</item>
+        <item>4 - NTSC-U</item>
+        <item>6 - PAL-M</item>
+        <item>7 - PAL-N</item>
+        <item>9 - PAL-E</item>
+    </string-array>
+
+    <string-array name="bioscode">
+        <item>J</item>
+        <item>E</item>
+        <item>U</item>
+        <item>R</item>
+        <item>K</item>
+    </string-array>
+
+</resources>
