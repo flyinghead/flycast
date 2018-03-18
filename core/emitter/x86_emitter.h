@@ -228,6 +228,18 @@ struct /*__declspec(dllexport)*/  x86_ptr_imm
 	{
 		this->ptr=ptr;
 	}
+
+	template<typename Rv, typename ...Args>
+	x86_ptr_imm(Rv(* ptr)(Args...))
+	{
+		this->ptr= reinterpret_cast<void*>(ptr);
+	}
+
+    template<typename Rv, typename ...Args>
+    x86_ptr_imm(Rv(DYNACALL * ptr)(Args...))
+    {
+        this->ptr= reinterpret_cast<void*>(ptr);
+    }
 };
 
 enum x86_mrm_mod

@@ -1,0 +1,151 @@
+<resources
+  xmlns:tools="http://schemas.android.com/tools"
+  tools:ignore="MissingTranslation" >
+    
+    <string name="menu_settings">Settings</string>
+    
+    <string name="system_path">System Path (location of the data folder with dc_boot.bin/dc_flash.bin inside)</string>
+    <string name="browser_path">Default System Path</string>
+    <string name="games_path">Storage Path (location of *.gdi, *.chd or *.cdi images)</string>
+    <string name="button_theme">Onscreen Button Theme</string>
+    <string name="bios_selection">Select a BIOS source</string>
+
+    <string name="game_path">Default Game Storage</string>
+    <string name="config_home">Please configure a home directory.</string>
+    <string name="config_data">Please move BIOS to %1$s/data/</string>
+    <string name="config_game">Please configure a game directory.</string>
+    <string name="unsupported">Unsupported kernel version!</string>
+    <string name="locate">Locate</string>
+    <string name="browse">Browse</string>
+    <string name="gdrive">Google Drive</string>
+    
+    <string name="boot_bios">Boot Dreamcast BIOS</string>
+    <string name="missing_bios_title">Missing Dreamcast BIOS</string>
+    <string name="missing_bios">The Dreamcast BIOS is missing. A dump of the Dreamcast BIOS is required for this emulator to work. Make sure the BIOS file is named "dc_boot.bin" and is in %1$s/data/dc_boot.bin</string>
+    <string name="missing_flash_title">Missing Dreamcast Flash ROM</string>
+    <string name="missing_flash">The Dreamcast Flash is missing. A dump of the Dreamcast Flash is required for this emulator to work. Make sure the Flash file is named "dc_flash.bin" and is in %1$s/data/dc_flash.bin</string>
+    <string name="require_bios">You have to provide a Dreamcast BIOS.</string>
+    <string name="data_folder">The current data folder is assumed.</string>
+    
+    <string name="folder_bios">Boot BIOS</string>
+    <string name="folder_select">Select current folder</string>
+    
+    <string name="optimization_opts">Optimization and Debugging Options</string>
+    <string name="experimental_opts">Experimental (May cause widespread panic)</string>
+    <string name="select_reios">Use reios BIOS</string>
+    <string name="select_bios">BIOS Region (dc_flash[X].bin)</string>
+    <string name="select_details">Enable Game Details</string>
+    <string name="select_native">Native Gamepad Mode [No OSD]</string>
+    <string name="select_dynarec">Dynarec Options</string>
+    <string name="select_unstable">Unstable Optimisations</string>
+    <string name="select_cable">Cable Type</string>
+    <string name="select_region">DC Region</string>
+    <string name="select_broadcast">Broadcast</string>
+    <string name="select_limitfps">Limit FPS</string>
+    <string name="select_mipmaps">Use Mipmaps (fixes SGX540)</string>
+    <string name="select_stretch">Widescreen Mode</string>
+    <string name="set_frameskip">Frameskip Value</string>
+    <string name="select_syncrender">Synchronous Rendering</string>
+    <string name="select_render">PVR Rendering (does nothing for now)</string>
+    <string name="select_fps">Show On-Screen FPS</string>
+    <string name="select_software">Force Software Rendering</string>
+    <string name="select_sound">Disable Emulator Sound</string>
+    <string name="select_depth">Rendering Depth</string>
+    <string name="select_force_gpu">Force v6 GPU Config</string>
+    <string name="default_disk">Default Disk</string>
+    
+    <string name="games_listing">Game List</string>
+    
+    <string name="game_details">Game Info - %1$s</string>
+    <string name="info_unavailable">Game Info Unavailable</string>
+    <string name="disk_loading">Loading Disk Info</string>
+
+    <string name="report_issue">Previous Crash Detected</string>
+    <string name="bios_config">Configuration failed!</string>
+    
+    <string name="customize_touch_controls">Customize Touch Controls</string>
+    <string name="launch_editor">Launch Editor</string>
+    <string name="touch_vibration">Haptic Feedback</string>
+    <string name="vibration_duration">Duration of Haptic Feedback</string>
+    <string name="controller_a">Controller A</string>
+    <string name="controller_b">Controller B</string>
+    <string name="controller_c">Controller C</string>
+    <string name="controller_d">Controller D</string>
+    <string name="controller_not_connected">Controller Not Connected</string>
+    <string name="controller_none_selected">No Controller Selected</string>
+    <string name="select">Select</string>
+    <string name="remove">Remove</string>
+    <string name="select_controller_title">Select Controller</string>
+    <string name="select_controller_message">Press any button on the controller %1$s to assign to port</string>
+    <string name="controller_already_in_use">This controller is already in use!</string>
+    <string name="rstick_mode">Right Stick: On - L/R, Off - A/B</string>
+    <string name="joystick_layout">Use Joystick For D-Pad Input</string>
+    <string name="modified_layout">Enable Custom Key Layout</string>
+    <string name="controller_compat">Enable Compatibility Mode</string>
+    <string name="controller_unavailable">Gamepad IME detected!\nPlease disable native interface</string>
+    <string name="mic_in_port_2">Microphone plugged into port 2</string>
+    
+    <string name="customize_physical_controls">Customize Physical Controls</string>
+    <string name="map_keycode_title">Modify Controller</string>
+    <string name="map_keycode_message">Press the new controller button for %1$s</string>
+    
+    <string name="moga_pro_connect">MOGA Pro connected!</string>
+    <string name="moga_connect">MOGA connected!</string>
+    
+    <string name="about_text">reicast is a multi-platform Dreamcast emulator.</string>
+    <string name="revision_text">Version: %1$s [%2$s]</string>
+    <string name="git_broken">Github API not available</string>
+    
+    <string-array name="controllers">
+        <item>Controller A</item>
+        <item>Controller B</item>
+        <item>Controller C</item>
+        <item>Controller D</item>
+    </string-array>
+    
+    <string name="drawer_open">Menu Opened</string>
+	<string name="drawer_shut">Menu Closed</string>	
+    <string name="browser">Browser</string>
+    <string name="settings">Settings</string>
+    <string name="paths">Paths</string>
+    <string name="input">Input</string>
+    <string name="about">About</string>
+    <string name="rateme">Rate Me</string>
+    <string name="messages">Send Logs</string>
+    <string name="cloud">Cloud VMU</string>
+
+    <string name="cancel">Cancel</string>
+    <string name="dismiss">Dismiss</string>
+    <string name="manual">Manual</string>
+    <string name="options">Options</string>
+    <string name="report">Report</string>
+    
+    <string name="cloudInfos">With this tool you can upload/download your VMUs to/from Dropbox, in order to sync them with all your devices!</string>
+    <string name="uploadWarning">ATTENTION: You are about to upload your VMUs to Dropbox, please notice that this will OVERWRITE your last upload!!</string>
+    <string name="downloadWarning">ATTENTION: You are about to download your VMUs from Dropbox, please notice that this will OVERWRITE your currently VMUs!! By the way a backup copy will 
+        be created in VmuBackups folder!</string>
+    <string name="uploadVMU">Upload VMU</string>
+    <string name="downloadVMU">Download VMU</string>
+    
+    <string name="platform">Copying logcat content to clipboard\nPlease paste in the issue report</string>
+    <string name="log_saved">Log saved to \"Files Dir\" path</string>
+    
+    <!-- Onscreen Menu -->
+    <string name="popup_button_back">Back</string>
+    <string name="popup_button_disk">Disk Swap</string>
+    <string name="popup_button_vmu_swap">VMU Swap</string>
+    <string name="popup_button_options">Config Menu</string>
+    <string name="popup_button_debugging">Debug Menu</string>
+    <string name="popup_button_screenshot">Screenshot</string>
+    <string name="popup_button_exit">Quit Emu</string>
+    <string name="popup_button_clear_cache">Clear Cache</string>
+    <string name="popup_button_profiler_one">Profiler 1</string>
+    <string name="popup_button_profiler_two">Profiler 2</string>
+    <string name="popup_button_print_stats">Print Stats</string>
+    <string name="popup_button_widescreen">Widescreen</string>
+    <string name="popup_button_frames_down">Frameskip -</string>
+    <string name="popup_button_frames_up">Frameskip +</string>
+    <string name="popup_button_frame_limit">Limit Framerate</string>
+    <string name="popup_button_audio">Emu Sound</string>
+    <string name="popup_button_turbo">Turbo</string>
+</resources>

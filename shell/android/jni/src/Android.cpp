@@ -18,7 +18,7 @@
 #include "hw/maple/maple_if.h"
 #include "oslib/audiobackend_android.h"
 
-#include "util.h"
+// #include "util.h"
 
 extern "C"
 {

@@ -96,8 +96,10 @@ ngen_mainloop:
 	mov ecx,0xA0000000
 	mov dword ptr cycle_counter, 448 #SH4_TIMESLICE
 
-	mov dword ptr loop_no_update,offset no_update
-	mov dword ptr intc_sched,offset intc_sched_offs
+    lea eax, no_update
+	mov dword ptr loop_no_update, eax
+	lea eax, intc_sched_offs
+	mov dword ptr intc_sched, eax
 	
 	mov eax,0
 		

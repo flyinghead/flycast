@@ -1,0 +1,44 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 25
+    buildToolsVersion "27.0.3"
+
+    defaultConfig {
+        applicationId "com.reicast.emulator"
+        minSdkVersion 9
+        targetSdkVersion 21
+
+        ndk {
+            moduleName "dc"
+            abiFilters 'armeabi-v7a'
+        }
+    }
+
+    useLibrary 'org.apache.http.legacy'
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+        }
+    }
+    externalNativeBuild {
+        ndkBuild {
+            path 'src/main/jni/Android.mk'
+        }
+    }
+}
+
+dependencies {
+    compile 'com.android.support:support-v4:25.3.1'
+    compile files('libs/bcprov-jdk16-146.jar')
+    compile files('libs/com.bda.controller.jar')
+    compile files('libs/commons-io-2.4.jar')
+    compile files('libs/commons-lang3-3.1.jar')
+    compile files('libs/commons-logging-1.1.1.jar')
+    compile files('libs/dropbox-android-sdk-1.6.1.jar')
+    compile files('libs/image-uniload.jar')
+    compile files('libs/json_simple-1.1.jar')
+    compile files('libs/ouya-sdk.jar')
+}

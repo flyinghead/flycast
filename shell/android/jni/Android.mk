@@ -61,7 +61,7 @@ ifeq ($(TARGET_ARCH_ABI),x86)
 endif
 
 LOCAL_CPP_FEATURES := 
-LOCAL_SHARED_LIBRARIES:= libcutils libutils
+# LOCAL_SHARED_LIBRARIES:= libcutils libutils
 LOCAL_PRELINK_MODULE  := false
 
 LOCAL_MODULE	:= dc
@@ -76,6 +76,7 @@ ifeq ($(TARGET_ARCH),mips)
   LOCAL_LDFLAGS += -Wl,--gc-sections
 else
   LOCAL_LDFLAGS += -Wl,--gc-sections,--icf=safe
+  LOCAL_LDLIBS += -Wl,--no-warn-shared-textrel
 endif
 
 #
