@@ -67,9 +67,6 @@
     <content url="file://$MODULE_DIR$/../../../core/deps/zlib">
       <sourceFolder url="file://$MODULE_DIR$/../../../core/deps/zlib" isTestSource="false" />
     </content>
-    <content url="file://$MODULE_DIR$/../../../core/emitter">
-      <sourceFolder url="file://$MODULE_DIR$/../../../core/emitter" isTestSource="false" />
-    </content>
     <content url="file://$MODULE_DIR$/../../../core/hw/aica">
       <sourceFolder url="file://$MODULE_DIR$/../../../core/hw/aica" isTestSource="false" />
     </content>
@@ -123,9 +120,6 @@
     </content>
     <content url="file://$MODULE_DIR$/../../../core/rec-ARM">
       <sourceFolder url="file://$MODULE_DIR$/../../../core/rec-ARM" isTestSource="false" />
-    </content>
-    <content url="file://$MODULE_DIR$/../../../core/rec-x86">
-      <sourceFolder url="file://$MODULE_DIR$/../../../core/rec-x86" isTestSource="false" />
     </content>
     <content url="file://$MODULE_DIR$/../../../core/reios">
       <sourceFolder url="file://$MODULE_DIR$/../../../core/reios" isTestSource="false" />
@@ -206,31 +200,16 @@
       <sourceFolder url="file://$MODULE_DIR$/src/androidTest/shaders" isTestSource="true" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/assets" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/blame" />
-      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/build-info" />
-      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/builds" />
-      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/check-manifest" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/classes" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/incremental" />
-      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/incremental-classes" />
-      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/incremental-runtime-classes" />
-      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/incremental-verifier" />
-      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/instant-run-resources" />
-      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/instant-run-support" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/javaPrecompile" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/jniLibs" />
-      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/lint" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/manifests" />
-      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/ndk" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/ndkBuild" />
-      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/prebuild" />
-      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/reload-dex" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/res" />
-      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/rs" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/shaders" />
-      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/split-apk" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/splits-support" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/symbols" />
-      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/tmp" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/transforms" />
       <excludeFolder url="file://$MODULE_DIR$/build/outputs" />
       <excludeFolder url="file://$MODULE_DIR$/build/tmp" />
