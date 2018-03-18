@@ -50,9 +50,9 @@ include $(LOCAL_PATH)/../../../../../core/core.mk
 LOCAL_SRC_FILES := $(RZDCY_FILES)
 LOCAL_SRC_FILES += $(wildcard $(LOCAL_PATH)/jni/src/Android.cpp)
 LOCAL_SRC_FILES += $(wildcard $(LOCAL_PATH)/jni/src/utils.cpp)
-LOCAL_CFLAGS  := $(RZDCY_CFLAGS) -fvisibility=hidden -ffunction-sections -fdata-sections
-LOCAL_CXXFLAGS  := $(RZDCY_CXXFLAGS) -fvisibility=hidden -fvisibility-inlines-hidden -ffunction-sections -fdata-sections
-LOCAL_CPPFLAGS  := $(RZDCY_CXXFLAGS) -fvisibility=hidden -fvisibility-inlines-hidden -ffunction-sections -fdata-sections
+LOCAL_CFLAGS  := $(RZDCY_CFLAGS) -fPIC -fvisibility=hidden -ffunction-sections -fdata-sections
+LOCAL_CXXFLAGS  := $(RZDCY_CXXFLAGS) -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -ffunction-sections -fdata-sections
+LOCAL_CPPFLAGS  := $(RZDCY_CXXFLAGS) -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -ffunction-sections -fdata-sections
 
 # LOCAL_CFLAGS += -std=c++11
 LOCAL_CXXFLAGS += -std=c++11
@@ -69,7 +69,7 @@ LOCAL_PRELINK_MODULE  := false
 
 LOCAL_MODULE	:= dc
 LOCAL_DISABLE_FORMAT_STRING_CHECKS=true
-LOCAL_ASFLAGS := -fvisibility=hidden
+LOCAL_ASFLAGS := -fPIC -fvisibility=hidden
 LOCAL_LDLIBS	:= -llog -lGLESv2 -lEGL -lz 
 #-Wl,-Map,./res/raw/syms.mp3
 LOCAL_ARM_MODE	:= arm

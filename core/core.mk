@@ -73,7 +73,7 @@ RZDCY_FILES += $(foreach dir,$(addprefix $(RZDCY_SRC_DIR)/,$(RZDCY_MODULES)),$(w
 	
 ifdef FOR_PANDORA
 RZDCY_CFLAGS	:= \
-	$(CFLAGS) -c -O3 -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps \
+	$(CFLAGS) -c -O0 -g -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps \
 	-DRELEASE -DPANDORA\
 	-march=armv7-a -mtune=cortex-a8 -mfpu=neon -mfloat-abi=softfp \
 	-frename-registers -fsingle-precision-constant -ffast-math \
@@ -82,7 +82,7 @@ RZDCY_CFLAGS	:= \
 	RZDCY_CFLAGS += -DTARGET_LINUX_ARMELv7
 else
 RZDCY_CFLAGS	:= \
-	$(CFLAGS) -c -O3 -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps \
+	$(CFLAGS) -c -O0 -g -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps \
 	-D_ANDROID -DRELEASE\
 	-frename-registers -fsingle-precision-constant -ffast-math \
 	-ftree-vectorize -fomit-frame-pointer
