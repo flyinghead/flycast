@@ -151,6 +151,7 @@ Devices tested by the reicast team:
 * Nvidia Shield tablet
 * Samsung Galaxy Note 4
 * LG Nexus 5
+* LG Nexus 5X
 * Asus Nexus 7 (2013)
 
 Team
