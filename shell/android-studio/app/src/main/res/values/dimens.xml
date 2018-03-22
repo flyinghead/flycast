@@ -6,10 +6,9 @@
 
     <integer name="num_cols">1</integer>
 
-    <dimen name="activity_horizontal_margin">16dp</dimen>
-    <dimen name="activity_vertical_margin">16dp</dimen>
-    <dimen name="nav_header_vertical_spacing">16dp</dimen>
-    <dimen name="nav_header_height">80dp</dimen>
+    <dimen name="nav_header_vertical_spacing">8dp</dimen>
+    <dimen name="nav_header_padding">16dp</dimen>
+    <dimen name="nav_header_height">176dp</dimen>
 
     <dimen name="primary_text_material">16sp</dimen>
     <dimen name="secondary_text_material">14sp</dimen>
