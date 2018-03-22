@@ -14,6 +14,8 @@ before_install:
 - GIT_HASH=`git log --pretty=format:'%h' -n 1`
 - GIT_BUILD=`git describe --all`-$GIT_HASH
 install:
+- sudo apt-get -qq update
+- sudo apt-get install ant
 - wget http://dl.google.com/android/ndk/android-ndk-r10d-linux-x86_64.bin
 - chmod +x android-ndk-r10d-linux-x86_64.bin
 - ./android-ndk-r10d-linux-x86_64.bin -y | grep -v Extracting
