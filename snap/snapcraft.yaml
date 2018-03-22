@@ -1,0 +1,29 @@
+name: reicast
+version: "r7-svn"
+summary: Reicast
+description: |
+  Reicast is a Sega Dreamcas temulator. It is designed to run dreamcast games
+  and homebrew in x86, x64 and aarch64 based platforms.
+grade: devel
+icon: shell/linux/reicast.png
+confinement: devmode
+
+apps:
+  reicast:
+    command: reicast
+    plugs: [home, alsa, opengl, x11]
+
+parts:
+  reicast:
+    source: .
+    source-subdir: shell/linux
+    plugin: make
+    make-parameters: [ PREFIX= ]
+    build-packages:
+      - build-essential
+      - libasound2
+      - libegl1-mesa-dev
+      - libgles2-mesa-dev
+      - libasound2-dev
+      - mesa-common-dev
+      - libgl1-mesa-dev
