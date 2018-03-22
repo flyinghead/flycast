@@ -8,6 +8,9 @@ android {
         applicationId "com.reicast.emulator"
         minSdkVersion 9
         targetSdkVersion 21
+        versionCode="7"
+        versionName="r7"
+        vectorDrawables.useSupportLibrary = true
 
         ndk {
             moduleName "dc"
