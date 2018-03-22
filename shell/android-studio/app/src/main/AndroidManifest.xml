@@ -43,6 +43,7 @@
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
         android:theme="@style/AppTheme"
+        android:roundIcon="@drawable/ic_launcher"
         android:banner="@drawable/ic_banner"
         android:logo="@drawable/ic_banner"
         android:hardwareAccelerated="true"
@@ -59,7 +60,6 @@
             android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
                 <category android:name="tv.ouya.intent.category.GAME" />
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
@@ -120,9 +120,7 @@
             android:launchMode="singleTask" >
             <intent-filter>
                 <data android:scheme="db-7d7tw1t57sbzrj5" />
-
                 <action android:name="android.intent.action.VIEW" />
-
                 <category android:name="android.intent.category.BROWSABLE" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>

@@ -20,14 +20,14 @@
         android:layout_height="match_parent"
         android:paddingTop="@dimen/nav_header_vertical_spacing"
         android:text="@string/app_name"
-        android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-        android:textColor="@android:color/black" />
+        android:textColor="@color/ice_dark"
+        android:textAppearance="@style/TextAppearance.AppCompat.Body1" />
 
     <TextView
         android:id="@+id/textView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/app_site"
-        android:textColor="@android:color/black" />
+        android:textColor="@color/ice_dark" />
 
 </LinearLayout>
