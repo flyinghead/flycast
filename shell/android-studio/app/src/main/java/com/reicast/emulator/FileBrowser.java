@@ -381,7 +381,7 @@ public class FileBrowser extends Fragment {
 
 	private void createListItem(LinearLayout list, final File game, final int index, final boolean isGame) {				
 		final View childview = parentActivity.getLayoutInflater().inflate(
-				R.layout.app_list_item, null, false);
+				R.layout.browser_fragment_item, null, false);
 		
 		XMLParser xmlParser = new XMLParser(game, index, mPrefs);
 		xmlParser.setViewParent(parentActivity, childview, mCallback);
@@ -457,7 +457,7 @@ public class FileBrowser extends Fragment {
 			if (file != null && !file.isDirectory() && !file.getAbsolutePath().equals("/data"))
 				continue;
 			final View childview = parentActivity.getLayoutInflater().inflate(
-					R.layout.app_list_item, null, false);
+					R.layout.browser_fragment_item, null, false);
 
 			if (file == null) {
 				((TextView) childview.findViewById(R.id.item_name)).setText(R.string.folder_select);
