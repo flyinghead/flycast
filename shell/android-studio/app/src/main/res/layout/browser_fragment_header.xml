@@ -30,7 +30,7 @@
             android:layout_marginRight="2dp"
             android:layout_marginTop="2dp"
             android:scaleType="fitCenter"
-            app:srcCompat="@drawable/gdi" />
+            app:srcCompat="@drawable/ic_settings" />
 
         <TextView
             android:id="@+id/item_name"
