@@ -368,7 +368,7 @@ public class FileBrowser extends Fragment {
 		}
 
 		final View headerView = parentActivity.getLayoutInflater().inflate(
-				R.layout.head_list_item, null, false);
+				R.layout.browser_fragment_header, null, false);
 		((ImageView) headerView.findViewById(R.id.item_icon))
 				.setImageResource(R.drawable.open_folder);
 		((TextView) headerView.findViewById(R.id.item_name))
@@ -466,9 +466,9 @@ public class FileBrowser extends Fragment {
 			else
 				((TextView) childview.findViewById(R.id.item_name)).setText(file.getName());
 
-			((ImageView) childview.findViewById(R.id.item_icon))
-					.setImageResource(file == null ? R.drawable.config : file.isDirectory()
-							? R.drawable.open_folder : R.drawable.disk_unknown);
+			((ImageView) childview.findViewById(R.id.item_icon)).setImageResource(file == null
+					? R.drawable.ic_settings: file.isDirectory()
+					? R.drawable.ic_folder_black_24dp : R.drawable.disk_unknown);;
 
 			childview.setTag(file);
 
