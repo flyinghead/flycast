@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical" >
@@ -153,7 +154,7 @@
                         android:id="@+id/a_button_icon"
                         android:layout_width="48dp"
                         android:layout_height="48dp"
-                        android:src="@drawable/input" />
+                        app:srcCompat="@drawable/input" />
 
                     <TextView
                         android:id="@+id/a_button_key"
@@ -204,7 +205,7 @@
                         android:id="@+id/b_button_icon"
                         android:layout_width="48dp"
                         android:layout_height="48dp"
-                        android:src="@drawable/input" />
+                        app:srcCompat="@drawable/input" />
 
                     <TextView
                         android:id="@+id/b_button_key"
@@ -255,7 +256,7 @@
                         android:id="@+id/x_button_icon"
                         android:layout_width="48dp"
                         android:layout_height="48dp"
-                        android:src="@drawable/input" />
+                        app:srcCompat="@drawable/input" />
 
                     <TextView
                         android:id="@+id/x_button_key"
@@ -306,7 +307,7 @@
                         android:id="@+id/y_button_icon"
                         android:layout_width="48dp"
                         android:layout_height="48dp"
-                        android:src="@drawable/input" />
+                        app:srcCompat="@drawable/input" />
 
                     <TextView
                         android:id="@+id/y_button_key"
@@ -357,7 +358,7 @@
                         android:id="@+id/l_button_icon"
                         android:layout_width="48dp"
                         android:layout_height="48dp"
-                        android:src="@drawable/input" />
+                        app:srcCompat="@drawable/input" />
 
                     <TextView
                         android:id="@+id/l_button_key"
@@ -408,7 +409,7 @@
                         android:id="@+id/r_button_icon"
                         android:layout_width="48dp"
                         android:layout_height="48dp"
-                        android:src="@drawable/input" />
+                        app:srcCompat="@drawable/input" />
 
                     <TextView
                         android:id="@+id/r_button_key"
@@ -611,7 +612,7 @@
                         android:id="@+id/start_button_icon"
                         android:layout_width="48dp"
                         android:layout_height="48dp"
-                        android:src="@drawable/input" />
+                        app:srcCompat="@drawable/input" />
 
                     <TextView
                         android:id="@+id/start_button_key"
@@ -662,7 +663,7 @@
                         android:id="@+id/select_button_icon"
                         android:layout_width="48dp"
                         android:layout_height="48dp"
-                        android:src="@drawable/input" />
+                        app:srcCompat="@drawable/input" />
 
                     <TextView
                         android:id="@+id/select_button_key"
