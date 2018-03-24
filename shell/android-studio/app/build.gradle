@@ -53,6 +53,9 @@ afterEvaluate {
 
 dependencies {
     compile 'com.android.support:support-v4:25.3.1'
+    compile 'com.android.support:appcompat-v7:25.3.1'
+    compile 'com.android.support:design:25.3.1'
+    compile 'com.android.support.constraint:constraint-layout:1.1.0-beta6'
     compile 'org.bouncycastle:bcprov-jdk16:1.46'
     compile 'commons-io:commons-io:2.6'
     compile 'org.apache.commons:commons-lang3:3.7'
