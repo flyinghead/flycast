@@ -3,26 +3,23 @@ package com.reicast.emulator.periph;
 
 /******************************************************************************/
 
-import java.util.Arrays;
-
 import android.app.Activity;
-import android.app.Instrumentation;
-import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Handler;
-import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
-import com.bda.controller.KeyEvent;
 import com.bda.controller.Controller;
 import com.bda.controller.ControllerListener;
+import com.bda.controller.KeyEvent;
 import com.bda.controller.MotionEvent;
 import com.bda.controller.StateEvent;
 import com.reicast.emulator.GL2JNIActivity;
 import com.reicast.emulator.GL2JNINative;
 import com.reicast.emulator.R;
+
+import java.util.Arrays;
 
 /******************************************************************************/
 

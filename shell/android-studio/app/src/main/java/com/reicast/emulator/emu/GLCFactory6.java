@@ -1,18 +1,18 @@
 package com.reicast.emulator.emu;
 
-import java.util.Locale;
-
-import javax.microedition.khronos.egl.EGL10;
-import javax.microedition.khronos.egl.EGLConfig;
-import javax.microedition.khronos.egl.EGLContext;
-import javax.microedition.khronos.egl.EGLDisplay;
-
 import android.annotation.TargetApi;
 import android.opengl.EGL14;
 import android.opengl.EGLExt;
 import android.opengl.GLSurfaceView;
 import android.os.Build;
 import android.util.Log;
+
+import java.util.Locale;
+
+import javax.microedition.khronos.egl.EGL10;
+import javax.microedition.khronos.egl.EGLConfig;
+import javax.microedition.khronos.egl.EGLContext;
+import javax.microedition.khronos.egl.EGLDisplay;
 
 @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
 public class GLCFactory6 {

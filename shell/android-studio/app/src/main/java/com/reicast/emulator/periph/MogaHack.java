@@ -20,8 +20,6 @@
  */
 package com.reicast.emulator.periph;
 
-import java.util.List;
-
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -32,6 +30,8 @@ import android.util.Log;
 
 import com.bda.controller.Controller;
 import com.bda.controller.IControllerService;
+
+import java.util.List;
 
 /**
  * Temporary hack for crash in MOGA library on Lollipop. This hack can be removed once MOGA fixes

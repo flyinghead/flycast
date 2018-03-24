@@ -1,9 +1,5 @@
 package com.reicast.emulator;
 
-import java.io.File;
-import java.lang.Thread.UncaughtExceptionHandler;
-import java.util.List;
-
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -43,6 +39,10 @@ import com.reicast.emulator.config.OptionsFragment;
 import com.reicast.emulator.debug.GenerateLogs;
 import com.reicast.emulator.emu.JNIdc;
 import com.reicast.emulator.periph.Gamepad;
+
+import java.io.File;
+import java.lang.Thread.UncaughtExceptionHandler;
+import java.util.List;
 
 public class MainActivity extends FragmentActivity implements
 		FileBrowser.OnItemSelectedListener, OptionsFragment.OnClickListener {

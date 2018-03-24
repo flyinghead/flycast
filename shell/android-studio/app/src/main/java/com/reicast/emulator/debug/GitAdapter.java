@@ -1,8 +1,5 @@
 package com.reicast.emulator.debug;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
@@ -31,6 +28,9 @@ import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
 import com.nostra13.universalimageloader.core.assist.ImageScaleType;
 import com.reicast.emulator.R;
+
+import java.util.ArrayList;
+import java.util.HashMap;
 
 public class GitAdapter extends BaseAdapter {
 

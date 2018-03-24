@@ -1,10 +1,5 @@
 package com.reicast.emulator.config;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-
 import android.annotation.TargetApi;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -38,6 +33,11 @@ import android.widget.TextView;
 
 import com.reicast.emulator.R;
 import com.reicast.emulator.periph.Gamepad;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 
 public class InputModFragment extends Fragment {
 

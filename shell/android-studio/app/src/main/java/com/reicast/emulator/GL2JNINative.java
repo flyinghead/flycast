@@ -1,9 +1,5 @@
 package com.reicast.emulator;
 
-import java.util.Arrays;
-import java.util.HashMap;
-
-import tv.ouya.console.api.OuyaController;
 import android.annotation.TargetApi;
 import android.app.NativeActivity;
 import android.content.SharedPreferences;
@@ -22,7 +18,6 @@ import android.view.ViewConfiguration;
 import android.view.ViewGroup.LayoutParams;
 import android.view.Window;
 import android.view.WindowManager;
-import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.Toast;
 
@@ -36,6 +31,11 @@ import com.reicast.emulator.emu.OnScreenMenu.VmuPopup;
 import com.reicast.emulator.periph.Gamepad;
 import com.reicast.emulator.periph.MOGAInput;
 import com.reicast.emulator.periph.SipEmulator;
+
+import java.util.Arrays;
+import java.util.HashMap;
+
+import tv.ouya.console.api.OuyaController;
 
 @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR1)
 public class GL2JNINative extends NativeActivity {

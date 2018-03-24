@@ -1,9 +1,5 @@
 package com.reicast.emulator.periph;
 
-import java.util.HashMap;
-
-import tv.ouya.console.api.OuyaController;
-import tv.ouya.console.api.OuyaFacade;
 import android.app.UiModeManager;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -12,6 +8,11 @@ import android.content.res.Configuration;
 import android.os.Build;
 import android.util.SparseArray;
 import android.view.KeyEvent;
+
+import java.util.HashMap;
+
+import tv.ouya.console.api.OuyaController;
+import tv.ouya.console.api.OuyaFacade;
 
 public class Gamepad {
 

@@ -1,15 +1,15 @@
 package com.reicast.emulator.config;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 
 import com.android.util.DreamTime;
 import com.reicast.emulator.emu.JNIdc;
+
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 
 public class Config {
 

@@ -1,5 +1,12 @@
 package com.reicast.emulator.debug;
 
+import android.content.Context;
+import android.os.AsyncTask;
+import android.os.Build;
+import android.widget.Toast;
+
+import com.reicast.emulator.R;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -8,13 +15,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-
-import android.content.Context;
-import android.os.AsyncTask;
-import android.os.Build;
-import android.widget.Toast;
-
-import com.reicast.emulator.R;
 
 public class GenerateLogs extends AsyncTask<String, Integer, String> {
 
