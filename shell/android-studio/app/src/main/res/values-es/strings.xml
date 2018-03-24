@@ -65,8 +65,5 @@
     <string name="input">Entrada</string>
     <string name="about">Acerca de</string>
     <string name="rateme">Rate Me</string>
-    
-    <string name="textOn">EN</string>
-    <string name="textOff">OFF</string>
 
 </resources>

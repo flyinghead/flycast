@@ -69,9 +69,6 @@
     <string name="about">정보</string>
     <string name="rateme">별점 평가</string>
     
-    <string name="textOn">ON</string>
-    <string name="textOff">OFF</string>
-    
     <string name="cancel">취소</string>
     <string name="dismiss">Dismiss</string>
     <string name="manual">Manual</string>

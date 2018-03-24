@@ -146,7 +146,4 @@
     <string name="popup_button_frame_limit">Ограничение FPS</string>
     <string name="popup_button_audio">Эмуляция звука</string>
     <string name="popup_button_turbo">Турбо-режим</string>
-    
-    <string name="textOn">ВКЛ</string>
-    <string name="textOff">ВЫКЛ</string>
 </resources>

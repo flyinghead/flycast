@@ -104,9 +104,6 @@
     <string name="rateme">Bewerten</string>
     <string name="messages">Logdateien senden</string>
     <string name="cloud">Cloud-VMU</string>
-    
-    <string name="textOn">Ein</string>
-    <string name="textOff">Aus</string>
 
     <string name="cancel">Abbrechen</string>
     <string name="dismiss">Verwerfen</string>

@@ -67,8 +67,5 @@
     <string name="input">Kontrolery</string>
     <string name="about">O nas</string>
     <string name="rateme">Oceń nas</string>
-    
-    <string name="textOn">WŁ</string>
-    <string name="textOff">WYŁ</string>
 
 </resources>

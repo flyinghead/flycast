@@ -104,10 +104,7 @@
     <string name="about">Sobre</string>
     <string name="rateme">Avaliar</string>
     <string name="messages">Enviar Logs</string>
-    <string name="cloud">VMU na Nuvem</string>	
-    
-    <string name="textOn">LIG</string>
-    <string name="textOff">DESL</string>
+    <string name="cloud">VMU na Nuvem</string>
     
     <string name="cancel">Cancelar</string>
     <string name="dismiss">Destituir</string>	
