@@ -3,24 +3,24 @@
 
     <item android:title="@string/browser"
         android:id="@+id/browser_menu"
-        android:icon="@drawable/disk_unknown" />
+        android:icon="@mipmap/menu_disk_unknown" />
     <item android:title="@string/settings"
         android:id="@+id/settings_menu"
-        android:icon="@drawable/config" />
+        android:icon="@mipmap/menu_config" />
     <item android:title="@string/input"
         android:id="@+id/input_menu"
-        android:icon="@drawable/input" />
+        android:icon="@mipmap/menu_input" />
     <item android:title="@string/about"
         android:id="@+id/about_menu"
-        android:icon="@drawable/question" />
+        android:icon="@mipmap/menu_question" />
     <item android:title="@string/cloud"
         android:id="@+id/cloud_menu"
-        android:icon="@drawable/cloud" />
+        android:icon="@mipmap/menu_cloud" />
     <item android:title="@string/rateme"
         android:id="@+id/rateme_menu"
-        android:icon="@drawable/star" />
+        android:icon="@mipmap/menu_star" />
     <item android:title="@string/messages"
         android:id="@+id/message_menu"
-        android:icon="@drawable/debug" />
+        android:icon="@mipmap/menu_debug" />
 
 </menu>
