@@ -64,8 +64,6 @@
     <string name="input">輸入</string>
     <string name="about">關於</string>
     <string name="rateme">評價我</string>
-    <string name="textOn">開</string>
-    <string name="textOff">關</string>
 
     <string name="bios_config">請生成一個配置\n（運行至少一次BIOS）</string>
 

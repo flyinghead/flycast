@@ -30,16 +30,31 @@ android {
     }
 }
 
+afterEvaluate {
+    android.applicationVariants.all {  v ->
+        if (v.buildType.name == "release") {
+            def hashtag = new ByteArrayOutputStream()
+            exec {
+                commandLine "git", "rev-parse", "HEAD"
+                standardOutput = hashtag
+            }
+            hashtag = hashtag.toString().trim()
+            v.outputs.each { output ->
+                output.outputFile = new File(output.outputFile.parent,
+                        "reicast-android-" + hashtag.substring(0,7) + ".apk")
+            }
+            file('src/main/assets/build').text = hashtag
+        }
+    }
+}
+
 dependencies {
     compile 'com.android.support:support-v4:25.3.1'
     compile 'org.bouncycastle:bcprov-jdk16:1.46'
-    compile files('libs/com.bda.controller.jar')
-    compile 'commons-io:commons-io:+'
-    compile 'org.apache.commons:commons-lang3:+'
-    compile 'commons-logging:commons-logging:+'
-    compile files('libs/dropbox-android-sdk-1.6.1.jar')
-    compile files('libs/image-uniload.jar')
-    compile 'com.googlecode.json-simple:json-simple:1.1.1'
-    compile files('libs/ouya-sdk.jar')
-    //compile 'com.dropbox.core:dropbox-core-sdk:3.0.6'
+    compile 'commons-io:commons-io:2.6'
+    compile 'org.apache.commons:commons-lang3:3.7'
+    compile ('com.googlecode.json-simple:json-simple:1.1.1') {
+        exclude module: 'junit'
+    }
+    compile fileTree(include: ['*.jar'], dir: 'libs')
 }

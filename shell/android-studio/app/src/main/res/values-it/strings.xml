@@ -101,9 +101,6 @@
     <string name="rateme">Votami</string>
     <string name="messages">Test Suite</string>
     <string name="cloud">Cloud VMU</string>
-    
-    <string name="textOn">Attivo</string>
-    <string name="textOff">Inattivo</string>
 
     <string name="cancel">Cancella</string>
     <string name="dismiss">Scartare</string>

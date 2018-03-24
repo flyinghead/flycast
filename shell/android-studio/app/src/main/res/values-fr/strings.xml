@@ -101,9 +101,6 @@ Last Edit: 21 May 2014
     <string name="rateme">Evaluez-nous</string>
     <string name="messages">Test Suite</string>
     <string name="cloud">Cloud VMU</string>
-     
-    <string name="textOn">ACTIF</string>
-    <string name="textOff">DESACT.</string>
  
     <string name="cancel">Annuler</string>
     <string name="dismiss">Abandonner</string>
