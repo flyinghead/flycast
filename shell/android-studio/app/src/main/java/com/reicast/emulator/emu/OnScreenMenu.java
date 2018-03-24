@@ -1,8 +1,5 @@
 package com.reicast.emulator.emu;
 
-import java.io.File;
-import java.util.Vector;
-
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -26,6 +23,9 @@ import com.reicast.emulator.MainActivity;
 import com.reicast.emulator.R;
 import com.reicast.emulator.config.Config;
 import com.reicast.emulator.periph.VmuLcd;
+
+import java.io.File;
+import java.util.Vector;
 
 public class OnScreenMenu {
 

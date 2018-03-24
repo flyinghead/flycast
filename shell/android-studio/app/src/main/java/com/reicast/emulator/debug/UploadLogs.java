@@ -1,8 +1,15 @@
 package com.reicast.emulator.debug;
 
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.util.ArrayList;
+import android.annotation.SuppressLint;
+import android.annotation.TargetApi;
+import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
+import android.os.AsyncTask;
+import android.os.Build;
+import android.os.StrictMode;
+
+import com.reicast.emulator.config.Config;
 
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
@@ -15,16 +22,9 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 
-import android.annotation.SuppressLint;
-import android.annotation.TargetApi;
-import android.content.Context;
-import android.content.Intent;
-import android.net.Uri;
-import android.os.AsyncTask;
-import android.os.Build;
-import android.os.StrictMode;
-
-import com.reicast.emulator.config.Config;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.util.ArrayList;
 
 /**
  * Upload the specialized logcat to reicast issues

@@ -1,11 +1,11 @@
 package com.reicast.emulator.periph;
 
-import java.util.concurrent.ConcurrentLinkedQueue;
-
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
 import android.util.Log;
+
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class SipEmulator extends Thread {
 	
