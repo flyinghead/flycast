@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 <item>
     <shape android:shape="rectangle" android:padding="10dp" >
         <solid android:color="#D0000000"/>
@@ -8,7 +9,7 @@
 <item>
 <bitmap xmlns:android="http://schemas.android.com/apk/res/android"
     android:gravity="center"
-    android:src="@drawable/menutile"
+    app:srcCompat="@drawable/menutile"
     android:tileMode="repeat" />
 </item>
 </layer-list>

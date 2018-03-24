@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical" >
@@ -160,7 +161,7 @@
                     android:gravity="center_vertical" >
 			        
 			        <ImageView 
-			            android:src="@drawable/mic_icon"
+			            app:srcCompat="@drawable/mic_icon"
 			            android:layout_width="48dp"
                         android:layout_height="48dp"
                         android:layout_centerInParent="true"
@@ -221,7 +222,7 @@
                             android:layout_height="48dp"
                             android:layout_centerInParent="true"
                             android:scaleType="fitCenter"
-                            android:src="@drawable/input" />
+                            app:srcCompat="@drawable/input" />
 
                         <TextView
                             android:id="@+id/controller_text_a"
@@ -303,7 +304,7 @@
                             android:layout_height="48dp"
                             android:layout_centerInParent="true"
                             android:scaleType="fitCenter"
-                            android:src="@drawable/input" />
+                            app:srcCompat="@drawable/input" />
 
                         <TextView
                             android:id="@+id/controller_text_b"
@@ -385,7 +386,7 @@
                             android:layout_height="48dp"
                             android:layout_centerInParent="true"
                             android:scaleType="fitCenter"
-                            android:src="@drawable/input" />
+                            app:srcCompat="@drawable/input" />
 
                         <TextView
                             android:id="@+id/controller_text_c"
@@ -467,7 +468,7 @@
                             android:layout_height="48dp"
                             android:layout_centerInParent="true"
                             android:scaleType="fitCenter"
-                            android:src="@drawable/input" />
+                            app:srcCompat="@drawable/input" />
 
                         <TextView
                             android:id="@+id/controller_text_d"
