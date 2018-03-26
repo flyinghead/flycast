@@ -13,7 +13,6 @@ import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
-import android.os.StrictMode;
 import android.os.Vibrator;
 import android.view.View;
 import android.view.View.OnLongClickListener;
@@ -23,12 +22,6 @@ import android.widget.TextView;
 import com.reicast.emulator.FileBrowser.OnItemSelectedListener;
 import com.reicast.emulator.config.Config;
 
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.util.EntityUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -37,6 +30,7 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 import java.io.BufferedInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -44,6 +38,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
@@ -67,8 +62,8 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 	private String gameId;
 	private String game_details;
 
-	private static final String game_index = "http://thegamesdb.net/api/GetGamesList.php?platform=sega+dreamcast&name=";
-	private static final String game_id = "http://thegamesdb.net/api/GetGame.php?platform=sega+dreamcast&id=";
+	private String game_index = "http://thegamesdb.net/api/GetGamesList.php?platform=sega+dreamcast&name=";
+	private String game_id = "http://thegamesdb.net/api/GetGame.php?platform=sega+dreamcast&id=";
 
 	public XMLParser(File game, int index, SharedPreferences mPrefs) {
 		this.mPrefs = mPrefs;
@@ -87,71 +82,13 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 		initializeDefaults();
 	}
 
-	protected void onPreExecute() {
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
-			StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder()
-					.permitAll().build();
-			StrictMode.setThreadPolicy(policy);
-		}
-	}
-
-	public Bitmap decodeBitmapIcon(String filename) throws IOException {
-		String index = filename.substring(filename.lastIndexOf("/") + 1, filename.lastIndexOf("."));
-		File file = new File(mContext.getExternalFilesDir(null) + "/images", index + ".png");
-		if (file.exists()) {
-			return BitmapFactory.decodeFile(file.getAbsolutePath());
-		} else {
-			URL updateURL = new URL(filename);
-			URLConnection conn1 = updateURL.openConnection();
-			InputStream im = conn1.getInputStream();
-			BufferedInputStream bis = new BufferedInputStream(im, 512);
-			BitmapFactory.Options options = new BitmapFactory.Options();
-			options.inJustDecodeBounds = true;
-			Bitmap bitmap = BitmapFactory.decodeStream(bis, null, options);
-			int heightRatio = (int) Math.ceil(options.outHeight / (float) 72);
-			int widthRatio = (int) Math.ceil(options.outWidth / (float) 72);
-			if (heightRatio > 1 || widthRatio > 1) {
-				if (heightRatio > widthRatio) {
-					options.inSampleSize = heightRatio;
-				} else {
-					options.inSampleSize = widthRatio;
-				}
-			}
-			options.inJustDecodeBounds = false;
-			bis.close();
-			im.close();
-			conn1 = updateURL.openConnection();
-			im = conn1.getInputStream();
-			bis = new BufferedInputStream(im, 512);
-			bitmap = BitmapFactory.decodeStream(bis, null, options);
-			bis.close();
-			im.close();
-			bis = null;
-			im = null;
-			OutputStream fOut = null;
-			if (!file.getParentFile().exists()) {
-				file.getParentFile().mkdir();
-			}
-			try {
-				fOut = new FileOutputStream(file, false);
-				bitmap.compress(Bitmap.CompressFormat.PNG, 100, fOut);
-				fOut.flush();
-				fOut.close();
-			} catch (Exception ex) {
-				
-			}
-			return bitmap;
-		}
-	}
-
 	@Override
 	protected String doInBackground(String... params) {
 		String filename = game_name = params[0];
 		if (isNetworkAvailable() && mPrefs.getBoolean(Config.pref_gamedetails, false)) {
-			DefaultHttpClient httpClient = new DefaultHttpClient();
-			HttpPost httpPost;
+			String xmlUrl = "";
 			if (gameId != null) {
-				httpPost = new HttpPost(game_id + gameId);
+				xmlUrl = game_id + gameId;
 			} else {
 				filename = filename.substring(0, filename.lastIndexOf("."));
 				try {
@@ -159,15 +96,23 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 				} catch (UnsupportedEncodingException e) {
 					filename = filename.replace(" ", "+");
 				}
-				httpPost = new HttpPost(game_index + filename);
+				xmlUrl = game_index + filename;
 			}
-			try {
-				HttpResponse httpResponse = httpClient.execute(httpPost);
-				HttpEntity httpEntity = httpResponse.getEntity();
-				return EntityUtils.toString(httpEntity);
-			} catch (UnsupportedEncodingException e) {
 
-			} catch (ClientProtocolException e) {
+			try {
+				HttpURLConnection conn = (HttpURLConnection) new URL(xmlUrl).openConnection();
+				conn.setRequestMethod("POST");
+				conn.setDoInput(true);
+
+				InputStream is = new BufferedInputStream(conn.getInputStream());
+				ByteArrayOutputStream result = new ByteArrayOutputStream();
+				byte[] buffer = new byte[1024];
+				int length;
+				while ((length = is.read(buffer)) != -1) {
+					result.write(buffer, 0, length);
+				}
+				return result.toString();
+			} catch (UnsupportedEncodingException e) {
 
 			} catch (IOException e) {
 
@@ -199,7 +144,8 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 							boxart = (Element) images.getElementsByTagName("boxart").item(0);
 						}
 						if (boxart != null) {
-							coverart = decodeBitmapIcon("http://thegamesdb.net/banners/" + getElementValue(boxart));
+							(new decodeBitmapIcon()).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,
+									"http://thegamesdb.net/banners/" + getElementValue(boxart));
 							game_icon = new BitmapDrawable(coverart);
 						}
 					}
@@ -336,5 +282,68 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 			}
 		}
 		return "";
+	}
+
+	private class decodeBitmapIcon extends AsyncTask<String, Integer, Bitmap> {
+		@Override
+		protected Bitmap doInBackground(String... params) {
+			try {
+				String index = params[0].substring(params[0].lastIndexOf("/") + 1, params[0].lastIndexOf("."));
+				File file = new File(mContext.getExternalFilesDir(null) + "/images", index + ".png");
+				if (file.exists()) {
+					return BitmapFactory.decodeFile(file.getAbsolutePath());
+				} else {
+					URL updateURL = new URL(params[0]);
+					URLConnection conn1 = updateURL.openConnection();
+					InputStream im = conn1.getInputStream();
+					BufferedInputStream bis = new BufferedInputStream(im, 512);
+					BitmapFactory.Options options = new BitmapFactory.Options();
+					options.inJustDecodeBounds = true;
+					Bitmap bitmap = BitmapFactory.decodeStream(bis, null, options);
+					int heightRatio = (int) Math.ceil(options.outHeight / (float) 72);
+					int widthRatio = (int) Math.ceil(options.outWidth / (float) 72);
+					if (heightRatio > 1 || widthRatio > 1) {
+						if (heightRatio > widthRatio) {
+							options.inSampleSize = heightRatio;
+						} else {
+							options.inSampleSize = widthRatio;
+						}
+					}
+					options.inJustDecodeBounds = false;
+					bis.close();
+					im.close();
+					conn1 = updateURL.openConnection();
+					im = conn1.getInputStream();
+					bis = new BufferedInputStream(im, 512);
+					bitmap = BitmapFactory.decodeStream(bis, null, options);
+					bis.close();
+					im.close();
+					bis = null;
+					im = null;
+					OutputStream fOut = null;
+					if (!file.getParentFile().exists()) {
+						file.getParentFile().mkdir();
+					}
+					try {
+						fOut = new FileOutputStream(file, false);
+						bitmap.compress(Bitmap.CompressFormat.PNG, 100, fOut);
+						fOut.flush();
+						fOut.close();
+					} catch (Exception ex) {
+
+					}
+					return bitmap;
+				}
+			} catch (IOException e) {
+
+			}
+			return null;
+		}
+
+		@Override
+		protected void onPostExecute(Bitmap gameImage) {
+			coverart = gameImage;
+			game_icon = new BitmapDrawable(gameImage);
+		}
 	}
 }
