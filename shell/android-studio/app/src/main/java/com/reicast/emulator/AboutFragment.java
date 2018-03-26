@@ -1,9 +1,7 @@
 package com.reicast.emulator;
 
-import android.annotation.TargetApi;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.app.Fragment;
@@ -22,23 +20,22 @@ import android.widget.Toast;
 import com.reicast.emulator.config.Config;
 import com.reicast.emulator.debug.GitAdapter;
 
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.StatusLine;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
+
+import javax.net.ssl.HttpsURLConnection;
 
 public class AboutFragment extends Fragment {
 
@@ -61,8 +58,7 @@ public class AboutFragment extends Fragment {
 		try {
 			InputStream file = getResources().getAssets().open("build");
 			if (file != null) {
-				BufferedReader reader = new BufferedReader(
-						new InputStreamReader(file));
+				BufferedReader reader = new BufferedReader(new InputStreamReader(file));
 				buildId = reader.readLine();
 				file.close();
 			}
@@ -75,8 +71,7 @@ public class AboutFragment extends Fragment {
 					.getPackageInfo(getActivity().getPackageName(), 0).versionName;
 			int versionCode = getActivity().getPackageManager()
 					.getPackageInfo(getActivity().getPackageName(), 0).versionCode;
-			TextView version = (TextView) getView().findViewById(
-					R.id.revision_text);
+			TextView version = (TextView) getView().findViewById(R.id.revision_text);
 			String revision = getString(R.string.revision_text,
 					versionName, String.valueOf(versionCode));
 			if (!buildId.equals("")) {
@@ -125,21 +120,15 @@ public class AboutFragment extends Fragment {
 					JSONObject commitArray = jsonObject.getJSONObject("commit");
 
 					String date = commitArray.getJSONObject("committer")
-							.getString("date").replace("T", " ")
-							.replace("Z", "");
-					String author = commitArray.getJSONObject("author")
-							.getString("name");
-					String committer = commitArray.getJSONObject("committer")
-							.getString("name");
+							.getString("date").replace("T", " ").replace("Z", "");
+					String author = commitArray.getJSONObject("author").getString("name");
+					String committer = commitArray.getJSONObject("committer").getString("name");
 
 					String avatar = null;
 					if (!jsonObject.getString("committer").equals("null")) {
-						avatar = jsonObject.getJSONObject("committer")
-								.getString("avatar_url");
-						committer = committer
-								+ " ("
-								+ jsonObject.getJSONObject("committer")
-								.getString("login") + ")";
+						avatar = jsonObject.getJSONObject("committer").getString("avatar_url");
+						committer = committer + " (" + jsonObject
+								.getJSONObject("committer").getString("login") + ")";
 						if (avatar.equals("null")) {
 							avatar = "https://github.com/apple-touch-icon-144.png";
 						}
@@ -147,28 +136,22 @@ public class AboutFragment extends Fragment {
 						avatar = "https://github.com/apple-touch-icon-144.png";
 					}
 					if (!jsonObject.getString("author").equals("null")) {
-						author = author
-								+ " ("
-								+ jsonObject.getJSONObject("author").getString(
-										"login") + ")";
+						author = author + " (" + jsonObject.getJSONObject(
+								"author").getString("login") + ")";
 					}
 					String sha = jsonObject.getString("sha");
-					String curl = jsonObject
-							.getString("url")
-							.replace("https://api.github.com/repos",
-									"https://github.com")
-									.replace("commits", "commit");
+					String curl = jsonObject.getString("url")
+							.replace("https://api.github.com/repos", "https://github.com")
+							.replace("commits", "commit");
 
 					String title = "No commit heading attached";
 					String message = "No commit message attached";
 
 					if (commitArray.getString("message").contains("\n\n")) {
 						String fullOutput = commitArray.getString("message");
-						title = fullOutput.substring(0,
-								fullOutput.indexOf("\n\n"));
+						title = fullOutput.substring(0, fullOutput.indexOf("\n\n"));
 						message = fullOutput.substring(
-								fullOutput.indexOf("\n\n") + 1,
-								fullOutput.length());
+								fullOutput.indexOf("\n\n") + 1, fullOutput.length());
 					} else {
 						title = commitArray.getString("message");
 					}
@@ -232,32 +215,23 @@ public class AboutFragment extends Fragment {
 
 		}
 		
-		private JSONArray getContent(String urlString) 
-				throws IOException, JSONException {
-			StringBuilder builder = new StringBuilder();
-			HttpClient client = new DefaultHttpClient();
-			HttpGet httpGet = new HttpGet(urlString);
-			try {
-				HttpResponse response = client.execute(httpGet);
-				StatusLine statusLine = response.getStatusLine();
-				int statusCode = statusLine.getStatusCode();
-				if (statusCode == 200) {
-					HttpEntity entity = response.getEntity();
-					InputStream content = entity.getContent();
-					BufferedReader reader = new BufferedReader(
-							new InputStreamReader(content));
-					String line;
-					while ((line = reader.readLine()) != null) {
-						builder.append(line);
-					}
-				} else {
+		private JSONArray getContent(String urlString) throws IOException, JSONException {
+			HttpURLConnection conn = (HttpURLConnection) new URL(urlString).openConnection();
+			conn.setRequestMethod("GET");
+			conn.setDoInput(true);
+			int responseCode = conn.getResponseCode();
+
+			if (responseCode != HttpsURLConnection.HTTP_OK) {
+				InputStream is = new BufferedInputStream(conn.getInputStream());
+				ByteArrayOutputStream result = new ByteArrayOutputStream();
+				byte[] buffer = new byte[1024];
+				int length;
+				while ((length = is.read(buffer)) != -1) {
+					result.write(buffer, 0, length);
 				}
-			} catch (ClientProtocolException e) {
-				e.printStackTrace();
-			} catch (IOException e) {
-				e.printStackTrace();
+				return new JSONArray(result.toString());
 			}
-			return new JSONArray(builder.toString());
+			return null;
 		}
 	}
 }
