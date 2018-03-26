@@ -1,5 +1,6 @@
 package com.reicast.emulator;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -16,6 +17,7 @@ import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
@@ -25,7 +27,6 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
-import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnSystemUiVisibilityChangeListener;
@@ -48,6 +49,7 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity implements
 		FileBrowser.OnItemSelectedListener, OptionsFragment.OnClickListener,
 		NavigationView.OnNavigationItemSelectedListener {
+	private static final int PERMISSION_REQUEST = 1001;
 
 	private SharedPreferences mPrefs;
 	private static File sdcard = Environment.getExternalStorageDirectory();
@@ -108,18 +110,28 @@ public class MainActivity extends AppCompatActivity implements
 			Thread.setDefaultUncaughtExceptionHandler(mUEHandler);
 		}
 
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+			if (ContextCompat.checkSelfPermission(this,
+					Manifest.permission.READ_EXTERNAL_STORAGE
+			) == PackageManager.PERMISSION_DENIED) {
+				requestPermissions(new String[]{
+						Manifest.permission.READ_EXTERNAL_STORAGE
+				}, PERMISSION_REQUEST);
+			}
+		}
+
 		home_directory = mPrefs.getString("home_directory", home_directory);
 
 		Intent market = new Intent(Intent.ACTION_VIEW, Uri.parse("market://search?q=dummy"));
 		if (isCallable(market)) {
 			hasAndroidMarket = true;
 		}
-		
+
 		if (!getFilesDir().exists()) {
 			getFilesDir().mkdir();
 		}
 		JNIdc.config(home_directory);
-		
+
 		// When viewing a resource, pass its URI to the native code for opening
 		Intent intent = getIntent();
 		if (intent.getAction() != null) {
@@ -135,7 +147,6 @@ public class MainActivity extends AppCompatActivity implements
 		// Check that the activity is using the layout version with
 		// the fragment_container FrameLayout
 		if (findViewById(R.id.fragment_container) != null) {
-
 			// However, if we're being restored from a previous state,
 			// then we don't need to do anything and should return or else
 			// we could end up with overlapping fragments.
@@ -144,7 +155,6 @@ public class MainActivity extends AppCompatActivity implements
 					return;
 				}
 			}
-
 			// Create a new Fragment to be placed in the activity layout
 			FileBrowser firstFragment = new FileBrowser();
 			Bundle args = new Bundle();
@@ -154,16 +164,13 @@ public class MainActivity extends AppCompatActivity implements
 			args.putBoolean("games_entry", false);
 			// specify if the desired path is for games or data
 			firstFragment.setArguments(args);
-			// In case this activity was started with special instructions from
-			// an
-			// Intent, pass the Intent's extras to the fragment as arguments
+			// In case this activity was started with instructions from an intent
+			// pass the Intent's extras to the fragment as arguments
 			// firstFragment.setArguments(getIntent().getExtras());
 
 			// Add the fragment to the 'fragment_container' FrameLayout
-			getSupportFragmentManager()
-			.beginTransaction()
-			.replace(R.id.fragment_container, firstFragment,
-					"MAIN_BROWSER").commit();
+			getSupportFragmentManager().beginTransaction()
+			.replace(R.id.fragment_container, firstFragment, "MAIN_BROWSER").commit();
 		}
 
 		menuHeading = (TextView) findViewById(R.id.menu_heading);
@@ -270,20 +277,15 @@ public class MainActivity extends AppCompatActivity implements
 						FileBrowser firstFragment = new FileBrowser();
 						Bundle args = new Bundle();
 						// args.putBoolean("ImgBrowse", false);
-						// specify ImgBrowse option. true = images,
-						// false = folders only
+						// specify ImgBrowse option. true = images, false = folders only
 						args.putString("browse_entry", sdcard.toString());
-						// specify a path for selecting folder
-						// options
+						// specify a path for selecting folder options
 						args.putBoolean("games_entry", false);
-						// selecting a BIOS folder, so this is not
-						// games
+						// selecting a BIOS folder, so this is not games
 
 						firstFragment.setArguments(args);
-						// In case this activity was started with
-						// special instructions from
-						// an Intent, pass the Intent's extras to
-						// the fragment as arguments
+						// In case this activity was started with instructions from an intent
+						// pass the Intent's extras to the fragment as arguments
 						// firstFragment.setArguments(getIntent().getExtras());
 
 						// Add the fragment to the
