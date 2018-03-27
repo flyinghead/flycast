@@ -195,7 +195,8 @@ public class MainActivity extends AppCompatActivity implements
 
 		NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         if (!hasAndroidMarket) {
-            navigationView.getMenu().findItem(R.id.rateme_menu).setVisible(false);
+			navigationView.getMenu().findItem(R.id.rateme_menu).setEnabled(false);
+			navigationView.getMenu().findItem(R.id.rateme_menu).setVisible(false);
         }
 		navigationView.setNavigationItemSelectedListener(this);
 	}
@@ -258,7 +259,7 @@ public class MainActivity extends AppCompatActivity implements
 			launchBIOSdetection();
 		} else {
 			Config.nativeact = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).getBoolean(Config.pref_nativeact, Config.nativeact);
-			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD && Config.nativeact) {
+			if (Config.nativeact) {
 				startActivity(new Intent("com.reicast.EMULATOR", uri, getApplicationContext(),
 						GL2JNINative.class));
 			} else {
@@ -288,8 +289,7 @@ public class MainActivity extends AppCompatActivity implements
 						// pass the Intent's extras to the fragment as arguments
 						// firstFragment.setArguments(getIntent().getExtras());
 
-						// Add the fragment to the
-						// 'fragment_container' FrameLayout
+						// Add the fragment to the 'fragment_container' FrameLayout
 						getSupportFragmentManager()
 						.beginTransaction()
 						.replace(R.id.fragment_container,
@@ -478,6 +478,8 @@ public class MainActivity extends AppCompatActivity implements
 								"MAIN_BROWSER").addToBackStack(null)
 						.commit();
 				setTitle(R.string.browser);
+				drawer.closeDrawer(GravityCompat.START);
+				return true;
 
 			case R.id.settings_menu:
 				OptionsFragment optionsFrag = (OptionsFragment) getSupportFragmentManager()
@@ -495,6 +497,8 @@ public class MainActivity extends AppCompatActivity implements
 								optionsFrag, "OPTIONS_FRAG")
 						.addToBackStack(null).commit();
 				setTitle(R.string.settings);
+				drawer.closeDrawer(GravityCompat.START);
+				return true;
 
 			case R.id.input_menu:
 				InputFragment inputFrag = (InputFragment) getSupportFragmentManager()
@@ -511,6 +515,8 @@ public class MainActivity extends AppCompatActivity implements
 						.replace(R.id.fragment_container, inputFrag,
 								"INPUT_FRAG").addToBackStack(null).commit();
 				setTitle(R.string.input);
+				drawer.closeDrawer(GravityCompat.START);
+				return true;
 
 			case R.id.about_menu:
 				AboutFragment aboutFrag = (AboutFragment) getSupportFragmentManager()
@@ -527,6 +533,8 @@ public class MainActivity extends AppCompatActivity implements
 						.replace(R.id.fragment_container, aboutFrag,
 								"ABOUT_FRAG").addToBackStack(null).commit();
 				setTitle(R.string.about);
+				drawer.closeDrawer(GravityCompat.START);
+				return true;
 
 			case R.id.cloud_menu:
 				CloudFragment cloudFrag = (CloudFragment) getSupportFragmentManager()
@@ -544,20 +552,27 @@ public class MainActivity extends AppCompatActivity implements
 								cloudFrag, "CLOUD_FRAG")
 						.addToBackStack(null).commit();
 				setTitle(R.string.cloud);
+				drawer.closeDrawer(GravityCompat.START);
+				return true;
 
 			case R.id.rateme_menu:
 				// vib.vibrate(50);
 				startActivity(new Intent(Intent.ACTION_VIEW, Uri
 						.parse("market://details?id=" + getPackageName())));
 				//setTitle(R.string.rateme);
+				drawer.closeDrawer(GravityCompat.START);
+				return true;
 
 			case R.id.message_menu:
 				generateErrorLog();
+				drawer.closeDrawer(GravityCompat.START);
+				return true;
+
+			default:
+				drawer.closeDrawer(GravityCompat.START);
+				return true;
+
 		}
-
-
-		drawer.closeDrawer(GravityCompat.START);
-		return true;
 	}
 
 	@Override
