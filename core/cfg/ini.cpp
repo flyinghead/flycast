@@ -111,7 +111,7 @@ ConfigSection* ConfigFile::get_section(string name, bool is_virtual)
 ConfigEntry* ConfigFile::get_entry(string section_name, string entry_name)
 {
 	ConfigSection* section = this->get_section(section_name, true);
-	if(section != NULL)
+	if(section != NULL && section->has_entry(entry_name))
 	{
 		return section->get_entry(entry_name);
 	}
