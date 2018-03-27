@@ -535,8 +535,10 @@ public class FileBrowser extends Fragment {
 			data_directory.mkdirs();
 			File bios = new File(home_directory, "dc_boot.bin");
 			boolean success = bios.renameTo(new File(home_directory, "data/dc_boot.bin"));
-			File flash = new File(home_directory, "dc_flash.bin");
-			success = flash.renameTo(new File(home_directory, "data/dc_flash.bin"));
+			if (success) {
+				File flash = new File(home_directory, "dc_flash.bin");
+				success = flash.renameTo(new File(home_directory, "data/dc_flash.bin"));
+			}
 			return success;
 		} else {
 			File bios = new File(home_directory, "data/dc_boot.bin");
