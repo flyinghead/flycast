@@ -16,6 +16,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.support.design.widget.NavigationView;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
@@ -111,13 +112,12 @@ public class MainActivity extends AppCompatActivity implements
 		}
 
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-			if (ContextCompat.checkSelfPermission(this,
-					Manifest.permission.READ_EXTERNAL_STORAGE
-			) == PackageManager.PERMISSION_DENIED) {
-				requestPermissions(new String[]{
-						Manifest.permission.READ_EXTERNAL_STORAGE
-				}, PERMISSION_REQUEST);
-			}
+			ActivityCompat.requestPermissions(MainActivity.this,
+					new String[] {
+							Manifest.permission.READ_EXTERNAL_STORAGE,
+							Manifest.permission.WRITE_EXTERNAL_STORAGE
+					},
+					PERMISSION_REQUEST);
 		}
 
 		home_directory = mPrefs.getString("home_directory", home_directory);

@@ -32,6 +32,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
@@ -151,42 +152,6 @@ public class FileBrowser extends Fragment {
 	public void onViewCreated(View view, Bundle savedInstanceState) {
 		// setContentView(R.layout.activity_main);
 		parentActivity = getActivity();
-		try {
-			File buttons = null;
-			String theme = mPrefs.getString(Config.pref_theme, null);
-			if (theme != null) {
-				buttons = new File(theme);
-			}
-			File file = new File(home_directory, "data/buttons.png");
-			if (buttons != null && buttons.exists()) {
-				InputStream in = new FileInputStream(buttons);
-			    OutputStream out = new FileOutputStream(file);
-
-			    // Transfer bytes from in to out
-			    byte[] buf = new byte[1024];
-			    int len;
-			    while ((len = in.read(buf)) > 0) {
-			        out.write(buf, 0, len);
-			    }
-			    in.close();
-			    out.close();
-			} else if (!file.exists()) {
-				file.createNewFile();
-				OutputStream fo = new FileOutputStream(file);
-				InputStream png = parentActivity.getAssets()
-						.open("buttons.png");
-
-				byte[] buffer = new byte[4096];
-				int len = 0;
-				while ((len = png.read(buffer)) != -1) {
-					fo.write(buffer, 0, len);
-				}
-				fo.close();
-				png.close();
-			}
-		} catch (IOException ioe) {
-			ioe.printStackTrace();
-		}
 
 		vib = (Vibrator) parentActivity
 				.getSystemService(Context.VIBRATOR_SERVICE);
@@ -207,12 +172,59 @@ public class FileBrowser extends Fragment {
 			MainActivity.showToastMessage(getActivity(), 
 					getActivity().getString(R.string.config_home),
 					R.drawable.ic_notification, Toast.LENGTH_LONG);
+		} else {
+			(new installGraphics()).execute();
 		}
 
 		if (!ImgBrowse && !games) {
 			new LocateGames(R.array.flash).execute(home_directory);
 		} else {
 			new LocateGames(R.array.images).execute(game_directory);
+		}
+	}
+
+	private class installGraphics extends AsyncTask<String, Integer, String> {
+		@Override
+		protected String doInBackground(String... params) {
+			try {
+				File buttons = null;
+				String theme = mPrefs.getString(Config.pref_theme, null);
+				if (theme != null) {
+					buttons = new File(theme);
+				}
+				File file = new File(home_directory, "data/buttons.png");
+				if (buttons != null && buttons.exists()) {
+					InputStream in = new FileInputStream(buttons);
+					OutputStream out = new FileOutputStream(file);
+
+					// Transfer bytes from in to out
+					byte[] buf = new byte[1024];
+					int len;
+					while ((len = in.read(buf)) > 0) {
+						out.write(buf, 0, len);
+					}
+					in.close();
+					out.close();
+				} else if (!file.exists()) {
+					file.getParentFile().mkdirs();
+					OutputStream fo = new FileOutputStream(file);
+					InputStream png = parentActivity.getAssets()
+							.open("buttons.png");
+
+					byte[] buffer = new byte[4096];
+					int len = 0;
+					while ((len = png.read(buffer)) != -1) {
+						fo.write(buffer, 0, len);
+					}
+					fo.close();
+					png.close();
+				}
+			} catch (FileNotFoundException fnf) {
+				fnf.printStackTrace();
+			} catch (IOException ioe) {
+				ioe.printStackTrace();
+			}
+			return null;
 		}
 	}
 
