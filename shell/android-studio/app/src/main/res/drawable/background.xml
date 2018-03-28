@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
-<item>
-    <shape android:shape="rectangle" android:padding="10dp" >
-        <solid android:color="#D0000000"/>
-    </shape>
-</item>
-<item>
-<bitmap xmlns:android="http://schemas.android.com/apk/res/android"
-    android:gravity="center"
-    app:srcCompat="@drawable/menutile"
-    android:tileMode="repeat" />
-</item>
+    <item>
+        <shape android:shape="rectangle" android:padding="10dp" >
+            <solid android:color="#D0000000"/>
+        </shape>
+    </item>
+    <item>
+        <bitmap
+            android:gravity="center"
+            app:srcCompat="@drawable/menutile"
+            android:tileMode="repeat" />
+    </item>
 </layer-list>
