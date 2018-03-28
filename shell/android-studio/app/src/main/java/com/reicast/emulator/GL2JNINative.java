@@ -237,7 +237,7 @@ public class GL2JNINative extends NativeActivity {
 		if(prefs.getBoolean(Config.pref_vmu, false)){
 			//kind of a hack - if the user last had the vmu on screen
 			//inverse it and then "toggle"
-			prefs.edit().putBoolean(Config.pref_vmu, false).commit();
+			prefs.edit().putBoolean(Config.pref_vmu, false).apply();
 			//can only display a popup after onCreate
 			mView.post(new Runnable() {
 				public void run() {
@@ -308,7 +308,7 @@ public class GL2JNINative extends NativeActivity {
 			//add back to popup menu
 			popUp.showVmu();
 		}
-		prefs.edit().putBoolean(Config.pref_vmu, showFloating).commit();
+		prefs.edit().putBoolean(Config.pref_vmu, showFloating).apply();
 	}
 	
 	public void displayConfig(PopupWindow popUpConfig) {

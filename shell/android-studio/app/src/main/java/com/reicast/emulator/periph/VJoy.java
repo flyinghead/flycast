@@ -52,12 +52,30 @@ public class VJoy {
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
 		return new float[][] {
 			// x-shift, y-shift, sizing-factor
-			new float[] { prefs.getFloat("touch_x_shift_dpad", 0), prefs.getFloat("touch_y_shift_dpad", 0), prefs.getFloat("touch_scale_dpad", 1) }, // DPAD
-			new float[] { prefs.getFloat("touch_x_shift_buttons", 0), prefs.getFloat("touch_y_shift_buttons", 0), prefs.getFloat("touch_scale_buttons", 1) }, // X, Y, B, A Buttons
-			new float[] { prefs.getFloat("touch_x_shift_start", 0), prefs.getFloat("touch_y_shift_start", 0), prefs.getFloat("touch_scale_start", 1) }, // Start
-			new float[] { prefs.getFloat("touch_x_shift_left_trigger", 0), prefs.getFloat("touch_y_shift_left_trigger", 0), prefs.getFloat("touch_scale_left_trigger", 1) }, // Left Trigger
-			new float[] { prefs.getFloat("touch_x_shift_right_trigger", 0), prefs.getFloat("touch_y_shift_right_trigger", 0), prefs.getFloat("touch_scale_right_trigger", 1) }, // Right Trigger
-			new float[] { prefs.getFloat("touch_x_shift_analog", 0), prefs.getFloat("touch_y_shift_analog", 0), prefs.getFloat("touch_scale_analog", 1) } // Analog Stick
+			new float[] { prefs.getFloat("touch_x_shift_dpad", 0),
+					prefs.getFloat("touch_y_shift_dpad", 0),
+					prefs.getFloat("touch_scale_dpad", 1)
+			}, // DPAD
+			new float[] { prefs.getFloat("touch_x_shift_buttons", 0),
+					prefs.getFloat("touch_y_shift_buttons", 0),
+					prefs.getFloat("touch_scale_buttons", 1)
+			}, // X, Y, B, A Buttons
+			new float[] { prefs.getFloat("touch_x_shift_start", 0),
+					prefs.getFloat("touch_y_shift_start", 0),
+					prefs.getFloat("touch_scale_start", 1)
+			}, // Start
+			new float[] { prefs.getFloat("touch_x_shift_left_trigger", 0),
+					prefs.getFloat("touch_y_shift_left_trigger", 0),
+					prefs.getFloat("touch_scale_left_trigger", 1)
+			}, // Left Trigger
+			new float[] { prefs.getFloat("touch_x_shift_right_trigger", 0),
+					prefs.getFloat("touch_y_shift_right_trigger", 0),
+					prefs.getFloat("touch_scale_right_trigger", 1)
+			}, // Right Trigger
+			new float[] { prefs.getFloat("touch_x_shift_analog", 0),
+					prefs.getFloat("touch_y_shift_analog", 0),
+					prefs.getFloat("touch_scale_analog", 1)
+			} // Analog Stick
 		};
 	}
 
@@ -91,56 +109,56 @@ public class VJoy {
 	public static void writeCustomVjoyValues(float[][] vjoy_d_custom, Context context) {
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
 
-		prefs.edit().putFloat("touch_x_shift_dpad", vjoy_d_custom[0][0]).commit();
-		prefs.edit().putFloat("touch_y_shift_dpad", vjoy_d_custom[0][1]).commit();
-		prefs.edit().putFloat("touch_scale_dpad", vjoy_d_custom[0][2]).commit();
+		prefs.edit().putFloat("touch_x_shift_dpad", vjoy_d_custom[0][0]).apply();
+		prefs.edit().putFloat("touch_y_shift_dpad", vjoy_d_custom[0][1]).apply();
+		prefs.edit().putFloat("touch_scale_dpad", vjoy_d_custom[0][2]).apply();
 
-		prefs.edit().putFloat("touch_x_shift_buttons", vjoy_d_custom[1][0]).commit();
-		prefs.edit().putFloat("touch_y_shift_buttons", vjoy_d_custom[1][1]).commit();
-		prefs.edit().putFloat("touch_scale_buttons", vjoy_d_custom[1][2]).commit();
+		prefs.edit().putFloat("touch_x_shift_buttons", vjoy_d_custom[1][0]).apply();
+		prefs.edit().putFloat("touch_y_shift_buttons", vjoy_d_custom[1][1]).apply();
+		prefs.edit().putFloat("touch_scale_buttons", vjoy_d_custom[1][2]).apply();
 
-		prefs.edit().putFloat("touch_x_shift_start", vjoy_d_custom[2][0]).commit();
-		prefs.edit().putFloat("touch_y_shift_start", vjoy_d_custom[2][1]).commit();
-		prefs.edit().putFloat("touch_scale_start", vjoy_d_custom[2][2]).commit();
+		prefs.edit().putFloat("touch_x_shift_start", vjoy_d_custom[2][0]).apply();
+		prefs.edit().putFloat("touch_y_shift_start", vjoy_d_custom[2][1]).apply();
+		prefs.edit().putFloat("touch_scale_start", vjoy_d_custom[2][2]).apply();
 
-		prefs.edit().putFloat("touch_x_shift_left_trigger", vjoy_d_custom[3][0]).commit();
-		prefs.edit().putFloat("touch_y_shift_left_trigger", vjoy_d_custom[3][1]).commit();
-		prefs.edit().putFloat("touch_scale_left_trigger", vjoy_d_custom[3][2]).commit();
+		prefs.edit().putFloat("touch_x_shift_left_trigger", vjoy_d_custom[3][0]).apply();
+		prefs.edit().putFloat("touch_y_shift_left_trigger", vjoy_d_custom[3][1]).apply();
+		prefs.edit().putFloat("touch_scale_left_trigger", vjoy_d_custom[3][2]).apply();
 
-		prefs.edit().putFloat("touch_x_shift_right_trigger", vjoy_d_custom[4][0]).commit();
-		prefs.edit().putFloat("touch_y_shift_right_trigger", vjoy_d_custom[4][1]).commit();
-		prefs.edit().putFloat("touch_scale_right_trigger", vjoy_d_custom[4][2]).commit();
+		prefs.edit().putFloat("touch_x_shift_right_trigger", vjoy_d_custom[4][0]).apply();
+		prefs.edit().putFloat("touch_y_shift_right_trigger", vjoy_d_custom[4][1]).apply();
+		prefs.edit().putFloat("touch_scale_right_trigger", vjoy_d_custom[4][2]).apply();
 
-		prefs.edit().putFloat("touch_x_shift_analog", vjoy_d_custom[5][0]).commit();
-		prefs.edit().putFloat("touch_y_shift_analog", vjoy_d_custom[5][1]).commit();
-		prefs.edit().putFloat("touch_scale_analog", vjoy_d_custom[5][2]).commit();
+		prefs.edit().putFloat("touch_x_shift_analog", vjoy_d_custom[5][0]).apply();
+		prefs.edit().putFloat("touch_y_shift_analog", vjoy_d_custom[5][1]).apply();
+		prefs.edit().putFloat("touch_scale_analog", vjoy_d_custom[5][2]).apply();
 	}
 	
 	public static void resetCustomVjoyValues(Context context) {
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
 
-		prefs.edit().remove("touch_x_shift_dpad").commit();
-		prefs.edit().remove("touch_y_shift_dpad").commit();
-		prefs.edit().remove("touch_scale_dpad").commit();
+		prefs.edit().remove("touch_x_shift_dpad").apply();
+		prefs.edit().remove("touch_y_shift_dpad").apply();
+		prefs.edit().remove("touch_scale_dpad").apply();
 
-		prefs.edit().remove("touch_x_shift_buttons").commit();
-		prefs.edit().remove("touch_y_shift_buttons").commit();
-		prefs.edit().remove("touch_scale_buttons").commit();
+		prefs.edit().remove("touch_x_shift_buttons").apply();
+		prefs.edit().remove("touch_y_shift_buttons").apply();
+		prefs.edit().remove("touch_scale_buttons").apply();
 
-		prefs.edit().remove("touch_x_shift_start").commit();
-		prefs.edit().remove("touch_y_shift_start").commit();
-		prefs.edit().remove("touch_scale_start").commit();
+		prefs.edit().remove("touch_x_shift_start").apply();
+		prefs.edit().remove("touch_y_shift_start").apply();
+		prefs.edit().remove("touch_scale_start").apply();
 
-		prefs.edit().remove("touch_x_shift_left_trigger").commit();
-		prefs.edit().remove("touch_y_shift_left_trigger").commit();
-		prefs.edit().remove("touch_scale_left_trigger").commit();
+		prefs.edit().remove("touch_x_shift_left_trigger").apply();
+		prefs.edit().remove("touch_y_shift_left_trigger").apply();
+		prefs.edit().remove("touch_scale_left_trigger").apply();
 
-		prefs.edit().remove("touch_x_shift_right_trigger").commit();
-		prefs.edit().remove("touch_y_shift_right_trigger").commit();
-		prefs.edit().remove("touch_scale_right_trigger").commit();
+		prefs.edit().remove("touch_x_shift_right_trigger").apply();
+		prefs.edit().remove("touch_y_shift_right_trigger").apply();
+		prefs.edit().remove("touch_scale_right_trigger").apply();
 
-		prefs.edit().remove("touch_x_shift_analog").commit();
-		prefs.edit().remove("touch_y_shift_analog").commit();
-		prefs.edit().remove("touch_scale_analog").commit();
+		prefs.edit().remove("touch_x_shift_analog").apply();
+		prefs.edit().remove("touch_y_shift_analog").apply();
+		prefs.edit().remove("touch_scale_analog").apply();
 	}
 }

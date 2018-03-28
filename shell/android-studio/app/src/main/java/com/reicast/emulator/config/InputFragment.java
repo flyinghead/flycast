@@ -128,7 +128,7 @@ public class InputFragment extends Fragment {
 
 		    public void onStopTrackingTouch(SeekBar seekBar) {
 			int progress = seekBar.getProgress() + 5;
-			sharedPreferences.edit().putInt(Config.pref_vibrationDuration, progress).commit();
+			sharedPreferences.edit().putInt(Config.pref_vibrationDuration, progress).apply();
 			Config.vibrationDuration = progress;
 			vib.vibrate(progress);
 		    }
@@ -138,7 +138,7 @@ public class InputFragment extends Fragment {
 			public void onCheckedChanged(CompoundButton buttonView,
 					boolean isChecked) {
 				sharedPreferences.edit()
-						.putBoolean(Config.pref_touchvibe, isChecked).commit();
+						.putBoolean(Config.pref_touchvibe, isChecked).apply();
 				vibLay.setVisibility( isChecked ? View.VISIBLE : View.GONE );
 			}
 		};
@@ -164,9 +164,7 @@ public class InputFragment extends Fragment {
 					.setOnCheckedChangeListener(new OnCheckedChangeListener() {
 						public void onCheckedChanged(CompoundButton buttonView,
 								boolean isChecked) {
-							sharedPreferences.edit()
-									.putBoolean(Config.pref_mic, isChecked)
-									.commit();
+							sharedPreferences.edit().putBoolean(Config.pref_mic, isChecked).apply();
 						}
 					});
 		} else {
@@ -477,20 +475,16 @@ public class InputFragment extends Fragment {
 		case 0:
 			return false;
 		case 1:
-			sharedPreferences.edit()
-					.putString(Gamepad.pref_player1, descriptor).commit();
+			sharedPreferences.edit().putString(Gamepad.pref_player1, descriptor).apply();
 			break;
 		case 2:
-			sharedPreferences.edit()
-					.putString(Gamepad.pref_player2, descriptor).commit();
+			sharedPreferences.edit().putString(Gamepad.pref_player2, descriptor).apply();
 			break;
 		case 3:
-			sharedPreferences.edit()
-					.putString(Gamepad.pref_player3, descriptor).commit();
+			sharedPreferences.edit().putString(Gamepad.pref_player3, descriptor).apply();
 			break;
 		case 4:
-			sharedPreferences.edit()
-					.putString(Gamepad.pref_player4, descriptor).commit();
+			sharedPreferences.edit().putString(Gamepad.pref_player4, descriptor).apply();
 			break;
 		}
 
@@ -506,20 +500,16 @@ public class InputFragment extends Fragment {
 	private void removeController(int playerNum) {
 		switch (playerNum) {
 		case 1:
-			sharedPreferences.edit().putString(Gamepad.pref_player1, null)
-					.commit();
+			sharedPreferences.edit().putString(Gamepad.pref_player1, null).apply();
 			break;
 		case 2:
-			sharedPreferences.edit().putString(Gamepad.pref_player2, null)
-					.commit();
+			sharedPreferences.edit().putString(Gamepad.pref_player2, null).apply();
 			break;
 		case 3:
-			sharedPreferences.edit().putString(Gamepad.pref_player3, null)
-					.commit();
+			sharedPreferences.edit().putString(Gamepad.pref_player3, null).apply();
 			break;
 		case 4:
-			sharedPreferences.edit().putString(Gamepad.pref_player4, null)
-					.commit();
+			sharedPreferences.edit().putString(Gamepad.pref_player4, null).apply();
 			break;
 		}
 
