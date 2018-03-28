@@ -107,9 +107,7 @@ public class InputModFragment extends Fragment {
 		OnCheckedChangeListener joystick_mode = new OnCheckedChangeListener() {
 			public void onCheckedChanged(CompoundButton buttonView,
 					boolean isChecked) {
-				mPrefs.edit()
-						.putBoolean(Gamepad.pref_js_merged + player,
-								isChecked).commit();
+				mPrefs.edit().putBoolean(Gamepad.pref_js_merged + player, isChecked).apply();
 			}
 		};
 		
@@ -118,9 +116,7 @@ public class InputModFragment extends Fragment {
 		OnCheckedChangeListener rstick_mode = new OnCheckedChangeListener() {
 			public void onCheckedChanged(CompoundButton buttonView,
 					boolean isChecked) {
-				mPrefs.edit()
-						.putBoolean(Gamepad.pref_js_rbuttons + player,
-								isChecked).commit();
+				mPrefs.edit().putBoolean(Gamepad.pref_js_rbuttons + player, isChecked).apply();
 			}
 		};
 		
@@ -129,9 +125,7 @@ public class InputModFragment extends Fragment {
 		OnCheckedChangeListener modified_layout = new OnCheckedChangeListener() {
 			public void onCheckedChanged(CompoundButton buttonView,
 					boolean isChecked) {
-				mPrefs.edit()
-						.putBoolean(Gamepad.pref_js_modified + player,
-								isChecked).commit();
+				mPrefs.edit().putBoolean(Gamepad.pref_js_modified + player, isChecked).apply();
 			}
 		};
 		
@@ -140,9 +134,7 @@ public class InputModFragment extends Fragment {
 		OnCheckedChangeListener compat_mode = new OnCheckedChangeListener() {
 			public void onCheckedChanged(CompoundButton buttonView,
 					boolean isChecked) {
-				mPrefs.edit()
-						.putBoolean(Gamepad.pref_js_compat + player, isChecked)
-						.commit();
+				mPrefs.edit().putBoolean(Gamepad.pref_js_compat + player, isChecked).apply();
 				if (isChecked) {
 					selectController();
 				}
@@ -469,9 +461,7 @@ public class InputModFragment extends Fragment {
 				});
 		builder.setOnKeyListener(new Dialog.OnKeyListener() {
 			public boolean onKey(DialogInterface dialog, int keyCode, KeyEvent event) {
-				mPrefs.edit()
-						.putInt("controller" + player, event.getDeviceId())
-						.commit();
+				mPrefs.edit().putInt("controller" + player, event.getDeviceId()).apply();
 				dialog.dismiss();
 				return true;
 			}
@@ -540,7 +530,7 @@ public class InputModFragment extends Fragment {
 					return -1;
 			}
 
-			mPrefs.edit().putInt(button + player, keyCode).commit();
+			mPrefs.edit().putInt(button + player, keyCode).apply();
 
 			return keyCode;
 		}
@@ -627,7 +617,7 @@ public class InputModFragment extends Fragment {
 	}
 
 	private void remKeyCode(final String button, TextView output) {
-		mPrefs.edit().remove(button + player).commit();
+		mPrefs.edit().remove(button + player).apply();
 		getKeyCode(button, output);
 	}
 }

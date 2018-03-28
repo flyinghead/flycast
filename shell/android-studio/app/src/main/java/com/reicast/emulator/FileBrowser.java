@@ -404,7 +404,7 @@ public class FileBrowser extends Fragment {
 										getActivity().getString(R.string.config_data, home_directory),
 										R.drawable.ic_notification, Toast.LENGTH_LONG);
 							}
-							mPrefs.edit().putString("home_directory", home_directory).commit();
+							mPrefs.edit().putString("home_directory", home_directory).apply();
                             mCallback.onFolderSelected(Uri.fromFile(new File(home_directory)));
 							JNIdc.config(home_directory);
 						}
@@ -490,11 +490,11 @@ public class FileBrowser extends Fragment {
 
 								if (games) {
 									game_directory = heading;
-									mPrefs.edit().putString(Config.pref_games, heading).commit();
+									mPrefs.edit().putString(Config.pref_games, heading).apply();
 									mCallback.onFolderSelected(Uri.fromFile(new File(game_directory)));
 								} else {
 									home_directory = heading.replace("/data", "");
-									mPrefs.edit().putString(Config.pref_home, home_directory).commit();
+									mPrefs.edit().putString(Config.pref_home, home_directory).apply();
 									if (!DataDirectoryBIOS()) {
 										MainActivity.showToastMessage(getActivity(), 
 												getActivity().getString(R.string.config_data, home_directory),
