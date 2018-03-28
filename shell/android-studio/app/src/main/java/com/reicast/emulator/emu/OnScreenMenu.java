@@ -17,6 +17,7 @@ import android.widget.PopupWindow;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
+import com.reicast.emulator.Emulator;
 import com.reicast.emulator.GL2JNIActivity;
 import com.reicast.emulator.GL2JNINative;
 import com.reicast.emulator.MainActivity;
@@ -39,9 +40,9 @@ public class OnScreenMenu {
 	private File sdcard = Environment.getExternalStorageDirectory();
 	private String home_directory = sdcard + "/dc";
 
-	private int frames = Config.frameskip;
-	private boolean screen = Config.widescreen;
-	private boolean limit = Config.limitfps;
+	private int frames = Emulator.frameskip;
+	private boolean screen = Emulator.widescreen;
+	private boolean limit = Emulator.limitfps;
 	private boolean audio;
 	private boolean masteraudio;
 	private boolean boosted = false;
@@ -58,9 +59,9 @@ public class OnScreenMenu {
 		if (prefs != null) {
 			this.prefs = prefs;
 			home_directory = prefs.getString(Config.pref_home, home_directory);
-			masteraudio = !Config.nosound;
+			masteraudio = !Emulator.nosound;
 			audio = masteraudio;
-			syncedrender = Config.syncedrender;
+			syncedrender = Emulator.syncedrender;
 		}
 		vmuLcd = new VmuLcd(mContext);
 		vmuLcd.setOnClickListener(new OnClickListener() {

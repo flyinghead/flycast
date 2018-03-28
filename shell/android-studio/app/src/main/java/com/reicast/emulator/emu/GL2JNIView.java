@@ -27,6 +27,7 @@ import android.view.WindowManager;
 import android.widget.Toast;
 
 import com.android.util.FileUtils;
+import com.reicast.emulator.Emulator;
 import com.reicast.emulator.GL2JNIActivity;
 import com.reicast.emulator.GL2JNINative;
 import com.reicast.emulator.MainActivity;
@@ -114,7 +115,7 @@ public class GL2JNIView extends GLSurfaceView
 	}
 
 	@TargetApi(Build.VERSION_CODES.HONEYCOMB)
-	public GL2JNIView(Context context, Config config, String newFileName,
+	public GL2JNIView(Context context, String newFileName,
 			boolean translucent, int depth, int stencil, boolean editVjoyMode) {
 		super(context);
 		this.context = context;
@@ -151,7 +152,7 @@ public class GL2JNIView extends GLSurfaceView
 
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
 
-		ethd = new EmuThread(!Config.nosound);
+		ethd = new EmuThread(!Emulator.nosound);
 
 		touchVibrationEnabled = prefs.getBoolean(Config.pref_touchvibe, true);
 		vibrationDuration = prefs.getInt(Config.pref_vibrationDuration, 20);
@@ -172,8 +173,6 @@ public class GL2JNIView extends GLSurfaceView
 			}
 		}
 
-//		config.loadConfigurationPrefs();
-
 		vjoy_d_custom = VJoy.readCustomVjoyValues(context);
 
 		scaleGestureDetector = new ScaleGestureDetector(context, new OscOnScaleGestureListener());
@@ -181,7 +180,7 @@ public class GL2JNIView extends GLSurfaceView
 		// This is the game we are going to run
 		fileName = newFileName;
 
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD && Config.nativeact) {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD && Emulator.nativeact) {
 			if (GL2JNINative.syms != null)
 				JNIdc.data(1, GL2JNINative.syms);
 		} else {

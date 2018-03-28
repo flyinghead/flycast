@@ -47,7 +47,6 @@ public class GL2JNINative extends NativeActivity {
 	MOGAInput moga = new MOGAInput();
 	private SharedPreferences prefs;
 
-	private Config config;
 	private Gamepad pad = new Gamepad();
 
 	public static byte[] syms;
@@ -75,9 +74,9 @@ public class GL2JNINative extends NativeActivity {
 //		isNvidiaShield = Gamepad.IsNvidiaShield();
 		
 		RegisterNative(pad.isXperiaPlay);
-		
-		config = new Config(GL2JNINative.this);
-		config.getConfigurationPrefs();
+
+		Emulator app = (Emulator)getApplicationContext();
+		app.getConfigurationPrefs(GL2JNINative.this);
 		menu = new OnScreenMenu(GL2JNINative.this, prefs);
 
 		String fileName = null;
@@ -214,14 +213,14 @@ public class GL2JNINative extends NativeActivity {
 			}
 		}
 
-		config.loadConfigurationPrefs();
+		app.loadConfigurationPrefs();
 
 		// When viewing a resource, pass its URI to the native code for opening
 		if (getIntent().getAction().equals("com.reicast.EMULATOR"))
 			fileName = Uri.decode(getIntent().getData().toString());
 
 		// Create the actual GLES view
-		mView = new GL2JNIView(getApplication(), config, fileName, false,
+		mView = new GL2JNIView(getApplication(), fileName, false,
 				prefs.getInt(Config.pref_renderdepth, 24), 0, false);
 		setContentView(mView);
 

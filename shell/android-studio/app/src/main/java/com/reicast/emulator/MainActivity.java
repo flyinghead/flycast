@@ -259,9 +259,9 @@ public class MainActivity extends AppCompatActivity implements
 		if (msg != null) {
 			launchBIOSdetection();
 		} else {
-			Config.nativeact = PreferenceManager.getDefaultSharedPreferences(
-					getApplicationContext()).getBoolean(Config.pref_nativeact, Config.nativeact);
-			if (Config.nativeact) {
+			Emulator.nativeact = PreferenceManager.getDefaultSharedPreferences(
+					getApplicationContext()).getBoolean(Emulator.pref_nativeact, Emulator.nativeact);
+			if (Emulator.nativeact) {
 				startActivity(new Intent("com.reicast.EMULATOR", uri, getApplicationContext(),
 						GL2JNINative.class));
 			} else {
