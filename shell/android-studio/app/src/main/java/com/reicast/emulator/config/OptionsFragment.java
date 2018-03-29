@@ -3,14 +3,19 @@ package com.reicast.emulator.config;
 import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
+import android.support.constraint.ConstraintLayout;
+import android.support.design.widget.Snackbar;
+import android.support.graphics.drawable.VectorDrawableCompat;
 import android.support.v4.app.Fragment;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -25,12 +30,11 @@ import android.widget.EditText;
 import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.Spinner;
-import android.widget.Toast;
+import android.widget.TextView;
 
 import com.android.util.FileUtils;
 import com.reicast.emulator.Emulator;
 import com.reicast.emulator.FileBrowser;
-import com.reicast.emulator.GL2JNIActivity;
 import com.reicast.emulator.R;
 import com.reicast.emulator.emu.GL2JNIView;
 import com.reicast.emulator.emu.JNIdc;
@@ -131,8 +135,8 @@ public class OptionsFragment extends Fragment {
 					home_directory = editBrowse.getText().toString();
 					if (home_directory.endsWith("/data")) {
 						home_directory.replace("/data", "");
-						Toast.makeText(getActivity(), R.string.data_folder,
-								Toast.LENGTH_SHORT).show();
+						showToastMessage(getActivity().getString(R.string.data_folder),
+								Snackbar.LENGTH_SHORT);
 					}
 					mPrefs.edit().putString(Config.pref_home, home_directory).apply();
 					JNIdc.config(home_directory);
@@ -649,5 +653,29 @@ public class OptionsFragment extends Fragment {
 			local.renameTo(flash);
 		}
 		mPrefs.edit().putString("localized", localized).apply();
+	}
+
+	private void showToastMessage(String message, int duration) {
+		ConstraintLayout layout = (ConstraintLayout) getActivity().findViewById(R.id.mainui_layout);
+		Snackbar snackbar = Snackbar.make(layout, message, duration);
+		View snackbarLayout = snackbar.getView();
+		snackbarLayout.setMinimumWidth(ConstraintLayout.LayoutParams.MATCH_PARENT);
+		TextView textView = (TextView) snackbarLayout.findViewById(
+				android.support.design.R.id.snackbar_text);
+		textView.setGravity(Gravity.CENTER_VERTICAL);
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1)
+			textView.setTextAlignment(View.TEXT_ALIGNMENT_GRAVITY);
+		Drawable drawable;
+		if (android.os.Build.VERSION.SDK_INT > Build.VERSION_CODES.M) {
+			drawable = getResources().getDrawable(
+					R.drawable.ic_settings, getActivity().getTheme());
+		} else {
+			drawable = VectorDrawableCompat.create(getResources(),
+					R.drawable.ic_settings, getActivity().getTheme());
+		}
+		textView.setCompoundDrawablesWithIntrinsicBounds(drawable, null, null, null);
+		textView.setCompoundDrawablePadding(getResources()
+				.getDimensionPixelOffset(R.dimen.snackbar_icon_padding));
+		snackbar.show();
 	}
 }

@@ -13,4 +13,6 @@
     <dimen name="primary_text_material">16sp</dimen>
     <dimen name="secondary_text_material">14sp</dimen>
 
+    <dimen name="snackbar_icon_padding">6dp</dimen>
+
 </resources>
