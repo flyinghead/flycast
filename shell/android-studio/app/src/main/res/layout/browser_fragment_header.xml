@@ -6,11 +6,6 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="2dp"
-        android:background="@drawable/list_item_border" />
-
     <LinearLayout
         android:id="@+id/childview"
         android:layout_width="match_parent"
@@ -37,9 +32,16 @@
             style="@android:style/TextAppearance.Medium"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginLeft="6dp"
             android:layout_gravity="center_vertical"
             android:layout_weight="1"
             android:text="@string/disk_loading" />
     </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="2dp"
+        android:layout_marginTop="4dp"
+        android:background="@drawable/list_item_border" />
 
 </LinearLayout>

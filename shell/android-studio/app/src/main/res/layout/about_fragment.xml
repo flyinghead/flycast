@@ -34,7 +34,8 @@
         android:layout_marginTop="10dp"
         android:ems="12"
         android:gravity="center"
-        android:text="@string/app_site" />
+        android:text="@string/app_site"
+        android:autoLink="web"/>
         
         <SlidingDrawer
             android:id="@+id/slidingGithub"
