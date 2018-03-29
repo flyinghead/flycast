@@ -7,11 +7,16 @@ import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
+import android.support.constraint.ConstraintLayout;
+import android.support.design.widget.Snackbar;
+import android.support.graphics.drawable.VectorDrawableCompat;
 import android.support.v4.app.Fragment;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -22,7 +27,6 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.android.util.FileUtils;
 import com.reicast.emulator.config.Config;
@@ -52,7 +56,6 @@ public class FileBrowser extends Fragment {
 
 	private Vibrator vib;
 	private Drawable orig_bg;
-	private Activity parentActivity;
 	private boolean ImgBrowse;
 	private boolean games;
 	private OnItemSelectedListener mCallback;
@@ -151,10 +154,8 @@ public class FileBrowser extends Fragment {
 	@Override
 	public void onViewCreated(View view, Bundle savedInstanceState) {
 		// setContentView(R.layout.activity_main);
-		parentActivity = getActivity();
 
-		vib = (Vibrator) parentActivity
-				.getSystemService(Context.VIBRATOR_SERVICE);
+		vib = (Vibrator) getActivity().getSystemService(Context.VIBRATOR_SERVICE);
 
 		/*
 		 * OnTouchListener viblist=new OnTouchListener() {
@@ -169,9 +170,7 @@ public class FileBrowser extends Fragment {
 
 		File home = new File(mPrefs.getString(Config.pref_home, home_directory));
 		if (!home.exists() || !home.isDirectory()) {
-			MainActivity.showToastMessage(getActivity(), 
-					getActivity().getString(R.string.config_home),
-					R.drawable.ic_notification, Toast.LENGTH_LONG);
+			showToastMessage(getActivity().getString(R.string.config_home), Snackbar.LENGTH_LONG);
 		} else {
 			(new installGraphics()).execute();
 		}
@@ -207,9 +206,9 @@ public class FileBrowser extends Fragment {
 					out.close();
 				} else if (!file.exists()) {
 					file.getParentFile().mkdirs();
+					file.createNewFile();
 					OutputStream fo = new FileOutputStream(file);
-					InputStream png = parentActivity.getAssets()
-							.open("buttons.png");
+					InputStream png = getActivity().getAssets().open("buttons.png");
 
 					byte[] buffer = new byte[4096];
 					int len = 0;
@@ -241,7 +240,7 @@ public class FileBrowser extends Fragment {
 			File storage = new File(paths[0]);
 
 			// array of valid image file extensions
-			String[] mediaTypes = parentActivity.getResources().getStringArray(array);
+			String[] mediaTypes = getActivity().getResources().getStringArray(array);
 			FilenameFilter[] filter = new FilenameFilter[mediaTypes.length];
 
 			int i = 0;
@@ -275,12 +274,12 @@ public class FileBrowser extends Fragment {
 		@Override
 		protected void onPostExecute(List<File> items) {
 			if (items != null && !items.isEmpty()) {
-				final LinearLayout list = (LinearLayout) parentActivity.findViewById(R.id.game_list);
+				final LinearLayout list = (LinearLayout) getActivity().findViewById(R.id.game_list);
 				if (list != null) {
 					list.removeAllViews();
 				}
 
-				String heading = parentActivity.getString(R.string.games_listing);
+				String heading = getActivity().getString(R.string.games_listing);
 				createListHeader(heading, list, array == R.array.images);
 				for (int i = 0; i < items.size(); i++) {
 					createListItem(list, items.get(i), i, array == R.array.images);
@@ -328,7 +327,7 @@ public class FileBrowser extends Fragment {
 
 	private void createListHeader(String header_text, View view, boolean hasBios) {
 		if (hasBios) {
-			final View childview = parentActivity.getLayoutInflater().inflate(
+			final View childview = getActivity().getLayoutInflater().inflate(
 					R.layout.bios_list_item, null, false);
 
 			((TextView) childview.findViewById(R.id.item_name))
@@ -367,7 +366,7 @@ public class FileBrowser extends Fragment {
 			((ViewGroup) view).addView(childview);
 		}
 
-		final View headerView = parentActivity.getLayoutInflater().inflate(
+		final View headerView = getActivity().getLayoutInflater().inflate(
 				R.layout.browser_fragment_header, null, false);
 		((ImageView) headerView.findViewById(R.id.item_icon))
 				.setImageResource(R.drawable.open_folder);
@@ -380,11 +379,11 @@ public class FileBrowser extends Fragment {
 	}
 
 	private void createListItem(LinearLayout list, final File game, final int index, final boolean isGame) {				
-		final View childview = parentActivity.getLayoutInflater().inflate(
+		final View childview = getActivity().getLayoutInflater().inflate(
 				R.layout.browser_fragment_item, null, false);
 		
 		XMLParser xmlParser = new XMLParser(game, index, mPrefs);
-		xmlParser.setViewParent(parentActivity, childview, mCallback);
+		xmlParser.setViewParent(getActivity(), childview, mCallback);
 		orig_bg = childview.getBackground();
 
 		childview.findViewById(R.id.childview).setOnClickListener(
@@ -400,9 +399,8 @@ public class FileBrowser extends Fragment {
 							home_directory = game.getAbsolutePath().substring(0,
 									game.getAbsolutePath().lastIndexOf(File.separator)).replace("/data", "");
 							if (!DataDirectoryBIOS()) {
-								MainActivity.showToastMessage(getActivity(), 
-										getActivity().getString(R.string.config_data, home_directory),
-										R.drawable.ic_notification, Toast.LENGTH_LONG);
+								showToastMessage(getActivity().getString(R.string.config_data, home_directory),
+                                        Snackbar.LENGTH_LONG);
 							}
 							mPrefs.edit().putString("home_directory", home_directory).apply();
                             mCallback.onFolderSelected(Uri.fromFile(new File(home_directory)));
@@ -430,8 +428,7 @@ public class FileBrowser extends Fragment {
 	}
 
 	void navigate(final File root_sd) {
-		LinearLayout v = (LinearLayout) parentActivity
-				.findViewById(R.id.game_list);
+		LinearLayout v = (LinearLayout) getActivity().findViewById(R.id.game_list);
 		v.removeAllViews();
 
 		ArrayList<File> list = new ArrayList<File>();
@@ -456,7 +453,7 @@ public class FileBrowser extends Fragment {
 		for (final File file : list) {
 			if (file != null && !file.isDirectory() && !file.getAbsolutePath().equals("/data"))
 				continue;
-			final View childview = parentActivity.getLayoutInflater().inflate(
+			final View childview = getActivity().getLayoutInflater().inflate(
 					R.layout.browser_fragment_item, null, false);
 
 			if (file == null) {
@@ -481,7 +478,7 @@ public class FileBrowser extends Fragment {
 						public void onClick(View view) {
 							if (file != null && file.isDirectory()) {
 								navigate(file);
-								ScrollView sv = (ScrollView) parentActivity
+								ScrollView sv = (ScrollView) getActivity()
 										.findViewById(R.id.game_scroller);
 								sv.scrollTo(0, 0);
 								vib.vibrate(50);
@@ -496,9 +493,9 @@ public class FileBrowser extends Fragment {
 									home_directory = heading.replace("/data", "");
 									mPrefs.edit().putString(Config.pref_home, home_directory).apply();
 									if (!DataDirectoryBIOS()) {
-										MainActivity.showToastMessage(getActivity(), 
-												getActivity().getString(R.string.config_data, home_directory),
-												R.drawable.ic_notification, Toast.LENGTH_LONG);
+										showToastMessage(getActivity().getString(R.string.config_data, home_directory),
+                                                Snackbar.LENGTH_LONG
+                                        );
 									}
                                     mCallback.onFolderSelected(Uri.fromFile(new File(home_directory)));
 									JNIdc.config(home_directory);
@@ -548,5 +545,29 @@ public class FileBrowser extends Fragment {
 				return false;
 			}
 		}
+	}
+
+	private void showToastMessage(String message, int duration) {
+		ConstraintLayout layout = (ConstraintLayout) getActivity().findViewById(R.id.mainui_layout);
+		Snackbar snackbar = Snackbar.make(layout, message, duration);
+		View snackbarLayout = snackbar.getView();
+		snackbarLayout.setMinimumWidth(ConstraintLayout.LayoutParams.MATCH_PARENT);
+		TextView textView = (TextView) snackbarLayout.findViewById(
+				android.support.design.R.id.snackbar_text);
+		textView.setGravity(Gravity.CENTER_VERTICAL);
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1)
+			textView.setTextAlignment(View.TEXT_ALIGNMENT_GRAVITY);
+		Drawable drawable;
+		if (android.os.Build.VERSION.SDK_INT > Build.VERSION_CODES.M) {
+			drawable = getResources().getDrawable(
+					R.drawable.ic_subdirectory_arrow_right, getActivity().getTheme());
+		} else {
+			drawable = VectorDrawableCompat.create(getResources(),
+					R.drawable.ic_subdirectory_arrow_right, getActivity().getTheme());
+		}
+		textView.setCompoundDrawablesWithIntrinsicBounds(drawable, null, null, null);
+		textView.setCompoundDrawablePadding(getResources()
+				.getDimensionPixelOffset(R.dimen.snackbar_icon_padding));
+		snackbar.show();
 	}
 }

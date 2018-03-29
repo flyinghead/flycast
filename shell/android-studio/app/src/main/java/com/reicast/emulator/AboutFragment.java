@@ -1,11 +1,17 @@
 package com.reicast.emulator;
 
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.constraint.ConstraintLayout;
+import android.support.design.widget.Snackbar;
+import android.support.graphics.drawable.VectorDrawableCompat;
 import android.support.v4.app.Fragment;
 import android.text.util.Linkify;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,7 +21,6 @@ import android.widget.ListView;
 import android.widget.SlidingDrawer;
 import android.widget.SlidingDrawer.OnDrawerOpenListener;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.reicast.emulator.config.Config;
 import com.reicast.emulator.debug.GitAdapter;
@@ -172,9 +177,7 @@ public class AboutFragment extends Fragment {
 			} catch (JSONException e) {
 				handler.post(new Runnable() {
 					public void run() {
-						MainActivity.showToastMessage(getActivity(),
-								getActivity().getString(R.string.git_broken),
-								R.drawable.ic_github, Toast.LENGTH_SHORT);
+						showToastMessage(getActivity().getString(R.string.git_broken), Snackbar.LENGTH_SHORT);
 						slidingGithub.close();
 					}
 				});
@@ -182,9 +185,7 @@ public class AboutFragment extends Fragment {
 			} catch (Exception e) {
 				handler.post(new Runnable() {
 					public void run() {
-						MainActivity.showToastMessage(getActivity(),
-								getActivity().getString(R.string.git_broken),
-								R.drawable.ic_github, Toast.LENGTH_SHORT);
+						showToastMessage(getActivity().getString(R.string.git_broken), Snackbar.LENGTH_SHORT);
 						slidingGithub.close();
 					}
 				});
@@ -233,5 +234,29 @@ public class AboutFragment extends Fragment {
 			}
 			return null;
 		}
+	}
+
+	private void showToastMessage(String message, int duration) {
+		ConstraintLayout layout = (ConstraintLayout) getActivity().findViewById(R.id.mainui_layout);
+		Snackbar snackbar = Snackbar.make(layout, message, duration);
+		View snackbarLayout = snackbar.getView();
+		snackbarLayout.setMinimumWidth(ConstraintLayout.LayoutParams.MATCH_PARENT);
+		TextView textView = (TextView) snackbarLayout.findViewById(
+				android.support.design.R.id.snackbar_text);
+		textView.setGravity(Gravity.CENTER_VERTICAL);
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1)
+			textView.setTextAlignment(View.TEXT_ALIGNMENT_GRAVITY);
+		Drawable drawable;
+		if (android.os.Build.VERSION.SDK_INT > Build.VERSION_CODES.M) {
+			drawable = getResources().getDrawable(
+					R.drawable.ic_info_outline, getActivity().getTheme());
+		} else {
+			drawable = VectorDrawableCompat.create(getResources(),
+					R.drawable.ic_info_outline, getActivity().getTheme());
+		}
+		textView.setCompoundDrawablesWithIntrinsicBounds(drawable, null, null, null);
+		textView.setCompoundDrawablePadding(getResources()
+				.getDimensionPixelOffset(R.dimen.snackbar_icon_padding));
+		snackbar.show();
 	}
 }

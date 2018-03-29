@@ -1,8 +1,16 @@
 package com.reicast.emulator.debug;
 
+import android.app.Activity;
 import android.content.Context;
+import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Build;
+import android.support.constraint.ConstraintLayout;
+import android.support.design.widget.Snackbar;
+import android.support.graphics.drawable.VectorDrawableCompat;
+import android.view.Gravity;
+import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.reicast.emulator.R;
@@ -239,10 +247,13 @@ public class GenerateLogs extends AsyncTask<String, Integer, String> {
 	@Override
 	protected void onPostExecute(final String response) {
 		if (response != null && !response.equals(null)) {
-			Toast.makeText(mContext, mContext.getString(R.string.log_saved),
-					Toast.LENGTH_SHORT).show();
-			Toast.makeText(mContext, mContext.getString(R.string.platform),
-					Toast.LENGTH_SHORT).show();
+//			Toast.makeText(mContext, mContext.getString(R.string.log_saved),
+//					Toast.LENGTH_SHORT).show();
+//			Toast.makeText(mContext, mContext.getString(R.string.platform),
+//					Toast.LENGTH_SHORT).show();
+
+			showToastMessage(mContext.getString(R.string.log_saved), Snackbar.LENGTH_SHORT);
+			showToastMessage(mContext.getString(R.string.platform), Snackbar.LENGTH_SHORT);
 			UploadLogs mUploadLogs = new UploadLogs(mContext, currentTime);
 			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
 				mUploadLogs.executeOnExecutor(
@@ -251,5 +262,35 @@ public class GenerateLogs extends AsyncTask<String, Integer, String> {
 				mUploadLogs.execute(response);
 			}
 		}
+	}
+
+	private void showToastMessage(String message, int duration) {
+		ConstraintLayout layout = (ConstraintLayout)
+				((Activity) mContext).findViewById(R.id.mainui_layout);
+		Snackbar snackbar = Snackbar.make(layout, message, duration);
+		View snackbarLayout = snackbar.getView();
+		ConstraintLayout.LayoutParams lp = new ConstraintLayout.LayoutParams(
+				ConstraintLayout.LayoutParams.MATCH_PARENT,
+				ConstraintLayout.LayoutParams.WRAP_CONTENT
+		);
+		lp.setMargins(0, 0, 0, 0);
+		snackbarLayout.setLayoutParams(lp);
+		TextView textView = (TextView) snackbarLayout.findViewById(
+				android.support.design.R.id.snackbar_text);
+		textView.setGravity(Gravity.CENTER_VERTICAL);
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1)
+			textView.setTextAlignment(View.TEXT_ALIGNMENT_GRAVITY);
+		Drawable drawable;
+		if (android.os.Build.VERSION.SDK_INT > Build.VERSION_CODES.M) {
+			drawable = mContext.getResources().getDrawable(
+					R.drawable.ic_send, ((Activity) mContext).getTheme());
+		} else {
+			drawable = VectorDrawableCompat.create(mContext.getResources(),
+					R.drawable.ic_send, ((Activity) mContext).getTheme());
+		}
+		textView.setCompoundDrawablesWithIntrinsicBounds(drawable, null, null, null);
+		textView.setCompoundDrawablePadding(mContext.getResources()
+				.getDimensionPixelOffset(R.dimen.snackbar_icon_padding));
+		snackbar.show();
 	}
 }

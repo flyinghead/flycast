@@ -1,7 +1,6 @@
 package com.reicast.emulator;
 
 import android.Manifest;
-import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -15,26 +14,23 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
+import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.NavigationView;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
-import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.KeyEvent;
-import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnSystemUiVisibilityChangeListener;
 import android.view.WindowManager;
-import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.reicast.emulator.config.Config;
 import com.reicast.emulator.config.InputFragment;
@@ -244,8 +240,7 @@ public class MainActivity extends AppCompatActivity implements
 
 	public void onGameSelected(Uri uri) {
 		if (Config.readOutput("uname -a").equals(getString(R.string.error_kernel))) {
-			MainActivity.showToastMessage(MainActivity.this, getString(R.string.unsupported),
-					R.drawable.ic_notification, Toast.LENGTH_SHORT);
+			showToastMessage(getString(R.string.unsupported), Snackbar.LENGTH_SHORT);
 		}
 		String msg = null;
 		if (!isBiosExisting(MainActivity.this))
@@ -300,8 +295,8 @@ public class MainActivity extends AppCompatActivity implements
 		builder.setNegativeButton(R.string.gdrive,
 				new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int which) {
-						Toast.makeText(MainActivity.this,
-								R.string.require_bios, Toast.LENGTH_SHORT).show();
+						showToastMessage(getString(R.string.require_bios),
+								Snackbar.LENGTH_SHORT);
 					}
 				});
 		builder.create();
@@ -586,29 +581,20 @@ public class MainActivity extends AppCompatActivity implements
 				intent, PackageManager.MATCH_DEFAULT_ONLY);
 		return list.size() > 0;
 	}
-	
-	public static void showToastMessage(Context context, String message,
-			int resource, int duration) {
-		LayoutInflater inflater = (LayoutInflater) context
-				.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-		View layout = inflater.inflate(R.layout.toast_layout, null);
 
-		ImageView image = (ImageView) layout.findViewById(R.id.image);
-		image.setImageResource(resource);
-
-		TextView text = (TextView) layout.findViewById(R.id.text);
-		text.setText(message);
-
-		DisplayMetrics metrics = new DisplayMetrics();
-		WindowManager winman = (WindowManager) context
-				.getSystemService(Context.WINDOW_SERVICE);
-		winman.getDefaultDisplay().getMetrics(metrics);
-
-		Toast toast = new Toast(context);
-		toast.setGravity(Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL, 0,
-						(int) (72 * metrics.density + 0.5f));
-		toast.setDuration(duration);
-		toast.setView(layout);
-		toast.show();
+	private void showToastMessage(String message, int duration) {
+		ConstraintLayout layout = (ConstraintLayout) findViewById(R.id.mainui_layout);
+		Snackbar snackbar = Snackbar.make(layout, message, duration);
+		View snackbarLayout = snackbar.getView();
+		snackbarLayout.setMinimumWidth(ConstraintLayout.LayoutParams.MATCH_PARENT);
+		TextView textView = (TextView) snackbarLayout.findViewById(
+				android.support.design.R.id.snackbar_text);
+		textView.setGravity(Gravity.CENTER_VERTICAL);
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1)
+			textView.setTextAlignment(View.TEXT_ALIGNMENT_GRAVITY);
+		textView.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_notification, 0, 0, 0);
+		textView.setCompoundDrawablePadding(getResources()
+				.getDimensionPixelOffset(R.dimen.snackbar_icon_padding));
+		snackbar.show();
 	}
 }

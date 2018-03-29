@@ -30,8 +30,6 @@ import com.android.util.FileUtils;
 import com.reicast.emulator.Emulator;
 import com.reicast.emulator.GL2JNIActivity;
 import com.reicast.emulator.GL2JNINative;
-import com.reicast.emulator.MainActivity;
-import com.reicast.emulator.R;
 import com.reicast.emulator.config.Config;
 import com.reicast.emulator.emu.OnScreenMenu.FpsPopup;
 import com.reicast.emulator.periph.VJoy;
@@ -686,7 +684,7 @@ public class GL2JNIView extends GLSurfaceView
 			handler.post(new Runnable() {
 				public void run() {
 					Log.d(context.getApplicationContext().getPackageName(), msg);
-					MainActivity.showToastMessage(context, msg, R.drawable.ic_notification, Toast.LENGTH_SHORT);
+					Toast.makeText(context, msg, Toast.LENGTH_SHORT).show();
 				}
 			});
 		}
