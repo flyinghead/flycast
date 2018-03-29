@@ -56,7 +56,6 @@ public class MainActivity extends AppCompatActivity implements
 	private static File sdcard = Environment.getExternalStorageDirectory();
 	public static String home_directory = sdcard.getAbsolutePath();
 
-	private TextView menuHeading;
 	private boolean hasAndroidMarket = false;
 	
 	private UncaughtExceptionHandler mUEHandler;
@@ -172,8 +171,6 @@ public class MainActivity extends AppCompatActivity implements
 			getSupportFragmentManager().beginTransaction()
 			.replace(R.id.fragment_container, firstFragment, "MAIN_BROWSER").commit();
 		}
-
-		menuHeading = (TextView) findViewById(R.id.menu_heading);
 
 		Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
 		setSupportActionBar(toolbar);
@@ -348,12 +345,6 @@ public class MainActivity extends AppCompatActivity implements
 				.beginTransaction()
 				.replace(R.id.fragment_container, firstFragment, "MAIN_BROWSER")
 				.addToBackStack(null).commit();
-	}
-
-	@SuppressLint("NewApi")
-	@Override
-	public void setTitle(CharSequence title) {
-		menuHeading.setText(title);
 	}
 
 	@Override
