@@ -58,6 +58,7 @@ public class FileBrowser extends Fragment {
 	private Drawable orig_bg;
 	private boolean ImgBrowse;
 	private boolean games;
+	private String searchQuery = null;
 	private OnItemSelectedListener mCallback;
 
 	private SharedPreferences mPrefs;
@@ -85,8 +86,10 @@ public class FileBrowser extends Fragment {
 					game_directory = b.getString("path_entry");
 				}
 			}
+			if (b.getString("search_params") != null) {
+				searchQuery = b.getString("search_params");
+			}
 		}
-
 	}
 	
 	public static HashSet<String> getExternalMounts() {
@@ -253,9 +256,11 @@ public class FileBrowser extends Fragment {
 							return false;
 						} else if (array == R.array.flash && !name.startsWith("dc_")) {
 							return false;
-						} else {
+						} else if (searchQuery == null || name.toLowerCase(Locale.getDefault())
+								.contains(searchQuery.toLowerCase(Locale.getDefault())))
 							return StringUtils.endsWithIgnoreCase(name, "." + type);
-						}
+						else
+							return false;
 					}
 
 				};

@@ -55,6 +55,7 @@
     <string name="default_disk">Default Disk</string>
     
     <string name="games_listing">Game List</string>
+    <string name="search_hint">Game (ie. Crazy Taxi)</string>
     
     <string name="game_details">Game Info - %1$s</string>
     <string name="info_unavailable">Game Info Unavailable</string>

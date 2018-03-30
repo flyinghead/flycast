@@ -9,6 +9,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.content.res.Configuration;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -22,6 +23,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Gravity;
@@ -192,6 +194,33 @@ public class MainActivity extends AppCompatActivity implements
 			navigationView.getMenu().findItem(R.id.rateme_menu).setVisible(false);
         }
 		navigationView.setNavigationItemSelectedListener(this);
+
+		final SearchView searchView = (SearchView) findViewById(R.id.searchView);
+		if (searchView != null) {
+			searchView.setQueryHint(getString(R.string.search_hint));
+			searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+				@Override
+				public boolean onQueryTextSubmit(String query) {
+					FileBrowser fragment = new FileBrowser();
+					Bundle args = new Bundle();
+					args.putBoolean("ImgBrowse", true);
+					args.putString("browse_entry", home_directory);
+					args.putBoolean("games_entry", true);
+					args.putString("search_params", query);
+					fragment.setArguments(args);
+					getSupportFragmentManager().beginTransaction()
+							.replace(R.id.fragment_container, fragment, "MAIN_BROWSER")
+							.addToBackStack(null).commit();
+					setTitle(R.string.browser);
+					searchView.onActionViewCollapsed();
+					return false;
+				}
+				@Override
+				public boolean onQueryTextChange(String s) {
+					return false;
+				}
+			});
+		}
 	}
 
 	public void generateErrorLog() {
