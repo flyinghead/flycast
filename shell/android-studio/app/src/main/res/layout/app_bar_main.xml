@@ -18,6 +18,14 @@
             android:background="@android:color/black"
             app:popupTheme="@style/AppTheme.PopupOverlay">
 
+            <android.support.v7.widget.SearchView
+                android:id="@+id/searchView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:layout_gravity="right"
+                android:iconifiedByDefault="true" />
+
         </android.support.v7.widget.Toolbar>
 
     </android.support.design.widget.AppBarLayout>
