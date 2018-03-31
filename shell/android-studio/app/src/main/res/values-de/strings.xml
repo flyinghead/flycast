@@ -115,10 +115,7 @@
     <string name="downloadWarning">ACHTUNG: Sie sind im Begriff Ihre VMUs von Ihrer Dropbox herunterzuladen. Beachten Sie bitte, dass dies ihren letzten Download ÜBERSCHREIBEN wird! Eine Sicherungkopie wird im VmuBackups angelegt.</string>
     <string name="uploadVMU">VMU hochladen</string>
     <string name="downloadVMU">VMU herunterladen</string>
-    
-    <string name="platform">Kopiere Logcat-Inhalte in die Zwischenablage\nBitte in den Fehlerbericht einfügen.</string>
-    <string name="log_saved">Logdatei ins \"Datenverzeichnis\" gespeichert.</string>
-    
+
     <!-- Onscreen Menu -->
     <string name="popup_button_back">Zurück</string>
     <string name="popup_button_disk">Disk wechseln</string>

@@ -615,7 +615,6 @@ public class MainActivity extends AppCompatActivity implements
 		ConstraintLayout layout = (ConstraintLayout) findViewById(R.id.mainui_layout);
 		Snackbar snackbar = Snackbar.make(layout, message, duration);
 		View snackbarLayout = snackbar.getView();
-		snackbarLayout.setMinimumWidth(ConstraintLayout.LayoutParams.MATCH_PARENT);
 		TextView textView = (TextView) snackbarLayout.findViewById(
 				android.support.design.R.id.snackbar_text);
 		textView.setGravity(Gravity.CENTER_VERTICAL);

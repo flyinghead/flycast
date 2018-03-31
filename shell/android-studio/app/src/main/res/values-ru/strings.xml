@@ -124,10 +124,7 @@
         в папке VmuBackups</string>
     <string name="uploadVMU">Загрузить VMU</string>
     <string name="downloadVMU">Скачать VMU</string>
-    
-    <string name="platform">Содержимое logcat скопировано в буфер обмена\nПожалуйста, вставьте лог в отчёт об ошибке</string>
-    <string name="log_saved">Лог сохранён в \"Files Dir\"</string>
-    
+
     <!-- Onscreen Menu -->
     <string name="popup_button_back">Назад</string>
     <string name="popup_button_disk">След. диск</string>
