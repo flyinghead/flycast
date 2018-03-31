@@ -13,6 +13,7 @@ import android.media.AudioManager;
 import android.media.AudioTrack;
 import android.opengl.GLSurfaceView;
 import android.os.Build;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
@@ -150,6 +151,9 @@ public class GL2JNIView extends GLSurfaceView
 
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
 
+        JNIdc.config(prefs.getString(Config.pref_home,
+                Environment.getExternalStorageDirectory().getAbsolutePath()));
+
 		ethd = new EmuThread(!Emulator.nosound);
 
 		touchVibrationEnabled = prefs.getBoolean(Config.pref_touchvibe, true);
@@ -178,7 +182,7 @@ public class GL2JNIView extends GLSurfaceView
 		// This is the game we are going to run
 		fileName = newFileName;
 
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD && Emulator.nativeact) {
+		if (Emulator.nativeact) {
 			if (GL2JNINative.syms != null)
 				JNIdc.data(1, GL2JNINative.syms);
 		} else {

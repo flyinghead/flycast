@@ -4,9 +4,9 @@
     
     <string name="menu_settings">Settings</string>
     
-    <string name="system_path">System Path (location of the data folder with dc_boot.bin/dc_flash.bin inside)</string>
+    <string name="system_path">System Path\n  (location of data folder with dc_boot.bin/dc_flash.bin inside)</string>
     <string name="browser_path">Default System Path</string>
-    <string name="games_path">Storage Path (location of *.gdi, *.chd or *.cdi images)</string>
+    <string name="games_path">Storage Path\n  (location of *.gdi, *.chd or *.cdi images)</string>
     <string name="button_theme">Onscreen Button Theme</string>
     <string name="bios_selection">Select a BIOS source</string>
 

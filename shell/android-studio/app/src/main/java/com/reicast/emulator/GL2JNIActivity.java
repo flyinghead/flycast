@@ -58,7 +58,7 @@ public class GL2JNIActivity extends Activity {
 					WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
 		}
 		Emulator app = (Emulator)getApplicationContext();
-		app.getConfigurationPrefs(GL2JNIActivity.this);
+		app.getConfigurationPrefs(prefs);
 		menu = new OnScreenMenu(GL2JNIActivity.this, prefs);
 
 		pad.isXperiaPlay = pad.IsXperiaPlay();

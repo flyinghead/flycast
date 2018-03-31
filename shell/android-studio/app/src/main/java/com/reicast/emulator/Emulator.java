@@ -50,8 +50,7 @@ public class Emulator extends Application {
      * Load the user configuration from preferences
      *
      */
-    public void getConfigurationPrefs(Context mContext) {
-        SharedPreferences mPrefs = PreferenceManager.getDefaultSharedPreferences(mContext);
+    public void getConfigurationPrefs(SharedPreferences mPrefs) {
         Emulator.dynarecopt = mPrefs.getBoolean(pref_dynarecopt, dynarecopt);
         Emulator.unstableopt = mPrefs.getBoolean(pref_unstable, unstableopt);
         Emulator.cable = mPrefs.getInt(pref_cable, cable);

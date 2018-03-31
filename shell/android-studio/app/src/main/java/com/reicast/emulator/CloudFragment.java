@@ -15,6 +15,8 @@ import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Environment;
+import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -30,6 +32,7 @@ import com.dropbox.client2.exception.DropboxException;
 import com.dropbox.client2.session.AccessTokenPair;
 import com.dropbox.client2.session.AppKeyPair;
 import com.dropbox.client2.session.TokenPair;
+import com.reicast.emulator.config.Config;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -49,6 +52,7 @@ public class CloudFragment extends Fragment {
 	boolean actionRequired=false;
 	public String task = "";
 	DropBoxClient client = null;
+	private String home_directory;
 	
 	String[] vmus = {"vmu_save_A1.bin","vmu_save_A2.bin",
 					 "vmu_save_B1.bin","vmu_save_B2.bin",
@@ -62,6 +66,9 @@ public class CloudFragment extends Fragment {
 
 	@Override
 	public void onViewCreated(View view, Bundle savedInstanceState) {
+		SharedPreferences mPrefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+		home_directory = mPrefs.getString(Config.pref_home,
+				Environment.getExternalStorageDirectory().getAbsolutePath());
         buttonListener();
         confirmDialog = new AlertDialog.Builder(getActivity());
         setClient();
@@ -134,14 +141,16 @@ public class CloudFragment extends Fragment {
 				for(int k=0;k<vmus.length;k++){
 					String result = "";
 					try {
-						String vmuPath = MainActivity.home_directory+"/"+vmus[k];
+						String vmuPath = home_directory+"/"+vmus[k];
 						File vmu = new File(vmuPath);
 						if(vmu.exists() || task.equals("Download") ){     
-							result = new netOperation(client).execute(task,vmuPath,vmus[k]).get(); 
+							result = new netOperation(client, home_directory).execute(
+									task,vmuPath,vmus[k]).get();
 						}
 						else{
 							result = "Ok"; // The result is still ok, because the vmu bin doesn't exist ;)
-							Toast.makeText(getActivity(), vmus[k]+" doesn't exist, skipping it!", Toast.LENGTH_SHORT).show();
+							Toast.makeText(getActivity(), vmus[k]+ " doesn't exist, skipping it!",
+									Toast.LENGTH_SHORT).show();
 						}
 					} catch (InterruptedException e) {
 						e.printStackTrace();
@@ -230,10 +239,11 @@ class DropBoxClient {
 class netOperation extends AsyncTask<String, Void, String> {
 	
 	DropBoxClient client = null;
+	private String home_directory;
 	
-	
-	public netOperation(DropBoxClient client){
+	public netOperation(DropBoxClient client, String home_directory){
 		this.client = client;
+		this.home_directory = home_directory;
 	}
 
 	public boolean uploadFile(String filePath, String fileName) {
@@ -310,13 +320,13 @@ class netOperation extends AsyncTask<String, Void, String> {
     
     
     void  createBackupOfVmu(String vmuName){
-    	File backupDir = new File(MainActivity.home_directory+"/VmuBackups/");
+    	File backupDir = new File(home_directory+"/VmuBackups/");
     	 if(!backupDir.exists()) {
          		backupDir.mkdirs();
          } 
     	
-        File source = new File(MainActivity.home_directory+"/"+vmuName);
-        File destination = new File(MainActivity.home_directory+"/VmuBackups/"+vmuName);
+        File source = new File(home_directory+"/"+vmuName);
+        File destination = new File(home_directory+"/VmuBackups/"+vmuName);
         if(!destination.exists()) {
         	try {
 				destination.createNewFile();
@@ -339,9 +349,6 @@ class netOperation extends AsyncTask<String, Void, String> {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-        
-
-
     }
     
 }

@@ -396,7 +396,7 @@ public class FileBrowser extends Fragment {
 								showToastMessage(getActivity().getString(R.string.config_data, home_directory),
                                         Snackbar.LENGTH_LONG);
 							}
-							mPrefs.edit().putString("home_directory", home_directory).apply();
+							mPrefs.edit().putString(Config.pref_home, home_directory).apply();
                             mCallback.onFolderSelected(Uri.fromFile(new File(home_directory)));
 							JNIdc.config(home_directory);
 						}
