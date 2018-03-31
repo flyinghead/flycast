@@ -117,10 +117,7 @@
         criado na pasta VmuBackups!</string>
     <string name="uploadVMU">Upload VMU</string>
     <string name="downloadVMU">Download VMU</string>
-    
-    <string name="platform">Copiar conteúdo do logcat para o clipboard\nPor favor, cole no relatório de emissão</string>
-    <string name="log_saved">Log salvo em \"Files Dir\" path</string>
-    
+
     <!-- Onscreen Menu -->
     <string name="popup_button_back">Voltar</string>
     <string name="popup_button_disk">Trocar Disco</string>

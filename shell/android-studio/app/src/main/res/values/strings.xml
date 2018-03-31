@@ -128,8 +128,7 @@
     <string name="uploadVMU">Upload VMU</string>
     <string name="downloadVMU">Download VMU</string>
     
-    <string name="platform">Copying logcat content to clipboard\nPlease paste in the issue report</string>
-    <string name="log_saved">Log saved to \"Files Dir\" path</string>
+    <string name="log_saved">Logcat saved and copied to clipboard\nPlease paste inside the Github issue</string>
     
     <!-- Onscreen Menu -->
     <string name="popup_button_back">Back</string>

@@ -79,10 +79,7 @@
     <string name="downloadWarning">주의:VMUs파일을 드롭박스에서 다운받아서 덮어쓰게 됩니다. 실행전에 VMUs파일을 다른곳에 백업하세요! </string>
     <string name="uploadVMU">VMU 올리기</string>
     <string name="downloadVMU">VMU 내려받기</string>
-    
-    <string name="platform">Copying logcat content to clipboard\nPlease paste in the issue report</string>
-    <string name="log_saved">Log saved to \"Files Dir\" path</string>
-    
+
     <!-- Onscreen Menu -->
     <string name="popup_button_back">뒤로</string>
     <string name="popup_button_disk">Disk Swap</string>
