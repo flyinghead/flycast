@@ -208,18 +208,17 @@ public class FileBrowser extends Fragment {
 					in.close();
 					out.close();
 				} else if (!file.exists()) {
-					file.getParentFile().mkdirs();
-					file.createNewFile();
-					OutputStream fo = new FileOutputStream(file);
+					org.apache.commons.io.FileUtils.touch(file);
 					InputStream png = getActivity().getAssets().open("buttons.png");
-
+					OutputStream fo = new FileOutputStream(file);
 					byte[] buffer = new byte[4096];
-					int len = 0;
-					while ((len = png.read(buffer)) != -1) {
-						fo.write(buffer, 0, len);
+					int read;
+					while ((read = png.read(buffer)) != -1) {
+						fo.write(buffer, 0, read);
 					}
-					fo.close();
 					png.close();
+					fo.flush();
+					fo.close();
 				}
 			} catch (FileNotFoundException fnf) {
 				fnf.printStackTrace();
