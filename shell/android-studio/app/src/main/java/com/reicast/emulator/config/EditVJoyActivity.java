@@ -56,7 +56,7 @@ public class EditVJoyActivity extends Activity {
 		SharedPreferences prefs = PreferenceManager
 				.getDefaultSharedPreferences(this);
 		Emulator app = (Emulator)getApplicationContext();
-		app.getConfigurationPrefs(EditVJoyActivity.this);
+		app.getConfigurationPrefs(prefs);
 
 		// Create the actual GLES view
 		mView = new GL2JNIView(EditVJoyActivity.this, null, false,

@@ -51,9 +51,6 @@ public class MainActivity extends AppCompatActivity implements
 	private static final int PERMISSION_REQUEST = 1001;
 
 	private SharedPreferences mPrefs;
-	private static File sdcard = Environment.getExternalStorageDirectory();
-	public static String home_directory = sdcard.getAbsolutePath();
-
 	private boolean hasAndroidMarket = false;
 	
 	private UncaughtExceptionHandler mUEHandler;
@@ -117,8 +114,6 @@ public class MainActivity extends AppCompatActivity implements
 					PERMISSION_REQUEST);
 		}
 
-		home_directory = mPrefs.getString("home_directory", home_directory);
-
 		Intent market = new Intent(Intent.ACTION_VIEW, Uri.parse("market://search?q=dummy"));
 		if (isCallable(market)) {
 			hasAndroidMarket = true;
@@ -127,7 +122,6 @@ public class MainActivity extends AppCompatActivity implements
 		if (!getFilesDir().exists()) {
 			getFilesDir().mkdir();
 		}
-		JNIdc.config(home_directory);
 
 		// When viewing a resource, pass its URI to the native code for opening
 		Intent intent = getIntent();
@@ -152,22 +146,7 @@ public class MainActivity extends AppCompatActivity implements
 					return;
 				}
 			}
-			// Create a new Fragment to be placed in the activity layout
-			FileBrowser firstFragment = new FileBrowser();
-			Bundle args = new Bundle();
-			args.putBoolean("ImgBrowse", true);
-			args.putString("browse_entry", null);
-			// specify a path for selecting folder options
-			args.putBoolean("games_entry", false);
-			// specify if the desired path is for games or data
-			firstFragment.setArguments(args);
-			// In case this activity was started with instructions from an intent
-			// pass the Intent's extras to the fragment as arguments
-			// firstFragment.setArguments(getIntent().getExtras());
-
-			// Add the fragment to the 'fragment_container' FrameLayout
-			getSupportFragmentManager().beginTransaction().replace(
-					R.id.fragment_container, firstFragment, "MAIN_BROWSER").commit();
+            onMainBrowseSelected(true, null, false, null);
 		}
 
 		Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -201,17 +180,9 @@ public class MainActivity extends AppCompatActivity implements
 			searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
 				@Override
 				public boolean onQueryTextSubmit(String query) {
-					FileBrowser fragment = new FileBrowser();
-					Bundle args = new Bundle();
-					args.putBoolean("ImgBrowse", true);
-					args.putString("browse_entry", home_directory);
-					args.putBoolean("games_entry", true);
-					args.putString("search_params", query);
-					fragment.setArguments(args);
-					getSupportFragmentManager().beginTransaction()
-							.replace(R.id.fragment_container, fragment, "MAIN_BROWSER")
-							.addToBackStack(null).commit();
-					setTitle(R.string.browser);
+                    onMainBrowseSelected(true, mPrefs.getString(Config.pref_games,
+                            Environment.getExternalStorageDirectory().getAbsolutePath()),
+                            true, query);
 					searchView.onActionViewCollapsed();
 					return false;
 				}
@@ -253,43 +224,41 @@ public class MainActivity extends AppCompatActivity implements
 		builder.show();
 	}
 
-    public static boolean isBiosExisting(Context context) {
-        SharedPreferences mPrefs = PreferenceManager.getDefaultSharedPreferences(context);
-        home_directory = mPrefs.getString("home_directory", home_directory);
-        File bios = new File(home_directory, "data/dc_boot.bin");
-        return bios.exists();
+    public static boolean isBiosExisting(String home_directory) {
+        return new File (home_directory, "data/dc_boot.bin").exists();
     }
 
-    public static boolean isFlashExisting(Context context) {
-        SharedPreferences mPrefs = PreferenceManager.getDefaultSharedPreferences(context);
-        home_directory = mPrefs.getString("home_directory", home_directory);
-        File flash = new File(home_directory, "data/dc_flash.bin");
-        return flash.exists();
+    public static boolean isFlashExisting(String home_directory) {
+		return new File (home_directory, "data/dc_flash.bin").exists();
     }
 
 	public void onGameSelected(Uri uri) {
 		if (Config.readOutput("uname -a").equals(getString(R.string.error_kernel))) {
 			showToastMessage(getString(R.string.unsupported), Snackbar.LENGTH_SHORT);
 		}
-		String msg = null;
-		if (!isBiosExisting(MainActivity.this))
-			msg = getString(R.string.missing_bios, home_directory);
-		else if (!isFlashExisting(MainActivity.this))
-			msg = getString(R.string.missing_flash, home_directory);
+		String home_directory = mPrefs.getString(Config.pref_home,
+				Environment.getExternalStorageDirectory().getAbsolutePath());
 
-		if (msg != null) {
-			launchBIOSdetection();
-		} else {
-			Emulator.nativeact = PreferenceManager.getDefaultSharedPreferences(
-					getApplicationContext()).getBoolean(Emulator.pref_nativeact, Emulator.nativeact);
-			if (Emulator.nativeact) {
-				startActivity(new Intent("com.reicast.EMULATOR", uri, getApplicationContext(),
-						GL2JNINative.class));
-			} else {
-				startActivity(new Intent("com.reicast.EMULATOR", uri, getApplicationContext(),
-						GL2JNIActivity.class));
-			}
-		}
+        if (!isBiosExisting(home_directory)) {
+            launchBIOSdetection();
+            return;
+        }
+		if (!isFlashExisting(home_directory)) {
+            launchBIOSdetection();
+            return;
+        }
+
+		JNIdc.config(home_directory);
+
+        Emulator.nativeact = PreferenceManager.getDefaultSharedPreferences(
+                getApplicationContext()).getBoolean(Emulator.pref_nativeact, Emulator.nativeact);
+        if (Emulator.nativeact) {
+            startActivity(new Intent("com.reicast.EMULATOR", uri, getApplicationContext(),
+                    GL2JNINative.class));
+        } else {
+            startActivity(new Intent("com.reicast.EMULATOR", uri, getApplicationContext(),
+                    GL2JNIActivity.class));
+        }
 	}
 	
 	private void launchBIOSdetection() {
@@ -298,27 +267,9 @@ public class MainActivity extends AppCompatActivity implements
 		builder.setPositiveButton(R.string.browse,
 				new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int which) {
-						FileBrowser firstFragment = new FileBrowser();
-						Bundle args = new Bundle();
-						// args.putBoolean("ImgBrowse", false);
-						// specify ImgBrowse option. true = images, false = folders only
-						args.putString("browse_entry", sdcard.toString());
-						// specify a path for selecting folder options
-						args.putBoolean("games_entry", false);
-						// selecting a BIOS folder, so this is not games
-
-						firstFragment.setArguments(args);
-						// In case this activity was started with instructions from an intent
-						// pass the Intent's extras to the fragment as arguments
-						// firstFragment.setArguments(getIntent().getExtras());
-
-						// Add the fragment to the 'fragment_container' FrameLayout
-						getSupportFragmentManager()
-						.beginTransaction()
-						.replace(R.id.fragment_container,
-								firstFragment,
-								"MAIN_BROWSER")
-								.addToBackStack(null).commit();
+                        onMainBrowseSelected(false,
+                                Environment.getExternalStorageDirectory().getAbsolutePath(),
+                                false, null);
 					}
 				});
 		builder.setNegativeButton(R.string.gdrive,
@@ -345,18 +296,33 @@ public class MainActivity extends AppCompatActivity implements
 		OptionsFragment optsFrag = new OptionsFragment();
 		getSupportFragmentManager().beginTransaction().replace(
 				R.id.fragment_container, optsFrag, "OPTIONS_FRAG").commit();
+		setTitle(R.string.settings);
 		return;
 	}
 
-	public void onMainBrowseSelected(String path_entry, boolean games) {
+    /**
+     * Launch the browser activity with specified parameters
+     *
+     * @param browse
+     *            Conditional for image files or folders
+     * @param path
+     *            The root path of the browser fragment
+     * @param games
+     *            Conditional for viewing games or BIOS
+     * @param query
+     *            Search parameters to limit list items
+     */
+	public void onMainBrowseSelected(boolean browse, String path, boolean games, String query) {
 		FileBrowser firstFragment = new FileBrowser();
 		Bundle args = new Bundle();
-		args.putBoolean("ImgBrowse", false);
+//		args.putBoolean("ImgBrowse", false);
+        args.putBoolean("ImgBrowse", browse);
 		// specify ImgBrowse option. true = images, false = folders only
-		args.putString("browse_entry", path_entry);
+		args.putString("browse_entry", path);
 		// specify a path for selecting folder options
 		args.putBoolean("games_entry", games);
 		// specify if the desired path is for games or data
+        args.putString("search_params", query);
 
 		firstFragment.setArguments(args);
 		// In case this activity was started with special instructions from
@@ -368,6 +334,7 @@ public class MainActivity extends AppCompatActivity implements
 				.beginTransaction()
 				.replace(R.id.fragment_container, firstFragment, "MAIN_BROWSER")
 				.addToBackStack(null).commit();
+        setTitle(R.string.browser);
 	}
 
 	@Override
@@ -389,11 +356,11 @@ public class MainActivity extends AppCompatActivity implements
 				if (readyToQuit) {
 					MainActivity.this.finish();
 				} else {
-					launchMainFragment(fragment);
+					launchMainFragment();
 				}
 				return true;
 			} else {
-				launchMainFragment(fragment);
+				launchMainFragment();
 				return true;
 			}
 
@@ -402,17 +369,8 @@ public class MainActivity extends AppCompatActivity implements
 		return super.onKeyDown(keyCode, event);
 	}
 	
-	private void launchMainFragment(Fragment fragment) {
-		fragment = new FileBrowser();
-		Bundle args = new Bundle();
-		args.putBoolean("ImgBrowse", true);
-		args.putString("browse_entry", null);
-		args.putBoolean("games_entry", false);
-		fragment.setArguments(args);
-		getSupportFragmentManager().beginTransaction()
-				.replace(R.id.fragment_container, fragment, "MAIN_BROWSER")
-				.addToBackStack(null).commit();
-		setTitle(R.string.browser);
+	private void launchMainFragment() {
+        onMainBrowseSelected(true, null, false, null);
 	}
 
 	@Override

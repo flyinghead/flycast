@@ -10,6 +10,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
@@ -41,7 +42,6 @@ import com.reicast.emulator.periph.MOGAInput;
 
 public class InputFragment extends Fragment {
 
-	private Activity parentActivity;
 	private int listenForButton = 0;
 	private AlertDialog alertDialogSelectController;
 	private SharedPreferences sharedPreferences;
@@ -66,16 +66,14 @@ public class InputFragment extends Fragment {
 
 	@Override
 	public void onViewCreated(View view, Bundle savedInstanceState) {
-		parentActivity = getActivity();
-
-		moga.onCreate(parentActivity, pad);
+		moga.onCreate(getActivity(), pad);
 		moga.mListener.setPlayerNum(1);
 
 		sharedPreferences = PreferenceManager
-				.getDefaultSharedPreferences(parentActivity);
+				.getDefaultSharedPreferences(getActivity());
 
 		Config.vibrationDuration = sharedPreferences.getInt(Config.pref_vibrationDuration, 20);
-		vib = (Vibrator) parentActivity.getSystemService(Context.VIBRATOR_SERVICE);
+		vib = (Vibrator) getActivity().getSystemService(Context.VIBRATOR_SERVICE);
 
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
 			ImageView icon_a = (ImageView) getView().findViewById(
@@ -96,12 +94,16 @@ public class InputFragment extends Fragment {
 				R.id.buttonLaunchEditor);
 		buttonLaunchEditor.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
-				Intent inte = new Intent(parentActivity, EditVJoyActivity.class);
+				Intent inte = new Intent(getActivity(), EditVJoyActivity.class);
 				startActivity(inte);
 			}
 		});
 
-		if (!MainActivity.isBiosExisting(parentActivity) || !MainActivity.isFlashExisting(parentActivity))
+		SharedPreferences mPrefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+		String home_directory = mPrefs.getString(Config.pref_home,
+				Environment.getExternalStorageDirectory().getAbsolutePath());
+
+		if (!MainActivity.isBiosExisting(home_directory) || !MainActivity.isFlashExisting(home_directory))
 			buttonLaunchEditor.setEnabled(false);
 
 		final TextView duration = (TextView) getView().findViewById(R.id.vibDuration_current);
@@ -259,7 +261,7 @@ public class InputFragment extends Fragment {
 
 		} else {
 
-			TableLayout input_devices = (TableLayout) parentActivity
+			TableLayout input_devices = (TableLayout) getActivity()
 					.findViewById(R.id.input_devices);
 			input_devices.setVisibility(View.GONE);
 
@@ -391,7 +393,7 @@ public class InputFragment extends Fragment {
 	private void selectController(int playerNum) {
 		listenForButton = playerNum;
 
-		AlertDialog.Builder builder = new AlertDialog.Builder(parentActivity);
+		AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
 		builder.setTitle(R.string.select_controller_title);
 		builder.setMessage(getString(R.string.select_controller_message,
 				String.valueOf(listenForButton)));
@@ -466,7 +468,7 @@ public class InputFragment extends Fragment {
 				|| descriptor.equals(deviceDescriptorPlayer2)
 				|| descriptor.equals(deviceDescriptorPlayer3)
 				|| descriptor.equals(deviceDescriptorPlayer4)) {
-			Toast.makeText(parentActivity, R.string.controller_already_in_use,
+			Toast.makeText(getActivity(), R.string.controller_already_in_use,
 					Toast.LENGTH_SHORT).show();
 			return true;
 		}
