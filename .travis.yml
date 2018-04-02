@@ -47,7 +47,7 @@ script:
 before_deploy:
 - cd ../../
 - mkdir -p artifacts/$GIT_BUILD/
-- cp shell/android-studio/app/build/outputs/apk/app-debug.apk  artifacts/$GIT_BUILD/reicast-android-debug-$GIT_HASH.apk
+- cp shell/android-studio/app/build/outputs/apk/debug/app-debug.apk artifacts/$GIT_BUILD/reicast-android-debug-$GIT_HASH.apk
 deploy:
   provider: s3
   access_key_id: AKIAJR5J3OHAQUP5BHHQ

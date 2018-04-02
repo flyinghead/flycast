@@ -49,10 +49,6 @@
         <meta-data
             android:name="xperiaplayoptimized_content"
             android:resource="@drawable/ic_xperia_play" />
-        
-        <uses-library 
-        	android:name="org.apache.http.legacy" 
-        	android:required="false" />
 
         <activity
             android:name=".MainActivity"

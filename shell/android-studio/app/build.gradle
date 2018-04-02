@@ -45,10 +45,7 @@ afterEvaluate {
                 standardOutput = hashtag
             }
             hashtag = hashtag.toString().trim()
-            v.outputs.each { output ->
-                output.outputFile = new File(output.outputFile.parent,
-                        "reicast-android-" + hashtag.substring(0,7) + ".apk")
-            }
+            v.outputs[0].outputFileName = "reicast-android-" + hashtag.substring(0,7) + ".apk"
             file('src/main/assets/build').text = hashtag
         }
     }
