@@ -25,6 +25,10 @@
 #define LWS_BUILD_HASH "unknown-build-hash"
 #endif
 
+#ifdef WIN32
+#define getdtablesize() 30000
+#endif
+
 static const char *library_version = LWS_LIBRARY_VERSION " " LWS_BUILD_HASH;
 
 /**
@@ -122,7 +126,11 @@ libwebsocket_create_context(struct lws_context_creation_info *info)
 	context->options = info->options;
 	context->iface = info->iface;
 	/* to reduce this allocation, */
+#ifdef WIN32
+	context->max_fds = getdtablesize ();
+#else
 	context->max_fds = sysconf(_SC_OPEN_MAX);
+#endif
 	lwsl_notice(" static allocation: %u + (%u x %u fds) = %u bytes\n",
 		sizeof(struct libwebsocket_context),
 		sizeof(struct libwebsocket_pollfd) +
