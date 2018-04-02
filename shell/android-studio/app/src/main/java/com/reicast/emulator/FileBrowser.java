@@ -467,9 +467,8 @@ public class FileBrowser extends Fragment {
 				((TextView) childview.findViewById(R.id.item_name)).setText(file.getName());
 
 			((ImageView) childview.findViewById(R.id.item_icon))
-					.setImageResource(file == null ? R.drawable.config
-							: file.isDirectory() ? R.drawable.open_folder
-									: R.drawable.disk_unknown);
+					.setImageResource(file == null ? R.drawable.config : file.isDirectory()
+							? R.drawable.open_folder : R.drawable.disk_unknown);
 
 			childview.setTag(file);
 

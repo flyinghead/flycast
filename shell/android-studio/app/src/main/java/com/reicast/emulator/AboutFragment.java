@@ -219,9 +219,9 @@ public class AboutFragment extends Fragment {
 			HttpURLConnection conn = (HttpURLConnection) new URL(urlString).openConnection();
 			conn.setRequestMethod("GET");
 			conn.setDoInput(true);
-			int responseCode = conn.getResponseCode();
 
-			if (responseCode != HttpsURLConnection.HTTP_OK) {
+			int responseCode = conn.getResponseCode();
+			if (responseCode == HttpsURLConnection.HTTP_OK) {
 				InputStream is = new BufferedInputStream(conn.getInputStream());
 				ByteArrayOutputStream result = new ByteArrayOutputStream();
 				byte[] buffer = new byte[1024];

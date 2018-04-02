@@ -107,8 +107,7 @@ public class UploadLogs extends AsyncTask<String, Integer, Object> {
 			writer.close();
 			os.close();
 
-			int responseCode=conn.getResponseCode();
-
+			int responseCode = conn.getResponseCode();
 			if (responseCode != HttpsURLConnection.HTTP_OK) {
 				String header = conn.getHeaderField("Location");
 				if (header != null && header.length() != 0) {

@@ -87,7 +87,7 @@
     <string name="moga_connect">MOGA verbunden!</string>
 
     <string name="about_text">reicast ist ein Dreamcast-Emulator</string>
-    <string name="revision_text">Version: %1$s</string>
+    <string name="revision_text">Version: %1$s [%2$s]</string>
     
     <string-array name="controllers">
         <item>Controller A</item>

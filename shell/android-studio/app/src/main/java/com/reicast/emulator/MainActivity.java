@@ -247,7 +247,8 @@ public class MainActivity extends AppCompatActivity implements
 
 	public void onGameSelected(Uri uri) {
 		if (Config.readOutput("uname -a").equals(getString(R.string.error_kernel))) {
-			MainActivity.showToastMessage(MainActivity.this, getString(R.string.unsupported), R.drawable.ic_notification, Toast.LENGTH_SHORT);
+			MainActivity.showToastMessage(MainActivity.this, getString(R.string.unsupported),
+					R.drawable.ic_notification, Toast.LENGTH_SHORT);
 		}
 		String msg = null;
 		if (!isBiosExisting(MainActivity.this))
@@ -258,7 +259,8 @@ public class MainActivity extends AppCompatActivity implements
 		if (msg != null) {
 			launchBIOSdetection();
 		} else {
-			Config.nativeact = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).getBoolean(Config.pref_nativeact, Config.nativeact);
+			Config.nativeact = PreferenceManager.getDefaultSharedPreferences(
+					getApplicationContext()).getBoolean(Config.pref_nativeact, Config.nativeact);
 			if (Config.nativeact) {
 				startActivity(new Intent("com.reicast.EMULATOR", uri, getApplicationContext(),
 						GL2JNINative.class));
@@ -301,7 +303,8 @@ public class MainActivity extends AppCompatActivity implements
 		builder.setNegativeButton(R.string.gdrive,
 				new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int which) {
-						Toast.makeText(MainActivity.this, R.string.require_bios, Toast.LENGTH_SHORT).show();
+						Toast.makeText(MainActivity.this,
+								R.string.require_bios, Toast.LENGTH_SHORT).show();
 					}
 				});
 		builder.create();

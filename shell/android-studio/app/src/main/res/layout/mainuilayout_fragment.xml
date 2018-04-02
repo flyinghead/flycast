@@ -1,64 +1,57 @@
-<android.support.v4.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/drawer_layout"
+    android:id="@+id/content_frame"
     android:layout_width="match_parent"
     android:layout_height="match_parent" >
 
     <!-- The main content view -->
-
-    <FrameLayout
-        android:id="@+id/content_frame"
+    <LinearLayout
+        android:id="@+id/root_list"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" >
+        android:layout_height="match_parent"
+        android:orientation="vertical" >
 
         <LinearLayout
-            android:id="@+id/root_list"
+            android:id="@+id/header_list"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical" >
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="2dp"
+            android:orientation="horizontal" >
 
             <LinearLayout
-                android:id="@+id/header_list"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_width="wrap_content"
+                android:layout_height="48dp"
                 android:layout_marginBottom="2dp"
                 android:orientation="horizontal" >
 
-                <LinearLayout
+                <ImageView
+                    android:id="@+id/header_menu"
                     android:layout_width="wrap_content"
-                    android:layout_height="48dp"
-                    android:layout_marginBottom="2dp"
-                    android:orientation="horizontal" >
+                    android:layout_height="fill_parent"
+                    app:srcCompat="@drawable/ic_drawer" />
 
-                    <ImageView
-                        android:id="@+id/header_menu"
-                        android:layout_width="wrap_content"
-                        android:layout_height="fill_parent"
-                        app:srcCompat="@drawable/ic_drawer" />
-
-                    <ImageView
-                        android:id="@+id/header_icon"
-                        android:layout_width="wrap_content"
-                        android:layout_height="fill_parent"
-                        app:srcCompat="@drawable/ic_launcher" />
-                </LinearLayout>
-
-                <TextView
-                    android:id="@+id/menu_heading"
-                    style="@android:style/TextAppearance.Large"
+                <ImageView
+                    android:id="@+id/header_icon"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center_vertical"
-                    android:layout_marginLeft="4dp"
-                    android:layout_weight="1"
-                    android:text="@string/app_name" />
+                    android:layout_height="fill_parent"
+                    app:srcCompat="@drawable/ic_launcher" />
             </LinearLayout>
 
-            <FrameLayout
-                android:id="@+id/fragment_container"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent" />
+            <TextView
+                android:id="@+id/menu_heading"
+                style="@android:style/TextAppearance.Large"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:layout_marginLeft="4dp"
+                android:layout_weight="1"
+                android:text="@string/app_name" />
         </LinearLayout>
-    </FrameLayout>
 
-</android.support.v4.widget.DrawerLayout>
+        <FrameLayout
+            android:id="@+id/fragment_container"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+    </LinearLayout>
+
+</FrameLayout>
