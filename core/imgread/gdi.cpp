@@ -1,6 +1,10 @@
 #include "common.h"
 #include <ctype.h>
 #include <sstream>
+#ifdef WIN32
+#include <BaseTsd.h>
+typedef SSIZE_T ssize_t;
+#endif
 
 Disc* load_gdi(const char* file)
 {
