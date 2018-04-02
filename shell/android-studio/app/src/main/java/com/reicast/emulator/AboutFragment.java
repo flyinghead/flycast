@@ -223,14 +223,17 @@ public class AboutFragment extends Fragment {
 
 			int responseCode = conn.getResponseCode();
 			if (responseCode == HttpsURLConnection.HTTP_OK) {
-				InputStream is = new BufferedInputStream(conn.getInputStream());
-				ByteArrayOutputStream result = new ByteArrayOutputStream();
-				byte[] buffer = new byte[1024];
-				int length;
-				while ((length = is.read(buffer)) != -1) {
-					result.write(buffer, 0, length);
-				}
-				return new JSONArray(result.toString());
+				InputStream in = conn.getInputStream();
+				BufferedReader streamReader = new BufferedReader(
+						new InputStreamReader(in, "UTF-8"));
+				StringBuilder responseStrBuilder = new StringBuilder();
+
+				String inputStr;
+				while ((inputStr = streamReader.readLine()) != null)
+					responseStrBuilder.append(inputStr);
+
+				in.close();
+				return new JSONArray(responseStrBuilder.toString());
 			}
 			return null;
 		}

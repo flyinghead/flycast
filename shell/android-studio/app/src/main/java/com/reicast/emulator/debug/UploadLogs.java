@@ -9,10 +9,12 @@ import android.os.AsyncTask;
 import com.reicast.emulator.config.Config;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
@@ -116,14 +118,17 @@ public class UploadLogs extends AsyncTask<String, Integer, Object> {
 					return null;
 				}
 			} else {
-				InputStream is = new BufferedInputStream(conn.getInputStream());
-				ByteArrayOutputStream result = new ByteArrayOutputStream();
-				byte[] buffer = new byte[1024];
-				int length;
-				while ((length = is.read(buffer)) != -1) {
-					result.write(buffer, 0, length);
-				}
-				return result.toString("UTF-8");
+				InputStream in = conn.getInputStream();
+				BufferedReader streamReader = new BufferedReader(
+						new InputStreamReader(in, "UTF-8"));
+				StringBuilder responseStrBuilder = new StringBuilder();
+
+				String inputStr;
+				while ((inputStr = streamReader.readLine()) != null)
+					responseStrBuilder.append(inputStr);
+
+				in.close();
+				return responseStrBuilder.toString();
 			}
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
