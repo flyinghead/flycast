@@ -67,7 +67,7 @@ Disc* load_gdi(const char* file)
 		if (last == '"')
 		{
 			for(;;) {
-				gdi >> last;
+				gdi >> std::noskipws >> last;
 				if (last == '"')
 					break;
 				track_filename += last;
