@@ -32,13 +32,14 @@ android {
 
 dependencies {
     compile 'com.android.support:support-v4:25.3.1'
-    compile files('libs/bcprov-jdk16-146.jar')
+    compile 'org.bouncycastle:bcprov-jdk16:1.46'
     compile files('libs/com.bda.controller.jar')
-    compile files('libs/commons-io-2.4.jar')
-    compile files('libs/commons-lang3-3.1.jar')
-    compile files('libs/commons-logging-1.1.1.jar')
+    compile 'commons-io:commons-io:+'
+    compile 'org.apache.commons:commons-lang3:+'
+    compile 'commons-logging:commons-logging:+'
     compile files('libs/dropbox-android-sdk-1.6.1.jar')
     compile files('libs/image-uniload.jar')
-    compile files('libs/json_simple-1.1.jar')
+    compile 'com.googlecode.json-simple:json-simple:1.1.1'
     compile files('libs/ouya-sdk.jar')
+    //compile 'com.dropbox.core:dropbox-core-sdk:3.0.6'
 }
