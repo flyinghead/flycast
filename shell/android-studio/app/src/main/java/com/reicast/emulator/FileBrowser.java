@@ -42,6 +42,7 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -297,7 +298,7 @@ public class FileBrowser extends Fragment {
 	
 	private void browseStorage(boolean images) {
 		if (images) {
-			(new navigate()).executeOnExecutor(
+			(new navigate(this)).executeOnExecutor(
 					AsyncTask.THREAD_POOL_EXECUTOR, new File(home_directory));
 		} else {
 			if (game_directory.equals(sdcard.getAbsolutePath())) {
@@ -307,14 +308,14 @@ public class FileBrowser extends Fragment {
 						String sdCardPath = sd.next().replace("mnt/media_rw", "storage");
 						if (!sdCardPath.equals(sdcard.getAbsolutePath())) {
 							if (new File(sdCardPath).canRead()) {
-								(new navigate()).execute(new File(sdCardPath));
+								(new navigate(this)).execute(new File(sdCardPath));
 								return;
 							}
 						}
 					}
 				}
 			}
-			(new navigate()).executeOnExecutor(
+			(new navigate(this)).executeOnExecutor(
 					AsyncTask.THREAD_POOL_EXECUTOR, new File(game_directory));
 		}
 	}
@@ -421,11 +422,15 @@ public class FileBrowser extends Fragment {
 		xmlParser.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, game.getName());
 	}
 
-	private final class navigate extends AsyncTask<File, Integer, List<File>> {
+	private static class navigate extends AsyncTask<File, Integer, List<File>> {
 
-		private LinearLayout listView;
+		private WeakReference<FileBrowser> browser;
 		private String heading;
 		private File parent;
+
+		public navigate(FileBrowser context) {
+			browser = new WeakReference<>(context);
+		}
 
 		private final class DirSort implements Comparator<File> {
 			@Override
@@ -439,7 +444,8 @@ public class FileBrowser extends Fragment {
 
 		@Override
 		protected void onPreExecute() {
-			listView = (LinearLayout) getActivity().findViewById(R.id.game_list);
+			LinearLayout listView = (LinearLayout)
+					browser.get().getActivity().findViewById(R.id.game_list);
 			if (listView.getChildCount() > 0)
 				listView.removeAllViews();
 		}
@@ -469,11 +475,13 @@ public class FileBrowser extends Fragment {
 		@Override
 		protected void onPostExecute(List<File> list) {
 			if (list != null && !list.isEmpty()) {
-				createListHeader(heading, listView, false);
+				LinearLayout listView = (LinearLayout)
+						browser.get().getActivity().findViewById(R.id.game_list);
+				browser.get().createListHeader(heading, listView, false);
 				for (final File file : list) {
 					if (file != null && !file.isDirectory() && !file.getAbsolutePath().equals("/data"))
 						continue;
-					final View childview = getActivity().getLayoutInflater().inflate(
+					final View childview = browser.get().getActivity().getLayoutInflater().inflate(
 							R.layout.browser_fragment_item, null, false);
 
 					if (file == null) {
@@ -489,7 +497,7 @@ public class FileBrowser extends Fragment {
 
 					childview.setTag(file);
 
-					orig_bg = childview.getBackground();
+					browser.get().orig_bg = childview.getBackground();
 
 					// vw.findViewById(R.id.childview).setBackgroundColor(0xFFFFFFFF);
 
@@ -497,29 +505,35 @@ public class FileBrowser extends Fragment {
 							new OnClickListener() {
 								public void onClick(View view) {
 									if (file != null && file.isDirectory()) {
-										(new navigate()).executeOnExecutor(
+										(new navigate(browser.get())).executeOnExecutor(
 												AsyncTask.THREAD_POOL_EXECUTOR, file);
-										ScrollView sv = (ScrollView) getActivity()
+										ScrollView sv = (ScrollView) browser.get().getActivity()
 												.findViewById(R.id.game_scroller);
 										sv.scrollTo(0, 0);
-										vib.vibrate(50);
+										browser.get().vib.vibrate(50);
 									} else if (view.getTag() == null) {
-										vib.vibrate(250);
+										browser.get().vib.vibrate(250);
 
-										if (games) {
-											game_directory = heading;
-											mPrefs.edit().putString(Config.pref_games, heading).apply();
-											mCallback.onFolderSelected(Uri.fromFile(new File(game_directory)));
+										if (browser.get().games) {
+											browser.get().game_directory = heading;
+											browser.get().mPrefs.edit().putString(
+													Config.pref_games, heading).apply();
+											browser.get().mCallback.onFolderSelected(
+													Uri.fromFile(new File(browser.get().game_directory)));
 										} else {
-											home_directory = heading.replace("/data", "");
-											mPrefs.edit().putString(Config.pref_home, home_directory).apply();
-											if (!DataDirectoryBIOS()) {
-												showToastMessage(getActivity().getString(R.string.config_data, home_directory),
-														Snackbar.LENGTH_LONG
-												);
+											browser.get().home_directory = heading.replace("/data", "");
+											browser.get().mPrefs.edit().putString(
+													Config.pref_home, browser.get().home_directory).apply();
+											if (!browser.get().DataDirectoryBIOS()) {
+												browser.get().showToastMessage(
+														browser.get().getActivity().getString(
+																R.string.config_data,
+																browser.get().home_directory),
+														Snackbar.LENGTH_LONG);
 											}
-											mCallback.onFolderSelected(Uri.fromFile(new File(home_directory)));
-											JNIdc.config(home_directory);
+											browser.get().mCallback.onFolderSelected(
+													Uri.fromFile(new File(browser.get().home_directory)));
+											JNIdc.config(browser.get().home_directory);
 										}
 
 									}
@@ -534,7 +548,7 @@ public class FileBrowser extends Fragment {
 										view.setBackgroundColor(0xFF4F3FFF);
 									} else if (event.getActionMasked() == MotionEvent.ACTION_CANCEL
 											|| event.getActionMasked() == MotionEvent.ACTION_UP) {
-										view.setBackgroundDrawable(orig_bg);
+										view.setBackgroundDrawable(browser.get().orig_bg);
 									}
 
 									return false;
@@ -553,20 +567,15 @@ public class FileBrowser extends Fragment {
 		if (!data_directory.exists() || !data_directory.isDirectory()) {
 			data_directory.mkdirs();
 			File bios = new File(home_directory, "dc_boot.bin");
-			boolean success = bios.renameTo(new File(home_directory, "data/dc_boot.bin"));
-			if (success) {
+			if (bios.renameTo(new File(home_directory, "data/dc_boot.bin"))) {
 				File flash = new File(home_directory, "dc_flash.bin");
-				success = flash.renameTo(new File(home_directory, "data/dc_flash.bin"));
+				return flash.renameTo(new File(home_directory, "data/dc_flash.bin"));
 			}
-			return success;
+			return false;
 		} else {
 			File bios = new File(home_directory, "data/dc_boot.bin");
 			File flash = new File(home_directory, "data/dc_flash.bin");
-			if (bios.exists() && flash.exists()) {
-				return true;
-			} else {
-				return false;
-			}
+			return (bios.exists() && flash.exists());
 		}
 	}
 
