@@ -1,4 +1,5 @@
 #pragma once
+#include <malloc.h>
 #include "ta.h"
 #include "pvr_regs.h"
 
@@ -151,8 +152,8 @@ struct TA_context
 	}
 	void Alloc()
 	{
-		tad.Reset((u8*)malloc(2*1024*1024));
-
+		tad.Reset((u8*)memalign(32, 2*1024*1024));
+		
 		rend.verts.InitBytes(1024*1024,&rend.Overrun); //up to 1 mb of vtx data/frame = ~ 38k vtx/frame
 		rend.idx.Init(60*1024,&rend.Overrun);			//up to 60K indexes ( idx have stripification overhead )
 		rend.global_param_op.Init(4096,&rend.Overrun);
