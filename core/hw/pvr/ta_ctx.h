@@ -5,10 +5,10 @@
 #include "pvr_regs.h"
 
 // helper for 32 byte aligned memory allocation
-inline void* aligned_malloc(size_t size, size_t align)
+inline void* aligned_malloc(size_t align, size_t size)
 {
     	void *result;
-    	#ifdef WIN32 
+    	#if HOST_OS == OS_WINDOWS  
     		result = _aligned_malloc(size, align);
     	#else 
      		if(posix_memalign(&result, align, size)) result = 0;
