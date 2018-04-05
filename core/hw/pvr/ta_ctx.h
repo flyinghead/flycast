@@ -1,7 +1,29 @@
 #pragma once
 #include <malloc.h>
+#include <stdlib.h>
 #include "ta.h"
 #include "pvr_regs.h"
+
+// helper for 32 byte aligned memory allocation
+inline void* aligned_malloc(size_t size, size_t align)
+{
+    	void *result;
+    	#ifdef WIN32 
+    		result = _aligned_malloc(size, align);
+    	#else 
+     		if(posix_memalign(&result, align, size)) result = 0;
+    	#endif
+    		return result;
+}
+// helper for 32 byte aligned memory de-allocation
+inline void aligned_free(void *ptr)
+{
+	#ifdef WIN32
+		_aligned_free(ptr);
+    	#else 
+      		free(ptr);
+    	#endif
+}
 
 //Vertex storage types
 struct Vertex
@@ -152,7 +174,7 @@ struct TA_context
 	}
 	void Alloc()
 	{
-		tad.Reset((u8*)memalign(32, 2*1024*1024));
+		tad.Reset((u8*)aligned_malloc(32, 2*1024*1024));
 		
 		rend.verts.InitBytes(1024*1024,&rend.Overrun); //up to 1 mb of vtx data/frame = ~ 38k vtx/frame
 		rend.idx.Init(60*1024,&rend.Overrun);			//up to 60K indexes ( idx have stripification overhead )
@@ -177,7 +199,7 @@ struct TA_context
 
 	void Free()
 	{
-		free(tad.thd_root);
+		aligned_free(tad.thd_root);
 		rend.verts.Free();
 		rend.idx.Free();
 		rend.global_param_op.Free();
