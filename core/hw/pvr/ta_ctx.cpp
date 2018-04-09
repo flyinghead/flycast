@@ -1,3 +1,5 @@
+#include <malloc.h>
+
 #include "ta.h"
 #include "ta_ctx.h"
 
@@ -14,6 +16,29 @@ tad_context ta_tad;
 
 TA_context*  vd_ctx;
 rend_context vd_rc;
+
+// helper for 32 byte aligned memory allocation
+void* OS_aligned_malloc(size_t align, size_t size)
+{
+        void *result;
+        #if HOST_OS == OS_WINDOWS
+                result = _aligned_malloc(size, align);
+        #else
+                if(posix_memalign(&result, align, size)) result = 0;
+        #endif
+                return result;
+}
+
+// helper for 32 byte aligned memory de-allocation
+void OS_aligned_free(void *ptr)
+{
+        #if HOST_OS == OS_WINDOWS
+                _aligned_free(ptr);
+        #else
+                free(ptr);
+        #endif
+}
+
 
 void SetCurrentTARC(u32 addr)
 {
