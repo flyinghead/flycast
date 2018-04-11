@@ -160,9 +160,9 @@ s32  cfgLoadInt(const wchar * Section, const wchar * Key,s32 Default)
 	return cfgdb.get_int(string(Section), string(Key), Default);
 }
 
-void  cfgSaveBool(const wchar * Section, const wchar * Key, bool Bool)
+void  cfgSaveBool(const wchar * Section, const wchar * Key, bool BoolValue)
 {
-	cfgdb.set_bool(string(Section), string(Key), Bool);
+	cfgdb.set_bool(string(Section), string(Key), BoolValue);
 	if(save_config)
 	{
 		savecfgf();
