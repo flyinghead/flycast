@@ -302,7 +302,7 @@ void linux_fix_personality() {
 }
 
 void linux_rpi2_init() {
-#if (HOST_OS == OS_LINUX) && !defined(_ANDROID) && !defined(TARGET_NACL32) && !defined(TARGET_EMSCRIPTEN)
+#if (HOST_OS == OS_LINUX) && !defined(_ANDROID) && !defined(TARGET_NACL32) && !defined(TARGET_EMSCRIPTEN) && defined(TARGET_VIDEOCORE)
 	void* handle;
 	void (*rpi_bcm_init)(void);
 

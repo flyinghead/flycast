@@ -130,14 +130,19 @@ else ifneq (,$(findstring lincpp,$(platform)))
 
 # Raspberry Pi 2
 else ifneq (,$(findstring rpi2,$(platform)))
-    MFLAGS += -marm -march=armv7-a -mtune=cortex-a9 -mfpu=neon -mfloat-abi=hard -funroll-loops
-    ASFLAGS += -march=armv7-a -mfpu=neon -mfloat-abi=softfp
     CFLAGS += -D TARGET_BEAGLE -D TARGET_LINUX_ARMELv7 -DARM_HARDFP -fsingle-precision-constant
-    INCS += -I/opt/vc/include/ -I/opt/vc/include/interface/vmcs_host/linux -I/opt/vc/include/interface/vcos/pthreads -I../linux-deps/include
-    LIBS += -L/opt/vc/lib/  -L../linux-deps/lib -lbcm_host
-    USE_OMX := 1
-    USE_DISPMANX := 1
-    USE_GLES := 1
+    ifneq (,$(findstring mesa,$(platform)))
+        USE_SDL := 1
+        USE_GLES := 1
+    else
+        INCS += -I/opt/vc/include/ -I/opt/vc/include/interface/vmcs_host/linux -I/opt/vc/include/interface/vcos/pthreads
+        LIBS += -L/opt/vc/lib/ -lbcm_host
+        LIBS += -lbrcmEGL -lbrcmGLESv2
+        CFLAGS += -D TARGET_VIDEOCORE
+        CXXFLAGS += -DGLES
+        USE_OMX := 1
+        USE_DISPMANX := 1
+    endif
     undefine USE_X11
 
 # BeagleBone Black
