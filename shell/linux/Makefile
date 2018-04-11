@@ -135,7 +135,10 @@ else ifneq (,$(findstring rpi2,$(platform)))
     CFLAGS += -D TARGET_BEAGLE -D TARGET_LINUX_ARMELv7 -DARM_HARDFP -fsingle-precision-constant
     INCS += -I/opt/vc/include/ -I/opt/vc/include/interface/vmcs_host/linux -I/opt/vc/include/interface/vcos/pthreads -I../linux-deps/include
     LIBS += -L/opt/vc/lib/  -L../linux-deps/lib -lbcm_host
+    USE_OMX := 1
+    USE_DISPMANX := 1
     USE_GLES := 1
+    undefine USE_X11
 
 # BeagleBone Black
 else ifneq (,$(findstring beagle,$(platform)))
@@ -259,6 +262,11 @@ ifdef LTO_TEST
     LDFLAGS +=-flto -fwhole-program 
 endif
 
+ifdef USE_DISPMANX
+    CFLAGS += -D SUPPORT_DISPMANX
+    CXXFLAGS += -D SUPPORT_DISPMANX
+endif
+
 ifdef USE_X11
     CFLAGS += -D SUPPORT_X11
     CXXFLAGS += -D SUPPORT_X11 
@@ -271,6 +279,11 @@ endif
 
 ifdef USE_JOYSTICK
     CXXFLAGS += -D USE_JOYSTICK
+endif
+
+ifdef USE_OMX
+    CXXFLAGS += -D USE_OMX
+    LIBS += -lopenmaxil
 endif
 
 ifdef USE_ALSA

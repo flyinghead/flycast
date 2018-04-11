@@ -160,6 +160,24 @@ s32  cfgLoadInt(const wchar * Section, const wchar * Key,s32 Default)
 	return cfgdb.get_int(string(Section), string(Key), Default);
 }
 
+void  cfgSaveBool(const wchar * Section, const wchar * Key, bool Bool)
+{
+	cfgdb.set_bool(string(Section), string(Key), Bool);
+	if(save_config)
+	{
+		savecfgf();
+	}
+}
+
+bool  cfgLoadBool(const wchar * Section, const wchar * Key,bool Default)
+{
+	if(!cfgdb.has_entry(string(Section), string(Key)))
+	{
+			cfgSaveBool(Section, Key, Default);
+	}
+	return cfgdb.get_bool(string(Section), string(Key), Default);
+}
+
 void cfgSetVirtual(const wchar * Section, const wchar * Key, const wchar * String)
 {
 	cfgdb.set(string(Section), string(Key), string(String), true);
