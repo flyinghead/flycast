@@ -129,8 +129,15 @@ else ifneq (,$(findstring lincpp,$(platform)))
     CXXFLAGS += -fexceptions -std=gnu++11
 
 # Raspberry Pi 2
-else ifneq (,$(findstring rpi2,$(platform)))
+else ifneq (,$(findstring rpi,$(platform)))
     CFLAGS += -D TARGET_BEAGLE -D TARGET_LINUX_ARMELv7 -DARM_HARDFP -fsingle-precision-constant
+    ifneq (,$(findstring rpi2,$(platform)))
+        MFLAGS += -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard
+        ASFLAGS += -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard
+    else ifneq (,$(findstring rpi3,$(platform)))
+        MFLAGS += -march=armv8-a+crc -mtune=cortex-a53 -mfpu=neon-fp-armv8 -mfloat-abi=hard
+        ASFLAGS += -march=armv8-a+crc -mtune=cortex-a53 -mfpu=neon-fp-armv8 -mfloat-abi=hard
+    endif
     ifneq (,$(findstring mesa,$(platform)))
         USE_SDL := 1
         USE_GLES := 1
