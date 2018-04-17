@@ -263,10 +263,21 @@ void LoadSettings()
 	settings.pvr.HashLogFile = cfgLoadStr("testing", "ta.HashLogFile", "");
 	settings.pvr.HashCheckFile = cfgLoadStr("testing", "ta.HashCheckFile", "");
 
+#if SUPPORT_DISPMANX
+	settings.dispmanx.Width = cfgLoadInt("dispmanx","width",640);
+	settings.dispmanx.Height = cfgLoadInt("dispmanx","height",480);
+	settings.dispmanx.Maintain_Aspect = cfgLoadBool("dispmanx","maintain_aspect",true);
+#endif
+
 #if (HOST_OS != OS_LINUX || defined(_ANDROID) || defined(TARGET_PANDORA))
 	settings.aica.BufferSize=2048;
 #else
 	settings.aica.BufferSize=1024;
+#endif
+
+#if USE_OMX
+	settings.omx.Audio_Latency = cfgLoadInt("omx","audio_latency",100);
+	settings.omx.Audio_HDMI = cfgLoadBool("omx","audio_hdmi",true);
 #endif
 
 /*

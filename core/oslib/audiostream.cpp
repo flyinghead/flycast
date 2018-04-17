@@ -8,6 +8,7 @@
 #include "oslib/audiobackend_oss.h"
 #include "oslib/audiobackend_pulseaudio.h"
 #include "oslib/audiobackend_coreaudio.h"
+#include "oslib/audiobackend_omx.h"
 
 struct SoundFrame { s16 l;s16 r; };
 #define SAMPLE_COUNT 512
@@ -76,6 +77,9 @@ void RegisterAllAudioBackends() {
 		#endif
 		#if ANDROID
 		RegisterAudioBackend(&audiobackend_android);
+		#endif
+		#if USE_OMX
+		RegisterAudioBackend(&audiobackend_omx);
 		#endif
 		#if USE_ALSA
 		RegisterAudioBackend(&audiobackend_alsa);

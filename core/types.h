@@ -652,6 +652,23 @@ struct settings_t
         u32 NoSound;        //0 ->sound, 1 -> no sound
 	} aica;
 
+#if USE_OMX
+	struct
+	{
+		u32 Audio_Latency;
+		bool Audio_HDMI;
+	} omx;
+#endif
+
+#if SUPPORT_DISPMANX
+	struct
+	{
+		u32 Width;
+		u32 Height;
+		bool Maintain_Aspect;
+	} dispmanx;
+#endif
+
 	struct
 	{
 		bool PatchRegion;

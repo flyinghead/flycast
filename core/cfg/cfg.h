@@ -15,6 +15,8 @@ void  cfgSaveInt(const wchar * lpSection, const wchar * lpKey, s32 Int);
 void  cfgLoadStr(const wchar * lpSection, const wchar * lpKey, wchar * lpReturn,const wchar* lpDefault);
 string  cfgLoadStr(const wchar * Section, const wchar * Key, const wchar* Default);
 void  cfgSaveStr(const wchar * lpSection, const wchar * lpKey, const wchar * lpString);
+void  cfgSaveBool(const wchar * Section, const wchar * Key, bool BoolValue);
+bool  cfgLoadBool(const wchar * Section, const wchar * Key,bool Default);
 s32  cfgExists(const wchar * Section, const wchar * Key);
 void cfgSetVirtual(const wchar * lpSection, const wchar * lpKey, const wchar * lpString);
 
