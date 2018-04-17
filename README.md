@@ -18,7 +18,13 @@ Let's try to keep everything under a single project :)
 
 Contributing
 ------------
-For small/one-off fixes a PR from an github fork is alright. For longer term colaboration we prefer to use namespaced branches in the form of `<username>/<whatever>` in the main repo. Before you work on something major, make sure to check the issue tracker to coordinate with other contributors, and open an issue to get feedback before doing big changes/PRs. It is always polite to check the history of the code you're working and colaborate with the people that have worked on it. Everything goes to master via PRs. Test builds are run automatically for both internal and external PRs, and generally should pass unless there's a really good reason for breakage. A good place to introduce yourself is [Meet the team](https://github.com/reicast/reicast-emulator/issues/1113). Also you might want to check our [CLA](https://gist.github.com/skmp/920357e9d3a7733234ade1eb465367cc), and issues marked as [good first issue](https://github.com/reicast/reicast-emulator/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) or [help wanted](https://github.com/reicast/reicast-emulator/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22)
+For small/one-off fixes a PR from an github fork is alright. For longer term collaboration we prefer to use namespace branches in the form of `<username>/<whatever>` in the main repo. 
+
+Before you work on something major, make sure to check the issue tracker to coordinate with other contributors, and open an issue to get feedback before doing big changes/PRs. It is always polite to check the history of the code you're working on and collaborate with the people that have worked on it. You can introduce yourself in [Meet the team](https://github.com/reicast/reicast-emulator/issues/1113).
+
+Everything goes to master via PRs. Test builds are run automatically for both internal and external PRs, and generally should pass unless there's a really good reason for breakage.  You might want to check our [CLA](https://gist.github.com/skmp/920357e9d3a7733234ade1eb465367cc), which is required to have your changes merged.
+
+If you are looking for somewhere to start, look for issues marked [good first issue](https://github.com/reicast/reicast-emulator/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) or [help wanted](https://github.com/reicast/reicast-emulator/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22)
 
 Building for Android
 --------------------
