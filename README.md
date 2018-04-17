@@ -18,7 +18,7 @@ Let's try to keep everything under a single project :)
 
 Contributing
 ------------
-For small/one-off fixes a PR from an github fork is alright. For longer term collaboration we prefer to use namespace branches in the form of `<username>/<whatever>` in the main repo. 
+For small/one-off fixes a PR from a github fork is alright. For longer term collaboration we prefer to use namespaced branches in the form of `<username>/<whatever>` in the main repo. 
 
 Before you work on something major, make sure to check the issue tracker to coordinate with other contributors, and open an issue to get feedback before doing big changes/PRs. It is always polite to check the history of the code you're working on and collaborate with the people that have worked on it. You can introduce yourself in [Meet the team](https://github.com/reicast/reicast-emulator/issues/1113).
 
