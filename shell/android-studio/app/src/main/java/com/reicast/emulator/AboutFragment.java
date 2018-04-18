@@ -1,5 +1,6 @@
 package com.reicast.emulator;
 
+import android.annotation.TargetApi;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
