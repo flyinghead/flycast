@@ -200,8 +200,8 @@ static void *ThreadHandler(void *UserData)
 
   // Make up argument list
   P       = (const char *)UserData;
-  Args[0] = "dc";
-  Args[1] = "-config";
+  Args[0] = (char*)"dc";
+  Args[1] = (char*)"-config";
   Args[2] = P&&P[0]? (char *)malloc(strlen(P)+32):0;
 
   if(Args[2])
@@ -253,7 +253,7 @@ void common_linux_setup();
 
 void os_SetWindowText(char const *Text)
 {
-	putinf(Text);
+	putinf("%s",Text);
 }
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_config(JNIEnv *env,jobject obj,jstring dirName)
 {
@@ -424,16 +424,16 @@ JNIEXPORT jint JNICALL Java_com_reicast_emulator_emu_JNIdc_send(JNIEnv *env,jobj
 	}
 }
 
-JNIEXPORT jint JNICALL Java_com_reicast_emulator_emu_JNIdc_data(JNIEnv *env,jobject obj,jint id, jbyteArray d)
+JNIEXPORT jint JNICALL Java_com_reicast_emulator_emu_JNIdc_data(JNIEnv *env, jobject obj, jint id, jbyteArray d)
 {
 	if (id==1)
 	{
-		printf("Loading symtable (%p,%p,%p,%p)\n",env,obj,id,d);
-		int len=env->GetArrayLength(d);
-		u8* syms=(u8*)malloc(len);
-		printf("Loading symtable to %p, %d\n",syms,len);
+		printf("Loading symtable (%p,%p,%d,%p)\n",env,obj,id,d);
+		jsize len=env->GetArrayLength(d);
+		u8* syms=(u8*)malloc((size_t)len);
+		printf("Loading symtable to %8s, %d\n",syms,len);
 		env->GetByteArrayRegion(d,0,len,(jbyte*)syms);
-		sample_Syms(syms,len);
+		sample_Syms(syms, (size_t)len);
 	}
 }
 

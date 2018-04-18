@@ -37,7 +37,7 @@ void setAPK (const char* apkPath) {
   for (int i=0; i<numFiles; i++) {
     const char* name = zip_get_name(APKArchive, i, 0);
     if (name == NULL) {
-      LOGE("Error reading zip file name at index %i : %s", zip_strerror(APKArchive));
+      LOGE("Error reading zip file name at index %i : %s", i, zip_strerror(APKArchive));
       return;
     }
     LOGI("File %i : %s\n", i, name);
