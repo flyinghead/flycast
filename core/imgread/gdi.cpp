@@ -1,6 +1,7 @@
 #include "common.h"
 #include <ctype.h>
 #include <sstream>
+#include <algorithm>
 
 // given file/name.ext or file\name.ext returns file/ or file\, depending on the platform
 // given name.ext returns ./ or .\, depending on the platform
@@ -24,6 +25,19 @@ string OS_dirname(string file)
 	return file.substr(0, last_slash + 1);
 }
 
+// On windows, transform / to \\
+// On linux, transform \\ to /
+string normalize_path_separator(string path)
+{
+	#if HOST_OS == OS_WINDOWS
+		std::replace( path.begin(), path.end(), '/', '\\');
+	#else
+		std::replace( path.begin(), path.end(), '\\', '/');
+	#endif
+
+	return path;
+}
+
 #if 0 // TODO: Move this to some tests, make it platform agnostic
 namespace {
 	struct OS_dirname_Test {
@@ -33,7 +47,17 @@ namespace {
 			verify(OS_dirname("local/path/three\\a.exe") == "local/path/");
 			verify(OS_dirname("local.ext") == "./");
 		}
-	} test;
+	} test1;
+
+	struct normalize_path_separator_Test {
+		normalize_path_separator_Test() {
+			verify(normalize_path_separator("local/path") == "local/path");
+			verify(normalize_path_separator("local\\path") == "local/path");
+			verify(normalize_path_separator("local\\path\\") == "local/path/");
+			verify(normalize_path_separator("\\local\\path\\") == "/local/path/");
+			verify(normalize_path_separator("loc\\al\\pa\\th") == "loc/al/pa/th");
+		}
+	} test2;
 }
 #endif
 
@@ -114,7 +138,7 @@ Disc* load_gdi(const char* file)
 
 		if (SSIZE!=0)
 		{
-			string path = basepath + track_filename;
+			string path = basepath + normalize_path_separator(track_filename);
 			t.file = new RawTrackFile(core_fopen(path.c_str()),OFFSET,t.StartFAD,SSIZE);	
 		}
 		disc->tracks.push_back(t);
