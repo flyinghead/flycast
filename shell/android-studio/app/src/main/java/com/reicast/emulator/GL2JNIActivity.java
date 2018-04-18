@@ -1,5 +1,6 @@
 package com.reicast.emulator;
 
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
