@@ -1,5 +1,5 @@
 name: reicast
-version: "r7-svn"
+version: git
 summary: Reicast
 description: |
   Reicast is a Sega Dreamcast emulator. It is designed to run dreamcast games
