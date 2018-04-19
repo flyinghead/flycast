@@ -41,14 +41,13 @@ public class Config {
 	public static String readOutput(String command) {
 		try {
 			Process p = Runtime.getRuntime().exec(command);
-			InputStream is = null;
+			InputStream is;
 			if (p.waitFor() == 0) {
 				is = p.getInputStream();
 			} else {
 				is = p.getErrorStream();
 			}
-			BufferedReader br = new BufferedReader(new InputStreamReader(is),
-					2048);
+			BufferedReader br = new BufferedReader(new InputStreamReader(is),2048);
 			String line = br.readLine();
 			br.close();
 			return line;
