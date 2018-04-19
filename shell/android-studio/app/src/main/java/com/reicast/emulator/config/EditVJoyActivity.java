@@ -1,6 +1,5 @@
 package com.reicast.emulator.config;
 
-import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -27,7 +26,6 @@ import com.reicast.emulator.emu.JNIdc;
 import com.reicast.emulator.emu.OnScreenMenu;
 import com.reicast.emulator.periph.VJoy;
 
-@TargetApi(Build.VERSION_CODES.HONEYCOMB_MR1)
 public class EditVJoyActivity extends Activity {
 	GL2JNIView mView;
 	PopupWindow popUp;

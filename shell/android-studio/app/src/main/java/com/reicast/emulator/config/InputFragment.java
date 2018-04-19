@@ -75,20 +75,18 @@ public class InputFragment extends Fragment {
 		Config.vibrationDuration = sharedPreferences.getInt(Config.pref_vibrationDuration, 20);
 		vib = (Vibrator) getActivity().getSystemService(Context.VIBRATOR_SERVICE);
 
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-			ImageView icon_a = (ImageView) getView().findViewById(
-					R.id.controller_icon_a);
-			icon_a.setAlpha(0.8f);
-			ImageView icon_b = (ImageView) getView().findViewById(
-					R.id.controller_icon_b);
-			icon_b.setAlpha(0.8f);
-			ImageView icon_c = (ImageView) getView().findViewById(
-					R.id.controller_icon_c);
-			icon_c.setAlpha(0.8f);
-			ImageView icon_d = (ImageView) getView().findViewById(
-					R.id.controller_icon_d);
-			icon_d.setAlpha(0.8f);
-		}
+		ImageView icon_a = (ImageView) getView().findViewById(
+				R.id.controller_icon_a);
+		icon_a.setAlpha(0.8f);
+		ImageView icon_b = (ImageView) getView().findViewById(
+				R.id.controller_icon_b);
+		icon_b.setAlpha(0.8f);
+		ImageView icon_c = (ImageView) getView().findViewById(
+				R.id.controller_icon_c);
+		icon_c.setAlpha(0.8f);
+		ImageView icon_d = (ImageView) getView().findViewById(
+				R.id.controller_icon_d);
+		icon_d.setAlpha(0.8f);
 
 		Button buttonLaunchEditor = (Button) getView().findViewById(
 				R.id.buttonLaunchEditor);
@@ -186,86 +184,76 @@ public class InputFragment extends Fragment {
 			}
 		});
 
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
+		Button buttonSelectControllerPlayer1 = (Button) getView()
+				.findViewById(R.id.buttonSelectControllerPlayer1);
+		buttonSelectControllerPlayer1
+				.setOnClickListener(new View.OnClickListener() {
+					public void onClick(View v) {
+						selectController(1);
+					}
+				});
+		Button buttonSelectControllerPlayer2 = (Button) getView()
+				.findViewById(R.id.buttonSelectControllerPlayer2);
+		buttonSelectControllerPlayer2
+				.setOnClickListener(new View.OnClickListener() {
+					public void onClick(View v) {
+						selectController(2);
+					}
+				});
+		Button buttonSelectControllerPlayer3 = (Button) getView()
+				.findViewById(R.id.buttonSelectControllerPlayer3);
+		buttonSelectControllerPlayer3
+				.setOnClickListener(new View.OnClickListener() {
+					public void onClick(View v) {
+						selectController(3);
+					}
+				});
+		Button buttonSelectControllerPlayer4 = (Button) getView()
+				.findViewById(R.id.buttonSelectControllerPlayer4);
+		buttonSelectControllerPlayer4
+				.setOnClickListener(new View.OnClickListener() {
+					public void onClick(View v) {
+						selectController(4);
+					}
+				});
 
-			Button buttonSelectControllerPlayer1 = (Button) getView()
-					.findViewById(R.id.buttonSelectControllerPlayer1);
-			buttonSelectControllerPlayer1
-					.setOnClickListener(new View.OnClickListener() {
-						public void onClick(View v) {
-							selectController(1);
-						}
-					});
-			Button buttonSelectControllerPlayer2 = (Button) getView()
-					.findViewById(R.id.buttonSelectControllerPlayer2);
-			buttonSelectControllerPlayer2
-					.setOnClickListener(new View.OnClickListener() {
-						public void onClick(View v) {
-							selectController(2);
-						}
-					});
-			Button buttonSelectControllerPlayer3 = (Button) getView()
-					.findViewById(R.id.buttonSelectControllerPlayer3);
-			buttonSelectControllerPlayer3
-					.setOnClickListener(new View.OnClickListener() {
-						public void onClick(View v) {
-							selectController(3);
-						}
-					});
-			Button buttonSelectControllerPlayer4 = (Button) getView()
-					.findViewById(R.id.buttonSelectControllerPlayer4);
-			buttonSelectControllerPlayer4
-					.setOnClickListener(new View.OnClickListener() {
-						public void onClick(View v) {
-							selectController(4);
-						}
-					});
+		Button buttonRemoveControllerPlayer1 = (Button) getView()
+				.findViewById(R.id.buttonRemoveControllerPlayer1);
+		buttonRemoveControllerPlayer1
+				.setOnClickListener(new View.OnClickListener() {
+					public void onClick(View v) {
+						removeController(1);
+					}
+				});
 
-			Button buttonRemoveControllerPlayer1 = (Button) getView()
-					.findViewById(R.id.buttonRemoveControllerPlayer1);
-			buttonRemoveControllerPlayer1
-					.setOnClickListener(new View.OnClickListener() {
-						public void onClick(View v) {
-							removeController(1);
-						}
-					});
+		Button buttonRemoveControllerPlayer2 = (Button) getView()
+				.findViewById(R.id.buttonRemoveControllerPlayer2);
+		buttonRemoveControllerPlayer2
+				.setOnClickListener(new View.OnClickListener() {
+					public void onClick(View v) {
+						removeController(2);
+					}
+				});
 
-			Button buttonRemoveControllerPlayer2 = (Button) getView()
-					.findViewById(R.id.buttonRemoveControllerPlayer2);
-			buttonRemoveControllerPlayer2
-					.setOnClickListener(new View.OnClickListener() {
-						public void onClick(View v) {
-							removeController(2);
-						}
-					});
+		Button buttonRemoveControllerPlayer3 = (Button) getView()
+				.findViewById(R.id.buttonRemoveControllerPlayer3);
+		buttonRemoveControllerPlayer3
+				.setOnClickListener(new View.OnClickListener() {
+					public void onClick(View v) {
+						removeController(3);
+					}
+				});
 
-			Button buttonRemoveControllerPlayer3 = (Button) getView()
-					.findViewById(R.id.buttonRemoveControllerPlayer3);
-			buttonRemoveControllerPlayer3
-					.setOnClickListener(new View.OnClickListener() {
-						public void onClick(View v) {
-							removeController(3);
-						}
-					});
+		Button buttonRemoveControllerPlayer4 = (Button) getView()
+				.findViewById(R.id.buttonRemoveControllerPlayer4);
+		buttonRemoveControllerPlayer4
+				.setOnClickListener(new View.OnClickListener() {
+					public void onClick(View v) {
+						removeController(4);
+					}
+				});
 
-			Button buttonRemoveControllerPlayer4 = (Button) getView()
-					.findViewById(R.id.buttonRemoveControllerPlayer4);
-			buttonRemoveControllerPlayer4
-					.setOnClickListener(new View.OnClickListener() {
-						public void onClick(View v) {
-							removeController(4);
-						}
-					});
-
-			updateControllers();
-
-		} else {
-
-			TableLayout input_devices = (TableLayout) getActivity()
-					.findViewById(R.id.input_devices);
-			input_devices.setVisibility(View.GONE);
-
-		}
+		updateControllers();
 
 		updateVibration();
 	}
@@ -290,12 +278,7 @@ public class InputFragment extends Fragment {
 
 		for (int devideId : InputDevice.getDeviceIds()) {
 			InputDevice dev = InputDevice.getDevice(devideId);
-			String descriptor = null;
-			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-				descriptor = dev.getDescriptor();
-			} else {
-				descriptor = dev.getName();
-			}
+			String descriptor = dev.getDescriptor();
 
 			if (descriptor != null) {
 				if (descriptor.equals(deviceDescriptorPlayer1))
@@ -436,21 +419,16 @@ public class InputFragment extends Fragment {
 				|| keyCode == KeyEvent.KEYCODE_VOLUME_UP
 				|| keyCode == KeyEvent.KEYCODE_VOLUME_DOWN)
 			return false;
-		if (!pad.IsXperiaPlay() && keyCode == KeyEvent.KEYCODE_BACK)
+		if (keyCode == KeyEvent.KEYCODE_BACK)
 			return false;
 
 		String descriptor = null;
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-			if (pad.isActiveMoga[listenForButton]) {
-				MogaListener config = new MogaListener(listenForButton);
-				moga.mController.setListener(config, new Handler());
-				descriptor = config.getController();
-			}
-			descriptor = InputDevice.getDevice(event.getDeviceId())
-					.getDescriptor();
-		} else {
-			descriptor = InputDevice.getDevice(event.getDeviceId()).getName();
+		if (pad.isActiveMoga[listenForButton]) {
+			MogaListener config = new MogaListener(listenForButton);
+			moga.mController.setListener(config, new Handler());
+			descriptor = config.getController();
 		}
+		descriptor = InputDevice.getDevice(event.getDeviceId()).getDescriptor();
 
 		if (descriptor == null)
 			return false;
@@ -490,7 +468,7 @@ public class InputFragment extends Fragment {
 			break;
 		}
 
-		Log.d("New controller for port " + listenForButton + ":", descriptor);
+		Log.d("New port " + listenForButton + " controller:", descriptor);
 
 		listenForButton = 0;
 		alertDialogSelectController.cancel();

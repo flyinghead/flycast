@@ -135,9 +135,7 @@ public class GL2JNIView extends GLSurfaceView
 			});
 		}
 
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-			setPreserveEGLContextOnPause(true);
-		}
+		setPreserveEGLContextOnPause(true);
 
 		vib=(Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
 
@@ -159,21 +157,7 @@ public class GL2JNIView extends GLSurfaceView
 		touchVibrationEnabled = prefs.getBoolean(Config.pref_touchvibe, true);
 		vibrationDuration = prefs.getInt(Config.pref_vibrationDuration, 20);
 
-		int renderType = prefs.getInt(Config.pref_rendertype, LAYER_TYPE_HARDWARE);
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-			this.setLayerType(renderType, null);
-		} else {
-			try {
-				Method setLayerType = this.getClass().getMethod(
-						"setLayerType", new Class[] { int.class, Paint.class });
-				if (setLayerType != null)
-					setLayerType.invoke(this, new Object[] { renderType, null });
-			} catch (NoSuchMethodException e) {
-			} catch (IllegalArgumentException e) {
-			} catch (IllegalAccessException e) {
-			} catch (InvocationTargetException e) {
-			}
-		}
+		this.setLayerType(prefs.getInt(Config.pref_rendertype, LAYER_TYPE_HARDWARE), null);
 
 		vjoy_d_custom = VJoy.readCustomVjoyValues(context);
 

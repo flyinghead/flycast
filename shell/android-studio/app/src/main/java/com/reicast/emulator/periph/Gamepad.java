@@ -7,6 +7,7 @@ import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.os.Build;
 import android.util.SparseArray;
+import android.util.SparseIntArray;
 import android.view.KeyEvent;
 
 import java.util.HashMap;
@@ -46,9 +47,6 @@ public class Gamepad {
 	public static final String controllers_sony = "Sony PLAYSTATION(R)3 Controller";
 	public static final String controllers_xbox = "Microsoft X-Box 360 pad";
 	public static final String controllers_shield = "NVIDIA Corporation NVIDIA Controller";
-	public static final String controllers_play = "keypad-zeus";
-	public static final String controllers_play_gp = "keypad-game-zeus";
-	public static final String controllers_play_tp = "synaptics_touchpad";
 	public static final String controllers_gamekey = "gamekeyboard";
 
 	public String[] portId = { "_A", "_B", "_C", "_D" };
@@ -61,16 +59,14 @@ public class Gamepad {
 	public boolean[] wasKeyStick = { false, false, false, false };
 	public int map[][] = new int[4][];
 
-	public SparseArray<String> deviceId_deviceDescriptor = new SparseArray<String>();
-	public HashMap<String, Integer> deviceDescriptor_PlayerNum = new HashMap<String, Integer>();
+	public SparseArray<String> deviceId_deviceDescriptor = new SparseArray<>();
+	public HashMap<String, Integer> deviceDescriptor_PlayerNum = new HashMap<>();
 
 	public boolean isActiveMoga[] = { false, false, false, false };
 	public boolean isMogaPro[] = { false, false, false, false };
 
-	public SparseArray<Integer> playerNumX = new SparseArray<Integer>();
-	public int[] keypadZeus = new int[2];
+	public SparseIntArray playerNumX = new SparseIntArray();
 
-	public boolean isXperiaPlay;
 	public boolean isOuyaOrTV;
 //	public boolean isNvidiaShield;
 
@@ -92,24 +88,6 @@ public class Gamepad {
 				OuyaController.BUTTON_A,          key_CONT_B,
 				OuyaController.BUTTON_U,          key_CONT_X,
 				OuyaController.BUTTON_Y,          key_CONT_Y,
-
-				OuyaController.BUTTON_DPAD_UP,    key_CONT_DPAD_UP,
-				OuyaController.BUTTON_DPAD_DOWN,  key_CONT_DPAD_DOWN,
-				OuyaController.BUTTON_DPAD_LEFT,  key_CONT_DPAD_LEFT,
-				OuyaController.BUTTON_DPAD_RIGHT, key_CONT_DPAD_RIGHT,
-
-				getStartButtonCode(),             key_CONT_START,
-				getSelectButtonCode(),            getSelectButtonCode()
-				// Redundant, but verifies it is mapped properly
-		};
-	}
-
-	public int[] getXPlayController() {
-		return new int[] { 
-				KeyEvent.KEYCODE_DPAD_CENTER,    key_CONT_A,
-				KeyEvent.KEYCODE_BACK,           key_CONT_B,
-				OuyaController.BUTTON_U,         key_CONT_X,
-				OuyaController.BUTTON_Y,         key_CONT_Y,
 
 				OuyaController.BUTTON_DPAD_UP,    key_CONT_DPAD_UP,
 				OuyaController.BUTTON_DPAD_DOWN,  key_CONT_DPAD_DOWN,
@@ -173,46 +151,23 @@ public class Gamepad {
 		};
 	}
 
-	public boolean IsXperiaPlay() {
-		return android.os.Build.MODEL.equals("R800a")
-				|| android.os.Build.MODEL.equals("R800i")
-				|| android.os.Build.MODEL.equals("R800x")
-				|| android.os.Build.MODEL.equals("R800at")
-				|| android.os.Build.MODEL.equals("SO-01D")
-				|| android.os.Build.MODEL.equals("zeus");
-	}
-
 	public boolean IsOuyaOrTV(Context context) {
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
-			UiModeManager uiModeManager = (UiModeManager) 
-					context.getSystemService(Context.UI_MODE_SERVICE);
-			if (uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION) {
-				return true;
-			}
+		UiModeManager uiModeManager = (UiModeManager)
+				context.getSystemService(Context.UI_MODE_SERVICE);
+		if (uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION) {
+			return true;
 		}
 		PackageManager pMan = context.getPackageManager();
-		if (pMan.hasSystemFeature(PackageManager.FEATURE_TELEVISION)) {
-			return true;
-		} else if (OuyaFacade.getInstance().isRunningOnOUYAHardware()) {
-			return true;
-		}
-		return false;
+		return pMan.hasSystemFeature(PackageManager.FEATURE_TELEVISION)
+				|| OuyaFacade.getInstance().isRunningOnOUYAHardware();
 	}
 	
 	public int getStartButtonCode() {
-		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.GINGERBREAD) {
-			return 108;
-		} else {
-			return KeyEvent.KEYCODE_BUTTON_START;
-		}
+		return KeyEvent.KEYCODE_BUTTON_START;
 	}
-	
+
 	public int getSelectButtonCode() {
-		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.GINGERBREAD) {
-			return 109;
-		} else {
-			return KeyEvent.KEYCODE_BUTTON_SELECT;
-		}
+		return KeyEvent.KEYCODE_BUTTON_SELECT;
 	}
 
 	public boolean IsNvidiaShield() {
