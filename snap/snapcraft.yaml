@@ -4,16 +4,25 @@ summary: Reicast
 description: |
   Reicast is a Sega Dreamcast emulator. It is designed to run dreamcast games
   and homebrew in x86, x64 and aarch64 based platforms.
-grade: devel
+grade: stable
 icon: shell/linux/reicast.png
 confinement: strict
 
 apps:
   reicast:
-    command:  desktop-launch $SNAP/reicast
+    command:  desktop-launch $SNAP/bin/reicast
     plugs: [home, alsa, pulseaudio, opengl, x11, joystick, unity7]
+  joyconfig:
+    command:  desktop-launch $SNAP/bin/reicast-joyconfig
+    plugs: [home, joystick]
 
 parts:
+  joyconfig:
+    plugin: python
+    python-version: python3
+    python-packages:
+      - evdev
+    source: .
   reicast:
     source: .
     source-subdir: shell/linux
