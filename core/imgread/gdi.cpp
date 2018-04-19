@@ -1,6 +1,65 @@
 #include "common.h"
 #include <ctype.h>
 #include <sstream>
+#include <algorithm>
+
+// given file/name.ext or file\name.ext returns file/ or file\, depending on the platform
+// given name.ext returns ./ or .\, depending on the platform
+string OS_dirname(string file)
+{
+	#if HOST_OS == OS_WINDOWS
+		const char sep = '\\';
+	#else
+		const char sep = '/';
+	#endif
+
+	size_t last_slash = file.find_last_of(sep);
+
+	if (last_slash == string::npos)
+	{
+		string local_dir = ".";
+		local_dir += sep;
+		return local_dir;
+	}
+
+	return file.substr(0, last_slash + 1);
+}
+
+// On windows, transform / to \\
+// On linux, transform \\ to /
+string normalize_path_separator(string path)
+{
+	#if HOST_OS == OS_WINDOWS
+		std::replace( path.begin(), path.end(), '/', '\\');
+	#else
+		std::replace( path.begin(), path.end(), '\\', '/');
+	#endif
+
+	return path;
+}
+
+#if 0 // TODO: Move this to some tests, make it platform agnostic
+namespace {
+	struct OS_dirname_Test {
+		OS_dirname_Test() {
+			verify(OS_dirname("local/path") == "local/");
+			verify(OS_dirname("local/path/two") == "local/path/");
+			verify(OS_dirname("local/path/three\\a.exe") == "local/path/");
+			verify(OS_dirname("local.ext") == "./");
+		}
+	} test1;
+
+	struct normalize_path_separator_Test {
+		normalize_path_separator_Test() {
+			verify(normalize_path_separator("local/path") == "local/path");
+			verify(normalize_path_separator("local\\path") == "local/path");
+			verify(normalize_path_separator("local\\path\\") == "local/path/");
+			verify(normalize_path_separator("\\local\\path\\") == "/local/path/");
+			verify(normalize_path_separator("loc\\al\\pa\\th") == "loc/al/pa/th");
+		}
+	} test2;
+}
+#endif
 
 Disc* load_gdi(const char* file)
 {
@@ -31,21 +90,9 @@ Disc* load_gdi(const char* file)
 	gdi >> iso_tc;
 	printf("\nGDI : %d tracks\n",iso_tc);
 
-	// FIXME: Data loss if buffer is too small
-	char path[512];
-	strncpy(path, file, sizeof(path));
-	path[sizeof(path) - 1] = '\0';
+	
+	string basepath = OS_dirname(file);
 
-	size_t len = strlen(path);
-
-	while (len>2)
-	{
-		if (path[len]=='\\' || path[len]=='/')
-			break;
-		len--;
-	}
-	len++;
-	char* pathptr=&path[len];
 	u32 TRACK=0,FADS=0,CTRL=0,SSIZE=0;
 	s32 OFFSET=0;
 	for (u32 i=0;i<iso_tc;i++)
@@ -91,8 +138,8 @@ Disc* load_gdi(const char* file)
 
 		if (SSIZE!=0)
 		{
-			strcpy(pathptr, track_filename.c_str());
-			t.file = new RawTrackFile(core_fopen(path),OFFSET,t.StartFAD,SSIZE);	
+			string path = basepath + normalize_path_separator(track_filename);
+			t.file = new RawTrackFile(core_fopen(path.c_str()),OFFSET,t.StartFAD,SSIZE);	
 		}
 		disc->tracks.push_back(t);
 	}
