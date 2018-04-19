@@ -81,11 +81,6 @@ public class InputModFragment extends Fragment {
 	@Override
 	public void onViewCreated(View view, Bundle savedInstanceState) {
 
-		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB) {
-			Runtime.getRuntime().freeMemory();
-			System.gc();
-		}
-
 		mPrefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
 
 		final String[] controllers = getResources().getStringArray(R.array.controllers);
@@ -390,10 +385,6 @@ public class InputModFragment extends Fragment {
 	 */
 	private Drawable getButtonImage(int x, int y) {
 		Bitmap image = null;
-		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB) {
-			Runtime.getRuntime().freeMemory();
-			System.gc();
-		}
 		try {
 			File buttons = null;
 			InputStream bitmap = null;
@@ -411,10 +402,6 @@ public class InputModFragment extends Fragment {
 			image = BitmapFactory.decodeStream(bitmap, null, options);
 			bitmap.close();
 			bitmap = null;
-			if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB) {
-				Runtime.getRuntime().freeMemory();
-				System.gc();
-			}
 			Matrix matrix = new Matrix();
 			matrix.postScale(32, 32);
 			Bitmap resizedBitmap = Bitmap.createBitmap(image, x, y, 64 / sS,
@@ -436,10 +423,6 @@ public class InputModFragment extends Fragment {
 				return getButtonImage(x, y);
 			} else {
 				E.printStackTrace();
-				if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB) {
-					Runtime.getRuntime().freeMemory();
-					System.gc();
-				}
 			}
 		}
 		return getResources().getDrawable(R.drawable.input);
@@ -535,7 +518,6 @@ public class InputModFragment extends Fragment {
 			return keyCode;
 		}
 
-		@TargetApi(Build.VERSION_CODES.HONEYCOMB_MR1)
 		public boolean dispatchTouchEvent(MotionEvent ev) {
 			if (isMapping) {
 				if ((ev.getSource() & InputDevice.SOURCE_CLASS_JOYSTICK) != 0) {
