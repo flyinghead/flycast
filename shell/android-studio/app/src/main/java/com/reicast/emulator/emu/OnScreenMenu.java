@@ -31,14 +31,10 @@ import java.util.Vector;
 public class OnScreenMenu {
 
 	private Activity mContext;
-	private SharedPreferences prefs;
 
 	private VmuLcd vmuLcd;
 
 	private Vector<PopupWindow> popups;
-
-	private File sdcard = Environment.getExternalStorageDirectory();
-	private String home_directory = sdcard + "/dc";
 
 	private int frames = Emulator.frameskip;
 	private boolean screen = Emulator.widescreen;
@@ -57,8 +53,6 @@ public class OnScreenMenu {
 		}
 		popups = new Vector<PopupWindow>();
 		if (prefs != null) {
-			this.prefs = prefs;
-			home_directory = prefs.getString(Config.pref_home, home_directory);
 			masteraudio = !Emulator.nosound;
 			audio = masteraudio;
 			syncedrender = Emulator.syncedrender;
