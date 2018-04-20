@@ -1,5 +1,3 @@
-#include <stdlib.h>
-
 #include "ta.h"
 #include "ta_ctx.h"
 
