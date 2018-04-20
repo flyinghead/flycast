@@ -207,7 +207,7 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 		game_details = mContext.getString(R.string.info_unavailable);
 		final String nameLower = game.getName().toLowerCase(
 				Locale.getDefault());
-		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+		if (Build.VERSION.SDK_INT < 21) {
 			game_icon = mContext.getResources().getDrawable(
 					game.isDirectory() ? R.drawable.open_folder : nameLower
 							.endsWith(".gdi") ? R.drawable.gdi : nameLower
@@ -336,12 +336,12 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 						fOut.flush();
 						fOut.close();
 					} catch (Exception ex) {
-						ex.printStackTrace();
+
 					}
 					return bitmap;
 				}
 			} catch (IOException e) {
-				e.printStackTrace();
+
 			}
 			return null;
 		}

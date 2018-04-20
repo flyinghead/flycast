@@ -246,10 +246,15 @@ public class GenerateLogs extends AsyncTask<String, Integer, String> {
 
 	@Override
 	protected void onPostExecute(final String response) {
-		if (response != null) {
+		if (response != null && !response.equals(null)) {
 			showToastMessage(mContext.getString(R.string.log_saved), Snackbar.LENGTH_LONG);
 			UploadLogs mUploadLogs = new UploadLogs(mContext, currentTime);
-			mUploadLogs.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, response);
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+				mUploadLogs.executeOnExecutor(
+						AsyncTask.THREAD_POOL_EXECUTOR, response);
+			} else {
+				mUploadLogs.execute(response);
+			}
 		}
 	}
 

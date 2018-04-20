@@ -6,7 +6,7 @@ android {
 
     defaultConfig {
         applicationId "com.reicast.emulator"
-        minSdkVersion 16
+        minSdkVersion 9
         targetSdkVersion 21
         versionCode="7"
         versionName="r7"
