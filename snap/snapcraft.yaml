@@ -12,6 +12,7 @@ apps:
   reicast:
     command:  desktop-launch $SNAP/bin/reicast
     plugs: [home, alsa, pulseaudio, opengl, x11, joystick, unity7]
+    desktop: share/applications/reicast.desktop
   joyconfig:
     command:  desktop-launch $SNAP/bin/reicast-joyconfig
     plugs: [home, joystick]
@@ -23,6 +24,7 @@ parts:
     python-packages:
       - evdev
     source: .
+
   reicast:
     source: .
     source-subdir: shell/linux
@@ -36,4 +38,6 @@ parts:
       - libgles2-mesa-dev
       - mesa-common-dev
       - pkg-config
+    stage-packages:
+      - libevdev2
     after: [desktop-gtk2]
