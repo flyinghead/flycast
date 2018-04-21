@@ -43,39 +43,29 @@ android update project -p . --target "android-21"
 ant debug
 ```
 
-Building for iOS
-----------------
-Tools required:
-* Latest Xcode
- - https://developer.apple.com/xcode/downloads/
-* An iOS device (reicast will not compile for the iOS Simulator)
-* iOS 5.x ~ 7.x
+Building for iOS / MacOS
+---
+Requirements:
+
+[Latest Xcode](https://developer.apple.com/xcode/downloads/)
+
 * iOSOpenDev if developing without an official Apple certificate
  - http://iosopendev.com/download/
 
-From project root directory:
 
-```
-cd shell/ios/
-
-xcodebuild -configuration Release
-```
-
-Building for OSX
-----------------
-Tools required:
-* Latest Xcode
- - https://developer.apple.com/xcode/downloads/
-* A Mac
-* Current confirmed version: macOS 10.13.3 (17D102)
+| iOS                 | Mac |
+| --------------- | ------------- |
+| An iOS device  | A Mac             |
+| iOS  5.x ~ 7.x  | macOS 10.13.3 (17D102) |
 
 From project root directory:
 
-```
-cd shell/apple/emulator-osx
+| iOS                 | Mac |
+| --------------- | ------------- |
+| `cd shell/ios/` | `cd shell/apple/emulator-osx` |
 
-xcodebuild -configuration Release
-```
+`xcodebuild -configuration Release`
+
 Or open the .xcodeproj in Xcode and hit "Build".
 
 Building for Linux
