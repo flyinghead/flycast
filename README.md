@@ -49,18 +49,18 @@ Requirements:
 
 [Latest Xcode](https://developer.apple.com/xcode/downloads/)
 
-* iOSOpenDev if developing without an official Apple certificate (http://iosopendev.com/download/)
+* [iOSOpenDev](http://iosopendev.com/download/) if developing without an official Apple certificate
 
 
-| iOS                 | Mac |
-| --------------- | ------------- |
-| An iOS device  | A Mac             |
-| iOS  5.x ~ 7.x  | macOS 10.13.3 (17D102) |
+| iOS            | Mac                    |
+| -------------- | ---------------------- |
+| An iOS device  | A Mac                  |
+| iOS  5.x ~ 7.x | macOS 10.13.3 (17D102) |
 
 From project root directory:
 
-| iOS                 | Mac |
-| --------------- | ------------- |
+| iOS             | Mac                           |
+| --------------- | ----------------------------- |
 | `cd shell/ios/` | `cd shell/apple/emulator-osx` |
 
 `xcodebuild -configuration Release`
