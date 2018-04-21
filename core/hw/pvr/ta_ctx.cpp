@@ -1,5 +1,3 @@
-#include <malloc.h>
-
 #include "ta.h"
 #include "ta_ctx.h"
 
