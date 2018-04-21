@@ -2,13 +2,13 @@
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
-#define HAVE_DLFCN_H 1
+#define HAVE_DLFCN_H 0
 
 /* Define to 1 if you have the `feenableexcept' function. */
 #define HAVE_FEENABLEEXCEPT 1
 
 /* Define to 1 if you have the <inttypes.h> header file. */
-#define HAVE_INTTYPES_H 1
+#define HAVE_INTTYPES_H 0
 
 /* Define to 1 if you have the `m' library (-lm). */
 #define HAVE_LIBM 1
@@ -17,7 +17,7 @@
 #define HAVE_LIBZ 1
 
 /* Define to 1 if you have the <memory.h> header file. */
-#define HAVE_MEMORY_H 1
+#define HAVE_MEMORY_H 0
 
 /* Define to 1 if you have the `memset' function. */
 #define HAVE_MEMSET 1
@@ -77,7 +77,7 @@
 /* #undef PNG_ARM_NEON_CHECK_SUPPORTED */
 
 /* Enable ARM Neon optimizations */
-#define PNG_ARM_NEON_OPT 2
+/* #undef PNG_ARM_NEON_OPT */
 
 /* Enable Intel SSE optimizations */
 #define PNG_INTEL_SSE_OPT 0
