@@ -49,8 +49,7 @@ Requirements:
 
 [Latest Xcode](https://developer.apple.com/xcode/downloads/)
 
-* iOSOpenDev if developing without an official Apple certificate
- - http://iosopendev.com/download/
+* iOSOpenDev if developing without an official Apple certificate (http://iosopendev.com/download/)
 
 
 | iOS                 | Mac |
