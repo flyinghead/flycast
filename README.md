@@ -61,6 +61,23 @@ cd shell/ios/
 xcodebuild -configuration Release
 ```
 
+Building for OSX
+----------------
+Tools required:
+* Latest Xcode
+ - https://developer.apple.com/xcode/downloads/
+* A Mac
+* Current confirmed version: macOS 10.13.3 (17D102)
+
+From project root directory:
+
+```
+cd shell/apple/emulator-osx
+
+xcodebuild -configuration Release
+```
+Or open the .xcodeproj in Xcode and hit "Build".
+
 Building for Linux
 ------------------
 Requirements:
