@@ -88,7 +88,7 @@ static void alsa_init()
 	}
 	else
 		printf("ALSA: period size set to %d\n", frames);
-	frames = (44100 * settings.omx.Audio_Latency / 1000 / frames + 1) * frames;
+	frames = (44100 * 100 /* settings.omx.Audio_Latency */ / 1000 / frames + 1) * frames;
 	rc=snd_pcm_hw_params_set_buffer_size_near(handle, params, &frames);
 	if (rc < 0)
 	{

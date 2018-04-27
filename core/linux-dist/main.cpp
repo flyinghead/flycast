@@ -225,6 +225,7 @@ void os_DoEvents()
 {
 	#if defined(SUPPORT_X11)
 		input_x11_handle();
+		event_x11_handle();
 	#endif
 }
 
@@ -430,6 +431,10 @@ std::vector<string> find_system_data_dirs()
 }
 
 #if HOST_OS==OS_LINUX
+#if defined(SUPPORT_X11)
+void x11_gl_context_destroy();
+void x11_window_destroy();
+#endif
 void dc_term();
 void rend_terminate();
 void ngen_terminate();
@@ -507,6 +512,12 @@ int main(int argc, wchar* argv[])
 			close(evdev_controllers[port].fd);
 		}
 	}
+#endif
+#if defined(SUPPORT_X11)
+	/* Close the GL context */
+	x11_gl_context_destroy();
+	/* Destroy the window */
+	x11_window_destroy();
 #endif
 #endif
 

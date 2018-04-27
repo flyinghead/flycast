@@ -39,6 +39,7 @@ void* x11_glc;
 bool x11_fullscreen = false;
 
 void* x11_vis;
+Atom wmDeleteMessage;
 
 enum
 {
@@ -64,6 +65,22 @@ void x11_window_set_fullscreen(bool fullscreen)
 		XSendEvent((Display*)x11_disp, DefaultRootWindow((Display*)x11_disp), False, SubstructureNotifyMask, &xev);
 }
 
+void start_shutdown(void);
+
+void event_x11_handle()
+{
+	XEvent event;
+
+	while(XPending((Display *)x11_disp)) {
+		XNextEvent((Display *)x11_disp, &event);
+
+		if (event.type == ClientMessage &&
+				event.xclient.data.l[0] == wmDeleteMessage) {
+			start_shutdown();
+		}
+	}
+}
+
 void input_x11_handle()
 {
 	if (x11_win && x11_keyboard_input)
@@ -79,7 +96,7 @@ void input_x11_handle()
 				case KeyRelease:
 					if (e.type == KeyRelease && e.xkey.keycode == 9) // ESC button
 					{
-						die("death by escape key");
+						start_shutdown();
 					}
 #if FEAT_HAS_NIXPROF
 					else if (e.type == KeyRelease && e.xkey.keycode == 76) // F10 button
@@ -255,6 +272,9 @@ void x11_window_create()
 		x11Window = XCreateWindow(x11Display, RootWindow(x11Display, x11Screen), (ndcid%3)*640, (ndcid/3)*480, x11_width, x11_height,
 			0, depth, InputOutput, x11Visual->visual, ui32Mask, &sWA);
 
+		wmDeleteMessage = XInternAtom(x11Display, "WM_DELETE_WINDOW", False);
+		XSetWMProtocols(x11Display, x11Window, &wmDeleteMessage, 1);
+
 		if(x11_fullscreen)
 		{
 
@@ -318,6 +338,12 @@ void x11_window_set_text(const char* text)
 			XInternAtom((Display*)x11_disp, "UTF8_STRING", False), //UTF8_STRING,
 			8, PropModeReplace, (const unsigned char *)text, strlen(text));
 	}
+}
+
+void x11_gl_context_destroy()
+{
+	glXMakeCurrent((Display*)x11_disp, None, NULL);
+	glXDestroyContext((Display*)x11_disp, x11_glc);
 }
 
 void x11_window_destroy()
