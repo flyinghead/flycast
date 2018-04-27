@@ -997,7 +997,7 @@ void tryfit(float* x,float* y)
 		int rep=1;
 
 		//discard values clipped to 0 or 1
-		if (i<128 && y[i]==1 && y[i+1]==1)
+		if (i<127 && y[i]==1 && y[i+1]==1)
 			continue;
 
 		if (i>0 && y[i]==0 && y[i-1]==0)
@@ -1005,18 +1005,19 @@ void tryfit(float* x,float* y)
 
 		//Add many samples for first and last value (fog-in, fog-out -> important)
 		if (i>0 && y[i]!=1 && y[i-1]==1)
-			rep=10000;
+			rep=1000;
 
-		if (i<128 && y[i]!=0 && y[i+1]==0)
-			rep=10000;
+		if (i<127 && y[i]!=0 && y[i+1]==0)
+			rep=1000;
 
 		for (int j=0;j<rep;j++)
 		{
 			cnt++;
-			sylnx+=y[i]*log((double)x[i]);
-			sy+=y[i];
-			slnx+=log((double)x[i]);
-			slnx2+=log((double)x[i])*log((double)x[i]);
+			const double lnx = log((double)x[i]);
+			sylnx += y[i] * lnx;
+			sy += y[i];
+			slnx += lnx;
+			slnx2 += lnx * lnx;
 		}
 	}
 
@@ -1030,7 +1031,7 @@ void tryfit(float* x,float* y)
 	//log(x)=log2(x)*log(2)
 	//B*log(2)*log(x)+A
 	b*=logf(2.0);
-
+/*
 	float maxdev=0;
 	for (int i=0;i<128;i++)
 	{
@@ -1038,6 +1039,7 @@ void tryfit(float* x,float* y)
 		maxdev=max((float)fabs((float)diff),(float)maxdev);
 	}
 	printf("FOG TABLE Curve match: maxdev: %.02f cents\n",maxdev*100);
+*/
 	fog_coefs[0]=a;
 	fog_coefs[1]=b;
 	//printf("%f\n",B*log(maxdev)/log(2.0)+A);
