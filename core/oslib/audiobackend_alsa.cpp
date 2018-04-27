@@ -2,7 +2,8 @@
 #if USE_ALSA
 #include <alsa/asoundlib.h>
 
-snd_pcm_t *handle;
+static snd_pcm_t *handle;
+static bool pcm_blocking = true;
 
 // We're making these functions static - there's no need to pollute the global namespace
 static void alsa_init()
@@ -78,20 +79,24 @@ static void alsa_init()
 	}
 
 	/* Set period size to settings.aica.BufferSize frames. */
-	frames = 2 * 1024;//settings.aica.BufferSize;
+	frames = settings.aica.BufferSize;
 	rc=snd_pcm_hw_params_set_period_size_near(handle, params, &frames, &dir);
 	if (rc < 0)
 	{
 		fprintf(stderr, "Error:snd_pcm_hw_params_set_buffer_size_near %s\n", snd_strerror(rc));
 		return;
 	}
-	frames*=4;
+	else
+		printf("ALSA: period size set to %d\n", frames);
+	frames = (44100 * settings.omx.Audio_Latency / 1000 / frames + 1) * frames;
 	rc=snd_pcm_hw_params_set_buffer_size_near(handle, params, &frames);
 	if (rc < 0)
 	{
 		fprintf(stderr, "Error:snd_pcm_hw_params_set_buffer_size_near %s\n", snd_strerror(rc));
 		return;
 	}
+	else
+		printf("ALSA: buffer size set to %d\n", frames);
 
 	/* Write the parameters to the driver */
 	rc = snd_pcm_hw_params(handle, params);
@@ -104,7 +109,10 @@ static void alsa_init()
 
 static u32 alsa_push(void* frame, u32 samples, bool wait)
 {
-	snd_pcm_nonblock(handle, wait ? 0 : 1);
+	if (wait != pcm_blocking) {
+		snd_pcm_nonblock(handle, wait ? 0 : 1);
+		pcm_blocking = wait;
+	}
 
 	int rc = snd_pcm_writei(handle, frame, samples);
 	if (rc == -EPIPE)
@@ -112,7 +120,7 @@ static u32 alsa_push(void* frame, u32 samples, bool wait)
 		/* EPIPE means underrun */
 		fprintf(stderr, "ALSA: underrun occurred\n");
 		snd_pcm_prepare(handle);
-		alsa_push(frame, samples * 8, wait);
+		snd_pcm_writei(handle, frame, samples);
 	}
 	else if (rc < 0)
 	{
