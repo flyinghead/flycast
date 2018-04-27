@@ -299,6 +299,8 @@
 		}
 	}
 
+	void start_shutdown(void);
+
 	bool input_evdev_handle(EvdevController* controller, u32 port)
 	{
 		#define SET_FLAG(field, mask, expr) field =((expr) ? (field & ~mask) : (field | mask))
@@ -331,7 +333,8 @@
 					} else if (ie.code == controller->mapping->Btn_Start) {
 						SET_FLAG(kcode[port], DC_BTN_START, ie.value);
 					} else if (ie.code == controller->mapping->Btn_Escape) {
-						die("death by escape key");
+						if (ie.value == 0)
+							start_shutdown();
 					} else if (ie.code == controller->mapping->Btn_DPad_Left) {
 						SET_FLAG(kcode[port], DC_DPAD_LEFT, ie.value);
 					} else if (ie.code == controller->mapping->Btn_DPad_Right) {

@@ -229,6 +229,8 @@ bool rend_single_frame()
 	return do_swp;
 }
 
+int rend_en = true;
+
 void* rend_thread(void* p)
 {
 #if FEAT_HAS_NIXPROF
@@ -269,12 +271,22 @@ void* rend_thread(void* p)
 	//we don't know if this is true, so let's not speculate here
 	//renderer->Resize(640, 480);
 
-	for(;;)
+	while(rend_en)
 	{
 		if (rend_single_frame())
 			renderer->Present();
 	}
+
+	return 0;
 }
+
+#if HOST_OS==OS_LINUX
+void rend_terminate()
+{
+	rend_en = false;
+	printf("rend_terminate called\n");
+}
+#endif
 
 #if !defined(TARGET_NO_THREADS)
 cThread rthd(rend_thread,0);

@@ -429,6 +429,18 @@ std::vector<string> find_system_data_dirs()
 	return dirs;
 }
 
+#if HOST_OS==OS_LINUX
+void dc_term();
+void rend_terminate();
+void ngen_terminate();
+
+void start_shutdown(void)
+{
+    printf("start_shutdown called\n");
+    rend_terminate();
+    ngen_terminate();
+}
+#endif
 
 int main(int argc, wchar* argv[])
 {
@@ -482,6 +494,21 @@ int main(int argc, wchar* argv[])
 	#ifdef TARGET_PANDORA
 		clean_exit(0);
 	#endif
+
+#if HOST_OS==OS_LINUX
+	dc_term();
+#if defined(USE_EVDEV)
+	printf("closing any open controllers\n");
+
+	for (int port = 0; port < 4 ; port++)
+	{
+		if(evdev_controllers[port].fd >= 0)
+		{
+			close(evdev_controllers[port].fd);
+		}
+	}
+#endif
+#endif
 
 	return 0;
 }
