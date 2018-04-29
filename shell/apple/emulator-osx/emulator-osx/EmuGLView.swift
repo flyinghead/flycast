@@ -32,7 +32,7 @@ class EmuGLView: NSOpenGLView {
     }
     
     override func awakeFromNib() {
-        var renderTimer = Timer.scheduledTimer(timeInterval: 0.001, target: self, selector: #selector(EmuGLView.timerTick), userInfo: nil, repeats: true)
+        let renderTimer = Timer.scheduledTimer(timeInterval: 0.001, target: self, selector: #selector(EmuGLView.timerTick), userInfo: nil, repeats: true)
         
         RunLoop.current.add(renderTimer, forMode: RunLoopMode.defaultRunLoopMode);
         RunLoop.current.add(renderTimer, forMode: RunLoopMode.eventTrackingRunLoopMode);
@@ -64,11 +64,11 @@ class EmuGLView: NSOpenGLView {
     }
     
     override func keyDown(with e: NSEvent) {
-        emu_key_input(e.characters!, 1);
+        emu_key_input(e.keyCode, 1);
     }
     
     override func keyUp(with e: NSEvent) {
-        emu_key_input(e.characters!, 0);
+        emu_key_input(e.keyCode, 0);
     }
     
 }

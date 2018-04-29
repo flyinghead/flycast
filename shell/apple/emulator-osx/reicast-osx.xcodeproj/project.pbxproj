@@ -180,7 +180,6 @@
 		84B7BF6B1B72720200F9733F /* audiostream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BE791B72720200F9733F /* audiostream.cpp */; };
 		84B7BF6C1B72720200F9733F /* profiler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BE7D1B72720200F9733F /* profiler.cpp */; };
 		84B7BF6D1B72720200F9733F /* README.md in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BE7F1B72720200F9733F /* README.md */; };
-		84B7BF6E1B72720200F9733F /* rec_cpp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BE811B72720200F9733F /* rec_cpp.cpp */; };
 		84B7BF741B72720200F9733F /* descrambl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BE901B72720200F9733F /* descrambl.cpp */; };
 		84B7BF751B72720200F9733F /* gdrom_hle.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BE921B72720200F9733F /* gdrom_hle.cpp */; };
 		84B7BF761B72720200F9733F /* reios.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BE941B72720200F9733F /* reios.cpp */; };
@@ -192,6 +191,8 @@
 		84B7BF7F1B72720200F9733F /* stdclass.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BEA71B72720200F9733F /* stdclass.cpp */; };
 		84B7BF831B727AD700F9733F /* osx-main.mm in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BF821B727AD700F9733F /* osx-main.mm */; };
 		84B7BF861B72871600F9733F /* EmuGLView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BF851B72871600F9733F /* EmuGLView.swift */; };
+		AE1E292520947C6100FC6BA2 /* rec_x64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE1E292420947C6100FC6BA2 /* rec_x64.cpp */; };
+		AE1E293B2095FB1600FC6BA2 /* rec_cpp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE1E293A2095FB1600FC6BA2 /* rec_cpp.cpp */; };
 		EBDF374F1BB96581001191B5 /* audiobackend_coreaudio.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EBDF374D1BB96581001191B5 /* audiobackend_coreaudio.cpp */; };
 		EBDF37511BB969EE001191B5 /* CoreAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EBDF37501BB969EE001191B5 /* CoreAudio.framework */; };
 		EBDF37531BB969F8001191B5 /* AudioUnit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EBDF37521BB969F8001191B5 /* AudioUnit.framework */; };
@@ -517,7 +518,6 @@
 		84B7BE7D1B72720200F9733F /* profiler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = profiler.cpp; sourceTree = "<group>"; };
 		84B7BE7E1B72720200F9733F /* profiler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = profiler.h; sourceTree = "<group>"; };
 		84B7BE7F1B72720200F9733F /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; name = README.md; path = ../../../core/README.md; sourceTree = "<group>"; };
-		84B7BE811B72720200F9733F /* rec_cpp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = rec_cpp.cpp; sourceTree = "<group>"; };
 		84B7BE901B72720200F9733F /* descrambl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = descrambl.cpp; sourceTree = "<group>"; };
 		84B7BE911B72720200F9733F /* descrambl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = descrambl.h; sourceTree = "<group>"; };
 		84B7BE921B72720200F9733F /* gdrom_hle.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = gdrom_hle.cpp; sourceTree = "<group>"; };
@@ -539,6 +539,12 @@
 		84B7BF821B727AD700F9733F /* osx-main.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "osx-main.mm"; sourceTree = "<group>"; };
 		84B7BF841B72821900F9733F /* emulator-osx-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "emulator-osx-Bridging-Header.h"; sourceTree = "<group>"; };
 		84B7BF851B72871600F9733F /* EmuGLView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EmuGLView.swift; sourceTree = "<group>"; };
+		AE1E292420947C6100FC6BA2 /* rec_x64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = rec_x64.cpp; sourceTree = "<group>"; };
+		AE1E292820947D4700FC6BA2 /* xbyak.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = xbyak.h; sourceTree = "<group>"; };
+		AE1E292920947D4700FC6BA2 /* xbyak_bin2hex.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = xbyak_bin2hex.h; sourceTree = "<group>"; };
+		AE1E292A20947D4700FC6BA2 /* xbyak_mnemonic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = xbyak_mnemonic.h; sourceTree = "<group>"; };
+		AE1E292B20947D4700FC6BA2 /* xbyak_util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = xbyak_util.h; sourceTree = "<group>"; };
+		AE1E293A2095FB1600FC6BA2 /* rec_cpp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = rec_cpp.cpp; sourceTree = "<group>"; };
 		EBDF374D1BB96581001191B5 /* audiobackend_coreaudio.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = audiobackend_coreaudio.cpp; sourceTree = "<group>"; };
 		EBDF374E1BB96581001191B5 /* audiobackend_coreaudio.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = audiobackend_coreaudio.h; sourceTree = "<group>"; };
 		EBDF37501BB969EE001191B5 /* CoreAudio.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreAudio.framework; path = System/Library/Frameworks/CoreAudio.framework; sourceTree = SDKROOT; };
@@ -652,7 +658,8 @@
 				84B7BE6F1B72720200F9733F /* oslib */,
 				84B7BE7C1B72720200F9733F /* profiler */,
 				84B7BE7F1B72720200F9733F /* README.md */,
-				84B7BE801B72720200F9733F /* rec-cpp */,
+				AE1E29392095FB1600FC6BA2 /* rec-cpp */,
+				AE1E292320947C6100FC6BA2 /* rec-x64 */,
 				84B7BE8F1B72720200F9733F /* reios */,
 				84B7BE981B72720200F9733F /* rend */,
 				84B7BEA71B72720200F9733F /* stdclass.cpp */,
@@ -685,6 +692,7 @@
 				84B7BD2D1B72720100F9733F /* libelf */,
 				84B7BD351B72720100F9733F /* libpng */,
 				84B7BD661B72720100F9733F /* libzip */,
+				AE1E292620947D4700FC6BA2 /* xbyak */,
 				84B7BDA01B72720100F9733F /* zlib */,
 			);
 			name = deps;
@@ -1240,15 +1248,6 @@
 			path = ../../../core/profiler;
 			sourceTree = "<group>";
 		};
-		84B7BE801B72720200F9733F /* rec-cpp */ = {
-			isa = PBXGroup;
-			children = (
-				84B7BE811B72720200F9733F /* rec_cpp.cpp */,
-			);
-			name = "rec-cpp";
-			path = "../../../core/rec-cpp";
-			sourceTree = "<group>";
-		};
 		84B7BE8F1B72720200F9733F /* reios */ = {
 			isa = PBXGroup;
 			children = (
@@ -1286,6 +1285,34 @@
 				84B7BE9F1B72720200F9733F /* gltex.cpp */,
 			);
 			path = gles;
+			sourceTree = "<group>";
+		};
+		AE1E292320947C6100FC6BA2 /* rec-x64 */ = {
+			isa = PBXGroup;
+			children = (
+				AE1E292420947C6100FC6BA2 /* rec_x64.cpp */,
+			);
+			path = "rec-x64";
+			sourceTree = "<group>";
+		};
+		AE1E292620947D4700FC6BA2 /* xbyak */ = {
+			isa = PBXGroup;
+			children = (
+				AE1E292820947D4700FC6BA2 /* xbyak.h */,
+				AE1E292920947D4700FC6BA2 /* xbyak_bin2hex.h */,
+				AE1E292A20947D4700FC6BA2 /* xbyak_mnemonic.h */,
+				AE1E292B20947D4700FC6BA2 /* xbyak_util.h */,
+			);
+			path = xbyak;
+			sourceTree = "<group>";
+		};
+		AE1E29392095FB1600FC6BA2 /* rec-cpp */ = {
+			isa = PBXGroup;
+			children = (
+				AE1E293A2095FB1600FC6BA2 /* rec_cpp.cpp */,
+			);
+			name = "rec-cpp";
+			path = "../../../core/rec-cpp";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -1451,6 +1478,7 @@
 				84B7BEF21B72720200F9733F /* zip_file_get_offset.c in Sources */,
 				84B7BF7B1B72720200F9733F /* gltex.cpp in Sources */,
 				84B7BEF41B72720200F9733F /* zip_filerange_crc.c in Sources */,
+				AE1E292520947C6100FC6BA2 /* rec_x64.cpp in Sources */,
 				84B7BEB91B72720200F9733F /* elf.cpp in Sources */,
 				84B7BF6D1B72720200F9733F /* README.md in Sources */,
 				84B7BF2B1B72720200F9733F /* arm_mem.cpp in Sources */,
@@ -1471,6 +1499,7 @@
 				84B7BF411B72720200F9733F /* ta_vtx.cpp in Sources */,
 				84B7BEF61B72720200F9733F /* zip_fopen_index.c in Sources */,
 				84B7BEEE1B72720200F9733F /* zip_error_to_str.c in Sources */,
+				AE1E293B2095FB1600FC6BA2 /* rec_cpp.cpp in Sources */,
 				84B7BEF81B72720200F9733F /* zip_free.c in Sources */,
 				84B7BF331B72720200F9733F /* sb_mem.cpp in Sources */,
 				84B7BF2F1B72720200F9733F /* gdromv3.cpp in Sources */,
@@ -1566,7 +1595,6 @@
 				84A388B91B1CDD3E000166C0 /* AppDelegate.swift in Sources */,
 				84B7BF001B72720200F9733F /* zip_new.c in Sources */,
 				84B7BF0A1B72720200F9733F /* zip_source_filep.c in Sources */,
-				84B7BF6E1B72720200F9733F /* rec_cpp.cpp in Sources */,
 				84967CBE1B8F49EE005F1140 /* filter_neon.S in Sources */,
 				84B7BF091B72720200F9733F /* zip_source_file.c in Sources */,
 				84B7BF151B72720200F9733F /* zip_unchange_data.c in Sources */,
@@ -1630,8 +1658,12 @@
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
-					"$(inherited)",
+					TARGET_NO_EXCEPTIONS,
+					TARGET_NO_WEBUI,
+					TARGET_NO_NIXPROF,
+					TARGET_NO_COREIO_HTTP,
+					TARGET_NO_AREC,
+					XBYAK_NO_OP_NAMES,
 				);
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -1671,6 +1703,14 @@
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					TARGET_NO_EXCEPTIONS,
+					TARGET_NO_WEBUI,
+					TARGET_NO_NIXPROF,
+					TARGET_NO_COREIO_HTTP,
+					TARGET_NO_AREC,
+					XBYAK_NO_OP_NAMES,
+				);
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNDECLARED_SELECTOR = YES;
@@ -1688,13 +1728,16 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				COMBINE_HIDPI_IMAGES = YES;
-				"GCC_PREPROCESSOR_DEFINITIONS[arch=*]" = (
-					TARGET_NO_EXCEPTIONS,
-					TARGET_NO_WEBUI,
-					TARGET_NO_NIXPROF,
-					TARGET_NO_COREIO_HTTP,
-					TARGET_NO_JIT,
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				"GCC_PREPROCESSOR_DEFINITIONS[arch=i386]" = (
 					TARGET_OSX,
+					"$(inherited)",
+				);
+				"GCC_PREPROCESSOR_DEFINITIONS[arch=x86_64]" = (
+					TARGET_OSX_X64,
 					"$(inherited)",
 				);
 				HEADER_SEARCH_PATHS = (
@@ -1717,13 +1760,13 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				COMBINE_HIDPI_IMAGES = YES;
-				"GCC_PREPROCESSOR_DEFINITIONS[arch=*]" = (
-					TARGET_NO_EXCEPTIONS,
-					TARGET_NO_WEBUI,
-					TARGET_NO_NIXPROF,
-					TARGET_NO_COREIO_HTTP,
-					TARGET_NO_JIT,
+				GCC_PREPROCESSOR_DEFINITIONS = "$(inherited)";
+				"GCC_PREPROCESSOR_DEFINITIONS[arch=i386]" = (
 					TARGET_OSX,
+					"$(inherited)",
+				);
+				"GCC_PREPROCESSOR_DEFINITIONS[arch=x86_64]" = (
+					TARGET_OSX_X64,
 					"$(inherited)",
 				);
 				HEADER_SEARCH_PATHS = (

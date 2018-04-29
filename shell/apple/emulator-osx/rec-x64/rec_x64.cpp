@@ -59,7 +59,7 @@ void ngen_mainloop(void* v_cntx)
 	} while (ngen_required);
 }
 
-#if HOST_OS==OS_LINUX
+#if HOST_OS==OS_LINUX || HOST_OS==OS_DARWIN
 void ngen_terminate()
 {
 	ngen_required = false;

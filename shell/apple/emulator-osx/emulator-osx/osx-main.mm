@@ -132,6 +132,7 @@ extern "C" int emu_single_frame(int w, int h) {
         return true;
     screen_width = w;
     screen_height = h;
+    glViewport(0, 0, w, h);
     return rend_single_frame();
 }
 
@@ -163,35 +164,56 @@ enum DCPad {
     Axis_Y= 0x20001,
 };
 
-void handle_key(int dckey, int state) {
+static void handle_key(int dckey, int state) {
     if (state)
         kcode[0] &= ~dckey;
     else
         kcode[0] |= dckey;
 }
 
-void handle_trig(u8* dckey, int state) {
+static void handle_trig(u8* dckey, int state) {
     if (state)
         dckey[0] = 255;
     else
         dckey[0] = 0;
 }
 
-extern "C" void emu_key_input(char* keyt, int state) {
-    int key = keyt[0];
-    switch(key) {
-        case 'z':     handle_key(Btn_X, state); break;
-        case 'x':     handle_key(Btn_Y, state); break;
-        case 'c':     handle_key(Btn_B, state); break;
-        case 'v':     handle_key(Btn_A, state); break;
-        
-        case 'a':     handle_trig(lt, state); break;
-        case 's':     handle_trig(rt, state); break;
-            
-        case 'j':     handle_key(DPad_Left, state); break;
-        case 'k':     handle_key(DPad_Down, state); break;
-        case 'l':     handle_key(DPad_Right, state); break;
-        case 'i':     handle_key(DPad_Up, state); break;
-        case 0xa:     handle_key(Btn_Start, state); break;
+extern "C" void emu_key_input(UInt16 keyCode, int state) {
+    switch(keyCode) {
+        // Z
+        case 0x06:     handle_key(Btn_X, state); break;
+        // X
+        case 0x07:     handle_key(Btn_Y, state); break;
+        // C
+        case 0x08:     handle_key(Btn_B, state); break;
+        // V
+        case 0x09:     handle_key(Btn_A, state); break;
+
+        // A
+        case 0x00:     handle_trig(lt, state); break;
+        // S
+        case 0x01:     handle_trig(rt, state); break;
+
+        // J
+        case 0x26:     handle_key(DPad_Left, state); break;
+        // K
+        case 0x28:     handle_key(DPad_Down, state); break;
+        // L
+        case 0x25:     handle_key(DPad_Right, state); break;
+        // I
+        case 0x22:     handle_key(DPad_Up, state); break;
+        // Enter
+        case 0x24:     handle_key(Btn_Start, state); break;
     }
+}
+
+void rend_terminate();
+void ngen_terminate();
+void dc_term();
+
+extern "C" void emu_shutdown()
+{
+    rend_terminate();
+    ngen_terminate();
+    dc_term();
 }

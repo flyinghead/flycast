@@ -199,6 +199,9 @@
 #elif defined(TARGET_OSX)
     #define HOST_OS OS_DARWIN
     #define HOST_CPU CPU_GENERIC
+#elif defined(TARGET_OSX_X64)
+    #define HOST_OS OS_DARWIN
+    #define HOST_CPU CPU_X64
 #else
 	#error Invalid Target: TARGET_* not defined
 #endif

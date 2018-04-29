@@ -280,7 +280,7 @@ void* rend_thread(void* p)
 	return 0;
 }
 
-#if HOST_OS==OS_LINUX
+#if HOST_OS==OS_LINUX || HOST_OS==OS_DARWIN
 void rend_terminate()
 {
 	rend_en = false;

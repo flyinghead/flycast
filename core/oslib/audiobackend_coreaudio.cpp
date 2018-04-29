@@ -24,6 +24,7 @@ AudioUnit audioUnit;
 u8 samples_temp[1024 * 4];
 
 volatile int samples_ptr = 0;
+cResetEvent bufferEmpty(false, true);
 
 OSStatus coreaudio_callback(void* ctx, AudioUnitRenderActionFlags* flags, const AudioTimeStamp* ts,
                             UInt32 bus, UInt32 frames, AudioBufferList* abl)
@@ -41,6 +42,8 @@ OSStatus coreaudio_callback(void* ctx, AudioUnitRenderActionFlags* flags, const 
     
     if (samples_ptr < 0)
         samples_ptr = 0;
+    if (samples_ptr == 0)
+        bufferEmpty.Set();
     
     return noErr;
 }
@@ -103,12 +106,14 @@ static void coreaudio_init()
     err = AudioOutputUnitStart(audioUnit);
 
     verify(err == noErr);
+    
+    bufferEmpty.Set();
 }
 
 static u32 coreaudio_push(void* frame, u32 samples, bool wait)
 {
-    /* Yeah, right */
-    while (samples_ptr != 0 && wait) ;
+    if (wait)
+        bufferEmpty.Wait();
     
     if (samples_ptr == 0) {
         memcpy(&samples_temp[samples_ptr], frame, samples * 4);
@@ -130,6 +135,8 @@ static void coreaudio_term()
     
     err = AudioComponentInstanceDispose(audioUnit);
     verify(err == noErr);
+    
+    bufferEmpty.Set();
 }
 
 audiobackend_t audiobackend_coreaudio = {

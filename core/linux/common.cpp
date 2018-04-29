@@ -18,7 +18,7 @@
 #include <sys/param.h>
 #include <sys/mman.h>
 #include <sys/time.h>
-#if !defined(_ANDROID) && !defined(TARGET_IPHONE) && !defined(TARGET_NACL32) && !defined(TARGET_EMSCRIPTEN) && !defined(TARGET_OSX)
+#if !defined(_ANDROID) && !defined(TARGET_IPHONE) && !defined(TARGET_NACL32) && !defined(TARGET_EMSCRIPTEN) && !defined(TARGET_OSX) && !defined(TARGET_OSX_X64)
   #include <sys/personality.h>
   #include <dlfcn.h>
 #endif
@@ -201,7 +201,7 @@ void VArray2::LockRegion(u32 offset,u32 size)
 	}
 
 	#else
-		printf("VA2: LockRegion\n");
+		//printf("VA2: LockRegion\n");
 	#endif
 }
 
@@ -252,7 +252,7 @@ void VArray2::UnLockRegion(u32 offset,u32 size)
 		die("mprotect  failed ..\n");
 	}
 	#else
-		printf("VA2: UnLockRegion\n");
+		//printf("VA2: UnLockRegion\n");
 	#endif
 }
 double os_GetSeconds()
