@@ -12,6 +12,7 @@
     It does work on my macmini though
  */
 
+#include <atomic>
 #include "oslib/audiobackend_coreaudio.h"
 
 #if HOST_OS == OS_DARWIN
@@ -21,29 +22,31 @@
 
 AudioUnit audioUnit;
 
-u8 samples_temp[1024 * 4];
+#define BUFSIZE 8192
+u8 samples_temp[BUFSIZE];
 
-volatile int samples_ptr = 0;
+std::atomic<int> samples_wptr;
+int samples_rptr;
 cResetEvent bufferEmpty(false, true);
 
 OSStatus coreaudio_callback(void* ctx, AudioUnitRenderActionFlags* flags, const AudioTimeStamp* ts,
                             UInt32 bus, UInt32 frames, AudioBufferList* abl)
 {
     verify(frames <= 1024);
-    
-    u8* src = samples_temp;
-    
+
     for (int i = 0; i < abl->mNumberBuffers; i++) {
-        memcpy(abl->mBuffers[i].mData, src, abl->mBuffers[i].mDataByteSize);
-        src += abl->mBuffers[i].mDataByteSize;
+        if ((samples_rptr + abl->mBuffers[i].mDataByteSize) % BUFSIZE > samples_wptr) {
+            //printf("Core Audio: buffer underrun");
+            memset(abl->mBuffers[i].mData, '\0', abl->mBuffers[i].mDataByteSize);
+        }
+        else
+        {
+            memcpy(abl->mBuffers[i].mData, samples_temp + samples_rptr, abl->mBuffers[i].mDataByteSize);
+            samples_rptr = (samples_rptr + abl->mBuffers[i].mDataByteSize) % BUFSIZE;
+        }
     }
     
-    samples_ptr -= frames * 2 * 2;
-    
-    if (samples_ptr < 0)
-        samples_ptr = 0;
-    if (samples_ptr == 0)
-        bufferEmpty.Set();
+    bufferEmpty.Set();
     
     return noErr;
 }
@@ -114,11 +117,9 @@ static u32 coreaudio_push(void* frame, u32 samples, bool wait)
 {
     if (wait)
         bufferEmpty.Wait();
-    
-    if (samples_ptr == 0) {
-        memcpy(&samples_temp[samples_ptr], frame, samples * 4);
-        samples_ptr += samples * 4;
-    }
+
+    memcpy(&samples_temp[samples_wptr], frame, samples * 4);
+    samples_wptr = (samples_wptr + samples * 4) % BUFSIZE;
     
     return 1;
 }
