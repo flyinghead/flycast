@@ -12,10 +12,10 @@
     It does work on my macmini though
  */
 
-#include <atomic>
 #include "oslib/audiobackend_coreaudio.h"
 
 #if HOST_OS == OS_DARWIN
+#include <atomic>
 
 //#include <CoreAudio/CoreAudio.h>
 #include <AudioUnit/AudioUnit.h>
