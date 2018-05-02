@@ -74,6 +74,8 @@ const static u32 SrcBlendGL[] =
 	GL_ONE_MINUS_DST_ALPHA
 };
 
+extern int screen_width;
+extern int screen_height;
 
 PipelineShader* CurrentShader;
 u32 gcflip;
@@ -121,9 +123,9 @@ s32 SetTileClip(u32 val, bool set)
 		clip_mode=0;    //always passes
 	}
 	else if (clipmode&1)
-		clip_mode=-1;   //render stuff inside the region
+		clip_mode=-1;   //render stuff outside the region
 	else
-		clip_mode=1;    //render stuff outside the region
+		clip_mode=1;    //render stuff inside the region
 
 	float csx=0,csy=0,cex=0,cey=0;
 
@@ -137,11 +139,20 @@ s32 SetTileClip(u32 val, bool set)
 	csy=csy*32;
 	cey=cey*32 +32;
 
-	if (csx==0 && csy==0 && cex==640 && cey==480)
+	if (csx <= 0 && csy <= 0 && cex >= 640 && cey >= 480)
 		return 0;
 	
-	if (set)
-		glUniform4f(CurrentShader->pp_ClipTest,-csx,-csy,-cex,-cey);		
+	if (set && clip_mode) {
+		csy = 480 - csy;
+		cey = 480 - cey;
+		float dc2s_scale_h = screen_height / 480.0f;
+		float ds2s_offs_x = (screen_width - dc2s_scale_h * 640) / 2;
+		csx = csx * dc2s_scale_h + ds2s_offs_x;
+		cex = cex * dc2s_scale_h + ds2s_offs_x;
+		csy = csy * dc2s_scale_h;
+		cey = cey * dc2s_scale_h;
+		glUniform4f(CurrentShader->pp_ClipTest, csx, cey, cex, csy);
+	}
 
 	return clip_mode;
 }
@@ -173,8 +184,8 @@ __forceinline
 	{
 		cache.program=CurrentShader->program;
 		glUseProgram(CurrentShader->program);
-		SetTileClip(gp->tileclip,true);
 	}
+	SetTileClip(gp->tileclip,true);
 
 	//This for some reason doesn't work properly
 	//So, shadow bit emulation is disabled.

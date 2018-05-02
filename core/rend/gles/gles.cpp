@@ -233,7 +233,7 @@ const char* PixelPipelineShader =
 "\
 \
 #define cp_AlphaTest %d \n\
-#define pp_ClipTestMode %d.0 \n\
+#define pp_ClipTestMode %d \n\
 #define pp_UseAlpha %d \n\
 #define pp_Texture %d \n\
 #define pp_IgnoreTexA %d \n\
@@ -259,6 +259,19 @@ lowp float fog_mode2(highp float val) \n\
 } \n\
 void main() \n\
 { \n\
+	// Clip outside the box \n\
+	#if pp_ClipTestMode==1 \n\
+		if (gl_FragCoord.x < pp_ClipTest.x || gl_FragCoord.x > pp_ClipTest.z \n\
+				|| gl_FragCoord.y < pp_ClipTest.y || gl_FragCoord.y > pp_ClipTest.w) \n\
+			discard; \n\
+	#endif \n\
+	// Clip inside the box \n\
+	#if pp_ClipTestMode==-1 \n\
+		if (gl_FragCoord.x >= pp_ClipTest.x && gl_FragCoord.x <= pp_ClipTest.z \n\
+				&& gl_FragCoord.y >= pp_ClipTest.y && gl_FragCoord.y <= pp_ClipTest.w) \n\
+			discard; \n\
+	#endif \n\
+	\n\
 	lowp vec4 color=vtx_base; \n\
 	#if pp_UseAlpha==0 \n\
 		color.a=1.0; \n\
