@@ -274,10 +274,12 @@ void main() \n\
 			texcol.a=1.0;	 \n\
 		#endif\n\
 		\n\
+		#if cp_AlphaTest == 1 \n\
+			if (cp_AlphaTestValue>texcol.a) discard;\n\
+		#endif  \n\
 		#if pp_ShadInstr==0 \n\
 		{ \n\
-			color.rgb=texcol.rgb; \n\
-			color.a=texcol.a; \n\
+			color=texcol; \n\
 		} \n\
 		#endif\n\
 		#if pp_ShadInstr==1 \n\
@@ -312,7 +314,7 @@ void main() \n\
 	} \n\
 	#endif\n\
 	#if cp_AlphaTest == 1 \n\
-		if (cp_AlphaTestValue>color.a) discard;\n\
+		color.a=1.0; \n\
 	#endif  \n\
 	//color.rgb=vec3(vtx_xyz.z/255.0);\n\
 	" FRAGCOL "=color; \n\
