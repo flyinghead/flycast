@@ -15,7 +15,7 @@ Takes vertex, textures and renders to the currently set up target
 //Uncomment this to disable the stencil work around
 //Seems like there's a bug either on the wrapper, or nvogl making
 //stencil not work properly (requiring some double calls to get proper results)
-//#define NO_STENCIL_WORKAROUND
+#define NO_STENCIL_WORKAROUND
 
 
 const static u32 CullMode[]= 
@@ -147,10 +147,10 @@ s32 SetTileClip(u32 val, bool set)
 		cey = 480 - cey;
 		float dc2s_scale_h = screen_height / 480.0f;
 		float ds2s_offs_x = (screen_width - dc2s_scale_h * 640) / 2;
-		csx = csx * dc2s_scale_h + ds2s_offs_x;
-		cex = cex * dc2s_scale_h + ds2s_offs_x;
-		csy = csy * dc2s_scale_h;
-		cey = cey * dc2s_scale_h;
+		csx = csx * dc2s_scale_h * scale_x + ds2s_offs_x;
+		cex = cex * dc2s_scale_h * scale_x + ds2s_offs_x;
+		csy = csy * dc2s_scale_h * scale_y;
+		cey = cey * dc2s_scale_h * scale_y;
 		glUniform4f(CurrentShader->pp_ClipTest, csx, cey, cex, csy);
 	}
 
@@ -843,8 +843,11 @@ void SetMVS_Mode(u32 mv_mode,ISP_Modvol ispc)
 		glStencilMask(2);
 		//no stencil testing
 		glStencilFunc(GL_ALWAYS,0,2);
-		//count the number of pixels in front of the Z buffer (and only keep the lower bit of the count)
+		//count the number of pixels in front of the Z buffer (xor zpass)
 		glStencilOp(GL_KEEP,GL_KEEP,GL_INVERT);
+
+		//zfail would be better when camera is in the volume but it doesn't work for open volumes
+		//glStencilOp(GL_KEEP, GL_INVERT, GL_KEEP);
 #ifndef NO_STENCIL_WORKAROUND
 		//this needs to be done .. twice ? looks like
 		//a bug somewhere, on gles/nvgl ?
@@ -862,8 +865,6 @@ void SetMVS_Mode(u32 mv_mode,ISP_Modvol ispc)
 
 		//no depth test
 		glDisable(GL_DEPTH_TEST);
-		//write bits 1:0
-		glStencilMask(3);
 
 		if (mv_mode==1)
 		{
@@ -873,7 +874,8 @@ void SetMVS_Mode(u32 mv_mode,ISP_Modvol ispc)
 			//1   : 0      : 01
 			//1   : 1      : 01
 			
-
+			//write bits 1:0
+			glStencilMask(3);
 			//if (1<=st) st=1; else st=0;
 			glStencilFunc(GL_LEQUAL,1,3);
 			glStencilOp(GL_ZERO,GL_ZERO,GL_REPLACE);
@@ -904,8 +906,10 @@ void SetMVS_Mode(u32 mv_mode,ISP_Modvol ispc)
 			//1   : 0   : 00
 			//1   : 1   : 01
 
-			//if (2>st) st=1; else st=0;	//can't be done with a single pass
-			glStencilFunc(GL_GREATER,1,3);
+			// Write to bit 0
+			glStencilMask(1);	// FIXME bit 1 is not reset. Need other pass
+			//if (3==st) st=1; else st=0;	//can't be done with a single pass
+			glStencilFunc(GL_EQUAL, 3, 3);
 			glStencilOp(GL_ZERO,GL_KEEP,GL_REPLACE);
 #ifndef NO_STENCIL_WORKAROUND
 			//Look @ comment above -- this looks like a driver bug
@@ -997,7 +1001,7 @@ void DrawModVols()
 		*/
 
 		glColorMask(GL_FALSE,GL_FALSE,GL_FALSE,GL_FALSE);
-		glDepthFunc(GL_GREATER);
+
 		if ( 0 /* || GetAsyncKeyState(VK_F6)*/ )
 		{
 			//simple single level stencil
@@ -1118,7 +1122,7 @@ void DrawStrips()
 	/*if (!GetAsyncKeyState(VK_F1))*/
 	DrawList<ListType_Opaque,false>(pvrrc.global_param_op);
 
-	//DrawModVols();
+	DrawModVols();
 
 	//Alpha tested
 	//setup alpha test state

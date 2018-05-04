@@ -61,6 +61,7 @@ Tile clip
 void GenSorted();
 
 float fb_scale_x,fb_scale_y;
+float scale_x, scale_y;
 
 #ifndef GLES
 #define attr "in"
@@ -1554,8 +1555,6 @@ bool RenderFrame()
 	if (!is_rtt)
 	{
 		gcflip=0;
-		dc_width=640;
-		dc_height=480;
 	}
 	else
 	{
@@ -1568,12 +1567,10 @@ bool RenderFrame()
 		dc_height=FB_Y_CLIP.max-FB_Y_CLIP.min+1;
 		u32 pvr_stride=(FB_W_LINESTRIDE.stride)*8;
 		*/
-
-		dc_width=640;
-		dc_height=480;
 	}
 
-	float scale_x=1, scale_y=1;
+	scale_x = 1;
+	scale_y = 1;
 
 	float scissoring_scale_x = 1;
 
@@ -1768,6 +1765,7 @@ bool RenderFrame()
 		glClearColor(0,0,0,1.0f);
 
 	glClearDepthf(0.f); glCheck();
+	glStencilMask(0xFF); glCheck();
 	glClear(GL_COLOR_BUFFER_BIT|GL_STENCIL_BUFFER_BIT|GL_DEPTH_BUFFER_BIT); glCheck();
 
 

@@ -43,6 +43,7 @@
 
 //vertex types
 extern u32 gcflip;
+extern float scale_x, scale_y;
 
 
 void DrawStrips();

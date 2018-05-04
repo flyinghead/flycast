@@ -166,7 +166,7 @@ struct TA_context
 		rend.global_param_mvo.Init(4096,&rend.Overrun);
 		rend.global_param_tr.Init(4096,&rend.Overrun);
 
-		rend.modtrig.Init(4096,&rend.Overrun);
+		rend.modtrig.Init(8192,&rend.Overrun);
 		
 		Reset();
 	}
