@@ -1431,10 +1431,6 @@ void OSD_DRAW()
 
 bool ProcessFrame(TA_context* ctx)
 {
-	//disable RTTs for now ..
-	if (ctx->rend.isRTT)
-		return false;
-
 	ctx->rend_inuse.Lock();
 	ctx->MarkRend();
 
@@ -1563,10 +1559,10 @@ bool RenderFrame()
 		//For some reason this produces wrong results
 		//so for now its hacked based like on the d3d code
 		/*
-		dc_width=FB_X_CLIP.max-FB_X_CLIP.min+1;
-		dc_height=FB_Y_CLIP.max-FB_Y_CLIP.min+1;
 		u32 pvr_stride=(FB_W_LINESTRIDE.stride)*8;
 		*/
+		dc_width = FB_X_CLIP.max - FB_X_CLIP.min + 1;
+		dc_height = FB_Y_CLIP.max - FB_Y_CLIP.min + 1;
 	}
 
 	scale_x = 1;
@@ -1597,8 +1593,6 @@ bool RenderFrame()
 	dc_width  *= scale_x;
 	dc_height *= scale_y;
 
-	glUseProgram(gl.modvol_shader.program);
-
 	/*
 
 	float vnear=0;
@@ -1626,12 +1620,12 @@ bool RenderFrame()
 	/*
 		Handle Dc to screen scaling
 	*/
-	float dc2s_scale_h=screen_height/480.0f;
-	float ds2s_offs_x=(screen_width-dc2s_scale_h*640)/2;
+	float dc2s_scale_h = is_rtt ? (screen_width / dc_width) : (screen_height / 480.0);
+	float ds2s_offs_x =  is_rtt ? 0 : ((screen_width - dc2s_scale_h * 640.0) / 2);
 
 	//-1 -> too much to left
 	ShaderUniforms.scale_coefs[0]=2.0f/(screen_width/dc2s_scale_h*scale_x);
-	ShaderUniforms.scale_coefs[1]=(is_rtt?2:-2)/dc_height;
+	ShaderUniforms.scale_coefs[1]=(is_rtt ? 2 : -2) / min(480.0, dc_height);	// FIXME Is that min() right? due to global clipping (TA_GLOB_TILE_CLIP)?
 	ShaderUniforms.scale_coefs[2]=1-2*ds2s_offs_x/(screen_width);
 	ShaderUniforms.scale_coefs[3]=(is_rtt?1:-1);
 
@@ -1641,7 +1635,7 @@ bool RenderFrame()
 	ShaderUniforms.depth_coefs[2]=0;
 	ShaderUniforms.depth_coefs[3]=0;
 
-	//printf("scale: %f, %f, %f, %f\n",scale_coefs[0],scale_coefs[1],scale_coefs[2],scale_coefs[3]);
+	//printf("scale: %f, %f, %f, %f\n",ShaderUniforms.scale_coefs[0],ShaderUniforms.scale_coefs[1],ShaderUniforms.scale_coefs[2],ShaderUniforms.scale_coefs[3]);
 
 
 	//VERT and RAM fog color constants
@@ -1720,7 +1714,7 @@ bool RenderFrame()
 
 		case 2: //0x2   4444 ARGB 16 bit
 			channels=GL_RGBA;
-			format=GL_UNSIGNED_SHORT_5_5_5_1;
+			format=GL_UNSIGNED_SHORT_4_4_4_4;
 			break;
 
 		case 3://0x3    1555 ARGB 16 bit    The alpha value is determined by comparison with the value of fb_alpha_threshold.
@@ -1729,25 +1723,18 @@ bool RenderFrame()
 			break;
 
 		case 4: //0x4   888 RGB 24 bit packed
-			channels=GL_RGB;
-			format=GL_UNSIGNED_SHORT_5_6_5;
-			break;
-
 		case 5: //0x5   0888 KRGB 32 bit    K is the value of fk_kval.
-			channels=GL_RGBA;
-			format=GL_UNSIGNED_SHORT_4_4_4_4;
-			break;
-
 		case 6: //0x6   8888 ARGB 32 bit
-			channels=GL_RGBA;
-			format=GL_UNSIGNED_SHORT_4_4_4_4;
-			break;
+			fprintf(stderr, "Unsupported render to texture format: %d\n", FB_W_CTRL.fb_packmode);
+			return false;
 
 		case 7: //7     invalid
 			die("7 is not valid");
 			break;
 		}
-		BindRTT(FB_W_SOF1&VRAM_MASK,FB_X_CLIP.max-FB_X_CLIP.min+1,FB_Y_CLIP.max-FB_Y_CLIP.min+1,channels,format);
+		//printf("RTT packmode=%d stride=%d - %d,%d -> %d,%d\n", FB_W_CTRL.fb_packmode, FB_W_LINESTRIDE.stride * 4,
+		//		FB_X_CLIP.min, FB_Y_CLIP.min, FB_X_CLIP.max, FB_Y_CLIP.max);
+		BindRTT(FB_W_SOF1 & VRAM_MASK, dc_width, dc_height, channels, format);
 	}
 	else
 	{
@@ -1755,11 +1742,12 @@ bool RenderFrame()
         //Fix this in a proper way
 		glBindFramebuffer(GL_FRAMEBUFFER,0);
 #endif
+		glViewport(0, 0, screen_width, screen_height);
 	}
 
 	//Clear depth
 	//Color is cleared by the bgp
-	if (settings.rend.WideScreen)
+	if (!is_rtt && settings.rend.WideScreen)
 		glClearColor(pvrrc.verts.head()->col[2]/255.0f,pvrrc.verts.head()->col[1]/255.0f,pvrrc.verts.head()->col[0]/255.0f,1.0f);
 	else
 		glClearColor(0,0,0,1.0f);
@@ -1802,14 +1790,18 @@ bool RenderFrame()
 		printf("SCI: %f, %f, %f, %f\n", offs_x+pvrrc.fb_X_CLIP.min/scale_x,(pvrrc.fb_Y_CLIP.min/scale_y)*dc2s_scale_h,(pvrrc.fb_X_CLIP.max-pvrrc.fb_X_CLIP.min+1)/scale_x*dc2s_scale_h,(pvrrc.fb_Y_CLIP.max-pvrrc.fb_Y_CLIP.min+1)/scale_y*dc2s_scale_h);
 	#endif
 
-	glScissor(offs_x+pvrrc.fb_X_CLIP.min/scale_x,(pvrrc.fb_Y_CLIP.min/scale_y)*dc2s_scale_h,(pvrrc.fb_X_CLIP.max-pvrrc.fb_X_CLIP.min+1)/scale_x*dc2s_scale_h,(pvrrc.fb_Y_CLIP.max-pvrrc.fb_Y_CLIP.min+1)/scale_y*dc2s_scale_h);
-	if (settings.rend.WideScreen && pvrrc.fb_X_CLIP.min==0 && ((pvrrc.fb_X_CLIP.max+1)/scale_x==640) && (pvrrc.fb_Y_CLIP.min==0) && ((pvrrc.fb_Y_CLIP.max+1)/scale_y==480 ) )
+	if (!is_rtt && settings.rend.WideScreen && pvrrc.fb_X_CLIP.min==0 && ((pvrrc.fb_X_CLIP.max+1)/scale_x==640) && (pvrrc.fb_Y_CLIP.min==0) && ((pvrrc.fb_Y_CLIP.max+1)/scale_y==480 ) )
 	{
 		glDisable(GL_SCISSOR_TEST);
 	}
 	else
+	{
+		glScissor(offs_x + pvrrc.fb_X_CLIP.min / scale_x,
+				  pvrrc.fb_Y_CLIP.min / scale_y * (is_rtt ? 1 : dc2s_scale_h),
+				  (pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1) / scale_x * (is_rtt ? 1 : dc2s_scale_h),
+				  (pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1) / scale_y * (is_rtt ? 1 : dc2s_scale_h));
 		glEnable(GL_SCISSOR_TEST);
-
+	}
 
 	//restore scale_x
 	scale_x /= scissoring_scale_x;
@@ -1823,6 +1815,9 @@ bool RenderFrame()
 	eglCheck();
 
 	KillTex=false;
+
+	if (is_rtt)
+		ReadRTTBuffer();
 
 	return !is_rtt;
 }

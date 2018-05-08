@@ -392,6 +392,9 @@ void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 	rv.TexAddr=addy>>3;
 
 	// Find the largest square power of two texture that fits into the viewport
+	int fbh2 = 2;
+	while (fbh2 < fbh)
+		fbh2 *= 2;
 
 	// Get the currently bound frame buffer object. On most platforms this just gives 0.
 	//glGetIntegerv(GL_FRAMEBUFFER_BINDING, &m_i32OriginalFbo);
@@ -407,20 +410,20 @@ void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 	*/
 
 #ifdef GLES
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24_OES, fbw, fbh);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24_OES, fbw, fbh2);
 #else
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, fbw, fbh);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, fbw, fbh2);
 #endif
 
 	glGenRenderbuffers(1, &rv.stencilb);
 	glBindRenderbuffer(GL_RENDERBUFFER, rv.stencilb);
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_STENCIL_INDEX8, fbw, fbh);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_STENCIL_INDEX8, fbw, fbh2);
 
 	// Create a texture for rendering to
 	glGenTextures(1, &rv.tex);
 	glBindTexture(GL_TEXTURE_2D, rv.tex);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, channels, fbw, fbh, 0, channels, fmt, 0);
+	glTexImage2D(GL_TEXTURE_2D, 0, channels, fbw, fbh2, 0, channels, fmt, 0);
 
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -441,15 +444,65 @@ void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 	GLuint uStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 
 	verify(uStatus == GL_FRAMEBUFFER_COMPLETE);
+
+	glViewport(0, 0, fbw, fbh);		// TODO CLIP_X/Y min?
+}
+
+void ReadRTTBuffer() {
+	for (TexCacheIter i = TexCache.begin(); i != TexCache.end(); i++)
+	{
+		if (i->second.sa_tex == fb_rtt.TexAddr << 3)
+			i->second.dirty = FrameCount;
+	}
+
+	u32 w = pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1;
+	u32 h = pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1;
+
+	// FIXME stride
+
+	glPixelStorei(GL_PACK_ALIGNMENT, 1);
+	u16 *src = temp_tex_buffer;
+	u16 *dst = (u16 *)&vram[fb_rtt.TexAddr << 3];
+
+	switch(FB_W_CTRL.fb_packmode)
+	{
+	case 0: //0x0   0555 KRGB 16 bit  (default)	Bit 15 is the value of fb_kval[7].
+		// Untested: read into temp (5551) and copy/convert to 1555
+		glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, temp_tex_buffer);
+		for (u32 i = 0; i < w * h; i++) {
+			*dst++ = ((*src++ >> 1) & 0x7FFF) | ((FB_W_CTRL.fb_kval & 0x80) << 8);
+		}
+		break;
+
+	case 1: //0x1   565 RGB 16 bit
+		// Can be read directly into vram
+		glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, &vram[fb_rtt.TexAddr << 3]);
+		break;
+
+	case 2: //0x2   4444 ARGB 16 bit
+		// Untested: read into temp (rgba_4444) and copy/convert to argb_4444
+		glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4, temp_tex_buffer);
+		for (u32 i = 0; i < w * h; i++) {
+			*dst++ = ((*src >> 4) & 0xFFF) | ((*src & 0xF) << 12);
+			src++;
+		}
+		break;
+
+	case 3://0x3    1555 ARGB 16 bit    The alpha value is determined by comparison with the value of fb_alpha_threshold.
+		// TODO
+		memset(dst, '\0', w * h * 2);
+		break;
+	}
+
+	if (fb_rtt.fbo) { glDeleteFramebuffers(1,&fb_rtt.fbo); fb_rtt.fbo = 0; }
+	if (fb_rtt.tex) { glDeleteTextures(1,&fb_rtt.tex); fb_rtt.tex = 0; }
+	if (fb_rtt.depthb) { glDeleteRenderbuffers(1,&fb_rtt.depthb); fb_rtt.depthb = 0; }
+	if (fb_rtt.stencilb) { glDeleteRenderbuffers(1,&fb_rtt.stencilb); fb_rtt.stencilb = 0; }
+
 }
 
 GLuint gl_GetTexture(TSP tsp, TCW tcw)
 {
-	if (tcw.TexAddr==fb_rtt.TexAddr && fb_rtt.tex)
-	{
-		return fb_rtt.tex;
-	}
-
 	//lookup texture
 	TextureCacheData* tf;
 	//= TexCache.Find(tcw.full,tsp.full);

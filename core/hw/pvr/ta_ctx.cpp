@@ -134,9 +134,17 @@ bool QueueRender(TA_context* ctx)
 	} 
 
 	if (rqueue) {
-		tactx_Recycle(ctx);
-		fskip++;
-		return false;
+		// If the queued frame is for rendering to a texture, we can't skip it, so we wait
+		if (ctx->rend.isRTT) {
+			frame_finished.Wait();
+			verify(!rqueue);
+		}
+		else
+		{
+			tactx_Recycle(ctx);
+			fskip++;
+			return false;
+		}
 	}
 
 	frame_finished.Reset();
