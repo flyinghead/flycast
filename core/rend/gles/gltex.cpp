@@ -1,6 +1,7 @@
 #include "gles.h"
 #include "rend/TexCache.h"
 #include "hw/pvr/pvr_mem.h"
+#include "hw/mem/_vmem.h"
 
 /*
 Textures
@@ -449,20 +450,36 @@ void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 }
 
 void ReadRTTBuffer() {
-	for (TexCacheIter i = TexCache.begin(); i != TexCache.end(); i++)
-	{
-		if (i->second.sa_tex == fb_rtt.TexAddr << 3)
-			i->second.dirty = FrameCount;
-	}
-
 	u32 w = pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1;
 	u32 h = pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1;
 
 	// FIXME stride
 
+    u32 size = w * h * 2;
+    u32 tex_addr = fb_rtt.TexAddr << 3;
+
+    // Manually mark textures as dirty and remove all vram locks before calling glReadPixels
+    // (deadlock on rpi)
+    for (TexCacheIter i = TexCache.begin(); i != TexCache.end(); i++)
+    {
+    	if (i->second.sa_tex <= tex_addr + size - 1 && i->second.sa + i->second.size - 1 >= tex_addr) {
+    		i->second.dirty = FrameCount;
+    		if (i->second.lock_block != NULL) {
+    			libCore_vramlock_Unlock_block(i->second.lock_block);
+    			i->second.lock_block = NULL;
+    		}
+    	}
+    }
+    vram.UnLockRegion(0, 2 * vram.size);
+
+
 	glPixelStorei(GL_PACK_ALIGNMENT, 1);
 	u16 *src = temp_tex_buffer;
 	u16 *dst = (u16 *)&vram[fb_rtt.TexAddr << 3];
+
+	GLint color_fmt, color_type;
+	glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_FORMAT, &color_fmt);
+	glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_TYPE, &color_type);
 
 	switch(FB_W_CTRL.fb_packmode)
 	{
@@ -475,8 +492,24 @@ void ReadRTTBuffer() {
 		break;
 
 	case 1: //0x1   565 RGB 16 bit
-		// Can be read directly into vram
-		glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, &vram[fb_rtt.TexAddr << 3]);
+		if (color_fmt == GL_RGB && color_type == GL_UNSIGNED_SHORT_5_6_5)
+			// Can be read directly into vram
+			glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, dst);
+		else
+		{
+			int lines = h;
+			while (lines > 0) {
+				u8 *p = (u8 *)temp_tex_buffer;
+				u32 chunk_lines = min((u32)sizeof(temp_tex_buffer), w * lines * 4) / w / 4;
+				glReadPixels(0, h - lines, w, chunk_lines, GL_RGBA, GL_UNSIGNED_BYTE, p);
+
+				for (u32 i = 0; i < w * chunk_lines; i++) {
+					*dst++ = (((p[0] >> 3) & 0x1F) << 11) | (((p[1] >> 2) & 0x3F) << 5) | ((p[2] >> 3) & 0x1F);
+					p += 4;
+				}
+				lines -= chunk_lines;
+			}
+		}
 		break;
 
 	case 2: //0x2   4444 ARGB 16 bit
@@ -493,6 +526,19 @@ void ReadRTTBuffer() {
 		memset(dst, '\0', w * h * 2);
 		break;
 	}
+
+	// Restore VRAM locks
+    for (TexCacheIter i = TexCache.begin(); i != TexCache.end(); i++)
+    {
+            if (i->second.lock_block != NULL) {
+                    vram.LockRegion(i->second.sa_tex, i->second.sa + i->second.size - i->second.sa_tex);
+
+                    //TODO: Fix this for 32M wrap as well
+                    if (_nvmem_enabled() && VRAM_SIZE == 0x800000) {
+                            vram.LockRegion(i->second.sa_tex + VRAM_SIZE, i->second.sa + i->second.size - i->second.sa_tex);
+                    }
+            }
+    }
 
 	if (fb_rtt.fbo) { glDeleteFramebuffers(1,&fb_rtt.fbo); fb_rtt.fbo = 0; }
 	if (fb_rtt.tex) { glDeleteTextures(1,&fb_rtt.tex); fb_rtt.tex = 0; }
