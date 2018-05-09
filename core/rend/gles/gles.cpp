@@ -1625,7 +1625,7 @@ bool RenderFrame()
 
 	//-1 -> too much to left
 	ShaderUniforms.scale_coefs[0]=2.0f/(screen_width/dc2s_scale_h*scale_x);
-	ShaderUniforms.scale_coefs[1]=(is_rtt ? 2 : -2) / min(480.0, dc_height);	// FIXME Is that min() right? due to global clipping (TA_GLOB_TILE_CLIP)?
+	ShaderUniforms.scale_coefs[1]=(is_rtt ? 2 : -2) / dc_height;		// FIXME CT2 needs 480 here instead of dc_height=512
 	ShaderUniforms.scale_coefs[2]=1-2*ds2s_offs_x/(screen_width);
 	ShaderUniforms.scale_coefs[3]=(is_rtt?1:-1);
 
@@ -1732,7 +1732,7 @@ bool RenderFrame()
 			die("7 is not valid");
 			break;
 		}
-		//printf("RTT packmode=%d stride=%d - %d,%d -> %d,%d\n", FB_W_CTRL.fb_packmode, FB_W_LINESTRIDE.stride * 4,
+		//printf("RTT packmode=%d stride=%d - %d,%d -> %d,%d\n", FB_W_CTRL.fb_packmode, FB_W_LINESTRIDE.stride * 8,
 		//		FB_X_CLIP.min, FB_Y_CLIP.min, FB_X_CLIP.max, FB_Y_CLIP.max);
 		BindRTT(FB_W_SOF1 & VRAM_MASK, dc_width, dc_height, channels, format);
 	}

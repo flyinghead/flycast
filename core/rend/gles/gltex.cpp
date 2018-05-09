@@ -453,7 +453,13 @@ void ReadRTTBuffer() {
 	u32 w = pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1;
 	u32 h = pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1;
 
-	// FIXME stride
+	u32 stride = FB_W_LINESTRIDE.stride * 8;
+	if (stride == 0)
+		stride = w * 2;
+	else if (w * 2 > stride) {
+    	// Happens for Virtua Tennis
+    	w = stride / 2;
+    }
 
     u32 size = w * h * 2;
     u32 tex_addr = fb_rtt.TexAddr << 3;
@@ -481,7 +487,7 @@ void ReadRTTBuffer() {
 	glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_FORMAT, &color_fmt);
 	glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_TYPE, &color_type);
 
-	if (FB_W_CTRL.fb_packmode == 1 && color_fmt == GL_RGB && color_type == GL_UNSIGNED_SHORT_5_6_5) {
+	if (FB_W_CTRL.fb_packmode == 1 && stride == w * 2 && color_fmt == GL_RGB && color_type == GL_UNSIGNED_SHORT_5_6_5) {
 		// Can be read directly into vram
 		glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, dst);
 	}
@@ -493,23 +499,26 @@ void ReadRTTBuffer() {
 			u32 chunk_lines = min((u32)sizeof(temp_tex_buffer), w * lines * 4) / w / 4;
 			glReadPixels(0, h - lines, w, chunk_lines, GL_RGBA, GL_UNSIGNED_BYTE, p);
 
-			for (u32 i = 0; i < w * chunk_lines; i++) {
-				switch(FB_W_CTRL.fb_packmode)
-				{
-				case 0: //0x0   0555 KRGB 16 bit  (default)	Bit 15 is the value of fb_kval[7].
-					*dst++ = (((p[0] >> 3) & 0x1F) << 10) | (((p[1] >> 3) & 0x1F) << 5) | ((p[2] >> 3) & 0x1F) | ((FB_W_CTRL.fb_kval & 0x80) << 8);
-					break;
-				case 1: //0x1   565 RGB 16 bit
-					*dst++ = (((p[0] >> 3) & 0x1F) << 11) | (((p[1] >> 2) & 0x3F) << 5) | ((p[2] >> 3) & 0x1F);
-					break;
-				case 2: //0x2   4444 ARGB 16 bit
-					*dst++ = (((p[0] >> 4) & 0xF) << 8) | (((p[1] >> 4) & 0xF) << 4) | ((p[2] >> 4) & 0xF) | (((p[3] >> 4) & 0xF) << 12);
-					break;
-				case 3://0x3    1555 ARGB 16 bit    The alpha value is determined by comparison with the value of fb_alpha_threshold.
-					*dst++ = (((p[0] >> 3) & 0x1F) << 10) | (((p[1] >> 3) & 0x1F) << 5) | ((p[2] >> 3) & 0x1F) | (p[3] >= FB_W_CTRL.fb_alpha_threshold ? 0x8000 : 0);
-					break;
+			for (u32 l = 0; l < chunk_lines; l++) {
+				for (u32 c = 0; c < w; c++) {
+					switch(FB_W_CTRL.fb_packmode)
+					{
+					case 0: //0x0   0555 KRGB 16 bit  (default)	Bit 15 is the value of fb_kval[7].
+						*dst++ = (((p[0] >> 3) & 0x1F) << 10) | (((p[1] >> 3) & 0x1F) << 5) | ((p[2] >> 3) & 0x1F) | ((FB_W_CTRL.fb_kval & 0x80) << 8);
+						break;
+					case 1: //0x1   565 RGB 16 bit
+						*dst++ = (((p[0] >> 3) & 0x1F) << 11) | (((p[1] >> 2) & 0x3F) << 5) | ((p[2] >> 3) & 0x1F);
+						break;
+					case 2: //0x2   4444 ARGB 16 bit
+						*dst++ = (((p[0] >> 4) & 0xF) << 8) | (((p[1] >> 4) & 0xF) << 4) | ((p[2] >> 4) & 0xF) | (((p[3] >> 4) & 0xF) << 12);
+						break;
+					case 3://0x3    1555 ARGB 16 bit    The alpha value is determined by comparison with the value of fb_alpha_threshold.
+						*dst++ = (((p[0] >> 3) & 0x1F) << 10) | (((p[1] >> 3) & 0x1F) << 5) | ((p[2] >> 3) & 0x1F) | (p[3] >= FB_W_CTRL.fb_alpha_threshold ? 0x8000 : 0);
+						break;
+					}
+					p += 4;
 				}
-				p += 4;
+				dst += (stride - w * 2) / 2;
 			}
 			lines -= chunk_lines;
 		}
