@@ -1704,7 +1704,7 @@ bool RenderFrame()
 		{
 		case 0: //0x0   0555 KRGB 16 bit  (default)	Bit 15 is the value of fb_kval[7].
 			channels=GL_RGBA;
-			format=GL_UNSIGNED_SHORT_5_5_5_1;
+			format=GL_UNSIGNED_BYTE;
 			break;
 
 		case 1: //0x1   565 RGB 16 bit
@@ -1714,12 +1714,12 @@ bool RenderFrame()
 
 		case 2: //0x2   4444 ARGB 16 bit
 			channels=GL_RGBA;
-			format=GL_UNSIGNED_SHORT_4_4_4_4;
+			format=GL_UNSIGNED_BYTE;
 			break;
 
 		case 3://0x3    1555 ARGB 16 bit    The alpha value is determined by comparison with the value of fb_alpha_threshold.
 			channels=GL_RGBA;
-			format=GL_UNSIGNED_SHORT_5_5_5_1;
+			format=GL_UNSIGNED_BYTE;
 			break;
 
 		case 4: //0x4   888 RGB 24 bit packed

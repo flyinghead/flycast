@@ -481,50 +481,38 @@ void ReadRTTBuffer() {
 	glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_FORMAT, &color_fmt);
 	glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_TYPE, &color_type);
 
-	switch(FB_W_CTRL.fb_packmode)
+	if (FB_W_CTRL.fb_packmode == 1 && color_fmt == GL_RGB && color_type == GL_UNSIGNED_SHORT_5_6_5) {
+		// Can be read directly into vram
+		glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, dst);
+	}
+	else
 	{
-	case 0: //0x0   0555 KRGB 16 bit  (default)	Bit 15 is the value of fb_kval[7].
-		// Untested: read into temp (5551) and copy/convert to 1555
-		glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, temp_tex_buffer);
-		for (u32 i = 0; i < w * h; i++) {
-			*dst++ = ((*src++ >> 1) & 0x7FFF) | ((FB_W_CTRL.fb_kval & 0x80) << 8);
-		}
-		break;
+		u32 lines = h;
+		while (lines > 0) {
+			u8 *p = (u8 *)temp_tex_buffer;
+			u32 chunk_lines = min((u32)sizeof(temp_tex_buffer), w * lines * 4) / w / 4;
+			glReadPixels(0, h - lines, w, chunk_lines, GL_RGBA, GL_UNSIGNED_BYTE, p);
 
-	case 1: //0x1   565 RGB 16 bit
-		if (color_fmt == GL_RGB && color_type == GL_UNSIGNED_SHORT_5_6_5)
-			// Can be read directly into vram
-			glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, dst);
-		else
-		{
-			int lines = h;
-			while (lines > 0) {
-				u8 *p = (u8 *)temp_tex_buffer;
-				u32 chunk_lines = min((u32)sizeof(temp_tex_buffer), w * lines * 4) / w / 4;
-				glReadPixels(0, h - lines, w, chunk_lines, GL_RGBA, GL_UNSIGNED_BYTE, p);
-
-				for (u32 i = 0; i < w * chunk_lines; i++) {
+			for (u32 i = 0; i < w * chunk_lines; i++) {
+				switch(FB_W_CTRL.fb_packmode)
+				{
+				case 0: //0x0   0555 KRGB 16 bit  (default)	Bit 15 is the value of fb_kval[7].
+					*dst++ = (((p[0] >> 3) & 0x1F) << 10) | (((p[1] >> 3) & 0x1F) << 5) | ((p[2] >> 3) & 0x1F) | ((FB_W_CTRL.fb_kval & 0x80) << 8);
+					break;
+				case 1: //0x1   565 RGB 16 bit
 					*dst++ = (((p[0] >> 3) & 0x1F) << 11) | (((p[1] >> 2) & 0x3F) << 5) | ((p[2] >> 3) & 0x1F);
-					p += 4;
+					break;
+				case 2: //0x2   4444 ARGB 16 bit
+					*dst++ = (((p[0] >> 4) & 0xF) << 8) | (((p[1] >> 4) & 0xF) << 4) | ((p[2] >> 4) & 0xF) | (((p[3] >> 4) & 0xF) << 12);
+					break;
+				case 3://0x3    1555 ARGB 16 bit    The alpha value is determined by comparison with the value of fb_alpha_threshold.
+					*dst++ = (((p[0] >> 3) & 0x1F) << 10) | (((p[1] >> 3) & 0x1F) << 5) | ((p[2] >> 3) & 0x1F) | (p[3] >= FB_W_CTRL.fb_alpha_threshold ? 0x8000 : 0);
+					break;
 				}
-				lines -= chunk_lines;
+				p += 4;
 			}
+			lines -= chunk_lines;
 		}
-		break;
-
-	case 2: //0x2   4444 ARGB 16 bit
-		// Untested: read into temp (rgba_4444) and copy/convert to argb_4444
-		glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4, temp_tex_buffer);
-		for (u32 i = 0; i < w * h; i++) {
-			*dst++ = ((*src >> 4) & 0xFFF) | ((*src & 0xF) << 12);
-			src++;
-		}
-		break;
-
-	case 3://0x3    1555 ARGB 16 bit    The alpha value is determined by comparison with the value of fb_alpha_threshold.
-		// TODO
-		memset(dst, '\0', w * h * 2);
-		break;
 	}
 
 	// Restore VRAM locks
