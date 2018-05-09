@@ -2,6 +2,8 @@ package com.reicast.emulator.debug;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -14,6 +16,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.reicast.emulator.R;
+import com.reicast.emulator.config.Config;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
