@@ -58,8 +58,6 @@ Tile clip
 #include "rend/rend.h"
 #include "hw/pvr/Renderer_if.h"
 
-void GenSorted();
-
 float fb_scale_x,fb_scale_y;
 float scale_x, scale_y;
 
@@ -1432,7 +1430,6 @@ void OSD_DRAW()
 bool ProcessFrame(TA_context* ctx)
 {
 	ctx->rend_inuse.Lock();
-	ctx->MarkRend();
 
 	if (KillTex)
 	{
@@ -1752,13 +1749,7 @@ bool RenderFrame()
 	else
 		glClearColor(0,0,0,1.0f);
 
-	glClearDepthf(0.f); glCheck();
-	glStencilMask(0xFF); glCheck();
-	glClear(GL_COLOR_BUFFER_BIT|GL_STENCIL_BUFFER_BIT|GL_DEPTH_BUFFER_BIT); glCheck();
-
-
-	if (UsingAutoSort())
-		GenSorted();
+	glClear(GL_COLOR_BUFFER_BIT); glCheck();
 
 	//move vertex to gpu
 

@@ -55,16 +55,23 @@ struct  tad_context
 	u8* thd_data;
 	u8* thd_root;
 	u8* thd_old_data;
+	vector<u8*> render_passes;
 
 	void Clear()
 	{
 		thd_old_data = thd_data = thd_root;
+		render_passes.clear();
 	}
 
 	void ClearPartial()
 	{
 		thd_old_data = thd_data;
 		thd_data = thd_root;
+	}
+
+	void Continue()
+	{
+		render_passes.push_back(thd_data);
 	}
 	
 	u8* End()
@@ -75,8 +82,16 @@ struct  tad_context
 	void Reset(u8* ptr)
 	{
 		thd_data = thd_root = thd_old_data = ptr;
+		render_passes.clear();
 	}
 
+};
+
+struct RenderPass {
+	u32 op_count;
+	u32 mvo_count;
+	u32 pt_count;
+	u32 tr_count;
 };
 
 struct rend_context
@@ -104,6 +119,7 @@ struct rend_context
 	List<PolyParam>   global_param_op;
 	List<PolyParam>   global_param_pt;
 	List<PolyParam>   global_param_tr;
+	List<RenderPass>  render_passes;
 
 	void Clear()
 	{
@@ -114,6 +130,7 @@ struct rend_context
 		global_param_tr.Clear();
 		modtrig.Clear();
 		global_param_mvo.Clear();
+		render_passes.Clear();
 
 		Overrun=false;
 		fZ_min= 1000000.0f;
@@ -150,11 +167,14 @@ struct TA_context
 			sa2:    idx: 36094, vtx: 24520, op: 1330, pt: 10, tr: 177, mvo: 39, modt: 360, ov: 0
 	*/
 
-	void MarkRend()
+	void MarkRend(u32 render_pass)
 	{
-		rend.proc_start = tad.thd_root;
-		rend.proc_end = tad.End();
+		verify(render_pass <= tad.render_passes.size());
+
+		rend.proc_start = render_pass == 0 ? tad.thd_root : tad.render_passes[render_pass - 1];
+		rend.proc_end = render_pass == tad.render_passes.size() ? tad.End() : tad.render_passes[render_pass];
 	}
+
 	void Alloc()
 	{
 		tad.Reset((u8*)OS_aligned_malloc(32, 2*1024*1024));
@@ -168,6 +188,8 @@ struct TA_context
 
 		rend.modtrig.Init(8192,&rend.Overrun);
 		
+		rend.render_passes.Init(sizeof(RenderPass) * 10, &rend.Overrun);	// 10 render passes
+
 		Reset();
 	}
 
@@ -190,6 +212,7 @@ struct TA_context
 		rend.global_param_tr.Free();
 		rend.modtrig.Free();
 		rend.global_param_mvo.Free();
+		rend.render_passes.Free();
 	}
 };
 

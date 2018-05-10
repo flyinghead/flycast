@@ -262,10 +262,9 @@ __forceinline
 }
 
 template <u32 Type, bool SortingEnabled>
-void DrawList(const List<PolyParam>& gply)
+void DrawList(const List<PolyParam>& gply, int first, int count)
 {
-	PolyParam* params=gply.head();
-	int count=gply.used();
+	PolyParam* params = &gply.head()[first];
 
 
 	if (count==0)
@@ -311,16 +310,16 @@ bool operator<(const PolyParam &left, const PolyParam &right)
 }
 
 //Sort based on min-z of each strip
-void SortPParams()
+void SortPParams(int first, int count)
 {
-	if (pvrrc.verts.used()==0 || pvrrc.global_param_tr.used()<=1)
+	if (pvrrc.verts.used() == 0 || count <= 1)
 		return;
 
 	Vertex* vtx_base=pvrrc.verts.head();
 	u16* idx_base=pvrrc.idx.head();
 
-	PolyParam* pp=pvrrc.global_param_tr.head();
-	PolyParam* pp_end= pp + pvrrc.global_param_tr.used();
+	PolyParam* pp = &pvrrc.global_param_tr.head()[first];
+	PolyParam* pp_end = pp + count;
 
 	while(pp!=pp_end)
 	{
@@ -499,21 +498,21 @@ void fill_id(u16* d, Vertex* v0, Vertex* v1, Vertex* v2,  Vertex* vb)
 	d[2]=v2-vb;
 }
 
-void GenSorted()
+void GenSorted(int first, int count)
 {
 	u32 tess_gen=0;
 
 	pidx_sort.clear();
 
-	if (pvrrc.verts.used()==0 || pvrrc.global_param_tr.used()<=1)
+	if (pvrrc.verts.used() == 0 || count <= 1)
 		return;
 
 	Vertex* vtx_base=pvrrc.verts.head();
 	u16* idx_base=pvrrc.idx.head();
 
-	PolyParam* pp_base=pvrrc.global_param_tr.head();
-	PolyParam* pp=pp_base;
-	PolyParam* pp_end= pp + pvrrc.global_param_tr.used();
+	PolyParam* pp_base = &pvrrc.global_param_tr.head()[first];
+	PolyParam* pp = pp_base;
+	PolyParam* pp_end = pp + count;
 	
 	Vertex* vtx_arr=vtx_base+idx_base[pp->first];
 	vtx_sort_base=vtx_base;
@@ -966,9 +965,9 @@ void SetupModvolVBO()
 	glDisableVertexAttribArray(VERTEX_COL_OFFS_ARRAY);
 	glDisableVertexAttribArray(VERTEX_COL_BASE_ARRAY);
 }
-void DrawModVols()
+void DrawModVols(int first, int count)
 {
-	if (pvrrc.modtrig.used()==0 /*|| GetAsyncKeyState(VK_F4)*/)
+	if (count == 0 /*|| GetAsyncKeyState(VK_F4)*/)
 		return;
 
 	SetupModvolVBO();
@@ -986,7 +985,7 @@ void DrawModVols()
 	{
 		//simply draw the volumes -- for debugging
 		SetCull(0);
-		glDrawArrays(GL_TRIANGLES,0,pvrrc.modtrig.used()*3);
+		glDrawArrays(GL_TRIANGLES, first, count * 3);
 		SetupMainVBO();
 	}
 	else
@@ -1021,7 +1020,7 @@ void DrawModVols()
 #endif
 			glStencilMask(0x1);
 			SetCull(0);
-			glDrawArrays(GL_TRIANGLES,0,pvrrc.modtrig.used()*3);
+			glDrawArrays(GL_TRIANGLES, first, count * 3);
 		}
 		else if (true)
 		{
@@ -1031,8 +1030,8 @@ void DrawModVols()
 			u32 mod_base=0; //cur start triangle
 			u32 mod_last=0; //last merge
 
-			u32 cmv_count=(pvrrc.global_param_mvo.used()-1);
-			ISP_Modvol* params=pvrrc.global_param_mvo.head();
+			u32 cmv_count = count - 1;
+			ISP_Modvol* params = &pvrrc.global_param_mvo.head()[first];
 
 			//ISP_Modvol
 			for (u32 cmv=0;cmv<cmv_count;cmv++)
@@ -1117,46 +1116,60 @@ void DrawStrips()
 	SetupMainVBO();
 	//Draw the strips !
 
-	//initial state
-	glDisable(GL_BLEND); glCheck();
-	glEnable(GL_DEPTH_TEST);
-
 	//We use sampler 0
 	glActiveTexture(GL_TEXTURE0);
 
-	//Opaque
-	//Nothing extra needs to be setup here
-	/*if (!GetAsyncKeyState(VK_F1))*/
-	DrawList<ListType_Opaque,false>(pvrrc.global_param_op);
+	RenderPass previous_pass = {0};
+	for (int render_pass = 0; render_pass < pvrrc.render_passes.used(); render_pass++) {
+		const RenderPass& current_pass = pvrrc.render_passes.head()[render_pass];
 
-	DrawModVols();
+		//initial state
+		glDisable(GL_BLEND);
+		glEnable(GL_DEPTH_TEST);
 
-	//Alpha tested
-	//setup alpha test state
-	/*if (!GetAsyncKeyState(VK_F2))*/
-	DrawList<ListType_Punch_Through,false>(pvrrc.global_param_pt);
+		glClearDepthf(0.f);
+		glDepthMask(GL_TRUE);
+		glStencilMask(0xFF);
+		glClear(GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); glCheck();
+
+		//Opaque
+		//Nothing extra needs to be setup here
+		/*if (!GetAsyncKeyState(VK_F1))*/
+		DrawList<ListType_Opaque,false>(pvrrc.global_param_op, previous_pass.op_count, current_pass.op_count - previous_pass.op_count);
+
+		DrawModVols(previous_pass.mvo_count, current_pass.mvo_count);
+
+		//Alpha tested
+		//setup alpha test state
+		/*if (!GetAsyncKeyState(VK_F2))*/
+		DrawList<ListType_Punch_Through,false>(pvrrc.global_param_pt, previous_pass.pt_count, current_pass.pt_count - previous_pass.pt_count);
 
 
-	//Alpha blended
-	//Setup blending
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	/*if (!GetAsyncKeyState(VK_F3))*/
-	{
-		/*
-		if (UsingAutoSort())
-			SortRendPolyParamList(pvrrc.global_param_tr);
-		else
-			*/
+		//Alpha blended
+		//Setup blending
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		/*if (!GetAsyncKeyState(VK_F3))*/
+		{
+			/*
+			if (UsingAutoSort())
+				SortRendPolyParamList(pvrrc.global_param_tr);
+			else
+				*/
+			if (pvrrc.isAutoSort)
+				GenSorted(previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
+
 #if TRIG_SORT
-		if (pvrrc.isAutoSort)
-			DrawSorted();
-		else
-			DrawList<ListType_Translucent,false>(pvrrc.global_param_tr);
+			if (pvrrc.isAutoSort)
+				DrawSorted();
+			else
+				DrawList<ListType_Translucent,false>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
 #else
-		if (pvrrc.isAutoSort)
-			SortPParams();
-		DrawList<ListType_Translucent,true>(pvrrc.global_param_tr);
+			if (pvrrc.isAutoSort)
+				SortPParams(previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
+			DrawList<ListType_Translucent,true>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
 #endif
+		}
+		previous_pass = current_pass;
 	}
 }

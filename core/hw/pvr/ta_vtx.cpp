@@ -1444,19 +1444,32 @@ bool ta_parse_vdrc(TA_context* ctx)
 	vd_rc = vd_ctx->rend;
 	
 	ta_parse_cnt++;
-	if (0 == (ta_parse_cnt %  ( settings.pvr.ta_skip + 1)))
+	if (ctx->rend.isRTT || 0 == (ta_parse_cnt %  ( settings.pvr.ta_skip + 1)))
 	{
 		TAFifo0.vdec_init();
 		
-		Ta_Dma* ta_data=(Ta_Dma*)vd_rc.proc_start;
-		Ta_Dma* ta_data_end=((Ta_Dma*)vd_rc.proc_end)-1;
-
-		do
+		for (int pass = 0; pass <= ctx->tad.render_passes.size(); pass++) 
 		{
-			ta_data =TaCmd(ta_data,ta_data_end);
+			ctx->MarkRend(pass);
+			vd_rc.proc_start = ctx->rend.proc_start;
+			vd_rc.proc_end = ctx->rend.proc_end;
 
+			Ta_Dma* ta_data=(Ta_Dma*)vd_rc.proc_start;
+			Ta_Dma* ta_data_end=((Ta_Dma*)vd_rc.proc_end)-1;
+
+			do
+			{
+				ta_data =TaCmd(ta_data,ta_data_end);
+
+			}
+			while(ta_data<=ta_data_end);
+
+			RenderPass *render_pass = vd_rc.render_passes.Append();
+			render_pass->op_count = vd_rc.global_param_op.used();
+			render_pass->mvo_count = vd_rc.global_param_mvo.used();
+			render_pass->pt_count = vd_rc.global_param_pt.used();
+			render_pass->tr_count = vd_rc.global_param_tr.used();
 		}
-		while(ta_data<=ta_data_end);
 
 		rv = true; //whatever
 	}
