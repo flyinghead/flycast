@@ -2,6 +2,7 @@
 #include "rend/TexCache.h"
 #include "hw/pvr/pvr_mem.h"
 #include "hw/mem/_vmem.h"
+#include "deps/libpng/png.h"
 
 /*
 Textures
@@ -66,6 +67,47 @@ const u32 MipPoint[8] =
 
 const GLuint PAL_TYPE[4]=
 {GL_UNSIGNED_SHORT_5_5_5_1,GL_UNSIGNED_SHORT_5_6_5,GL_UNSIGNED_SHORT_4_4_4_4,GL_UNSIGNED_SHORT_4_4_4_4};
+
+static void dumpRtTexture(u32 name, u32 w, u32 h) {
+	char sname[256];
+	sprintf(sname, "texdump/%x-%d.png", name, FrameCount);
+	FILE *fp = fopen(sname, "wb");
+    if (fp == NULL)
+    	return;
+
+	glPixelStorei(GL_PACK_ALIGNMENT, 1);
+
+	png_bytepp rows = (png_bytepp)malloc(h * sizeof(png_bytep));
+	for (int y = 0; y < h; y++) {
+		rows[y] = (png_bytep)malloc(w * 4);	// 32-bit per pixel
+		glReadPixels(0, y, w, 1, GL_RGBA, GL_UNSIGNED_BYTE, rows[y]);
+	}
+
+    png_structp png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+    png_infop info_ptr = png_create_info_struct(png_ptr);
+
+    png_init_io(png_ptr, fp);
+
+
+    /* write header */
+    png_set_IHDR(png_ptr, info_ptr, w, h,
+                         8, PNG_COLOR_TYPE_RGBA, PNG_INTERLACE_NONE,
+                         PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
+
+    png_write_info(png_ptr, info_ptr);
+
+
+            /* write bytes */
+    png_write_image(png_ptr, rows);
+
+    /* end write */
+    png_write_end(png_ptr, NULL);
+    fclose(fp);
+
+	for (int y = 0; y < h; y++)
+		free(rows[y]);
+	free(rows);
+}
 
 
 //Texture Cache :)
@@ -369,7 +411,7 @@ struct TextureCacheData
 map<u64,TextureCacheData> TexCache;
 typedef map<u64,TextureCacheData>::iterator TexCacheIter;
 
-//TexCacheList<TextureCacheData> TexCache;
+TextureCacheData *getTextureCacheData(TSP tsp, TCW tcw);
 
 struct FBT
 {
@@ -396,6 +438,9 @@ void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 	int fbh2 = 2;
 	while (fbh2 < fbh)
 		fbh2 *= 2;
+	int fbw2 = 2;
+	while (fbw2 < fbw)
+		fbw2 *= 2;
 
 	// Get the currently bound frame buffer object. On most platforms this just gives 0.
 	//glGetIntegerv(GL_FRAMEBUFFER_BINDING, &m_i32OriginalFbo);
@@ -411,20 +456,20 @@ void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 	*/
 
 #ifdef GLES
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24_OES, fbw, fbh2);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24_OES, fbw2, fbh2);
 #else
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, fbw, fbh2);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, fbw2, fbh2);
 #endif
 
 	glGenRenderbuffers(1, &rv.stencilb);
 	glBindRenderbuffer(GL_RENDERBUFFER, rv.stencilb);
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_STENCIL_INDEX8, fbw, fbh2);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_STENCIL_INDEX8, fbw2, fbh2);
 
 	// Create a texture for rendering to
 	glGenTextures(1, &rv.tex);
 	glBindTexture(GL_TEXTURE_2D, rv.tex);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, channels, fbw, fbh2, 0, channels, fmt, 0);
+	glTexImage2D(GL_TEXTURE_2D, 0, channels, fbw2, fbh2, 0, channels, fmt, 0);
 
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -487,12 +532,17 @@ void ReadRTTBuffer() {
 	glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_FORMAT, &color_fmt);
 	glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_TYPE, &color_type);
 
-	if (FB_W_CTRL.fb_packmode == 1 && stride == w * 2 && color_fmt == GL_RGB && color_type == GL_UNSIGNED_SHORT_5_6_5) {
+	const u8 fb_packmode = FB_W_CTRL.fb_packmode;
+
+	if (fb_packmode == 1 && stride == w * 2 && color_fmt == GL_RGB && color_type == GL_UNSIGNED_SHORT_5_6_5) {
 		// Can be read directly into vram
 		glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, dst);
 	}
 	else
 	{
+		const u16 kval_bit = (FB_W_CTRL.fb_kval & 0x80) << 8;
+		const u8 fb_alpha_threshold = FB_W_CTRL.fb_alpha_threshold;
+
 		u32 lines = h;
 		while (lines > 0) {
 			u8 *p = (u8 *)temp_tex_buffer;
@@ -501,10 +551,10 @@ void ReadRTTBuffer() {
 
 			for (u32 l = 0; l < chunk_lines; l++) {
 				for (u32 c = 0; c < w; c++) {
-					switch(FB_W_CTRL.fb_packmode)
+					switch(fb_packmode)
 					{
 					case 0: //0x0   0555 KRGB 16 bit  (default)	Bit 15 is the value of fb_kval[7].
-						*dst++ = (((p[0] >> 3) & 0x1F) << 10) | (((p[1] >> 3) & 0x1F) << 5) | ((p[2] >> 3) & 0x1F) | ((FB_W_CTRL.fb_kval & 0x80) << 8);
+						*dst++ = (((p[0] >> 3) & 0x1F) << 10) | (((p[1] >> 3) & 0x1F) << 5) | ((p[2] >> 3) & 0x1F) | kval_bit;
 						break;
 					case 1: //0x1   565 RGB 16 bit
 						*dst++ = (((p[0] >> 3) & 0x1F) << 11) | (((p[1] >> 2) & 0x3F) << 5) | ((p[2] >> 3) & 0x1F);
@@ -513,7 +563,7 @@ void ReadRTTBuffer() {
 						*dst++ = (((p[0] >> 4) & 0xF) << 8) | (((p[1] >> 4) & 0xF) << 4) | ((p[2] >> 4) & 0xF) | (((p[3] >> 4) & 0xF) << 12);
 						break;
 					case 3://0x3    1555 ARGB 16 bit    The alpha value is determined by comparison with the value of fb_alpha_threshold.
-						*dst++ = (((p[0] >> 3) & 0x1F) << 10) | (((p[1] >> 3) & 0x1F) << 5) | ((p[2] >> 3) & 0x1F) | (p[3] >= FB_W_CTRL.fb_alpha_threshold ? 0x8000 : 0);
+						*dst++ = (((p[0] >> 3) & 0x1F) << 10) | (((p[1] >> 3) & 0x1F) << 5) | ((p[2] >> 3) & 0x1F) | (p[3] >= fb_alpha_threshold ? 0x8000 : 0);
 						break;
 					}
 					p += 4;
@@ -537,42 +587,104 @@ void ReadRTTBuffer() {
             }
     }
 
+    //dumpRtTexture(fb_rtt.TexAddr, w, h);
+    
+    if (w > 1024 || h > 1024) {
+    	glDeleteTextures(1, &fb_rtt.tex);
+    }
+    else
+    {
+    	TCW tcw = { { TexAddr : fb_rtt.TexAddr, Reserved : 0, StrideSel : 0, ScanOrder : 1 } };
+    	switch (FB_W_CTRL.fb_packmode) {
+    	case 0:
+    	case 3:
+    		tcw.PixelFmt = 0;
+    		break;
+    	case 1:
+    		tcw.PixelFmt = 1;
+    		break;
+    	case 2:
+    		tcw.PixelFmt = 2;
+    		break;
+    	}
+    	TSP tsp = { 0 };
+    	for (tsp.TexU = 0; tsp.TexU <= 7 && (8 << tsp.TexU) < w; tsp.TexU++);
+    	for (tsp.TexV = 0; tsp.TexV <= 7 && (8 << tsp.TexV) < h; tsp.TexV++);
+
+    	TextureCacheData *texture_data = getTextureCacheData(tsp, tcw);
+    	if (texture_data->texID != 0)
+    		glDeleteTextures(1, &texture_data->texID);
+    	else {
+    		texture_data->Create(false);
+    		texture_data->lock_block = libCore_vramlock_Lock(texture_data->sa_tex, texture_data->sa + texture_data->size - 1, texture_data);
+    	}
+    	texture_data->texID = fb_rtt.tex;
+    	texture_data->dirty = 0;
+    }
+    fb_rtt.tex = 0;
+
 	if (fb_rtt.fbo) { glDeleteFramebuffers(1,&fb_rtt.fbo); fb_rtt.fbo = 0; }
-	if (fb_rtt.tex) { glDeleteTextures(1,&fb_rtt.tex); fb_rtt.tex = 0; }
 	if (fb_rtt.depthb) { glDeleteRenderbuffers(1,&fb_rtt.depthb); fb_rtt.depthb = 0; }
 	if (fb_rtt.stencilb) { glDeleteRenderbuffers(1,&fb_rtt.stencilb); fb_rtt.stencilb = 0; }
 
 }
 
-GLuint gl_GetTexture(TSP tsp, TCW tcw)
-{
-	//lookup texture
+static int TexCacheLookups;
+static int TexCacheHits;
+static float LastTexCacheStats;
+
+// Only use TexU and TexV from TSP in the cache key
+const TSP TSPTextureCacheMask = { { TexV : 7, TexU : 7 } };
+const TCW TCWTextureCacheMask = { { TexAddr : 0x1FFFFF, Reserved : 0, StrideSel : 0, ScanOrder : 0, PixelFmt : 7, VQ_Comp : 1, MipMapped : 1 } };
+
+TextureCacheData *getTextureCacheData(TSP tsp, TCW tcw) {
+	u64 key = ((u64)(tcw.full & TCWTextureCacheMask.full) << 32) | (tsp.full & TSPTextureCacheMask.full);
+
+	TexCacheIter tx = TexCache.find(key);
+
 	TextureCacheData* tf;
-	//= TexCache.Find(tcw.full,tsp.full);
-	u64 key=((u64)tcw.full<<32) | tsp.full;
-
-	TexCacheIter tx=TexCache.find(key);
-
-	if (tx!=TexCache.end())
+	if (tx != TexCache.end())
 	{
-		tf=&tx->second;
+		tf = &tx->second;
 	}
 	else //create if not existing
 	{
 		TextureCacheData tfc={0};
-		TexCache[key]=tfc;
+		TexCache[key] = tfc;
 
 		tx=TexCache.find(key);
 		tf=&tx->second;
 
-		tf->tsp=tsp;
-		tf->tcw=tcw;
-		tf->Create(true);
+		tf->tsp = tsp;
+		tf->tcw = tcw;
 	}
+
+	return tf;
+}
+
+GLuint gl_GetTexture(TSP tsp, TCW tcw)
+{
+	TexCacheLookups++;
+
+	//lookup texture
+	TextureCacheData* tf = getTextureCacheData(tsp, tcw);
+
+	if (tf->texID == 0)
+		tf->Create(true);
 
 	//update if needed
 	if (tf->NeedsUpdate())
 		tf->Update();
+	else
+		TexCacheHits++;
+
+//	if (os_GetSeconds() - LastTexCacheStats >= 2.0)
+//	{
+//		LastTexCacheStats = os_GetSeconds();
+//		printf("Texture cache efficiency: %.2f%% cache size %ld\n", (float)TexCacheHits / TexCacheLookups * 100, TexCache.size());
+//		TexCacheLookups = 0;
+//		TexCacheHits = 0;
+//	}
 
 	//update state for opts/stuff
 	tf->Lookups++;
@@ -588,8 +700,7 @@ text_info raw_GetTexture(TSP tsp, TCW tcw)
 
 	//lookup texture
 	TextureCacheData* tf;
-	//= TexCache.Find(tcw.full,tsp.full);
-	u64 key = ((u64)tcw.full << 32) | tsp.full;
+	u64 key = ((u64)(tcw.full & TCWTextureCacheMask.full) << 32) | (tsp.full & TSPTextureCacheMask.full);
 
 	TexCacheIter tx = TexCache.find(key);
 

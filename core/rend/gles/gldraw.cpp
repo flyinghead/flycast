@@ -212,29 +212,42 @@ __forceinline
 		glStencilFunc(GL_ALWAYS,stencil,stencil);
 	}
 
+	bool texture_changed = false;
+
 	if (gp->texid != cache.texture)
 	{
 		cache.texture=gp->texid;
 		if (gp->texid != -1) {
 			//verify(glIsTexture(gp->texid));
 			glBindTexture(GL_TEXTURE_2D, gp->texid);
+			texture_changed = true;
 		}
 	}
 
-	if (gp->tsp.full!=cache.tsp.full)
+	if (gp->tsp.full != cache.tsp.full || texture_changed)
 	{
 		cache.tsp=gp->tsp;
 
 		if (Type==ListType_Translucent)
 		{
 			glBlendFunc(SrcBlendGL[gp->tsp.SrcInstr],DstBlendGL[gp->tsp.DstInstr]);
+		}
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, (gp->tsp.ClampU ? GL_CLAMP_TO_EDGE : (gp->tsp.FlipU ? GL_MIRRORED_REPEAT : GL_REPEAT))) ;
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, (gp->tsp.ClampV ? GL_CLAMP_TO_EDGE : (gp->tsp.FlipV ? GL_MIRRORED_REPEAT : GL_REPEAT))) ;
 
-#ifdef WEIRD_SLOWNESS
-			//SGX seems to be super slow with discard enabled blended pixels
-			//can't cache this -- due to opengl shader api
-			bool clip_alpha_on_zero=gp->tsp.SrcInstr==4 && (gp->tsp.DstInstr==1 || gp->tsp.DstInstr==5);
-			glUniform1f(CurrentShader->cp_AlphaTestValue,clip_alpha_on_zero?(1/255.f):(-2.f));
-#endif
+		//set texture filter mode
+		if (gp->tsp.FilterMode == 0)
+		{
+			//disable filtering, mipmaps
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		}
+		else
+		{
+			//bilinear filtering
+			//PowerVR supports also trilinear via two passes, but we ignore that for now
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, (gp->tcw.MipMapped && settings.rend.UseMipmaps) ? GL_LINEAR_MIPMAP_NEAREST : GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		}
 	}
 
