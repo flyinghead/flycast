@@ -713,6 +713,7 @@ struct settings_t
 		
 		u32 MaxThreads;
 		u32 SynchronousRendering;
+		u32 RenderToTextureBuffer;
 
 		string HashLogFile;
 		string HashCheckFile;

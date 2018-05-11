@@ -251,6 +251,7 @@ void LoadSettings()
 
 	settings.pvr.MaxThreads			= cfgLoadInt("config", "pvr.MaxThreads", 3);
 	settings.pvr.SynchronousRendering			= cfgLoadInt("config", "pvr.SynchronousRendering", 0);
+	settings.pvr.RenderToTextureBuffer = cfgLoadInt("config", "pvr.RenderToTextureBuffer", 0);
 
 	settings.debug.SerialConsole = cfgLoadInt("config", "Debug.SerialConsoleEnabled", 0) != 0;
 

@@ -505,87 +505,94 @@ void ReadRTTBuffer() {
     	// Happens for Virtua Tennis
     	w = stride / 2;
     }
-
-    u32 size = w * h * 2;
-    u32 tex_addr = fb_rtt.TexAddr << 3;
-
-    // Manually mark textures as dirty and remove all vram locks before calling glReadPixels
-    // (deadlock on rpi)
-    for (TexCacheIter i = TexCache.begin(); i != TexCache.end(); i++)
-    {
-    	if (i->second.sa_tex <= tex_addr + size - 1 && i->second.sa + i->second.size - 1 >= tex_addr) {
-    		i->second.dirty = FrameCount;
-    		if (i->second.lock_block != NULL) {
-    			libCore_vramlock_Unlock_block(i->second.lock_block);
-    			i->second.lock_block = NULL;
-    		}
-    	}
-    }
-    vram.UnLockRegion(0, 2 * vram.size);
-
-
-	glPixelStorei(GL_PACK_ALIGNMENT, 1);
-	u16 *src = temp_tex_buffer;
-	u16 *dst = (u16 *)&vram[fb_rtt.TexAddr << 3];
-
-	GLint color_fmt, color_type;
-	glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_FORMAT, &color_fmt);
-	glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_TYPE, &color_type);
+	u32 size = w * h * 2;
 
 	const u8 fb_packmode = FB_W_CTRL.fb_packmode;
 
-	if (fb_packmode == 1 && stride == w * 2 && color_fmt == GL_RGB && color_type == GL_UNSIGNED_SHORT_5_6_5) {
-		// Can be read directly into vram
-		glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, dst);
+	if (settings.pvr.RenderToTextureBuffer)
+	{
+		u32 tex_addr = fb_rtt.TexAddr << 3;
+
+		// Manually mark textures as dirty and remove all vram locks before calling glReadPixels
+		// (deadlock on rpi)
+		for (TexCacheIter i = TexCache.begin(); i != TexCache.end(); i++)
+		{
+			if (i->second.sa_tex <= tex_addr + size - 1 && i->second.sa + i->second.size - 1 >= tex_addr) {
+				i->second.dirty = FrameCount;
+				if (i->second.lock_block != NULL) {
+					libCore_vramlock_Unlock_block(i->second.lock_block);
+					i->second.lock_block = NULL;
+				}
+			}
+		}
+		vram.UnLockRegion(0, 2 * vram.size);
+
+
+		glPixelStorei(GL_PACK_ALIGNMENT, 1);
+		u16 *src = temp_tex_buffer;
+		u16 *dst = (u16 *)&vram[fb_rtt.TexAddr << 3];
+
+		GLint color_fmt, color_type;
+		glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_FORMAT, &color_fmt);
+		glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_TYPE, &color_type);
+
+		if (fb_packmode == 1 && stride == w * 2 && color_fmt == GL_RGB && color_type == GL_UNSIGNED_SHORT_5_6_5) {
+			// Can be read directly into vram
+			glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, dst);
+		}
+		else
+		{
+			const u16 kval_bit = (FB_W_CTRL.fb_kval & 0x80) << 8;
+			const u8 fb_alpha_threshold = FB_W_CTRL.fb_alpha_threshold;
+
+			u32 lines = h;
+			while (lines > 0) {
+				u8 *p = (u8 *)temp_tex_buffer;
+				u32 chunk_lines = min((u32)sizeof(temp_tex_buffer), w * lines * 4) / w / 4;
+				glReadPixels(0, h - lines, w, chunk_lines, GL_RGBA, GL_UNSIGNED_BYTE, p);
+
+				for (u32 l = 0; l < chunk_lines; l++) {
+					for (u32 c = 0; c < w; c++) {
+						switch(fb_packmode)
+						{
+						case 0: //0x0   0555 KRGB 16 bit  (default)	Bit 15 is the value of fb_kval[7].
+							*dst++ = (((p[0] >> 3) & 0x1F) << 10) | (((p[1] >> 3) & 0x1F) << 5) | ((p[2] >> 3) & 0x1F) | kval_bit;
+							break;
+						case 1: //0x1   565 RGB 16 bit
+							*dst++ = (((p[0] >> 3) & 0x1F) << 11) | (((p[1] >> 2) & 0x3F) << 5) | ((p[2] >> 3) & 0x1F);
+							break;
+						case 2: //0x2   4444 ARGB 16 bit
+							*dst++ = (((p[0] >> 4) & 0xF) << 8) | (((p[1] >> 4) & 0xF) << 4) | ((p[2] >> 4) & 0xF) | (((p[3] >> 4) & 0xF) << 12);
+							break;
+						case 3://0x3    1555 ARGB 16 bit    The alpha value is determined by comparison with the value of fb_alpha_threshold.
+							*dst++ = (((p[0] >> 3) & 0x1F) << 10) | (((p[1] >> 3) & 0x1F) << 5) | ((p[2] >> 3) & 0x1F) | (p[3] >= fb_alpha_threshold ? 0x8000 : 0);
+							break;
+						}
+						p += 4;
+					}
+					dst += (stride - w * 2) / 2;
+				}
+				lines -= chunk_lines;
+			}
+		}
+
+		// Restore VRAM locks
+		for (TexCacheIter i = TexCache.begin(); i != TexCache.end(); i++)
+		{
+				if (i->second.lock_block != NULL) {
+						vram.LockRegion(i->second.sa_tex, i->second.sa + i->second.size - i->second.sa_tex);
+
+						//TODO: Fix this for 32M wrap as well
+						if (_nvmem_enabled() && VRAM_SIZE == 0x800000) {
+								vram.LockRegion(i->second.sa_tex + VRAM_SIZE, i->second.sa + i->second.size - i->second.sa_tex);
+						}
+				}
+		}
 	}
 	else
 	{
-		const u16 kval_bit = (FB_W_CTRL.fb_kval & 0x80) << 8;
-		const u8 fb_alpha_threshold = FB_W_CTRL.fb_alpha_threshold;
-
-		u32 lines = h;
-		while (lines > 0) {
-			u8 *p = (u8 *)temp_tex_buffer;
-			u32 chunk_lines = min((u32)sizeof(temp_tex_buffer), w * lines * 4) / w / 4;
-			glReadPixels(0, h - lines, w, chunk_lines, GL_RGBA, GL_UNSIGNED_BYTE, p);
-
-			for (u32 l = 0; l < chunk_lines; l++) {
-				for (u32 c = 0; c < w; c++) {
-					switch(fb_packmode)
-					{
-					case 0: //0x0   0555 KRGB 16 bit  (default)	Bit 15 is the value of fb_kval[7].
-						*dst++ = (((p[0] >> 3) & 0x1F) << 10) | (((p[1] >> 3) & 0x1F) << 5) | ((p[2] >> 3) & 0x1F) | kval_bit;
-						break;
-					case 1: //0x1   565 RGB 16 bit
-						*dst++ = (((p[0] >> 3) & 0x1F) << 11) | (((p[1] >> 2) & 0x3F) << 5) | ((p[2] >> 3) & 0x1F);
-						break;
-					case 2: //0x2   4444 ARGB 16 bit
-						*dst++ = (((p[0] >> 4) & 0xF) << 8) | (((p[1] >> 4) & 0xF) << 4) | ((p[2] >> 4) & 0xF) | (((p[3] >> 4) & 0xF) << 12);
-						break;
-					case 3://0x3    1555 ARGB 16 bit    The alpha value is determined by comparison with the value of fb_alpha_threshold.
-						*dst++ = (((p[0] >> 3) & 0x1F) << 10) | (((p[1] >> 3) & 0x1F) << 5) | ((p[2] >> 3) & 0x1F) | (p[3] >= fb_alpha_threshold ? 0x8000 : 0);
-						break;
-					}
-					p += 4;
-				}
-				dst += (stride - w * 2) / 2;
-			}
-			lines -= chunk_lines;
-		}
+		memset(&vram[fb_rtt.TexAddr << 3], '\0', size);
 	}
-
-	// Restore VRAM locks
-    for (TexCacheIter i = TexCache.begin(); i != TexCache.end(); i++)
-    {
-            if (i->second.lock_block != NULL) {
-                    vram.LockRegion(i->second.sa_tex, i->second.sa + i->second.size - i->second.sa_tex);
-
-                    //TODO: Fix this for 32M wrap as well
-                    if (_nvmem_enabled() && VRAM_SIZE == 0x800000) {
-                            vram.LockRegion(i->second.sa_tex + VRAM_SIZE, i->second.sa + i->second.size - i->second.sa_tex);
-                    }
-            }
-    }
 
     //dumpRtTexture(fb_rtt.TexAddr, w, h);
     
@@ -595,7 +602,7 @@ void ReadRTTBuffer() {
     else
     {
     	TCW tcw = { { TexAddr : fb_rtt.TexAddr, Reserved : 0, StrideSel : 0, ScanOrder : 1 } };
-    	switch (FB_W_CTRL.fb_packmode) {
+    	switch (fb_packmode) {
     	case 0:
     	case 3:
     		tcw.PixelFmt = 0;
