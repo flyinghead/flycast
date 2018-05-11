@@ -198,7 +198,7 @@ TA_context* read_frame(const char* file, u8* vram_ref) {
 bool rend_frame(TA_context* ctx, bool draw_osd) {
 	bool proc = renderer->Process(ctx);
 #if !defined(TARGET_NO_THREADS)
-	if (!ctx->rend.isRTT)
+	if (!proc || !ctx->rend.isRTT)
 		// If rendering to texture, continue locking until the frame is rendered
 		re.Set();
 #endif

@@ -134,17 +134,10 @@ bool QueueRender(TA_context* ctx)
 	} 
 
 	if (rqueue) {
-		// If the queued frame is for rendering to a texture, we can't skip it, so we wait
-		if (ctx->rend.isRTT) {
-			frame_finished.Wait();
-			verify(!rqueue);
-		}
-		else
-		{
-			tactx_Recycle(ctx);
-			fskip++;
-			return false;
-		}
+		// FIXME if the discarded render is a RTT we'll have a texture missing. But waiting for the current frame to finish kills performance...
+		tactx_Recycle(ctx);
+		fskip++;
+		return false;
 	}
 
 	frame_finished.Reset();
