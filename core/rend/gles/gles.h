@@ -79,7 +79,7 @@ struct gl_ctx
 	{
 		GLuint program;
 
-		GLuint scale,depth_scale;
+		GLuint scale;
 		GLuint sp_ShaderColor;
 
 	} modvol_shader;
@@ -87,7 +87,8 @@ struct gl_ctx
 	PipelineShader pogram_table[768*2];
 	struct
 	{
-		GLuint program,scale,depth_scale;
+		GLuint program;
+		GLuint scale;
 	} OSD_SHADER;
 
 	struct
