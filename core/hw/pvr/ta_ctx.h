@@ -99,6 +99,9 @@ struct rend_context
 	u8* proc_start;
 	u8* proc_end;
 
+	f32 fZ_min;
+	f32 fZ_max;
+
 	bool Overrun;
 	bool isRTT;
 	bool isAutoSort;
@@ -130,6 +133,8 @@ struct rend_context
 		render_passes.Clear();
 
 		Overrun=false;
+		fZ_min= 1000000.0f;
+		fZ_max= 1.0f;
 	}
 };
 

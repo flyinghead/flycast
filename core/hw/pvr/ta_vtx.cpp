@@ -908,6 +908,12 @@ public:
 
 
 	
+	static inline void update_fz(float z)
+	{
+		if ((s32&)vdrc.fZ_max<(s32&)z && (s32&)z<0x49800000)
+			vdrc.fZ_max=z;
+	}
+
 		//Poly Vertex handlers
 		//Append vertex base
 	template<class T>
@@ -919,6 +925,7 @@ public:
 		cv->x=vtx->xyz[0];
 		cv->y=vtx->xyz[1];
 		cv->z=invW;
+		update_fz(invW);
 		return cv;
 	}
 
@@ -1226,7 +1233,8 @@ public:
 
 	#define append_sprite_yz(indx,set,st2) \
 		cv[indx].y=sv->y##set; \
-		cv[indx].z=sv->z##st2;
+		cv[indx].z=sv->z##st2; \
+		update_fz(sv->z##st2);
 
 	#define sprite_uv(indx,u_name,v_name) \
 		cv[indx].u = f16(sv->u_name);\
@@ -1259,10 +1267,12 @@ public:
 		cv[2].x=sv->x0;
 		cv[2].y=sv->y0;
 		cv[2].z=sv->z0;
+		update_fz(sv->z0);
 
 		cv[3].x=sv->x1;
 		cv[3].y=sv->y1;
 		cv[3].z=sv->z1;
+		update_fz(sv->z1);
 
 		cv[1].x=sv->x2;
 	}
@@ -1322,6 +1332,7 @@ public:
 
 		cv[1].y=sv->y2;
 		cv[1].z=sv->z2;
+		update_fz(sv->z2);
 
 		cv[0].x=sv->x3;
 		cv[0].y=sv->y3;
@@ -1333,6 +1344,8 @@ public:
 		//sprite_uv(0, u0,v2);//or sprite_uv(u2,v0); ?
 
 		CaclulateSpritePlane(cv);
+
+		update_fz(cv[0].z);
 
 		/*
 		if (CurrentPP->count)
@@ -1377,10 +1390,12 @@ public:
 		lmr->x0=mvv->x0;
 		lmr->y0=mvv->y0;
 		lmr->z0=mvv->z0;
+		//update_fz(mvv->z0);
 
 		lmr->x1=mvv->x1;
 		lmr->y1=mvv->y1;
 		lmr->z1=mvv->z1;
+		//update_fz(mvv->z1);
 
 		lmr->x2=mvv->x2;
 	}
@@ -1392,6 +1407,7 @@ public:
 			return;
 		lmr->y2=mvv->y2;
 		lmr->z2=mvv->z2;
+		//update_fz(mvv->z2);
 	}
 
 	static void VDECInit()

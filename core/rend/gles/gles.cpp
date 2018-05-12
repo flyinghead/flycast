@@ -79,6 +79,7 @@ const char* VertexShaderSource =
 "\
 /* Vertex constants*/  \n\
 uniform highp vec4      scale; \n\
+uniform highp vec4      depth_scale; \n\
 uniform highp float sp_FOG_DENSITY; \n\
 /* Vertex input */ \n\
 " attr " highp vec4    in_pos; \n\
@@ -99,13 +100,9 @@ void main() \n\
 	vtx_xyz.xy = vpos.xy;  \n\
 	vtx_xyz.z = vpos.z*sp_FOG_DENSITY;  \n\
 	vpos.w=1.0/vpos.z;  \n\
-	if (vpos.w < 0.0) { \n\
-		gl_Position = vec4(0.0, 0.0, 0.0, vpos.w); \n\
-		return; \n\
-	} \n\
 	vpos.xy=vpos.xy*scale.xy-scale.zw;  \n\
 	vpos.xy*=vpos.w;  \n\
-	vpos.z = vpos.w; \n\
+	vpos.z=depth_scale.x+depth_scale.y*vpos.w;  \n\
 	gl_Position = vpos; \n\
 }";
 
@@ -331,8 +328,6 @@ void main() \n\
 	#if cp_AlphaTest == 1 \n\
 		color.a=1.0; \n\
 	#endif  \n\
-	highp float w = gl_FragCoord.w * 100.0; \n\
-	gl_FragDepth = log2(1.0 + w) / 24.0; \n\
 	//color.rgb=vec3(vtx_xyz.z/255.0);\n\
 	" FRAGCOL "=color; \n\
 }";
@@ -347,8 +342,6 @@ uniform lowp float sp_ShaderColor; \n\
 /* Vertex input*/ \n\
 void main() \n\
 { \n\
-	highp float w = gl_FragCoord.w * 100.0; \n\
-	gl_FragDepth = log2(1.0 + w) / 24.0; \n\
 	" FRAGCOL "=vec4(0.0, 0.0, 0.0, sp_ShaderColor); \n\
 }";
 
@@ -683,6 +676,7 @@ struct ShaderUniforms_t
 {
 	float PT_ALPHA;
 	float scale_coefs[4];
+	float depth_coefs[4];
 	float fog_den_float;
 	float ps_FOG_COL_RAM[3];
 	float ps_FOG_COL_VERT[3];
@@ -695,6 +689,9 @@ struct ShaderUniforms_t
 
 		if (s->scale!=-1)
 			glUniform4fv( s->scale, 1, scale_coefs);
+
+		if (s->depth_scale!=-1)
+			glUniform4fv( s->depth_scale, 1, depth_coefs);
 
 		if (s->sp_FOG_DENSITY!=-1)
 			glUniform1f( s->sp_FOG_DENSITY,fog_den_float);
@@ -829,6 +826,7 @@ bool CompilePipelineShader(	PipelineShader* s)
 
 	//get the uniform locations
 	s->scale	            = glGetUniformLocation(s->program, "scale");
+	s->depth_scale      = glGetUniformLocation(s->program, "depth_scale");
 
 
 	s->pp_ClipTest      = glGetUniformLocation(s->program, "pp_ClipTest");
@@ -927,11 +925,13 @@ bool gl_create_resources()
 	gl.modvol_shader.program=gl_CompileAndLink(VertexShaderSource,ModifierVolumeShader);
 	gl.modvol_shader.scale          = glGetUniformLocation(gl.modvol_shader.program, "scale");
 	gl.modvol_shader.sp_ShaderColor = glGetUniformLocation(gl.modvol_shader.program, "sp_ShaderColor");
+	gl.modvol_shader.depth_scale    = glGetUniformLocation(gl.modvol_shader.program, "depth_scale");
 
 
 	gl.OSD_SHADER.program=gl_CompileAndLink(VertexShaderSource,OSD_Shader);
 	printf("OSD: %d\n",gl.OSD_SHADER.program);
 	gl.OSD_SHADER.scale=glGetUniformLocation(gl.OSD_SHADER.program, "scale");
+	gl.OSD_SHADER.depth_scale=glGetUniformLocation(gl.OSD_SHADER.program, "depth_scale");
 	glUniform1i(glGetUniformLocation(gl.OSD_SHADER.program, "tex"),0);		//bind osd texture to slot 0
 
 	//#define PRECOMPILE_SHADERS
@@ -1452,13 +1452,26 @@ bool RenderFrame()
 
 	bool is_rtt=pvrrc.isRTT;
 
-	if (!is_rtt)
-		OSD_HOOK();
+
+	OSD_HOOK();
 
 	//if (FrameCount&7) return;
 
 	//Setup the matrix
 
+	//TODO: Make this dynamic
+	float vtx_min_fZ=0.f;	//pvrrc.fZ_min;
+	float vtx_max_fZ=pvrrc.fZ_max;
+
+	//sanitise the values, now with NaN detection (for omap)
+	//0x49800000 is 1024*1024. Using integer math to avoid issues w/ infs and nans
+	if ((s32&)vtx_max_fZ<0 || (u32&)vtx_max_fZ>0x49800000)
+		vtx_max_fZ=10*1024;
+
+
+	//add some extra range to avoid clipping border cases
+	vtx_min_fZ*=0.98f;
+	vtx_max_fZ*=1.001f;
 
 	//calculate a projection so that it matches the pvr x,y setup, and
 	//a) Z is linearly scaled between 0 ... 1
@@ -1614,6 +1627,11 @@ bool RenderFrame()
 	ShaderUniforms.scale_coefs[3]=(is_rtt?1:-1);
 
 
+	ShaderUniforms.depth_coefs[0]=2/(vtx_max_fZ-vtx_min_fZ);
+	ShaderUniforms.depth_coefs[1]=-vtx_min_fZ-1;
+	ShaderUniforms.depth_coefs[2]=0;
+	ShaderUniforms.depth_coefs[3]=0;
+
 	//printf("scale: %f, %f, %f, %f\n",ShaderUniforms.scale_coefs[0],ShaderUniforms.scale_coefs[1],ShaderUniforms.scale_coefs[2],ShaderUniforms.scale_coefs[3]);
 
 
@@ -1654,9 +1672,14 @@ bool RenderFrame()
 	glUseProgram(gl.modvol_shader.program);
 
 	glUniform4fv( gl.modvol_shader.scale, 1, ShaderUniforms.scale_coefs);
+	glUniform4fv( gl.modvol_shader.depth_scale, 1, ShaderUniforms.depth_coefs);
+
+
+	GLfloat td[4]={0.5,0,0,0};
 
 	glUseProgram(gl.OSD_SHADER.program);
 	glUniform4fv( gl.OSD_SHADER.scale, 1, ShaderUniforms.scale_coefs);
+	glUniform4fv( gl.OSD_SHADER.depth_scale, 1, td);
 
 	ShaderUniforms.PT_ALPHA=(PT_ALPHA_REF&0xFF)/255.0f;
 
