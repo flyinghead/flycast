@@ -99,10 +99,21 @@ void main() \n\
 	vec4 vpos=in_pos; \n\
 	vtx_xyz.xy = vpos.xy;  \n\
 	vtx_xyz.z = vpos.z*sp_FOG_DENSITY;  \n\
-	vpos.w=1.0/vpos.z;  \n\
+	vpos.w=1.0/vpos.z;  \n"
+#ifndef GLES
+	"\
+	if (vpos.w < 0.0) { \n\
+		gl_Position = vec4(0.0, 0.0, 0.0, vpos.w); \n\
+		return; \n\
+	} \n\
+	vpos.z = vpos.w; \n"
+#else
+	"\
+	vpos.z=depth_scale.x+depth_scale.y*vpos.w;  \n"
+#endif
+	"\
 	vpos.xy=vpos.xy*scale.xy-scale.zw;  \n\
 	vpos.xy*=vpos.w;  \n\
-	vpos.z=depth_scale.x+depth_scale.y*vpos.w;  \n\
 	gl_Position = vpos; \n\
 }";
 
@@ -328,8 +339,13 @@ void main() \n\
 	#if cp_AlphaTest == 1 \n\
 		color.a=1.0; \n\
 	#endif  \n\
-	//color.rgb=vec3(vtx_xyz.z/255.0);\n\
-	" FRAGCOL "=color; \n\
+	//color.rgb=vec3(vtx_xyz.z/255.0);\n"
+#ifndef GLES
+	"\
+	highp float w = gl_FragCoord.w * 100.0; \n\
+	gl_FragDepth = log2(1.0 + w) / 24.0; \n"
+#endif
+	FRAGCOL "=color; \n\
 }";
 
 const char* ModifierVolumeShader =
@@ -341,8 +357,13 @@ const char* ModifierVolumeShader =
 uniform lowp float sp_ShaderColor; \n\
 /* Vertex input*/ \n\
 void main() \n\
-{ \n\
-	" FRAGCOL "=vec4(0.0, 0.0, 0.0, sp_ShaderColor); \n\
+{ \n"
+#ifndef GLES
+	"\
+	highp float w = gl_FragCoord.w * 100.0; \n\
+	gl_FragDepth = log2(1.0 + w) / 24.0; \n"
+#endif
+	FRAGCOL "=vec4(0.0, 0.0, 0.0, sp_ShaderColor); \n\
 }";
 
 const char* OSD_Shader =
