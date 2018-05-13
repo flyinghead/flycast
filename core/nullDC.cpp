@@ -243,6 +243,7 @@ void LoadSettings()
     settings.aica.NoSound			= cfgLoadInt("config","aica.NoSound",0);
 	settings.rend.UseMipmaps		= cfgLoadInt("config","rend.UseMipmaps",1);
 	settings.rend.WideScreen		= cfgLoadInt("config","rend.WideScreen",0);
+	settings.rend.ShowFPS			= cfgLoadInt("config", "rend.ShowFPS", 0);
 	
 	settings.pvr.subdivide_transp	= cfgLoadInt("config","pvr.Subdivide",0);
 	

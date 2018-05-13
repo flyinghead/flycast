@@ -394,6 +394,7 @@ install: $(EXECUTABLE)
 	install -m644 man/reicast-joyconfig.1 $(DESTDIR)$(MAN_DIR)
 	install -m644 reicast.desktop $(DESTDIR)$(MENUENTRY_DIR)
 	install -m644 reicast.png $(DESTDIR)$(ICON_DIR)
+	install -m644 font.png $(DESTDIR)$(ICON_DIR)
 
 uninstall:
 	rm -f $(DESTDIR)$(PREFIX)/bin/$(EXECUTABLE_NAME)
@@ -408,6 +409,7 @@ uninstall:
 	rm -f $(DESTDIR)$(MAN_DIR)/reicast-joyconfig.1
 	rm -f $(DESTDIR)$(MENUENTRY_DIR)/reicast.desktop
 	rm -f $(DESTDIR)$(ICON_DIR)/reicast.png
+	rm -f $(DESTDIR)$(ICON_DIR)/font.png
 
 clean:
 	rm -f $(OBJECTS) $(EXECUTABLE) $(EXECUTABLE_STRIPPED) .map

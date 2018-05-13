@@ -858,9 +858,7 @@ bool CompilePipelineShader(	PipelineShader* s)
 }
 
 GLuint osd_tex;
-#ifdef TARGET_PANDORA
 GLuint osd_font;
-#endif
 
 bool gl_create_resources()
 {
@@ -947,6 +945,10 @@ bool gl_create_resources()
 	osd_tex=loadPNG(get_readonly_data_path("/data/buttons.png"),w,h);
 #ifdef TARGET_PANDORA
 	osd_font=loadPNG(get_readonly_data_path("/font2.png"),w,h);
+#else
+	osd_font = loadPNG(get_readonly_data_path("/pixmaps/font.png"), w, h);
+	if (osd_font == 0)
+		osd_font = loadPNG(get_readonly_data_path("/font.png"), w, h);
 #endif
 
 	return true;
@@ -1162,7 +1164,7 @@ static void ClearBG()
 
 
 void DrawButton2(float* xy, bool state) { DrawButton(xy,state?0:255); }
-#ifdef TARGET_PANDORA
+
 static void DrawCenteredText(float yy, float scale, int transparency, const char* text)
 // Draw a centered text. Font is loaded from font2.png file. Each char is 16*16 size, so scale it down so it's not too big
 // Transparency 255=opaque, 0=not visible
@@ -1213,7 +1215,7 @@ static void DrawCenteredText(float yy, float scale, int transparency, const char
   }
 }
 static void DrawRightedText(float yy, float scale, int transparency, const char* text)
-// Draw a text right justified. Font is loaded from font2.png file. Each char is 16*16 size, so scale it down so it's not too big
+// Draw a text right justified. Font is loaded from font.png file. Each char is 16*16 size, so scale it down so it's not too big
 // Transparency 255=opaque, 0=not visible
 {
   Vertex vtx;
@@ -1222,7 +1224,7 @@ static void DrawRightedText(float yy, float scale, int transparency, const char*
 
   float w=float(strlen(text)*14)*scale;
 
-  float x=640-w;
+  float x = 320 + 240 * screen_width / screen_height - w;
   float y=yy;
   float h=16.0f*scale;
   w=14.0f*scale;
@@ -1261,7 +1263,6 @@ static void DrawRightedText(float yy, float scale, int transparency, const char*
     osd_count+=4;
   }
 }
-#endif
 
 #ifdef TARGET_PANDORA
 char OSD_Info[128];
@@ -1270,30 +1271,37 @@ char OSD_Counters[256];
 int  OSD_Counter=0;
 #endif
 
+static float LastFPSTime;
+static int lastFrameCount = 0;
+static float fps = -1;
+
 static void OSD_HOOK()
 {
 	osd_base=pvrrc.verts.used();
 	osd_count=0;
 
 	#ifndef TARGET_PANDORA
-	DrawButton2(vjoy_pos[0],kcode[0]&key_CONT_DPAD_LEFT);
-	DrawButton2(vjoy_pos[1],kcode[0]&key_CONT_DPAD_UP);
-	DrawButton2(vjoy_pos[2],kcode[0]&key_CONT_DPAD_RIGHT);
-	DrawButton2(vjoy_pos[3],kcode[0]&key_CONT_DPAD_DOWN);
+	if (osd_tex)
+	{
+		DrawButton2(vjoy_pos[0],kcode[0]&key_CONT_DPAD_LEFT);
+		DrawButton2(vjoy_pos[1],kcode[0]&key_CONT_DPAD_UP);
+		DrawButton2(vjoy_pos[2],kcode[0]&key_CONT_DPAD_RIGHT);
+		DrawButton2(vjoy_pos[3],kcode[0]&key_CONT_DPAD_DOWN);
 
-	DrawButton2(vjoy_pos[4],kcode[0]&key_CONT_X);
-	DrawButton2(vjoy_pos[5],kcode[0]&key_CONT_Y);
-	DrawButton2(vjoy_pos[6],kcode[0]&key_CONT_B);
-	DrawButton2(vjoy_pos[7],kcode[0]&key_CONT_A);
+		DrawButton2(vjoy_pos[4],kcode[0]&key_CONT_X);
+		DrawButton2(vjoy_pos[5],kcode[0]&key_CONT_Y);
+		DrawButton2(vjoy_pos[6],kcode[0]&key_CONT_B);
+		DrawButton2(vjoy_pos[7],kcode[0]&key_CONT_A);
 
-	DrawButton2(vjoy_pos[8],kcode[0]&key_CONT_START);
+		DrawButton2(vjoy_pos[8],kcode[0]&key_CONT_START);
 
-	DrawButton(vjoy_pos[9],lt[0]);
+		DrawButton(vjoy_pos[9],lt[0]);
 
-	DrawButton(vjoy_pos[10],rt[0]);
+		DrawButton(vjoy_pos[10],rt[0]);
 
-	DrawButton2(vjoy_pos[11],1);
-	DrawButton2(vjoy_pos[12],0);
+		DrawButton2(vjoy_pos[11],1);
+		DrawButton2(vjoy_pos[12],0);
+	}
 	#endif
 	#ifdef TARGET_PANDORA
 	  if (OSD_Delay) {
@@ -1304,12 +1312,20 @@ static void OSD_HOOK()
 		DrawRightedText(20, 1.0f, 255, OSD_Counters);
 	  }
 	#endif
-}
 
-extern GLuint osd_tex;
-#ifdef TARGET_PANDORA
-extern GLuint osd_font;
-#endif
+	if (settings.rend.ShowFPS) {
+		if (os_GetSeconds() - LastFPSTime > 0.5) {
+			fps = (FrameCount - lastFrameCount) / (os_GetSeconds() - LastFPSTime);
+			LastFPSTime = os_GetSeconds();
+			lastFrameCount = FrameCount;
+		}
+		if (fps >= 0) {
+			char text[32];
+			sprintf(text, "F:%.1f", fps);
+			DrawRightedText(470, 0.5f, 196, text);
+		}
+	}
+}
 
 #define OSD_TEX_W 512
 #define OSD_TEX_H 256
@@ -1378,7 +1394,6 @@ void OSD_DRAW()
 			glDrawArrays(GL_TRIANGLE_STRIP,osd_base+i*4,4);
 	}
 #endif
-#ifdef TARGET_PANDORA
   if (osd_font)
   {
     float u=0;
@@ -1395,16 +1410,6 @@ void OSD_DRAW()
 
     glBindTexture(GL_TEXTURE_2D,osd_font);
     glUseProgram(gl.OSD_SHADER.program);
-
-  /*
-    //-1 -> too much to left
-    ShaderUniforms.scale_coefs[0]=2.0f/(screen_width/dc2s_scale_h);
-    ShaderUniforms.scale_coefs[1]=-2/dc_height;
-    ShaderUniforms.scale_coefs[2]=1-2*ds2s_offs_x/(screen_width);
-    ShaderUniforms.scale_coefs[3]=-1;
-
-    glUniform4fv( gl.OSD_SHADER.scale, 1, ShaderUniforms.scale_coefs);
-*/
 
     glEnable(GL_BLEND);
     glDisable(GL_DEPTH_TEST);
@@ -1424,7 +1429,6 @@ void OSD_DRAW()
    	for (int i=0;i<dfa;i++)
 		glDrawArrays(GL_TRIANGLE_STRIP,osd_base+i*4,4);
  }
-#endif
 }
 
 bool ProcessFrame(TA_context* ctx)
@@ -1452,8 +1456,8 @@ bool RenderFrame()
 
 	bool is_rtt=pvrrc.isRTT;
 
-
-	OSD_HOOK();
+	if (!is_rtt)
+		OSD_HOOK();
 
 	//if (FrameCount&7) return;
 
@@ -1742,13 +1746,19 @@ bool RenderFrame()
 		glViewport(0, 0, screen_width, screen_height);
 	}
 
-	//Clear depth
+	bool wide_screen_on = !is_rtt && settings.rend.WideScreen
+			&& pvrrc.fb_X_CLIP.min == 0
+			&& (pvrrc.fb_X_CLIP.max + 1) / scale_x == 640
+			&& pvrrc.fb_Y_CLIP.min == 0
+			&& (pvrrc.fb_Y_CLIP.max + 1) / scale_y == 480;
+
 	//Color is cleared by the bgp
-	if (!is_rtt && settings.rend.WideScreen)
+	if (wide_screen_on)
 		glClearColor(pvrrc.verts.head()->col[2]/255.0f,pvrrc.verts.head()->col[1]/255.0f,pvrrc.verts.head()->col[0]/255.0f,1.0f);
 	else
 		glClearColor(0,0,0,1.0f);
 
+	glDisable(GL_SCISSOR_TEST);
 	glClear(GL_COLOR_BUFFER_BIT); glCheck();
 
 	//move vertex to gpu
@@ -1781,13 +1791,9 @@ bool RenderFrame()
 		printf("SCI: %f, %f, %f, %f\n", offs_x+pvrrc.fb_X_CLIP.min/scale_x,(pvrrc.fb_Y_CLIP.min/scale_y)*dc2s_scale_h,(pvrrc.fb_X_CLIP.max-pvrrc.fb_X_CLIP.min+1)/scale_x*dc2s_scale_h,(pvrrc.fb_Y_CLIP.max-pvrrc.fb_Y_CLIP.min+1)/scale_y*dc2s_scale_h);
 	#endif
 
-	if (!is_rtt && settings.rend.WideScreen && pvrrc.fb_X_CLIP.min==0 && ((pvrrc.fb_X_CLIP.max+1)/scale_x==640) && (pvrrc.fb_Y_CLIP.min==0) && ((pvrrc.fb_Y_CLIP.max+1)/scale_y==480 ) )
+	if (!wide_screen_on)
 	{
-		glDisable(GL_SCISSOR_TEST);
-	}
-	else
-	{
-		glScissor(offs_x + pvrrc.fb_X_CLIP.min / scale_x,
+		glScissor(offs_x + pvrrc.fb_X_CLIP.min / scale_x * (is_rtt ? 1 : dc2s_scale_h),
 				  pvrrc.fb_Y_CLIP.min / scale_y * (is_rtt ? 1 : dc2s_scale_h),
 				  (pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1) / scale_x * (is_rtt ? 1 : dc2s_scale_h),
 				  (pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1) / scale_y * (is_rtt ? 1 : dc2s_scale_h));
@@ -2011,7 +2017,7 @@ GLuint loadPNG(const string& fname, int &width, int &height)
 	glBindTexture(GL_TEXTURE_2D, texture);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA,
 		GL_UNSIGNED_BYTE, (GLvoid*) image_data);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
 	//clean up memory and close stuff
 	png_destroy_read_struct(&png_ptr, &info_ptr, &end_info);
