@@ -1322,7 +1322,7 @@ static void OSD_HOOK()
 		if (fps >= 0) {
 			char text[32];
 			sprintf(text, "F:%.1f", fps);
-			DrawRightedText(470, 0.5f, 196, text);
+			DrawRightedText(460, 1.f, 196, text);
 		}
 	}
 }
