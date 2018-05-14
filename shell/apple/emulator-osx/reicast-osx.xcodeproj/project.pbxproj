@@ -191,8 +191,8 @@
 		84B7BF7F1B72720200F9733F /* stdclass.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BEA71B72720200F9733F /* stdclass.cpp */; };
 		84B7BF831B727AD700F9733F /* osx-main.mm in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BF821B727AD700F9733F /* osx-main.mm */; };
 		84B7BF861B72871600F9733F /* EmuGLView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BF851B72871600F9733F /* EmuGLView.swift */; };
-		AE1E292520947C6100FC6BA2 /* rec_x64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE1E292420947C6100FC6BA2 /* rec_x64.cpp */; };
 		AE1E293B2095FB1600FC6BA2 /* rec_cpp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE1E293A2095FB1600FC6BA2 /* rec_cpp.cpp */; };
+		AE1E294020A96B0B00FC6BA2 /* rec_x64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE1E293F20A96B0B00FC6BA2 /* rec_x64.cpp */; };
 		EBDF374F1BB96581001191B5 /* audiobackend_coreaudio.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EBDF374D1BB96581001191B5 /* audiobackend_coreaudio.cpp */; };
 		EBDF37511BB969EE001191B5 /* CoreAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EBDF37501BB969EE001191B5 /* CoreAudio.framework */; };
 		EBDF37531BB969F8001191B5 /* AudioUnit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EBDF37521BB969F8001191B5 /* AudioUnit.framework */; };
@@ -539,12 +539,12 @@
 		84B7BF821B727AD700F9733F /* osx-main.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "osx-main.mm"; sourceTree = "<group>"; };
 		84B7BF841B72821900F9733F /* emulator-osx-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "emulator-osx-Bridging-Header.h"; sourceTree = "<group>"; };
 		84B7BF851B72871600F9733F /* EmuGLView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EmuGLView.swift; sourceTree = "<group>"; };
-		AE1E292420947C6100FC6BA2 /* rec_x64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = rec_x64.cpp; sourceTree = "<group>"; };
 		AE1E292820947D4700FC6BA2 /* xbyak.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = xbyak.h; sourceTree = "<group>"; };
 		AE1E292920947D4700FC6BA2 /* xbyak_bin2hex.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = xbyak_bin2hex.h; sourceTree = "<group>"; };
 		AE1E292A20947D4700FC6BA2 /* xbyak_mnemonic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = xbyak_mnemonic.h; sourceTree = "<group>"; };
 		AE1E292B20947D4700FC6BA2 /* xbyak_util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = xbyak_util.h; sourceTree = "<group>"; };
 		AE1E293A2095FB1600FC6BA2 /* rec_cpp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = rec_cpp.cpp; sourceTree = "<group>"; };
+		AE1E293F20A96B0B00FC6BA2 /* rec_x64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = rec_x64.cpp; sourceTree = "<group>"; };
 		EBDF374D1BB96581001191B5 /* audiobackend_coreaudio.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = audiobackend_coreaudio.cpp; sourceTree = "<group>"; };
 		EBDF374E1BB96581001191B5 /* audiobackend_coreaudio.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = audiobackend_coreaudio.h; sourceTree = "<group>"; };
 		EBDF37501BB969EE001191B5 /* CoreAudio.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreAudio.framework; path = System/Library/Frameworks/CoreAudio.framework; sourceTree = SDKROOT; };
@@ -659,7 +659,7 @@
 				84B7BE7C1B72720200F9733F /* profiler */,
 				84B7BE7F1B72720200F9733F /* README.md */,
 				AE1E29392095FB1600FC6BA2 /* rec-cpp */,
-				AE1E292320947C6100FC6BA2 /* rec-x64 */,
+				AE1E293E20A96B0B00FC6BA2 /* rec-x64 */,
 				84B7BE8F1B72720200F9733F /* reios */,
 				84B7BE981B72720200F9733F /* rend */,
 				84B7BEA71B72720200F9733F /* stdclass.cpp */,
@@ -1287,14 +1287,6 @@
 			path = gles;
 			sourceTree = "<group>";
 		};
-		AE1E292320947C6100FC6BA2 /* rec-x64 */ = {
-			isa = PBXGroup;
-			children = (
-				AE1E292420947C6100FC6BA2 /* rec_x64.cpp */,
-			);
-			path = "rec-x64";
-			sourceTree = "<group>";
-		};
 		AE1E292620947D4700FC6BA2 /* xbyak */ = {
 			isa = PBXGroup;
 			children = (
@@ -1313,6 +1305,15 @@
 			);
 			name = "rec-cpp";
 			path = "../../../core/rec-cpp";
+			sourceTree = "<group>";
+		};
+		AE1E293E20A96B0B00FC6BA2 /* rec-x64 */ = {
+			isa = PBXGroup;
+			children = (
+				AE1E293F20A96B0B00FC6BA2 /* rec_x64.cpp */,
+			);
+			name = "rec-x64";
+			path = "../../../core/rec-x64";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -1478,7 +1479,7 @@
 				84B7BEF21B72720200F9733F /* zip_file_get_offset.c in Sources */,
 				84B7BF7B1B72720200F9733F /* gltex.cpp in Sources */,
 				84B7BEF41B72720200F9733F /* zip_filerange_crc.c in Sources */,
-				AE1E292520947C6100FC6BA2 /* rec_x64.cpp in Sources */,
+				AE1E294020A96B0B00FC6BA2 /* rec_x64.cpp in Sources */,
 				84B7BEB91B72720200F9733F /* elf.cpp in Sources */,
 				84B7BF6D1B72720200F9733F /* README.md in Sources */,
 				84B7BF2B1B72720200F9733F /* arm_mem.cpp in Sources */,
@@ -1662,7 +1663,7 @@
 					TARGET_NO_WEBUI,
 					TARGET_NO_NIXPROF,
 					TARGET_NO_COREIO_HTTP,
-					TARGET_NO_AREC,
+                    TARGET_NO_AREC,
 					XBYAK_NO_OP_NAMES,
 				);
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
@@ -1708,7 +1709,7 @@
 					TARGET_NO_WEBUI,
 					TARGET_NO_NIXPROF,
 					TARGET_NO_COREIO_HTTP,
-					TARGET_NO_AREC,
+                    TARGET_NO_AREC,
 					XBYAK_NO_OP_NAMES,
 				);
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -1766,7 +1767,7 @@
 					"$(inherited)",
 				);
 				"GCC_PREPROCESSOR_DEFINITIONS[arch=x86_64]" = (
-					TARGET_OSX_X64,
+                    TARGET_OSX_X64,
 					"$(inherited)",
 				);
 				HEADER_SEARCH_PATHS = (
