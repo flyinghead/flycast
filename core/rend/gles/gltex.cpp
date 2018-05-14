@@ -645,7 +645,12 @@ const TSP TSPTextureCacheMask = { { TexV : 7, TexU : 7 } };
 const TCW TCWTextureCacheMask = { { TexAddr : 0x1FFFFF, Reserved : 0, StrideSel : 0, ScanOrder : 0, PixelFmt : 7, VQ_Comp : 1, MipMapped : 1 } };
 
 TextureCacheData *getTextureCacheData(TSP tsp, TCW tcw) {
-	u64 key = ((u64)(tcw.full & TCWTextureCacheMask.full) << 32) | (tsp.full & TSPTextureCacheMask.full);
+	u64 key = tsp.full & TSPTextureCacheMask.full;
+	if (tcw.PixelFmt == 5 || tcw.PixelFmt == 6)
+		// Paletted textures have a palette selection that must be part of the key
+		key |= (u64)tcw.full << 32;
+	else
+		key |= (u64)(tcw.full & TCWTextureCacheMask.full) << 32;
 
 	TexCacheIter tx = TexCache.find(key);
 
