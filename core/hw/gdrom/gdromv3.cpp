@@ -1,4 +1,4 @@
-﻿﻿/*
+﻿/*
 	gdrom, v3
 	Overly complex implementation of a very ugly device
 */
