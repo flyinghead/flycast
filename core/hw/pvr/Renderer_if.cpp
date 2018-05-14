@@ -141,12 +141,13 @@ void dump_frame(const char* file, TA_context* ctx, u8* vram, u8* vram_ref = NULL
 	fclose(fw);
 }
 
-TA_context* read_frame(const char* file, u8* vram_ref) {
+TA_context* read_frame(const char* file, u8* vram_ref = NULL) {
 	
 	FILE* fw = fopen(file, "rb");
+	if (fw == NULL)
+		die("Cannot open frame to display");
 	char id0[8] = { 0 };
 	u32 t = 0;
-	u32 t2 = 0;
 
 	fread(id0, 1, 8, fw);
 
@@ -166,27 +167,30 @@ TA_context* read_frame(const char* file, u8* vram_ref) {
 	fread(&ctx->rend.fb_X_CLIP.full, 1, sizeof(ctx->rend.fb_X_CLIP.full), fw);
 	fread(&ctx->rend.fb_Y_CLIP.full, 1, sizeof(ctx->rend.fb_Y_CLIP.full), fw);
 
-	fread(ctx->rend.global_param_op.head(), 1, sizeof(PolyParam), fw);
-	fread(ctx->rend.verts.head(), 1, 4 * sizeof(Vertex), fw);
+	fread(ctx->rend.global_param_op.Append(), 1, sizeof(PolyParam), fw);
+	fread(ctx->rend.verts.Append(4), 1, 4 * sizeof(Vertex), fw);
 
 	fread(&t, 1, sizeof(t), fw);
 	verify(t == VRAM_SIZE);
 
 	vram.UnLockRegion(0, VRAM_SIZE);
 
-	fread(&t2, 1, sizeof(t), fw);
+	uLongf compressed_size;
 
-	u8* gz_stream = (u8*)malloc(t2);
-	fread(gz_stream, 1, t2, fw);
-	uncompress(vram.data, (uLongf*)&t, gz_stream, t2);
+	fread(&compressed_size, 1, sizeof(compressed_size), fw);
+
+	u8* gz_stream = (u8*)malloc(compressed_size);
+	fread(gz_stream, 1, compressed_size, fw);
+	uLongf tl = t;
+	verify(uncompress(vram.data, &tl, gz_stream, compressed_size) == Z_OK);
 	free(gz_stream);
 
-
 	fread(&t, 1, sizeof(t), fw);
-	fread(&t2, 1, sizeof(t), fw);
-	gz_stream = (u8*)malloc(t2);
-	fread(gz_stream, 1, t2, fw);
-	uncompress(ctx->tad.thd_data, (uLongf*)&t, gz_stream, t2);
+	fread(&compressed_size, 1, sizeof(compressed_size), fw);
+	gz_stream = (u8*)malloc(compressed_size);
+	fread(gz_stream, 1, compressed_size, fw);
+	tl = t;
+	verify(uncompress(ctx->tad.thd_data, &tl, gz_stream, compressed_size) == Z_OK);
 	free(gz_stream);
 
 	ctx->tad.thd_data += t;
@@ -195,7 +199,14 @@ TA_context* read_frame(const char* file, u8* vram_ref) {
     return ctx;
 }
 
+bool dump_frame_switch = false;
+
 bool rend_frame(TA_context* ctx, bool draw_osd) {
+	if (dump_frame_switch) {
+		char name[32];
+		sprintf(name, "dcframe-%d", FrameCount);
+		dump_frame(name, _pvrrc, &vram[0]);
+	}
 	bool proc = renderer->Process(ctx);
 #if !defined(TARGET_NO_THREADS)
 	if (!proc || !ctx->rend.isRTT)
@@ -358,6 +369,7 @@ void rend_start_render()
 
 		if (!ctx->rend.Overrun)
 		{
+			//tactx_Recycle(ctx); ctx = read_frame("frames/dcframe-SoA-intro-tr-autosort");
 			//printf("REP: %.2f ms\n",render_end_pending_cycles/200000.0);
 			FillBGP(ctx);
 			
