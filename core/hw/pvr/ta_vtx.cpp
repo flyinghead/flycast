@@ -1448,7 +1448,7 @@ bool ta_parse_vdrc(TA_context* ctx)
 	{
 		TAFifo0.vdec_init();
 		
-		for (int pass = 0; pass <= ctx->tad.render_passes.size(); pass++) 
+		for (int pass = 0; pass <= ctx->tad.render_pass_count; pass++) 
 		{
 			ctx->MarkRend(pass);
 			vd_rc.proc_start = ctx->rend.proc_start;
