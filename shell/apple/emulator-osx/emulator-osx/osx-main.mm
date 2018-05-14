@@ -132,7 +132,6 @@ extern "C" int emu_single_frame(int w, int h) {
         return true;
     screen_width = w;
     screen_height = h;
-    glViewport(0, 0, w, h);
     return rend_single_frame();
 }
 
