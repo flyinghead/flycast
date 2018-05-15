@@ -1780,8 +1780,8 @@ bool RenderFrame()
 	//move vertex to gpu
 
 	//Main VBO
-	glcache.BindBuffer(GL_ARRAY_BUFFER, gl.vbo.geometry); glCheck();
-	glcache.BindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs); glCheck();
+	glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.geometry); glCheck();
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs); glCheck();
 
 	glBufferData(GL_ARRAY_BUFFER,pvrrc.verts.bytes(),pvrrc.verts.head(),GL_STREAM_DRAW); glCheck();
 
@@ -1790,7 +1790,7 @@ bool RenderFrame()
 	//Modvol VBO
 	if (pvrrc.modtrig.used())
 	{
-		glcache.BindBuffer(GL_ARRAY_BUFFER, gl.vbo.modvols); glCheck();
+		glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.modvols); glCheck();
 		glBufferData(GL_ARRAY_BUFFER,pvrrc.modtrig.bytes(),pvrrc.modtrig.head(),GL_STREAM_DRAW); glCheck();
 	}
 

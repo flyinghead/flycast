@@ -719,7 +719,7 @@ void GenSorted(int first, int count)
 	if (pidx_sort.size())
 	{
 		//Bind and upload sorted index buffer
-		glcache.BindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs2); glCheck();
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs2); glCheck();
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER,vidx_sort.size()*2,&vidx_sort[0],GL_STREAM_DRAW);
 
 		if (tess_gen) printf("Generated %.2fK Triangles !\n",tess_gen/1000.0);
@@ -731,7 +731,7 @@ void DrawSorted()
 	//if any drawing commands, draw them
 	if (pidx_sort.size())
 	{
-		glcache.BindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs2); glCheck();
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs2); glCheck();
 
 		u32 count=pidx_sort.size();
 		
@@ -872,8 +872,8 @@ void SetupMainVBO()
 	glBindVertexArray(gl.vbo.vao);
 #endif
 
-	glcache.BindBuffer(GL_ARRAY_BUFFER, gl.vbo.geometry); glCheck();
-	glcache.BindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs); glCheck();
+	glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.geometry); glCheck();
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs); glCheck();
 
 	//setup vertex buffers attrib pointers
 	glEnableVertexAttribArray(VERTEX_POS_ARRAY); glCheck();
@@ -895,7 +895,7 @@ void SetupModvolVBO()
 	glBindVertexArray(gl.vbo.vao);
 #endif
 
-	glcache.BindBuffer(GL_ARRAY_BUFFER, gl.vbo.modvols); glCheck();
+	glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.modvols); glCheck();
 
 	//setup vertex buffers attrib pointers
 	glEnableVertexAttribArray(VERTEX_POS_ARRAY); glCheck();

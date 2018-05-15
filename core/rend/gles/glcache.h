@@ -7,20 +7,6 @@ class GLCache {
 public:
 	GLCache() { Reset(); }
 
-	void BindBuffer(GLenum target,  GLuint buffer) {
-		switch (target) {
-		case GL_ARRAY_BUFFER:
-			if (_array_buffer != buffer) {
-				glBindBuffer(target, buffer);
-				_array_buffer = buffer;
-			}
-		case GL_ELEMENT_ARRAY_BUFFER:
-			if (_element_array_buffer != buffer) {
-				glBindBuffer(target, buffer);
-				_element_array_buffer = buffer;
-			}
-		}
-	}
 	void BindTexture(GLenum target,  GLuint texture) {
 		if (target == GL_TEXTURE_2D && texture != _texture) {
 			glBindTexture(target, texture);
@@ -40,11 +26,11 @@ public:
 
 	void ClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha) {
 		if (red != _clear_r || green != _clear_g || blue != _clear_b || alpha != _clear_a) {
-			glClearColor(red, green, blue, alpha);
 			_clear_r = red;
 			_clear_g = green;
 			_clear_b = blue;
 			_clear_a = alpha;
+			glClearColor(red, green, blue, alpha);
 		}
 	}
 
@@ -53,16 +39,6 @@ public:
 			_cull_face = mode;
 			glCullFace(mode);
 		}
-	}
-
-	void DeleteBuffers(GLsizei n, const GLuint *buffers) {
-		for (int i = 0; i < n; i++) {
-			if (buffers[i] == _array_buffer)
-				_array_buffer = 0;
-			if (buffers[i] == _element_array_buffer)
-				_element_array_buffer = 0;
-		}
-		glDeleteBuffers(n, buffers);
 	}
 
 	void DeleteTextures(GLsizei n, const GLuint *textures) {
@@ -90,65 +66,11 @@ public:
 	}
 
 	void Enable(GLenum cap) {
-		switch (cap) {
-		case GL_BLEND:
-			if (_en_blend)
-				return;
-			_en_blend = true;
-			break;
-		case GL_CULL_FACE:
-			if (_en_cull_face)
-				return;
-			_en_cull_face = true;
-			break;
-		case GL_DEPTH_TEST:
-			if (_en_depth_test)
-				return;
-			_en_depth_test = true;
-			break;
-		case GL_SCISSOR_TEST:
-			if (_en_scissor_test)
-				return;
-			_en_scissor_test = true;
-			break;
-		case GL_STENCIL_TEST:
-			if (_en_stencil_test)
-				return;
-			_en_stencil_test = true;
-			break;
-		}
-		glEnable(cap);
+		setCapability(cap, true);
 	}
 
 	void Disable(GLenum cap) {
-		switch (cap) {
-		case GL_BLEND:
-			if (!_en_blend)
-				return;
-			_en_blend = false;
-			break;
-		case GL_CULL_FACE:
-			if (!_en_cull_face)
-				return;
-			_en_cull_face = false;
-			break;
-		case GL_DEPTH_TEST:
-			if (!_en_depth_test)
-				return;
-			_en_depth_test = false;
-			break;
-		case GL_SCISSOR_TEST:
-			if (!_en_scissor_test)
-				return;
-			_en_scissor_test = false;
-			break;
-		case GL_STENCIL_TEST:
-			if (!_en_stencil_test)
-				return;
-			_en_stencil_test = false;
-			break;
-		}
-		glDisable(cap);
+		setCapability(cap, false);
 	}
 
 	void UseProgram(GLuint program) {
@@ -163,7 +85,6 @@ public:
 			_stencil_func = func;
 			_stencil_ref = ref;
 			_stencil_fmask = mask;
-
 			glStencilFunc(func, ref, mask);
 		}
 	}
@@ -173,7 +94,6 @@ public:
 			_stencil_sfail = sfail;
 			_stencil_dpfail = dpfail;
 			_stencil_dppass = dppass;
-
 			glStencilOp(sfail, dpfail, dppass);
 		}
 	}
@@ -194,8 +114,6 @@ public:
 	}
 
 	void Reset() {
-		_array_buffer = 0;
-		_element_array_buffer = 0;
 		_texture = 0;
 		_src_blend_factor = GL_ONE;
 		_dst_blend_factor = GL_ZERO;
@@ -223,8 +141,36 @@ public:
 	}
 
 private:
-	GLuint _array_buffer;
-	GLuint _element_array_buffer;
+	void setCapability(GLenum cap, bool value) {
+		bool *pCap = NULL;
+		switch (cap) {
+		case GL_BLEND:
+			pCap = &_en_blend;
+			break;
+		case GL_CULL_FACE:
+			pCap = &_en_cull_face;
+			break;
+		case GL_DEPTH_TEST:
+			pCap = &_en_depth_test;
+			break;
+		case GL_SCISSOR_TEST:
+			pCap = &_en_scissor_test;
+			break;
+		case GL_STENCIL_TEST:
+			pCap = &_en_stencil_test;
+			break;
+		}
+		if (pCap != NULL) {
+			if (*pCap == value)
+				return;
+			*pCap = value;
+		}
+		if (value)
+			glEnable(cap);
+		else
+			glDisable(cap);
+	}
+
 	GLuint _texture;
 	GLenum _src_blend_factor;
 	GLenum _dst_blend_factor;
