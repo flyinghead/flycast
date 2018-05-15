@@ -980,7 +980,7 @@ void SetupModvolVBO()
 }
 void DrawModVols(int first, int count)
 {
-	if (count == 0 /*|| GetAsyncKeyState(VK_F4)*/)
+    if (count == 0 /*|| GetAsyncKeyState(VK_F4)*/)
 		return;
 
 	SetupModvolVBO();
@@ -1133,8 +1133,8 @@ void DrawStrips()
 	glActiveTexture(GL_TEXTURE0);
 
 	RenderPass previous_pass = {0};
-	for (int render_pass = 0; render_pass < pvrrc.render_passes.used(); render_pass++) {
-		const RenderPass& current_pass = pvrrc.render_passes.head()[render_pass];
+    for (int render_pass = 0; render_pass < pvrrc.render_passes.used(); render_pass++) {
+        const RenderPass& current_pass = pvrrc.render_passes.head()[render_pass];
 
 		//initial state
 		glDisable(GL_BLEND);

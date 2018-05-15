@@ -896,7 +896,8 @@ bool gl_create_resources()
 	glGenBuffers(1, &gl.vbo.modvols);
 	glGenBuffers(1, &gl.vbo.idxs);
 	glGenBuffers(1, &gl.vbo.idxs2);
-
+    glCheck();
+    
 	memset(gl.pogram_table,0,sizeof(gl.pogram_table));
 
 	PipelineShader* dshader=0;
@@ -1008,12 +1009,12 @@ bool gles_init()
 #endif
 
 	//clean up all buffers ...
-	for (int i=0;i<10;i++)
-	{
-		glClearColor(0.f, 0.f, 0.f, 0.f);
-		glClear(GL_COLOR_BUFFER_BIT);
-		gl_swap();
-	}
+//    for (int i=0;i<10;i++)
+//    {
+//        glClearColor(0.f, 0.f, 0.f, 0.f); glCheck();
+//        glClear(GL_COLOR_BUFFER_BIT); glCheck();
+//        gl_swap(); glCheck();
+//    }
 
 	return true;
 }
@@ -1692,7 +1693,7 @@ bool RenderFrame()
 		tryfit(xvals,yvals);
 	}
 
-	glUseProgram(gl.modvol_shader.program);
+	glUseProgram(gl.modvol_shader.program); glCheck();
 
 	glUniform4fv( gl.modvol_shader.scale, 1, ShaderUniforms.scale_coefs);
 	glUniform4fv( gl.modvol_shader.depth_scale, 1, ShaderUniforms.depth_coefs);
@@ -1700,7 +1701,7 @@ bool RenderFrame()
 
 	GLfloat td[4]={0.5,0,0,0};
 
-	glUseProgram(gl.OSD_SHADER.program);
+	glUseProgram(gl.OSD_SHADER.program); glCheck();
 	glUniform4fv( gl.OSD_SHADER.scale, 1, ShaderUniforms.scale_coefs);
 	glUniform4fv( gl.OSD_SHADER.depth_scale, 1, td);
 
@@ -1760,9 +1761,10 @@ bool RenderFrame()
 	{
 #if HOST_OS != OS_DARWIN
         //Fix this in a proper way
-		glBindFramebuffer(GL_FRAMEBUFFER,0);
+        glBindFramebuffer(GL_FRAMEBUFFER,0); glCheck();
 #endif
-		glViewport(0, 0, screen_width, screen_height);
+        glViewport(0, 0, screen_width, screen_height); glCheck();
+
 	}
 
 	bool wide_screen_on = !is_rtt && settings.rend.WideScreen
@@ -1776,8 +1778,9 @@ bool RenderFrame()
 		glClearColor(pvrrc.verts.head()->col[2]/255.0f,pvrrc.verts.head()->col[1]/255.0f,pvrrc.verts.head()->col[0]/255.0f,1.0f);
 	else
 		glClearColor(0,0,0,1.0f);
+    glCheck();
 
-	glDisable(GL_SCISSOR_TEST);
+	glDisable(GL_SCISSOR_TEST); glCheck();
 	glClear(GL_COLOR_BUFFER_BIT); glCheck();
 
 	//move vertex to gpu

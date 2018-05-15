@@ -177,7 +177,7 @@ CSYM(no_update):              @ next_pc _MUST_ be on r4 *R4 NOT R0 anymore*
                               @       below is inefficient. If anyone is familiar
                               @       with asm please consider optimising!
 
-	ldr r3, =ngen_required	@ load r3 with the address of c variable ngen_required
+	ldr r3, =CSYM(ngen_required)	@ load r3 with the address of c variable ngen_required
 	ldr r0,[r3]		@ dereference and store in r0
 	cmp r0,#0		@ compare r0 with numerical value 0
 	beq CSYM(cleanup)	@ if compare is true jump to cleanup label and exit thread

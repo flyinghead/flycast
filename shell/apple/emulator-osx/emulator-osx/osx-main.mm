@@ -88,6 +88,7 @@ void gl_swap() {
     
 }
 
+void common_linux_setup();
 int dc_init(int argc,wchar* argv[]);
 void dc_run();
 
@@ -107,6 +108,7 @@ void* emuthread(void*) {
         set_user_config_dir(".");
         set_user_data_dir(".");
     }
+    common_linux_setup();
     char* argv[] = { "reicast" };
     
     dc_init(1,argv);
@@ -132,6 +134,9 @@ extern "C" int emu_single_frame(int w, int h) {
         return true;
     screen_width = w;
     screen_height = h;
+    glViewport(0, 0, screen_width, screen_height);
+    GLenum err = glGetError();
+    if (err != GL_NO_ERROR) {printf("OpenGL error %d\n", err); die("OpenGL error"); }
     return rend_single_frame();
 }
 

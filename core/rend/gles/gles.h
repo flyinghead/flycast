@@ -32,7 +32,7 @@
 #endif
 
 
-#define glCheck() do { if (unlikely(settings.validate.OpenGlChecks)) { verify(glGetError()==GL_NO_ERROR); } } while(0)
+#define glCheck() do { /*if (unlikely(settings.validate.OpenGlChecks))*/ { GLenum err = glGetError(); if (err != GL_NO_ERROR) {printf("OpenGL error %d\n", err); die("OpenGL error"); }} } while(0)
 #define eglCheck() false
 
 #define VERTEX_POS_ARRAY 0
