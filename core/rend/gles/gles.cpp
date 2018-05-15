@@ -1053,25 +1053,28 @@ void tryfit(float* x,float* y)
 		}
 	}
 
-	double a,b;
-	b=(cnt*sylnx-sy*slnx)/(cnt*slnx2-slnx*slnx);
-	a=(sy-b*slnx)/(cnt);
-
-
-	//We use log2 and not ln on calculations	//B*log(x)+A
-	//log2(x)=log(x)/log(2)
-	//log(x)=log2(x)*log(2)
-	//B*log(2)*log(x)+A
-	b*=logf(2.0);
-	/*
-	float maxdev=0;
-	for (int i=0;i<128;i++)
+	double a = 0, b = 0;
+	if (slnx != 0)
 	{
-		float diff=min(max(b*logf(x[i])/logf(2.0)+a,(double)0),(double)1)-y[i];
-		maxdev=max((float)fabs((float)diff),(float)maxdev);
+		b=(cnt*sylnx-sy*slnx)/(cnt*slnx2-slnx*slnx);
+		a=(sy-b*slnx)/(cnt);
+
+
+		//We use log2 and not ln on calculations	//B*log(x)+A
+		//log2(x)=log(x)/log(2)
+		//log(x)=log2(x)*log(2)
+		//B*log(2)*log(x)+A
+		b*=logf(2.0);
+		/*
+		float maxdev=0;
+		for (int i=0;i<128;i++)
+		{
+			float diff=min(max(b*logf(x[i])/logf(2.0)+a,(double)0),(double)1)-y[i];
+			maxdev=max((float)fabs((float)diff),(float)maxdev);
+		}
+		printf("FOG TABLE Curve match: maxdev: %.02f cents\n",maxdev*100);
+		 */
 	}
-	printf("FOG TABLE Curve match: maxdev: %.02f cents\n",maxdev*100);
-	 */
 	ShaderUniforms.fog_coefs[0] = a;
 	ShaderUniforms.fog_coefs[1] = b;
 	//printf("%f\n",B*log(maxdev)/log(2.0)+A);
