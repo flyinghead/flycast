@@ -41,6 +41,7 @@ class EmuGLView: NSOpenGLView {
         [
                 UInt32(NSOpenGLPFADoubleBuffer),
                 UInt32(NSOpenGLPFADepthSize), UInt32(24),
+                UInt32(NSOpenGLPFAStencilSize), UInt32(8),
                 // Must specify the 3.2 Core Profile to use OpenGL 3.2
                 UInt32(NSOpenGLPFAOpenGLProfile),
                 UInt32(NSOpenGLProfileVersion3_2Core),
