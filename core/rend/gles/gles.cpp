@@ -1012,6 +1012,10 @@ bool gles_init()
 	glClear(GL_COLOR_BUFFER_BIT);
 	gl_swap();
 
+#ifdef GLES
+	glHint(GL_GENERATE_MIPMAP_HINT, GL_FASTEST);
+#endif
+
 	return true;
 }
 
