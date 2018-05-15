@@ -1,4 +1,4 @@
-#include "gles.h"
+#include "glcache.h"
 #include "rend/rend.h"
 
 #include <algorithm>
@@ -11,12 +11,6 @@ Takes vertex, textures and renders to the currently set up target
 
 
 */
-
-//Uncomment this to disable the stencil work around
-//Seems like there's a bug either on the wrapper, or nvogl making
-//stencil not work properly (requiring some double calls to get proper results)
-#define NO_STENCIL_WORKAROUND
-
 
 const static u32 CullMode[]= 
 {
@@ -83,39 +77,17 @@ u32 gcflip;
 static struct
 {
 	TSP tsp;
-	//TCW tcw;
-	PCW pcw;
-	ISP_TSP isp;
-	u32 clipmode;
-	//u32 texture_enabled;
-	u32 stencil_modvol_on;
-	u32 program;
 	GLuint texture;
 
 	void Reset(const PolyParam* gp)
 	{
-		program=~0;
 		texture=~0;
 		tsp.full = ~gp->tsp.full;
-		//tcw.full = ~gp->tcw.full;
-		pcw.full = ~gp->pcw.full;
-		isp.full = ~gp->isp.full;
-		clipmode=0xFFFFFFFF;
-//		texture_enabled=~gp->pcw.Texture;
-		stencil_modvol_on=false;
 	}
 } cache;
 
 s32 SetTileClip(u32 val, bool set)
 {
-	/*
-	if (set)
-	{
-		if (cache.clipmode==val)
-			return clip_mode;
-		cache.clipmode=val;
-	}*/
-
 	u32 clipmode=val>>28;
 	s32 clip_mode;
 	if (clipmode<2)
@@ -168,12 +140,12 @@ void SetCull(u32 CulliMode)
 {
 	if (CullMode[CulliMode]==GL_NONE)
 	{ 
-		glDisable(GL_CULL_FACE);
+		glcache.Disable(GL_CULL_FACE);
 	}
 	else
 	{
-		glEnable(GL_CULL_FACE);
-		glCullFace(CullMode[CulliMode]); //GL_FRONT/GL_BACK, ...
+		glcache.Enable(GL_CULL_FACE);
+		glcache.CullFace(CullMode[CulliMode]); //GL_FRONT/GL_BACK, ...
 	}
 }
 
@@ -181,57 +153,52 @@ template <u32 Type, bool SortingEnabled>
 __forceinline
 	void SetGPState(const PolyParam* gp,u32 cflip=0)
 {
-	//has to preserve cache_tsp/cache_isp
-	//can freely use cache_tcw
-	CurrentShader=&gl.pogram_table[GetProgramID(Type==ListType_Punch_Through?1:0,SetTileClip(gp->tileclip,false)+1,gp->pcw.Texture,gp->tsp.UseAlpha,gp->tsp.IgnoreTexA,gp->tsp.ShadInstr,gp->pcw.Offset,gp->tsp.FogCtrl)];
+	CurrentShader = &gl.pogram_table[
+									 GetProgramID(Type == ListType_Punch_Through ? 1 : 0,
+											 	  SetTileClip(gp->tileclip, false) + 1,
+												  gp->pcw.Texture,
+												  gp->tsp.UseAlpha,
+												  gp->tsp.IgnoreTexA,
+												  gp->tsp.ShadInstr,
+												  gp->pcw.Offset,
+												  gp->tsp.FogCtrl)];
 	
 	if (CurrentShader->program == -1)
 		CompilePipelineShader(CurrentShader);
-	if (CurrentShader->program != cache.program)
-	{
-		cache.program=CurrentShader->program;
-		glUseProgram(CurrentShader->program);
-	}
+	glcache.UseProgram(CurrentShader->program);
 	SetTileClip(gp->tileclip,true);
 
-	//This for some reason doesn't work properly
-	//So, shadow bit emulation is disabled.
-	//This bit normally control which pixels are affected
+	//This bit control which pixels are affected
 	//by modvols
-#ifdef NO_STENCIL_WORKAROUND
 	const u32 stencil=(gp->pcw.Shadow!=0)?0x80:0x0;
-#else
-	//force everything to be shadowed
-	const u32 stencil=0x80;
-#endif
 
-	if (cache.stencil_modvol_on!=stencil)
-	{
-		cache.stencil_modvol_on=stencil;
-
-		glStencilFunc(GL_ALWAYS,stencil,stencil);
-	}
+	glcache.StencilFunc(GL_ALWAYS,stencil,stencil);
 
 	bool texture_changed = false;
 
+	// FIXME the same gl texture id can be used with different parameters (filtering, clamping, etc.) This is not handled here
 	if (gp->texid != cache.texture)
 	{
 		cache.texture=gp->texid;
 		if (gp->texid != -1) {
 			//verify(glIsTexture(gp->texid));
-			glBindTexture(GL_TEXTURE_2D, gp->texid);
+			glcache.BindTexture(GL_TEXTURE_2D, gp->texid);
 			texture_changed = true;
 		}
 	}
+
+	if (Type==ListType_Translucent)
+	{
+		glcache.Enable(GL_BLEND);
+		glcache.BlendFunc(SrcBlendGL[gp->tsp.SrcInstr],DstBlendGL[gp->tsp.DstInstr]);
+	}
+	else
+		glcache.Disable(GL_BLEND);
 
 	if (gp->tsp.full != cache.tsp.full || texture_changed)
 	{
 		cache.tsp=gp->tsp;
 
-		if (Type==ListType_Translucent)
-		{
-			glBlendFunc(SrcBlendGL[gp->tsp.SrcInstr],DstBlendGL[gp->tsp.DstInstr]);
-		}
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, (gp->tsp.ClampU ? GL_CLAMP_TO_EDGE : (gp->tsp.FlipU ? GL_MIRRORED_REPEAT : GL_REPEAT))) ;
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, (gp->tsp.ClampV ? GL_CLAMP_TO_EDGE : (gp->tsp.FlipV ? GL_MIRRORED_REPEAT : GL_REPEAT))) ;
 
@@ -256,22 +223,18 @@ __forceinline
 	//gcflip is global clip flip, needed for when rendering to texture due to mirrored Y direction
 	SetCull(gp->isp.CullMode^cflip^gcflip);
 
-
-	if (gp->isp.full!= cache.isp.full)
-	{
-		cache.isp.full=gp->isp.full;
-
-		//set Z mode, only if required
-		if (!(Type==ListType_Punch_Through || (Type==ListType_Translucent && SortingEnabled)))
-			glDepthFunc(Zfunction[gp->isp.DepthMode]);
+	//set Z mode, only if required
+	if (Type == ListType_Punch_Through || (Type == ListType_Translucent && SortingEnabled))
+		glcache.DepthFunc(GL_GEQUAL);
+	else
+		glcache.DepthFunc(Zfunction[gp->isp.DepthMode]);
 		
 #if TRIG_SORT
-		if (SortingEnabled)
-			glDepthMask(GL_FALSE);
-		else
+	if (SortingEnabled)
+		glcache.DepthMask(GL_FALSE);
+	else
 #endif
-			glDepthMask(!gp->isp.ZWriteDis);
-	}
+		glcache.DepthMask(!gp->isp.ZWriteDis);
 }
 
 template <u32 Type, bool SortingEnabled>
@@ -285,23 +248,11 @@ void DrawList(const List<PolyParam>& gply, int first, int count)
 	//we want at least 1 PParam
 
 
-	//reset the cache state
-	cache.Reset(params);
-
 	//set some 'global' modes for all primitives
 
-	//Z funct. can be fixed on these combinations, avoid setting it all the time
-	if (Type==ListType_Punch_Through || (Type==ListType_Translucent && SortingEnabled))
-		glDepthFunc(Zfunction[6]);
-
-	glEnable(GL_STENCIL_TEST);
-	glStencilFunc(GL_ALWAYS,0,0);
-	glStencilOp(GL_KEEP,GL_KEEP,GL_REPLACE);
-
-#ifndef NO_STENCIL_WORKAROUND
-	//This looks like a driver bug
-	glStencilOp(GL_KEEP,GL_KEEP,GL_REPLACE);
-#endif
+	glcache.Enable(GL_STENCIL_TEST);
+	glcache.StencilFunc(GL_ALWAYS,0,0);
+	glcache.StencilOp(GL_KEEP,GL_KEEP,GL_REPLACE);
 
 	while(count-->0)
 	{
@@ -359,7 +310,7 @@ void SortPParams(int first, int count)
 		pp++;
 	}
 
-	std::stable_sort(pvrrc.global_param_tr.head(),pvrrc.global_param_tr.head()+pvrrc.global_param_tr.used());
+	std::stable_sort(pvrrc.global_param_tr.head() + first, pvrrc.global_param_tr.head() + first + count);
 }
 
 Vertex* vtx_sort_base;
@@ -578,7 +529,7 @@ void GenSorted(int first, int count)
 					v1=&vtx[1];
 					v2=&vtx[2];
 				}
-
+#if 0
 				if (settings.pvr.subdivide_transp)
 				{
 					u32 tess_x=(max3(v0->x,v1->x,v2->x)-min3(v0->x,v1->x,v2->x))/32;
@@ -652,6 +603,7 @@ void GenSorted(int first, int count)
 					}
 				}
 				else
+#endif
 				{
 					fill_id(lst[pfsti].id,v0,v1,v2,vtx_base);
 					lst[pfsti].pid= ppid ;
@@ -767,7 +719,7 @@ void GenSorted(int first, int count)
 	if (pidx_sort.size())
 	{
 		//Bind and upload sorted index buffer
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs2); glCheck();
+		glcache.BindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs2); glCheck();
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER,vidx_sort.size()*2,&vidx_sort[0],GL_STREAM_DRAW);
 
 		if (tess_gen) printf("Generated %.2fK Triangles !\n",tess_gen/1000.0);
@@ -779,26 +731,16 @@ void DrawSorted()
 	//if any drawing commands, draw them
 	if (pidx_sort.size())
 	{
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs2); glCheck();
+		glcache.BindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs2); glCheck();
 
 		u32 count=pidx_sort.size();
 		
 		{
-			cache.Reset(pidx_sort[0].ppid);
-
 			//set some 'global' modes for all primitives
 
-			//Z sorting is fixed for .. sorted stuff
-			glDepthFunc(Zfunction[6]);
-
-			glEnable(GL_STENCIL_TEST);
-			glStencilFunc(GL_ALWAYS,0,0);
-			glStencilOp(GL_KEEP,GL_KEEP,GL_REPLACE);
-
-		#ifndef NO_STENCIL_WORKAROUND
-			//This looks like a driver bug
-			glStencilOp(GL_KEEP,GL_KEEP,GL_REPLACE);
-		#endif
+			glcache.Enable(GL_STENCIL_TEST);
+			glcache.StencilFunc(GL_ALWAYS,0,0);
+			glcache.StencilOp(GL_KEEP,GL_KEEP,GL_REPLACE);
 
 			for (u32 p=0; p<count; p++)
 			{
@@ -857,21 +799,14 @@ void SetMVS_Mode(u32 mv_mode,ISP_Modvol ispc)
 	if (mv_mode==0)	//normal trigs
 	{
 		//set states
-		glEnable(GL_DEPTH_TEST);
+		glcache.Enable(GL_DEPTH_TEST);
 		//write only bit 1
-		glStencilMask(2);
+		glcache.StencilMask(2);
 		//no stencil testing
-		glStencilFunc(GL_ALWAYS,0,2);
+		glcache.StencilFunc(GL_ALWAYS,0,2);
 		//count the number of pixels in front of the Z buffer (xor zpass)
-		glStencilOp(GL_KEEP,GL_KEEP,GL_INVERT);
+		glcache.StencilOp(GL_KEEP,GL_KEEP,GL_INVERT);
 
-		//zfail would be better when camera is in the volume but it doesn't work for open volumes
-		//glStencilOp(GL_KEEP, GL_INVERT, GL_KEEP);
-#ifndef NO_STENCIL_WORKAROUND
-		//this needs to be done .. twice ? looks like
-		//a bug somewhere, on gles/nvgl ?
-		glStencilOp(GL_KEEP,GL_KEEP,GL_INVERT);
-#endif
 		//Cull mode needs to be set
 		SetCull(ispc.CullMode);
 	}
@@ -883,7 +818,7 @@ void SetMVS_Mode(u32 mv_mode,ISP_Modvol ispc)
 		//common states
 
 		//no depth test
-		glDisable(GL_DEPTH_TEST);
+		glcache.Disable(GL_DEPTH_TEST);
 
 		if (mv_mode==1)
 		{
@@ -894,14 +829,10 @@ void SetMVS_Mode(u32 mv_mode,ISP_Modvol ispc)
 			//1   : 1      : 01
 			
 			//write bits 1:0
-			glStencilMask(3);
+			glcache.StencilMask(3);
 			//if (1<=st) st=1; else st=0;
-			glStencilFunc(GL_LEQUAL,1,3);
-			glStencilOp(GL_ZERO,GL_ZERO,GL_REPLACE);
-#ifndef NO_STENCIL_WORKAROUND
-			//Look @ comment above -- this looks like a driver bug
-			glStencilOp(GL_ZERO,GL_ZERO,GL_REPLACE);
-#endif
+			glcache.StencilFunc(GL_LEQUAL,1,3);
+			glcache.StencilOp(GL_ZERO,GL_ZERO,GL_REPLACE);
 
 			/*
 			//if !=0 -> set to 10
@@ -926,14 +857,10 @@ void SetMVS_Mode(u32 mv_mode,ISP_Modvol ispc)
 			//1   : 1   : 01
 
 			// Write to bit 0
-			glStencilMask(1);	// FIXME bit 1 is not reset. Need other pass
+			glcache.StencilMask(1);	// FIXME bit 1 is not reset. Need other pass
 			//if (3==st) st=1; else st=0;	//can't be done with a single pass
-			glStencilFunc(GL_EQUAL, 3, 3);
-			glStencilOp(GL_ZERO,GL_KEEP,GL_REPLACE);
-#ifndef NO_STENCIL_WORKAROUND
-			//Look @ comment above -- this looks like a driver bug
-			glStencilOp(GL_ZERO,GL_KEEP,GL_REPLACE);
-#endif
+			glcache.StencilFunc(GL_EQUAL, 3, 3);
+			glcache.StencilOp(GL_ZERO,GL_KEEP,GL_REPLACE);
 		}
 	}
 }
@@ -945,8 +872,8 @@ void SetupMainVBO()
 	glBindVertexArray(gl.vbo.vao);
 #endif
 
-	glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.geometry); glCheck();
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs); glCheck();
+	glcache.BindBuffer(GL_ARRAY_BUFFER, gl.vbo.geometry); glCheck();
+	glcache.BindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs); glCheck();
 
 	//setup vertex buffers attrib pointers
 	glEnableVertexAttribArray(VERTEX_POS_ARRAY); glCheck();
@@ -968,7 +895,7 @@ void SetupModvolVBO()
 	glBindVertexArray(gl.vbo.vao);
 #endif
 
-	glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.modvols); glCheck();
+	glcache.BindBuffer(GL_ARRAY_BUFFER, gl.vbo.modvols); glCheck();
 
 	//setup vertex buffers attrib pointers
 	glEnableVertexAttribArray(VERTEX_POS_ARRAY); glCheck();
@@ -980,19 +907,19 @@ void SetupModvolVBO()
 }
 void DrawModVols(int first, int count)
 {
-    if (count == 0 /*|| GetAsyncKeyState(VK_F4)*/)
+	if (count == 0 || pvrrc.modtrig.used() == 0)
 		return;
 
 	SetupModvolVBO();
 
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glcache.Enable(GL_BLEND);
+	glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	glUseProgram(gl.modvol_shader.program);
+	glcache.UseProgram(gl.modvol_shader.program);
 	glUniform1f(gl.modvol_shader.sp_ShaderColor,0.5f);
 
-	glDepthMask(GL_FALSE);
-	glDepthFunc(GL_GREATER);
+	glcache.DepthMask(GL_FALSE);
+	glcache.DepthFunc(GL_GREATER);
 
 	if(0 /*|| GetAsyncKeyState(VK_F5)*/ )
 	{
@@ -1024,14 +951,10 @@ void DrawModVols(int first, int count)
 		if ( 0 /* || GetAsyncKeyState(VK_F6)*/ )
 		{
 			//simple single level stencil
-			glEnable(GL_STENCIL_TEST);
-			glStencilFunc(GL_ALWAYS,0x1,0x1);
-			glStencilOp(GL_KEEP,GL_KEEP,GL_INVERT);
-#ifndef NO_STENCIL_WORKAROUND
-			//looks like a driver bug
-			glStencilOp(GL_KEEP,GL_KEEP,GL_INVERT);
-#endif
-			glStencilMask(0x1);
+			glcache.Enable(GL_STENCIL_TEST);
+			glcache.StencilFunc(GL_ALWAYS,0x1,0x1);
+			glcache.StencilOp(GL_KEEP,GL_KEEP,GL_INVERT);
+			glcache.StencilMask(0x1);
 			SetCull(0);
 			glDrawArrays(GL_TRIANGLES, first, count * 3);
 		}
@@ -1092,22 +1015,18 @@ void DrawModVols(int first, int count)
 		glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
 
 		//black out any stencil with '1'
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+		glcache.Enable(GL_BLEND);
+		glcache.BlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 		
-		glEnable(GL_STENCIL_TEST);
-		glStencilFunc(GL_EQUAL,0x81,0x81); //only pixels that are Modvol enabled, and in area 1
+		glcache.Enable(GL_STENCIL_TEST);
+		glcache.StencilFunc(GL_EQUAL,0x81,0x81); //only pixels that are Modvol enabled, and in area 1
 		
 		//clear the stencil result bit
-		glStencilMask(0x3);    //write to lsb 
-		glStencilOp(GL_ZERO,GL_ZERO,GL_ZERO);
-#ifndef NO_STENCIL_WORKAROUND
-		//looks like a driver bug ?
-		glStencilOp(GL_ZERO,GL_ZERO,GL_ZERO);
-#endif
+		glcache.StencilMask(0x3);    //write to lsb
+		glcache.StencilOp(GL_ZERO,GL_ZERO,GL_ZERO);
 
 		//don't do depth testing
-		glDisable(GL_DEPTH_TEST);
+		glcache.Disable(GL_DEPTH_TEST);
 
 		SetupMainVBO();
 		glDrawArrays(GL_TRIANGLE_STRIP,0,4);
@@ -1118,10 +1037,7 @@ void DrawModVols(int first, int count)
 	}
 
 	//restore states
-	glDepthMask(GL_TRUE);
-	glDisable(GL_BLEND);
-	glEnable(GL_DEPTH_TEST);
-	glDisable(GL_STENCIL_TEST);
+	glcache.Enable(GL_DEPTH_TEST);
 }
 
 void DrawStrips()
@@ -1137,38 +1053,25 @@ void DrawStrips()
         const RenderPass& current_pass = pvrrc.render_passes.head()[render_pass];
 
 		//initial state
-		glDisable(GL_BLEND);
-		glEnable(GL_DEPTH_TEST);
+		glcache.Enable(GL_DEPTH_TEST);
 
 		glClearDepthf(0.f);
-		glDepthMask(GL_TRUE);
-		glStencilMask(0xFF);
+		glcache.DepthMask(GL_TRUE);
+		glcache.StencilMask(0xFF);
 		glClear(GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); glCheck();
 
 		//Opaque
-		//Nothing extra needs to be setup here
-		/*if (!GetAsyncKeyState(VK_F1))*/
 		DrawList<ListType_Opaque,false>(pvrrc.global_param_op, previous_pass.op_count, current_pass.op_count - previous_pass.op_count);
 
+		// Modifier volumes
 		DrawModVols(previous_pass.mvo_count, current_pass.mvo_count);
 
 		//Alpha tested
-		//setup alpha test state
-		/*if (!GetAsyncKeyState(VK_F2))*/
 		DrawList<ListType_Punch_Through,false>(pvrrc.global_param_pt, previous_pass.pt_count, current_pass.pt_count - previous_pass.pt_count);
 
 
 		//Alpha blended
-		//Setup blending
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		/*if (!GetAsyncKeyState(VK_F3))*/
 		{
-			/*
-			if (UsingAutoSort())
-				SortRendPolyParamList(pvrrc.global_param_tr);
-			else
-				*/
 			if (pvrrc.isAutoSort)
 				GenSorted(previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
 

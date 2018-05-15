@@ -1,5 +1,5 @@
 #include <math.h>
-#include "gles.h"
+#include "glcache.h"
 #include "rend/TexCache.h"
 #include "cfg/cfg.h"
 
@@ -383,7 +383,7 @@ void main() \n\
 	" FRAGCOL "=vtx_base*" TEXLOOKUP "(tex,uv.st); \n\n\
 }";
 
-
+GLCache glcache;
 gl_ctx gl;
 
 int screen_width;
@@ -677,12 +677,12 @@ int screen_height;
 				#if 0
 					//handy to debug really stupid render-not-working issues ...
 
-					glClearColor( 0, 0.5, 1, 1 );
+					glcache.ClearColor( 0, 0.5, 1, 1 );
 					glClear( GL_COLOR_BUFFER_BIT );
 					glXSwapBuffers((Display*)libPvr_GetRenderSurface(), (GLXDrawable)libPvr_GetRenderTarget());
 
 
-					glClearColor ( 1, 0.5, 0, 1 );
+					glcache.ClearColor ( 1, 0.5, 0, 1 );
 					glClear ( GL_COLOR_BUFFER_BIT );
 					glXSwapBuffers((Display*)libPvr_GetRenderSurface(), (GLXDrawable)libPvr_GetRenderTarget());
 				#endif
@@ -804,7 +804,7 @@ GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentShader)
 	glDeleteShader(vs);
 	glDeleteShader(ps);
 
-	glUseProgram(program);
+	glcache.UseProgram(program);
 
 	verify(glIsProgram(program));
 
@@ -1007,6 +1007,11 @@ bool gles_init()
 	#endif
 #endif
 
+	//clean up the buffer
+	glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
+	glClear(GL_COLOR_BUFFER_BIT);
+	gl_swap();
+
 	return true;
 }
 
@@ -1032,10 +1037,10 @@ void tryfit(float* x,float* y)
 
 		//Add many samples for first and last value (fog-in, fog-out -> important)
 		if (i>0 && y[i]!=1 && y[i-1]==1)
-			rep=1000;
+			rep=10000;
 
 		if (i<127 && y[i]!=0 && y[i+1]==0)
-			rep=1000;
+			rep=10000;
 
 		for (int j=0;j<rep;j++)
 		{
@@ -1369,8 +1374,8 @@ void OSD_DRAW()
 
 		verify(glIsProgram(gl.OSD_SHADER.program));
 
-		glBindTexture(GL_TEXTURE_2D,osd_tex);
-		glUseProgram(gl.OSD_SHADER.program);
+		glcache.BindTexture(GL_TEXTURE_2D, osd_tex);
+		glcache.UseProgram(gl.OSD_SHADER.program);
 
 		//reset rendering scale
 /*
@@ -1389,15 +1394,15 @@ void OSD_DRAW()
 		glUniform4fv( gl.OSD_SHADER.scale, 1, ShaderUniforms.scale_coefs);
 */
 
-		glEnable(GL_BLEND);
-		glDisable(GL_DEPTH_TEST);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glcache.Enable(GL_BLEND);
+		glcache.Disable(GL_DEPTH_TEST);
+		glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-		glDepthMask(false);
-		glDepthFunc(GL_ALWAYS);
+		glcache.DepthMask(false);
+		glcache.DepthFunc(GL_ALWAYS);
 
-		glDisable(GL_CULL_FACE);
-		glDisable(GL_SCISSOR_TEST);
+		glcache.Disable(GL_CULL_FACE);
+		glcache.Disable(GL_SCISSOR_TEST);
 
 		int dfa=osd_count/4;
 
@@ -1419,20 +1424,20 @@ void OSD_DRAW()
 	float ds2s_offs_x=(screen_width-dc2s_scale_h*640)/2;
 
 
-    glBindTexture(GL_TEXTURE_2D,osd_font);
-    glUseProgram(gl.OSD_SHADER.program);
+    glcache.BindTexture(GL_TEXTURE_2D,osd_font);
+    glcache.UseProgram(gl.OSD_SHADER.program);
 
-    glEnable(GL_BLEND);
-    glDisable(GL_DEPTH_TEST);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-
-    glDepthMask(false);
-    glDepthFunc(GL_ALWAYS);
+    glcache.Enable(GL_BLEND);
+    glcache.Disable(GL_DEPTH_TEST);
+    glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 
-    glDisable(GL_CULL_FACE);
-    glDisable(GL_SCISSOR_TEST);
+    glcache.DepthMask(false);
+    glcache.DepthFunc(GL_ALWAYS);
+
+
+    glcache.Disable(GL_CULL_FACE);
+    glcache.Disable(GL_SCISSOR_TEST);
 
 
     int dfa=osd_count/4;
@@ -1684,7 +1689,7 @@ bool RenderFrame()
 		tryfit(xvals,yvals);
 	}
 
-	glUseProgram(gl.modvol_shader.program);
+	glcache.UseProgram(gl.modvol_shader.program);
 
 	glUniform4fv( gl.modvol_shader.scale, 1, ShaderUniforms.scale_coefs);
 	glUniform4fv( gl.modvol_shader.depth_scale, 1, ShaderUniforms.depth_coefs);
@@ -1692,7 +1697,7 @@ bool RenderFrame()
 
 	GLfloat td[4]={0.5,0,0,0};
 
-	glUseProgram(gl.OSD_SHADER.program);
+	glcache.UseProgram(gl.OSD_SHADER.program);
 	glUniform4fv( gl.OSD_SHADER.scale, 1, ShaderUniforms.scale_coefs);
 	glUniform4fv( gl.OSD_SHADER.depth_scale, 1, td);
 
@@ -1704,7 +1709,7 @@ bool RenderFrame()
 		if (s->program == -1)
 			continue;
 
-		glUseProgram(s->program);
+		glcache.UseProgram(s->program);
 
 		ShaderUniforms.Set(s);
 	}
@@ -1765,18 +1770,18 @@ bool RenderFrame()
 
 	//Color is cleared by the bgp
 	if (wide_screen_on)
-		glClearColor(pvrrc.verts.head()->col[2]/255.0f,pvrrc.verts.head()->col[1]/255.0f,pvrrc.verts.head()->col[0]/255.0f,1.0f);
+		glcache.ClearColor(pvrrc.verts.head()->col[2]/255.0f,pvrrc.verts.head()->col[1]/255.0f,pvrrc.verts.head()->col[0]/255.0f,1.0f);
 	else
-		glClearColor(0,0,0,1.0f);
+		glcache.ClearColor(0,0,0,1.0f);
 
-	glDisable(GL_SCISSOR_TEST);
+	glcache.Disable(GL_SCISSOR_TEST);
 	glClear(GL_COLOR_BUFFER_BIT); glCheck();
 
 	//move vertex to gpu
 
 	//Main VBO
-	glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.geometry); glCheck();
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs); glCheck();
+	glcache.BindBuffer(GL_ARRAY_BUFFER, gl.vbo.geometry); glCheck();
+	glcache.BindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs); glCheck();
 
 	glBufferData(GL_ARRAY_BUFFER,pvrrc.verts.bytes(),pvrrc.verts.head(),GL_STREAM_DRAW); glCheck();
 
@@ -1785,7 +1790,7 @@ bool RenderFrame()
 	//Modvol VBO
 	if (pvrrc.modtrig.used())
 	{
-		glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.modvols); glCheck();
+		glcache.BindBuffer(GL_ARRAY_BUFFER, gl.vbo.modvols); glCheck();
 		glBufferData(GL_ARRAY_BUFFER,pvrrc.modtrig.bytes(),pvrrc.modtrig.head(),GL_STREAM_DRAW); glCheck();
 	}
 
@@ -1808,7 +1813,7 @@ bool RenderFrame()
 				  pvrrc.fb_Y_CLIP.min / scale_y * (is_rtt ? 1 : dc2s_scale_h),
 				  (pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1) / scale_x * (is_rtt ? 1 : dc2s_scale_h),
 				  (pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1) / scale_y * (is_rtt ? 1 : dc2s_scale_h));
-		glEnable(GL_SCISSOR_TEST);
+		glcache.Enable(GL_SCISSOR_TEST);
 	}
 
 	//restore scale_x
@@ -2023,9 +2028,8 @@ GLuint loadPNG(const string& fname, int &width, int &height)
 	png_read_image(png_ptr, row_pointers);
 
 	//Now generate the OpenGL texture object
-	GLuint texture;
-	glGenTextures(1, &texture);
-	glBindTexture(GL_TEXTURE_2D, texture);
+	GLuint texture = glcache.GenTexture();
+	glcache.BindTexture(GL_TEXTURE_2D, texture);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA,
 		GL_UNSIGNED_BYTE, (GLvoid*) image_data);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);

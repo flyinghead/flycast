@@ -1,4 +1,4 @@
-#include "gles.h"
+#include "glcache.h"
 #include "rend/TexCache.h"
 #include "hw/pvr/pvr_mem.h"
 #include "hw/mem/_vmem.h"
@@ -176,7 +176,7 @@ struct TextureCacheData
 	{
 		//ask GL for texture ID
 		if (isGL) {
-			glGenTextures(1, &texID);
+			texID = glcache.GenTexture();
 		}
 		else {
 			texID = 0;
@@ -201,7 +201,7 @@ struct TextureCacheData
 
 		if (texID) {
 			//bind texture to set modes
-			glBindTexture(GL_TEXTURE_2D, texID);
+			glcache.BindTexture(GL_TEXTURE_2D, texID);
 
 			//set texture repeat mode
 			SetRepeatMode(GL_TEXTURE_WRAP_S, tsp.ClampU, tsp.FlipU); // glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, (tsp.ClampU ? GL_CLAMP_TO_EDGE : (tsp.FlipU ? GL_MIRRORED_REPEAT : GL_REPEAT))) ;
@@ -348,7 +348,7 @@ struct TextureCacheData
 
 		if (texID) {
 			//upload to OpenGL !
-			glBindTexture(GL_TEXTURE_2D, texID);
+			glcache.BindTexture(GL_TEXTURE_2D, texID);
 			GLuint comps=textype==GL_UNSIGNED_SHORT_5_6_5?GL_RGB:GL_RGBA;
 			glTexImage2D(GL_TEXTURE_2D, 0,comps , w, h, 0, comps, textype, temp_tex_buffer);
 			if (tcw.MipMapped && settings.rend.UseMipmaps)
@@ -399,7 +399,7 @@ struct TextureCacheData
 		}
 
 		if (texID) {
-			glDeleteTextures(1, &texID);
+			glcache.DeleteTextures(1, &texID);
 		}
 		if (lock_block)
 			libCore_vramlock_Unlock_block(lock_block);
@@ -428,7 +428,7 @@ void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 	FBT& rv=fb_rtt;
 
 	if (rv.fbo) glDeleteFramebuffers(1,&rv.fbo);
-	if (rv.tex) glDeleteTextures(1,&rv.tex);
+	if (rv.tex) glcache.DeleteTextures(1,&rv.tex);
 	if (rv.depthb) glDeleteRenderbuffers(1,&rv.depthb);
 	if (rv.stencilb) glDeleteRenderbuffers(1,&rv.stencilb);
 
@@ -466,8 +466,8 @@ void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 	glRenderbufferStorage(GL_RENDERBUFFER, GL_STENCIL_INDEX8, fbw2, fbh2);
 
 	// Create a texture for rendering to
-	glGenTextures(1, &rv.tex);
-	glBindTexture(GL_TEXTURE_2D, rv.tex);
+	rv.tex = glcache.GenTexture();
+	glcache.BindTexture(GL_TEXTURE_2D, rv.tex);
 
 	glTexImage2D(GL_TEXTURE_2D, 0, channels, fbw2, fbh2, 0, channels, fmt, 0);
 
@@ -597,7 +597,7 @@ void ReadRTTBuffer() {
     //dumpRtTexture(fb_rtt.TexAddr, w, h);
     
     if (w > 1024 || h > 1024) {
-    	glDeleteTextures(1, &fb_rtt.tex);
+    	glcache.DeleteTextures(1, &fb_rtt.tex);
     }
     else
     {
@@ -620,7 +620,7 @@ void ReadRTTBuffer() {
 
     	TextureCacheData *texture_data = getTextureCacheData(tsp, tcw);
     	if (texture_data->texID != 0)
-    		glDeleteTextures(1, &texture_data->texID);
+    		glcache.DeleteTextures(1, &texture_data->texID);
     	else {
     		texture_data->Create(false);
     		texture_data->lock_block = libCore_vramlock_Lock(texture_data->sa_tex, texture_data->sa + texture_data->size - 1, texture_data);
