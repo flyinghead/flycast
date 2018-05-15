@@ -32,6 +32,7 @@ before_install:
 - chmod +x shell/android-studio/gradlew
 install:
 - sudo apt-get -qq update
+- touch ~/.android/repositories.cfg
 - echo y | sdkmanager 'ndk-bundle'
 - export NDK=ANDROID_NDK=ANDROID_NDK_HOME=$ANDROID_HOME/ndk-bundle
 - export PATH=${PATH}:$ANDROID_HOME/tools
