@@ -1,4 +1,5 @@
 #pragma once
+#include <map>
 #include "gles.h"
 
 #define TEXTURE_ID_CACHE_SIZE 32
@@ -43,10 +44,9 @@ public:
 
 	void DeleteTextures(GLsizei n, const GLuint *textures) {
 		for (int i = 0; i < n; i++) {
-			if (textures[i] == _texture) {
+			_texture_params.erase(textures[i]);
+			if (textures[i] == _texture)
 				_texture = 0;
-				break;
-			}
 		}
 		glDeleteTextures(n, textures);
 	}
@@ -105,6 +105,36 @@ public:
 		}
 	}
 
+	void TexParameteri(GLenum target,  GLenum pname,  GLint param) {
+		if (target == GL_TEXTURE_2D)
+		{
+			TextureParameters &cur_params = _texture_params[_texture];
+			switch (pname) {
+			case GL_TEXTURE_MIN_FILTER:
+				if (cur_params._min_filter == param)
+					return;
+				cur_params._min_filter = param;
+				break;
+			case GL_TEXTURE_MAG_FILTER:
+				if (cur_params._mag_filter == param)
+					return;
+				cur_params._mag_filter = param;
+				break;
+			case GL_TEXTURE_WRAP_S:
+				if (cur_params._wrap_s == param)
+					return;
+				cur_params._wrap_s = param;
+				break;
+			case GL_TEXTURE_WRAP_T:
+				if (cur_params._wrap_t == param)
+					return;
+				cur_params._wrap_t = param;
+				break;
+			}
+		}
+		glTexParameteri(target, pname, param);
+	}
+
 	GLuint GenTexture() {
 		if (_texture_cache_size == 0) {
 			_texture_cache_size = TEXTURE_ID_CACHE_SIZE;
@@ -141,6 +171,16 @@ public:
 	}
 
 private:
+	class TextureParameters {
+	public:
+		TextureParameters() : _min_filter(GL_NEAREST_MIPMAP_LINEAR), _mag_filter(GL_LINEAR), _wrap_s(GL_REPEAT), _wrap_t(GL_REPEAT) {}
+
+		GLenum _min_filter;
+		GLenum _mag_filter;
+		GLenum _wrap_s;
+		GLenum _wrap_t;
+	};
+
 	void setCapability(GLenum cap, bool value) {
 		bool *pCap = NULL;
 		switch (cap) {
@@ -196,6 +236,7 @@ private:
 	GLuint _stencil_mask;
 	GLuint _texture_ids[TEXTURE_ID_CACHE_SIZE];
 	GLuint _texture_cache_size;
+	std::map<GLuint, TextureParameters> _texture_params;
 };
 
 extern GLCache glcache;

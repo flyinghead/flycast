@@ -2039,7 +2039,7 @@ GLuint loadPNG(const string& fname, int &width, int &height)
 	glcache.BindTexture(GL_TEXTURE_2D, texture);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA,
 		GL_UNSIGNED_BYTE, (GLvoid*) image_data);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
 	//clean up memory and close stuff
 	png_destroy_read_struct(&png_ptr, &info_ptr, &end_info);

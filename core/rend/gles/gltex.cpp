@@ -163,14 +163,6 @@ struct TextureCacheData
 		printf("\n");
 	}
 
-	void SetRepeatMode(GLuint dir,u32 clamp,u32 mirror)
-	{
-		if (clamp)
-			glTexParameteri (GL_TEXTURE_2D, dir, GL_CLAMP_TO_EDGE);
-		else 
-			glTexParameteri (GL_TEXTURE_2D, dir, mirror?GL_MIRRORED_REPEAT : GL_REPEAT);
-	}
-
 	//Create GL texture from tsp/tcw
 	void Create(bool isGL)
 	{
@@ -198,30 +190,6 @@ struct TextureCacheData
 		sa = sa_tex;							//data texture start address (modified for MIPs, as needed)
 		w=8<<tsp.TexU;                   //tex width
 		h=8<<tsp.TexV;                   //tex height
-
-		if (texID) {
-			//bind texture to set modes
-			glcache.BindTexture(GL_TEXTURE_2D, texID);
-
-			//set texture repeat mode
-			SetRepeatMode(GL_TEXTURE_WRAP_S, tsp.ClampU, tsp.FlipU); // glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, (tsp.ClampU ? GL_CLAMP_TO_EDGE : (tsp.FlipU ? GL_MIRRORED_REPEAT : GL_REPEAT))) ;
-			SetRepeatMode(GL_TEXTURE_WRAP_T, tsp.ClampV, tsp.FlipV); // glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, (tsp.ClampV ? GL_CLAMP_TO_EDGE : (tsp.FlipV ? GL_MIRRORED_REPEAT : GL_REPEAT))) ;
-
-			//set texture filter mode
-			if (tsp.FilterMode == 0)
-			{
-				//disable filtering, mipmaps
-				glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
-				glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
-			}
-			else
-			{
-				//bilinear filtering
-				//PowerVR supports also trilinear via two passes, but we ignore that for now
-				glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER, (tcw.MipMapped && settings.rend.UseMipmaps)?GL_LINEAR_MIPMAP_NEAREST:GL_LINEAR);
-				glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-			}
-		}
 
 		//PAL texture
 		if (tex->bpp==4)
@@ -466,11 +434,6 @@ void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 	glcache.BindTexture(GL_TEXTURE_2D, rv.tex);
 
 	glTexImage2D(GL_TEXTURE_2D, 0, channels, fbw2, fbh2, 0, channels, fmt, 0);
-
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
 	// Create the object that will allow us to render to the aforementioned texture
 	glGenFramebuffers(1, &rv.fbo);

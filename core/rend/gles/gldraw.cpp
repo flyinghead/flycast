@@ -74,18 +74,6 @@ extern int screen_height;
 PipelineShader* CurrentShader;
 u32 gcflip;
 
-static struct
-{
-	TSP tsp;
-	GLuint texture;
-
-	void Reset(const PolyParam* gp)
-	{
-		texture=~0;
-		tsp.full = ~gp->tsp.full;
-	}
-} cache;
-
 s32 SetTileClip(u32 val, bool set)
 {
 	u32 clipmode=val>>28;
@@ -149,6 +137,14 @@ void SetCull(u32 CulliMode)
 	}
 }
 
+static void SetTextureRepeatMode(GLuint dir, u32 clamp, u32 mirror)
+{
+	if (clamp)
+		glcache.TexParameteri(GL_TEXTURE_2D, dir, GL_CLAMP_TO_EDGE);
+	else
+		glcache.TexParameteri(GL_TEXTURE_2D, dir, mirror ? GL_MIRRORED_REPEAT : GL_REPEAT);
+}
+
 template <u32 Type, bool SortingEnabled>
 __forceinline
 	void SetGPState(const PolyParam* gp,u32 cflip=0)
@@ -174,17 +170,24 @@ __forceinline
 
 	glcache.StencilFunc(GL_ALWAYS,stencil,stencil);
 
-	bool texture_changed = false;
+	glcache.BindTexture(GL_TEXTURE_2D, gp->texid == -1 ? 0 : gp->texid);
 
-	// FIXME the same gl texture id can be used with different parameters (filtering, clamping, etc.) This is not handled here
-	if (gp->texid != cache.texture)
+	SetTextureRepeatMode(GL_TEXTURE_WRAP_S, gp->tsp.ClampU, gp->tsp.FlipU);
+	SetTextureRepeatMode(GL_TEXTURE_WRAP_T, gp->tsp.ClampV, gp->tsp.FlipV);
+
+	//set texture filter mode
+	if (gp->tsp.FilterMode == 0)
 	{
-		cache.texture=gp->texid;
-		if (gp->texid != -1) {
-			//verify(glIsTexture(gp->texid));
-			glcache.BindTexture(GL_TEXTURE_2D, gp->texid);
-			texture_changed = true;
-		}
+		//disable filtering, mipmaps
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	}
+	else
+	{
+		//bilinear filtering
+		//PowerVR supports also trilinear via two passes, but we ignore that for now
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, (gp->tcw.MipMapped && settings.rend.UseMipmaps) ? GL_LINEAR_MIPMAP_NEAREST : GL_LINEAR);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	}
 
 	if (Type==ListType_Translucent)
@@ -194,29 +197,6 @@ __forceinline
 	}
 	else
 		glcache.Disable(GL_BLEND);
-
-	if (gp->tsp.full != cache.tsp.full || texture_changed)
-	{
-		cache.tsp=gp->tsp;
-
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, (gp->tsp.ClampU ? GL_CLAMP_TO_EDGE : (gp->tsp.FlipU ? GL_MIRRORED_REPEAT : GL_REPEAT))) ;
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, (gp->tsp.ClampV ? GL_CLAMP_TO_EDGE : (gp->tsp.FlipV ? GL_MIRRORED_REPEAT : GL_REPEAT))) ;
-
-		//set texture filter mode
-		if (gp->tsp.FilterMode == 0)
-		{
-			//disable filtering, mipmaps
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		}
-		else
-		{
-			//bilinear filtering
-			//PowerVR supports also trilinear via two passes, but we ignore that for now
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, (gp->tcw.MipMapped && settings.rend.UseMipmaps) ? GL_LINEAR_MIPMAP_NEAREST : GL_LINEAR);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		}
-	}
 
 	//set cull mode !
 	//cflip is required when exploding triangles for triangle sorting
@@ -819,48 +799,39 @@ void SetMVS_Mode(u32 mv_mode,ISP_Modvol ispc)
 
 		//no depth test
 		glcache.Disable(GL_DEPTH_TEST);
+		//write bits 1:0
+		glcache.StencilMask(3);
 
 		if (mv_mode==1)
 		{
+			// Inclusion volume
 			//res : old : final 
 			//0   : 0      : 00
 			//0   : 1      : 01
 			//1   : 0      : 01
 			//1   : 1      : 01
 			
-			//write bits 1:0
-			glcache.StencilMask(3);
 			//if (1<=st) st=1; else st=0;
 			glcache.StencilFunc(GL_LEQUAL,1,3);
 			glcache.StencilOp(GL_ZERO,GL_ZERO,GL_REPLACE);
-
-			/*
-			//if !=0 -> set to 10
-			verifyc(dev->SetRenderState(D3DRS_STENCILFUNC,D3DCMP_LESSEQUAL));
-			verifyc(dev->SetRenderState(D3DRS_STENCILREF,1));					
-			verifyc(dev->SetRenderState(D3DRS_STENCILPASS,D3DSTENCILOP_REPLACE));
-			verifyc(dev->SetRenderState(D3DRS_STENCILFAIL,D3DSTENCILOP_ZERO));
-			*/
 		}
 		else
 		{
+			// Exclusion volume
 			/*
-				this is bugged. a lot.
 				I've only seen a single game use it, so i guess it doesn't matter ? (Zombie revenge)
 				(actually, i think there was also another, racing game)
 			*/
-
+			// The initial value for exclusion volumes is 1 so we need to invert the result before and'ing.
 			//res : old : final 
 			//0   : 0   : 00
-			//0   : 1   : 00
+			//0   : 1   : 01
 			//1   : 0   : 00
-			//1   : 1   : 01
+			//1   : 1   : 00
 
-			// Write to bit 0
-			glcache.StencilMask(1);	// FIXME bit 1 is not reset. Need other pass
-			//if (3==st) st=1; else st=0;	//can't be done with a single pass
-			glcache.StencilFunc(GL_EQUAL, 3, 3);
-			glcache.StencilOp(GL_ZERO,GL_KEEP,GL_REPLACE);
+			// if (1 == st) st = 1; else st = 0;
+			glcache.StencilFunc(GL_EQUAL, 1, 3);
+			glcache.StencilOp(GL_ZERO, GL_ZERO, GL_REPLACE);
 		}
 	}
 }
@@ -921,7 +892,7 @@ void DrawModVols(int first, int count)
 	glcache.DepthMask(GL_FALSE);
 	glcache.DepthFunc(GL_GREATER);
 
-	if(0 /*|| GetAsyncKeyState(VK_F5)*/ )
+	if(0)
 	{
 		//simply draw the volumes -- for debugging
 		SetCull(0);
@@ -948,7 +919,7 @@ void DrawModVols(int first, int count)
 
 		glColorMask(GL_FALSE,GL_FALSE,GL_FALSE,GL_FALSE);
 
-		if ( 0 /* || GetAsyncKeyState(VK_F6)*/ )
+		if (0)
 		{
 			//simple single level stencil
 			glcache.Enable(GL_STENCIL_TEST);
