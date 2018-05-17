@@ -42,7 +42,12 @@ import com.reicast.emulator.emu.JNIdc;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FilenameFilter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -634,9 +639,37 @@ public class OptionsFragment extends Fragment {
 	private void hideSoftKeyBoard() {
 		InputMethodManager iMm = (InputMethodManager) getActivity()
 				.getSystemService(Context.INPUT_METHOD_SERVICE);
-		if (iMm.isAcceptingText()) {
-			iMm.hideSoftInputFromWindow(getActivity().getCurrentFocus()
-					.getWindowToken(), 0);
+		if (iMm != null && iMm.isAcceptingText()) {
+			iMm.hideSoftInputFromWindow(getActivity().getCurrentFocus().getWindowToken(), 0);
+		}
+	}
+	
+	private void copy(File src, File dst) throws IOException {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+			try (InputStream in = new FileInputStream(src)) {
+				try (OutputStream out = new FileOutputStream(dst)) {
+					// Transfer bytes from in to out
+					byte[] buf = new byte[1024];
+					int len;
+					while ((len = in.read(buf)) > 0) {
+						out.write(buf, 0, len);
+					}
+				}
+			}
+		} else {
+			InputStream in = new FileInputStream(src);
+			OutputStream out = new FileOutputStream(dst);
+			try {
+				// Transfer bytes from in to out
+				byte[] buf = new byte[1024];
+				int len;
+				while ((len = in.read(buf)) > 0) {
+					out.write(buf, 0, len);
+				}
+			} finally {
+				in.close();
+				out.close();
+			}
 		}
 	}
 	
@@ -649,9 +682,14 @@ public class OptionsFragment extends Fragment {
 			if (flash.exists()) {
 				flash.delete();
 			}
-			local.renameTo(flash);
+			try {
+				copy(local, flash);
+			} catch (IOException ex) {
+				ex.printStackTrace();
+				local.renameTo(flash);
+			}
+			mPrefs.edit().putString("localized", localized).apply();
 		}
-		mPrefs.edit().putString("localized", localized).apply();
 	}
 
 	private void showToastMessage(String message, int duration) {
