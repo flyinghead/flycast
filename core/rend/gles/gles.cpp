@@ -271,14 +271,14 @@ void main() \n\
 { \n\
 	// Clip outside the box \n\
 	#if pp_ClipTestMode==1 \n\
-		if (vtx_xyz.x < pp_ClipTest.x || vtx_xyz.x > pp_ClipTest.z \n\
-				|| vtx_xyz.y < pp_ClipTest.y || vtx_xyz.y > pp_ClipTest.w) \n\
+		if (gl_FragCoord.x < pp_ClipTest.x || gl_FragCoord.x > pp_ClipTest.z \n\
+				|| gl_FragCoord.y < pp_ClipTest.y || gl_FragCoord.y > pp_ClipTest.w) \n\
 			discard; \n\
 	#endif \n\
 	// Clip inside the box \n\
 	#if pp_ClipTestMode==-1 \n\
-		if (vtx_xyz.x >= pp_ClipTest.x && vtx_xyz.x <= pp_ClipTest.z \n\
-				&& vtx_xyz.y >= pp_ClipTest.y && vtx_xyz.y <= pp_ClipTest.w) \n\
+		if (gl_FragCoord.x >= pp_ClipTest.x && gl_FragCoord.x <= pp_ClipTest.z \n\
+				&& gl_FragCoord.y >= pp_ClipTest.y && gl_FragCoord.y <= pp_ClipTest.w) \n\
 			discard; \n\
 	#endif \n\
 	\n\
