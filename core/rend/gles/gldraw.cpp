@@ -68,9 +68,6 @@ const static u32 SrcBlendGL[] =
 	GL_ONE_MINUS_DST_ALPHA
 };
 
-extern int screen_width;
-extern int screen_height;
-
 PipelineShader* CurrentShader;
 u32 gcflip;
 
@@ -102,24 +99,8 @@ s32 SetTileClip(u32 val, bool set)
 	if (csx <= 0 && csy <= 0 && cex >= 640 && cey >= 480)
 		return 0;
 	
-	if (set && clip_mode) {
-		csx *= scale_x;
-		csy *= scale_y;
-		cex *= scale_x;
-		cey *= scale_y;
-		if (!pvrrc.isRTT) {
-			float t = cey;
-			cey = 480 - csy;
-			csy = 480 - t;
-			float dc2s_scale_h = screen_height / 480.0f;
-			float ds2s_offs_x = (screen_width - dc2s_scale_h * 640) / 2;
-			csx = csx * dc2s_scale_h + ds2s_offs_x;
-			cex = cex * dc2s_scale_h + ds2s_offs_x;
-			csy = csy * dc2s_scale_h;
-			cey = cey * dc2s_scale_h;
-		}
+	if (set)
 		glUniform4f(CurrentShader->pp_ClipTest, csx, csy, cex, cey);
-	}
 
 	return clip_mode;
 }
