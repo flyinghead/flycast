@@ -1646,14 +1646,6 @@ bool UsingAutoSort()
 {
 	if (((FPU_PARAM_CFG >> 21) & 1) == 0)
 		return ((ISP_FEED_CFG & 1) == 0);
-	else {
-		// Hack: check all the tiles instead of just the first one (Rayman, VR2)
-		for (u32 i = 0; i < 300; i++)
-		{
-			if (((vri(REGION_BASE + i * 24) >> 29) & 1) == 0)
-				return true;
-		}
-
-		return false;
-	}
+	else
+		return ((vri(REGION_BASE) >> 29) & 1) == 0;
 }
