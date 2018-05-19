@@ -56,12 +56,12 @@ struct  tad_context
 	u8* thd_root;
 	u8* thd_old_data;
 	u8 *render_passes[10];
-    u32 render_pass_count;
+	u32 render_pass_count;
 
 	void Clear()
 	{
 		thd_old_data = thd_data = thd_root;
-        render_pass_count = 0;
+		render_pass_count = 0;
 	}
 
 	void ClearPartial()
@@ -72,7 +72,9 @@ struct  tad_context
 
 	void Continue()
 	{
-		render_passes[render_pass_count++] = thd_data;
+		render_passes[render_pass_count] = End();
+		if (render_pass_count < sizeof(render_passes) / sizeof(u8*) - 1)
+			render_pass_count++;
 	}
 	
 	u8* End()
