@@ -947,6 +947,8 @@ void DrawModVols(int first, int count)
 				ISP_Modvol ispc=params[cmv];
 				mod_base=ispc.id;
 				u32 sz=params[cmv+1].id-mod_base;
+				if (sz == 0)
+					continue;
 
 				u32 mv_mode = ispc.DepthMode;
 
@@ -1035,7 +1037,7 @@ void DrawStrips()
 		DrawList<ListType_Opaque,false>(pvrrc.global_param_op, previous_pass.op_count, current_pass.op_count - previous_pass.op_count);
 
 		// Modifier volumes
-		DrawModVols(previous_pass.mvo_count, current_pass.mvo_count);
+		DrawModVols(previous_pass.mvo_count, current_pass.mvo_count - previous_pass.mvo_count);
 
 		//Alpha tested
 		DrawList<ListType_Punch_Through,false>(pvrrc.global_param_pt, previous_pass.pt_count, current_pass.pt_count - previous_pass.pt_count);
