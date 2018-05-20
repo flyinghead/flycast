@@ -211,7 +211,7 @@ __forceinline
 		
 #if TRIG_SORT
 	if (SortingEnabled)
-		glcache.DepthMask(GL_FALSE);
+		glcache.DepthMask(GL_TRUE);
 	else
 #endif
 		glcache.DepthMask(!gp->isp.ZWriteDis);
@@ -711,8 +711,6 @@ void DrawSorted()
 	//if any drawing commands, draw them
 	if (pidx_sort.size())
 	{
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs2); glCheck();
-
 		u32 count=pidx_sort.size();
 		
 		{
@@ -748,6 +746,8 @@ void DrawSorted()
 				params++;
 			}
 		}
+		// Re-bind the previous index buffer for subsequent render passes
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs);
 	}
 }
 
@@ -1027,11 +1027,7 @@ void DrawStrips()
 
 		//initial state
 		glcache.Enable(GL_DEPTH_TEST);
-
-		glClearDepthf(0.f);
 		glcache.DepthMask(GL_TRUE);
-		glcache.StencilMask(0xFF);
-		glClear(GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); glCheck();
 
 		//Opaque
 		DrawList<ListType_Opaque,false>(pvrrc.global_param_op, previous_pass.op_count, current_pass.op_count - previous_pass.op_count);
