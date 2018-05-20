@@ -205,13 +205,20 @@ __forceinline
 
 	//set Z mode, only if required
 	if (Type == ListType_Punch_Through || (Type == ListType_Translucent && SortingEnabled))
-		glcache.DepthFunc(GL_GEQUAL);
+	{
+		if (gp->isp.DepthMode == 7)		// Fixes VR2 menu but not sure about this one
+			glcache.DepthFunc(GL_ALWAYS);
+		else
+			glcache.DepthFunc(GL_GEQUAL);
+	}
 	else
+	{
 		glcache.DepthFunc(Zfunction[gp->isp.DepthMode]);
-		
+	}
+
 #if TRIG_SORT
 	if (SortingEnabled)
-		glcache.DepthMask(GL_TRUE);
+		glcache.DepthMask(GL_FALSE);
 	else
 #endif
 		glcache.DepthMask(!gp->isp.ZWriteDis);
@@ -706,7 +713,7 @@ void GenSorted(int first, int count)
 	}
 }
 
-void DrawSorted()
+void DrawSorted(bool multipass)
 {
 	//if any drawing commands, draw them
 	if (pidx_sort.size())
@@ -744,6 +751,23 @@ void DrawSorted()
 #endif
 				}
 				params++;
+			}
+			if (multipass)
+			{
+				// Write to the depth buffer now. The next render pass might need it. (Cosmic Smash)
+				glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+				glcache.StencilMask(0);
+				for (u32 p = 0; p < count; p++)
+				{
+					PolyParam* params = pidx_sort[p].ppid;
+					if (pidx_sort[p].count > 2 && !params->isp.ZWriteDis) {
+						SetGPState<ListType_Translucent,true>(params);
+						glcache.DepthMask(GL_TRUE);
+						glDrawElements(GL_TRIANGLES, pidx_sort[p].count, GL_UNSIGNED_SHORT, (GLvoid*)(2*pidx_sort[p].first));
+					}
+				}
+				glcache.StencilMask(0xFF);
+				glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 			}
 		}
 		// Re-bind the previous index buffer for subsequent render passes
@@ -1046,7 +1070,7 @@ void DrawStrips()
 
 #if TRIG_SORT
 			if (pvrrc.isAutoSort)
-				DrawSorted();
+				DrawSorted(render_pass < pvrrc.render_passes.used() - 1);
 			else
 				DrawList<ListType_Translucent,false>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
 #else
