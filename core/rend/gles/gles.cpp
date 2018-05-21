@@ -342,8 +342,8 @@ void main() \n\
 	//color.rgb=vec3(vtx_xyz.z/255.0);\n"
 #ifndef GLES
 	"\
-	highp float w = gl_FragCoord.w * 100.0; \n\
-	gl_FragDepth = log2(1.0 + w) / 24.0; \n"
+	highp float w = gl_FragCoord.w * 100000.0; \n\
+	gl_FragDepth = log2(1.0 + w) / 34; \n"
 #endif
 	FRAGCOL "=color; \n\
 }";
@@ -360,8 +360,8 @@ void main() \n\
 { \n"
 #ifndef GLES
 	"\
-	highp float w = gl_FragCoord.w * 100.0; \n\
-	gl_FragDepth = log2(1.0 + w) / 24.0; \n"
+	highp float w = gl_FragCoord.w * 100000.0; \n\
+	gl_FragDepth = log2(1.0 + w) / 34; \n"
 #endif
 	FRAGCOL "=vec4(0.0, 0.0, 0.0, sp_ShaderColor); \n\
 }";
@@ -1783,7 +1783,7 @@ bool RenderFrame()
 
 	glcache.Disable(GL_SCISSOR_TEST);
 
-	glClearDepthf(0.f); glCheck();
+	glcache.DepthMask(GL_TRUE);
 	glStencilMask(0xFF); glCheck();
 	glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); glCheck();
 
