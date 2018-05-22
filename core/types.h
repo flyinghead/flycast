@@ -617,6 +617,7 @@ struct settings_t
 		bool WideScreen;
 		bool ShowFPS;
 		bool RenderToTextureBuffer;
+		bool TranslucentPolygonDepthMask;
 	} rend;
 
 	struct

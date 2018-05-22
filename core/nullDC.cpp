@@ -134,6 +134,9 @@ void LoadSpecialSettings()
 	if (!strncmp("T13008D", reios_product_number, 7))
 		// Tony Hawk's Pro Skater 2
 		settings.rend.RenderToTextureBuffer = 1;
+	if (!strncmp("RDC-0057", reios_product_number, 8))
+		// Cosmic Smash
+		settings.rend.TranslucentPolygonDepthMask = 1;
 }
 
 int dc_init(int argc,wchar* argv[])
@@ -259,6 +262,7 @@ void LoadSettings()
 	settings.rend.WideScreen		= cfgLoadInt("config","rend.WideScreen",0);
 	settings.rend.ShowFPS			= cfgLoadInt("config", "rend.ShowFPS", 0);
 	settings.rend.RenderToTextureBuffer = cfgLoadInt("config", "rend.RenderToTextureBuffer", 0);
+	settings.rend.TranslucentPolygonDepthMask = cfgLoadInt("config", "rend.TranslucentPolygonDepthMask", 0);
 	
 	settings.pvr.subdivide_transp	= cfgLoadInt("config","pvr.Subdivide",0);
 	
