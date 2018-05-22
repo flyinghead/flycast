@@ -108,7 +108,7 @@ static char reios_maker_id[17];
 static char reios_device_info[17];
 static char reios_area_symbols[9];
 static char reios_peripherals[9];
-static char reios_product_number[11];
+char reios_product_number[11];
 static char reios_product_version[7];
 static char reios_releasedate[17];
 static char reios_boot_filename[17];

@@ -11,6 +11,6 @@ void DYNACALL reios_trap(u32 op);
 
 const char* reios_locate_ip(void);
 bool reios_locate_bootfile(const char* bootfile);
-extern char reios_product_number[17];
+extern char reios_product_number[11];
 
 #define REIOS_OPCODE 0x085B

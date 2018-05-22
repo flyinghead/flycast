@@ -131,6 +131,9 @@ cThread webui_thd(&webui_th,0);
 
 void LoadSpecialSettings()
 {
+	if (!strncmp("T13008D", reios_product_number, 7))
+		// Tony Hawk's Pro Skater 2
+		settings.rend.RenderToTextureBuffer = 1;
 }
 
 int dc_init(int argc,wchar* argv[])
@@ -255,6 +258,7 @@ void LoadSettings()
 	settings.rend.UseMipmaps		= cfgLoadInt("config","rend.UseMipmaps",1);
 	settings.rend.WideScreen		= cfgLoadInt("config","rend.WideScreen",0);
 	settings.rend.ShowFPS			= cfgLoadInt("config", "rend.ShowFPS", 0);
+	settings.rend.RenderToTextureBuffer = cfgLoadInt("config", "rend.RenderToTextureBuffer", 0);
 	
 	settings.pvr.subdivide_transp	= cfgLoadInt("config","pvr.Subdivide",0);
 	
@@ -263,7 +267,6 @@ void LoadSettings()
 
 	settings.pvr.MaxThreads			= cfgLoadInt("config", "pvr.MaxThreads", 3);
 	settings.pvr.SynchronousRendering			= cfgLoadInt("config", "pvr.SynchronousRendering", 0);
-	settings.pvr.RenderToTextureBuffer = cfgLoadInt("config", "pvr.RenderToTextureBuffer", 0);
 
 	settings.debug.SerialConsole = cfgLoadInt("config", "Debug.SerialConsoleEnabled", 0) != 0;
 
