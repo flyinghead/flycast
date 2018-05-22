@@ -68,7 +68,6 @@ float scale_x, scale_y;
 #define attr "attribute"
 #define vary "varying"
 #endif
-#if 1
 
 //Fragment and vertex shaders code
 //pretty much 1:1 copy of the d3d ones for now
@@ -80,7 +79,6 @@ const char* VertexShaderSource =
 /* Vertex constants*/  \n\
 uniform highp vec4      scale; \n\
 uniform highp vec4      depth_scale; \n\
-uniform highp float sp_FOG_DENSITY; \n\
 /* Vertex input */ \n\
 " attr " highp vec4    in_pos; \n\
 " attr " lowp vec4     in_base; \n\
@@ -90,15 +88,12 @@ uniform highp float sp_FOG_DENSITY; \n\
 " vary " lowp vec4 vtx_base; \n\
 " vary " lowp vec4 vtx_offs; \n\
 " vary " mediump vec2 vtx_uv; \n\
-" vary " highp vec3 vtx_xyz; \n\
 void main() \n\
 { \n\
 	vtx_base=in_base; \n\
 	vtx_offs=in_offs; \n\
 	vtx_uv=in_uv; \n\
 	vec4 vpos=in_pos; \n\
-	vtx_xyz.xy = vpos.xy;  \n\
-	vtx_xyz.z = vpos.z*sp_FOG_DENSITY;  \n\
 	vpos.w=1.0/vpos.z;  \n"
 #ifndef GLES
 	"\
@@ -116,65 +111,6 @@ void main() \n\
 	vpos.xy*=vpos.w;  \n\
 	gl_Position = vpos; \n\
 }";
-
-
-#else
-
-
-
-const char* VertexShaderSource =
-				""
-				"/* Test Projection Matrix */"
-				""
-				"uniform highp mat4  Projection;"
-				""
-				""
-				"/* Vertex constants */"
-				""
-				"uniform highp float sp_FOG_DENSITY;"
-				"uniform highp vec4  scale;"
-				""
-				"/* Vertex output */"
-				""
-				"attribute highp   vec4 in_pos;"
-				"attribute lowp    vec4 in_base;"
-				"attribute lowp    vec4 in_offs;"
-				"attribute mediump vec2 in_uv;"
-				""
-				"/* Transformed input */"
-				""
-				"varying lowp    vec4 vtx_base;"
-				"varying lowp    vec4 vtx_offs;"
-				"varying mediump vec2 vtx_uv;"
-				"varying highp   vec3 vtx_xyz;"
-				""
-				"void main()"
-				"{"
-				"  vtx_base = in_base;"
-				"  vtx_offs = in_offs;"
-				"  vtx_uv   = in_uv;"
-				""
-				"  vec4 vpos  = in_pos;"
-				"  vtx_xyz.xy = vpos.xy; "
-				"  vtx_xyz.z  = vpos.z*sp_FOG_DENSITY; "
-				""
-				"  vpos.w     = 1.0/vpos.z; "
-				"  vpos.z    *= -scale.w; "
-				"  vpos.xy    = vpos.xy*scale.xy-sign(scale.xy); "
-				"  vpos.xy   *= vpos.w; "
-				""
-				"  gl_Position = vpos;"
-			//	"  gl_Position = vpos * Projection;"
-				"}"
-				;
-
-
-#endif
-
-
-
-
-
 
 /*
 
@@ -256,16 +192,16 @@ uniform lowp float cp_AlphaTestValue; \n\
 uniform lowp vec4 pp_ClipTest; \n\
 uniform lowp vec3 sp_FOG_COL_RAM,sp_FOG_COL_VERT; \n\
 uniform highp vec2 sp_LOG_FOG_COEFS; \n\
+uniform highp float sp_FOG_DENSITY; \n\
 uniform sampler2D tex,fog_table; \n\
 /* Vertex input*/ \n\
 " vary " lowp vec4 vtx_base; \n\
 " vary " lowp vec4 vtx_offs; \n\
 " vary " mediump vec2 vtx_uv; \n\
-" vary " highp vec3 vtx_xyz; \n\
-lowp float fog_mode2(highp float val) \n\
+lowp float fog_mode2(highp float w) \n\
 { \n\
-	highp float fog_idx=clamp(val,0.0,127.99); \n\
-	return clamp(sp_LOG_FOG_COEFS.y*log2(fog_idx)+sp_LOG_FOG_COEFS.x,0.001,1.0); //the clamp is required due to yet another bug !\n\
+	highp float fog_idx = clamp(w * sp_FOG_DENSITY, 0.0, 127.99); \n\
+	return clamp(sp_LOG_FOG_COEFS.y * log2(fog_idx) + sp_LOG_FOG_COEFS.x, 0.001, 1.0); //the clamp is required due to yet another bug !\n\
 } \n\
 void main() \n\
 { \n\
@@ -287,7 +223,7 @@ void main() \n\
 		color.a=1.0; \n\
 	#endif\n\
 	#if pp_FogCtrl==3 \n\
-		color=vec4(sp_FOG_COL_RAM.rgb,fog_mode2(vtx_xyz.z)); \n\
+		color=vec4(sp_FOG_COL_RAM.rgb,fog_mode2(gl_FragCoord.w)); \n\
 	#endif\n\
 	#if pp_Texture==1 \n\
 	{ \n\
@@ -333,13 +269,13 @@ void main() \n\
 	#endif\n\
 	#if pp_FogCtrl==0 \n\
 	{ \n\
-		color.rgb=mix(color.rgb,sp_FOG_COL_RAM.rgb,fog_mode2(vtx_xyz.z));  \n\
+		color.rgb=mix(color.rgb,sp_FOG_COL_RAM.rgb,fog_mode2(gl_FragCoord.w));  \n\
 	} \n\
 	#endif\n\
 	#if cp_AlphaTest == 1 \n\
 		color.a=1.0; \n\
 	#endif  \n\
-	//color.rgb=vec3(vtx_xyz.z/255.0);\n"
+	//color.rgb=vec3(gl_FragCoord.w * sp_FOG_DENSITY / 128.0);\n"
 #ifndef GLES
 	"\
 	highp float w = gl_FragCoord.w * 100000.0; \n\
