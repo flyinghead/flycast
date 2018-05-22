@@ -138,6 +138,14 @@ void dump_frame(const char* file, TA_context* ctx, u8* vram, u8* vram_ref = NULL
 	fwrite(compressed, 1, compressed_size, fw);
 	free(compressed);
 
+	fwrite(&ctx->tad.render_pass_count, 1, sizeof(u32), fw);
+	for (int i = 0; i < ctx->tad.render_pass_count; i++) {
+		u32 offset = ctx->tad.render_passes[i] - ctx->tad.thd_root;
+		fwrite(&offset, 1, sizeof(offset), fw);
+	}
+
+	fwrite(pvr_regs, 1, sizeof(pvr_regs), fw);
+
 	fclose(fw);
 }
 
@@ -194,6 +202,17 @@ TA_context* read_frame(const char* file, u8* vram_ref = NULL) {
 	free(gz_stream);
 
 	ctx->tad.thd_data += t;
+
+	if (fread(&t, 1, sizeof(t), fw) > 0) {
+		ctx->tad.render_pass_count = t;
+		for (int i = 0; i < t; i++) {
+			u32 offset;
+			fread(&offset, 1, sizeof(offset), fw);
+			ctx->tad.render_passes[i] = ctx->tad.thd_root + offset;
+		}
+	}
+	fread(pvr_regs, 1, sizeof(pvr_regs), fw);
+
 	fclose(fw);
     
     return ctx;
