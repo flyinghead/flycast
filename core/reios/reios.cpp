@@ -46,6 +46,8 @@ u32 read_u32bi(u8* ptr) {
 	return (ptr[4]<<24) | (ptr[5]<<16) | (ptr[6]<<8) | (ptr[7]<<0);
 }
 
+static bool bootfile_inited = false;
+
 bool reios_locate_bootfile(const char* bootfile="1ST_READ.BIN") {
 	u32 data_len = 2048 * 1024;
 	u8* temp = new u8[data_len];
@@ -89,6 +91,8 @@ bool reios_locate_bootfile(const char* bootfile="1ST_READ.BIN") {
 			}
 			
 			delete[] temp;
+
+			bootfile_inited = true;
 			return true;
 		}
 	}
@@ -98,6 +102,19 @@ bool reios_locate_bootfile(const char* bootfile="1ST_READ.BIN") {
 }
 
 char reios_bootfile[32];
+char ip_bin[256];
+static char reios_hardware_id[17];
+static char reios_maker_id[17];
+static char reios_device_info[17];
+static char reios_area_symbols[9];
+static char reios_peripherals[9];
+static char reios_product_number[11];
+static char reios_product_version[7];
+static char reios_releasedate[17];
+static char reios_boot_filename[17];
+static char reios_software_company[17];
+static char reios_software_name[129];
+
 const char* reios_locate_ip() {
 
 	if (libGDR_GetDiscType() == GdRom) {
@@ -111,6 +128,34 @@ const char* reios_locate_ip() {
 		base_fad = (ses[3] << 16) | (ses[4] << 8) | (ses[5] << 0);
 		descrambl = true;
 	}
+
+	libGDR_ReadSector(GetMemPtr(0x8c008000, 0), base_fad, 256, 2048);
+	memset(ip_bin, 0, sizeof(ip_bin));
+	memcpy(ip_bin, GetMemPtr(0x8c008000, 0), 256);
+	memcpy(&reios_hardware_id[0], &ip_bin[0], 16 * sizeof(char));
+	memcpy(&reios_maker_id[0], &ip_bin[16],   16 * sizeof(char));
+	memcpy(&reios_device_info[0], &ip_bin[32],   16 * sizeof(char));
+	memcpy(&reios_area_symbols[0], &ip_bin[48],   8 * sizeof(char));
+	memcpy(&reios_peripherals[0], &ip_bin[56],   8 * sizeof(char));
+	memcpy(&reios_product_number[0], &ip_bin[64],   10 * sizeof(char));
+	memcpy(&reios_product_version[0], &ip_bin[74],   6 * sizeof(char));
+	memcpy(&reios_releasedate[0], &ip_bin[80],   16 * sizeof(char));
+	memcpy(&reios_boot_filename[0], &ip_bin[96],   16 * sizeof(char));
+	memcpy(&reios_software_company[0], &ip_bin[112],   16 * sizeof(char));
+	memcpy(&reios_software_name[0], &ip_bin[128],   128 * sizeof(char));
+
+	printf("reios: IP.bin is '%s'\n", ip_bin);
+	printf("reios: Hardware ID is: %s\n", reios_hardware_id);
+	printf("reios: Maker ID is:    %s\n",    reios_maker_id);
+	printf("reios: Device info is: %s\n",    reios_device_info);
+	printf("reios: Area symbols is: %s\n",    reios_area_symbols);
+	printf("reios: Peripherals is: %s\n",    reios_peripherals);
+	printf("reios: Product number is: %s\n",    reios_product_number);
+	printf("reios: Product version is: %s\n",    reios_product_version);
+	printf("reios: Release date is: %s\n",    reios_releasedate);
+	printf("reios: Boot filename is: %s\n",    reios_boot_filename);
+	printf("reios: Software company is: %s\n",    reios_software_company);
+	printf("reios: Software name is: %s\n",    reios_software_name);
 
 	printf("reios: loading ip.bin from FAD: %d\n", base_fad);
 
@@ -575,8 +620,7 @@ void reios_boot() {
 	}
 	else {
 		if (DC_PLATFORM == DC_PLATFORM_DREAMCAST) {
-			const char* bootfile = reios_locate_ip();
-			if (!bootfile || !reios_locate_bootfile(bootfile))
+			if (!bootfile_inited)
 				msgboxf("Failed to locate bootfile", MBX_ICONERROR);
 			reios_setup_state(0xac008300);
 		}

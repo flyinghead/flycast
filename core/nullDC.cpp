@@ -15,6 +15,7 @@
 
 #include "webui/server.h"
 #include "hw/naomi/naomi_cart.h"
+#include "reios/reios.h"
 
 settings_t settings;
 
@@ -128,6 +129,10 @@ void* webui_th(void* p)
 cThread webui_thd(&webui_th,0);
 #endif
 
+void LoadSpecialSettings()
+{
+}
+
 int dc_init(int argc,wchar* argv[])
 {
 	setbuf(stdin,0);
@@ -207,6 +212,12 @@ int dc_init(int argc,wchar* argv[])
 
 	sh4_cpu.Reset(false);
 	
+	const char* bootfile = reios_locate_ip();
+	if (!bootfile || !reios_locate_bootfile("1ST_READ.BIN"))
+		printf("Failed to locate bootfile.\n");
+
+	LoadSpecialSettings();
+
 	return rv;
 }
 
