@@ -925,7 +925,7 @@ void DrawModVols(int first, int count)
 	glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	glcache.UseProgram(gl.modvol_shader.program);
-	glUniform1f(gl.modvol_shader.sp_ShaderColor,0.5f);
+	glUniform1f(gl.modvol_shader.sp_ShaderColor, 1 - FPU_SHAD_SCALE.scale_factor / 256.f);
 
 	glcache.DepthMask(GL_FALSE);
 	glcache.DepthFunc(GL_GREATER);
