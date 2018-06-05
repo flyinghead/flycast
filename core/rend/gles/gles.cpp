@@ -200,10 +200,10 @@ uniform sampler2D tex,fog_table; \n\
 lowp float fog_mode2(highp float w) \n\
 { \n\
 	highp float z = clamp(w * sp_FOG_DENSITY, 1.0, 255.9999); \n\
-	uint i = uint(floor(log2(z))); \n\
-	highp float m = z * 16 / pow(2, i) - 16; \n\
-	float idx = floor(m) + i * 16u + 0.5; \n\
-	vec4 fog_coef = " TEXLOOKUP "(fog_table, vec2(idx / 128, 0.75 - (m - floor(m)) / 2)); \n\
+	float exp = floor(log2(z)); \n\
+	highp float m = z * 16.0 / pow(2.0, exp) - 16.0; \n\
+	float idx = floor(m) + exp * 16.0 + 0.5; \n\
+	vec4 fog_coef = " TEXLOOKUP "(fog_table, vec2(idx / 128.0, 0.75 - (m - floor(m)) / 2.0)); \n\
 	return fog_coef.a; \n\
  } \n\
 void main() \n\
