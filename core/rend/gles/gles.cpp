@@ -191,7 +191,6 @@ const char* PixelPipelineShader =
 uniform lowp float cp_AlphaTestValue; \n\
 uniform lowp vec4 pp_ClipTest; \n\
 uniform lowp vec3 sp_FOG_COL_RAM,sp_FOG_COL_VERT; \n\
-uniform highp vec2 sp_LOG_FOG_COEFS; \n\
 uniform highp float sp_FOG_DENSITY; \n\
 uniform sampler2D tex,fog_table; \n\
 /* Vertex input*/ \n\
@@ -200,9 +199,13 @@ uniform sampler2D tex,fog_table; \n\
 " vary " mediump vec2 vtx_uv; \n\
 lowp float fog_mode2(highp float w) \n\
 { \n\
-	highp float fog_idx = clamp(w * sp_FOG_DENSITY, 0.0, 127.99); \n\
-	return clamp(sp_LOG_FOG_COEFS.y * log2(fog_idx) + sp_LOG_FOG_COEFS.x, 0.001, 1.0); //the clamp is required due to yet another bug !\n\
-} \n\
+	highp float z = clamp(w * sp_FOG_DENSITY, 1.0, 255.9999); \n\
+	uint i = uint(floor(log2(z))); \n\
+	highp float m = z * 16 / pow(2, i) - 16; \n\
+	float idx = floor(m) + i * 16u + 0.5; \n\
+	vec4 fog_coef = " TEXLOOKUP "(fog_table, vec2(idx / 128, 0.75 - (m - floor(m)) / 2)); \n\
+	return fog_coef.a; \n\
+ } \n\
 void main() \n\
 { \n\
 	// Clip outside the box \n\
@@ -324,6 +327,7 @@ gl_ctx gl;
 
 int screen_width;
 int screen_height;
+GLuint fogTextureId;
 
 #if (HOST_OS != OS_DARWIN) && !defined(TARGET_NACL32)
 #if defined(GLES) && !defined(USE_SDL)
@@ -637,7 +641,6 @@ struct ShaderUniforms_t
 	float fog_den_float;
 	float ps_FOG_COL_RAM[3];
 	float ps_FOG_COL_VERT[3];
-	float fog_coefs[2];
 
 	void Set(PipelineShader* s)
 	{
@@ -658,9 +661,6 @@ struct ShaderUniforms_t
 
 		if (s->sp_FOG_COL_VERT!=-1)
 			glUniform3fv( s->sp_FOG_COL_VERT, 1, ps_FOG_COL_VERT);
-
-		if (s->sp_LOG_FOG_COEFS!=-1)
-			glUniform2fv(s->sp_LOG_FOG_COEFS,1, fog_coefs);
 	}
 
 } ShaderUniforms;
@@ -800,14 +800,15 @@ bool CompilePipelineShader(	PipelineShader* s)
 	if (s->pp_FogCtrl==0 || s->pp_FogCtrl==3)
 	{
 		s->sp_FOG_COL_RAM=glGetUniformLocation(s->program, "sp_FOG_COL_RAM");
-		s->sp_LOG_FOG_COEFS=glGetUniformLocation(s->program, "sp_LOG_FOG_COEFS");
 	}
 	else
 	{
 		s->sp_FOG_COL_RAM=-1;
-		s->sp_LOG_FOG_COEFS=-1;
 	}
-
+	// Setup texture 1 as the fog table
+	gu = glGetUniformLocation(s->program, "fog_table");
+	if (gu != -1)
+		glUniform1i(gu, 1);
 
 	ShaderUniforms.Set(s);
 
@@ -956,70 +957,32 @@ bool gles_init()
 }
 
 
-void tryfit(float* x,float* y)
+void UpdateFogTexture(u8 *fog_table)
 {
-	//y=B*ln(x)+A
-
-	double sylnx=0,sy=0,slnx=0,slnx2=0;
-
-	u32 cnt=0;
-
-	for (int i=0;i<128;i++)
+	glActiveTexture(GL_TEXTURE1);
+	if (fogTextureId == 0)
 	{
-		int rep=1;
-
-		//discard values clipped to 0 or 1
-		if (i<127 && y[i]==1 && y[i+1]==1)
-			continue;
-
-		if (i>0 && y[i]==0 && y[i-1]==0)
-			continue;
-
-		//Add many samples for first and last value (fog-in, fog-out -> important)
-		if (i>0 && y[i]!=1 && y[i-1]==1)
-			rep=10000;
-
-		if (i<127 && y[i]!=0 && y[i+1]==0)
-			rep=10000;
-
-		for (int j=0;j<rep;j++)
-		{
-			cnt++;
-			const double lnx = log((double)x[i]);
-			sylnx += y[i] * lnx;
-			sy += y[i];
-			slnx += lnx;
-			slnx2 += lnx * lnx;
-		}
+		fogTextureId = glcache.GenTexture();
+		glcache.BindTexture(GL_TEXTURE_2D, fogTextureId);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	}
+	else
+		glcache.BindTexture(GL_TEXTURE_2D, fogTextureId);
 
-	double a = 0, b = 0;
-	if (slnx != 0)
+	u8 temp_tex_buffer[256];
+	for (int i = 0; i < 128; i++)
 	{
-		b=(cnt*sylnx-sy*slnx)/(cnt*slnx2-slnx*slnx);
-		a=(sy-b*slnx)/(cnt);
-
-
-		//We use log2 and not ln on calculations	//B*log(x)+A
-		//log2(x)=log(x)/log(2)
-		//log(x)=log2(x)*log(2)
-		//B*log(2)*log(x)+A
-		b*=logf(2.0);
-		/*
-		float maxdev=0;
-		for (int i=0;i<128;i++)
-		{
-			float diff=min(max(b*logf(x[i])/logf(2.0)+a,(double)0),(double)1)-y[i];
-			maxdev=max((float)fabs((float)diff),(float)maxdev);
-		}
-		printf("FOG TABLE Curve match: maxdev: %.02f cents\n",maxdev*100);
-		 */
+		temp_tex_buffer[i] = fog_table[i * 4];
+		temp_tex_buffer[i + 128] = fog_table[i * 4 + 1];
 	}
-	ShaderUniforms.fog_coefs[0] = a;
-	ShaderUniforms.fog_coefs[1] = b;
-	//printf("%f\n",B*log(maxdev)/log(2.0)+A);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, 128, 2, 0, GL_ALPHA, GL_UNSIGNED_BYTE, temp_tex_buffer);
+	glCheck();
+
+	glActiveTexture(GL_TEXTURE0);
 }
-
 
 
 extern u16 kcode[4];
@@ -1618,18 +1581,8 @@ bool RenderFrame()
 
 	if (fog_needs_update)
 	{
-		fog_needs_update=false;
-		//Get the coefs for the fog curve
-		u8* fog_table=(u8*)FOG_TABLE;
-		float xvals[128];
-		float yvals[128];
-		for (int i=0;i<128;i++)
-		{
-			xvals[i]=powf(2.0f,i>>4)*(1+(i&15)/16.f);
-			yvals[i]=fog_table[i*4+1]/255.0f;
-		}
-
-		tryfit(xvals,yvals);
+		fog_needs_update = false;
+		UpdateFogTexture((u8 *)FOG_TABLE);
 	}
 
 	glcache.UseProgram(gl.modvol_shader.program);
