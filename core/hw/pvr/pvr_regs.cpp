@@ -71,8 +71,11 @@ void pvr_WriteReg(u32 paddr,u32 data)
 		return;
 	}
 
-	if (addr == TA_YUV_TEX_BASE_addr)
+	if (addr == TA_YUV_TEX_BASE_addr) {
+		PvrReg(addr, u32) = data;
 		YUV_init();
+		return;
+	}
 
 	if (addr>=PALETTE_RAM_START_addr)
 	{
