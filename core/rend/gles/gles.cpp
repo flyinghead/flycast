@@ -282,7 +282,7 @@ void main() \n\
 #ifndef GLES
 	"\
 	highp float w = gl_FragCoord.w * 100000.0; \n\
-	gl_FragDepth = log2(1.0 + w) / 34; \n"
+	gl_FragDepth = log2(1.0 + w) / 34.0; \n"
 #endif
 	FRAGCOL "=color; \n\
 }";
@@ -300,7 +300,7 @@ void main() \n\
 #ifndef GLES
 	"\
 	highp float w = gl_FragCoord.w * 100000.0; \n\
-	gl_FragDepth = log2(1.0 + w) / 34; \n"
+	gl_FragDepth = log2(1.0 + w) / 34.0; \n"
 #endif
 	FRAGCOL "=vec4(0.0, 0.0, 0.0, sp_ShaderColor); \n\
 }";
