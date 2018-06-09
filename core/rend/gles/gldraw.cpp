@@ -856,6 +856,7 @@ void SetMVS_Mode(u32 mv_mode,ISP_Modvol ispc)
 
 		if (mv_mode==1)
 		{
+			// Inclusion volume
 			//res : old : final 
 			//0   : 0      : 00
 			//0   : 1      : 01
@@ -881,21 +882,22 @@ void SetMVS_Mode(u32 mv_mode,ISP_Modvol ispc)
 		}
 		else
 		{
+			// Exclusion volume
 			/*
-				this is bugged. a lot.
 				I've only seen a single game use it, so i guess it doesn't matter ? (Zombie revenge)
 				(actually, i think there was also another, racing game)
 			*/
 
+			// The initial value for exclusion volumes is 1 so we need to invert the result before and'ing.
 			//res : old : final 
 			//0   : 0   : 00
-			//0   : 1   : 00
+			//0   : 1   : 01
 			//1   : 0   : 00
-			//1   : 1   : 01
+			//1   : 1   : 00
 
-			//if (2>st) st=1; else st=0;	//can't be done with a single pass
-			glStencilFunc(GL_GREATER,1,3);
-			glStencilOp(GL_ZERO,GL_KEEP,GL_REPLACE);
+			//if (1 == st) st = 1; else st = 0;
+			glStencilFunc(GL_EQUAL, 1, 3);
+			glStencilOp(GL_ZERO,GL_KEEP,GL_KEEP);
 #ifndef NO_STENCIL_WORKAROUND
 			//Look @ comment above -- this looks like a driver bug
 			glStencilOp(GL_ZERO,GL_KEEP,GL_REPLACE);
@@ -986,7 +988,7 @@ void DrawModVols()
 		*/
 
 		glColorMask(GL_FALSE,GL_FALSE,GL_FALSE,GL_FALSE);
-		glDepthFunc(GL_GREATER);
+
 		if ( 0 /* || GetAsyncKeyState(VK_F6)*/ )
 		{
 			//simple single level stencil
@@ -1107,7 +1109,8 @@ void DrawStrips()
 	/*if (!GetAsyncKeyState(VK_F1))*/
 	DrawList<ListType_Opaque,false>(pvrrc.global_param_op);
 
-	//DrawModVols();
+	if (settings.rend.ModifierVolumes)
+		DrawModVols();
 
 	//Alpha tested
 	//setup alpha test state

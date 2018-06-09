@@ -615,6 +615,7 @@ struct settings_t
 	{
 		bool UseMipmaps;
 		bool WideScreen;
+		bool ModifierVolumes;
 	} rend;
 
 	struct
