@@ -1109,7 +1109,8 @@ void DrawStrips()
 	/*if (!GetAsyncKeyState(VK_F1))*/
 	DrawList<ListType_Opaque,false>(pvrrc.global_param_op);
 
-	DrawModVols();
+	if (settings.rend.ModifierVolumes)
+		DrawModVols();
 
 	//Alpha tested
 	//setup alpha test state
