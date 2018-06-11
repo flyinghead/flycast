@@ -1,4 +1,4 @@
-Any information not included may be requested when diagnosing the issue
+*Any information not included may be requested when diagnosing the issue*
 
 | Branch | Hash | Buildbot |
 | ------ | ---- | -------- |
