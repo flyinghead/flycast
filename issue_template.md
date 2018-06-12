@@ -1,8 +1,8 @@
 *Any information not included may be requested when diagnosing the issue*
 
-| Branch | Hash | Buildbot |
-| ------ | ---- | -------- |
-| Branch name (or Google Play) | hashtag (delete if unknown) | Downloaded from buildbot? |
+| Device | Branch | Hash | CIDL |
+| ------ | ------ | ---- | ---- |
+| Device Name (or Platform) | Branch name (or Google Play) | Hashtag (delete if unknown) | Downloaded from build site? |
 
 **_Description of the Issue_**
 
