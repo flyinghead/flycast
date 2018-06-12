@@ -1,8 +1,8 @@
 *Any information not included may be requested when diagnosing the issue*
 
-| Device | Branch | Hash | CIDL |
+| Platform | Branch | Hash | CIDL |
 | ------ | ------ | ---- | ---- |
-| Device Name (or Platform) | Branch name (or Google Play) | Hashtag (delete if unknown) | Downloaded from build site? |
+| Installed OS and version (ie. Android 8.0) | Branch name (or Google Play) | Hashtag (delete if unknown) | Downloaded from build site? |
 
 **_Description of the Issue_**
 
