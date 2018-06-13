@@ -26,7 +26,7 @@ Everything goes to master via PRs. Test builds are run automatically for both in
 
 If you are looking for somewhere to start, look for issues marked [good first issue](https://github.com/reicast/reicast-emulator/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) or [help wanted](https://github.com/reicast/reicast-emulator/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22)
 
-Supporting the projects / donations
+Supporting the project / donations
 -------------------
 Well, glad you liked the project so far! We want to switch to a "donation-driven-developemtn" model so that we are not forced to pay out of out pockets for the project costs, and so that contributors can have a source of income to cover food and housing costs.
 
