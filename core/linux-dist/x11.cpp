@@ -77,12 +77,12 @@ void input_x11_handle()
 			{
 				case KeyPress:
 				case KeyRelease:
-					if (e.type == KeyRelease && e.xkey.keycode == 9) // ESC button
+					if (e.type == KeyRelease && e.xkey.keycode == KEY_ESC)
 					{
-						die("death by escape key");
+						die("X11: death by escape key");
 					}
 #if FEAT_HAS_NIXPROF
-					else if (e.type == KeyRelease && e.xkey.keycode == 76) // F10 button
+					else if (e.type == KeyRelease && e.xkey.keycode == KEY_F10)
 					{
 						if (sample_Switch(3000)) {
 							printf("Starting profiling\n");
@@ -91,7 +91,7 @@ void input_x11_handle()
 						}
 					}
 #endif
-					else if (e.type == KeyRelease && e.xkey.keycode == 95) // F11 button
+					else if (e.type == KeyRelease && e.xkey.keycode == KEY_F11)
 					{
 						x11_fullscreen = !x11_fullscreen;
 						x11_window_set_fullscreen(x11_fullscreen);
@@ -99,6 +99,24 @@ void input_x11_handle()
 					else
 					{
 						int dc_key = x11_keymap[e.xkey.keycode];
+
+						if (e.xkey.keycode == KEY_F)
+						{
+							// Left shoulder button pressed (lt)
+							if (e.type == KeyPress)
+								lt[0] = 255;
+							else
+								lt[0] = 0;
+						}
+						else if (e.xkey.keycode == KEY_V)
+						{
+							// Right shoulder button pressed (rt)
+							if (e.type == KeyPress)
+								rt[0] = 255;
+							else
+								rt[0] = 0;
+						}
+
 						if (e.type == KeyPress)
 						{
 							kcode[0] &= ~dc_key;
@@ -107,8 +125,9 @@ void input_x11_handle()
 						{
 							kcode[0] |= dc_key;
 						}
+
+						printf("KEY: %d -> %d: %d\n", e.xkey.keycode, dc_key, x11_dc_buttons );
 					}
-					//printf("KEY: %d -> %d: %d\n",e.xkey.keycode, dc_key, x11_dc_buttons );
 					break;
 			}
 		}
@@ -117,23 +136,34 @@ void input_x11_handle()
 
 void input_x11_init()
 {
-	x11_keymap[113] = DC_DPAD_LEFT;
-	x11_keymap[114] = DC_DPAD_RIGHT;
+	x11_keymap[KEY_LEFT] = DC_DPAD_LEFT;
+	x11_keymap[KEY_RIGHT] = DC_DPAD_RIGHT;
 
-	x11_keymap[111] = DC_DPAD_UP;
-	x11_keymap[116] = DC_DPAD_DOWN;
+	x11_keymap[KEY_UP] = DC_DPAD_UP;
+	x11_keymap[KEY_DOWN] = DC_DPAD_DOWN;
 
-	x11_keymap[53] = DC_BTN_X;
-	x11_keymap[54] = DC_BTN_B;
-	x11_keymap[55] = DC_BTN_A;
+	// Layout on a real DC controller
+	//   Y
+	// X   B
+	//   A
+	x11_keymap[KEY_S] = DC_BTN_X;
+	x11_keymap[KEY_X] = DC_BTN_A;
+	x11_keymap[KEY_D] = DC_BTN_Y;
+	x11_keymap[KEY_C] = DC_BTN_B;
+
+	// ???
+	x11_keymap[KEY_Q] = DC_BTN_Z;
+	x11_keymap[KEY_W] = DC_BTN_C;
+	x11_keymap[KEY_E] = DC_BTN_D;
+
+	// Start button (triangle)
+	x11_keymap[KEY_RETURN] = DC_BTN_START;
 
 	/*
 	//TODO: Fix sliders
-	x11_keymap[38] = DPad_Down;
-	x11_keymap[39] = DPad_Down;
+	x11_keymap[KEY_A] = DPad_Down;
+	x11_keymap[KEY_S] = DPad_Down;
 	*/
-
-	x11_keymap[36] = DC_BTN_START;
 
 	x11_keyboard_input = cfgLoadInt("input", "enable_x11_keyboard", 1);
 }
