@@ -28,7 +28,7 @@ If you are looking for somewhere to start, look for issues marked [good first is
 
 Supporting the project / donations
 -------------------
-Well, glad you liked the project so far! We want to switch to a "donation-driven-developemtn" model so that we are not forced to pay out of out pockets for the project costs, and so that contributors can have a source of income to cover food and housing costs.
+Well, glad you liked the project so far! We want to switch to a "donation-driven-development" model so that we are not forced to pay out of out pockets for the project costs, and so that contributors can have a source of income to cover food and housing costs.
 
 We accept monetary donations via bountysource at https://salt.bountysource.com/teams/reicast or IBAN transfers to `CH65 0070 0110 0052 6460 1, Stefanos Kornilios Mitsis Poiitidis, 8005 Zürich`. Please note that IBAN donations will appear as `Anonymous` for now.
 
