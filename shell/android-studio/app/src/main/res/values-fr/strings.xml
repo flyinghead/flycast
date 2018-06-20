@@ -44,7 +44,6 @@ Last Edit: 21 May 2014
     <string name="select_software">Forcer le rendu logiciel</string>
     <string name="select_sound">Désactiver le son de l\'émulateur</string>
     <string name="select_depth">Rendu de profondeur</string>
-    <string name="select_force_gpu">Forcer la config GPU v6</string>
     <string name="default_disk">Réglage du disque par défaut</string>
  
     <string name="games_listing">Liste des jeux disponibles</string>

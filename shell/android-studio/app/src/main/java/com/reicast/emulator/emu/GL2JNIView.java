@@ -182,12 +182,12 @@ public class GL2JNIView extends GLSurfaceView
 		// is interpreted as any 32-bit surface with alpha by SurfaceFlinger.
 		if(translucent) this.getHolder().setFormat(PixelFormat.TRANSLUCENT);
 
-		if (prefs.getBoolean(Config.pref_forcegpu, false)) {
-			setEGLContextFactory(new GLCFactory6.ContextFactory());
+		if (prefs.getBoolean(Config.pref_egl14, false)) {
+			setEGLContextFactory(new GLCFactory14.ContextFactory());
 			setEGLConfigChooser(
 					translucent?
-							new GLCFactory6.ConfigChooser(8, 8, 8, 8, depth, stencil)
-					: new GLCFactory6.ConfigChooser(5, 6, 5, 0, depth, stencil)
+							new GLCFactory14.ConfigChooser(8, 8, 8, 8, depth, stencil)
+					: new GLCFactory14.ConfigChooser(5, 6, 5, 0, depth, stencil)
 					);
 		} else {
 			// Setup the context factory for 2.0 rendering.

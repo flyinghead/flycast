@@ -502,19 +502,19 @@ public class OptionsFragment extends Fragment {
 		fps_opt.setChecked(counter);
 		fps_opt.setOnCheckedChangeListener(fps_options);
 
-		final CompoundButton force_gpu_opt = (CompoundButton) getView().findViewById(R.id.force_gpu_option);
+		final CompoundButton use_egl14_opt = (CompoundButton) getView().findViewById(R.id.force_gpu_option);
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
 			OnCheckedChangeListener force_gpu_options = new OnCheckedChangeListener() {
 
 				public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-					mPrefs.edit().putBoolean(Config.pref_forcegpu, isChecked).apply();
+					mPrefs.edit().putBoolean(Config.pref_egl14, isChecked).apply();
 				}
 			};
-			boolean enhanced = mPrefs.getBoolean(Config.pref_forcegpu, true);
-			force_gpu_opt.setChecked(enhanced);
-			force_gpu_opt.setOnCheckedChangeListener(force_gpu_options);
+			boolean enhanced = mPrefs.getBoolean(Config.pref_egl14, false);
+			use_egl14_opt.setChecked(enhanced);
+			use_egl14_opt.setOnCheckedChangeListener(force_gpu_options);
 		} else {
-			force_gpu_opt.setEnabled(false);
+			use_egl14_opt.setEnabled(false);
 		}
 
 		CompoundButton force_software_opt = (CompoundButton) getView().findViewById(
@@ -528,10 +528,10 @@ public class OptionsFragment extends Fragment {
 						).apply();
 				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
 					if (isChecked) {
-						force_gpu_opt.setEnabled(false);
-						mPrefs.edit().putBoolean(Config.pref_forcegpu, false).apply();
+						use_egl14_opt.setEnabled(false);
+						mPrefs.edit().putBoolean(Config.pref_egl14, false).apply();
 					} else {
-						force_gpu_opt.setEnabled(true);
+						use_egl14_opt.setEnabled(true);
 					}
 				}
 			}

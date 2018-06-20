@@ -506,13 +506,13 @@
                 android:gravity="center_vertical" >
 
                 <TextView
-                    android:id="@+id/force_gpu_text"
+                    android:id="@+id/select_egl14_text"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_weight="0.5"
                     android:ems="10"
                     android:gravity="center_vertical|left"
-                    android:text="@string/select_force_gpu" />
+                    android:text="@string/select_egl14" />
 
                 <LinearLayout
                     android:layout_width="wrap_content"

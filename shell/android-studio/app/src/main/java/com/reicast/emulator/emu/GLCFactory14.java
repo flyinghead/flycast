@@ -15,7 +15,7 @@ import javax.microedition.khronos.egl.EGLContext;
 import javax.microedition.khronos.egl.EGLDisplay;
 
 @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
-public class GLCFactory6 {
+public class GLCFactory14 {
 
 	private static void LOGI(String S) { Log.i("GL2JNIView-v6",S); }
 	private static void LOGW(String S) { Log.w("GL2JNIView-v6",S); }
@@ -194,15 +194,15 @@ public class GLCFactory6 {
 					EGL14.EGL_TRANSPARENT_RED_VALUE,
 					EGL14.EGL_TRANSPARENT_GREEN_VALUE,
 					EGL14.EGL_TRANSPARENT_BLUE_VALUE,
-					0x3039, // EGL14.EGL_BIND_TO_TEXTURE_RGB,
-					0x303A, // EGL14.EGL_BIND_TO_TEXTURE_RGBA,
-					0x303B, // EGL14.EGL_MIN_SWAP_INTERVAL,
-					0x303C, // EGL14.EGL_MAX_SWAP_INTERVAL,
+					EGL14.EGL_BIND_TO_TEXTURE_RGB,
+					EGL14.EGL_BIND_TO_TEXTURE_RGBA,
+					EGL14.EGL_MIN_SWAP_INTERVAL,
+					EGL14.EGL_MAX_SWAP_INTERVAL,
 					EGL14.EGL_LUMINANCE_SIZE,
 					EGL14.EGL_ALPHA_MASK_SIZE,
 					EGL14.EGL_COLOR_BUFFER_TYPE,
 					EGL14.EGL_RENDERABLE_TYPE,
-					0x3042 // EGL14.EGL_CONFORMANT
+					EGL14.EGL_CONFORMANT
 				};
 
 			final String[] names =
