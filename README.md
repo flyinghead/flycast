@@ -4,7 +4,7 @@ reicast is a multi-platform Sega Dreamcast emulator.
 
 This is a developer-oriented resource, if you just want bins head over to http://reicast.com/
 
-For development discussion, join #dreamcast in the r/EmuDev slack, https://slofile.com/slack/emudev
+For development discussion, [join #reicast in freenode](https://webchat.freenode.net/?channels=reicast)
 
 Caution
 -------
