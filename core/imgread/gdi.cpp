@@ -119,6 +119,7 @@ Disc* load_gdi(const char* file)
 					break;
 				track_filename += last;
 			}
+			gdi >> std::skipws;
 		}
 		else
 		{
