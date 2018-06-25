@@ -131,7 +131,7 @@ cThread webui_thd(&webui_th,0);
 
 void LoadSpecialSettings()
 {
-	if (!strncmp("T13008D", reios_product_number, 7))
+	if (!strncmp("T13008D", reios_product_number, 7) || !strncmp("T13006N", reios_product_number, 7))
 		// Tony Hawk's Pro Skater 2
 		settings.rend.RenderToTextureBuffer = 1;
 	if (!strncmp("RDC-0057", reios_product_number, 8))

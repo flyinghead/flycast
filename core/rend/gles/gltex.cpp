@@ -511,23 +511,32 @@ void ReadRTTBuffer() {
 				glReadPixels(0, h - lines, w, chunk_lines, GL_RGBA, GL_UNSIGNED_BYTE, p);
 
 				for (u32 l = 0; l < chunk_lines; l++) {
-					for (u32 c = 0; c < w; c++) {
-						switch(fb_packmode)
-						{
-						case 0: //0x0   0555 KRGB 16 bit  (default)	Bit 15 is the value of fb_kval[7].
+					switch(fb_packmode)
+					{
+					case 0: //0x0   0555 KRGB 16 bit  (default)	Bit 15 is the value of fb_kval[7].
+						for (u32 c = 0; c < w; c++) {
 							*dst++ = (((p[0] >> 3) & 0x1F) << 10) | (((p[1] >> 3) & 0x1F) << 5) | ((p[2] >> 3) & 0x1F) | kval_bit;
-							break;
-						case 1: //0x1   565 RGB 16 bit
-							*dst++ = (((p[0] >> 3) & 0x1F) << 11) | (((p[1] >> 2) & 0x3F) << 5) | ((p[2] >> 3) & 0x1F);
-							break;
-						case 2: //0x2   4444 ARGB 16 bit
-							*dst++ = (((p[0] >> 4) & 0xF) << 8) | (((p[1] >> 4) & 0xF) << 4) | ((p[2] >> 4) & 0xF) | (((p[3] >> 4) & 0xF) << 12);
-							break;
-						case 3://0x3    1555 ARGB 16 bit    The alpha value is determined by comparison with the value of fb_alpha_threshold.
-							*dst++ = (((p[0] >> 3) & 0x1F) << 10) | (((p[1] >> 3) & 0x1F) << 5) | ((p[2] >> 3) & 0x1F) | (p[3] >= fb_alpha_threshold ? 0x8000 : 0);
-							break;
+							p += 4;
 						}
-						p += 4;
+						break;
+					case 1: //0x1   565 RGB 16 bit
+						for (u32 c = 0; c < w; c++) {
+							*dst++ = (((p[0] >> 3) & 0x1F) << 11) | (((p[1] >> 2) & 0x3F) << 5) | ((p[2] >> 3) & 0x1F);
+							p += 4;
+						}
+						break;
+					case 2: //0x2   4444 ARGB 16 bit
+						for (u32 c = 0; c < w; c++) {
+							*dst++ = (((p[0] >> 4) & 0xF) << 8) | (((p[1] >> 4) & 0xF) << 4) | ((p[2] >> 4) & 0xF) | (((p[3] >> 4) & 0xF) << 12);
+							p += 4;
+						}
+						break;
+					case 3://0x3    1555 ARGB 16 bit    The alpha value is determined by comparison with the value of fb_alpha_threshold.
+						for (u32 c = 0; c < w; c++) {
+							*dst++ = (((p[0] >> 3) & 0x1F) << 10) | (((p[1] >> 3) & 0x1F) << 5) | ((p[2] >> 3) & 0x1F) | (p[3] >= fb_alpha_threshold ? 0x8000 : 0);
+							p += 4;
+						}
+						break;
 					}
 					dst += (stride - w * 2) / 2;
 				}
