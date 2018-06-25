@@ -489,7 +489,7 @@ void ReadRTTBuffer() {
 
 		glPixelStorei(GL_PACK_ALIGNMENT, 1);
 		u16 *src = temp_tex_buffer;
-		u16 *dst = (u16 *)&vram[fb_rtt.TexAddr << 3];
+		u16 *dst = (u16 *)&vram[tex_addr];
 
 		GLint color_fmt, color_type;
 		glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_FORMAT, &color_fmt);
@@ -550,7 +550,7 @@ void ReadRTTBuffer() {
 	}
 	else
 	{
-		memset(&vram[fb_rtt.TexAddr << 3], '\0', size);
+		//memset(&vram[fb_rtt.TexAddr << 3], '\0', size);
 	}
 
     //dumpRtTexture(fb_rtt.TexAddr, w, h);
