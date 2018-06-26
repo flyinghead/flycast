@@ -126,3 +126,5 @@ int GetProgramID(u32 cp_AlphaTest, u32 pp_ClipTestMode,
 bool CompilePipelineShader(PipelineShader* s);
 #define TEXTURE_LOAD_ERROR 0
 GLuint loadPNG(const string& subpath, int &width, int &height);
+
+enum ModifierVolumeMode { Xor, Or, Inclusion, Exclusion, ModeCount };

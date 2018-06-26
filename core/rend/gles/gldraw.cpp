@@ -812,35 +812,46 @@ void DrawSorted(bool multipass)
 	10 -> 00
 	11 -> 01
 */
-void SetMVS_Mode(u32 mv_mode,ISP_Modvol ispc)
+void SetMVS_Mode(ModifierVolumeMode mv_mode, ISP_Modvol ispc)
 {
-	if (mv_mode==0)	//normal trigs
+	if (mv_mode == Xor)
 	{
-		//set states
+		// set states
 		glcache.Enable(GL_DEPTH_TEST);
-		//write only bit 1
+		// write only bit 1
 		glcache.StencilMask(2);
-		//no stencil testing
-		glcache.StencilFunc(GL_ALWAYS,0,2);
-		//count the number of pixels in front of the Z buffer (xor zpass)
-		glcache.StencilOp(GL_KEEP,GL_KEEP,GL_INVERT);
+		// no stencil testing
+		glcache.StencilFunc(GL_ALWAYS, 0, 2);
+		// count the number of pixels in front of the Z buffer (xor zpass)
+		glcache.StencilOp(GL_KEEP, GL_KEEP, GL_INVERT);
 
-		//Cull mode needs to be set
+		// Cull mode needs to be set
+		SetCull(ispc.CullMode);
+	}
+	else if (mv_mode == Or)
+	{
+		// set states
+		glcache.Enable(GL_DEPTH_TEST);
+		// write only bit 1
+		glcache.StencilMask(2);
+		// no stencil testing
+		glcache.StencilFunc(GL_ALWAYS, 2, 2);
+		// Or'ing of all triangles
+		glcache.StencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+
+		// Cull mode needs to be set
 		SetCull(ispc.CullMode);
 	}
 	else
 	{
-		//1 (last in) or 2 (last out)
-		//each triangle forms the last of a volume
+		// Inclusion or Exclusion volume
 
-		//common states
-
-		//no depth test
+		// no depth test
 		glcache.Disable(GL_DEPTH_TEST);
-		//write bits 1:0
+		// write bits 1:0
 		glcache.StencilMask(3);
 
-		if (mv_mode==1)
+		if (mv_mode == Inclusion)
 		{
 			// Inclusion volume
 			//res : old : final 
@@ -849,9 +860,9 @@ void SetMVS_Mode(u32 mv_mode,ISP_Modvol ispc)
 			//1   : 0      : 01
 			//1   : 1      : 01
 			
-			//if (1<=st) st=1; else st=0;
+			// if (1<=st) st=1; else st=0;
 			glcache.StencilFunc(GL_LEQUAL,1,3);
-			glcache.StencilOp(GL_ZERO,GL_ZERO,GL_REPLACE);
+			glcache.StencilOp(GL_ZERO, GL_ZERO, GL_REPLACE);
 		}
 		else
 		{
@@ -869,7 +880,7 @@ void SetMVS_Mode(u32 mv_mode,ISP_Modvol ispc)
 
 			// if (1 == st) st = 1; else st = 0;
 			glcache.StencilFunc(GL_EQUAL, 1, 3);
-			glcache.StencilOp(GL_ZERO, GL_ZERO, GL_REPLACE);
+			glcache.StencilOp(GL_ZERO, GL_ZERO, GL_KEEP);
 		}
 	}
 }
@@ -939,85 +950,35 @@ void DrawModVols(int first, int count)
 	}
 	else
 	{
-		/*
-		mode :
-		normal trig : flip
-		last *in*   : flip, merge*in* &clear from last merge
-		last *out*  : flip, merge*out* &clear from last merge
-		*/
+		//Full emulation
 
-		/*
+		glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 
-			Do not write to color
-			Do not write to depth
+		ModifierVolumeParam* params = &pvrrc.global_param_mvo.head()[first];
 
-			read from stencil bits 1:0
-			write to stencil bits 1:0
-		*/
-
-		glColorMask(GL_FALSE,GL_FALSE,GL_FALSE,GL_FALSE);
-
-		if (0)
+		for (u32 cmv = 0; cmv < count; cmv++)
 		{
-			//simple single level stencil
-			glcache.Enable(GL_STENCIL_TEST);
-			glcache.StencilFunc(GL_ALWAYS,0x1,0x1);
-			glcache.StencilOp(GL_KEEP,GL_KEEP,GL_INVERT);
-			glcache.StencilMask(0x1);
-			SetCull(0);
-			glDrawArrays(GL_TRIANGLES, first, count * 3);
-		}
-		else if (true)
-		{
-			//Full emulation
-			//the *out* mode is buggy
+			ModifierVolumeParam& param = params[cmv];
 
-			u32 mod_base=0; //cur start triangle
-			u32 mod_last=0; //last merge
+			if (param.count == 0)
+				continue;
 
-			u32 cmv_count = count - 1;
-			ISP_Modvol* params = &pvrrc.global_param_mvo.head()[first];
+			u32 mv_mode = param.isp.DepthMode;
 
-			//ISP_Modvol
-			for (u32 cmv=0;cmv<cmv_count;cmv++)
+			if (!param.isp.VolumeLast && mv_mode > 0)
+				SetMVS_Mode(Or, param.isp);		// OR'ing (open volume or quad)
+			else
+				SetMVS_Mode(Xor, param.isp);	// XOR'ing (closed volume)
+			glDrawArrays(GL_TRIANGLES, param.first * 3, param.count * 3);
+
+			if (mv_mode == 1 || mv_mode == 2)
 			{
-
-				ISP_Modvol ispc=params[cmv];
-				mod_base=ispc.id;
-				u32 sz=params[cmv+1].id-mod_base;
-				if (sz == 0)
-					continue;
-
-				u32 mv_mode = ispc.DepthMode;
-
-
-				if (mv_mode==0)	//normal trigs
-				{
-					SetMVS_Mode(0,ispc);
-					//Render em (counts intersections)
-					//verifyc(dev->DrawPrimitiveUP(D3DPT_TRIANGLELIST,sz,pvrrc.modtrig.data+mod_base,3*4));
-					glDrawArrays(GL_TRIANGLES,mod_base*3,sz*3);
-				}
-				else if (mv_mode<3)
-				{
-					while(sz)
-					{
-						//merge and clear all the prev. stencil bits
-
-						//Count Intersections (last poly)
-						SetMVS_Mode(0,ispc);
-						glDrawArrays(GL_TRIANGLES,mod_base*3,3);
-
-						//Sum the area
-						SetMVS_Mode(mv_mode,ispc);
-						glDrawArrays(GL_TRIANGLES,mod_last*3,(mod_base-mod_last+1)*3);
-
-						//update pointers
-						mod_last=mod_base+1;
-						sz--;
-						mod_base++;
-					}
-				}
+				// Sum the area
+				SetMVS_Mode(mv_mode == 1 ? Inclusion : Exclusion, param.isp);
+				// Use the background poly as a quad to do the sum up
+				SetupMainVBO();
+				glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+				SetupModvolVBO();
 			}
 		}
 		//disable culling
