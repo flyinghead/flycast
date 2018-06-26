@@ -956,6 +956,8 @@ void DrawModVols(int first, int count)
 
 		ModifierVolumeParam* params = &pvrrc.global_param_mvo.head()[first];
 
+		int mod_base = -1;
+
 		for (u32 cmv = 0; cmv < count; cmv++)
 		{
 			ModifierVolumeParam& param = params[cmv];
@@ -965,20 +967,22 @@ void DrawModVols(int first, int count)
 
 			u32 mv_mode = param.isp.DepthMode;
 
+			if (mod_base == -1)
+				mod_base = param.first;
+
 			if (!param.isp.VolumeLast && mv_mode > 0)
 				SetMVS_Mode(Or, param.isp);		// OR'ing (open volume or quad)
 			else
 				SetMVS_Mode(Xor, param.isp);	// XOR'ing (closed volume)
+
 			glDrawArrays(GL_TRIANGLES, param.first * 3, param.count * 3);
 
 			if (mv_mode == 1 || mv_mode == 2)
 			{
 				// Sum the area
 				SetMVS_Mode(mv_mode == 1 ? Inclusion : Exclusion, param.isp);
-				// Use the background poly as a quad to do the sum up
-				SetupMainVBO();
-				glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-				SetupModvolVBO();
+				glDrawArrays(GL_TRIANGLES, mod_base * 3, (param.first + param.count - mod_base) * 3);
+				mod_base = -1;
 			}
 		}
 		//disable culling
