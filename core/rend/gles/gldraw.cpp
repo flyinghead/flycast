@@ -594,7 +594,7 @@ void GenSorted(int first, int count)
 				{
 					fill_id(lst[pfsti].id,v0,v1,v2,vtx_base);
 					lst[pfsti].pid= ppid ;
-					lst[pfsti].z = minZ(vtx_base,lst[pfsti].id);
+					lst[pfsti].z = pp->isp.DepthMode == 7 ? 10000000.0 : minZ(vtx_base,lst[pfsti].id);
 					pfsti++;
 				}
 
