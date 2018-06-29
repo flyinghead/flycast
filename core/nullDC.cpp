@@ -129,6 +129,37 @@ void* webui_th(void* p)
 cThread webui_thd(&webui_th,0);
 #endif
 
+const char *EGHackGamesList[] = {
+		"T46703M",		/* Border Down (Japan) */
+		"RDC-0117",		/* Border Down (Japan) */
+		"MK-51065",		/* Bomberman Online (USA) */
+		"T47801M",		/* Chaos Field (Japan) */
+		"T23202M",		/* Death Crimson OX (Japan) */
+		"T2401N",		/* Death Crimson OX (USA) */
+		"T3108M",		/* Garou: Mark of the Wolves (Japan) */
+		"HDR-0078",		/* Jet Set Radio (Japan) */
+		"MK-51058",		/* Jet Grind Radio (USA, Europe) */
+		"HDR-0079",		/* Napple Tale (Japan) */
+		"MK-5110050",	/* Phantasy Star Online (Europe) */
+		"HDR-0129",		/* Phantasy Star Online (Japan) */
+		"MK-51100",		/* Phantasy Star Online (USA) */
+		"MK-5119350",	/* Phantasy Star Online Ver. 2 (Europe) */
+		"HDR-0163",		/* Phantasy Star Online Ver. 2 (Japan) */
+		"MK-51193",		/* Phantasy Star Online Ver. 2 (USA) */
+		"T9907M",		/* Psyvariar 2 (Japan) */
+		"HDR-0216",		/* Puyo Puyo Fever (Japan) */
+		"T47802M",		/* Radirgy (Japan) */
+		"HDR-0151",		/* Segagaga (Japan) */
+		"HDR-0125",		/* Sonic Shuffle (Japan) */
+		"MK-5106050",	/* Sonic Shuffle (Europe) */
+		"MK-51060",		/* Sonic Shuffle (USA) */
+		"T29102M",		/* Trigger Heart Exelica (Japan) */
+		"T45101M",		/* WWF Royal Rumble (Japan) */
+		"T10003D 50",	/* WWF Royal Rumble (Europe) */
+		"T10005N",		/* WWF Royal Rumble (USA) */
+		NULL
+};
+
 void LoadSpecialSettings()
 {
 	if (!strncmp("T13008D", reios_product_number, 7) || !strncmp("T13006N", reios_product_number, 7))
@@ -137,6 +168,13 @@ void LoadSpecialSettings()
 	if (!strncmp("RDC-0057", reios_product_number, 8))
 		// Cosmic Smash
 		settings.rend.TranslucentPolygonDepthMask = 1;
+	for (int i = 0; EGHackGamesList[i] != NULL; i++)
+		if (!strncmp(reios_product_number, EGHackGamesList[i], strlen(EGHackGamesList[i])))
+		{
+			printf("Enabling EG Hack\n");
+			settings.aica.EGHack = 1;
+			break;
+		}
 }
 
 int dc_init(int argc,wchar* argv[])
@@ -258,6 +296,7 @@ void LoadSettings()
 	settings.aica.LimitFPS			= cfgLoadInt("config","aica.LimitFPS",1);
 	settings.aica.NoBatch			= cfgLoadInt("config","aica.NoBatch",0);
     settings.aica.NoSound			= cfgLoadInt("config","aica.NoSound",0);
+    settings.aica.EGHack			= cfgLoadInt("config","aica.EGHack", 0);;
 	settings.rend.UseMipmaps		= cfgLoadInt("config","rend.UseMipmaps",1);
 	settings.rend.WideScreen		= cfgLoadInt("config","rend.WideScreen",0);
 	settings.rend.ShowFPS			= cfgLoadInt("config", "rend.ShowFPS", 0);

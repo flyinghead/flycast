@@ -3,6 +3,8 @@
 #include "aica_mem.h"
 #include "hw/aica/aica_if.h"
 #include <math.h>
+#include <algorithm>
+using namespace std;
 #undef FAR
 
 //#define CLIP_WARN
@@ -390,7 +392,7 @@ struct ChannelEx
 
 		return rv;
 	}
-	__forceinline bool Step(SampleType& oLeft, SampleType& oRight, SampleType& oDsp)
+	__forceinline bool Step(SampleType& oLeft, SampleType& oRight, SampleType& oDsp, int32_t mixl, int32_t mixr)
 	{
 		if (!enabled)
 		{
@@ -409,12 +411,18 @@ struct ChannelEx
 			//logtable handles up to 1024, anything >=255 is mute
 
 			u32 ofsatt=lfo.alfo+(AEG.GetValue()>>2);
+			ofsatt = min(ofsatt, (u32)255); // make sure it never gets more 255 -- it can happen with some alfo/aeg combinations
+			u32 const max_att = ((16 << 4) - 1) - ofsatt;
 			
-			s32* logtable=ofsatt+tl_lut;
+			s32* logtable = ofsatt + tl_lut;
 
-			oLeft=FPMul(sample,logtable[VolMix.DLAtt],15);
-			oRight=FPMul(sample,logtable[VolMix.DRAtt],15);
-			oDsp=FPMul(sample,logtable[VolMix.DSPAtt],15);
+			u32 dl = min(VolMix.DLAtt, max_att);
+			u32 dr = min(VolMix.DRAtt, max_att);
+			u32 ds = min(VolMix.DSPAtt, max_att);
+
+			oLeft = FPMul(sample, logtable[dl], 15);
+			oRight = FPMul(sample, logtable[dr], 15);
+			oDsp = FPMul(sample, logtable[ds], 15);
 
 			clip_verify(((s16)oLeft)==oLeft);
 			clip_verify(((s16)oRight)==oRight);
@@ -422,6 +430,33 @@ struct ChannelEx
 			clip_verify(sample*oLeft>=0);
 			clip_verify(sample*oRight>=0);
 			clip_verify(sample*oDsp>=0);
+
+			if (settings.aica.EGHack)
+			{
+				if ((s64)(this->ccd->DL + mixl + mixr + *VolMix.DSPOut) == 0)
+				{
+					switch(this->AEG.state)
+					{
+					case EG_Decay1:
+						if(this->AEG.AttackRate > this->AEG.Decay1Rate)
+						{
+							//printf("Promote 1\n");
+							this->SetAegState(EG_Attack);
+						}
+
+						break;
+
+					case EG_Decay2:
+						if(this->AEG.AttackRate > this->AEG.Decay2Rate)
+						{
+							//printf("Promote 2\n");
+							this->SetAegState(EG_Attack);
+						}
+
+						break;
+					}
+				}
+			}
 
 			StepAEG(this);
 			StepFEG(this);
@@ -435,7 +470,7 @@ struct ChannelEx
 	{
 		SampleType oLeft,oRight,oDsp;
 
-		Step(oLeft,oRight,oDsp);
+		Step(oLeft, oRight, oDsp, mixl, mixr);
 
 		*VolMix.DSPOut+=oDsp;
 		mixl+=oLeft;
@@ -1191,7 +1226,7 @@ void AICA_Sample32()
 		{
 			SampleType oLeft,oRight,oDsp;
 			//stop working on this channel if its turned off ...
-			if (!Chans[ch].Step(oLeft, oRight, oDsp))
+			if (!Chans[ch].Step(oLeft, oRight, oDsp, mxlr[i * 2 + 0], mxlr[i * 2 + 1]))
 				break;
 
 			sg++;
