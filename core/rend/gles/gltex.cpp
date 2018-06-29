@@ -610,7 +610,7 @@ static float LastTexCacheStats;
 
 // Only use TexU and TexV from TSP in the cache key
 const TSP TSPTextureCacheMask = { { TexV : 7, TexU : 7 } };
-const TCW TCWTextureCacheMask = { { TexAddr : 0x1FFFFF, Reserved : 0, StrideSel : 0, ScanOrder : 0, PixelFmt : 7, VQ_Comp : 1, MipMapped : 1 } };
+const TCW TCWTextureCacheMask = { { TexAddr : 0x1FFFFF, Reserved : 0, StrideSel : 1, ScanOrder : 1, PixelFmt : 7, VQ_Comp : 1, MipMapped : 1 } };
 
 TextureCacheData *getTextureCacheData(TSP tsp, TCW tcw) {
 	u64 key = tsp.full & TSPTextureCacheMask.full;
