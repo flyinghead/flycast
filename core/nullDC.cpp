@@ -131,11 +131,12 @@ cThread webui_thd(&webui_th,0);
 
 const char *EGHackGamesList[] = {
 		"T46703M",		/* Border Down (Japan) */
-		"RDC-0117",		/* Border Down (Japan) */
 		"MK-51065",		/* Bomberman Online (USA) */
+		"RDC-0117",		/* Bomberman Online (USA) */
 		"T47801M",		/* Chaos Field (Japan) */
 		"T23202M",		/* Death Crimson OX (Japan) */
 		"T2401N",		/* Death Crimson OX (USA) */
+		"T44306N",		/* Fatal Fury: Mark of the Wolves (USA) */
 		"T3108M",		/* Garou: Mark of the Wolves (Japan) */
 		"HDR-0078",		/* Jet Set Radio (Japan) */
 		"MK-51058",		/* Jet Grind Radio (USA, Europe) */
@@ -162,10 +163,12 @@ const char *EGHackGamesList[] = {
 
 void LoadSpecialSettings()
 {
-	if (!strncmp("T13008D", reios_product_number, 7) || !strncmp("T13006N", reios_product_number, 7))
-		// Tony Hawk's Pro Skater 2
+	// Tony Hawk's Pro Skater 2
+	if (!strncmp("T13008D", reios_product_number, 7) || !strncmp("T13006N", reios_product_number, 7)
+			// Tony Hawk's Pro Skater 1
+			|| !strncmp("T40205N", reios_product_number, 7))
 		settings.rend.RenderToTextureBuffer = 1;
-	if (!strncmp("RDC-0057", reios_product_number, 8))
+	if (!strncmp("HDR-0176", reios_product_number, 8) || !strncmp("RDC-0057", reios_product_number, 8))
 		// Cosmic Smash
 		settings.rend.TranslucentPolygonDepthMask = 1;
 	for (int i = 0; EGHackGamesList[i] != NULL; i++)
