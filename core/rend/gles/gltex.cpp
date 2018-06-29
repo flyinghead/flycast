@@ -586,6 +586,9 @@ void ReadRTTBuffer() {
     	for (tsp.TexU = 0; tsp.TexU <= 7 && (8 << tsp.TexU) < w; tsp.TexU++);
     	for (tsp.TexV = 0; tsp.TexV <= 7 && (8 << tsp.TexV) < h; tsp.TexV++);
 
+    	if (8 << tsp.TexU != w)
+    		tcw.StrideSel = 1;
+
     	TextureCacheData *texture_data = getTextureCacheData(tsp, tcw);
     	if (texture_data->texID != 0)
     		glcache.DeleteTextures(1, &texture_data->texID);
