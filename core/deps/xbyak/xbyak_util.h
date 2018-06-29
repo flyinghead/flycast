@@ -48,10 +48,6 @@
 	#endif
 #endif
 
-#ifdef _MSC_VER
-extern "C" unsigned __int64 __xgetbv(int);
-#endif
-
 namespace Xbyak { namespace util {
 
 /**
@@ -88,6 +84,67 @@ class Cpu {
 			displayModel = model;
 		}
 	}
+	unsigned int extractBit(unsigned int val, unsigned int base, unsigned int end)
+	{
+		return (val >> base) & ((1u << (end - base)) - 1);
+	}
+	void setCacheHierarchy()
+	{
+		if ((type_ & tINTEL) == 0) return;
+		const unsigned int NO_CACHE = 0;
+		const unsigned int DATA_CACHE = 1;
+//		const unsigned int INSTRUCTION_CACHE = 2;
+		const unsigned int UNIFIED_CACHE = 3;
+		unsigned int smt_width = 0;
+		unsigned int n_cores = 0;
+		unsigned int data[4];
+
+		/*
+			if leaf 11 exists, we use it to get the number of smt cores and cores on socket
+			If x2APIC is supported, these are the only correct numbers.
+
+			leaf 0xB can be zeroed-out by a hypervisor
+		*/
+		getCpuidEx(0x0, 0, data);
+		if (data[0] >= 0xB) {
+			getCpuidEx(0xB, 0, data); // CPUID for SMT Level
+			smt_width = data[1] & 0x7FFF;
+			getCpuidEx(0xB, 1, data); // CPUID for CORE Level
+			n_cores = data[1] & 0x7FFF;
+		}
+
+		/*
+			Assumptions:
+			the first level of data cache is not shared (which is the
+			case for every existing architecture) and use this to
+			determine the SMT width for arch not supporting leaf 11.
+			when leaf 4 reports a number of core less than n_cores
+			on socket reported by leaf 11, then it is a correct number
+			of cores not an upperbound.
+		*/
+		for (int i = 0; data_cache_levels < maxNumberCacheLevels; i++) {
+			getCpuidEx(0x4, i, data);
+			unsigned int cacheType = extractBit(data[0], 0, 4);
+			if (cacheType == NO_CACHE) break;
+			if (cacheType == DATA_CACHE || cacheType == UNIFIED_CACHE) {
+				unsigned int nb_logical_cores = extractBit(data[0], 14, 25) + 1;
+				if (n_cores != 0) { // true only if leaf 0xB is supported and valid
+					nb_logical_cores = (std::min)(nb_logical_cores, n_cores);
+				}
+				assert(nb_logical_cores != 0);
+				data_cache_size[data_cache_levels] =
+					(extractBit(data[1], 22, 31) + 1)
+					* (extractBit(data[1], 12, 21) + 1)
+					* (extractBit(data[1], 0, 11) + 1)
+					* (data[2] + 1);
+				if (cacheType == DATA_CACHE && smt_width == 0) smt_width = nb_logical_cores;
+				assert(smt_width != 0);
+				cores_sharing_data_cache[data_cache_levels] = nb_logical_cores / smt_width;
+				data_cache_levels++;
+			}
+		}
+	}
+
 public:
 	int model;
 	int family;
@@ -96,6 +153,28 @@ public:
 	int extFamily;
 	int displayFamily; // family + extFamily
 	int displayModel; // model + extModel
+
+	// may I move these members into private?
+	static const unsigned int maxNumberCacheLevels = 10;
+	unsigned int data_cache_size[maxNumberCacheLevels];
+	unsigned int cores_sharing_data_cache[maxNumberCacheLevels];
+	unsigned int data_cache_levels;
+
+	unsigned int getDataCacheLevels() const { return data_cache_levels; }
+	unsigned int getCoresSharingDataCache(unsigned int i) const
+	{
+		if (i >= data_cache_levels) throw  Error(ERR_BAD_PARAMETER);
+		return cores_sharing_data_cache[i];
+	}
+	unsigned int getDataCacheSize(unsigned int i) const
+	{
+		if (i >= data_cache_levels) throw  Error(ERR_BAD_PARAMETER);
+		return data_cache_size[i];
+	}
+
+	/*
+		data[] = { eax, ebx, ecx, edx }
+	*/
 	static inline void getCpuid(unsigned int eaxIn, unsigned int data[4])
 	{
 #ifdef _MSC_VER
@@ -115,7 +194,7 @@ public:
 	static inline uint64 getXfeature()
 	{
 #ifdef _MSC_VER
-		return __xgetbv(0);
+		return _xgetbv(0);
 #else
 		unsigned int eax, edx;
 		// xgetvb is not support on gcc 4.2
@@ -125,6 +204,7 @@ public:
 #endif
 	}
 	typedef uint64 Type;
+
 	static const Type NONE = 0;
 	static const Type tMMX = 1 << 0;
 	static const Type tMMX2 = 1 << 1;
@@ -164,71 +244,128 @@ public:
 	static const Type tRTM = uint64(1) << 32; // xbegin, xend, xabort
 	static const Type tF16C = uint64(1) << 33; // vcvtph2ps, vcvtps2ph
 	static const Type tMOVBE = uint64(1) << 34; // mobve
+	static const Type tAVX512F = uint64(1) << 35;
+	static const Type tAVX512DQ = uint64(1) << 36;
+	static const Type tAVX512_IFMA = uint64(1) << 37;
+	static const Type tAVX512IFMA = tAVX512_IFMA;
+	static const Type tAVX512PF = uint64(1) << 38;
+	static const Type tAVX512ER = uint64(1) << 39;
+	static const Type tAVX512CD = uint64(1) << 40;
+	static const Type tAVX512BW = uint64(1) << 41;
+	static const Type tAVX512VL = uint64(1) << 42;
+	static const Type tAVX512_VBMI = uint64(1) << 43;
+	static const Type tAVX512VBMI = tAVX512_VBMI; // changed by Intel's manual
+	static const Type tAVX512_4VNNIW = uint64(1) << 44;
+	static const Type tAVX512_4FMAPS = uint64(1) << 45;
+	static const Type tPREFETCHWT1 = uint64(1) << 46;
+	static const Type tPREFETCHW = uint64(1) << 47;
+	static const Type tSHA = uint64(1) << 48;
+	static const Type tMPX = uint64(1) << 49;
+	static const Type tAVX512_VBMI2 = uint64(1) << 50;
+	static const Type tGFNI = uint64(1) << 51;
+	static const Type tVAES = uint64(1) << 52;
+	static const Type tVPCLMULQDQ = uint64(1) << 53;
+	static const Type tAVX512_VNNI = uint64(1) << 54;
+	static const Type tAVX512_BITALG = uint64(1) << 55;
+	static const Type tAVX512_VPOPCNTDQ = uint64(1) << 56;
 
 	Cpu()
 		: type_(NONE)
+		, data_cache_levels(0)
 	{
 		unsigned int data[4];
+		const unsigned int& EAX = data[0];
+		const unsigned int& EBX = data[1];
+		const unsigned int& ECX = data[2];
+		const unsigned int& EDX = data[3];
 		getCpuid(0, data);
-		const unsigned int maxNum = data[0];
+		const unsigned int maxNum = EAX;
 		static const char intel[] = "ntel";
 		static const char amd[] = "cAMD";
-		if (data[2] == get32bitAsBE(amd)) {
+		if (ECX == get32bitAsBE(amd)) {
 			type_ |= tAMD;
 			getCpuid(0x80000001, data);
-			if (data[3] & (1U << 31)) type_ |= t3DN;
-			if (data[3] & (1U << 15)) type_ |= tCMOV;
-			if (data[3] & (1U << 30)) type_ |= tE3DN;
-			if (data[3] & (1U << 22)) type_ |= tMMX2;
-			if (data[3] & (1U << 27)) type_ |= tRDTSCP;
+			if (EDX & (1U << 31)) type_ |= t3DN;
+			if (EDX & (1U << 15)) type_ |= tCMOV;
+			if (EDX & (1U << 30)) type_ |= tE3DN;
+			if (EDX & (1U << 22)) type_ |= tMMX2;
+			if (EDX & (1U << 27)) type_ |= tRDTSCP;
 		}
-		if (data[2] == get32bitAsBE(intel)) {
+		if (ECX == get32bitAsBE(intel)) {
 			type_ |= tINTEL;
 			getCpuid(0x80000001, data);
-			if (data[3] & (1U << 27)) type_ |= tRDTSCP;
-			if (data[2] & (1U << 5)) type_ |= tLZCNT;
+			if (EDX & (1U << 27)) type_ |= tRDTSCP;
+			if (ECX & (1U << 5)) type_ |= tLZCNT;
+			if (ECX & (1U << 8)) type_ |= tPREFETCHW;
 		}
 		getCpuid(1, data);
-		if (data[2] & (1U << 0)) type_ |= tSSE3;
-		if (data[2] & (1U << 9)) type_ |= tSSSE3;
-		if (data[2] & (1U << 19)) type_ |= tSSE41;
-		if (data[2] & (1U << 20)) type_ |= tSSE42;
-		if (data[2] & (1U << 22)) type_ |= tMOVBE;
-		if (data[2] & (1U << 23)) type_ |= tPOPCNT;
-		if (data[2] & (1U << 25)) type_ |= tAESNI;
-		if (data[2] & (1U << 1)) type_ |= tPCLMULQDQ;
-		if (data[2] & (1U << 27)) type_ |= tOSXSAVE;
-		if (data[2] & (1U << 30)) type_ |= tRDRAND;
-		if (data[2] & (1U << 29)) type_ |= tF16C;
+		if (ECX & (1U << 0)) type_ |= tSSE3;
+		if (ECX & (1U << 9)) type_ |= tSSSE3;
+		if (ECX & (1U << 19)) type_ |= tSSE41;
+		if (ECX & (1U << 20)) type_ |= tSSE42;
+		if (ECX & (1U << 22)) type_ |= tMOVBE;
+		if (ECX & (1U << 23)) type_ |= tPOPCNT;
+		if (ECX & (1U << 25)) type_ |= tAESNI;
+		if (ECX & (1U << 1)) type_ |= tPCLMULQDQ;
+		if (ECX & (1U << 27)) type_ |= tOSXSAVE;
+		if (ECX & (1U << 30)) type_ |= tRDRAND;
+		if (ECX & (1U << 29)) type_ |= tF16C;
 
-		if (data[3] & (1U << 15)) type_ |= tCMOV;
-		if (data[3] & (1U << 23)) type_ |= tMMX;
-		if (data[3] & (1U << 25)) type_ |= tMMX2 | tSSE;
-		if (data[3] & (1U << 26)) type_ |= tSSE2;
+		if (EDX & (1U << 15)) type_ |= tCMOV;
+		if (EDX & (1U << 23)) type_ |= tMMX;
+		if (EDX & (1U << 25)) type_ |= tMMX2 | tSSE;
+		if (EDX & (1U << 26)) type_ |= tSSE2;
 
 		if (type_ & tOSXSAVE) {
 			// check XFEATURE_ENABLED_MASK[2:1] = '11b'
 			uint64 bv = getXfeature();
 			if ((bv & 6) == 6) {
-				if (data[2] & (1U << 28)) type_ |= tAVX;
-				if (data[2] & (1U << 12)) type_ |= tFMA;
+				if (ECX & (1U << 28)) type_ |= tAVX;
+				if (ECX & (1U << 12)) type_ |= tFMA;
+				if (((bv >> 5) & 7) == 7) {
+					getCpuidEx(7, 0, data);
+					if (EBX & (1U << 16)) type_ |= tAVX512F;
+					if (type_ & tAVX512F) {
+						if (EBX & (1U << 17)) type_ |= tAVX512DQ;
+						if (EBX & (1U << 21)) type_ |= tAVX512_IFMA;
+						if (EBX & (1U << 26)) type_ |= tAVX512PF;
+						if (EBX & (1U << 27)) type_ |= tAVX512ER;
+						if (EBX & (1U << 28)) type_ |= tAVX512CD;
+						if (EBX & (1U << 30)) type_ |= tAVX512BW;
+						if (EBX & (1U << 31)) type_ |= tAVX512VL;
+						if (ECX & (1U << 1)) type_ |= tAVX512_VBMI;
+						if (ECX & (1U << 6)) type_ |= tAVX512_VBMI2;
+						if (ECX & (1U << 8)) type_ |= tGFNI;
+						if (ECX & (1U << 9)) type_ |= tVAES;
+						if (ECX & (1U << 10)) type_ |= tVPCLMULQDQ;
+						if (ECX & (1U << 11)) type_ |= tAVX512_VNNI;
+						if (ECX & (1U << 12)) type_ |= tAVX512_BITALG;
+						if (ECX & (1U << 14)) type_ |= tAVX512_VPOPCNTDQ;
+						if (EDX & (1U << 2)) type_ |= tAVX512_4VNNIW;
+						if (EDX & (1U << 3)) type_ |= tAVX512_4FMAPS;
+					}
+				}
 			}
 		}
 		if (maxNum >= 7) {
 			getCpuidEx(7, 0, data);
-			if (type_ & tAVX && data[1] & 0x20) type_ |= tAVX2;
-			if (data[1] & (1U << 3)) type_ |= tBMI1;
-			if (data[1] & (1U << 8)) type_ |= tBMI2;
-			if (data[1] & (1U << 9)) type_ |= tENHANCED_REP;
-			if (data[1] & (1U << 18)) type_ |= tRDSEED;
-			if (data[1] & (1U << 19)) type_ |= tADX;
-			if (data[1] & (1U << 20)) type_ |= tSMAP;
-			if (data[1] & (1U << 4)) type_ |= tHLE;
-			if (data[1] & (1U << 11)) type_ |= tRTM;
+			if (type_ & tAVX && (EBX & (1U << 5))) type_ |= tAVX2;
+			if (EBX & (1U << 3)) type_ |= tBMI1;
+			if (EBX & (1U << 8)) type_ |= tBMI2;
+			if (EBX & (1U << 9)) type_ |= tENHANCED_REP;
+			if (EBX & (1U << 18)) type_ |= tRDSEED;
+			if (EBX & (1U << 19)) type_ |= tADX;
+			if (EBX & (1U << 20)) type_ |= tSMAP;
+			if (EBX & (1U << 4)) type_ |= tHLE;
+			if (EBX & (1U << 11)) type_ |= tRTM;
+			if (EBX & (1U << 14)) type_ |= tMPX;
+			if (EBX & (1U << 29)) type_ |= tSHA;
+			if (ECX & (1U << 0)) type_ |= tPREFETCHWT1;
 		}
 		setFamily();
+		setCacheHierarchy();
 	}
-	void putFamily()
+	void putFamily() const
 	{
 		printf("family=%d, model=%X, stepping=%d, extFamily=%d, extModel=%X\n",
 			family, model, stepping, extFamily, extModel);
@@ -283,13 +420,18 @@ class Pack {
 	const Xbyak::Reg64 *tbl_[maxTblNum];
 	size_t n_;
 public:
-	Pack() : n_(0) {}
+	Pack() : tbl_(), n_(0) {}
 	Pack(const Xbyak::Reg64 *tbl, size_t n) { init(tbl, n); }
 	Pack(const Pack& rhs)
 		: n_(rhs.n_)
 	{
-		if (n_ > maxTblNum) throw Error(ERR_INTERNAL);
 		for (size_t i = 0; i < n_; i++) tbl_[i] = rhs.tbl_[i];
+	}
+	Pack& operator=(const Pack& rhs)
+	{
+		n_ = rhs.n_;
+		for (size_t i = 0; i < n_; i++) tbl_[i] = rhs.tbl_[i];
+		return *this;
 	}
 	Pack(const Xbyak::Reg64& t0)
 	{ n_ = 1; tbl_[0] = &t0; }
@@ -313,7 +455,7 @@ public:
 	{ n_ = 10; tbl_[0] = &t0; tbl_[1] = &t1; tbl_[2] = &t2; tbl_[3] = &t3; tbl_[4] = &t4; tbl_[5] = &t5; tbl_[6] = &t6; tbl_[7] = &t7; tbl_[8] = &t8; tbl_[9] = &t9; }
 	Pack& append(const Xbyak::Reg64& t)
 	{
-		if (n_ == 10) {
+		if (n_ == maxTblNum) {
 			fprintf(stderr, "ERR Pack::can't append\n");
 			throw Error(ERR_BAD_PARAMETER);
 		}
