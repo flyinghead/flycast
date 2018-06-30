@@ -206,10 +206,7 @@ __forceinline
 	//set Z mode, only if required
 	if (Type == ListType_Punch_Through || (Type == ListType_Translucent && SortingEnabled))
 	{
-		if (gp->isp.DepthMode == 7)		// Fixes VR2 menu but not sure about this one
-			glcache.DepthFunc(GL_ALWAYS);
-		else
-			glcache.DepthFunc(GL_GEQUAL);
+		glcache.DepthFunc(GL_GEQUAL);
 	}
 	else
 	{
@@ -1043,16 +1040,16 @@ void DrawStrips()
 
 		//Alpha blended
 		{
-			if (pvrrc.isAutoSort)
+			if (current_pass.autosort)
 				GenSorted(previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
 
 #if TRIG_SORT
-			if (pvrrc.isAutoSort)
+			if (current_pass.autosort)
 				DrawSorted(render_pass < pvrrc.render_passes.used() - 1);
 			else
 				DrawList<ListType_Translucent,false>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
 #else
-			if (pvrrc.isAutoSort)
+			if (current_pass.autosort)
 				SortPParams(previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
 			DrawList<ListType_Translucent,true>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
 #endif

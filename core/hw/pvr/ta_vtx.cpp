@@ -1441,6 +1441,7 @@ public:
 	}
 };
 
+static bool ClearZBeforePass(int pass_number);
 
 FifoSplitter<0> TAFifo0;
 
@@ -1483,6 +1484,8 @@ bool ta_parse_vdrc(TA_context* ctx)
 			render_pass->mvo_count = vd_rc.global_param_mvo.used();
 			render_pass->pt_count = vd_rc.global_param_pt.used();
 			render_pass->tr_count = vd_rc.global_param_tr.used();
+			render_pass->autosort = UsingAutoSort(pass);
+			render_pass->z_clear = ClearZBeforePass(pass);
 		}
 
 		rv = true; //whatever
@@ -1656,10 +1659,42 @@ void FillBGP(TA_context* ctx)
 	cv[3].z=ISP_BACKGND_D.f;
 }
 
-bool UsingAutoSort()
+static RegionArrayTile getRegionTile(int pass_number)
+{
+	u32 addr = REGION_BASE;
+	bool empty_first_region = true;
+	for (int i = 0; i < 5; i++)
+		if ((vri(addr + (i + 1) * 4) & 0x80000000) == 0)
+		{
+			empty_first_region = false;
+			break;
+		}
+	if (empty_first_region)
+		addr += 6 * 4;
+
+	RegionArrayTile tile;
+	tile.full = vri(addr + pass_number * 6 * 4);
+
+	return tile;
+}
+
+bool UsingAutoSort(int pass_number)
 {
 	if (((FPU_PARAM_CFG >> 21) & 1) == 0)
+		// Type 1 region header type
 		return ((ISP_FEED_CFG & 1) == 0);
 	else
-		return ((vri(REGION_BASE) >> 29) & 1) == 0;
+	{
+		// Type 2
+		RegionArrayTile tile = getRegionTile(pass_number);
+
+		return !tile.PreSort;
+	}
+}
+
+static bool ClearZBeforePass(int pass_number)
+{
+	RegionArrayTile tile = getRegionTile(pass_number);
+
+	return !tile.NoZClear;
 }

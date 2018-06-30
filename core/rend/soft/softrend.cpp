@@ -864,7 +864,7 @@ struct softrend : Renderer
 		if (pvrrc.verts.used()<3)
 			return false;
 
-		if (pvrrc.isAutoSort)
+		if (pvrrc.render_passes.head()[0].autosort)
 			SortPParams(0, pvrrc.global_param_tr.used());
 
 		int tcount = omp_get_num_procs() - 1;

@@ -695,3 +695,20 @@ const u32 ParamType_Vertex_Parameter=7;
 //Reserved
 const u32 ParamType_Reserved_1=3;
 const u32 ParamType_Reserved_2=6;
+
+// Tile parameters in region array. One per tile * number of passes
+union RegionArrayTile
+{
+	struct
+	{
+		u32 Reserved_0		: 2;
+		u32 X				: 6;
+		u32 Y				: 6;
+		u32 Reserved_1		: 14;
+		u32 FlushAccumulate	: 1;
+		u32 PreSort			: 1;	// For type 2 only. Ignored for type 1.
+		u32 NoZClear		: 1;
+		u32 LastRegion		: 1;
+	};
+	u32 full;
+};
