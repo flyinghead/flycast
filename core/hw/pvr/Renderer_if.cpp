@@ -99,7 +99,7 @@ void dump_frame(const char* file, TA_context* ctx, u8* vram, u8* vram_ref = NULL
 
 	fwrite(&ctx->rend.isRTT, 1, sizeof(ctx->rend.isRTT), fw);
 	u32 zero = 0;
-	fwrite(&zero, 1, sizeof(zero), fw);	// Was autosort
+	fwrite(&zero, 1, sizeof(bool), fw);	// Was autosort
 	fwrite(&ctx->rend.fb_X_CLIP.full, 1, sizeof(ctx->rend.fb_X_CLIP.full), fw);
 	fwrite(&ctx->rend.fb_Y_CLIP.full, 1, sizeof(ctx->rend.fb_Y_CLIP.full), fw);
 
@@ -172,7 +172,7 @@ TA_context* read_frame(const char* file, u8* vram_ref = NULL) {
 	ctx->tad.Clear();
 
 	fread(&ctx->rend.isRTT, 1, sizeof(ctx->rend.isRTT), fw);
-	fread(&t, 1, sizeof(t), fw);	// Was autosort
+	fread(&t, 1, sizeof(bool), fw);	// Was autosort
 	fread(&ctx->rend.fb_X_CLIP.full, 1, sizeof(ctx->rend.fb_X_CLIP.full), fw);
 	fread(&ctx->rend.fb_Y_CLIP.full, 1, sizeof(ctx->rend.fb_Y_CLIP.full), fw);
 
