@@ -163,7 +163,7 @@ public:
 		 		 } while (0)
 
 	void CheckBlock(RuntimeBlockInfo* block) {
-		mov(ecx,block->addr);
+		mov(call_regs[0], block->addr);
 
 		s32 sz=block->sh4_code_size;
 		u32 sa=block->addr;
