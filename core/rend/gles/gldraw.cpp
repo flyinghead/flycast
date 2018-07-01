@@ -157,7 +157,8 @@ __forceinline
 												  gp->tsp.IgnoreTexA,
 												  gp->tsp.ShadInstr,
 												  gp->pcw.Offset,
-												  gp->tsp.FogCtrl)];
+												  gp->tsp.FogCtrl,
+												  gp->pcw.Gouraud)];
 	
 	if (CurrentShader->program == -1)
 		CompilePipelineShader(CurrentShader);
