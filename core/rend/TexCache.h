@@ -185,10 +185,10 @@ pixelcvt_next(convYUV_PL,4,1)
 pixelcvt_next(convBMP_PL,4,1)
 {
 	u16* p_in=(u16*)data;
-	pb->prel(0,ARGB8888(p_in[0]));
-	pb->prel(1,ARGB8888(p_in[1]));
-	pb->prel(2,ARGB8888(p_in[2]));
-	pb->prel(3,ARGB8888(p_in[3]));
+	pb->prel(0,ARGB4444(p_in[0]));
+	pb->prel(1,ARGB4444(p_in[1]));
+	pb->prel(2,ARGB4444(p_in[2]));
+	pb->prel(3,ARGB4444(p_in[3]));
 }
 pixelcvt_end;
 //twiddled 
@@ -263,10 +263,10 @@ pixelcvt_next(convYUV_TW,2,2)
 pixelcvt_next(convBMP_TW,2,2)
 {
 	u16* p_in=(u16*)data;
-	pb->prel(0,0,ARGB8888(p_in[0]));
-	pb->prel(0,1,ARGB8888(p_in[1]));
-	pb->prel(1,0,ARGB8888(p_in[2]));
-	pb->prel(1,1,ARGB8888(p_in[3]));
+	pb->prel(0,0,ARGB4444(p_in[0]));
+	pb->prel(0,1,ARGB4444(p_in[1]));
+	pb->prel(1,0,ARGB4444(p_in[2]));
+	pb->prel(1,1,ARGB4444(p_in[3]));
 }
 pixelcvt_end;
 
