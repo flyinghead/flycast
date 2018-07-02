@@ -1625,7 +1625,6 @@ void FillBGP(TA_context* ctx)
 
 	bgpp->isp.DepthMode=7;// -> this makes things AWFULLY slow .. sometimes
 	bgpp->isp.CullMode=0;// -> so that its not culled, or somehow else hidden !
-	bgpp->tsp.FogCtrl=2;
 	//Set some pcw bits .. I should really get rid of pcw ..
 	bgpp->pcw.UV_16bit=bgpp->isp.UV_16b;
 	bgpp->pcw.Gouraud=bgpp->isp.Gouraud;
@@ -1656,7 +1655,6 @@ void FillBGP(TA_context* ctx)
 	cv[3]=cv[2];
 	cv[3].x=640*scale_x+2000;
 	cv[3].y=480+2000;
-	cv[3].z=ISP_BACKGND_D.f;
 }
 
 static RegionArrayTile getRegionTile(int pass_number)
