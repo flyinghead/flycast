@@ -7,7 +7,7 @@ android {
     defaultConfig {
         applicationId "com.reicast.emulator"
         minSdkVersion 16
-        targetSdkVersion 21
+        targetSdkVersion 25
         versionCode="7"
         versionName="r7"
         vectorDrawables.useSupportLibrary = true
@@ -52,10 +52,10 @@ afterEvaluate {
 }
 
 dependencies {
-    compile 'com.android.support:support-v4:25.3.1'
-    compile 'com.android.support:appcompat-v7:25.3.1'
-    compile 'com.android.support:design:25.3.1'
-    compile 'com.android.support.constraint:constraint-layout:1.1.0-beta6'
+    compile 'com.android.support:support-v4:25.4.0'
+    compile 'com.android.support:appcompat-v7:25.4.0'
+    compile 'com.android.support:design:25.4.0'
+    compile 'com.android.support.constraint:constraint-layout:1.1.2'
     compile 'org.bouncycastle:bcprov-jdk16:1.46'
     compile 'commons-io:commons-io:2.6'
     compile 'org.apache.commons:commons-lang3:3.7'
