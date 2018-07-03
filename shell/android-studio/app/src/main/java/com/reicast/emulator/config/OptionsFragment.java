@@ -55,10 +55,6 @@ import java.util.List;
 
 public class OptionsFragment extends Fragment {
 
-	private Emulator app;
-	
-	private Button mainBrowse;
-	private Button gameBrowse;
 	private Spinner mSpnrThemes;
 	private OnClickListener mCallback;
 
@@ -86,7 +82,20 @@ public class OptionsFragment extends Fragment {
 			throw new ClassCastException(activity.toString()
 					+ " must implement OnClickListener");
 		}
+	}
 
+	@Override
+	public void onAttach(Context context) {
+		super.onAttach(context);
+
+		// This makes sure that the container activity has implemented
+		// the callback interface. If not, it throws an exception
+		try {
+			mCallback = (OnClickListener) context;
+		} catch (ClassCastException e) {
+			throw new ClassCastException(context.getClass().toString()
+					+ " must implement OnClickListener");
+		}
 	}
 
 	@Override
@@ -113,12 +122,12 @@ public class OptionsFragment extends Fragment {
 		}
 		
 		home_directory = mPrefs.getString(Config.pref_home, home_directory);
-		app = (Emulator) getActivity().getApplicationContext();
+		Emulator app = (Emulator) getActivity().getApplicationContext();
 		app.getConfigurationPrefs(mPrefs);
 
 		// Generate the menu options and fill in existing settings
-		
-		mainBrowse = (Button) getView().findViewById(R.id.browse_main_path);
+
+		Button mainBrowse = (Button) getView().findViewById(R.id.browse_main_path);
 		mSpnrThemes = (Spinner) getView().findViewById(R.id.pick_button_theme);
 		new LocateThemes().execute(home_directory + "/themes");
 
@@ -187,7 +196,7 @@ public class OptionsFragment extends Fragment {
 		details_opt.setChecked(mPrefs.getBoolean(Config.pref_gamedetails, false));
 		details_opt.setOnCheckedChangeListener(details_options);
 
-		gameBrowse = (Button) getView().findViewById(R.id.browse_game_path);
+		Button gameBrowse = (Button) getView().findViewById(R.id.browse_game_path);
 
 		final EditText editGames = (EditText) getView().findViewById(
 				R.id.game_path);
@@ -422,9 +431,9 @@ public class OptionsFragment extends Fragment {
 		});
 		mainFrames.addTextChangedListener(new TextWatcher() {
 			public void afterTextChanged(Editable s) {
-				String frameText = mainFrames.getText().toString();
+				Editable frameText = mainFrames.getText();
 				if (frameText != null) {
-					int frames = Integer.parseInt(frameText);
+					int frames = Integer.parseInt(frameText.toString());
 					frameSeek.setProgress(frames);
 					mPrefs.edit().putInt(Emulator.pref_frameskip, frames).apply();
 					Emulator.frameskip = frames;
@@ -472,7 +481,7 @@ public class OptionsFragment extends Fragment {
 			public void afterTextChanged(Editable s) {
 				if (cheatEdit.getText() != null) {
 					String disk = cheatEdit.getText().toString();
-					if (disk != null && disk.contains("/")) {
+					if (disk.contains("/")) {
 						cheatEdit.setText(disk.substring(disk.lastIndexOf("/"),
 								disk.length()));
 					} else {
