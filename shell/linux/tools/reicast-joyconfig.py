@@ -19,8 +19,9 @@ try:
     import evdev
 except ImportError:
     print("Can't import evdev module. Please install it.")
-    print("You can do this via:")
+    print("You can do this via one of the following:")
     print("  pip install evdev")
+    print("  sudo apt install python-evdev")
     sys.exit(1)
 
 try:
