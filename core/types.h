@@ -618,6 +618,8 @@ struct settings_t
 		bool ShowFPS;
 		bool RenderToTextureBuffer;
 		bool TranslucentPolygonDepthMask;
+		bool ModifierVolumes;
+		bool Clipping;
 	} rend;
 
 	struct

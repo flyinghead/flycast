@@ -76,6 +76,9 @@ u32 gcflip;
 
 s32 SetTileClip(u32 val, bool set)
 {
+	if (!settings.rend.Clipping)
+		return 0;
+
 	u32 clipmode=val>>28;
 	s32 clip_mode;
 	if (clipmode<2)
@@ -1038,7 +1041,8 @@ void DrawStrips()
 		DrawList<ListType_Punch_Through,false>(pvrrc.global_param_pt, previous_pass.pt_count, current_pass.pt_count - previous_pass.pt_count);
 
 		// Modifier volumes
-		DrawModVols(previous_pass.mvo_count, current_pass.mvo_count - previous_pass.mvo_count);
+		if (settings.rend.ModifierVolumes)
+			DrawModVols(previous_pass.mvo_count, current_pass.mvo_count - previous_pass.mvo_count);
 
 		//Alpha blended
 		{

@@ -4,7 +4,7 @@ reicast is a multi-platform Sega Dreamcast emulator.
 
 This is a developer-oriented resource, if you just want bins head over to http://reicast.com/
 
-For development discussion, join #dreamcast in the r/EmuDev slack, https://slofile.com/slack/emudev
+For development discussion, [join #reicast in freenode](https://webchat.freenode.net/?channels=reicast)
 
 Caution
 -------
@@ -25,6 +25,28 @@ Before you work on something major, make sure to check the issue tracker to coor
 Everything goes to master via PRs. Test builds are run automatically for both internal and external PRs, and generally should pass unless there's a really good reason for breakage.  You might want to check our [CLA](https://gist.github.com/skmp/920357e9d3a7733234ade1eb465367cc), which is required to have your changes merged.
 
 If you are looking for somewhere to start, look for issues marked [good first issue](https://github.com/reicast/reicast-emulator/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) or [help wanted](https://github.com/reicast/reicast-emulator/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22)
+
+Supporting the project / donations
+-------------------
+Well, glad you liked the project so far! We want to switch to a "donation-driven-development" model so that we are not forced to pay out of out pockets for the project costs, and so that contributors can have a source of income to cover food and housing costs.
+
+We accept monetary donations via bountysource at https://salt.bountysource.com/teams/reicast or IBAN transfers to `CH65 0070 0110 0052 6460 1, Stefanos Kornilios Mitsis Poiitidis, 8005 Zürich`. Please note that IBAN donations will appear as `Anonymous` for now.
+
+You can also directly add bounties to tickets that are of interest to you at https://www.bountysource.com/teams/reicast, though supporting the project via a small monthly donation is preffered. Every $5 helps.
+
+We will use the donations to cover administrative and hosting costs (~$100/mo), buy hardware and to sponsor development & testing.
+
+If you want to do hardware or other non-monetary donations, please contact donations@reicast.com.
+
+Please help us to make this project self-sustainable.
+Thank you for your support!
+
+Notable Donors
+--------------
+- Twinaphex / RetroArch Team - introduced us to bountysource, has sponsored the development of a few tickets
+- anothername99 - First bounty not posted by RA
+- Raco Centrente - First donation from a 3rd party
+- (And, of course, all the people that have worked pro-bono over the past 20 years. That is priceless. Thank you!)
 
 Building for Android
 --------------------
@@ -94,7 +116,6 @@ cd shell/linux
 make
 ```
 
-
 Translations
 ------------
 New and updated translations are always appreciated!
@@ -117,38 +138,6 @@ Development/Beta versions
 Additional builds (iOS & android) can be found at [angelxwind's](http://reicast.angelxwind.net/) buildbot and [Random Stuff "Daily/Nightly/Testing" PPA](https://launchpad.net/~random-stuff/+archive/ubuntu/ppa) (for Ubuntu).
 
 
-Donations and stuff
--------------------
-Well, glad you liked the project so far!
-
-We're currently short on hardware.
-
-If you would like to donate some devices, get in touch at team@reicast.com.
-GLES3 capable stuff, some mainstream hardware and rarities would be extremely
-appreciated.
-Keep in mind we're located in Greece for the most part
-
-This has been tested/developed on
-* Galaxy tab 7.0 Plus
-* LG P990
-* Archos 10G9
-* Some Chinese tablet
-* OUYA
-* Various development boards
-* GCW Zero
-
-We had to buy all of these, except the GCW Zero and a BeagleBone which were
-donated (Thanks! You rock!)
-
-Apart from that, we don't accept monetary donations right now.
-We also don't plan to be releasing a premium version at any store.
-Most of the project has been developed by drk||Raziel (aka, skmp, drk, Raz,
-etc) but it has been based on the works of multiple people. It would be
-extremely unfair to charge for it and get all the credit :)
-
-We're planning for an indiegogo campaign later on to help with sustained
-development and running costs, so follow @reicastdc on twitter for updates
-
 Other Testing
 -------------
 Devices tested by the reicast team:
@@ -167,6 +156,7 @@ Devices tested by the reicast team:
 * LG Nexus 5
 * LG Nexus 5X
 * Asus Nexus 7 (2013)
+
 
 Team
 ----

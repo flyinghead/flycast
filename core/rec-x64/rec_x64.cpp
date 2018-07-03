@@ -91,6 +91,11 @@ u32* GetRegPtr(u32 reg)
 	return Sh4_int_GetRegisterPtr((Sh4RegType)reg);
 }
 
+void ngen_blockcheckfail(u32 pc) {
+	printf("X64 JIT: SMC invalidation at %08X\n", pc);
+	rdv_BlockCheckFail(pc);
+}
+
 class BlockCompiler : public Xbyak::CodeGenerator{
 public:
 
@@ -167,7 +172,39 @@ public:
 				 movss(dword[rax], rs);				\
 		 		 } while (0)
 
+	void CheckBlock(RuntimeBlockInfo* block) {
+		mov(call_regs[0], block->addr);
+
+		s32 sz=block->sh4_code_size;
+		u32 sa=block->addr;
+
+		while(sz>0) {
+			void* ptr=(void*)GetMemPtr(sa,4);
+			if (ptr) {
+				mov(rax, reinterpret_cast<uintptr_t>(ptr));
+
+				if (sz==2) {
+					mov(edx, *(u16*)ptr);
+					cmp(word[rax],dx);
+				}
+				else {
+					mov(edx, *(u32*)ptr);
+					cmp(dword[rax],edx);
+				}
+				jne(reinterpret_cast<const void*>(&ngen_blockcheckfail));
+			}
+			sz-=4;
+			sa+=4;
+		}
+		
+	}
+
 	void compile(RuntimeBlockInfo* block, bool force_checks, bool reset, bool staging, bool optimise) {
+		
+		if (force_checks) {
+			CheckBlock(block);
+		}
+
 		mov(rax, (size_t)&cycle_counter);
 
 		sub(dword[rax], block->guest_cycles);

@@ -223,7 +223,9 @@
 
 				if(custom_mapping_fname != NULL)
 				{
+					// custom mapping defined in config, use that
 					mapping_fname = custom_mapping_fname;
+					printf("evdev: user defined custom mapping found (%s)\n", custom_mapping_fname);
 				}
 				else
 				{
@@ -232,27 +234,47 @@
 					#elif defined(TARGET_GCW0)
 						mapping_fname = "controller_gcwz.cfg";
 					#else
-						if (strcmp(name, "Microsoft X-Box 360 pad") == 0 ||
-							strcmp(name, "Xbox 360 Wireless Receiver") == 0 ||
-							strcmp(name, "Xbox 360 Wireless Receiver (XBOX)") == 0)
-						{
-							mapping_fname = "controller_xpad.cfg";
+						// check if a config file name <device>.cfg exists in the /mappings/ directory
+						char* name_cfg = (char*)malloc(strlen(name)+4);
+						strcpy(name_cfg, name);
+						strcat(name_cfg, ".cfg");
+
+						size_t size_needed = snprintf(NULL, 0, EVDEV_MAPPING_PATH, name_cfg) + 1;
+                                                char* mapping_path = (char*)malloc(size_needed);
+                                                sprintf(mapping_path, EVDEV_MAPPING_PATH, name_cfg);
+
+						string dir = get_readonly_data_path(mapping_path);
+						free(mapping_path);
+						if (file_exists(dir)) {
+							printf("evdev: found a named mapping for the device (%s)\n", name_cfg);
+							mapping_fname = name_cfg;
 						}
-						else if (strstr(name, "Xbox Gamepad (userspace driver)") != NULL)
-						{
-							mapping_fname = "controller_xboxdrv.cfg";
-						}
-						else if (strstr(name, "keyboard") != NULL ||
-								 strstr(name, "Keyboard") != NULL)
-						{
-							mapping_fname = "keyboard.cfg";
-						}
-						else
-						{
-							mapping_fname = "controller_generic.cfg";
+						else {
+							free(name_cfg);
+
+							if (strcmp(name, "Microsoft X-Box 360 pad") == 0 ||
+								strcmp(name, "Xbox 360 Wireless Receiver") == 0 ||
+								strcmp(name, "Xbox 360 Wireless Receiver (XBOX)") == 0)
+							{
+								mapping_fname = "controller_xpad.cfg";
+							}
+							else if (strstr(name, "Xbox Gamepad (userspace driver)") != NULL)
+							{
+								mapping_fname = "controller_xboxdrv.cfg";
+							}
+							else if (strstr(name, "keyboard") != NULL ||
+									 strstr(name, "Keyboard") != NULL)
+							{
+								mapping_fname = "keyboard.cfg";
+							}
+							else
+							{
+								mapping_fname = "controller_generic.cfg";
+							}
 						}
 					#endif
 				}
+
 				if(loaded_mappings.count(string(mapping_fname)) == 0)
 				{
 					FILE* mapping_fd = NULL;
@@ -270,7 +292,7 @@
 						mapping_fd = fopen(get_readonly_data_path(mapping_path).c_str(), "r");
 						free(mapping_path);
 					}
-					
+
 					if(mapping_fd != NULL)
 					{
 						printf("evdev: reading mapping file: '%s'\n", mapping_fname);
