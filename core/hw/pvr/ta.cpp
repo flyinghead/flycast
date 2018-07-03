@@ -273,16 +273,19 @@ NOINLINE void DYNACALL ta_handle_cmd(u32 trans)
 
 static OnLoad ol_fillfsm(&fill_fsm);
 
+#define TA_ISP_BASE_MASK (~((1 << 20) - 1))		// Define TA_ISP_BASE in 1 MB units like PARAM_BASE
+
 void ta_vtx_ListCont()
 {
-	SetCurrentTARC(TA_ISP_BASE);
+	SetCurrentTARC(TA_ISP_BASE & TA_ISP_BASE_MASK);
 	ta_tad.Continue();
 
 	ta_cur_state=TAS_NS;
 }
 void ta_vtx_ListInit()
 {
-	SetCurrentTARC(TA_ISP_BASE);
+	u32 base = TA_ISP_BASE & TA_ISP_BASE_MASK;
+	SetCurrentTARC(base);
 	ta_tad.ClearPartial();
 
 	ta_cur_state=TAS_NS;
