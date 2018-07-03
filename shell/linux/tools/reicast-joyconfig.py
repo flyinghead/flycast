@@ -298,7 +298,8 @@ if __name__ == "__main__":
             mapping.write(f)
         print("\nMapping file saved to: %s\n" % os.path.abspath(args.file))
     else:
-        print("\nHere's your mapping file:\n")
+        print("\nHere's your mapping file:")
+        print("Save this as \"~/.local/share/reicast/mappings/%s.cfg\"\n" % mapping.get("emulator", "mapping_name"))
         mapping.write(sys.stdout)
 
     sys.exit(0)
