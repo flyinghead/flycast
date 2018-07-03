@@ -152,6 +152,16 @@ template <u32 Type, bool SortingEnabled>
 __forceinline
 	void SetGPState(const PolyParam* gp,u32 cflip=0)
 {
+	if (gp->pcw.Texture && gp->tsp.FilterMode > 1)
+	{
+		ShaderUniforms.trilinear_alpha = 0.25 * (gp->tsp.MipMapD & 0x3);
+		if (gp->tsp.FilterMode == 2)
+			// Trilinear pass A
+			ShaderUniforms.trilinear_alpha = 1.0 - ShaderUniforms.trilinear_alpha;
+	}
+	else
+		ShaderUniforms.trilinear_alpha = 1.0;
+
 	CurrentShader = &gl.pogram_table[
 									 GetProgramID(Type == ListType_Punch_Through ? 1 : 0,
 											 	  SetTileClip(gp->tileclip, false) + 1,
@@ -166,7 +176,11 @@ __forceinline
 	
 	if (CurrentShader->program == -1)
 		CompilePipelineShader(CurrentShader);
-	glcache.UseProgram(CurrentShader->program);
+	else
+	{
+		glcache.UseProgram(CurrentShader->program);
+		ShaderUniforms.Set(CurrentShader);
+	}
 	SetTileClip(gp->tileclip,true);
 
 	//This bit control which pixels are affected

@@ -55,6 +55,7 @@ struct PipelineShader
 	GLuint scale,depth_scale;
 	GLuint pp_ClipTest,cp_AlphaTestValue;
 	GLuint sp_FOG_COL_RAM,sp_FOG_COL_VERT,sp_FOG_DENSITY;
+	GLuint trilinear_alpha;
 
 	//
 	u32 cp_AlphaTest; s32 pp_ClipTestMode;
@@ -129,3 +130,40 @@ bool CompilePipelineShader(PipelineShader* s);
 GLuint loadPNG(const string& subpath, int &width, int &height);
 
 enum ModifierVolumeMode { Xor, Or, Inclusion, Exclusion, ModeCount };
+
+extern struct ShaderUniforms_t
+{
+	float PT_ALPHA;
+	float scale_coefs[4];
+	float depth_coefs[4];
+	float fog_den_float;
+	float ps_FOG_COL_RAM[3];
+	float ps_FOG_COL_VERT[3];
+	float trilinear_alpha;
+
+	void Set(PipelineShader* s)
+	{
+		if (s->cp_AlphaTestValue!=-1)
+			glUniform1f(s->cp_AlphaTestValue,PT_ALPHA);
+
+		if (s->scale!=-1)
+			glUniform4fv( s->scale, 1, scale_coefs);
+
+		if (s->depth_scale!=-1)
+			glUniform4fv( s->depth_scale, 1, depth_coefs);
+
+		if (s->sp_FOG_DENSITY!=-1)
+			glUniform1f( s->sp_FOG_DENSITY,fog_den_float);
+
+		if (s->sp_FOG_COL_RAM!=-1)
+			glUniform3fv( s->sp_FOG_COL_RAM, 1, ps_FOG_COL_RAM);
+
+		if (s->sp_FOG_COL_VERT!=-1)
+			glUniform3fv( s->sp_FOG_COL_VERT, 1, ps_FOG_COL_VERT);
+
+		if (s->trilinear_alpha != -1)
+			glUniform1f(s->trilinear_alpha, trilinear_alpha);
+	}
+
+} ShaderUniforms;
+
