@@ -300,8 +300,8 @@ void DYNACALL ta_thd_data32_i(void* data)
 {
 	if (ta_ctx == NULL)
 	{
-		printf("Warning: data sent to TA prior to ListInit. Ignored\n");
-		return;
+		printf("Warning: data sent to TA prior to ListInit. Implied\n");
+		ta_vtx_ListInit();
 	}
 
 	simd256_t* dst = (simd256_t*)ta_tad.thd_data;
