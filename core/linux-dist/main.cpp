@@ -228,7 +228,6 @@ void os_DoEvents()
 
 void os_SetWindowText(const char * text)
 {
-	printf("%s\n",text);
 	#if defined(SUPPORT_X11)
 		x11_window_set_text(text);
 	#endif
