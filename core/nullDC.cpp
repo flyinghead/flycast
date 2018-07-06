@@ -178,6 +178,9 @@ void LoadSpecialSettings()
 			settings.aica.EGHack = 1;
 			break;
 		}
+	if (!strncmp("T30701D", reios_product_number, 7))
+		// Pro Pinball Trilogy
+		settings.dynarec.DisableDivMatching = true;
 }
 
 int dc_init(int argc,wchar* argv[])
@@ -291,6 +294,7 @@ void LoadSettings()
 	settings.dynarec.Enable			= cfgLoadInt("config","Dynarec.Enabled", 1)!=0;
 	settings.dynarec.idleskip		= cfgLoadInt("config","Dynarec.idleskip",1)!=0;
 	settings.dynarec.unstable_opt	= cfgLoadInt("config","Dynarec.unstable-opt",0);
+	settings.dynarec.DisableDivMatching	= cfgLoadInt("config", "Dynarec.DisableDivMatching", 0);
 	//disable_nvmem can't be loaded, because nvmem init is before cfg load
 	settings.dreamcast.cable		= cfgLoadInt("config","Dreamcast.Cable",3);
 	settings.dreamcast.RTC			= cfgLoadInt("config","Dreamcast.RTC",GetRTC_now());
