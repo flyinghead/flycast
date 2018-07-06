@@ -46,7 +46,7 @@
 #include "blockmanager.h"
 
 
-#define CODE_SIZE   (6*1024*1024)
+#define CODE_SIZE   (10*1024*1024)
 
 
 //alternative emit ptr, set to 0 to use the main buffer
