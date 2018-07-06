@@ -522,9 +522,9 @@ void GenSorted(int first, int count)
 
 				if (flip)
 				{
-					v0=&vtx[2];
-					v1=&vtx[1];
-					v2=&vtx[0];
+					v0=&vtx[1];
+					v1=&vtx[0];
+					v2=&vtx[2];
 				}
 				else
 				{
