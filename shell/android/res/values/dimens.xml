@@ -1,9 +1,0 @@
-<resources>
-
-    <dimen name="padding_small">8dp</dimen>
-    <dimen name="padding_medium">8dp</dimen>
-    <dimen name="padding_large">16dp</dimen>
-
-    <integer name="num_cols">1</integer>
-
-</resources>

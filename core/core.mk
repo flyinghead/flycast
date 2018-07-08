@@ -104,7 +104,7 @@ ifdef NO_REC
 endif
 
 ifdef USE_GLES
-  RZDCY_CFLAGS += -DGLES
+  RZDCY_CFLAGS += -DGLES -fPIC
 endif
 
 ifdef HAS_SOFTREND

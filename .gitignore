@@ -50,3 +50,10 @@ shell/linux/nosym-reicast.elf
 shell/linux/reicast.elf
 
 reicast-ios.xccheckout
+
+# Android Studio
+.gradle
+.idea
+*.iml
+.externalNativeBuild
+shell/android-studio/app/src/main/assets/build

@@ -1,0 +1,66 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 25
+    buildToolsVersion "27.0.3"
+
+    defaultConfig {
+        applicationId "com.reicast.emulator"
+        minSdkVersion 16
+        targetSdkVersion 25
+        versionCode="7"
+        versionName="r7"
+        vectorDrawables.useSupportLibrary = true
+
+        ndk {
+            moduleName "dc"
+                abiFilters 'armeabi-v7a', 'x86'
+            moduleName "sexplay"
+                abiFilters 'armeabi-v7a', 'x86'
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+        }
+    }
+    externalNativeBuild {
+        ndkBuild {
+            path 'src/main/jni/Android.mk'
+        }
+    }
+    lintOptions {
+        abortOnError false
+    }
+}
+
+afterEvaluate {
+    android.applicationVariants.all {  v ->
+        if (v.buildType.name == "release") {
+            def hashtag = new ByteArrayOutputStream()
+            exec {
+                commandLine "git", "rev-parse", "HEAD"
+                standardOutput = hashtag
+            }
+            hashtag = hashtag.toString().trim()
+            v.outputs[0].outputFileName = "reicast-android-" + hashtag.substring(0,7) + ".apk"
+            file('src/main/assets/build').text = hashtag
+        }
+    }
+}
+
+dependencies {
+    compile 'com.android.support:support-v4:25.4.0'
+    compile 'com.android.support:appcompat-v7:25.4.0'
+    compile 'com.android.support:design:25.4.0'
+    compile 'com.android.support.constraint:constraint-layout:1.1.2'
+    compile 'org.bouncycastle:bcprov-jdk16:1.46'
+    compile 'commons-io:commons-io:2.6'
+    compile 'org.apache.commons:commons-lang3:3.7'
+    compile ('com.googlecode.json-simple:json-simple:1.1.1') {
+        exclude module: 'junit'
+    }
+    compile fileTree(include: ['*.jar'], dir: 'libs')
+}
