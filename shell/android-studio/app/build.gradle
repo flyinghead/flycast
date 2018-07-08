@@ -1,4 +1,6 @@
 apply plugin: 'com.android.application'
+apply plugin: 'com.github.triplet.play'
+
 
 android {
     compileSdkVersion 25
@@ -20,17 +22,29 @@ android {
         }
     }
 
+    signingConfigs {
+        release {
+            storeFile file("../reicast-beta-cd.jks")
+            storePassword "notasecret"
+            keyAlias "reicast-upload-key"
+            keyPassword "notasecret"
+        }
+    }
+
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+            signingConfig signingConfigs.release
         }
     }
+
     externalNativeBuild {
         ndkBuild {
             path 'src/main/jni/Android.mk'
         }
     }
+
     lintOptions {
         abortOnError false
     }
@@ -51,6 +65,12 @@ afterEvaluate {
     }
 }
 
+play {
+    track = 'beta'
+    serviceAccountEmail = 'reicast-beta-cd@api-7801059239587459896-777757.iam.gserviceaccount.com'
+    pk12File = file('../reicast-beta-cd.p12')
+}
+
 dependencies {
     compile 'com.android.support:support-v4:25.4.0'
     compile 'com.android.support:appcompat-v7:25.4.0'
@@ -64,3 +84,4 @@ dependencies {
     }
     compile fileTree(include: ['*.jar'], dir: 'libs')
 }
+
