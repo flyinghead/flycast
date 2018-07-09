@@ -293,7 +293,7 @@ pixelcvt32_start(convYUV_TW,2,2)
 }
 pixelcvt_end;
 
-pixelcvt_size_start(convPAL4_TW,2,4)
+pixelcvt_size_start(convPAL4_TW,4,4)
 {
 	u8* p_in=(u8*)data;
 	u32* pal=&palette_ram[palette_index];

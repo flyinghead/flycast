@@ -309,7 +309,7 @@ struct TextureCacheData
 		if (texconv32 != NULL && (pal_table_rev == NULL || textype == GL_UNSIGNED_INT_8_8_8_8))
 		{
 			PixelBuffer<u32> pbt;
-			pbt.p_buffer_start = pbt.p_current_line = (u32*)temp_tex_buffer;
+			pbt.p_buffer_start = pbt.p_current_line = pbt.p_current_pixel = (u32*)temp_tex_buffer;
 			pbt.pixels_per_line = w;
 
 			texconv32(&pbt, (u8*)&vram[sa], stride, h);
@@ -317,8 +317,8 @@ struct TextureCacheData
 		else if (texconv != NULL)
 		{
 			PixelBuffer<u16> pbt;
-			pbt.p_buffer_start=pbt.p_current_line=temp_tex_buffer;
-			pbt.pixels_per_line=w;
+			pbt.p_buffer_start = pbt.p_current_line = pbt.p_current_pixel = temp_tex_buffer;
+			pbt.pixels_per_line = w;
 
 			texconv(&pbt,(u8*)&vram[sa],stride,h);
 		}
