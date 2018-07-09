@@ -1510,8 +1510,8 @@ bool RenderFrame()
 		/*
 		u32 pvr_stride=(FB_W_LINESTRIDE.stride)*8;
 		*/
-		dc_width = FB_X_CLIP.max - FB_X_CLIP.min + 1;
-		dc_height = FB_Y_CLIP.max - FB_Y_CLIP.min + 1;
+		dc_width = pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1;
+		dc_height = pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1;
 	}
 
 	scale_x = 1;
@@ -1734,10 +1734,21 @@ bool RenderFrame()
 
 	if (!wide_screen_on)
 	{
-		glScissor(offs_x + pvrrc.fb_X_CLIP.min / scale_x * (is_rtt ? 1 : dc2s_scale_h),
-				  pvrrc.fb_Y_CLIP.min / scale_y * (is_rtt ? 1 : dc2s_scale_h),
-				  (pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1) / scale_x * (is_rtt ? 1 : dc2s_scale_h),
-				  (pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1) / scale_y * (is_rtt ? 1 : dc2s_scale_h));
+		float width = (pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1) / scale_x;
+		float height = (pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1) / scale_y;
+		int min_x = pvrrc.fb_X_CLIP.min / scale_x;
+		int min_y = pvrrc.fb_Y_CLIP.min / scale_y;
+		if (!is_rtt)
+		{
+			// Add x offset for aspect ratio > 4/3
+			min_x = min_x * dc2s_scale_h + offs_x;
+			// Invert y coordinates when rendering to screen
+			min_y = screen_height - height * dc2s_scale_h;
+			width *= dc2s_scale_h;
+			height *= dc2s_scale_h;
+		}
+
+		glScissor(offs_x + min_x, min_y, width, height);
 		glcache.Enable(GL_SCISSOR_TEST);
 	}
 
