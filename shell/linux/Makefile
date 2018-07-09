@@ -334,7 +334,7 @@ endif
 
 EXECUTABLE_STRIPPED=nosym-reicast.elf
 ifdef NAOMI
-    CFLAGS += -D TARGET_NAOMI
+    CFLAGS += -D TARGET_NAOMI -D SAVE_EPPROM
     DC_PLATFORM=naomi
     EXECUTABLE=reicast_naomi.elf
     EXECUTABLE_NAME=reicast-naomi

@@ -3,6 +3,7 @@
 #include "maple_helper.h"
 #include "maple_devs.h"
 #include "maple_cfg.h"
+#include "cfg/cfg.h"
 #include <time.h>
 
 #if _ANDROID
@@ -989,6 +990,23 @@ void printState(u32 cmd, u32* buffer_in, u32 buffer_in_len)
 	}
 }
 
+#ifdef SAVE_EPPROM
+static string get_eeprom_file_path()
+{
+	char image_path[512];
+	cfgLoadStr("config", "image", image_path, "naomi_boot.bin");
+	string eeprom_file = image_path;
+	size_t lastindex = eeprom_file.find_last_of("/");
+	if (lastindex != npos)
+		eeprom_file = eeprom_file.substr(lastindex + 1);
+	lastindex = eeprom_file.find_last_of(".");
+	if (lastindex != npos)
+		eeprom_file = eeprom_file.substr(0, lastindex);
+	eeprom_file = eeprom_file + ".eeprom";
+	return get_writable_data_path("/data/") + eeprom_file;
+}
+#endif
+
 /*
 Sega Dreamcast Controller
 No error checking of any kind, but works just fine
@@ -1295,16 +1313,16 @@ struct maple_naomi_jamma : maple_sega_controller
 				memcpy(EEPROM + address, buffer_in_b + 4, size);
 
 #ifdef SAVE_EPPROM
-				wchar eeprom_file[512];
-				host.ConfigLoadStr(L"emu", L"gamefile", eeprom_file, L"");
-				wcscat(eeprom_file, L".eeprom");
-				FILE* f = _wfopen(eeprom_file, L"wb");
+				string eeprom_file = get_eeprom_file_path();
+				FILE* f = fopen(eeprom_file.c_str(), "wb");
 				if (f)
 				{
 					fwrite(EEPROM, 1, 0x80, f);
 					fclose(f);
-					wprintf(L"SAVED EEPROM to %s\n", eeprom_file);
+					printf("Saved EEPROM to %s\n", eeprom_file.c_str());
 				}
+				else
+					printf("EEPROM SAVE FAILED to %s\n", eeprom_file.c_str());
 #endif
 			}
 			return (7);
@@ -1314,16 +1332,16 @@ struct maple_naomi_jamma : maple_sega_controller
 				if (!EEPROM_loaded)
 				{
 					EEPROM_loaded = true;
-					wchar eeprom_file[512];
-					host.ConfigLoadStr(L"emu", L"gamefile", eeprom_file, L"");
-					wcscat(eeprom_file, L".eeprom");
-					FILE* f = _wfopen(eeprom_file, L"rb");
+					string eeprom_file = get_eeprom_file_path();
+					FILE* f = fopen(eeprom_file.c_str(), "rb");
 					if (f)
 					{
 						fread(EEPROM, 1, 0x80, f);
 						fclose(f);
-						wprintf(L"LOADED EEPROM from %s\n", eeprom_file);
+						printf("Loaded EEPROM from %s\n", eeprom_file.c_str());
 					}
+					else
+						printf("EEPROM file not found at %s\n", eeprom_file.c_str());
 				}
 #endif
 				//printf("EEprom READ ?\n");
