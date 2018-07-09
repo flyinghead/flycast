@@ -1609,7 +1609,7 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 
 			if (op->rs2.is_imm())
 			{
-				if (!op->rs2.is_imm_u8())
+				if (!is_i8r4(op->rs2._imm))
 					MOV32(rs2,(u32)op->rs2._imm);
 				else
 					is_imm=true;

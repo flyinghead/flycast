@@ -339,8 +339,9 @@ int msgboxf(const wchar* Text,unsigned int Type,...)
   va_list Args;
 
   va_start(Args,Type);
-  vsprintf(S,Text,Args);
+  vsnprintf(S, 2048,Text,Args);
   va_end(Args);
+  puts(S);
 
   int byteCount = strlen(S);
   jbyteArray bytes = jenv->NewByteArray(byteCount);
@@ -561,5 +562,8 @@ int push_vmu_screen(u8* buffer)
 
 void os_DebugBreak()
 {
-  //notify the parent thread about it ...
+    // TODO: notify the parent thread about it ...
+
+    // Attach debugger here to figure out what went wrong
+    for(;;) ;
 }
