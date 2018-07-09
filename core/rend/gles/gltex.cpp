@@ -12,8 +12,8 @@ The mapping is done with tcw:tsp -> GL texture. That includes stuff like
 filtering/ texture repeat
 
 To save space native formats are used for 1555/565/4444 (only bit shuffling is done)
-YUV is converted to 565 (some loss of quality on that)
-PALs are decoded to their unpaletted format, 8888 is downcasted to 4444
+YUV is converted to 8888
+PALs are decoded to their unpaletted format (5551/565/4444/8888 depending on palette type)
 
 Mipmaps
 	not supported for now
@@ -26,31 +26,37 @@ Compression
 	#include <xmmintrin.h>
 #endif
 
-u16 temp_tex_buffer[1024*1024];
+u16 temp_tex_buffer[4 * 1024 * 1024];	// Maximum texture size: RGBA_8888 x 1024 x 1024
 extern u32 decoded_colors[3][65536];
 
-typedef void TexConvFP(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height);
+typedef void TexConvFP(PixelBuffer<u16>* pb,u8* p_in,u32 Width,u32 Height);
+typedef void TexConvFP32(PixelBuffer<u32>* pb,u8* p_in,u32 Width,u32 Height);
 
 struct PvrTexInfo
 {
 	const char* name;
-	int bpp;        //4/8 for pal. 16 for uv, argb
+	int bpp;        //4/8 for pal. 16 for yuv, rgb, argb
 	GLuint type;
+	// Conversion to 16 bpp
 	TexConvFP *PL;
 	TexConvFP *TW;
 	TexConvFP *VQ;
+	// Conversion to 32 bpp
+	TexConvFP32 *PL32;
+	TexConvFP32 *TW32;
+	TexConvFP32 *VQ32;
 };
 
 PvrTexInfo format[8]=
-{
-	{"1555", 16,GL_UNSIGNED_SHORT_5_5_5_1, &tex1555_PL,&tex1555_TW,&tex1555_VQ},	//1555
-	{"565", 16,GL_UNSIGNED_SHORT_5_6_5,    &tex565_PL,&tex565_TW,&tex565_VQ},		//565
-	{"4444", 16,GL_UNSIGNED_SHORT_4_4_4_4, &tex4444_PL,&tex4444_TW,&tex4444_VQ},	//4444
-	{"yuv", 16,GL_UNSIGNED_SHORT_5_6_5,    &texYUV422_PL,&texYUV422_TW,&texYUV422_VQ},	//yuv
-	{"UNSUPPORTED BUMP MAPPED POLY", 16,GL_UNSIGNED_SHORT_4_4_4_4,&texBMP_PL,&texBMP_TW,&texBMP_VQ},	//bump_ns
-	{"pal4", 4,0,0,texPAL4_TW,0},	//pal4
-	{"pla8", 8,0,0,texPAL8_TW,0},	//pal8
-	{"ns/1555", 0},	//ns, 1555
+{	// name     bpp GL format				   Planar		Twiddled	 VQ				Planar(32b)    Twiddled(32b)  VQ (32b)
+	{"1555", 	16,	GL_UNSIGNED_SHORT_5_5_5_1, &tex1555_PL,	&tex1555_TW, &tex1555_VQ,	NULL },											//1555
+	{"565", 	16, GL_UNSIGNED_SHORT_5_6_5,   &tex565_PL,	&tex565_TW,  &tex565_VQ, 	NULL },											//565
+	{"4444", 	16, GL_UNSIGNED_SHORT_4_4_4_4, &tex4444_PL,	&tex4444_TW, &tex4444_VQ, 	NULL },											//4444
+	{"yuv", 	16, GL_UNSIGNED_INT_8_8_8_8,   NULL, 		NULL, 		 NULL,			&texYUV422_PL, &texYUV422_TW, &texYUV422_VQ },	//yuv
+	{"bumpmap", 16, GL_UNSIGNED_SHORT_4_4_4_4, &texBMP_PL,	&texBMP_TW,	 &texBMP_VQ, 	NULL},											//bump map
+	{"pal4", 	4,	0,						   0,			&texPAL4_TW, 0, 			NULL, 		   &texPAL4_TW32, NULL },			//pal4
+	{"pal8", 	8,	0,						   0,			&texPAL8_TW, 0, 			NULL, 		   &texPAL8_TW32, NULL },			//pal8
+	{"ns/1555", 0},																														//ns, 1555
 };
 
 const u32 MipPoint[8] =
@@ -66,7 +72,7 @@ const u32 MipPoint[8] =
 };
 
 const GLuint PAL_TYPE[4]=
-{GL_UNSIGNED_SHORT_5_5_5_1,GL_UNSIGNED_SHORT_5_6_5,GL_UNSIGNED_SHORT_4_4_4_4,GL_UNSIGNED_SHORT_4_4_4_4};
+{GL_UNSIGNED_SHORT_5_5_5_1,GL_UNSIGNED_SHORT_5_6_5,GL_UNSIGNED_SHORT_4_4_4_4, GL_UNSIGNED_INT_8_8_8_8};
 
 static void dumpRtTexture(u32 name, u32 w, u32 h) {
 	char sname[256];
@@ -130,6 +136,7 @@ struct TextureCacheData
 
 	PvrTexInfo* tex;
 	TexConvFP*  texconv;
+	TexConvFP32*  texconv32;
 
 	u32 dirty;
 	vram_block* lock_block;
@@ -160,7 +167,7 @@ struct TextureCacheData
 			printf(" Stride");
 
 		printf(" %dx%d @ 0x%X",8<<tsp.TexU,8<<tsp.TexV,tcw.TexAddr<<3);
-		printf("\n");
+		printf(" id=%d\n", texID);
 	}
 
 	//Create GL texture from tsp/tcw
@@ -223,16 +230,20 @@ struct TextureCacheData
 		case 4: //4    -NOT_PROPERLY SUPPORTED- Bump Map        16 bits/pixel; S value: 8 bits; R value: 8 bits -NOT_PROPERLY SUPPORTED-
 		case 5: //5     4 BPP Palette   Palette texture with 4 bits/pixel
 		case 6: //6     8 BPP Palette   Palette texture with 8 bits/pixel
-			if (tcw.ScanOrder && tex->PL)
+			if (tcw.ScanOrder && (tex->PL || tex->PL32))
 			{
 				//Texture is stored 'planar' in memory, no deswizzle is needed
-				verify(tcw.VQ_Comp==0);
+				//verify(tcw.VQ_Comp==0);
+				if (tcw.VQ_Comp != 0)
+					printf("Warning: planar texture with VQ set (invalid)\n");
+
 				//Planar textures support stride selection, mostly used for non power of 2 textures (videos)
 				int stride=w;
 				if (tcw.StrideSel) 
 					stride=(TEXT_CONTROL&31)*32;
 				//Call the format specific conversion code
-				texconv=tex->PL;
+				texconv = tex->PL;
+				texconv32 = tex->PL32;
 				//calculate the size, in bytes, for the locking
 				size=stride*h*tex->bpp/8;
 			}
@@ -242,19 +253,21 @@ struct TextureCacheData
 
 				if (tcw.VQ_Comp)
 				{
-					verify(tex->VQ!=0);
+					verify(tex->VQ != NULL || tex->VQ32 != NULL);
 					indirect_color_ptr=sa;
 					if (tcw.MipMapped)
 						sa+=MipPoint[tsp.TexU];
-					texconv=tex->VQ;
+					texconv = tex->VQ;
+					texconv32 = tex->VQ32;
 					size=w*h/8;
 				}
 				else
 				{
-					verify(tex->TW!=0)
+					verify(tex->TW != NULL || tex->TW32 != NULL)
 					if (tcw.MipMapped)
 						sa+=MipPoint[tsp.TexU]*tex->bpp/2;
-					texconv=tex->TW;
+					texconv = tex->TW;
+					texconv32 = tex->TW32;
 					size=w*h*tex->bpp/8;
 				}
 			}
@@ -263,7 +276,8 @@ struct TextureCacheData
 			printf("Unhandled texture %d\n",tcw.PixelFmt);
 			size=w*h*2;
 			memset(temp_tex_buffer,0xFFFFFFFF,size);
-			texconv=0;
+			texconv = NULL;
+			texconv32 = NULL;
 		}
 	}
 
@@ -285,28 +299,42 @@ struct TextureCacheData
 		vq_codebook=(u8*)&vram[indirect_color_ptr];  //might be used if VQ tex
 
 		//texture conversion work
-		PixelBuffer pbt;
-		pbt.p_buffer_start=pbt.p_current_line=temp_tex_buffer;
-		pbt.pixels_per_line=w;
-
 		u32 stride=w;
 
-		if (tcw.StrideSel && tcw.ScanOrder && tex->PL) 
+		if (tcw.StrideSel && tcw.ScanOrder && (tex->PL || tex->PL32))
 			stride=(TEXT_CONTROL&31)*32; //I think this needs +1 ?
 
-		if(texconv!=0)
+		// For paletted formats, we have the choice of conversion type (16 or 32).
+		// Use the one that fits the palette entry size.
+		if (texconv32 != NULL && (pal_table_rev == NULL || textype == GL_UNSIGNED_INT_8_8_8_8))
 		{
+			PixelBuffer<u32> pbt;
+			pbt.p_buffer_start = pbt.p_current_line = (u32*)temp_tex_buffer;
+			pbt.pixels_per_line = w;
+
+			texconv32(&pbt, (u8*)&vram[sa], stride, h);
+		}
+		else if (texconv != NULL)
+		{
+			PixelBuffer<u16> pbt;
+			pbt.p_buffer_start=pbt.p_current_line=temp_tex_buffer;
+			pbt.pixels_per_line=w;
+
 			texconv(&pbt,(u8*)&vram[sa],stride,h);
 		}
 		else
 		{
 			//fill it in with a temp color
 			printf("UNHANDLED TEXTURE\n");
-			memset(temp_tex_buffer,0xF88F8F7F,w*h*2);
+			memset(temp_tex_buffer, 0x80, w * h * 2);
 		}
 
 		//PrintTextureName();
-
+		if (sa_tex > VRAM_SIZE || size == 0 || sa + size > VRAM_SIZE)
+		{
+			printf("Warning: invalid texture. Address %08X %08X size %d\n", sa_tex, sa, size);
+			return;
+		}
 		//lock the texture to detect changes in it
 		lock_block = libCore_vramlock_Lock(sa_tex,sa+size-1,this);
 

@@ -13,25 +13,26 @@ extern u32 _pal_rev_16[64];
 extern u32 detwiddle[2][8][1024];
 
 //Pixel buffer class (realy helpfull ;) )
+template<class pixel_type>
 struct PixelBuffer
 {
-	u16* p_buffer_start;
-	u16* p_current_line;
-	u16* p_current_pixel;
+	pixel_type* p_buffer_start;
+	pixel_type* p_current_line;
+	pixel_type* p_current_pixel;
 
 	u32 pixels_per_line;
 
 	void init(void* data,u32 ppl_bytes)
 	{
-		p_buffer_start=p_current_line=p_current_pixel=(u16*)data;
-		pixels_per_line=ppl_bytes/sizeof(u16);
+		p_buffer_start=p_current_line=p_current_pixel=(pixel_type*)data;
+		pixels_per_line=ppl_bytes/sizeof(pixel_type);
 	}
-	__forceinline void prel(u32 x,u16 value)
+	__forceinline void prel(u32 x,pixel_type value)
 	{
 		p_current_pixel[x]=value;
 	}
 
-	__forceinline void prel(u32 x,u32 y,u16 value)
+	__forceinline void prel(u32 x,u32 y,pixel_type value)
 	{
 		p_current_pixel[y*pixels_per_line+x]=value;
 	}
@@ -57,19 +58,17 @@ void palette_update();
 
 #define clamp(minv,maxv,x) min(maxv,max(minv,x))
 
+// Unpack to 16-bit word
+
 #define ARGB1555( word )	( ((word>>15)&1) | (((word>>10) & 0x1F)<<11)  | (((word>>5) & 0x1F)<<6)  | (((word>>0) & 0x1F)<<1) )
-//	ARGB8888(unpack_1_to_8[(word>>15)&1],unpack_5_to_8[(word>>10) & 0x1F],	
-//unpack_5_to_8[(word>>5) & 0x1F],unpack_5_to_8[word&0x1F])
 
 #define ARGB565( word )	( (((word>>0)&0x1F)<<0) | (((word>>5)&0x3F)<<5) | (((word>>11)&0x1F)<<11) )
 	
-//ARGB8888(0xFF,unpack_5_to_8[(word>>11) & 0x1F],	unpack_6_to_8[(word>>5) & 0x3F],unpack_5_to_8[word&0x1F])
-//( 0xFF000000 | unpack_5_to_8[(word>>11) & 0x1F] | unpack_5_to_8[(word>>5) & 0x3F]<<8 | unpack_5_to_8[word&0x1F]<<16 )
-
 #define ARGB4444( word ) ( (((word>>0)&0xF)<<4) | (((word>>4)&0xF)<<8) | (((word>>8)&0xF)<<12) | (((word>>12)&0xF)<<0) )
-//ARGB8888( (word&0xF000)>>(12-4),(word&0xF00)>>(8-4),(word&0xF0)>>(4-4),(word&0xF)<<4 )
 
-#define ARGB8888( word ) ( (((word>>4)&0xF)<<4) | (((word>>12)&0xF)<<8) | (((word>>20)&0xF)<<12) | (((word>>28)&0xF)<<0) )
+// Unpack to 32-bit word
+
+#define ARGB8888( word ) ( ((word >> 24) & 0xFF) | (((word >> 16) & 0xFF) << 24) | (((word >> 8) & 0xFF) << 16) | ((word & 0xFF) << 8) )
 
 template<class PixelPacker>
 __forceinline u32 YUV422(s32 Y,s32 Yu,s32 Yv)
@@ -102,13 +101,32 @@ struct pp_565
 	}
 };
 
+struct pp_8888
+{
+	__forceinline static u32 packRGB(u8 R,u8 G,u8 B)
+	{
+		return (R << 24) | (G << 16) | (B << 8) | 0xFF;
+	}
+};
+
 //pixel convertors !
-#define pixelcvt_start(name,x,y) template<class PixelPacker> \
+#define pixelcvt_start_base(name,x,y,type) template<class PixelPacker> \
+		struct name \
+		{ \
+			static const u32 xpp=x;\
+			static const u32 ypp=y;	\
+			__forceinline static void Convert(PixelBuffer<type>* pb,u8* data) \
+		{
+
+#define pixelcvt_start(name,x,y) pixelcvt_start_base(name, x, y, u16)
+#define pixelcvt32_start(name,x,y) pixelcvt_start_base(name, x, y, u32)
+
+#define pixelcvt_size_start(name, x, y) template<class PixelPacker, class pixel_size> \
 struct name \
 { \
 	static const u32 xpp=x;\
 	static const u32 ypp=y;	\
-	__forceinline static void Convert(PixelBuffer* pb,u8* data) \
+	__forceinline static void Convert(PixelBuffer<pixel_size>* pb,u8* data) \
 {
 
 #define pixelcvt_end } }
@@ -153,7 +171,17 @@ pixelcvt_next(conv4444_PL,4,1)
 	//3,0
 	pb->prel(3,ARGB4444(p_in[3]));
 }
-pixelcvt_next(convYUV_PL,4,1)
+pixelcvt_next(convBMP_PL,4,1)
+{
+	u16* p_in=(u16*)data;
+	pb->prel(0,ARGB4444(p_in[0]));
+	pb->prel(1,ARGB4444(p_in[1]));
+	pb->prel(2,ARGB4444(p_in[2]));
+	pb->prel(3,ARGB4444(p_in[3]));
+}
+pixelcvt_end;
+
+pixelcvt32_start(convYUV_PL,4,1)
 {
 	//convert 4x1 4444 to 4x1 8888
 	u32* p_in=(u32*)data;
@@ -182,15 +210,8 @@ pixelcvt_next(convYUV_PL,4,1)
 	//1,0
 	pb->prel(3,YUV422<PixelPacker>(Y1,Yu,Yv));
 }
-pixelcvt_next(convBMP_PL,4,1)
-{
-	u16* p_in=(u16*)data;
-	pb->prel(0,ARGB4444(p_in[0]));
-	pb->prel(1,ARGB4444(p_in[1]));
-	pb->prel(2,ARGB4444(p_in[2]));
-	pb->prel(3,ARGB4444(p_in[3]));
-}
 pixelcvt_end;
+
 //twiddled 
 pixelcvt_start(conv565_TW,2,2)
 {
@@ -231,7 +252,17 @@ pixelcvt_next(conv4444_TW,2,2)
 	//1,1
 	pb->prel(1,1,ARGB4444(p_in[3]));
 }
-pixelcvt_next(convYUV_TW,2,2)
+pixelcvt_next(convBMP_TW,2,2)
+{
+	u16* p_in=(u16*)data;
+	pb->prel(0,0,ARGB4444(p_in[0]));
+	pb->prel(0,1,ARGB4444(p_in[1]));
+	pb->prel(1,0,ARGB4444(p_in[2]));
+	pb->prel(1,1,ARGB4444(p_in[3]));
+}
+pixelcvt_end;
+
+pixelcvt32_start(convYUV_TW,2,2)
 {
 	//convert 4x1 4444 to 4x1 8888
 	u16* p_in=(u16*)data;
@@ -260,17 +291,9 @@ pixelcvt_next(convYUV_TW,2,2)
 	//1,1
 	pb->prel(1,1,YUV422<PixelPacker>(Y1,Yu,Yv));
 }
-pixelcvt_next(convBMP_TW,2,2)
-{
-	u16* p_in=(u16*)data;
-	pb->prel(0,0,ARGB4444(p_in[0]));
-	pb->prel(0,1,ARGB4444(p_in[1]));
-	pb->prel(1,0,ARGB4444(p_in[2]));
-	pb->prel(1,1,ARGB4444(p_in[3]));
-}
 pixelcvt_end;
 
-pixelcvt_start(convPAL4_TW,4,4)
+pixelcvt_size_start(convPAL4_TW,2,4)
 {
 	u8* p_in=(u8*)data;
 	u32* pal=&palette_ram[palette_index];
@@ -295,7 +318,9 @@ pixelcvt_start(convPAL4_TW,4,4)
 	pb->prel(3,2,pal[p_in[0]&0xF]);
 	pb->prel(3,3,pal[(p_in[0]>>4)&0xF]);p_in++;
 }
-pixelcvt_next(convPAL8_TW,2,4)
+pixelcvt_end;
+
+pixelcvt_size_start(convPAL8_TW,2,4)
 {
 	u8* p_in=(u8*)data;
 	u32* pal=&palette_ram[palette_index];
@@ -311,9 +336,10 @@ pixelcvt_next(convPAL8_TW,2,4)
 	pb->prel(1,3,pal[p_in[0]]);p_in++;
 }
 pixelcvt_end;
+
 //handler functions
-template<class PixelConvertor>
-void texture_PL(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height)
+template<class PixelConvertor, class pixel_type>
+void texture_PL(PixelBuffer<pixel_type>* pb,u8* p_in,u32 Width,u32 Height)
 {
 	pb->amove(0,0);
 
@@ -334,8 +360,8 @@ void texture_PL(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height)
 	}
 }
 
-template<class PixelConvertor>
-void texture_TW(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height)
+template<class PixelConvertor, class pixel_type>
+void texture_TW(PixelBuffer<pixel_type>* pb,u8* p_in,u32 Width,u32 Height)
 {
 	pb->amove(0,0);
 
@@ -360,8 +386,8 @@ void texture_TW(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height)
 	}
 }
 
-template<class PixelConvertor>
-void texture_VQ(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height)
+template<class PixelConvertor, class pixel_type>
+void texture_VQ(PixelBuffer<pixel_type>* pb,u8* p_in,u32 Width,u32 Height)
 {
 	p_in+=256*4*2;
 	pb->amove(0,0);
@@ -389,55 +415,55 @@ void texture_VQ(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height)
 //We ask the compiler to generate the templates here
 //;)
 //planar formats !
-template void texture_PL<conv565_PL<pp_565> >(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height);
-template void texture_PL<conv1555_PL<pp_565> >(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height);
-template void texture_PL<conv4444_PL<pp_565> >(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height);
-template void texture_PL<convYUV_PL<pp_565> >(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height);
-template void texture_PL<convBMP_PL<pp_565> >(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height);
+template void texture_PL<conv565_PL<pp_565>, u16>(PixelBuffer<u16>* pb,u8* p_in,u32 Width,u32 Height);
+template void texture_PL<conv1555_PL<pp_565>, u16>(PixelBuffer<u16>* pb,u8* p_in,u32 Width,u32 Height);
+template void texture_PL<conv4444_PL<pp_565>, u16>(PixelBuffer<u16>* pb,u8* p_in,u32 Width,u32 Height);
+template void texture_PL<convYUV_PL<pp_8888>, u32>(PixelBuffer<u32>* pb,u8* p_in,u32 Width,u32 Height);
+template void texture_PL<convBMP_PL<pp_565>, u16>(PixelBuffer<u16>* pb,u8* p_in,u32 Width,u32 Height);
 
 //twiddled formats !
-template void texture_TW<conv565_TW<pp_565> >(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height);
-template void texture_TW<conv1555_TW<pp_565> >(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height);
-template void texture_TW<conv4444_TW<pp_565> >(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height);
-template void texture_TW<convYUV_TW<pp_565> >(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height);
-template void texture_TW<convBMP_TW<pp_565> >(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height);
+template void texture_TW<conv565_TW<pp_565>, u16>(PixelBuffer<u16>* pb,u8* p_in,u32 Width,u32 Height);
+template void texture_TW<conv1555_TW<pp_565>, u16>(PixelBuffer<u16>* pb,u8* p_in,u32 Width,u32 Height);
+template void texture_TW<conv4444_TW<pp_565>, u16>(PixelBuffer<u16>* pb,u8* p_in,u32 Width,u32 Height);
+template void texture_TW<convYUV_TW<pp_8888>, u32>(PixelBuffer<u32>* pb,u8* p_in,u32 Width,u32 Height);
+template void texture_TW<convBMP_TW<pp_565>, u16>(PixelBuffer<u16>* pb,u8* p_in,u32 Width,u32 Height);
 
-template void texture_TW<convPAL4_TW<pp_565> >(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height);
-template void texture_TW<convPAL8_TW<pp_565> >(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height);
+template void texture_TW<convPAL4_TW<pp_565, u16>, u16>(PixelBuffer<u16>* pb,u8* p_in,u32 Width,u32 Height);
+template void texture_TW<convPAL8_TW<pp_565, u16>, u16>(PixelBuffer<u16>* pb,u8* p_in,u32 Width,u32 Height);
+template void texture_TW<convPAL4_TW<pp_8888, u32>, u32>(PixelBuffer<u32>* pb,u8* p_in,u32 Width,u32 Height);
+template void texture_TW<convPAL8_TW<pp_8888, u32>, u32>(PixelBuffer<u32>* pb,u8* p_in,u32 Width,u32 Height);
 
 //VQ formats !
-template void texture_VQ<conv565_TW<pp_565> >(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height);
-template void texture_VQ<conv1555_TW<pp_565> >(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height);
-template void texture_VQ<conv4444_TW<pp_565> >(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height);
-template void texture_VQ<convYUV_TW<pp_565> >(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height);
-template void texture_VQ<convBMP_TW<pp_565> >(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height);
+template void texture_VQ<conv565_TW<pp_565>, u16>(PixelBuffer<u16>* pb,u8* p_in,u32 Width,u32 Height);
+template void texture_VQ<conv1555_TW<pp_565>, u16>(PixelBuffer<u16>* pb,u8* p_in,u32 Width,u32 Height);
+template void texture_VQ<conv4444_TW<pp_565>, u16>(PixelBuffer<u16>* pb,u8* p_in,u32 Width,u32 Height);
+template void texture_VQ<convYUV_TW<pp_8888>, u32>(PixelBuffer<u32>* pb,u8* p_in,u32 Width,u32 Height);
+template void texture_VQ<convBMP_TW<pp_565>, u16>(PixelBuffer<u16>* pb,u8* p_in,u32 Width,u32 Height);
 
 //Planar
-#define tex565_PL texture_PL<conv565_PL<pp_565> >
-#define tex1555_PL texture_PL<conv1555_PL<pp_565> >
-#define tex4444_PL texture_PL<conv4444_PL<pp_565> >
-#define texYUV422_PL texture_PL<convYUV_PL<pp_565> >
-#define texBMP_PL texture_PL<convBMP_PL<pp_565> >
+#define tex565_PL texture_PL<conv565_PL<pp_565>, u16>
+#define tex1555_PL texture_PL<conv1555_PL<pp_565>, u16>
+#define tex4444_PL texture_PL<conv4444_PL<pp_565>, u16>
+#define texYUV422_PL texture_PL<convYUV_PL<pp_8888>, u32>
+#define texBMP_PL texture_PL<convBMP_PL<pp_565>, u16>
 
 //Twiddle
-#define tex565_TW texture_TW<conv565_TW<pp_565> >
-#define tex1555_TW texture_TW<conv1555_TW<pp_565> >
-#define tex4444_TW texture_TW<conv4444_TW<pp_565> >
-#define texYUV422_TW texture_TW<convYUV_TW<pp_565> >
-#define texBMP_TW texture_TW<convBMP_TW<pp_565> >
-#define texPAL4_TW texture_TW<convPAL4_TW<pp_565> >
-#define texPAL8_TW  texture_TW<convPAL8_TW<pp_565> >
+#define tex565_TW texture_TW<conv565_TW<pp_565>, u16>
+#define tex1555_TW texture_TW<conv1555_TW<pp_565>, u16>
+#define tex4444_TW texture_TW<conv4444_TW<pp_565>, u16>
+#define texYUV422_TW texture_TW<convYUV_TW<pp_8888>, u32>
+#define texBMP_TW texture_TW<convBMP_TW<pp_565>, u16>
+#define texPAL4_TW texture_TW<convPAL4_TW<pp_565, u16>, u16>
+#define texPAL8_TW  texture_TW<convPAL8_TW<pp_565, u16>, u16>
+#define texPAL4_TW32 texture_TW<convPAL4_TW<pp_8888, u32>, u32>
+#define texPAL8_TW32  texture_TW<convPAL8_TW<pp_8888, u32>, u32>
 
 //VQ
-#define tex565_VQ texture_VQ<conv565_TW<pp_565> >
-#define tex1555_VQ texture_VQ<conv1555_TW<pp_565> >
-#define tex4444_VQ texture_VQ<conv4444_TW<pp_565> >
-#define texYUV422_VQ texture_VQ<convYUV_TW<pp_565> >
-#define texBMP_VQ texture_VQ<convBMP_TW<pp_565> >
-
-void texture_PAL4(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height);
-void texture_PAL8(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height);
-
+#define tex565_VQ texture_VQ<conv565_TW<pp_565>, u16>
+#define tex1555_VQ texture_VQ<conv1555_TW<pp_565>, u16>
+#define tex4444_VQ texture_VQ<conv4444_TW<pp_565>, u16>
+#define texYUV422_VQ texture_VQ<convYUV_TW<pp_8888>, u32>
+#define texBMP_VQ texture_VQ<convBMP_TW<pp_565>, u16>
 
 #define Is_64_Bit(addr) ((addr &0x1000000)==0)
  
