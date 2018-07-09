@@ -1699,6 +1699,7 @@ bool RenderFrame()
 	glcache.Disable(GL_SCISSOR_TEST);
 
 	glcache.DepthMask(GL_TRUE);
+	glClearDepthf(0.0);
 	glStencilMask(0xFF); glCheck();
 	glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); glCheck();
 
