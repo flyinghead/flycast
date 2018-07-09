@@ -24,8 +24,7 @@ cache:
 before_install:
 - test -z "$encrypted_c726d225a9d9_key" || openssl aes-256-cbc -K $encrypted_543813c1b0c6_key -iv $encrypted_543813c1b0c6_iv
   -in shell/android-studio/reicast-beta-cd.p12.enc -out shell/android-studio/reicast-beta-cd.p12 -d
-- test -z "$encrypted_c726d225a9d9_key" || openssl aes-256-cbc -K $encrypted_543813c1b0c6_key -iv $encrypted_543813c1b0c6_iv
-  -in shell/android-studio/reicast-beta-cd.jks.enc -out shell/android-studio/reicast-beta-cd.jks -d
+- test -z "$encrypted_c726d225a9d9_key" || openssl aes-256-cbc -K $encrypted_c726d225a9d9_key -iv $encrypted_c726d225a9d9_iv -in shell/android-studio/reicast-beta-cd.jks.enc -out shell/android-studio/reicast-beta-cd.jks -d
 - test -z "$encrypted_c726d225a9d9_key" || openssl aes-256-cbc -K $encrypted_c726d225a9d9_key
   -iv $encrypted_c726d225a9d9_iv -in debug.keystore.enc -out debug.keystore -d
 - GIT_HASH=`git log --pretty=format:'%h' -n 1`
