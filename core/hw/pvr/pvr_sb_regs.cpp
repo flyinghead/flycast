@@ -28,8 +28,8 @@ void do_pvr_dma()
 	u32 dmaor  = DMAC_DMAOR.full;
 	u32 dmatcr = DMAC_DMATCR(0);
 
-	u32 src = SB_PDSTAR;
-	u32 dst = SB_PDSTAP;
+	u32 src = SB_PDSTAR;	// System RAM address
+	u32 dst = SB_PDSTAP;	// VRAM address
 	u32 len = SB_PDLEN;
 
 	if(0x8201 != (dmaor &DMAOR_MASK))
@@ -47,18 +47,11 @@ void do_pvr_dma()
 	if (SB_PDDIR)
 	{
 		//PVR -> System
-/*		for (u32 i=0;i<len;i+=4)
-		{
-			u32 temp=ReadMem32_nommu(dst+i);
-			WriteMem32_nommu(src+i,temp);
-		}*/
-		WriteMemBlock_nommu_dma(dst,src,len);
+		WriteMemBlock_nommu_dma(src, dst, len);
 	}
 	else
 	{
 		//System -> PVR
-		//TODO : FIX THAT , to warp around on dmas :)
-		//WriteMemBlock_nommu_ptr(dst,(u32*)GetMemPtr(src,len),len);
 		WriteMemBlock_nommu_dma(dst,src,len);
 	}
 
