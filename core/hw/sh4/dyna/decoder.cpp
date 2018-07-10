@@ -727,12 +727,12 @@ bool MatchDiv32s(u32 op,u32 pc)
 	div_som_reg3=(Sh4RegType)n;
 
 	u32 match=MatchDiv32(pc+2,div_som_reg1,div_som_reg2,div_som_reg3);
-	printf("DIV32S matched %d%% @ 0x%X\n",match*100/65,pc);
+	//printf("DIV32S matched %d%% @ 0x%X\n",match*100/65,pc);
 	
 	if (match==65)
 	{
 		//DIV32S was perfectly matched :)
-		printf("div32s %d/%d/%d\n",div_som_reg1,div_som_reg2,div_som_reg3);
+		//printf("div32s %d/%d/%d\n",div_som_reg1,div_som_reg2,div_som_reg3);
 		return true;
 	}
 	else //no match ...
