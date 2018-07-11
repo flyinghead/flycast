@@ -614,9 +614,6 @@ void ReadRTTBuffer() {
     	for (tsp.TexU = 0; tsp.TexU <= 7 && (8 << tsp.TexU) < w; tsp.TexU++);
     	for (tsp.TexV = 0; tsp.TexV <= 7 && (8 << tsp.TexV) < h; tsp.TexV++);
 
-    	if (8 << tsp.TexU != w)
-    		tcw.StrideSel = 1;
-
     	TextureCacheData *texture_data = getTextureCacheData(tsp, tcw);
     	if (texture_data->texID != 0)
     		glcache.DeleteTextures(1, &texture_data->texID);
@@ -641,7 +638,7 @@ static float LastTexCacheStats;
 
 // Only use TexU and TexV from TSP in the cache key
 const TSP TSPTextureCacheMask = { { TexV : 7, TexU : 7 } };
-const TCW TCWTextureCacheMask = { { TexAddr : 0x1FFFFF, Reserved : 0, StrideSel : 1, ScanOrder : 1, PixelFmt : 7, VQ_Comp : 1, MipMapped : 1 } };
+const TCW TCWTextureCacheMask = { { TexAddr : 0x1FFFFF, Reserved : 0, StrideSel : 0, ScanOrder : 0, PixelFmt : 7, VQ_Comp : 1, MipMapped : 1 } };
 
 TextureCacheData *getTextureCacheData(TSP tsp, TCW tcw) {
 	u64 key = tsp.full & TSPTextureCacheMask.full;
@@ -657,6 +654,9 @@ TextureCacheData *getTextureCacheData(TSP tsp, TCW tcw) {
 	if (tx != TexCache.end())
 	{
 		tf = &tx->second;
+		// Needed if the texture is updated
+		tf->tcw.StrideSel = tcw.StrideSel;
+		tf->tcw.ScanOrder = tcw.ScanOrder;
 	}
 	else //create if not existing
 	{
