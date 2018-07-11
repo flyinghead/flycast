@@ -1749,7 +1749,7 @@ bool RenderFrame()
 			height *= dc2s_scale_h;
 		}
 
-		glScissor(offs_x + min_x, min_y, width, height);
+		glScissor(min_x, min_y, width, height);
 		glcache.Enable(GL_SCISSOR_TEST);
 	}
 
