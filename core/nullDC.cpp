@@ -136,6 +136,7 @@ const char *EGHackGamesList[] = {
 		"T47801M",		/* Chaos Field (Japan) */
 		"T23202M",		/* Death Crimson OX (Japan) */
 		"T2401N",		/* Death Crimson OX (USA) */
+		"T1223M",		/* Eldorado Gate Vol. 1 (Japan) */
 		"T44306N",		/* Fatal Fury: Mark of the Wolves (USA) */
 		"T3108M",		/* Garou: Mark of the Wolves (Japan) */
 		"HDR-0078",		/* Jet Set Radio (Japan) */
