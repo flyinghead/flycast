@@ -72,6 +72,7 @@ enum SectorFormat
 	SECFMT_2048_MODE1,			//2048 user byte, form1 sector
 	SECFMT_2048_MODE2_FORM1,	//2048 user bytes, form2m1 sector
 	SECFMT_2336_MODE2,			//2336 user bytes, 
+	SECFMT_2448_MODE2,			//2048 user bytes, ? SYNC (12) | HEAD (4) | sub-head (8) | data (2048) | edc (4) | ecc (276) + subcodes (96) ?
 };
 
 enum SubcodeFormat
@@ -168,7 +169,7 @@ struct Disc
 
 	void ReadSectors(u32 FAD,u32 count,u8* dst,u32 fmt)
 	{
-		u8 temp[2352];
+		u8 temp[2448];
 		SectorFormat secfmt;
 		SubcodeFormat subfmt;
 
@@ -192,9 +193,14 @@ struct Disc
 					printf("GDR:fmt=2352;secfmt=2048\n");
 					memcpy(dst,temp,2048);
 				}
+				else if (fmt==2048 && secfmt==SECFMT_2448_MODE2)
+				{
+					// Pier Solar and the Great Architects
+					ConvertSector(temp, dst, 2448, fmt, FAD);
+				}
 				else
 				{
-					printf("ERROR: UNABLE TO CONVERT SECTOR. THIS IS FATAL.");
+					printf("ERROR: UNABLE TO CONVERT SECTOR. THIS IS FATAL. Format: %d Sector format: %d\n", fmt, secfmt);
 					//verify(false);
 				}
 			}
@@ -286,6 +292,8 @@ struct RawTrackFile : TrackFile
 			*sector_type=SECFMT_2048_MODE2_FORM1;
 		else if (fmt==2336)
 			*sector_type=SECFMT_2336_MODE2;
+		else if (fmt==2448)
+			*sector_type=SECFMT_2448_MODE2;
 		else
 		{
 			verify(false);
