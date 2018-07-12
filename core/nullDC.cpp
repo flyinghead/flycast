@@ -178,8 +178,10 @@ void LoadSpecialSettings()
 			settings.aica.EGHack = 1;
 			break;
 		}
-	if (!strncmp("T30701D", reios_product_number, 7))
-		// Pro Pinball Trilogy
+	// Pro Pinball Trilogy
+	if (!strncmp("T30701D", reios_product_number, 7)
+		// Demolition Racer
+		|| !strncmp("T15112N", reios_product_number, 7))
 		settings.dynarec.DisableDivMatching = true;
 }
 
