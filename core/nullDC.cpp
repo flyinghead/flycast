@@ -182,7 +182,9 @@ void LoadSpecialSettings()
 	// Pro Pinball Trilogy
 	if (!strncmp("T30701D", reios_product_number, 7)
 		// Demolition Racer
-		|| !strncmp("T15112N", reios_product_number, 7))
+		|| !strncmp("T15112N", reios_product_number, 7)
+		// Star Wars - Episode I - Racer (United Kingdom)
+		|| !strncmp("T23001D", reios_product_number, 7))
 		settings.dynarec.DisableDivMatching = true;
 }
 
