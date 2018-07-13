@@ -72,7 +72,7 @@ INLINE void Denorm32(float &value)
 }
 
 
-#define CHECK_FPU_32(v) //Denorm32(v)
+#define CHECK_FPU_32(v) v = fixNaN(v)
 #define CHECK_FPU_64(v)
 
 
@@ -84,7 +84,7 @@ sh4op(i1111_nnnn_mmmm_0000)
 		u32 n = GetN(op);
 		u32 m = GetM(op);
 		fr[n] += fr[m];
-		//CHECK_FPU_32(fr[n]);
+		CHECK_FPU_32(fr[n]);
 	}
 	else
 	{

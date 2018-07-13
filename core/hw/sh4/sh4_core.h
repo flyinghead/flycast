@@ -108,3 +108,12 @@ struct SH4ThrownException {
 	u32 expEvn;
 	u32 callVect;
 };
+
+// The SH4 sets the signaling bit to 0 for qNaN (unlike all recent CPUs). Some games relies on this.
+static INLINE float fixNaN(f32 f)
+{
+	// no fast-math
+//	return f == f ? f : 0x7fbfffff;
+	// fast-math
+	return (*(u32 *)&f & 0x7fffffff) <= 0x7f800000 ? f :  0x7fbfffff;
+}
