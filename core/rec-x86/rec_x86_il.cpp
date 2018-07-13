@@ -1453,7 +1453,7 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 			verify(op->rs1.is_r32f());
 			verify(reg.IsAllocg(op->rd));
 			verify(reg.IsAllocf(op->rs1));
-			static f32 sse_ftrc_saturate = 0x7FFFFFBF;//1.11111111111111111111111 << 31
+			static f32 sse_ftrc_saturate = 2147483520.0f;		// IEEE 754: 0x4effffff
 			x86e->Emit(op_movaps, XMM0, reg.mapf(op->rs1));
 			x86e->Emit(op_minss, XMM0, &sse_ftrc_saturate);
 			x86e->Emit(op_cvttss2si, reg.mapg(op->rd), XMM0);
