@@ -3,27 +3,29 @@ notifications:
 language: android
 android:
   components:
-    - platform-tools
-    - tools
-    - build-tools-27.0.3
-    - android-25
-    - extra-google-m2repository
-    - extra-android-m2repository
+  - platform-tools
+  - tools
+  - build-tools-27.0.3
+  - android-25
+  - extra-google-m2repository
+  - extra-android-m2repository
   licenses:
-   - android-sdk-preview-license-.+
-   - android-sdk-license-.+
+  - android-sdk-preview-license-.+
+  - android-sdk-license-.+
 sudo: false
 before_cache:
-  - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
-  - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+- rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+- rm -fr $HOME/.gradle/caches/*/plugin-resolution/
 cache:
   directories:
-    - $HOME/.gradle/caches/
-    - $HOME/.gradle/wrapper/
-    - $HOME/.android/build-cache
+  - "$HOME/.gradle/caches/"
+  - "$HOME/.gradle/wrapper/"
+  - "$HOME/.android/build-cache"
 before_install:
-- test -z "$encrypted_c726d225a9d9_key" || openssl aes-256-cbc -K $encrypted_c726d225a9d9_key -iv $encrypted_c726d225a9d9_iv
-  -in debug.keystore.enc -out debug.keystore -d
+- test -z "$encrypted_c726d225a9d9_key" || openssl aes-256-cbc -K $encrypted_c726d225a9d9_key -iv $encrypted_c726d225a9d9_iv -in secure.tar.enc -out secure.tar -d
+- test -z "$encrypted_c726d225a9d9_key" || tar -xvf secure.tar
+- test -z "$encrypted_c726d225a9d9_key" || mv reicast-beta-cd.jks shell/android-studio/reicast-beta-cd.jks
+- test -z "$encrypted_c726d225a9d9_key" || mv reicast-beta-cd.p12 shell/android-studio/reicast-beta-cd.p12
 - GIT_HASH=`git log --pretty=format:'%h' -n 1`
 - GIT_BUILD=`git describe --all --always`-$GIT_HASH
 - mkdir "$ANDROID_HOME/licenses" || true
@@ -44,7 +46,8 @@ before_script:
 script:
 - cd shell/android-studio
 - export NUMBER_OF_PROCESSORS=2
-- ./gradlew build
+- "./gradlew build"
+- test -z "$encrypted_c726d225a9d9_key" || ./travis-release.sh
 before_deploy:
 - cd ../../
 - mkdir -p artifacts/$GIT_BUILD/

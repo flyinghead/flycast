@@ -790,7 +790,7 @@ void armv_prof(OpType opt,u32 op,u32 flg);
 
 extern "C" void arm_dispatch();
 extern "C" void arm_exit();
-extern "C" void DYNACALL arm_mainloop(u32 cycl);
+extern "C" void DYNACALL arm_mainloop(u32 cycl, void* regs, void* entrypoints);
 extern "C" void DYNACALL arm_compilecode();
 
 template <bool L, bool B>
@@ -1470,7 +1470,7 @@ naked void DYNACALL arm_compilecode()
 	}
 }
 
-naked void DYNACALL arm_mainloop(u32 cycl)
+naked void DYNACALL arm_mainloop(u32 cycl, void* regs, void* entrypoints)
 {
 	__asm
 	{
@@ -1590,8 +1590,13 @@ void armv_end(void* codestart, u32 cycl)
 		SUB(r5,r5,cycl,true);
 	else
 	{
-		SUB(r5,r5,256);
-		SUB(r5,r5,cycl-256,true);
+		u32 togo = cycl;
+		while(ARMImmid8r4_enc(togo) == -1)
+		{
+			SUB(r5,r5,256);
+			togo -= 256;
+		}
+		SUB(r5,r5,togo,true);
 	}
 	JUMP((u32)&arm_exit,CC_MI);	//statically predicted as not taken
 	JUMP((u32)&arm_dispatch);
@@ -1620,7 +1625,7 @@ void arm_Run(u32 CycleCount)
 
 	for (int i=0;i<32;i++)
 	{
-		arm_mainloop(CycleCount/32);
+		arm_mainloop(CycleCount/32, arm_Reg, EntryPoints);
 		libAICA_TimeStep();
 	}
 
