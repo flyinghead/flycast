@@ -47,7 +47,7 @@ script:
 - cd shell/android-studio
 - export NUMBER_OF_PROCESSORS=2
 - "./gradlew build"
-- test -z "$encrypted_c726d225a9d9_key" || "./gradlew publishApkRelease"
+- test -z "$encrypted_c726d225a9d9_key" || ./gradlew publishApkRelease
 before_deploy:
 - cd ../../
 - mkdir -p artifacts/$GIT_BUILD/
