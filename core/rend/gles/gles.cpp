@@ -178,10 +178,15 @@ lowp float fog_mode2(highp float invW)  \n\
 #ifndef GLES
 #define FRAGCOL "FragColor"
 #define TEXLOOKUP "texture"
+#undef vary
 #define vary "in"
+#define FOG_CHANNEL "r"
+#define FOG_IMG_TYPE GL_RED
 #else
 #define FRAGCOL "gl_FragColor"
 #define TEXLOOKUP "texture2D"
+#define FOG_CHANNEL "a"
+#define FOG_IMG_TYPE GL_ALPHA
 #endif
 
 
@@ -235,7 +240,7 @@ lowp float fog_mode2(highp float w) \n\
 	highp float m = z * 16.0 / pow(2.0, exp) - 16.0; \n\
 	float idx = floor(m) + exp * 16.0 + 0.5; \n\
 	vec4 fog_coef = " TEXLOOKUP "(fog_table, vec2(idx / 128.0, 0.75 - (m - floor(m)) / 2.0)); \n\
-	return fog_coef.a; \n\
+	return fog_coef." FOG_CHANNEL "; \n\
  } \n\
 void main() \n\
 { \n\
@@ -1004,7 +1009,8 @@ void UpdateFogTexture(u8 *fog_table)
 		temp_tex_buffer[i] = fog_table[i * 4];
 		temp_tex_buffer[i + 128] = fog_table[i * 4 + 1];
 	}
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, 128, 2, 0, GL_ALPHA, GL_UNSIGNED_BYTE, temp_tex_buffer);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	glTexImage2D(GL_TEXTURE_2D, 0, FOG_IMG_TYPE, 128, 2, 0, FOG_IMG_TYPE, GL_UNSIGNED_BYTE, temp_tex_buffer);
 	glCheck();
 
 	glActiveTexture(GL_TEXTURE0);
