@@ -1,6 +1,23 @@
 apply plugin: 'com.android.application'
 apply plugin: 'com.github.triplet.play'
 
+def getVersionCode = { ->
+    def stdout = new ByteArrayOutputStream()
+    exec {
+        commandLine 'git', 'rev-list', '--count', 'HEAD'
+        standardOutput = stdout
+    }
+    return Integer.parseInt(stdout.toString().trim())
+}
+
+def getVersionName = { ->
+    def stdout = new ByteArrayOutputStream()
+    exec {
+        commandLine 'git', 'describe', '--always'
+        standardOutput = stdout
+    }
+    return stdout.toString().trim()
+}
 
 android {
     compileSdkVersion 25
@@ -10,8 +27,8 @@ android {
         applicationId "com.reicast.emulator"
         minSdkVersion 16
         targetSdkVersion 25
-        versionCode="7"
-        versionName="r7"
+        versionCode getVersionCode()
+        versionName getVersionName()
         vectorDrawables.useSupportLibrary = true
 
         ndk {
