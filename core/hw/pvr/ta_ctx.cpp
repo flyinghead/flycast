@@ -203,7 +203,6 @@ TA_context* tactx_Alloc()
 	{
 		rv = new TA_context();
 		rv->Alloc();
-		printf("new tactx\n");
 	}
 
 	return rv;

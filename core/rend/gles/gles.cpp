@@ -749,6 +749,10 @@ GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentShader)
 		printf("Shader linking: %s \n (%d bytes), - %s -\n",result?"linked":"failed to link", compile_log_len,compile_log);
 
 		free(compile_log);
+
+		// Dump the shaders source for troubleshooting
+		printf("// VERTEX SHADER\n%s\n// END\n", VertexShader);
+		printf("// FRAGMENT SHADER\n%s\n// END\n", FragmentShader);
 		die("shader compile fail\n");
 	}
 
