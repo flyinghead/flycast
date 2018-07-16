@@ -41,6 +41,8 @@ bool x11_fullscreen = false;
 void* x11_vis;
 Atom wmDeleteMessage;
 
+extern bool dump_frame_switch;
+
 enum
 {
 	_NET_WM_STATE_REMOVE =0,
@@ -98,7 +100,13 @@ void input_x11_handle()
 					{
 						start_shutdown();
 					}
-#if FEAT_HAS_NIXPROF
+#ifndef RELEASE
+					else if (e.xkey.keycode == 76) // F10 button
+					{
+						// Dump the next frame into a file
+						dump_frame_switch = e.type == KeyPress;
+					}
+#elif FEAT_HAS_NIXPROF
 					else if (e.type == KeyRelease && e.xkey.keycode == 76) // F10 button
 					{
 						if (sample_Switch(3000)) {
