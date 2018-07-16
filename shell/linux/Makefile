@@ -338,6 +338,11 @@ ifdef NAOMI
     DC_PLATFORM=naomi
     EXECUTABLE=reicast_naomi.elf
     EXECUTABLE_NAME=reicast-naomi
+else ifdef DISPFRAME
+    CFLAGS += -D TARGET_DISPFRAME
+    DC_PLATFORM=dreamcast
+    EXECUTABLE=dispframe.elf
+    EXECUTABLE_NAME=dispframe
 else
     DC_PLATFORM=dreamcast
     EXECUTABLE=reicast.elf

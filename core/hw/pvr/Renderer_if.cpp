@@ -226,6 +226,7 @@ bool rend_frame(TA_context* ctx, bool draw_osd) {
 		char name[32];
 		sprintf(name, "dcframe-%d", FrameCount);
 		dump_frame(name, _pvrrc, &vram[0]);
+		dump_frame_switch = false;
 	}
 	bool proc = renderer->Process(ctx);
 #if !defined(TARGET_NO_THREADS)

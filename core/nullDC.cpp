@@ -78,8 +78,10 @@ s32 plugins_Init()
 	if (s32 rv = libPvr_Init())
 		return rv;
 
+	#ifndef TARGET_DISPFRAME
 	if (s32 rv = libGDR_Init())
 		return rv;
+	#endif
 	#if DC_PLATFORM == DC_PLATFORM_NAOMI
 	if (!naomi_cart_SelectFile(libPvr_GetRenderTarget()))
 		return rv_serror;
@@ -276,10 +278,12 @@ int dc_init(int argc,wchar* argv[])
 	return rv;
 }
 
+#ifndef TARGET_DISPFRAME
 void dc_run()
 {
 	sh4_cpu.Run();
 }
+#endif
 
 void dc_term()
 {
