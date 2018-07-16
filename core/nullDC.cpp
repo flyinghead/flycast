@@ -313,6 +313,7 @@ void LoadSettings()
 	settings.rend.WideScreen		= cfgLoadInt("config","rend.WideScreen",0);
 	settings.rend.ShowFPS			= cfgLoadInt("config", "rend.ShowFPS", 0);
 	settings.rend.RenderToTextureBuffer = cfgLoadInt("config", "rend.RenderToTextureBuffer", 0);
+	settings.rend.RenderToTextureUpscale = cfgLoadInt("config", "rend.RenderToTextureUpscale", 1);
 	settings.rend.TranslucentPolygonDepthMask = cfgLoadInt("config", "rend.TranslucentPolygonDepthMask", 0);
 	settings.rend.ModifierVolumes	= cfgLoadInt("config","rend.ModifierVolumes",1);
 	settings.rend.Clipping			= cfgLoadInt("config","rend.Clipping",1);

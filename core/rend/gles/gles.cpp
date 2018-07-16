@@ -1754,6 +1754,13 @@ bool RenderFrame()
 			width *= dc2s_scale_h;
 			height *= dc2s_scale_h;
 		}
+		else if (settings.rend.RenderToTextureUpscale > 1 && !settings.rend.RenderToTextureBuffer)
+		{
+			min_x *= settings.rend.RenderToTextureUpscale;
+			min_y *= settings.rend.RenderToTextureUpscale;
+			width *= settings.rend.RenderToTextureUpscale;
+			height *= settings.rend.RenderToTextureUpscale;
+		}
 
 		glScissor(min_x, min_y, width, height);
 		glcache.Enable(GL_SCISSOR_TEST);

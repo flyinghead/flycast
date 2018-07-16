@@ -617,6 +617,7 @@ struct settings_t
 		bool WideScreen;
 		bool ShowFPS;
 		bool RenderToTextureBuffer;
+		int RenderToTextureUpscale;
 		bool TranslucentPolygonDepthMask;
 		bool ModifierVolumes;
 		bool Clipping;
