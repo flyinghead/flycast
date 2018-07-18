@@ -100,17 +100,15 @@ void input_x11_handle()
 					{
 						int dc_key = x11_keymap[e.xkey.keycode];
 
-						if (e.xkey.keycode == KEY_F)
+						if (dc_key == DC_AXIS_LT)
 						{
-							// Left shoulder button pressed (lt)
 							if (e.type == KeyPress)
 								lt[0] = 255;
 							else
 								lt[0] = 0;
 						}
-						else if (e.xkey.keycode == KEY_V)
+						else if (dc_key == DC_AXIS_RT)
 						{
-							// Right shoulder button pressed (rt)
 							if (e.type == KeyPress)
 								rt[0] = 255;
 							else
@@ -126,7 +124,9 @@ void input_x11_handle()
 							kcode[0] |= dc_key;
 						}
 
+						#if defined(_DEBUG)
 						printf("KEY: %d -> %d: %d\n", e.xkey.keycode, dc_key, x11_dc_buttons );
+						#endif
 					}
 					break;
 			}
@@ -151,7 +151,7 @@ void input_x11_init()
 	x11_keymap[KEY_D] = DC_BTN_Y;
 	x11_keymap[KEY_C] = DC_BTN_B;
 
-	// ???
+	// Used by some "arcade" controllers
 	x11_keymap[KEY_Q] = DC_BTN_Z;
 	x11_keymap[KEY_W] = DC_BTN_C;
 	x11_keymap[KEY_E] = DC_BTN_D;
@@ -159,12 +159,10 @@ void input_x11_init()
 	// Start button (triangle)
 	x11_keymap[KEY_RETURN] = DC_BTN_START;
 
-	/*
-	//TODO: Fix sliders
-	x11_keymap[KEY_A] = DPad_Down;
-	x11_keymap[KEY_S] = DPad_Down;
-	*/
-
+	// Shoulder trigger
+	x11_keymap[KEY_F] = DC_AXIS_LT;
+	x11_keymap[KEY_V] = DC_AXIS_RT;
+	
 	x11_keyboard_input = cfgLoadInt("input", "enable_x11_keyboard", 1);
 }
 
