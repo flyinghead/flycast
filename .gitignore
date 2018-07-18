@@ -37,6 +37,7 @@ build/*
 local.properties
 ant.properties
 *build_obj
+*.d
 Workdir/data
 Workdir/reicast*
 Workdir/vmu*

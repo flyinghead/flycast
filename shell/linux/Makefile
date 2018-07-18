@@ -358,6 +358,14 @@ OBJECTS:=$(OBJECTS:.c=.build_obj)
 OBJECTS:=$(OBJECTS:.S=.build_obj)
 OBJECTS:=$(patsubst $(RZDCY_SRC_DIR)/%,$(BUILDDIR)/%,$(OBJECTS))
 
+DEPDIR := .dep-$(BUILDDIR)
+DEPFLAGS = -MT $@ -MD -MP -MF $(DEPDIR)/$*.Td
+DEPS=$(RZDCY_FILES:.cpp=.d)
+DEPS:=$(DEPS:.c=.d)
+DEPS:=$(DEPS:.S=.d)
+DEPS:=$(patsubst $(RZDCY_SRC_DIR)/%,$(DEPDIR)/%,$(DEPS))
+POSTCOMPILE = mv -f $(DEPDIR)/$*.Td $(DEPDIR)/$*.d
+
 all: $(CPPFILES) $(EXECUTABLE) $(EXECUTABLE_STRIPPED)
 ifneq (,$(findstring gcwz,$(platform)))
 	mksquashfs $(EXECUTABLE_STRIPPED) $(GCWZ_PKG_FILES) $(GCWZ_PKG) -all-root
@@ -370,16 +378,25 @@ $(EXECUTABLE_STRIPPED): $(EXECUTABLE)
 	cp $< $@ && $(STRIP) $@
 
 $(BUILDDIR)/%.build_obj : $(RZDCY_SRC_DIR)/%.cpp
+$(BUILDDIR)/%.build_obj: $(RZDCY_SRC_DIR)/%.cpp $(DEPDIR)/%.d
 	mkdir -p $(dir $@)
-	$(CXX) $(EXTRAFLAGS) $(INCS) $(CFLAGS) $(MFLAGS) $(CXXFLAGS) $< -o $@
-	
+	mkdir -p .dep-$(dir $@)
+	$(CXX) $(EXTRAFLAGS) $(INCS) $(DEPFLAGS) $(CFLAGS) $(MFLAGS) $(CXXFLAGS) $< -o $@
+	$(POSTCOMPILE)
+
 $(BUILDDIR)/%.build_obj : $(RZDCY_SRC_DIR)/%.c
+$(BUILDDIR)/%.build_obj: $(RZDCY_SRC_DIR)/%.c $(DEPDIR)/%.d
 	mkdir -p $(dir $@)
-	$(CC) $(EXTRAFLAGS) $(INCS) $(CFLAGS) $< -o $@
+	mkdir -p .dep-$(dir $@)
+	$(CC) $(EXTRAFLAGS) $(INCS) $(DEPFLAGS) $(CFLAGS) $< -o $@
+	$(POSTCOMPILE)
 
 $(BUILDDIR)/%.build_obj : $(RZDCY_SRC_DIR)/%.S
+$(BUILDDIR)/%.build_obj: $(RZDCY_SRC_DIR)/%.S $(DEPDIR)/%.d
 	mkdir -p $(dir $@)	
-	$(AS) $(ASFLAGS) $(INCS) $< -o $@
+	mkdir -p .dep-$(dir $@)
+	$(AS) $(DEPFLAGS) $(ASFLAGS) $(INCS) $< -o $@
+	$(POSTCOMPILE)
 
 install: $(EXECUTABLE)
 	mkdir -p $(DESTDIR)$(PREFIX)/bin 2>/dev/null || /bin/true
@@ -418,3 +435,9 @@ uninstall:
 
 clean:
 	rm -f $(OBJECTS) $(EXECUTABLE) $(EXECUTABLE_STRIPPED) .map
+
+.PRECIOUS = $(DEPDIR)/%.d
+$(DEPDIR)/%.d: ;
+
+-include $(DEPS)
+
