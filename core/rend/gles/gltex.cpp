@@ -341,6 +341,7 @@ struct TextureCacheData
 		if (texID) {
 			//upload to OpenGL !
 			glcache.BindTexture(GL_TEXTURE_2D, texID);
+			GLuint comps=textype==GL_UNSIGNED_SHORT_5_6_5?GL_RGB:GL_RGBA;
 #ifdef GLES
 			GLuint actual_textype = textype == GL_UNSIGNED_INT_8_8_8_8 ? GL_UNSIGNED_BYTE : textype;
 			glTexImage2D(GL_TEXTURE_2D, 0, comps, w, h, 0, comps, actual_textype,
