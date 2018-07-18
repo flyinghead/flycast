@@ -68,7 +68,15 @@ void palette_update();
 
 // Unpack to 32-bit word
 
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__ && defined(GLES)
+// GLES doesn't have the native ordering 8888 so we need to put bytes in the RGBA memory order.
+#define ARGB8888( word ) ( ((word >> 0) & 0xFF000000) | (((word >> 16) & 0xFF) << 0) | (((word >> 8) & 0xFF) << 8) | ((word & 0xFF) << 16) )
+
+#else
+
 #define ARGB8888( word ) ( ((word >> 24) & 0xFF) | (((word >> 16) & 0xFF) << 24) | (((word >> 8) & 0xFF) << 16) | ((word & 0xFF) << 8) )
+
+#endif
 
 template<class PixelPacker>
 __forceinline u32 YUV422(s32 Y,s32 Yu,s32 Yv)
@@ -105,7 +113,11 @@ struct pp_8888
 {
 	__forceinline static u32 packRGB(u8 R,u8 G,u8 B)
 	{
-		return (R << 24) | (G << 16) | (B << 8) | 0xFF;
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__ && defined(GLES)
+		return (R << 0) | (G << 8) | (B << 16);
+#else
+		return (R << 24) | (G << 16) | (B << 8);
+#endif
 	}
 };
 
