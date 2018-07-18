@@ -997,10 +997,10 @@ static string get_eeprom_file_path()
 	cfgLoadStr("config", "image", image_path, "naomi_boot.bin");
 	string eeprom_file = image_path;
 	size_t lastindex = eeprom_file.find_last_of("/");
-	if (lastindex != npos)
+	if (lastindex != -1)
 		eeprom_file = eeprom_file.substr(lastindex + 1);
 	lastindex = eeprom_file.find_last_of(".");
-	if (lastindex != npos)
+	if (lastindex != -1)
 		eeprom_file = eeprom_file.substr(0, lastindex);
 	eeprom_file = eeprom_file + ".eeprom";
 	return get_writable_data_path("/data/") + eeprom_file;
