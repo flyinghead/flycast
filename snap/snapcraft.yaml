@@ -10,7 +10,7 @@ confinement: strict
 
 apps:
   reicast:
-    command:  desktop-launch $SNAP/bin/reicast
+    command:  desktop-launch alsa-launch $SNAP/bin/reicast
     plugs: [home, alsa, pulseaudio, opengl, x11, joystick, unity7]
     desktop: share/applications/reicast.desktop
   joyconfig:
@@ -40,4 +40,4 @@ parts:
       - pkg-config
     stage-packages:
       - libevdev2
-    after: [desktop-gtk2]
+    after: [desktop-gtk2, alsa]

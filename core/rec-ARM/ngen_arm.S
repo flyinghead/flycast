@@ -228,8 +228,8 @@ push {r4,r5,r8,r9,lr}
 	ldr r8,Xarm_Reg			@load cntx
 	ldr r4,XEntryPoints		@load lookup base
 	#else
-	ldr r8,=arm_Reg			@load cntx
-	ldr r4,=EntryPoints		@load lookup base
+	mov r8,r1			@load cntx
+	mov r4,r2		@load lookup base
 	#endif
 
 	ldr r5,[r8,#192]	@load cycle count

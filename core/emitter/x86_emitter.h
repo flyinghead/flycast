@@ -228,6 +228,22 @@ struct /*__declspec(dllexport)*/  x86_ptr_imm
 	{
 		this->ptr=ptr;
 	}
+
+#if HOST_CPU != CPU_X64
+#ifndef WIN32
+	template<typename Rv, typename ...Args>
+	x86_ptr_imm(Rv(* ptr)(Args...))
+	{
+		this->ptr= reinterpret_cast<void*>(ptr);
+	}
+#endif
+
+    template<typename Rv, typename ...Args>
+    x86_ptr_imm(Rv(DYNACALL * ptr)(Args...))
+    {
+        this->ptr= reinterpret_cast<void*>(ptr);
+    }
+#endif
 };
 
 enum x86_mrm_mod

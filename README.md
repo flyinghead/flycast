@@ -4,7 +4,8 @@ reicast is a multi-platform Sega Dreamcast emulator.
 
 This is a developer-oriented resource, if you just want bins head over to http://reicast.com/
 
-For development discussion, [join #reicast in freenode](https://webchat.freenode.net/?channels=reicast)
+For development discussion, join [#reicast in freenode](https://webchat.freenode.net/?channels=reicast)
+ or stop by the [reicast Discord server](http://discord.gg/Hc6CF72)
 
 Caution
 -------
@@ -15,6 +16,15 @@ Rebranding/(hard)forks
 If you are interested into further porting/adapting/whatever, *please* don't fork off. I hate that. Really.
 
 Let's try to keep everything under a single project :)
+
+Submitting Issues
+----------------
+Please take a moment to search the open issues for one similar to yours and add your info to it.  
+If you cannot find a similar issue, click the 'New Issue' button and make sure to fill out the form.
+
+*Please Note:*  
+Duplicate issues may be closed with a link to the existing issue.  
+Bugs that do not include a form may be closed until it is filled out.
 
 Contributing
 ------------

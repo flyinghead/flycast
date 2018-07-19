@@ -471,6 +471,7 @@
 					break;
 			}
 		}
+		return true;
 	}
 
 	void input_evdev_rumble(EvdevController* controller, u16 pow_strong, u16 pow_weak)

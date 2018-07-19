@@ -19,8 +19,9 @@ try:
     import evdev
 except ImportError:
     print("Can't import evdev module. Please install it.")
-    print("You can do this via:")
+    print("You can do this via one of the following:")
     print("  pip install evdev")
+    print("  sudo apt install python-evdev")
     sys.exit(1)
 
 try:
@@ -297,7 +298,8 @@ if __name__ == "__main__":
             mapping.write(f)
         print("\nMapping file saved to: %s\n" % os.path.abspath(args.file))
     else:
-        print("\nHere's your mapping file:\n")
+        print("\nHere's your mapping file:")
+        print("Save this as \"~/.local/share/reicast/mappings/%s.cfg\"\n" % mapping.get("emulator", "mapping_name"))
         mapping.write(sys.stdout)
 
     sys.exit(0)

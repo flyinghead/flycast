@@ -71,7 +71,8 @@ ifeq (,$(platform))
     else ifneq (,$(findstring mips,$(ARCH)))
         platform = gcwz
     else
-        $(error Unsupported CPU architecture)
+        $(warning Unsupported CPU architecture, using lincpp)
+        platform = lincpp
     endif
 
     FLAGS = $(shell grep flags /proc/cpuinfo)

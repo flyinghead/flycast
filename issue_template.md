@@ -1,23 +1,27 @@
-*Any information not included may be requested when diagnosing the issue*
+**Please Note: This form is the minimum required information for submitting bugs.**
+
+**Removing this form may lead to your issue being closed until it is completed.**
 
 | Platform | Branch | Hash | CIDL |
 | ------ | ------ | ---- | ---- |
-| Installed OS and version (ie. Android 8.0) | Branch name (or Google Play) | Hashtag (delete if unknown) | Downloaded from build site? |
+| Installed OS and version (ie. Android 8.0) | Branch (or Google Play) | Hashtag (skip if unknown) | Downloaded from build site? |
 
 **_Description of the Issue_**
 
-Add a short, concise description of the issue
+Add a short, concise description of the issue here
 
 **_Debugging Steps Tested_**
 
-  * Fill in any steps already tried
-  * Begin each line with an asterisk
+  * Fill in any steps already tried here
+  * Begin each new line with an asterisk
+  * If no steps are required, please skip
 
 **_Logs Gathered_**
 
 ```
 
-Paste the contents of the log / logs here
+Please paste the contents of the log / logs here
+You may leave this field blank if you have none.
 
 ```
 
@@ -26,4 +30,4 @@ Paste the contents of the log / logs here
 
 ![Issue Screenshot](https://github.com/adam-p/markdown-here/raw/master/src/common/images/icon48.png)
 
-- [ ] Check this box to confirm you have filled in all relevant information
+- [ ] Place an X in the box to confirm you have filled in this form
