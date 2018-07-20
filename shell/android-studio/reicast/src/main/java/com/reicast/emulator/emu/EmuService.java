@@ -5,6 +5,7 @@ import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
+
 import com.reicast.emulator.R;
 
 public class EmuService extends Service {
@@ -30,9 +31,9 @@ public class EmuService extends Service {
 
             NotificationCompat.Builder builder = new NotificationCompat.Builder(this)
                     .setSmallIcon(R.drawable.ic_launcher)
-                    .setTicker("Emulator ticker message")
-                    .setContentTitle("Emulator notification title")
-                    .setContentText("Emulator notification content")
+                    .setTicker(getString(R.string.service_ticker))
+                    .setContentTitle(getString(R.string.service_title))
+                    .setContentText(getString(R.string.service_content))
                     .setContentIntent(pendingIntent);
             startForeground(FOREGROUND_ID, builder.build());
             return START_STICKY_COMPATIBILITY;
