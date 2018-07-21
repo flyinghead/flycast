@@ -1,10 +1,11 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/types.h>
-#include <linux/joystick.h>
 #include "linux-dist/joystick.h"
 
 #if defined(USE_JOYSTICK)
+#include <linux/joystick.h>
+
 	const u32 joystick_map_btn_usb[JOYSTICK_MAP_SIZE]      = { DC_BTN_Y, DC_BTN_B, DC_BTN_A, DC_BTN_X, 0, 0, 0, 0, 0, DC_BTN_START };
 	const u32 joystick_map_axis_usb[JOYSTICK_MAP_SIZE]     = { DC_AXIS_X, DC_AXIS_Y, 0, 0, 0, 0, 0, 0, 0, 0 };
 
