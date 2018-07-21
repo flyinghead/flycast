@@ -572,17 +572,18 @@ public class GL2JNIActivity extends Activity {
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
-		moga.onDestroy();
 		if (serviceRunning(EmuService.class))
 			stopService(serviceIntent);
+		mView.onDestroy();
 		JNIdc.stop();
+		moga.onDestroy();
 	}
 
 	@Override
 	protected void onStop() {
 		// TODO Auto-generated method stub
-		mView.onStop();
 		super.onStop();
+//		mView.onStop();
 	}
 
 	@Override

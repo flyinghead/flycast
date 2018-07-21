@@ -76,15 +76,20 @@ public class EditVJoyActivity extends Activity {
 
 	@Override
 	protected void onStop() {
-		mView.onStop();
 		super.onStop();
+//		mView.onStop();
 	}
-
 
 	@Override
 	protected void onResume() {
 		super.onResume();
 		mView.onResume();
+	}
+
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
+		mView.onDestroy();
 	}
 	
 	PopupWindow createVJoyPopup() {

@@ -573,14 +573,15 @@ public class GL2JNINative extends NativeActivity {
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
+		mView.onDestroy();
+		JNIdc.stop();
 		moga.onDestroy();
 	}
 
 	@Override
 	protected void onStop() {
-		JNIdc.stop();
-		mView.onStop();
 		super.onStop();
+//		mView.onStop();
 	}
 
 	@Override
