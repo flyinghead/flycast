@@ -655,7 +655,7 @@ public class GL2JNIView extends GLSurfaceView
 					long used=pos-Player.getPlaybackHeadPosition();
 					long avail=size-used;
 
-					//Log.i("AUD", "u: " + used + " a: " + avail);
+					//Log.i("audcfg", "u: " + used + " a: " + avail);
 					if (avail<newdata)
 						return 0;
 				}
