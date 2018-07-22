@@ -95,16 +95,19 @@ public class GLCFactory14 {
 					glAPIToTry = EGL14.EGL_OPENGL_ES2_BIT;
 				} else {
 					renderableType = EGL14.EGL_OPENGL_ES2_BIT;
-					// If this API does not work, try ES next.
-					glAPIToTry = EGL14.EGL_OPENGL_ES_API;
+					// If this API does not work, is a potato.
+					glAPIToTry = EGL10.EGL_NONE;
 				}
 
+				// This EGL config specification is used to specify 2.0 rendering.
+				// We use a minimum size of 4 bits for red/green/blue, but will
+				// perform actual matching in chooseConfig() below.
 				configSpec = new int[] { 
 						EGL14.EGL_RED_SIZE, 4,
 						EGL14.EGL_GREEN_SIZE, 4, 
 						EGL14.EGL_BLUE_SIZE, 4,
 						EGL14.EGL_RENDERABLE_TYPE, renderableType,
-						EGL14.EGL_DEPTH_SIZE, 24,
+						EGL14.EGL_DEPTH_SIZE, 16,
 						EGL14.EGL_NONE
 				};
 
@@ -115,7 +118,7 @@ public class GLCFactory14 {
 					}
 				}
 
-			} while (glAPIToTry != EGL14.EGL_OPENGL_ES_API && mValue[0]<=0);
+			} while (glAPIToTry != EGL10.EGL_NONE && mValue[0]<=0);
 
 			if (mValue[0]<=0) {
 				throw new IllegalArgumentException("No configs match configSpec");
