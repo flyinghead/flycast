@@ -144,7 +144,6 @@ const char* reios_locate_ip() {
 	memcpy(&reios_software_company[0], &ip_bin[112],   16 * sizeof(char));
 	memcpy(&reios_software_name[0], &ip_bin[128],   128 * sizeof(char));
 
-	printf("reios: IP.bin is '%s'\n", ip_bin);
 	printf("reios: Hardware ID is: %s\n", reios_hardware_id);
 	printf("reios: Maker ID is:    %s\n",    reios_maker_id);
 	printf("reios: Device info is: %s\n",    reios_device_info);
