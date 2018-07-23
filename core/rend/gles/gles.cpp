@@ -336,7 +336,7 @@ void main() \n\
 	} \n\
 	#endif\n\
 	#if cp_AlphaTest == 1 \n\
-		color.a = round(color.a * 255.0) / 255.0; // Fixes noised cars in Jet Grind Radio \n\
+		color.a = floor(color.a * 255.0 + 0.5) / 255.0; // Fixes noised cars in Jet Grind Radio \n\
 		if (cp_AlphaTestValue>color.a) \n\
 			discard;\n\
 		else \n\
