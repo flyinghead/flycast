@@ -93,8 +93,8 @@ do_iter:
 		pop ecx;
 		call rdv_DoInterrupts;
 		mov ecx,eax;
-//		cmp byte ptr [sh4_int_bCpuRun],0;
-	//	jz cleanup;
+		cmp byte ptr [sh4_int_bCpuRun],0;
+		jz cleanup;
 		jmp no_update;
 
 cleanup:

@@ -21,7 +21,7 @@ static SDL_GLContext glcontext;
 static SDL_Joystick* JoySDL = 0;
 
 extern bool FrameSkipping;
-extern void dc_term();
+extern void dc_stop();
 extern bool KillTex;
 
 #ifdef TARGET_PANDORA
@@ -374,10 +374,7 @@ void input_sdl_handle(u32 port)
 	if (keys[12]){ kcode[port] &= ~DC_BTN_START; }
 	if (keys[9])
 	{ 
-		dc_term();
-	
-		// is there a proper way to exit? dc_term() doesn't end the dc_run() loop it seems
-		die("death by escape key"); 
+		dc_stop();
 	} 
 	if (keys[10])
 	{

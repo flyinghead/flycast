@@ -102,7 +102,7 @@ PCHAR*
 	return argv;
 }
 
-
+void dc_stop(void);
 
 bool VramLockedWrite(u8* address);
 bool ngen_Rewrite(unat& addr,unat retadr,unat acc);
@@ -247,6 +247,8 @@ void UpdateInputState(u32 port)
 
 		if (GetAsyncKeyState(VK_F10))
 			DiscSwap();
+		if (GetAsyncKeyState(VK_ESCAPE))
+			dc_stop();
 	}
 
 void UpdateController(u32 port)
@@ -734,7 +736,7 @@ void os_DoEvents()
 		// If the message is WM_QUIT, exit the while loop
 		if (msg.message == WM_QUIT)
 		{
-			sh4_cpu.Stop();
+			dc_stop();
 		}
 
 		// Translate the message and dispatch it to WindowProc()

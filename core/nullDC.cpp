@@ -227,6 +227,11 @@ void dc_term()
 	SaveRomFiles(get_writable_data_path("/data/"));
 }
 
+void dc_stop()
+{
+	sh4_cpu.Stop();
+}
+
 void LoadSettings()
 {
 #ifndef _ANDROID
