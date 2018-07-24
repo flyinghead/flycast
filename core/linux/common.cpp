@@ -47,10 +47,8 @@ void sigill_handler(int sn, siginfo_t * si, void *segfault_ctx) {
 	
 	printf("SIGILL @ %08X, fault_handler+0x%08X ... %08X -> was not in vram, %d\n", pc, pc - (unat)sigill_handler, (unat)si->si_addr, dyna_cde);
 	
-	printf("Entering infiniloop");
-
-	for (;;);
-	printf("PC is used here %08X\n", pc);
+	//printf("PC is used here %08X\n", pc);
+    kill(getpid(), SIGABRT);
 }
 #endif
 

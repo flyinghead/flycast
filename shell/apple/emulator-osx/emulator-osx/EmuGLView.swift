@@ -8,7 +8,7 @@
 
 import Cocoa
 
-class EmuGLView: NSOpenGLView {
+class EmuGLView: NSOpenGLView, NSWindowDelegate {
 
     override var acceptsFirstResponder: Bool {
         return true;
@@ -72,4 +72,12 @@ class EmuGLView: NSOpenGLView {
         emu_key_input(e.keyCode, 0);
     }
     
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        self.window!.delegate = self
+    }
+    
+    func windowWillClose(_ notification: Notification) {
+        emu_shutdown()
+    }
 }

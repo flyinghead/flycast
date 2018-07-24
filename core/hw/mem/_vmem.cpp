@@ -429,8 +429,11 @@ void _vmem_bm_reset() {
 			_vmem_bm_reset_nvmem();
 		#endif
 	}
-    
-    if (!virt_ram_base || HOST_OS == OS_DARWIN) {
+
+#ifndef TARGET_IPHONE
+    if (!virt_ram_base)
+#endif
+    {
 		bm_vmem_pagefill((void**)p_sh4rcb->fpcb, FPCB_SIZE);
 	}
 }
@@ -624,7 +627,7 @@ void _vmem_bm_reset_nvmem()
 		return;
 	#endif
 
-	#if (HOST_OS == OS_DARWIN)
+	#ifdef TARGET_IPHONE
 		//On iOS & nacl we allways allocate all of the mapping table
 		mprotect(p_sh4rcb, sizeof(p_sh4rcb->fpcb), PROT_READ | PROT_WRITE);
 		return;
