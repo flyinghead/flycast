@@ -506,6 +506,10 @@ void rend_term()
 
 	if (fLogFrames)
 		fclose(fLogFrames);
+
+#if !defined(TARGET_NO_THREADS)
+	rthd.WaitToEnd();
+#endif
 }
 
 void rend_vblank()
