@@ -90,6 +90,8 @@ void gl_swap() {
 
 int dc_init(int argc,wchar* argv[]);
 void dc_run();
+void dc_term();
+void dc_stop();
 
 bool has_init = false;
 void* emuthread(void*) {
@@ -115,7 +117,16 @@ void* emuthread(void*) {
     
     dc_run();
     
+    has_init = false;
+    
+    dc_term();
+
     return 0;
+}
+
+extern "C" void emu_dc_stop()
+{
+    dc_stop();
 }
 
 pthread_t emu_thread;

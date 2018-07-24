@@ -497,7 +497,9 @@ bool rend_init()
 void rend_term()
 {
 	renderer_enabled = false;
+#if !defined(TARGET_NO_THREADS)
 	rs.Set();
+#endif
 
 	if (fCheckFrames)
 		fclose(fCheckFrames);
