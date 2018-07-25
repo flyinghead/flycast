@@ -575,7 +575,7 @@ public class GL2JNIActivity extends Activity {
 		if (serviceRunning(EmuService.class))
 			stopService(serviceIntent);
 		mView.onDestroy();
-		JNIdc.stop();
+		JNIdc.terminate();
 		moga.onDestroy();
 	}
 

@@ -574,7 +574,7 @@ public class GL2JNINative extends NativeActivity {
 	protected void onDestroy() {
 		super.onDestroy();
 		mView.onDestroy();
-		JNIdc.stop();
+		JNIdc.terminate();
 		moga.onDestroy();
 	}
 
