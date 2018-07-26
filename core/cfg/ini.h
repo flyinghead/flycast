@@ -33,7 +33,7 @@ struct ConfigFile {
 		void save(FILE* fd);
 
 		/* getting values */
-		string get(string section_name, string entry_name, string default_value = "");
+		std::string get(const string& section_name, const string& entry_name, const string& default_value = "");
 		int get_int(string section_name, string entry_name, int default_value = 0);
 		bool get_bool(string section_name, string entry_name, bool default_value = false);
 		/* setting values */

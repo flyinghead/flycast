@@ -40,35 +40,38 @@ settings_t settings;
 #include <windows.h>
 #endif
 
-int GetFile(char *szFileName, char *szParse=0, u32 flags=0)
+int GetFile(std::string& diskFileName)
 {
-	cfgLoadStr("config","image",szFileName,"null");
-	if (strcmp(szFileName,"null")==0)
+	cfgLoadStr("config", "image", diskFileName, "");
+#if HOST_OS==OS_WINDOWS
+	if (diskFileName.empty())
 	{
-	#if HOST_OS==OS_WINDOWS
+		diskFileName.resize(MAX_PATH);
 		OPENFILENAME ofn;
-		ZeroMemory( &ofn , sizeof( ofn));
-	ofn.lStructSize = sizeof ( ofn );
-	ofn.hwndOwner = NULL  ;
-	ofn.lpstrFile = szFileName ;
-	ofn.lpstrFile[0] = '\0';
-	ofn.nMaxFile = MAX_PATH;
-	ofn.lpstrFilter = "All\0*.*\0\0";
-	ofn.nFilterIndex =1;
-	ofn.lpstrFileTitle = NULL ;
-	ofn.nMaxFileTitle = 0 ;
-	ofn.lpstrInitialDir=NULL ;
-	ofn.Flags = OFN_PATHMUSTEXIST|OFN_FILEMUSTEXIST ;
+		ZeroMemory(&ofn, sizeof(ofn));
+		ofn.lStructSize = sizeof(ofn);
+		ofn.lpstrFile = &diskFileName[0];
+		ofn.nMaxFile = MAX_PATH;
+		ofn.lpstrFilter = "Supported Disk Image Files(.CDI, .GDI)\0*.CDI;*.GDI\0\0";
+		ofn.nFilterIndex = 1;
+		ofn.lpstrTitle = "Open disk image file";
+		ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
 
-		if (GetOpenFileNameA(&ofn))
+		while (!GetOpenFileName(&ofn))
 		{
-			//already there
-			//strcpy(szFileName,ofn.lpstrFile);
+			const DWORD errorCode = CommDlgExtendedError();
+			if (errorCode == FNERR_BUFFERTOOSMALL)
+			{
+				//The first two bytes of the lpstrFile buffer contain an integer value specifying the size required to receive the full name, in characters.
+				const size_t newBufferSize = ((size_t)ofn.lpstrFile[0] | (size_t)ofn.lpstrFile[1] << 8);
+				diskFileName.resize(newBufferSize);
+				//try again
+			}
+			else return (errorCode == ERROR_SUCCESS) ? rv_ok : rv_error;
 		}
-	#endif
 	}
-
-	return 1;
+#endif
+	return rv_ok;
 }
 
 
@@ -93,8 +96,6 @@ s32 plugins_Init()
 
 	//if (s32 rv = libExtDevice_Init())
 	//	return rv;
-
-
 
 	return rv_ok;
 }
@@ -204,7 +205,14 @@ int dc_init(int argc,wchar* argv[])
 		}
 	}
 
-	plugins_Init();
+	if (plugins_Init() != rv_ok) {
+#if defined(_ANDROID)
+		reios_init_value = rv_error;
+		return;
+#else
+		return rv_error;
+#endif
+	}
 
 #if defined(_ANDROID)
 }

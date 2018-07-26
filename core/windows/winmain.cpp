@@ -695,7 +695,10 @@ int CALLBACK WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine
 		int dc_init(int argc,wchar* argv[]);
 		void dc_run();
 		void dc_term();
-		dc_init(argc,argv);
+		if(dc_init(argc,argv)!=rv_ok)
+		{
+			return 0;
+		}
 
 		#ifdef _WIN64
 				setup_seh();
