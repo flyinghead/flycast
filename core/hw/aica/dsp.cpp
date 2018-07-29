@@ -1,4 +1,4 @@
-﻿#include "dsp.h"
+#include "dsp.h"
 #include "aica_mem.h"
 #include "hw/aica/aica_if.h"
 #include "oslib/oslib.h"
@@ -22,6 +22,54 @@
 
 DECL_ALIGN(4096) dsp_t dsp;
 
+//float format is ?
+u16 DYNACALL PACK(s32 val)
+{
+	u32 temp;
+	int sign,exponent,k;
+
+	sign = (val >> 23) & 0x1;
+	temp = (val ^ (val << 1)) & 0xFFFFFF;
+	exponent = 0;
+	for (k=0; k<12; k++)
+	{
+		if (temp & 0x800000)
+			break;
+		temp <<= 1;
+		exponent += 1;
+	}
+	if (exponent < 12)
+		val = (val << exponent) & 0x3FFFFF;
+	else
+		val <<= 11;
+	val >>= 11;
+	val |= sign << 15;
+	val |= exponent << 11;
+
+	return (u16)val;
+}
+
+s32 DYNACALL UNPACK(u16 val)
+{
+	int sign,exponent,mantissa;
+	s32 uval;
+
+	sign = (val >> 15) & 0x1;
+	exponent = (val >> 11) & 0xF;
+	mantissa = val & 0x7FF;
+	uval = mantissa << 11;
+	if (exponent > 11)
+		exponent = 11;
+	else
+		uval |= (sign ^ 1) << 22;
+	uval |= sign << 23;
+	uval <<= 8;
+	uval >>= 8;
+	uval >>= exponent;
+
+	return uval;
+}
+
 #if HOST_CPU == CPU_X86 && FEAT_DSPREC == DYNAREC_JIT
 #include "emitter/x86_emitter.h"
 
@@ -31,38 +79,6 @@ const bool SUPPORT_NOFL=false;
 #define assert verify
 
 #pragma warning(disable:4311)
-
-struct _INST
-{
-	unsigned int TRA;
-	unsigned int TWT;
-	unsigned int TWA;
-	
-	unsigned int XSEL;
-	unsigned int YSEL;
-	unsigned int IRA;
-	unsigned int IWT;
-	unsigned int IWA;
-
-	unsigned int EWT;
-	unsigned int EWA;
-	unsigned int ADRL;
-	unsigned int FRCL;
-	unsigned int SHIFT;
-	unsigned int YRL;
-	unsigned int NEGB;
-	unsigned int ZERO;
-	unsigned int BSEL;
-
-	unsigned int NOFL;  //MRQ set
-	unsigned int TABLE; //MRQ set
-	unsigned int MWT;   //MRQ set
-	unsigned int MRD;   //MRQ set
-	unsigned int MASA;  //MRQ set
-	unsigned int ADREB; //MRQ set
-	unsigned int NXADR; //MRQ set
-};
-
 
 #define DYNBUF  0x10000
 /*
@@ -127,55 +143,6 @@ _negme:
 	}
 }*/
 
-//float format is ?
-static u16 DYNACALL PACK(s32 val)
-{
-	u32 temp;
-	int sign,exponent,k;
-
-	sign = (val >> 23) & 0x1;
-	temp = (val ^ (val << 1)) & 0xFFFFFF;
-	exponent = 0;
-	for (k=0; k<12; k++)
-	{
-		if (temp & 0x800000)
-			break;
-		temp <<= 1;
-		exponent += 1;
-	}
-	if (exponent < 12)
-		val = (val << exponent) & 0x3FFFFF;
-	else
-		val <<= 11;
-	val >>= 11;
-	val |= sign << 15;
-	val |= exponent << 11;
-
-	return (u16)val;
-}
-
-static s32 DYNACALL UNPACK(u16 val)
-{
-	int sign,exponent,mantissa;
-	s32 uval;
-
-	sign = (val >> 15) & 0x1;
-	exponent = (val >> 11) & 0xF;
-	mantissa = val & 0x7FF;
-	uval = mantissa << 11;
-	if (exponent > 11)
-		exponent = 11;
-	else
-		uval |= (sign ^ 1) << 22;
-	uval |= sign << 23;
-	uval <<= 8;
-	uval >>= 8;
-	uval >>= exponent;
-
-	return uval;
-}
-
-
 void dsp_init()
 {
 	memset(&dsp,0,sizeof(dsp));
@@ -187,7 +154,7 @@ void dsp_init()
 	dsp.regs.MDEC_CT=1;
 
 
-	os_MakeExecutable(dsp.DynCode,sizeof(dsp.DynCode));
+	//os_MakeExecutable(dsp.DynCode,sizeof(dsp.DynCode));
 }
 void dsp_recompile();
 void DecodeInst(u32 *IPtr,_INST *i)
@@ -252,8 +219,8 @@ void _dsp_debug_step_end()
 	verify(dsp.regs_init.TEMPS);
 	verify(dsp.regs_init.EFREG);
 }
-#define nwtn(x) verify(!dsp.regs_init.##x)
-#define wtn(x) nwtn(x);dsp.regs_init.##x=true;
+#define nwtn(x) verify(!dsp.regs_init.x)
+#define wtn(x) nwtn(x);dsp.regs_init.x=true;
 
 //sign extend to 32 bits
 void dsp_rec_se(x86_block& x86e,x86_gpr_reg reg,u32 src_sz,u32 dst_sz=0xFF)
@@ -864,10 +831,4 @@ void dsp_readmem(u32 addr)
 {
 	//nothing ? :p
 }
-#else
-
-void dsp_init() { }
-void dsp_term() { }
-void dsp_step() { }
-void dsp_writenmem(u32 addr) { }
 #endif

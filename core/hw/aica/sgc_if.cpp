@@ -1,4 +1,4 @@
-﻿#include "sgc_if.h"
+#include "sgc_if.h"
 #include "dsp.h"
 #include "aica_mem.h"
 #include "hw/aica/aica_if.h"
@@ -1359,8 +1359,16 @@ void AICA_Sample()
 	{
 		VOLPAN(EXTS0L,dsp_out_vol[16].EFSDL,dsp_out_vol[16].EFPAN,mixl,mixr);
 		VOLPAN(EXTS0R,dsp_out_vol[17].EFSDL,dsp_out_vol[17].EFPAN,mixl,mixr);
+
+		DSPData->EXTS[0] = EXTS0L;
+		DSPData->EXTS[1] = EXTS0R;
 	}
-	if (settings.aica.DSPEnabled)
+	else
+	{
+		DSPData->EXTS[0] = 0;
+		DSPData->EXTS[1] = 0;
+	}
+	//if (settings.aica.DSPEnabled)
 	{
 		dsp_step();
 
