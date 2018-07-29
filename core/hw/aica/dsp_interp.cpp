@@ -8,7 +8,7 @@
 #include "aica_if.h"
 #include "aica_mem.h"
 
-#if FEAT_DSPREC == DYNAREC_NONE
+#if HOST_CPU != CPU_X86 || FEAT_DSPREC != DYNAREC_JIT
 
 void AICADSP_Init(struct dsp_t *DSP)
 {
