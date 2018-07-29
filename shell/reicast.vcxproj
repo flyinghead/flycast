@@ -80,6 +80,7 @@
     <ClCompile Include="..\core\hw\aica\aica_if.cpp" />
     <ClCompile Include="..\core\hw\aica\aica_mem.cpp" />
     <ClCompile Include="..\core\hw\aica\dsp.cpp" />
+    <ClCompile Include="..\core\hw\aica\dsp_interp.cpp" />
     <ClCompile Include="..\core\hw\aica\sgc_if.cpp" />
     <ClCompile Include="..\core\hw\arm7\arm7.cpp" />
     <ClCompile Include="..\core\hw\arm7\arm_mem.cpp" />
