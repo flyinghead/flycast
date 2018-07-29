@@ -104,12 +104,12 @@ s32 SetTileClip(u32 val, bool set)
 
 	if (csx <= 0 && csy <= 0 && cex >= 640 && cey >= 480)
 		return 0;
-	
+
 	if (set && clip_mode) {
-		csx *= scale_x;
-		csy *= scale_y;
-		cex *= scale_x;
-		cey *= scale_y;
+		csx /= scale_x;
+		csy /= scale_y;
+		cex /= scale_x;
+		cey /= scale_y;
 		if (!pvrrc.isRTT) {
 			float t = cey;
 			cey = 480 - csy;
