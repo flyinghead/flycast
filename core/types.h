@@ -621,6 +621,8 @@ struct settings_t
 		bool TranslucentPolygonDepthMask;
 		bool ModifierVolumes;
 		bool Clipping;
+		int TextureUpscale;
+		int MaxFilteredTextureSize;
 	} rend;
 
 	struct

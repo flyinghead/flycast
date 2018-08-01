@@ -4,7 +4,6 @@
 #include "ta.h"
 #include "spg.h"
 
-u32 palette_ram[1024];
 bool pal_needs_update=true;
 bool fog_needs_update=true;
 u32 _pal_rev_256[4]={0};

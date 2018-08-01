@@ -96,7 +96,7 @@ ifneq (,$(findstring x86,$(platform)))
     MFLAGS += -m32
     ASFLAGS += --32
     LDFLAGS += -m32
-    CFLAGS += -m32 -D TARGET_LINUX_x86 -D TARGET_NO_AREC -fsingle-precision-constant -fno-builtin-sqrtf
+    CFLAGS += -m32 -D TARGET_LINUX_x86 -D TARGET_NO_AREC -fno-builtin-sqrtf
     CXXFLAGS += -fexceptions
 
     ifneq (,$(findstring sse4_1,$(platform)))
@@ -108,7 +108,7 @@ else ifneq (,$(findstring x64,$(platform)))
     X64_REC := 1
     NOT_ARM := 1
     USE_X11 := 1
-    CFLAGS += -D TARGET_LINUX_x64 -D TARGET_NO_AREC -fsingle-precision-constant -fno-builtin-sqrtf
+    CFLAGS += -D TARGET_LINUX_x64 -D TARGET_NO_AREC -fno-builtin-sqrtf
     CXXFLAGS += -fexceptions
 
     ifneq (,$(findstring sse4_1,$(platform)))
@@ -242,7 +242,7 @@ CFLAGS += -g -O3 -D RELEASE -c -D USES_HOMEDIR #-D NO_REND
 CFLAGS += -frename-registers -fno-strict-aliasing
 CFLAGS += -ffast-math -ftree-vectorize
 
-CXXFLAGS += -fno-rtti -fpermissive -fno-operator-names -D_GLIBCXX_USE_CXX11_ABI=0
+CXXFLAGS += -fno-rtti -fpermissive -fno-operator-names -D_GLIBCXX_USE_CXX11_ABI=0 -std=gnu++11
 
 INCS += -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps -I$(RZDCY_SRC_DIR)/khronos
 
@@ -346,7 +346,7 @@ ifdef NAOMI
     EXECUTABLE_NAME=reicast-naomi
 else ifdef DISPFRAME
     CFLAGS += -D TARGET_DISPFRAME
-    DC_PLATFORM=dreamcast
+    DC_PLATFORM=dispframe
     EXECUTABLE=dispframe.elf
     EXECUTABLE_NAME=dispframe
 else

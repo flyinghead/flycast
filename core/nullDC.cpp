@@ -287,7 +287,9 @@ void LoadSettings()
 	settings.rend.TranslucentPolygonDepthMask = cfgLoadInt("config", "rend.TranslucentPolygonDepthMask", 0);
 	settings.rend.ModifierVolumes	= cfgLoadInt("config","rend.ModifierVolumes",1);
 	settings.rend.Clipping			= cfgLoadInt("config","rend.Clipping",1);
-	
+	settings.rend.TextureUpscale	= cfgLoadInt("config","rend.TextureUpscale", 1);
+	settings.rend.MaxFilteredTextureSize = cfgLoadInt("config","rend.MaxFilteredTextureSize", 256);
+
 	settings.pvr.subdivide_transp	= cfgLoadInt("config","pvr.Subdivide",0);
 	
 	settings.pvr.ta_skip			= cfgLoadInt("config","ta.skip",0);

@@ -712,3 +712,15 @@ union RegionArrayTile
 	};
 	u32 full;
 };
+
+enum PixelFormat
+{
+	Pixel1555 = 0,
+	Pixel565 = 1,
+	Pixel4444 = 2,
+	PixelYUV = 3,
+	PixelBumpMap = 4,
+	PixelPal4 = 5,
+	PixelPal8 = 6,
+	PixelReserved = 7
+};

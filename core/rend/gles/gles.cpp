@@ -995,6 +995,14 @@ bool gles_init()
 	glHint(GL_GENERATE_MIPMAP_HINT, GL_FASTEST);
 #endif
 
+	if (settings.rend.TextureUpscale > 1)
+	{
+		// Trick to preload the tables used by xBRZ
+		u32 src[] { 0x11111111, 0x22222222, 0x33333333, 0x44444444 };
+		u32 dst[16];
+		UpscalexBRZ(2, src, dst, 2, 2, false);
+	}
+
 	return true;
 }
 

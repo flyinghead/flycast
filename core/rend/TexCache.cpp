@@ -1,10 +1,17 @@
+#include <list>
 #include "TexCache.h"
 #include "hw/pvr/pvr_regs.h"
 #include "hw/mem/_vmem.h"
+#include "deps/ctpl/ctpl_stl.h"
+#include "deps/xbrz/xbrz.h"
 
 u8* vq_codebook;
 u32 palette_index;
 bool KillTex=false;
+u32 palette16_ram[1024];
+u32 palette32_ram[1024];
+
+ctpl::thread_pool ThreadPool;
 
 u32 detwiddle[2][8][1024];
 //input : address in the yyyyyxxxxx format
@@ -68,35 +75,38 @@ void palette_update()
 	memcpy(pal_rev_256,_pal_rev_256,sizeof(pal_rev_256));
 	memcpy(pal_rev_16,_pal_rev_16,sizeof(pal_rev_16));
 
-#define PixelPacker pp_dx
 	pal_needs_update=false;
 	switch(PAL_RAM_CTRL&3)
 	{
 	case 0:
 		for (int i=0;i<1024;i++)
 		{
-			palette_ram[i]=ARGB1555(PALETTE_RAM[i]);
+			palette16_ram[i] = ARGB1555(PALETTE_RAM[i]);
+			palette32_ram[i] = ARGB1555_32(PALETTE_RAM[i]);
 		}
 		break;
 
 	case 1:
 		for (int i=0;i<1024;i++)
 		{
-			palette_ram[i]=ARGB565(PALETTE_RAM[i]);
+			palette16_ram[i] = ARGB565(PALETTE_RAM[i]);
+			palette32_ram[i] = ARGB565_32(PALETTE_RAM[i]);
 		}
 		break;
 
 	case 2:
 		for (int i=0;i<1024;i++)
 		{
-			palette_ram[i]=ARGB4444(PALETTE_RAM[i]);
+			palette16_ram[i] = ARGB4444(PALETTE_RAM[i]);
+			palette32_ram[i] = ARGB4444_32(PALETTE_RAM[i]);
 		}
 		break;
 
 	case 3:
 		for (int i=0;i<1024;i++)
 		{
-			palette_ram[i]=ARGB8888(PALETTE_RAM[i]);
+			palette16_ram[i] = ARGB8888(PALETTE_RAM[i]);
+			palette32_ram[i] = ARGB8888_32(PALETTE_RAM[i]);
 		}
 		break;
 	}
@@ -271,4 +281,122 @@ void libCore_vramlock_Unlock_block_wb(vram_block* block)
 		//more work needed
 		free(block);
 	}
+}
+
+//
+// deposterization: smoothes posterized gradients from low-color-depth (e.g. 444, 565, compressed) sources
+// Shamelessly stolen from ppsspp
+// Copyright (c) 2012- PPSSPP Project.
+//
+#define BLOCK_SIZE 32
+
+static void deposterizeH(u32* data, u32* out, int w, int l, int u) {
+	static const int T = 8;
+	for (int y = l; y < u; ++y) {
+		for (int x = 0; x < w; ++x) {
+			int inpos = y*w + x;
+			u32 center = data[inpos];
+			if (x == 0 || x == w - 1) {
+				out[y*w + x] = center;
+				continue;
+			}
+			u32 left = data[inpos - 1];
+			u32 right = data[inpos + 1];
+			out[y*w + x] = 0;
+			for (int c = 0; c < 4; ++c) {
+				u8 lc = ((left >> c * 8) & 0xFF);
+				u8 cc = ((center >> c * 8) & 0xFF);
+				u8 rc = ((right >> c * 8) & 0xFF);
+				if ((lc != rc) && ((lc == cc && abs((int)((int)rc) - cc) <= T) || (rc == cc && abs((int)((int)lc) - cc) <= T))) {
+					// blend this component
+					out[y*w + x] |= ((rc + lc) / 2) << (c * 8);
+				} else {
+					// no change for this component
+					out[y*w + x] |= cc << (c * 8);
+				}
+			}
+		}
+	}
+}
+static void deposterizeV(u32* data, u32* out, int w, int h, int l, int u) {
+	static const int T = 8;
+	for (int xb = 0; xb < w / BLOCK_SIZE + 1; ++xb) {
+		for (int y = l; y < u; ++y) {
+			for (int x = xb*BLOCK_SIZE; x < (xb + 1)*BLOCK_SIZE && x < w; ++x) {
+				u32 center = data[y    * w + x];
+				if (y == 0 || y == h - 1) {
+					out[y*w + x] = center;
+					continue;
+				}
+				u32 upper = data[(y - 1) * w + x];
+				u32 lower = data[(y + 1) * w + x];
+				out[y*w + x] = 0;
+				for (int c = 0; c < 4; ++c) {
+					u8 uc = ((upper >> c * 8) & 0xFF);
+					u8 cc = ((center >> c * 8) & 0xFF);
+					u8 lc = ((lower >> c * 8) & 0xFF);
+					if ((uc != lc) && ((uc == cc && abs((int)((int)lc) - cc) <= T) || (lc == cc && abs((int)((int)uc) - cc) <= T))) {
+						// blend this component
+						out[y*w + x] |= ((lc + uc) / 2) << (c * 8);
+					} else {
+						// no change for this component
+						out[y*w + x] |= cc << (c * 8);
+					}
+				}
+			}
+		}
+	}
+}
+
+void parallelize(const std::function<void(int,int)> &func, int start, int end, int width /* = 0 */)
+{
+	if (ThreadPool.size() == 0)
+		ThreadPool.resize(max(1, (int)settings.pvr.MaxThreads));
+
+	static const int CHUNK = 8;	// 32x32 best if not parall'ed (chunk >= 32)
+									//			 8: 0.0481391 ms
+									//			16: 0.068005 ms
+									//			32: 0.0265986 ms
+									// 1024x512 best is 8 (or 16)
+									//			 4:							2.19 ms
+									//           8: 229 - 241 Mpix/s		2.16 ms 2.185 2.183 2.11
+									//			16: 163 - 175 Mpix/s		2.16 ms 2.145 2.185 2.144
+									//			32: 129 - 142 Mpix/s		2.19 ms
+									//			64: 						4.34 ms
+	const int chunk_size = width == 0 ? CHUNK : max(CHUNK, CHUNK * 128 / width);
+
+	if (end - start <= chunk_size)
+	{
+		// Don't parallelize if there isn't much to parallelize
+		func(start, end);
+	}
+	else
+	{
+		std::list<std::future<void>> futures;
+
+		for (int i = start; i < end; i += chunk_size)
+			futures.push_back(ThreadPool.push([func] (int id, int from, int to){ func(from, to); }, i, i + chunk_size));
+		for (auto it = futures.begin(); it != futures.end(); ++it)
+			it->wait();
+	}
+}
+
+void DePosterize(u32* source, u32* dest, int width, int height) {
+	u32 *tmpbuf = (u32 *)malloc(width * height * sizeof(u32));
+
+	parallelize(std::bind(&deposterizeH, source, tmpbuf, width, std::placeholders::_1, std::placeholders::_2), 0, height, width);
+	parallelize(std::bind(&deposterizeV, tmpbuf, dest, width, height, std::placeholders::_1, std::placeholders::_2), 0, height, width);
+	parallelize(std::bind(&deposterizeH, dest, tmpbuf, width, std::placeholders::_1, std::placeholders::_2), 0, height, width);
+	parallelize(std::bind(&deposterizeV, tmpbuf, dest, width, height, std::placeholders::_1, std::placeholders::_2), 0, height, width);
+
+	free(tmpbuf);
+}
+
+struct xbrz::ScalerCfg xbrz_cfg;
+
+void UpscalexBRZ(int factor, u32* source, u32* dest, int width, int height, bool has_alpha) {
+	parallelize(
+			std::bind(&xbrz::scale, factor, source, dest, width, height, has_alpha ? xbrz::ColorFormat::ARGB : xbrz::ColorFormat::RGB, xbrz_cfg,
+					std::placeholders::_1, std::placeholders::_2), 0, height, width);
+//	xbrz::scale(factor, source, dest, width, height, has_alpha ? xbrz::ColorFormat::ARGB : xbrz::ColorFormat::RGB, xbrz_cfg);
 }
