@@ -173,14 +173,9 @@ do_iter:
 HIDDEN(no_update)
 CSYM(no_update):              @ next_pc _MUST_ be on r4 *R4 NOT R0 anymore*
 
-                              @ Note: I suspect that the exit thread routine
-                              @       below is inefficient. If anyone is familiar
-                              @       with asm please consider optimising!
-
-	ldr r3, =CSYM(ngen_required)	@ load r3 with the address of c variable ngen_required
-	ldr r0,[r3]		@ dereference and store in r0
-	cmp r0,#0		@ compare r0 with numerical value 0
-	beq CSYM(cleanup)	@ if compare is true jump to cleanup label and exit thread
+	ldr r0,[r8,#-156]         @load CpuRunning
+	cmp r0,#0
+	beq CSYM(cleanup)
 
 #if DC_PLATFORM == DC_PLATFORM_NAOMI
 	sub r2,r8,#0x4100000

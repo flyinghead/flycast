@@ -46,8 +46,6 @@ void ngen_FailedToFindBlock_internal() {
 
 void(*ngen_FailedToFindBlock)() = &ngen_FailedToFindBlock_internal;
 
-unsigned int ngen_required = true;
-
 void ngen_mainloop(void* v_cntx)
 {
 	Sh4RCB* ctx = (Sh4RCB*)((u8*)v_cntx - sizeof(Sh4RCB));
@@ -55,7 +53,7 @@ void ngen_mainloop(void* v_cntx)
 	cycle_counter = 0;
 
 #if !defined(TARGET_BOUNDED_EXECUTION)
-	while (ngen_required) {
+	while (sh4_int_bCpuRun) {
 #else
 	for (int i=0; i<10000; i++) {
 #endif
@@ -73,12 +71,6 @@ void ngen_mainloop(void* v_cntx)
 
 void ngen_init()
 {
-}
-
-void ngen_terminate(void)
-{
-    printf("ngen_terminate called\n");
-    ngen_required = false;
 }
 
 void ngen_GetFeatures(ngen_features* dst)

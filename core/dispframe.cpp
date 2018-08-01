@@ -4,7 +4,7 @@
 #include "rend/TexCache.h"
 
 extern cResetEvent rs;
-extern int rend_en;
+extern int renderer_enabled;
 extern cResetEvent frame_finished;
 extern TA_context* rqueue;
 
@@ -33,7 +33,7 @@ void dc_run()
 	double t1 = os_GetSeconds();
 	printf("Loaded context in %g ms\n", (t1- t0) * 1000);
 
-	while(rend_en)
+	while(renderer_enabled)
 	{
 		tad_context saved_tad = ctx->tad;
 		rend_context saved_rend = ctx->rend;

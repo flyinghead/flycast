@@ -252,6 +252,7 @@ void os_CreateWindow()
 void common_linux_setup();
 int dc_init(int argc,wchar* argv[]);
 void dc_run();
+void dc_term();
 
 #ifdef TARGET_PANDORA
 	void gl_term();
@@ -426,23 +427,6 @@ std::vector<string> find_system_data_dirs()
 	return dirs;
 }
 
-#if HOST_OS==OS_LINUX
-#if defined(SUPPORT_X11)
-void x11_gl_context_destroy();
-void x11_window_destroy();
-#endif
-void dc_term();
-void rend_terminate();
-void ngen_terminate();
-
-void start_shutdown(void)
-{
-    printf("start_shutdown called\n");
-    rend_terminate();
-    ngen_terminate();
-}
-#endif
-
 int main(int argc, wchar* argv[])
 {
 	#ifdef TARGET_PANDORA
@@ -491,31 +475,25 @@ int main(int argc, wchar* argv[])
 		emscripten_set_main_loop(&dc_run, 100, false);
 	#endif
 
-
 	#ifdef TARGET_PANDORA
 		clean_exit(0);
 	#endif
 
-#if HOST_OS==OS_LINUX
 	dc_term();
-#if defined(USE_EVDEV)
-	printf("closing any open controllers\n");
 
-	for (int port = 0; port < 4 ; port++)
-	{
-		if(evdev_controllers[port].fd >= 0)
+	#if defined(USE_EVDEV)
+		for (int port = 0; port < 4 ; port++)
 		{
-			close(evdev_controllers[port].fd);
+			if(evdev_controllers[port].fd >= 0)
+			{
+				close(evdev_controllers[port].fd);
+			}
 		}
-	}
-#endif
-#if defined(SUPPORT_X11)
-	/* Close the GL context */
-	x11_gl_context_destroy();
-	/* Destroy the window */
-	x11_window_destroy();
-#endif
-#endif
+	#endif
+
+	#if defined(SUPPORT_X11)
+		x11_window_destroy();
+	#endif
 
 	return 0;
 }

@@ -35,13 +35,15 @@ int x11_width;
 int x11_height;
 
 int ndcid = 0;
-void* x11_glc;
+void* x11_glc = NULL;
 bool x11_fullscreen = false;
-
-void* x11_vis;
 Atom wmDeleteMessage;
 
+void* x11_vis;
+
 extern bool dump_frame_switch;
+
+void dc_stop(void);
 
 enum
 {
@@ -67,19 +69,17 @@ void x11_window_set_fullscreen(bool fullscreen)
 		XSendEvent((Display*)x11_disp, DefaultRootWindow((Display*)x11_disp), False, SubstructureNotifyMask, &xev);
 }
 
-void start_shutdown(void);
-
 void event_x11_handle()
 {
 	XEvent event;
 
-	while(XPending((Display *)x11_disp)) {
+	while(XPending((Display *)x11_disp))
+	{
 		XNextEvent((Display *)x11_disp, &event);
 
 		if (event.type == ClientMessage &&
-				event.xclient.data.l[0] == wmDeleteMessage) {
-			start_shutdown();
-		}
+				event.xclient.data.l[0] == wmDeleteMessage)
+			dc_stop();
 	}
 }
 
@@ -98,7 +98,7 @@ void input_x11_handle()
 				case KeyRelease:
 					if (e.type == KeyRelease && e.xkey.keycode == KEY_ESC)
 					{
-						start_shutdown();
+						dc_stop();
 					}
 #ifndef RELEASE
 					else if (e.xkey.keycode == KEY_F10)
@@ -269,7 +269,7 @@ void x11_window_create()
 
 			// Get a visual
 			XVisualInfo *vi = glXGetVisualFromFBConfig(x11Display, bestFbc);
-			printf("Chosen visual ID = 0x%x\n", vi->visualid);
+			printf("Chosen visual ID = 0x%lx\n", vi->visualid);
 
 
 			depth = vi->depth;
@@ -308,6 +308,7 @@ void x11_window_create()
 		x11Window = XCreateWindow(x11Display, RootWindow(x11Display, x11Screen), (ndcid%3)*640, (ndcid/3)*480, x11_width, x11_height,
 			0, depth, InputOutput, x11Visual->visual, ui32Mask, &sWA);
 
+		// Capture the close window event
 		wmDeleteMessage = XInternAtom(x11Display, "WM_DELETE_WINDOW", False);
 		XSetWMProtocols(x11Display, x11Window, &wmDeleteMessage, 1);
 
@@ -390,12 +391,18 @@ void x11_window_destroy()
 	if (x11_win)
 	{
 		XDestroyWindow((Display*)x11_disp, (Window)x11_win);
-		x11_win = 0;
+		x11_win = NULL;
 	}
 	if (x11_disp)
 	{
+		if (x11_glc)
+		{
+			glXMakeCurrent((Display*)x11_disp, None, NULL);
+			glXDestroyContext((Display*)x11_disp, (GLXContext)x11_glc);
+			x11_glc = NULL;
+		}
 		XCloseDisplay((Display*)x11_disp);
-		x11_disp = 0;
+		x11_disp = NULL;
 	}
 }
 #endif

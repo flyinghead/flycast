@@ -91,6 +91,8 @@ void gl_swap() {
 void common_linux_setup();
 int dc_init(int argc,wchar* argv[]);
 void dc_run();
+void dc_term();
+void dc_stop();
 
 bool has_init = false;
 void* emuthread(void*) {
@@ -117,7 +119,16 @@ void* emuthread(void*) {
     
     dc_run();
     
+    has_init = false;
+    
+    dc_term();
+
     return 0;
+}
+
+extern "C" void emu_dc_stop()
+{
+    dc_stop();
 }
 
 pthread_t emu_thread;
@@ -215,15 +226,4 @@ extern "C" void emu_key_input(UInt16 keyCode, int state) {
         // Enter
         case 0x24:     handle_key(Btn_Start, state); break;
     }
-}
-
-void rend_terminate();
-void ngen_terminate();
-void dc_term();
-
-extern "C" void emu_shutdown()
-{
-    rend_terminate();
-    ngen_terminate();
-    dc_term();
 }

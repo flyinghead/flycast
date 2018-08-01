@@ -255,6 +255,13 @@ void dc_term()
 	SaveSettings();
 #endif
 	SaveRomFiles(get_writable_data_path("/data/"));
+    
+    TermAudio();
+}
+
+void dc_stop()
+{
+	sh4_cpu.Stop();
 }
 
 void LoadSettings()

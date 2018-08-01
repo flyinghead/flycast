@@ -76,6 +76,7 @@ u32 VertexCount=0;
 u32 FrameCount=1;
 
 Renderer* renderer;
+bool renderer_enabled = true;	// Signals the renderer thread to exit
 
 #if !defined(TARGET_NO_THREADS)
 cResetEvent rs(false,true);
@@ -251,6 +252,9 @@ bool rend_single_frame()
 #if !defined(TARGET_NO_THREADS)
 		rs.Wait();
 #endif
+		if (!renderer_enabled)
+			return false;
+
 		_pvrrc = DequeueRender();
 	}
 	while (!_pvrrc);
@@ -265,8 +269,6 @@ bool rend_single_frame()
 
 	return do_swp;
 }
-
-int rend_en = true;
 
 void* rend_thread(void* p)
 {
@@ -308,22 +310,14 @@ void* rend_thread(void* p)
 	//we don't know if this is true, so let's not speculate here
 	//renderer->Resize(640, 480);
 
-	while(rend_en)
+	while (renderer_enabled)
 	{
 		if (rend_single_frame())
 			renderer->Present();
 	}
 
-	return 0;
+	return NULL;
 }
-
-#if HOST_OS==OS_LINUX || HOST_OS==OS_DARWIN
-void rend_terminate()
-{
-	rend_en = false;
-	printf("rend_terminate called\n");
-}
-#endif
 
 #if !defined(TARGET_NO_THREADS)
 cThread rthd(rend_thread,0);
@@ -539,11 +533,20 @@ bool rend_init()
 
 void rend_term()
 {
+	renderer_enabled = false;
+#if !defined(TARGET_NO_THREADS)
+	rs.Set();
+#endif
+
 	if (fCheckFrames)
 		fclose(fCheckFrames);
 
 	if (fLogFrames)
 		fclose(fLogFrames);
+
+#if !defined(TARGET_NO_THREADS)
+	rthd.WaitToEnd();
+#endif
 }
 
 void rend_vblank()
