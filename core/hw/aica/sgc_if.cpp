@@ -688,6 +688,7 @@ struct ChannelEx
 		case 0x18://FNS
 		case 0x19://FNS,OCT
 			UpdatePitch();
+			UpdateAEG();
 			break;
 
 		case 0x1C://ALFOS,ALFOWS,PLFOS
