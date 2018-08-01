@@ -22,27 +22,31 @@
 
 AudioUnit audioUnit;
 
-#define BUFSIZE 8192
-u8 samples_temp[BUFSIZE];
+// ~ 93 ms
+#define BUFSIZE (4 * 1024 * 4)
+static u8 samples_temp[BUFSIZE];
 
-std::atomic<int> samples_wptr;
-int samples_rptr;
-cResetEvent bufferEmpty(false, true);
+static std::atomic<int> samples_wptr;
+static std::atomic<int> samples_rptr;
+static cResetEvent bufferEmpty(false, true);
 
-OSStatus coreaudio_callback(void* ctx, AudioUnitRenderActionFlags* flags, const AudioTimeStamp* ts,
+static OSStatus coreaudio_callback(void* ctx, AudioUnitRenderActionFlags* flags, const AudioTimeStamp* ts,
                             UInt32 bus, UInt32 frames, AudioBufferList* abl)
 {
     verify(frames <= 1024);
 
-    for (int i = 0; i < abl->mNumberBuffers; i++) {
-        if ((samples_rptr + abl->mBuffers[i].mDataByteSize) % BUFSIZE > samples_wptr) {
+    for (int i = 0; i < abl->mNumberBuffers; i++)
+    {
+        u32 buf_size = abl->mBuffers[i].mDataByteSize;
+        if ((samples_wptr - samples_rptr + BUFSIZE) % BUFSIZE < buf_size)
+        {
             //printf("Core Audio: buffer underrun");
-            memset(abl->mBuffers[i].mData, '\0', abl->mBuffers[i].mDataByteSize);
+            memset(abl->mBuffers[i].mData, '\0', buf_size);
         }
         else
         {
-            memcpy(abl->mBuffers[i].mData, samples_temp + samples_rptr, abl->mBuffers[i].mDataByteSize);
-            samples_rptr = (samples_rptr + abl->mBuffers[i].mDataByteSize) % BUFSIZE;
+            memcpy(abl->mBuffers[i].mData, samples_temp + samples_rptr, buf_size);
+            samples_rptr = (samples_rptr + buf_size) % BUFSIZE;
         }
     }
     
@@ -115,11 +119,21 @@ static void coreaudio_init()
 
 static u32 coreaudio_push(void* frame, u32 samples, bool wait)
 {
-    if (wait)
-        bufferEmpty.Wait();
-
-    memcpy(&samples_temp[samples_wptr], frame, samples * 4);
-    samples_wptr = (samples_wptr + samples * 4) % BUFSIZE;
+    int byte_size = samples * 4;
+    while (true)
+    {
+        int space = (samples_rptr - samples_wptr + BUFSIZE) % BUFSIZE;
+        if (space != 0 && byte_size > space - 1)
+        {
+            if (!wait)
+                break;
+            bufferEmpty.Wait();
+            continue;
+        }
+        memcpy(&samples_temp[samples_wptr], frame, byte_size);
+        samples_wptr = (samples_wptr + byte_size) % BUFSIZE;
+        break;
+    }
     
     return 1;
 }

@@ -193,6 +193,7 @@
 		84B7BF861B72871600F9733F /* EmuGLView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BF851B72871600F9733F /* EmuGLView.swift */; };
 		AE1E293B2095FB1600FC6BA2 /* rec_cpp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE1E293A2095FB1600FC6BA2 /* rec_cpp.cpp */; };
 		AE1E294020A96B0B00FC6BA2 /* rec_x64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE1E293F20A96B0B00FC6BA2 /* rec_x64.cpp */; };
+		AE8C27342111A31100D4D8F4 /* dsp_interp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE8C27332111A31100D4D8F4 /* dsp_interp.cpp */; };
 		EBDF374F1BB96581001191B5 /* audiobackend_coreaudio.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EBDF374D1BB96581001191B5 /* audiobackend_coreaudio.cpp */; };
 		EBDF37511BB969EE001191B5 /* CoreAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EBDF37501BB969EE001191B5 /* CoreAudio.framework */; };
 		EBDF37531BB969F8001191B5 /* AudioUnit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EBDF37521BB969F8001191B5 /* AudioUnit.framework */; };
@@ -545,6 +546,7 @@
 		AE1E292B20947D4700FC6BA2 /* xbyak_util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = xbyak_util.h; sourceTree = "<group>"; };
 		AE1E293A2095FB1600FC6BA2 /* rec_cpp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = rec_cpp.cpp; sourceTree = "<group>"; };
 		AE1E293F20A96B0B00FC6BA2 /* rec_x64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = rec_x64.cpp; sourceTree = "<group>"; };
+		AE8C27332111A31100D4D8F4 /* dsp_interp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dsp_interp.cpp; sourceTree = "<group>"; };
 		EBDF374D1BB96581001191B5 /* audiobackend_coreaudio.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = audiobackend_coreaudio.cpp; sourceTree = "<group>"; };
 		EBDF374E1BB96581001191B5 /* audiobackend_coreaudio.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = audiobackend_coreaudio.h; sourceTree = "<group>"; };
 		EBDF37501BB969EE001191B5 /* CoreAudio.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreAudio.framework; path = System/Library/Frameworks/CoreAudio.framework; sourceTree = SDKROOT; };
@@ -929,6 +931,7 @@
 				84B7BDCD1B72720100F9733F /* aica_mem.h */,
 				84B7BDCE1B72720100F9733F /* dsp.cpp */,
 				84B7BDCF1B72720100F9733F /* dsp.h */,
+				AE8C27332111A31100D4D8F4 /* dsp_interp.cpp */,
 				84B7BDD01B72720100F9733F /* sgc_if.cpp */,
 				84B7BDD11B72720100F9733F /* sgc_if.h */,
 			);
@@ -1470,6 +1473,7 @@
 				84B7BEAF1B72720200F9733F /* cfg.cpp in Sources */,
 				84B7BF521B72720200F9733F /* ubc.cpp in Sources */,
 				84B7BF121B72720200F9733F /* zip_unchange.c in Sources */,
+				AE8C27342111A31100D4D8F4 /* dsp_interp.cpp in Sources */,
 				84B7BF421B72720200F9733F /* blockmanager.cpp in Sources */,
 				84B7BEE21B72720200F9733F /* zip_add_dir.c in Sources */,
 				84967CC91B8F49EE005F1140 /* pngset.c in Sources */,
