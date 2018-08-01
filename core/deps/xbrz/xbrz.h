@@ -21,6 +21,11 @@
 #include <limits>
 #include "xbrz_config.h"
 
+// Guard against msvc stupidity
+#ifdef max
+#undef max
+#endif
+
 namespace xbrz
 {
 /*
