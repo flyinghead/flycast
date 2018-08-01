@@ -81,11 +81,6 @@ class EmuGLView: NSOpenGLView, NSWindowDelegate {
         self.window!.delegate = self
     }
     
-    override func viewDidMoveToWindow() {
-        super.viewDidMoveToWindow()
-        self.window!.delegate = self
-    }
-    
     func windowWillClose(_ notification: Notification) {
         emu_dc_stop()
     }
