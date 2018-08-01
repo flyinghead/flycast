@@ -26,9 +26,10 @@ class EmuGLView: NSOpenGLView, NSWindowDelegate {
         
         openGLContext!.makeCurrentContext()
         
-        while 0==emu_single_frame(Int32(dirtyRect.width), Int32(dirtyRect.height)) { }
-        
-        openGLContext!.flushBuffer()
+        if (emu_single_frame(Int32(dirtyRect.width), Int32(dirtyRect.height)) != 0)
+        {
+            openGLContext!.flushBuffer()
+        }
     }
     
     override func awakeFromNib() {
@@ -61,7 +62,10 @@ class EmuGLView: NSOpenGLView, NSWindowDelegate {
     
    
     func timerTick() {
-        self.needsDisplay = true;
+        if (emu_frame_pending())
+        {
+            self.needsDisplay = true;
+        }
     }
     
     override func keyDown(with e: NSEvent) {

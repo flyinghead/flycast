@@ -127,11 +127,14 @@ extern "C" void emu_main() {
 
 extern int screen_width,screen_height;
 bool rend_single_frame();
+bool rend_framePending();
 bool gles_init();
 
 extern "C" int emu_single_frame(int w, int h) {
     if (!has_init)
         return true;
+    if (!rend_framePending())
+        return 0;
     screen_width = w;
     screen_height = h;
 
@@ -140,6 +143,11 @@ extern "C" int emu_single_frame(int w, int h) {
 
 extern "C" void emu_gles_init() {
     gles_init();
+}
+
+extern "C" bool emu_frame_pending()
+{
+    return rend_framePending();
 }
 
 enum DCPad {
@@ -196,14 +204,14 @@ extern "C" void emu_key_input(UInt16 keyCode, int state) {
         // S
         case 0x01:     handle_trig(rt, state); break;
 
-        // J
-        case 0x26:     handle_key(DPad_Left, state); break;
-        // K
-        case 0x28:     handle_key(DPad_Down, state); break;
-        // L
-        case 0x25:     handle_key(DPad_Right, state); break;
-        // I
-        case 0x22:     handle_key(DPad_Up, state); break;
+        // Left arrow
+        case 0x7b:     handle_key(DPad_Left, state); break;
+        // Down arrow
+        case 0x7d:     handle_key(DPad_Down, state); break;
+        // Right arrow
+        case 0x7c:     handle_key(DPad_Right, state); break;
+        // Up arrow
+        case 0x7e:     handle_key(DPad_Up, state); break;
         // Enter
         case 0x24:     handle_key(Btn_Start, state); break;
     }
