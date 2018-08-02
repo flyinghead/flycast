@@ -173,6 +173,10 @@ do_iter:
 HIDDEN(no_update)
 CSYM(no_update):              @ next_pc _MUST_ be on r4 *R4 NOT R0 anymore*
 
+	ldr r0,[r8,#-156]         @load CpuRunning
+	cmp r0,#0
+	beq CSYM(cleanup)
+
 #if DC_PLATFORM == DC_PLATFORM_NAOMI
 	sub r2,r8,#0x4100000
 	ubfx r1,r4,#1,#24
@@ -185,6 +189,8 @@ CSYM(no_update):              @ next_pc _MUST_ be on r4 *R4 NOT R0 anymore*
 	@bic r1,r4,#0xFF000000
 	@ldr pc,[r2,r1,lsl #1]
 
+HIDDEN(cleanup)
+CSYM(cleanup):
 
 pop {r4-r12,lr}
 bx lr

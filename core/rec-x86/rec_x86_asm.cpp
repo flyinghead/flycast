@@ -59,6 +59,8 @@ naked void ngen_FailedToFindBlock_()
 	}
 }
 
+const u32 cpurun_offset=offsetof(Sh4RCB,cntx.CpuRunning);
+
 void (*ngen_FailedToFindBlock)()=&ngen_FailedToFindBlock_;
 naked void ngen_mainloop(void* cntx)
 {
@@ -93,8 +95,10 @@ do_iter:
 		pop ecx;
 		call rdv_DoInterrupts;
 		mov ecx,eax;
-//		cmp byte ptr [sh4_int_bCpuRun],0;
-	//	jz cleanup;
+		mov edx,[p_sh4rcb];
+		add edx,[cpurun_offset];
+		cmp dword ptr [edx],0;
+		jz cleanup;
 		jmp no_update;
 
 cleanup:
@@ -128,6 +132,7 @@ naked void DYNACALL ngen_blockcheckfail2(u32 addr)
 }
 #else
 	u32 gas_offs=offsetof(Sh4RCB,cntx.jdyn);
+	u32 cpurun_offset=offsetof(Sh4RCB,cntx.CpuRunning);
 	void (*ngen_FailedToFindBlock)()=&ngen_FailedToFindBlock_;
 #endif
 #endif

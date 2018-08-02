@@ -10,6 +10,7 @@
 #define emulator_osx_osx_main_Bridging_Header_h
 
 void emu_main();
+void emu_dc_stop();
 int emu_single_frame(int w, int h);
 void emu_gles_init();
 void emu_key_input(const char* key, int state);

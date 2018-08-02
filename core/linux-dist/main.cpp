@@ -222,6 +222,7 @@ void os_DoEvents()
 {
 	#if defined(SUPPORT_X11)
 		input_x11_handle();
+		event_x11_handle();
 	#endif
 }
 
@@ -252,6 +253,7 @@ void os_CreateWindow()
 void common_linux_setup();
 int dc_init(int argc,wchar* argv[]);
 void dc_run();
+void dc_term();
 
 #ifdef TARGET_PANDORA
 	void gl_term();
@@ -475,9 +477,24 @@ int main(int argc, wchar* argv[])
 		emscripten_set_main_loop(&dc_run, 100, false);
 	#endif
 
-
 	#ifdef TARGET_PANDORA
 		clean_exit(0);
+	#endif
+
+	dc_term();
+
+	#if defined(USE_EVDEV)
+		for (int port = 0; port < 4 ; port++)
+		{
+			if(evdev_controllers[port].fd >= 0)
+			{
+				close(evdev_controllers[port].fd);
+			}
+		}
+	#endif
+
+	#if defined(SUPPORT_X11)
+		x11_window_destroy();
 	#endif
 
 	return 0;
