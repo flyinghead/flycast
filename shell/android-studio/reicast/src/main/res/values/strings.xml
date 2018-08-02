@@ -129,6 +129,10 @@
     <string name="downloadVMU">Download VMU</string>
     
     <string name="log_saved">Logcat saved and copied to clipboard\nPlease paste inside the Github issue</string>
+
+    <string name="service_ticker">reicast is running...</string>
+    <string name="service_title">reicast is running...</string>
+    <string name="service_content">Emulator service is currently running</string>
     
     <!-- Onscreen Menu -->
     <string name="popup_button_back">Back</string>

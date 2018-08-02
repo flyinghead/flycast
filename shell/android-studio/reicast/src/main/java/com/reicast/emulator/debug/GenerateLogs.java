@@ -153,7 +153,7 @@ public class GenerateLogs extends AsyncTask<String, Integer, String> {
 		}
 		try {
 			mLogcatProc = Runtime.getRuntime().exec(
-					new String[] { "logcat", "-d", "AndroidRuntime:E *:S" });
+					new String[] { "logcat", "-ds", "AndroidRuntime:E" });
 			reader = new BufferedReader(new InputStreamReader(
 					mLogcatProc.getInputStream()));
 			String line;
@@ -187,7 +187,7 @@ public class GenerateLogs extends AsyncTask<String, Integer, String> {
 			mLogcatProc = null;
 			reader = null;
 			mLogcatProc = Runtime.getRuntime().exec(
-					new String[] { "logcat", "-d", "reicast:V *:S" });
+					new String[] { "logcat", "-ds", "reicast:V" });
 			reader = new BufferedReader(new InputStreamReader(
 					mLogcatProc.getInputStream()));
 			log.append(separator);
@@ -203,7 +203,7 @@ public class GenerateLogs extends AsyncTask<String, Integer, String> {
 			mLogcatProc = null;
 			reader = null;
 			mLogcatProc = Runtime.getRuntime().exec(
-					new String[] { "logcat", "-d", "GL2JNIView:E *:S" });
+					new String[] { "logcat", "-ds", "GL2JNIView:E" });
 			reader = new BufferedReader(new InputStreamReader(
 					mLogcatProc.getInputStream()));
 			log.append(separator);

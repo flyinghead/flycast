@@ -69,6 +69,7 @@ LOCAL_PRELINK_MODULE  := false
 
 LOCAL_MODULE	:= dc
 LOCAL_DISABLE_FORMAT_STRING_CHECKS=true
+LOCAL_SHORT_COMMANDS := true
 LOCAL_ASFLAGS := -fPIC -fvisibility=hidden
 LOCAL_LDLIBS	:= -llog -lGLESv2 -lEGL -lz 
 #-Wl,-Map,./res/raw/syms.mp3
