@@ -61,10 +61,10 @@ public class GL2JNIActivity extends Activity {
 					WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
 					WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
 		}
-		serviceIntent = new Intent(this, EmuService.class);
-		serviceIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_FROM_BACKGROUND);
-		serviceIntent.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES | Intent.FLAG_ACTIVITY_NO_ANIMATION);
-		startService(serviceIntent);
+		//serviceIntent = new Intent(this, EmuService.class);
+		//serviceIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_FROM_BACKGROUND);
+		//serviceIntent.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES | Intent.FLAG_ACTIVITY_NO_ANIMATION);
+		//startService(serviceIntent);
 
 		Emulator app = (Emulator)getApplicationContext();
 		app.getConfigurationPrefs(prefs);
@@ -572,8 +572,8 @@ public class GL2JNIActivity extends Activity {
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
-		if (serviceRunning(EmuService.class))
-			stopService(serviceIntent);
+		//if (serviceRunning(EmuService.class))
+		//	stopService(serviceIntent);
 		mView.onDestroy();
 		JNIdc.terminate();
 		moga.onDestroy();
