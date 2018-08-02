@@ -236,9 +236,9 @@ endif
 RZDCY_SRC_DIR = $(LOCAL_PATH)/../../core
 include $(RZDCY_SRC_DIR)/core.mk
 
-LDFLAGS += -g -Wl,-Map,$(notdir $@).map,--gc-sections -Wl,-O3 -Wl,--sort-common
+LDFLAGS += -g -Wl,-Map,$(notdir $@).map,--gc-sections -Wl,-O3 -Wl,--sort-common -fopenmp
 
-CFLAGS += -g -O3 -D RELEASE -c -D USES_HOMEDIR #-D NO_REND
+CFLAGS += -g -O3 -D RELEASE -c -D USES_HOMEDIR -fopenmp #-D NO_REND
 CFLAGS += -frename-registers -fno-strict-aliasing
 CFLAGS += -ffast-math -ftree-vectorize
 
@@ -319,8 +319,7 @@ ifdef USE_PULSEAUDIO
 endif
 
 ifdef HAS_SOFTREND
-    CFLAGS += -fopenmp -msse4.1
-    LDFLAGS += -fopenmp
+    CFLAGS += -msse4.1
 endif
 
 # these are also handled on core.mk, but ignored here

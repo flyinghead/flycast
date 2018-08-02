@@ -350,7 +350,9 @@ static void deposterizeV(u32* data, u32* out, int w, int h, int l, int u) {
 
 void parallelize(const std::function<void(int,int)> &func, int start, int end, int width /* = 0 */)
 {
-	int tcount = max(1, omp_get_num_procs() - 1);
+	int tcount = omp_get_num_procs() - 1;
+	if (tcount < 1)
+		tcount = 1;
 	tcount = min(tcount, (int)settings.pvr.MaxThreads);
 #pragma omp parallel num_threads(tcount)
 	{
