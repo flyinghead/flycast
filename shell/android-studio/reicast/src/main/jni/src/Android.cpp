@@ -159,7 +159,7 @@ void egl_stealcntx();
 void SetApplicationPath(wchar *path);
 int dc_init(int argc,wchar* argv[]);
 void dc_run();
-void dc_stop();
+//void dc_stop();
 void dc_term();
 void mcfg_Create(MapleDeviceType type,u32 bus,u32 port);
 
@@ -372,7 +372,7 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setupVmu(JNIEnv *env,
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_stop(JNIEnv *env,jobject obj)
 {
-	dc_stop();
+//	dc_stop();
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_terminate(JNIEnv *env,jobject obj)
