@@ -44,7 +44,16 @@ android {
         }
     }
 
+
     buildTypes {
+        all {
+            resValue "string", "app_name", "Reicast"
+        }
+
+        debug {
+            resValue "string", "app_name", "Reicast DEV-" + getVersionName()
+            android.defaultConfig.applicationId = "com.reicast.emulator.dev_" + getVersionName().replaceAll('-','_')
+        }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
