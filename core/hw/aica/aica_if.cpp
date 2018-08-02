@@ -242,8 +242,11 @@ void Write_SB_ADST(u32 addr, u32 data)
 			SB_ADSUSP &= ~0x10;
 
 			// Schedule the end of DMA transfer interrupt
-			int cycles = len * (SH4_MAIN_CLOCK / 2 / 25000000) + 384;       // 16 bits @ 25 MHz + some overhead
-			sh4_sched_request(dma_sched_id, cycles);
+			int cycles = len * (SH4_MAIN_CLOCK / 2 / 25000000);       // 16 bits @ 25 MHz
+			if (cycles < 4096)
+				dma_end_sched(0, 0, 0);
+			else
+				sh4_sched_request(dma_sched_id, cycles);
 		}
 	}
 }
