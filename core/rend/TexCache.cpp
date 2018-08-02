@@ -1,8 +1,10 @@
 #include <list>
+#include <functional>
+#include <omp.h>
+
 #include "TexCache.h"
 #include "hw/pvr/pvr_regs.h"
 #include "hw/mem/_vmem.h"
-#include "deps/ctpl/ctpl_stl.h"
 #include "deps/xbrz/xbrz.h"
 
 u8* vq_codebook;
@@ -10,8 +12,6 @@ u32 palette_index;
 bool KillTex=false;
 u32 palette16_ram[1024];
 u32 palette32_ram[1024];
-
-ctpl::thread_pool ThreadPool;
 
 u32 detwiddle[2][8][1024];
 //input : address in the yyyyyxxxxx format
@@ -350,34 +350,16 @@ static void deposterizeV(u32* data, u32* out, int w, int h, int l, int u) {
 
 void parallelize(const std::function<void(int,int)> &func, int start, int end, int width /* = 0 */)
 {
-	if (ThreadPool.size() == 0)
-		ThreadPool.resize(max(1, (int)settings.pvr.MaxThreads));
-
-	static const int CHUNK = 8;	// 32x32 best if not parall'ed (chunk >= 32)
-									//			 8: 0.0481391 ms
-									//			16: 0.068005 ms
-									//			32: 0.0265986 ms
-									// 1024x512 best is 8 (or 16)
-									//			 4:							2.19 ms
-									//           8: 229 - 241 Mpix/s		2.16 ms 2.185 2.183 2.11
-									//			16: 163 - 175 Mpix/s		2.16 ms 2.145 2.185 2.144
-									//			32: 129 - 142 Mpix/s		2.19 ms
-									//			64: 						4.34 ms
-	const int chunk_size = width == 0 ? CHUNK : max(CHUNK, CHUNK * 128 / width);
-
-	if (end - start <= chunk_size)
+	int tcount = max(1, omp_get_num_procs() - 1);
+	tcount = min(tcount, (int)settings.pvr.MaxThreads);
+#pragma omp parallel num_threads(tcount)
 	{
-		// Don't parallelize if there isn't much to parallelize
-		func(start, end);
-	}
-	else
-	{
-		std::list<std::future<void>> futures;
-
-		for (int i = start; i < end; i += chunk_size)
-			futures.push_back(ThreadPool.push([func] (int id, int from, int to){ func(from, to); }, i, i + chunk_size));
-		for (auto it = futures.begin(); it != futures.end(); ++it)
-			it->wait();
+		int num_threads = omp_get_num_threads();
+		int thread = omp_get_thread_num();
+		int chunk = (end - start) / num_threads;
+		func(start + chunk * thread,
+				num_threads == thread + 1 ? end
+						: (start + chunk * (thread + 1)));
 	}
 }
 
