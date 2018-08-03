@@ -89,6 +89,11 @@ u32* GetRegPtr(u32 reg)
 	return Sh4_int_GetRegisterPtr((Sh4RegType)reg);
 }
 
+void ngen_blockcheckfail(u32 pc) {
+	printf("REC CPP: SMC invalidation at %08X\n", pc);
+	rdv_BlockCheckFail(pc);
+}
+
 class opcodeExec {
 	public:
 	virtual void execute() = 0;
@@ -812,6 +817,26 @@ struct opcode_blockend : public opcodeExec {
 	}
 };
 
+struct opcode_check_block : public opcodeExec {
+	RuntimeBlockInfo* block;
+	vector<u8> code;
+	void* ptr;
+
+	opcodeExec* setup(RuntimeBlockInfo* block) {
+		this->block = block;
+		ptr = GetMemPtr(block->addr, 4);
+		code.resize(block->sh4_code_size);
+		memcpy(&code[0], ptr, block->sh4_code_size);
+
+		return this;
+	}
+
+	void execute() {
+		if (memcmp(ptr, &code[0], block->sh4_code_size) != 0)
+			ngen_blockcheckfail(block->addr);
+	}
+};
+
 #if !defined(_DEBUG)
 	#define DREP_1(x, phrase) if (x < cnt) ops[x]->execute(); else return;
 	#define DREP_2(x, phrase) DREP_1(x, phrase) DREP_1(x+1, phrase)
@@ -1162,8 +1187,8 @@ public:
 	opcodeExec** ptrsg;
 	void compile(RuntimeBlockInfo* block, bool force_checks, bool reset, bool staging, bool optimise) {
 		
-		//we need an extra one for the end opcode
-		auto ptrs = fnnCtor_forreal(block->oplist.size() + 1)(block->guest_cycles);
+		//we need an extra one for the end opcode and optionally one more for block check
+		auto ptrs = fnnCtor_forreal(block->oplist.size() + 1 + (force_checks ? 1 : 0))(block->guest_cycles);
 
 		ptrsg = ptrs.ptrs;
 
@@ -1176,9 +1201,15 @@ public:
 			emit_Skip(emit_FreeSpace()-16);
 		}
 
-		for (size_t i = 0; i < block->oplist.size(); i++) {
+		size_t i = 0;
+		if (force_checks)
+		{
+			opcodeExec* op = (new opcode_check_block())->setup(block);
+			ptrs.ptrs[i++] = op;
+		}
+		for (size_t opnum = 0; opnum < block->oplist.size(); opnum++, i++) {
 			opcode_index = i;
-			shil_opcode& op = block->oplist[i];
+			shil_opcode& op = block->oplist[opnum];
 			switch (op.op) {
 
 			case shop_ifb:
@@ -1453,7 +1484,7 @@ public:
 				CASEWS(BET_Cond_1);
 			}
 
-			ptrs.ptrs[block->oplist.size()] = op;
+			ptrs.ptrs[i] = op;
 		}
 
 	}
