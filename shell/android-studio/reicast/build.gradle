@@ -46,17 +46,13 @@ android {
 
 
     buildTypes {
-        all {
-            resValue "string", "app_name", "Reicast"
-        }
-
         debug {
             if (System.getenv("TRAVIS_JOB_ID")) {
-                resValue "string", "app_name", "Reicast CI-" + getVersionName()
-                android.defaultConfig.applicationId = "com.reicast.emulator.ci_" + getVersionName().replaceAll('-', '_')
+                versionNameSuffix " CI-" + getVersionName()
+                applicationIdSuffix ".ci_" + getVersionName().replaceAll('-', '_')
             } else {
-                resValue "string", "app_name", "Reicast DBG-" + getVersionName()
-                android.defaultConfig.applicationId = "com.reicast.emulator.dbg";
+                versionNameSuffix " DBG-" + getVersionName()
+                applicationIdSuffix ".dbg"
             }
         }
 
