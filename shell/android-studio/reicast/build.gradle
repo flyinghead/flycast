@@ -16,9 +16,6 @@ def getVersionName = { ->
 }
 
 android {
-    defaultPublishConfig 'release'
-    publishNonDefault true
-
     compileSdkVersion 25
     buildToolsVersion "27.0.3"
 
