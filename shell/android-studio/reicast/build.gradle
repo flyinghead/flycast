@@ -21,6 +21,7 @@ android {
 
     defaultConfig {
         applicationId "com.reicast.emulator"
+
         minSdkVersion 16
         targetSdkVersion 25
         versionCode getVersionCode()
@@ -48,10 +49,10 @@ android {
     buildTypes {
         debug {
             if (System.getenv("TRAVIS_JOB_ID")) {
-                versionNameSuffix " CI-" + getVersionName()
+                versionNameSuffix "-CI"
                 applicationIdSuffix ".ci_" + getVersionName().replaceAll('-', '_')
             } else {
-                versionNameSuffix " DBG-" + getVersionName()
+                versionNameSuffix "-DBG"
                 applicationIdSuffix ".dbg"
             }
         }
