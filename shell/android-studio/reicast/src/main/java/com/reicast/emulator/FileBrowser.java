@@ -176,7 +176,7 @@ public class FileBrowser extends Fragment {
 		if (!home.exists() || !home.isDirectory()) {
 			showToastMessage(getActivity().getString(R.string.config_home), Snackbar.LENGTH_LONG);
 		} else {
-			(new installGraphics()).execute();
+			installButtons();
 		}
 
 		if (!ImgBrowse && !games) {
@@ -186,47 +186,37 @@ public class FileBrowser extends Fragment {
 		}
 	}
 
-	private class installGraphics extends AsyncTask<String, Integer, String> {
-		@Override
-		protected String doInBackground(String... params) {
-			try {
-				File buttons = null;
-				String theme = mPrefs.getString(Config.pref_theme, null);
-				if (theme != null) {
-					buttons = new File(theme);
-				}
-				File file = new File(home_directory, "data/buttons.png");
-				if (buttons != null && buttons.exists()) {
-					InputStream in = new FileInputStream(buttons);
-					OutputStream out = new FileOutputStream(file);
-
-					// Transfer bytes from in to out
-					byte[] buf = new byte[1024];
-					int len;
-					while ((len = in.read(buf)) > 0) {
-						out.write(buf, 0, len);
-					}
-					in.close();
-					out.close();
-				} else if (!file.exists()) {
-					org.apache.commons.io.FileUtils.touch(file);
-					InputStream png = getActivity().getAssets().open("buttons.png");
-					OutputStream fo = new FileOutputStream(file);
-					byte[] buffer = new byte[4096];
-					int read;
-					while ((read = png.read(buffer)) != -1) {
-						fo.write(buffer, 0, read);
-					}
-					png.close();
-					fo.flush();
-					fo.close();
-				}
-			} catch (FileNotFoundException fnf) {
-				fnf.printStackTrace();
-			} catch (IOException ioe) {
-				ioe.printStackTrace();
+	private void installButtons() {
+		try {
+			File buttons = null;
+			String theme = mPrefs.getString(Config.pref_theme, null);
+			if (theme != null) {
+				buttons = new File(theme);
 			}
-			return null;
+			File file = new File(home_directory, "data/buttons.png");
+			InputStream in = null;
+			if (buttons != null && buttons.exists()) {
+				in = new FileInputStream(buttons);
+			} else if (!file.exists() || file.length() == 0) {
+				in = getActivity().getAssets().open("buttons.png");
+			}
+			if (in != null) {
+				OutputStream out = new FileOutputStream(file);
+
+				// Transfer bytes from in to out
+				byte[] buf = new byte[4096];
+				int len;
+				while ((len = in.read(buf)) != -1) {
+					out.write(buf, 0, len);
+				}
+				in.close();
+				out.flush();
+				out.close();
+			}
+		} catch (FileNotFoundException fnf) {
+			fnf.printStackTrace();
+		} catch (IOException ioe) {
+			ioe.printStackTrace();
 		}
 	}
 
