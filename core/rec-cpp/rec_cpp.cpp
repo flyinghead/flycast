@@ -817,6 +817,7 @@ struct opcode_blockend : public opcodeExec {
 	}
 };
 
+template <int sz>
 struct opcode_check_block : public opcodeExec {
 	RuntimeBlockInfo* block;
 	vector<u8> code;
@@ -825,15 +826,32 @@ struct opcode_check_block : public opcodeExec {
 	opcodeExec* setup(RuntimeBlockInfo* block) {
 		this->block = block;
 		ptr = GetMemPtr(block->addr, 4);
-		code.resize(block->sh4_code_size);
-		memcpy(&code[0], ptr, block->sh4_code_size);
+		code.resize(sz == -1 ? block->sh4_code_size : sz);
+		memcpy(&code[0], ptr, sz == -1 ? block->sh4_code_size : sz);
 
 		return this;
 	}
 
 	void execute() {
-		if (memcmp(ptr, &code[0], block->sh4_code_size) != 0)
-			ngen_blockcheckfail(block->addr);
+		switch (sz)
+		{
+		case 4:
+			if (*(u32 *)ptr != *(u32 *)&code[0])
+				ngen_blockcheckfail(block->addr);
+			break;
+		case 6:
+			if (*(u32 *)ptr != *(u32 *)&code[0] || *((u16 *)ptr + 2) != *((u16 *)&code[0] + 2))
+				ngen_blockcheckfail(block->addr);
+			break;
+		case 8:
+			if (*(u32 *)ptr != *(u32 *)&code[0] || *((u32 *)ptr + 1) != *((u32 *)&code[0] + 1))
+				ngen_blockcheckfail(block->addr);
+			break;
+		default:
+			if (memcmp(ptr, &code[0], block->sh4_code_size) != 0)
+				ngen_blockcheckfail(block->addr);
+			break;
+		}
 	}
 };
 
@@ -1204,7 +1222,22 @@ public:
 		size_t i = 0;
 		if (force_checks)
 		{
-			opcodeExec* op = (new opcode_check_block())->setup(block);
+			opcodeExec* op;
+			switch (block->sh4_code_size)
+			{
+			case 4:
+				op = (new opcode_check_block<4>())->setup(block);
+				break;
+			case 6:
+				op = (new opcode_check_block<6>())->setup(block);
+				break;
+			case 8:
+				op = (new opcode_check_block<8>())->setup(block);
+				break;
+			default:
+				op = (new opcode_check_block<-1>())->setup(block);
+				break;
+			}
 			ptrs.ptrs[i++] = op;
 		}
 		for (size_t opnum = 0; opnum < block->oplist.size(); opnum++, i++) {
