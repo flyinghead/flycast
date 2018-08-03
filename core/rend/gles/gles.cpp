@@ -1420,7 +1420,10 @@ bool ProcessFrame(TA_context* ctx)
 
 	CollectCleanup();
 
-	return true;
+	if (ctx->rend.Overrun)
+		printf("ERROR: TA context overrun\n");
+
+	return !ctx->rend.Overrun;
 }
 
 bool RenderFrame()
