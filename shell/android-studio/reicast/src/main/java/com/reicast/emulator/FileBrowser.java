@@ -194,11 +194,10 @@ public class FileBrowser extends Fragment {
 				buttons = new File(theme);
 			}
 			File file = new File(home_directory, "data/buttons.png");
-			org.apache.commons.io.FileUtils.touch(file);
 			InputStream in = null;
 			if (buttons != null && buttons.exists()) {
 				in = new FileInputStream(buttons);
-			} else if (!file.exists()) {
+			} else if (!file.exists() || file.length() == 0) {
 				in = getActivity().getAssets().open("buttons.png");
 			}
 			if (in != null) {
