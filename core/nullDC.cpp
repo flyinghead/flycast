@@ -67,7 +67,10 @@ int GetFile(std::string& diskFileName)
 				diskFileName.resize(newBufferSize);
 				//try again
 			}
-			else return (errorCode == ERROR_SUCCESS) ? rv_ok : rv_error;
+            else
+            {
+                return (errorCode == ERROR_SUCCESS) ? rv_ok : rv_error;
+            }
 		}
 	}
 #endif

@@ -23,11 +23,22 @@ Disc*(*drivers[])(const wchar* path)=
 
 u8 q_subchannel[96];
 
-void SetSnsCodes(const u32 asc, const u32 ascq, const u32 key)
+struct SenseErrorCode
 {
-	sns_asc = asc;
-	sns_ascq = ascq;
-	sns_key = key;
+    int sns_asc;
+    int sns_ascq;
+    int sns_key;
+};
+
+//No disc inserted at the time of power-on, reset or hard reset, or TOC cannot be read.
+const SenseErrorCode NoDiskInsertedSenseCode{ 0x29, 0, 6 };
+const SenseErrorCode NoErrorSenseCode{ 0, 0, 0 };
+
+void SetSnsCodes(const SenseErrorCode& errorCode)
+{
+    sns_asc = errorCode.sns_asc;
+    sns_ascq = errorCode.sns_ascq;
+    sns_key = errorCode.sns_key;
 }
 
 void PatchRegion_0(u8* sector,int size)
@@ -159,27 +170,26 @@ Disc* OpenDisc(const wchar* fn)
 
 bool InitDrive_(const wchar* const fn)
 {
-	TermDrive();
+    TermDrive();
 
-	//try all drivers
-	disc = OpenDisc(fn);
+    //try all drivers
+    disc = OpenDisc(fn);
 
-	if (disc!=0)
-	{
-		printf("gdrom: Opened image \"%s\"\n",fn);
-		NullDriveDiscType=Busy;
+    if (disc)
+    {
+        printf("gdrom: Opened image \"%s\"\n", fn);
+        NullDriveDiscType = Busy;
 #ifndef NOT_REICAST
-		libCore_gdrom_disc_change();
+        libCore_gdrom_disc_change();
 #endif
-//		Sleep(400); //busy for a bit // what, really ?
-		return true;
-	}
-	else
-	{
-		printf("gdrom: Failed to open image \"%s\"\n",fn);
-		NullDriveDiscType=NoDisk; //no disc :)
-	}
-	return false;
+        return true;
+    }
+    else
+    {
+        printf("gdrom: Failed to open image \"%s\"\n", fn);
+        NullDriveDiscType = NoDisk; //no disc :)
+        return false;
+    }
 }
 
 #ifndef NOT_REICAST
@@ -208,17 +218,15 @@ bool InitDrive(u32 fileflags/*=0*/)
 		return false;
 	}
 
-	// FIXME: Data loss if buffer is too small
 	settings.imgread.LastImage = diskImageFileName;
 
 	SaveSettings();
 
 	if (!InitDrive_(diskImageFileName.c_str()))
 	{
-		//msgboxf("Selected image failed to load",MBX_ICONERROR);
 		NullDriveDiscType = NoDisk;
 		gd_setdisc();
-		SetSnsCodes(0x29, 0x00, 0x06);
+		SetSnsCodes(NoDiskInsertedSenseCode);
 		return false;
 	}
 	return true;
@@ -238,44 +246,44 @@ bool DiscSwap(u32 fileflags)
 			return true;
 	}
 
-	std::string diskImageFileName{ settings.imgread.LastImage };
+    std::string diskImageFileName = settings.imgread.LastImage;
 
 #ifdef BUILD_DREAMCAST
-	int gfrv = GetFile(diskImageFileName);
+    int gfrv = GetFile(diskImageFileName);
 #else
-	int gfrv = rv_error;
+    int gfrv = rv_error;
 #endif
-	if (gfrv == rv_ok)
-	{
-		NullDriveDiscType = Open;
-		gd_setdisc();
-		SetSnsCodes(0x28, 0x00, 0x06);
-		return true;
-	}
-	else
-	{
-		SetSnsCodes(0x28, 0x00, 0x06); // to fix: we have same return codes as previous branch, looks suspicious
-		return false;
-	}
+    if (gfrv == rv_ok)
+    {
+        NullDriveDiscType = Open;
+        gd_setdisc();
+        SetSnsCodes(NoErrorSenseCode);
+        return true;
+    }
+    else
+    {
+        SetSnsCodes(NoDiskInsertedSenseCode);
+        return false;
+    }
 
 
-	settings.imgread.LastImage = diskImageFileName;
+    settings.imgread.LastImage = diskImageFileName;
 
-	SaveSettings();
+    SaveSettings();
 
-	if (!InitDrive_(diskImageFileName.c_str()))
-	{
-		//msgboxf("Selected image failed to load",MBX_ICONERROR);
-		NullDriveDiscType = Open;
-		gd_setdisc();
-		SetSnsCodes(0x28, 0x00, 0x06);
-		return true;
-	}
-	else
-	{
-		SetSnsCodes(0x28, 0x00, 0x06);
-		return false;
-	}
+    if (!InitDrive_(diskImageFileName.c_str()))
+    {
+        msgboxf("Selected image failed to load", MBX_ICONERROR);
+        NullDriveDiscType = Open;
+        gd_setdisc();
+        SetSnsCodes(NoDiskInsertedSenseCode);
+        return false;
+    }
+    else
+    {
+        SetSnsCodes(NoErrorSenseCode);
+        return true;
+    }
 }
 #endif
 
