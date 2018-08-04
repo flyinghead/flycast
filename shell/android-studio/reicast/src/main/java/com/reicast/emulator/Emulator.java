@@ -24,6 +24,7 @@ public class Emulator extends Application {
     public static final String pref_frameskip = "frame_skip";
     public static final String pref_pvrrender = "pvr_render";
     public static final String pref_syncedrender = "synced_render";
+    public static final String pref_modvols = "modifier_volumes";
     public static final String pref_cheatdisk = "cheat_disk";
     public static final String pref_usereios = "use_reios";
 
@@ -42,6 +43,7 @@ public class Emulator extends Application {
     public static int frameskip = 0;
     public static boolean pvrrender = false;
     public static boolean syncedrender = false;
+    public static boolean modvols = true;
     public static String cheatdisk = "null";
     public static boolean usereios = false;
     public static boolean nativeact = false;

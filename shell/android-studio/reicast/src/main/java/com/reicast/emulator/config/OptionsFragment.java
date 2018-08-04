@@ -468,6 +468,17 @@ public class OptionsFragment extends Fragment {
 		synced_render.setChecked(Emulator.syncedrender);
 		synced_render.setOnCheckedChangeListener(synchronous);
 
+		OnCheckedChangeListener mod_volumes = new OnCheckedChangeListener() {
+
+			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+				mPrefs.edit().putBoolean(Emulator.pref_modvols, isChecked).apply();
+				Emulator.modvols = isChecked;
+			}
+		};
+		CompoundButton modifier_volumes = (CompoundButton) getView().findViewById(R.id.modvols_option);
+		modifier_volumes.setChecked(Emulator.modvols);
+		modifier_volumes.setOnCheckedChangeListener(mod_volumes);
+
 		final EditText cheatEdit = (EditText) getView().findViewById(R.id.cheat_disk);
 		String disk = Emulator.cheatdisk;
 		if (disk != null && disk.contains("/")) {
