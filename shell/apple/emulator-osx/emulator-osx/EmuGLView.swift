@@ -46,6 +46,7 @@ class EmuGLView: NSOpenGLView, NSWindowDelegate {
                 // Must specify the 3.2 Core Profile to use OpenGL 3.2
                 UInt32(NSOpenGLPFAOpenGLProfile),
                 UInt32(NSOpenGLProfileVersion3_2Core),
+                UInt32(NSOpenGLPFABackingStore), UInt32(true),
                 UInt32(0)
         ]
         
