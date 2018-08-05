@@ -190,6 +190,7 @@ public class GL2JNIView extends GLSurfaceView
                             new GLCFactory14.ConfigChooser(8, 8, 8, 8, depth, stencil)
                             : new GLCFactory14.ConfigChooser(5, 6, 5, 0, depth, stencil)
             );
+            GLES20.glEnable(GLES20.GL_DEPTH_TEST);
         } else {
             // Setup the context factory for 2.0 rendering.
             // See ContextFactory class definition below
@@ -205,8 +206,6 @@ public class GL2JNIView extends GLSurfaceView
                             : new GLCFactory.ConfigChooser(5, 6, 5, 0, depth, stencil)
             );
         }
-
-        GLES20.glEnable(GLES20.GL_DEPTH_TEST);
 
         // Set the renderer responsible for frame rendering
         setRenderer(rend=new Renderer(this));
