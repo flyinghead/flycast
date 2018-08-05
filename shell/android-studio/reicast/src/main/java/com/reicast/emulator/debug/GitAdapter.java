@@ -114,7 +114,7 @@ public class GitAdapter extends BaseAdapter {
 	}
 
 	private void displayCommit(final String sha, String message, String url,
-			Context context) {
+							   Context context) {
 		final AlertDialog.Builder builder = new AlertDialog.Builder(context);
 		builder.setCancelable(true);
 		builder.setTitle(sha.substring(0,7));
@@ -138,7 +138,7 @@ public class GitAdapter extends BaseAdapter {
 	@SuppressLint("SetJavaScriptEnabled")
 	@SuppressWarnings("deprecation")
 	private WebView configureWebview(String url, Context context,
-			WebView mWebView) {
+									 WebView mWebView) {
 		mWebView.getSettings().setSupportZoom(true);
 		mWebView.getSettings().setBuiltInZoomControls(true);
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {

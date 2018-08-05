@@ -59,7 +59,7 @@ public class InputFragment extends Fragment {
 
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
-			Bundle savedInstanceState) {
+							 Bundle savedInstanceState) {
 		// Inflate the layout for this fragment
 		return inflater.inflate(R.layout.input_fragment, container, false);
 	}
@@ -109,34 +109,34 @@ public class InputFragment extends Fragment {
 		final SeekBar vibSeek = (SeekBar) getView().findViewById(R.id.vib_seekBar);
 
 		if (sharedPreferences.getBoolean(Config.pref_touchvibe, true)) {
-		  vibLay.setVisibility(View.VISIBLE);
+			vibLay.setVisibility(View.VISIBLE);
 		} else {
-		  vibLay.setVisibility(View.GONE);
+			vibLay.setVisibility(View.GONE);
 		}
 
 		duration.setText(String.valueOf(Config.vibrationDuration +  " ms"));
 		vibSeek.setProgress(Config.vibrationDuration);
 
 		vibSeek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-		    public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-		      duration.setText(String.valueOf(progress + 5 + " ms"));
-		    }
+			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+				duration.setText(String.valueOf(progress + 5 + " ms"));
+			}
 
-		    public void onStartTrackingTouch(SeekBar seekBar) {
-		      // TODO Auto-generated method stub
-		    }
+			public void onStartTrackingTouch(SeekBar seekBar) {
+				// TODO Auto-generated method stub
+			}
 
-		    public void onStopTrackingTouch(SeekBar seekBar) {
-			int progress = seekBar.getProgress() + 5;
-			sharedPreferences.edit().putInt(Config.pref_vibrationDuration, progress).apply();
-			Config.vibrationDuration = progress;
-			vib.vibrate(progress);
-		    }
+			public void onStopTrackingTouch(SeekBar seekBar) {
+				int progress = seekBar.getProgress() + 5;
+				sharedPreferences.edit().putInt(Config.pref_vibrationDuration, progress).apply();
+				Config.vibrationDuration = progress;
+				vib.vibrate(progress);
+			}
 		});
 
 		OnCheckedChangeListener touch_vibration = new OnCheckedChangeListener() {
 			public void onCheckedChanged(CompoundButton buttonView,
-					boolean isChecked) {
+										 boolean isChecked) {
 				sharedPreferences.edit()
 						.putBoolean(Config.pref_touchvibe, isChecked).apply();
 				vibLay.setVisibility( isChecked ? View.VISIBLE : View.GONE );
@@ -163,7 +163,7 @@ public class InputFragment extends Fragment {
 			micPluggedIntoFirstController
 					.setOnCheckedChangeListener(new OnCheckedChangeListener() {
 						public void onCheckedChanged(CompoundButton buttonView,
-								boolean isChecked) {
+													 boolean isChecked) {
 							sharedPreferences.edit().putBoolean(Config.pref_mic, isChecked).apply();
 						}
 					});
@@ -406,7 +406,7 @@ public class InputFragment extends Fragment {
 				});
 		builder.setOnKeyListener(new Dialog.OnKeyListener() {
 			public boolean onKey(DialogInterface dialog, int keyCode,
-					KeyEvent event) {
+								 KeyEvent event) {
 				return mapDevice(keyCode, event);
 			}
 		});
@@ -452,20 +452,20 @@ public class InputFragment extends Fragment {
 		}
 
 		switch (listenForButton) {
-		case 0:
-			return false;
-		case 1:
-			sharedPreferences.edit().putString(Gamepad.pref_player1, descriptor).apply();
-			break;
-		case 2:
-			sharedPreferences.edit().putString(Gamepad.pref_player2, descriptor).apply();
-			break;
-		case 3:
-			sharedPreferences.edit().putString(Gamepad.pref_player3, descriptor).apply();
-			break;
-		case 4:
-			sharedPreferences.edit().putString(Gamepad.pref_player4, descriptor).apply();
-			break;
+			case 0:
+				return false;
+			case 1:
+				sharedPreferences.edit().putString(Gamepad.pref_player1, descriptor).apply();
+				break;
+			case 2:
+				sharedPreferences.edit().putString(Gamepad.pref_player2, descriptor).apply();
+				break;
+			case 3:
+				sharedPreferences.edit().putString(Gamepad.pref_player3, descriptor).apply();
+				break;
+			case 4:
+				sharedPreferences.edit().putString(Gamepad.pref_player4, descriptor).apply();
+				break;
 		}
 
 		Log.d("New port " + listenForButton + " controller:", descriptor);
@@ -479,18 +479,18 @@ public class InputFragment extends Fragment {
 
 	private void removeController(int playerNum) {
 		switch (playerNum) {
-		case 1:
-			sharedPreferences.edit().putString(Gamepad.pref_player1, null).apply();
-			break;
-		case 2:
-			sharedPreferences.edit().putString(Gamepad.pref_player2, null).apply();
-			break;
-		case 3:
-			sharedPreferences.edit().putString(Gamepad.pref_player3, null).apply();
-			break;
-		case 4:
-			sharedPreferences.edit().putString(Gamepad.pref_player4, null).apply();
-			break;
+			case 1:
+				sharedPreferences.edit().putString(Gamepad.pref_player1, null).apply();
+				break;
+			case 2:
+				sharedPreferences.edit().putString(Gamepad.pref_player2, null).apply();
+				break;
+			case 3:
+				sharedPreferences.edit().putString(Gamepad.pref_player3, null).apply();
+				break;
+			case 4:
+				sharedPreferences.edit().putString(Gamepad.pref_player4, null).apply();
+				break;
 		}
 
 		updateControllers();
@@ -519,13 +519,13 @@ public class InputFragment extends Fragment {
 
 		public void onStateEvent(StateEvent event) {
 			if (event.getState() == StateEvent.STATE_CONNECTION &&
-			    event.getAction() == MOGAInput.ACTION_CONNECTED) {
+					event.getAction() == MOGAInput.ACTION_CONNECTED) {
 
 				int mControllerVersion = moga.mController
-				        .getState(Controller.STATE_CURRENT_PRODUCT_VERSION);
+						.getState(Controller.STATE_CURRENT_PRODUCT_VERSION);
 
 				if (mControllerVersion == Controller.ACTION_VERSION_MOGA ||
-				    mControllerVersion == Controller.ACTION_VERSION_MOGAPRO) {
+						mControllerVersion == Controller.ACTION_VERSION_MOGAPRO) {
 					pad.isActiveMoga[playerNum] = true;
 				}
 			}

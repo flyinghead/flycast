@@ -52,7 +52,7 @@ public class MainActivity extends AppCompatActivity implements
 
 	private SharedPreferences mPrefs;
 	private boolean hasAndroidMarket = false;
-	
+
 	private UncaughtExceptionHandler mUEHandler;
 
 	Gamepad pad = new Gamepad();
@@ -61,7 +61,7 @@ public class MainActivity extends AppCompatActivity implements
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
-		
+
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
 			getWindow().getDecorView().setOnSystemUiVisibilityChangeListener (new OnSystemUiVisibilityChangeListener() {
 				public void onSystemUiVisibilityChange(int visibility) {
@@ -69,16 +69,16 @@ public class MainActivity extends AppCompatActivity implements
 						getWindow().getDecorView().setSystemUiVisibility(
 //                            View.SYSTEM_UI_FLAG_LAYOUT_STABLE | 
 								View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                                | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                                | View.SYSTEM_UI_FLAG_FULLSCREEN
-                                | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+										| View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+										| View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+										| View.SYSTEM_UI_FLAG_FULLSCREEN
+										| View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
 					}
 				}
 			});
 		} else {
 			getWindow().setFlags (WindowManager.LayoutParams.FLAG_FULLSCREEN,
-                    WindowManager.LayoutParams.FLAG_FULLSCREEN);
+					WindowManager.LayoutParams.FLAG_FULLSCREEN);
 		}
 
 		mPrefs = PreferenceManager.getDefaultSharedPreferences(this);
@@ -130,15 +130,15 @@ public class MainActivity extends AppCompatActivity implements
 				onGameSelected(Uri.parse(intent.getData().toString()));
 				// Flush the intent to prevent multiple calls
 				getIntent().setData(null);
-		        setIntent(null);
-		        Config.externalIntent = true;
+				setIntent(null);
+				Config.externalIntent = true;
 			}
 		}
 
 		// Check that the activity is using the layout version with
 		// the fragment_container FrameLayout
 		if (findViewById(R.id.fragment_container) != null) {
-            onMainBrowseSelected(true, null, false, null);
+			onMainBrowseSelected(true, null, false, null);
 		}
 
 		Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -160,10 +160,10 @@ public class MainActivity extends AppCompatActivity implements
 		toggle.syncState();
 
 		NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
-        if (!hasAndroidMarket) {
+		if (!hasAndroidMarket) {
 			navigationView.getMenu().findItem(R.id.rateme_menu).setEnabled(false);
 			navigationView.getMenu().findItem(R.id.rateme_menu).setVisible(false);
-        }
+		}
 		navigationView.setNavigationItemSelectedListener(this);
 
 		final SearchView searchView = (SearchView) findViewById(R.id.searchView);
@@ -172,9 +172,9 @@ public class MainActivity extends AppCompatActivity implements
 			searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
 				@Override
 				public boolean onQueryTextSubmit(String query) {
-                    onMainBrowseSelected(true, mPrefs.getString(Config.pref_games,
-                            Environment.getExternalStorageDirectory().getAbsolutePath()),
-                            true, query);
+					onMainBrowseSelected(true, mPrefs.getString(Config.pref_games,
+							Environment.getExternalStorageDirectory().getAbsolutePath()),
+							true, query);
 					searchView.onActionViewCollapsed();
 					return false;
 				}
@@ -192,7 +192,7 @@ public class MainActivity extends AppCompatActivity implements
 
 	/**
 	 * Display a dialog to notify the user of prior crash
-	 * 
+	 *
 	 * @param error
 	 *            A generalized summary of the crash cause
 	 */
@@ -216,13 +216,13 @@ public class MainActivity extends AppCompatActivity implements
 		builder.show();
 	}
 
-    public static boolean isBiosExisting(String home_directory) {
-        return new File (home_directory, "data/dc_boot.bin").exists();
-    }
+	public static boolean isBiosExisting(String home_directory) {
+		return new File (home_directory, "data/dc_boot.bin").exists();
+	}
 
-    public static boolean isFlashExisting(String home_directory) {
+	public static boolean isFlashExisting(String home_directory) {
 		return new File (home_directory, "data/dc_flash.bin").exists();
-    }
+	}
 
 	public void onGameSelected(Uri uri) {
 		if (Config.readOutput("uname -a").equals(getString(R.string.error_kernel))) {
@@ -231,37 +231,37 @@ public class MainActivity extends AppCompatActivity implements
 		String home_directory = mPrefs.getString(Config.pref_home,
 				Environment.getExternalStorageDirectory().getAbsolutePath());
 
-        if (!isBiosExisting(home_directory)) {
-            launchBIOSdetection();
-            return;
-        }
+		if (!isBiosExisting(home_directory)) {
+			launchBIOSdetection();
+			return;
+		}
 		if (!isFlashExisting(home_directory)) {
-            launchBIOSdetection();
-            return;
-        }
+			launchBIOSdetection();
+			return;
+		}
 
 		JNIdc.config(home_directory);
 
-        Emulator.nativeact = PreferenceManager.getDefaultSharedPreferences(
-                getApplicationContext()).getBoolean(Emulator.pref_nativeact, Emulator.nativeact);
-        if (Emulator.nativeact) {
-            startActivity(new Intent("com.reicast.EMULATOR", uri, getApplicationContext(),
-                    GL2JNINative.class));
-        } else {
-            startActivity(new Intent("com.reicast.EMULATOR", uri, getApplicationContext(),
-                    GL2JNIActivity.class));
-        }
+		Emulator.nativeact = PreferenceManager.getDefaultSharedPreferences(
+				getApplicationContext()).getBoolean(Emulator.pref_nativeact, Emulator.nativeact);
+		if (Emulator.nativeact) {
+			startActivity(new Intent("com.reicast.EMULATOR", uri, getApplicationContext(),
+					GL2JNINative.class));
+		} else {
+			startActivity(new Intent("com.reicast.EMULATOR", uri, getApplicationContext(),
+					GL2JNIActivity.class));
+		}
 	}
-	
+
 	private void launchBIOSdetection() {
 		AlertDialog.Builder builder = new AlertDialog.Builder(this);
 		builder.setTitle(R.string.bios_selection);
 		builder.setPositiveButton(R.string.browse,
 				new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int which) {
-                        onMainBrowseSelected(false,
-                                Environment.getExternalStorageDirectory().getAbsolutePath(),
-                                false, null);
+						onMainBrowseSelected(false,
+								Environment.getExternalStorageDirectory().getAbsolutePath(),
+								false, null);
 					}
 				});
 		builder.setNegativeButton(R.string.gdrive,
@@ -292,29 +292,29 @@ public class MainActivity extends AppCompatActivity implements
 		return;
 	}
 
-    /**
-     * Launch the browser activity with specified parameters
-     *
-     * @param browse
-     *            Conditional for image files or folders
-     * @param path
-     *            The root path of the browser fragment
-     * @param games
-     *            Conditional for viewing games or BIOS
-     * @param query
-     *            Search parameters to limit list items
-     */
+	/**
+	 * Launch the browser activity with specified parameters
+	 *
+	 * @param browse
+	 *            Conditional for image files or folders
+	 * @param path
+	 *            The root path of the browser fragment
+	 * @param games
+	 *            Conditional for viewing games or BIOS
+	 * @param query
+	 *            Search parameters to limit list items
+	 */
 	public void onMainBrowseSelected(boolean browse, String path, boolean games, String query) {
 		FileBrowser firstFragment = new FileBrowser();
 		Bundle args = new Bundle();
 //		args.putBoolean("ImgBrowse", false);
-        args.putBoolean("ImgBrowse", browse);
+		args.putBoolean("ImgBrowse", browse);
 		// specify ImgBrowse option. true = images, false = folders only
 		args.putString("browse_entry", path);
 		// specify a path for selecting folder options
 		args.putBoolean("games_entry", games);
 		// specify if the desired path is for games or data
-        args.putString("search_params", query);
+		args.putString("search_params", query);
 
 		firstFragment.setArguments(args);
 		// In case this activity was started with special instructions from
@@ -326,7 +326,7 @@ public class MainActivity extends AppCompatActivity implements
 				.beginTransaction()
 				.replace(R.id.fragment_container, firstFragment, "MAIN_BROWSER")
 				.addToBackStack(null).commit();
-        setTitle(R.string.browser);
+		setTitle(R.string.browser);
 	}
 
 	@Override
@@ -360,9 +360,9 @@ public class MainActivity extends AppCompatActivity implements
 
 		return super.onKeyDown(keyCode, event);
 	}
-	
+
 	private void launchMainFragment() {
-        onMainBrowseSelected(true, null, false, null);
+		onMainBrowseSelected(true, null, false, null);
 	}
 
 	@Override
@@ -399,14 +399,14 @@ public class MainActivity extends AppCompatActivity implements
 				fragment.moga.onResume();
 			}
 		}
-		
+
 		CloudFragment cloudfragment = (CloudFragment) getSupportFragmentManager()
 				.findFragmentByTag("CLOUD_FRAG");
 		if (cloudfragment != null && cloudfragment.isVisible()) {
 			cloudfragment.onResume();
 		}
 	}
-	
+
 	@Override
 	public void onPostCreate(Bundle savedInstanceState) {
 		super.onPostCreate(savedInstanceState);
@@ -546,11 +546,11 @@ public class MainActivity extends AppCompatActivity implements
 		if (hasFocus && Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
 			getWindow().getDecorView().setSystemUiVisibility(
 					View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-	                | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-	                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-	                | View.SYSTEM_UI_FLAG_FULLSCREEN
-	                | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
-        }
+							| View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+							| View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+							| View.SYSTEM_UI_FLAG_FULLSCREEN
+							| View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+		}
 	}
 
 	public boolean isCallable(Intent intent) {
