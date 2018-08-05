@@ -11,6 +11,7 @@ import android.graphics.PixelFormat;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
+import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.os.Build;
 import android.os.Environment;
@@ -204,6 +205,8 @@ public class GL2JNIView extends GLSurfaceView
 					: new GLCFactory.ConfigChooser(5, 6, 5, 0, depth, stencil)
 					);
 		}
+
+		GLES20.glEnable(GLES20.GL_DEPTH_TEST);
 
 		// Set the renderer responsible for frame rendering
 		setRenderer(rend=new Renderer(this));
