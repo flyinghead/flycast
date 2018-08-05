@@ -21,6 +21,10 @@ public class GLCFactory14 {
 	private static void LOGW(String S) { Log.w("GL2JNIView-v6",S); }
 	private static void LOGE(String S) { Log.e("GL2JNIView-v6",S); }
 
+	private int DEPTH_COMPONENT16_NONLINEAR_NV = 0x8E2C;
+	private int EGL_DEPTH_ENCODING_NV = 0x30E2;
+	private int EGL_DEPTH_ENCODING_NONLINEAR_NV = 0x30E3;
+
 	public static class ContextFactory implements GLSurfaceView.EGLContextFactory
 	{
 		private static final int EGL_CONTEXT_CLIENT_VERSION = 0x3098;
