@@ -59,7 +59,7 @@ public class GenerateLogs extends AsyncTask<String, Integer, String> {
 
 	/**
 	 * Obtain the specific parameters of the current device
-	 * 
+	 *
 	 */
 	private String discoverCPUData() {
 		String s = "MODEL: " + Build.MODEL;
@@ -108,7 +108,7 @@ public class GenerateLogs extends AsyncTask<String, Integer, String> {
 
 	/**
 	 * Read the output of a shell command
-	 * 
+	 *
 	 * @param command
 	 *            The shell command being issued to the terminal
 	 */

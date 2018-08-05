@@ -25,13 +25,13 @@ import java.util.Arrays;
 
 /*
 
-*/
+ */
 public final class MOGAInput
 {
 	private SharedPreferences prefs;
 
 	static final int DELAY = 1000 / 50; // 50 Hz
-	
+
 	public static final int ACTION_CONNECTED = Controller.ACTION_CONNECTED;
 	static final int ACTION_DISCONNECTED = Controller.ACTION_DISCONNECTED;
 	static final int ACTION_VERSION_MOGA = Controller.ACTION_VERSION_MOGA;
@@ -134,11 +134,11 @@ public final class MOGAInput
 	public class ExampleControllerListener implements ControllerListener
 	{
 		int playerNum;
-		
+
 		public void setPlayerNum(int playerNum) {
 			this.playerNum = playerNum;
 		}
-		
+
 		public void onKeyEvent(KeyEvent event)
 		{
 			boolean keydown = false;

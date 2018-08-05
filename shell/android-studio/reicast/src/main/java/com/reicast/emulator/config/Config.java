@@ -32,7 +32,7 @@ public class Config {
 
 	/**
 	 * Read the output of a shell command
-	 * 
+	 *
 	 * @param command
 	 *            The shell command being issued to the terminal
 	 */

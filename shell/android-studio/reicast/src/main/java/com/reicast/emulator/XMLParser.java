@@ -79,7 +79,7 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 		this.childview = childview;
 		this.mCallback = mCallback;
 	}
-	
+
 	public void setGameID(String id) {
 		this.gameId = id;
 		initializeDefaults();
@@ -157,7 +157,7 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 					}
 				}
 			} catch (Exception e) {
-				
+
 			}
 		}
 
@@ -168,7 +168,7 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 		} else {
 			((ImageView) childview.findViewById(R.id.item_icon)).setImageBitmap(coverart);
 		}
-		
+
 		if (mPrefs.getBoolean(Config.pref_gamedetails, false)) {
 			childview.findViewById(R.id.childview).setOnLongClickListener(
 					new OnLongClickListener() {
@@ -202,7 +202,7 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 
 		childview.setTag(game_name);
 	}
-	
+
 	private void initializeDefaults() {
 		game_details = mContext.getString(R.string.info_unavailable);
 		final String nameLower = game.getName().toLowerCase(
@@ -218,7 +218,7 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 
 	public boolean isNetworkAvailable() {
 		ConnectivityManager connectivityManager = (ConnectivityManager) mContext
-				.getSystemService(Context.CONNECTIVITY_SERVICE);		
+				.getSystemService(Context.CONNECTIVITY_SERVICE);
 		NetworkInfo mWifi = connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
 		NetworkInfo mMobile = connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE);
 		NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
@@ -232,7 +232,7 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 	public Drawable getGameIcon() {
 		return game_icon;
 	}
-	
+
 	public Bitmap getGameCover() {
 		return coverart;
 	}
@@ -240,7 +240,7 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 	public String getGameTitle() {
 		return game_name;
 	}
-	
+
 	public String getGameDetails() {
 		return game_details;
 	}

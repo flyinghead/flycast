@@ -30,7 +30,7 @@ public class EditVJoyActivity extends Activity {
 	GL2JNIView mView;
 	PopupWindow popUp;
 	LayoutParams params;
-	
+
 	private float[][] vjoy_d_cached;
 
 	View addbut(int x, OnClickListener ocl) {
@@ -46,7 +46,7 @@ public class EditVJoyActivity extends Activity {
 	@Override
 	protected void onCreate(Bundle icicle) {
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
-		
+
 		popUp = createVJoyPopup();
 
 		// Call parent onCreate()
@@ -65,7 +65,7 @@ public class EditVJoyActivity extends Activity {
 
 		vjoy_d_cached = VJoy.readCustomVjoyValues(getApplicationContext());
 
-        JNIdc.show_osd();
+		JNIdc.show_osd();
 	}
 
 	@Override
@@ -91,7 +91,7 @@ public class EditVJoyActivity extends Activity {
 		super.onDestroy();
 		mView.onDestroy();
 	}
-	
+
 	PopupWindow createVJoyPopup() {
 		final PopupWindow popUp = new PopupWindow(this);
 		int p = OnScreenMenu.getPixelsFromDp(60, this);
@@ -151,7 +151,7 @@ public class EditVJoyActivity extends Activity {
 		} else
 			return super.onKeyDown(keyCode, event);
 	}
-	
+
 	@Override
 	public void onConfigurationChanged(Configuration newConfig) {
 		super.onConfigurationChanged(newConfig);

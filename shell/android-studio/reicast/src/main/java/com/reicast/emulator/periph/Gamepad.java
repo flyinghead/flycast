@@ -71,7 +71,7 @@ public class Gamepad {
 //	public boolean isNvidiaShield;
 
 	public static final int Xperia_Touchpad = 1048584;
-	
+
 	public static final int key_CONT_B          = 0x0002;
 	public static final int key_CONT_A          = 0x0004;
 	public static final int key_CONT_START      = 0x0008;
@@ -131,12 +131,12 @@ public class Gamepad {
 
 				getStartButtonCode(),        key_CONT_START,
 				getSelectButtonCode(),       getSelectButtonCode()
-			};
+		};
 	}
 
 	public int[] setModifiedKeys(String id, int playerNum, SharedPreferences mPrefs) {
-		return new int[] { 
-				mPrefs.getInt(pref_button_a + id, OuyaController.BUTTON_O),             key_CONT_A, 
+		return new int[] {
+				mPrefs.getInt(pref_button_a + id, OuyaController.BUTTON_O),             key_CONT_A,
 				mPrefs.getInt(pref_button_b + id, OuyaController.BUTTON_A),             key_CONT_B,
 				mPrefs.getInt(pref_button_x + id, OuyaController.BUTTON_U),             key_CONT_X,
 				mPrefs.getInt(pref_button_y + id, OuyaController.BUTTON_Y),             key_CONT_Y,
@@ -161,7 +161,7 @@ public class Gamepad {
 		return pMan.hasSystemFeature(PackageManager.FEATURE_TELEVISION)
 				|| OuyaFacade.getInstance().isRunningOnOUYAHardware();
 	}
-	
+
 	public int getStartButtonCode() {
 		return KeyEvent.KEYCODE_BUTTON_START;
 	}
@@ -175,7 +175,7 @@ public class Gamepad {
 				|| android.os.Build.DEVICE.equals("roth")
 				|| android.os.Build.PRODUCT.equals("thor");
 	}
-	
+
 	public void setCustomMapping(String id, int playerNum, SharedPreferences prefs) {
 		map[playerNum] = setModifiedKeys(id, playerNum, prefs);
 	}
@@ -186,7 +186,7 @@ public class Gamepad {
 			globalLS_Y[playerNum] = previousLS_Y[playerNum] = 0.0f;
 		}
 	}
-	
+
 	public void runCompatibilityMode(int joy, SharedPreferences prefs) {
 		for (int n = 0; n < 4; n++) {
 			if (compat[n]) {
@@ -197,7 +197,7 @@ public class Gamepad {
 			}
 		}
 	}
-	
+
 	public void fullCompatibilityMode(SharedPreferences prefs) {
 		for (int n = 0; n < 4; n++) {
 			runCompatibilityMode(n, prefs);

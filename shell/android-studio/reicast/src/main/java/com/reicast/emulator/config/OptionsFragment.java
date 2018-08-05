@@ -62,18 +62,18 @@ public class OptionsFragment extends Fragment {
 	private File sdcard = Environment.getExternalStorageDirectory();
 	private String home_directory = sdcard.getAbsolutePath();
 	private String game_directory = sdcard.getAbsolutePath();
-	
+
 	private String[] codes;
 
 	// Container Activity must implement this interface
 	public interface OnClickListener {
-        void onMainBrowseSelected(boolean browse, String path_entry, boolean games, String query);
+		void onMainBrowseSelected(boolean browse, String path_entry, boolean games, String query);
 	}
 
 	@Override
 	public void onAttach(Activity activity) {
 		super.onAttach(activity);
-		
+
 		// This makes sure that the container activity has implemented
 		// the callback interface. If not, it throws an exception
 		try {
@@ -100,16 +100,16 @@ public class OptionsFragment extends Fragment {
 
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
-			Bundle savedInstanceState) {
+							 Bundle savedInstanceState) {
 		// Inflate the layout for this fragment
 		return inflater.inflate(R.layout.configure_fragment, container, false);
 	}
 
 	@Override
 	public void onViewCreated(View view, Bundle savedInstanceState) {
-		
+
 		mPrefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
-		
+
 		// Specialized handler for devices with an extSdCard mount for external
 		HashSet<String> extStorage = FileBrowser.getExternalMounts();
 		if (extStorage != null && !extStorage.isEmpty()) {
@@ -120,7 +120,7 @@ public class OptionsFragment extends Fragment {
 				}
 			}
 		}
-		
+
 		home_directory = mPrefs.getString(Config.pref_home, home_directory);
 		Emulator app = (Emulator) getActivity().getApplicationContext();
 		app.getConfigurationPrefs(mPrefs);
@@ -137,7 +137,7 @@ public class OptionsFragment extends Fragment {
 		mainBrowse.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View view) {
 				mPrefs.edit().remove(Config.pref_home).apply();
-                hideSoftKeyBoard();
+				hideSoftKeyBoard();
 				mCallback.onMainBrowseSelected(false, home_directory, false, null);
 			}
 		});
@@ -163,11 +163,11 @@ public class OptionsFragment extends Fragment {
 			public void onTextChanged(CharSequence s, int start, int before, int count) {
 			}
 		});
-		
+
 		OnCheckedChangeListener reios_options = new OnCheckedChangeListener() {
 
 			public void onCheckedChanged(CompoundButton buttonView,
-					boolean isChecked) {
+										 boolean isChecked) {
 				mPrefs.edit().putBoolean(Emulator.pref_usereios, isChecked).apply();
 			}
 		};
@@ -175,11 +175,11 @@ public class OptionsFragment extends Fragment {
 				R.id.reios_option);
 		reios_opt.setChecked(mPrefs.getBoolean(Emulator.pref_usereios, false));
 		reios_opt.setOnCheckedChangeListener(reios_options);
-		
+
 		OnCheckedChangeListener details_options = new OnCheckedChangeListener() {
 
 			public void onCheckedChanged(CompoundButton buttonView,
-					boolean isChecked) {
+										 boolean isChecked) {
 				mPrefs.edit().putBoolean(Config.pref_gamedetails, isChecked).apply();
 				if (!isChecked) {
 					File dir = new File(getActivity().getExternalFilesDir(null), "images");
@@ -209,7 +209,7 @@ public class OptionsFragment extends Fragment {
 				if (editBrowse.getText() != null) {
 					game_directory = editGames.getText().toString();
 				}
-                hideSoftKeyBoard();
+				hideSoftKeyBoard();
 				mCallback.onMainBrowseSelected(false, game_directory, true, null);
 			}
 		});
@@ -243,12 +243,12 @@ public class OptionsFragment extends Fragment {
 		bios_spnr.setOnItemSelectedListener(new OnItemSelectedListener() {
 
 			public void onItemSelected(AdapterView<?> parent, View view,
-					int pos, long id) {
-                flashBios(codes[pos]);
+									   int pos, long id) {
+				flashBios(codes[pos]);
 			}
 
 			public void onNothingSelected(AdapterView<?> arg0) {
-				
+
 			}
 
 		});
@@ -256,7 +256,7 @@ public class OptionsFragment extends Fragment {
 		OnCheckedChangeListener native_options = new OnCheckedChangeListener() {
 
 			public void onCheckedChanged(CompoundButton buttonView,
-					boolean isChecked) {
+										 boolean isChecked) {
 				mPrefs.edit().putBoolean(Emulator.pref_nativeact, isChecked).apply();
 				Emulator.nativeact = isChecked;
 			}
@@ -269,7 +269,7 @@ public class OptionsFragment extends Fragment {
 		OnCheckedChangeListener dynarec_options = new OnCheckedChangeListener() {
 
 			public void onCheckedChanged(CompoundButton buttonView,
-					boolean isChecked) {
+										 boolean isChecked) {
 				mPrefs.edit().putBoolean(Emulator.pref_dynarecopt, isChecked).apply();
 				Emulator.dynarecopt = isChecked;
 			}
@@ -282,7 +282,7 @@ public class OptionsFragment extends Fragment {
 		OnCheckedChangeListener unstable_option = new OnCheckedChangeListener() {
 
 			public void onCheckedChanged(CompoundButton buttonView,
-					boolean isChecked) {
+										 boolean isChecked) {
 				mPrefs.edit().putBoolean(Emulator.pref_unstable, isChecked).apply();
 				Emulator.unstableopt = isChecked;
 			}
@@ -311,7 +311,7 @@ public class OptionsFragment extends Fragment {
 		cable_spnr.setOnItemSelectedListener(new OnItemSelectedListener() {
 
 			public void onItemSelected(AdapterView<?> parent, View view,
-					int pos, long id) {
+									   int pos, long id) {
 				mPrefs.edit().putInt(Emulator.pref_cable, pos + 1).apply();
 				Emulator.cable = pos + 1;
 			}
@@ -458,7 +458,7 @@ public class OptionsFragment extends Fragment {
 		pvr_render.setChecked(Emulator.pvrrender);
 		pvr_render.setOnCheckedChangeListener(pvr_rendering);
 
-        OnCheckedChangeListener synchronous = new OnCheckedChangeListener() {
+		OnCheckedChangeListener synchronous = new OnCheckedChangeListener() {
 			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
 				mPrefs.edit().putBoolean(Emulator.pref_syncedrender, isChecked).apply();
 				Emulator.syncedrender = isChecked;
@@ -514,7 +514,7 @@ public class OptionsFragment extends Fragment {
 		OnCheckedChangeListener fps_options = new OnCheckedChangeListener() {
 
 			public void onCheckedChanged(CompoundButton buttonView,
-					boolean isChecked) {
+										 boolean isChecked) {
 				mPrefs.edit().putBoolean(Config.pref_showfps, isChecked).apply();
 			}
 		};
@@ -595,7 +595,7 @@ public class OptionsFragment extends Fragment {
 			}
 		});
 	}
-	
+
 	private final class LocateThemes extends AsyncTask<String, Integer, List<File>> {
 		@Override
 		protected List<File> doInBackground(String... paths) {
@@ -663,7 +663,7 @@ public class OptionsFragment extends Fragment {
 			iMm.hideSoftInputFromWindow(getActivity().getCurrentFocus().getWindowToken(), 0);
 		}
 	}
-	
+
 	private void copy(File src, File dst) throws IOException {
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
 			try (InputStream in = new FileInputStream(src)) {
@@ -692,7 +692,7 @@ public class OptionsFragment extends Fragment {
 			}
 		}
 	}
-	
+
 	private void flashBios(String localized) {
 		File local = new File(home_directory, "data/dc_flash[" + localized
 				+ "].bin");

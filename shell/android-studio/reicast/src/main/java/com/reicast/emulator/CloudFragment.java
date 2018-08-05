@@ -4,7 +4,7 @@ package com.reicast.emulator;
  *  File: CloudFragment.java
  *  Author: Luca D'Amico (Luca91)
  *  Last Edit: 11 May 2014
- *  
+ *
  *  Reference: http://forums.reicast.com/index.php?topic=160.msg422
  */
 
@@ -45,20 +45,20 @@ import java.util.concurrent.ExecutionException;
 
 
 public class CloudFragment extends Fragment {
-	
+
 	Button uploadBtn;
 	Button downloadBtn;
-	AlertDialog.Builder confirmDialog = null; 
+	AlertDialog.Builder confirmDialog = null;
 	boolean actionRequired=false;
 	public String task = "";
 	DropBoxClient client = null;
 	private String home_directory;
-	
+
 	String[] vmus = {"vmu_save_A1.bin","vmu_save_A2.bin",
-					 "vmu_save_B1.bin","vmu_save_B2.bin",
-					 "vmu_save_C1.bin","vmu_save_C2.bin",
-					 "vmu_save_D1.bin","vmu_save_D2.bin"};
-    
+			"vmu_save_B1.bin","vmu_save_B2.bin",
+			"vmu_save_C1.bin","vmu_save_C2.bin",
+			"vmu_save_D1.bin","vmu_save_D2.bin"};
+
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 		return inflater.inflate(R.layout.cloud_fragment, container, false);
@@ -69,58 +69,58 @@ public class CloudFragment extends Fragment {
 		SharedPreferences mPrefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
 		home_directory = mPrefs.getString(Config.pref_home,
 				Environment.getExternalStorageDirectory().getAbsolutePath());
-        buttonListener();
-        confirmDialog = new AlertDialog.Builder(getActivity());
-        setClient();
+		buttonListener();
+		confirmDialog = new AlertDialog.Builder(getActivity());
+		setClient();
 	}
-	
+
 	public void setClient(){
 		if(client==null)
-        	client = new DropBoxClient(getActivity());
+			client = new DropBoxClient(getActivity());
 	}
-	
-	
+
+
 	public void buttonListener() {
 		uploadBtn = (Button) getView().findViewById(R.id.uploadBtn);
 		uploadBtn.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View arg0) {
 				confirmDialog.setMessage(R.string.uploadWarning);
-		        confirmDialog.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-		    	    public void onClick(DialogInterface dialog, int which) {					      	
-		         	   	setClient();
-		                task = "Upload";
-		         		client.startLogin();
-		         		actionRequired = true;
-			    	    }
-			    	});
-			    confirmDialog.setNegativeButton(R.string.cancel, null);			
-		        confirmDialog.show();
+				confirmDialog.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int which) {
+						setClient();
+						task = "Upload";
+						client.startLogin();
+						actionRequired = true;
+					}
+				});
+				confirmDialog.setNegativeButton(R.string.cancel, null);
+				confirmDialog.show();
 
-            }
-          });
-            	
-		
+			}
+		});
+
+
 		downloadBtn = (Button) getView().findViewById(R.id.downloadBtn);
 		downloadBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View arg0) {
-            	confirmDialog.setMessage(R.string.downloadWarning);
-		        confirmDialog.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-		    	    public void onClick(DialogInterface dialog, int which) {					      	
-		         	   	setClient();
-		                task = "Download";
-		         		client.startLogin();
-		         		actionRequired = true;
-			    	    }
-			    	});
-			    confirmDialog.setNegativeButton(R.string.cancel, null);					
-		        confirmDialog.show();
-            }
-        });
-    }
-	
-	
+			@Override
+			public void onClick(View arg0) {
+				confirmDialog.setMessage(R.string.downloadWarning);
+				confirmDialog.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int which) {
+						setClient();
+						task = "Download";
+						client.startLogin();
+						actionRequired = true;
+					}
+				});
+				confirmDialog.setNegativeButton(R.string.cancel, null);
+				confirmDialog.show();
+			}
+		});
+	}
+
+
 	@Override
 	public void onResume(){
 		super.onResume();
@@ -143,7 +143,7 @@ public class CloudFragment extends Fragment {
 					try {
 						String vmuPath = home_directory+"/"+vmus[k];
 						File vmu = new File(vmuPath);
-						if(vmu.exists() || task.equals("Download") ){     
+						if(vmu.exists() || task.equals("Download") ){
 							result = new netOperation(client, home_directory).execute(
 									task,vmuPath,vmus[k]).get();
 						}
@@ -166,175 +166,175 @@ public class CloudFragment extends Fragment {
 			actionRequired = false;
 		}
 	}
-	
-	
+
+
 }
 
 
 class DropBoxClient {
-	
+
 	Context context;
-	
-    final static private String APP_KEY = "7d7tw1t57sbzrj5";
-    final static private String APP_SECRET = "5xxqa2uctousyi2";
-    
-    public DropboxAPI<AndroidAuthSession> mDBApi;
-    AndroidAuthSession session;
-    
-    public DropBoxClient(Context context){
-    	this.context = context;
-        session = buildSession();
-        mDBApi = new DropboxAPI<AndroidAuthSession>(session);
-    }
-    
-    public void startLogin(){
-    		mDBApi.getSession().startOAuth2Authentication(context);
-    }
-    
+
+	final static private String APP_KEY = "7d7tw1t57sbzrj5";
+	final static private String APP_SECRET = "5xxqa2uctousyi2";
+
+	public DropboxAPI<AndroidAuthSession> mDBApi;
+	AndroidAuthSession session;
+
+	public DropBoxClient(Context context){
+		this.context = context;
+		session = buildSession();
+		mDBApi = new DropboxAPI<AndroidAuthSession>(session);
+	}
+
+	public void startLogin(){
+		mDBApi.getSession().startOAuth2Authentication(context);
+	}
+
 	public String[] getKeys() {
-        SharedPreferences prefs = context.getSharedPreferences("ReicastVMUUploader", 0);
-        String key = prefs.getString("DBoxKey", null);
-        String secret = prefs.getString("DBoxSecret", null);
-        if (key != null && secret != null) {
-        	String[] ret = new String[2];
-        	ret[0] = key;
-        	ret[1] = secret;
-        	return ret;
-        } else {
-        	return null;
-        }
-    }
-	
+		SharedPreferences prefs = context.getSharedPreferences("ReicastVMUUploader", 0);
+		String key = prefs.getString("DBoxKey", null);
+		String secret = prefs.getString("DBoxSecret", null);
+		if (key != null && secret != null) {
+			String[] ret = new String[2];
+			ret[0] = key;
+			ret[1] = secret;
+			return ret;
+		} else {
+			return null;
+		}
+	}
 
-    
-    public void storeKeys(String key, String secret) {
-        SharedPreferences prefs = context.getSharedPreferences("ReicastVMUUploader", 0);
-        Editor edit = prefs.edit();
-        edit.putString("DBoxKey", key);
-        edit.putString("DBoxSecret", secret);
-        edit.commit();
-    }
-    
 
-    
 
-	
-	 private AndroidAuthSession buildSession() {
-	        AppKeyPair appKeyPair = new AppKeyPair(APP_KEY, APP_SECRET);
-	        AndroidAuthSession session;
+	public void storeKeys(String key, String secret) {
+		SharedPreferences prefs = context.getSharedPreferences("ReicastVMUUploader", 0);
+		Editor edit = prefs.edit();
+		edit.putString("DBoxKey", key);
+		edit.putString("DBoxSecret", secret);
+		edit.commit();
+	}
 
-	        String[] stored = getKeys();
-	        if (stored != null) {
-	            AccessTokenPair accessToken = new AccessTokenPair(stored[0], stored[1]);
-	            session = new AndroidAuthSession(appKeyPair, accessToken);
-	        } else {
-	            session = new AndroidAuthSession(appKeyPair);
-	        }
 
-	        return session;
-	    }
+
+
+
+	private AndroidAuthSession buildSession() {
+		AppKeyPair appKeyPair = new AppKeyPair(APP_KEY, APP_SECRET);
+		AndroidAuthSession session;
+
+		String[] stored = getKeys();
+		if (stored != null) {
+			AccessTokenPair accessToken = new AccessTokenPair(stored[0], stored[1]);
+			session = new AndroidAuthSession(appKeyPair, accessToken);
+		} else {
+			session = new AndroidAuthSession(appKeyPair);
+		}
+
+		return session;
+	}
 
 }
 
 class netOperation extends AsyncTask<String, Void, String> {
-	
+
 	DropBoxClient client = null;
 	private String home_directory;
-	
+
 	public netOperation(DropBoxClient client, String home_directory){
 		this.client = client;
 		this.home_directory = home_directory;
 	}
 
 	public boolean uploadFile(String filePath, String fileName) {
-        File file = new File(filePath);
-        FileInputStream inputStream = null;
-        try {
-            inputStream = new FileInputStream(file);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
+		File file = new File(filePath);
+		FileInputStream inputStream = null;
+		try {
+			inputStream = new FileInputStream(file);
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
 
-        DropboxAPI.Entry response = null;
-        try {
-            response = client.mDBApi.putFileOverwrite("/"+fileName, inputStream, file.length(), null);
-        } catch (DropboxException e) {
-            e.printStackTrace();
-        }
-        Log.i("FileInfos", "The uploaded file's rev is: "+ response);
-        return true;
-    }
+		DropboxAPI.Entry response = null;
+		try {
+			response = client.mDBApi.putFileOverwrite("/"+fileName, inputStream, file.length(), null);
+		} catch (DropboxException e) {
+			e.printStackTrace();
+		}
+		Log.i("FileInfos", "The uploaded file's rev is: "+ response);
+		return true;
+	}
 
-    public boolean downloadFile(String filePath, String fileName) {
-        DropboxAPI.DropboxFileInfo info = null;
-        try { 
-        	Entry remoteFile = client.mDBApi.metadata("/"+fileName, 1, null, false, null);
-        	if((remoteFile.rev != null) && (remoteFile.bytes > 0)){ // Avoid to download 0 bytes vmus!
-        		 File file = new File(filePath);
-        		 if(file.exists())
-        			 createBackupOfVmu(fileName);
-        	     FileOutputStream out = null;
-        	     try {
-        	    	 out = new FileOutputStream(file);
-        	     } catch (FileNotFoundException e) {
-        	    	 e.printStackTrace();
-        	     }
-        		info = client.mDBApi.getFile("/"+fileName,null,out,null);
-        	}
-        } catch (DropboxException e) {
-            e.printStackTrace();
-        }
-        Log.i("FileInfos", "The downloaded file's rev is: "+ info);
-        return true;
-    }
+	public boolean downloadFile(String filePath, String fileName) {
+		DropboxAPI.DropboxFileInfo info = null;
+		try {
+			Entry remoteFile = client.mDBApi.metadata("/"+fileName, 1, null, false, null);
+			if((remoteFile.rev != null) && (remoteFile.bytes > 0)){ // Avoid to download 0 bytes vmus!
+				File file = new File(filePath);
+				if(file.exists())
+					createBackupOfVmu(fileName);
+				FileOutputStream out = null;
+				try {
+					out = new FileOutputStream(file);
+				} catch (FileNotFoundException e) {
+					e.printStackTrace();
+				}
+				info = client.mDBApi.getFile("/"+fileName,null,out,null);
+			}
+		} catch (DropboxException e) {
+			e.printStackTrace();
+		}
+		Log.i("FileInfos", "The downloaded file's rev is: "+ info);
+		return true;
+	}
 
 
-    @Override
-    protected void onPostExecute(String result) {
+	@Override
+	protected void onPostExecute(String result) {
 
-    }
+	}
 
-     @Override
-    protected String doInBackground(String... strings) {
-        if(strings[0].equals("Upload")){
-            if(uploadFile(strings[1],strings[2]))
-                return "Ok";
-            else
-                return "No";
-        }
-        else if(strings[0].equals("Download")){
-            if(downloadFile(strings[1],strings[2]))
-                return "Ok";
-            else
-                return "No";
-        }
-        else
-            return "Unknown";
-    }
+	@Override
+	protected String doInBackground(String... strings) {
+		if(strings[0].equals("Upload")){
+			if(uploadFile(strings[1],strings[2]))
+				return "Ok";
+			else
+				return "No";
+		}
+		else if(strings[0].equals("Download")){
+			if(downloadFile(strings[1],strings[2]))
+				return "Ok";
+			else
+				return "No";
+		}
+		else
+			return "Unknown";
+	}
 
-    @Override
-    protected void onPreExecute() {}
+	@Override
+	protected void onPreExecute() {}
 
-    @Override
-    protected void onProgressUpdate(Void... values) {}
-    
-    
-    void  createBackupOfVmu(String vmuName){
-    	File backupDir = new File(home_directory+"/VmuBackups/");
-    	 if(!backupDir.exists()) {
-         		backupDir.mkdirs();
-         } 
-    	
-        File source = new File(home_directory+"/"+vmuName);
-        File destination = new File(home_directory+"/VmuBackups/"+vmuName);
-        if(!destination.exists()) {
-        	try {
+	@Override
+	protected void onProgressUpdate(Void... values) {}
+
+
+	void  createBackupOfVmu(String vmuName){
+		File backupDir = new File(home_directory+"/VmuBackups/");
+		if(!backupDir.exists()) {
+			backupDir.mkdirs();
+		}
+
+		File source = new File(home_directory+"/"+vmuName);
+		File destination = new File(home_directory+"/VmuBackups/"+vmuName);
+		if(!destination.exists()) {
+			try {
 				destination.createNewFile();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-        } 
-        try {
+		}
+		try {
 			InputStream in = new FileInputStream(source);
 			OutputStream out = new FileOutputStream(destination);
 			byte[] buffer = new byte[1024];
@@ -349,6 +349,6 @@ class netOperation extends AsyncTask<String, Void, String> {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-    }
-    
+	}
+
 }

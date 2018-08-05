@@ -68,7 +68,7 @@ public class GL2JNINative extends NativeActivity {
 
 		pad.isOuyaOrTV = pad.IsOuyaOrTV(GL2JNINative.this);
 //		isNvidiaShield = Gamepad.IsNvidiaShield();
-		
+
 		RegisterNative(false);
 
 		Emulator app = (Emulator)getApplicationContext();
@@ -105,18 +105,18 @@ public class GL2JNINative extends NativeActivity {
 			Integer playerNum = e.getValue();
 
 			switch (playerNum) {
-			case 1:
-				if (descriptor != null)
-					controllerTwoConnected = true;
-				break;
-			case 2:
-				if (descriptor != null)
-					controllerThreeConnected = true;
-				break;
-			case 3:
-				if (descriptor != null)
-					controllerFourConnected = true;
-				break;
+				case 1:
+					if (descriptor != null)
+						controllerTwoConnected = true;
+					break;
+				case 2:
+					if (descriptor != null)
+						controllerThreeConnected = true;
+					break;
+				case 3:
+					if (descriptor != null)
+						controllerFourConnected = true;
+					break;
 			}
 		}
 
@@ -197,7 +197,7 @@ public class GL2JNINative extends NativeActivity {
 			sip.startRecording();
 			JNIdc.setupMic(sip);
 		}
-		
+
 		popUp = menu.new MainPopup(this);
 		vmuPop = menu.new VmuPopup(this);
 		if(prefs.getBoolean(Config.pref_vmu, false)){
@@ -222,14 +222,14 @@ public class GL2JNINative extends NativeActivity {
 			});
 		}
 	}
-	
+
 	public boolean simulatedTouchEvent(int playerNum, float L2, float R2) {
 		GL2JNIView.lt[playerNum] = (int) (L2 * 255);
 		GL2JNIView.rt[playerNum] = (int) (R2 * 255);
 		mView.pushInput();
 		return true;
 	}
-	
+
 	public void displayPopUp(PopupWindow popUp) {
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
 			popUp.showAtLocation(mView, Gravity.BOTTOM, 0, 60);
@@ -239,7 +239,7 @@ public class GL2JNINative extends NativeActivity {
 		popUp.update(LayoutParams.WRAP_CONTENT,
 				LayoutParams.WRAP_CONTENT);
 	}
-	
+
 	public void displayDebug(PopupWindow popUpDebug) {
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
 			popUpDebug.showAtLocation(mView, Gravity.BOTTOM, 0, 60);
@@ -276,7 +276,7 @@ public class GL2JNINative extends NativeActivity {
 		}
 		prefs.edit().putBoolean(Config.pref_vmu, showFloating).apply();
 	}
-	
+
 	public void displayConfig(PopupWindow popUpConfig) {
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
 			popUpConfig.showAtLocation(mView, Gravity.BOTTOM, 0, 60);
@@ -286,7 +286,7 @@ public class GL2JNINative extends NativeActivity {
 		popUpConfig.update(LayoutParams.WRAP_CONTENT,
 				LayoutParams.WRAP_CONTENT);
 	}
-	
+
 	public boolean motionEventHandler(Integer playerNum, com.bda.controller.MotionEvent event) {
 		if (playerNum == null || playerNum == -1)
 			return false;
@@ -385,7 +385,7 @@ public class GL2JNINative extends NativeActivity {
 
 					GL2JNIView.jx[playerNum] = (int) (LS_X * 126);
 					GL2JNIView.jy[playerNum] = (int) (LS_Y * 126);
-					
+
 					GL2JNIView.lt[playerNum] = (int) (L2 * 255);
 					GL2JNIView.rt[playerNum] = (int) (R2 * 255);
 
@@ -493,7 +493,7 @@ public class GL2JNINative extends NativeActivity {
 				if (keyCode == prefs.getInt(Gamepad.pref_button_l + id,
 						KeyEvent.KEYCODE_BUTTON_L1)
 						|| keyCode == prefs.getInt(Gamepad.pref_button_r + id,
-								KeyEvent.KEYCODE_BUTTON_R1)) {
+						KeyEvent.KEYCODE_BUTTON_R1)) {
 					return simulatedTouchEvent(playerNum, 0.0f, 0.0f);
 				} else {
 					return handle_key(playerNum, keyCode, false);
@@ -503,10 +503,10 @@ public class GL2JNINative extends NativeActivity {
 		return false;
 	}
 
-//	public boolean OnNativeMotion(int device, int source, int action, int x,
+	//	public boolean OnNativeMotion(int device, int source, int action, int x,
 //			int y, boolean newEvent) {
 	public boolean OnNativeMotion(int device, int source, int action, int x,
-			int y) {
+								  int y) {
 		Integer playerNum = pad.playerNumX.get(device);
 		if (playerNum != null && playerNum != -1) {
 			Log.d("reicast", playerNum + " - " + device + ": " + source);
@@ -547,7 +547,7 @@ public class GL2JNINative extends NativeActivity {
 	public void screenGrab() {
 		mView.screenGrab();
 	}
-	
+
 	private boolean showMenu() {
 		if (popUp != null) {
 			if (!menu.dismissPopUps()) {

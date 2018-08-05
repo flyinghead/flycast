@@ -51,7 +51,7 @@ public class AboutFragment extends Fragment {
 
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
-			Bundle savedInstanceState) {
+							 Bundle savedInstanceState) {
 		// Inflate the layout for this fragment
 		return inflater.inflate(R.layout.about_fragment, container, false);
 	}
@@ -207,14 +207,14 @@ public class AboutFragment extends Fragment {
 
 				list.setOnItemClickListener(new OnItemClickListener() {
 					public void onItemClick(AdapterView<?> parent, View view,
-							int position, long id) {
+											int position, long id) {
 						slidingGithub.open();
 					}
 				});
 			}
 
 		}
-		
+
 		private JSONArray getContent(String urlString) throws IOException, JSONException {
 			HttpURLConnection conn = (HttpURLConnection) new URL(urlString).openConnection();
 			conn.setRequestMethod("GET");

@@ -8,19 +8,19 @@ import android.util.Log;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class SipEmulator extends Thread {
-	
+
 	static final String TAG = "SipEmulator";
-	
+
 	//one second of audio data in bytes
 	static final int BUFFER_SIZE = 22050;
 	//this needs to get set to the amount the mic normally sends per data request
 	//...cant be bigger than a maple packet
 	// 240 16 (or 14) bit samples
 	static final int ONE_BLIP_SIZE = 480; //ALSO DEFINED IN maple_devs.h
-	
+
 	private AudioRecord record;
 	private ConcurrentLinkedQueue<byte[]> bytesReadBuffer;
-	
+
 	private boolean continueRecording;
 	private boolean firstGet;
 	
@@ -29,31 +29,31 @@ public class SipEmulator extends Thread {
 	== 176.4 kbit/s
 	== 22050 bytes/s
 	*/
-	
+
 	public SipEmulator(){
-		
+
 		Log.d(TAG, "SipEmulator constructor called");
-		
+
 		init();
-		
+
 	}
-	
+
 	private void init(){
 		Log.d(TAG, "SipEmulator init called");
 
 		record = new AudioRecord(
-				MediaRecorder.AudioSource.VOICE_RECOGNITION, 
-				11025, 
-				AudioFormat.CHANNEL_IN_MONO, 
-				AudioFormat.ENCODING_PCM_16BIT, 
+				MediaRecorder.AudioSource.VOICE_RECOGNITION,
+				11025,
+				AudioFormat.CHANNEL_IN_MONO,
+				AudioFormat.ENCODING_PCM_16BIT,
 				BUFFER_SIZE);
-		
+
 		bytesReadBuffer = new ConcurrentLinkedQueue<byte[]>();
-		
+
 		continueRecording = false;
 		firstGet = true;
 	}
-	
+
 	public void startRecording(){
 		Log.d(TAG, "SipEmulator startRecording called");
 		if(continueRecording){
@@ -63,13 +63,13 @@ public class SipEmulator extends Thread {
 		continueRecording = true;
 		this.start();
 	}
-	
+
 	public void stopRecording(){
 		Log.d(TAG, "SipEmulator stopRecording called");
 		continueRecording = false;
 		record.stop();
 	}
-	
+
 	public byte[] getData(){
 		//Log.d(TAG, "SipEmulator getData called");
 		//Log.d(TAG, "SipEmulator getData bytesReadBuffer size: "+bytesReadBuffer.size());
@@ -79,26 +79,26 @@ public class SipEmulator extends Thread {
 		}
 		return bytesReadBuffer.poll();
 	}
-	
+
 	private byte[] catchUp(){
 		Log.d(TAG, "SipEmulator catchUp");
 		byte[] last = bytesReadBuffer.poll();
 		bytesReadBuffer.clear();
 		return last;
 	}
-	
+
 	public void configSomething(int what, int setting){
 		Log.d(TAG, "SipEmulator configSomething called");
-		
+
 	}
-	
+
 	public void run() {
 		Log.d(TAG, "recordThread starting");
-		
+
 		while(continueRecording){
 			byte[] freshData = new byte[ONE_BLIP_SIZE];
 			// read blocks
-			record.read(freshData, 0, ONE_BLIP_SIZE); 
+			record.read(freshData, 0, ONE_BLIP_SIZE);
 			if(!firstGet){
 				bytesReadBuffer.add(freshData);
 			}
