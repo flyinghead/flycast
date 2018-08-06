@@ -24,7 +24,6 @@
 
 #ifdef __cplusplus
 extern "C" {
-#include <cstddef>
 #endif
 	
 #ifdef CMAKE_BUILD
@@ -36,6 +35,7 @@ extern "C" {
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
+
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <stddef.h>
