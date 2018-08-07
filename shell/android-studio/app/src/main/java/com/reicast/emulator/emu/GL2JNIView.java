@@ -199,10 +199,7 @@ public class GL2JNIView extends GLSurfaceView
 			// custom config chooser. See ConfigChooser class definition
 			// below.
 			setEGLConfigChooser(
-					translucent?
-							new GLCFactory.ConfigChooser(8, 8, 8, 8, depth, stencil)
-					: new GLCFactory.ConfigChooser(8, 8, 8, 0, depth, stencil)
-					);
+					new GLCFactory.ConfigChooser(8, 8, 8, translucent ? 8 : 0, depth, stencil));
 		}
 
 		// Set the renderer responsible for frame rendering
