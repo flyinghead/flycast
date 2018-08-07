@@ -183,29 +183,19 @@ public class GL2JNIView extends GLSurfaceView
         // is interpreted as any 32-bit surface with alpha by SurfaceFlinger.
         if(translucent) this.getHolder().setFormat(PixelFormat.TRANSLUCENT);
 
-        if (prefs.getBoolean(Config.pref_egl14, false)) {
-            setEGLContextFactory(new GLCFactory14.ContextFactory());
-            setEGLConfigChooser(
-                    translucent?
-                            new GLCFactory14.ConfigChooser(8, 8, 8, 8, depth, stencil)
-                            : new GLCFactory14.ConfigChooser(5, 6, 5, 0, depth, stencil)
-            );
-            GLES20.glEnable(GLES20.GL_DEPTH_TEST);
-        } else {
-            // Setup the context factory for 2.0 rendering.
-            // See ContextFactory class definition below
-            setEGLContextFactory(new GLCFactory.ContextFactory());
+        // Setup the context factory for 2.0 rendering.
+        // See ContextFactory class definition below
+        setEGLContextFactory(new GLCFactory.ContextFactory());
 
-            // We need to choose an EGLConfig that matches the format of
-            // our surface exactly. This is going to be done in our
-            // custom config chooser. See ConfigChooser class definition
-            // below.
-            setEGLConfigChooser(
-                    translucent?
-                            new GLCFactory.ConfigChooser(8, 8, 8, 8, depth, stencil)
-                            : new GLCFactory.ConfigChooser(5, 6, 5, 0, depth, stencil)
-            );
-        }
+        // We need to choose an EGLConfig that matches the format of
+        // our surface exactly. This is going to be done in our
+        // custom config chooser. See ConfigChooser class definition
+        // below.
+        setEGLConfigChooser(
+                translucent?
+                        new GLCFactory.ConfigChooser(8, 8, 8, 8, depth, stencil)
+                        : new GLCFactory.ConfigChooser(5, 6, 5, 0, depth, stencil)
+        );
 
         // Set the renderer responsible for frame rendering
         setRenderer(rend=new Renderer(this));
