@@ -71,7 +71,7 @@ naked void ngen_mainloop(void* cntx)
 		push ebp;
 		push ebx;
 
-		mov ecx,[eax-184]; //# PC - was #0xA0000000
+		mov ecx,0xA0000000;
 		mov [cycle_counter],SH4_TIMESLICE;
 
 		mov [loop_no_update],offset no_update;

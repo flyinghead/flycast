@@ -131,16 +131,9 @@ bool ConvertSector(u8* in_buff , u8* out_buff , int from , int to,int sector)
 
 Disc* OpenDisc(const wchar* fn)
 {
-	Disc* rv = nullptr;
+	Disc* rv;
 	
-	for (unat i=0; drivers[i] && !rv; i++) {  // ;drivers[i] && !(rv=drivers[i](fn));
-		rv = drivers[i](fn);
-		
-		if (cdi_parse == drivers[i]) {
-			const wchar warn_str[] = "Warning: CDI Image Loaded!\n  Many CDI images are known to be defective, GDI or CHD format is preferred. Please only file bug reports when using images known to be good (GDI or CHD).";
-			msgboxf(warn_str,MBX_ICONASTERISK);// if (OS_DlgYes!=os_Dialog(OS_DialogYesNo, cdiWarn_S)) rv=0;
-		}
-	}
+	for (int i=0;drivers[i] && !(rv=drivers[i](fn));i++) ;
 
 	return rv;
 }
@@ -178,7 +171,7 @@ bool InitDrive(u32 fileflags)
 		printf("Loading default image \"%s\"\n",settings.imgread.DefaultImage);
 		if (!InitDrive_(settings.imgread.DefaultImage))
 		{
-			msgboxf("Default image \"%s\" failed to load",MBX_ICONERROR,settings.imgread.DefaultImage);
+			msgboxf("Default image \"%s\" failed to load",MBX_ICONERROR);
 			return false;
 		}
 		else
