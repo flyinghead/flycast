@@ -193,6 +193,7 @@
 		84B7BF861B72871600F9733F /* EmuGLView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BF851B72871600F9733F /* EmuGLView.swift */; };
 		AE1E293B2095FB1600FC6BA2 /* rec_cpp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE1E293A2095FB1600FC6BA2 /* rec_cpp.cpp */; };
 		AE1E294020A96B0B00FC6BA2 /* rec_x64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE1E293F20A96B0B00FC6BA2 /* rec_x64.cpp */; };
+		AE4FF4E1211588B5009BF202 /* font.png in Resources */ = {isa = PBXBuildFile; fileRef = AE4FF4E0211588B5009BF202 /* font.png */; };
 		AE8C27342111A31100D4D8F4 /* dsp_interp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE8C27332111A31100D4D8F4 /* dsp_interp.cpp */; };
 		AE8C274121122E2500D4D8F4 /* Changelog.txt in Resources */ = {isa = PBXBuildFile; fileRef = AE8C273B21122E2500D4D8F4 /* Changelog.txt */; };
 		AE8C274221122E2500D4D8F4 /* License.txt in Resources */ = {isa = PBXBuildFile; fileRef = AE8C273C21122E2500D4D8F4 /* License.txt */; };
@@ -549,6 +550,7 @@
 		AE1E292B20947D4700FC6BA2 /* xbyak_util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = xbyak_util.h; sourceTree = "<group>"; };
 		AE1E293A2095FB1600FC6BA2 /* rec_cpp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = rec_cpp.cpp; sourceTree = "<group>"; };
 		AE1E293F20A96B0B00FC6BA2 /* rec_x64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = rec_x64.cpp; sourceTree = "<group>"; };
+		AE4FF4E0211588B5009BF202 /* font.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = font.png; path = ../../../linux/font.png; sourceTree = "<group>"; };
 		AE8C27332111A31100D4D8F4 /* dsp_interp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dsp_interp.cpp; sourceTree = "<group>"; };
 		AE8C273B21122E2500D4D8F4 /* Changelog.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Changelog.txt; sourceTree = "<group>"; };
 		AE8C273C21122E2500D4D8F4 /* License.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = License.txt; sourceTree = "<group>"; };
@@ -631,6 +633,7 @@
 		84A388B61B1CDD3E000166C0 /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
+				AE4FF4E0211588B5009BF202 /* font.png */,
 				84A388B71B1CDD3E000166C0 /* Info.plist */,
 			);
 			name = "Supporting Files";
@@ -1431,6 +1434,7 @@
 				84A388BB1B1CDD3E000166C0 /* Images.xcassets in Resources */,
 				84A388BE1B1CDD3E000166C0 /* MainMenu.xib in Resources */,
 				AE8C274121122E2500D4D8F4 /* Changelog.txt in Resources */,
+				AE4FF4E1211588B5009BF202 /* font.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1692,8 +1696,9 @@
 					TARGET_NO_WEBUI,
 					TARGET_NO_NIXPROF,
 					TARGET_NO_COREIO_HTTP,
-                    TARGET_NO_AREC,
+					TARGET_NO_AREC,
 					XBYAK_NO_OP_NAMES,
+					TARGET_NO_OPENMP,
 				);
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -1737,8 +1742,9 @@
 					TARGET_NO_WEBUI,
 					TARGET_NO_NIXPROF,
 					TARGET_NO_COREIO_HTTP,
-                    TARGET_NO_AREC,
+					TARGET_NO_AREC,
 					XBYAK_NO_OP_NAMES,
+					TARGET_NO_OPENMP,
 				);
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
@@ -1778,7 +1784,7 @@
 				);
 				INFOPLIST_FILE = "emulator-osx/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
-				PRODUCT_NAME = "reicast-osx";
+				PRODUCT_NAME = Reicast;
 				SWIFT_OBJC_BRIDGING_HEADER = "emulator-osx/emulator-osx-Bridging-Header.h";
 				SWIFT_VERSION = 3.0;
 			};
@@ -1795,7 +1801,7 @@
 					"$(inherited)",
 				);
 				"GCC_PREPROCESSOR_DEFINITIONS[arch=x86_64]" = (
-                    TARGET_OSX_X64,
+					TARGET_OSX_X64,
 					"$(inherited)",
 				);
 				HEADER_SEARCH_PATHS = (
@@ -1807,7 +1813,7 @@
 				);
 				INFOPLIST_FILE = "emulator-osx/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
-				PRODUCT_NAME = "reicast-osx";
+				PRODUCT_NAME = Reicast;
 				SWIFT_OBJC_BRIDGING_HEADER = "emulator-osx/emulator-osx-Bridging-Header.h";
 				SWIFT_VERSION = 3.0;
 			};

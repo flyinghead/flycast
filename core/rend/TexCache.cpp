@@ -1,6 +1,8 @@
 #include <list>
 #include <functional>
+#ifndef TARGET_NO_OPENMP
 #include <omp.h>
+#endif
 
 #include "TexCache.h"
 #include "hw/pvr/pvr_regs.h"
@@ -348,6 +350,7 @@ static void deposterizeV(u32* data, u32* out, int w, int h, int l, int u) {
 	}
 }
 
+#ifndef TARGET_NO_OPENMP
 void parallelize(const std::function<void(int,int)> &func, int start, int end, int width /* = 0 */)
 {
 	int tcount = omp_get_num_procs() - 1;
@@ -375,12 +378,16 @@ void DePosterize(u32* source, u32* dest, int width, int height) {
 
 	free(tmpbuf);
 }
+#endif
 
 struct xbrz::ScalerCfg xbrz_cfg;
 
 void UpscalexBRZ(int factor, u32* source, u32* dest, int width, int height, bool has_alpha) {
+#ifndef TARGET_NO_OPENMP
 	parallelize(
 			std::bind(&xbrz::scale, factor, source, dest, width, height, has_alpha ? xbrz::ColorFormat::ARGB : xbrz::ColorFormat::RGB, xbrz_cfg,
 					std::placeholders::_1, std::placeholders::_2), 0, height, width);
-//	xbrz::scale(factor, source, dest, width, height, has_alpha ? xbrz::ColorFormat::ARGB : xbrz::ColorFormat::RGB, xbrz_cfg);
+#else
+	xbrz::scale(factor, source, dest, width, height, has_alpha ? xbrz::ColorFormat::ARGB : xbrz::ColorFormat::RGB, xbrz_cfg);
+#endif
 }

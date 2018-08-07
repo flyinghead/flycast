@@ -97,19 +97,6 @@ void dc_stop();
 bool has_init = false;
 void* emuthread(void*) {
     settings.profile.run_counts=0;
-    string home = (string)getenv("HOME");
-    if(home.c_str())
-    {
-        home += "/.reicast";
-        mkdir(home.c_str(), 0755); // create the directory if missing
-        set_user_config_dir(home);
-        set_user_data_dir(home);
-    }
-    else
-    {
-        set_user_config_dir(".");
-        set_user_data_dir(".");
-    }
     common_linux_setup();
     char* argv[] = { "reicast" };
     
@@ -153,6 +140,28 @@ extern "C" int emu_single_frame(int w, int h) {
 }
 
 extern "C" void emu_gles_init() {
+    char *home = getenv("HOME");
+    if (home != NULL)
+    {
+        string config_dir = string(home) + "/.reicast";
+        mkdir(config_dir.c_str(), 0755); // create the directory if missing
+        set_user_config_dir(config_dir);
+        set_user_data_dir(config_dir);
+    }
+    else
+    {
+        set_user_config_dir(".");
+        set_user_data_dir(".");
+    }
+    // Add bundle resources path
+    CFBundleRef mainBundle = CFBundleGetMainBundle();
+    CFURLRef resourcesURL = CFBundleCopyResourcesDirectoryURL(mainBundle);
+    char path[PATH_MAX];
+    if (CFURLGetFileSystemRepresentation(resourcesURL, TRUE, (UInt8 *)path, PATH_MAX))
+        add_system_data_dir(string(path));
+    CFRelease(resourcesURL);
+    CFRelease(mainBundle);
+
     gles_init();
 }
 
