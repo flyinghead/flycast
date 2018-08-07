@@ -201,7 +201,7 @@ public class GL2JNIView extends GLSurfaceView
 			setEGLConfigChooser(
 					translucent?
 							new GLCFactory.ConfigChooser(8, 8, 8, 8, depth, stencil)
-					: new GLCFactory.ConfigChooser(5, 6, 5, 0, depth, stencil)
+					: new GLCFactory.ConfigChooser(8, 8, 8, 0, depth, stencil)
 					);
 		}
 

@@ -187,7 +187,7 @@ public class GL2JNINative extends NativeActivity {
 
 		// Create the actual GLES view
 		mView = new GL2JNIView(getApplication(), fileName, false,
-				prefs.getInt(Config.pref_renderdepth, 24), 0, false);
+				prefs.getInt(Config.pref_renderdepth, 24), 8, false);
 		setContentView(mView);
 
 		//setup mic

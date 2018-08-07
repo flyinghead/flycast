@@ -304,6 +304,10 @@ void LoadSettings()
 	settings.reios.ElfFile = cfgLoadStr("reios", "ElfFile", "");
 
 	settings.validate.OpenGlChecks = cfgLoadInt("validate", "OpenGlChecks", 0) != 0;
+#else
+    // TODO Expose this with JNI
+	settings.rend.Clipping = 1;
+	settings.rend.ModifierVolumes = 1;
 #endif
 
 	settings.pvr.HashLogFile = cfgLoadStr("testing", "ta.HashLogFile", "");

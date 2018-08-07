@@ -20,6 +20,13 @@ int fbdev = -1;
 #include <GL3/gl3w.c>
 #pragma comment(lib,"Opengl32.lib")
 #endif
+#else
+#ifndef GL_RED
+#define GL_RED                            0x1903
+#endif
+#ifndef GL_MAJOR_VERSION
+#define GL_MAJOR_VERSION                  0x821B
+#endif
 #endif
 
 /*
@@ -61,73 +68,66 @@ Tile clip
 float fb_scale_x,fb_scale_y;
 float scale_x, scale_y;
 
-#ifndef GLES
-#define attr "in"
-#define vary "out"
-#else
-#define attr "attribute"
-#define vary "varying"
-#endif
-
 //Fragment and vertex shaders code
-//pretty much 1:1 copy of the d3d ones for now
 const char* VertexShaderSource =
-#ifndef GLES
-	"#version 140 \n"
-#endif
 "\
+%s \n\
+#define TARGET_GL %s \n\
 #define pp_Gouraud %d \n\
- \n"
-#ifndef GLES
-"\
+ \n\
+#define GLES2 0 \n\
+#define GLES3 1 \n\
+#define GL 2 \n\
+ \n\
+#if TARGET_GL == GLES2 \n\
+#define in attribute \n\
+#define out varying \n\
+#endif \n\
+ \n\
+ \n\
+#if TARGET_GL != GLES2 \n\
 #if pp_Gouraud == 0 \n\
 #define INTERPOLATION flat \n\
 #else \n\
 #define INTERPOLATION smooth \n\
-#endif \n"
-#else
-"\
-#define INTERPOLATION \n"
-#endif
-" \n\
+#endif \n\
+#else \n\
+#define INTERPOLATION \n\
+#endif \n\
+ \n\
 /* Vertex constants*/  \n\
 uniform highp vec4      scale; \n\
 uniform highp vec4      depth_scale; \n\
 /* Vertex input */ \n\
-" attr " highp vec4    in_pos; \n\
-" attr " lowp vec4     in_base; \n\
-" attr " lowp vec4     in_offs; \n\
-" attr " mediump vec2  in_uv; \n\
+in highp vec4    in_pos; \n\
+in lowp vec4     in_base; \n\
+in lowp vec4     in_offs; \n\
+in mediump vec2  in_uv; \n\
 /* output */ \n\
-INTERPOLATION " vary " lowp vec4 vtx_base; \n\
-INTERPOLATION " vary " lowp vec4 vtx_offs; \n\
-              " vary " mediump vec2 vtx_uv; \n\
+INTERPOLATION out lowp vec4 vtx_base; \n\
+INTERPOLATION out lowp vec4 vtx_offs; \n\
+              out mediump vec2 vtx_uv; \n\
 void main() \n\
 { \n\
 	vtx_base=in_base; \n\
 	vtx_offs=in_offs; \n\
 	vtx_uv=in_uv; \n\
-	vec4 vpos=in_pos; \n"
-#ifndef GLES
-	"\
+	vec4 vpos=in_pos; \n\
+#if TARGET_GL != GLES2 \n\
 	if (isinf(vpos.z)) \n\
 		vpos.w = 1.18e-38; \n\
-	else \n"
-#endif
-	"\
-		vpos.w = 1.0 / vpos.z; \n"
-#ifndef GLES
-	"\
+	else \n\
+#endif \n\
+		vpos.w = 1.0 / vpos.z; \n\
+#if TARGET_GL != GLES2 \n\
 	if (vpos.w < 0.0) { \n\
 		gl_Position = vec4(0.0, 0.0, 0.0, vpos.w); \n\
 		return; \n\
 	} \n\
-	vpos.z = vpos.w; \n"
-#else
-	"\
-	vpos.z=depth_scale.x+depth_scale.y*vpos.w;  \n"
-#endif
-	"\
+	vpos.z = vpos.w; \n\
+#else \n\
+	vpos.z=depth_scale.x+depth_scale.y*vpos.w;  \n\
+#endif \n\
 	vpos.xy=vpos.xy*scale.xy-scale.zw;  \n\
 	vpos.xy*=vpos.w;  \n\
 	gl_Position = vpos; \n\
@@ -182,28 +182,11 @@ lowp float fog_mode2(highp float invW)  \n\
 } \n\
 */
 
-#ifndef GLES
-#define FRAGCOL "FragColor"
-#define TEXLOOKUP "texture"
-#undef vary
-#define vary "in"
-#define FOG_CHANNEL "r"
-#define FOG_IMG_TYPE GL_RED
-#else
-#define FRAGCOL "gl_FragColor"
-#define TEXLOOKUP "texture2D"
-#define FOG_CHANNEL "a"
-#define FOG_IMG_TYPE GL_ALPHA
-#endif
-
-
 const char* PixelPipelineShader =
-#ifndef GLES
-	"#version 140 \n"
-	"out vec4 FragColor; \n"
-#endif
 "\
-\
+%s \n\
+#define TARGET_GL %s \n\
+\n\
 #define cp_AlphaTest %d \n\
 #define pp_ClipTestMode %d \n\
 #define pp_UseAlpha %d \n\
@@ -215,19 +198,36 @@ const char* PixelPipelineShader =
 #define pp_Gouraud %d \n\
 #define pp_BumpMap %d \n\
 #define PI 3.1415926 \n\
- \n"
-#ifndef GLES
-"\
+\n\
+#define GLES2 0 \n\
+#define GLES3 1 \n\
+#define GL 2 \n\
+ \n\
+#if TARGET_GL == GLES3 \n\
+out highp vec4 FragColor; \n\
+#define gl_FragColor FragColor \n\
+#define FOG_CHANNEL a \n\
+#elif TARGET_GL == GL \n\
+out highp vec4 FragColor; \n\
+#define gl_FragColor FragColor \n\
+#define FOG_CHANNEL r \n\
+#else \n\
+#define in varying \n\
+#define texture texture2D \n\
+#define FOG_CHANNEL a \n\
+#endif \n\
+ \n\
+ \n\
+#if TARGET_GL != GLES2 \n\
 #if pp_Gouraud == 0 \n\
 #define INTERPOLATION flat \n\
 #else \n\
 #define INTERPOLATION smooth \n\
-#endif \n"
-#else
-"\
-#define INTERPOLATION \n"
-#endif
-" \n\
+#endif \n\
+#else \n\
+#define INTERPOLATION \n\
+#endif \n\
+ \n\
 /* Shader program params*/ \n\
 /* gles has no alpha test stage, so its emulated on the shader */ \n\
 uniform lowp float cp_AlphaTestValue; \n\
@@ -237,17 +237,17 @@ uniform highp float sp_FOG_DENSITY; \n\
 uniform sampler2D tex,fog_table; \n\
 uniform lowp float trilinear_alpha; \n\
 /* Vertex input*/ \n\
-INTERPOLATION " vary " lowp vec4 vtx_base; \n\
-INTERPOLATION " vary " lowp vec4 vtx_offs; \n\
-			  " vary " mediump vec2 vtx_uv; \n\
+INTERPOLATION in lowp vec4 vtx_base; \n\
+INTERPOLATION in lowp vec4 vtx_offs; \n\
+			  in mediump vec2 vtx_uv; \n\
 lowp float fog_mode2(highp float w) \n\
 { \n\
 	highp float z = clamp(w * sp_FOG_DENSITY, 1.0, 255.9999); \n\
-	float exp = floor(log2(z)); \n\
+	highp float exp = floor(log2(z)); \n\
 	highp float m = z * 16.0 / pow(2.0, exp) - 16.0; \n\
-	float idx = floor(m) + exp * 16.0 + 0.5; \n\
-	vec4 fog_coef = " TEXLOOKUP "(fog_table, vec2(idx / 128.0, 0.75 - (m - floor(m)) / 2.0)); \n\
-	return fog_coef." FOG_CHANNEL "; \n\
+	lowp float idx = floor(m) + exp * 16.0 + 0.5; \n\
+	highp vec4 fog_coef = texture(fog_table, vec2(idx / 128.0, 0.75 - (m - floor(m)) / 2.0)); \n\
+	return fog_coef.FOG_CHANNEL; \n\
  } \n\
 void main() \n\
 { \n\
@@ -273,7 +273,7 @@ void main() \n\
 	#endif\n\
 	#if pp_Texture==1 \n\
 	{ \n\
-		lowp vec4 texcol=" TEXLOOKUP "(tex, vtx_uv); \n\
+		lowp vec4 texcol=texture(tex, vtx_uv); \n\
 		 \n\
 		#if pp_BumpMap == 1 \n\
 			float s = PI / 2.0 * (texcol.a * 15.0 * 16.0 + texcol.r * 15.0) / 255.0; \n\
@@ -330,48 +330,65 @@ void main() \n\
 	#if cp_AlphaTest == 1 \n\
 		color.a=1.0; \n\
 	#endif  \n\
-	//color.rgb=vec3(gl_FragCoord.w * sp_FOG_DENSITY / 128.0);\n"
-#ifndef GLES
-	"\
+	//color.rgb=vec3(gl_FragCoord.w * sp_FOG_DENSITY / 128.0);\n\
+#if TARGET_GL != GLES2 \n\
 	highp float w = gl_FragCoord.w * 100000.0; \n\
-	gl_FragDepth = log2(1.0 + w) / 34.0; \n"
-#endif
-	FRAGCOL "=color; \n\
+	gl_FragDepth = log2(1.0 + w) / 34.0; \n\
+#endif \n\
+	gl_FragColor =color; \n\
 }";
 
 const char* ModifierVolumeShader =
-#ifndef GLES
-	"#version 140 \n"
-	"out vec4 FragColor; \n"
-#endif
-" \
+"\
+%s \n\
+#define TARGET_GL %s \n\
+ \n\
+#define GLES2 0 \n\
+#define GLES3 1 \n\
+#define GL 2 \n\
+ \n\
+#if TARGET_GL != GLES2 \n\
+out highp vec4 FragColor; \n\
+#define gl_FragColor FragColor \n\
+#endif \n\
+ \n\
 uniform lowp float sp_ShaderColor; \n\
 /* Vertex input*/ \n\
 void main() \n\
-{ \n"
-#ifndef GLES
-	"\
+{ \n\
+#if TARGET_GL != GLES2 \n\
 	highp float w = gl_FragCoord.w * 100000.0; \n\
-	gl_FragDepth = log2(1.0 + w) / 34.0; \n"
-#endif
-	FRAGCOL "=vec4(0.0, 0.0, 0.0, sp_ShaderColor); \n\
+	gl_FragDepth = log2(1.0 + w) / 34.0; \n\
+#endif \n\
+	gl_FragColor=vec4(0.0, 0.0, 0.0, sp_ShaderColor); \n\
 }";
 
 const char* OSD_Shader =
-#ifndef GLES
-	"#version 140 \n"
-	"out vec4 FragColor; \n"
-#endif
-" \
-" vary " lowp vec4 vtx_base; \n\
-" vary " mediump vec2 vtx_uv; \n\
+"\
+%s \n\
+#define TARGET_GL %s \n\
+ \n\
+#define GLES2 0 \n\
+#define GLES3 1 \n\
+#define GL 2 \n\
+ \n\
+#if TARGET_GL != GLES2 \n\
+out highp vec4 FragColor; \n\
+#define gl_FragColor FragColor \n\
+#else \n\
+#define in varying \n\
+#define texture texture2D \n\
+#endif \n\
+ \n\
+in lowp vec4 vtx_base; \n\
+in mediump vec2 vtx_uv; \n\
 /* Vertex input*/ \n\
 uniform sampler2D tex; \n\
 void main() \n\
 { \n\
 	mediump vec2 uv=vtx_uv; \n\
 	uv.y=1.0-uv.y; \n\
-	" FRAGCOL "=vtx_base*" TEXLOOKUP "(tex,uv.st); \n\n\
+	gl_FragColor = vtx_base*texture(tex,uv.st); \n\
 }";
 
 GLCache glcache;
@@ -685,6 +702,39 @@ GLuint fogTextureId;
 
 #endif
 
+void findGLVersion()
+{
+	while (true)
+		if (glGetError() == GL_NO_ERROR)
+			break;
+	glGetIntegerv(GL_MAJOR_VERSION, &gl.gl_major);
+	if (glGetError() == GL_INVALID_ENUM)
+		gl.gl_major = 2;
+	const char *version = (const char *)glGetString(GL_VERSION);
+	if (!strncmp(version, "OpenGL ES", 9))
+	{
+		gl.is_gles = true;
+		if (gl.gl_major >= 3)
+		{
+			gl.gl_version = "GLES3";
+			gl.glsl_version_header = "#version 300 es";
+		}
+		else
+		{
+			gl.gl_version = "GLES2";
+			gl.glsl_version_header = "";
+		}
+		gl.fog_image_format = GL_ALPHA;
+	}
+	else
+	{
+		gl.is_gles = false;
+		gl.gl_version = "GL";
+		gl.glsl_version_header = "#version 140";
+		gl.fog_image_format = GL_RED;
+	}
+}
+
 struct ShaderUniforms_t ShaderUniforms;
 
 GLuint gl_CompileShader(const char* shader,GLuint type)
@@ -797,11 +847,11 @@ bool CompilePipelineShader(	PipelineShader* s)
 {
 	char vshader[8192];
 
-	sprintf(vshader, VertexShaderSource, s->pp_Gouraud);
+	sprintf(vshader, VertexShaderSource, gl.glsl_version_header, gl.gl_version, s->pp_Gouraud);
 
 	char pshader[8192];
 
-	sprintf(pshader,PixelPipelineShader,
+	sprintf(pshader,PixelPipelineShader, gl.glsl_version_header, gl.gl_version,
                 s->cp_AlphaTest,s->pp_ClipTestMode,s->pp_UseAlpha,
                 s->pp_Texture,s->pp_IgnoreTexA,s->pp_ShadInstr,s->pp_Offset,s->pp_FogCtrl, s->pp_Gouraud, s->pp_BumpMap);
 
@@ -917,16 +967,21 @@ bool gl_create_resources()
 		}
 	}
 
+	findGLVersion();
+	
 	char vshader[8192];
-	sprintf(vshader, VertexShaderSource, 1);
+	sprintf(vshader, VertexShaderSource, gl.glsl_version_header, gl.gl_version, 1);
+	char fshader[8192];
+	sprintf(fshader, ModifierVolumeShader, gl.glsl_version_header, gl.gl_version);
 
-	gl.modvol_shader.program=gl_CompileAndLink(vshader, ModifierVolumeShader);
+	gl.modvol_shader.program=gl_CompileAndLink(vshader, fshader);
 	gl.modvol_shader.scale          = glGetUniformLocation(gl.modvol_shader.program, "scale");
 	gl.modvol_shader.sp_ShaderColor = glGetUniformLocation(gl.modvol_shader.program, "sp_ShaderColor");
 	gl.modvol_shader.depth_scale    = glGetUniformLocation(gl.modvol_shader.program, "depth_scale");
 
+	sprintf(fshader, OSD_Shader, gl.glsl_version_header, gl.gl_version);
 
-	gl.OSD_SHADER.program=gl_CompileAndLink(vshader, OSD_Shader);
+	gl.OSD_SHADER.program=gl_CompileAndLink(vshader, fshader);
 	printf("OSD: %d\n",gl.OSD_SHADER.program);
 	gl.OSD_SHADER.scale=glGetUniformLocation(gl.OSD_SHADER.program, "scale");
 	gl.OSD_SHADER.depth_scale=glGetUniformLocation(gl.OSD_SHADER.program, "depth_scale");
@@ -1029,7 +1084,7 @@ void UpdateFogTexture(u8 *fog_table)
 		temp_tex_buffer[i + 128] = fog_table[i * 4 + 1];
 	}
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	glTexImage2D(GL_TEXTURE_2D, 0, FOG_IMG_TYPE, 128, 2, 0, FOG_IMG_TYPE, GL_UNSIGNED_BYTE, temp_tex_buffer);
+	glTexImage2D(GL_TEXTURE_2D, 0, gl.fog_image_format, 128, 2, 0, gl.fog_image_format, GL_UNSIGNED_BYTE, temp_tex_buffer);
 	glCheck();
 
 	glActiveTexture(GL_TEXTURE0);
