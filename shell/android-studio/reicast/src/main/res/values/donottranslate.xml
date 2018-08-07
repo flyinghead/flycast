@@ -1,6 +1,6 @@
 <resources>
 
-    <!-- moved to gradle -->
+    <string name="app_name">reicast</string>
 
     <string name="app_site">http://reicast.com</string>
 

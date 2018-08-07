@@ -21,8 +21,6 @@ android {
 
     defaultConfig {
         applicationId "com.reicast.emulator"
-        resValue "string", "app_name", "Reicast"
-
         minSdkVersion 16
         targetSdkVersion 25
         versionCode getVersionCode()
@@ -46,20 +44,7 @@ android {
         }
     }
 
-
     buildTypes {
-        debug {
-            if (System.getenv("TRAVIS_JOB_ID")) {
-                resValue "string", "app_name", "Reicast CI-" + getVersionName()
-                versionNameSuffix "-CI"
-                applicationIdSuffix ".ci_" + getVersionName().replaceAll('-', '_')
-            } else {
-                resValue "string", "app_name", "Reicast DBG-" + getVersionName()
-                versionNameSuffix "-DBG"
-                applicationIdSuffix ".dbg"
-            }
-        }
-
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
