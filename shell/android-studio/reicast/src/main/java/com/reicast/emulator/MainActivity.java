@@ -259,9 +259,9 @@ public class MainActivity extends AppCompatActivity implements
 		builder.setPositiveButton(R.string.browse,
 				new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int which) {
-						onMainBrowseSelected(false,
-								Environment.getExternalStorageDirectory().getAbsolutePath(),
-								false, null);
+						String home_directory = mPrefs.getString(Config.pref_home,
+								Environment.getExternalStorageDirectory().getAbsolutePath());
+						onMainBrowseSelected(false, home_directory, false, null);
 					}
 				});
 		builder.setNegativeButton(R.string.gdrive,

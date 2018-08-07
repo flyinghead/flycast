@@ -172,13 +172,12 @@ public class FileBrowser extends Fragment {
 		 * findViewById(R.id.about).setOnTouchListener(viblist);
 		 */
 
-		File home = new File(mPrefs.getString(Config.pref_home, home_directory));
-		if (!home.exists() || !home.isDirectory()) {
+		String temp = mPrefs.getString(Config.pref_home, null);
+		if (temp == null || !new File(temp).isDirectory()) {
 			showToastMessage(getActivity().getString(R.string.config_home), Snackbar.LENGTH_LONG);
 		} else {
 			installButtons();
 		}
-
 		if (!ImgBrowse && !games) {
 			new LocateGames(R.array.flash).execute(home_directory);
 		} else {
