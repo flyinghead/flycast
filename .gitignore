@@ -6,11 +6,6 @@ bin/
 gen/
 obj/
 
-newdc/android/libnewdc/bin/libnewdc.jar
-newdc/android/libnewdc/bin/classes/com/example/newdc/JNIdc.class
-
-shell/android/assets/build
-
 # iOS/Xcode general stuff
 .DS_Store
 */build/*
@@ -56,4 +51,4 @@ reicast-ios.xccheckout
 .idea
 *.iml
 .externalNativeBuild
-shell/android-studio/app/src/main/assets/build
+shell/android-studio/reicast/src/main/assets/build
