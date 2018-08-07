@@ -194,6 +194,9 @@ public class GL2JNIView extends GLSurfaceView
 			// See ContextFactory class definition below
 			setEGLContextFactory(new GLCFactory.ContextFactory());
 
+			if (!translucent)
+				this.getHolder().setFormat(PixelFormat.RGBX_8888);
+				
 			// We need to choose an EGLConfig that matches the format of
 			// our surface exactly. This is going to be done in our
 			// custom config chooser. See ConfigChooser class definition
