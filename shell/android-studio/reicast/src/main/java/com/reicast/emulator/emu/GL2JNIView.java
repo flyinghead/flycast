@@ -681,6 +681,8 @@ public class GL2JNIView extends GLSurfaceView
     }
 
     public void onDestroy() {
+        // Workaround for ANR when returning to menu
+        System.exit(0);
         try {
             ethd.join();
         } catch (InterruptedException e) {
