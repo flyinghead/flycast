@@ -15,8 +15,6 @@ import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.Snackbar;
 import android.support.graphics.drawable.VectorDrawableCompat;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.Gravity;
@@ -72,6 +70,7 @@ public class OptionsFragment extends Fragment {
 	// Container Activity must implement this interface
 	public interface OnClickListener {
 		void onMainBrowseSelected(boolean browse, String path_entry, boolean games, String query);
+		void onSettingsReload(Fragment options);
 	}
 
 	@Override
@@ -729,17 +728,7 @@ public class OptionsFragment extends Fragment {
 		mPrefs.edit().remove(Config.pref_renderdepth).apply();
 		mPrefs.edit().remove(Config.pref_theme).apply();
 
-		Emulator app = (Emulator) getActivity().getApplicationContext();
-		app.getConfigurationPrefs(mPrefs);
-
-		FragmentManager manager = getActivity().getSupportFragmentManager();
-		FragmentTransaction ft = manager.beginTransaction();
-		Fragment newFragment = this;
-		this.onDestroy();
-		ft.remove(this);
-		ft.replace(R.id.fragment_container,newFragment);
-		ft.addToBackStack(null);
-		ft.commit();
+		mCallback.onSettingsReload(this);
 	}
 
 	private void showToastMessage(String message, int duration) {

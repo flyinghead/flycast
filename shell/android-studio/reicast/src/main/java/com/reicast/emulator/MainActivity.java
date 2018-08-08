@@ -2,14 +2,12 @@ package com.reicast.emulator;
 
 import android.Manifest;
 import android.app.AlertDialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.content.res.Configuration;
-import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -20,6 +18,8 @@ import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
@@ -365,6 +365,15 @@ public class MainActivity extends AppCompatActivity implements
 		onMainBrowseSelected(true, null, false, null);
 	}
 
+	public void onSettingsReload(Fragment options) {
+		getSupportFragmentManager().beginTransaction().remove(options).commit();
+		OptionsFragment optionsFrag = new OptionsFragment();
+		getSupportFragmentManager()
+				.beginTransaction()
+				.replace(R.id.fragment_container, optionsFrag, "OPTIONS_FRAG")
+				.addToBackStack(null).commit();
+    }
+
 	@Override
 	protected void onPause() {
 		super.onPause();
@@ -439,9 +448,8 @@ public class MainActivity extends AppCompatActivity implements
 				browseFrag.setArguments(args);
 				getSupportFragmentManager()
 						.beginTransaction()
-						.replace(R.id.fragment_container, browseFrag,
-								"MAIN_BROWSER").addToBackStack(null)
-						.commit();
+						.replace(R.id.fragment_container, browseFrag, "MAIN_BROWSER")
+						.addToBackStack(null).commit();
 				setTitle(R.string.browser);
 				drawer.closeDrawer(GravityCompat.START);
 				return true;
@@ -458,8 +466,7 @@ public class MainActivity extends AppCompatActivity implements
 				optionsFrag = new OptionsFragment();
 				getSupportFragmentManager()
 						.beginTransaction()
-						.replace(R.id.fragment_container,
-								optionsFrag, "OPTIONS_FRAG")
+						.replace(R.id.fragment_container, optionsFrag, "OPTIONS_FRAG")
 						.addToBackStack(null).commit();
 				setTitle(R.string.settings);
 				drawer.closeDrawer(GravityCompat.START);
@@ -477,8 +484,8 @@ public class MainActivity extends AppCompatActivity implements
 				inputFrag = new InputFragment();
 				getSupportFragmentManager()
 						.beginTransaction()
-						.replace(R.id.fragment_container, inputFrag,
-								"INPUT_FRAG").addToBackStack(null).commit();
+						.replace(R.id.fragment_container, inputFrag, "INPUT_FRAG")
+						.addToBackStack(null).commit();
 				setTitle(R.string.input);
 				drawer.closeDrawer(GravityCompat.START);
 				return true;
@@ -495,8 +502,8 @@ public class MainActivity extends AppCompatActivity implements
 				aboutFrag = new AboutFragment();
 				getSupportFragmentManager()
 						.beginTransaction()
-						.replace(R.id.fragment_container, aboutFrag,
-								"ABOUT_FRAG").addToBackStack(null).commit();
+						.replace(R.id.fragment_container, aboutFrag, "ABOUT_FRAG")
+						.addToBackStack(null).commit();
 				setTitle(R.string.about);
 				drawer.closeDrawer(GravityCompat.START);
 				return true;
@@ -513,8 +520,7 @@ public class MainActivity extends AppCompatActivity implements
 				cloudFrag = new CloudFragment();
 				getSupportFragmentManager()
 						.beginTransaction()
-						.replace(R.id.fragment_container,
-								cloudFrag, "CLOUD_FRAG")
+						.replace(R.id.fragment_container, cloudFrag, "CLOUD_FRAG")
 						.addToBackStack(null).commit();
 				setTitle(R.string.cloud);
 				drawer.closeDrawer(GravityCompat.START);
@@ -522,8 +528,8 @@ public class MainActivity extends AppCompatActivity implements
 
 			case R.id.rateme_menu:
 				// vib.vibrate(50);
-				startActivity(new Intent(Intent.ACTION_VIEW, Uri
-						.parse("market://details?id=" + getPackageName())));
+				startActivity(new Intent(Intent.ACTION_VIEW,
+						Uri.parse("market://details?id=" + getPackageName())));
 				//setTitle(R.string.rateme);
 				drawer.closeDrawer(GravityCompat.START);
 				return true;

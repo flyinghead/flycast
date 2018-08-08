@@ -65,6 +65,7 @@ public class Emulator extends Application {
         Emulator.frameskip = mPrefs.getInt(pref_frameskip, frameskip);
         Emulator.pvrrender = mPrefs.getBoolean(pref_pvrrender, pvrrender);
         Emulator.syncedrender = mPrefs.getBoolean(pref_syncedrender, syncedrender);
+        Emulator.modvols = mPrefs.getBoolean(pref_modvols, modvols);
         Emulator.cheatdisk = mPrefs.getString(pref_cheatdisk, cheatdisk);
         Emulator.usereios = mPrefs.getBoolean(pref_usereios, usereios);
         Emulator.nativeact = mPrefs.getBoolean(pref_nativeact, nativeact);
@@ -90,6 +91,7 @@ public class Emulator extends Application {
         JNIdc.frameskip(Emulator.frameskip);
         JNIdc.pvrrender(Emulator.pvrrender ? 1 : 0);
         JNIdc.syncedrender(Emulator.syncedrender ? 1 : 0);
+        JNIdc.modvols(Emulator.modvols ? 1 : 0);
         JNIdc.usereios(Emulator.usereios ? 1 : 0);
         JNIdc.cheatdisk(Emulator.cheatdisk);
         JNIdc.dreamtime(DreamTime.getDreamtime());

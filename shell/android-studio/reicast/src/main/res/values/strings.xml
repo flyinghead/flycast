@@ -56,7 +56,7 @@
 
     <string name="reset_emu">Reset Emu</string>
     <string name="reset_emu_title">Reset Emulator Settings</string>
-    <string name="reset_emu_details">Emulator settings will be cleared and app will close. Folder and input settings will NOT be removed.\nAre you sure you want to continue?</string>
+    <string name="reset_emu_details">Warning: Emulator settings will be cleared. Folder and input settings are not included. This cannot be undone.\nAre you sure you want to continue?</string>
     
     <string name="games_listing">Game List</string>
     <string name="search_hint">Game (ie. Crazy Taxi)</string>
