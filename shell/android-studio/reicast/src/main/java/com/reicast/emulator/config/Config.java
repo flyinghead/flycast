@@ -15,7 +15,6 @@ public class Config {
 	public static final String pref_showfps = "show_fps";
 	public static final String pref_rendertype = "render_type";
 	public static final String pref_renderdepth = "depth_render";
-	public static final String pref_egl14 = "use_egl14";
 
 	public static final String pref_touchvibe = "touch_vibration_enabled";
 	public static final String pref_vibrationDuration = "vibration_duration";

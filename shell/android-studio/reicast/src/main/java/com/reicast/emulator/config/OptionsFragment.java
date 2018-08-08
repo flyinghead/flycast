@@ -522,38 +522,13 @@ public class OptionsFragment extends Fragment {
 		fps_opt.setChecked(counter);
 		fps_opt.setOnCheckedChangeListener(fps_options);
 
-		final CompoundButton use_egl14_opt = (CompoundButton) getView().findViewById(R.id.force_gpu_option);
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-			OnCheckedChangeListener force_gpu_options = new OnCheckedChangeListener() {
-
-				public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-					mPrefs.edit().putBoolean(Config.pref_egl14, isChecked).apply();
-				}
-			};
-			boolean enhanced = mPrefs.getBoolean(Config.pref_egl14, false);
-			use_egl14_opt.setChecked(enhanced);
-			use_egl14_opt.setOnCheckedChangeListener(force_gpu_options);
-		} else {
-			use_egl14_opt.setEnabled(false);
-		}
-
 		CompoundButton force_software_opt = (CompoundButton) getView().findViewById(
 				R.id.software_option);
 		OnCheckedChangeListener force_software = new OnCheckedChangeListener() {
 
 			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-				mPrefs.edit()
-						.putInt(Config.pref_rendertype, isChecked
-								? GL2JNIView.LAYER_TYPE_SOFTWARE : GL2JNIView.LAYER_TYPE_HARDWARE
-						).apply();
-				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-					if (isChecked) {
-						use_egl14_opt.setEnabled(false);
-						mPrefs.edit().putBoolean(Config.pref_egl14, false).apply();
-					} else {
-						use_egl14_opt.setEnabled(true);
-					}
-				}
+				mPrefs.edit().putInt(Config.pref_rendertype, isChecked ?
+						GL2JNIView.LAYER_TYPE_SOFTWARE : GL2JNIView.LAYER_TYPE_HARDWARE).apply();
 			}
 		};
 		int software = mPrefs.getInt(Config.pref_rendertype, GL2JNIView.LAYER_TYPE_HARDWARE);
