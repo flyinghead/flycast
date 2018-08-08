@@ -502,34 +502,6 @@
             </TableRow>
 
             <TableRow
-                android:layout_marginTop="10dp"
-                android:gravity="center_vertical" >
-
-                <TextView
-                    android:id="@+id/select_egl14_text"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="0.5"
-                    android:ems="10"
-                    android:gravity="center_vertical|left"
-                    android:text="@string/select_egl14" />
-
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:gravity="right"
-                    android:orientation="vertical" >
-
-                    <Switch
-                        android:id="@+id/force_gpu_option"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:focusable="true" />
-                </LinearLayout>
-            </TableRow>
-
-            <TableRow
                 android:layout_marginTop="20dp"
                 android:gravity="center_vertical" >
 
@@ -803,6 +775,34 @@
                     </EditText>
                 </LinearLayout>
             </LinearLayout>
+
+            <TableRow
+                android:layout_marginTop="10dp"
+                android:gravity="center_vertical" >
+
+                <TextView
+                    android:id="@+id/reset_emu_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="0.5"
+                    android:ems="10"
+                    android:gravity="center_vertical|left"
+                    android:text="@string/reset_emu_title" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="right"
+                    android:orientation="vertical" >
+
+                    <Button
+                        android:id="@+id/reset_emu_settings"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/reset_emu" />
+                </LinearLayout>
+            </TableRow>
         </TableLayout>
     </LinearLayout>
 
