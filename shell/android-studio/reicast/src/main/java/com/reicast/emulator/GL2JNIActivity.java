@@ -22,7 +22,6 @@ import android.view.WindowManager;
 import android.widget.PopupWindow;
 
 import com.reicast.emulator.config.Config;
-import com.reicast.emulator.emu.EmuService;
 import com.reicast.emulator.emu.GL2JNIView;
 import com.reicast.emulator.emu.JNIdc;
 import com.reicast.emulator.emu.OnScreenMenu;
@@ -39,7 +38,6 @@ import java.util.HashMap;
 import tv.ouya.console.api.OuyaController;
 
 public class GL2JNIActivity extends Activity {
-    private Intent serviceIntent;
     public GL2JNIView mView;
     OnScreenMenu menu;
     public MainPopup popUp;
@@ -61,10 +59,6 @@ public class GL2JNIActivity extends Activity {
                     WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
                     WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
         }
-        //serviceIntent = new Intent(this, EmuService.class);
-        //serviceIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_FROM_BACKGROUND);
-        //serviceIntent.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES | Intent.FLAG_ACTIVITY_NO_ANIMATION);
-        //startService(serviceIntent);
 
         Emulator app = (Emulator)getApplicationContext();
         app.getConfigurationPrefs(prefs);
@@ -572,8 +566,6 @@ public class GL2JNIActivity extends Activity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        //if (serviceRunning(EmuService.class))
-        //	stopService(serviceIntent);
         mView.onDestroy();
         JNIdc.terminate();
         moga.onDestroy();
@@ -583,7 +575,6 @@ public class GL2JNIActivity extends Activity {
     protected void onStop() {
         // TODO Auto-generated method stub
         super.onStop();
-//		mView.onStop();
     }
 
     @Override
