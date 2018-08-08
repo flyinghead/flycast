@@ -52,8 +52,11 @@
     <string name="select_software">Force Software Rendering</string>
     <string name="select_sound">Disable Emulator Sound</string>
     <string name="select_depth">Rendering Depth</string>
-    <string name="select_egl14">Use EGL14 GLCFactory</string>
     <string name="default_disk">Default Disk</string>
+
+    <string name="reset_emu">Reset Emu</string>
+    <string name="reset_emu_title">Reset Emulator Settings</string>
+    <string name="reset_emu_details">All emulator settings will be cleared. BIOS, game, and controller settings will NOT be removed. Are you sure you want to continue?</string>
     
     <string name="games_listing">Game List</string>
     <string name="search_hint">Game (ie. Crazy Taxi)</string>

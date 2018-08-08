@@ -1,7 +1,9 @@
 package com.reicast.emulator.config;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
@@ -567,6 +569,23 @@ public class OptionsFragment extends Fragment {
 
 			}
 		});
+
+		Button resetEmu = (Button) getView().findViewById(R.id.reset_emu_settings);
+		resetEmu.setOnClickListener(new View.OnClickListener() {
+			public void onClick(View view) {
+				AlertDialog.Builder b = new AlertDialog.Builder(getActivity());
+				b.setIcon(android.R.drawable.ic_dialog_alert);
+				b.setTitle(getActivity().getString(R.string.reset_emu_title) + "?");
+				b.setMessage(getActivity().getString(R.string.reset_emu_details));
+				b.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int id) {
+						resetEmuSettings();
+					}
+				});
+				b.setNegativeButton(android.R.string.no, null);
+				b.show();
+			}
+		});
 	}
 
 	private final class LocateThemes extends AsyncTask<String, Integer, List<File>> {
@@ -685,7 +704,7 @@ public class OptionsFragment extends Fragment {
 		}
 	}
 
-	private void resetConfig() {
+	private void resetEmuSettings() {
 		mPrefs.edit().remove(Emulator.pref_usereios).apply();
 		mPrefs.edit().remove(Config.pref_gamedetails).apply();
 		mPrefs.edit().remove(Emulator.pref_nativeact).apply();
