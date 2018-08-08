@@ -324,10 +324,8 @@ public class OptionsFragment extends Fragment {
 
 //		String[] regions = ArrayUtils.remove(parentActivity.getResources()
 //				.getStringArray(R.array.region), 4);
-		String[] regions = getResources()
-				.getStringArray(R.array.region);
-		Spinner region_spnr = (Spinner) getView().findViewById(
-				R.id.region_spinner);
+		String[] regions = getResources().getStringArray(R.array.region);
+		Spinner region_spnr = (Spinner) getView().findViewById(R.id.region_spinner);
 		ArrayAdapter<String> regionAdapter = new ArrayAdapter<String>(
 				getActivity(), R.layout.spinner_selected, regions);
 		regionAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -685,6 +683,30 @@ public class OptionsFragment extends Fragment {
 			}
 			mPrefs.edit().putString("localized", localized).apply();
 		}
+	}
+
+	private void resetConfig() {
+		mPrefs.edit().remove(Emulator.pref_usereios).apply();
+		mPrefs.edit().remove(Config.pref_gamedetails).apply();
+		mPrefs.edit().remove(Emulator.pref_nativeact).apply();
+		mPrefs.edit().remove(Emulator.pref_dynarecopt).apply();
+		mPrefs.edit().remove(Emulator.pref_unstable).apply();
+		mPrefs.edit().remove(Emulator.pref_cable).apply();
+		mPrefs.edit().remove(Emulator.pref_dcregion).apply();
+		mPrefs.edit().remove(Emulator.pref_broadcast).apply();
+		mPrefs.edit().remove(Emulator.pref_limitfps).apply();
+		mPrefs.edit().remove(Emulator.pref_mipmaps).apply();
+		mPrefs.edit().remove(Emulator.pref_widescreen).apply();
+		mPrefs.edit().remove(Emulator.pref_frameskip).apply();
+		mPrefs.edit().remove(Emulator.pref_pvrrender).apply();
+		mPrefs.edit().remove(Emulator.pref_syncedrender).apply();
+		mPrefs.edit().remove(Emulator.pref_modvols).apply();
+		mPrefs.edit().remove(Emulator.pref_cheatdisk).apply();
+		mPrefs.edit().remove(Config.pref_showfps).apply();
+		mPrefs.edit().remove(Config.pref_rendertype).apply();
+		mPrefs.edit().remove(Emulator.pref_nosound).apply();
+		mPrefs.edit().remove(Config.pref_renderdepth).apply();
+		mPrefs.edit().remove(Config.pref_theme).apply();
 	}
 
 	private void showToastMessage(String message, int duration) {
