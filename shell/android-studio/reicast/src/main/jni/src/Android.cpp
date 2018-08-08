@@ -25,8 +25,8 @@ extern "C"
   JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_config(JNIEnv *env,jobject obj,jstring dirName)  __attribute__((visibility("default")));
   JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_init(JNIEnv *env,jobject obj,jstring fileName)  __attribute__((visibility("default")));
   JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_run(JNIEnv *env,jobject obj,jobject emu_thread)  __attribute__((visibility("default")));
-  JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_stop(JNIEnv *env,jobject obj)  __attribute__((visibility("default")));
-  JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_terminate(JNIEnv *env,jobject obj)  __attribute__((visibility("default")));
+  JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_pause(JNIEnv *env,jobject obj)  __attribute__((visibility("default")));
+  JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_destroy(JNIEnv *env,jobject obj)  __attribute__((visibility("default")));
 
   JNIEXPORT jint JNICALL Java_com_reicast_emulator_emu_JNIdc_send(JNIEnv *env,jobject obj,jint id, jint v)  __attribute__((visibility("default")));
   JNIEXPORT jint JNICALL Java_com_reicast_emulator_emu_JNIdc_data(JNIEnv *env,jobject obj,jint id, jbyteArray d)  __attribute__((visibility("default")));
@@ -165,7 +165,7 @@ void egl_stealcntx();
 void SetApplicationPath(wchar *path);
 int dc_init(int argc,wchar* argv[]);
 void dc_run();
-//void dc_stop();
+void dc_pause();
 void dc_term();
 void mcfg_Create(MapleDeviceType type,u32 bus,u32 port);
 
@@ -376,12 +376,12 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setupVmu(JNIEnv *env,
 	//jpix=env->NewByteArray(1536);
 }
 
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_stop(JNIEnv *env,jobject obj)
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_pause(JNIEnv *env,jobject obj)
 {
-//	dc_stop();
+	dc_pause();
 }
 
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_terminate(JNIEnv *env,jobject obj)
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_destroy(JNIEnv *env,jobject obj)
 {
 	dc_term();
 }

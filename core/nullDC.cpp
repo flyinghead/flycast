@@ -229,6 +229,13 @@ void dc_term()
     TermAudio();
 }
 
+#if defined(_ANDROID)
+void dc_pause()
+{
+	SaveRomFiles(get_writable_data_path("/data/"));
+}
+#endif
+
 void dc_stop()
 {
 	sh4_cpu.Stop();

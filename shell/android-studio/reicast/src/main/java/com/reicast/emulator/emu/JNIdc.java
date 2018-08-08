@@ -8,8 +8,8 @@ public final class JNIdc
 	public static native void config(String dirName);
 	public static native void init(String fileName);
 	public static native void run(Object track);
-	public static native void stop();
-	public static native void terminate();
+	public static native void pause();
+	public static native void destroy();
 
 	public static native int send(int cmd, int opt);
 	public static native int data(int cmd, byte[] data);

@@ -559,6 +559,7 @@ public class GL2JNIActivity extends Activity {
     protected void onPause() {
         super.onPause();
         mView.onPause();
+        JNIdc.pause();
         moga.onPause();
     }
 
@@ -566,7 +567,7 @@ public class GL2JNIActivity extends Activity {
     protected void onDestroy() {
         super.onDestroy();
         mView.onDestroy();
-        JNIdc.terminate();
+        JNIdc.destroy();
         moga.onDestroy();
     }
 

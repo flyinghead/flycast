@@ -574,6 +574,7 @@ public class GL2JNINative extends NativeActivity {
 	protected void onPause() {
 		super.onPause();
 		mView.onPause();
+		JNIdc.pause();
 		moga.onPause();
 	}
 
@@ -581,7 +582,7 @@ public class GL2JNINative extends NativeActivity {
 	protected void onDestroy() {
 		super.onDestroy();
 		mView.onDestroy();
-		JNIdc.terminate();
+		JNIdc.destroy();
 		moga.onDestroy();
 	}
 
