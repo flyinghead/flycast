@@ -3,7 +3,6 @@ package com.reicast.emulator;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.net.Uri;
@@ -569,12 +568,6 @@ public class GL2JNIActivity extends Activity {
         mView.onDestroy();
         JNIdc.terminate();
         moga.onDestroy();
-    }
-
-    @Override
-    protected void onStop() {
-        // TODO Auto-generated method stub
-        super.onStop();
     }
 
     @Override
