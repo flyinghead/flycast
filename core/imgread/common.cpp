@@ -31,8 +31,8 @@ struct SenseErrorCode
 };
 
 //No disc inserted at the time of power-on, reset or hard reset, or TOC cannot be read.
-const SenseErrorCode NoDiskInsertedSenseCode{ 0x29, 0, 6 };
-const SenseErrorCode NoErrorSenseCode{ 0, 0, 0 };
+const SenseErrorCode NoDiskInsertedSenseCode = { 0x29, 0, 6 };
+const SenseErrorCode NoErrorSenseCode = { 0, 0, 0 };
 
 void SetSnsCodes(const SenseErrorCode& errorCode)
 {
@@ -207,17 +207,14 @@ bool InitDrive(u32 fileflags/*=0*/)
 			return true;
 	}
 
-	std::string diskImageFileName{ settings.imgread.LastImage };
+	std::string diskImageFileName = settings.imgread.LastImage;
 #ifdef BUILD_DREAMCAST
-	int gfrv = GetFile(diskImageFileName);
+	int returnCode = GetFile(diskImageFileName);
+    if (!returnCode)
+        return false;
 #else
-	int gfrv = rv_error;
+	int returnCode = rv_error;
 #endif
-	if (gfrv != rv_ok)
-	{
-		return false;
-	}
-
 	settings.imgread.LastImage = diskImageFileName;
 
 	SaveSettings();
