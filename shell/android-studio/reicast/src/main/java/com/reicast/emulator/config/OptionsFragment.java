@@ -580,6 +580,7 @@ public class OptionsFragment extends Fragment {
 				b.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int id) {
 						resetEmuSettings();
+						getActivity().finishAffinity();
 					}
 				});
 				b.setNegativeButton(android.R.string.no, null);
