@@ -6,12 +6,10 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
-import android.graphics.Paint;
 import android.graphics.PixelFormat;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
-import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.os.Build;
 import android.os.Environment;
@@ -37,8 +35,6 @@ import com.reicast.emulator.emu.OnScreenMenu.FpsPopup;
 import com.reicast.emulator.periph.VJoy;
 
 import java.io.UnsupportedEncodingException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -183,29 +179,18 @@ public class GL2JNIView extends GLSurfaceView
         // is interpreted as any 32-bit surface with alpha by SurfaceFlinger.
         if(translucent) this.getHolder().setFormat(PixelFormat.TRANSLUCENT);
 
-        if (prefs.getBoolean(Config.pref_egl14, false)) {
-            setEGLContextFactory(new GLCFactory14.ContextFactory());
-            setEGLConfigChooser(
-                    translucent?
-                            new GLCFactory14.ConfigChooser(8, 8, 8, 8, depth, stencil)
-                            : new GLCFactory14.ConfigChooser(5, 6, 5, 0, depth, stencil)
-            );
-            GLES20.glEnable(GLES20.GL_DEPTH_TEST);
-        } else {
-            // Setup the context factory for 2.0 rendering.
-            // See ContextFactory class definition below
-            setEGLContextFactory(new GLCFactory.ContextFactory());
+        // Setup the context factory for 2.0 rendering.
+        // See ContextFactory class definition below
+        setEGLContextFactory(new GLCFactory.ContextFactory());
 
-            // We need to choose an EGLConfig that matches the format of
-            // our surface exactly. This is going to be done in our
-            // custom config chooser. See ConfigChooser class definition
-            // below.
-            setEGLConfigChooser(
-                    translucent?
-                            new GLCFactory.ConfigChooser(8, 8, 8, 8, depth, stencil)
-                            : new GLCFactory.ConfigChooser(5, 6, 5, 0, depth, stencil)
-            );
-        }
+        // We need to choose an EGLConfig that matches the format of
+        // our surface exactly. This is going to be done in our
+        // custom config chooser. See ConfigChooser class definition
+        // below.
+        setEGLConfigChooser(translucent?
+                new GLCFactory.ConfigChooser(8, 8, 8, 8, depth, stencil)
+                : new GLCFactory.ConfigChooser(5, 6, 5, 0, depth, stencil)
+        );
 
         // Set the renderer responsible for frame rendering
         setRenderer(rend=new Renderer(this));
@@ -695,24 +680,10 @@ public class GL2JNIView extends GLSurfaceView
 
     }
 
-//	public void onStop() {
-//		// TODO Auto-generated method stub
-//		System.exit(0);
-//		try {
-//			ethd.join();
-//		} catch (InterruptedException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-//	}
-
     public void onDestroy() {
-        // TODO Auto-generated method stub
-        System.exit(0);
         try {
             ethd.join();
         } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }

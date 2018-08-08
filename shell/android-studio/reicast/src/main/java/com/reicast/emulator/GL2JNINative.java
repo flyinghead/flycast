@@ -75,6 +75,13 @@ public class GL2JNINative extends NativeActivity {
 		app.getConfigurationPrefs(prefs);
 		menu = new OnScreenMenu(GL2JNINative.this, prefs);
 
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+			pad.compat[0] = true;
+			pad.compat[1] = true;
+			pad.compat[2] = true;
+			pad.compat[3] = true;
+		}
+
 		String fileName = null;
 
 		// Call parent onCreate()
@@ -567,6 +574,7 @@ public class GL2JNINative extends NativeActivity {
 	protected void onPause() {
 		super.onPause();
 		mView.onPause();
+		JNIdc.pause();
 		moga.onPause();
 	}
 
@@ -574,14 +582,13 @@ public class GL2JNINative extends NativeActivity {
 	protected void onDestroy() {
 		super.onDestroy();
 		mView.onDestroy();
-		JNIdc.terminate();
+		JNIdc.destroy();
 		moga.onDestroy();
 	}
 
 	@Override
 	protected void onStop() {
 		super.onStop();
-//		mView.onStop();
 	}
 
 	@Override
