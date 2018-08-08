@@ -111,4 +111,7 @@ ifdef HAS_SOFTREND
 	RZDCY_CFLAGS += -DTARGET_SOFTREND
 endif
 
+# png_init_filter_functions_neon
+RZDCY_CFLAGS += -DPNG_ARM_NEON_OPT=0
+
 RZDCY_CXXFLAGS := $(RZDCY_CFLAGS) -fno-exceptions -fno-rtti -std=gnu++11

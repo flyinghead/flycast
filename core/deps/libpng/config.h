@@ -77,7 +77,7 @@
 /* #undef PNG_ARM_NEON_CHECK_SUPPORTED */
 
 /* Enable ARM Neon optimizations */
-/* #undef PNG_ARM_NEON_OPT */
+#define PNG_ARM_NEON_OPT 0
 
 /* Enable Intel SSE optimizations */
 #define PNG_INTEL_SSE_OPT 0
