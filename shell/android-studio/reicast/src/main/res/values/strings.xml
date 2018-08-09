@@ -52,7 +52,7 @@
     <string name="select_software">Force Software Rendering</string>
     <string name="select_sound">Disable Emulator Sound</string>
     <string name="select_depth">Rendering Depth</string>
-    <string name="default_disk">Default Disk</string>
+    <string name="boot_disk">Boot Disk (ie. Gameshark, Utopia)</string>
 
     <string name="reset_emu">Reset Emu</string>
     <string name="reset_emu_title">Reset Emulator Settings</string>
@@ -133,10 +133,6 @@
     <string name="downloadVMU">Download VMU</string>
     
     <string name="log_saved">Logcat saved and copied to clipboard\nPlease paste inside the Github issue</string>
-
-    <string name="service_ticker">reicast is running...</string>
-    <string name="service_title">reicast is running...</string>
-    <string name="service_content">Emulator service is currently running</string>
     
     <!-- Onscreen Menu -->
     <string name="popup_button_back">Back</string>

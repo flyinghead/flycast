@@ -480,27 +480,27 @@ public class OptionsFragment extends Fragment {
 		modifier_volumes.setChecked(Emulator.modvols);
 		modifier_volumes.setOnCheckedChangeListener(mod_volumes);
 
-		final EditText cheatEdit = (EditText) getView().findViewById(R.id.cheat_disk);
-		String disk = Emulator.cheatdisk;
+		final EditText bootdiskEdit = (EditText) getView().findViewById(R.id.boot_disk);
+		String disk = Emulator.bootdisk;
 		if (disk != null && disk.contains("/")) {
-			cheatEdit.setText(disk.substring(disk.lastIndexOf("/"),
+			bootdiskEdit.setText(disk.substring(disk.lastIndexOf("/"),
 					disk.length()));
 		} else {
-			cheatEdit.setText(disk);
+			bootdiskEdit.setText(disk);
 		}
 
-		cheatEdit.addTextChangedListener(new TextWatcher() {
+		bootdiskEdit.addTextChangedListener(new TextWatcher() {
 			public void afterTextChanged(Editable s) {
-				if (cheatEdit.getText() != null) {
-					String disk = cheatEdit.getText().toString();
+				if (bootdiskEdit.getText() != null) {
+					String disk = bootdiskEdit.getText().toString();
 					if (disk.contains("/")) {
-						cheatEdit.setText(disk.substring(disk.lastIndexOf("/"),
+						bootdiskEdit.setText(disk.substring(disk.lastIndexOf("/"),
 								disk.length()));
 					} else {
-						cheatEdit.setText(disk);
+						bootdiskEdit.setText(disk);
 					}
-					mPrefs.edit().putString(Emulator.pref_cheatdisk, disk).apply();
-					Emulator.cheatdisk = disk;
+					mPrefs.edit().putString(Emulator.pref_bootdisk, disk).apply();
+					Emulator.bootdisk = disk;
 				}
 			}
 
@@ -721,7 +721,7 @@ public class OptionsFragment extends Fragment {
 		mPrefs.edit().remove(Emulator.pref_pvrrender).apply();
 		mPrefs.edit().remove(Emulator.pref_syncedrender).apply();
 		mPrefs.edit().remove(Emulator.pref_modvols).apply();
-		mPrefs.edit().remove(Emulator.pref_cheatdisk).apply();
+		mPrefs.edit().remove(Emulator.pref_bootdisk).apply();
 		mPrefs.edit().remove(Config.pref_showfps).apply();
 		mPrefs.edit().remove(Config.pref_rendertype).apply();
 		mPrefs.edit().remove(Emulator.pref_nosound).apply();
