@@ -127,14 +127,6 @@ void SetupInput()
 			}
 			else
 			{
-				for (i = 0; i < port; i++)
-				{
-						if (evdev_device_id[port] == evdev_device_id[i])
-						{
-								die("You can't assign the same device to multiple ports!\n");
-						}
-				}
-
 				size_needed = snprintf(NULL, 0, EVDEV_DEVICE_STRING, evdev_device_id[port]) + 1;
 				evdev_device = (char*)malloc(size_needed);
 				sprintf(evdev_device, EVDEV_DEVICE_STRING, evdev_device_id[port]);
