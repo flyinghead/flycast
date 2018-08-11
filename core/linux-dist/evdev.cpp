@@ -196,6 +196,52 @@
 		};
 		return mapping;
 	}
+	
+	bool input_evdev_button_assigned(EvdevControllerMapping* mapping, int button)
+	{
+		return ((mapping->Btn_A == button) 
+			|| (mapping->Btn_B == button) 
+			|| (mapping->Btn_C == button) 
+			|| (mapping->Btn_D == button) 
+			|| (mapping->Btn_X == button) 
+			|| (mapping->Btn_Y == button) 
+			|| (mapping->Btn_Z == button) 
+			|| (mapping->Btn_Start == button) 
+			|| (mapping->Btn_Escape == button) 
+			|| (mapping->Btn_DPad_Left == button) 
+			|| (mapping->Btn_DPad_Right == button) 
+			|| (mapping->Btn_DPad_Up == button) 
+			|| (mapping->Btn_DPad_Down == button) 
+			|| (mapping->Btn_DPad2_Left == button) 
+			|| (mapping->Btn_DPad2_Right == button) 
+			|| (mapping->Btn_DPad2_Up == button) 
+			|| (mapping->Btn_DPad2_Down == button) 
+			|| (mapping->Btn_Trigger_Left == button) 
+			|| (mapping->Btn_Trigger_Right == button));
+	}
+	
+	bool input_evdev_button_duplicate_button(EvdevControllerMapping* mapping1, EvdevControllerMapping* mapping2)
+	{
+		return (input_evdev_button_assigned(mapping1, mapping2->Btn_A)
+			|| input_evdev_button_assigned(mapping1, mapping2->Btn_B)
+			|| input_evdev_button_assigned(mapping1, mapping2->Btn_C)
+			|| input_evdev_button_assigned(mapping1, mapping2->Btn_D)
+			|| input_evdev_button_assigned(mapping1, mapping2->Btn_X)
+			|| input_evdev_button_assigned(mapping1, mapping2->Btn_Y)
+			|| input_evdev_button_assigned(mapping1, mapping2->Btn_Z)
+			|| input_evdev_button_assigned(mapping1, mapping2->Btn_Start)
+			|| input_evdev_button_assigned(mapping1, mapping2->Btn_Escape)
+			|| input_evdev_button_assigned(mapping1, mapping2->Btn_DPad_Left)
+			|| input_evdev_button_assigned(mapping1, mapping2->Btn_DPad_Right)
+			|| input_evdev_button_assigned(mapping1, mapping2->Btn_DPad_Up)
+			|| input_evdev_button_assigned(mapping1, mapping2->Btn_DPad_Down)
+			|| input_evdev_button_assigned(mapping1, mapping2->Btn_DPad2_Left)
+			|| input_evdev_button_assigned(mapping1, mapping2->Btn_DPad2_Right)
+			|| input_evdev_button_assigned(mapping1, mapping2->Btn_DPad2_Up)
+			|| input_evdev_button_assigned(mapping1, mapping2->Btn_DPad2_Down)
+			|| input_evdev_button_assigned(mapping1, mapping2->Btn_Trigger_Left)
+			|| input_evdev_button_assigned(mapping1, mapping2->Btn_Trigger_Right));
+	}
 
 	int input_evdev_init(EvdevController* controller, const char* device, const char* custom_mapping_fname = NULL)
 	{
