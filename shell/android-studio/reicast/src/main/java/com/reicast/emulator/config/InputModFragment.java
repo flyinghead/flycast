@@ -561,6 +561,8 @@ public class InputModFragment extends Fragment {
 	private void updateController(String player) {
 		switchJoystickDpadEnabled.setChecked(mPrefs.getBoolean(
 				Gamepad.pref_js_merged + player, false));
+		switchRightStickLREnabled.setChecked(mPrefs.getBoolean(
+				Gamepad.pref_js_rbuttons + player, true));
 		switchModifiedLayoutEnabled.setChecked(mPrefs.getBoolean(
 				Gamepad.pref_js_modified + player, false));
 		switchCompatibilityEnabled.setChecked(mPrefs.getBoolean(
