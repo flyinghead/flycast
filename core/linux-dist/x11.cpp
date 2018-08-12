@@ -180,7 +180,9 @@ void input_x11_init()
 	x11_keymap[KEY_F] = DC_AXIS_LT;
 	x11_keymap[KEY_V] = DC_AXIS_RT;
 	
-	x11_keyboard_input = cfgLoadInt("input", "enable_x11_keyboard", 1);
+	x11_keyboard_input = (cfgLoadInt("input", "enable_x11_keyboard", 1) >= 1);
+	if (!x11_keyboard_input)
+		printf("X11 Keyboard input disabled by config.\n");
 }
 
 void x11_window_create()
