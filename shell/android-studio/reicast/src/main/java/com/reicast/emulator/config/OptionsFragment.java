@@ -480,36 +480,36 @@ public class OptionsFragment extends Fragment {
 		modifier_volumes.setChecked(Emulator.modvols);
 		modifier_volumes.setOnCheckedChangeListener(mod_volumes);
 
-		final EditText bootdiskEdit = (EditText) getView().findViewById(R.id.boot_disk);
-		String disk = Emulator.bootdisk;
-		if (disk != null && disk.contains("/")) {
-			bootdiskEdit.setText(disk.substring(disk.lastIndexOf("/"),
-					disk.length()));
-		} else {
-			bootdiskEdit.setText(disk);
-		}
-
-		bootdiskEdit.addTextChangedListener(new TextWatcher() {
-			public void afterTextChanged(Editable s) {
-				if (bootdiskEdit.getText() != null) {
-					String disk = bootdiskEdit.getText().toString();
-					if (disk.contains("/")) {
-						bootdiskEdit.setText(disk.substring(disk.lastIndexOf("/"),
-								disk.length()));
-					} else {
-						bootdiskEdit.setText(disk);
-					}
-					mPrefs.edit().putString(Emulator.pref_bootdisk, disk).apply();
-					Emulator.bootdisk = disk;
-				}
-			}
-
-			public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-			}
-
-			public void onTextChanged(CharSequence s, int start, int before, int count) {
-			}
-		});
+//		final EditText bootdiskEdit = (EditText) getView().findViewById(R.id.boot_disk);
+//		String disk = Emulator.bootdisk;
+//		if (disk != null && disk.contains("/")) {
+//			bootdiskEdit.setText(disk.substring(disk.lastIndexOf("/"),
+//					disk.length()));
+//		} else {
+//			bootdiskEdit.setText(disk);
+//		}
+//
+//		bootdiskEdit.addTextChangedListener(new TextWatcher() {
+//			public void afterTextChanged(Editable s) {
+//				if (bootdiskEdit.getText() != null) {
+//					String disk = bootdiskEdit.getText().toString();
+//					if (disk.contains("/")) {
+//						bootdiskEdit.setText(disk.substring(disk.lastIndexOf("/"),
+//								disk.length()));
+//					} else {
+//						bootdiskEdit.setText(disk);
+//					}
+//					mPrefs.edit().putString(Emulator.pref_bootdisk, disk).apply();
+//					Emulator.bootdisk = disk;
+//				}
+//			}
+//
+//			public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+//			}
+//
+//			public void onTextChanged(CharSequence s, int start, int before, int count) {
+//			}
+//		});
 
 		final CompoundButton fps_opt = (CompoundButton) getView().findViewById(R.id.fps_option);
 		OnCheckedChangeListener fps_options = new OnCheckedChangeListener() {
@@ -721,7 +721,7 @@ public class OptionsFragment extends Fragment {
 		mPrefs.edit().remove(Emulator.pref_pvrrender).apply();
 		mPrefs.edit().remove(Emulator.pref_syncedrender).apply();
 		mPrefs.edit().remove(Emulator.pref_modvols).apply();
-		mPrefs.edit().remove(Emulator.pref_bootdisk).apply();
+//		mPrefs.edit().remove(Emulator.pref_bootdisk).apply();
 		mPrefs.edit().remove(Config.pref_showfps).apply();
 		mPrefs.edit().remove(Config.pref_rendertype).apply();
 		mPrefs.edit().remove(Emulator.pref_nosound).apply();
