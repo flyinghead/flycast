@@ -798,7 +798,7 @@ u32 DYNACALL DoMemOp(u32 addr,u32 data)
 {
 	u32 rv=0;
 
-#if HOST_CPU==CPU_X86 && FEAT_AREC != DYNAREC_NONE
+#if HOST_CPU==CPU_X86
 	addr=virt_arm_reg(0);
 	data=virt_arm_reg(1);
 #endif
@@ -818,7 +818,7 @@ u32 DYNACALL DoMemOp(u32 addr,u32 data)
 			arm_WriteMem32(addr,data);
 	}
 
-	#if HOST_CPU==CPU_X86 && FEAT_AREC != DYNAREC_NONE
+	#if HOST_CPU==CPU_X86
 		virt_arm_reg(0)=rv;
 	#endif
 
@@ -1309,7 +1309,7 @@ u32 nfb,ffb,bfb,mfb;
 
 
 
-#if (HOST_CPU == CPU_X86)
+#if HOST_CPU == CPU_X86 && FEAT_AREC != DYNAREC_NONE
 
 /* X86 backend
  * Uses a mix of
