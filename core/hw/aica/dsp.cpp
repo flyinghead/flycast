@@ -831,4 +831,8 @@ void dsp_readmem(u32 addr)
 {
 	//nothing ? :p
 }
+
+void dsp_term()
+{
+}
 #endif
