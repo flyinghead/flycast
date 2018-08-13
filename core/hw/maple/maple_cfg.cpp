@@ -14,7 +14,7 @@ Plugins:
 		KeyMap -- translated chars ( no re-mapping possible)
 	Output
 		Image
-		
+
 */
 /*
 	MapleConfig:
@@ -64,19 +64,20 @@ struct MapleConfigMap : IMapleConfigMap
 	}
 };
 
-void mcfg_Create(MapleDeviceType type,u32 bus,u32 port)
+void mcfg_Create(MapleDeviceType type, u32 bus, u32 port)
 {
-	maple_device* dev=maple_Create(type);
-	dev->Setup(maple_GetAddress(bus,port));
+	maple_device* dev = maple_Create(type);
+	dev->Setup(maple_GetAddress(bus, port));
 	dev->config = new MapleConfigMap(dev);
 	dev->OnSetup();
-	MapleDevices[bus][port]=dev;
+	MapleDevices[bus][port] = dev;
 }
 
 void mcfg_CreateDevices()
 {
-int numberOfControl = cfgLoadInt("players", "nb", 1);
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST
+	int numberOfControl = cfgLoadInt("players", "nb", 1);
+
 	if (numberOfControl <= 0)
 		numberOfControl = 1;
 	if (numberOfControl > 4)
@@ -84,10 +85,15 @@ int numberOfControl = cfgLoadInt("players", "nb", 1);
 
 	for (int i = 0; i < numberOfControl; i++){
 		mcfg_Create(MDT_SegaController, i, 5);
+		// mcfg_Create(MDT_PurupuruPack, i, 1);
 	}
 
-	mcfg_Create(MDT_SegaVMU,0,0);
-	mcfg_Create(MDT_SegaVMU,0,1);
+	// if using evdev they will be created later on
+#if !defined(USE_EVDEV)
+	mcfg_Create(MDT_SegaVMU, 0, 0);
+	mcfg_Create(MDT_SegaVMU, 0, 1);
+#endif
+
 #else
 	mcfg_Create(MDT_NaomiJamma, 0, 5);
 #endif

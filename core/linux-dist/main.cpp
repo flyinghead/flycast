@@ -37,6 +37,8 @@
 
 #if defined(USE_EVDEV)
 	#include "linux-dist/evdev.h"
+	#include "hw/maple/maple_cfg.h"
+	#include "hw/maple/maple_devs.h"
 #endif
 
 #if defined(USE_JOYSTICK)
@@ -153,6 +155,44 @@ void SetupInput()
 								printf("WARNING: One or more button(s) of this device is also used in the configuration of input device %d (mapping: %s)\n", i, evdev_controllers[i].mapping->name);
 							}
 						}
+				}
+
+				switch (evdev_controllers[port].mapping->Maple_Device1)
+				{
+					case 1:
+						printf("Maple Device 1: VMU\n");
+						mcfg_Create(MDT_SegaVMU, port, 0);
+						break;
+					case 2:
+						printf("Maple Device 1: Microphone\n");
+						mcfg_Create(MDT_Microphone, port, 0);
+						break;
+					case 3:
+						printf("Maple Device 1: PuruPuruPack\n");
+						mcfg_Create(MDT_PurupuruPack, port, 0);
+						break;
+					default:
+						printf("Unsupported configuration for Maple Device 1 (using VMU): %d\n", evdev_controllers[port].mapping->Maple_Device1);
+						mcfg_Create(MDT_SegaVMU, port, 0);
+				}
+
+				switch (evdev_controllers[port].mapping->Maple_Device2)
+				{
+					case 1:
+						printf("Maple Device 2: VMU\n");
+						mcfg_Create(MDT_SegaVMU, port, 1);
+						break;
+					case 2:
+						printf("Maple Device 2: Microphone\n");
+						mcfg_Create(MDT_Microphone, port, 1);
+						break;
+					case 3:
+						printf("Maple Device 2: PuruPuruPack\n");
+						mcfg_Create(MDT_PurupuruPack, port, 1);
+						break;
+					default:
+						printf("Unsupported configuration for Maple Device 2 (using VMU): %d\n", evdev_controllers[port].mapping->Maple_Device2);
+						mcfg_Create(MDT_SegaVMU, port, 1);
 				}
 			}
 		}
@@ -364,7 +404,7 @@ string find_user_data_dir()
 			// If XDG_DATA_HOME is set explicitly, we'll use that instead of $HOME/.config
 			data = (string)getenv("XDG_DATA_HOME") + "/reicast";
 		}
-		
+
 		if(!data.empty())
 		{
 			if((stat(data.c_str(), &info) != 0) || !(info.st_mode & S_IFDIR))

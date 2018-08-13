@@ -1,5 +1,6 @@
 #pragma once
 #include "types.h"
+#include "maple_devs.h"
 
 enum PlainJoystickButtonId
 {
@@ -42,7 +43,7 @@ struct PlainJoystickState
 		joy[0]=joy[1]=joy[2]=joy[3]=0x80;
 		trigger[0]=trigger[1]=0;
 	}
-	static const u32 ButtonMask = PJBI_B | PJBI_A | PJBI_START | PJBI_DPAD_UP | 
+	static const u32 ButtonMask = PJBI_B | PJBI_A | PJBI_START | PJBI_DPAD_UP |
 	                              PJBI_DPAD_DOWN | PJBI_DPAD_LEFT | PJBI_DPAD_RIGHT | PJBI_Y | PJBI_X;
 
 	static const u32 AxisMask = PJAI_X1 | PJAI_Y1;
@@ -62,6 +63,8 @@ struct IMapleConfigMap
 	virtual void SetImage(void* img)=0;
 	virtual ~IMapleConfigMap() {}
 };
+
+void mcfg_Create(MapleDeviceType type, u32 bus, u32 port);
 
 #ifndef _ANDROID
 void mcfg_CreateDevices();
