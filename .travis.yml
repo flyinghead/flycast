@@ -44,14 +44,16 @@ install:
 - test -z "$encrypted_c726d225a9d9_key" || mv debug.keystore ~/.android/debug.keystore
 before_script: 
 script:
+- git fetch --unshallow
 - cd shell/android-studio
 - export NUMBER_OF_PROCESSORS=2
-- "./gradlew build"
+- sudo chmod 755 travis-build.sh
+- "./travis-build.sh"
 - test -z "$encrypted_c726d225a9d9_key" || ./travis-release.sh
 before_deploy:
 - cd ../../
 - mkdir -p artifacts/$GIT_BUILD/
-- cp shell/android-studio/app/build/outputs/apk/debug/app-debug.apk artifacts/$GIT_BUILD/reicast-android-debug-$GIT_HASH.apk
+- cp shell/android-studio/reicast/build/outputs/apk/debug/reicast-debug.apk artifacts/$GIT_BUILD/reicast-android-debug-$GIT_HASH.apk
 deploy:
   provider: s3
   access_key_id: AKIAJR5J3OHAQUP5BHHQ

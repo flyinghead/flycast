@@ -1,0 +1,100 @@
+apply plugin: 'com.android.application'
+apply plugin: 'com.github.triplet.play'
+
+def getVersionCode = { ->
+    def build_id = System.getenv("TRAVIS_JOB_ID") ?: "8"
+    return Integer.parseInt( build_id )
+}
+
+def getVersionName = { ->
+    def stdout = new ByteArrayOutputStream()
+    exec {
+        commandLine 'git', 'describe', '--tags', '--always'
+        standardOutput = stdout
+    }
+    return stdout.toString().trim()
+}
+
+android {
+    compileSdkVersion 25
+    buildToolsVersion "27.0.3"
+
+    defaultConfig {
+        applicationId "com.reicast.emulator"
+        minSdkVersion 16
+        targetSdkVersion 25
+        versionCode getVersionCode()
+        versionName getVersionName()
+        vectorDrawables.useSupportLibrary = true
+
+        ndk {
+            moduleName "dc"
+                abiFilters 'armeabi-v7a', 'x86'
+            moduleName "sexplay"
+                abiFilters 'armeabi-v7a', 'x86'
+        }
+    }
+
+    signingConfigs {
+        release {
+            storeFile file("../reicast-beta-cd.jks")
+            storePassword "notasecret"
+            keyAlias "reicast-upload-key"
+            keyPassword "notasecret"
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+            signingConfig signingConfigs.release
+        }
+    }
+
+    externalNativeBuild {
+        ndkBuild {
+            path 'src/main/jni/Android.mk'
+        }
+    }
+
+    lintOptions {
+        abortOnError false
+    }
+}
+
+afterEvaluate {
+    android.applicationVariants.all {  v ->
+        if (v.buildType.name == "release") {
+            def hashtag = new ByteArrayOutputStream()
+            exec {
+                commandLine "git", "rev-parse", "HEAD"
+                standardOutput = hashtag
+            }
+            hashtag = hashtag.toString().trim()
+            v.outputs[0].outputFileName = "reicast-android-" + hashtag.substring(0,7) + ".apk"
+            file('src/main/assets/build').text = hashtag
+        }
+    }
+}
+
+play {
+    track = 'beta'
+    serviceAccountEmail = 'reicast-beta-cd@api-7801059239587459896-777757.iam.gserviceaccount.com'
+    pk12File = file('../reicast-beta-cd.p12')
+}
+
+dependencies {
+    implementation 'com.android.support:support-v4:25.4.0'
+    implementation 'com.android.support:appcompat-v7:25.4.0'
+    implementation 'com.android.support:design:25.4.0'
+    implementation 'com.android.support.constraint:constraint-layout:1.1.2'
+    implementation 'org.bouncycastle:bcprov-jdk16:1.46'
+    implementation 'commons-io:commons-io:2.6'
+    implementation 'org.apache.commons:commons-lang3:3.7'
+    implementation ('com.googlecode.json-simple:json-simple:1.1.1') {
+        exclude module: 'junit'
+    }
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+}
+

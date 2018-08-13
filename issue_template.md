@@ -1,5 +1,4 @@
-**Please Note: This form is the minimum required information for submitting bugs.**
-
+**Please Note: This form is the minimum required information for submitting bugs.**  
 **Removing this form may lead to your issue being closed until it is completed.**
 
 | Platform | Branch | Hash | CIDL |
@@ -28,6 +27,6 @@ You may leave this field blank if you have none.
 
 **_Screenshots_**
 
-![Issue Screenshot](https://github.com/adam-p/markdown-here/raw/master/src/common/images/icon48.png)
+(Replace this line with any issue screenshots)
 
 - [ ] Place an X in the box to confirm you have filled in this form

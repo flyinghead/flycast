@@ -259,6 +259,13 @@ void dc_term()
     TermAudio();
 }
 
+#if defined(_ANDROID)
+void dc_pause()
+{
+	SaveRomFiles(get_writable_data_path("/data/"));
+}
+#endif
+
 void dc_stop()
 {
 	sh4_cpu.Stop();
@@ -307,7 +314,6 @@ void LoadSettings()
 #else
     // TODO Expose this with JNI
 	settings.rend.Clipping = 1;
-	settings.rend.ModifierVolumes = 1;
 #endif
 
 	settings.pvr.HashLogFile = cfgLoadStr("testing", "ta.HashLogFile", "");
