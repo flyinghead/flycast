@@ -17,6 +17,15 @@ void NaomiBoardIDWrite(const u16 Data);
 void NaomiBoardIDWriteControl(const u16 Data);
 u16 NaomiBoardIDRead();
 
+typedef u16 (*getNaomiAxisFP)();
+
+struct NaomiInputMapping {
+	getNaomiAxisFP axis[4];
+	u8 button_mapping_byte[16];
+	u8 button_mapping_mask[16];
+};
+
+extern NaomiInputMapping Naomi_Mapping;
 
 
 

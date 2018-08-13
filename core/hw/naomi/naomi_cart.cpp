@@ -1,5 +1,6 @@
 #include "naomi_cart.h"
 #include "cfg/cfg.h"
+#include "naomi.h"
 
 u8* RomPtr;
 u32 RomSize;
@@ -20,6 +21,143 @@ fd_t*	RomCacheMap;
 u32		RomCacheMapCount;
 
 char SelectedFile[512];
+
+extern s8 joyx[4],joyy[4];
+extern u8 rt[4], lt[4];
+
+static std::string trim(const std::string s)
+{
+	std::string r(s);
+	while (!r.empty() && r[0] == ' ')
+		r.erase(0, 1);
+	while (!r.empty() && r[r.size() - 1] == ' ')
+		r.erase(r.size() - 1);
+
+	return r;
+}
+
+static u16 getJoystickXAxis()
+{
+	return (joyx[0] + 128) << 8;
+}
+
+static u16 getJoystickYAxis()
+{
+	return (joyy[0] + 128) << 8;
+}
+
+static u16 getLeftTriggerAxis()
+{
+	return lt[0] << 8;
+}
+
+static u16 getRightTriggerAxis()
+{
+	return rt[0] << 8;
+}
+
+static NaomiInputMapping naomi_default_mapping = {
+	{ getJoystickXAxis, getJoystickYAxis, getRightTriggerAxis, getLeftTriggerAxis },
+	{ 0,  0,  0,  0,  0,  0,  0,  0,  1,  1,  1,  1 },
+	{ 1,  2,  4,  8, 16, 32, 64,128,  1,  2,  4,  8 },
+};
+
+static void parse_comment(const char *line)
+{
+	std::string s(line + 1);
+	s = trim(s);
+	if (strncmp(s.c_str(), "input-mapping:", 14))
+		return;
+
+	s.erase(0, 14);
+
+	s = trim(s);
+	while (!s.empty())
+	{
+		size_t p = s.find_first_of(",");
+		if (p == -1)
+			p = s.size();
+		std::string mapping = s.substr(0, p);
+		size_t eq = mapping.find_first_of("=");
+		if (eq == -1 || eq == mapping.size() - 1)
+			printf("Warning: unparseable mapping %s\n", mapping.c_str());
+		else
+		{
+			std::string dc_key = trim(mapping.substr(0, eq));
+			std::string naomi_key = trim(mapping.substr(eq + 1));
+			if (!strncmp(naomi_key.c_str(), "axis_", 5))
+			{
+				int axis = naomi_key[5] - '0';
+				if (axis >= 4)
+					printf("Warning: invalid axis number %d\n", axis);
+				else
+				{
+					getNaomiAxisFP fp = NULL;
+					if (dc_key == "axis_x")
+						fp = &getJoystickXAxis;
+					else if (dc_key == "axis_y")
+						fp = &getJoystickYAxis;
+					else if (dc_key == "axis_trigger_left")
+						fp = &getLeftTriggerAxis;
+					else if (dc_key == "axis_trigger_right")
+						fp = &getRightTriggerAxis;
+					else
+						printf("Warning: invalid controller axis %s\n", dc_key.c_str());
+					if (fp != NULL)
+						Naomi_Mapping.axis[axis] = fp;
+				}
+			}
+			else
+			{
+				int byte = naomi_key[0] - '0';
+				size_t colon = naomi_key.find_first_of(":");
+				if (colon == -1 || colon == naomi_key.size() - 1)
+					printf("Warning: unparseable naomi key %s\n", naomi_key.c_str());
+				else
+				{
+					int value = atoi(naomi_key.substr(colon + 1).c_str());
+					int dc_btnnum = -1;
+					if (dc_key == "x")
+						dc_btnnum = 10;
+					else if (dc_key == "y")
+						dc_btnnum = 9;
+					else if (dc_key == "a")
+						dc_btnnum = 2;
+					else if (dc_key == "b")
+						dc_btnnum = 1;
+					else if (dc_key == "c")
+						dc_btnnum = 0;
+					else if (dc_key == "d")
+						dc_btnnum = 11;
+					else if (dc_key == "z")
+						dc_btnnum = 8;
+					else if (dc_key == "up")
+						dc_btnnum = 4;
+					else if (dc_key == "down")
+						dc_btnnum = 5;
+					else if (dc_key == "left")
+						dc_btnnum = 6;
+					else if (dc_key == "right")
+						dc_btnnum = 7;
+					else if (dc_key == "start")
+						dc_btnnum = 3;
+					else
+						printf("Warning: unparseable dc key %s\n", dc_key.c_str());
+					if (dc_btnnum != -1)
+					{
+						Naomi_Mapping.button_mapping_byte[dc_btnnum] = byte;
+						Naomi_Mapping.button_mapping_mask[dc_btnnum] = value;
+						printf("Button %d: mapped to %d:%d\n", dc_btnnum, Naomi_Mapping.button_mapping_byte[dc_btnnum], Naomi_Mapping.button_mapping_mask[dc_btnnum]);
+					}
+				}
+			}
+		}
+		if (p == s.size())
+			break;
+		s = trim(s.substr(p + 1));
+	}
+
+}
 
 bool naomi_cart_LoadRom(char* file)
 {
@@ -63,6 +201,8 @@ bool naomi_cart_LoadRom(char* file)
 		return false;
 	}
 
+	Naomi_Mapping = naomi_default_mapping;
+
 	vector<string> files;
 	vector<u32> fstart;
 	vector<u32> fsize;
@@ -72,14 +212,19 @@ bool naomi_cart_LoadRom(char* file)
 
 	while (line)
 	{
-		char filename[512];
-		u32 addr, sz;
-		sscanf(line, "\"%[^\"]\",%x,%x", filename, &addr, &sz);
-		files.push_back(filename);
-		fstart.push_back(addr);
-		fsize.push_back(sz);
-		setsize += sz;
-		RomSize = max(RomSize, (addr + sz));
+		if (line[0] == '#')
+			parse_comment(line);
+		else
+		{
+			char filename[512];
+			u32 addr, sz;
+			sscanf(line, "\"%[^\"]\",%x,%x", filename, &addr, &sz);
+			files.push_back(filename);
+			fstart.push_back(addr);
+			fsize.push_back(sz);
+			setsize += sz;
+			RomSize = max(RomSize, (addr + sz));
+		}
 		line = fgets(t, 512, fl);
 	}
 	fclose(fl);
@@ -181,9 +326,9 @@ bool naomi_cart_LoadRom(char* file)
 		{
 			wprintf(L"-Mapping \"%s\" at 0x%08X, size 0x%08X\n", files[i].c_str(), fstart[i], fsize[i]);
 #if HOST_OS == OS_WINDOWS
-			bool mapped = RomDest != MapViewOfFileEx(RomCacheMap[i], FILE_MAP_READ, 0, 0, fsize[i], RomDest);
+			bool mapped = RomDest == MapViewOfFileEx(RomCacheMap[i], FILE_MAP_READ, 0, 0, fsize[i], RomDest);
 #else
-			bool mapped = RomDest != mmap(RomDest, fsize[i], PROT_READ, MAP_PRIVATE, RomCacheMap[i], 0 );
+			bool mapped = RomDest == mmap(RomDest, fsize[i], PROT_READ, MAP_PRIVATE, RomCacheMap[i], 0 );
 #endif
 			if (!mapped)
 			{

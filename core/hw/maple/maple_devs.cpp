@@ -4,6 +4,7 @@
 #include "maple_devs.h"
 #include "maple_cfg.h"
 #include "cfg/cfg.h"
+#include "hw/naomi/naomi.h"
 #include <time.h>
 
 #if _ANDROID
@@ -78,7 +79,7 @@ enum MapleDeviceRV
 	MDRE_ARGunError      = 0xF9, //1 word, bitfield
 };
 
-
+NaomiInputMapping Naomi_Mapping;
 
 #define SWAP32(a) ((((a) & 0xff) << 24)  | (((a) & 0xff00) << 8) | (((a) >> 8) & 0xff00) | (((a) >> 24) & 0xff))
 
@@ -938,6 +939,9 @@ struct maple_sega_purupuru : maple_base
 	}
 };
 
+extern u16 kcode[4];
+extern s8 joyx[4],joyy[4];
+extern u8 rt[4], lt[4];
 char EEPROM[0x100];
 bool EEPROM_loaded = false;
 
@@ -1040,8 +1044,8 @@ struct maple_naomi_jamma : maple_sega_controller
 
 				buffer_out[0] = 0xffffffff;
 				buffer_out[1] = 0xffffffff;
-				u32 keycode = ~pjs.kcode;
-				u32 keycode2 = ~pjs.kcode;
+				u32 keycode = ~kcode[0];
+				u32 keycode2 = ~kcode[1];
 
 				if (keycode&NAOMI_SERVICE_KEY_2)		//Service
 					buffer_out[0] &= ~(1 << 0x1b);
@@ -1127,9 +1131,9 @@ struct maple_naomi_jamma : maple_sega_controller
 						buffer_out_b[0x8 + 0x9 + 0x3] = 0x0;
 						buffer_out_b[0x8 + 0x9 + 0x9] = 0x1;
 #define ADDFEAT(Feature,Count1,Count2,Count3)	*FeatPtr++=Feature; *FeatPtr++=Count1; *FeatPtr++=Count2; *FeatPtr++=Count3;
-						ADDFEAT(1, 2, 12, 0);	//Feat 1=Digital Inputs.  2 Players. 10 bits
+						ADDFEAT(1, 2, 12, 0);	//Feat 1=Digital Inputs.  2 Players. 12 bits
 						ADDFEAT(2, 2, 0, 0);	//Feat 2=Coin inputs. 2 Inputs
-						ADDFEAT(3, 2, 0, 0);	//Feat 3=Analog. 2 Chans
+						ADDFEAT(3, 4, 0, 0);	//Feat 3=Analog. 4 Chans
 
 						ADDFEAT(0, 0, 0, 0);	//End of list
 					}
@@ -1155,58 +1159,41 @@ struct maple_naomi_jamma : maple_sega_controller
 #if HOST_OS == OS_WINDOWS
 					GetKeyboardState(Key);
 #endif
+					u8 *buttons = &buffer_out_b[8 + 0x12 + 2];
+					for (int i = 0; i < 4; i++)
+						buttons[i] = 0;
+					for (int i = 0; i < 16; i++)
+						if (keycode & (1 << i))
+						{
+							buttons[Naomi_Mapping.button_mapping_byte[i]] |= Naomi_Mapping.button_mapping_mask[i];
+						}
+					u16 axis_values[4];
+					for (int i = 0; i < 4; i++)
+					{
+						if (Naomi_Mapping.axis[i] != NULL)
+							axis_values[i] = Naomi_Mapping.axis[i]();
+						else
+						{
+							switch (i) {
+							case 0:
+								axis_values[i] = (joyx[bus_id * 2 + 0] + 128) << 8;
+								break;
+							case 1:
+								axis_values[i] = (joyy[bus_id * 2 + 0] + 128) << 8;
+								break;
+							case 2:
+								axis_values[i] = rt[bus_id * 2] << 8;
+								break;
+							case 3:
+								axis_values[i] = lt[bus_id * 2] << 8;
+								break;
+							}
+						}
+					}
+					
 					if (keycode&NAOMI_SERVICE_KEY_1)			//Service ?
 						glbl |= 0x80;
-					if (keycode&NAOMI_TEST_KEY_1)			//Test
-						p1_1 |= 0x40;
-					if (keycode&NAOMI_START_KEY)			//start ?
-						p1_1 |= 0x80;
-					if (keycode&NAOMI_UP_KEY)			//up
-						p1_1 |= 0x20;
-					if (keycode&NAOMI_DOWN_KEY)		//down
-						p1_1 |= 0x10;
-					if (keycode&NAOMI_LEFT_KEY)		//left
-						p1_1 |= 0x08;
-					if (keycode&NAOMI_RIGHT_KEY)		//right
-						p1_1 |= 0x04;
-					if (keycode&NAOMI_BTN0_KEY)			//btn1
-						p1_1 |= 0x02;
-					if (keycode&NAOMI_BTN1_KEY)			//btn2
-						p1_1 |= 0x01;
-					if (keycode&NAOMI_BTN2_KEY)			//btn3
-						p1_2 |= 0x80;
-					if (keycode&NAOMI_BTN3_KEY)			//btn4
-						p1_2 |= 0x40;
-					if (keycode&NAOMI_BTN4_KEY)			//btn5
-						p1_2 |= 0x20;
-					if (keycode&NAOMI_BTN5_KEY)			//btn6
-						p1_2 |= 0x10;
-
-					if (keycode2&NAOMI_TEST_KEY_1)			//Test
-						p2_1 |= 0x40;
-					if (keycode2&NAOMI_START_KEY)			//start ?
-						p2_1 |= 0x80;
-					if (keycode2&NAOMI_UP_KEY)			//up
-						p2_1 |= 0x20;
-					if (keycode2&NAOMI_DOWN_KEY)		//down
-						p2_1 |= 0x10;
-					if (keycode2&NAOMI_LEFT_KEY)		//left
-						p2_1 |= 0x08;
-					if (keycode2&NAOMI_RIGHT_KEY)		//right
-						p2_1 |= 0x04;
-					if (keycode2&NAOMI_BTN0_KEY)			//btn1
-						p2_1 |= 0x02;
-					if (keycode2&NAOMI_BTN1_KEY)			//btn2
-						p2_1 |= 0x01;
-					if (keycode2&NAOMI_BTN2_KEY)			//btn3
-						p2_2 |= 0x80;
-					if (keycode2&NAOMI_BTN3_KEY)			//btn4
-						p2_2 |= 0x40;
-					if (keycode2&NAOMI_BTN4_KEY)			//btn5
-						p2_2 |= 0x20;
-					if (keycode2&NAOMI_BTN5_KEY)			//btn6
-						p2_2 |= 0x10;
-
+					
 					static bool old_coin = false;
 					static bool old_coin2 = false;
 
@@ -1230,24 +1217,24 @@ struct maple_naomi_jamma : maple_sega_controller
 
 					buffer_out_b[8 + 0x12 + 0] = 1;
 					buffer_out_b[8 + 0x12 + 1] = glbl;
-					buffer_out_b[8 + 0x12 + 2] = p1_1;
-					buffer_out_b[8 + 0x12 + 3] = p1_2;
-					buffer_out_b[8 + 0x12 + 4] = p2_1;
-					buffer_out_b[8 + 0x12 + 5] = p2_2;
+//					buffer_out_b[8 + 0x12 + 2] = p1_1;
+//					buffer_out_b[8 + 0x12 + 3] = p1_2;
+//					buffer_out_b[8 + 0x12 + 4] = p2_1;
+//					buffer_out_b[8 + 0x12 + 5] = p2_2;
 					buffer_out_b[8 + 0x12 + 6] = 1;
 					buffer_out_b[8 + 0x12 + 7] = coin1 >> 8;
 					buffer_out_b[8 + 0x12 + 8] = coin1 & 0xff;
 					buffer_out_b[8 + 0x12 + 9] = coin2 >> 8;
 					buffer_out_b[8 + 0x12 + 10] = coin2 & 0xff;
 					buffer_out_b[8 + 0x12 + 11] = 1;
-					buffer_out_b[8 + 0x12 + 12] = 0x00;
-					buffer_out_b[8 + 0x12 + 13] = 0x00;
-					buffer_out_b[8 + 0x12 + 14] = 0x00;
-					buffer_out_b[8 + 0x12 + 15] = 0x00;
-					buffer_out_b[8 + 0x12 + 16] = 0x00;
-					buffer_out_b[8 + 0x12 + 17] = 0x00;
-					buffer_out_b[8 + 0x12 + 18] = 0x00;
-					buffer_out_b[8 + 0x12 + 19] = 0x00;
+					buffer_out_b[8 + 0x12 + 12] = axis_values[0] >> 8;
+					buffer_out_b[8 + 0x12 + 13] = axis_values[0];
+					buffer_out_b[8 + 0x12 + 14] = axis_values[1] >> 8;
+					buffer_out_b[8 + 0x12 + 15] = axis_values[1];
+					buffer_out_b[8 + 0x12 + 16] = axis_values[2] >> 8;
+					buffer_out_b[8 + 0x12 + 17] = axis_values[2];
+					buffer_out_b[8 + 0x12 + 18] = axis_values[3] >> 8;
+					buffer_out_b[8 + 0x12 + 19] = axis_values[3];
 					buffer_out_b[8 + 0x12 + 20] = 0x00;
 
 					memcpy(LastKey, Key, sizeof(Key));
