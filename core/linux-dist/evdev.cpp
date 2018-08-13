@@ -192,7 +192,9 @@
 			mf.get_bool("compat", "axis_x_inverted", false),
 			mf.get_bool("compat", "axis_y_inverted", false),
 			mf.get_bool("compat", "axis_trigger_left_inverted", false),
-			mf.get_bool("compat", "axis_trigger_right_inverted", false)
+			mf.get_bool("compat", "axis_trigger_right_inverted", false),
+			mf.get_int("dreamcast", "maple_device1", -1),
+			mf.get_int("dreamcast", "maple_device2", -1)
 		};
 		return mapping;
 	}

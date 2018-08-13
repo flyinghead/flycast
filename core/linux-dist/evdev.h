@@ -36,6 +36,8 @@ struct EvdevControllerMapping
 	const bool Axis_Analog_Y_Inverted;
 	const bool Axis_Trigger_Left_Inverted;
 	const bool Axis_Trigger_Right_Inverted;
+	const int Maple_Device1;
+	const int Maple_Device2;
 };
 
 struct EvdevAxisData
