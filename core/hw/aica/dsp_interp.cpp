@@ -10,6 +10,11 @@
 
 #if HOST_CPU != CPU_X86 || FEAT_DSPREC != DYNAREC_JIT
 
+#ifdef RELEASE
+#undef verify
+#define verify(...)
+#endif
+
 void AICADSP_Init(struct dsp_t *DSP)
 {
 	memset(DSP, 0, sizeof(*DSP));
@@ -29,7 +34,6 @@ void AICADSP_Step(struct dsp_t *DSP)
 	s32 MEMVAL[4] = {0};
 	s32 FRC_REG = 0;	//13 bit
 	s32 Y_REG = 0;		//24 bit
-	u32 ADDR = 0;
 	u32 ADRS_REG = 0;	//13 bit
 	int step;
 
@@ -49,21 +53,35 @@ void AICADSP_Step(struct dsp_t *DSP)
 	{
 		u32 *IPtr = DSPData->MPRO + step * 4;
 
+		if (IPtr[0] == 0 && IPtr[1] == 0 && IPtr[2] == 0 && IPtr[3] == 0)
+		{
+			// Empty instruction shortcut
+			X = DSP->TEMP[DSP->regs.MDEC_CT & 0x7F];
+			X <<= 8;
+			X >>= 8;
+			Y = FRC_REG;
+			Y <<= 19;
+			Y >>= 19;
+
+			s64 v = ((s64)X * (s64)Y) >> 10;
+			v <<= 6;	// 26 bits only
+			v >>= 6;
+			ACC = v + X;
+			ACC <<= 6;	// 26 bits only
+			ACC >>= 6;
+
+			continue;
+		}
+
 		u32 TRA = (IPtr[0] >> 9) & 0x7F;
 		u32 TWT = (IPtr[0] >> 8) & 0x01;
-		u32 TWA = (IPtr[0] >> 1) & 0x7F;
 
 		u32 XSEL = (IPtr[1] >> 15) & 0x01;
 		u32 YSEL = (IPtr[1] >> 13) & 0x03;
 		u32 IRA = (IPtr[1] >> 7) & 0x3F;
 		u32 IWT = (IPtr[1] >> 6) & 0x01;
-		u32 IWA = (IPtr[1] >> 1) & 0x1F;
 
-		u32 TABLE = (IPtr[2] >> 15) & 0x01;
-		u32 MWT = (IPtr[2] >> 14) & 0x01;
-		u32 MRD = (IPtr[2] >> 13) & 0x01;
 		u32 EWT = (IPtr[2] >> 12) & 0x01;
-		u32 EWA = (IPtr[2] >> 8) & 0x0F;
 		u32 ADRL = (IPtr[2] >> 7) & 0x01;
 		u32 FRCL = (IPtr[2] >> 6) & 0x01;
 		u32 SHIFT = (IPtr[2] >> 4) & 0x03;
@@ -72,13 +90,7 @@ void AICADSP_Step(struct dsp_t *DSP)
 		u32 ZERO = (IPtr[2] >> 1) & 0x01;
 		u32 BSEL = (IPtr[2] >> 0) & 0x01;
 
-		u32 NOFL = (IPtr[3] >> 15) & 1;		//????
-		verify(!NOFL);
 		u32 COEF = step;
-
-		u32 MASA = (IPtr[3] >> 9) & 0x3f;	//???
-		u32 ADREB = (IPtr[3] >> 8) & 0x1;
-		u32 NXADR = (IPtr[3] >> 7) & 0x1;
 
 		// operations are done at 24 bit precision
 #if 0
@@ -115,6 +127,7 @@ void AICADSP_Step(struct dsp_t *DSP)
 
 		if (IWT)
 		{
+			u32 IWA = (IPtr[1] >> 1) & 0x1F;
 			DSP->MEMS[IWA] = MEMVAL[step & 3];	// MEMVAL was selected in previous MRD
 			// "When read and write are specified simultaneously in the same step for INPUTS, TEMP, etc., write is executed after read."
 			//if (IRA == IWA)
@@ -205,7 +218,10 @@ void AICADSP_Step(struct dsp_t *DSP)
 		ACC >>= 6;
 
 		if (TWT)
+		{
+			u32 TWA = (IPtr[0] >> 1) & 0x7F;
 			DSP->TEMP[(TWA + DSP->regs.MDEC_CT) & 0x7F] = SHIFTED;
+		}
 
 		if (FRCL)
 		{
@@ -215,38 +231,51 @@ void AICADSP_Step(struct dsp_t *DSP)
 				FRC_REG = (SHIFTED >> 11) & 0x1FFF;
 		}
 
-		if ((MRD || MWT) && (step & 1))
+		if (step & 1)
 		{
-			ADDR = DSPData->MADRS[MASA];
-			if (ADREB)
-				ADDR += ADRS_REG & 0x0FFF;
-			if (NXADR)
-				ADDR++;
-			if (!TABLE)
-				ADDR += DSP->regs.MDEC_CT;
-			if (!TABLE)
-				ADDR &= DSP->RBL;		// RBL is ring buffer length - 1
-			else
-				ADDR &= 0xFFFF;
-			// ADDR <<= 1;
-			// ADDR += DSP->RBP << 13;
-			// MEMVAL = DSP->AICARAM[ADDR >> 1];
-			ADDR <<= 1;					// Word -> byte address
-			ADDR += DSP->RBP;			// RBP is already a byte address
-			if (MRD)			// memory only allowed on odd. DoA inserts NOPs on even
+			u32 MWT = (IPtr[2] >> 14) & 0x01;
+			u32 MRD = (IPtr[2] >> 13) & 0x01;
+
+			if (MRD || MWT)
 			{
-				if (NOFL)
-					MEMVAL[(step + 2) & 3] = (*(s16 *)&aica_ram[ADDR]) << 8;
+				u32 TABLE = (IPtr[2] >> 15) & 0x01;
+
+				u32 NOFL = (IPtr[3] >> 15) & 1;		//????
+				verify(!NOFL);
+				u32 MASA = (IPtr[3] >> 9) & 0x3f;	//???
+				u32 ADREB = (IPtr[3] >> 8) & 0x1;
+				u32 NXADR = (IPtr[3] >> 7) & 0x1;
+
+				u32 ADDR = DSPData->MADRS[MASA];
+				if (ADREB)
+					ADDR += ADRS_REG & 0x0FFF;
+				if (NXADR)
+					ADDR++;
+				if (!TABLE)
+				{
+					ADDR += DSP->regs.MDEC_CT;
+					ADDR &= DSP->RBL;		// RBL is ring buffer length - 1
+				}
 				else
-					MEMVAL[(step + 2) & 3] = UNPACK(*(u16 *)&aica_ram[ADDR]);
-			}
-			if (MWT)
-			{
-				// FIXME We should wait for the next step to copy stuff to SRAM (same as read)
-				if (NOFL)
-					*(s16 *)&aica_ram[ADDR] = SHIFTED >> 8;
-				else
-					*(u16 *)&aica_ram[ADDR] = PACK(SHIFTED);
+					ADDR &= 0xFFFF;
+
+				ADDR <<= 1;					// Word -> byte address
+				ADDR += DSP->RBP;			// RBP is already a byte address
+				if (MRD)			// memory only allowed on odd. DoA inserts NOPs on even
+				{
+					//if (NOFL)
+					//	MEMVAL[(step + 2) & 3] = (*(s16 *)&aica_ram[ADDR]) << 8;
+					//else
+						MEMVAL[(step + 2) & 3] = UNPACK(*(u16 *)&aica_ram[ADDR]);
+				}
+				if (MWT)
+				{
+					// FIXME We should wait for the next step to copy stuff to SRAM (same as read)
+					//if (NOFL)
+					//	*(s16 *)&aica_ram[ADDR] = SHIFTED >> 8;
+					//else
+						*(u16 *)&aica_ram[ADDR] = PACK(SHIFTED);
+				}
 			}
 		}
 
@@ -259,8 +288,11 @@ void AICADSP_Step(struct dsp_t *DSP)
 		}
 
 		if (EWT)
+		{
+			u32 EWA = (IPtr[2] >> 8) & 0x0F;
 			// 4 ????
 			DSPData->EFREG[EWA] += SHIFTED >> 4;	// dynarec uses = instead of +=
+		}
 
 	}
 	--DSP->regs.MDEC_CT;
