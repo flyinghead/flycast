@@ -2,7 +2,7 @@ LOCAL_PATH := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 FOR_LINUX :=1
 #NO_REC := 1
 #NO_REND := 1
-WEBUI :=1 
+WEBUI :=1
 USE_OSS := 1
 #USE_PULSEAUDIO := 1
 USE_EVDEV := 1
@@ -13,19 +13,19 @@ AS=${CC_PREFIX}as
 STRIP=${CC_PREFIX}strip
 LD=${CC}
 
-MFLAGS := 
-ASFLAGS := 
+MFLAGS :=
+ASFLAGS :=
 LDFLAGS :=
 INCS :=
 LIBS :=
-CFLAGS := 
+CFLAGS :=
 CXXFLAGS :=
 
 ifneq (, $(filter $(shell uname -s), FreeBSD OpenBSD NetBSD DragonFly))
     CFLAGS += -DTARGET_BSD
 else
     USE_ALSA := 1
-    USE_JOYSTICK := 1
+#    USE_JOYSTICK := 1
 endif
 
 # Platform auto-detection
@@ -276,8 +276,8 @@ ifdef PGO_USE
 endif
 
 ifdef LTO_TEST
-    CFLAGS += -flto -fwhole-program 
-    LDFLAGS +=-flto -fwhole-program 
+    CFLAGS += -flto -fwhole-program
+    LDFLAGS +=-flto -fwhole-program
 endif
 
 ifdef USE_DISPMANX
@@ -363,7 +363,7 @@ all: $(CPPFILES) $(EXECUTABLE) $(EXECUTABLE_STRIPPED)
 ifneq (,$(findstring gcwz,$(platform)))
 	mksquashfs $(EXECUTABLE_STRIPPED) $(GCWZ_PKG_FILES) $(GCWZ_PKG) -all-root
 endif
-	
+
 $(EXECUTABLE): $(OBJECTS)
 	$(CXX) $(MFLAGS) $(EXTRAFLAGS) $(LDFLAGS) $(OBJECTS) $(LIBS) -o $@
 
@@ -373,13 +373,13 @@ $(EXECUTABLE_STRIPPED): $(EXECUTABLE)
 $(BUILDDIR)/%.build_obj : $(RZDCY_SRC_DIR)/%.cpp
 	mkdir -p $(dir $@)
 	$(CXX) $(EXTRAFLAGS) $(INCS) $(CFLAGS) $(MFLAGS) $(CXXFLAGS) $< -o $@
-	
+
 $(BUILDDIR)/%.build_obj : $(RZDCY_SRC_DIR)/%.c
 	mkdir -p $(dir $@)
 	$(CC) $(EXTRAFLAGS) $(INCS) $(CFLAGS) $< -o $@
 
 $(BUILDDIR)/%.build_obj : $(RZDCY_SRC_DIR)/%.S
-	mkdir -p $(dir $@)	
+	mkdir -p $(dir $@)
 	$(AS) $(ASFLAGS) $(INCS) $< -o $@
 
 install: $(EXECUTABLE)
