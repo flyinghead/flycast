@@ -146,7 +146,11 @@ void LoadSpecialSettings()
 		// Demolition Racer
 		|| !strncmp("T15112N", reios_product_number, 7)
 		// Star Wars - Episode I - Racer (United Kingdom)
-		|| !strncmp("T23001D", reios_product_number, 7))
+		|| !strncmp("T23001D", reios_product_number, 7)
+		// Record of Lodoss War (EU)
+		|| !strncmp("T7012D", reios_product_number, 6)
+		// Record of Lodoss War (USA)
+		|| !strncmp("T40218N", reios_product_number, 7))
 		settings.dynarec.DisableDivMatching = true;
 }
 
