@@ -31,6 +31,7 @@ public final class JNIdc
 	public static native void dynarec(int dynarec);
 	public static native void idleskip(int idleskip);
 	public static native void unstable(int unstable);
+	public static native void safemode(int safemode);
 	public static native void cable(int cable);
 	public static native void region(int region);
 	public static native void broadcast(int broadcast);

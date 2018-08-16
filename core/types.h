@@ -624,6 +624,7 @@ struct settings_t
 		bool Enable;
 		bool idleskip;
 		bool unstable_opt;
+		bool safemode;
 		bool disable_nvmem;
 	} dynarec;
 	

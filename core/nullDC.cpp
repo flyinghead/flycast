@@ -247,6 +247,7 @@ void LoadSettings()
 	settings.dynarec.Enable			= cfgLoadInt("config","Dynarec.Enabled", 1)!=0;
 	settings.dynarec.idleskip		= cfgLoadInt("config","Dynarec.idleskip",1)!=0;
 	settings.dynarec.unstable_opt	= cfgLoadInt("config","Dynarec.unstable-opt",0);
+	settings.dynarec.safemode		= cfgLoadInt("config","Dynarec.safemode",0);
 	//disable_nvmem can't be loaded, because nvmem init is before cfg load
 	settings.dreamcast.cable		= cfgLoadInt("config","Dreamcast.Cable",3);
 	settings.dreamcast.RTC			= cfgLoadInt("config","Dreamcast.RTC",GetRTC_now());
