@@ -105,6 +105,32 @@ void emit_WriteCodeCache();
 	static int joystick_fd = -1; // Joystick file descriptor
 #endif
 
+MapleDeviceType GetMapleDeviceType(int value)
+{
+	switch (value)
+	{
+		case 1:
+			#if defined(_DEBUG) || defined(DEBUG)
+			printf("Maple Device: VMU\n");
+			#endif
+			return MDT_SegaVMU;
+		case 2:
+			#if defined(_DEBUG) || defined(DEBUG)
+			printf("Maple Device: Microphone\n");
+			#endif
+			return MDT_Microphone;
+		case 3:
+			#if defined(_DEBUG) || defined(DEBUG)
+			printf("Maple Device: PuruPuruPack\n");
+			#endif
+			return MDT_PurupuruPack;
+		default:
+			printf("Unsupported configuration (%d) for Maple Device, using VMU\n", value);
+	}
+
+	return MDT_SegaVMU;
+}
+
 void SetupInput()
 {
 	#if defined(USE_EVDEV)
@@ -157,43 +183,7 @@ void SetupInput()
 						}
 				}
 
-				switch (evdev_controllers[port].mapping->Maple_Device1)
-				{
-					case 1:
-						printf("Maple Device 1: VMU\n");
-						mcfg_Create(MDT_SegaVMU, port, 0);
-						break;
-					case 2:
-						printf("Maple Device 1: Microphone\n");
-						mcfg_Create(MDT_Microphone, port, 0);
-						break;
-					case 3:
-						printf("Maple Device 1: PuruPuruPack\n");
-						mcfg_Create(MDT_PurupuruPack, port, 0);
-						break;
-					default:
-						printf("Unsupported configuration for Maple Device 1 (using VMU): %d\n", evdev_controllers[port].mapping->Maple_Device1);
-						mcfg_Create(MDT_SegaVMU, port, 0);
-				}
-
-				switch (evdev_controllers[port].mapping->Maple_Device2)
-				{
-					case 1:
-						printf("Maple Device 2: VMU\n");
-						mcfg_Create(MDT_SegaVMU, port, 1);
-						break;
-					case 2:
-						printf("Maple Device 2: Microphone\n");
-						mcfg_Create(MDT_Microphone, port, 1);
-						break;
-					case 3:
-						printf("Maple Device 2: PuruPuruPack\n");
-						mcfg_Create(MDT_PurupuruPack, port, 1);
-						break;
-					default:
-						printf("Unsupported configuration for Maple Device 2 (using VMU): %d\n", evdev_controllers[port].mapping->Maple_Device2);
-						mcfg_Create(MDT_SegaVMU, port, 1);
-				}
+				mcfg_CreateController(port, GetMapleDeviceType(evdev_controllers[port].mapping->Maple_Device1), GetMapleDeviceType(evdev_controllers[port].mapping->Maple_Device2));
 			}
 		}
 	#endif

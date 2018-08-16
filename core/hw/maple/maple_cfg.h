@@ -64,7 +64,7 @@ struct IMapleConfigMap
 	virtual ~IMapleConfigMap() {}
 };
 
-void mcfg_Create(MapleDeviceType type, u32 bus, u32 port);
+void mcfg_CreateController(u32 bus, MapleDeviceType maple_type1, MapleDeviceType maple_type2);
 
 #ifndef _ANDROID
 void mcfg_CreateDevices();

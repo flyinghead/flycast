@@ -73,9 +73,18 @@ void mcfg_Create(MapleDeviceType type, u32 bus, u32 port)
 	MapleDevices[bus][port] = dev;
 }
 
+void mcfg_CreateController(u32 bus, MapleDeviceType maple_type1, MapleDeviceType maple_type2)
+{
+	mcfg_Create(MDT_SegaController, bus, 5);
+	mcfg_Create(maple_type1, bus, 0);
+	mcfg_Create(maple_type2, bus, 1);
+}
+
 void mcfg_CreateDevices()
 {
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST
+	// if using evdev they will be created later on
+#if !defined(USE_EVDEV)
 	int numberOfControl = cfgLoadInt("players", "nb", 1);
 
 	if (numberOfControl <= 0)
@@ -85,11 +94,8 @@ void mcfg_CreateDevices()
 
 	for (int i = 0; i < numberOfControl; i++){
 		mcfg_Create(MDT_SegaController, i, 5);
-		// mcfg_Create(MDT_PurupuruPack, i, 1);
 	}
 
-	// if using evdev they will be created later on
-#if !defined(USE_EVDEV)
 	mcfg_Create(MDT_SegaVMU, 0, 0);
 	mcfg_Create(MDT_SegaVMU, 0, 1);
 #endif
