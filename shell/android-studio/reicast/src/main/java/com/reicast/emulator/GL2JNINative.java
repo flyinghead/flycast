@@ -346,16 +346,16 @@ public class GL2JNINative extends NativeActivity {
 				&& (!(pad.previousLS_X[playerNum] == 0.0f) || !(pad.previousLS_Y[playerNum] == 0.0f));
 	}
 
-	private void processJoystickInput(MotionEvent event, Integer playerNum) {
+	private void processJoystickInput(MotionEvent event, Integer playerNum, int index) {
 		// Joystick
 		if ((event.getSource() & InputDevice.SOURCE_CLASS_JOYSTICK) != 0) {
 			// do other things with joystick
-			float LS_X = event.getAxisValue(OuyaController.AXIS_LS_X);
-			float LS_Y = event.getAxisValue(OuyaController.AXIS_LS_Y);
-			float RS_X = event.getAxisValue(OuyaController.AXIS_RS_X);
-			float RS_Y = event.getAxisValue(OuyaController.AXIS_RS_Y);
-			float L2 = event.getAxisValue(OuyaController.AXIS_L2);
-			float R2 = event.getAxisValue(OuyaController.AXIS_R2);
+			float LS_X = event.getHistoricalAxisValue(OuyaController.AXIS_LS_X, index);
+			float LS_Y = event.getHistoricalAxisValue(OuyaController.AXIS_LS_Y, index);
+			float RS_X = event.getHistoricalAxisValue(OuyaController.AXIS_RS_X, index);
+			float RS_Y = event.getHistoricalAxisValue(OuyaController.AXIS_RS_Y, index);
+			float L2 = event.getHistoricalAxisValue(OuyaController.AXIS_L2, index);
+			float R2 = event.getHistoricalAxisValue(OuyaController.AXIS_R2, index);
 
 			if (!pad.joystick[playerNum]) {
 				pad.previousLS_X[playerNum] = pad.globalLS_X[playerNum];
@@ -414,9 +414,9 @@ public class GL2JNINative extends NativeActivity {
 			if (!pad.compat[playerNum]) {
 				final int historySize = event.getHistorySize();
 				for (int i = 0; i < historySize; i++) {
-					processJoystickInput(event, i);
+					processJoystickInput(event, playerNum, i);
 				}
-				processJoystickInput(event, -1);
+				processJoystickInput(event, playerNum, -1);
 			}
 			mView.pushInput();
 			if (!pad.joystick[playerNum] && (pad.globalLS_X[playerNum] == pad.previousLS_X[playerNum] && pad.globalLS_Y[playerNum] == pad.previousLS_Y[playerNum])
