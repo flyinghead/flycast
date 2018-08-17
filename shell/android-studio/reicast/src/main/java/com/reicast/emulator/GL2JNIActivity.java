@@ -61,7 +61,7 @@ public class GL2JNIActivity extends Activity {
         app.getConfigurationPrefs(prefs);
         menu = new OnScreenMenu(GL2JNIActivity.this, prefs);
 
-        pad.isOuyaOrTV = pad.IsOuyaOrTV(GL2JNIActivity.this);
+        pad.isOuyaOrTV = pad.IsOuyaOrTV(GL2JNIActivity.this, false);
 //		pad.isNvidiaShield = pad.IsNvidiaShield();
 
         /*
@@ -227,12 +227,21 @@ public class GL2JNIActivity extends Activity {
         // Joystick
         if ((event.getSource() & InputDevice.SOURCE_CLASS_JOYSTICK) != 0) {
             // do other things with joystick
-            float LS_X = event.getHistoricalAxisValue(OuyaController.AXIS_LS_X, index);
-            float LS_Y = event.getHistoricalAxisValue(OuyaController.AXIS_LS_Y, index);
-            float RS_X = event.getHistoricalAxisValue(OuyaController.AXIS_RS_X, index);
-            float RS_Y = event.getHistoricalAxisValue(OuyaController.AXIS_RS_Y, index);
-            float L2 = event.getHistoricalAxisValue(OuyaController.AXIS_L2, index);
-            float R2 = event.getHistoricalAxisValue(OuyaController.AXIS_R2, index);
+            float LS_X = event.getHistoricalAxisValue(MotionEvent.AXIS_X, index);
+            float LS_Y = event.getHistoricalAxisValue(MotionEvent.AXIS_Y, index);
+            float RS_X = event.getHistoricalAxisValue(MotionEvent.AXIS_RX, index);
+            float RS_Y = event.getHistoricalAxisValue(MotionEvent.AXIS_RY, index);
+            float L2 = event.getHistoricalAxisValue(MotionEvent.AXIS_LTRIGGER, index);
+            float R2 = event.getHistoricalAxisValue(MotionEvent.AXIS_RTRIGGER, index);
+
+            if (pad.IsOuyaOrTV(GL2JNIActivity.this, true)) {
+                LS_X = event.getHistoricalAxisValue(OuyaController.AXIS_LS_X, index);
+                LS_Y = event.getHistoricalAxisValue(OuyaController.AXIS_LS_Y, index);
+                RS_X = event.getHistoricalAxisValue(OuyaController.AXIS_RS_X, index);
+                RS_Y = event.getHistoricalAxisValue(OuyaController.AXIS_RS_Y, index);
+                L2 = event.getHistoricalAxisValue(OuyaController.AXIS_L2, index);
+                R2 = event.getHistoricalAxisValue(OuyaController.AXIS_R2, index);
+            }
 
             if (!pad.joystick[playerNum]) {
                 pad.previousLS_X[playerNum] = pad.globalLS_X[playerNum];

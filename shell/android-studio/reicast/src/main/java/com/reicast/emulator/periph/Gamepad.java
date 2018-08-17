@@ -150,15 +150,19 @@ public class Gamepad {
 		};
 	}
 
-	public boolean IsOuyaOrTV(Context context) {
-		UiModeManager uiModeManager = (UiModeManager)
-				context.getSystemService(Context.UI_MODE_SERVICE);
-		if (uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION) {
-			return true;
+	public boolean IsOuyaOrTV(Context context, boolean ouya) {
+		if (ouya) {
+			return OuyaFacade.getInstance().isRunningOnOUYAHardware();
+		} else {
+			UiModeManager uiModeManager = (UiModeManager)
+					context.getSystemService(Context.UI_MODE_SERVICE);
+			if (uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION) {
+				return true;
+			}
+			PackageManager pMan = context.getPackageManager();
+			return pMan.hasSystemFeature(PackageManager.FEATURE_TELEVISION)
+					|| OuyaFacade.getInstance().isRunningOnOUYAHardware();
 		}
-		PackageManager pMan = context.getPackageManager();
-		return pMan.hasSystemFeature(PackageManager.FEATURE_TELEVISION)
-				|| OuyaFacade.getInstance().isRunningOnOUYAHardware();
 	}
 
 	public int getStartButtonCode() {
