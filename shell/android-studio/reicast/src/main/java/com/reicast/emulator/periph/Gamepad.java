@@ -48,6 +48,8 @@ public class Gamepad {
 	public static final String controllers_xbox = "Microsoft X-Box 360 pad";
 	public static final String controllers_shield = "NVIDIA Corporation NVIDIA Controller";
 	public static final String controllers_gamekey = "gamekeyboard";
+	public static final String controllers_moga = "Moga";
+
 
 	public String[] portId = { "_A", "_B", "_C", "_D" };
 	public boolean[] compat = { false, false, false, false };
@@ -61,9 +63,6 @@ public class Gamepad {
 
 	public SparseArray<String> deviceId_deviceDescriptor = new SparseArray<>();
 	public HashMap<String, Integer> deviceDescriptor_PlayerNum = new HashMap<>();
-
-	public boolean isActiveMoga[] = { false, false, false, false };
-	public boolean isMogaPro[] = { false, false, false, false };
 
 	public SparseIntArray playerNumX = new SparseIntArray();
 
