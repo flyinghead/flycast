@@ -75,13 +75,6 @@ public class GL2JNINative extends NativeActivity {
 		app.getConfigurationPrefs(prefs);
 		menu = new OnScreenMenu(GL2JNINative.this, prefs);
 
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-			pad.compat[0] = true;
-			pad.compat[1] = true;
-			pad.compat[2] = true;
-			pad.compat[3] = true;
-		}
-
 		String fileName = null;
 
 		// Call parent onCreate()

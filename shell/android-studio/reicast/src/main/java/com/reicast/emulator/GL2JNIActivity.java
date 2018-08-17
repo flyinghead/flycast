@@ -76,13 +76,6 @@ public class GL2JNIActivity extends Activity {
          * catch (IOException e) { e.getMessage(); e.printStackTrace(); }
          */
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            pad.compat[0] = true;
-            pad.compat[1] = true;
-            pad.compat[2] = true;
-            pad.compat[3] = true;
-        }
-
         String fileName = null;
 
         // Call parent onCreate()
