@@ -241,6 +241,35 @@ void dc_stop()
 	sh4_cpu.Stop();
 }
 
+void LoadCustom()
+{
+	char *configFile = ""; // Replace with code to get a per-game config file
+	
+	settings.dynarec.Enable			= cfgLoadInt(configFile,"Dynarec.Enabled", settings.dynarec.Enable ? 1 : 0) != 0;
+	settings.dynarec.idleskip		= cfgLoadInt(configFile,"Dynarec.idleskip", settings.dynarec.idleskip ? 1 : 0) != 0;
+	settings.dynarec.unstable_opt	= cfgLoadInt(configFile,"Dynarec.unstable-opt", settings.dynarec.unstable_opt);
+	settings.dynarec.safemode		= cfgLoadInt(configFile,"Dynarec.safemode", settings.dynarec.safemode);
+	//disable_nvmem can't be loaded, because nvmem init is before cfg load
+	settings.dreamcast.cable		= cfgLoadInt(configFile,"Dreamcast.Cable", settings.dreamcast.cable);
+	settings.dreamcast.region		= cfgLoadInt(configFile,"Dreamcast.Region", settings.dreamcast.region);
+	settings.dreamcast.broadcast	= cfgLoadInt(configFile,"Dreamcast.Broadcast", settings.dreamcast.broadcast);
+	settings.aica.LimitFPS			= cfgLoadInt(configFile,"aica.LimitFPS", settings.aica.LimitFPS);
+	settings.aica.NoBatch			= cfgLoadInt(configFile,"aica.NoBatch", settings.aica.NoBatch);
+    settings.aica.NoSound			= cfgLoadInt(configFile,"aica.NoSound", settings.aica.NoSound);
+	settings.rend.UseMipmaps		= cfgLoadInt(configFile,"rend.UseMipmaps", settings.rend.UseMipmaps);
+	settings.rend.WideScreen		= cfgLoadInt(configFile,"rend.WideScreen", settings.rend.WideScreen);
+	settings.rend.ModifierVolumes	= cfgLoadInt(configFile,"rend.ModifierVolumes", settings.rend.ModifierVolumes);
+	settings.rend.Clipping			= cfgLoadInt(configFile,"rend.Clipping", settings.rend.Clipping);
+	
+	settings.pvr.subdivide_transp	= cfgLoadInt(configFile,"pvr.Subdivide", settings.pvr.subdivide_transp);
+	
+	settings.pvr.ta_skip			= cfgLoadInt(configFile,"ta.skip", settings.pvr.ta_skip);
+	settings.pvr.rend				= cfgLoadInt(configFile,"pvr.rend", settings.pvr.rend);
+
+	settings.pvr.MaxThreads			= cfgLoadInt(configFile, "pvr.MaxThreads", settings.pvr.MaxThreads);
+	settings.pvr.SynchronousRendering			= cfgLoadInt(configFile, "pvr.SynchronousRendering", settings.pvr.SynchronousRendering);
+}
+
 void LoadSettings()
 {
 #ifndef _ANDROID
@@ -303,6 +332,8 @@ void LoadSettings()
 	settings.dreamcast.region	= min(max(settings.dreamcast.region,   0),3);
 	settings.dreamcast.broadcast= min(max(settings.dreamcast.broadcast,0),4);
 */
+
+	LoadCustom();
 }
 void SaveSettings()
 {
