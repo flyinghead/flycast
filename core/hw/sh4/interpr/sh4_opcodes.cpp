@@ -1710,7 +1710,7 @@ sh4op(i0011_nnnn_mmmm_1110)
 // addv <REG_M>,<REG_N>
 sh4op(i0011_nnnn_mmmm_1111)
 {
-	printf("WARN: addv <REG_M>,<REG_N> used, %04X\n",op);
+	//printf("WARN: addv <REG_M>,<REG_N> used, %04X\n",op);
 	//Retail game "Twinkle Star Sprites" "uses" this opcode.
 	//iNimp(op, "addv <REG_M>,<REG_N>");
 	u32 n = GetN(op);
@@ -1765,7 +1765,7 @@ sh4op(i0011_nnnn_mmmm_1010)
 //subv <REG_M>,<REG_N>
 sh4op(i0011_nnnn_mmmm_1011)
 {
-	printf("WARN: subv <REG_M>,<REG_N> used, %04X\n",op);
+	//printf("WARN: subv <REG_M>,<REG_N> used, %04X\n",op);
 	//Retail game "Twinkle Star Sprites" "uses" this opcode.
 	//iNimp(op, "subv <REG_M>,<REG_N>");
 	u32 n = GetN(op);
@@ -2056,7 +2056,7 @@ sh4op(i0010_nnnn_mmmm_1101)
 //tst.b #<imm>,@(R0,GBR)
 sh4op(i1100_1100_iiii_iiii)
 {
-	printf("WARN: tst.b #<imm>,@(R0,GBR) used, %04X\n",op);
+	//printf("WARN: tst.b #<imm>,@(R0,GBR) used, %04X\n",op);
 	//Retail game "Twinkle Star Sprites" "uses" this opcode.
 	u32 imm=GetImm8(op);
 
