@@ -1220,6 +1220,8 @@ public:
 
 		SFaceBaseColor=spr->BaseCol;
 		SFaceOffsColor=spr->OffsCol;
+        
+        d_pp->isp.CullMode ^= 1;
 	}
 
 	#define append_sprite(indx) \
@@ -1241,17 +1243,17 @@ public:
 	__forceinline
 		static void AppendSpriteVertexA(TA_Sprite1A* sv)
 	{
-		u16* idx=vdrc.idx.Append(6);
+        u16* idx=vdrc.idx.Append(6);
 		u32 vbase=vdrc.verts.used();
 
 		idx[0]=vbase+0;
 		idx[1]=vbase+1;
 		idx[2]=vbase+2;
 		idx[3]=vbase+3;
-		idx[4]=vbase+3;
-		idx[5]=vbase+4;
+        idx[4]=vbase+3;
+        idx[5]=vbase+4;
 
-		CurrentPP->count=vdrc.idx.used()-CurrentPP->first-2;
+        CurrentPP->count=vdrc.idx.used()-CurrentPP->first-2;
 
 		Vertex* cv = vdrc.verts.Append(4);
 
