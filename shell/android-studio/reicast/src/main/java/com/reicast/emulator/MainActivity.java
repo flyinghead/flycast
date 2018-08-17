@@ -231,13 +231,15 @@ public class MainActivity extends AppCompatActivity implements
 		String home_directory = mPrefs.getString(Config.pref_home,
 				Environment.getExternalStorageDirectory().getAbsolutePath());
 
-		if (!isBiosExisting(home_directory)) {
-			launchBIOSdetection();
-			return;
-		}
-		if (!isFlashExisting(home_directory)) {
-			launchBIOSdetection();
-			return;
+		if (!mPrefs.getBoolean(Emulator.pref_usereios, false)) {
+			if (!isBiosExisting(home_directory)) {
+				launchBIOSdetection();
+				return;
+			}
+			if (!isFlashExisting(home_directory)) {
+				launchBIOSdetection();
+				return;
+			}
 		}
 
 		JNIdc.config(home_directory);
