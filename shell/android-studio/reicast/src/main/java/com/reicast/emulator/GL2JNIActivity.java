@@ -274,6 +274,8 @@ public class GL2JNIActivity extends Activity {
                 GL2JNIView.lt[playerNum] = (int) (-(RS_Y) * 255);
             }
         }
+
+        mView.pushInput();
     }
 
     @Override
@@ -301,13 +303,11 @@ public class GL2JNIActivity extends Activity {
                 processJoystickInput(event, playerNum, -1);
             }
         }
-
-        mView.pushInput();
         // Only handle Left Stick on an Xbox 360 controller if there was actual
         // motion on the stick, otherwise event can be handled as a DPAD event
-        return (pad.joystick[playerNum] || (!(pad.globalLS_X[playerNum] == pad.previousLS_X[playerNum])
-                || !(pad.globalLS_Y[playerNum] == pad.previousLS_Y[playerNum])))
-                && (!(pad.previousLS_X[playerNum] == 0.0f) || !(pad.previousLS_Y[playerNum] == 0.0f));
+        return (pad.joystick[playerNum] || (pad.globalLS_X[playerNum] != pad.previousLS_X[playerNum]
+                || pad.globalLS_Y[playerNum] != pad.previousLS_Y[playerNum]))
+                && (pad.previousLS_X[playerNum] != 0.0f || pad.previousLS_Y[playerNum] != 0.0f);
     }
 
     public boolean simulatedTouchEvent(int playerNum, float L2, float R2) {

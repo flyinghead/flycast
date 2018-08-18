@@ -336,6 +336,8 @@ public class GL2JNINative extends NativeActivity {
 				GL2JNIView.lt[playerNum] = (int) (-(RS_Y) * 255);
 			}
 		}
+
+		mView.pushInput();
 	}
 
 	@Override
@@ -366,14 +368,9 @@ public class GL2JNINative extends NativeActivity {
 					processJoystickInput(event, playerNum, -1);
 				}
 			}
-			mView.pushInput();
-			if (!pad.joystick[playerNum] && (pad.globalLS_X[playerNum] == pad.previousLS_X[playerNum] && pad.globalLS_Y[playerNum] == pad.previousLS_Y[playerNum])
-					|| (pad.previousLS_X[playerNum] == 0.0f && pad.previousLS_Y[playerNum] == 0.0f))
-				// Only handle Left Stick on an Xbox 360 controller if there was actual
-				// motion on the stick, otherwise event can be handled as a DPAD event
-				return false;
-			else
-				return true;
+			return (pad.joystick[playerNum] || (pad.globalLS_X[playerNum] != pad.previousLS_X[playerNum]
+					|| pad.globalLS_Y[playerNum] != pad.previousLS_Y[playerNum]))
+					&& (pad.previousLS_X[playerNum] != 0.0f || pad.previousLS_Y[playerNum] != 0.0f);
 		}
 		return false;
 
