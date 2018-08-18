@@ -231,13 +231,15 @@ public class MainActivity extends AppCompatActivity implements
 		String home_directory = mPrefs.getString(Config.pref_home,
 				Environment.getExternalStorageDirectory().getAbsolutePath());
 
-		if (!isBiosExisting(home_directory)) {
-			launchBIOSdetection();
-			return;
-		}
-		if (!isFlashExisting(home_directory)) {
-			launchBIOSdetection();
-			return;
+		if (!mPrefs.getBoolean(Emulator.pref_usereios, false)) {
+			if (!isBiosExisting(home_directory)) {
+				launchBIOSdetection();
+				return;
+			}
+			if (!isFlashExisting(home_directory)) {
+				launchBIOSdetection();
+				return;
+			}
 		}
 
 		JNIdc.config(home_directory);
@@ -377,38 +379,16 @@ public class MainActivity extends AppCompatActivity implements
 	@Override
 	protected void onPause() {
 		super.onPause();
-		InputFragment fragment = (InputFragment) getSupportFragmentManager()
-				.findFragmentByTag("INPUT_FRAG");
-		if (fragment != null && fragment.isVisible()) {
-			if (fragment.moga != null) {
-				fragment.moga.onPause();
-			}
-		}
 	}
 
 	@Override
 	protected void onDestroy() {
-		InputFragment fragment = (InputFragment) getSupportFragmentManager()
-				.findFragmentByTag("INPUT_FRAG");
-		if (fragment != null && fragment.isVisible()) {
-			if (fragment.moga != null) {
-				fragment.moga.onDestroy();
-			}
-		}
 		super.onDestroy();
 	}
 
 	@Override
 	protected void onResume() {
 		super.onResume();
-		InputFragment fragment = (InputFragment) getSupportFragmentManager()
-				.findFragmentByTag("INPUT_FRAG");
-		if (fragment != null && fragment.isVisible()) {
-			if (fragment.moga != null) {
-				fragment.moga.onResume();
-			}
-		}
-
 		CloudFragment cloudfragment = (CloudFragment) getSupportFragmentManager()
 				.findFragmentByTag("CLOUD_FRAG");
 		if (cloudfragment != null && cloudfragment.isVisible()) {

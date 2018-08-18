@@ -690,7 +690,10 @@ u32 MatchDiv32(u32 pc , Sh4RegType &reg1,Sh4RegType &reg2 , Sh4RegType &reg3)
 			break;
 	}
 	
-	return match;
+	if (settings.dynarec.safemode)
+		return 0;
+	else
+		return match;
 }
 bool MatchDiv32u(u32 op,u32 pc)
 {

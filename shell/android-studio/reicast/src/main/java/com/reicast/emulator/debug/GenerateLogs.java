@@ -152,40 +152,7 @@ public class GenerateLogs extends AsyncTask<String, Integer, String> {
 			log.append(unHandledIOE);
 		}
 		try {
-			mLogcatProc = Runtime.getRuntime().exec(
-					new String[] { "logcat", "-ds", "AndroidRuntime:E" });
-			reader = new BufferedReader(new InputStreamReader(
-					mLogcatProc.getInputStream()));
 			String line;
-			log.append(separator);
-			log.append(separator);
-			log.append("AndroidRuntime Output");
-			log.append(separator);
-			log.append(separator);
-			while ((line = reader.readLine()) != null) {
-				log.append(line);
-				log.append(separator);
-			}
-			reader.close();
-			mLogcatProc = null;
-			reader = null;
-			int PID = android.os.Process.getUidForName("com.reicast.emulator");
-			mLogcatProc = Runtime.getRuntime().exec(
-					new String[] { "logcat", "-d", "|", "grep " + PID });
-			reader = new BufferedReader(new InputStreamReader(
-					mLogcatProc.getInputStream()));
-			log.append(separator);
-			log.append(separator);
-			log.append("Application Core Output");
-			log.append(separator);
-			log.append(separator);
-			while ((line = reader.readLine()) != null) {
-				log.append(line);
-				log.append(separator);
-			}
-			reader.close();
-			mLogcatProc = null;
-			reader = null;
 			mLogcatProc = Runtime.getRuntime().exec(
 					new String[] { "logcat", "-ds", "reicast:V" });
 			reader = new BufferedReader(new InputStreamReader(
@@ -193,22 +160,6 @@ public class GenerateLogs extends AsyncTask<String, Integer, String> {
 			log.append(separator);
 			log.append(separator);
 			log.append("Native Interface Output");
-			log.append(separator);
-			log.append(separator);
-			while ((line = reader.readLine()) != null) {
-				log.append(line);
-				log.append(separator);
-			}
-			reader.close();
-			mLogcatProc = null;
-			reader = null;
-			mLogcatProc = Runtime.getRuntime().exec(
-					new String[] { "logcat", "-ds", "GL2JNIView:E" });
-			reader = new BufferedReader(new InputStreamReader(
-					mLogcatProc.getInputStream()));
-			log.append(separator);
-			log.append(separator);
-			log.append("Open GLES View Output");
 			log.append(separator);
 			log.append(separator);
 			while ((line = reader.readLine()) != null) {

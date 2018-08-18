@@ -299,6 +299,23 @@ public class OptionsFragment extends Fragment {
 		}
 		unstable_opt.setOnCheckedChangeListener(unstable_option);
 
+		OnCheckedChangeListener safemode_option = new OnCheckedChangeListener() {
+
+			public void onCheckedChanged(CompoundButton buttonView,
+										 boolean isChecked) {
+				mPrefs.edit().putBoolean(Emulator.pref_dynsafemode, isChecked).apply();
+				Emulator.dynsafemode = isChecked;
+			}
+		};
+		CompoundButton safemode_opt = (CompoundButton) getView().findViewById(
+				R.id.dynarec_safemode);
+		if (Emulator.dynsafemode) {
+			safemode_opt.setChecked(true);
+		} else {
+			safemode_opt.setChecked(false);
+		}
+		safemode_opt.setOnCheckedChangeListener(safemode_option);
+
 		String[] cables = getResources().getStringArray(
 				R.array.cable);
 		Spinner cable_spnr = (Spinner) getView().findViewById(
@@ -711,6 +728,7 @@ public class OptionsFragment extends Fragment {
 		mPrefs.edit().remove(Emulator.pref_nativeact).apply();
 		mPrefs.edit().remove(Emulator.pref_dynarecopt).apply();
 		mPrefs.edit().remove(Emulator.pref_unstable).apply();
+		mPrefs.edit().remove(Emulator.pref_dynsafemode).apply();
 		mPrefs.edit().remove(Emulator.pref_cable).apply();
 		mPrefs.edit().remove(Emulator.pref_dcregion).apply();
 		mPrefs.edit().remove(Emulator.pref_broadcast).apply();

@@ -48,6 +48,8 @@ public class Gamepad {
 	public static final String controllers_xbox = "Microsoft X-Box 360 pad";
 	public static final String controllers_shield = "NVIDIA Corporation NVIDIA Controller";
 	public static final String controllers_gamekey = "gamekeyboard";
+	public static final String controllers_moga = "Moga";
+
 
 	public String[] portId = { "_A", "_B", "_C", "_D" };
 	public boolean[] compat = { false, false, false, false };
@@ -61,9 +63,6 @@ public class Gamepad {
 
 	public SparseArray<String> deviceId_deviceDescriptor = new SparseArray<>();
 	public HashMap<String, Integer> deviceDescriptor_PlayerNum = new HashMap<>();
-
-	public boolean isActiveMoga[] = { false, false, false, false };
-	public boolean isMogaPro[] = { false, false, false, false };
 
 	public SparseIntArray playerNumX = new SparseIntArray();
 
@@ -151,15 +150,19 @@ public class Gamepad {
 		};
 	}
 
-	public boolean IsOuyaOrTV(Context context) {
-		UiModeManager uiModeManager = (UiModeManager)
-				context.getSystemService(Context.UI_MODE_SERVICE);
-		if (uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION) {
-			return true;
+	public boolean IsOuyaOrTV(Context context, boolean ouya) {
+		if (ouya) {
+			return OuyaFacade.getInstance().isRunningOnOUYAHardware();
+		} else {
+			UiModeManager uiModeManager = (UiModeManager)
+					context.getSystemService(Context.UI_MODE_SERVICE);
+			if (uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION) {
+				return true;
+			}
+			PackageManager pMan = context.getPackageManager();
+			return pMan.hasSystemFeature(PackageManager.FEATURE_TELEVISION)
+					|| OuyaFacade.getInstance().isRunningOnOUYAHardware();
 		}
-		PackageManager pMan = context.getPackageManager();
-		return pMan.hasSystemFeature(PackageManager.FEATURE_TELEVISION)
-				|| OuyaFacade.getInstance().isRunningOnOUYAHardware();
 	}
 
 	public int getStartButtonCode() {

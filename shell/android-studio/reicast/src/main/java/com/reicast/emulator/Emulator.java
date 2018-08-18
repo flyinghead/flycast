@@ -14,6 +14,7 @@ public class Emulator extends Application {
     public static final String pref_nativeact = "enable_native";
     public static final String pref_dynarecopt = "dynarec_opt";
     public static final String pref_unstable = "unstable_opt";
+    public static final String pref_dynsafemode = "dyn_safemode";
     public static final String pref_cable = "dc_cable";
     public static final String pref_dcregion = "dc_region";
     public static final String pref_broadcast = "dc_broadcast";
@@ -31,6 +32,7 @@ public class Emulator extends Application {
     public static boolean dynarecopt = true;
     public static boolean idleskip = true;
     public static boolean unstableopt = false;
+    public static boolean dynsafemode = false;
     public static int cable = 3;
     public static int dcregion = 3;
     public static int broadcast = 4;
@@ -55,6 +57,7 @@ public class Emulator extends Application {
     public void getConfigurationPrefs(SharedPreferences mPrefs) {
         Emulator.dynarecopt = mPrefs.getBoolean(pref_dynarecopt, dynarecopt);
         Emulator.unstableopt = mPrefs.getBoolean(pref_unstable, unstableopt);
+        Emulator.dynsafemode = mPrefs.getBoolean(pref_dynsafemode, dynsafemode);
         Emulator.cable = mPrefs.getInt(pref_cable, cable);
         Emulator.dcregion = mPrefs.getInt(pref_dcregion, dcregion);
         Emulator.broadcast = mPrefs.getInt(pref_broadcast, broadcast);
@@ -79,6 +82,7 @@ public class Emulator extends Application {
         JNIdc.dynarec(Emulator.dynarecopt ? 1 : 0);
         JNIdc.idleskip(Emulator.idleskip ? 1 : 0);
         JNIdc.unstable(Emulator.unstableopt ? 1 : 0);
+        JNIdc.safemode(Emulator.dynsafemode ? 1 : 0);
         JNIdc.cable(Emulator.cable);
         JNIdc.region(Emulator.dcregion);
         JNIdc.broadcast(Emulator.broadcast);

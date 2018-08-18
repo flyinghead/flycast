@@ -1,6 +1,5 @@
 package com.reicast.emulator.config;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
@@ -8,10 +7,8 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.Handler;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
@@ -27,18 +24,12 @@ import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
-import android.widget.TableLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.bda.controller.Controller;
-import com.bda.controller.ControllerListener;
-import com.bda.controller.MotionEvent;
-import com.bda.controller.StateEvent;
 import com.reicast.emulator.MainActivity;
 import com.reicast.emulator.R;
 import com.reicast.emulator.periph.Gamepad;
-import com.reicast.emulator.periph.MOGAInput;
 
 public class InputFragment extends Fragment {
 
@@ -49,7 +40,6 @@ public class InputFragment extends Fragment {
 	private CompoundButton micPluggedIntoFirstController;
 
 	private Gamepad pad = new Gamepad();
-	public MOGAInput moga = new MOGAInput();
 	Vibrator vib;
 
 	// Container Activity must implement this interface
@@ -66,9 +56,6 @@ public class InputFragment extends Fragment {
 
 	@Override
 	public void onViewCreated(View view, Bundle savedInstanceState) {
-		moga.onCreate(getActivity(), pad);
-		moga.mListener.setPlayerNum(1);
-
 		sharedPreferences = PreferenceManager
 				.getDefaultSharedPreferences(getActivity());
 
@@ -422,13 +409,7 @@ public class InputFragment extends Fragment {
 		if (keyCode == KeyEvent.KEYCODE_BACK)
 			return false;
 
-		String descriptor = null;
-		if (pad.isActiveMoga[listenForButton]) {
-			MogaListener config = new MogaListener(listenForButton);
-			moga.mController.setListener(config, new Handler());
-			descriptor = config.getController();
-		}
-		descriptor = InputDevice.getDevice(event.getDeviceId()).getDescriptor();
+		String descriptor = InputDevice.getDevice(event.getDeviceId()).getDescriptor();
 
 		if (descriptor == null)
 			return false;
@@ -494,41 +475,5 @@ public class InputFragment extends Fragment {
 		}
 
 		updateControllers();
-	}
-
-	private final class MogaListener implements ControllerListener {
-
-		private int playerNum;
-		private String controllerId;
-
-		public MogaListener(int playerNum) {
-			this.playerNum = playerNum;
-		}
-
-		public void onKeyEvent(com.bda.controller.KeyEvent event) {
-			controllerId = String.valueOf(event.getControllerId());
-		}
-
-		public void onMotionEvent(MotionEvent arg0) {
-
-		}
-
-		public String getController() {
-			return controllerId;
-		}
-
-		public void onStateEvent(StateEvent event) {
-			if (event.getState() == StateEvent.STATE_CONNECTION &&
-					event.getAction() == MOGAInput.ACTION_CONNECTED) {
-
-				int mControllerVersion = moga.mController
-						.getState(Controller.STATE_CURRENT_PRODUCT_VERSION);
-
-				if (mControllerVersion == Controller.ACTION_VERSION_MOGA ||
-						mControllerVersion == Controller.ACTION_VERSION_MOGAPRO) {
-					pad.isActiveMoga[playerNum] = true;
-				}
-			}
-		}
 	}
 }
