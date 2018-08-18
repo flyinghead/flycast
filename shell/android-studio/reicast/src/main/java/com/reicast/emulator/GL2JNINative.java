@@ -285,21 +285,26 @@ public class GL2JNINative extends NativeActivity {
 				LayoutParams.WRAP_CONTENT);
 	}
 
-	private void processJoystickInput(MotionEvent event, Integer playerNum, int index) {
-		float LS_X = event.getHistoricalAxisValue(MotionEvent.AXIS_X, index);
-		float LS_Y = event.getHistoricalAxisValue(MotionEvent.AXIS_Y, index);
-		float RS_X = event.getHistoricalAxisValue(MotionEvent.AXIS_RX, index);
-		float RS_Y = event.getHistoricalAxisValue(MotionEvent.AXIS_RY, index);
-		float L2 = event.getHistoricalAxisValue(MotionEvent.AXIS_LTRIGGER, index);
-		float R2 = event.getHistoricalAxisValue(MotionEvent.AXIS_RTRIGGER, index);
+	float getAxisValues(MotionEvent event, int axis, int historyPos) {
+		return historyPos < 0 ? event.getAxisValue(axis) :
+				event.getHistoricalAxisValue(axis, historyPos);
+	}
+
+	private void processJoystickInput(MotionEvent event, Integer playerNum, int historyPos) {
+		float LS_X = getAxisValues(event, MotionEvent.AXIS_X, historyPos);
+		float LS_Y = getAxisValues(event, MotionEvent.AXIS_Y, historyPos);
+		float RS_X = getAxisValues(event, MotionEvent.AXIS_RX, historyPos);
+		float RS_Y = getAxisValues(event, MotionEvent.AXIS_RY, historyPos);
+		float L2 = getAxisValues(event, MotionEvent.AXIS_LTRIGGER, historyPos);
+		float R2 = getAxisValues(event, MotionEvent.AXIS_RTRIGGER, historyPos);
 
 		if (pad.IsOuyaOrTV(GL2JNINative.this, true)) {
-			LS_X = event.getHistoricalAxisValue(OuyaController.AXIS_LS_X, index);
-			LS_Y = event.getHistoricalAxisValue(OuyaController.AXIS_LS_Y, index);
-			RS_X = event.getHistoricalAxisValue(OuyaController.AXIS_RS_X, index);
-			RS_Y = event.getHistoricalAxisValue(OuyaController.AXIS_RS_Y, index);
-			L2 = event.getHistoricalAxisValue(OuyaController.AXIS_L2, index);
-			R2 = event.getHistoricalAxisValue(OuyaController.AXIS_R2, index);
+			LS_X = getAxisValues(event, OuyaController.AXIS_LS_X, historyPos);
+			LS_Y = getAxisValues(event, OuyaController.AXIS_LS_Y, historyPos);
+			RS_X = getAxisValues(event, OuyaController.AXIS_RS_X, historyPos);
+			RS_Y = getAxisValues(event, OuyaController.AXIS_RS_Y, historyPos);
+			L2 = getAxisValues(event, OuyaController.AXIS_L2, historyPos);
+			R2 = getAxisValues(event, OuyaController.AXIS_R2, historyPos);
 		}
 
 		if (!pad.joystick[playerNum]) {
