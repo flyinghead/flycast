@@ -270,7 +270,7 @@ public class GL2JNIActivity extends Activity {
                 handle_key(playerNum, pad.map[playerNum][1], false);
                 pad.wasKeyStick[playerNum] = false;
             }
-        } else {
+        } else if (L2 == 0 && R2 ==0) {
             if (RS_Y > 0.25) {
                 GL2JNIView.rt[playerNum] = (int) (RS_Y * 255);
                 GL2JNIView.lt[playerNum] = (int) (L2 * 255);
