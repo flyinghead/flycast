@@ -457,7 +457,7 @@ int screen_height;
 		screen_width=w;
 		screen_height=h;
 
-		printf("EGL config: %08X, %08X, %08X %dx%d\n",gl.setup.context,gl.setup.display,gl.setup.surface,w,h);
+		printf("EGL config: %p, %08X, %08X %dx%d\n",gl.setup.context,gl.setup.display,gl.setup.surface,w,h);
 		return true;
 	}
 

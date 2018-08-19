@@ -416,7 +416,7 @@ public class FileBrowser extends Fragment {
 		private String heading;
 		private File parent;
 
-		public navigate(FileBrowser context) {
+		navigate(FileBrowser context) {
 			browser = new WeakReference<>(context);
 		}
 

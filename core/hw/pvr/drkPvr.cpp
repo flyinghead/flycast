@@ -16,7 +16,6 @@
 #include "pvr_regs.h"
 #include "pvr_mem.h"
 #include "Renderer_if.h"
-#include <algorithm>
 
 
 void libPvr_LockedBlockWrite (vram_block* block,u32 addr)

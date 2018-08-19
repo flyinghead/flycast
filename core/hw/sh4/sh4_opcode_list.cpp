@@ -2,7 +2,6 @@
 #include "interpr/sh4_opcodes.h"
 #include "sh4_opcode_list.h"
 #include "dyna/decoder_opcodes.h"
-#include "types.h"
 #include "hw/sh4/dyna/shil.h"
 #include "reios/reios.h"
 

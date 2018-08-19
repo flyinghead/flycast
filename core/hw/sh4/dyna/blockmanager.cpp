@@ -122,7 +122,7 @@ RuntimeBlockInfo* bm_GetBlock(void* dynarec_code)
 	}
 	else
 	{
-		printf("bm_GetBlock(%08X) failed ..\n",dynarec_code);
+		printf("bm_GetBlock(%8s) failed ..\n",dynarec_code);
 		return 0;
 	}
 }
@@ -510,7 +510,7 @@ void bm_PrintTopBlocks()
 		sel_hops+=all_blocks[i]->host_opcodes*all_blocks[i]->runs;
 	}
 
-	printf(" >-< %.2f%% covered in top 1% blocks\n",sel_hops/total_hops);
+	printf(" >-< %.2f%% covered in top 1%% blocks\n",sel_hops/total_hops);
 
 	size_t i;
 	for (i=all_blocks.size()/100;sel_hops/total_hops<50;i++)

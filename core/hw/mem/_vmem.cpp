@@ -761,7 +761,7 @@ bool _vmem_reserve()
 	//[0x10000000,0x20000000) -> unused
 	unused_buffer(0x10000000,0x20000000);
 
-	printf("vmem reserve: base: %08X, aram: %08x, vram: %08X, ram: %08X\n",virt_ram_base,aica_ram.data,vram.data,mem_b.data);
+	printf("vmem reserve: base: %8s, aram: %8s, vram: %8s, ram: %8s\n",virt_ram_base,aica_ram.data,vram.data,mem_b.data);
 
 	printf("Resetting mem\n");
 

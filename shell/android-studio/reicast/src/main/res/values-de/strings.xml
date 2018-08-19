@@ -46,7 +46,6 @@
     <string name="select_software">Softwarerendering erzwingen</string>
     <string name="select_sound">Emulator-Sound deaktivieren</string>
     <string name="select_depth">Rendering-Tiefe</string>
-    <string name="default_disk">Wähle Standard-Datenträger</string>
 
     <string name="games_listing">Verfügbare Dreamcast-Spiele</string>
 

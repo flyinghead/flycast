@@ -1,10 +1,8 @@
 <resources>
 
-    <string name="app_name">reicast</string>
+    <string name="app_name" translatable="false">reicast</string>
 
-    <string name="app_site">http://reicast.com</string>
-
-    <string name="error_kernel"></string>
+    <string name="app_site" translatable="false">http://reicast.com</string>
 
     <string-array name="depth">
         <item>16</item>

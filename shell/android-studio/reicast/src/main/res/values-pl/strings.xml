@@ -23,7 +23,6 @@
     <string name="select_stretch">Tryb Szerokoekranowy</string>
     <string name="set_frameskip">Wartość Frameskip</string>
     <string name="select_render">PVR Rendering (na razie nie działa)</string>
-    <string name="default_disk">Ustaw domyślny dysk</string>
 
     <string name="games_listing">Dostępne gry Dreamcast\'a</string>
 

@@ -110,7 +110,7 @@ void GD_HLE_Command(u32 cc, u32 prm)
 	switch(cc)
 	{
 	case GDCC_GETTOC:
-		printf("GDROM:\t*FIXME* CMD GETTOC PRM:%X\n",cc,prm);
+		printf("GDROM:\t*FIXME* CMD GETTOC CC:%X PRM:%X\n",cc,prm);
 		break;
 
 	case GDCC_GETTOC2:
@@ -118,12 +118,12 @@ void GD_HLE_Command(u32 cc, u32 prm)
 		break;
 
 	case GDCC_GETSES:
-		debugf("GDROM:\tGETSES PRM:%X\n", cc, prm);
+		debugf("GDROM:\tGETSES CC:%X PRM:%X\n", cc, prm);
 		GDROM_HLE_ReadSES(r[5]);
 		break;
 
 	case GDCC_INIT:
-		printf("GDROM:\tCMD INIT PRM:%X\n",cc,prm);
+		printf("GDROM:\tCMD INIT CC:%X PRM:%X\n",cc,prm);
 		break;
 
 	case GDCC_PIOREAD:
@@ -131,30 +131,30 @@ void GD_HLE_Command(u32 cc, u32 prm)
 		break;
 
 	case GDCC_DMAREAD:
-		debugf("GDROM:\tCMD DMAREAD PRM:%X\n", cc, prm);
+		debugf("GDROM:\tCMD DMAREAD CC:%X PRM:%X\n", cc, prm);
 		GDROM_HLE_ReadDMA(r[5]);
 		break;
 
 
 	case GDCC_PLAY_SECTOR:
-		printf("GDROM:\tCMD PLAYSEC? PRM:%X\n",cc,prm);
+		printf("GDROM:\tCMD PLAYSEC? CC:%X PRM:%X\n",cc,prm);
 		break;
 
 	case GDCC_RELEASE:
-		printf("GDROM:\tCMD RELEASE? PRM:%X\n",cc,prm);
+		printf("GDROM:\tCMD RELEASE? CC:%X PRM:%X\n",cc,prm);
 		break;
 
-	case GDCC_STOP:	printf("GDROM:\tCMD STOP PRM:%X\n",cc,prm);		break;
-	case GDCC_SEEK:	printf("GDROM:\tCMD SEEK PRM:%X\n",cc,prm);	break;
-	case GDCC_PLAY:	printf("GDROM:\tCMD PLAY PRM:%X\n",cc,prm);	break;
-	case GDCC_PAUSE:printf("GDROM:\tCMD PAUSE PRM:%X\n",cc,prm);	break;
+	case GDCC_STOP:	printf("GDROM:\tCMD STOP CC:%X PRM:%X\n",cc,prm);	break;
+	case GDCC_SEEK:	printf("GDROM:\tCMD SEEK CC:%X PRM:%X\n",cc,prm);	break;
+	case GDCC_PLAY:	printf("GDROM:\tCMD PLAY CC:%X PRM:%X\n",cc,prm);	break;
+	case GDCC_PAUSE:printf("GDROM:\tCMD PAUSE CC:%X PRM:%X\n",cc,prm);	break;
 
 	case GDCC_READ:
-		printf("GDROM:\tCMD READ PRM:%X\n",cc,prm);
+		printf("GDROM:\tCMD READ CC:%X PRM:%X\n",cc,prm);
 		break;
 
 	case GDCC_GETSCD:
-		debugf("GDROM:\tGETSCD PRM:%X\n",cc,prm);
+		debugf("GDROM:\tGETSCD CC:%X PRM:%X\n",cc,prm);
 		GDCC_HLE_GETSCD(r[5]);
 		break;
 

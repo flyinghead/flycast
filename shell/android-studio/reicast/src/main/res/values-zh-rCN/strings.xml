@@ -23,7 +23,6 @@
     <string name="select_render">PVR 渲染 (目前没有任何作用)</string>
     <string name="select_software">强制使用软件渲染</string>
 
-    <string name="default_disk">设置默认光盘</string>
     <string name="games_listing">可用的Dreamcast游戏</string>
     <string name="customize_touch_controls">自定义触屏控制</string>
     <string name="launch_editor">打开编辑器</string>
