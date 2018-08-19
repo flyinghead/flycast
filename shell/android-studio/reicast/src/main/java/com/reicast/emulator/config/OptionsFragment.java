@@ -50,6 +50,7 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.ref.WeakReference;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -132,7 +133,7 @@ public class OptionsFragment extends Fragment {
 
 		Button mainBrowse = (Button) getView().findViewById(R.id.browse_main_path);
 		mSpnrThemes = (Spinner) getView().findViewById(R.id.pick_button_theme);
-		new LocateThemes().execute(home_directory + "/themes");
+		new LocateThemes(this).execute(home_directory + "/themes");
 
 		final EditText editBrowse = (EditText) getView().findViewById(R.id.main_path);
 		editBrowse.setText(home_directory);
@@ -156,7 +157,7 @@ public class OptionsFragment extends Fragment {
 					}
 					mPrefs.edit().putString(Config.pref_home, home_directory).apply();
 					JNIdc.config(home_directory);
-					new LocateThemes().execute(home_directory + "/themes");
+					new LocateThemes(OptionsFragment.this).execute(home_directory + "/themes");
 				}
 			}
 
@@ -606,11 +607,17 @@ public class OptionsFragment extends Fragment {
 		});
 	}
 
-	private final class LocateThemes extends AsyncTask<String, Integer, List<File>> {
+	private static class LocateThemes extends AsyncTask<String, Integer, List<File>> {
+		private WeakReference<OptionsFragment> options;
+
+		LocateThemes(OptionsFragment context) {
+			options = new WeakReference<>(context);
+		}
+
 		@Override
 		protected List<File> doInBackground(String... paths) {
 			File storage = new File(paths[0]);
-			String[] mediaTypes = getResources().getStringArray(R.array.themes);
+			String[] mediaTypes = options.get().getResources().getStringArray(R.array.themes);
 			FilenameFilter[] filter = new FilenameFilter[mediaTypes.length];
 			int i = 0;
 			for (final String type : mediaTypes) {
@@ -641,18 +648,18 @@ public class OptionsFragment extends Fragment {
 				}
 				themes[items.size()] = "None";
 				ArrayAdapter<String> themeAdapter = new ArrayAdapter<String>(
-						getActivity(), android.R.layout.simple_spinner_item, themes);
+						options.get().getActivity(), android.R.layout.simple_spinner_item, themes);
 				themeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-				mSpnrThemes.setAdapter(themeAdapter);
-				mSpnrThemes.setOnItemSelectedListener(new OnItemSelectedListener() {
+				options.get().mSpnrThemes.setAdapter(themeAdapter);
+				options.get().mSpnrThemes.setOnItemSelectedListener(new OnItemSelectedListener() {
 					@Override
 					public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
 						String theme = String.valueOf(parentView.getItemAtPosition(position));
 						if (theme.equals("None")) {
-							mPrefs.edit().remove(Config.pref_theme).apply();
+							options.get().mPrefs.edit().remove(Config.pref_theme).apply();
 						} else {
-							String theme_path = home_directory + "/themes/" + theme;
-							mPrefs.edit().putString(Config.pref_theme, theme_path).apply();
+							String theme_path = options.get().home_directory + "/themes/" + theme;
+							options.get().mPrefs.edit().putString(Config.pref_theme, theme_path).apply();
 						}
 					}
 					@Override
@@ -661,7 +668,7 @@ public class OptionsFragment extends Fragment {
 					}
 				});
 			} else {
-				mSpnrThemes.setEnabled(false);
+				options.get().mSpnrThemes.setEnabled(false);
 			}
 		}
 	}

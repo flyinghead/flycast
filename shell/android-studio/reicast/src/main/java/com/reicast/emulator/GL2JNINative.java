@@ -184,7 +184,7 @@ public class GL2JNINative extends NativeActivity {
 			fileName = Uri.decode(getIntent().getData().toString());
 
 		// Create the actual GLES view
-		mView = new GL2JNIView(getApplication(), fileName, false,
+		mView = new GL2JNIView(GL2JNINative.this, fileName, false,
 				prefs.getInt(Config.pref_renderdepth, 24), 0, false);
 		setContentView(mView);
 
@@ -221,33 +221,6 @@ public class GL2JNINative extends NativeActivity {
 		}
 	}
 
-	public boolean simulatedTouchEvent(int playerNum, float L2, float R2) {
-		GL2JNIView.lt[playerNum] = (int) (L2 * 255);
-		GL2JNIView.rt[playerNum] = (int) (R2 * 255);
-		mView.pushInput();
-		return true;
-	}
-
-	public void displayPopUp(PopupWindow popUp) {
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-			popUp.showAtLocation(mView, Gravity.BOTTOM, 0, 60);
-		} else {
-			popUp.showAtLocation(mView, Gravity.BOTTOM, 0, 0);
-		}
-		popUp.update(LayoutParams.WRAP_CONTENT,
-				LayoutParams.WRAP_CONTENT);
-	}
-
-	public void displayDebug(PopupWindow popUpDebug) {
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-			popUpDebug.showAtLocation(mView, Gravity.BOTTOM, 0, 60);
-		} else {
-			popUpDebug.showAtLocation(mView, Gravity.BOTTOM, 0, 0);
-		}
-		popUpDebug.update(LayoutParams.WRAP_CONTENT,
-				LayoutParams.WRAP_CONTENT);
-	}
-
 	public void displayFPS() {
 		fpsPop.showAtLocation(mView, Gravity.TOP | Gravity.LEFT, 20, 20);
 		fpsPop.update(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
@@ -275,6 +248,20 @@ public class GL2JNINative extends NativeActivity {
 		prefs.edit().putBoolean(Config.pref_vmu, showFloating).apply();
 	}
 
+	public void screenGrab() {
+		mView.screenGrab();
+	}
+
+	public void displayPopUp(PopupWindow popUp) {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+			popUp.showAtLocation(mView, Gravity.BOTTOM, 0, 60);
+		} else {
+			popUp.showAtLocation(mView, Gravity.BOTTOM, 0, 0);
+		}
+		popUp.update(LayoutParams.WRAP_CONTENT,
+				LayoutParams.WRAP_CONTENT);
+	}
+
 	public void displayConfig(PopupWindow popUpConfig) {
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
 			popUpConfig.showAtLocation(mView, Gravity.BOTTOM, 0, 60);
@@ -283,6 +270,31 @@ public class GL2JNINative extends NativeActivity {
 		}
 		popUpConfig.update(LayoutParams.WRAP_CONTENT,
 				LayoutParams.WRAP_CONTENT);
+	}
+
+	public void displayDebug(PopupWindow popUpDebug) {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+			popUpDebug.showAtLocation(mView, Gravity.BOTTOM, 0, 60);
+		} else {
+			popUpDebug.showAtLocation(mView, Gravity.BOTTOM, 0, 0);
+		}
+		popUpDebug.update(LayoutParams.WRAP_CONTENT,
+				LayoutParams.WRAP_CONTENT);
+	}
+
+	private boolean showMenu() {
+		if (popUp != null) {
+			if (!menu.dismissPopUps()) {
+				if (!popUp.isShowing()) {
+					displayPopUp(popUp);
+				} else {
+					popUp.dismiss();
+				}
+			} else {
+				popUp.dismiss();
+			}
+		}
+		return true;
 	}
 
 	float getAxisValues(MotionEvent event, int axis, int historyPos) {
@@ -332,7 +344,7 @@ public class GL2JNINative extends NativeActivity {
 				handle_key(playerNum, pad.map[playerNum][1], false);
 				pad.wasKeyStick[playerNum] = false;
 			}
-		} else {
+		} else if (L2 == 0 && R2 ==0) {
 			if (RS_Y > 0.25) {
 				GL2JNIView.rt[playerNum] = (int) (RS_Y * 255);
 				GL2JNIView.lt[playerNum] = (int) (L2 * 255);
@@ -378,7 +390,13 @@ public class GL2JNINative extends NativeActivity {
 					&& (pad.previousLS_X[playerNum] != 0.0f || pad.previousLS_Y[playerNum] != 0.0f);
 		}
 		return false;
+	}
 
+	public boolean simulatedTouchEvent(int playerNum, float L2, float R2) {
+		GL2JNIView.lt[playerNum] = (int) (L2 * 255);
+		GL2JNIView.rt[playerNum] = (int) (R2 * 255);
+		mView.pushInput();
+		return true;
 	}
 
 	public boolean handle_key(Integer playerNum, int kc, boolean down) {
@@ -494,25 +512,6 @@ public class GL2JNINative extends NativeActivity {
 
 	public GL2JNIView getGameView() {
 		return mView;
-	}
-
-	public void screenGrab() {
-		mView.screenGrab();
-	}
-
-	private boolean showMenu() {
-		if (popUp != null) {
-			if (!menu.dismissPopUps()) {
-				if (!popUp.isShowing()) {
-					displayPopUp(popUp);
-				} else {
-					popUp.dismiss();
-				}
-			} else {
-				popUp.dismiss();
-			}
-		}
-		return true;
 	}
 
 	@Override

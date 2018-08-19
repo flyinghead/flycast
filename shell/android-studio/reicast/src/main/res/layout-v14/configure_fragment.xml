@@ -523,7 +523,7 @@
                     <Spinner
                         android:id="@+id/depth_spinner"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                        android:layout_height="0dp"
                         android:layout_weight="1"
                         android:ems="10" />
                 </LinearLayout>
@@ -599,7 +599,7 @@
                     <Spinner
                         android:id="@+id/cable_spinner"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                        android:layout_height="0dp"
                         android:layout_weight="1"
                         android:ems="10" />
                 </LinearLayout>
@@ -628,7 +628,7 @@
                     <Spinner
                         android:id="@+id/region_spinner"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                        android:layout_height="0dp"
                         android:layout_weight="1"
                         android:ems="10" />
                 </LinearLayout>
@@ -657,7 +657,7 @@
                     <Spinner
                         android:id="@+id/broadcast_spinner"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                        android:layout_height="0dp"
                         android:layout_weight="1"
                         android:ems="10" />
                 </LinearLayout>

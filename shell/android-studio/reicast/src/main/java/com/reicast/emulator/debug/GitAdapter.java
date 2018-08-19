@@ -34,13 +34,11 @@ import java.util.HashMap;
 
 public class GitAdapter extends BaseAdapter {
 
-	private static Activity activity;
 	private ArrayList<HashMap<String, String>> data;
 	private LayoutInflater inflater = null;
 	private DisplayImageOptions options;
 
-	public GitAdapter(Activity a, ArrayList<HashMap<String, String>> d) {
-		activity = a;
+	public GitAdapter(Activity activity, ArrayList<HashMap<String, String>> d) {
 		this.data = d;
 		this.inflater = (LayoutInflater) activity
 				.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
@@ -141,16 +139,10 @@ public class GitAdapter extends BaseAdapter {
 									 WebView mWebView) {
 		mWebView.getSettings().setSupportZoom(true);
 		mWebView.getSettings().setBuiltInZoomControls(true);
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-			mWebView.getSettings().setDisplayZoomControls(false);
-		}
+		mWebView.getSettings().setDisplayZoomControls(false);
 		mWebView.setInitialScale(1);
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ECLAIR) {
-			mWebView.getSettings().setUseWideViewPort(true);
-		}
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ECLAIR_MR1) {
-			mWebView.getSettings().setLoadWithOverviewMode(true);
-		}
+		mWebView.getSettings().setUseWideViewPort(true);
+		mWebView.getSettings().setLoadWithOverviewMode(true);
 		mWebView.getSettings().setJavaScriptEnabled(true);
 		mWebView.getSettings().setPluginState(PluginState.ON);
 		mWebView.getSettings().setCacheMode(WebSettings.LOAD_NO_CACHE);

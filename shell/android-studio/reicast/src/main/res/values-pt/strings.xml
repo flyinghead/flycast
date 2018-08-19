@@ -46,7 +46,6 @@
     <string name="select_software">Forçar Renderização por Software</string>
     <string name="select_sound">Desabilitar Som do Emulador</string>
     <string name="select_depth">Profundidade da Renderização</string>
-    <string name="default_disk">Disco padrão</string>
 
     <string name="games_listing">Lista de jogos</string>
 

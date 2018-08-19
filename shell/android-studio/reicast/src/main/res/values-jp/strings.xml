@@ -35,8 +35,7 @@
     <string name="select_software">ソフトウェアレンダリング</string>
     <string name="select_sound">サウンドを無効に</string>
     <string name="select_depth">レンダラの深度</string>
-    <string name="default_disk">デフォルトディスク</string>
-    
+
     <string name="games_listing">ゲームリスト</string>
     
     <string name="report_issue">前回のクラッシュ検出された</string>

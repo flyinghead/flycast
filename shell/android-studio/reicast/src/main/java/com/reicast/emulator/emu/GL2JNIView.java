@@ -17,13 +17,11 @@ import android.os.Handler;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
 import android.util.AttributeSet;
-import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.ScaleGestureDetector.SimpleOnScaleGestureListener;
 import android.view.View;
-import android.view.WindowManager;
 import android.widget.Toast;
 
 import com.android.util.FileUtils;
@@ -135,14 +133,6 @@ public class GL2JNIView extends GLSurfaceView
         setPreserveEGLContextOnPause(true);
 
         vib=(Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
-
-        DisplayMetrics metrics = new DisplayMetrics();
-        //((Activity) context).getWindowManager().getDefaultDisplay().getMetrics(metrics);
-        ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE))
-                .getDefaultDisplay().getMetrics(metrics);
-        final float scale = context.getResources().getDisplayMetrics().density;
-        sWidth = (int) (metrics.widthPixels * scale + 0.5f);
-        sHeight = (int) (metrics.heightPixels * scale + 0.5f);
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
 
@@ -528,7 +518,7 @@ public class GL2JNIView extends GLSurfaceView
         private FPSCounter fps = new FPSCounter();
         private FpsPopup fpsPop;
 
-        public Renderer (GL2JNIView mView) {
+        Renderer (GL2JNIView mView) {
             this.mView = mView;
         }
 
@@ -547,7 +537,11 @@ public class GL2JNIView extends GLSurfaceView
         public void onSurfaceChanged(GL10 gl,int width,int height)
         {
             gl.glViewport(0, 0, width, height);
-            JNIdc.rendinit(width,height);
+            if (Emulator.widescreen) {
+                JNIdc.rendinit(width, height);
+            } else {
+                JNIdc.rendinit(height * (4 / 3), height);
+            }
         }
 
         public void onSurfaceCreated(GL10 gl,EGLConfig config)
@@ -555,11 +549,11 @@ public class GL2JNIView extends GLSurfaceView
             onSurfaceChanged(gl, 800, 480);
         }
 
-        public class FPSCounter {
+        class FPSCounter {
             long startTime = System.nanoTime();
             int frames = 0;
 
-            public void logFrame() {
+            void logFrame() {
                 frames++;
                 if (System.nanoTime() - startTime >= 1000000000) {
                     mView.post(new Runnable() {
@@ -599,7 +593,7 @@ public class GL2JNIView extends GLSurfaceView
         long size;	//size in frames
         private boolean sound;
 
-        public EmuThread(boolean sound) {
+        EmuThread(boolean sound) {
             this.sound = sound;
         }
 

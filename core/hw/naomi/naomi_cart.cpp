@@ -50,7 +50,7 @@ bool naomi_cart_LoadRom(char* file)
 
 	char* eon = strstr(line, "\n");
 	if (!eon)
-		printf("+Loading naomi rom that has no name\n", line);
+		printf("+Loading naomi rom that has no name\n");
 	else
 		*eon = 0;
 

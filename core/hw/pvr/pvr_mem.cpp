@@ -13,7 +13,6 @@
 
 //TODO : move code later to a plugin
 //TODO : Fix registers arrays , they must be smaller now doe to the way SB registers are handled
-#include "types.h"
 #include "hw/holly/holly_intc.h"
 
 
@@ -237,7 +236,6 @@ void TAWrite(u32 address,u32* data,u32 count)
 }
 
 #include "hw/sh4/sh4_mmr.h"
-#include "hw/pvr/ta.h"
 
 void NOINLINE MemWrite32(void* dst, void* src)
 {

@@ -44,8 +44,7 @@
     <string name="select_software">Forza il Rendering Software</string>
     <string name="select_sound">Disabilita l\'Emulazione del Sonoro</string>
     <string name="select_depth">Profondità di Rendering</string>
-    <string name="default_disk">Disco Predefinito</string>
-    
+
     <string name="games_listing">Lista Giochi</string>
     
     <string name="game_details">Dettagli Gioco - %1$s</string>

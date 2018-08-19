@@ -49,7 +49,6 @@
     <string name="select_software">Программный рендеринг</string>
     <string name="select_sound">Без эмуляции звука</string>
     <string name="select_depth">Глубина рендеринга</string>
-    <string name="default_disk">Диск по умолчанию</string>
     
     <string name="games_listing">Список игр</string>
     

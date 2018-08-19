@@ -51,4 +51,5 @@ reicast-ios.xccheckout
 .idea
 *.iml
 .externalNativeBuild
+gradle.properties
 shell/android-studio/reicast/src/main/assets/build

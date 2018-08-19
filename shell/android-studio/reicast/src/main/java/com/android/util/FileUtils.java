@@ -24,6 +24,7 @@ import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Vector;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -63,15 +64,14 @@ public class FileUtils {
 	public Collection<File> listFiles(File directory, FilenameFilter[] filter,
 			int recurse) {
 
-		Vector<File> files = new Vector<File>();
+		Vector<File> files = new Vector<>();
 
 		File[] entries = directory.listFiles();
 
 		if (entries != null) {
 			for (File entry : entries) {
 				for (FilenameFilter filefilter : filter) {
-					if (filter == null
-							|| filefilter.accept(directory, entry.getName())) {
+					if (filefilter.accept(directory, entry.getName())) {
 						files.add(entry);
 					}
 				}
@@ -90,7 +90,7 @@ public class FileUtils {
 			SharedPreferences mPrefs = PreferenceManager.getDefaultSharedPreferences(c);
 			File dir = new File(mPrefs.getString(Config.pref_home,
 					Environment.getExternalStorageDirectory().getAbsolutePath()));
-			SimpleDateFormat s = new SimpleDateFormat("yyyyMMddHHmmss");
+			SimpleDateFormat s = new SimpleDateFormat("yyyyMMddHHmmss", Locale.getDefault());
 			String timestamp = s.format(new Date());
 			File f = new File(dir.getAbsolutePath(), timestamp+".jpeg");
 			FileOutputStream out = new FileOutputStream(f);
@@ -129,8 +129,6 @@ public class FileUtils {
 				bt[(h-k-1)*w+j]=pix1;
 			}
 		}
-
-		Bitmap sb=Bitmap.createBitmap(bt, w, h, Bitmap.Config.ARGB_8888);
-		return sb;
+		return Bitmap.createBitmap(bt, w, h, Bitmap.Config.ARGB_8888);
 	}
 }

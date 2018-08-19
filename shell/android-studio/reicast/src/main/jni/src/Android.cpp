@@ -8,17 +8,13 @@
 
 #include <EGL/egl.h>
 #include <GLES2/gl2.h>
-#include <GLES2/gl2ext.h>
 
 #include "types.h"
 #include "profiler/profiler.h"
-#include "cfg/cfg.h"
 #include "rend/TexCache.h"
 #include "hw/maple/maple_devs.h"
 #include "hw/maple/maple_if.h"
 #include "oslib/audiobackend_android.h"
-
-#include "utils.h"
 
 extern "C"
 {

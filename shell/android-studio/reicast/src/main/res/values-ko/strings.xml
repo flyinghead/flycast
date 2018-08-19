@@ -24,7 +24,6 @@
     <string name="select_stretch">와이드 스크린 모드</string>
     <string name="set_frameskip">frameskip있는 값</string>
     <string name="select_render">PVR 렌더링 (지금은 아무것도하지 않습니다)</string>
-    <string name="default_disk">설정 기본 디스크</string>
 
     <string name="games_listing">드림 캐스트 게임 목록</string>
 

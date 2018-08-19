@@ -225,9 +225,6 @@ public class MainActivity extends AppCompatActivity implements
 	}
 
 	public void onGameSelected(Uri uri) {
-		if (Config.readOutput("uname -a").equals(getString(R.string.error_kernel))) {
-			showToastMessage(getString(R.string.unsupported), Snackbar.LENGTH_SHORT);
-		}
 		String home_directory = mPrefs.getString(Config.pref_home,
 				Environment.getExternalStorageDirectory().getAbsolutePath());
 
