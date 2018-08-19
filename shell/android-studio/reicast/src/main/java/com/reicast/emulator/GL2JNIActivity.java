@@ -1,8 +1,6 @@
 package com.reicast.emulator;
 
 import android.app.Activity;
-import android.app.ActivityManager;
-import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.net.Uri;
@@ -223,6 +221,82 @@ public class GL2JNIActivity extends Activity {
         }
     }
 
+    public void displayFPS() {
+        fpsPop.showAtLocation(mView, Gravity.TOP | Gravity.LEFT, 20, 20);
+        fpsPop.update(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+    }
+
+    public void toggleVmu() {
+        boolean showFloating = !prefs.getBoolean(Config.pref_vmu, false);
+        if (showFloating) {
+            if (popUp.isShowing()) {
+                popUp.dismiss();
+            }
+            //remove from popup menu
+            popUp.hideVmu();
+            //add to floating window
+            vmuPop.showVmu();
+            vmuPop.showAtLocation(mView, Gravity.TOP | Gravity.RIGHT, 4, 4);
+            vmuPop.update(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+        } else {
+            vmuPop.dismiss();
+            //remove from floating window
+            vmuPop.hideVmu();
+            //add back to popup menu
+            popUp.showVmu();
+        }
+        prefs.edit().putBoolean(Config.pref_vmu, showFloating).apply();
+    }
+
+    public void screenGrab() {
+        mView.screenGrab();
+    }
+
+    public void displayPopUp(PopupWindow popUp) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            popUp.showAtLocation(mView, Gravity.BOTTOM, 0, 60);
+        } else {
+            popUp.showAtLocation(mView, Gravity.BOTTOM, 0, 0);
+        }
+        popUp.update(LayoutParams.WRAP_CONTENT,
+                LayoutParams.WRAP_CONTENT);
+    }
+
+    public void displayConfig(PopupWindow popUpConfig) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            popUpConfig.showAtLocation(mView, Gravity.BOTTOM, 0, 60);
+        } else {
+            popUpConfig.showAtLocation(mView, Gravity.BOTTOM, 0, 0);
+        }
+        popUpConfig.update(LayoutParams.WRAP_CONTENT,
+                LayoutParams.WRAP_CONTENT);
+    }
+
+    public void displayDebug(PopupWindow popUpDebug) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            popUpDebug.showAtLocation(mView, Gravity.BOTTOM, 0, 60);
+        } else {
+            popUpDebug.showAtLocation(mView, Gravity.BOTTOM, 0, 0);
+        }
+        popUpDebug.update(LayoutParams.WRAP_CONTENT,
+                LayoutParams.WRAP_CONTENT);
+    }
+
+    private boolean showMenu() {
+        if (popUp != null) {
+            if (!menu.dismissPopUps()) {
+                if (!popUp.isShowing()) {
+                    displayPopUp(popUp);
+                } else {
+                    popUp.dismiss();
+                }
+            } else {
+                popUp.dismiss();
+            }
+        }
+        return true;
+    }
+
     float getAxisValues(MotionEvent event, int axis, int historyPos) {
         return historyPos < 0 ? event.getAxisValue(axis) :
                 event.getHistoricalAxisValue(axis, historyPos);
@@ -342,64 +416,6 @@ public class GL2JNIActivity extends Activity {
         }
         mView.pushInput();
         return rav;
-
-    }
-
-    public void displayPopUp(PopupWindow popUp) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            popUp.showAtLocation(mView, Gravity.BOTTOM, 0, 60);
-        } else {
-            popUp.showAtLocation(mView, Gravity.BOTTOM, 0, 0);
-        }
-        popUp.update(LayoutParams.WRAP_CONTENT,
-                LayoutParams.WRAP_CONTENT);
-    }
-
-    public void displayDebug(PopupWindow popUpDebug) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            popUpDebug.showAtLocation(mView, Gravity.BOTTOM, 0, 60);
-        } else {
-            popUpDebug.showAtLocation(mView, Gravity.BOTTOM, 0, 0);
-        }
-        popUpDebug.update(LayoutParams.WRAP_CONTENT,
-                LayoutParams.WRAP_CONTENT);
-    }
-
-    public void displayFPS() {
-        fpsPop.showAtLocation(mView, Gravity.TOP | Gravity.LEFT, 20, 20);
-        fpsPop.update(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
-    }
-
-    public void toggleVmu() {
-        boolean showFloating = !prefs.getBoolean(Config.pref_vmu, false);
-        if (showFloating) {
-            if (popUp.isShowing()) {
-                popUp.dismiss();
-            }
-            //remove from popup menu
-            popUp.hideVmu();
-            //add to floating window
-            vmuPop.showVmu();
-            vmuPop.showAtLocation(mView, Gravity.TOP | Gravity.RIGHT, 4, 4);
-            vmuPop.update(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
-        } else {
-            vmuPop.dismiss();
-            //remove from floating window
-            vmuPop.hideVmu();
-            //add back to popup menu
-            popUp.showVmu();
-        }
-        prefs.edit().putBoolean(Config.pref_vmu, showFloating).apply();
-    }
-
-    public void displayConfig(PopupWindow popUpConfig) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            popUpConfig.showAtLocation(mView, Gravity.BOTTOM, 0, 60);
-        } else {
-            popUpConfig.showAtLocation(mView, Gravity.BOTTOM, 0, 0);
-        }
-        popUpConfig.update(LayoutParams.WRAP_CONTENT,
-                LayoutParams.WRAP_CONTENT);
     }
 
     public boolean onKeyUp(int keyCode, KeyEvent event) {
@@ -470,41 +486,6 @@ public class GL2JNIActivity extends Activity {
 
     public GL2JNIView getGameView() {
         return mView;
-    }
-
-    public void screenGrab() {
-        mView.screenGrab();
-    }
-
-    private boolean showMenu() {
-        if (popUp != null) {
-            if (!menu.dismissPopUps()) {
-                if (!popUp.isShowing()) {
-                    displayPopUp(popUp);
-                } else {
-                    popUp.dismiss();
-                }
-            } else {
-                popUp.dismiss();
-            }
-        }
-        return true;
-    }
-
-    public boolean serviceRunning(Class<?> javaclass) {
-        ActivityManager manager = (ActivityManager)
-                getSystemService(Context.ACTIVITY_SERVICE);
-        try {
-            for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
-                if (javaclass.getName().equals(
-                        service.service.getClassName())) {
-                    return true;
-                }
-            }
-        } catch (NullPointerException e) {
-            e.printStackTrace();
-        }
-        return false;
     }
 
     @Override
