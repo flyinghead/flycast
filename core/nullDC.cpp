@@ -15,6 +15,7 @@
 
 #include "webui/server.h"
 #include "hw/naomi/naomi_cart.h"
+#include "reios/reios.h"
 
 settings_t settings;
 
@@ -241,9 +242,12 @@ void dc_stop()
 	sh4_cpu.Stop();
 }
 
+char *configFile;
+
 void LoadCustom()
 {
-	char *configFile = ""; // Replace with code to get a per-game config file
+
+	configFile = reios_disk_id();
 	
 	settings.dynarec.Enable			= cfgLoadInt(configFile,"Dynarec.Enabled", settings.dynarec.Enable ? 1 : 0) != 0;
 	settings.dynarec.idleskip		= cfgLoadInt(configFile,"Dynarec.idleskip", settings.dynarec.idleskip ? 1 : 0) != 0;
@@ -335,6 +339,16 @@ void LoadSettings()
 
 	LoadCustom();
 }
+
+void SaveCustom()
+{
+	cfgSaveInt(configFile,"Dynarec.Enabled",	settings.dynarec.Enable);
+	cfgSaveInt(configFile,"Dreamcast.Cable",	settings.dreamcast.cable);
+	cfgSaveInt(configFile,"Dreamcast.RTC",	settings.dreamcast.RTC);
+	cfgSaveInt(configFile,"Dreamcast.Region",	settings.dreamcast.region);
+	cfgSaveInt(configFile,"Dreamcast.Broadcast",settings.dreamcast.broadcast);
+}
+
 void SaveSettings()
 {
 	cfgSaveInt("config","Dynarec.Enabled",	settings.dynarec.Enable);
@@ -342,4 +356,6 @@ void SaveSettings()
 	cfgSaveInt("config","Dreamcast.RTC",	settings.dreamcast.RTC);
 	cfgSaveInt("config","Dreamcast.Region",	settings.dreamcast.region);
 	cfgSaveInt("config","Dreamcast.Broadcast",settings.dreamcast.broadcast);
+	
+	SaveCustom();
 }
