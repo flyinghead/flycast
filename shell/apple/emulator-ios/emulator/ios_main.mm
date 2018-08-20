@@ -21,7 +21,7 @@
 #include <sys/time.h>
 #include "hw/sh4/dyna/blockmanager.h"
 #include <unistd.h>
-#include "maple_cfg.h"
+#include "hw/maple/maple_cfg.h"
 
 
 int msgboxf(const wchar* text,unsigned int type,...)
