@@ -668,7 +668,7 @@ struct settings_t
 	{
 		u32 Width;
 		u32 Height;
-		bool Maintain_Aspect;
+		bool Keep_Aspect;
 	} dispmanx;
 #endif
 
@@ -715,7 +715,7 @@ struct settings_t
 		u32 rend;
 		
 		u32 MaxThreads;
-		u32 SynchronousRendering;
+		u32 SynchronousRender;
 
 		string HashLogFile;
 		string HashCheckFile;
@@ -733,6 +733,7 @@ struct settings_t
 extern settings_t settings;
 
 void LoadSettings();
+void LoadCustom();
 void SaveSettings();
 u32 GetRTC_now();
 extern u32 patchRB;

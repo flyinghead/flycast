@@ -37,7 +37,7 @@ void dispmanx_window_create()
 	src_rect.width = window_width << 16;
 	src_rect.height = window_height << 16;
 
-	if(settings.dispmanx.Maintain_Aspect)
+	if(settings.dispmanx.Keep_Aspect)
 	{
 		float screen_aspect = (float)screen_width / screen_height;
 		float window_aspect = (float)window_width / window_height;

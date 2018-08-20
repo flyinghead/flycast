@@ -186,8 +186,8 @@ int dc_init(int argc,wchar* argv[])
 		Get_Sh4Interpreter(&sh4_cpu);
 		printf("Using Interpreter\n");
 	}
-	
-  InitAudio();
+
+    InitAudio();
 
 	sh4_cpu.Init();
 	mem_Init();
@@ -207,6 +207,8 @@ int dc_init(int argc,wchar* argv[])
 	
 
 	sh4_cpu.Reset(false);
+
+	LoadCustom();
 	
 	return rv;
 }
@@ -242,38 +244,6 @@ void dc_stop()
 	sh4_cpu.Stop();
 }
 
-char *configFile;
-
-void LoadCustom()
-{
-
-	configFile = reios_disk_id();
-	
-	settings.dynarec.Enable			= cfgLoadInt(configFile,"Dynarec.Enabled", settings.dynarec.Enable ? 1 : 0) != 0;
-	settings.dynarec.idleskip		= cfgLoadInt(configFile,"Dynarec.idleskip", settings.dynarec.idleskip ? 1 : 0) != 0;
-	settings.dynarec.unstable_opt	= cfgLoadInt(configFile,"Dynarec.unstable-opt", settings.dynarec.unstable_opt);
-	settings.dynarec.safemode		= cfgLoadInt(configFile,"Dynarec.safemode", settings.dynarec.safemode);
-	//disable_nvmem can't be loaded, because nvmem init is before cfg load
-	settings.dreamcast.cable		= cfgLoadInt(configFile,"Dreamcast.Cable", settings.dreamcast.cable);
-	settings.dreamcast.region		= cfgLoadInt(configFile,"Dreamcast.Region", settings.dreamcast.region);
-	settings.dreamcast.broadcast	= cfgLoadInt(configFile,"Dreamcast.Broadcast", settings.dreamcast.broadcast);
-	settings.aica.LimitFPS			= cfgLoadInt(configFile,"aica.LimitFPS", settings.aica.LimitFPS);
-	settings.aica.NoBatch			= cfgLoadInt(configFile,"aica.NoBatch", settings.aica.NoBatch);
-    settings.aica.NoSound			= cfgLoadInt(configFile,"aica.NoSound", settings.aica.NoSound);
-	settings.rend.UseMipmaps		= cfgLoadInt(configFile,"rend.UseMipmaps", settings.rend.UseMipmaps);
-	settings.rend.WideScreen		= cfgLoadInt(configFile,"rend.WideScreen", settings.rend.WideScreen);
-	settings.rend.ModifierVolumes	= cfgLoadInt(configFile,"rend.ModifierVolumes", settings.rend.ModifierVolumes);
-	settings.rend.Clipping			= cfgLoadInt(configFile,"rend.Clipping", settings.rend.Clipping);
-	
-	settings.pvr.subdivide_transp	= cfgLoadInt(configFile,"pvr.Subdivide", settings.pvr.subdivide_transp);
-	
-	settings.pvr.ta_skip			= cfgLoadInt(configFile,"ta.skip", settings.pvr.ta_skip);
-	settings.pvr.rend				= cfgLoadInt(configFile,"pvr.rend", settings.pvr.rend);
-
-	settings.pvr.MaxThreads			= cfgLoadInt(configFile, "pvr.MaxThreads", settings.pvr.MaxThreads);
-	settings.pvr.SynchronousRendering			= cfgLoadInt(configFile, "pvr.SynchronousRendering", settings.pvr.SynchronousRendering);
-}
-
 void LoadSettings()
 {
 #ifndef _ANDROID
@@ -300,23 +270,23 @@ void LoadSettings()
 	settings.pvr.rend				= cfgLoadInt("config","pvr.rend",0);
 
 	settings.pvr.MaxThreads			= cfgLoadInt("config", "pvr.MaxThreads", 3);
-	settings.pvr.SynchronousRendering			= cfgLoadInt("config", "pvr.SynchronousRendering", 0);
+	settings.pvr.SynchronousRender	= cfgLoadInt("config", "pvr.SynchronousRendering", 0);
 
-	settings.debug.SerialConsole = cfgLoadInt("config", "Debug.SerialConsoleEnabled", 0) != 0;
+	settings.debug.SerialConsole	= cfgLoadInt("config", "Debug.SerialConsoleEnabled", 0) != 0;
 
-	settings.bios.UseReios = cfgLoadInt("config", "bios.UseReios", 0);
-	settings.reios.ElfFile = cfgLoadStr("reios", "ElfFile", "");
+	settings.bios.UseReios			= cfgLoadInt("config", "bios.UseReios", 0);
+	settings.reios.ElfFile			= cfgLoadStr("reios", "ElfFile", "");
 
-	settings.validate.OpenGlChecks = cfgLoadInt("validate", "OpenGlChecks", 0) != 0;
+	settings.validate.OpenGlChecks	= cfgLoadInt("validate", "OpenGlChecks", 0) != 0;
 #endif
 
-	settings.pvr.HashLogFile = cfgLoadStr("testing", "ta.HashLogFile", "");
-	settings.pvr.HashCheckFile = cfgLoadStr("testing", "ta.HashCheckFile", "");
+	settings.pvr.HashLogFile		= cfgLoadStr("testing", "ta.HashLogFile", "");
+	settings.pvr.HashCheckFile		= cfgLoadStr("testing", "ta.HashCheckFile", "");
 
 #if SUPPORT_DISPMANX
-	settings.dispmanx.Width = cfgLoadInt("dispmanx","width",640);
-	settings.dispmanx.Height = cfgLoadInt("dispmanx","height",480);
-	settings.dispmanx.Maintain_Aspect = cfgLoadBool("dispmanx","maintain_aspect",true);
+	settings.dispmanx.Width			= cfgLoadInt("dispmanx","width",640);
+	settings.dispmanx.Height		= cfgLoadInt("dispmanx","height",480);
+	settings.dispmanx.Keep_Aspect	= cfgLoadBool("dispmanx","maintain_aspect",true);
 #endif
 
 #if (HOST_OS != OS_LINUX || defined(_ANDROID) || defined(TARGET_PANDORA))
@@ -336,26 +306,32 @@ void LoadSettings()
 	settings.dreamcast.region	= min(max(settings.dreamcast.region,   0),3);
 	settings.dreamcast.broadcast= min(max(settings.dreamcast.broadcast,0),4);
 */
-
-	LoadCustom();
 }
 
-void SaveCustom()
+void LoadCustom()
 {
-	cfgSaveInt(configFile,"Dynarec.Enabled",	settings.dynarec.Enable);
-	cfgSaveInt(configFile,"Dreamcast.Cable",	settings.dreamcast.cable);
-	cfgSaveInt(configFile,"Dreamcast.RTC",	settings.dreamcast.RTC);
-	cfgSaveInt(configFile,"Dreamcast.Region",	settings.dreamcast.region);
-	cfgSaveInt(configFile,"Dreamcast.Broadcast",settings.dreamcast.broadcast);
+	char *reios_id = reios_disk_id();
+
+	settings.dynarec.idleskip		= cfgLoadInt(reios_id,"Dynarec.idleskip", settings.dynarec.idleskip ? 1 : 0) != 0;
+	settings.dynarec.unstable_opt	= cfgLoadInt(reios_id,"Dynarec.unstable-opt", settings.dynarec.unstable_opt);
+	settings.dynarec.safemode		= cfgLoadInt(reios_id,"Dynarec.safemode", settings.dynarec.safemode);
+	settings.rend.ModifierVolumes	= cfgLoadInt(reios_id,"rend.ModifierVolumes", settings.rend.ModifierVolumes);
+	settings.rend.Clipping			= cfgLoadInt(reios_id,"rend.Clipping", settings.rend.Clipping);
+
+	settings.pvr.subdivide_transp	= cfgLoadInt(reios_id,"pvr.Subdivide", settings.pvr.subdivide_transp);
+
+	settings.pvr.ta_skip			= cfgLoadInt(reios_id,"ta.skip", settings.pvr.ta_skip);
+	settings.pvr.rend				= cfgLoadInt(reios_id,"pvr.rend", settings.pvr.rend);
+
+	settings.pvr.MaxThreads			= cfgLoadInt(reios_id, "pvr.MaxThreads", settings.pvr.MaxThreads);
+	settings.pvr.SynchronousRender	= cfgLoadInt(reios_id, "pvr.SynchronousRendering", settings.pvr.SynchronousRender);
 }
 
 void SaveSettings()
 {
-	cfgSaveInt("config","Dynarec.Enabled",	settings.dynarec.Enable);
-	cfgSaveInt("config","Dreamcast.Cable",	settings.dreamcast.cable);
-	cfgSaveInt("config","Dreamcast.RTC",	settings.dreamcast.RTC);
-	cfgSaveInt("config","Dreamcast.Region",	settings.dreamcast.region);
-	cfgSaveInt("config","Dreamcast.Broadcast",settings.dreamcast.broadcast);
-	
-	SaveCustom();
+	cfgSaveInt("config","Dynarec.Enabled",		settings.dynarec.Enable);
+	cfgSaveInt("config","Dreamcast.Cable",		settings.dreamcast.cable);
+	cfgSaveInt("config","Dreamcast.RTC",		settings.dreamcast.RTC);
+	cfgSaveInt("config","Dreamcast.Region",		settings.dreamcast.region);
+	cfgSaveInt("config","Dreamcast.Broadcast",	settings.dreamcast.broadcast);
 }
