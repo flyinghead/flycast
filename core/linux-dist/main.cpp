@@ -105,10 +105,15 @@ void emit_WriteCodeCache();
 	static int joystick_fd = -1; // Joystick file descriptor
 #endif
 
-MapleDeviceType GetMapleDeviceType(int value)
+MapleDeviceType GetMapleDeviceType(int value, int port)
 {
 	switch (value)
 	{
+		case 0:
+			#if defined(_DEBUG) || defined(DEBUG)
+			printf("Maple Device: None\n");
+			#endif
+			return MDT_None;
 		case 1:
 			#if defined(_DEBUG) || defined(DEBUG)
 			printf("Maple Device: VMU\n");
@@ -125,10 +130,19 @@ MapleDeviceType GetMapleDeviceType(int value)
 			#endif
 			return MDT_PurupuruPack;
 		default:
-			printf("Unsupported configuration (%d) for Maple Device, using VMU\n", value);
-	}
+			MapleDeviceType result = MDT_None;
+			string result_type = "None";
 
-	return MDT_SegaVMU;
+			// Controller in port 1 defaults to VMU for Maple device, all other to None
+			if (port == 1)
+			{
+				result_type = "VMU";
+				result = MDT_SegaVMU;
+			}
+
+			printf("Unsupported configuration (%d) for Maple Device, using %s\n", value, result_type);
+			return result;
+	}
 }
 
 void os_SetupInput()
@@ -183,7 +197,7 @@ void os_SetupInput()
 						}
 				}
 
-				mcfg_CreateController(port, GetMapleDeviceType(evdev_controllers[port].mapping->Maple_Device1), GetMapleDeviceType(evdev_controllers[port].mapping->Maple_Device2));
+				mcfg_CreateController(port, GetMapleDeviceType(evdev_controllers[port].mapping->Maple_Device1, port), GetMapleDeviceType(evdev_controllers[port].mapping->Maple_Device2, port));
 			}
 		}
 	#endif
