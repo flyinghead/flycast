@@ -1063,18 +1063,17 @@ void DrawStrips()
 		//Alpha blended
 		{
 			if (current_pass.autosort)
-				GenSorted(previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
-
+            {
 #if TRIG_SORT
-			if (current_pass.autosort)
+				GenSorted(previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
 				DrawSorted(render_pass < pvrrc.render_passes.used() - 1);
+#else
+                SortPParams(previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
+                DrawList<ListType_Translucent,true>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
+#endif
+            }
 			else
 				DrawList<ListType_Translucent,false>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
-#else
-			if (current_pass.autosort)
-				SortPParams(previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
-			DrawList<ListType_Translucent,true>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
-#endif
 		}
 		previous_pass = current_pass;
 	}
