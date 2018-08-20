@@ -8,7 +8,7 @@
 #import <Carbon/Carbon.h>
 
 #include "types.h"
-#include "maple_cfg.h"
+#include "hw/maple/maple_cfg.h"
 #include <sys/stat.h>
 
 #include <OpenGL/gl3.h>
