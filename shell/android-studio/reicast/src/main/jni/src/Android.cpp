@@ -15,6 +15,7 @@
 #include "hw/maple/maple_devs.h"
 #include "hw/maple/maple_if.h"
 #include "oslib/audiobackend_android.h"
+#include "reios/reios.h"
 
 extern "C"
 {
@@ -326,6 +327,19 @@ jobject vmulcd = NULL;
 jbyteArray jpix = NULL;
 jmethodID updatevmuscreen;
 
+void reios_info(JNIEnv *env) {
+    jmethodID reiosInfoMid=env->GetMethodID(env->GetObjectClass(emu),"reiosInfo","(Ljava/lang/String;Ljava/lang/String;)V");
+
+    char *id = (char*)malloc(9);
+    strcpy(id, reios_disk_id());
+    jstring reios_id = env->NewStringUTF(id);
+
+    char *name = (char*)malloc(129);
+    strcpy(name, reios_software_name);
+    jstring reios_name = env->NewStringUTF(name);
+
+    jenv->CallVoidMethod(emu, reiosInfoMid, reios_id, reios_name);
+}
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_run(JNIEnv *env,jobject obj,jobject emu_thread)
 {
@@ -338,9 +352,10 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_run(JNIEnv *env,jobje
 	writemid=env->GetMethodID(env->GetObjectClass(emu),"WriteBuffer","([SI)I");
     coreMessageMid=env->GetMethodID(env->GetObjectClass(emu),"coreMessage","([B)V");
     dieMid=env->GetMethodID(env->GetObjectClass(emu),"Die","()V");
-//	msgboxf("HELLO!", MBX_OK);
-	
-	dc_run();
+
+    reios_info(env);
+
+    dc_run();
 }
 
 int msgboxf(const wchar* Text,unsigned int Type,...)
