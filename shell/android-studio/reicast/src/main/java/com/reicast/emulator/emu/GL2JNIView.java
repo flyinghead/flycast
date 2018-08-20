@@ -654,19 +654,20 @@ public class GL2JNIView extends GLSurfaceView
         void showMessage(final String msg) {
             handler.post(new Runnable() {
                 public void run() {
-                    Log.d(context.getApplicationContext().getPackageName(), msg);
+                    Log.d(context.getPackageName(), msg);
                     Toast.makeText(context, msg, Toast.LENGTH_SHORT).show();
                 }
             });
         }
 
-        void coreMessage(byte[] msg) {
+        int coreMessage(byte[] msg) {
             try {
                 showMessage(new String(msg, "UTF-8"));
             }
             catch (UnsupportedEncodingException e) {
                 showMessage("coreMessage: Failed to display error");
             }
+            return 1;
         }
 
         void Die() {

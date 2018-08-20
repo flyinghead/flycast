@@ -138,7 +138,12 @@ Disc* OpenDisc(const wchar* fn)
 		
 		if (cdi_parse == drivers[i]) {
 			const wchar warn_str[] = "Warning: CDI Image Loaded!\n  Many CDI images are known to be defective, GDI or CHD format is preferred. Please only file bug reports when using images known to be good (GDI or CHD).";
-			msgboxf(warn_str,MBX_ICONASTERISK);// if (OS_DlgYes!=os_Dialog(OS_DialogYesNo, cdiWarn_S)) rv=0;
+#ifdef _ANDROID
+			printf(warn_str);
+#else
+			msgboxf(warn_str, MBX_ICONASTERISK);// if (OS_DlgYes!=os_Dialog(OS_DialogYesNo, cdiWarn_S)) rv=0;
+#endif
+			break;
 		}
 	}
 
