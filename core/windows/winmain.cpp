@@ -6,7 +6,7 @@
 #include <windows.h>
 
 #include <Xinput.h>
-#include "maple_cfg.h"
+#include "hw\maple\maple_cfg.h"
 #pragma comment(lib, "XInput9_1_0.lib")
 
 PCHAR*
