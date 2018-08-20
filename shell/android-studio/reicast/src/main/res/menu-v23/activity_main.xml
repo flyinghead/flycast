@@ -13,6 +13,10 @@
             android:icon="@drawable/ic_settings"
             android:title="@string/settings" />
         <item
+            android:id="@+id/pgconfig_menu"
+            android:icon="@drawable/ic_settings"
+            android:title="@string/pgconfig" />
+        <item
             android:id="@+id/input_menu"
             android:icon="@drawable/ic_input"
             android:title="@string/input" />

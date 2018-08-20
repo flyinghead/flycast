@@ -675,15 +675,19 @@ public class GL2JNIView extends GLSurfaceView
         }
 
         void reiosInfo(String reiosId, String reiosSoftware) {
+            String gameId = reiosId.replaceAll("[^a-zA-Z0-9]+", "").toLowerCase();
             try {
                 OutputStreamWriter outputStreamWriter = new OutputStreamWriter(
-                        context.openFileOutput(reiosId+".cfg", Context.MODE_PRIVATE));
+                        context.openFileOutput(gameId + ".pgc", Context.MODE_PRIVATE));
                 outputStreamWriter.write(reiosSoftware);
                 outputStreamWriter.close();
             }
             catch (IOException e) {
                 Log.e("Exception", "File write failed: " + e.toString());
             }
+            Emulator app = (Emulator) context.getApplicationContext();
+            app.getGameConfiguration(gameId);
+            app.loadGameConfiguration();
         }
 
     }

@@ -208,7 +208,9 @@ int dc_init(int argc,wchar* argv[])
 
 	sh4_cpu.Reset(false);
 
+#ifndef _ANDROID
 	LoadCustom();
+#endif
 	
 	return rv;
 }

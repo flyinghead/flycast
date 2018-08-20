@@ -58,7 +58,12 @@
     <string name="reset_emu">Reset Emu</string>
     <string name="reset_emu_title">Reset Emulator Settings</string>
     <string name="reset_emu_details">Warning: Emulator settings will be cleared. Folder and input settings are not included. This cannot be undone.\nAre you sure you want to continue?</string>
-    
+
+    <string name="pgc_doc">Per-Game Configuration\nThese options will override the default settings.\nTo add a game, launch it from the main game list\nGames will appear when returning to this window\nAfter changing settings, make sure to \"Save PCG\"</string>
+    <string name="pgc_select_game">Select Game</string>
+    <string name="save_pgc_title">Save Per-Game Config</string>
+    <string name="write_pgc">Save PGC</string>
+
     <string name="games_listing">Game List</string>
     <string name="search_hint">Game (ie. Crazy Taxi)</string>
     
@@ -113,6 +118,7 @@
 	<string name="drawer_shut">Menu Closed</string>	
     <string name="browser">Browser</string>
     <string name="settings">Settings</string>
+    <string name="pgconfig">PG Config</string>
     <string name="paths">Paths</string>
     <string name="input">Input</string>
     <string name="about">About</string>

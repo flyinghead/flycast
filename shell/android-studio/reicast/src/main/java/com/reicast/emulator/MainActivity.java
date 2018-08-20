@@ -18,8 +18,6 @@ import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
@@ -35,6 +33,7 @@ import android.view.WindowManager;
 import android.widget.TextView;
 
 import com.reicast.emulator.config.Config;
+import com.reicast.emulator.config.PGConfigFragment;
 import com.reicast.emulator.config.InputFragment;
 import com.reicast.emulator.config.OptionsFragment;
 import com.reicast.emulator.debug.GenerateLogs;
@@ -364,15 +363,6 @@ public class MainActivity extends AppCompatActivity implements
 		onMainBrowseSelected(true, null, false, null);
 	}
 
-	public void onSettingsReload(Fragment options) {
-		getSupportFragmentManager().beginTransaction().remove(options).commit();
-		OptionsFragment optionsFrag = new OptionsFragment();
-		getSupportFragmentManager()
-				.beginTransaction()
-				.replace(R.id.fragment_container, optionsFrag, "OPTIONS_FRAG")
-				.addToBackStack(null).commit();
-    }
-
 	@Override
 	protected void onPause() {
 		super.onPause();
@@ -446,6 +436,24 @@ public class MainActivity extends AppCompatActivity implements
 						.replace(R.id.fragment_container, optionsFrag, "OPTIONS_FRAG")
 						.addToBackStack(null).commit();
 				setTitle(R.string.settings);
+				drawer.closeDrawer(GravityCompat.START);
+				return true;
+
+			case R.id.pgconfig_menu:
+				PGConfigFragment pgconfigFrag = (PGConfigFragment) getSupportFragmentManager()
+						.findFragmentByTag("PGCONFIG_FRAG");
+				if (pgconfigFrag != null) {
+					if (pgconfigFrag.isVisible()) {
+						drawer.closeDrawer(GravityCompat.START);
+						return true;
+					}
+				}
+				pgconfigFrag = new PGConfigFragment();
+				getSupportFragmentManager()
+						.beginTransaction()
+						.replace(R.id.fragment_container, pgconfigFrag, "PGCONFIG_FRAG")
+						.addToBackStack(null).commit();
+				setTitle(R.string.pgconfig);
 				drawer.closeDrawer(GravityCompat.START);
 				return true;
 

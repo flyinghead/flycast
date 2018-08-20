@@ -63,4 +63,8 @@
         <item>K</item>
     </string-array>
 
+    <string-array name="configs">
+        <item>pgc</item>
+    </string-array>
+
 </resources>
