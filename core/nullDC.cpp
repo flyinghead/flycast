@@ -312,6 +312,7 @@ void LoadCustom()
 {
 	char *reios_id = reios_disk_id();
 
+	cfgSaveStr(reios_id, "software.name", reios_software_name);
 	settings.dynarec.idleskip		= cfgLoadInt(reios_id,"Dynarec.idleskip", settings.dynarec.idleskip ? 1 : 0) != 0;
 	settings.dynarec.unstable_opt	= cfgLoadInt(reios_id,"Dynarec.unstable-opt", settings.dynarec.unstable_opt);
 	settings.dynarec.safemode		= cfgLoadInt(reios_id,"Dynarec.safemode", settings.dynarec.safemode);
