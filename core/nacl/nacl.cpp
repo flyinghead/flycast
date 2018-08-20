@@ -15,6 +15,7 @@
 #include "ppapi/utility/completion_callback_factory.h"
 
 #include "types.h"
+#include "maple_cfg.h"
 
 #include <GLES2/gl2.h>
 
@@ -47,7 +48,7 @@ void* emuthread(void* ) {
   printf("Emu thread starting up");
   char *Args[3];
   Args[0] = "dc";
-  
+
 	set_user_config_dir("/http");
 	set_user_data_dir("/http");
 
@@ -161,7 +162,7 @@ class HelloWorldInstance : public pp::Instance {
 
     glClearColor(0.65f, 0.65f, 0.65f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    
+
     if (rend_framePending()) {
       while (!rend_single_frame()) ;
       printf("Rendered frame\n");
@@ -194,7 +195,7 @@ void HelloWorldInstance::HandleMessage(const pp::Var& var_message) {
 class HelloWorldModule : public pp::Module {
  public:
   HelloWorldModule() : pp::Module() {
-    
+
   }
   virtual ~HelloWorldModule() {}
 
@@ -252,6 +253,9 @@ void os_DoEvents() {
 
 }
 
+void os_SetupInput() {
+	mcfg_CreateDevicesFromConfig();
+}
 
 void UpdateInputState(u32 port) {
 
@@ -275,7 +279,7 @@ void* libPvr_GetRenderTarget() {
 
 void* libPvr_GetRenderSurface() {
     return 0;
-    
+
 }
 
 bool gl_init(void*, void*) {
@@ -283,9 +287,9 @@ bool gl_init(void*, void*) {
 }
 
 void gl_term() {
-    
+
 }
 
 void gl_swap() {
-    
+
 }

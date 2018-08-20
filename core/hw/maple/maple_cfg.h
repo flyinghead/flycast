@@ -64,11 +64,11 @@ struct IMapleConfigMap
 	virtual ~IMapleConfigMap() {}
 };
 
+#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
+void mcfg_CreateDevicesFromConfig();
 void mcfg_CreateController(u32 bus, MapleDeviceType maple_type1, MapleDeviceType maple_type2);
-
-#ifndef _ANDROID
-void mcfg_CreateDevices();
 #else
-void mcfg_CreateDevices();
+void mcfg_CreateNAOMIJamma();
 #endif
+
 void mcfg_DestroyDevices();

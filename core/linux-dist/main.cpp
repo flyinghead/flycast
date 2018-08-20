@@ -131,7 +131,7 @@ MapleDeviceType GetMapleDeviceType(int value)
 	return MDT_SegaVMU;
 }
 
-void SetupInput()
+void os_SetupInput()
 {
 	#if defined(USE_EVDEV)
 		int evdev_device_id[4] = { -1, -1, -1, -1 };
@@ -499,8 +499,6 @@ int main(int argc, wchar* argv[])
 	settings.profile.run_counts=0;
 
 	dc_init(argc,argv);
-
-	SetupInput();
 
 	#if !defined(TARGET_EMSCRIPTEN)
 		#if FEAT_HAS_NIXPROF
