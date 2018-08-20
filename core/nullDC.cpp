@@ -313,19 +313,19 @@ void LoadCustom()
 	char *reios_id = reios_disk_id();
 
 	cfgSaveStr(reios_id, "software.name", reios_software_name);
-	settings.dynarec.idleskip		= cfgLoadInt(reios_id,"Dynarec.idleskip", settings.dynarec.idleskip ? 1 : 0) != 0;
-	settings.dynarec.unstable_opt	= cfgLoadInt(reios_id,"Dynarec.unstable-opt", settings.dynarec.unstable_opt);
-	settings.dynarec.safemode		= cfgLoadInt(reios_id,"Dynarec.safemode", settings.dynarec.safemode);
-	settings.rend.ModifierVolumes	= cfgLoadInt(reios_id,"rend.ModifierVolumes", settings.rend.ModifierVolumes);
-	settings.rend.Clipping			= cfgLoadInt(reios_id,"rend.Clipping", settings.rend.Clipping);
+	settings.dynarec.idleskip		= cfgGameInt(reios_id,"Dynarec.idleskip", settings.dynarec.idleskip ? 1 : 0) != 0;
+	settings.dynarec.unstable_opt	= cfgGameInt(reios_id,"Dynarec.unstable-opt", settings.dynarec.unstable_opt);
+	settings.dynarec.safemode		= cfgGameInt(reios_id,"Dynarec.safemode", settings.dynarec.safemode);
+	settings.rend.ModifierVolumes	= cfgGameInt(reios_id,"rend.ModifierVolumes", settings.rend.ModifierVolumes);
+	settings.rend.Clipping			= cfgGameInt(reios_id,"rend.Clipping", settings.rend.Clipping);
 
-	settings.pvr.subdivide_transp	= cfgLoadInt(reios_id,"pvr.Subdivide", settings.pvr.subdivide_transp);
+	settings.pvr.subdivide_transp	= cfgGameInt(reios_id,"pvr.Subdivide", settings.pvr.subdivide_transp);
 
-	settings.pvr.ta_skip			= cfgLoadInt(reios_id,"ta.skip", settings.pvr.ta_skip);
-	settings.pvr.rend				= cfgLoadInt(reios_id,"pvr.rend", settings.pvr.rend);
+	settings.pvr.ta_skip			= cfgGameInt(reios_id,"ta.skip", settings.pvr.ta_skip);
+	settings.pvr.rend				= cfgGameInt(reios_id,"pvr.rend", settings.pvr.rend);
 
-	settings.pvr.MaxThreads			= cfgLoadInt(reios_id, "pvr.MaxThreads", settings.pvr.MaxThreads);
-	settings.pvr.SynchronousRender	= cfgLoadInt(reios_id, "pvr.SynchronousRendering", settings.pvr.SynchronousRender);
+	settings.pvr.MaxThreads			= cfgGameInt(reios_id, "pvr.MaxThreads", settings.pvr.MaxThreads);
+	settings.pvr.SynchronousRender	= cfgGameInt(reios_id, "pvr.SynchronousRendering", settings.pvr.SynchronousRender);
 }
 
 void SaveSettings()
