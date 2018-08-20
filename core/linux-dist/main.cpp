@@ -140,7 +140,7 @@ MapleDeviceType GetMapleDeviceType(int value, int port)
 				result = MDT_SegaVMU;
 			}
 
-			printf("Unsupported configuration (%d) for Maple Device, using %s\n", value, result_type);
+			printf("Unsupported configuration (%d) for Maple Device, using %s\n", value, result_type.c_str());
 			return result;
 	}
 }
