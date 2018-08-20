@@ -10,7 +10,7 @@
 #include <GLES2/gl2.h>
 
 #include "types.h"
-#include "maple_cfg.h"
+#include "hw/maple/maple_cfg.h"
 #include "profiler/profiler.h"
 #include "rend/TexCache.h"
 #include "hw/maple/maple_devs.h"
