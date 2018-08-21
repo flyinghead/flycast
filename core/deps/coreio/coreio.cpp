@@ -281,9 +281,6 @@ int core_fclose(core_file* fc)
 	if (f->f) {
 		fclose(f->f);
 	}
-	else {
-
-	}
 
 	delete f;
 

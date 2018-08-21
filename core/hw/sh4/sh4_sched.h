@@ -1,3 +1,6 @@
+#ifndef SH4_SCHED_H
+#define SH4_SCHED_H
+
 #include "types.h"
 
 /*
@@ -45,3 +48,5 @@ int sh4_sched_elapsed(int id);
 void sh4_sched_tick(int cycles);
 
 extern u32 sh4_sched_intr;
+
+#endif //SH4_SCHED_H

@@ -1,5 +1,7 @@
-#include "types.h"
+#ifndef REIOS_H
+#define REIOS_H
 
+#include "types.h"
 
 bool reios_init(u8* rom, u8* flash);
 
@@ -13,3 +15,5 @@ char* reios_disk_id();
 extern char reios_software_name[129];
 
 #define REIOS_OPCODE 0x085B
+
+#endif //REIOS_H

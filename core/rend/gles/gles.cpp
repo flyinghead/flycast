@@ -746,8 +746,6 @@ GLuint gl_CompileShader(const char* shader,GLuint type)
 
 	if (!result && compile_log_len>0)
 	{
-		if (compile_log_len==0)
-			compile_log_len=1;
 		char* compile_log=(char*)malloc(compile_log_len);
 		*compile_log=0;
 
@@ -791,8 +789,6 @@ GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentShader)
 
 	if (!result && compile_log_len>0)
 	{
-		if (compile_log_len==0)
-			compile_log_len=1;
 		compile_log_len+= 1024;
 		char* compile_log=(char*)malloc(compile_log_len);
 		*compile_log=0;
@@ -1035,7 +1031,7 @@ void tryfit(float* x,float* y)
 		int rep=1;
 
 		//discard values clipped to 0 or 1
-		if (i<128 && y[i]==1 && y[i+1]==1)
+		if (y[i]==1 && y[i+1]==1)
 			continue;
 
 		if (i>0 && y[i]==0 && y[i-1]==0)
@@ -1045,7 +1041,7 @@ void tryfit(float* x,float* y)
 		if (i>0 && y[i]!=1 && y[i-1]==1)
 			rep=10000;
 
-		if (i<128 && y[i]!=0 && y[i+1]==0)
+		if (y[i]!=0 && y[i+1]==0)
 			rep=10000;
 
 		for (int j=0;j<rep;j++)
