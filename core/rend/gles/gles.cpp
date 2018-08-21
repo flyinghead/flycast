@@ -336,7 +336,11 @@ void main() \n\
 	} \n\
 	#endif\n\
 	#if cp_AlphaTest == 1 \n\
-		if (cp_AlphaTestValue>color.a) discard;\n\
+		color.a = floor(color.a * 255.0 + 0.5) / 255.0; // Fixes noised cars in Jet Grind Radio \n\
+		if (cp_AlphaTestValue>color.a) \n\
+			discard;\n\
+		else \n\
+			color.a = 1.0; \n\
 	#endif  \n\
 	//color.rgb=vec3(vtx_xyz.z/255.0);\n"
 #ifndef GLES
