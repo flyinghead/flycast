@@ -1,4 +1,4 @@
-
+#pragma once
 #include "deps/zlib/zlib.h"
 
 #define DEFLATE_FRAME_COMPRESSION_LEVEL_SERVER 1
