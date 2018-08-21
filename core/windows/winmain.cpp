@@ -704,7 +704,7 @@ int CALLBACK WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine
 
 
 	if(ParseCommandLine(argc,argv)) {
-		return 69;
+		return rv_cli_finish;
 	}
 
 	ReserveBottomMemory();

@@ -469,7 +469,7 @@
       <Command>for /f "delims=" %%i in ('git describe') do echo #define REICAST_VERSION "%%i" &gt;$(ProjectDir)\..\core\version.h</Command>
     </PreBuildEvent>
     <PreBuildEvent>
-      <Message>Setting Version  git describe &gt;$(ProjectDir)\version.txt &amp;&amp;  set r_ver=%%i &amp;&amp; </Message>
+      <Message>Setting Version # in header</Message>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Fast|x64'">
@@ -513,7 +513,7 @@
       <Command>for /f "delims=" %%i in ('git describe') do echo #define REICAST_VERSION "%%i" &gt;$(ProjectDir)\..\core\version.h</Command>
     </PreBuildEvent>
     <PreBuildEvent>
-      <Message>Setting Version  git describe &gt;$(ProjectDir)\version.txt &amp;&amp;  set r_ver=%%i &amp;&amp; </Message>
+      <Message>Setting Version # in header</Message>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Slow|Win32'">
@@ -544,7 +544,7 @@
       <Command>for /f "delims=" %%i in ('git describe') do echo #define REICAST_VERSION "%%i" &gt;$(ProjectDir)\..\core\version.h</Command>
     </PreBuildEvent>
     <PreBuildEvent>
-      <Message>Setting Version  git describe &gt;$(ProjectDir)\version.txt &amp;&amp;  set r_ver=%%i &amp;&amp; </Message>
+      <Message>Setting Version # in header</Message>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Slow|x64'">
@@ -580,7 +580,7 @@
       <Command>for /f "delims=" %%i in ('git describe') do echo #define REICAST_VERSION "%%i" &gt;$(ProjectDir)\..\core\version.h</Command>
     </PreBuildEvent>
     <PreBuildEvent>
-      <Message>Setting Version  git describe &gt;$(ProjectDir)\version.txt &amp;&amp;  set r_ver=%%i &amp;&amp; </Message>
+      <Message>Setting Version # in header</Message>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">

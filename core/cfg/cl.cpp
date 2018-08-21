@@ -9,7 +9,7 @@
 #include <ctype.h>
 #include <string.h>
 
-#ifndef linux
+#if !defined(linux) && !defined(_ANDROID)
 #include <conio.h>
 #endif
 
