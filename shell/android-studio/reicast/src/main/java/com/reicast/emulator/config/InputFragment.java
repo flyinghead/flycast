@@ -317,8 +317,8 @@ public class InputFragment extends Fragment {
 		p2periph1Adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		p2periph1spnr.setAdapter(p2periph1Adapter);
 
-		String p2periph1 = String.valueOf(mPrefs.getInt(Gamepad.p2_peripheral + 1, 0));
-		p2periph1spnr.setSelection(p2periph1Adapter.getPosition(p2periph1), true);
+		p2periph1spnr.setSelection(mPrefs.getInt(
+				Gamepad.p2_peripheral + 1, 0), true);
 
 		p2periph1spnr.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
 
@@ -337,8 +337,8 @@ public class InputFragment extends Fragment {
 		p2periph2Adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		p2periph2spnr.setAdapter(p2periph2Adapter);
 
-		String p2periph2 = String.valueOf(mPrefs.getInt(Gamepad.p2_peripheral + 2, 0));
-		p2periph2spnr.setSelection(p2periph2Adapter.getPosition(p2periph2), true);
+		p2periph2spnr.setSelection(mPrefs.getInt(
+				Gamepad.p2_peripheral + 2, 0), true);
 
 		p2periph2spnr.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
 
@@ -377,8 +377,8 @@ public class InputFragment extends Fragment {
 		p3periph1Adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		p3periph1spnr.setAdapter(p3periph1Adapter);
 
-		String p3periph1 = String.valueOf(mPrefs.getInt(Gamepad.p3_peripheral + 1, 0));
-		p3periph1spnr.setSelection(p3periph1Adapter.getPosition(p3periph1), true);
+		p3periph1spnr.setSelection(mPrefs.getInt(
+				Gamepad.p3_peripheral + 1, 0), true);
 
 		p3periph1spnr.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
 
@@ -397,8 +397,8 @@ public class InputFragment extends Fragment {
 		p3periph2Adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		p3periph2spnr.setAdapter(p3periph2Adapter);
 
-		String p3periph2 = String.valueOf(mPrefs.getInt(Gamepad.p3_peripheral + 2, 0));
-		p3periph2spnr.setSelection(p3periph2Adapter.getPosition(p3periph2), true);
+		p3periph2spnr.setSelection(mPrefs.getInt(
+				Gamepad.p3_peripheral + 2, 0), true);
 
 		p3periph2spnr.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
 
