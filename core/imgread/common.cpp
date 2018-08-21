@@ -243,7 +243,7 @@ bool DiscSwap(u32 fileflags)
 		printf("Loading default image \"%s\"\n",settings.imgread.DefaultImage);
 		if (!InitDrive_(settings.imgread.DefaultImage))
 		{
-			msgboxf("Default image \"%s\" failed to load",MBX_ICONERROR);
+			msgboxf("Default image \"%s\" failed to load",MBX_ICONERROR,settings.imgread.DefaultImage);
 			return false;
 		}
 		else
