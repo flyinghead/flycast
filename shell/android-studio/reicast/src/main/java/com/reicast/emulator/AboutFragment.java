@@ -9,7 +9,6 @@ import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.Snackbar;
 import android.support.graphics.drawable.VectorDrawableCompat;
 import android.support.v4.app.Fragment;
-import android.text.util.Linkify;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -38,8 +37,6 @@ import javax.net.ssl.HttpsURLConnection;
 public class AboutFragment extends Fragment {
 
 	String buildId = "";
-	private ListView list;
-	private GitAdapter adapter;
 
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -52,39 +49,20 @@ public class AboutFragment extends Fragment {
 	public void onViewCreated(View view, Bundle savedInstanceState) {
 
 		try {
-			InputStream file = getResources().getAssets().open("build");
-			if (file != null) {
-				BufferedReader reader = new BufferedReader(new InputStreamReader(file));
-				buildId = reader.readLine();
-				file.close();
-			}
-		} catch (IOException ioe) {
-			ioe.printStackTrace();
-		}
-
-		try {
 			String versionName = getActivity().getPackageManager()
 					.getPackageInfo(getActivity().getPackageName(), 0).versionName;
 			int versionCode = getActivity().getPackageManager()
 					.getPackageInfo(getActivity().getPackageName(), 0).versionCode;
 			TextView version = (TextView) getView().findViewById(R.id.revision_text);
-			String revision = getString(R.string.revision_text,
-					versionName, String.valueOf(versionCode));
-			if (!buildId.equals("")) {
-				revision = getActivity().getString(R.string.revision_text,
-						versionName, buildId.substring(0,7));
-			}
-			version.setText(revision);
+			version.setText(getString(R.string.revision_text,
+					versionName, String.valueOf(versionCode)));
+			int start = versionName.lastIndexOf("-");
+			buildId = versionName.substring(start + 2, start + 9);
 		} catch (NameNotFoundException e) {
 			e.printStackTrace();
 		}
 
-		TextView website = (TextView) getView().findViewById(
-				R.id.site_text);
-		Linkify.addLinks(website, Linkify.ALL);
-
 		new retrieveGitTask().execute(Config.git_api);
-
 	}
 
 	private class retrieveGitTask extends

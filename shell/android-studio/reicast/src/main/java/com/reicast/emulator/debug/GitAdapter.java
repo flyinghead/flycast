@@ -86,7 +86,7 @@ public class GitAdapter extends BaseAdapter {
 		final String current = commit.get("Build");
 
 		RelativeLayout item = (RelativeLayout) vi.findViewById(R.id.change);
-		if (current != null && !current.equals("") && current.equals(sha)) {
+		if (current != null && current.equals(sha.substring(0, 7))) {
 			item.getBackground().setColorFilter(0xFF00FF00,
 					PorterDuff.Mode.MULTIPLY);
 		} else {
@@ -96,8 +96,7 @@ public class GitAdapter extends BaseAdapter {
 		dateText.setText(date);
 		committerText.setText(committer);
 		titleText.setText(title);
-		ImageLoader.getInstance()
-				.displayImage(avatar, avatarIcon, this.options);
+		ImageLoader.getInstance().displayImage(avatar, avatarIcon, this.options);
 
 		vi.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
