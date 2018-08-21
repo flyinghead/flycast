@@ -75,8 +75,7 @@
     <string name="modified_layout">Benutzerdefiniertes Layout</string>
     <string name="controller_compat">Kompatibilitätsmodus aktivieren</string>
     <string name="controller_unavailable">Gamepad-IME erkannt!\nBitte deaktivieren Sie das native Interface.</string>
-    <string name="mic_in_port_2">Mikrophon in Port 2 eingesteckt</string>
-    
+
     <string name="customize_physical_controls">Physische Controller anpassen</string>
     <string name="map_keycode_title">Controller ändern</string>
     <string name="map_keycode_message">Drücken Sie die neue Controller-Taste für %1$s</string>

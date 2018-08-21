@@ -67,4 +67,11 @@
         <item>pgc</item>
     </string-array>
 
+    <string-array name="peripherals">
+        <item>None</item>
+        <item>VMU</item>
+        <item>Microphone</item>
+        <item>Purupuru</item>
+    </string-array>
+
 </resources>

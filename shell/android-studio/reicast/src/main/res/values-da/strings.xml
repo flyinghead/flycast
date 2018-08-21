@@ -66,8 +66,7 @@
     <string name="modified_layout">Aktiver brugerdefineret layout</string>
     <string name="controller_compat">Aktiver kompatibilitesmode</string>
     <string name="controller_unavailable">Gamepad IME detekteret!\nDeaktiver native interface</string>
-    <string name="mic_in_port_2">Mikrofon tilsluttet port 2</string>
-    
+
     <string name="customize_physical_controls">Tilpas fysiske taster</string>
     <string name="map_keycode_title">Tilpas controller</string>
     <string name="map_keycode_message">Tryk på den nye controller taste for %1$s</string>

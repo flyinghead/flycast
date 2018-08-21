@@ -79,8 +79,7 @@
     <string name="modified_layout">Разрешить изменение раскладки</string>
     <string name="controller_compat">Режим совместимости</string>
     <string name="controller_unavailable">Обнаружен Gamepad IME!\nПожалуйста, отключите нативный интерфейс</string>
-    <string name="mic_in_port_2">Подключить микрофон к порту 2</string>
-    
+
     <string name="customize_physical_controls">Настройка аппаратных кнопок</string>
     <string name="map_keycode_title">Настройка контроллера</string>
     <string name="map_keycode_message">Нажмите кнопку контроллера для %1$s</string>

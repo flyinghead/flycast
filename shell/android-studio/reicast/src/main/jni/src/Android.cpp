@@ -36,7 +36,7 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_kcode(JNIEnv * env, j
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_vjoy(JNIEnv * env, jobject obj,u32 id,float x, float y, float w, float h)  __attribute__((visibility("default")));
 //JNIEXPORT jint JNICALL Java_com_reicast_emulator_emu_JNIdc_play(JNIEnv *env,jobject obj,jshortArray result,jint size);
 
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_initControllers(JNIEnv *env, jobject obj, jbooleanArray controllers)  __attribute__((visibility("default")));
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_initControllers(JNIEnv *env, jobject obj, jbooleanArray controllers, jobjectArray peripherals)  __attribute__((visibility("default")));
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setupMic(JNIEnv *env,jobject obj,jobject sip)  __attribute__((visibility("default")));
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_diskSwap(JNIEnv *env,jobject obj, jstring newdisk)  __attribute__((visibility("default")));
@@ -186,6 +186,7 @@ static char CurFileName[256];
 
 // Additonal controllers 2, 3 and 4 connected ?
 static bool add_controllers[3] = { false, false, false };
+int **controller_periphs;
 
 u16 kcode[4];
 u32 vks[4];
@@ -222,8 +223,8 @@ static void *ThreadHandler(void *UserData)
         strcat(Args[2],P);
     }
 
-  // Run nullDC emulator
-  dc_init(Args[2]? 3:1,Args);
+    // Run nullDC emulator
+    dc_init(Args[2]? 3:1,Args);
     return 0;
 }
 
@@ -256,17 +257,34 @@ void *libPvr_GetRenderSurface()
 
 void common_linux_setup();
 
+MapleDeviceType GetMapleDeviceType(int value)
+{
+    switch (value)
+    {
+        case 1:
+            return MDT_SegaVMU;
+        case 2:
+            return MDT_Microphone;
+        case 3:
+            return MDT_PurupuruPack;
+        default:
+            return MDT_None;
+    }
+}
+
 void os_SetupInput()
 {
-	// Create first controller
-	mcfg_CreateController(0, MDT_SegaVMU, MDT_SegaVMU);
+    // Create first controller
+    mcfg_CreateController(0, MDT_SegaVMU, MDT_SegaVMU);
 
-	// Add additonal controllers
-	for (int i = 0; i < 3; i++)
-	{
-		if (add_controllers[i])
-			mcfg_CreateController(i+1, MDT_None, MDT_None);
-	}
+    // Add additonal controllers
+    for (int i = 0; i < 3; i++)
+    {
+        if (add_controllers[i])
+            mcfg_CreateController(i + 1,
+                                  GetMapleDeviceType(controller_periphs[i + 1][0]),
+                                  GetMapleDeviceType(controller_periphs[i + 1][1]));
+    }
 }
 
 void os_SetWindowText(char const *Text)
@@ -384,8 +402,17 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setupMic(JNIEnv *env,
 {
     sipemu = env->NewGlobalRef(sip);
     getmicdata = env->GetMethodID(env->GetObjectClass(sipemu),"getData","()[B");
-    delete MapleDevices[0][1];
-    mcfg_Create(MDT_Microphone,0,1);
+    for (int i = 0; i < 3; i++)
+    {
+        if (controller_periphs[i + 1][0] == MDT_Microphone) {
+            delete MapleDevices[i + 1][0];
+            mcfg_Create(MDT_Microphone, i + 1, 0);
+        }
+        if (controller_periphs[i + 1][1] == MDT_Microphone) {
+            delete MapleDevices[i + 1][1];
+            mcfg_Create(MDT_Microphone, i + 1, 1);
+        }
+    }
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setupVmu(JNIEnv *env,jobject obj,jobject vmu)
@@ -527,11 +554,30 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_vjoy(JNIEnv * env, jo
     }
 }
 
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_initControllers(JNIEnv *env, jobject obj, jbooleanArray controllers)
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_initControllers(JNIEnv *env, jobject obj, jbooleanArray controllers, jobjectArray peripherals)
 {
     jboolean *controllers_body = env->GetBooleanArrayElements(controllers, 0);
     memcpy(add_controllers, controllers_body, 3);
     env->ReleaseBooleanArrayElements(controllers, controllers_body, 0);
+
+    int obj_len = env->GetArrayLength(peripherals);
+    jintArray port = (jintArray) env->GetObjectArrayElement(peripherals, 0);
+    int port_len = env->GetArrayLength(port);
+    controller_periphs = new int*[obj_len];
+    for (int i = 0; i < obj_len; ++i) {
+        port = (jintArray) env->GetObjectArrayElement(peripherals, i);
+        jint *items = env->GetIntArrayElements(port, 0);
+        controller_periphs[i] = new int[port_len];
+        for (int j = 0; j < port_len; ++j) {
+            controller_periphs[i][j]= items[j];
+        }
+    }
+    for (int i = 0; i < obj_len; i++) {
+        jintArray port = (jintArray) env->GetObjectArrayElement(peripherals, i);
+        jint *items = env->GetIntArrayElements(port, 0);
+        env->ReleaseIntArrayElements(port, items, 0);
+        env->DeleteLocalRef(port);
+    }
 }
 
 // Audio Stuff

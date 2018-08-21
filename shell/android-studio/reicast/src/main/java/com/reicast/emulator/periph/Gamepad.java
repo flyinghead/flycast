@@ -23,6 +23,12 @@ public class Gamepad {
 	public static final String pref_player4 = "device_descriptor_player_4";
 	public static final String pref_pad = "controller";
 
+	public static final String pref_mic = "mic_plugged_in";
+
+	public static final String p2_peripheral = "p2_peripheral";
+	public static final String p3_peripheral = "p3_peripheral";
+	public static final String p4_peripheral = "p4_peripheral";
+
 	public static final String pref_js_modified = "modified_key_layout";
 	public static final String pref_js_compat = "controller_compat";
 	public static final String pref_js_merged = "merged_joystick";

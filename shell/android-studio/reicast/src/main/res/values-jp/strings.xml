@@ -58,8 +58,7 @@
     <string name="joystick_layout">Dパッドとしてジョイスティックを使用</string>
     <string name="modified_layout">カスタムキーレイアウトを有効に</string>
     <string name="controller_compat">互換モードを有効に</string>
-    <string name="mic_in_port_2">ポート2に接続されたマイク</string>
-    
+
     <string name="customize_physical_controls">物理コントロールを編集</string>
     <string name="map_keycode_title">コントローラを編集する</string>
     <string name="map_keycode_message">%1$sボタンを押してください</string>
