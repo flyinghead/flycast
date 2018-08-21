@@ -37,6 +37,8 @@
 
 #if defined(USE_EVDEV)
 	#include "linux-dist/evdev.h"
+	#include "hw/maple/maple_cfg.h"
+	#include "hw/maple/maple_devs.h"
 #endif
 
 #if defined(USE_JOYSTICK)
@@ -103,7 +105,47 @@ void emit_WriteCodeCache();
 	static int joystick_fd = -1; // Joystick file descriptor
 #endif
 
-void SetupInput()
+MapleDeviceType GetMapleDeviceType(int value, int port)
+{
+	switch (value)
+	{
+		case 0:
+			#if defined(_DEBUG) || defined(DEBUG)
+			printf("Maple Device: None\n");
+			#endif
+			return MDT_None;
+		case 1:
+			#if defined(_DEBUG) || defined(DEBUG)
+			printf("Maple Device: VMU\n");
+			#endif
+			return MDT_SegaVMU;
+		case 2:
+			#if defined(_DEBUG) || defined(DEBUG)
+			printf("Maple Device: Microphone\n");
+			#endif
+			return MDT_Microphone;
+		case 3:
+			#if defined(_DEBUG) || defined(DEBUG)
+			printf("Maple Device: PuruPuruPack\n");
+			#endif
+			return MDT_PurupuruPack;
+		default:
+			MapleDeviceType result = MDT_None;
+			string result_type = "None";
+
+			// Controller in port 1 defaults to VMU for Maple device, all other to None
+			if (port == 1)
+			{
+				result_type = "VMU";
+				result = MDT_SegaVMU;
+			}
+
+			printf("Unsupported configuration (%d) for Maple Device, using %s\n", value, result_type.c_str());
+			return result;
+	}
+}
+
+void os_SetupInput()
 {
 	#if defined(USE_EVDEV)
 		int evdev_device_id[4] = { -1, -1, -1, -1 };
@@ -154,6 +196,8 @@ void SetupInput()
 							}
 						}
 				}
+
+				mcfg_CreateController(port, GetMapleDeviceType(evdev_controllers[port].mapping->Maple_Device1, port), GetMapleDeviceType(evdev_controllers[port].mapping->Maple_Device2, port));
 			}
 		}
 	#endif
@@ -364,7 +408,7 @@ string find_user_data_dir()
 			// If XDG_DATA_HOME is set explicitly, we'll use that instead of $HOME/.config
 			data = (string)getenv("XDG_DATA_HOME") + "/reicast";
 		}
-		
+
 		if(!data.empty())
 		{
 			if((stat(data.c_str(), &info) != 0) || !(info.st_mode & S_IFDIR))
@@ -469,8 +513,6 @@ int main(int argc, wchar* argv[])
 	settings.profile.run_counts=0;
 
 	dc_init(argc,argv);
-
-	SetupInput();
 
 	#if !defined(TARGET_EMSCRIPTEN)
 		#if FEAT_HAS_NIXPROF

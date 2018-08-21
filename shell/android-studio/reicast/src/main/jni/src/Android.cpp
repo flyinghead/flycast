@@ -10,6 +10,7 @@
 #include <GLES2/gl2.h>
 
 #include "types.h"
+#include "hw/maple/maple_cfg.h"
 #include "profiler/profiler.h"
 #include "rend/TexCache.h"
 #include "hw/maple/maple_devs.h"
@@ -221,15 +222,8 @@ static void *ThreadHandler(void *UserData)
         strcat(Args[2],P);
     }
 
-    // Add additonal controllers
-    for (int i = 0; i < 3; i++)
-    {
-        if (add_controllers[i])
-            mcfg_Create(MDT_SegaController,i+1,5);
-    }
-
-    // Run nullDC emulator
-    dc_init(Args[2]? 3:1,Args);
+  // Run nullDC emulator
+  dc_init(Args[2]? 3:1,Args);
     return 0;
 }
 
@@ -261,6 +255,19 @@ void *libPvr_GetRenderSurface()
 }
 
 void common_linux_setup();
+
+void os_SetupInput()
+{
+	// Create first controller
+	mcfg_CreateController(0, MDT_SegaVMU, MDT_SegaVMU);
+
+	// Add additonal controllers
+	for (int i = 0; i < 3; i++)
+	{
+		if (add_controllers[i])
+			mcfg_CreateController(i+1, MDT_None, MDT_None);
+	}
+}
 
 void os_SetWindowText(char const *Text)
 {

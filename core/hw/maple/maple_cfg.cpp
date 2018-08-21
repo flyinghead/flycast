@@ -14,7 +14,7 @@ Plugins:
 		KeyMap -- translated chars ( no re-mapping possible)
 	Output
 		Image
-		
+
 */
 /*
 	MapleConfig:
@@ -64,19 +64,37 @@ struct MapleConfigMap : IMapleConfigMap
 	}
 };
 
-void mcfg_Create(MapleDeviceType type,u32 bus,u32 port)
+void mcfg_Create(MapleDeviceType type, u32 bus, u32 port)
 {
-	maple_device* dev=maple_Create(type);
-	dev->Setup(maple_GetAddress(bus,port));
+	maple_device* dev = maple_Create(type);
+	dev->Setup(maple_GetAddress(bus, port));
 	dev->config = new MapleConfigMap(dev);
 	dev->OnSetup();
-	MapleDevices[bus][port]=dev;
+	MapleDevices[bus][port] = dev;
 }
 
-void mcfg_CreateDevices()
+void mcfg_CreateNAOMIJamma()
 {
-int numberOfControl = cfgLoadInt("players", "nb", 1);
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
+	mcfg_Create(MDT_NaomiJamma, 0, 5);
+}
+
+
+void mcfg_CreateController(u32 bus, MapleDeviceType maple_type1, MapleDeviceType maple_type2)
+{
+	mcfg_Create(MDT_SegaController, bus, 5);
+
+	if (maple_type1 != MDT_None)
+		mcfg_Create(maple_type1, bus, 0);
+
+	if (maple_type2 != MDT_None)
+		mcfg_Create(maple_type2, bus, 1);
+}
+
+void mcfg_CreateDevicesFromConfig()
+{
+	// Create the configure controller count
+	int numberOfControl = cfgLoadInt("players", "nb", 1);
+
 	if (numberOfControl <= 0)
 		numberOfControl = 1;
 	if (numberOfControl > 4)
@@ -86,11 +104,9 @@ int numberOfControl = cfgLoadInt("players", "nb", 1);
 		mcfg_Create(MDT_SegaController, i, 5);
 	}
 
-	mcfg_Create(MDT_SegaVMU,0,0);
-	mcfg_Create(MDT_SegaVMU,0,1);
-#else
-	mcfg_Create(MDT_NaomiJamma, 0, 5);
-#endif
+	// Default to two VMUs on controller 1
+	mcfg_Create(MDT_SegaVMU, 0, 0);
+	mcfg_Create(MDT_SegaVMU, 0, 1);
 }
 
 void mcfg_DestroyDevices()

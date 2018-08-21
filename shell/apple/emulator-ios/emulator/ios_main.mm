@@ -21,17 +21,18 @@
 #include <sys/time.h>
 #include "hw/sh4/dyna/blockmanager.h"
 #include <unistd.h>
+#include "hw/maple/maple_cfg.h"
 
 
 int msgboxf(const wchar* text,unsigned int type,...)
 {
     va_list args;
-    
+
     wchar temp[2048];
     va_start(args, type);
     vsprintf(temp, text, args);
     va_end(args);
-    
+
     //printf(NULL,temp,VER_SHORTNAME,type | MB_TASKMODAL);
     puts(temp);
     return 0;
@@ -39,14 +40,14 @@ int msgboxf(const wchar* text,unsigned int type,...)
 
 int darw_printf(const wchar* text,...) {
     va_list args;
-    
+
     wchar temp[2048];
     va_start(args, text);
     vsprintf(temp, text, args);
     va_end(args);
-    
+
     NSLog(@"%s", temp);
-    
+
     return 0;
 }
 
@@ -64,29 +65,29 @@ extern "C" int reicast_main(int argc, wchar* argv[])
 {
     //if (argc==2)
     //ndcid=atoi(argv[1]);
-    
+
     string homedir = [ [[[[NSFileManager defaultManager] URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask] objectAtIndex:0] path] UTF8String];
     set_user_config_dir(homedir);
     set_user_data_dir(homedir);
-    
+
     freopen( (homedir + "/log.txt").c_str(), "wb", stdout);
-    
+
     printf("Config dir is: %s\n", get_writable_config_path("/").c_str());
     printf("Data dir is:   %s\n", get_writable_data_path("/").c_str());
-    
+
     common_linux_setup();
-    
+
     settings.profile.run_counts=0;
-    
+
     dc_init(argc,argv);
-    
+
     dc_run();
-    
+
     return 0;
 }
 
 void os_DoEvents() {
-    
+
 }
 
 
@@ -102,8 +103,12 @@ void os_CreateWindow() {
 
 }
 
+void os_SetupInput() {
+	mcfg_CreateDevicesFromConfig();
+}
+
 void UpdateInputState(u32 port) {
-    
+
 }
 
 void UpdateVibration(u32 port, u32 value) {
@@ -120,7 +125,7 @@ void* libPvr_GetRenderTarget() {
 
 void* libPvr_GetRenderSurface() {
     return 0;
-    
+
 }
 
 bool gl_init(void*, void*) {
@@ -128,9 +133,9 @@ bool gl_init(void*, void*) {
 }
 
 void gl_term() {
-    
+
 }
 
 void gl_swap() {
-    
+
 }

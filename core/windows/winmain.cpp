@@ -2,10 +2,11 @@
 #include "oslib\audiostream.h"
 #include "imgread\common.h"
 
-#define _WIN32_WINNT 0x0500 
+#define _WIN32_WINNT 0x0500
 #include <windows.h>
 
 #include <Xinput.h>
+#include "hw\maple\maple_cfg.h"
 #pragma comment(lib, "XInput9_1_0.lib")
 
 PCHAR*
@@ -45,7 +46,7 @@ PCHAR*
 	{
 		if(in_QM)
 		{
-			if(a == '\"') 
+			if(a == '\"')
 			{
 				in_QM = FALSE;
 			}
@@ -108,6 +109,11 @@ bool VramLockedWrite(u8* address);
 bool ngen_Rewrite(unat& addr,unat retadr,unat acc);
 bool BM_LockedWrite(u8* address);
 void UpdateController(u32 port);
+
+void os_SetupInput()
+{
+	mcfg_CreateDevicesFromConfig();
+}
 
 LONG ExeptionHandler(EXCEPTION_POINTERS *ExceptionInfo)
 {
@@ -254,12 +260,12 @@ void UpdateInputState(u32 port)
 void UpdateController(u32 port)
 	{
 		XINPUT_STATE state;
-		
+
 		if (XInputGetState(port, &state) == 0)
 		{
 			WORD xbutton = state.Gamepad.wButtons;
 
-			if (xbutton & XINPUT_GAMEPAD_A) 
+			if (xbutton & XINPUT_GAMEPAD_A)
 				kcode[port] &= ~key_CONT_A;
 			if (xbutton & XINPUT_GAMEPAD_B)
 				kcode[port] &= ~key_CONT_B;
@@ -381,34 +387,34 @@ void os_CreateWindow()
 	window_win=hWnd;
 }
 
-void* libPvr_GetRenderTarget() 
-{ 
-	return window_win; 
+void* libPvr_GetRenderTarget()
+{
+	return window_win;
 }
 
-void* libPvr_GetRenderSurface() 
-{ 
+void* libPvr_GetRenderSurface()
+{
 	return GetDC((HWND)window_win);
 }
 
-BOOL CtrlHandler( DWORD fdwCtrlType ) 
-{ 
-	switch( fdwCtrlType ) 
+BOOL CtrlHandler( DWORD fdwCtrlType )
+{
+	switch( fdwCtrlType )
 	{
 		case CTRL_SHUTDOWN_EVENT:
 		case CTRL_LOGOFF_EVENT:
-		// Pass other signals to the next handler. 
+		// Pass other signals to the next handler.
 		case CTRL_BREAK_EVENT:
-		// CTRL-CLOSE: confirm that the user wants to exit. 
+		// CTRL-CLOSE: confirm that the user wants to exit.
 		case CTRL_CLOSE_EVENT:
-		// Handle the CTRL-C signal. 
+		// Handle the CTRL-C signal.
 		case CTRL_C_EVENT:
 			SendMessageA((HWND)libPvr_GetRenderTarget(),WM_CLOSE,0,0); //FIXEM
 			return( TRUE );
-		default: 
+		default:
 			return FALSE;
-	} 
-} 
+	}
+}
 
 
 void os_SetWindowText(const char* text)
@@ -472,12 +478,12 @@ void ReserveBottomMemory()
     if ( s_initialized )
         return;
     s_initialized = true;
- 
+
     // Start by reserving large blocks of address space, and then
     // gradually reduce the size in order to capture all of the
     // fragments. Technically we should continue down to 64 KB but
     // stopping at 1 MB is sufficient to keep most allocators out.
- 
+
     const size_t LOW_MEM_LINE = 0x100000000LL;
     size_t totalReservation = 0;
     size_t numVAllocs = 0;
@@ -490,19 +496,19 @@ void ReserveBottomMemory()
             void* p = VirtualAlloc(0, size, MEM_RESERVE, PAGE_NOACCESS);
             if (!p)
                 break;
- 
+
             if ((size_t)p >= LOW_MEM_LINE)
             {
                 // We don't need this memory, so release it completely.
                 VirtualFree(p, 0, MEM_RELEASE);
                 break;
             }
- 
+
             totalReservation += size;
             ++numVAllocs;
         }
     }
- 
+
     // Now repeat the same process but making heap allocations, to use up
     // the already reserved heap blocks that are below the 4 GB line.
     HANDLE heap = GetProcessHeap();
@@ -513,19 +519,19 @@ void ReserveBottomMemory()
             void* p = HeapAlloc(heap, 0, blockSize);
             if (!p)
                 break;
- 
+
             if ((size_t)p >= LOW_MEM_LINE)
             {
                 // We don't need this memory, so release it completely.
                 HeapFree(heap, 0, p);
                 break;
             }
- 
+
             totalReservation += blockSize;
             ++numHeapAllocs;
         }
     }
- 
+
     // Perversely enough the CRT doesn't use the process heap. Suck up
     // the memory the CRT heap has already reserved.
     for (size_t blockSize = 64 * 1024; blockSize >= 16; blockSize /= 2)
@@ -535,19 +541,19 @@ void ReserveBottomMemory()
             void* p = malloc(blockSize);
             if (!p)
                 break;
- 
+
             if ((size_t)p >= LOW_MEM_LINE)
             {
                 // We don't need this memory, so release it completely.
                 free(p);
                 break;
             }
- 
+
             totalReservation += blockSize;
             ++numHeapAllocs;
         }
     }
- 
+
     // Print diagnostics showing how many allocations we had to make in
     // order to reserve all of low memory, typically less than 200.
     char buffer[1000];
@@ -600,7 +606,7 @@ struct _CONTEXT* ContextRecord,
 	EXCEPTION_POINTERS ep;
 	ep.ContextRecord = ContextRecord;
 	ep.ExceptionRecord = ExceptionRecord;
-	
+
 	return (EXCEPTION_DISPOSITION)ExeptionHandler(&ep);
 }
 
@@ -646,7 +652,7 @@ void setup_seh() {
 	unwind_info[0].UnwindCode[0].CodeOffset = 0;
 	unwind_info[0].UnwindCode[0].UnwindOp = 2;// UWOP_ALLOC_SMALL;
 	unwind_info[0].UnwindCode[0].OpInfo = 0x20 / 8;
-	
+
 	//unwind_info[0].ExceptionHandler =
 		//(DWORD)((u8 *)__gnat_SEH_error_handler - CodeCache);
 	/* Set its scope to the entire program.  */
@@ -708,7 +714,7 @@ int CALLBACK WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine
 }
 
 
-	
+
 LARGE_INTEGER qpf;
 double  qpfd;
 //Helper functions
@@ -757,7 +763,7 @@ cThread::cThread(ThreadEntryFP* function,void* prm)
 	param=prm;
 }
 
-	
+
 void cThread::Start()
 {
 	hThread=CreateThread(NULL,NULL,(LPTHREAD_START_ROUTINE)Entry,param,0,NULL);
@@ -773,7 +779,7 @@ void cThread::WaitToEnd()
 //cResetEvent Calss
 cResetEvent::cResetEvent(bool State,bool Auto)
 {
-		hEvent = CreateEvent( 
+		hEvent = CreateEvent(
 		NULL,             // default security attributes
 		Auto?FALSE:TRUE,  // auto-reset event?
 		State?TRUE:FALSE, // initial state is State
