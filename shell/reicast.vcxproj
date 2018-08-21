@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Fast|Win32">
@@ -337,6 +337,7 @@
     <ClInclude Include="..\core\rend\TexCache.h" />
     <ClInclude Include="..\core\stdclass.h" />
     <ClInclude Include="..\core\types.h" />
+    <ClInclude Include="..\core\version.h" />
     <ClInclude Include="..\core\webui\server.h" />
   </ItemGroup>
   <ItemGroup>
@@ -359,6 +360,7 @@
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>reicast</RootNamespace>
     <ProjectName>reicast</ProjectName>
+    <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Fast|Win32'" Label="Configuration">
@@ -459,6 +461,16 @@
       <AdditionalLibraryDirectories>$(SolutionDir)..\pvrframe</AdditionalLibraryDirectories>
       <AdditionalDependencies>Dsound.lib;winmm.lib;wsock32.lib;comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <CustomBuildStep>
+      <Command>
+      </Command>
+    </CustomBuildStep>
+    <PreBuildEvent>
+      <Command>for /f "delims=" %%i in ('git describe') do echo #define REICAST_VERSION "%%i" &gt;$(ProjectDir)\..\core\version.h</Command>
+    </PreBuildEvent>
+    <PreBuildEvent>
+      <Message>Setting Version  git describe &gt;$(ProjectDir)\version.txt &amp;&amp;  set r_ver=%%i &amp;&amp; </Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Fast|x64'">
     <ClCompile>
@@ -466,7 +478,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Full</Optimization>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;X86;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>TARGET_NO_WEBUI;WIN32;NDEBUG;_CONSOLE;X86;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>/MP %(AdditionalOptions)</AdditionalOptions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
@@ -493,6 +505,16 @@
       <AdditionalLibraryDirectories>$(SolutionDir)..\pvrframe</AdditionalLibraryDirectories>
       <AdditionalDependencies>Dsound.lib;winmm.lib;wsock32.lib;comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <CustomBuildStep>
+      <Command>
+      </Command>
+    </CustomBuildStep>
+    <PreBuildEvent>
+      <Command>for /f "delims=" %%i in ('git describe') do echo #define REICAST_VERSION "%%i" &gt;$(ProjectDir)\..\core\version.h</Command>
+    </PreBuildEvent>
+    <PreBuildEvent>
+      <Message>Setting Version  git describe &gt;$(ProjectDir)\version.txt &amp;&amp;  set r_ver=%%i &amp;&amp; </Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Slow|Win32'">
     <ClCompile>
@@ -500,7 +522,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;X86;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>DEF_CONSOLE;TARGET_NO_WEBUI;WIN32;_DEBUG;_CONSOLE;X86;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <MinimalRebuild>false</MinimalRebuild>
@@ -514,6 +536,16 @@
       <AdditionalLibraryDirectories>$(SolutionDir)..\pvrframe</AdditionalLibraryDirectories>
       <AdditionalDependencies>Dsound.lib;winmm.lib;wsock32.lib;comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <CustomBuildStep>
+      <Command>
+      </Command>
+    </CustomBuildStep>
+    <PreBuildEvent>
+      <Command>for /f "delims=" %%i in ('git describe') do echo #define REICAST_VERSION "%%i" &gt;$(ProjectDir)\..\core\version.h</Command>
+    </PreBuildEvent>
+    <PreBuildEvent>
+      <Message>Setting Version  git describe &gt;$(ProjectDir)\version.txt &amp;&amp;  set r_ver=%%i &amp;&amp; </Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Slow|x64'">
     <ClCompile>
@@ -521,7 +553,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;X86;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>TARGET_NO_WEBUI;WIN32;_DEBUG;_CONSOLE;X86;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <MinimalRebuild>false</MinimalRebuild>
@@ -537,7 +569,19 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)..\pvrframe</AdditionalLibraryDirectories>
       <AdditionalDependencies>Dsound.lib;winmm.lib;wsock32.lib;comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <EntryPointSymbol>
+      </EntryPointSymbol>
     </Link>
+    <CustomBuildStep>
+      <Command>
+      </Command>
+    </CustomBuildStep>
+    <PreBuildEvent>
+      <Command>for /f "delims=" %%i in ('git describe') do echo #define REICAST_VERSION "%%i" &gt;$(ProjectDir)\..\core\version.h</Command>
+    </PreBuildEvent>
+    <PreBuildEvent>
+      <Message>Setting Version  git describe &gt;$(ProjectDir)\version.txt &amp;&amp;  set r_ver=%%i &amp;&amp; </Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

@@ -946,6 +946,7 @@
     <ClInclude Include="..\core\hw\sh4\modules\mmu_impl.h">
       <Filter>hw\sh4\modules</Filter>
     </ClInclude>
+    <ClInclude Include="..\core\version.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\core\deps\zlib\Makefile">

@@ -370,7 +370,11 @@ ifneq (,$(findstring gcwz,$(platform)))
 	mksquashfs $(EXECUTABLE_STRIPPED) $(GCWZ_PKG_FILES) $(GCWZ_PKG) -all-root
 endif
 
-$(EXECUTABLE): $(OBJECTS)
+VERSION_HEADER=$(RZDCY_SRC_DIR)/version.h
+$(VERSION_HEADER):
+	echo \#define REICAST_VERSION \"$(shell git describe)\" >$(RZDCY_SRC_DIR)/version.h
+
+$(EXECUTABLE): $(VERSION_HEADER) $(OBJECTS)
 	$(CXX) $(MFLAGS) $(EXTRAFLAGS) $(LDFLAGS) $(OBJECTS) $(LIBS) -o $@
 
 $(EXECUTABLE_STRIPPED): $(EXECUTABLE)
@@ -422,4 +426,4 @@ uninstall:
 	rm -f $(DESTDIR)$(ICON_DIR)/reicast.png
 
 clean:
-	rm -f $(OBJECTS) $(EXECUTABLE) $(EXECUTABLE_STRIPPED) .map
+	rm -f $(VERSION_HEADER) $(OBJECTS) $(EXECUTABLE) $(EXECUTABLE_STRIPPED) .map

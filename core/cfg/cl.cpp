@@ -6,8 +6,12 @@
 */
 
 #include <stdio.h>
-#include <string.h>
 #include <ctype.h>
+#include <string.h>
+
+#ifndef linux
+#include <conio.h>
+#endif
 
 #include "cfg/cfg.h"
 
@@ -101,27 +105,45 @@ int setconfig(wchar** arg,int cl)
 
 int showhelp(wchar** arg,int cl)
 {
-	printf("Available commands :\n");
+	printf("\nAvailable commands :\n");
 
-	printf("-config	section:key=value [, ..]: add a virtual config value\n Virtual config values won't be saved to the .cfg file\n unless a different value is written to em\nNote :\n You can specify many settings in the xx:yy=zz , gg:hh=jj , ...\n format.The spaces between the values and ',' are needed.");
+	printf("-config	section:key=value [, ..]: add a virtual config value\n Virtual config values won't be saved to the .cfg file\n unless a different value is written to em\nNote :\n You can specify many settings in the xx:yy=zz , gg:hh=jj , ...\n format.The spaces between the values and ',' are needed.\n");
+	printf("\n-help: show help info\n");
+	printf("\n-version: show current version #\n\n");
 
+#if !defined(DEF_CONSOLE) && !defined(linux)
+	getch();
+#endif
 	return 0;
 }
+
+int showversion(wchar** arg,int cl)
+{
+	printf("\nReicast Version: # %s built on %s \n", REICAST_VERSION, __DATE__);
+
+#if !defined(DEF_CONSOLE) && !defined(linux)
+	getch();
+#endif
+	return 0;
+}
+
 bool ParseCommandLine(int argc,wchar* argv[])
 {
-
 	int cl=argc-2;
 	wchar** arg=argv+1;
 	while(cl>=0)
 	{
-		if (stricmp(*arg,"-help")==0)
+		if (stricmp(*arg,"-help")==0 || stricmp(*arg,"--help")==0)
 		{
-			int as=showhelp(arg,cl);
-			cl-=as;
-			arg+=as;
+			showhelp(arg,cl);
 			return true;
 		}
-		else if (stricmp(*arg,"-config")==0)
+		if (stricmp(*arg,"-version")==0 || stricmp(*arg,"--version")==0)
+		{
+			showversion(arg,cl);
+			return true;
+		}
+		else if (stricmp(*arg,"-config")==0 || stricmp(*arg,"--config")==0)
 		{
 			int as=setconfig(arg,cl);
 			cl-=as;
