@@ -94,7 +94,8 @@
     <string name="modified_layout">Enable Custom Key Layout</string>
     <string name="controller_compat">Enable Compatibility Mode</string>
     <string name="controller_unavailable">Gamepad IME detected!\nPlease disable native interface</string>
-    <string name="mic_in_port_2">Microphone plugged into port 2</string>
+    <string name="enable_microphone">Enable Microphone(s)</string>
+    <string name="controller_1_vmu">Includes 2 VMUs (Cannot be modified)</string>
     
     <string name="customize_physical_controls">Customize Physical Controls</string>
     <string name="map_keycode_title">Modify Controller</string>

@@ -22,7 +22,7 @@ public final class JNIdc
 	public static native void vjoy(int id,float x, float y, float w, float h);
 	//public static native int play(short result[],int size);
 
-	public static native void initControllers(boolean[] controllers);
+	public static native void initControllers(boolean[] controllers, int[][] peripherals);
 
 	public static native void setupMic(Object sip);
 	public static native void diskSwap(String disk);

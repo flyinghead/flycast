@@ -75,9 +75,8 @@
     <string name="joystick_layout">Usar Joystick para entrada D-Pad</string>	
     <string name="modified_layout">Habilitar layout de botões personalizado</string>
     <string name="controller_compat">Habilitar modo de compatibilidade</string>
-    <string name="controller_unavailable">Gamepad IME detectado!\nPor favor, desative a interface nativa</string>	
-	<string name="mic_in_port_2">Microfone conectado na porta 2</string>
-    
+    <string name="controller_unavailable">Gamepad IME detectado!\nPor favor, desative a interface nativa</string>
+
     <string name="customize_physical_controls">Personalizar controles físicos</string>
     <string name="map_keycode_title">Modificar controle</string>
     <string name="map_keycode_message">Pressione o novo botão para o controle %1$s</string>

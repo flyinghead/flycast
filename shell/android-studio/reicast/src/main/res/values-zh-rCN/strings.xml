@@ -40,7 +40,6 @@
     <string name="controller_already_in_use">该控制器已被使用!</string>
     <string name="modified_layout">启用自定义按键布局</string>
     <string name="controller_compat">启用兼容模式</string>
-    <string name="mic_in_port_2">麦克风已插入 Port 2</string>
     <string name="customize_physical_controls">自定义物理控制</string>
     <string name="map_keycode_title">修改控制器</string>
     <string name="map_keycode_message">按下控制器按钮来映射 %1$s</string>
