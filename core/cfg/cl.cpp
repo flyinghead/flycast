@@ -117,6 +117,12 @@ int showhelp(wchar** arg,int cl)
 	return 0;
 }
 
+#ifndef _ANDROID
+#include "version.h"
+#else
+#define REICAST_VERSION "r7-android-tmp"
+#endif
+
 int showversion(wchar** arg,int cl)
 {
 	printf("\nReicast Version: # %s built on %s \n", REICAST_VERSION, __DATE__);

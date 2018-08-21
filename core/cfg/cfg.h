@@ -1,7 +1,6 @@
 #pragma once
 
 #include "types.h"
-#include "version.h"
 /*
 **	cfg* prototypes, if you pass NULL to a cfgSave* it will wipe out the section
 **	} if you pass it to lpKey it will wipe out that particular entry
