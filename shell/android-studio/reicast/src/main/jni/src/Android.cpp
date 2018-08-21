@@ -223,8 +223,8 @@ static void *ThreadHandler(void *UserData)
         strcat(Args[2],P);
     }
 
-  // Run nullDC emulator
-  dc_init(Args[2]? 3:1,Args);
+    // Run nullDC emulator
+    dc_init(Args[2]? 3:1,Args);
     return 0;
 }
 
@@ -274,18 +274,17 @@ MapleDeviceType GetMapleDeviceType(int value)
 
 void os_SetupInput()
 {
-	// Create first controller
-	mcfg_CreateController(0, MDT_SegaVMU, MDT_SegaVMU);
+    // Create first controller
+    mcfg_CreateController(0, MDT_SegaVMU, MDT_SegaVMU);
 
-	// Add additonal controllers
-	for (int i = 0; i < 3; i++)
-	{
-		if (add_controllers[i])
-			mcfg_CreateController(i + 1,
-                    GetMapleDeviceType(controller_periphs[i + 1][0]),
-                    GetMapleDeviceType(controller_periphs[i + 1][1])
-            );
-	}
+    // Add additonal controllers
+    for (int i = 0; i < 3; i++)
+    {
+        if (add_controllers[i])
+            mcfg_CreateController(i + 1,
+                                  GetMapleDeviceType(controller_periphs[i + 1][0]),
+                                  GetMapleDeviceType(controller_periphs[i + 1][1]));
+    }
 }
 
 void os_SetWindowText(char const *Text)
