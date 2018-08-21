@@ -825,7 +825,7 @@
                     android:orientation="vertical" >
 
                     <Button
-                        android:id="@+id/reset_emu_settings"
+                        android:id="@+id/reset_emu_btn"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/reset_emu" />

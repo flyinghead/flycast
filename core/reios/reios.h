@@ -9,4 +9,7 @@ void reios_term();
 
 void DYNACALL reios_trap(u32 op);
 
+char* reios_disk_id();
+extern char reios_software_name[129];
+
 #define REIOS_OPCODE 0x085B

@@ -1,5 +1,6 @@
 package com.reicast.emulator;
 
+import android.app.Activity;
 import android.app.Application;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -99,6 +100,25 @@ public class Emulator extends Application {
         JNIdc.usereios(Emulator.usereios ? 1 : 0);
         JNIdc.bootdisk(Emulator.bootdisk);
         JNIdc.dreamtime(DreamTime.getDreamtime());
+    }
+
+    public void getGameConfiguration(String gameId) {
+        SharedPreferences mPrefs = getSharedPreferences(gameId, Activity.MODE_PRIVATE);
+        Emulator.unstableopt = mPrefs.getBoolean(pref_unstable, unstableopt);
+        Emulator.dynsafemode = mPrefs.getBoolean(pref_dynsafemode, dynsafemode);
+        Emulator.frameskip = mPrefs.getInt(pref_frameskip, frameskip);
+        Emulator.pvrrender = mPrefs.getBoolean(pref_pvrrender, pvrrender);
+        Emulator.syncedrender = mPrefs.getBoolean(pref_syncedrender, syncedrender);
+        Emulator.modvols = mPrefs.getBoolean(pref_modvols, modvols);
+    }
+
+    public void loadGameConfiguration() {
+        JNIdc.unstable(Emulator.unstableopt ? 1 : 0);
+        JNIdc.safemode(Emulator.dynsafemode ? 1 : 0);
+        JNIdc.frameskip(Emulator.frameskip);
+        JNIdc.pvrrender(Emulator.pvrrender ? 1 : 0);
+        JNIdc.syncedrender(Emulator.syncedrender ? 1 : 0);
+        JNIdc.modvols(Emulator.modvols ? 1 : 0);
     }
 
     static {

@@ -32,6 +32,8 @@ import com.reicast.emulator.config.Config;
 import com.reicast.emulator.emu.OnScreenMenu.FpsPopup;
 import com.reicast.emulator.periph.VJoy;
 
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 
 import javax.microedition.khronos.egl.EGLConfig;
@@ -670,6 +672,22 @@ public class GL2JNIView extends GLSurfaceView
         void Die() {
             showMessage("Something went wrong and reicast crashed.\nPlease report this on the reicast forums.");
             ((Activity) context).finish();
+        }
+
+        void reiosInfo(String reiosId, String reiosSoftware) {
+            String gameId = reiosId.replaceAll("[^a-zA-Z0-9]+", "").toLowerCase();
+            try {
+                OutputStreamWriter outputStreamWriter = new OutputStreamWriter(
+                        context.openFileOutput(gameId + ".pgc", Context.MODE_PRIVATE));
+                outputStreamWriter.write(reiosSoftware);
+                outputStreamWriter.close();
+            }
+            catch (IOException e) {
+                Log.e("Exception", "File write failed: " + e.toString());
+            }
+            Emulator app = (Emulator) context.getApplicationContext();
+            app.getGameConfiguration(gameId);
+            app.loadGameConfiguration();
         }
 
     }

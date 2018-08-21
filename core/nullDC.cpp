@@ -15,6 +15,7 @@
 
 #include "webui/server.h"
 #include "hw/naomi/naomi_cart.h"
+#include "reios/reios.h"
 
 settings_t settings;
 
@@ -185,8 +186,8 @@ int dc_init(int argc,wchar* argv[])
 		Get_Sh4Interpreter(&sh4_cpu);
 		printf("Using Interpreter\n");
 	}
-	
-  InitAudio();
+
+    InitAudio();
 
 	sh4_cpu.Init();
 	mem_Init();
@@ -206,6 +207,10 @@ int dc_init(int argc,wchar* argv[])
 	
 
 	sh4_cpu.Reset(false);
+
+#ifndef _ANDROID
+	LoadCustom();
+#endif
 	
 	return rv;
 }
@@ -267,23 +272,23 @@ void LoadSettings()
 	settings.pvr.rend				= cfgLoadInt("config","pvr.rend",0);
 
 	settings.pvr.MaxThreads			= cfgLoadInt("config", "pvr.MaxThreads", 3);
-	settings.pvr.SynchronousRendering			= cfgLoadInt("config", "pvr.SynchronousRendering", 0);
+	settings.pvr.SynchronousRender	= cfgLoadInt("config", "pvr.SynchronousRendering", 0);
 
-	settings.debug.SerialConsole = cfgLoadInt("config", "Debug.SerialConsoleEnabled", 0) != 0;
+	settings.debug.SerialConsole	= cfgLoadInt("config", "Debug.SerialConsoleEnabled", 0) != 0;
 
-	settings.bios.UseReios = cfgLoadInt("config", "bios.UseReios", 0);
-	settings.reios.ElfFile = cfgLoadStr("reios", "ElfFile", "");
+	settings.bios.UseReios			= cfgLoadInt("config", "bios.UseReios", 0);
+	settings.reios.ElfFile			= cfgLoadStr("reios", "ElfFile", "");
 
-	settings.validate.OpenGlChecks = cfgLoadInt("validate", "OpenGlChecks", 0) != 0;
+	settings.validate.OpenGlChecks	= cfgLoadInt("validate", "OpenGlChecks", 0) != 0;
 #endif
 
-	settings.pvr.HashLogFile = cfgLoadStr("testing", "ta.HashLogFile", "");
-	settings.pvr.HashCheckFile = cfgLoadStr("testing", "ta.HashCheckFile", "");
+	settings.pvr.HashLogFile		= cfgLoadStr("testing", "ta.HashLogFile", "");
+	settings.pvr.HashCheckFile		= cfgLoadStr("testing", "ta.HashCheckFile", "");
 
 #if SUPPORT_DISPMANX
-	settings.dispmanx.Width = cfgLoadInt("dispmanx","width",640);
-	settings.dispmanx.Height = cfgLoadInt("dispmanx","height",480);
-	settings.dispmanx.Maintain_Aspect = cfgLoadBool("dispmanx","maintain_aspect",true);
+	settings.dispmanx.Width			= cfgLoadInt("dispmanx","width",640);
+	settings.dispmanx.Height		= cfgLoadInt("dispmanx","height",480);
+	settings.dispmanx.Keep_Aspect	= cfgLoadBool("dispmanx","maintain_aspect",true);
 #endif
 
 #if (HOST_OS != OS_LINUX || defined(_ANDROID) || defined(TARGET_PANDORA))
@@ -304,11 +309,32 @@ void LoadSettings()
 	settings.dreamcast.broadcast= min(max(settings.dreamcast.broadcast,0),4);
 */
 }
+
+void LoadCustom()
+{
+	char *reios_id = reios_disk_id();
+
+	cfgSaveStr(reios_id, "software.name", reios_software_name);
+	settings.dynarec.idleskip		= cfgGameInt(reios_id,"Dynarec.idleskip", settings.dynarec.idleskip ? 1 : 0) != 0;
+	settings.dynarec.unstable_opt	= cfgGameInt(reios_id,"Dynarec.unstable-opt", settings.dynarec.unstable_opt);
+	settings.dynarec.safemode		= cfgGameInt(reios_id,"Dynarec.safemode", settings.dynarec.safemode);
+	settings.rend.ModifierVolumes	= cfgGameInt(reios_id,"rend.ModifierVolumes", settings.rend.ModifierVolumes);
+	settings.rend.Clipping			= cfgGameInt(reios_id,"rend.Clipping", settings.rend.Clipping);
+
+	settings.pvr.subdivide_transp	= cfgGameInt(reios_id,"pvr.Subdivide", settings.pvr.subdivide_transp);
+
+	settings.pvr.ta_skip			= cfgGameInt(reios_id,"ta.skip", settings.pvr.ta_skip);
+	settings.pvr.rend				= cfgGameInt(reios_id,"pvr.rend", settings.pvr.rend);
+
+	settings.pvr.MaxThreads			= cfgGameInt(reios_id, "pvr.MaxThreads", settings.pvr.MaxThreads);
+	settings.pvr.SynchronousRender	= cfgGameInt(reios_id, "pvr.SynchronousRendering", settings.pvr.SynchronousRender);
+}
+
 void SaveSettings()
 {
-	cfgSaveInt("config","Dynarec.Enabled",	settings.dynarec.Enable);
-	cfgSaveInt("config","Dreamcast.Cable",	settings.dreamcast.cable);
-	cfgSaveInt("config","Dreamcast.RTC",	settings.dreamcast.RTC);
-	cfgSaveInt("config","Dreamcast.Region",	settings.dreamcast.region);
-	cfgSaveInt("config","Dreamcast.Broadcast",settings.dreamcast.broadcast);
+	cfgSaveInt("config","Dynarec.Enabled",		settings.dynarec.Enable);
+	cfgSaveInt("config","Dreamcast.Cable",		settings.dreamcast.cable);
+	cfgSaveInt("config","Dreamcast.RTC",		settings.dreamcast.RTC);
+	cfgSaveInt("config","Dreamcast.Region",		settings.dreamcast.region);
+	cfgSaveInt("config","Dreamcast.Broadcast",	settings.dreamcast.broadcast);
 }

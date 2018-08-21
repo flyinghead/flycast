@@ -7,6 +7,9 @@
     <item android:title="@string/settings"
         android:id="@+id/settings_menu"
         android:icon="@mipmap/menu_config" />
+    <item android:title="@string/pgconfig"
+        android:id="@+id/pgconfig_menu"
+        android:icon="@mipmap/menu_config" />
     <item android:title="@string/input"
         android:id="@+id/input_menu"
         android:icon="@mipmap/menu_input" />

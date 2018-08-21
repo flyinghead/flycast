@@ -87,7 +87,7 @@ bool reios_locate_bootfile(const char* bootfile="1ST_READ.BIN") {
 				fwrite(GetMemPtr(0x8c010000, 0), 1, len, f);
 				fclose(f);
 			}
-			
+
 			delete[] temp;
 			return true;
 		}
@@ -97,20 +97,62 @@ bool reios_locate_bootfile(const char* bootfile="1ST_READ.BIN") {
 	return false;
 }
 
+char ip_bin[256];
+char reios_hardware_id[17];
+char reios_maker_id[17];
+char reios_device_info[17];
+char reios_area_symbols[9];
+char reios_peripherals[9];
+char reios_product_number[9];
+char reios_product_version[7];
+char reios_releasedate[17];
+char reios_boot_filename[17];
+char reios_software_company[17];
+char reios_software_name[129];
 char reios_bootfile[32];
-const char* reios_locate_ip() {
 
+bool pre_init = false;
+
+void reios_pre_init()
+{
 	if (libGDR_GetDiscType() == GdRom) {
 		base_fad = 45150;
 		descrambl = false;
-	}
-	else {
+	} else {
 		u8 ses[6];
 		libGDR_GetSessionInfo(ses, 0);
 		libGDR_GetSessionInfo(ses, ses[2]);
 		base_fad = (ses[3] << 16) | (ses[4] << 8) | (ses[5] << 0);
 		descrambl = true;
 	}
+	pre_init = true;
+}
+
+char* reios_disk_id() {
+
+	if (!pre_init) reios_pre_init();
+
+	libGDR_ReadSector(GetMemPtr(0x8c008000, 0), base_fad, 256, 2048);
+	memset(ip_bin, 0, sizeof(ip_bin));
+	memcpy(ip_bin, GetMemPtr(0x8c008000, 0), 256);
+	memcpy(&reios_hardware_id[0], &ip_bin[0], 16 * sizeof(char));
+	memcpy(&reios_maker_id[0], &ip_bin[16],   16 * sizeof(char));
+	memcpy(&reios_device_info[0], &ip_bin[32],   16 * sizeof(char));
+	memcpy(&reios_area_symbols[0], &ip_bin[48],   8 * sizeof(char));
+	memcpy(&reios_peripherals[0], &ip_bin[56],   8 * sizeof(char));
+	memcpy(&reios_product_number[0], &ip_bin[64],   8 * sizeof(char));
+	memcpy(&reios_product_version[0], &ip_bin[74],   6 * sizeof(char));
+	memcpy(&reios_releasedate[0], &ip_bin[80],   16 * sizeof(char));
+	memcpy(&reios_boot_filename[0], &ip_bin[96],   16 * sizeof(char));
+	memcpy(&reios_software_company[0], &ip_bin[112],   16 * sizeof(char));
+	memcpy(&reios_software_name[0], &ip_bin[128],   128 * sizeof(char));
+
+	return reios_product_number;
+}
+
+const char* reios_locate_ip() {
+
+	if (!pre_init) reios_pre_init();
 
 	printf("reios: loading ip.bin from FAD: %d\n", base_fad);
 
