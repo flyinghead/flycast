@@ -9,10 +9,6 @@
 #include <ctype.h>
 #include <string.h>
 
-#if !defined(linux) && !defined(_ANDROID)
-#include <conio.h>
-#endif
-
 #include "cfg/cfg.h"
 
 wchar* trim_ws(wchar* str)
@@ -103,6 +99,37 @@ int setconfig(wchar** arg,int cl)
 	return rv;
 }
 
+#ifndef _ANDROID
+#include "version.h"
+#else
+#define REICAST_VERSION "r7-android-tmp"
+#endif
+
+#if !defined(DEF_CONSOLE)
+#if defined(linux) || defined(_ANDROID)
+#define DEF_CONSOLE
+#elif defined(_WIN32)
+#include <conio.h>
+#endif
+#endif
+
+void cli_pause()
+{
+#ifdef DEF_CONSOLE
+	return;
+#endif
+
+#if defined(_WIN32)
+	printf("\nPress a key to exit.\n");
+	getch();
+#else
+	printf("\nPress enter to exit.\n");
+	char c = getchar();
+#endif
+}
+
+
+
 int showhelp(wchar** arg,int cl)
 {
 	printf("\nAvailable commands :\n");
@@ -111,25 +138,16 @@ int showhelp(wchar** arg,int cl)
 	printf("\n-help: show help info\n");
 	printf("\n-version: show current version #\n\n");
 
-#if !defined(DEF_CONSOLE) && !defined(linux)
-	getch();
-#endif
+	cli_pause();
 	return 0;
 }
 
-#ifndef _ANDROID
-#include "version.h"
-#else
-#define REICAST_VERSION "r7-android-tmp"
-#endif
 
 int showversion(wchar** arg,int cl)
 {
 	printf("\nReicast Version: # %s built on %s \n", REICAST_VERSION, __DATE__);
 
-#if !defined(DEF_CONSOLE) && !defined(linux)
-	getch();
-#endif
+	cli_pause();
 	return 0;
 }
 
