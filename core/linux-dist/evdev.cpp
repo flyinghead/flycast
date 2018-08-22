@@ -118,12 +118,13 @@
 			strstr(keycode.c_str(), "BTN_") != NULL ||
 			strstr(keycode.c_str(), "ABS_") != NULL)
 		{
-			if(libevdev_available)
+			if (libevdev_available)
 			{
 				int type = ((strstr(keycode.c_str(), "ABS_") != NULL) ? EV_ABS : EV_KEY);
 				code = libevdev_event_code_from_name(type, keycode.c_str());
 			}
-			if(code < 0)
+			
+			if (code < 0)
 			{
 				printf("evdev: failed to find keycode for '%s'\n", keycode.c_str());
 			}
@@ -131,27 +132,34 @@
 			{
 				printf("%s = %s (%d)\n", dc_key.c_str(), keycode.c_str(), code);
 			}
-			return code;
 		}
-
-		code = cfg->get_int(section, dc_key, -1);
-		if(code >= 0)
+		else
 		{
-			char* name = NULL;
-			if(libevdev_available)
+			code = cfg->get_int(section, dc_key, -1);
+			if(code >= 0)
 			{
-				int type = ((strstr(dc_key.c_str(), "axis_") != NULL) ? EV_ABS : EV_KEY);
-				name = (char*)libevdev_event_code_get_name(type, code);
-			}
-			if (name != NULL)
-			{
-				printf("%s = %s (%d)\n", dc_key.c_str(), name, code);
-			}
-			else
-			{
-				printf("%s = %d\n", dc_key.c_str(), code);
+				char* name = NULL;
+				
+				if (libevdev_available)
+				{
+					int type = ((strstr(dc_key.c_str(), "axis_") != NULL) ? EV_ABS : EV_KEY);
+					name = (char*)libevdev_event_code_get_name(type, code);
+				}
+				
+				if (name != NULL)
+				{
+					printf("%s = %s (%d)\n", dc_key.c_str(), name, code);
+				}
+				else
+				{
+					printf("%s = %d\n", dc_key.c_str(), code);
+				}
 			}
 		}
+		
+		if (code < 0)
+			printf("WARNING: %s/%s not configured!\n", section.c_str(), dc_key.c_str());
+		
 		return code;
 	}
 
