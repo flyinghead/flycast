@@ -717,6 +717,7 @@ struct settings_t
 		
 		u32 MaxThreads;
 		u32 SynchronousRender;
+		u32 QueueRender;
 
 		string HashLogFile;
 		string HashCheckFile;

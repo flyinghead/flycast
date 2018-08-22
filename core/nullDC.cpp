@@ -273,6 +273,7 @@ void LoadSettings()
 
 	settings.pvr.MaxThreads			= cfgLoadInt("config", "pvr.MaxThreads", 3);
 	settings.pvr.SynchronousRender	= cfgLoadInt("config", "pvr.SynchronousRendering", 0);
+	settings.pvr.QueueRender		= cfgLoadInt("config", "pvr.QueueRender", 0);
 
 	settings.debug.SerialConsole	= cfgLoadInt("config", "Debug.SerialConsoleEnabled", 0) != 0;
 
@@ -329,6 +330,7 @@ void LoadCustom()
 
 	settings.pvr.MaxThreads			= cfgGameInt(reios_id, "pvr.MaxThreads", settings.pvr.MaxThreads);
 	settings.pvr.SynchronousRender	= cfgGameInt(reios_id, "pvr.SynchronousRendering", settings.pvr.SynchronousRender);
+	settings.pvr.QueueRender		= cfgLoadInt(reios_id, "pvr.QueueRender", settings.pvr.QueueRender);
 }
 
 void SaveSettings()
