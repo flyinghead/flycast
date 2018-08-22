@@ -36,9 +36,9 @@
     <string name="select_bios">BIOS Region (dc_flash[X].bin)</string>
     <string name="select_details">Enable Game Details</string>
     <string name="select_native">Native Gamepad Mode [No OSD]</string>
-    <string name="select_dynarec">Dynarec Options</string>
+    <string name="select_dynarec">Dynamic Recompiler</string>
     <string name="select_unstable">Unstable Optimisations</string>
-    <string name="select_safemode">Dynarec Safemode</string>
+    <string name="select_safemode">Bypass Div Matching</string>
     <string name="select_cable">Cable Type</string>
     <string name="select_region">DC Region</string>
     <string name="select_broadcast">Broadcast</string>
@@ -50,9 +50,9 @@
     <string name="select_syncrender">Synchronous Rendering</string>
     <string name="select_modvols">Enable Modifier Volumes</string>
     <string name="select_fps">Show On-Screen FPS</string>
-    <string name="select_software">Force Software Rendering</string>
+    <string name="select_software">Use Software Layer</string>
     <string name="select_sound">Disable Emulator Sound</string>
-    <string name="select_depth">Rendering Depth</string>
+    <string name="select_depth">View Rendering Depth</string>
     <string name="boot_disk">Boot Disk (ie. Gameshark, Utopia)</string>
 
     <string name="reset_emu">Reset Emu</string>

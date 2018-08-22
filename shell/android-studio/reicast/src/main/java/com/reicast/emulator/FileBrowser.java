@@ -364,10 +364,27 @@ public class FileBrowser extends Fragment {
 	private void createListItem(LinearLayout list, final File game, final int index, final boolean isGame) {				
 		final View childview = getActivity().getLayoutInflater().inflate(
 				R.layout.browser_fragment_item, null, false);
-		
-		XMLParser xmlParser = new XMLParser(game, index, mPrefs);
-		xmlParser.setViewParent(getActivity(), childview, mCallback);
+
 		orig_bg = childview.getBackground();
+
+		((TextView) childview.findViewById(R.id.item_name)).setText(game.getName());
+
+		String nameLower = game.getName().toLowerCase(Locale.getDefault());
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+			((ImageView) childview.findViewById(R.id.item_icon)).setImageDrawable(
+					getResources().getDrawable(game.isDirectory() ? R.drawable.open_folder
+							: nameLower.endsWith(".gdi") ? R.mipmap.disk_gdi
+							: nameLower.endsWith(".chd") ? R.mipmap.disk_chd
+							: nameLower.endsWith(".cdi") ? R.mipmap.disk_cdi
+							: R.mipmap.disk_unknown));
+		} else {
+			((ImageView) childview.findViewById(R.id.item_icon)).setImageDrawable(
+					getResources().getDrawable(game.isDirectory() ? R.drawable.open_folder
+							: nameLower.endsWith(".gdi") ? R.drawable.gdi
+							: nameLower.endsWith(".chd") ? R.drawable.chd
+							: nameLower.endsWith(".cdi") ? R.drawable.cdi
+							: R.drawable.disk_unknown));
+		}
 
 		childview.findViewById(R.id.childview).setOnClickListener(
 				new OnClickListener() {
@@ -407,7 +424,6 @@ public class FileBrowser extends Fragment {
 					}
 				});
 		list.addView(childview);
-		xmlParser.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, game.getName());
 	}
 
 	private static class navigate extends AsyncTask<File, Integer, List<File>> {

@@ -3,7 +3,7 @@
 
     <item android:title="@string/browser"
         android:id="@+id/browser_menu"
-        android:icon="@mipmap/menu_disk_unknown" />
+        android:icon="@mipmap/disk_unknown" />
     <item android:title="@string/settings"
         android:id="@+id/settings_menu"
         android:icon="@mipmap/menu_config" />
