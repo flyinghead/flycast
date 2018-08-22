@@ -201,6 +201,8 @@ int AicaUpdate(int tag, int c, int j)
 
 	//static int aica_sample_cycles=0;
 	//aica_sample_cycles+=14336*AICA_SAMPLE_GCM;
+	
+	extern void aica_periodical(u32 cycl);
 
 	//if (aica_sample_cycles>=AICA_SAMPLE_CYCLES)
 	{
@@ -208,6 +210,9 @@ int AicaUpdate(int tag, int c, int j)
 		UpdateAica(1*32);
 		//aica_sample_cycles-=AICA_SAMPLE_CYCLES;
 	}
+
+   if (settings.aica.InterruptHack)
+      aica_periodical(3584);
 
 	return AICA_TICK;
 }

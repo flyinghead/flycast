@@ -2,6 +2,7 @@
 #include "types.h"
 
 void asic_RaiseInterrupt(HollyInterruptID inter);
+void asic_RaiseInterruptWait(HollyInterruptID inter);
 void asic_CancelInterrupt(HollyInterruptID inter);
 
 //Init/Res/Term for regs
