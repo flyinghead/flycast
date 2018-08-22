@@ -45,7 +45,6 @@ import java.util.Map;
 
 public class PGConfigFragment extends Fragment {
 
-	private Emulator app;
 	private Spinner mSpnrConfigs;
 
 	private CompoundButton unstable_opt;
@@ -55,6 +54,7 @@ public class PGConfigFragment extends Fragment {
 	private CompoundButton pvr_render;
 	private CompoundButton synced_render;
 	private CompoundButton modifier_volumes;
+	private CompoundButton interrupt_opt;
 
 	@Override
 	public void onAttach(Activity activity) {
@@ -76,7 +76,7 @@ public class PGConfigFragment extends Fragment {
 	@Override
 	public void onViewCreated(View view, Bundle savedInstanceState) {
 
-		app = (Emulator) getActivity().getApplicationContext();
+		Emulator app = (Emulator) getActivity().getApplicationContext();
 		app.getConfigurationPrefs(PreferenceManager.getDefaultSharedPreferences(getActivity()));
 
 		mSpnrConfigs = (Spinner) getView().findViewById(R.id.config_spinner);
@@ -90,6 +90,7 @@ public class PGConfigFragment extends Fragment {
 		pvr_render = (CompoundButton) getView().findViewById(R.id.render_option);
 		synced_render = (CompoundButton) getView().findViewById(R.id.syncrender_option);
 		modifier_volumes = (CompoundButton) getView().findViewById(R.id.modvols_option);
+		interrupt_opt = (CompoundButton) getView().findViewById(R.id.interrupt_option);
 	}
 
 	private void saveSettings(SharedPreferences mPrefs) {
@@ -98,7 +99,8 @@ public class PGConfigFragment extends Fragment {
 				.putInt(Emulator.pref_frameskip, frameSeek.getProgress())
 				.putBoolean(Emulator.pref_pvrrender, pvr_render.isChecked())
 				.putBoolean(Emulator.pref_syncedrender, synced_render.isChecked())
-				.putBoolean(Emulator.pref_modvols, modifier_volumes.isChecked()).apply();
+				.putBoolean(Emulator.pref_modvols, modifier_volumes.isChecked())
+				.putBoolean(Emulator.pref_interrupt, interrupt_opt.isChecked()).apply();
 	}
 
 	private void configureViewByGame(String gameId) {
@@ -144,6 +146,7 @@ public class PGConfigFragment extends Fragment {
 		pvr_render.setChecked(mPrefs.getBoolean(Emulator.pref_pvrrender, Emulator.pvrrender));
 		synced_render.setChecked(mPrefs.getBoolean(Emulator.pref_syncedrender, Emulator.syncedrender));
 		modifier_volumes.setChecked(mPrefs.getBoolean(Emulator.pref_modvols, Emulator.modvols));
+		interrupt_opt.setChecked(mPrefs.getBoolean(Emulator.pref_interrupt, Emulator.interrupt));
 
 		Button savePGC = (Button) getView().findViewById(R.id.save_pg_btn);
 		savePGC.setOnClickListener(new View.OnClickListener() {

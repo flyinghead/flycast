@@ -21,6 +21,7 @@ public class Emulator extends Application {
     public static final String pref_broadcast = "dc_broadcast";
     public static final String pref_limitfps = "limit_fps";
     public static final String pref_nosound = "sound_disabled";
+    public static final String pref_interrupt = "interrupt_hack";
     public static final String pref_mipmaps = "use_mipmaps";
     public static final String pref_widescreen = "stretch_view";
     public static final String pref_frameskip = "frame_skip";
@@ -40,6 +41,7 @@ public class Emulator extends Application {
     public static boolean limitfps = true;
     public static boolean nobatch = false;
     public static boolean nosound = false;
+    public static boolean interrupt = false;
     public static boolean mipmaps = true;
     public static boolean widescreen = false;
     public static boolean subdivide = false;
@@ -64,6 +66,7 @@ public class Emulator extends Application {
         Emulator.broadcast = mPrefs.getInt(pref_broadcast, broadcast);
         Emulator.limitfps = mPrefs.getBoolean(pref_limitfps, limitfps);
         Emulator.nosound = mPrefs.getBoolean(pref_nosound, nosound);
+        Emulator.interrupt = mPrefs.getBoolean(pref_interrupt, interrupt);
         Emulator.mipmaps = mPrefs.getBoolean(pref_mipmaps, mipmaps);
         Emulator.widescreen = mPrefs.getBoolean(pref_widescreen, widescreen);
         Emulator.frameskip = mPrefs.getInt(pref_frameskip, frameskip);
@@ -90,6 +93,7 @@ public class Emulator extends Application {
         JNIdc.limitfps(Emulator.limitfps ? 1 : 0);
         JNIdc.nobatch(Emulator.nobatch ? 1 : 0);
         JNIdc.nosound(Emulator.nosound ? 1 : 0);
+        JNIdc.interrupthack(Emulator.interrupt ? 1 : 0);
         JNIdc.mipmaps(Emulator.mipmaps ? 1 : 0);
         JNIdc.widescreen(Emulator.widescreen ? 1 : 0);
         JNIdc.subdivide(Emulator.subdivide ? 1 : 0);
@@ -106,6 +110,7 @@ public class Emulator extends Application {
         SharedPreferences mPrefs = getSharedPreferences(gameId, Activity.MODE_PRIVATE);
         Emulator.unstableopt = mPrefs.getBoolean(pref_unstable, unstableopt);
         Emulator.dynsafemode = mPrefs.getBoolean(pref_dynsafemode, dynsafemode);
+        Emulator.interrupt = mPrefs.getBoolean(pref_interrupt, interrupt);
         Emulator.frameskip = mPrefs.getInt(pref_frameskip, frameskip);
         Emulator.pvrrender = mPrefs.getBoolean(pref_pvrrender, pvrrender);
         Emulator.syncedrender = mPrefs.getBoolean(pref_syncedrender, syncedrender);
