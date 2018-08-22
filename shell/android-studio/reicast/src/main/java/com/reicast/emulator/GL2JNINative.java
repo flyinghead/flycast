@@ -93,9 +93,18 @@ public class GL2JNINative extends NativeActivity {
 		boolean player2connected = false;
 		boolean player3connected = false;
 		boolean player4connected = false;
-		int p2periphs[] = {0, 0};
-		int p3periphs[] = {0, 0};
-		int p4periphs[] = {0, 0};
+		int p2periphs[] = {
+				prefs.getInt(Gamepad.p2_peripheral + 1, 0),
+				prefs.getInt(Gamepad.p2_peripheral + 2, 0)
+		};
+		int p3periphs[] = {
+				prefs.getInt(Gamepad.p3_peripheral + 1, 0),
+				prefs.getInt(Gamepad.p3_peripheral + 2, 0)
+		};
+		int p4periphs[] = {
+				prefs.getInt(Gamepad.p4_peripheral + 1, 0),
+				prefs.getInt(Gamepad.p4_peripheral + 2, 0)
+		};
 
 		for (HashMap.Entry<String, Integer> e : pad.deviceDescriptor_PlayerNum
 				.entrySet()) {
@@ -104,25 +113,16 @@ public class GL2JNINative extends NativeActivity {
 
 			switch (playerNum) {
 				case 1:
-					if (descriptor != null) {
+					if (descriptor != null)
 						player2connected = true;
-						p2periphs[0] = prefs.getInt(Gamepad.p2_peripheral + 1, 0);
-						p2periphs[1] = prefs.getInt(Gamepad.p2_peripheral + 2, 0);
-					}
 					break;
 				case 2:
-					if (descriptor != null) {
+					if (descriptor != null)
 						player3connected = true;
-						p3periphs[0] = prefs.getInt(Gamepad.p3_peripheral + 1, 0);
-						p3periphs[1] = prefs.getInt(Gamepad.p3_peripheral + 2, 0);
-					}
 					break;
 				case 3:
-					if (descriptor != null) {
+					if (descriptor != null)
 						player4connected = true;
-						p4periphs[0] = prefs.getInt(Gamepad.p4_peripheral + 1, 0);
-						p4periphs[1] = prefs.getInt(Gamepad.p4_peripheral + 2, 0);
-					}
 					break;
 			}
 		}

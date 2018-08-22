@@ -402,6 +402,12 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setupMic(JNIEnv *env,
 {
     sipemu = env->NewGlobalRef(sip);
     getmicdata = env->GetMethodID(env->GetObjectClass(sipemu),"getData","()[B");
+
+    // Obligatory microphone for controller A-2
+    delete MapleDevices[0][1];
+    mcfg_Create(MDT_Microphone, 0, 1);
+
+    // Allow additional microphones, if desired
     for (int i = 0; i < 3; i++)
     {
         if (controller_periphs[i + 1][0] == MDT_Microphone) {
