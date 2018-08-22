@@ -53,6 +53,7 @@ public class PGConfigFragment extends Fragment {
 	private SeekBar frameSeek;
 	private CompoundButton pvr_render;
 	private CompoundButton synced_render;
+	private CompoundButton queue_render;
 	private CompoundButton modifier_volumes;
 	private CompoundButton interrupt_opt;
 
@@ -89,6 +90,7 @@ public class PGConfigFragment extends Fragment {
 		frameSeek = (SeekBar) getView().findViewById(R.id.frame_seekbar);
 		pvr_render = (CompoundButton) getView().findViewById(R.id.render_option);
 		synced_render = (CompoundButton) getView().findViewById(R.id.syncrender_option);
+		queue_render = (CompoundButton) getView().findViewById(R.id.queuerender_option);
 		modifier_volumes = (CompoundButton) getView().findViewById(R.id.modvols_option);
 		interrupt_opt = (CompoundButton) getView().findViewById(R.id.interrupt_option);
 	}
@@ -99,6 +101,7 @@ public class PGConfigFragment extends Fragment {
 				.putInt(Emulator.pref_frameskip, frameSeek.getProgress())
 				.putBoolean(Emulator.pref_pvrrender, pvr_render.isChecked())
 				.putBoolean(Emulator.pref_syncedrender, synced_render.isChecked())
+				.putBoolean(Emulator.pref_queuerender, queue_render.isChecked())
 				.putBoolean(Emulator.pref_modvols, modifier_volumes.isChecked())
 				.putBoolean(Emulator.pref_interrupt, interrupt_opt.isChecked()).apply();
 	}
@@ -145,6 +148,7 @@ public class PGConfigFragment extends Fragment {
 
 		pvr_render.setChecked(mPrefs.getBoolean(Emulator.pref_pvrrender, Emulator.pvrrender));
 		synced_render.setChecked(mPrefs.getBoolean(Emulator.pref_syncedrender, Emulator.syncedrender));
+		queue_render.setChecked(mPrefs.getBoolean(Emulator.pref_queuerender, Emulator.queuerender));
 		modifier_volumes.setChecked(mPrefs.getBoolean(Emulator.pref_modvols, Emulator.modvols));
 		interrupt_opt.setChecked(mPrefs.getBoolean(Emulator.pref_interrupt, Emulator.interrupt));
 
