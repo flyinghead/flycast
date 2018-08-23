@@ -92,6 +92,10 @@ public class GL2JNIActivity extends Activity {
         boolean player2connected = false;
         boolean player3connected = false;
         boolean player4connected = false;
+        int p1periphs[] = {
+                1, // Hardcoded VMU
+                prefs.getBoolean(Gamepad.pref_mic, false) ? 2 : 1
+        };
         int p2periphs[] = {
                 prefs.getInt(Gamepad.p2_peripheral + 1, 0),
                 prefs.getInt(Gamepad.p2_peripheral + 2, 0)
@@ -127,7 +131,7 @@ public class GL2JNIActivity extends Activity {
 
         JNIdc.initControllers(
                 new boolean[] { player2connected, player3connected, player4connected },
-                new int[][] { p2periphs, p3periphs, p4periphs });
+                new int[][] { p1periphs, p2periphs, p3periphs, p4periphs });
         int joys[] = InputDevice.getDeviceIds();
         for (int joy: joys) {
             String descriptor = null;

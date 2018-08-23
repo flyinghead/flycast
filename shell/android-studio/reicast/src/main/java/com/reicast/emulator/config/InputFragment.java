@@ -1,5 +1,6 @@
 package com.reicast.emulator.config;
 
+import android.Manifest;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
@@ -7,10 +8,12 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.InputDevice;
@@ -35,6 +38,7 @@ import com.reicast.emulator.R;
 import com.reicast.emulator.periph.Gamepad;
 
 public class InputFragment extends Fragment {
+	private static final int PERMISSION_REQUEST = 1001;
 
 	private int listenForButton = 0;
 	private AlertDialog alertDialogSelectController;
@@ -148,6 +152,13 @@ public class InputFragment extends Fragment {
 					.setOnCheckedChangeListener(new OnCheckedChangeListener() {
 						public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
 							mPrefs.edit().putBoolean(Gamepad.pref_mic, isChecked).apply();
+							if (isChecked && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+									ActivityCompat.requestPermissions(getActivity(),
+											new String[] {
+													Manifest.permission.RECORD_AUDIO
+											},
+											PERMISSION_REQUEST);
+							}
 						}
 					});
 		} else {
