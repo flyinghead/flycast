@@ -320,8 +320,8 @@ public class GL2JNIActivity extends Activity {
     }
 
     private void processJoystickInput(MotionEvent event, Integer playerNum, int historyPos) {
-        float LS_X = getAxisValues(event, MotionEvent.AXIS_X, historyPos);
-        float LS_Y = getAxisValues(event, MotionEvent.AXIS_Y, historyPos);
+        float LS_X = getAxisValues(event, prefs.getInt(Gamepad.pref_axis_x, MotionEvent.AXIS_X), historyPos);
+        float LS_Y = getAxisValues(event, prefs.getInt(Gamepad.pref_axis_y, MotionEvent.AXIS_Y), historyPos);
         float RS_X = getAxisValues(event, MotionEvent.AXIS_RX, historyPos);
         float RS_Y = getAxisValues(event, MotionEvent.AXIS_RY, historyPos);
         float L2 = getAxisValues(event, MotionEvent.AXIS_LTRIGGER, historyPos);

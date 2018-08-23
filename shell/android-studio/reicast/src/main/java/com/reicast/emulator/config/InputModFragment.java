@@ -547,13 +547,26 @@ public class InputModFragment extends Fragment {
 		}
 
 		private void mapAxis(final String button, final TextView output) {
-			getView().setOnGenericMotionListener(new View.OnGenericMotionListener() {
+			AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+			builder.setTitle(R.string.map_keycode_title);
+			builder.setMessage(getString(R.string.map_keycode_message, button.replace("_", " ")));
+			View view = getLayoutInflater().inflate(R.layout.joystick_dialog, null);
+			builder.setView(view);
+			builder.setCancelable(false);
+			builder.create();
+			final Dialog dialog = builder.show();
+			view.findViewById(R.id.joystick_cancel_btn).setOnClickListener(new View.OnClickListener() {
+				public void onClick(View view) {
+					dialog.dismiss();
+				}
+			});
+			view.setOnGenericMotionListener(new View.OnGenericMotionListener() {
 				@Override
 				public boolean onGenericMotion(View view, MotionEvent event) {
+					int axis = -1;
 					if ((event.getSource() & InputDevice.SOURCE_JOYSTICK) ==
 							InputDevice.SOURCE_JOYSTICK &&
 							event.getAction() == MotionEvent.ACTION_MOVE) {
-						int axis = -1;
 						if (event.getAxisValue(MotionEvent.AXIS_X) != 0) {
 							axis = MotionEvent.AXIS_X;
 						}
@@ -573,11 +586,10 @@ public class InputModFragment extends Fragment {
 							axis = MotionEvent.AXIS_HAT_Y;
 						}
 						mPrefs.edit().putInt(button + player, axis).apply();
-						getView().setOnGenericMotionListener(null);
-						getKeyCode(button, output);
-						return true;
+						dialog.dismiss();
+						return getKeyCode(button, output);
 					}
-					return false;
+					return true;
 				}
 			});
 		}
