@@ -290,7 +290,7 @@ MapleDeviceType GetMapleDeviceType(int value)
 void os_SetupInput()
 {
     // Create first controller
-    mcfg_CreateController(0, MDT_SegaVMU, MDT_SegaVMU);
+    mcfg_CreateController(0, MDT_SegaVMU, GetMapleDeviceType(controller_periphs[0][1]));
 
     // Add additonal controllers
     for (int i = 0; i < 3; i++)
@@ -416,23 +416,6 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setupMic(JNIEnv *env,
 {
     sipemu = env->NewGlobalRef(sip);
     getmicdata = env->GetMethodID(env->GetObjectClass(sipemu),"getData","()[B");
-
-    // Obligatory microphone for controller A-2
-    delete MapleDevices[0][1];
-    mcfg_Create(MDT_Microphone, 0, 1);
-
-    // Allow additional microphones, if desired
-    for (int i = 0; i < 3; i++)
-    {
-        if (controller_periphs[i + 1][0] == MDT_Microphone) {
-            delete MapleDevices[i + 1][0];
-            mcfg_Create(MDT_Microphone, i + 1, 0);
-        }
-        if (controller_periphs[i + 1][1] == MDT_Microphone) {
-            delete MapleDevices[i + 1][1];
-            mcfg_Create(MDT_Microphone, i + 1, 1);
-        }
-    }
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setupVmu(JNIEnv *env,jobject obj,jobject vmu)

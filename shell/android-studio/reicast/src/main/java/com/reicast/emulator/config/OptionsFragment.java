@@ -178,25 +178,6 @@ public class OptionsFragment extends Fragment {
 		reios_opt.setChecked(mPrefs.getBoolean(Emulator.pref_usereios, false));
 		reios_opt.setOnCheckedChangeListener(reios_options);
 
-		OnCheckedChangeListener details_options = new OnCheckedChangeListener() {
-
-			public void onCheckedChanged(CompoundButton buttonView,
-										 boolean isChecked) {
-				mPrefs.edit().putBoolean(Config.pref_gamedetails, isChecked).apply();
-				if (!isChecked) {
-					File dir = new File(getActivity().getExternalFilesDir(null), "images");
-					for (File file : dir.listFiles()) {
-						if (!file.isDirectory()) {
-							file.delete();
-						}
-					}
-				}
-			}
-		};
-		CompoundButton details_opt = (CompoundButton) getView().findViewById(R.id.details_option);
-		details_opt.setChecked(mPrefs.getBoolean(Config.pref_gamedetails, false));
-		details_opt.setOnCheckedChangeListener(details_options);
-
 		Button gameBrowse = (Button) getView().findViewById(R.id.browse_game_path);
 
 		final EditText editGames = (EditText) getView().findViewById(R.id.game_path);
@@ -713,7 +694,6 @@ public class OptionsFragment extends Fragment {
 
 	private void resetEmuSettings() {
 		mPrefs.edit().remove(Emulator.pref_usereios).apply();
-		mPrefs.edit().remove(Config.pref_gamedetails).apply();
 		mPrefs.edit().remove(Emulator.pref_nativeact).apply();
 		mPrefs.edit().remove(Emulator.pref_dynarecopt).apply();
 		mPrefs.edit().remove(Emulator.pref_unstable).apply();
