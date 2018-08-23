@@ -47,6 +47,9 @@ public class Gamepad {
 	public static final String pref_dpad_left = "dpad_left";
 	public static final String pref_dpad_right = "dpad_right";
 
+	public static final String pref_axis_x = "x_axis";
+	public static final String pref_axis_y = "y_axis";
+
 	public static final String pref_button_start = "start_button";
 	public static final String pref_button_select = "select_button";
 
