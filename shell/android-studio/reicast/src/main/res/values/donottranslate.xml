@@ -9,7 +9,7 @@
         <item>24</item>
         <item>32</item>        
     </string-array>
-    
+
     <string-array name="flash">
         <item>bin</item>
     </string-array>
@@ -61,10 +61,6 @@
         <item>U</item>
         <item>R</item>
         <item>K</item>
-    </string-array>
-
-    <string-array name="configs">
-        <item>pgc</item>
     </string-array>
 
     <string-array name="peripherals">

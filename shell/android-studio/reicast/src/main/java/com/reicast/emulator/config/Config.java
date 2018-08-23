@@ -17,6 +17,8 @@ public class Config {
 	public static final String pref_touchvibe = "touch_vibration_enabled";
 	public static final String pref_vibrationDuration = "vibration_duration";
 
+	public static final String game_title = "game_title";
+
 	public static int vibrationDuration = 20;
 
 	public static final String pref_vmu = "vmu_floating";

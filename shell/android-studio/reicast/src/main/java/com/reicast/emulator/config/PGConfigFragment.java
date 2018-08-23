@@ -1,9 +1,7 @@
 package com.reicast.emulator.config;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
@@ -16,6 +14,7 @@ import android.support.graphics.drawable.VectorDrawableCompat;
 import android.support.v4.app.Fragment;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -24,7 +23,6 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CompoundButton;
-import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.EditText;
 import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
@@ -35,15 +33,8 @@ import com.android.util.FileUtils;
 import com.reicast.emulator.Emulator;
 import com.reicast.emulator.R;
 
-import org.apache.commons.lang3.StringUtils;
-
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.lang.ref.WeakReference;
 import java.util.Collection;
 import java.util.HashMap;
@@ -88,8 +79,8 @@ public class PGConfigFragment extends Fragment {
 		app.getConfigurationPrefs(PreferenceManager.getDefaultSharedPreferences(getActivity()));
 
 		mSpnrConfigs = (Spinner) getView().findViewById(R.id.config_spinner);
-		new LocateConfigs(PGConfigFragment.this).execute(
-				getActivity().getFilesDir().getAbsolutePath());
+		new LocateConfigs(PGConfigFragment.this).execute("/data/data/"
+				+ getActivity().getPackageName() + "/shared_prefs/");
 
 		unstable_opt = (CompoundButton) getView().findViewById(R.id.unstable_option);
 		safemode_opt = (CompoundButton) getView().findViewById(R.id.dynarec_safemode);
@@ -179,21 +170,13 @@ public class PGConfigFragment extends Fragment {
 		@Override
 		protected List<File> doInBackground(String... paths) {
 			File storage = new File(paths[0]);
-			String[] mediaTypes = options.get().getResources().getStringArray(R.array.configs);
-			FilenameFilter[] filter = new FilenameFilter[mediaTypes.length];
-			int i = 0;
-			for (final String type : mediaTypes) {
-				filter[i] = new FilenameFilter() {
-					public boolean accept(File dir, String name) {
-						if (dir.getName().startsWith(".") || name.startsWith(".")) {
-							return false;
-						} else {
-							return StringUtils.endsWithIgnoreCase(name, "." + type);
-						}
-					}
-				};
-				i++;
-			}
+			Log.d("Files", storage.getAbsolutePath());
+			FilenameFilter[] filter = new FilenameFilter[1];
+			filter[0] = new FilenameFilter() {
+				public boolean accept(File dir, String name) {
+					return !name.endsWith("_preferences.xml");
+				}
+			};
 			FileUtils fileUtils = new FileUtils();
 			Collection<File> files = fileUtils.listFiles(storage, filter, 0);
 			return (List<File>) files;
@@ -206,26 +189,11 @@ public class PGConfigFragment extends Fragment {
 				String[] titles = new String[items.size()];
 				for (int i = 0; i < items.size(); i ++) {
 					String filename = items.get(i).getName();
-					try {
-						InputStream iS = options.get().getActivity().openFileInput(filename);
-
-						if (iS != null) {
-							InputStreamReader iSR = new InputStreamReader(iS);
-							BufferedReader bR = new BufferedReader(iSR);
-							String readString = "";
-							StringBuilder stringBuilder = new StringBuilder();
-
-							while ( (readString = bR.readLine()) != null ) {
-								stringBuilder.append(readString);
-							}
-
-							iS.close();
-							titles[i] = stringBuilder.toString();
-							gameMap.put(titles[i], filename.substring(0, filename.length() - 4));
-						}
-					} catch (IOException e) {
-						// TODO: Appropriate error message
-					}
+					String gameFile = filename.substring(0, filename.length() - 4);
+					SharedPreferences mPrefs = options.get().getActivity()
+							.getSharedPreferences(gameFile, Activity.MODE_PRIVATE);
+					titles[i] = mPrefs.getString(Config.game_title, "Title Unavailable");
+					gameMap.put(titles[i], gameFile);
 				}
 				ArrayAdapter<String> configAdapter = new ArrayAdapter<String>(
 						options.get().getActivity(), android.R.layout.simple_spinner_item, titles);
