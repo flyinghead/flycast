@@ -164,6 +164,7 @@ public class GL2JNIView extends GLSurfaceView
         }
 
         JNIdc.init(fileName);
+        JNIdc.query(ethd);
 
         // By default, GLSurfaceView() creates a RGB_565 opaque surface.
         // If we want a translucent one, we should change the surface's

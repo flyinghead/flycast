@@ -48,7 +48,9 @@
     <string name="set_frameskip">Frameskip Value</string>
     <string name="select_render">PVR Rendering (does nothing for now)</string>
     <string name="select_syncrender">Synchronous Rendering</string>
+    <string name="select_queuerender">Force Queue Rendering</string>
     <string name="select_modvols">Enable Modifier Volumes</string>
+    <string name="select_interrupt">Enable Interrupt Hack</string>
     <string name="select_fps">Show On-Screen FPS</string>
     <string name="select_software">Use Software Layer</string>
     <string name="select_sound">Disable Emulator Sound</string>
@@ -63,6 +65,7 @@
     <string name="pgc_select_game">Select Game</string>
     <string name="save_pgc_title">Save Per-Game Config</string>
     <string name="write_pgc">Save PGC</string>
+    <string name="pgconfig_saved">Configuration Saved</string>
 
     <string name="games_listing">Game List</string>
     <string name="search_hint">Game (ie. Crazy Taxi)</string>
@@ -100,9 +103,6 @@
     <string name="customize_physical_controls">Customize Physical Controls</string>
     <string name="map_keycode_title">Modify Controller</string>
     <string name="map_keycode_message">Press the new controller button for %1$s</string>
-    
-    <string name="moga_pro_connect">MOGA Pro connected!</string>
-    <string name="moga_connect">MOGA connected!</string>
     
     <string name="about_text">reicast is a multi-platform Dreamcast emulator.</string>
     <string name="revision_text">Version: %1$s [%2$s]</string>

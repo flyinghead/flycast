@@ -454,6 +454,15 @@ public class OptionsFragment extends Fragment {
 		synced_render.setChecked(mPrefs.getBoolean(Emulator.pref_syncedrender, Emulator.syncedrender));
 		synced_render.setOnCheckedChangeListener(synchronous);
 
+		OnCheckedChangeListener queued = new OnCheckedChangeListener() {
+			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+				mPrefs.edit().putBoolean(Emulator.pref_queuerender, isChecked).apply();
+			}
+		};
+		CompoundButton queue_render = (CompoundButton) getView().findViewById(R.id.queuerender_option);
+		queue_render.setChecked(mPrefs.getBoolean(Emulator.pref_queuerender, Emulator.queuerender));
+		queue_render.setOnCheckedChangeListener(queued);
+
 		OnCheckedChangeListener mod_volumes = new OnCheckedChangeListener() {
 
 			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -463,6 +472,16 @@ public class OptionsFragment extends Fragment {
 		CompoundButton modifier_volumes = (CompoundButton) getView().findViewById(R.id.modvols_option);
 		modifier_volumes.setChecked(mPrefs.getBoolean(Emulator.pref_modvols, Emulator.modvols));
 		modifier_volumes.setOnCheckedChangeListener(mod_volumes);
+
+		CompoundButton interrupt_opt = (CompoundButton) getView().findViewById(R.id.interrupt_option);
+		OnCheckedChangeListener interrupthack = new OnCheckedChangeListener() {
+
+			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+				mPrefs.edit().putBoolean(Emulator.pref_interrupt, isChecked).apply();
+			}
+		};
+		interrupt_opt.setChecked(mPrefs.getBoolean(Emulator.pref_interrupt, false));
+		interrupt_opt.setOnCheckedChangeListener(interrupthack);
 
 //		final EditText bootdiskEdit = (EditText) getView().findViewById(R.id.boot_disk);
 //		String disk = Emulator.bootdisk;

@@ -70,9 +70,6 @@
     <string name="customize_physical_controls">Tilpas fysiske taster</string>
     <string name="map_keycode_title">Tilpas controller</string>
     <string name="map_keycode_message">Tryk på den nye controller taste for %1$s</string>
-    
-    <string name="moga_pro_connect">MOGA Pro tilsluttet!</string>
-    <string name="moga_connect">MOGA tilsluttet!</string>
 
     <string name="about_text">reicast er en Dreamcast emulator</string>
     <string name="revision_text">Version: %1$s [%2$s]</string>

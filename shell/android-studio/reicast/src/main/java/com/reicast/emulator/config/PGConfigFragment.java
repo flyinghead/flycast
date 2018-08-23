@@ -5,12 +5,18 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
+import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.constraint.ConstraintLayout;
+import android.support.design.widget.Snackbar;
+import android.support.graphics.drawable.VectorDrawableCompat;
 import android.support.v4.app.Fragment;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,6 +29,7 @@ import android.widget.EditText;
 import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.Spinner;
+import android.widget.TextView;
 
 import com.android.util.FileUtils;
 import com.reicast.emulator.Emulator;
@@ -45,7 +52,6 @@ import java.util.Map;
 
 public class PGConfigFragment extends Fragment {
 
-	private Emulator app;
 	private Spinner mSpnrConfigs;
 
 	private CompoundButton unstable_opt;
@@ -54,7 +60,9 @@ public class PGConfigFragment extends Fragment {
 	private SeekBar frameSeek;
 	private CompoundButton pvr_render;
 	private CompoundButton synced_render;
+	private CompoundButton queue_render;
 	private CompoundButton modifier_volumes;
+	private CompoundButton interrupt_opt;
 
 	@Override
 	public void onAttach(Activity activity) {
@@ -76,7 +84,7 @@ public class PGConfigFragment extends Fragment {
 	@Override
 	public void onViewCreated(View view, Bundle savedInstanceState) {
 
-		app = (Emulator) getActivity().getApplicationContext();
+		Emulator app = (Emulator) getActivity().getApplicationContext();
 		app.getConfigurationPrefs(PreferenceManager.getDefaultSharedPreferences(getActivity()));
 
 		mSpnrConfigs = (Spinner) getView().findViewById(R.id.config_spinner);
@@ -89,7 +97,9 @@ public class PGConfigFragment extends Fragment {
 		frameSeek = (SeekBar) getView().findViewById(R.id.frame_seekbar);
 		pvr_render = (CompoundButton) getView().findViewById(R.id.render_option);
 		synced_render = (CompoundButton) getView().findViewById(R.id.syncrender_option);
+		queue_render = (CompoundButton) getView().findViewById(R.id.queuerender_option);
 		modifier_volumes = (CompoundButton) getView().findViewById(R.id.modvols_option);
+		interrupt_opt = (CompoundButton) getView().findViewById(R.id.interrupt_option);
 	}
 
 	private void saveSettings(SharedPreferences mPrefs) {
@@ -98,7 +108,11 @@ public class PGConfigFragment extends Fragment {
 				.putInt(Emulator.pref_frameskip, frameSeek.getProgress())
 				.putBoolean(Emulator.pref_pvrrender, pvr_render.isChecked())
 				.putBoolean(Emulator.pref_syncedrender, synced_render.isChecked())
-				.putBoolean(Emulator.pref_modvols, modifier_volumes.isChecked()).apply();
+				.putBoolean(Emulator.pref_queuerender, queue_render.isChecked())
+				.putBoolean(Emulator.pref_modvols, modifier_volumes.isChecked())
+				.putBoolean(Emulator.pref_interrupt, interrupt_opt.isChecked()).apply();
+		showToastMessage(getActivity().getString(R.string.pgconfig_saved),
+				Snackbar.LENGTH_SHORT);
 	}
 
 	private void configureViewByGame(String gameId) {
@@ -143,7 +157,9 @@ public class PGConfigFragment extends Fragment {
 
 		pvr_render.setChecked(mPrefs.getBoolean(Emulator.pref_pvrrender, Emulator.pvrrender));
 		synced_render.setChecked(mPrefs.getBoolean(Emulator.pref_syncedrender, Emulator.syncedrender));
+		queue_render.setChecked(mPrefs.getBoolean(Emulator.pref_queuerender, Emulator.queuerender));
 		modifier_volumes.setChecked(mPrefs.getBoolean(Emulator.pref_modvols, Emulator.modvols));
+		interrupt_opt.setChecked(mPrefs.getBoolean(Emulator.pref_interrupt, Emulator.interrupt));
 
 		Button savePGC = (Button) getView().findViewById(R.id.save_pg_btn);
 		savePGC.setOnClickListener(new View.OnClickListener() {
@@ -231,5 +247,28 @@ public class PGConfigFragment extends Fragment {
 				options.get().mSpnrConfigs.setEnabled(false);
 			}
 		}
+	}
+
+	private void showToastMessage(String message, int duration) {
+		ConstraintLayout layout = (ConstraintLayout) getActivity().findViewById(R.id.mainui_layout);
+		Snackbar snackbar = Snackbar.make(layout, message, duration);
+		View snackbarLayout = snackbar.getView();
+		TextView textView = (TextView) snackbarLayout.findViewById(
+				android.support.design.R.id.snackbar_text);
+		textView.setGravity(Gravity.CENTER_VERTICAL);
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1)
+			textView.setTextAlignment(View.TEXT_ALIGNMENT_GRAVITY);
+		Drawable drawable;
+		if (android.os.Build.VERSION.SDK_INT > Build.VERSION_CODES.M) {
+			drawable = getResources().getDrawable(
+					R.drawable.ic_settings, getActivity().getTheme());
+		} else {
+			drawable = VectorDrawableCompat.create(getResources(),
+					R.drawable.ic_settings, getActivity().getTheme());
+		}
+		textView.setCompoundDrawablesWithIntrinsicBounds(drawable, null, null, null);
+		textView.setCompoundDrawablePadding(getResources()
+				.getDimensionPixelOffset(R.dimen.snackbar_icon_padding));
+		snackbar.show();
 	}
 }

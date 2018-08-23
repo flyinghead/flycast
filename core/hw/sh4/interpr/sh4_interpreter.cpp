@@ -193,6 +193,7 @@ int rtc_schid;
 //14336 Cycles
 
 const int AICA_TICK=145124;
+extern void aica_periodical(u32 cycl);
 
 int AicaUpdate(int tag, int c, int j)
 {
@@ -208,6 +209,9 @@ int AicaUpdate(int tag, int c, int j)
 		UpdateAica(1*32);
 		//aica_sample_cycles-=AICA_SAMPLE_CYCLES;
 	}
+
+   if (settings.aica.InterruptHack)
+      aica_periodical(3584);
 
 	return AICA_TICK;
 }

@@ -7,6 +7,7 @@ public final class JNIdc
 
 	public static native void config(String dirName);
 	public static native void init(String fileName);
+	public static native void query(Object thread);
 	public static native void run(Object track);
 	public static native void pause();
 	public static native void destroy();
@@ -38,12 +39,14 @@ public final class JNIdc
 	public static native void limitfps(int limiter);
 	public static native void nobatch(int nobatch);
 	public static native void nosound(int noaudio);
+	public static native void interrupthack(int interrupt);
 	public static native void mipmaps(int mipmaps);
 	public static native void widescreen(int stretch);
 	public static native void subdivide(int subdivide);
 	public static native void frameskip(int frames);
 	public static native void pvrrender(int render);
 	public static native void syncedrender(int sync);
+	public static native void queuerender(int queue);
 	public static native void modvols(int volumes);
 	public static native void bootdisk(String disk);
 	public static native void usereios(int reios);

@@ -652,7 +652,8 @@ struct settings_t
 		u32 GlobalMute;
 		u32 DSPEnabled;		//0 -> no, 1 -> yes
 		u32 NoBatch;
-        u32 NoSound;        //0 ->sound, 1 -> no sound
+		u32 NoSound;        //0 ->sound, 1 -> no sound
+		u32 InterruptHack;
 	} aica;
 
 #if USE_OMX
@@ -716,6 +717,7 @@ struct settings_t
 		
 		u32 MaxThreads;
 		u32 SynchronousRender;
+		u32 QueueRender;
 
 		string HashLogFile;
 		string HashCheckFile;

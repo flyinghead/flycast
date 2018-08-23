@@ -260,6 +260,7 @@ void LoadSettings()
 	settings.aica.LimitFPS			= cfgLoadInt("config","aica.LimitFPS",1);
 	settings.aica.NoBatch			= cfgLoadInt("config","aica.NoBatch",0);
     settings.aica.NoSound			= cfgLoadInt("config","aica.NoSound",0);
+	settings.aica.InterruptHack		= cfgLoadInt("config","aica.InterruptHack",0);
 	settings.rend.UseMipmaps		= cfgLoadInt("config","rend.UseMipmaps",1);
 	settings.rend.WideScreen		= cfgLoadInt("config","rend.WideScreen",0);
 	settings.rend.ModifierVolumes	= cfgLoadInt("config","rend.ModifierVolumes",1);
@@ -272,6 +273,7 @@ void LoadSettings()
 
 	settings.pvr.MaxThreads			= cfgLoadInt("config", "pvr.MaxThreads", 3);
 	settings.pvr.SynchronousRender	= cfgLoadInt("config", "pvr.SynchronousRendering", 0);
+	settings.pvr.QueueRender		= cfgLoadInt("config", "pvr.QueueRender", 0);
 
 	settings.debug.SerialConsole	= cfgLoadInt("config", "Debug.SerialConsoleEnabled", 0) != 0;
 
@@ -317,6 +319,7 @@ void LoadCustom()
 	settings.dynarec.idleskip		= cfgGameInt(reios_id,"Dynarec.idleskip", settings.dynarec.idleskip ? 1 : 0) != 0;
 	settings.dynarec.unstable_opt	= cfgGameInt(reios_id,"Dynarec.unstable-opt", settings.dynarec.unstable_opt);
 	settings.dynarec.safemode		= cfgGameInt(reios_id,"Dynarec.safemode", settings.dynarec.safemode);
+	settings.aica.InterruptHack		= cfgLoadInt(reios_id,"aica.InterruptHack", settings.aica.InterruptHack);
 	settings.rend.ModifierVolumes	= cfgGameInt(reios_id,"rend.ModifierVolumes", settings.rend.ModifierVolumes);
 	settings.rend.Clipping			= cfgGameInt(reios_id,"rend.Clipping", settings.rend.Clipping);
 
@@ -327,6 +330,7 @@ void LoadCustom()
 
 	settings.pvr.MaxThreads			= cfgGameInt(reios_id, "pvr.MaxThreads", settings.pvr.MaxThreads);
 	settings.pvr.SynchronousRender	= cfgGameInt(reios_id, "pvr.SynchronousRendering", settings.pvr.SynchronousRender);
+	settings.pvr.QueueRender		= cfgLoadInt(reios_id, "pvr.QueueRender", settings.pvr.QueueRender);
 }
 
 void SaveSettings()
