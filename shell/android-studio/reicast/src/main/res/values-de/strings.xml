@@ -79,9 +79,6 @@
     <string name="customize_physical_controls">Physische Controller anpassen</string>
     <string name="map_keycode_title">Controller ändern</string>
     <string name="map_keycode_message">Drücken Sie die neue Controller-Taste für %1$s</string>
-    
-    <string name="moga_pro_connect">MOGA Pro verbunden!</string>
-    <string name="moga_connect">MOGA verbunden!</string>
 
     <string name="about_text">reicast ist ein Dreamcast-Emulator</string>
     <string name="revision_text">Version: %1$s [%2$s]</string>

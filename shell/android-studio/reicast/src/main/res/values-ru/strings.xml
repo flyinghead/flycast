@@ -83,9 +83,6 @@
     <string name="customize_physical_controls">Настройка аппаратных кнопок</string>
     <string name="map_keycode_title">Настройка контроллера</string>
     <string name="map_keycode_message">Нажмите кнопку контроллера для %1$s</string>
-    
-    <string name="moga_pro_connect">Подключен MOGA Pro</string>
-    <string name="moga_connect">Подключен MOGA</string>
 
     <string name="about_text">Reicast - мультиплатформенный эмулятор Dreamcast</string>
     <string name="revision_text">Версия: %1$s [%2$s]</string>

@@ -23,6 +23,7 @@ extern "C"
 {
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_config(JNIEnv *env,jobject obj,jstring dirName)  __attribute__((visibility("default")));
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_init(JNIEnv *env,jobject obj,jstring fileName)  __attribute__((visibility("default")));
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_query(JNIEnv *env,jobject obj,jobject emu_thread)  __attribute__((visibility("default")));
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_run(JNIEnv *env,jobject obj,jobject emu_thread)  __attribute__((visibility("default")));
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_pause(JNIEnv *env,jobject obj)  __attribute__((visibility("default")));
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_destroy(JNIEnv *env,jobject obj)  __attribute__((visibility("default")));
@@ -366,8 +367,9 @@ jobject vmulcd = NULL;
 jbyteArray jpix = NULL;
 jmethodID updatevmuscreen;
 
-void reios_info(JNIEnv *env) {
-    jmethodID reiosInfoMid=env->GetMethodID(env->GetObjectClass(emu),"reiosInfo","(Ljava/lang/String;Ljava/lang/String;)V");
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_query(JNIEnv *env,jobject obj,jobject emu_thread)
+{
+    jmethodID reiosInfoMid=env->GetMethodID(env->GetObjectClass(emu_thread),"reiosInfo","(Ljava/lang/String;Ljava/lang/String;)V");
 
     char *id = (char*)malloc(9);
     strcpy(id, reios_disk_id());
@@ -377,7 +379,7 @@ void reios_info(JNIEnv *env) {
     strcpy(name, reios_software_name);
     jstring reios_name = env->NewStringUTF(name);
 
-    jenv->CallVoidMethod(emu, reiosInfoMid, reios_id, reios_name);
+    env->CallVoidMethod(emu_thread, reiosInfoMid, reios_id, reios_name);
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_run(JNIEnv *env,jobject obj,jobject emu_thread)
@@ -391,8 +393,6 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_run(JNIEnv *env,jobje
     writemid=env->GetMethodID(env->GetObjectClass(emu),"WriteBuffer","([SI)I");
     coreMessageMid=env->GetMethodID(env->GetObjectClass(emu),"coreMessage","([B)I");
     dieMid=env->GetMethodID(env->GetObjectClass(emu),"Die","()V");
-
-    reios_info(env);
 
     dc_run();
 }

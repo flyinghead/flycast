@@ -43,8 +43,6 @@
     <string name="customize_physical_controls">自定义物理控制</string>
     <string name="map_keycode_title">修改控制器</string>
     <string name="map_keycode_message">按下控制器按钮来映射 %1$s</string>
-    <string name="moga_pro_connect">MOGA Pro已连接!</string>
-    <string name="moga_connect">MOGA已连接</string>
     <string name="about_text">reicast是一款dreamcast模拟器</string>
     <string name="revision_text">版本: %1$s [%2$s]</string>
 

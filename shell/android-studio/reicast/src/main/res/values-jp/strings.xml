@@ -62,10 +62,7 @@
     <string name="customize_physical_controls">物理コントロールを編集</string>
     <string name="map_keycode_title">コントローラを編集する</string>
     <string name="map_keycode_message">%1$sボタンを押してください</string>
-    
-    <string name="moga_pro_connect">MOGAプロが接続された！</string>
-    <string name="moga_connect">MOGAが接続された！</string>
-    
+
     <string name="about_text">reicastはマルチプラットフォームのドリームキャストエミュレータです。</string>
     <string name="revision_text">バージョン：%1$s [%2$s]</string>
     
