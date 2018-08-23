@@ -60,6 +60,8 @@ public class InputModFragment extends Fragment {
 	private TextView dpad_right_text;
 	private TextView start_button_text;
 	private TextView select_button_text;
+	private TextView vert_axis_text;
+	private TextView horz_axis_text;
 
 	private String player = "_A";
 	private int sS = 2;
@@ -518,43 +520,22 @@ public class InputModFragment extends Fragment {
 			return keyCode;
 		}
 
-		public boolean dispatchTouchEvent(MotionEvent ev) {
+		private void mapAxis(View view, final int axis) {
 			if (isMapping) {
-				if ((ev.getSource() & InputDevice.SOURCE_CLASS_JOYSTICK) != 0) {
-					if (ev.getAxisValue(MotionEvent.AXIS_HAT_X) != 0) {
-
+				view.setOnGenericMotionListener(new View.OnGenericMotionListener() {
+					@Override
+					public boolean onGenericMotion(View view, MotionEvent event) {
+						if ((event.getSource() & InputDevice.SOURCE_JOYSTICK) ==
+								InputDevice.SOURCE_JOYSTICK &&
+								event.getAction() == MotionEvent.ACTION_MOVE) {
+							mPrefs.edit().putInt(axis + player, event.getActionIndex ()).apply();
+							isMapping = false;
+							return true;
+						}
+						return false;
 					}
-					if (ev.getAxisValue(MotionEvent.AXIS_HAT_Y) != 0) {
-
-					}
-					if (ev.getAxisValue(MotionEvent.AXIS_Z) != 0) {
-
-					}
-					if (ev.getAxisValue(MotionEvent.AXIS_RZ) != 0) {
-
-					}
-					if (ev.getAxisValue(MotionEvent.AXIS_RTRIGGER) != 0) {
-
-					}
-					if (ev.getAxisValue(MotionEvent.AXIS_LTRIGGER) != 0) {
-
-					}
-					if (ev.getAxisValue(MotionEvent.AXIS_THROTTLE) != 0) {
-
-					}
-					if (ev.getAxisValue(MotionEvent.AXIS_BRAKE) != 0) {
-
-					}
-					String label = output.getText().toString();
-					if (label.contains(":")) {
-						label = label.substring(0, label.indexOf(":"));
-					}
-
-					output.setText(label + ": " + ev.getAction());
-				}
-
+				});
 			}
-			return dispatchTouchEvent(ev);
 		}
 	}
 

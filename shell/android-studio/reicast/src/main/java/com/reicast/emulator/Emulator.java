@@ -2,9 +2,7 @@ package com.reicast.emulator;
 
 import android.app.Activity;
 import android.app.Application;
-import android.content.Context;
 import android.content.SharedPreferences;
-import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatDelegate;
 
 import com.android.util.DreamTime;
@@ -110,27 +108,16 @@ public class Emulator extends Application {
         JNIdc.dreamtime(DreamTime.getDreamtime());
     }
 
-    public void getGameConfiguration(String gameId) {
+    public void loadGameConfiguration(String gameId) {
         SharedPreferences mPrefs = getSharedPreferences(gameId, Activity.MODE_PRIVATE);
-        Emulator.unstableopt = mPrefs.getBoolean(pref_unstable, unstableopt);
-        Emulator.dynsafemode = mPrefs.getBoolean(pref_dynsafemode, dynsafemode);
-        Emulator.interrupt = mPrefs.getBoolean(pref_interrupt, interrupt);
-        Emulator.frameskip = mPrefs.getInt(pref_frameskip, frameskip);
-        Emulator.pvrrender = mPrefs.getBoolean(pref_pvrrender, pvrrender);
-        Emulator.syncedrender = mPrefs.getBoolean(pref_syncedrender, syncedrender);
-        Emulator.queuerender = mPrefs.getBoolean(pref_queuerender, queuerender);
-        Emulator.modvols = mPrefs.getBoolean(pref_modvols, modvols);
-    }
-
-    public void loadGameConfiguration() {
-        JNIdc.unstable(Emulator.unstableopt ? 1 : 0);
-        JNIdc.safemode(Emulator.dynsafemode ? 1 : 0);
-        JNIdc.interrupthack(Emulator.interrupt ? 1 : 0);
-        JNIdc.frameskip(Emulator.frameskip);
-        JNIdc.pvrrender(Emulator.pvrrender ? 1 : 0);
-        JNIdc.syncedrender(Emulator.syncedrender ? 1 : 0);
-        JNIdc.queuerender(Emulator.queuerender ? 1 : 0);
-        JNIdc.modvols(Emulator.modvols ? 1 : 0);
+        JNIdc.unstable(mPrefs.getBoolean(pref_unstable, unstableopt) ? 1 : 0);
+        JNIdc.safemode(mPrefs.getBoolean(pref_dynsafemode, dynsafemode) ? 1 : 0);
+        JNIdc.interrupthack(mPrefs.getBoolean(pref_interrupt, interrupt) ? 1 : 0);
+        JNIdc.frameskip(mPrefs.getInt(pref_frameskip, frameskip));
+        JNIdc.pvrrender(mPrefs.getBoolean(pref_pvrrender, pvrrender) ? 1 : 0);
+        JNIdc.syncedrender(mPrefs.getBoolean(pref_syncedrender, syncedrender) ? 1 : 0);
+        JNIdc.queuerender(mPrefs.getBoolean(pref_queuerender, queuerender) ? 1 : 0);
+        JNIdc.modvols(mPrefs.getBoolean(pref_modvols, modvols) ? 1 : 0);
     }
 
     static {

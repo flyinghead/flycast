@@ -32,8 +32,6 @@ import com.reicast.emulator.config.Config;
 import com.reicast.emulator.emu.OnScreenMenu.FpsPopup;
 import com.reicast.emulator.periph.VJoy;
 
-import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 
 import javax.microedition.khronos.egl.EGLConfig;
@@ -678,18 +676,10 @@ public class GL2JNIView extends GLSurfaceView
 
         void reiosInfo(String reiosId, String reiosSoftware) {
             String gameId = reiosId.replaceAll("[^a-zA-Z0-9]+", "").toLowerCase();
-            try {
-                OutputStreamWriter outputStreamWriter = new OutputStreamWriter(
-                        context.openFileOutput(gameId + ".pgc", Context.MODE_PRIVATE));
-                outputStreamWriter.write(reiosSoftware);
-                outputStreamWriter.close();
-            }
-            catch (IOException e) {
-                Log.e("Exception", "File write failed: " + e.toString());
-            }
+            SharedPreferences mPrefs = context.getSharedPreferences(gameId, Activity.MODE_PRIVATE);
             Emulator app = (Emulator) context.getApplicationContext();
-            app.getGameConfiguration(gameId);
-            app.loadGameConfiguration();
+            app.loadGameConfiguration(gameId);
+            mPrefs.edit().putString(Config.game_title, reiosSoftware.trim()).apply();
         }
 
     }
