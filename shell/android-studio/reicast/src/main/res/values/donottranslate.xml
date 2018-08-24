@@ -70,4 +70,10 @@
         <item>Purupuru</item>
     </string-array>
 
+    <string-array name="right_stick">
+        <item>None</item>
+        <item>L / R</item>
+        <item>A / B</item>
+    </string-array>
+
 </resources>

@@ -350,28 +350,27 @@ public class GL2JNINative extends NativeActivity {
 		GL2JNIView.jx[playerNum] = (int) (LS_X * 126);
 		GL2JNIView.jy[playerNum] = (int) (LS_Y * 126);
 
-		GL2JNIView.lt[playerNum] = (int) (L2 * 255);
-		GL2JNIView.rt[playerNum] = (int) (R2 * 255);
+		if (prefs.getInt(Gamepad.pref_js_rstick + pad.portId[playerNum], 0) == 1) {
+			float R2Sum = R2 > 0.25 ? R2 : RS_Y;
+			GL2JNIView.rt[playerNum] = (int) (R2Sum * 255);
+			float L2Sum = L2 > 0.25 ? L2 : -(RS_Y);
+			GL2JNIView.lt[playerNum] = (int) (L2Sum * 255);
+		} else {
+			GL2JNIView.lt[playerNum] = (int) (L2 * 255);
+			GL2JNIView.rt[playerNum] = (int) (R2 * 255);
 
-		if (prefs.getBoolean(Gamepad.pref_js_rbuttons + pad.portId[playerNum], true)) {
-			if (RS_Y > 0.25) {
-				handle_key(playerNum, pad.map[playerNum][0]/* A */, true);
-				pad.wasKeyStick[playerNum] = true;
-			} else if (RS_Y < 0.25) {
-				handle_key(playerNum, pad.map[playerNum][1]/* B */, true);
-				pad.wasKeyStick[playerNum] = true;
-			} else if (pad.wasKeyStick[playerNum]){
-				handle_key(playerNum, pad.map[playerNum][0], false);
-				handle_key(playerNum, pad.map[playerNum][1], false);
-				pad.wasKeyStick[playerNum] = false;
-			}
-		} else if (L2 == 0 && R2 ==0) {
-			if (RS_Y > 0.25) {
-				GL2JNIView.rt[playerNum] = (int) (RS_Y * 255);
-				GL2JNIView.lt[playerNum] = (int) (L2 * 255);
-			} else if (RS_Y < 0.25) {
-				GL2JNIView.rt[playerNum] = (int) (R2 * 255);
-				GL2JNIView.lt[playerNum] = (int) (-(RS_Y) * 255);
+			if (prefs.getInt(Gamepad.pref_js_rstick + pad.portId[playerNum], 0) == 2) {
+				if (RS_Y > 0.25) {
+					handle_key(playerNum, pad.map[playerNum][0]/* A */, true);
+					pad.wasKeyStick[playerNum] = true;
+				} else if (RS_Y < 0.25) {
+					handle_key(playerNum, pad.map[playerNum][1]/* B */, true);
+					pad.wasKeyStick[playerNum] = true;
+				} else if (pad.wasKeyStick[playerNum]) {
+					handle_key(playerNum, pad.map[playerNum][0], false);
+					handle_key(playerNum, pad.map[playerNum][1], false);
+					pad.wasKeyStick[playerNum] = false;
+				}
 			}
 		}
 

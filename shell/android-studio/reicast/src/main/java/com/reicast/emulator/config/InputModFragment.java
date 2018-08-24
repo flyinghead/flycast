@@ -44,10 +44,10 @@ public class InputModFragment extends Fragment {
 
 	private SharedPreferences mPrefs;
 
-	private CompoundButton switchJoystickDpadEnabled;
-	private CompoundButton switchRightStickLREnabled;
 	private CompoundButton switchModifiedLayoutEnabled;
 	private CompoundButton switchCompatibilityEnabled;
+	private Spinner right_stick_spinner;
+	private CompoundButton switchJoystickDpadEnabled;
 
 	private TextView a_button_text;
 	private TextView b_button_text;
@@ -95,8 +95,6 @@ public class InputModFragment extends Fragment {
 
 		switchJoystickDpadEnabled = (CompoundButton) getView().findViewById(
 				R.id.switchJoystickDpadEnabled);
-		switchRightStickLREnabled = (CompoundButton) getView().findViewById(
-				R.id.switchRightStickLREnabled);
 		switchModifiedLayoutEnabled = (CompoundButton) getView().findViewById(
 				R.id.switchModifiedLayoutEnabled);
 		switchCompatibilityEnabled = (CompoundButton) getView().findViewById(
@@ -111,14 +109,23 @@ public class InputModFragment extends Fragment {
 
 		switchJoystickDpadEnabled.setOnCheckedChangeListener(joystick_mode);
 
-		OnCheckedChangeListener rstick_mode = new OnCheckedChangeListener() {
-			public void onCheckedChanged(CompoundButton buttonView,
-										 boolean isChecked) {
-				mPrefs.edit().putBoolean(Gamepad.pref_js_rbuttons + player, isChecked).apply();
-			}
-		};
+		String[] rstick = getResources().getStringArray(R.array.right_stick);
+		right_stick_spinner = (Spinner) getView().findViewById(R.id.rstick_spinner);
+		ArrayAdapter<String> rstickAdapter = new ArrayAdapter<String>(
+				getActivity(), android.R.layout.simple_spinner_item, rstick);
+		rstickAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		right_stick_spinner.setAdapter(rstickAdapter);
+		right_stick_spinner.setOnItemSelectedListener(new OnItemSelectedListener() {
 
-		switchRightStickLREnabled.setOnCheckedChangeListener(rstick_mode);
+			public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
+				mPrefs.edit().putInt(Gamepad.pref_js_rstick + player, pos).apply();
+			}
+
+			public void onNothingSelected(AdapterView<?> arg0) {
+
+			}
+
+		});
 
 		OnCheckedChangeListener modified_layout = new OnCheckedChangeListener() {
 			public void onCheckedChanged(CompoundButton buttonView,
@@ -307,7 +314,7 @@ public class InputModFragment extends Fragment {
 		});
 
 		joystick_x_text = (TextView) getView().findViewById(
-				R.id.joystick_x_key);
+				R.id.joystick_x_axis);
 		Button joystick_x = (Button) getView().findViewById(
 				R.id.joystick_x_edit);
 		joystick_x.setOnClickListener(new View.OnClickListener() {
@@ -324,7 +331,7 @@ public class InputModFragment extends Fragment {
 		});
 
 		joystick_y_text = (TextView) getView().findViewById(
-				R.id.joystick_y_key);
+				R.id.joystick_y_axis);
 		Button joystick_y = (Button) getView().findViewById(
 				R.id.joystick_y_edit);
 		joystick_y.setOnClickListener(new View.OnClickListener() {
@@ -608,8 +615,7 @@ public class InputModFragment extends Fragment {
 	private void updateController(String player) {
 		switchJoystickDpadEnabled.setChecked(mPrefs.getBoolean(
 				Gamepad.pref_js_merged + player, false));
-		switchRightStickLREnabled.setChecked(mPrefs.getBoolean(
-				Gamepad.pref_js_rbuttons + player, true));
+		right_stick_spinner.setSelection(mPrefs.getInt(Gamepad.pref_js_rstick + player, 0));
 		switchModifiedLayoutEnabled.setChecked(mPrefs.getBoolean(
 				Gamepad.pref_js_modified + player, false));
 		switchCompatibilityEnabled.setChecked(mPrefs.getBoolean(
