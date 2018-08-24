@@ -99,6 +99,12 @@
     <string name="enable_microphone">Enable Microphone(s)</string>
     <string name="controller_1_vmu">Includes 2 VMUs (or 1 VMU / 1 Mic)</string>
 
+    <string name="a_button">A Button</string>
+    <string name="b_button">B Button</string>
+    <string name="x_button">X Button</string>
+    <string name="y_button">Y Button</string>
+    <string name="right_button">R Button</string>
+    <string name="left_button">L Button</string>
     <string name="dpad_up">D-Pad Up</string>
     <string name="dpad_down">D-Pad Down</string>
     <string name="dpad_left">D-Pad Left</string>

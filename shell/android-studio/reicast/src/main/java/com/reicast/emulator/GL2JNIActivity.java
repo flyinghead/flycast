@@ -358,19 +358,18 @@ public class GL2JNIActivity extends Activity {
         } else {
             GL2JNIView.lt[playerNum] = (int) (L2 * 255);
             GL2JNIView.rt[playerNum] = (int) (R2 * 255);
-
-            if (prefs.getInt(Gamepad.pref_js_rstick + pad.portId[playerNum], 0) == 2) {
-                if (RS_Y > 0.25) {
-                    handle_key(playerNum, pad.map[playerNum][0]/* A */, true);
-                    pad.wasKeyStick[playerNum] = true;
-                } else if (RS_Y < 0.25) {
-                    handle_key(playerNum, pad.map[playerNum][1]/* B */, true);
-                    pad.wasKeyStick[playerNum] = true;
-                } else if (pad.wasKeyStick[playerNum]) {
-                    handle_key(playerNum, pad.map[playerNum][0], false);
-                    handle_key(playerNum, pad.map[playerNum][1], false);
-                    pad.wasKeyStick[playerNum] = false;
-                }
+        }
+        if (prefs.getInt(Gamepad.pref_js_rstick + pad.portId[playerNum], 0) == 2) {
+            if (RS_Y > 0.25) {
+                handle_key(playerNum, pad.map[playerNum][0]/* A */, true);
+                pad.wasKeyStick[playerNum] = true;
+            } else if (RS_Y < 0.25) {
+                handle_key(playerNum, pad.map[playerNum][1]/* B */, true);
+                pad.wasKeyStick[playerNum] = true;
+            } else if (pad.wasKeyStick[playerNum]) {
+                handle_key(playerNum, pad.map[playerNum][0], false);
+                handle_key(playerNum, pad.map[playerNum][1], false);
+                pad.wasKeyStick[playerNum] = false;
             }
         }
 
