@@ -32,7 +32,7 @@ public class Gamepad {
 	public static final String pref_js_modified = "modified_key_layout";
 	public static final String pref_js_compat = "controller_compat";
 	public static final String pref_js_merged = "merged_joystick";
-	public static final String pref_js_rbuttons = "right_buttons";
+	public static final String pref_js_rstick = "right_joystick";
 
 	public static final String pref_button_a = "a_button";
 	public static final String pref_button_b = "b_button";
@@ -46,6 +46,9 @@ public class Gamepad {
 	public static final String pref_dpad_down = "dpad_down";
 	public static final String pref_dpad_left = "dpad_left";
 	public static final String pref_dpad_right = "dpad_right";
+
+	public static final String pref_axis_x = "x_axis";
+	public static final String pref_axis_y = "y_axis";
 
 	public static final String pref_button_start = "start_button";
 	public static final String pref_button_select = "select_button";

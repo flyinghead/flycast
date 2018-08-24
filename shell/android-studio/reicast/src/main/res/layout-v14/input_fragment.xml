@@ -22,6 +22,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:ems="10"
+                    android:layout_marginLeft="4dp"
                     android:text="@string/customize_touch_controls" />
 
                 <LinearLayout
@@ -50,6 +51,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="0.5"
                     android:ems="10"
+                    android:layout_marginLeft="4dp"
                     android:gravity="center_vertical|left"
                     android:text="@string/touch_vibration" />
 
@@ -85,6 +87,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
+                        android:layout_marginLeft="4dp"
                         android:text="@string/vibration_duration" />
 
                     <LinearLayout
@@ -130,6 +133,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:ems="10"
+                    android:layout_marginLeft="4dp"
                     android:text="@string/customize_physical_controls" />
 
                 <LinearLayout

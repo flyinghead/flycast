@@ -320,16 +320,20 @@ public class GL2JNIActivity extends Activity {
     }
 
     private void processJoystickInput(MotionEvent event, Integer playerNum, int historyPos) {
-        float LS_X = getAxisValues(event, MotionEvent.AXIS_X, historyPos);
-        float LS_Y = getAxisValues(event, MotionEvent.AXIS_Y, historyPos);
+        float LS_X = getAxisValues(event, prefs.getInt(
+                Gamepad.pref_axis_x, MotionEvent.AXIS_X), historyPos);
+        float LS_Y = getAxisValues(event, prefs.getInt(
+                Gamepad.pref_axis_y, MotionEvent.AXIS_Y), historyPos);
         float RS_X = getAxisValues(event, MotionEvent.AXIS_RX, historyPos);
         float RS_Y = getAxisValues(event, MotionEvent.AXIS_RY, historyPos);
         float L2 = getAxisValues(event, MotionEvent.AXIS_LTRIGGER, historyPos);
         float R2 = getAxisValues(event, MotionEvent.AXIS_RTRIGGER, historyPos);
 
         if (pad.IsOuyaOrTV(GL2JNIActivity.this, true)) {
-            LS_X = getAxisValues(event, OuyaController.AXIS_LS_X, historyPos);
-            LS_Y = getAxisValues(event, OuyaController.AXIS_LS_Y, historyPos);
+            LS_X = getAxisValues(event, prefs.getInt(Gamepad.pref_axis_x,
+                    OuyaController.AXIS_LS_X), historyPos);
+            LS_Y = getAxisValues(event, prefs.getInt(Gamepad.pref_axis_y,
+                    OuyaController.AXIS_LS_Y), historyPos);
             RS_X = getAxisValues(event, OuyaController.AXIS_RS_X, historyPos);
             RS_Y = getAxisValues(event, OuyaController.AXIS_RS_Y, historyPos);
             L2 = getAxisValues(event, OuyaController.AXIS_L2, historyPos);
@@ -346,28 +350,26 @@ public class GL2JNIActivity extends Activity {
         GL2JNIView.jx[playerNum] = (int) (LS_X * 126);
         GL2JNIView.jy[playerNum] = (int) (LS_Y * 126);
 
-        GL2JNIView.lt[playerNum] = (int) (L2 * 255);
-        GL2JNIView.rt[playerNum] = (int) (R2 * 255);
-
-        if (prefs.getBoolean(Gamepad.pref_js_rbuttons + pad.portId[playerNum], true)) {
+        if (prefs.getInt(Gamepad.pref_js_rstick + pad.portId[playerNum], 0) == 1) {
+            float R2Sum = RS_Y > 0.25 ? RS_Y : R2;
+            GL2JNIView.rt[playerNum] = (int) (R2Sum * 255);
+            float L2Sum = RS_Y < -0.25 ? -(RS_Y) : L2;
+            GL2JNIView.lt[playerNum] = (int) (L2Sum * 255);
+        } else {
+            GL2JNIView.lt[playerNum] = (int) (L2 * 255);
+            GL2JNIView.rt[playerNum] = (int) (R2 * 255);
+        }
+        if (prefs.getInt(Gamepad.pref_js_rstick + pad.portId[playerNum], 0) == 2) {
             if (RS_Y > 0.25) {
                 handle_key(playerNum, pad.map[playerNum][0]/* A */, true);
                 pad.wasKeyStick[playerNum] = true;
             } else if (RS_Y < 0.25) {
                 handle_key(playerNum, pad.map[playerNum][1]/* B */, true);
                 pad.wasKeyStick[playerNum] = true;
-            } else if (pad.wasKeyStick[playerNum]){
+            } else if (pad.wasKeyStick[playerNum]) {
                 handle_key(playerNum, pad.map[playerNum][0], false);
                 handle_key(playerNum, pad.map[playerNum][1], false);
                 pad.wasKeyStick[playerNum] = false;
-            }
-        } else if (L2 == 0 && R2 ==0) {
-            if (RS_Y > 0.25) {
-                GL2JNIView.rt[playerNum] = (int) (RS_Y * 255);
-                GL2JNIView.lt[playerNum] = (int) (L2 * 255);
-            } else if (RS_Y < 0.25) {
-                GL2JNIView.rt[playerNum] = (int) (R2 * 255);
-                GL2JNIView.lt[playerNum] = (int) (-(RS_Y) * 255);
             }
         }
 

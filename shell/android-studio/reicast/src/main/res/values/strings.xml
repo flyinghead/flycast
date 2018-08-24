@@ -91,13 +91,28 @@
     <string name="select_controller_title">Select Controller</string>
     <string name="select_controller_message">Press any button on the controller %1$s to assign to port</string>
     <string name="controller_already_in_use">This controller is already in use!</string>
-    <string name="rstick_mode">Right Stick: On - L/R, Off - A/B</string>
+    <string name="rstick_mode">Right Stick Mode</string>
     <string name="joystick_layout">Use Joystick For D-Pad Input</string>
     <string name="modified_layout">Enable Custom Key Layout</string>
     <string name="controller_compat">Enable Compatibility Mode</string>
     <string name="controller_unavailable">Gamepad IME detected!\nPlease disable native interface</string>
     <string name="enable_microphone">Enable Microphone(s)</string>
     <string name="controller_1_vmu">Includes 2 VMUs (or 1 VMU / 1 Mic)</string>
+
+    <string name="a_button">A Button</string>
+    <string name="b_button">B Button</string>
+    <string name="x_button">X Button</string>
+    <string name="y_button">Y Button</string>
+    <string name="right_button">R Button</string>
+    <string name="left_button">L Button</string>
+    <string name="dpad_up">D-Pad Up</string>
+    <string name="dpad_down">D-Pad Down</string>
+    <string name="dpad_left">D-Pad Left</string>
+    <string name="dpad_right">D-Pad Right</string>
+    <string name="joystick_x">JS X Axis</string>
+    <string name="joystick_y">JS Y Axis</string>
+    <string name="start_button">Start Button</string>
+    <string name="select_button">Select Button</string>
     
     <string name="customize_physical_controls">Customize Physical Controls</string>
     <string name="map_keycode_title">Modify Controller</string>
