@@ -1,6 +1,5 @@
 package com.reicast.emulator.config;
 
-import android.annotation.TargetApi;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
@@ -38,6 +37,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+
+import tv.ouya.console.api.OuyaController;
 
 public class InputModFragment extends Fragment {
 
@@ -560,6 +561,7 @@ public class InputModFragment extends Fragment {
 					dialog.dismiss();
 				}
 			});
+			view.requestFocusFromTouch();
 			view.setOnGenericMotionListener(new View.OnGenericMotionListener() {
 				@Override
 				public boolean onGenericMotion(View view, MotionEvent event) {
@@ -584,6 +586,14 @@ public class InputModFragment extends Fragment {
 						}
 						if (event.getAxisValue(MotionEvent.AXIS_HAT_Y) != 0) {
 							axis = MotionEvent.AXIS_HAT_Y;
+						}
+						if (new Gamepad().IsOuyaOrTV(getActivity(), true)) {
+							if (event.getAxisValue(OuyaController.AXIS_LS_X) != 0) {
+								axis = OuyaController.AXIS_LS_X;
+							}
+							if (event.getAxisValue(OuyaController.AXIS_LS_Y) != 0) {
+								axis = OuyaController.AXIS_LS_Y;
+							}
 						}
 						mPrefs.edit().putInt(button + player, axis).apply();
 						dialog.dismiss();
