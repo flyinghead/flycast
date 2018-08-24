@@ -37,9 +37,10 @@
 
 #if defined(USE_EVDEV)
 	#include "linux-dist/evdev.h"
-	#include "hw/maple/maple_cfg.h"
 	#include "hw/maple/maple_devs.h"
 #endif
+
+#include "hw/maple/maple_cfg.h"
 
 #if defined(USE_JOYSTICK)
 	#include "linux-dist/joystick.h"
