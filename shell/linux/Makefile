@@ -5,6 +5,7 @@ FOR_LINUX :=1
 WEBUI :=1
 USE_OSS := 1
 #USE_PULSEAUDIO := 1
+#USE_LIBAO := 1
 USE_EVDEV := 1
 
 CXX=${CC_PREFIX}g++
@@ -316,6 +317,11 @@ endif
 ifdef USE_PULSEAUDIO
     CXXFLAGS += `pkg-config --cflags libpulse-simple` -D USE_PULSEAUDIO
     LIBS += `pkg-config --libs libpulse-simple`
+endif
+
+ifdef USE_LIBAO
+	CXXFLAGS += `pkg-config --cflags ao` -D USE_LIBAO
+	LIBS += `pkg-config --libs ao`
 endif
 
 ifdef HAS_SOFTREND
