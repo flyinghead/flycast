@@ -411,8 +411,13 @@ public class GL2JNINative extends NativeActivity {
 		return false;
 	}
 
-	public boolean simulatedTouchEvent(int playerNum, float L2, float R2) {
+	public boolean simulatedLTouchEvent(int playerNum, float L2) {
 		GL2JNIView.lt[playerNum] = (int) (L2 * 255);
+		mView.pushInput();
+		return true;
+	}
+
+	public boolean simulatedRTouchEvent(int playerNum, float R2) {
 		GL2JNIView.rt[playerNum] = (int) (R2 * 255);
 		mView.pushInput();
 		return true;
@@ -468,25 +473,22 @@ public class GL2JNINative extends NativeActivity {
 		if (playerNum != null && playerNum != -1) {
 			String id = pad.portId[playerNum];
 			if (action == KeyEvent.ACTION_DOWN) {
-				if (keyCode == prefs.getInt(Gamepad.pref_button_l + id, KeyEvent.KEYCODE_BUTTON_L1)) {
-					return simulatedTouchEvent(playerNum, 1.0f, 0.0f);
-				} else if (keyCode == prefs.getInt(Gamepad.pref_button_r + id, KeyEvent.KEYCODE_BUTTON_R1)) {
-					return simulatedTouchEvent(playerNum, 0.0f, 1.0f);
-				} else if (handle_key(playerNum, keyCode, true)) {
+				if (keyCode == prefs.getInt(Gamepad.pref_button_l + id, KeyEvent.KEYCODE_BUTTON_L1))
+					return simulatedLTouchEvent(playerNum, 1.0f);
+				if (keyCode == prefs.getInt(Gamepad.pref_button_r + id, KeyEvent.KEYCODE_BUTTON_R1))
+					return simulatedRTouchEvent(playerNum, 1.0f);
+				if (handle_key(playerNum, keyCode, true)) {
 					if (playerNum == 0)
 						JNIdc.hide_osd();
 					return true;
 				}
 			}
 			if (action == KeyEvent.ACTION_UP) {
-				if (keyCode == prefs.getInt(Gamepad.pref_button_l + id,
-						KeyEvent.KEYCODE_BUTTON_L1)
-						|| keyCode == prefs.getInt(Gamepad.pref_button_r + id,
-						KeyEvent.KEYCODE_BUTTON_R1)) {
-					return simulatedTouchEvent(playerNum, 0.0f, 0.0f);
-				} else {
-					return handle_key(playerNum, keyCode, false);
-				}
+				if (keyCode == prefs.getInt(Gamepad.pref_button_l + id, KeyEvent.KEYCODE_BUTTON_L1))
+					return simulatedLTouchEvent(playerNum, 0.0f);
+				if (keyCode == prefs.getInt(Gamepad.pref_button_r + id, KeyEvent.KEYCODE_BUTTON_R1))
+					return simulatedRTouchEvent(playerNum, 0.0f);
+				return handle_key(playerNum, keyCode, false);
 			}
 		}
 		return false;
