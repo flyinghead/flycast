@@ -18,8 +18,8 @@
 
         <ImageView
             android:id="@+id/item_icon"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
             android:layout_marginLeft="16dp"
             android:layout_gravity="center"
             android:tint="@color/ice_light"
