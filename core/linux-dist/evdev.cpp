@@ -123,7 +123,7 @@
 				int type = ((strstr(keycode.c_str(), "ABS_") != NULL) ? EV_ABS : EV_KEY);
 				code = libevdev_event_code_from_name(type, keycode.c_str());
 			}
-			
+
 			if (code < 0)
 			{
 				printf("evdev: failed to find keycode for '%s'\n", keycode.c_str());
@@ -139,13 +139,13 @@
 			if(code >= 0)
 			{
 				char* name = NULL;
-				
+
 				if (libevdev_available)
 				{
 					int type = ((strstr(dc_key.c_str(), "axis_") != NULL) ? EV_ABS : EV_KEY);
 					name = (char*)libevdev_event_code_get_name(type, code);
 				}
-				
+
 				if (name != NULL)
 				{
 					printf("%s = %s (%d)\n", dc_key.c_str(), name, code);
@@ -156,10 +156,10 @@
 				}
 			}
 		}
-		
+
 		if (code < 0)
 			printf("WARNING: %s/%s not configured!\n", section.c_str(), dc_key.c_str());
-		
+
 		return code;
 	}
 
@@ -169,7 +169,7 @@
 		mf.parse(fd);
 
 		EvdevControllerMapping mapping = {
-			mf.get("emulator", "mapping_name", "<Unknown>").c_str(),
+			mf.get("emulator", "mapping_name", "<Unknown>"),
 			load_keycode(&mf, "dreamcast", "btn_a"),
 			load_keycode(&mf, "dreamcast", "btn_b"),
 			load_keycode(&mf, "dreamcast", "btn_c"),
@@ -370,7 +370,7 @@
 					}
 				}
 				controller->mapping = &loaded_mappings.find(string(mapping_fname))->second;
-				printf("evdev: Using '%s' mapping\n", controller->mapping->name);
+				printf("evdev: Using '%s' mapping\n", controller->mapping->name.c_str());
 				controller->init();
 
 				return 0;
