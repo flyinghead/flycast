@@ -193,7 +193,7 @@ void os_SetupInput()
 							// Multiple controllers with the same device, check for multiple button assignments
 							if (input_evdev_button_duplicate_button(evdev_controllers[i].mapping, evdev_controllers[port].mapping))
 							{
-								printf("WARNING: One or more button(s) of this device is also used in the configuration of input device %d (mapping: %s)\n", i, evdev_controllers[i].mapping->name);
+								printf("WARNING: One or more button(s) of this device is also used in the configuration of input device %d (mapping: %s)\n", i, evdev_controllers[i].mapping->name.c_str());
 							}
 						}
 				}
