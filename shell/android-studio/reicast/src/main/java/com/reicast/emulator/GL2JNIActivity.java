@@ -408,8 +408,13 @@ public class GL2JNIActivity extends Activity {
                 && (pad.previousLS_X[playerNum] != 0.0f || pad.previousLS_Y[playerNum] != 0.0f);
     }
 
-    public boolean simulatedTouchEvent(int playerNum, float L2, float R2) {
+    public boolean simulatedLTouchEvent(int playerNum, float L2) {
         GL2JNIView.lt[playerNum] = (int) (L2 * 255);
+        mView.pushInput();
+        return true;
+    }
+
+    public boolean simulatedRTouchEvent(int playerNum, float R2) {
         GL2JNIView.rt[playerNum] = (int) (R2 * 255);
         mView.pushInput();
         return true;
@@ -449,17 +454,14 @@ public class GL2JNIActivity extends Activity {
         if (playerNum != null && playerNum != -1) {
             if (pad.compat[playerNum] || pad.custom[playerNum]) {
                 String id = pad.portId[playerNum];
-                if (keyCode == prefs.getInt(Gamepad.pref_button_l + id,
-                        KeyEvent.KEYCODE_BUTTON_L1)
-                        || keyCode == prefs.getInt(Gamepad.pref_button_r + id,
-                        KeyEvent.KEYCODE_BUTTON_R1)) {
-                    return simulatedTouchEvent(playerNum, 0.0f, 0.0f);
-                }
+                if (keyCode == prefs.getInt(Gamepad.pref_button_l + id, KeyEvent.KEYCODE_BUTTON_L1))
+                    return simulatedLTouchEvent(playerNum, 0.0f);
+                if (keyCode == prefs.getInt(Gamepad.pref_button_r + id, KeyEvent.KEYCODE_BUTTON_R1))
+                    return simulatedRTouchEvent(playerNum, 0.0f);
             }
         }
 
-        return handle_key(playerNum, keyCode, false)
-                || super.onKeyUp(keyCode, event);
+        return handle_key(playerNum, keyCode, false) || super.onKeyUp(keyCode, event);
     }
 
     public boolean onKeyDown(int keyCode, KeyEvent event) {
@@ -475,10 +477,10 @@ public class GL2JNIActivity extends Activity {
             if (pad.compat[playerNum] || pad.custom[playerNum]) {
                 String id = pad.portId[playerNum];
                 if (keyCode == prefs.getInt(Gamepad.pref_button_l + id, KeyEvent.KEYCODE_BUTTON_L1)) {
-                    return simulatedTouchEvent(playerNum, 1.0f, 0.0f);
+                    return simulatedLTouchEvent(playerNum, 1.0f);
                 }
                 if (keyCode == prefs.getInt(Gamepad.pref_button_r + id, KeyEvent.KEYCODE_BUTTON_R1)) {
-                    return simulatedTouchEvent(playerNum, 0.0f, 1.0f);
+                    return simulatedRTouchEvent(playerNum, 1.0f);
                 }
             }
         }
