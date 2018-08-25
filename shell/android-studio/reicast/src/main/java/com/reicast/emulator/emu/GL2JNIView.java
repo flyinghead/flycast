@@ -65,12 +65,8 @@ public class GL2JNIView extends GLSurfaceView
     public static final int LAYER_TYPE_HARDWARE = 2;
 
     private static String fileName;
-    //private AudioThread audioThread;
     private EmuThread ethd;
     private Handler handler = new Handler();
-
-    private static int sWidth;
-    private static int sHeight;
 
     Vibrator vib;
 

@@ -46,7 +46,7 @@ before_script:
 script:
 - git fetch --depth 50
 - cd shell/android-studio
-- export NUMBER_OF_PROCESSORS=4
+- export NUMBER_OF_PROCESSORS=2
 - sudo chmod 755 travis-build.sh
 - "./travis-build.sh"
 - test -z "$encrypted_c726d225a9d9_key" || ./travis-release.sh
