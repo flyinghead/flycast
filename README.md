@@ -139,7 +139,7 @@ Development/Beta versions
 | Platform                                           | Status | Downloads
 | -------------------------------------------------- | -------------- | ---------
 | ![Android](http://i.imgur.com/nK9exQe.jpg) Android | [![Build Status](https://travis-ci.org/reicast/reicast-emulator.svg?branch=master)](https://travis-ci.org/reicast/reicast-emulator) | [Reicast CI Builds](http://builds.reicast.com)
-| ![iOS](http://i.imgur.com/6bvAUUj.png) iOS         | [![Build Status](https://app.bitrise.io/app/d082ed2fb1bdeeef.svg?token=39zhSBFh-b9YVJw8q91omw) | *TODO*
+| ![iOS](http://i.imgur.com/6bvAUUj.png) iOS         | [![Build Status](https://app.bitrise.io/app/d082ed2fb1bdeeef.svg?token=39zhSBFh-b9YVJw8q91omw)](https://app.bitrise.io/app/d082ed2fb1bdeeef#/builds) | *TODO*
 | ![Windows](http://i.imgur.com/hAuMmjF.png) Windows | [![Build status](https://ci.appveyor.com/api/projects/status/353mwl73ki74tb58/branch/master?svg=true)](https://ci.appveyor.com/project/skmp/reicast-emulator/branch/master) |  [Reicast CI Builds](http://builds.reicast.com)
 | ![Linux](http://i.imgur.com/19aAoQD.png) Linux     | [![wercker status](https://app.wercker.com/status/bcabca642a2de044c6f58203b975878b/s/master "wercker status")](https://app.wercker.com/project/bykey/bcabca642a2de044c6f58203b975878b) | *TODO*
 | ![OSX](http://i.imgur.com/0YoI5Vm.png) OSX         | *TODO* | *TODO*
