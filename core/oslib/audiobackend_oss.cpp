@@ -2,11 +2,7 @@
 #ifdef USE_OSS
 #include <sys/ioctl.h>
 #include <sys/fcntl.h>
-#ifdef TARGET_BSD
 #include <unistd.h>
-#else
-#include <sys/unistd.h>
-#endif
 #include <sys/soundcard.h>
 
 static int oss_audio_fd = -1;
