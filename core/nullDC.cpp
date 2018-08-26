@@ -286,28 +286,28 @@ void dc_stop()
 void LoadSettings()
 {
 #ifndef _ANDROID
-	settings.dynarec.Enable			= cfgLoadInt("config","Dynarec.Enabled", 1)!=0;
-	settings.dynarec.idleskip		= cfgLoadInt("config","Dynarec.idleskip",1)!=0;
-	settings.dynarec.unstable_opt	= cfgLoadInt("config","Dynarec.unstable-opt",0);
-	settings.dynarec.safemode		= cfgLoadInt("config","Dynarec.safemode",0);
+	settings.dynarec.Enable			= cfgLoadInt("config", "Dynarec.Enabled", 1) != 0;
+	settings.dynarec.idleskip		= cfgLoadInt("config", "Dynarec.idleskip", 1) != 0;
+	settings.dynarec.unstable_opt	= cfgLoadInt("config", "Dynarec.unstable-opt", 0);
+	settings.dynarec.safemode		= cfgLoadInt("config", "Dynarec.safemode", 0);
 	//disable_nvmem can't be loaded, because nvmem init is before cfg load
-	settings.dreamcast.cable		= cfgLoadInt("config","Dreamcast.Cable",3);
-	settings.dreamcast.RTC			= cfgLoadInt("config","Dreamcast.RTC",GetRTC_now());
-	settings.dreamcast.region		= cfgLoadInt("config","Dreamcast.Region",3);
-	settings.dreamcast.broadcast	= cfgLoadInt("config","Dreamcast.Broadcast",4);
-	settings.aica.LimitFPS			= cfgLoadInt("config","aica.LimitFPS",1);
-	settings.aica.NoBatch			= cfgLoadInt("config","aica.NoBatch",0);
-    settings.aica.NoSound			= cfgLoadInt("config","aica.NoSound",0);
-	settings.aica.InterruptHack		= cfgLoadInt("config","aica.InterruptHack",0);
-	settings.rend.UseMipmaps		= cfgLoadInt("config","rend.UseMipmaps",1);
-	settings.rend.WideScreen		= cfgLoadInt("config","rend.WideScreen",0);
-	settings.rend.ModifierVolumes	= cfgLoadInt("config","rend.ModifierVolumes",1);
-	settings.rend.Clipping			= cfgLoadInt("config","rend.Clipping",1);
+	settings.dreamcast.cable		= cfgLoadInt("config", "Dreamcast.Cable", 3);
+	settings.dreamcast.RTC			= cfgLoadInt("config", "Dreamcast.RTC", GetRTC_now());
+	settings.dreamcast.region		= cfgLoadInt("config", "Dreamcast.Region", 3);
+	settings.dreamcast.broadcast	= cfgLoadInt("config", "Dreamcast.Broadcast", 4);
+	settings.aica.LimitFPS			= cfgLoadInt("config", "aica.LimitFPS", 1);
+	settings.aica.NoBatch			= cfgLoadInt("config", "aica.NoBatch", 0);
+    settings.aica.NoSound			= cfgLoadInt("config", "aica.NoSound", 0);
+	settings.aica.InterruptHack		= cfgLoadInt("config", "aica.InterruptHack", 0);
+	settings.rend.UseMipmaps		= cfgLoadInt("config", "rend.UseMipmaps", 1);
+	settings.rend.WideScreen		= cfgLoadInt("config", "rend.WideScreen", 0);
+	settings.rend.ModifierVolumes	= cfgLoadInt("config", "rend.ModifierVolumes", 1);
+	settings.rend.Clipping			= cfgLoadInt("config", "rend.Clipping", 1);
 
-	settings.pvr.subdivide_transp	= cfgLoadInt("config","pvr.Subdivide",0);
+	settings.pvr.subdivide_transp	= cfgLoadInt("config", "pvr.Subdivide", 0);
 
-	settings.pvr.ta_skip			= cfgLoadInt("config","ta.skip",0);
-	settings.pvr.rend				= cfgLoadInt("config","pvr.rend",0);
+	settings.pvr.ta_skip			= cfgLoadInt("config", "ta.skip", 0);
+	settings.pvr.rend				= cfgLoadInt("config", "pvr.rend", 0);
 
 	settings.pvr.MaxThreads			= cfgLoadInt("config", "pvr.MaxThreads", 3);
 	settings.pvr.SynchronousRender	= cfgLoadInt("config", "pvr.SynchronousRendering", 0);
@@ -354,6 +354,7 @@ void LoadCustom()
 	char *reios_id = reios_disk_id();
 
 	cfgSaveStr(reios_id, "software.name", reios_software_name);
+    settings.dynarec.Enable			= cfgLoadInt(reios_id,"Dynarec.Enabled", settings.dynarec.Enable ? 1 : 0) != 0;
 	settings.dynarec.idleskip		= cfgGameInt(reios_id,"Dynarec.idleskip", settings.dynarec.idleskip ? 1 : 0) != 0;
 	settings.dynarec.unstable_opt	= cfgGameInt(reios_id,"Dynarec.unstable-opt", settings.dynarec.unstable_opt);
 	settings.dynarec.safemode		= cfgGameInt(reios_id,"Dynarec.safemode", settings.dynarec.safemode);

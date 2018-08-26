@@ -45,6 +45,7 @@ public class PGConfigFragment extends Fragment {
 
 	private Spinner mSpnrConfigs;
 
+	private CompoundButton dynarec_opt;
 	private CompoundButton unstable_opt;
 	private CompoundButton safemode_opt;
 	private EditText mainFrames;
@@ -82,6 +83,7 @@ public class PGConfigFragment extends Fragment {
 		new LocateConfigs(PGConfigFragment.this).execute("/data/data/"
 				+ getActivity().getPackageName() + "/shared_prefs/");
 
+		dynarec_opt = (CompoundButton) getView().findViewById(R.id.dynarec_option);
 		unstable_opt = (CompoundButton) getView().findViewById(R.id.unstable_option);
 		safemode_opt = (CompoundButton) getView().findViewById(R.id.dynarec_safemode);
 		mainFrames = (EditText) getView().findViewById(R.id.current_frames);
@@ -94,7 +96,9 @@ public class PGConfigFragment extends Fragment {
 	}
 
 	private void saveSettings(SharedPreferences mPrefs) {
-		mPrefs.edit().putBoolean(Emulator.pref_unstable, unstable_opt.isChecked())
+		mPrefs.edit()
+				.putBoolean(Emulator.pref_dynarecopt, dynarec_opt.isChecked())
+				.putBoolean(Emulator.pref_unstable, unstable_opt.isChecked())
 				.putBoolean(Emulator.pref_dynsafemode, safemode_opt.isChecked())
 				.putInt(Emulator.pref_frameskip, frameSeek.getProgress())
 				.putBoolean(Emulator.pref_pvrrender, pvr_render.isChecked())
@@ -109,6 +113,7 @@ public class PGConfigFragment extends Fragment {
 	private void configureViewByGame(String gameId) {
 		final SharedPreferences mPrefs = getActivity()
 				.getSharedPreferences(gameId, Activity.MODE_PRIVATE);
+		dynarec_opt.setChecked(mPrefs.getBoolean(Emulator.pref_dynarecopt, Emulator.dynarecopt));
 		unstable_opt.setChecked(mPrefs.getBoolean(Emulator.pref_unstable, Emulator.unstableopt));
 		safemode_opt.setChecked(mPrefs.getBoolean(Emulator.pref_dynsafemode, Emulator.dynsafemode));
 
