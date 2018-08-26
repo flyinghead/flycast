@@ -129,7 +129,13 @@ void* webui_th(void* p)
 cThread webui_thd(&webui_th,0);
 #endif
 
+#if defined(_ANDROID)
+int reios_init_value;
+
+void reios_init(int argc,wchar* argv[])
+#else
 int dc_init(int argc,wchar* argv[])
+#endif
 {
 	setbuf(stdin,0);
 	setbuf(stdout,0);
@@ -137,7 +143,12 @@ int dc_init(int argc,wchar* argv[])
 	if (!_vmem_reserve())
 	{
 		printf("Failed to alloc mem\n");
+#if defined(_ANDROID)
+		reios_init_value = -1;
+		return;
+#else
 		return -1;
+#endif
 	}
 
 #if !defined(TARGET_NO_WEBUI)
@@ -146,19 +157,29 @@ int dc_init(int argc,wchar* argv[])
 
 	if(ParseCommandLine(argc,argv))
 	{
-		return 69;
+#if defined(_ANDROID)
+        reios_init_value = 69;
+        return;
+#else
+        return 69;
+#endif
 	}
 	if(!cfgOpen())
 	{
 		msgboxf("Unable to open config file",MBX_ICONERROR);
+#if defined(_ANDROID)
+		reios_init_value = -4;
+		return;
+#else
 		return -4;
+#endif
 	}
 	LoadSettings();
 #ifndef _ANDROID
 	os_CreateWindow();
 #endif
 
-	int rv= 0;
+	int rv = 0;
 
 #if HOST_OS != OS_DARWIN
     #define DATA_PATH "/data/"
@@ -169,10 +190,33 @@ int dc_init(int argc,wchar* argv[])
 	if (settings.bios.UseReios || !LoadRomFiles(get_readonly_data_path(DATA_PATH)))
 	{
 		if (!LoadHle(get_readonly_data_path(DATA_PATH)))
+		{
+#if defined(_ANDROID)
+			reios_init_value = -4;
+			return;
+#else
 			return -3;
+#endif
+		}
 		else
+		{
 			printf("Did not load bios, using reios\n");
+		}
 	}
+
+	plugins_Init();
+
+#if defined(_ANDROID)
+}
+
+int dc_init()
+{
+	int rv = 0;
+	if (reios_init_value != 0)
+		return reios_init_value;
+#else
+	LoadCustom();
+#endif
 
 #if FEAT_SHREC != DYNAREC_NONE
 	if(settings.dynarec.Enable)
@@ -192,8 +236,6 @@ int dc_init(int argc,wchar* argv[])
 	sh4_cpu.Init();
 	mem_Init();
 
-	plugins_Init();
-
 	mem_map_default();
 
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST
@@ -206,10 +248,6 @@ int dc_init(int argc,wchar* argv[])
 	mem_Reset(false);
 
 	sh4_cpu.Reset(false);
-
-#ifndef _ANDROID
-	LoadCustom();
-#endif
 	
 	return rv;
 }

@@ -156,7 +156,6 @@ public class GL2JNIView extends GLSurfaceView
             if (GL2JNIActivity.syms != null)
                 JNIdc.data(1, GL2JNIActivity.syms);
         }
-
         JNIdc.init(fileName);
         JNIdc.query(ethd);
 

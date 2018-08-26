@@ -9,7 +9,6 @@ import android.net.Uri;
 import android.os.Environment;
 import android.preference.PreferenceManager;
 
-import com.reicast.emulator.MainActivity;
 import com.reicast.emulator.config.Config;
 
 import java.io.File;
