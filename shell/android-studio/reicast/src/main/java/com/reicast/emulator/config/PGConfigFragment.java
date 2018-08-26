@@ -111,11 +111,26 @@ public class PGConfigFragment extends Fragment {
 				.putBoolean(Emulator.pref_queuerender, queue_render.isChecked())
 				.putBoolean(Emulator.pref_modvols, modifier_volumes.isChecked())
 				.putBoolean(Emulator.pref_interrupt, interrupt_opt.isChecked()).apply();
-		showToastMessage(getActivity().getString(R.string.pgconfig_saved),
-				Snackbar.LENGTH_SHORT);
+		showToastMessage(getActivity().getString(R.string.pgconfig_saved), Snackbar.LENGTH_SHORT);
 	}
 
-	private void configureViewByGame(String gameId) {
+	private void clearSettings(SharedPreferences mPrefs, String gameId) {
+		mPrefs.edit() // Prevent clear() removing title
+				.remove(Gamepad.pref_js_merged + "_A")
+				.remove(Emulator.pref_dynarecopt)
+				.remove(Emulator.pref_unstable)
+				.remove(Emulator.pref_dynsafemode)
+				.remove(Emulator.pref_frameskip)
+				.remove(Emulator.pref_pvrrender)
+				.remove(Emulator.pref_syncedrender)
+				.remove(Emulator.pref_queuerender)
+				.remove(Emulator.pref_modvols)
+				.remove(Emulator.pref_interrupt).apply();
+		showToastMessage(getActivity().getString(R.string.pgconfig_cleared), Snackbar.LENGTH_SHORT);
+		configureViewByGame(gameId);
+	}
+
+	private void configureViewByGame(final String gameId) {
 		final SharedPreferences mPrefs = getActivity()
 				.getSharedPreferences(gameId, Activity.MODE_PRIVATE);
 		switchJoystickDpadEnabled.setChecked(mPrefs.getBoolean(
@@ -168,6 +183,13 @@ public class PGConfigFragment extends Fragment {
 		savePGC.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View view) {
 				saveSettings(mPrefs);
+			}
+		});
+
+		Button clearPGC = (Button) getView().findViewById(R.id.clear_pg_btn);
+		clearPGC.setOnClickListener(new View.OnClickListener() {
+			public void onClick(View view) {
+				clearSettings(mPrefs, gameId);
 			}
 		});
 	}
