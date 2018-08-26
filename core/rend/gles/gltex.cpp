@@ -949,3 +949,132 @@ void rend_text_invl(vram_block* bl)
 
 	libCore_vramlock_Unlock_block_wb(bl);
 }
+
+GLuint fbTextureId;
+
+void RenderFramebuffer()
+{
+	if (FB_R_SIZE.fb_x_size == 0 || FB_R_SIZE.fb_y_size == 0)
+		return;
+
+	int width = (FB_R_SIZE.fb_x_size + 1) << 1;     // in 16-bit words
+	int height = FB_R_SIZE.fb_y_size + 1;
+	int modulus = (FB_R_SIZE.fb_modulus - 1) << 1;
+	
+	int bpp;
+	switch (FB_R_CTRL.fb_depth)
+	{
+		case fbde_0555:
+		case fbde_565:
+			bpp = 2;
+			break;
+		case fbde_888:
+			bpp = 3;
+			width = (width * 2) / 3;		// in pixels
+			modulus = (modulus * 2) / 3;	// in pixels
+			break;
+		case fbde_C888:
+			bpp = 4;
+			width /= 2;             // in pixels
+			modulus /= 2;           // in pixels
+			break;
+		default:
+			die("Invalid framebuffer format\n");
+			bpp = 4;
+			break;
+	}
+	
+	if (fbTextureId == 0)
+		fbTextureId = glcache.GenTexture();
+	
+	glcache.BindTexture(GL_TEXTURE_2D, fbTextureId);
+	
+	//set texture repeat mode
+	glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	
+	u32 addr = SPG_CONTROL.interlace && !SPG_STATUS.fieldnum ? FB_R_SOF2 : FB_R_SOF1;
+	
+	PixelBuffer<u32> pb;
+	pb.init(width, height);
+	u8 *dst = (u8*)pb.data();
+	
+	switch (FB_R_CTRL.fb_depth)
+	{
+		case fbde_0555:    // 555 RGB
+			for (int y = 0; y < height; y++)
+			{
+				for (int i = 0; i < width; i++)
+				{
+					u16 src = pvr_read_area1_16(addr);
+					*dst++ = (((src >> 10) & 0x1F) << 3) + FB_R_CTRL.fb_concat;
+					*dst++ = (((src >> 5) & 0x1F) << 3) + FB_R_CTRL.fb_concat;
+					*dst++ = (((src >> 0) & 0x1F) << 3) + FB_R_CTRL.fb_concat;
+					*dst++ = 0xFF;
+					addr += bpp;
+				}
+				addr += modulus * bpp;
+			}
+			break;
+			
+		case fbde_565:    // 565 RGB
+			for (int y = 0; y < height; y++)
+			{
+				for (int i = 0; i < width; i++)
+				{
+					u16 src = pvr_read_area1_16(addr);
+					*dst++ = (((src >> 11) & 0x1F) << 3) + FB_R_CTRL.fb_concat;
+					*dst++ = (((src >> 5) & 0x3F) << 2) + (FB_R_CTRL.fb_concat >> 1);
+					*dst++ = (((src >> 0) & 0x1F) << 3) + FB_R_CTRL.fb_concat;
+					*dst++ = 0xFF;
+					addr += bpp;
+				}
+				addr += modulus * bpp;
+			}
+			break;
+		case fbde_888:		// 888 RGB
+			for (int y = 0; y < height; y++)
+			{
+				for (int i = 0; i < width; i++)
+				{
+					if (addr & 1)
+					{
+						u32 src = pvr_read_area1_32(addr - 1);
+						*dst++ = src >> 16;
+						*dst++ = src >> 8;
+						*dst++ = src;
+					}
+					else
+					{
+						u32 src = pvr_read_area1_32(addr);
+						*dst++ = src >> 24;
+						*dst++ = src >> 16;
+						*dst++ = src >> 8;
+					}
+					*dst++ = 0xFF;
+					addr += bpp;
+				}
+				addr += modulus * bpp;
+			}
+			break;
+		case fbde_C888:     // 0888 RGB
+			for (int y = 0; y < height; y++)
+			{
+				for (int i = 0; i < width; i++)
+				{
+					u32 src = pvr_read_area1_32(addr);
+					*dst++ = src >> 16;
+					*dst++ = src >> 8;
+					*dst++ = src;
+					*dst++ = 0xFF;
+					addr += bpp;
+				}
+				addr += modulus * bpp;
+			}
+			break;
+	}
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pb.data());
+}
+

@@ -85,6 +85,13 @@ cResetEvent re(false,true);
 
 int max_idx,max_mvo,max_op,max_pt,max_tr,max_vtx,max_modt, ovrn;
 
+static bool render_called = false;
+u32 fb1_watch_addr_start;
+u32 fb1_watch_addr_end;
+u32 fb2_watch_addr_start;
+u32 fb2_watch_addr_end;
+bool fb_dirty;
+
 TA_context* _pvrrc;
 void SetREP(TA_context* cntx);
 
@@ -231,7 +238,7 @@ bool rend_frame(TA_context* ctx, bool draw_osd) {
 	}
 	bool proc = renderer->Process(ctx);
 #if !defined(TARGET_NO_THREADS)
-	if (!proc || !ctx->rend.isRTT)
+	if (!proc || (!ctx->rend.isRTT && !ctx->rend.isRenderFramebuffer))
 		// If rendering to texture, continue locking until the frame is rendered
 		re.Set();
 #endif
@@ -332,14 +339,18 @@ void rend_resize(int width, int height) {
 
 void rend_start_render()
 {
+	render_called = true;
 	pend_rend = false;
-	bool is_rtt=(FB_W_SOF1& 0x1000000)!=0;
 	TA_context* ctx = tactx_Pop(CORE_CURRENT_CTX);
 
-	SetREP(ctx);
+	// No end of render interrupt when rendering the framebuffer
+	if (!ctx || !ctx->rend.isRenderFramebuffer)
+		SetREP(ctx);
 
 	if (ctx)
 	{
+		bool is_rtt=(FB_W_SOF1& 0x1000000)!=0 && !ctx->rend.isRenderFramebuffer;
+		
 		if (fLogFrames || fCheckFrames) {
 			MD5Context md5;
 			u8 digest[16];
@@ -386,7 +397,8 @@ void rend_start_render()
 		{
 			//tactx_Recycle(ctx); ctx = read_frame("frames/dcframe-SoA-intro-tr-autosort");
 			//printf("REP: %.2f ms\n",render_end_pending_cycles/200000.0);
-			FillBGP(ctx);
+			if (!ctx->rend.isRenderFramebuffer)
+				FillBGP(ctx);
 			
 			ctx->rend.isRTT=is_rtt;
 
@@ -551,5 +563,24 @@ void rend_term()
 
 void rend_vblank()
 {
+	if (!render_called && fb_dirty && FB_R_CTRL.fb_enable)
+	{
+		SetCurrentTARC(CORE_CURRENT_CTX);
+		ta_ctx->rend.isRenderFramebuffer = true;
+		rend_start_render();
+		fb_dirty = false;
+	}
+	render_called = false;
+	check_framebuffer_write();
+
 	os_DoEvents();
+}
+
+void check_framebuffer_write()
+{
+	u32 fb_size = (FB_R_SIZE.fb_y_size + 1) * (FB_R_SIZE.fb_x_size + FB_R_SIZE.fb_modulus) / 4;
+	fb1_watch_addr_start = FB_R_SOF1;
+	fb1_watch_addr_end = FB_R_SOF1 + fb_size - 1;
+	fb2_watch_addr_start = FB_R_SOF2;
+	fb2_watch_addr_end = FB_R_SOF2 + fb_size - 1;
 }

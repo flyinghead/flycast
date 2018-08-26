@@ -1078,3 +1078,66 @@ void DrawStrips()
 		previous_pass = current_pass;
 	}
 }
+
+void DrawFramebuffer(float w, float h)
+{
+	struct Vertex vertices[] = {
+		{ 0, h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 1 },
+		{ 0, 0, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 0 },
+		{ w, h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 1 },
+		{ w, 0, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 0 },
+	};
+	GLushort indices[] = { 0, 1, 2, 1, 3 };
+
+	glcache.Disable(GL_SCISSOR_TEST);
+	glcache.Disable(GL_DEPTH_TEST);
+	glcache.Disable(GL_STENCIL_TEST);
+	glcache.Disable(GL_CULL_FACE);
+	glcache.Disable(GL_BLEND);
+
+	ShaderUniforms.trilinear_alpha = 1.0;
+
+	PipelineShader *shader = &gl.pogram_table[GetProgramID(0, 1, 1, 0, 1, 0, 0, 2, false, false)];
+	if (shader->program == -1)
+		CompilePipelineShader(shader);
+	else
+	{
+		glcache.UseProgram(shader->program);
+		ShaderUniforms.Set(shader);
+	}
+
+	glActiveTexture(GL_TEXTURE0);
+	glcache.BindTexture(GL_TEXTURE_2D, fbTextureId);
+
+#ifndef GLES
+	glBindVertexArray(gl.vbo.vao);
+#endif
+
+	// FIXME This make glDrawElements fails on OSX
+	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STREAM_DRAW);
+
+	glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.geometry);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STREAM_DRAW);
+
+	//setup vertex buffers attrib pointers
+	glEnableVertexAttribArray(VERTEX_POS_ARRAY);
+	glVertexAttribPointer(VERTEX_POS_ARRAY, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, x));
+
+	glEnableVertexAttribArray(VERTEX_COL_BASE_ARRAY);
+	glVertexAttribPointer(VERTEX_COL_BASE_ARRAY, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*)offsetof(Vertex, col));
+
+	glEnableVertexAttribArray(VERTEX_COL_OFFS_ARRAY);
+	glVertexAttribPointer(VERTEX_COL_OFFS_ARRAY, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*)offsetof(Vertex, spc));
+
+	glEnableVertexAttribArray(VERTEX_UV_ARRAY);
+	glVertexAttribPointer(VERTEX_UV_ARRAY, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, u));
+	
+	// FIXME This fails on OSX
+//	glDrawElements(GL_TRIANGLE_STRIP, 5, GL_UNSIGNED_SHORT, indices);
+	glDrawElements(GL_TRIANGLE_STRIP, 5, GL_UNSIGNED_SHORT, (void *)0);
+
+	glcache.DeleteTextures(1, &fbTextureId);
+	fbTextureId = 0;
+}
