@@ -62,7 +62,7 @@
     <string name="reset_emu_details">Warning: Emulator settings will be cleared. Folder and input settings are not included. This cannot be undone.\nAre you sure you want to continue?</string>
 
     <string name="pgc_doc">Per-Game Configuration\nThese options will override the default settings.\nTo add a game, launch it from the main game list\nGames will appear when returning to this window\nAfter changing settings, make sure to \"Save PCG\"</string>
-    <string name="pgc_select_game">Select Game</string>
+    <string name="pgc_select_game">PGC Game</string>
     <string name="save_pgc_title">Save Per-Game Config</string>
     <string name="save_pgc">Save PGC</string>
     <string name="pgconfig_saved">Configuration Saved</string>
