@@ -35,7 +35,12 @@ import com.reicast.emulator.R;
 import com.reicast.emulator.periph.Gamepad;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FilenameFilter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.ref.WeakReference;
 import java.util.Collection;
 import java.util.HashMap;
@@ -186,12 +191,72 @@ public class PGConfigFragment extends Fragment {
 			}
 		});
 
+		Button importPGC = (Button) getView().findViewById(R.id.import_pg_btn);
+		importPGC.setOnClickListener(new View.OnClickListener() {
+			public void onClick(View view) {
+				try {
+					copy(new File(getActivity().getExternalFilesDir(null), gameId
+							+ ".xml"), new File("/data/data/" + getActivity()
+							.getPackageName(),"/shared_prefs/" + gameId + ".xml"));
+					showToastMessage(getActivity().getString(
+							R.string.pgconfig_imported), Snackbar.LENGTH_SHORT);
+					configureViewByGame(gameId);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		});
+
+		Button exportPGC = (Button) getView().findViewById(R.id.export_pg_btn);
+		exportPGC.setOnClickListener(new View.OnClickListener() {
+			public void onClick(View view) {
+				try {
+					copy(new File("/data/data/" + getActivity().getPackageName(),
+							"/shared_prefs/" + gameId + ".xml"), new File(getActivity()
+							.getExternalFilesDir(null), gameId + ".xml"));
+					showToastMessage(getActivity().getString(
+							R.string.pgconfig_exported), Snackbar.LENGTH_SHORT);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		});
+
 		Button clearPGC = (Button) getView().findViewById(R.id.clear_pg_btn);
 		clearPGC.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View view) {
 				clearSettings(mPrefs, gameId);
 			}
 		});
+	}
+
+	private void copy(File src, File dst) throws IOException {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+			try (InputStream in = new FileInputStream(src)) {
+				try (OutputStream out = new FileOutputStream(dst)) {
+					// Transfer bytes from in to out
+					byte[] buf = new byte[1024];
+					int len;
+					while ((len = in.read(buf)) > 0) {
+						out.write(buf, 0, len);
+					}
+				}
+			}
+		} else {
+			InputStream in = new FileInputStream(src);
+			OutputStream out = new FileOutputStream(dst);
+			try {
+				// Transfer bytes from in to out
+				byte[] buf = new byte[1024];
+				int len;
+				while ((len = in.read(buf)) > 0) {
+					out.write(buf, 0, len);
+				}
+			} finally {
+				in.close();
+				out.close();
+			}
+		}
 	}
 
 	private static class LocateConfigs extends AsyncTask<String, Integer, List<File>> {

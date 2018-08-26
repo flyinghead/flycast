@@ -683,7 +683,6 @@ public class GL2JNIView extends GLSurfaceView
                         Gamepad.pref_js_merged + "_A", ((GL2JNINative) context).getPad().joystick[0]);
             mPrefs.edit().putString(Config.game_title, reiosSoftware.trim()).apply();
         }
-
     }
 
     public void onDestroy() {

@@ -368,56 +368,42 @@
 
             <TableRow
                 android:layout_marginTop="10dp"
-                android:gravity="center_vertical" >
+                android:gravity="center_vertical"
+                android:layout_marginRight="6dp" >
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="0.5"
-                    android:ems="10"
-                    android:gravity="center_vertical|left"
-                    android:text="@string/save_pgc_title" />
-
-                <LinearLayout
-                    android:layout_width="wrap_content"
+                <Button
+                    android:id="@+id/clear_pg_btn"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:gravity="right"
-                    android:orientation="vertical" >
+                    android:text="@string/clear_pgc" />
 
-                    <Button
-                        android:id="@+id/save_pg_btn"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/save_pgc" />
-                </LinearLayout>
+                <Button
+                    android:id="@+id/save_pg_btn"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/save_pgc" />
             </TableRow>
 
             <TableRow
                 android:layout_marginTop="10dp"
-                android:gravity="center_vertical" >
+                android:gravity="center_vertical"
+                android:layout_marginRight="6dp" >
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="0.5"
-                    android:ems="10"
-                    android:gravity="center_vertical|left"
-                    android:text="@string/clear_pgc_title" />
-
-                <LinearLayout
-                    android:layout_width="wrap_content"
+                <Button
+                    android:id="@+id/import_pg_btn"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:gravity="right"
-                    android:orientation="vertical" >
+                    android:text="@string/import_pgc" />
 
-                    <Button
-                        android:id="@+id/clear_pg_btn"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/clear_pgc" />
-                </LinearLayout>
+                <Button
+                    android:id="@+id/export_pg_btn"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/export_pgc" />
             </TableRow>
         </TableLayout>
     </LinearLayout>
