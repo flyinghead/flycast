@@ -160,7 +160,8 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 			}
 		}
 
-		((TextView) childview.get().findViewById(R.id.item_name)).setText(game_name);
+		if (childview.get() != null)
+			((TextView) childview.get().findViewById(R.id.item_name)).setText(game_name);
 
 		if (mPrefs.getBoolean(Config.pref_gamedetails, false)) {
 			childview.get().findViewById(R.id.childview).setOnLongClickListener(

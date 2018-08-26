@@ -32,6 +32,7 @@ import android.widget.TextView;
 import com.android.util.FileUtils;
 import com.reicast.emulator.Emulator;
 import com.reicast.emulator.R;
+import com.reicast.emulator.periph.Gamepad;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -45,6 +46,7 @@ public class PGConfigFragment extends Fragment {
 
 	private Spinner mSpnrConfigs;
 
+	private CompoundButton switchJoystickDpadEnabled;
 	private CompoundButton dynarec_opt;
 	private CompoundButton unstable_opt;
 	private CompoundButton safemode_opt;
@@ -83,6 +85,8 @@ public class PGConfigFragment extends Fragment {
 		new LocateConfigs(PGConfigFragment.this).execute("/data/data/"
 				+ getActivity().getPackageName() + "/shared_prefs/");
 
+		switchJoystickDpadEnabled = (CompoundButton) getView().findViewById(
+				R.id.switchJoystickDpadEnabled);
 		dynarec_opt = (CompoundButton) getView().findViewById(R.id.dynarec_option);
 		unstable_opt = (CompoundButton) getView().findViewById(R.id.unstable_option);
 		safemode_opt = (CompoundButton) getView().findViewById(R.id.dynarec_safemode);
@@ -97,6 +101,7 @@ public class PGConfigFragment extends Fragment {
 
 	private void saveSettings(SharedPreferences mPrefs) {
 		mPrefs.edit()
+				.putBoolean(Gamepad.pref_js_merged + "_A", switchJoystickDpadEnabled.isChecked())
 				.putBoolean(Emulator.pref_dynarecopt, dynarec_opt.isChecked())
 				.putBoolean(Emulator.pref_unstable, unstable_opt.isChecked())
 				.putBoolean(Emulator.pref_dynsafemode, safemode_opt.isChecked())
@@ -113,6 +118,8 @@ public class PGConfigFragment extends Fragment {
 	private void configureViewByGame(String gameId) {
 		final SharedPreferences mPrefs = getActivity()
 				.getSharedPreferences(gameId, Activity.MODE_PRIVATE);
+		switchJoystickDpadEnabled.setChecked(mPrefs.getBoolean(
+				Gamepad.pref_js_merged + "_A", false));
 		dynarec_opt.setChecked(mPrefs.getBoolean(Emulator.pref_dynarecopt, Emulator.dynarecopt));
 		unstable_opt.setChecked(mPrefs.getBoolean(Emulator.pref_unstable, Emulator.unstableopt));
 		safemode_opt.setChecked(mPrefs.getBoolean(Emulator.pref_dynsafemode, Emulator.dynsafemode));

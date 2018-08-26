@@ -238,6 +238,10 @@ public class GL2JNIActivity extends Activity {
         }
     }
 
+    public Gamepad getPad() {
+        return pad;
+    }
+
     public void displayFPS() {
         fpsPop.showAtLocation(mView, Gravity.TOP | Gravity.LEFT, 20, 20);
         fpsPop.update(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
