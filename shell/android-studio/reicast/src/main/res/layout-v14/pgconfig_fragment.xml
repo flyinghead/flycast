@@ -18,42 +18,70 @@
             android:gravity="center"
             android:text="@string/pgc_doc" />
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginLeft="6dp"
-            android:layout_marginTop="20dp"
-            android:orientation="vertical" >
-
-            <TextView
-                android:id="@+id/textView3"
-                android:layout_width="wrap_content"
-                android:layout_height="0dip"
-                android:layout_weight="1"
-                android:text="@string/pgc_select_game" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal" >
-
-                <Spinner
-                    android:id="@+id/config_spinner"
-                    android:layout_width="0dip"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:ems="10" >
-
-                    <requestFocus />
-                </Spinner>
-            </LinearLayout>
-        </LinearLayout>
-
         <TableLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginLeft="6dp"
             android:stretchColumns="*" >
+
+            <TableRow
+                android:layout_marginTop="10dp"
+                android:gravity="center_vertical" >
+
+                <TextView
+                    android:id="@+id/textView3"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="0.5"
+                    android:ems="10"
+                    android:gravity="center_vertical|left"
+                    android:text="@string/pgc_select_game" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="right"
+                    android:orientation="vertical" >
+
+                    <Spinner
+                        android:id="@+id/config_spinner"
+                        android:layout_width="wrap_content"
+                        android:layout_height="0dp"
+                        android:layout_weight="1"
+                        android:ems="10" >
+
+                        <requestFocus />
+                    </Spinner>
+                </LinearLayout>
+            </TableRow>
+
+            <TableRow
+                android:layout_marginTop="25dp"
+                android:gravity="center_vertical" >
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="0.5"
+                    android:ems="10"
+                    android:gravity="center_vertical|left"
+                    android:text="@string/joystick_layout" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="right"
+                    android:orientation="vertical" >
+
+                    <Switch
+                        android:id="@+id/switchJoystickDpadEnabled"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:focusable="true" />
+                </LinearLayout>
+            </TableRow>
 
             <TableRow
                 android:layout_marginTop="10dp"
@@ -77,34 +105,6 @@
 
                     <Switch
                         android:id="@+id/unstable_option"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:focusable="true" />
-                </LinearLayout>
-            </TableRow>
-
-            <TableRow
-                android:layout_marginTop="10dp"
-                android:gravity="center_vertical" >
-
-                <TextView
-                    android:id="@+id/safemode_text"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="0.5"
-                    android:ems="10"
-                    android:gravity="center_vertical|left"
-                    android:text="@string/select_safemode" />
-
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:gravity="right"
-                    android:orientation="vertical" >
-
-                    <Switch
-                        android:id="@+id/dynarec_safemode"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:focusable="true" />
@@ -169,6 +169,62 @@
                 android:layout_width="match_parent"
                 android:layout_height="2dp"
                 android:background="@drawable/list_item_border" />
+
+            <TableRow
+                android:layout_marginTop="20dp"
+                android:gravity="center_vertical" >
+
+                <TextView
+                    android:id="@+id/dynarec_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="0.5"
+                    android:ems="10"
+                    android:gravity="center_vertical|left"
+                    android:text="@string/select_dynarec" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="right"
+                    android:orientation="vertical" >
+
+                    <Switch
+                        android:id="@+id/dynarec_option"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:focusable="true" />
+                </LinearLayout>
+            </TableRow>
+
+            <TableRow
+                android:layout_marginTop="10dp"
+                android:gravity="center_vertical" >
+
+                <TextView
+                    android:id="@+id/safemode_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="0.5"
+                    android:ems="10"
+                    android:gravity="center_vertical|left"
+                    android:text="@string/select_safemode" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="right"
+                    android:orientation="vertical" >
+
+                    <Switch
+                        android:id="@+id/dynarec_safemode"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:focusable="true" />
+                </LinearLayout>
+            </TableRow>
 
             <TableRow
                 android:layout_marginTop="10dp"
@@ -312,30 +368,42 @@
 
             <TableRow
                 android:layout_marginTop="10dp"
-                android:gravity="center_vertical" >
+                android:gravity="center_vertical"
+                android:layout_marginRight="6dp" >
 
-                <TextView
-                    android:id="@+id/apply_pg_text"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="0.5"
-                    android:ems="10"
-                    android:gravity="center_vertical|left"
-                    android:text="@string/save_pgc_title" />
-
-                <LinearLayout
-                    android:layout_width="wrap_content"
+                <Button
+                    android:id="@+id/clear_pg_btn"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:gravity="right"
-                    android:orientation="vertical" >
+                    android:text="@string/clear_pgc" />
 
-                    <Button
-                        android:id="@+id/save_pg_btn"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/write_pgc" />
-                </LinearLayout>
+                <Button
+                    android:id="@+id/save_pg_btn"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/save_pgc" />
+            </TableRow>
+
+            <TableRow
+                android:layout_marginTop="10dp"
+                android:gravity="center_vertical"
+                android:layout_marginRight="6dp" >
+
+                <Button
+                    android:id="@+id/import_pg_btn"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/import_pgc" />
+
+                <Button
+                    android:id="@+id/export_pg_btn"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/export_pgc" />
             </TableRow>
         </TableLayout>
     </LinearLayout>

@@ -33,9 +33,9 @@ import android.view.WindowManager;
 import android.widget.TextView;
 
 import com.reicast.emulator.config.Config;
-import com.reicast.emulator.config.PGConfigFragment;
 import com.reicast.emulator.config.InputFragment;
 import com.reicast.emulator.config.OptionsFragment;
+import com.reicast.emulator.config.PGConfigFragment;
 import com.reicast.emulator.debug.GenerateLogs;
 import com.reicast.emulator.emu.JNIdc;
 import com.reicast.emulator.periph.Gamepad;

@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.os.Environment;
 import android.view.Gravity;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -25,7 +24,6 @@ import com.reicast.emulator.R;
 import com.reicast.emulator.config.Config;
 import com.reicast.emulator.periph.VmuLcd;
 
-import java.io.File;
 import java.util.Vector;
 
 public class OnScreenMenu {

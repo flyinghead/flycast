@@ -110,6 +110,7 @@ public class Emulator extends Application {
 
     public void loadGameConfiguration(String gameId) {
         SharedPreferences mPrefs = getSharedPreferences(gameId, Activity.MODE_PRIVATE);
+        JNIdc.dynarec(mPrefs.getBoolean(pref_dynarecopt, dynarecopt) ? 1 : 0);
         JNIdc.unstable(mPrefs.getBoolean(pref_unstable, unstableopt) ? 1 : 0);
         JNIdc.safemode(mPrefs.getBoolean(pref_dynsafemode, dynsafemode) ? 1 : 0);
         JNIdc.interrupthack(mPrefs.getBoolean(pref_interrupt, interrupt) ? 1 : 0);

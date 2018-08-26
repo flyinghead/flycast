@@ -10,7 +10,6 @@
 #include <GLES2/gl2.h>
 #include <types.h>
 
-#include "types.h"
 #include "hw/maple/maple_cfg.h"
 #include "profiler/profiler.h"
 #include "rend/TexCache.h"
@@ -182,7 +181,8 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_dreamtime(JNIEnv *env
 
 void egl_stealcntx();
 void SetApplicationPath(wchar *path);
-int dc_init(int argc,wchar* argv[]);
+void reios_init(int argc,wchar* argv[]);
+int dc_init();
 void dc_run();
 void dc_pause();
 void dc_term();
@@ -239,7 +239,7 @@ static void *ThreadHandler(void *UserData)
     }
 
     // Run nullDC emulator
-    dc_init(Args[2]? 3:1,Args);
+    reios_init(Args[2]? 3:1,Args);
     return 0;
 }
 
@@ -380,6 +380,8 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_query(JNIEnv *env,job
     jstring reios_name = env->NewStringUTF(name);
 
     env->CallVoidMethod(emu_thread, reiosInfoMid, reios_id, reios_name);
+
+    dc_init();
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_run(JNIEnv *env,jobject obj,jobject emu_thread)

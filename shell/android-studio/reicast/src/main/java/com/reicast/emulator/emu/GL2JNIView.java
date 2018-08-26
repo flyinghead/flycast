@@ -30,6 +30,7 @@ import com.reicast.emulator.GL2JNIActivity;
 import com.reicast.emulator.GL2JNINative;
 import com.reicast.emulator.config.Config;
 import com.reicast.emulator.emu.OnScreenMenu.FpsPopup;
+import com.reicast.emulator.periph.Gamepad;
 import com.reicast.emulator.periph.VJoy;
 
 import java.io.UnsupportedEncodingException;
@@ -156,7 +157,6 @@ public class GL2JNIView extends GLSurfaceView
             if (GL2JNIActivity.syms != null)
                 JNIdc.data(1, GL2JNIActivity.syms);
         }
-
         JNIdc.init(fileName);
         JNIdc.query(ethd);
 
@@ -675,9 +675,14 @@ public class GL2JNIView extends GLSurfaceView
             SharedPreferences mPrefs = context.getSharedPreferences(gameId, Activity.MODE_PRIVATE);
             Emulator app = (Emulator) context.getApplicationContext();
             app.loadGameConfiguration(gameId);
+            if (context instanceof GL2JNIActivity)
+                ((GL2JNIActivity) context).getPad().joystick[0] = mPrefs.getBoolean(
+                        Gamepad.pref_js_merged + "_A", ((GL2JNIActivity) context).getPad().joystick[0]);
+            if (context instanceof GL2JNINative)
+                ((GL2JNINative) context).getPad().joystick[0] = mPrefs.getBoolean(
+                        Gamepad.pref_js_merged + "_A", ((GL2JNINative) context).getPad().joystick[0]);
             mPrefs.edit().putString(Config.game_title, reiosSoftware.trim()).apply();
         }
-
     }
 
     public void onDestroy() {

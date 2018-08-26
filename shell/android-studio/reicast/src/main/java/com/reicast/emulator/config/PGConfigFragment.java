@@ -32,9 +32,15 @@ import android.widget.TextView;
 import com.android.util.FileUtils;
 import com.reicast.emulator.Emulator;
 import com.reicast.emulator.R;
+import com.reicast.emulator.periph.Gamepad;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FilenameFilter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.ref.WeakReference;
 import java.util.Collection;
 import java.util.HashMap;
@@ -45,6 +51,8 @@ public class PGConfigFragment extends Fragment {
 
 	private Spinner mSpnrConfigs;
 
+	private CompoundButton switchJoystickDpadEnabled;
+	private CompoundButton dynarec_opt;
 	private CompoundButton unstable_opt;
 	private CompoundButton safemode_opt;
 	private EditText mainFrames;
@@ -82,6 +90,9 @@ public class PGConfigFragment extends Fragment {
 		new LocateConfigs(PGConfigFragment.this).execute("/data/data/"
 				+ getActivity().getPackageName() + "/shared_prefs/");
 
+		switchJoystickDpadEnabled = (CompoundButton) getView().findViewById(
+				R.id.switchJoystickDpadEnabled);
+		dynarec_opt = (CompoundButton) getView().findViewById(R.id.dynarec_option);
 		unstable_opt = (CompoundButton) getView().findViewById(R.id.unstable_option);
 		safemode_opt = (CompoundButton) getView().findViewById(R.id.dynarec_safemode);
 		mainFrames = (EditText) getView().findViewById(R.id.current_frames);
@@ -94,7 +105,10 @@ public class PGConfigFragment extends Fragment {
 	}
 
 	private void saveSettings(SharedPreferences mPrefs) {
-		mPrefs.edit().putBoolean(Emulator.pref_unstable, unstable_opt.isChecked())
+		mPrefs.edit()
+				.putBoolean(Gamepad.pref_js_merged + "_A", switchJoystickDpadEnabled.isChecked())
+				.putBoolean(Emulator.pref_dynarecopt, dynarec_opt.isChecked())
+				.putBoolean(Emulator.pref_unstable, unstable_opt.isChecked())
 				.putBoolean(Emulator.pref_dynsafemode, safemode_opt.isChecked())
 				.putInt(Emulator.pref_frameskip, frameSeek.getProgress())
 				.putBoolean(Emulator.pref_pvrrender, pvr_render.isChecked())
@@ -102,13 +116,31 @@ public class PGConfigFragment extends Fragment {
 				.putBoolean(Emulator.pref_queuerender, queue_render.isChecked())
 				.putBoolean(Emulator.pref_modvols, modifier_volumes.isChecked())
 				.putBoolean(Emulator.pref_interrupt, interrupt_opt.isChecked()).apply();
-		showToastMessage(getActivity().getString(R.string.pgconfig_saved),
-				Snackbar.LENGTH_SHORT);
+		showToastMessage(getActivity().getString(R.string.pgconfig_saved), Snackbar.LENGTH_SHORT);
 	}
 
-	private void configureViewByGame(String gameId) {
+	private void clearSettings(SharedPreferences mPrefs, String gameId) {
+		mPrefs.edit() // Prevent clear() removing title
+				.remove(Gamepad.pref_js_merged + "_A")
+				.remove(Emulator.pref_dynarecopt)
+				.remove(Emulator.pref_unstable)
+				.remove(Emulator.pref_dynsafemode)
+				.remove(Emulator.pref_frameskip)
+				.remove(Emulator.pref_pvrrender)
+				.remove(Emulator.pref_syncedrender)
+				.remove(Emulator.pref_queuerender)
+				.remove(Emulator.pref_modvols)
+				.remove(Emulator.pref_interrupt).apply();
+		showToastMessage(getActivity().getString(R.string.pgconfig_cleared), Snackbar.LENGTH_SHORT);
+		configureViewByGame(gameId);
+	}
+
+	private void configureViewByGame(final String gameId) {
 		final SharedPreferences mPrefs = getActivity()
 				.getSharedPreferences(gameId, Activity.MODE_PRIVATE);
+		switchJoystickDpadEnabled.setChecked(mPrefs.getBoolean(
+				Gamepad.pref_js_merged + "_A", false));
+		dynarec_opt.setChecked(mPrefs.getBoolean(Emulator.pref_dynarecopt, Emulator.dynarecopt));
 		unstable_opt.setChecked(mPrefs.getBoolean(Emulator.pref_unstable, Emulator.unstableopt));
 		safemode_opt.setChecked(mPrefs.getBoolean(Emulator.pref_dynsafemode, Emulator.dynsafemode));
 
@@ -158,6 +190,73 @@ public class PGConfigFragment extends Fragment {
 				saveSettings(mPrefs);
 			}
 		});
+
+		Button importPGC = (Button) getView().findViewById(R.id.import_pg_btn);
+		importPGC.setOnClickListener(new View.OnClickListener() {
+			public void onClick(View view) {
+				try {
+					copy(new File(getActivity().getExternalFilesDir(null), gameId
+							+ ".xml"), new File("/data/data/" + getActivity()
+							.getPackageName(),"/shared_prefs/" + gameId + ".xml"));
+					showToastMessage(getActivity().getString(
+							R.string.pgconfig_imported), Snackbar.LENGTH_SHORT);
+					configureViewByGame(gameId);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		});
+
+		Button exportPGC = (Button) getView().findViewById(R.id.export_pg_btn);
+		exportPGC.setOnClickListener(new View.OnClickListener() {
+			public void onClick(View view) {
+				try {
+					copy(new File("/data/data/" + getActivity().getPackageName(),
+							"/shared_prefs/" + gameId + ".xml"), new File(getActivity()
+							.getExternalFilesDir(null), gameId + ".xml"));
+					showToastMessage(getActivity().getString(
+							R.string.pgconfig_exported), Snackbar.LENGTH_SHORT);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		});
+
+		Button clearPGC = (Button) getView().findViewById(R.id.clear_pg_btn);
+		clearPGC.setOnClickListener(new View.OnClickListener() {
+			public void onClick(View view) {
+				clearSettings(mPrefs, gameId);
+			}
+		});
+	}
+
+	private void copy(File src, File dst) throws IOException {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+			try (InputStream in = new FileInputStream(src)) {
+				try (OutputStream out = new FileOutputStream(dst)) {
+					// Transfer bytes from in to out
+					byte[] buf = new byte[1024];
+					int len;
+					while ((len = in.read(buf)) > 0) {
+						out.write(buf, 0, len);
+					}
+				}
+			}
+		} else {
+			InputStream in = new FileInputStream(src);
+			OutputStream out = new FileOutputStream(dst);
+			try {
+				// Transfer bytes from in to out
+				byte[] buf = new byte[1024];
+				int len;
+				while ((len = in.read(buf)) > 0) {
+					out.write(buf, 0, len);
+				}
+			} finally {
+				in.close();
+				out.close();
+			}
+		}
 	}
 
 	private static class LocateConfigs extends AsyncTask<String, Integer, List<File>> {

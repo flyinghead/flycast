@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
-import android.os.Build;
 import android.util.SparseArray;
 import android.util.SparseIntArray;
 import android.view.KeyEvent;
