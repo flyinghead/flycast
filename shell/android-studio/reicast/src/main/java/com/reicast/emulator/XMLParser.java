@@ -22,6 +22,7 @@ import android.widget.TextView;
 import com.reicast.emulator.FileBrowser.OnItemSelectedListener;
 import com.reicast.emulator.config.Config;
 
+import org.apache.commons.io.FilenameUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -39,6 +40,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
+import java.lang.ref.WeakReference;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
@@ -54,26 +56,24 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 	private SharedPreferences mPrefs;
 	private File game;
 	private int index;
-	private View childview;
 	private OnItemSelectedListener mCallback;
-	private Context mContext;
 	private String game_name;
 	private Drawable game_icon;
 	private String gameId;
 	private String game_details;
 
-	private String game_index = "http://legacy.thegamesdb.net/api/GetGamesList.php?platform=sega+dreamcast&name=";
-	private String game_id = "http://legacy.thegamesdb.net/api/GetGame.php?platform=sega+dreamcast&id=";
+	private WeakReference<Context> mContext;
+	private WeakReference<View> childview;
 
-	public XMLParser(File game, int index, SharedPreferences mPrefs) {
+	XMLParser(File game, int index, SharedPreferences mPrefs) {
 		this.mPrefs = mPrefs;
 		this.game = game;
 		this.index = index;
 	}
 
-	public void setViewParent(Context mContext, View childview, OnItemSelectedListener mCallback) {
-		this.mContext = mContext;
-		this.childview = childview;
+	public void setViewParent(Context reference, View childview, OnItemSelectedListener mCallback) {
+		this.mContext = new WeakReference<>(reference);
+		this.childview = new WeakReference<>(childview);
 		this.mCallback = mCallback;
 		initializeDefaults();
 	}
@@ -88,7 +88,7 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 		if (isNetworkAvailable() && mPrefs.getBoolean(Config.pref_gamedetails, false)) {
 			String xmlUrl = "";
 			if (gameId != null) {
-				xmlUrl = game_id + gameId;
+				xmlUrl = "http://legacy.thegamesdb.net/api/GetGame.php?platform=sega+dreamcast&id=" + gameId;
 			} else {
 				filename = filename.substring(0, filename.lastIndexOf("."));
 				try {
@@ -96,7 +96,7 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 				} catch (UnsupportedEncodingException e) {
 					filename = filename.replace(" ", "+");
 				}
-				xmlUrl = game_index + filename;
+				xmlUrl = "http://legacy.thegamesdb.net/api/GetGamesList.php?platform=sega+dreamcast&name=" + filename;
 			}
 
 			try {
@@ -116,9 +116,9 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 				in.close();
 				return responseStrBuilder.toString();
 			} catch (UnsupportedEncodingException e) {
-
+				e.printStackTrace();
 			} catch (IOException e) {
-
+				e.printStackTrace();
 			}
 		}
 		return null;
@@ -133,11 +133,13 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 					Element root = (Element) doc.getElementsByTagName("Game").item(0);
 					if (gameId == null) {
 						XMLParser xmlParser = new XMLParser(game, index, mPrefs);
-						xmlParser.setViewParent(mContext, childview, mCallback);
+						xmlParser.setViewParent(mContext.get(), childview.get(), mCallback);
 						xmlParser.setGameID(getValue(root, "id"));
 						xmlParser.execute(game_name);
 					} else {
-						game_name = getValue(root, "GameTitle");
+						game_name = getValue(root, "GameTitle") + " ["
+							+ FilenameUtils.getExtension(game.getName())
+								.toUpperCase(Locale.getDefault()) + "]";
 						game_details = getValue(root, "Overview");
 						Element images = (Element) root.getElementsByTagName("Images").item(0);
 						Element boxart = null;
@@ -154,35 +156,39 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 					}
 				}
 			} catch (Exception e) {
-
+				e.printStackTrace();
 			}
 		}
 
-		((TextView) childview.findViewById(R.id.item_name)).setText(game_name);
+		((TextView) childview.get().findViewById(R.id.item_name)).setText(game_name);
 
 		if (mPrefs.getBoolean(Config.pref_gamedetails, false)) {
-			childview.findViewById(R.id.childview).setOnLongClickListener(
+			childview.get().findViewById(R.id.childview).setOnLongClickListener(
 					new OnLongClickListener() {
 						public boolean onLongClick(View view) {
-							final AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
+							final AlertDialog.Builder builder = new AlertDialog.Builder(mContext.get());
 							builder.setCancelable(true);
-							builder.setTitle(mContext.getString(R.string.game_details, game_name));
+							builder.setTitle(mContext.get().getString(R.string.game_details, game_name));
 							builder.setMessage(game_details);
 							builder.setIcon(game_icon);
 							builder.setNegativeButton("Close",
 									new DialogInterface.OnClickListener() {
 										public void onClick(DialogInterface dialog, int which) {
 											dialog.dismiss();
-											return;
 										}
 									});
 							builder.setPositiveButton("Launch",
 									new DialogInterface.OnClickListener() {
 										public void onClick(DialogInterface dialog, int which) {
 											dialog.dismiss();
-											mCallback.onGameSelected(game != null ? Uri.fromFile(game) : Uri.EMPTY);
-											((Vibrator) mContext.getSystemService(Context.VIBRATOR_SERVICE)).vibrate(250);
-											return;
+											mCallback.onGameSelected(game != null
+													? Uri.fromFile(game) : Uri.EMPTY);
+											try {
+												((Vibrator) mContext.get().getSystemService(
+														Context.VIBRATOR_SERVICE)).vibrate(250);
+											} catch (Exception e) {
+												// Vibration unavailable
+											}
 										}
 									});
 							builder.create().show();
@@ -191,32 +197,32 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 					});
 		}
 
-		childview.setTag(game_name);
+		childview.get().setTag(game_name);
 	}
 
 	private void initializeDefaults() {
-		game_details = mContext.getString(R.string.info_unavailable);
+		game_details = mContext.get().getString(R.string.info_unavailable);
 		final String nameLower = game.getName().toLowerCase(Locale.getDefault());
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-			game_icon = mContext.getResources().getDrawable(
+			game_icon = mContext.get().getResources().getDrawable(
 					game.isDirectory() ? R.drawable.open_folder
 							: nameLower.endsWith(".gdi") ? R.mipmap.disk_gdi
 							: nameLower.endsWith(".chd") ? R.mipmap.disk_chd
 							: nameLower.endsWith(".cdi") ? R.mipmap.disk_cdi
 							: R.mipmap.disk_unknown);
 		} else {
-			game_icon = mContext.getResources().getDrawable(
+			game_icon = mContext.get().getResources().getDrawable(
 					game.isDirectory() ? R.drawable.open_folder
 							: nameLower.endsWith(".gdi") ? R.drawable.gdi
 							: nameLower.endsWith(".chd") ? R.drawable.chd
 							: nameLower.endsWith(".cdi") ? R.drawable.cdi
 							: R.drawable.disk_unknown);
 		}
-		((ImageView) childview.findViewById(R.id.item_icon)).setImageDrawable(game_icon);
+		((ImageView) childview.get().findViewById(R.id.item_icon)).setImageDrawable(game_icon);
 	}
 
-	public boolean isNetworkAvailable() {
-		ConnectivityManager connectivityManager = (ConnectivityManager) mContext
+	private boolean isNetworkAvailable() {
+		ConnectivityManager connectivityManager = (ConnectivityManager) mContext.get()
 				.getSystemService(Context.CONNECTIVITY_SERVICE);
 		NetworkInfo mWifi = connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
 		NetworkInfo mMobile = connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE);
@@ -240,7 +246,7 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 		return game_details;
 	}
 
-	public Document getDomElement(String xml) {
+	private Document getDomElement(String xml) {
 		Document doc = null;
 		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 		try {
@@ -265,12 +271,12 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 		return doc;
 	}
 
-	public String getValue(Element item, String str) {
+	private String getValue(Element item, String str) {
 		NodeList n = item.getElementsByTagName(str);
 		return this.getElementValue(n.item(0));
 	}
 
-	public final String getElementValue(Node elem) {
+	private String getElementValue(Node elem) {
 		Node child;
 		if (elem != null) {
 			if (elem.hasChildNodes()) {
@@ -289,8 +295,10 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 		@Override
 		protected Bitmap doInBackground(String... params) {
 			try {
-				String index = params[0].substring(params[0].lastIndexOf("/") + 1, params[0].lastIndexOf("."));
-				File file = new File(mContext.getExternalFilesDir(null) + "/images", index + ".png");
+				String index = params[0].substring(params[0].lastIndexOf(
+						"/") + 1, params[0].lastIndexOf("."));
+				File file = new File(mContext.get().getExternalFilesDir(
+						null) + "/images", index + ".png");
 				if (file.exists()) {
 					return BitmapFactory.decodeFile(file.getAbsolutePath());
 				} else {
@@ -345,14 +353,14 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 		protected void onPostExecute(Bitmap gameImage) {
 			if (gameImage != null) {
 				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-					((ImageView) childview.findViewById(R.id.item_icon)).setImageTintList(null);
+					((ImageView) childview.get().findViewById(R.id.item_icon)).setImageTintList(null);
 				}
 				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-					game_icon = new BitmapDrawable(mContext.getResources(), gameImage);
+					game_icon = new BitmapDrawable(mContext.get().getResources(), gameImage);
 				} else {
 					game_icon = new BitmapDrawable(gameImage);
 				}
-				((ImageView) childview.findViewById(R.id.item_icon)).setImageDrawable(game_icon);
+				((ImageView) childview.get().findViewById(R.id.item_icon)).setImageDrawable(game_icon);
 			}
 		}
 	}
