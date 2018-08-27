@@ -134,8 +134,8 @@ MapleDeviceType GetMapleDeviceType(int value, int port)
 			MapleDeviceType result = MDT_None;
 			string result_type = "None";
 
-			// Controller in port 1 defaults to VMU for Maple device, all other to None
-			if (port == 1)
+			// Controller in port 0 (player1) defaults to VMU for Maple device, all other to None
+			if (port == 0)
 			{
 				result_type = "VMU";
 				result = MDT_SegaVMU;
