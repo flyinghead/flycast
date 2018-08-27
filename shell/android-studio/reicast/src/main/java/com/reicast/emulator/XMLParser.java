@@ -126,7 +126,7 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 
 	@Override
 	protected void onPostExecute(String gameData) {
-		if (gameData != null) {
+		if (childview.get() != null && gameData != null) {
 			try {
 				Document doc = getDomElement(gameData);
 				if (doc.getElementsByTagName("Game") != null) {
@@ -138,7 +138,7 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 						xmlParser.execute(game_name);
 					} else {
 						game_name = getValue(root, "GameTitle") + " ["
-							+ FilenameUtils.getExtension(game.getName())
+								+ FilenameUtils.getExtension(game.getName())
 								.toUpperCase(Locale.getDefault()) + "]";
 						game_details = getValue(root, "Overview");
 						Element images = (Element) root.getElementsByTagName("Images").item(0);
@@ -149,9 +149,29 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 							boxart = (Element) images.getElementsByTagName("boxart").item(0);
 						}
 						if (boxart != null) {
-							(new decodeBitmapIcon()).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,
-									"https://cdn.thegamesdb.net/images/thumb/" + getElementValue(
-											boxart).replace("original/", ""));
+							decodeBitmapIcon icon = new decodeBitmapIcon(mContext.get());
+							icon.setListener(new decodeBitmapIcon.decodeBitmapIconListener() {
+								@Override
+								public void onDecodeBitmapIconFinished(Bitmap gameImage) {
+									if (gameImage != null) {
+										if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+											((ImageView) childview.get().findViewById(
+													R.id.item_icon)).setImageTintList(null);
+										}
+										if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+											game_icon = new BitmapDrawable(
+													mContext.get().getResources(), gameImage);
+										} else {
+											game_icon = new BitmapDrawable(gameImage);
+										}
+										((ImageView) childview.get().findViewById(
+												R.id.item_icon)).setImageDrawable(game_icon);
+									}
+								}
+							});
+							icon.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,
+									"https://cdn.thegamesdb.net/images/thumb/"
+											+ getElementValue(boxart).replace("original/", ""));
 						}
 					}
 				}
@@ -160,8 +180,7 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 			}
 		}
 
-		if (childview.get() != null)
-			((TextView) childview.get().findViewById(R.id.item_name)).setText(game_name);
+		((TextView) childview.get().findViewById(R.id.item_name)).setText(game_name);
 
 		if (mPrefs.getBoolean(Config.pref_gamedetails, false)) {
 			childview.get().findViewById(R.id.childview).setOnLongClickListener(
@@ -292,7 +311,14 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 		return "";
 	}
 
-	private class decodeBitmapIcon extends AsyncTask<String, Integer, Bitmap> {
+	private static class decodeBitmapIcon extends AsyncTask<String, Integer, Bitmap> {
+		private WeakReference<Context> mContext;
+		private decodeBitmapIconListener listener;
+
+		decodeBitmapIcon(Context reference) {
+			this.mContext = new WeakReference<>(reference);
+		}
+
 		@Override
 		protected Bitmap doInBackground(String... params) {
 			try {
@@ -352,17 +378,18 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 
 		@Override
 		protected void onPostExecute(Bitmap gameImage) {
-			if (gameImage != null) {
-				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-					((ImageView) childview.get().findViewById(R.id.item_icon)).setImageTintList(null);
-				}
-				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-					game_icon = new BitmapDrawable(mContext.get().getResources(), gameImage);
-				} else {
-					game_icon = new BitmapDrawable(gameImage);
-				}
-				((ImageView) childview.get().findViewById(R.id.item_icon)).setImageDrawable(game_icon);
+			super.onPostExecute(gameImage);
+			if (listener != null) {
+				listener.onDecodeBitmapIconFinished(gameImage);
 			}
+		}
+
+		void setListener(decodeBitmapIconListener listener) {
+			this.listener = listener;
+		}
+
+		public interface decodeBitmapIconListener {
+			void onDecodeBitmapIconFinished(Bitmap gameImage);
 		}
 	}
 }
