@@ -21,12 +21,12 @@
 	void load_libevdev()
 	{
 		if (libevdev_tried)
-		{
 			return;
-		}
 
 		libevdev_tried = true;
-		void* lib_handle = dlopen("libevdev.so", RTLD_NOW);
+		void* lib_handle = dlopen("libevdev.so.2", RTLD_NOW);
+		if (!lib_handle) // libevdev.so.2 not found, fallback to libevdev.so
+			lib_handle = dlopen("libevdev.so", RTLD_NOW);
 
 		bool failed = false;
 
@@ -56,7 +56,7 @@
 			}
 		}
 
-		if(failed)
+		if (failed)
 		{
 			puts("WARNING: libevdev is not available. You'll not be able to use button names instead of numeric codes in your controller mappings!\n");
 			return;
