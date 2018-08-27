@@ -45,7 +45,12 @@ android {
     }
 
     buildTypes {
+        debug {
+            debuggable true
+            zipAlignEnabled true
+        }
         release {
+            debuggable false
             minifyEnabled false
             zipAlignEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
