@@ -158,11 +158,6 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_modvols(JNIEnv *env,j
     settings.rend.ModifierVolumes = volumes;
 }
 
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_bootdisk(JNIEnv *env,jobject obj, jstring disk)
-{
-
-}
-
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_usereios(JNIEnv *env,jobject obj, jint reios)
 {
     settings.bios.UseReios = reios;
@@ -191,7 +186,8 @@ bool gles_init();
 extern int screen_width,screen_height;
 
 static u64 tvs_base;
-static char CurFileName[256];
+static char bootdisk[256];
+static char gamedisk[256];
 
 // Additonal controllers 2, 3 and 4 connected ?
 static bool add_controllers[3] = { false, false, false };
@@ -310,20 +306,34 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_config(JNIEnv *env,jo
     printf("Data dir is:   %s\n", get_writable_data_path("/").c_str());
     env->ReleaseStringUTFChars(dirName,D);
 }
+
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_bootdisk(JNIEnv *env,jobject obj, jstring disk)
+{
+    const char* P = disk? env->GetStringUTFChars(disk,0):0;
+    if(!P) bootdisk[0] = '\0';
+    else
+    {
+        printf("Got URI: '%s'\n",P);
+        strncpy(bootdisk,(strlen(P)>=7)&&!memcmp(P,"file://",7)? P+7:P,sizeof(bootdisk));
+        bootdisk[sizeof(bootdisk)-1] = '\0';
+        env->ReleaseStringUTFChars(disk,P);
+    }
+}
+
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_init(JNIEnv *env,jobject obj,jstring fileName)
 {
     // Get filename string from Java
     const char* P = fileName? env->GetStringUTFChars(fileName,0):0;
-    if(!P) CurFileName[0] = '\0';
+    if(!P) gamedisk[0] = '\0';
     else
     {
         printf("Got URI: '%s'\n",P);
-        strncpy(CurFileName,(strlen(P)>=7)&&!memcmp(P,"file://",7)? P+7:P,sizeof(CurFileName));
-        CurFileName[sizeof(CurFileName)-1] = '\0';
+        strncpy(gamedisk,(strlen(P)>=7)&&!memcmp(P,"file://",7)? P+7:P,sizeof(gamedisk));
+        gamedisk[sizeof(gamedisk)-1] = '\0';
         env->ReleaseStringUTFChars(fileName,P);
     }
 
-    printf("Opening file: '%s'\n",CurFileName);
+    printf("Opening file: '%s'\n",gamedisk);
 
     // Initialize platform-specific stuff
     common_linux_setup();
@@ -340,7 +350,10 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_init(JNIEnv *env,jobj
   pthread_attr_destroy(&PTAttr);
   */
 
-    ThreadHandler(CurFileName);
+    if (strcmp(bootdisk, "null") != 0)
+        ThreadHandler(bootdisk);
+    else
+        ThreadHandler(gamedisk);
 }
 
 #define SAMPLE_COUNT 512
@@ -432,9 +445,10 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_destroy(JNIEnv *env,j
     dc_term();
 }
 
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_diskSwap(JNIEnv *env,jobject obj, jstring newdisk)
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_diskSwap(JNIEnv *env,jobject obj)
 {
     // Needs actual code to swap a disk
+    // bootdisk is replaced by gamedisk
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_vmuSwap(JNIEnv *env,jobject obj)

@@ -307,8 +307,6 @@ public class OptionsFragment extends Fragment {
 
 		});
 
-//		String[] regions = ArrayUtils.remove(parentActivity.getResources()
-//				.getStringArray(R.array.region), 4);
 		String[] regions = getResources().getStringArray(R.array.region);
 		Spinner region_spnr = (Spinner) getView().findViewById(R.id.region_spinner);
 		ArrayAdapter<String> regionAdapter = new ArrayAdapter<String>(
@@ -444,36 +442,30 @@ public class OptionsFragment extends Fragment {
 		synced_render.setChecked(mPrefs.getBoolean(Emulator.pref_syncedrender, Emulator.syncedrender));
 		synced_render.setOnCheckedChangeListener(synchronous);
 
-//		final EditText bootdiskEdit = (EditText) getView().findViewById(R.id.boot_disk);
-//		String disk = Emulator.bootdisk;
-//		if (disk != null && disk.contains("/")) {
-//			bootdiskEdit.setText(disk.substring(disk.lastIndexOf("/"),
-//					disk.length()));
-//		} else {
-//			bootdiskEdit.setText(disk);
-//		}
-//
-//		bootdiskEdit.addTextChangedListener(new TextWatcher() {
-//			public void afterTextChanged(Editable s) {
-//				if (bootdiskEdit.getText() != null) {
-//					String disk = bootdiskEdit.getText().toString();
-//					if (disk.contains("/")) {
-//						bootdiskEdit.setText(disk.substring(disk.lastIndexOf("/"),
-//								disk.length()));
-//					} else {
-//						bootdiskEdit.setText(disk);
-//					}
-//					mPrefs.edit().putString(Emulator.pref_bootdisk, disk).apply();
-//					Emulator.bootdisk = disk;
-//				}
-//			}
-//
-//			public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-//			}
-//
-//			public void onTextChanged(CharSequence s, int start, int before, int count) {
-//			}
-//		});
+		final EditText bootdiskEdit = (EditText) getView().findViewById(R.id.boot_disk);
+		bootdiskEdit.setText(mPrefs.getString(Emulator.pref_bootdisk, Emulator.bootdisk));
+
+		bootdiskEdit.addTextChangedListener(new TextWatcher() {
+			public void afterTextChanged(Editable editText) {
+				if (editText != null) {
+					String disk = editText.toString();
+					if (disk.substring(disk.lastIndexOf("/") + 1).length() == 0) {
+                        disk = "null";
+                    } else if (!disk.equals("null") && !disk.contains("/")) {
+						disk = game_directory + "/" + disk;
+					}
+					bootdiskEdit.setText(disk);
+					mPrefs.edit().putString(Emulator.pref_bootdisk, disk).apply();
+					Emulator.bootdisk = disk;
+				}
+			}
+
+			public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+			}
+
+			public void onTextChanged(CharSequence s, int start, int before, int count) {
+			}
+		});
 
 		final CompoundButton fps_opt = (CompoundButton) getView().findViewById(R.id.fps_option);
 		OnCheckedChangeListener fps_options = new OnCheckedChangeListener() {
