@@ -367,7 +367,7 @@ void rend_start_render()
 #if HOST_OS==OS_WINDOWS && 0
 			printf("max: idx: %d, vtx: %d, op: %d, pt: %d, tr: %d, mvo: %d, modt: %d, ov: %d\n", max_idx, max_vtx, max_op, max_pt, max_tr, max_mvo, max_modt, ovrn);
 #endif
-			if (QueueRender(ctx) || settings.pvr.QueueRender)
+			if (QueueRender(ctx))
 			{
 				palette_update();
 #if !defined(TARGET_NO_THREADS)
