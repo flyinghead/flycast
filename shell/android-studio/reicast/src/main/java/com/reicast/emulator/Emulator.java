@@ -25,7 +25,6 @@ public class Emulator extends Application {
     public static final String pref_frameskip = "frame_skip";
     public static final String pref_pvrrender = "pvr_render";
     public static final String pref_syncedrender = "synced_render";
-    public static final String pref_queuerender = "queue_render";
     public static final String pref_modvols = "modifier_volumes";
     public static final String pref_bootdisk = "boot_disk";
     public static final String pref_usereios = "use_reios";
@@ -47,7 +46,6 @@ public class Emulator extends Application {
     public static int frameskip = 0;
     public static boolean pvrrender = false;
     public static boolean syncedrender = false;
-    public static boolean queuerender = false;
     public static boolean modvols = true;
     public static String bootdisk = "null";
     public static boolean usereios = false;
@@ -72,7 +70,6 @@ public class Emulator extends Application {
         Emulator.frameskip = mPrefs.getInt(pref_frameskip, frameskip);
         Emulator.pvrrender = mPrefs.getBoolean(pref_pvrrender, pvrrender);
         Emulator.syncedrender = mPrefs.getBoolean(pref_syncedrender, syncedrender);
-        Emulator.queuerender = mPrefs.getBoolean(pref_queuerender, queuerender);
         Emulator.modvols = mPrefs.getBoolean(pref_modvols, modvols);
         Emulator.bootdisk = mPrefs.getString(pref_bootdisk, bootdisk);
         Emulator.usereios = mPrefs.getBoolean(pref_usereios, usereios);
@@ -101,7 +98,6 @@ public class Emulator extends Application {
         JNIdc.frameskip(Emulator.frameskip);
         JNIdc.pvrrender(Emulator.pvrrender ? 1 : 0);
         JNIdc.syncedrender(Emulator.syncedrender ? 1 : 0);
-        JNIdc.queuerender(Emulator.queuerender ? 1 : 0);
         JNIdc.modvols(Emulator.modvols ? 1 : 0);
         JNIdc.usereios(Emulator.usereios ? 1 : 0);
         JNIdc.bootdisk(Emulator.bootdisk);
@@ -117,7 +113,6 @@ public class Emulator extends Application {
         JNIdc.frameskip(mPrefs.getInt(pref_frameskip, frameskip));
         JNIdc.pvrrender(mPrefs.getBoolean(pref_pvrrender, pvrrender) ? 1 : 0);
         JNIdc.syncedrender(mPrefs.getBoolean(pref_syncedrender, syncedrender) ? 1 : 0);
-        JNIdc.queuerender(mPrefs.getBoolean(pref_queuerender, queuerender) ? 1 : 0);
         JNIdc.modvols(mPrefs.getBoolean(pref_modvols, modvols) ? 1 : 0);
     }
 

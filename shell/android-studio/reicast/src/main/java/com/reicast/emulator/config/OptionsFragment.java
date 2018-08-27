@@ -455,15 +455,6 @@ public class OptionsFragment extends Fragment {
 		synced_render.setChecked(mPrefs.getBoolean(Emulator.pref_syncedrender, Emulator.syncedrender));
 		synced_render.setOnCheckedChangeListener(synchronous);
 
-		OnCheckedChangeListener queued = new OnCheckedChangeListener() {
-			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-				mPrefs.edit().putBoolean(Emulator.pref_queuerender, isChecked).apply();
-			}
-		};
-		CompoundButton queue_render = (CompoundButton) getView().findViewById(R.id.queuerender_option);
-		queue_render.setChecked(mPrefs.getBoolean(Emulator.pref_queuerender, Emulator.queuerender));
-		queue_render.setOnCheckedChangeListener(queued);
-
 		OnCheckedChangeListener mod_volumes = new OnCheckedChangeListener() {
 
 			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
