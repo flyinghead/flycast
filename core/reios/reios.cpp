@@ -103,7 +103,7 @@ char reios_maker_id[17];
 char reios_device_info[17];
 char reios_area_symbols[9];
 char reios_peripherals[9];
-char reios_product_number[9];
+char reios_product_number[11];
 char reios_product_version[7];
 char reios_releasedate[17];
 char reios_boot_filename[17];
@@ -140,7 +140,7 @@ char* reios_disk_id() {
 	memcpy(&reios_device_info[0], &ip_bin[32],   16 * sizeof(char));
 	memcpy(&reios_area_symbols[0], &ip_bin[48],   8 * sizeof(char));
 	memcpy(&reios_peripherals[0], &ip_bin[56],   8 * sizeof(char));
-	memcpy(&reios_product_number[0], &ip_bin[64],   8 * sizeof(char));
+	memcpy(&reios_product_number[0], &ip_bin[64],   10 * sizeof(char));
 	memcpy(&reios_product_version[0], &ip_bin[74],   6 * sizeof(char));
 	memcpy(&reios_releasedate[0], &ip_bin[80],   16 * sizeof(char));
 	memcpy(&reios_boot_filename[0], &ip_bin[96],   16 * sizeof(char));

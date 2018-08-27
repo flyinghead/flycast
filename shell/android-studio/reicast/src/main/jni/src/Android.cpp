@@ -365,7 +365,7 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_query(JNIEnv *env,job
 {
     jmethodID reiosInfoMid=env->GetMethodID(env->GetObjectClass(emu_thread),"reiosInfo","(Ljava/lang/String;Ljava/lang/String;)V");
 
-    char *id = (char*)malloc(9);
+    char *id = (char*)malloc(11);
     strcpy(id, reios_disk_id());
     jstring reios_id = env->NewStringUTF(id);
 
