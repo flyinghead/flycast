@@ -284,17 +284,6 @@ public class OptionsFragment extends Fragment {
 		unstable_opt.setChecked(mPrefs.getBoolean(Emulator.pref_unstable, Emulator.unstableopt));
 		unstable_opt.setOnCheckedChangeListener(unstable_option);
 
-		OnCheckedChangeListener safemode_option = new OnCheckedChangeListener() {
-
-			public void onCheckedChanged(CompoundButton buttonView,
-										 boolean isChecked) {
-				mPrefs.edit().putBoolean(Emulator.pref_dynsafemode, isChecked).apply();
-			}
-		};
-		CompoundButton safemode_opt = (CompoundButton) getView().findViewById(R.id.dynarec_safemode);
-		safemode_opt.setChecked(mPrefs.getBoolean(Emulator.pref_dynsafemode, Emulator.dynsafemode));
-		safemode_opt.setOnCheckedChangeListener(safemode_option);
-
 		String[] cables = getResources().getStringArray(R.array.cable);
 		Spinner cable_spnr = (Spinner) getView().findViewById(R.id.cable_spinner);
 		ArrayAdapter<String> cableAdapter = new ArrayAdapter<String>(
@@ -454,26 +443,6 @@ public class OptionsFragment extends Fragment {
 		CompoundButton synced_render = (CompoundButton) getView().findViewById(R.id.syncrender_option);
 		synced_render.setChecked(mPrefs.getBoolean(Emulator.pref_syncedrender, Emulator.syncedrender));
 		synced_render.setOnCheckedChangeListener(synchronous);
-
-		OnCheckedChangeListener mod_volumes = new OnCheckedChangeListener() {
-
-			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-				mPrefs.edit().putBoolean(Emulator.pref_modvols, isChecked).apply();
-			}
-		};
-		CompoundButton modifier_volumes = (CompoundButton) getView().findViewById(R.id.modvols_option);
-		modifier_volumes.setChecked(mPrefs.getBoolean(Emulator.pref_modvols, Emulator.modvols));
-		modifier_volumes.setOnCheckedChangeListener(mod_volumes);
-
-		CompoundButton interrupt_opt = (CompoundButton) getView().findViewById(R.id.interrupt_option);
-		OnCheckedChangeListener delayinterrupt = new OnCheckedChangeListener() {
-
-			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-				mPrefs.edit().putBoolean(Emulator.pref_interrupt, isChecked).apply();
-			}
-		};
-		interrupt_opt.setChecked(mPrefs.getBoolean(Emulator.pref_interrupt, false));
-		interrupt_opt.setOnCheckedChangeListener(delayinterrupt);
 
 //		final EditText bootdiskEdit = (EditText) getView().findViewById(R.id.boot_disk);
 //		String disk = Emulator.bootdisk;
@@ -709,7 +678,6 @@ public class OptionsFragment extends Fragment {
 		mPrefs.edit().remove(Emulator.pref_nativeact).apply();
 		mPrefs.edit().remove(Emulator.pref_dynarecopt).apply();
 		mPrefs.edit().remove(Emulator.pref_unstable).apply();
-		mPrefs.edit().remove(Emulator.pref_dynsafemode).apply();
 		mPrefs.edit().remove(Emulator.pref_cable).apply();
 		mPrefs.edit().remove(Emulator.pref_dcregion).apply();
 		mPrefs.edit().remove(Emulator.pref_broadcast).apply();
@@ -719,7 +687,6 @@ public class OptionsFragment extends Fragment {
 		mPrefs.edit().remove(Emulator.pref_frameskip).apply();
 		mPrefs.edit().remove(Emulator.pref_pvrrender).apply();
 		mPrefs.edit().remove(Emulator.pref_syncedrender).apply();
-		mPrefs.edit().remove(Emulator.pref_modvols).apply();
 //		mPrefs.edit().remove(Emulator.pref_bootdisk).apply();
 		mPrefs.edit().remove(Config.pref_showfps).apply();
 		mPrefs.edit().remove(Config.pref_rendertype).apply();

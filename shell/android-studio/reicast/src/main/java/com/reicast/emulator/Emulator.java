@@ -58,19 +58,16 @@ public class Emulator extends Application {
     public void getConfigurationPrefs(SharedPreferences mPrefs) {
         Emulator.dynarecopt = mPrefs.getBoolean(pref_dynarecopt, dynarecopt);
         Emulator.unstableopt = mPrefs.getBoolean(pref_unstable, unstableopt);
-        Emulator.dynsafemode = mPrefs.getBoolean(pref_dynsafemode, dynsafemode);
         Emulator.cable = mPrefs.getInt(pref_cable, cable);
         Emulator.dcregion = mPrefs.getInt(pref_dcregion, dcregion);
         Emulator.broadcast = mPrefs.getInt(pref_broadcast, broadcast);
         Emulator.limitfps = mPrefs.getBoolean(pref_limitfps, limitfps);
         Emulator.nosound = mPrefs.getBoolean(pref_nosound, nosound);
-        Emulator.interrupt = mPrefs.getBoolean(pref_interrupt, interrupt);
         Emulator.mipmaps = mPrefs.getBoolean(pref_mipmaps, mipmaps);
         Emulator.widescreen = mPrefs.getBoolean(pref_widescreen, widescreen);
         Emulator.frameskip = mPrefs.getInt(pref_frameskip, frameskip);
         Emulator.pvrrender = mPrefs.getBoolean(pref_pvrrender, pvrrender);
         Emulator.syncedrender = mPrefs.getBoolean(pref_syncedrender, syncedrender);
-        Emulator.modvols = mPrefs.getBoolean(pref_modvols, modvols);
         Emulator.bootdisk = mPrefs.getString(pref_bootdisk, bootdisk);
         Emulator.usereios = mPrefs.getBoolean(pref_usereios, usereios);
         Emulator.nativeact = mPrefs.getBoolean(pref_nativeact, nativeact);

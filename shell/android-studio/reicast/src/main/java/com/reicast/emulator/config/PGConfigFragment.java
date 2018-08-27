@@ -190,9 +190,14 @@ public class PGConfigFragment extends Fragment {
 		importPGC.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View view) {
 				try {
-					copy(new File(getActivity().getExternalFilesDir(null), gameId
-							+ ".xml"), new File("/data/data/" + getActivity()
-							.getPackageName(),"/shared_prefs/" + gameId + ".xml"));
+					File xml = new File("/data/data/"
+							+ getActivity().getPackageName(),"/shared_prefs/");
+					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+						xml = new File(getActivity().getDataDir(),
+								"/shared_prefs/" + gameId + ".xml");
+					}
+					copy(new File(getActivity().getExternalFilesDir(null),
+							gameId + ".xml"), xml);
 					showToastMessage(getActivity().getString(
 							R.string.pgconfig_imported), Snackbar.LENGTH_SHORT);
 					configureViewByGame(gameId);
@@ -206,9 +211,14 @@ public class PGConfigFragment extends Fragment {
 		exportPGC.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View view) {
 				try {
-					copy(new File("/data/data/" + getActivity().getPackageName(),
-							"/shared_prefs/" + gameId + ".xml"), new File(getActivity()
-							.getExternalFilesDir(null), gameId + ".xml"));
+					File xml = new File("/data/data/"
+							+ getActivity().getPackageName(),"/shared_prefs/");
+					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+						xml = new File(getActivity().getDataDir(),
+								"/shared_prefs/" + gameId + ".xml");
+					}
+						copy(xml, new File(getActivity().getExternalFilesDir(null),
+								gameId + ".xml"));
 					showToastMessage(getActivity().getString(
 							R.string.pgconfig_exported), Snackbar.LENGTH_SHORT);
 				} catch (Exception e) {

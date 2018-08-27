@@ -671,17 +671,21 @@ public class GL2JNIView extends GLSurfaceView
         }
 
         void reiosInfo(String reiosId, String reiosSoftware) {
-            String gameId = reiosId.replaceAll("[^a-zA-Z0-9]+", "").toLowerCase();
-            SharedPreferences mPrefs = context.getSharedPreferences(gameId, Activity.MODE_PRIVATE);
-            Emulator app = (Emulator) context.getApplicationContext();
-            app.loadGameConfiguration(gameId);
-            if (context instanceof GL2JNIActivity)
-                ((GL2JNIActivity) context).getPad().joystick[0] = mPrefs.getBoolean(
-                        Gamepad.pref_js_merged + "_A", ((GL2JNIActivity) context).getPad().joystick[0]);
-            if (context instanceof GL2JNINative)
-                ((GL2JNINative) context).getPad().joystick[0] = mPrefs.getBoolean(
-                        Gamepad.pref_js_merged + "_A", ((GL2JNINative) context).getPad().joystick[0]);
-            mPrefs.edit().putString(Config.game_title, reiosSoftware.trim()).apply();
+            if (fileName != null) {
+                String gameId = reiosId.replaceAll("[^a-zA-Z0-9]+", "").toLowerCase();
+                SharedPreferences mPrefs = context.getSharedPreferences(gameId, Activity.MODE_PRIVATE);
+                Emulator app = (Emulator) context.getApplicationContext();
+                app.loadGameConfiguration(gameId);
+                if (context instanceof GL2JNIActivity)
+                    ((GL2JNIActivity) context).getPad().joystick[0] = mPrefs.getBoolean(
+                            Gamepad.pref_js_merged + "_A",
+                            ((GL2JNIActivity) context).getPad().joystick[0]);
+                if (context instanceof GL2JNINative)
+                    ((GL2JNINative) context).getPad().joystick[0] = mPrefs.getBoolean(
+                            Gamepad.pref_js_merged + "_A",
+                            ((GL2JNINative) context).getPad().joystick[0]);
+                mPrefs.edit().putString(Config.game_title, reiosSoftware.trim()).apply();
+            }
         }
     }
 
