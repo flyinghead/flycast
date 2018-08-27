@@ -40,7 +40,6 @@ import com.reicast.emulator.debug.GenerateLogs;
 import com.reicast.emulator.emu.JNIdc;
 import com.reicast.emulator.periph.Gamepad;
 
-import java.io.File;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.List;
 
@@ -215,28 +214,9 @@ public class MainActivity extends AppCompatActivity implements
 		builder.show();
 	}
 
-	public static boolean isBiosExisting(String home_directory) {
-		return new File (home_directory, "data/dc_boot.bin").exists();
-	}
-
-	public static boolean isFlashExisting(String home_directory) {
-		return new File (home_directory, "data/dc_flash.bin").exists();
-	}
-
 	public void onGameSelected(Uri uri) {
 		String home_directory = mPrefs.getString(Config.pref_home,
 				Environment.getExternalStorageDirectory().getAbsolutePath());
-
-		if (!mPrefs.getBoolean(Emulator.pref_usereios, false)) {
-			if (!isBiosExisting(home_directory)) {
-				launchBIOSdetection();
-				return;
-			}
-			if (!isFlashExisting(home_directory)) {
-				launchBIOSdetection();
-				return;
-			}
-		}
 
 		JNIdc.config(home_directory);
 
@@ -249,28 +229,6 @@ public class MainActivity extends AppCompatActivity implements
 			startActivity(new Intent("com.reicast.EMULATOR", uri, getApplicationContext(),
 					GL2JNIActivity.class));
 		}
-	}
-
-	private void launchBIOSdetection() {
-		AlertDialog.Builder builder = new AlertDialog.Builder(this);
-		builder.setTitle(R.string.bios_selection);
-		builder.setPositiveButton(R.string.browse,
-				new DialogInterface.OnClickListener() {
-					public void onClick(DialogInterface dialog, int which) {
-						String home_directory = mPrefs.getString(Config.pref_home,
-								Environment.getExternalStorageDirectory().getAbsolutePath());
-						onMainBrowseSelected(false, home_directory, false, null);
-					}
-				});
-		builder.setNegativeButton(R.string.gdrive,
-				new DialogInterface.OnClickListener() {
-					public void onClick(DialogInterface dialog, int which) {
-						showToastMessage(getString(R.string.require_bios),
-								Snackbar.LENGTH_SHORT);
-					}
-				});
-		builder.create();
-		builder.show();
 	}
 
 	public void onFolderSelected(Uri uri) {
@@ -325,6 +283,28 @@ public class MainActivity extends AppCompatActivity implements
 				.replace(R.id.fragment_container, firstFragment, "MAIN_BROWSER")
 				.addToBackStack(null).commit();
 		setTitle(R.string.browser);
+	}
+
+	public void launchBIOSdetection() {
+		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		builder.setTitle(R.string.bios_selection);
+		builder.setPositiveButton(R.string.browse,
+				new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int which) {
+						String home_directory = mPrefs.getString(Config.pref_home,
+								Environment.getExternalStorageDirectory().getAbsolutePath());
+						onMainBrowseSelected(false, home_directory, false, null);
+					}
+				});
+		builder.setNegativeButton(R.string.gdrive,
+				new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int which) {
+						showToastMessage(getString(R.string.require_bios),
+								Snackbar.LENGTH_SHORT);
+					}
+				});
+		builder.create();
+		builder.show();
 	}
 
 	@Override

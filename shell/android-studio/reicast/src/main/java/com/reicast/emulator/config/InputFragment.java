@@ -33,9 +33,11 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.reicast.emulator.MainActivity;
+import com.reicast.emulator.Emulator;
 import com.reicast.emulator.R;
 import com.reicast.emulator.periph.Gamepad;
+
+import java.io.File;
 
 public class InputFragment extends Fragment {
 	private static final int PERMISSION_REQUEST = 1001;
@@ -90,11 +92,7 @@ public class InputFragment extends Fragment {
 			}
 		});
 
-		String home_directory = mPrefs.getString(Config.pref_home,
-				Environment.getExternalStorageDirectory().getAbsolutePath());
-
-		if (!MainActivity.isBiosExisting(home_directory) || !MainActivity.isFlashExisting(home_directory))
-			buttonLaunchEditor.setEnabled(false);
+		buttonLaunchEditor.setEnabled(isBIOSAvailable());
 
 		final TextView duration = (TextView) getView().findViewById(R.id.vibDuration_current);
 		final LinearLayout vibLay = (LinearLayout) getView().findViewById(R.id.vibDuration_layout);
@@ -249,6 +247,13 @@ public class InputFragment extends Fragment {
 		updateControllers();
 
 		updateVibration();
+	}
+
+	private boolean isBIOSAvailable() {
+		String home_directory = mPrefs.getString(Config.pref_home,
+				Environment.getExternalStorageDirectory().getAbsolutePath());
+		return new File(home_directory, "data/dc_flash.bin").exists()
+				|| mPrefs.getBoolean(Emulator.pref_usereios, false);
 	}
 
 	private void updateVibration() {

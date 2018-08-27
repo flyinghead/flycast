@@ -71,6 +71,7 @@ public class OptionsFragment extends Fragment {
 	// Container Activity must implement this interface
 	public interface OnClickListener {
 		void onMainBrowseSelected(boolean browse, String path_entry, boolean games, String query);
+		void launchBIOSdetection();
 	}
 
 	@Override
@@ -141,7 +142,7 @@ public class OptionsFragment extends Fragment {
 			public void onClick(View view) {
 				mPrefs.edit().remove(Config.pref_home).apply();
 				hideSoftKeyBoard();
-				mCallback.onMainBrowseSelected(false, home_directory, false, null);
+				mCallback.launchBIOSdetection();
 			}
 		});
 
@@ -474,14 +475,14 @@ public class OptionsFragment extends Fragment {
 		modifier_volumes.setOnCheckedChangeListener(mod_volumes);
 
 		CompoundButton interrupt_opt = (CompoundButton) getView().findViewById(R.id.interrupt_option);
-		OnCheckedChangeListener interrupthack = new OnCheckedChangeListener() {
+		OnCheckedChangeListener delayinterrupt = new OnCheckedChangeListener() {
 
 			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
 				mPrefs.edit().putBoolean(Emulator.pref_interrupt, isChecked).apply();
 			}
 		};
 		interrupt_opt.setChecked(mPrefs.getBoolean(Emulator.pref_interrupt, false));
-		interrupt_opt.setOnCheckedChangeListener(interrupthack);
+		interrupt_opt.setOnCheckedChangeListener(delayinterrupt);
 
 //		final EditText bootdiskEdit = (EditText) getView().findViewById(R.id.boot_disk);
 //		String disk = Emulator.bootdisk;

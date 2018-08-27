@@ -298,7 +298,7 @@ void LoadSettings()
 	settings.aica.LimitFPS			= cfgLoadInt("config", "aica.LimitFPS", 1);
 	settings.aica.NoBatch			= cfgLoadInt("config", "aica.NoBatch", 0);
     settings.aica.NoSound			= cfgLoadInt("config", "aica.NoSound", 0);
-	settings.aica.InterruptHack		= cfgLoadInt("config", "aica.InterruptHack", 0);
+	settings.aica.DelayInterrupt	= cfgLoadInt("config", "aica.DelayInterrupt", 0);
 	settings.rend.UseMipmaps		= cfgLoadInt("config", "rend.UseMipmaps", 1);
 	settings.rend.WideScreen		= cfgLoadInt("config", "rend.WideScreen", 0);
 	settings.rend.ModifierVolumes	= cfgLoadInt("config", "rend.ModifierVolumes", 1);
@@ -358,7 +358,7 @@ void LoadCustom()
 	settings.dynarec.idleskip		= cfgGameInt(reios_id,"Dynarec.idleskip", settings.dynarec.idleskip ? 1 : 0) != 0;
 	settings.dynarec.unstable_opt	= cfgGameInt(reios_id,"Dynarec.unstable-opt", settings.dynarec.unstable_opt);
 	settings.dynarec.safemode		= cfgGameInt(reios_id,"Dynarec.safemode", settings.dynarec.safemode);
-	settings.aica.InterruptHack		= cfgLoadInt(reios_id,"aica.InterruptHack", settings.aica.InterruptHack);
+	settings.aica.DelayInterrupt	= cfgLoadInt(reios_id,"aica.DelayInterrupt", settings.aica.DelayInterrupt);
 	settings.rend.ModifierVolumes	= cfgGameInt(reios_id,"rend.ModifierVolumes", settings.rend.ModifierVolumes);
 	settings.rend.Clipping			= cfgGameInt(reios_id,"rend.Clipping", settings.rend.Clipping);
 
