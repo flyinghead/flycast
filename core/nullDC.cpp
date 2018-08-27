@@ -289,7 +289,6 @@ void LoadSettings()
 	settings.dynarec.Enable		= cfgLoadInt("config", "Dynarec.Enabled", 1) != 0;
 	settings.dynarec.idleskip	= cfgLoadInt("config", "Dynarec.idleskip", 1) != 0;
 	settings.dynarec.unstable_opt	= cfgLoadInt("config", "Dynarec.unstable-opt", 0);
-	settings.dynarec.safemode	= cfgLoadInt("config", "Dynarec.safemode", 0);
 	//disable_nvmem can't be loaded, because nvmem init is before cfg load
 	settings.dreamcast.cable	= cfgLoadInt("config", "Dreamcast.Cable", 3);
 	settings.dreamcast.RTC		= cfgLoadInt("config", "Dreamcast.RTC", GetRTC_now());
@@ -298,10 +297,8 @@ void LoadSettings()
 	settings.aica.LimitFPS		= cfgLoadInt("config", "aica.LimitFPS", 1);
 	settings.aica.NoBatch		= cfgLoadInt("config", "aica.NoBatch", 0);
 	settings.aica.NoSound		= cfgLoadInt("config", "aica.NoSound", 0);
-	settings.aica.DelayInterrupt	= cfgLoadInt("config", "aica.DelayInterrupt", 0);
 	settings.rend.UseMipmaps	= cfgLoadInt("config", "rend.UseMipmaps", 1);
 	settings.rend.WideScreen	= cfgLoadInt("config", "rend.WideScreen", 0);
-	settings.rend.ModifierVolumes	= cfgLoadInt("config", "rend.ModifierVolumes", 1);
 	settings.rend.Clipping		= cfgLoadInt("config", "rend.Clipping", 1);
 
 	settings.pvr.subdivide_transp	= cfgLoadInt("config", "pvr.Subdivide", 0);
@@ -318,6 +315,11 @@ void LoadSettings()
 	settings.reios.ElfFile		= cfgLoadStr("reios", "ElfFile", "");
 
 	settings.validate.OpenGlChecks	= cfgLoadInt("validate", "OpenGlChecks", 0) != 0;
+
+	// Configured on a per-game basis
+	settings.dynarec.safemode	= 0;
+	settings.aica.DelayInterrupt	= 0;
+	settings.rend.ModifierVolumes	= 1;
 #endif
 
 	settings.pvr.HashLogFile	= cfgLoadStr("testing", "ta.HashLogFile", "");
