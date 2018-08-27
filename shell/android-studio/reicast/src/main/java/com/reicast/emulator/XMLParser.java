@@ -126,7 +126,7 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 
 	@Override
 	protected void onPostExecute(String gameData) {
-		if (childview.get() != null && gameData != null) {
+		if (gameData != null) {
 			try {
 				Document doc = getDomElement(gameData);
 				if (doc.getElementsByTagName("Game") != null) {
@@ -153,7 +153,7 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 							icon.setListener(new decodeBitmapIcon.decodeBitmapIconListener() {
 								@Override
 								public void onDecodeBitmapIconFinished(Bitmap gameImage) {
-									if (gameImage != null) {
+									if (childview.get() != null && gameImage != null) {
 										if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
 											((ImageView) childview.get().findViewById(
 													R.id.item_icon)).setImageTintList(null);
@@ -180,44 +180,23 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 			}
 		}
 
-		((TextView) childview.get().findViewById(R.id.item_name)).setText(game_name);
+		if (childview.get() != null) {
+			((TextView) childview.get().findViewById(R.id.item_name)).setText(game_name);
 
-		if (mPrefs.getBoolean(Config.pref_gamedetails, false)) {
-			childview.get().findViewById(R.id.childview).setOnLongClickListener(
-					new OnLongClickListener() {
-						public boolean onLongClick(View view) {
-							final AlertDialog.Builder builder = new AlertDialog.Builder(mContext.get());
-							builder.setCancelable(true);
-							builder.setTitle(mContext.get().getString(R.string.game_details, game_name));
-							builder.setMessage(game_details);
-							builder.setIcon(game_icon);
-							builder.setNegativeButton("Close",
-									new DialogInterface.OnClickListener() {
-										public void onClick(DialogInterface dialog, int which) {
-											dialog.dismiss();
-										}
-									});
-							builder.setPositiveButton("Launch",
-									new DialogInterface.OnClickListener() {
-										public void onClick(DialogInterface dialog, int which) {
-											dialog.dismiss();
-											mCallback.onGameSelected(game != null
-													? Uri.fromFile(game) : Uri.EMPTY);
-											try {
-												((Vibrator) mContext.get().getSystemService(
-														Context.VIBRATOR_SERVICE)).vibrate(250);
-											} catch (Exception e) {
-												// Vibration unavailable
-											}
-										}
-									});
-							builder.create().show();
-							return true;
-						}
-					});
+			if (mPrefs.getBoolean(Config.pref_gamedetails, false)) {
+				childview.get().findViewById(R.id.childview).setOnLongClickListener(
+						new OnLongClickListener() {
+							public boolean onLongClick(View view) {
+								new AlertDialog.Builder(mContext.get()).setCancelable(true).setIcon(game_icon)
+										.setTitle(mContext.get().getString(R.string.game_details, game_name))
+										.setMessage(game_details).create().show();
+								return true;
+							}
+						});
+			}
+
+			childview.get().setTag(game_name);
 		}
-
-		childview.get().setTag(game_name);
 	}
 
 	private void initializeDefaults() {
