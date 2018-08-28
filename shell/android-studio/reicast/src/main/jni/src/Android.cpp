@@ -41,7 +41,7 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_vjoy(JNIEnv * env, jo
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_initControllers(JNIEnv *env, jobject obj, jbooleanArray controllers, jobjectArray peripherals)  __attribute__((visibility("default")));
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setupMic(JNIEnv *env,jobject obj,jobject sip)  __attribute__((visibility("default")));
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_diskSwap(JNIEnv *env,jobject obj)  __attribute__((visibility("default")));
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_diskSwap(JNIEnv *env,jobject obj,jstring disk)  __attribute__((visibility("default")));
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_vmuSwap(JNIEnv *env,jobject obj)  __attribute__((visibility("default")));
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setupVmu(JNIEnv *env,jobject obj,jobject sip)  __attribute__((visibility("default")));
 
@@ -445,7 +445,7 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_destroy(JNIEnv *env,j
     dc_term();
 }
 
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_diskSwap(JNIEnv *env,jobject obj)
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_diskSwap(JNIEnv *env,jobject obj,jstring disk)
 {
     if (settings.imgread.LoadDefaultImage == 1) {
         if (!gamedisk) settings.imgread.DefaultImage[0] = '\0';
@@ -453,6 +453,19 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_diskSwap(JNIEnv *env,
             printf("Got URI: '%s'\n", gamedisk);
             strncpy(settings.imgread.DefaultImage, gamedisk, sizeof(settings.imgread.DefaultImage));
             settings.imgread.DefaultImage[sizeof(settings.imgread.DefaultImage) - 1] = '\0';
+        }
+        DiscSwap();
+    } else if (disk != NULL) {
+        settings.imgread.LoadDefaultImage = 1;
+        const char *P = disk ? env->GetStringUTFChars(disk, 0) : 0;
+        if (!P) settings.imgread.DefaultImage[0] = '\0';
+        else {
+            printf("Got URI: '%s'\n", P);
+            strncpy(settings.imgread.DefaultImage,
+                    (strlen(P) >= 7) && !memcmp(P, "file://", 7) ? P + 7 : P,
+                    sizeof(settings.imgread.DefaultImage));
+            settings.imgread.DefaultImage[sizeof(settings.imgread.DefaultImage) - 1] = '\0';
+            env->ReleaseStringUTFChars(disk, P);
         }
         DiscSwap();
     }
