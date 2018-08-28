@@ -2,6 +2,7 @@ package com.reicast.emulator;
 
 import android.Manifest;
 import android.app.AlertDialog;
+import android.app.UiModeManager;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -160,6 +161,15 @@ public class MainActivity extends AppCompatActivity implements
 		if (!hasAndroidMarket) {
 			navigationView.getMenu().findItem(R.id.rateme_menu).setEnabled(false);
 			navigationView.getMenu().findItem(R.id.rateme_menu).setVisible(false);
+		}
+		try {
+			UiModeManager uiModeManager = (UiModeManager) getSystemService(UI_MODE_SERVICE);
+			if (uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION) {
+				View header = navigationView.getHeaderView(0);
+				((TextView) header.findViewById(R.id.project_link)).setLinksClickable(true);
+			}
+		} catch (Exception e) {
+			// They require a check, so they can fix their API
 		}
 		navigationView.setNavigationItemSelectedListener(this);
 
