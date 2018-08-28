@@ -136,7 +136,7 @@ public class MainActivity extends AppCompatActivity implements
 		// Check that the activity is using the layout version with
 		// the fragment_container FrameLayout
 		if (findViewById(R.id.fragment_container) != null) {
-			onMainBrowseSelected(null, false, null);
+			onMainBrowseSelected(null, true, null);
 		}
 
 		Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
