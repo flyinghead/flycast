@@ -125,10 +125,17 @@ ConfigEntry* ConfigFile::get_entry(string section_name, string entry_name)
 
 }
 
-std::string ConfigFile::get(const string& section_name, const string& entry_name, const string& default_value /*= ""*/)
+string ConfigFile::get(string section_name, string entry_name, string default_value)
 {
 	ConfigEntry* entry = this->get_entry(section_name, entry_name);
-	return (!entry) ? default_value : entry->get_string();
+	if (entry == NULL)
+	{
+		return default_value;
+	}
+	else
+	{
+		return entry->get_string();
+	}
 }
 
 int ConfigFile::get_int(string section_name, string entry_name, int default_value)

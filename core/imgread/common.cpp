@@ -23,24 +23,6 @@ Disc*(*drivers[])(const wchar* path)=
 
 u8 q_subchannel[96];
 
-struct SenseErrorCode
-{
-    int sns_asc;
-    int sns_ascq;
-    int sns_key;
-};
-
-//No disc inserted at the time of power-on, reset or hard reset, or TOC cannot be read.
-const SenseErrorCode NoDiskInsertedSenseCode = { 0x29, 0, 6 };
-const SenseErrorCode NoErrorSenseCode = { 0, 0, 0 };
-
-void SetSnsCodes(const SenseErrorCode& errorCode)
-{
-    sns_asc = errorCode.sns_asc;
-    sns_ascq = errorCode.sns_ascq;
-    sns_key = errorCode.sns_key;
-}
-
 void PatchRegion_0(u8* sector,int size)
 {
 #ifndef NOT_REICAST
@@ -168,119 +150,158 @@ Disc* OpenDisc(const wchar* fn)
 	return rv;
 }
 
-bool InitDrive_(const wchar* const fn)
+bool InitDrive_(wchar* fn)
 {
-    TermDrive();
+	TermDrive();
 
-    //try all drivers
-    disc = OpenDisc(fn);
+	//try all drivers
+	disc = OpenDisc(fn);
 
-    if (disc)
-    {
-        printf("gdrom: Opened image \"%s\"\n", fn);
-        NullDriveDiscType = Busy;
+	if (disc!=0)
+	{
+		printf("gdrom: Opened image \"%s\"\n",fn);
+		NullDriveDiscType=Busy;
 #ifndef NOT_REICAST
-        libCore_gdrom_disc_change();
+		libCore_gdrom_disc_change();
 #endif
-        return true;
-    }
-    else
-    {
-        printf("gdrom: Failed to open image \"%s\"\n", fn);
-        NullDriveDiscType = NoDisk; //no disc :)
-        return false;
-    }
+//		Sleep(400); //busy for a bit // what, really ?
+		return true;
+	}
+	else
+	{
+		printf("gdrom: Failed to open image \"%s\"\n",fn);
+		NullDriveDiscType=NoDisk; //no disc :)
+	}
+	return false;
 }
 
 #ifndef NOT_REICAST
-bool InitDrive(u32 fileflags/*=0*/)
+bool InitDrive(u32 fileflags)
 {
 	if (settings.imgread.LoadDefaultImage)
 	{
-		printf("Loading default image \"%s\"\n", settings.imgread.DefaultImage.c_str());
-		if (!InitDrive_(settings.imgread.DefaultImage.c_str()))
+		printf("Loading default image \"%s\"\n",settings.imgread.DefaultImage);
+		if (!InitDrive_(settings.imgread.DefaultImage))
 		{
-			msgboxf("Default image \"%s\" failed to load",MBX_ICONERROR,settings.imgread.DefaultImage.c_str());
+			msgboxf("Default image \"%s\" failed to load",MBX_ICONERROR,settings.imgread.DefaultImage);
 			return false;
 		}
 		else
 			return true;
 	}
 
-	std::string diskImageFileName = settings.imgread.LastImage;
+	// FIXME: Data loss if buffer is too small
+	wchar fn[512];
+	strncpy(fn,settings.imgread.LastImage, sizeof(fn));
+	fn[sizeof(fn) - 1] = '\0';
+
 #ifdef BUILD_DREAMCAST
-	int returnCode = GetFile(diskImageFileName);
-        if (!returnCode)
-            return false;
+	int gfrv=GetFile(fn,0,fileflags);
 #else
-	int returnCode = rv_error;
+	int gfrv=0;
 #endif
-	settings.imgread.LastImage = diskImageFileName;
+	if (gfrv == 0)
+	{
+		NullDriveDiscType=NoDisk;
+		gd_setdisc();
+		sns_asc=0x29;
+		sns_ascq=0x00;
+		sns_key=0x6;
+		return true;
+	}
+	else if (gfrv == -1)
+	{
+		return false;
+	}
+
+	// FIXME: Data loss if buffer is too small
+	strncpy(settings.imgread.LastImage, fn, sizeof(settings.imgread.LastImage));
+	settings.imgread.LastImage[sizeof(settings.imgread.LastImage) - 1] = '\0';
 
 	SaveSettings();
 
-	if (!InitDrive_(diskImageFileName.c_str()))
+	if (!InitDrive_(fn))
 	{
-		NullDriveDiscType = NoDisk;
-		gd_setdisc();
-		SetSnsCodes(NoDiskInsertedSenseCode);
-		return false;
+		//msgboxf("Selected image failed to load",MBX_ICONERROR);
+			NullDriveDiscType=NoDisk;
+			gd_setdisc();
+			sns_asc=0x29;
+			sns_ascq=0x00;
+			sns_key=0x6;
+		return true;
 	}
-	return true;
+	else
+	{
+		return true;
+	}
 }
 
 bool DiscSwap(u32 fileflags)
 {
 	if (settings.imgread.LoadDefaultImage)
 	{
-		printf("Loading default image \"%s\"\n", settings.imgread.DefaultImage.c_str());
-		if (!InitDrive_(settings.imgread.DefaultImage.c_str()))
+		printf("Loading default image \"%s\"\n",settings.imgread.DefaultImage);
+		if (!InitDrive_(settings.imgread.DefaultImage))
 		{
-			msgboxf("Default image \"%s\" failed to load",MBX_ICONERROR,settings.imgread.DefaultImage.c_str());
+			msgboxf("Default image \"%s\" failed to load",MBX_ICONERROR,settings.imgread.DefaultImage);
 			return false;
 		}
 		else
 			return true;
 	}
 
-    std::string diskImageFileName = settings.imgread.LastImage;
+	// FIXME: Data loss if buffer is too small
+	wchar fn[512];
+	strncpy(fn, settings.imgread.LastImage, sizeof(fn));
+	fn[sizeof(fn) - 1] = '\0';
+
 
 #ifdef BUILD_DREAMCAST
-    int gfrv = GetFile(diskImageFileName);
+	int gfrv=GetFile(fn,0,fileflags);
 #else
-    int gfrv = rv_error;
+	int gfrv=0;
 #endif
-    if (gfrv == rv_ok)
-    {
-        NullDriveDiscType = Open;
-        gd_setdisc();
-        SetSnsCodes(NoErrorSenseCode);
-        return true;
-    }
-    else
-    {
-        SetSnsCodes(NoDiskInsertedSenseCode);
-        return false;
-    }
+	if (gfrv == 0)
+	{
+		NullDriveDiscType=Open;
+		gd_setdisc();
+		sns_asc=0x28;
+		sns_ascq=0x00;
+		sns_key=0x6;
+		return true;
+	}
+	else if (gfrv == -1)
+	{
+		sns_asc=0x28;
+		sns_ascq=0x00;
+		sns_key=0x6;
+		return false;
+	}
+
+	// FIXME: Data loss if buffer is too small
+	strncpy(settings.imgread.LastImage, fn, sizeof(settings.imgread.LastImage));
+	settings.imgread.LastImage[sizeof(settings.imgread.LastImage) - 1] = '\0';
 
 
-    settings.imgread.LastImage = diskImageFileName;
+	SaveSettings();
 
-    SaveSettings();
-
-    if (!InitDrive_(diskImageFileName.c_str()))
-    {
-        msgboxf("Selected image failed to load", MBX_ICONERROR);
-        NullDriveDiscType = Open;
-        gd_setdisc();
-        SetSnsCodes(NoDiskInsertedSenseCode);
-        return false;
-    }
-    else
-    {
-        SetSnsCodes(NoErrorSenseCode);
-        return true;
-    }
+	if (!InitDrive_(fn))
+	{
+		//msgboxf("Selected image failed to load",MBX_ICONERROR);
+		NullDriveDiscType=Open;
+		gd_setdisc();
+		sns_asc=0x28;
+		sns_ascq=0x00;
+		sns_key=0x6;
+		return true;
+	}
+	else
+	{
+		sns_asc=0x28;
+		sns_ascq=0x00;
+		sns_key=0x6;
+		return true;
+	}
 }
 #endif
 
