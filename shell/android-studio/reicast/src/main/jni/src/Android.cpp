@@ -447,15 +447,15 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_destroy(JNIEnv *env,j
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_diskSwap(JNIEnv *env,jobject obj)
 {
-    if (!gamedisk) settings.imgread.DefaultImage[0] = '\0';
-    else {
-        printf("Got URI: '%s'\n", gamedisk);
-        strncpy(settings.imgread.DefaultImage, gamedisk, sizeof(settings.imgread.DefaultImage));
-        settings.imgread.DefaultImage[sizeof(settings.imgread.DefaultImage) - 1] = '\0';
+    if (settings.imgread.LoadDefaultImage == 1) {
+        if (!gamedisk) settings.imgread.DefaultImage[0] = '\0';
+        else {
+            printf("Got URI: '%s'\n", gamedisk);
+            strncpy(settings.imgread.DefaultImage, gamedisk, sizeof(settings.imgread.DefaultImage));
+            settings.imgread.DefaultImage[sizeof(settings.imgread.DefaultImage) - 1] = '\0';
+        }
+        DiscSwap();
     }
-
-    settings.imgread.LoadDefaultImage = 1;
-    DiscSwap();
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_vmuSwap(JNIEnv *env,jobject obj)

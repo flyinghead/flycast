@@ -149,8 +149,8 @@ public class OptionsFragment extends Fragment {
 			@Override
 			public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
 				if (actionId == EditorInfo.IME_ACTION_DONE
-						|| (event.getAction() == KeyEvent.ACTION_DOWN
-						&& event.getKeyCode() == KeyEvent.KEYCODE_ENTER)) {
+						|| (event.getKeyCode() == KeyEvent.KEYCODE_ENTER
+						&& event.getAction() == KeyEvent.ACTION_DOWN)) {
 					if (event == null || !event.isShiftPressed()) {
 						if (v.getText() != null) {
 							home_directory = v.getText().toString();
@@ -163,10 +163,11 @@ public class OptionsFragment extends Fragment {
 							JNIdc.config(home_directory);
 							new LocateThemes(OptionsFragment.this).execute(home_directory + "/themes");
 						}
-						return true; // consume.
+						hideSoftKeyBoard();
+						return true;
 					}
 				}
-				return false; // pass on to other listeners.
+				return false;
 			}
 		});
 
@@ -220,17 +221,18 @@ public class OptionsFragment extends Fragment {
 			@Override
 			public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
 				if (actionId == EditorInfo.IME_ACTION_DONE
-						|| (event.getAction() == KeyEvent.ACTION_DOWN
-						&& event.getKeyCode() == KeyEvent.KEYCODE_ENTER)) {
+						|| (event.getKeyCode() == KeyEvent.KEYCODE_ENTER
+						&& event.getAction() == KeyEvent.ACTION_DOWN)) {
 					if (event == null || !event.isShiftPressed()) {
 						if (v.getText() != null) {
 							game_directory = v.getText().toString();
 							mPrefs.edit().putString(Config.pref_games, game_directory).apply();
 						}
-						return true; // consume.
+						hideSoftKeyBoard();
+						return true;
 					}
 				}
-				return false; // pass on to other listeners.
+				return false;
 			}
 		});
 
@@ -414,18 +416,19 @@ public class OptionsFragment extends Fragment {
 			@Override
 			public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
 				if (actionId == EditorInfo.IME_ACTION_DONE
-						|| (event.getAction() == KeyEvent.ACTION_DOWN
-						&& event.getKeyCode() == KeyEvent.KEYCODE_ENTER)) {
+						|| (event.getKeyCode() == KeyEvent.KEYCODE_ENTER
+						&& event.getAction() == KeyEvent.ACTION_DOWN)) {
 					if (event == null || !event.isShiftPressed()) {
 						if (v.getText() != null) {
 							int frames = Integer.parseInt(v.getText().toString());
 							frameSeek.setProgress(frames);
 							mPrefs.edit().putInt(Emulator.pref_frameskip, frames).apply();
 						}
-						return true; // consume.
+						hideSoftKeyBoard();
+						return true;
 					}
 				}
-				return false; // pass on to other listeners.
+				return false;
 			}
 		});
 
@@ -455,8 +458,8 @@ public class OptionsFragment extends Fragment {
 					@Override
 					public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
 						if (actionId == EditorInfo.IME_ACTION_DONE
-								|| (event.getAction() == KeyEvent.ACTION_DOWN
-								&& event.getKeyCode() == KeyEvent.KEYCODE_ENTER)) {
+								|| (event.getKeyCode() == KeyEvent.KEYCODE_ENTER
+								&& event.getAction() == KeyEvent.ACTION_DOWN)) {
 							if (event == null || !event.isShiftPressed()) {
 								if (v.getText() != "null") {
 									String disk = v.getText().toString();
@@ -476,10 +479,11 @@ public class OptionsFragment extends Fragment {
 									v.setText(disk);
 									Emulator.bootdisk = disk;
 								}
-								return true; // consume.
+								hideSoftKeyBoard();
+								return true;
 							}
 						}
-						return false; // pass on to other listeners.
+						return false;
 					}
 				});
 
