@@ -477,7 +477,6 @@ public class OptionsFragment extends Fragment {
 										}
 									}
 									v.setText(disk);
-									Emulator.bootdisk = disk;
 								}
 								hideSoftKeyBoard();
 								return true;
@@ -699,7 +698,7 @@ public class OptionsFragment extends Fragment {
 		mPrefs.edit().remove(Emulator.pref_frameskip).apply();
 		mPrefs.edit().remove(Emulator.pref_pvrrender).apply();
 		mPrefs.edit().remove(Emulator.pref_syncedrender).apply();
-//		mPrefs.edit().remove(Emulator.pref_bootdisk).apply();
+		mPrefs.edit().remove(Emulator.pref_bootdisk).apply();
 		mPrefs.edit().remove(Config.pref_showfps).apply();
 		mPrefs.edit().remove(Config.pref_rendertype).apply();
 		mPrefs.edit().remove(Emulator.pref_nosound).apply();

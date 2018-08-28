@@ -7,6 +7,7 @@ import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.Snackbar;
@@ -16,9 +17,12 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -61,6 +65,7 @@ public class PGConfigFragment extends Fragment {
 	private CompoundButton synced_render;
 	private CompoundButton modifier_volumes;
 	private CompoundButton interrupt_opt;
+	private EditText bootdiskEdit;
 
 	@Override
 	public void onAttach(Activity activity) {
@@ -100,6 +105,7 @@ public class PGConfigFragment extends Fragment {
 		synced_render = (CompoundButton) getView().findViewById(R.id.syncrender_option);
 		modifier_volumes = (CompoundButton) getView().findViewById(R.id.modvols_option);
 		interrupt_opt = (CompoundButton) getView().findViewById(R.id.interrupt_option);
+		bootdiskEdit = (EditText) getView().findViewById(R.id.boot_disk);
 	}
 
 	private void saveSettings(SharedPreferences mPrefs) {
@@ -113,6 +119,11 @@ public class PGConfigFragment extends Fragment {
 				.putBoolean(Emulator.pref_syncedrender, synced_render.isChecked())
 				.putBoolean(Emulator.pref_modvols, modifier_volumes.isChecked())
 				.putBoolean(Emulator.pref_interrupt, interrupt_opt.isChecked()).apply();
+		if (bootdiskEdit.getText() != null)
+			mPrefs.edit().putString(Emulator.pref_bootdisk,
+					bootdiskEdit.getText().toString()).apply();
+		else
+			mPrefs.edit().remove(Emulator.pref_bootdisk).apply();
 		showToastMessage(getActivity().getString(R.string.pgconfig_saved), Snackbar.LENGTH_SHORT);
 	}
 
@@ -126,7 +137,8 @@ public class PGConfigFragment extends Fragment {
 				.remove(Emulator.pref_pvrrender)
 				.remove(Emulator.pref_syncedrender)
 				.remove(Emulator.pref_modvols)
-				.remove(Emulator.pref_interrupt).apply();
+				.remove(Emulator.pref_interrupt)
+				.remove(Emulator.pref_bootdisk).apply();
 		showToastMessage(getActivity().getString(R.string.pgconfig_cleared), Snackbar.LENGTH_SHORT);
 		configureViewByGame(gameId);
 	}
@@ -158,19 +170,23 @@ public class PGConfigFragment extends Fragment {
 
 			}
 		});
-		mainFrames.addTextChangedListener(new TextWatcher() {
-			public void afterTextChanged(Editable s) {
-				Editable frameText = mainFrames.getText();
-				if (frameText != null) {
-					int frames = Integer.parseInt(frameText.toString());
-					frameSeek.setProgress(frames);
+
+		mainFrames.setOnEditorActionListener(new EditText.OnEditorActionListener() {
+			@Override
+			public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+				if (actionId == EditorInfo.IME_ACTION_DONE
+						|| (event.getKeyCode() == KeyEvent.KEYCODE_ENTER
+						&& event.getAction() == KeyEvent.ACTION_DOWN)) {
+					if (event == null || !event.isShiftPressed()) {
+						if (v.getText() != null) {
+							int frames = Integer.parseInt(v.getText().toString());
+							frameSeek.setProgress(frames);
+						}
+						hideSoftKeyBoard();
+						return true;
+					}
 				}
-			}
-
-			public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-			}
-
-			public void onTextChanged(CharSequence s, int start, int before, int count) {
+				return false;
 			}
 		});
 
@@ -178,6 +194,37 @@ public class PGConfigFragment extends Fragment {
 		synced_render.setChecked(mPrefs.getBoolean(Emulator.pref_syncedrender, Emulator.syncedrender));
 		modifier_volumes.setChecked(mPrefs.getBoolean(Emulator.pref_modvols, Emulator.modvols));
 		interrupt_opt.setChecked(mPrefs.getBoolean(Emulator.pref_interrupt, Emulator.interrupt));
+		bootdiskEdit.setText(mPrefs.getString(Emulator.pref_bootdisk, Emulator.bootdisk));
+
+		bootdiskEdit.setOnEditorActionListener(new EditText.OnEditorActionListener() {
+			@Override
+			public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+				if (actionId == EditorInfo.IME_ACTION_DONE
+						|| (event.getKeyCode() == KeyEvent.KEYCODE_ENTER
+						&& event.getAction() == KeyEvent.ACTION_DOWN)) {
+					if (event == null || !event.isShiftPressed()) {
+						if (v.getText() != "null") {
+							String disk = v.getText().toString();
+							if (disk.substring(disk.lastIndexOf("/") + 1).length() == 0) {
+								disk = null;
+							} else {
+								if (!disk.contains("/"))
+									disk = mPrefs.getString(Config.pref_games,
+											Environment.getExternalStorageDirectory()
+													.getAbsolutePath()) + "/" + disk;
+								if (!new File(disk).exists()) {
+									disk = null;
+								}
+							}
+							v.setText(disk);
+						}
+						hideSoftKeyBoard();
+						return true;
+					}
+				}
+				return false;
+			}
+		});
 
 		Button savePGC = (Button) getView().findViewById(R.id.save_pg_btn);
 		savePGC.setOnClickListener(new View.OnClickListener() {
@@ -318,6 +365,14 @@ public class PGConfigFragment extends Fragment {
 			} else {
 				options.get().mSpnrConfigs.setEnabled(false);
 			}
+		}
+	}
+
+	private void hideSoftKeyBoard() {
+		InputMethodManager iMm = (InputMethodManager) getActivity()
+				.getSystemService(Context.INPUT_METHOD_SERVICE);
+		if (iMm != null && iMm.isAcceptingText()) {
+			iMm.hideSoftInputFromWindow(getActivity().getCurrentFocus().getWindowToken(), 0);
 		}
 	}
 
