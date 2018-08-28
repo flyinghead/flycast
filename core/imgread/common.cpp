@@ -210,8 +210,8 @@ bool InitDrive(u32 fileflags/*=0*/)
 	std::string diskImageFileName = settings.imgread.LastImage;
 #ifdef BUILD_DREAMCAST
 	int returnCode = GetFile(diskImageFileName);
-    if (!returnCode)
-        return false;
+        if (!returnCode)
+            return false;
 #else
 	int returnCode = rv_error;
 #endif
