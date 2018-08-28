@@ -19,9 +19,9 @@ u32 RomSize;
 fd_t*	RomCacheMap;
 u32		RomCacheMapCount;
 
-std::string SelectedFile;
+char SelectedFile[512];
 
-bool naomi_cart_LoadRom(const char* file)
+bool naomi_cart_LoadRom(char* file)
 {
 
 	printf("\nnullDC-Naomi rom loader v1.2\n");
@@ -50,7 +50,7 @@ bool naomi_cart_LoadRom(const char* file)
 
 	char* eon = strstr(line, "\n");
 	if (!eon)
-		printf("+Loading naomi rom that has no name %s\n", line);
+		printf("+Loading naomi rom that has no name\n");
 	else
 		*eon = 0;
 
@@ -204,14 +204,13 @@ bool naomi_cart_LoadRom(const char* file)
 bool naomi_cart_SelectFile(void* handle)
 {
 	cfgLoadStr("config", "image", SelectedFile, "null");
-
+	
 #if HOST_OS == OS_WINDOWS
-	if (SelectedFile == "null")
-    {
+	if (strcmp(SelectedFile, "null") == 0) {
 		OPENFILENAME ofn = { 0 };
 		ofn.lStructSize = sizeof(OPENFILENAME);
 		ofn.hInstance = (HINSTANCE)GetModuleHandle(0);
-		ofn.lpstrFile = &SelectedFile[0];
+		ofn.lpstrFile = SelectedFile;
 		ofn.nMaxFile = MAX_PATH;
 		ofn.lpstrFilter = "*.lst\0*.lst\0\0";
 		ofn.nFilterIndex = 0;
@@ -222,17 +221,17 @@ bool naomi_cart_SelectFile(void* handle)
 			return true;
 	}
 #endif
-	if (!naomi_cart_LoadRom(SelectedFile.c_str()))
+	if (!naomi_cart_LoadRom(SelectedFile))
 	{
 		cfgSaveStr("emu", "gamefile", "naomi_bios");
 	}
 	else
 	{
-		cfgSaveStr("emu", "gamefile", SelectedFile.c_str());
+		cfgSaveStr("emu", "gamefile", SelectedFile);
 	}
 
 
-	printf("EEPROM file : %s.eeprom\n", SelectedFile.c_str());
+	printf("EEPROM file : %s.eeprom\n", SelectedFile);
 
 	return true;
 }
