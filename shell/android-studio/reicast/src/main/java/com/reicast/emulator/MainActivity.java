@@ -2,6 +2,7 @@ package com.reicast.emulator;
 
 import android.Manifest;
 import android.app.AlertDialog;
+import android.app.UiModeManager;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -91,12 +92,11 @@ public class MainActivity extends AppCompatActivity implements
 					if (error != null) {
 						StringBuilder output = new StringBuilder();
 						for (StackTraceElement trace : error.getStackTrace()) {
-							output.append(trace.toString() + "\n");
+							output.append(trace.toString());
+							output.append("\n");
 						}
 						mPrefs.edit().putString("prior_error", output.toString()).apply();
 						error.printStackTrace();
-						android.os.Process.killProcess(android.os.Process.myPid());
-						System.exit(0);
 					}
 				}
 			};
@@ -136,7 +136,7 @@ public class MainActivity extends AppCompatActivity implements
 		// Check that the activity is using the layout version with
 		// the fragment_container FrameLayout
 		if (findViewById(R.id.fragment_container) != null) {
-			onMainBrowseSelected(true, null, false, null);
+			onMainBrowseSelected(null, false, null);
 		}
 
 		Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -162,6 +162,15 @@ public class MainActivity extends AppCompatActivity implements
 			navigationView.getMenu().findItem(R.id.rateme_menu).setEnabled(false);
 			navigationView.getMenu().findItem(R.id.rateme_menu).setVisible(false);
 		}
+		try {
+			UiModeManager uiModeManager = (UiModeManager) getSystemService(UI_MODE_SERVICE);
+			if (uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION) {
+				View header = navigationView.getHeaderView(0);
+				((TextView) header.findViewById(R.id.project_link)).setLinksClickable(true);
+			}
+		} catch (Exception e) {
+			// They require a check, so they can fix their API
+		}
 		navigationView.setNavigationItemSelectedListener(this);
 
 		final SearchView searchView = (SearchView) findViewById(R.id.searchView);
@@ -170,7 +179,7 @@ public class MainActivity extends AppCompatActivity implements
 			searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
 				@Override
 				public boolean onQueryTextSubmit(String query) {
-					onMainBrowseSelected(true, mPrefs.getString(Config.pref_games,
+					onMainBrowseSelected(mPrefs.getString(Config.pref_games,
 							Environment.getExternalStorageDirectory().getAbsolutePath()),
 							true, query);
 					searchView.onActionViewCollapsed();
@@ -251,8 +260,6 @@ public class MainActivity extends AppCompatActivity implements
 	/**
 	 * Launch the browser activity with specified parameters
 	 *
-	 * @param browse
-	 *            Conditional for image files or folders
 	 * @param path
 	 *            The root path of the browser fragment
 	 * @param games
@@ -260,11 +267,9 @@ public class MainActivity extends AppCompatActivity implements
 	 * @param query
 	 *            Search parameters to limit list items
 	 */
-	public void onMainBrowseSelected(boolean browse, String path, boolean games, String query) {
+	public void onMainBrowseSelected(String path, boolean games, String query) {
 		FileBrowser firstFragment = new FileBrowser();
 		Bundle args = new Bundle();
-//		args.putBoolean("ImgBrowse", false);
-		args.putBoolean("ImgBrowse", browse);
 		// specify ImgBrowse option. true = images, false = folders only
 		args.putString("browse_entry", path);
 		// specify a path for selecting folder options
@@ -293,7 +298,7 @@ public class MainActivity extends AppCompatActivity implements
 					public void onClick(DialogInterface dialog, int which) {
 						String home_directory = mPrefs.getString(Config.pref_home,
 								Environment.getExternalStorageDirectory().getAbsolutePath());
-						onMainBrowseSelected(false, home_directory, false, null);
+						onMainBrowseSelected(home_directory, false, null);
 					}
 				});
 		builder.setNegativeButton(R.string.gdrive,
@@ -340,7 +345,7 @@ public class MainActivity extends AppCompatActivity implements
 	}
 
 	private void launchMainFragment() {
-		onMainBrowseSelected(true, null, false, null);
+		onMainBrowseSelected(null, false, null);
 	}
 
 	@Override

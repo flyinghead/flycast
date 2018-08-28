@@ -79,15 +79,15 @@ public class Gamepad {
 
 	public static final int Xperia_Touchpad = 1048584;
 
-	public static final int key_CONT_B          = 0x0002;
-	public static final int key_CONT_A          = 0x0004;
-	public static final int key_CONT_START      = 0x0008;
-	public static final int key_CONT_DPAD_UP    = 0x0010;
-	public static final int key_CONT_DPAD_DOWN  = 0x0020;
-	public static final int key_CONT_DPAD_LEFT  = 0x0040;
-	public static final int key_CONT_DPAD_RIGHT = 0x0080;
-	public static final int key_CONT_Y          = 0x0200;
-	public static final int key_CONT_X          = 0x0400;
+	private static final int key_CONT_B          = 0x0002;
+	private static final int key_CONT_A          = 0x0004;
+	private static final int key_CONT_START      = 0x0008;
+	private static final int key_CONT_DPAD_UP    = 0x0010;
+	private static final int key_CONT_DPAD_DOWN  = 0x0020;
+	private static final int key_CONT_DPAD_LEFT  = 0x0040;
+	private static final int key_CONT_DPAD_RIGHT = 0x0080;
+	private static final int key_CONT_Y          = 0x0200;
+	private static final int key_CONT_X          = 0x0400;
 
 	public int[] getConsoleController() {
 		return new int[] {
@@ -162,10 +162,14 @@ public class Gamepad {
 		if (ouya) {
 			return OuyaFacade.getInstance().isRunningOnOUYAHardware();
 		} else {
-			UiModeManager uiModeManager = (UiModeManager)
-					context.getSystemService(Context.UI_MODE_SERVICE);
-			if (uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION) {
-				return true;
+			try {
+				UiModeManager uiModeManager = (UiModeManager)
+						context.getSystemService(Context.UI_MODE_SERVICE);
+				if (uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION) {
+					return true;
+				}
+			} catch (Exception e) {
+				// Not entirely important
 			}
 			PackageManager pMan = context.getPackageManager();
 			return pMan.hasSystemFeature(PackageManager.FEATURE_TELEVISION)

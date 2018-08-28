@@ -70,7 +70,7 @@ public class OptionsFragment extends Fragment {
 
 	// Container Activity must implement this interface
 	public interface OnClickListener {
-		void onMainBrowseSelected(boolean browse, String path_entry, boolean games, String query);
+		void onMainBrowseSelected(String path_entry, boolean games, String query);
 		void launchBIOSdetection();
 	}
 
@@ -211,7 +211,7 @@ public class OptionsFragment extends Fragment {
 					game_directory = editGames.getText().toString();
 				}
 				hideSoftKeyBoard();
-				mCallback.onMainBrowseSelected(false, game_directory, true, null);
+				mCallback.onMainBrowseSelected(game_directory, true, null);
 			}
 		});
 
