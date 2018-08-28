@@ -496,7 +496,7 @@ public class OnScreenMenu {
 
 			OnClickListener clickDisk = new OnClickListener() {
 				public void onClick(View v) {
-					JNIdc.diskSwap(null);
+					JNIdc.diskSwap();
 					dismiss();
 				}
 			};

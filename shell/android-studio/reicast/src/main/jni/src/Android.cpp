@@ -17,6 +17,7 @@
 #include "hw/maple/maple_if.h"
 #include "oslib/audiobackend_android.h"
 #include "reios/reios.h"
+#include "imgread/common.h"
 
 extern "C"
 {
@@ -40,7 +41,7 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_vjoy(JNIEnv * env, jo
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_initControllers(JNIEnv *env, jobject obj, jbooleanArray controllers, jobjectArray peripherals)  __attribute__((visibility("default")));
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setupMic(JNIEnv *env,jobject obj,jobject sip)  __attribute__((visibility("default")));
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_diskSwap(JNIEnv *env,jobject obj, jstring newdisk)  __attribute__((visibility("default")));
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_diskSwap(JNIEnv *env,jobject obj)  __attribute__((visibility("default")));
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_vmuSwap(JNIEnv *env,jobject obj)  __attribute__((visibility("default")));
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setupVmu(JNIEnv *env,jobject obj,jobject sip)  __attribute__((visibility("default")));
 
@@ -186,7 +187,6 @@ bool gles_init();
 extern int screen_width,screen_height;
 
 static u64 tvs_base;
-static char bootdisk[256];
 static char gamedisk[256];
 
 // Additonal controllers 2, 3 and 4 connected ?
@@ -310,14 +310,17 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_config(JNIEnv *env,jo
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_bootdisk(JNIEnv *env,jobject obj, jstring disk)
 {
     const char* P = disk? env->GetStringUTFChars(disk,0):0;
-    if(!P) bootdisk[0] = '\0';
+    if(!P) settings.imgread.DefaultImage[0] = '\0';
     else
     {
         printf("Got URI: '%s'\n",P);
-        strncpy(bootdisk,(strlen(P)>=7)&&!memcmp(P,"file://",7)? P+7:P,sizeof(bootdisk));
-        bootdisk[sizeof(bootdisk)-1] = '\0';
+        strncpy(settings.imgread.DefaultImage,(strlen(P)>=7)&&!memcmp(P,"file://",7)? P+7:P,sizeof(settings.imgread.DefaultImage));
+        settings.imgread.DefaultImage[sizeof(settings.imgread.DefaultImage)-1] = '\0';
         env->ReleaseStringUTFChars(disk,P);
     }
+
+    if (strcmp(settings.imgread.DefaultImage, "null") != 0)
+        settings.imgread.LoadDefaultImage = 1;
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_init(JNIEnv *env,jobject obj,jstring fileName)
@@ -350,10 +353,7 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_init(JNIEnv *env,jobj
   pthread_attr_destroy(&PTAttr);
   */
 
-    if (strcmp(bootdisk, "null") != 0)
-        ThreadHandler(bootdisk);
-    else
-        ThreadHandler(gamedisk);
+    ThreadHandler(gamedisk);
 }
 
 #define SAMPLE_COUNT 512
@@ -447,8 +447,9 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_destroy(JNIEnv *env,j
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_diskSwap(JNIEnv *env,jobject obj)
 {
-    // Needs actual code to swap a disk
-    // bootdisk is replaced by gamedisk
+    settings.imgread.LoadDefaultImage = 0;
+
+    DiscSwap();
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_vmuSwap(JNIEnv *env,jobject obj)

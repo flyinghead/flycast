@@ -451,10 +451,11 @@ public class OptionsFragment extends Fragment {
 					String disk = editText.toString();
 					if (disk.substring(disk.lastIndexOf("/") + 1).length() == 0) {
                         disk = "null";
+						bootdiskEdit.setText(disk);
                     } else if (!disk.equals("null") && !disk.contains("/")) {
 						disk = game_directory + "/" + disk;
+						bootdiskEdit.setText(disk);
 					}
-					bootdiskEdit.setText(disk);
 					mPrefs.edit().putString(Emulator.pref_bootdisk, disk).apply();
 					Emulator.bootdisk = disk;
 				}
