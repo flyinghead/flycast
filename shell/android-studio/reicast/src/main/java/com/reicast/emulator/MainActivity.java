@@ -392,10 +392,9 @@ public class MainActivity extends AppCompatActivity implements
 				}
 				browseFrag = new FileBrowser();
 				Bundle args = new Bundle();
-				args.putBoolean("ImgBrowse", true);
 				args.putString("browse_entry", null);
 				// specify a path for selecting folder options
-				args.putBoolean("games_entry", false);
+				args.putBoolean("games_entry", true);
 				// specify if the desired path is for games or data
 				browseFrag.setArguments(args);
 				getSupportFragmentManager()
