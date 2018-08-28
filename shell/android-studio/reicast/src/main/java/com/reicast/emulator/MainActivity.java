@@ -136,7 +136,7 @@ public class MainActivity extends AppCompatActivity implements
 		// Check that the activity is using the layout version with
 		// the fragment_container FrameLayout
 		if (findViewById(R.id.fragment_container) != null) {
-			onMainBrowseSelected(true, null, false, null);
+			onMainBrowseSelected(null, false, null);
 		}
 
 		Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -170,7 +170,7 @@ public class MainActivity extends AppCompatActivity implements
 			searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
 				@Override
 				public boolean onQueryTextSubmit(String query) {
-					onMainBrowseSelected(true, mPrefs.getString(Config.pref_games,
+					onMainBrowseSelected(mPrefs.getString(Config.pref_games,
 							Environment.getExternalStorageDirectory().getAbsolutePath()),
 							true, query);
 					searchView.onActionViewCollapsed();
@@ -251,8 +251,6 @@ public class MainActivity extends AppCompatActivity implements
 	/**
 	 * Launch the browser activity with specified parameters
 	 *
-	 * @param browse
-	 *            Conditional for image files or folders
 	 * @param path
 	 *            The root path of the browser fragment
 	 * @param games
@@ -260,11 +258,9 @@ public class MainActivity extends AppCompatActivity implements
 	 * @param query
 	 *            Search parameters to limit list items
 	 */
-	public void onMainBrowseSelected(boolean browse, String path, boolean games, String query) {
+	public void onMainBrowseSelected(String path, boolean games, String query) {
 		FileBrowser firstFragment = new FileBrowser();
 		Bundle args = new Bundle();
-//		args.putBoolean("ImgBrowse", false);
-		args.putBoolean("ImgBrowse", browse);
 		// specify ImgBrowse option. true = images, false = folders only
 		args.putString("browse_entry", path);
 		// specify a path for selecting folder options
@@ -293,7 +289,7 @@ public class MainActivity extends AppCompatActivity implements
 					public void onClick(DialogInterface dialog, int which) {
 						String home_directory = mPrefs.getString(Config.pref_home,
 								Environment.getExternalStorageDirectory().getAbsolutePath());
-						onMainBrowseSelected(false, home_directory, false, null);
+						onMainBrowseSelected(home_directory, false, null);
 					}
 				});
 		builder.setNegativeButton(R.string.gdrive,
@@ -340,7 +336,7 @@ public class MainActivity extends AppCompatActivity implements
 	}
 
 	private void launchMainFragment() {
-		onMainBrowseSelected(true, null, false, null);
+		onMainBrowseSelected(null, false, null);
 	}
 
 	@Override

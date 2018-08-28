@@ -57,7 +57,6 @@ public class FileBrowser extends Fragment {
 
 	private Vibrator vib;
 	private Drawable orig_bg;
-	private boolean ImgBrowse;
 	private boolean games;
 	private String searchQuery = null;
 	private OnItemSelectedListener mCallback;
@@ -77,7 +76,6 @@ public class FileBrowser extends Fragment {
 
 		Bundle b = getArguments();
 		if (b != null) {
-			ImgBrowse = b.getBoolean("ImgBrowse", true);
 			if (games = b.getBoolean("games_entry", false)) {
 				if (b.getString("path_entry") != null) {
 					home_directory = b.getString("path_entry");
@@ -177,7 +175,7 @@ public class FileBrowser extends Fragment {
 			showToastMessage(getActivity().getString(R.string.config_home), Snackbar.LENGTH_LONG);
 		}
 		installButtons();
-		if (!ImgBrowse && !games) {
+		if (!games) {
 			new LocateGames(R.array.flash).execute(home_directory);
 		} else {
 			new LocateGames(R.array.images).execute(game_directory);
