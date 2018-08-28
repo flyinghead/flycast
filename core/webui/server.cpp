@@ -21,15 +21,14 @@
 #ifdef CMAKE_BUILD
 #include "lws_config.h"
 #endif
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <signal.h>
-#include <string.h>
+#include <cstddef>
+#include <cstdio>
+#include <cstdlib>
+#include <csignal>
+#include <cstring>
+#include <cassert>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <assert.h>
-
 #ifdef _WIN32
 #include <io.h>
 #ifdef EXTERNAL_POLL
