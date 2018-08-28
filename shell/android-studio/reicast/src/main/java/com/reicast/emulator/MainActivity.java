@@ -91,12 +91,11 @@ public class MainActivity extends AppCompatActivity implements
 					if (error != null) {
 						StringBuilder output = new StringBuilder();
 						for (StackTraceElement trace : error.getStackTrace()) {
-							output.append(trace.toString() + "\n");
+							output.append(trace.toString());
+							output.append("\n");
 						}
 						mPrefs.edit().putString("prior_error", output.toString()).apply();
 						error.printStackTrace();
-						android.os.Process.killProcess(android.os.Process.myPid());
-						System.exit(0);
 					}
 				}
 			};
