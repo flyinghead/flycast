@@ -270,7 +270,6 @@ public class MainActivity extends AppCompatActivity implements
 	public void onMainBrowseSelected(String path, boolean games, String query) {
 		FileBrowser firstFragment = new FileBrowser();
 		Bundle args = new Bundle();
-		// specify ImgBrowse option. true = images, false = folders only
 		args.putString("browse_entry", path);
 		// specify a path for selecting folder options
 		args.putBoolean("games_entry", games);
@@ -326,7 +325,7 @@ public class MainActivity extends AppCompatActivity implements
 				boolean readyToQuit = true;
 				if (fragment.getArguments() != null) {
 					readyToQuit = fragment.getArguments().getBoolean(
-							"ImgBrowse", true);
+							"games_entry", true);
 				}
 				if (readyToQuit) {
 					MainActivity.this.finish();
@@ -345,7 +344,7 @@ public class MainActivity extends AppCompatActivity implements
 	}
 
 	private void launchMainFragment() {
-		onMainBrowseSelected(null, false, null);
+		onMainBrowseSelected(null, true, null);
 	}
 
 	@Override
