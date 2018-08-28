@@ -47,7 +47,7 @@ public class Emulator extends Application {
     public static boolean pvrrender = false;
     public static boolean syncedrender = false;
     public static boolean modvols = true;
-    public static String bootdisk = "null";
+    public static String bootdisk = null;
     public static boolean usereios = false;
     public static boolean nativeact = false;
     

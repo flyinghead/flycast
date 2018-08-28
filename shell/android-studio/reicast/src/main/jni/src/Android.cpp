@@ -307,20 +307,20 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_config(JNIEnv *env,jo
     env->ReleaseStringUTFChars(dirName,D);
 }
 
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_bootdisk(JNIEnv *env,jobject obj, jstring disk)
-{
-    const char* P = disk? env->GetStringUTFChars(disk,0):0;
-    if(!P) settings.imgread.DefaultImage[0] = '\0';
-    else
-    {
-        printf("Got URI: '%s'\n",P);
-        strncpy(settings.imgread.DefaultImage,(strlen(P)>=7)&&!memcmp(P,"file://",7)? P+7:P,sizeof(settings.imgread.DefaultImage));
-        settings.imgread.DefaultImage[sizeof(settings.imgread.DefaultImage)-1] = '\0';
-        env->ReleaseStringUTFChars(disk,P);
-    }
-
-    if (strcmp(settings.imgread.DefaultImage, "null") != 0)
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_bootdisk(JNIEnv *env,jobject obj, jstring disk) {
+    if (disk != NULL) {
         settings.imgread.LoadDefaultImage = 1;
+        const char *P = disk ? env->GetStringUTFChars(disk, 0) : 0;
+        if (!P) settings.imgread.DefaultImage[0] = '\0';
+        else {
+            printf("Got URI: '%s'\n", P);
+            strncpy(settings.imgread.DefaultImage,
+                    (strlen(P) >= 7) && !memcmp(P, "file://", 7) ? P + 7 : P,
+                    sizeof(settings.imgread.DefaultImage));
+            settings.imgread.DefaultImage[sizeof(settings.imgread.DefaultImage) - 1] = '\0';
+            env->ReleaseStringUTFChars(disk, P);
+        }
+    }
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_init(JNIEnv *env,jobject obj,jstring fileName)
@@ -447,8 +447,14 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_destroy(JNIEnv *env,j
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_diskSwap(JNIEnv *env,jobject obj)
 {
-    settings.imgread.LoadDefaultImage = 0;
+    if (!gamedisk) settings.imgread.DefaultImage[0] = '\0';
+    else {
+        printf("Got URI: '%s'\n", gamedisk);
+        strncpy(settings.imgread.DefaultImage, gamedisk, sizeof(settings.imgread.DefaultImage));
+        settings.imgread.DefaultImage[sizeof(settings.imgread.DefaultImage) - 1] = '\0';
+    }
 
+    settings.imgread.LoadDefaultImage = 1;
     DiscSwap();
 }
 
