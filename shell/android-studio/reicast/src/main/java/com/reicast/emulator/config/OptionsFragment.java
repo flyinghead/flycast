@@ -461,23 +461,24 @@ public class OptionsFragment extends Fragment {
 								|| (event.getKeyCode() == KeyEvent.KEYCODE_ENTER
 								&& event.getAction() == KeyEvent.ACTION_DOWN)) {
 							if (event == null || !event.isShiftPressed()) {
-								if (v.getText() != "null") {
-									String disk = v.getText().toString();
-									if (disk.substring(disk.lastIndexOf("/") + 1).length() == 0) {
+								String disk = null;
+								if (v.getText() != null) {
+									disk = v.getText().toString();
+									if (disk.equals("") || disk.substring(
+											disk.lastIndexOf("/") + 1).length() == 0) {
 										disk = null;
-										mPrefs.edit().remove(Emulator.pref_bootdisk).apply();
 									} else {
 										if (!disk.contains("/"))
 											disk = game_directory + "/" + disk;
-										if (new File(disk).exists()) {
-											mPrefs.edit().putString(Emulator.pref_bootdisk, disk).apply();
-										} else {
+										if (!new File(disk).exists())
 											disk = null;
-											mPrefs.edit().remove(Emulator.pref_bootdisk).apply();
-										}
 									}
 									v.setText(disk);
 								}
+								if (disk == null)
+									mPrefs.edit().remove(Emulator.pref_bootdisk).apply();
+								else
+									mPrefs.edit().putString(Emulator.pref_bootdisk, disk).apply();
 								hideSoftKeyBoard();
 								return true;
 							}

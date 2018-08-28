@@ -496,7 +496,7 @@ public class OnScreenMenu {
 
 			OnClickListener clickDisk = new OnClickListener() {
 				public void onClick(View v) {
-					if (Emulator.bootdisk == null)
+					if (Emulator.bootdisk != null)
 						JNIdc.diskSwap(null);
 					dismiss();
 				}

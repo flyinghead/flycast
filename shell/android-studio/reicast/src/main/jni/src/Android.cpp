@@ -188,6 +188,7 @@ extern int screen_width,screen_height;
 
 static u64 tvs_base;
 static char gamedisk[256];
+static char bootdisk[256];
 
 // Additonal controllers 2, 3 and 4 connected ?
 static bool add_controllers[3] = { false, false, false };
@@ -309,16 +310,14 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_config(JNIEnv *env,jo
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_bootdisk(JNIEnv *env,jobject obj, jstring disk) {
     if (disk != NULL) {
-        settings.imgread.LoadDefaultImage = 1;
-        const char *P = disk ? env->GetStringUTFChars(disk, 0) : 0;
+        settings.imgread.LoadDefaultImage = true;
+        const char *P = env->GetStringUTFChars(disk, 0);
         if (!P) settings.imgread.DefaultImage[0] = '\0';
         else {
-            printf("Got URI: '%s'\n", P);
-            strncpy(settings.imgread.DefaultImage,
-                    (strlen(P) >= 7) && !memcmp(P, "file://", 7) ? P + 7 : P,
-                    sizeof(settings.imgread.DefaultImage));
+            printf("Boot Disk URI: '%s'\n", P);
+            strncpy(settings.imgread.DefaultImage,(strlen(P)>=7)&&!memcmp(
+                    P,"file://",7)? P+7:P,sizeof(settings.imgread.DefaultImage));
             settings.imgread.DefaultImage[sizeof(settings.imgread.DefaultImage) - 1] = '\0';
-            env->ReleaseStringUTFChars(disk, P);
         }
     }
 }
@@ -326,17 +325,15 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_bootdisk(JNIEnv *env,
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_init(JNIEnv *env,jobject obj,jstring fileName)
 {
     // Get filename string from Java
-    const char* P = fileName? env->GetStringUTFChars(fileName,0):0;
-    if(!P) gamedisk[0] = '\0';
+    const char* P = fileName ? env->GetStringUTFChars(fileName,0) : 0;
+    if (!P) gamedisk[0] = '\0';
     else
     {
-        printf("Got URI: '%s'\n",P);
+        printf("Game Disk URI: '%s'\n",P);
         strncpy(gamedisk,(strlen(P)>=7)&&!memcmp(P,"file://",7)? P+7:P,sizeof(gamedisk));
         gamedisk[sizeof(gamedisk)-1] = '\0';
         env->ReleaseStringUTFChars(fileName,P);
     }
-
-    printf("Opening file: '%s'\n",gamedisk);
 
     // Initialize platform-specific stuff
     common_linux_setup();
@@ -354,6 +351,27 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_init(JNIEnv *env,jobj
   */
 
     ThreadHandler(gamedisk);
+}
+
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_diskSwap(JNIEnv *env,jobject obj,jstring disk)
+{
+    if (settings.imgread.LoadDefaultImage) {
+        strncpy(settings.imgread.DefaultImage, gamedisk, sizeof(settings.imgread.DefaultImage));
+        settings.imgread.DefaultImage[sizeof(settings.imgread.DefaultImage) - 1] = '\0';
+        DiscSwap();
+    } else if (disk != NULL) {
+        settings.imgread.LoadDefaultImage = true;
+        const char *P = env->GetStringUTFChars(disk, 0);
+        if (!P) settings.imgread.DefaultImage[0] = '\0';
+        else {
+            printf("Swap Disk URI: '%s'\n", P);
+            strncpy(settings.imgread.DefaultImage,(strlen(P)>=7)&&!memcmp(
+                    P,"file://",7)? P+7:P,sizeof(settings.imgread.DefaultImage));
+            settings.imgread.DefaultImage[sizeof(settings.imgread.DefaultImage) - 1] = '\0';
+            env->ReleaseStringUTFChars(disk, P);
+        }
+        DiscSwap();
+    }
 }
 
 #define SAMPLE_COUNT 512
@@ -443,32 +461,6 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_pause(JNIEnv *env,job
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_destroy(JNIEnv *env,jobject obj)
 {
     dc_term();
-}
-
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_diskSwap(JNIEnv *env,jobject obj,jstring disk)
-{
-    if (settings.imgread.LoadDefaultImage == 1) {
-        if (!gamedisk) settings.imgread.DefaultImage[0] = '\0';
-        else {
-            printf("Got URI: '%s'\n", gamedisk);
-            strncpy(settings.imgread.DefaultImage, gamedisk, sizeof(settings.imgread.DefaultImage));
-            settings.imgread.DefaultImage[sizeof(settings.imgread.DefaultImage) - 1] = '\0';
-        }
-        DiscSwap();
-    } else if (disk != NULL) {
-        settings.imgread.LoadDefaultImage = 1;
-        const char *P = disk ? env->GetStringUTFChars(disk, 0) : 0;
-        if (!P) settings.imgread.DefaultImage[0] = '\0';
-        else {
-            printf("Got URI: '%s'\n", P);
-            strncpy(settings.imgread.DefaultImage,
-                    (strlen(P) >= 7) && !memcmp(P, "file://", 7) ? P + 7 : P,
-                    sizeof(settings.imgread.DefaultImage));
-            settings.imgread.DefaultImage[sizeof(settings.imgread.DefaultImage) - 1] = '\0';
-            env->ReleaseStringUTFChars(disk, P);
-        }
-        DiscSwap();
-    }
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_vmuSwap(JNIEnv *env,jobject obj)

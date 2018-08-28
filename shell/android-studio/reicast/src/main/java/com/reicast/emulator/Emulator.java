@@ -111,7 +111,7 @@ public class Emulator extends Application {
         JNIdc.pvrrender(mPrefs.getBoolean(pref_pvrrender, pvrrender) ? 1 : 0);
         JNIdc.syncedrender(mPrefs.getBoolean(pref_syncedrender, syncedrender) ? 1 : 0);
         JNIdc.modvols(mPrefs.getBoolean(pref_modvols, modvols) ? 1 : 0);
-        JNIdc.bootdisk(mPrefs.getString(pref_bootdisk, null));
+        JNIdc.bootdisk(mPrefs.getString(pref_bootdisk, bootdisk));
     }
 
     static {

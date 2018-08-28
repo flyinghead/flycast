@@ -203,18 +203,19 @@ public class PGConfigFragment extends Fragment {
 						|| (event.getKeyCode() == KeyEvent.KEYCODE_ENTER
 						&& event.getAction() == KeyEvent.ACTION_DOWN)) {
 					if (event == null || !event.isShiftPressed()) {
-						if (v.getText() != "null") {
-							String disk = v.getText().toString();
-							if (disk.substring(disk.lastIndexOf("/") + 1).length() == 0) {
+						String disk;
+						if (v.getText() != null) {
+							disk = v.getText().toString();
+							if (disk.equals("") || disk.substring(
+									disk.lastIndexOf("/") + 1).length() == 0) {
 								disk = null;
 							} else {
 								if (!disk.contains("/"))
 									disk = mPrefs.getString(Config.pref_games,
 											Environment.getExternalStorageDirectory()
 													.getAbsolutePath()) + "/" + disk;
-								if (!new File(disk).exists()) {
+								if (!new File(disk).exists())
 									disk = null;
-								}
 							}
 							v.setText(disk);
 						}
