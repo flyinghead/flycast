@@ -17,6 +17,7 @@
 #include "hw/maple/maple_if.h"
 #include "oslib/audiobackend_android.h"
 #include "reios/reios.h"
+#include "imgread/common.h"
 
 extern "C"
 {
@@ -40,7 +41,7 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_vjoy(JNIEnv * env, jo
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_initControllers(JNIEnv *env, jobject obj, jbooleanArray controllers, jobjectArray peripherals)  __attribute__((visibility("default")));
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setupMic(JNIEnv *env,jobject obj,jobject sip)  __attribute__((visibility("default")));
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_diskSwap(JNIEnv *env,jobject obj, jstring newdisk)  __attribute__((visibility("default")));
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_diskSwap(JNIEnv *env,jobject obj,jstring disk)  __attribute__((visibility("default")));
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_vmuSwap(JNIEnv *env,jobject obj)  __attribute__((visibility("default")));
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setupVmu(JNIEnv *env,jobject obj,jobject sip)  __attribute__((visibility("default")));
 
@@ -158,11 +159,6 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_modvols(JNIEnv *env,j
     settings.rend.ModifierVolumes = volumes;
 }
 
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_bootdisk(JNIEnv *env,jobject obj, jstring disk)
-{
-
-}
-
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_usereios(JNIEnv *env,jobject obj, jint reios)
 {
     settings.bios.UseReios = reios;
@@ -191,7 +187,8 @@ bool gles_init();
 extern int screen_width,screen_height;
 
 static u64 tvs_base;
-static char CurFileName[256];
+static char gamedisk[256];
+static char bootdisk[256];
 
 // Additonal controllers 2, 3 and 4 connected ?
 static bool add_controllers[3] = { false, false, false };
@@ -310,20 +307,33 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_config(JNIEnv *env,jo
     printf("Data dir is:   %s\n", get_writable_data_path("/").c_str());
     env->ReleaseStringUTFChars(dirName,D);
 }
+
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_bootdisk(JNIEnv *env,jobject obj, jstring disk) {
+    if (disk != NULL) {
+        settings.imgread.LoadDefaultImage = true;
+        const char *P = env->GetStringUTFChars(disk, 0);
+        if (!P) settings.imgread.DefaultImage[0] = '\0';
+        else {
+            printf("Boot Disk URI: '%s'\n", P);
+            strncpy(settings.imgread.DefaultImage,(strlen(P)>=7)&&!memcmp(
+                    P,"file://",7)? P+7:P,sizeof(settings.imgread.DefaultImage));
+            settings.imgread.DefaultImage[sizeof(settings.imgread.DefaultImage) - 1] = '\0';
+        }
+    }
+}
+
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_init(JNIEnv *env,jobject obj,jstring fileName)
 {
     // Get filename string from Java
-    const char* P = fileName? env->GetStringUTFChars(fileName,0):0;
-    if(!P) CurFileName[0] = '\0';
+    const char* P = fileName ? env->GetStringUTFChars(fileName,0) : 0;
+    if (!P) gamedisk[0] = '\0';
     else
     {
-        printf("Got URI: '%s'\n",P);
-        strncpy(CurFileName,(strlen(P)>=7)&&!memcmp(P,"file://",7)? P+7:P,sizeof(CurFileName));
-        CurFileName[sizeof(CurFileName)-1] = '\0';
+        printf("Game Disk URI: '%s'\n",P);
+        strncpy(gamedisk,(strlen(P)>=7)&&!memcmp(P,"file://",7)? P+7:P,sizeof(gamedisk));
+        gamedisk[sizeof(gamedisk)-1] = '\0';
         env->ReleaseStringUTFChars(fileName,P);
     }
-
-    printf("Opening file: '%s'\n",CurFileName);
 
     // Initialize platform-specific stuff
     common_linux_setup();
@@ -340,7 +350,28 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_init(JNIEnv *env,jobj
   pthread_attr_destroy(&PTAttr);
   */
 
-    ThreadHandler(CurFileName);
+    ThreadHandler(gamedisk);
+}
+
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_diskSwap(JNIEnv *env,jobject obj,jstring disk)
+{
+    if (settings.imgread.LoadDefaultImage) {
+        strncpy(settings.imgread.DefaultImage, gamedisk, sizeof(settings.imgread.DefaultImage));
+        settings.imgread.DefaultImage[sizeof(settings.imgread.DefaultImage) - 1] = '\0';
+        DiscSwap();
+    } else if (disk != NULL) {
+        settings.imgread.LoadDefaultImage = true;
+        const char *P = env->GetStringUTFChars(disk, 0);
+        if (!P) settings.imgread.DefaultImage[0] = '\0';
+        else {
+            printf("Swap Disk URI: '%s'\n", P);
+            strncpy(settings.imgread.DefaultImage,(strlen(P)>=7)&&!memcmp(
+                    P,"file://",7)? P+7:P,sizeof(settings.imgread.DefaultImage));
+            settings.imgread.DefaultImage[sizeof(settings.imgread.DefaultImage) - 1] = '\0';
+            env->ReleaseStringUTFChars(disk, P);
+        }
+        DiscSwap();
+    }
 }
 
 #define SAMPLE_COUNT 512
@@ -430,11 +461,6 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_pause(JNIEnv *env,job
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_destroy(JNIEnv *env,jobject obj)
 {
     dc_term();
-}
-
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_diskSwap(JNIEnv *env,jobject obj, jstring newdisk)
-{
-    // Needs actual code to swap a disk
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_vmuSwap(JNIEnv *env,jobject obj)

@@ -15,12 +15,12 @@ import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.Snackbar;
 import android.support.graphics.drawable.VectorDrawableCompat;
 import android.support.v4.app.Fragment;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemSelectedListener;
@@ -145,26 +145,29 @@ public class OptionsFragment extends Fragment {
 				mCallback.launchBIOSdetection();
 			}
 		});
-
-		editBrowse.addTextChangedListener(new TextWatcher() {
-			public void afterTextChanged(Editable s) {
-				if (editBrowse.getText() != null) {
-					home_directory = editBrowse.getText().toString();
-					if (home_directory.endsWith("/data")) {
-						home_directory.replace("/data", "");
-						showToastMessage(getActivity().getString(R.string.data_folder),
-								Snackbar.LENGTH_SHORT);
+		editBrowse.setOnEditorActionListener(new EditText.OnEditorActionListener() {
+			@Override
+			public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+				if (actionId == EditorInfo.IME_ACTION_DONE
+						|| (event.getKeyCode() == KeyEvent.KEYCODE_ENTER
+						&& event.getAction() == KeyEvent.ACTION_DOWN)) {
+					if (event == null || !event.isShiftPressed()) {
+						if (v.getText() != null) {
+							home_directory = v.getText().toString();
+							if (home_directory.endsWith("/data")) {
+								home_directory.replace("/data", "");
+								showToastMessage(getActivity().getString(R.string.data_folder),
+										Snackbar.LENGTH_SHORT);
+							}
+							mPrefs.edit().putString(Config.pref_home, home_directory).apply();
+							JNIdc.config(home_directory);
+							new LocateThemes(OptionsFragment.this).execute(home_directory + "/themes");
+						}
+						hideSoftKeyBoard();
+						return true;
 					}
-					mPrefs.edit().putString(Config.pref_home, home_directory).apply();
-					JNIdc.config(home_directory);
-					new LocateThemes(OptionsFragment.this).execute(home_directory + "/themes");
 				}
-			}
-
-			public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-			}
-
-			public void onTextChanged(CharSequence s, int start, int before, int count) {
+				return false;
 			}
 		});
 
@@ -214,19 +217,22 @@ public class OptionsFragment extends Fragment {
 				mCallback.onMainBrowseSelected(game_directory, true, null);
 			}
 		});
-
-		editGames.addTextChangedListener(new TextWatcher() {
-			public void afterTextChanged(Editable s) {
-				if (editBrowse.getText() != null) {
-					game_directory = editGames.getText().toString();
-					mPrefs.edit().putString(Config.pref_games, game_directory).apply();
+		editGames.setOnEditorActionListener(new EditText.OnEditorActionListener() {
+			@Override
+			public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+				if (actionId == EditorInfo.IME_ACTION_DONE
+						|| (event.getKeyCode() == KeyEvent.KEYCODE_ENTER
+						&& event.getAction() == KeyEvent.ACTION_DOWN)) {
+					if (event == null || !event.isShiftPressed()) {
+						if (v.getText() != null) {
+							game_directory = v.getText().toString();
+							mPrefs.edit().putString(Config.pref_games, game_directory).apply();
+						}
+						hideSoftKeyBoard();
+						return true;
+					}
 				}
-			}
-
-			public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-			}
-
-			public void onTextChanged(CharSequence s, int start, int before, int count) {
+				return false;
 			}
 		});
 
@@ -307,8 +313,6 @@ public class OptionsFragment extends Fragment {
 
 		});
 
-//		String[] regions = ArrayUtils.remove(parentActivity.getResources()
-//				.getStringArray(R.array.region), 4);
 		String[] regions = getResources().getStringArray(R.array.region);
 		Spinner region_spnr = (Spinner) getView().findViewById(R.id.region_spinner);
 		ArrayAdapter<String> regionAdapter = new ArrayAdapter<String>(
@@ -408,20 +412,23 @@ public class OptionsFragment extends Fragment {
 				mPrefs.edit().putInt(Emulator.pref_frameskip, progress).apply();
 			}
 		});
-		mainFrames.addTextChangedListener(new TextWatcher() {
-			public void afterTextChanged(Editable s) {
-				Editable frameText = mainFrames.getText();
-				if (frameText != null) {
-					int frames = Integer.parseInt(frameText.toString());
-					frameSeek.setProgress(frames);
-					mPrefs.edit().putInt(Emulator.pref_frameskip, frames).apply();
+		mainFrames.setOnEditorActionListener(new EditText.OnEditorActionListener() {
+			@Override
+			public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+				if (actionId == EditorInfo.IME_ACTION_DONE
+						|| (event.getKeyCode() == KeyEvent.KEYCODE_ENTER
+						&& event.getAction() == KeyEvent.ACTION_DOWN)) {
+					if (event == null || !event.isShiftPressed()) {
+						if (v.getText() != null) {
+							int frames = Integer.parseInt(v.getText().toString());
+							frameSeek.setProgress(frames);
+							mPrefs.edit().putInt(Emulator.pref_frameskip, frames).apply();
+						}
+						hideSoftKeyBoard();
+						return true;
+					}
 				}
-			}
-
-			public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-			}
-
-			public void onTextChanged(CharSequence s, int start, int before, int count) {
+				return false;
 			}
 		});
 
@@ -444,36 +451,41 @@ public class OptionsFragment extends Fragment {
 		synced_render.setChecked(mPrefs.getBoolean(Emulator.pref_syncedrender, Emulator.syncedrender));
 		synced_render.setOnCheckedChangeListener(synchronous);
 
-//		final EditText bootdiskEdit = (EditText) getView().findViewById(R.id.boot_disk);
-//		String disk = Emulator.bootdisk;
-//		if (disk != null && disk.contains("/")) {
-//			bootdiskEdit.setText(disk.substring(disk.lastIndexOf("/"),
-//					disk.length()));
-//		} else {
-//			bootdiskEdit.setText(disk);
-//		}
-//
-//		bootdiskEdit.addTextChangedListener(new TextWatcher() {
-//			public void afterTextChanged(Editable s) {
-//				if (bootdiskEdit.getText() != null) {
-//					String disk = bootdiskEdit.getText().toString();
-//					if (disk.contains("/")) {
-//						bootdiskEdit.setText(disk.substring(disk.lastIndexOf("/"),
-//								disk.length()));
-//					} else {
-//						bootdiskEdit.setText(disk);
-//					}
-//					mPrefs.edit().putString(Emulator.pref_bootdisk, disk).apply();
-//					Emulator.bootdisk = disk;
-//				}
-//			}
-//
-//			public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-//			}
-//
-//			public void onTextChanged(CharSequence s, int start, int before, int count) {
-//			}
-//		});
+		final EditText bootdiskEdit = (EditText) getView().findViewById(R.id.boot_disk);
+		bootdiskEdit.setText(mPrefs.getString(Emulator.pref_bootdisk, Emulator.bootdisk));
+
+		bootdiskEdit.setOnEditorActionListener(new EditText.OnEditorActionListener() {
+					@Override
+					public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+						if (actionId == EditorInfo.IME_ACTION_DONE
+								|| (event.getKeyCode() == KeyEvent.KEYCODE_ENTER
+								&& event.getAction() == KeyEvent.ACTION_DOWN)) {
+							if (event == null || !event.isShiftPressed()) {
+								String disk = null;
+								if (v.getText() != null) {
+									disk = v.getText().toString();
+									if (disk.equals("") || disk.substring(
+											disk.lastIndexOf("/") + 1).length() == 0) {
+										disk = null;
+									} else {
+										if (!disk.contains("/"))
+											disk = game_directory + "/" + disk;
+										if (!new File(disk).exists())
+											disk = null;
+									}
+									v.setText(disk);
+								}
+								if (disk == null)
+									mPrefs.edit().remove(Emulator.pref_bootdisk).apply();
+								else
+									mPrefs.edit().putString(Emulator.pref_bootdisk, disk).apply();
+								hideSoftKeyBoard();
+								return true;
+							}
+						}
+						return false;
+					}
+				});
 
 		final CompoundButton fps_opt = (CompoundButton) getView().findViewById(R.id.fps_option);
 		OnCheckedChangeListener fps_options = new OnCheckedChangeListener() {
@@ -687,7 +699,7 @@ public class OptionsFragment extends Fragment {
 		mPrefs.edit().remove(Emulator.pref_frameskip).apply();
 		mPrefs.edit().remove(Emulator.pref_pvrrender).apply();
 		mPrefs.edit().remove(Emulator.pref_syncedrender).apply();
-//		mPrefs.edit().remove(Emulator.pref_bootdisk).apply();
+		mPrefs.edit().remove(Emulator.pref_bootdisk).apply();
 		mPrefs.edit().remove(Config.pref_showfps).apply();
 		mPrefs.edit().remove(Config.pref_rendertype).apply();
 		mPrefs.edit().remove(Emulator.pref_nosound).apply();
