@@ -34,27 +34,25 @@ import android.view.WindowManager;
 import android.widget.TextView;
 
 import com.reicast.emulator.config.Config;
+import com.reicast.emulator.config.EditVJoyActivity;
 import com.reicast.emulator.config.InputFragment;
 import com.reicast.emulator.config.OptionsFragment;
 import com.reicast.emulator.config.PGConfigFragment;
 import com.reicast.emulator.debug.GenerateLogs;
 import com.reicast.emulator.emu.JNIdc;
-import com.reicast.emulator.periph.Gamepad;
 
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements
-		FileBrowser.OnItemSelectedListener, OptionsFragment.OnClickListener,
-		NavigationView.OnNavigationItemSelectedListener {
+		NavigationView.OnNavigationItemSelectedListener, FileBrowser.OnItemSelectedListener,
+		OptionsFragment.OnClickListener, InputFragment.OnClickListener  {
 	private static final int PERMISSION_REQUEST = 1001;
 
 	private SharedPreferences mPrefs;
 	private boolean hasAndroidMarket = false;
 
 	private UncaughtExceptionHandler mUEHandler;
-
-	Gamepad pad = new Gamepad();
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -221,6 +219,16 @@ public class MainActivity extends AppCompatActivity implements
 				});
 		builder.create();
 		builder.show();
+	}
+
+	public void onEditorSelected(Uri uri) {
+		String home_directory = mPrefs.getString(Config.pref_home,
+				Environment.getExternalStorageDirectory().getAbsolutePath());
+
+		JNIdc.config(home_directory);
+
+		startActivity(new Intent("com.reicast.EMULATOR", uri,
+				getApplicationContext(), EditVJoyActivity.class));
 	}
 
 	public void onGameSelected(Uri uri) {

@@ -69,11 +69,6 @@ public class InputModFragment extends Fragment {
 	private int playerNum = -1;
 	private mapKeyCode mKey;
 
-	// Container Activity must implement this interface
-	public interface OnClickListener {
-		void onMainBrowseSelected(String path_entry, boolean games);
-	}
-
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 							 Bundle savedInstanceState) {

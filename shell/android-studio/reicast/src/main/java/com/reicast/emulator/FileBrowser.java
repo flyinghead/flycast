@@ -311,8 +311,7 @@ public class FileBrowser extends Fragment {
 			final View childview = getActivity().getLayoutInflater().inflate(
 					R.layout.bios_list_item, null, false);
 
-			((TextView) childview.findViewById(R.id.item_name))
-					.setText(R.string.boot_bios);
+			((TextView) childview.findViewById(R.id.item_name)).setText(R.string.boot_bios);
 
 			childview.setTag(null);
 
@@ -323,8 +322,7 @@ public class FileBrowser extends Fragment {
 						public void onClick(View view) {
 							File f = (File) view.getTag();
 							vib.vibrate(50);
-							mCallback.onGameSelected(f != null ? Uri
-									.fromFile(f) : Uri.EMPTY);
+							mCallback.onGameSelected(f != null ? Uri.fromFile(f) : Uri.EMPTY);
 							vib.vibrate(250);
 						}
 					});
@@ -372,16 +370,16 @@ public class FileBrowser extends Fragment {
 					public void onClick(View view) {
 						if (isGame) {
 							vib.vibrate(50);
-							mCallback.onGameSelected(game != null ? Uri
-									.fromFile(game) : Uri.EMPTY);
+							mCallback.onGameSelected(game != null ? Uri.fromFile(game) : Uri.EMPTY);
 							vib.vibrate(250);
 						} else {
 							vib.vibrate(50);
 							home_directory = game.getAbsolutePath().substring(0,
-									game.getAbsolutePath().lastIndexOf(File.separator)).replace("/data", "");
+									game.getAbsolutePath().lastIndexOf(File.separator))
+									.replace("/data", "");
 							if (!DataDirectoryBIOS()) {
-								showToastMessage(getActivity().getString(R.string.config_data, home_directory),
-                                        Snackbar.LENGTH_LONG);
+								showToastMessage(getActivity().getString(R.string.config_data,
+										home_directory), Snackbar.LENGTH_LONG);
 							}
 							mPrefs.edit().putString(Config.pref_home, home_directory).apply();
                             mCallback.onFolderSelected(Uri.fromFile(new File(home_directory)));
@@ -507,13 +505,13 @@ public class FileBrowser extends Fragment {
 											browser.get().mCallback.onFolderSelected(
 													Uri.fromFile(new File(browser.get().game_directory)));
 										} else {
-											browser.get().home_directory = heading.replace("/data", "");
+											browser.get().home_directory = heading
+													.replace("/data", "");
 											browser.get().mPrefs.edit().putString(
 													Config.pref_home, browser.get().home_directory).apply();
 											if (!browser.get().DataDirectoryBIOS()) {
-												browser.get().showToastMessage(
-														browser.get().getActivity().getString(
-																R.string.config_data,
+												browser.get().showToastMessage(browser.get()
+														.getActivity().getString(R.string.config_data,
 																browser.get().home_directory),
 														Snackbar.LENGTH_LONG);
 											}
