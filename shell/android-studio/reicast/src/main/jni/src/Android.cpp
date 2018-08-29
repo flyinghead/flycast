@@ -188,7 +188,6 @@ extern int screen_width,screen_height;
 
 static u64 tvs_base;
 static char gamedisk[256];
-static char bootdisk[256];
 
 // Additonal controllers 2, 3 and 4 connected ?
 static bool add_controllers[3] = { false, false, false };
