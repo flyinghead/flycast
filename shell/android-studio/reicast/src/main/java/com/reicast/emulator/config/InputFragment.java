@@ -1,13 +1,14 @@
 package com.reicast.emulator.config;
 
 import android.Manifest;
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
@@ -42,19 +43,48 @@ import java.io.File;
 public class InputFragment extends Fragment {
 	private static final int PERMISSION_REQUEST = 1001;
 
+    private OnClickListener mCallback;
+
 	private int listenForButton = 0;
 	private AlertDialog alertDialogSelectController;
 	private SharedPreferences mPrefs;
 	private CompoundButton switchTouchVibrationEnabled;
 	private CompoundButton micPluggedIntoController;
 
-	private Gamepad pad = new Gamepad();
 	Vibrator vib;
 
 	// Container Activity must implement this interface
 	public interface OnClickListener {
-		void onMainBrowseSelected(String path_entry, boolean games);
+		void onEditorSelected(Uri uri);
 	}
+
+    @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+
+        // This makes sure that the container activity has implemented
+        // the callback interface. If not, it throws an exception
+        try {
+            mCallback = (OnClickListener) activity;
+        } catch (ClassCastException e) {
+            throw new ClassCastException(activity.toString()
+                    + " must implement OnClickListener");
+        }
+    }
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+
+        // This makes sure that the container activity has implemented
+        // the callback interface. If not, it throws an exception
+        try {
+            mCallback = (OnClickListener) context;
+        } catch (ClassCastException e) {
+            throw new ClassCastException(context.getClass().toString()
+                    + " must implement OnClickListener");
+        }
+    }
 
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -87,8 +117,7 @@ public class InputFragment extends Fragment {
 				R.id.buttonLaunchEditor);
 		buttonLaunchEditor.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
-				Intent inte = new Intent(getActivity(), EditVJoyActivity.class);
-				startActivity(inte);
+                mCallback.onEditorSelected(Uri.EMPTY);
 			}
 		});
 

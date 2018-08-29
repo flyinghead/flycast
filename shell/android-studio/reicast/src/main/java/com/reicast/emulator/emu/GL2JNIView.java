@@ -106,8 +106,8 @@ public class GL2JNIView extends GLSurfaceView
     }
 
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
-    public GL2JNIView(Context context, String newFileName,
-                      boolean translucent, int depth, int stencil, boolean editVjoyMode) {
+    public GL2JNIView(Context context, String newFileName, boolean translucent,
+                      int depth, int stencil, boolean editVjoyMode) {
         super(context);
         this.context = context;
         this.editVjoyMode = editVjoyMode;
@@ -129,7 +129,7 @@ public class GL2JNIView extends GLSurfaceView
 
         setPreserveEGLContextOnPause(true);
 
-        vib=(Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
+        vib = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
 
@@ -174,13 +174,11 @@ public class GL2JNIView extends GLSurfaceView
         // our surface exactly. This is going to be done in our
         // custom config chooser. See ConfigChooser class definition
         // below.
-        setEGLConfigChooser(translucent?
-                new GLCFactory.ConfigChooser(8, 8, 8, 8, depth, stencil)
-                : new GLCFactory.ConfigChooser(5, 6, 5, 0, depth, stencil)
-        );
+        setEGLConfigChooser(new GLCFactory.ConfigChooser(
+                8, 8, 8, translucent ? 8 : 0, depth, stencil));
 
         // Set the renderer responsible for frame rendering
-        setRenderer(rend=new Renderer(this));
+        setRenderer(rend = new Renderer(this));
 
         pushInput(); //initializes controller codes
 
