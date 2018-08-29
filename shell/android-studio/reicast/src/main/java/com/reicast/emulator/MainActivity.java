@@ -166,7 +166,7 @@ public class MainActivity extends AppCompatActivity implements
 			UiModeManager uiModeManager = (UiModeManager) getSystemService(UI_MODE_SERVICE);
 			if (uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION) {
 				View header = navigationView.getHeaderView(0);
-				((TextView) header.findViewById(R.id.project_link)).setLinksClickable(true);
+				((TextView) header.findViewById(R.id.project_link)).setVisibility(View.GONE);
 			}
 		} catch (Exception e) {
 			// They require a check, so they can fix their API
