@@ -75,7 +75,5 @@ struct EvdevController
 
 extern void input_evdev_init();
 extern void input_evdev_close();
-extern int input_evdev_init(EvdevController* controller, const char* device, const char* mapping_fname);
 extern bool input_evdev_handle(u32 port);
 extern void input_evdev_rumble(u32 port, u16 pow_strong, u16 pow_weak);
-extern bool input_evdev_button_duplicate_button(EvdevControllerMapping* mapping1, EvdevControllerMapping* mapping2);
