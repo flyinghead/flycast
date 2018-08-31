@@ -3,6 +3,9 @@
 #include <linux/input.h>
 #include "linux-dist/evdev.h"
 #include "linux-dist/main.h"
+#include "hw/maple/maple_devs.h"
+#include "hw/maple/maple_cfg.h"
+#include "cfg/cfg.h"
 #include "cfg/ini.h"
 #include <vector>
 #include <map>
@@ -15,6 +18,14 @@
 	typedef const char* (*libevdev_func2_t)(int, int);
 	libevdev_func1_t libevdev_event_code_from_name;
 	libevdev_func2_t libevdev_event_code_get_name;
+
+	/* evdev input */
+	static EvdevController evdev_controllers[4] = {
+		{ -1, NULL },
+		{ -1, NULL },
+		{ -1, NULL },
+		{ -1, NULL }
+	};
 
 	void dc_stop(void);
 
@@ -105,6 +116,102 @@
 		this->data_trigger_left.init(this->fd, this->mapping->Axis_Trigger_Left, this->mapping->Axis_Trigger_Left_Inverted);
 		this->data_trigger_right.init(this->fd, this->mapping->Axis_Trigger_Right, this->mapping->Axis_Trigger_Right_Inverted);
 		this->rumble_effect_id = -1;
+	}
+
+	MapleDeviceType GetMapleDeviceType(int value, int port)
+	{
+		switch (value)
+		{
+			case 0:
+				#if defined(_DEBUG) || defined(DEBUG)
+				printf("Maple Device: None\n");
+				#endif
+				return MDT_None;
+			case 1:
+				#if defined(_DEBUG) || defined(DEBUG)
+				printf("Maple Device: VMU\n");
+				#endif
+				return MDT_SegaVMU;
+			case 2:
+				#if defined(_DEBUG) || defined(DEBUG)
+				printf("Maple Device: Microphone\n");
+				#endif
+				return MDT_Microphone;
+			case 3:
+				#if defined(_DEBUG) || defined(DEBUG)
+				printf("Maple Device: PuruPuruPack\n");
+				#endif
+				return MDT_PurupuruPack;
+			default:
+				MapleDeviceType result = MDT_None;
+				string result_type = "None";
+
+				// Controller in port 0 (player1) defaults to VMU for Maple device, all other to None
+				if (port == 0)
+				{
+					result_type = "VMU";
+					result = MDT_SegaVMU;
+				}
+
+				printf("Unsupported configuration (%d) for Maple Device, using %s\n", value, result_type.c_str());
+				return result;
+		}
+	}
+
+	void input_evdev_init()
+	{
+		int evdev_device_id[4] = { -1, -1, -1, -1 };
+		size_t size_needed;
+		int port, i;
+
+		char* evdev_device;
+
+		for (port = 0; port < 4; port++)
+		{
+			size_needed = snprintf(NULL, 0, EVDEV_DEVICE_CONFIG_KEY, port+1) + 1;
+			char* evdev_config_key = (char*)malloc(size_needed);
+			sprintf(evdev_config_key, EVDEV_DEVICE_CONFIG_KEY, port+1);
+			evdev_device_id[port] = cfgLoadInt("input", evdev_config_key, EVDEV_DEFAULT_DEVICE_ID(port+1));
+			free(evdev_config_key);
+
+			// Check if the same device is already in use on another port
+			if (evdev_device_id[port] < 0)
+			{
+				printf("evdev: Controller %d disabled by config.\n", port + 1);
+			}
+			else
+			{
+				size_needed = snprintf(NULL, 0, EVDEV_DEVICE_STRING, evdev_device_id[port]) + 1;
+				evdev_device = (char*)malloc(size_needed);
+				sprintf(evdev_device, EVDEV_DEVICE_STRING, evdev_device_id[port]);
+
+				size_needed = snprintf(NULL, 0, EVDEV_MAPPING_CONFIG_KEY, port+1) + 1;
+				evdev_config_key = (char*)malloc(size_needed);
+				sprintf(evdev_config_key, EVDEV_MAPPING_CONFIG_KEY, port+1);
+
+				string tmp;
+				const char* mapping = (cfgExists("input", evdev_config_key) == 2 ? (tmp = cfgLoadStr("input", evdev_config_key, "")).c_str() : NULL);
+				free(evdev_config_key);
+
+				input_evdev_init(&evdev_controllers[port], evdev_device, mapping);
+
+				free(evdev_device);
+
+				for (i = 0; i < port; i++)
+				{
+						if (evdev_device_id[port] == evdev_device_id[i])
+						{
+							// Multiple controllers with the same device, check for multiple button assignments
+							if (input_evdev_button_duplicate_button(evdev_controllers[i].mapping, evdev_controllers[port].mapping))
+							{
+								printf("WARNING: One or more button(s) of this device is also used in the configuration of input device %d (mapping: %s)\n", i, evdev_controllers[i].mapping->name.c_str());
+							}
+						}
+				}
+
+				mcfg_CreateController(port, GetMapleDeviceType(evdev_controllers[port].mapping->Maple_Device1, port), GetMapleDeviceType(evdev_controllers[port].mapping->Maple_Device2, port));
+			}
+		}
 	}
 
 	std::map<std::string, EvdevControllerMapping> loaded_mappings;
@@ -383,8 +490,21 @@
 		}
 	}
 
-	bool input_evdev_handle(EvdevController* controller, u32 port)
+	void input_evdev_close()
 	{
+		for (int port = 0; port < 4 ; port++)
+		{
+			if (evdev_controllers[port].fd >= 0)
+			{
+				close(evdev_controllers[port].fd);
+			}
+		}
+	}
+
+	bool input_evdev_handle(u32 port)
+	{
+		EvdevController* controller = &evdev_controllers[port];
+
 		#define SET_FLAG(field, mask, expr) field =((expr) ? (field & ~mask) : (field | mask))
 		if (controller->fd < 0 || controller->mapping == NULL)
 		{
@@ -533,8 +653,10 @@
 		return true;
 	}
 
-	void input_evdev_rumble(EvdevController* controller, u16 pow_strong, u16 pow_weak)
+	void input_evdev_rumble(u32 port, u16 pow_strong, u16 pow_weak)
 	{
+		EvdevController* controller = &evdev_controllers[port];
+
 		if (controller->fd < 0 || controller->rumble_effect_id == -2)
 		{
 			// Either the controller is not used or previous rumble effect failed
