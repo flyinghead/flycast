@@ -405,6 +405,9 @@ void rend_start_render()
 			ctx->rend.fb_X_CLIP=FB_X_CLIP;
 			ctx->rend.fb_Y_CLIP=FB_Y_CLIP;
 			
+			ctx->rend.fog_clamp_min = FOG_CLAMP_MIN;
+			ctx->rend.fog_clamp_max = FOG_CLAMP_MAX;
+			
 			max_idx=max(max_idx,ctx->rend.idx.used());
 			max_vtx=max(max_vtx,ctx->rend.verts.used());
 			max_op=max(max_op,ctx->rend.global_param_op.used());

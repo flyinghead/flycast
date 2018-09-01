@@ -62,11 +62,13 @@ struct PipelineShader
 	GLuint pp_ClipTest,cp_AlphaTestValue;
 	GLuint sp_FOG_COL_RAM,sp_FOG_COL_VERT,sp_FOG_DENSITY;
 	GLuint trilinear_alpha;
+	GLuint fog_clamp_min, fog_clamp_max;
 
 	//
 	u32 cp_AlphaTest; s32 pp_ClipTestMode;
 	u32 pp_Texture, pp_UseAlpha, pp_IgnoreTexA, pp_ShadInstr, pp_Offset, pp_FogCtrl;
 	bool pp_Gouraud, pp_BumpMap;
+	bool fog_clamping;
 };
 
 
@@ -92,7 +94,7 @@ struct gl_ctx
 
 	} modvol_shader;
 
-	PipelineShader pogram_table[6144];
+	PipelineShader pogram_table[12288];
 	struct
 	{
 		GLuint program,scale,depth_scale;
@@ -137,7 +139,7 @@ void DrawFramebuffer(float w, float h);
 
 int GetProgramID(u32 cp_AlphaTest, u32 pp_ClipTestMode,
 							u32 pp_Texture, u32 pp_UseAlpha, u32 pp_IgnoreTexA, u32 pp_ShadInstr, u32 pp_Offset,
-							u32 pp_FogCtrl, bool pp_Gouraud, bool pp_BumpMap);
+							u32 pp_FogCtrl, bool pp_Gouraud, bool pp_BumpMap, bool fog_clamping);
 
 bool CompilePipelineShader(PipelineShader* s);
 #define TEXTURE_LOAD_ERROR 0
@@ -154,6 +156,8 @@ extern struct ShaderUniforms_t
 	float ps_FOG_COL_RAM[3];
 	float ps_FOG_COL_VERT[3];
 	float trilinear_alpha;
+	float fog_clamp_min[4];
+	float fog_clamp_max[4];
 
 	void Set(PipelineShader* s)
 	{
@@ -177,6 +181,11 @@ extern struct ShaderUniforms_t
 
 		if (s->trilinear_alpha != -1)
 			glUniform1f(s->trilinear_alpha, trilinear_alpha);
+		
+		if (s->fog_clamp_min != -1)
+			glUniform4fv(s->fog_clamp_min, 1, fog_clamp_min);
+		if (s->fog_clamp_max != -1)
+			glUniform4fv(s->fog_clamp_max, 1, fog_clamp_max);
 	}
 
 } ShaderUniforms;

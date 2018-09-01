@@ -174,7 +174,8 @@ __forceinline
 												  gp->pcw.Offset,
 												  gp->tsp.FogCtrl,
 												  gp->pcw.Gouraud,
-												  gp->tcw.PixelFmt == PixelBumpMap)];
+												  gp->tcw.PixelFmt == PixelBumpMap,
+												  pvrrc.fog_clamp_min != 0 || pvrrc.fog_clamp_max != 0xffffffff)];
 	
 	if (CurrentShader->program == -1)
 		CompilePipelineShader(CurrentShader);
@@ -1097,7 +1098,7 @@ void DrawFramebuffer(float w, float h)
 
 	ShaderUniforms.trilinear_alpha = 1.0;
 
-	PipelineShader *shader = &gl.pogram_table[GetProgramID(0, 1, 1, 0, 1, 0, 0, 2, false, false)];
+	PipelineShader *shader = &gl.pogram_table[GetProgramID(0, 1, 1, 0, 1, 0, 0, 2, false, false, false)];
 	if (shader->program == -1)
 		CompilePipelineShader(shader);
 	else
