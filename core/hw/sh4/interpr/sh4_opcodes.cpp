@@ -2129,7 +2129,7 @@ sh4op(i0100_nnnn_0001_1011)
 sh4op(i0000_nnnn_0000_0010)//0002
 {
 	u32 n = GetN(op);
-	r[n] = sr.GetFull();
+	r[n] = sh4_sr_GetFull();
 }
 
  //sts FPSCR,<REG_N>
@@ -2155,7 +2155,7 @@ sh4op(i0100_nnnn_0000_0011)
 	//iNimp("stc.l SR,@-<REG_N>");
 	u32 n = GetN(op);
 	r[n] -= 4;
-	WriteMemU32(r[n], sr.GetFull());
+	WriteMemU32(r[n], sh4_sr_GetFull());
 }
 
 //lds.l @<REG_N>+,FPSCR
@@ -2178,7 +2178,7 @@ sh4op(i0100_nnnn_0000_0111)
 	u32 sr_t;
 	ReadMemU32(sr_t,r[n]);
 
-	sr.SetFull(sr_t);
+	sh4_sr_SetFull(sr_t);
 	r[n] += 4;
 	if (UpdateSR())
 	{
@@ -2198,7 +2198,7 @@ sh4op(i0100_nnnn_0110_1010)
 sh4op(i0100_nnnn_0000_1110)
 {
 	u32 n = GetN(op);
-	sr.SetFull(r[n]);
+	sh4_sr_SetFull(r[n]);
 	if (UpdateSR())
 	{
 		UpdateINTC();

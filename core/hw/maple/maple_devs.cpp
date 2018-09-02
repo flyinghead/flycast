@@ -286,6 +286,20 @@ struct maple_sega_vmu: maple_base
 		return (rv == Z_OK && dec_sz == sizeof(flash_data));
 	}
 
+	virtual bool maple_serialize(void **data, unsigned int *total_size)
+	{
+		REICAST_SA(flash_data,128*1024);
+		REICAST_SA(lcd_data,192);
+		REICAST_SA(lcd_data_decoded,48*32);
+		return true ;
+	}
+	virtual bool maple_unserialize(void **data, unsigned int *total_size)
+	{
+		REICAST_USA(flash_data,128*1024);
+		REICAST_USA(lcd_data,192);
+		REICAST_USA(lcd_data_decoded,48*32);
+		return true ;
+	}
 	virtual void OnSetup()
 	{
 		memset(flash_data, 0, sizeof(flash_data));
@@ -701,6 +715,16 @@ struct maple_microphone: maple_base
 {
 	u8 micdata[SIZE_OF_MIC_DATA];
 
+	virtual bool maple_serialize(void **data, unsigned int *total_size)
+	{
+		REICAST_SA(micdata,SIZE_OF_MIC_DATA);
+		return true ;
+	}
+	virtual bool maple_unserialize(void **data, unsigned int *total_size)
+	{
+		REICAST_USA(micdata,SIZE_OF_MIC_DATA);
+		return true ;
+	}
 	virtual void OnSetup()
 	{
 		memset(micdata,0,sizeof(micdata));
@@ -883,6 +907,20 @@ struct maple_sega_purupuru : maple_base
 	u16 AST, AST_ms;
 	u32 VIBSET;
 
+   virtual bool maple_serialize(void **data, unsigned int *total_size)
+   {
+      REICAST_S(AST);
+      REICAST_S(AST_ms);
+      REICAST_S(VIBSET);
+      return true ;
+   }
+   virtual bool maple_unserialize(void **data, unsigned int *total_size)
+   {
+      REICAST_US(AST);
+      REICAST_US(AST_ms);
+      REICAST_US(VIBSET);
+      return true ;
+   }
 	virtual u32 dma(u32 cmd)
 	{
 		switch (cmd)
@@ -972,12 +1010,6 @@ struct maple_sega_purupuru : maple_base
 char EEPROM[0x100];
 bool EEPROM_loaded = false;
 
-struct _NaomiState
-{
-	u8 Cmd;
-	u8 Mode;
-	u8 Node;
-};
 _NaomiState State;
 
 

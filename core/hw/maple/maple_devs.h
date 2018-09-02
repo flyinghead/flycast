@@ -31,6 +31,15 @@ struct maple_device
 	virtual void OnSetup(){};
 	virtual ~maple_device();
 	virtual u32 Dma(u32 Command,u32* buffer_in,u32 buffer_in_len,u32* buffer_out,u32& buffer_out_len)=0;
+	virtual bool maple_serialize(void **data, unsigned int *total_size){return true;};
+	virtual bool maple_unserialize(void **data, unsigned int *total_size){return true;};
+};
+
+struct _NaomiState
+{
+	u8 Cmd;
+	u8 Mode;
+	u8 Node;
 };
 
 maple_device* maple_Create(MapleDeviceType type);

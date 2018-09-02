@@ -49,4 +49,12 @@ void sh4_sched_tick(int cycles);
 
 extern u32 sh4_sched_intr;
 
+struct sched_list
+{
+	sh4_sched_callback* cb;
+	int tag;
+	int start;
+	int end;
+};
+
 #endif //SH4_SCHED_H

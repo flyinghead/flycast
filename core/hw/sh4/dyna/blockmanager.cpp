@@ -4,6 +4,7 @@
 */
 
 #include <algorithm>
+#include <set>
 #include "blockmanager.h"
 #include "ngen.h"
 

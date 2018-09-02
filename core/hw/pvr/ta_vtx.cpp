@@ -83,10 +83,10 @@ PolyParam* CurrentPP=&nullPP;
 List<PolyParam>* CurrentPPlist;
 
 //TA state vars	
-DECL_ALIGN(4) static u8 FaceBaseColor[4];
-DECL_ALIGN(4) static u8 FaceOffsColor[4];
-DECL_ALIGN(4) static u32 SFaceBaseColor;
-DECL_ALIGN(4) static u32 SFaceOffsColor;
+DECL_ALIGN(4) u8 FaceBaseColor[4];
+DECL_ALIGN(4) u8 FaceOffsColor[4];
+DECL_ALIGN(4) u32 SFaceBaseColor;
+DECL_ALIGN(4) u32 SFaceOffsColor;
 
 
 

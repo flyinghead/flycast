@@ -24,13 +24,6 @@
 u64 sh4_sched_ffb;
 u32 sh4_sched_intr;
 
-struct sched_list
-{
-	sh4_sched_callback* cb;
-	int tag;
-	int start;
-	int end;
-};
 
 vector<sched_list> list;
 

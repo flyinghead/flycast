@@ -82,6 +82,7 @@ bool cfgOpen()
 	string config_path_read = get_readonly_config_path(filename);
 	cfgPath = get_writable_config_path(filename);
 
+	printf("opening cfg file %s\n", config_path_read.c_str()) ;
 	FILE* cfgfile = fopen(config_path_read.c_str(),"r");
 	if(cfgfile != NULL) {
 		cfgdb.parse(cfgfile);

@@ -94,12 +94,6 @@ void ngen_ResetBlocks();
 extern void (*ngen_FailedToFindBlock)();
 //the dynarec mainloop
 void ngen_mainloop(void* cntx);
-//ngen features
-struct ngen_features
-{
-	bool OnlyDynamicEnds;     //if set the block endings aren't handled natively and only Dynamic block end type is used
-	bool InterpreterFallback; //if set all the non-branch opcodes are handled with the ifb opcode
-};
 
 void ngen_GetFeatures(ngen_features* dst);
 

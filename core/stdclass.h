@@ -240,6 +240,14 @@ public :
 		pthread_mutex_lock(&mutx);
 #endif
 	}
+	bool TryLock()
+	{
+#if HOST_OS==OS_WINDOWS
+		return TryEnterCriticalSection(&cs);
+#else
+		return pthread_mutex_trylock(&mutx)==0;
+#endif
+	}
 	void Unlock()
 	{
 #if HOST_OS==OS_WINDOWS
