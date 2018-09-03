@@ -275,13 +275,13 @@ static OnLoad ol_fillfsm(&fill_fsm);
 
 void ta_vtx_ListCont()
 {
-	SetCurrentTARC(TA_ISP_BASE);
+	SetCurrentTARC(TA_CURRENT_CTX);
 
 	ta_cur_state=TAS_NS;
 }
 void ta_vtx_ListInit()
 {
-	SetCurrentTARC(TA_ISP_BASE);
+	SetCurrentTARC(TA_CURRENT_CTX);
 	ta_tad.ClearPartial();
 
 	ta_cur_state=TAS_NS;
