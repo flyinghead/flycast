@@ -1208,8 +1208,7 @@ struct softrend : Renderer
 
 		BitBlt(hdc, x, y, 640 , 480 , hmem, 0, 0, SRCCOPY);
 		ReleaseDC(hWnd, hdc);
-#else
-	#if defined(SUPPORT_X11)
+#elif defined(SUPPORT_X11)
 		extern Window x11_win;
 		extern Display* x11_disp;
 		extern Visual* x11_vis;
@@ -1226,10 +1225,9 @@ struct softrend : Renderer
 		XPutImage(x11_disp, x11_win, gc, ximage, 0, 0, (x11_width - width)/2, (x11_height - height)/2, width, height);
 		XFree(ximage);
 		XFreeGC(x11_disp, gc);
-	#else
-		// TODO softrend without X11 (SDL f.e.)
-		#error Cannot use softrend without X11
-	#endif
+#else
+	// TODO softrend without X11 (SDL f.e.)
+	#error Cannot use softrend without X11
 #endif
 	}
 };
