@@ -8,7 +8,7 @@
 
 	Initial code by skmp and gigaherz
 
-	This is a rather weird very basic pvr softrend. 
+	This is a rather weird very basic pvr softrend.
 	Renders	in some kind of tile format (that I forget now),
 	and does depth and color, but no alpha, texture, or pixel
 	processing. All of the pipeline is based on quads.
@@ -195,7 +195,7 @@ struct PlaneStepper
 		c = _mm_load_ps_r(c_s_a, c_s_b, c_s_c, c_s_d);
 
 		//z = z1 + dzdx * (minx - v1.x) + dzdy * (minx - v1.y);
-		//z = (z1 - dzdx * v1.x - v1.y*dzdy) +  dzdx*inx + dzdy *iny;	
+		//z = (z1 - dzdx * v1.x - v1.y*dzdy) +  dzdx*inx + dzdy *iny;
 	}
 
 	__forceinline __m128 Ip(__m128 x, __m128 y) const
@@ -296,7 +296,7 @@ static void PixelFlush(PolyParam* pp, text_info* texture, __m128 x, __m128 y, u8
 		__m128 c = ip.Col.InStep(b);
 		__m128 d = ip.Col.InStep(c);
 
-		//we need : 
+		//we need :
 
 		__m128i ab = _mm_packs_epi32(_mm_cvttps_epi32(a), _mm_cvttps_epi32(b));
 		__m128i cd = _mm_packs_epi32(_mm_cvttps_epi32(c), _mm_cvttps_epi32(d));
@@ -327,30 +327,30 @@ static void PixelFlush(PolyParam* pp, text_info* texture, __m128 x, __m128 y, u8
 			for (int i = 0; i < 4; i++) {
 				u32 u = textadr.m128i_i16[i * 2 + 0];
 				u32 v = textadr.m128i_i16[i * 2 + 1];
-				
+
 				__m128i mufi_ = _mm_shuffle_epi32(ufi, _MM_SHUFFLE(0, 0, 0, 0));
 				__m128i mufi_n = _mm_sub_epi32(_mm_set1_epi32(255), mufi_);
 
 				__m128i mvfi_ = _mm_shuffle_epi32(vfi, _MM_SHUFFLE(0, 0, 0, 0));
 				__m128i mvfi_n = _mm_sub_epi32(_mm_set1_epi32(255), mvfi_);
-				
+
 				ufi = _mm_shuffle_epi32(ufi, _MM_SHUFFLE(0,3,2,1));
 				vfi = _mm_shuffle_epi32(vfi, _MM_SHUFFLE(0,3,2,1));
 
 				u32 pixel;
-				
+
 #if 0
 				u32 textel_size = 2;
-				
+
 				u32 pixel00 = decoded_colors[texture->textype][texture->pdata[((u + 1) % texture->width + (v + 1) % texture->height * texture->width)]];
 				u32 pixel01 = decoded_colors[texture->textype][texture->pdata[((u + 0) % texture->width + (v + 1) % texture->height * texture->width)]];
 				u32 pixel10 = decoded_colors[texture->textype][texture->pdata[((u + 1) % texture->width + (v + 0) % texture->height * texture->width)]];
 				u32 pixel11 = decoded_colors[texture->textype][texture->pdata[((u + 0) % texture->width + (v + 0) % texture->height * texture->width)]];
 
-				
+
 				for (int j = 0; j < 4; j++) {
 				((u8*)&pixel)[j] =
-				
+
 				(((u8*)&pixel00)[j] * uf.m128_f32[i] + ((u8*)&pixel01)[j] * (1 - uf.m128_f32[i])) * vf.m128_f32[i] + (((u8*)&pixel10)[j] * uf.m128_f32[i] + ((u8*)&pixel11)[j] * (1 - uf.m128_f32[i])) * (1 - vf.m128_f32[i]);
 				}
 #endif
@@ -358,7 +358,7 @@ static void PixelFlush(PolyParam* pp, text_info* texture, __m128 x, __m128 y, u8
 				__m128i px = ((__m128i*)texture->pdata)[((u + 0) % texture->width + (v + 0) % texture->height * texture->width)];
 
 
-				
+
 				__m128i tex_00 = _mm_cvtepu8_epi32(px);
 				__m128i tex_01 = _mm_cvtepu8_epi32(_mm_shuffle_epi32(px, _MM_SHUFFLE(0, 0, 0, 1)));
 				__m128i tex_10 = _mm_cvtepu8_epi32(_mm_shuffle_epi32(px, _MM_SHUFFLE(0, 0, 0, 2)));
@@ -366,7 +366,7 @@ static void PixelFlush(PolyParam* pp, text_info* texture, __m128 x, __m128 y, u8
 
 				tex_00 = _mm_add_epi32(_mm_mullo_epi32(tex_00, mufi_), _mm_mullo_epi32(tex_01, mufi_n));
 				tex_10 = _mm_add_epi32(_mm_mullo_epi32(tex_10, mufi_), _mm_mullo_epi32(tex_10, mufi_n));
-				
+
 				tex_00 = _mm_add_epi32(_mm_mullo_epi32(tex_00, mvfi_), _mm_mullo_epi32(tex_10, mvfi_n));
 				tex_00 = _mm_srli_epi32(tex_00, 16);
 
@@ -388,8 +388,8 @@ static void PixelFlush(PolyParam* pp, text_info* texture, __m128 x, __m128 y, u8
 				*(int*)out = _mm_cvtsi128_si32(y); // Store the lower 32 bits
 
 				// 0x000000FF * 0x00010001 = 0x00FF00FF
-				
-				
+
+
 
 
 				__m128i px = ((__m128i*)texture->pdata)[((u) & ( texture->width - 1) + (v) & (texture->height-1) * texture->width)];
@@ -475,7 +475,7 @@ static void PixelFlush(PolyParam* pp, text_info* texture, __m128 x, __m128 y, u8
 			if (pp_Offset) {
 				//add offset
 			}
-			
+
 
 			//textadr = _mm_add_epi32(textadr, _mm_setr_epi32(tex_addr, tex_addr, tex_addr, tex_addr));
 			//rv = textel.mm; // _mm_xor_si128(rv, textadr);
@@ -572,7 +572,7 @@ static void Rendtriangle(PolyParam* pp, int vertex_offset, const Vertex &v1, con
 		{
 			texture = raw_GetTexture(pp->tsp, pp->tcw);
 		}
-			
+
 	}
 
 	const int stride_bytes = STRIDE_PIXEL_OFFSET * 4;
@@ -699,8 +699,8 @@ static void Rendtriangle(PolyParam* pp, int vertex_offset, const Vertex &v1, con
 	DECL_ALIGN(64) IPs ip;
 
 	ip.Setup(pp, &texture, v1, v2, v3, minx, miny, q);
-	
-	
+
+
 	__m128 y_ps = _mm_broadcast_float(miny);
 	__m128 minx_ps = _mm_load_scaled_float(minx - q, 1);
 	static DECL_ALIGN(16) float ones_ps[4] = { 1, 1, 1, 1 };
@@ -832,11 +832,11 @@ struct softrend : Renderer
 		return true;
 	}
 
-	
+
 
 	template <int alpha_mode>
 	void RenderParamList(List<PolyParam>* param_list, RECT* area) {
-		
+
 		Vertex* verts = pvrrc.verts.head();
 		u16* idx = pvrrc.idx.head();
 
@@ -885,8 +885,8 @@ struct softrend : Renderer
 			RenderParamList<2>(&pvrrc.global_param_tr, &area);
 		}
 
-		
-		
+
+
 
 		/*
 		for (int y = 0; y < 480; y++) {
@@ -903,14 +903,14 @@ struct softrend : Renderer
 	HBITMAP hBMP = 0, holdBMP;
 	HDC hmem;
 #endif
-	
+
 
 	virtual bool Init() {
 
 		const_setAlpha = _mm_set1_epi32(0xFF000000);
 		u8 ushuffle[] = { 0x0E, 0x80, 0x0E, 0x80, 0x0E, 0x80, 0x0E, 0x80, 0x06, 0x80, 0x06, 0x80, 0x06, 0x80, 0x06, 0x80};
 		memcpy(&shuffle_alpha, ushuffle, sizeof(shuffle_alpha));
-		
+
 #if HOST_OS == OS_WINDOWS
 		hWnd = (HWND)libPvr_GetRenderTarget();
 
@@ -1176,7 +1176,7 @@ struct softrend : Renderer
 		//	#define SHUFFL(v) shuffle_pixel(v)
 
 		#if HOST_OS == OS_WINDOWS
-			#define FLIP_Y 479 - 
+			#define FLIP_Y 479 -
 		#else
 			#define FLIP_Y
 		#endif
@@ -1192,7 +1192,7 @@ struct softrend : Renderer
 				pdst[(FLIP_Y (y + 3))*stride + x / 4] = SHUFFL(*psrc++);
 			}
 		}
-		
+
 #if HOST_OS == OS_WINDOWS
 		SetDIBits(hmem, hBMP, 0, 480, pixels, (BITMAPINFO*)&bi, DIB_RGB_COLORS);
 
@@ -1208,14 +1208,14 @@ struct softrend : Renderer
 
 		BitBlt(hdc, x, y, 640 , 480 , hmem, 0, 0, SRCCOPY);
 		ReleaseDC(hWnd, hdc);
-#else
+#elif defined(SUPPORT_X11)
 		extern Window x11_win;
 		extern Display* x11_disp;
 		extern Visual* x11_vis;
 
 		int width = 640;
 		int height = 480;
-		
+
 		extern int x11_width;
 		extern int x11_height;
 
@@ -1225,6 +1225,9 @@ struct softrend : Renderer
 		XPutImage(x11_disp, x11_win, gc, ximage, 0, 0, (x11_width - width)/2, (x11_height - height)/2, width, height);
 		XFree(ximage);
 		XFreeGC(x11_disp, gc);
+#else
+	// TODO softrend without X11 (SDL f.e.)
+	#error Cannot use softrend without X11
 #endif
 	}
 };
