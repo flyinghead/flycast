@@ -1226,8 +1226,10 @@ struct softrend : Renderer
 		XPutImage(x11_disp, x11_win, gc, ximage, 0, 0, (x11_width - width)/2, (x11_height - height)/2, width, height);
 		XFree(ximage);
 		XFreeGC(x11_disp, gc);
+	#else
+		// TODO softrend without X11 (SDL f.e.)
+		#error Cannot use softrend without X11
 	#endif
-	// TODO softrend without X11
 #endif
 	}
 };
