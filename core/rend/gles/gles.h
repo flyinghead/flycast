@@ -59,6 +59,7 @@ struct PipelineShader
 	GLuint program;
 
 	GLuint scale,depth_scale;
+	GLuint extra_depth_scale;
 	GLuint pp_ClipTest,cp_AlphaTestValue;
 	GLuint sp_FOG_COL_RAM,sp_FOG_COL_VERT,sp_FOG_DENSITY;
 	GLuint trilinear_alpha;
@@ -90,6 +91,7 @@ struct gl_ctx
 		GLuint program;
 
 		GLuint scale,depth_scale;
+		GLuint extra_depth_scale;
 		GLuint sp_ShaderColor;
 
 	} modvol_shader;
@@ -98,6 +100,7 @@ struct gl_ctx
 	struct
 	{
 		GLuint program,scale,depth_scale;
+		GLuint extra_depth_scale;
 	} OSD_SHADER;
 
 	struct
@@ -152,6 +155,7 @@ extern struct ShaderUniforms_t
 	float PT_ALPHA;
 	float scale_coefs[4];
 	float depth_coefs[4];
+	float extra_depth_scale;
 	float fog_den_float;
 	float ps_FOG_COL_RAM[3];
 	float ps_FOG_COL_VERT[3];
@@ -169,6 +173,9 @@ extern struct ShaderUniforms_t
 
 		if (s->depth_scale!=-1)
 			glUniform4fv( s->depth_scale, 1, depth_coefs);
+
+		if (s->extra_depth_scale != -1)
+			glUniform1f(s->extra_depth_scale, extra_depth_scale);
 
 		if (s->sp_FOG_DENSITY!=-1)
 			glUniform1f( s->sp_FOG_DENSITY,fog_den_float);

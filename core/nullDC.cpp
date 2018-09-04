@@ -300,6 +300,11 @@ void LoadSettings()
 	settings.rend.Clipping			= cfgLoadInt("config","rend.Clipping",1);
 	settings.rend.TextureUpscale	= cfgLoadInt("config","rend.TextureUpscale", 1);
 	settings.rend.MaxFilteredTextureSize = cfgLoadInt("config","rend.MaxFilteredTextureSize", 256);
+	char extra_depth_scale_str[128];
+	cfgLoadStr("config","rend.ExtraDepthScale", extra_depth_scale_str, "1");
+	settings.rend.ExtraDepthScale = atof(extra_depth_scale_str);
+	if (settings.rend.ExtraDepthScale == 0)
+		settings.rend.ExtraDepthScale = 1.f;
 
 	settings.pvr.subdivide_transp	= cfgLoadInt("config","pvr.Subdivide",0);
 	

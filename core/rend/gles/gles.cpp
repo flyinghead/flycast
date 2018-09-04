@@ -98,6 +98,7 @@ const char* VertexShaderSource =
 /* Vertex constants*/  \n\
 uniform highp vec4      scale; \n\
 uniform highp vec4      depth_scale; \n\
+uniform highp float     extra_depth_scale; \n\
 /* Vertex input */ \n\
 in highp vec4    in_pos; \n\
 in lowp vec4     in_base; \n\
@@ -118,7 +119,7 @@ void main() \n\
         vpos.w = 1.18e-38; \n\
 	else \n\
 #endif \n\
-		vpos.w = 1.0 / vpos.z; \n\
+		vpos.w = extra_depth_scale / vpos.z; \n\
 #if TARGET_GL != GLES2 \n\
 	if (vpos.w < 0.0) { \n\
 		gl_Position = vec4(0.0, 0.0, 0.0, vpos.w); \n\
@@ -239,6 +240,7 @@ uniform sampler2D tex,fog_table; \n\
 uniform lowp float trilinear_alpha; \n\
 uniform lowp vec4 fog_clamp_min; \n\
 uniform lowp vec4 fog_clamp_max; \n\
+uniform highp float extra_depth_scale; \n\
 /* Vertex input*/ \n\
 INTERPOLATION in lowp vec4 vtx_base; \n\
 INTERPOLATION in lowp vec4 vtx_offs; \n\
@@ -246,7 +248,7 @@ INTERPOLATION in lowp vec4 vtx_offs; \n\
  \n\
 lowp float fog_mode2(highp float w) \n\
 { \n\
-	highp float z = clamp(w * sp_FOG_DENSITY, 1.0, 255.9999); \n\
+	highp float z = clamp(w * extra_depth_scale * sp_FOG_DENSITY, 1.0, 255.9999); \n\
 	highp float exp = floor(log2(z)); \n\
 	highp float m = z * 16.0 / pow(2.0, exp) - 16.0; \n\
 	lowp float idx = floor(m) + exp * 16.0 + 0.5; \n\
@@ -886,7 +888,7 @@ bool CompilePipelineShader(	PipelineShader* s)
 	//get the uniform locations
 	s->scale	            = glGetUniformLocation(s->program, "scale");
 	s->depth_scale      = glGetUniformLocation(s->program, "depth_scale");
-
+	s->extra_depth_scale = glGetUniformLocation(s->program, "extra_depth_scale");
 
 	s->pp_ClipTest      = glGetUniformLocation(s->program, "pp_ClipTest");
 
@@ -1013,6 +1015,7 @@ bool gl_create_resources()
 	gl.modvol_shader.scale          = glGetUniformLocation(gl.modvol_shader.program, "scale");
 	gl.modvol_shader.sp_ShaderColor = glGetUniformLocation(gl.modvol_shader.program, "sp_ShaderColor");
 	gl.modvol_shader.depth_scale    = glGetUniformLocation(gl.modvol_shader.program, "depth_scale");
+	gl.modvol_shader.extra_depth_scale = glGetUniformLocation(gl.modvol_shader.program, "extra_depth_scale");
 
 	sprintf(fshader, OSD_Shader, gl.glsl_version_header, gl.gl_version);
 
@@ -1020,6 +1023,7 @@ bool gl_create_resources()
 	printf("OSD: %d\n",gl.OSD_SHADER.program);
 	gl.OSD_SHADER.scale=glGetUniformLocation(gl.OSD_SHADER.program, "scale");
 	gl.OSD_SHADER.depth_scale=glGetUniformLocation(gl.OSD_SHADER.program, "depth_scale");
+	gl.OSD_SHADER.extra_depth_scale = glGetUniformLocation(gl.OSD_SHADER.program, "extra_depth_scale");
 	glUniform1i(glGetUniformLocation(gl.OSD_SHADER.program, "tex"),0);		//bind osd texture to slot 0
 
 	//#define PRECOMPILE_SHADERS
@@ -1710,6 +1714,8 @@ bool RenderFrame()
 	ShaderUniforms.depth_coefs[2]=0;
 	ShaderUniforms.depth_coefs[3]=0;
 
+	ShaderUniforms.extra_depth_scale = settings.rend.ExtraDepthScale;
+
 	//printf("scale: %f, %f, %f, %f\n",ShaderUniforms.scale_coefs[0],ShaderUniforms.scale_coefs[1],ShaderUniforms.scale_coefs[2],ShaderUniforms.scale_coefs[3]);
 
 
@@ -1750,13 +1756,14 @@ bool RenderFrame()
 
 	glUniform4fv( gl.modvol_shader.scale, 1, ShaderUniforms.scale_coefs);
 	glUniform4fv( gl.modvol_shader.depth_scale, 1, ShaderUniforms.depth_coefs);
-
+	glUniform1f(gl.modvol_shader.extra_depth_scale, ShaderUniforms.extra_depth_scale);
 
 	GLfloat td[4]={0.5,0,0,0};
 
 	glcache.UseProgram(gl.OSD_SHADER.program);
 	glUniform4fv( gl.OSD_SHADER.scale, 1, ShaderUniforms.scale_coefs);
 	glUniform4fv( gl.OSD_SHADER.depth_scale, 1, td);
+	glUniform1f(gl.OSD_SHADER.extra_depth_scale, 1.0f);
 
 	ShaderUniforms.PT_ALPHA=(PT_ALPHA_REF&0xFF)/255.0f;
 
