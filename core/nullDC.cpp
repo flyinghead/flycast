@@ -323,6 +323,7 @@ void LoadSettings()
 #else
     // TODO Expose this with JNI
 	settings.rend.Clipping = 1;
+	settings.rend.ExtraDepthScale = 1.f;
 #endif
 
 	settings.pvr.HashLogFile = cfgLoadStr("testing", "ta.HashLogFile", "");
