@@ -56,7 +56,7 @@ void input_sdl_init()
 {
 	if (SDL_WasInit(SDL_INIT_JOYSTICK) == 0)
 	{
-		if(SDL_InitSubSystem(SDL_INIT_JOYSTICK) < 0)
+		if (SDL_InitSubSystem(SDL_INIT_JOYSTICK) < 0)
 		{
 			die("error initializing SDL Joystick subsystem");
 		}
@@ -68,10 +68,10 @@ void input_sdl_init()
 	{
 		JoySDL = SDL_JoystickOpen(0);
 	}
-	
-	printf("Joystick opened\n");  
-	
-	if(JoySDL)
+
+	printf("Joystick opened\n");
+
+	if (JoySDL)
 	{
 		int AxisCount,ButtonCount;
 		const char* Name;
@@ -114,13 +114,13 @@ void input_sdl_init()
 			JSensitivity[128+i] = j;
 		}
 	#endif
-	
+
 	SDL_SetRelativeMouseMode(SDL_TRUE);
 }
 
 void input_sdl_handle(u32 port)
 {
-	static int keys[13];
+	#define SET_FLAG(field, mask, expr) field =((expr) ? (field & ~mask) : (field | mask))
 	static int mouse_use = 0;
 	SDL_Event event;
 	int k, value;
@@ -131,30 +131,59 @@ void input_sdl_handle(u32 port)
 		switch (event.type)
 		{
 			case SDL_QUIT:
-							 die("death by SDL request");
-							 break;
+				dc_stop();
+				break;
 			case SDL_KEYDOWN:
 			case SDL_KEYUP:
 				k = event.key.keysym.sym;
 				value = (event.type == SDL_KEYDOWN) ? 1 : 0;
-				 //printf("type %i key %i \n", event.type, k);
+				printf("type %i key %i \n", event.type, k);
 				switch (k) {
 					//TODO: Better keymaps for non-pandora platforms
-					case SDLK_SPACE:    keys[0] = value; break;
-					case SDLK_UP:       keys[1] = value; break;
-					case SDLK_DOWN:     keys[2] = value; break;
-					case SDLK_LEFT:     keys[3] = value; break;
-					case SDLK_RIGHT:    keys[4] = value; break;
-					case SDLK_PAGEUP:   keys[5] = value; break;
-					case SDLK_PAGEDOWN: keys[6] = value; break;
-					case SDLK_END:      keys[7] = value; break;
-					case SDLK_HOME:     keys[8] = value; break;
+					case SDLK_SPACE:
+						SET_FLAG(kcode[port], DC_BTN_C, value);
+						break;
+					case SDLK_UP:
+						SET_FLAG(kcode[port], DC_DPAD_UP, value);
+						break;
+					case SDLK_DOWN:
+						SET_FLAG(kcode[port], DC_DPAD_DOWN, value);
+						break;
+					case SDLK_LEFT:
+						SET_FLAG(kcode[port], DC_DPAD_LEFT, value);
+						break;
+					case SDLK_RIGHT:
+						SET_FLAG(kcode[port], DC_DPAD_RIGHT, value);
+						break;
+					case SDLK_PAGEUP:
+						SET_FLAG(kcode[port], DC_BTN_Y, value);
+						break;
+					case SDLK_PAGEDOWN:
+						SET_FLAG(kcode[port], DC_BTN_A, value);
+						break;
+					case SDLK_END:
+						SET_FLAG(kcode[port], DC_BTN_B, value);
+						break;
+					case SDLK_HOME:
+						SET_FLAG(kcode[port], DC_BTN_X, value);
+						break;
 					case SDLK_MENU:
-					case SDLK_ESCAPE:   keys[9]  = value; break;
-					case SDLK_RSHIFT:   keys[11] = value; break;
-					case SDLK_RCTRL:    keys[10] = value; break;
-					case SDLK_LALT:     keys[12] = value; break;
-					case SDLK_k:        KillTex = true; break;
+					case SDLK_ESCAPE:
+						dc_stop();
+						break;
+					case SDLK_RSHIFT:
+						lt[port] = (value ? 255 : 0);
+						break;
+					case SDLK_RCTRL:
+						rt[port] = (value ? 255 : 0);;
+						break;
+					case SDLK_LALT:
+						SET_FLAG(kcode[port], DC_BTN_START, value);
+						break;
+					case SDLK_k:
+						SET_FLAG(kcode[port], DC_BTN_A, value);
+						break;
+
 				#if defined(TARGET_PANDORA)
 					case SDLK_n:
 						if (value)
@@ -163,7 +192,7 @@ void input_sdl_handle(u32 port)
 							snprintf(OSD_Info, 128, "Right Nub mode: %s\n", num_mode[mouse_use]);
 							OSD_Delay=300;
 						}
-						break;  
+						break;
 					case SDLK_s:
 						if (value)
 						{
@@ -179,7 +208,7 @@ void input_sdl_handle(u32 port)
 							snprintf(OSD_Info, 128, "FrameSkipping %s\n", (FrameSkipping) ? "On" : "Off");
 							OSD_Delay = 300;
 						}
-						break;  
+						break;
 					case SDLK_c:
 						if (value)
 						{
@@ -196,16 +225,16 @@ void input_sdl_handle(u32 port)
 				{
 					u32 mt = sdl_map_btn[k] >> 16;
 					u32 mo = sdl_map_btn[k] & 0xFFFF;
-					
+
 					// printf("BUTTON %d,%d\n",JE.number,JE.value);
-					
+
 					if (mt == 0)
 					{
 						// printf("Mapped to %d\n",mo);
 						if (value)
-						kcode[port] &= ~mo;
+							kcode[port] &= ~mo;
 						else
-						kcode[port] |= mo;
+							kcode[port] |= mo;
 					}
 					else if (mt == 1)
 					{
@@ -219,7 +248,7 @@ void input_sdl_handle(u32 port)
 							rt[port] = value ? 255 : 0;
 						}
 					}
-					
+
 				}
 				break;
 			case SDL_JOYAXISMOTION:
@@ -228,13 +257,13 @@ void input_sdl_handle(u32 port)
 				{
 					u32 mt = sdl_map_axis[k] >> 16;
 					u32 mo = sdl_map_axis[k] & 0xFFFF;
-					
+
 					//printf("AXIS %d,%d\n",JE.number,JE.value);
 					s8 v=(s8)(value/256); //-127 ... + 127 range
 					#ifdef TARGET_PANDORA
 						v = JSensitivity[128+v];
 					#endif
-					
+
 					if (mt == 0)
 					{
 						kcode[port] |= mo;
@@ -247,15 +276,15 @@ void input_sdl_handle(u32 port)
 						{
 							kcode[port] &= ~(mo*2);
 						}
-						
+
 						// printf("Mapped to %d %d %d\n",mo,kcode[port]&mo,kcode[port]&(mo*2));
 					}
 					else if (mt == 1)
 					{
 						if (v >= 0) v++;  //up to 255
-						
+
 						//   printf("AXIS %d,%d Mapped to %d %d %d\n",JE.number,JE.value,mo,v,v+127);
-						
+
 						if (mo == 0)
 						{
 							lt[port] = v + 127;
@@ -282,7 +311,7 @@ void input_sdl_handle(u32 port)
 			case SDL_MOUSEMOTION:
 					xx = event.motion.xrel;
 					yy = event.motion.yrel;
-					
+
 					// some caping and dead zone...
 					if (abs(xx) < 4)
 					{
@@ -292,10 +321,10 @@ void input_sdl_handle(u32 port)
 					{
 						yy = 0;
 					}
-					
+
 					xx = xx * 255 / 20;
 					yy = yy * 255 / 20;
-					
+
 					if (xx > 255)
 					{
 						xx = 255;
@@ -304,7 +333,7 @@ void input_sdl_handle(u32 port)
 					{
 						xx = -255;
 					}
-					
+
 					if (yy > 255)
 					{
 						yy = 255;
@@ -313,7 +342,7 @@ void input_sdl_handle(u32 port)
 					{
 						yy = -255;
 					}
-					
+
 					//if (abs(xx)>0 || abs(yy)>0) printf("mouse %i, %i\n", xx, yy);
 					switch (mouse_use)
 					{
@@ -360,29 +389,6 @@ void input_sdl_handle(u32 port)
 					}
 				break;
 		}
-	}
-			
-	if (keys[0]) { kcode[port] &= ~DC_BTN_C; }
-	if (keys[6]) { kcode[port] &= ~DC_BTN_A; }
-	if (keys[7]) { kcode[port] &= ~DC_BTN_B; }
-	if (keys[5]) { kcode[port] &= ~DC_BTN_Y; }
-	if (keys[8]) { kcode[port] &= ~DC_BTN_X; }
-	if (keys[1]) { kcode[port] &= ~DC_DPAD_UP; }
-	if (keys[2]) { kcode[port] &= ~DC_DPAD_DOWN; }
-	if (keys[3]) { kcode[port] &= ~DC_DPAD_LEFT; }
-	if (keys[4]) { kcode[port] &= ~DC_DPAD_RIGHT; }
-	if (keys[12]){ kcode[port] &= ~DC_BTN_START; }
-	if (keys[9])
-	{ 
-		dc_stop();
-	} 
-	if (keys[10])
-	{
-		rt[port] = 255;
-	}
-	if (keys[11])
-	{
-		lt[port] = 255;
 	}
 }
 
