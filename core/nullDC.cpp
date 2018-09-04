@@ -120,7 +120,7 @@ void plugins_Reset(bool Manual)
 	//libExtDevice_Reset(Manual);
 }
 
-#if !defined(TARGET_NO_WEBUI)
+#if !defined(TARGET_NO_WEBUI) && !defined(TARGET_NO_THREADS)
 
 void* webui_th(void* p)
 {
@@ -165,7 +165,7 @@ int dc_init(int argc,wchar* argv[])
 		return -1;
 	}
 
-#if !defined(TARGET_NO_WEBUI)
+#if !defined(TARGET_NO_WEBUI) && !defined(TARGET_NO_THREADS)
 	webui_thd.Start();
 #endif
 
