@@ -123,6 +123,13 @@ s32 SetTileClip(u32 val, bool set)
 			csy = csy * dc2s_scale_h;
 			cey = cey * dc2s_scale_h;
 		}
+		else
+		{
+			csx *= settings.rend.RenderToTextureUpscale;
+			csy *= settings.rend.RenderToTextureUpscale;
+			cex *= settings.rend.RenderToTextureUpscale;
+			cey *= settings.rend.RenderToTextureUpscale;
+		}
 		glUniform4f(CurrentShader->pp_ClipTest, csx, csy, cex, cey);
 	}
 
