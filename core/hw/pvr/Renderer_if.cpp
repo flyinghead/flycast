@@ -582,8 +582,8 @@ void rend_vblank()
 void check_framebuffer_write()
 {
 	u32 fb_size = (FB_R_SIZE.fb_y_size + 1) * (FB_R_SIZE.fb_x_size + FB_R_SIZE.fb_modulus) / 4;
-	fb1_watch_addr_start = FB_R_SOF1;
-	fb1_watch_addr_end = FB_R_SOF1 + fb_size - 1;
-	fb2_watch_addr_start = FB_R_SOF2;
-	fb2_watch_addr_end = FB_R_SOF2 + fb_size - 1;
+	fb1_watch_addr_start = FB_R_SOF1 & VRAM_MASK;
+	fb1_watch_addr_end = fb1_watch_addr_start + fb_size - 1;
+	fb2_watch_addr_start = FB_R_SOF2 & VRAM_MASK;
+	fb2_watch_addr_end = fb2_watch_addr_start + fb_size - 1;
 }
