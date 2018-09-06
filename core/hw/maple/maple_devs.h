@@ -7,6 +7,7 @@ enum MapleDeviceType
 	MDT_SegaVMU,
 	MDT_Microphone,
 	MDT_PurupuruPack,
+	MDT_Keyboard,
 
 	MDT_NaomiJamma,
 

@@ -83,6 +83,139 @@ void event_x11_handle()
 	}
 }
 
+u8 kb_map[256];
+
+static void init_kb_map()
+{
+	//04-1D Letter keys A-Z (in alphabetic order)
+	kb_map[KEY_A] = 0x04;
+	kb_map[KEY_B] = 0x05;
+	kb_map[KEY_C] = 0x06;
+	kb_map[KEY_D] = 0x07;
+	kb_map[KEY_E] = 0x08;
+	kb_map[KEY_F] = 0x09;
+	kb_map[KEY_G] = 0x0A;
+	kb_map[KEY_H] = 0x0B;
+	kb_map[KEY_I] = 0x0C;
+	kb_map[KEY_J] = 0x0D;
+	kb_map[KEY_K] = 0x0E;
+	kb_map[KEY_L] = 0x0F;
+	kb_map[KEY_M] = 0x10;
+	kb_map[KEY_N] = 0x11;
+	kb_map[KEY_O] = 0x12;
+	kb_map[KEY_P] = 0x13;
+	kb_map[KEY_Q] = 0x14;
+	kb_map[KEY_R] = 0x15;
+	kb_map[KEY_S] = 0x16;
+	kb_map[KEY_T] = 0x17;
+	kb_map[KEY_U] = 0x18;
+	kb_map[KEY_V] = 0x19;
+	kb_map[KEY_W] = 0x1A;
+	kb_map[KEY_X] = 0x1B;
+	kb_map[KEY_Y] = 0x1C;
+	kb_map[KEY_Z] = 0x1D;
+
+	//1E-27 Number keys 1-0
+	kb_map[KEY_1] = 0x1E;
+	kb_map[KEY_2] = 0x1F;
+	kb_map[KEY_3] = 0x20;
+	kb_map[KEY_4] = 0x21;
+	kb_map[KEY_5] = 0x22;
+	kb_map[KEY_6] = 0x23;
+	kb_map[KEY_7] = 0x24;
+	kb_map[KEY_8] = 0x25;
+	kb_map[KEY_9] = 0x26;
+	kb_map[KEY_0] = 0x27;
+
+	kb_map[KEY_RETURN] = 0x28;
+	kb_map[KEY_ESC] = 0x29;
+	kb_map[KEY_BACKSPACE] = 0x2A;
+	kb_map[KEY_TAB] = 0x2B;
+	kb_map[KEY_SPACE] = 0x2C;
+
+	kb_map[20] = 0x2D;	// key right of 0
+	kb_map[21] = 0x2E;	// key right of previous one
+	kb_map[34] = 0x2F;	// key right of P
+	kb_map[35] = 0x30;	// key right of previous one
+
+	//kb_map[94] = 0x31;	// \ (US) also 64, not used
+
+	//32-34 "]", ";" and ":" (the 3 keys right of L)
+	kb_map[47] = 0x32;
+	kb_map[48] = 0x33;
+	kb_map[51] = 0x34;
+
+	//35 hankaku/zenkaku / kanji (top left)
+	kb_map[49] = 0x35; // `~ (US)
+
+	//36-38 ",", "." and "/" (the 3 keys right of M)
+	kb_map[59] = 0x36;
+	kb_map[60] = 0x37;
+	kb_map[61] = 0x38;
+
+	// CAPSLOCK
+	kb_map[66] = 0x39;
+
+	//3A-45 Function keys F1-F12
+	for (int i = 0;i < 10; i++)
+		kb_map[KEY_F1 + i] = 0x3A + i;
+	kb_map[KEY_F11] = 0x44;
+	kb_map[KEY_F12] = 0x45;
+
+	//46-4E Control keys above cursor keys
+	kb_map[107] = 0x46;
+	kb_map[78] = 0x47;
+	kb_map[127] = 0x48;
+	kb_map[KEY_INS] = 0x49;
+	kb_map[KEY_HOME] = 0x4A;
+	kb_map[KEY_PGUP] = 0x4B;
+	kb_map[KEY_DEL] = 0x4C;
+	kb_map[KEY_END] = 0x4D;
+	kb_map[KEY_PGDOWN] = 0x4E;
+
+	//4F-52 Cursor keys
+	kb_map[KEY_RIGHT] = 0x4F;
+	kb_map[KEY_LEFT] = 0x50;
+	kb_map[KEY_DOWN] = 0x51;
+	kb_map[KEY_UP] = 0x52;
+
+	//53 Num Lock (Numeric keypad)
+	kb_map[77] = 0x53;
+	//54 "/" (Numeric keypad)
+	kb_map[106] = 0x54;
+	//55 "*" (Numeric keypad)
+	kb_map[63] = 0x55;
+	//56 "-" (Numeric keypad)
+	kb_map[82] = 0x56;
+	//57 "+" (Numeric keypad)
+	kb_map[86] = 0x57;
+	//58 Enter (Numeric keypad)
+	kb_map[104] = 0x58;
+	//59-62 Number keys 1-0 (Numeric keypad)
+	kb_map[87] = 0x59;
+	kb_map[88] = 0x5A;
+	kb_map[89] = 0x5B;
+	kb_map[83] = 0x5C;
+	kb_map[84] = 0x5D;
+	kb_map[85] = 0x5E;
+	kb_map[79] = 0x5F;
+	kb_map[80] = 0x60;
+	kb_map[81] = 0x61;
+	kb_map[90] = 0x62;
+	//63 "." (Numeric keypad)
+	kb_map[91] = 0x63;
+	//64 "\" (right of left Shift)
+	kb_map[94] = 0x64;
+	//65 S3 key
+	//66-86 Not used
+	//8C-FF Not used
+}
+
+static u32 kb_used = 0;
+extern u8 kb_shift; 		// shift keys pressed (bitmask)
+extern u8 kb_led; 			// leds currently lit
+extern u8 kb_key[6];		// normal keys pressed
+
 void input_x11_handle()
 {
 	if (x11_win && x11_keyboard_input)
@@ -96,6 +229,51 @@ void input_x11_handle()
 			{
 				case KeyPress:
 				case KeyRelease:
+					// Dreamcast keyboard emulation
+					if (e.xkey.keycode == KEY_LSHIFT || e.xkey.keycode == KEY_RSHIFT)
+						if (e.type == KeyRelease)
+							kb_shift &= ~(0x02 | 0x20);
+						else
+							kb_shift |= (0x02 | 0x20);
+
+					u8 dc_keycode = kb_map[e.xkey.keycode & 0xFF];
+					if (dc_keycode != 0)
+					{
+						if (e.type == KeyPress)
+						{
+							if (kb_used < 6)
+							{
+								bool found = false;
+								for (int i = 0; !found && i < 6; i++)
+								{
+									if (kb_key[i] == dc_keycode)
+										found = true;
+								}
+								if (!found)
+								{
+									kb_key[kb_used] = dc_keycode;
+									kb_used++;
+								}
+							}
+						}
+						else
+						{
+							if (kb_used > 0)
+							{
+								for (int i = 0; i < 6; i++)
+								{
+									if (kb_key[i] == dc_keycode)
+									{
+										kb_used--;
+										for (int j = i; j < 5; j++)
+											kb_key[j] = kb_key[j + 1];
+									}
+								}
+							}
+						}
+					}
+
+					// Normal keyboard handling
 					if (e.type == KeyRelease && e.xkey.keycode == KEY_ESC)
 					{
 						dc_stop();
@@ -191,6 +369,8 @@ void input_x11_init()
 	x11_keyboard_input = (cfgLoadInt("input", "enable_x11_keyboard", 1) >= 1);
 	if (!x11_keyboard_input)
 		printf("X11 Keyboard input disabled by config.\n");
+
+	init_kb_map();
 }
 
 void x11_window_create()

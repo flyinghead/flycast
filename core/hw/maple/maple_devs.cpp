@@ -939,6 +939,75 @@ struct maple_sega_purupuru : maple_base
 	}
 };
 
+u8 kb_shift; 		// shift keys pressed (bitmask)
+u8 kb_led; 			// leds currently lit
+u8 kb_key[6]={0};	// normal keys pressed
+
+struct maple_keyboard : maple_base
+{
+	virtual u32 dma(u32 cmd)
+	{
+		switch (cmd)
+		{
+		case MDC_DeviceRequest:
+			//caps
+			//4
+			w32(1 << 30);
+
+			//struct data
+			//3*4
+			w32( 0xfe060f00);
+			w32( 0);
+			w32( 0);
+			//1	area code
+			w8(0xFF);
+			//1	direction
+			w8(0);
+			//30
+			for (u32 i = 0; i < 30; i++)
+			{
+				w8((u8)maple_sega_kbd_name[i]);
+			}
+			//ptr_out += 30;
+
+			//60
+			for (u32 i = 0; i < 60; i++)
+			{
+				w8((u8)maple_sega_brand[i]);
+			}
+			//ptr_out += 60;
+
+			//2
+			w16(0x01AE);
+
+			//2
+			w16(0x01F5);
+
+			return 5;
+
+		case MDCF_GetCondition:
+			w32((1 << 30));
+			//struct data
+			//int8 shift          ; shift keys pressed (bitmask)	//1
+			w8(kb_shift);
+			//int8 led            ; leds currently lit			//1
+			w8(kb_led);
+			//int8 key[6]         ; normal keys pressed			//6
+			for (int i=0;i<6;i++)
+			{
+				w8(kb_key[i]);
+			}
+
+			return 8;
+
+		default:
+			printf("Keyboard: unknown MAPLE COMMAND %d\n", cmd);
+
+			return 7;
+		}
+	}
+};
+
 extern u16 kcode[4];
 extern s8 joyx[4],joyy[4];
 extern u8 rt[4], lt[4];
@@ -1402,7 +1471,9 @@ maple_device* maple_Create(MapleDeviceType type)
 		rv = new maple_sega_purupuru();
 		break;
 
-
+	case MDT_Keyboard:
+		rv = new maple_keyboard();
+		break;
 
 	case MDT_NaomiJamma:
 		rv = new maple_naomi_jamma();

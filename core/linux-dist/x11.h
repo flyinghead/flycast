@@ -46,13 +46,15 @@ const int KEY_U		=  30;
 const int KEY_V		=  55;
 const int KEY_W		=  25;
 const int KEY_X		=  53;
-const int KEY_Y		=  52;
-const int KEY_Z		=  29;
+const int KEY_Y		=  29;
+const int KEY_Z		=  52;
 
 // special
 const int KEY_ESC	=   9;
+const int KEY_BACKSPACE =  22;
 const int KEY_TAB	=  23;
-const int KEY_RETURN	=  36;
+const int KEY_RETURN =  36;
+const int KEY_SPACE =  65;
 const int KEY_HOME	= 110;
 const int KEY_UP	= 111;
 const int KEY_PGUP	= 112;
@@ -60,9 +62,13 @@ const int KEY_LEFT	= 113;
 const int KEY_RIGHT	= 114;
 const int KEY_END	= 115;
 const int KEY_DOWN	= 116;
-const int KEY_PGDOWN	= 117;
+const int KEY_PGDOWN = 117;
 const int KEY_INS	= 118;
-const int KEY_DEL	= 118;
+const int KEY_DEL	= 119;
+const int KEY_LSHIFT = 50;
+const int KEY_RSHIFT = 62;
+const int KEY_LCTRL = 37;
+const int KEY_RCTRL = 105;
 
 const int KEY_F1	=  67;
 const int KEY_F2	=  68;

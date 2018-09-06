@@ -85,6 +85,8 @@ int numberOfControl = cfgLoadInt("players", "nb", 1);
 	for (int i = 0; i < numberOfControl; i++){
 		mcfg_Create(MDT_SegaController, i, 5);
 	}
+	if (numberOfControl < 4)
+		mcfg_Create(MDT_Keyboard, numberOfControl, 5);
 
 	mcfg_Create(MDT_SegaVMU,0,0);
 	mcfg_Create(MDT_SegaVMU,0,1);
