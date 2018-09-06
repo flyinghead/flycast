@@ -14,6 +14,8 @@ u32 palette_index;
 bool KillTex=false;
 u32 palette16_ram[1024];
 u32 palette32_ram[1024];
+u32 pal_hash_256[4];
+u32 pal_hash_16[64];
 
 u32 detwiddle[2][8][1024];
 //input : address in the yyyyyxxxxx format
@@ -70,12 +72,25 @@ void BuildTwiddleTables()
 
 static OnLoad btt(&BuildTwiddleTables);
 
+// FNV-1a hashing algorithm
+#define HASH_OFFSET 2166136261
+#define HASH_PRIME 16777619
+
+#define HASH_PALETTE(palette_hash, bpp)	do { u32 &hash = palette_hash[i >> bpp]; \
+		if ((i & ((1 << bpp) - 1)) == 0) \
+			hash = HASH_OFFSET; \
+		u8 *p = (u8 *)&palette32_ram[i]; \
+		hash = (hash ^ p[0]) * HASH_PRIME; \
+		hash = (hash ^ p[1]) * HASH_PRIME; \
+		hash = (hash ^ p[2]) * HASH_PRIME; \
+		hash = (hash ^ p[3]) * HASH_PRIME; } while (false)
+#define HASH_PALETTE_16() HASH_PALETTE(pal_hash_16, 4)
+#define HASH_PALETTE_256() HASH_PALETTE(pal_hash_256, 8)
+
 void palette_update()
 {
 	if (pal_needs_update==false)
 		return;
-	memcpy(pal_rev_256,_pal_rev_256,sizeof(pal_rev_256));
-	memcpy(pal_rev_16,_pal_rev_16,sizeof(pal_rev_16));
 
 	pal_needs_update=false;
 	switch(PAL_RAM_CTRL&3)
@@ -85,6 +100,8 @@ void palette_update()
 		{
 			palette16_ram[i] = ARGB1555(PALETTE_RAM[i]);
 			palette32_ram[i] = ARGB1555_32(PALETTE_RAM[i]);
+			HASH_PALETTE_16();
+			HASH_PALETTE_256();
 		}
 		break;
 
@@ -93,6 +110,8 @@ void palette_update()
 		{
 			palette16_ram[i] = ARGB565(PALETTE_RAM[i]);
 			palette32_ram[i] = ARGB565_32(PALETTE_RAM[i]);
+			HASH_PALETTE_16();
+			HASH_PALETTE_256();
 		}
 		break;
 
@@ -101,6 +120,8 @@ void palette_update()
 		{
 			palette16_ram[i] = ARGB4444(PALETTE_RAM[i]);
 			palette32_ram[i] = ARGB4444_32(PALETTE_RAM[i]);
+			HASH_PALETTE_16();
+			HASH_PALETTE_256();
 		}
 		break;
 
@@ -109,6 +130,8 @@ void palette_update()
 		{
 			palette16_ram[i] = ARGB8888(PALETTE_RAM[i]);
 			palette32_ram[i] = ARGB8888_32(PALETTE_RAM[i]);
+			HASH_PALETTE_16();
+			HASH_PALETTE_256();
 		}
 		break;
 	}

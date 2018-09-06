@@ -238,8 +238,7 @@ struct TextureCacheData
 	u32 Updates;
 
 	//used for palette updates
-	u32  pal_local_rev;         //local palette rev
-	u32* pal_table_rev;         //table palette rev pointer
+	u32 palette_hash;			// Palette hash at time of last update
 	u32  indirect_color_ptr;    //palette color table index for pal. tex
 	                            //VQ quantizers table for VQ tex
 	                            //a texture can't be both VQ and PAL at the same time
@@ -262,6 +261,11 @@ struct TextureCacheData
 
 		printf(" %dx%d @ 0x%X",8<<tsp.TexU,8<<tsp.TexV,tcw.TexAddr<<3);
 		printf(" id=%d\n", texID);
+	}
+
+	bool IsPaletted()
+	{
+		return tcw.PixelFmt == PixelPal4 || tcw.PixelFmt == PixelPal8;
 	}
 
 	//Create GL texture from tsp/tcw
@@ -294,19 +298,9 @@ struct TextureCacheData
 
 		//PAL texture
 		if (tex->bpp==4)
-		{
-			pal_table_rev=&pal_rev_16[tcw.PalSelect];
 			indirect_color_ptr=tcw.PalSelect<<4;
-		}
 		else if (tex->bpp==8)
-		{
-			pal_table_rev=&pal_rev_256[tcw.PalSelect>>4];
 			indirect_color_ptr=(tcw.PalSelect>>4)<<8;
-		}
-		else
-		{
-			pal_table_rev=0;
-		}
 
 		//VQ table (if VQ tex)
 		if (tcw.VQ_Comp)
@@ -383,12 +377,17 @@ struct TextureCacheData
 		GLuint textype=tex->type;
 
 		bool has_alpha = false;
-		if (pal_table_rev) 
+		if (IsPaletted())
 		{
 			textype=PAL_TYPE[PAL_RAM_CTRL&3];
-			pal_local_rev=*pal_table_rev; //make sure to update the local rev, so it won't have to redo the tex
 			if (textype == GL_UNSIGNED_INT_8_8_8_8)
 				has_alpha = true;
+
+			// Get the palette hash to check for future updates
+			if (tcw.PixelFmt == PixelPal4)
+				palette_hash = pal_hash_16[tcw.PalSelect];
+			else
+				palette_hash = pal_hash_256[tcw.PalSelect >> 4];
 		}
 
 		palette_index=indirect_color_ptr; //might be used if pal. tex
@@ -420,7 +419,7 @@ struct TextureCacheData
 				|| w * h > settings.rend.MaxFilteredTextureSize
 					* settings.rend.MaxFilteredTextureSize		// Don't process textures that are too big
 				|| tcw.PixelFmt == PixelYUV)					// Don't process YUV textures
-			&& (pal_table_rev == NULL || textype != GL_UNSIGNED_INT_8_8_8_8)
+			&& (!IsPaletted() || textype != GL_UNSIGNED_INT_8_8_8_8)
 			&& texconv != NULL)
 			need_32bit_buffer = false;
 		// TODO avoid upscaling/depost. textures that change too often
@@ -526,8 +525,13 @@ struct TextureCacheData
 		}
 	}
 
-	//true if : dirty or paletted texture and revs don't match
-	bool NeedsUpdate() { return (dirty) || (pal_table_rev!=0 && *pal_table_rev!=pal_local_rev); }
+	//true if : dirty or paletted texture and hashes don't match
+	bool NeedsUpdate() {
+		bool rc = dirty
+				|| (tcw.PixelFmt == PixelPal4 && palette_hash != pal_hash_16[tcw.PalSelect])
+				|| (tcw.PixelFmt == PixelPal8 && palette_hash != pal_hash_256[tcw.PalSelect >> 4]);
+		return rc;
+	}
 	
 	void Delete()
 	{
@@ -800,7 +804,10 @@ TextureCacheData *getTextureCacheData(TSP tsp, TCW tcw) {
 	u64 key = tsp.full & TSPTextureCacheMask.full;
 	if (tcw.PixelFmt == PixelPal4 || tcw.PixelFmt == PixelPal8)
 		// Paletted textures have a palette selection that must be part of the key
-		key |= (u64)tcw.full << 32;
+		// We also add the palette type to the key to avoid thrashing the cache
+		// when the palette type is changed. If the palette type is changed back in the future,
+		// this texture will stil be available.
+		key |= ((u64)tcw.full << 32) | ((PAL_RAM_CTRL & 3) << 6);
 	else
 		key |= (u64)(tcw.full & TCWTextureCacheMask.full) << 32;
 
