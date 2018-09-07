@@ -320,9 +320,8 @@ public class FileBrowser extends Fragment {
 			childview.findViewById(R.id.childview).setOnClickListener(
 					new OnClickListener() {
 						public void onClick(View view) {
-							File f = (File) view.getTag();
 							vib.vibrate(50);
-							mCallback.onGameSelected(f != null ? Uri.fromFile(f) : Uri.EMPTY);
+							mCallback.onGameSelected(Uri.EMPTY);
 							vib.vibrate(250);
 						}
 					});
