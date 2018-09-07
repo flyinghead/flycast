@@ -74,7 +74,7 @@ public class OptionsFragment extends Fragment {
 		void launchBIOSdetection();
 	}
 
-	@Override
+	@Override  @SuppressWarnings("deprecation")
 	public void onAttach(Activity activity) {
 		super.onAttach(activity);
 
@@ -117,8 +117,8 @@ public class OptionsFragment extends Fragment {
 		// Specialized handler for devices with an extSdCard mount for external
 		HashSet<String> extStorage = FileBrowser.getExternalMounts();
 		if (extStorage != null && !extStorage.isEmpty()) {
-			for (Iterator<String> sd = extStorage.iterator(); sd.hasNext();) {
-				String sdCardPath = sd.next().replace("mnt/media_rw", "storage");
+			for (String sd : extStorage) {
+				String sdCardPath = sd.replace("mnt/media_rw", "storage");
 				if (!sdCardPath.equals(sdcard.getAbsolutePath())) {
 					game_directory = sdCardPath;
 				}
@@ -239,7 +239,7 @@ public class OptionsFragment extends Fragment {
 		String[] bios = getResources().getStringArray(R.array.bios);
 		codes = getResources().getStringArray(R.array.bioscode);
 		Spinner bios_spnr = (Spinner) getView().findViewById(R.id.bios_spinner);
-		ArrayAdapter<String> biosAdapter = new ArrayAdapter<String>(
+		ArrayAdapter<String> biosAdapter = new ArrayAdapter<>(
 				getActivity(), android.R.layout.simple_spinner_item, bios);
 		biosAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		bios_spnr.setAdapter(biosAdapter);
@@ -292,7 +292,7 @@ public class OptionsFragment extends Fragment {
 
 		String[] cables = getResources().getStringArray(R.array.cable);
 		Spinner cable_spnr = (Spinner) getView().findViewById(R.id.cable_spinner);
-		ArrayAdapter<String> cableAdapter = new ArrayAdapter<String>(
+		ArrayAdapter<String> cableAdapter = new ArrayAdapter<>(
 				getActivity(), R.layout.spinner_selected, cables);
 		cableAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		cable_spnr.setAdapter(cableAdapter);
@@ -315,7 +315,7 @@ public class OptionsFragment extends Fragment {
 
 		String[] regions = getResources().getStringArray(R.array.region);
 		Spinner region_spnr = (Spinner) getView().findViewById(R.id.region_spinner);
-		ArrayAdapter<String> regionAdapter = new ArrayAdapter<String>(
+		ArrayAdapter<String> regionAdapter = new ArrayAdapter<>(
 				getActivity(), R.layout.spinner_selected, regions);
 		regionAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		region_spnr.setAdapter(regionAdapter);
@@ -333,7 +333,7 @@ public class OptionsFragment extends Fragment {
 
 		String[] broadcasts = getResources().getStringArray(R.array.broadcast);
 		Spinner broadcast_spnr = (Spinner) getView().findViewById(R.id.broadcast_spinner);
-		ArrayAdapter<String> broadcastAdapter = new ArrayAdapter<String>(
+		ArrayAdapter<String> broadcastAdapter = new ArrayAdapter<>(
 				getActivity(), R.layout.spinner_selected, broadcasts);
 		broadcastAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		broadcast_spnr.setAdapter(broadcastAdapter);
@@ -526,7 +526,7 @@ public class OptionsFragment extends Fragment {
 		String[] depths = getResources().getStringArray(R.array.depth);
 
 		Spinner depth_spnr = (Spinner) getView().findViewById(R.id.depth_spinner);
-		ArrayAdapter<String> depthAdapter = new ArrayAdapter<String>(
+		ArrayAdapter<String> depthAdapter = new ArrayAdapter<>(
 				getActivity(), R.layout.spinner_selected, depths);
 		depthAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		depth_spnr.setAdapter(depthAdapter);
@@ -580,11 +580,8 @@ public class OptionsFragment extends Fragment {
 			for (final String type : mediaTypes) {
 				filter[i] = new FilenameFilter() {
 					public boolean accept(File dir, String name) {
-						if (dir.getName().startsWith(".") || name.startsWith(".")) {
-							return false;
-						} else {
-							return StringUtils.endsWithIgnoreCase(name, "." + type);
-						}
+						return !dir.getName().startsWith(".") && !name.startsWith(".")
+								&& StringUtils.endsWithIgnoreCase(name, "." + type);
 					}
 				};
 				i++;
@@ -602,7 +599,7 @@ public class OptionsFragment extends Fragment {
 					themes[i] = items.get(i).getName();
 				}
 				themes[items.size()] = "None";
-				ArrayAdapter<String> themeAdapter = new ArrayAdapter<String>(
+				ArrayAdapter<String> themeAdapter = new ArrayAdapter<>(
 						options.get().getActivity(), android.R.layout.simple_spinner_item, themes);
 				themeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 				options.get().mSpnrThemes.setAdapter(themeAdapter);
@@ -629,10 +626,14 @@ public class OptionsFragment extends Fragment {
 	}
 
 	private void hideSoftKeyBoard() {
-		InputMethodManager iMm = (InputMethodManager) getActivity()
-				.getSystemService(Context.INPUT_METHOD_SERVICE);
-		if (iMm != null && iMm.isAcceptingText()) {
-			iMm.hideSoftInputFromWindow(getActivity().getCurrentFocus().getWindowToken(), 0);
+		try {
+			InputMethodManager iMm = (InputMethodManager) getActivity()
+					.getSystemService(Context.INPUT_METHOD_SERVICE);
+			if (iMm != null && iMm.isAcceptingText()) {
+				iMm.hideSoftInputFromWindow(getActivity().getCurrentFocus().getWindowToken(), 0);
+			}
+		} catch (NullPointerException e) {
+			// Keyboard may still be visible
 		}
 	}
 
