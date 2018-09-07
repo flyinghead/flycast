@@ -263,6 +263,13 @@ void dc_term()
 	SaveRomFiles(get_writable_data_path("/data/"));
     
     TermAudio();
+
+#if !defined(TARGET_NO_WEBUI) && !defined(TARGET_NO_THREADS)
+    extern void sighandler(int sig);
+	sighandler(0);
+	webui_thd.WaitToEnd();
+#endif
+
 }
 
 #if defined(_ANDROID)
