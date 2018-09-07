@@ -89,7 +89,7 @@
     <string name="controller_b">Controller B</string>
     <string name="controller_c">Controller C</string>
     <string name="controller_d">Controller D</string>
-    <string name="controller_not_connected">Controller Not Connected</string>
+    <string name="controller_not_connected">Controller Not Connected %1$s</string>
     <string name="controller_none_selected">No Controller Selected</string>
     <string name="select">Select</string>
     <string name="remove">Remove</string>

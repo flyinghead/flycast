@@ -61,7 +61,7 @@ Last Edit: 21 May 2014
     <string name="controller_b">Manette B</string>
     <string name="controller_c">Manette C</string>
     <string name="controller_d">Manette D</string>
-    <string name="controller_not_connected">Manette non connectée</string>
+    <string name="controller_not_connected">Manette non connectée %1$s</string>
     <string name="controller_none_selected">Aucune manette selectionnée</string>
     <string name="select">Choisir</string>
     <string name="remove">Supprimer</string>
