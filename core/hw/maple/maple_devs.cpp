@@ -231,11 +231,11 @@ struct maple_sega_controller: maple_base
 				w8(0x80);
 			}
 
-		return MDRS_DataTransfer;
+			return MDRS_DataTransfer;
 
 		default:
 			//printf("UNKOWN MAPLE COMMAND %d\n",cmd);
-			return MDRE_UnknownFunction;
+			return MDRE_UnknownCmd;
 		}
 	}	
 };
@@ -831,18 +831,18 @@ struct maple_microphone: maple_base
 					return MDRS_DeviceReply;//MDRS_DataTransfer;
 				default:
 					LOGW("maple_microphone::dma UNHANDLED secondword %#010x\n",secondword);
-					break;
+					return MDRE_UnknownFunction;
 				}
 			}
 			default:
 				LOGW("maple_microphone::dma UNHANDLED function %#010x\n",function);
-				break;
+				return MDRE_UnknownFunction;
 			}
 		}
 
 		default:
 			LOGW("maple_microphone::dma UNHANDLED MAPLE COMMAND %d\n",cmd);
-			return MDRE_UnknownFunction;
+			return MDRE_UnknownCmd;
 		}
 	}	
 };
@@ -934,7 +934,7 @@ struct maple_sega_purupuru : maple_base
 
 		default:
 			//printf("UNKOWN MAPLE COMMAND %d\n",cmd);
-			return MDRE_UnknownFunction;
+			return MDRE_UnknownCmd;
 		}
 	}
 };
@@ -952,58 +952,55 @@ struct maple_keyboard : maple_base
 		case MDC_DeviceRequest:
 			//caps
 			//4
-			w32(1 << 30);
+			w32(MFID_6_Keyboard);
 
 			//struct data
 			//3*4
-			w32( 0xfe060f00);
-			w32( 0);
-			w32( 0);
+			w32(0x80000502);	// US, 104 keys
+			w32(0);
+			w32(0);
 			//1	area code
 			w8(0xFF);
 			//1	direction
 			w8(0);
-			//30
+			// Product name (30)
 			for (u32 i = 0; i < 30; i++)
 			{
 				w8((u8)maple_sega_kbd_name[i]);
 			}
-			//ptr_out += 30;
 
-			//60
+			// License (60)
 			for (u32 i = 0; i < 60; i++)
 			{
 				w8((u8)maple_sega_brand[i]);
 			}
-			//ptr_out += 60;
 
-			//2
+			// Low-consumption standby current (2)
 			w16(0x01AE);
 
-			//2
+			// Maximum current consumption (2)
 			w16(0x01F5);
 
-			return 5;
+			return MDRS_DeviceStatus;
 
 		case MDCF_GetCondition:
-			w32((1 << 30));
+			w32(MFID_6_Keyboard);
 			//struct data
 			//int8 shift          ; shift keys pressed (bitmask)	//1
 			w8(kb_shift);
 			//int8 led            ; leds currently lit			//1
 			w8(kb_led);
 			//int8 key[6]         ; normal keys pressed			//6
-			for (int i=0;i<6;i++)
+			for (int i = 0; i < 6; i++)
 			{
 				w8(kb_key[i]);
 			}
 
-			return 8;
+			return MDRS_DataTransfer;
 
 		default:
 			printf("Keyboard: unknown MAPLE COMMAND %d\n", cmd);
-
-			return 7;
+			return MDRE_UnknownCmd;
 		}
 	}
 };

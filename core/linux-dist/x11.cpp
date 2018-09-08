@@ -133,20 +133,20 @@ static void init_kb_map()
 	kb_map[KEY_TAB] = 0x2B;
 	kb_map[KEY_SPACE] = 0x2C;
 
-	kb_map[20] = 0x2D;	// key right of 0
-	kb_map[21] = 0x2E;	// key right of previous one
-	kb_map[34] = 0x2F;	// key right of P
-	kb_map[35] = 0x30;	// key right of previous one
+	kb_map[20] = 0x2D;	// -
+	kb_map[21] = 0x2E;	// =
+	kb_map[34] = 0x2F;	// [
+	kb_map[35] = 0x30;	// ]
 
-	//kb_map[94] = 0x31;	// \ (US) also 64, not used
+	kb_map[94] = 0x31;	// \ (US) unsure of keycode
 
 	//32-34 "]", ";" and ":" (the 3 keys right of L)
-	kb_map[47] = 0x32;
-	kb_map[48] = 0x33;
-	kb_map[51] = 0x34;
+	kb_map[51] = 0x32;	// ~ (non-US) *,µ in FR layout
+	kb_map[47] = 0x33;	// ;
+	kb_map[48] = 0x34;	// '
 
 	//35 hankaku/zenkaku / kanji (top left)
-	kb_map[49] = 0x35; // `~ (US)
+	kb_map[49] = 0x35;	// `~ (US)
 
 	//36-38 ",", "." and "/" (the 3 keys right of M)
 	kb_map[59] = 0x36;
@@ -163,9 +163,9 @@ static void init_kb_map()
 	kb_map[KEY_F12] = 0x45;
 
 	//46-4E Control keys above cursor keys
-	kb_map[107] = 0x46;
-	kb_map[78] = 0x47;
-	kb_map[127] = 0x48;
+	kb_map[107] = 0x46;		// Print Screen
+	kb_map[78] = 0x47;		// Scroll Lock
+	kb_map[127] = 0x48;		// Pause
 	kb_map[KEY_INS] = 0x49;
 	kb_map[KEY_HOME] = 0x4A;
 	kb_map[KEY_PGUP] = 0x4B;
@@ -204,11 +204,20 @@ static void init_kb_map()
 	kb_map[90] = 0x62;
 	//63 "." (Numeric keypad)
 	kb_map[91] = 0x63;
-	//64 "\" (right of left Shift)
-	kb_map[94] = 0x64;
+	//64 #| (non-US)
+	//kb_map[94] = 0x64;
 	//65 S3 key
-	//66-86 Not used
-	//8C-FF Not used
+	//66-A4 Not used
+	//A5-DF Reserved
+	//E0 Left Control
+	//E1 Left Shift
+	//E2 Left Alt
+	//E3 Left S1
+	//E4 Right Control
+	//E5 Right Shift
+	//E6 Right Alt
+	//E7 Right S3
+	//E8-FF Reserved
 }
 
 static u32 kb_used = 0;
@@ -235,6 +244,11 @@ void input_x11_handle()
 							kb_shift &= ~(0x02 | 0x20);
 						else
 							kb_shift |= (0x02 | 0x20);
+					if (e.xkey.keycode == KEY_LCTRL || e.xkey.keycode == KEY_RCTRL)
+						if (e.type == KeyRelease)
+							kb_shift &= ~(0x01 | 0x10);
+						else
+							kb_shift |= (0x01 | 0x10);
 
 					u8 dc_keycode = kb_map[e.xkey.keycode & 0xFF];
 					if (dc_keycode != 0)
