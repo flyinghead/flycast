@@ -55,7 +55,7 @@
     <string name="controller_b">Controller B</string>
     <string name="controller_c">Controller C</string>
     <string name="controller_d">Controller D</string>
-    <string name="controller_not_connected">Controller ikke forbundet</string>
+    <string name="controller_not_connected">Controller ikke forbundet %1$s</string>
     <string name="controller_none_selected">Ingen controller valgt</string>
     <string name="select">Vælg</string>
     <string name="remove">Fjern</string>

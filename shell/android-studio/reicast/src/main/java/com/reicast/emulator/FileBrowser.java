@@ -92,7 +92,7 @@ public class FileBrowser extends Fragment {
 	}
 
 	public static HashSet<String> getExternalMounts() {
-		final HashSet<String> out = new HashSet<String>();
+		final HashSet<String> out = new HashSet<>();
 		String reg = "(?i).*vold.*(vfat|ntfs|exfat|fat32|ext3|ext4|fuse|sdfat).*rw.*";
 		StringBuilder s = new StringBuilder();
 		try {
@@ -133,7 +133,7 @@ public class FileBrowser extends Fragment {
 		void onFolderSelected(Uri uri);
 	}
 
-	@Override
+	@Override @SuppressWarnings("deprecation")
 	public void onAttach(Activity activity) {
 		super.onAttach(activity);
 
@@ -176,9 +176,9 @@ public class FileBrowser extends Fragment {
 		}
 		installButtons();
 		if (!games) {
-			new LocateGames(R.array.flash).execute(home_directory);
+			new LocateGames(this, R.array.flash).execute(home_directory);
 		} else {
-			new LocateGames(R.array.images).execute(game_directory);
+			new LocateGames(this, R.array.images).execute(game_directory);
 		}
 	}
 
@@ -216,11 +216,13 @@ public class FileBrowser extends Fragment {
 		}
 	}
 
-	private final class LocateGames extends AsyncTask<String, Integer, List<File>> {
-		
+	private static final class LocateGames extends AsyncTask<String, Integer, List<File>> {
+
+		private WeakReference<FileBrowser> browser;
 		private int array;
 		
-		public LocateGames(int arrayType) {
+		LocateGames(FileBrowser context, int arrayType) {
+			browser = new WeakReference<>(context);
 			this.array = arrayType;
 		}
 
@@ -229,7 +231,7 @@ public class FileBrowser extends Fragment {
 			File storage = new File(paths[0]);
 
 			// array of valid image file extensions
-			String[] mediaTypes = getActivity().getResources().getStringArray(array);
+			String[] mediaTypes = browser.get().getActivity().getResources().getStringArray(array);
 			FilenameFilter[] filter = new FilenameFilter[mediaTypes.length];
 
 			int i = 0;
@@ -237,18 +239,14 @@ public class FileBrowser extends Fragment {
 				filter[i] = new FilenameFilter() {
 
 					public boolean accept(File dir, String name) {
-						if (dir.getName().equals("obb") || dir.getName().equals("cache") 
-							|| dir.getName().startsWith(".") || name.startsWith(".")) {
-							return false;
-						} else if (array == R.array.flash && !name.startsWith("dc_")) {
-							return false;
-						} else if (searchQuery == null || name.toLowerCase(Locale.getDefault())
-								.contains(searchQuery.toLowerCase(Locale.getDefault())))
-							return StringUtils.endsWithIgnoreCase(name, "." + type);
-						else
-							return false;
+                        return (!dir.getName().equals("obb") && !dir.getName().equals("cache")
+                                && !dir.getName().startsWith(".") && !name.startsWith("."))
+                                && (array != R.array.flash && name.startsWith("dc_"))
+                                && (browser.get().searchQuery == null
+                                || name.toLowerCase(Locale.getDefault()).contains(
+                                browser.get().searchQuery.toLowerCase(Locale.getDefault())))
+                                && StringUtils.endsWithIgnoreCase(name, "." + type);
 					}
-
 				};
 				i++;
 			}
@@ -265,19 +263,19 @@ public class FileBrowser extends Fragment {
 		@Override
 		protected void onPostExecute(List<File> items) {
 			if (items != null && !items.isEmpty()) {
-				LinearLayout list = (LinearLayout) getActivity().findViewById(R.id.game_list);
+				LinearLayout list = (LinearLayout) browser.get().getActivity().findViewById(R.id.game_list);
 				if (list.getChildCount() > 0) {
 					list.removeAllViews();
 				}
 
-				String heading = getActivity().getString(R.string.games_listing);
-				createListHeader(heading, list, array == R.array.images);
+				String heading = browser.get().getActivity().getString(R.string.games_listing);
+				browser.get().createListHeader(heading, list, array == R.array.images);
 				for (int i = 0; i < items.size(); i++) {
-					createListItem(list, items.get(i), i, array == R.array.images);
+					browser.get().createListItem(list, items.get(i), i, array == R.array.images);
 				}
 				list.invalidate();
 			} else {
-				browseStorage(array == R.array.images);
+				browser.get().browseStorage(array == R.array.images);
 			}
 		}
 	}
@@ -290,15 +288,15 @@ public class FileBrowser extends Fragment {
 			if (game_directory.equals(sdcard.getAbsolutePath())) {
 				HashSet<String> extStorage = FileBrowser.getExternalMounts();
 				if (extStorage != null && !extStorage.isEmpty()) {
-					for (Iterator<String> sd = extStorage.iterator(); sd.hasNext();) {
-						String sdCardPath = sd.next().replace("mnt/media_rw", "storage");
-						if (!sdCardPath.equals(sdcard.getAbsolutePath())) {
-							if (new File(sdCardPath).canRead()) {
-								(new navigate(this)).execute(new File(sdCardPath));
-								return;
-							}
-						}
-					}
+                    for (String sd : extStorage) {
+                        String sdCardPath = sd.replace("mnt/media_rw", "storage");
+                        if (!sdCardPath.equals(sdcard.getAbsolutePath())) {
+                            if (new File(sdCardPath).canRead()) {
+                                (new navigate(this)).execute(new File(sdCardPath));
+                                return;
+                            }
+                        }
+                    }
 				}
 			}
 			(new navigate(this)).executeOnExecutor(
@@ -320,9 +318,8 @@ public class FileBrowser extends Fragment {
 			childview.findViewById(R.id.childview).setOnClickListener(
 					new OnClickListener() {
 						public void onClick(View view) {
-							File f = (File) view.getTag();
 							vib.vibrate(50);
-							mCallback.onGameSelected(f != null ? Uri.fromFile(f) : Uri.EMPTY);
+							mCallback.onGameSelected(Uri.EMPTY);
 							vib.vibrate(250);
 						}
 					});
@@ -377,7 +374,7 @@ public class FileBrowser extends Fragment {
 							home_directory = game.getAbsolutePath().substring(0,
 									game.getAbsolutePath().lastIndexOf(File.separator))
 									.replace("/data", "");
-							if (!DataDirectoryBIOS()) {
+							if (requireDataBIOS()) {
 								showToastMessage(getActivity().getString(R.string.config_data,
 										home_directory), Snackbar.LENGTH_LONG);
 							}
@@ -438,7 +435,7 @@ public class FileBrowser extends Fragment {
 		protected List<File> doInBackground(File... paths) {
 			heading = paths[0].getAbsolutePath();
 
-			ArrayList<File> list = new ArrayList<File>();
+			ArrayList<File> list = new ArrayList<>();
 
 			File flist[] = paths[0].listFiles();
 			parent = paths[0].getParentFile();
@@ -477,7 +474,7 @@ public class FileBrowser extends Fragment {
 
 					((ImageView) childview.findViewById(R.id.item_icon)).setImageResource(file == null
 							? R.drawable.ic_settings: file.isDirectory()
-							? R.drawable.ic_folder_black_24dp : R.drawable.disk_unknown);;
+							? R.drawable.ic_folder_black_24dp : R.drawable.disk_unknown);
 
 					childview.setTag(file);
 
@@ -509,7 +506,7 @@ public class FileBrowser extends Fragment {
 													.replace("/data", "");
 											browser.get().mPrefs.edit().putString(
 													Config.pref_home, browser.get().home_directory).apply();
-											if (!browser.get().DataDirectoryBIOS()) {
+											if (browser.get().requireDataBIOS()) {
 												browser.get().showToastMessage(browser.get()
 														.getActivity().getString(R.string.config_data,
 																browser.get().home_directory),
@@ -545,23 +542,24 @@ public class FileBrowser extends Fragment {
 			}
 		}
 	}
-	
-	private boolean DataDirectoryBIOS() {
-		File data_directory = new File(home_directory, "data");
-		if (!data_directory.exists() || !data_directory.isDirectory()) {
-			data_directory.mkdirs();
-			File bios = new File(home_directory, "dc_boot.bin");
-			if (bios.renameTo(new File(home_directory, "data/dc_boot.bin"))) {
-				File flash = new File(home_directory, "dc_flash.bin");
-				return flash.renameTo(new File(home_directory, "data/dc_flash.bin"));
-			}
-			return false;
-		} else {
-			File bios = new File(home_directory, "data/dc_boot.bin");
-			File flash = new File(home_directory, "data/dc_flash.bin");
-			return (bios.exists() && flash.exists());
-		}
-	}
+
+    private boolean requireDataBIOS() {
+        File data_directory = new File(home_directory, "data");
+        if (data_directory.exists() && data_directory.isDirectory()) {
+            File bios = new File(home_directory, "data/dc_boot.bin");
+            File flash = new File(home_directory, "data/dc_flash.bin");
+            return !(bios.exists() && flash.exists());
+        } else {
+            if (data_directory.mkdirs()) {
+                File bios = new File(home_directory, "dc_boot.bin");
+                if (bios.renameTo(new File(home_directory, "data/dc_boot.bin"))) {
+                    return !new File(home_directory, "dc_flash.bin").renameTo(
+                            new File(home_directory, "data/dc_flash.bin"));
+                }
+            }
+            return true;
+        }
+    }
 
 	private void showToastMessage(String message, int duration) {
 		ConstraintLayout layout = (ConstraintLayout) getActivity().findViewById(R.id.mainui_layout);

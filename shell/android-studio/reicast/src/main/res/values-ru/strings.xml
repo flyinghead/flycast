@@ -67,7 +67,7 @@
     <string name="controller_b">Контроллер B</string>
     <string name="controller_c">Контроллер C</string>
     <string name="controller_d">Контроллер D</string>
-    <string name="controller_not_connected">Контроллер не подключен</string>
+    <string name="controller_not_connected">Контроллер не подключен %1$s</string>
     <string name="controller_none_selected">Контроллер не выбран</string>
     <string name="select">Назначить</string>
     <string name="remove">Удалить</string>

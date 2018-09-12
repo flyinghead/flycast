@@ -32,7 +32,7 @@
     <string name="controller_b">Controlador B</string>
     <string name="controller_c">Controlador C</string>
     <string name="controller_d">Controlador D</string>
-    <string name="controller_not_connected">Controller No conectado</string>
+    <string name="controller_not_connected">Controller No conectado %1$s</string>
     <string name="controller_none_selected">No Controlador seleccionado</string>
     <string name="select">Seleccionar</string>
     <string name="remove">Eliminar</string>

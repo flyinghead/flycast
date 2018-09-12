@@ -31,7 +31,7 @@
     <string name="controller_b">控制器B</string>
     <string name="controller_c">控制器C</string>
     <string name="controller_d">控制器D</string>
-    <string name="controller_not_connected">控制器未連接</string>
+    <string name="controller_not_connected">控制器未連接 %1$s</string>
     <string name="controller_none_selected">未選擇任何控制器</string>
     <string name="select">選擇</string>
     <string name="remove">移除</string>

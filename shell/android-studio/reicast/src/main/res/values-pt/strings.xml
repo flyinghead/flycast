@@ -64,7 +64,7 @@
     <string name="controller_b">Controle B</string>
     <string name="controller_c">Controle C</string>
     <string name="controller_d">Controle D</string>
-    <string name="controller_not_connected">Controle não está Conectado</string>
+    <string name="controller_not_connected">Controle não está Conectado %1$s</string>
     <string name="controller_none_selected">Nenhum controle selecionado</string>
     <string name="select">Selecionar</string>
     <string name="remove">Remover</string>
