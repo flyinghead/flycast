@@ -97,6 +97,8 @@
     <ClCompile Include="..\core\hw\maple\maple_devs.cpp" />
     <ClCompile Include="..\core\hw\maple\maple_helper.cpp" />
     <ClCompile Include="..\core\hw\maple\maple_if.cpp" />
+    <ClCompile Include="..\core\hw\modem\modem.cpp" />
+    <ClCompile Include="..\core\hw\modem\pppd.cpp" />
     <ClCompile Include="..\core\hw\mem\_vmem.cpp" />
     <ClCompile Include="..\core\hw\naomi\naomi.cpp" />
     <ClCompile Include="..\core\hw\naomi\naomi_cart.cpp" />
@@ -264,6 +266,9 @@
     <ClInclude Include="..\core\hw\maple\maple_helper.h" />
     <ClInclude Include="..\core\hw\maple\maple_if.h" />
     <ClInclude Include="..\core\hw\mem\_vmem.h" />
+    <ClInclude Include="..\core\hw\modem\modem.h" />
+    <ClInclude Include="..\core\hw\modem\modem_regs.h" />
+    <ClInclude Include="..\core\hw\modem\pppd.h" />
     <ClInclude Include="..\core\hw\naomi\naomi.h" />
     <ClInclude Include="..\core\hw\naomi\naomi_cart.h" />
     <ClInclude Include="..\core\hw\naomi\naomi_regs.h" />
