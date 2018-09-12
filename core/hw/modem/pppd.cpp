@@ -20,6 +20,7 @@
     You should have received a copy of the GNU General Public License
     along with reicast.  If not, see <https://www.gnu.org/licenses/>.
  */
+#include "build.h"
 
 #if HOST_OS == OS_LINUX
 
