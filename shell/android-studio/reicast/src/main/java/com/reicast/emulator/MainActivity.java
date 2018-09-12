@@ -14,6 +14,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
 import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
@@ -64,7 +65,6 @@ public class MainActivity extends AppCompatActivity implements
 				public void onSystemUiVisibilityChange(int visibility) {
 					if ((visibility & View.SYSTEM_UI_FLAG_FULLSCREEN) == 0) {
 						getWindow().getDecorView().setSystemUiVisibility(
-//                            View.SYSTEM_UI_FLAG_LAYOUT_STABLE | 
 								View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
 										| View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
 										| View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
@@ -152,6 +152,7 @@ public class MainActivity extends AppCompatActivity implements
 
 			}
 		};
+		//noinspection deprecation
 		drawer.setDrawerListener(toggle);
 		toggle.syncState();
 
@@ -262,7 +263,6 @@ public class MainActivity extends AppCompatActivity implements
 		getSupportFragmentManager().beginTransaction().replace(
 				R.id.fragment_container, optsFrag, "OPTIONS_FRAG").commit();
 		setTitle(R.string.settings);
-		return;
 	}
 
 	/**
@@ -327,8 +327,7 @@ public class MainActivity extends AppCompatActivity implements
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
 		if (keyCode == KeyEvent.KEYCODE_BACK) {
-			Fragment fragment = (FileBrowser) getSupportFragmentManager()
-					.findFragmentByTag("MAIN_BROWSER");
+			Fragment fragment = getSupportFragmentManager().findFragmentByTag("MAIN_BROWSER");
 			if (fragment != null && fragment.isVisible()) {
 				boolean readyToQuit = true;
 				if (fragment.getArguments() != null) {
@@ -380,9 +379,8 @@ public class MainActivity extends AppCompatActivity implements
 		super.onPostCreate(savedInstanceState);
 	}
 
-	@SuppressWarnings("StatementWithEmptyBody")
 	@Override
-	public boolean onNavigationItemSelected(MenuItem item) {
+	public boolean onNavigationItemSelected(@NonNull MenuItem item) {
 		// Handle navigation view item clicks here.
 		DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
 

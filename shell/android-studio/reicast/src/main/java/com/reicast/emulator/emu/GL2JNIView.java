@@ -352,9 +352,9 @@ public class GL2JNIView extends GLSurfaceView
 
                         int pre = 255;
 
-                        if (y>vjoy[j][1] && y<=(vjoy[j][1]+vjoy[j][3]))
+                        if (y > vjoy[j][1] && y <= (vjoy[j][1]+vjoy[j][3]))
                         {
-                            if (vjoy[j][4]>=-2)
+                            if (vjoy[j][4] >= -2)
                             {
                                 if (vjoy[j][5]==0)
                                     if (!editVjoyMode && touchVibrationEnabled)
@@ -363,7 +363,7 @@ public class GL2JNIView extends GLSurfaceView
                             }
 
 
-                            if (vjoy[j][4]==-3)
+                            if (vjoy[j][4] == -3)
                             {
                                 if (editVjoyMode) {
                                     selectedVjoyElement = 5; // Analog
@@ -375,39 +375,35 @@ public class GL2JNIView extends GLSurfaceView
                                     JNIdc.vjoy(j+1, vjoy[j+1][0], vjoy[j+1][1] , vjoy[j+1][2], vjoy[j+1][3]);
                                     anal_id=event.getPointerId(i);
                                 }
-                            }
-                            else if (vjoy[j][4]==-4);
-                            else if(vjoy[j][4]==-1) {
-                                if (editVjoyMode) {
-                                    selectedVjoyElement = 3; // Left Trigger
-                                    resetEditMode();
+                            } else if (vjoy[j][4] != -4) {
+                                if (vjoy[j][4] == -1) {
+                                    if (editVjoyMode) {
+                                        selectedVjoyElement = 3; // Left Trigger
+                                        resetEditMode();
+                                    } else {
+                                        lt[0] = pre;
+                                        lt_id = event.getPointerId(i);
+                                    }
+                                } else if (vjoy[j][4] == -2) {
+                                    if (editVjoyMode) {
+                                        selectedVjoyElement = 4; // Right Trigger
+                                        resetEditMode();
+                                    } else {
+                                        rt[0] = pre;
+                                        rt_id = event.getPointerId(i);
+                                    }
                                 } else {
-                                    lt[0]=pre;
-                                    lt_id=event.getPointerId(i);
+                                    if (editVjoyMode) {
+                                        selectedVjoyElement = getElementIdFromButtonId(j);
+                                        resetEditMode();
+                                    } else
+                                        rv &= ~(int) vjoy[j][4];
                                 }
-                            }
-                            else if (vjoy[j][4]==-2) {
-                                if (editVjoyMode) {
-                                    selectedVjoyElement = 4; // Right Trigger
-                                    resetEditMode();
-                                } else{
-                                    rt[0]=pre;
-                                    rt_id=event.getPointerId(i);
-                                }
-                            }
-                            else {
-                                if (editVjoyMode) {
-                                    selectedVjoyElement = getElementIdFromButtonId(j);
-                                    resetEditMode();
-                                } else
-                                    rv&=~(int)vjoy[j][4];
                             }
                         }
                     }
                 }
-            }
-            else
-            {
+            } else {
                 if (x<vjoy[11][0])
                     x=vjoy[11][0];
                 else if (x>(vjoy[11][0]+vjoy[11][2]))

@@ -27,6 +27,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.ref.WeakReference;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
@@ -62,21 +63,22 @@ public class AboutFragment extends Fragment {
 			e.printStackTrace();
 		}
 
-		new retrieveGitTask().execute(Config.git_api);
+		new retrieveGitTask(this).execute(Config.git_api);
 	}
 
-	private class retrieveGitTask extends
+	private static class retrieveGitTask extends
 			AsyncTask<String, Integer, ArrayList<HashMap<String, String>>> {
 
-		@Override
-		protected void onPreExecute() {
+		private WeakReference<AboutFragment> ref;
 
+		retrieveGitTask(AboutFragment context) {
+			ref = new WeakReference<>(context);
 		}
 
 		@Override
 		protected ArrayList<HashMap<String, String>> doInBackground(
 				String... paths) {
-			ArrayList<HashMap<String, String>> commitList = new ArrayList<HashMap<String, String>>();
+			ArrayList<HashMap<String, String>> commitList = new ArrayList<>();
 			try {
 				JSONArray gitObject = getContent(paths[0]);
 				for (int i = 0; i < gitObject.length(); i++) {
@@ -89,7 +91,7 @@ public class AboutFragment extends Fragment {
 					String author = commitArray.getJSONObject("author").getString("name");
 					String committer = commitArray.getJSONObject("committer").getString("name");
 
-					String avatar = null;
+					String avatar;
 					if (!jsonObject.getString("committer").equals("null")) {
 						avatar = jsonObject.getJSONObject("committer").getString("avatar_url");
 						committer = committer + " (" + jsonObject
@@ -109,7 +111,7 @@ public class AboutFragment extends Fragment {
 							.replace("https://api.github.com/repos", "https://github.com")
 							.replace("commits", "commit");
 
-					String title = "No commit heading attached";
+					String title;
 					String message = "No commit message attached";
 
 					if (commitArray.getString("message").contains("\n\n")) {
@@ -121,7 +123,7 @@ public class AboutFragment extends Fragment {
 						title = commitArray.getString("message");
 					}
 
-					HashMap<String, String> map = new HashMap<String, String>();
+					HashMap<String, String> map = new HashMap<>();
 					map.put("Date", date);
 					map.put("Committer", committer);
 					map.put("Title", title);
@@ -130,7 +132,7 @@ public class AboutFragment extends Fragment {
 					map.put("Url", curl);
 					map.put("Author", author);
 					map.put("Avatar", avatar);
-					map.put("Build", buildId);
+					map.put("Build", ref.get().buildId);
 					commitList.add(map);
 				}
 
@@ -146,14 +148,15 @@ public class AboutFragment extends Fragment {
 		protected void onPostExecute(
 				ArrayList<HashMap<String, String>> commitList) {
 			if (commitList != null && commitList.size() > 0) {
-				ListView list = (ListView) getView().findViewById(R.id.list);
+				ListView list = (ListView) ref.get().getView().findViewById(R.id.list);
 				list.setSelector(R.drawable.list_selector);
 				list.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
-				GitAdapter adapter = new GitAdapter(getActivity(), commitList);
+				GitAdapter adapter = new GitAdapter(ref.get().getActivity(), commitList);
 				// Set adapter as specified collection
 				list.setAdapter(adapter);
 			} else {
-				showToastMessage(getActivity().getString(R.string.git_broken), Snackbar.LENGTH_SHORT);
+				ref.get().showToastMessage(ref.get().getActivity().getString(
+						R.string.git_broken), Snackbar.LENGTH_SHORT);
 			}
 
 		}
