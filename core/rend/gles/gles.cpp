@@ -330,21 +330,24 @@ void main() \n\
 		#if pp_Offset==1 && pp_BumpMap == 0 \n\
 		{ \n\
 			color.rgb+=vtx_offs.rgb; \n\
-			if (pp_FogCtrl==1) \n\
-			{ \n\
-				color = fog_clamp(color); \n\
-				color.rgb=mix(color.rgb,sp_FOG_COL_VERT.rgb,vtx_offs.a); \n\
-			} \n\
 		} \n\
 		#endif\n\
 	} \n\
 	#endif\n\
-	#if pp_FogCtrl==0 \n\
+	 \n\
+	color = fog_clamp(color); \n\
+	 \n\
+	#if pp_FogCtrl == 0 \n\
 	{ \n\
-		color = fog_clamp(color); \n\
 		color.rgb=mix(color.rgb,sp_FOG_COL_RAM.rgb,fog_mode2(gl_FragCoord.w));  \n\
 	} \n\
 	#endif\n\
+	#if pp_FogCtrl == 1 && pp_Offset==1 && pp_BumpMap == 0 \n\
+	{ \n\
+		color.rgb=mix(color.rgb,sp_FOG_COL_VERT.rgb,vtx_offs.a); \n\
+	} \n\
+	#endif\n\
+	 \n\
 	color *= trilinear_alpha; \n\
 	 \n\
 	#if cp_AlphaTest == 1 \n\
