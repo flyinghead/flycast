@@ -13,6 +13,7 @@
 #include "hw/gdrom/gdrom_if.h"
 #include "hw/aica/aica_if.h"
 #include "hw/naomi/naomi.h"
+#include "hw/modem/modem.h"
 
 #include "hw/flashrom/flashrom.h"
 #include "reios/reios.h"
@@ -150,7 +151,6 @@ T DYNACALL ReadMem_area0(u32 addr)
 		}
 		else if ((addr>= 0x005F7000) && (addr<= 0x005F70FF)) // GD-ROM
 		{
-			//EMUERROR3("Read from area0_32 not implemented [GD-ROM], addr=%x,size=%d",addr,sz);
 	#if DC_PLATFORM == DC_PLATFORM_NAOMI
 			return (T)ReadMem_naomi(addr,sz);
 	#else
@@ -159,12 +159,10 @@ T DYNACALL ReadMem_area0(u32 addr)
 		}
 		else if (likely((addr>= 0x005F6800) && (addr<=0x005F7CFF))) //	/*:PVR i/f Control Reg.*/ -> ALL SB registers now
 		{
-			//EMUERROR2("Read from area0_32 not implemented [PVR i/f Control Reg], addr=%x",addr);
 			return (T)sb_ReadMem(addr,sz);
 		}
 		else if (likely((addr>= 0x005F8000) && (addr<=0x005F9FFF))) //	:TA / PVR Core Reg.
 		{
-			//EMUERROR2("Read from area0_32 not implemented [TA / PVR Core Reg], addr=%x",addr);
 			verify(sz==4);
 			return (T)pvr_ReadReg(addr);
 		}
@@ -172,8 +170,11 @@ T DYNACALL ReadMem_area0(u32 addr)
 	//map 0x0060 to 0x0060
 	else if ((base ==0x0060) /*&& (addr>= 0x00600000)*/ && (addr<= 0x006007FF)) //	:MODEM
 	{
-		return (T)libExtDevice_ReadMem_A0_006(addr,sz);
-		//EMUERROR2("Read from area0_32 not implemented [MODEM], addr=%x",addr);
+#if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
+		return (T)libExtDevice_ReadMem_A0_006(addr, sz);
+#else
+		return (T)ModemReadMem_A0_006(addr, sz);
+#endif
 	}
 	//map 0x0060 to 0x006F
 	else if ((base >=0x0060) && (base <=0x006F) && (addr>= 0x00600800) && (addr<= 0x006FFFFF)) //	:G2 (Reserved)
@@ -183,26 +184,21 @@ T DYNACALL ReadMem_area0(u32 addr)
 	//map 0x0070 to 0x0070
 	else if ((base ==0x0070) /*&& (addr>= 0x00700000)*/ && (addr<=0x00707FFF)) //	:AICA- Sound Cntr. Reg.
 	{
-		//EMUERROR2("Read from area0_32 not implemented [AICA- Sound Cntr. Reg], addr=%x",addr);
 		return (T) ReadMem_aica_reg(addr,sz);//libAICA_ReadReg(addr,sz);
 	}
 	//map 0x0071 to 0x0071
 	else if ((base ==0x0071) /*&& (addr>= 0x00710000)*/ && (addr<= 0x0071000B)) //	:AICA- RTC Cntr. Reg.
 	{
-		//EMUERROR2("Read from area0_32 not implemented [AICA- RTC Cntr. Reg], addr=%x",addr);
 		return (T)ReadMem_aica_rtc(addr,sz);
 	}
 	//map 0x0080 to 0x00FF
 	else if ((base >=0x0080) && (base <=0x00FF) /*&& (addr>= 0x00800000) && (addr<=0x00FFFFFF)*/) //	:AICA- Wave Memory
 	{
-		//EMUERROR2("Read from area0_32 not implemented [AICA- Wave Memory], addr=%x",addr);
-		//return (T)libAICA_ReadMem_aica_ram(addr,sz);
 		ReadMemArrRet(aica_ram.data,addr&ARAM_MASK,sz);
 	}
 	//map 0x0100 to 0x01FF
 	else if ((base >=0x0100) && (base <=0x01FF) /*&& (addr>= 0x01000000) && (addr<= 0x01FFFFFF)*/) //	:Ext. Device
 	{
-	//	EMUERROR2("Read from area0_32 not implemented [Ext. Device], addr=%x",addr);
 		return (T)libExtDevice_ReadMem_A0_010(addr,sz);
 	}
 	return 0;
@@ -218,13 +214,11 @@ void  DYNACALL WriteMem_area0(u32 addr,T data)
 	//map 0x0000 to 0x001F
 	if ((base <=0x001F) /*&& (addr<=0x001FFFFF)*/)// :MPX System/Boot ROM
 	{
-		//EMUERROR4("Write to  [MPX	System/Boot ROM] is not possible, addr=%x,data=%x,size=%d",addr,data,sz);
 		WriteBios(addr,data,sz);
 	}
 	//map 0x0020 to 0x0021
 	else if ((base >=0x0020) && (base <=0x0021) /*&& (addr>= 0x00200000) && (addr<= 0x0021FFFF)*/) // Flash Memory
 	{
-		//EMUERROR4("Write to [Flash Memory] , sz?!, addr=%x,data=%x,size=%d",addr,data,sz);
 		WriteFlash(addr,data,sz);
 	}
 	//map 0x0040 to 0x005F -> actually, I'll only map 0x005F to 0x005F, b/c the rest of it is unspammed (left to default handler)
@@ -237,7 +231,6 @@ void  DYNACALL WriteMem_area0(u32 addr,T data)
 		}
 		else if ((addr>= 0x005F7000) && (addr<= 0x005F70FF)) // GD-ROM
 		{
-			//EMUERROR4("Write to area0_32 not implemented [GD-ROM], addr=%x,data=%x,size=%d",addr,data,sz);
 #if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
 			WriteMem_naomi(addr,data,sz);
 #else
@@ -246,12 +239,10 @@ void  DYNACALL WriteMem_area0(u32 addr,T data)
 		}
 		else if ( likely((addr>= 0x005F6800) && (addr<=0x005F7CFF)) ) // /*:PVR i/f Control Reg.*/ -> ALL SB registers
 		{
-			//EMUERROR4("Write to area0_32 not implemented [PVR i/f Control Reg], addr=%x,data=%x,size=%d",addr,data,sz);
 			sb_WriteMem(addr,data,sz);
 		}
 		else if ( likely((addr>= 0x005F8000) && (addr<=0x005F9FFF)) ) // TA / PVR Core Reg.
 		{
-			//EMUERROR4("Write to area0_32 not implemented [TA / PVR Core Reg], addr=%x,data=%x,size=%d",addr,data,sz);
 			verify(sz==4);
 			pvr_WriteReg(addr,data);
 		}
@@ -259,8 +250,11 @@ void  DYNACALL WriteMem_area0(u32 addr,T data)
 	//map 0x0060 to 0x0060
 	else if ((base ==0x0060) /*&& (addr>= 0x00600000)*/ && (addr<= 0x006007FF)) // MODEM
 	{
-		//EMUERROR4("Write to area0_32 not implemented [MODEM], addr=%x,data=%x,size=%d",addr,data,sz);
-		libExtDevice_WriteMem_A0_006(addr,data,sz);
+#if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
+		libExtDevice_WriteMem_A0_006(addr, data, sz);
+#else
+		ModemWriteMem_A0_006(addr, data, sz);
+#endif
 	}
 	//map 0x0060 to 0x006F
 	else if ((base >=0x0060) && (base <=0x006F) && (addr>= 0x00600800) && (addr<= 0x006FFFFF)) // G2 (Reserved)
@@ -270,29 +264,24 @@ void  DYNACALL WriteMem_area0(u32 addr,T data)
 	//map 0x0070 to 0x0070
 	else if ((base >=0x0070) && (base <=0x0070) /*&& (addr>= 0x00700000)*/ && (addr<=0x00707FFF)) // AICA- Sound Cntr. Reg.
 	{
-		//EMUERROR4("Write to area0_32 not implemented [AICA- Sound Cntr. Reg], addr=%x,data=%x,size=%d",addr,data,sz);
 		WriteMem_aica_reg(addr,data,sz);
 		return;
 	}
 	//map 0x0071 to 0x0071
 	else if ((base >=0x0071) && (base <=0x0071) /*&& (addr>= 0x00710000)*/ && (addr<= 0x0071000B)) // AICA- RTC Cntr. Reg.
 	{
-		//EMUERROR4("Write to area0_32 not implemented [AICA- RTC Cntr. Reg], addr=%x,data=%x,size=%d",addr,data,sz);
 		WriteMem_aica_rtc(addr,data,sz);
 		return;
 	}
 	//map 0x0080 to 0x00FF
 	else if ((base >=0x0080) && (base <=0x00FF) /*&& (addr>= 0x00800000) && (addr<=0x00FFFFFF)*/) // AICA- Wave Memory
 	{
-		//EMUERROR4("Write to area0_32 not implemented [AICA- Wave Memory], addr=%x,data=%x,size=%d",addr,data,sz);
-		//aica_writeram(addr,data,sz);
 		WriteMemArrRet(aica_ram.data,addr&ARAM_MASK,data,sz);
 		return;
 	}
 	//map 0x0100 to 0x01FF
 	else if ((base >=0x0100) && (base <=0x01FF) /*&& (addr>= 0x01000000) && (addr<= 0x01FFFFFF)*/) // Ext. Device
 	{
-		//EMUERROR4("Write to area0_32 not implemented [Ext. Device], addr=%x,data=%x,size=%d",addr,data,sz);
 		libExtDevice_WriteMem_A0_010(addr,data,sz);
 	}
 	return;
