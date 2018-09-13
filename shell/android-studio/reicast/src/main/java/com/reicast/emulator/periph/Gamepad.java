@@ -202,18 +202,14 @@ public class Gamepad {
 		}
 	}
 
-	public void runCompatibilityMode(int joy, SharedPreferences prefs) {
+	public void fullCompatibilityMode(SharedPreferences prefs) {
+		for (int joy = 0; joy < 4; joy++) {
 			if (compat[joy]) {
 				String id = portId[joy];
 				joystick[joy] = prefs.getBoolean(Gamepad.pref_js_merged + id, false);
 				getCompatibilityMap(joy, portId[joy], prefs);
 				initJoyStickLayout(joy);
 			}
-	}
-
-	public void fullCompatibilityMode(SharedPreferences prefs) {
-		for (int n = 0; n < 4; n++) {
-			runCompatibilityMode(n, prefs);
 		}
 	}
 

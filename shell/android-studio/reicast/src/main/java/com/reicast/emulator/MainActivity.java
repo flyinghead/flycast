@@ -53,8 +53,6 @@ public class MainActivity extends AppCompatActivity implements
 	private SharedPreferences mPrefs;
 	private boolean hasAndroidMarket = false;
 
-	private UncaughtExceptionHandler mUEHandler;
-
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -85,7 +83,7 @@ public class MainActivity extends AppCompatActivity implements
 			displayLogOutput(prior_error);
 			mPrefs.edit().remove("prior_error").apply();
 		} else {
-			mUEHandler = new Thread.UncaughtExceptionHandler() {
+			UncaughtExceptionHandler mUEHandler = new Thread.UncaughtExceptionHandler() {
 				public void uncaughtException(Thread t, Throwable error) {
 					if (error != null) {
 						StringBuilder output = new StringBuilder();

@@ -149,11 +149,13 @@ public class GL2JNIActivity extends Activity {
             pad.deviceId_deviceDescriptor.put(joy, descriptor);
         }
 
-        for (int joy :joys) {
+        boolean detected = false;
+        for (int joy : joys) {
             Integer playerNum = pad.deviceDescriptor_PlayerNum
                     .get(pad.deviceId_deviceDescriptor.get(joy));
 
             if (playerNum != null) {
+                detected = true;
                 String id = pad.portId[playerNum];
                 pad.custom[playerNum] = prefs.getBoolean(Gamepad.pref_js_modified + id, false);
                 pad.compat[playerNum] = prefs.getBoolean(Gamepad.pref_js_compat + id, false);
@@ -187,11 +189,9 @@ public class GL2JNIActivity extends Activity {
                     pad.getCompatibilityMap(playerNum, id, prefs);
                 }
                 pad.initJoyStickLayout(playerNum);
-            } else {
-                pad.runCompatibilityMode(joy, prefs);
             }
         }
-        if (joys.length == 0) {
+        if (joys.length == 0 || !detected) {
             pad.fullCompatibilityMode(prefs);
         }
 

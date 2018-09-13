@@ -144,25 +144,22 @@ public class GL2JNINative extends NativeActivity {
 			pad.deviceId_deviceDescriptor.put(joy, descriptor);
 		}
 
+		boolean detected = false;
 		for (int joy : joys) {
 			Integer playerNum = pad.deviceDescriptor_PlayerNum
 					.get(pad.deviceId_deviceDescriptor.get(joy));
 
 			if (playerNum != null) {
+			    detected = true;
 				String id = pad.portId[playerNum];
 				pad.custom[playerNum] = prefs.getBoolean(Gamepad.pref_js_modified + id, false);
 				pad.compat[playerNum] = prefs.getBoolean(Gamepad.pref_js_compat + id, false);
 				pad.joystick[playerNum] = prefs.getBoolean(Gamepad.pref_js_merged + id, false);
-				if (InputDevice.getDevice(joy).getName()
-						.contains(Gamepad.controllers_gamekey)) {
-//						if (pad.custom[playerNum]) {
-//							setCustomMapping(id, playerNum);
-//						} else {
-//							pad.map[playerNum] = pad.getConsoleController();
-//						}
+				if (InputDevice.getDevice(joy).getName().contains(Gamepad.controllers_gamekey)) {
 					new Handler().post(new Runnable() {
 						public void run() {
-							Toast.makeText(getApplicationContext(), R.string.controller_unavailable,
+							Toast.makeText(getApplicationContext(),
+									R.string.controller_unavailable,
 									Toast.LENGTH_SHORT).show();
 							finish();
 						}
@@ -190,9 +187,10 @@ public class GL2JNINative extends NativeActivity {
 				}
 				pad.initJoyStickLayout(playerNum);
 				pad.playerNumX.put(joy, playerNum);
-			} else {
-				pad.runCompatibilityMode(joy, prefs);
 			}
+		}
+        if (joys.length == 0 || !detected) {
+			pad.fullCompatibilityMode(prefs);
 		}
 
 		app.loadConfigurationPrefs();
