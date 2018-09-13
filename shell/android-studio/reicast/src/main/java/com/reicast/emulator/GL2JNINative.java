@@ -1,5 +1,6 @@
 package com.reicast.emulator;
 
+import android.annotation.SuppressLint;
 import android.app.NativeActivity;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
@@ -136,32 +137,29 @@ public class GL2JNINative extends NativeActivity {
 				new int[][] { p1periphs, p2periphs, p3periphs, p4periphs });
 		int joys[] = InputDevice.getDeviceIds();
 		for (int joy : joys) {
-			String descriptor = descriptor = InputDevice.getDevice(joy).getDescriptor();
+			String descriptor = InputDevice.getDevice(joy).getDescriptor();
 			Log.d("reicast", "InputDevice ID: " + joy);
 			Log.d("reicast", "InputDevice Name: " + InputDevice.getDevice(joy).getName());
 			Log.d("reicast", "InputDevice Descriptor: " + descriptor);
 			pad.deviceId_deviceDescriptor.put(joy, descriptor);
 		}
 
+		boolean detected = false;
 		for (int joy : joys) {
 			Integer playerNum = pad.deviceDescriptor_PlayerNum
 					.get(pad.deviceId_deviceDescriptor.get(joy));
 
 			if (playerNum != null) {
+			    detected = true;
 				String id = pad.portId[playerNum];
 				pad.custom[playerNum] = prefs.getBoolean(Gamepad.pref_js_modified + id, false);
 				pad.compat[playerNum] = prefs.getBoolean(Gamepad.pref_js_compat + id, false);
 				pad.joystick[playerNum] = prefs.getBoolean(Gamepad.pref_js_merged + id, false);
-				if (InputDevice.getDevice(joy).getName()
-						.contains(Gamepad.controllers_gamekey)) {
-//						if (pad.custom[playerNum]) {
-//							setCustomMapping(id, playerNum);
-//						} else {
-//							pad.map[playerNum] = pad.getConsoleController();
-//						}
+				if (InputDevice.getDevice(joy).getName().contains(Gamepad.controllers_gamekey)) {
 					new Handler().post(new Runnable() {
 						public void run() {
-							Toast.makeText(getApplicationContext(), R.string.controller_unavailable,
+							Toast.makeText(getApplicationContext(),
+									R.string.controller_unavailable,
 									Toast.LENGTH_SHORT).show();
 							finish();
 						}
@@ -189,9 +187,10 @@ public class GL2JNINative extends NativeActivity {
 				}
 				pad.initJoyStickLayout(playerNum);
 				pad.playerNumX.put(joy, playerNum);
-			} else {
-				pad.runCompatibilityMode(joy, prefs);
 			}
+		}
+        if (joys.length == 0 || !detected) {
+			pad.fullCompatibilityMode(prefs);
 		}
 
 		app.loadConfigurationPrefs();
@@ -242,6 +241,7 @@ public class GL2JNINative extends NativeActivity {
 		return pad;
 	}
 
+	@SuppressLint("RtlHardcoded")
 	public void displayFPS() {
 		fpsPop.showAtLocation(mView, Gravity.TOP | Gravity.LEFT, 20, 20);
 		fpsPop.update(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
@@ -305,14 +305,14 @@ public class GL2JNINative extends NativeActivity {
 
 	private boolean showMenu() {
 		if (popUp != null) {
-			if (!menu.dismissPopUps()) {
+			if (menu.dismissPopUps()) {
+				popUp.dismiss();
+			} else {
 				if (!popUp.isShowing()) {
 					displayPopUp(popUp);
 				} else {
 					popUp.dismiss();
 				}
-			} else {
-				popUp.dismiss();
 			}
 		}
 		return true;
@@ -436,7 +436,7 @@ public class GL2JNINative extends NativeActivity {
 
 		boolean rav = false;
 		for (int i = 0; i < pad.map[playerNum].length; i += 2) {
-			if (pad.map[playerNum][i + 0] == kc) {
+			if (pad.map[playerNum][i] == kc) {
 				if (down)
 					GL2JNIView.kcode_raw[playerNum] &= ~pad.map[playerNum][i + 1];
 				else
@@ -474,7 +474,7 @@ public class GL2JNINative extends NativeActivity {
 
 	public boolean OnNativeKeyPress(int device, int keyCode, int action, int metaState) {
 		Integer playerNum = pad.playerNumX.get(device);
-		if (playerNum != null && playerNum != -1) {
+		if (playerNum != -1) {
 			String id = pad.portId[playerNum];
 			if (action == KeyEvent.ACTION_DOWN) {
 				if (keyCode == prefs.getInt(Gamepad.pref_button_l + id, KeyEvent.KEYCODE_BUTTON_L1))
@@ -500,10 +500,9 @@ public class GL2JNINative extends NativeActivity {
 
 	//	public boolean OnNativeMotion(int device, int source, int action, int x,
 //			int y, boolean newEvent) {
-	public boolean OnNativeMotion(int device, int source, int action, int x,
-								  int y) {
+	public boolean OnNativeMotion(int device, int source, int action, int x, int y) {
 		Integer playerNum = pad.playerNumX.get(device);
-		if (playerNum != null && playerNum != -1) {
+		if (playerNum != -1) {
 			Log.d("reicast", playerNum + " - " + device + ": " + source);
 //			if (newEvent && source == Gamepad.Xperia_Touchpad) {
 			if (source == Gamepad.Xperia_Touchpad) {
@@ -526,17 +525,13 @@ public class GL2JNINative extends NativeActivity {
 				// The y-axis is inverted from normal layout
 				// Imagine it as a small MacBook touch mouse
 
-				GL2JNIView.jx[playerNum] = (int) (x * 126);
-				GL2JNIView.jy[playerNum] = (int) (y * 126);
+				GL2JNIView.jx[playerNum] = x * 126;
+				GL2JNIView.jy[playerNum] = y * 126;
 				mView.pushInput();
 				return true;
 			}
 		}
 		return false;
-	}
-
-	public GL2JNIView getGameView() {
-		return mView;
 	}
 
 	@Override

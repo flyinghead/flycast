@@ -75,7 +75,7 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 		initializeDefaults();
 	}
 
-	public void setGameID(String id) {
+	private void setGameID(String id) {
 		this.gameId = id;
 	}
 
@@ -83,7 +83,7 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 	protected String doInBackground(String... params) {
 		String filename = game_name = params[0];
 		if (isNetworkAvailable() && mPrefs.getBoolean(Config.pref_gamedetails, false)) {
-			String xmlUrl = "";
+			String xmlUrl;
 			if (gameId != null) {
 				xmlUrl = "http://legacy.thegamesdb.net/api/GetGame.php?platform=sega+dreamcast&id=" + gameId;
 			} else {
@@ -187,6 +187,7 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 							game_icon = new BitmapDrawable(
 									mContext.get().getResources(), gameImage);
 						} else {
+							//noinspection deprecation
 							game_icon = new BitmapDrawable(gameImage);
 						}
 						((ImageView) childview.get().findViewById(
@@ -233,18 +234,6 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 		} else {
 			return activeNetworkInfo != null && activeNetworkInfo.isConnected();
 		}
-	}
-
-	public Drawable getGameIcon() {
-		return game_icon;
-	}
-
-	public String getGameTitle() {
-		return game_name;
-	}
-
-	public String getGameDetails() {
-		return game_details;
 	}
 
 	private Document getDomElement(String xml) {
@@ -339,9 +328,7 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 					Bitmap bitmap = BitmapFactory.decodeStream(bis, null, options);
 					bis.close();
 					im.close();
-					bis = null;
-					im = null;
-					OutputStream fOut = null;
+					OutputStream fOut;
 					if (!file.getParentFile().exists()) {
 						file.getParentFile().mkdir();
 					}

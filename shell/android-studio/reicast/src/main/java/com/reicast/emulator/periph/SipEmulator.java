@@ -9,14 +9,14 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class SipEmulator extends Thread {
 
-	static final String TAG = "SipEmulator";
+	private static final String TAG = "SipEmulator";
 
 	//one second of audio data in bytes
-	static final int BUFFER_SIZE = 22050;
+	private static final int BUFFER_SIZE = 22050;
 	//this needs to get set to the amount the mic normally sends per data request
 	//...cant be bigger than a maple packet
 	// 240 16 (or 14) bit samples
-	static final int ONE_BLIP_SIZE = 480; //ALSO DEFINED IN maple_devs.h
+	private static final int ONE_BLIP_SIZE = 480; //ALSO DEFINED IN maple_devs.h
 
 	private AudioRecord record;
 	private ConcurrentLinkedQueue<byte[]> bytesReadBuffer;
@@ -48,7 +48,7 @@ public class SipEmulator extends Thread {
 				AudioFormat.ENCODING_PCM_16BIT,
 				BUFFER_SIZE);
 
-		bytesReadBuffer = new ConcurrentLinkedQueue<byte[]>();
+		bytesReadBuffer = new ConcurrentLinkedQueue<>();
 
 		continueRecording = false;
 		firstGet = true;

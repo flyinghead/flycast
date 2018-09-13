@@ -1,5 +1,6 @@
 package com.reicast.emulator;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
@@ -134,7 +135,7 @@ public class GL2JNIActivity extends Activity {
                 new int[][] { p1periphs, p2periphs, p3periphs, p4periphs });
         int joys[] = InputDevice.getDeviceIds();
         for (int joy: joys) {
-            String descriptor = null;
+            String descriptor;
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
                 descriptor = InputDevice.getDevice(joy).getDescriptor();
             } else {
@@ -148,11 +149,13 @@ public class GL2JNIActivity extends Activity {
             pad.deviceId_deviceDescriptor.put(joy, descriptor);
         }
 
-        for (int joy :joys) {
+        boolean detected = false;
+        for (int joy : joys) {
             Integer playerNum = pad.deviceDescriptor_PlayerNum
                     .get(pad.deviceId_deviceDescriptor.get(joy));
 
             if (playerNum != null) {
+                detected = true;
                 String id = pad.portId[playerNum];
                 pad.custom[playerNum] = prefs.getBoolean(Gamepad.pref_js_modified + id, false);
                 pad.compat[playerNum] = prefs.getBoolean(Gamepad.pref_js_compat + id, false);
@@ -186,11 +189,9 @@ public class GL2JNIActivity extends Activity {
                     pad.getCompatibilityMap(playerNum, id, prefs);
                 }
                 pad.initJoyStickLayout(playerNum);
-            } else {
-                pad.runCompatibilityMode(joy, prefs);
             }
         }
-        if (joys.length == 0) {
+        if (joys.length == 0 || !detected) {
             pad.fullCompatibilityMode(prefs);
         }
 
@@ -247,6 +248,7 @@ public class GL2JNIActivity extends Activity {
         fpsPop.update(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
     }
 
+    @SuppressLint("RtlHardcoded")
     public void toggleVmu() {
         boolean showFloating = !prefs.getBoolean(Config.pref_vmu, false);
         if (showFloating) {
@@ -305,14 +307,14 @@ public class GL2JNIActivity extends Activity {
 
     private boolean showMenu() {
         if (popUp != null) {
-            if (!menu.dismissPopUps()) {
+            if (menu.dismissPopUps()) {
+                popUp.dismiss();
+            } else {
                 if (!popUp.isShowing()) {
                     displayPopUp(popUp);
                 } else {
                     popUp.dismiss();
                 }
-            } else {
-                popUp.dismiss();
             }
         }
         return true;
@@ -433,7 +435,7 @@ public class GL2JNIActivity extends Activity {
 
         boolean rav = false;
         for (int i = 0; i < pad.map[playerNum].length; i += 2) {
-            if (pad.map[playerNum][i + 0] == kc) {
+            if (pad.map[playerNum][i] == kc) {
                 if (down)
                     GL2JNIView.kcode_raw[playerNum] &= ~pad.map[playerNum][i + 1];
                 else
@@ -507,10 +509,6 @@ public class GL2JNIActivity extends Activity {
             return showMenu();
         }
         return super.onKeyDown(keyCode, event);
-    }
-
-    public GL2JNIView getGameView() {
-        return mView;
     }
 
     @Override
