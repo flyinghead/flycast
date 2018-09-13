@@ -15,7 +15,7 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "84A388B21B1CDD3E000166C0"
-               BuildableName = "reicast-osx.app"
+               BuildableName = "Reicast.app"
                BlueprintName = "reicast-osx"
                ReferencedContainer = "container:emulator-osx/reicast-osx.xcodeproj">
             </BuildableReference>
@@ -54,6 +54,7 @@
       buildConfiguration = "Debug"
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
+      language = ""
       shouldUseLaunchSchemeArgsEnv = "YES">
       <Testables>
          <TestableReference
@@ -71,7 +72,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "84A388B21B1CDD3E000166C0"
-            BuildableName = "reicast-osx.app"
+            BuildableName = "Reicast.app"
             BlueprintName = "reicast-osx"
             ReferencedContainer = "container:emulator-osx/reicast-osx.xcodeproj">
          </BuildableReference>
@@ -94,7 +95,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "84A388B21B1CDD3E000166C0"
-            BuildableName = "reicast-osx.app"
+            BuildableName = "Reicast.app"
             BlueprintName = "reicast-osx"
             ReferencedContainer = "container:emulator-osx/reicast-osx.xcodeproj">
          </BuildableReference>
@@ -113,7 +114,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "84A388B21B1CDD3E000166C0"
-            BuildableName = "reicast-osx.app"
+            BuildableName = "Reicast.app"
             BlueprintName = "reicast-osx"
             ReferencedContainer = "container:emulator-osx/reicast-osx.xcodeproj">
          </BuildableReference>

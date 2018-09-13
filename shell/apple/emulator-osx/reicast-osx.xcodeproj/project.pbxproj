@@ -198,6 +198,8 @@
 		AE8C274121122E2500D4D8F4 /* Changelog.txt in Resources */ = {isa = PBXBuildFile; fileRef = AE8C273B21122E2500D4D8F4 /* Changelog.txt */; };
 		AE8C274221122E2500D4D8F4 /* License.txt in Resources */ = {isa = PBXBuildFile; fileRef = AE8C273C21122E2500D4D8F4 /* License.txt */; };
 		AE8C274321122E2500D4D8F4 /* xbrz.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE8C273D21122E2500D4D8F4 /* xbrz.cpp */; };
+		AEFF7ECC214AEC810068CE11 /* modem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEFF7EC7214AEC800068CE11 /* modem.cpp */; };
+		AEFF7ECD214AEC810068CE11 /* pppd.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEFF7ECA214AEC800068CE11 /* pppd.cpp */; };
 		EBDF374F1BB96581001191B5 /* audiobackend_coreaudio.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EBDF374D1BB96581001191B5 /* audiobackend_coreaudio.cpp */; };
 		EBDF37511BB969EE001191B5 /* CoreAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EBDF37501BB969EE001191B5 /* CoreAudio.framework */; };
 		EBDF37531BB969F8001191B5 /* AudioUnit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EBDF37521BB969F8001191B5 /* AudioUnit.framework */; };
@@ -243,7 +245,7 @@
 		84967CBA1B8F49EE005F1140 /* pngwrite.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pngwrite.c; sourceTree = "<group>"; };
 		84967CBB1B8F49EE005F1140 /* pngwtran.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pngwtran.c; sourceTree = "<group>"; };
 		84967CBC1B8F49EE005F1140 /* pngwutil.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pngwutil.c; sourceTree = "<group>"; };
-		84A388B31B1CDD3E000166C0 /* reicast-osx.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "reicast-osx.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		84A388B31B1CDD3E000166C0 /* reicast-osx.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; name = "reicast-osx.app"; path = Reicast.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		84A388B71B1CDD3E000166C0 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		84A388B81B1CDD3E000166C0 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		84A388BA1B1CDD3E000166C0 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
@@ -558,6 +560,11 @@
 		AE8C273E21122E2500D4D8F4 /* xbrz.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = xbrz.h; sourceTree = "<group>"; };
 		AE8C273F21122E2500D4D8F4 /* xbrz_config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = xbrz_config.h; sourceTree = "<group>"; };
 		AE8C274021122E2500D4D8F4 /* xbrz_tools.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = xbrz_tools.h; sourceTree = "<group>"; };
+		AEFF7EC7214AEC800068CE11 /* modem.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = modem.cpp; sourceTree = "<group>"; };
+		AEFF7EC8214AEC800068CE11 /* modem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = modem.h; sourceTree = "<group>"; };
+		AEFF7EC9214AEC800068CE11 /* modem_regs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = modem_regs.h; sourceTree = "<group>"; };
+		AEFF7ECA214AEC800068CE11 /* pppd.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = pppd.cpp; sourceTree = "<group>"; };
+		AEFF7ECB214AEC800068CE11 /* pppd.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pppd.h; sourceTree = "<group>"; };
 		EBDF374D1BB96581001191B5 /* audiobackend_coreaudio.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = audiobackend_coreaudio.cpp; sourceTree = "<group>"; };
 		EBDF374E1BB96581001191B5 /* audiobackend_coreaudio.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = audiobackend_coreaudio.h; sourceTree = "<group>"; };
 		EBDF37501BB969EE001191B5 /* CoreAudio.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreAudio.framework; path = System/Library/Frameworks/CoreAudio.framework; sourceTree = SDKROOT; };
@@ -926,6 +933,7 @@
 				84B7BDE31B72720100F9733F /* holly */,
 				84B7BDEB1B72720100F9733F /* maple */,
 				84B7BDF41B72720100F9733F /* mem */,
+				AEFF7EC6214AEC800068CE11 /* modem */,
 				84B7BDF71B72720100F9733F /* pvr */,
 				84B7BE0D1B72720100F9733F /* sh4 */,
 			);
@@ -1345,6 +1353,18 @@
 			path = xbrz;
 			sourceTree = "<group>";
 		};
+		AEFF7EC6214AEC800068CE11 /* modem */ = {
+			isa = PBXGroup;
+			children = (
+				AEFF7EC7214AEC800068CE11 /* modem.cpp */,
+				AEFF7EC8214AEC800068CE11 /* modem.h */,
+				AEFF7EC9214AEC800068CE11 /* modem_regs.h */,
+				AEFF7ECA214AEC800068CE11 /* pppd.cpp */,
+				AEFF7ECB214AEC800068CE11 /* pppd.h */,
+			);
+			path = modem;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -1463,6 +1483,7 @@
 				84B7BF7A1B72720200F9733F /* gles.cpp in Sources */,
 				84B7BEFC1B72720200F9733F /* zip_get_name.c in Sources */,
 				84B7BEFA1B72720200F9733F /* zip_get_archive_flag.c in Sources */,
+				AEFF7ECD214AEC810068CE11 /* pppd.cpp in Sources */,
 				84B7BF1E1B72720200F9733F /* Makefile in Sources */,
 				84B7BF0F1B72720200F9733F /* zip_stat_index.c in Sources */,
 				84B7BEEB1B72720200F9733F /* zip_error_get.c in Sources */,
@@ -1570,6 +1591,7 @@
 				84B7BF6C1B72720200F9733F /* profiler.cpp in Sources */,
 				84B7BF161B72720200F9733F /* adler32.c in Sources */,
 				84B7BEEC1B72720200F9733F /* zip_error_get_sys_type.c in Sources */,
+				AEFF7ECC214AEC810068CE11 /* modem.cpp in Sources */,
 				84B7BF2E1B72720200F9733F /* gdrom_response.cpp in Sources */,
 				84B7BF7F1B72720200F9733F /* stdclass.cpp in Sources */,
 				84B7BF271B72720200F9733F /* aica_mem.cpp in Sources */,
@@ -1745,6 +1767,7 @@
 					TARGET_NO_AREC,
 					XBYAK_NO_OP_NAMES,
 					TARGET_NO_OPENMP,
+					RELEASE,
 				);
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
