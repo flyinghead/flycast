@@ -93,6 +93,8 @@ public class MainActivity extends AppCompatActivity implements
 						}
 						mPrefs.edit().putString("prior_error", output.toString()).apply();
 						error.printStackTrace();
+						android.os.Process.killProcess(android.os.Process.myPid());
+						System.exit(0);
 					}
 				}
 			};
