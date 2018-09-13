@@ -239,13 +239,13 @@ public class FileBrowser extends Fragment {
 				filter[i] = new FilenameFilter() {
 
 					public boolean accept(File dir, String name) {
-                        return (!dir.getName().equals("obb") && !dir.getName().equals("cache")
-                                && !dir.getName().startsWith(".") && !name.startsWith("."))
-                                && (array != R.array.flash && name.startsWith("dc_"))
-                                && (browser.get().searchQuery == null
-                                || name.toLowerCase(Locale.getDefault()).contains(
-                                browser.get().searchQuery.toLowerCase(Locale.getDefault())))
-                                && StringUtils.endsWithIgnoreCase(name, "." + type);
+						return !dir.getName().equals("obb") && !dir.getName().equals("cache")
+								&& !dir.getName().startsWith(".") && !name.startsWith(".")
+								&& (array != R.array.flash || name.startsWith("dc_"))
+								&& (browser.get().searchQuery == null
+								|| name.toLowerCase(Locale.getDefault()).contains(
+										browser.get().searchQuery.toLowerCase(Locale.getDefault())))
+								&& StringUtils.endsWithIgnoreCase(name, "." + type);
 					}
 				};
 				i++;
