@@ -74,6 +74,7 @@ enum ConnectState
 	DIALING,
 	RINGING,
 	HANDSHAKING,
+	PRE_CONNECTED,
 	CONNECTED,
 };
 static ConnectState connect_state = DISCONNECTED;
@@ -142,6 +143,8 @@ static int modem_sched_func(int tag, int c, int j)
 		last_comm_stats = os_GetSeconds();
 	}
 #endif
+	int callback_cycles = 0;
+
 	switch (state)
 	{
 	case MS_ST_CONTROLER:
@@ -181,58 +184,82 @@ static int modem_sched_func(int tag, int c, int j)
 			{
 				SET_STATUS_BIT(0x0f, modem_regs.reg0f.RI, 1);
 				SET_STATUS_BIT(0x0b, modem_regs.reg0b.ATV25, 1);
-				SET_STATUS_BIT(0x0b, modem_regs.reg0b.ATBEL, 1);
-			}
-			if (modem_regs.reg12 == 0xAA)
-			{
-				// V8 AUTO mode
-				dspram[0x302] |= 1 << 3;	// Detect ANSam
 			}
 			break;
 		case HANDSHAKING:
 			LOG("\t\t *** HANDSHAKING STATE ***");
+			if (modem_regs.reg12 == 0xAA)
+			{
+				// V8 AUTO mode
+				dspram[0x302] |= 1 << 3;				// ANSam detected
+			}
+			modem_regs.reg1f.NEWS = 1;
+			SET_STATUS_BIT(0x0f, modem_regs.reg0f.RI, 0);
+			SET_STATUS_BIT(0x0b, modem_regs.reg0b.ATV25, 0);
+
+			callback_cycles = SH4_MAIN_CLOCK / 1000000 * 500;		// 500 ms
+			connect_state = PRE_CONNECTED;
+
+			break;
+
+		case PRE_CONNECTED:
+			printf("MODEM Connected\n");
 			if (modem_regs.reg03.RLSDE)
 				SET_STATUS_BIT(0x0f, modem_regs.reg0f.RLSD, 1);
+			if (modem_regs.reg12 == 0xAA)
+			{
+				// V8 AUTO mode
+				dspram[0x302] |= 1 << 4;				// protocol octet received
+				dspram[0x301] |= 1 << 4;				// JM detected
+				dspram[0x303] |= 0xE0;					// Received protocol bits (?)
+				dspram[0x2e3] |= 5;						// Symbol rate 3429
+				dspram[0x239] |= 12;					// RTD 0 @ 3429 sym rate
+				if (modem_regs.reg08.ASYN)
+				{
+					modem_regs.reg12 = 0xce;		// CONF V34 - K56flex
+					modem_regs.reg0e.SPEED = 0x10;	// 33.6k
+				}
+				else
+				{
+					// Force the driver to ASYN=1 so it sends raw data
+					modem_regs.reg12 = 0xa1;		// CONF V23 75 TX/1200 RX
+					modem_regs.reg0e.SPEED = 0x02;	// 1.2k
+				}
+				if (modem_regs.reg1f.NSIE)
+				{
+					// CONF
+					if (dspram[regs_int_mask_addr[0x12]] & (1 << 7))
+						modem_regs.reg1f.NSIA = 1;
+					// SPEED
+					if (dspram[regs_int_mask_addr[0x0e]] & 0x1f)
+						modem_regs.reg1f.NSIA = 1;
+				}
+				modem_regs.reg09.DATA = 1;
+				modem_regs.reg15.AUTO = 0;
+			}
+			modem_regs.reg14 = 0x00;			// ABCODE: no error
 			if (modem_regs.reg1f.NSIE)
 			{
-				// CONF
-				if (dspram[regs_int_mask_addr[0x12]] & (1 << 7))
-					modem_regs.reg1f.NSIA = 1;
-				// SPEED
-				if (dspram[regs_int_mask_addr[0x0e]] & 0x1f)
-					modem_regs.reg1f.NSIA = 1;
 				// ABCODE
 				if (dspram[regs_int_mask_addr[0x014]])
 					modem_regs.reg1f.NSIA = 1;
 			}
-			if (modem_regs.reg08.ASYN)
-			{
-				modem_regs.reg12 = 0xce;		// CONF V34 - K56flex
-				modem_regs.reg0e.SPEED = 0x10;	// 33.6k
-			}
-			else
-			{
-				// Force the driver to ASYN=1 so it sends raw data
-				modem_regs.reg12 = 0xa4;		// CONF V23
-				modem_regs.reg0e.SPEED = 0x02;	// 1.2k
-				//modem_regs.reg0e.SPEED = 0x10;	// 33.6k. Obviously wrong for V23 but may help some games complaining about low quality link
-			}
-			modem_regs.reg14 = 0x00;			// ABCODE: no error
 			modem_regs.reg1f.NEWS = 1;
-			SET_STATUS_BIT(0x0f, modem_regs.reg0f.RI, 0);
-			SET_STATUS_BIT(0x0b, modem_regs.reg0b.ATV25, 0);
-			SET_STATUS_BIT(0x0b, modem_regs.reg0b.ATBEL, 0);
 			SET_STATUS_BIT(0x0f, modem_regs.reg0f.DSR, 1);
-			if (modem_regs.reg02.v0.V54PE)
-				SET_STATUS_BIT(0x0f, modem_regs.reg0f.V54DT, 1);
 			if (modem_regs.reg02.v0.RTSDE)
 				SET_STATUS_BIT(0x0f, modem_regs.reg0f.RTSDT, 1);
 
 			// What is this? This is required for games to detect the connection
-			// Can be set now or at connected state
 			SET_STATUS_BIT(0x0f, modem_regs.reg0f.FED, 1);
 
+			// V.34 Remote Modem Data Rate Capability
+			dspram[0x208] = 0xff;	// 2.4 - 19.2 kpbs supported
+			dspram[0x209] = 0xbf;	// 21.6 - 33.6 kpbs supported, asymmetric supported
+
 			start_pppd();
+			connect_state = CONNECTED;
+			callback_cycles = SH4_MAIN_CLOCK / 1000000 * 238;	// 238 us
+
 			break;
 
 		case CONNECTED:
@@ -258,20 +285,19 @@ static int modem_sched_func(int tag, int c, int j)
 					modem_regs.reg1e.RDBF = 1;
 					if (modem_regs.reg04.FIFOEN)
 						SET_STATUS_BIT(0x0c, modem_regs.reg0c.RXFNE, 1);
+					SET_STATUS_BIT(0x01, modem_regs.reg01.RXHF, 1);
 				}
 			}
 			modem_regs.reg1e.TDBE = 1;
+			callback_cycles = SH4_MAIN_CLOCK / 1000000 * 238;	// 238 us
+
+			break;
 		}
 		break;
 	}
 	update_interrupt();
 
-	if (connect_state == HANDSHAKING)
-	{
-		connect_state = CONNECTED;
-		return SH4_MAIN_CLOCK / 1000 * 500;		// 500 ms
-	}
-	return connect_state == CONNECTED ? (SH4_MAIN_CLOCK / 1000000 * 238) : 0;	// 238us
+	return callback_cycles;
 }
 
 static void schedule_callback(int ms)
@@ -385,7 +411,7 @@ static void modem_reset(u32 v)
 		state=MS_RESETING;
 		modem_regs.ptr[0x20]=1;
 		ControllerTestStart();
-		LOG("Modem reset end ...");
+		printf("MODEM Reset\n");
 	}
 }
 
@@ -397,7 +423,7 @@ static void check_start_handshake()
 	{
 		LOG("DTR asserted. starting handshaking");
 		connect_state = HANDSHAKING;
-		schedule_callback(1000);
+		schedule_callback(1);
 	}
 }
 
@@ -423,12 +449,6 @@ static void ModemNormalWrite(u32 reg, u32 data)
 	switch(reg)
 	{
 	case 0x02:
-		if (modem_regs.reg02.v0.V54PE)
-			LOG("V54PE set");
-		if (modem_regs.reg02.v0.V54AE)
-			LOG("V54AE set");
-		if (modem_regs.reg02.v0.V54TE)
-			LOG("V54TE set");
 		modem_regs.reg0f.RTSDT = modem_regs.reg02.v0.RTSDE & connect_state == CONNECTED;
 		break;
 
@@ -449,34 +469,30 @@ static void ModemNormalWrite(u32 reg, u32 data)
 		break;
 
 	case 0x10:	// TBUFFER
-		//LOG("ModemNormalWrite : TBUFFER = %X", data);
 		if (module_download)
 		{
 			download_crc = (download_crc << 1) + ((download_crc & 0x80) >> 7) + (data & 0xFF);
 		}
 		else if (connect_state == DISCONNECTED || connect_state == DIALING)
 		{
+			//LOG("ModemNormalWrite : TBUFFER = %X", data);
 			if (connect_state == DISCONNECTED)
 			{
-				LOG("Switching to DIALING...");
+				printf("MODEM Dialing\n");
 				connect_state = DIALING;
 			}
 			schedule_callback(100);
 		}
 		else if (connect_state == CONNECTED && modem_regs.reg08.RTS)
 		{
-			//LOG("pppd write %02x", data);
+			//LOG("ModemNormalWrite : TBUFFER = %X", data);
 #ifndef RELEASE
 			sent_bytes++;
 			if (sent_fp)
 				fputc(data, sent_fp);
 #endif
 			write_pppd(data);
-			if (!modem_regs.reg08.ASYN || modem_regs.reg12 == 0xa4)	// CONF = V23
-				// Wait for the next schedule before setting the TX empty flag?
-				modem_regs.reg1e.TDBE = 0;
-			else
-				modem_regs.reg1e.TDBE = 1;
+			modem_regs.reg1e.TDBE = 0;
 		}
 		break;
 
@@ -527,13 +543,13 @@ static void ModemNormalWrite(u32 reg, u32 data)
 		break;
 
 	case 0x1D:	// MEADDH
-		if (modem_regs.reg1c_1d.MEMW && !(old & 1 << 13))
+		if (modem_regs.reg1c_1d.MEMW && !(old & (1 << 5)))
 		{
 			word_dspram_write = false;
 		}
 		if (modem_regs.reg1c_1d.MEACC)
 		{
-			modem_regs.reg1c_1d.MEACC=0;
+			modem_regs.reg1c_1d.MEACC = 0;
 			modem_regs.reg1f.NEWS = 1;
 			u32 dspram_addr = modem_regs.reg1c_1d.MEMADD_l | (modem_regs.reg1c_1d.MEMADD_h << 8);
 			if (modem_regs.reg1c_1d.MEMW)
@@ -612,7 +628,6 @@ u32 ModemReadMem_A0_006(u32 addr, u32 size)
 	if (reg<0x100)
 	{
 		verify(reg<=1);
-		LOG("Reading MODEM ID addr %03x", reg);
 		return MODEM_ID[reg];
 	}
 	else
@@ -633,35 +648,26 @@ u32 ModemReadMem_A0_006(u32 addr, u32 size)
 					if (modem_regs.reg04.FIFOEN || module_download)
 						SET_STATUS_BIT(0x0d, modem_regs.reg0d.TXFNF, 1);
 				}
-				//LOG("Read reg %03x == %x", reg, modem_regs.ptr[reg]);
 				u8 data = modem_regs.ptr[reg];
 				if (reg == 0x00)	// RBUFFER
 				{
 					//LOG("Read RBUFFER = %X", data);
 					modem_regs.reg1e.RDBF = 0;
 					SET_STATUS_BIT(0x0c, modem_regs.reg0c.RXFNE, 0);
-					if (connect_state == CONNECTED)
-					{
+					SET_STATUS_BIT(0x01, modem_regs.reg01.RXHF, 0);
 #ifndef RELEASE
-						if (recv_fp)
-							fputc(data, recv_fp);
+					if (connect_state == CONNECTED && recv_fp)
+						fputc(data, recv_fp);
 #endif
-						// FIXME Code dup with sched_func
-						int c = read_pppd();
-						if (c >= 0)
-						{
-							//LOG("pppd received %02x", c);
-#ifndef RELEASE
-							recvd_bytes++;
-#endif
-							modem_regs.reg00 = c & 0xFF;
-							modem_regs.reg1e.RDBF = 1;
-							if (modem_regs.reg04.FIFOEN)
-								SET_STATUS_BIT(0x0c, modem_regs.reg0c.RXFNE, 1);
-						}
-					}
 					update_interrupt();
 				}
+				else if (reg == 0x16 || reg == 0x17)
+				{
+					//LOG("SECTXB / SECTXB being read %02x", reg)
+				}
+				//else
+				//	LOG("Read Reg %03x = %x", reg, data);
+
 				return data;
 			}
 			else if (state==MS_ST_CONTROLER || state==MS_ST_DSP)
@@ -673,7 +679,6 @@ u32 ModemReadMem_A0_006(u32 addr, u32 size)
 				}
 				else
 				{
-					//printf("modem reg %03X read -- reset/test state\n",reg);
 					return modem_regs.ptr[reg];
 				}
 			}
@@ -683,8 +688,8 @@ u32 ModemReadMem_A0_006(u32 addr, u32 size)
 			}
 			else
 			{
-				LOG("Read (reset) reg %03x == %x", reg, modem_regs.ptr[reg]);
-				return modem_regs.ptr[reg];
+				//LOG("Read (reset) reg %03x == %x", reg, modem_regs.ptr[reg]);
+				return 0;
 			}
 		}
 		else
