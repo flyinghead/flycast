@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <files-path name="files_root" path="."/>
+    <external-path name="external_files" path="."/>
+</paths>
