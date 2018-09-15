@@ -371,6 +371,9 @@ DEPS:=$(DEPS:.S=.d)
 DEPS:=$(patsubst $(RZDCY_SRC_DIR)/%,$(DEPDIR)/%,$(DEPS))
 POSTCOMPILE = mv -f $(DEPDIR)/$*.Td $(DEPDIR)/$*.d
 
+INCS += -I$(PWD)/$(BUILDDIR)/deps/picotcp/include
+LIBS += -L$(PWD)/$(BUILDDIR)/deps/picotcp/lib -lpicotcp 
+
 all: $(CPPFILES) $(EXECUTABLE) $(EXECUTABLE_STRIPPED)
 ifneq (,$(findstring gcwz,$(platform)))
 	mksquashfs $(EXECUTABLE_STRIPPED) $(GCWZ_PKG_FILES) $(GCWZ_PKG) -all-root
@@ -436,6 +439,13 @@ uninstall:
 
 clean:
 	rm -f $(OBJECTS) $(EXECUTABLE) $(EXECUTABLE_STRIPPED) .map
+
+$(BUILDDIR)/hw/modem/picoppp.build_obj: $(BUILDDIR)/deps/picotcp/lib/libpicotcp.a
+
+$(BUILDDIR)/deps/picotcp/lib/libpicotcp.a:
+	mkdir -p $(BUILDDIR)/deps/picotcp
+	echo cd $(RZDCY_SRC_DIR)/deps/picotcp , make PREFIX=$(PWD)/$(BUILDDIR)/deps/picotcp
+	cd $(RZDCY_SRC_DIR)/deps/picotcp ; make PREFIX=$(PWD)/$(BUILDDIR)/deps/picotcp
 
 .PRECIOUS = $(DEPDIR)/%.d
 $(DEPDIR)/%.d: ;
