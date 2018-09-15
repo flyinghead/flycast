@@ -282,6 +282,7 @@ struct pico_device_ppp {
     uint8_t frame_id;
     uint8_t timer_on;
     uint16_t mru;
+    uint32_t ipcp_peer_ip;
 };
 
 
@@ -513,7 +514,7 @@ static int pico_ppp_send(struct pico_device *dev, void *buf, int len)
     int fcs_start;
     int i = 0;
 
-    ppp_dbg(" >>>>>>>>> PPP OUT\n");
+    ppp_dbg(" >>>>>>>>> PPP OUT len %d\n", len);
 
     if (ppp->ipcp_state != PPP_IPCP_STATE_OPENED)
         return len;
@@ -1141,12 +1142,12 @@ static inline uint32_t ipcp_request_options_size(struct pico_device_ppp *ppp)
 {
     uint32_t size = 0;
 
-/*    if (ppp->ipcp_ip) */
-    size += IPCP_ADDR_LEN;
-/*    if (ppp->ipcp_dns1) */
-    size += IPCP_ADDR_LEN;
-/*    if (ppp->ipcp_dns2) */
-    size += IPCP_ADDR_LEN;
+    if (ppp->ipcp_peer_ip)
+    	size += IPCP_ADDR_LEN;
+    if (ppp->ipcp_dns1)
+    	size += IPCP_ADDR_LEN;
+    if (ppp->ipcp_dns2)
+    	size += IPCP_ADDR_LEN;
     if (ppp->ipcp_nbns1)
         size += IPCP_ADDR_LEN;
 
@@ -1171,7 +1172,7 @@ static int ipcp_request_add_address(uint8_t *dst, uint8_t tag, uint32_t arg)
 static void ipcp_request_fill(struct pico_device_ppp *ppp, uint8_t *opts)
 {
     if (ppp->ipcp_allowed_fields & IPCP_ALLOW_IP)
-        opts += ipcp_request_add_address(opts, IPCP_OPT_IP, ppp->ipcp_ip);
+        opts += ipcp_request_add_address(opts, IPCP_OPT_IP, ppp->ipcp_peer_ip);
 
     if (ppp->ipcp_allowed_fields & IPCP_ALLOW_DNS1)
         opts += ipcp_request_add_address(opts, IPCP_OPT_DNS1, ppp->ipcp_dns1);
@@ -1216,12 +1217,16 @@ static void ipcp_reject_vj(struct pico_device_ppp *ppp, uint8_t *comp_req)
     struct pico_ipcp_hdr *ih = (struct pico_ipcp_hdr *) (ipcp_req + prefix);
     uint8_t *p = ipcp_req + prefix + sizeof(struct pico_ipcp_hdr);
     uint32_t i;
+    uint8_t *p2 =  comp_req + sizeof(struct pico_ipcp_hdr);
 
-    ih->id = ppp->frame_id++;
-    ih->code = PICO_CONF_REQ;
+    ih->id = ((struct pico_ipcp_hdr *)comp_req)->id;
+    ih->code = PICO_CONF_REJ;
     ih->len = short_be(IPCP_VJ_LEN + sizeof(struct pico_ipcp_hdr));
-    for(i = 0; i < IPCP_OPT_VJ; i++)
-        p[i] = comp_req[i + sizeof(struct pico_ipcp_hdr)];
+
+    while (p2[0] != IPCP_OPT_VJ)
+    	p2 += p2[1];
+    for(i = 0; i < IPCP_VJ_LEN; i++)
+        p[i] = p2[i];
     ppp_dbg("Sending IPCP CONF REJ VJ\n");
     pico_ppp_ctl_send(&ppp->dev, PPP_PROTO_IPCP,
                       ipcp_req,             /* Start of PPP packet */
@@ -1243,9 +1248,10 @@ static void ppp_ipv4_conf(struct pico_device_ppp *ppp)
         0
     };
     ip.addr = ppp->ipcp_ip;
-    nm.addr = 0xFFFFFF00;
+    nm.addr = 0xFFFFFFFF;
     pico_ipv4_link_add(&ppp->dev, ip, nm);
-    pico_ipv4_route_add(any, any, any, 1, pico_ipv4_link_by_dev(&ppp->dev));
+    ip.addr = ppp->ipcp_peer_ip;
+    pico_ipv4_route_add(ip, nm, any, 1, pico_ipv4_link_by_dev(&ppp->dev));
 
     dns1.addr = ppp->ipcp_dns1;
     dns2.addr = ppp->ipcp_dns2;
@@ -1253,12 +1259,14 @@ static void ppp_ipv4_conf(struct pico_device_ppp *ppp)
     pico_dns_client_nameserver(&dns2, PICO_DNS_NS_ADD);
 }
 
+static void ipcp_send_nack(struct pico_device_ppp *ppp);
 
 static void ipcp_process_in(struct pico_device_ppp *ppp, uint8_t *pkt, uint32_t len)
 {
     struct pico_ipcp_hdr *ih = (struct pico_ipcp_hdr *)pkt;
     uint8_t *p = pkt + sizeof(struct pico_ipcp_hdr);
     int reject = 0;
+    int nak = 0;
     while (p < pkt + len) {
         if (p[0] == IPCP_OPT_VJ) {
             reject++;
@@ -1266,75 +1274,72 @@ static void ipcp_process_in(struct pico_device_ppp *ppp, uint8_t *pkt, uint32_t 
 
         if (p[0] == IPCP_OPT_IP) {
             if (ih->code != PICO_CONF_REJ)
-                ppp->ipcp_ip = long_be((uint32_t)((p[2] << 24) + (p[3] << 16) + (p[4] << 8) + p[5]));
-            else {
-                ppp->ipcp_allowed_fields &= (~IPCP_ALLOW_IP);
-                ppp->ipcp_ip = 0;
+            {
+            	uint32_t ipcp_ip = long_be((uint32_t)((p[2] << 24) + (p[3] << 16) + (p[4] << 8) + p[5]));
+            	if (ipcp_ip != ppp->ipcp_peer_ip)
+            		nak++;
             }
         }
 
         if (p[0] == IPCP_OPT_DNS1) {
             if (ih->code != PICO_CONF_REJ)
-                ppp->ipcp_dns1 = long_be((uint32_t)((p[2] << 24) + (p[3] << 16) + (p[4] << 8) + p[5]));
-            else {
-                ppp->ipcp_allowed_fields &= (~IPCP_ALLOW_DNS1);
-                ppp->ipcp_dns1 = 0;
-            }
-        }
-
-        if (p[0] == IPCP_OPT_NBNS1) {
-            if (ih->code != PICO_CONF_REJ)
-                ppp->ipcp_nbns1 = long_be((uint32_t)((p[2] << 24) + (p[3] << 16) + (p[4] << 8) + p[5]));
-            else {
-                ppp->ipcp_allowed_fields &= (~IPCP_ALLOW_NBNS1);
-                ppp->ipcp_nbns1 = 0;
+            {
+            	uint32_t ipcp_dns1 = long_be((uint32_t)((p[2] << 24) + (p[3] << 16) + (p[4] << 8) + p[5]));
+            	if (ipcp_dns1 != ppp->ipcp_dns1)
+            		nak++;
             }
         }
 
         if (p[0] == IPCP_OPT_DNS2) {
             if (ih->code != PICO_CONF_REJ)
-                ppp->ipcp_dns2 = long_be((uint32_t)((p[2] << 24) + (p[3] << 16) + (p[4] << 8) + p[5]));
-            else {
-                ppp->ipcp_allowed_fields &= (~IPCP_ALLOW_DNS2);
-                ppp->ipcp_dns2 = 0;
-            }
-        }
-
-        if (p[0] == IPCP_OPT_NBNS2) {
-            if (ih->code != PICO_CONF_REJ)
-                ppp->ipcp_nbns2 = long_be((uint32_t)((p[2] << 24) + (p[3] << 16) + (p[4] << 8) + p[5]));
-            else {
-                ppp->ipcp_allowed_fields &= (~IPCP_ALLOW_NBNS2);
-                ppp->ipcp_nbns2 = 0;
+            {
+            	uint32_t ipcp_dns2 = long_be((uint32_t)((p[2] << 24) + (p[3] << 16) + (p[4] << 8) + p[5]));
+            	if (ipcp_dns2 != ppp->ipcp_dns2)
+            		nak++;
             }
         }
 
         p += p[1];
     }
+
+    switch(ih->code) {
+    case PICO_CONF_ACK:
+        ppp_dbg("Received IPCP CONF ACK\n");
+        break;
+    case PICO_CONF_REQ:
+        ppp_dbg("Received IPCP CONF REQ\n");
+        break;
+    case PICO_CONF_NAK:
+        ppp_dbg("Received IPCP CONF NAK\n");
+        break;
+    case PICO_CONF_REJ:
+        ppp_dbg("Received IPCP CONF REJ\n");
+        break;
+    }
     if (reject) {
-        ipcp_reject_vj(ppp, p);
+        ipcp_reject_vj(ppp, pkt);
         return;
     }
 
     ppp->pkt = pkt;
     ppp->len = len;
 
+    if (nak) {
+        ipcp_send_nack(ppp);
+        return;
+    }
+
     switch(ih->code) {
     case PICO_CONF_ACK:
-        ppp_dbg("Received IPCP CONF ACK\n");
         evaluate_ipcp_state(ppp, PPP_IPCP_EVENT_RCA);
         break;
     case PICO_CONF_REQ:
-        ppp_dbg("Received IPCP CONF REQ\n");
         evaluate_ipcp_state(ppp, PPP_IPCP_EVENT_RCR_POS);
         break;
     case PICO_CONF_NAK:
-        ppp_dbg("Received IPCP CONF NAK\n");
         evaluate_ipcp_state(ppp, PPP_IPCP_EVENT_RCN);
         break;
     case PICO_CONF_REJ:
-        ppp_dbg("Received IPCP CONF REJ\n");
-
         evaluate_ipcp_state(ppp, PPP_IPCP_EVENT_RCN);
         break;
     }
@@ -1923,9 +1928,61 @@ static void evaluate_auth_state(struct pico_device_ppp *ppp, enum ppp_auth_event
     }
 }
 
+static inline uint32_t ipcp_nack_options_size(struct pico_device_ppp *ppp, uint8_t *pkt, uint32_t len)
+{
+	uint8_t *p = pkt + sizeof(struct pico_ipcp_hdr);
+	uint32_t size = 0;
+
+	IGNORE_PARAMETER(ppp);
+
+    while (p < pkt + len) {
+        if (p[0] == IPCP_OPT_IP)
+        	size += IPCP_ADDR_LEN;
+        else if (p[0] == IPCP_OPT_DNS1)
+        	size += IPCP_ADDR_LEN;
+        else if (p[0] == IPCP_OPT_DNS2)
+        	size += IPCP_ADDR_LEN;
+        p += p[1];
+    }
+
+    return size;
+}
+
 static void ipcp_send_nack(struct pico_device_ppp *ppp)
 {
-    IGNORE_PARAMETER(ppp);
+	uint8_t *pkt = ppp->pkt;
+	uint32_t len = ppp->len;
+
+    uint8_t ipcp_req[PPP_HDR_SIZE + PPP_PROTO_SLOT_SIZE + sizeof(struct pico_ipcp_hdr) + ipcp_nack_options_size(ppp, pkt, len) + PPP_FCS_SIZE + 1];
+    uint32_t prefix = PPP_HDR_SIZE +  PPP_PROTO_SLOT_SIZE;
+    struct pico_ipcp_hdr *ih = (struct pico_ipcp_hdr *) (ipcp_req + prefix);
+    uint8_t *p = ipcp_req + prefix + sizeof(struct pico_ipcp_hdr);
+    uint8_t *preq = pkt + sizeof(struct pico_ipcp_hdr);
+
+    ih->id = ((struct pico_ipcp_hdr *)pkt)->id;
+    ih->code = PICO_CONF_NAK;
+    ih->len = short_be((uint16_t)(ipcp_nack_options_size(ppp, pkt, len) + sizeof(struct pico_ipcp_hdr)));
+
+    while (preq < pkt + len) {
+        if (preq[0] == IPCP_OPT_IP)
+        {
+        	p += ipcp_request_add_address(p, IPCP_OPT_IP, ppp->ipcp_peer_ip);
+        }
+        else if (preq[0] == IPCP_OPT_DNS1)
+        {
+        	p += ipcp_request_add_address(p, IPCP_OPT_DNS1, ppp->ipcp_dns1);
+        }
+        else if (preq[0] == IPCP_OPT_DNS2)
+        {
+        	p += ipcp_request_add_address(p, IPCP_OPT_DNS2, ppp->ipcp_dns2);
+        }
+        preq += preq[1];
+    }
+
+    ppp_dbg("Sending IPCP CONF NAK\n");
+    pico_ppp_ctl_send(&ppp->dev, PPP_PROTO_IPCP,
+                      ipcp_req,             /* Start of PPP packet */
+                      (uint32_t)sizeof(ipcp_req));
 }
 
 static void ipcp_bring_up(struct pico_device_ppp *ppp)
@@ -1934,10 +1991,10 @@ static void ipcp_bring_up(struct pico_device_ppp *ppp)
 
     if (ppp->ipcp_ip) {
         char my_ip[16], my_dns[16];
-        pico_ipv4_to_string(my_ip, ppp->ipcp_ip);
-        ppp_dbg("Received IP config %s\n", my_ip);
+        pico_ipv4_to_string(my_ip, ppp->ipcp_peer_ip);
+        ppp_dbg("Assigned IP to peer: %s\n", my_ip);
         pico_ipv4_to_string(my_dns, ppp->ipcp_dns1);
-        ppp_dbg("Received DNS: %s\n", my_dns);
+        ppp_dbg("Assigned DNS: %s\n", my_dns);
         ppp_ipv4_conf(ppp);
     }
 }
@@ -2195,7 +2252,7 @@ struct pico_device *pico_ppp_create(void)
     ppp->dev.link_state  = pico_ppp_link_state;
     ppp->frame_id = (uint8_t)(pico_rand() % 0xFF);
 
-    ppp->modem_state = PPP_MODEM_STATE_INITIAL;
+    ppp->modem_state = PPP_MODEM_STATE_CONNECTED;
     ppp->lcp_state = PPP_LCP_STATE_INITIAL;
     ppp->auth_state = PPP_AUTH_STATE_INITIAL;
     ppp->ipcp_state = PPP_IPCP_STATE_INITIAL;
@@ -2209,7 +2266,7 @@ struct pico_device *pico_ppp_create(void)
     ppp->mru = PICO_PPP_MRU;
 
     LCPOPT_SET_LOCAL(ppp, LCPOPT_MRU);
-    LCPOPT_SET_LOCAL(ppp, LCPOPT_AUTH); /* We support authentication, even if it's not part of the req */
+    //LCPOPT_SET_LOCAL(ppp, LCPOPT_AUTH); /* We support authentication, even if it's not part of the req */
     LCPOPT_SET_LOCAL(ppp, LCPOPT_PROTO_COMP);
     LCPOPT_SET_LOCAL(ppp, LCPOPT_ADDRCTL_COMP);
 
@@ -2221,7 +2278,9 @@ struct pico_device *pico_ppp_create(void)
 int pico_ppp_connect(struct pico_device *dev)
 {
     struct pico_device_ppp *ppp = (struct pico_device_ppp *)dev;
-    ppp->autoreconnect = 1;
+	ppp_modem_connected(ppp);
+	evaluate_lcp_state(ppp, PPP_LCP_EVENT_OPEN);
+
     return 0;
 }
 
@@ -2308,5 +2367,49 @@ int pico_ppp_set_password(struct pico_device *dev, const char *password)
         return -1;
 
     strncpy(ppp->password, password, sizeof(ppp->password) - 1);
+    return 0;
+}
+
+int pico_ppp_set_ip(struct pico_device *dev, struct pico_ip4 ip)
+{
+    struct pico_device_ppp *ppp = (struct pico_device_ppp *)dev;
+
+    if (!dev)
+        return -1;
+
+    ppp->ipcp_ip = ip.addr;
+    return 0;
+}
+
+int pico_ppp_set_dns1(struct pico_device *dev, struct pico_ip4 ip)
+{
+    struct pico_device_ppp *ppp = (struct pico_device_ppp *)dev;
+
+    if (!dev)
+        return -1;
+
+    ppp->ipcp_dns1 = ip.addr;
+    return 0;
+}
+
+int pico_ppp_set_dns2(struct pico_device *dev, struct pico_ip4 ip)
+{
+    struct pico_device_ppp *ppp = (struct pico_device_ppp *)dev;
+
+    if (!dev)
+        return -1;
+
+    ppp->ipcp_dns2 = ip.addr;
+    return 0;
+}
+
+int pico_ppp_set_peer_ip(struct pico_device *dev, struct pico_ip4 ip)
+{
+    struct pico_device_ppp *ppp = (struct pico_device_ppp *)dev;
+
+    if (!dev)
+        return -1;
+
+    ppp->ipcp_peer_ip = ip.addr;
     return 0;
 }

@@ -26,7 +26,14 @@
 #include "hw/holly/holly_intc.h"
 #include "hw/sh4/sh4_sched.h"
 #include "oslib/oslib.h"
+#include "picoppp.h"
 #include "pppd.h"
+
+#define start_pppd start_pico
+#define stop_pppd stop_pico
+#define write_pppd write_pico
+#define read_pppd read_pico
+
 
 #define MODEM_COUNTRY_RES 0
 #define MODEM_COUNTRY_JAP 1

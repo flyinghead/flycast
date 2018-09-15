@@ -89,7 +89,7 @@ void pico_tap_destroy(struct pico_device *dev)
 }
 
 #ifndef __FreeBSD__
-static int tap_open(char *name)
+static int tap_open(const char *name)
 {
     struct ifreq ifr;
     int tap_fd;
@@ -107,7 +107,7 @@ static int tap_open(char *name)
     return tap_fd;
 }
 #else
-static int tap_open(char *name)
+static int tap_open(const char *name)
 {
     int tap_fd;
     (void)name;
@@ -118,7 +118,7 @@ static int tap_open(char *name)
 
 
 #ifndef __FreeBSD__
-static int tap_get_mac(char *name, uint8_t *mac)
+static int tap_get_mac(const char *name, uint8_t *mac)
 {
     int sck;
     struct ifreq eth;
@@ -146,7 +146,7 @@ static int tap_get_mac(char *name, uint8_t *mac)
 #include <net/if_dl.h>
 #include <ifaddrs.h>
 #include <net/if_types.h>
-static int tap_get_mac(char *name, uint8_t *mac)
+static int tap_get_mac(const char *name, uint8_t *mac)
 {
     struct sockaddr_dl *sdl;
     struct ifaddrs *ifap, *root;
@@ -172,7 +172,7 @@ static int tap_get_mac(char *name, uint8_t *mac)
 }
 #endif
 
-struct pico_device *pico_tap_create(char *name)
+struct pico_device *pico_tap_create(const char *name)
 {
     struct pico_device_tap *tap = PICO_ZALLOC(sizeof(struct pico_device_tap));
     uint8_t mac[6] = {};

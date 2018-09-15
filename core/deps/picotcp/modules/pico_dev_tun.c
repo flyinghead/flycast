@@ -60,7 +60,7 @@ void pico_tun_destroy(struct pico_device *dev)
 }
 
 
-static int tun_open(char *name)
+static int tun_open(const char *name)
 {
     struct ifreq ifr;
     int tun_fd;
@@ -80,7 +80,7 @@ static int tun_open(char *name)
 
 
 
-struct pico_device *pico_tun_create(char *name)
+struct pico_device *pico_tun_create(const char *name)
 {
     struct pico_device_tun *tun = PICO_ZALLOC(sizeof(struct pico_device_tun));
 

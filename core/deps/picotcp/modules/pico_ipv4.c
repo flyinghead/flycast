@@ -1575,8 +1575,9 @@ static int pico_ipv4_pre_forward_checks(struct pico_frame *f)
 
 static int pico_ipv4_forward_check_dev(struct pico_frame *f)
 {
-    if (f->dev->eth != NULL)
-        f->len -= PICO_SIZE_ETHHDR;
+ //   TODO What was this for? Clearly causing problems with tap
+ //   if (f->dev->eth != NULL)
+ //       f->len -= PICO_SIZE_ETHHDR;
 
     if (f->len > f->dev->mtu) {
         pico_notify_pkt_too_big(f);

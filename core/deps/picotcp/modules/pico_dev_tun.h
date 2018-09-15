@@ -9,7 +9,7 @@
 #include "pico_device.h"
 
 void pico_tun_destroy(struct pico_device *tun);
-struct pico_device *pico_tun_create(char *name);
+struct pico_device *pico_tun_create(const char *name);
 
 #endif
 

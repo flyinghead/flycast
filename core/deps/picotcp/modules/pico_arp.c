@@ -436,10 +436,11 @@ static int pico_arp_process_in(struct pico_frame *f, struct pico_arp_hdr *hdr, s
         return -1;
     }
 
-    if (pico_arp_check_flooding(f, me) < 0) {
-        pico_frame_discard(f);
-        return -1;
-    }
+	// FIXME Problem with proxy ARP
+//    if (pico_arp_check_flooding(f, me) < 0) {
+//        pico_frame_discard(f);
+//        return -1;
+//    }
 
     /* If no existing entry was found, create a new entry, or fail trying. */
     if ((!found) && (pico_arp_create_entry(hdr->s_mac, hdr->src, f->dev) < 0)) {

@@ -22,5 +22,9 @@ int pico_ppp_set_serial_set_speed(struct pico_device *dev, int (*sspeed)(struct 
 int pico_ppp_set_apn(struct pico_device *dev, const char *apn);
 int pico_ppp_set_username(struct pico_device *dev, const char *username);
 int pico_ppp_set_password(struct pico_device *dev, const char *password);
+int pico_ppp_set_ip(struct pico_device *dev, struct pico_ip4 ip);
+int pico_ppp_set_dns1(struct pico_device *dev, struct pico_ip4 ip);
+int pico_ppp_set_dns2(struct pico_device *dev, struct pico_ip4 ip);
+int pico_ppp_set_peer_ip(struct pico_device *dev, struct pico_ip4 ip);
 
 #endif /* INCLUDE_PICO_PPP */
