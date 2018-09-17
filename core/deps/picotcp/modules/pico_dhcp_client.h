@@ -7,7 +7,7 @@
  *********************************************************************/
 #ifndef INCLUDE_PICO_DHCP_CLIENT
 #define INCLUDE_PICO_DHCP_CLIENT
-#include "pico_defines.h"
+#include "pico_config.h"
 #ifdef PICO_SUPPORT_UDP
 #include "pico_dhcp_common.h"
 #include "pico_addressing.h"

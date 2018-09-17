@@ -298,7 +298,13 @@ static int modem_sched_func(int tag, int c, int j)
 			callback_cycles = SH4_MAIN_CLOCK / 1000000 * 238;	// 238 us
 
 			break;
+
+		default:
+			break;
 		}
+		break;
+
+	default:
 		break;
 	}
 	update_interrupt();
@@ -455,7 +461,7 @@ static void ModemNormalWrite(u32 reg, u32 data)
 	switch(reg)
 	{
 	case 0x02:
-		modem_regs.reg0f.RTSDT = modem_regs.reg02.v0.RTSDE & connect_state == CONNECTED;
+		modem_regs.reg0f.RTSDT = modem_regs.reg02.v0.RTSDE && connect_state == CONNECTED;
 		break;
 
 	case 0x06:
@@ -610,7 +616,7 @@ static void ModemNormalWrite(u32 reg, u32 data)
 			}
 		}
 		// Don't allow NEWS to be set if 0
-		if (old & (1 << 3) == 0)
+		if ((old & (1 << 3)) == 0)
 			modem_regs.reg1f.NEWS = 0;
 		if (!modem_regs.reg1f.NEWS)
 		{

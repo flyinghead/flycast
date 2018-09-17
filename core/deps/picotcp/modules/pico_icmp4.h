@@ -7,7 +7,7 @@
  *********************************************************************/
 #ifndef INCLUDE_PICO_ICMP4
 #define INCLUDE_PICO_ICMP4
-#include "pico_defines.h"
+#include "pico_config.h"
 #include "pico_addressing.h"
 #include "pico_protocol.h"
 

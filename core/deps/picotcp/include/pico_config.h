@@ -3,7 +3,12 @@
    See COPYING, LICENSE.GPLv2 and LICENSE.GPLv3 for usage.
 
  *********************************************************************/
+#ifdef _MS_VER
+#include "pico_defines_msvc.h"
+#else
 #include "pico_defines.h"
+#endif
+
 #ifndef INCLUDE_PICO_CONFIG
 #define INCLUDE_PICO_CONFIG
 #ifndef __KERNEL__
