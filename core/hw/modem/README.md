@@ -13,14 +13,14 @@ Make sure this address is not being used on your network. Ping it just in case..
 ## Windows (7)
 1. Install TAP-Windows
 
-   Navigate to [https://openvpn.net/index.php/download/community-downloads.html] and scroll all the way to the bottom. Download and install the NDIS 6 version.
+   Navigate to [OpenVPN Community Downloads](https://openvpn.net/index.php/download/community-downloads.html) and scroll all the way to the bottom. Download and install the NDIS 6 version.
    
 2. In your Network Connections you should see a new network with a TAP-Windows Adapter V9 device. 
    *Make sure it is enabled.*
 
-4. Run `reicast.exe` as an administrator (right-click on the program and select "Run as administrator")
+3. Run `reicast.exe` as an administrator (right-click on the program and select "Run as administrator")
 
-5. That's it! Now you need to configure internet access in the Dreamcast itself.
+4. That's it! Now you need to configure internet access in the Dreamcast itself.
 
 ## Linux
 All these commands must be run as root.
@@ -35,20 +35,17 @@ All these commands must be run as root.
    # ip link set tun0 up
    ``` 
    
-3. Assign an IP address from your LAN to the Dreamcast and add it to your `emu.cfg` file in the `[network]` section: `IP = 192.168.1.99` for example.
-   Make sure this address is not being used on your network.
-
-4. Add a route to this IP.
+3. Add a route to this IP.
    ```
    # ip route add 192.168.1.99/32 dev tun0
    ```
    Replace 192.168.1.99 by the IP set in your emu.cfg file.
    
-5. Enable proxy ARP for all interfaces.
+4. Enable proxy ARP for all interfaces.
    ```
    # echo '1' >/proc/sys/net/ipv4/conf/all/proxy_arp
    ```
-6. Follow up to the next section
+5. Follow up to the next section
 
 
 ## Dreamcast
