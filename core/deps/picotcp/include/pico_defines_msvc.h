@@ -11,4 +11,6 @@
 #define PICO_SUPPORT_DNS_CLIENT
 #define PICO_SUPPORT_CRC
 #define PICO_SUPPORT_PPP
+
+#define inline __inline
 #endif
