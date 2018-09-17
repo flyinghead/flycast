@@ -403,7 +403,13 @@ out highp vec4 FragColor; \n\
 #define texture texture2D \n\
 #endif \n\
  \n\
-in lowp vec4 vtx_base; \n\
+#if TARGET_GL != GLES2 \n\
+#define INTERPOLATION smooth \n\
+#else \n\
+#define INTERPOLATION \n\
+#endif \n\
+ \n\
+INTERPOLATION in lowp vec4 vtx_base; \n\
 in mediump vec2 vtx_uv; \n\
 /* Vertex input*/ \n\
 uniform sampler2D tex; \n\
