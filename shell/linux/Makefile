@@ -466,6 +466,7 @@ uninstall:
 
 clean:
 	rm -f $(OBJECTS) $(EXECUTABLE) $(EXECUTABLE_STRIPPED) .map
+	rm -rf $(BUILDDIR)/deps/picotcp
 
 $(BUILDDIR)/hw/modem/picoppp.build_obj: $(BUILDDIR)/deps/picotcp/lib/libpicotcp.a
 

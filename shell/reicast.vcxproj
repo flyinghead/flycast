@@ -64,6 +64,27 @@
     <ClCompile Include="..\core\deps\libwebsocket\server.c" />
     <ClCompile Include="..\core\deps\libwebsocket\service.c" />
     <ClCompile Include="..\core\deps\libwebsocket\sha-1.c" />
+    <ClCompile Include="..\core\deps\picotcp\pico_arp.c" />
+    <ClCompile Include="..\core\deps\picotcp\pico_dev_ppp.c" />
+    <ClCompile Include="..\core\deps\picotcp\pico_dev_tap_windows.c" />
+    <ClCompile Include="..\core\deps\picotcp\pico_dns_client.c" />
+    <ClCompile Include="..\core\deps\picotcp\pico_dns_common.c" />
+    <ClCompile Include="..\core\deps\picotcp\pico_ethernet.c" />
+    <ClCompile Include="..\core\deps\picotcp\pico_fragments.c" />
+    <ClCompile Include="..\core\deps\picotcp\pico_icmp4.c" />
+    <ClCompile Include="..\core\deps\picotcp\pico_ipv4.c" />
+    <ClCompile Include="..\core\deps\picotcp\pico_socket_tcp.c" />
+    <ClCompile Include="..\core\deps\picotcp\pico_socket_udp.c" />
+    <ClCompile Include="..\core\deps\picotcp\pico_tcp.c" />
+    <ClCompile Include="..\core\deps\picotcp\pico_udp.c" />
+    <ClCompile Include="..\core\deps\picotcp\pico_device.c" />
+    <ClCompile Include="..\core\deps\picotcp\pico_frame.c" />
+    <ClCompile Include="..\core\deps\picotcp\pico_md5.c" />
+    <ClCompile Include="..\core\deps\picotcp\pico_protocol.c" />
+    <ClCompile Include="..\core\deps\picotcp\pico_socket_multicast.c" />
+    <ClCompile Include="..\core\deps\picotcp\pico_socket.c" />
+    <ClCompile Include="..\core\deps\picotcp\pico_stack.c" />
+    <ClCompile Include="..\core\deps\picotcp\pico_tree.c" />
     <ClCompile Include="..\core\deps\xbrz\xbrz.cpp" />
     <ClCompile Include="..\core\deps\zlib\adler32.c" />
     <ClCompile Include="..\core\deps\zlib\compress.c" />
@@ -98,7 +119,7 @@
     <ClCompile Include="..\core\hw\maple\maple_helper.cpp" />
     <ClCompile Include="..\core\hw\maple\maple_if.cpp" />
     <ClCompile Include="..\core\hw\modem\modem.cpp" />
-    <ClCompile Include="..\core\hw\modem\pppd.cpp" />
+    <ClCompile Include="..\core\hw\modem\picoppp.cpp" />
     <ClCompile Include="..\core\hw\mem\_vmem.cpp" />
     <ClCompile Include="..\core\hw\naomi\naomi.cpp" />
     <ClCompile Include="..\core\hw\naomi\naomi_cart.cpp" />
@@ -268,7 +289,7 @@
     <ClInclude Include="..\core\hw\mem\_vmem.h" />
     <ClInclude Include="..\core\hw\modem\modem.h" />
     <ClInclude Include="..\core\hw\modem\modem_regs.h" />
-    <ClInclude Include="..\core\hw\modem\pppd.h" />
+    <ClInclude Include="..\core\hw\modem\picoppp.h" />
     <ClInclude Include="..\core\hw\naomi\naomi.h" />
     <ClInclude Include="..\core\hw\naomi\naomi_cart.h" />
     <ClInclude Include="..\core\hw\naomi\naomi_regs.h" />
@@ -442,7 +463,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Full</Optimization>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;X86;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;$(ProjectDir)..\deps\picotcp\modules;$(ProjectDir)..\deps\picotcp\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>/MP %(AdditionalOptions)</AdditionalOptions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -474,7 +495,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Full</Optimization>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;X86;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;$(ProjectDir)..\deps\picotcp\modules;$(ProjectDir)..\deps\picotcp\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>/MP %(AdditionalOptions)</AdditionalOptions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -508,7 +529,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;X86;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;$(ProjectDir)..\deps\picotcp\modules;$(ProjectDir)..\deps\picotcp\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
@@ -529,7 +550,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;X86;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;$(ProjectDir)..\deps\picotcp\modules;$(ProjectDir)..\deps\picotcp\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>

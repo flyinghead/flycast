@@ -27,7 +27,6 @@
 #include "hw/sh4/sh4_sched.h"
 #include "oslib/oslib.h"
 #include "picoppp.h"
-#include "pppd.h"
 
 #define start_pppd start_pico
 #define stop_pppd stop_pico
