@@ -240,7 +240,8 @@ static inline uint64_t long_long_be(uint64_t le)
 # include "arch/pico_generic_gcc.h"
 #elif defined __KERNEL__
 # include "arch/pico_linux.h"
-/* #elif defined ... */
+#elif defined _MSC_VER
+# include "arch/pico_msvc.h"
 #else
 # include "arch/pico_posix.h"
 #endif

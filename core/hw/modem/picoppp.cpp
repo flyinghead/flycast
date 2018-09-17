@@ -114,6 +114,12 @@ bool start_pico()
     	    0
     	};
 
+#ifdef _WIN32
+    // No de-init on Windows yet
+    if (pico_stack_inited)
+	return;
+#endif
+
     if (!pico_stack_inited)
     {
     	pico_stack_init();
@@ -310,6 +316,7 @@ bool start_pico()
 
 void stop_pico()
 {
+#ifndef _WIN32
 	if (ppp)
 	{
 		pico_ppp_destroy(ppp);
@@ -325,4 +332,5 @@ void stop_pico()
 		pico_device_destroy(tun);
 		tun = NULL;
 	}
+#endif
 }

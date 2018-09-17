@@ -8,9 +8,7 @@
 
 #include <string.h>
 #include <stdio.h>
-#ifndef _MSC_VER
 #include <unistd.h>
-#endif
 #include <sys/time.h>
 
 /*
@@ -132,7 +130,7 @@ extern void *pico_thread_create(void *(*routine)(void *), void *arg);
 
 static inline void PICO_IDLE(void)
 {
-    // Not used anyway usleep(5000);
+    usleep(5000);
 }
 
 #endif  /* PICO_SUPPORT_POSIX */
