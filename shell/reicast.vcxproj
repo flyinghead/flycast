@@ -64,27 +64,6 @@
     <ClCompile Include="..\core\deps\libwebsocket\server.c" />
     <ClCompile Include="..\core\deps\libwebsocket\service.c" />
     <ClCompile Include="..\core\deps\libwebsocket\sha-1.c" />
-    <ClCompile Include="..\core\deps\picotcp\modules\pico_arp.c" />
-    <ClCompile Include="..\core\deps\picotcp\modules\pico_dev_ppp.c" />
-    <ClCompile Include="..\core\deps\picotcp\modules\pico_dev_tap_windows.c" />
-    <ClCompile Include="..\core\deps\picotcp\modules\pico_dns_client.c" />
-    <ClCompile Include="..\core\deps\picotcp\modules\pico_dns_common.c" />
-    <ClCompile Include="..\core\deps\picotcp\modules\pico_ethernet.c" />
-    <ClCompile Include="..\core\deps\picotcp\modules\pico_fragments.c" />
-    <ClCompile Include="..\core\deps\picotcp\modules\pico_icmp4.c" />
-    <ClCompile Include="..\core\deps\picotcp\modules\pico_ipv4.c" />
-    <ClCompile Include="..\core\deps\picotcp\modules\pico_socket_tcp.c" />
-    <ClCompile Include="..\core\deps\picotcp\modules\pico_socket_udp.c" />
-    <ClCompile Include="..\core\deps\picotcp\modules\pico_tcp.c" />
-    <ClCompile Include="..\core\deps\picotcp\modules\pico_udp.c" />
-    <ClCompile Include="..\core\deps\picotcp\stack\pico_device.c" />
-    <ClCompile Include="..\core\deps\picotcp\stack\pico_frame.c" />
-    <ClCompile Include="..\core\deps\picotcp\stack\pico_md5.c" />
-    <ClCompile Include="..\core\deps\picotcp\stack\pico_protocol.c" />
-    <ClCompile Include="..\core\deps\picotcp\stack\pico_socket_multicast.c" />
-    <ClCompile Include="..\core\deps\picotcp\stack\pico_socket.c" />
-    <ClCompile Include="..\core\deps\picotcp\stack\pico_stack.c" />
-    <ClCompile Include="..\core\deps\picotcp\stack\pico_tree.c" />
     <ClCompile Include="..\core\deps\xbrz\xbrz.cpp" />
     <ClCompile Include="..\core\deps\zlib\adler32.c" />
     <ClCompile Include="..\core\deps\zlib\compress.c" />
@@ -463,7 +442,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Full</Optimization>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;X86;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;$(ProjectDir)..\core\deps\picotcp\modules;$(ProjectDir)..\core\deps\picotcp\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>/MP %(AdditionalOptions)</AdditionalOptions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -495,7 +474,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Full</Optimization>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;X86;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;$(ProjectDir)..\core\deps\picotcp\modules;$(ProjectDir)..\core\deps\picotcp\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>/MP %(AdditionalOptions)</AdditionalOptions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -529,7 +508,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;X86;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;$(ProjectDir)..\core\deps\picotcp\modules;$(ProjectDir)..\core\deps\picotcp\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
@@ -550,7 +529,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;X86;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;$(ProjectDir)..\core\deps\picotcp\modules;$(ProjectDir)..\core\deps\picotcp\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
