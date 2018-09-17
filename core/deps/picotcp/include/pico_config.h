@@ -31,6 +31,14 @@
 #   define PEDANTIC_STRUCT_DEF struct
 #   define PACKED_UNION_DEF    _Packed union
 #   define WEAK
+#elif defined _MSC_VER
+#   define PACKED_STRUCT_DEF struct
+#   define PEDANTIC_STRUCT_DEF struct
+#   define PACKED_UNION_DEF union
+#   define PACKED
+#   define WEAK
+// quick'n'dirty
+#pragma pack(push,1)
 #else
 #   define PACKED_STRUCT_DEF struct __attribute__((packed))
 #   define PEDANTIC_STRUCT_DEF struct

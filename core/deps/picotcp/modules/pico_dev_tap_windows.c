@@ -26,7 +26,6 @@
 #include "pico_dev_tap_windows_private.h"
 
 #define DEBUG_TAP_INFO
-#define DEBUG_TAP_GENERAL
 
 /*
  * Debugging info
