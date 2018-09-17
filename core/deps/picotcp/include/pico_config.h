@@ -3,7 +3,7 @@
    See COPYING, LICENSE.GPLv2 and LICENSE.GPLv3 for usage.
 
  *********************************************************************/
-#ifdef _MS_VER
+#ifdef _MSC_VER
 #include "pico_defines_msvc.h"
 #else
 #include "pico_defines.h"
