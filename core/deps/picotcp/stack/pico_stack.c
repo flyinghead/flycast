@@ -40,6 +40,12 @@
 #   define MOCKABLE
 #endif
 
+#ifdef _WIN32
+#ifdef WEAK
+#undef WEAK
+#endif
+#define WEAK
+#endif
 
 volatile pico_time pico_tick;
 volatile pico_err_t pico_err;

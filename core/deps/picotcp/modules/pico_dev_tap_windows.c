@@ -25,6 +25,9 @@
 #include <winioctl.h>
 #include "pico_dev_tap_windows_private.h"
 
+#define DEBUG_TAP_INFO
+#define DEBUG_TAP_GENERAL
+
 /*
  * Debugging info
  */
@@ -96,7 +99,8 @@ struct tuntap
     uint8_t mac[6];
 
     /* Windows stuff */
-    DWORD adapter_index; /*adapter index for TAP-Windows adapter, ~0 if undefined */
+    //DWORD adapter_index; /*adapter index for TAP-Windows adapter, ~0 if undefined */
+    const char *guid;
     HANDLE hand;
     struct overlapped_io reads; /* for overlapped IO */
     struct overlapped_io writes;
@@ -217,13 +221,13 @@ const struct tap_reg *get_tap_reg (void)
                     if (!strcmp (component_id, TAP_WIN_COMPONENT_ID))
                     {
                         struct tap_reg *reg;
-                        reg = PICO_ZALLOC(sizeof(struct tap_reg), 1);
+                        reg = PICO_ZALLOC(sizeof(struct tap_reg));
                         /* ALLOC_OBJ_CLEAR_GC (reg, struct tap_reg, gc); */
                         if (!reg)
                             return NULL;
 
                         /* reg->guid = string_alloc (net_cfg_instance_id, gc); */
-                        reg->guid = PICO_ZALLOC (strlen(net_cfg_instance_id) + 1, 1);
+                        reg->guid = PICO_ZALLOC (strlen(net_cfg_instance_id) + 1);
                         if (!(reg->guid))
                         {
                             PICO_FREE(reg);
@@ -329,13 +333,13 @@ const struct panel_reg *get_panel_reg (void)
                 struct panel_reg *reg;
 
                 /* ALLOC_OBJ_CLEAR_GC (reg, struct panel_reg, gc); */
-                reg = PICO_ZALLOC(sizeof(struct panel_reg), 1);
+                reg = PICO_ZALLOC(sizeof(struct panel_reg));
                 if (!reg)
                     return NULL;
 
                 n = WideCharToMultiByte (CP_UTF8, 0, name_data, -1, NULL, 0, NULL, NULL);
                 /* name = gc_malloc (n, false, gc); */
-                name = PICO_ZALLOC(n, 1);
+                name = PICO_ZALLOC(n);
                 if (!name)
                 {
                     PICO_FREE(reg);
@@ -345,7 +349,7 @@ const struct panel_reg *get_panel_reg (void)
                 WideCharToMultiByte (CP_UTF8, 0, name_data, -1, name, n, NULL, NULL);
                 reg->name = name;
                 /* reg->guid = string_alloc (enum_name, gc); */
-                reg->guid = PICO_ZALLOC(strlen(enum_name) + 1, 1);
+                reg->guid = PICO_ZALLOC(strlen(enum_name) + 1);
                 if (!reg->guid)
                 {
                     PICO_FREE((void *)reg->name);
@@ -520,13 +524,14 @@ int open_tun (const char *dev, const char *dev_type, const char *dev_node, struc
             );
 
         if (tt->hand == INVALID_HANDLE_VALUE)
-            dbg_tap_info("CreateFile failed on TAP device: %s\n", device_path);
+            dbg_tap_info("CreateFile failed on TAP device: %s error %d\n", device_path, GetLastError());
 
         /* translate high-level device name into a device instance
            GUID using the registry */
         tt->actual_name = PICO_ZALLOC(strlen(name) + 1);
         if (tt->actual_name)
             strcpy(tt->actual_name, name);
+	tt->guid = device_guid;
     }
 
     dbg_tap_info("TAP-WIN32 device [%s] opened: %s\n", tt->actual_name, device_path);
@@ -605,11 +610,11 @@ int open_tun (const char *dev, const char *dev_type, const char *dev_node, struc
     if (tt->type == DEV_TYPE_TUN)
     {
         dbg_tap_info("TUN type not supported for now...\n");
+        // TODO: Set Point-to-point through DeviceIoControl TAP_WIN_IOCTL_CONFIG_TUN
         return -1;
     }
     else if (tt->type == DEV_TYPE_TAP)
     { /* TAP DEVICE */
-        dbg_tap_info("TODO: Set Point-to-point through DeviceIoControl\n");
     }
 
     /* set driver media status to 'connected' */
@@ -688,7 +693,7 @@ int tun_read_queue (struct tuntap *tt, uint8_t *buffer, int maxsize)
 
         /* the overlapped read will signal this event on I/O completion */
         if (!ResetEvent (tt->reads.overlapped.hEvent))
-            dbg_tap("ResetEvent failed\n");
+            dbg_tap_info("ResetEvent failed\n");
 
         status = ReadFile(
             tt->hand,
@@ -703,7 +708,7 @@ int tun_read_queue (struct tuntap *tt, uint8_t *buffer, int maxsize)
             /* since we got an immediate return, we must signal the event object ourselves */
             /* ASSERT (SetEvent (tt->reads.overlapped.hEvent)); */
             if (!SetEvent (tt->reads.overlapped.hEvent))
-                dbg_tap("SetEvent failed\n");
+                dbg_tap_info("SetEvent failed\n");
 
             tt->reads.iostate = IOSTATE_IMMEDIATE_RETURN;
             tt->reads.status = 0;
@@ -724,11 +729,11 @@ int tun_read_queue (struct tuntap *tt, uint8_t *buffer, int maxsize)
             else /* error occurred */
             {
                 if (!SetEvent (tt->reads.overlapped.hEvent))
-                    dbg_tap("SetEvent failed\n");
+                    dbg_tap_info("SetEvent failed\n");
 
                 tt->reads.iostate = IOSTATE_IMMEDIATE_RETURN;
                 tt->reads.status = err;
-                dbg_tap ("WIN32 I/O: TAP Read error [%d] : %d\n", (int) len, (int) err);
+                dbg_tap_info("WIN32 I/O: TAP Read error [%d] : %d\n", (int) len, (int) err);
             }
         }
     }
@@ -764,7 +769,7 @@ int tun_finalize(HANDLE h, struct overlapped_io *io, uint8_t **buf, uint32_t *bu
             io->iostate = IOSTATE_INITIAL;
 
             if (!ResetEvent (io->overlapped.hEvent))
-                dbg_tap("ResetEvent in finalize failed!\n");
+                dbg_tap_info("ResetEvent in finalize failed!\n");
 
             dbg_tap_win32 ("WIN32 I/O: TAP Completion success: QUEUED! [%d]\n", ret);
         }
@@ -773,15 +778,16 @@ int tun_finalize(HANDLE h, struct overlapped_io *io, uint8_t **buf, uint32_t *bu
             /* error during a queued operation */
             /* error, or just not completed? */
             ret = 0;
-            if (GetLastError() != ERROR_IO_INCOMPLETE)
+			int last_error = GetLastError();
+            if (last_error != ERROR_IO_INCOMPLETE)
             {
                 /* if no error (i.e. just not finished yet),
                    then DON'T execute this code */
                 io->iostate = IOSTATE_INITIAL;
                 if (!ResetEvent (io->overlapped.hEvent))
-                    dbg_tap("ResetEvent in finalize failed!\n");
+                    dbg_tap_info("ResetEvent in finalize failed!\n");
 
-                dbg_tap("WIN32 I/O: TAP Completion error\n");
+                dbg_tap_info("WIN32 I/O: TAP Completion error %d\n", last_error);
                 ret = -1;     /* There actually was an error */
             }
         }
@@ -791,14 +797,14 @@ int tun_finalize(HANDLE h, struct overlapped_io *io, uint8_t **buf, uint32_t *bu
     case IOSTATE_IMMEDIATE_RETURN:
         io->iostate = IOSTATE_INITIAL;
         if (!ResetEvent (io->overlapped.hEvent))
-            dbg_tap("ResetEvent in finalize failed!\n");
+            dbg_tap_info("ResetEvent in finalize failed!\n");
 
         if (io->status)
         {
             /* error return for a non-queued operation */
             SetLastError (io->status);
             ret = -1;
-            dbg_tap("WIN32 I/O: TAP Completion non-queued error\n");
+            dbg_tap_info("WIN32 I/O: TAP Completion non-queued error\n");
         }
         else
         {
@@ -815,11 +821,11 @@ int tun_finalize(HANDLE h, struct overlapped_io *io, uint8_t **buf, uint32_t *bu
     case IOSTATE_INITIAL:     /* were we called without proper queueing? */
         SetLastError (ERROR_INVALID_FUNCTION);
         ret = -1;
-        dbg_tap ("WIN32 I/O: TAP Completion BAD STATE\n");
+        dbg_tap_info("WIN32 I/O: TAP Completion BAD STATE\n");
         break;
 
     default:
-        dbg_tap ("Some weird case happened..\n");
+        dbg_tap_info("Some weird case happened..\n");
     }
 
     if (buf)
@@ -845,7 +851,7 @@ int tun_write_queue (struct tuntap *tt, uint8_t *buf, uint32_t buf_len)
 
         /* the overlapped write will signal this event on I/O completion */
         if (!ResetEvent (tt->writes.overlapped.hEvent))
-            dbg_tap("ResetEvent in write_queue failed!\n");
+            dbg_tap_info("ResetEvent in write_queue failed!\n");
 
         status = WriteFile(
             tt->hand,
@@ -861,7 +867,7 @@ int tun_write_queue (struct tuntap *tt, uint8_t *buf, uint32_t buf_len)
 
             /* since we got an immediate return, we must signal the event object ourselves */
             if (!SetEvent (tt->writes.overlapped.hEvent))
-                dbg_tap("SetEvent in write_queue failed!\n");
+                dbg_tap_info("SetEvent in write_queue failed!\n");
 
             tt->writes.status = 0;
 
@@ -882,7 +888,7 @@ int tun_write_queue (struct tuntap *tt, uint8_t *buf, uint32_t buf_len)
             else /* error occurred */
             {
                 if (!SetEvent (tt->writes.overlapped.hEvent))
-                    dbg_tap("SetEvent in write_queue failed!\n");
+                    dbg_tap_info("SetEvent in write_queue failed!\n");
 
                 tt->writes.iostate = IOSTATE_IMMEDIATE_RETURN;
                 tt->writes.status = err;
@@ -1026,8 +1032,6 @@ static int pico_tap_poll(struct pico_device *dev, int loop_score)
     return loop_score;
 }
 
-
-
 #define CLEAR(x) memset(&(x), 0, sizeof(x))
 
 void overlapped_io_init (struct overlapped_io *o, int event_state)
@@ -1066,7 +1070,7 @@ void init_tun_post (struct tuntap *tt)
 struct pico_device *pico_tap_create(char *name, uint8_t *mac)
 {
     struct pico_device_tap *tap = PICO_ZALLOC(sizeof(struct pico_device_tap));
-    struct tuntap *tt = PICO_ZALLOC(sizeof(struct tuntap), 1);
+    struct tuntap *tt = PICO_ZALLOC(sizeof(struct tuntap));
 
     if (!(tap) || !(tt))
         return NULL;
@@ -1098,4 +1102,9 @@ struct pico_device *pico_tap_create(char *name, uint8_t *mac)
     dbg_tap("Device %s created.\n", tap->dev.name);
 
     return (struct pico_device *)tap;
+}
+
+const char *pico_tap_get_guid(struct pico_device *dev)
+{
+	return ((struct pico_device_tap *)dev)->tt->guid;
 }

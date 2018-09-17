@@ -41,7 +41,9 @@ int posix_memalign(void** memptr, size_t alignment, size_t size) {
 void* OS_aligned_malloc(size_t align, size_t size)
 {
         void *result;
-        #if HOST_OS == OS_WINDOWS
+	#ifdef __MINGW32__
+		return __mingw_aligned_malloc(size, align);
+        #elif HOST_OS == OS_WINDOWS
                 result = _aligned_malloc(size, align);
         #else
                 if(posix_memalign(&result, align, size)) result = 0;
@@ -52,7 +54,9 @@ void* OS_aligned_malloc(size_t align, size_t size)
 // helper for 32 byte aligned memory de-allocation
 void OS_aligned_free(void *ptr)
 {
-        #if HOST_OS == OS_WINDOWS
+	#ifdef __MINGW32__
+		__mingw_aligned_free(ptr);
+        #elif HOST_OS == OS_WINDOWS
                 _aligned_free(ptr);
         #else
                 free(ptr);

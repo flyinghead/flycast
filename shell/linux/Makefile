@@ -6,6 +6,7 @@ WEBUI :=1
 USE_OSS := 1
 #USE_PULSEAUDIO := 1
 USE_EVDEV := 1
+PLATFORM_EXT := elf
 
 CXX=${CC_PREFIX}g++
 CC=${CC_PREFIX}gcc
@@ -229,6 +230,30 @@ else ifneq (,$(findstring vero4k,$(platform)))
     USE_GLES := 1
     USE_SDL := 1
 
+# Windows
+else ifneq (,$(findstring win32,$(platform)))
+    X64_REC := 1
+    NOT_ARM := 1
+    CFLAGS += -DTARGET_NO_WEBUI -fno-builtin-sqrtf -funroll-loops
+    LDFLAGS += -static-libgcc -static-libstdc++
+    LIBS := -lopengl32 -lwinmm -lgdi32 -lwsock32 -ldsound -lcomctl32 -lcomdlg32 -lxinput -liphlpapi
+    PLATFORM_EXT := exe
+    CC = gcc
+    CXX = g++
+ifeq ($(WITH_DYNAREC), x86)
+    LDFLAGS += -m32
+    CFLAGS += -m32
+else
+    CFLAGS += -D TARGET_NO_AREC
+endif
+    undefine USE_X11
+    undefine USE_ALSA
+    undefine USE_OSS
+    undefine USE_EVDEV
+    undefine FOR_LINUX
+    undefine WEBUI
+    NO_NIXPROF := 1
+    FOR_WINDOWS := 1
 else
     $(error Unknown platform)
 endif
@@ -246,8 +271,10 @@ CXXFLAGS += -fno-rtti -fpermissive -fno-operator-names -D_GLIBCXX_USE_CXX11_ABI=
 
 INCS += -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps -I$(RZDCY_SRC_DIR)/khronos
 
-LIBS += -lm -lrt -ldl
-LIBS  += -lpthread
+LIBS += -lm -lpthread
+ifdef FOR_LINUX
+LIBS += -lrt -ldl
+endif
 
 PREFIX ?= /usr/local
 MAN_DIR ?= ${PREFIX}/share/man/man1
@@ -328,7 +355,7 @@ endif
 ifdef USE_GLES
     CXXFLAGS += -DGLES
     LIBS += -lEGL -lGLESv2
-else
+else ifdef FOR_LINUX
     LIBS += -ldl -lGL #for desktop gl
 endif
 
@@ -337,20 +364,20 @@ ifdef HAS_SOFTREND
     CXXFLAGS += -DTARGET_SOFTREND
 endif
 
-EXECUTABLE_STRIPPED=nosym-reicast.elf
+EXECUTABLE_STRIPPED=nosym-reicast.$(PLATFORM_EXT)
 ifdef NAOMI
     CFLAGS += -D TARGET_NAOMI -D SAVE_EPPROM
     DC_PLATFORM=naomi
-    EXECUTABLE=reicast_naomi.elf
+    EXECUTABLE=reicast_naomi.$(PLATFORM_EXT)
     EXECUTABLE_NAME=reicast-naomi
 else ifdef DISPFRAME
     CFLAGS += -D TARGET_DISPFRAME
     DC_PLATFORM=dispframe
-    EXECUTABLE=dispframe.elf
+    EXECUTABLE=dispframe.$(PLATFORM_EXT)
     EXECUTABLE_NAME=dispframe
 else
     DC_PLATFORM=dreamcast
-    EXECUTABLE=reicast.elf
+    EXECUTABLE=reicast.$(PLATFORM_EXT)
     EXECUTABLE_NAME=reicast
 endif
 
@@ -444,7 +471,6 @@ $(BUILDDIR)/hw/modem/picoppp.build_obj: $(BUILDDIR)/deps/picotcp/lib/libpicotcp.
 
 $(BUILDDIR)/deps/picotcp/lib/libpicotcp.a:
 	mkdir -p $(BUILDDIR)/deps/picotcp
-	echo cd $(RZDCY_SRC_DIR)/deps/picotcp , make PREFIX=$(PWD)/$(BUILDDIR)/deps/picotcp
 	cd $(RZDCY_SRC_DIR)/deps/picotcp ; make PREFIX=$(PWD)/$(BUILDDIR)/deps/picotcp
 
 .PRECIOUS = $(DEPDIR)/%.d

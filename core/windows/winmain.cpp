@@ -683,8 +683,15 @@ int CALLBACK WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine
 
 	SetupPath();
 
-	//SetUnhandledExceptionFilter(&ExeptionHandler);
+#ifndef __GNUC__
 	__try
+#else
+#ifdef _WIN64
+	AddVectoredExceptionHandler(1, ExeptionHandler);
+#else
+	SetUnhandledExceptionFilter(&ExeptionHandler);
+#endif
+#endif
 	{
 		int dc_init(int argc,wchar* argv[]);
 		void dc_run();
@@ -692,16 +699,18 @@ int CALLBACK WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine
 		dc_init(argc,argv);
 
 		#ifdef _WIN64
-				setup_seh();
+			setup_seh();
 		#endif
 
 		dc_run();
 		dc_term();
 	}
+#ifndef __GNUC__
 	__except( ExeptionHandler(GetExceptionInformation()) )
 	{
 		printf("Unhandled exception - Emulation thread halted...\n");
 	}
+#endif
 	SetUnhandledExceptionFilter(0);
 
 	return 0;

@@ -12,6 +12,7 @@
 struct pico_device *pico_tap_create(char *name, uint8_t *mac);
 /* TODO: not implemented yet */
 /* void pico_tap_destroy(struct pico_device *null); */
+const char *pico_tap_get_guid(struct pico_device *dev);
 
 #endif
 

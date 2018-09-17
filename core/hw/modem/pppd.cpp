@@ -22,7 +22,7 @@
  */
 #include "types.h"
 
-#if 1//HOST_OS == OS_LINUX
+#if HOST_OS == OS_LINUX
 
 #include <unistd.h>
 #include <stdio.h>

@@ -490,7 +490,7 @@ bool rend_init()
 		case 0:
 			renderer = rend_GLES2();
 			break;
-#if HOST_OS == OS_WINDOWS
+#if 0 //HOST_OS == OS_WINDOWS
 		case 1:
 			renderer = rend_D3D11();
 			break;

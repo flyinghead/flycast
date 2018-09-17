@@ -443,7 +443,8 @@ static int pico_arp_process_in(struct pico_frame *f, struct pico_arp_hdr *hdr, s
 //    }
 
     /* If no existing entry was found, create a new entry, or fail trying. */
-    if ((!found) && (pico_arp_create_entry(hdr->s_mac, hdr->src, f->dev) < 0)) {
+    /* Do not create an entry for Slaac V4 probe packets (0.0.0.0) */
+    if ((!found) && (hdr->src.addr == 0 || pico_arp_create_entry(hdr->s_mac, hdr->src, f->dev) < 0)) {
         pico_frame_discard(f);
         return -1;
     }

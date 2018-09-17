@@ -8,7 +8,7 @@ RZDCY_SRC_DIR ?= $(call my-dir)
 
 RZDCY_MODULES	:=	cfg/ hw/arm7/ hw/aica/ hw/holly/ hw/ hw/gdrom/ hw/maple/ hw/modem/ \
  hw/mem/ hw/pvr/ hw/sh4/ hw/sh4/interpr/ hw/sh4/modules/ plugins/ profiler/ oslib/ \
- hw/extdev/ hw/arm/ hw/naomi/ imgread/ linux/ ./ deps/coreio/ deps/zlib/ deps/chdr/ deps/crypto/ \
+ hw/extdev/ hw/arm/ hw/naomi/ imgread/ ./ deps/coreio/ deps/zlib/ deps/chdr/ deps/crypto/ \
  deps/libelf/ deps/chdpsr/ arm_emitter/ rend/ reios/ deps/libpng/ deps/xbrz/
 
 
@@ -56,7 +56,7 @@ ifndef NO_NIXPROF
 endif
 
 ifdef FOR_ANDROID
-    RZDCY_MODULES += android/ deps/libandroid/ deps/libzip/
+    RZDCY_MODULES += android/ deps/libandroid/ linux/ deps/libzip/
 endif
 
 ifdef USE_SDL
@@ -64,7 +64,11 @@ ifdef USE_SDL
 endif
 
 ifdef FOR_LINUX
-    RZDCY_MODULES += linux-dist/
+    RZDCY_MODULES += linux-dist/ linux/
+endif
+
+ifdef FOR_WINDOWS
+    RZDCY_MODULES += windows/
 endif
 
 RZDCY_FILES := $(foreach dir,$(addprefix $(RZDCY_SRC_DIR)/,$(RZDCY_MODULES)),$(wildcard $(dir)*.cpp))

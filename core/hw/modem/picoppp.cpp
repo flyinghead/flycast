@@ -3,7 +3,11 @@
 extern "C" {
 #include <pico_stack.h>
 #include <pico_dev_ppp.h>
+#ifdef _WIN32
+#include <pico_dev_tap_windows.h>
+#else
 #include <pico_dev_tap.h>
+#endif
 #include <pico_arp.h>
 #include <pico_dev_tun.h>
 #ifdef DHCP
@@ -11,7 +15,12 @@ extern "C" {
 #endif
 }
 
+#ifdef _WIN32
+#include <iphlpapi.h>
+#define NETWORK_TAP
+#else
 #define NETWORK_TUN
+#endif
 
 #include "types.h"
 #include "cfg/cfg.h"
@@ -20,6 +29,7 @@ extern "C" {
 static struct pico_device *ppp;
 struct pico_device* tap;
 struct pico_device* tun;
+u8 virtual_mac[] = { 0x76, 0x6D, 0x61, 0x63, 0x30, 0x31 };
 
 static std::queue<u8> in_buffer;
 static std::queue<u8> out_buffer;
@@ -100,7 +110,7 @@ static bool pico_stack_inited;
 
 bool start_pico()
 {
-    struct pico_ip4 ipaddr, netmask, zero = {
+    struct pico_ip4 ipaddr, dcaddr, dnsaddr, netmask, zero = {
     	    0
     	};
 
@@ -120,14 +130,14 @@ bool start_pico()
     	printf("No IP address set for Netplay. Set IP= in the [network] section\n");
     	return false;
     }
-    pico_string_to_ipv4(dc_ip.c_str(), &ipaddr.addr);
-    pico_ppp_set_peer_ip(ppp, ipaddr);
+    pico_string_to_ipv4(dc_ip.c_str(), &dcaddr.addr);
+    pico_ppp_set_peer_ip(ppp, dcaddr);
     pico_string_to_ipv4("192.168.167.1", &ipaddr.addr);
     pico_ppp_set_ip(ppp, ipaddr);
 
     string dns_ip = cfgLoadStr("network", "DNS", "46.101.91.123");
-    pico_string_to_ipv4(dns_ip.c_str(), &ipaddr.addr);
-    pico_ppp_set_dns1(ppp, ipaddr);
+    pico_string_to_ipv4(dns_ip.c_str(), &dnsaddr.addr);
+    pico_ppp_set_dns1(ppp, dnsaddr);
 
 #ifdef NETWORK_TAP
     // TAP
@@ -138,7 +148,11 @@ bool start_pico()
     // # ip route add <IP>/32 dev tap0		# where <IP> is the value of network:IP in emu.cfg./. This also allows proxy arp
     // # echo '1' >/proc/sys/net/ipv4/conf/all/proxy_arp
     // (or ...conf/tap0/proxy_arp and ...conf/eth0/proxy_arp only)
+#ifdef _WIN32
+    tap = pico_tap_create("tap0", virtual_mac);
+#else
     tap = pico_tap_create("tap0");
+#endif
     if (!tap)
     {
     	stop_pico();
@@ -150,6 +164,107 @@ bool start_pico()
     pico_ipv4_link_add(tap, ipaddr, netmask);
     // Proxy ARP
     pico_arp_create_entry(tap->eth->mac.addr, ipaddr, ppp);
+
+#ifdef _WIN32
+    int err;
+
+    // Enable routing
+    OVERLAPPED overlapped;
+    memset(&overlapped, 0, sizeof(overlapped));
+    overlapped.hEvent = overlapped.hEvent = CreateEvent (NULL, FALSE, FALSE, NULL);
+    if (overlapped.hEvent == NULL)
+	printf("CreateEvent failed with error %d\n", GetLastError());
+    else
+    {
+	HANDLE handle;
+	err = EnableRouter(&handle, &overlapped);
+	if (err != ERROR_IO_PENDING)
+	    printf("EnableRouter failed with error %d\n", err);
+	else
+	    printf("Windows router enabled\n");
+	CloseHandle(overlapped.hEvent);
+    }
+
+    // Get the LAN interface index
+    DWORD idx = -1;
+    err = GetBestInterface(dnsaddr.addr, &idx);
+    if (err != NO_ERROR)
+	printf("GetBestInterface failed error %d\n", err);
+
+    // Create a Proxy ARP entry for the DC on the local LAN
+    if (idx != -1)
+    {
+	err = CreateProxyArpEntry(dcaddr.addr, 0xffffffff, idx);
+	if (err == ERROR_OBJECT_ALREADY_EXISTS)
+		printf("Proxy ARP entry already exists\n");
+	else if (err != NO_ERROR)
+		printf("CreateProxyArpEntry failed error %d\n", err);
+    }
+
+	// Get the TAP interface index
+	unsigned long size = sizeof(IP_INTERFACE_INFO);
+	IP_INTERFACE_INFO *infos = (IP_INTERFACE_INFO *)malloc(size);
+	err = GetInterfaceInfo(infos, &size);
+	if (err == ERROR_INSUFFICIENT_BUFFER)
+	{
+	    free(infos);
+	    infos = (IP_INTERFACE_INFO *)malloc(size);
+	    err = GetInterfaceInfo(infos, &size);
+	    if (err != NO_ERROR)
+	    {
+		printf("GetInterfaceInfo failed error %d\n", err);
+		infos->NumAdapters = 0;
+	    }
+	}
+
+	const char *tap_guid = pico_tap_get_guid(tap);
+	wchar_t wtap_guid[40];
+	MultiByteToWideChar(CP_UTF8, 0, tap_guid, strlen(tap_guid), &wtap_guid[0], 40);
+	DWORD tap_idx = -1; // 11;
+	for (int i = 0; i < infos->NumAdapters; i++)
+	{
+	    printf("Found interface %ls index %d\n", infos->Adapter[i].Name, infos->Adapter[i].Index);
+	    if (wcsstr(infos->Adapter[i].Name, wtap_guid) != NULL)
+	    {
+		tap_idx = infos->Adapter[i].Index;
+		break;
+	    }
+	}
+	free(infos);
+
+	// Set the TAP interface IP address
+	pico_string_to_ipv4("192.168.166.1", &ipaddr.addr);
+	pico_string_to_ipv4("255.255.255.0", &netmask.addr);
+	unsigned long nte_context, nte_instance;
+	err = AddIPAddress(ipaddr.addr, netmask.addr, tap_idx, &nte_context, &nte_instance);
+	if (err == ERROR_OBJECT_ALREADY_EXISTS)
+		printf("TAP IP address already set\n");
+	else if (err != NO_ERROR)
+		printf("AddIpAddress failed with error %d\n", err);
+	else
+		printf("TAP IP address set\n");
+
+	// Create a route to the DC through the TAP interface
+	if (tap_idx != -1)
+	{
+		MIB_IPFORWARDROW fwd;
+		memset(&fwd, 0, sizeof(fwd));
+		fwd.dwForwardDest = dcaddr.addr;
+		fwd.dwForwardMask = 0xffffffff;
+		fwd.dwForwardIfIndex = tap_idx;
+		fwd.dwForwardProto = MIB_IPPROTO_NETMGMT;
+		fwd.dwForwardAge = INFINITE;
+		fwd.dwForwardMetric1 = 500;
+		err = CreateIpForwardEntry(&fwd);
+		if (err == ERROR_OBJECT_ALREADY_EXISTS)
+			printf("IP forward entry already exists\n");
+		else if (err != NO_ERROR)
+			printf("CreateIpForwardEntry failed with error %d\n", err);
+		else
+			printf("IP forward entry created\n");
+	}
+
+#endif
 #endif
 
 #ifdef NETWORK_TUN

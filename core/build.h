@@ -152,7 +152,7 @@
 //automatic
 
 #if defined(_WIN32) && !defined(TARGET_WIN86) && !defined(TARGET_WIN64)
-	#if !defined(_M_AMD64)
+	#if !defined(_M_AMD64) && !defined(__x86_64__)
 		#define TARGET_WIN86
 	#else
 		#define TARGET_WIN64
