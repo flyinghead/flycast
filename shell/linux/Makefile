@@ -263,11 +263,11 @@ include $(RZDCY_SRC_DIR)/core.mk
 
 LDFLAGS += -g -Wl,-Map,$(notdir $@).map,--gc-sections -Wl,-O3 -Wl,--sort-common -fopenmp
 
-CFLAGS += -g -O3 -D RELEASE -c -D USES_HOMEDIR -fopenmp #-D NO_REND
+CFLAGS += $(RZDCY_CFLAGS) -g -O3 -D RELEASE -c -D USES_HOMEDIR -fopenmp #-D NO_REND
 CFLAGS += -frename-registers -fno-strict-aliasing
 CFLAGS += -ffast-math -ftree-vectorize
 
-CXXFLAGS += -fno-rtti -fpermissive -fno-operator-names -D_GLIBCXX_USE_CXX11_ABI=0 -std=gnu++11
+CXXFLAGS += $(RZDCY_CFLAGS) -fno-rtti -fpermissive -fno-operator-names -D_GLIBCXX_USE_CXX11_ABI=0 -std=gnu++11
 
 INCS += -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps -I$(RZDCY_SRC_DIR)/khronos
 
@@ -398,9 +398,6 @@ DEPS:=$(DEPS:.S=.d)
 DEPS:=$(patsubst $(RZDCY_SRC_DIR)/%,$(DEPDIR)/%,$(DEPS))
 POSTCOMPILE = mv -f $(DEPDIR)/$*.Td $(DEPDIR)/$*.d
 
-INCS += -I$(PWD)/$(BUILDDIR)/deps/picotcp/include
-LIBS += -L$(PWD)/$(BUILDDIR)/deps/picotcp/lib -lpicotcp 
-
 all: $(CPPFILES) $(EXECUTABLE) $(EXECUTABLE_STRIPPED)
 ifneq (,$(findstring gcwz,$(platform)))
 	mksquashfs $(EXECUTABLE_STRIPPED) $(GCWZ_PKG_FILES) $(GCWZ_PKG) -all-root
@@ -466,13 +463,6 @@ uninstall:
 
 clean:
 	rm -f $(OBJECTS) $(EXECUTABLE) $(EXECUTABLE_STRIPPED) .map
-	rm -rf $(BUILDDIR)/deps/picotcp
-
-$(BUILDDIR)/hw/modem/picoppp.build_obj: $(BUILDDIR)/deps/picotcp/lib/libpicotcp.a
-
-$(BUILDDIR)/deps/picotcp/lib/libpicotcp.a:
-	mkdir -p $(BUILDDIR)/deps/picotcp
-	cd $(RZDCY_SRC_DIR)/deps/picotcp ; make PREFIX=$(PWD)/$(BUILDDIR)/deps/picotcp
 
 .PRECIOUS = $(DEPDIR)/%.d
 $(DEPDIR)/%.d: ;

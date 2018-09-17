@@ -3,6 +3,7 @@
    See COPYING, LICENSE.GPLv2 and LICENSE.GPLv3 for usage.
 
  *********************************************************************/
+#ifndef _WIN32
 #ifndef INCLUDE_PICO_TUN
 #define INCLUDE_PICO_TUN
 #include "pico_config.h"
@@ -11,5 +12,6 @@
 void pico_tun_destroy(struct pico_device *tun);
 struct pico_device *pico_tun_create(const char *name);
 
+#endif
 #endif
 

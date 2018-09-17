@@ -5,7 +5,7 @@
    Authors: Daniele Lacamera
  *********************************************************************/
 
-
+#ifndef _WIN32
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <net/if.h>
@@ -88,7 +88,7 @@ struct pico_device *pico_tun_create(const char *name)
         return NULL;
 
     if( 0 != pico_device_init((struct pico_device *)tun, name, NULL)) {
-        dbg("Tun init failed.\n");
+        printf("Tun init failed.\n");
         pico_tun_destroy((struct pico_device *)tun);
         return NULL;
     }
@@ -96,7 +96,7 @@ struct pico_device *pico_tun_create(const char *name)
     tun->dev.overhead = 0;
     tun->fd = tun_open(name);
     if (tun->fd < 0) {
-        dbg("Tun creation failed.\n");
+        printf("Tun creation failed.\n");
         pico_tun_destroy((struct pico_device *)tun);
         return NULL;
     }
@@ -108,3 +108,4 @@ struct pico_device *pico_tun_create(const char *name)
     return (struct pico_device *)tun;
 }
 
+#endif

@@ -5,7 +5,7 @@
    Authors: Daniele Lacamera
  *********************************************************************/
 
-
+#ifndef _WIN32
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <net/if.h>
@@ -228,3 +228,4 @@ struct pico_device *pico_tap_create(const char *name)
     return (struct pico_device *)tap;
 }
 
+#endif

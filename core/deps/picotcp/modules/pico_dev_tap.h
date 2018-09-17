@@ -3,6 +3,7 @@
    See COPYING, LICENSE.GPLv2 and LICENSE.GPLv3 for usage.
 
  *********************************************************************/
+#ifndef _WIN32
 #ifndef INCLUDE_PICO_TAP
 #define INCLUDE_PICO_TAP
 #include "pico_config.h"
@@ -12,4 +13,4 @@ void pico_tap_destroy(struct pico_device *tap);
 struct pico_device *pico_tap_create(const char *name);
 
 #endif
-
+#endif
