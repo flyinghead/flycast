@@ -210,7 +210,7 @@ static int pico_ipv4_is_invalid_loopback(uint32_t address, struct pico_device *d
 int pico_ipv4_is_valid_src(uint32_t address, struct pico_device *dev)
 {
     if (pico_ipv4_is_broadcast(address)) {
-        dbg("Source is a broadcast address, discard packet\n");
+        dbg("Source is a broadcast address, discard packet %08x\n", address);
         return 0;
     } else if ( pico_ipv4_is_multicast(address)) {
         dbg("Source is a multicast address, discard packet\n");
@@ -1627,7 +1627,7 @@ int pico_ipv4_is_broadcast(uint32_t addr)
 
     pico_tree_foreach(index, &Tree_dev_link) {
         link = index->keyValue;
-        if ((link->address.addr | (~link->netmask.addr)) == addr)
+        if ((link->address.addr | (~link->netmask.addr)) == addr && link->netmask.addr != 0xffffffff)
             return 1;
     }
     return 0;

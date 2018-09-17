@@ -199,7 +199,32 @@
 		AE8C274221122E2500D4D8F4 /* License.txt in Resources */ = {isa = PBXBuildFile; fileRef = AE8C273C21122E2500D4D8F4 /* License.txt */; };
 		AE8C274321122E2500D4D8F4 /* xbrz.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE8C273D21122E2500D4D8F4 /* xbrz.cpp */; };
 		AEFF7ECC214AEC810068CE11 /* modem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEFF7EC7214AEC800068CE11 /* modem.cpp */; };
-		AEFF7ECD214AEC810068CE11 /* pppd.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEFF7ECA214AEC800068CE11 /* pppd.cpp */; };
+		AEFF7F4D214D9D590068CE11 /* pico_arp.c in Sources */ = {isa = PBXBuildFile; fileRef = AEFF7EFA214D9D590068CE11 /* pico_arp.c */; };
+		AEFF7F4E214D9D590068CE11 /* pico_dev_ppp.c in Sources */ = {isa = PBXBuildFile; fileRef = AEFF7EFE214D9D590068CE11 /* pico_dev_ppp.c */; };
+		AEFF7F51214D9D590068CE11 /* pico_dev_tun.c in Sources */ = {isa = PBXBuildFile; fileRef = AEFF7F05214D9D590068CE11 /* pico_dev_tun.c */; };
+		AEFF7F52214D9D590068CE11 /* pico_dhcp_client.c in Sources */ = {isa = PBXBuildFile; fileRef = AEFF7F07214D9D590068CE11 /* pico_dhcp_client.c */; };
+		AEFF7F53214D9D590068CE11 /* pico_dhcp_common.c in Sources */ = {isa = PBXBuildFile; fileRef = AEFF7F09214D9D590068CE11 /* pico_dhcp_common.c */; };
+		AEFF7F54214D9D590068CE11 /* pico_dns_client.c in Sources */ = {isa = PBXBuildFile; fileRef = AEFF7F0B214D9D590068CE11 /* pico_dns_client.c */; };
+		AEFF7F55214D9D590068CE11 /* pico_dns_common.c in Sources */ = {isa = PBXBuildFile; fileRef = AEFF7F0D214D9D590068CE11 /* pico_dns_common.c */; };
+		AEFF7F56214D9D590068CE11 /* pico_ethernet.c in Sources */ = {isa = PBXBuildFile; fileRef = AEFF7F0F214D9D590068CE11 /* pico_ethernet.c */; };
+		AEFF7F57214D9D590068CE11 /* pico_fragments.c in Sources */ = {isa = PBXBuildFile; fileRef = AEFF7F11214D9D590068CE11 /* pico_fragments.c */; };
+		AEFF7F58214D9D590068CE11 /* pico_icmp4.c in Sources */ = {isa = PBXBuildFile; fileRef = AEFF7F13214D9D590068CE11 /* pico_icmp4.c */; };
+		AEFF7F59214D9D590068CE11 /* pico_ipv4.c in Sources */ = {isa = PBXBuildFile; fileRef = AEFF7F18214D9D590068CE11 /* pico_ipv4.c */; };
+		AEFF7F5A214D9D590068CE11 /* pico_mdns.c in Sources */ = {isa = PBXBuildFile; fileRef = AEFF7F1D214D9D590068CE11 /* pico_mdns.c */; };
+		AEFF7F5B214D9D590068CE11 /* pico_socket_tcp.c in Sources */ = {isa = PBXBuildFile; fileRef = AEFF7F23214D9D590068CE11 /* pico_socket_tcp.c */; };
+		AEFF7F5C214D9D590068CE11 /* pico_socket_udp.c in Sources */ = {isa = PBXBuildFile; fileRef = AEFF7F25214D9D590068CE11 /* pico_socket_udp.c */; };
+		AEFF7F5D214D9D590068CE11 /* pico_strings.c in Sources */ = {isa = PBXBuildFile; fileRef = AEFF7F27214D9D590068CE11 /* pico_strings.c */; };
+		AEFF7F5E214D9D590068CE11 /* pico_tcp.c in Sources */ = {isa = PBXBuildFile; fileRef = AEFF7F29214D9D590068CE11 /* pico_tcp.c */; };
+		AEFF7F5F214D9D590068CE11 /* pico_udp.c in Sources */ = {isa = PBXBuildFile; fileRef = AEFF7F2B214D9D590068CE11 /* pico_udp.c */; };
+		AEFF7F6F214D9D590068CE11 /* pico_device.c in Sources */ = {isa = PBXBuildFile; fileRef = AEFF7F3E214D9D590068CE11 /* pico_device.c */; };
+		AEFF7F70214D9D590068CE11 /* pico_frame.c in Sources */ = {isa = PBXBuildFile; fileRef = AEFF7F3F214D9D590068CE11 /* pico_frame.c */; };
+		AEFF7F71214D9D590068CE11 /* pico_md5.c in Sources */ = {isa = PBXBuildFile; fileRef = AEFF7F40214D9D590068CE11 /* pico_md5.c */; };
+		AEFF7F72214D9D590068CE11 /* pico_protocol.c in Sources */ = {isa = PBXBuildFile; fileRef = AEFF7F41214D9D590068CE11 /* pico_protocol.c */; };
+		AEFF7F73214D9D590068CE11 /* pico_socket.c in Sources */ = {isa = PBXBuildFile; fileRef = AEFF7F42214D9D590068CE11 /* pico_socket.c */; };
+		AEFF7F74214D9D590068CE11 /* pico_socket_multicast.c in Sources */ = {isa = PBXBuildFile; fileRef = AEFF7F43214D9D590068CE11 /* pico_socket_multicast.c */; };
+		AEFF7F75214D9D590068CE11 /* pico_stack.c in Sources */ = {isa = PBXBuildFile; fileRef = AEFF7F44214D9D590068CE11 /* pico_stack.c */; };
+		AEFF7F76214D9D590068CE11 /* pico_tree.c in Sources */ = {isa = PBXBuildFile; fileRef = AEFF7F45214D9D590068CE11 /* pico_tree.c */; };
+		AEFF7F7A214DA3C90068CE11 /* picoppp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEFF7F78214DA3C90068CE11 /* picoppp.cpp */; };
 		EBDF374F1BB96581001191B5 /* audiobackend_coreaudio.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EBDF374D1BB96581001191B5 /* audiobackend_coreaudio.cpp */; };
 		EBDF37511BB969EE001191B5 /* CoreAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EBDF37501BB969EE001191B5 /* CoreAudio.framework */; };
 		EBDF37531BB969F8001191B5 /* AudioUnit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EBDF37521BB969F8001191B5 /* AudioUnit.framework */; };
@@ -563,8 +588,95 @@
 		AEFF7EC7214AEC800068CE11 /* modem.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = modem.cpp; sourceTree = "<group>"; };
 		AEFF7EC8214AEC800068CE11 /* modem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = modem.h; sourceTree = "<group>"; };
 		AEFF7EC9214AEC800068CE11 /* modem_regs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = modem_regs.h; sourceTree = "<group>"; };
-		AEFF7ECA214AEC800068CE11 /* pppd.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = pppd.cpp; sourceTree = "<group>"; };
-		AEFF7ECB214AEC800068CE11 /* pppd.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pppd.h; sourceTree = "<group>"; };
+		AEFF7ED3214D9D590068CE11 /* pico_arm9.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pico_arm9.h; sourceTree = "<group>"; };
+		AEFF7ED4214D9D590068CE11 /* pico_atsamd21j18.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pico_atsamd21j18.h; sourceTree = "<group>"; };
+		AEFF7ED5214D9D590068CE11 /* pico_avr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pico_avr.h; sourceTree = "<group>"; };
+		AEFF7ED6214D9D590068CE11 /* pico_cortex_m.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pico_cortex_m.h; sourceTree = "<group>"; };
+		AEFF7ED7214D9D590068CE11 /* pico_dos.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pico_dos.h; sourceTree = "<group>"; };
+		AEFF7ED8214D9D590068CE11 /* pico_esp8266.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pico_esp8266.h; sourceTree = "<group>"; };
+		AEFF7ED9214D9D590068CE11 /* pico_generic_gcc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pico_generic_gcc.h; sourceTree = "<group>"; };
+		AEFF7EDA214D9D590068CE11 /* pico_linux.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pico_linux.h; sourceTree = "<group>"; };
+		AEFF7EDB214D9D590068CE11 /* pico_mbed.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pico_mbed.h; sourceTree = "<group>"; };
+		AEFF7EDC214D9D590068CE11 /* pico_msp430.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pico_msp430.h; sourceTree = "<group>"; };
+		AEFF7EDD214D9D590068CE11 /* pico_none.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pico_none.h; sourceTree = "<group>"; };
+		AEFF7EDE214D9D590068CE11 /* pico_pic24.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pico_pic24.h; sourceTree = "<group>"; };
+		AEFF7EDF214D9D590068CE11 /* pico_pic32.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pico_pic32.h; sourceTree = "<group>"; };
+		AEFF7EE0214D9D590068CE11 /* pico_posix.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pico_posix.h; sourceTree = "<group>"; };
+		AEFF7EE1214D9D590068CE11 /* heap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = heap.h; sourceTree = "<group>"; };
+		AEFF7EE2214D9D590068CE11 /* pico_addressing.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pico_addressing.h; sourceTree = "<group>"; };
+		AEFF7EE3214D9D590068CE11 /* pico_config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pico_config.h; sourceTree = "<group>"; };
+		AEFF7EE4214D9D590068CE11 /* pico_constants.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pico_constants.h; sourceTree = "<group>"; };
+		AEFF7EE5214D9D590068CE11 /* pico_device.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pico_device.h; sourceTree = "<group>"; };
+		AEFF7EE6214D9D590068CE11 /* pico_eth.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pico_eth.h; sourceTree = "<group>"; };
+		AEFF7EE7214D9D590068CE11 /* pico_frame.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pico_frame.h; sourceTree = "<group>"; };
+		AEFF7EE8214D9D590068CE11 /* pico_md5.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pico_md5.h; sourceTree = "<group>"; };
+		AEFF7EE9214D9D590068CE11 /* pico_module_eth.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pico_module_eth.h; sourceTree = "<group>"; };
+		AEFF7EEA214D9D590068CE11 /* pico_protocol.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pico_protocol.h; sourceTree = "<group>"; };
+		AEFF7EEB214D9D590068CE11 /* pico_queue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pico_queue.h; sourceTree = "<group>"; };
+		AEFF7EEC214D9D590068CE11 /* pico_socket.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pico_socket.h; sourceTree = "<group>"; };
+		AEFF7EED214D9D590068CE11 /* pico_socket_multicast.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pico_socket_multicast.h; sourceTree = "<group>"; };
+		AEFF7EEE214D9D590068CE11 /* pico_stack.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pico_stack.h; sourceTree = "<group>"; };
+		AEFF7EEF214D9D590068CE11 /* pico_tree.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pico_tree.h; sourceTree = "<group>"; };
+		AEFF7EF6214D9D590068CE11 /* pico_6lowpan.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pico_6lowpan.h; sourceTree = "<group>"; };
+		AEFF7EF7214D9D590068CE11 /* pico_6lowpan_ll.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pico_6lowpan_ll.h; sourceTree = "<group>"; };
+		AEFF7EF8214D9D590068CE11 /* pico_802154.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pico_802154.h; sourceTree = "<group>"; };
+		AEFF7EF9214D9D590068CE11 /* pico_aodv.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pico_aodv.h; sourceTree = "<group>"; };
+		AEFF7EFA214D9D590068CE11 /* pico_arp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pico_arp.c; sourceTree = "<group>"; };
+		AEFF7EFB214D9D590068CE11 /* pico_arp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pico_arp.h; sourceTree = "<group>"; };
+		AEFF7EFC214D9D590068CE11 /* pico_dev_ipc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pico_dev_ipc.h; sourceTree = "<group>"; };
+		AEFF7EFD214D9D590068CE11 /* pico_dev_null.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pico_dev_null.h; sourceTree = "<group>"; };
+		AEFF7EFE214D9D590068CE11 /* pico_dev_ppp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pico_dev_ppp.c; sourceTree = "<group>"; };
+		AEFF7EFF214D9D590068CE11 /* pico_dev_ppp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pico_dev_ppp.h; sourceTree = "<group>"; };
+		AEFF7F05214D9D590068CE11 /* pico_dev_tun.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pico_dev_tun.c; sourceTree = "<group>"; };
+		AEFF7F06214D9D590068CE11 /* pico_dev_tun.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pico_dev_tun.h; sourceTree = "<group>"; };
+		AEFF7F07214D9D590068CE11 /* pico_dhcp_client.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pico_dhcp_client.c; sourceTree = "<group>"; };
+		AEFF7F08214D9D590068CE11 /* pico_dhcp_client.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pico_dhcp_client.h; sourceTree = "<group>"; };
+		AEFF7F09214D9D590068CE11 /* pico_dhcp_common.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pico_dhcp_common.c; sourceTree = "<group>"; };
+		AEFF7F0A214D9D590068CE11 /* pico_dhcp_common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pico_dhcp_common.h; sourceTree = "<group>"; };
+		AEFF7F0B214D9D590068CE11 /* pico_dns_client.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pico_dns_client.c; sourceTree = "<group>"; };
+		AEFF7F0C214D9D590068CE11 /* pico_dns_client.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pico_dns_client.h; sourceTree = "<group>"; };
+		AEFF7F0D214D9D590068CE11 /* pico_dns_common.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pico_dns_common.c; sourceTree = "<group>"; };
+		AEFF7F0E214D9D590068CE11 /* pico_dns_common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pico_dns_common.h; sourceTree = "<group>"; };
+		AEFF7F0F214D9D590068CE11 /* pico_ethernet.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pico_ethernet.c; sourceTree = "<group>"; };
+		AEFF7F10214D9D590068CE11 /* pico_ethernet.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pico_ethernet.h; sourceTree = "<group>"; };
+		AEFF7F11214D9D590068CE11 /* pico_fragments.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pico_fragments.c; sourceTree = "<group>"; };
+		AEFF7F12214D9D590068CE11 /* pico_fragments.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pico_fragments.h; sourceTree = "<group>"; };
+		AEFF7F13214D9D590068CE11 /* pico_icmp4.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pico_icmp4.c; sourceTree = "<group>"; };
+		AEFF7F14214D9D590068CE11 /* pico_icmp4.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pico_icmp4.h; sourceTree = "<group>"; };
+		AEFF7F15214D9D590068CE11 /* pico_icmp6.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pico_icmp6.h; sourceTree = "<group>"; };
+		AEFF7F16214D9D590068CE11 /* pico_igmp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pico_igmp.h; sourceTree = "<group>"; };
+		AEFF7F17214D9D590068CE11 /* pico_ipfilter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pico_ipfilter.h; sourceTree = "<group>"; };
+		AEFF7F18214D9D590068CE11 /* pico_ipv4.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pico_ipv4.c; sourceTree = "<group>"; };
+		AEFF7F19214D9D590068CE11 /* pico_ipv4.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pico_ipv4.h; sourceTree = "<group>"; };
+		AEFF7F1A214D9D590068CE11 /* pico_ipv6.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pico_ipv6.h; sourceTree = "<group>"; };
+		AEFF7F1B214D9D590068CE11 /* pico_ipv6_nd.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pico_ipv6_nd.h; sourceTree = "<group>"; };
+		AEFF7F1C214D9D590068CE11 /* pico_mcast.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pico_mcast.h; sourceTree = "<group>"; };
+		AEFF7F1D214D9D590068CE11 /* pico_mdns.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pico_mdns.c; sourceTree = "<group>"; };
+		AEFF7F1E214D9D590068CE11 /* pico_mdns.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pico_mdns.h; sourceTree = "<group>"; };
+		AEFF7F1F214D9D590068CE11 /* pico_mld.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pico_mld.h; sourceTree = "<group>"; };
+		AEFF7F20214D9D590068CE11 /* pico_mm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pico_mm.h; sourceTree = "<group>"; };
+		AEFF7F21214D9D590068CE11 /* pico_nat.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pico_nat.h; sourceTree = "<group>"; };
+		AEFF7F22214D9D590068CE11 /* pico_olsr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pico_olsr.h; sourceTree = "<group>"; };
+		AEFF7F23214D9D590068CE11 /* pico_socket_tcp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pico_socket_tcp.c; sourceTree = "<group>"; };
+		AEFF7F24214D9D590068CE11 /* pico_socket_tcp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pico_socket_tcp.h; sourceTree = "<group>"; };
+		AEFF7F25214D9D590068CE11 /* pico_socket_udp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pico_socket_udp.c; sourceTree = "<group>"; };
+		AEFF7F26214D9D590068CE11 /* pico_socket_udp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pico_socket_udp.h; sourceTree = "<group>"; };
+		AEFF7F27214D9D590068CE11 /* pico_strings.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pico_strings.c; sourceTree = "<group>"; };
+		AEFF7F28214D9D590068CE11 /* pico_strings.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pico_strings.h; sourceTree = "<group>"; };
+		AEFF7F29214D9D590068CE11 /* pico_tcp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pico_tcp.c; sourceTree = "<group>"; };
+		AEFF7F2A214D9D590068CE11 /* pico_tcp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pico_tcp.h; sourceTree = "<group>"; };
+		AEFF7F2B214D9D590068CE11 /* pico_udp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pico_udp.c; sourceTree = "<group>"; };
+		AEFF7F2C214D9D590068CE11 /* pico_udp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pico_udp.h; sourceTree = "<group>"; };
+		AEFF7F3E214D9D590068CE11 /* pico_device.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pico_device.c; sourceTree = "<group>"; };
+		AEFF7F3F214D9D590068CE11 /* pico_frame.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pico_frame.c; sourceTree = "<group>"; };
+		AEFF7F40214D9D590068CE11 /* pico_md5.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pico_md5.c; sourceTree = "<group>"; };
+		AEFF7F41214D9D590068CE11 /* pico_protocol.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pico_protocol.c; sourceTree = "<group>"; };
+		AEFF7F42214D9D590068CE11 /* pico_socket.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pico_socket.c; sourceTree = "<group>"; };
+		AEFF7F43214D9D590068CE11 /* pico_socket_multicast.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pico_socket_multicast.c; sourceTree = "<group>"; };
+		AEFF7F44214D9D590068CE11 /* pico_stack.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pico_stack.c; sourceTree = "<group>"; };
+		AEFF7F45214D9D590068CE11 /* pico_tree.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pico_tree.c; sourceTree = "<group>"; };
+		AEFF7F78214DA3C90068CE11 /* picoppp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = picoppp.cpp; sourceTree = "<group>"; };
+		AEFF7F79214DA3C90068CE11 /* picoppp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = picoppp.h; sourceTree = "<group>"; };
 		EBDF374D1BB96581001191B5 /* audiobackend_coreaudio.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = audiobackend_coreaudio.cpp; sourceTree = "<group>"; };
 		EBDF374E1BB96581001191B5 /* audiobackend_coreaudio.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = audiobackend_coreaudio.h; sourceTree = "<group>"; };
 		EBDF37501BB969EE001191B5 /* CoreAudio.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreAudio.framework; path = System/Library/Frameworks/CoreAudio.framework; sourceTree = SDKROOT; };
@@ -713,6 +825,7 @@
 				84B7BD2D1B72720100F9733F /* libelf */,
 				84B7BD351B72720100F9733F /* libpng */,
 				84B7BD661B72720100F9733F /* libzip */,
+				AEFF7ECE214D9D580068CE11 /* picotcp */,
 				AE8C273A21122E2500D4D8F4 /* xbrz */,
 				AE1E292620947D4700FC6BA2 /* xbyak */,
 				84B7BDA01B72720100F9733F /* zlib */,
@@ -1356,13 +1469,139 @@
 		AEFF7EC6214AEC800068CE11 /* modem */ = {
 			isa = PBXGroup;
 			children = (
+				AEFF7F78214DA3C90068CE11 /* picoppp.cpp */,
+				AEFF7F79214DA3C90068CE11 /* picoppp.h */,
 				AEFF7EC7214AEC800068CE11 /* modem.cpp */,
 				AEFF7EC8214AEC800068CE11 /* modem.h */,
 				AEFF7EC9214AEC800068CE11 /* modem_regs.h */,
-				AEFF7ECA214AEC800068CE11 /* pppd.cpp */,
-				AEFF7ECB214AEC800068CE11 /* pppd.h */,
 			);
 			path = modem;
+			sourceTree = "<group>";
+		};
+		AEFF7ECE214D9D580068CE11 /* picotcp */ = {
+			isa = PBXGroup;
+			children = (
+				AEFF7ED1214D9D590068CE11 /* include */,
+				AEFF7EF5214D9D590068CE11 /* modules */,
+				AEFF7F3D214D9D590068CE11 /* stack */,
+			);
+			path = picotcp;
+			sourceTree = "<group>";
+		};
+		AEFF7ED1214D9D590068CE11 /* include */ = {
+			isa = PBXGroup;
+			children = (
+				AEFF7ED2214D9D590068CE11 /* arch */,
+				AEFF7EE1214D9D590068CE11 /* heap.h */,
+				AEFF7EE2214D9D590068CE11 /* pico_addressing.h */,
+				AEFF7EE3214D9D590068CE11 /* pico_config.h */,
+				AEFF7EE4214D9D590068CE11 /* pico_constants.h */,
+				AEFF7EE5214D9D590068CE11 /* pico_device.h */,
+				AEFF7EE6214D9D590068CE11 /* pico_eth.h */,
+				AEFF7EE7214D9D590068CE11 /* pico_frame.h */,
+				AEFF7EE8214D9D590068CE11 /* pico_md5.h */,
+				AEFF7EE9214D9D590068CE11 /* pico_module_eth.h */,
+				AEFF7EEA214D9D590068CE11 /* pico_protocol.h */,
+				AEFF7EEB214D9D590068CE11 /* pico_queue.h */,
+				AEFF7EEC214D9D590068CE11 /* pico_socket.h */,
+				AEFF7EED214D9D590068CE11 /* pico_socket_multicast.h */,
+				AEFF7EEE214D9D590068CE11 /* pico_stack.h */,
+				AEFF7EEF214D9D590068CE11 /* pico_tree.h */,
+			);
+			path = include;
+			sourceTree = "<group>";
+		};
+		AEFF7ED2214D9D590068CE11 /* arch */ = {
+			isa = PBXGroup;
+			children = (
+				AEFF7ED3214D9D590068CE11 /* pico_arm9.h */,
+				AEFF7ED4214D9D590068CE11 /* pico_atsamd21j18.h */,
+				AEFF7ED5214D9D590068CE11 /* pico_avr.h */,
+				AEFF7ED6214D9D590068CE11 /* pico_cortex_m.h */,
+				AEFF7ED7214D9D590068CE11 /* pico_dos.h */,
+				AEFF7ED8214D9D590068CE11 /* pico_esp8266.h */,
+				AEFF7ED9214D9D590068CE11 /* pico_generic_gcc.h */,
+				AEFF7EDA214D9D590068CE11 /* pico_linux.h */,
+				AEFF7EDB214D9D590068CE11 /* pico_mbed.h */,
+				AEFF7EDC214D9D590068CE11 /* pico_msp430.h */,
+				AEFF7EDD214D9D590068CE11 /* pico_none.h */,
+				AEFF7EDE214D9D590068CE11 /* pico_pic24.h */,
+				AEFF7EDF214D9D590068CE11 /* pico_pic32.h */,
+				AEFF7EE0214D9D590068CE11 /* pico_posix.h */,
+			);
+			path = arch;
+			sourceTree = "<group>";
+		};
+		AEFF7EF5214D9D590068CE11 /* modules */ = {
+			isa = PBXGroup;
+			children = (
+				AEFF7EF6214D9D590068CE11 /* pico_6lowpan.h */,
+				AEFF7EF7214D9D590068CE11 /* pico_6lowpan_ll.h */,
+				AEFF7EF8214D9D590068CE11 /* pico_802154.h */,
+				AEFF7EF9214D9D590068CE11 /* pico_aodv.h */,
+				AEFF7EFA214D9D590068CE11 /* pico_arp.c */,
+				AEFF7EFB214D9D590068CE11 /* pico_arp.h */,
+				AEFF7EFC214D9D590068CE11 /* pico_dev_ipc.h */,
+				AEFF7EFD214D9D590068CE11 /* pico_dev_null.h */,
+				AEFF7EFE214D9D590068CE11 /* pico_dev_ppp.c */,
+				AEFF7EFF214D9D590068CE11 /* pico_dev_ppp.h */,
+				AEFF7F05214D9D590068CE11 /* pico_dev_tun.c */,
+				AEFF7F06214D9D590068CE11 /* pico_dev_tun.h */,
+				AEFF7F07214D9D590068CE11 /* pico_dhcp_client.c */,
+				AEFF7F08214D9D590068CE11 /* pico_dhcp_client.h */,
+				AEFF7F09214D9D590068CE11 /* pico_dhcp_common.c */,
+				AEFF7F0A214D9D590068CE11 /* pico_dhcp_common.h */,
+				AEFF7F0B214D9D590068CE11 /* pico_dns_client.c */,
+				AEFF7F0C214D9D590068CE11 /* pico_dns_client.h */,
+				AEFF7F0D214D9D590068CE11 /* pico_dns_common.c */,
+				AEFF7F0E214D9D590068CE11 /* pico_dns_common.h */,
+				AEFF7F0F214D9D590068CE11 /* pico_ethernet.c */,
+				AEFF7F10214D9D590068CE11 /* pico_ethernet.h */,
+				AEFF7F11214D9D590068CE11 /* pico_fragments.c */,
+				AEFF7F12214D9D590068CE11 /* pico_fragments.h */,
+				AEFF7F13214D9D590068CE11 /* pico_icmp4.c */,
+				AEFF7F14214D9D590068CE11 /* pico_icmp4.h */,
+				AEFF7F15214D9D590068CE11 /* pico_icmp6.h */,
+				AEFF7F16214D9D590068CE11 /* pico_igmp.h */,
+				AEFF7F17214D9D590068CE11 /* pico_ipfilter.h */,
+				AEFF7F18214D9D590068CE11 /* pico_ipv4.c */,
+				AEFF7F19214D9D590068CE11 /* pico_ipv4.h */,
+				AEFF7F1A214D9D590068CE11 /* pico_ipv6.h */,
+				AEFF7F1B214D9D590068CE11 /* pico_ipv6_nd.h */,
+				AEFF7F1C214D9D590068CE11 /* pico_mcast.h */,
+				AEFF7F1D214D9D590068CE11 /* pico_mdns.c */,
+				AEFF7F1E214D9D590068CE11 /* pico_mdns.h */,
+				AEFF7F1F214D9D590068CE11 /* pico_mld.h */,
+				AEFF7F20214D9D590068CE11 /* pico_mm.h */,
+				AEFF7F21214D9D590068CE11 /* pico_nat.h */,
+				AEFF7F22214D9D590068CE11 /* pico_olsr.h */,
+				AEFF7F23214D9D590068CE11 /* pico_socket_tcp.c */,
+				AEFF7F24214D9D590068CE11 /* pico_socket_tcp.h */,
+				AEFF7F25214D9D590068CE11 /* pico_socket_udp.c */,
+				AEFF7F26214D9D590068CE11 /* pico_socket_udp.h */,
+				AEFF7F27214D9D590068CE11 /* pico_strings.c */,
+				AEFF7F28214D9D590068CE11 /* pico_strings.h */,
+				AEFF7F29214D9D590068CE11 /* pico_tcp.c */,
+				AEFF7F2A214D9D590068CE11 /* pico_tcp.h */,
+				AEFF7F2B214D9D590068CE11 /* pico_udp.c */,
+				AEFF7F2C214D9D590068CE11 /* pico_udp.h */,
+			);
+			path = modules;
+			sourceTree = "<group>";
+		};
+		AEFF7F3D214D9D590068CE11 /* stack */ = {
+			isa = PBXGroup;
+			children = (
+				AEFF7F3E214D9D590068CE11 /* pico_device.c */,
+				AEFF7F3F214D9D590068CE11 /* pico_frame.c */,
+				AEFF7F40214D9D590068CE11 /* pico_md5.c */,
+				AEFF7F41214D9D590068CE11 /* pico_protocol.c */,
+				AEFF7F42214D9D590068CE11 /* pico_socket.c */,
+				AEFF7F43214D9D590068CE11 /* pico_socket_multicast.c */,
+				AEFF7F44214D9D590068CE11 /* pico_stack.c */,
+				AEFF7F45214D9D590068CE11 /* pico_tree.c */,
+			);
+			path = stack;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -1479,13 +1718,14 @@
 				84B7BF5B1B72720200F9733F /* chd.cpp in Sources */,
 				84B7BF611B72720200F9733F /* common.cpp in Sources */,
 				84B7BF0B1B72720200F9733F /* zip_source_free.c in Sources */,
+				AEFF7F5C214D9D590068CE11 /* pico_socket_udp.c in Sources */,
 				84967CCC1B8F49EE005F1140 /* pngwrite.c in Sources */,
 				84B7BF7A1B72720200F9733F /* gles.cpp in Sources */,
 				84B7BEFC1B72720200F9733F /* zip_get_name.c in Sources */,
 				84B7BEFA1B72720200F9733F /* zip_get_archive_flag.c in Sources */,
-				AEFF7ECD214AEC810068CE11 /* pppd.cpp in Sources */,
 				84B7BF1E1B72720200F9733F /* Makefile in Sources */,
 				84B7BF0F1B72720200F9733F /* zip_stat_index.c in Sources */,
+				AEFF7F5E214D9D590068CE11 /* pico_tcp.c in Sources */,
 				84B7BEEB1B72720200F9733F /* zip_error_get.c in Sources */,
 				84B7BEB31B72720200F9733F /* coreio.cpp in Sources */,
 				84B7BF281B72720200F9733F /* dsp.cpp in Sources */,
@@ -1493,6 +1733,7 @@
 				84B7BF191B72720200F9733F /* deflate.c in Sources */,
 				84967CBD1B8F49EE005F1140 /* arm_init.c in Sources */,
 				84B7BF7E1B72720200F9733F /* TexCache.cpp in Sources */,
+				AEFF7F4E214D9D590068CE11 /* pico_dev_ppp.c in Sources */,
 				84B7BEE41B72720200F9733F /* zip_delete.c in Sources */,
 				84B7BF1A1B72720200F9733F /* infback.c in Sources */,
 				84B7BF431B72720200F9733F /* decoder.cpp in Sources */,
@@ -1501,6 +1742,8 @@
 				EBDF374F1BB96581001191B5 /* audiobackend_coreaudio.cpp in Sources */,
 				84967CC31B8F49EE005F1140 /* pngmem.c in Sources */,
 				84B7BF581B72720200F9733F /* sh4_rom.cpp in Sources */,
+				AEFF7F51214D9D590068CE11 /* pico_dev_tun.c in Sources */,
+				AEFF7F5A214D9D590068CE11 /* pico_mdns.c in Sources */,
 				84B7BF441B72720200F9733F /* driver.cpp in Sources */,
 				84B7BEEF1B72720200F9733F /* zip_fclose.c in Sources */,
 				84967CC11B8F49EE005F1140 /* pngerror.c in Sources */,
@@ -1508,13 +1751,17 @@
 				84B7BF031B72720200F9733F /* zip_replace.c in Sources */,
 				84B7BF021B72720200F9733F /* zip_rename.c in Sources */,
 				84967CCB1B8F49EE005F1140 /* pngwio.c in Sources */,
+				AEFF7F6F214D9D590068CE11 /* pico_device.c in Sources */,
+				AEFF7F4D214D9D590068CE11 /* pico_arp.c in Sources */,
 				84B7BEB11B72720200F9733F /* cdipsr.cpp in Sources */,
 				84967CC51B8F49EE005F1140 /* pngread.c in Sources */,
 				84967CC71B8F49EE005F1140 /* pngrtran.c in Sources */,
 				84B7BEE81B72720200F9733F /* zip_err_str.c in Sources */,
 				84B7BF111B72720200F9733F /* zip_strerror.c in Sources */,
 				84B7BF081B72720200F9733F /* zip_source_buffer.c in Sources */,
+				AEFF7F55214D9D590068CE11 /* pico_dns_common.c in Sources */,
 				84B7BF371B72720200F9733F /* maple_if.cpp in Sources */,
+				AEFF7F7A214DA3C90068CE11 /* picoppp.cpp in Sources */,
 				84B7BEF01B72720200F9733F /* zip_file_error_clear.c in Sources */,
 				84B7BF351B72720200F9733F /* maple_devs.cpp in Sources */,
 				84B7BF461B72720200F9733F /* sh4_fpu.cpp in Sources */,
@@ -1534,6 +1781,7 @@
 				84B7BF7B1B72720200F9733F /* gltex.cpp in Sources */,
 				84B7BEF41B72720200F9733F /* zip_filerange_crc.c in Sources */,
 				AE1E294020A96B0B00FC6BA2 /* rec_x64.cpp in Sources */,
+				AEFF7F76214D9D590068CE11 /* pico_tree.c in Sources */,
 				84B7BEB91B72720200F9733F /* elf.cpp in Sources */,
 				84B7BF6D1B72720200F9733F /* README.md in Sources */,
 				84B7BF2B1B72720200F9733F /* arm_mem.cpp in Sources */,
@@ -1573,6 +1821,7 @@
 				84B7BEB01B72720200F9733F /* cl.cpp in Sources */,
 				84B7BF391B72720200F9733F /* drkPvr.cpp in Sources */,
 				84B7BF621B72720200F9733F /* context.cpp in Sources */,
+				AEFF7F72214D9D590068CE11 /* pico_protocol.c in Sources */,
 				84B7BF6A1B72720200F9733F /* audiobackend_pulseaudio.cpp in Sources */,
 				84B7BF3F1B72720200F9733F /* ta.cpp in Sources */,
 				84B7BF751B72720200F9733F /* gdrom_hle.cpp in Sources */,
@@ -1590,11 +1839,15 @@
 				84B7BF631B72720200F9733F /* nixprof.cpp in Sources */,
 				84B7BF6C1B72720200F9733F /* profiler.cpp in Sources */,
 				84B7BF161B72720200F9733F /* adler32.c in Sources */,
+				AEFF7F73214D9D590068CE11 /* pico_socket.c in Sources */,
+				AEFF7F5D214D9D590068CE11 /* pico_strings.c in Sources */,
 				84B7BEEC1B72720200F9733F /* zip_error_get_sys_type.c in Sources */,
 				AEFF7ECC214AEC810068CE11 /* modem.cpp in Sources */,
 				84B7BF2E1B72720200F9733F /* gdrom_response.cpp in Sources */,
 				84B7BF7F1B72720200F9733F /* stdclass.cpp in Sources */,
+				AEFF7F59214D9D590068CE11 /* pico_ipv4.c in Sources */,
 				84B7BF271B72720200F9733F /* aica_mem.cpp in Sources */,
+				AEFF7F52214D9D590068CE11 /* pico_dhcp_client.c in Sources */,
 				84B7BF571B72720200F9733F /* sh4_opcode_list.cpp in Sources */,
 				84B7BF1F1B72720200F9733F /* trees.c in Sources */,
 				84B7BEB21B72720200F9733F /* chdr.cpp in Sources */,
@@ -1611,17 +1864,22 @@
 				84B7BF251B72720200F9733F /* aica.cpp in Sources */,
 				84B7BF791B72720200F9733F /* gldraw.cpp in Sources */,
 				84B7BF4E1B72720200F9733F /* mmu.cpp in Sources */,
+				AEFF7F53214D9D590068CE11 /* pico_dhcp_common.c in Sources */,
 				84967CCE1B8F49EE005F1140 /* pngwutil.c in Sources */,
 				84B7BEBA1B72720200F9733F /* elf32.cpp in Sources */,
 				84B7BEE91B72720200F9733F /* zip_error.c in Sources */,
 				84B7BF481B72720200F9733F /* sh4_opcodes.cpp in Sources */,
 				84B7BF141B72720200F9733F /* zip_unchange_archive.c in Sources */,
+				AEFF7F5B214D9D590068CE11 /* pico_socket_tcp.c in Sources */,
 				84B7BF4A1B72720200F9733F /* ccn.cpp in Sources */,
+				AEFF7F5F214D9D590068CE11 /* pico_udp.c in Sources */,
+				AEFF7F70214D9D590068CE11 /* pico_frame.c in Sources */,
 				AE8C274321122E2500D4D8F4 /* xbrz.cpp in Sources */,
 				84B7BEE11B72720200F9733F /* zip_add.c in Sources */,
 				84B7BF4C1B72720200F9733F /* dmac.cpp in Sources */,
 				84B7BEFD1B72720200F9733F /* zip_get_num_files.c in Sources */,
 				84967CC81B8F49EE005F1140 /* pngrutil.c in Sources */,
+				AEFF7F56214D9D590068CE11 /* pico_ethernet.c in Sources */,
 				84B7BEF71B72720200F9733F /* zip_fread.c in Sources */,
 				84B7BF771B72720200F9733F /* reios_elf.cpp in Sources */,
 				84B7BF5C1B72720200F9733F /* common.cpp in Sources */,
@@ -1641,6 +1899,7 @@
 				84B7BEEA1B72720200F9733F /* zip_error_clear.c in Sources */,
 				84B7BF051B72720200F9733F /* zip_set_archive_flag.c in Sources */,
 				84B7BF671B72720200F9733F /* audiobackend_alsa.cpp in Sources */,
+				AEFF7F58214D9D590068CE11 /* pico_icmp4.c in Sources */,
 				84B7BF501B72720200F9733F /* serial.cpp in Sources */,
 				84B7BEED1B72720200F9733F /* zip_error_strerror.c in Sources */,
 				84B7BF381B72720200F9733F /* _vmem.cpp in Sources */,
@@ -1652,11 +1911,16 @@
 				84A388B91B1CDD3E000166C0 /* AppDelegate.swift in Sources */,
 				84B7BF001B72720200F9733F /* zip_new.c in Sources */,
 				84B7BF0A1B72720200F9733F /* zip_source_filep.c in Sources */,
+				AEFF7F75214D9D590068CE11 /* pico_stack.c in Sources */,
 				84967CBE1B8F49EE005F1140 /* filter_neon.S in Sources */,
 				84B7BF091B72720200F9733F /* zip_source_file.c in Sources */,
+				AEFF7F74214D9D590068CE11 /* pico_socket_multicast.c in Sources */,
 				84B7BF151B72720200F9733F /* zip_unchange_data.c in Sources */,
+				AEFF7F71214D9D590068CE11 /* pico_md5.c in Sources */,
 				84B7BEF11B72720200F9733F /* zip_file_error_get.c in Sources */,
+				AEFF7F54214D9D590068CE11 /* pico_dns_client.c in Sources */,
 				84967CBF1B8F49EE005F1140 /* filter_neon_intrinsics.c in Sources */,
+				AEFF7F57214D9D590068CE11 /* pico_fragments.c in Sources */,
 				84B7BF861B72871600F9733F /* EmuGLView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1804,6 +2068,7 @@
 					../../../core/deps,
 					../../../core,
 					../../../core/khronos,
+					"../../../core/deps/picotcp/**",
 				);
 				INFOPLIST_FILE = "emulator-osx/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
@@ -1833,6 +2098,7 @@
 					../../../core/deps,
 					../../../core,
 					../../../core/khronos,
+					"../../../core/deps/picotcp/**",
 				);
 				INFOPLIST_FILE = "emulator-osx/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
