@@ -341,8 +341,8 @@ void stop_pico()
 #include "types.h"
 
 bool start_pico() { return false; }
-void stop_pico();
-void write_pico(u8 b);
+void stop_pico() { }
+void write_pico(u8 b) { }
 int read_pico() { return -1; }
 
 #endif
