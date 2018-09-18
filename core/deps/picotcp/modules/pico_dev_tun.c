@@ -107,7 +107,7 @@ static int tun_open(const char *name)
 	strlcpy(ctlInfo.ctl_name, UTUN_CONTROL_NAME, sizeof(ctlInfo.ctl_name));
 	int fd = -1;
 	
-	for (int unit = 0; unit < 256 && fd == -1; unit++)@
+	for (int unit = 0; unit < 256 && fd == -1; unit++)
 	{
 		fd = socket(PF_SYSTEM, SOCK_DGRAM, SYSPROTO_CONTROL);
 		if (fd < 0) {
