@@ -225,19 +225,85 @@ extern u8 kb_shift; 		// shift keys pressed (bitmask)
 extern u8 kb_led; 			// leds currently lit
 extern u8 kb_key[6];		// normal keys pressed
 
+extern u32 mo_buttons;
+extern f32 mo_x_delta;
+extern f32 mo_y_delta;
+extern f32 mo_wheel_delta;
+
+static bool capturing_mouse;
+static Cursor empty_cursor = None;
+
+static Cursor create_empty_cursor()
+{
+	if (empty_cursor == None)
+	{
+		Display *display = (Display*)x11_disp;
+		char data[] = { 0 };
+
+		XColor color;
+		color.red = color.green = color.blue = 0;
+
+		Pixmap pixmap = XCreateBitmapFromData(display, DefaultRootWindow(display),
+				data, 1, 1);
+		if (pixmap)
+		{
+			empty_cursor = XCreatePixmapCursor(display, pixmap, pixmap, &color, &color, 0, 0);
+			XFreePixmap(display, pixmap);
+		}
+	}
+	return empty_cursor;
+}
+
+static void destroy_empty_cursor()
+{
+	if (empty_cursor != None)
+	{
+		XFreeCursor((Display*)x11_disp, empty_cursor);
+		empty_cursor = None;
+	}
+}
+
+static void x11_capture_mouse()
+{
+	x11_window_set_text("Reicast - mouse capture");
+	capturing_mouse = true;
+	Cursor cursor = create_empty_cursor();
+	Display *display = (Display*)x11_disp;
+	Window window = (Window)x11_win;
+	XDefineCursor(display, window, cursor);
+	XGrabPointer(display, window, False,
+			ButtonPressMask | ButtonReleaseMask | PointerMotionMask | FocusChangeMask,
+			GrabModeAsync, GrabModeAsync, None, None, CurrentTime);
+}
+
+static void x11_uncapture_mouse()
+{
+	x11_window_set_text("Reicast");
+	capturing_mouse = false;
+	Display *display = (Display*)x11_disp;
+	Window window = (Window)x11_win;
+	XUndefineCursor(display, window);
+	XUngrabPointer(display, CurrentTime);
+}
+
 void input_x11_handle()
 {
-	if (x11_win && x11_keyboard_input)
-	{
-		//Handle X11
-		XEvent e;
+	if (!x11_win || (!x11_keyboard_input && !settings.input.DCKeyboard && !settings.input.DCMouse))
+		return;
 
-		if(XCheckWindowEvent((Display*)x11_disp, (Window)x11_win, KeyPressMask | KeyReleaseMask, &e))
+	//Handle X11
+	XEvent e;
+
+	while (XCheckWindowEvent((Display*)x11_disp, (Window)x11_win,
+			KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask
+			| PointerMotionMask | FocusChangeMask,
+			&e))
+	{
+		switch(e.type)
 		{
-			switch(e.type)
-			{
-				case KeyPress:
-				case KeyRelease:
+			case KeyPress:
+			case KeyRelease:
+				{
 					// Dreamcast keyboard emulation
 					if (e.xkey.keycode == KEY_LSHIFT || e.xkey.keycode == KEY_RSHIFT)
 						if (e.type == KeyRelease)
@@ -287,66 +353,138 @@ void input_x11_handle()
 						}
 					}
 
-					// Normal keyboard handling
-					if (e.type == KeyRelease && e.xkey.keycode == KEY_ESC)
+					if (settings.input.DCMouse)
 					{
-						dc_stop();
+						// Start/stop mouse capture with Left Ctrl + Left Alt
+						if (e.type == KeyPress
+								&& ((e.xkey.keycode == KEY_LALT && (e.xkey.state & ControlMask))
+									|| (e.xkey.keycode == KEY_LCTRL && (e.xkey.state & Mod1Mask))))
+						{
+							capturing_mouse = !capturing_mouse;
+							if (capturing_mouse)
+								x11_capture_mouse();
+							else
+								x11_uncapture_mouse();
+						}
 					}
+					if (x11_keyboard_input)
+					{
+						// Normal keyboard handling
+						if (e.type == KeyRelease && e.xkey.keycode == KEY_ESC
+								&& !(e.xkey.state & (ControlMask | ShiftMask | Mod1Mask)))
+						{
+							dc_stop();
+						}
 #ifndef RELEASE
-					else if (e.xkey.keycode == KEY_F10)
-					{
-						// Dump the next frame into a file
-						dump_frame_switch = e.type == KeyPress;
-					}
+						else if (e.xkey.keycode == KEY_F10)
+						{
+							// Dump the next frame into a file
+							dump_frame_switch = e.type == KeyPress;
+						}
 #elif FEAT_HAS_NIXPROF
-					else if (e.type == KeyRelease && e.xkey.keycode == KEY_F10)
-					{
-						if (sample_Switch(3000)) {
-							printf("Starting profiling\n");
-						} else {
-							printf("Stopping profiling\n");
+						else if (e.type == KeyRelease && e.xkey.keycode == KEY_F10)
+						{
+							if (sample_Switch(3000)) {
+								printf("Starting profiling\n");
+							} else {
+								printf("Stopping profiling\n");
+							}
 						}
-					}
 #endif
-					else if (e.type == KeyRelease && e.xkey.keycode == KEY_F11)
-					{
-						x11_fullscreen = !x11_fullscreen;
-						x11_window_set_fullscreen(x11_fullscreen);
-					}
-					else
-					{
-						int dc_key = x11_keymap[e.xkey.keycode];
-
-						if (dc_key == DC_AXIS_LT)
+						else if (e.type == KeyRelease && e.xkey.keycode == KEY_F11)
 						{
-							if (e.type == KeyPress)
-								lt[0] = 255;
-							else
-								lt[0] = 0;
-						}
-						else if (dc_key == DC_AXIS_RT)
-						{
-							if (e.type == KeyPress)
-								rt[0] = 255;
-							else
-								rt[0] = 0;
-						}
-
-						if (e.type == KeyPress)
-						{
-							kcode[0] &= ~dc_key;
+							x11_fullscreen = !x11_fullscreen;
+							x11_window_set_fullscreen(x11_fullscreen);
 						}
 						else
 						{
-							kcode[0] |= dc_key;
-						}
+							int dc_key = x11_keymap[e.xkey.keycode];
 
-						#if defined(_DEBUG)
-						printf("KEY: %d -> %d: %d\n", e.xkey.keycode, dc_key, x11_dc_buttons );
-						#endif
+							if (dc_key == DC_AXIS_LT)
+							{
+								if (e.type == KeyPress)
+									lt[0] = 255;
+								else
+									lt[0] = 0;
+							}
+							else if (dc_key == DC_AXIS_RT)
+							{
+								if (e.type == KeyPress)
+									rt[0] = 255;
+								else
+									rt[0] = 0;
+							}
+
+							if (e.type == KeyPress)
+							{
+								kcode[0] &= ~dc_key;
+							}
+							else
+							{
+								kcode[0] |= dc_key;
+							}
+
+							#if defined(_DEBUG)
+							printf("KEY: %d -> %d: %d\n", e.xkey.keycode, dc_key, x11_dc_buttons );
+							#endif
+						}
 					}
-					break;
-			}
+				}
+				break;
+
+			case FocusOut:
+				{
+					if (capturing_mouse)
+						x11_uncapture_mouse();
+					capturing_mouse = false;
+				}
+				break;
+
+			case ButtonPress:
+			case ButtonRelease:
+				{
+					u32 button_mask = 0;
+					if (e.xbutton.button == Button1)
+						button_mask = 1 << 2;
+					else if (e.xbutton.button == Button2)
+						button_mask = 1 << 1;
+
+					if (button_mask)
+					{
+						if (e.type == ButtonPress)
+							mo_buttons &= ~button_mask;
+						else
+							mo_buttons |= button_mask;
+					}
+				}
+				// FALL THROUGH
+
+			case MotionNotify:
+				{
+					static int prev_x = -1;
+					static int prev_y = -1;
+
+					if (settings.input.DCMouse)
+					{
+						if (prev_x != -1)
+							mo_x_delta += (f32)(e.xmotion.x - prev_x) * settings.input.MouseSensitivity / 1000.f;
+						if (prev_y != -1)
+							mo_y_delta += (f32)(e.xmotion.y - prev_y) * settings.input.MouseSensitivity / 1000.f;
+						if (capturing_mouse && (abs(x11_width / 2 - e.xmotion.x) > 10 || abs(x11_height / 2 - e.xmotion.y) > 10))
+						{
+							prev_x = x11_width / 2;
+							prev_y = x11_height / 2;
+							XWarpPointer((Display*)x11_disp, None, (Window)x11_win, 0, 0, 0, 0,
+									prev_x, prev_y);
+						}
+						else
+						{
+							prev_x = e.xmotion.x;
+							prev_y = e.xmotion.y;
+						}
+					}
+				}
+				break;
 		}
 	}
 }
@@ -488,6 +626,8 @@ void x11_window_create()
 
 		// Add to these for handling other events
 		sWA.event_mask = StructureNotifyMask | ExposureMask | ButtonPressMask | ButtonReleaseMask | KeyPressMask | KeyReleaseMask;
+		if (settings.input.DCMouse)
+			sWA.event_mask |= PointerMotionMask | FocusChangeMask;
 		ui32Mask = CWBackPixel | CWBorderPixel | CWEventMask | CWColormap;
 
 		x11_width = cfgLoadInt("x11", "width", DEFAULT_WINDOW_WIDTH);

@@ -8,6 +8,7 @@ enum MapleDeviceType
 	MDT_Microphone,
 	MDT_PurupuruPack,
 	MDT_Keyboard,
+	MDT_Mouse,
 
 	MDT_NaomiJamma,
 

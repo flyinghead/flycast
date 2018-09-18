@@ -329,6 +329,10 @@ void LoadSettings()
 	settings.reios.ElfFile = cfgLoadStr("reios", "ElfFile", "");
 
 	settings.validate.OpenGlChecks = cfgLoadInt("validate", "OpenGlChecks", 0) != 0;
+
+	settings.input.DCKeyboard = cfgLoadInt("input", "DCKeyboard", 1);
+	settings.input.DCMouse = cfgLoadInt("input", "DCMouse", 0);
+	settings.input.MouseSensitivity = cfgLoadInt("input", "MouseSensitivity", 100);
 #else
     // TODO Expose this with JNI
 	settings.rend.Clipping = 1;

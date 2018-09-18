@@ -739,6 +739,12 @@ struct settings_t
 	struct {
 		bool OpenGlChecks;
 	} validate;
+
+	struct {
+		bool DCKeyboard;
+		bool DCMouse;
+		u32 MouseSensitivity;
+	} input;
 };
 
 extern settings_t settings;

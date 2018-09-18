@@ -4,7 +4,6 @@ extern void* x11_glc;
 extern void input_x11_init();
 extern void event_x11_handle();
 extern void input_x11_handle();
-extern void event_x11_handle();
 extern void x11_window_create();
 extern void x11_window_set_text(const char* text);
 extern void x11_window_destroy();
@@ -69,6 +68,7 @@ const int KEY_LSHIFT = 50;
 const int KEY_RSHIFT = 62;
 const int KEY_LCTRL = 37;
 const int KEY_RCTRL = 105;
+const int KEY_LALT = 64;
 
 const int KEY_F1	=  67;
 const int KEY_F2	=  68;
