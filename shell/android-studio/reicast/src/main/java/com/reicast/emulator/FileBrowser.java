@@ -16,6 +16,7 @@ import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.Snackbar;
 import android.support.graphics.drawable.VectorDrawableCompat;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.FileProvider;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -367,7 +368,16 @@ public class FileBrowser extends Fragment {
 					public void onClick(View view) {
 						if (isGame) {
 							vib.vibrate(50);
-							mCallback.onGameSelected(game != null ? Uri.fromFile(game) : Uri.EMPTY);
+							Uri gameUri = Uri.EMPTY;
+							if (game != null) {
+								if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+									gameUri = FileProvider.getUriForFile(getActivity(),
+											"com.reicast.emulator.provider", game);
+								} else {
+									gameUri = Uri.fromFile(game);
+								}
+							}
+							mCallback.onGameSelected(gameUri);
 							vib.vibrate(250);
 						} else {
 							vib.vibrate(50);
@@ -379,7 +389,13 @@ public class FileBrowser extends Fragment {
 										home_directory), Snackbar.LENGTH_LONG);
 							}
 							mPrefs.edit().putString(Config.pref_home, home_directory).apply();
-                            mCallback.onFolderSelected(Uri.fromFile(new File(home_directory)));
+							if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+								mCallback.onFolderSelected(FileProvider.getUriForFile(getActivity(),
+										"com.reicast.emulator.provider", new File(home_directory)));
+							} else {
+								mCallback.onFolderSelected(
+										Uri.fromFile(new File(home_directory)));
+							}
 							JNIdc.config(home_directory);
 						}
 					}
@@ -499,21 +515,36 @@ public class FileBrowser extends Fragment {
 											browser.get().game_directory = heading;
 											browser.get().mPrefs.edit().putString(
 													Config.pref_games, heading).apply();
-											browser.get().mCallback.onFolderSelected(
-													Uri.fromFile(new File(browser.get().game_directory)));
+											if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+												browser.get().mCallback.onFolderSelected(FileProvider
+														.getUriForFile(browser.get().getActivity(),
+																"com.reicast.emulator.provider",
+																new File(browser.get().game_directory)));
+											} else {
+												browser.get().mCallback.onFolderSelected(Uri.fromFile(
+														new File(browser.get().game_directory)));
+											}
+
+
 										} else {
 											browser.get().home_directory = heading
 													.replace("/data", "");
 											browser.get().mPrefs.edit().putString(
 													Config.pref_home, browser.get().home_directory).apply();
 											if (browser.get().requireDataBIOS()) {
-												browser.get().showToastMessage(browser.get()
-														.getActivity().getString(R.string.config_data,
-																browser.get().home_directory),
-														Snackbar.LENGTH_LONG);
+												browser.get().showToastMessage(browser.get().getActivity()
+														.getString(R.string.config_data, browser.get()
+																.home_directory), Snackbar.LENGTH_LONG);
 											}
-											browser.get().mCallback.onFolderSelected(
-													Uri.fromFile(new File(browser.get().home_directory)));
+											if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+												browser.get().mCallback.onFolderSelected(FileProvider
+														.getUriForFile(browser.get().getActivity(),
+																"com.reicast.emulator.provider",
+																new File(browser.get().home_directory)));
+											} else {
+												browser.get().mCallback.onFolderSelected(Uri.fromFile(
+														new File(browser.get().home_directory)));
+											}
 											JNIdc.config(browser.get().home_directory);
 										}
 

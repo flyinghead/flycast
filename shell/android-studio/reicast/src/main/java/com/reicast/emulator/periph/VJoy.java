@@ -78,18 +78,18 @@ public class VJoy {
 
 	public static float[][] getVjoy_d(float[][] vjoy_d_custom) {
 		return new float[][] {
-				new float[] { 20*vjoy_d_custom[0][2]+vjoy_d_custom[0][0],		288+64*vjoy_d_custom[0][2]+vjoy_d_custom[0][1],
+				new float[] { 20+0*vjoy_d_custom[0][2]+vjoy_d_custom[0][0],		288+64*vjoy_d_custom[0][2]+vjoy_d_custom[0][1],
 						64*vjoy_d_custom[0][2],64*vjoy_d_custom[0][2],	key_CONT_DPAD_LEFT},
-				new float[] { 20+64*vjoy_d_custom[0][2]+vjoy_d_custom[0][0],	288*vjoy_d_custom[0][2]+vjoy_d_custom[0][1],
+				new float[] { 20+64*vjoy_d_custom[0][2]+vjoy_d_custom[0][0],	288+0*vjoy_d_custom[0][2]+vjoy_d_custom[0][1],
 						64*vjoy_d_custom[0][2],64*vjoy_d_custom[0][2],	key_CONT_DPAD_UP},
 				new float[] { 20+128*vjoy_d_custom[0][2]+vjoy_d_custom[0][0],	288+64*vjoy_d_custom[0][2]+vjoy_d_custom[0][1],
 						64*vjoy_d_custom[0][2],64*vjoy_d_custom[0][2],	key_CONT_DPAD_RIGHT},
 				new float[] { 20+64*vjoy_d_custom[0][2]+vjoy_d_custom[0][0],	288+128*vjoy_d_custom[0][2]+vjoy_d_custom[0][1],
 						64*vjoy_d_custom[0][2],64*vjoy_d_custom[0][2],	key_CONT_DPAD_DOWN},
 
-				new float[] { 448*vjoy_d_custom[1][2]+vjoy_d_custom[1][0],		288+64*vjoy_d_custom[1][2]+vjoy_d_custom[1][1],
+				new float[] { 448+0*vjoy_d_custom[1][2]+vjoy_d_custom[1][0],	288+64*vjoy_d_custom[1][2]+vjoy_d_custom[1][1],
 						64*vjoy_d_custom[1][2],64*vjoy_d_custom[1][2],	key_CONT_X},
-				new float[] { 448+64*vjoy_d_custom[1][2]+vjoy_d_custom[1][0],	288*vjoy_d_custom[1][2]+vjoy_d_custom[1][1],
+				new float[] { 448+64*vjoy_d_custom[1][2]+vjoy_d_custom[1][0],	288+0*vjoy_d_custom[1][2]+vjoy_d_custom[1][1],
 						64*vjoy_d_custom[1][2],64*vjoy_d_custom[1][2],	key_CONT_Y},
 				new float[] { 448+128*vjoy_d_custom[1][2]+vjoy_d_custom[1][0],	288+64*vjoy_d_custom[1][2]+vjoy_d_custom[1][1],
 						64*vjoy_d_custom[1][2],64*vjoy_d_custom[1][2],	key_CONT_B},
@@ -109,11 +109,11 @@ public class VJoy {
 				new float[] { 96+vjoy_d_custom[5][0],							320+vjoy_d_custom[5][1],
 						32*vjoy_d_custom[5][2],32*vjoy_d_custom[5][2],	-4},
 
-				new float[] { 20*vjoy_d_custom[0][2]+vjoy_d_custom[0][0],		288*vjoy_d_custom[0][2]+vjoy_d_custom[0][1],
+				new float[] { 20+0*vjoy_d_custom[0][2]+vjoy_d_custom[0][0],		288+0*vjoy_d_custom[0][2]+vjoy_d_custom[0][1],
 						64*vjoy_d_custom[0][2],64*vjoy_d_custom[0][2],	key_CONT_DPAD_LEFT|key_CONT_DPAD_UP},
-				new float[] { 20+128*vjoy_d_custom[0][2]+vjoy_d_custom[0][0],	288*vjoy_d_custom[0][2]+vjoy_d_custom[0][1],
+				new float[] { 20+128*vjoy_d_custom[0][2]+vjoy_d_custom[0][0],	288+0*vjoy_d_custom[0][2]+vjoy_d_custom[0][1],
 						64*vjoy_d_custom[0][2],64*vjoy_d_custom[0][2],	key_CONT_DPAD_RIGHT|key_CONT_DPAD_UP},
-				new float[] { 20*vjoy_d_custom[0][2]+vjoy_d_custom[0][0],		288+128*vjoy_d_custom[0][2]+vjoy_d_custom[0][1],
+				new float[] { 20+0*vjoy_d_custom[0][2]+vjoy_d_custom[0][0],		288+128*vjoy_d_custom[0][2]+vjoy_d_custom[0][1],
 						64*vjoy_d_custom[0][2],64*vjoy_d_custom[0][2],	key_CONT_DPAD_LEFT|key_CONT_DPAD_DOWN},
 				new float[] { 20+128*vjoy_d_custom[0][2]+vjoy_d_custom[0][0],	288+128*vjoy_d_custom[0][2]+vjoy_d_custom[0][1],
 						64*vjoy_d_custom[0][2],64*vjoy_d_custom[0][2],	key_CONT_DPAD_RIGHT|key_CONT_DPAD_DOWN},
