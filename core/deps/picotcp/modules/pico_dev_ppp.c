@@ -56,6 +56,7 @@
 #define PICO_CONF_DISCARD_REQ 11
 
 #define LCPOPT_MRU          1u /* param size: 4, fixed: MRU     */
+#define LCPOPT_ASYNCMAP		2u /* param size: 6, fixed: Async map */
 #define LCPOPT_AUTH         3u /* param size: 4-5: AUTH proto   */
 #define LCPOPT_QUALITY      4u /* unused for now                */
 #define LCPOPT_MAGIC        5u /* param size: 6, fixed: Magic   */
@@ -90,7 +91,7 @@
 #define IPCP_OPT_NBNS2 0x84
 
 static uint8_t LCPOPT_LEN[9] = {
-    0, 4, 0, 4, 4, 6, 2, 2, 2
+    0, 4, 6, 4, 4, 6, 2, 2, 2
 };
 
 
@@ -283,6 +284,7 @@ struct pico_device_ppp {
     uint8_t timer_on;
     uint16_t mru;
     uint32_t ipcp_peer_ip;
+    uint32_t asyncmap;
 };
 
 
@@ -297,11 +299,69 @@ static void (*mock_ipcp_state)(struct pico_device_ppp *ppp, enum ppp_ipcp_event 
 static void lcp_optflags_print(struct pico_device_ppp *ppp, uint8_t *opts, uint32_t opts_len);
 #endif
 
+FILE *dumpfp;
+
+static void pppdump(uint8_t *buf, int len, int egress)
+{
+#ifdef DEBUG_PPP
+	static uint32_t last_time_ms;
+
+	if (!len)
+		return;
+	if (dumpfp == NULL)
+	{
+		dumpfp = fopen("ppp.dump", "a");
+		uint32_t reset_time = long_be(PICO_TIME());
+		fputc(7, dumpfp);					// Reset time
+		fwrite(&reset_time, sizeof(reset_time), 1, dumpfp);
+		last_time_ms = PICO_TIME_MS();
+	}
+
+	uint32_t delta = (PICO_TIME_MS() - last_time_ms) / 100;
+	if (delta < 256)
+	{
+		fputc(6, dumpfp);					// Time step (short)
+		fwrite(&delta, 1, 1, dumpfp);
+	}
+	else
+	{
+		delta = long_be(delta);
+		fputc(5, dumpfp);					// Time step (long)
+		fwrite(&delta, sizeof(delta), 1, dumpfp);
+	}
+	last_time_ms = PICO_TIME_MS();
+
+	fputc(egress ? 1 : 2, dumpfp);			// Sent/received data
+
+	uint16_t slen = short_be(len);
+	fwrite(&slen, 2, 1, dumpfp);
+
+	fwrite(buf, 1, len, dumpfp);
+#endif
+}
+
 #define PPP_TIMER_ON_MODEM      0x01u
 #define PPP_TIMER_ON_LCPREQ     0x04u
 #define PPP_TIMER_ON_LCPTERM    0x08u
 #define PPP_TIMER_ON_AUTH       0x10u
 #define PPP_TIMER_ON_IPCP       0x20u
+
+static inline int must_escape(struct pico_device_ppp *ppp, uint8_t b)
+{
+	switch (b) {
+	case 0x7e:
+	case 0x7d:
+		return 1;
+	default:
+		if (b >= 0x20)
+			return 0;
+		else
+		{
+			uint32_t bit = 1 << b;
+			return ppp->asyncmap & bit;
+		}
+	}
+}
 
 /* Escape and send */
 static int ppp_serial_send_escape(struct pico_device_ppp *ppp, void *buf, int len)
@@ -327,10 +387,11 @@ static int ppp_serial_send_escape(struct pico_device_ppp *ppp, void *buf, int le
 
     for (i = 1; i < (len - 1); i++) /* from 1 to len -1, as start/stop are not escaped */
     {
-        if (((in_buf[i] + 1u) >> 1) == 0x3Fu)
+    	if (must_escape(ppp, in_buf[i]))
             esc_char_count++;
     }
     if (!esc_char_count) {
+    	pppdump(buf, len, 1);
         return ppp->serial_send(&ppp->dev, buf, len);
     }
 
@@ -342,7 +403,7 @@ static int ppp_serial_send_escape(struct pico_device_ppp *ppp, void *buf, int le
     /* Start byte. */
     out_buf[0] = in_buf[0];
     for(i = 1, j = 1; i < (len - 1); i++) {
-        if (((in_buf[i] + 1u) >> 1) == 0x3Fu) {
+    	if (must_escape(ppp, in_buf[i])) {
             out_buf[j++] = PPPF_CTRL_ESC;
             out_buf[j++] = in_buf[i] ^ 0x20;
         } else {
@@ -352,6 +413,7 @@ static int ppp_serial_send_escape(struct pico_device_ppp *ppp, void *buf, int le
     /* Stop byte. */
     out_buf[newlen - 1] = in_buf[len - 1];
 
+	pppdump(out_buf, newlen, 1);
     ret = ppp->serial_send(&ppp->dev, out_buf, newlen);
 
     PICO_FREE(out_buf);
@@ -471,6 +533,7 @@ static int ppp_fcs_verify(uint8_t *buf, uint32_t len)
     uint16_t fcs = ppp_fcs_start(buf, len - 2);
     fcs = ppp_fcs_finish(fcs);
     if ((((fcs & 0xFF00u) >> 8) != buf[len - 1]) || ((fcs & 0xFFu) != buf[len - 2])) {
+    	ppp_dbg("ppp_fcs_verify: INVALID FCS in packet of len %d\n", len);
         return -1;
     }
 
@@ -529,7 +592,7 @@ static int pico_ppp_send(struct pico_device *dev, void *buf, int len)
         pico_ppp_data_buffer[i++] = PPPF_CTRL;
     }
 
-    fcs_start = i;
+    fcs_start = 1;
 
     if (!LCPOPT_ISSET_PEER(ppp, LCPOPT_PROTO_COMP))
     {
@@ -786,7 +849,7 @@ static void ppp_modem_recv(struct pico_device_ppp *ppp, void *data, uint32_t len
 
 static void lcp_send_configure_request(struct pico_device_ppp *ppp)
 {
-#   define MY_LCP_REQ_SIZE 12 /* Max value. */
+#   define MY_LCP_REQ_SIZE 20 /* Max value. */
     struct pico_lcp_hdr *req;
     uint8_t *lcpbuf, *opts;
     uint32_t size = MY_LCP_REQ_SIZE;
@@ -824,6 +887,15 @@ static void lcp_send_configure_request(struct pico_device_ppp *ppp)
     if (LCPOPT_ISSET_LOCAL(ppp, LCPOPT_ADDRCTL_COMP)) {
         opts[optsize++] = LCPOPT_ADDRCTL_COMP;
         opts[optsize++] = LCPOPT_LEN[LCPOPT_ADDRCTL_COMP];
+    }
+
+    if (LCPOPT_ISSET_LOCAL(ppp, LCPOPT_ASYNCMAP)) {
+        opts[optsize++] = LCPOPT_ASYNCMAP;
+        opts[optsize++] = LCPOPT_LEN[LCPOPT_ASYNCMAP];
+        opts[optsize++] = 0;
+        opts[optsize++] = 0;
+        opts[optsize++] = 0;
+        opts[optsize++] = 0;
     }
 
     req->len = short_be((uint16_t)((unsigned long)optsize + sizeof(struct pico_lcp_hdr)));
@@ -877,6 +949,10 @@ static uint16_t lcp_optflags(struct pico_device_ppp *ppp, uint8_t *pkt, uint32_t
     uint16_t flags = 0;
     uint8_t *p = pkt +  sizeof(struct pico_lcp_hdr);
     int off;
+
+    if (adjust_opts)
+    	ppp->asyncmap = 0xffffffff;
+
     while(p < (pkt + len)) {
         flags = (uint16_t)((uint16_t)(1u << (uint16_t)p[0]) | flags);
 
@@ -893,6 +969,10 @@ static uint16_t lcp_optflags(struct pico_device_ppp *ppp, uint8_t *pkt, uint32_t
                 ppp_dbg("Setting AUTH to %02x%02x\n", p[2], p[3]);
                 ppp->auth = (uint16_t)((p[2] << 8) + p[3]);
                 break;
+            case LCPOPT_ASYNCMAP:
+            	ppp->asyncmap = ((uint32_t)p[2] << 24) | ((uint32_t)p[3] << 16) | ((uint32_t)p[4] << 8) | p[5];
+           		ppp_dbg("Setting Async-Control-Character-Map to %08x\n", ppp->asyncmap);
+            	break;
             default:
                 break;
             }
@@ -1142,17 +1222,8 @@ static inline uint32_t ipcp_request_options_size(struct pico_device_ppp *ppp)
 {
     uint32_t size = 0;
 
-    if (ppp->ipcp_peer_ip)
+    if (ppp->ipcp_ip)
     	size += IPCP_ADDR_LEN;
-    if (ppp->ipcp_dns1)
-    	size += IPCP_ADDR_LEN;
-    if (ppp->ipcp_dns2)
-    	size += IPCP_ADDR_LEN;
-    if (ppp->ipcp_nbns1)
-        size += IPCP_ADDR_LEN;
-
-    if (ppp->ipcp_nbns2)
-        size += IPCP_ADDR_LEN;
 
     return size;
 }
@@ -1172,19 +1243,7 @@ static int ipcp_request_add_address(uint8_t *dst, uint8_t tag, uint32_t arg)
 static void ipcp_request_fill(struct pico_device_ppp *ppp, uint8_t *opts)
 {
     if (ppp->ipcp_allowed_fields & IPCP_ALLOW_IP)
-        opts += ipcp_request_add_address(opts, IPCP_OPT_IP, ppp->ipcp_peer_ip);
-
-    if (ppp->ipcp_allowed_fields & IPCP_ALLOW_DNS1)
-        opts += ipcp_request_add_address(opts, IPCP_OPT_DNS1, ppp->ipcp_dns1);
-
-    if (ppp->ipcp_allowed_fields & IPCP_ALLOW_DNS2)
-        opts += ipcp_request_add_address(opts, IPCP_OPT_DNS2, ppp->ipcp_dns2);
-
-    if ((ppp->ipcp_allowed_fields & IPCP_ALLOW_NBNS1) &&  (ppp->ipcp_nbns1))
-        opts += ipcp_request_add_address(opts, IPCP_OPT_NBNS1, ppp->ipcp_nbns1);
-
-    if ((ppp->ipcp_allowed_fields & IPCP_ALLOW_NBNS2) &&  (ppp->ipcp_nbns2))
-        opts += ipcp_request_add_address(opts, IPCP_OPT_NBNS2, ppp->ipcp_nbns2);
+        opts += ipcp_request_add_address(opts, IPCP_OPT_IP, ppp->ipcp_ip);
 }
 
 static void ipcp_send_req(struct pico_device_ppp *ppp)
@@ -1276,8 +1335,16 @@ static void ipcp_process_in(struct pico_device_ppp *ppp, uint8_t *pkt, uint32_t 
             if (ih->code != PICO_CONF_REJ)
             {
             	uint32_t ipcp_ip = long_be((uint32_t)((p[2] << 24) + (p[3] << 16) + (p[4] << 8) + p[5]));
-            	if (ipcp_ip != ppp->ipcp_peer_ip)
-            		nak++;
+            	if (ih->id == ppp->frame_id - 1)
+            	{
+                	if (ipcp_ip != ppp->ipcp_ip)
+                		nak++;
+            	}
+            	else
+            	{
+                	if (ipcp_ip != ppp->ipcp_peer_ip)
+                		nak++;
+            	}
             }
         }
 
@@ -2088,6 +2155,7 @@ static int pico_ppp_poll(struct pico_device *dev, int loop_score)
             r = ppp->serial_recv(&ppp->dev, &ppp_recv_buf[len], 1);
             if (r <= 0)
                 break;
+        	pppdump(&ppp_recv_buf[len], 1, 0);
 
             if (ppp->modem_state == PPP_MODEM_STATE_CONNECTED) {
                 static int control_escape = 0;
@@ -2156,7 +2224,10 @@ void pico_ppp_destroy(struct pico_device *ppp)
 {
     if (!ppp)
         return;
-
+	if (dumpfp)
+		fclose(dumpfp);
+	dumpfp = NULL;
+	
     /* Perform custom cleanup here before calling 'pico_device_destroy'
      * or register a custom cleanup function during initialization
      * by setting 'ppp->dev.destroy'. */
@@ -2269,7 +2340,8 @@ struct pico_device *pico_ppp_create(void)
     //LCPOPT_SET_LOCAL(ppp, LCPOPT_AUTH); /* We support authentication, even if it's not part of the req */
     LCPOPT_SET_LOCAL(ppp, LCPOPT_PROTO_COMP);
     LCPOPT_SET_LOCAL(ppp, LCPOPT_ADDRCTL_COMP);
-
+    LCPOPT_SET_LOCAL(ppp, LCPOPT_ASYNCMAP);
+    LCPOPT_SET_LOCAL(ppp, LCPOPT_MAGIC);
 
     ppp_dbg("Device %s created.\n", ppp->dev.name);
     return (struct pico_device *)ppp;
