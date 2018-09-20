@@ -410,11 +410,11 @@ extern DECL_ALIGN(4) u32 SFaceOffsColor;
 //./core/rend/TexCache.o
 //maybe
 //extern u8* vq_codebook;
-extern u32 palette_index;
-extern bool KillTex;
+//extern u32 palette_index;
+//extern bool KillTex;
 //extern u32 palette16_ram[1024];
 //extern u32 palette32_ram[1024];
-extern u32 detwiddle[2][8][1024];
+//extern u32 detwiddle[2][8][1024];
 //maybe
 //extern vector<vram_block*> VramLocks[/*VRAM_SIZE*/(16*1024*1024)/PAGE_SIZE];
 //maybe - probably not - just a locking mechanism
@@ -983,14 +983,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	REICAST_S(YUV_x_size);
 	REICAST_S(YUV_y_size);
 
-
-
-
-	REICAST_S(fog_needs_update);
 	REICAST_SA(pvr_regs,pvr_RegSize);
-
-
-
 
 	REICAST_S(in_vblank);
 	REICAST_S(clc_pvr_scanline);
@@ -1013,15 +1006,6 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	REICAST_SA(ta_fsm,2049);
 	REICAST_S(ta_fsm_cl);
 
-
-	REICAST_S(pal_needs_update);
-	for (int i = 0; i < 64 + 64 + 4 + 4; i++)
-		REICAST_S(i);
-	//REICAST_SA(_pal_rev_256,4);
-	//REICAST_SA(_pal_rev_16,64);
-	//REICAST_SA(pal_rev_256,4);
-	//REICAST_SA(pal_rev_16,64);
-
 	REICAST_S(tileclip_val);
 	REICAST_SA(f32_su8_tbl,65536);
 	REICAST_SA(FaceBaseColor,4);
@@ -1029,21 +1013,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	REICAST_S(SFaceBaseColor);
 	REICAST_S(SFaceOffsColor);
 
-
-	REICAST_S(palette_index);
-	REICAST_S(KillTex);
-	REICAST_SA(palette16_ram,1024);
-	REICAST_SA(palette32_ram,1024);
-	for (i = 0 ; i < 2 ; i++)
-		for (j = 0 ; j < 8 ; j++)
-		{
-			u32 *ptr = detwiddle[i][j] ;
-			REICAST_SA(ptr,1024);
-		}
 	REICAST_SA(vram.data, vram.size);
-
-
-
 
 	REICAST_SA(OnChipRAM.data,OnChipRAM_SIZE);
 
@@ -1377,13 +1347,8 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	REICAST_US(YUV_x_size);
 	REICAST_US(YUV_y_size);
 
-
-
-
-	REICAST_US(fog_needs_update);
 	REICAST_USA(pvr_regs,pvr_RegSize);
 	fog_needs_update = true ;
-
 
 	REICAST_US(in_vblank);
 	REICAST_US(clc_pvr_scanline);
@@ -1400,20 +1365,10 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	REICAST_US(full_rps);
 	REICAST_US(fskip);
 
-
-
 	REICAST_USA(ta_type_lut,256);
 	REICAST_USA(ta_fsm,2049);
 	REICAST_US(ta_fsm_cl);
 
-
-	REICAST_US(pal_needs_update);
-	for (int i = 0; i < 64 + 64 + 4 + 4; i++)
-		REICAST_US(j);
-	//REICAST_USA(_pal_rev_256,4);
-	//REICAST_USA(_pal_rev_16,64);
-	//REICAST_USA(pal_rev_256,4);
-	//REICAST_USA(pal_rev_16,64);
 	REICAST_US(tileclip_val);
 	REICAST_USA(f32_su8_tbl,65536);
 	REICAST_USA(FaceBaseColor,4);
@@ -1421,22 +1376,9 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	REICAST_US(SFaceBaseColor);
 	REICAST_US(SFaceOffsColor);
 
-
-	REICAST_US(palette_index);
-	REICAST_US(KillTex);
-	REICAST_USA(palette16_ram,1024);
-	REICAST_USA(palette32_ram,1024);
 	pal_needs_update = true;
-	for (i = 0 ; i < 2 ; i++)
-		for (j = 0 ; j < 8 ; j++)
-		{
-			u32 *ptr = detwiddle[i][j] ;
-			REICAST_USA(ptr,1024);
-		}
+
 	REICAST_USA(vram.data, vram.size);
-
-
-
 
 	REICAST_USA(OnChipRAM.data,OnChipRAM_SIZE);
 

@@ -23,7 +23,7 @@
 
 #include "rend/gles/gles.h"
 
-static u32 decoded_colors[3][65536];
+u32 decoded_colors[3][65536];
 
 #define MAX_RENDER_WIDTH 640
 #define MAX_RENDER_HEIGHT 480
