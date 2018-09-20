@@ -88,7 +88,6 @@ public class Emulator extends Application {
         JNIdc.limitfps(Emulator.limitfps ? 1 : 0);
         JNIdc.nobatch(Emulator.nobatch ? 1 : 0);
         JNIdc.nosound(Emulator.nosound ? 1 : 0);
-        JNIdc.delayinterrupt(Emulator.interrupt ? 1 : 0);
         JNIdc.mipmaps(Emulator.mipmaps ? 1 : 0);
         JNIdc.widescreen(Emulator.widescreen ? 1 : 0);
         JNIdc.subdivide(Emulator.subdivide ? 1 : 0);
@@ -106,7 +105,6 @@ public class Emulator extends Application {
         JNIdc.dynarec(mPrefs.getBoolean(pref_dynarecopt, dynarecopt) ? 1 : 0);
         JNIdc.unstable(mPrefs.getBoolean(pref_unstable, unstableopt) ? 1 : 0);
         JNIdc.safemode(mPrefs.getBoolean(pref_dynsafemode, dynsafemode) ? 1 : 0);
-        JNIdc.delayinterrupt(mPrefs.getBoolean(pref_interrupt, interrupt) ? 1 : 0);
         JNIdc.frameskip(mPrefs.getInt(pref_frameskip, frameskip));
         JNIdc.pvrrender(mPrefs.getBoolean(pref_pvrrender, pvrrender) ? 1 : 0);
         JNIdc.syncedrender(mPrefs.getBoolean(pref_syncedrender, syncedrender) ? 1 : 0);

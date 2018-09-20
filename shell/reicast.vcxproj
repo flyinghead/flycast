@@ -196,6 +196,7 @@
     <ClCompile Include="..\core\rend\gles\gltex.cpp" />
     <ClCompile Include="..\core\rend\soft\softrend.cpp" />
     <ClCompile Include="..\core\rend\TexCache.cpp" />
+    <ClCompile Include="..\core\serialize.cpp" />
     <ClCompile Include="..\core\stdclass.cpp" />
     <ClCompile Include="..\core\webui\server.cpp" />
     <ClCompile Include="..\core\windows\winmain.cpp" />
