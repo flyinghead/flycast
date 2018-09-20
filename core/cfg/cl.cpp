@@ -108,9 +108,11 @@ int setconfig(wchar** arg,int cl)
 #if !defined(DEF_CONSOLE)
 #if defined(linux) || defined(_ANDROID)
 #define DEF_CONSOLE
-#elif defined(_WIN32)
-#include <conio.h>
 #endif
+#endif
+
+#if defined(_WIN32)
+#include <conio.h>
 #endif
 
 void cli_pause()
@@ -121,7 +123,7 @@ void cli_pause()
 
 #if defined(_WIN32)
 	printf("\nPress a key to exit.\n");
-	getch();
+	_getch();
 #else
 	printf("\nPress enter to exit.\n");
 	char c = getchar();
