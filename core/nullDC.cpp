@@ -152,8 +152,13 @@ void LoadSpecialSettings()
 		// Record of Lodoss War (EU)
 		|| !strncmp("T7012D", reios_product_number, 6)
 		// Record of Lodoss War (USA)
-		|| !strncmp("T40218N", reios_product_number, 7))
+		|| !strncmp("T40218N", reios_product_number, 7)
+		// Surf Rocket Racers
+		|| !strncmp("T40216N", reios_product_number, 7))
+	{
+		printf("Disabling Div Matching for game %s\n", reios_product_number);
 		settings.dynarec.DisableDivMatching = true;
+	}
 }
 
 int dc_init(int argc,wchar* argv[])
