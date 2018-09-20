@@ -20,7 +20,7 @@ struct DynaRBI: RuntimeBlockInfo
 
 x86_block* x86e;
 
-u32 cycle_counter;
+int cycle_counter;
 
 void* loop_no_update;
 void* intc_sched;
