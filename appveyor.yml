@@ -1,9 +1,17 @@
 version: git-{branch}-{build}
-configuration: Debug-v120
+os: Visual Studio 2015
+
+environment:
+  matrix:
+  - Toolset: v120
 
 platform:
   - x86
   - x64
+
+configuration:
+# - Release-120
+  - Debug-120
   
 build:
   project: shell/reicast.sln
