@@ -48,8 +48,7 @@
     <string name="set_frameskip">Frameskip Value</string>
     <string name="select_render">PVR Rendering (does nothing for now)</string>
     <string name="select_syncrender">Synchronous Rendering</string>
-    <string name="select_modvols">Modifier Volumes</string>
-    <string name="select_interrupt">Delayed Interrupt</string>
+    <string name="select_modvols">Enable Modifier Volumes</string>
     <string name="select_fps">Show On-Screen FPS</string>
     <string name="select_software">Use Software Layer</string>
     <string name="select_sound">Disable Emulator Sound</string>

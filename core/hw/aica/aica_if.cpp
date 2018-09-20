@@ -178,28 +178,6 @@ void aica_Term()
 
 }
 
-s32 aica_pending_dma = 0;
-
-void aica_periodical(u32 cycl)
-{
-	if (aica_pending_dma > 0)
-	{
-		verify(SB_ADST==1);
-
-		cycl = (aica_pending_dma <= 0) ? 0 : cycl;
-		aica_pending_dma-=cycl;
-
-		if (aica_pending_dma <= 0)
-		{
-			//log("%u %d\n",cycl,(s32)aica_pending_dma);
-			asic_RaiseInterrupt(holly_SPU_DMA);
-			aica_pending_dma = 0;
-			SB_ADST=0;
-		}
-	}
-}
-
-
 void Write_SB_ADST(u32 addr, u32 data)
 {
 	//0x005F7800	SB_ADSTAG	RW	AICA:G2-DMA G2 start address 
@@ -218,8 +196,6 @@ void Write_SB_ADST(u32 addr, u32 data)
 			u32 src=SB_ADSTAR;
 			u32 dst=SB_ADSTAG;
 			u32 len=SB_ADLEN & 0x7FFFFFFF;
-			
-			u32 total_bytes=0;
 
 			if ((SB_ADDIR&1)==1)
 			{
@@ -245,14 +221,11 @@ void Write_SB_ADST(u32 addr, u32 data)
 
 			SB_ADSTAR+=len;
 			SB_ADSTAG+=len;
-			total_bytes+=len;
-			SB_ADST    = settings.aica.DelayInterrupt ? 1 : 0x00000000;//dma done
-			SB_ADLEN   = 0x00000000;
- 	 
-			aica_pending_dma = ((total_bytes * 200000000) / 65536) + 1;
- 	 
-			if (!settings.aica.DelayInterrupt)
-				asic_RaiseInterruptWait(holly_SPU_DMA);
+			SB_ADST = 0x00000000;//dma done
+			SB_ADLEN = 0x00000000;
+
+			
+			asic_RaiseInterrupt(holly_SPU_DMA);
 		}
 	}
 }
@@ -306,7 +279,7 @@ void Write_SB_E1ST(u32 addr, u32 data)
 			SB_E1LEN = 0x00000000;
 
 			
-			asic_RaiseInterruptWait(holly_EXT_DMA1);
+			asic_RaiseInterrupt(holly_EXT_DMA1);
 		}
 	}
 }

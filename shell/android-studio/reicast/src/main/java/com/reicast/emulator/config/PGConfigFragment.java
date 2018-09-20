@@ -62,7 +62,6 @@ public class PGConfigFragment extends Fragment {
 	private CompoundButton pvr_render;
 	private CompoundButton synced_render;
 	private CompoundButton modifier_volumes;
-	private CompoundButton interrupt_opt;
 	private EditText bootdiskEdit;
 
 	@Override
@@ -102,7 +101,6 @@ public class PGConfigFragment extends Fragment {
 		pvr_render = (CompoundButton) getView().findViewById(R.id.render_option);
 		synced_render = (CompoundButton) getView().findViewById(R.id.syncrender_option);
 		modifier_volumes = (CompoundButton) getView().findViewById(R.id.modvols_option);
-		interrupt_opt = (CompoundButton) getView().findViewById(R.id.interrupt_option);
 		bootdiskEdit = (EditText) getView().findViewById(R.id.boot_disk);
 	}
 
@@ -115,8 +113,7 @@ public class PGConfigFragment extends Fragment {
 				.putInt(Emulator.pref_frameskip, frameSeek.getProgress())
 				.putBoolean(Emulator.pref_pvrrender, pvr_render.isChecked())
 				.putBoolean(Emulator.pref_syncedrender, synced_render.isChecked())
-				.putBoolean(Emulator.pref_modvols, modifier_volumes.isChecked())
-				.putBoolean(Emulator.pref_interrupt, interrupt_opt.isChecked()).apply();
+				.putBoolean(Emulator.pref_modvols, modifier_volumes.isChecked()).apply();
 		if (bootdiskEdit.getText() != null)
 			mPrefs.edit().putString(Emulator.pref_bootdisk,
 					bootdiskEdit.getText().toString()).apply();
@@ -135,7 +132,6 @@ public class PGConfigFragment extends Fragment {
 				.remove(Emulator.pref_pvrrender)
 				.remove(Emulator.pref_syncedrender)
 				.remove(Emulator.pref_modvols)
-				.remove(Emulator.pref_interrupt)
 				.remove(Emulator.pref_bootdisk).apply();
 		showToastMessage(getActivity().getString(R.string.pgconfig_cleared), Snackbar.LENGTH_SHORT);
 		configureViewByGame(gameId);
@@ -191,7 +187,6 @@ public class PGConfigFragment extends Fragment {
 		pvr_render.setChecked(mPrefs.getBoolean(Emulator.pref_pvrrender, Emulator.pvrrender));
 		synced_render.setChecked(mPrefs.getBoolean(Emulator.pref_syncedrender, Emulator.syncedrender));
 		modifier_volumes.setChecked(mPrefs.getBoolean(Emulator.pref_modvols, Emulator.modvols));
-		interrupt_opt.setChecked(mPrefs.getBoolean(Emulator.pref_interrupt, Emulator.interrupt));
 		bootdiskEdit.setText(mPrefs.getString(Emulator.pref_bootdisk, Emulator.bootdisk));
 
 		bootdiskEdit.setOnEditorActionListener(new EditText.OnEditorActionListener() {
