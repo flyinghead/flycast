@@ -469,23 +469,32 @@
 				const char* mapping = (cfgExists("input", evdev_config_key) == 2 ? (tmp = cfgLoadStr("input", evdev_config_key, "")).c_str() : NULL);
 				free(evdev_config_key);
 
-				input_evdev_init(&evdev_controllers[port], evdev_device, mapping);
+				int err = input_evdev_init(&evdev_controllers[port], evdev_device, mapping);
 
 				free(evdev_device);
 
-				for (i = 0; i < port; i++)
+				// If there was an error initializing the controller, don't proceed any further
+				if (err == 0)
 				{
+					for (i = 0; i < port; i++)
+					{
+						// If the controller could not be loaded, skip this one as it can't interfere
+						if (evdev_controllers[i].fd < 0)
+							continue;
+
 						if (evdev_device_id[port] == evdev_device_id[i])
 						{
 							// Multiple controllers with the same device, check for multiple button assignments
 							if (input_evdev_button_duplicate_button(evdev_controllers[i].mapping, evdev_controllers[port].mapping))
 							{
-								printf("WARNING: One or more button(s) of this device is also used in the configuration of input device %d (mapping: %s)\n", i, evdev_controllers[i].mapping->name.c_str());
+								printf("WARNING: One or more button(s) of this device is also used in the configuration of input device %d (mapping: %s)\n", i,
+								evdev_controllers[i].mapping->name.c_str());
 							}
 						}
-				}
+					}
 
-				mcfg_CreateController(port, GetMapleDeviceType(evdev_controllers[port].mapping->Maple_Device1, port), GetMapleDeviceType(evdev_controllers[port].mapping->Maple_Device2, port));
+					mcfg_CreateController(port, GetMapleDeviceType(evdev_controllers[port].mapping->Maple_Device1, port), GetMapleDeviceType(evdev_controllers[port].mapping->Maple_Device2, port));
+				}
 			}
 		}
 	}
