@@ -548,9 +548,24 @@ void cleanup_serialize(void *data)
 
 }
 
+static string get_savestate_file_path()
+{
+	char image_path[512];
+	cfgLoadStr("config", "image", image_path, "./");
+	string state_file = image_path;
+	size_t lastindex = state_file.find_last_of("/");
+	if (lastindex != -1)
+		state_file = state_file.substr(lastindex + 1);
+	lastindex = state_file.find_last_of(".");
+	if (lastindex != -1)
+		state_file = state_file.substr(0, lastindex);
+	state_file = state_file + ".state";
+	return get_writable_data_path("/data/") + state_file;
+}
+
 void* dc_savestate_thread(void* p)
 {
-	char filename[2048] ;
+	string filename;
 	unsigned int total_size = 0 ;
 	void *data = NULL ;
 	void *data_ptr = NULL ;
@@ -598,12 +613,12 @@ void* dc_savestate_thread(void* p)
     	return NULL;
 	}
 
-	snprintf(filename, 2048, "%s%s", get_writable_data_path("/data/").c_str(), "state") ;
-	f = fopen(filename, "wb") ;
+	filename = get_savestate_file_path();
+	f = fopen(filename.c_str(), "wb") ;
 
 	if ( f == NULL )
 	{
-		printf("Failed to save state - could not open %s for writing\n", filename) ;
+		printf("Failed to save state - could not open %s for writing\n", filename.c_str()) ;
 		cleanup_serialize(data) ;
     	return NULL;
 	}
@@ -612,13 +627,13 @@ void* dc_savestate_thread(void* p)
 	fclose(f);
 
 	cleanup_serialize(data) ;
-	printf("Saved state to %s\n size %d", filename, total_size) ;
+	printf("Saved state to %s\n size %d", filename.c_str(), total_size) ;
 
 }
 
 void* dc_loadstate_thread(void* p)
 {
-	char filename[2048] ;
+	string filename;
 	unsigned int total_size = 0 ;
 	void *data = NULL ;
 	void *data_ptr = NULL ;
@@ -657,12 +672,12 @@ void* dc_loadstate_thread(void* p)
     	return NULL;
 	}
 
-	snprintf(filename, 2048, "%s%s", get_writable_data_path("/data/").c_str(), "state") ;
-	f = fopen(filename, "rb") ;
+	filename = get_savestate_file_path();
+	f = fopen(filename.c_str(), "rb") ;
 
 	if ( f == NULL )
 	{
-		printf("Failed to load state - could not open %s for reading\n", filename) ;
+		printf("Failed to load state - could not open %s for reading\n", filename.c_str()) ;
 		cleanup_serialize(data) ;
     	return NULL;
 	}
@@ -683,7 +698,7 @@ void* dc_loadstate_thread(void* p)
 	}
 
 	cleanup_serialize(data) ;
-	printf("Loaded state from %s size %d\n", filename, total_size) ;
+	printf("Loaded state from %s size %d\n", filename.c_str(), total_size) ;
 }
 
 
