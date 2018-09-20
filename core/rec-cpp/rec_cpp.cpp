@@ -20,7 +20,6 @@
 #define SHIL_MODE 2
 #include "hw/sh4/dyna/shil_canonical.h"
 
-
 #define MIPS_COUNTER 0
 
 struct DynaRBI : RuntimeBlockInfo
@@ -34,8 +33,6 @@ struct DynaRBI : RuntimeBlockInfo
 		verify(false);
 	}
 };
-
-
 
 int cycle_counter;
 extern int mips_counter;

@@ -136,7 +136,7 @@ string  cfgLoadStr(const wchar * Section, const wchar * Key, const wchar* Defaul
 {
 	if(!cfgdb.has_entry(string(Section), string(Key)))
 	{
-			cfgSaveStr(Section, Key, Default);
+		cfgSaveStr(Section, Key, Default);
 	}
 	return cfgdb.get(string(Section), string(Key), string(Default));
 }
@@ -155,9 +155,18 @@ s32  cfgLoadInt(const wchar * Section, const wchar * Key,s32 Default)
 {
 	if(!cfgdb.has_entry(string(Section), string(Key)))
 	{
-			cfgSaveInt(Section, Key, Default);
+		cfgSaveInt(Section, Key, Default);
 	}
 	return cfgdb.get_int(string(Section), string(Key), Default);
+}
+
+s32  cfgGameInt(const wchar * Section, const wchar * Key,s32 Default)
+{
+    if(cfgdb.has_entry(string(Section), string(Key)))
+    {
+        return cfgdb.get_int(string(Section), string(Key), Default);
+    }
+    return Default;
 }
 
 void  cfgSaveBool(const wchar * Section, const wchar * Key, bool BoolValue)
@@ -173,7 +182,7 @@ bool  cfgLoadBool(const wchar * Section, const wchar * Key,bool Default)
 {
 	if(!cfgdb.has_entry(string(Section), string(Key)))
 	{
-			cfgSaveBool(Section, Key, Default);
+		cfgSaveBool(Section, Key, Default);
 	}
 	return cfgdb.get_bool(string(Section), string(Key), Default);
 }

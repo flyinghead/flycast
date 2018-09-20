@@ -22,6 +22,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:ems="10"
+                    android:layout_marginLeft="4dp"
                     android:text="@string/customize_touch_controls" />
 
                 <LinearLayout
@@ -34,7 +35,7 @@
                     <Button
                         android:id="@+id/buttonLaunchEditor"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                        android:layout_height="0dp"
                         android:layout_weight="1"
                         android:ems="8"
                         android:text="@string/launch_editor" />
@@ -50,6 +51,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="0.5"
                     android:ems="10"
+                    android:layout_marginLeft="4dp"
                     android:gravity="center_vertical|left"
                     android:text="@string/touch_vibration" />
 
@@ -85,6 +87,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
+                        android:layout_marginLeft="4dp"
                         android:text="@string/vibration_duration" />
 
                     <LinearLayout
@@ -130,6 +133,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:ems="10"
+                    android:layout_marginLeft="4dp"
                     android:text="@string/customize_physical_controls" />
 
                 <LinearLayout
@@ -142,41 +146,41 @@
                     <Button
                         android:id="@+id/buttonKeycodeEditor"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                        android:layout_height="0dp"
                         android:layout_weight="1"
                         android:ems="8"
                         android:text="@string/launch_editor" />
                 </LinearLayout>
             </TableRow>
-            
-			<TableRow
+
+            <TableRow
                 android:layout_marginTop="25dp"
                 android:gravity="center_vertical" >
 
-			    <LinearLayout 
-			        android:layout_width="wrap_content"
+                <LinearLayout
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:layout_marginLeft="6dp"
                     android:gravity="center_vertical" >
-			        
-			        <ImageView 
-			            app:srcCompat="@drawable/mic_icon"
-			            android:layout_width="48dp"
+
+                    <ImageView
+                        app:srcCompat="@drawable/mic_icon"
+                        android:layout_width="48dp"
                         android:layout_height="48dp"
                         android:layout_centerInParent="true"
                         android:scaleType="fitCenter" />
-			        
-	                <TextView
-	                    android:layout_width="wrap_content"
-	                    android:layout_height="wrap_content"
-	                    android:layout_weight="0.5"
-	                    android:ems="10"
-	                    android:gravity="center_vertical|left"
-	                    android:layout_marginLeft="6dp"
-	                    android:text="@string/mic_in_port_2" />
-				</LinearLayout>
-				
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="0.5"
+                        android:ems="10"
+                        android:gravity="center_vertical|left"
+                        android:layout_marginLeft="6dp"
+                        android:text="@string/enable_microphone" />
+                </LinearLayout>
+
                 <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -185,7 +189,7 @@
                     android:orientation="vertical" >
 
                     <Checkbox
-                        android:id="@+id/micInPort2"
+                        android:id="@+id/micEnabled"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:focusable="true" />
@@ -237,7 +241,7 @@
                     </RelativeLayout>
 
                     <LinearLayout
-                        android:layout_width="wrap_content"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginLeft="6dp"
                         android:layout_weight="1"
@@ -255,6 +259,15 @@
                             android:layout_height="wrap_content"
                             android:ems="10"
                             android:text="@string/controller_none_selected" />
+
+                        <TextView
+                            android:id="@+id/textViewPeripheralsPlayer1"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="10dp"
+                            android:layout_marginLeft="5dp"
+                            android:ems="10"
+                            android:text="@string/controller_1_vmu" />
                     </LinearLayout>
                 </LinearLayout>
 
@@ -319,7 +332,7 @@
                     </RelativeLayout>
 
                     <LinearLayout
-                        android:layout_width="wrap_content"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginLeft="6dp"
                         android:layout_weight="1"
@@ -337,6 +350,29 @@
                             android:layout_height="wrap_content"
                             android:ems="10"
                             android:text="@string/controller_none_selected" />
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="10dp"
+                            android:orientation="horizontal" >
+
+                            <Spinner
+                                android:id="@+id/spnr_player2_periph1"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:ems="6"
+                                android:entries="@array/peripherals" />
+
+                            <Spinner
+                                android:id="@+id/spnr_player2_periph2"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:ems="6"
+                                android:entries="@array/peripherals" />
+                        </LinearLayout>
                     </LinearLayout>
                 </LinearLayout>
 
@@ -401,7 +437,7 @@
                     </RelativeLayout>
 
                     <LinearLayout
-                        android:layout_width="wrap_content"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginLeft="6dp"
                         android:layout_weight="1"
@@ -419,6 +455,29 @@
                             android:layout_height="wrap_content"
                             android:ems="10"
                             android:text="@string/controller_none_selected" />
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="10dp"
+                            android:orientation="horizontal" >
+
+                            <Spinner
+                                android:id="@+id/spnr_player3_periph1"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:ems="6"
+                                android:entries="@array/peripherals" />
+
+                            <Spinner
+                                android:id="@+id/spnr_player3_periph2"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:ems="6"
+                                android:entries="@array/peripherals" />
+                        </LinearLayout>
                     </LinearLayout>
                 </LinearLayout>
 
@@ -483,7 +542,7 @@
                     </RelativeLayout>
 
                     <LinearLayout
-                        android:layout_width="wrap_content"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginLeft="6dp"
                         android:layout_weight="1"
@@ -501,6 +560,29 @@
                             android:layout_height="wrap_content"
                             android:ems="10"
                             android:text="@string/controller_none_selected" />
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="10dp"
+                            android:orientation="horizontal" >
+
+                            <Spinner
+                                android:id="@+id/spnr_player4_periph1"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:ems="6"
+                                android:entries="@array/peripherals" />
+
+                            <Spinner
+                                android:id="@+id/spnr_player4_periph2"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:ems="6"
+                                android:entries="@array/peripherals" />
+                        </LinearLayout>
                     </LinearLayout>
                 </LinearLayout>
 

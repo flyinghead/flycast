@@ -3,8 +3,8 @@ package com.reicast.emulator.debug;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.net.Uri;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.support.constraint.ConstraintLayout;
@@ -13,7 +13,6 @@ import android.support.graphics.drawable.VectorDrawableCompat;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.reicast.emulator.R;
 import com.reicast.emulator.config.Config;
@@ -26,34 +25,34 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.ref.WeakReference;
 
 public class GenerateLogs extends AsyncTask<String, Integer, String> {
+	private WeakReference<Context> mContext;
 
-	public static final String build_model = android.os.Build.MODEL;
-	public static final String build_device = android.os.Build.DEVICE;
-	public static final String build_board = android.os.Build.BOARD;
-	public static final int build_sdk = android.os.Build.VERSION.SDK_INT;
+	private static final String build_device = android.os.Build.DEVICE;
+	private static final String build_board = android.os.Build.BOARD;
+	private static final int build_sdk = android.os.Build.VERSION.SDK_INT;
 
-	public static final String DN = "Donut";
-	public static final String EC = "Eclair";
-	public static final String FR = "Froyo";
-	public static final String GB = "Gingerbread";
-	public static final String HC = "Honeycomb";
-	public static final String IC = "Ice Cream Sandwich";
-	public static final String JB = "JellyBean";
-	public static final String KK = "KitKat";
-	public static final String LP = "L Preview";
-	public static final String LL = "Lollipop";
-	public static final String NL = "New / No Label";
-	public static final String NF = "Not Found";
+	private static final String DN = "Donut";
+	private static final String EC = "Eclair";
+	private static final String FR = "Froyo";
+	private static final String GB = "Gingerbread";
+	private static final String HC = "Honeycomb";
+	private static final String IC = "Ice Cream Sandwich";
+	private static final String JB = "JellyBean";
+	private static final String KK = "KitKat";
+	private static final String LL = "Lollipop";
+	private static final String MM = "Marshmallow";
+	private static final String NT = "Nougat";
+	private static final String NL = "New / No Label";
+	private static final String NF = "Not Found";
 
+	private String currentTime;
 	private String unHandledIOE;
 
-	private Context mContext;
-	private String currentTime;
-
-	public GenerateLogs(Context mContext) {
-		this.mContext = mContext;
+	public GenerateLogs(Context reference) {
+		this.mContext = new WeakReference<>(reference);
 		this.currentTime = String.valueOf(System.currentTimeMillis());
 	}
 
@@ -68,7 +67,7 @@ public class GenerateLogs extends AsyncTask<String, Integer, String> {
 		s += "\r\n";
 		s += "BOARD: " + build_board;
 		s += "\r\n";
-		if (String.valueOf(build_sdk) != null) {
+		if (!String.valueOf(build_sdk).equals("")) {
 			String build_version = NF;
 			if (String.valueOf(build_sdk).equals("L")) {
 				build_version = "LP";
@@ -88,9 +87,13 @@ public class GenerateLogs extends AsyncTask<String, Integer, String> {
 				build_version = JB;
 			} else if (build_sdk >= 19 && build_sdk < 21) {
 				build_version = KK;
-			} else if (build_sdk >= 21 && build_sdk < 22) {
+			} else if (build_sdk >= 21 && build_sdk < 23) {
 				build_version = LL;
-			} else if (build_sdk >= 22) {
+			} else if (build_sdk >= 23 && build_sdk < 24) {
+				build_version = MM;
+			} else if (build_sdk >= 24 && build_sdk < 26) {
+				build_version = NT;
+			} else if (build_sdk >= 26) {
 				build_version = NL;
 			}
 			s += build_version + " (" + build_sdk + ")";
@@ -152,40 +155,7 @@ public class GenerateLogs extends AsyncTask<String, Integer, String> {
 			log.append(unHandledIOE);
 		}
 		try {
-			mLogcatProc = Runtime.getRuntime().exec(
-					new String[] { "logcat", "-ds", "AndroidRuntime:E" });
-			reader = new BufferedReader(new InputStreamReader(
-					mLogcatProc.getInputStream()));
 			String line;
-			log.append(separator);
-			log.append(separator);
-			log.append("AndroidRuntime Output");
-			log.append(separator);
-			log.append(separator);
-			while ((line = reader.readLine()) != null) {
-				log.append(line);
-				log.append(separator);
-			}
-			reader.close();
-			mLogcatProc = null;
-			reader = null;
-			int PID = android.os.Process.getUidForName("com.reicast.emulator");
-			mLogcatProc = Runtime.getRuntime().exec(
-					new String[] { "logcat", "-d", "|", "grep " + PID });
-			reader = new BufferedReader(new InputStreamReader(
-					mLogcatProc.getInputStream()));
-			log.append(separator);
-			log.append(separator);
-			log.append("Application Core Output");
-			log.append(separator);
-			log.append(separator);
-			while ((line = reader.readLine()) != null) {
-				log.append(line);
-				log.append(separator);
-			}
-			reader.close();
-			mLogcatProc = null;
-			reader = null;
 			mLogcatProc = Runtime.getRuntime().exec(
 					new String[] { "logcat", "-ds", "reicast:V" });
 			reader = new BufferedReader(new InputStreamReader(
@@ -200,25 +170,7 @@ public class GenerateLogs extends AsyncTask<String, Integer, String> {
 				log.append(separator);
 			}
 			reader.close();
-			mLogcatProc = null;
-			reader = null;
-			mLogcatProc = Runtime.getRuntime().exec(
-					new String[] { "logcat", "-ds", "GL2JNIView:E" });
-			reader = new BufferedReader(new InputStreamReader(
-					mLogcatProc.getInputStream()));
-			log.append(separator);
-			log.append(separator);
-			log.append("Open GLES View Output");
-			log.append(separator);
-			log.append(separator);
-			while ((line = reader.readLine()) != null) {
-				log.append(line);
-				log.append(separator);
-			}
-			reader.close();
-			mLogcatProc = null;
-			reader = null;
-			File memory = new File(mContext.getFilesDir(), "mem_alloc.txt");
+			File memory = new File(mContext.get().getFilesDir(), "mem_alloc.txt");
 			if (memory.exists()) {
 				log.append(separator);
 				log.append(separator);
@@ -232,9 +184,7 @@ public class GenerateLogs extends AsyncTask<String, Integer, String> {
 					log.append(separator);
 				}
 				fis.close();
-				fis = null;
 				reader.close();
-				reader = null;
 			}
 			BufferedWriter writer = new BufferedWriter(new FileWriter(logFile));
 			writer.write(log.toString());
@@ -242,7 +192,8 @@ public class GenerateLogs extends AsyncTask<String, Integer, String> {
 			writer.close();
 			return log.toString();
 		} catch (IOException e) {
-
+			// Could not generate log file
+			// Writing a log is redundant
 		}
 		return null;
 	}
@@ -250,19 +201,19 @@ public class GenerateLogs extends AsyncTask<String, Integer, String> {
 	@Override
 	protected void onPostExecute(final String response) {
 		if (response != null) {
-			showToastMessage(mContext.getString(R.string.log_saved), Snackbar.LENGTH_LONG);
-			android.content.ClipboardManager clipboard = (android.content.ClipboardManager) mContext
+			showToastMessage(mContext.get().getString(R.string.log_saved), Snackbar.LENGTH_LONG);
+			android.content.ClipboardManager clipboard = (android.content.ClipboardManager) mContext.get()
 					.getSystemService(Context.CLIPBOARD_SERVICE);
 			android.content.ClipData clip = android.content.ClipData.newPlainText("logcat", response);
 			clipboard.setPrimaryClip(clip);
 			Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(Config.git_issues));
-			mContext.startActivity(browserIntent);
+			mContext.get().startActivity(browserIntent);
 		}
 	}
 
 	private void showToastMessage(String message, int duration) {
 		ConstraintLayout layout = (ConstraintLayout)
-				((Activity) mContext).findViewById(R.id.mainui_layout);
+				((Activity) mContext.get()).findViewById(R.id.mainui_layout);
 		Snackbar snackbar = Snackbar.make(layout, message, duration);
 		View snackbarLayout = snackbar.getView();
 		ConstraintLayout.LayoutParams lp = new ConstraintLayout.LayoutParams(
@@ -278,14 +229,14 @@ public class GenerateLogs extends AsyncTask<String, Integer, String> {
 			textView.setTextAlignment(View.TEXT_ALIGNMENT_GRAVITY);
 		Drawable drawable;
 		if (android.os.Build.VERSION.SDK_INT > Build.VERSION_CODES.M) {
-			drawable = mContext.getResources().getDrawable(
-					R.drawable.ic_send, ((Activity) mContext).getTheme());
+			drawable = mContext.get().getResources().getDrawable(
+					R.drawable.ic_send, ((Activity) mContext.get()).getTheme());
 		} else {
-			drawable = VectorDrawableCompat.create(mContext.getResources(),
-					R.drawable.ic_send, ((Activity) mContext).getTheme());
+			drawable = VectorDrawableCompat.create(mContext.get().getResources(),
+					R.drawable.ic_send, ((Activity) mContext.get()).getTheme());
 		}
 		textView.setCompoundDrawablesWithIntrinsicBounds(drawable, null, null, null);
-		textView.setCompoundDrawablePadding(mContext.getResources()
+		textView.setCompoundDrawablePadding(mContext.get().getResources()
 				.getDimensionPixelOffset(R.dimen.snackbar_icon_padding));
 		snackbar.show();
 	}

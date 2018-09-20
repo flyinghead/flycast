@@ -495,7 +495,7 @@
                     <Spinner
                         android:id="@+id/depth_spinner"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                        android:layout_height="0dp"
                         android:layout_weight="1"
                         android:ems="10" />
                 </LinearLayout>
@@ -571,7 +571,7 @@
                     <Spinner
                         android:id="@+id/cable_spinner"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                        android:layout_height="0dp"
                         android:layout_weight="1"
                         android:ems="10" />
                 </LinearLayout>
@@ -600,7 +600,7 @@
                     <Spinner
                         android:id="@+id/region_spinner"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                        android:layout_height="0dp"
                         android:layout_weight="1"
                         android:ems="10" />
                 </LinearLayout>
@@ -629,7 +629,7 @@
                     <Spinner
                         android:id="@+id/broadcast_spinner"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                        android:layout_height="0dp"
                         android:layout_weight="1"
                         android:ems="10" />
                 </LinearLayout>
@@ -719,62 +719,34 @@
                 </LinearLayout>
             </TableRow>
 
-            <TableRow
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
-                android:gravity="center_vertical" >
+                android:orientation="vertical" >
 
                 <TextView
-                    android:id="@+id/modvols_text"
+                    android:id="@+id/boot_disk_text"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="0.5"
-                    android:ems="10"
-                    android:gravity="center_vertical|left"
-                    android:text="@string/select_modvols" />
+                    android:layout_height="0dip"
+                    android:layout_weight="1"
+                    android:text="@string/boot_disk" />
 
                 <LinearLayout
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:gravity="right"
                     android:orientation="vertical" >
 
-                    <Switch
-                        android:id="@+id/modvols_option"
-                        android:layout_width="wrap_content"
+                    <EditText
+                        android:id="@+id/boot_disk"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:focusable="true" />
+                        android:layout_weight="1"
+                        android:ems="10"
+                        android:inputType="text" >
+                    </EditText>
                 </LinearLayout>
-            </TableRow>
-
-            <!--<LinearLayout-->
-                <!--android:layout_width="match_parent"-->
-                <!--android:layout_height="wrap_content"-->
-                <!--android:layout_marginTop="10dp"-->
-                <!--android:orientation="vertical" >-->
-
-                <!--<TextView-->
-                    <!--android:id="@+id/boot_disk_text"-->
-                    <!--android:layout_width="wrap_content"-->
-                    <!--android:layout_height="0dip"-->
-                    <!--android:layout_weight="1"-->
-                    <!--android:text="@string/boot_disk" />-->
-
-                <!--<LinearLayout-->
-                    <!--android:layout_width="match_parent"-->
-                    <!--android:layout_height="wrap_content"-->
-                    <!--android:orientation="vertical" >-->
-
-                    <!--<EditText-->
-                        <!--android:id="@+id/boot_disk"-->
-                        <!--android:layout_width="match_parent"-->
-                        <!--android:layout_height="wrap_content"-->
-                        <!--android:layout_weight="1"-->
-                        <!--android:ems="10"-->
-                        <!--android:inputType="textPersonName" >-->
-                    <!--</EditText>-->
-                <!--</LinearLayout>-->
-            <!--</LinearLayout>-->
+            </LinearLayout>
 
             <TableRow
                 android:layout_marginTop="10dp"
@@ -797,7 +769,7 @@
                     android:orientation="vertical" >
 
                     <Button
-                        android:id="@+id/reset_emu_settings"
+                        android:id="@+id/reset_emu_btn"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/reset_emu" />

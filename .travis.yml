@@ -44,7 +44,7 @@ install:
 - test -z "$encrypted_c726d225a9d9_key" || mv debug.keystore ~/.android/debug.keystore
 before_script: 
 script:
-- git fetch --unshallow
+- git fetch --depth 250
 - cd shell/android-studio
 - export NUMBER_OF_PROCESSORS=2
 - sudo chmod 755 travis-build.sh

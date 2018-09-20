@@ -3,16 +3,16 @@
 
     <item android:title="@string/browser"
         android:id="@+id/browser_menu"
-        android:icon="@mipmap/menu_disk_unknown" />
+        android:icon="@mipmap/disk_unknown" />
     <item android:title="@string/settings"
         android:id="@+id/settings_menu"
         android:icon="@mipmap/menu_config" />
     <item android:title="@string/input"
         android:id="@+id/input_menu"
         android:icon="@mipmap/menu_input" />
-    <item android:title="@string/about"
-        android:id="@+id/about_menu"
-        android:icon="@mipmap/menu_question" />
+    <item android:title="@string/pgconfig"
+        android:id="@+id/pgconfig_menu"
+        android:icon="@mipmap/menu_config" />
     <item android:title="@string/cloud"
         android:id="@+id/cloud_menu"
         android:icon="@mipmap/menu_cloud" />
@@ -22,5 +22,8 @@
     <item android:title="@string/messages"
         android:id="@+id/message_menu"
         android:icon="@mipmap/menu_debug" />
+    <item android:title="@string/about"
+        android:id="@+id/about_menu"
+        android:icon="@mipmap/menu_question" />
 
 </menu>

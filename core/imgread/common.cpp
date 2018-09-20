@@ -131,9 +131,21 @@ bool ConvertSector(u8* in_buff , u8* out_buff , int from , int to,int sector)
 
 Disc* OpenDisc(const wchar* fn)
 {
-	Disc* rv;
-	
-	for (int i=0;drivers[i] && !(rv=drivers[i](fn));i++) ;
+	Disc* rv = nullptr;
+
+	for (unat i=0; drivers[i] && !rv; i++) {  // ;drivers[i] && !(rv=drivers[i](fn));
+		rv = drivers[i](fn);
+
+		if (rv && cdi_parse == drivers[i]) {
+			const wchar warn_str[] = "Warning: CDI Image Loaded!\n  Many CDI images are known to be defective, GDI or CHD format is preferred. Please only file bug reports when using images known to be good (GDI or CHD).";
+#ifdef _ANDROID
+			printf(warn_str);
+#else
+			msgboxf(warn_str, MBX_ICONASTERISK);// if (OS_DlgYes!=os_Dialog(OS_DialogYesNo, cdiWarn_S)) rv=0;
+#endif
+			break;
+		}
+	}
 
 	return rv;
 }
@@ -171,7 +183,7 @@ bool InitDrive(u32 fileflags)
 		printf("Loading default image \"%s\"\n",settings.imgread.DefaultImage);
 		if (!InitDrive_(settings.imgread.DefaultImage))
 		{
-			msgboxf("Default image \"%s\" failed to load",MBX_ICONERROR);
+			msgboxf("Default image \"%s\" failed to load",MBX_ICONERROR,settings.imgread.DefaultImage);
 			return false;
 		}
 		else
@@ -231,7 +243,7 @@ bool DiscSwap(u32 fileflags)
 		printf("Loading default image \"%s\"\n",settings.imgread.DefaultImage);
 		if (!InitDrive_(settings.imgread.DefaultImage))
 		{
-			msgboxf("Default image \"%s\" failed to load",MBX_ICONERROR);
+			msgboxf("Default image \"%s\" failed to load",MBX_ICONERROR,settings.imgread.DefaultImage);
 			return false;
 		}
 		else
@@ -363,9 +375,9 @@ void GetDriveToc(u32* to,DiskArea area)
 	//Generate the TOC info
 
 	//-1 for 1..99 0 ..98
-	to[99]=CreateTrackInfo_se(disc->tracks[first_track-1].CTRL,disc->tracks[first_track-1].ADDR,first_track); 
-	to[100]=CreateTrackInfo_se(disc->tracks[last_track-1].CTRL,disc->tracks[last_track-1].ADDR,last_track); 
-	
+	to[99]=CreateTrackInfo_se(disc->tracks[first_track-1].CTRL,disc->tracks[first_track-1].ADDR,first_track);
+	to[100]=CreateTrackInfo_se(disc->tracks[last_track-1].CTRL,disc->tracks[last_track-1].ADDR,last_track);
+
 	if (disc->type==GdRom)
 	{
 		//use smaller LEADOUT
@@ -379,7 +391,7 @@ void GetDriveToc(u32* to,DiskArea area)
 
 	for (u32 i=first_track-1;i<last_track;i++)
 	{
-		to[i]=CreateTrackInfo(disc->tracks[i].CTRL,disc->tracks[i].ADDR,disc->tracks[i].StartFAD); 
+		to[i]=CreateTrackInfo(disc->tracks[i].CTRL,disc->tracks[i].ADDR,disc->tracks[i].StartFAD);
 	}
 }
 
@@ -389,7 +401,7 @@ void GetDriveSessionInfo(u8* to,u8 session)
 		return;
 	to[0]=2;//status, will get overwritten anyway
 	to[1]=0;//0's
-	
+
 	if (session==0)
 	{
 		to[2]=disc->sessions.size();//count of sessions
@@ -429,7 +441,7 @@ DiscType GuessDiscType(bool m1, bool m2, bool da)
 		return  CdRom;
 	else if (m2)
 		return  CdRom_XA;
-	else if (da && m1) 
+	else if (da && m1)
 		return CdRom_Extra;
 	else
 		return CdRom;

@@ -496,7 +496,7 @@ GLuint fogTextureId;
 		screen_width=w;
 		screen_height=h;
 
-		printf("EGL config: %08X, %08X, %08X %dx%d\n",gl.setup.context,gl.setup.display,gl.setup.surface,w,h);
+		printf("EGL config: %p, %08X, %08X %dx%d\n",gl.setup.context,gl.setup.display,gl.setup.surface,w,h);
 		return true;
 	}
 
@@ -780,8 +780,6 @@ GLuint gl_CompileShader(const char* shader,GLuint type)
 
 	if (!result && compile_log_len>0)
 	{
-		if (compile_log_len==0)
-			compile_log_len=1;
 		char* compile_log=(char*)malloc(compile_log_len);
 		*compile_log=0;
 
@@ -825,8 +823,6 @@ GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentShader)
 
 	if (!result && compile_log_len>0)
 	{
-		if (compile_log_len==0)
-			compile_log_len=1;
 		compile_log_len+= 1024;
 		char* compile_log=(char*)malloc(compile_log_len);
 		*compile_log=0;

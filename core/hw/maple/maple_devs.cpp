@@ -131,7 +131,7 @@ struct maple_base: maple_device
 		while(len--)
 			w8(0x20);
 	}
-	
+
 	u8 r8()	  { u8  rv=*((u8*)dma_buffer_in);dma_buffer_in+=1;dma_count_in-=1; return rv; }
 	u16 r16() { u16 rv=*((u16*)dma_buffer_in);dma_buffer_in+=2;dma_count_in-=2; return rv; }
 	u32 r32() { u32 rv=*(u32*)dma_buffer_in;dma_buffer_in+=4;dma_count_in-=4; return rv; }
@@ -183,7 +183,7 @@ struct maple_sega_controller: maple_base
 
 			//1	direction
 			w8(0);
-			
+
 			//30
 			wstr(maple_sega_controller_name,30);
 
@@ -191,7 +191,7 @@ struct maple_sega_controller: maple_base
 			wstr(maple_sega_brand,60);
 
 			//2
-			w16(0x01AE); 
+			w16(0x01AE);
 
 			//2
 			w16(0x01F4);
@@ -237,7 +237,7 @@ struct maple_sega_controller: maple_base
 			//printf("UNKOWN MAPLE COMMAND %d\n",cmd);
 			return MDRE_UnknownCmd;
 		}
-	}	
+	}
 };
 
 /*
@@ -273,25 +273,44 @@ struct maple_sega_vmu: maple_base
 	u8 flash_data[128*1024];
 	u8 lcd_data[192];
 	u8 lcd_data_decoded[48*32];
-	
+
+	// creates an empty VMU
+	bool init_emptyvmu()
+	{
+		printf("Initialising empty VMU...\n");
+
+		uLongf dec_sz = sizeof(flash_data);
+		int rv = uncompress(flash_data, &dec_sz, vmu_default, sizeof(vmu_default));
+
+		verify(rv == Z_OK);
+		verify(dec_sz == sizeof(flash_data));
+
+		return (rv == Z_OK && dec_sz == sizeof(flash_data));
+	}
+
 	virtual void OnSetup()
 	{
-		memset(flash_data,0,sizeof(flash_data));
-		memset(lcd_data,0,sizeof(lcd_data));
+		memset(flash_data, 0, sizeof(flash_data));
+		memset(lcd_data, 0, sizeof(lcd_data));
 		wchar tempy[512];
-		sprintf(tempy,"/vmu_save_%s.bin",logical_port);
-		string apath=get_writable_data_path(tempy);
+		sprintf(tempy, "/vmu_save_%s.bin", logical_port);
+		string apath = get_writable_data_path(tempy);
 
-		file=fopen(apath.c_str(),"rb+");
+		file = fopen(apath.c_str(), "rb+");
 		if (!file)
 		{
 			printf("Unable to open VMU save file \"%s\", creating new file\n",apath.c_str());
-			file=fopen(apath.c_str(),"wb");
+			file = fopen(apath.c_str(), "wb");
 			if (file) {
+				if (!init_emptyvmu())
+					printf("Failed to initialize an empty VMU, you should reformat it using the BIOS\n");
+
 				fwrite(flash_data, sizeof(flash_data), 1, file);
-				fseek(file,0,SEEK_SET);
-			} else {
-				printf("Unable to create vmu\n");
+				fseek(file, 0, SEEK_SET);
+			}
+			else
+			{
+				printf("Unable to create VMU!\n");
 			}
 		}
 
@@ -301,20 +320,33 @@ struct maple_sega_vmu: maple_base
 		}
 		else
 		{
-			fread(flash_data,1,sizeof(flash_data),file);
+			fread(flash_data, 1, sizeof(flash_data), file);
 		}
 
 		u8 sum = 0;
-		for (int i=0;i<sizeof(flash_data);i++)
-			sum|=flash_data[i];
+		for (int i = 0; i < sizeof(flash_data); i++)
+			sum |= flash_data[i];
 
 		if (sum == 0) {
-			printf("Initialising empty vmu...\n");
-			uLongf dec_sz = sizeof(flash_data);
-			int rv=uncompress(flash_data, &dec_sz, vmu_default, sizeof(vmu_default));
+			// This means the existing VMU file is completely empty and needs to be recreated
 
-			verify(rv == Z_OK);
-			verify(dec_sz == sizeof(flash_data));
+			if (init_emptyvmu())
+			{
+				if (!file)
+					file = fopen(apath.c_str(), "wb");
+
+				if (file) {
+					fwrite(flash_data, sizeof(flash_data), 1, file);
+					fseek(file, 0, SEEK_SET);
+				}
+				else {
+					printf("Unable to create VMU!\n");
+				}
+			}
+			else
+			{
+				printf("Failed to initialize an empty VMU, you should reformat it using the BIOS\n");
+			}
 		}
 
 	}
@@ -367,7 +399,7 @@ struct maple_sega_vmu: maple_base
 				case MFID_1_Storage:
 					{
 						w32(MFID_1_Storage);
-						
+
 						//total_size;
 						w16(0xff);
 						//partition_number;
@@ -413,7 +445,7 @@ struct maple_sega_vmu: maple_base
 							w8(31);             //Y dots -1
 							w8(((1)<<4) | (0)); //1 Color, 0 contrast levels
 							w8(0);              //Padding
-							
+
 							return MDRS_DataTransfer;
 						}
 					}
@@ -455,7 +487,7 @@ struct maple_sega_vmu: maple_base
 						w32(MFID_2_LCD);
 						w32(r32()); // mnn ?
 						wptr(flash_data,192);
-						
+
 						return MDRS_DataTransfer;//data transfer
 					}
 					break;
@@ -474,7 +506,7 @@ struct maple_sega_vmu: maple_base
 							time_t now;
 							time(&now);
 							tm* timenow=localtime(&now);
-							
+
 							u8* timebuf=dma_buffer_out;
 
 							w8((timenow->tm_year+1900)%256);
@@ -510,7 +542,7 @@ struct maple_sega_vmu: maple_base
 					{
 						u32 bph=r32();
 						u32 Block = (SWAP32(bph))&0xffff;
-						u32 Phase = ((SWAP32(bph))>>16)&0xff; 
+						u32 Phase = ((SWAP32(bph))>>16)&0xff;
 						u32 write_adr=Block*512+Phase*(512/4);
 						u32 write_len=r_count();
 						rptr(&flash_data[write_adr],write_len);
@@ -528,13 +560,13 @@ struct maple_sega_vmu: maple_base
 						return MDRS_DeviceReply;//just ko
 					}
 					break;
-					
+
 
 					case MFID_2_LCD:
 					{
 						u32 wat=r32();
 						rptr(lcd_data,192);
-						
+
 						u8 white=0xff,black=0x00;
 
 						for(int y=0;y<32;++y)
@@ -562,8 +594,8 @@ struct maple_sega_vmu: maple_base
 							dev->lcd.visible=true;
 							ShowWindow(dev->lcd.handle,SHOW_OPENNOACTIVATE);
 						}
-						
-							
+
+
 							InvalidateRect(dev->lcd.handle,NULL,FALSE);
 						}
 
@@ -663,7 +695,7 @@ struct maple_sega_vmu: maple_base
 			//printf("Unknown MAPLE COMMAND %d\n",cmd);
 			return MDRE_UnknownCmd;
 		}
-	}	
+	}
 };
 
 
@@ -702,7 +734,7 @@ struct maple_microphone: maple_base
 
 			//1	direction
 			w8(0);
-			
+
 			//30
 			wstr(maple_sega_mic_name,30);
 
@@ -710,7 +742,7 @@ struct maple_microphone: maple_base
 			wstr(maple_sega_brand,60);
 
 			//2
-			w16(0x01AE); 
+			w16(0x01AE);
 
 			//2
 			w16(0x01F4);
@@ -844,7 +876,7 @@ struct maple_microphone: maple_base
 			LOGW("maple_microphone::dma UNHANDLED MAPLE COMMAND %d\n",cmd);
 			return MDRE_UnknownCmd;
 		}
-	}	
+	}
 };
 
 
@@ -890,7 +922,7 @@ struct maple_sega_purupuru : maple_base
 
 			//get last vibration
 		case MDCF_GetCondition:
-			
+
 			w32(MFID_8_Vibration);
 
 			w32(VIBSET);
@@ -902,7 +934,7 @@ struct maple_sega_purupuru : maple_base
 			w32(MFID_8_Vibration);
 
 			// PuruPuru vib specs
-			w32(0x3B07E010); 
+			w32(0x3B07E010);
 
 			return MDRS_DataTransfer;
 
@@ -917,7 +949,7 @@ struct maple_sega_purupuru : maple_base
 			return MDRS_DataTransfer;
 
 		case MDCF_BlockWrite:
-			
+
 			//Auto-stop time
 			AST = dma_buffer_in[10];
 			AST_ms = AST * 250 + 250;
@@ -925,7 +957,7 @@ struct maple_sega_purupuru : maple_base
 			return MDRS_DeviceReply;
 
 		case MDCF_SetCondition:
-			
+
 			VIBSET = *(u32*)&dma_buffer_in[4];
 			//Do the rumble thing!
 			config->SetVibration(VIBSET);
@@ -1178,7 +1210,7 @@ struct maple_naomi_jamma : maple_sega_controller
 	{
 		u32* buffer_in = (u32*)dma_buffer_in;
 		u32* buffer_out = (u32*)dma_buffer_out;
-		
+
 		u8* buffer_in_b = dma_buffer_in;
 		u8* buffer_out_b = dma_buffer_out;
 
@@ -1253,7 +1285,7 @@ struct maple_naomi_jamma : maple_sega_controller
 					break;
 
 					//CMD Version
-					//REV in command|Format command to read the (revision)|One|Two 
+					//REV in command|Format command to read the (revision)|One|Two
 					//in : 1 byte, out : 2 bytes
 					case 0x11:
 					{
@@ -1262,7 +1294,7 @@ struct maple_naomi_jamma : maple_sega_controller
 					break;
 
 					//JVS Version
-					//In JV REV|JAMMA VIDEO standard reading (revision)|One|Two 
+					//In JV REV|JAMMA VIDEO standard reading (revision)|One|Two
 					//in : 1 byte, out : 2 bytes
 					case 0x12:
 					{
@@ -1524,7 +1556,7 @@ struct maple_naomi_jamma : maple_sega_controller
 			buffer_out_len = 256;
 			return (0x83);
 		}
-		
+
 		case 1:
 		case 9:
 			return maple_sega_controller::dma(cmd);

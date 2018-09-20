@@ -2,9 +2,10 @@ LOCAL_PATH := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 FOR_LINUX :=1
 #NO_REC := 1
 #NO_REND := 1
-WEBUI :=1 
+WEBUI :=1
 USE_OSS := 1
 #USE_PULSEAUDIO := 1
+#USE_LIBAO := 1
 USE_EVDEV := 1
 PLATFORM_EXT := elf
 
@@ -14,19 +15,19 @@ AS=${CC_PREFIX}as
 STRIP=${CC_PREFIX}strip
 LD=${CC}
 
-MFLAGS := 
-ASFLAGS := 
+MFLAGS :=
+ASFLAGS :=
 LDFLAGS :=
 INCS :=
 LIBS :=
-CFLAGS := 
+CFLAGS :=
 CXXFLAGS :=
 
 ifneq (, $(filter $(shell uname -s), FreeBSD OpenBSD NetBSD DragonFly))
     CFLAGS += -DTARGET_BSD
 else
     USE_ALSA := 1
-    USE_JOYSTICK := 1
+#    USE_JOYSTICK := 1
 endif
 
 # Platform auto-detection
@@ -303,8 +304,8 @@ ifdef PGO_USE
 endif
 
 ifdef LTO_TEST
-    CFLAGS += -flto -fwhole-program 
-    LDFLAGS +=-flto -fwhole-program 
+    CFLAGS += -flto -fwhole-program
+    LDFLAGS +=-flto -fwhole-program
 endif
 
 ifdef USE_DISPMANX
@@ -343,6 +344,11 @@ endif
 ifdef USE_PULSEAUDIO
     CXXFLAGS += `pkg-config --cflags libpulse-simple` -D USE_PULSEAUDIO
     LIBS += `pkg-config --libs libpulse-simple`
+endif
+
+ifdef USE_LIBAO
+	CXXFLAGS += `pkg-config --cflags ao` -D USE_LIBAO
+	LIBS += `pkg-config --libs ao`
 endif
 
 ifdef HAS_SOFTREND
@@ -402,7 +408,7 @@ all: $(CPPFILES) $(EXECUTABLE) $(EXECUTABLE_STRIPPED)
 ifneq (,$(findstring gcwz,$(platform)))
 	mksquashfs $(EXECUTABLE_STRIPPED) $(GCWZ_PKG_FILES) $(GCWZ_PKG) -all-root
 endif
-	
+
 $(EXECUTABLE): $(OBJECTS)
 	$(CXX) $(MFLAGS) $(EXTRAFLAGS) $(LDFLAGS) $(OBJECTS) $(LIBS) -o $@
 
@@ -424,6 +430,7 @@ $(BUILDDIR)/%.build_obj: $(RZDCY_SRC_DIR)/%.c $(DEPDIR)/%.d
 	$(POSTCOMPILE)
 
 $(BUILDDIR)/%.build_obj : $(RZDCY_SRC_DIR)/%.S
+	mkdir -p $(dir $@)
 	$(AS) $(ASFLAGS) $(INCS) $< -o $@
 
 install: $(EXECUTABLE)

@@ -161,7 +161,7 @@ public class GLCFactory14 {
 				if (r == mRedSize && g == mGreenSize && b == mBlueSize
 						&& a == mAlphaSize)
 					if (GL2JNIView.DEBUG) {
-						LOGW(String.format("Configuration %d:", i));
+						LOGW(String.format(Locale.ENGLISH, "Configuration %d:", i));
 						printConfig(display, configs[i]);
 					}
 				return config;

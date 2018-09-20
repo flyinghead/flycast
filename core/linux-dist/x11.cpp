@@ -731,12 +731,14 @@ void x11_window_destroy()
 	}
 	if (x11_disp)
 	{
+#if !defined(GLES)
 		if (x11_glc)
 		{
 			glXMakeCurrent((Display*)x11_disp, None, NULL);
 			glXDestroyContext((Display*)x11_disp, (GLXContext)x11_glc);
 			x11_glc = NULL;
 		}
+#endif
 		XCloseDisplay((Display*)x11_disp);
 		x11_disp = NULL;
 	}

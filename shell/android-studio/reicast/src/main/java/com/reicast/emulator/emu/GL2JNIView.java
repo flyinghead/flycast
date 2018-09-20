@@ -17,13 +17,11 @@ import android.os.Handler;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
 import android.util.AttributeSet;
-import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.ScaleGestureDetector.SimpleOnScaleGestureListener;
 import android.view.View;
-import android.view.WindowManager;
 import android.widget.Toast;
 
 import com.android.util.FileUtils;
@@ -32,6 +30,7 @@ import com.reicast.emulator.GL2JNIActivity;
 import com.reicast.emulator.GL2JNINative;
 import com.reicast.emulator.config.Config;
 import com.reicast.emulator.emu.OnScreenMenu.FpsPopup;
+import com.reicast.emulator.periph.Gamepad;
 import com.reicast.emulator.periph.VJoy;
 
 import java.io.UnsupportedEncodingException;
@@ -67,12 +66,8 @@ public class GL2JNIView extends GLSurfaceView
     public static final int LAYER_TYPE_HARDWARE = 2;
 
     private static String fileName;
-    //private AudioThread audioThread;
     private EmuThread ethd;
     private Handler handler = new Handler();
-
-    private static int sWidth;
-    private static int sHeight;
 
     Vibrator vib;
 
@@ -111,8 +106,8 @@ public class GL2JNIView extends GLSurfaceView
     }
 
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
-    public GL2JNIView(Context context, String newFileName,
-                      boolean translucent, int depth, int stencil, boolean editVjoyMode) {
+    public GL2JNIView(Context context, String newFileName, boolean translucent,
+                      int depth, int stencil, boolean editVjoyMode) {
         super(context);
         this.context = context;
         this.editVjoyMode = editVjoyMode;
@@ -134,15 +129,7 @@ public class GL2JNIView extends GLSurfaceView
 
         setPreserveEGLContextOnPause(true);
 
-        vib=(Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
-
-        DisplayMetrics metrics = new DisplayMetrics();
-        //((Activity) context).getWindowManager().getDefaultDisplay().getMetrics(metrics);
-        ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE))
-                .getDefaultDisplay().getMetrics(metrics);
-        final float scale = context.getResources().getDisplayMetrics().density;
-        sWidth = (int) (metrics.widthPixels * scale + 0.5f);
-        sHeight = (int) (metrics.heightPixels * scale + 0.5f);
+        vib = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
 
@@ -170,8 +157,8 @@ public class GL2JNIView extends GLSurfaceView
             if (GL2JNIActivity.syms != null)
                 JNIdc.data(1, GL2JNIActivity.syms);
         }
-
         JNIdc.init(fileName);
+        JNIdc.query(ethd);
 
         // By default, GLSurfaceView() creates a RGB_565 opaque surface.
         // If we want a translucent one, we should change the surface's
@@ -190,10 +177,11 @@ public class GL2JNIView extends GLSurfaceView
         // our surface exactly. This is going to be done in our
         // custom config chooser. See ConfigChooser class definition
         // below.
-        setEGLConfigChooser(new GLCFactory.ConfigChooser(8, 8, 8, translucent ? 8 : 0, depth, stencil));
+        setEGLConfigChooser(new GLCFactory.ConfigChooser(
+                8, 8, 8, translucent ? 8 : 0, depth, stencil));
 
         // Set the renderer responsible for frame rendering
-        setRenderer(rend=new Renderer(this));
+        setRenderer(rend = new Renderer(this));
 
         pushInput(); //initializes controller codes
 
@@ -367,9 +355,9 @@ public class GL2JNIView extends GLSurfaceView
 
                         int pre = 255;
 
-                        if (y>vjoy[j][1] && y<=(vjoy[j][1]+vjoy[j][3]))
+                        if (y > vjoy[j][1] && y <= (vjoy[j][1]+vjoy[j][3]))
                         {
-                            if (vjoy[j][4]>=-2)
+                            if (vjoy[j][4] >= -2)
                             {
                                 if (vjoy[j][5]==0)
                                     if (!editVjoyMode && touchVibrationEnabled)
@@ -378,7 +366,7 @@ public class GL2JNIView extends GLSurfaceView
                             }
 
 
-                            if (vjoy[j][4]==-3)
+                            if (vjoy[j][4] == -3)
                             {
                                 if (editVjoyMode) {
                                     selectedVjoyElement = 5; // Analog
@@ -390,39 +378,35 @@ public class GL2JNIView extends GLSurfaceView
                                     JNIdc.vjoy(j+1, vjoy[j+1][0], vjoy[j+1][1] , vjoy[j+1][2], vjoy[j+1][3]);
                                     anal_id=event.getPointerId(i);
                                 }
-                            }
-                            else if (vjoy[j][4]==-4);
-                            else if(vjoy[j][4]==-1) {
-                                if (editVjoyMode) {
-                                    selectedVjoyElement = 3; // Left Trigger
-                                    resetEditMode();
+                            } else if (vjoy[j][4] != -4) {
+                                if (vjoy[j][4] == -1) {
+                                    if (editVjoyMode) {
+                                        selectedVjoyElement = 3; // Left Trigger
+                                        resetEditMode();
+                                    } else {
+                                        lt[0] = pre;
+                                        lt_id = event.getPointerId(i);
+                                    }
+                                } else if (vjoy[j][4] == -2) {
+                                    if (editVjoyMode) {
+                                        selectedVjoyElement = 4; // Right Trigger
+                                        resetEditMode();
+                                    } else {
+                                        rt[0] = pre;
+                                        rt_id = event.getPointerId(i);
+                                    }
                                 } else {
-                                    lt[0]=pre;
-                                    lt_id=event.getPointerId(i);
+                                    if (editVjoyMode) {
+                                        selectedVjoyElement = getElementIdFromButtonId(j);
+                                        resetEditMode();
+                                    } else
+                                        rv &= ~(int) vjoy[j][4];
                                 }
-                            }
-                            else if (vjoy[j][4]==-2) {
-                                if (editVjoyMode) {
-                                    selectedVjoyElement = 4; // Right Trigger
-                                    resetEditMode();
-                                } else{
-                                    rt[0]=pre;
-                                    rt_id=event.getPointerId(i);
-                                }
-                            }
-                            else {
-                                if (editVjoyMode) {
-                                    selectedVjoyElement = getElementIdFromButtonId(j);
-                                    resetEditMode();
-                                } else
-                                    rv&=~(int)vjoy[j][4];
                             }
                         }
                     }
                 }
-            }
-            else
-            {
+            } else {
                 if (x<vjoy[11][0])
                     x=vjoy[11][0];
                 else if (x>(vjoy[11][0]+vjoy[11][2]))
@@ -528,7 +512,7 @@ public class GL2JNIView extends GLSurfaceView
         private FPSCounter fps = new FPSCounter();
         private FpsPopup fpsPop;
 
-        public Renderer (GL2JNIView mView) {
+        Renderer (GL2JNIView mView) {
             this.mView = mView;
         }
 
@@ -547,7 +531,11 @@ public class GL2JNIView extends GLSurfaceView
         public void onSurfaceChanged(GL10 gl,int width,int height)
         {
             gl.glViewport(0, 0, width, height);
-            JNIdc.rendinit(width,height);
+            if (Emulator.widescreen) {
+                JNIdc.rendinit(width, height);
+            } else {
+                JNIdc.rendinit(height * (4 / 3), height);
+            }
         }
 
         public void onSurfaceCreated(GL10 gl,EGLConfig config)
@@ -555,11 +543,11 @@ public class GL2JNIView extends GLSurfaceView
             onSurfaceChanged(gl, 800, 480);
         }
 
-        public class FPSCounter {
+        class FPSCounter {
             long startTime = System.nanoTime();
             int frames = 0;
 
-            public void logFrame() {
+            void logFrame() {
                 frames++;
                 if (System.nanoTime() - startTime >= 1000000000) {
                     mView.post(new Runnable() {
@@ -599,7 +587,7 @@ public class GL2JNIView extends GLSurfaceView
         long size;	//size in frames
         private boolean sound;
 
-        public EmuThread(boolean sound) {
+        EmuThread(boolean sound) {
             this.sound = sound;
         }
 
@@ -658,19 +646,20 @@ public class GL2JNIView extends GLSurfaceView
         void showMessage(final String msg) {
             handler.post(new Runnable() {
                 public void run() {
-                    Log.d(context.getApplicationContext().getPackageName(), msg);
+                    Log.d(context.getPackageName(), msg);
                     Toast.makeText(context, msg, Toast.LENGTH_SHORT).show();
                 }
             });
         }
 
-        void coreMessage(byte[] msg) {
+        int coreMessage(byte[] msg) {
             try {
                 showMessage(new String(msg, "UTF-8"));
             }
             catch (UnsupportedEncodingException e) {
                 showMessage("coreMessage: Failed to display error");
             }
+            return 1;
         }
 
         void Die() {
@@ -678,6 +667,23 @@ public class GL2JNIView extends GLSurfaceView
             ((Activity) context).finish();
         }
 
+        void reiosInfo(String reiosId, String reiosSoftware) {
+            if (fileName != null) {
+                String gameId = reiosId.replaceAll("[^a-zA-Z0-9]+", "").toLowerCase();
+                SharedPreferences mPrefs = context.getSharedPreferences(gameId, Activity.MODE_PRIVATE);
+                Emulator app = (Emulator) context.getApplicationContext();
+                app.loadGameConfiguration(gameId);
+                if (context instanceof GL2JNIActivity)
+                    ((GL2JNIActivity) context).getPad().joystick[0] = mPrefs.getBoolean(
+                            Gamepad.pref_js_merged + "_A",
+                            ((GL2JNIActivity) context).getPad().joystick[0]);
+                if (context instanceof GL2JNINative)
+                    ((GL2JNINative) context).getPad().joystick[0] = mPrefs.getBoolean(
+                            Gamepad.pref_js_merged + "_A",
+                            ((GL2JNINative) context).getPad().joystick[0]);
+                mPrefs.edit().putString(Config.game_title, reiosSoftware.trim()).apply();
+            }
+        }
     }
 
     public void onDestroy() {

@@ -44,8 +44,7 @@
     <string name="select_software">Forza il Rendering Software</string>
     <string name="select_sound">Disabilita l\'Emulazione del Sonoro</string>
     <string name="select_depth">Profondità di Rendering</string>
-    <string name="default_disk">Disco Predefinito</string>
-    
+
     <string name="games_listing">Lista Giochi</string>
     
     <string name="game_details">Dettagli Gioco - %1$s</string>
@@ -73,15 +72,11 @@
     <string name="modified_layout">Abilita la Disposizione Personalizzata dei Tasti</string>
     <string name="controller_compat">Abilita Modalità di Compatibilità</string>
     <string name="controller_unavailable">Rilevato Gamepad IME !\nPer favore disabilita l\'interfaccia nativa</string>
-    <string name="mic_in_port_2">Microfono inserito nella porta 2</string>
-    
+
     <string name="customize_physical_controls">Personalizza Controlli Fisici</string>
     <string name="map_keycode_title">Modifica Controller</string>
     <string name="map_keycode_message">Premi il nuovo tasto sul controller per %1$s</string>
-    
-    <string name="moga_pro_connect">MOGA Pro Connesso!</string>
-    <string name="moga_connect">MOGA Connesso!</string>
-    
+
     <string name="about_text">reicast è un emulatore del Dreamcast multi-piattaforma.</string>
     <string name="revision_text">Versione: %1$s [%2$s]</string>
     

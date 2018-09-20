@@ -74,19 +74,19 @@ void RaiseAsicErr(HollyInterruptID inter)
 
 void asic_RaiseInterrupt(HollyInterruptID inter)
 {
-	u8 m=inter>>8;
-	switch(m)
-	{
-	case 0:
-		RaiseAsicNormal(inter);
-		break;
-	case 1:
-		RaiseAsicExt(inter);
-		break;
-	case 2:
-		RaiseAsicErr(inter);
-		break;
-	}
+   u8 m=inter>>8;
+   switch(m)
+   {
+      case 0:
+         RaiseAsicNormal(inter);
+         break;
+      case 1:
+         RaiseAsicExt(inter);
+         break;
+      case 2:
+         RaiseAsicErr(inter);
+         break;
+   }
 }
 
 u32 Read_SB_ISTNRM(u32 addr)

@@ -212,12 +212,8 @@ class DropBoxClient {
 		Editor edit = prefs.edit();
 		edit.putString("DBoxKey", key);
 		edit.putString("DBoxSecret", secret);
-		edit.commit();
+		edit.apply();
 	}
-
-
-
-
 
 	private AndroidAuthSession buildSession() {
 		AppKeyPair appKeyPair = new AppKeyPair(APP_KEY, APP_SECRET);

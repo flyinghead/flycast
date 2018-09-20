@@ -4,6 +4,7 @@
 enum MapleDeviceType
 {
 	MDT_SegaController,
+
 	MDT_SegaVMU,
 	MDT_Microphone,
 	MDT_PurupuruPack,
@@ -12,6 +13,7 @@ enum MapleDeviceType
 
 	MDT_NaomiJamma,
 
+	MDT_None,
 	MDT_Count
 };
 

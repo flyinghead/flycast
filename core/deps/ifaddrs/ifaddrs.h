@@ -44,11 +44,13 @@ struct ifaddrs {
 #define	ifa_broadaddr	ifa_dstaddr	/* broadcast address interface */
 #endif
 
-#include <sys/cdefs.h>
-
-__BEGIN_DECLS
+#ifdef _cplusplus 
+extern "C" {
+#endif
 extern int getifaddrs(struct ifaddrs **ifap);
 extern void freeifaddrs(struct ifaddrs *ifa);
-__END_DECLS
+#ifdef _cplusplus 
+}
+#endif
 
 #endif

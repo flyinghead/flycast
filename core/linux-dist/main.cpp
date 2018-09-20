@@ -88,74 +88,15 @@ s8 joyx[4], joyy[4];
 
 void emit_WriteCodeCache();
 
-#if defined(USE_EVDEV)
-	/* evdev input */
-	static EvdevController evdev_controllers[4] = {
-		{ -1, NULL },
-		{ -1, NULL },
-		{ -1, NULL },
-		{ -1, NULL }
-	};
-#endif
-
 #if defined(USE_JOYSTICK)
 	/* legacy joystick input */
 	static int joystick_fd = -1; // Joystick file descriptor
 #endif
 
-void SetupInput()
+void os_SetupInput()
 {
 	#if defined(USE_EVDEV)
-		int evdev_device_id[4] = { -1, -1, -1, -1 };
-		size_t size_needed;
-		int port, i;
-
-		char* evdev_device;
-
-		for (port = 0; port < 4; port++)
-		{
-			size_needed = snprintf(NULL, 0, EVDEV_DEVICE_CONFIG_KEY, port+1) + 1;
-			char* evdev_config_key = (char*)malloc(size_needed);
-			sprintf(evdev_config_key, EVDEV_DEVICE_CONFIG_KEY, port+1);
-			evdev_device_id[port] = cfgLoadInt("input", evdev_config_key, EVDEV_DEFAULT_DEVICE_ID(port+1));
-			free(evdev_config_key);
-
-			// Check if the same device is already in use on another port
-			if (evdev_device_id[port] < 0)
-			{
-				printf("evdev: Controller %d disabled by config.\n", port + 1);
-			}
-			else
-			{
-				size_needed = snprintf(NULL, 0, EVDEV_DEVICE_STRING, evdev_device_id[port]) + 1;
-				evdev_device = (char*)malloc(size_needed);
-				sprintf(evdev_device, EVDEV_DEVICE_STRING, evdev_device_id[port]);
-
-				size_needed = snprintf(NULL, 0, EVDEV_MAPPING_CONFIG_KEY, port+1) + 1;
-				evdev_config_key = (char*)malloc(size_needed);
-				sprintf(evdev_config_key, EVDEV_MAPPING_CONFIG_KEY, port+1);
-
-				string tmp;
-				const char* mapping = (cfgExists("input", evdev_config_key) == 2 ? (tmp = cfgLoadStr("input", evdev_config_key, "")).c_str() : NULL);
-				free(evdev_config_key);
-
-				input_evdev_init(&evdev_controllers[port], evdev_device, mapping);
-
-				free(evdev_device);
-
-				for (i = 0; i < port; i++)
-				{
-						if (evdev_device_id[port] == evdev_device_id[i])
-						{
-							// Multiple controllers with the same device, check for multiple button assignments
-							if (input_evdev_button_duplicate_button(evdev_controllers[i].mapping, evdev_controllers[port].mapping))
-							{
-								printf("WARNING: One or more button(s) of this device is also used in the configuration of input device %d (mapping: %s)\n", i, evdev_controllers[i].mapping->name);
-							}
-						}
-				}
-			}
-		}
+		input_evdev_init();
 	#endif
 
 	#if defined(USE_JOYSTICK)
@@ -193,7 +134,7 @@ void UpdateInputState(u32 port)
 	#endif
 
 	#if defined(USE_EVDEV)
-		input_evdev_handle(&evdev_controllers[port], port);
+		input_evdev_handle(port);
 	#endif
 
 	#if defined(USE_SDL)
@@ -218,7 +159,7 @@ void UpdateVibration(u32 port, u32 value)
 		u16 pow_strong = (u16)(65535 * pow_l);
 		u16 pow_weak = (u16)(65535 * pow_r);
 
-		input_evdev_rumble(&evdev_controllers[port], pow_strong, pow_weak);
+		input_evdev_rumble(port, pow_strong, pow_weak);
 	#endif
 }
 
@@ -363,7 +304,7 @@ string find_user_data_dir()
 			// If XDG_DATA_HOME is set explicitly, we'll use that instead of $HOME/.config
 			data = (string)getenv("XDG_DATA_HOME") + "/reicast";
 		}
-		
+
 		if(!data.empty())
 		{
 			if((stat(data.c_str(), &info) != 0) || !(info.st_mode & S_IFDIR))
@@ -468,8 +409,6 @@ int main(int argc, wchar* argv[])
 
 	dc_init(argc,argv);
 
-	SetupInput();
-
 	#if !defined(TARGET_EMSCRIPTEN)
 		#if FEAT_HAS_NIXPROF
 		install_prof_handler(0);
@@ -486,13 +425,7 @@ int main(int argc, wchar* argv[])
 	dc_term();
 
 	#if defined(USE_EVDEV)
-		for (int port = 0; port < 4 ; port++)
-		{
-			if(evdev_controllers[port].fd >= 0)
-			{
-				close(evdev_controllers[port].fd);
-			}
-		}
+		input_evdev_close();
 	#endif
 
 	#if defined(SUPPORT_X11)

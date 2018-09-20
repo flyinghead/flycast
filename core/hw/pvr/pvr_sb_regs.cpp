@@ -9,7 +9,6 @@
 #include "hw/sh4/modules/dmac.h"
 #include "hw/sh4/sh4_mem.h"
 #include "pvr_sb_regs.h"
-#include "types.h"
 #include "hw/sh4/sh4_mmr.h"
 #include "ta.h"
 

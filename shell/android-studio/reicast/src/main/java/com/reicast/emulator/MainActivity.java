@@ -2,6 +2,7 @@ package com.reicast.emulator;
 
 import android.Manifest;
 import android.app.AlertDialog;
+import android.app.UiModeManager;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -13,13 +14,12 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
 import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
@@ -35,27 +35,23 @@ import android.view.WindowManager;
 import android.widget.TextView;
 
 import com.reicast.emulator.config.Config;
+import com.reicast.emulator.config.EditVJoyActivity;
 import com.reicast.emulator.config.InputFragment;
 import com.reicast.emulator.config.OptionsFragment;
+import com.reicast.emulator.config.PGConfigFragment;
 import com.reicast.emulator.debug.GenerateLogs;
 import com.reicast.emulator.emu.JNIdc;
-import com.reicast.emulator.periph.Gamepad;
 
-import java.io.File;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements
-		FileBrowser.OnItemSelectedListener, OptionsFragment.OnClickListener,
-		NavigationView.OnNavigationItemSelectedListener {
+		NavigationView.OnNavigationItemSelectedListener, FileBrowser.OnItemSelectedListener,
+		OptionsFragment.OnClickListener, InputFragment.OnClickListener  {
 	private static final int PERMISSION_REQUEST = 1001;
 
 	private SharedPreferences mPrefs;
 	private boolean hasAndroidMarket = false;
-
-	private UncaughtExceptionHandler mUEHandler;
-
-	Gamepad pad = new Gamepad();
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -67,7 +63,6 @@ public class MainActivity extends AppCompatActivity implements
 				public void onSystemUiVisibilityChange(int visibility) {
 					if ((visibility & View.SYSTEM_UI_FLAG_FULLSCREEN) == 0) {
 						getWindow().getDecorView().setSystemUiVisibility(
-//                            View.SYSTEM_UI_FLAG_LAYOUT_STABLE | 
 								View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
 										| View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
 										| View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
@@ -88,12 +83,13 @@ public class MainActivity extends AppCompatActivity implements
 			displayLogOutput(prior_error);
 			mPrefs.edit().remove("prior_error").apply();
 		} else {
-			mUEHandler = new Thread.UncaughtExceptionHandler() {
+			UncaughtExceptionHandler mUEHandler = new Thread.UncaughtExceptionHandler() {
 				public void uncaughtException(Thread t, Throwable error) {
 					if (error != null) {
 						StringBuilder output = new StringBuilder();
 						for (StackTraceElement trace : error.getStackTrace()) {
-							output.append(trace.toString() + "\n");
+							output.append(trace.toString());
+							output.append("\n");
 						}
 						mPrefs.edit().putString("prior_error", output.toString()).apply();
 						error.printStackTrace();
@@ -138,7 +134,7 @@ public class MainActivity extends AppCompatActivity implements
 		// Check that the activity is using the layout version with
 		// the fragment_container FrameLayout
 		if (findViewById(R.id.fragment_container) != null) {
-			onMainBrowseSelected(true, null, false, null);
+			onMainBrowseSelected(null, true, null);
 		}
 
 		Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -156,6 +152,7 @@ public class MainActivity extends AppCompatActivity implements
 
 			}
 		};
+		//noinspection deprecation
 		drawer.setDrawerListener(toggle);
 		toggle.syncState();
 
@@ -163,6 +160,15 @@ public class MainActivity extends AppCompatActivity implements
 		if (!hasAndroidMarket) {
 			navigationView.getMenu().findItem(R.id.rateme_menu).setEnabled(false);
 			navigationView.getMenu().findItem(R.id.rateme_menu).setVisible(false);
+		}
+		try {
+			UiModeManager uiModeManager = (UiModeManager) getSystemService(UI_MODE_SERVICE);
+			if (uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION) {
+				View header = navigationView.getHeaderView(0);
+				((TextView) header.findViewById(R.id.project_link)).setVisibility(View.GONE);
+			}
+		} catch (Exception e) {
+			// They require a check, so they can fix their API
 		}
 		navigationView.setNavigationItemSelectedListener(this);
 
@@ -172,7 +178,7 @@ public class MainActivity extends AppCompatActivity implements
 			searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
 				@Override
 				public boolean onQueryTextSubmit(String query) {
-					onMainBrowseSelected(true, mPrefs.getString(Config.pref_games,
+					onMainBrowseSelected(mPrefs.getString(Config.pref_games,
 							Environment.getExternalStorageDirectory().getAbsolutePath()),
 							true, query);
 					searchView.onActionViewCollapsed();
@@ -216,63 +222,42 @@ public class MainActivity extends AppCompatActivity implements
 		builder.show();
 	}
 
-	public static boolean isBiosExisting(String home_directory) {
-		return new File (home_directory, "data/dc_boot.bin").exists();
-	}
-
-	public static boolean isFlashExisting(String home_directory) {
-		return new File (home_directory, "data/dc_flash.bin").exists();
-	}
-
-	public void onGameSelected(Uri uri) {
-		if (Config.readOutput("uname -a").equals(getString(R.string.error_kernel))) {
-			showToastMessage(getString(R.string.unsupported), Snackbar.LENGTH_SHORT);
-		}
+	public void onEditorSelected(Uri uri) {
 		String home_directory = mPrefs.getString(Config.pref_home,
 				Environment.getExternalStorageDirectory().getAbsolutePath());
 
-		if (!isBiosExisting(home_directory)) {
-			launchBIOSdetection();
-			return;
-		}
-		if (!isFlashExisting(home_directory)) {
-			launchBIOSdetection();
-			return;
-		}
+		JNIdc.config(home_directory);
+
+		startActivity(new Intent("com.reicast.EMULATOR", uri,
+				getApplicationContext(), EditVJoyActivity.class));
+	}
+
+	public void onGameSelected(Uri uri) {
+		String home_directory = mPrefs.getString(Config.pref_home,
+				Environment.getExternalStorageDirectory().getAbsolutePath());
 
 		JNIdc.config(home_directory);
+
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+			uri = Uri.parse(uri.toString().replace("content://"
+					+ uri.getAuthority() + "/external_files", "/storage"));
+		}
 
 		Emulator.nativeact = PreferenceManager.getDefaultSharedPreferences(
 				getApplicationContext()).getBoolean(Emulator.pref_nativeact, Emulator.nativeact);
 		if (Emulator.nativeact) {
-			startActivity(new Intent("com.reicast.EMULATOR", uri, getApplicationContext(),
-					GL2JNINative.class));
+			Intent intent = new Intent("com.reicast.EMULATOR",
+					uri, getApplicationContext(), GL2JNINative.class);
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
+				intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+			startActivity(intent);
 		} else {
-			startActivity(new Intent("com.reicast.EMULATOR", uri, getApplicationContext(),
-					GL2JNIActivity.class));
+			Intent intent = new Intent("com.reicast.EMULATOR",
+					uri, getApplicationContext(), GL2JNIActivity.class);
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
+				intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+			startActivity(intent);
 		}
-	}
-
-	private void launchBIOSdetection() {
-		AlertDialog.Builder builder = new AlertDialog.Builder(this);
-		builder.setTitle(R.string.bios_selection);
-		builder.setPositiveButton(R.string.browse,
-				new DialogInterface.OnClickListener() {
-					public void onClick(DialogInterface dialog, int which) {
-						String home_directory = mPrefs.getString(Config.pref_home,
-								Environment.getExternalStorageDirectory().getAbsolutePath());
-						onMainBrowseSelected(false, home_directory, false, null);
-					}
-				});
-		builder.setNegativeButton(R.string.gdrive,
-				new DialogInterface.OnClickListener() {
-					public void onClick(DialogInterface dialog, int which) {
-						showToastMessage(getString(R.string.require_bios),
-								Snackbar.LENGTH_SHORT);
-					}
-				});
-		builder.create();
-		builder.show();
 	}
 
 	public void onFolderSelected(Uri uri) {
@@ -289,14 +274,11 @@ public class MainActivity extends AppCompatActivity implements
 		getSupportFragmentManager().beginTransaction().replace(
 				R.id.fragment_container, optsFrag, "OPTIONS_FRAG").commit();
 		setTitle(R.string.settings);
-		return;
 	}
 
 	/**
 	 * Launch the browser activity with specified parameters
 	 *
-	 * @param browse
-	 *            Conditional for image files or folders
 	 * @param path
 	 *            The root path of the browser fragment
 	 * @param games
@@ -304,12 +286,9 @@ public class MainActivity extends AppCompatActivity implements
 	 * @param query
 	 *            Search parameters to limit list items
 	 */
-	public void onMainBrowseSelected(boolean browse, String path, boolean games, String query) {
+	public void onMainBrowseSelected(String path, boolean games, String query) {
 		FileBrowser firstFragment = new FileBrowser();
 		Bundle args = new Bundle();
-//		args.putBoolean("ImgBrowse", false);
-		args.putBoolean("ImgBrowse", browse);
-		// specify ImgBrowse option. true = images, false = folders only
 		args.putString("browse_entry", path);
 		// specify a path for selecting folder options
 		args.putBoolean("games_entry", games);
@@ -329,6 +308,28 @@ public class MainActivity extends AppCompatActivity implements
 		setTitle(R.string.browser);
 	}
 
+	public void launchBIOSdetection() {
+		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		builder.setTitle(R.string.bios_selection);
+		builder.setPositiveButton(R.string.browse,
+				new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int which) {
+						String home_directory = mPrefs.getString(Config.pref_home,
+								Environment.getExternalStorageDirectory().getAbsolutePath());
+						onMainBrowseSelected(home_directory, false, null);
+					}
+				});
+		builder.setNegativeButton(R.string.gdrive,
+				new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int which) {
+						showToastMessage(getString(R.string.require_bios),
+								Snackbar.LENGTH_SHORT);
+					}
+				});
+		builder.create();
+		builder.show();
+	}
+
 	@Override
 	public void onConfigurationChanged(Configuration newConfig) {
 		super.onConfigurationChanged(newConfig);
@@ -337,13 +338,12 @@ public class MainActivity extends AppCompatActivity implements
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
 		if (keyCode == KeyEvent.KEYCODE_BACK) {
-			Fragment fragment = (FileBrowser) getSupportFragmentManager()
-					.findFragmentByTag("MAIN_BROWSER");
+			Fragment fragment = getSupportFragmentManager().findFragmentByTag("MAIN_BROWSER");
 			if (fragment != null && fragment.isVisible()) {
 				boolean readyToQuit = true;
 				if (fragment.getArguments() != null) {
 					readyToQuit = fragment.getArguments().getBoolean(
-							"ImgBrowse", true);
+							"games_entry", true);
 				}
 				if (readyToQuit) {
 					MainActivity.this.finish();
@@ -362,53 +362,22 @@ public class MainActivity extends AppCompatActivity implements
 	}
 
 	private void launchMainFragment() {
-		onMainBrowseSelected(true, null, false, null);
+		onMainBrowseSelected(null, true, null);
 	}
-
-	public void onSettingsReload(Fragment options) {
-		getSupportFragmentManager().beginTransaction().remove(options).commit();
-		OptionsFragment optionsFrag = new OptionsFragment();
-		getSupportFragmentManager()
-				.beginTransaction()
-				.replace(R.id.fragment_container, optionsFrag, "OPTIONS_FRAG")
-				.addToBackStack(null).commit();
-    }
 
 	@Override
 	protected void onPause() {
 		super.onPause();
-		InputFragment fragment = (InputFragment) getSupportFragmentManager()
-				.findFragmentByTag("INPUT_FRAG");
-		if (fragment != null && fragment.isVisible()) {
-			if (fragment.moga != null) {
-				fragment.moga.onPause();
-			}
-		}
 	}
 
 	@Override
 	protected void onDestroy() {
-		InputFragment fragment = (InputFragment) getSupportFragmentManager()
-				.findFragmentByTag("INPUT_FRAG");
-		if (fragment != null && fragment.isVisible()) {
-			if (fragment.moga != null) {
-				fragment.moga.onDestroy();
-			}
-		}
 		super.onDestroy();
 	}
 
 	@Override
 	protected void onResume() {
 		super.onResume();
-		InputFragment fragment = (InputFragment) getSupportFragmentManager()
-				.findFragmentByTag("INPUT_FRAG");
-		if (fragment != null && fragment.isVisible()) {
-			if (fragment.moga != null) {
-				fragment.moga.onResume();
-			}
-		}
-
 		CloudFragment cloudfragment = (CloudFragment) getSupportFragmentManager()
 				.findFragmentByTag("CLOUD_FRAG");
 		if (cloudfragment != null && cloudfragment.isVisible()) {
@@ -421,9 +390,8 @@ public class MainActivity extends AppCompatActivity implements
 		super.onPostCreate(savedInstanceState);
 	}
 
-	@SuppressWarnings("StatementWithEmptyBody")
 	@Override
-	public boolean onNavigationItemSelected(MenuItem item) {
+	public boolean onNavigationItemSelected(@NonNull MenuItem item) {
 		// Handle navigation view item clicks here.
 		DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
 
@@ -440,10 +408,9 @@ public class MainActivity extends AppCompatActivity implements
 				}
 				browseFrag = new FileBrowser();
 				Bundle args = new Bundle();
-				args.putBoolean("ImgBrowse", true);
 				args.putString("browse_entry", null);
 				// specify a path for selecting folder options
-				args.putBoolean("games_entry", false);
+				args.putBoolean("games_entry", true);
 				// specify if the desired path is for games or data
 				browseFrag.setArguments(args);
 				getSupportFragmentManager()
@@ -469,6 +436,24 @@ public class MainActivity extends AppCompatActivity implements
 						.replace(R.id.fragment_container, optionsFrag, "OPTIONS_FRAG")
 						.addToBackStack(null).commit();
 				setTitle(R.string.settings);
+				drawer.closeDrawer(GravityCompat.START);
+				return true;
+
+			case R.id.pgconfig_menu:
+				PGConfigFragment pgconfigFrag = (PGConfigFragment) getSupportFragmentManager()
+						.findFragmentByTag("PGCONFIG_FRAG");
+				if (pgconfigFrag != null) {
+					if (pgconfigFrag.isVisible()) {
+						drawer.closeDrawer(GravityCompat.START);
+						return true;
+					}
+				}
+				pgconfigFrag = new PGConfigFragment();
+				getSupportFragmentManager()
+						.beginTransaction()
+						.replace(R.id.fragment_container, pgconfigFrag, "PGCONFIG_FRAG")
+						.addToBackStack(null).commit();
+				setTitle(R.string.pgconfig);
 				drawer.closeDrawer(GravityCompat.START);
 				return true;
 

@@ -1,19 +1,20 @@
 package com.reicast.emulator.config;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.Handler;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.InputDevice;
@@ -21,41 +22,68 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
-import android.widget.TableLayout;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.bda.controller.Controller;
-import com.bda.controller.ControllerListener;
-import com.bda.controller.MotionEvent;
-import com.bda.controller.StateEvent;
-import com.reicast.emulator.MainActivity;
+import com.reicast.emulator.Emulator;
 import com.reicast.emulator.R;
 import com.reicast.emulator.periph.Gamepad;
-import com.reicast.emulator.periph.MOGAInput;
+
+import java.io.File;
 
 public class InputFragment extends Fragment {
+	private static final int PERMISSION_REQUEST = 1001;
+
+    private OnClickListener mCallback;
 
 	private int listenForButton = 0;
 	private AlertDialog alertDialogSelectController;
-	private SharedPreferences sharedPreferences;
+	private SharedPreferences mPrefs;
 	private CompoundButton switchTouchVibrationEnabled;
-	private CompoundButton micPluggedIntoFirstController;
 
-	private Gamepad pad = new Gamepad();
-	public MOGAInput moga = new MOGAInput();
 	Vibrator vib;
 
 	// Container Activity must implement this interface
 	public interface OnClickListener {
-		void onMainBrowseSelected(String path_entry, boolean games);
+		void onEditorSelected(Uri uri);
 	}
+
+    @Override @SuppressWarnings("deprecation")
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+
+        // This makes sure that the container activity has implemented
+        // the callback interface. If not, it throws an exception
+        try {
+            mCallback = (OnClickListener) activity;
+        } catch (ClassCastException e) {
+            throw new ClassCastException(activity.toString()
+                    + " must implement OnClickListener");
+        }
+    }
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+
+        // This makes sure that the container activity has implemented
+        // the callback interface. If not, it throws an exception
+        try {
+            mCallback = (OnClickListener) context;
+        } catch (ClassCastException e) {
+            throw new ClassCastException(context.getClass().toString()
+                    + " must implement OnClickListener");
+        }
+    }
 
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -66,49 +94,42 @@ public class InputFragment extends Fragment {
 
 	@Override
 	public void onViewCreated(View view, Bundle savedInstanceState) {
-		moga.onCreate(getActivity(), pad);
-		moga.mListener.setPlayerNum(1);
+		mPrefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
 
-		sharedPreferences = PreferenceManager
-				.getDefaultSharedPreferences(getActivity());
-
-		Config.vibrationDuration = sharedPreferences.getInt(Config.pref_vibrationDuration, 20);
+		Config.vibrationDuration = mPrefs.getInt(Config.pref_vibrationDuration, 20);
 		vib = (Vibrator) getActivity().getSystemService(Context.VIBRATOR_SERVICE);
 
-		ImageView icon_a = (ImageView) getView().findViewById(
-				R.id.controller_icon_a);
-		icon_a.setAlpha(0.8f);
-		ImageView icon_b = (ImageView) getView().findViewById(
-				R.id.controller_icon_b);
-		icon_b.setAlpha(0.8f);
-		ImageView icon_c = (ImageView) getView().findViewById(
-				R.id.controller_icon_c);
-		icon_c.setAlpha(0.8f);
-		ImageView icon_d = (ImageView) getView().findViewById(
-				R.id.controller_icon_d);
-		icon_d.setAlpha(0.8f);
+		try {
+			ImageView icon_a = (ImageView) getView().findViewById(
+					R.id.controller_icon_a);
+			icon_a.setAlpha(0.8f);
+			ImageView icon_b = (ImageView) getView().findViewById(
+					R.id.controller_icon_b);
+			icon_b.setAlpha(0.8f);
+			ImageView icon_c = (ImageView) getView().findViewById(
+					R.id.controller_icon_c);
+			icon_c.setAlpha(0.8f);
+			ImageView icon_d = (ImageView) getView().findViewById(
+					R.id.controller_icon_d);
+			icon_d.setAlpha(0.8f);
+		} catch (NullPointerException ex) {
+			// Couldn't find images, so leave them opaque
+		}
 
-		Button buttonLaunchEditor = (Button) getView().findViewById(
-				R.id.buttonLaunchEditor);
+		Button buttonLaunchEditor = (Button) getView().findViewById(R.id.buttonLaunchEditor);
 		buttonLaunchEditor.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
-				Intent inte = new Intent(getActivity(), EditVJoyActivity.class);
-				startActivity(inte);
+                mCallback.onEditorSelected(Uri.EMPTY);
 			}
 		});
 
-		SharedPreferences mPrefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
-		String home_directory = mPrefs.getString(Config.pref_home,
-				Environment.getExternalStorageDirectory().getAbsolutePath());
-
-		if (!MainActivity.isBiosExisting(home_directory) || !MainActivity.isFlashExisting(home_directory))
-			buttonLaunchEditor.setEnabled(false);
+		buttonLaunchEditor.setEnabled(isBIOSAvailable());
 
 		final TextView duration = (TextView) getView().findViewById(R.id.vibDuration_current);
 		final LinearLayout vibLay = (LinearLayout) getView().findViewById(R.id.vibDuration_layout);
 		final SeekBar vibSeek = (SeekBar) getView().findViewById(R.id.vib_seekBar);
 
-		if (sharedPreferences.getBoolean(Config.pref_touchvibe, true)) {
+		if (mPrefs.getBoolean(Config.pref_touchvibe, true)) {
 			vibLay.setVisibility(View.VISIBLE);
 		} else {
 			vibLay.setVisibility(View.GONE);
@@ -123,12 +144,12 @@ public class InputFragment extends Fragment {
 			}
 
 			public void onStartTrackingTouch(SeekBar seekBar) {
-				// TODO Auto-generated method stub
+
 			}
 
 			public void onStopTrackingTouch(SeekBar seekBar) {
 				int progress = seekBar.getProgress() + 5;
-				sharedPreferences.edit().putInt(Config.pref_vibrationDuration, progress).apply();
+				mPrefs.edit().putInt(Config.pref_vibrationDuration, progress).apply();
 				Config.vibrationDuration = progress;
 				vib.vibrate(progress);
 			}
@@ -137,14 +158,13 @@ public class InputFragment extends Fragment {
 		OnCheckedChangeListener touch_vibration = new OnCheckedChangeListener() {
 			public void onCheckedChanged(CompoundButton buttonView,
 										 boolean isChecked) {
-				sharedPreferences.edit()
-						.putBoolean(Config.pref_touchvibe, isChecked).apply();
+				mPrefs.edit().putBoolean(Config.pref_touchvibe, isChecked).apply();
 				vibLay.setVisibility( isChecked ? View.VISIBLE : View.GONE );
 			}
 		};
 		switchTouchVibrationEnabled = (CompoundButton) getView().findViewById(
 				R.id.switchTouchVibrationEnabled);
-		boolean vibrate = sharedPreferences.getBoolean(Config.pref_touchvibe, true);
+		boolean vibrate = mPrefs.getBoolean(Config.pref_touchvibe, true);
 		if (vibrate) {
 			switchTouchVibrationEnabled.setChecked(true);
 		} else {
@@ -152,23 +172,26 @@ public class InputFragment extends Fragment {
 		}
 		switchTouchVibrationEnabled.setOnCheckedChangeListener(touch_vibration);
 
-		micPluggedIntoFirstController = (CompoundButton) getView().findViewById(
-				R.id.micInPort2);
-		boolean micPluggedIn = sharedPreferences.getBoolean(Config.pref_mic,
-				false);
-		micPluggedIntoFirstController.setChecked(micPluggedIn);
-		if (getActivity().getPackageManager().hasSystemFeature(
-				PackageManager.FEATURE_MICROPHONE)) {
+		CompoundButton micPluggedIntoController = (CompoundButton) getView().findViewById(R.id.micEnabled);
+		boolean micPluggedIn = mPrefs.getBoolean(Gamepad.pref_mic, false);
+		micPluggedIntoController.setChecked(micPluggedIn);
+		if (getActivity().getPackageManager().hasSystemFeature(PackageManager.FEATURE_MICROPHONE)) {
 			// Microphone is present on the device
-			micPluggedIntoFirstController
+			micPluggedIntoController
 					.setOnCheckedChangeListener(new OnCheckedChangeListener() {
-						public void onCheckedChanged(CompoundButton buttonView,
-													 boolean isChecked) {
-							sharedPreferences.edit().putBoolean(Config.pref_mic, isChecked).apply();
+						public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+							mPrefs.edit().putBoolean(Gamepad.pref_mic, isChecked).apply();
+							if (isChecked && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+									ActivityCompat.requestPermissions(getActivity(),
+											new String[] {
+													Manifest.permission.RECORD_AUDIO
+											},
+											PERMISSION_REQUEST);
+							}
 						}
 					});
 		} else {
-			micPluggedIntoFirstController.setEnabled(false);
+			micPluggedIntoController.setEnabled(false);
 		}
 
 		Button buttonKeycodeEditor = (Button) getView().findViewById(
@@ -177,10 +200,9 @@ public class InputFragment extends Fragment {
 			public void onClick(View v) {
 				InputModFragment inputModFrag = new InputModFragment();
 				getActivity()
-						.getSupportFragmentManager()
-						.beginTransaction()
-						.replace(R.id.fragment_container, inputModFrag,
-								"INPUT_MOD_FRAG").addToBackStack(null).commit();
+						.getSupportFragmentManager().beginTransaction()
+						.replace(R.id.fragment_container, inputModFrag, "INPUT_MOD_FRAG")
+						.addToBackStack(null).commit();
 			}
 		});
 
@@ -258,21 +280,23 @@ public class InputFragment extends Fragment {
 		updateVibration();
 	}
 
+	private boolean isBIOSAvailable() {
+		String home_directory = mPrefs.getString(Config.pref_home,
+				Environment.getExternalStorageDirectory().getAbsolutePath());
+		return new File(home_directory, "data/dc_flash.bin").exists()
+				|| mPrefs.getBoolean(Emulator.pref_usereios, false);
+	}
+
 	private void updateVibration() {
-		boolean touchVibrationEnabled = sharedPreferences.getBoolean(
-				Config.pref_touchvibe, true);
+		boolean touchVibrationEnabled = mPrefs.getBoolean(Config.pref_touchvibe, true);
 		switchTouchVibrationEnabled.setChecked(touchVibrationEnabled);
 	}
 
 	private void updateControllers() {
-		String deviceDescriptorPlayer1 = sharedPreferences.getString(
-				Gamepad.pref_player1, null);
-		String deviceDescriptorPlayer2 = sharedPreferences.getString(
-				Gamepad.pref_player2, null);
-		String deviceDescriptorPlayer3 = sharedPreferences.getString(
-				Gamepad.pref_player3, null);
-		String deviceDescriptorPlayer4 = sharedPreferences.getString(
-				Gamepad.pref_player4, null);
+		String deviceDescriptorPlayer1 = mPrefs.getString(Gamepad.pref_player1, null);
+		String deviceDescriptorPlayer2 = mPrefs.getString(Gamepad.pref_player2, null);
+		String deviceDescriptorPlayer3 = mPrefs.getString(Gamepad.pref_player3, null);
+		String deviceDescriptorPlayer4 = mPrefs.getString(Gamepad.pref_player4, null);
 
 		String labelPlayer1 = null, labelPlayer2 = null, labelPlayer3 = null, labelPlayer4 = null;
 
@@ -301,9 +325,8 @@ public class InputFragment extends Fragment {
 			buttonRemoveControllerPlayer1.setEnabled(true);
 		} else {
 			if (deviceDescriptorPlayer1 != null) {
-				textViewDeviceDescriptorPlayer1
-						.setText(getString(R.string.controller_not_connected)
-								+ " (" + deviceDescriptorPlayer1 + ")");
+				textViewDeviceDescriptorPlayer1.setText(getString(R.string.controller_not_connected,
+						"(" + deviceDescriptorPlayer1 + ")"));
 				buttonRemoveControllerPlayer1.setEnabled(true);
 			} else {
 				textViewDeviceDescriptorPlayer1
@@ -321,9 +344,8 @@ public class InputFragment extends Fragment {
 			buttonRemoveControllerPlayer2.setEnabled(true);
 		} else {
 			if (deviceDescriptorPlayer2 != null) {
-				textViewDeviceDescriptorPlayer2
-						.setText(getString(R.string.controller_not_connected)
-								+ " (" + deviceDescriptorPlayer2 + ")");
+				textViewDeviceDescriptorPlayer2.setText(getString(R.string.controller_not_connected,
+						"(" + deviceDescriptorPlayer2 + ")"));
 				buttonRemoveControllerPlayer2.setEnabled(true);
 			} else {
 				textViewDeviceDescriptorPlayer2
@@ -331,6 +353,48 @@ public class InputFragment extends Fragment {
 				buttonRemoveControllerPlayer2.setEnabled(false);
 			}
 		}
+
+		String[] periphs = getResources().getStringArray(R.array.peripherals);
+
+		Spinner p2periph1spnr = (Spinner) getView().findViewById(R.id.spnr_player2_periph1);
+		ArrayAdapter<String> p2periph1Adapter = new ArrayAdapter<>(
+				getActivity(), R.layout.spinner_selected, periphs);
+		p2periph1Adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		p2periph1spnr.setAdapter(p2periph1Adapter);
+
+		p2periph1spnr.setSelection(mPrefs.getInt(
+				Gamepad.p2_peripheral + 1, 0), true);
+
+		p2periph1spnr.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+
+			public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
+				mPrefs.edit().putInt(Gamepad.p2_peripheral + 1, pos).apply();
+			}
+
+			public void onNothingSelected(AdapterView<?> arg0) {
+
+			}
+		});
+
+		Spinner p2periph2spnr = (Spinner) getView().findViewById(R.id.spnr_player2_periph2);
+		ArrayAdapter<String> p2periph2Adapter = new ArrayAdapter<>(
+				getActivity(), R.layout.spinner_selected, periphs);
+		p2periph2Adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		p2periph2spnr.setAdapter(p2periph2Adapter);
+
+		p2periph2spnr.setSelection(mPrefs.getInt(
+				Gamepad.p2_peripheral + 2, 0), true);
+
+		p2periph2spnr.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+
+			public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
+				mPrefs.edit().putInt(Gamepad.p2_peripheral + 2, pos).apply();
+			}
+
+			public void onNothingSelected(AdapterView<?> arg0) {
+
+			}
+		});
 
 		TextView textViewDeviceDescriptorPlayer3 = (TextView) getView()
 				.findViewById(R.id.textViewDeviceDescriptorPlayer3);
@@ -341,9 +405,8 @@ public class InputFragment extends Fragment {
 			buttonRemoveControllerPlayer3.setEnabled(true);
 		} else {
 			if (deviceDescriptorPlayer3 != null) {
-				textViewDeviceDescriptorPlayer3
-						.setText(getString(R.string.controller_not_connected)
-								+ " (" + deviceDescriptorPlayer3 + ")");
+				textViewDeviceDescriptorPlayer3.setText(getString(R.string.controller_not_connected,
+						"(" + deviceDescriptorPlayer3 + ")"));
 				buttonRemoveControllerPlayer3.setEnabled(true);
 			} else {
 				textViewDeviceDescriptorPlayer3
@@ -351,6 +414,46 @@ public class InputFragment extends Fragment {
 				buttonRemoveControllerPlayer3.setEnabled(false);
 			}
 		}
+
+		Spinner p3periph1spnr = (Spinner) getView().findViewById(R.id.spnr_player3_periph1);
+		ArrayAdapter<String> p3periph1Adapter = new ArrayAdapter<>(
+				getActivity(), R.layout.spinner_selected, periphs);
+		p3periph1Adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		p3periph1spnr.setAdapter(p3periph1Adapter);
+
+		p3periph1spnr.setSelection(mPrefs.getInt(
+				Gamepad.p3_peripheral + 1, 0), true);
+
+		p3periph1spnr.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+
+			public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
+				mPrefs.edit().putInt(Gamepad.p3_peripheral + 1, pos).apply();
+			}
+
+			public void onNothingSelected(AdapterView<?> arg0) {
+
+			}
+		});
+
+		Spinner p3periph2spnr = (Spinner) getView().findViewById(R.id.spnr_player3_periph2);
+		ArrayAdapter<String> p3periph2Adapter = new ArrayAdapter<>(
+				getActivity(), R.layout.spinner_selected, periphs);
+		p3periph2Adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		p3periph2spnr.setAdapter(p3periph2Adapter);
+
+		p3periph2spnr.setSelection(mPrefs.getInt(
+				Gamepad.p3_peripheral + 2, 0), true);
+
+		p3periph2spnr.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+
+			public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
+				mPrefs.edit().putInt(Gamepad.p3_peripheral + 2, pos).apply();
+			}
+
+			public void onNothingSelected(AdapterView<?> arg0) {
+
+			}
+		});
 
 		TextView textViewDeviceDescriptorPlayer4 = (TextView) getView()
 				.findViewById(R.id.textViewDeviceDescriptorPlayer4);
@@ -361,9 +464,8 @@ public class InputFragment extends Fragment {
 			buttonRemoveControllerPlayer4.setEnabled(true);
 		} else {
 			if (deviceDescriptorPlayer4 != null) {
-				textViewDeviceDescriptorPlayer4
-						.setText(getString(R.string.controller_not_connected)
-								+ " (" + deviceDescriptorPlayer4 + ")");
+				textViewDeviceDescriptorPlayer4.setText(getString(R.string.controller_not_connected,
+						"(" + deviceDescriptorPlayer4 + ")"));
 				buttonRemoveControllerPlayer4.setEnabled(true);
 			} else {
 				textViewDeviceDescriptorPlayer4
@@ -371,6 +473,46 @@ public class InputFragment extends Fragment {
 				buttonRemoveControllerPlayer4.setEnabled(false);
 			}
 		}
+
+		Spinner p4periph1spnr = (Spinner) getView().findViewById(R.id.spnr_player4_periph1);
+		ArrayAdapter<String> p4periph1Adapter = new ArrayAdapter<>(
+				getActivity(), R.layout.spinner_selected, periphs);
+		p4periph1Adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		p4periph1spnr.setAdapter(p4periph1Adapter);
+
+		String p4periph1 = String.valueOf(mPrefs.getInt(Gamepad.p4_peripheral + 1, 0));
+		p4periph1spnr.setSelection(p2periph2Adapter.getPosition(p4periph1), true);
+
+		p4periph1spnr.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+
+			public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
+				mPrefs.edit().putInt(Gamepad.p4_peripheral + 1, pos).apply();
+			}
+
+			public void onNothingSelected(AdapterView<?> arg0) {
+
+			}
+		});
+
+		Spinner p4periph2spnr = (Spinner) getView().findViewById(R.id.spnr_player4_periph2);
+		ArrayAdapter<String> p4periph2Adapter = new ArrayAdapter<>(
+				getActivity(), R.layout.spinner_selected, periphs);
+		p4periph2Adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		p4periph2spnr.setAdapter(p4periph2Adapter);
+
+		String p4periph2 = String.valueOf(mPrefs.getInt(Gamepad.p4_peripheral + 2, 0));
+		p4periph2spnr.setSelection(p2periph2Adapter.getPosition(p4periph2), true);
+
+		p4periph2spnr.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+
+			public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
+				mPrefs.edit().putInt(Gamepad.p4_peripheral + 2, pos).apply();
+			}
+
+			public void onNothingSelected(AdapterView<?> arg0) {
+
+			}
+		});
 	}
 
 	private void selectController(int playerNum) {
@@ -422,25 +564,15 @@ public class InputFragment extends Fragment {
 		if (keyCode == KeyEvent.KEYCODE_BACK)
 			return false;
 
-		String descriptor = null;
-		if (pad.isActiveMoga[listenForButton]) {
-			MogaListener config = new MogaListener(listenForButton);
-			moga.mController.setListener(config, new Handler());
-			descriptor = config.getController();
-		}
-		descriptor = InputDevice.getDevice(event.getDeviceId()).getDescriptor();
+		String descriptor = InputDevice.getDevice(event.getDeviceId()).getDescriptor();
 
 		if (descriptor == null)
 			return false;
 
-		String deviceDescriptorPlayer1 = sharedPreferences.getString(
-				Gamepad.pref_player1, null);
-		String deviceDescriptorPlayer2 = sharedPreferences.getString(
-				Gamepad.pref_player2, null);
-		String deviceDescriptorPlayer3 = sharedPreferences.getString(
-				Gamepad.pref_player3, null);
-		String deviceDescriptorPlayer4 = sharedPreferences.getString(
-				Gamepad.pref_player4, null);
+		String deviceDescriptorPlayer1 = mPrefs.getString(Gamepad.pref_player1, null);
+		String deviceDescriptorPlayer2 = mPrefs.getString(Gamepad.pref_player2, null);
+		String deviceDescriptorPlayer3 = mPrefs.getString(Gamepad.pref_player3, null);
+		String deviceDescriptorPlayer4 = mPrefs.getString(Gamepad.pref_player4, null);
 
 		if (descriptor.equals(deviceDescriptorPlayer1)
 				|| descriptor.equals(deviceDescriptorPlayer2)
@@ -455,16 +587,16 @@ public class InputFragment extends Fragment {
 			case 0:
 				return false;
 			case 1:
-				sharedPreferences.edit().putString(Gamepad.pref_player1, descriptor).apply();
+				mPrefs.edit().putString(Gamepad.pref_player1, descriptor).apply();
 				break;
 			case 2:
-				sharedPreferences.edit().putString(Gamepad.pref_player2, descriptor).apply();
+				mPrefs.edit().putString(Gamepad.pref_player2, descriptor).apply();
 				break;
 			case 3:
-				sharedPreferences.edit().putString(Gamepad.pref_player3, descriptor).apply();
+				mPrefs.edit().putString(Gamepad.pref_player3, descriptor).apply();
 				break;
 			case 4:
-				sharedPreferences.edit().putString(Gamepad.pref_player4, descriptor).apply();
+				mPrefs.edit().putString(Gamepad.pref_player4, descriptor).apply();
 				break;
 		}
 
@@ -480,55 +612,19 @@ public class InputFragment extends Fragment {
 	private void removeController(int playerNum) {
 		switch (playerNum) {
 			case 1:
-				sharedPreferences.edit().putString(Gamepad.pref_player1, null).apply();
+				mPrefs.edit().putString(Gamepad.pref_player1, null).apply();
 				break;
 			case 2:
-				sharedPreferences.edit().putString(Gamepad.pref_player2, null).apply();
+				mPrefs.edit().putString(Gamepad.pref_player2, null).apply();
 				break;
 			case 3:
-				sharedPreferences.edit().putString(Gamepad.pref_player3, null).apply();
+				mPrefs.edit().putString(Gamepad.pref_player3, null).apply();
 				break;
 			case 4:
-				sharedPreferences.edit().putString(Gamepad.pref_player4, null).apply();
+				mPrefs.edit().putString(Gamepad.pref_player4, null).apply();
 				break;
 		}
 
 		updateControllers();
-	}
-
-	private final class MogaListener implements ControllerListener {
-
-		private int playerNum;
-		private String controllerId;
-
-		public MogaListener(int playerNum) {
-			this.playerNum = playerNum;
-		}
-
-		public void onKeyEvent(com.bda.controller.KeyEvent event) {
-			controllerId = String.valueOf(event.getControllerId());
-		}
-
-		public void onMotionEvent(MotionEvent arg0) {
-
-		}
-
-		public String getController() {
-			return controllerId;
-		}
-
-		public void onStateEvent(StateEvent event) {
-			if (event.getState() == StateEvent.STATE_CONNECTION &&
-					event.getAction() == MOGAInput.ACTION_CONNECTED) {
-
-				int mControllerVersion = moga.mController
-						.getState(Controller.STATE_CURRENT_PRODUCT_VERSION);
-
-				if (mControllerVersion == Controller.ACTION_VERSION_MOGA ||
-						mControllerVersion == Controller.ACTION_VERSION_MOGAPRO) {
-					pad.isActiveMoga[playerNum] = true;
-				}
-			}
-		}
 	}
 }

@@ -35,8 +35,7 @@
     <string name="select_software">ソフトウェアレンダリング</string>
     <string name="select_sound">サウンドを無効に</string>
     <string name="select_depth">レンダラの深度</string>
-    <string name="default_disk">デフォルトディスク</string>
-    
+
     <string name="games_listing">ゲームリスト</string>
     
     <string name="report_issue">前回のクラッシュ検出された</string>
@@ -49,7 +48,7 @@
     <string name="controller_b">コントローラB</string>
     <string name="controller_c">コントローラC</string>
     <string name="controller_d">コントローラD</string>
-    <string name="controller_not_connected">コントローラが接続されていません</string>
+    <string name="controller_not_connected">コントローラが接続されていません %1$s</string>
     <string name="controller_none_selected">コントローラが選択されていない。</string>
     <string name="select">選択する</string>
     <string name="remove">削除する</string>
@@ -59,15 +58,11 @@
     <string name="joystick_layout">Dパッドとしてジョイスティックを使用</string>
     <string name="modified_layout">カスタムキーレイアウトを有効に</string>
     <string name="controller_compat">互換モードを有効に</string>
-    <string name="mic_in_port_2">ポート2に接続されたマイク</string>
-    
+
     <string name="customize_physical_controls">物理コントロールを編集</string>
     <string name="map_keycode_title">コントローラを編集する</string>
     <string name="map_keycode_message">%1$sボタンを押してください</string>
-    
-    <string name="moga_pro_connect">MOGAプロが接続された！</string>
-    <string name="moga_connect">MOGAが接続された！</string>
-    
+
     <string name="about_text">reicastはマルチプラットフォームのドリームキャストエミュレータです。</string>
     <string name="revision_text">バージョン：%1$s [%2$s]</string>
     

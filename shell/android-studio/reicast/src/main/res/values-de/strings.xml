@@ -46,7 +46,6 @@
     <string name="select_software">Softwarerendering erzwingen</string>
     <string name="select_sound">Emulator-Sound deaktivieren</string>
     <string name="select_depth">Rendering-Tiefe</string>
-    <string name="default_disk">Wähle Standard-Datenträger</string>
 
     <string name="games_listing">Verfügbare Dreamcast-Spiele</string>
 
@@ -66,7 +65,7 @@
     <string name="controller_c">Controller C</string>
     <string name="controller_d">Controller D</string>
     <string name="controller_not_connected">Controller nicht verbunden</string>
-    <string name="controller_none_selected">Kein Controller ausgewählt</string>
+    <string name="controller_none_selected">Kein Controller ausgewählt %1$s</string>
     <string name="select">Auswählen</string>
     <string name="remove">Entfernen</string>
     <string name="select_controller_title">Controller auswählen</string>
@@ -76,14 +75,10 @@
     <string name="modified_layout">Benutzerdefiniertes Layout</string>
     <string name="controller_compat">Kompatibilitätsmodus aktivieren</string>
     <string name="controller_unavailable">Gamepad-IME erkannt!\nBitte deaktivieren Sie das native Interface.</string>
-    <string name="mic_in_port_2">Mikrophon in Port 2 eingesteckt</string>
-    
+
     <string name="customize_physical_controls">Physische Controller anpassen</string>
     <string name="map_keycode_title">Controller ändern</string>
     <string name="map_keycode_message">Drücken Sie die neue Controller-Taste für %1$s</string>
-    
-    <string name="moga_pro_connect">MOGA Pro verbunden!</string>
-    <string name="moga_connect">MOGA verbunden!</string>
 
     <string name="about_text">reicast ist ein Dreamcast-Emulator</string>
     <string name="revision_text">Version: %1$s [%2$s]</string>

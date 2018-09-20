@@ -32,7 +32,7 @@
     <string name="controller_b">Controlador B</string>
     <string name="controller_c">Controlador C</string>
     <string name="controller_d">Controlador D</string>
-    <string name="controller_not_connected">Controller No conectado</string>
+    <string name="controller_not_connected">Controller No conectado %1$s</string>
     <string name="controller_none_selected">No Controlador seleccionado</string>
     <string name="select">Seleccionar</string>
     <string name="remove">Eliminar</string>
@@ -45,9 +45,6 @@
     <string name="customize_physical_controls">Personalizar controles físicos</string>
     <string name="map_keycode_title">Modificar Controller</string>
     <string name="map_keycode_message">Pulse el botón nuevo controlador para %1$s</string>
-    
-    <string name="moga_pro_connect">MOGA Pro conectado!</string>
-    <string name="moga_connect">MOGA conectado!</string>
 
     <string name="about_text">reicast es un emulador de Dreamcast</string>
     <string name="revision_text">Version: %1$s [%2$s]</string>

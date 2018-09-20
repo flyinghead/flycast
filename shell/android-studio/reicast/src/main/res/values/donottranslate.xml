@@ -1,17 +1,15 @@
 <resources>
 
-    <string name="app_name">reicast</string>
+    <string name="app_name" translatable="false">reicast</string>
 
-    <string name="app_site">http://reicast.com</string>
-
-    <string name="error_kernel"></string>
+    <string name="app_site" translatable="false">http://reicast.com</string>
 
     <string-array name="depth">
         <item>16</item>
         <item>24</item>
         <item>32</item>        
     </string-array>
-    
+
     <string-array name="flash">
         <item>bin</item>
     </string-array>
@@ -63,6 +61,19 @@
         <item>U</item>
         <item>R</item>
         <item>K</item>
+    </string-array>
+
+    <string-array name="peripherals">
+        <item>None</item>
+        <item>VMU</item>
+        <item>Microphone</item>
+        <item>Purupuru</item>
+    </string-array>
+
+    <string-array name="right_stick">
+        <item>None</item>
+        <item>L / R</item>
+        <item>A / B</item>
     </string-array>
 
 </resources>

@@ -73,7 +73,7 @@ evdev_device_id_1 = X
 evdev_mapping_1 = my_mapping.cfg
 .LP
 
-You can create your own mappings with the \fBreicast-joyconfig\fR tool. You should either put them into the "mappings" folder inside the reicast config directory. As an alternative, you can specify an absolute path (which has to begin with a leading slash "/"):
+You can create your own mappings with the \fBreicast-joyconfig\fR tool. You should either put them into the "mappings" folder inside the reicast config directory (~/.local/share/reicast) or as an alternative, you can specify an absolute path (which has to begin with a leading slash "/"):
 .IP
 [input]
 .br
@@ -82,17 +82,17 @@ evdev_device_id_1 = X
 evdev_mapping_1 = /path/to/my_mapping.cfg
 .LP
 
-If you don't specify a mapping file, \fBreicast\fR will use one of the pre-defined mapping files (e.g. for Xbox 360 controllers).
+If you don't specify a mapping file, \fBreicast\fR will try to find a file withe the name of the specified input device in your "mappings" folder ("Logitech RumblePad 2 USB.cfg" for example) or use one of the pre-defined mapping files (e.g. for Xbox 360 controllers).
 
 If the evdev input works for you, it's probably best to deactivate the legacy joystick API input:
 
 .IP
 [input]
 .br
-joystick_device_id =-1
+joystick_device_id = -1
 .LP
 
-If your version of \fBreicast\fR is compiled against X11, you might want to disable the built-in X11 keyboard support:
+If your version of \fBreicast\fR is compiled against X11, you might want to disable the built-in X11 keyboard support as this can interfere if your controller is detected as a keyboard:
 .IP
 [input]
 .br

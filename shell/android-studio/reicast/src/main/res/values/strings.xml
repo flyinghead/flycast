@@ -36,8 +36,9 @@
     <string name="select_bios">BIOS Region (dc_flash[X].bin)</string>
     <string name="select_details">Enable Game Details</string>
     <string name="select_native">Native Gamepad Mode [No OSD]</string>
-    <string name="select_dynarec">Dynarec Options</string>
+    <string name="select_dynarec">Dynamic Recompiler</string>
     <string name="select_unstable">Unstable Optimisations</string>
+    <string name="select_safemode">Bypass Div Matching</string>
     <string name="select_cable">Cable Type</string>
     <string name="select_region">DC Region</string>
     <string name="select_broadcast">Broadcast</string>
@@ -47,17 +48,29 @@
     <string name="set_frameskip">Frameskip Value</string>
     <string name="select_render">PVR Rendering (does nothing for now)</string>
     <string name="select_syncrender">Synchronous Rendering</string>
-    <string name="select_modvols">Enable Modifier Volumes</string>
+    <string name="select_modvols">Modifier Volumes</string>
+    <string name="select_interrupt">Delayed Interrupt</string>
     <string name="select_fps">Show On-Screen FPS</string>
-    <string name="select_software">Force Software Rendering</string>
+    <string name="select_software">Use Software Layer</string>
     <string name="select_sound">Disable Emulator Sound</string>
-    <string name="select_depth">Rendering Depth</string>
+    <string name="select_depth">View Rendering Depth</string>
     <string name="boot_disk">Boot Disk (ie. Gameshark, Utopia)</string>
 
     <string name="reset_emu">Reset Emu</string>
     <string name="reset_emu_title">Reset Emulator Settings</string>
     <string name="reset_emu_details">Warning: Emulator settings will be cleared. Folder and input settings are not included. This cannot be undone.\nAre you sure you want to continue?</string>
-    
+
+    <string name="pgc_doc">Per-Game Configuration\nThese options will override the default settings.\nTo add a game, launch it from the main game list\nGames will appear when returning to this window\nAfter changing settings, make sure to \"Save PCG\"</string>
+    <string name="pgc_select_game">PGC Game</string>
+    <string name="save_pgc">Save PGC</string>
+    <string name="pgconfig_saved">Configuration Saved</string>
+    <string name="clear_pgc">Clear PGC</string>
+    <string name="pgconfig_cleared">Configuration Cleared</string>
+    <string name="import_pgc">Import PGC</string>
+    <string name="pgconfig_imported">Configuration Imported</string>
+    <string name="export_pgc">Export PGC</string>
+    <string name="pgconfig_exported">Configuration Exported</string>
+
     <string name="games_listing">Game List</string>
     <string name="search_hint">Game (ie. Crazy Taxi)</string>
     
@@ -76,26 +89,39 @@
     <string name="controller_b">Controller B</string>
     <string name="controller_c">Controller C</string>
     <string name="controller_d">Controller D</string>
-    <string name="controller_not_connected">Controller Not Connected</string>
+    <string name="controller_not_connected">Controller Not Connected %1$s</string>
     <string name="controller_none_selected">No Controller Selected</string>
     <string name="select">Select</string>
     <string name="remove">Remove</string>
     <string name="select_controller_title">Select Controller</string>
     <string name="select_controller_message">Press any button on the controller %1$s to assign to port</string>
     <string name="controller_already_in_use">This controller is already in use!</string>
-    <string name="rstick_mode">Right Stick: On - L/R, Off - A/B</string>
+    <string name="rstick_mode">Right Stick Mode</string>
     <string name="joystick_layout">Use Joystick For D-Pad Input</string>
     <string name="modified_layout">Enable Custom Key Layout</string>
     <string name="controller_compat">Enable Compatibility Mode</string>
     <string name="controller_unavailable">Gamepad IME detected!\nPlease disable native interface</string>
-    <string name="mic_in_port_2">Microphone plugged into port 2</string>
+    <string name="enable_microphone">Enable Microphone(s)</string>
+    <string name="controller_1_vmu">Includes 2 VMUs (or 1 VMU / 1 Mic)</string>
+
+    <string name="a_button">A Button</string>
+    <string name="b_button">B Button</string>
+    <string name="x_button">X Button</string>
+    <string name="y_button">Y Button</string>
+    <string name="right_button">R Button</string>
+    <string name="left_button">L Button</string>
+    <string name="dpad_up">D-Pad Up</string>
+    <string name="dpad_down">D-Pad Down</string>
+    <string name="dpad_left">D-Pad Left</string>
+    <string name="dpad_right">D-Pad Right</string>
+    <string name="joystick_x">JS X Axis</string>
+    <string name="joystick_y">JS Y Axis</string>
+    <string name="start_button">Start Button</string>
+    <string name="select_button">Select Button</string>
     
     <string name="customize_physical_controls">Customize Physical Controls</string>
     <string name="map_keycode_title">Modify Controller</string>
     <string name="map_keycode_message">Press the new controller button for %1$s</string>
-    
-    <string name="moga_pro_connect">MOGA Pro connected!</string>
-    <string name="moga_connect">MOGA connected!</string>
     
     <string name="about_text">reicast is a multi-platform Dreamcast emulator.</string>
     <string name="revision_text">Version: %1$s [%2$s]</string>
@@ -112,6 +138,7 @@
 	<string name="drawer_shut">Menu Closed</string>	
     <string name="browser">Browser</string>
     <string name="settings">Settings</string>
+    <string name="pgconfig">PG Config</string>
     <string name="paths">Paths</string>
     <string name="input">Input</string>
     <string name="about">About</string>

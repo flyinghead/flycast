@@ -15,12 +15,12 @@ import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.Snackbar;
 import android.support.graphics.drawable.VectorDrawableCompat;
 import android.support.v4.app.Fragment;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemSelectedListener;
@@ -50,6 +50,7 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.ref.WeakReference;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -69,11 +70,11 @@ public class OptionsFragment extends Fragment {
 
 	// Container Activity must implement this interface
 	public interface OnClickListener {
-		void onMainBrowseSelected(boolean browse, String path_entry, boolean games, String query);
-		void onSettingsReload(Fragment options);
+		void onMainBrowseSelected(String path_entry, boolean games, String query);
+		void launchBIOSdetection();
 	}
 
-	@Override
+	@Override  @SuppressWarnings("deprecation")
 	public void onAttach(Activity activity) {
 		super.onAttach(activity);
 
@@ -116,8 +117,8 @@ public class OptionsFragment extends Fragment {
 		// Specialized handler for devices with an extSdCard mount for external
 		HashSet<String> extStorage = FileBrowser.getExternalMounts();
 		if (extStorage != null && !extStorage.isEmpty()) {
-			for (Iterator<String> sd = extStorage.iterator(); sd.hasNext();) {
-				String sdCardPath = sd.next().replace("mnt/media_rw", "storage");
+			for (String sd : extStorage) {
+				String sdCardPath = sd.replace("mnt/media_rw", "storage");
 				if (!sdCardPath.equals(sdcard.getAbsolutePath())) {
 					game_directory = sdCardPath;
 				}
@@ -132,7 +133,7 @@ public class OptionsFragment extends Fragment {
 
 		Button mainBrowse = (Button) getView().findViewById(R.id.browse_main_path);
 		mSpnrThemes = (Spinner) getView().findViewById(R.id.pick_button_theme);
-		new LocateThemes().execute(home_directory + "/themes");
+		new LocateThemes(this).execute(home_directory + "/themes");
 
 		final EditText editBrowse = (EditText) getView().findViewById(R.id.main_path);
 		editBrowse.setText(home_directory);
@@ -141,29 +142,32 @@ public class OptionsFragment extends Fragment {
 			public void onClick(View view) {
 				mPrefs.edit().remove(Config.pref_home).apply();
 				hideSoftKeyBoard();
-				mCallback.onMainBrowseSelected(false, home_directory, false, null);
+				mCallback.launchBIOSdetection();
 			}
 		});
-
-		editBrowse.addTextChangedListener(new TextWatcher() {
-			public void afterTextChanged(Editable s) {
-				if (editBrowse.getText() != null) {
-					home_directory = editBrowse.getText().toString();
-					if (home_directory.endsWith("/data")) {
-						home_directory.replace("/data", "");
-						showToastMessage(getActivity().getString(R.string.data_folder),
-								Snackbar.LENGTH_SHORT);
+		editBrowse.setOnEditorActionListener(new EditText.OnEditorActionListener() {
+			@Override
+			public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+				if (actionId == EditorInfo.IME_ACTION_DONE
+						|| (event.getKeyCode() == KeyEvent.KEYCODE_ENTER
+						&& event.getAction() == KeyEvent.ACTION_DOWN)) {
+					if (event == null || !event.isShiftPressed()) {
+						if (v.getText() != null) {
+							home_directory = v.getText().toString();
+							if (home_directory.endsWith("/data")) {
+								home_directory.replace("/data", "");
+								showToastMessage(getActivity().getString(R.string.data_folder),
+										Snackbar.LENGTH_SHORT);
+							}
+							mPrefs.edit().putString(Config.pref_home, home_directory).apply();
+							JNIdc.config(home_directory);
+							new LocateThemes(OptionsFragment.this).execute(home_directory + "/themes");
+						}
+						hideSoftKeyBoard();
+						return true;
 					}
-					mPrefs.edit().putString(Config.pref_home, home_directory).apply();
-					JNIdc.config(home_directory);
-					new LocateThemes().execute(home_directory + "/themes");
 				}
-			}
-
-			public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-			}
-
-			public void onTextChanged(CharSequence s, int start, int before, int count) {
+				return false;
 			}
 		});
 
@@ -174,8 +178,7 @@ public class OptionsFragment extends Fragment {
 				mPrefs.edit().putBoolean(Emulator.pref_usereios, isChecked).apply();
 			}
 		};
-		CompoundButton reios_opt = (CompoundButton) getView().findViewById(
-				R.id.reios_option);
+		CompoundButton reios_opt = (CompoundButton) getView().findViewById(R.id.reios_option);
 		reios_opt.setChecked(mPrefs.getBoolean(Emulator.pref_usereios, false));
 		reios_opt.setOnCheckedChangeListener(reios_options);
 
@@ -194,15 +197,13 @@ public class OptionsFragment extends Fragment {
 				}
 			}
 		};
-		CompoundButton details_opt = (CompoundButton) getView().findViewById(
-				R.id.details_option);
+		CompoundButton details_opt = (CompoundButton) getView().findViewById(R.id.details_option);
 		details_opt.setChecked(mPrefs.getBoolean(Config.pref_gamedetails, false));
 		details_opt.setOnCheckedChangeListener(details_options);
 
 		Button gameBrowse = (Button) getView().findViewById(R.id.browse_game_path);
 
-		final EditText editGames = (EditText) getView().findViewById(
-				R.id.game_path);
+		final EditText editGames = (EditText) getView().findViewById(R.id.game_path);
 		game_directory = mPrefs.getString(Config.pref_games, game_directory);
 		editGames.setText(game_directory);
 
@@ -213,40 +214,40 @@ public class OptionsFragment extends Fragment {
 					game_directory = editGames.getText().toString();
 				}
 				hideSoftKeyBoard();
-				mCallback.onMainBrowseSelected(false, game_directory, true, null);
+				mCallback.onMainBrowseSelected(game_directory, true, null);
 			}
 		});
-
-		editGames.addTextChangedListener(new TextWatcher() {
-			public void afterTextChanged(Editable s) {
-				if (editBrowse.getText() != null) {
-					game_directory = editGames.getText().toString();
-					mPrefs.edit().putString(Config.pref_games, game_directory).apply();
+		editGames.setOnEditorActionListener(new EditText.OnEditorActionListener() {
+			@Override
+			public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+				if (actionId == EditorInfo.IME_ACTION_DONE
+						|| (event.getKeyCode() == KeyEvent.KEYCODE_ENTER
+						&& event.getAction() == KeyEvent.ACTION_DOWN)) {
+					if (event == null || !event.isShiftPressed()) {
+						if (v.getText() != null) {
+							game_directory = v.getText().toString();
+							mPrefs.edit().putString(Config.pref_games, game_directory).apply();
+						}
+						hideSoftKeyBoard();
+						return true;
+					}
 				}
-			}
-
-			public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-			}
-
-			public void onTextChanged(CharSequence s, int start, int before, int count) {
+				return false;
 			}
 		});
 
 		String[] bios = getResources().getStringArray(R.array.bios);
 		codes = getResources().getStringArray(R.array.bioscode);
-		Spinner bios_spnr = (Spinner) getView().findViewById(
-				R.id.bios_spinner);
-		ArrayAdapter<String> biosAdapter = new ArrayAdapter<String>(
+		Spinner bios_spnr = (Spinner) getView().findViewById(R.id.bios_spinner);
+		ArrayAdapter<String> biosAdapter = new ArrayAdapter<>(
 				getActivity(), android.R.layout.simple_spinner_item, bios);
-		biosAdapter
-				.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		biosAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		bios_spnr.setAdapter(biosAdapter);
 		String region = mPrefs.getString("localized", codes[4]);
 		bios_spnr.setSelection(biosAdapter.getPosition(region), true);
 		bios_spnr.setOnItemSelectedListener(new OnItemSelectedListener() {
 
-			public void onItemSelected(AdapterView<?> parent, View view,
-									   int pos, long id) {
+			public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
 				flashBios(codes[pos]);
 			}
 
@@ -261,12 +262,10 @@ public class OptionsFragment extends Fragment {
 			public void onCheckedChanged(CompoundButton buttonView,
 										 boolean isChecked) {
 				mPrefs.edit().putBoolean(Emulator.pref_nativeact, isChecked).apply();
-				Emulator.nativeact = isChecked;
 			}
 		};
-		CompoundButton native_opt = (CompoundButton) getView().findViewById(
-				R.id.native_option);
-		native_opt.setChecked(Emulator.nativeact);
+		CompoundButton native_opt = (CompoundButton) getView().findViewById(R.id.native_option);
+		native_opt.setChecked(mPrefs.getBoolean(Emulator.pref_nativeact, Emulator.nativeact));
 		native_opt.setOnCheckedChangeListener(native_options);
 
 		OnCheckedChangeListener dynarec_options = new OnCheckedChangeListener() {
@@ -274,11 +273,9 @@ public class OptionsFragment extends Fragment {
 			public void onCheckedChanged(CompoundButton buttonView,
 										 boolean isChecked) {
 				mPrefs.edit().putBoolean(Emulator.pref_dynarecopt, isChecked).apply();
-				Emulator.dynarecopt = isChecked;
 			}
 		};
-		CompoundButton dynarec_opt = (CompoundButton) getView().findViewById(
-				R.id.dynarec_option);
+		CompoundButton dynarec_opt = (CompoundButton) getView().findViewById(R.id.dynarec_option);
 		dynarec_opt.setChecked(Emulator.dynarecopt);
 		dynarec_opt.setOnCheckedChangeListener(dynarec_options);
 
@@ -287,36 +284,27 @@ public class OptionsFragment extends Fragment {
 			public void onCheckedChanged(CompoundButton buttonView,
 										 boolean isChecked) {
 				mPrefs.edit().putBoolean(Emulator.pref_unstable, isChecked).apply();
-				Emulator.unstableopt = isChecked;
 			}
 		};
-		CompoundButton unstable_opt = (CompoundButton) getView().findViewById(
-				R.id.unstable_option);
-		if (Emulator.unstableopt) {
-			unstable_opt.setChecked(true);
-		} else {
-			unstable_opt.setChecked(false);
-		}
+		CompoundButton unstable_opt = (CompoundButton) getView().findViewById(R.id.unstable_option);
+		unstable_opt.setChecked(mPrefs.getBoolean(Emulator.pref_unstable, Emulator.unstableopt));
 		unstable_opt.setOnCheckedChangeListener(unstable_option);
 
-		String[] cables = getResources().getStringArray(
-				R.array.cable);
-		Spinner cable_spnr = (Spinner) getView().findViewById(
-				R.id.cable_spinner);
-		ArrayAdapter<String> cableAdapter = new ArrayAdapter<String>(
+		String[] cables = getResources().getStringArray(R.array.cable);
+		Spinner cable_spnr = (Spinner) getView().findViewById(R.id.cable_spinner);
+		ArrayAdapter<String> cableAdapter = new ArrayAdapter<>(
 				getActivity(), R.layout.spinner_selected, cables);
-		cableAdapter
-				.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		cableAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		cable_spnr.setAdapter(cableAdapter);
 
-		cable_spnr.setSelection(Emulator.cable - 1, true);
+		cable_spnr.setSelection(mPrefs.getInt(
+				Emulator.pref_cable, Emulator.cable) - 1, true);
 
 		cable_spnr.setOnItemSelectedListener(new OnItemSelectedListener() {
 
 			public void onItemSelected(AdapterView<?> parent, View view,
 									   int pos, long id) {
 				mPrefs.edit().putInt(Emulator.pref_cable, pos + 1).apply();
-				Emulator.cable = pos + 1;
 			}
 
 			public void onNothingSelected(AdapterView<?> arg0) {
@@ -325,19 +313,16 @@ public class OptionsFragment extends Fragment {
 
 		});
 
-//		String[] regions = ArrayUtils.remove(parentActivity.getResources()
-//				.getStringArray(R.array.region), 4);
 		String[] regions = getResources().getStringArray(R.array.region);
 		Spinner region_spnr = (Spinner) getView().findViewById(R.id.region_spinner);
-		ArrayAdapter<String> regionAdapter = new ArrayAdapter<String>(
+		ArrayAdapter<String> regionAdapter = new ArrayAdapter<>(
 				getActivity(), R.layout.spinner_selected, regions);
 		regionAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		region_spnr.setAdapter(regionAdapter);
-		region_spnr.setSelection(Emulator.dcregion, true);
+		region_spnr.setSelection(mPrefs.getInt(Emulator.pref_dcregion, Emulator.dcregion), true);
 		region_spnr.setOnItemSelectedListener(new OnItemSelectedListener() {
 			public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
 				mPrefs.edit().putInt(Emulator.pref_dcregion, pos).apply();
-				Emulator.dcregion = pos;
 
 			}
 
@@ -348,13 +333,13 @@ public class OptionsFragment extends Fragment {
 
 		String[] broadcasts = getResources().getStringArray(R.array.broadcast);
 		Spinner broadcast_spnr = (Spinner) getView().findViewById(R.id.broadcast_spinner);
-		ArrayAdapter<String> broadcastAdapter = new ArrayAdapter<String>(
+		ArrayAdapter<String> broadcastAdapter = new ArrayAdapter<>(
 				getActivity(), R.layout.spinner_selected, broadcasts);
 		broadcastAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		broadcast_spnr.setAdapter(broadcastAdapter);
 
 		int select = 0;
-		String cast = String.valueOf(Emulator.broadcast);
+		String cast = String.valueOf(mPrefs.getInt(Emulator.pref_broadcast, Emulator.broadcast));
 		for (int i = 0; i < broadcasts.length; i++) {
 			if (broadcasts[i].startsWith(cast + " - "))
 				select = i;
@@ -367,7 +352,6 @@ public class OptionsFragment extends Fragment {
 				String item = parent.getItemAtPosition(pos).toString();
 				String selection = item.substring(0, item.indexOf(" - "));
 				mPrefs.edit().putInt(Emulator.pref_broadcast, Integer.parseInt(selection)).apply();
-				Emulator.broadcast = Integer.parseInt(selection);
 
 			}
 
@@ -380,40 +364,39 @@ public class OptionsFragment extends Fragment {
 
 			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
 				mPrefs.edit().putBoolean(Emulator.pref_limitfps, isChecked).apply();
-				Emulator.limitfps = isChecked;
 			}
 		};
 		CompoundButton limit_fps = (CompoundButton) getView().findViewById(R.id.limitfps_option);
-		limit_fps.setChecked(Emulator.limitfps);
+		limit_fps.setChecked(mPrefs.getBoolean(Emulator.pref_limitfps, Emulator.limitfps));
 		limit_fps.setOnCheckedChangeListener(limitfps_option);
 
 		OnCheckedChangeListener mipmaps_option = new OnCheckedChangeListener() {
 
 			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
 				mPrefs.edit().putBoolean(Emulator.pref_mipmaps, isChecked).apply();
-				Emulator.mipmaps = isChecked;
 			}
 		};
 		CompoundButton mipmap_opt = (CompoundButton) getView().findViewById(R.id.mipmaps_option);
-		mipmap_opt.setChecked(Emulator.mipmaps);
+		mipmap_opt.setChecked(mPrefs.getBoolean(Emulator.pref_mipmaps, Emulator.mipmaps));
 		mipmap_opt.setOnCheckedChangeListener(mipmaps_option);
 
 		OnCheckedChangeListener full_screen = new OnCheckedChangeListener() {
 
 			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
 				mPrefs.edit().putBoolean(Emulator.pref_widescreen, isChecked).apply();
-				Emulator.widescreen = isChecked;
 			}
 		};
 		CompoundButton stretch_view = (CompoundButton) getView().findViewById(R.id.stretch_option);
-		stretch_view.setChecked(Emulator.widescreen);
+		stretch_view.setChecked(mPrefs.getBoolean(Emulator.pref_widescreen, Emulator.widescreen));
 		stretch_view.setOnCheckedChangeListener(full_screen);
 
+		int frameskip = mPrefs.getInt(Emulator.pref_frameskip, Emulator.frameskip);
+
 		final EditText mainFrames = (EditText) getView().findViewById(R.id.current_frames);
-		mainFrames.setText(String.valueOf(Emulator.frameskip));
+		mainFrames.setText(String.valueOf(frameskip));
 
 		final SeekBar frameSeek = (SeekBar) getView().findViewById(R.id.frame_seekbar);
-		frameSeek.setProgress(Emulator.frameskip);
+		frameSeek.setProgress(frameskip);
 		frameSeek.setIndeterminate(false);
 		frameSeek.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
 			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -427,24 +410,25 @@ public class OptionsFragment extends Fragment {
 			public void onStopTrackingTouch(SeekBar seekBar) {
 				int progress = seekBar.getProgress();
 				mPrefs.edit().putInt(Emulator.pref_frameskip, progress).apply();
-				Emulator.frameskip = progress;
 			}
 		});
-		mainFrames.addTextChangedListener(new TextWatcher() {
-			public void afterTextChanged(Editable s) {
-				Editable frameText = mainFrames.getText();
-				if (frameText != null) {
-					int frames = Integer.parseInt(frameText.toString());
-					frameSeek.setProgress(frames);
-					mPrefs.edit().putInt(Emulator.pref_frameskip, frames).apply();
-					Emulator.frameskip = frames;
+		mainFrames.setOnEditorActionListener(new EditText.OnEditorActionListener() {
+			@Override
+			public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+				if (actionId == EditorInfo.IME_ACTION_DONE
+						|| (event.getKeyCode() == KeyEvent.KEYCODE_ENTER
+						&& event.getAction() == KeyEvent.ACTION_DOWN)) {
+					if (event == null || !event.isShiftPressed()) {
+						if (v.getText() != null) {
+							int frames = Integer.parseInt(v.getText().toString());
+							frameSeek.setProgress(frames);
+							mPrefs.edit().putInt(Emulator.pref_frameskip, frames).apply();
+						}
+						hideSoftKeyBoard();
+						return true;
+					}
 				}
-			}
-
-			public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-			}
-
-			public void onTextChanged(CharSequence s, int start, int before, int count) {
+				return false;
 			}
 		});
 
@@ -452,64 +436,56 @@ public class OptionsFragment extends Fragment {
 
 			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
 				mPrefs.edit().putBoolean(Emulator.pref_pvrrender, isChecked).apply();
-				Emulator.pvrrender = isChecked;
 			}
 		};
 		CompoundButton pvr_render = (CompoundButton) getView().findViewById(R.id.render_option);
-		pvr_render.setChecked(Emulator.pvrrender);
+		pvr_render.setChecked(mPrefs.getBoolean(Emulator.pref_pvrrender, Emulator.pvrrender));
 		pvr_render.setOnCheckedChangeListener(pvr_rendering);
 
 		OnCheckedChangeListener synchronous = new OnCheckedChangeListener() {
 			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
 				mPrefs.edit().putBoolean(Emulator.pref_syncedrender, isChecked).apply();
-				Emulator.syncedrender = isChecked;
 			}
 		};
 		CompoundButton synced_render = (CompoundButton) getView().findViewById(R.id.syncrender_option);
-		synced_render.setChecked(Emulator.syncedrender);
+		synced_render.setChecked(mPrefs.getBoolean(Emulator.pref_syncedrender, Emulator.syncedrender));
 		synced_render.setOnCheckedChangeListener(synchronous);
 
-		OnCheckedChangeListener mod_volumes = new OnCheckedChangeListener() {
+		final EditText bootdiskEdit = (EditText) getView().findViewById(R.id.boot_disk);
+		bootdiskEdit.setText(mPrefs.getString(Emulator.pref_bootdisk, Emulator.bootdisk));
 
-			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-				mPrefs.edit().putBoolean(Emulator.pref_modvols, isChecked).apply();
-				Emulator.modvols = isChecked;
-			}
-		};
-		CompoundButton modifier_volumes = (CompoundButton) getView().findViewById(R.id.modvols_option);
-		modifier_volumes.setChecked(Emulator.modvols);
-		modifier_volumes.setOnCheckedChangeListener(mod_volumes);
-
-//		final EditText bootdiskEdit = (EditText) getView().findViewById(R.id.boot_disk);
-//		String disk = Emulator.bootdisk;
-//		if (disk != null && disk.contains("/")) {
-//			bootdiskEdit.setText(disk.substring(disk.lastIndexOf("/"),
-//					disk.length()));
-//		} else {
-//			bootdiskEdit.setText(disk);
-//		}
-//
-//		bootdiskEdit.addTextChangedListener(new TextWatcher() {
-//			public void afterTextChanged(Editable s) {
-//				if (bootdiskEdit.getText() != null) {
-//					String disk = bootdiskEdit.getText().toString();
-//					if (disk.contains("/")) {
-//						bootdiskEdit.setText(disk.substring(disk.lastIndexOf("/"),
-//								disk.length()));
-//					} else {
-//						bootdiskEdit.setText(disk);
-//					}
-//					mPrefs.edit().putString(Emulator.pref_bootdisk, disk).apply();
-//					Emulator.bootdisk = disk;
-//				}
-//			}
-//
-//			public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-//			}
-//
-//			public void onTextChanged(CharSequence s, int start, int before, int count) {
-//			}
-//		});
+		bootdiskEdit.setOnEditorActionListener(new EditText.OnEditorActionListener() {
+					@Override
+					public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+						if (actionId == EditorInfo.IME_ACTION_DONE
+								|| (event.getKeyCode() == KeyEvent.KEYCODE_ENTER
+								&& event.getAction() == KeyEvent.ACTION_DOWN)) {
+							if (event == null || !event.isShiftPressed()) {
+								String disk = null;
+								if (v.getText() != null) {
+									disk = v.getText().toString();
+									if (disk.equals("") || disk.substring(
+											disk.lastIndexOf("/") + 1).length() == 0) {
+										disk = null;
+									} else {
+										if (!disk.contains("/"))
+											disk = game_directory + "/" + disk;
+										if (!new File(disk).exists())
+											disk = null;
+									}
+									v.setText(disk);
+								}
+								if (disk == null)
+									mPrefs.edit().remove(Emulator.pref_bootdisk).apply();
+								else
+									mPrefs.edit().putString(Emulator.pref_bootdisk, disk).apply();
+								hideSoftKeyBoard();
+								return true;
+							}
+						}
+						return false;
+					}
+				});
 
 		final CompoundButton fps_opt = (CompoundButton) getView().findViewById(R.id.fps_option);
 		OnCheckedChangeListener fps_options = new OnCheckedChangeListener() {
@@ -541,7 +517,6 @@ public class OptionsFragment extends Fragment {
 
 			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
 				mPrefs.edit().putBoolean(Emulator.pref_nosound, isChecked).apply();
-				Emulator.nosound = isChecked;
 			}
 		};
 		boolean sound = mPrefs.getBoolean(Emulator.pref_nosound, false);
@@ -551,7 +526,7 @@ public class OptionsFragment extends Fragment {
 		String[] depths = getResources().getStringArray(R.array.depth);
 
 		Spinner depth_spnr = (Spinner) getView().findViewById(R.id.depth_spinner);
-		ArrayAdapter<String> depthAdapter = new ArrayAdapter<String>(
+		ArrayAdapter<String> depthAdapter = new ArrayAdapter<>(
 				getActivity(), R.layout.spinner_selected, depths);
 		depthAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		depth_spnr.setAdapter(depthAdapter);
@@ -571,7 +546,7 @@ public class OptionsFragment extends Fragment {
 			}
 		});
 
-		Button resetEmu = (Button) getView().findViewById(R.id.reset_emu_settings);
+		Button resetEmu = (Button) getView().findViewById(R.id.reset_emu_btn);
 		resetEmu.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View view) {
 				AlertDialog.Builder b = new AlertDialog.Builder(getActivity());
@@ -589,23 +564,24 @@ public class OptionsFragment extends Fragment {
 		});
 	}
 
-	private final class LocateThemes extends AsyncTask<String, Integer, List<File>> {
+	private static class LocateThemes extends AsyncTask<String, Integer, List<File>> {
+		private WeakReference<OptionsFragment> options;
+
+		LocateThemes(OptionsFragment context) {
+			options = new WeakReference<>(context);
+		}
+
 		@Override
 		protected List<File> doInBackground(String... paths) {
 			File storage = new File(paths[0]);
-			String[] mediaTypes = getResources().getStringArray(R.array.themes);
+			String[] mediaTypes = options.get().getResources().getStringArray(R.array.themes);
 			FilenameFilter[] filter = new FilenameFilter[mediaTypes.length];
 			int i = 0;
 			for (final String type : mediaTypes) {
 				filter[i] = new FilenameFilter() {
 					public boolean accept(File dir, String name) {
-						if (dir.getName().startsWith(".")
-								|| name.startsWith(".")) {
-							return false;
-						} else {
-							return StringUtils.endsWithIgnoreCase(name, "."
-									+ type);
-						}
+						return !dir.getName().startsWith(".") && !name.startsWith(".")
+								&& StringUtils.endsWithIgnoreCase(name, "." + type);
 					}
 				};
 				i++;
@@ -623,19 +599,19 @@ public class OptionsFragment extends Fragment {
 					themes[i] = items.get(i).getName();
 				}
 				themes[items.size()] = "None";
-				ArrayAdapter<String> themeAdapter = new ArrayAdapter<String>(
-						getActivity(), android.R.layout.simple_spinner_item, themes);
+				ArrayAdapter<String> themeAdapter = new ArrayAdapter<>(
+						options.get().getActivity(), android.R.layout.simple_spinner_item, themes);
 				themeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-				mSpnrThemes.setAdapter(themeAdapter);
-				mSpnrThemes.setOnItemSelectedListener(new OnItemSelectedListener() {
+				options.get().mSpnrThemes.setAdapter(themeAdapter);
+				options.get().mSpnrThemes.setOnItemSelectedListener(new OnItemSelectedListener() {
 					@Override
 					public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
 						String theme = String.valueOf(parentView.getItemAtPosition(position));
 						if (theme.equals("None")) {
-							mPrefs.edit().remove(Config.pref_theme).apply();
+							options.get().mPrefs.edit().remove(Config.pref_theme).apply();
 						} else {
-							String theme_path = home_directory + "/themes/" + theme;
-							mPrefs.edit().putString(Config.pref_theme, theme_path).apply();
+							String theme_path = options.get().home_directory + "/themes/" + theme;
+							options.get().mPrefs.edit().putString(Config.pref_theme, theme_path).apply();
 						}
 					}
 					@Override
@@ -644,16 +620,20 @@ public class OptionsFragment extends Fragment {
 					}
 				});
 			} else {
-				mSpnrThemes.setEnabled(false);
+				options.get().mSpnrThemes.setEnabled(false);
 			}
 		}
 	}
 
 	private void hideSoftKeyBoard() {
-		InputMethodManager iMm = (InputMethodManager) getActivity()
-				.getSystemService(Context.INPUT_METHOD_SERVICE);
-		if (iMm != null && iMm.isAcceptingText()) {
-			iMm.hideSoftInputFromWindow(getActivity().getCurrentFocus().getWindowToken(), 0);
+		try {
+			InputMethodManager iMm = (InputMethodManager) getActivity()
+					.getSystemService(Context.INPUT_METHOD_SERVICE);
+			if (iMm != null && iMm.isAcceptingText()) {
+				iMm.hideSoftInputFromWindow(getActivity().getCurrentFocus().getWindowToken(), 0);
+			}
+		} catch (NullPointerException e) {
+			// Keyboard may still be visible
 		}
 	}
 
@@ -720,15 +700,14 @@ public class OptionsFragment extends Fragment {
 		mPrefs.edit().remove(Emulator.pref_frameskip).apply();
 		mPrefs.edit().remove(Emulator.pref_pvrrender).apply();
 		mPrefs.edit().remove(Emulator.pref_syncedrender).apply();
-		mPrefs.edit().remove(Emulator.pref_modvols).apply();
-//		mPrefs.edit().remove(Emulator.pref_bootdisk).apply();
+		mPrefs.edit().remove(Emulator.pref_bootdisk).apply();
 		mPrefs.edit().remove(Config.pref_showfps).apply();
 		mPrefs.edit().remove(Config.pref_rendertype).apply();
 		mPrefs.edit().remove(Emulator.pref_nosound).apply();
 		mPrefs.edit().remove(Config.pref_renderdepth).apply();
 		mPrefs.edit().remove(Config.pref_theme).apply();
 
-		mCallback.onSettingsReload(this);
+		getActivity().finish();
 	}
 
 	private void showToastMessage(String message, int duration) {

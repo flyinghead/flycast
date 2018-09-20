@@ -68,7 +68,7 @@ Disc* cdi_parse(const wchar* file)
 				case 2 :
 				default: printf("Mode2/"); break;
 				}
-				printf("%d  ",track.sector_size);
+				printf("%lu  ",track.sector_size);
 				
 				printf("Pregap: %-3ld  ",track.pregap_length);
 				printf("Size: %-6ld  ",track.length);
@@ -122,7 +122,7 @@ Disc* cdi_parse(const wchar* file)
 					else
 					{
 						
-						printf("Track position: %d\n",track.position + track.pregap_length * track.sector_size);
+						printf("Track position: %lu\n",track.position + track.pregap_length * track.sector_size);
 						core_fseek(fsource, track.position, SEEK_SET);
 						//     fseek(fsource, track->pregap_length * track->sector_size, SEEK_CUR);
 						//     fseek(fsource, track->length * track->sector_size, SEEK_CUR);

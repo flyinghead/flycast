@@ -1,12 +1,12 @@
 package com.reicast.emulator.emu;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.os.Environment;
 import android.view.Gravity;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -25,7 +25,6 @@ import com.reicast.emulator.R;
 import com.reicast.emulator.config.Config;
 import com.reicast.emulator.periph.VmuLcd;
 
-import java.io.File;
 import java.util.Vector;
 
 public class OnScreenMenu {
@@ -46,12 +45,12 @@ public class OnScreenMenu {
 
 	public OnScreenMenu(Activity context, SharedPreferences prefs) {
 		if (context instanceof GL2JNINative) {
-			this.mContext = (GL2JNINative) context;
+			this.mContext = context;
 		}
 		if (context instanceof GL2JNIActivity) {
-			this.mContext = (GL2JNIActivity) context;
+			this.mContext = context;
 		}
-		popups = new Vector<PopupWindow>();
+		popups = new Vector<>();
 		if (prefs != null) {
 			masteraudio = !Emulator.nosound;
 			audio = masteraudio;
@@ -70,7 +69,7 @@ public class OnScreenMenu {
 		});
 	}
 
-	void displayDebugPopup(final PopupWindow popUp) {
+	private void displayDebugPopup() {
 		if (mContext instanceof GL2JNINative) {
 			((GL2JNINative) mContext).displayDebug(new DebugPopup(mContext));
 		}
@@ -116,8 +115,9 @@ public class OnScreenMenu {
 
 	public class DebugPopup extends PopupWindow {
 
-		public DebugPopup(Context c) {
+	    DebugPopup(Context c) {
 			super(c);
+            //noinspection deprecation
 			setBackgroundDrawable(new BitmapDrawable());
 
 			View shell = mContext.getLayoutInflater().inflate(R.layout.menu_popup_debug, null);
@@ -173,7 +173,7 @@ public class OnScreenMenu {
 		}
 	}
 
-	void displayConfigPopup(final PopupWindow popUp) {
+	private void displayConfigPopup() {
 		if (mContext instanceof GL2JNINative) {
 			((GL2JNINative) mContext).displayConfig(new ConfigPopup(mContext));
 		}
@@ -191,8 +191,9 @@ public class OnScreenMenu {
 		private Button fdown;
 		private Button fup;
 
-		public ConfigPopup(Context c) {
+		ConfigPopup(Context c) {
 			super(c);
+            //noinspection deprecation
 			setBackgroundDrawable(new BitmapDrawable());
 
 			View shell = mContext.getLayoutInflater().inflate(R.layout.menu_popup_config, null);
@@ -473,7 +474,8 @@ public class OnScreenMenu {
 		private LinearLayout vmuIcon;
 		LinearLayout.LayoutParams params;
 
-		private LinearLayout.LayoutParams setVmuParams() {
+		@SuppressLint("RtlHardcoded")
+        private LinearLayout.LayoutParams setVmuParams() {
 			int vpX = getPixelsFromDp(72, mContext);
 			int vpY = getPixelsFromDp(52, mContext);
 			LinearLayout.LayoutParams vmuParams = new LinearLayout.LayoutParams(
@@ -486,6 +488,7 @@ public class OnScreenMenu {
 
 		public MainPopup(Context c) {
 			super(c);
+			//noinspection deprecation
 			setBackgroundDrawable(new BitmapDrawable());
 
 			View shell = mContext.getLayoutInflater().inflate(R.layout.menu_popup_main, null);
@@ -498,7 +501,8 @@ public class OnScreenMenu {
 
 			OnClickListener clickDisk = new OnClickListener() {
 				public void onClick(View v) {
-					JNIdc.diskSwap(null);
+					if (Emulator.bootdisk != null)
+						JNIdc.diskSwap(null);
 					dismiss();
 				}
 			};
@@ -516,7 +520,7 @@ public class OnScreenMenu {
 
 			OnClickListener clickOptions = new OnClickListener() {
 				public void onClick(View v) {
-					displayConfigPopup(MainPopup.this);
+					displayConfigPopup();
 					popups.remove(MainPopup.this);
 					dismiss();
 				}
@@ -526,7 +530,7 @@ public class OnScreenMenu {
 
 			OnClickListener clickDebugging = new OnClickListener() {
 				public void onClick(View v) {
-					displayDebugPopup(MainPopup.this);
+					displayDebugPopup();
 					popups.remove(MainPopup.this);
 					dismiss();
 				}
@@ -553,11 +557,11 @@ public class OnScreenMenu {
 			OnClickListener clickExit = new OnClickListener() {
 				public void onClick(View v) {
 					if (Config.externalIntent) {
-						((Activity) mContext).finish();
+						mContext.finish();
 					} else {
 						Intent inte = new Intent(mContext, MainActivity.class);
 						mContext.startActivity(inte);
-						((Activity) mContext).finish();
+						mContext.finish();
 					}
 				}
 			};

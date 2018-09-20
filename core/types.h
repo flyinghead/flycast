@@ -635,8 +635,8 @@ struct settings_t
 		bool Enable;
 		bool idleskip;
 		bool unstable_opt;
+		bool safemode;
 		bool disable_nvmem;
-		bool DisableDivMatching;
 	} dynarec;
 	
 	struct
@@ -663,7 +663,7 @@ struct settings_t
 		u32 GlobalMute;
 		u32 DSPEnabled;		//0 -> no, 1 -> yes
 		u32 NoBatch;
-        u32 NoSound;        //0 ->sound, 1 -> no sound
+		u32 NoSound;        //0 ->sound, 1 -> no sound
 	} aica;
 
 #if USE_OMX
@@ -679,7 +679,7 @@ struct settings_t
 	{
 		u32 Width;
 		u32 Height;
-		bool Maintain_Aspect;
+		bool Keep_Aspect;
 	} dispmanx;
 #endif
 
@@ -726,7 +726,7 @@ struct settings_t
 		u32 rend;
 		
 		u32 MaxThreads;
-		u32 SynchronousRendering;
+		u32 SynchronousRender;
 
 		string HashLogFile;
 		string HashCheckFile;
@@ -750,6 +750,7 @@ struct settings_t
 extern settings_t settings;
 
 void LoadSettings();
+void LoadCustom();
 void SaveSettings();
 u32 GetRTC_now();
 extern u32 patchRB;

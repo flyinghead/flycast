@@ -49,7 +49,6 @@
     <string name="select_software">Программный рендеринг</string>
     <string name="select_sound">Без эмуляции звука</string>
     <string name="select_depth">Глубина рендеринга</string>
-    <string name="default_disk">Диск по умолчанию</string>
     
     <string name="games_listing">Список игр</string>
     
@@ -68,7 +67,7 @@
     <string name="controller_b">Контроллер B</string>
     <string name="controller_c">Контроллер C</string>
     <string name="controller_d">Контроллер D</string>
-    <string name="controller_not_connected">Контроллер не подключен</string>
+    <string name="controller_not_connected">Контроллер не подключен %1$s</string>
     <string name="controller_none_selected">Контроллер не выбран</string>
     <string name="select">Назначить</string>
     <string name="remove">Удалить</string>
@@ -80,14 +79,10 @@
     <string name="modified_layout">Разрешить изменение раскладки</string>
     <string name="controller_compat">Режим совместимости</string>
     <string name="controller_unavailable">Обнаружен Gamepad IME!\nПожалуйста, отключите нативный интерфейс</string>
-    <string name="mic_in_port_2">Подключить микрофон к порту 2</string>
-    
+
     <string name="customize_physical_controls">Настройка аппаратных кнопок</string>
     <string name="map_keycode_title">Настройка контроллера</string>
     <string name="map_keycode_message">Нажмите кнопку контроллера для %1$s</string>
-    
-    <string name="moga_pro_connect">Подключен MOGA Pro</string>
-    <string name="moga_connect">Подключен MOGA</string>
 
     <string name="about_text">Reicast - мультиплатформенный эмулятор Dreamcast</string>
     <string name="revision_text">Версия: %1$s [%2$s]</string>

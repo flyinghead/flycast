@@ -1,12 +1,15 @@
 .DS_Store
 *.class
 *.orig
+*build_obj
+Workdir/data
+Workdir/reicast*
+Workdir/vmu*
+Workdir/webui*
+Workdir/emu.cfg
+Workdir/lib*ant.properties
 
-bin/
-gen/
-obj/
-
-# iOS/Xcode general stuff
+# iOS General
 .DS_Store
 */build/*
 **/build/*
@@ -39,17 +42,30 @@ Workdir/vmu*
 Workdir/webui*
 Workdir/emu.cfg
 Workdir/lib*ant.properties
+reicast-ios.xccheckout
 
-# Linux stuff
+# Linux General
 shell/linux/.map
 shell/linux/nosym-reicast.elf
 shell/linux/reicast.elf
 
-reicast-ios.xccheckout
+# Visual Studio
+generated
+.vs
+
+# Android General
+bin/
+gen/
+obj/
+build/*
+*.so
+local.properties
+ant.properties
 
 # Android Studio
 .gradle
 .idea
 *.iml
 .externalNativeBuild
+gradle.properties
 shell/android-studio/reicast/src/main/assets/build

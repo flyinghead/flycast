@@ -46,7 +46,6 @@
     <string name="select_software">Forçar Renderização por Software</string>
     <string name="select_sound">Desabilitar Som do Emulador</string>
     <string name="select_depth">Profundidade da Renderização</string>
-    <string name="default_disk">Disco padrão</string>
 
     <string name="games_listing">Lista de jogos</string>
 
@@ -65,7 +64,7 @@
     <string name="controller_b">Controle B</string>
     <string name="controller_c">Controle C</string>
     <string name="controller_d">Controle D</string>
-    <string name="controller_not_connected">Controle não está Conectado</string>
+    <string name="controller_not_connected">Controle não está Conectado %1$s</string>
     <string name="controller_none_selected">Nenhum controle selecionado</string>
     <string name="select">Selecionar</string>
     <string name="remove">Remover</string>
@@ -76,15 +75,11 @@
     <string name="joystick_layout">Usar Joystick para entrada D-Pad</string>	
     <string name="modified_layout">Habilitar layout de botões personalizado</string>
     <string name="controller_compat">Habilitar modo de compatibilidade</string>
-    <string name="controller_unavailable">Gamepad IME detectado!\nPor favor, desative a interface nativa</string>	
-	<string name="mic_in_port_2">Microfone conectado na porta 2</string>
-    
+    <string name="controller_unavailable">Gamepad IME detectado!\nPor favor, desative a interface nativa</string>
+
     <string name="customize_physical_controls">Personalizar controles físicos</string>
     <string name="map_keycode_title">Modificar controle</string>
     <string name="map_keycode_message">Pressione o novo botão para o controle %1$s</string>
-    
-    <string name="moga_pro_connect">MOGA Pro Conectado!</string>
-    <string name="moga_connect">MOGA Conectado!</string>
 
     <string name="about_text">reicast é um emulador multi-plataforma de Dreamcast</string>
     <string name="revision_text">Versão: %1$s [%2$s]</string>

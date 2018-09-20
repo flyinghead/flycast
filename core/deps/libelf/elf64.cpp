@@ -157,7 +157,7 @@ elf64_getSectionName(void *elfFile, int i)
 	struct Elf64_Shdr *sections = elf64_getSectionTable((Elf64_Header*)elfFile);
 	char           *str_table = elf64_getSegmentStringTable((Elf64_Header*)elfFile);
 	if (str_table == NULL) {
-		return "<corrupted>";
+		return (char*)"<corrupted>";
 	} else {
 		return str_table + sections[i].sh_name;
 	}

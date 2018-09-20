@@ -1,6 +1,5 @@
 #include <EGL/egl.h>
 #include <GLES2/gl2.h>
-#include <GLES2/gl2ext.h>
 extern "C" {
 #include "deps/libpng/png.h"
 }
@@ -70,8 +69,7 @@ GLuint loadTextureFromPNG(const char* filename, int &width, int &height) {
   }
 
   //create png struct
-  png_structp png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL,
-      NULL, NULL);
+  png_structp png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
   if (!png_ptr) {
     zip_fclose(file);
     LOGE("Unable to create png struct : %s", filename);
@@ -119,8 +117,7 @@ GLuint loadTextureFromPNG(const char* filename, int &width, int &height) {
   png_uint_32 twidth, theight;
 
   // get info about png
-  png_get_IHDR(png_ptr, info_ptr, &twidth, &theight, &bit_depth, &color_type,
-      NULL, NULL, NULL);
+  png_get_IHDR(png_ptr, info_ptr, &twidth, &theight, &bit_depth, &color_type, NULL, NULL, NULL);
 
   //update width and height based on png info
   width = twidth;
@@ -164,7 +161,7 @@ GLuint loadTextureFromPNG(const char* filename, int &width, int &height) {
   glGenTextures(1, &texture);
   glBindTexture(GL_TEXTURE_2D, texture);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA,
-      GL_UNSIGNED_BYTE, (GLvoid*) image_data);
+               GL_UNSIGNED_BYTE, (GLvoid*) image_data);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
   //clean up memory and close stuff
