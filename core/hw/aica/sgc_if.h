@@ -38,6 +38,19 @@ union fp_20_12
 	u32 full;
 };
 
+struct DSP_OUT_VOL_REG
+{
+	//--	EFSDL[3:0]	--	EFPAN[4:0]
+
+	u32 EFPAN:5;
+	u32 res_1:3;
+
+	u32 EFSDL:4;
+	u32 res_2:4;
+
+	u32 pad:16;
+};
+
 //#define SAMPLE_TYPE_SHIFT (8)
 typedef s32 SampleType;
 
@@ -45,3 +58,5 @@ void ReadCommonReg(u32 reg,bool byte);
 void WriteCommonReg8(u32 reg,u32 data);
 #define clip(x,min,max) if ((x)<(min)) (x)=(min); if ((x)>(max)) (x)=(max);
 #define clip16(x) clip(x,-32768,32767)
+bool channel_serialize(void **data, unsigned int *total_size);
+bool channel_unserialize(void **data, unsigned int *total_size);

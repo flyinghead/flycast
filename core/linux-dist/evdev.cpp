@@ -28,6 +28,8 @@
 	};
 
 	void dc_stop(void);
+	bool dc_loadstate(void);
+	bool dc_savestate(void);
 
 	void load_libevdev()
 	{
@@ -230,6 +232,8 @@
 			load_keycode(&mf, "dreamcast", "btn_z"),
 			load_keycode(&mf, "dreamcast", "btn_start"),
 			load_keycode(&mf, "emulator",  "btn_escape"),
+			load_keycode(&mf, "emulator",  "btn_loadstate"),
+			load_keycode(&mf, "emulator",  "btn_savestate"),
 			load_keycode(&mf, "dreamcast", "btn_dpad1_left"),
 			load_keycode(&mf, "dreamcast", "btn_dpad1_right"),
 			load_keycode(&mf, "dreamcast", "btn_dpad1_up"),
@@ -273,6 +277,8 @@
 			|| (mapping->Btn_Z == button)
 			|| (mapping->Btn_Start == button)
 			|| (mapping->Btn_Escape == button)
+			|| (mapping->Btn_LoadState == button)
+			|| (mapping->Btn_SaveState == button)
 			|| (mapping->Btn_DPad_Left == button)
 			|| (mapping->Btn_DPad_Right == button)
 			|| (mapping->Btn_DPad_Up == button)
@@ -296,6 +302,8 @@
 			|| input_evdev_button_assigned(mapping1, mapping2->Btn_Z)
 			|| input_evdev_button_assigned(mapping1, mapping2->Btn_Start)
 			|| input_evdev_button_assigned(mapping1, mapping2->Btn_Escape)
+			|| input_evdev_button_assigned(mapping1, mapping2->Btn_LoadState)
+			|| input_evdev_button_assigned(mapping1, mapping2->Btn_SaveState)
 			|| input_evdev_button_assigned(mapping1, mapping2->Btn_DPad_Left)
 			|| input_evdev_button_assigned(mapping1, mapping2->Btn_DPad_Right)
 			|| input_evdev_button_assigned(mapping1, mapping2->Btn_DPad_Up)
@@ -537,6 +545,10 @@
 						SET_FLAG(kcode[port], DC_BTN_START, ie.value);
 					} else if (ie.code == controller->mapping->Btn_Escape) {
 						dc_stop();
+					} else if (ie.code == controller->mapping->Btn_LoadState) {
+						dc_loadstate();
+					} else if (ie.code == controller->mapping->Btn_SaveState) {
+						dc_savestate();
 					} else if (ie.code == controller->mapping->Btn_DPad_Left) {
 						SET_FLAG(kcode[port], DC_DPAD_LEFT, ie.value);
 					} else if (ie.code == controller->mapping->Btn_DPad_Right) {

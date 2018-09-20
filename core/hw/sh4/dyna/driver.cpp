@@ -382,6 +382,11 @@ void recSh4_Stop()
 	Sh4_int_Stop();
 }
 
+void recSh4_Start()
+{
+	Sh4_int_Start();
+}
+
 void recSh4_Step()
 {
 	Sh4_int_Step();
@@ -485,6 +490,7 @@ void Get_Sh4Recompiler(sh4_if* rv)
 {
 	rv->Run = recSh4_Run;
 	rv->Stop = recSh4_Stop;
+	rv->Start = recSh4_Start;
 	rv->Step = recSh4_Step;
 	rv->Skip = recSh4_Skip;
 	rv->Reset = recSh4_Reset;

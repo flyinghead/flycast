@@ -95,18 +95,6 @@ void AICA_Sample();
 }
 s16 pl=0,pr=0;
 
-struct DSP_OUT_VOL_REG
-{
-	//--	EFSDL[3:0]	--	EFPAN[4:0]
-	
-	u32 EFPAN:5;
-	u32 res_1:3;
-
-	u32 EFSDL:4;
-	u32 res_2:4;
-
-	u32 pad:16;
-};
 DSP_OUT_VOL_REG* dsp_out_vol;
 
 #pragma pack (1)
@@ -326,13 +314,17 @@ struct ChannelEx
 	void (* StepStream)(ChannelEx* ch);
 	void (* StepStreamInitial)(ChannelEx* ch);
 	
+	u8 step_stream_lut1=0 ;
+	u8 step_stream_lut2=0 ;
+	u8 step_stream_lut3=0 ;
+
 	struct
 	{
 		s32 val;
 		__forceinline s32 GetValue() { return val>>AEG_STEP_BITS;}
 		void SetValue(u32 aegb) { val=aegb<<AEG_STEP_BITS; }
 
-		_EG_state state;
+		_EG_state state=EG_Attack;
 
 		u32 AttackRate;
 		u32 Decay1Rate;
@@ -344,7 +336,7 @@ struct ChannelEx
 	struct
 	{
 		s32 value;
-		_EG_state state;
+		_EG_state state=EG_Attack;
 	} FEG;//i have to figure out how this works w/ AEG and channel state, and the iir values
 	
 	struct 
@@ -356,6 +348,8 @@ struct ChannelEx
 		u8 alfo_shft;
 		u8 plfo;
 		u8 plfo_shft;
+		u8 alfo_calc_lut=0 ;
+		u8 plfo_calc_lut=0 ;
 		void (* alfo_calc)(ChannelEx* ch);
 		void (* plfo_calc)(ChannelEx* ch);
 		__forceinline void Step(ChannelEx* ch) { counter--;if (counter==0) { state++; counter=start_value; alfo_calc(ch);plfo_calc(ch); } }
@@ -365,6 +359,7 @@ struct ChannelEx
 
 	bool enabled;	//set to false to 'freeze' the channel
 	int ChanelNumber;
+
 	void Init(int cn,u8* ccd_raw)
 	{
 		ccd=(ChannelCommonData*)&ccd_raw[cn*0x80];
@@ -524,6 +519,9 @@ struct ChannelEx
 
 		StepStream=STREAM_STEP_LUT[fmt][ccd->LPCTL][ccd->LPSLNK];
 		StepStreamInitial=STREAM_INITAL_STEP_LUT[fmt];
+		step_stream_lut1 = fmt ;
+		step_stream_lut2 = ccd->LPCTL ;
+		step_stream_lut3 = ccd->LPSLNK ;
 	}
 	//SA,PCMS
 	void UpdateSA()
@@ -598,6 +596,8 @@ struct ChannelEx
 
 		lfo.alfo_calc=ALFOWS_CALC[ccd->ALFOWS];
 		lfo.plfo_calc=PLFOWS_CALC[ccd->PLFOWS];
+		lfo.alfo_calc_lut=ccd->ALFOWS;
+		lfo.plfo_calc_lut=ccd->PLFOWS;
 
 		if (ccd->LFORE)
 		{
@@ -943,7 +943,7 @@ void CalcPlfo(ChannelEx* ch)
 		rv=(ch->lfo.state>>3)^(ch->lfo.state<<3)^(ch->lfo.state&0xE3);
 		break;
 	}
-	ch->lfo.alfo=rv>>ch->lfo.plfo_shft;
+	ch->lfo.plfo=rv>>ch->lfo.plfo_shft;
 }
 
 template<u32 state>
@@ -1177,7 +1177,7 @@ s16 cdda_sector[CDDA_SIZE]={0};
 u32 cdda_index=CDDA_SIZE<<1;
 
 
-static SampleType mxlr[64];
+SampleType mxlr[64];
 
 u32 samples_gen;
 
@@ -1397,3 +1397,117 @@ void AICA_Sample()
 	WriteSample(mixr,mixl);
 }
 
+bool channel_serialize(void **data, unsigned int *total_size)
+{
+	int i = 0 ;
+	int addr = 0 ;
+
+	for ( i = 0 ; i < 64 ; i++)
+	{
+		addr = Chans[i].SA - (&(aica_ram.data[0])) ;
+		REICAST_S(addr);
+
+		REICAST_S(Chans[i].CA) ;
+		REICAST_S(Chans[i].step) ;
+		REICAST_S(Chans[i].update_rate) ;
+		REICAST_S(Chans[i].s0) ;
+		REICAST_S(Chans[i].s1) ;
+		REICAST_S(Chans[i].loop) ;
+		REICAST_S(Chans[i].adpcm.last_quant) ;
+		REICAST_S(Chans[i].noise_state) ;
+		REICAST_S(Chans[i].VolMix.DLAtt) ;
+		REICAST_S(Chans[i].VolMix.DRAtt) ;
+		REICAST_S(Chans[i].VolMix.DSPAtt) ;
+
+		addr = Chans[i].VolMix.DSPOut - (&(dsp.MIXS[0])) ;
+		REICAST_S(addr);
+
+		REICAST_S(Chans[i].AEG.val) ;
+		REICAST_S(Chans[i].AEG.state) ;
+		REICAST_S(Chans[i].AEG.AttackRate) ;
+		REICAST_S(Chans[i].AEG.Decay1Rate) ;
+		REICAST_S(Chans[i].AEG.Decay2Rate) ;
+		REICAST_S(Chans[i].AEG.Decay2Value) ;
+		REICAST_S(Chans[i].AEG.ReleaseRate) ;
+		REICAST_S(Chans[i].FEG) ;
+		REICAST_S(Chans[i].step_stream_lut1) ;
+		REICAST_S(Chans[i].step_stream_lut2) ;
+		REICAST_S(Chans[i].step_stream_lut3) ;
+
+		REICAST_S(Chans[i].lfo.counter) ;
+		REICAST_S(Chans[i].lfo.start_value) ;
+		REICAST_S(Chans[i].lfo.state) ;
+		REICAST_S(Chans[i].lfo.alfo) ;
+		REICAST_S(Chans[i].lfo.alfo_shft) ;
+		REICAST_S(Chans[i].lfo.plfo) ;
+		REICAST_S(Chans[i].lfo.plfo_shft) ;
+		REICAST_S(Chans[i].lfo.alfo_calc_lut) ;
+		REICAST_S(Chans[i].lfo.plfo_calc_lut) ;
+		REICAST_S(Chans[i].enabled) ;
+		REICAST_S(Chans[i].ChanelNumber) ;
+	}
+
+	/* TODO/FIXME - no possibility for this to return false? */
+	return true;
+}
+
+bool channel_unserialize(void **data, unsigned int *total_size)
+{
+	int i = 0 ;
+	int addr = 0 ;
+
+	for ( i = 0 ; i < 64 ; i++)
+	{
+		REICAST_US(addr);
+		Chans[i].SA = addr + (&(aica_ram.data[0])) ;
+
+		REICAST_US(Chans[i].CA) ;
+		REICAST_US(Chans[i].step) ;
+		REICAST_US(Chans[i].update_rate) ;
+		REICAST_US(Chans[i].s0) ;
+		REICAST_US(Chans[i].s1) ;
+		REICAST_US(Chans[i].loop) ;
+		REICAST_US(Chans[i].adpcm.last_quant) ;
+		REICAST_US(Chans[i].noise_state) ;
+		REICAST_US(Chans[i].VolMix.DLAtt) ;
+		REICAST_US(Chans[i].VolMix.DRAtt) ;
+		REICAST_US(Chans[i].VolMix.DSPAtt) ;
+
+		REICAST_US(addr);
+		Chans[i].VolMix.DSPOut = addr + (&(dsp.MIXS[0])) ;
+
+		REICAST_US(Chans[i].AEG.val) ;
+		REICAST_US(Chans[i].AEG.state) ;
+		Chans[i].StepAEG=AEG_STEP_LUT[Chans[i].AEG.state];
+		REICAST_US(Chans[i].AEG.AttackRate) ;
+		REICAST_US(Chans[i].AEG.Decay1Rate) ;
+		REICAST_US(Chans[i].AEG.Decay2Rate) ;
+		REICAST_US(Chans[i].AEG.Decay2Value) ;
+		REICAST_US(Chans[i].AEG.ReleaseRate) ;
+		REICAST_US(Chans[i].FEG) ;
+		Chans[i].StepFEG=FEG_STEP_LUT[Chans[i].FEG.state];
+		REICAST_US(Chans[i].step_stream_lut1) ;
+		REICAST_US(Chans[i].step_stream_lut2) ;
+		REICAST_US(Chans[i].step_stream_lut3) ;
+		Chans[i].StepStream=STREAM_STEP_LUT[Chans[i].step_stream_lut1][Chans[i].step_stream_lut2][Chans[i].step_stream_lut3] ;
+		Chans[i].StepStreamInitial=STREAM_INITAL_STEP_LUT[Chans[i].step_stream_lut1];
+
+		REICAST_US(Chans[i].lfo.counter) ;
+		REICAST_US(Chans[i].lfo.start_value) ;
+		REICAST_US(Chans[i].lfo.state) ;
+		REICAST_US(Chans[i].lfo.alfo) ;
+		REICAST_US(Chans[i].lfo.alfo_shft) ;
+		REICAST_US(Chans[i].lfo.plfo) ;
+		REICAST_US(Chans[i].lfo.plfo_shft) ;
+		REICAST_US(Chans[i].lfo.alfo_calc_lut) ;
+		REICAST_US(Chans[i].lfo.plfo_calc_lut) ;
+		Chans[i].lfo.alfo_calc = ALFOWS_CALC[Chans[i].lfo.alfo_calc_lut];
+		Chans[i].lfo.plfo_calc = PLFOWS_CALC[Chans[i].lfo.plfo_calc_lut];
+		REICAST_US(Chans[i].enabled) ;
+		REICAST_US(Chans[i].ChanelNumber) ;
+
+	}
+
+	/* TODO/FIXME - no possibility for this to return false? */
+	return true;
+}

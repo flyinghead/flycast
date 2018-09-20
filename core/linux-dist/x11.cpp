@@ -44,6 +44,8 @@ void* x11_vis;
 extern bool dump_frame_switch;
 
 void dc_stop(void);
+bool dc_loadstate(void);
+bool dc_savestate(void);
 
 enum
 {
@@ -395,6 +397,14 @@ void input_x11_handle()
 						{
 							x11_fullscreen = !x11_fullscreen;
 							x11_window_set_fullscreen(x11_fullscreen);
+						}
+						else if (e.type == KeyRelease && e.xkey.keycode == KEY_F2)
+						{
+							dc_savestate() ;
+						}
+						else if (e.type == KeyRelease && e.xkey.keycode == KEY_F4)
+						{
+							dc_loadstate() ;
 						}
 						else
 						{

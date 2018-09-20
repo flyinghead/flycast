@@ -82,6 +82,14 @@ void Sh4_int_Stop()
 	}
 }
 
+void Sh4_int_Start()
+{
+	if (!sh4_int_bCpuRun)
+	{
+		sh4_int_bCpuRun=true;
+	}
+}
+
 void Sh4_int_Step()
 {
 	if (sh4_int_bCpuRun)
@@ -124,7 +132,7 @@ void Sh4_int_Reset(bool Manual)
 		gbr=ssr=spc=sgr=dbr=vbr=0;
 		mac.full=pr=fpul=0;
 
-		sr.SetFull(0x700000F0);
+		sh4_sr_SetFull(0x700000F0);
 		old_sr.status=sr.status;
 		UpdateSR();
 
@@ -165,12 +173,12 @@ void ExecuteDelayslot()
 
 void ExecuteDelayslot_RTE()
 {
-	u32 oldsr = sr.GetFull();
+	u32 oldsr = sh4_sr_GetFull();
 
 #if !defined(NO_MMU)
 	try {
 #endif
-		sr.SetFull(ssr);
+		sh4_sr_SetFull(ssr);
 
 		ExecuteDelayslot();
 #if !defined(NO_MMU)
@@ -265,6 +273,7 @@ void Get_Sh4Interpreter(sh4_if* rv)
 {
 	rv->Run=Sh4_int_Run;
 	rv->Stop=Sh4_int_Stop;
+	rv->Start=Sh4_int_Start;
 	rv->Step=Sh4_int_Step;
 	rv->Skip=Sh4_int_Skip;
 	rv->Reset=Sh4_int_Reset;

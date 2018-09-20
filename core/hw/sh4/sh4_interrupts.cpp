@@ -146,7 +146,7 @@ bool Do_Interrupt(u32 intEvn)
 {
 	CCN_INTEVT = intEvn;
 
-	ssr = sr.GetFull();
+	ssr = sh4_sr_GetFull();
 	spc = next_pc;
 	sgr = r[15];
 	sr.BL = 1;
@@ -163,7 +163,7 @@ bool Do_Exception(u32 epc, u32 expEvn, u32 CallVect)
 	verify(sr.BL == 0);
 	CCN_EXPEVT = expEvn;
 
-	ssr = sr.GetFull();
+	ssr = sh4_sr_GetFull();
 	spc = epc;
 	sgr = r[15];
 	sr.BL = 1;

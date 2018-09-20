@@ -14,6 +14,8 @@ struct EvdevControllerMapping
 	const int Btn_Z;
 	const int Btn_Start;
 	const int Btn_Escape;
+	const int Btn_LoadState;
+	const int Btn_SaveState;
 	const int Btn_DPad_Left;
 	const int Btn_DPad_Right;
 	const int Btn_DPad_Up;
