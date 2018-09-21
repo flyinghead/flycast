@@ -477,6 +477,12 @@ void LoadCustom()
 {
 	char *reios_id = reios_disk_id();
 
+	char *p = reios_id + strlen(reios_id) - 1;
+	while (p >= reios_id && *p == ' ')
+		*p-- = '\0';
+	if (*p == '\0')
+		return;
+
 	LoadSpecialSettings();	// Default per-game settings
 
 	if (reios_software_name[0] != '\0')
@@ -495,6 +501,9 @@ void LoadCustom()
 
 	settings.pvr.MaxThreads		= cfgGameInt(reios_id, "pvr.MaxThreads", settings.pvr.MaxThreads);
 	settings.pvr.SynchronousRender	= cfgGameInt(reios_id, "pvr.SynchronousRendering", settings.pvr.SynchronousRender);
+	settings.dreamcast.cable = cfgGameInt(reios_id, "Dreamcast.Cable", settings.dreamcast.cable);
+	settings.dreamcast.region = cfgGameInt(reios_id, "Dreamcast.Region", settings.dreamcast.region);
+	settings.dreamcast.broadcast = cfgGameInt(reios_id, "Dreamcast.Broadcast", settings.dreamcast.broadcast);
 }
 
 void SaveSettings()
