@@ -302,10 +302,11 @@ struct vram_block
 
 enum ndc_error_codes
 {
-	rv_ok = 0,		//no error
+	rv_ok = 0,			//no error
+	rv_cli_finish=69,	//clean exit after -help or -version , should we just use rv_ok?
 
-	rv_error=-2,	//error
-	rv_serror=-1,	//silent error , it has been reported to the user
+	rv_error=-2,		//error
+	rv_serror=-1,		//silent error , it has been reported to the user
 };
 
 //Simple struct to store window rect  ;)

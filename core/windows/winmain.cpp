@@ -1,6 +1,8 @@
 #include "oslib\oslib.h"
 #include "oslib\audiostream.h"
 #include "imgread\common.h"
+#include "stdclass.h"
+#include "cfg/cfg.h"
 
 #define _WIN32_WINNT 0x0500
 #include <windows.h>
@@ -152,7 +154,7 @@ LONG ExeptionHandler(EXCEPTION_POINTERS *ExceptionInfo)
 #endif
 	else
 	{
-		printf("[GPF]Unhandled access to : 0x%X\n",address);
+		printf("[GPF]Unhandled access to : 0x%X\n",(unat)address);
 	}
 
 	return EXCEPTION_CONTINUE_SEARCH;
@@ -446,7 +448,7 @@ void os_consume(double t)
 
 	if ((cycl_glob+cyc)<10*1000*1000)
 	{
-		InterlockedExchangeAdd(&cycl_glob,cyc);
+		InterlockedExchangeAdd(&cycl_glob,(u64)cyc);
 	}
 	else
 	{
@@ -667,12 +669,23 @@ void setup_seh() {
 }
 #endif
 
-int CALLBACK WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine,int nCmdShowCmd)
+
+
+
+// DEF_CONSOLE allows you to override linker subsystem and therefore default console //
+//	: pragma isn't pretty but def's are configurable 
+#ifdef DEF_CONSOLE
+#pragma comment(linker, "/subsystem:console")
+
+int main(int argc, char **argv)
 {
-	ReserveBottomMemory();
 
-	tick_thd.Start();
+#else
+#pragma comment(linker, "/subsystem:windows")
 
+int CALLBACK WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine,int nCmdShowCmd)
+
+{
 	int argc=0;
 	wchar* cmd_line=GetCommandLineA();
 	wchar** argv=CommandLineToArgvA(cmd_line,&argc);
@@ -687,6 +700,15 @@ int CALLBACK WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine
 		SetConsoleCtrlHandler( (PHANDLER_ROUTINE) CtrlHandler, TRUE );
 	}
 
+#endif
+
+
+	if(ParseCommandLine(argc,argv)) {
+		return rv_cli_finish;
+	}
+
+	ReserveBottomMemory();
+	tick_thd.Start();
 	SetupPath();
 
 	//SetUnhandledExceptionFilter(&ExeptionHandler);
@@ -695,14 +717,14 @@ int CALLBACK WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine
 		int dc_init(int argc,wchar* argv[]);
 		void dc_run();
 		void dc_term();
-		dc_init(argc,argv);
-
-		#ifdef _WIN64
-				setup_seh();
-		#endif
-
-		dc_run();
-		dc_term();
+		if (0 == dc_init(argc, argv))
+		{
+#ifdef _WIN64
+			setup_seh();
+#endif
+			dc_run();
+			dc_term();
+		}
 	}
 	__except( ExeptionHandler(GetExceptionInformation()) )
 	{
