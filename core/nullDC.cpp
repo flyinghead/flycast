@@ -484,7 +484,7 @@ void LoadCustom()
 	settings.dynarec.Enable		= cfgGameInt(reios_id,"Dynarec.Enabled", settings.dynarec.Enable ? 1 : 0) != 0;
 	settings.dynarec.idleskip	= cfgGameInt(reios_id,"Dynarec.idleskip", settings.dynarec.idleskip ? 1 : 0) != 0;
 	settings.dynarec.unstable_opt	= cfgGameInt(reios_id,"Dynarec.unstable-opt", settings.dynarec.unstable_opt);
-	settings.dynarec.safemode	= cfgGameInt(reios_id,"Dynarec.safemode", settings.dynarec.safemode);
+	settings.dynarec.safemode	= cfgGameInt(reios_id,"Dynarec.safe-mode", settings.dynarec.safemode);
 	settings.rend.ModifierVolumes	= cfgGameInt(reios_id,"rend.ModifierVolumes", settings.rend.ModifierVolumes);
 	settings.rend.Clipping		= cfgGameInt(reios_id,"rend.Clipping", settings.rend.Clipping);
 
