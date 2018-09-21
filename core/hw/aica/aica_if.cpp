@@ -305,6 +305,48 @@ void Write_SB_E1ST(u32 addr, u32 data)
 	}
 }
 
+void Write_SB_E2ST(u32 addr, u32 data)
+{
+	if ((data & 1) && (SB_E2EN & 1))
+	{
+		u32 src=SB_E2STAR;
+		u32 dst=SB_E2STAG;
+		u32 len=SB_E2LEN & 0x7FFFFFFF;
+
+		if (SB_E2DIR==1)
+		{
+			u32 t=src;
+			src=dst;
+			dst=t;
+			printf("G2-EXT2 DMA : SB_E2DIR==1 DMA Read to 0x%X from 0x%X %d bytes\n",dst,src,len);
+		}
+		else
+			printf("G2-EXT2 DMA : SB_E2DIR==0:DMA Write to 0x%X from 0x%X %d bytes\n",dst,src,len);
+
+		WriteMemBlock_nommu_dma(dst,src,len);
+
+		if (SB_E2LEN & 0x80000000)
+			SB_E2EN=1;
+		else
+			SB_E2EN=0;
+
+		SB_E2STAR+=len;
+		SB_E2STAG+=len;
+		SB_E2ST = 0x00000000;//dma done
+		SB_E2LEN = 0x00000000;
+
+
+		asic_RaiseInterrupt(holly_EXT_DMA2);
+	}
+}
+
+
+void Write_SB_DDST(u32 addr, u32 data)
+{
+	if (data & 1)
+		die("SB_DDST DMA not implemented");
+}
+
 void aica_sb_Init()
 {
 	//NRM
@@ -317,6 +359,8 @@ void aica_sb_Init()
 	//THIS IS NOT AICA, its G2-EXT (BBA)
 
 	sb_rio_register(SB_E1ST_addr,RIO_WF,0,&Write_SB_E1ST);
+	sb_rio_register(SB_E2ST_addr,RIO_WF,0,&Write_SB_E2ST);
+	sb_rio_register(SB_DDST_addr,RIO_WF,0,&Write_SB_DDST);
 
 	//sb_regs[((SB_E1ST_addr-SB_BASE)>>2)].flags=REG_32BIT_READWRITE | REG_READ_DATA;
 	//sb_regs[((SB_E1ST_addr-SB_BASE)>>2)].writeFunction=Write_SB_E1ST;
