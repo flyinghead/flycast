@@ -52,9 +52,9 @@
 	#include "deps/lzma/LzmaEnc.h"
 	#include "deps/lzma/LzmaDec.h"
 #endif // CHD5_LZMA
-#include "crypto/md5.h"
-#include "crypto/sha1.h"
-#include "zlib.h"
+#include "deps/crypto/md5.h"
+#include "deps/crypto/sha1.h"
+#include "deps/zlib/zlib.h"
 
 #define TRUE 1
 #define FALSE 0
