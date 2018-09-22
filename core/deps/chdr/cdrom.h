@@ -20,9 +20,6 @@
     CONSTANTS
 ***************************************************************************/
 
-/* tracks are padded to a multiple of this many frames */
-extern const uint32_t CD_TRACK_PADDING;
-
 #define CD_MAX_TRACKS           (99)    /* AFAIK the theoretical limit */
 #define CD_MAX_SECTOR_DATA      (2352)
 #define CD_MAX_SUBCODE_DATA     (96)
