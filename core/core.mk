@@ -1,15 +1,19 @@
-#LOCAL_PATH:= 
+#LOCAL_PATH:=
 
 #MFLAGS	:= -marm -march=armv7-a -mtune=cortex-a8 -mfpu=vfpv3-d16 -mfloat-abi=softfp
 #ASFLAGS	:= -march=armv7-a -mfpu=vfp-d16 -mfloat-abi=softfp
-#LDFLAGS	:= -Wl,-Map,$(notdir $@).map,--gc-sections -Wl,-O3 -Wl,--sort-common 
+#LDFLAGS	:= -Wl,-Map,$(notdir $@).map,--gc-sections -Wl,-O3 -Wl,--sort-common
 
 RZDCY_SRC_DIR ?= $(call my-dir)
 
 RZDCY_MODULES	:=	cfg/ hw/arm7/ hw/aica/ hw/holly/ hw/ hw/gdrom/ hw/maple/ \
  hw/mem/ hw/pvr/ hw/sh4/ hw/sh4/interpr/ hw/sh4/modules/ plugins/ profiler/ oslib/ \
  hw/extdev/ hw/arm/ hw/naomi/ imgread/ linux/ ./ deps/coreio/ deps/zlib/ deps/chdr/ deps/crypto/ \
- deps/libelf/ deps/chdpsr/ arm_emitter/ rend/ reios/ deps/libpng/ 
+ deps/libelf/ deps/chdpsr/ arm_emitter/ rend/ reios/ deps/libpng/
+
+ ifdef CHD5_LZMA
+	RZDCY_MODULES += deps/lzma/
+ endif
 
 
 ifdef WEBUI
@@ -70,7 +74,7 @@ endif
 RZDCY_FILES := $(foreach dir,$(addprefix $(RZDCY_SRC_DIR)/,$(RZDCY_MODULES)),$(wildcard $(dir)*.cpp))
 RZDCY_FILES += $(foreach dir,$(addprefix $(RZDCY_SRC_DIR)/,$(RZDCY_MODULES)),$(wildcard $(dir)*.c))
 RZDCY_FILES += $(foreach dir,$(addprefix $(RZDCY_SRC_DIR)/,$(RZDCY_MODULES)),$(wildcard $(dir)*.S))
-	
+
 ifdef FOR_PANDORA
 RZDCY_CFLAGS	:= \
 	$(CFLAGS) -c -O3 -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps \
@@ -86,7 +90,7 @@ RZDCY_CFLAGS	:= \
 	-D_ANDROID -DRELEASE\
 	-frename-registers -fsingle-precision-constant -ffast-math \
 	-ftree-vectorize -fomit-frame-pointer
-	
+
 	ifndef NOT_ARM
 		RZDCY_CFLAGS += -march=armv7-a -mtune=cortex-a9 -mfpu=vfpv3-d16
 		RZDCY_CFLAGS += -DTARGET_LINUX_ARMELv7

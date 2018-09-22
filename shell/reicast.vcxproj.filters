@@ -97,9 +97,6 @@
     <ClCompile Include="..\core\deps\crypto\sha1.cpp">
       <Filter>deps\crypto</Filter>
     </ClCompile>
-    <ClCompile Include="..\core\deps\chdr\chdr.cpp">
-      <Filter>deps\chdr</Filter>
-    </ClCompile>
     <ClCompile Include="..\core\imgread\cdi.cpp">
       <Filter>imgread</Filter>
     </ClCompile>
@@ -429,6 +426,60 @@
     <ClCompile Include="..\core\cfg\ini.cpp">
       <Filter>cfg</Filter>
     </ClCompile>
+    <ClCompile Include="..\core\deps\chdr\chd.c">
+      <Filter>deps\chdr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\chdr\cdrom.c">
+      <Filter>deps\chdr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\chdr\flac.c">
+      <Filter>deps\chdr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\chdr\huffman.c">
+      <Filter>deps\chdr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\chdr\bitstream.c">
+      <Filter>deps\chdr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lzma\Alloc.c">
+      <Filter>deps\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lzma\Bra.c">
+      <Filter>deps\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lzma\Bra86.c">
+      <Filter>deps\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lzma\BraIA64.c">
+      <Filter>deps\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lzma\CpuArch.c">
+      <Filter>deps\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lzma\Delta.c">
+      <Filter>deps\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lzma\LzFind.c">
+      <Filter>deps\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lzma\Lzma86Dec.c">
+      <Filter>deps\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lzma\Lzma86Enc.c">
+      <Filter>deps\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lzma\LzmaDec.c">
+      <Filter>deps\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lzma\LzmaEnc.c">
+      <Filter>deps\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lzma\LzmaLib.c">
+      <Filter>deps\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lzma\Sort.c">
+      <Filter>deps\lzma</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="hw">
@@ -565,6 +616,9 @@
     </Filter>
     <Filter Include="hw\naomi">
       <UniqueIdentifier>{1752487d-0739-47bf-8c6b-1d38e6f389f7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="deps\lzma">
+      <UniqueIdentifier>{9198fe3c-8215-431d-9adf-d36e81eda98d}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -947,6 +1001,18 @@
       <Filter>hw\sh4\modules</Filter>
     </ClInclude>
     <ClInclude Include="..\core\version.h" />
+    <ClInclude Include="..\core\deps\chdr\cdrom.h">
+      <Filter>deps\chdr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\chdr\flac.h">
+      <Filter>deps\chdr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\chdr\huffman.h">
+      <Filter>deps\chdr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\chdr\bitstream.h">
+      <Filter>deps\chdr</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\core\deps\zlib\Makefile">

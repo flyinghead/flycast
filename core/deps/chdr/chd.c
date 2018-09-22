@@ -49,8 +49,8 @@
 #endif // CHD5_FLAC
 #include "huffman.h"
 #if defined(CHD5_LZMA)
-	#include "LzmaEnc.h"
-	#include "LzmaDec.h"
+	#include "deps/lzma/LzmaEnc.h"
+	#include "deps/lzma/LzmaDec.h"
 #endif // CHD5_LZMA
 #include "crypto/md5.h"
 #include "crypto/sha1.h"

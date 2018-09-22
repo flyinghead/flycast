@@ -20,6 +20,7 @@ include $(CLEAR_VARS)
 FOR_ANDROID := 1
 WEBUI := 1
 USE_GLES := 1
+CHD5_LZMA := 1
 
 ifneq ($(TARGET_ARCH_ABI),armeabi-v7a)
   NOT_ARM := 1
@@ -39,6 +40,11 @@ ifeq ($(TARGET_ARCH_ABI),mips)
 else
   ISMIPS :=
   NO_REC :=
+endif
+
+# 7-Zip/LZMA settings (CHDv5)
+ifdef USE_LZMA
+	LOCAL_CFLAGS += -D_7ZIP_ST -DCHD5_LZMA
 endif
 
 $(info $$TARGET_ARCH_ABI is [${TARGET_ARCH_ABI}])
