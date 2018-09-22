@@ -4,7 +4,7 @@ build:
     steps:
         - script:
             name: install-dependencies
-            code: sudo apt-get clean && sudo apt-get update && sudo apt-get install -y build-essential pkgconf libasound2-dev libgl1-mesa-dev libx11-dev
+            code: sudo apt-get clean && sudo apt-get update && sudo apt-get install -y build-essential pkgconf libasound2-dev libgl1-mesa-dev libx11-dev libflac-dev
         - script:
             name: gcc-version
             code: gcc --version
