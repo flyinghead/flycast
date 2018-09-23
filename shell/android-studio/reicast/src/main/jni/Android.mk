@@ -44,11 +44,6 @@ else
   NO_REC :=
 endif
 
-# 7-Zip/LZMA settings (CHDv5)
-ifdef USE_LZMA
-	LOCAL_CFLAGS += -D_7ZIP_ST -DCHD5_LZMA
-endif
-
 $(info $$TARGET_ARCH_ABI is [${TARGET_ARCH_ABI}])
 
 include $(LOCAL_PATH)/../../../../../core/core.mk
@@ -59,6 +54,11 @@ LOCAL_SRC_FILES += $(wildcard $(LOCAL_PATH)/jni/src/utils.cpp)
 LOCAL_CFLAGS  := $(RZDCY_CFLAGS) -fPIC -fvisibility=hidden -ffunction-sections -fdata-sections
 LOCAL_CXXFLAGS  := $(RZDCY_CXXFLAGS) -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -ffunction-sections -fdata-sections
 LOCAL_CPPFLAGS  := $(RZDCY_CXXFLAGS) -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -ffunction-sections -fdata-sections
+
+# 7-Zip/LZMA settings (CHDv5)
+ifdef CHD5_LZMA
+	LOCAL_CFLAGS += -D_7ZIP_ST -DCHD5_LZMA
+endif
 
 # LOCAL_CFLAGS += -std=c++11
 LOCAL_CXXFLAGS += -std=c++11
