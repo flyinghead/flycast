@@ -12,6 +12,7 @@ void rend_vblank();
 void rend_start_render();
 void rend_end_render();
 void rend_end_wait();
+void rend_cancel_emu_wait();
 
 void rend_set_fb_scale(float x,float y);
 void rend_resize(int width, int height);

@@ -215,6 +215,9 @@ static void handle_trig(u8* dckey, int state) {
         dckey[0] = 0;
 }
 
+bool dc_loadstate(void);
+bool dc_savestate(void);
+
 extern "C" void emu_key_input(UInt16 keyCode, int state) {
     switch(keyCode) {
         // Z
@@ -241,5 +244,9 @@ extern "C" void emu_key_input(UInt16 keyCode, int state) {
         case 0x7e:     handle_key(DPad_Up, state); break;
         // Enter
         case 0x24:     handle_key(Btn_Start, state); break;
+		// F2
+		case 0x78:     dc_savestate(); break;
+		// F4
+		case 0x76:     dc_loadstate(); break;
     }
 }

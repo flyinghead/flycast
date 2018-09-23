@@ -8,9 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		8491687F1B782B2D00F3F2B4 /* ini.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8491687D1B782B2D00F3F2B4 /* ini.cpp */; };
-		84967CBD1B8F49EE005F1140 /* arm_init.c in Sources */ = {isa = PBXBuildFile; fileRef = 84967CA21B8F49EE005F1140 /* arm_init.c */; };
-		84967CBE1B8F49EE005F1140 /* filter_neon.S in Sources */ = {isa = PBXBuildFile; fileRef = 84967CA31B8F49EE005F1140 /* filter_neon.S */; };
-		84967CBF1B8F49EE005F1140 /* filter_neon_intrinsics.c in Sources */ = {isa = PBXBuildFile; fileRef = 84967CA41B8F49EE005F1140 /* filter_neon_intrinsics.c */; };
 		84967CC01B8F49EE005F1140 /* png.c in Sources */ = {isa = PBXBuildFile; fileRef = 84967CA71B8F49EE005F1140 /* png.c */; };
 		84967CC11B8F49EE005F1140 /* pngerror.c in Sources */ = {isa = PBXBuildFile; fileRef = 84967CAB1B8F49EE005F1140 /* pngerror.c */; };
 		84967CC21B8F49EE005F1140 /* pngget.c in Sources */ = {isa = PBXBuildFile; fileRef = 84967CAC1B8F49EE005F1140 /* pngget.c */; };
@@ -194,6 +191,9 @@
 		AE1E293B2095FB1600FC6BA2 /* rec_cpp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE1E293A2095FB1600FC6BA2 /* rec_cpp.cpp */; };
 		AE1E294020A96B0B00FC6BA2 /* rec_x64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE1E293F20A96B0B00FC6BA2 /* rec_x64.cpp */; };
 		AE4FF4E1211588B5009BF202 /* font.png in Resources */ = {isa = PBXBuildFile; fileRef = AE4FF4E0211588B5009BF202 /* font.png */; };
+		AE80EDB72157D4D500F7800F /* serialize.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE80EDB62157D4D500F7800F /* serialize.cpp */; };
+		AE80EDBE2157D4E600F7800F /* naomi.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE80EDB92157D4E600F7800F /* naomi.cpp */; };
+		AE80EDBF2157D4E600F7800F /* naomi_cart.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE80EDBB2157D4E600F7800F /* naomi_cart.cpp */; };
 		AE8C27342111A31100D4D8F4 /* dsp_interp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE8C27332111A31100D4D8F4 /* dsp_interp.cpp */; };
 		AE8C274121122E2500D4D8F4 /* Changelog.txt in Resources */ = {isa = PBXBuildFile; fileRef = AE8C273B21122E2500D4D8F4 /* Changelog.txt */; };
 		AE8C274221122E2500D4D8F4 /* License.txt in Resources */ = {isa = PBXBuildFile; fileRef = AE8C273C21122E2500D4D8F4 /* License.txt */; };
@@ -243,11 +243,7 @@
 /* Begin PBXFileReference section */
 		8491687D1B782B2D00F3F2B4 /* ini.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ini.cpp; sourceTree = "<group>"; };
 		8491687E1B782B2D00F3F2B4 /* ini.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ini.h; sourceTree = "<group>"; };
-		84967CA21B8F49EE005F1140 /* arm_init.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = arm_init.c; sourceTree = "<group>"; };
-		84967CA31B8F49EE005F1140 /* filter_neon.S */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; path = filter_neon.S; sourceTree = "<group>"; };
-		84967CA41B8F49EE005F1140 /* filter_neon_intrinsics.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = filter_neon_intrinsics.c; sourceTree = "<group>"; };
 		84967CA51B8F49EE005F1140 /* config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = config.h; sourceTree = "<group>"; };
-		84967CA61B8F49EE005F1140 /* fp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = fp.h; sourceTree = "<group>"; };
 		84967CA71B8F49EE005F1140 /* png.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = png.c; sourceTree = "<group>"; };
 		84967CA81B8F49EE005F1140 /* png.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = png.h; sourceTree = "<group>"; };
 		84967CA91B8F49EE005F1140 /* pngconf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pngconf.h; sourceTree = "<group>"; };
@@ -578,6 +574,12 @@
 		AE1E293A2095FB1600FC6BA2 /* rec_cpp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = rec_cpp.cpp; sourceTree = "<group>"; };
 		AE1E293F20A96B0B00FC6BA2 /* rec_x64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = rec_x64.cpp; sourceTree = "<group>"; };
 		AE4FF4E0211588B5009BF202 /* font.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = font.png; path = ../../../linux/font.png; sourceTree = "<group>"; };
+		AE80EDB62157D4D500F7800F /* serialize.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = serialize.cpp; path = ../../../core/serialize.cpp; sourceTree = "<group>"; };
+		AE80EDB92157D4E600F7800F /* naomi.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = naomi.cpp; sourceTree = "<group>"; };
+		AE80EDBA2157D4E600F7800F /* naomi.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = naomi.h; sourceTree = "<group>"; };
+		AE80EDBB2157D4E600F7800F /* naomi_cart.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = naomi_cart.cpp; sourceTree = "<group>"; };
+		AE80EDBC2157D4E600F7800F /* naomi_cart.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = naomi_cart.h; sourceTree = "<group>"; };
+		AE80EDBD2157D4E600F7800F /* naomi_regs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = naomi_regs.h; sourceTree = "<group>"; };
 		AE8C27332111A31100D4D8F4 /* dsp_interp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dsp_interp.cpp; sourceTree = "<group>"; };
 		AE8C273B21122E2500D4D8F4 /* Changelog.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Changelog.txt; sourceTree = "<group>"; };
 		AE8C273C21122E2500D4D8F4 /* License.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = License.txt; sourceTree = "<group>"; };
@@ -703,16 +705,6 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		84967CA11B8F49EE005F1140 /* arm */ = {
-			isa = PBXGroup;
-			children = (
-				84967CA21B8F49EE005F1140 /* arm_init.c */,
-				84967CA31B8F49EE005F1140 /* filter_neon.S */,
-				84967CA41B8F49EE005F1140 /* filter_neon_intrinsics.c */,
-			);
-			path = arm;
-			sourceTree = "<group>";
-		};
 		84A388AA1B1CDD3E000166C0 = {
 			isa = PBXGroup;
 			children = (
@@ -795,6 +787,7 @@
 				AE1E293E20A96B0B00FC6BA2 /* rec-x64 */,
 				84B7BE8F1B72720200F9733F /* reios */,
 				84B7BE981B72720200F9733F /* rend */,
+				AE80EDB62157D4D500F7800F /* serialize.cpp */,
 				84B7BEA71B72720200F9733F /* stdclass.cpp */,
 				84B7BEA81B72720200F9733F /* stdclass.h */,
 				84B7BEA91B72720200F9733F /* types.h */,
@@ -892,9 +885,7 @@
 		84B7BD351B72720100F9733F /* libpng */ = {
 			isa = PBXGroup;
 			children = (
-				84967CA11B8F49EE005F1140 /* arm */,
 				84967CA51B8F49EE005F1140 /* config.h */,
-				84967CA61B8F49EE005F1140 /* fp.h */,
 				84967CA71B8F49EE005F1140 /* png.c */,
 				84967CA81B8F49EE005F1140 /* png.h */,
 				84967CA91B8F49EE005F1140 /* pngconf.h */,
@@ -1047,6 +1038,7 @@
 				84B7BDEB1B72720100F9733F /* maple */,
 				84B7BDF41B72720100F9733F /* mem */,
 				AEFF7EC6214AEC800068CE11 /* modem */,
+				AE80EDB82157D4E600F7800F /* naomi */,
 				84B7BDF71B72720100F9733F /* pvr */,
 				84B7BE0D1B72720100F9733F /* sh4 */,
 			);
@@ -1453,6 +1445,18 @@
 			path = "../../../core/rec-x64";
 			sourceTree = "<group>";
 		};
+		AE80EDB82157D4E600F7800F /* naomi */ = {
+			isa = PBXGroup;
+			children = (
+				AE80EDB92157D4E600F7800F /* naomi.cpp */,
+				AE80EDBA2157D4E600F7800F /* naomi.h */,
+				AE80EDBB2157D4E600F7800F /* naomi_cart.cpp */,
+				AE80EDBC2157D4E600F7800F /* naomi_cart.h */,
+				AE80EDBD2157D4E600F7800F /* naomi_regs.h */,
+			);
+			path = naomi;
+			sourceTree = "<group>";
+		};
 		AE8C273A21122E2500D4D8F4 /* xbrz */ = {
 			isa = PBXGroup;
 			children = (
@@ -1725,13 +1729,14 @@
 				84B7BEFA1B72720200F9733F /* zip_get_archive_flag.c in Sources */,
 				84B7BF1E1B72720200F9733F /* Makefile in Sources */,
 				84B7BF0F1B72720200F9733F /* zip_stat_index.c in Sources */,
+				AE80EDBF2157D4E600F7800F /* naomi_cart.cpp in Sources */,
 				AEFF7F5E214D9D590068CE11 /* pico_tcp.c in Sources */,
+				AE80EDBE2157D4E600F7800F /* naomi.cpp in Sources */,
 				84B7BEEB1B72720200F9733F /* zip_error_get.c in Sources */,
 				84B7BEB31B72720200F9733F /* coreio.cpp in Sources */,
 				84B7BF281B72720200F9733F /* dsp.cpp in Sources */,
 				84B7BF3D1B72720200F9733F /* Renderer_if.cpp in Sources */,
 				84B7BF191B72720200F9733F /* deflate.c in Sources */,
-				84967CBD1B8F49EE005F1140 /* arm_init.c in Sources */,
 				84B7BF7E1B72720200F9733F /* TexCache.cpp in Sources */,
 				AEFF7F4E214D9D590068CE11 /* pico_dev_ppp.c in Sources */,
 				84B7BEE41B72720200F9733F /* zip_delete.c in Sources */,
@@ -1837,6 +1842,7 @@
 				84B7BF0C1B72720200F9733F /* zip_source_function.c in Sources */,
 				84B7BF4B1B72720200F9733F /* cpg.cpp in Sources */,
 				84B7BF631B72720200F9733F /* nixprof.cpp in Sources */,
+				AE80EDB72157D4D500F7800F /* serialize.cpp in Sources */,
 				84B7BF6C1B72720200F9733F /* profiler.cpp in Sources */,
 				84B7BF161B72720200F9733F /* adler32.c in Sources */,
 				AEFF7F73214D9D590068CE11 /* pico_socket.c in Sources */,
@@ -1912,14 +1918,12 @@
 				84B7BF001B72720200F9733F /* zip_new.c in Sources */,
 				84B7BF0A1B72720200F9733F /* zip_source_filep.c in Sources */,
 				AEFF7F75214D9D590068CE11 /* pico_stack.c in Sources */,
-				84967CBE1B8F49EE005F1140 /* filter_neon.S in Sources */,
 				84B7BF091B72720200F9733F /* zip_source_file.c in Sources */,
 				AEFF7F74214D9D590068CE11 /* pico_socket_multicast.c in Sources */,
 				84B7BF151B72720200F9733F /* zip_unchange_data.c in Sources */,
 				AEFF7F71214D9D590068CE11 /* pico_md5.c in Sources */,
 				84B7BEF11B72720200F9733F /* zip_file_error_get.c in Sources */,
 				AEFF7F54214D9D590068CE11 /* pico_dns_client.c in Sources */,
-				84967CBF1B8F49EE005F1140 /* filter_neon_intrinsics.c in Sources */,
 				AEFF7F57214D9D590068CE11 /* pico_fragments.c in Sources */,
 				84B7BF861B72871600F9733F /* EmuGLView.swift in Sources */,
 			);

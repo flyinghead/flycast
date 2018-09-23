@@ -17,6 +17,7 @@
 #include "hw/naomi/naomi_cart.h"
 #include "reios/reios.h"
 #include "hw/sh4/dyna/blockmanager.h"
+#include "hw/pvr/Renderer_if.h"
 
 settings_t settings;
 static bool performed_serialization = false;
@@ -536,13 +537,12 @@ bool acquire_mainloop_lock()
 	int64_t start_time = get_time_usec() ;
 	const int64_t FIVE_SECONDS = 5*1000000 ;
 
-    while ( ( start_time+FIVE_SECONDS > get_time_usec() ) && !(result = mtx_mainloop.TryLock())  )
-   	{
-    	//rend_cancel_emu_wait() ;
-    	//retro_run();
-   	}
+	while ( ( start_time+FIVE_SECONDS > get_time_usec() ) && !(result = mtx_mainloop.TryLock())  )
+	{
+		rend_cancel_emu_wait() ;
+	}
 
-    return result ;
+	return result ;
 }
 
 void cleanup_serialize(void *data)
@@ -638,6 +638,7 @@ void* dc_savestate_thread(void* p)
 	cleanup_serialize(data) ;
 	printf("Saved state to %s\n size %d", filename.c_str(), total_size) ;
 
+	return NULL;
 }
 
 void* dc_loadstate_thread(void* p)
@@ -708,6 +709,8 @@ void* dc_loadstate_thread(void* p)
 
 	cleanup_serialize(data) ;
 	printf("Loaded state from %s size %d\n", filename.c_str(), total_size) ;
+
+	return NULL;
 }
 
 

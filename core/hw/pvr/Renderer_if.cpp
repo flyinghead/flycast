@@ -587,3 +587,11 @@ void check_framebuffer_write()
 	fb2_watch_addr_start = FB_R_SOF2 & VRAM_MASK;
 	fb2_watch_addr_end = fb2_watch_addr_start + fb_size;
 }
+
+void rend_cancel_emu_wait()
+{
+#if !defined(TARGET_NO_THREADS)
+	re.Set();
+#endif
+}
+
