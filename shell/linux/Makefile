@@ -244,7 +244,6 @@ endif
 
 ifdef CHD5_FLAC
 	CFLAGS += -DCHD5_FLAC
-	LIBS += `pkg-config --libs flac`
 endif
 
 RZDCY_SRC_DIR = $(LOCAL_PATH)/../../core
