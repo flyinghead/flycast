@@ -23,6 +23,7 @@ FOR_ANDROID := 1
 WEBUI := 1
 USE_GLES := 1
 CHD5_LZMA := 1
+CHD5_FLAC := 1
 
 ifneq ($(TARGET_ARCH_ABI),armeabi-v7a)
   NOT_ARM := 1
@@ -58,6 +59,11 @@ LOCAL_CPPFLAGS  := $(RZDCY_CXXFLAGS) -fPIC -fvisibility=hidden -fvisibility-inli
 # 7-Zip/LZMA settings (CHDv5)
 ifdef CHD5_LZMA
 	LOCAL_CFLAGS += -D_7ZIP_ST -DCHD5_LZMA
+endif
+
+# FLAC settings (CHDv5)
+ifdef CHD5_FLAC
+	LOCAL_CFLAGS += -DCHD5_FLAC
 endif
 
 # LOCAL_CFLAGS += -std=c++11

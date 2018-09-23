@@ -11,10 +11,9 @@ RZDCY_MODULES	:=	cfg/ hw/arm7/ hw/aica/ hw/holly/ hw/ hw/gdrom/ hw/maple/ \
  hw/extdev/ hw/arm/ hw/naomi/ imgread/ linux/ ./ deps/coreio/ deps/zlib/ deps/chdr/ deps/crypto/ \
  deps/libelf/ deps/chdpsr/ arm_emitter/ rend/ reios/ deps/libpng/
 
- ifdef CHD5_LZMA
+ifdef CHD5_LZMA
 	RZDCY_MODULES += deps/lzma/
- endif
-
+endif
 
 ifdef WEBUI
 	RZDCY_MODULES += webui/
@@ -113,6 +112,35 @@ endif
 
 ifdef HAS_SOFTREND
 	RZDCY_CFLAGS += -DTARGET_SOFTREND
+endif
+
+ifdef CHD5_FLAC
+	RZDCY_MODULES += deps/flac/src/libFLAC/
+	RZDCY_FILES += $(RZDCY_SRC_DIR)/deps/flac/src/libFLAC/bitmath.c
+	RZDCY_FILES += $(RZDCY_SRC_DIR)/deps/flac/src/libFLAC/bitreader.c
+	RZDCY_FILES += $(RZDCY_SRC_DIR)/deps/flac/src/libFLAC/cpu.c
+	RZDCY_FILES += $(RZDCY_SRC_DIR)/deps/flac/src/libFLAC/crc.c
+	RZDCY_FILES += $(RZDCY_SRC_DIR)/deps/flac/src/libFLAC/fixed.c
+	RZDCY_FILES += $(RZDCY_SRC_DIR)/deps/flac/src/libFLAC/fixed_intrin_sse2.c
+	RZDCY_FILES += $(RZDCY_SRC_DIR)/deps/flac/src/libFLAC/fixed_intrin_ssse3.c
+	RZDCY_FILES += $(RZDCY_SRC_DIR)/deps/flac/src/libFLAC/float.c
+	RZDCY_FILES += $(RZDCY_SRC_DIR)/deps/flac/src/libFLAC/format.c
+	RZDCY_FILES += $(RZDCY_SRC_DIR)/deps/flac/src/libFLAC/lpc.c
+	RZDCY_FILES += $(RZDCY_SRC_DIR)/deps/flac/src/libFLAC/lpc_intrin_avx2.c
+	RZDCY_FILES += $(RZDCY_SRC_DIR)/deps/flac/src/libFLAC/lpc_intrin_sse2.c
+	RZDCY_FILES += $(RZDCY_SRC_DIR)/deps/flac/src/libFLAC/lpc_intrin_sse41.c
+	RZDCY_FILES += $(RZDCY_SRC_DIR)/deps/flac/src/libFLAC/lpc_intrin_sse.c
+	RZDCY_FILES += $(RZDCY_SRC_DIR)/deps/flac/src/libFLAC/md5.c
+	RZDCY_FILES += $(RZDCY_SRC_DIR)/deps/flac/src/libFLAC/memory.c
+	RZDCY_FILES += $(RZDCY_SRC_DIR)/deps/flac/src/libFLAC/metadata_iterators.c
+	RZDCY_FILES += $(RZDCY_SRC_DIR)/deps/flac/src/libFLAC/metadata_object.c
+	RZDCY_FILES += $(RZDCY_SRC_DIR)/deps/flac/src/libFLAC/stream_decoder.c
+	RZDCY_FILES += $(RZDCY_SRC_DIR)/deps/flac/src/libFLAC/window.c
+
+	RZDCY_CFLAGS += -I$(RZDCY_SRC_DIR)/deps/flac/src/libFLAC/include/ -I$(RZDCY_SRC_DIR)/deps/flac/include
+	RZDCY_CFLAGS += -DPACKAGE_VERSION=\"1.3.2\" -DFLAC__HAS_OGG=0 -DFLAC__NO_DLL -DHAVE_LROUND -DHAVE_STDINT_H -DHAVE_STDLIB_H -DHAVE_SYS_PARAM_H
+ 	CFLAGS += -I$(RZDCY_SRC_DIR)/deps/flac/include -I$(RZDCY_SRC_DIR)/deps/flac/src/libFLAC/include/
+ 	CFLAGS += -DPACKAGE_VERSION=\"1.3.2\" -DFLAC__HAS_OGG=0 -DFLAC__NO_DLL -DHAVE_LROUND -DHAVE_STDINT_H -DHAVE_STDLIB_H -DHAVE_SYS_PARAM_H
 endif
 
 RZDCY_CXXFLAGS := $(RZDCY_CFLAGS) -fno-exceptions -fno-rtti -std=gnu++11
