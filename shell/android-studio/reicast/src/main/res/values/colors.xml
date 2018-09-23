@@ -6,6 +6,13 @@
     <color name="colorPrimaryTransparent">#AA1074bc</color>
     <color name="colorAccent">#F5A623</color>
 
+    <color name="colorDarkPrimary">#3F51B5</color>
+    <color name="colorDarkPrimaryDark">#303F9F</color>
+    <color name="colorDarkAccent">#FF4081</color>
+
+    <color name="colorLightPrimary">#ff8a80</color>
+    <color name="colorLightPrimaryDark">#c85a54</color>
+    <color name="colorLightAccent">#8effae</color>
 
     <color name="yellow">#ffd34c</color>
     <color name="green">#0f0</color>
