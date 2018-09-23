@@ -1,3 +1,4 @@
+#if defined(CHD5_FLAC)
 /* license:BSD-3-Clause
  * copyright-holders:Aaron Giles
 ***************************************************************************
@@ -329,3 +330,4 @@ FLAC__StreamDecoderWriteStatus flac_decoder_write_callback(void *client_data, co
 void flac_decoder_error_callback_static(const FLAC__StreamDecoder *decoder, FLAC__StreamDecoderErrorStatus status, void *client_data)
 {
 }
+#endif // CHD5_FLAC
