@@ -13,6 +13,7 @@
 #include <sys/mman.h>
 #include <sys/time.h>
 #include "hw/sh4/dyna/blockmanager.h"
+#include "hw/maple/maple_cfg.h"
 #include <unistd.h>
 
 #if defined(TARGET_EMSCRIPTEN)
@@ -95,32 +96,36 @@ void emit_WriteCodeCache();
 
 void os_SetupInput()
 {
-	#if defined(USE_EVDEV)
-		input_evdev_init();
-	#endif
+#if defined(USE_EVDEV)
+	input_evdev_init();
+#endif
 
-	#if defined(USE_JOYSTICK)
-		int joystick_device_id = cfgLoadInt("input", "joystick_device_id", JOYSTICK_DEFAULT_DEVICE_ID);
-		if (joystick_device_id < 0) {
-			puts("Legacy Joystick input disabled by config.\n");
-		}
-		else
-		{
-			int joystick_device_length = snprintf(NULL, 0, JOYSTICK_DEVICE_STRING, joystick_device_id);
-			char* joystick_device = (char*)malloc(joystick_device_length + 1);
-			sprintf(joystick_device, JOYSTICK_DEVICE_STRING, joystick_device_id);
-			joystick_fd = input_joystick_init(joystick_device);
-			free(joystick_device);
-		}
-	#endif
+#if defined(USE_JOYSTICK)
+	int joystick_device_id = cfgLoadInt("input", "joystick_device_id", JOYSTICK_DEFAULT_DEVICE_ID);
+	if (joystick_device_id < 0) {
+		puts("Legacy Joystick input disabled by config.\n");
+	}
+	else
+	{
+		int joystick_device_length = snprintf(NULL, 0, JOYSTICK_DEVICE_STRING, joystick_device_id);
+		char* joystick_device = (char*)malloc(joystick_device_length + 1);
+		sprintf(joystick_device, JOYSTICK_DEVICE_STRING, joystick_device_id);
+		joystick_fd = input_joystick_init(joystick_device);
+		free(joystick_device);
+	}
+#endif
 
-	#if defined(SUPPORT_X11)
-		input_x11_init();
-	#endif
+#if defined(SUPPORT_X11)
+	input_x11_init();
+#endif
 
-	#if defined(USE_SDL)
-		input_sdl_init();
-	#endif
+#if defined(USE_SDL)
+	input_sdl_init();
+#endif
+
+#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
+	mcfg_CreateDevicesFromConfig();
+#endif
 }
 
 void UpdateInputState(u32 port)
