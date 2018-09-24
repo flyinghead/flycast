@@ -218,7 +218,7 @@ static void tcp_callback(uint16_t ev, struct pico_socket *s)
 		else
 		{
 			pico_ipv4_to_string(peer, orig.addr);
-			printf("Connection established with %s:%d.\n", peer, short_be(port));
+			//printf("Connection established with %s:%d.\n", peer, short_be(port));
 			pico_socket_setoption(sock_a, PICO_TCP_NODELAY, &yes);
 			/* Set keepalive options */
 	//		ka_val = 5;
@@ -404,7 +404,7 @@ static void read_native_sockets()
     	{
     		printf("pico_socket_connect failed: error %d\n", pico_err);
     		closesocket(sockfd);
-    		pico_socket_del(ps);
+    		pico_socket_close(ps);
     		continue;
     	}
     	tcp_sockets[ps] = sockfd;
@@ -665,13 +665,13 @@ static void *pico_thread_func(void *)
 		if (::bind(sockfd, (struct sockaddr *)&saddr, saddr_len) < 0)
     	{
     		perror("bind");
-    		close(sockfd);
+    		closesocket(sockfd);
     		continue;
     	}
 		if (listen(sockfd, 5) < 0)
 		{
 			perror("listen");
-    		close(sockfd);
+    		closesocket(sockfd);
     		continue;
     	}
 		set_non_blocking(sockfd);
@@ -703,6 +703,7 @@ static void *pico_thread_func(void *)
 		pico_ppp_destroy(ppp);
 		ppp = NULL;
 	}
+	pico_stack_tick();
 
 	return NULL;
 }
