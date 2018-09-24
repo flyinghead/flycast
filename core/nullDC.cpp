@@ -434,7 +434,7 @@ void LoadSettings()
 
 	settings.validate.OpenGlChecks = cfgLoadInt("validate", "OpenGlChecks", 0) != 0;
 
-	settings.input.DCKeyboard = cfgLoadInt("input", "DCKeyboard", 1);
+	settings.input.DCKeyboard = cfgLoadInt("input", "DCKeyboard", 0);
 	settings.input.DCMouse = cfgLoadInt("input", "DCMouse", 0);
 	settings.input.MouseSensitivity = cfgLoadInt("input", "MouseSensitivity", 100);
 #else
