@@ -582,11 +582,19 @@ static int pico_socket_deliver(struct pico_protocol *p, struct pico_frame *f, ui
     if (!tr)
         return -1;
 
+	// Try to find a socket using the local port number
     sp = pico_get_sockport(p->proto_number, localport);
-    if (!sp) {
-        dbg("No such port %d\n", short_be(localport));
-        return -1;
+    if (sp)
+    {
+        if (pico_socket_transport_deliver(p, sp, f) == 0)
+        	return 0;
     }
+    // Try to find a wildcard socket
+	sp = pico_get_sockport(p->proto_number, 0);
+	if (!sp) {
+		dbg("No such port %d\n", short_be(localport));
+		return -1;
+	}
 
     return pico_socket_transport_deliver(p, sp, f);
 }
@@ -1118,6 +1126,8 @@ static int pico_socket_xmit_one(struct pico_socket *s, const void *buf, const in
     if (msginfo) {
         f->send_ttl = (uint8_t)msginfo->ttl;
         f->send_tos = (uint8_t)msginfo->tos;
+        f->local_ip = msginfo->local_addr.ip4;
+        f->local_port = msginfo->local_port;
     }
 
     memcpy(f->payload, (const uint8_t *)buf, f->payload_len);
@@ -1377,19 +1387,23 @@ int MOCKABLE pico_socket_sendto_extended(struct pico_socket *s, const void *buf,
     if (pico_socket_sendto_initial_checks(s, buf, len, dst, remote_port) < 0)
         return -1;
 
-
-    src = pico_socket_sendto_get_src(s, dst);
-    if (!src) {
+    if (msginfo && msginfo->local_addr.ip4.addr)
+    	src = &msginfo->local_addr.ip4;
+    else
+    {
+    	src = pico_socket_sendto_get_src(s, dst);
+    	if (!src) {
 #ifdef PICO_SUPPORT_IPV6
-        if((s->net->proto_number == PICO_PROTO_IPV6)
-           && msginfo && msginfo->dev
-           && pico_ipv6_is_multicast(((struct pico_ip6 *)dst)->addr))
-        {
-            src = &(pico_ipv6_linklocal_get(msginfo->dev)->address);
-        }
-        else
+			if((s->net->proto_number == PICO_PROTO_IPV6)
+			   && msginfo && msginfo->dev
+			   && pico_ipv6_is_multicast(((struct pico_ip6 *)dst)->addr))
+			{
+				src = &(pico_ipv6_linklocal_get(msginfo->dev)->address);
+			}
+			else
 #endif
-        return -1;
+				return -1;
+    	}
     }
 
     remote_endpoint = pico_socket_sendto_destination(s, dst, remote_port);
@@ -1589,13 +1603,14 @@ int MOCKABLE pico_socket_bind(struct pico_socket *s, void *local_addr, uint16_t 
     }
 
     /* When given port = 0, get a random high port to bind to. */
-    if (*port == 0) {
-        *port = pico_socket_high_port(PROTO(s));
-        if (*port == 0) {
-            pico_err = PICO_ERR_EINVAL;
-            return -1;
-        }
-    }
+// Port 0 is used as a wildcard for "all ports"
+//    if (*port == 0) {
+//        *port = pico_socket_high_port(PROTO(s));
+//        if (*port == 0) {
+//            pico_err = PICO_ERR_EINVAL;
+//            return -1;
+//        }
+//    }
 
     if (pico_is_port_free(PROTO(s), *port, local_addr, s->net) == 0) {
         pico_err = PICO_ERR_EADDRINUSE;
@@ -1757,33 +1772,73 @@ struct pico_socket *pico_socket_accept(struct pico_socket *s, void *orig, uint16
     }
 
     if (TCPSTATE(s) == PICO_SOCKET_STATE_TCP_LISTEN) {
-        struct pico_sockport *sp = pico_get_sockport(PICO_PROTO_TCP, s->local_port);
-        struct pico_socket *found;
-        uint32_t socklen = sizeof(struct pico_ip4);
-        /* If at this point no incoming connection socket is found,
-         * the accept call is valid, but no connection is established yet.
-         */
-        pico_err = PICO_ERR_EAGAIN;
-        if (sp) {
-            struct pico_tree_node *index;
-            /* RB_FOREACH(found, socket_tree, &sp->socks) { */
-            pico_tree_foreach(index, &sp->socks){
-                found = index->keyValue;
-                if ((s == found->parent) && ((found->state & PICO_SOCKET_STATE_TCP) == PICO_SOCKET_STATE_TCP_ESTABLISHED)) {
-                    found->parent = NULL;
-                    pico_err = PICO_ERR_NOERR;
-                    #ifdef PICO_SUPPORT_IPV6
-                    if (is_sock_ipv6(s))
-                        socklen = sizeof(struct pico_ip6);
+		/* If at this point no incoming connection socket is found,
+		 * the accept call is valid, but no connection is established yet.
+		 */
+		struct pico_socket *found;
+		uint32_t socklen = sizeof(struct pico_ip4);
+		struct pico_sockport *sp;
 
-                    #endif
-                    memcpy(orig, &found->remote_addr, socklen);
-                    *port = found->remote_port;
-                    s->number_of_pending_conn--;
-                    return found;
-                }
+		pico_err = PICO_ERR_EAGAIN;
+
+    	if (s->local_port == 0)
+    	{
+    		// Wildcard socket: do a full scan of the TCP table to find a new child
+            struct pico_tree_node *index, *indexp;
+
+            pico_tree_foreach(indexp, &TCPTable)
+            {
+            	sp = indexp->keyValue;
+            	if (sp)
+            	{
+                    pico_tree_foreach(index, &sp->socks)
+                    {
+                    	found = index->keyValue;
+						if (found == NULL)
+							continue;
+
+						if ((s == found->parent) && ((found->state & PICO_SOCKET_STATE_TCP) == PICO_SOCKET_STATE_TCP_ESTABLISHED)) {
+							found->parent = NULL;
+							pico_err = PICO_ERR_NOERR;
+							#ifdef PICO_SUPPORT_IPV6
+							if (is_sock_ipv6(s))
+								socklen = sizeof(struct pico_ip6);
+
+							#endif
+							memcpy(orig, &found->remote_addr, socklen);
+							*port = found->remote_port;
+							s->number_of_pending_conn--;
+							return found;
+						}
+                    }
+            	}
             }
-        }
+    	}
+    	else
+    	{
+    		// Normal search using the local port
+    		sp = pico_get_sockport(PICO_PROTO_TCP, s->local_port);
+			if (sp) {
+				struct pico_tree_node *index;
+				/* RB_FOREACH(found, socket_tree, &sp->socks) { */
+				pico_tree_foreach(index, &sp->socks){
+					found = index->keyValue;
+					if ((s == found->parent) && ((found->state & PICO_SOCKET_STATE_TCP) == PICO_SOCKET_STATE_TCP_ESTABLISHED)) {
+						found->parent = NULL;
+						pico_err = PICO_ERR_NOERR;
+						#ifdef PICO_SUPPORT_IPV6
+						if (is_sock_ipv6(s))
+							socklen = sizeof(struct pico_ip6);
+
+						#endif
+						memcpy(orig, &found->remote_addr, socklen);
+						*port = found->remote_port;
+						s->number_of_pending_conn--;
+						return found;
+					}
+				}
+			}
+    	}
     }
 
     return NULL;

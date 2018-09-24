@@ -350,6 +350,11 @@ static int pico_ipv4_process_local_unicast_in(struct pico_frame *f)
             pico_transport_receive(f, hdr->proto);
 
         return 1;
+    } else if (f->dev->proxied) {
+    	// Proxied device: deliver all traffic locally
+        pico_transport_receive(f, hdr->proto);
+
+        return 1;
     } else if (pico_tree_findKey(&Tree_dev_link, &test)) {
 #ifdef PICO_SUPPORT_UDP
         /* address of this device is apparently 0.0.0.0; might be a DHCP packet */
@@ -1052,7 +1057,10 @@ int pico_ipv4_frame_push(struct pico_frame *f, struct pico_ip4 *dst, uint8_t pro
     }
 
     hdr->dst.addr = dst->addr;
-    hdr->src.addr = link->address.addr;
+    if (f->local_ip.addr)
+        hdr->src.addr = f->local_ip.addr;		// Masqueraded
+    else
+    	hdr->src.addr = link->address.addr;
     hdr->ttl = ttl;
     hdr->tos = f->send_tos;
     hdr->proto = proto;

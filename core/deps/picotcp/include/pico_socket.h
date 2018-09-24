@@ -175,6 +175,8 @@ struct pico_msginfo {
     struct pico_device *dev;
     uint8_t ttl;
     uint8_t tos;
+    union pico_address local_addr;
+    uint16_t local_port;
 };
 
 struct pico_socket *pico_socket_open(uint16_t net, uint16_t proto, void (*wakeup)(uint16_t ev, struct pico_socket *s));

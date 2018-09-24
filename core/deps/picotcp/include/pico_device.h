@@ -38,6 +38,7 @@ struct pico_device {
   #ifdef PICO_SUPPORT_IPV6
     struct pico_nd_hostvars hostvars;
   #endif
+    int proxied;
 };
 
 

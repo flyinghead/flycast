@@ -95,6 +95,7 @@ void pico_tcp_flags_update(struct pico_frame *f, struct pico_socket *s);
 int pico_tcp_set_bufsize_in(struct pico_socket *s, uint32_t value);
 int pico_tcp_set_bufsize_out(struct pico_socket *s, uint32_t value);
 int pico_tcp_get_bufsize_in(struct pico_socket *s, uint32_t *value);
+int pico_tcp_get_bufspace_out(struct pico_socket *s, uint32_t *value);
 int pico_tcp_get_bufsize_out(struct pico_socket *s, uint32_t *value);
 int pico_tcp_set_keepalive_probes(struct pico_socket *s, uint32_t value);
 int pico_tcp_set_keepalive_intvl(struct pico_socket *s, uint32_t value);

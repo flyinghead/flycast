@@ -107,7 +107,10 @@ static int pico_udp_push(struct pico_protocol *self, struct pico_frame *f)
 
     /* this (fragmented) frame should contain a transport header */
     if (f->transport_hdr != f->payload) {
-        hdr->trans.sport = f->sock->local_port;
+    	if (f->local_port)
+            hdr->trans.sport = f->local_port;		// Masqueraded
+    	else
+    		hdr->trans.sport = f->sock->local_port;
         if (remote_endpoint) {
             hdr->trans.dport = remote_endpoint->remote_port;
         } else {
@@ -173,6 +176,8 @@ static void pico_udp_get_msginfo(struct pico_frame *f, struct pico_msginfo *msgi
         struct pico_ipv4_hdr *hdr = (struct pico_ipv4_hdr *)(f->net_hdr);
         msginfo->ttl = hdr->ttl;
         msginfo->tos = hdr->tos;
+        msginfo->local_addr.ip4 = hdr->dst;
+        msginfo->local_port = ((struct pico_udp_hdr *)f->transport_hdr)->trans.dport;
 #endif
     } else {
 #ifdef PICO_SUPPORT_IPV6

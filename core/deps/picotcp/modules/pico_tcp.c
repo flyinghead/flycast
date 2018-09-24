@@ -980,6 +980,8 @@ static int tcp_send(struct pico_socket_tcp *ts, struct pico_frame *f)
     hdr->crc = 0;
     hdr->crc = short_be(pico_tcp_checksum(f));
 
+	f->local_ip.addr = ts->sock.local_addr.ip4.addr;	// Masqueraded
+
     return tcp_send_try_enqueue(ts, f);
 
 }
@@ -1318,6 +1320,7 @@ static void tcp_send_empty(struct pico_socket_tcp *t, uint16_t flags, int is_kee
     hdr->crc = short_be(pico_tcp_checksum(f));
 
     /* TCP: ENQUEUE to PROTO */
+	f->local_ip.addr = t->sock.local_addr.ip4.addr;	// Masqueraded
     pico_enqueue(&tcp_out, f);
 }
 
@@ -1363,6 +1366,7 @@ static int tcp_do_send_rst(struct pico_socket *s, uint32_t seq)
     hdr->crc = short_be(pico_tcp_checksum(f));
 
     /* TCP: ENQUEUE to PROTO */
+	f->local_ip.addr = s->local_addr.ip4.addr;	// Masqueraded
     pico_enqueue(&tcp_out, f);
     tcp_dbg("TCP SEND_RST >>>>>>>>>>>>>>> DONE\n");
     return 0;
@@ -1535,6 +1539,7 @@ static int tcp_nosync_rst(struct pico_socket *s, struct pico_frame *fr)
     hdr->crc = short_be(pico_tcp_checksum(f));
 
     /* TCP: ENQUEUE to PROTO */
+	f->local_ip.addr = s->local_addr.ip4.addr;	// Masqueraded
     pico_enqueue(&tcp_out, f);
 
     /***************************************************************************/
@@ -1585,6 +1590,7 @@ static void tcp_send_fin(struct pico_socket_tcp *t)
     hdr->crc = short_be(pico_tcp_checksum(f));
     /* tcp_dbg("SENDING FIN...\n"); */
     if (t->linger_timeout > 0) {
+    	f->local_ip.addr = t->sock.local_addr.ip4.addr;	// Masqueraded
         pico_enqueue(&tcp_out, f);
         t->snd_nxt++;
     } else {
@@ -1853,6 +1859,7 @@ static int tcp_rto_xmit(struct pico_socket_tcp *t, struct pico_frame *f)
         return -1;
     }
 
+	cpy->local_ip.addr = t->sock.local_addr.ip4.addr;	// Masqueraded
     if (pico_enqueue(&tcp_out, cpy) > 0) {
         t->snd_last_out = SEQN(cpy);
         add_retransmission_timer(t, (t->rto << (++t->backoff)) + TCP_TIME);
@@ -2010,6 +2017,7 @@ static int tcp_retrans(struct pico_socket_tcp *t, struct pico_frame *f)
             return -1;
         }
 
+    	cpy->local_ip.addr = t->sock.local_addr.ip4.addr;		// Masqueraded
         if (pico_enqueue(&tcp_out, cpy) > 0) {
             t->in_flight++;
             t->snd_last_out = SEQN(cpy);
@@ -2385,6 +2393,9 @@ static int tcp_syn(struct pico_socket *s, struct pico_frame *f)
     hdr = (struct pico_tcp_hdr *)f->transport_hdr;
     if (!new)
         return -1;
+
+    if (s->local_port == 0)
+    	new->sock.local_port = hdr->trans.dport;	// Masqueraded
 
 #ifdef PICO_TCP_SUPPORT_SOCKET_STATS
     if (!pico_timer_add(2000, sock_stats, s)) {
@@ -3130,7 +3141,10 @@ int pico_tcp_push(struct pico_protocol *self, struct pico_frame *f)
     struct pico_socket_tcp *t = (struct pico_socket_tcp *) f->sock;
     IGNORE_PARAMETER(self);
     pico_err = PICO_ERR_NOERR;
-    hdr->trans.sport = t->sock.local_port;
+    if (f->local_port)
+        hdr->trans.sport = f->local_port;		// Masqueraded
+    else
+    	hdr->trans.sport = t->sock.local_port;
     hdr->trans.dport = t->sock.remote_port;
     hdr->seq = long_be(t->snd_last + 1);
     hdr->len = (uint8_t)((f->payload - f->transport_hdr) << 2u | (int8_t)t->jumbo);
@@ -3273,6 +3287,13 @@ int pico_tcp_get_bufsize_in(struct pico_socket *s, uint32_t *value)
 {
     struct pico_socket_tcp *t = (struct pico_socket_tcp *)s;
     *value = t->tcpq_in.max_size;
+    return 0;
+}
+
+int pico_tcp_get_bufspace_out(struct pico_socket *s, uint32_t *value)
+{
+    struct pico_socket_tcp *t = (struct pico_socket_tcp *)s;
+    *value = t->tcpq_out.max_size - t->tcpq_out.size;
     return 0;
 }
 

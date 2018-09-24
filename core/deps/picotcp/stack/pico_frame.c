@@ -278,24 +278,21 @@ struct pico_frame *pico_frame_deepcopy(struct pico_frame *f)
 
 static inline uint32_t pico_checksum_adder(uint32_t sum, void *data, uint32_t len)
 {
-    uint16_t *buf = (uint16_t *)data;
-    uint16_t *stop;
-
-    if (len & 0x01) {
-        --len;
+	uint8_t *p = (uint8_t *)data;
+	uint8_t *stop = p + len;
+	while (p < stop)
+	{
 #ifdef PICO_BIGENDIAN
-        sum += (((uint8_t *)data)[len]) << 8;
+		sum += *p++ << 8;
+		if (p < stop)
+			sum += *p++;
 #else
-        sum += ((uint8_t *)data)[len];
+		sum += *p++;
+		if (p < stop)
+			sum += *p++ << 8;
 #endif
-    }
-
-    stop = (uint16_t *)(((uint8_t *)data) + len);
-
-    while (buf < stop) {
-        sum += *buf++;
-    }
-    return sum;
+	}
+	return sum;
 }
 
 static inline uint16_t pico_checksum_finalize(uint32_t sum)

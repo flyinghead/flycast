@@ -142,7 +142,9 @@ static int modem_sched_func(int tag, int c, int j)
 	{
 		if (last_comm_stats != 0)
 		{
-			printf("Stats sent %d received %d TDBE %d RDBF %d\n", sent_bytes, recvd_bytes, modem_regs.reg1e.TDBE, modem_regs.reg1e.RDBF);
+			printf("Stats sent %d (%.2f kB/s) received %d (%.2f kB/s) TDBE %d RDBF %d\n", sent_bytes, sent_bytes / 2000.0,
+					recvd_bytes, recvd_bytes / 2000.0,
+					modem_regs.reg1e.TDBE, modem_regs.reg1e.RDBF);
 			sent_bytes = 0;
 			recvd_bytes = 0;
 		}
@@ -315,6 +317,7 @@ static int modem_sched_func(int tag, int c, int j)
 static void schedule_callback(int ms)
 {
 	if (modem_sched == 0)
+		// FIXME would break save state -> relies on all schedule to be registered at init
 		modem_sched = sh4_sched_register(0, &modem_sched_func);
 	sh4_sched_request(modem_sched, SH4_MAIN_CLOCK / 1000 * ms);
 }

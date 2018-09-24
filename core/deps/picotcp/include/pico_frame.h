@@ -92,6 +92,9 @@ struct pico_frame {
 
     uint8_t send_ttl; /* Special TTL/HOPS value, 0 = auto assign */
     uint8_t send_tos; /* Type of service */
+
+    struct pico_ip4 local_ip;	/* address to masquerade */
+    uint16_t local_port;		/* port to masquerade */
 };
 
 /** frame alloc/dealloc/copy **/
