@@ -654,7 +654,11 @@ static void *pico_thread_func(void *)
 		int sockfd = find_udp_socket(port);
 		saddr.sin_port = port;
 
-		bind(sockfd, (struct sockaddr *)&saddr, saddr_len);
+		if (::bind(sockfd, (struct sockaddr *)&saddr, saddr_len) < 0)
+		{
+			perror("bind");
+			continue;
+		}
     }
 
     for (int i = 0; i < sizeof(games_tcp_ports) / sizeof(uint16_t); i++)
