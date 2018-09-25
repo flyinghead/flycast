@@ -21,12 +21,8 @@
 
 #include <stdio.h>
 #include <errno.h>
-#ifndef _WIN32
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <netinet/in.h>
-#include <unistd.h>
-#endif
+
+#include "net_platform.h"
 
 extern "C" {
 #include <pico_stack.h>
@@ -37,15 +33,15 @@ extern "C" {
 void get_host_by_name(const char *name, struct pico_ip4 dnsaddr);
 int get_dns_answer(struct pico_ip4 *address, struct pico_ip4 dnsaddr);
 char *read_name(char *reader, char *buffer, int *count);
-void set_non_blocking(int fd);
+void set_non_blocking(sock_t fd);
 
-static int sock_fd = -1;
+static sock_t sock_fd = INVALID_SOCKET;
 static unsigned short qid = PICO_TIME_MS();
 static int qname_len;
 
 void get_host_by_name(const char *host, struct pico_ip4 dnsaddr)
 {
-    if (sock_fd < 0)
+    if (!VALID(sock_fd))
     {
     	sock_fd = socket(AF_INET , SOCK_DGRAM , IPPROTO_UDP);
     	set_non_blocking(sock_fd);
@@ -97,7 +93,7 @@ int get_dns_answer(struct pico_ip4 *address, struct pico_ip4 dnsaddr)
     int r = recvfrom(sock_fd, buf, sizeof(buf), 0, (struct sockaddr*)&peer , &peer_len);
     if (r < 0)
     {
-    	if (errno != EAGAIN && errno != EWOULDBLOCK)
+    	if (get_last_error() != L_EAGAIN && get_last_error() != L_EWOULDBLOCK)
     		perror("DNS recvfrom failed");
     	return -1;
     }

@@ -32,25 +32,11 @@ extern "C" {
 #include <pico_tcp.h>
 }
 
-#ifndef _WIN32
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netinet/ip.h>
-#include <netinet/tcp.h>
-#include <netdb.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <errno.h>
-#endif
+#include "net_platform.h"
 
 #include "types.h"
 #include "cfg/cfg.h"
 #include "picoppp.h"
-
-#ifndef _WIN32
-#define closesocket close
-#endif
 
 #define RESOLVER1_OPENDNS_COM "208.67.222.222"
 #define AFO_ORIG_IP 0x83f2fb3f		// 63.251.242.131 in network order
@@ -71,9 +57,9 @@ struct pico_ip4 public_ip;
 struct pico_ip4 afo_ip;
 
 // src socket -> socket fd
-static map<struct pico_socket *, int> tcp_sockets;
+static map<struct pico_socket *, sock_t> tcp_sockets;
 // src port -> socket fd
-static map<uint16_t, int> udp_sockets;
+static map<uint16_t, sock_t> udp_sockets;
 
 static const uint16_t games_udp_ports[] = {
 		7980,	// Alien Front Online
@@ -107,7 +93,7 @@ static const uint16_t games_tcp_ports[] = {
 		17219,	// Worms World Party
 };
 // listening port -> socket fd
-static map<uint16_t, int> tcp_listening_sockets;
+static map<uint16_t, sock_t> tcp_listening_sockets;
 
 static void read_native_sockets();
 void get_host_by_name(const char *name, struct pico_ip4 dnsaddr);
@@ -169,12 +155,12 @@ int read_pico()
 	}
 }
 
-void set_non_blocking(int fd)
+void set_non_blocking(sock_t fd)
 {
 #ifndef _WIN32
 					fcntl(fd, F_SETFL, O_NONBLOCK);
 #else
-					uint32_t optl = 1;
+					u_long optl = 1;
 					ioctlsocket(fd, FIONBIO, &optl);
 #endif
 }
@@ -196,8 +182,8 @@ static void tcp_callback(uint16_t ev, struct pico_socket *s)
 
 			r = pico_socket_read(it->first, buf, sizeof(buf));
 			if (r > 0) {
-				if (write(it->second, buf, r) < r)
-					perror("tcp_callback write");
+				if (send(it->second, buf, r, 0) < r)
+					perror("tcp_callback send");
 			}
 		}
 	}
@@ -228,8 +214,8 @@ static void tcp_callback(uint16_t ev, struct pico_socket *s)
 	//		ka_val = 5000;
 	//		pico_socket_setoption(sock_a, PICO_SOCKET_OPT_KEEPINTVL, &ka_val);
 
-			int sockfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-			if (sockfd < 0)
+			sock_t sockfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+			if (!VALID(sockfd))
 			{
 				perror("socket");
 			}
@@ -256,7 +242,10 @@ static void tcp_callback(uint16_t ev, struct pico_socket *s)
 
 					int optval = 1;
 					socklen_t optlen = sizeof(optval);
-#if !defined(__APPLE__) && !defined(__FreeBSD__) && !defined(__NetBSD__)
+#if defined(_WIN32)
+					struct protoent *tcp_proto = getprotobyname("TCP");
+					setsockopt(sockfd, tcp_proto->p_proto, TCP_NODELAY, (const char *)&optval, optlen);
+#elif !defined(__APPLE__) && !defined(__FreeBSD__) && !defined(__NetBSD__)
 					setsockopt(sockfd, SOL_TCP, TCP_NODELAY, (const void *)&optval, optlen);
 #else
 					struct protoent *tcp_proto = getprotobyname("TCP");
@@ -307,14 +296,14 @@ static void tcp_callback(uint16_t ev, struct pico_socket *s)
 //	}
 }
 
-static int find_udp_socket(uint16_t src_port)
+static sock_t find_udp_socket(uint16_t src_port)
 {
 	auto it = udp_sockets.find(src_port);
 	if (it != udp_sockets.end())
 		return it->second;
 
-	int sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-	if (sockfd < 0)
+	sock_t sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	if (!VALID(sockfd))
 	{
 		perror("socket");
 		return -1;
@@ -322,7 +311,7 @@ static int find_udp_socket(uint16_t src_port)
 #ifndef _WIN32
 	fcntl(sockfd, F_SETFL, O_NONBLOCK);
 #else
-	uint32_t optl = 1;
+	u_long optl = 1;
 	ioctlsocket(sockfd, FIONBIO, &optl);
 #endif
 
@@ -352,8 +341,8 @@ static void udp_callback(uint16_t ev, struct pico_socket *s)
 				break;
 			}
 
-			int sockfd = find_udp_socket(src_port);
-			if (sockfd >= 0)
+			sock_t sockfd = find_udp_socket(src_port);
+			if (VALID(sockfd))
 			{
 				struct sockaddr_in dst_addr;
 				socklen_t addr_len = sizeof(dst_addr);
@@ -383,10 +372,10 @@ static void read_native_sockets()
     {
 		addr_len = sizeof(src_addr);
 		memset(&src_addr, 0, addr_len);
-    	int sockfd = accept(it->second, (struct sockaddr *)&src_addr, &addr_len);
-    	if (sockfd < 0)
+    	sock_t sockfd = accept(it->second, (struct sockaddr *)&src_addr, &addr_len);
+    	if (!VALID(sockfd))
     	{
-    		if (errno != EAGAIN && errno != EWOULDBLOCK)
+    		if (get_last_error() != L_EAGAIN && get_last_error() != L_EWOULDBLOCK)
     			perror("accept");
     		continue;
     	}
@@ -438,9 +427,9 @@ static void read_native_sockets()
 			if (r2 < r)
 				printf("%s: error UDP sending to %d: %s\n", __FUNCTION__, short_be(it->first), strerror(pico_err));
 		}
-		else if (r < 0 && errno != EAGAIN)
+		else if (r < 0 && get_last_error() != L_EAGAIN && get_last_error() != L_EWOULDBLOCK)
 		{
-			perror("read udp socket");
+			perror("recvfrom udp socket");
 			continue;
 		}
 	}
@@ -455,7 +444,7 @@ static void read_native_sockets()
 			// Wait for the out buffer to empty a bit
 			continue;
 		}
-		r = read(it->second, buf, sizeof(buf));
+		r = recv(it->second, buf, sizeof(buf), 0);
 		if (r > 0)
 		{
 //			printf("read_native_sockets TCP received %d bytes\n", r);
@@ -466,9 +455,9 @@ static void read_native_sockets()
 				// FIXME EAGAIN errors. Need to buffer data or wait for call back.
 				printf("%s: truncated send: %d -> %d\n", __FUNCTION__, r, r2);
 		}
-		else if (r < 0 && errno != EAGAIN)
+		else if (r < 0 && get_last_error() != L_EAGAIN && get_last_error() != L_EWOULDBLOCK)
 		{
-			perror("read tcp socket");
+			perror("recv tcp socket");
 			closesocket(it->second);
 			pico_socket_close(it->first);
 			tcp_sockets.erase(it);
@@ -495,7 +484,7 @@ static int modem_set_speed(struct pico_device *dev, uint32_t speed)
     return 0;
 }
 
-#ifdef _WIN32
+#if 0 // _WIN32
 static void usleep(unsigned int usec)
 {
 	HANDLE timer;
@@ -601,6 +590,11 @@ static void *pico_thread_func(void *)
     {
     	pico_stack_init();
     	pico_stack_inited = true;
+#if _WIN32
+		static WSADATA wsaData;
+		if (WSAStartup(MAKEWORD(2, 0), &wsaData) != 0)
+			printf("WSAStartup failed\n");
+#endif
     }
 
     // PPP
@@ -651,7 +645,7 @@ static void *pico_thread_func(void *)
     for (int i = 0; i < sizeof(games_udp_ports) / sizeof(uint16_t); i++)
     {
     	uint16_t port = short_be(games_udp_ports[i]);
-		int sockfd = find_udp_socket(port);
+		sock_t sockfd = find_udp_socket(port);
 		saddr.sin_port = port;
 
 		if (::bind(sockfd, (struct sockaddr *)&saddr, saddr_len) < 0)
@@ -665,7 +659,7 @@ static void *pico_thread_func(void *)
     {
     	uint16_t port = short_be(games_tcp_ports[i]);
     	saddr.sin_port = port;
-    	int sockfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    	sock_t sockfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 		if (::bind(sockfd, (struct sockaddr *)&saddr, saddr_len) < 0)
     	{
     		perror("bind");
