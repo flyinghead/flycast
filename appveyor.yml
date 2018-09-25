@@ -3,15 +3,15 @@ os: Visual Studio 2015
 
 environment:
   matrix:
-  - Toolset: v120
+  - Toolset: v140
 
 platform:
   - x86
   - x64
 
 configuration:
-# - Release-120
-  - Debug-120
+# - Release-140
+  - Debug-140
   
 build:
   project: shell/reicast.sln
