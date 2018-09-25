@@ -461,13 +461,16 @@ static void read_native_sockets()
 				// FIXME EAGAIN errors. Need to buffer data or wait for call back.
 				printf("%s: truncated send: %d -> %d\n", __FUNCTION__, r, r2);
 		}
+		else if (r == 0)
+		{
+			pico_socket_shutdown(it->first, PICO_SHUT_RDWR);
+		}
 		else if (r < 0 && get_last_error() != L_EAGAIN && get_last_error() != L_EWOULDBLOCK)
 		{
 			perror("recv tcp socket");
 			closesocket(it->second);
 			pico_socket_close(it->first);
 			tcp_sockets.erase(it);
-			continue;
 		}
 	}
 }
