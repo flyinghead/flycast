@@ -425,6 +425,7 @@ void recSh4_Init()
 	}
 	
 #if defined(_WIN64)
+#ifdef _MSVC_VER
 	for (int i = 10; i < 1300; i++) {
 
 
@@ -436,6 +437,10 @@ void recSh4_Init()
 		if (CodeCache)
 			break;
 	}
+#else
+	CodeCache = (u8*)VirtualAlloc(NULL, CODE_SIZE, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+#endif
+	verify(CodeCache != NULL);
 #else
 	CodeCache = (u8*)(((unat)SH4_TCB+4095)& ~4095);
 #endif
