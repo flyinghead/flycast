@@ -183,7 +183,13 @@ static void tcp_callback(uint16_t ev, struct pico_socket *s)
 			r = pico_socket_read(it->first, buf, sizeof(buf));
 			if (r > 0) {
 				if (send(it->second, buf, r, 0) < r)
+				{
 					perror("tcp_callback send");
+					closesocket(it->second);
+					pico_socket_close(it->first);
+					tcp_sockets.erase(it);
+					return;
+				}
 			}
 		}
 	}
