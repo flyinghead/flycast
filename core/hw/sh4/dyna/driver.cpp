@@ -425,7 +425,7 @@ void recSh4_Init()
 	}
 	
 #if defined(_WIN64)
-#ifdef _MSVC_VER
+#ifdef _MSC_VER
 	for (int i = 10; i < 1300; i++) {
 
 

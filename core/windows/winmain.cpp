@@ -433,46 +433,6 @@ void os_MakeExecutable(void* ptr, u32 sz)
 	VirtualProtect(ptr,sizeof(sz),PAGE_EXECUTE_READWRITE,&old);
 }
 
-
-u64 cycl_glob;
-cResetEvent evt_hld(false,true);
-
-
-double speed_load_mspdf;
-extern double full_rps;
-
-
-void os_consume(double t)
-{
-	double cyc=t*190*1000*1000;
-
-	if ((cycl_glob+cyc)<10*1000*1000)
-	{
-		InterlockedExchangeAdd(&cycl_glob,cyc);
-	}
-	else
-	{
-		cycl_glob=10*1000*1000;
-	}
-
-	evt_hld.Set();
-}
-
-void* tick_th(void* p)
-{
-		SetThreadPriority(GetCurrentThread(),THREAD_PRIORITY_TIME_CRITICAL);
-		double old=os_GetSeconds();
-		for(;;)
-		{
-			Sleep(4);
-			double newt=os_GetSeconds();
-			os_consume(newt-old);
-			old=newt;
-		}
-}
-
-cThread tick_thd(&tick_th,0);
-
 void ReserveBottomMemory()
 {
 #if defined(_WIN64) && defined(_DEBUG)
@@ -672,8 +632,6 @@ void setup_seh() {
 int CALLBACK WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine,int nCmdShowCmd)
 {
 	ReserveBottomMemory();
-
-	tick_thd.Start();
 
 	int argc=0;
 	wchar* cmd_line=GetCommandLineA();

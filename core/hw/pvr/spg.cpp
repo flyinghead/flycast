@@ -80,11 +80,8 @@ int elapse_time(int tag, int cycl, int jit)
 #endif
 	return min(max(Frame_Cycles,(u32)1*1000*1000),(u32)8*1000*1000);
 }
-#if HOST_OS==OS_WINDOWS
-extern double speed_load_mspdf;
-#else
+
 double speed_load_mspdf;
-#endif
 
 int mips_counter;
 
@@ -186,8 +183,8 @@ int spg_line_sched(int tag, int cycl, int jit)
 					mode,res,fullvbs,
 					spd_fps,fskip/ts);
 				#else
-				printf("%s/%c - %4.2f (%4.2f) - %4.2f - V: %4.2f (%.2f, %s%s%4.2f) R: %4.2f+%4.2f VTX: %4.2f%c, MIPS: %.2f\n",
-					VER_SHORTNAME,'n',mspdf,speed_load_mspdf,spd_cpu*100/200,spd_vbs,
+				printf("%s/%c - %4.2f - %4.2f - V: %4.2f (%.2f, %s%s%4.2f) R: %4.2f+%4.2f VTX: %4.2f%c, MIPS: %.2f\n",
+					VER_SHORTNAME,'n',mspdf,spd_cpu*100/200,spd_vbs,
 					spd_vbs/full_rps,mode,res,fullvbs,
 					spd_fps,fskip/ts
 					, mv, mv_c, mips_counter/ 1024.0 / 1024.0);
