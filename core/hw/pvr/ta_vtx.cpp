@@ -1437,8 +1437,6 @@ int ta_parse_cnt = 0;
 */
 bool ta_parse_vdrc(TA_context* ctx)
 {
-	bool rv=false;
-
 	verify( vd_ctx == 0);
 	vd_ctx = ctx;
 	vd_rc = vd_ctx->rend;
@@ -1457,15 +1455,18 @@ bool ta_parse_vdrc(TA_context* ctx)
 
 		}
 		while(ta_data<=ta_data_end);
-
-		rv = true; //whatever
 	}
+	bool overrun = ctx->rend.Overrun;
 
 	vd_ctx->rend = vd_rc;
 	vd_ctx = 0;
 	ctx->rend_inuse.Unlock();
 
-	return rv;
+	ctx->rend.Overrun = overrun;
+	if (overrun)
+		printf("Warning: TA context overrun\n");
+
+	return !overrun;
 }
 
 

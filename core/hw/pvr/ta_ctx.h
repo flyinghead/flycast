@@ -159,12 +159,12 @@ struct TA_context
 	{
 		tad.Reset((u8*)OS_aligned_malloc(32, 8*1024*1024));
 
-		rend.verts.InitBytes(1024*1024,&rend.Overrun); //up to 1 mb of vtx data/frame = ~ 38k vtx/frame
-		rend.idx.Init(60*1024,&rend.Overrun);			//up to 60K indexes ( idx have stripification overhead )
+		rend.verts.InitBytes(2*1024*1024,&rend.Overrun); //up to 2 mb of vtx data/frame = ~ 76k vtx/frame
+		rend.idx.Init(120*1024,&rend.Overrun);			//up to 120K indexes ( idx have stripification overhead )
 		rend.global_param_op.Init(4096,&rend.Overrun);
 		rend.global_param_pt.Init(4096,&rend.Overrun);
 		rend.global_param_mvo.Init(4096,&rend.Overrun);
-		rend.global_param_tr.Init(4096,&rend.Overrun);
+		rend.global_param_tr.Init(8192,&rend.Overrun);
 
 		rend.modtrig.Init(8192,&rend.Overrun);
 		
