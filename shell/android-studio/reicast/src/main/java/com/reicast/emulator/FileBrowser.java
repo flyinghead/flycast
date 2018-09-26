@@ -308,6 +308,7 @@ public class FileBrowser extends Fragment {
 					R.layout.bios_list_item, null, false);
 
 			((TextView) childview.findViewById(R.id.item_name)).setText(R.string.boot_bios);
+			((ImageView) childview.findViewById(R.id.item_icon)).setImageResource(R.mipmap.disk_bios);
 
 			childview.setTag(null);
 
