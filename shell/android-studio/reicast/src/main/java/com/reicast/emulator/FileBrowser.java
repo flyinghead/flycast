@@ -54,7 +54,6 @@ import java.util.Locale;
 public class FileBrowser extends Fragment {
 
 	private Vibrator vib;
-	private Drawable orig_bg;
 	private boolean games;
 	private String searchQuery = null;
 	private OnItemSelectedListener mCallback;
@@ -312,14 +311,31 @@ public class FileBrowser extends Fragment {
 
 			childview.setTag(null);
 
-			orig_bg = childview.getBackground();
-
 			childview.findViewById(R.id.childview).setOnClickListener(
 					new OnClickListener() {
 						public void onClick(View view) {
 							vib.vibrate(50);
 							mCallback.onGameSelected(Uri.EMPTY);
 							vib.vibrate(250);
+						}
+					});
+			((ViewGroup) view).addView(childview);
+		}
+		if (searchQuery != null) {
+			final View childview = getActivity().getLayoutInflater().inflate(
+					R.layout.bios_list_item, null, false);
+
+			((TextView) childview.findViewById(R.id.item_name)).setText(R.string.clear_search);
+			((ImageView) childview.findViewById(R.id.item_icon)).setImageResource(R.mipmap.disk_unknown);
+
+			childview.setTag(null);
+
+			childview.findViewById(R.id.childview).setOnClickListener(
+					new OnClickListener() {
+						public void onClick(View view) {
+							searchQuery = null;
+							new LocateGames(FileBrowser.this,
+									R.array.images).execute(game_directory);
 						}
 					});
 			((ViewGroup) view).addView(childview);
@@ -343,7 +359,6 @@ public class FileBrowser extends Fragment {
 		
 		XMLParser xmlParser = new XMLParser(game, index, mPrefs);
 		xmlParser.setViewParent(getActivity(), childview, mCallback);
-		orig_bg = childview.getBackground();
 
 		childview.findViewById(R.id.childview).setOnClickListener(
 				new OnClickListener() {
@@ -472,8 +487,6 @@ public class FileBrowser extends Fragment {
 							? R.drawable.ic_folder_black_24dp : R.drawable.disk_unknown);
 
 					childview.setTag(file);
-
-					browser.get().orig_bg = childview.getBackground();
 
 					// vw.findViewById(R.id.childview).setBackgroundColor(0xFFFFFFFF);
 

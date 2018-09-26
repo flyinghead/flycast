@@ -193,7 +193,7 @@ public class MainActivity extends AppCompatActivity implements
 					return false;
 				}
 				@Override
-				public boolean onQueryTextChange(String s) {
+				public boolean onQueryTextChange(String query) {
 					return false;
 				}
 			});
