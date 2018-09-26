@@ -294,9 +294,14 @@ void input_x11_handle()
 		return;
 
 	//Handle X11
+	static int prev_x = -1;
+	static int prev_y = -1;
+	bool mouse_moved = false;
 	XEvent e;
 
-	while (XCheckWindowEvent((Display*)x11_disp, (Window)x11_win,
+	Display *display = (Display*)x11_disp;
+
+	while (XCheckWindowEvent(display, (Window)x11_win,
 			KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask
 			| PointerMotionMask | FocusChangeMask,
 			&e))
@@ -470,32 +475,26 @@ void input_x11_handle()
 				// FALL THROUGH
 
 			case MotionNotify:
+				if (settings.input.DCMouse)
 				{
-					static int prev_x = -1;
-					static int prev_y = -1;
-
-					if (settings.input.DCMouse)
-					{
-						if (prev_x != -1)
-							mo_x_delta += (f32)(e.xmotion.x - prev_x) * settings.input.MouseSensitivity / 1000.f;
-						if (prev_y != -1)
-							mo_y_delta += (f32)(e.xmotion.y - prev_y) * settings.input.MouseSensitivity / 1000.f;
-						if (capturing_mouse && (abs(x11_width / 2 - e.xmotion.x) > 10 || abs(x11_height / 2 - e.xmotion.y) > 10))
-						{
-							prev_x = x11_width / 2;
-							prev_y = x11_height / 2;
-							XWarpPointer((Display*)x11_disp, None, (Window)x11_win, 0, 0, 0, 0,
-									prev_x, prev_y);
-						}
-						else
-						{
-							prev_x = e.xmotion.x;
-							prev_y = e.xmotion.y;
-						}
-					}
+					mouse_moved = true;
+					if (prev_x != -1)
+						mo_x_delta += (f32)(e.xmotion.x - prev_x) * settings.input.MouseSensitivity / 100.f;
+					if (prev_y != -1)
+						mo_y_delta += (f32)(e.xmotion.y - prev_y) * settings.input.MouseSensitivity / 100.f;
+					prev_x = e.xmotion.x;
+					prev_y = e.xmotion.y;
 				}
 				break;
 		}
+	}
+	if (capturing_mouse && mouse_moved)
+	{
+		prev_x = x11_width / 2;
+		prev_y = x11_height / 2;
+		XWarpPointer(display, None, (Window)x11_win, 0, 0, 0, 0,
+				prev_x, prev_y);
+		XSync(display, true);
 	}
 }
 

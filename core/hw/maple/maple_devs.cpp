@@ -1084,7 +1084,7 @@ struct maple_mouse : maple_base
 {
 	static u16 mo_cvt(f32 delta)
 	{
-		delta+=0x200;
+		delta+=0x200 + 0.5;
 		if (delta<=0)
 			delta=0;
 		else if (delta>0x3FF)
