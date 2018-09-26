@@ -452,6 +452,9 @@ public class FileBrowser extends Fragment {
 					if (app_theme == 7) {
 						childview.findViewById(R.id.childview)
 								.setBackgroundResource(R.drawable.game_selector_dream);
+					} else if (app_theme == 1) {
+						childview.findViewById(R.id.childview)
+								.setBackgroundResource(R.drawable.game_selector_blue);
 					} else {
 						childview.findViewById(R.id.childview)
 								.setBackgroundResource(R.drawable.game_selector_dark);

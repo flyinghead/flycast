@@ -78,6 +78,8 @@ public class GitAdapter extends BaseAdapter {
 		int app_theme = mPrefs.getInt(Config.pref_app_theme, 0);
 		if (app_theme == 7) {
 			vi.setBackgroundResource(R.drawable.list_selector_dream);
+		} else if (app_theme == 1) {
+			vi.setBackgroundResource(R.drawable.list_selector_blue);
 		} else {
 			vi.setBackgroundResource(R.drawable.list_selector_dark);
 		}
@@ -101,7 +103,7 @@ public class GitAdapter extends BaseAdapter {
 		RelativeLayout item = (RelativeLayout) vi.findViewById(R.id.change);
 		if (current != null && current.equals(sha.substring(0, 7))) {
 			item.getBackground().setColorFilter(0xFF00FF00,
-					PorterDuff.Mode.OVERLAY);
+					PorterDuff.Mode.MULTIPLY);
 		} else {
 			item.getBackground().setColorFilter(null);
 		}

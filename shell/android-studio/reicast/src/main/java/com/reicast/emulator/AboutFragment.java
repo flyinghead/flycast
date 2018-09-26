@@ -156,6 +156,8 @@ public class AboutFragment extends Fragment {
 				int app_theme = mPrefs.getInt(Config.pref_app_theme, 0);
 				if (app_theme == 7) {
 					list.setSelector(R.drawable.list_selector_dream);
+				} else if (app_theme == 7) {
+					list.setSelector(R.drawable.list_selector_blue);
 				} else {
 					list.setSelector(R.drawable.list_selector_dark);
 				}

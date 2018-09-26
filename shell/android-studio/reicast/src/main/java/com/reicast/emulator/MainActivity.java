@@ -59,7 +59,9 @@ public class MainActivity extends AppCompatActivity implements
         mPrefs = PreferenceManager.getDefaultSharedPreferences(this);
         int app_theme = mPrefs.getInt(Config.pref_app_theme, 0);
         if (app_theme == 7) {
-            setTheme(R.style.AppTheme_Dream);
+			setTheme(R.style.AppTheme_Dream);
+		} else if (app_theme == 1) {
+        	setTheme(R.style.AppTheme_Blue);
         } else {
             setTheme(R.style.AppTheme);
         }

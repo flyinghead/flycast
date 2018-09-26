@@ -22,6 +22,7 @@
     
     <string-array name="themes_app">
         <item>Dark</item>
+        <item>Blue</item>
         <item>Dream</item>
     </string-array>
 

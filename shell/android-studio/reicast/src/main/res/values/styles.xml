@@ -14,6 +14,17 @@
         <item name="android:tint">@color/colorDarkTint</item>
     </style>
 
+    <style name="AppTheme.Blue" parent="Theme.AppCompat.NoActionBar">
+        <item name="colorPrimary">@color/colorBluePrimary</item>
+        <item name="colorPrimaryDark">@color/colorBluePrimaryDark</item>
+        <item name="colorAccent">@color/colorBlueAccent</item>
+        <item name="android:windowBackground">@drawable/background_blue</item>
+        <item name="android:textColorPrimary">@android:color/white</item>
+        <item name="android:textColorSecondary">@color/colorBlueText</item>
+        <item name="android:textColorTertiary">@android:color/white</item>
+        <item name="android:tint">@color/colorBlueTint</item>
+    </style>
+
     <style name="AppTheme.Dream" parent="Theme.AppCompat.Light.NoActionBar">
         <item name="colorPrimary">@color/colorDreamPrimary</item>
         <item name="colorPrimaryDark">@color/colorDreamPrimaryDark</item>

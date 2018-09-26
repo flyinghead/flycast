@@ -201,7 +201,7 @@ public class OptionsFragment extends Fragment {
 					mPrefs.edit().putInt(Config.pref_app_theme, 7).apply();
 					mCallback.recreateActivity();
 				} else {
-					mPrefs.edit().putInt(Config.pref_app_theme, 0).apply();
+					mPrefs.edit().putInt(Config.pref_app_theme, position).apply();
 					mCallback.recreateActivity();
 				}
 			}
