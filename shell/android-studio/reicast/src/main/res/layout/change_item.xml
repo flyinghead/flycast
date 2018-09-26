@@ -24,7 +24,8 @@
             android:layout_width="60dip"
             android:layout_height="60dip"
             android:gravity="center"
-            app:srcCompat="@drawable/ic_github" />
+            app:srcCompat="@drawable/ic_github"
+            android:tint="@android:color/transparent"/>
     </LinearLayout>
     <!-- Main Commit Content -->
 
@@ -35,7 +36,6 @@
         android:layout_marginTop="16dip"
         android:layout_toRightOf="@+id/thumbnail"
         android:text="GitHub Committer"
-        android:textColor="#040404"
         android:textSize="14sp"
         android:textStyle="bold"
         android:typeface="sans" />
@@ -48,7 +48,6 @@
         android:layout_marginTop="2dip"
         android:layout_toRightOf="@+id/thumbnail"
         android:text="GitHub Commit Message"
-        android:textColor="#343434"
         android:textSize="12sp" />
 
     <!-- Right Date -->

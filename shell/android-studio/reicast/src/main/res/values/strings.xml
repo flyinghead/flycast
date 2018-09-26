@@ -92,7 +92,7 @@
     <string name="controller_not_connected">Controller Not Connected %1$s</string>
     <string name="controller_none_selected">No Controller Selected</string>
     <string name="select">Select</string>
-    <string name="remove">Remove</string>
+    <string name="remove">Clear</string>
     <string name="select_controller_title">Select Controller</string>
     <string name="select_controller_message">Press any button on the controller %1$s to assign to port</string>
     <string name="controller_already_in_use">This controller is already in use!</string>
@@ -145,6 +145,7 @@
     <string name="rateme">Rate Me</string>
     <string name="messages">Send Logs</string>
     <string name="cloud">Cloud VMU</string>
+    <string name="theme">Switch Theme</string>
 
     <string name="cancel">Cancel</string>
     <string name="dismiss">Dismiss</string>

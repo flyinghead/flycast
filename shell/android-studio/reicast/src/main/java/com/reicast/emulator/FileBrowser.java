@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.StateListDrawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -16,6 +17,7 @@ import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.Snackbar;
 import android.support.graphics.drawable.VectorDrawableCompat;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -324,22 +326,6 @@ public class FileBrowser extends Fragment {
 							vib.vibrate(250);
 						}
 					});
-
-			childview.findViewById(R.id.childview).setOnTouchListener(
-					new OnTouchListener() {
-						@SuppressWarnings("deprecation")
-						public boolean onTouch(View view, MotionEvent arg1) {
-							if (arg1.getActionMasked() == MotionEvent.ACTION_DOWN) {
-								view.setBackgroundColor(0xFF4F3FFF);
-							} else if (arg1.getActionMasked() == MotionEvent.ACTION_CANCEL
-									|| arg1.getActionMasked() == MotionEvent.ACTION_UP) {
-								view.setBackgroundDrawable(orig_bg);
-							}
-
-							return false;
-
-						}
-					});
 			((ViewGroup) view).addView(childview);
 		}
 
@@ -398,21 +384,6 @@ public class FileBrowser extends Fragment {
 							}
 							JNIdc.config(home_directory);
 						}
-					}
-				});
-
-		childview.findViewById(R.id.childview).setOnTouchListener(
-				new OnTouchListener() {
-					@SuppressWarnings("deprecation")
-					public boolean onTouch(View view, MotionEvent arg1) {
-						if (arg1.getActionMasked() == MotionEvent.ACTION_DOWN) {
-							view.setBackgroundColor(0xFF4F3FFF);
-						} else if (arg1.getActionMasked() == MotionEvent.ACTION_CANCEL
-								|| arg1.getActionMasked() == MotionEvent.ACTION_UP) {
-							view.setBackgroundDrawable(orig_bg);
-						}
-						return false;
-
 					}
 				});
 		list.addView(childview);
@@ -480,6 +451,14 @@ public class FileBrowser extends Fragment {
 						continue;
 					final View childview = browser.get().getActivity().getLayoutInflater().inflate(
 							R.layout.browser_fragment_item, null, false);
+
+					if (browser.get().mPrefs.getBoolean("lightTheme", false)) {
+						childview.findViewById(R.id.childview)
+								.setBackgroundResource(R.drawable.game_selector);
+					} else {
+						childview.findViewById(R.id.childview)
+								.setBackgroundResource(R.drawable.game_selector_dark);
+					}
 
 					if (file == null) {
 						((TextView) childview.findViewById(R.id.item_name)).setText(R.string.folder_select);
@@ -549,22 +528,6 @@ public class FileBrowser extends Fragment {
 										}
 
 									}
-								}
-							});
-
-					childview.findViewById(R.id.childview).setOnTouchListener(
-							new OnTouchListener() {
-								@SuppressWarnings("deprecation")
-								public boolean onTouch(View view, MotionEvent event) {
-									if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
-										view.setBackgroundColor(0xFF4F3FFF);
-									} else if (event.getActionMasked() == MotionEvent.ACTION_CANCEL
-											|| event.getActionMasked() == MotionEvent.ACTION_UP) {
-										view.setBackgroundDrawable(browser.get().orig_bg);
-									}
-
-									return false;
-
 								}
 							});
 					listView.addView(childview);

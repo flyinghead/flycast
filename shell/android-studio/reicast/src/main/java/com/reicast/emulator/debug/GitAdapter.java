@@ -6,8 +6,10 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.SharedPreferences;
 import android.graphics.PorterDuff;
 import android.os.Build;
+import android.preference.PreferenceManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -35,8 +37,9 @@ import java.util.HashMap;
 public class GitAdapter extends BaseAdapter {
 
 	private ArrayList<HashMap<String, String>> data;
-	private LayoutInflater inflater = null;
+	private LayoutInflater inflater;
 	private DisplayImageOptions options;
+	private SharedPreferences mPrefs;
 
 	public GitAdapter(Activity activity, ArrayList<HashMap<String, String>> d) {
 		this.data = d;
@@ -50,6 +53,7 @@ public class GitAdapter extends BaseAdapter {
 				.imageScaleType(ImageScaleType.EXACTLY_STRETCHED).build();
 
 		ImageLoader.getInstance().init(configicon);
+		mPrefs = PreferenceManager.getDefaultSharedPreferences(activity);
 
 	}
 
@@ -69,6 +73,13 @@ public class GitAdapter extends BaseAdapter {
 		View vi = convertView;
 		if (convertView == null)
 			vi = this.inflater.inflate(R.layout.change_item, null);
+
+		if (mPrefs.getBoolean("lightTheme", false)) {
+			vi.setBackgroundResource(R.drawable.list_selector);
+		} else {
+			vi.setBackgroundResource(R.drawable.list_selector_dark);
+		}
+
 		TextView dateText = (TextView) vi.findViewById(R.id.date);
 		TextView committerText = (TextView) vi.findViewById(R.id.committer);
 		TextView titleText = (TextView) vi.findViewById(R.id.title);

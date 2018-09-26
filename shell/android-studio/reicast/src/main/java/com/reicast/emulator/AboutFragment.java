@@ -1,10 +1,12 @@
 package com.reicast.emulator;
 
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.Snackbar;
 import android.support.graphics.drawable.VectorDrawableCompat;
@@ -149,7 +151,13 @@ public class AboutFragment extends Fragment {
 				ArrayList<HashMap<String, String>> commitList) {
 			if (commitList != null && commitList.size() > 0) {
 				ListView list = (ListView) ref.get().getView().findViewById(R.id.list);
-				list.setSelector(R.drawable.list_selector);
+				SharedPreferences mPrefs = PreferenceManager
+						.getDefaultSharedPreferences(ref.get().getActivity());
+				if (mPrefs.getBoolean("lightTheme", false)) {
+					list.setSelector(R.drawable.list_selector);
+				} else {
+					list.setSelector(R.drawable.list_selector_dark);
+				}
 				list.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
 				GitAdapter adapter = new GitAdapter(ref.get().getActivity(), commitList);
 				// Set adapter as specified collection

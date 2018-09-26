@@ -5,8 +5,8 @@
     <!-- Gradient BgColor for listrow Selected -->
     <gradient
         android:angle="270"
-        android:centerColor="@color/colorLightAccentDark"
-        android:endColor="@color/colorLightAccent"
-        android:startColor="@color/colorLightAccent" />
+        android:centerColor="@color/colorDarkAccentDark"
+        android:endColor="@color/colorDarkAccent"
+        android:startColor="@color/colorDarkAccent" />
 
 </shape>

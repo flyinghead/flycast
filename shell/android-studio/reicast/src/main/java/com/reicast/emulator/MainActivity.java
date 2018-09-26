@@ -20,6 +20,7 @@ import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
@@ -55,6 +56,9 @@ public class MainActivity extends AppCompatActivity implements
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
+        mPrefs = PreferenceManager.getDefaultSharedPreferences(this);
+        setTheme(mPrefs.getBoolean("lightTheme", false)
+                ?  R.style.AppTheme_Light : R.style.AppTheme);
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 
@@ -75,8 +79,6 @@ public class MainActivity extends AppCompatActivity implements
 			getWindow().setFlags (WindowManager.LayoutParams.FLAG_FULLSCREEN,
 					WindowManager.LayoutParams.FLAG_FULLSCREEN);
 		}
-
-		mPrefs = PreferenceManager.getDefaultSharedPreferences(this);
 
 		String prior_error = mPrefs.getString("prior_error", null);
 		if (prior_error != null) {
@@ -390,6 +392,16 @@ public class MainActivity extends AppCompatActivity implements
 		super.onPostCreate(savedInstanceState);
 	}
 
+	private void restartActivity() {
+		this.recreate();
+		OptionsFragment optionsFrag = new OptionsFragment();
+		getSupportFragmentManager()
+				.beginTransaction()
+				.replace(R.id.fragment_container, optionsFrag, "OPTIONS_FRAG")
+				.addToBackStack(null).commit();
+		// Prevents a crash, but actually just reloads the FileBrowser fragment
+	}
+
 	@Override
 	public boolean onNavigationItemSelected(@NonNull MenuItem item) {
 		// Handle navigation view item clicks here.
@@ -521,6 +533,16 @@ public class MainActivity extends AppCompatActivity implements
 
 			case R.id.message_menu:
 				generateErrorLog();
+				drawer.closeDrawer(GravityCompat.START);
+				return true;
+			case R.id.theme_menu:
+				if (mPrefs.getBoolean("lightTheme", false)) {
+					mPrefs.edit().putBoolean("lightTheme", false).apply();
+					restartActivity();
+				} else {
+					mPrefs.edit().putBoolean("lightTheme", true).apply();
+					restartActivity();
+				}
 				drawer.closeDrawer(GravityCompat.START);
 				return true;
 
