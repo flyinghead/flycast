@@ -13,7 +13,7 @@
         android:orientation="horizontal"
         android:clickable="true"
         android:focusable="true"
-        android:background="@drawable/game_selector" >
+        android:background="@drawable/game_selector_dream" >
 
         <ImageView
             android:id="@+id/item_icon"

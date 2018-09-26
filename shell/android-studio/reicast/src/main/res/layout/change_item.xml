@@ -4,7 +4,7 @@
     android:id="@+id/change"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@drawable/list_selector"
+    android:background="@drawable/list_selector_dream"
     android:orientation="horizontal"
     android:padding="5dip" >
 

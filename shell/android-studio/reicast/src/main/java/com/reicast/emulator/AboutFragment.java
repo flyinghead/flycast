@@ -153,8 +153,9 @@ public class AboutFragment extends Fragment {
 				ListView list = (ListView) ref.get().getView().findViewById(R.id.list);
 				SharedPreferences mPrefs = PreferenceManager
 						.getDefaultSharedPreferences(ref.get().getActivity());
-				if (mPrefs.getBoolean("lightTheme", false)) {
-					list.setSelector(R.drawable.list_selector);
+				int app_theme = mPrefs.getInt(Config.pref_app_theme, 0);
+				if (app_theme == 7) {
+					list.setSelector(R.drawable.list_selector_dream);
 				} else {
 					list.setSelector(R.drawable.list_selector_dark);
 				}

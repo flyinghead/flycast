@@ -30,6 +30,7 @@ import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
 import com.nostra13.universalimageloader.core.assist.ImageScaleType;
 import com.reicast.emulator.R;
+import com.reicast.emulator.config.Config;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -74,8 +75,9 @@ public class GitAdapter extends BaseAdapter {
 		if (convertView == null)
 			vi = this.inflater.inflate(R.layout.change_item, null);
 
-		if (mPrefs.getBoolean("lightTheme", false)) {
-			vi.setBackgroundResource(R.drawable.list_selector);
+		int app_theme = mPrefs.getInt(Config.pref_app_theme, 0);
+		if (app_theme == 7) {
+			vi.setBackgroundResource(R.drawable.list_selector_dream);
 		} else {
 			vi.setBackgroundResource(R.drawable.list_selector_dark);
 		}
@@ -99,7 +101,7 @@ public class GitAdapter extends BaseAdapter {
 		RelativeLayout item = (RelativeLayout) vi.findViewById(R.id.change);
 		if (current != null && current.equals(sha.substring(0, 7))) {
 			item.getBackground().setColorFilter(0xFF00FF00,
-					PorterDuff.Mode.MULTIPLY);
+					PorterDuff.Mode.OVERLAY);
 		} else {
 			item.getBackground().setColorFilter(null);
 		}

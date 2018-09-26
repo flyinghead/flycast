@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
-import android.graphics.drawable.StateListDrawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -17,14 +16,11 @@ import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.Snackbar;
 import android.support.graphics.drawable.VectorDrawableCompat;
 import android.support.v4.app.Fragment;
-import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
 import android.view.Gravity;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.view.View.OnTouchListener;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -52,7 +48,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 
@@ -188,7 +183,7 @@ public class FileBrowser extends Fragment {
 	private void installButtons() {
 		try {
 			File buttons = null;
-			String theme = mPrefs.getString(Config.pref_theme, null);
+			String theme = mPrefs.getString(Config.pref_button_theme, null);
 			if (theme != null) {
 				buttons = new File(theme);
 			}
@@ -452,9 +447,10 @@ public class FileBrowser extends Fragment {
 					final View childview = browser.get().getActivity().getLayoutInflater().inflate(
 							R.layout.browser_fragment_item, null, false);
 
-					if (browser.get().mPrefs.getBoolean("lightTheme", false)) {
+					int app_theme = browser.get().mPrefs.getInt(Config.pref_app_theme, 0);
+					if (app_theme == 7) {
 						childview.findViewById(R.id.childview)
-								.setBackgroundResource(R.drawable.game_selector);
+								.setBackgroundResource(R.drawable.game_selector_dream);
 					} else {
 						childview.findViewById(R.id.childview)
 								.setBackgroundResource(R.drawable.game_selector_dark);

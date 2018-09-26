@@ -7,11 +7,12 @@
     <color name="colorDarkText">#e0e0e0</color>
     <color name="colorDarkTint">#e0e0e0</color>
 
-    <color name="colorLightPrimary">#6e6b66</color>
-    <color name="colorLightPrimaryDark">#534e4b</color>
-    <color name="colorLightAccent">#5787c7</color>
-    <color name="colorLightAccentDark">#42a5f5</color>
-    <color name="colorLightText">#3d3533</color>
+    <color name="colorDreamPrimary">#6e6b66</color>
+    <color name="colorDreamPrimaryDark">#534e4b</color>
+    <color name="colorDreamAccent">#5787c7</color>
+    <color name="colorDreamAccentDark">#42a5f5</color>
+    <color name="colorDreamText">#3d3533</color>
+    <color name="colorDreamTint">#534e4b</color>
 
     <color name="colorLink">#42a5f5</color>
 </resources>

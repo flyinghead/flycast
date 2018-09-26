@@ -53,7 +53,6 @@ import java.io.OutputStream;
 import java.lang.ref.WeakReference;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 
 public class OptionsFragment extends Fragment {
@@ -608,10 +607,10 @@ public class OptionsFragment extends Fragment {
 					public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
 						String theme = String.valueOf(parentView.getItemAtPosition(position));
 						if (theme.equals("None")) {
-							options.get().mPrefs.edit().remove(Config.pref_theme).apply();
+							options.get().mPrefs.edit().remove(Config.pref_button_theme).apply();
 						} else {
 							String theme_path = options.get().home_directory + "/themes/" + theme;
-							options.get().mPrefs.edit().putString(Config.pref_theme, theme_path).apply();
+							options.get().mPrefs.edit().putString(Config.pref_button_theme, theme_path).apply();
 						}
 					}
 					@Override
@@ -705,7 +704,7 @@ public class OptionsFragment extends Fragment {
 		mPrefs.edit().remove(Config.pref_rendertype).apply();
 		mPrefs.edit().remove(Emulator.pref_nosound).apply();
 		mPrefs.edit().remove(Config.pref_renderdepth).apply();
-		mPrefs.edit().remove(Config.pref_theme).apply();
+		mPrefs.edit().remove(Config.pref_button_theme).apply();
 
 		getActivity().finish();
 	}

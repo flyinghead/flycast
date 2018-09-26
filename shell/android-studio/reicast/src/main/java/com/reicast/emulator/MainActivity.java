@@ -57,8 +57,12 @@ public class MainActivity extends AppCompatActivity implements
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
         mPrefs = PreferenceManager.getDefaultSharedPreferences(this);
-        setTheme(mPrefs.getBoolean("lightTheme", false)
-                ?  R.style.AppTheme_Light : R.style.AppTheme);
+        int app_theme = mPrefs.getInt(Config.pref_app_theme, 0);
+        if (app_theme == 7) {
+            setTheme(R.style.AppTheme_Dream);
+        } else {
+            setTheme(R.style.AppTheme);
+        }
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 
@@ -536,11 +540,12 @@ public class MainActivity extends AppCompatActivity implements
 				drawer.closeDrawer(GravityCompat.START);
 				return true;
 			case R.id.theme_menu:
-				if (mPrefs.getBoolean("lightTheme", false)) {
-					mPrefs.edit().putBoolean("lightTheme", false).apply();
+				int app_theme = mPrefs.getInt(Config.pref_app_theme, 0);
+				if (app_theme == 7) {
+					mPrefs.edit().putInt(Config.pref_app_theme, 0).apply();
 					restartActivity();
 				} else {
-					mPrefs.edit().putBoolean("lightTheme", true).apply();
+					mPrefs.edit().putInt(Config.pref_app_theme, 7).apply();
 					restartActivity();
 				}
 				drawer.closeDrawer(GravityCompat.START);

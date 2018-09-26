@@ -8,7 +8,9 @@ public class Config {
 
 	public static final String pref_home = "home_directory";
 	public static final String pref_games = "game_directory";
-	public static final String pref_theme = "button_theme";
+	public static final String pref_button_theme = "button_theme";
+
+	public static final String pref_app_theme = "app_theme";
 
 	public static final String pref_gamedetails = "game_details";
 
