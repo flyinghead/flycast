@@ -1104,7 +1104,7 @@ struct maple_mouse : maple_base
 
 			//struct data
 			//3*4
-			w32(0x00060700);	// Mouse, 2 buttons, 4 axes
+			w32(0x00070E00);	// Mouse, 3 buttons, 3 axes
 			w32(0);
 			w32(0);
 			//1	area code
