@@ -7,6 +7,7 @@
     <string name="system_path">System Path\n  (location of data folder with dc_boot.bin/dc_flash.bin inside)</string>
     <string name="browser_path">Default System Path</string>
     <string name="games_path">Storage Path\n  (location of *.gdi, *.chd or *.cdi images)</string>
+    <string name="app_theme">Application Theme</string>
     <string name="button_theme">Onscreen Button Theme</string>
     <string name="bios_selection">Select a BIOS source</string>
 
@@ -145,7 +146,6 @@
     <string name="rateme">Rate Me</string>
     <string name="messages">Send Logs</string>
     <string name="cloud">Cloud VMU</string>
-    <string name="theme">Switch Theme</string>
 
     <string name="cancel">Cancel</string>
     <string name="dismiss">Dismiss</string>

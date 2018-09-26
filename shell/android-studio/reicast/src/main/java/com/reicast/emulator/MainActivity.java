@@ -396,7 +396,7 @@ public class MainActivity extends AppCompatActivity implements
 		super.onPostCreate(savedInstanceState);
 	}
 
-	private void restartActivity() {
+	public void recreateActivity() {
 		this.recreate();
 		OptionsFragment optionsFrag = new OptionsFragment();
 		getSupportFragmentManager()
@@ -537,17 +537,6 @@ public class MainActivity extends AppCompatActivity implements
 
 			case R.id.message_menu:
 				generateErrorLog();
-				drawer.closeDrawer(GravityCompat.START);
-				return true;
-			case R.id.theme_menu:
-				int app_theme = mPrefs.getInt(Config.pref_app_theme, 0);
-				if (app_theme == 7) {
-					mPrefs.edit().putInt(Config.pref_app_theme, 0).apply();
-					restartActivity();
-				} else {
-					mPrefs.edit().putInt(Config.pref_app_theme, 7).apply();
-					restartActivity();
-				}
 				drawer.closeDrawer(GravityCompat.START);
 				return true;
 
