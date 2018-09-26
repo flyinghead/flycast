@@ -364,6 +364,7 @@ void input_x11_handle()
 										kb_used--;
 										for (int j = i; j < 5; j++)
 											kb_key[j] = kb_key[j + 1];
+										kb_key[5] = 0;
 									}
 								}
 							}
