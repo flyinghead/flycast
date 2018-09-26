@@ -37,3 +37,64 @@ Last update : 25/03/2009
 - Resident Evil Code Veronica, the statue wont turn; Soul Calibur , Yoshimitsu exhibition mode crashing at fade out : The speed of gdrom transfers needs to be limited to about 1MB/s for these games to work
 - Prince Of Persia 3D : the textures are totaly wrong: Check the dynamic shift opcodes, the game depends on only using the lower 5 bits.
 - Skies Of Arcadia crashes “randomly” after exiting the ingame menu: For some reason, everytime that you exit it writes stuff to the flash.When the flash is full, it clears a sector.Make sure the flash clear command is handled properly.
+
+
+PsyMan's List
+
+Last update 9/22/09
+
+» Beats of Rage:
+
+Problem: Code execution seems to loop after the Sega license screen. Game appears to be frozen.
+
+Cause: It starts multiple maple DMA transfers before the previous ones end.
+
+Solution: Make sure to allow that instead of ending each DMA before starting the other.
+
+» Record of Lodoss War:
+
+Problem: Code execution seems to loop after beating certain enemies or getting certain items, etc. Game appears to be frozen.
+
+Cause: Division by zero.
+
+Solution: Handle division by zero on the related Div μcode.
+
+» D2:
+
+Problem: Disc swapping does not work on this game.
+
+Cause: GD-ROM error control is missing.
+
+Solution: Implement GD-ROM error control. Another option is to hack things up to generate an error and return the appropriate sense key (6h) and sense code (28h) when error info is requested.
+
+» Dreamcast BIOS:
+
+Problem: Dreamcast logo appears as if the tray is open when the tray is closed while the emulators starts and there is no disc in the drive. It should appear as when there is a disc in the drive.
+
+Cause: GD-ROM error control is missing.
+
+Solution: Implement GD-ROM error control. Another option is to hack things up to generate an error and return the appropriate sense key (6h) and sense code (29h) when error info is requested.
+
+» Various games, VMU/Memory card:
+
+Problem: Various games fail to detect the connected memory card(s).
+
+Cause: There can be various causes for that.
+
+Some games (ie: Dynamite Cop) expect that an LCD and/or a real time clock is present on the storage device (”simple” memory cards lack those two, VMUs have them).
+
+Some games (ie: Spawn) look for a very specific device name for the connected VMUs (”Visual Memory”, padded with spaces having a specific string length) and will fail to detect the connected memory cards if the name is different.
+
+Some WinCE games seem to do VMU detection using a timer. More on that later.
+
+Solution: Be sure to give correct VMU device information.  More on the timer thing some other time. :p
+
+» Various games/Disc Swapping:
+
+Problem: Disc swapping fails for some games, “fixing” it breaks other games (ie: Swapping on Utopia Boot Disc works but fails on Xploder DC, or works for Xploder DC and fails on Utopia Boot Disc).
+
+Cause: The state of the drive is wrong, it seems that after the command 71h the drive state ends up being set to “pause” for GD-ROMs and to “standby” for the rest disc types.
+
+Solution: Be sure to set the drive state accordingly. Figuring out how the responses on command 71h are generated and why the drive state ends up like that is a plus. :p
+
+More to come…
