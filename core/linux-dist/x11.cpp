@@ -311,6 +311,16 @@ void input_x11_handle()
 			case KeyPress:
 			case KeyRelease:
 				{
+					if (e.type == KeyRelease && XEventsQueued(display, QueuedAfterReading))
+					{
+						XEvent nev;
+						XPeekEvent(display, &nev);
+
+						if (nev.type == KeyPress && nev.xkey.time == e.xkey.time &&
+								nev.xkey.keycode == e.xkey.keycode)
+							// Key wasn’t actually released: auto repeat
+							continue;
+					}
 					// Dreamcast keyboard emulation
 					if (e.xkey.keycode == KEY_LSHIFT || e.xkey.keycode == KEY_RSHIFT)
 						if (e.type == KeyRelease)
