@@ -163,7 +163,7 @@ T DYNACALL ReadMem_area0(u32 addr)
 		}
 		else if (likely((addr>= 0x005F8000) && (addr<=0x005F9FFF))) //	:TA / PVR Core Reg.
 		{
-			verify(sz==4);
+			if (sz != 4) return 0;		// House of the Dead 2
 			return (T)pvr_ReadReg(addr);
 		}
 	}
