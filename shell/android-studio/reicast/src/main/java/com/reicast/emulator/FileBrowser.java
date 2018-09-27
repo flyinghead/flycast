@@ -3,6 +3,7 @@ package com.reicast.emulator;
 import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.res.ColorStateList;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -16,7 +17,9 @@ import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.Snackbar;
 import android.support.graphics.drawable.VectorDrawableCompat;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
+import android.support.v4.widget.ImageViewCompat;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -316,7 +319,19 @@ public class FileBrowser extends Fragment {
 					R.layout.bios_list_item, null, false);
 
 			((TextView) childview.findViewById(R.id.item_name)).setText(R.string.boot_bios);
-			((ImageView) childview.findViewById(R.id.item_icon)).setImageResource(R.mipmap.disk_bios);
+			ImageView icon = (ImageView) childview.findViewById(R.id.item_icon);
+			icon.setImageResource(R.mipmap.disk_bios);
+			int app_theme = mPrefs.getInt(Config.pref_app_theme, 0);
+			if (app_theme == 7) {
+				ImageViewCompat.setImageTintList(icon, ColorStateList.valueOf(
+						ContextCompat.getColor(getActivity(), R.color.colorDreamTint)));
+			} else if (app_theme == 1) {
+				ImageViewCompat.setImageTintList(icon, ColorStateList.valueOf(
+						ContextCompat.getColor(getActivity(), R.color.colorBlueTint)));
+			} else {
+				ImageViewCompat.setImageTintList(icon, ColorStateList.valueOf(
+						ContextCompat.getColor(getActivity(), R.color.colorDarkTint)));
+			}
 
 			childview.setTag(null);
 
@@ -335,7 +350,19 @@ public class FileBrowser extends Fragment {
 					R.layout.bios_list_item, null, false);
 
 			((TextView) childview.findViewById(R.id.item_name)).setText(R.string.clear_search);
-			((ImageView) childview.findViewById(R.id.item_icon)).setImageResource(R.mipmap.disk_unknown);
+			ImageView icon = (ImageView) childview.findViewById(R.id.item_icon);
+			icon.setImageResource(R.mipmap.disk_unknown);
+			int app_theme = mPrefs.getInt(Config.pref_app_theme, 0);
+			if (app_theme == 7) {
+				ImageViewCompat.setImageTintList(icon, ColorStateList.valueOf(
+						ContextCompat.getColor(getActivity(), R.color.colorDreamTint)));
+			} else if (app_theme == 1) {
+				ImageViewCompat.setImageTintList(icon, ColorStateList.valueOf(
+						ContextCompat.getColor(getActivity(), R.color.colorBlueTint)));
+			} else {
+				ImageViewCompat.setImageTintList(icon, ColorStateList.valueOf(
+						ContextCompat.getColor(getActivity(), R.color.colorDarkTint)));
+			}
 
 			childview.setTag(null);
 
@@ -491,9 +518,21 @@ public class FileBrowser extends Fragment {
 					else
 						((TextView) childview.findViewById(R.id.item_name)).setText(file.getName());
 
-					((ImageView) childview.findViewById(R.id.item_icon)).setImageResource(file == null
+					ImageView icon = (ImageView) childview.findViewById(R.id.item_icon);
+					icon.setImageResource(file == null
 							? R.drawable.ic_settings: file.isDirectory()
 							? R.drawable.ic_folder_black_24dp : R.drawable.disk_unknown);
+
+					if (app_theme == 7) {
+						ImageViewCompat.setImageTintList(icon, ColorStateList.valueOf(
+								ContextCompat.getColor(browser.get().getActivity(), R.color.colorDreamTint)));
+					} else if (app_theme == 1) {
+						ImageViewCompat.setImageTintList(icon, ColorStateList.valueOf(
+								ContextCompat.getColor(browser.get().getActivity(), R.color.colorBlueTint)));
+					} else {
+						ImageViewCompat.setImageTintList(icon, ColorStateList.valueOf(
+								ContextCompat.getColor(browser.get().getActivity(), R.color.colorDarkTint)));
+					}
 
 					childview.setTag(file);
 

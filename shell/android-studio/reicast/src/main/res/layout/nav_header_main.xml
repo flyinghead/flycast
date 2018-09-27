@@ -18,8 +18,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:paddingTop="@dimen/nav_header_vertical_spacing"
-            app:srcCompat="@drawable/ic_launcher"
-            android:tint="@android:color/transparent"/>
+            app:srcCompat="@drawable/ic_launcher"/>
 
         <LinearLayout
             android:layout_width="match_parent"
