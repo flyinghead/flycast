@@ -24,8 +24,7 @@
             android:layout_width="60dip"
             android:layout_height="60dip"
             android:gravity="center"
-            app:srcCompat="@drawable/ic_github"
-            android:tint="@android:color/transparent"/>
+            app:srcCompat="@drawable/ic_github"/>
     </LinearLayout>
     <!-- Main Commit Content -->
 

@@ -43,7 +43,6 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:contentDescription="cloudImg"
-        app:srcCompat="@drawable/cloud_big"
-        android:tint="@android:color/transparent"/>
+        app:srcCompat="@drawable/cloud_big"/>
 
 </LinearLayout>
