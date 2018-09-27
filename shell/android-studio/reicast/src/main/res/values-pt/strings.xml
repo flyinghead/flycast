@@ -31,7 +31,6 @@
     <string name="select_reios">Usar reios BIOS</string>
     <string name="select_bios">Região da BIOS (dc_flash[X].bin)</string>
     <string name="select_details">Habilitar detalhes do jogo</string>
-    <string name="select_native">Modo nativo [Sem OSD]</string>	
     <string name="select_dynarec">Habilitar Recompilador Dinâmico (Dynarec)</string>
     <string name="select_unstable">Otimizações instáveis</string>
     <string name="select_cable">Tipo de cabo</string>	

@@ -286,17 +286,6 @@ public class OptionsFragment extends Fragment {
 
 		});
 
-		OnCheckedChangeListener native_options = new OnCheckedChangeListener() {
-
-			public void onCheckedChanged(CompoundButton buttonView,
-										 boolean isChecked) {
-				mPrefs.edit().putBoolean(Emulator.pref_nativeact, isChecked).apply();
-			}
-		};
-		CompoundButton native_opt = (CompoundButton) getView().findViewById(R.id.native_option);
-		native_opt.setChecked(mPrefs.getBoolean(Emulator.pref_nativeact, Emulator.nativeact));
-		native_opt.setOnCheckedChangeListener(native_options);
-
 		OnCheckedChangeListener dynarec_options = new OnCheckedChangeListener() {
 
 			public void onCheckedChanged(CompoundButton buttonView,
@@ -717,7 +706,6 @@ public class OptionsFragment extends Fragment {
 	private void resetEmuSettings() {
 		mPrefs.edit().remove(Emulator.pref_usereios).apply();
 		mPrefs.edit().remove(Config.pref_gamedetails).apply();
-		mPrefs.edit().remove(Emulator.pref_nativeact).apply();
 		mPrefs.edit().remove(Emulator.pref_dynarecopt).apply();
 		mPrefs.edit().remove(Emulator.pref_unstable).apply();
 		mPrefs.edit().remove(Emulator.pref_cable).apply();
@@ -737,7 +725,6 @@ public class OptionsFragment extends Fragment {
 		mPrefs.edit().remove(Config.pref_button_theme).apply();
 
 		Emulator.usereios = false;
-		Emulator.nativeact = false;
 		Emulator.dynarecopt = true;
 		Emulator.unstableopt = false;
 		Emulator.cable = 3;

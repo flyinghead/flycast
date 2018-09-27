@@ -24,7 +24,6 @@
     <string name="optimization_opts">Optimerings- og fejlfindingsopsætninger</string>
     <string name="experimental_opts">Eksperimentel (Kan medføre vidtspredt panik)</string>
     <string name="select_details">Aktiver spil detaljer</string>
-    <string name="select_native">Aktiver native interface</string>
     <string name="select_dynarec">Dynarec option</string>
     <string name="select_unstable">Ustabile optimeringer</string>
     <string name="select_region">DC region</string>

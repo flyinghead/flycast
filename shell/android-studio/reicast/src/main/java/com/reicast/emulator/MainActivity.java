@@ -262,21 +262,11 @@ public class MainActivity extends AppCompatActivity implements
 					+ uri.getAuthority() + "/external_files", "/storage"));
 		}
 
-		Emulator.nativeact = PreferenceManager.getDefaultSharedPreferences(
-				getApplicationContext()).getBoolean(Emulator.pref_nativeact, Emulator.nativeact);
-		if (Emulator.nativeact) {
-			Intent intent = new Intent("com.reicast.EMULATOR",
-					uri, getApplicationContext(), GL2JNINative.class);
-			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
-				intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-			startActivity(intent);
-		} else {
-			Intent intent = new Intent("com.reicast.EMULATOR",
-					uri, getApplicationContext(), GL2JNIActivity.class);
-			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
-				intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-			startActivity(intent);
-		}
+		Intent intent = new Intent("com.reicast.EMULATOR",
+				uri, getApplicationContext(), GL2JNIActivity.class);
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
+			intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+		startActivity(intent);
 	}
 
 	public void onFolderSelected(Uri uri) {
