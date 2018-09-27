@@ -21,7 +21,6 @@
     
     <string name="optimization_opts">最適化とデバッグの設定</string>
     <string name="experimental_opts">実験的</string>
-    <string name="select_native">ネイティブインタフェースを使用</string>
     <string name="select_dynarec">Dynarecの設定</string>
     <string name="select_unstable">不安定な最適化</string>
     <string name="select_region">DC地域</string>

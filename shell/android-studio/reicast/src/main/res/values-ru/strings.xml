@@ -33,7 +33,6 @@
     <string name="select_reios">Использовать reios BIOS</string>
     <string name="select_bios">Регион BIOS (dc_flash[X].bin)</string>
     <string name="select_details">Информация об игре</string>
-    <string name="select_native">Нативный режим (без индикации)</string>
     <string name="select_dynarec">Динамическая рекомпиляция</string>
     <string name="select_unstable">Нестабильные оптимизации</string>
     <string name="select_cable">Тип кабеля</string>

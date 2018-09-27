@@ -9,8 +9,7 @@ import com.android.util.DreamTime;
 import com.reicast.emulator.emu.JNIdc;
 
 public class Emulator extends Application {
-    
-    public static final String pref_nativeact = "enable_native";
+
     public static final String pref_dynarecopt = "dynarec_opt";
     public static final String pref_unstable = "unstable_opt";
     public static final String pref_dynsafemode = "dyn_safemode";
@@ -47,7 +46,6 @@ public class Emulator extends Application {
     public static boolean modvols = true;
     public static String bootdisk = null;
     public static boolean usereios = false;
-    public static boolean nativeact = false;
     
     /**
      * Load the user configuration from preferences
@@ -68,7 +66,6 @@ public class Emulator extends Application {
         Emulator.syncedrender = mPrefs.getBoolean(pref_syncedrender, syncedrender);
         Emulator.bootdisk = mPrefs.getString(pref_bootdisk, bootdisk);
         Emulator.usereios = mPrefs.getBoolean(pref_usereios, usereios);
-        Emulator.nativeact = mPrefs.getBoolean(pref_nativeact, nativeact);
     }
 
     /**
