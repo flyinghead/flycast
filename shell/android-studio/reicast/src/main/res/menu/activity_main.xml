@@ -25,5 +25,4 @@
     <item android:title="@string/about"
         android:id="@+id/about_menu"
         android:icon="@mipmap/menu_question" />
-
 </menu>

@@ -20,7 +20,13 @@
         <item>VGA</item>
     </string-array>
     
-    <string-array name="themes">
+    <string-array name="themes_app">
+        <item>Dark</item>
+        <item>Blue</item>
+        <item>Dream</item>
+    </string-array>
+
+    <string-array name="themes_ext">
         <item>png</item>
         <item>jpg</item>
         <item>jpeg</item>

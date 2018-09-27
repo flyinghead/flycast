@@ -97,7 +97,8 @@
                     android:id="@+id/a_button_icon"
                     android:layout_width="48dp"
                     android:layout_height="48dp"
-                    app:srcCompat="@drawable/input" />
+                    app:srcCompat="@drawable/input"
+                    android:tint="@android:color/transparent"/>
 
                 <TextView
                     android:id="@+id/a_button_key"
@@ -149,7 +150,8 @@
                     android:id="@+id/b_button_icon"
                     android:layout_width="48dp"
                     android:layout_height="48dp"
-                    app:srcCompat="@drawable/input" />
+                    app:srcCompat="@drawable/input"
+                    android:tint="@android:color/transparent"/>
 
                 <TextView
                     android:id="@+id/b_button_key"
@@ -201,7 +203,8 @@
                     android:id="@+id/x_button_icon"
                     android:layout_width="48dp"
                     android:layout_height="48dp"
-                    app:srcCompat="@drawable/input" />
+                    app:srcCompat="@drawable/input"
+                    android:tint="@android:color/transparent"/>
 
                 <TextView
                     android:id="@+id/x_button_key"
@@ -261,7 +264,8 @@
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="4dp"
                     android:ems="10"
-                    android:text="@string/y_button" />
+                    android:text="@string/y_button"
+                    android:tint="@android:color/transparent"/>
             </LinearLayout>
 
             <LinearLayout

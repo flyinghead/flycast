@@ -53,7 +53,6 @@ import java.io.OutputStream;
 import java.lang.ref.WeakReference;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 
 public class OptionsFragment extends Fragment {
@@ -70,6 +69,7 @@ public class OptionsFragment extends Fragment {
 
 	// Container Activity must implement this interface
 	public interface OnClickListener {
+		void recreateActivity();
 		void onMainBrowseSelected(String path_entry, boolean games, String query);
 		void launchBIOSdetection();
 	}
@@ -130,7 +130,6 @@ public class OptionsFragment extends Fragment {
 		app.getConfigurationPrefs(mPrefs);
 
 		// Generate the menu options and fill in existing settings
-
 		Button mainBrowse = (Button) getView().findViewById(R.id.browse_main_path);
 		mSpnrThemes = (Spinner) getView().findViewById(R.id.pick_button_theme);
 		new LocateThemes(this).execute(home_directory + "/themes");
@@ -181,6 +180,36 @@ public class OptionsFragment extends Fragment {
 		CompoundButton reios_opt = (CompoundButton) getView().findViewById(R.id.reios_option);
 		reios_opt.setChecked(mPrefs.getBoolean(Emulator.pref_usereios, false));
 		reios_opt.setOnCheckedChangeListener(reios_options);
+
+		String[] app_themes = getResources().getStringArray(R.array.themes_app);
+		Spinner aSpnrThemes = (Spinner) getView().findViewById(R.id.pick_app_theme);
+		ArrayAdapter<String> themeAdapter = new ArrayAdapter<>(getActivity(),
+				android.R.layout.simple_spinner_item, app_themes);
+		themeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		aSpnrThemes.setAdapter(themeAdapter);
+		int app_theme = mPrefs.getInt(Config.pref_app_theme, 0);
+		if (app_theme == 7) {
+			aSpnrThemes.setSelection(themeAdapter.getPosition("Dream"), true);
+		} else {
+			aSpnrThemes.setSelection(app_theme, true);
+		}
+		aSpnrThemes.setOnItemSelectedListener(new OnItemSelectedListener() {
+			@Override
+			public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
+				String theme = String.valueOf(parentView.getItemAtPosition(position));
+				if (theme.equals("Dream")) {
+					mPrefs.edit().putInt(Config.pref_app_theme, 7).apply();
+					mCallback.recreateActivity();
+				} else {
+					mPrefs.edit().putInt(Config.pref_app_theme, position).apply();
+					mCallback.recreateActivity();
+				}
+			}
+			@Override
+			public void onNothingSelected(AdapterView<?> parentView) {
+
+			}
+		});
 
 		OnCheckedChangeListener details_options = new OnCheckedChangeListener() {
 
@@ -574,7 +603,7 @@ public class OptionsFragment extends Fragment {
 		@Override
 		protected List<File> doInBackground(String... paths) {
 			File storage = new File(paths[0]);
-			String[] mediaTypes = options.get().getResources().getStringArray(R.array.themes);
+			String[] mediaTypes = options.get().getResources().getStringArray(R.array.themes_ext);
 			FilenameFilter[] filter = new FilenameFilter[mediaTypes.length];
 			int i = 0;
 			for (final String type : mediaTypes) {
@@ -608,10 +637,10 @@ public class OptionsFragment extends Fragment {
 					public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
 						String theme = String.valueOf(parentView.getItemAtPosition(position));
 						if (theme.equals("None")) {
-							options.get().mPrefs.edit().remove(Config.pref_theme).apply();
+							options.get().mPrefs.edit().remove(Config.pref_button_theme).apply();
 						} else {
 							String theme_path = options.get().home_directory + "/themes/" + theme;
-							options.get().mPrefs.edit().putString(Config.pref_theme, theme_path).apply();
+							options.get().mPrefs.edit().putString(Config.pref_button_theme, theme_path).apply();
 						}
 					}
 					@Override
@@ -705,9 +734,25 @@ public class OptionsFragment extends Fragment {
 		mPrefs.edit().remove(Config.pref_rendertype).apply();
 		mPrefs.edit().remove(Emulator.pref_nosound).apply();
 		mPrefs.edit().remove(Config.pref_renderdepth).apply();
-		mPrefs.edit().remove(Config.pref_theme).apply();
+		mPrefs.edit().remove(Config.pref_button_theme).apply();
 
-		getActivity().finish();
+		Emulator.usereios = false;
+		Emulator.nativeact = false;
+		Emulator.dynarecopt = true;
+		Emulator.unstableopt = false;
+		Emulator.cable = 3;
+		Emulator.dcregion = 3;
+		Emulator.broadcast = 4;
+		Emulator.limitfps = true;
+		Emulator.mipmaps = true;
+		Emulator.widescreen = false;
+		Emulator.frameskip = 0;
+		Emulator.pvrrender = false;
+		Emulator.syncedrender = false;
+		Emulator.bootdisk = null;
+		Emulator.nosound = false;
+
+		mCallback.recreateActivity();
 	}
 
 	private void showToastMessage(String message, int duration) {

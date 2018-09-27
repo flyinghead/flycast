@@ -4,7 +4,7 @@
     android:id="@+id/change"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@drawable/list_selector"
+    android:background="@drawable/list_selector_dream"
     android:orientation="horizontal"
     android:padding="5dip" >
 
@@ -24,7 +24,8 @@
             android:layout_width="60dip"
             android:layout_height="60dip"
             android:gravity="center"
-            app:srcCompat="@drawable/ic_github" />
+            app:srcCompat="@drawable/ic_github"
+            android:tint="@android:color/transparent"/>
     </LinearLayout>
     <!-- Main Commit Content -->
 

@@ -7,5 +7,4 @@
     android:layout_weight="1"
     android:ellipsize="marquee"
     android:gravity="right"
-    android:singleLine="true"
-    android:textColor="#ffffff" />
+    android:singleLine="true" />

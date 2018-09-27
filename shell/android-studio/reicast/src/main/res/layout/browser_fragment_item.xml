@@ -14,7 +14,7 @@
         android:layout_centerInParent="true"
         android:clickable="true"
         android:focusable="true"
-        android:background="@drawable/game_selector" >
+        android:background="@drawable/game_selector_dream" >
 
         <ImageView
             android:id="@+id/item_icon"
@@ -22,7 +22,6 @@
             android:layout_height="72dp"
             android:layout_marginLeft="16dp"
             android:layout_gravity="center"
-            android:tint="@color/ice_light"
             app:srcCompat="@drawable/ic_folder_black_24dp" />
 
         <TextView
@@ -35,7 +34,6 @@
             android:paddingLeft="16dp"
             android:paddingRight="16dp"
             android:textSize="@dimen/primary_text_material"
-            android:textColor="@color/ice_light"
             android:text="@string/disk_loading" />
     </LinearLayout>
 

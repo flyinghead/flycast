@@ -19,10 +19,8 @@ import android.support.v4.app.Fragment;
 import android.support.v4.content.FileProvider;
 import android.view.Gravity;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.view.View.OnTouchListener;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -50,14 +48,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 
 public class FileBrowser extends Fragment {
 
 	private Vibrator vib;
-	private Drawable orig_bg;
 	private boolean games;
 	private String searchQuery = null;
 	private OnItemSelectedListener mCallback;
@@ -186,7 +182,7 @@ public class FileBrowser extends Fragment {
 	private void installButtons() {
 		try {
 			File buttons = null;
-			String theme = mPrefs.getString(Config.pref_theme, null);
+			String theme = mPrefs.getString(Config.pref_button_theme, null);
 			if (theme != null) {
 				buttons = new File(theme);
 			}
@@ -311,10 +307,9 @@ public class FileBrowser extends Fragment {
 					R.layout.bios_list_item, null, false);
 
 			((TextView) childview.findViewById(R.id.item_name)).setText(R.string.boot_bios);
+			((ImageView) childview.findViewById(R.id.item_icon)).setImageResource(R.mipmap.disk_bios);
 
 			childview.setTag(null);
-
-			orig_bg = childview.getBackground();
 
 			childview.findViewById(R.id.childview).setOnClickListener(
 					new OnClickListener() {
@@ -324,20 +319,23 @@ public class FileBrowser extends Fragment {
 							vib.vibrate(250);
 						}
 					});
+			((ViewGroup) view).addView(childview);
+		}
+		if (searchQuery != null) {
+			final View childview = getActivity().getLayoutInflater().inflate(
+					R.layout.bios_list_item, null, false);
 
-			childview.findViewById(R.id.childview).setOnTouchListener(
-					new OnTouchListener() {
-						@SuppressWarnings("deprecation")
-						public boolean onTouch(View view, MotionEvent arg1) {
-							if (arg1.getActionMasked() == MotionEvent.ACTION_DOWN) {
-								view.setBackgroundColor(0xFF4F3FFF);
-							} else if (arg1.getActionMasked() == MotionEvent.ACTION_CANCEL
-									|| arg1.getActionMasked() == MotionEvent.ACTION_UP) {
-								view.setBackgroundDrawable(orig_bg);
-							}
+			((TextView) childview.findViewById(R.id.item_name)).setText(R.string.clear_search);
+			((ImageView) childview.findViewById(R.id.item_icon)).setImageResource(R.mipmap.disk_unknown);
 
-							return false;
+			childview.setTag(null);
 
+			childview.findViewById(R.id.childview).setOnClickListener(
+					new OnClickListener() {
+						public void onClick(View view) {
+							searchQuery = null;
+							new LocateGames(FileBrowser.this,
+									R.array.images).execute(game_directory);
 						}
 					});
 			((ViewGroup) view).addView(childview);
@@ -361,7 +359,6 @@ public class FileBrowser extends Fragment {
 		
 		XMLParser xmlParser = new XMLParser(game, index, mPrefs);
 		xmlParser.setViewParent(getActivity(), childview, mCallback);
-		orig_bg = childview.getBackground();
 
 		childview.findViewById(R.id.childview).setOnClickListener(
 				new OnClickListener() {
@@ -398,21 +395,6 @@ public class FileBrowser extends Fragment {
 							}
 							JNIdc.config(home_directory);
 						}
-					}
-				});
-
-		childview.findViewById(R.id.childview).setOnTouchListener(
-				new OnTouchListener() {
-					@SuppressWarnings("deprecation")
-					public boolean onTouch(View view, MotionEvent arg1) {
-						if (arg1.getActionMasked() == MotionEvent.ACTION_DOWN) {
-							view.setBackgroundColor(0xFF4F3FFF);
-						} else if (arg1.getActionMasked() == MotionEvent.ACTION_CANCEL
-								|| arg1.getActionMasked() == MotionEvent.ACTION_UP) {
-							view.setBackgroundDrawable(orig_bg);
-						}
-						return false;
-
 					}
 				});
 		list.addView(childview);
@@ -481,6 +463,18 @@ public class FileBrowser extends Fragment {
 					final View childview = browser.get().getActivity().getLayoutInflater().inflate(
 							R.layout.browser_fragment_item, null, false);
 
+					int app_theme = browser.get().mPrefs.getInt(Config.pref_app_theme, 0);
+					if (app_theme == 7) {
+						childview.findViewById(R.id.childview)
+								.setBackgroundResource(R.drawable.game_selector_dream);
+					} else if (app_theme == 1) {
+						childview.findViewById(R.id.childview)
+								.setBackgroundResource(R.drawable.game_selector_blue);
+					} else {
+						childview.findViewById(R.id.childview)
+								.setBackgroundResource(R.drawable.game_selector_dark);
+					}
+
 					if (file == null) {
 						((TextView) childview.findViewById(R.id.item_name)).setText(R.string.folder_select);
 					} else if (file == parent)
@@ -493,8 +487,6 @@ public class FileBrowser extends Fragment {
 							? R.drawable.ic_folder_black_24dp : R.drawable.disk_unknown);
 
 					childview.setTag(file);
-
-					browser.get().orig_bg = childview.getBackground();
 
 					// vw.findViewById(R.id.childview).setBackgroundColor(0xFFFFFFFF);
 
@@ -549,22 +541,6 @@ public class FileBrowser extends Fragment {
 										}
 
 									}
-								}
-							});
-
-					childview.findViewById(R.id.childview).setOnTouchListener(
-							new OnTouchListener() {
-								@SuppressWarnings("deprecation")
-								public boolean onTouch(View view, MotionEvent event) {
-									if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
-										view.setBackgroundColor(0xFF4F3FFF);
-									} else if (event.getActionMasked() == MotionEvent.ACTION_CANCEL
-											|| event.getActionMasked() == MotionEvent.ACTION_UP) {
-										view.setBackgroundDrawable(browser.get().orig_bg);
-									}
-
-									return false;
-
 								}
 							});
 					listView.addView(childview);

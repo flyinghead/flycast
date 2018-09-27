@@ -20,6 +20,7 @@ import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
@@ -55,6 +56,15 @@ public class MainActivity extends AppCompatActivity implements
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
+        mPrefs = PreferenceManager.getDefaultSharedPreferences(this);
+        int app_theme = mPrefs.getInt(Config.pref_app_theme, 0);
+        if (app_theme == 7) {
+			setTheme(R.style.AppTheme_Dream);
+		} else if (app_theme == 1) {
+        	setTheme(R.style.AppTheme_Blue);
+        } else {
+            setTheme(R.style.AppTheme);
+        }
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 
@@ -75,8 +85,6 @@ public class MainActivity extends AppCompatActivity implements
 			getWindow().setFlags (WindowManager.LayoutParams.FLAG_FULLSCREEN,
 					WindowManager.LayoutParams.FLAG_FULLSCREEN);
 		}
-
-		mPrefs = PreferenceManager.getDefaultSharedPreferences(this);
 
 		String prior_error = mPrefs.getString("prior_error", null);
 		if (prior_error != null) {
@@ -185,7 +193,7 @@ public class MainActivity extends AppCompatActivity implements
 					return false;
 				}
 				@Override
-				public boolean onQueryTextChange(String s) {
+				public boolean onQueryTextChange(String query) {
 					return false;
 				}
 			});
@@ -388,6 +396,16 @@ public class MainActivity extends AppCompatActivity implements
 	@Override
 	public void onPostCreate(Bundle savedInstanceState) {
 		super.onPostCreate(savedInstanceState);
+	}
+
+	public void recreateActivity() {
+		this.recreate();
+		OptionsFragment optionsFrag = new OptionsFragment();
+		getSupportFragmentManager()
+				.beginTransaction()
+				.replace(R.id.fragment_container, optionsFrag, "OPTIONS_FRAG")
+				.addToBackStack(null).commit();
+		// Prevents a crash, but actually just reloads the FileBrowser fragment
 	}
 
 	@Override
