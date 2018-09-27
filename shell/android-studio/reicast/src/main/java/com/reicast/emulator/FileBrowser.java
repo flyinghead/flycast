@@ -271,7 +271,7 @@ public class FileBrowser extends Fragment {
 					browser.get().createListItem(list, items.get(i), i, array == R.array.images);
 				}
 				list.invalidate();
-			} else {
+			} else if (browser.get().searchQuery == null) {
 				browser.get().browseStorage(array == R.array.images);
 			}
 		}
