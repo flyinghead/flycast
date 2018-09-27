@@ -198,6 +198,17 @@ public class MainActivity extends AppCompatActivity implements
 				}
 			});
 		}
+
+		try {
+			String versionName = getPackageManager()
+					.getPackageInfo(getPackageName(), 0).versionName;
+			int versionCode = getPackageManager()
+					.getPackageInfo(getPackageName(), 0).versionCode;
+			((TextView) navigationView.findViewById(R.id.version)).setText(
+					getString(R.string.revision_text, versionName, String.valueOf(versionCode)));
+		} catch (PackageManager.NameNotFoundException e) {
+			e.printStackTrace();
+		}
 	}
 
 	public void generateErrorLog() {

@@ -74,6 +74,7 @@
     <string name="games_listing">Game List</string>
     <string name="search_hint">Game (ie. Crazy Taxi)</string>
     <string name="clear_search">Clear Search Results</string>
+    <string name="no_games">No games found for current search</string>
     
     <string name="game_details">Game Info - %1$s</string>
     <string name="info_unavailable">Game Info Unavailable</string>
