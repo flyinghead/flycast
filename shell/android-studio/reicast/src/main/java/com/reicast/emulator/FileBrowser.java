@@ -259,24 +259,33 @@ public class FileBrowser extends Fragment {
 
 		@Override
 		protected void onPostExecute(List<File> items) {
-			if (items != null && !items.isEmpty()) {
-				LinearLayout list = (LinearLayout) browser.get().getActivity().findViewById(R.id.game_list);
-				if (list.getChildCount() > 0) {
-					list.removeAllViews();
-				}
+			LinearLayout list = (LinearLayout) browser.get().getActivity().findViewById(R.id.game_list);
+			if (list.getChildCount() > 0) {
+				list.removeAllViews();
+			}
 
-				String heading = browser.get().getActivity().getString(R.string.games_listing);
-				browser.get().createListHeader(heading, list, array == R.array.images);
+			String heading = browser.get().getActivity().getString(R.string.games_listing);
+			browser.get().createListHeader(heading, list, array == R.array.images);
+			if (items != null && !items.isEmpty()) {
 				for (int i = 0; i < items.size(); i++) {
 					browser.get().createListItem(list, items.get(i), i, array == R.array.images);
 				}
-				list.invalidate();
-			} else if (browser.get().searchQuery == null) {
+
+			} else if (browser.get().searchQuery != null) {
+				final View childview = browser.get().getActivity().getLayoutInflater().inflate(
+						R.layout.browser_fragment_item, null, false);
+				((TextView) childview.findViewById(R.id.item_name)).setText(R.string.no_games);
+				((ImageView) childview.findViewById(R.id.item_icon))
+						.setImageResource(R.mipmap.disk_missing);
+				list.addView(childview);
+
+			} else {
 				browser.get().browseStorage(array == R.array.images);
 			}
+			list.invalidate();
 		}
 	}
-	
+
 	private void browseStorage(boolean images) {
 		if (images) {
 			(new navigate(this)).executeOnExecutor(
@@ -285,15 +294,15 @@ public class FileBrowser extends Fragment {
 			if (game_directory.equals(sdcard.getAbsolutePath())) {
 				HashSet<String> extStorage = FileBrowser.getExternalMounts();
 				if (extStorage != null && !extStorage.isEmpty()) {
-                    for (String sd : extStorage) {
-                        String sdCardPath = sd.replace("mnt/media_rw", "storage");
-                        if (!sdCardPath.equals(sdcard.getAbsolutePath())) {
-                            if (new File(sdCardPath).canRead()) {
-                                (new navigate(this)).execute(new File(sdCardPath));
-                                return;
-                            }
-                        }
-                    }
+					for (String sd : extStorage) {
+						String sdCardPath = sd.replace("mnt/media_rw", "storage");
+						if (!sdCardPath.equals(sdcard.getAbsolutePath())) {
+							if (new File(sdCardPath).canRead()) {
+								(new navigate(this)).execute(new File(sdCardPath));
+								return;
+							}
+						}
+					}
 				}
 			}
 			(new navigate(this)).executeOnExecutor(
