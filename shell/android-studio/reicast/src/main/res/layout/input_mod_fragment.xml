@@ -261,8 +261,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="4dp"
                     android:ems="10"
-                    android:text="@string/y_button"
-                    android:tint="@android:color/transparent"/>
+                    android:text="@string/y_button"/>
             </LinearLayout>
 
             <LinearLayout
