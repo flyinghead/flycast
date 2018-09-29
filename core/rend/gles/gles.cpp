@@ -1197,10 +1197,10 @@ static void DrawButton(float* xy, u32 state)
 
 	vtx.z=1;
 
-	float x=xy[0];
-	float y=xy[1];
-	float w=xy[2];
-	float h=xy[3];
+	float x = xy[0] * scale_x;
+	float y = xy[1] * scale_y;
+	float w = xy[2] * scale_x;
+	float h = xy[3] * scale_y;
 
 	vtx.col[0]=vtx.col[1]=vtx.col[2]=(0x7F-0x40*state/255)*vjoy_pos[13][0];
 
@@ -1294,12 +1294,12 @@ static void DrawRightedText(float yy, float scale, int transparency, const char*
 
   vtx.z=1;
 
-  float w=float(strlen(text)*14)*scale;
+  float w = float(strlen(text) * 14) * scale * scale_x;
 
-  float x = 320 + 240 * screen_width / screen_height - w;
-  float y=yy;
-  float h=16.0f*scale;
-  w=14.0f*scale;
+  float x = (ShaderUniforms.scale_coefs[2] + 1) / ShaderUniforms.scale_coefs[0] - w;
+  float y = yy * scale_y;
+  float h = 16.0f * scale * scale_y;
+  w = 14.0f * scale * scale_x;
   float step=32.0f/512.0f;
   float step2=4.0f/512.0f;
 
