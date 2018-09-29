@@ -709,6 +709,7 @@ void* dc_loadstate_thread(void* p)
 
 	cleanup_serialize(data) ;
 	printf("Loaded state from %s size %d\n", filename.c_str(), total_size) ;
+	rend_cancel_emu_wait();
 
 	return NULL;
 }

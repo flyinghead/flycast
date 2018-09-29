@@ -1160,7 +1160,9 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	REICAST_SA(joyx,4);
 	REICAST_SA(joyy,4);
 
-
+	REICAST_S(settings.dreamcast.broadcast);
+	REICAST_S(settings.dreamcast.cable);
+	REICAST_S(settings.dreamcast.region);
 
 	return true ;
 }
@@ -1537,6 +1539,11 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	REICAST_USA(vks,4);
 	REICAST_USA(joyx,4);
 	REICAST_USA(joyy,4);
+
+
+	REICAST_US(settings.dreamcast.broadcast);
+	REICAST_US(settings.dreamcast.cable);
+	REICAST_US(settings.dreamcast.region);
 
 	return true ;
 }
