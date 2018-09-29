@@ -8,7 +8,7 @@
 #include "hw/flashrom/flashrom.h"
 #include "hw/mem/_vmem.h"
 #include "hw/gdrom/gdromv3.h"
-#include "hw/maple/maple_devs.h"
+#include "hw/maple/maple_cfg.h"
 #include "hw/pvr/Renderer_if.h"
 #include "hw/pvr/ta_structs.h"
 #include "hw/sh4/sh4_interrupts.h"
@@ -213,45 +213,8 @@ extern ByteCount_t ByteCount ;
 extern char EEPROM[0x100];
 extern bool EEPROM_loaded;
 extern _NaomiState State;
-/*
- * each maple_device has unique sub-elements - need special handler
-struct maple_base: maple_device
-{
-	u8* dma_buffer_out;
-	u32* dma_count_out;
-
-	u8* dma_buffer_in;
-	u32 dma_count_in;
-
-struct maple_sega_vmu: maple_base
-{
-	FILE* file;
-	u8 flash_data[128*1024];
-	u8 lcd_data[192];
-	u8 lcd_data_decoded[48*32];
-
-struct maple_device
-{
-	u8 maple_port;          //raw maple port
-	u8 bus_port;            //0 .. 5
-	u8 bus_id;              //0 .. 3
-	wchar logical_port[3];  //A0, etc
-	IMapleConfigMap* config;
-struct maple_microphone: maple_base
-
-	u8 micdata[SIZE_OF_MIC_DATA];
-struct maple_sega_purupuru : maple_base
-
-   u16 AST, AST_ms;
-   u32 VIBSET;
-*/
-
-
-
 
 //./core/hw/maple/maple_if.o
-//needs special handler
-extern maple_device* MapleDevices[4][6];
 //one time set
 //extern int maple_sched;
 //incremented but never read
@@ -964,12 +927,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 
 	REICAST_S(maple_ddt_pending_reset);
 
-	for (i = 0 ; i < 4 ; i++)
-		for (j = 0 ; j < 6 ; j++)
-			if ( MapleDevices[i][j] != 0 )
-				MapleDevices[i][j]->maple_serialize(data, total_size) ;
-
-
+	mcfg_SerializeDevices(data, total_size);
 
 	REICAST_S(FrameCount);
 	REICAST_S(pend_rend);
@@ -1328,12 +1286,7 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 
 	REICAST_US(maple_ddt_pending_reset);
 
-	for (i = 0 ; i < 4 ; i++)
-		for (j = 0 ; j < 6 ; j++)
-			if ( MapleDevices[i][j] != 0 )
-				MapleDevices[i][j]->maple_unserialize(data, total_size) ;
-
-
+	mcfg_UnserializeDevices(data, total_size);
 
 	REICAST_US(FrameCount);
 	REICAST_US(pend_rend);

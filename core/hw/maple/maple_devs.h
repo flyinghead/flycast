@@ -35,6 +35,7 @@ struct maple_device
 	virtual u32 Dma(u32 Command,u32* buffer_in,u32 buffer_in_len,u32* buffer_out,u32& buffer_out_len)=0;
 	virtual bool maple_serialize(void **data, unsigned int *total_size){return true;};
 	virtual bool maple_unserialize(void **data, unsigned int *total_size){return true;};
+	virtual MapleDeviceType get_device_type() = 0;
 };
 
 struct _NaomiState
@@ -50,3 +51,4 @@ maple_device* maple_Create(MapleDeviceType type);
 int get_mic_data(u8* buffer); //implemented in Android.cpp
 int push_vmu_screen(u8* buffer); //implemented in Android.cpp
 #endif
+#define MAPLE_PORTS 4

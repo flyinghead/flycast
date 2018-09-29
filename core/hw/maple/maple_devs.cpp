@@ -162,6 +162,11 @@ struct maple_base: maple_device
 */
 struct maple_sega_controller: maple_base
 {
+	virtual MapleDeviceType get_device_type()
+	{
+		return MDT_SegaController;
+	}
+
 	virtual u32 dma(u32 cmd)
 	{
 		//printf("maple_sega_controller::dma Called 0x%X;Command %d\n",device_instance->port,Command);
@@ -191,10 +196,10 @@ struct maple_sega_controller: maple_base
 			wstr(maple_sega_brand,60);
 
 			//2
-			w16(0x01AE);
+			w16(0x01AE);	// 43 mA
 
 			//2
-			w16(0x01F4);
+			w16(0x01F4);	// 50 mA
 
 			return MDRS_DeviceStatus;
 
@@ -273,6 +278,11 @@ struct maple_sega_vmu: maple_base
 	u8 flash_data[128*1024];
 	u8 lcd_data[192];
 	u8 lcd_data_decoded[48*32];
+
+	virtual MapleDeviceType get_device_type()
+	{
+		return MDT_SegaVMU;
+	}
 
 	// creates an empty VMU
 	bool init_emptyvmu()
@@ -395,10 +405,10 @@ struct maple_sega_vmu: maple_base
 				wstr(maple_sega_brand,60);
 
 				//2
-				w16(0x007c);
+				w16(0x007c);	// 12.4 mA
 
 				//2
-				w16(0x0082);
+				w16(0x0082);	// 13 mA
 
 				return MDRS_DeviceStatus;
 			}
@@ -717,6 +727,11 @@ struct maple_microphone: maple_base
 {
 	u8 micdata[SIZE_OF_MIC_DATA];
 
+	virtual MapleDeviceType get_device_type()
+	{
+		return MDT_Microphone;
+	}
+
 	virtual bool maple_serialize(void **data, unsigned int *total_size)
 	{
 		REICAST_SA(micdata,SIZE_OF_MIC_DATA);
@@ -766,10 +781,10 @@ struct maple_microphone: maple_base
 			wstr(maple_sega_brand,60);
 
 			//2
-			w16(0x01AE);
+			w16(0x01AE);	// 43 mA
 
 			//2
-			w16(0x01F4);
+			w16(0x01F4);	// 50 mA
 
 			return MDRS_DeviceStatus;
 
@@ -909,6 +924,11 @@ struct maple_sega_purupuru : maple_base
 	u16 AST, AST_ms;
 	u32 VIBSET;
 
+	virtual MapleDeviceType get_device_type()
+	{
+		return MDT_PurupuruPack;
+	}
+
    virtual bool maple_serialize(void **data, unsigned int *total_size)
    {
       REICAST_S(AST);
@@ -951,10 +971,10 @@ struct maple_sega_purupuru : maple_base
 			wstr(maple_sega_brand, 60);
 
 			//2
-			w16(0x00C8);
+			w16(0x00C8);	// 20 mA
 
 			//2
-			w16(0x0640);
+			w16(0x0640);	// 160 mA
 
 			return MDRS_DeviceStatus;
 
@@ -1015,6 +1035,11 @@ u8 kb_key[6]={0};	// normal keys pressed
 
 struct maple_keyboard : maple_base
 {
+	virtual MapleDeviceType get_device_type()
+	{
+		return MDT_Keyboard;
+	}
+
 	virtual u32 dma(u32 cmd)
 	{
 		switch (cmd)
@@ -1046,10 +1071,10 @@ struct maple_keyboard : maple_base
 			}
 
 			// Low-consumption standby current (2)
-			w16(0x01AE);
+			w16(0x01AE);	// 43 mA
 
 			// Maximum current consumption (2)
-			w16(0x01F5);
+			w16(0x01F5);	// 50.1 mA
 
 			return MDRS_DeviceStatus;
 
@@ -1082,6 +1107,11 @@ f32 mo_wheel_delta;
 
 struct maple_mouse : maple_base
 {
+	virtual MapleDeviceType get_device_type()
+	{
+		return MDT_Mouse;
+	}
+
 	static u16 mo_cvt(f32 delta)
 	{
 		delta+=0x200 + 0.5;
@@ -1124,10 +1154,10 @@ struct maple_mouse : maple_base
 			}
 
 			// Low-consumption standby current (2)
-			w16(0x0069);
+			w16(0x0069);	// 10.5 mA
 
 			// Maximum current consumption (2)
-			w16(0x0120);
+			w16(0x0120);	// 28.8 mA
 
 			return MDRS_DeviceStatus;
 
@@ -1238,6 +1268,11 @@ No error checking of any kind, but works just fine
 */
 struct maple_naomi_jamma : maple_sega_controller
 {
+	virtual MapleDeviceType get_device_type()
+	{
+		return MDT_NaomiJamma;
+	}
+
 	virtual u32 dma(u32 cmd)
 	{
 		u32* buffer_in = (u32*)dma_buffer_in;
