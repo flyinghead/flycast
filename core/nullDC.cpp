@@ -353,7 +353,14 @@ void LoadCustom()
 {
 	char *reios_id = reios_disk_id();
 
-	cfgSaveStr(reios_id, "software.name", reios_software_name);
+	char *p = reios_id + strlen(reios_id) - 1;
+	while (p >= reios_id && *p == ' ')
+		*p-- = '\0';
+	if (p < reios_id || *p == '\0')
+		return;
+
+	if (reios_software_name[0] != '\0')
+		cfgSaveStr(reios_id, "software.name", reios_software_name);
 	settings.dynarec.Enable			= cfgGameInt(reios_id,"Dynarec.Enabled", settings.dynarec.Enable ? 1 : 0) != 0;
 	settings.dynarec.idleskip		= cfgGameInt(reios_id,"Dynarec.idleskip", settings.dynarec.idleskip ? 1 : 0) != 0;
 	settings.dynarec.unstable_opt	= cfgGameInt(reios_id,"Dynarec.unstable-opt", settings.dynarec.unstable_opt);
@@ -368,6 +375,9 @@ void LoadCustom()
 
 	settings.pvr.MaxThreads			= cfgGameInt(reios_id, "pvr.MaxThreads", settings.pvr.MaxThreads);
 	settings.pvr.SynchronousRender	= cfgGameInt(reios_id, "pvr.SynchronousRendering", settings.pvr.SynchronousRender);
+	settings.dreamcast.cable = cfgGameInt(reios_id, "Dreamcast.Cable", settings.dreamcast.cable);
+	settings.dreamcast.region = cfgGameInt(reios_id, "Dreamcast.Region", settings.dreamcast.region);
+	settings.dreamcast.broadcast = cfgGameInt(reios_id, "Dreamcast.Broadcast", settings.dreamcast.broadcast);
 }
 
 void SaveSettings()
