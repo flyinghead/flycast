@@ -659,7 +659,7 @@ public class GL2JNIView extends GLSurfaceView
         }
 
         void reiosInfo(String reiosId, String reiosSoftware) {
-            if (fileName != null) {
+            if (fileName != null && !reiosId.equals("") && !reiosSoftware.equals("")) {
                 String gameId = reiosId.replaceAll("[^a-zA-Z0-9]+", "").toLowerCase();
                 SharedPreferences mPrefs = context.getSharedPreferences(gameId, Activity.MODE_PRIVATE);
                 Emulator app = (Emulator) context.getApplicationContext();
