@@ -15,6 +15,7 @@
     <string name="config_home">Please configure a home directory.</string>
     <string name="config_data">Please move BIOS to %1$s/data/</string>
     <string name="config_game">Please configure a game directory.</string>
+    <string name="permission_blocked">Permission(s) blocked:%1$s</string>
     <string name="unsupported">Unsupported kernel version!</string>
     <string name="locate">Locate</string>
     <string name="browse">Browse</string>
