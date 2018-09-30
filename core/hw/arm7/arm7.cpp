@@ -1096,19 +1096,19 @@ void StoreReg(eReg rd,u32 regn,ConditionCode cc=CC_AL)
 }
 
 //very quick-and-dirty register rename based virtualisation
-map<u32,u32> renamed_regs;
+u32 renamed_regs[16];
 u32 rename_reg_base;
 
 void RenameRegReset()
 {
 	rename_reg_base=r1;
-	renamed_regs.clear();
+	memset(renamed_regs, 0, sizeof(renamed_regs));
 }
 
 //returns new reg #. didrn is true if a rename mapping was added
 u32 RenameReg(u32 reg, bool& didrn)
 {
-	if (renamed_regs.find(reg)==renamed_regs.end())
+	if (renamed_regs[reg] == 0)
 	{
 		renamed_regs[reg]=rename_reg_base;
 		rename_reg_base++;
@@ -1209,7 +1209,7 @@ void VirtualizeOpcode(u32 opcd,u32 flag,u32 pc)
 		StoreAndRename(orig,16);
 
 	//Sanity check ..
-	if (renamed_regs.find(15)!=renamed_regs.end())
+	if (renamed_regs[15] != 0)
 	{
 		verify(flag&OP_READS_PC || (flag&OP_SETS_PC && !(flag&OP_IS_COND)));
 	}
@@ -1533,7 +1533,7 @@ void armv_MOV32(eReg regn, u32 imm)
 	No sanity checks on arm ..
 */
 
-#endif	// HOST_CPU 
+#endif	// HOST_CPU == CPU_ARM
 
 //Run a timeslice for ARMREC
 //CycleCount is pretty much fixed to (512*32) for now (might change to a diff constant, but will be constant)
@@ -1690,8 +1690,8 @@ extern "C" void CompileCode()
 					armv_imm_to_reg(15,pc+8);
 
 				else*/
-					#if HOST_CPU==CPU_X86
-					armv_imm_to_reg(15,rand());
+#if HOST_CPU==CPU_X86
+				armv_imm_to_reg(15,rand());
 #endif
 
 				VirtualizeOpcode(opcd,op_flags,pc);
