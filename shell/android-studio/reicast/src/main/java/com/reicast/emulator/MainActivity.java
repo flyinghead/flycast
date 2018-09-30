@@ -563,6 +563,23 @@ public class MainActivity extends AppCompatActivity implements
 		}
 	}
 
+	@Override
+	public void onRequestPermissionsResult(
+			int requestCode, @NonNull String permissions[], @NonNull int[] grantResults) {
+		if (requestCode == PERMISSION_REQUEST) {
+			if (!(grantResults.length > 0 && grantResults[0]
+					== PackageManager.PERMISSION_GRANTED)) {
+				StringBuilder disabled = new StringBuilder();
+				for (String permission : permissions) {
+					disabled.append("\n");
+					disabled.append(permission);
+				}
+				showToastMessage(getString(R.string.permission_blocked,
+						disabled.toString()), Snackbar.LENGTH_LONG);
+			}
+		}
+	}
+
 	public boolean isCallable(Intent intent) {
 		List<ResolveInfo> list = getPackageManager().queryIntentActivities(
 				intent, PackageManager.MATCH_DEFAULT_ONLY);
