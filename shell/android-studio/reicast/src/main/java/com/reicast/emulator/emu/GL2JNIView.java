@@ -659,7 +659,7 @@ public class GL2JNIView extends GLSurfaceView
         }
 
         void reiosInfo(String reiosId, String reiosSoftware) {
-            if (fileName != null && !reiosId.equals("") && !reiosSoftware.equals("")) {
+            if (fileName != null) {
                 String gameId = reiosId.replaceAll("[^a-zA-Z0-9]+", "").toLowerCase();
                 SharedPreferences mPrefs = context.getSharedPreferences(gameId, Activity.MODE_PRIVATE);
                 Emulator app = (Emulator) context.getApplicationContext();
@@ -668,6 +668,8 @@ public class GL2JNIView extends GLSurfaceView
                     ((GL2JNIActivity) context).getPad().joystick[0] = mPrefs.getBoolean(
                             Gamepad.pref_js_merged + "_A",
                             ((GL2JNIActivity) context).getPad().joystick[0]);
+                // Assign the ID as a placeholder if a name isn't found
+                if (reiosSoftware.equals("")) reiosSoftware = reiosId;
                 mPrefs.edit().putString(Config.game_title, reiosSoftware.trim()).apply();
             }
         }
