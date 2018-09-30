@@ -496,6 +496,10 @@ GLuint fogTextureId;
 		screen_width=w;
 		screen_height=h;
 
+		// Required when doing partial redraws
+        if (!eglSurfaceAttrib(gl.setup.display, gl.setup.surface, EGL_SWAP_BEHAVIOR, EGL_BUFFER_PRESERVED))
+        	printf("eglSurfaceAttrib(EGL_SWAP_BEHAVIOR, EGL_BUFFER_PRESERVED) failed\n");
+
 		printf("EGL config: %p, %08X, %08X %dx%d\n",gl.setup.context,gl.setup.display,gl.setup.surface,w,h);
 		return true;
 	}
@@ -941,6 +945,9 @@ GLuint osd_font;
 
 bool gl_create_resources()
 {
+	if (gl.vbo.geometry != 0)
+		// Assume the resources have already been created
+		return true;
 
 #ifndef GLES
 	//create vao
@@ -1385,7 +1392,7 @@ static void OSD_HOOK()
 	  }
 	#endif
 
-	if (settings.rend.ShowFPS) {
+	if (settings.rend.ShowFPS && osd_font) {
 		if (os_GetSeconds() - LastFPSTime > 0.5) {
 			fps = (FrameCount - lastFrameCount) / (os_GetSeconds() - LastFPSTime);
 			LastFPSTime = os_GetSeconds();
@@ -1892,6 +1899,16 @@ bool RenderFrame()
 				min_y = screen_height - (min_y + height) * dc2s_scale_h;
 				width *= dc2s_scale_h;
 				height *= dc2s_scale_h;
+
+				if (ds2s_offs_x > 0)
+				{
+					glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
+					glcache.Enable(GL_SCISSOR_TEST);
+					glScissor(0, 0, ds2s_offs_x, screen_height);
+					glClear(GL_COLOR_BUFFER_BIT);
+					glScissor(screen_width - ds2s_offs_x, 0, ds2s_offs_x, screen_height);
+					glClear(GL_COLOR_BUFFER_BIT);
+				}
 			}
 			else if (settings.rend.RenderToTextureUpscale > 1 && !settings.rend.RenderToTextureBuffer)
 			{
@@ -1935,34 +1952,6 @@ bool RenderFrame()
 #define SET_AFNT 1
 #endif
 #endif
-
-extern u16 kcode[4];
-
-/*
-bool rend_single_frame()
-{
-	//wait render start only if no frame pending
-	_pvrrc = DequeueRender();
-
-	while (!_pvrrc)
-	{
-		rs.Wait();
-		_pvrrc = DequeueRender();
-	}
-
-	bool do_swp=false;
-	//if (kcode[0]&(1<<9))
-	{
-
-
-	//clear up & free data ..
-	tactx_Recycle(_pvrrc);
-	_pvrrc=0;
-
-	return do_swp;
-}
-*/
-
 
 void rend_set_fb_scale(float x,float y)
 {
