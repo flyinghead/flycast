@@ -354,7 +354,7 @@ void LoadCustom()
 	char *reios_id = reios_disk_id();
 
 	cfgSaveStr(reios_id, "software.name", reios_software_name);
-	settings.dynarec.Enable			= cfgLoadInt(reios_id,"Dynarec.Enabled", settings.dynarec.Enable ? 1 : 0) != 0;
+	settings.dynarec.Enable			= cfgGameInt(reios_id,"Dynarec.Enabled", settings.dynarec.Enable ? 1 : 0) != 0;
 	settings.dynarec.idleskip		= cfgGameInt(reios_id,"Dynarec.idleskip", settings.dynarec.idleskip ? 1 : 0) != 0;
 	settings.dynarec.unstable_opt	= cfgGameInt(reios_id,"Dynarec.unstable-opt", settings.dynarec.unstable_opt);
 	settings.dynarec.safemode		= cfgGameInt(reios_id,"Dynarec.safemode", settings.dynarec.safemode);
