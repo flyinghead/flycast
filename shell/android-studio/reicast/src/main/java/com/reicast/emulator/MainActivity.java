@@ -265,7 +265,8 @@ public class MainActivity extends AppCompatActivity implements
 		Intent intent = new Intent("com.reicast.EMULATOR",
 				uri, getApplicationContext(), GL2JNIActivity.class);
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
-			intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+			intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION
+					| Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
 		startActivity(intent);
 	}
 
