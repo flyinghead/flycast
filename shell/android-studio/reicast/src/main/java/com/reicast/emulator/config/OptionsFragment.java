@@ -197,12 +197,15 @@ public class OptionsFragment extends Fragment {
 			@Override
 			public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
 				String theme = String.valueOf(parentView.getItemAtPosition(position));
+				int current = mPrefs.getInt(Config.pref_app_theme, 0);
 				if (theme.equals("Dream")) {
 					mPrefs.edit().putInt(Config.pref_app_theme, 7).apply();
-					mCallback.recreateActivity();
+					if (current != 7)
+						mCallback.recreateActivity();
 				} else {
 					mPrefs.edit().putInt(Config.pref_app_theme, position).apply();
-					mCallback.recreateActivity();
+					if (current != position)
+						mCallback.recreateActivity();
 				}
 			}
 			@Override
