@@ -198,11 +198,13 @@ bx lr
 end_ngen_mainloop:
 @@@@@@@@@@ ngen_mainloop @@@@@@@@@@
 
+#if FEAT_AREC == DYNAREC_JIT
 .global CSYM(arm_compilecode)
 HIDDEN(arm_compilecode)
 CSYM(arm_compilecode):
 bl CSYM(CompileCode)
 b CSYM(arm_dispatch)
+#endif
 
 #ifdef TARGET_IPHONE
 Xarm_Reg: .word CSYM(arm_Reg)
