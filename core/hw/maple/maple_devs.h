@@ -10,6 +10,7 @@ enum MapleDeviceType
 	MDT_PurupuruPack,
 	MDT_Keyboard,
 	MDT_Mouse,
+	MDT_LightGun,
 
 	MDT_NaomiJamma,
 
@@ -36,6 +37,7 @@ struct maple_device
 	virtual bool maple_serialize(void **data, unsigned int *total_size){return true;};
 	virtual bool maple_unserialize(void **data, unsigned int *total_size){return true;};
 	virtual MapleDeviceType get_device_type() = 0;
+	virtual void get_lightgun_pos() {};
 };
 
 struct _NaomiState

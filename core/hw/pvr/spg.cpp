@@ -71,8 +71,6 @@ void CalculateSync()
 	sh4_sched_request(vblank_schid,Line_Cycles);
 }
 
-void os_wait_cycl(u32 c);
-
 int elapse_time(int tag, int cycl, int jit)
 {
 #if HOST_OS==OS_WINDOWS
@@ -86,6 +84,9 @@ double speed_load_mspdf;
 int mips_counter;
 
 double full_rps;
+
+static u32 lightgun_line = 0xffff;
+static u32 lightgun_hpos;
 
 u32 fskip=0;
 //called from sh4 context , should update pvr/ta state and everything else
@@ -195,6 +196,12 @@ int spg_line_sched(int tag, int cycl, int jit)
 				last_fps=os_GetSeconds();
 			}
 		}
+		if (lightgun_line != 0xffff && lightgun_line == prv_cur_scanline)
+		{
+			SPG_TRIGGER_POS = ((lightgun_line & 0x3FF) << 16) | (lightgun_hpos & 0x3FF);
+			asic_RaiseInterrupt(holly_MAPLE_DMA);
+			lightgun_line = 0xffff;
+		}
 	}
 
 	//interrupts
@@ -222,9 +229,25 @@ int spg_line_sched(int tag, int cycl, int jit)
 	if (min_scanline<pvr_numscanlines)
 		min_active=min(min_active,pvr_numscanlines);
 
+	if (lightgun_line != 0xffff && min_scanline < lightgun_line)
+		min_active = min(min_active, lightgun_line);
+
 	min_active=max(min_active,min_scanline);
 
 	return (min_active-prv_cur_scanline)*Line_Cycles;
+}
+
+void read_lightgun_position(int x, int y)
+{
+	if (y < 0 || y >= 480 || x < 0 || x >= 640)
+		// Off screen
+		lightgun_line = 0xffff;
+	else
+	{
+		lightgun_line = y / 2 + SPG_VBLANK_INT.vblank_out_interrupt_line_number;
+		lightgun_hpos = x * (SPG_HBLANK.hstart - SPG_HBLANK.hbend) / 640 + SPG_HBLANK.hbend * 2;	// Ok but why *2 ????
+		lightgun_hpos = min((u32)0x3FF, lightgun_hpos);
+	}
 }
 
 int rend_end_sch(int tag, int cycl, int jitt)

@@ -5,6 +5,7 @@
 #include "maple_cfg.h"
 #include "cfg/cfg.h"
 #include "hw/naomi/naomi.h"
+#include "hw/pvr/spg.h"
 #include <time.h>
 
 #if _ANDROID
@@ -25,6 +26,7 @@ const char* maple_sega_dreameye_name_1 = "Dreamcast Camera Flash  Devic";
 const char* maple_sega_dreameye_name_2 = "Dreamcast Camera Flash LDevic";
 const char* maple_sega_mic_name = "MicDevice for Dreameye";
 const char* maple_sega_purupuru_name = "Puru Puru Pack";
+const char* maple_sega_lightgun_name = "Dreamcast Gun";
 
 const char* maple_sega_brand = "Produced By or Under License From SEGA ENTERPRISES,LTD.";
 
@@ -1100,10 +1102,21 @@ struct maple_keyboard : maple_base
 	}
 };
 
+// Mouse buttons
+// bit 0: Button C
+// bit 1: Right button (B)
+// bit 2: Left button (A)
+// bit 3: Wheel button
 u32 mo_buttons = 0xFFFFFFFF;
+// Relative mouse coordinates [-512:511]
 f32 mo_x_delta;
 f32 mo_y_delta;
 f32 mo_wheel_delta;
+// Absolute mouse coordinates
+// Range [0:639] [0:479]
+// but may be outside this range if the pointer is offscreen or outside the 4:3 window.
+s32 mo_x_abs;
+s32 mo_y_abs;
 
 struct maple_mouse : maple_base
 {
@@ -1193,6 +1206,96 @@ struct maple_mouse : maple_base
 			printf("Mouse: unknown MAPLE COMMAND %d\n", cmd);
 			return MDRE_UnknownCmd;
 		}
+	}
+};
+
+struct maple_lightgun : maple_base
+{
+	virtual MapleDeviceType get_device_type()
+	{
+		return MDT_LightGun;
+	}
+
+	virtual u32 dma(u32 cmd)
+	{
+		switch (cmd)
+		{
+		case MDC_DeviceRequest:
+			//caps
+			//4
+			w32(MFID_7_LightGun | MFID_0_Input);
+
+			//struct data
+			//3*4
+			w32(0);				// Light gun
+			w32(0xFE000000);	// Controller
+			w32(0);
+			//1	area code
+			w8(0x01);		// FF: Worldwide, 01: North America
+			//1	direction
+			w8(0);
+			// Product name (30)
+			for (u32 i = 0; i < 30; i++)
+			{
+				w8((u8)maple_sega_lightgun_name[i]);
+			}
+
+			// License (60)
+			for (u32 i = 0; i < 60; i++)
+			{
+				w8((u8)maple_sega_brand[i]);
+			}
+
+			// Low-consumption standby current (2)
+			w16(0x0069);	// 10.5 mA
+
+			// Maximum current consumption (2)
+			w16(0x0120);	// 28.8 mA
+
+			return MDRS_DeviceStatus;
+
+		case MDCF_GetCondition:
+		{
+			PlainJoystickState pjs;
+			config->GetInput(&pjs);
+
+			// Also use the mouse buttons
+			if (!(mo_buttons & 4))	// Left button
+				pjs.kcode &= ~4;	// A
+			if (!(mo_buttons & 2))	// Right button
+				pjs.kcode &= ~2;	// B
+			if (!(mo_buttons & 8))	// Wheel button
+				pjs.kcode &= ~8;	// Start
+
+			//caps
+			//4
+			w32(MFID_0_Input);
+
+			//state data
+			//2 key code
+			w16(pjs.kcode | 0xFF01);
+
+			//not used
+			//2
+			w16(0xFFFF);
+
+			//not used
+			//4
+			w32(0x80808080);
+		}
+
+		return MDRS_DataTransfer;
+
+		default:
+			printf("Light gun: unknown MAPLE COMMAND %d\n", cmd);
+			return MDRE_UnknownCmd;
+		}
+	}
+
+	virtual void get_lightgun_pos()
+	{
+		read_lightgun_position(mo_x_abs, mo_y_abs);
+		// TODO If NAOMI, set some bits at 0x600284 http://64darksoft.blogspot.com/2013/10/atomiswage-to-naomi-update-4.html
 	}
 };
 
@@ -1664,6 +1767,10 @@ maple_device* maple_Create(MapleDeviceType type)
 
 	case MDT_Mouse:
 		rv = new maple_mouse();
+		break;
+
+	case MDT_LightGun:
+		rv = new maple_lightgun();
 		break;
 
 	case MDT_NaomiJamma:

@@ -82,6 +82,11 @@ void event_x11_handle()
 		if (event.type == ClientMessage &&
 				event.xclient.data.l[0] == wmDeleteMessage)
 			dc_stop();
+		else if (event.type == ConfigureNotify)
+		{
+			x11_width = event.xconfigure.width;
+			x11_height = event.xconfigure.height;
+		}
 	}
 }
 
@@ -231,6 +236,8 @@ extern u32 mo_buttons;
 extern f32 mo_x_delta;
 extern f32 mo_y_delta;
 extern f32 mo_wheel_delta;
+extern s32 mo_x_abs;
+extern s32 mo_y_abs;
 
 static bool capturing_mouse;
 static Cursor empty_cursor = None;
@@ -290,9 +297,6 @@ static void x11_uncapture_mouse()
 
 void input_x11_handle()
 {
-	if (!x11_win || (!x11_keyboard_input && !settings.input.DCKeyboard && !settings.input.DCMouse))
-		return;
-
 	//Handle X11
 	static int prev_x = -1;
 	static int prev_y = -1;
@@ -470,9 +474,11 @@ void input_x11_handle()
 			case ButtonRelease:
 				{
 					u32 button_mask = 0;
-					if (e.xbutton.button == Button1)
+					if (e.xbutton.button == Button1)		// Left button
 						button_mask = 1 << 2;
-					else if (e.xbutton.button == Button2)
+					else if (e.xbutton.button == Button2)	// Middle button
+						button_mask = 1 << 3;
+					else if (e.xbutton.button == Button3)	// Right button
 						button_mask = 1 << 1;
 
 					if (button_mask)
@@ -486,6 +492,11 @@ void input_x11_handle()
 				// FALL THROUGH
 
 			case MotionNotify:
+				// For Light gun
+				mo_x_abs = (e.xmotion.x - (x11_width - x11_height * 640 / 480) / 2) * 480 / x11_height;
+				mo_y_abs = e.xmotion.y * 480 / x11_height;
+
+				// For mouse
 				if (settings.input.DCMouse)
 				{
 					mouse_moved = true;
@@ -738,7 +749,7 @@ void x11_window_set_text(const char* text)
 void x11_gl_context_destroy()
 {
 	glXMakeCurrent((Display*)x11_disp, None, NULL);
-	glXDestroyContext((Display*)x11_disp, x11_glc);
+	glXDestroyContext((Display*)x11_disp, (GLXContext)x11_glc);
 }
 
 void x11_window_destroy()
