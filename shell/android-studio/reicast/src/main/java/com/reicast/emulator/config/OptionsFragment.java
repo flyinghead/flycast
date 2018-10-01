@@ -275,7 +275,7 @@ public class OptionsFragment extends Fragment {
 				getActivity(), android.R.layout.simple_spinner_item, bios);
 		biosAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		bios_spnr.setAdapter(biosAdapter);
-		String region = mPrefs.getString("localized", codes[4]);
+		String region = mPrefs.getString(Config.bios_code, codes[4]);
 		bios_spnr.setSelection(biosAdapter.getPosition(region), true);
 		bios_spnr.setOnItemSelectedListener(new OnItemSelectedListener() {
 
@@ -318,14 +318,12 @@ public class OptionsFragment extends Fragment {
 		cableAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		cable_spnr.setAdapter(cableAdapter);
 
-		cable_spnr.setSelection(mPrefs.getInt(
-				Emulator.pref_cable, Emulator.cable) - 1, true);
+		cable_spnr.setSelection(mPrefs.getInt(Emulator.pref_cable, Emulator.cable), true);
 
 		cable_spnr.setOnItemSelectedListener(new OnItemSelectedListener() {
 
-			public void onItemSelected(AdapterView<?> parent, View view,
-									   int pos, long id) {
-				mPrefs.edit().putInt(Emulator.pref_cable, pos + 1).apply();
+			public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
+				mPrefs.edit().putInt(Emulator.pref_cable, pos == 0 ? 3 : pos).apply();
 			}
 
 			public void onNothingSelected(AdapterView<?> arg0) {
@@ -359,20 +357,19 @@ public class OptionsFragment extends Fragment {
 		broadcastAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		broadcast_spnr.setAdapter(broadcastAdapter);
 
-		int select = 0;
-		String cast = String.valueOf(mPrefs.getInt(Emulator.pref_broadcast, Emulator.broadcast));
+		String cast = getBroadcastName(mPrefs.getInt(Emulator.pref_broadcast, Emulator.broadcast));
 		for (int i = 0; i < broadcasts.length; i++) {
-			if (broadcasts[i].startsWith(cast + " - "))
-				select = i;
+			if (broadcasts[i].equals(cast)) {
+				broadcast_spnr.setSelection(i, true);
+				break;
+			}
 		}
-
-		broadcast_spnr.setSelection(select, true);
 		broadcast_spnr.setOnItemSelectedListener(new OnItemSelectedListener() {
 
 			public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
 				String item = parent.getItemAtPosition(pos).toString();
-				String selection = item.substring(0, item.indexOf(" - "));
-				mPrefs.edit().putInt(Emulator.pref_broadcast, Integer.parseInt(selection)).apply();
+				int broadcastValue = getBroadcastValue(item);
+				mPrefs.edit().putInt(Emulator.pref_broadcast, broadcastValue).apply();
 
 			}
 
@@ -702,7 +699,7 @@ public class OptionsFragment extends Fragment {
 				ex.printStackTrace();
 				local.renameTo(flash);
 			}
-			mPrefs.edit().putString("localized", localized).apply();
+			mPrefs.edit().putString(Config.bios_code, localized).apply();
 		}
 	}
 
@@ -766,5 +763,35 @@ public class OptionsFragment extends Fragment {
 		textView.setCompoundDrawablePadding(getResources()
 				.getDimensionPixelOffset(R.dimen.snackbar_icon_padding));
 		snackbar.show();
+	}
+
+	private int getBroadcastValue(String broadcastName) {
+		if (broadcastName.equals("NTSC-J"))
+			return 0;
+		else if (broadcastName.equals("NTSC-U"))
+			return 4;
+		else if (broadcastName.equals("PAL-M"))
+			return 6;
+		else if (broadcastName.equals("PAL-N"))
+			return 7;
+		else if (broadcastName.equals("PAL-E"))
+			return 9;
+		else
+			return -1;
+	}
+
+	private String getBroadcastName(int broadcastValue) {
+		if (broadcastValue == 0)
+			return "NTSC-J";
+		else if (broadcastValue == 4)
+			return "NTSC-U";
+		else if (broadcastValue == 6)
+			return "PAL-M";
+		else if (broadcastValue == 7)
+			return "PAL-N";
+		else if (broadcastValue == 9)
+			return "PAL-E";
+		else
+			return null;
 	}
 }
