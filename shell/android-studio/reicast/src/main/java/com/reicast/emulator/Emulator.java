@@ -110,387 +110,387 @@ public class Emulator extends Application {
     public int isVGACompatible(String gameId) {
         int vgaMode; // -1 = None / Unknown, 0 = VGA, 1 = Patchable, 2 = TV
         switch (gameId) {
-            case "T-36803N": //102 Dalmatians puppies to the Rescue
-            case "T-36813D-05": //102 Dalmatians puppies to the Rescue
+            case "T36803N": //102 Dalmatians puppies to the Rescue
+            case "T36813D05": //102 Dalmatians puppies to the Rescue
             case "51064": // 18 Wheeler American Pro Trucker
-            case "MK-51064": // 18 Wheeler American Pro Trucker
-            case "T-9708N": // 4 Wheel Thunder
-            case "T-9706D": // 4 Wheel Thunder
-            case "T-41903N": // 4x4 Evolution
-            case "MK-51190": // 90 Minutes Championship Football
-            case "T-40201N": // Aerowings
-            case "T-40202D-50": // Aerowings
-            case "T-40210N": // Aerowings 2
-            case "MK-51171": // Alien Front Online
-            case "T-15117N": // Alone in the Dark The New Nightmare
-            case "T-15112D-05": // Alone in the Dark The New Nightmare
-            case "T-40301N": // Armada
-            case "T-15130N": // Atari Aniversary Edition
-            case "T-44102N": // Bang! Gunship Elite
-            case "T-13001N": // Blue Stinger
-            case "T-13001D-58": // Blue Stinger
+            case "MK51064": // 18 Wheeler American Pro Trucker
+            case "T9708N": // 4 Wheel Thunder
+            case "T9706D": // 4 Wheel Thunder
+            case "T41903N": // 4x4 Evolution
+            case "MK51190": // 90 Minutes Championship Football
+            case "T40201N": // Aerowings
+            case "T40202D50": // Aerowings
+            case "T40210N": // Aerowings 2
+            case "MK51171": // Alien Front Online
+            case "T15117N": // Alone in the Dark The New Nightmare
+            case "T15112D05": // Alone in the Dark The New Nightmare
+            case "T40301N": // Armada
+            case "T15130N": // Atari Aniversary Edition
+            case "T44102N": // Bang! Gunship Elite
+            case "T13001N": // Blue Stinger
+            case "T13001D58": // Blue Stinger
             case "51065": // Bomberman Online
-            case "T-13007N": // Buzz Lightyear of Star Command
-            case "T-13005D-05": // Buzz Lightyear of Star Command
-            case "T-1215N": // Cannon Spike
-            case "T-46601D-50": // Cannon Spike
-            case "T-1218N": // Capcom Vs. SNK
-            case "T-5701N": // Carrier
-            case "T-44901D-50": // Carrier
-            case "T-40602N": // Centepede
-            case "T-41403N": // Championship Surfer
-            case "T-41402D-50": // Championship Surfer
-            case "T-15127N": // Charge'N Blast
-            case "T-44902D-50": // Charge'N Blast
-            case "T-36811N": // Chicken Run
-            case "T-36814D-05": // Chicken Run
+            case "T13007N": // Buzz Lightyear of Star Command
+            case "T13005D05": // Buzz Lightyear of Star Command
+            case "T1215N": // Cannon Spike
+            case "T46601D50": // Cannon Spike
+            case "T1218N": // Capcom Vs. SNK
+            case "T5701N": // Carrier
+            case "T44901D50": // Carrier
+            case "T40602N": // Centepede
+            case "T41403N": // Championship Surfer
+            case "T41402D50": // Championship Surfer
+            case "T15127N": // Charge'N Blast
+            case "T44902D50": // Charge'N Blast
+            case "T36811N": // Chicken Run
+            case "T36814D05": // Chicken Run
             case "51049": // ChuChu Rocket!
-            case "MK-51049-50": // ChuChu Rocket!
+            case "MK5104950": // ChuChu Rocket!
             case "51160": // Confidential Mission
-            case "MK-51160-50": // Confidential Mission
-            case "T-46603D-71": // Conflict Zone
+            case "MK5116050": // Confidential Mission
+            case "T46603D71": // Conflict Zone
             case "51035": // Crazy Taxi
-            case "MK-51035-50": // Crazy Taxi
+            case "MK5103550": // Crazy Taxi
             case "51136": // Crazy Taxi 2
-            case "MK-51136-50": // Crazy Taxi 2
+            case "MK5113650": // Crazy Taxi 2
             case "51036": // D-2
-            case "T-8120N": // Dave Mirra BMX
-            case "T-8120D-59": // Dave Mirra BMX
+            case "T8120N": // Dave Mirra BMX
+            case "T8120D59": // Dave Mirra BMX
             case "51037": // Daytona USA
-            case "MK-51037-50": // Daytona USA 2001
-            case "T-3601N": // Dead or Alive 2
-            case "T-8116D-05": // Dead or Alive 2 & ECW Hardcore Revolution
-            case "T-2401N": // Death Crimson OX
-            case "T-15112N": // Demolition Racer
-            case "T-17717N": // Dinosaur
-            case "T-17719N": // Donald Duck: Goin' Quackers
-            case "T-17714D-05": // Donald Duck: Quack Attack
-            case "T-40203N": // Draconus: Cult of the Wyrm
-            case "T-17720N": // Dragon Riders: Chronicles of Pern
-            case "T-17716D-91": // Dragon Riders: Chronicles of Pern
-            case "T-8113N": // Ducati World Racing Challenge
-            case "T-8121D-05": // Ducati World
+            case "MK5103750": // Daytona USA 2001
+            case "T3601N": // Dead or Alive 2
+            case "T8116D05": // Dead or Alive 2 & ECW Hardcore Revolution
+            case "T2401N": // Death Crimson OX
+            case "T15112N": // Demolition Racer
+            case "T17717N": // Dinosaur
+            case "T17719N": // Donald Duck: Goin' Quackers
+            case "T17714D05": // Donald Duck: Quack Attack
+            case "T40203N": // Draconus: Cult of the Wyrm
+            case "T17720N": // Dragon Riders: Chronicles of Pern
+            case "T17716D91": // Dragon Riders: Chronicles of Pern
+            case "T8113N": // Ducati World Racing Challenge
+            case "T8121D05": // Ducati World
             case "51013": // Dynamite Cop!
-            case "MK-51013-50": // Dynamite Cop!
+            case "MK5101350": // Dynamite Cop!
             case "51033": // Ecco the Dolphin: Defender of the Future
-            case "MK-51033-50": // Ecco the Dolphin: Defender of the Future
-            case "T-41601N": // Elemental Gimmick Gear
-            case "T-9509N": // ESPN International Track n Field
-            case "T-9504D-50": // ESPN International Track n Field
-            case "T-9505N": // ESPN NBA2Night
-            case "T-7015D-50": // European Super League
-            case "T-46605D-71": // Evil Twin Cyprien's Chronicles
-            case "T-17706N": // Evolution: The World of Sacred Device
-            case "T-17711N": // Evolution 2: Far Off Promise
-            case "T-45005D-50": // Evolution 2: Far Off Promise
-            case "T-22903D-50": // Exhibition of Speed
-            case "T-15101D-05": // Millenium Soldier: Expendable
-            case "T-17706D-50": // F1 Racing Championship
-            case "T-3001N": // F1 World Grand Prix
-            case "T-3001D-50": // F1 World Grand Prix
-            case "T-3002D-50": // F1 World Grand Prix II
-            case "T-8119N": // F355 Challenge: Passione Rossa
-            case "T-8118D-05": // F355 Challenge: Passione Rossa
-            case "T-44306N": // Fatal Fury: Mark of the Wolf
-            case "T-35801N": // Fighting Force 2
-            case "T-36802D-05": // Fighting Force 2
-            case "MK-51154-50": // Fighting Vipers 2
+            case "MK5103350": // Ecco the Dolphin: Defender of the Future
+            case "T41601N": // Elemental Gimmick Gear
+            case "T9509N": // ESPN International Track n Field
+            case "T9504D50": // ESPN International Track n Field
+            case "T9505N": // ESPN NBA2Night
+            case "T7015D50": // European Super League
+            case "T46605D71": // Evil Twin Cyprien's Chronicles
+            case "T17706N": // Evolution: The World of Sacred Device
+            case "T17711N": // Evolution 2: Far Off Promise
+            case "T45005D50": // Evolution 2: Far Off Promise
+            case "T22903D50": // Exhibition of Speed
+            case "T15101D05": // Millenium Soldier: Expendable
+            case "T17706D50": // F1 Racing Championship
+            case "T3001N": // F1 World Grand Prix
+            case "T3001D50": // F1 World Grand Prix
+            case "T3002D50": // F1 World Grand Prix II
+            case "T8119N": // F355 Challenge: Passione Rossa
+            case "T8118D05": // F355 Challenge: Passione Rossa
+            case "T44306N": // Fatal Fury: Mark of the Wolf
+            case "T35801N": // Fighting Force 2
+            case "T36802D05": // Fighting Force 2
+            case "MK5115450": // Fighting Vipers 2
             case "51007": // Flag to Flag
             case "51114": // Floigan Brothers Episode 1
-            case "MK-51114-50": // Floigan Brothers Episode 1
-            case "T-40604N": // Frogger 2 Swampies Revenge
-            case "T-8107N": // Fur Fighters
-            case "T-8113D-05": // Fur Fighters
-            case "T-9710N": // Gauntlet Legends
-            case "T-9707D-51": // Gauntlet Legends
-            case "T-1209N": // Giga Wing
-            case "T-7008D-50": // Giga Wing
-            case "T-1222N": // Giga Wing 2
-            case "T-42102N": // Grand Theft Auto II
-            case "T-40502D-61": // Grand Theft Auto II
-            case "T-17716N": // Grandia II
-            case "T-17715D-05": // Grandia II
-            case "T-9512N": // Grintch, The
-            case "T-9503D-76": // Grintch, The
-            case "T-13301N": // Gundam Side Story 0079
+            case "MK5111450": // Floigan Brothers Episode 1
+            case "T40604N": // Frogger 2 Swampies Revenge
+            case "T8107N": // Fur Fighters
+            case "T8113D05": // Fur Fighters
+            case "T9710N": // Gauntlet Legends
+            case "T9707D51": // Gauntlet Legends
+            case "T1209N": // Giga Wing
+            case "T7008D50": // Giga Wing
+            case "T1222N": // Giga Wing 2
+            case "T42102N": // Grand Theft Auto II
+            case "T40502D61": // Grand Theft Auto II
+            case "T17716N": // Grandia II
+            case "T17715D05": // Grandia II
+            case "T9512N": // Grintch, The
+            case "T9503D76": // Grintch, The
+            case "T13301N": // Gundam Side Story 0079
             case "51041": // Headhunter
-            case "T-1223N": // Heavy Metal: Geomatrix
-            case "T-46602D-50": // Heavy Metal: Geomatrix
+            case "T1223N": // Heavy Metal: Geomatrix
+            case "T46602D50": // Heavy Metal: Geomatrix
             case "51002": // House of the Dead 2
-            case "MK-51045-50": // House of the Dead 2
-            case "T-11008N": // Hoyle Casino
-            case "T-46001N": // Illbleed
-            case "T-12503N": // Incoming
-            case "T-40701D-50": // Incoming
-            case "T-41302N": // Industrial Spy: Operation Espionage
-            case "T-8104N": // Jeremy McGrath Supercross 2000
-            case "T-8114D-05": // Jeremy McGrath Supercross 2000
-            case "BKL83176.01-ENG": // Jeremy McGrath Supercross 2000
+            case "MK5104550": // House of the Dead 2
+            case "T11008N": // Hoyle Casino
+            case "T46001N": // Illbleed
+            case "T12503N": // Incoming
+            case "T40701D50": // Incoming
+            case "T41302N": // Industrial Spy: Operation Espionage
+            case "T8104N": // Jeremy McGrath Supercross 2000
+            case "T8114D05": // Jeremy McGrath Supercross 2000
+            case "BKL8317601ENG": // Jeremy McGrath Supercross 2000
             case "51058": // Jet Grind Radio
-            case "MK-51058-50": // Jet Set Radio
-            case "T-7001D": // Jimmy White's 2: Cueball
-            case "T-22903N": // Kao the Kangeroo
-            case "T-22902D-50": // Kao the Kangeroo
-            case "T-41901N": // KISS: Psycho Circus: The Nightmare Child
-            case "T-40506D-50": // KISS: Psycho Circus: The Nightmare Child
-            case "T-36802N": // Legacy of Kain: Soul Reaver
-            case "T-36803D-05": // Legacy of Kain: Soul Reaver
-            case "T-15116N": // Loony Toons Space Race
-            case "T-15108D-50": // Loony Toons Space Race
-            case "T-40208N": // Mag Force Racing
-            case "T-40207D-50": // Mag Force Racing
-            case "T-36804N": // Magical Racing Tour
-            case "T-36809D-50": // Magical Racing Tour
+            case "MK5105850": // Jet Set Radio
+            case "T7001D": // Jimmy White's 2: Cueball
+            case "T22903N": // Kao the Kangeroo
+            case "T22902D50": // Kao the Kangeroo
+            case "T41901N": // KISS: Psycho Circus: The Nightmare Child
+            case "T40506D50": // KISS: Psycho Circus: The Nightmare Child
+            case "T36802N": // Legacy of Kain: Soul Reaver
+            case "T36803D05": // Legacy of Kain: Soul Reaver
+            case "T15116N": // Loony Toons Space Race
+            case "T15108D50": // Loony Toons Space Race
+            case "T40208N": // Mag Force Racing
+            case "T40207D50": // Mag Force Racing
+            case "T36804N": // Magical Racing Tour
+            case "T36809D50": // Magical Racing Tour
             case "51050": // Maken X
-            case "MK-51050-50": // Maken X
-            case "T-1221N": // Mars Matrix
-            case "T-1202N": // Marvel vs. Capcom: Clash of Super Heroes
-            case "T-7002D-61": // Marvel vs. Capcom: Clash of Super Heroes
-            case "T-1212N": // Marvel vs. Capcom 2
-            case "T-7010D-50": // Marvel vs. Capcom 2: New Age of Heroes
-            case "T-13005N": // Mat Hoffman's Pro BMX
-            case "T-41402N": // Max Steel Covert Missions
-            case "T-11002N": // Maximum Pool
-            case "T-12502N": // MDK2
-            case "T-12501D-61": // MDK2
+            case "MK5105050": // Maken X
+            case "T1221N": // Mars Matrix
+            case "T1202N": // Marvel vs. Capcom: Clash of Super Heroes
+            case "T7002D61": // Marvel vs. Capcom: Clash of Super Heroes
+            case "T1212N": // Marvel vs. Capcom 2
+            case "T7010D50": // Marvel vs. Capcom 2: New Age of Heroes
+            case "T13005N": // Mat Hoffman's Pro BMX
+            case "T41402N": // Max Steel Covert Missions
+            case "T11002N": // Maximum Pool
+            case "T12502N": // MDK2
+            case "T12501D61": // MDK2
             case "51012": // Metropolis Street Racer
-            case "MK-51022-50": // Metropolis Street Racer
-            case "T-9713N": // Midway Greatest Arcade Hits Volume 1
-            case "T-9710D-50": // Midway Greatest Arcade Hits Volume 1
-            case "T-9714N": // Midway Greatest Arcade Hits Volume 2
-            case "T-40508D": // Moho (Ball Breakers)
-            case "T-17701N": // Monaco Grand Prix
-            case "T-45006D-50": // Racing Simulation 2: On-line Monaco Grand Prix
-            case "T-9701D-61": // Mortal Kombat Gold
-            case "T-1402N": // Mr Driller
-            case "T-7020D-50": // Mr Driller
-            case "T-1403N": // Namco Museum
+            case "MK5102250": // Metropolis Street Racer
+            case "T9713N": // Midway Greatest Arcade Hits Volume 1
+            case "T9710D50": // Midway Greatest Arcade Hits Volume 1
+            case "T9714N": // Midway Greatest Arcade Hits Volume 2
+            case "T40508D": // Moho (Ball Breakers)
+            case "T17701N": // Monaco Grand Prix
+            case "T45006D50": // Racing Simulation 2: On-line Monaco Grand Prix
+            case "T9701D61": // Mortal Kombat Gold
+            case "T1402N": // Mr Driller
+            case "T7020D50": // Mr Driller
+            case "T1403N": // Namco Museum
             case "51004": // NBA 2K
-            case "MK-51004-53": // NBA 2K
+            case "MK5100453": // NBA 2K
             case "51063": // NBA 2K1
             case "51178": // NBA 2K2
-            case "MK-51178-50": // NBA 2K2
-            case "T-9709N": // NBA Hoopz
-            case "T-9713D-61": // NBA Hoopz
+            case "MK5117850": // NBA 2K2
+            case "T9709N": // NBA Hoopz
+            case "T9713D61": // NBA Hoopz
             case "51176": // NCAA College Football 2K2
             case "51003": // NFL 2K
             case "51062": // NFL 2K1
             case "51168": // NFL 2K2
-            case "T-9703N": // NFL Blitz 2000
-            case "T-9712N": // NFL Blitz 2001
-            case "T-8101N": // NFL Quarterback Club 2000
-            case "T-8102D-05": // NFL Quarterback Club 2000
-            case "T-8115N": // NFL Quarterback Club 2001
+            case "T9703N": // NFL Blitz 2000
+            case "T9712N": // NFL Blitz 2001
+            case "T8101N": // NFL Quarterback Club 2000
+            case "T8102D05": // NFL Quarterback Club 2000
+            case "T8115N": // NFL Quarterback Club 2001
             case "51025": // NHL 2K
-            case "MK-51025-89": // NHL 2K
+            case "MK5102589": // NHL 2K
             case "51182": // NHL 2K2
-            case "T-9504N": // Nightmare Creatures II
-            case "T-9502D-76": // Nightmare Creatures II
-            case "T-36807N": // Omikron The Nomad Soul
-            case "T-36805D-09": // Nomad Soul, The
+            case "T9504N": // Nightmare Creatures II
+            case "T9502D76": // Nightmare Creatures II
+            case "T36807N": // Omikron The Nomad Soul
+            case "T36805D09": // Nomad Soul, The
             case "51140": // Ooga Booga
             case "51102": // OutTrigger: International Counter Terrorism Special Force
-            case "MK-51102-50": // OutTrigger: International Counter Terrorism Special Force
-            case "T-15105N": // Pen Pen TriIcelon
+            case "MK5110250": // OutTrigger: International Counter Terrorism Special Force
+            case "T15105N": // Pen Pen TriIcelon
             case "51100": // Phantasy Star Online
-            case "MK-51100-50": // Phantasy Star Online
+            case "MK5110050": // Phantasy Star Online
             case "51193": // Phantasy Star Online Ver.2
-            case "MK-51193-50": // Phantasy Star Online Ver.2
-            case "MK-51148-64": // Planet Ring
-            case "T-17713N": // POD: Speedzone
-            case "T-17710D-50": // Pod 2 Multiplayer Online
-            case "T-1201N": // Power Stone
-            case "T-36801D-64": // Power Stone
-            case "T-1211N": // Power Stone 2
-            case "T-36812D-61": // Power Stone 2
-            case "T-41405N": // Prince of Persia Arabian Nights
-            case "T-30701D": // Pro Pinball Trilogy
-            case "T-1219N": // Project Justice
-            case "T-7022D-50": // Project Justice: Rival Schools 2
+            case "MK5119350": // Phantasy Star Online Ver.2
+            case "MK5114864": // Planet Ring
+            case "T17713N": // POD: Speedzone
+            case "T17710D50": // Pod 2 Multiplayer Online
+            case "T1201N": // Power Stone
+            case "T36801D64": // Power Stone
+            case "T1211N": // Power Stone 2
+            case "T36812D61": // Power Stone 2
+            case "T41405N": // Prince of Persia Arabian Nights
+            case "T30701D": // Pro Pinball Trilogy
+            case "T1219N": // Project Justice
+            case "T7022D50": // Project Justice: Rival Schools 2
             case "51061": // Quake III Arena
-            case "MK-51061-50": // Quake III Arena
-            case "T-41902N": // Railroad Tycoon II: Gold Edition
-            case "T-17704N": // Rayman 2
-            case "T-17707D-50": // Rayman 2
-            case "T-40219N": // Razor Freestyle Scooter
-            case "T-46604D-50": // Freestyle Scooter
-            case "T-8109N": // Re-Volt
-            case "T-8107D-05": // Re-Volt
-            case "T-9704N": // Ready 2 Rumble Boxing
-            case "T-9704D-50": // Ready 2 Rumble Boxing
-            case "T-9717N": // Ready 2 Rumble Boxing Round 2
-            case "T-9711D-50": // Ready 2 Rumble Boxing Round 2
-            case "T-40218N": // Record of Lodoss War
-            case "T-7012D-97": // Record of Lodoss War
-            case "T-40215N": // Red Dog: Superior Firepower
-            case "MK-51021-50": // Red Dog: Superior Firepower
-            case "T-1205N": // Resident Evil 2
-            case "T-7004D-61": // Resident Evil 2
-            case "T-1220N": // Resident Evil 3: Nemesis
-            case "T-7021D-56": // Resident Evil 3: Nemesis
-            case "T-1204N": // Resident Evil Code: Veronica
-            case "MK-51192-50": // REZ
-            case "T-22901N": // Roadsters
-            case "T-22901D-05": // Roadsters
+            case "MK5106150": // Quake III Arena
+            case "T41902N": // Railroad Tycoon II: Gold Edition
+            case "T17704N": // Rayman 2
+            case "T17707D50": // Rayman 2
+            case "T40219N": // Razor Freestyle Scooter
+            case "T46604D50": // Freestyle Scooter
+            case "T8109N": // Re-Volt
+            case "T8107D05": // Re-Volt
+            case "T9704N": // Ready 2 Rumble Boxing
+            case "T9704D50": // Ready 2 Rumble Boxing
+            case "T9717N": // Ready 2 Rumble Boxing Round 2
+            case "T9711D50": // Ready 2 Rumble Boxing Round 2
+            case "T40218N": // Record of Lodoss War
+            case "T7012D97": // Record of Lodoss War
+            case "T40215N": // Red Dog: Superior Firepower
+            case "MK5102150": // Red Dog: Superior Firepower
+            case "T1205N": // Resident Evil 2
+            case "T7004D61": // Resident Evil 2
+            case "T1220N": // Resident Evil 3: Nemesis
+            case "T7021D56": // Resident Evil 3: Nemesis
+            case "T1204N": // Resident Evil Code: Veronica
+            case "MK5119250": // REZ
+            case "T22901N": // Roadsters
+            case "T22901D05": // Roadsters
             case "51092": // Samba De Amigo
-            case "MK-51092-50": // Samba De Amigo
-            case "T-9709D-61": // San Fransisco Rush 2049
+            case "MK5109250": // Samba De Amigo
+            case "T9709D61": // San Fransisco Rush 2049
             case "51048": // SeaMan
             case "51006": // Sega Bass Fishing
-            case "MK-51006-05": // Sega Bass Fishing
+            case "MK5100605": // Sega Bass Fishing
             case "51166": // Sega Bass Fishing 2
             case "51053": // Sega GT
-            case "MK-51053-50": // Sega GT
+            case "MK5105350": // Sega GT
             case "51096": // Sega Marine Fishing
             case "51019": // Sega Rally Championship 2
-            case "MK-51019-50": // Sega Rally 2
+            case "MK5101950": // Sega Rally 2
             case "51146": // Sega Smash Pack 1
-            case "MK-51083-50": // Sega Worldwide Soccer 2000 Euro Edition
-            case "T-41301N": // Seventh Cross Evolution
-            case "T-8106N": // Shadowman
+            case "MK5108350": // Sega Worldwide Soccer 2000 Euro Edition
+            case "T41301N": // Seventh Cross Evolution
+            case "T8106N": // Shadowman
             case "51059": // Shenmue
-            case "MK-51059-50": // Shenmue
-            case "MK-51184-50": // Shenmue 2
-            case "T-9507N": // Silent Scope
-            case "T-9505D-76": // Silent Scope
-            case "T-15108N": // Silver
-            case "T-15109D-91": // Silver
+            case "MK5105950": // Shenmue
+            case "MK5118450": // Shenmue 2
+            case "T9507N": // Silent Scope
+            case "T9505D76": // Silent Scope
+            case "T15108N": // Silver
+            case "T15109D91": // Silver
             case "51052": // Skies of Arcadia
-            case "T-15106N": // Slave Zero
-            case "T-15104D-59": // Slave Zero
-            case "T-40207N": // Sno-Cross Championship Racing
-            case "T-40212N": // Soldier of Fortune
-            case "T-17726D-50": // Soldier of Fortune
+            case "T15106N": // Slave Zero
+            case "T15104D59": // Slave Zero
+            case "T40207N": // Sno-Cross Championship Racing
+            case "T40212N": // Soldier of Fortune
+            case "T17726D50": // Soldier of Fortune
             case "51000": // Sonic Adventure
-            case "MK-51000-53": // Sonic Adventure
+            case "MK5100053": // Sonic Adventure
             case "51014": // Sonic Adventure (Limited Edition)
             case "51117": // Sonic Adventure 2
-            case "MK-51117-50": // Sonic Adventure 2
+            case "MK5111750": // Sonic Adventure 2
             case "51060": // Sonic Shuffle
-            case "MK-51060-50": // Sonic Shuffle
-            case "T-1401D-50": // SoulCalibur
-            case "T-8112D-05": // South Park Rally
-            case "T-8105N": // South Park: Chef's Luv Shack
+            case "MK5106050": // Sonic Shuffle
+            case "T1401D50": // SoulCalibur
+            case "T8112D05": // South Park Rally
+            case "T8105N": // South Park: Chef's Luv Shack
             case "51051": // Space Channel 5
-            case "MK-51051-50": // Space Channel 5
-            case "T-1216N": // Spawn: In the Demon's Hand
-            case "T-41704N": // Spec Ops II: Omega Squad
-            case "T-45004D-50": // Spec Ops II: Omega Squad
-            case "T-17702N": // Speed Devils
-            case "T-17702D-50": // Speed Devils
-            case "T-17718N": // Speed Devils Online Racing
-            case "T-17713D-50": // Speed Devils Online Racing
-            case "T-13008N": // Spider-man
-            case "T-13011D-05": // Spider-man
-            case "T-8118N": // Spirit of Speed 1937
-            case "T-8117D-59": // Spirit of Speed 1937
-            case "T-44304N": // Sports Jam
-            case "T-23003N": // Star Wars: Demolition
-            case "T-13010D-50": // Star Wars: Demolition
-            case "T-23002N": // Star Wars: Episode 1 Jedi Power Battles
-            case "T-23002D-50": // Star Wars: Episode 1 Jedi Power Battles
-            case "T-23001N": // Star Wars: Episode 1 Racer
-            case "T-13006D-50": // Star Wars: Episode 1 Racer
-            case "T-40209N": // StarLancer
-            case "T-17723D-50": // StarLancer
-            case "T-1203N": // Street Fighter Alpha3
-            case "T-7005D-50": // Street Fighter Alpha3
-            case "T-1213N": // Street Fighter III: 3rd Strike
-            case "T-7013D-50": // Street Fighter III: 3rd Strike
-            case "T-1210N": // Street Fighter III: Double Impact
-            case "T-7006D-50": // Street Fighter III: Double Impact
-            case "T-15111N": // Striker Pro 2000
-            case "T-15102D-50": // UEFA Striker
-            case "T-22904D": // Stunt GP
-            case "T-17708N": // Stupid Invaders
-            case "T-17711D-71": // Stupid Invaders
-            case "T-40206N": // Super Magnetic Neo
-            case "T-40206D-50": // Super Magnetic Neo
-            case "T-12511N": // Super Runabout: San Francisco Edition
-            case "T-7014D-50": // Super Runabout: The Golden State
-            case "T-40216N": // Surf Rocket Racers
-            case "T-17721D-50": // Surf Rocket Racers
-            case "T-17703N": // Suzuki Alstare Extreme Racing
-            case "T-17703D-05": // Suzuki Alstare Extreme Racing
-            case "T-36805N": // Sword of the Berserk: Guts' Rage
-            case "T-36807D-05": // Sword of the Berserk: Guts' Rage
-            case "T-17708D": // Taxi 2
-            case "T-1208N": // Tech Romancer
-            case "T-7009D-50": // Tech Romancer
-            case "T-8108N": // Tee Off
+            case "MK5105150": // Space Channel 5
+            case "T1216N": // Spawn: In the Demon's Hand
+            case "T41704N": // Spec Ops II: Omega Squad
+            case "T45004D50": // Spec Ops II: Omega Squad
+            case "T17702N": // Speed Devils
+            case "T17702D50": // Speed Devils
+            case "T17718N": // Speed Devils Online Racing
+            case "T17713D50": // Speed Devils Online Racing
+            case "T13008N": // Spider-man
+            case "T13011D05": // Spider-man
+            case "T8118N": // Spirit of Speed 1937
+            case "T8117D59": // Spirit of Speed 1937
+            case "T44304N": // Sports Jam
+            case "T23003N": // Star Wars: Demolition
+            case "T13010D50": // Star Wars: Demolition
+            case "T23002N": // Star Wars: Episode 1 Jedi Power Battles
+            case "T23002D50": // Star Wars: Episode 1 Jedi Power Battles
+            case "T23001N": // Star Wars: Episode 1 Racer
+            case "T13006D50": // Star Wars: Episode 1 Racer
+            case "T40209N": // StarLancer
+            case "T17723D50": // StarLancer
+            case "T1203N": // Street Fighter Alpha3
+            case "T7005D50": // Street Fighter Alpha3
+            case "T1213N": // Street Fighter III: 3rd Strike
+            case "T7013D50": // Street Fighter III: 3rd Strike
+            case "T1210N": // Street Fighter III: Double Impact
+            case "T7006D50": // Street Fighter III: Double Impact
+            case "T15111N": // Striker Pro 2000
+            case "T15102D50": // UEFA Striker
+            case "T22904D": // Stunt GP
+            case "T17708N": // Stupid Invaders
+            case "T17711D71": // Stupid Invaders
+            case "T40206N": // Super Magnetic Neo
+            case "T40206D50": // Super Magnetic Neo
+            case "T12511N": // Super Runabout: San Francisco Edition
+            case "T7014D50": // Super Runabout: The Golden State
+            case "T40216N": // Surf Rocket Racers
+            case "T17721D50": // Surf Rocket Racers
+            case "T17703N": // Suzuki Alstare Extreme Racing
+            case "T17703D05": // Suzuki Alstare Extreme Racing
+            case "T36805N": // Sword of the Berserk: Guts' Rage
+            case "T36807D05": // Sword of the Berserk: Guts' Rage
+            case "T17708D": // Taxi 2
+            case "T1208N": // Tech Romancer
+            case "T7009D50": // Tech Romancer
+            case "T8108N": // Tee Off
             case "51186": // Tennis 2K2
-            case "MK-51186-50": // Virtua Tennis 2
-            case "T-15102N": // Test Drive 6
-            case "T-15123N": // Test Drive Le Mans
-            case "T-15111D-91": // Le Mans 24 Hours
-            case "T-15110N": // Test Drive V-Rally
-            case "T-15105D-05": // V-Rally 2: Expert Edition
+            case "MK5118650": // Virtua Tennis 2
+            case "T15102N": // Test Drive 6
+            case "T15123N": // Test Drive Le Mans
+            case "T15111D91": // Le Mans 24 Hours
+            case "T15110N": // Test Drive V-Rally
+            case "T15105D05": // V-Rally 2: Expert Edition
             case "51011": // Time Stalkers
-            case "MK-51011-53": // Time Stalkers
-            case "T-13701N": // TNN Motorsports HardCore Heat
-            case "T-40202N": // Tokyo Extreme Racer
-            case "T-40201D-50": // Tokyo Highway Challenge
-            case "T-40211N": // Tokyo Extreme Racer 2
-            case "T-17724D-50": // Tokyo Highway Challenge 2
-            case "T-40402N": // Tom Clancy's Rainbow Six Rouge Spear
-            case "T-45002D-61": // Tom Clancy's Rainbow Six Rouge Spear
-            case "T-36812N": // Tomb Raider: Chronicles
-            case "T-36815D-05": // Tomb Raider: Chronicles
-            case "T-36806N": // Tomb Raider: The Last Revelation
-            case "T-36804D-05": // Tomb Raider: The Last Revelation
-            case "T-40205N": // Tony Hawks Pro Skater
-            case "T-40204D-50": // Tony Hawk's Skateboarding
-            case "T-13006N": // Tony Hawks Pro Skater 2
-            case "T-13008D-05": // Tony Hawks Pro Skater 2
+            case "MK5101153": // Time Stalkers
+            case "T13701N": // TNN Motorsports HardCore Heat
+            case "T40202N": // Tokyo Extreme Racer
+            case "T40201D50": // Tokyo Highway Challenge
+            case "T40211N": // Tokyo Extreme Racer 2
+            case "T17724D50": // Tokyo Highway Challenge 2
+            case "T40402N": // Tom Clancy's Rainbow Six Rouge Spear
+            case "T45002D61": // Tom Clancy's Rainbow Six Rouge Spear
+            case "T36812N": // Tomb Raider: Chronicles
+            case "T36815D05": // Tomb Raider: Chronicles
+            case "T36806N": // Tomb Raider: The Last Revelation
+            case "T36804D05": // Tomb Raider: The Last Revelation
+            case "T40205N": // Tony Hawks Pro Skater
+            case "T40204D50": // Tony Hawk's Skateboarding
+            case "T13006N": // Tony Hawks Pro Skater 2
+            case "T13008D05": // Tony Hawks Pro Skater 2
             case "51020": // Toy Comander
-            case "MK-51020-50": // Toy Comander
+            case "MK5102050": // Toy Comander
             case "51149": // Toy Racer
-            case "T-13003N": // Toy Story 2: Buzz Lightyear to the Rescue!
-            case "T-13003D-05": // Toy Story 2: Buzz Lightyear to the Rescue!
-            case "T-8102N": // TrickStyle
-            case "T-8101D-05": // TrickStyle
+            case "T13003N": // Toy Story 2: Buzz Lightyear to the Rescue!
+            case "T13003D05": // Toy Story 2: Buzz Lightyear to the Rescue!
+            case "T8102N": // TrickStyle
+            case "T8101D05": // TrickStyle
             case "51144": // Typing of the Dead
-            case "MK-51095-05": // UEFA Dream Soccer
-            case "T-40204N": // Ultimate Fighting Championship
-            case "T-40203D-50": // Ultimate Fighting Championship
-            case "T-15125N": // Unreal Tornament
-            case "T-36801D-50": // Unreal Tornament
-            case "T-36810N": // Urban Chaos
-            case "T-36810D-50": // Urban Chaos
-            case "T-8110N": // Vanishing Point
-            case "T-8110D-05": // Vanishing Point
-            case "T-13002N": // Vigilante 8: 2nd Offense
-            case "T-13002D-71": // Vigilante 8: 2nd Offense
-            case "T-44301N": // Virtua Athlete 2000
-            case "MK-51094-50": // Virtua Athlete 2K
+            case "MK5109505": // UEFA Dream Soccer
+            case "T40204N": // Ultimate Fighting Championship
+            case "T40203D50": // Ultimate Fighting Championship
+            case "T15125N": // Unreal Tornament
+            case "T36801D50": // Unreal Tornament
+            case "T36810N": // Urban Chaos
+            case "T36810D50": // Urban Chaos
+            case "T8110N": // Vanishing Point
+            case "T8110D05": // Vanishing Point
+            case "T13002N": // Vigilante 8: 2nd Offense
+            case "T13002D71": // Vigilante 8: 2nd Offense
+            case "T44301N": // Virtua Athlete 2000
+            case "MK5109450": // Virtua Athlete 2K
             case "51001": // Virtua Fighter 3tb
-            case "MK-51001-53": // Virtua Fighter 3tb
+            case "MK5100153": // Virtua Fighter 3tb
             case "51028": // Virtua Striker 2
-            case "MK-51028-50": // Virtua Striker 2 Ver. 2000.1
+            case "MK5102850": // Virtua Striker 2 Ver. 2000.1
             case "51054": // Virtua Tennis
-            case "MK-51054-50": // Virtua Tennis
-            case "T-13004N": // Virtual On: Oratorio Tangram
-            case "T-15113N": // Wacky Races
-            case "T-15106D-05": // Wacky Races
-            case "T-8111N": // Wetrix+
-            case "T-40504D-64": // Wetrix+
-            case "T-36811D": // Who Wants To Be A Millianare
-            case "T-42101N": // Wild Metal
-            case "T-40501D-64": // Wild Metal
+            case "MK5105450": // Virtua Tennis
+            case "T13004N": // Virtual On: Oratorio Tangram
+            case "T15113N": // Wacky Races
+            case "T15106D05": // Wacky Races
+            case "T8111N": // Wetrix+
+            case "T40504D64": // Wetrix+
+            case "T36811D": // Who Wants To Be A Millianare
+            case "T42101N": // Wild Metal
+            case "T40501D64": // Wild Metal
             case "51055": // World Series Baseball 2K1
             case "51152": // World Series Baseball 2K2
-            case "T-40601N": // Worms Armageddon
-            case "T-40601D-79": // Worms Armageddon
-            case "T-22904N": // Worms World Party
-            case "T-7016D-50": // Worms World Party
-            case "T-10005N": // WWF Royal Rumble
-            case "T-10003D-50": // WWF Royal Rumble
-            case "T-15126N": //  Xtreme Sports
-            case "MK-51081-50": // Sega Extreme Sports
+            case "T40601N": // Worms Armageddon
+            case "T40601D79": // Worms Armageddon
+            case "T22904N": // Worms World Party
+            case "T7016D50": // Worms World Party
+            case "T10005N": // WWF Royal Rumble
+            case "T10003D50": // WWF Royal Rumble
+            case "T15126N": //  Xtreme Sports
+            case "MK5108150": // Sega Extreme Sports
             case "51038": // Zombie Revenge
-            case "MK-51038-50": // Zombie Revenge
+            case "MK5103850": // Zombie Revenge
             // Unlicensed Games
-            case "T-26702N": // PBA Tour Bowling 2001
+            case "T26702N": // PBA Tour Bowling 2001
             case "43011": // Bleem!Cast - Gran Turismo 2
             case "43021": // Bleem!Cast - Metal Gear Solid
             case "43031": // Bleem!Cast - Tekken 3
@@ -499,93 +499,93 @@ public class Emulator extends Application {
             case "T0000": // DC VCD Player (Joy Pad hack)
                 vgaMode = 0;
 
-            case "T-40509D-50": // Aqua GT
-            case "T-9715N": // Army Men Sarges Heroes
-            case "T-9708D-61": // Army Men Sarges Heroes
-            case "T-8117N": // Bust-A-Move 4
-            case "T-8109D-05": // Bust-A-Move 4
-            case "T-44903D-50": // Coaster Works
-            case "T-17721N": // Conflict Zone
-            case "T-1217N": // Dino Crisis
-            case "T-7019D-05": // Dino Crisis
-            case "T-12503D-61": // Dragon's Blood
-            case "T-10003N": // Evil Dead Hail to the King
-            case "T-10005D-05": // Evil Dead Hail to the King
-            case "T-17705SD-50": // Evolution: The World of Sacred Device
-            case "T-15104N": // Expendable
-            case "T-45401D-50": // Giant Killers
-            case "T-1214N": // Gun Bird 2
-            case "T-7018D-50": // Gun Bird 2
-            case "T-40502-N": // Hidden and Dangerous
-            case "T-40503D-64": // Hidden and Dangerous
-            case "T-9702D-61": // Hydro Thunder
-            case "T-9701N": // Mortal Kombat Gold
-            case "T-1404N": // Ms Pacman Maze Madness
-            case "T-10001D-50": //  MTV Sports: Skateboarding feat. Andy McDonald
-            case "T-9706N": // NBA Showdown: NBA on NBC
-            case "T-9705D-50": // NBA Showdown: NBA on NBC
-            case "T-40214N": // Next Tetris, The
-            case "T-9703D-50": // NFL Blitz 2000
-            case "T-40403N": // Q*bert
-            case "T-44303N": // Reel Fishing: Wild
+            case "T40509D50": // Aqua GT
+            case "T9715N": // Army Men Sarges Heroes
+            case "T9708D61": // Army Men Sarges Heroes
+            case "T8117N": // BusTA-Move 4
+            case "T8109D05": // BusTA-Move 4
+            case "T44903D50": // Coaster Works
+            case "T17721N": // Conflict Zone
+            case "T1217N": // Dino Crisis
+            case "T7019D05": // Dino Crisis
+            case "T12503D61": // Dragon's Blood
+            case "T10003N": // Evil Dead Hail to the King
+            case "T10005D05": // Evil Dead Hail to the King
+            case "T17705SD50": // Evolution: The World of Sacred Device
+            case "T15104N": // Expendable
+            case "T45401D50": // Giant Killers
+            case "T1214N": // Gun Bird 2
+            case "T7018D50": // Gun Bird 2
+            case "T40502N": // Hidden and Dangerous
+            case "T40503D64": // Hidden and Dangerous
+            case "T9702D61": // Hydro Thunder
+            case "T9701N": // Mortal Kombat Gold
+            case "T1404N": // Ms Pacman Maze Madness
+            case "T10001D50": //  MTV Sports: Skateboarding feat. Andy McDonald
+            case "T9706N": // NBA Showdown: NBA on NBC
+            case "T9705D50": // NBA Showdown: NBA on NBC
+            case "T40214N": // Next Tetris, The
+            case "T9703D50": // NFL Blitz 2000
+            case "T40403N": // Q*bert
+            case "T44303N": // Reel Fishing: Wild
             case "51010": // Rippin' Riders
-            case "T-9707N": // San Fransisco Rush 2049
-            case "MK-51031-50": // Sega Worldwide Soccer 2000
-            case "T-8104D-05": // Shadowman
-            case "MK-51052-50": // Skies of Arcadia
-            case "T-17722D-50": // Sno-Cross Championship Racing
-            case "T-1401N": // SoulCalibur
-            case "T-8116N": // South Park Rally
-            case "T-8105D-50": // South Park: Chef's Luv Shack
-            case "T-36816D-05": // Spawn: In the Demon's Hand
-            case "T-36808D-05": // Sydney 2000
-            case "T-8108D-05": // Tee Off
-            case "MK-54040-50": // TNN Motorsports Buggy Heat
-            case "T-40401N": // Tom Clancy's Rainbow Six
-            case "T-45001D-05": // Tom Clancy's Rainbow Six
-            case "T-11011N": // Who Wants To Beat Up A Millianare
+            case "T9707N": // San Fransisco Rush 2049
+            case "MK5103150": // Sega Worldwide Soccer 2000
+            case "T8104D05": // Shadowman
+            case "MK5105250": // Skies of Arcadia
+            case "T17722D50": // Sno-Cross Championship Racing
+            case "T1401N": // SoulCalibur
+            case "T8116N": // South Park Rally
+            case "T8105D50": // South Park: Chef's Luv Shack
+            case "T36816D05": // Spawn: In the Demon's Hand
+            case "T36808D05": // Sydney 2000
+            case "T8108D05": // Tee Off
+            case "MK5404050": // TNN Motorsports Buggy Heat
+            case "T40401N": // Tom Clancy's Rainbow Six
+            case "T45001D05": // Tom Clancy's Rainbow Six
+            case "T11011N": // Who Wants To Beat Up A Millianare
                 vgaMode = 1;
 
-            case "T-40209D-50": // Aerowings 2
-            case "T-9501N": // Air Force Delta
-            case "T-9501D-76": // Air Force Delta
-            case "T-40217N": // Bangai-O
-            case "T-7011D": // Bangai-O
-            case "T-12504N": // Ceasars Palace 2000: Millennium Gold Edition
-            case "T-12502D-61": // Ceasars Palace 2000: Millennium Gold Edition
-            case "T-7017D-50": // Capcom Vs. SNK
-            case "T-15128N": // Coaster Works
-            case "T-17718D-84": // Dinosaur
-            case "T-8114N": // ECW Anarchy Rulz
-            case "T-8119D-59": // ECW Anarchy Rulz
-            case "T-8112N": // ECW Hardcore Revolution
-            case "BKL83203.01-ENG": // ECW Hardcore Revolution
-            case "T-9702N": // Hydro Thunder
-            case "T-15129-N": // Iron Aces
-            case "T-44904D-50": // Iron Aces
-            case "T-1206N": // Jojo's Bizarre Adventure
-            case "T-7007D-50": // Jojo's Bizarre Adventure
-            case "T-44302N": // The King of Fighters '99 Evolution
-            case "T-3101N": // The King of Fighters: Dream Match 1999
-            case "T-44305N": // Last Blade II Heart of a Samarai
-            case "T-10004N": // MTV Sports: Skateboarding feat. Andy McDonald
-                /*case "T-10001D-50": // MTV Sports: Skateboarding feat. Andy McDonald*/
-            case "T-17717D-50": // Next Tetris, The
-            case "T-15103D-61": // Pen Pen
-            case "T-1207N": // Plasma Sword
-            case "T-7003D-50": // Plasma Sword
-            case "T-31101N": // Psychic Force 2012
-            case "T-8106D-05": // Psychic Force 2012
-            case "T-40505D-50": // Railroad Tycoon II: Gold Edition
-            case "T-36806D-05": // Resident Evil Code: Veronica
-            case "T-15122N": //  Ring, The: Terror's Realm
-            case "MK-51010-50": // Rippin' Riders
-                /*case "MK-51052-50": // Skies of Arcadia*/
-            case "T-41401N": // Soul Fighter
-            case "T-41401D-61": // Soul Fighter
-            case "T-36808N": // Sydney 2000
-            case "T-8103N": // WWF Attitude
-            case "T-8103D-50": // WWF Attitude
+            case "T40209D50": // Aerowings 2
+            case "T9501N": // Air Force Delta
+            case "T9501D76": // Air Force Delta
+            case "T40217N": // Bangai-O
+            case "T7011D": // Bangai-O
+            case "T12504N": // Ceasars Palace 2000: Millennium Gold Edition
+            case "T12502D61": // Ceasars Palace 2000: Millennium Gold Edition
+            case "T7017D50": // Capcom Vs. SNK
+            case "T15128N": // Coaster Works
+            case "T17718D84": // Dinosaur
+            case "T8114N": // ECW Anarchy Rulz
+            case "T8119D59": // ECW Anarchy Rulz
+            case "T8112N": // ECW Hardcore Revolution
+            case "BKL8320301ENG": // ECW Hardcore Revolution
+            case "T9702N": // Hydro Thunder
+            case "T15129N": // Iron Aces
+            case "T44904D50": // Iron Aces
+            case "T1206N": // Jojo's Bizarre Adventure
+            case "T7007D50": // Jojo's Bizarre Adventure
+            case "T44302N": // The King of Fighters '99 Evolution
+            case "T3101N": // The King of Fighters: Dream Match 1999
+            case "T44305N": // Last Blade II Heart of a Samarai
+            case "T10004N": // MTV Sports: Skateboarding feat. Andy McDonald
+                /*case "T10001D50": // MTV Sports: Skateboarding feat. Andy McDonald*/
+            case "T17717D50": // Next Tetris, The
+            case "T15103D61": // Pen Pen
+            case "T1207N": // Plasma Sword
+            case "T7003D50": // Plasma Sword
+            case "T31101N": // Psychic Force 2012
+            case "T8106D05": // Psychic Force 2012
+            case "T40505D50": // Railroad Tycoon II: Gold Edition
+            case "T36806D05": // Resident Evil Code: Veronica
+            case "T15122N": //  Ring, The: Terror's Realm
+            case "MK5101050": // Rippin' Riders
+                /*case "MK5105250": // Skies of Arcadia*/
+            case "T41401N": // Soul Fighter
+            case "T41401D61": // Soul Fighter
+            case "T36808N": // Sydney 2000
+            case "T8103N": // WWF Attitude
+            case "T8103D50": // WWF Attitude
                 vgaMode = 2;
 
             default:
