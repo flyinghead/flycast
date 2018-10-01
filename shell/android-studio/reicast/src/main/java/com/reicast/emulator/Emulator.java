@@ -108,7 +108,7 @@ public class Emulator extends Application {
     }
 
     public int isVGACompatible(String gameId) {
-        int vgaMode; // -1 = None / Unknown, 0 = VGA, 1 = Patchable, 2 = TV
+        int vgaMode; // -1 = None / Unknown, 0 = Patchable, 1 = VGA, 3 = TV
         switch (gameId) {
             case "T36803N": //102 Dalmatians puppies to the Rescue
             case "T36813D05": //102 Dalmatians puppies to the Rescue
@@ -586,7 +586,7 @@ public class Emulator extends Application {
             case "T36808N": // Sydney 2000
             case "T8103N": // WWF Attitude
             case "T8103D50": // WWF Attitude
-                vgaMode = 2;
+                vgaMode = 3;
 
             default:
                 vgaMode = -1;

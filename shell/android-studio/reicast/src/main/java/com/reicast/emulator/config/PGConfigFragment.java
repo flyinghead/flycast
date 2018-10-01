@@ -51,6 +51,7 @@ import java.util.Map;
 
 public class PGConfigFragment extends Fragment {
 
+	private Emulator app;
 	private Spinner mSpnrConfigs;
 
 	private CompoundButton switchJoystickDpadEnabled;
@@ -88,7 +89,7 @@ public class PGConfigFragment extends Fragment {
 	@Override
 	public void onViewCreated(View view, Bundle savedInstanceState) {
 
-		Emulator app = (Emulator) getActivity().getApplicationContext();
+		app = (Emulator) getActivity().getApplicationContext();
 		app.getConfigurationPrefs(PreferenceManager.getDefaultSharedPreferences(getActivity()));
 
 		mSpnrConfigs = (Spinner) getView().findViewById(R.id.config_spinner);
@@ -210,7 +211,8 @@ public class PGConfigFragment extends Fragment {
 		ArrayAdapter<String> cableAdapter = new ArrayAdapter<>(getActivity(), R.layout.spinner_selected, cables);
 		cableAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		cable_spnr.setAdapter(cableAdapter);
-		cable_spnr.setSelection(mPrefs.getInt(Emulator.pref_cable, Emulator.cable), true);
+		int compat = mPrefs.getInt(Emulator.pref_cable, app.isVGACompatible(gameId));
+		cable_spnr.setSelection(compat == -1 ? 0 : compat, true);
 
 		String[] regions = getResources().getStringArray(R.array.region);
 		ArrayAdapter<String> regionAdapter = new ArrayAdapter<>(getActivity(), R.layout.spinner_selected, regions);

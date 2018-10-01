@@ -15,10 +15,10 @@
     </string-array>
 
     <string-array name="cable">
-        <item>None</item>
-        <item>HDMI</item>
-        <item>Component</item>
+        <item>Generic</item>
         <item>VGA</item>
+        <item>Component</item>
+        <item>TV</item>
     </string-array>
     
     <string-array name="themes_app">
