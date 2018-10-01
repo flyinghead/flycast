@@ -297,14 +297,16 @@ public class OptionsFragment extends Fragment {
 		cableAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		cable_spnr.setAdapter(cableAdapter);
 
-		cable_spnr.setSelection(mPrefs.getInt(
-				Emulator.pref_cable, Emulator.cable) - 1, true);
+		int selectedItem = mPrefs.getInt(Emulator.pref_cable, Emulator.cable);
+		if (selectedItem > 0)
+			selectedItem--;
+		cable_spnr.setSelection(selectedItem, true);
 
 		cable_spnr.setOnItemSelectedListener(new OnItemSelectedListener() {
 
 			public void onItemSelected(AdapterView<?> parent, View view,
 									   int pos, long id) {
-				mPrefs.edit().putInt(Emulator.pref_cable, pos + 1).apply();
+				mPrefs.edit().putInt(Emulator.pref_cable, pos > 0 ? pos + 1 : pos).apply();
 			}
 
 			public void onNothingSelected(AdapterView<?> arg0) {
@@ -337,21 +339,12 @@ public class OptionsFragment extends Fragment {
 				getActivity(), R.layout.spinner_selected, broadcasts);
 		broadcastAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		broadcast_spnr.setAdapter(broadcastAdapter);
+		broadcast_spnr.setSelection(mPrefs.getInt(Emulator.pref_broadcast, Emulator.broadcast), true);
 
-		int select = 0;
-		String cast = String.valueOf(mPrefs.getInt(Emulator.pref_broadcast, Emulator.broadcast));
-		for (int i = 0; i < broadcasts.length; i++) {
-			if (broadcasts[i].startsWith(cast + " - "))
-				select = i;
-		}
-
-		broadcast_spnr.setSelection(select, true);
 		broadcast_spnr.setOnItemSelectedListener(new OnItemSelectedListener() {
 
 			public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
-				String item = parent.getItemAtPosition(pos).toString();
-				String selection = item.substring(0, item.indexOf(" - "));
-				mPrefs.edit().putInt(Emulator.pref_broadcast, Integer.parseInt(selection)).apply();
+				mPrefs.edit().putInt(Emulator.pref_broadcast, pos).apply();
 
 			}
 

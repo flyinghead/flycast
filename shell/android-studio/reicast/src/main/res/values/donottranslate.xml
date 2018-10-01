@@ -15,9 +15,9 @@
     </string-array>
 
     <string-array name="cable">
-        <item>HDMI</item>
-        <item>Component</item>
         <item>VGA</item>
+        <item>Component</item>
+        <item>TV</item>
     </string-array>
     
     <string-array name="themes">
@@ -33,26 +33,26 @@
     </string-array>
 
    	<string-array name="region">
-        <item>NTSC-J</item>
-        <item>NTSC-U/PAL-M/PAL-N</item>
-        <item>PAL-E</item>
+        <item>Japan</item>
+        <item>USA</item>
+        <item>Europe</item>
         <item>reicast</item>
     </string-array>
 
     <string-array name="bios">
-        <item>NTSC-J</item>
-        <item>NTSC-U/PAL-M/PAL-N</item>
-        <item>PAL-E</item>
+        <item>Japan</item>
+        <item>USA</item>
+        <item>Europe</item>
         <item>reicast</item>
         <item>Katana</item>
     </string-array>
  
     <string-array name="broadcast">
-        <item>0 - NTSC-J</item>
-        <item>4 - NTSC-U</item>
-        <item>6 - PAL-M</item>
-        <item>7 - PAL-N</item>
-        <item>9 - PAL-E</item>
+        <item>NTSC</item>
+        <item>PAL</item>
+        <item>PAL-M</item>
+        <item>PAL-N</item>
+        <item>reicast</item>
     </string-array>
 
     <string-array name="bioscode">
