@@ -148,7 +148,6 @@ public class Emulator extends Application {
             case "MK5104950": // ChuChu Rocket!
             case "51160": // Confidential Mission
             case "MK5116050": // Confidential Mission
-            case "T46603D71": // Conflict Zone
             case "51035": // Crazy Taxi
             case "MK5103550": // Crazy Taxi
             case "51136": // Crazy Taxi 2
@@ -163,7 +162,6 @@ public class Emulator extends Application {
             case "T2401N": // Death Crimson OX
             case "T15112N": // Demolition Racer
             case "T17717N": // Dinosaur
-            case "T17719N": // Donald Duck: Goin' Quackers
             case "T17714D05": // Donald Duck: Quack Attack
             case "T40203N": // Draconus: Cult of the Wyrm
             case "T17720N": // Dragon Riders: Chronicles of Pern
@@ -175,7 +173,6 @@ public class Emulator extends Application {
             case "51033": // Ecco the Dolphin: Defender of the Future
             case "MK5103350": // Ecco the Dolphin: Defender of the Future
             case "T41601N": // Elemental Gimmick Gear
-            case "T9509N": // ESPN International Track n Field
             case "T9504D50": // ESPN International Track n Field
             case "T9505N": // ESPN NBA2Night
             case "T7015D50": // European Super League
@@ -184,7 +181,6 @@ public class Emulator extends Application {
             case "T17711N": // Evolution 2: Far Off Promise
             case "T45005D50": // Evolution 2: Far Off Promise
             case "T22903D50": // Exhibition of Speed
-            case "T15101D05": // Millenium Soldier: Expendable
             case "T17706D50": // F1 Racing Championship
             case "T3001N": // F1 World Grand Prix
             case "T3001D50": // F1 World Grand Prix
@@ -215,8 +211,6 @@ public class Emulator extends Application {
             case "T13301N": // Gundam Side Story 0079
             case "51041": // Headhunter
             case "T1223N": // Heavy Metal: Geomatrix
-            case "T46602D50": // Heavy Metal: Geomatrix
-            case "51002": // House of the Dead 2
             case "MK5104550": // House of the Dead 2
             case "T11008N": // Hoyle Casino
             case "T46001N": // Illbleed
@@ -235,7 +229,6 @@ public class Emulator extends Application {
             case "T40506D50": // KISS: Psycho Circus: The Nightmare Child
             case "T36802N": // Legacy of Kain: Soul Reaver
             case "T36803D05": // Legacy of Kain: Soul Reaver
-            case "T15116N": // Loony Toons Space Race
             case "T15108D50": // Loony Toons Space Race
             case "T40208N": // Mag Force Racing
             case "T40207D50": // Mag Force Racing
@@ -256,7 +249,6 @@ public class Emulator extends Application {
             case "51012": // Metropolis Street Racer
             case "MK5102250": // Metropolis Street Racer
             case "T9713N": // Midway Greatest Arcade Hits Volume 1
-            case "T9710D50": // Midway Greatest Arcade Hits Volume 1
             case "T9714N": // Midway Greatest Arcade Hits Volume 2
             case "T40508D": // Moho (Ball Breakers)
             case "T17701N": // Monaco Grand Prix
@@ -271,7 +263,6 @@ public class Emulator extends Application {
             case "51178": // NBA 2K2
             case "MK5117850": // NBA 2K2
             case "T9709N": // NBA Hoopz
-            case "T9713D61": // NBA Hoopz
             case "51176": // NCAA College Football 2K2
             case "51003": // NFL 2K
             case "51062": // NFL 2K1
@@ -281,7 +272,6 @@ public class Emulator extends Application {
             case "T8101N": // NFL Quarterback Club 2000
             case "T8102D05": // NFL Quarterback Club 2000
             case "T8115N": // NFL Quarterback Club 2001
-            case "51025": // NHL 2K
             case "MK5102589": // NHL 2K
             case "51182": // NHL 2K2
             case "T9504N": // Nightmare Creatures II
@@ -313,14 +303,12 @@ public class Emulator extends Application {
             case "T17704N": // Rayman 2
             case "T17707D50": // Rayman 2
             case "T40219N": // Razor Freestyle Scooter
-            case "T46604D50": // Freestyle Scooter
             case "T8109N": // Re-Volt
             case "T8107D05": // Re-Volt
             case "T9704N": // Ready 2 Rumble Boxing
             case "T9704D50": // Ready 2 Rumble Boxing
             case "T9717N": // Ready 2 Rumble Boxing Round 2
             case "T9711D50": // Ready 2 Rumble Boxing Round 2
-            case "T40218N": // Record of Lodoss War
             case "T7012D97": // Record of Lodoss War
             case "T40215N": // Red Dog: Superior Firepower
             case "MK5102150": // Red Dog: Superior Firepower
@@ -330,19 +318,15 @@ public class Emulator extends Application {
             case "T7021D56": // Resident Evil 3: Nemesis
             case "T1204N": // Resident Evil Code: Veronica
             case "MK5119250": // REZ
-            case "T22901N": // Roadsters
             case "T22901D05": // Roadsters
             case "51092": // Samba De Amigo
             case "MK5109250": // Samba De Amigo
-            case "T9709D61": // San Fransisco Rush 2049
             case "51048": // SeaMan
-            case "51006": // Sega Bass Fishing
             case "MK5100605": // Sega Bass Fishing
             case "51166": // Sega Bass Fishing 2
             case "51053": // Sega GT
             case "MK5105350": // Sega GT
             case "51096": // Sega Marine Fishing
-            case "51019": // Sega Rally Championship 2
             case "MK5101950": // Sega Rally 2
             case "51146": // Sega Smash Pack 1
             case "MK5108350": // Sega Worldwide Soccer 2000 Euro Edition
@@ -351,7 +335,6 @@ public class Emulator extends Application {
             case "51059": // Shenmue
             case "MK5105950": // Shenmue
             case "MK5118450": // Shenmue 2
-            case "T9507N": // Silent Scope
             case "T9505D76": // Silent Scope
             case "T15108N": // Silver
             case "T15109D91": // Silver
@@ -379,24 +362,19 @@ public class Emulator extends Application {
             case "T17702N": // Speed Devils
             case "T17702D50": // Speed Devils
             case "T17718N": // Speed Devils Online Racing
-            case "T17713D50": // Speed Devils Online Racing
             case "T13008N": // Spider-man
             case "T13011D05": // Spider-man
             case "T8118N": // Spirit of Speed 1937
             case "T8117D59": // Spirit of Speed 1937
             case "T44304N": // Sports Jam
             case "T23003N": // Star Wars: Demolition
-            case "T13010D50": // Star Wars: Demolition
             case "T23002N": // Star Wars: Episode 1 Jedi Power Battles
-            case "T23002D50": // Star Wars: Episode 1 Jedi Power Battles
             case "T23001N": // Star Wars: Episode 1 Racer
-            case "T13006D50": // Star Wars: Episode 1 Racer
             case "T40209N": // StarLancer
             case "T17723D50": // StarLancer
             case "T1203N": // Street Fighter Alpha3
             case "T7005D50": // Street Fighter Alpha3
             case "T1213N": // Street Fighter III: 3rd Strike
-            case "T7013D50": // Street Fighter III: 3rd Strike
             case "T1210N": // Street Fighter III: Double Impact
             case "T7006D50": // Street Fighter III: Double Impact
             case "T15111N": // Striker Pro 2000
@@ -411,12 +389,10 @@ public class Emulator extends Application {
             case "T40216N": // Surf Rocket Racers
             case "T17721D50": // Surf Rocket Racers
             case "T17703N": // Suzuki Alstare Extreme Racing
-            case "T17703D05": // Suzuki Alstare Extreme Racing
             case "T36805N": // Sword of the Berserk: Guts' Rage
             case "T36807D05": // Sword of the Berserk: Guts' Rage
             case "T17708D": // Taxi 2
             case "T1208N": // Tech Romancer
-            case "T7009D50": // Tech Romancer
             case "T8108N": // Tee Off
             case "51186": // Tennis 2K2
             case "MK5118650": // Virtua Tennis 2
@@ -442,13 +418,10 @@ public class Emulator extends Application {
             case "T40204D50": // Tony Hawk's Skateboarding
             case "T13006N": // Tony Hawks Pro Skater 2
             case "T13008D05": // Tony Hawks Pro Skater 2
-            case "51020": // Toy Comander
             case "MK5102050": // Toy Comander
             case "51149": // Toy Racer
-            case "T13003N": // Toy Story 2: Buzz Lightyear to the Rescue!
             case "T13003D05": // Toy Story 2: Buzz Lightyear to the Rescue!
             case "T8102N": // TrickStyle
-            case "T8101D05": // TrickStyle
             case "51144": // Typing of the Dead
             case "MK5109505": // UEFA Dream Soccer
             case "T40204N": // Ultimate Fighting Championship
@@ -456,10 +429,8 @@ public class Emulator extends Application {
             case "T15125N": // Unreal Tornament
             case "T36801D50": // Unreal Tornament
             case "T36810N": // Urban Chaos
-            case "T36810D50": // Urban Chaos
             case "T8110N": // Vanishing Point
             case "T8110D05": // Vanishing Point
-            case "T13002N": // Vigilante 8: 2nd Offense
             case "T13002D71": // Vigilante 8: 2nd Offense
             case "T44301N": // Virtua Athlete 2000
             case "MK5109450": // Virtua Athlete 2K
@@ -472,7 +443,6 @@ public class Emulator extends Application {
             case "T13004N": // Virtual On: Oratorio Tangram
             case "T15113N": // Wacky Races
             case "T15106D05": // Wacky Races
-            case "T8111N": // Wetrix+
             case "T40504D64": // Wetrix+
             case "T36811D": // Who Wants To Be A Millianare
             case "T42101N": // Wild Metal
@@ -485,9 +455,7 @@ public class Emulator extends Application {
             case "T7016D50": // Worms World Party
             case "T10005N": // WWF Royal Rumble
             case "T10003D50": // WWF Royal Rumble
-            case "T15126N": //  Xtreme Sports
             case "MK5108150": // Sega Extreme Sports
-            case "51038": // Zombie Revenge
             case "MK5103850": // Zombie Revenge
             // Unlicensed Games
             case "T26702N": // PBA Tour Bowling 2001
@@ -519,7 +487,6 @@ public class Emulator extends Application {
             case "T40502N": // Hidden and Dangerous
             case "T40503D64": // Hidden and Dangerous
             case "T9702D61": // Hydro Thunder
-            case "T9701N": // Mortal Kombat Gold
             case "T1404N": // Ms Pacman Maze Madness
             case "T10001D50": //  MTV Sports: Skateboarding feat. Andy McDonald
             case "T9706N": // NBA Showdown: NBA on NBC
@@ -588,6 +555,41 @@ public class Emulator extends Application {
             case "T8103D50": // WWF Attitude
                 vgaMode = 3;
 
+            // Untested Games
+            case "T46603D71": // Conflict Zone
+            case "T17719N": // Donald Duck: Goin' Quackers
+            case "T9509N": // ESPN International Track n Field
+            case "T15101D05": // Millenium Soldier: Expendable
+            case "T46602D50": // Heavy Metal: Geomatrix
+            case "51002": // House of the Dead 2
+            case "T15116N": // Loony Toons Space Race
+            case "T9710D50": // Midway Greatest Arcade Hits Volume 1
+            case "T9701N": // Mortal Kombat Gold
+            case "T9713D61": // NBA Hoopz
+            case "51025": // NHL 2K
+            case "T46604D50": // Freestyle Scooter
+            case "T40218N": // Record of Lodoss War
+            case "T22901N": // Roadsters
+            case "T9709D61": // San Fransisco Rush 2049
+            case "51006": // Sega Bass Fishing
+            case "51019": // Sega Rally Championship 2
+            case "T9507N": // Silent Scope
+            case "T17713D50": // Speed Devils Online Racing
+            case "T13010D50": // Star Wars: Demolition
+            case "T23002D50": // Star Wars: Episode 1 Jedi Power Battles
+            case "T13006D50": // Star Wars: Episode 1 Racer
+            case "T7013D50": // Street Fighter III: 3rd Strike
+            case "T17703D05": // Suzuki Alstare Extreme Racing
+            case "T7009D50": // Tech Romancer
+            case "51020": // Toy Comander
+            case "T13003N": // Toy Story 2: Buzz Lightyear to the Rescue!
+            case "T8101D05": // TrickStyle
+            case "T36810D50": // Urban Chaos
+            case "T13002N": // Vigilante 8: 2nd Offense
+            case "T8111N": // Wetrix+
+            case "T15126N": //  Xtreme Sports
+            case "51038": // Zombie Revenge
+
             default:
                 vgaMode = -1;
 
@@ -614,44 +616,6 @@ public class Emulator extends Application {
                 Rush Rush Rally Racing (Deluxe Edition) - [Unlicenced]
                 Super Boom Tread Troopers - [Unlicenced]
                 Wind and Water: Puzzle Battles - [Unlicenced]
-                ================================================================ */
-
-                // Unknown / Untested Games:
-                /* =============================================================
-                PAL-E - Conflict Zone - GOT - [DCCM]
-                NTSC-U - Donald Duck: Goin' Quackers - GOT - [DCCM/RDC]
-                NTSC-U - ESPN International Track n Field - GOT -[DCCM]
-                PAL-E - Millenium Soldier: Expendable (Expendable) - GOT - [DCP]
-                PAL-E - Heavy Metal: Geomatrix - GOT - [DCP]
-                NTSC-U - House of the Dead 2 - GOT - [DCCM]
-                NTSC-U - Loony Toons Space Race - GOT - [DCRES/OVERRiDE]
-                PAL-E - Midway Greatest Arcade Hits Volume 1 - GOT - [DCCM]
-                PAL-E - Mortal Kombat Gold - GOT - [DCP]
-                PAL-E - NBA Hoopz - GOT - [PULSAR]
-                NTSC-U - NHL 2K - GOT - [DCCM]
-                PAL-E Freestyle Scooter [Razor Freestyle Scooter]
-                NTSC-U Record of Lodoss War
-                NTSC-U Roadsters
-                PAL-E San Fransisco Rush 2049
-                NTSC-U Sega Bass Fishing
-                NTSC-U Sega Rally Championship 2
-                NTSC-U Silent Scope
-                PAL-E Speed Devils Online Racing
-                PAL-E Star Wars: Demolition
-                PAL-E Star Wars: Episode 1 Jedi Power Battles
-                PAL-E Star Wars: Episode 1 Racer
-                PAL-E Street Fighter III: 3rd Strike
-                PAL-E Suzuki Alstare Extreme Racing
-                PAL-E Tech Romancer
-                PAL-E Tokyo Highway Challenge 2 [Tokyo Extreme Racer 2]
-                NTSC-U Toy Comander
-                NTSC-U Toy Story 2: Buzz Lightyear to the Rescue!
-                PAL-E TrickStyle
-                PAL-E Urban Chaos
-                NTSC-U Vigilante 8: 2nd Offense
-                NTSC-U Wetrix+
-                NTSC-U Xtreme Sports
-                NTSC-U Zombie Revenge
                 ================================================================ */
 
                 // List provided by Zorlon
