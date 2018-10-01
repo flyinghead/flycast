@@ -146,7 +146,7 @@ public class Emulator extends Application {
             case "T-36814D-05": // Chicken Run
             case "51049": // ChuChu Rocket!
             case "MK-51049-50": // ChuChu Rocket!
-            case "51168": // Confidential Mission
+            case "51160": // Confidential Mission
             case "MK-51160-50": // Confidential Mission
             case "T-46603D-71": // Conflict Zone
             case "51035": // Crazy Taxi
@@ -159,7 +159,7 @@ public class Emulator extends Application {
             case "51037": // Daytona USA
             case "MK-51037-50": // Daytona USA 2001
             case "T-3601N": // Dead or Alive 2
-            case "T-8116D-05": // Dead or Alive 2
+            case "T-8116D-05": // Dead or Alive 2 & ECW Hardcore Revolution
             case "T-2401N": // Death Crimson OX
             case "T-15112N": // Demolition Racer
             case "T-17717N": // Dinosaur
@@ -222,9 +222,10 @@ public class Emulator extends Application {
             case "T-46001N": // Illbleed
             case "T-12503N": // Incoming
             case "T-40701D-50": // Incoming
-            case "T-46001N": // Industrial Spy: Operation Espionage
-            case "T-8101N": // Jeremy McGrath Supercross 2000
+            case "T-41302N": // Industrial Spy: Operation Espionage
+            case "T-8104N": // Jeremy McGrath Supercross 2000
             case "T-8114D-05": // Jeremy McGrath Supercross 2000
+            case "BKL83176.01-ENG": // Jeremy McGrath Supercross 2000
             case "51058": // Jet Grind Radio
             case "MK-51058-50": // Jet Set Radio
             case "T-7001D": // Jimmy White's 2: Cueball
@@ -328,7 +329,6 @@ public class Emulator extends Application {
             case "T-1220N": // Resident Evil 3: Nemesis
             case "T-7021D-56": // Resident Evil 3: Nemesis
             case "T-1204N": // Resident Evil Code: Veronica
-            case "T-36806D-05": // Resident Evil Code: Veronica
             case "MK-51192-50": // REZ
             case "T-22901N": // Roadsters
             case "T-22901D-05": // Roadsters
@@ -345,7 +345,7 @@ public class Emulator extends Application {
             case "51019": // Sega Rally Championship 2
             case "MK-51019-50": // Sega Rally 2
             case "51146": // Sega Smash Pack 1
-            case "MK-51038-50": // Sega Worldwide Soccer 2000 Euro Edition
+            case "MK-51083-50": // Sega Worldwide Soccer 2000 Euro Edition
             case "T-41301N": // Seventh Cross Evolution
             case "T-8106N": // Shadowman
             case "51059": // Shenmue
@@ -355,7 +355,7 @@ public class Emulator extends Application {
             case "T-9505D-76": // Silent Scope
             case "T-15108N": // Silver
             case "T-15109D-91": // Silver
-            case "51062": // Skies of Arcadia
+            case "51052": // Skies of Arcadia
             case "T-15106N": // Slave Zero
             case "T-15104D-59": // Slave Zero
             case "T-40207N": // Sno-Cross Championship Racing
@@ -431,7 +431,7 @@ public class Emulator extends Application {
             case "T-40202N": // Tokyo Extreme Racer
             case "T-40201D-50": // Tokyo Highway Challenge
             case "T-40211N": // Tokyo Extreme Racer 2
-            case "T-40201D-50": // Tokyo Highway Challenge 2
+            case "T-17724D-50": // Tokyo Highway Challenge 2
             case "T-40402N": // Tom Clancy's Rainbow Six Rouge Spear
             case "T-45002D-61": // Tom Clancy's Rainbow Six Rouge Spear
             case "T-36812N": // Tomb Raider: Chronicles
@@ -508,7 +508,7 @@ public class Emulator extends Application {
             case "T-17721N": // Conflict Zone
             case "T-1217N": // Dino Crisis
             case "T-7019D-05": // Dino Crisis
-            case "T-40203N": // Dragon's Blood
+            case "T-12503D-61": // Dragon's Blood
             case "T-10003N": // Evil Dead Hail to the King
             case "T-10005D-05": // Evil Dead Hail to the King
             case "T-17705SD-50": // Evolution: The World of Sacred Device
@@ -559,7 +559,7 @@ public class Emulator extends Application {
             case "T-8114N": // ECW Anarchy Rulz
             case "T-8119D-59": // ECW Anarchy Rulz
             case "T-8112N": // ECW Hardcore Revolution
-            case "T-8116D-05": // ECW Hardcore Revolution
+            case "BKL83203.01-ENG": // ECW Hardcore Revolution
             case "T-9702N": // Hydro Thunder
             case "T-15129-N": // Iron Aces
             case "T-44904D-50": // Iron Aces
