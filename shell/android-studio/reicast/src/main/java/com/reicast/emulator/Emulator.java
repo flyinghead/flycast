@@ -107,6 +107,46 @@ public class Emulator extends Application {
         JNIdc.bootdisk(mPrefs.getString(pref_bootdisk, bootdisk));
     }
 
+    public int isVGACompatible(String gameId) {
+        int vgaMode; // -1 = None / Unknown, 0 = VGA, 1 = TV, 2 = Patchable
+        switch (gameId) {
+            case "T-36803N": //102 Dalmatians puppies to the Rescue
+            case "T-36813D-05": //102 Dalmatians puppies to the Rescue
+            case "51064": // 18 Wheeler American Pro Trucker
+            case "MK-51064": // 18 Wheeler American Pro Trucker
+            case "T-9708N": // 4 Wheel Thunder
+            case "T-9706D": // 4 Wheel Thunder
+            case "T-41903N": // 4x4 Evolution
+            case "MK-51190": // 90 Minutes Championship Football
+            case "T-40201N": // Aerowings
+            case "T-40202D-50": // Aerowings
+            case "T-40210N": // Aerowings 2
+            case "MK-51171": // Alien Front Online
+            case "T-15117N": // Alone in the Dark The New Nightmare
+            case "T-15112D-05": // Alone in the Dark The New Nightmare
+            case "T-40301N": // Armada
+            case "T-15130N": // Atari Aniversary Edition
+            case "T-44102N": // Bang! Gunship Elite
+                vgaMode = 0;
+
+            case "T-40209D-50": // Aerowings 2
+            case "T-9501N": // Air Force Delta
+            case "T-9501D-76": // Air Force Delta
+            case "T-40217N": // Bangai-O
+            case "T-7011D": // Bangai-O
+                vgaMode = 1;
+
+            case "T-40509D-50": // Aqua GT
+            case "T-9715N": // Army Men Sarges Heroes
+            case "T-9708D-61": // Army Men Sarges Heroes
+                vgaMode = 2;
+
+            default:
+                vgaMode = -1;
+        }
+        return vgaMode;
+    }
+
     static {
         AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
     }
