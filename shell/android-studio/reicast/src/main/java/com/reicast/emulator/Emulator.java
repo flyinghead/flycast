@@ -108,8 +108,9 @@ public class Emulator extends Application {
     }
 
     public int isVGACompatible(String gameId) {
-        int vgaMode; // -1 = None / Unknown, 0 = Patchable, 1 = VGA, 3 = TV
+        int vgaMode; // 0 = VGA, 1 = Patchable, 3 = TV
         switch (gameId) {
+            // VGA Compatible
             case "T36803N": //102 Dalmatians puppies to the Rescue
             case "T36813D05": //102 Dalmatians puppies to the Rescue
             case "51064": // 18 Wheeler American Pro Trucker
@@ -457,16 +458,25 @@ public class Emulator extends Application {
             case "T10003D50": // WWF Royal Rumble
             case "MK5108150": // Sega Extreme Sports
             case "MK5103850": // Zombie Revenge
-            // Unlicensed Games
+            // Unreleased Games
             case "T26702N": // PBA Tour Bowling 2001
+            // Unlicensed Games
             case "43011": // Bleem!Cast - Gran Turismo 2
             case "43021": // Bleem!Cast - Metal Gear Solid
             case "43031": // Bleem!Cast - Tekken 3
+            case "DUX-SE-1": // DUX Special Edition
+            case "DXCE-15": // DUX Collector's Edition
+            case "DXJC-1": // DUX Jewel Case
+            case "RRRR-RE": // Rush Rush Rally Racing
+            case "RRRR-DX": // Rush Rush Rally Racing (Deluxe Edition)
+            case "YW-015DC": // Wind and Water: Puzzle Battles
             // Other Software
-                /*case "": // Codebreaker & Loader */
+            /*case "T?": // Codebreaker & Loader */
             case "T0000": // DC VCD Player (Joy Pad hack)
+            // Published by "The GOAT Store" (No IDs)
                 vgaMode = 0;
 
+            // VGA Patchable
             case "T40509D50": // Aqua GT
             case "T9715N": // Army Men Sarges Heroes
             case "T9708D61": // Army Men Sarges Heroes
@@ -513,6 +523,7 @@ public class Emulator extends Application {
             case "T11011N": // Who Wants To Beat Up A Millianare
                 vgaMode = 1;
 
+            // VGA Incompatible
             case "T40209D50": // Aerowings 2
             case "T9501N": // Air Force Delta
             case "T9501D76": // Air Force Delta
@@ -536,7 +547,6 @@ public class Emulator extends Application {
             case "T3101N": // The King of Fighters: Dream Match 1999
             case "T44305N": // Last Blade II Heart of a Samarai
             case "T10004N": // MTV Sports: Skateboarding feat. Andy McDonald
-                /*case "T10001D50": // MTV Sports: Skateboarding feat. Andy McDonald*/
             case "T17717D50": // Next Tetris, The
             case "T15103D61": // Pen Pen
             case "T1207N": // Plasma Sword
@@ -547,7 +557,6 @@ public class Emulator extends Application {
             case "T36806D05": // Resident Evil Code: Veronica
             case "T15122N": //  Ring, The: Terror's Realm
             case "MK5101050": // Rippin' Riders
-                /*case "MK5105250": // Skies of Arcadia*/
             case "T41401N": // Soul Fighter
             case "T41401D61": // Soul Fighter
             case "T36808N": // Sydney 2000
@@ -555,7 +564,7 @@ public class Emulator extends Application {
             case "T8103D50": // WWF Attitude
                 vgaMode = 3;
 
-            // Untested Games
+            // VGA Unverified
             case "T46603D71": // Conflict Zone
             case "T17719N": // Donald Duck: Goin' Quackers
             case "T9509N": // ESPN International Track n Field
@@ -591,35 +600,7 @@ public class Emulator extends Application {
             case "51038": // Zombie Revenge
 
             default:
-                vgaMode = -1;
-
-                // Unlicensed / Demo / No ID:
-                /* =============================================================
-                Sega Swirl - [PAL-E]
-                Ball Breakers - [Beta] [NTSC-U]
-                Flintstones, The: Viva Rock Vegas - [BETA]
-                Half-Life & Blue Shift - [BETA]
-                Hell Gate - [BETA]
-                Propeller Arena - [BETA]
-                System Shock 2 - [ALPHA]
-                Cool Herders - [Unlicenced]
-                Dream Para Para - [Unlicenced]
-                DUX - [Unlicenced]
-                Feet of Fury - [Unlicenced]
-                Frog Feast - [Unlicenced]
-                Inhabitants - [Unlicenced]
-                Irides: Master of Blocks - [Unlicenced]
-                Last Hope - [Unlicenced]
-                Last Hope: Pink Bullets - [Unlicenced]
-                Maqiupai - [Unlicenced]
-                Rush Rush Rally Racing - [Unlicenced]
-                Rush Rush Rally Racing (Deluxe Edition) - [Unlicenced]
-                Super Boom Tread Troopers - [Unlicenced]
-                Wind and Water: Puzzle Battles - [Unlicenced]
-                ================================================================ */
-
-                // List provided by Zorlon
-                // https://www.epforums.org/showthread.php?56169-Dreamcast-VGA-Compatability-list-amp-Guide
+                vgaMode = 3; // Emulator default
         }
         return vgaMode;
     }

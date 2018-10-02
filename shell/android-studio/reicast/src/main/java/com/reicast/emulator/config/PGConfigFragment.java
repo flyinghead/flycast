@@ -211,7 +211,7 @@ public class PGConfigFragment extends Fragment {
 		cableAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		cable_spnr.setAdapter(cableAdapter);
 		int compat = mPrefs.getInt(Emulator.pref_cable, app.isVGACompatible(gameId));
-		cable_spnr.setSelection(compat == -1 ? 0 : compat, true);
+		cable_spnr.setSelection(compat, true);
 
 		String[] regions = getResources().getStringArray(R.array.region);
 		ArrayAdapter<String> regionAdapter = new ArrayAdapter<>(getActivity(), R.layout.spinner_selected, regions);
