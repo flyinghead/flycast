@@ -195,6 +195,7 @@ int dma_end_sched(int tag, int cycl, int jitt)
 	SB_ADST = 0x00000000;//dma done
 	SB_ADLEN = 0x00000000;
 
+	// indicate that dma is not happening, or has been paused
 	SB_ADSUSP |= 0x10;
 
 	asic_RaiseInterrupt(holly_SPU_DMA);
@@ -238,14 +239,24 @@ void Write_SB_ADST(u32 addr, u32 data)
 				WriteMem32_nommu(dst+i,data);
 			}
 			*/
+
+			// idicate that dma is in progress
 			SB_ADSUSP &= ~0x10;
 
-			// Schedule the end of DMA transfer interrupt
-			int cycles = len * (SH4_MAIN_CLOCK / 2 / 25000000);       // 16 bits @ 25 MHz
-			if (cycles < 4096)
-				dma_end_sched(0, 0, 0);
+			if (!settings.aica.OldSyncronousDma)
+			{
+
+				// Schedule the end of DMA transfer interrupt
+				int cycles = len * (SH4_MAIN_CLOCK / 2 / 25000000);       // 16 bits @ 25 MHz
+				if (cycles < 4096)
+					dma_end_sched(0, 0, 0);
+				else
+					sh4_sched_request(dma_sched_id, cycles);
+			}
 			else
-				sh4_sched_request(dma_sched_id, cycles);
+			{
+				dma_end_sched(0, 0, 0);
+			}
 		}
 	}
 }
