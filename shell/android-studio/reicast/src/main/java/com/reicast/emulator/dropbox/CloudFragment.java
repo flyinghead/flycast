@@ -30,7 +30,7 @@ import android.widget.Toast;
 import com.dropbox.core.DbxException;
 import com.dropbox.core.DbxRequestConfig;
 import com.dropbox.core.android.Auth;
-import com.dropbox.core.http.OkHttp3Requestor;
+import com.dropbox.core.http.StandardHttpRequestor;
 import com.dropbox.core.v2.DbxClientV2;
 import com.dropbox.core.v2.files.FileMetadata;
 import com.dropbox.core.v2.files.ListFolderResult;
@@ -46,6 +46,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.concurrent.TimeUnit;
 
 
 public class CloudFragment extends Fragment {
@@ -358,10 +359,11 @@ public class CloudFragment extends Fragment {
 
 		public static void init(String accessToken) {
 			if (sDbxClient == null) {
-				DbxRequestConfig requestConfig = DbxRequestConfig.newBuilder("examples-v2-demo")
-						.withHttpRequestor(new OkHttp3Requestor(OkHttp3Requestor.defaultOkHttpClient()))
-						.build();
-
+				StandardHttpRequestor requestor = new StandardHttpRequestor(
+						StandardHttpRequestor.Config.DEFAULT_INSTANCE);
+				DbxRequestConfig requestConfig = DbxRequestConfig
+						.newBuilder("reicast.emulator")
+						.withHttpRequestor(requestor).build();
 				sDbxClient = new DbxClientV2(requestConfig, accessToken);
 			}
 		}
