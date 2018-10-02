@@ -16,7 +16,6 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.DropBoxManager;
 import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
@@ -46,7 +45,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.concurrent.TimeUnit;
 
 
 public class CloudFragment extends Fragment {
@@ -77,7 +75,17 @@ public class CloudFragment extends Fragment {
 				Environment.getExternalStorageDirectory().getAbsolutePath());
 		buttonListener();
 		confirmDialog = new AlertDialog.Builder(getActivity());
-		Auth.startOAuth2Authentication(getActivity(), APP_KEY);
+//		Auth.startOAuth2Authentication(getActivity(), APP_KEY);
+		String accessToken = mPrefs.getString("access-token", null);
+		if (accessToken != null) {
+			DropboxClientFactory.init(accessToken);
+		} else {
+			accessToken = Auth.getOAuth2Token();
+			if (accessToken != null) {
+				mPrefs.edit().putString("access-token", accessToken).apply();
+				DropboxClientFactory.init(accessToken);
+			}
+		}
 	}
 
 	public void buttonListener() {
