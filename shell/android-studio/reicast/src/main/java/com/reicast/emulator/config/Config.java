@@ -23,6 +23,8 @@ public class Config {
 
 	public static final String game_title = "game_title";
 
+	public static final String bios_code = "localized";
+
 	public static int vibrationDuration = 20;
 
 	public static final String pref_vmu = "vmu_floating";

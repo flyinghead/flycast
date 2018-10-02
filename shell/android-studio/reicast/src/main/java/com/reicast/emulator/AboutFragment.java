@@ -59,8 +59,10 @@ public class AboutFragment extends Fragment {
 			TextView version = (TextView) getView().findViewById(R.id.revision_text);
 			version.setText(getString(R.string.revision_text,
 					versionName, String.valueOf(versionCode)));
-			int start = versionName.lastIndexOf("-");
-			buildId = versionName.substring(start + 2, start + 9);
+			if (versionName.contains("-")) {
+				int start = versionName.lastIndexOf("-");
+				buildId = versionName.substring(start + 2, start + 9);
+			}
 		} catch (NameNotFoundException e) {
 			e.printStackTrace();
 		}

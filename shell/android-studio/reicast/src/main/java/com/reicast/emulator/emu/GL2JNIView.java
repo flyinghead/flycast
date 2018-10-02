@@ -638,7 +638,7 @@ public class GL2JNIView extends GLSurfaceView
             handler.post(new Runnable() {
                 public void run() {
                     Log.d(context.getPackageName(), msg);
-                    Toast.makeText(context, msg, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context.getApplicationContext(), msg, Toast.LENGTH_SHORT).show();
                 }
             });
         }

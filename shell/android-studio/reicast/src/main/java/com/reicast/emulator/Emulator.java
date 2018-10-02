@@ -46,7 +46,7 @@ public class Emulator extends Application {
     public static boolean modvols = true;
     public static String bootdisk = null;
     public static boolean usereios = false;
-    
+
     /**
      * Load the user configuration from preferences
      *
