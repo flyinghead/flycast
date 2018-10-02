@@ -39,8 +39,6 @@ android {
         ndk {
             moduleName "dc"
                 abiFilters 'armeabi-v7a', 'x86'
-            moduleName "sexplay"
-                abiFilters 'armeabi-v7a', 'x86'
         }
     }
 
@@ -101,6 +99,7 @@ dependencies {
     implementation 'org.bouncycastle:bcprov-jdk16:1.46'
     implementation 'commons-io:commons-io:2.6'
     implementation 'org.apache.commons:commons-lang3:3.7'
+    implementation 'com.dropbox.core:dropbox-core-sdk:3.0.9'
     implementation ('com.googlecode.json-simple:json-simple:1.1.1') {
         exclude module: 'junit'
     }
