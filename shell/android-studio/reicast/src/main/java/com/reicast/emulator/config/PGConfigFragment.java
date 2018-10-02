@@ -123,8 +123,7 @@ public class PGConfigFragment extends Fragment {
 				.putBoolean(Emulator.pref_syncedrender, synced_render.isChecked())
 				.putBoolean(Emulator.pref_modvols, modifier_volumes.isChecked()).apply();
 
-		int cablePosition = cable_spnr.getSelectedItemPosition();
-		mPrefs.edit().putInt(Emulator.pref_cable, cablePosition == 0 ? 3 : cablePosition).apply();
+		mPrefs.edit().putInt(Emulator.pref_cable, cable_spnr.getSelectedItemPosition()).apply();
 		mPrefs.edit().putInt(Emulator.pref_dcregion, region_spnr.getSelectedItemPosition()).apply();
 		String item = broadcastAdapter.getItem(broadcast_spnr.getSelectedItemPosition());
 		int broadcastValue = getBroadcastValue(item);

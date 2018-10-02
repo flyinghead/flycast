@@ -311,44 +311,11 @@ public class OptionsFragment extends Fragment {
 		unstable_opt.setChecked(mPrefs.getBoolean(Emulator.pref_unstable, Emulator.unstableopt));
 		unstable_opt.setOnCheckedChangeListener(unstable_option);
 
-		String[] cables = getResources().getStringArray(R.array.cable);
-		Spinner cable_spnr = (Spinner) getView().findViewById(R.id.cable_spinner);
-		ArrayAdapter<String> cableAdapter = new ArrayAdapter<>(
-				getActivity(), R.layout.spinner_selected, cables);
-		cableAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-		cable_spnr.setAdapter(cableAdapter);
+		setSpinner(R.array.cable, R.id.cable_spinner,
+				Emulator.pref_cable, Emulator.cable, false);
 
-		cable_spnr.setSelection(mPrefs.getInt(Emulator.pref_cable, Emulator.cable), true);
-
-		cable_spnr.setOnItemSelectedListener(new OnItemSelectedListener() {
-
-			public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
-				mPrefs.edit().putInt(Emulator.pref_cable, pos == 0 ? 3 : pos).apply();
-			}
-
-			public void onNothingSelected(AdapterView<?> arg0) {
-
-			}
-
-		});
-
-		String[] regions = getResources().getStringArray(R.array.region);
-		Spinner region_spnr = (Spinner) getView().findViewById(R.id.region_spinner);
-		ArrayAdapter<String> regionAdapter = new ArrayAdapter<>(
-				getActivity(), R.layout.spinner_selected, regions);
-		regionAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-		region_spnr.setAdapter(regionAdapter);
-		region_spnr.setSelection(mPrefs.getInt(Emulator.pref_dcregion, Emulator.dcregion), true);
-		region_spnr.setOnItemSelectedListener(new OnItemSelectedListener() {
-			public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
-				mPrefs.edit().putInt(Emulator.pref_dcregion, pos).apply();
-
-			}
-
-			public void onNothingSelected(AdapterView<?> arg0) {
-
-			}
-		});
+		setSpinner(R.array.region, R.id.region_spinner,
+				Emulator.pref_dcregion, Emulator.dcregion, false);
 
 		String[] broadcasts = getResources().getStringArray(R.array.broadcast);
 		Spinner broadcast_spnr = (Spinner) getView().findViewById(R.id.broadcast_spinner);
@@ -541,28 +508,9 @@ public class OptionsFragment extends Fragment {
 		sound_opt.setChecked(sound);
 		sound_opt.setOnCheckedChangeListener(emu_sound);
 
-		String[] depths = getResources().getStringArray(R.array.depth);
 
-		Spinner depth_spnr = (Spinner) getView().findViewById(R.id.depth_spinner);
-		ArrayAdapter<String> depthAdapter = new ArrayAdapter<>(
-				getActivity(), R.layout.spinner_selected, depths);
-		depthAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-		depth_spnr.setAdapter(depthAdapter);
-
-		String depth = String.valueOf(mPrefs.getInt(Config.pref_renderdepth, 24));
-		depth_spnr.setSelection(depthAdapter.getPosition(depth), true);
-
-		depth_spnr.setOnItemSelectedListener(new OnItemSelectedListener() {
-
-			public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
-				int render = Integer.parseInt(parent.getItemAtPosition(pos).toString());
-				mPrefs.edit().putInt(Config.pref_renderdepth, render).apply();
-			}
-
-			public void onNothingSelected(AdapterView<?> arg0) {
-
-			}
-		});
+		setSpinner(R.array.depth, R.id.depth_spinner,
+				Config.pref_renderdepth, 24, true);
 
 		Button resetEmu = (Button) getView().findViewById(R.id.reset_emu_btn);
 		resetEmu.setOnClickListener(new View.OnClickListener() {
@@ -579,6 +527,40 @@ public class OptionsFragment extends Fragment {
 				b.setNegativeButton(android.R.string.no, null);
 				b.show();
 			}
+		});
+	}
+
+	private void setSpinner(int array, int view, final String pref, int def, final boolean parse) {
+		String[] stringArray = getResources().getStringArray(array);
+		Spinner spinner = (Spinner) getView().findViewById(view);
+		ArrayAdapter<String> adapter = new ArrayAdapter<>(
+				getActivity(), R.layout.spinner_selected, stringArray);
+		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		spinner.setAdapter(adapter);
+
+		if (parse) {
+			String value = String.valueOf(mPrefs.getInt(pref, def));
+			spinner.setSelection(adapter.getPosition(value), true);
+		} else {
+			spinner.setSelection(mPrefs.getInt(pref, def), true);
+		}
+
+		spinner.setOnItemSelectedListener(new OnItemSelectedListener() {
+
+			public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
+				if (parse) {
+					int value = Integer.parseInt(parent.getItemAtPosition(pos).toString());
+					mPrefs.edit().putInt(pref, value).apply();
+				} else {
+					mPrefs.edit().putInt(pref, pos).apply();
+				}
+
+			}
+
+			public void onNothingSelected(AdapterView<?> arg0) {
+
+			}
+
 		});
 	}
 
