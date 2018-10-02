@@ -1904,9 +1904,9 @@ bool RenderFrame()
 				{
 					glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
 					glcache.Enable(GL_SCISSOR_TEST);
-					glScissor(0, 0, ds2s_offs_x, screen_height);
+					glScissor(0, 0, offs_x, screen_height);
 					glClear(GL_COLOR_BUFFER_BIT);
-					glScissor(screen_width - ds2s_offs_x, 0, ds2s_offs_x, screen_height);
+					glScissor(screen_width - offs_x, 0, offs_x, screen_height);
 					glClear(GL_COLOR_BUFFER_BIT);
 				}
 			}
