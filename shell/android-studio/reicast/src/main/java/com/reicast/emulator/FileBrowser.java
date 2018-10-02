@@ -194,6 +194,11 @@ public class FileBrowser extends Fragment {
 			if (buttons != null && buttons.exists()) {
 				in = new FileInputStream(buttons);
 			} else if (!file.exists() || file.length() == 0) {
+				try {
+					file.createNewFile();
+				} catch (Exception e) {
+					// N+ files be broken
+				}
 				in = getActivity().getAssets().open("buttons.png");
 			}
 			if (in != null) {
