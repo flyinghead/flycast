@@ -326,12 +326,12 @@ int dc_init()
 	return rv;
 }
 
-#ifndef TARGET_DISPFRAME
 bool dc_is_running()
 {
 	return sh4_cpu.IsCpuRunning();
 }
 
+#ifndef TARGET_DISPFRAME
 void dc_run()
 {
     while ( true )
