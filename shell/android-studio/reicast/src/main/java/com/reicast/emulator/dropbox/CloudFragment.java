@@ -149,13 +149,14 @@ public class CloudFragment extends Fragment {
 
 					Log.e(getActivity().getLocalClassName(), "Failed to list folder.", e);
 					Toast.makeText(getActivity(),
-							"An error has occurred", Toast.LENGTH_SHORT).show();
+							"Failed to list folder", Toast.LENGTH_SHORT).show();
 				}
 			}).execute(mPath);
 		} catch (IllegalStateException s) {
+			dialog.dismiss();
 			Log.e(getActivity().getLocalClassName(), "Failed to list folder.", s);
 			Toast.makeText(getActivity(),
-					"An error has occurred", Toast.LENGTH_SHORT).show();
+					"Failed to list folder", Toast.LENGTH_SHORT).show();
 		}
 	}
 
@@ -179,13 +180,14 @@ public class CloudFragment extends Fragment {
 
 					Log.e(getActivity().getLocalClassName(), "Failed to upload file.", e);
 					Toast.makeText(getActivity(),
-							"An error has occurred", Toast.LENGTH_SHORT).show();
+							"Failed to upload file", Toast.LENGTH_SHORT).show();
 				}
 			}).execute(fileUri, mPath);
 		} catch (IllegalStateException s) {
+			dialog.dismiss();
 			Log.e(getActivity().getLocalClassName(), "Failed to upload file.", s);
 			Toast.makeText(getActivity(),
-					"An error has occurred", Toast.LENGTH_SHORT).show();
+					"Failed to upload file", Toast.LENGTH_SHORT).show();
 		}
 	}
 
@@ -209,13 +211,14 @@ public class CloudFragment extends Fragment {
 
 					Log.e(getActivity().getLocalClassName(), "Failed to download file.", e);
 					Toast.makeText(getActivity(),
-							"An error has occurred", Toast.LENGTH_SHORT).show();
+							"Failed to download file", Toast.LENGTH_SHORT).show();
 				}
 			}).execute(file);
 		} catch (IllegalStateException s) {
+			dialog.dismiss();
 			Log.e(getActivity().getLocalClassName(), "Failed to download file.", s);
 			Toast.makeText(getActivity(),
-					"An error has occurred", Toast.LENGTH_SHORT).show();
+					"Failed to download file", Toast.LENGTH_SHORT).show();
 		}
 	}
 
