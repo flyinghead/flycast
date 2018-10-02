@@ -129,28 +129,34 @@ public class CloudFragment extends Fragment {
 		dialog.setMessage("Loading");
 		dialog.show();
 
-		new ListFolderTask(DropboxClientFactory.getClient(), new ListFolderTask.Callback() {
-			@Override
-			public void onDataLoaded(ListFolderResult result) {
-				dialog.dismiss();
-				for (Metadata item : result.getEntries()) {
-					if (item.getName().equals(vmu)) {
-						if (item instanceof FileMetadata) {
-							downloadFile((FileMetadata) item);
+		try {
+			new ListFolderTask(DropboxClientFactory.getClient(), new ListFolderTask.Callback() {
+				@Override
+				public void onDataLoaded(ListFolderResult result) {
+					dialog.dismiss();
+					for (Metadata item : result.getEntries()) {
+						if (item.getName().equals(vmu)) {
+							if (item instanceof FileMetadata) {
+								downloadFile((FileMetadata) item);
+							}
 						}
 					}
 				}
-			}
 
-			@Override
-			public void onError(Exception e) {
-				dialog.dismiss();
+				@Override
+				public void onError(Exception e) {
+					dialog.dismiss();
 
-				Log.e(getActivity().getLocalClassName(), "Failed to list folder.", e);
-				Toast.makeText(getActivity(),
-						"An error has occurred", Toast.LENGTH_SHORT).show();
-			}
-		}).execute(mPath);
+					Log.e(getActivity().getLocalClassName(), "Failed to list folder.", e);
+					Toast.makeText(getActivity(),
+							"An error has occurred", Toast.LENGTH_SHORT).show();
+				}
+			}).execute(mPath);
+		} catch (IllegalStateException s) {
+			Log.e(getActivity().getLocalClassName(), "Failed to list folder.", s);
+			Toast.makeText(getActivity(),
+					"An error has occurred", Toast.LENGTH_SHORT).show();
+		}
 	}
 
 	private void uploadFile(String fileUri) {
@@ -160,21 +166,27 @@ public class CloudFragment extends Fragment {
 		dialog.setMessage("Uploading");
 		dialog.show();
 
-		new UploadFileTask(getActivity(), DropboxClientFactory.getClient(), new UploadFileTask.Callback() {
-			@Override
-			public void onUploadComplete(FileMetadata result) {
-				dialog.dismiss();
-			}
+		try {
+			new UploadFileTask(getActivity(), DropboxClientFactory.getClient(), new UploadFileTask.Callback() {
+				@Override
+				public void onUploadComplete(FileMetadata result) {
+					dialog.dismiss();
+				}
 
-			@Override
-			public void onError(Exception e) {
-				dialog.dismiss();
+				@Override
+				public void onError(Exception e) {
+					dialog.dismiss();
 
-				Log.e(getActivity().getLocalClassName(), "Failed to upload file.", e);
-				Toast.makeText(getActivity(),
-						"An error has occurred", Toast.LENGTH_SHORT).show();
-			}
-		}).execute(fileUri, mPath);
+					Log.e(getActivity().getLocalClassName(), "Failed to upload file.", e);
+					Toast.makeText(getActivity(),
+							"An error has occurred", Toast.LENGTH_SHORT).show();
+				}
+			}).execute(fileUri, mPath);
+		} catch (IllegalStateException s) {
+			Log.e(getActivity().getLocalClassName(), "Failed to upload file.", s);
+			Toast.makeText(getActivity(),
+					"An error has occurred", Toast.LENGTH_SHORT).show();
+		}
 	}
 
 	private void downloadFile(FileMetadata file) {
@@ -184,21 +196,27 @@ public class CloudFragment extends Fragment {
 		dialog.setMessage("Downloading");
 		dialog.show();
 
-		new DownloadFileTask(getActivity(), DropboxClientFactory.getClient(), new DownloadFileTask.Callback() {
-			@Override
-			public void onDownloadComplete(File result) {
-				dialog.dismiss();
-			}
+		try {
+			new DownloadFileTask(getActivity(), DropboxClientFactory.getClient(), new DownloadFileTask.Callback() {
+				@Override
+				public void onDownloadComplete(File result) {
+					dialog.dismiss();
+				}
 
-			@Override
-			public void onError(Exception e) {
-				dialog.dismiss();
+				@Override
+				public void onError(Exception e) {
+					dialog.dismiss();
 
-				Log.e(getActivity().getLocalClassName(), "Failed to download file.", e);
-				Toast.makeText(getActivity(),
-						"An error has occurred", Toast.LENGTH_SHORT).show();
-			}
-		}).execute(file);
+					Log.e(getActivity().getLocalClassName(), "Failed to download file.", e);
+					Toast.makeText(getActivity(),
+							"An error has occurred", Toast.LENGTH_SHORT).show();
+				}
+			}).execute(file);
+		} catch (IllegalStateException s) {
+			Log.e(getActivity().getLocalClassName(), "Failed to download file.", s);
+			Toast.makeText(getActivity(),
+					"An error has occurred", Toast.LENGTH_SHORT).show();
+		}
 	}
 
 	static class ListFolderTask extends AsyncTask<String, Void, ListFolderResult> {
