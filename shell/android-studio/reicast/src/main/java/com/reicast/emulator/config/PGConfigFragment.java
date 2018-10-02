@@ -51,7 +51,6 @@ import java.util.Map;
 
 public class PGConfigFragment extends Fragment {
 
-	private Emulator app;
 	private Spinner mSpnrConfigs;
 
 	private CompoundButton switchJoystickDpadEnabled;
@@ -89,7 +88,7 @@ public class PGConfigFragment extends Fragment {
 	@Override
 	public void onViewCreated(View view, Bundle savedInstanceState) {
 
-		app = (Emulator) getActivity().getApplicationContext();
+		Emulator app = (Emulator) getActivity().getApplicationContext();
 		app.getConfigurationPrefs(PreferenceManager.getDefaultSharedPreferences(getActivity()));
 
 		mSpnrConfigs = (Spinner) getView().findViewById(R.id.config_spinner);
