@@ -158,11 +158,13 @@ public class PGConfigFragment extends Fragment {
 	private void configureViewByGame(final String gameId) {
 		final SharedPreferences mPrefs = getActivity()
 				.getSharedPreferences(gameId, Activity.MODE_PRIVATE);
+		Compat compat = new Compat();
 		switchJoystickDpadEnabled.setChecked(mPrefs.getBoolean(
 				Gamepad.pref_js_merged + "_A", false));
 		dynarec_opt.setChecked(mPrefs.getBoolean(Emulator.pref_dynarecopt, Emulator.dynarecopt));
 		unstable_opt.setChecked(mPrefs.getBoolean(Emulator.pref_unstable, Emulator.unstableopt));
-		safemode_opt.setChecked(mPrefs.getBoolean(Emulator.pref_dynsafemode, Emulator.dynsafemode));
+		safemode_opt.setChecked(mPrefs.getBoolean(
+				Emulator.pref_dynsafemode, compat.useSafeMode(gameId)));
 
 		int frameskip = mPrefs.getInt(Emulator.pref_frameskip, Emulator.frameskip);
 		mainFrames.setText(String.valueOf(frameskip));
@@ -210,8 +212,8 @@ public class PGConfigFragment extends Fragment {
 		ArrayAdapter<String> cableAdapter = new ArrayAdapter<>(getActivity(), R.layout.spinner_selected, cables);
 		cableAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		cable_spnr.setAdapter(cableAdapter);
-		int compat = mPrefs.getInt(Emulator.pref_cable, app.isVGACompatible(gameId));
-		cable_spnr.setSelection(compat, true);
+		cable_spnr.setSelection(mPrefs.getInt(Emulator.pref_cable,
+				compat.isVGACompatible(gameId)), true);
 
 		String[] regions = getResources().getStringArray(R.array.region);
 		ArrayAdapter<String> regionAdapter = new ArrayAdapter<>(getActivity(), R.layout.spinner_selected, regions);
