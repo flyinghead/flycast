@@ -1,4 +1,4 @@
-package com.reicast.emulator.dropbox;
+package com.reicast.emulator.cloud;
 
 import com.dropbox.core.DbxRequestConfig;
 import com.dropbox.core.http.StandardHttpRequestor;
@@ -7,7 +7,7 @@ import com.dropbox.core.v2.DbxClientV2;
 /**
  * Singleton instance of {@link DbxClientV2} and friends
  */
-public class ClientFactory {
+public class DbxClientFactory {
 
     private static DbxClientV2 sDbxClient;
 

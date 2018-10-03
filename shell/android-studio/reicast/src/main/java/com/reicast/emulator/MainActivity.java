@@ -40,7 +40,7 @@ import com.reicast.emulator.config.InputFragment;
 import com.reicast.emulator.config.OptionsFragment;
 import com.reicast.emulator.config.PGConfigFragment;
 import com.reicast.emulator.debug.GenerateLogs;
-import com.reicast.emulator.dropbox.CloudFragment;
+import com.reicast.emulator.cloud.CloudFragment;
 import com.reicast.emulator.emu.JNIdc;
 
 import java.lang.Thread.UncaughtExceptionHandler;

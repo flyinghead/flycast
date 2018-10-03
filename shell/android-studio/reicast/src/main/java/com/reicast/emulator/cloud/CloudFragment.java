@@ -1,4 +1,4 @@
-package com.reicast.emulator.dropbox;
+package com.reicast.emulator.cloud;
 
 /*
  *  Author: Luca D'Amico (Luca91)
@@ -84,10 +84,10 @@ public class CloudFragment extends Fragment {
 			accessToken = Auth.getOAuth2Token();
 			if (accessToken != null) {
 				mPrefs.edit().putString("access-token", accessToken).apply();
-				ClientFactory.init(accessToken);
+				DbxClientFactory.init(accessToken);
 			}
 		} else {
-			ClientFactory.init(accessToken);
+			DbxClientFactory.init(accessToken);
 		}
 	}
 
@@ -134,7 +134,7 @@ public class CloudFragment extends Fragment {
 		dialog.show();
 
 		try {
-			new UploadFileTask(getActivity(), ClientFactory.getClient(), new UploadFileTask.Callback() {
+			new UploadFileTask(getActivity(), DbxClientFactory.getClient(), new UploadFileTask.Callback() {
 				@Override
 				public void onUploadComplete(FileMetadata result) {
 					dialog.dismiss();
@@ -165,7 +165,7 @@ public class CloudFragment extends Fragment {
 		dialog.show();
 
 		try {
-			new ListFolderTask(ClientFactory.getClient(), new ListFolderTask.Callback() {
+			new ListFolderTask(DbxClientFactory.getClient(), new ListFolderTask.Callback() {
 				@Override
 				public void onDataLoaded(ListFolderResult result) {
 					dialog.dismiss();
@@ -203,7 +203,7 @@ public class CloudFragment extends Fragment {
 		dialog.show();
 
 		try {
-			new DownloadFileTask(this, ClientFactory.getClient(), new DownloadFileTask.Callback() {
+			new DownloadFileTask(this, DbxClientFactory.getClient(), new DownloadFileTask.Callback() {
 				@Override
 				public void onDownloadComplete(File result) {
 					dialog.dismiss();
@@ -398,13 +398,13 @@ public class CloudFragment extends Fragment {
 	}
 
 	void createBackupOfVmu(String vmuName) {
-		File backupDir = new File(home_directory, "VmuBackups");
+		File backupDir = new File(home_directory, "vmu_backup");
 		if (!backupDir.exists()) {
 			backupDir.mkdirs();
 		}
 
 		File source = new File(home_directory, vmuName);
-		File destination = new File(home_directory, "VmuBackups/" + vmuName);
+		File destination = new File(home_directory, "vmu_backup/" + vmuName);
 		if (!destination.exists()) {
 			try {
 				destination.createNewFile();
