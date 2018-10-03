@@ -9,8 +9,8 @@
 
     <color name="colorBluePrimary">#226696</color>
     <color name="colorBluePrimaryDark">#164f6e</color>
-    <color name="colorBlueAccent">#e040fb</color>
-    <color name="colorBlueAccentDark">#9c27b0</color>
+    <color name="colorBlueAccent">#ffca28</color>
+    <color name="colorBlueAccentDark">#ffb74d</color>
     <color name="colorBlueText">#e0e0e0</color>
     <color name="colorBlueTint">#072540</color>
 
