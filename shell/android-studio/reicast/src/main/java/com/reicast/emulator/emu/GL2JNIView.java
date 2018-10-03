@@ -524,6 +524,8 @@ public class GL2JNIView extends GLSurfaceView
             gl.glViewport(0, 0, width, height);
             if (Emulator.widescreen) {
                 JNIdc.rendinit(width, height);
+            } else if (Emulator.crtview) {
+                JNIdc.rendinit(640, 480);
             } else {
                 JNIdc.rendinit(height * (4 / 3), height);
             }
@@ -638,7 +640,7 @@ public class GL2JNIView extends GLSurfaceView
             handler.post(new Runnable() {
                 public void run() {
                     Log.d(context.getPackageName(), msg);
-                    Toast.makeText(context.getApplicationContext(), msg, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context, msg, Toast.LENGTH_SHORT).show();
                 }
             });
         }

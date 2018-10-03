@@ -25,4 +25,7 @@
     <item android:title="@string/about"
         android:id="@+id/about_menu"
         android:icon="@mipmap/menu_question" />
+    <item
+        android:id="@+id/version_spacer"
+        android:title=""/>
 </menu>

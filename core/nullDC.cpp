@@ -319,10 +319,10 @@ void LoadSettings()
 	// Configured on a per-game basis
 	settings.dynarec.safemode		= 0;
 	settings.rend.ModifierVolumes	= 1;
-#endif
 
 	settings.pvr.HashLogFile		= cfgLoadStr("testing", "ta.HashLogFile", "");
 	settings.pvr.HashCheckFile		= cfgLoadStr("testing", "ta.HashCheckFile", "");
+#endif
 
 #if SUPPORT_DISPMANX
 	settings.dispmanx.Width			= cfgLoadInt("dispmanx","width",640);

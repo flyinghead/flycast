@@ -365,15 +365,8 @@ public class OptionsFragment extends Fragment {
 		mipmap_opt.setChecked(mPrefs.getBoolean(Emulator.pref_mipmaps, Emulator.mipmaps));
 		mipmap_opt.setOnCheckedChangeListener(mipmaps_option);
 
-		OnCheckedChangeListener full_screen = new OnCheckedChangeListener() {
-
-			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-				mPrefs.edit().putBoolean(Emulator.pref_widescreen, isChecked).apply();
-			}
-		};
-		CompoundButton stretch_view = (CompoundButton) getView().findViewById(R.id.stretch_option);
-		stretch_view.setChecked(mPrefs.getBoolean(Emulator.pref_widescreen, Emulator.widescreen));
-		stretch_view.setOnCheckedChangeListener(full_screen);
+		setSpinner(R.array.resolution, R.id.resolution_spinner,
+				Emulator.pref_resolution, 0, false);
 
 		int frameskip = mPrefs.getInt(Emulator.pref_frameskip, Emulator.frameskip);
 
@@ -695,7 +688,7 @@ public class OptionsFragment extends Fragment {
 		mPrefs.edit().remove(Emulator.pref_broadcast).apply();
 		mPrefs.edit().remove(Emulator.pref_limitfps).apply();
 		mPrefs.edit().remove(Emulator.pref_mipmaps).apply();
-		mPrefs.edit().remove(Emulator.pref_widescreen).apply();
+		mPrefs.edit().remove(Emulator.pref_resolution).apply();
 		mPrefs.edit().remove(Emulator.pref_frameskip).apply();
 		mPrefs.edit().remove(Emulator.pref_pvrrender).apply();
 		mPrefs.edit().remove(Emulator.pref_syncedrender).apply();
@@ -715,6 +708,7 @@ public class OptionsFragment extends Fragment {
 		Emulator.limitfps = true;
 		Emulator.mipmaps = true;
 		Emulator.widescreen = false;
+		Emulator.crtview = false;
 		Emulator.frameskip = 0;
 		Emulator.pvrrender = false;
 		Emulator.syncedrender = false;
