@@ -326,17 +326,7 @@ public class FileBrowser extends Fragment {
 			((TextView) childview.findViewById(R.id.item_name)).setText(R.string.boot_bios);
 			ImageView icon = (ImageView) childview.findViewById(R.id.item_icon);
 			icon.setImageResource(R.mipmap.disk_bios);
-			int app_theme = mPrefs.getInt(Config.pref_app_theme, 0);
-			if (app_theme == 7) {
-				ImageViewCompat.setImageTintList(icon, ColorStateList.valueOf(
-						ContextCompat.getColor(getActivity(), R.color.colorDreamTint)));
-			} else if (app_theme == 1) {
-				ImageViewCompat.setImageTintList(icon, ColorStateList.valueOf(
-						ContextCompat.getColor(getActivity(), R.color.colorBlueTint)));
-			} else {
-				ImageViewCompat.setImageTintList(icon, ColorStateList.valueOf(
-						ContextCompat.getColor(getActivity(), R.color.colorDarkTint)));
-			}
+			configureTheme(childview, true);
 
 			childview.setTag(null);
 
@@ -357,17 +347,7 @@ public class FileBrowser extends Fragment {
 			((TextView) childview.findViewById(R.id.item_name)).setText(R.string.clear_search);
 			ImageView icon = (ImageView) childview.findViewById(R.id.item_icon);
 			icon.setImageResource(R.mipmap.disk_unknown);
-			int app_theme = mPrefs.getInt(Config.pref_app_theme, 0);
-			if (app_theme == 7) {
-				ImageViewCompat.setImageTintList(icon, ColorStateList.valueOf(
-						ContextCompat.getColor(getActivity(), R.color.colorDreamTint)));
-			} else if (app_theme == 1) {
-				ImageViewCompat.setImageTintList(icon, ColorStateList.valueOf(
-						ContextCompat.getColor(getActivity(), R.color.colorBlueTint)));
-			} else {
-				ImageViewCompat.setImageTintList(icon, ColorStateList.valueOf(
-						ContextCompat.getColor(getActivity(), R.color.colorDarkTint)));
-			}
+			configureTheme(childview, true);
 
 			childview.setTag(null);
 
@@ -438,6 +418,7 @@ public class FileBrowser extends Fragment {
 						}
 					}
 				});
+		configureTheme(childview, false);
 		list.addView(childview);
 		xmlParser.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, game.getName());
 	}
@@ -504,18 +485,6 @@ public class FileBrowser extends Fragment {
 					final View childview = browser.get().getActivity().getLayoutInflater().inflate(
 							R.layout.browser_fragment_item, null, false);
 
-					int app_theme = browser.get().mPrefs.getInt(Config.pref_app_theme, 0);
-					if (app_theme == 7) {
-						childview.findViewById(R.id.childview)
-								.setBackgroundResource(R.drawable.game_selector_dream);
-					} else if (app_theme == 1) {
-						childview.findViewById(R.id.childview)
-								.setBackgroundResource(R.drawable.game_selector_blue);
-					} else {
-						childview.findViewById(R.id.childview)
-								.setBackgroundResource(R.drawable.game_selector_dark);
-					}
-
 					if (file == null) {
 						((TextView) childview.findViewById(R.id.item_name)).setText(R.string.folder_select);
 					} else if (file == parent)
@@ -527,17 +496,7 @@ public class FileBrowser extends Fragment {
 					icon.setImageResource(file == null
 							? R.drawable.ic_settings: file.isDirectory()
 							? R.drawable.ic_folder_black_24dp : R.drawable.disk_unknown);
-
-					if (app_theme == 7) {
-						ImageViewCompat.setImageTintList(icon, ColorStateList.valueOf(
-								ContextCompat.getColor(browser.get().getActivity(), R.color.colorDreamTint)));
-					} else if (app_theme == 1) {
-						ImageViewCompat.setImageTintList(icon, ColorStateList.valueOf(
-								ContextCompat.getColor(browser.get().getActivity(), R.color.colorBlueTint)));
-					} else {
-						ImageViewCompat.setImageTintList(icon, ColorStateList.valueOf(
-								ContextCompat.getColor(browser.get().getActivity(), R.color.colorDarkTint)));
-					}
+					browser.get().configureTheme(childview, true);
 
 					childview.setTag(file);
 
@@ -620,6 +579,30 @@ public class FileBrowser extends Fragment {
             return true;
         }
     }
+
+	private void configureTheme(View childview, boolean useTint) {
+		int app_theme = mPrefs.getInt(Config.pref_app_theme, 0);
+		ImageView icon = (ImageView) childview.findViewById(R.id.item_icon);
+		if (app_theme == 7) {
+			childview.findViewById(R.id.childview)
+					.setBackgroundResource(R.drawable.game_selector_dream);
+			if (useTint)
+				ImageViewCompat.setImageTintList(icon, ColorStateList.valueOf(
+						ContextCompat.getColor(getActivity(), R.color.colorDreamTint)));
+		} else if (app_theme == 1) {
+			childview.findViewById(R.id.childview)
+					.setBackgroundResource(R.drawable.game_selector_blue);
+			if (useTint)
+				ImageViewCompat.setImageTintList(icon, ColorStateList.valueOf(
+						ContextCompat.getColor(getActivity(), R.color.colorBlueTint)));
+		} else {
+			childview.findViewById(R.id.childview)
+					.setBackgroundResource(R.drawable.game_selector_dark);
+			if (useTint)
+				ImageViewCompat.setImageTintList(icon, ColorStateList.valueOf(
+						ContextCompat.getColor(getActivity(), R.color.colorDarkTint)));
+		}
+	}
 
 	private void showToastMessage(String message, int duration) {
 		ConstraintLayout layout = (ConstraintLayout) getActivity().findViewById(R.id.mainui_layout);
