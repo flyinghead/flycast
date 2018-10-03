@@ -27,9 +27,7 @@ import android.widget.Button;
 import android.widget.Toast;
 
 import com.dropbox.core.DbxException;
-import com.dropbox.core.DbxRequestConfig;
 import com.dropbox.core.android.Auth;
-import com.dropbox.core.http.StandardHttpRequestor;
 import com.dropbox.core.v2.DbxClientV2;
 import com.dropbox.core.v2.files.FileMetadata;
 import com.dropbox.core.v2.files.ListFolderResult;
@@ -45,13 +43,13 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.ref.WeakReference;
 
 
 public class CloudFragment extends Fragment {
-	final static private String APP_KEY = "7d7tw1t57sbzrj5";
-	final static private String APP_SECRET = "5xxqa2uctousyi2";
 
-	private String mPath = ""; // Dropbox Path
+    private final static String APP_KEY = "lowa9ps6h5k7zbo";
+	private String mPath = ""; // Dropbox folder
 
 	Button uploadBtn;
 	Button downloadBtn;
@@ -75,20 +73,26 @@ public class CloudFragment extends Fragment {
 				Environment.getExternalStorageDirectory().getAbsolutePath());
 		buttonListener();
 		confirmDialog = new AlertDialog.Builder(getActivity());
-//		Auth.startOAuth2Authentication(getActivity(), APP_KEY);
+	}
+
+	@Override
+	public void onResume() {
+		super.onResume();
+		SharedPreferences mPrefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
 		String accessToken = mPrefs.getString("access-token", null);
-		if (accessToken != null) {
-			DropboxClientFactory.init(accessToken);
-		} else {
+		if (accessToken == null) {
 			accessToken = Auth.getOAuth2Token();
 			if (accessToken != null) {
 				mPrefs.edit().putString("access-token", accessToken).apply();
-				DropboxClientFactory.init(accessToken);
+				ClientFactory.init(accessToken);
 			}
+		} else {
+			ClientFactory.init(accessToken);
 		}
 	}
 
 	public void buttonListener() {
+		Auth.startOAuth2Authentication(getActivity(), APP_KEY);
 		uploadBtn = (Button) getView().findViewById(R.id.uploadBtn);
 		uploadBtn.setOnClickListener(new View.OnClickListener() {
 			@Override
@@ -96,7 +100,7 @@ public class CloudFragment extends Fragment {
 				confirmDialog.setMessage(R.string.uploadWarning);
 				confirmDialog.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int which) {
-						getUriForFiles("Upload");
+						getPathForFiles("Upload");
 					}
 				});
 				confirmDialog.setNegativeButton(R.string.cancel, null);
@@ -113,13 +117,44 @@ public class CloudFragment extends Fragment {
 				confirmDialog.setMessage(R.string.downloadWarning);
 				confirmDialog.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int which) {
-						getUriForFiles("Download");
+						getPathForFiles("Download");
 					}
 				});
 				confirmDialog.setNegativeButton(R.string.cancel, null);
 				confirmDialog.show();
 			}
 		});
+	}
+
+	private void uploadFile(String filePath) {
+		final ProgressDialog dialog = new ProgressDialog(getActivity());
+		dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+		dialog.setCancelable(false);
+		dialog.setMessage("Uploading");
+		dialog.show();
+
+		try {
+			new UploadFileTask(getActivity(), ClientFactory.getClient(), new UploadFileTask.Callback() {
+				@Override
+				public void onUploadComplete(FileMetadata result) {
+					dialog.dismiss();
+				}
+
+				@Override
+				public void onError(Exception e) {
+					dialog.dismiss();
+
+					Log.e(getActivity().getLocalClassName(), "Failed to upload file.", e);
+					Toast.makeText(getActivity(),
+							"Failed to upload file", Toast.LENGTH_SHORT).show();
+				}
+			}).execute(filePath, mPath);
+		} catch (IllegalStateException s) {
+			dialog.dismiss();
+			Log.e(getActivity().getLocalClassName(), "Failed to upload file.", s);
+			Toast.makeText(getActivity(),
+					"Failed to upload file", Toast.LENGTH_SHORT).show();
+		}
 	}
 
 	private void retrieveFiles(final String vmu) {
@@ -130,7 +165,7 @@ public class CloudFragment extends Fragment {
 		dialog.show();
 
 		try {
-			new ListFolderTask(DropboxClientFactory.getClient(), new ListFolderTask.Callback() {
+			new ListFolderTask(ClientFactory.getClient(), new ListFolderTask.Callback() {
 				@Override
 				public void onDataLoaded(ListFolderResult result) {
 					dialog.dismiss();
@@ -160,37 +195,6 @@ public class CloudFragment extends Fragment {
 		}
 	}
 
-	private void uploadFile(String fileUri) {
-		final ProgressDialog dialog = new ProgressDialog(getActivity());
-		dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-		dialog.setCancelable(false);
-		dialog.setMessage("Uploading");
-		dialog.show();
-
-		try {
-			new UploadFileTask(getActivity(), DropboxClientFactory.getClient(), new UploadFileTask.Callback() {
-				@Override
-				public void onUploadComplete(FileMetadata result) {
-					dialog.dismiss();
-				}
-
-				@Override
-				public void onError(Exception e) {
-					dialog.dismiss();
-
-					Log.e(getActivity().getLocalClassName(), "Failed to upload file.", e);
-					Toast.makeText(getActivity(),
-							"Failed to upload file", Toast.LENGTH_SHORT).show();
-				}
-			}).execute(fileUri, mPath);
-		} catch (IllegalStateException s) {
-			dialog.dismiss();
-			Log.e(getActivity().getLocalClassName(), "Failed to upload file.", s);
-			Toast.makeText(getActivity(),
-					"Failed to upload file", Toast.LENGTH_SHORT).show();
-		}
-	}
-
 	private void downloadFile(FileMetadata file) {
 		final ProgressDialog dialog = new ProgressDialog(getActivity());
 		dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
@@ -199,7 +203,7 @@ public class CloudFragment extends Fragment {
 		dialog.show();
 
 		try {
-			new DownloadFileTask(getActivity(), DropboxClientFactory.getClient(), new DownloadFileTask.Callback() {
+			new DownloadFileTask(this, ClientFactory.getClient(), new DownloadFileTask.Callback() {
 				@Override
 				public void onDownloadComplete(File result) {
 					dialog.dismiss();
@@ -211,7 +215,7 @@ public class CloudFragment extends Fragment {
 
 					Log.e(getActivity().getLocalClassName(), "Failed to download file.", e);
 					Toast.makeText(getActivity(),
-							"Failed to download file", Toast.LENGTH_SHORT).show();
+							"Failed to download file\n" + e, Toast.LENGTH_SHORT).show();
 				}
 			}).execute(file);
 		} catch (IllegalStateException s) {
@@ -219,6 +223,58 @@ public class CloudFragment extends Fragment {
 			Log.e(getActivity().getLocalClassName(), "Failed to download file.", s);
 			Toast.makeText(getActivity(),
 					"Failed to download file", Toast.LENGTH_SHORT).show();
+		}
+	}
+
+	static class UploadFileTask extends AsyncTask<String, Void, FileMetadata> {
+
+		private WeakReference<Context> mContext;
+		private final DbxClientV2 mDbxClient;
+		private final Callback mCallback;
+		private Exception mException;
+
+		public interface Callback {
+			void onUploadComplete(FileMetadata result);
+			void onError(Exception e);
+		}
+
+		UploadFileTask(Context context, DbxClientV2 dbxClient, Callback callback) {
+			mContext = new WeakReference<>(context);
+			mDbxClient = dbxClient;
+			mCallback = callback;
+		}
+
+		@Override
+		protected void onPostExecute(FileMetadata result) {
+			super.onPostExecute(result);
+			if (mException != null) {
+				mCallback.onError(mException);
+			} else if (result == null) {
+				mCallback.onError(null);
+			} else {
+				mCallback.onUploadComplete(result);
+			}
+		}
+
+		@Override
+		protected FileMetadata doInBackground(String... params) {
+			File localFile = new File(params[0]);
+			String remoteFolderPath = params[1];
+
+			// Note - does not verify a valid dropbox file name
+			String remoteFileName = localFile.getName();
+
+			try {
+				InputStream inputStream = new FileInputStream(localFile);
+				return mDbxClient.files().uploadBuilder(
+						remoteFolderPath + "/" + remoteFileName)
+						.withMode(WriteMode.OVERWRITE)
+						.uploadAndFinish(inputStream);
+			} catch (DbxException | IOException e) {
+				mException = e;
+			}
+
+			return null;
 		}
 	}
 
@@ -233,7 +289,7 @@ public class CloudFragment extends Fragment {
 			void onError(Exception e);
 		}
 
-		public ListFolderTask(DbxClientV2 dbxClient, Callback callback) {
+		ListFolderTask(DbxClientV2 dbxClient, Callback callback) {
 			mDbxClient = dbxClient;
 			mCallback = callback;
 		}
@@ -261,65 +317,9 @@ public class CloudFragment extends Fragment {
 		}
 	}
 
-	static class UploadFileTask extends AsyncTask<String, Void, FileMetadata> {
-
-		private final Context mContext;
-		private final DbxClientV2 mDbxClient;
-		private final Callback mCallback;
-		private Exception mException;
-
-		public interface Callback {
-			void onUploadComplete(FileMetadata result);
-			void onError(Exception e);
-		}
-
-		UploadFileTask(Context context, DbxClientV2 dbxClient, Callback callback) {
-			mContext = context;
-			mDbxClient = dbxClient;
-			mCallback = callback;
-		}
-
-		@Override
-		protected void onPostExecute(FileMetadata result) {
-			super.onPostExecute(result);
-			if (mException != null) {
-				mCallback.onError(mException);
-			} else if (result == null) {
-				mCallback.onError(null);
-			} else {
-				mCallback.onUploadComplete(result);
-			}
-		}
-
-		@Override
-		protected FileMetadata doInBackground(String... params) {
-			String localUri = params[0];
-			File localFile = UriHelpers.getFileForUri(mContext, Uri.parse(localUri));
-
-			if (localFile != null) {
-				String remoteFolderPath = params[1];
-
-				// Note - this is not ensuring the name is a valid dropbox file name
-				String remoteFileName = localFile.getName();
-
-				try {
-					InputStream inputStream = new FileInputStream(localFile);
-					return mDbxClient.files().uploadBuilder(
-							remoteFolderPath + "/" + remoteFileName)
-							.withMode(WriteMode.OVERWRITE)
-							.uploadAndFinish(inputStream);
-				} catch (DbxException | IOException e) {
-					mException = e;
-				}
-			}
-
-			return null;
-		}
-	}
-
 	static class DownloadFileTask extends AsyncTask<FileMetadata, Void, File> {
 
-		private final Context mContext;
+		private WeakReference<CloudFragment> mCloud;
 		private final DbxClientV2 mDbxClient;
 		private final Callback mCallback;
 		private Exception mException;
@@ -329,8 +329,8 @@ public class CloudFragment extends Fragment {
 			void onError(Exception e);
 		}
 
-		DownloadFileTask(Context context, DbxClientV2 dbxClient, Callback callback) {
-			mContext = context;
+		DownloadFileTask(CloudFragment context, DbxClientV2 dbxClient, Callback callback) {
+            mCloud = new WeakReference<>(context);
 			mDbxClient = dbxClient;
 			mCallback = callback;
 		}
@@ -349,8 +349,7 @@ public class CloudFragment extends Fragment {
 		protected File doInBackground(FileMetadata... params) {
 			FileMetadata metadata = params[0];
 			try {
-				File path = Environment.getExternalStoragePublicDirectory(
-						Environment.DIRECTORY_DOWNLOADS);
+				File path = new File(mCloud.get().home_directory);
 				File file = new File(path, metadata.getName());
 
 				// Make sure the Downloads directory exists.
@@ -371,7 +370,7 @@ public class CloudFragment extends Fragment {
 				// Tell android about the file
 				Intent intent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
 				intent.setData(Uri.fromFile(file));
-				mContext.sendBroadcast(intent);
+				mCloud.get().getActivity().sendBroadcast(intent);
 
 				return file;
 			} catch (DbxException | IOException e) {
@@ -382,39 +381,18 @@ public class CloudFragment extends Fragment {
 		}
 	}
 
-	static class DropboxClientFactory {
-
-		private static DbxClientV2 sDbxClient;
-
-		public static void init(String accessToken) {
-			if (sDbxClient == null) {
-				StandardHttpRequestor requestor = new StandardHttpRequestor(
-						StandardHttpRequestor.Config.DEFAULT_INSTANCE);
-				DbxRequestConfig requestConfig = DbxRequestConfig
-						.newBuilder("reicast.emulator")
-						.withHttpRequestor(requestor).build();
-				sDbxClient = new DbxClientV2(requestConfig, accessToken);
-			}
-		}
-
-		public static DbxClientV2 getClient() {
-			if (sDbxClient == null) {
-				throw new IllegalStateException("Client not initialized.");
-			}
-			return sDbxClient;
-		}
-	}
-
-	private void getUriForFiles(String task) {
+	private void getPathForFiles(String task) {
 		for (String vmu : vmus) {
 			File vmuFile = new File(home_directory, vmu);
 			if (task.equals("Download")) {
 				if (vmuFile.exists())
 					createBackupOfVmu(vmuFile.getName());
-				retrieveFiles(vmuFile.getName());
+				else
+                    retrieveFiles(vmuFile.getName());
 			}
 			if (task.equals("Upload")) {
-				uploadFile(Uri.parse(vmuFile.toString()).toString());
+				if (vmuFile.exists())
+					uploadFile(vmuFile.toString());
 			}
 		}
 	}
@@ -449,5 +427,6 @@ public class CloudFragment extends Fragment {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+        retrieveFiles(vmuName);
 	}
 }
