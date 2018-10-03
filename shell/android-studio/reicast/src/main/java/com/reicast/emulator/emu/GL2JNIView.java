@@ -524,6 +524,8 @@ public class GL2JNIView extends GLSurfaceView
             gl.glViewport(0, 0, width, height);
             if (Emulator.widescreen) {
                 JNIdc.rendinit(width, height);
+            } else if (Emulator.crtview) {
+                JNIdc.rendinit(640, 480);
             } else {
                 JNIdc.rendinit(height * (4 / 3), height);
             }

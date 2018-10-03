@@ -45,7 +45,7 @@
     <string name="select_broadcast">Broadcast</string>
     <string name="select_limitfps">Limit FPS</string>
     <string name="select_mipmaps">Use Mipmaps (fixes SGX540)</string>
-    <string name="select_stretch">Widescreen Mode</string>
+    <string name="select_resolution">Resolution Mode</string>
     <string name="set_frameskip">Frameskip Value</string>
     <string name="select_render">PVR Rendering (does nothing for now)</string>
     <string name="select_syncrender">Synchronous Rendering</string>

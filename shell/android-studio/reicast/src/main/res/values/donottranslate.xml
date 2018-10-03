@@ -77,6 +77,12 @@
         <item>Purupuru</item>
     </string-array>
 
+    <string-array name="resolution">
+        <item>Standard</item>
+        <item>CRT (640x480)</item>
+        <item>Widescreen</item>
+    </string-array>
+
     <string-array name="right_stick">
         <item>None</item>
         <item>L / R</item>
