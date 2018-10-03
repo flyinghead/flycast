@@ -227,12 +227,15 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 		icon.setImageDrawable(game_icon);
 		int app_theme = mPrefs.getInt(Config.pref_app_theme, 0);
 		if (app_theme == 7) {
+			childview.get().setBackgroundResource(R.drawable.game_selector_dream);
 			ImageViewCompat.setImageTintList(icon, ColorStateList.valueOf(
 					ContextCompat.getColor(mContext.get(), R.color.colorDreamTint)));
 		} else if (app_theme == 1) {
+			childview.get().setBackgroundResource(R.drawable.game_selector_blue);
 			ImageViewCompat.setImageTintList(icon, ColorStateList.valueOf(
 					ContextCompat.getColor(mContext.get(), R.color.colorBlueTint)));
 		} else {
+			childview.get().setBackgroundResource(R.drawable.game_selector_dark);
 			ImageViewCompat.setImageTintList(icon, ColorStateList.valueOf(
 					ContextCompat.getColor(mContext.get(), R.color.colorDarkTint)));
 		}

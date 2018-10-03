@@ -20,7 +20,6 @@ import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
@@ -41,6 +40,7 @@ import com.reicast.emulator.config.InputFragment;
 import com.reicast.emulator.config.OptionsFragment;
 import com.reicast.emulator.config.PGConfigFragment;
 import com.reicast.emulator.debug.GenerateLogs;
+import com.reicast.emulator.cloud.CloudFragment;
 import com.reicast.emulator.emu.JNIdc;
 
 import java.lang.Thread.UncaughtExceptionHandler;
