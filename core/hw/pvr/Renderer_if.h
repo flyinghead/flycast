@@ -51,9 +51,10 @@ struct Renderer
 
 extern Renderer* renderer;
 
-
-Renderer* rend_D3D11();
 Renderer* rend_GLES2();
+#if !defined(GLES) && HOST_OS != OS_DARWIN
+Renderer* rend_GL4();
+#endif
 Renderer* rend_norend();
 Renderer* rend_softrend();
 

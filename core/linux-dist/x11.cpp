@@ -704,20 +704,30 @@ void x11_window_create()
 			verify(glXCreateContextAttribsARB != 0);
 			int context_attribs[] =
 			{
-				GLX_CONTEXT_MAJOR_VERSION_ARB, 3,
-				GLX_CONTEXT_MINOR_VERSION_ARB, 1,
+				GLX_CONTEXT_MAJOR_VERSION_ARB, 4,
+				GLX_CONTEXT_MINOR_VERSION_ARB, 3,
+#ifndef RELEASE
 				GLX_CONTEXT_FLAGS_ARB, GLX_CONTEXT_DEBUG_BIT_ARB,
+#endif
 				GLX_CONTEXT_PROFILE_MASK_ARB, GLX_CONTEXT_CORE_PROFILE_BIT_ARB,
 				None
 			};
 
 			x11_glc = glXCreateContextAttribsARB(x11Display, bestFbc, 0, True, context_attribs);
-			XSync(x11Display, False);
-
 			if (!x11_glc)
 			{
-				die("Failed to create GL3.1 context\n");
+				printf("Open GL 4.3 not supported\n");
+				// Try GL 3.1
+				context_attribs[1] = 3;
+				context_attribs[3] = 1;
+				x11_glc = glXCreateContextAttribsARB(x11Display, bestFbc, 0, True, context_attribs);
+				if (!x11_glc)
+				{
+					die("Open GL 3.1 not supported\n");
+				}
 			}
+			XSync(x11Display, False);
+
 		#endif
 
 		XFlush(x11Display);

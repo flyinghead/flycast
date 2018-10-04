@@ -17,6 +17,12 @@ struct Vertex
 	u8 spc[4];
 
 	float u,v;
+
+	// Two volumes format
+	u8 col1[4];
+	u8 spc1[4];
+
+	float u1,v1;
 };
 
 struct PolyParam
@@ -35,6 +41,9 @@ struct PolyParam
 	float zvZ;
 	u32 tileclip;
 	//float zMin,zMax;
+	TSP tsp1;
+	TCW tcw1;
+	u32 texid1;
 };
 
 struct ModifierVolumeParam
@@ -98,6 +107,7 @@ struct RenderPass {
 	u32 mvo_count;
 	u32 pt_count;
 	u32 tr_count;
+	u32 mvo_tr_count;
 };
 
 struct rend_context
@@ -124,6 +134,7 @@ struct rend_context
 	List<u16>         idx;
 	List<ModTriangle> modtrig;
 	List<ModifierVolumeParam>  global_param_mvo;
+	List<ModifierVolumeParam>  global_param_mvo_tr;
 
 	List<PolyParam>   global_param_op;
 	List<PolyParam>   global_param_pt;
@@ -139,6 +150,7 @@ struct rend_context
 		global_param_tr.Clear();
 		modtrig.Clear();
 		global_param_mvo.Clear();
+		global_param_mvo_tr.Clear();
 		render_passes.Clear();
 
 		Overrun=false;
@@ -189,16 +201,17 @@ struct TA_context
 	{
 		tad.Reset((u8*)OS_aligned_malloc(32, 8*1024*1024));
 
-		rend.verts.InitBytes(2*1024*1024,&rend.Overrun); //up to 2 MB of vtx data/frame = ~ 75k vtx/frame
-		rend.idx.Init(120*1024,&rend.Overrun);			//up to 120K indexes ( idx have stripification overhead )
-		rend.global_param_op.Init(4096,&rend.Overrun);
-		rend.global_param_pt.Init(4096,&rend.Overrun);
-		rend.global_param_mvo.Init(4096,&rend.Overrun);
-		rend.global_param_tr.Init(8192,&rend.Overrun);
+		rend.verts.InitBytes(4 * 1024 * 1024, &rend.Overrun, "verts");	//up to 4 mb of vtx data/frame = ~ 96k vtx/frame
+		rend.idx.Init(120 * 1024, &rend.Overrun, "idx");				//up to 120K indexes ( idx have stripification overhead )
+		rend.global_param_op.Init(4096, &rend.Overrun, "global_param_op");
+		rend.global_param_pt.Init(4096, &rend.Overrun, "global_param_pt");
+		rend.global_param_mvo.Init(4096, &rend.Overrun, "global_param_mvo");
+		rend.global_param_tr.Init(10240, &rend.Overrun, "global_param_tr");
+		rend.global_param_mvo_tr.Init(4096, &rend.Overrun, "global_param_mvo_tr");
 
-		rend.modtrig.Init(8192,&rend.Overrun);
+		rend.modtrig.Init(16384, &rend.Overrun, "modtrig");
 		
-		rend.render_passes.Init(sizeof(RenderPass) * 10, &rend.Overrun);	// 10 render passes
+		rend.render_passes.Init(sizeof(RenderPass) * 10, &rend.Overrun, "render_passes");	// 10 render passes
 
 		Reset();
 	}
@@ -222,6 +235,7 @@ struct TA_context
 		rend.global_param_tr.Free();
 		rend.modtrig.Free();
 		rend.global_param_mvo.Free();
+		rend.global_param_mvo_tr.Free();
 		rend.render_passes.Free();
 	}
 };

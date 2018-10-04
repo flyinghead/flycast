@@ -573,14 +573,6 @@ typedef map<u64,TextureCacheData>::iterator TexCacheIter;
 
 TextureCacheData *getTextureCacheData(TSP tsp, TCW tcw);
 
-struct FBT
-{
-	u32 TexAddr;
-	GLuint depthb,stencilb;
-	GLuint tex;
-	GLuint fbo;
-};
-
 FBT fb_rtt;
 
 void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
@@ -594,7 +586,7 @@ void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 
 	rv.TexAddr=addy>>3;
 
-	// Find the largest square power of two texture that fits into the viewport
+	// Find the smallest power of two texture that fits into the viewport
 	int fbh2 = 2;
 	while (fbh2 < fbh)
 		fbh2 *= 2;

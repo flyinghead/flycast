@@ -210,8 +210,8 @@
 			}
 		}
 
-		if (code < 0)
-			printf("WARNING: %s/%s not configured!\n", section.c_str(), dc_key.c_str());
+		//if (code < 0)
+		//	printf("WARNING: %s/%s not configured!\n", section.c_str(), dc_key.c_str());
 
 		return code;
 	}

@@ -85,6 +85,8 @@ List<PolyParam>* CurrentPPlist;
 //TA state vars	
 DECL_ALIGN(4) u8 FaceBaseColor[4];
 DECL_ALIGN(4) u8 FaceOffsColor[4];
+DECL_ALIGN(4) u8 FaceBaseColor1[4];
+DECL_ALIGN(4) u8 FaceOffsColor1[4];
 DECL_ALIGN(4) u32 SFaceBaseColor;
 DECL_ALIGN(4) u32 SFaceOffsColor;
 
@@ -769,7 +771,7 @@ public:
 		CurrentPP=&nullPP;
 		CurrentPPlist=0;
 
-		if (ListType == ListType_Opaque_Modifier_Volume)
+		if (ListType == ListType_Opaque_Modifier_Volume || ListType == ListType_Translucent_Modifier_Volume)
 			EndModVol();
 	}
 
@@ -808,6 +810,9 @@ public:
 			if (d_pp->pcw.Texture) {
 				d_pp->texid = renderer->GetTexture(d_pp->tsp,d_pp->tcw);
 			}
+			d_pp->tsp1.full = -1;
+			d_pp->tcw1.full = -1;
+			d_pp->texid1 = -1;
 		}
 	}
 
@@ -860,6 +865,11 @@ public:
 		TA_PolyParam3* pp=(TA_PolyParam3*)vpp;
 
 		glob_param_bdc(pp);
+
+		CurrentPP->tsp1.full = pp->tsp1.full;
+		CurrentPP->tcw1.full = pp->tcw1.full;
+		if (pp->pcw.Texture)
+			CurrentPP->texid1 = renderer->GetTexture(pp->tsp1, pp->tcw1);
 	}
 	__forceinline
 		static void TACALL AppendPolyParam4A(void* vpp)
@@ -867,13 +877,19 @@ public:
 		TA_PolyParam4A* pp=(TA_PolyParam4A*)vpp;
 
 		glob_param_bdc(pp);
+
+		CurrentPP->tsp1.full = pp->tsp1.full;
+		CurrentPP->tcw1.full = pp->tcw1.full;
+		if (pp->pcw.Texture)
+			CurrentPP->texid1 = renderer->GetTexture(pp->tsp1, pp->tcw1);
 	}
 	__forceinline
 		static void TACALL AppendPolyParam4B(void* vpp)
 	{
 		TA_PolyParam4B* pp=(TA_PolyParam4B*)vpp;
 
-		poly_float_color(FaceBaseColor,FaceColor0);
+		poly_float_color(FaceBaseColor, FaceColor0);
+		poly_float_color(FaceBaseColor1, FaceColor1);
 	}
 
 	//Poly Strip handling
@@ -884,14 +900,6 @@ public:
 	{
 		CurrentPP->count=vdrc.idx.used() - CurrentPP->first;
 
-		int vbase=vdrc.verts.used();
-
-		*vdrc.idx.Append()=vbase-1;
-		*vdrc.idx.Append()=vbase;
-
-		if (CurrentPP->count&1)
-			*vdrc.idx.Append()=vbase;
-#if STRIPS_AS_PPARAMS
 		if (CurrentPPlist==&vdrc.global_param_tr)
 		{
 			PolyParam* d_pp =CurrentPPlist->Append(); 
@@ -900,7 +908,16 @@ public:
 			d_pp->first=vdrc.idx.used(); 
 			d_pp->count=0; 
 		}
-#endif
+		else
+		{
+			int vbase=vdrc.verts.used();
+
+			*vdrc.idx.Append()=vbase-1;
+			*vdrc.idx.Append()=vbase;
+
+			if (CurrentPP->count&1)
+				*vdrc.idx.Append()=vbase;
+		}
 	}
 
 
@@ -940,6 +957,14 @@ public:
 	#define vert_uv_16(u_name,v_name) \
 		cv->u = f16(vtx->u_name);\
 		cv->v = f16(vtx->v_name);
+
+	#define vert_uv1_32(u_name,v_name) \
+		cv->u1 = (vtx->u_name);\
+		cv->v1 = (vtx->v_name);
+
+	#define vert_uv1_16(u_name,v_name) \
+		cv->u1 = f16(vtx->u_name);\
+		cv->v1 = f16(vtx->v_name);
 
 		//Color conversions
 	#define vert_packed_color_(to,src) \
@@ -983,6 +1008,20 @@ public:
 		cv->spc[1] = FaceOffsColor[1]*satint/256;  \
 		cv->spc[2] = FaceOffsColor[2]*satint/256;  \
 		cv->spc[3] = FaceOffsColor[3]; }
+
+	#define vert_face_base_color1(baseint) \
+		{ u32 satint=float_to_satu8(vtx->baseint); \
+		cv->col1[0] = FaceBaseColor1[0]*satint/256;  \
+		cv->col1[1] = FaceBaseColor1[1]*satint/256;  \
+		cv->col1[2] = FaceBaseColor1[2]*satint/256;  \
+		cv->col1[3] = FaceBaseColor1[3]; }
+
+	#define vert_face_offs_color1(offsint) \
+		{ u32 satint=float_to_satu8(vtx->offsint); \
+		cv->spc1[0] = FaceOffsColor1[0]*satint/256;  \
+		cv->spc1[1] = FaceOffsColor1[1]*satint/256;  \
+		cv->spc1[2] = FaceOffsColor1[2]*satint/256;  \
+		cv->spc1[3] = FaceOffsColor1[3]; }
 
 	//vert_float_color_(cv->spc,FaceOffsColor[3],FaceOffsColor[0]*satint/256,FaceOffsColor[1]*satint/256,FaceOffsColor[2]*satint/256); }
 
@@ -1109,6 +1148,7 @@ public:
 		vert_cvt_base;
 
 		vert_packed_color(col,BaseCol0);
+		vert_packed_color(col1, BaseCol1);
 	}
 
 	//(Non-Textured, Intensity,	with Two Volumes)
@@ -1118,6 +1158,7 @@ public:
 		vert_cvt_base;
 
 		vert_face_base_color(BaseInt0);
+		vert_face_base_color1(BaseInt1);
 	}
 
 	//(Textured, Packed Color,	with Two Volumes)	
@@ -1136,6 +1177,10 @@ public:
 	{
 		vert_res_base;
 
+		vert_packed_color(col1, BaseCol1);
+		vert_packed_color(spc1, OffsCol1);
+
+		vert_uv1_32(u1, v1);
 	}
 
 	//(Textured, Packed Color, 16bit UV, with Two Volumes)
@@ -1154,6 +1199,10 @@ public:
 	{
 		vert_res_base;
 
+		vert_packed_color(col1, BaseCol1);
+		vert_packed_color(spc1, OffsCol1);
+
+		vert_uv1_16(u1, v1);
 	}
 
 	//(Textured, Intensity,	with Two Volumes)
@@ -1172,6 +1221,10 @@ public:
 	{
 		vert_res_base;
 
+		vert_face_base_color1(BaseInt1);
+		vert_face_offs_color1(OffsInt1);
+
+		vert_uv1_32(u1,v1);
 	}
 
 	//(Textured, Intensity, 16bit UV, with Two Volumes)
@@ -1190,6 +1243,10 @@ public:
 	{
 		vert_res_base;
 
+		vert_face_base_color1(BaseInt1);
+		vert_face_offs_color1(OffsInt1);
+
+		vert_uv1_16(u1, v1);
 	}
 
 	//Sprites
@@ -1217,6 +1274,9 @@ public:
 		if (d_pp->pcw.Texture) {
 			d_pp->texid = renderer->GetTexture(d_pp->tsp,d_pp->tcw);
 		}
+		d_pp->tcw1.full = -1;
+		d_pp->tsp1.full = -1;
+		d_pp->texid1 = -1;
 
 		SFaceBaseColor=spr->BaseCol;
 		SFaceOffsColor=spr->OffsCol;
@@ -1355,7 +1415,7 @@ public:
 			vert[-1].z=vert[0].z;
 			CurrentPP->count+=2;
 		}*/
-#if STRIPS_AS_PPARAMS
+
 		if (CurrentPPlist==&vdrc.global_param_tr)
 		{
 			PolyParam* d_pp =CurrentPPlist->Append(); 
@@ -1364,7 +1424,6 @@ public:
 			d_pp->first=vdrc.idx.used(); 
 			d_pp->count=0;
 		}
-#endif
 	}
 
 	// Modifier Volumes Vertex handlers
@@ -1374,6 +1433,8 @@ public:
 		List<ModifierVolumeParam> *list = NULL;
 		if (CurrentList == ListType_Opaque_Modifier_Volume)
 			list = &vdrc.global_param_mvo;
+		else if (CurrentList == ListType_Translucent_Modifier_Volume)
+			list = &vdrc.global_param_mvo_tr;
 		else
 			return;
 		if (list->used() > 0)
@@ -1390,6 +1451,8 @@ public:
 		ModifierVolumeParam *p = NULL;
 		if (CurrentList == ListType_Opaque_Modifier_Volume)
 			p = vdrc.global_param_mvo.Append();
+		else if (CurrentList == ListType_Translucent_Modifier_Volume)
+			p = vdrc.global_param_mvo_tr.Append();
 		else
 			return;
 		p->isp.full = param->isp.full;
@@ -1399,7 +1462,7 @@ public:
 	__forceinline
 		static void AppendModVolVertexA(TA_ModVolA* mvv)
 	{
-		if (CurrentList!=ListType_Opaque_Modifier_Volume)
+		if (CurrentList != ListType_Opaque_Modifier_Volume && CurrentList != ListType_Translucent_Modifier_Volume)
 			return;
 		lmr=vdrc.modtrig.Append();
 
@@ -1419,7 +1482,7 @@ public:
 	__forceinline
 		static void AppendModVolVertexB(TA_ModVolB* mvv)
 	{
-		if (CurrentList!=ListType_Opaque_Modifier_Volume)
+		if (CurrentList != ListType_Opaque_Modifier_Volume && CurrentList != ListType_Translucent_Modifier_Volume)
 			return;
 		lmr->y2=mvv->y2;
 		lmr->z2=mvv->z2;
@@ -1486,6 +1549,7 @@ bool ta_parse_vdrc(TA_context* ctx)
 			render_pass->mvo_count = vd_rc.global_param_mvo.used();
 			render_pass->pt_count = vd_rc.global_param_pt.used();
 			render_pass->tr_count = vd_rc.global_param_tr.used();
+			render_pass->mvo_tr_count = vd_rc.global_param_mvo_tr.used();
 			render_pass->autosort = UsingAutoSort(pass);
 			render_pass->z_clear = ClearZBeforePass(pass);
 		}
@@ -1637,6 +1701,9 @@ void FillBGP(TA_context* ctx)
 	bgpp->isp.full=vri(strip_base);
 	bgpp->tsp.full=vri(strip_base+4);
 	bgpp->tcw.full=vri(strip_base+8);
+	bgpp->tcw1.full = -1;
+	bgpp->tsp1.full = -1;
+	bgpp->texid1 = -1;
 	bgpp->count=4;
 	bgpp->first=0;
 	bgpp->tileclip=0;//disabled ! HA ~

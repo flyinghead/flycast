@@ -641,15 +641,24 @@ GLuint fogTextureId;
 				}
 
 				int attribs[] =
-		       {
-		            WGL_CONTEXT_MAJOR_VERSION_ARB, 3,
-		            WGL_CONTEXT_MINOR_VERSION_ARB, 1,
+				{
+		            WGL_CONTEXT_MAJOR_VERSION_ARB, 4,
+		            WGL_CONTEXT_MINOR_VERSION_ARB, 3,
 		            WGL_CONTEXT_FLAGS_ARB, WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB,
 		            WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
 		            0
-		       };
+				};
 
 				HGLRC m_hrc = wglCreateContextAttribsARB(ourWindowHandleToDeviceContext,0, attribs);
+
+				if (!m_hrc)
+				{
+					printf("Open GL 4.3 not supported\n");
+					// Try Gl 3.1
+					attribs[1] = 3;
+					attribs[3] = 1;
+					m_hrc = wglCreateContextAttribsARB(ourWindowHandleToDeviceContext,0, attribs);
+				}
 
 				if (m_hrc)
 					wglMakeCurrent(ourWindowHandleToDeviceContext,m_hrc);
@@ -811,6 +820,9 @@ GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentShader)
 	glBindAttribLocation(program, VERTEX_COL_BASE_ARRAY, "in_base");
 	glBindAttribLocation(program, VERTEX_COL_OFFS_ARRAY, "in_offs");
 	glBindAttribLocation(program, VERTEX_UV_ARRAY,       "in_uv");
+	glBindAttribLocation(program, VERTEX_COL_BASE1_ARRAY, "in_base1");
+	glBindAttribLocation(program, VERTEX_COL_OFFS1_ARRAY, "in_offs1");
+	glBindAttribLocation(program, VERTEX_UV1_ARRAY,       "in_uv1");
 
 #ifndef GLES
 	glBindFragDataLocation(program, 0, "FragColor");
@@ -1060,8 +1072,6 @@ bool gl_create_resources()
 	return true;
 }
 
-bool gl_init(void* wind, void* disp);
-
 //swap buffers
 void gl_swap();
 //destroy the gles context and free resources
@@ -1076,7 +1086,6 @@ bool gl_create_resources();
 
 bool gles_init()
 {
-
 	if (!gl_init((void*)libPvr_GetRenderTarget(),
 		         (void*)libPvr_GetRenderSurface()))
 			return false;
@@ -1091,6 +1100,11 @@ bool gles_init()
 	eglSwapInterval(gl.setup.display,1);
 	#endif
 #endif
+
+	//    glEnable(GL_DEBUG_OUTPUT);
+	//    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+	//    glDebugMessageCallback(gl_DebugOutput, NULL);
+	//    glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
 
 	//clean up the buffer
 	glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
@@ -1354,7 +1368,7 @@ static float LastFPSTime;
 static int lastFrameCount = 0;
 static float fps = -1;
 
-static void OSD_HOOK()
+void OSD_HOOK()
 {
 	osd_base=pvrrc.verts.used();
 	osd_count=0;

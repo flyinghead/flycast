@@ -103,7 +103,7 @@ void dump_frame(const char* file, TA_context* ctx, u8* vram, u8* vram_ref = NULL
 
 	u32 bytes = ctx->tad.End() - ctx->tad.thd_root;
 
-	fwrite("TAFRAME3", 1, 8, fw);
+	fwrite("TAFRAME4", 1, 8, fw);
 
 	fwrite(&ctx->rend.isRTT, 1, sizeof(ctx->rend.isRTT), fw);
 	u32 zero = 0;
@@ -168,9 +168,16 @@ TA_context* read_frame(const char* file, u8* vram_ref = NULL) {
 
 	fread(id0, 1, 8, fw);
 
-	if (memcmp(id0, "TAFRAME3", 8) != 0) {
+	if (memcmp(id0, "TAFRAME", 7) != 0 || (id0[7] != '3' && id0[7] != '4')) {
 		fclose(fw);
 		return 0;
+	}
+	int sizeofPolyParam = sizeof(PolyParam);
+	int sizeofVertex = sizeof(Vertex);
+	if (id0[7] == '3')
+	{
+		sizeofPolyParam -= 12;
+		sizeofVertex -= 16;
 	}
 
 	TA_context* ctx = tactx_Alloc();
@@ -184,8 +191,10 @@ TA_context* read_frame(const char* file, u8* vram_ref = NULL) {
 	fread(&ctx->rend.fb_X_CLIP.full, 1, sizeof(ctx->rend.fb_X_CLIP.full), fw);
 	fread(&ctx->rend.fb_Y_CLIP.full, 1, sizeof(ctx->rend.fb_Y_CLIP.full), fw);
 
-	fread(ctx->rend.global_param_op.Append(), 1, sizeof(PolyParam), fw);
-	fread(ctx->rend.verts.Append(4), 1, 4 * sizeof(Vertex), fw);
+	fread(ctx->rend.global_param_op.Append(), 1, sizeofPolyParam, fw);
+	Vertex *vtx = ctx->rend.verts.Append(4);
+	for (int i = 0; i < 4; i++)
+		fread(vtx + i, 1, sizeofVertex, fw);
 
 	fread(&t, 1, sizeof(t), fw);
 	verify(t == VRAM_SIZE);
@@ -499,6 +508,11 @@ bool rend_init()
 #if FEAT_HAS_SOFTREND
 		case 2:
 			renderer = rend_softrend();
+			break;
+#endif
+#if !defined(GLES) && HOST_OS != OS_DARWIN
+		case 3:
+			renderer = rend_GL4();
 			break;
 #endif
 	}

@@ -8,6 +8,7 @@ struct List
 
 	int size;
 	bool* overrun;
+	const char *list_name;
 
 	__forceinline int used() const { return size-avail; }
 	__forceinline int bytes() const { return used()* sizeof(T); }
@@ -17,6 +18,8 @@ struct List
 	{ 
 		*overrun |= true;
 		Clear();
+		if (list_name != NULL)
+			printf("List overrun for list %s\n", list_name);
 
 		return daty;
 	}
@@ -45,7 +48,7 @@ struct List
 
 	T* head() const { return daty-used(); }
 
-	void InitBytes(int maxbytes,bool* ovrn)
+	void InitBytes(int maxbytes,bool* ovrn, const char *name)
 	{
 		maxbytes-=maxbytes%sizeof(T);
 
@@ -58,11 +61,12 @@ struct List
 		overrun=ovrn;
 
 		Clear();
+		list_name = name;
 	}
 
-	void Init(int maxsize,bool* ovrn)
+	void Init(int maxsize,bool* ovrn, const char *name)
 	{
-		InitBytes(maxsize*sizeof(T),ovrn);
+		InitBytes(maxsize*sizeof(T),ovrn, name);
 	}
 
 	void Clear()

@@ -42,6 +42,10 @@
 #define VERTEX_COL_BASE_ARRAY 1
 #define VERTEX_COL_OFFS_ARRAY 2
 #define VERTEX_UV_ARRAY 3
+// OIT only
+#define VERTEX_COL_BASE1_ARRAY 4
+#define VERTEX_COL_OFFS1_ARRAY 5
+#define VERTEX_UV1_ARRAY 6
 
 #ifndef GL_UNSIGNED_INT_8_8_8_8
 #define GL_UNSIGNED_INT_8_8_8_8 0x8035
@@ -121,6 +125,7 @@ struct gl_ctx
 
 extern gl_ctx gl;
 extern GLuint fbTextureId;
+extern float fb_scale_x, fb_scale_y;
 
 GLuint gl_GetTexture(TSP tsp,TCW tcw);
 struct text_info {
@@ -130,20 +135,27 @@ struct text_info {
 	u32 textype; // 0 565, 1 1555, 2 4444
 };
 
+bool gl_init(void* wind, void* disp);
+void gl_swap();
+
 text_info raw_GetTexture(TSP tsp, TCW tcw);
 void CollectCleanup();
 void DoCleanup();
 void SortPParams(int first, int count);
+void SetCull(u32 CullMode);
 
 void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt);
 void ReadRTTBuffer();
 void RenderFramebuffer();
 void DrawFramebuffer(float w, float h);
 
+void OSD_HOOK();
 int GetProgramID(u32 cp_AlphaTest, u32 pp_ClipTestMode,
 							u32 pp_Texture, u32 pp_UseAlpha, u32 pp_IgnoreTexA, u32 pp_ShadInstr, u32 pp_Offset,
 							u32 pp_FogCtrl, bool pp_Gouraud, bool pp_BumpMap, bool fog_clamping);
 
+GLuint gl_CompileShader(const char* shader, GLuint type);
+GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentShader);
 bool CompilePipelineShader(PipelineShader* s);
 #define TEXTURE_LOAD_ERROR 0
 GLuint loadPNG(const string& subpath, int &width, int &height);
@@ -197,3 +209,13 @@ extern struct ShaderUniforms_t
 
 } ShaderUniforms;
 
+// Render to texture
+struct FBT
+{
+	u32 TexAddr;
+	GLuint depthb,stencilb;
+	GLuint tex;
+	GLuint fbo;
+};
+
+extern FBT fb_rtt;

@@ -44,6 +44,9 @@ endif
 
 ifndef NO_REND
     RZDCY_MODULES += rend/gles/
+    ifndef USE_GLES
+	    RZDCY_MODULES += rend/gl4/
+    endif
 else
     RZDCY_MODULES += rend/norend/
 endif
@@ -78,8 +81,7 @@ RZDCY_FILES += $(foreach dir,$(addprefix $(RZDCY_SRC_DIR)/,$(RZDCY_MODULES)),$(w
 
 ifdef FOR_PANDORA
 RZDCY_CFLAGS	:= \
-	$(CFLAGS) -c -O3 -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps \
-	-I$(RZDCY_SRC_DIR)/deps/picotcp/include -I$(RZDCY_SRC_DIR)/deps/picotcp/modules \
+	$(CFLAGS) -c -O3 \
 	-DRELEASE -DPANDORA\
 	-march=armv7-a -mtune=cortex-a8 -mfpu=neon -mfloat-abi=softfp \
 	-frename-registers -fsingle-precision-constant -ffast-math \
@@ -89,8 +91,7 @@ RZDCY_CFLAGS	:= \
 else
 	ifdef FOR_ANDROID
 RZDCY_CFLAGS	:= \
-		$(CFLAGS) -c -O3 -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps \
-		-I$(RZDCY_SRC_DIR)/deps/picotcp/include -I$(RZDCY_SRC_DIR)/deps/picotcp/modules \
+		$(CFLAGS) -c -O3 \
 		-D_ANDROID -DRELEASE \
 		-frename-registers -fsingle-precision-constant -ffast-math \
 		-ftree-vectorize -fomit-frame-pointer
@@ -106,11 +107,12 @@ RZDCY_CFLAGS	:= \
 			endif
 		endif
 	else
-RZDCY_CFLAGS	:= \
-		-I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps \
-		-I$(RZDCY_SRC_DIR)/deps/picotcp/include -I$(RZDCY_SRC_DIR)/deps/picotcp/modules
+RZDCY_CFLAGS := 
 	endif
 endif
+
+RZDCY_CFLAGS += -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/rend/gles -I$(RZDCY_SRC_DIR)/deps \
+		-I$(RZDCY_SRC_DIR)/deps/picotcp/include -I$(RZDCY_SRC_DIR)/deps/picotcp/modules
 
 ifdef NO_REC
   RZDCY_CFLAGS += -DTARGET_NO_REC
