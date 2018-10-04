@@ -8,8 +8,6 @@
 #include "rend/rend.h"
 #include "hw/pvr/Renderer_if.h"
 
-float gl4_scale_x, gl4_scale_y;
-
 //Fragment and vertex shaders code
 
 static const char* VertexShaderSource =
@@ -827,15 +825,15 @@ static bool RenderFrame()
 		dc_height = pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1;
 	}
 
-	gl4_scale_x = 1;
-	gl4_scale_y = 1;
+	scale_x = 1;
+	scale_y = 1;
 
 	float scissoring_scale_x = 1;
 
 	if (!is_rtt && !pvrrc.isRenderFramebuffer)
 	{
-		gl4_scale_x=fb_scale_x;
-		gl4_scale_y=fb_scale_y;
+		scale_x=fb_scale_x;
+		scale_y=fb_scale_y;
 
 		//work out scaling parameters !
 		//Pixel doubling is on VO, so it does not affect any pixel operations
@@ -843,18 +841,18 @@ static bool RenderFrame()
 		if (VO_CONTROL.pixel_double)
 		{
 			scissoring_scale_x = 0.5f;
-			gl4_scale_x *= 0.5f;
+			scale_x *= 0.5f;
 		}
 
 		if (SCALER_CTL.hscale)
 		{
 			scissoring_scale_x /= 2;
-			gl4_scale_x*=2;
+			scale_x*=2;
 		}
 	}
 
-	dc_width  *= gl4_scale_x;
-	dc_height *= gl4_scale_y;
+	dc_width  *= scale_x;
+	dc_height *= scale_y;
 
 	/*
 		Handle Dc to screen scaling
@@ -863,7 +861,7 @@ static bool RenderFrame()
 	float ds2s_offs_x =  is_rtt ? 0 : ((screen_width - dc2s_scale_h * 640.0) / 2);
 
 	//-1 -> too much to left
-	gl4ShaderUniforms.scale_coefs[0]=2.0f/(screen_width/dc2s_scale_h*gl4_scale_x);
+	gl4ShaderUniforms.scale_coefs[0]=2.0f/(screen_width/dc2s_scale_h*scale_x);
 	gl4ShaderUniforms.scale_coefs[1]=(is_rtt ? 2 : -2) / dc_height;		// FIXME CT2 needs 480 here instead of dc_height=512
 	gl4ShaderUniforms.scale_coefs[2]=1-2*ds2s_offs_x/(screen_width);
 	gl4ShaderUniforms.scale_coefs[3]=(is_rtt?1:-1);
@@ -976,9 +974,9 @@ static bool RenderFrame()
 
 	bool wide_screen_on = !is_rtt && settings.rend.WideScreen
 			&& pvrrc.fb_X_CLIP.min == 0
-			&& (pvrrc.fb_X_CLIP.max + 1) / gl4_scale_x == 640
+			&& (pvrrc.fb_X_CLIP.max + 1) / scale_x == 640
 			&& pvrrc.fb_Y_CLIP.min == 0
-			&& (pvrrc.fb_Y_CLIP.max + 1) / gl4_scale_y == 480;
+			&& (pvrrc.fb_Y_CLIP.max + 1) / scale_y == 480;
 
 	//Color is cleared by the background plane
 
@@ -1012,21 +1010,21 @@ static bool RenderFrame()
 		//this needs to be scaled
 
 		//not all scaling affects pixel operations, scale to adjust for that
-		gl4_scale_x *= scissoring_scale_x;
+		scale_x *= scissoring_scale_x;
 
 		#if 0
 			//handy to debug really stupid render-not-working issues ...
 			printf("SS: %dx%d\n", screen_width, screen_height);
 			printf("SCI: %d, %f\n", pvrrc.fb_X_CLIP.max, dc2s_scale_h);
-			printf("SCI: %f, %f, %f, %f\n", offs_x+pvrrc.fb_X_CLIP.min/gl4_scale_x,(pvrrc.fb_Y_CLIP.min/gl4_scale_y)*dc2s_scale_h,(pvrrc.fb_X_CLIP.max-pvrrc.fb_X_CLIP.min+1)/gl4_scale_x*dc2s_scale_h,(pvrrc.fb_Y_CLIP.max-pvrrc.fb_Y_CLIP.min+1)/gl4_scale_y*dc2s_scale_h);
+			printf("SCI: %f, %f, %f, %f\n", offs_x+pvrrc.fb_X_CLIP.min/scale_x,(pvrrc.fb_Y_CLIP.min/scale_y)*dc2s_scale_h,(pvrrc.fb_X_CLIP.max-pvrrc.fb_X_CLIP.min+1)/scale_x*dc2s_scale_h,(pvrrc.fb_Y_CLIP.max-pvrrc.fb_Y_CLIP.min+1)/scale_y*dc2s_scale_h);
 		#endif
 
 		if (!wide_screen_on)
 		{
-			float width = (pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1) / gl4_scale_x;
-			float height = (pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1) / gl4_scale_y;
-			float min_x = pvrrc.fb_X_CLIP.min / gl4_scale_x;
-			float min_y = pvrrc.fb_Y_CLIP.min / gl4_scale_y;
+			float width = (pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1) / scale_x;
+			float height = (pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1) / scale_y;
+			float min_x = pvrrc.fb_X_CLIP.min / scale_x;
+			float min_y = pvrrc.fb_Y_CLIP.min / scale_y;
 			if (!is_rtt)
 			{
 				// Add x offset for aspect ratio > 4/3
@@ -1059,7 +1057,7 @@ static bool RenderFrame()
 		}
 
 		//restore scale_x
-		gl4_scale_x /= scissoring_scale_x;
+		scale_x /= scissoring_scale_x;
 		gl4DrawStrips(output_fbo);
 	}
 	else

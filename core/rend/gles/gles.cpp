@@ -1317,7 +1317,7 @@ static void DrawRightedText(float yy, float scale, int transparency, const char*
 
   float w = float(strlen(text) * 14) * scale * scale_x;
 
-  float x = (ShaderUniforms.scale_coefs[2] + 1) / ShaderUniforms.scale_coefs[0] - w;
+  float x = scale_x / 2 * (640 + screen_width * 480 / screen_height) - w;
   float y = yy * scale_y;
   float h = 16.0f * scale * scale_y;
   w = 14.0f * scale * scale_x;

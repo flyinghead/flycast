@@ -114,10 +114,10 @@ static s32 SetTileClip(u32 val, bool set)
 	{
 		if (!pvrrc.isRTT)
 		{
-			csx /= gl4_scale_x;
-			csy /= gl4_scale_y;
-			cex /= gl4_scale_x;
-			cey /= gl4_scale_y;
+			csx /= scale_x;
+			csy /= scale_y;
+			cex /= scale_x;
+			cey /= scale_y;
 			float t = cey;
 			cey = 480 - csy;
 			csy = 480 - t;

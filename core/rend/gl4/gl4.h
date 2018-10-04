@@ -2,8 +2,6 @@
 #include "rend/gles/gles.h"
 #include <map>
 
-extern float gl4_scale_x, gl4_scale_y;
-
 void gl4DrawStrips(GLuint output_fbo);
 
 struct gl4PipelineShader
