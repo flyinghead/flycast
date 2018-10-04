@@ -194,6 +194,10 @@
     <ClCompile Include="..\core\rend\gles\gldraw.cpp" />
     <ClCompile Include="..\core\rend\gles\gles.cpp" />
     <ClCompile Include="..\core\rend\gles\gltex.cpp" />
+    <ClCompile Include="..\core\rend\gl4\abuffer.cpp" />
+    <ClCompile Include="..\core\rend\gl4\gldraw.cpp" />
+    <ClCompile Include="..\core\rend\gl4\gles.cpp" />
+    <ClCompile Include="..\core\rend\gl4\gltex.cpp" />
     <ClCompile Include="..\core\rend\soft\softrend.cpp" />
     <ClCompile Include="..\core\rend\TexCache.cpp" />
     <ClCompile Include="..\core\serialize.cpp" />
@@ -341,6 +345,8 @@
     <ClInclude Include="..\core\reios\reios.h" />
     <ClInclude Include="..\core\reios\reios_elf.h" />
     <ClInclude Include="..\core\rend\gles\gles.h" />
+    <ClInclude Include="..\core\rend\gles\glcache.h" />
+    <ClInclude Include="..\core\rend\gl4\gl4.h" />
     <ClInclude Include="..\core\rend\rend.h" />
     <ClInclude Include="..\core\rend\TexCache.h" />
     <ClInclude Include="..\core\stdclass.h" />
