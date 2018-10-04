@@ -299,13 +299,17 @@ static void rend_create_renderer()
 	case 0:
 		renderer = rend_GLES2();
 		break;
+#if FEAT_HAS_SOFTREND
 	case 2:
 		renderer = rend_softrend();
 		break;
+#endif
+#if !defined(GLES) && HOST_OS != OS_DARWIN
 	case 3:
 		renderer = rend_GL4();
 		fallback_renderer = rend_GLES2();
 		break;
+#endif
 	}
 #endif
 }
