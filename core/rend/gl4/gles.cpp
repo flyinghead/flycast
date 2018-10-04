@@ -407,8 +407,6 @@ void main() \n\
 
 gl4_ctx gl4;
 
-static GLuint fogTextureId;
-
 struct gl4ShaderUniforms_t gl4ShaderUniforms;
 
 int gl4GetProgramID(u32 cp_AlphaTest, u32 pp_ClipTestMode,
@@ -563,7 +561,6 @@ static bool gl_create_resources()
 //setup
 extern void initABuffer();
 
-// FIXME dup code if not gl_create_res
 static bool gles_init()
 {
 

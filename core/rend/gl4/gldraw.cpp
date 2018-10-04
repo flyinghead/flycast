@@ -44,6 +44,44 @@ static GLuint texSamplers[2];
 static GLuint depth_fbo;
 GLuint depthSaveTexId;
 
+static void setCurrentShader(u32 cp_AlphaTest, u32 pp_ClipTestMode,
+							u32 pp_Texture, u32 pp_UseAlpha, u32 pp_IgnoreTexA, u32 pp_ShadInstr, u32 pp_Offset,
+							u32 pp_FogCtrl, bool pp_TwoVolumes, u32 pp_DepthFunc, bool pp_Gouraud, bool pp_BumpMap, bool fog_clamping, int pass)
+{
+	int shaderId = gl4GetProgramID(cp_AlphaTest,
+				pp_ClipTestMode + 1,
+				pp_Texture,
+				pp_UseAlpha,
+				pp_IgnoreTexA,
+				pp_ShadInstr,
+				pp_Offset,
+				pp_FogCtrl,
+				pp_TwoVolumes,
+				pp_DepthFunc,
+				pp_Gouraud,
+				pp_BumpMap,
+				fog_clamping,
+				pass);
+	CurrentShader = gl4.getShader(shaderId);
+	if (CurrentShader->program == -1) {
+		CurrentShader->cp_AlphaTest = cp_AlphaTest;
+		CurrentShader->pp_ClipTestMode = pp_ClipTestMode;
+		CurrentShader->pp_Texture = pp_Texture;
+		CurrentShader->pp_UseAlpha = pp_UseAlpha;
+		CurrentShader->pp_IgnoreTexA = pp_IgnoreTexA;
+		CurrentShader->pp_ShadInstr = pp_ShadInstr;
+		CurrentShader->pp_Offset = pp_Offset;
+		CurrentShader->pp_FogCtrl = pp_FogCtrl;
+		CurrentShader->pp_TwoVolumes = pp_TwoVolumes;
+		CurrentShader->pp_DepthFunc = pp_DepthFunc;
+		CurrentShader->pp_Gouraud = pp_Gouraud;
+		CurrentShader->pp_BumpMap = pp_BumpMap;
+		CurrentShader->fog_clamping = fog_clamping;
+		CurrentShader->pass = pass;
+		gl4CompilePipelineShader(CurrentShader);
+	}
+}
+
 static void SetTextureRepeatMode(int index, GLuint dir, u32 clamp, u32 mirror)
 {
 	if (clamp)
@@ -66,12 +104,11 @@ template <u32 Type, bool SortingEnabled>
 		gl4ShaderUniforms.trilinear_alpha = 1.0;
 
 	s32 clipping = SetTileClip(gp->tileclip, -1);
-	int shaderId;
 
 	if (pass == 0)
 	{
-		shaderId = gl4GetProgramID(Type == ListType_Punch_Through ? 1 : 0,
-				clipping + 1,
+		setCurrentShader(Type == ListType_Punch_Through ? 1 : 0,
+				clipping,
 				Type == ListType_Punch_Through ? gp->pcw.Texture : 0,
 				1,
 				gp->tsp.IgnoreTexA,
@@ -84,24 +121,6 @@ template <u32 Type, bool SortingEnabled>
 				false,
 				false,
 				pass);
-		CurrentShader = gl4.getShader(shaderId);
-		if (CurrentShader->program == -1) {
-			CurrentShader->cp_AlphaTest = Type == ListType_Punch_Through ? 1 : 0;
-			CurrentShader->pp_ClipTestMode = clipping;
-			CurrentShader->pp_Texture = Type == ListType_Punch_Through ? gp->pcw.Texture : 0;
-			CurrentShader->pp_UseAlpha = 1;
-			CurrentShader->pp_IgnoreTexA = gp->tsp.IgnoreTexA;
-			CurrentShader->pp_ShadInstr = 0;
-			CurrentShader->pp_Offset = 0;
-			CurrentShader->pp_FogCtrl = 2;
-			CurrentShader->pp_TwoVolumes = false;
-			CurrentShader->pp_DepthFunc = 0;
-			CurrentShader->pp_Gouraud = false;
-			CurrentShader->pp_BumpMap = false;
-			CurrentShader->fog_clamping = false;
-			CurrentShader->pass = pass;
-			gl4CompilePipelineShader(CurrentShader);
-		}
 	}
 	else
 	{
@@ -118,38 +137,20 @@ template <u32 Type, bool SortingEnabled>
 				depth_func = gp->isp.DepthMode;
 		}
 
-		shaderId = gl4GetProgramID(Type == ListType_Punch_Through ? 1 : 0,
-											 	  clipping + 1,
-												  gp->pcw.Texture,
-												  gp->tsp.UseAlpha,
-												  gp->tsp.IgnoreTexA,
-												  gp->tsp.ShadInstr,
-												  gp->pcw.Offset,
-												  gp->tsp.FogCtrl,
-												  two_volumes_mode,
-												  depth_func,
-												  gp->pcw.Gouraud,
-												  gp->tcw.PixelFmt == PixelBumpMap,
-												  color_clamp,
-												  pass);
-		CurrentShader = gl4.getShader(shaderId);
-		if (CurrentShader->program == -1) {
-			CurrentShader->cp_AlphaTest = Type == ListType_Punch_Through ? 1 : 0;
-			CurrentShader->pp_ClipTestMode = clipping;
-			CurrentShader->pp_Texture = gp->pcw.Texture;
-			CurrentShader->pp_UseAlpha = gp->tsp.UseAlpha;
-			CurrentShader->pp_IgnoreTexA = gp->tsp.IgnoreTexA;
-			CurrentShader->pp_ShadInstr = gp->tsp.ShadInstr;
-			CurrentShader->pp_Offset = gp->pcw.Offset;
-			CurrentShader->pp_FogCtrl = gp->tsp.FogCtrl;
-			CurrentShader->pp_TwoVolumes = two_volumes_mode;
-			CurrentShader->pp_DepthFunc = depth_func;
-			CurrentShader->pp_Gouraud = gp->pcw.Gouraud;
-			CurrentShader->pp_BumpMap = gp->tcw.PixelFmt == 4;
-			CurrentShader->fog_clamping = color_clamp;
-			CurrentShader->pass = pass;
-			gl4CompilePipelineShader(CurrentShader);
-		}
+		setCurrentShader(Type == ListType_Punch_Through ? 1 : 0,
+				clipping,
+				gp->pcw.Texture,
+				gp->tsp.UseAlpha,
+				gp->tsp.IgnoreTexA,
+				gp->tsp.ShadInstr,
+				gp->pcw.Offset,
+				gp->tsp.FogCtrl,
+				two_volumes_mode,
+				depth_func,
+				gp->pcw.Gouraud,
+				gp->tcw.PixelFmt == PixelBumpMap,
+				color_clamp,
+				pass);
 	}
 
 	glcache.UseProgram(CurrentShader->program);
@@ -387,9 +388,9 @@ void checkOverflowAndReset();
 static GLuint CreateColorFBOTexture()
 {
 	GLuint texId = glcache.GenTexture();
-	glcache.BindTexture(GL_TEXTURE_2D, texId);
-	glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glBindTexture(GL_TEXTURE_2D, texId);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, screen_width, screen_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texId, 0);
 	glCheck();
@@ -400,10 +401,10 @@ static GLuint CreateColorFBOTexture()
 static void CreateTextures()
 {
 	stencilTexId = glcache.GenTexture();
-	glcache.BindTexture(GL_TEXTURE_2D, stencilTexId); glCheck();
-	glcache.TexParameteri(GL_TEXTURE_2D, GL_DEPTH_STENCIL_TEXTURE_MODE, GL_STENCIL_INDEX);		// OpenGL >= 4.3
-	glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glBindTexture(GL_TEXTURE_2D, stencilTexId); glCheck();
+	glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_STENCIL_TEXTURE_MODE, GL_STENCIL_INDEX);		// OpenGL >= 4.3
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	// Using glTexStorage2D instead of glTexImage2D to satisfy requirement GL_TEXTURE_IMMUTABLE_FORMAT=true, needed for glTextureView below
 	glTexStorage2D(GL_TEXTURE_2D, 1, GL_DEPTH32F_STENCIL8, screen_width, screen_height);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, stencilTexId, 0); glCheck();
@@ -414,10 +415,10 @@ static void CreateTextures()
 	depthTexId = glcache.GenTexture();
 	glTextureView(depthTexId, GL_TEXTURE_2D, stencilTexId, GL_DEPTH32F_STENCIL8, 0, 1, 0, 1);
 	glCheck();
-	glcache.BindTexture(GL_TEXTURE_2D, depthTexId);
-	glcache.TexParameteri(GL_TEXTURE_2D, GL_DEPTH_STENCIL_TEXTURE_MODE, GL_DEPTH_COMPONENT);
-	glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glBindTexture(GL_TEXTURE_2D, depthTexId);
+	glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_STENCIL_TEXTURE_MODE, GL_DEPTH_COMPONENT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glCheck();
 }
 
@@ -504,10 +505,10 @@ void gl4DrawStrips(GLuint output_fbo)
 				if (depthSaveTexId == 0)
 				{
 					depthSaveTexId = glcache.GenTexture();
-					glcache.BindTexture(GL_TEXTURE_2D, depthSaveTexId);
-					glcache.TexParameteri(GL_TEXTURE_2D, GL_DEPTH_STENCIL_TEXTURE_MODE, GL_DEPTH_COMPONENT);
-					glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-					glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+					glBindTexture(GL_TEXTURE_2D, depthSaveTexId);
+					glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_STENCIL_TEXTURE_MODE, GL_DEPTH_COMPONENT);
+					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 					glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH32F_STENCIL8, screen_width, screen_height, 0, GL_DEPTH_STENCIL, GL_FLOAT_32_UNSIGNED_INT_24_8_REV, NULL); glCheck();
 					glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, depthSaveTexId, 0); glCheck();
 				}
@@ -674,8 +675,8 @@ void gl4DrawFramebuffer(float w, float h)
 
 	gl4ShaderUniforms.trilinear_alpha = 1.0;
 
-	int shaderId = gl4GetProgramID(0,
-				1,
+	setCurrentShader(0,
+				0,
 				1,
 				0,
 				1,
@@ -688,30 +689,11 @@ void gl4DrawFramebuffer(float w, float h)
 				false,
 				false,
 				1);
-	gl4PipelineShader *shader = gl4.getShader(shaderId);
-	if (shader->program == -1)
-	{
-		shader->cp_AlphaTest = 0;
-		shader->pp_ClipTestMode = 0;
-		shader->pp_Texture = 1;
-		shader->pp_UseAlpha = 0;
-		shader->pp_IgnoreTexA = 1;
-		shader->pp_ShadInstr = 0;
-		shader->pp_Offset = 0;
-		shader->pp_FogCtrl = 2;
-		shader->pp_TwoVolumes = false;
-		shader->pp_DepthFunc = 0;
-		shader->pp_Gouraud = false;
-		shader->pp_BumpMap = false;
-		shader->fog_clamping = false;
-		shader->pass = 1;
-		gl4CompilePipelineShader(shader);
-	}
-	glcache.UseProgram(shader->program);
-	gl4ShaderUniforms.Set(shader);
+	glcache.UseProgram(CurrentShader->program);
+	gl4ShaderUniforms.Set(CurrentShader);
 
 	glActiveTexture(GL_TEXTURE0);
-	glcache.BindTexture(GL_TEXTURE_2D, fbTextureId);
+	glBindTexture(GL_TEXTURE_2D, fbTextureId);
 
 	SetupMainVBO();
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STREAM_DRAW);
