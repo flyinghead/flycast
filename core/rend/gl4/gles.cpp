@@ -761,35 +761,6 @@ static void OSD_DRAW()
  }
 }
 
-static bool ProcessFrame(TA_context* ctx)
-{
-	ctx->rend_inuse.Lock();
-
-	if (KillTex)
-	{
-		void killtex();
-		killtex();
-		printf("Texture cache cleared\n");
-	}
-
-	if (ctx->rend.isRenderFramebuffer)
-	{
-		RenderFramebuffer();
-		ctx->rend_inuse.Unlock();
-	}
-	else
-	{
-		if (!ta_parse_vdrc(ctx))
-			return false;
-	}
-	CollectCleanup();
-
-	if (ctx->rend.Overrun)
-		printf("ERROR: TA context overrun\n");
-
-	return !ctx->rend.Overrun;
-}
-
 static bool RenderFrame()
 {
 	static int old_screen_width, old_screen_height;

@@ -137,12 +137,14 @@ struct text_info {
 
 bool gl_init(void* wind, void* disp);
 void gl_swap();
+bool ProcessFrame(TA_context* ctx);
 
 text_info raw_GetTexture(TSP tsp, TCW tcw);
 void CollectCleanup();
 void DoCleanup();
 void SortPParams(int first, int count);
 void SetCull(u32 CullMode);
+s32 SetTileClip(u32 val, GLint uniform);
 
 void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt);
 void ReadRTTBuffer();

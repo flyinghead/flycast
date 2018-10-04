@@ -34,41 +34,6 @@ const static u32 Zfunction[]=
 	GL_ALWAYS,      //GL_ALWAYS,            //7 Always
 };
 
-/*
-0   Zero                  (0, 0, 0, 0)
-1   One                   (1, 1, 1, 1)
-2   Other Color           (OR, OG, OB, OA)
-3   Inverse Other Color   (1-OR, 1-OG, 1-OB, 1-OA)
-4   SRC Alpha             (SA, SA, SA, SA)
-5   Inverse SRC Alpha     (1-SA, 1-SA, 1-SA, 1-SA)
-6   DST Alpha             (DA, DA, DA, DA)
-7   Inverse DST Alpha     (1-DA, 1-DA, 1-DA, 1-DA)
-*/
-
-const static u32 DstBlendGL[] =
-{
-	GL_ZERO,
-	GL_ONE,
-	GL_SRC_COLOR,
-	GL_ONE_MINUS_SRC_COLOR,
-	GL_SRC_ALPHA,
-	GL_ONE_MINUS_SRC_ALPHA,
-	GL_DST_ALPHA,
-	GL_ONE_MINUS_DST_ALPHA
-};
-
-const static u32 SrcBlendGL[] =
-{
-	GL_ZERO,
-	GL_ONE,
-	GL_DST_COLOR,
-	GL_ONE_MINUS_DST_COLOR,
-	GL_SRC_ALPHA,
-	GL_ONE_MINUS_SRC_ALPHA,
-	GL_DST_ALPHA,
-	GL_ONE_MINUS_DST_ALPHA
-};
-
 static gl4PipelineShader* CurrentShader;
 extern u32 gcflip;
 static GLuint geom_fbo;
@@ -78,68 +43,6 @@ GLuint depthTexId;
 static GLuint texSamplers[2];
 static GLuint depth_fbo;
 GLuint depthSaveTexId;
-
-static s32 SetTileClip(u32 val, bool set)
-{
-	if (!settings.rend.Clipping)
-		return 0;
-
-	u32 clipmode=val>>28;
-	s32 clip_mode;
-	if (clipmode<2)
-	{
-		clip_mode=0;    //always passes
-	}
-	else if (clipmode&1)
-		clip_mode=-1;   //render stuff outside the region
-	else
-		clip_mode=1;    //render stuff inside the region
-
-	float csx=0,csy=0,cex=0,cey=0;
-
-
-	csx=(float)(val&63);
-	cex=(float)((val>>6)&63);
-	csy=(float)((val>>12)&31);
-	cey=(float)((val>>17)&31);
-	csx=csx*32;
-	cex=cex*32 +32;
-	csy=csy*32;
-	cey=cey*32 +32;
-
-	if (csx <= 0 && csy <= 0 && cex >= 640 && cey >= 480)
-		return 0;
-
-	if (set && clip_mode)
-	{
-		if (!pvrrc.isRTT)
-		{
-			csx /= scale_x;
-			csy /= scale_y;
-			cex /= scale_x;
-			cey /= scale_y;
-			float t = cey;
-			cey = 480 - csy;
-			csy = 480 - t;
-			float dc2s_scale_h = screen_height / 480.0f;
-			float ds2s_offs_x = (screen_width - dc2s_scale_h * 640) / 2;
-			csx = csx * dc2s_scale_h + ds2s_offs_x;
-			cex = cex * dc2s_scale_h + ds2s_offs_x;
-			csy = csy * dc2s_scale_h;
-			cey = cey * dc2s_scale_h;
-		}
-		else
-		{
-			csx *= settings.rend.RenderToTextureUpscale;
-			csy *= settings.rend.RenderToTextureUpscale;
-			cex *= settings.rend.RenderToTextureUpscale;
-			cey *= settings.rend.RenderToTextureUpscale;
-		}
-		glUniform4f(CurrentShader->pp_ClipTest, csx, csy, cex, cey);
-	}
-
-	return clip_mode;
-}
 
 static void SetTextureRepeatMode(int index, GLuint dir, u32 clamp, u32 mirror)
 {
@@ -162,7 +65,7 @@ template <u32 Type, bool SortingEnabled>
 	else
 		gl4ShaderUniforms.trilinear_alpha = 1.0;
 
-	s32 clipping = SetTileClip(gp->tileclip, false);
+	s32 clipping = SetTileClip(gp->tileclip, -1);
 	int shaderId;
 
 	if (pass == 0)
@@ -265,7 +168,7 @@ template <u32 Type, bool SortingEnabled>
 	}
 	gl4ShaderUniforms.Set(CurrentShader);
 
-	SetTileClip(gp->tileclip,true);
+	SetTileClip(gp->tileclip, CurrentShader->pp_ClipTest);
 
 	//This bit control which pixels are affected
 	//by modvols

@@ -74,7 +74,7 @@ extern int screen_height;
 PipelineShader* CurrentShader;
 u32 gcflip;
 
-s32 SetTileClip(u32 val, bool set)
+s32 SetTileClip(u32 val, GLint uniform)
 {
 	if (!settings.rend.Clipping)
 		return 0;
@@ -105,7 +105,7 @@ s32 SetTileClip(u32 val, bool set)
 	if (csx <= 0 && csy <= 0 && cex >= 640 && cey >= 480)
 		return 0;
 
-	if (set && clip_mode)
+	if (uniform >= 0 && clip_mode)
 	{
 		if (!pvrrc.isRTT)
 		{
@@ -130,7 +130,7 @@ s32 SetTileClip(u32 val, bool set)
 			cex *= settings.rend.RenderToTextureUpscale;
 			cey *= settings.rend.RenderToTextureUpscale;
 		}
-		glUniform4f(CurrentShader->pp_ClipTest, csx, csy, cex, cey);
+		glUniform4f(uniform, csx, csy, cex, cey);
 	}
 
 	return clip_mode;
@@ -175,7 +175,7 @@ __forceinline
 
 	CurrentShader = &gl.pogram_table[
 									 GetProgramID(Type == ListType_Punch_Through ? 1 : 0,
-											 	  SetTileClip(gp->tileclip, false) + 1,
+											 	  SetTileClip(gp->tileclip, -1) + 1,
 												  gp->pcw.Texture,
 												  gp->tsp.UseAlpha,
 												  gp->tsp.IgnoreTexA,
@@ -193,7 +193,7 @@ __forceinline
 		glcache.UseProgram(CurrentShader->program);
 		ShaderUniforms.Set(CurrentShader);
 	}
-	SetTileClip(gp->tileclip,true);
+	SetTileClip(gp->tileclip, CurrentShader->pp_ClipTest);
 
 	//This bit control which pixels are affected
 	//by modvols
