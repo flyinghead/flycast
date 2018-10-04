@@ -137,8 +137,10 @@ struct text_info {
 enum ModifierVolumeMode { Xor, Or, Inclusion, Exclusion, ModeCount };
 
 bool gl_init(void* wind, void* disp);
+void gl_load_osd_resources();
 void gl_swap();
 bool ProcessFrame(TA_context* ctx);
+void UpdateFogTexture(u8 *fog_table, GLenum texture_slot, GLint fog_image_format);
 
 text_info raw_GetTexture(TSP tsp, TCW tcw);
 void CollectCleanup();
@@ -154,6 +156,7 @@ void RenderFramebuffer();
 void DrawFramebuffer(float w, float h);
 
 void OSD_HOOK();
+void OSD_DRAW(GLuint shader_program);
 int GetProgramID(u32 cp_AlphaTest, u32 pp_ClipTestMode,
 							u32 pp_Texture, u32 pp_UseAlpha, u32 pp_IgnoreTexA, u32 pp_ShadInstr, u32 pp_Offset,
 							u32 pp_FogCtrl, bool pp_Gouraud, bool pp_BumpMap, bool fog_clamping);

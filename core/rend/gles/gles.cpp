@@ -958,6 +958,24 @@ bool CompilePipelineShader(	PipelineShader* s)
 GLuint osd_tex;
 GLuint osd_font;
 
+void gl_load_osd_resources()
+{
+
+	int w, h;
+	if (osd_tex == 0)
+		osd_tex = loadPNG(get_readonly_data_path("/data/buttons.png"), w, h);
+	if (osd_font == 0)
+	{
+#ifdef TARGET_PANDORA
+		osd_font = loadPNG(get_readonly_data_path("/font2.png"), w, h);
+#else
+		osd_font = loadPNG(get_readonly_data_path("/pixmaps/font.png"), w, h);
+		if (osd_font == 0)
+			osd_font = loadPNG(get_readonly_data_path("/font.png"), w, h);
+#endif
+	}
+}
+
 bool gl_create_resources()
 {
 	if (gl.vbo.geometry != 0)
@@ -1062,15 +1080,7 @@ bool gl_create_resources()
 	}
 	#endif
 
-	int w, h;
-	osd_tex=loadPNG(get_readonly_data_path("/data/buttons.png"),w,h);
-#ifdef TARGET_PANDORA
-	osd_font=loadPNG(get_readonly_data_path("/font2.png"),w,h);
-#else
-	osd_font = loadPNG(get_readonly_data_path("/pixmaps/font.png"), w, h);
-	if (osd_font == 0)
-		osd_font = loadPNG(get_readonly_data_path("/font.png"), w, h);
-#endif
+	gl_load_osd_resources();
 
 	return true;
 }
@@ -1130,9 +1140,9 @@ bool gles_init()
 }
 
 
-void UpdateFogTexture(u8 *fog_table)
+void UpdateFogTexture(u8 *fog_table, GLenum texture_slot, GLint fog_image_format)
 {
-	glActiveTexture(GL_TEXTURE1);
+	glActiveTexture(texture_slot);
 	if (fogTextureId == 0)
 	{
 		fogTextureId = glcache.GenTexture();
@@ -1152,7 +1162,7 @@ void UpdateFogTexture(u8 *fog_table)
 		temp_tex_buffer[i + 128] = fog_table[i * 4 + 1];
 	}
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	glTexImage2D(GL_TEXTURE_2D, 0, gl.fog_image_format, 128, 2, 0, gl.fog_image_format, GL_UNSIGNED_BYTE, temp_tex_buffer);
+	glTexImage2D(GL_TEXTURE_2D, 0, fog_image_format, 128, 2, 0, fog_image_format, GL_UNSIGNED_BYTE, temp_tex_buffer);
 	glCheck();
 
 	glActiveTexture(GL_TEXTURE0);
@@ -1426,7 +1436,7 @@ void OSD_HOOK()
 #define OSD_TEX_W 512
 #define OSD_TEX_H 256
 
-void OSD_DRAW()
+void OSD_DRAW(GLuint shader_program)
 {
 	#ifndef TARGET_PANDORA
 	if (osd_tex)
@@ -1452,10 +1462,10 @@ void OSD_DRAW()
 			//v+=vjoy_pos[i][3];
 		}
 
-		verify(glIsProgram(gl.OSD_SHADER.program));
+		verify(glIsProgram(shader_program));
 
 		glcache.BindTexture(GL_TEXTURE_2D, osd_tex);
-		glcache.UseProgram(gl.OSD_SHADER.program);
+		glcache.UseProgram(shader_program);
 
 		//reset rendering scale
 /*
@@ -1495,7 +1505,7 @@ void OSD_DRAW()
     float u=0;
     float v=0;
 
-    verify(glIsProgram(gl.OSD_SHADER.program));
+    verify(glIsProgram(shader_program));
 
 	float dc_width=640;
 	float dc_height=480;
@@ -1505,7 +1515,7 @@ void OSD_DRAW()
 
 
     glcache.BindTexture(GL_TEXTURE_2D,osd_font);
-    glcache.UseProgram(gl.OSD_SHADER.program);
+    glcache.UseProgram(shader_program);
 
     glcache.Enable(GL_BLEND);
     glcache.Disable(GL_DEPTH_TEST);
@@ -1778,7 +1788,7 @@ bool RenderFrame()
 	if (fog_needs_update)
 	{
 		fog_needs_update = false;
-		UpdateFogTexture((u8 *)FOG_TABLE);
+		UpdateFogTexture((u8 *)FOG_TABLE, GL_TEXTURE1, gl.fog_image_format);
 	}
 
 	glcache.UseProgram(gl.modvol_shader.program);
@@ -1964,12 +1974,6 @@ bool RenderFrame()
 	return !is_rtt;
 }
 
-#if !defined(_ANDROID) && !defined(TARGET_NACL32)
-#if HOST_OS==OS_LINUX
-#define SET_AFNT 1
-#endif
-#endif
-
 void rend_set_fb_scale(float x,float y)
 {
 	fb_scale_x=x;
@@ -1987,7 +1991,7 @@ struct glesrend : Renderer
 
 	void Present() { gl_swap(); glViewport(0, 0, screen_width, screen_height); }
 
-	void DrawOSD() { OSD_DRAW(); }
+	void DrawOSD() { OSD_DRAW(gl.OSD_SHADER.program); }
 
 	virtual u32 GetTexture(TSP tsp, TCW tcw) {
 		return gl_GetTexture(tsp, tcw);

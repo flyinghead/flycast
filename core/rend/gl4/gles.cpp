@@ -517,9 +517,6 @@ bool gl4CompilePipelineShader(	gl4PipelineShader* s, const char *source /* = Pix
 	return glIsProgram(s->program)==GL_TRUE;
 }
 
-extern GLuint osd_tex;
-extern GLuint osd_font;
-
 static bool gl_create_resources()
 {
 	if (gl4.vbo.geometry != 0)
@@ -550,11 +547,7 @@ static bool gl_create_resources()
 	gl4.OSD_SHADER.extra_depth_scale = glGetUniformLocation(gl4.OSD_SHADER.program, "extra_depth_scale");
 	glUniform1i(glGetUniformLocation(gl4.OSD_SHADER.program, "tex"),0);		//bind osd texture to slot 0
 
-	int w, h;
-	osd_tex=loadPNG(get_readonly_data_path("/data/buttons.png"),w,h);
-	osd_font = loadPNG(get_readonly_data_path("/pixmaps/font.png"), w, h);
-	if (osd_font == 0)
-		osd_font = loadPNG(get_readonly_data_path("/font.png"), w, h);
+	gl_load_osd_resources();
 
 	// Create the buffer for Translucent poly params
 	glGenBuffers(1, &gl4.vbo.tr_poly_params);
@@ -614,161 +607,6 @@ static bool gles_init()
 	}
 
 	return true;
-}
-
-
-static void UpdateFogTexture(u8 *fog_table)
-{
-	glActiveTexture(GL_TEXTURE5);
-	if (fogTextureId == 0)
-	{
-		fogTextureId = glcache.GenTexture();
-		glcache.BindTexture(GL_TEXTURE_2D, fogTextureId);
-		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	}
-	else
-		glcache.BindTexture(GL_TEXTURE_2D, fogTextureId);
-
-	u8 temp_tex_buffer[256];
-	for (int i = 0; i < 128; i++)
-	{
-		temp_tex_buffer[i] = fog_table[i * 4];
-		temp_tex_buffer[i + 128] = fog_table[i * 4 + 1];
-	}
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, 128, 2, 0, GL_RED, GL_UNSIGNED_BYTE, temp_tex_buffer);
-	glCheck();
-
-	glActiveTexture(GL_TEXTURE0);
-}
-
-extern u32 osd_base;
-extern u32 osd_count;
-
-#if defined(_ANDROID)
-extern float vjoy_pos[14][8];
-#else
-
-static float vjoy_pos[14][8]=
-{
-	{24+0,24+64,64,64},     //LEFT
-	{24+64,24+0,64,64},     //UP
-	{24+128,24+64,64,64},   //RIGHT
-	{24+64,24+128,64,64},   //DOWN
-
-	{440+0,280+64,64,64},   //X
-	{440+64,280+0,64,64},   //Y
-	{440+128,280+64,64,64}, //B
-	{440+64,280+128,64,64}, //A
-
-	{320-32,360+32,64,64},  //Start
-
-	{440,200,90,64},        //RT
-	{542,200,90,64},        //LT
-
-	{-24,128+224,128,128},  //ANALOG_RING
-	{96,320,64,64},         //ANALOG_POINT
-	{1}
-};
-#endif // !_ANDROID
-
-static float vjoy_sz[2][14] = {
-	{ 64,64,64,64, 64,64,64,64, 64, 90,90, 128, 64 },
-	{ 64,64,64,64, 64,64,64,64, 64, 64,64, 128, 64 },
-};
-
-#define OSD_TEX_W 512
-#define OSD_TEX_H 256
-
-static void OSD_DRAW()
-{
-	#ifndef TARGET_PANDORA
-	if (osd_tex)
-	{
-		float u=0;
-		float v=0;
-
-		for (int i=0;i<13;i++)
-		{
-			//umin,vmin,umax,vmax
-			vjoy_pos[i][4]=(u+1)/OSD_TEX_W;
-			vjoy_pos[i][5]=(v+1)/OSD_TEX_H;
-
-			vjoy_pos[i][6]=((u+vjoy_sz[0][i]-1))/OSD_TEX_W;
-			vjoy_pos[i][7]=((v+vjoy_sz[1][i]-1))/OSD_TEX_H;
-
-			u+=vjoy_sz[0][i];
-			if (u>=OSD_TEX_W)
-			{
-				u-=OSD_TEX_W;
-				v+=vjoy_sz[1][i];
-			}
-			//v+=vjoy_pos[i][3];
-		}
-
-		verify(glIsProgram(gl4.OSD_SHADER.program));
-
-		glcache.BindTexture(GL_TEXTURE_2D, osd_tex);
-		glcache.UseProgram(gl4.OSD_SHADER.program);
-
-		//reset rendering scale
-/*
-		float dc_width=640;
-		float dc_height=480;
-
-		float dc2s_scale_h=screen_height/480.0f;
-		float ds2s_offs_x=(screen_width-dc2s_scale_h*640)/2;
-
-		//-1 -> too much to left
-		gl4ShaderUniforms.scale_coefs[0]=2.0f/(screen_width/dc2s_scale_h);
-		gl4ShaderUniforms.scale_coefs[1]=-2/dc_height;
-		gl4ShaderUniforms.scale_coefs[2]=1-2*ds2s_offs_x/(screen_width);
-		gl4ShaderUniforms.scale_coefs[3]=-1;
-
-		glUniform4fv( gl4.OSD_SHADER.scale, 1, gl4ShaderUniforms.scale_coefs);
-*/
-
-		glcache.Enable(GL_BLEND);
-		glcache.Disable(GL_DEPTH_TEST);
-		glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-		glcache.DepthMask(false);
-		glcache.DepthFunc(GL_ALWAYS);
-
-		glcache.Disable(GL_CULL_FACE);
-		glcache.Disable(GL_SCISSOR_TEST);
-
-		int dfa=osd_count/4;
-
-		for (int i=0;i<dfa;i++)
-			glDrawArrays(GL_TRIANGLE_STRIP,osd_base+i*4,4);
-	}
-#endif
-  if (osd_font)
-  {
-    verify(glIsProgram(gl4.OSD_SHADER.program));
-
-    glcache.BindTexture(GL_TEXTURE_2D,osd_font);
-    glcache.UseProgram(gl4.OSD_SHADER.program);
-
-    glcache.Enable(GL_BLEND);
-    glcache.Disable(GL_DEPTH_TEST);
-    glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    glcache.DepthMask(false);
-    glcache.DepthFunc(GL_ALWAYS);
-
-    glcache.Disable(GL_CULL_FACE);
-    glcache.Disable(GL_SCISSOR_TEST);
-
-    int dfa=osd_count/4;
-
-   	for (int i=0;i<dfa;i++)
-		glDrawArrays(GL_TRIANGLE_STRIP,osd_base+i*4,4);
- }
 }
 
 static bool RenderFrame()
@@ -884,7 +722,7 @@ static bool RenderFrame()
 	if (fog_needs_update)
 	{
 		fog_needs_update = false;
-		UpdateFogTexture((u8 *)FOG_TABLE);
+		UpdateFogTexture((u8 *)FOG_TABLE, GL_TEXTURE5, GL_RED);
 	}
 
 	glcache.UseProgram(gl4.modvol_shader.program);
@@ -1064,12 +902,6 @@ static bool RenderFrame()
 	return !is_rtt;
 }
 
-#if !defined(_ANDROID) && !defined(TARGET_NACL32)
-#if HOST_OS==OS_LINUX
-#define SET_AFNT 1
-#endif
-#endif
-
 void reshapeABuffer(int w, int h);
 void termABuffer();
 
@@ -1112,7 +944,7 @@ struct gl4rend : Renderer
 
 	void Present() { gl_swap(); }
 
-	void DrawOSD() { OSD_DRAW(); }
+	void DrawOSD() { OSD_DRAW(gl4.OSD_SHADER.program); }
 
 	virtual u32 GetTexture(TSP tsp, TCW tcw) {
 		return gl_GetTexture(tsp, tcw);
