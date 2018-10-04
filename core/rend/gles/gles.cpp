@@ -76,15 +76,21 @@ const char* VertexShaderSource =
  \n\
 #define GLES2 0 \n\
 #define GLES3 1 \n\
-#define GL 2 \n\
+#define GL2 2 \n\
+#define GL3 3 \n\
  \n\
-#if TARGET_GL == GLES2 \n\
+#if TARGET_GL == GL2 \n\
+#define highp \n\
+#define lowp \n\
+#define mediump \n\
+#endif \n\
+#if TARGET_GL == GLES2 || TARGET_GL == GL2 \n\
 #define in attribute \n\
 #define out varying \n\
 #endif \n\
  \n\
  \n\
-#if TARGET_GL != GLES2 \n\
+#if TARGET_GL == GL3 || TARGET_GL == GLES3 \n\
 #if pp_Gouraud == 0 \n\
 #define INTERPOLATION flat \n\
 #else \n\
@@ -113,7 +119,7 @@ void main() \n\
 	vtx_offs=in_offs; \n\
 	vtx_uv=in_uv; \n\
 	vec4 vpos=in_pos; \n\
-#if TARGET_GL == GL \n\
+#if TARGET_GL == GL3 \n\
     if (isinf(vpos.z)) \n\
         vpos.w = 1.18e-38; \n\
 	else \n\
@@ -132,55 +138,6 @@ void main() \n\
 	vpos.xy*=vpos.w;  \n\
 	gl_Position = vpos; \n\
 }";
-
-/*
-
-cp_AlphaTest 0 1        2 2
-pp_ClipTestMode -1 0 1  3 6
-pp_UseAlpha  0 1        2 12
-pp_Texture 1
-	pp_IgnoreTexA 0 1       2   2
-	pp_ShadInstr 0 1 2 3    4   8
-	pp_Offset 0 1           2   16
-	pp_FogCtrl 0 1 2 3      4   64
-pp_Texture 0
-	pp_FogCtrl 0 2 3        4   4
-
-pp_Texture: off -> 12*4=48 shaders
-pp_Texture: on  -> 12*64=768 shaders
-Total: 816 shaders
-
-highp float fdecp(highp float flt,out highp float e)  \n\
-{  \n\
-	highp float lg2=log2(flt);  //ie , 2.5  \n\
-	highp float frc=fract(lg2); //ie , 0.5  \n\
-	e=lg2-frc;                  //ie , 2.5-0.5=2 (exp)  \n\
-	return pow(2.0,frc);        //2^0.5 (manitsa)  \n\
-}  \n\
-lowp float fog_mode2(highp float invW)  \n\
-{  \n\
-	highp float foginvW=invW;  \n\
-	foginvW=clamp(foginvW,1.0,255.0);  \n\
-	  \n\
-	highp float fogexp;                                 //0 ... 7  \n\
-	highp float fogman=fdecp(foginvW, fogexp);          //[1,2) mantissa bits. that is 1.m  \n\
-	  \n\
-	highp float fogman_hi=fogman*16.0-16.0;             //[16,32) -16 -> [0,16)  \n\
-	highp float fogman_idx=floor(fogman_hi);            //[0,15]  \n\
-	highp float fogman_blend=fract(fogman_hi);          //[0,1) -- can also be fogman_idx-fogman_idx !  \n\
-	highp float fog_idx_fr=fogexp*16.0+fogman_idx;      //[0,127]  \n\
-	  \n\
-	highp float fog_idx_pixel_fr=fog_idx_fr+0.5;  \n\
-	highp float fog_idx_pixel_n=fog_idx_pixel_fr/128.0;//normalise to [0.5/128,127.5/128) coordinates  \n\
-  \n\
-	//fog is 128x1 texure  \n\
-	lowp vec2 fog_coefs=texture2D(fog_table,vec2(fog_idx_pixel_n)).rg;  \n\
-  \n\
-	lowp float fog_coef=mix(fog_coefs.r,fog_coefs.g,fogman_blend);  \n\
-	  \n\
-	return fog_coef;  \n\
-} \n\
-*/
 
 const char* PixelPipelineShader =
 "\
@@ -202,13 +159,19 @@ const char* PixelPipelineShader =
 \n\
 #define GLES2 0 \n\
 #define GLES3 1 \n\
-#define GL 2 \n\
+#define GL2 2 \n\
+#define GL3 3 \n\
  \n\
+#if TARGET_GL == GL2 \n\
+#define highp \n\
+#define lowp \n\
+#define mediump \n\
+#endif \n\
 #if TARGET_GL == GLES3 \n\
 out highp vec4 FragColor; \n\
 #define gl_FragColor FragColor \n\
 #define FOG_CHANNEL a \n\
-#elif TARGET_GL == GL \n\
+#elif TARGET_GL == GL3 \n\
 out highp vec4 FragColor; \n\
 #define gl_FragColor FragColor \n\
 #define FOG_CHANNEL r \n\
@@ -219,7 +182,7 @@ out highp vec4 FragColor; \n\
 #endif \n\
  \n\
  \n\
-#if TARGET_GL != GLES2 \n\
+#if TARGET_GL == GL3 || TARGET_GL == GLES3 \n\
 #if pp_Gouraud == 0 \n\
 #define INTERPOLATION flat \n\
 #else \n\
@@ -367,9 +330,15 @@ const char* ModifierVolumeShader =
  \n\
 #define GLES2 0 \n\
 #define GLES3 1 \n\
-#define GL 2 \n\
+#define GL2 2 \n\
+#define GL3 3 \n\
  \n\
-#if TARGET_GL != GLES2 \n\
+#if TARGET_GL == GL2 \n\
+#define highp \n\
+#define lowp \n\
+#define mediump \n\
+#endif \n\
+#if TARGET_GL != GLES2 && TARGET_GL != GL2 \n\
 out highp vec4 FragColor; \n\
 #define gl_FragColor FragColor \n\
 #endif \n\
@@ -392,9 +361,15 @@ const char* OSD_Shader =
  \n\
 #define GLES2 0 \n\
 #define GLES3 1 \n\
-#define GL 2 \n\
+#define GL2 2 \n\
+#define GL3 3 \n\
  \n\
-#if TARGET_GL != GLES2 \n\
+#if TARGET_GL == GL2 \n\
+#define highp \n\
+#define lowp \n\
+#define mediump \n\
+#endif \n\
+#if TARGET_GL != GLES2 && TARGET_GL != GL2 \n\
 out highp vec4 FragColor; \n\
 #define gl_FragColor FragColor \n\
 #else \n\
@@ -402,7 +377,7 @@ out highp vec4 FragColor; \n\
 #define texture texture2D \n\
 #endif \n\
  \n\
-#if TARGET_GL != GLES2 \n\
+#if TARGET_GL == GL3 || TARGET_GL == GLES3 \n\
 #define INTERPOLATION smooth \n\
 #else \n\
 #define INTERPOLATION \n\
@@ -774,9 +749,18 @@ void findGLVersion()
 	else
 	{
 		gl.is_gles = false;
-		gl.gl_version = "GL";
-		gl.glsl_version_header = "#version 140";
-		gl.fog_image_format = GL_RED;
+    	if (gl.gl_major >= 3)
+    	{
+			gl.gl_version = "GL3";
+			gl.glsl_version_header = "#version 130";
+			gl.fog_image_format = GL_RED;
+		}
+		else
+		{
+			gl.gl_version = "GL2";
+			gl.glsl_version_header = "#version 120";
+			gl.fog_image_format = GL_ALPHA;
+		}
 	}
 }
 
