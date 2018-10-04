@@ -50,6 +50,8 @@ struct Renderer
 };
 
 extern Renderer* renderer;
+extern bool renderer_enabled;	// Signals the renderer thread to exit
+extern bool renderer_changed;	// Signals the renderer thread to switch renderer
 
 Renderer* rend_GLES2();
 #if !defined(GLES) && HOST_OS != OS_DARWIN

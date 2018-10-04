@@ -426,6 +426,13 @@ void input_x11_handle()
 						{
 							dc_loadstate() ;
 						}
+						else if (e.type == KeyRelease && e.xkey.keycode == KEY_F12)
+						{
+							extern bool renderer_changed;
+							settings.pvr.rend = settings.pvr.rend == 0 ? 3 : 0;		// Alternate between per-pixel and per-triangle
+							printf("OpenGL: renderer changed to %d\n", settings.pvr.rend);
+							renderer_changed = true;
+						}
 						else
 						{
 							int dc_key = x11_keymap[e.xkey.keycode];

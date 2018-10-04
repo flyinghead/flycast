@@ -76,8 +76,9 @@ u32 VertexCount=0;
 u32 FrameCount=1;
 
 Renderer* renderer;
-Renderer* fallback_renderer;
+static Renderer* fallback_renderer;
 bool renderer_enabled = true;	// Signals the renderer thread to exit
+bool renderer_changed = false;	// Signals the renderer thread to switch renderer
 
 #if !defined(TARGET_NO_THREADS)
 cResetEvent rs(false,true);
@@ -287,15 +288,54 @@ bool rend_single_frame()
 	return do_swp;
 }
 
+static void rend_create_renderer()
+{
+#ifdef NO_REND
+	renderer	 = rend_norend();
+#else
+	switch (settings.pvr.rend)
+	{
+	default:
+	case 0:
+		renderer = rend_GLES2();
+		break;
+	case 2:
+		renderer = rend_softrend();
+		break;
+	case 3:
+		renderer = rend_GL4();
+		fallback_renderer = rend_GLES2();
+		break;
+	}
+#endif
+}
+
 static void rend_init_renderer()
 {
 	if (!renderer->Init())
     {
+		delete renderer;
     	if (fallback_renderer == NULL || !fallback_renderer->Init())
+    	{
+    		if (fallback_renderer != NULL)
+    			delete fallback_renderer;
     		die("Renderer initialization failed\n");
+    	}
     	printf("Selected renderer initialization failed. Falling back to default renderer.\n");
     	renderer  = fallback_renderer;
     }
+}
+
+static void rend_term_renderer()
+{
+	renderer->Term();
+	delete renderer;
+	renderer = NULL;
+	if (fallback_renderer != NULL)
+	{
+		delete fallback_renderer;
+		fallback_renderer = NULL;
+	}
 }
 
 void* rend_thread(void* p)
@@ -340,9 +380,16 @@ void* rend_thread(void* p)
 	{
 		if (rend_single_frame())
 			renderer->Present();
+		if (renderer_changed)
+		{
+			renderer_changed = false;
+			rend_term_renderer();
+			rend_create_renderer();
+			rend_init_renderer();
+		}
 	}
 
-	renderer->Term();
+	rend_term_renderer();
 
 	return NULL;
 }
@@ -501,36 +548,7 @@ bool rend_init()
 		printf("Comparing frame hashes against: '%s'\n", settings.pvr.HashCheckFile.c_str());
 	}
 
-#ifdef NO_REND
-	renderer	 = rend_norend();
-#else
-
-
-	switch (settings.pvr.rend) {
-		default:
-		case 0:
-			renderer = rend_GLES2();
-			break;
-#if 0 //HOST_OS == OS_WINDOWS
-		case 1:
-			renderer = rend_D3D11();
-			break;
-#endif
-
-#if FEAT_HAS_SOFTREND
-		case 2:
-			renderer = rend_softrend();
-			break;
-#endif
-#if !defined(GLES) && HOST_OS != OS_DARWIN
-		case 3:
-			renderer = rend_GL4();
-			fallback_renderer = rend_GLES2();
-			break;
-#endif
-	}
-
-#endif
+	rend_create_renderer();
 
 #if !defined(_ANDROID) && HOST_OS != OS_DARWIN
   #if !defined(TARGET_NO_THREADS)
