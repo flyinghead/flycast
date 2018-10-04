@@ -342,6 +342,8 @@ void* rend_thread(void* p)
 			renderer->Present();
 	}
 
+	renderer->Term();
+
 	return NULL;
 }
 

@@ -369,6 +369,35 @@ void initABuffer()
 	glCheck();
 }
 
+void termABuffer()
+{
+	if (pixels_pointers != 0)
+	{
+		glcache.DeleteTextures(1, &pixels_pointers);
+		pixels_pointers = 0;
+	}
+	if (pixels_buffer != 0)
+	{
+		glDeleteBuffers(1, &pixels_buffer);
+		pixels_buffer = 0;
+	}
+	if (atomic_buffer != 0)
+	{
+		glDeleteBuffers(1, &atomic_buffer);
+		atomic_buffer = 0;
+	}
+	if (g_quadVertexArray != 0)
+	{
+		glDeleteVertexArrays(1, &g_quadVertexArray);
+		g_quadVertexArray = 0;
+	}
+	if (g_quadBuffer != 0)
+	{
+		glDeleteBuffers(1, &g_quadBuffer);
+		g_quadBuffer = 0;
+	}
+}
+
 void reshapeABuffer(int w, int h)
 {
 	if (w != g_imageWidth || h != g_imageHeight) {

@@ -587,6 +587,7 @@ static bool gles_init()
 		printf("Warning: OpenGL version doesn't support per-pixel sorting.\n");
 		return false;
 	}
+	printf("Per-pixel sorting enabled\n");
 
 	if (!gl_create_resources())
 		return false;
@@ -1070,6 +1071,7 @@ static bool RenderFrame()
 #endif
 
 void reshapeABuffer(int w, int h);
+void termABuffer();
 
 struct gl4rend : Renderer
 {
@@ -1100,7 +1102,10 @@ struct gl4rend : Renderer
 		}
 		reshapeABuffer(w, h);
 	}
-	void Term() { }
+	void Term()
+	{
+		termABuffer();
+	}
 
 	bool Process(TA_context* ctx) { return ProcessFrame(ctx); }
 	bool Render() { return RenderFrame(); }

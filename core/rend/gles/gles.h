@@ -134,6 +134,7 @@ struct text_info {
 	u32 height;
 	u32 textype; // 0 565, 1 1555, 2 4444
 };
+enum ModifierVolumeMode { Xor, Or, Inclusion, Exclusion, ModeCount };
 
 bool gl_init(void* wind, void* disp);
 void gl_swap();
@@ -145,6 +146,7 @@ void DoCleanup();
 void SortPParams(int first, int count);
 void SetCull(u32 CullMode);
 s32 SetTileClip(u32 val, GLint uniform);
+void SetMVS_Mode(ModifierVolumeMode mv_mode, ISP_Modvol ispc);
 
 void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt);
 void ReadRTTBuffer();
@@ -161,8 +163,6 @@ GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentShader);
 bool CompilePipelineShader(PipelineShader* s);
 #define TEXTURE_LOAD_ERROR 0
 GLuint loadPNG(const string& subpath, int &width, int &height);
-
-enum ModifierVolumeMode { Xor, Or, Inclusion, Exclusion, ModeCount };
 
 extern struct ShaderUniforms_t
 {
