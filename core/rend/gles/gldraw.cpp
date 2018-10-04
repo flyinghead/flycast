@@ -914,7 +914,7 @@ void SetMVS_Mode(ModifierVolumeMode mv_mode, ISP_Modvol ispc)
 }
 
 
-void SetupMainVBO()
+static void SetupMainVBO()
 {
 #ifndef GLES
 	glBindVertexArray(gl.vbo.vao);

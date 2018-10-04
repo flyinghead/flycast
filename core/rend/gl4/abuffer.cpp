@@ -299,6 +299,11 @@ void initABuffer()
 
 	if (pixels_buffer == 0 )
 	{
+		// get the max buffer size
+		GLint64 size;
+		glGetInteger64v(GL_MAX_SHADER_STORAGE_BLOCK_SIZE, &size);
+		pixel_buffer_size = (GLuint)min((GLint64)pixel_buffer_size, size);
+
 		// Create the buffer
 		glGenBuffers(1, &pixels_buffer);
 		// Bind it
@@ -319,7 +324,7 @@ void initABuffer()
 		glBufferData(GL_ATOMIC_COUNTER_BUFFER, 4, NULL, GL_DYNAMIC_COPY);
 		glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 0, atomic_buffer);
 		GLint zero = 0;
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(GLint), &zero);
+		glBufferSubData(GL_ATOMIC_COUNTER_BUFFER, 0, sizeof(GLint), &zero);
 		glCheck();
 	}
 
