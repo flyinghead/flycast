@@ -6,7 +6,6 @@
 
 #include "oslib/oslib.h"
 #include "rend/rend.h"
-#include "hw/pvr/Renderer_if.h"
 
 //Fragment and vertex shaders code
 
@@ -578,6 +577,16 @@ static bool gles_init()
 	if (!gl_init((void*)libPvr_GetRenderTarget(),
 		         (void*)libPvr_GetRenderSurface()))
 			return false;
+
+	int major = 0;
+	int minor = 0;
+	glGetIntegerv(GL_MAJOR_VERSION, &major);
+	glGetIntegerv(GL_MINOR_VERSION, &minor);
+	if (major < 4 || (major == 4 && minor < 3))
+	{
+		printf("Warning: OpenGL version doesn't support per-pixel sorting.\n");
+		return false;
+	}
 
 	if (!gl_create_resources())
 		return false;

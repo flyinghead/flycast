@@ -76,6 +76,7 @@ u32 VertexCount=0;
 u32 FrameCount=1;
 
 Renderer* renderer;
+Renderer* fallback_renderer;
 bool renderer_enabled = true;	// Signals the renderer thread to exit
 
 #if !defined(TARGET_NO_THREADS)
@@ -286,6 +287,17 @@ bool rend_single_frame()
 	return do_swp;
 }
 
+static void rend_init_renderer()
+{
+	if (!renderer->Init())
+    {
+    	if (fallback_renderer == NULL || !fallback_renderer->Init())
+    		die("Renderer initialization failed\n");
+    	printf("Selected renderer initialization failed. Falling back to default renderer.\n");
+    	renderer  = fallback_renderer;
+    }
+}
+
 void* rend_thread(void* p)
 {
 #if FEAT_HAS_NIXPROF
@@ -319,9 +331,7 @@ void* rend_thread(void* p)
 	#endif
 
 
-
-	if (!renderer->Init())
-		die("rend->init() failed\n");
+	rend_init_renderer();
 
 	//we don't know if this is true, so let's not speculate here
 	//renderer->Resize(640, 480);
@@ -513,6 +523,7 @@ bool rend_init()
 #if !defined(GLES) && HOST_OS != OS_DARWIN
 		case 3:
 			renderer = rend_GL4();
+			fallback_renderer = rend_GLES2();
 			break;
 #endif
 	}
@@ -523,7 +534,7 @@ bool rend_init()
   #if !defined(TARGET_NO_THREADS)
     rthd.Start();
   #else
-    if (!renderer->Init()) die("rend->init() failed\n");
+    rend_init_renderer();
 
     renderer->Resize(640, 480);
   #endif

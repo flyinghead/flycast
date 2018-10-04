@@ -63,7 +63,6 @@ Tile clip
 
 #include "oslib/oslib.h"
 #include "rend/rend.h"
-#include "hw/pvr/Renderer_if.h"
 
 float fb_scale_x,fb_scale_y;
 float scale_x, scale_y;
@@ -454,34 +453,34 @@ GLuint fogTextureId;
 
 		printf("Info: EGL version %d.%d\n",maj,min);
 
-
-
-		EGLint pi32ConfigAttribs[]  = { EGL_SURFACE_TYPE, EGL_WINDOW_BIT, EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT , EGL_DEPTH_SIZE, 24, EGL_STENCIL_SIZE, 8, EGL_NONE };
-		EGLint pi32ContextAttribs[] = { EGL_CONTEXT_CLIENT_VERSION, 2 , EGL_NONE };
-
-		int num_config;
-
-		EGLConfig config;
-		if (!eglChooseConfig(gl.setup.display, pi32ConfigAttribs, &config, 1, &num_config) || (num_config != 1))
+		if (gl.setup.surface == 0)
 		{
-			printf("EGL Error: eglChooseConfig failed\n");
-			return false;
+			EGLint pi32ConfigAttribs[]  = { EGL_SURFACE_TYPE, EGL_WINDOW_BIT, EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT , EGL_DEPTH_SIZE, 24, EGL_STENCIL_SIZE, 8, EGL_NONE };
+			EGLint pi32ContextAttribs[] = { EGL_CONTEXT_CLIENT_VERSION, 2 , EGL_NONE };
+
+			int num_config;
+
+			EGLConfig config;
+			if (!eglChooseConfig(gl.setup.display, pi32ConfigAttribs, &config, 1, &num_config) || (num_config != 1))
+			{
+				printf("EGL Error: eglChooseConfig failed\n");
+				return false;
+			}
+
+			gl.setup.surface = eglCreateWindowSurface(gl.setup.display, config, (EGLNativeWindowType)wind, NULL);
+
+			if (eglCheck())
+				return false;
+
+			eglBindAPI(EGL_OPENGL_ES_API);
+			if (eglCheck())
+				return false;
+
+			gl.setup.context = eglCreateContext(gl.setup.display, config, NULL, pi32ContextAttribs);
+
+			if (eglCheck())
+				return false;
 		}
-
-		gl.setup.surface = eglCreateWindowSurface(gl.setup.display, config, (EGLNativeWindowType)wind, NULL);
-
-		if (eglCheck())
-			return false;
-
-		eglBindAPI(EGL_OPENGL_ES_API);
-		if (eglCheck())
-			return false;
-
-		gl.setup.context = eglCreateContext(gl.setup.display, config, NULL, pi32ContextAttribs);
-
-		if (eglCheck())
-			return false;
-
 	#endif
 
 		eglMakeCurrent(gl.setup.display, gl.setup.surface, gl.setup.surface, gl.setup.context);
@@ -589,6 +588,10 @@ GLuint fogTextureId;
 		HDC ourWindowHandleToDeviceContext;
 		bool gl_init(void* hwnd, void* hdc)
 		{
+			if (ourWindowHandleToDeviceContext)
+				// Already initialized
+				return true;
+
 			PIXELFORMATDESCRIPTOR pfd =
 		    {
 		            sizeof(PIXELFORMATDESCRIPTOR),
