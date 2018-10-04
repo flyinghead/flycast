@@ -332,8 +332,6 @@ extern u32 ta_fsm_cl;
 
 //./core/hw/pvr/ta_vtx.o
 extern bool pal_needs_update;
-extern u32 palette16_ram[1024];
-extern u32 palette32_ram[1024];
 //extern u32 decoded_colors[3][65536];
 extern u32 tileclip_val;
 extern u8 f32_su8_tbl[65536];
@@ -348,10 +346,8 @@ extern u8 f32_su8_tbl[65536];
 //TA state vars
 extern DECL_ALIGN(4) u8 FaceBaseColor[4];
 extern DECL_ALIGN(4) u8 FaceOffsColor[4];
-#ifdef HAVE_OIT
 extern DECL_ALIGN(4) u8 FaceBaseColor1[4];
 extern DECL_ALIGN(4) u8 FaceOffsColor1[4];
-#endif
 extern DECL_ALIGN(4) u32 SFaceBaseColor;
 extern DECL_ALIGN(4) u32 SFaceOffsColor;
 //maybe
@@ -375,8 +371,6 @@ extern DECL_ALIGN(4) u32 SFaceOffsColor;
 //extern u8* vq_codebook;
 //extern u32 palette_index;
 //extern bool KillTex;
-//extern u32 palette16_ram[1024];
-//extern u32 palette32_ram[1024];
 //extern u32 detwiddle[2][8][1024];
 //maybe
 //extern vector<vram_block*> VramLocks[/*VRAM_SIZE*/(16*1024*1024)/PAGE_SIZE];

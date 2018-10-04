@@ -1,10 +1,9 @@
 #include <signal.h>
-#include "hw/pvr/ta_ctx.h"
 #include "cfg/cfg.h"
 #include "rend/TexCache.h"
+#include "rend/rend.h"
 
 extern cResetEvent rs;
-extern int renderer_enabled;
 extern cResetEvent frame_finished;
 extern TA_context* rqueue;
 
