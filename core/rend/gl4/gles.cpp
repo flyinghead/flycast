@@ -409,30 +409,6 @@ gl4_ctx gl4;
 
 struct gl4ShaderUniforms_t gl4ShaderUniforms;
 
-int gl4GetProgramID(u32 cp_AlphaTest, u32 pp_ClipTestMode,
-							u32 pp_Texture, u32 pp_UseAlpha, u32 pp_IgnoreTexA, u32 pp_ShadInstr, u32 pp_Offset,
-							u32 pp_FogCtrl, bool pp_TwoVolumes, u32 pp_DepthFunc, bool pp_Gouraud, bool pp_BumpMap, bool fog_clamping, int pass)
-{
-	u32 rv=0;
-
-	rv|=pp_ClipTestMode;
-	rv<<=1; rv|=cp_AlphaTest;
-	rv<<=1; rv|=pp_Texture;
-	rv<<=1; rv|=pp_UseAlpha;
-	rv<<=1; rv|=pp_IgnoreTexA;
-	rv<<=2; rv|=pp_ShadInstr;
-	rv<<=1; rv|=pp_Offset;
-	rv<<=2; rv|=pp_FogCtrl;
-	rv <<= 1; rv |= (int)pp_TwoVolumes;
-	rv <<= 3; rv |= pp_DepthFunc;
-	rv <<= 1; rv |= (int)pp_Gouraud;
-	rv <<= 1; rv |= pp_BumpMap;
-	rv <<= 1; rv |= fog_clamping;
-	rv <<= 2; rv |= pass;
-
-	return rv;
-}
-
 bool gl4CompilePipelineShader(	gl4PipelineShader* s, const char *source /* = PixelPipelineShader */)
 {
 	char vshader[16384];
@@ -505,6 +481,7 @@ bool gl4CompilePipelineShader(	gl4PipelineShader* s, const char *source /* = Pix
 		glUniform1i(gu, 3);		// GL_TEXTURE3
 
 	s->pp_Number = glGetUniformLocation(s->program, "pp_Number");
+	s->pp_DepthFunc = glGetUniformLocation(s->program, "pp_DepthFunc");
 
 	s->blend_mode = glGetUniformLocation(s->program, "blend_mode");
 	s->use_alpha = glGetUniformLocation(s->program, "use_alpha");
@@ -513,6 +490,24 @@ bool gl4CompilePipelineShader(	gl4PipelineShader* s, const char *source /* = Pix
 	s->fog_control = glGetUniformLocation(s->program, "fog_control");
 
 	return glIsProgram(s->program)==GL_TRUE;
+}
+
+static void gl_term(void)
+{
+	gl4.vbo.geometry = 0;
+	glDeleteProgram(gl4.modvol_shader.program);
+	glDeleteBuffers(1, &gl4.vbo.geometry);
+	glDeleteBuffers(1, &gl4.vbo.modvols);
+	glDeleteBuffers(1, &gl4.vbo.idxs);
+	glDeleteBuffers(1, &gl4.vbo.idxs2);
+	glDeleteBuffers(1, &gl4.vbo.tr_poly_params);
+	for (auto it = gl4.shaders.begin(); it != gl4.shaders.end(); it++)
+	{
+		if (it->second->program != -1)
+			glDeleteProgram(it->second->program);
+		delete it->second;
+	}
+	gl4.shaders.clear();
 }
 
 static bool gl_create_resources()
@@ -579,6 +574,8 @@ static bool gles_init()
 	}
 	printf("Per-pixel sorting enabled\n");
 
+	glcache.DisableCache();
+
 	if (!gl_create_resources())
 		return false;
 
@@ -602,6 +599,7 @@ static bool gles_init()
 		u32 dst[16];
 		UpscalexBRZ(2, src, dst, 2, 2, false);
 	}
+	fog_needs_update = true;
 
 	return true;
 }
@@ -822,9 +820,6 @@ static bool RenderFrame()
 		glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(struct PolyParam) * pvrrc.global_param_tr.used(), pvrrc.global_param_tr.head(), GL_STATIC_DRAW);
 		glCheck();
 
-		int offs_x=ds2s_offs_x+0.5f;
-		//this needs to be scaled
-
 		//not all scaling affects pixel operations, scale to adjust for that
 		scale_x *= scissoring_scale_x;
 
@@ -844,7 +839,7 @@ static bool RenderFrame()
 			if (!is_rtt)
 			{
 				// Add x offset for aspect ratio > 4/3
-				min_x = min_x * dc2s_scale_h + offs_x;
+            	min_x = min_x * dc2s_scale_h + ds2s_offs_x;
 				// Invert y coordinates when rendering to screen
 				min_y = screen_height - (min_y + height) * dc2s_scale_h;
 				width *= dc2s_scale_h;
@@ -852,11 +847,13 @@ static bool RenderFrame()
 
 				if (ds2s_offs_x > 0)
 				{
+					float rounded_offs_x = ds2s_offs_x + 0.5f;
+
 					glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
 					glcache.Enable(GL_SCISSOR_TEST);
-					glScissor(0, 0, ds2s_offs_x, screen_height);
+					glScissor(0, 0, rounded_offs_x, screen_height);
 					glClear(GL_COLOR_BUFFER_BIT);
-					glScissor(screen_width - ds2s_offs_x, 0, ds2s_offs_x, screen_height);
+					glScissor(screen_width - rounded_offs_x, 0, rounded_offs_x, screen_height);
 					glClear(GL_COLOR_BUFFER_BIT);
 				}
 			}
@@ -868,7 +865,7 @@ static bool RenderFrame()
 				height *= settings.rend.RenderToTextureUpscale;
 			}
 
-			glScissor(min_x, min_y, width, height);
+         glScissor(min_x + 0.5f, min_y + 0.5f, width + 0.5f, height + 0.5f);
 			glcache.Enable(GL_SCISSOR_TEST);
 		}
 
@@ -883,11 +880,8 @@ static bool RenderFrame()
 		glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		DrawFramebuffer(dc_width, dc_height);
+		gl4DrawFramebuffer(dc_width, dc_height);
 	}
-	#if HOST_OS==OS_WINDOWS
-		//Sleep(40); //to test MT stability
-	#endif
 
 	eglCheck();
 
@@ -934,6 +928,36 @@ struct gl4rend : Renderer
 	void Term()
 	{
 		termABuffer();
+	   if (stencilTexId != 0)
+	   {
+		  glcache.DeleteTextures(1, &stencilTexId);
+		  stencilTexId = 0;
+	   }
+	   if (depthTexId != 0)
+	   {
+		  glcache.DeleteTextures(1, &depthTexId);
+		  depthTexId = 0;
+	   }
+	   if (opaqueTexId != 0)
+	   {
+		  glcache.DeleteTextures(1, &opaqueTexId);
+		  opaqueTexId = 0;
+	   }
+	   if (depthSaveTexId != 0)
+	   {
+		  glcache.DeleteTextures(1, &depthSaveTexId);
+		  depthSaveTexId = 0;
+	   }
+	   if (KillTex)
+	   {
+		  void killtex();
+		  killtex();
+		  printf("Texture cache cleared\n");
+	   }
+
+	   CollectCleanup();
+
+	   gl_term();
 	}
 
 	bool Process(TA_context* ctx) { return ProcessFrame(ctx); }

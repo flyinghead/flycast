@@ -44,6 +44,30 @@ static GLuint texSamplers[2];
 static GLuint depth_fbo;
 GLuint depthSaveTexId;
 
+static int gl4GetProgramID(u32 cp_AlphaTest, u32 pp_ClipTestMode,
+							u32 pp_Texture, u32 pp_UseAlpha, u32 pp_IgnoreTexA, u32 pp_ShadInstr, u32 pp_Offset,
+							u32 pp_FogCtrl, bool pp_TwoVolumes, u32 pp_DepthFunc, bool pp_Gouraud, bool pp_BumpMap, bool fog_clamping, int pass)
+{
+	u32 rv=0;
+
+	rv|=pp_ClipTestMode;
+	rv<<=1; rv|=cp_AlphaTest;
+	rv<<=1; rv|=pp_Texture;
+	rv<<=1; rv|=pp_UseAlpha;
+	rv<<=1; rv|=pp_IgnoreTexA;
+	rv<<=2; rv|=pp_ShadInstr;
+	rv<<=1; rv|=pp_Offset;
+	rv<<=2; rv|=pp_FogCtrl;
+	rv <<= 1; rv |= (int)pp_TwoVolumes;
+	rv <<= 3; rv |= pp_DepthFunc;
+	rv <<= 1; rv |= (int)pp_Gouraud;
+	rv <<= 1; rv |= pp_BumpMap;
+	rv <<= 1; rv |= fog_clamping;
+	rv <<= 2; rv |= pass;
+
+	return rv;
+}
+
 static void setCurrentShader(u32 cp_AlphaTest, u32 pp_ClipTestMode,
 							u32 pp_Texture, u32 pp_UseAlpha, u32 pp_IgnoreTexA, u32 pp_ShadInstr, u32 pp_Offset,
 							u32 pp_FogCtrl, bool pp_TwoVolumes, u32 pp_DepthFunc, bool pp_Gouraud, bool pp_BumpMap, bool fog_clamping, int pass)
@@ -446,11 +470,9 @@ void gl4DrawStrips(GLuint output_fbo)
 	if (texSamplers[0] == 0)
 		glGenSamplers(2, texSamplers);
 
-	glcache.ClearColor(0, 0, 0, 0);
-	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 	glcache.DepthMask(GL_TRUE);
 	glStencilMask(0xFF);
-	glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); glCheck();
+	glClear(GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); glCheck();
 
 	SetupMainVBO();
 	//Draw the strips !
