@@ -297,6 +297,7 @@ void LoadSettings()
 	settings.aica.LimitFPS			= cfgLoadInt("config", "aica.LimitFPS", 1);
 	settings.aica.NoBatch			= cfgLoadInt("config", "aica.NoBatch", 0);
 	settings.aica.NoSound			= cfgLoadInt("config", "aica.NoSound", 0);
+	settings.aica.OldSyncronousDma	= cfgLoadBool("config", "aica.OldSyncronousDma", false);
 	settings.rend.UseMipmaps		= cfgLoadInt("config", "rend.UseMipmaps", 1);
 	settings.rend.WideScreen		= cfgLoadInt("config", "rend.WideScreen", 0);
 	settings.rend.Clipping			= cfgLoadInt("config", "rend.Clipping", 1);
