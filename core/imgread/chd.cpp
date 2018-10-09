@@ -63,6 +63,7 @@ struct CHDTrack : TrackFile
 		if (disc->old_hunk!=hunk)
 		{
 			chd_read(disc->chd,hunk,disc->hunk_mem); //CHDERR_NONE
+			disc->old_hunk = hunk;
 		}
 
 		u32 hunk_ofs=fad_offs%disc->sph;
