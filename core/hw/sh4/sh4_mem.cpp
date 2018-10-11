@@ -257,7 +257,11 @@ void WriteMemBlock_nommu_dma(u32 dst,u32 src,u32 size)
 void WriteMemBlock_nommu_ptr(u32 dst,u32* src,u32 size)
 {
 	u32 dst_msk;
-	verify(size % 4 == 0);
+	if (size % 4 != 0)
+	{
+		printf("WriteMem32_nommu: invalid size %d. Ignored\n", size);
+		return;
+	}
 
 	void* dst_ptr=_vmem_get_ptr2(dst,dst_msk);
 
