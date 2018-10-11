@@ -212,7 +212,6 @@ extern ByteCount_t ByteCount ;
 //./core/hw/maple/maple_devs.o
 extern char EEPROM[0x100];
 extern bool EEPROM_loaded;
-extern _NaomiState State;
 
 //./core/hw/maple/maple_if.o
 //one time set
@@ -916,7 +915,6 @@ bool dc_serialize(void **data, unsigned int *total_size)
 
 	REICAST_SA(EEPROM,0x100);
 	REICAST_S(EEPROM_loaded);
-	REICAST_S(State);
 
 
 	REICAST_S(maple_ddt_pending_reset);
@@ -1277,7 +1275,6 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 
 	REICAST_USA(EEPROM,0x100);
 	REICAST_US(EEPROM_loaded);
-	REICAST_US(State);
 
 
 	REICAST_US(maple_ddt_pending_reset);

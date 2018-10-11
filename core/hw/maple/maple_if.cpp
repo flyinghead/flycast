@@ -167,12 +167,6 @@ void maple_DoDma()
 			{
 				u32 outlen = MapleDevices[bus][port]->RawDma(&p_data[0], inlen + 4, &p_out[0]);
 				xfer_count =+ outlen;
-				/*
-				printf("JVS OUT: ");
-				u8 *p = (u8 *)&p_out[0];
-				for (int i = 0; i < outlen + 4; i++) printf("%02x ", p[i]);
-				printf("\n");
-				*/
 			}
 			else
 			{
