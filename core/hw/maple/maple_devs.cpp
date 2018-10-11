@@ -15,8 +15,14 @@
 #define LOGW printf
 #define LOGI printf
 #endif
+#ifndef RELEASE
+#define LOGJVS(...) LOGI(__VA_ARGS__)
+#else
+#define LOGJVS(...)
+#endif
 
 #include "deps/zlib/zlib.h"
+#include "deps/xxhash/xxhash.h"
 
 const char* maple_sega_controller_name = "Dreamcast Controller";
 const char* maple_sega_vmu_name = "Visual Memory";
@@ -64,10 +70,16 @@ enum MapleDeviceCommand
 	MDCF_SetCondition   = 0x0E, //FT,data ...
 	MDCF_MICControl     = 0x0F, //FT,MIC data ...
 	MDCF_ARGunControl   = 0x10, //FT,AR-Gun data ...
+
+	MDC_JVSUploadFirmware = 0x80, // JVS bridge firmware
+	MDC_JVSGetId		 = 0x82,
+	MDC_JVSCommand		 = 0x86, // JVS I/O
 };
 
 enum MapleDeviceRV
 {
+	MDRS_JVSNone		 = 0x00, // No reply, used for multiple JVS I/O boards
+
 	MDRS_DeviceStatus    = 0x05, //28 words
 	MDRS_DeviceStatusAll = 0x06, //28 words + device dependent data
 	MDRS_DeviceReply     = 0x07, //0 words
@@ -75,10 +87,12 @@ enum MapleDeviceRV
 
 	MDRE_UnknownFunction = 0xFE, //0 words
 	MDRE_UnknownCmd      = 0xFD, //0 words
-	MDRE_TransminAgain   = 0xFC, //0 words
+	MDRE_TransmitAgain   = 0xFC, //1 word, 1 or 2?
 	MDRE_FileError       = 0xFB, //1 word, bitfield
 	MDRE_LCDError        = 0xFA, //1 word, bitfield
 	MDRE_ARGunError      = 0xF9, //1 word, bitfield
+
+	MDRS_JVSReply		 = 0x87, // JVS I/O
 };
 
 NaomiInputMapping Naomi_Mapping;
@@ -145,7 +159,7 @@ struct maple_base: maple_device
 	}
 	u32 r_count() { return dma_count_in; }
 
-	virtual u32 Dma(u32 Command,u32* buffer_in,u32 buffer_in_len,u32* buffer_out,u32& buffer_out_len)
+	u32 Dma(u32 Command,u32* buffer_in,u32 buffer_in_len,u32* buffer_out,u32& buffer_out_len)
 	{
 		dma_buffer_out=(u8*)buffer_out;
 		dma_count_out=&buffer_out_len;
@@ -156,6 +170,25 @@ struct maple_base: maple_device
 		return dma(Command);
 	}
 	virtual u32 dma(u32 cmd)=0;
+
+	virtual u32 RawDma(u32* buffer_in, u32 buffer_in_len, u32* buffer_out)
+	{
+		u32 command=buffer_in[0] &0xFF;
+		//Recipient address
+		u32 reci = (buffer_in[0] >> 8) & 0xFF;
+		//Sender address
+		u32 send = (buffer_in[0] >> 16) & 0xFF;
+		u32 outlen = 0;
+		u32 resp = Dma(command, &buffer_in[1], buffer_in_len - 4, &buffer_out[1], outlen);
+
+		if (reci & 0x20)
+			reci |= maple_GetAttachedDevices(maple_GetBusId(reci));
+
+		verify(u8(outlen/4)*4==outlen);
+		buffer_out[0] = (resp <<0 ) | (send << 8) | (reci << 16) | ((outlen / 4) << 24);
+
+		return outlen + 4;
+	}
 };
 
 /*
@@ -523,7 +556,7 @@ struct maple_sega_vmu: maple_base
 						if (r32()!=0)
 						{
 							printf("VMU: Block read: MFID_3_Clock : invalid params \n");
-							return MDRE_TransminAgain; //invalid params
+							return MDRE_TransmitAgain; //invalid params
 						}
 						else
 						{
@@ -669,7 +702,7 @@ struct maple_sega_vmu: maple_base
 					case MFID_3_Clock:
 					{
 						if (r32()!=0 || r_count()!=8)
-							return MDRE_TransminAgain;	//invalid params ...
+							return MDRE_TransmitAgain;	//invalid params ...
 						else
 						{
 							u8 timebuf[8];
@@ -897,7 +930,7 @@ struct maple_microphone: maple_base
 				case 0x03:
 					LOGI("maple_microphone::dma MDCF_MICControl set gain %#010x\n",secondword);
 					return MDRS_DeviceReply;
-				case MDRE_TransminAgain:
+				case MDRE_TransmitAgain:
 					LOGW("maple_microphone::dma MDCF_MICControl MDRE_TransminAgain");
 					//apparently this doesnt matter
 					//wptr(micdata, SIZE_OF_MIC_DATA);
@@ -1366,380 +1399,852 @@ static string get_eeprom_file_path()
 #endif
 
 /*
-Sega Dreamcast Controller
-No error checking of any kind, but works just fine
+ * Sega JVS I/O board
 */
+bool coin_chute;
+static int coin_count;
+
+struct maple_naomi_jamma;
+
+class jvs_io_board
+{
+public:
+	jvs_io_board(u8 node_id, bool last_node, maple_naomi_jamma *parent)
+	{
+		this->node_id = node_id;
+		this->last_node = last_node;
+		this->parent = parent;
+	}
+
+	MapleDeviceRV handle_jvs_command(u8* data);
+	bool maple_serialize(void **data, unsigned int *total_size);
+	bool maple_unserialize(void **data, unsigned int *total_size);
+
+	bool rotary_encoders = false;
+	bool lightgun_as_analog = false;
+
+private:
+	void make_jvs_reply_buffer(bool empty = false);
+	void finish_jvs_reply_buffer();
+
+	const u8 ALL_NODES = 0xff;
+	u8 node_id = 0;
+	bool last_node;
+	maple_naomi_jamma *parent;
+
+	u8 jvs_repeat_request[256];
+	u32 jvs_repeat_length = 0;
+	u8 jvs_request[256];
+	u32 jvs_length = 0;
+	u8 *dma_out = NULL;
+};
+
 struct maple_naomi_jamma : maple_sega_controller
 {
+	class jvs_io_board *io_boards[1];
+	bool crazy_mode = false;
+
+	maple_naomi_jamma()
+	{
+		io_boards[0] = new jvs_io_board(1, true, this);
+//		io_boards[1] = new jvs_io_board(2, true, this);
+//		io_boards[0]->rotary_encoders = true;
+	}
+
 	virtual MapleDeviceType get_device_type()
 	{
 		return MDT_NaomiJamma;
 	}
 
-	virtual u32 dma(u32 cmd)
+	virtual u32 RawDma(u32* buffer_in, u32 buffer_in_len, u32* buffer_out)
 	{
-		u32* buffer_in = (u32*)dma_buffer_in;
-		u32* buffer_out = (u32*)dma_buffer_out;
+		/*
+		printf("JVS IN: ");
+		u8 *p = (u8*)buffer_in;
+		for (int i = 0; i < buffer_in_len; i++) printf("%02x ", *p++);
+		printf("\n");
+		*/
 
-		u8* buffer_in_b = dma_buffer_in;
-		u8* buffer_out_b = dma_buffer_out;
+		u32 out_len = 0;
+		dma_buffer_out = (u8 *)buffer_out;
+		dma_count_out = &out_len;
 
-		u32& buffer_out_len = *dma_count_out;
-		u32 buffer_in_len = dma_count_in;
+		dma_buffer_in = (u8 *)buffer_in + 4;
+		dma_count_in = buffer_in_len - 4;
 
+		u32 cmd = *(u8*)buffer_in;
 		switch (cmd)
 		{
-		case 0x86:
-		{
-			u32 subcode = *(u8*)buffer_in;
-			//printf("Naomi 0x86 : %x\n",SubCode);
-			switch (subcode)
+			case MDC_JVSCommand:
 			{
-			case 0x15:
-			case 0x33:
-			{
-				PlainJoystickState pjs;
-				config->GetInput(&pjs);
+				u32 subcode = dma_buffer_in[0];
 
-				buffer_out[0] = 0xffffffff;
-				buffer_out[1] = 0xffffffff;
-				u32 keycode = ~kcode[0];
-				u32 keycode2 = ~kcode[1];
-
-				if (keycode&NAOMI_SERVICE_KEY_2)		//Service
-					buffer_out[0] &= ~(1 << 0x1b);
-
-				if (keycode&NAOMI_TEST_KEY_2)		//Test
-					buffer_out[0] &= ~(1 << 0x1a);
-
-				if (State.Mode == 0 && subcode != 0x33)	//Get Caps
+				switch (subcode)	// Sub-command
 				{
-					buffer_out_b[0x11 + 1] = 0x8E;	//Valid data check
-					buffer_out_b[0x11 + 2] = 0x01;
-					buffer_out_b[0x11 + 3] = 0x00;
-					buffer_out_b[0x11 + 4] = 0xFF;
-					buffer_out_b[0x11 + 5] = 0xE0;
-					buffer_out_b[0x11 + 8] = 0x01;
-
-					switch (State.Cmd)
-					{
-						//Reset, in : 2 bytes, out : 0
 					case 0xF0:
-						break;
-
-						//Find nodes?
-						//In addressing Slave address, in : 2 bytes, out : 1
 					case 0xF1:
+					case 0x13:
+					case 0x15:
+					case 0x17:
+					case 0x19:
+					case 0x21:
+					case 0x27:
+					case 0x33:
 					{
-						buffer_out_len = 4 * 4;
-					}
-					break;
-
-					//Speed Change, in : 2 bytes, out : 0
-					case 0xF2:
-						break;
-
-						//Name
-						//"In the I / O ID" "Reading each slave ID data"
-						//"NAMCO LTD.; I / O PCB-1000; ver1.0; for domestic only, no analog input"
-						//in : 1 byte, out : max 102
-					case 0x10:
-					{
-						static char ID1[102] = "nullDC Team; I/O Plugin-1; ver0.2; for nullDC or other emus";
-						buffer_out_b[0x8 + 0x10] = (u8)strlen(ID1) + 3;
-						for (int i = 0; ID1[i] != 0; ++i)
+						MapleDeviceRV rc;
+						for (int i = 0; i < sizeof(io_boards)/sizeof(void*); i++)
 						{
-							buffer_out_b[0x8 + 0x13 + i] = ID1[i];
+							rc = io_boards[i]->handle_jvs_command(dma_buffer_in);
+							if (rc != MDRS_JVSNone)
+								break;
 						}
 					}
 					break;
 
-					//CMD Version
-					//REV in command|Format command to read the (revision)|One|Two
-					//in : 1 byte, out : 2 bytes
-					case 0x11:
+					case 0x0B:	//EEPROM write
 					{
-						buffer_out_b[0x8 + 0x13] = 0x13;
+						int address = dma_buffer_in[1];
+						int size = dma_buffer_in[2];
+						//printf("EEprom write %08X %08X\n",address,size);
+						//printState(Command,buffer_in,buffer_in_len);
+						memcpy(EEPROM + address, dma_buffer_in + 4, size);
+
+#ifdef SAVE_EPPROM
+						string eeprom_file = get_eeprom_file_path();
+						FILE* f = fopen(eeprom_file.c_str(), "wb");
+						if (f)
+						{
+							fwrite(EEPROM, 1, 0x80, f);
+							fclose(f);
+							printf("Saved EEPROM to %s\n", eeprom_file.c_str());
+						}
+						else
+							printf("EEPROM SAVE FAILED to %s\n", eeprom_file.c_str());
+#endif
+						w8(MDRS_JVSReply);
+						w8(0x20);
+						w8(0x00);
+						w8(0x01);
+						memcpy(dma_buffer_out, EEPROM, 4);
+						out_len += 4;
 					}
 					break;
 
-					//JVS Version
-					//In JV REV|JAMMA VIDEO standard reading (revision)|One|Two
-					//in : 1 byte, out : 2 bytes
-					case 0x12:
+					case 0x3:	//EEPROM read
 					{
-						buffer_out_b[0x8 + 0x13] = 0x30;
+#ifdef SAVE_EPPROM
+						if (!EEPROM_loaded)
+						{
+							EEPROM_loaded = true;
+							string eeprom_file = get_eeprom_file_path();
+							FILE* f = fopen(eeprom_file.c_str(), "rb");
+							if (f)
+							{
+								fread(EEPROM, 1, 0x80, f);
+								fclose(f);
+								printf("Loaded EEPROM from %s\n", eeprom_file.c_str());
+							}
+							else
+								printf("EEPROM file not found at %s\n", eeprom_file.c_str());
+						}
+#endif
+						//printf("EEprom READ\n");
+						int address = dma_buffer_in[1];
+						//printState(Command,buffer_in,buffer_in_len);
+						w8(MDRS_JVSReply);
+						w8(0x20);
+						w8(0x00);
+						w8(0x20);
+						memcpy(dma_buffer_out, EEPROM + address, 0x80);
+						out_len += 0x80;
 					}
 					break;
 
-					//COM Version
-					//VER in the communication system|Read a communication system compliant version of |One|Two
-					//in : 1 byte, out : 2 bytes
-					case 0x13:
+					case 0x31:	// DIP switches
 					{
-						buffer_out_b[0x8 + 0x13] = 0x10;
+						w8(MDRS_JVSReply);
+						w8(0x00);
+						w8(0x20);
+						w8(0x05);
+
+						w8(0x32);
+						w8(0xff);
+						w8(0xff);
+						w8(0xff);
+						w32(0xffffffff);	// bit16: 1=VGA, 0=NTSCi
+						w32(0xffffffff);
+						w32(0xffffffff);
+						w32(0xffffffff);
 					}
 					break;
 
-					//Features
-					//Check in feature |Each features a slave to read |One |6 to
-					//in : 1 byte, out : 6 + (?)
-					case 0x14:
-					{
-						unsigned char *FeatPtr = buffer_out_b + 0x8 + 0x13;
-						buffer_out_b[0x8 + 0x9 + 0x3] = 0x0;
-						buffer_out_b[0x8 + 0x9 + 0x9] = 0x1;
-#define ADDFEAT(Feature,Count1,Count2,Count3)	*FeatPtr++=Feature; *FeatPtr++=Count1; *FeatPtr++=Count2; *FeatPtr++=Count3;
-						ADDFEAT(1, 2, 12, 0);	//Feat 1=Digital Inputs.  2 Players. 12 bits
-						ADDFEAT(2, 2, 0, 0);	//Feat 2=Coin inputs. 2 Inputs
-						ADDFEAT(3, 4, 0, 0);	//Feat 3=Analog. 4 Chans
+					//case 0x3:
+					//	break;
 
-						ADDFEAT(0, 0, 0, 0);	//End of list
-					}
-					break;
+					case 0x1:
+						w8(MDRS_JVSReply);
+						w8(0x00);
+						w8(0x20);
+						w8(0x02);
+
+						w8(0x2);
+						w8(0x0);
+						w8(0x0);
+						w8(0x0);
+
+						w8(0x0);
+						w8(0x0);
+						w8(0x0);
+						w8(0x0);
+						break;
 
 					default:
-						printf("unknown CAP %X\n", State.Cmd);
-						return 0;
-					}
-					buffer_out_len = 4 * 4;
+						printf("JVS: Unknown 0x86 sub-command %x\n", subcode);
+						break;
 				}
-				else if (State.Mode == 1 || State.Mode == 2 || subcode == 0x33)	//Get Data
+			}
+			break;
+
+
+			case MDC_JVSUploadFirmware:
+			{
+				static FILE *fw_dump;
+				static XXH32_state_t* state;
+
+				if (state == NULL)
 				{
-					unsigned char glbl = 0x00;
-					unsigned char p1_1 = 0x00;
-					unsigned char p1_2 = 0x00;
-					unsigned char p2_1 = 0x00;
-					unsigned char p2_2 = 0x00;
-					static unsigned char LastKey[256];
-					static unsigned short coin1 = 0x0000;
-					static unsigned short coin2 = 0x0000;
-					unsigned char Key[256] = { 0 };
-#if HOST_OS == OS_WINDOWS
-					GetKeyboardState(Key);
-#endif
-					u8 *buttons = &buffer_out_b[8 + 0x12 + 2];
-					for (int i = 0; i < 4; i++)
-						buttons[i] = 0;
-					for (int i = 0; i < 16; i++)
-						if (keycode & (1 << i))
-						{
-							buttons[Naomi_Mapping.button_mapping_byte[i]] |= Naomi_Mapping.button_mapping_mask[i];
-						}
-					u16 axis_values[4];
-					for (int i = 0; i < 4; i++)
-					{
-						if (Naomi_Mapping.axis[i] != NULL)
-							axis_values[i] = Naomi_Mapping.axis[i]();
-						else
-						{
-							switch (i) {
-							case 0:
-								axis_values[i] = (joyx[bus_id * 2 + 0] + 128) << 8;
-								break;
-							case 1:
-								axis_values[i] = (joyy[bus_id * 2 + 0] + 128) << 8;
-								break;
-							case 2:
-								axis_values[i] = rt[bus_id * 2] << 8;
-								break;
-							case 3:
-								axis_values[i] = lt[bus_id * 2] << 8;
-								break;
-							}
-						}
-					}
-					
-					if (keycode&NAOMI_SERVICE_KEY_1)			//Service ?
-						glbl |= 0x80;
-					
-					static bool old_coin = false;
-					static bool old_coin2 = false;
+					 state = XXH32_createState();
+					 XXH32_reset(state, 0);
+				}
 
-					if ((old_coin == false) && (keycode&NAOMI_COIN_KEY))
-						coin1++;
-					old_coin = (keycode&NAOMI_COIN_KEY) ? true : false;
-
-					if ((old_coin2 == false) && (keycode2&NAOMI_COIN_KEY))
-						coin2++;
-					old_coin2 = (keycode2&NAOMI_COIN_KEY) ? true : false;
-
-					buffer_out_b[0x11 + 0] = 0x00;
-					buffer_out_b[0x11 + 1] = 0x8E;	//Valid data check
-					buffer_out_b[0x11 + 2] = 0x01;
-					buffer_out_b[0x11 + 3] = 0x00;
-					buffer_out_b[0x11 + 4] = 0xFF;
-					buffer_out_b[0x11 + 5] = 0xE0;
-					buffer_out_b[0x11 + 8] = 0x01;
-
-					//memset(OutData+8+0x11,0x00,0x100);
-
-					buffer_out_b[8 + 0x12 + 0] = 1;
-					buffer_out_b[8 + 0x12 + 1] = glbl;
-//					buffer_out_b[8 + 0x12 + 2] = p1_1;
-//					buffer_out_b[8 + 0x12 + 3] = p1_2;
-//					buffer_out_b[8 + 0x12 + 4] = p2_1;
-//					buffer_out_b[8 + 0x12 + 5] = p2_2;
-					buffer_out_b[8 + 0x12 + 6] = 1;
-					buffer_out_b[8 + 0x12 + 7] = coin1 >> 8;
-					buffer_out_b[8 + 0x12 + 8] = coin1 & 0xff;
-					buffer_out_b[8 + 0x12 + 9] = coin2 >> 8;
-					buffer_out_b[8 + 0x12 + 10] = coin2 & 0xff;
-					buffer_out_b[8 + 0x12 + 11] = 1;
-					buffer_out_b[8 + 0x12 + 12] = axis_values[0] >> 8;
-					buffer_out_b[8 + 0x12 + 13] = axis_values[0];
-					buffer_out_b[8 + 0x12 + 14] = axis_values[1] >> 8;
-					buffer_out_b[8 + 0x12 + 15] = axis_values[1];
-					buffer_out_b[8 + 0x12 + 16] = axis_values[2] >> 8;
-					buffer_out_b[8 + 0x12 + 17] = axis_values[2];
-					buffer_out_b[8 + 0x12 + 18] = axis_values[3] >> 8;
-					buffer_out_b[8 + 0x12 + 19] = axis_values[3];
-					buffer_out_b[8 + 0x12 + 20] = 0x00;
-
-					memcpy(LastKey, Key, sizeof(Key));
-
-					if (State.Mode == 1)
-					{
-						buffer_out_b[0x11 + 0x7] = 19;
-						buffer_out_b[0x11 + 0x4] = 19 + 5;
-					}
+				if (dma_buffer_in[1] == 0xff)
+				{
+					XXH32_hash_t hash = XXH32_digest(state);
+					LOGJVS("JVS Firmware hash %08x\n", hash);
+					if (hash == 0xEF29B145)
+						crazy_mode = true;
 					else
-					{
-						buffer_out_b[0x11 + 0x7] = 17;
-						buffer_out_b[0x11 + 0x4] = 17 - 1;
-					}
+						crazy_mode = false;
+					XXH32_freeState(state);
+					state = NULL;
 
-					//OutLen=8+0x11+16;
-					buffer_out_len = 8 + 0x12 + 22;
+					if (fw_dump)
+						fclose(fw_dump);
+					fw_dump = NULL;
+
+					return MDRS_DeviceReply;
 				}
-				/*ID.Keys=0xFFFFFFFF;
-				if(GetKeyState(VK_F1)&0x8000)		//Service
-				ID.Keys&=~(1<<0x1b);
-				if(GetKeyState(VK_F2)&0x8000)		//Test
-				ID.Keys&=~(1<<0x1a);
-				memcpy(OutData,&ID,sizeof(ID));
-				OutData[0x12]=0x8E;
-				OutLen=sizeof(ID);
-				*/
-			}
-			return 8;
-
-			case 0x17:	//Select Subdevice
-			{
-				State.Mode = 0;
-				State.Cmd = buffer_in_b[8];
-				State.Node = buffer_in_b[9];
-				buffer_out_len = 0;
-			}
-			return (7);
-
-			case 0x27:	//Transfer request
-			{
-				State.Mode = 1;
-				State.Cmd = buffer_in_b[8];
-				State.Node = buffer_in_b[9];
-				buffer_out_len = 0;
-			}
-			return (7);
-			case 0x21:		//Transfer request with repeat
-			{
-				State.Mode = 2;
-				State.Cmd = buffer_in_b[8];
-				State.Node = buffer_in_b[9];
-				buffer_out_len = 0;
-			}
-			return (7);
-
-			case 0x0B:	//EEPROM write
-			{
-				int address = buffer_in_b[1];
-				int size = buffer_in_b[2];
-				//printf("EEprom write %08X %08X\n",address,size);
-				//printState(Command,buffer_in,buffer_in_len);
-				memcpy(EEPROM + address, buffer_in_b + 4, size);
-
-#ifdef SAVE_EPPROM
-				string eeprom_file = get_eeprom_file_path();
-				FILE* f = fopen(eeprom_file.c_str(), "wb");
-				if (f)
+#ifdef DUMP_JVS_FW
+				if (fw_dump == NULL)
 				{
-					fwrite(EEPROM, 1, 0x80, f);
-					fclose(f);
-					printf("Saved EEPROM to %s\n", eeprom_file.c_str());
+					char filename[128];
+					for (int i = 0; ; i++)
+					{
+						sprintf(filename, "z80_fw_%d.bin", i);
+						fw_dump = fopen(filename, "r");
+						if (fw_dump == NULL)
+						{
+							fw_dump = fopen(filename, "w");
+							printf("Saving JVS firmware to %s\n", filename);
+							break;
+						}
+					}
 				}
+#endif
+				int xfer_bytes;
+				if (dma_buffer_in[0] == 0xff)
+					xfer_bytes = 0x1C;
 				else
-					printf("EEPROM SAVE FAILED to %s\n", eeprom_file.c_str());
-#endif
-			}
-			return (7);
-			case 0x3:	//EEPROM read
-			{
-#ifdef SAVE_EPPROM
-				if (!EEPROM_loaded)
+					xfer_bytes = 0x18;
+				u16 addr = (dma_buffer_in[2] << 8) + dma_buffer_in[3];
+				XXH32_update(state, &dma_buffer_in[4], xfer_bytes);
+#ifdef DUMP_JVS_FW
+				if (fw_dump)
 				{
-					EEPROM_loaded = true;
-					string eeprom_file = get_eeprom_file_path();
-					FILE* f = fopen(eeprom_file.c_str(), "rb");
-					if (f)
-					{
-						fread(EEPROM, 1, 0x80, f);
-						fclose(f);
-						printf("Loaded EEPROM from %s\n", eeprom_file.c_str());
-					}
-					else
-						printf("EEPROM file not found at %s\n", eeprom_file.c_str());
+					fseek(fw_dump, addr, SEEK_SET);
+					fwrite(&dma_buffer_in[4], 1, xfer_bytes, fw_dump);
 				}
 #endif
-				//printf("EEprom READ ?\n");
-				int address = buffer_in_b[1];
-				//printState(Command,buffer_in,buffer_in_len);
-				memcpy(buffer_out, EEPROM + address, 0x80);
-				buffer_out_len = 0x80;
+				u8 sum = 0;
+				for (int i = 0; i < 0x1C; i++)
+					sum += dma_buffer_in[i];
+
+				w8(0x80);	// or 0x81 on bootrom?
+				w8(0);
+				w8(0x20);
+				w8(0x01);
+				w8(sum);
+				w8(0);
+				w8(0);
+				w8(0);
+
+				w8(MDRS_DeviceReply);
+				w8(0x00);
+				w8(0x20);
+				w8(0x00);
 			}
-			return 8;
-			//IF I return all FF, then board runs in low res
-			case 0x31:
+			break;
+
+		case MDC_JVSGetId:
 			{
-				buffer_out[0] = 0xffffffff;
-				buffer_out[1] = 0xffffffff;
+				const char ID1[] = "315-6149    COPYRIGHT SEGA E";
+				const char ID2[] = "NTERPRISES CO,LTD.  1998    ";
+				w8(0x83);
+				w8(0x00);
+				w8(0x20);
+				w8(0x07);
+				wstr(ID1, 28);
+
+				w8(0x83);
+				w8(0x00);
+				w8(0x20);
+				w8(0x05);
+				wstr(ID2, 28);
 			}
-			return (8);
+			break;
 
-			//case 0x3:
-			//	break;
+		case MDC_DeviceRequest:
+			w8(MDRS_DeviceStatus);
+			w8(0x00);
+			w8(0x20);
+			w8(0x01);
 
-			//case 0x1:
-			//	break;
-			default:
-				printf("Unknown 0x86 : SubCommand 0x%X - State: Cmd 0x%X Mode :  0x%X Node : 0x%X\n", subcode, State.Cmd, State.Mode, State.Node);
-				printState(cmd, buffer_in, buffer_in_len);
-			}
+			w32(2);
 
-			return 8;//MAPLE_RESPONSE_DATATRF
-		}
-		break;
-		case 0x82:
-		{
-			const char *ID = "315-6149    COPYRIGHT SEGA E\x83\x00\x20\x05NTERPRISES CO,LTD.  ";
-			memset(buffer_out_b, 0x20, 256);
-			memcpy(buffer_out_b, ID, 0x38 - 4);
-			buffer_out_len = 256;
-			return (0x83);
-		}
+			break;
 
-		case 1:
-		case 9:
-			return maple_sega_controller::dma(cmd);
+		case MDC_DeviceReset:
+			w8(MDRS_DeviceReply);
+			w8(0x00);
+			w8(0x20);
+			w8(0x00);
 
+			break;
 
 		default:
-			printf("unknown MAPLE Frame\n");
-			//printState(Command, buffer_in, buffer_in_len);
+			printf("Unknown Maple command %x\n", cmd);
+			w8(MDRE_UnknownCmd);
+			w8(0x00);
+			w8(0x00);
+			w8(0x00);
+
 			break;
 		}
-		return MDRE_UnknownFunction;
+
+		return out_len;
+	}
+
+	virtual bool maple_serialize(void **data, unsigned int *total_size)
+	{
+		// FIXME Should serialize count and rebuild dynamically
+		for (int i = 0; i < sizeof(io_boards)/sizeof(void*); i++)
+			io_boards[i]->maple_serialize(data, total_size);
+
+		return true ;
+	}
+
+	virtual bool maple_unserialize(void **data, unsigned int *total_size)
+	{
+		for (int i = 0; i < sizeof(io_boards)/sizeof(void*); i++)
+			io_boards[i]->maple_unserialize(data, total_size);
+
+		return true ;
 	}
 };
+
+
+MapleDeviceRV jvs_io_board::handle_jvs_command(u8* data)
+{
+	MapleDeviceRV rc;
+
+	u8 req = data[0];
+	if (req == 0x15 || req == 0x33)			// Receive
+	{
+		if (req == 0x15 && jvs_length == 0)
+		{
+			return MDRS_JVSNone;
+		}
+
+		if (jvs_length > 0)
+		{
+			switch (jvs_request[0])
+			{
+			case 0xF0:		// board reset
+				// We shouln't get there
+				rc = MDRS_JVSNone;
+				break;
+
+			case 0xF1:		// set board address
+				if (jvs_request[1] == node_id)
+				{
+					// That's our node number
+					make_jvs_reply_buffer();
+					parent->w8(1);	// report byte
+					finish_jvs_reply_buffer();
+					LOGJVS("JVS Node %d address assigned\n", node_id);
+					rc = MDRS_JVSReply;
+				}
+				else
+					rc = MDRS_JVSNone;
+				break;
+
+			case 0x10:	// Read ID data
+				make_jvs_reply_buffer();
+				parent->w8(1);	// report byte
+				static char ID[] = "SEGA ENTERPRISES,LTD.;I/O BD JVS;837-13551 ;Ver1.00;98/10";
+				for (char *p = ID; *p != 0; )
+					parent->w8(*p++);
+				parent->w8(0);
+				finish_jvs_reply_buffer();
+				rc = MDRS_JVSReply;
+				break;
+
+			case 0x11:	// Get command format version
+				make_jvs_reply_buffer();
+				parent->w8(1);		// report byte
+				parent->w8(0x13);	// 1.3
+				finish_jvs_reply_buffer();
+				rc = MDRS_JVSReply;
+				break;
+
+			case 0x12:	// Get JVS versionjamma
+				make_jvs_reply_buffer();
+				parent->w8(1);		// report byte
+				parent->w8(0x30);	// 3.0
+				finish_jvs_reply_buffer();
+				rc = MDRS_JVSReply;
+				break;
+
+			case 0x13:	// Get communication version
+				make_jvs_reply_buffer();
+				parent->w8(1);		// report byte
+				parent->w8(0x10);	// 1.0
+				finish_jvs_reply_buffer();
+				rc = MDRS_JVSReply;
+				break;
+
+			case 0x14:	// Get slave features
+				make_jvs_reply_buffer();
+				parent->w8(1);		// report byte
+
+				parent->w8(1);		// Digital inputs
+				parent->w8(2);		//   2 players
+				parent->w8(13);		//   13 bits
+				parent->w8(0);
+
+				parent->w8(2);		// Coin inputs
+				parent->w8(2);		//   2 inputs
+				parent->w8(0);
+				parent->w8(0);
+
+				parent->w8(3);		// Analog inputs
+				parent->w8(4);		//   4 channels
+				parent->w8(0);		//   bits per channel, 0: unknown
+				parent->w8(0);
+
+				if (rotary_encoders)
+				{
+					parent->w8(4);		// Rotary encoders
+					parent->w8(2);		//   2 channels
+					parent->w8(0);
+					parent->w8(0);
+				}
+
+//				parent->w8(6);		// Light gun
+//				parent->w8(16);		//   X bits
+//				parent->w8(16);		//   Y bits
+//				parent->w8(1);		//   1 channel
+
+				parent->w8(0);		// End of list
+				parent->w8(0);
+				parent->w8(0);
+				parent->w8(0);
+				finish_jvs_reply_buffer();
+				rc = MDRS_JVSReply;
+				break;
+
+			case 0x15:	// Master board ID
+				make_jvs_reply_buffer();
+				parent->w8(1);		// report byte
+				finish_jvs_reply_buffer();
+				rc = MDRS_JVSReply;
+				break;
+
+			default:
+				if (jvs_request[0] >= 0x20 && jvs_request[0] <= 0x38) // Read inputs and more
+				{
+					LOGJVS("JVS Node %d: ", node_id);
+					PlainJoystickState pjs;
+					parent->config->GetInput(&pjs);
+					u32 keycode = ~kcode[0];
+					u32 keycode2 = ~kcode[1];
+
+					make_jvs_reply_buffer();
+					for (int cmdi = 0; cmdi < jvs_length; )
+					{
+						switch (jvs_request[cmdi])
+						{
+						case 0x20:	// Read digital input
+							{
+								parent->w8(1);		// report byte
+
+								LOGJVS("btns ");
+								parent->w8((kcode[0] & 1) ? 0 : 0x80);		// test, tilt1, tilt2, tilt3, unused, unused, unused, unused
+								// FIXME in-lst mapping
+								u8 buttons[8] = { 0 };
+								u32 keycode = ~kcode[0];
+								for (int i = 0; i < 16; i++)
+									if ((keycode & (1 << i)) != 0)
+									{
+										buttons[Naomi_Mapping.button_mapping_byte[i]] |= Naomi_Mapping.button_mapping_mask[i];
+									}
+								for (int player = 0; player < jvs_request[cmdi + 1]; player++)
+								{
+									LOGJVS("P%d %02x ", player + 1, buttons[player * 2]);
+									parent->w8(buttons[player * 2]);
+									if (jvs_request[cmdi + 2] == 2)
+									{
+										LOGJVS("%02x ", buttons[player * 2 + 1]);
+										parent->w8(buttons[player * 2 + 1]);
+									}
+								}
+//								for (int player = 0; player < jvs_request[cmdi + 1]; player++)
+//								{
+//									u32 keycode = ~kcode[player];
+//									if (keycode & DC_BTN_C)
+//										keycode |= 0xFFff;
+//
+//									if (jvs_request[cmdi + 2] == 1)
+//										w8(keycode);
+//									else
+//										w16(keycode);
+//								}
+								cmdi += 3;
+							}
+							break;
+
+						case 0x21:	// Read coins
+							{
+								if (coin_chute)
+								{
+									coin_chute = false;
+									coin_count++;
+								}
+								parent->w8(1);		// report byte
+								LOGJVS("coins ");
+								for (int slot = 0; slot < jvs_request[cmdi + 1]; slot++)
+								{
+									if (slot == 0)
+									{
+										LOGJVS("0:%d ", coin_count);
+										parent->w8((coin_count >> 8) & 0x3F);		// status (2 highest bits, 0: normal), coin count MSB
+										parent->w8(coin_count);						// coin count LSB
+									}
+									else
+									{
+										LOGJVS("%d:0 ", slot);
+										parent->w8(0);
+										parent->w8(0);
+									}
+								}
+								cmdi += 2;
+							}
+							break;
+
+						case 0x22:	// Read analog inputs
+							{
+								parent->w8(1);		// report byte
+								int axis = 0;
+
+								LOGJVS("ana ");
+								if (lightgun_as_analog)
+								{
+									// Death Crimson / Confidential Mission
+									u16 x = mo_x_abs * 0xFFFF / 639;
+									u16 y = mo_y_abs * 0xFFFF / 479;
+									if (mo_x_abs < 0 || mo_x_abs > 639 || mo_y_abs < 0 || mo_y_abs > 479)
+									{
+										x = 0xffff;
+										y = 0xffff;
+									}
+									LOGJVS("x,y:%4x,%4x ", x, y);
+									parent->w8(x >> 8);		// X, MSB
+									parent->w8(x);			// X, LSB
+									parent->w8(y >> 8);		// Y, MSB
+									parent->w8(y);			// Y, LSB
+									axis = 2;
+								}
+
+								for (; axis < jvs_request[cmdi + 1]; axis++)
+								{
+									u16 axis_value;
+									if (Naomi_Mapping.axis[axis] != NULL)
+										axis_value = Naomi_Mapping.axis[axis]();
+									else
+									{
+										switch (axis) {
+										case 0:
+											axis_value = (joyx[axis / 4] + 128) << 8;
+											break;
+										case 1:
+											axis_value = (joyy[axis / 4] + 128) << 8;
+											break;
+										case 2:
+											axis_value = rt[axis / 4] << 8;
+											break;
+										case 3:
+											axis_value = lt[axis / 4] << 8;
+											break;
+										}
+									}
+									LOGJVS("%d:%4x ", axis, axis_value);
+									parent->w8(axis_value >> 8);
+									parent->w8(axis_value);
+								}
+								cmdi += 2;
+							}
+							break;
+
+						case 0x23:	// Read rotary encoders
+							{
+								parent->w8(1);		// report byte
+								static s16 rotx = 0;
+								static s16 roty = 0;
+								rotx += mo_x_delta * 10;
+								roty += mo_y_delta * 10;
+								mo_x_delta = 0;
+								mo_y_delta = 0;
+								LOGJVS("rotenc ");
+								for (int chan = 0; chan < jvs_request[cmdi + 1]; chan++)
+								{
+									if (chan == 0)
+									{
+										LOGJVS("%d:%4x ", chan, rotx);
+										parent->w8(rotx >> 8);	// MSB
+										parent->w8(rotx);		// LSB
+									}
+									else if (chan == 1)
+									{
+										LOGJVS("%d:%4x ", chan, roty);
+										parent->w8(roty >> 8);	// MSB
+										parent->w8(roty);		// LSB
+									}
+									else
+									{
+										LOGJVS("%d:%4x ", chan, 0);
+										parent->w8(0x80);	// MSB
+										parent->w8(0x80);	// LSB
+									}
+								}
+								cmdi += 2;
+							}
+							break;
+
+						case 0x25:	// Read screen pos inputs
+							{
+								parent->w8(1);		// report byte
+								// Channel number is jvs_request[cmdi + 1]
+								u16 x = mo_x_abs * 0xFFFF / 639;
+								u16 y = (479 - mo_y_abs) * 0xFFFF / 479;
+								LOGJVS("lightgun %4x,%4x ", x, y);
+								parent->w8(x >> 8);		// X, MSB
+								parent->w8(x);			// X, LSB
+								parent->w8(y >> 8);		// Y, MSB
+								parent->w8(y);			// Y, LSB
+								cmdi += 2;
+							}
+							break;
+
+						case 0x32:	// switched outputs
+						case 0x33:
+							parent->w8(1);		// report byte
+							cmdi += jvs_request[cmdi + 1] + 2;
+							break;
+
+						// case 0x30, 0x31: add coin
+						default:
+							printf("JVS: Unknown input type %x\n", jvs_request[cmdi]);
+							parent->w8(2);		// report byte: command error
+							cmdi = jvs_length;	// Ignore subsequent commands
+							break;
+						}
+					}
+					LOGJVS("\n");
+					finish_jvs_reply_buffer();
+					rc = MDRS_JVSReply;
+				}
+				break;
+			}
+
+			jvs_length = 0;
+		}
+	}
+	if (req != 0x15)	// Send
+	{
+		u8 node;
+		u8 *cmd;
+		u32 len;
+		u8 channel = 0;
+		if (data[1] > 31 && data[1] != 0xff)	// TODO what is this?
+		{
+			node = data[6];
+			len = data[7];
+			cmd = &data[8];
+			channel = data[5];
+		}
+		else
+		{
+			node = data[1];
+			len = data[2];
+			cmd = &data[3];
+		}
+		if (node != ALL_NODES && node != node_id)
+			return MDRS_JVSNone;
+
+		if (len > 0 && *cmd == 0xf0)	// reset
+			return MDRS_JVSNone;
+
+		if (req == 0x27)
+		{
+			// FIXME hack
+			node = cmd[-1];
+			len = cmd[0];
+			cmd++;
+		}
+
+		// CT fw uses 13 as a 17, and 17 as 13 and also uses 19
+		if (parent->crazy_mode)
+		{
+			switch (req)
+			{
+			case 0x13:
+				req = 0x17;
+				break;
+			case 0x17:
+				req = 0x13;
+				break;
+			}
+		}
+		// Store repeat request
+		if (req == 0x13)
+		{
+			if (node == node_id)
+			{
+				if (len > 0)
+				{
+					printf("JVS node %d: Storing %d cmd bytes\n", node_id, len);
+					memcpy(jvs_repeat_request, cmd, len);
+					jvs_repeat_length = len;
+				}
+				parent->w8(MDRS_JVSReply);
+				parent->w8(channel);	// node id?
+				parent->w8(0x20);
+				parent->w8(0x01);
+				parent->w8(data[0] + 1);	// subcommand + 1
+				parent->w8(0);
+				parent->w8(len + 1);
+				parent->w8(0);
+
+				return MDRS_JVSReply;
+			}
+			else
+				return MDRS_JVSNone;
+		}
+		memcpy(jvs_request, cmd, len);
+		jvs_length = len;
+
+		if (node == node_id && (req == 0x21 || req == 0x27 || req == 0x33 || req == 0x19))
+		{
+			// Use repeat
+			memcpy(jvs_request + jvs_length, jvs_repeat_request, jvs_repeat_length);
+			jvs_length += jvs_repeat_length;
+		}
+		// FIXME this is for 0x17 and 0x21
+		parent->w8(MDRS_JVSReply);
+		parent->w8(channel);
+		parent->w8(0x20);
+		parent->w8(0x01);
+		parent->w8(0x18);
+		parent->w8(0x10);	// FIXME bytes received? >0 required for 0x19
+		parent->w8(0);		// in(91)
+		parent->w8(0);
+		if (node != ALL_NODES)
+			rc = MDRS_JVSReply;
+		else
+			rc = MDRS_JVSNone;		// Allow other boards to respond to the message
+		//printf("JVS send node %x len %d cmd %x repeat_length %d dma_count_out %d\n", node, jvs_length, *cmd, jvs_repeat_length, *(parent->dma_count_out));
+
+	}
+	return rc;
+}
+
+void jvs_io_board::make_jvs_reply_buffer(bool empty)
+{
+	dma_out = parent->dma_buffer_out;
+	parent->w8(MDRS_JVSReply);
+	parent->w8(0x00);	// channel id?
+	parent->w8(0x20);
+	parent->w8(0x00);	// length in dword
+	parent->w32(0xffffff16);
+	parent->w32(0xffffffff);
+	if (!empty)
+	{
+		*(parent->dma_count_out) += 9;
+		parent->dma_buffer_out += 9;
+		parent->w8(0x00);
+		parent->w8(last_node ? 0x8E : 0x8F);	// bit 0 is sense line level. If set during F1 <n>, more I/O boards need addressing
+		parent->w8(node_id);	// node number
+		parent->w8(0x00);
+		parent->w8(0x00);	// len of following data
+		parent->w8(0xE0);	// sync
+		parent->w8(0x00);	// master node
+		parent->w8(0x00);	// jvs payload len
+		parent->w8(0x01);	// status byte
+	}
+	else
+	{
+		*(parent->dma_count_out) += 8;
+		parent->dma_buffer_out += 8;
+	}
+}
+
+void jvs_io_board::finish_jvs_reply_buffer()
+{
+	dma_out[25] = parent->dma_buffer_out - dma_out - 26;
+	dma_out[28] = parent->dma_buffer_out - dma_out - 29;
+	while ((*(parent->dma_count_out)) & 3)
+	{
+		*(parent->dma_count_out) += 1;
+		parent->dma_buffer_out++;
+	}
+	dma_out[3] = (parent->dma_buffer_out - dma_out) / 4 - 1;
+//	printf("dma_count_out=%d\n", *(parent->dma_count_out));
+}
+
+bool jvs_io_board::maple_serialize(void **data, unsigned int *total_size)
+{
+	REICAST_S(node_id);
+	REICAST_S(last_node);
+	REICAST_S(rotary_encoders);
+	REICAST_S(jvs_length);
+	REICAST_SA(jvs_request, sizeof(jvs_request));
+	REICAST_S(jvs_repeat_length);
+	REICAST_SA(jvs_repeat_request, sizeof(jvs_repeat_request));
+	return true ;
+}
+
+bool jvs_io_board::maple_unserialize(void **data, unsigned int *total_size)
+{
+	REICAST_US(node_id);
+	REICAST_US(last_node);
+	REICAST_US(rotary_encoders);
+	REICAST_US(jvs_length);
+	REICAST_USA(jvs_request, sizeof(jvs_request));
+	REICAST_US(jvs_repeat_length);
+	REICAST_USA(jvs_repeat_request, sizeof(jvs_repeat_request));
+	return true ;
+}
+
 maple_device* maple_Create(MapleDeviceType type)
 {
 	maple_device* rv=0;

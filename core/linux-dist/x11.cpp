@@ -242,6 +242,8 @@ extern s32 mo_y_abs;
 static bool capturing_mouse;
 static Cursor empty_cursor = None;
 
+extern bool coin_chute;
+
 static Cursor create_empty_cursor()
 {
 	if (empty_cursor == None)
@@ -433,6 +435,12 @@ void input_x11_handle()
 							printf("OpenGL: renderer changed to %d\n", settings.pvr.rend);
 							renderer_changed = true;
 						}
+#if DC_PLATFORM == DC_PLATFORM_NAOMI
+						else if (e.type == KeyRelease && e.xkey.keycode == KEY_F8)
+						{
+							coin_chute = true;
+						}
+#endif
 						else
 						{
 							int dc_key = x11_keymap[e.xkey.keycode];

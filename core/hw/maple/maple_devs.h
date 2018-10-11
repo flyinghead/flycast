@@ -33,7 +33,8 @@ struct maple_device
 
 	virtual void OnSetup(){};
 	virtual ~maple_device();
-	virtual u32 Dma(u32 Command,u32* buffer_in,u32 buffer_in_len,u32* buffer_out,u32& buffer_out_len)=0;
+	u32 Dma(u32 Command,u32* buffer_in,u32 buffer_in_len,u32* buffer_out,u32& buffer_out_len);
+	virtual u32 RawDma(u32* buffer_in, u32 buffer_in_len, u32* buffer_out) = 0;
 	virtual bool maple_serialize(void **data, unsigned int *total_size){return true;};
 	virtual bool maple_unserialize(void **data, unsigned int *total_size){return true;};
 	virtual MapleDeviceType get_device_type() = 0;

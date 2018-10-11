@@ -58,8 +58,8 @@ static u16 getRightTriggerAxis()
 
 static NaomiInputMapping naomi_default_mapping = {
 	{ getJoystickXAxis, getJoystickYAxis, getRightTriggerAxis, getLeftTriggerAxis },
-	{ 0,  0,  0,  0,  0,  0,  0,  0,  1,  1,  1,  1 },
-	{ 1,  2,  4,  8, 16, 32, 64,128,  1,  2,  4,  8 },
+	{ 0,    0,    0,    0,    0,    0,    0,    0,    0, 1,    1,    0, 0 },
+	{ 0x40, 0x01, 0x02, 0x80, 0x20, 0x10, 0x08, 0x04, 0, 0x80, 0x40, 0, 0 },
 };
 
 static void parse_comment(const char *line)
