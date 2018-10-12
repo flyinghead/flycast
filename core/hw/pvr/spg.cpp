@@ -244,7 +244,7 @@ void read_lightgun_position(int x, int y)
 		lightgun_line = 0xffff;
 	else
 	{
-		lightgun_line = y / 2 + SPG_VBLANK_INT.vblank_out_interrupt_line_number;
+		lightgun_line = y / (SPG_CONTROL.interlace ? 2 : 1) + SPG_VBLANK_INT.vblank_out_interrupt_line_number;
 		lightgun_hpos = x * (SPG_HBLANK.hstart - SPG_HBLANK.hbend) / 640 + SPG_HBLANK.hbend * 2;	// Ok but why *2 ????
 		lightgun_hpos = min((u32)0x3FF, lightgun_hpos);
 	}
