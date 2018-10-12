@@ -1362,22 +1362,6 @@ enum NAOMI_KEYS
 };
 
 
-void printState(u32 cmd, u32* buffer_in, u32 buffer_in_len)
-{
-	printf("Command : 0x%X", cmd);
-	if (buffer_in_len>0)
-		printf(",Data : %d bytes\n", buffer_in_len);
-	else
-		printf("\n");
-	buffer_in_len >>= 2;
-	while (buffer_in_len-->0)
-	{
-		printf("%08X ", *buffer_in++);
-		if (buffer_in_len == 0)
-			printf("\n");
-	}
-}
-
 #ifdef SAVE_EPPROM
 static string get_eeprom_file_path()
 {
@@ -1533,6 +1517,15 @@ struct maple_naomi_jamma : maple_sega_controller
 
 	void handle_86_subcommand()
 	{
+		if (dma_count_in == 0)
+		{
+			w8(MDRS_JVSReply);
+			w8(0);
+			w8(0x20);
+			w8(0x00);
+
+			return;
+		}
 		u32 subcode = dma_buffer_in[0];
 
 		// CT fw uses 13 as a 17, and 17 as 13 and also uses 19
@@ -1684,11 +1677,12 @@ struct maple_naomi_jamma : maple_sega_controller
 					printf("EEPROM SAVE FAILED to %s\n", eeprom_file.c_str());
 #endif
 				w8(MDRS_JVSReply);
-				w8(0x20);
 				w8(0x00);
+				w8(0x20);
 				w8(0x01);
 				memcpy(dma_buffer_out, EEPROM, 4);
-				*dma_buffer_out += 4;
+				dma_buffer_out += 4;
+				*dma_count_out += 4;
 			}
 			break;
 
@@ -1714,11 +1708,12 @@ struct maple_naomi_jamma : maple_sega_controller
 				int address = dma_buffer_in[1];
 				//printState(Command,buffer_in,buffer_in_len);
 				w8(MDRS_JVSReply);
-				w8(0x20);
 				w8(0x00);
 				w8(0x20);
+				w8(0x20);
 				memcpy(dma_buffer_out, EEPROM + address, 0x80);
-				*dma_buffer_out += 0x80;
+				dma_buffer_out += 0x80;
+				*dma_count_out += 0x80;
 			}
 			break;
 
@@ -1747,21 +1742,25 @@ struct maple_naomi_jamma : maple_sega_controller
 				w8(MDRS_JVSReply);
 				w8(0x00);
 				w8(0x20);
-				w8(0x02);
+				w8(0x01);
 
 				w8(0x2);
 				w8(0x0);
 				w8(0x0);
 				w8(0x0);
-
-				w8(0x0);
-				w8(0x0);
-				w8(0x0);
-				w8(0x0);
+//CT
+//				w8(0x0);
+//				w8(0x0);
+//				w8(0x0);
+//				w8(0x0);
 				break;
 
 			default:
 				printf("JVS: Unknown 0x86 sub-command %x\n", subcode);
+				w8(MDRE_UnknownCmd);
+				w8(0x00);
+				w8(0x20);
+				w8(0x00);
 				break;
 		}
 	}
@@ -1890,9 +1889,10 @@ struct maple_naomi_jamma : maple_sega_controller
 			w8(MDRS_DeviceStatus);
 			w8(0x00);
 			w8(0x20);
-			w8(0x01);
-
-			w32(2);
+			w8(0x00);	// CT
+//			w8(0x01);
+//
+//			w32(2);
 
 			break;
 
@@ -2037,10 +2037,10 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 			JVS_OUT(0);
 		}
 
-//			JVS_OUT(6);		// Light gun
-//			JVS_OUT(16);		//   X bits
-//			JVS_OUT(16);		//   Y bits
-//			JVS_OUT(1);			//   1 channel
+//		JVS_OUT(6);		// Light gun
+//		JVS_OUT(16);		//   X bits
+//		JVS_OUT(16);		//   Y bits
+//		JVS_OUT(1);			//   1 channel
 
 		JVS_OUT(0);		// End of list
 		JVS_OUT(0);
