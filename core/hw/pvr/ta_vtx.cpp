@@ -427,8 +427,8 @@ public:
 				//32B
 			case ParamType_Object_List_Set:
 				{
+					printf("Unsupported list type: ParamType_Object_List_Set\n");	// NAOMI Virtual on Oratorio Tangram
 
-					die("ParamType_Object_List_Set");
 					// *cough* ignore it :p
 					data+=SZ32;
 				}
