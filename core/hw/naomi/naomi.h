@@ -20,7 +20,7 @@ u16 NaomiBoardIDRead();
 typedef u16 (*getNaomiAxisFP)();
 
 struct NaomiInputMapping {
-	getNaomiAxisFP axis[4];
+	getNaomiAxisFP axis[8];
 	u8 button_mapping_byte[16];
 	u8 button_mapping_mask[16];
 };
