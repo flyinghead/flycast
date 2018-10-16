@@ -1449,11 +1449,21 @@ struct maple_naomi_jamma : maple_sega_controller
 				u8 *pbuf = &jvs_receive_buffer[channel][jvs_receive_length[channel]];
 				if (jvs_receive_length[channel] + out_len + 3 <= sizeof(jvs_receive_buffer[0]))
 				{
-					pbuf[0] = node_id;
-					pbuf[1] = 0x00;		// 0: ok, 2: timeout, 3: dest node !=0, 4: checksum failed
-					pbuf[2] = out_len;
-					memcpy(&pbuf[3], temp_buffer, out_len);
-					jvs_receive_length[channel] += out_len + 3;
+					if (crazy_mode)
+					{
+						pbuf[0] = 0x00;		// ? 0: ok, 2: timeout, 3: dest node !=0, 4: checksum failed
+						pbuf[1] = out_len;
+						memcpy(&pbuf[2], temp_buffer, out_len);
+						jvs_receive_length[channel] += out_len + 2;
+					}
+					else
+					{
+						pbuf[0] = node_id;
+						pbuf[1] = 0x00;		// 0: ok, 2: timeout, 3: dest node !=0, 4: checksum failed
+						pbuf[2] = out_len;
+						memcpy(&pbuf[3], temp_buffer, out_len);
+						jvs_receive_length[channel] += out_len + 3;
+					}
 				}
 			}
 		}
@@ -1483,16 +1493,24 @@ struct maple_naomi_jamma : maple_sega_controller
 
 	bool receive_jvs_messages(u32 channel)
 	{
-		u32 dword_length = (jvs_receive_length[channel] + 0x10 + 3) / 4 + 1;
+		u32 dword_length = (jvs_receive_length[channel] + 0x10 + 3 - 1) / 4 + 1;
 
 		w8(MDRS_JVSReply);
 		w8(0x00);
 		w8(0x20);
 		if (jvs_receive_length[channel] == 0)
+		{
 			w8(0x05);
+			w8(0x32);
+		}
 		else
+		{
 			w8(dword_length);
-		w32(0xffffff16);
+			w8(0x16);
+		}
+		w8(0xff);
+		w8(0xff);
+		w8(0xff);
 		w32(0xffffff00);
 		w32(0);
 		w32(0);
@@ -1505,9 +1523,11 @@ struct maple_naomi_jamma : maple_sega_controller
 
 		w8(0);
 		w8(channel);
-		bool last_node = jvs_receive_buffer[channel][0] == io_boards.size();
-		w8(last_node ? 0x8E : 0x8F);	// bit 0 is sense line level. If set during F1 <n>, more I/O boards need addressing
-		
+		if (crazy_mode)
+			w8(0x8E);
+		else
+			w8(sense_line(jvs_receive_buffer[channel][0]));	// bit 0 is sense line level. If set during F1 <n>, more I/O boards need addressing
+
 		memcpy(dma_buffer_out, jvs_receive_buffer[channel], jvs_receive_length[channel]);
 		dma_buffer_out += dword_length * 4 - 0x10 - 3;
 		*dma_count_out += dword_length * 4 - 0x10 - 3;
@@ -1827,6 +1847,8 @@ struct maple_naomi_jamma : maple_sega_controller
 #endif
 					free(ram);
 					ram = NULL;
+					for (int i = 0; i < 32; i++)
+						jvs_repeat_request[i][0] = 0;
 
 					return MDRS_DeviceReply;
 				}
@@ -2020,7 +2042,7 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 		{
 			JVS_OUT(3);		// Analog inputs
 			JVS_OUT(8);		//   8 channels
-			JVS_OUT(0);		//   bits per channel, 0: unknown
+			JVS_OUT(0x10);	//   16 bits per channel, 0: unknown
 			JVS_OUT(0);
 		}
 
@@ -2043,9 +2065,6 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 		JVS_OUT(0);
 
 		JVS_OUT(0);		// End of list
-		JVS_OUT(0);
-		JVS_OUT(0);
-		JVS_OUT(0);
 		break;
 
 	case 0x15:	// Master board ID
