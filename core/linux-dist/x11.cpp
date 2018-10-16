@@ -42,6 +42,7 @@ Atom wmDeleteMessage;
 void* x11_vis;
 
 extern bool dump_frame_switch;
+extern bool naomi_test_button;
 
 void dc_stop(void);
 bool dc_loadstate(void);
@@ -439,6 +440,10 @@ void input_x11_handle()
 						else if (e.type == KeyRelease && e.xkey.keycode == KEY_F8)
 						{
 							coin_chute = true;
+						}
+						else if (e.xkey.keycode == KEY_F7)
+						{
+							naomi_test_button = e.type == KeyPress;
 						}
 #endif
 						else
