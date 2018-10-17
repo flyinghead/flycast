@@ -21,6 +21,7 @@ fd_t*	RomCacheMap;
 u32		RomCacheMapCount;
 
 char SelectedFile[512];
+char naomi_game_id[33];
 
 extern s8 joyx[4],joyy[4];
 extern u8 rt[4], lt[4];
@@ -218,12 +219,16 @@ bool naomi_cart_LoadRom(char* file)
 		{
 			char filename[512];
 			u32 addr, sz;
-			sscanf(line, "\"%[^\"]\",%x,%x", filename, &addr, &sz);
-			files.push_back(filename);
-			fstart.push_back(addr);
-			fsize.push_back(sz);
-			setsize += sz;
-			RomSize = max(RomSize, (addr + sz));
+			if (sscanf(line, "\"%[^\"]\",%x,%x", filename, &addr, &sz) == 3)
+			{
+				files.push_back(filename);
+				fstart.push_back(addr);
+				fsize.push_back(sz);
+				setsize += sz;
+				RomSize = max(RomSize, (addr + sz));
+			}
+			else if (line[0] != 0 && line[0] != '\n' && line[0] != '\r')
+				printf("Warning: invalid line in .lst file: %s\n", line);
 		}
 		line = fgets(t, 512, fl);
 	}
@@ -238,7 +243,7 @@ bool naomi_cart_LoadRom(char* file)
 	}
 
 	RomCacheMapCount = (u32)files.size();
-	RomCacheMap = new fd_t[files.size()];
+	RomCacheMap = new fd_t[files.size()]();
 
 	// FIXME: Data loss if buffer is too small
 	strncpy(t, file, sizeof(t));
@@ -261,6 +266,8 @@ bool naomi_cart_LoadRom(char* file)
 	strncpy(t, file, sizeof(t));
 	t[sizeof(t) - 1] = '\0';
 
+	bool load_error = false;
+
 	//Create File Mapping Objects
 	for (size_t i = 0; i<files.size(); i++)
 	{
@@ -280,9 +287,10 @@ bool naomi_cart_LoadRom(char* file)
 #endif
 		if (RomCache == INVALID_FD)
 		{
-			wprintf(L"-Unable to read file %s\n", files[i].c_str());
+			printf("-Unable to read file %s: error %d\n", files[i].c_str(), errno);
 			RomCacheMap[i] = INVALID_FD;
-			continue;
+			load_error = true;
+			break;
 		}
 
 #if HOST_OS == OS_WINDOWS
@@ -293,17 +301,25 @@ bool naomi_cart_LoadRom(char* file)
 #endif
 
 		verify(RomCacheMap[i] != INVALID_FD);
-		wprintf(L"-Preparing \"%s\" at 0x%08X, size 0x%08X\n", files[i].c_str(), fstart[i], fsize[i]);
+		//printf("-Preparing \"%s\" at 0x%08X, size 0x%08X\n", files[i].c_str(), fstart[i], fsize[i]);
 	}
 
-	//We have all file mapping objects, we start to map the ram
-	printf("+Mapping ROM\n");
 	//Release the segment we reserved so we can map the files there
 #if HOST_OS == OS_WINDOWS
 	verify(VirtualFree(RomPtr, 0, MEM_RELEASE));
 #else
 	munmap(RomPtr, RomSize);
 #endif
+
+	if (load_error)
+	{
+		for (size_t i = 0; i < files.size(); i++)
+			if (RomCacheMap[i] != INVALID_FD)
+				close(RomCacheMap[i]);
+		return false;
+	}
+
+	//We have all file mapping objects, we start to map the ram
 
 	//Map the files into the segment of the ram that was reserved
 	for (size_t i = 0; i<RomCacheMapCount; i++)
@@ -312,7 +328,7 @@ bool naomi_cart_LoadRom(char* file)
 
 		if (RomCacheMap[i] == INVALID_FD)
 		{
-			wprintf(L"-Reserving ram at 0x%08X, size 0x%08X\n", fstart[i], fsize[i]);
+			//printf("-Reserving ram at 0x%08X, size 0x%08X\n", fstart[i], fsize[i]);
 			
 #if HOST_OS == OS_WINDOWS
 			bool mapped = RomDest == VirtualAlloc(RomDest, fsize[i], MEM_RESERVE, PAGE_NOACCESS);
@@ -324,7 +340,7 @@ bool naomi_cart_LoadRom(char* file)
 		}
 		else
 		{
-			wprintf(L"-Mapping \"%s\" at 0x%08X, size 0x%08X\n", files[i].c_str(), fstart[i], fsize[i]);
+			//printf("-Mapping \"%s\" at 0x%08X, size 0x%08X\n", files[i].c_str(), fstart[i], fsize[i]);
 #if HOST_OS == OS_WINDOWS
 			bool mapped = RomDest == MapViewOfFileEx(RomCacheMap[i], FILE_MAP_READ, 0, 0, fsize[i], RomDest);
 #else
@@ -332,9 +348,19 @@ bool naomi_cart_LoadRom(char* file)
 #endif
 			if (!mapped)
 			{
-				printf("-Mapping ROM FAILED\n");
-				//unmap file
+				printf("-Mapping ROM FAILED: %s @ %08x size %x\n", files[i].c_str(), fstart[i], fsize[i]);
 				return false;
+			}
+			if (fstart[i] == 0 && fsize[i] >= 0x50)
+			{
+				memcpy(naomi_game_id, RomDest + 0x30, 0x20);
+				naomi_game_id[0x31] = '\0';
+				if (!strcmp("AWNAOMI                         ", naomi_game_id) && fsize[i] >= 0xFF50)
+				{
+					memcpy(naomi_game_id, RomDest + 0xFF30, 0x20);
+				}
+				for (char *p = naomi_game_id + 0x1f; *p == ' ' && p >= naomi_game_id; *p-- = '\0');
+				printf("NAOMI GAME ID [%s]\n", naomi_game_id);
 			}
 		}
 	}
@@ -368,15 +394,11 @@ bool naomi_cart_SelectFile(void* handle)
 #endif
 	if (!naomi_cart_LoadRom(SelectedFile))
 	{
-		cfgSaveStr("emu", "gamefile", "naomi_bios");
-	}
-	else
-	{
-		cfgSaveStr("emu", "gamefile", SelectedFile);
+		printf("Cannot load %s: error %d\n", SelectedFile, errno);
+		return false;
 	}
 
-
-	printf("EEPROM file : %s.eeprom\n", SelectedFile);
+	cfgSaveStr("emu", "gamefile", SelectedFile);
 
 	return true;
 }

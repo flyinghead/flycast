@@ -840,6 +840,7 @@ struct settings_t
 		bool DCKeyboard;
 		bool DCMouse;
 		u32 MouseSensitivity;
+		u32 JammaSetup;			// 0: standard, 1: 4-players, 2: rotary encoders, 3: Sega Marine Fishing
 	} input;
 };
 
@@ -948,11 +949,9 @@ s32 libExtDevice_Init();
 void libExtDevice_Reset(bool M);
 void libExtDevice_Term();
 
-#if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
-// 0x00600000 - 0x006007FF [Modem]
-static u32  libExtDevice_ReadMem_A0_006(u32 addr,u32 size) { return 0; }
-static void libExtDevice_WriteMem_A0_006(u32 addr,u32 data,u32 size) { }
-#endif
+// 0x00600000 - 0x006007FF [NAOMI] (modem area for dreamcast)
+u32  libExtDevice_ReadMem_A0_006(u32 addr,u32 size);
+void libExtDevice_WriteMem_A0_006(u32 addr,u32 data,u32 size);
 
 //Area 0 , 0x01000000- 0x01FFFFFF	[Ext. Device]
 static u32 libExtDevice_ReadMem_A0_010(u32 addr,u32 size) { return 0; }

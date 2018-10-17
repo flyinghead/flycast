@@ -175,6 +175,7 @@ cThread webui_thd(&webui_th,0);
 
 void LoadSpecialSettings()
 {
+#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
 	// Tony Hawk's Pro Skater 2
 	if (!strncmp("T13008D", reios_product_number, 7) || !strncmp("T13006N", reios_product_number, 7)
 			// Tony Hawk's Pro Skater 1
@@ -201,6 +202,34 @@ void LoadSpecialSettings()
 		printf("Enabling Dynarec safe mode for game %s\n", reios_product_number);
 		settings.dynarec.safemode = 1;
 	}
+#elif DC_PLATFORM == DC_PLATFORM_NAOMI
+	if (!strcmp("METAL SLUG 6", naomi_game_id) || !strcmp("WAVE RUNNER GP", naomi_game_id))
+	{
+		printf("Enabling Dynarec safe mode for game %s\n", naomi_game_id);
+		settings.dynarec.safemode = 1;
+	}
+	if (!strcmp("SAMURAI SPIRITS 6", naomi_game_id))
+	{
+		printf("Enabling Extra depth scaling for game %s\n", naomi_game_id);
+		settings.rend.ExtraDepthScale = 1e26;
+
+	}
+	if (!strcmp("DYNAMIC GOLF", naomi_game_id) || !strcmp("SHOOTOUT POOL", naomi_game_id))
+	{
+		printf("Enabling JVS rotary encoders for game %s\n", naomi_game_id);
+		settings.input.JammaSetup = 2;
+	}
+	else if (!strcmp("POWER STONE 2 JAPAN", naomi_game_id))
+	{
+		printf("Enabling 4-player setup for game %s\n", naomi_game_id);
+		settings.input.JammaSetup = 1;
+	}
+	else if (!strcmp("SEGA MARINE FISHING JAPAN", naomi_game_id))
+	{
+		printf("Enabling specific JVS setup for game %s\n", naomi_game_id);
+		settings.input.JammaSetup = 3;
+	}
+#endif
 }
 
 #if defined(_ANDROID)
@@ -278,7 +307,15 @@ int dc_init(int argc,wchar* argv[])
 		}
 	}
 
-	plugins_Init();
+	if (plugins_Init())
+	{
+#if defined(_ANDROID)
+			reios_init_value = -4;
+			return;
+#else
+			return -3;
+#endif
+	}
 
 #if defined(_ANDROID)
 }
@@ -437,13 +474,15 @@ void LoadSettings()
 	settings.input.DCKeyboard = cfgLoadInt("input", "DCKeyboard", 0);
 	settings.input.DCMouse = cfgLoadInt("input", "DCMouse", 0);
 	settings.input.MouseSensitivity = cfgLoadInt("input", "MouseSensitivity", 100);
+	settings.input.JammaSetup = cfgLoadInt("input", "JammaSetup", 0);
 #else
     // TODO Expose this with JNI
 	settings.rend.Clipping = 1;
-	settings.rend.ExtraDepthScale = 1.f;
 
 	// Configured on a per-game basis
+	settings.rend.ExtraDepthScale = 1.f;
 	settings.dynarec.safemode	= 0;
+	settings.input.JammaSetup = 0;
 #endif
 
 	settings.pvr.HashLogFile	= cfgLoadStr("testing", "ta.HashLogFile", "");
@@ -476,6 +515,7 @@ void LoadSettings()
 
 void LoadCustom()
 {
+#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
 	char *reios_id = reios_disk_id();
 
 	char *p = reios_id + strlen(reios_id) - 1;
@@ -483,6 +523,10 @@ void LoadCustom()
 		*p-- = '\0';
 	if (*p == '\0')
 		return;
+#elif DC_PLATFORM == DC_PLATFORM_NAOMI
+	char *reios_id = naomi_game_id;
+	char *reios_software_name = naomi_game_id;
+#endif
 
 	LoadSpecialSettings();	// Default per-game settings
 
@@ -502,18 +546,22 @@ void LoadCustom()
 
 	settings.pvr.MaxThreads		= cfgGameInt(reios_id, "pvr.MaxThreads", settings.pvr.MaxThreads);
 	settings.pvr.SynchronousRender	= cfgGameInt(reios_id, "pvr.SynchronousRendering", settings.pvr.SynchronousRender);
+#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
 	settings.dreamcast.cable = cfgGameInt(reios_id, "Dreamcast.Cable", settings.dreamcast.cable);
 	settings.dreamcast.region = cfgGameInt(reios_id, "Dreamcast.Region", settings.dreamcast.region);
 	settings.dreamcast.broadcast = cfgGameInt(reios_id, "Dreamcast.Broadcast", settings.dreamcast.broadcast);
+#endif
 }
 
 void SaveSettings()
 {
 	cfgSaveInt("config","Dynarec.Enabled",		settings.dynarec.Enable);
+#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
 	cfgSaveInt("config","Dreamcast.Cable",		settings.dreamcast.cable);
 	cfgSaveInt("config","Dreamcast.RTC",		settings.dreamcast.RTC);
 	cfgSaveInt("config","Dreamcast.Region",		settings.dreamcast.region);
 	cfgSaveInt("config","Dreamcast.Broadcast",	settings.dreamcast.broadcast);
+#endif
 }
 
 bool wait_until_dc_running()

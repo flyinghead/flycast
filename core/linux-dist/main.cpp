@@ -412,7 +412,8 @@ int main(int argc, wchar* argv[])
 
 	settings.profile.run_counts=0;
 
-	dc_init(argc,argv);
+	if (dc_init(argc,argv))
+		die("Reicast initialization failed\n");
 
 	#if !defined(TARGET_EMSCRIPTEN)
 		#if FEAT_HAS_NIXPROF

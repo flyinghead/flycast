@@ -1423,8 +1423,11 @@ struct maple_naomi_jamma : maple_sega_controller
 	maple_naomi_jamma()
 	{
 		io_boards.push_back(new jvs_io_board(1, this));
-//		io_boards.back()->rotary_encoders = true;
-//		io_boards.push_back(new jvs_io_board(2, this));
+		if (settings.input.JammaSetup == 2)
+		{
+			io_boards.back()->rotary_encoders = true;
+			io_boards.push_back(new jvs_io_board(2, this));
+		}
 	}
 
 	virtual MapleDeviceType get_device_type()
@@ -2026,19 +2029,37 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 		JVS_STATUS1();
 
 		JVS_OUT(1);		// Digital inputs
-		JVS_OUT(rotary_encoders ? 1 : 2);		//   2 players
-		JVS_OUT(rotary_encoders ? 9 : 13);		//   13 bits
+		if (settings.input.JammaSetup == 1 && !rotary_encoders)	// 4 players
+		{
+			JVS_OUT(4);		//   4 players
+			JVS_OUT(12);	//   12 bits
+		}
+		else if (settings.input.JammaSetup == 3)					// Sega Marine Fishing
+		{
+			JVS_OUT(2);		//   2 players
+			JVS_OUT(12);		//   12 bits
+		}
+		else if (rotary_encoders)
+		{
+			JVS_OUT(1);		//   1 player
+			JVS_OUT(9);		//   9 bits
+		}
+		else														// Default
+		{
+			JVS_OUT(2);		//   2 players
+			JVS_OUT(13);		//   13 bits
+		}
 		JVS_OUT(0);
 
 		if (!rotary_encoders)
 		{
 			JVS_OUT(2);		// Coin inputs
-			JVS_OUT(2);		//   2 inputs
+			JVS_OUT(settings.input.JammaSetup == 1 ? 4 : 2);	//   2 or 4 inputs
 			JVS_OUT(0);
 			JVS_OUT(0);
 		}
 
-		if (!rotary_encoders)
+		if (!rotary_encoders && settings.input.JammaSetup != 1)
 		{
 			JVS_OUT(3);		// Analog inputs
 			JVS_OUT(8);		//   8 channels
@@ -2060,7 +2081,10 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 //		JVS_OUT(1);			//   1 channel
 
 		JVS_OUT(0x12);	// General output driver
-		JVS_OUT(rotary_encoders ? 8 : 6);	//    6 outputs
+		if (settings.input.JammaSetup == 3)				// Sega Marine Fishing
+			JVS_OUT(16);	//    16 outputs
+		else
+			JVS_OUT(rotary_encoders ? 8 : 6);	//    6 outputs
 		JVS_OUT(0);
 		JVS_OUT(0);
 

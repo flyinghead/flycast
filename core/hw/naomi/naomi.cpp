@@ -490,7 +490,7 @@ u32  ReadMem_naomi(u32 Addr, u32 sz)
 		return 1;
 
 	case 0x04C:
-		printf("naomi GD? READ: %X, %d\n", Addr, sz);
+		//printf("naomi GD? READ: %X, %d\n", Addr, sz);
 		return reg_dimm_4c;
 
 	case 0x18:
@@ -610,7 +610,7 @@ void WriteMem_naomi(u32 Addr, u32 data, u32 sz)
 
 	default: break;
 	}
-	printf("naomi?WTF? WriteMem: %X <= %X, %d\n", Addr, data, sz);
+	//printf("naomi?WTF? WriteMem: %X <= %X, %d\n", Addr, data, sz);
 }
 
 
@@ -809,4 +809,38 @@ void Update_naomi()
 		}
 	}
 #endif
+}
+
+static u8 mem600[0x800];
+
+u32 libExtDevice_ReadMem_A0_006(u32 addr,u32 size) {
+	verify(size == 1);
+	addr &= 0x7ff;
+	//printf("libExtDevice_ReadMem_A0_006 %d@%08x: %x\n", size, addr, mem600[addr]);
+	switch (addr)
+	{
+	case 0x284:		// Atomiswave maple devices
+		// ddcc0000 where cc/dd are the types of devices on maple bus 2 and 3:
+		// 0: regular AtomisWave controller
+		// 1: light gun
+		// 2,3: mouse/trackball
+		//mem600[addr] |= 0x10;
+//		printf("NAOMI 600284 read %x\n", mem600[addr]);
+		break;
+	}
+	return mem600[addr];
+}
+void libExtDevice_WriteMem_A0_006(u32 addr,u32 data,u32 size) {
+	verify(size == 1);
+	addr &= 0x7ff;
+	//printf("libExtDevice_WriteMem_A0_006 %d@%08x: %x\n", size, addr, data);
+	switch (addr)
+	{
+	case 0x284:		// Atomiswave maple devices
+//		printf("NAOMI 600284 write %x\n", data);
+		break;
+	default:
+		break;
+	}
+	mem600[addr] = data;
 }
