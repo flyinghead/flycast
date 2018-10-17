@@ -671,7 +671,6 @@ extern u32 NAOMI_COMM_DATA;
 
 
 //./core/rec.o
-extern int cycle_counter;
 #if FEAT_SHREC == DYNAREC_CPP
 extern int idxnxx;
 #endif
@@ -1117,7 +1116,6 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	REICAST_S(NAOMI_COMM_OFFSET);
 	REICAST_S(NAOMI_COMM_DATA);
 
-	REICAST_S(cycle_counter);
 #if FEAT_SHREC == DYNAREC_CPP
 	REICAST_S(idxnxx);
 #else
@@ -1493,7 +1491,6 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	REICAST_US(NAOMI_COMM_OFFSET);
 	REICAST_US(NAOMI_COMM_DATA);
 
-	REICAST_US(cycle_counter);
 #if FEAT_SHREC == DYNAREC_CPP
 	REICAST_US(idxnxx);
 #else

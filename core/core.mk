@@ -45,7 +45,9 @@ endif
 ifndef NO_REND
     RZDCY_MODULES += rend/gles/
     ifndef USE_GLES
+	ifndef USE_DISPMANX
 	    RZDCY_MODULES += rend/gl4/
+	endif
     endif
 else
     RZDCY_MODULES += rend/norend/
