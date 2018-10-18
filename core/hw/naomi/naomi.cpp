@@ -354,13 +354,13 @@ u32  _ReadMem_naomi(u32 Addr, u32 sz)
 {
 	verify(sz!=1);
 
-	printf("naomi?WTF? ReadMem: %X, %d\n", Addr, sz);
+	//printf("naomi?WTF? ReadMem: %X, %d\n", Addr, sz);
 	return 1;
 
 }
 void _WriteMem_naomi(u32 Addr, u32 data, u32 sz)
 {
-	printf("naomi?WTF? WriteMem: %X <= %X, %d\n", Addr, data, sz);
+	//printf("naomi?WTF? WriteMem: %X <= %X, %d\n", Addr, data, sz);
 }
 
 
@@ -500,7 +500,7 @@ u32  ReadMem_naomi(u32 Addr, u32 sz)
 
 	default: break;
 	}
-	printf("naomi?WTF? ReadMem: %X, %d\n", Addr, sz);
+	//printf("naomi?WTF? ReadMem: %X, %d\n", Addr, sz);
 	return 0;
 
 }

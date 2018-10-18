@@ -1129,7 +1129,7 @@ struct maple_keyboard : maple_base
 			return MDRS_DataTransfer;
 
 		default:
-			printf("Keyboard: unknown MAPLE COMMAND %d\n", cmd);
+			//printf("Keyboard: unknown MAPLE COMMAND %d\n", cmd);
 			return MDRE_UnknownCmd;
 		}
 	}
@@ -1236,7 +1236,7 @@ struct maple_mouse : maple_base
 			return MDRS_DataTransfer;
 
 		default:
-			printf("Mouse: unknown MAPLE COMMAND %d\n", cmd);
+			//printf("Mouse: unknown MAPLE COMMAND %d\n", cmd);
 			return MDRE_UnknownCmd;
 		}
 	}
@@ -1320,7 +1320,7 @@ struct maple_lightgun : maple_base
 		return MDRS_DataTransfer;
 
 		default:
-			printf("Light gun: unknown MAPLE COMMAND %d\n", cmd);
+			//printf("Light gun: unknown MAPLE COMMAND %d\n", cmd);
 			return MDRE_UnknownCmd;
 		}
 	}
@@ -1917,7 +1917,7 @@ struct maple_naomi_jamma : maple_sega_controller
 			break;
 
 		default:
-			printf("Unknown Maple command %x\n", cmd);
+			//printf("Unknown Maple command %x\n", cmd);
 			w8(MDRE_UnknownCmd);
 			w8(0x00);
 			w8(0x00);

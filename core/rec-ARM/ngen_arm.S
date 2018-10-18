@@ -180,9 +180,11 @@ CSYM(no_update):              @ next_pc _MUST_ be on r4 *R4 NOT R0 anymore*
 #if DC_PLATFORM == DC_PLATFORM_NAOMI
 	sub r2,r8,#0x4100000
 	ubfx r1,r4,#1,#24
-#else
+#elif DC_PLATFORM == DC_PLATFORM_DREAMCAST
 	sub r2,r8,#0x2100000
 	ubfx r1,r4,#1,#23
+#else
+#error "Define DC_PLATFORM"
 #endif
 	ldr pc,[r2,r1,lsl #2]
 

@@ -282,11 +282,6 @@ MAN_DIR ?= ${PREFIX}/share/man/man1
 MENUENTRY_DIR ?= ${PREFIX}/share/applications
 ICON_DIR ?= ${PREFIX}/share/pixmaps
 
-ifndef NOT_ARM
-    AS=${CC_PREFIX}gcc
-    ASFLAGS += $(CFLAGS)
-endif
-
 ifdef USE_SDL
     CXXFLAGS += `sdl2-config --cflags` -D USE_SDL
     LIBS += `sdl2-config --libs`
@@ -385,6 +380,11 @@ else
     DC_PLATFORM=dreamcast
     EXECUTABLE=reicast.$(PLATFORM_EXT)
     EXECUTABLE_NAME=reicast
+endif
+
+ifndef NOT_ARM
+    AS=${CC_PREFIX}gcc
+    ASFLAGS += $(CFLAGS)
 endif
 
 CHAR_EMPTY:=
