@@ -26,7 +26,7 @@ HIDDEN(do_sqw_nommu_area_3)
 CSYM(do_sqw_nommu_area_3):
 add r3,r1,#0x0C000000	@ get ram ptr from r1, part 1
 and r2,r0,#0x20			@ SQ# selection, isolate
-ubfx r0,r0,#5,#19		@ get ram offset
+ubfx r0,r0,#5,#20		@ get ram offset
 add r1,r2				@ SQ# selection, add to SQ ptr
 add r3,#512				@ get ram ptr from r1, part 2
 add r3,r0,lsl #5		@ ram + offset
