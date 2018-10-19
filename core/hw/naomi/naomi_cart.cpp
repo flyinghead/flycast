@@ -353,13 +353,13 @@ bool naomi_cart_LoadRom(char* file)
 			}
 			if (fstart[i] == 0 && fsize[i] >= 0x50)
 			{
-				memcpy(naomi_game_id, RomDest + 0x30, 0x20);
-				naomi_game_id[0x31] = '\0';
+				memcpy(naomi_game_id, RomDest + 0x30, sizeof(naomi_game_id) - 1);
+				naomi_game_id[sizeof(naomi_game_id) - 1] = '\0';
 				if (!strcmp("AWNAOMI                         ", naomi_game_id) && fsize[i] >= 0xFF50)
 				{
-					memcpy(naomi_game_id, RomDest + 0xFF30, 0x20);
+					memcpy(naomi_game_id, RomDest + 0xFF30, sizeof(naomi_game_id) - 1);
 				}
-				for (char *p = naomi_game_id + 0x1f; *p == ' ' && p >= naomi_game_id; *p-- = '\0');
+				for (char *p = naomi_game_id + sizeof(naomi_game_id) - 2; *p == ' ' && p >= naomi_game_id; *p-- = '\0');
 				printf("NAOMI GAME ID [%s]\n", naomi_game_id);
 			}
 		}
