@@ -82,6 +82,8 @@ void CPUUpdateFlags();
 void CPUSoftwareInterrupt(int comment);
 void CPUUndefinedException();
 
+#if FEAT_AREC == DYNAREC_NONE
+
 void arm_Run_(u32 CycleCount)
 {
 	if (!Arm7Enabled)
@@ -100,8 +102,7 @@ void arm_Run_(u32 CycleCount)
 	}
 }
 
-void CPUInterrupt();
-
+#endif
 
 void armt_init();
 //void CreateTables();
@@ -410,22 +411,6 @@ void arm_SetEnabled(bool enabled)
 
 
 
-//Emulate a single arm op, passed in opcode
-//DYNACALL for ECX passing
-
-u32 DYNACALL arm_single_op(u32 opcode)
-{
-	u32 clockTicks=0;
-
-#define NO_OPCODE_READ
-
-	//u32 static_opcode=((opcd_hash&0xFFF0)<<16) |  ((opcd_hash&0x000F)<<4);
-	//u32 static_opcode=((opcd_hash)<<28);
-#include "arm-new.h"
-
-	return clockTicks;
-}
-
 void update_armintc()
 {
 	reg[INTR_PEND].I=e68k_out && armFiqEnable;
@@ -441,8 +426,29 @@ void arm_Run(u32 CycleCount) {
 		libAICA_TimeStep();
 	}
 }
-#else
+#else	// FEAT_AREC != DYNAREC_NONE
+
+#if HOST_OS == OS_LINUX || HOST_OS == OS_DARWIN
+#include <sys/mman.h>
+#endif
+
 extern "C" void CompileCode();
+
+//Emulate a single arm op, passed in opcode
+//DYNACALL for ECX passing
+
+u32 DYNACALL arm_single_op(u32 opcode)
+{
+	u32 clockTicks=0;
+
+#define NO_OPCODE_READ
+
+	//u32 static_opcode=((opcd_hash&0xFFF0)<<16) |  ((opcd_hash&0x000F)<<4);
+	//u32 static_opcode=((opcd_hash)<<28);
+#include "arm-new.h"
+
+	return clockTicks;
+}
 
 /*
 
@@ -1381,16 +1387,37 @@ void armv_prof(OpType opt,u32 op,u32 flags)
 
 naked void DYNACALL arm_compilecode()
 {
+#if HOST_OS == OS_LINUX
+	__asm ( "call CompileCode	\n\t"
+			"mov 0, %%eax		\n\t"
+			"jmp arm_dispatch"
+			:
+			:
+			: "eax"
+	);
+#else
 	__asm
 	{
 		call CompileCode;
 		mov eax,0;
 		jmp arm_dispatch;
 	}
+#endif
 }
 
 naked void DYNACALL arm_mainloop(u32 cycl, void* regs, void* entrypoints)
 {
+#if HOST_OS == OS_LINUX
+	__asm ( "push %%esi			\n\t"
+			"mov %%ecx, %%esi	\n\t"
+			"add  %0, %%esi		\n\t"
+			"mov 0, %%eax		\n\t"
+			"jmp arm_dispatch"
+			:
+			: "im" (reg[CYCL_CNT * 4].I)
+			//: "esi", "eax"
+	);
+#else
 	__asm
 	{
 		push esi
@@ -1401,10 +1428,33 @@ naked void DYNACALL arm_mainloop(u32 cycl, void* regs, void* entrypoints)
 		mov eax,0;
 		jmp arm_dispatch
 	}
+#endif
 }
 
 naked void arm_dispatch()
 {
+#if HOST_OS == OS_LINUX
+arm_disp:
+	__asm goto ( "mov %0, %%eax			\n\t"
+				 "and 0x1FFFFC, %%eax	\n\t"
+				 "cmp %1, 0				\n\t"
+				 "jne arm_dofiq			\n\t"
+//FIXME			 "jmp [%2 + %%eax]"
+			:
+			: "im" (reg[R15_ARM_NEXT * 4].I),
+			  "irm" (reg[INTR_PEND * 4].I),
+			  "im" (EntryPoints)
+			: // "eax"
+			: arm_dofiq
+	);
+
+arm_dofiq:
+	__asm goto ("call CPUFiq	\n\t"
+				"jmp arm_disp"
+				: : :
+				: arm_disp
+	);
+#else
 	__asm
 	{
 arm_disp:
@@ -1418,10 +1468,21 @@ arm_dofiq:
 		call CPUFiq
 		jmp arm_disp
 	}
+#endif
 }
 
 naked void arm_exit()
 {
+#if HOST_OS == OS_LINUX
+arm_exit:
+	__asm ( "mov %0, %%esi \n\t"
+			"pop %%esi	\n\t"
+			"ret		\n\t"
+			:
+			: "irm" (reg[CYCL_CNT * 4].I)
+			: // "esi"
+	);
+#else
 	__asm
 	{
 	arm_exit:
@@ -1429,6 +1490,7 @@ naked void arm_exit()
 		pop esi
 		ret
 	}
+#endif
 }
 #elif	(HOST_CPU == CPU_ARM)
 
@@ -1709,13 +1771,18 @@ extern "C" void CompileCode()
 
 				verify(op_flags&OP_SETS_PC);
 
+				LoadReg(r0,opcd&0xF);
+#if HOST_CPU==CPU_X86
+				x86e->Emit(op_and32, &virt_arm_reg(0), 0xfffffffc);
+#else
+				BIC(r0, r0, 3);
+#endif
 				if (cc!=CC_AL)
 				{
-					LoadFlags();
 					armv_imm_to_reg(R15_ARM_NEXT,pc+4);
+					LoadFlags();
 				}
 
-				LoadReg(r0,opcd&0xF);
 				StoreReg(r0,R15_ARM_NEXT,cc);
 			}
 			break;
@@ -2052,7 +2119,7 @@ void *armGetEmitPtr()
 	return icPtr;
 }
 
-#endif
+#endif // WINDOWS - X86
 
 
 void armt_init()
