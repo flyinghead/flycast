@@ -354,13 +354,13 @@ u32  _ReadMem_naomi(u32 Addr, u32 sz)
 {
 	verify(sz!=1);
 
-	//printf("naomi?WTF? ReadMem: %X, %d\n", Addr, sz);
+	EMUERROR("naomi?WTF? ReadMem: %X, %d", Addr, sz);
 	return 1;
 
 }
 void _WriteMem_naomi(u32 Addr, u32 data, u32 sz)
 {
-	//printf("naomi?WTF? WriteMem: %X <= %X, %d\n", Addr, data, sz);
+	EMUERROR("naomi?WTF? WriteMem: %X <= %X, %d", Addr, data, sz);
 }
 
 
@@ -427,16 +427,16 @@ u32  ReadMem_naomi(u32 Addr, u32 sz)
 	switch(Addr&255)
 	{
 	case 0x3c:
-		//printf("naomi GD? READ: %X, %d\n", Addr, sz);
+		EMUERROR("naomi GD? READ: %X, %d", Addr, sz);
 		return reg_dimm_3c | (NaomiDataRead ? 0 : -1); //pretend the board isn't there for the bios
 	case 0x40:
-		printf("naomi GD? READ: %X, %d\n", Addr, sz);
+		EMUERROR("naomi GD? READ: %X, %d", Addr, sz);
 		return reg_dimm_40;
 	case 0x44:
-		printf("naomi GD? READ: %X, %d\n", Addr, sz);
+		EMUERROR("naomi GD? READ: %X, %d", Addr, sz);
 		return reg_dimm_44;
 	case 0x48:
-		printf("naomi GD? READ: %X, %d\n", Addr, sz);
+		EMUERROR("naomi GD? READ: %X, %d", Addr, sz);
 		return reg_dimm_48;
 
 		//These are known to be valid on normal ROMs and DIMM board
@@ -486,11 +486,11 @@ u32  ReadMem_naomi(u32 Addr, u32 sz)
 		return DmaOffset&0xFFFF;
 
 	case NAOMI_BOARDID_WRITE_addr&255:
-		printf("naomi ReadMem: %X, %d\n", Addr, sz);
+		EMUERROR("naomi ReadMem: %X, %d", Addr, sz);
 		return 1;
 
 	case 0x04C:
-		//printf("naomi GD? READ: %X, %d\n", Addr, sz);
+		EMUERROR("naomi GD? READ: %X, %d", Addr, sz);
 		return reg_dimm_4c;
 
 	case 0x18:
@@ -500,7 +500,7 @@ u32  ReadMem_naomi(u32 Addr, u32 sz)
 
 	default: break;
 	}
-	//printf("naomi?WTF? ReadMem: %X, %d\n", Addr, sz);
+	EMUERROR("naomi?WTF? ReadMem: %X, %d", Addr, sz);
 	return 0;
 
 }
@@ -518,20 +518,20 @@ void WriteMem_naomi(u32 Addr, u32 data, u32 sz)
 			 reg_dimm_4c|=1;*/
 		 }
 		 reg_dimm_3c=data;
-		 printf("naomi GD? Write: %X <= %X, %d\n", Addr, data, sz);
+		 EMUERROR("naomi GD? Write: %X <= %X, %d", Addr, data, sz);
 		 return;
 
 	case 0x40:
 		reg_dimm_40=data;
-		printf("naomi GD? Write: %X <= %X, %d\n", Addr, data, sz);
+		EMUERROR("naomi GD? Write: %X <= %X, %d", Addr, data, sz);
 		return;
 	case 0x44:
 		reg_dimm_44=data;
-		printf("naomi GD? Write: %X <= %X, %d\n", Addr, data, sz);
+		EMUERROR("naomi GD? Write: %X <= %X, %d", Addr, data, sz);
 		return;
 	case 0x48:
 		reg_dimm_48=data;
-		printf("naomi GD? Write: %X <= %X, %d\n", Addr, data, sz);
+		EMUERROR("naomi GD? Write: %X <= %X, %d", Addr, data, sz);
 		return;
 
 	case 0x4C:
@@ -548,7 +548,7 @@ void WriteMem_naomi(u32 Addr, u32 data, u32 sz)
 			naomi_process(reg_dimm_3c,reg_dimm_40,reg_dimm_44,reg_dimm_48);
 		}
 		reg_dimm_4c=data&~0x100;
-		printf("naomi GD? Write: %X <= %X, %d\n", Addr, data, sz);
+		EMUERROR("naomi GD? Write: %X <= %X, %d", Addr, data, sz);
 		return;
 
 		//These are known to be valid on normal ROMs and DIMM board
@@ -563,7 +563,7 @@ void WriteMem_naomi(u32 Addr, u32 data, u32 sz)
 		return;
 
 	case NAOMI_ROM_DATA_addr&255:
-		printf("naomi WriteMem:Write to rom ? sure ? no , i dont think so %%) %X <= %X, %d\n", Addr, data, sz);
+		EMUERROR("naomi WriteMem:Write to rom ? sure ? no , i dont think so %%) %X <= %X, %d", Addr, data, sz);
 		return;
 
 	case NAOMI_DMA_OFFSETH_addr&255:
@@ -605,12 +605,12 @@ void WriteMem_naomi(u32 Addr, u32 data, u32 sz)
 
 		//This should be valid
 	case NAOMI_BOARDID_READ_addr&255:
-		printf("naomi WriteMem: %X <= %X, %d\n", Addr, data, sz);
+		EMUERROR("naomi WriteMem: %X <= %X, %d", Addr, data, sz);
 		return;
 
 	default: break;
 	}
-	//printf("naomi?WTF? WriteMem: %X <= %X, %d\n", Addr, data, sz);
+	EMUERROR("naomi?WTF? WriteMem: %X <= %X, %d", Addr, data, sz);
 }
 
 

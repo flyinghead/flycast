@@ -753,8 +753,6 @@ bool _vmem_reserve()
 	mem_b.size=RAM_SIZE;
 	mem_b.data=(u8*)ptr;
 	
-	printf("A8\n");
-
 	//Area 4
 	//Area 5
 	//Area 6
@@ -765,13 +763,11 @@ bool _vmem_reserve()
 
 	printf("vmem reserve: base: %08X, aram: %08x, vram: %08X, ram: %08X\n",virt_ram_base,aica_ram.data,vram.data,mem_b.data);
 
-	printf("Resetting mem\n");
-
 	aica_ram.Zero();
 	vram.Zero();
 	mem_b.Zero();
 
-	printf("Mem alloc successful!");
+	printf("Mem alloc successful!\n");
 
 	return virt_ram_base!=0;
 }

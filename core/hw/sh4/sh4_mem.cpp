@@ -259,7 +259,7 @@ void WriteMemBlock_nommu_ptr(u32 dst,u32* src,u32 size)
 	u32 dst_msk;
 	if (size % 4 != 0)
 	{
-		printf("WriteMem32_nommu: invalid size %d. Ignored\n", size);
+		EMUERROR("invalid size %d. Ignored", size);
 		return;
 	}
 
@@ -324,7 +324,7 @@ u8* GetMemPtr(u32 Addr,u32 size)
 		case 6:
 		case 7:
 		default:
-			printf("Get MemPtr unsupported area : addr=0x%X\n",Addr);
+			EMUERROR("unsupported area : addr=0x%X",Addr);
 			return 0;
 	}
 }
