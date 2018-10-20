@@ -1797,6 +1797,7 @@ extern "C" void CompileCode()
 				}
 
 				LoadReg(r0,opcd&0xF);
+				// Need x86e->Emit(op_and32, &virt_arm_reg(0), 0xfffffffc);
 				StoreReg(r0,R15_ARM_NEXT,cc);
 			}
 			break;
