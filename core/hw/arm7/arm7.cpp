@@ -1771,18 +1771,18 @@ extern "C" void CompileCode()
 
 				verify(op_flags&OP_SETS_PC);
 
+				if (cc!=CC_AL)
+				{
+					LoadFlags();
+					armv_imm_to_reg(R15_ARM_NEXT,pc+4);
+				}
+
 				LoadReg(r0,opcd&0xF);
 #if HOST_CPU==CPU_X86
 				x86e->Emit(op_and32, &virt_arm_reg(0), 0xfffffffc);
 #else
 				BIC(r0, r0, 3);
 #endif
-				if (cc!=CC_AL)
-				{
-					armv_imm_to_reg(R15_ARM_NEXT,pc+4);
-					LoadFlags();
-				}
-
 				StoreReg(r0,R15_ARM_NEXT,cc);
 			}
 			break;
