@@ -315,7 +315,11 @@ bool naomi_cart_LoadRom(char* file)
 	{
 		for (size_t i = 0; i < files.size(); i++)
 			if (RomCacheMap[i] != INVALID_FD)
+#if HOST_OS == OS_WINDOWS
+				CloseHandle(RomCacheMap[i]);
+#else
 				close(RomCacheMap[i]);
+#endif
 		return false;
 	}
 

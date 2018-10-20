@@ -141,9 +141,6 @@
     <ClCompile Include="..\core\hw\holly\sb.cpp">
       <Filter>hw\holly</Filter>
     </ClCompile>
-    <ClCompile Include="..\core\hw\holly\sb_dma.cpp">
-      <Filter>hw\holly</Filter>
-    </ClCompile>
     <ClCompile Include="..\core\hw\holly\sb_mem.cpp">
       <Filter>hw\holly</Filter>
     </ClCompile>
@@ -429,6 +426,18 @@
     <ClCompile Include="..\core\cfg\ini.cpp">
       <Filter>cfg</Filter>
     </ClCompile>
+    <ClCompile Include="..\core\deps\xbrz\xbrz.cpp" />
+    <ClCompile Include="..\core\hw\aica\dsp_interp.cpp" />
+    <ClCompile Include="..\core\hw\modem\modem.cpp" />
+    <ClCompile Include="..\core\hw\modem\picoppp.cpp" />
+    <ClCompile Include="..\core\rend\gl4\abuffer.cpp" />
+    <ClCompile Include="..\core\rend\gl4\gldraw.cpp" />
+    <ClCompile Include="..\core\rend\gl4\gles.cpp" />
+    <ClCompile Include="..\core\rend\gl4\gltex.cpp" />
+    <ClCompile Include="..\core\serialize.cpp" />
+    <ClCompile Include="..\core\deps\xxhash\xxhash.c">
+      <Filter>deps\xxhash</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="hw">
@@ -566,6 +575,9 @@
     <Filter Include="hw\naomi">
       <UniqueIdentifier>{1752487d-0739-47bf-8c6b-1d38e6f389f7}</UniqueIdentifier>
     </Filter>
+    <Filter Include="deps\xxhash">
+      <UniqueIdentifier>{83d7e5cc-cbd2-40e3-b2c0-79cc53b1dd9a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\core\hw\aica\aica.h">
@@ -590,9 +602,6 @@
       <Filter>hw\arm7</Filter>
     </ClInclude>
     <ClInclude Include="..\core\hw\arm7\arm-new.h">
-      <Filter>hw\arm7</Filter>
-    </ClInclude>
-    <ClInclude Include="..\core\hw\arm7\resource.h">
       <Filter>hw\arm7</Filter>
     </ClInclude>
     <ClInclude Include="..\core\hw\arm7\virt_arm.h">
@@ -946,6 +955,11 @@
     <ClInclude Include="..\core\hw\sh4\modules\mmu_impl.h">
       <Filter>hw\sh4\modules</Filter>
     </ClInclude>
+    <ClInclude Include="..\core\hw\modem\modem.h" />
+    <ClInclude Include="..\core\hw\modem\modem_regs.h" />
+    <ClInclude Include="..\core\hw\modem\picoppp.h" />
+    <ClInclude Include="..\core\rend\gles\glcache.h" />
+    <ClInclude Include="..\core\rend\gl4\gl4.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\core\deps\zlib\Makefile">

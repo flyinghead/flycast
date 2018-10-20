@@ -1479,19 +1479,21 @@ struct maple_naomi_jamma : maple_sega_controller
 		{
 			memcpy(temp_buffer, data, length);
 		}
-		u32 repeat_len = jvs_repeat_request[node_id - 1][0];
-		if (use_repeat && repeat_len > 0)
-		{
-			memcpy(temp_buffer + length, &jvs_repeat_request[node_id - 1][1], repeat_len);
-			length += repeat_len;
-		}
 		if (node_id == ALL_NODES)
 		{
 			for (int i = 0; i < io_boards.size(); i++)
 				send_jvs_message(i + 1, channel, length, temp_buffer);
 		}
 		else
+		{
+			u32 repeat_len = jvs_repeat_request[node_id - 1][0];
+			if (use_repeat && repeat_len > 0)
+			{
+				memcpy(temp_buffer + length, &jvs_repeat_request[node_id - 1][1], repeat_len);
+				length += repeat_len;
+			}
 			send_jvs_message(node_id, channel, length, temp_buffer);
+		}
 	}
 
 	bool receive_jvs_messages(u32 channel)
@@ -1995,15 +1997,17 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 		break;
 
 	case 0x10:	// Read ID data
-		JVS_STATUS1();	// status
-		JVS_STATUS1();	// report
-		const static char ID_837_13551[] = "SEGA ENTERPRISES,LTD.;I/O BD JVS;837-13551 ;Ver1.00;98/10";
-		const static char ID_837_13938[] = "SEGA ENTERPRISES,LTD.;837-13938 ENCORDER BD  ;Ver0.01;99/08";		// Virtua Golf, Outtrigger, Shootout Pool
-		const static char ID_837_13844[] = "SEGA ENTERPRISES,LTD.;837-13844-01 I/O CNTL BD2 ;Ver1.00;99/07";	// Sega Marine Fishing
+		{
+			JVS_STATUS1();	// status
+			JVS_STATUS1();	// report
+			const static char ID_837_13551[] = "SEGA ENTERPRISES,LTD.;I/O BD JVS;837-13551 ;Ver1.00;98/10";
+			const static char ID_837_13938[] = "SEGA ENTERPRISES,LTD.;837-13938 ENCORDER BD  ;Ver0.01;99/08";		// Virtua Golf, Outtrigger, Shootout Pool
+			const static char ID_837_13844[] = "SEGA ENTERPRISES,LTD.;837-13844-01 I/O CNTL BD2 ;Ver1.00;99/07";	// Sega Marine Fishing
 
-		for (const char *p = rotary_encoders ? ID_837_13938 : ID_837_13551; *p != 0; )
-			JVS_OUT(*p++);
-		JVS_OUT(0);
+			for (const char *p = rotary_encoders ? ID_837_13938 : ID_837_13551; *p != 0; )
+				JVS_OUT(*p++);
+			JVS_OUT(0);
+		}
 		break;
 
 	case 0x11:	// Get command format version

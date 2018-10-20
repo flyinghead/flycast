@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.24720.0
+# Visual Studio 15
+VisualStudioVersion = 15.0.28010.2046
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "reicast", "reicast.vcxproj", "{58B14048-EACB-4780-8B1E-9C84C2C30A8E}"
 EndProject
@@ -14,6 +14,10 @@ Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
 		Debug|x86 = Debug|x86
+		Naomi Debug|x64 = Naomi Debug|x64
+		Naomi Debug|x86 = Naomi Debug|x86
+		Naomi Release|x64 = Naomi Release|x64
+		Naomi Release|x86 = Naomi Release|x86
 		Release|x64 = Release|x64
 		Release|x86 = Release|x86
 	EndGlobalSection
@@ -22,6 +26,14 @@ Global
 		{58B14048-EACB-4780-8B1E-9C84C2C30A8E}.Debug|x64.Build.0 = Slow|x64
 		{58B14048-EACB-4780-8B1E-9C84C2C30A8E}.Debug|x86.ActiveCfg = Slow|Win32
 		{58B14048-EACB-4780-8B1E-9C84C2C30A8E}.Debug|x86.Build.0 = Slow|Win32
+		{58B14048-EACB-4780-8B1E-9C84C2C30A8E}.Naomi Debug|x64.ActiveCfg = Naomi Debug|x64
+		{58B14048-EACB-4780-8B1E-9C84C2C30A8E}.Naomi Debug|x64.Build.0 = Naomi Debug|x64
+		{58B14048-EACB-4780-8B1E-9C84C2C30A8E}.Naomi Debug|x86.ActiveCfg = Naomi Debug|Win32
+		{58B14048-EACB-4780-8B1E-9C84C2C30A8E}.Naomi Debug|x86.Build.0 = Naomi Debug|Win32
+		{58B14048-EACB-4780-8B1E-9C84C2C30A8E}.Naomi Release|x64.ActiveCfg = Naomi Release|x64
+		{58B14048-EACB-4780-8B1E-9C84C2C30A8E}.Naomi Release|x64.Build.0 = Naomi Release|x64
+		{58B14048-EACB-4780-8B1E-9C84C2C30A8E}.Naomi Release|x86.ActiveCfg = Naomi Release|Win32
+		{58B14048-EACB-4780-8B1E-9C84C2C30A8E}.Naomi Release|x86.Build.0 = Naomi Release|Win32
 		{58B14048-EACB-4780-8B1E-9C84C2C30A8E}.Release|x64.ActiveCfg = Fast|x64
 		{58B14048-EACB-4780-8B1E-9C84C2C30A8E}.Release|x64.Build.0 = Fast|x64
 		{58B14048-EACB-4780-8B1E-9C84C2C30A8E}.Release|x86.ActiveCfg = Fast|Win32
@@ -29,5 +41,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {5919AAB6-FF44-4C99-8537-EC9FDF629E9A}
 	EndGlobalSection
 EndGlobal
