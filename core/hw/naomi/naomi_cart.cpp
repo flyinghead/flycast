@@ -294,7 +294,12 @@ bool naomi_cart_LoadRom(char* file)
 		}
 
 #if HOST_OS == OS_WINDOWS
+		// Windows doesn't allow mapping a read-only file to a memory area larger than the file size
+		BY_HANDLE_FILE_INFORMATION file_info;
+		GetFileInformationByHandle(RomCache, &file_info);
+		fsize[i] = file_info.nFileSizeLow;
 		RomCacheMap[i] = CreateFileMapping(RomCache, 0, PAGE_READONLY, 0, fsize[i], 0);
+		verify(RomCacheMap[i] != NULL);
 		verify(CloseHandle(RomCache));
 #else
 		RomCacheMap[i] = RomCache;
