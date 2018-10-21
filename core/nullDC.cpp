@@ -229,6 +229,12 @@ void LoadSpecialSettings()
 		printf("Enabling specific JVS setup for game %s\n", naomi_game_id);
 		settings.input.JammaSetup = 3;
 	}
+	if (!strcmp("COSMIC SMASH IN JAPAN", naomi_game_id))
+	{
+		printf("Enabling translucent depth multipass for game %s\n", naomi_game_id);
+		settings.rend.TranslucentPolygonDepthMask = true;
+
+	}
 #endif
 }
 
