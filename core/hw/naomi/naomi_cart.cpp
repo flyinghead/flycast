@@ -176,65 +176,87 @@ bool naomi_cart_LoadRom(char* file)
 	strncpy(t, file, sizeof(t));
 	t[sizeof(t) - 1] = '\0';
 
-	FILE* fl = fopen(t, "r");
-	if (!fl)
-		return false;
-
-	char* line = fgets(t, 512, fl);
-	if (!line)
-	{
-		fclose(fl);
-		return false;
-	}
-
-	char* eon = strstr(line, "\n");
-	if (!eon)
-		printf("+Loading naomi rom that has no name\n");
-	else
-		*eon = 0;
-
-	printf("+Loading naomi rom : %s\n", line);
-
-	line = fgets(t, 512, fl);
-	if (!line)
-	{
-		fclose(fl);
-		return false;
-	}
-
 	Naomi_Mapping = naomi_default_mapping;
 
 	vector<string> files;
 	vector<u32> fstart;
 	vector<u32> fsize;
-
 	u32 setsize = 0;
-	RomSize = 0;
 
-	while (line)
+	char *pdot = strrchr(file, '.');
+	if (pdot != NULL && (!strcmp(pdot, ".lst") || !strcmp(pdot, ".LST")))
 	{
-		if (line[0] == '#')
-			parse_comment(line);
-		else
-		{
-			char filename[512];
-			u32 addr, sz;
-			if (sscanf(line, "\"%[^\"]\",%x,%x", filename, &addr, &sz) == 3)
-			{
-				files.push_back(filename);
-				fstart.push_back(addr);
-				fsize.push_back(sz);
-				setsize += sz;
-				RomSize = max(RomSize, (addr + sz));
-			}
-			else if (line[0] != 0 && line[0] != '\n' && line[0] != '\r')
-				printf("Warning: invalid line in .lst file: %s\n", line);
-		}
-		line = fgets(t, 512, fl);
-	}
-	fclose(fl);
+		// LST file
 
-	printf("+%d romfiles, %.2f MB set size, %.2f MB set address space\n", files.size(), setsize / 1024.f / 1024.f, RomSize / 1024.f / 1024.f);
+		FILE* fl = fopen(t, "r");
+		if (!fl)
+			return false;
+
+		char* line = fgets(t, 512, fl);
+		if (!line)
+		{
+			fclose(fl);
+			return false;
+		}
+
+		char* eon = strstr(line, "\n");
+		if (!eon)
+			printf("+Loading naomi rom that has no name\n");
+		else
+			*eon = 0;
+
+		printf("+Loading naomi rom : %s\n", line);
+
+		line = fgets(t, 512, fl);
+		if (!line)
+		{
+			fclose(fl);
+			return false;
+		}
+
+		RomSize = 0;
+
+		while (line)
+		{
+			if (line[0] == '#')
+				parse_comment(line);
+			else
+			{
+				char filename[512];
+				u32 addr, sz;
+				if (sscanf(line, "\"%[^\"]\",%x,%x", filename, &addr, &sz) == 3)
+				{
+					files.push_back(filename);
+					fstart.push_back(addr);
+					fsize.push_back(sz);
+					setsize += sz;
+					RomSize = max(RomSize, (addr + sz));
+				}
+				else if (line[0] != 0 && line[0] != '\n' && line[0] != '\r')
+					printf("Warning: invalid line in .lst file: %s\n", line);
+			}
+			line = fgets(t, 512, fl);
+		}
+		fclose(fl);
+	}
+	else
+	{
+		// BIN loading
+		FILE* fp = fopen(t, "rb");
+		if (fp == NULL)
+			return false;
+
+		fseek(fp, 0, SEEK_END);
+		u32 file_size = ftell(fp);
+		fclose(fp);
+		files.push_back(t);
+		fstart.push_back(0);
+		fsize.push_back(file_size);
+		setsize = file_size;
+		RomSize = file_size;
+	}
+
+	printf("+%ld romfiles, %.2f MB set size, %.2f MB set address space\n", files.size(), setsize / 1024.f / 1024.f, RomSize / 1024.f / 1024.f);
 
 	if (RomCacheMap)
 	{
@@ -244,13 +266,6 @@ bool naomi_cart_LoadRom(char* file)
 
 	RomCacheMapCount = (u32)files.size();
 	RomCacheMap = new fd_t[files.size()]();
-
-	// FIXME: Data loss if buffer is too small
-	strncpy(t, file, sizeof(t));
-	t[sizeof(t) - 1] = '\0';
-
-	t[folder_pos] = 0;
-	strcat(t, "ndcn-composed.cache");
 
 	//Allocate space for the ram, so we are sure we have a segment of continius ram
 #if HOST_OS == OS_WINDOWS
@@ -262,17 +277,24 @@ bool naomi_cart_LoadRom(char* file)
 	verify(RomPtr != 0);
 	verify(RomPtr != (void*)-1);
 
-	// FIXME: Data loss if buffer is too small
-	strncpy(t, file, sizeof(t));
-	t[sizeof(t) - 1] = '\0';
-
 	bool load_error = false;
 
 	//Create File Mapping Objects
 	for (size_t i = 0; i<files.size(); i++)
 	{
-		t[folder_pos] = 0;
-		strcat(t, files[i].c_str());
+		if (files[i][0] != '/' && files[i][0] != '\\')
+		{
+			strncpy(t, file, sizeof(t));
+			t[sizeof(t) - 1] = '\0';
+			t[folder_pos] = 0;
+			strcat(t, files[i].c_str());
+		}
+		else
+		{
+			strncpy(t, files[i].c_str(), sizeof(t));
+			t[sizeof(t) - 1] = '\0';
+		}
+
 		fd_t RomCache;
 
 		if (strcmp(files[i].c_str(), "null") == 0)
@@ -287,7 +309,7 @@ bool naomi_cart_LoadRom(char* file)
 #endif
 		if (RomCache == INVALID_FD)
 		{
-			printf("-Unable to read file %s: error %d\n", files[i].c_str(), errno);
+			printf("-Unable to read file %s: error %d\n", t, errno);
 			RomCacheMap[i] = INVALID_FD;
 			load_error = true;
 			break;
@@ -425,7 +447,7 @@ void* naomi_cart_GetPtr(u32 offset, u32 size) {
 	offset &= 0x0FFFffff;
 
 	verify(offset < RomSize);
-	verify((offset + size) < RomSize);
+	verify((offset + size) <= RomSize);
 
 	return &RomPtr[offset];
 }
