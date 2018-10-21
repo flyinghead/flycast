@@ -24,6 +24,8 @@
 #include "deps/zlib/zlib.h"
 #include "deps/xxhash/xxhash.h"
 
+#define SAVE_EPROM 1
+
 const char* maple_sega_controller_name = "Dreamcast Controller";
 const char* maple_sega_vmu_name = "Visual Memory";
 const char* maple_sega_kbd_name = "Emulated Dreamcast Keyboard";
@@ -1484,7 +1486,7 @@ struct maple_naomi_jamma : maple_sega_controller
 			for (int i = 0; i < io_boards.size(); i++)
 				send_jvs_message(i + 1, channel, length, temp_buffer);
 		}
-		else
+		else if (node_id >= 1 && node_id <= 32)
 		{
 			u32 repeat_len = jvs_repeat_request[node_id - 1][0];
 			if (use_repeat && repeat_len > 0)
