@@ -2295,7 +2295,7 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 
 				case 0x30:	// substract coin
 					if (buffer_in[cmdi + 1] == 1)
-						coin_count -= buffer_in[cmdi + 2] << 8 + buffer_in[cmdi + 3];
+						coin_count -= (buffer_in[cmdi + 2] << 8) + buffer_in[cmdi + 3];
 					JVS_STATUS1();	// report byte
 					cmdi += 4;
 					break;
