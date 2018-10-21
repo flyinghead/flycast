@@ -188,6 +188,9 @@ u16 kcode[4];
 u32 vks[4];
 s8 joyx[4],joyy[4];
 u8 rt[4],lt[4];
+extern bool coin_chute;
+extern bool naomi_test_button;
+
 #define key_CONT_C            (1 << 0)
 #define key_CONT_B            (1 << 1)
 #define key_CONT_A            (1 << 2)
@@ -257,7 +260,15 @@ void UpdateInputState(u32 port)
 			DiscSwap();
 		if (GetAsyncKeyState(VK_ESCAPE))
 			dc_stop();
-	}
+#if DC_PLATFORM == DC_PLATFORM_NAOMI
+		if (GetAsyncKeyState(VK_F8))
+			coin_chute = true;
+		naomi_test_button = GetAsyncKeyState(VK_F7);
+#endif
+		// also Naomi service button
+		if (GetAsyncKeyState(VK_F6))
+			kcode[port] &= ~key_CONT_C;
+}
 
 void UpdateController(u32 port)
 	{
