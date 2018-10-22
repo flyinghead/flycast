@@ -814,7 +814,6 @@ void Update_naomi()
 static u8 mem600[0x800];
 
 u32 libExtDevice_ReadMem_A0_006(u32 addr,u32 size) {
-	verify(size == 1);
 	addr &= 0x7ff;
 	//printf("libExtDevice_ReadMem_A0_006 %d@%08x: %x\n", size, addr, mem600[addr]);
 	switch (addr)
@@ -828,10 +827,18 @@ u32 libExtDevice_ReadMem_A0_006(u32 addr,u32 size) {
 //		printf("NAOMI 600284 read %x\n", mem600[addr]);
 		break;
 	}
-	return mem600[addr];
+	switch (size)
+	{
+	case 1:
+		return mem600[addr];
+	case 2:
+		return *(u16 *)&mem600[addr & ~1];
+	case 4:
+		return *(u32 *)&mem600[addr & ~3];
+	}
 }
+
 void libExtDevice_WriteMem_A0_006(u32 addr,u32 data,u32 size) {
-	verify(size == 1);
 	addr &= 0x7ff;
 	//printf("libExtDevice_WriteMem_A0_006 %d@%08x: %x\n", size, addr, data);
 	switch (addr)
@@ -842,5 +849,18 @@ void libExtDevice_WriteMem_A0_006(u32 addr,u32 data,u32 size) {
 	default:
 		break;
 	}
-	mem600[addr] = data;
+	switch (size)
+	{
+	case 1:
+		mem600[addr] = data;
+		break;
+	case 2:
+		if ((addr & 1) == 0)
+			*(u16 *)&mem600[addr] = data;
+		break;
+	case 4:
+		if ((addr & 3) == 0)
+			*(u32 *)&mem600[addr] = data;
+		break;
+	}
 }
