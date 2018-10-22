@@ -57,7 +57,7 @@ bkpt #0
 #else
 bkpt
 #endif
-ubfx r0,r3,#5,#18		@ get vram offset
+ubfx r0,r3,#5,#19		@ get vram offset
 add r3,r1,#0x04000000	@ get vram ptr from r1, part 1
 add r3,#512				@ get ram ptr from r1, part 2
 add r3,r0,lsl #5		@ ram + offset
@@ -239,13 +239,9 @@ push {r4,r5,r8,r9,lr}
 .global CSYM(arm_dispatch)
 HIDDEN(arm_dispatch)
 CSYM(arm_dispatch):
-	#ifdef TARGET_IPHONE
 	ldrd r0,r1,[r8,#184]		@load: Next PC, interrupt
-	#else
-	ldrd r0,[r8,#184]		@load: Next PC, interrupt
-	#endif
 
-	ubfx r2,r0,#2,#19
+	ubfx r2,r0,#2,#21
 	cmp r1,#0
 	bne arm_dofiq
 
