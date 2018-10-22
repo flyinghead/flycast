@@ -69,7 +69,10 @@ bool CHDDisc::TryOpen(const wchar* file)
 	chd_error err=chd_open(file,CHD_OPEN_READ,0,&chd);
 
 	if (err!=CHDERR_NONE)
+	{
+		printf("chd: chd_open failed for file %s: %d\n", file, err);
 		return false;
+	}
 
 	printf("chd: parsing file %s\n",file);
 

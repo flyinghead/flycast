@@ -137,8 +137,9 @@ Disc* OpenDisc(const wchar* fn)
 		rv = drivers[i](fn);
 
 		if (rv && cdi_parse == drivers[i]) {
-			const wchar warn_str[] = "Warning: CDI Image Loaded!\n  Many CDI images are known to be defective, GDI or CHD format is preferred. Please only file bug reports when using images known to be good (GDI or CHD).";
-			printf(warn_str);
+			const wchar warn_str[] = "Warning: CDI Image Loaded!\n  Many CDI images are known to be defective, GDI or CHD format is preferred. "
+					"Please only file bug reports when using images known to be good (GDI or CHD).";
+			printf("%s\n", warn_str);
 
 			break;
 		}
