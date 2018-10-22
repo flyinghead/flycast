@@ -4,6 +4,8 @@
 
     <string name="app_site" translatable="false">http://reicast.com</string>
 
+    <string name="flavor" translatable="false">dreamcast</string>
+
     <string-array name="depth">
         <item>16</item>
         <item>24</item>

@@ -28,6 +28,7 @@ import com.android.util.FileUtils;
 import com.reicast.emulator.Emulator;
 import com.reicast.emulator.GL2JNIActivity;
 import com.reicast.emulator.GL2JNINative;
+import com.reicast.emulator.R;
 import com.reicast.emulator.config.Config;
 import com.reicast.emulator.emu.OnScreenMenu.FpsPopup;
 import com.reicast.emulator.periph.Gamepad;
@@ -472,7 +473,11 @@ public class GL2JNIView extends GLSurfaceView
             case MotionEvent.ACTION_DOWN:
                 break;
         }
-
+        if (getResources().getString(R.string.flavor).equals("naomi"))
+        {
+            if (lt[0] != 0)
+                rv &= ~VJoy.key_CONT_C; // Service key/coin
+        }
         kcode_raw[0] = rv;
         jx[0] = get_anal(11, 0);
         jy[0] = get_anal(11, 1);

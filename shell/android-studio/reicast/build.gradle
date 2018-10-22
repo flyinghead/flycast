@@ -67,6 +67,17 @@ android {
         }
     }
 
+    flavorDimensions "systemtype"
+    productFlavors {
+        dreamcast {
+        }
+        naomi {
+            applicationId = "com.reicast.emulator.naomi"
+            versionNameSuffix " Naomi"
+            externalNativeBuild { ndkBuild { arguments "NAOMI=1" } }
+        }
+    }
+
     externalNativeBuild {
         ndkBuild {
             path 'src/main/jni/Android.mk'

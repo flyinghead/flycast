@@ -25,7 +25,7 @@ public class Config {
 
 	public static final String pref_vmu = "vmu_floating";
 
-	public static String git_api = "https://api.github.com/repos/reicast/reicast-emulator/commits";
+	public static String git_api = "https://api.github.com/repos/reicast/reicast-emulator/commits/fh/mymaster";
 	public static String git_issues = "https://github.com/reicast/reicast-emulator/issues/";
 
 	public static boolean externalIntent = false;

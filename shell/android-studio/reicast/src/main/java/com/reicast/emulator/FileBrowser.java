@@ -306,7 +306,7 @@ public class FileBrowser extends Fragment {
 	}
 
 	private void createListHeader(String header_text, View view, boolean hasBios) {
-		if (hasBios) {
+		if (hasBios && getResources().getString(R.string.flavor).equals("dreamcast")) {
 			final View childview = getActivity().getLayoutInflater().inflate(
 					R.layout.bios_list_item, null, false);
 

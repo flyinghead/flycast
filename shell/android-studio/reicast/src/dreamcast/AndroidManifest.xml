@@ -1,0 +1,46 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.reicast.emulator"
+    xmlns:tools="http://schemas.android.com/tools">
+    <application android:name="com.reicast.emulator.Emulator">
+	    <activity
+		    android:name="com.reicast.emulator.MainActivity">
+		    <intent-filter>
+		        <action android:name="android.intent.action.VIEW" />
+		
+		        <category android:name="android.intent.category.DEFAULT" />
+		        <category android:name="android.intent.category.BROWSABLE" />
+		
+		        <data
+		            android:host="*"
+		            android:mimeType="*/*"
+		            android:pathPattern=".*\\.GDI"
+		            android:scheme="file" />
+		        <data
+		            android:host="*"
+		            android:mimeType="*/*"
+		            android:pathPattern=".*\\.gdi"
+		            android:scheme="file" />
+		        <data
+		            android:host="*"
+		            android:mimeType="*/*"
+		            android:pathPattern=".*\\.CHD"
+		            android:scheme="file" />
+		        <data
+		            android:host="*"
+		            android:mimeType="*/*"
+		            android:pathPattern=".*\\.chd"
+		            android:scheme="file" />
+		        <data
+		            android:host="*"
+		            android:mimeType="*/*"
+		            android:pathPattern=".*\\.CDI"
+		            android:scheme="file" />
+		        <data
+		            android:host="*"
+		            android:mimeType="*/*"
+		            android:pathPattern=".*\\.cdi"
+		            android:scheme="file" />
+		    </intent-filter>
+		</activity>
+	</application>
+</manifest>

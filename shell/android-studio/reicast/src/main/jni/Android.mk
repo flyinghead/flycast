@@ -54,6 +54,12 @@ LOCAL_CFLAGS  := $(RZDCY_CFLAGS) -fPIC -fvisibility=hidden -ffunction-sections -
 LOCAL_CXXFLAGS  := $(RZDCY_CXXFLAGS) -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -ffunction-sections -fdata-sections
 LOCAL_CPPFLAGS  := $(RZDCY_CXXFLAGS) -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -ffunction-sections -fdata-sections
 
+ifdef NAOMI
+LOCAL_CFLAGS += -DTARGET_NAOMI=1
+LOCAL_CPPFLAGS += -DTARGET_NAOMI=1
+LOCAL_CXXFLAGS += -DTARGET_NAOMI=1
+endif
+
 # LOCAL_CFLAGS += -std=c++11
 LOCAL_CXXFLAGS += -std=c++11 -fopenmp
 LOCAL_LDFLAGS  += -fopenmp
