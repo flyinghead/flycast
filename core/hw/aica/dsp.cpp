@@ -155,6 +155,11 @@ void dsp_init()
 
 
 	//os_MakeExecutable(dsp.DynCode,sizeof(dsp.DynCode));
+#if HOST_OS == OS_WINDOWS
+	DWORD old;
+	VirtualProtect(dsp.DynCode, sizeof(dsp.DynCode), PAGE_EXECUTE_READWRITE, &old);
+#endif
+
 }
 void dsp_recompile();
 void DecodeInst(u32 *IPtr,_INST *i)
