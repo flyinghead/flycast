@@ -835,6 +835,9 @@ u32 libExtDevice_ReadMem_A0_006(u32 addr,u32 size) {
 		return *(u16 *)&mem600[addr & ~1];
 	case 4:
 		return *(u32 *)&mem600[addr & ~3];
+	default:
+		die("Invalid size");
+		return 0;
 	}
 }
 
