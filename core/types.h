@@ -466,13 +466,13 @@ using namespace std;
 #endif
 
 //no inline -- fixme
-#if HOST_OS==OS_WINDOWS
+#if BUILD_COMPILER == COMPILER_VC
 #define NOINLINE __declspec(noinline)
 #else
 #define NOINLINE __attribute__ ((noinline))
 #endif
 
-#if HOST_OS==OS_WINDOWS
+#if BUILD_COMPILER == COMPILER_VC
 #define likely(x) x
 #define unlikely(x) x
 #else

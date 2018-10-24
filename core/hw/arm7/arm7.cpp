@@ -1,6 +1,6 @@
 #include "arm7.h"
 #include "arm_mem.h"
-
+#include "virt_arm.h"
 
 #include <map>
 
@@ -715,7 +715,12 @@ void armv_prof(OpType opt,u32 op,u32 flg);
 
 extern "C" void arm_dispatch();
 extern "C" void arm_exit();
-extern "C" void DYNACALL arm_mainloop(u32 cycl, void* regs, void* entrypoints);
+extern "C" void DYNACALL
+#if BUILD_COMPILER == COMPILER_GCC
+	// Avoid inlining / duplicating / whatever
+	__attribute__ ((optimize(0)))
+#endif
+		arm_mainloop(u32 cycl, void* regs, void* entrypoints);
 extern "C" void DYNACALL arm_compilecode();
 
 template <bool L, bool B>
@@ -1251,7 +1256,6 @@ u32 nfb,ffb,bfb,mfb;
 */
 
 #include "emitter/x86_emitter.h"
-#include "virt_arm.h"
 
 static x86_block* x86e;
 
@@ -1389,11 +1393,9 @@ naked void DYNACALL arm_compilecode()
 {
 #if HOST_OS == OS_LINUX
 	__asm ( "call CompileCode	\n\t"
-			"mov 0, %%eax		\n\t"
-			"jmp arm_dispatch"
+			"mov $0, %%eax		\n\t"
+			"jmp arm_dispatch	\n"
 			:
-			:
-			: "eax"
 	);
 #else
 	__asm
@@ -1410,12 +1412,15 @@ naked void DYNACALL arm_mainloop(u32 cycl, void* regs, void* entrypoints)
 #if HOST_OS == OS_LINUX
 	__asm ( "push %%esi			\n\t"
 			"mov %%ecx, %%esi	\n\t"
-			"add  %0, %%esi		\n\t"
-			"mov 0, %%eax		\n\t"
-			"jmp arm_dispatch"
+			"add %0, %%esi		\n\t"
+			"mov $0, %%eax		\n\t"
+			"jmp arm_dispatch	\n\t"
+
+		"arm_exit_linux:		\n\t"
+			"mov %%esi, %0 		\n\t"
+			"pop %%esi			\n"
 			:
-			: "im" (reg[CYCL_CNT * 4].I)
-			//: "esi", "eax"
+			: "m" (reg[CYCL_CNT].I)
 	);
 #else
 	__asm
@@ -1434,25 +1439,22 @@ naked void DYNACALL arm_mainloop(u32 cycl, void* regs, void* entrypoints)
 naked void arm_dispatch()
 {
 #if HOST_OS == OS_LINUX
-arm_disp:
-	__asm goto ( "mov %0, %%eax			\n\t"
-				 "and 0x1FFFFC, %%eax	\n\t"
-				 "cmp %1, 0				\n\t"
-				 "jne arm_dofiq			\n\t"
-//FIXME			 "jmp [%2 + %%eax]"
+	__asm ( "arm_dispatch:				\n\t"
+				"mov %0, %%eax			\n\t"
+			 	"and $0x1FFFFC, %%eax	\n\t"
+				"cmp $0, %1				\n\t"
+			 	"jne arm_dofiq			\n\t"
+			 	"jmp *%2(%%eax)			\n"
 			:
-			: "im" (reg[R15_ARM_NEXT * 4].I),
-			  "irm" (reg[INTR_PEND * 4].I),
-			  "im" (EntryPoints)
-			: // "eax"
-			: arm_dofiq
+			: "m" (reg[R15_ARM_NEXT].I),
+			  "m" (reg[INTR_PEND].I),
+			  "m" (EntryPoints)
 	);
 
-arm_dofiq:
-	__asm goto ("call CPUFiq	\n\t"
-				"jmp arm_disp"
-				: : :
-				: arm_disp
+	__asm ("arm_dofiq:					\n\t"
+				"call CPUFiq			\n\t"
+				"jmp arm_dispatch		\n"
+			:
 	);
 #else
 	__asm
@@ -1474,14 +1476,7 @@ arm_dofiq:
 naked void arm_exit()
 {
 #if HOST_OS == OS_LINUX
-arm_exit:
-	__asm ( "mov %0, %%esi \n\t"
-			"pop %%esi	\n\t"
-			"ret		\n\t"
-			:
-			: "irm" (reg[CYCL_CNT * 4].I)
-			: // "esi"
-	);
+	__asm ( "jmp arm_exit_linux" :);
 #else
 	__asm
 	{
@@ -2093,9 +2088,10 @@ void FlushCache()
 
 
 
-#if HOST_CPU==CPU_X86 && HOST_OS == OS_WINDOWS
-
+#if HOST_CPU == CPU_X86
+#if HOST_OS == OS_WINDOWS
 #include <Windows.h>
+#endif
 
 // These have to be declared somewhere or linker dies
 u8* ARM::emit_opt=0;
@@ -2119,7 +2115,7 @@ void *armGetEmitPtr()
 	return icPtr;
 }
 
-#endif // WINDOWS - X86
+#endif // X86
 
 
 void armt_init()
