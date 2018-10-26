@@ -547,6 +547,7 @@ public:
 
 			ta_type_lut[i]=rv;
 		}
+		VerxexDataFP = NullVertexData;
 	}
 	/*
 	Volume,Col_Type,Texture,Offset,Gouraud,16bit_UV
