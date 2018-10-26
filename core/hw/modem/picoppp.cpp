@@ -567,6 +567,12 @@ void close_native_sockets()
 		closesocket(it->second);
 	}
 	tcp_sockets.clear();
+	for (auto it = tcp_connecting_sockets.begin(); it != tcp_connecting_sockets.end(); it++)
+	{
+		pico_socket_close(it->first);
+		closesocket(it->second);
+	}
+	tcp_connecting_sockets.clear();
 }
 
 static int modem_set_speed(struct pico_device *dev, uint32_t speed)
