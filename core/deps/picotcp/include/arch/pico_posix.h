@@ -16,7 +16,11 @@
    #define TIME_PRESCALE
    #define PICO_SUPPORT_THREADING
  */
+#ifdef RELEASE
+#define dbg(...)
+#else
 #define dbg printf
+#endif
 
 #define stack_fill_pattern(...) do {} while(0)
 #define stack_count_free_words(...) do {} while(0)

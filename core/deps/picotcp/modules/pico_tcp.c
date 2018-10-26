@@ -1241,6 +1241,8 @@ int pico_tcp_initconn(struct pico_socket *s)
     hdr->trans.sport = ts->sock.local_port;
     hdr->trans.dport = ts->sock.remote_port;
 
+    syn->local_ip.addr = s->local_addr.ip4.addr;		// Masqueraded
+
     hdr->crc = 0;
     hdr->crc = short_be(pico_tcp_checksum(syn));
 

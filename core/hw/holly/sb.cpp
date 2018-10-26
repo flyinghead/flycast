@@ -10,6 +10,7 @@
 #include "hw/gdrom/gdrom_if.h"
 #include "hw/maple/maple_if.h"
 #include "hw/aica/aica_if.h"
+#include "hw/modem/modem.h"
 
 #include "hw/naomi/naomi.h"
 
@@ -54,6 +55,11 @@ u32 sb_ReadMem(u32 addr,u32 sz)
 		else
 		{
 			//printf("SB: %08X\n",addr);
+			if (sb_regs[offset].readFunctionAddr == NULL)
+			{
+				EMUERROR("sb_ReadMem write-only reg %08x %d\n", addr, sz);
+				return 0;
+			}
 			return sb_regs[offset].readFunctionAddr(addr);
 		}
 #ifdef TRACE
@@ -771,6 +777,10 @@ void sb_Init()
 	pvr_sb_Init();
 	maple_Init();
 	aica_sb_Init();
+
+#if DC_PLATFORM != DC_PLATFORM_NAOMI
+	ModemInit();
+#endif
 }
 
 void sb_Reset(bool Manual)

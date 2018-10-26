@@ -58,6 +58,7 @@ struct pico_ip4 afo_ip;
 
 // src socket -> socket fd
 static map<struct pico_socket *, sock_t> tcp_sockets;
+static map<struct pico_socket *, sock_t> tcp_connecting_sockets;
 // src port -> socket fd
 static map<uint16_t, sock_t> udp_sockets;
 
@@ -165,6 +166,38 @@ void set_non_blocking(sock_t fd)
 #endif
 }
 
+void set_tcp_nodelay(sock_t fd)
+{
+	int optval = 1;
+	socklen_t optlen = sizeof(optval);
+#if defined(_WIN32)
+	struct protoent *tcp_proto = getprotobyname("TCP");
+	setsockopt(fd, tcp_proto->p_proto, TCP_NODELAY, (const char *)&optval, optlen);
+#elif !defined(__APPLE__) && !defined(__FreeBSD__) && !defined(__NetBSD__)
+	setsockopt(fd, SOL_TCP, TCP_NODELAY, (const void *)&optval, optlen);
+#else
+	struct protoent *tcp_proto = getprotobyname("TCP");
+	setsockopt(fd, tcp_proto->p_proto, TCP_NODELAY, &optval, optlen);
+#endif
+}
+
+static void read_from_dc_socket(pico_socket *pico_sock, sock_t nat_sock)
+{
+	char buf[1510];
+
+	int r = pico_socket_read(pico_sock, buf, sizeof(buf));
+	if (r > 0)
+	{
+		if (send(nat_sock, buf, r, 0) < r)
+		{
+			perror("tcp_callback send");
+			closesocket(nat_sock);
+			pico_socket_close(pico_sock);
+			tcp_sockets.erase(pico_sock);
+		}
+	}
+}
+
 static void tcp_callback(uint16_t ev, struct pico_socket *s)
 {
 	int r = 0;
@@ -174,23 +207,12 @@ static void tcp_callback(uint16_t ev, struct pico_socket *s)
 		auto it = tcp_sockets.find(s);
 		if (it == tcp_sockets.end())
 		{
-			printf("Unknown socket: remote port %d\n", s->remote_port);
+			if (tcp_connecting_sockets.find(s) == tcp_connecting_sockets.end())
+				printf("Unknown socket: remote port %d\n", short_be(s->remote_port));
 		}
 		else
 		{
-			char buf[1510];
-
-			r = pico_socket_read(it->first, buf, sizeof(buf));
-			if (r > 0) {
-				if (send(it->second, buf, r, 0) < r)
-				{
-					perror("tcp_callback send");
-					closesocket(it->second);
-					pico_socket_close(it->first);
-					tcp_sockets.erase(it);
-					return;
-				}
-			}
+			read_from_dc_socket(it->first, it->second);
 		}
 	}
 
@@ -205,12 +227,14 @@ static void tcp_callback(uint16_t ev, struct pico_socket *s)
 		struct pico_socket *sock_a = pico_socket_accept(s, &orig, &port);
 		if (sock_a == NULL)
 		{
-			printf("pico_socket_accept: %s\n", strerror(pico_err));
+			// Also called for child sockets
+			if (tcp_sockets.find(s) == tcp_sockets.end())
+				printf("pico_socket_accept: %s\n", strerror(pico_err));
 		}
 		else
 		{
 			pico_ipv4_to_string(peer, orig.addr);
-			//printf("Connection established with %s:%d.\n", peer, short_be(port));
+			//printf("Connection established from %s:%d to %08x:%d\n", peer, short_be(port), sock_a->local_addr.ip4.addr, short_be(sock_a->local_port));
 			pico_socket_setoption(sock_a, PICO_TCP_NODELAY, &yes);
 			/* Set keepalive options */
 	//		ka_val = 5;
@@ -235,28 +259,23 @@ static void tcp_callback(uint16_t ev, struct pico_socket *s)
 		        	serveraddr.sin_addr.s_addr = afo_ip.addr;
 
 				serveraddr.sin_port = sock_a->local_port;
+				set_non_blocking(sockfd);
 				if (connect(sockfd, (struct sockaddr *)&serveraddr, sizeof(serveraddr)) < 0)
 				{
-					pico_ipv4_to_string(peer, sock_a->local_addr.ip4.addr);
-					printf("TCP connection to %s:%d failed: ", peer, sock_a->local_port);
-					perror(NULL);
-					closesocket(sockfd);
+					if (get_last_error() != EINPROGRESS && get_last_error() != L_EWOULDBLOCK)
+					{
+						pico_ipv4_to_string(peer, sock_a->local_addr.ip4.addr);
+						printf("TCP connection to %s:%d failed: ", peer, short_be(sock_a->local_port));
+						perror(NULL);
+						closesocket(sockfd);
+					}
+					else
+						tcp_connecting_sockets[sock_a] = sockfd;
 				}
 				else
 				{
-					set_non_blocking(sockfd);
+					set_tcp_nodelay(sockfd);
 
-					int optval = 1;
-					socklen_t optlen = sizeof(optval);
-#if defined(_WIN32)
-					struct protoent *tcp_proto = getprotobyname("TCP");
-					setsockopt(sockfd, tcp_proto->p_proto, TCP_NODELAY, (const char *)&optval, optlen);
-#elif !defined(__APPLE__) && !defined(__FreeBSD__) && !defined(__NetBSD__)
-					setsockopt(sockfd, SOL_TCP, TCP_NODELAY, (const void *)&optval, optlen);
-#else
-					struct protoent *tcp_proto = getprotobyname("TCP");
-					setsockopt(sockfd, tcp_proto->p_proto, TCP_NODELAY, &optval, optlen);
-#endif
 					tcp_sockets[sock_a] = sockfd;
 				}
 			}
@@ -264,38 +283,45 @@ static void tcp_callback(uint16_t ev, struct pico_socket *s)
 	}
 
 	if (ev & PICO_SOCK_EV_FIN) {
-		//printf("Socket closed. Exit normally. \n");
 		auto it = tcp_sockets.find(s);
 		if (it == tcp_sockets.end())
 		{
-			printf("PICO_SOCK_EV_FIN: Unknown socket: remote port %d\n", s->remote_port);
+			printf("PICO_SOCK_EV_FIN: Unknown socket: remote port %d\n", short_be(s->remote_port));
 		}
 		else
 		{
 			closesocket(it->second);
-			pico_socket_close(s);
-			tcp_sockets.erase(s);
+			tcp_sockets.erase(it);
 		}
 	}
 
 	if (ev & PICO_SOCK_EV_ERR) {
-		printf("Socket error received: %s. Bailing out.\n", strerror(pico_err));
+		printf("Socket error received: %s\n", strerror(pico_err));
 		auto it = tcp_sockets.find(s);
 		if (it == tcp_sockets.end())
 		{
-			printf("PICO_SOCK_EV_ERR: Unknown socket: remote port %d\n", s->remote_port);
+			printf("PICO_SOCK_EV_ERR: Unknown socket: remote port %d\n", short_be(s->remote_port));
 		}
 		else
 		{
 			closesocket(it->second);
-			pico_socket_close(s);
-			tcp_sockets.erase(s);
+			tcp_sockets.erase(it);
 		}
 	}
 
-//	if (ev & PICO_SOCK_EV_CLOSE)
-//	{
-//	}
+	if (ev & PICO_SOCK_EV_CLOSE)
+	{
+		auto it = tcp_sockets.find(s);
+		if (it == tcp_sockets.end())
+		{
+			printf("PICO_SOCK_EV_CLOSE: Unknown socket: remote port %d\n", short_be(s->remote_port));
+		}
+		else
+		{
+			shutdown(it->second, SHUT_WR);
+			pico_socket_shutdown(s, PICO_SHUT_RD);
+		}
+	}
 
 //	if (ev & PICO_SOCK_EV_WR)
 //	{
@@ -374,22 +400,22 @@ static void read_native_sockets()
 	socklen_t addr_len;
 
 	// Accept incoming TCP connections
-    for (auto it = tcp_listening_sockets.begin(); it != tcp_listening_sockets.end(); it++)
-    {
+	for (auto it = tcp_listening_sockets.begin(); it != tcp_listening_sockets.end(); it++)
+	{
 		addr_len = sizeof(src_addr);
 		memset(&src_addr, 0, addr_len);
-    	sock_t sockfd = accept(it->second, (struct sockaddr *)&src_addr, &addr_len);
-    	if (!VALID(sockfd))
-    	{
-    		if (get_last_error() != L_EAGAIN && get_last_error() != L_EWOULDBLOCK)
-    			perror("accept");
-    		continue;
-    	}
-    	printf("Incoming TCP connection from %08x to port %d\n", src_addr.sin_addr.s_addr, short_be(it->first));
-    	struct pico_socket *ps = pico_socket_tcp_open(PICO_PROTO_IPV4);
+		sock_t sockfd = accept(it->second, (struct sockaddr *)&src_addr, &addr_len);
+		if (!VALID(sockfd))
+		{
+			if (get_last_error() != L_EAGAIN && get_last_error() != L_EWOULDBLOCK)
+				perror("accept");
+			continue;
+		}
+    	//printf("Incoming TCP connection from %08x to port %d\n", src_addr.sin_addr.s_addr, short_be(it->first));
+    	struct pico_socket *ps = pico_socket_open(PICO_PROTO_IPV4, PICO_PROTO_TCP, &tcp_callback);
     	if (ps == NULL)
     	{
-    		printf("pico_socket_tcp_open failed: error %d\n", pico_err);
+    		printf("pico_socket_open failed: error %d\n", pico_err);
     		closesocket(sockfd);
     		continue;
     	}
@@ -402,8 +428,53 @@ static void read_native_sockets()
     		pico_socket_close(ps);
     		continue;
     	}
+    	set_non_blocking(sockfd);
+    	set_tcp_nodelay(sockfd);
     	tcp_sockets[ps] = sockfd;
-    }
+	}
+
+	// Check connecting outbound TCP sockets
+	fd_set write_fds;
+	FD_ZERO(&write_fds);
+	int max_fd = -1;
+	for (auto it = tcp_connecting_sockets.begin(); it != tcp_connecting_sockets.end(); it++)
+	{
+		FD_SET(it->second, &write_fds);
+		max_fd = max(max_fd, it->second);
+	}
+	struct timeval tv;
+	tv.tv_sec = 0;
+	tv.tv_usec = 0;
+	if (select(max_fd + 1, NULL, &write_fds, NULL, &tv) > 0)
+	{
+		for (auto it = tcp_connecting_sockets.begin(); it != tcp_connecting_sockets.end(); )
+		{
+			if (!FD_ISSET(it->second, &write_fds))
+			{
+				it++;
+				continue;
+			}
+			int value;
+			socklen_t l = sizeof(int);
+			if (getsockopt(it->second, SOL_SOCKET, SO_ERROR, &value, &l) < 0 || value)
+			{
+				char peer[30];
+				pico_ipv4_to_string(peer, it->first->local_addr.ip4.addr);
+				printf("TCP connection to %s:%d failed: ", peer, short_be(it->first->local_port));
+				perror(NULL);
+				pico_socket_close(it->first);
+				closesocket(it->second);
+			}
+			else
+			{
+				set_tcp_nodelay(it->second);
+				tcp_sockets[it->first] = it->second;
+
+				read_from_dc_socket(it->first, it->second);
+			}
+			it = tcp_connecting_sockets.erase(it);
+		}
+	}
 
 	char buf[1500];		// FIXME MTU ?
 	struct pico_msginfo msginfo;
@@ -428,7 +499,7 @@ static void read_native_sockets()
 			msginfo.ttl = 0;
 			msginfo.local_addr.ip4.addr = src_addr.sin_addr.s_addr;
 			msginfo.local_port = src_addr.sin_port;
-//			printf("read_native_sockets UCP received %d bytes from %08x:%d\n", r, long_be(msginfo.local_addr.ip4.addr), short_be(msginfo.local_port));
+			//printf("read_native_sockets UDP received %d bytes from %08x:%d\n", r, long_be(msginfo.local_addr.ip4.addr), short_be(msginfo.local_port));
 			int r2 = pico_socket_sendto_extended(pico_udp_socket, buf, r, &dcaddr, it->first, &msginfo);
 			if (r2 < r)
 				printf("%s: error UDP sending to %d: %s\n", __FUNCTION__, short_be(it->first), strerror(pico_err));
@@ -441,19 +512,26 @@ static void read_native_sockets()
 	}
 
 	// Read TCP sockets
-	for (auto it = tcp_sockets.begin(); it != tcp_sockets.end(); it++)
+	for (auto it = tcp_sockets.begin(); it != tcp_sockets.end(); )
 	{
 		uint32_t space;
 		pico_tcp_get_bufspace_out(it->first, &space);
 		if (space < sizeof(buf))
 		{
 			// Wait for the out buffer to empty a bit
+			it++;
 			continue;
 		}
 		r = recv(it->second, buf, sizeof(buf), 0);
 		if (r > 0)
 		{
-//			printf("read_native_sockets TCP received %d bytes\n", r);
+			if (it->first->remote_port == short_be(5011) && r >= 5)
+			{
+				// Visual Concepts sport games
+				if (buf[0] == 1)
+					memcpy(&buf[1], &it->first->local_addr.ip4.addr, 4);
+			}
+
 			int r2 = pico_socket_send(it->first, buf, r);
 			if (r2 < 0)
 				printf("%s: error TCP sending: %s\n", __FUNCTION__, strerror(pico_err));
@@ -463,15 +541,18 @@ static void read_native_sockets()
 		}
 		else if (r == 0)
 		{
-			pico_socket_shutdown(it->first, PICO_SHUT_RDWR);
+			pico_socket_shutdown(it->first, PICO_SHUT_WR);
+			shutdown(it->second, SHUT_RD);
 		}
 		else if (r < 0 && get_last_error() != L_EAGAIN && get_last_error() != L_EWOULDBLOCK)
 		{
 			perror("recv tcp socket");
 			closesocket(it->second);
 			pico_socket_close(it->first);
-			tcp_sockets.erase(it);
+			it = tcp_sockets.erase(it);
+			continue;
 		}
+		it++;
 	}
 }
 

@@ -11,6 +11,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <sys/select.h>
 #else
 #include <ws2tcpip.h>
 #endif

@@ -1662,13 +1662,16 @@ int pico_socket_connect(struct pico_socket *s, const void *remote_addr, uint16_t
         struct pico_ip4 *local = NULL;
         const struct pico_ip4 *ip = (const struct pico_ip4 *)remote_addr;
         s->remote_addr.ip4 = *ip;
-        local = pico_ipv4_source_find(ip);
-        if (local) {
-            get_sock_dev(s);
-            s->local_addr.ip4 = *local;
-        } else {
-            pico_err = PICO_ERR_EHOSTUNREACH;
-            return -1;
+        if (s->local_addr.ip4.addr == 0)	// Not for masquerading socket
+        {
+			local = pico_ipv4_source_find(ip);
+			if (local) {
+				get_sock_dev(s);
+				s->local_addr.ip4 = *local;
+			} else {
+				pico_err = PICO_ERR_EHOSTUNREACH;
+				return -1;
+			}
         }
 
     #endif
