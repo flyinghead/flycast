@@ -214,7 +214,9 @@ void LoadSpecialSettings()
 		settings.rend.ExtraDepthScale = 1e26;
 
 	}
-	if (!strcmp("DYNAMIC GOLF", naomi_game_id) || !strcmp("SHOOTOUT POOL", naomi_game_id))
+	if (!strcmp("DYNAMIC GOLF", naomi_game_id)
+			|| !strcmp("SHOOTOUT POOL", naomi_game_id)
+			|| !strcmp("OUTTRIGGER     JAPAN", naomi_game_id))
 	{
 		printf("Enabling JVS rotary encoders for game %s\n", naomi_game_id);
 		settings.input.JammaSetup = 2;
@@ -236,6 +238,14 @@ void LoadSpecialSettings()
 
 	}
 #endif
+}
+
+void dc_reset()
+{
+	plugins_Reset(false);
+	mem_Reset(false);
+
+	sh4_cpu.Reset(false);
 }
 
 #if defined(_ANDROID)
@@ -361,10 +371,7 @@ int dc_init()
 	mcfg_CreateNAOMIJamma();
 #endif
 
-	plugins_Reset(false);
-	mem_Reset(false);
-
-	sh4_cpu.Reset(false);
+	dc_reset();
 	
 	return rv;
 }

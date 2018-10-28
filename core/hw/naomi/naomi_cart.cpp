@@ -440,7 +440,18 @@ bool naomi_cart_Read(u32 offset, u32 size, void* dst) {
 	if (!RomPtr)
 		return false;
 
-	memcpy(dst, naomi_cart_GetPtr(offset, size), size);
+	offset &= 0x0FFFFFFF;
+	if (offset >= RomSize || (offset + size) > RomSize)
+	{
+		static u32 ones = 0xffffffff;
+
+		// Makes Outtrigger boot
+		EMUERROR("naomi_cart_Read: offset %d > %d\n", offset, RomSize);
+		memcpy(dst, &ones, size);
+	}
+	else
+		memcpy(dst, naomi_cart_GetPtr(offset, size), size);
+
 	return true;
 }
 
