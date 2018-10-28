@@ -1,7 +1,5 @@
 #include <unistd.h>
 #include <fcntl.h>
-#include <linux/input.h>
-#include "linux-dist/evdev.h"
 #include "linux-dist/main.h"
 #include "hw/maple/maple_devs.h"
 #include "hw/maple/maple_cfg.h"
@@ -12,6 +10,9 @@
 #include <dlfcn.h>
 
 #if defined(USE_EVDEV)
+#include <linux/input.h>
+#include "linux-dist/evdev.h"
+
 	bool libevdev_tried = false;
 	bool libevdev_available = false;
 	typedef int (*libevdev_func1_t)(int, const char*);
