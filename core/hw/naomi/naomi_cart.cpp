@@ -263,7 +263,7 @@ bool naomi_cart_LoadRom(char* file)
 	if (RomCacheMap)
 	{
 		RomCacheMapCount = 0;
-		delete RomCacheMap;
+		delete[] RomCacheMap;
 	}
 
 	RomCacheMapCount = (u32)files.size();
