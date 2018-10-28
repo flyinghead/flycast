@@ -20,6 +20,8 @@ Compression
 	look into it, but afaik PVRC is not realtime doable
 */
 
+u16 buf[1024*1024];
+
 #if FEAT_HAS_SOFTREND
 	#include <xmmintrin.h>
 #endif
@@ -384,11 +386,6 @@ void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 {
 	FBT& rv=fb_rtt;
 
-	if (rv.fbo) glDeleteFramebuffers(1,&rv.fbo);
-	if (rv.tex) glDeleteTextures(1,&rv.tex);
-	if (rv.depthb) glDeleteRenderbuffers(1,&rv.depthb);
-	if (rv.stencilb) glDeleteRenderbuffers(1,&rv.stencilb);
-
 	rv.TexAddr=addy>>3;
 
 	// Find the largest square power of two texture that fits into the viewport
@@ -397,7 +394,8 @@ void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 	//glGetIntegerv(GL_FRAMEBUFFER_BINDING, &m_i32OriginalFbo);
 
 	// Generate and bind a render buffer which will become a depth buffer shared between our two FBOs
-	glGenRenderbuffers(1, &rv.depthb);
+	if (!rv.depthb)
+		glGenRenderbuffers(1, &rv.depthb);
 	glBindRenderbuffer(GL_RENDERBUFFER, rv.depthb);
 
 	/*
@@ -412,23 +410,25 @@ void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, fbw, fbh);
 #endif
 
-	glGenRenderbuffers(1, &rv.stencilb);
+	if (!rv.stencilb)
+		glGenRenderbuffers(1, &rv.stencilb);
 	glBindRenderbuffer(GL_RENDERBUFFER, rv.stencilb);
 	glRenderbufferStorage(GL_RENDERBUFFER, GL_STENCIL_INDEX8, fbw, fbh);
 
 	// Create a texture for rendering to
-	glGenTextures(1, &rv.tex);
+	if (!rv.tex)
+		glGenTextures(1, &rv.tex);
 	glBindTexture(GL_TEXTURE_2D, rv.tex);
-
 	glTexImage2D(GL_TEXTURE_2D, 0, channels, fbw, fbh, 0, channels, fmt, 0);
 
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER_OES);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER_OES);
 
 	// Create the object that will allow us to render to the aforementioned texture
-	glGenFramebuffers(1, &rv.fbo);
+	if (!rv.fbo)
+		glGenFramebuffers(1, &rv.fbo);
 	glBindFramebuffer(GL_FRAMEBUFFER, rv.fbo);
 
 	// Attach the texture to the FBO
@@ -441,6 +441,51 @@ void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 	GLuint uStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 
 	verify(uStatus == GL_FRAMEBUFFER_COMPLETE);
+
+	glViewport(0, 0, fbw, fbh);
+}
+
+void ReadRTT() {
+	FBT& rv=fb_rtt;
+
+	//get viewport width and height from rtt framebuffer
+	GLint dimensions[4] = {0};
+	glGetIntegerv(GL_VIEWPORT, dimensions);
+	GLint w = dimensions[2];
+	GLint h = dimensions[3];
+
+	//bind texture to which we have rendered in the last rtt pass
+	glBindTexture(GL_TEXTURE_2D, rv.tex);
+
+	switch(FB_W_CTRL.fb_packmode)
+	{
+		//currently RGB 565 is supported only
+		case 1: //0x1   565 RGB 16 bit
+		{
+		    u16 *dataPointer = temp_tex_buffer;
+			glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, temp_tex_buffer);
+			for (u32 i = 0; i < w * h; i++) {
+				buf[i] = ((*dataPointer & 0xF000) >> 12) | ((*dataPointer & 0x0FFF) << 4);
+				*dataPointer++;
+			}
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4, buf);
+
+			break;
+		}
+		default:
+			//clear unsupported texture to avoid artifacts
+			memset(buf, '\0', w * h);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4, buf);
+
+			break;
+	}
+}
+
+void FreeRTTBuffers() {
+	if (fb_rtt.fbo) { glDeleteFramebuffers(1,&fb_rtt.fbo); fb_rtt.fbo = 0; }
+	if (fb_rtt.tex) { glDeleteTextures(1,&fb_rtt.tex); fb_rtt.tex = 0; }
+	if (fb_rtt.depthb) { glDeleteRenderbuffers(1,&fb_rtt.depthb); fb_rtt.depthb = 0; }
+	if (fb_rtt.stencilb) { glDeleteRenderbuffers(1,&fb_rtt.stencilb); fb_rtt.stencilb = 0; }
 }
 
 GLuint gl_GetTexture(TSP tsp, TCW tcw)
@@ -523,12 +568,12 @@ text_info raw_GetTexture(TSP tsp, TCW tcw)
 
 	//return gl texture
 	rv.height = tf->h;
-	rv.width = tf->w;
-	rv.pdata = tf->pData;
-	rv.textype = tf->tex_type;
-	
-	
-	return rv;
+    rv.width = tf->w;
+    rv.pdata = tf->pData;
+    rv.textype = tf->tex_type;
+
+
+    return rv;
 }
 
 void CollectCleanup() {

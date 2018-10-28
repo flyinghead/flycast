@@ -172,10 +172,10 @@ const char* VertexShaderSource =
 
 #endif
 
-
-
-
-
+//0 - not in use
+//1 - in use since the last frame
+//2 - not anymore in use (e.g. exit to menu)
+u8 rttInUse = 0;
 
 /*
 
@@ -1447,10 +1447,6 @@ void OSD_DRAW()
 
 bool ProcessFrame(TA_context* ctx)
 {
-	//disable RTTs for now ..
-	if (ctx->rend.isRTT)
-		return false;
-
 	ctx->rend_inuse.Lock();
 	ctx->MarkRend();
 
@@ -1580,14 +1576,10 @@ bool RenderFrame()
 
 		//For some reason this produces wrong results
 		//so for now its hacked based like on the d3d code
-		/*
-		dc_width=FB_X_CLIP.max-FB_X_CLIP.min+1;
-		dc_height=FB_Y_CLIP.max-FB_Y_CLIP.min+1;
-		u32 pvr_stride=(FB_W_LINESTRIDE.stride)*8;
-		*/
 
-		dc_width=640;
-		dc_height=480;
+		dc_width = FB_X_CLIP.max - FB_X_CLIP.min + 1;
+		dc_height  = FB_Y_CLIP.max - FB_Y_CLIP.min + 1;
+		//u32 pvr_stride=(FB_W_LINESTRIDE.stride)*8;
 	}
 
 	float scale_x=1, scale_y=1;
@@ -1646,8 +1638,9 @@ bool RenderFrame()
 	/*
 		Handle Dc to screen scaling
 	*/
-	float dc2s_scale_h=screen_height/480.0f;
-	float ds2s_offs_x=(screen_width-dc2s_scale_h*640)/2;
+
+	float dc2s_scale_h = is_rtt ? (screen_width / dc_width) : (screen_height / 480.0);
+	float ds2s_offs_x =  is_rtt ? 0 : ((screen_width - dc2s_scale_h * 640.0) / 2);
 
 	//-1 -> too much to left
 	ShaderUniforms.scale_coefs[0]=2.0f/(screen_width/dc2s_scale_h*scale_x);
@@ -1702,7 +1695,6 @@ bool RenderFrame()
 
 	glUniform4fv( gl.modvol_shader.scale, 1, ShaderUniforms.scale_coefs);
 	glUniform4fv( gl.modvol_shader.depth_scale, 1, ShaderUniforms.depth_coefs);
-
 
 	GLfloat td[4]={0.5,0,0,0};
 
@@ -1768,12 +1760,22 @@ bool RenderFrame()
 			break;
 		}
 		BindRTT(FB_W_SOF1&VRAM_MASK,FB_X_CLIP.max-FB_X_CLIP.min+1,FB_Y_CLIP.max-FB_Y_CLIP.min+1,channels,format);
+		rttInUse = 1;
 	}
 	else
 	{
 #if HOST_OS != OS_DARWIN
-        //Fix this in a proper way
+        if (rttInUse == 1) {
+            ReadRTT();
+            rttInUse = 2;
+        }
+        else if (rttInUse == 2) {
+            FreeRTTBuffers();
+            rttInUse = 0;
+        }
+
 		glBindFramebuffer(GL_FRAMEBUFFER,0);
+		glViewport(0, 0, screen_width, screen_height);
 #endif
 	}
 

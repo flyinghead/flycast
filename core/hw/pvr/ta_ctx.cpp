@@ -146,14 +146,15 @@ bool QueueRender(TA_context* ctx)
 
  	bool too_fast = (cycle_span / time_span) > (SH4_MAIN_CLOCK * 1.2);
 	
-	if (rqueue && too_fast && settings.pvr.SynchronousRender) {
+	if ((rqueue && too_fast && settings.pvr.SynchronousRender) ||
+		(rqueue && ctx->rend.isRTT)) {
 		//wait for a frame if
 		//  we have another one queue'd and
 		//  sh4 run at > 120% on the last slice
 		//  and SynchronousRendering is enabled
 		frame_finished.Wait();
 		verify(!rqueue);
-	} 
+	}
 
 	if (rqueue) {
 		tactx_Recycle(ctx);
