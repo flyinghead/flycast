@@ -16,7 +16,7 @@ u32 RomSize;
 	#include <sys/mman.h>
 #endif
 
-fd_t*	RomCacheMap;
+fd_t*	RomCacheMap = NULL;
 u32		RomCacheMapCount;
 
 char SelectedFile[512];
@@ -89,7 +89,7 @@ bool naomi_cart_LoadRom(char* file)
 	if (RomCacheMap)
 	{
 		RomCacheMapCount = 0;
-		delete RomCacheMap;
+		delete[] RomCacheMap;
 	}
 
 	RomCacheMapCount = (u32)files.size();
