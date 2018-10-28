@@ -97,6 +97,10 @@ struct gl_ctx
 #endif
 	} vbo;
 
+	const char *gl_version;
+	const char *glsl_version_header;
+	int gl_major;
+	bool is_gles;
 
 	//GLuint matrix;
 };
