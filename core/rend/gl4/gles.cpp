@@ -865,7 +865,7 @@ static bool RenderFrame()
 				height *= settings.rend.RenderToTextureUpscale;
 			}
 
-         glScissor(min_x + 0.5f, min_y + 0.5f, width + 0.5f, height + 0.5f);
+			glScissor(min_x + 0.5f, min_y + 0.5f, width + 0.5f, height + 0.5f);
 			glcache.Enable(GL_SCISSOR_TEST);
 		}
 
@@ -949,11 +949,7 @@ struct gl4rend : Renderer
 		  depthSaveTexId = 0;
 	   }
 	   if (KillTex)
-	   {
-		  void killtex();
 		  killtex();
-		  printf("Texture cache cleared\n");
-	   }
 
 	   CollectCleanup();
 

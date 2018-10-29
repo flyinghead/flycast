@@ -96,6 +96,7 @@ bool fb_dirty;
 
 TA_context* _pvrrc;
 void SetREP(TA_context* cntx);
+void killtex();
 
 void dump_frame(const char* file, TA_context* ctx, u8* vram, u8* vram_ref = NULL) {
 	FILE* fw = fopen(file, "wb");
@@ -612,6 +613,8 @@ void rend_term()
 #if !defined(TARGET_NO_THREADS)
 	rthd.WaitToEnd();
 #endif
+	killtex();
+	tactx_Term();
 }
 
 void rend_vblank()

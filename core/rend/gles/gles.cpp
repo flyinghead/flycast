@@ -1973,7 +1973,11 @@ struct glesrend : Renderer
 {
 	bool Init() { return gles_init(); }
 	void Resize(int w, int h) { screen_width=w; screen_height=h; }
-	void Term() { }
+	void Term()
+	{
+		if (KillTex)
+			killtex();
+	}
 
 	bool Process(TA_context* ctx) { return ProcessFrame(ctx); }
 	bool Render() { return RenderFrame(); }

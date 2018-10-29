@@ -143,6 +143,7 @@ bool ProcessFrame(TA_context* ctx);
 void UpdateFogTexture(u8 *fog_table, GLenum texture_slot, GLint fog_image_format);
 
 text_info raw_GetTexture(TSP tsp, TCW tcw);
+void killtex();
 void CollectCleanup();
 void DoCleanup();
 void SortPParams(int first, int count);

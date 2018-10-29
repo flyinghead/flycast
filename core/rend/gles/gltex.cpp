@@ -952,6 +952,7 @@ void killtex()
 	}
 
 	TexCache.clear();
+	printf("Texture cache cleared\n");
 }
 
 void rend_text_invl(vram_block* bl)
