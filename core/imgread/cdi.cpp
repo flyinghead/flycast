@@ -155,6 +155,7 @@ Disc* cdi_parse(const wchar* file)
 
 		image.remaining_sessions--;
 	}
+	core_fclose(fsource);
 
 	rv->type=GuessDiscType(CD_M1,CD_M2,CD_DA);
 
