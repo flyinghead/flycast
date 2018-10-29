@@ -427,6 +427,10 @@ void bm_Term()
 	
 	oprofHandle=0;
 #endif
+	bm_Reset();
+	for (int i = 0; i < del_blocks.size(); i++)
+		delete del_blocks[i];
+	del_blocks.clear();
 }
 
 void bm_WriteBlockMap(const string& file)
