@@ -177,7 +177,7 @@ bool cResetEvent::Wait(u32 msec)//Wait for signal , then reset
 	{
 		struct timespec ts;
 		ts.tv_sec = msec / 1000;
-		ts.tv_nsec = (msec % 1000) * 1000;
+		ts.tv_nsec = (msec % 1000) * 1000000;
 		rc = pthread_cond_timedwait( &cond, &mutx, &ts ) == 0;
 	}
 	if (rc)
