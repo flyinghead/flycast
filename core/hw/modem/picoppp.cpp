@@ -20,6 +20,7 @@
  */
 
 #ifndef _MSC_VER
+#define _POSIX_SOURCE
 #include <queue>
 #include <map>
 
@@ -440,7 +441,7 @@ static void read_native_sockets()
 	for (auto it = tcp_connecting_sockets.begin(); it != tcp_connecting_sockets.end(); it++)
 	{
 		FD_SET(it->second, &write_fds);
-		max_fd = max(max_fd, it->second);
+		max_fd = max(max_fd, (int)it->second);
 	}
 	struct timeval tv;
 	tv.tv_sec = 0;
@@ -454,7 +455,11 @@ static void read_native_sockets()
 				it++;
 				continue;
 			}
+#ifdef _WIN32
+			char value;
+#else
 			int value;
+#endif
 			socklen_t l = sizeof(int);
 			if (getsockopt(it->second, SOL_SOCKET, SO_ERROR, &value, &l) < 0 || value)
 			{
