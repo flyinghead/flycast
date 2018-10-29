@@ -66,6 +66,8 @@ struct MapleConfigMap : IMapleConfigMap
 
 void mcfg_Create(MapleDeviceType type, u32 bus, u32 port)
 {
+	if (MapleDevices[bus][port] != NULL)
+		delete MapleDevices[bus][port];
 	maple_device* dev = maple_Create(type);
 	dev->Setup(maple_GetAddress(bus, port));
 	dev->config = new MapleConfigMap(dev);
@@ -101,13 +103,9 @@ void mcfg_CreateDevicesFromConfig()
 		numberOfControl = 4;
 
 	for (int i = 0; i < numberOfControl; i++)
-	{
-		mcfg_Create(MDT_SegaController, i, 5);
-
 		// Default to two VMUs on each controller
-		mcfg_Create(MDT_SegaVMU, i, 0);
-		mcfg_Create(MDT_SegaVMU, i, 1);
-	}
+		mcfg_CreateController(i, MDT_SegaVMU, MDT_SegaVMU);
+
 	if (settings.input.DCKeyboard && numberOfControl < 4)
 		mcfg_Create(MDT_Keyboard, numberOfControl++, 5);
 
@@ -120,8 +118,11 @@ void mcfg_DestroyDevices()
 	for (int i = 0; i < MAPLE_PORTS; i++)
 		for (int j=0;j<=5;j++)
 		{
-			delete MapleDevices[i][j];
-			MapleDevices[i][j] = NULL;
+			if (MapleDevices[i][j] != NULL)
+			{
+				delete MapleDevices[i][j];
+				MapleDevices[i][j] = NULL;
+			}
 		}
 }
 
@@ -151,12 +152,6 @@ void mcfg_SerializeDevices(void **data, unsigned int *total_size)
 
 void mcfg_UnserializeDevices(void **data, unsigned int *total_size)
 {
-	if (*data == NULL)
-	{
-		// Return the maximum size needed (8 vmus)
-		*total_size += *total_size + (128 * 1024 + 192 + 48 * 32) * 8 + MAPLE_PORTS * 6;
-		return;
-	}
 	mcfg_DestroyDevices();
 
 	for (int i = 0; i < MAPLE_PORTS; i++)

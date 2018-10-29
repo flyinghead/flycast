@@ -407,6 +407,8 @@ void dc_term()
 	plugins_Term();
 	_vmem_release();
 
+	mcfg_DestroyDevices();
+
 #ifndef _ANDROID
 	SaveSettings();
 #endif
