@@ -292,3 +292,21 @@ TA_context* tactx_Pop(u32 addr)
 	}
 	return 0;
 }
+
+void tactx_Term()
+{
+	for (size_t i = 0; i < ctx_list.size(); i++)
+	{
+		ctx_list[i]->Free();
+		delete ctx_list[i];
+	}
+	mtx_pool.Lock();
+	{
+		for (size_t i = 0; i < ctx_pool.size(); i++)
+		{
+			ctx_pool[i]->Free();
+			delete ctx_pool[i];
+		}
+	}
+	mtx_pool.Unlock();
+}

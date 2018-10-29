@@ -252,7 +252,7 @@ TA_context* tactx_Pop(u32 addr);
 
 TA_context* tactx_Alloc();
 void tactx_Recycle(TA_context* poped_ctx);
-
+void tactx_Term();
 /*
 	Ta Context
 
