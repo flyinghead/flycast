@@ -16,8 +16,9 @@
 #include "webui/server.h"
 #include "hw/naomi/naomi_cart.h"
 #include "reios/reios.h"
-#include "hw/sh4/dyna/blockmanager.h"
+#include "hw/sh4/sh4_sched.h"
 #include "hw/pvr/Renderer_if.h"
+#include "hw/pvr/spg.h"
 
 settings_t settings;
 static bool performed_serialization = false;
@@ -759,7 +760,10 @@ void* dc_loadstate_thread(void* p)
 
 	data_ptr = data ;
 
-    bm_Reset() ;
+	sh4_cpu.ResetCache();
+#if FEAT_AREC == DYNAREC_JIT
+    FlushCache();
+#endif
 
 	if ( ! dc_unserialize(&data_ptr, &total_size) )
 	{
@@ -768,7 +772,10 @@ void* dc_loadstate_thread(void* p)
     	return NULL;
 	}
 
-	cleanup_serialize(data) ;
+    sh4_sched_ffts();
+    CalculateSync();
+
+    cleanup_serialize(data) ;
 	printf("Loaded state from %s size %d\n", filename.c_str(), total_size) ;
 	rend_cancel_emu_wait();
 

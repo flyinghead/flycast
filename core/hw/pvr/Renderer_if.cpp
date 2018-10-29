@@ -526,7 +526,8 @@ void rend_end_render()
 #if !defined(TARGET_NO_THREADS)
 		re.Wait();
 #else
-		renderer->Present();
+		if (renderer != NULL)
+			renderer->Present();
 #endif
 	}
 }
