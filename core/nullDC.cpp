@@ -20,6 +20,8 @@
 #include "hw/pvr/Renderer_if.h"
 #include "hw/pvr/spg.h"
 
+void FlushCache();
+
 settings_t settings;
 static bool performed_serialization = false;
 static cMutex mtx_serialization ;
