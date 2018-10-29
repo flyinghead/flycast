@@ -521,7 +521,7 @@ JNIEXPORT jint JNICALL Java_com_reicast_emulator_emu_JNIdc_data(JNIEnv *env, job
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_rendframe(JNIEnv *env,jobject obj)
 {
-    while(!rend_single_frame()) ;
+    rend_single_frame();
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_kcode(JNIEnv * env, jobject obj, jintArray k_code, jintArray l_t, jintArray r_t, jintArray jx, jintArray jy)

@@ -269,7 +269,12 @@ bool rend_single_frame()
 	do
 	{
 #if !defined(TARGET_NO_THREADS)
+#if defined(_ANDROID)
+		if (!rs.Wait(100))
+			return false;
+#else
 		rs.Wait();
+#endif
 #endif
 		if (!renderer_enabled)
 			return false;

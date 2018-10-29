@@ -169,9 +169,21 @@ void cResetEvent::Reset()//reset
 	state=false;
 	pthread_mutex_unlock( &mutx );
 }
-void cResetEvent::Wait(u32 msec)//Wait for signal , then reset
+bool cResetEvent::Wait(u32 msec)//Wait for signal , then reset
 {
-	verify(false);
+	bool rc = true;
+	pthread_mutex_lock( &mutx );
+	if (!state)
+	{
+		struct timespec ts;
+		ts.tv_sec = msec / 1000;
+		ts.tv_nsec = (msec % 1000) * 1000;
+		rc = pthread_cond_timedwait( &cond, &mutx, &ts ) == 0;
+	}
+	state=false;
+	pthread_mutex_unlock( &mutx );
+
+	return rc;
 }
 void cResetEvent::Wait()//Wait for signal , then reset
 {

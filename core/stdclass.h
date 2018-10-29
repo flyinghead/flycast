@@ -201,7 +201,7 @@ public :
 	~cResetEvent();
 	void Set();		//Set state to signaled
 	void Reset();	//Set state to non signaled
-	void Wait(u32 msec);//Wait for signal , then reset[if auto]
+	bool Wait(u32 msec);//Wait for signal , then reset[if auto]. Returns false if timed out
 	void Wait();	//Wait for signal , then reset[if auto]
 };
 
