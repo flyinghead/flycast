@@ -16,7 +16,7 @@ public final class JNIdc
 	public static native int data(int cmd, byte[] data);
 
 	public static native void rendinit(int w, int y);
-	public static native void rendframe();
+	public static native boolean rendframe();
 
 	public static native void kcode(int[] kcode, int[] lt, int[] rt, int[] jx, int[] jy);
 

@@ -523,10 +523,11 @@ public class GL2JNIView extends GLSurfaceView
 
         public void onDrawFrame(GL10 gl)
         {
-            if (fpsPop != null && fpsPop.isShowing()) {
-                fps.logFrame();
+            if (JNIdc.rendframe()) {
+                if (fpsPop != null && fpsPop.isShowing()) {
+                    fps.logFrame();
+                }
             }
-            JNIdc.rendframe();
             if(mView.takeScreenshot){
                 mView.takeScreenshot = false;
                 FileUtils.saveScreenshot(mView.getContext(), mView.getWidth(), mView.getHeight(), gl);
