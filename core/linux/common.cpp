@@ -180,7 +180,8 @@ bool cResetEvent::Wait(u32 msec)//Wait for signal , then reset
 		ts.tv_nsec = (msec % 1000) * 1000;
 		rc = pthread_cond_timedwait( &cond, &mutx, &ts ) == 0;
 	}
-	state=false;
+	if (rc)
+		state=false;
 	pthread_mutex_unlock( &mutx );
 
 	return rc;
