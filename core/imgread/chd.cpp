@@ -158,8 +158,11 @@ bool CHDDisc::TryOpen(const wchar* file)
 		t.ADDR = 0;
 		t.CTRL = strcmp(type,"AUDIO") == 0 ? 0 : 4;
 		t.file = new CHDTrack(this, t.StartFAD, total_hunks, strcmp(type,"MODE1") ? 2352 : 2048, extraframes);
-		int padded = (frames + CD_TRACK_PADDING - 1) / CD_TRACK_PADDING;
-		extraframes += (padded * CD_TRACK_PADDING) - frames;
+		if (head->version >= 5)
+		{
+			int padded = (frames + CD_TRACK_PADDING - 1) / CD_TRACK_PADDING;
+			extraframes += (padded * CD_TRACK_PADDING) - frames;
+		}
 
 		total_hunks += frames / sph;
 		if (frames % sph)
