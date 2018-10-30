@@ -120,7 +120,6 @@
 		84B7BF2F1B72720200F9733F /* gdromv3.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BDE11B72720100F9733F /* gdromv3.cpp */; };
 		84B7BF301B72720200F9733F /* holly_intc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BDE41B72720100F9733F /* holly_intc.cpp */; };
 		84B7BF311B72720200F9733F /* sb.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BDE61B72720100F9733F /* sb.cpp */; };
-		84B7BF321B72720200F9733F /* sb_dma.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BDE81B72720100F9733F /* sb_dma.cpp */; };
 		84B7BF331B72720200F9733F /* sb_mem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BDE91B72720100F9733F /* sb_mem.cpp */; };
 		84B7BF341B72720200F9733F /* maple_cfg.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BDEC1B72720100F9733F /* maple_cfg.cpp */; };
 		84B7BF351B72720200F9733F /* maple_devs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BDEE1B72720100F9733F /* maple_devs.cpp */; };
@@ -191,6 +190,7 @@
 		AE1E293B2095FB1600FC6BA2 /* rec_cpp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE1E293A2095FB1600FC6BA2 /* rec_cpp.cpp */; };
 		AE1E294020A96B0B00FC6BA2 /* rec_x64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE1E293F20A96B0B00FC6BA2 /* rec_x64.cpp */; };
 		AE4FF4E1211588B5009BF202 /* font.png in Resources */ = {isa = PBXBuildFile; fileRef = AE4FF4E0211588B5009BF202 /* font.png */; };
+		AE649BB62188689000EF4A81 /* xxhash.c in Sources */ = {isa = PBXBuildFile; fileRef = AE649BB42188689000EF4A81 /* xxhash.c */; };
 		AE80EDB72157D4D500F7800F /* serialize.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE80EDB62157D4D500F7800F /* serialize.cpp */; };
 		AE80EDBE2157D4E600F7800F /* naomi.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE80EDB92157D4E600F7800F /* naomi.cpp */; };
 		AE80EDBF2157D4E600F7800F /* naomi_cart.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE80EDBB2157D4E600F7800F /* naomi_cart.cpp */; };
@@ -415,7 +415,6 @@
 		84B7BDE51B72720100F9733F /* holly_intc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = holly_intc.h; sourceTree = "<group>"; };
 		84B7BDE61B72720100F9733F /* sb.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = sb.cpp; sourceTree = "<group>"; };
 		84B7BDE71B72720100F9733F /* sb.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = sb.h; sourceTree = "<group>"; };
-		84B7BDE81B72720100F9733F /* sb_dma.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = sb_dma.cpp; sourceTree = "<group>"; };
 		84B7BDE91B72720100F9733F /* sb_mem.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = sb_mem.cpp; sourceTree = "<group>"; };
 		84B7BDEA1B72720100F9733F /* sb_mem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = sb_mem.h; sourceTree = "<group>"; };
 		84B7BDEC1B72720100F9733F /* maple_cfg.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = maple_cfg.cpp; sourceTree = "<group>"; };
@@ -570,6 +569,8 @@
 		AE1E293A2095FB1600FC6BA2 /* rec_cpp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = rec_cpp.cpp; sourceTree = "<group>"; };
 		AE1E293F20A96B0B00FC6BA2 /* rec_x64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = rec_x64.cpp; sourceTree = "<group>"; };
 		AE4FF4E0211588B5009BF202 /* font.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = font.png; path = ../../../linux/font.png; sourceTree = "<group>"; };
+		AE649BB42188689000EF4A81 /* xxhash.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = xxhash.c; sourceTree = "<group>"; };
+		AE649BB52188689000EF4A81 /* xxhash.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = xxhash.h; sourceTree = "<group>"; };
 		AE80EDB62157D4D500F7800F /* serialize.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = serialize.cpp; path = ../../../core/serialize.cpp; sourceTree = "<group>"; };
 		AE80EDB92157D4E600F7800F /* naomi.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = naomi.cpp; sourceTree = "<group>"; };
 		AE80EDBA2157D4E600F7800F /* naomi.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = naomi.h; sourceTree = "<group>"; };
@@ -811,6 +812,7 @@
 				AEFF7ECE214D9D580068CE11 /* picotcp */,
 				AE8C273A21122E2500D4D8F4 /* xbrz */,
 				AE1E292620947D4700FC6BA2 /* xbyak */,
+				AE649BB32188689000EF4A81 /* xxhash */,
 				84B7BDA01B72720100F9733F /* zlib */,
 			);
 			name = deps;
@@ -1096,7 +1098,6 @@
 				84B7BDE51B72720100F9733F /* holly_intc.h */,
 				84B7BDE61B72720100F9733F /* sb.cpp */,
 				84B7BDE71B72720100F9733F /* sb.h */,
-				84B7BDE81B72720100F9733F /* sb_dma.cpp */,
 				84B7BDE91B72720100F9733F /* sb_mem.cpp */,
 				84B7BDEA1B72720100F9733F /* sb_mem.h */,
 			);
@@ -1433,6 +1434,15 @@
 			);
 			name = "rec-x64";
 			path = "../../../core/rec-x64";
+			sourceTree = "<group>";
+		};
+		AE649BB32188689000EF4A81 /* xxhash */ = {
+			isa = PBXGroup;
+			children = (
+				AE649BB42188689000EF4A81 /* xxhash.c */,
+				AE649BB52188689000EF4A81 /* xxhash.h */,
+			);
+			path = xxhash;
 			sourceTree = "<group>";
 		};
 		AE80EDB82157D4E600F7800F /* naomi */ = {
@@ -1776,7 +1786,6 @@
 				84B7BF4F1B72720200F9733F /* rtc.cpp in Sources */,
 				84B7BF361B72720200F9733F /* maple_helper.cpp in Sources */,
 				84B7BF131B72720200F9733F /* zip_unchange_all.c in Sources */,
-				84B7BF321B72720200F9733F /* sb_dma.cpp in Sources */,
 				84B7BF541B72720200F9733F /* sh4_interrupts.cpp in Sources */,
 				84B7BF6B1B72720200F9733F /* audiostream.cpp in Sources */,
 				84B7BEFB1B72720200F9733F /* zip_get_file_comment.c in Sources */,
@@ -1878,6 +1887,7 @@
 				84B7BEB41B72720200F9733F /* md5.cpp in Sources */,
 				84B7BF661B72720200F9733F /* nullDC.cpp in Sources */,
 				84B7BF291B72720200F9733F /* sgc_if.cpp in Sources */,
+				AE649BB62188689000EF4A81 /* xxhash.c in Sources */,
 				84B7BF5E1B72720200F9733F /* ImgReader.cpp in Sources */,
 				84B7BEB51B72720200F9733F /* sha1.cpp in Sources */,
 				84B7BF2C1B72720200F9733F /* vbaARM.cpp in Sources */,

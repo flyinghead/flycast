@@ -15,6 +15,7 @@ u32 RomSize;
 	#include <unistd.h>
 	#include <fcntl.h>
 	#include <sys/mman.h>
+	#include <errno.h>
 #endif
 
 fd_t*	RomCacheMap;

@@ -20,7 +20,10 @@
  */
 
 #ifndef _MSC_VER
+#ifdef __MINGW32__
 #define _POSIX_SOURCE
+#endif
+
 #include <queue>
 #include <map>
 
