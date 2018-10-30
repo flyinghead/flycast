@@ -752,7 +752,11 @@ void findGLVersion()
     	if (gl.gl_major >= 3)
     	{
 			gl.gl_version = "GL3";
+#if HOST_OS == OS_DARWIN
+			gl.glsl_version_header = "#version 150";
+#else
 			gl.glsl_version_header = "#version 130";
+#endif
 			gl.fog_image_format = GL_RED;
 		}
 		else
