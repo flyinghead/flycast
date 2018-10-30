@@ -23,6 +23,10 @@
   #include <sys/personality.h>
   #include <dlfcn.h>
 #endif
+#if HOST_OS == OS_DARWIN
+#include <mach/clock.h>
+#include <mach/mach.h>
+#endif
 #include <unistd.h>
 #include "hw/sh4/dyna/blockmanager.h"
 
@@ -171,17 +175,34 @@ void cResetEvent::Reset()//reset
 }
 bool cResetEvent::Wait(u32 msec)//Wait for signal , then reset
 {
-	bool rc = true;
 	pthread_mutex_lock( &mutx );
 	if (!state)
 	{
 		struct timespec ts;
-		ts.tv_sec = msec / 1000;
-		ts.tv_nsec = (msec % 1000) * 1000000;
-		rc = pthread_cond_timedwait( &cond, &mutx, &ts ) == 0;
+#if HOST_OS == OS_DARWIN
+		// OSX doesn't have clock_gettime.
+		clock_serv_t cclock;
+		mach_timespec_t mts;
+
+		host_get_clock_service(mach_host_self(), CALENDAR_CLOCK, &cclock);
+		clock_get_time(cclock, &mts);
+		mach_port_deallocate(mach_task_self(), cclock);
+		ts.tv_sec = mts.tv_sec;
+		ts.tv_nsec = mts.tv_nsec;
+#else
+		clock_gettime(CLOCK_REALTIME, &ts);
+#endif
+		ts.tv_sec += msec / 1000;
+		ts.tv_nsec += (msec % 1000) * 1000000;
+		while (ts.tv_nsec > 1000000000)
+		{
+			ts.tv_nsec -= 1000000000;
+			ts.tv_sec++;
+		}
+		pthread_cond_timedwait( &cond, &mutx, &ts );
 	}
-	if (rc)
-		state=false;
+	bool rc = state;
+	state=false;
 	pthread_mutex_unlock( &mutx );
 
 	return rc;
