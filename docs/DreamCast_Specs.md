@@ -1,7 +1,7 @@
 # SEGA Dreamcast Specifications
 
 ### CPU Specifications:
-    - **Processor**:								Hitachi SH-4 (128-bit)
+- **Processor**:								Hitachi SH-4 (128-bit)
     - **Processor Speed**:							200 MHz
     - **Millions of instructions per second**:		360
     - **Floating-point operations per seccond**:	1.4 billion
