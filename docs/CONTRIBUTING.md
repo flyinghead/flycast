@@ -3,7 +3,7 @@
 ## What are nillware's plans for the project?
 
 - We want **reicast** to be the best dreamcast emulator, available _on every possible platform_, with the source **public**, and at _no cost of the end users_. 
-- We are not really interested on making any money off of it, apart from guaranteeing its developers' sustainability.
+- We are not really interested in making any money off of it, apart from guaranteeing its developers' sustainability.
 - We'd really like that every regular/"important" contributor to get paid a reasonable amount of money for their work. 
 
 ## CLA Stuff
