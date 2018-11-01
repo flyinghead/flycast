@@ -13,7 +13,7 @@ A special game cabinet for the NAOMI, **NAOMI Universal Cabinet**, houses up to 
 
 _The other key difference between NAOMI and Dreamcast lies in the game media._
 
-The Dreamcast reads game data from GD-ROM optical disc,  while the NAOMI arcade board features 168 MB of solid-state ROMs or GD-ROMs using a custom DIMM board and GD-ROM drive. 
+The Dreamcast reads game data from GD-ROM optical disc, while the NAOMI arcade board features 168 MB of solid-state ROMs or GD-ROMs using a custom DIMM board and GD-ROM drive. 
 
 - In operation, the Naomi GD-ROM is read only once at system power up, loading the disc's contents to the DIMM Board RAM. 
 Once loading is complete, the game executes only from RAM, thereby reducing mechanical wear on the GD-ROM drive.
