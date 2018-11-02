@@ -97,9 +97,6 @@
     <ClCompile Include="..\core\deps\crypto\sha1.cpp">
       <Filter>deps\crypto</Filter>
     </ClCompile>
-    <ClCompile Include="..\core\deps\chdr\chdr.cpp">
-      <Filter>deps\chdr</Filter>
-    </ClCompile>
     <ClCompile Include="..\core\imgread\cdi.cpp">
       <Filter>imgread</Filter>
     </ClCompile>
@@ -454,6 +451,123 @@
     <ClCompile Include="..\core\hw\pvr\ta.cpp">
       <Filter>hw\pvr</Filter>
     </ClCompile>
+    <ClCompile Include="..\core\deps\lzma\Alloc.c">
+      <Filter>deps\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lzma\Bra.c">
+      <Filter>deps\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lzma\Bra86.c">
+      <Filter>deps\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lzma\BraIA64.c">
+      <Filter>deps\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lzma\CpuArch.c">
+      <Filter>deps\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lzma\Delta.c">
+      <Filter>deps\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lzma\LzFind.c">
+      <Filter>deps\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lzma\Lzma86Dec.c">
+      <Filter>deps\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lzma\Lzma86Enc.c">
+      <Filter>deps\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lzma\LzmaDec.c">
+      <Filter>deps\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lzma\LzmaEnc.c">
+      <Filter>deps\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lzma\LzmaLib.c">
+      <Filter>deps\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lzma\Sort.c">
+      <Filter>deps\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\flac\src\libFLAC\bitmath.c">
+      <Filter>deps\flac\src\libFLAC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\flac\src\libFLAC\bitreader.c">
+      <Filter>deps\flac\src\libFLAC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\flac\src\libFLAC\cpu.c">
+      <Filter>deps\flac\src\libFLAC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\flac\src\libFLAC\crc.c">
+      <Filter>deps\flac\src\libFLAC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\flac\src\libFLAC\fixed.c">
+      <Filter>deps\flac\src\libFLAC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\flac\src\libFLAC\fixed_intrin_sse2.c">
+      <Filter>deps\flac\src\libFLAC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\flac\src\libFLAC\fixed_intrin_ssse3.c">
+      <Filter>deps\flac\src\libFLAC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\flac\src\libFLAC\float.c">
+      <Filter>deps\flac\src\libFLAC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\flac\src\libFLAC\format.c">
+      <Filter>deps\flac\src\libFLAC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\flac\src\libFLAC\lpc.c">
+      <Filter>deps\flac\src\libFLAC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\flac\src\libFLAC\lpc_intrin_avx2.c">
+      <Filter>deps\flac\src\libFLAC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\flac\src\libFLAC\lpc_intrin_sse.c">
+      <Filter>deps\flac\src\libFLAC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\flac\src\libFLAC\lpc_intrin_sse2.c">
+      <Filter>deps\flac\src\libFLAC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\flac\src\libFLAC\lpc_intrin_sse41.c">
+      <Filter>deps\flac\src\libFLAC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\flac\src\libFLAC\md5.c">
+      <Filter>deps\flac\src\libFLAC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\flac\src\libFLAC\memory.c">
+      <Filter>deps\flac\src\libFLAC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\flac\src\libFLAC\metadata_iterators.c">
+      <Filter>deps\flac\src\libFLAC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\flac\src\libFLAC\metadata_object.c">
+      <Filter>deps\flac\src\libFLAC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\flac\src\libFLAC\stream_decoder.c">
+      <Filter>deps\flac\src\libFLAC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\flac\src\libFLAC\window.c">
+      <Filter>deps\flac\src\libFLAC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\flac\src\libFLAC\windows_unicode_filenames.c">
+      <Filter>deps\flac\src\libFLAC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\chdr\bitstream.c">
+      <Filter>deps\chdr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\chdr\cdrom.c">
+      <Filter>deps\chdr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\chdr\chd.c">
+      <Filter>deps\chdr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\chdr\flac.c">
+      <Filter>deps\chdr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\chdr\huffman.c">
+      <Filter>deps\chdr</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="hw">
@@ -587,6 +701,27 @@
     </Filter>
     <Filter Include="hw\modem">
       <UniqueIdentifier>{a67aece4-e47f-48a2-8944-6afbe679a5fb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="deps\lzma">
+      <UniqueIdentifier>{4c0328b2-a9b3-4b0a-ab54-558ba960b03a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="deps\flac">
+      <UniqueIdentifier>{8bb0b4a0-7661-4533-9245-fc43582f6182}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="deps\flac\include">
+      <UniqueIdentifier>{98226656-1e2d-4d69-bcd4-c1c1b6d4cb0a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="deps\flac\src">
+      <UniqueIdentifier>{f06382df-ae0e-459c-92a2-dc0eaab25b05}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="deps\flac\include\FLAC">
+      <UniqueIdentifier>{39e82b10-530a-4978-b8cc-8a11b67981d7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="deps\flac\include\share">
+      <UniqueIdentifier>{51e03f58-a90d-4ebc-95f7-6af6cdc39165}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="deps\flac\src\libFLAC">
+      <UniqueIdentifier>{4c52c0a3-9e35-4285-a062-290d3667e1d1}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -976,6 +1111,108 @@
     </ClInclude>
     <ClInclude Include="..\core\hw\pvr\ta.h">
       <Filter>hw\pvr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\lzma\7zTypes.h">
+      <Filter>deps\lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\lzma\Alloc.h">
+      <Filter>deps\lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\lzma\Bra.h">
+      <Filter>deps\lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\lzma\Compiler.h">
+      <Filter>deps\lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\lzma\CpuArch.h">
+      <Filter>deps\lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\lzma\Delta.h">
+      <Filter>deps\lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\lzma\LzFind.h">
+      <Filter>deps\lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\lzma\LzHash.h">
+      <Filter>deps\lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\lzma\Lzma86.h">
+      <Filter>deps\lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\lzma\LzmaDec.h">
+      <Filter>deps\lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\lzma\LzmaEnc.h">
+      <Filter>deps\lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\lzma\LzmaLib.h">
+      <Filter>deps\lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\lzma\Precomp.h">
+      <Filter>deps\lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\lzma\Sort.h">
+      <Filter>deps\lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\flac\include\FLAC\all.h">
+      <Filter>deps\flac\include\FLAC</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\flac\include\FLAC\assert.h">
+      <Filter>deps\flac\include\FLAC</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\flac\include\FLAC\callback.h">
+      <Filter>deps\flac\include\FLAC</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\flac\include\FLAC\export.h">
+      <Filter>deps\flac\include\FLAC</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\flac\include\FLAC\format.h">
+      <Filter>deps\flac\include\FLAC</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\flac\include\FLAC\metadata.h">
+      <Filter>deps\flac\include\FLAC</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\flac\include\FLAC\ordinals.h">
+      <Filter>deps\flac\include\FLAC</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\flac\include\FLAC\stream_decoder.h">
+      <Filter>deps\flac\include\FLAC</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\flac\include\FLAC\stream_encoder.h">
+      <Filter>deps\flac\include\FLAC</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\flac\include\share\alloc.h">
+      <Filter>deps\flac\include\share</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\flac\include\share\compat.h">
+      <Filter>deps\flac\include\share</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\flac\include\share\endswap.h">
+      <Filter>deps\flac\include\share</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\flac\include\share\macros.h">
+      <Filter>deps\flac\include\share</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\flac\include\share\safe_str.h">
+      <Filter>deps\flac\include\share</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\flac\include\share\win_utf8_io.h">
+      <Filter>deps\flac\include\share</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\flac\include\share\windows_unicode_filenames.h">
+      <Filter>deps\flac\include\share</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\chdr\bitstream.h">
+      <Filter>deps\chdr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\chdr\cdrom.h">
+      <Filter>deps\chdr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\chdr\flac.h">
+      <Filter>deps\chdr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\chdr\huffman.h">
+      <Filter>deps\chdr</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

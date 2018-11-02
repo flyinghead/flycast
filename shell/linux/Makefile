@@ -237,7 +237,7 @@ else ifneq (,$(findstring vero4k,$(platform)))
 else ifneq (,$(findstring win32,$(platform)))
     X64_REC := 1
     NOT_ARM := 1
-    CFLAGS += -DTARGET_NO_WEBUI -fno-builtin-sqrtf -funroll-loops
+    CFLAGS += -DTARGET_NO_WEBUI -fno-builtin-sqrtf -funroll-loops -DHAVE_FSEEKO
     LDFLAGS += -static-libgcc -static-libstdc++
     LIBS := -lopengl32 -lwinmm -lgdi32 -lwsock32 -ldsound -lcomctl32 -lcomdlg32 -lxinput -liphlpapi
     PLATFORM_EXT := exe
