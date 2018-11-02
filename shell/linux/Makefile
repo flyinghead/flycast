@@ -14,6 +14,8 @@ CC=${CC_PREFIX}gcc
 AS=${CC_PREFIX}as
 STRIP=${CC_PREFIX}strip
 LD=${CC}
+CHD5_LZMA := 1
+CHD5_FLAC := 1
 
 MFLAGS :=
 ASFLAGS :=
@@ -267,6 +269,14 @@ LDFLAGS += -g -Wl,-Map,$(notdir $@).map,--gc-sections -Wl,-O3 -Wl,--sort-common 
 CFLAGS += $(RZDCY_CFLAGS) -g -O3 -D RELEASE -c -D USES_HOMEDIR -fopenmp #-D NO_REND
 CFLAGS += -frename-registers -fno-strict-aliasing
 CFLAGS += -ffast-math -ftree-vectorize
+
+# 7-Zip/LZMA settings (CHDv5)
+ifdef CHD5_LZMA
+	CFLAGS += -D_7ZIP_ST -DCHD5_LZMA
+endif
+ifdef CHD5_FLAC
+	CFLAGS += -DCHD5_FLAC
+endif
 
 CXXFLAGS += $(RZDCY_CFLAGS) -fno-rtti -fpermissive -fno-operator-names -D_GLIBCXX_USE_CXX11_ABI=0 -std=gnu++11
 

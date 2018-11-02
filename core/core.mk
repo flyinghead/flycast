@@ -12,6 +12,13 @@ RZDCY_MODULES	:=	cfg/ hw/arm7/ hw/aica/ hw/holly/ hw/ hw/gdrom/ hw/maple/ hw/mod
  deps/libelf/ deps/chdpsr/ arm_emitter/ rend/ reios/ deps/libpng/ deps/xbrz/ \
  deps/picotcp/modules/ deps/picotcp/stack/ deps/xxhash/
 
+ifdef CHD5_LZMA
+	RZDCY_MODULES += deps/lzma/
+endif
+
+ifdef CHD5_FLAC
+	RZDCY_MODULES += deps/flac/src/libFLAC/
+endif
 
 ifdef WEBUI
 	RZDCY_MODULES += webui/
@@ -126,6 +133,11 @@ endif
 
 ifdef HAS_SOFTREND
 	RZDCY_CFLAGS += -DTARGET_SOFTREND
+endif
+
+ifdef CHD5_FLAC
+	RZDCY_CFLAGS += -I$(RZDCY_SRC_DIR)/deps/flac/src/libFLAC/include/ -I$(RZDCY_SRC_DIR)/deps/flac/include
+	RZDCY_CFLAGS += -DPACKAGE_VERSION=\"1.3.2\" -DFLAC__HAS_OGG=0 -DFLAC__NO_DLL -DHAVE_LROUND -DHAVE_STDINT_H -DHAVE_STDLIB_H -DHAVE_SYS_PARAM_H
 endif
 
 RZDCY_CXXFLAGS := $(RZDCY_CFLAGS) -fno-exceptions -fno-rtti -std=gnu++11

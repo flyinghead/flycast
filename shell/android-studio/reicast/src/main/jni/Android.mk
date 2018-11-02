@@ -22,6 +22,8 @@ include $(CLEAR_VARS)
 FOR_ANDROID := 1
 WEBUI := 1
 USE_GLES := 1
+CHD5_LZMA := 1
+CHD5_FLAC := 1
 
 ifneq ($(TARGET_ARCH_ABI),armeabi-v7a)
   NOT_ARM := 1
@@ -53,6 +55,15 @@ LOCAL_SRC_FILES += $(wildcard $(LOCAL_PATH)/jni/src/utils.cpp)
 LOCAL_CFLAGS  := $(RZDCY_CFLAGS) -fPIC -fvisibility=hidden -ffunction-sections -fdata-sections
 LOCAL_CXXFLAGS  := $(RZDCY_CXXFLAGS) -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -ffunction-sections -fdata-sections
 LOCAL_CPPFLAGS  := $(RZDCY_CXXFLAGS) -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -ffunction-sections -fdata-sections
+
+# 7-Zip/LZMA settings (CHDv5)
+ifdef CHD5_LZMA
+	LOCAL_CFLAGS += -D_7ZIP_ST -DCHD5_LZMA
+endif
+# FLAC settings (CHDv5)
+ifdef CHD5_FLAC
+	LOCAL_CFLAGS += -DCHD5_FLAC
+endif
 
 ifdef NAOMI
 LOCAL_CFLAGS += -DTARGET_NAOMI=1
