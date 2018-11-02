@@ -1,8 +1,17 @@
 version: git-{branch}-{build}
-configuration: Debug
+os: Visual Studio 2017
+
+environment:
+  matrix:
+  - Toolset: v141
+
+configuration:
+  - Release
+
 platform:
-- x86
-- x64
+  - x86
+  - x64
+
 build:
   project: shell/reicast.sln
   parallel: true
@@ -11,11 +20,11 @@ build:
 after_build:
   - cmd: mkdir artifacts
   - cmd: set PLATFORM2=%PLATFORM:x86=Win32%
-  - cmd: move WorkDir\reicast_%PLATFORM2%_Slow.exe artifacts/reicast-win_%PLATFORM%-slow-%APPVEYOR_REPO_COMMIT%.exe
+  - cmd: move WorkDir\reicast_%PLATFORM2%_Fast.exe artifacts/reicast-win_%PLATFORM%-fast-%APPVEYOR_REPO_COMMIT%.exe
 
 artifacts:
   - path: artifacts
-    name: reicast-win_$(platform)-slow-$(APPVEYOR_REPO_COMMIT)
+    name: reicast-win_$(platform)-fast-$(APPVEYOR_REPO_COMMIT)
 
 deploy:
 - provider: S3
@@ -25,5 +34,5 @@ deploy:
   region: eu-west-1
   bucket: reicast-builds-windows
   folder: 'builds/heads/$(APPVEYOR_REPO_BRANCH)-$(APPVEYOR_REPO_COMMIT)'
-  artifact: reicast-win_$(platform)-slow-$(APPVEYOR_REPO_COMMIT)
+  artifact: reicast-win_$(platform)-fast-$(APPVEYOR_REPO_COMMIT)
   set_public: true
