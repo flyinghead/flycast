@@ -35,40 +35,31 @@ struct CHDTrack : TrackFile
 {
 	CHDDisc* disc;
 	u32 StartFAD;
-	u32 StartHunk;
+	u32 Offset;
 	u32 fmt;
 
-	u32 extraframes; /* number of "spillage" frames in previous tracks */
-
-	CHDTrack(CHDDisc* disc, u32 StartFAD,u32 StartHunk, u32 fmt, u32 extraframes)
+	CHDTrack(CHDDisc* disc, u32 StartFAD, u32 Offset, u32 fmt)
 	{
 		this->disc=disc;
 		this->StartFAD=StartFAD;
-		this->StartHunk=StartHunk;
+		this->Offset=Offset;
 		this->fmt=fmt;
-		this->extraframes = extraframes;
 	}
 
-	virtual void Read(u32 FAD,u8* dst,SectorFormat* sector_type,u8* subcode,SubcodeFormat* subcode_type)
+	virtual void Read(u32 FAD, u8* dst, SectorFormat* sector_type, u8* subcode, SubcodeFormat* subcode_type)
 	{
-		s32 fad_offs = FAD - (StartFAD + extraframes);
-		u32 hunk=(fad_offs)/(s32)disc->sph + StartHunk;
+		s32 fad_offs = FAD + Offset;
+		u32 hunk = fad_offs / disc->sph;
 
-		if (fad_offs < 0)
+		if (disc->old_hunk != hunk)
 		{
-			hunk--;
-			fad_offs += disc->sph;
-		}
-
-		if (disc->old_hunk!=hunk)
-		{
-			chd_read(disc->chd,hunk,disc->hunk_mem); //CHDERR_NONE
+			chd_read(disc->chd, hunk, disc->hunk_mem); //CHDERR_NONE
 			disc->old_hunk = hunk;
 		}
 
-		u32 hunk_ofs=fad_offs%disc->sph;
+		u32 hunk_ofs = fad_offs%disc->sph;
 
-		memcpy(dst,disc->hunk_mem+hunk_ofs*(2352+96),fmt);
+		memcpy(dst, disc->hunk_mem + hunk_ofs * (2352+96), fmt);
 
 		*sector_type=fmt==2352?SECFMT_2352:SECFMT_2048_MODE1;
 
@@ -108,8 +99,7 @@ bool CHDDisc::TryOpen(const wchar* file)
 	u32 total_frames = 150;
 
 	u32 total_secs = 0;
-	u32 total_hunks = 0;
-	int extraframes = 0;
+	u32 Offset = 0;
 
 	for(;;)
 	{
@@ -157,16 +147,11 @@ bool CHDDisc::TryOpen(const wchar* file)
 		t.EndFAD = total_frames - 1;
 		t.ADDR = 0;
 		t.CTRL = strcmp(type,"AUDIO") == 0 ? 0 : 4;
-		t.file = new CHDTrack(this, t.StartFAD, total_hunks, strcmp(type,"MODE1") ? 2352 : 2048, extraframes);
-		if (head->version >= 5)
-		{
-			int padded = (frames + CD_TRACK_PADDING - 1) / CD_TRACK_PADDING;
-			extraframes += (padded * CD_TRACK_PADDING) - frames;
-		}
+		t.file = new CHDTrack(this, t.StartFAD, Offset - t.StartFAD, strcmp(type,"MODE1") ? 2352 : 2048);
 
-		total_hunks += frames / sph;
-		if (frames % sph)
-			total_hunks++;
+		// CHD files are padded, so we have to respect the offset
+		int padded = (frames + CD_TRACK_PADDING - 1) / CD_TRACK_PADDING;
+		Offset += padded * CD_TRACK_PADDING;
 
 		tracks.push_back(t);
 	}
