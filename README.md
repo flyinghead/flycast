@@ -1,19 +1,18 @@
+[![Snap Status](https://build.snapcraft.io/badge/reicast/reicast-emulator.svg)](https://build.snapcraft.io/user/reicast/reicast-emulator)
+
 reicast
 ===========
-reicast is a multi-platform Sega Dreamcast emulator.
+**reicast** is a multi-platform Sega Dreamcast emulator.
 
 This is a developer-oriented resource, if you just want bins head over to http://reicast.com/
 
 For development discussion, join [#reicast in freenode](https://webchat.freenode.net/?channels=reicast)
  or stop by the [reicast Discord server](http://discord.gg/Hc6CF72)
 
-Caution
--------
-The source is a mess, and dragons might eat your cat when you clone this project. We're working on cleaning things up, but don't hold your breath. Why don't you lend a hand?
-
 Rebranding/(hard)forks
 ----------------
-If you are interested into further porting/adapting/whatever, *please* don't fork off. I hate that. Really.
+If you are interested into further porting/adapting/whatever, *please* do not fork off.  
+We hate that. **Really**.
 
 Let's try to keep everything under a single project :)
 
@@ -28,7 +27,8 @@ Bugs that do not include a form may be closed until it is filled out.
 
 Contributing
 ------------
-For small/one-off fixes a PR from a github fork is alright. For longer term collaboration we prefer to use namespaced branches in the form of `<username>/<whatever>` in the main repo. 
+- For small/one-off fixes, a PR from a GitHub fork is alright.  
+- For longer term collaboration, we prefer to use namespaced branches in the form of `<username>/<whatever>` in the main repo. 
 
 Before you work on something major, make sure to check the issue tracker to coordinate with other contributors, and open an issue to get feedback before doing big changes/PRs. It is always polite to check the history of the code you're working on and collaborate with the people that have worked on it. You can introduce yourself in [Meet the team](https://github.com/reicast/reicast-emulator/issues/1113).
 
@@ -109,22 +109,25 @@ Or open the .xcodeproj in Xcode and hit "Build".
 
 Building for Linux
 ------------------
-Requirements:
-* build-essential
-* libasound2
-* libegl1-mesa-dev
-* libgles2-mesa-dev
-* libasound2-dev
-* mesa-common-dev
-* libgl1-mesa-dev
+### Using traditional make
+- Requirements:
+	* build-essential
+	* libasound2
+	* libegl1-mesa-dev
+	* libgles2-mesa-dev
+	* libasound2-dev
+	* mesa-common-dev
+	* libgl1-mesa-dev
 
-From project root directory:
-
+- From project root directory:
 ```
 cd shell/linux
 
 make
 ```
+
+### Using snap
+- Refer to our [snap README](https:github.com/reicast/reicast-emulator/snap/README.md)
 
 Translations
 ------------
@@ -178,11 +181,11 @@ Our IRC channel is [#reicast @ chat.freenode.net](irc://chat.freenode.net/reicas
 The original reicast team consisted of drk||Raziel (mostly just writing code),
 PsyMan (debugging/testing and everything else) and a little bit of gb_away
 
-
 Special thanks
 --------------
 In previous iterations a lot of people have worked on this, notably David
 Miller (aka, ZeZu), the nullDC team, friends from #pcsx2 and all over the world :)
 
 [![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/reicast/reicast-emulator/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
+
 
