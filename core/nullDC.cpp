@@ -94,8 +94,6 @@ s32 plugins_Init()
 	//if (s32 rv = libExtDevice_Init())
 	//	return rv;
 
-
-
 	return rv_ok;
 }
 
