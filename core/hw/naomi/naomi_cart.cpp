@@ -1,7 +1,16 @@
 #include "naomi_cart.h"
+#include "naomi_regs.h"
 #include "cfg/cfg.h"
 #include "naomi.h"
+#include "deps/libzip/zip.h"
+#include "decrypt.h"
+#include "naomi_roms.h"
+#include "hw/flashrom/flashrom.h"
+#include "hw/holly/holly_intc.h"
+#include "m1cartridge.h"
+#include "m4cartridge.h"
 
+Cartridge *CurrentCartridge;
 u8* RomPtr;
 u32 RomSize;
 
@@ -161,10 +170,251 @@ static void parse_comment(const char *line)
 
 }
 
+extern RomChip sys_rom;
+
+static bool naomi_LoadBios(const char *filename)
+{
+	int biosid = 0;
+	for (; BIOS[biosid].name != NULL; biosid++)
+		if (!stricmp(BIOS[biosid].name, filename))
+			break;
+	if (BIOS[biosid].name == NULL)
+	{
+		printf("Unknown BIOS %s\n", filename);
+		return false;
+	}
+
+	struct BIOS_t *bios = &BIOS[biosid];
+
+#if HOST_OS != OS_DARWIN
+	std::string basepath = get_readonly_data_path("/data/");
+#else
+	std::string basepath = get_readonly_data_path("/");
+#endif
+	zip *zip_archive = zip_open((basepath + filename).c_str(), 0, NULL);
+	if (zip_archive == NULL)
+	{
+		printf("Cannot find BIOS %s\n", filename);
+		return false;
+	}
+
+	int romid = 0;
+	while (bios->blobs[romid].filename != NULL)
+	{
+		if (bios->blobs[romid].blob_type == Copy)
+		{
+			verify(bios->blobs[romid].offset + bios->blobs[romid].length <= BIOS_SIZE);
+			verify(bios->blobs[romid].src_offset + bios->blobs[romid].length <= BIOS_SIZE);
+			memcpy(sys_rom.data + bios->blobs[romid].offset, sys_rom.data + bios->blobs[romid].src_offset, bios->blobs[romid].length);
+			printf("Copied: %x bytes from %07x to %07x\n", bios->blobs[romid].length, bios->blobs[romid].src_offset, bios->blobs[romid].offset);
+		}
+		else
+		{
+			zip_file* file = zip_fopen(zip_archive, bios->blobs[romid].filename, 0);
+			if (!file) {
+				printf("%s: Cannot open %s\n", filename, bios->blobs[romid].filename);
+				goto error;
+			}
+			if (bios->blobs[romid].blob_type == Normal)
+			{
+				verify(bios->blobs[romid].offset + bios->blobs[romid].length <= BIOS_SIZE);
+				size_t read = zip_fread(file, sys_rom.data + bios->blobs[romid].offset, bios->blobs[romid].length);
+				printf("Mapped %s: %lx bytes at %07x\n", bios->blobs[romid].filename, read, bios->blobs[romid].offset);
+			}
+			else if (bios->blobs[romid].blob_type == InterleavedWord)
+			{
+				u8 *buf = (u8 *)malloc(bios->blobs[romid].length);
+				if (buf == NULL)
+				{
+					printf("malloc failed\n");
+					zip_fclose(file);
+					goto error;
+				}
+				verify(bios->blobs[romid].offset + bios->blobs[romid].length <= BIOS_SIZE);
+				size_t read = zip_fread(file, buf, bios->blobs[romid].length);
+				u16 *to = (u16 *)(RomPtr + bios->blobs[romid].offset);
+				u16 *from = (u16 *)buf;
+				for (int i = bios->blobs[romid].length / 2; --i >= 0; to++)
+					*to++ = *from++;
+				free(buf);
+				printf("Mapped %s: %lx bytes (interleaved word) at %07x\n", bios->blobs[romid].filename, read, bios->blobs[romid].offset);
+			}
+			else
+				die("Unknown blob type\n");
+			zip_fclose(file);
+		}
+		romid++;
+	}
+
+	zip_close(zip_archive);
+
+	return true;
+
+error:
+	zip_close(zip_archive);
+	return false;
+}
+
+static bool naomi_cart_LoadZip(char *filename)
+{
+	char *p = strrchr(filename, '/');
+#ifdef _WIN32
+	p = strrchr(p == NULL ? filename : p, '\\');
+#endif
+	if (p == NULL)
+		p = filename;
+	else
+		p++;
+
+	int gameid = 0;
+	for (; Games[gameid].name != NULL; gameid++)
+		if (!stricmp(Games[gameid].name, p))
+			break;
+	if (Games[gameid].name == NULL)
+	{
+		printf("Unknown game %s\n", filename);
+		return false;
+	}
+
+	struct Game *game = &Games[gameid];
+
+	if (game->bios != NULL)
+	{
+		if (!naomi_LoadBios(game->bios))
+			return false;
+	}
+
+	zip *zip_archive = zip_open(filename, 0, NULL);
+	if (zip_archive == NULL)
+	{
+		printf("Cannot open %s\n", filename);
+		return false;
+	}
+
+	switch (game->cart_type)
+	{
+	case M1:
+		{
+			M1Cartridge *cart = new M1Cartridge(game->size);
+			cart->SetKey(game->key);
+			CurrentCartridge = cart;
+		}
+		break;
+	case M2:
+		{
+			M2Cartridge *cart = new M2Cartridge(game->size);
+			cart->SetKey(game->key);
+			CurrentCartridge = cart;
+		}
+		break;
+	case M4:
+		{
+			M4Cartridge *cart = new M4Cartridge(game->size);
+			cart->SetM4Id(game->key);
+			CurrentCartridge = cart;
+		}
+		break;
+	default:
+		die("Unsupported cartridge type\n");
+		break;
+	}
+//	RomSize = game->size;
+//	RomPtr = (u8 *)malloc(RomSize);
+//	memset(RomPtr, 0xFF, RomSize);
+//	cartridge_type = game->cart_type;
+//	cartridge_key = game->key;
+
+	int romid = 0;
+	while (game->blobs[romid].filename != NULL)
+	{
+		u32 len = game->blobs[romid].length;
+
+		if (game->blobs[romid].blob_type == Copy)
+		{
+			u8 *dst = (u8 *)CurrentCartridge->GetPtr(game->blobs[romid].offset, len);
+			u8 *src = (u8 *)CurrentCartridge->GetPtr(game->blobs[romid].src_offset, len);
+			memcpy(dst, src, game->blobs[romid].length);
+			printf("Copied: %x bytes from %07x to %07x\n", game->blobs[romid].length, game->blobs[romid].src_offset, game->blobs[romid].offset);
+		}
+		else
+		{
+			zip_file* file = zip_fopen(zip_archive, game->blobs[romid].filename, 0);
+			if (!file) {
+				printf("%s: Cannot open %s\n", filename, game->blobs[romid].filename);
+				goto error;
+			}
+			if (game->blobs[romid].blob_type == Normal)
+			{
+				u8 *dst = (u8 *)CurrentCartridge->GetPtr(game->blobs[romid].offset, len);
+				size_t read = zip_fread(file, dst, game->blobs[romid].length);
+				printf("Mapped %s: %lx bytes at %07x\n", game->blobs[romid].filename, read, game->blobs[romid].offset);
+			}
+			else if (game->blobs[romid].blob_type == InterleavedWord)
+			{
+				u8 *buf = (u8 *)malloc(game->blobs[romid].length);
+				if (buf == NULL)
+				{
+					printf("malloc failed\n");
+					zip_fclose(file);
+					goto error;
+				}
+				size_t read = zip_fread(file, buf, game->blobs[romid].length);
+				u16 *to = (u16 *)CurrentCartridge->GetPtr(game->blobs[romid].offset, len);
+				u16 *from = (u16 *)buf;
+				for (int i = game->blobs[romid].length / 2; --i >= 0; to++)
+					*to++ = *from++;
+				free(buf);
+				printf("Mapped %s: %lx bytes (interleaved word) at %07x\n", game->blobs[romid].filename, read, game->blobs[romid].offset);
+			}
+			else if (game->blobs[romid].blob_type == M4Key)
+			{
+				verify(game->cart_type == M4);
+				u8 *buf = (u8 *)malloc(game->blobs[romid].length);
+				if (buf == NULL)
+				{
+					printf("malloc failed\n");
+					zip_fclose(file);
+					goto error;
+				}
+				size_t read = zip_fread(file, buf, game->blobs[romid].length);
+				((M4Cartridge *)CurrentCartridge)->SetKeyData(buf);
+				printf("Loaded %s: %lx bytes M4 Key\n", game->blobs[romid].filename, read);
+			}
+			else
+				die("Unknown blob type\n");
+			zip_fclose(file);
+		}
+		romid++;
+	}
+	zip_close(zip_archive);
+
+	{
+		u32 len = sizeof(naomi_game_id) - 1;
+		u8 *game_id = (u8 *)CurrentCartridge->GetPtr(0x30, len);
+		memcpy(naomi_game_id, game_id, sizeof(naomi_game_id) - 1);
+		naomi_game_id[sizeof(naomi_game_id) - 1] = '\0';
+		for (char *p = naomi_game_id + sizeof(naomi_game_id) - 2; *p == ' ' && p >= naomi_game_id; *p-- = '\0');
+		printf("NAOMI GAME ID [%s]\n", naomi_game_id);
+	}
+
+	return true;
+
+error:
+	zip_close(zip_archive);
+	delete CurrentCartridge;
+	CurrentCartridge = NULL;
+	return false;
+}
+
 bool naomi_cart_LoadRom(char* file)
 {
-
 	printf("\nnullDC-Naomi rom loader v1.2\n");
+
+	if (CurrentCartridge != NULL)
+	{
+		delete CurrentCartridge;
+		CurrentCartridge = NULL;
+	}
 
 	size_t folder_pos = strlen(file) - 1;
 	while (folder_pos>1 && (file[folder_pos] != '\\' && file[folder_pos] != '/'))
@@ -186,6 +436,10 @@ bool naomi_cart_LoadRom(char* file)
 	bool raw_bin_file = false;
 
 	char *pdot = strrchr(file, '.');
+
+	if (pdot != NULL && (!strcmp(pdot, ".zip") || !strcmp(pdot, ".ZIP")))
+		return naomi_cart_LoadZip(file);
+
 	if (pdot != NULL && (!strcmp(pdot, ".lst") || !strcmp(pdot, ".LST")))
 	{
 		// LST file
@@ -402,6 +656,7 @@ bool naomi_cart_LoadRom(char* file)
 	//done :)
 	printf("\nMapped ROM Successfully !\n\n");
 
+	CurrentCartridge = new DecryptedCartridge(RomPtr, RomSize);
 
 	return true;
 }
@@ -437,31 +692,325 @@ bool naomi_cart_SelectFile(void* handle)
 	return true;
 }
 
-bool naomi_cart_Read(u32 offset, u32 size, void* dst) {
-	if (!RomPtr)
-		return false;
+Cartridge::Cartridge(u32 size)
+{
+	RomPtr = (u8 *)malloc(size);
+	RomSize = size;
+	memset(RomPtr, 0xFF, RomSize);
+}
 
-	offset &= 0x0FFFFFFF;
+Cartridge::~Cartridge()
+{
+	free(RomPtr);
+}
+
+bool Cartridge::Read(u32 offset, u32 size, void* dst)
+{
+	offset &= 0x1FFFFFFF;
 	if (offset >= RomSize || (offset + size) > RomSize)
 	{
 		static u32 ones = 0xffffffff;
 
 		// Makes Outtrigger boot
-		EMUERROR("naomi_cart_Read: offset %d > %d\n", offset, RomSize);
+		EMUERROR("offset %d > %d\n", offset, RomSize);
 		memcpy(dst, &ones, size);
 	}
 	else
-		memcpy(dst, naomi_cart_GetPtr(offset, size), size);
+	{
+		memcpy(dst, &RomPtr[offset], size);
+	}
 
 	return true;
 }
 
-void* naomi_cart_GetPtr(u32 offset, u32 size) {
+bool Cartridge::Write(u32 offset, u32 size, u32 data)
+{
+	EMUERROR("Invalid write @ %08x data %x\n", offset, data);
+	return false;
+}
 
-	offset &= 0x0FFFffff;
+void* Cartridge::GetPtr(u32 offset, u32& size)
+{
+	offset &= 0x1FFFffff;
 
 	verify(offset < RomSize);
 	verify((offset + size) <= RomSize);
 
 	return &RomPtr[offset];
+}
+
+
+void* NaomiCartridge::GetDmaPtr(u32& size)
+{
+	if ((DmaOffset & 0x1fffffff) >= RomSize)
+	{
+		EMUERROR("Error: DmaOffset >= RomSize\n");
+		size = 0;
+		return NULL;
+	}
+	size = min(size, RomSize - (DmaOffset & 0x1fffffff));
+	return GetPtr(DmaOffset, size);
+}
+
+void NaomiCartridge::AdvancePtr(u32 size) {
+}
+
+u32 NaomiCartridge::ReadMem(u32 address, u32 size)
+{
+	verify(size!=1);
+	//printf("+naomi?WTF? ReadMem: %X, %d\n", address, size);
+	switch(address & 255)
+	{
+	case 0x3c:
+		EMUERROR("naomi GD? READ: %X, %d", address, size);
+		return reg_dimm_3c | (NaomiDataRead ? 0 : -1); //pretend the board isn't there for the bios
+	case 0x40:
+		EMUERROR("naomi GD? READ: %X, %d", address, size);
+		return reg_dimm_40;
+	case 0x44:
+		EMUERROR("naomi GD? READ: %X, %d", address, size);
+		return reg_dimm_44;
+	case 0x48:
+		EMUERROR("naomi GD? READ: %X, %d", address, size);
+		return reg_dimm_48;
+
+		//These are known to be valid on normal ROMs and DIMM board
+	case NAOMI_ROM_OFFSETH_addr&255:
+		return RomPioOffset>>16 | (RomPioAutoIncrement << 15);
+
+	case NAOMI_ROM_OFFSETL_addr&255:
+		return RomPioOffset&0xFFFF;
+
+	case NAOMI_ROM_DATA_addr & 255:
+		{
+			u32 rv = 0;
+			Read(RomPioOffset, 2, &rv);
+			if (RomPioAutoIncrement)
+				RomPioOffset += 2;
+
+			return rv;
+		}
+
+	case NAOMI_DMA_COUNT_addr&255:
+		return (u16) DmaCount;
+
+	case NAOMI_BOARDID_READ_addr&255:
+		return NaomiGameIDRead()?0x8000:0x0000;
+
+		//What should i do to emulate 'nothing' ?
+	case NAOMI_COMM_OFFSET_addr&255:
+		#ifdef NAOMI_COMM
+		printf("naomi COMM offs READ: %X, %d\n", address, size);
+		return CommOffset;
+		#endif
+	case NAOMI_COMM_DATA_addr&255:
+		#ifdef NAOMI_COMM
+		printf("naomi COMM data read: %X, %d\n", CommOffset, size);
+		if (CommSharedMem)
+		{
+			return CommSharedMem[CommOffset&0xF];
+		}
+		#endif
+		return 1;
+
+
+		//This should be valid
+	case NAOMI_DMA_OFFSETH_addr&255:
+		return DmaOffset>>16;
+	case NAOMI_DMA_OFFSETL_addr&255:
+		return DmaOffset&0xFFFF;
+
+	case NAOMI_BOARDID_WRITE_addr&255:
+		EMUERROR("naomi ReadBoardId: %X, %d", address, size);
+		return 1;
+
+	case 0x04C:
+		EMUERROR("naomi GD? READ: %X, %d", address, size);
+		return reg_dimm_4c;
+
+	case 0x18:
+		printf("naomi reg 0x18 : returning random data\n");
+		return 0x4000^rand();
+		break;
+
+	default: break;
+	}
+	//EMUERROR("naomi?WTF? ReadMem: %X, %d", address, size);
+
+	return 0xFFFF;
+}
+
+void NaomiCartridge::WriteMem(u32 address, u32 data, u32 size)
+{
+	//	printf("+naomi WriteMem: %X <= %X, %d\n", address, data, size);
+	switch(address & 255)
+	{
+	case 0x3c:
+		 if (0x1E03==data)
+		 {
+			 /*
+			 if (!(reg_dimm_4c&0x100))
+				asic_RaiseInterrupt(holly_EXP_PCI);
+			 reg_dimm_4c|=1;*/
+		 }
+		 reg_dimm_3c=data;
+		 EMUERROR("naomi GD? Write: %X <= %X, %d", address, data, size);
+		 return;
+
+	case 0x40:
+		reg_dimm_40=data;
+		EMUERROR("naomi GD? Write: %X <= %X, %d", address, data, size);
+		return;
+	case 0x44:
+		reg_dimm_44=data;
+		EMUERROR("naomi GD? Write: %X <= %X, %d", address, data, size);
+		return;
+	case 0x48:
+		reg_dimm_48=data;
+		EMUERROR("naomi GD? Write: %X <= %X, %d", address, data, size);
+		return;
+
+	case 0x4C:
+		if (data&0x100)
+		{
+			asic_CancelInterrupt(holly_EXP_PCI);
+			naomi_updates=100;
+		}
+		else if ((data&1)==0)
+		{
+			/*FILE* ramd=fopen("c:\\ndc.ram.bin","wb");
+			fwrite(mem_b.data,1,RAM_SIZE,ramd);
+			fclose(ramd);*/
+			naomi_process(reg_dimm_3c,reg_dimm_40,reg_dimm_44,reg_dimm_48);
+		}
+		reg_dimm_4c=data&~0x100;
+		EMUERROR("naomi GD? Write: %X <= %X, %d", address, data, size);
+		return;
+
+		//These are known to be valid on normal ROMs and DIMM board
+	case NAOMI_ROM_OFFSETH_addr&255:
+		RomPioAutoIncrement = (data & 0x8000) != 0;
+		RomPioOffset&=0x0000ffff;
+		RomPioOffset|=(data<<16)&0x7fff0000;
+		PioOffsetChanged(RomPioOffset);
+		return;
+
+	case NAOMI_ROM_OFFSETL_addr&255:
+		RomPioOffset&=0xffff0000;
+		RomPioOffset|=data;
+		PioOffsetChanged(RomPioOffset);
+		return;
+
+	case NAOMI_ROM_DATA_addr&255:
+		Write(RomPioOffset, size, data);
+		if (RomPioAutoIncrement)
+			RomPioOffset += 2;
+
+		return;
+
+	case NAOMI_DMA_OFFSETH_addr&255:
+		DmaOffset&=0x0000ffff;
+		DmaOffset|=(data&0x7fff)<<16;
+		DmaOffsetChanged(DmaOffset);
+		return;
+
+	case NAOMI_DMA_OFFSETL_addr&255:
+		DmaOffset&=0xffff0000;
+		DmaOffset|=data;
+		DmaOffsetChanged(DmaOffset);
+		return;
+
+	case NAOMI_DMA_COUNT_addr&255:
+		{
+			DmaCount=data;
+		}
+		return;
+	case NAOMI_BOARDID_WRITE_addr&255:
+		NaomiGameIDWrite((u16)data);
+		return;
+
+		//What should i do to emulate 'nothing' ?
+	case NAOMI_COMM_OFFSET_addr&255:
+#ifdef NAOMI_COMM
+		printf("naomi COMM ofset Write: %X <= %X, %d\n", address, data, size);
+		CommOffset=data&0xFFFF;
+#endif
+		return;
+
+	case NAOMI_COMM_DATA_addr&255:
+		#ifdef NAOMI_COMM
+		printf("naomi COMM data Write: %X <= %X, %d\n", CommOffset, data, size);
+		if (CommSharedMem)
+		{
+			CommSharedMem[CommOffset&0xF]=data;
+		}
+		#endif
+		return;
+
+		//This should be valid
+	case NAOMI_BOARDID_READ_addr&255:
+		EMUERROR("naomi WriteMem: %X <= %X, %d", address, data, size);
+		return;
+
+	default: break;
+	}
+	EMUERROR("naomi?WTF? WriteMem: %X <= %X, %d", address, data, size);
+}
+
+bool M2Cartridge::Read(u32 offset, u32 size, void* dst)
+{
+	if (offset & 0x40000000)
+	{
+		if (offset == 0x4001fffe)
+		{
+			//printf("NAOMI CART DECRYPT read: %08x sz %d\n", offset, size);
+			cyptoSetKey(key);
+			u16 data = cryptoDecrypt();
+			*(u16 *)dst = data;
+			return true;
+		}
+		EMUERROR("Invalid read @ %08x\n", offset);
+		return false;
+	}
+	return NaomiCartridge::Read(offset, size, dst);
+}
+
+bool M2Cartridge::Write(u32 offset, u32 size, u32 data)
+{
+	if (offset & 0x40000000)
+	{
+		//printf("NAOMI CART CRYPT write: %08x data %x sz %d\n", offset, data, size);
+		if (offset & 0x00020000)
+		{
+			offset &= sizeof(naomi_cart_ram) - 1;
+			naomi_cart_ram[offset] = data;
+			naomi_cart_ram[offset + 1] = data >> 8;
+			return true;
+		}
+		switch (offset & 0x1ffff)
+		{
+			case 0x1fff8:
+				cyptoSetLowAddr(data);
+				return true;
+			case 0x1fffa:
+				cyptoSetHighAddr(data);
+				return true;
+			case 0x1fffc:
+				cyptoSetSubkey(data);
+				return true;
+		}
+	}
+	return NaomiCartridge::Write(offset, size, data);
+}
+
+u16 M2Cartridge::ReadCipheredData(u32 offset)
+{
+	if ((offset & 0xffff0000) == 0x01000000)
+	{
+		int base = 2 * (offset & 0x7fff);
+		return naomi_cart_ram[base + 1] | (naomi_cart_ram[base] << 8);
+	}
+	verify(2 * offset + 1 < RomSize);
+	return RomPtr[2 * offset + 1] | (RomPtr[2 * offset] << 8);
+
 }

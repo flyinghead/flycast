@@ -614,9 +614,6 @@ extern u8 q_subchannel[96];
 
 //./core/hw/naomi/naomi.o
 extern u32 naomi_updates;
-extern u32 RomPioOffset;
-extern u32 DmaOffset;
-extern u32 DmaCount;
 extern u32 BoardID;
 extern u32 GSerialBuffer;
 extern u32 BSerialBuffer;
@@ -642,16 +639,6 @@ extern u32 reg_dimm_44;	//parameters
 extern u32 reg_dimm_48;	//parameters
 extern u32 reg_dimm_4c;	//status/control reg ?
 extern bool NaomiDataRead;
-extern u32 NAOMI_ROM_OFFSETH;
-extern u32 NAOMI_ROM_OFFSETL;
-extern u32 NAOMI_ROM_DATA;
-extern u32 NAOMI_DMA_OFFSETH;
-extern u32 NAOMI_DMA_OFFSETL;
-extern u32 NAOMI_DMA_COUNT;
-extern u32 NAOMI_BOARDID_WRITE;
-extern u32 NAOMI_BOARDID_READ;
-extern u32 NAOMI_COMM_OFFSET;
-extern u32 NAOMI_COMM_DATA;
 
 
 
@@ -1104,9 +1091,6 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	REICAST_SA(q_subchannel,96);
 
 	REICAST_S(naomi_updates);
-	REICAST_S(RomPioOffset);
-	REICAST_S(DmaOffset);
-	REICAST_S(DmaCount);
 	REICAST_S(BoardID);
 	REICAST_S(GSerialBuffer);
 	REICAST_S(BSerialBuffer);
@@ -1132,16 +1116,6 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	REICAST_S(reg_dimm_48);
 	REICAST_S(reg_dimm_4c);
 	REICAST_S(NaomiDataRead);
-	REICAST_S(NAOMI_ROM_OFFSETH);
-	REICAST_S(NAOMI_ROM_OFFSETL);
-	REICAST_S(NAOMI_ROM_DATA);
-	REICAST_S(NAOMI_DMA_OFFSETH);
-	REICAST_S(NAOMI_DMA_OFFSETL);
-	REICAST_S(NAOMI_DMA_COUNT);
-	REICAST_S(NAOMI_BOARDID_WRITE);
-	REICAST_S(NAOMI_BOARDID_READ);
-	REICAST_S(NAOMI_COMM_OFFSET);
-	REICAST_S(NAOMI_COMM_DATA);
 
 #if FEAT_SHREC == DYNAREC_CPP
 	REICAST_S(idxnxx);
@@ -1509,9 +1483,6 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 
 
 	REICAST_US(naomi_updates);
-	REICAST_US(RomPioOffset);
-	REICAST_US(DmaOffset);
-	REICAST_US(DmaCount);
 	REICAST_US(BoardID);
 	REICAST_US(GSerialBuffer);
 	REICAST_US(BSerialBuffer);
@@ -1537,16 +1508,6 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	REICAST_US(reg_dimm_48);
 	REICAST_US(reg_dimm_4c);
 	REICAST_US(NaomiDataRead);
-	REICAST_US(NAOMI_ROM_OFFSETH);
-	REICAST_US(NAOMI_ROM_OFFSETL);
-	REICAST_US(NAOMI_ROM_DATA);
-	REICAST_US(NAOMI_DMA_OFFSETH);
-	REICAST_US(NAOMI_DMA_OFFSETL);
-	REICAST_US(NAOMI_DMA_COUNT);
-	REICAST_US(NAOMI_BOARDID_WRITE);
-	REICAST_US(NAOMI_BOARDID_READ);
-	REICAST_US(NAOMI_COMM_OFFSET);
-	REICAST_US(NAOMI_COMM_DATA);
 
 #if FEAT_SHREC == DYNAREC_CPP
 	REICAST_US(idxnxx);

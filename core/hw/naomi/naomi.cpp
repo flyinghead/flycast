@@ -15,11 +15,6 @@ u32 naomi_updates;
 
 //#define NAOMI_COMM
 
-u32 RomPioOffset=0;
-
-u32 DmaOffset;
-u32 DmaCount;
-
 u32 BoardID=0x980055AA;
 u32 GSerialBuffer=0,BSerialBuffer=0;
 int GBufPos=0,BBufPos=0;
@@ -78,10 +73,6 @@ unsigned short CRCSerial(unsigned char *Serial,unsigned int len)
 
 void NaomiInit()
 {
-	//RomOffset=0;
-	DmaCount=0xffff;
-	DmaOffset=0;
-
 	u16 CRC;
 	CRC=CRCSerial(BSerial+2,0x2E);
 	BSerial[0]=(u8)(CRC>>8);
@@ -420,211 +411,27 @@ void naomi_process(u32 r3c,u32 r40,u32 r44, u32 r48)
 		opcd++;
 	}
 }
-u32  ReadMem_naomi(u32 Addr, u32 sz)
+
+u32 ReadMem_naomi(u32 Addr, u32 sz)
 {
 	verify(sz!=1);
-//	printf("+naomi?WTF? ReadMem: %X, %d\n", Addr, sz);
-	switch(Addr&255)
+	if (unlikely(CurrentCartridge == NULL))
 	{
-	case 0x3c:
-		EMUERROR("naomi GD? READ: %X, %d", Addr, sz);
-		return reg_dimm_3c | (NaomiDataRead ? 0 : -1); //pretend the board isn't there for the bios
-	case 0x40:
-		EMUERROR("naomi GD? READ: %X, %d", Addr, sz);
-		return reg_dimm_40;
-	case 0x44:
-		EMUERROR("naomi GD? READ: %X, %d", Addr, sz);
-		return reg_dimm_44;
-	case 0x48:
-		EMUERROR("naomi GD? READ: %X, %d", Addr, sz);
-		return reg_dimm_48;
-
-		//These are known to be valid on normal ROMs and DIMM board
-	case NAOMI_ROM_OFFSETH_addr&255:
-		return RomPioOffset>>16;
-
-	case NAOMI_ROM_OFFSETL_addr&255:
-		return RomPioOffset&0xFFFF;
-
-	case NAOMI_ROM_DATA_addr & 255: 
-		{
-			u32 rv = 0;
-			naomi_cart_Read(RomPioOffset, 2, &rv);
-			RomPioOffset += 2;
-
-			return rv;
-		}
-		break;
-
-	case NAOMI_DMA_COUNT_addr&255:
-		return (u16) DmaCount;
-
-	case NAOMI_BOARDID_READ_addr&255:
-		return NaomiGameIDRead()?0x8000:0x0000;
-	
-		//What should i do to emulate 'nothing' ?
-	case NAOMI_COMM_OFFSET_addr&255:
-		#ifdef NAOMI_COMM
-		printf("naomi COMM offs READ: %X, %d\n", Addr, sz);
-		return CommOffset;
-		#endif
-	case NAOMI_COMM_DATA_addr&255:
-		#ifdef NAOMI_COMM
-		printf("naomi COMM data read: %X, %d\n", CommOffset, sz);
-		if (CommSharedMem)
-		{
-			return CommSharedMem[CommOffset&0xF];
-		}
-		#endif
-		return 1;
-
-
-		//This should be valid
-	case NAOMI_DMA_OFFSETH_addr&255:
-		return DmaOffset>>16;
-	case NAOMI_DMA_OFFSETL_addr&255:
-		return DmaOffset&0xFFFF;
-
-	case NAOMI_BOARDID_WRITE_addr&255:
-		EMUERROR("naomi ReadMem: %X, %d", Addr, sz);
-		return 1;
-
-	case 0x04C:
-		EMUERROR("naomi GD? READ: %X, %d", Addr, sz);
-		return reg_dimm_4c;
-
-	case 0x18:
-		printf("naomi reg 0x18 : returning random data\n");
-		return 0x4000^rand();
-		break;
-
-	default: break;
+		EMUERROR("called without cartridge\n");
+		return 0xFFFF;
 	}
-	EMUERROR("naomi?WTF? ReadMem: %X, %d", Addr, sz);
-	return 0;
-
+	return CurrentCartridge->ReadMem(Addr, sz);
 }
+
 void WriteMem_naomi(u32 Addr, u32 data, u32 sz)
 {
-//	printf("+naomi WriteMem: %X <= %X, %d\n", Addr, data, sz);
-	switch(Addr&255)
+	if (unlikely(CurrentCartridge == NULL))
 	{
-	case 0x3c:
-		 if (0x1E03==data)
-		 {
-			 /*
-			 if (!(reg_dimm_4c&0x100))
-				asic_RaiseInterrupt(holly_EXP_PCI);
-			 reg_dimm_4c|=1;*/
-		 }
-		 reg_dimm_3c=data;
-		 EMUERROR("naomi GD? Write: %X <= %X, %d", Addr, data, sz);
-		 return;
-
-	case 0x40:
-		reg_dimm_40=data;
-		EMUERROR("naomi GD? Write: %X <= %X, %d", Addr, data, sz);
+		EMUERROR("called without cartridge\n");
 		return;
-	case 0x44:
-		reg_dimm_44=data;
-		EMUERROR("naomi GD? Write: %X <= %X, %d", Addr, data, sz);
-		return;
-	case 0x48:
-		reg_dimm_48=data;
-		EMUERROR("naomi GD? Write: %X <= %X, %d", Addr, data, sz);
-		return;
-
-	case 0x4C:
-		if (data&0x100)
-		{
-			asic_CancelInterrupt(holly_EXP_PCI);
-			naomi_updates=100;
-		}
-		else if ((data&1)==0)
-		{
-			/*FILE* ramd=fopen("c:\\ndc.ram.bin","wb");
-			fwrite(mem_b.data,1,RAM_SIZE,ramd);
-			fclose(ramd);*/
-			naomi_process(reg_dimm_3c,reg_dimm_40,reg_dimm_44,reg_dimm_48);
-		}
-		reg_dimm_4c=data&~0x100;
-		EMUERROR("naomi GD? Write: %X <= %X, %d", Addr, data, sz);
-		return;
-
-		//These are known to be valid on normal ROMs and DIMM board
-	case NAOMI_ROM_OFFSETH_addr&255:
-		RomPioOffset&=0x0000ffff;
-		RomPioOffset|=(data<<16)&0x7fff0000;
-		return;
-
-	case NAOMI_ROM_OFFSETL_addr&255:
-		RomPioOffset&=0xffff0000;
-		RomPioOffset|=data;
-		return;
-
-	case NAOMI_ROM_DATA_addr&255:
-		EMUERROR("naomi WriteMem:Write to rom ? sure ? no , i dont think so %%) %X <= %X, %d", Addr, data, sz);
-		return;
-
-	case NAOMI_DMA_OFFSETH_addr&255:
-		DmaOffset&=0x0000ffff;
-		DmaOffset|=(data&0x7fff)<<16;
-		return;
-
-	case NAOMI_DMA_OFFSETL_addr&255:
-		DmaOffset&=0xffff0000;
-		DmaOffset|=data;
-		return;
-
-	case NAOMI_DMA_COUNT_addr&255:
-		{
-			DmaCount=data;
-		}
-		return;
-	case NAOMI_BOARDID_WRITE_addr&255:
-		NaomiGameIDWrite((u16)data);
-		return;
-
-		//What should i do to emulate 'nothing' ?
-	case NAOMI_COMM_OFFSET_addr&255:
-#ifdef NAOMI_COMM
-		printf("naomi COMM ofset Write: %X <= %X, %d\n", Addr, data, sz);
-		CommOffset=data&0xFFFF;
-#endif
-		return;
-
-	case NAOMI_COMM_DATA_addr&255:
-		#ifdef NAOMI_COMM
-		printf("naomi COMM data Write: %X <= %X, %d\n", CommOffset, data, sz);
-		if (CommSharedMem)
-		{
-			CommSharedMem[CommOffset&0xF]=data;
-		}
-		#endif
-		return;
-
-		//This should be valid
-	case NAOMI_BOARDID_READ_addr&255:
-		EMUERROR("naomi WriteMem: %X <= %X, %d", Addr, data, sz);
-		return;
-
-	default: break;
 	}
-	EMUERROR("naomi?WTF? WriteMem: %X <= %X, %d", Addr, data, sz);
+	CurrentCartridge->WriteMem(Addr, data, sz);
 }
-
-
-
-u32 NAOMI_ROM_OFFSETH;
-u32 NAOMI_ROM_OFFSETL;
-u32 NAOMI_ROM_DATA;
-u32 NAOMI_DMA_OFFSETH;
-u32 NAOMI_DMA_OFFSETL;
-u32 NAOMI_DMA_COUNT;
-u32 NAOMI_BOARDID_WRITE;
-u32 NAOMI_BOARDID_READ;
-u32 NAOMI_COMM_OFFSET;
-u32 NAOMI_COMM_DATA;
 
 //Dma Start
 void Naomi_DmaStart(u32 addr, u32 data)
@@ -646,8 +453,20 @@ void Naomi_DmaStart(u32 addr, u32 data)
 		
 		SB_GDLEND=SB_GDLEN;
 		SB_GDST=0;
-		void* ptr = naomi_cart_GetPtr(DmaOffset & 0x0FFFffff, SB_GDLEN);
-		WriteMemBlock_nommu_ptr(SB_GDSTAR, (u32*)ptr, SB_GDLEN);
+		if (CurrentCartridge != NULL)
+		{
+			u32 len = SB_GDLEN;
+			u32 offset = 0;
+			while (len > 0)
+			{
+				u32 block_len = len;
+				void* ptr = CurrentCartridge->GetDmaPtr(block_len);
+				WriteMemBlock_nommu_ptr(SB_GDSTAR + offset, (u32*)ptr, block_len);
+				CurrentCartridge->AdvancePtr(block_len);
+				len -= block_len;
+				offset += block_len;
+			}
+		}
 
 		asic_RaiseInterrupt(holly_GDROM_DMA);
 	}

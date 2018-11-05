@@ -127,7 +127,7 @@ s32 plugins_Init()
 	if (s32 rv = libGDR_Init())
 		return rv;
 	#endif
-	#if DC_PLATFORM == DC_PLATFORM_NAOMI
+	#if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
 	if (!naomi_cart_SelectFile(libPvr_GetRenderTarget()))
 		return rv_serror;
 	#endif
@@ -205,7 +205,7 @@ void LoadSpecialSettings()
 		printf("Enabling Dynarec safe mode for game %s\n", reios_product_number);
 		settings.dynarec.safemode = 1;
 	}
-#elif DC_PLATFORM == DC_PLATFORM_NAOMI
+#elif DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
 	if (!strcmp("METAL SLUG 6", naomi_game_id) || !strcmp("WAVE RUNNER GP", naomi_game_id))
 	{
 		printf("Enabling Dynarec safe mode for game %s\n", naomi_game_id);
@@ -219,7 +219,9 @@ void LoadSpecialSettings()
 	}
 	if (!strcmp("DYNAMIC GOLF", naomi_game_id)
 			|| !strcmp("SHOOTOUT POOL", naomi_game_id)
-			|| !strcmp("OUTTRIGGER     JAPAN", naomi_game_id))
+			|| !strcmp("OUTTRIGGER     JAPAN", naomi_game_id)
+			|| !strcmp("CRACKIN'DJ  ver JAPAN", naomi_game_id)
+			|| !strcmp("CRACKIN'DJ PART2  ver JAPAN", naomi_game_id))
 	{
 		printf("Enabling JVS rotary encoders for game %s\n", naomi_game_id);
 		settings.input.JammaSetup = 2;
@@ -370,7 +372,7 @@ int dc_init()
 
 	os_SetupInput();
 
-#if DC_PLATFORM == DC_PLATFORM_NAOMI
+#if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
 	mcfg_CreateNAOMIJamma();
 #endif
 
@@ -541,7 +543,7 @@ void LoadCustom()
 		*p-- = '\0';
 	if (*p == '\0')
 		return;
-#elif DC_PLATFORM == DC_PLATFORM_NAOMI
+#elif DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
 	char *reios_id = naomi_game_id;
 	char *reios_software_name = naomi_game_id;
 #endif

@@ -605,17 +605,24 @@ void reios_boot() {
 		}
 		else {
 			verify(DC_PLATFORM == DC_PLATFORM_NAOMI);
-			
-			u32* sz = (u32*)naomi_cart_GetPtr(0x368, 4);
-			if (!sz) {
+			if (CurrentCartridge == NULL)
+			{
+				printf("No cartridge loaded\n");
+				return;
+			}
+			u32 data_size = 4;
+			u32* sz = (u32*)CurrentCartridge->GetPtr(0x368, data_size);
+			if (!sz || data_size != 4) {
 				msgboxf("Naomi boot failure", MBX_ICONERROR);
 			}
 
 			int size = *sz;
 
-			verify(size < RAM_SIZE && naomi_cart_GetPtr(size - 1, 1) && "Invalid cart size");
+			data_size = 1;
+			verify(size < RAM_SIZE && CurrentCartridge->GetPtr(size - 1, data_size) && "Invalid cart size");
 
-			WriteMemBlock_nommu_ptr(0x0c020000, (u32*)naomi_cart_GetPtr(0, size), size);
+			data_size = size;
+			WriteMemBlock_nommu_ptr(0x0c020000, (u32*)CurrentCartridge->GetPtr(0, data_size), size);
 
 			reios_setuo_naomi(0x0c021000);
 		}
