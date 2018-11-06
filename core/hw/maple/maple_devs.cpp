@@ -1393,10 +1393,11 @@ struct maple_naomi_jamma;
 class jvs_io_board
 {
 public:
-	jvs_io_board(u8 node_id, maple_naomi_jamma *parent)
+	jvs_io_board(u8 node_id, maple_naomi_jamma *parent, int first_player = 0)
 	{
 		this->node_id = node_id;
 		this->parent = parent;
+		this->first_player = first_player;
 	}
 
 	u32 handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_out);
@@ -1409,6 +1410,7 @@ public:
 private:
 	u8 node_id = 0;
 	maple_naomi_jamma *parent;
+	u8 first_player;
 };
 
 struct maple_naomi_jamma : maple_sega_controller
@@ -1429,6 +1431,11 @@ struct maple_naomi_jamma : maple_sega_controller
 		{
 			io_boards.back()->rotary_encoders = true;
 			io_boards.push_back(new jvs_io_board(2, this));
+		}
+		else if (settings.input.JammaSetup == 4)
+		{
+			// Ring Out 4x4
+			io_boards.push_back(new jvs_io_board(2, this, 2));
 		}
 	}
 
@@ -1995,6 +2002,7 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 	case 0xF1:		// set board address
 		JVS_STATUS1();	// status
 		JVS_STATUS1();	// report
+		JVS_OUT(5);		// ?
 		LOGJVS("JVS Node %d address assigned\n", node_id);
 		break;
 
@@ -2132,12 +2140,13 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 							}
 						for (int player = 0; player < buffer_in[cmdi + 1]; player++)
 						{
-							LOGJVS("P%d %02x ", player + 1, buttons[player * 2]);
-							JVS_OUT(buttons[player * 2]);
+							u8 *cur_btns = &buttons[(first_player + player) * 2];
+							LOGJVS("P%d %02x ", player + 1 + first_player, cur_btns[0]);
+							JVS_OUT(cur_btns[0]);
 							if (buffer_in[cmdi + 2] == 2)
 							{
-								LOGJVS("%02x ", buttons[player * 2 + 1]);
-								JVS_OUT(buttons[player * 2 + 1]);
+								LOGJVS("%02x ", cur_btns[1]);
+								JVS_OUT(cur_btns[1]);
 							}
 						}
 //								for (int player = 0; player < jvs_request[channel][cmdi + 1]; player++)
@@ -2209,23 +2218,24 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 
 						for (; axis < buffer_in[cmdi + 1]; axis++)
 						{
+							// FIXME Need to know how many axes per player for proper mapping
 							u16 axis_value;
-							if (Naomi_Mapping.axis[axis] != NULL)
-								axis_value = Naomi_Mapping.axis[axis]();
+							if (axis + first_player * 4 < 8 && Naomi_Mapping.axis[axis + first_player * 4] != NULL)
+								axis_value = Naomi_Mapping.axis[axis + first_player * 4]();
 							else
 							{
 								switch (axis) {
 								case 0:
-									axis_value = (joyx[axis / 4] + 128) << 8;
+									axis_value = (joyx[first_player + axis / 4] + 128) << 8;
 									break;
 								case 1:
-									axis_value = (joyy[axis / 4] + 128) << 8;
+									axis_value = (joyy[first_player + axis / 4] + 128) << 8;
 									break;
 								case 2:
-									axis_value = rt[axis / 4] << 8;
+									axis_value = rt[first_player + axis / 4] << 8;
 									break;
 								case 3:
-									axis_value = lt[axis / 4] << 8;
+									axis_value = lt[first_player + axis / 4] << 8;
 									break;
 								}
 							}

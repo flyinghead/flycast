@@ -236,6 +236,11 @@ void LoadSpecialSettings()
 		printf("Enabling specific JVS setup for game %s\n", naomi_game_id);
 		settings.input.JammaSetup = 3;
 	}
+	else if (!strcmp("RINGOUT 4X4 JAPAN", naomi_game_id))
+	{
+		printf("Enabling specific JVS setup for game %s\n", naomi_game_id);
+		settings.input.JammaSetup = 4;
+	}
 	if (!strcmp("COSMIC SMASH IN JAPAN", naomi_game_id))
 	{
 		printf("Enabling translucent depth multipass for game %s\n", naomi_game_id);
