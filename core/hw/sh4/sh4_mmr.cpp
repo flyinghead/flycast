@@ -15,13 +15,13 @@ Array<u8> OnChipRAM;
 
 //All registers are 4 byte aligned
 
-Array<RegisterStruct> CCN(16,true);  //CCN  : 14 registers
+Array<RegisterStruct> CCN(18,true);  //CCN  : 16 registers
 Array<RegisterStruct> UBC(9,true);   //UBC  : 9 registers
 Array<RegisterStruct> BSC(19,true);  //BSC  : 18 registers
 Array<RegisterStruct> DMAC(17,true); //DMAC : 17 registers
 Array<RegisterStruct> CPG(5,true);   //CPG  : 5 registers
 Array<RegisterStruct> RTC(16,true);  //RTC  : 16 registers
-Array<RegisterStruct> INTC(4,true);  //INTC : 4 registers
+Array<RegisterStruct> INTC(5,true);  //INTC : 5 registers
 Array<RegisterStruct> TMU(12,true);  //TMU  : 12 registers
 Array<RegisterStruct> SCI(8,true);   //SCI  : 8 registers
 Array<RegisterStruct> SCIF(10,true); //SCIF : 10 registers
@@ -471,7 +471,7 @@ T DYNACALL ReadMem_area7(u32 addr)
 	switch (map_base & 0x1FFF)
 	{
 	case A7_REG_HASH(CCN_BASE_addr):
-		if (addr<=0x1F00003C)
+		if (addr<=0x1F000044)
 		{
 			return (T)sh4_rio_read<sz>(CCN,addr & 0xFF);
 		}
@@ -549,7 +549,7 @@ T DYNACALL ReadMem_area7(u32 addr)
 		break;
 
 	case A7_REG_HASH(INTC_BASE_addr):
-		if (addr<=0x1FD0000C)
+		if (addr<=0x1FD00010)
 		{
 			return (T)sh4_rio_read<sz>(INTC,addr & 0xFF);
 		}
