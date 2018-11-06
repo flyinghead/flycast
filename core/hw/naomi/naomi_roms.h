@@ -695,8 +695,6 @@ Games[] =
 			{ "ic12.bin",     0x10000000, 0x4000000 },
 			{ "ic13.bin",     0x14000000, 0x4000000 },
 			{ "317-5133-jpn.ic3", 0, 0x800, M4Key },	// pic_readout
-
-			//ROM_PARAMETER( ":rom_board:id", "5506" )
 			{ NULL, 0, 0 },
 		}
 	},
@@ -705,7 +703,7 @@ Games[] =
 		"mbaa.zip",
 		0x18000000,
 		0x5586,
-		"naomi.zip",
+		"naomi.zip",	// Needs BIOS version h
 		M4,
 		{
 			{ "ic8.bin",      0x00000000, 0x4000000 },
@@ -716,14 +714,12 @@ Games[] =
 			{ "ic12.bin",     0x10000000, 0x4000000 },
 			{ "ic13.bin",     0x14000000, 0x4000000 },
 			{ "317-5133-jpn.ic3", 0, 0x800, M4Key },	// pic_readout
-
-			//ROM_PARAMETER( ":rom_board:id", "5586" )
 			{ NULL, 0, 0 },
 		}
 	},
 	// Marvel Vs. Capcom 2 New Age of Heroes (Export, Korea, Rev A)
 	{
-		"mvsc2.zip",	// FIXME Not booting
+		"mvsc2.zip",
 		0x08800000,
 		0xc18b6e7c,
 		NULL,
@@ -753,9 +749,6 @@ Games[] =
 
 			//ROM_REGION(0x200, "some_eeprom", 0)	// TODO
 			//{  "25lc040.ic13s", 0x000000, 0x200, CRC(dc449637) SHA1(6cab09f61be1498271a36bff6a114a4eeeb00e1a) )
-
-			// 841-0007-02 2000     317-5058-COM   Naomi
-			//ROM_PARAMETER( ":rom_board:key", "c18b6e7c" )		// TODO M1 encryption scheme: naomim1.cpp
 			{ NULL, 0, 0 },
 		}
 	},
