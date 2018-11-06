@@ -11,8 +11,6 @@
 #include "m4cartridge.h"
 
 Cartridge *CurrentCartridge;
-u8* RomPtr;
-u32 RomSize;
 
 #if HOST_OS == OS_WINDOWS
 	typedef HANDLE fd_t;
@@ -30,7 +28,6 @@ u32 RomSize;
 fd_t*	RomCacheMap;
 u32		RomCacheMapCount;
 
-char SelectedFile[512];
 char naomi_game_id[33];
 
 extern s8 joyx[4],joyy[4];
@@ -232,7 +229,7 @@ static bool naomi_LoadBios(const char *filename)
 				}
 				verify(bios->blobs[romid].offset + bios->blobs[romid].length <= BIOS_SIZE);
 				size_t read = zip_fread(file, buf, bios->blobs[romid].length);
-				u16 *to = (u16 *)(RomPtr + bios->blobs[romid].offset);
+				u16 *to = (u16 *)(sys_rom.data + bios->blobs[romid].offset);
 				u16 *from = (u16 *)buf;
 				for (int i = bios->blobs[romid].length / 2; --i >= 0; to++)
 					*to++ = *from++;
@@ -318,11 +315,6 @@ static bool naomi_cart_LoadZip(char *filename)
 		die("Unsupported cartridge type\n");
 		break;
 	}
-//	RomSize = game->size;
-//	RomPtr = (u8 *)malloc(RomSize);
-//	memset(RomPtr, 0xFF, RomSize);
-//	cartridge_type = game->cart_type;
-//	cartridge_key = game->key;
 
 	int romid = 0;
 	while (game->blobs[romid].filename != NULL)
@@ -388,14 +380,8 @@ static bool naomi_cart_LoadZip(char *filename)
 	}
 	zip_close(zip_archive);
 
-	{
-		u32 len = sizeof(naomi_game_id) - 1;
-		u8 *game_id = (u8 *)CurrentCartridge->GetPtr(0x30, len);
-		memcpy(naomi_game_id, game_id, sizeof(naomi_game_id) - 1);
-		naomi_game_id[sizeof(naomi_game_id) - 1] = '\0';
-		for (char *p = naomi_game_id + sizeof(naomi_game_id) - 2; *p == ' ' && p >= naomi_game_id; *p-- = '\0');
-		printf("NAOMI GAME ID [%s]\n", naomi_game_id);
-	}
+	strcpy(naomi_game_id, CurrentCartridge->GetGameId().c_str());
+	printf("NAOMI GAME ID [%s]\n", naomi_game_id);
 
 	return true;
 
@@ -439,6 +425,9 @@ bool naomi_cart_LoadRom(char* file)
 
 	if (pdot != NULL && (!strcmp(pdot, ".zip") || !strcmp(pdot, ".ZIP")))
 		return naomi_cart_LoadZip(file);
+
+	u8* RomPtr;
+	u32 RomSize;
 
 	if (pdot != NULL && (!strcmp(pdot, ".lst") || !strcmp(pdot, ".LST")))
 	{
@@ -639,17 +628,6 @@ bool naomi_cart_LoadRom(char* file)
 				printf("-Mapping ROM FAILED: %s @ %08x size %x\n", files[i].c_str(), fstart[i], fsize[i]);
 				return false;
 			}
-			if (fstart[i] == 0 && fsize[i] >= 0x50)
-			{
-				memcpy(naomi_game_id, RomDest + 0x30, sizeof(naomi_game_id) - 1);
-				naomi_game_id[sizeof(naomi_game_id) - 1] = '\0';
-				if (!strcmp("AWNAOMI                         ", naomi_game_id) && fsize[i] >= 0xFF50)
-				{
-					memcpy(naomi_game_id, RomDest + 0xFF30, sizeof(naomi_game_id) - 1);
-				}
-				for (char *p = naomi_game_id + sizeof(naomi_game_id) - 2; *p == ' ' && p >= naomi_game_id; *p-- = '\0');
-				printf("NAOMI GAME ID [%s]\n", naomi_game_id);
-			}
 		}
 	}
 
@@ -657,12 +635,16 @@ bool naomi_cart_LoadRom(char* file)
 	printf("\nMapped ROM Successfully !\n\n");
 
 	CurrentCartridge = new DecryptedCartridge(RomPtr, RomSize);
+	strcpy(naomi_game_id, CurrentCartridge->GetGameId().c_str());
+	printf("NAOMI GAME ID [%s]\n", naomi_game_id);
 
 	return true;
 }
 
 bool naomi_cart_SelectFile(void* handle)
 {
+	char SelectedFile[512];
+
 	cfgLoadStr("config", "image", SelectedFile, "null");
 	
 #if HOST_OS == OS_WINDOWS
@@ -739,6 +721,19 @@ void* Cartridge::GetPtr(u32 offset, u32& size)
 	return &RomPtr[offset];
 }
 
+std::string Cartridge::GetGameId() {
+	if (RomSize < 0x30 + 0x20)
+		return "(ROM too small)";
+
+	std::string game_id((char *)RomPtr + 0x30, 0x20);
+	if (game_id == "AWNAOMI                         " && RomSize >= 0xFF50)
+	{
+		game_id = std::string((char *)RomPtr + 0xFF30, 0x20);
+	}
+	while (!game_id.empty() && game_id.back() == ' ')
+		game_id.pop_back();
+	return game_id;
+}
 
 void* NaomiCartridge::GetDmaPtr(u32& size)
 {

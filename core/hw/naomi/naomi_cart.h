@@ -1,6 +1,7 @@
 #ifndef NAOMI_CART_H
 #define NAOMI_CART_H
 
+#include <string>
 #include "types.h"
 
 class Cartridge
@@ -17,6 +18,7 @@ public:
 	virtual void* GetPtr(u32 offset, u32& size);
 	virtual void* GetDmaPtr(u32 &size) = 0;
 	virtual void AdvancePtr(u32 size) = 0;
+	virtual std::string GetGameId();
 
 protected:
 	u8* RomPtr;

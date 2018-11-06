@@ -272,3 +272,18 @@ M4Cartridge::~M4Cartridge()
 	if (m_key_data != NULL)
 		free(m_key_data);
 }
+
+std::string M4Cartridge::GetGameId()
+{
+	if (RomSize < 0x30 + 0x20)
+		return "(ROM too small)";
+
+	rom_cur_address = 0;
+	enc_reset();
+	enc_fill();
+
+	std::string game_id((char *)(buffer + 0x30), 0x20);
+	while (!game_id.empty() && game_id.back() == ' ')
+		game_id.pop_back();
+	return game_id;
+}

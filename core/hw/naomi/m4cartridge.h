@@ -38,6 +38,7 @@ public:
 
 	virtual void* GetDmaPtr(u32 &size) override;
 	virtual void AdvancePtr(u32 size) override;
+	virtual std::string GetGameId() override;
 
 	void SetM4Id(u16 m4id) { this->m4id = m4id; }
 	void SetKeyData(u8 *key_data)
