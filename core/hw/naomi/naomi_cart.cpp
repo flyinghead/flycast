@@ -952,6 +952,24 @@ void NaomiCartridge::WriteMem(u32 address, u32 data, u32 size)
 	EMUERROR("naomi?WTF? WriteMem: %X <= %X, %d", address, data, size);
 }
 
+void NaomiCartridge::Serialize(void** data, unsigned int* total_size)
+{
+	REICAST_S(RomPioOffset);
+	REICAST_S(RomPioAutoIncrement);
+	REICAST_S(DmaOffset);
+	REICAST_S(DmaCount);
+	Cartridge::Serialize(data, total_size);
+}
+
+void NaomiCartridge::Unserialize(void** data, unsigned int* total_size)
+{
+	REICAST_US(RomPioOffset);
+	REICAST_US(RomPioAutoIncrement);
+	REICAST_US(DmaOffset);
+	REICAST_US(DmaCount);
+	Cartridge::Unserialize(data, total_size);
+}
+
 bool M2Cartridge::Read(u32 offset, u32 size, void* dst)
 {
 	if (offset & 0x40000000)
@@ -1008,4 +1026,14 @@ u16 M2Cartridge::ReadCipheredData(u32 offset)
 	verify(2 * offset + 1 < RomSize);
 	return RomPtr[2 * offset + 1] | (RomPtr[2 * offset] << 8);
 
+}
+
+void M2Cartridge::Serialize(void** data, unsigned int* total_size) {
+	REICAST_S(naomi_cart_ram);
+	NaomiCartridge::Serialize(data, total_size);
+}
+
+void M2Cartridge::Unserialize(void** data, unsigned int* total_size) {
+	REICAST_US(naomi_cart_ram);
+	NaomiCartridge::Unserialize(data, total_size);
 }

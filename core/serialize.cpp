@@ -22,6 +22,7 @@
 #include "rend/gles/gles.h"
 #include "hw/sh4/dyna/blockmanager.h"
 #include "hw/sh4/dyna/ngen.h"
+#include "hw/naomi/naomi_cart.h"
 
 /*
  * search for "maybe" to find items that were left out that may be needed
@@ -32,7 +33,8 @@ extern "C" void DYNACALL TAWriteSQ(u32 address,u8* sqb);
 enum serialize_version_enum {
 	V1,
 	V2,
-	V3
+	V3,
+	V4
 } ;
 
 //./core/hw/arm7/arm_mem.cpp
@@ -789,7 +791,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 {
 	int i = 0;
 	int j = 0;
-	serialize_version_enum version = V3 ;
+	serialize_version_enum version = V4 ;
 
 	*total_size = 0 ;
 
@@ -1155,6 +1157,9 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	REICAST_S(settings.dreamcast.cable);
 	REICAST_S(settings.dreamcast.region);
 
+	if (CurrentCartridge != NULL)
+	   CurrentCartridge->Serialize(data, total_size);
+
 	return true ;
 }
 
@@ -1167,7 +1172,7 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	*total_size = 0 ;
 
 	REICAST_US(version) ;
-	if (version != V3)
+	if (version != V4)
 	{
 		fprintf(stderr, "Save State version not supported: %d\n", version);
 		return false;
@@ -1550,6 +1555,9 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	REICAST_US(settings.dreamcast.broadcast);
 	REICAST_US(settings.dreamcast.cable);
 	REICAST_US(settings.dreamcast.region);
+
+	if (CurrentCartridge != NULL)
+		CurrentCartridge->Unserialize(data, total_size);
 
 	return true ;
 }

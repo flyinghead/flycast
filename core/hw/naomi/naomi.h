@@ -38,21 +38,3 @@ extern u32 reg_dimm_4c;			//status/control reg ?
 
 extern bool NaomiDataRead;
 extern u32 naomi_updates;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

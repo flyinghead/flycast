@@ -287,3 +287,32 @@ std::string M4Cartridge::GetGameId()
 		game_id.pop_back();
 	return game_id;
 }
+
+void M4Cartridge::Serialize(void** data, unsigned int* total_size)
+{
+	REICAST_S(buffer);
+	REICAST_S(rom_cur_address);
+	REICAST_S(buffer_actual_size);
+	REICAST_S(iv);
+	REICAST_S(counter);
+	REICAST_S(encryption);
+	REICAST_S(cfi_mode);
+	REICAST_S(xfer_ready);
+
+	NaomiCartridge::Serialize(data, total_size);
+}
+
+void M4Cartridge::Unserialize(void** data, unsigned int* total_size)
+{
+	REICAST_US(buffer);
+	REICAST_US(rom_cur_address);
+	REICAST_US(buffer_actual_size);
+	REICAST_US(iv);
+	REICAST_US(counter);
+	REICAST_US(encryption);
+	REICAST_US(cfi_mode);
+	REICAST_US(xfer_ready);
+
+	NaomiCartridge::Unserialize(data, total_size);
+}
+

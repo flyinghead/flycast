@@ -126,3 +126,33 @@ u32 M1Cartridge::get_decrypted_32b()
 	u32 res = swapped_key ^ (((b ^ d) << 24) | ((a ^ c) << 16) | (b << 8) | a);
 	return res;
 }
+
+void M1Cartridge::Serialize(void** data, unsigned int* total_size) {
+	REICAST_S(buffer);
+	REICAST_S(dict);
+	REICAST_S(hist);
+	REICAST_S(avail_val);
+	REICAST_S(rom_cur_address);
+	REICAST_S(buffer_actual_size);
+	REICAST_S(avail_bits);
+	REICAST_S(stream_ended);
+	REICAST_S(has_history);
+	REICAST_S(encryption);
+
+	NaomiCartridge::Serialize(data, total_size);
+}
+
+void M1Cartridge::Unserialize(void** data, unsigned int* total_size) {
+	REICAST_US(buffer);
+	REICAST_US(dict);
+	REICAST_US(hist);
+	REICAST_US(avail_val);
+	REICAST_US(rom_cur_address);
+	REICAST_US(buffer_actual_size);
+	REICAST_US(avail_bits);
+	REICAST_US(stream_ended);
+	REICAST_US(has_history);
+	REICAST_US(encryption);
+
+	NaomiCartridge::Unserialize(data, total_size);
+}

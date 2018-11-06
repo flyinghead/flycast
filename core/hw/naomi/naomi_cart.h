@@ -19,6 +19,8 @@ public:
 	virtual void* GetDmaPtr(u32 &size) = 0;
 	virtual void AdvancePtr(u32 size) = 0;
 	virtual std::string GetGameId();
+	virtual void Serialize(void **data, unsigned int *total_size) {}
+	virtual void Unserialize(void **data, unsigned int *total_size) {}
 
 protected:
 	u8* RomPtr;
@@ -34,6 +36,8 @@ public:
 	virtual void WriteMem(u32 address, u32 data, u32 size);
 	virtual void* GetDmaPtr(u32 &size);
 	virtual void AdvancePtr(u32 size);
+	virtual void Serialize(void** data, unsigned int* total_size);
+	virtual void Unserialize(void** data, unsigned int* total_size);
 
 	void SetKey(u32 key) { this->key = key; }
 
@@ -62,6 +66,8 @@ public:
 	virtual bool Read(u32 offset, u32 size, void* dst);
 	virtual bool Write(u32 offset, u32 size, u32 data);
 	u16 ReadCipheredData(u32 offset);
+	virtual void Serialize(void** data, unsigned int* total_size);
+	virtual void Unserialize(void** data, unsigned int* total_size);
 
 private:
 	u8 naomi_cart_ram[64 * 1024];
