@@ -61,7 +61,8 @@ void M4Cartridge::device_start()
 
 void M4Cartridge::enc_init()
 {
-	for(int round_input = 0; round_input < 0x10000; round_input++) {
+	for (int round_input = 0; round_input < 0x10000; round_input++)
+	{
 		u8 input_nibble[4];
 		u8 output_nibble[4];
 
@@ -93,26 +94,18 @@ void M4Cartridge::device_reset()
 	cfi_mode = false;
 	counter = 0;
 	iv = 0;
+	xfer_ready = false;
 }
 
 void M4Cartridge::DmaOffsetChanged(u32 dma_offset)
 {
-	rom_cur_address = dma_offset & 0x1ffffffe;
+	xfer_ready = false;
 }
 
 void M4Cartridge::PioOffsetChanged(u32 pio_offset)
 {
-	rom_cur_address = DmaOffset & 0x1ffffffe;
-	encryption = RomPioOffset & 0x40000000;
-
-	if(encryption)
-	{
-		printf("M4 CRYPT m4id %x skey1 %x skey2 %x\n", m4id, subkey1, subkey2);
-		enc_reset();
-		enc_fill();
-	}
-	else
-		printf("M4 no encryption offset %08x\n", pio_offset);
+	encryption = pio_offset & 0x40000000;
+	xfer_ready = false;
 }
 
 
@@ -125,16 +118,20 @@ bool M4Cartridge::Read(u32 offset, u32 size, void *dst) {
 			*(u16 *)dst = *(u16 *)&cfidata[offset & 0xffff];
 			return true;
 		}
-		else
+	}
+	if (!xfer_ready)
+	{
+		rom_cur_address = RomPioOffset & 0x1ffffffe;
+		if (encryption)
 		{
-			// FIXME not right?
-			*(u16 *)dst = 0;
-			return true;
+			//printf("M4 CRYPT m4id %x skey1 %x skey2 %x RomPioOffset %08x\n", m4id, subkey1, subkey2, RomPioOffset);
+			enc_reset();
+			enc_fill();
 		}
+		xfer_ready = true;
 	}
 	if (encryption)
 	{
-		// FIXME offset ignored?
 		switch (size)
 		{
 		case 2:
@@ -144,7 +141,8 @@ bool M4Cartridge::Read(u32 offset, u32 size, void *dst) {
 			*(u32 *)dst = *(u32 *)buffer;
 			break;
 		}
-		AdvancePtr(size);
+		if (RomPioAutoIncrement)
+			AdvancePtr(size);
 
 		return true;
 	}
@@ -160,21 +158,37 @@ void *M4Cartridge::GetDmaPtr(u32 &limit)
 		int fpr_num = m4id & 0x7f;
 
 		if (((rom_cur_address >> 26) & 0x07) < fpr_num) {
-			limit = 2;
+			limit = min(limit, (u32)2);
 			return &cfidata[rom_cur_address & 0xffff];
 		}
 	}
 
-	if(encryption) {
-		limit = sizeof(buffer);
+	if (!xfer_ready)
+	{
+		rom_cur_address = DmaOffset & 0x1ffffffe;
+		if (encryption)
+		{
+			//printf("M4 CRYPT m4id %x skey1 %x skey2 %x DmaOffset %08x\n", m4id, subkey1, subkey2, DmaOffset);
+			enc_reset();
+			enc_fill();
+		}
+		xfer_ready = true;
+	}
+	if (encryption)
+	{
+		limit = min(limit, (u32)sizeof(buffer));
 		return buffer;
 
-	} else {
-		if (rom_cur_address < RomSize)
+	}
+	else
+	{
+		if ((DmaOffset & 0x1ffffffe) < RomSize)
 		{
-			limit = RomSize - rom_cur_address;
-			return RomPtr + rom_cur_address;
-		} else {
+			limit = min(limit, RomSize - (DmaOffset & 0x1ffffffe));
+			return RomPtr + (DmaOffset & 0x1ffffffe);
+		}
+		else
+		{
 			limit = 2;
 			return retzero;
 		}
@@ -183,15 +197,18 @@ void *M4Cartridge::GetDmaPtr(u32 &limit)
 
 void M4Cartridge::AdvancePtr(u32 size)
 {
-	if(encryption) {
-		if(size < buffer_actual_size) {
+	if (encryption)
+	{
+		if (size < buffer_actual_size)
+		{
 			memmove(buffer, buffer + size, buffer_actual_size - size);
 			buffer_actual_size -= size;
-		} else
+		}
+		else
 			buffer_actual_size = 0;
 		enc_fill();
-
-	} else
+	}
+	else
 		rom_cur_address += size;
 }
 
@@ -209,9 +226,9 @@ u16 M4Cartridge::decrypt_one_round(u16 word, u16 subkey)
 
 void M4Cartridge::enc_fill()
 {
-	//printf("M4Cartridge::enc_fill: decrypting @ %08x\n", rom_cur_address);
 	const u8 *base = RomPtr + rom_cur_address;
-	while(buffer_actual_size < sizeof(buffer)) {
+	while (buffer_actual_size < sizeof(buffer))
+	{
 		u16 enc = base[0] | (base[1] << 8);
 		u16 dec = iv;
 		iv = decrypt_one_round(enc ^ iv, subkey1);
@@ -229,7 +246,7 @@ void M4Cartridge::enc_fill()
 			iv = 0;
 		}
 	}
-//	printf("DECRYPTED M4 DATA:\n");
+//	printf("Decrypted M4 data:\n");
 //	for (int i = 0; i < buffer_actual_size; i++)
 //	{
 //		printf("%c ", buffer[i]);

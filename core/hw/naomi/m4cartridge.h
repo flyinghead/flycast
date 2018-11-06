@@ -69,6 +69,7 @@ private:
 	u8 counter;
 	bool encryption;
 	bool cfi_mode;
+	bool xfer_ready;
 
 	void enc_init();
 	void enc_reset();
