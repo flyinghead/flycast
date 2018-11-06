@@ -150,7 +150,7 @@ else ifneq (,$(findstring rpi,$(platform)))
         USE_GLES := 1
     else
         INCS += -I/opt/vc/include/ -I/opt/vc/include/interface/vmcs_host/linux -I/opt/vc/include/interface/vcos/pthreads
-        LIBS += -L/opt/vc/lib/ -lbcm_host
+        LIBS += -L/opt/vc/lib/ -lbcm_host -ldl
         LIBS += -lbrcmEGL -lbrcmGLESv2
         CFLAGS += -D TARGET_VIDEOCORE
         CXXFLAGS += -DGLES
@@ -247,7 +247,7 @@ CXXFLAGS += -fno-rtti -fpermissive -fno-operator-names
 
 INCS += -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps -I$(RZDCY_SRC_DIR)/khronos
 
-LIBS += -lm -lrt -ldl
+LIBS += -lm -lrt
 LIBS  += -lpthread
 
 PREFIX ?= /usr/local
@@ -294,6 +294,7 @@ endif
 
 ifdef USE_EVDEV
     CXXFLAGS += -D USE_EVDEV
+    LIBS += -ldl
 endif
 
 ifdef USE_JOYSTICK
