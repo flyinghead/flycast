@@ -1385,6 +1385,7 @@ static string get_eeprom_file_path()
  * Sega JVS I/O board
 */
 bool coin_chute;
+static bool old_coin_chute;
 static int coin_count;
 bool naomi_test_button = false;
 
@@ -2166,11 +2167,9 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 
 				case 0x21:	// Read coins
 					{
-						if (coin_chute)
-						{
-							coin_chute = false;
+						if (coin_chute && !old_coin_chute)
 							coin_count++;
-						}
+						old_coin_chute = coin_chute;
 						JVS_STATUS1();	// report byte
 						LOGJVS("coins ");
 						for (int slot = 0; slot < buffer_in[cmdi + 1]; slot++)

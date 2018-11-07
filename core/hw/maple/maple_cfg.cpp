@@ -37,26 +37,33 @@ u8 GetBtFromSgn(s8 val)
 struct MapleConfigMap : IMapleConfigMap
 {
 	maple_device* dev;
+	s32 player_num;
 
-	MapleConfigMap(maple_device* dev)
+	MapleConfigMap(maple_device* dev, s32 player_num = -1)
 	{
 		this->dev=dev;
+		this->player_num = player_num;
 	}
 
 	void SetVibration(u32 value)
 	{
-		UpdateVibration(dev->bus_id, value);
+		int player_num = this->player_num == -1 ? dev->bus_id : this->player_num;
+		UpdateVibration(player_num, value);
 	}
 
 	void GetInput(PlainJoystickState* pjs)
 	{
-		UpdateInputState(dev->bus_id);
+		int player_num = this->player_num == -1 ? dev->bus_id : this->player_num;
+		UpdateInputState(player_num);
 
-		pjs->kcode=kcode[dev->bus_id] | 0xF901;
-		pjs->joy[PJAI_X1]=GetBtFromSgn(joyx[dev->bus_id]);
-		pjs->joy[PJAI_Y1]=GetBtFromSgn(joyy[dev->bus_id]);
-		pjs->trigger[PJTI_R]=rt[dev->bus_id];
-		pjs->trigger[PJTI_L]=lt[dev->bus_id];
+		pjs->kcode=kcode[player_num];
+#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
+		pjs->kcode |= 0xF901;
+#endif
+		pjs->joy[PJAI_X1]=GetBtFromSgn(joyx[player_num]);
+		pjs->joy[PJAI_Y1]=GetBtFromSgn(joyy[player_num]);
+		pjs->trigger[PJTI_R]=rt[player_num];
+		pjs->trigger[PJTI_L]=lt[player_num];
 	}
 	void SetImage(void* img)
 	{
@@ -64,13 +71,13 @@ struct MapleConfigMap : IMapleConfigMap
 	}
 };
 
-void mcfg_Create(MapleDeviceType type, u32 bus, u32 port)
+void mcfg_Create(MapleDeviceType type, u32 bus, u32 port, s32 player_num = -1)
 {
 	if (MapleDevices[bus][port] != NULL)
 		delete MapleDevices[bus][port];
 	maple_device* dev = maple_Create(type);
 	dev->Setup(maple_GetAddress(bus, port));
-	dev->config = new MapleConfigMap(dev);
+	dev->config = new MapleConfigMap(dev, player_num);
 	dev->OnSetup();
 	MapleDevices[bus][port] = dev;
 }
@@ -78,8 +85,17 @@ void mcfg_Create(MapleDeviceType type, u32 bus, u32 port)
 void mcfg_CreateNAOMIJamma()
 {
 	mcfg_Create(MDT_NaomiJamma, 0, 5);
+//	mcfg_Create(MDT_Keyboard, 2, 5);
 }
 
+void mcfg_CreateAtomisWaveControllers()
+{
+	// Looks like a controller needs to be on bus 0 for digital controls
+	// Then another device on port 2 for analog axes, light gun, ...
+	mcfg_Create(MDT_SegaController, 0, 5);
+	mcfg_Create(MDT_SegaController, 2, 5, 0);
+//	mcfg_Create(MDT_LightGun, 2, 5, 0);
+}
 
 void mcfg_CreateController(u32 bus, MapleDeviceType maple_type1, MapleDeviceType maple_type2)
 {

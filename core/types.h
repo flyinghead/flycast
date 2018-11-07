@@ -265,12 +265,12 @@ struct vram_block
 	
 	#define BUILD_ATOMISWAVE 1
 
-	//Atomiswave : 16(?) mb ram, 16 mb vram, 8 mb aram, 64kb bios, 64k flash
+	//Atomiswave : 16 mb ram, 8 mb vram, 8 mb aram, 128kb bios on flash, 128kb battery-backed ram
 	#define RAM_SIZE (16*1024*1024)
-	#define VRAM_SIZE (16*1024*1024)
+	#define VRAM_SIZE (8*1024*1024)
 	#define ARAM_SIZE (8*1024*1024)
-	#define BIOS_SIZE (64*1024)
-	#define FLASH_SIZE (64*1024)
+	#define BIOS_SIZE (128*1024)
+	#define BBSRAM_SIZE (128*1024)
 
 	#define ROM_PREFIX "aw_"
 	#define ROM_NAMES ";bios.ic23_l"

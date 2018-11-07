@@ -63,6 +63,7 @@ void mcfg_CreateDevicesFromConfig();
 void mcfg_CreateController(u32 bus, MapleDeviceType maple_type1, MapleDeviceType maple_type2);
 #else
 void mcfg_CreateNAOMIJamma();
+void mcfg_CreateAtomisWaveControllers();
 #endif
 
 void mcfg_DestroyDevices();

@@ -18,7 +18,11 @@
 #include "hw/flashrom/flashrom.h"
 #include "reios/reios.h"
 
+#if DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
+DCFlashChip sys_rom(BIOS_SIZE, BIOS_SIZE / 2);
+#else
 RomChip sys_rom(BIOS_SIZE);
+#endif
 
 #ifdef FLASH_SIZE
 DCFlashChip sys_nvmem(FLASH_SIZE);
@@ -47,6 +51,9 @@ bool LoadRomFiles(const string& root)
 			return false;
 		}
 	}
+#if DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
+	sys_rom.Load(root, ROM_PREFIX, "%nvmem2.bin", "nvmem2");
+#endif
 
 	return true;
 }
@@ -54,6 +61,9 @@ bool LoadRomFiles(const string& root)
 void SaveRomFiles(const string& root)
 {
 	sys_nvmem.Save(root, ROM_PREFIX, "nvmem.bin", "nvmem");
+#if DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
+	sys_rom.Save(root, ROM_PREFIX, "nvmem2.bin", "nvmem2");
+#endif
 }
 
 bool LoadHle(const string& root) {
@@ -64,40 +74,28 @@ bool LoadHle(const string& root) {
 	return reios_init(sys_rom.data, sys_nvmem.data);
 }
 
+u32 ReadFlash(u32 addr,u32 sz) { return sys_nvmem.Read(addr,sz); }
+void WriteFlash(u32 addr,u32 data,u32 sz) { sys_nvmem.Write(addr,data,sz); }
+
 #if (DC_PLATFORM == DC_PLATFORM_DREAMCAST) || (DC_PLATFORM == DC_PLATFORM_DEV_UNIT) || (DC_PLATFORM == DC_PLATFORM_NAOMI) || (DC_PLATFORM == DC_PLATFORM_NAOMI2)
 
 u32 ReadBios(u32 addr,u32 sz) { return sys_rom.Read(addr,sz); }
 void WriteBios(u32 addr,u32 data,u32 sz) { EMUERROR4("Write to [Boot ROM] is not possible, addr=%x,data=%x,size=%d",addr,data,sz); }
 
-u32 ReadFlash(u32 addr,u32 sz) { return sys_nvmem.Read(addr,sz); }
-void WriteFlash(u32 addr,u32 data,u32 sz) { sys_nvmem.Write(addr,data,sz); }
-
 #elif (DC_PLATFORM == DC_PLATFORM_ATOMISWAVE)
-	u32 ReadFlash(u32 addr,u32 sz) { EMUERROR3("Read from [Flash ROM] is not possible, addr=%x,size=%d",addr,sz); return 0; }
-	void WriteFlash(u32 addr,u32 data,u32 sz) { EMUERROR4("Write to [Flash ROM] is not possible, addr=%x,data=%x,size=%d",addr,data,sz); }
-
 	u32 ReadBios(u32 addr,u32 sz)
 	{
-		if (!(addr&0x10000)) //upper 64 kb is flashrom
-		{
-			return sys_rom.Read(addr,sz);
-		}
-		else
-		{
-			return sys_nvmem.Read(addr,sz);
-		}
+		return sys_rom.Read(addr, sz);
 	}
 
 	void WriteBios(u32 addr,u32 data,u32 sz)
 	{
-		if (!(addr&0x10000)) //upper 64 kb is flashrom
+		if (sz != 1)
 		{
-			EMUERROR4("Write to  [Boot ROM] is not possible, addr=%x,data=%x,size=%d",addr,data,sz);
+			EMUERROR("Invalid access size @%5x data %x sz %d\n", addr, data, sz);
+			return;
 		}
-		else
-		{
-			sys_nvmem.Write(addr,data,sz);
-		}
+		sys_rom.Write(addr, data, sz);
 	}
 
 #else
@@ -133,7 +131,11 @@ T DYNACALL ReadMem_area0(u32 addr)
 	//map 0x0000 to 0x01FF to Default handler
 	//mirror 0x0200 to 0x03FF , from 0x0000 to 0x03FFF
 	//map 0x0000 to 0x001F
+#if DC_PLATFORM != DC_PLATFORM_ATOMISWAVE
 	if (base<=0x001F)//	:MPX	System/Boot ROM
+#else
+	if (base<=0x0001)		// Only 128k BIOS on AtomisWave
+#endif
 	{
 		return ReadBios(addr,sz);
 	}
@@ -151,11 +153,11 @@ T DYNACALL ReadMem_area0(u32 addr)
 		}
 		else if ((addr>= 0x005F7000) && (addr<= 0x005F70FF)) // GD-ROM
 		{
-	#if DC_PLATFORM == DC_PLATFORM_NAOMI
+#if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
 			return (T)ReadMem_naomi(addr,sz);
-	#else
+#else
 			return (T)ReadMem_gdrom(addr,sz);
-	#endif
+#endif
 		}
 		else if (likely((addr>= 0x005F6800) && (addr<=0x005F7CFF))) //	/*:PVR i/f Control Reg.*/ -> ALL SB registers now
 		{
@@ -212,7 +214,12 @@ void  DYNACALL WriteMem_area0(u32 addr,T data)
 	const u32 base=(addr>>16);
 
 	//map 0x0000 to 0x001F
+#if DC_PLATFORM != DC_PLATFORM_ATOMISWAVE
 	if ((base <=0x001F) /*&& (addr<=0x001FFFFF)*/)// :MPX System/Boot ROM
+#else
+
+	if (base <= 0x0001) // Only 128k BIOS on AtomisWave
+#endif
 	{
 		WriteBios(addr,data,sz);
 	}

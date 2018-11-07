@@ -10,12 +10,15 @@ struct MemChip
 	u8* data;
 	u32 size;
 	u32 mask;
+	u32 write_protect_size;
+	std::string load_filename;
 
-	MemChip(u32 size)
+	MemChip(u32 size, u32 write_protect_size = 0)
 	{
 		this->data=new u8[size];
 		this->size=size;
 		this->mask=size-1;//must be power of 2
+		this->write_protect_size = write_protect_size;
 	}
 	~MemChip() { delete[] data; }
 
@@ -41,11 +44,19 @@ struct MemChip
 		FILE* f=fopen(file.c_str(),"rb");
 		if (f)
 		{
-			bool rv=fread(data,1,size,f)==size;
+			bool rv = fread(data + write_protect_size, 1, size - write_protect_size, f) == size - write_protect_size;
 			fclose(f);
+			if (rv)
+				this->load_filename = file;
+
 			return rv;
 		}
 		return false;
+	}
+
+	bool Reload()
+	{
+		return Load(this->load_filename);
 	}
 
 	void Save(const string& file)
@@ -53,7 +64,7 @@ struct MemChip
 		FILE* f=fopen(file.c_str(),"wb");
 		if (f)
 		{
-			fwrite(data,1,size,f);
+			fwrite(data + write_protect_size, 1, size - write_protect_size, f);
 			fclose(f);
 		}
 	}
@@ -109,7 +120,7 @@ struct MemChip
 };
 struct RomChip : MemChip
 {
-	RomChip(u32 sz) : MemChip(sz) {}
+	RomChip(u32 sz, u32 write_protect_size = 0) : MemChip(sz, write_protect_size) {}
 	void Reset()
 	{
 		//nothing, its permanent read only ;p
@@ -121,7 +132,7 @@ struct RomChip : MemChip
 };
 struct SRamChip : MemChip
 {
-	SRamChip(u32 sz) : MemChip(sz) {}
+	SRamChip(u32 sz, u32 write_protect_size = 0) : MemChip(sz, write_protect_size) {}
 
 	void Reset()
 	{
@@ -130,6 +141,8 @@ struct SRamChip : MemChip
 	void Write(u32 addr,u32 val,u32 sz)
 	{
 		addr&=mask;
+		if (addr < write_protect_size)
+			return;
 		switch (sz)
 		{
 		case 1:
@@ -141,35 +154,34 @@ struct SRamChip : MemChip
 		case 4:
 			*(u32*)&data[addr]=val;
 			return;
+		default:
+			die("invalid access size");
 		}
-
-		die("invalid access size");
 	}
 };
-struct DCFlashChip : MemChip // I think its Micronix :p
+
+// Macronix 29LV160TMC
+// AtomisWave uses a custom 29L001mc model
+struct DCFlashChip : MemChip
 {
-	DCFlashChip(u32 sz): MemChip(sz) { }
+	DCFlashChip(u32 sz, u32 write_protect_size = 0): MemChip(sz, write_protect_size), state(FS_Normal) { }
 
 	enum FlashState
 	{
-		FS_CMD_AA, //Waiting AA
-		FS_CMD_55, //Waiting 55
-		FS_CMD,    //Waiting command
-
-		FS_Erase_AA,
-		FS_Erase_55,
-		FS_Erase,
-
-		FS_Write,
-		
-
+		FS_Normal,
+		FS_ReadAMDID1,
+		FS_ReadAMDID2,
+		FS_ByteProgram,
+		FS_EraseAMD1,
+		FS_EraseAMD2,
+		FS_EraseAMD3
 	};
 
 	FlashState state;
 	void Reset()
 	{
 		//reset the flash chip state
-		state=FS_CMD_AA;
+		state = FS_Normal;
 	}
 	
 	virtual u8 Read8(u32 addr)
@@ -196,61 +208,111 @@ struct DCFlashChip : MemChip // I think its Micronix :p
 		
 		switch(state)
 		{
-		case FS_Erase_AA:
-		case FS_CMD_AA:
+		case FS_Normal:
+			switch (val & 0xff)
 			{
-				verify(addr==0x5555 && val==0xAA);
-				state = (FlashState)(state + 1);
+			case 0xf0:
+			case 0xff:  // reset chip mode
+				state = FS_Normal;
+				break;
+			case 0xaa:  // AMD ID select part 1
+				if ((addr & 0xfff) == 0x555 || (addr & 0xfff) == 0xaaa)
+					state = FS_ReadAMDID1;
+				break;
+			default:
+				printf("Unknown FlashWrite mode: %x\n", val);
+				break;
 			}
 			break;
 
-		case FS_Erase_55:
-		case FS_CMD_55:
+		case FS_ReadAMDID1:
+			if ((addr & 0xffff) == 0x2aa && (val & 0xff) == 0x55)
+				state = FS_ReadAMDID2;
+			else if ((addr & 0xffff) == 0x2aaa && (val & 0xff) == 0x55)
+				state = FS_ReadAMDID2;
+			else if ((addr & 0xfff) == 0x555 && (val & 0xff) == 0x55)
+				state = FS_ReadAMDID2;
+			else
 			{
-				verify((addr==0xAAAA || addr==0x2AAA) && val==0x55);
-				state = (FlashState)(state + 1);
+				printf("FlashRom: ReadAMDID1 unexpected write @ %x: %x\n", addr, val);
+				state = FS_Normal;
 			}
 			break;
 
-		case FS_CMD:
+		case FS_ReadAMDID2:
+			if ((addr & 0xffff) == 0x555 && (val & 0xff) == 0x80)
+				state = FS_EraseAMD1;
+			else if ((addr & 0xffff) == 0x5555 && (val & 0xff) == 0x80)
+				state = FS_EraseAMD1;
+			else if ((addr & 0xfff) == 0xaaa && (val & 0xff) == 0x80)
+				state = FS_EraseAMD1;
+			else if ((addr & 0xffff) == 0x555 && (val & 0xff) == 0xa0)
+				state = FS_ByteProgram;
+			else if ((addr & 0xffff) == 0x5555 && (val & 0xff) == 0xa0)
+				state = FS_ByteProgram;
+			else if ((addr & 0xfff) == 0xaaa && (val & 0xff) == 0xa0)
+				state = FS_ByteProgram;
+			else
 			{
-				switch(val)
-				{
-				case 0xA0:
-					state=FS_Write;
-					break;
-				case 0x80:
-					state=FS_Erase_AA;
-					break;
-				default:
-					printf("Flash write: address=%06X, value=%08X, size=%d\n",addr,val,sz);
-					state=FS_CMD_AA;
-					die("lolwhut");
-				}
+				printf("FlashRom: ReadAMDID2 unexpected write @ %x: %x\n", addr, val);
+				state = FS_Normal;
+			}
+			break;
+		case FS_ByteProgram:
+			if (addr >= write_protect_size)
+				data[addr] &= val;
+			state = FS_Normal;
+			break;
+
+		case FS_EraseAMD1:
+			if ((addr & 0xfff) == 0x555 && (val & 0xff) == 0xaa)
+				state = FS_EraseAMD2;
+			else if ((addr & 0xfff) == 0xaaa && (val & 0xff) == 0xaa)
+				state = FS_EraseAMD2;
+			else
+			{
+				printf("FlashRom: EraseAMD1 unexpected write @ %x: %x\n", addr, val);
 			}
 			break;
 
-		case FS_Erase:
+		case FS_EraseAMD2:
+			if ((addr & 0xffff) == 0x2aa && (val & 0xff) == 0x55)
+				state = FS_EraseAMD3;
+			else if ((addr & 0xffff) == 0x2aaa && (val & 0xff) == 0x55)
+				state = FS_EraseAMD3;
+			else if ((addr & 0xfff) == 0x555 && (val & 0xff) == 0x55)
+				state = FS_EraseAMD3;
+			else
 			{
-				switch(val)
-				{
-				case 0x30:
-					printf("Erase Sector %08X! (%08X)\n",addr,addr&(~0x3FFF));
-					memset(&data[addr&(~0x3FFF)],0xFF,0x4000);
-					break;
-				default:
-					printf("Flash write: address=%06X, value=%08X, size=%d\n",addr,val,sz);
-					die("erase .. what ?");
-				}
-				state=FS_CMD_AA;
+				printf("FlashRom: EraseAMD2 unexpected write @ %x: %x\n", addr, val);
 			}
 			break;
 
-		case FS_Write:
+		case FS_EraseAMD3:
+			if (((addr & 0xfff) == 0x555 && (val & 0xff) == 0x10)
+				|| ((addr & 0xfff) == 0xaaa && (val & 0xff) == 0x10))
 			{
-				//printf("flash write\n");
-				data[addr]&=val;
-				state=FS_CMD_AA;
+				// chip erase
+				memset(data + write_protect_size, 0xff, size - write_protect_size);
+				state = FS_Normal;
+			}
+			else if ((val & 0xff) == 0x30)
+			{
+				// sector erase
+				addr = max(addr, write_protect_size);
+#if DC_PLATFORM != DC_PLATFORM_ATOMISWAVE
+				printf("Erase Sector %08X! (%08X)\n",addr,addr&(~0x3FFF));
+				memset(&data[addr&(~0x3FFF)],0xFF,0x4000);
+#else
+				// AtomisWave's Macronix 29L001mc has 64k blocks
+				printf("Erase Sector %08X! (%08X)\n",addr,addr&(~0xFFFF));
+				memset(&data[addr&(~0xFFFF)], 0xFF, 0x10000);
+#endif
+				state = FS_Normal;
+			}
+			else
+			{
+				printf("FlashRom: EraseAMD3 unexpected write @ %x: %x\n", addr, val);
 			}
 			break;
 		}

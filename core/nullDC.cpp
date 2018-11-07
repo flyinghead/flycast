@@ -377,8 +377,10 @@ int dc_init()
 
 	os_SetupInput();
 
-#if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
+#if DC_PLATFORM == DC_PLATFORM_NAOMI
 	mcfg_CreateNAOMIJamma();
+#elif DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
+	mcfg_CreateAtomisWaveControllers();
 #endif
 
 	dc_reset();

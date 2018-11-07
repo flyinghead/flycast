@@ -10,6 +10,7 @@ public:
 	Cartridge(u32 size);
 	virtual ~Cartridge();
 
+	virtual void Init() {}
 	virtual u32 ReadMem(u32 address, u32 size) = 0;
 	virtual void WriteMem(u32 address, u32 data, u32 size) = 0;
 
@@ -21,6 +22,8 @@ public:
 	virtual std::string GetGameId();
 	virtual void Serialize(void **data, unsigned int *total_size) {}
 	virtual void Unserialize(void **data, unsigned int *total_size) {}
+	virtual void SetKey(u32 key) { }
+	virtual void SetKeyData(u8 *key_data) { }
 
 protected:
 	u8* RomPtr;
@@ -39,7 +42,7 @@ public:
 	virtual void Serialize(void** data, unsigned int* total_size);
 	virtual void Unserialize(void** data, unsigned int* total_size);
 
-	void SetKey(u32 key) { this->key = key; }
+	void SetKey(u32 key) override { this->key = key; }
 
 protected:
 	virtual void DmaOffsetChanged(u32 dma_offset) {}

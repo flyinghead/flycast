@@ -630,34 +630,37 @@ void Update_naomi()
 #endif
 }
 
-static u8 mem600[0x800];
+static u8 aw_maple_devs;
+extern bool coin_chute;
 
 u32 libExtDevice_ReadMem_A0_006(u32 addr,u32 size) {
 	addr &= 0x7ff;
 	//printf("libExtDevice_ReadMem_A0_006 %d@%08x: %x\n", size, addr, mem600[addr]);
 	switch (addr)
 	{
+	case 0x280:
+		// 0x00600280 r  0000dcba
+		//	a/b - 1P/2P coin inputs (JAMMA), active low
+		//	c/d - 3P/4P coin inputs (EX. IO board), active low
+		//
+		//	(ab == 0) -> BIOS skip RAM test
+		if (coin_chute)
+		{
+			// FIXME Coin Error if coint_chute is set for too long
+			return 0xE;
+		}
+		return 0xF;
+
 	case 0x284:		// Atomiswave maple devices
 		// ddcc0000 where cc/dd are the types of devices on maple bus 2 and 3:
 		// 0: regular AtomisWave controller
 		// 1: light gun
 		// 2,3: mouse/trackball
-		//mem600[addr] |= 0x10;
-//		printf("NAOMI 600284 read %x\n", mem600[addr]);
-		break;
+		//printf("NAOMI 600284 read %x\n", aw_maple_devs);
+		return aw_maple_devs;
 	}
-	switch (size)
-	{
-	case 1:
-		return mem600[addr];
-	case 2:
-		return *(u16 *)&mem600[addr & ~1];
-	case 4:
-		return *(u32 *)&mem600[addr & ~3];
-	default:
-		die("Invalid size");
-		return 0;
-	}
+	EMUERROR("Unhandled read @ %x\n", addr);
+	return 0xFF;
 }
 
 void libExtDevice_WriteMem_A0_006(u32 addr,u32 data,u32 size) {
@@ -666,23 +669,11 @@ void libExtDevice_WriteMem_A0_006(u32 addr,u32 data,u32 size) {
 	switch (addr)
 	{
 	case 0x284:		// Atomiswave maple devices
-//		printf("NAOMI 600284 write %x\n", data);
+		printf("NAOMI 600284 write %x\n", data);
+		aw_maple_devs = data & 0xF0;
 		break;
 	default:
 		break;
 	}
-	switch (size)
-	{
-	case 1:
-		mem600[addr] = data;
-		break;
-	case 2:
-		if ((addr & 1) == 0)
-			*(u16 *)&mem600[addr] = data;
-		break;
-	case 4:
-		if ((addr & 3) == 0)
-			*(u32 *)&mem600[addr] = data;
-		break;
-	}
+	EMUERROR("Unhandled write @ %x: %x\n", addr, data);
 }

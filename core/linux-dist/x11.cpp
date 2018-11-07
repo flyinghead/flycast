@@ -436,10 +436,10 @@ void input_x11_handle()
 							printf("OpenGL: renderer changed to %d\n", settings.pvr.rend);
 							renderer_changed = true;
 						}
-#if DC_PLATFORM == DC_PLATFORM_NAOMI
-						else if (e.type == KeyRelease && e.xkey.keycode == KEY_F8)
+#if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
+						else if (e.xkey.keycode == KEY_F8)
 						{
-							coin_chute = true;
+							coin_chute = e.type == KeyPress;
 						}
 						else if (e.xkey.keycode == KEY_F7)
 						{

@@ -20,6 +20,12 @@ public:
 	M4Cartridge(u32 size) : NaomiCartridge(size) { }
 	~M4Cartridge();
 
+	virtual void Init() override
+	{
+		device_start();
+		device_reset();
+	}
+
 	virtual u32 ReadMem(u32 address, u32 size) override
 	{
 		if ((address & 0xff) == 0x34)
@@ -42,14 +48,8 @@ public:
 	virtual void Serialize(void** data, unsigned int* total_size) override;
 	virtual void Unserialize(void** data, unsigned int* total_size) override;
 
-	void SetM4Id(u16 m4id) { this->m4id = m4id; }
-	void SetKeyData(u8 *key_data)
-	{
-		this->m_key_data = key_data;
-		// FIXME not the best place to do this
-		device_start();
-		device_reset();
-	}
+	void SetKey(u32 key) override { this->m4id = key; }
+	void SetKeyData(u8 *key_data) override { this->m_key_data = key_data; }
 
 protected:
 	virtual void DmaOffsetChanged(u32 dma_offset) override;
