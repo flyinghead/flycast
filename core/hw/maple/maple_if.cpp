@@ -92,7 +92,7 @@ void maple_SB_MDEN_Write(u32 addr, u32 data)
 
 	if ((data & 0x1)==0  && SB_MDST)
 	{
-		die("Maple DMA abort ?\n");
+		printf("Maple DMA abort ?\n");
 	}
 }
 
