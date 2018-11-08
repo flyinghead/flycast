@@ -2,6 +2,8 @@
 #include "types.h"
 #include "cfg/cfg.h"
 #include "linux-dist/main.h"
+#include "hw/maple/maple_devs.h"
+#include "hw/maple/maple_cfg.h"
 #include "sdl/sdl.h"
 #ifndef GLES
 #include "khronos/GL3/gl3w.h"
@@ -92,6 +94,11 @@ void input_sdl_init()
 			sdl_map_axis = sdl_map_axis_xbox360;
 			printf("Using Xbox 360 map\n");
 		}
+		
+		// Create the first controller with two VMUs
+		// TODO: make this configurable
+		printf("SDL: Creating controller in first port with 2 VMUs");
+		mcfg_CreateController(0, MDT_SegaVMU, MDT_SegaVMU);
 	}
 	else
 	{
