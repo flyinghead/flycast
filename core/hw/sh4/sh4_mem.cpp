@@ -324,7 +324,7 @@ u8* GetMemPtr(u32 Addr,u32 size)
 		case 6:
 		case 7:
 		default:
-			EMUERROR("unsupported area : addr=0x%X",Addr);
+//			EMUERROR("unsupported area : addr=0x%X",Addr);
 			return 0;
 	}
 }
