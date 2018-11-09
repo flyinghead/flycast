@@ -28,6 +28,7 @@ extern u16 kcode[4];
 extern u32 vks[4];
 extern s8 joyx[4],joyy[4];
 extern u8 rt[4],lt[4];
+extern bool naomi_test_button;
 
 u8 GetBtFromSgn(s8 val)
 {
@@ -59,6 +60,11 @@ struct MapleConfigMap : IMapleConfigMap
 		pjs->kcode=kcode[player_num];
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST
 		pjs->kcode |= 0xF901;
+#elif DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
+		if (naomi_test_button)
+			pjs->kcode &= ~(1 << 14);
+//		if (!(pjs->kcode & (1 << 9)))	// Hack (Y -> service btn)
+//			pjs->kcode &= ~(1 << 13);
 #endif
 		pjs->joy[PJAI_X1]=GetBtFromSgn(joyx[player_num]);
 		pjs->joy[PJAI_Y1]=GetBtFromSgn(joyy[player_num]);
@@ -90,11 +96,21 @@ void mcfg_CreateNAOMIJamma()
 
 void mcfg_CreateAtomisWaveControllers()
 {
-	// Looks like a controller needs to be on bus 0 for digital controls
-	// Then another device on port 2 for analog axes, light gun, ...
+	// Looks like two controllers needs to be on bus 0 and 1 for digital inputs
+	// Then other devices on port 2 and 3 for analog axes, light guns, ...
 	mcfg_Create(MDT_SegaController, 0, 5);
-	mcfg_Create(MDT_SegaController, 2, 5, 0);
+	mcfg_Create(MDT_SegaController, 1, 5);
+//	mcfg_Create(MDT_SegaController, 2, 5, 0);
+//	mcfg_Create(MDT_SegaController, 3, 5, 1);
 //	mcfg_Create(MDT_LightGun, 2, 5, 0);
+//	mcfg_Create(MDT_LightGun, 3, 5, 1);
+//	mcfg_Create(MDT_Mouse, 2, 5, 0);
+	// Guilty Gear Isuka (4P)		needs 4 std controllers
+	// Faster Than Speed			needs 1 std controller on port 0 (digital inputs) and one on port 2 (analog axes)
+	// Maximum Speed				same
+	// Clay Challenge				needs 2 std controllers on port 0 & 1 (digital in) and light guns on port 2 & 3
+	// Sports Shooting				same
+	// Sega Bass Fishing Challenge  needs a mouse (track-ball) on port 3
 }
 
 void mcfg_CreateController(u32 bus, MapleDeviceType maple_type1, MapleDeviceType maple_type2)

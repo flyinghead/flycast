@@ -260,9 +260,8 @@ void UpdateInputState(u32 port)
 			DiscSwap();
 		if (GetAsyncKeyState(VK_ESCAPE))
 			dc_stop();
-#if DC_PLATFORM == DC_PLATFORM_NAOMI
-		if (GetAsyncKeyState(VK_F8))
-			coin_chute = true;
+#if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
+		coin_chute = GetAsyncKeyState(VK_F8);
 		naomi_test_button = GetAsyncKeyState(VK_F7);
 #endif
 		// also Naomi service button

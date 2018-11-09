@@ -646,7 +646,7 @@ u32 libExtDevice_ReadMem_A0_006(u32 addr,u32 size) {
 		//	(ab == 0) -> BIOS skip RAM test
 		if (coin_chute)
 		{
-			// FIXME Coin Error if coint_chute is set for too long
+			// FIXME Coin Error if coin_chute is set for too long
 			return 0xE;
 		}
 		return 0xF;
@@ -659,7 +659,7 @@ u32 libExtDevice_ReadMem_A0_006(u32 addr,u32 size) {
 		//printf("NAOMI 600284 read %x\n", aw_maple_devs);
 		return aw_maple_devs;
 	}
-	EMUERROR("Unhandled read @ %x\n", addr);
+	EMUERROR("Unhandled read @ %x", addr);
 	return 0xFF;
 }
 
@@ -672,8 +672,9 @@ void libExtDevice_WriteMem_A0_006(u32 addr,u32 data,u32 size) {
 		printf("NAOMI 600284 write %x\n", data);
 		aw_maple_devs = data & 0xF0;
 		break;
+	//case 0x28C:		// Wheel force feedback?
 	default:
 		break;
 	}
-	EMUERROR("Unhandled write @ %x: %x\n", addr, data);
+	EMUERROR("Unhandled write @ %x: %x", addr, data);
 }
