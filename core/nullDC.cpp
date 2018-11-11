@@ -23,9 +23,10 @@
 void FlushCache();
 
 settings_t settings;
-static bool performed_serialization = false;
+static bool continue_running = false;
 static cMutex mtx_serialization ;
 static cMutex mtx_mainloop ;
+static int new_dynarec_setting = -1;
 
 /*
 	libndc
@@ -356,21 +357,24 @@ int dc_init()
 #endif
 
 #if FEAT_SHREC != DYNAREC_NONE
+	Get_Sh4Recompiler(&sh4_cpu);
+	sh4_cpu.Init();		// Also initialize the interpreter
 	if(settings.dynarec.Enable)
 	{
-		Get_Sh4Recompiler(&sh4_cpu);
 		printf("Using Recompiler\n");
 	}
 	else
 #endif
 	{
 		Get_Sh4Interpreter(&sh4_cpu);
+#if FEAT_SHREC == DYNAREC_NONE
+		sh4_cpu.Init();
+#endif
 		printf("Using Interpreter\n");
 	}
 
     InitAudio();
 
-	sh4_cpu.Init();
 	mem_Init();
 
 	mem_map_default();
@@ -398,7 +402,7 @@ void dc_run()
 {
     while ( true )
     {
-    	performed_serialization = false ;
+    	continue_running = false ;
     	mtx_mainloop.Lock() ;
     	sh4_cpu.Run();
         mtx_mainloop.Unlock() ;
@@ -406,7 +410,22 @@ void dc_run()
     	mtx_serialization.Lock() ;
     	mtx_serialization.Unlock() ;
 
-    	if (!performed_serialization)
+    	if (new_dynarec_setting != -1 && new_dynarec_setting != settings.dynarec.Enable)
+    	{
+    		settings.dynarec.Enable = new_dynarec_setting;
+    		if (settings.dynarec.Enable)
+    		{
+    			Get_Sh4Recompiler(&sh4_cpu);
+    			printf("Using Recompiler\n");
+    		}
+    		else
+    		{
+    			Get_Sh4Interpreter(&sh4_cpu);
+    			printf("Using Interpreter\n");
+    		}
+    		sh4_cpu.ResetCache();
+    	}
+    	if (!continue_running)
     		break ;
     }
 }
@@ -620,13 +639,21 @@ bool acquire_mainloop_lock()
 	return result ;
 }
 
+void dc_enable_dynarec(bool enable)
+{
+#if FEAT_SHREC != DYNAREC_NONE
+	continue_running = true;
+	new_dynarec_setting = enable;
+	dc_stop();
+#endif
+}
+
 void cleanup_serialize(void *data)
 {
 	if ( data != NULL )
 		free(data) ;
 
-	performed_serialization = true ;
-	dc_start() ;
+	continue_running = true ;
 	mtx_serialization.Unlock() ;
 	mtx_mainloop.Unlock() ;
 
@@ -667,8 +694,7 @@ void* dc_savestate_thread(void* p)
 	if ( !acquire_mainloop_lock() )
 	{
 		printf("Failed to save state - could not acquire main loop lock\n") ;
-		performed_serialization = true ;
-		dc_start() ;
+		continue_running = true ;
 		mtx_serialization.Unlock() ;
     	return NULL;
 	}
@@ -736,8 +762,7 @@ void* dc_loadstate_thread(void* p)
 	if ( !acquire_mainloop_lock() )
 	{
 		printf("Failed to load state - could not acquire main loop lock\n") ;
-		performed_serialization = true ;
-		dc_start() ;
+		continue_running = true ;
 		mtx_serialization.Unlock() ;
     	return NULL;
 	}

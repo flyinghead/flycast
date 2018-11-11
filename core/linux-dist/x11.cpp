@@ -47,6 +47,7 @@ extern bool naomi_test_button;
 void dc_stop(void);
 bool dc_loadstate(void);
 bool dc_savestate(void);
+void dc_enable_dynarec(bool enable);
 
 enum
 {
@@ -446,6 +447,10 @@ void input_x11_handle()
 							naomi_test_button = e.type == KeyPress;
 						}
 #endif
+						else if (e.type == KeyRelease && e.xkey.keycode == KEY_F6)
+						{
+							dc_enable_dynarec(settings.dynarec.Enable == 0);
+						}
 						else
 						{
 							int dc_key = x11_keymap[e.xkey.keycode];

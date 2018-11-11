@@ -104,6 +104,9 @@ PCHAR*
 }
 
 void dc_stop(void);
+void dc_savestate();
+void dc_loadstate();
+void dc_enable_dynarec(bool enable);
 
 bool VramLockedWrite(u8* address);
 bool ngen_Rewrite(unat& addr,unat retadr,unat acc);
@@ -253,8 +256,13 @@ void UpdateInputState(u32 port)
 		if (GetAsyncKeyState(VK_F1))
 			settings.pvr.ta_skip = 100;
 
+//		if (GetAsyncKeyState(VK_F2))
+//			settings.pvr.ta_skip = 0;
 		if (GetAsyncKeyState(VK_F2))
-			settings.pvr.ta_skip = 0;
+			dc_savestate();
+		if (GetAsyncKeyState(VK_F4))
+			dc_loadstate();
+
 
 		if (GetAsyncKeyState(VK_F10))
 			DiscSwap();
@@ -264,9 +272,8 @@ void UpdateInputState(u32 port)
 		coin_chute = GetAsyncKeyState(VK_F8);
 		naomi_test_button = GetAsyncKeyState(VK_F7);
 #endif
-		// also Naomi service button
 		if (GetAsyncKeyState(VK_F6))
-			kcode[port] &= ~key_CONT_C;
+			dc_enable_dynarec(settings.dynarec.Enable == 0);
 }
 
 void UpdateController(u32 port)
