@@ -36,6 +36,7 @@ public final class JNIdc
 	public static native void cable(int cable);
 	public static native void region(int region);
 	public static native void broadcast(int broadcast);
+	public static native void rtt(int rtt);
 	public static native void limitfps(int limiter);
 	public static native void nobatch(int nobatch);
 	public static native void nosound(int noaudio);

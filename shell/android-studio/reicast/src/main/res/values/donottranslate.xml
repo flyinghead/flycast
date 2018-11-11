@@ -61,6 +61,14 @@
         <item>9 - PAL-E</item>
     </string-array>
 
+    <string-array name="rtt">
+        <item>Disabled - skip frames</item>
+        <item>Zeros</item>
+        <item>Ones</item>
+        <item>Shadow circle</item>
+        <item>Full</item>
+    </string-array>
+
     <string-array name="bioscode">
         <item>J</item>
         <item>E</item>

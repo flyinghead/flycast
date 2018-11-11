@@ -294,6 +294,7 @@ void LoadSettings()
 	settings.dreamcast.RTC			= cfgLoadInt("config", "Dreamcast.RTC", GetRTC_now());
 	settings.dreamcast.region		= cfgLoadInt("config", "Dreamcast.Region", 3);
 	settings.dreamcast.broadcast	= cfgLoadInt("config", "Dreamcast.Broadcast", 4);
+	settings.dreamcast.rttOption	= cfgLoadInt("config", "Dreamcast.Rtt", 0);
 	settings.aica.LimitFPS			= cfgLoadInt("config", "aica.LimitFPS", 1);
 	settings.aica.NoBatch			= cfgLoadInt("config", "aica.NoBatch", 0);
 	settings.aica.NoSound			= cfgLoadInt("config", "aica.NoSound", 0);
@@ -377,4 +378,5 @@ void SaveSettings()
 	cfgSaveInt("config","Dreamcast.RTC",		settings.dreamcast.RTC);
 	cfgSaveInt("config","Dreamcast.Region",		settings.dreamcast.region);
 	cfgSaveInt("config","Dreamcast.Broadcast",	settings.dreamcast.broadcast);
+	cfgSaveInt("config","Dreamcast.Rtt",		settings.dreamcast.rttOption);
 }

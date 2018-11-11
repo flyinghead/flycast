@@ -640,6 +640,7 @@ struct settings_t
 		u32 RTC;
 		u32 region;
 		u32 broadcast;
+		u32 rttOption;
 	} dreamcast;
 
 	struct

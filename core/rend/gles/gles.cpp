@@ -1,4 +1,5 @@
 #include <math.h>
+#include <types.h>
 #include "gles.h"
 #include "rend/TexCache.h"
 #include "cfg/cfg.h"
@@ -1778,6 +1779,8 @@ bool RenderFrame()
 		glViewport(0, 0, screen_width, screen_height);
 #endif
 	}
+
+	printf("RTT option: %d", settings.dreamcast.rttOption);
 
 	//Clear depth
 	//Color is cleared by the bgp
