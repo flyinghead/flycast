@@ -378,7 +378,6 @@ public class OptionsFragment extends Fragment {
 			}
 		});
 
-		//----------------------------------------
 		String[] rtts = getResources().getStringArray(R.array.rtt);
 		Spinner rtt_spnr = (Spinner) getView().findViewById(R.id.rtt_spinner);
 		ArrayAdapter<String> rttAdapter = new ArrayAdapter<>(
@@ -394,7 +393,6 @@ public class OptionsFragment extends Fragment {
 			public void onNothingSelected(AdapterView<?> arg0) {
 			}
 		});
-//----------------------------------------
 
 		OnCheckedChangeListener limitfps_option = new OnCheckedChangeListener() {
 

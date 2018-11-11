@@ -1,6 +1,7 @@
 #include "gles.h"
 #include "rend/TexCache.h"
 #include "hw/pvr/pvr_mem.h"
+#include <math.h>
 
 /*
 Textures
@@ -20,6 +21,9 @@ Compression
 	look into it, but afaik PVRC is not realtime doable
 */
 
+const u32 shadowCircleW = 128;
+const u32 shadowCircleH = 128;
+u16 shadowCircleTexture[shadowCircleW][shadowCircleH] = {0};
 u16 buf[1024*1024];
 
 #if FEAT_HAS_SOFTREND
@@ -445,26 +449,16 @@ void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 	glViewport(0, 0, fbw, fbh);
 }
 
-void ReadRTT() {
-	FBT& rv=fb_rtt;
-
-	//get viewport width and height from rtt framebuffer
-	GLint dimensions[4] = {0};
-	glGetIntegerv(GL_VIEWPORT, dimensions);
-	GLint w = dimensions[2];
-	GLint h = dimensions[3];
-
-	//bind texture to which we have rendered in the last rtt pass
-	glBindTexture(GL_TEXTURE_2D, rv.tex);
-
-	switch(FB_W_CTRL.fb_packmode)
-	{
+void handlePackModeRTT(GLint w, GLint h)
+{
+	switch (FB_W_CTRL.fb_packmode) {
 		//currently RGB 565 is supported only
 		case 1: //0x1   565 RGB 16 bit
 		{
-		    u16 *dataPointer = temp_tex_buffer;
+			u16 *dataPointer = temp_tex_buffer;
 			glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, temp_tex_buffer);
-			for (u32 i = 0; i < w * h; i++) {
+			for (u32 i = 0; i < w * h; i++)
+			{
 				buf[i] = ((*dataPointer & 0xF000) >> 12) | ((*dataPointer & 0x0FFF) << 4);
 				*dataPointer++;
 			}
@@ -481,7 +475,46 @@ void ReadRTT() {
 	}
 }
 
-void FreeRTTBuffers() {
+void ReadRTT()
+{
+	FBT& rv=fb_rtt;
+
+	//get viewport width and height from rtt framebuffer
+	GLint dimensions[4] = {0};
+	glGetIntegerv(GL_VIEWPORT, dimensions);
+	GLint w = dimensions[2];
+	GLint h = dimensions[3];
+
+	//bind texture to which we have rendered in the last rtt pass
+	glBindTexture(GL_TEXTURE_2D, rv.tex);
+
+	if (settings.dreamcast.rttOption == 3)
+	{
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, shadowCircleW, shadowCircleH, 0,
+					 GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4, shadowCircleTexture[0]);
+	}
+	else if (settings.dreamcast.rttOption == 2)
+	{
+		for (u32 i = 0; i < w * h; i++)
+			buf[i] = ~0;
+
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4, buf);
+	}
+	else if (settings.dreamcast.rttOption == 1)
+	{
+		for (u32 i = 0; i < w * h; i++)
+			buf[i] = 0;
+
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4, buf);
+	}
+	else if (settings.dreamcast.rttOption == 4)
+	{
+		handlePackModeRTT(w, h);
+	}
+}
+
+void FreeRTTBuffers()
+{
 	if (fb_rtt.fbo) { glDeleteFramebuffers(1,&fb_rtt.fbo); fb_rtt.fbo = 0; }
 	if (fb_rtt.tex) { glDeleteTextures(1,&fb_rtt.tex); fb_rtt.tex = 0; }
 	if (fb_rtt.depthb) { glDeleteRenderbuffers(1,&fb_rtt.depthb); fb_rtt.depthb = 0; }
@@ -568,12 +601,12 @@ text_info raw_GetTexture(TSP tsp, TCW tcw)
 
 	//return gl texture
 	rv.height = tf->h;
-    rv.width = tf->w;
-    rv.pdata = tf->pData;
-    rv.textype = tf->tex_type;
+	rv.width = tf->w;
+	rv.pdata = tf->pData;
+	rv.textype = tf->tex_type;
 
 
-    return rv;
+	return rv;
 }
 
 void CollectCleanup() {
@@ -602,6 +635,30 @@ void CollectCleanup() {
 void DoCleanup() {
 
 }
+
+void InitShadowCircle() {
+	s32 middle_x = shadowCircleW / 2;
+	s32 middle_y = shadowCircleH / 2;
+	u32 radius = 15;
+
+	s32 x = 0, y = 0;
+	for (s32 i = 0; i <= 360; i = i + 2) {
+		x = s32(radius * cos(i * M_PI / 180));
+		y = s32(radius * sin(i * M_PI / 180));
+		shadowCircleTexture[middle_x + x][middle_y + y] = 0x5555;
+
+		if (y < 0) {
+			for (s32 j = 0; j < abs(y); ++j) {
+				shadowCircleTexture[middle_x + x][middle_y - j] = 0xAAAA;
+			}
+		} else {
+			for (s32 j = 1; j < y; ++j) {
+				shadowCircleTexture[middle_x + x][middle_y + j] = 0xAAAA;
+			}
+		}
+	}
+}
+
 void killtex()
 {
 	for (TexCacheIter i=TexCache.begin();i!=TexCache.end();i++)

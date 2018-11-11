@@ -108,7 +108,6 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_rtt(JNIEnv *env,jobje
     settings.dreamcast.rttOption = rtt;
 }
 
-
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_limitfps(JNIEnv *env,jobject obj, jint limiter)
 {
     settings.aica.LimitFPS = limiter;

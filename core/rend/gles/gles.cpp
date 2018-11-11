@@ -997,6 +997,8 @@ bool gles_init()
 	if (!gl_create_resources())
 		return false;
 
+	InitShadowCircle();
+
 #if defined(GLES) && HOST_OS != OS_DARWIN && !defined(TARGET_NACL32)
 	#ifdef TARGET_PANDORA
 	fbdev=open("/dev/fb0", O_RDONLY);
@@ -1448,6 +1450,11 @@ void OSD_DRAW()
 
 bool ProcessFrame(TA_context* ctx)
 {
+	if (ctx->rend.isRTT && settings.dreamcast.rttOption == 0)
+	{
+		return false;
+	}
+
 	ctx->rend_inuse.Lock();
 	ctx->MarkRend();
 
@@ -1780,8 +1787,6 @@ bool RenderFrame()
 #endif
 	}
 
-	printf("RTT option: %d", settings.dreamcast.rttOption);
-
 	//Clear depth
 	//Color is cleared by the bgp
 	if (settings.rend.WideScreen)
@@ -1839,7 +1844,10 @@ bool RenderFrame()
 	//restore scale_x
 	scale_x /= scissoring_scale_x;
 
-	DrawStrips();
+	if (!(is_rtt && (settings.dreamcast.rttOption > 0 && settings.dreamcast.rttOption <= 3)))
+	{
+		DrawStrips();
+	}
 
 	#if HOST_OS==OS_WINDOWS
 		//Sleep(40); //to test MT stability
