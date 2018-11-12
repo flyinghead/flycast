@@ -2,6 +2,7 @@
 #include <vector>
 #include <sys/stat.h>
 #include "types.h"
+#include "cfg/cfg.h"
 
 #if BUILD_COMPILER==COMPILER_VC
 	#include <io.h>
@@ -101,6 +102,20 @@ string get_readonly_data_path(const string& filename)
 	return user_filepath;
 }
 
+string get_game_save_prefix()
+{
+	char image_path[512];
+	cfgLoadStr("config", "image", image_path, "");
+	string save_file = image_path;
+	size_t lastindex = save_file.find_last_of("/");
+#ifdef _WIN32
+	size_t lastindex2 = save_file.find_last_of("\\");
+	lastindex = max(lastindex, lastindex2);
+#endif
+	if (lastindex != -1)
+		save_file = save_file.substr(lastindex + 1);
+	return get_writable_data_path("/data/") + save_file;
+}
 
 #if 0
 //File Enumeration

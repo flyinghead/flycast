@@ -12,6 +12,7 @@
 #include "awcartridge.h"
 
 Cartridge *CurrentCartridge;
+bool bios_loaded = false;
 
 #if HOST_OS == OS_WINDOWS
 	typedef HANDLE fd_t;
@@ -170,7 +171,7 @@ static void parse_comment(const char *line)
 
 extern RomChip sys_rom;
 
-static bool naomi_LoadBios(const char *filename, zip *child_zip)
+static bool naomi_LoadBios(const char *filename, zip *child_zip, int region)
 {
 	int biosid = 0;
 	for (; BIOS[biosid].name != NULL; biosid++)
@@ -191,9 +192,18 @@ static bool naomi_LoadBios(const char *filename, zip *child_zip)
 #endif
 	zip *zip_archive = zip_open((basepath + filename).c_str(), 0, NULL);
 
-	int romid = 0;
-	while (bios->blobs[romid].filename != NULL)
+	bool found_region = false;
+
+	for (int romid = 0; bios->blobs[romid].filename != NULL; romid++)
 	{
+		if (region == -1)
+			region = bios->blobs[romid].region;
+		else
+		{
+			if (bios->blobs[romid].region != region)
+				continue;
+		}
+		found_region = true;
 		if (bios->blobs[romid].blob_type == Copy)
 		{
 			verify(bios->blobs[romid].offset + bios->blobs[romid].length <= BIOS_SIZE);
@@ -238,7 +248,6 @@ static bool naomi_LoadBios(const char *filename, zip *child_zip)
 				die("Unknown blob type\n");
 			zip_fclose(file);
 		}
-		romid++;
 	}
 
 	if (zip_archive != NULL)
@@ -249,7 +258,7 @@ static bool naomi_LoadBios(const char *filename, zip *child_zip)
 	sys_rom.Reload();
 #endif
 
-	return true;
+	return found_region;
 
 error:
 	if (zip_archive != NULL)
@@ -287,11 +296,24 @@ static bool naomi_cart_LoadZip(char *filename)
 		return false;
 	}
 
+	const char *bios = "naomi.zip";
 	if (game->bios != NULL)
+		bios = game->bios;
+	if (!naomi_LoadBios(bios, zip_archive, settings.dreamcast.region))
 	{
-		if (!naomi_LoadBios(game->bios, zip_archive))
-			return false;
+		printf("Warning: Region %d bios not found in %s\n", settings.dreamcast.region, bios);
+		if (!naomi_LoadBios(bios, zip_archive, -1))
+		{
+			// If a specific BIOS is needed for this game, fail.
+			if (game->bios != NULL || !bios_loaded)
+			{
+				printf("Error: cannot load BIOS. Exiting\n");
+				return false;
+			}
+			// otherwise use the default BIOS
+		}
 	}
+	bios_loaded = true;
 
 	switch (game->cart_type)
 	{

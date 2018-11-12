@@ -1363,24 +1363,6 @@ enum NAOMI_KEYS
 	NAOMI_COIN_KEY = 1 << 15,
 };
 
-
-#ifdef SAVE_EPPROM
-static string get_eeprom_file_path()
-{
-	char image_path[512];
-	cfgLoadStr("config", "image", image_path, "naomi_boot.bin");
-	string eeprom_file = image_path;
-	size_t lastindex = eeprom_file.find_last_of("/");
-	if (lastindex != -1)
-		eeprom_file = eeprom_file.substr(lastindex + 1);
-	lastindex = eeprom_file.find_last_of(".");
-	if (lastindex != -1)
-		eeprom_file = eeprom_file.substr(0, lastindex);
-	eeprom_file = eeprom_file + ".eeprom";
-	return get_writable_data_path("/data/") + eeprom_file;
-}
-#endif
-
 /*
  * Sega JVS I/O board
 */
@@ -1701,7 +1683,7 @@ struct maple_naomi_jamma : maple_sega_controller
 				memcpy(EEPROM + address, dma_buffer_in + 4, size);
 
 #ifdef SAVE_EPPROM
-				string eeprom_file = get_eeprom_file_path();
+				string eeprom_file = get_game_save_prefix() + ".eeprom";
 				FILE* f = fopen(eeprom_file.c_str(), "wb");
 				if (f)
 				{
@@ -1728,7 +1710,7 @@ struct maple_naomi_jamma : maple_sega_controller
 				if (!EEPROM_loaded)
 				{
 					EEPROM_loaded = true;
-					string eeprom_file = get_eeprom_file_path();
+					string eeprom_file = get_game_save_prefix() + ".eeprom";
 					FILE* f = fopen(eeprom_file.c_str(), "rb");
 					if (f)
 					{

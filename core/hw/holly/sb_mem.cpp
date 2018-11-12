@@ -32,14 +32,27 @@ DCFlashChip sys_nvmem(FLASH_SIZE);
 SRamChip sys_nvmem(BBSRAM_SIZE);
 #endif
 
+extern bool bios_loaded;
+
 bool LoadRomFiles(const string& root)
 {
+#if DC_PLATFORM != DC_PLATFORM_ATOMISWAVE
 	if (!sys_rom.Load(root, ROM_PREFIX, "%boot.bin;%boot.bin.bin;%bios.bin;%bios.bin.bin" ROM_NAMES, "bootrom"))
 	{
+#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
+		// Dreamcast absolutely needs a BIOS
 		msgboxf("Unable to find bios in \n%s\nExiting...", MBX_ICONERROR, root.c_str());
 		return false;
+#endif
 	}
+	else
+		bios_loaded = true;
+#endif
+#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
 	if (!sys_nvmem.Load(root, ROM_PREFIX, "%nvmem.bin;%flash_wb.bin;%flash.bin;%flash.bin.bin", "nvram"))
+#else
+	if (!sys_nvmem.Load(get_game_save_prefix() + ".nvmem"))
+#endif
 	{
 		if (NVR_OPTIONAL)
 		{
@@ -52,7 +65,7 @@ bool LoadRomFiles(const string& root)
 		}
 	}
 #if DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
-	sys_rom.Load(root, ROM_PREFIX, "%nvmem2.bin", "nvmem2");
+	sys_rom.Load(get_game_save_prefix() + ".nvmem2");
 #endif
 
 	return true;
@@ -60,9 +73,13 @@ bool LoadRomFiles(const string& root)
 
 void SaveRomFiles(const string& root)
 {
+#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
 	sys_nvmem.Save(root, ROM_PREFIX, "nvmem.bin", "nvmem");
+#else
+	sys_nvmem.Save(get_game_save_prefix() + ".nvmem");
+#endif
 #if DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
-	sys_rom.Save(root, ROM_PREFIX, "nvmem2.bin", "nvmem2");
+	sys_rom.Save(get_game_save_prefix() + ".nvmem2");
 #endif
 }
 
@@ -92,7 +109,7 @@ void WriteBios(u32 addr,u32 data,u32 sz) { EMUERROR4("Write to [Boot ROM] is not
 	{
 		if (sz != 1)
 		{
-			EMUERROR("Invalid access size @%5x data %x sz %d\n", addr, data, sz);
+			EMUERROR("Invalid access size @%08x data %x sz %d\n", addr, data, sz);
 			return;
 		}
 		sys_rom.Write(addr, data, sz);

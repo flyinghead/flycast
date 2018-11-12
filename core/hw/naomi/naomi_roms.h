@@ -46,6 +46,7 @@ struct BIOS_t
 	const char* name;
 	struct
 	{
+		u32 region;		// 0: Japan, 1: USA, 2: Export, 3: Other
 		const char* filename;
 		u32 offset;
 		u32 length;
@@ -58,112 +59,108 @@ BIOS[] =
 	{
 		"airlbios.zip",
 		{
-			{ "epr-21802.ic27", 0x000000, 0x200000 },
-			// or
-			//{ "epr-21801.ic27", 0x000000, 0x200000 },
-			{ NULL, 0, 0 },
+			{ 2, "epr-21802.ic27", 0x000000, 0x200000 },
+			{ 1, "epr-21801.ic27", 0x000000, 0x200000 },
+			{ 0, NULL, 0, 0 },
 		}
 	},
 	{
 		"awbios.zip",
 		{
-			//ROM_REGION( 0x200000, "awflash", 0)
-			{ "bios0.ic23", 0x000000, 0x020000 },
+			{ 0, "bios0.ic23", 0x000000, 0x020000 },
 			//or
 			//{ "bios1.ic23", 0x000000, 0x020000 },
-			{ NULL, 0, 0 },
+			{ 0, NULL, 0, 0 },
 		}
 	},
 	{
 		"f355bios.zip",
 		{
-			{ "epr-22851.ic27", 0x000000, 0x200000 },
-			//{ "epr-22850.ic27", 0x000000, 0x200000 },
-			//{ "epr-22849.ic27", 0x000000, 0x200000 },
-			{ NULL, 0, 0 },
+			{ 2, "epr-22851.ic27", 0x000000, 0x200000 },
+			{ 1, "epr-22850.ic27", 0x000000, 0x200000 },
+			{ 0, "epr-22849.ic27", 0x000000, 0x200000 },
+			{ 0, NULL, 0, 0 },
 		}
 	},
 	{
 		"f355dlx.zip",
 		{
 			// Ferrari F355 Deluxe (Export)
-			//{ "epr-21864.ic27", 0x000000, 0x200000 },
+			{ 2, "epr-21864.ic27", 0x000000, 0x200000 },
 			// Ferrari F355 Deluxe (USA)
-			{ "epr-21863.ic27", 0x000000, 0x200000 },
+			{ 1, "epr-21863.ic27", 0x000000, 0x200000 },
 			// Ferrari F355 Deluxe (Japan)
-			//{ "epr-21862.ic27", 0x000000, 0x200000 },
+			{ 0, "epr-21862.ic27", 0x000000, 0x200000 },
 			// Ferrari F355 Deluxe (Export, prototype)
-			//{ "epr-21864p.ic27", 0x000000, 0x200000 },
+			//{ 2, "epr-21864p.ic27", 0x000000, 0x200000 },
 			// Ferrari F355 Deluxe (Japan, prototype)
-			//{ "epr-21862p.ic27", 0x000000, 0x200000 },
-			{ NULL, 0, 0 },
+			//{ 0, "epr-21862p.ic27", 0x000000, 0x200000 },
+			{ 0, NULL, 0, 0 },
 		}
 	},
 	{
 		"hod2bios.zip",
 		{
-			{ "epr-21331.ic27", 0x000000, 0x200000 },
-			{ NULL, 0, 0 },
+			{ 0, "epr-21331.ic27", 0x000000, 0x200000 },
+			{ 0, NULL, 0, 0 },
 		}
 	},
 	{
 		"naomi.zip",
 		{
-				//ROM_SYSTEM_BIOS( 0, "bios0",   "epr-21576h (Japan)" )
-				{ "epr-21576h.ic27", 0x000000, 0x200000 },
-				//ROM_SYSTEM_BIOS( 1, "bios1",   "epr-21576g (Japan)" )
-//				{ "epr-21576g.ic27", 0x000000, 0x200000 },
-				//ROM_SYSTEM_BIOS( 2, "bios2",   "epr-21576e (Japan)" )
-//				{ "epr-21576e.ic27", 0x000000, 0x200000 },
-				//ROM_SYSTEM_BIOS( 3, "bios3",   "epr-21576d (Japan)" )
-//				{ "epr-21576d.ic27", 0x000000, 0x200000 },
-//				ROM_SYSTEM_BIOS( 4, "bios4",   "epr-21576c (Japan)" ) \
-//				ROM_LOAD16_WORD_SWAP_BIOS( 4,  "epr-21576c.ic27", 0x000000, 0x200000, BAD_DUMP CRC(4599ad13) SHA1(7e730e9452a792d76f210c33a955d385538682c7) ) \
-//				ROM_SYSTEM_BIOS( 5, "bios5",   "epr-21576b (Japan)" ) \
-//				ROM_LOAD16_WORD_SWAP_BIOS( 5,  "epr-21576b.ic27", 0x000000, 0x200000, CRC(755a6e07) SHA1(7e8b8ccfc063144d89668e7224dcd8a36c54f3b3) ) \
-//				ROM_SYSTEM_BIOS( 6, "bios6",   "epr-21576a (Japan)" ) \
-//				ROM_LOAD16_WORD_SWAP_BIOS( 6,  "epr-21576a.ic27", 0x000000, 0x200000, CRC(cedfe439) SHA1(f27798bf3d890863ef0c1d9dcb4e7782249dca27) ) \
-//				ROM_SYSTEM_BIOS( 7, "bios7",   "epr-21576 (Japan)" ) \
-//				ROM_LOAD16_WORD_SWAP_BIOS( 7,  "epr-21576.ic27",  0x000000, 0x200000, CRC(9dad3495) SHA1(5fb66f9a2b68d120f059c72758e65d34f461044a) ) \
-//				ROM_SYSTEM_BIOS( 8, "bios8",   "epr-21578h (Export)" ) \
-//				ROM_LOAD16_WORD_SWAP_BIOS( 8,  "epr-21578h.ic27", 0x000000, 0x200000, CRC(7b452946) SHA1(8e9f153bbada24b37066dc45b64a7bf0d4f26a9b) ) \
-//				ROM_SYSTEM_BIOS( 9, "bios9",   "epr-21578g (Export)" ) \
-//				ROM_LOAD16_WORD_SWAP_BIOS( 9,  "epr-21578g.ic27", 0x000000, 0x200000, CRC(55413214) SHA1(bd2748365a9fc1821c9369aa7155d7c41c4df43e) ) \
-//				ROM_SYSTEM_BIOS( 10, "bios10", "epr-21578f (Export)" ) \
-//				ROM_LOAD16_WORD_SWAP_BIOS( 10, "epr-21578f.ic27", 0x000000, 0x200000, CRC(628a27fd) SHA1(dae7add616b1a2478f00608823e88c3b82a0e78f) ) \
-//				ROM_SYSTEM_BIOS( 11, "bios11", "epr-21578e (Export)" ) \
-//				ROM_LOAD16_WORD_SWAP_BIOS( 11, "epr-21578e.ic27", 0x000000, 0x200000, CRC(087f09a3) SHA1(0418eb2cf9766f0b1b874a4e92528779e22c0a4a) ) \
-//				ROM_SYSTEM_BIOS( 12, "bios12", "epr-21578d (Export)" ) \
-//				ROM_LOAD16_WORD_SWAP_BIOS( 12, "epr-21578d.ic27", 0x000000, 0x200000, CRC(dfd5f42a) SHA1(614a0db4743a5e5a206190d6786ade24325afbfd) ) \
-//				ROM_SYSTEM_BIOS( 13, "bios13", "epr-21578a (Export)" ) \
-//				ROM_LOAD16_WORD_SWAP_BIOS( 13, "epr-21578a.ic27", 0x000000, 0x200000, CRC(6c9aad83) SHA1(555918de76d8dbee2a97d8a95297ef694b3e803f) ) \
-				//ROM_SYSTEM_BIOS( 14, "bios14", "epr-21577h (USA)" )
-//				{ "epr-21577h.ic27", 0x000000, 0x200000 },
-//				ROM_SYSTEM_BIOS( 15, "bios15", "epr-21577g (USA)" ) \
-//				ROM_LOAD16_WORD_SWAP_BIOS( 15, "epr-21577g.ic27", 0x000000, 0x200000, CRC(25f64af7) SHA1(99f9e6cc0642319bd2da492611220540add573e8) ) \
-//				ROM_SYSTEM_BIOS( 16, "bios16", "epr-21577e (USA)" ) \
-//				ROM_LOAD16_WORD_SWAP_BIOS( 16, "epr-21577e.ic27", 0x000000, 0x200000, CRC(cf36e97b) SHA1(b085305982e7572e58b03a9d35f17ae319c3bbc6) ) \
-//				ROM_SYSTEM_BIOS( 17, "bios17", "epr-21577d (USA)" ) \
-//				ROM_LOAD16_WORD_SWAP_BIOS( 17, "epr-21577d.ic27", 0x000000, 0x200000, CRC(60ddcbbe) SHA1(58b15096d269d6df617ca1810b66b47deb184958) ) \
-//				ROM_SYSTEM_BIOS( 18, "bios18", "epr-21577a (USA)" ) \
-//				ROM_LOAD16_WORD_SWAP_BIOS( 18, "epr-21577a.ic27", 0x000000, 0x200000, CRC(969dc491) SHA1(581d1eae328b87b67508a7586ffc60cee256f70f) ) \
-//				ROM_SYSTEM_BIOS( 19, "bios19", "epr-21579d (Korea)" ) \
-//				ROM_LOAD16_WORD_SWAP_BIOS( 19, "epr-21579d.ic27", 0x000000, 0x200000, CRC(33513691) SHA1(b1d8c7c516e1471a788fcf7a02a794ad2f05aeeb) ) \
-//				ROM_SYSTEM_BIOS( 20, "bios20", "epr-21579 (Korea)" ) \
-//				ROM_LOAD16_WORD_SWAP_BIOS( 20, "epr-21579.ic27",  0x000000, 0x200000, CRC(71f9c918) SHA1(d15af8b947f41eea7c203b565cd403e3f37a2017) ) \
-//				ROM_SYSTEM_BIOS( 21, "bios21", "Set4 Dev BIOS" ) \
-//				ROM_LOAD16_WORD_SWAP_BIOS( 21, "boot_rom_64b8.ic606", 0x000000, 0x080000, CRC(7a50fab9) SHA1(ef79f448e0bf735d1264ad4f051d24178822110f) ) \
-//				ROM_SYSTEM_BIOS( 22, "bios22", "Dev BIOS v1.10" ) \
-//				ROM_LOAD16_WORD_SWAP_BIOS( 22, "develop110.ic27", 0x000000, 0x200000, CRC(de7cfdb0) SHA1(da16800edc4d49f70481c124d487f544c2fa8ce7) ) \
-//				ROM_SYSTEM_BIOS( 23, "bios23", "Dev BIOS (Nov 1998)" ) \
-//				ROM_LOAD16_WORD_SWAP_BIOS( 23, "develop.ic27", 0x000000, 0x200000, CRC(309a196a) SHA1(409b50371feb648f10efd6b7ac420bf08d9a3b5a) ) \
-//				ROM_SYSTEM_BIOS( 24, "bios24", "Development ROM Board" ) \
-//				ROM_LOAD16_WORD_SWAP_BIOS( 24, "zukinver0930.ic25", 0x000000, 0x200000, CRC(58e17c23) SHA1(19330f906accf1b859f56bbcedc2edff73747599) ) \
-//				ROM_SYSTEM_BIOS( 25, "bios25", "epr-21576h (multi-region hack)" ) \
-//				ROM_LOAD16_WORD_SWAP_BIOS( 25, "epr-21576h_multi.ic27", 0x000000, 0x200000, CRC(cce01f1f) SHA1(cca17119ad13e3a4ef7cb6902a37b65d6a844aee) ) \
-//				ROM_REGION( 0x4000, "altera_pof", 0) \
-//				ROM_LOAD("315-6188.ic31", 0x0000, 0x2034, CRC(7c9fea46) SHA1(f77c07ae65dfed18c1c4c632c8945be21d02ddaf) )
-			{ NULL, 0, 0 },
+			//ROM_SYSTEM_BIOS( 0, "bios0",   "epr-21576h (Japan)" )
+			{ 0, "epr-21576h.ic27", 0x000000, 0x200000 },
+			//ROM_SYSTEM_BIOS( 1, "bios1",   "epr-21576g (Japan)" )
+			//{ 0, "epr-21576g.ic27", 0x000000, 0x200000 },
+			//ROM_SYSTEM_BIOS( 2, "bios2",   "epr-21576e (Japan)" )
+			//{ 0, "epr-21576e.ic27", 0x000000, 0x200000 },
+			//ROM_SYSTEM_BIOS( 3, "bios3",   "epr-21576d (Japan)" )
+			//{ 0, "epr-21576d.ic27", 0x000000, 0x200000 },
+			//ROM_SYSTEM_BIOS( 4, "bios4",   "epr-21576c (Japan)" )
+			//{ 0, "epr-21576c.ic27", 0x000000, 0x200000 }, // BAD DUMP
+			//ROM_SYSTEM_BIOS( 5, "bios5",   "epr-21576b (Japan)" )
+			//{ 0, "epr-21576b.ic27", 0x000000, 0x200000 },
+			//ROM_SYSTEM_BIOS( 6, "bios6",   "epr-21576a (Japan)" )
+			//{ 0, "epr-21576a.ic27", 0x000000, 0x200000 },
+			//ROM_SYSTEM_BIOS( 7, "bios7",   "epr-21576 (Japan)" )
+			//{ 0, "epr-21576.ic27",  0x000000, 0x200000 },
+			//ROM_SYSTEM_BIOS( 8, "bios8",   "epr-21578h (Export)" )
+			{ 2, "epr-21578h.ic27", 0x000000, 0x200000 },
+			//ROM_SYSTEM_BIOS( 9, "bios9",   "epr-21578g (Export)" )
+			//{ 2, "epr-21578g.ic27", 0x000000, 0x200000 },
+			//ROM_SYSTEM_BIOS( 10, "bios10", "epr-21578f (Export)" )
+			//{ 2, "epr-21578f.ic27", 0x000000, 0x200000 },
+			//ROM_SYSTEM_BIOS( 11, "bios11", "epr-21578e (Export)" )
+			//{ 2, "epr-21578e.ic27", 0x000000, 0x200000 },
+			//ROM_SYSTEM_BIOS( 12, "bios12", "epr-21578d (Export)" )
+			//{ 2, "epr-21578d.ic27", 0x000000, 0x200000 },
+			//ROM_SYSTEM_BIOS( 13, "bios13", "epr-21578a (Export)" )
+			//{ 2, "epr-21578a.ic27", 0x000000, 0x200000 },
+			//ROM_SYSTEM_BIOS( 14, "bios14", "epr-21577h (USA)" )
+			{ 1, "epr-21577h.ic27", 0x000000, 0x200000 },
+			//ROM_SYSTEM_BIOS( 15, "bios15", "epr-21577g (USA)" )
+			//{ 1, "epr-21577g.ic27", 0x000000, 0x200000 },
+			//ROM_SYSTEM_BIOS( 16, "bios16", "epr-21577e (USA)" )
+			//{ 1, "epr-21577e.ic27", 0x000000, 0x200000 },
+			//ROM_SYSTEM_BIOS( 17, "bios17", "epr-21577d (USA)" )
+			//{ 1, "epr-21577d.ic27", 0x000000, 0x200000 },
+			//ROM_SYSTEM_BIOS( 18, "bios18", "epr-21577a (USA)" )
+			//{ 1, "epr-21577a.ic27", 0x000000, 0x200000 },
+			//ROM_SYSTEM_BIOS( 19, "bios19", "epr-21579d (Korea)" )
+			{ 3, "epr-21579d.ic27", 0x000000, 0x200000 },
+			//ROM_SYSTEM_BIOS( 20, "bios20", "epr-21579 (Korea)" )
+			//{ 3, "epr-21579.ic27",  0x000000, 0x200000 },
+			//ROM_SYSTEM_BIOS( 21, "bios21", "Set4 Dev BIOS" )
+			//{ 3, "boot_rom_64b8.ic606", 0x000000, 0x080000 },
+			//ROM_SYSTEM_BIOS( 22, "bios22", "Dev BIOS v1.10" )
+			//{ 3, "develop110.ic27", 0x000000, 0x200000 },
+			//ROM_SYSTEM_BIOS( 23, "bios23", "Dev BIOS (Nov 1998)" )
+			//{ 3, "develop.ic27", 0x000000, 0x200000 },
+			//ROM_SYSTEM_BIOS( 24, "bios24", "Development ROM Board" )
+			//{ 3, "zukinver0930.ic25", 0x000000, 0x200000 },
+			//ROM_SYSTEM_BIOS( 25, "bios25", "epr-21576h (multi-region hack)" )
+			//{ 3, "epr-21576h_multi.ic27", 0x000000, 0x200000 },
+			{ 0, NULL, 0, 0 },
 		}
 	},
 	{
@@ -227,7 +224,7 @@ Games[] =
         "kick4csh.zip",
         0x9000000,
         0x820857c9,
-        "naomi.zip",
+        "naomi.zip",	// Needs Export BIOS
         M1,
         {
             { "epr-24212.ic11",   0x0000000, 0x400000 },
@@ -252,6 +249,7 @@ Games[] =
             //ROM_REGION(0x200, "some_eeprom", 0)
             //ROM_LOAD( "25lc040.ic13s", 0, 0x200, CRC(1576366a) SHA1(3e8bf3dbc8a248a6863242b78d5c6e53a869e951) )
             
+			// TODO Need emulation of 837-14438 board on serial port
             //ROM_REGION(0x220000, "hopper_board", 0)
             //ROM_LOAD( "fpr-24150.ic6",   0x0000000, 0x200000, CRC(3845c34c) SHA1(027b17bac64482ee152773d5fab30fcbc6e2bcb7) ) // SH4 code
             //ROM_LOAD( "6372a.ic3",       0x0200000, 0x020000, CRC(f30839ad) SHA1(ea1a32c4da1ed9745300bcdd7964a7c0964e3221) ) // FPGA config
