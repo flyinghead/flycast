@@ -632,6 +632,7 @@ void Update_naomi()
 
 static u8 aw_maple_devs;
 extern bool coin_chute;
+static bool once = false;
 
 u32 libExtDevice_ReadMem_A0_006(u32 addr,u32 size) {
 	addr &= 0x7ff;
@@ -644,6 +645,12 @@ u32 libExtDevice_ReadMem_A0_006(u32 addr,u32 size) {
 		//	c/d - 3P/4P coin inputs (EX. IO board), active low
 		//
 		//	(ab == 0) -> BIOS skip RAM test
+		if (!once)
+		{
+			// Skip RAM test at startup
+			once = true;
+			return 0;
+		}
 		if (coin_chute)
 		{
 			// FIXME Coin Error if coin_chute is set for too long
@@ -658,8 +665,12 @@ u32 libExtDevice_ReadMem_A0_006(u32 addr,u32 size) {
 		// 2,3: mouse/trackball
 		//printf("NAOMI 600284 read %x\n", aw_maple_devs);
 		return aw_maple_devs;
+	case 0x288:
+		// ??? Dolphin Blue
+		return 0;
+
 	}
-	EMUERROR("Unhandled read @ %x", addr);
+	EMUERROR("Unhandled read @ %x sz %d", addr, size);
 	return 0xFF;
 }
 
@@ -671,10 +682,13 @@ void libExtDevice_WriteMem_A0_006(u32 addr,u32 data,u32 size) {
 	case 0x284:		// Atomiswave maple devices
 		printf("NAOMI 600284 write %x\n", data);
 		aw_maple_devs = data & 0xF0;
-		break;
+		return;
+	case 0x288:
+		// ??? Dolphin Blue
+		return;
 	//case 0x28C:		// Wheel force feedback?
 	default:
 		break;
 	}
-	EMUERROR("Unhandled write @ %x: %x", addr, data);
+	EMUERROR("Unhandled write @ %x (%d): %x", addr, size, data);
 }

@@ -366,7 +366,7 @@ static bool naomi_cart_LoadZip(char *filename)
 				}
 				size_t read = zip_fread(file, buf, game->blobs[romid].length);
 				CurrentCartridge->SetKeyData(buf);
-				printf("Loaded %s: %lx bytes M4 Key\n", game->blobs[romid].filename, read);
+				printf("Loaded %s: %lx bytes cart key\n", game->blobs[romid].filename, read);
 			}
 			else
 				die("Unknown blob type\n");
