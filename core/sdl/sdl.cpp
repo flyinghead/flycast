@@ -86,7 +86,7 @@ void input_sdl_init()
 		ButtonCount = SDL_JoystickNumButtons(JoySDL);
 		Name = SDL_JoystickName(JoySDL);
 
-		printf("SDK: Found '%s' joystick with %d axes and %d buttons\n", Name, AxisCount, ButtonCount);
+		printf("SDL: Found '%s' joystick with %d axes and %d buttons\n", Name, AxisCount, ButtonCount);
 
 		if (Name != NULL && strcmp(Name,"Microsoft X-Box 360 pad")==0)
 		{
@@ -105,7 +105,7 @@ void input_sdl_init()
 	}
 	else
 	{
-		printf("SDK: No Joystick Found\n");
+		printf("SDL: No Joystick Found\n");
 	}
 
 	#ifdef TARGET_PANDORA
