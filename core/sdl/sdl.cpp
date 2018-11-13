@@ -96,9 +96,12 @@ void input_sdl_init()
 		}
 		
 		// Create the first controller with two VMUs
+		// (only when evdev is not available as it's already configured via evdev then)
 		// TODO: make this configurable
+		#ifndef USE_EVDEV
 		printf("SDL: Creating controller in first port with 2 VMUs");
 		mcfg_CreateController(0, MDT_SegaVMU, MDT_SegaVMU);
+		#endif
 	}
 	else
 	{
