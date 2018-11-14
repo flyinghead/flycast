@@ -82,4 +82,29 @@ extern char naomi_game_id[];
 
 extern Cartridge *CurrentCartridge;
 
+struct ButtonDescriptor
+{
+   u32 mask;
+   const char *name;
+};
+
+enum AxisType {
+   Full,
+   Half
+};
+
+struct AxisDescriptor
+{
+   const char *name;
+   AxisType type;
+};
+
+struct InputDescriptors
+{
+   ButtonDescriptor buttons[16];
+   AxisDescriptor axes[8];
+};
+
+extern InputDescriptors *naomi_game_inputs;
+
 #endif //NAOMI_CART_H

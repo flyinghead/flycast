@@ -1340,29 +1340,6 @@ extern u8 rt[4], lt[4];
 char EEPROM[0x100];
 bool EEPROM_loaded = false;
 
-enum NAOMI_KEYS
-{
-	NAOMI_SERVICE_KEY_1 = 1 << 0,
-	NAOMI_TEST_KEY_1 = 1 << 1,
-	NAOMI_SERVICE_KEY_2 = 1 << 2,
-	NAOMI_TEST_KEY_2 = 1 << 3,
-
-	NAOMI_START_KEY = 1 << 4,
-
-	NAOMI_UP_KEY = 1 << 5,
-	NAOMI_DOWN_KEY = 1 << 6,
-	NAOMI_LEFT_KEY = 1 << 7,
-	NAOMI_RIGHT_KEY = 1 << 8,
-
-	NAOMI_BTN0_KEY = 1 << 9,
-	NAOMI_BTN1_KEY = 1 << 10,
-	NAOMI_BTN2_KEY = 1 << 11,
-	NAOMI_BTN3_KEY = 1 << 12,
-	NAOMI_BTN4_KEY = 1 << 13,
-	NAOMI_BTN5_KEY = 1 << 14,
-	NAOMI_COIN_KEY = 1 << 15,
-};
-
 /*
  * Sega JVS I/O board
 */

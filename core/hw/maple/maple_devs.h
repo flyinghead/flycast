@@ -18,6 +18,54 @@ enum MapleDeviceType
 	MDT_Count
 };
 
+enum NAOMI_KEYS
+{
+	NAOMI_START_KEY = 1 << 15,
+	NAOMI_SERVICE_KEY = 1 << 14,
+
+	NAOMI_UP_KEY = 1 << 13,
+	NAOMI_DOWN_KEY = 1 << 12,
+	NAOMI_LEFT_KEY = 1 << 11,
+	NAOMI_RIGHT_KEY = 1 << 10,
+
+	NAOMI_BTN0_KEY = 1 << 9,
+	NAOMI_BTN1_KEY = 1 << 8,
+	NAOMI_BTN2_KEY = 1 << 7,
+	NAOMI_BTN3_KEY = 1 << 6,
+	NAOMI_BTN4_KEY = 1 << 5,
+	NAOMI_BTN5_KEY = 1 << 4,
+	NAOMI_BTN6_KEY = 1 << 3,
+	NAOMI_BTN7_KEY = 1 << 2,
+
+	NAOMI_TEST_KEY = 1 << 1,
+
+	// Not an actual button
+	NAOMI_COIN_KEY = 1 << 0,
+};
+
+enum AWAVE_KEYS
+{
+	AWAVE_START_KEY = 1 << 3,
+
+	AWAVE_BTN0_KEY  = 1 << 2,
+	AWAVE_BTN1_KEY  = 1 << 1,
+	AWAVE_BTN2_KEY  = 1 << 0,
+	AWAVE_BTN3_KEY  = 1 << 10,
+	AWAVE_BTN4_KEY  = 1 << 9,
+
+	AWAVE_UP_KEY    = 1 << 4,
+	AWAVE_DOWN_KEY  = 1 << 5,
+	AWAVE_LEFT_KEY  = 1 << 6,
+	AWAVE_RIGHT_KEY = 1 << 7,
+
+	AWAVE_SERVICE_KEY = 1 << 13,
+	AWAVE_TEST_KEY 	  = 1 << 14,
+
+	// Not an actual button
+	AWAVE_COIN_KEY    = 1 << 15,
+	AWAVE_TRIGGER_KEY    = 1 << 12,
+};
+
 struct IMapleConfigMap;
 
 struct maple_device
