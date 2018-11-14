@@ -1023,7 +1023,24 @@ bool M2Cartridge::Read(u32 offset, u32 size, void* dst)
 		EMUERROR("Invalid read @ %08x\n", offset);
 		return false;
 	}
+	else if (!(RomPioOffset & 0x20000000))
+	{
+		// 4MB mode
+		offset = (offset & 0x103fffff) | ((offset & 0x07c00000) << 1);
+	}
 	return NaomiCartridge::Read(offset, size, dst);
+}
+
+void* M2Cartridge::GetDmaPtr(u32& size)
+{
+	if (RomPioOffset & 0x20000000)
+		return NaomiCartridge::GetDmaPtr(size);
+
+	// 4MB mode
+	u32 offset4mb = (DmaOffset & 0x103fffff) | ((DmaOffset & 0x07c00000) << 1);
+	size = min(min(size, 0x400000 - (offset4mb & 0x3FFFFF)), RomSize - offset4mb);
+
+	return GetPtr(offset4mb, size);
 }
 
 bool M2Cartridge::Write(u32 offset, u32 size, u32 data)
