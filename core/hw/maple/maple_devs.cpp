@@ -1364,13 +1364,125 @@ public:
 	bool maple_serialize(void **data, unsigned int *total_size);
 	bool maple_unserialize(void **data, unsigned int *total_size);
 
-	bool rotary_encoders = false;
 	bool lightgun_as_analog = false;
+
+protected:
+	virtual const char *get_id() = 0;
+	u32 player_count = 0;
+	u32 digital_in_count = 0;
+	u32 coin_input_count = 0;
+	u32 analog_count = 0;
+	u32 encoder_count = 0;
+	u32 light_gun_count = 0;
+	u32 output_count = 0;
 
 private:
 	u8 node_id = 0;
 	maple_naomi_jamma *parent;
 	u8 first_player;
+};
+
+// Most common JVS board
+class jvs_837_13551 : public jvs_io_board
+{
+public:
+	jvs_837_13551(u8 node_id, maple_naomi_jamma *parent, int first_player = 0)
+		: jvs_io_board(node_id, parent, first_player)
+	{
+		player_count = 2;
+		digital_in_count = 13;
+		coin_input_count = 2;
+		analog_count = 8;
+		output_count = 6;
+	}
+protected:
+	virtual const char *get_id() override { return "SEGA ENTERPRISES,LTD.;I/O BD JVS;837-13551 ;Ver1.00;98/10"; }
+
+};
+
+// Same in 4-player mode
+class jvs_837_13551_4P : public jvs_837_13551
+{
+public:
+	jvs_837_13551_4P(u8 node_id, maple_naomi_jamma *parent, int first_player = 0)
+		: jvs_837_13551(node_id, parent, first_player)
+	{
+		player_count = 4;
+		digital_in_count = 12;
+		coin_input_count = 4;
+		analog_count = 0;
+	}
+};
+
+// Rotary encoders 2nd board
+// Virtua Golf, Outtrigger, Shootout Pool
+class jvs_837_13938 : public jvs_io_board
+{
+public:
+	jvs_837_13938(u8 node_id, maple_naomi_jamma *parent, int first_player = 0)
+		: jvs_io_board(node_id, parent, first_player)
+	{
+		player_count = 1;
+		digital_in_count = 9;
+		encoder_count = 4;
+		output_count = 8;
+	}
+protected:
+	virtual const char *get_id() override { return "SEGA ENTERPRISES,LTD.;837-13938 ENCORDER BD  ;Ver0.01;99/08"; }
+
+};
+
+// Sega Marine Fishing
+class jvs_837_13844 : public jvs_io_board
+{
+public:
+	jvs_837_13844(u8 node_id, maple_naomi_jamma *parent, int first_player = 0)
+		: jvs_io_board(node_id, parent, first_player)
+	{
+		player_count = 2;
+		coin_input_count = 2;
+		digital_in_count = 12;
+		analog_count = 8;
+		output_count = 16;
+	}
+protected:
+	virtual const char *get_id() override { return "SEGA ENTERPRISES,LTD.;837-13844-01 I/O CNTL BD2 ;Ver1.00;99/07"; }
+
+};
+
+// Ninja assault
+class jvs_namco_jyu : public jvs_io_board
+{
+public:
+	jvs_namco_jyu(u8 node_id, maple_naomi_jamma *parent, int first_player = 0)
+		: jvs_io_board(node_id, parent, first_player)
+	{
+		player_count = 2;
+		coin_input_count = 2;
+		digital_in_count = 12;
+		output_count = 16;
+		light_gun_count = 2;
+	}
+protected:
+	virtual const char *get_id() override { return "namco ltd.;JYU-PCB;Ver1.00;JPN,2Coins 2Guns"; }
+};
+
+// Mazan
+class jvs_namco_fcb : public jvs_io_board
+{
+public:
+	jvs_namco_fcb(u8 node_id, maple_naomi_jamma *parent, int first_player = 0)
+		: jvs_io_board(node_id, parent, first_player)
+	{
+		player_count = 1;
+		coin_input_count = 1;
+		digital_in_count = 12;
+		output_count = 16;
+		light_gun_count = 1;
+		analog_count = 4;
+	}
+protected:
+	virtual const char *get_id() override { return "namco ltd.;FCB;Ver1.0;JPN,Touch Panel & Multipurpose"; }
 };
 
 struct maple_naomi_jamma : maple_sega_controller
@@ -1386,17 +1498,33 @@ struct maple_naomi_jamma : maple_sega_controller
 
 	maple_naomi_jamma()
 	{
-		io_boards.push_back(new jvs_io_board(1, this));
-		if (settings.input.JammaSetup == 2)
+		switch (settings.input.JammaSetup)
 		{
-			io_boards.back()->rotary_encoders = true;
-			io_boards.push_back(new jvs_io_board(2, this));
-		}
-		else if (settings.input.JammaSetup == 4)
-		{
-			// Ring Out 4x4
-			io_boards.push_back(new jvs_io_board(2, this, 2));
-		}
+		case 0:
+			io_boards.push_back(new jvs_837_13551(1, this));
+			break;
+		case 1:
+			io_boards.push_back(new jvs_837_13551_4P(1, this));
+			break;
+		case 2:
+			io_boards.push_back(new jvs_837_13938(1, this));
+			io_boards.push_back(new jvs_837_13551(2, this));
+			break;
+		case 3:
+			io_boards.push_back(new jvs_837_13844(1, this));
+			break;
+		case 4:
+			io_boards.push_back(new jvs_837_13551(1, this));
+			io_boards.push_back(new jvs_837_13551(2, this, 2));
+			break;
+		case 5: // Ninja Assault
+			io_boards.push_back(new jvs_namco_jyu(1, this));
+			break;
+		case 6:	// Mazan
+			io_boards.push_back(new jvs_namco_fcb(1, this));
+			io_boards.push_back(new jvs_namco_fcb(2, this));
+			break;
+	}
 	}
 
 	virtual MapleDeviceType get_device_type()
@@ -1930,10 +2058,7 @@ struct maple_naomi_jamma : maple_sega_controller
 		size_t board_count;
 		REICAST_US(board_count);
 		for (int i = 0; i < board_count; i++)
-		{
-			io_boards.push_back(new jvs_io_board(i + 1, this));
-			io_boards.back()->maple_unserialize(data, total_size);
-		}
+			io_boards[i]->maple_unserialize(data, total_size);
 
 		return true ;
 	}
@@ -1970,11 +2095,7 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 		{
 			JVS_STATUS1();	// status
 			JVS_STATUS1();	// report
-			const static char ID_837_13551[] = "SEGA ENTERPRISES,LTD.;I/O BD JVS;837-13551 ;Ver1.00;98/10";
-			const static char ID_837_13938[] = "SEGA ENTERPRISES,LTD.;837-13938 ENCORDER BD  ;Ver0.01;99/08";		// Virtua Golf, Outtrigger, Shootout Pool
-			const static char ID_837_13844[] = "SEGA ENTERPRISES,LTD.;837-13844-01 I/O CNTL BD2 ;Ver1.00;99/07";	// Sega Marine Fishing
-
-			for (const char *p = rotary_encoders ? ID_837_13938 : ID_837_13551; *p != 0; )
+			for (const char *p = get_id(); *p != 0; )
 				JVS_OUT(*p++);
 			JVS_OUT(0);
 		}
@@ -2003,62 +2124,44 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 		JVS_STATUS1();
 
 		JVS_OUT(1);		// Digital inputs
-		if (settings.input.JammaSetup == 1 && !rotary_encoders)	// 4 players
-		{
-			JVS_OUT(4);		//   4 players
-			JVS_OUT(12);	//   12 bits
-		}
-		else if (settings.input.JammaSetup == 3)					// Sega Marine Fishing
-		{
-			JVS_OUT(2);		//   2 players
-			JVS_OUT(12);		//   12 bits
-		}
-		else if (rotary_encoders)
-		{
-			JVS_OUT(1);		//   1 player
-			JVS_OUT(9);		//   9 bits
-		}
-		else														// Default
-		{
-			JVS_OUT(2);		//   2 players
-			JVS_OUT(13);		//   13 bits
-		}
+		JVS_OUT(player_count);
+		JVS_OUT(digital_in_count);
 		JVS_OUT(0);
 
-		if (!rotary_encoders)
+		if (coin_input_count > 0)
 		{
 			JVS_OUT(2);		// Coin inputs
-			JVS_OUT(settings.input.JammaSetup == 1 ? 4 : 2);	//   2 or 4 inputs
+			JVS_OUT(coin_input_count);
 			JVS_OUT(0);
 			JVS_OUT(0);
 		}
 
-		if (!rotary_encoders && settings.input.JammaSetup != 1)
+		if (analog_count > 0)
 		{
 			JVS_OUT(3);		// Analog inputs
-			JVS_OUT(8);		//   8 channels
-			JVS_OUT(0x10);	//   16 bits per channel, 0: unknown
+			JVS_OUT(analog_count);	//   channel count
+			JVS_OUT(0x10);			//   16 bits per channel, 0: unknown
 			JVS_OUT(0);
 		}
 
-		if (rotary_encoders)
+		if (encoder_count > 0)
 		{
 			JVS_OUT(4);		// Rotary encoders
-			JVS_OUT(4);		//   4 channels
+			JVS_OUT(encoder_count);
 			JVS_OUT(0);
 			JVS_OUT(0);
 		}
 
-//		JVS_OUT(6);		// Light gun
-//		JVS_OUT(12);		//   X bits
-//		JVS_OUT(12);		//   Y bits
-//		JVS_OUT(1);			//   1 channel
+		if (light_gun_count > 0)
+		{
+			JVS_OUT(6);		// Light gun
+			JVS_OUT(16);		//   X bits
+			JVS_OUT(16);		//   Y bits
+			JVS_OUT(light_gun_count);
+		}
 
 		JVS_OUT(0x12);	// General output driver
-		if (settings.input.JammaSetup == 3)				// Sega Marine Fishing
-			JVS_OUT(16);	//    16 outputs
-		else
-			JVS_OUT(rotary_encoders ? 8 : 6);	//    6 outputs
+		JVS_OUT(output_count);
 		JVS_OUT(0);
 		JVS_OUT(0);
 
@@ -2244,8 +2347,14 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 					{
 						JVS_STATUS1();	// report byte
 						// Channel number is jvs_request[channel][cmdi + 1]
-						u16 x = mo_x_abs * 0xFFFF / 639;
-						u16 y = (479 - mo_y_abs) * 0xFFFF / 479;
+						// specs:
+						//u16 x = mo_x_abs * 0xFFFF / 639;
+						//u16 y = (479 - mo_y_abs) * 0xFFFF / 479;
+						// Ninja Assault:
+						u32 xr = 0x19d - 0x37;
+						u32 yr = 0x1fe - 0x40;
+						s16 x = mo_x_abs * xr / 639 + 0x37;
+						s16 y = mo_y_abs * yr / 479 + 0x40;
 						LOGJVS("lightgun %4x,%4x ", x, y);
 						JVS_OUT(x >> 8);		// X, MSB
 						JVS_OUT(x);				// X, LSB
@@ -2292,7 +2401,6 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 bool jvs_io_board::maple_serialize(void **data, unsigned int *total_size)
 {
 	REICAST_S(node_id);
-	REICAST_S(rotary_encoders);
 	REICAST_S(lightgun_as_analog);
 
 	return true ;
@@ -2301,7 +2409,6 @@ bool jvs_io_board::maple_serialize(void **data, unsigned int *total_size)
 bool jvs_io_board::maple_unserialize(void **data, unsigned int *total_size)
 {
 	REICAST_US(node_id);
-	REICAST_US(rotary_encoders);
 	REICAST_US(lightgun_as_analog);
 
 	return true ;

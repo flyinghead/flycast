@@ -840,7 +840,8 @@ struct settings_t
 		bool DCKeyboard;
 		bool DCMouse;
 		u32 MouseSensitivity;
-		u32 JammaSetup;			// 0: standard, 1: 4-players, 2: rotary encoders, 3: Sega Marine Fishing, 4: dual I/O boards (4P)
+		u32 JammaSetup;			// 0: standard, 1: 4-players, 2: rotary encoders, 3: Sega Marine Fishing,
+								// 4: dual I/O boards (4P), 5: Namco JYU board (Ninja Assault)
 	} input;
 };
 
