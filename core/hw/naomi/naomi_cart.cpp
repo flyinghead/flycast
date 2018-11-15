@@ -1083,6 +1083,18 @@ u16 M2Cartridge::ReadCipheredData(u32 offset)
 
 }
 
+std::string M2Cartridge::GetGameId()
+{
+	std::string game_id = NaomiCartridge::GetGameId();
+	if ((game_id.size() < 2 || (game_id[0] == -1 && game_id[1] == -1)) && RomSize >= 0x800050)
+	{
+		game_id = std::string((char *)RomPtr + 0x800030, 0x20);
+		while (!game_id.empty() && game_id.back() == ' ')
+			game_id.pop_back();
+	}
+	return game_id;
+}
+
 void M2Cartridge::Serialize(void** data, unsigned int* total_size) {
 	REICAST_S(naomi_cart_ram);
 	NaomiCartridge::Serialize(data, total_size);

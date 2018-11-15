@@ -72,6 +72,7 @@ public:
 	virtual void Serialize(void** data, unsigned int* total_size) override;
 	virtual void Unserialize(void** data, unsigned int* total_size) override;
 	virtual void* GetDmaPtr(u32& size) override;
+	virtual std::string GetGameId();
 
 private:
 	u8 naomi_cart_ram[64 * 1024];
