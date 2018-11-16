@@ -1086,7 +1086,7 @@ u16 M2Cartridge::ReadCipheredData(u32 offset)
 std::string M2Cartridge::GetGameId()
 {
 	std::string game_id = NaomiCartridge::GetGameId();
-	if ((game_id.size() < 2 || (game_id[0] == -1 && game_id[1] == -1)) && RomSize >= 0x800050)
+	if ((game_id.size() < 2 || ((u8)game_id[0] == 0xff && (u8)game_id[1] == 0xff)) && RomSize >= 0x800050)
 	{
 		game_id = std::string((char *)RomPtr + 0x800030, 0x20);
 		while (!game_id.empty() && game_id.back() == ' ')
