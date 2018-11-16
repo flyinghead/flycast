@@ -358,6 +358,7 @@ int dc_init()
 	int rv = 0;
 	if (reios_init_value != 0)
 		return reios_init_value;
+	LoadSpecialSettings();
 #else
 	LoadCustom();
 #endif

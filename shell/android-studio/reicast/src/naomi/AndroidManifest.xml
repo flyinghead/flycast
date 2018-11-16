@@ -40,6 +40,16 @@
                     android:mimeType="*/*"
                     android:pathPattern=".*\\.dat"
                     android:scheme="file" />
+                <data
+                    android:host="*"
+                    android:mimeType="*/*"
+                    android:pathPattern=".*\\.ZIP"
+                    android:scheme="file" />
+                <data
+                    android:host="*"
+                    android:mimeType="*/*"
+                    android:pathPattern=".*\\.zip"
+                    android:scheme="file" />
             </intent-filter>
         </activity>
     </application>
