@@ -39,7 +39,8 @@ enum CartridgeType {
 	M1,
 	M2,
 	M4,
-	AW
+	AW,
+	GD
 };
 
 struct BIOS_t
@@ -184,6 +185,7 @@ struct Game
 		BlobType blob_type;
 		u32 src_offset;		// For copy
 	} blobs[MAX_GAME_FILES];
+	const char *gdrom_name;
 	InputDescriptors *inputs;
 }
 Games[] =
@@ -294,6 +296,7 @@ Games[] =
             
             { NULL, 0, 0 },
         },
+        NULL,
         &mvsc2_inputs
     },
     // Quiz Ah Megamisama (JPN, USA, EXP, KOR, AUS)
@@ -451,6 +454,7 @@ Games[] =
             { "copy",			 0x0400000, 0xc00000, Copy, 0x1000000 }, // changed
             { NULL, 0, 0 },
         },
+        NULL,
         &vtenis2c_inputs
     },
     // Naomi M2/M3 Roms
@@ -485,6 +489,7 @@ Games[] =
             { "mpr-22183.ic20s", 0xa000000, 0x800000 },
             { NULL, 0, 0 },
         },
+        NULL,
         &_18wheelr_inputs
     },
     // 18 Wheeler (deluxe)
@@ -533,6 +538,7 @@ Games[] =
             
             { NULL, 0, 0 },
         },
+        NULL,
         &_18wheelr_inputs
     },
     // 18 Wheeler (deluxe) (Rev T)
@@ -581,6 +587,7 @@ Games[] =
             
             { NULL, 0, 0 },
         },
+        NULL,
         &_18wheelr_inputs
     },
     // 18 Wheeler (standard)
@@ -626,6 +633,7 @@ Games[] =
             
             { NULL, 0, 0 },
         },
+        NULL,
         &_18wheelr_inputs
     },
     // 18 Wheeler (upright)
@@ -670,6 +678,7 @@ Games[] =
             
             { NULL, 0, 0 },
         },
+        NULL,
         &_18wheelr_inputs
     },
     // Airline Pilots (Rev B) 
@@ -739,6 +748,7 @@ Games[] =
             { "mpr-23585.ic5",   0x4800000, 0x1000000 },
             { NULL, 0, 0 },
         },
+        NULL,
         &alienfnt_inputs
     },
     // Alien Front (Rev A)
@@ -757,6 +767,7 @@ Games[] =
             { "mpr-23585.ic5",   0x4800000, 0x1000000 },
             { NULL, 0, 0 },
         },
+        NULL,
         &alienfnt_inputs
     },
     // Capcom Vs. SNK Millennium Fight 2000 (JPN, USA, EXP, KOR, AUS) (Rev C)
@@ -777,6 +788,7 @@ Games[] =
             { "mpr-23510.ic7",   0x6800000, 0x1000000 },
             { NULL, 0, 0 },
         },
+        NULL,
         &capsnk_inputs
     },
     // Capcom Vs. SNK Millennium Fight 2000 (Rev A)
@@ -797,6 +809,7 @@ Games[] =
             { "mpr-23510.ic7",   0x6800000, 0x1000000 },
             { NULL, 0, 0 },
         },
+        NULL,
         &capsnk_inputs
     },
     // Capcom Vs. SNK Millennium Fight 2000
@@ -817,6 +830,7 @@ Games[] =
             { "mpr-23510.ic7",  0x6800000, 0x1000000 },
             { NULL, 0, 0 },
         },
+        NULL,
         &capsnk_inputs
     },
     // Crackin' DJ
@@ -901,6 +915,7 @@ Games[] =
             { "mpr-21683.ic15s", 0x7800000, 0x800000 },
             { NULL, 0, 0 },
         },
+        NULL,
         &crzytaxi_inputs
     },
     // Cosmic Smash (Rev A)
@@ -966,6 +981,7 @@ Games[] =
             { "mpr-23209.ic12s", 0x6000000, 0x0800000 },
             { NULL, 0, 0 },
         },
+        NULL,
         &cspike_inputs
     },
     // Death Crimson OX (JPN, USA, EXP, KOR, AUS)
@@ -989,6 +1005,7 @@ Games[] =
             { "mpr-23523.ic10",  0x5000000, 0x0800000 },
             { NULL, 0, 0 },
         },
+        NULL,
         &trigger_inputs
     },
     // Death Crimson OX
@@ -1012,6 +1029,7 @@ Games[] =
             { "mpr-23523.ic10", 0x5000000, 0x0800000 },
             { NULL, 0, 0 },
         },
+        NULL,
         &trigger_inputs
     },
     // Derby Owners Club 2000 (Rev A)
@@ -1524,8 +1542,9 @@ Games[] =
 			{ "bhf1ma14.6m",  0xe000000, 0x1000000 },
 			{ "bhf1ma15.6l",  0xf000000, 0x1000000 },
 			{ NULL, 0, 0 },
-	},
-	&gunsur2_inputs
+		},
+        NULL,
+		&gunsur2_inputs
     },
 	// Gun Survivor 2 Biohazard Code: Veronica (Japan, BHF1 Ver.E)
 	{
@@ -1551,7 +1570,8 @@ Games[] =
 			{ "bhf1ma14.6m",  0xe000000, 0x1000000 },
 			{ "bhf1ma15.6l",  0xf000000, 0x1000000 },
 			{ NULL, 0, 0 },
-	},
+		},
+        NULL,
         &gunsur2_inputs
     },
 	// Giga Wing 2
@@ -1932,7 +1952,8 @@ Games[] =
 			//ROM_REGION(0x84, "some_eeprom", 0)
 			//ROM_LOAD("sflash.ic37", 0x000000, 0x000084, CRC(37a66f3c) SHA1(df6cd2cdc2813caa5da4dc9f171998485bcbdc44))
 			{ NULL, 0, 0 },
-	},
+		},
+        NULL,
         &mvsc2_inputs
     },
     // Ninja Assault (NJA3 Ver. A)
@@ -3607,7 +3628,38 @@ Games[] =
             { NULL, 0, 0 },
         }
     },
+
+	// Naomi GD-roms
+
+	// Confidential Mission
+	{
+        "confmiss.zip",
+        0x4000,
+        0,
+        "naomi.zip",
+        GD,
+        {
+            { "317-0298-com.pic",  0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+		"gds-0001",
+    },
+	// Slashout
+	{
+        "slashout.zip",
+        0x4000,
+        0,
+        "naomi.zip",
+        GD,
+        {
+            { "317-0302-com.pic",  0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+		"gds-0004",
+    },
+
     // AtomisWave Roms
+
     // Animal Basket (24 Jan 2005)
 	{
         "anmlbskt.zip",
@@ -3814,7 +3866,8 @@ Games[] =
             { "ax1706m01.ic16", 0x6000000, 0x1000000 },
             { "ax1701f01.bin", 0, 4, Key },
             { NULL, 0, 0 },
-    },
+        },
+        NULL,
         &ftspeed_inputs,
     },
     // Guilty Gear Isuka
@@ -3954,6 +4007,7 @@ Games[] =
             { "ax0501f01.bin", 0, 4, Key },
             { NULL, 0, 0 },
         },
+        NULL,
         &maxspeed_inputs
     },
     // Metal Slug 6

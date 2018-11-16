@@ -10,6 +10,7 @@
 #include "m1cartridge.h"
 #include "m4cartridge.h"
 #include "awcartridge.h"
+#include "gdcartridge.h"
 
 Cartridge *CurrentCartridge;
 bool bios_loaded = false;
@@ -331,6 +332,13 @@ static bool naomi_cart_LoadZip(char *filename)
 		break;
 	case AW:
 		CurrentCartridge = new AWCartridge(game->size);
+		break;
+	case GD:
+		{
+			GDCartridge *gdcart = new GDCartridge(game->size);
+			gdcart->SetGDRomName(game->gdrom_name);
+			CurrentCartridge = gdcart;
+		}
 		break;
 	default:
 		die("Unsupported cartridge type\n");
