@@ -1979,7 +1979,9 @@ Games[] =
 			//ROM_REGION( 0x20000, "jyu_io", 0 )  // H8/3334-based I/O board ROM, eventually should be separated out
 			//ROM_LOAD( "jyu1_prg0a.ic3", 0x000000, 0x020000, CRC(aec4dbc1) SHA1(bddd4f345baf7f594998a39c09da18b3834f0ac2) )
 			{ NULL, 0, 0 },
-		}
+		},
+		NULL,
+		&ninjaslt_inputs
 	},
     // Ninja Assault (Asia, NJA4 Ver.A)
     {
@@ -2005,7 +2007,9 @@ Games[] =
             //ROM_REGION( 0x20000, "jyu_io", 0 )  // H8/3334-based I/O board ROM, eventually should be separated out
             //ROM_LOAD( "jyu1_prg0a.ic3", 0x000000, 0x020000, CRC(aec4dbc1) SHA1(bddd4f345baf7f594998a39c09da18b3834f0ac2) )
             { NULL, 0, 0 },
-        }
+        },
+		NULL,
+		&ninjaslt_inputs
     },
     // Ninja Assault (Japan, NJA1 Ver.A)
     {
@@ -2032,7 +2036,9 @@ Games[] =
             //ROM_LOAD( "jyu1_prg0a.ic3", 0x000000, 0x020000, CRC(aec4dbc1) SHA1(bddd4f345baf7f594998a39c09da18b3834f0ac2) )
             
             { NULL, 0, 0 },
-        }
+        },
+		NULL,
+		&ninjaslt_inputs
     },
     // Ninja Assault (US, NJA3 Ver.A)
     {
@@ -2059,7 +2065,9 @@ Games[] =
             //ROM_LOAD( "jyu1_prg0a.ic3", 0x000000, 0x020000, CRC(aec4dbc1) SHA1(bddd4f345baf7f594998a39c09da18b3834f0ac2) )
             
             { NULL, 0, 0 },
-        }
+        },
+		NULL,
+		&ninjaslt_inputs
     },
     // Oinori-daimyoujin Matsuri
     {
@@ -3629,34 +3637,817 @@ Games[] =
         }
     },
 
-	// Naomi GD-roms
+	// Naomi GD Roms
 
-	// Confidential Mission
+	// Azumanga Daioh Puzzle Bobble (GDL-0018)
 	{
-        "confmiss.zip",
-        0x4000,
-        0,
-        "naomi.zip",
-        GD,
-        {
-            { "317-0298-com.pic",  0, 0x4000 },
-            { NULL, 0, 0 },
-        },
+		"azumanga.zip",
+		0x4000,
+		0,
+		"naomi.zip",
+		GD,
+		{
+			{ "317-5091-jpn.pic", 0, 0x4000 },
+			{ NULL, 0, 0 },
+		},
+		"gdl-0018",
+	},
+	// Border Down (Rev A) (GDL-0023A)
+	{
+		"bdrdown.zip",
+		0x4000,
+		0,
+		"naomi.zip",
+		GD,
+		{
+			{ "317-5097-jpn.pic", 0, 0x4000 },
+			{ NULL, 0, 0 },
+		},
+		"gdl-0023a",
+	},
+	// Chaos Field (Japan) (GDL-0025)
+	{
+		"cfield.zip",
+		0x4000,
+		0,
+		"naomi.zip",
+		GD,
+		{
+			{ "317-5102-com.pic", 0, 0x4000 },
+			{ NULL, 0, 0 },
+		},
+		"gdl-0025",
+	},
+	// Musapey's Choco Marker (Rev A) (GDL-0014A)
+	{
+		"chocomk.zip",
+		0x4000,
+		0,
+		"naomi.zip",
+		GD,
+		{
+			{ "317-5085-jpn.pic", 0, 0x4000 },
+			{ NULL, 0, 0 },
+		},
+		"gdl-0014a",
+	},
+	// Cleopatra Fortune Plus (GDL-0012)
+	{
+		"cleoftp.zip",
+		0x4000,
+		0,
+		"naomi.zip",
+		GD,
+		{
+			{ "317-5083-com.pic", 0, 0x4000 },
+			{ NULL, 0, 0 },
+		},
+		"gdl-0012",
+	},
+	// Confidential Mission (GDS-0001)
+	{
+		"confmiss.zip",
+		0x4000,
+		0,
+		"naomi.zip",
+		GD,
+		{
+			{ "317-0298-com.pic",  0, 0x4000 },
+			{ NULL, 0, 0 },
+		},
 		"gds-0001",
-    },
-	// Slashout
+	},
+	// Capcom Vs. SNK Millennium Fight 2000 Pro (Japan) (GDL-0004)
 	{
-        "slashout.zip",
-        0x4000,
-        0,
-        "naomi.zip",
-        GD,
-        {
-            { "317-0302-com.pic",  0, 0x4000 },
-            { NULL, 0, 0 },
-        },
+		"cvsgd.zip",
+		0x4000,
+		0,
+		"naomi.zip",
+		GD,
+		{
+			{ "317-5076-jpn.pic", 0, 0x4000 },
+			{ NULL, 0, 0 },
+		},
+		"gdl-0004",
+	},
+	// Capcom Vs. SNK 2 Mark Of The Millennium 2001 (GDL-0008)
+	// ver 010804
+	// with Japan BIOS will be shown 010705, likely forgot / was not cared to update it
+	{
+		"cvs2.zip",
+		0x4000,
+		0,
+		"naomi.zip",
+		GD,
+		{
+			{ "317-5078-com.pic", 0, 0x4000 },
+			{ NULL, 0, 0 },
+		},
+		"gdl-0008",
+	},
+	// Capcom Vs. SNK 2 Millionaire Fighting 2001 (Rev A) (GDL-0007A)
+	// ver 010705
+	{
+		"cvs2mf.zip",
+		0x4000,
+		0,
+		"naomi.zip",
+		GD,
+		{
+			{ "317-5078-com.pic", 0, 0x4000 },
+			{ NULL, 0, 0 },
+		},
+		"gdl-0007a",
+	},
+	// Virtua Golf / Dynamic Golf (Rev A) (GDS-0009A)
+	{
+		"dygolf.zip",
+		0x4000,
+		0,
+		"naomi.zip",
+		GD,
+		{
+			{ "317-0308-com.pic", 0, 0x4000 },
+			{ NULL, 0, 0 },
+		},
+		"gds-0009a",
+	},
+	// Guilty Gear XX (GDL-0011)
+	{
+		"ggxx.zip",
+		0x4000,
+		0,
+		"naomi.zip",
+		GD,
+		{
+			{ "317-5082-com.pic", 0, 0x4000 },
+			{ NULL, 0, 0 },
+		},
+		"gdl-0011",
+	},
+	// Guilty Gear XX Accent Core (Japan) (GDL-0041)
+	{
+		"ggxxac.zip",
+		0x4000,
+		0,
+		"naomi.zip",
+		GD,
+		{
+			{ "317-5126-jpn.pic", 0, 0x4000 },
+			{ NULL, 0, 0 },
+		},
+		"gdl-0041",
+	},
+	// Guilty Gear XX #Reload (Japan, Rev A) (GDL-0019A)
+	{
+		"ggxxrl.zip",
+		0x4000,
+		0,
+		"naomi.zip",
+		GD,
+		{
+			{ "317-5092-jpn.pic", 0, 0x4000 },
+			{ NULL, 0, 0 },
+		},
+		"gdl-0019a",
+	},
+	// Guilty Gear XX #Reload (Japan) (GDL-0019)
+	{
+		"ggxxrlo.zip",
+		0x4000,
+		0,
+		"naomi.zip",
+		GD,
+		{
+			{ "317-5092-jpn.pic" , 0, 0x4000 },
+			{ NULL, 0, 0 },
+		},
+		"gdl-0019",
+	},
+	// Guilty Gear XX Slash (Japan, Rev A) (GDL-0033A)
+	{
+		"ggxxsla.zip",
+		0x4000,
+		0,
+		"naomi.zip",
+		GD,
+		{
+			{ "317-5111-jpn.pic", 0, 0x4000 },
+			{ NULL, 0, 0 },
+		},
+		"gdl-0033a",
+	},
+	// Mobile Suit Gundam: Federation Vs. Zeon (GDL-0001)
+	{
+		"gundmgd.zip",
+		0x4000,
+		0,
+		"naomi.zip",
+		GD,
+		{
+			{ "317-5069-com.pic", 0, 0x4000 },
+			{ NULL, 0, 0 },
+		},
+		"gdl-0001",
+	},
+	// Mobile Suit Gundam: Federation Vs. Zeon DX (USA, Japan) (GDL-0006)
+	{
+		"gundmxgd.zip",
+		0x4000,
+		0,
+		"naomi.zip",
+		GD,
+		{
+			{ "317-5079-com.pic", 0, 0x4000 },
+			{ NULL, 0, 0 },
+		},
+		"gdl-0006",
+	},
+	// Ikaruga (GDL-0010)
+	{
+		"ikaruga.zip",
+		0x4000,
+		0,
+		"naomi.zip",
+		GD,
+		{
+			{ "317-5081-jpn.pic", 0, 0x4000 },
+			{ NULL, 0, 0 },
+		},
+		"gdl-0010",
+	},
+	// Jingi Storm - The Arcade (Japan) (GDL-0037)
+	{
+		"jingystm.zip",
+		0x4000,
+		0,
+		"naomi.zip",
+		GD,
+		{
+			{ "317-5122-jpn.pic", 0, 0x4000 },
+			{ NULL, 0, 0 },
+		},
+		"gdl-0037",
+	},
+	// Karous (Japan) (GDL-0040)
+	{
+		"karous.zip",
+		0x4000,
+		0,
+		"naomi.zip",
+		GD,
+		{
+			{ "317-5125-com.pic", 0, 0x4000 },
+			{ NULL, 0, 0 },
+		},
+		"gdl-0040",
+	},
+	// La Keyboard (GDS-0017)
+	{
+		"keyboard.zip",
+		0x4000,
+		0,
+		"naomi.zip",
+		GD,
+		{
+			{ "317-0323-com.pic", 0, 0x4000 },
+			{ NULL, 0, 0 },
+		},
+		"gds-0017",
+	},
+	// Kurukuru Chameleon (Japan) (GDL-0034)
+	{
+		"kurucham.zip",
+		0x4000,
+		0,
+		"naomi.zip",
+		GD,
+		{
+			{ "317-5115-jpn.pic", 0, 0x4000 },
+			{ NULL, 0, 0 },
+		},
+		"gdl-0034",
+	},
+	// Lupin The Third - The Shooting (GDS-0018)
+	{
+		"lupinsho.zip",
+		0x4000,
+		0,
+		"naomi.zip",
+		GD,
+		{
+			{ "317-0325-jpn.pic", 0, 0x4000 },
+			{ NULL, 0, 0 },
+		},
+		"gds-0018",
+	},
+	// Lupin The Third - The Typing (Rev A) (GDS-0021A)
+	{
+		"luptype.zip",
+		0x4000,
+		0,
+		"naomi.zip",
+		GD,
+		{
+			{ "317-0332-jpn.pic", 0, 0x4000 },
+			{ NULL, 0, 0 },
+		},
+		"gds-0021a",
+	},
+	// Melty Blood Act Cadenza Version B2 (Japan) (GDL-0039A)
+	{
+		"meltyb.zip",
+		0x4000,
+		0,
+		"naomi.zip",
+		GD,
+		{
+			{ "317-5124-jpn.pic", 0, 0x4000 },
+			{ NULL, 0, 0 },
+		},
+		"gdl-0039a",
+	},
+	// Melty Blood Act Cadenza Ver. A (Japan) (GDL-0028C)
+	{
+		"meltybld.zip",
+		0x4000,
+		0,
+		"naomi.zip",
+		GD,
+		{
+			{ "317-5104-jpn.pic", 0, 0x4000 },
+			{ NULL, 0, 0 },
+		},
+		"gdl-0028c",
+	},
+	// Melty Blood Act Cadenza (Japan) (GDL-0028)
+	{
+		"meltyblo.zip",
+		0x4000,
+		0,
+		"naomi.zip",
+		GD,
+		{
+			{ "317-5104-jpn.pic", 0, 0x4000 },
+			{ NULL, 0, 0 },
+		},
+		"gdl-0028",
+	},
+	// Melty Blood Act Cadenza Version B (Japan) (GDL-0039)
+	{
+		"meltybo.zip",
+		0x4000,
+		0,
+		"naomi.zip",
+		GD,
+		{
+			{ "317-5124-jpn.pic", 0, 0x4000 },
+			{ NULL, 0, 0 },
+		},
+		"gdl-0039",
+	},
+	// Moeru Casinyo (Japan) (GDL-0013)
+	{
+		"moeru.zip",
+		0x4000,
+		0,
+		"naomi.zip",
+		GD,
+		{
+			{ "317-5084-jpn.pic", 0, 0x4000 },
+			{ NULL, 0, 0 },
+		},
+		"gdl-0013",
+	},
+	// The Maze of the Kings (GDS-0022)
+	{
+		"mok.zip",
+		0x4000,
+		0,
+		"naomi.zip",
+		GD,
+		{
+			{ "317-0333-com.pic", 0, 0x4000 },
+			{ NULL, 0, 0 },
+		},
+		"gds-0022",
+	},
+	// Monkey Ball (GDS-0008)
+	{
+		"monkeyba.zip",
+		0x4000,
+		0,
+		"naomi.zip",
+		GD,
+		{
+			{ "317-0307-com.pic", 0, 0x4000 },
+			{ NULL, 0, 0 },
+		},
+		"gds-0008",
+	},
+	// Psyvariar 2 - The Will To Fabricate (Japan) (GDL-0024)
+	{
+		"psyvar2.zip",
+		0x4000,
+		0,
+		"naomi.zip",
+		GD,
+		{
+			{ "317-5100-jpn.pic", 0, 0x4000 },
+			{ NULL, 0, 0 },
+		},
+		"gdl-0024",
+	},
+	// Puyo Pop Fever (World) (GDS-0034)
+	{
+		"puyofev.zip",
+		0x4000,
+		0,
+		"naomi.zip",
+		GD,
+		{
+			{ "317-0375-com.pic", 0, 0x4000 },
+			{ NULL, 0, 0 },
+		},
+		"gds-0034",
+	},
+	// Puyo Puyo Fever (Japan) (GDS-0031)
+	{
+		"puyofevj.zip",
+		0x4000,
+		0,
+		"naomi.zip",
+		GD,
+		{
+			{ "317-0375-com.pic", 0, 0x4000 },
+			{ NULL, 0, 0 },
+		},
+		"gds-0031",
+	},
+	// Quiz Keitai Q mode (GDL-0017)
+	{
+		"quizqgd.zip",
+		0x4000,
+		0,
+		"naomi.zip",
+		GD,
+		{
+			{ "317-5090-jpn.pic", 0, 0x4000 },
+			{ NULL, 0, 0 },
+		},
+		"gdl-0017",
+	},
+	// Radirgy (Japan, Rev A) (GDL-0032A)
+	{
+		"radirgy.zip",
+		0x4000,
+		0,
+		"naomi.zip",
+		GD,
+		{
+			{ "317-5110-jpn.pic", 0, 0x4000 },
+			{ NULL, 0, 0 },
+		},
+		"gdl-0032a",
+	},
+	// Radirgy (Japan) (GDL-0032)
+	{
+		"radirgyo.zip",
+		0x4000,
+		0,
+		"naomi.zip",
+		GD,
+		{
+			{ "317-5110-jpn.pic", 0, 0x4000 },
+			{ NULL, 0, 0 },
+		},
+		"gdl-0032",
+	},
+	// Senko No Ronde (Japan, Rev A) (GDL-0030A)
+	{
+		"senko.zip",
+		0x4000,
+		0,
+		"naomi.zip",
+		GD,
+		{
+			{ "317-5107-jpn.pic", 0, 0x4000 },
+			{ NULL, 0, 0 },
+		},
+		"gdl-0030a",
+	},
+	// Senko No Ronde (Japan) (GDL-0030)
+	{
+		"senkoo.zip",
+		0x4000,
+		0,
+		"naomi.zip",
+		GD,
+		{
+			{ "317-5107-jpn.pic", 0, 0x4000 },
+			{ NULL, 0, 0 },
+		},
+		"gdl-0030",
+	},
+	// Senko No Ronde Special (Export, Japan) (GDL-0038)
+	{
+		"senkosp.zip",
+		0x4000,
+		0,
+		"naomi.zip",
+		GD,
+		{
+			{ "317-5123-com.pic", 0, 0x4000 },
+			{ NULL, 0, 0 },
+		},
+		"gdl-0038",
+	},
+	// Street Fighter Zero 3 Upper (Japan) (GDL-0002)
+	{
+		"sfz3ugd.zip",
+		0x4000,
+		0,
+		"naomi.zip",
+		GD,
+		{
+			{ "317-5072-com.pic", 0, 0x4000 },
+			{ NULL, 0, 0 },
+		},
+		"gdl-0002",
+	},
+	// Shakatto Tambourine (Rev B) (GDS-0002B)
+	{
+		"shaktam.zip",
+		0x4000,
+		0,
+		"naomi.zip",
+		GD,
+		{
+			{ "317-0299-com.pic", 0, 0x4000 },
+			{ NULL, 0, 0 },
+		},
+		"gds-0002b",
+	},
+	// Shakatto Tambourine Cho Powerup Chu (2K1 AUT) (GDS-0016)
+	{
+		"shaktamb.zip",
+		0x4000,
+		0,
+		"naomi.zip",
+		GD,
+		{
+			{ "317-0321-com.pic", 0, 0x4000 },
+			{ NULL, 0, 0 },
+		},
+		"gds-0016",
+	},
+	// Shakatto Tambourine Motto Norinori Shinkyoku Tsuika (2K1 SPR) (GDS-0013)
+	{
+		"shaktmsp.zip",
+		0x4000,
+		0,
+		"naomi.zip",
+		GD,
+		{
+			{ "317-0315-com.pic", 0, 0x4000 },
+			{ NULL, 0, 0 },
+		},
+		"gds-0013",
+	},
+	// Shikigami No Shiro II / The Castle of Shikigami II (GDL-0021)
+	{
+		"shikgam2.zip",
+		0x4000,
+		0,
+		"naomi.zip",
+		GD,
+		{
+			{ "317-5095-jpn.pic", 0, 0x4000 },
+			{ NULL, 0, 0 },
+		},
+		"gdl-0021",
+	},
+	// Slashout (GDS-0004)
+	{
+		"slashout.zip",
+		0x4000,
+		0,
+		"naomi.zip",
+		GD,
+		{
+			{ "317-0302-com.pic",  0, 0x4000 },
+			{ NULL, 0, 0 },
+		},
 		"gds-0004",
-    },
+	},
+	// Spikers Battle (GDS-0005)
+	{
+		"spkrbtl.zip",
+		0x4000,
+		0,
+		"naomi.zip",
+		GD,
+		{
+			{ "317-0303-com.pic", 0, 0x4000 },
+			{ NULL, 0, 0 },
+		},
+		"gds-0005",
+	},
+	// Sports Jam (GDS-0003)
+	{
+		"sprtjam.zip",
+		0x4000,
+		0,
+		"naomi.zip",
+		GD,
+		{
+			{ "317-0300-com.pic", 0, 0x4000 },
+			{ NULL, 0, 0 },
+		},
+		"gds-0003",
+	},
+	// Super Shanghai 2005 (Japan, Rev A) (GDL-0031A)
+	{
+		"ss2005.zip",
+		0x4000,
+		0,
+		"naomi.zip",
+		GD,
+		{
+			{ "317-5108-jpn.pic", 0, 0x4000 },
+			{ NULL, 0, 0 },
+		},
+		"gdl-0031a",
+	},
+	// Super Shanghai 2005 (Japan) (GDL-0031)
+	{
+		"ss2005o.zip",
+		0x4000,
+		0,
+		"naomi.zip",
+		GD,
+		{
+			{ "317-5108-jpn.pic", 0, 0x4000 },
+			{ NULL, 0, 0 },
+		},
+		"gdl-0031",
+	},
+	// Doki Doki Idol Star Seeker (GDL-0005)
+	{
+		"starseek.zip",
+		0x4000,
+		0,
+		"naomi.zip",
+		GD,
+		{
+			{ "317-5077-jpn.pic", 0, 0x4000 },
+			{ NULL, 0, 0 },
+		},
+		"gdl-0005",
+	},
+	// Noukone Puzzle Takoron (Japan) (GDL-0042)
+	{
+		"takoron.zip",
+		0x4000,
+		0,
+		"naomi.zip",
+		GD,
+		{
+			{ "317-5127-jpn.pic", 0, 0x4000 },
+			{ NULL, 0, 0 },
+		},
+		"gdl-0042",
+	},
+	// Tetris Kiwamemichi (Japan) (GDL-0020)
+	{
+		"tetkiwam.zip",
+		0x4000,
+		0,
+		"naomi.zip",
+		GD,
+		{
+			{ "317-5093-jpn.pic", 0, 0x4000 },
+			{ NULL, 0, 0 },
+		},
+		"gdl-0020",
+	},
+	// Trigger Heart Exelica Ver.A (Japan) (GDL-0036A)
+	{
+		"trgheart.zip",
+		0x4000,
+		0,
+		"naomi.zip",
+		GD,
+		{
+			{ "317-5121-jpn.pic", 0, 0x4000 },
+			{ NULL, 0, 0 },
+		},
+		"gdl-0036a",
+	},
+	// Trigger Heart Exelica (Japan) (GDL-0036)
+	{
+		"trghearto.zip",
+		0x4000,
+		0,
+		"naomi.zip",
+		GD,
+		{
+			{ "317-5121-jpn.pic", 0, 0x4000 },
+			{ NULL, 0, 0 },
+		},
+		"gdl-0036",
+	},
+	// Trizeal (Japan) (GDL-0026)
+	{
+		"trizeal.zip",
+		0x4000,
+		0,
+		"naomi.zip",
+		GD,
+		{
+			{ "317-5103-jpn.pic", 0, 0x4000 },
+			{ NULL, 0, 0 },
+		},
+		"gdl-0026",
+	},
+	// Under Defeat (Japan) (GDL-0035)
+	{
+		"undefeat.zip",
+		0x4000,
+		0,
+		"naomi.zip",
+		GD,
+		{
+			{ "317-5117-jpn.pic", 0, 0x4000 },
+			{ NULL, 0, 0 },
+		},
+		"gdl-0035",
+	},
+	// Usagi - Yamashiro Mahjong Hen (Japan) (GDL-0022)
+	{
+		"usagiym.zip",
+		0x4000,
+		0,
+		"naomi.zip",
+		GD,
+		{
+			{ "317-5096-jpn.pic", 0, 0x4000 },
+			{ NULL, 0, 0 },
+		},
+		"gdl-0022",
+	},
+	// Virtua Athletics / Virtua Athlete (GDS-0019)
+	{
+		"vathlete.zip",
+		0x4000,
+		0,
+		"naomi.zip",
+		GD,
+		{
+			{ "317-0330-com.pic", 0, 0x4000 },
+			{ NULL, 0, 0 },
+		},
+		"gds-0019",
+	},
+	// Virtua Tennis 2 / Power Smash 2 (Rev A) (GDS-0015A)
+	{
+		"vtennis2.zip",
+		0x4000,
+		0,
+		"naomi.zip",
+		GD,
+		{
+			{ "317-0318-com.pic", 0, 0x4000 },
+			{ NULL, 0, 0 },
+		},
+		"gds-0015a",
+	},
+	// Virtua Tennis / Power Smash (GDS-0011)
+	{
+		"vtennisg.zip",
+		0x4000,
+		0,
+		"naomi.zip",
+		GD,
+		{
+			{ "317-0312-com.pic", 0, 0x4000 },
+			{ NULL, 0, 0 },
+		},
+		"gds-0011",
+	},
+	// World Series Baseball / Super Major League (GDS-0010)
+	{
+		"wsbbgd.zip",
+		0x4000,
+		0,
+		"naomi.zip",
+		GD,
+		{
+			{ "317-0309-com.pic", 0, 0x4000 },
+			{ NULL, 0, 0 },
+		},
+		"gds-0010",
+	},
 
     // AtomisWave Roms
 

@@ -174,6 +174,23 @@ InputDescriptors mvsc2_inputs = {
 	  },
 };
 
+InputDescriptors ninjaslt_inputs = {
+	  {
+			{ NAOMI_BTN0_KEY, "ENTER" },
+			{ NAOMI_BTN2_KEY, "START 1P" },
+			{ NAOMI_BTN3_KEY, "START 2P" },
+			{ NAOMI_BTN4_KEY, "TRIGGER 1P" },
+			{ NAOMI_BTN5_KEY, "TRIGGER 2P" },
+			{ NAOMI_UP_KEY, "SELECT UP" },
+			{ NAOMI_DOWN_KEY, "SELECT DOWN" },
+			NAO_BASE_BTN_DESC
+			{ 0 },
+	  },
+	  {
+			{ NULL },
+	  },
+};
+
 InputDescriptors vtenis2c_inputs = {
 	  {
 			{ NAOMI_BTN0_KEY, "SHOT1" },

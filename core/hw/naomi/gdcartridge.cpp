@@ -563,7 +563,7 @@ void GDCartridge::device_start()
 		if (file_start) {
 			u32 file_rounded_size = (file_size + 2047) & -2048;
 			for (dimm_data_size = 4096; dimm_data_size < file_rounded_size; dimm_data_size <<= 1);
-			dimm_data = malloc(dimm_data_size);
+			dimm_data = (u8 *)malloc(dimm_data_size);
 			if (dimm_data_size != file_rounded_size)
 				memset(dimm_data + file_rounded_size, 0, dimm_data_size - file_rounded_size);
 
