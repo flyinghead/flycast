@@ -117,6 +117,17 @@ string get_game_save_prefix()
 	return get_writable_data_path("/data/") + save_file;
 }
 
+string get_game_basename()
+{
+	char image_path[512];
+	cfgLoadStr("config", "image", image_path, "");
+	string game_dir = image_path;
+	size_t lastindex = game_dir.find_last_of(".");
+	if (lastindex != -1)
+		game_dir = game_dir.substr(0, lastindex);
+	return game_dir;
+}
+
 #if 0
 //File Enumeration
 void FindAllFiles(FileFoundCB* callback,wchar* dir,void* param)
