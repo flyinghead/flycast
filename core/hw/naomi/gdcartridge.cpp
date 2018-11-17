@@ -11,6 +11,7 @@
  */
 
 #include "gdcartridge.h"
+#include "stdclass.h"
 
 /*
 
