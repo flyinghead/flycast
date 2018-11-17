@@ -30,6 +30,8 @@ public:
 	virtual void* GetDmaPtr(u32 &size) override;
 	virtual void AdvancePtr(u32 size) override;
 	virtual bool Read(u32 offset, u32 size, void* dst) override;
+	virtual std::string GetGameId() override;
+
 	void SetGDRomName(const char *name) { this->gdrom_name = name; }
 
 private:

@@ -11,7 +11,6 @@
  */
 
 #include "gdcartridge.h"
-#include "stdclass.h"
 
 /*
 
@@ -611,4 +610,15 @@ bool GDCartridge::Read(u32 offset, u32 size, void *dst)
 	u32 addr = offset & (dimm_data_size-1);
 	memcpy(dst, &dimm_data[addr], min(size, dimm_data_size - addr));
 	return true;
+}
+
+std::string GDCartridge::GetGameId()
+{
+	if (dimm_data_size < 0x30 + 0x20)
+		return "(ROM too small)";
+
+	std::string game_id((char *)(dimm_data + 0x30), 0x20);
+	while (!game_id.empty() && game_id.back() == ' ')
+		game_id.pop_back();
+	return game_id;
 }
