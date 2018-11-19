@@ -33,6 +33,7 @@ u32		RomCacheMapCount;
 
 char naomi_game_id[33];
 InputDescriptors *naomi_game_inputs;
+u8 *naomi_default_eeprom;
 
 extern s8 joyx[4],joyy[4];
 extern u8 rt[4], lt[4];
@@ -401,6 +402,18 @@ static bool naomi_cart_LoadZip(char *filename)
 				size_t read = zip_fread(file, buf, game->blobs[romid].length);
 				CurrentCartridge->SetKeyData(buf);
 				printf("Loaded %s: %lx bytes cart key\n", game->blobs[romid].filename, read);
+			}
+			else if (game->blobs[romid].blob_type == Eeprom)
+			{
+				naomi_default_eeprom = (u8 *)malloc(game->blobs[romid].length);
+				if (naomi_default_eeprom == NULL)
+				{
+					printf("malloc failed\n");
+					zip_fclose(file);
+					goto error;
+				}
+				size_t read = zip_fread(file, naomi_default_eeprom, game->blobs[romid].length);
+				printf("Loaded %s: %lx bytes default eeprom\n", game->blobs[romid].filename, read);
 			}
 			else
 				die("Unknown blob type\n");

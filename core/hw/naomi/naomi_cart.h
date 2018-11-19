@@ -81,6 +81,7 @@ private:
 bool naomi_cart_SelectFile(void* handle);
 
 extern char naomi_game_id[];
+extern u8 *naomi_default_eeprom;
 
 extern Cartridge *CurrentCartridge;
 

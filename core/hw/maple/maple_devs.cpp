@@ -5,6 +5,7 @@
 #include "maple_cfg.h"
 #include "cfg/cfg.h"
 #include "hw/naomi/naomi.h"
+#include "hw/naomi/naomi_cart.h"
 #include "hw/pvr/spg.h"
 #include <time.h>
 
@@ -1450,6 +1451,27 @@ protected:
 
 };
 
+class jvs_837_13844_encoders : public jvs_837_13844
+{
+public:
+	jvs_837_13844_encoders(u8 node_id, maple_naomi_jamma *parent, int first_player = 0)
+		: jvs_837_13844(node_id, parent, first_player)
+	{
+		digital_in_count = 8;
+		encoder_count = 4;
+	}
+};
+
+class jvs_837_13844_touch : public jvs_837_13844
+{
+public:
+	jvs_837_13844_touch(u8 node_id, maple_naomi_jamma *parent, int first_player = 0)
+		: jvs_837_13844(node_id, parent, first_player)
+	{
+		light_gun_count = 1;
+	}
+};
+
 // Ninja assault
 class jvs_namco_jyu : public jvs_io_board
 {
@@ -1475,14 +1497,33 @@ public:
 		: jvs_io_board(node_id, parent, first_player)
 	{
 		player_count = 1;
-		coin_input_count = 1;
-		digital_in_count = 12;
-		output_count = 16;
+		coin_input_count = 2;
+		digital_in_count = 16;
+		output_count = 6;
 		light_gun_count = 1;
-		analog_count = 4;
+		analog_count = 7;
+		encoder_count = 2;
 	}
 protected:
 	virtual const char *get_id() override { return "namco ltd.;FCB;Ver1.0;JPN,Touch Panel & Multipurpose"; }
+};
+
+// Gun Survivor
+class jvs_namco_fca : public jvs_io_board
+{
+public:
+	jvs_namco_fca(u8 node_id, maple_naomi_jamma *parent, int first_player = 0)
+		: jvs_io_board(node_id, parent, first_player)
+	{
+		player_count = 1;
+		coin_input_count = 1; // 2 makes bios crash
+		digital_in_count = 16;
+		output_count = 6;
+		analog_count = 7;
+		encoder_count = 2;
+	}
+protected:
+	virtual const char *get_id() override { return "namco ltd.;FCA-1;Ver1.01;JPN,Multipurpose + Rotary Encoder"; }
 };
 
 struct maple_naomi_jamma : maple_sega_controller
@@ -1510,7 +1551,7 @@ struct maple_naomi_jamma : maple_sega_controller
 			io_boards.push_back(new jvs_837_13938(1, this));
 			io_boards.push_back(new jvs_837_13551(2, this));
 			break;
-		case 3:
+		case 3: // Sega Marine Fishing
 			io_boards.push_back(new jvs_837_13844(1, this));
 			break;
 		case 4:
@@ -1524,7 +1565,16 @@ struct maple_naomi_jamma : maple_sega_controller
 			io_boards.push_back(new jvs_namco_fcb(1, this));
 			io_boards.push_back(new jvs_namco_fcb(2, this));
 			break;
-	}
+		case 7:	// Gun Survivor
+			io_boards.push_back(new jvs_namco_fca(1, this));
+			break;
+		case 8: // Dog Walking
+			io_boards.push_back(new jvs_837_13844_encoders(1, this));
+			break;
+		case 9: // Touch de Uno
+			io_boards.push_back(new jvs_837_13844_touch(1, this));
+			break;
+		}
 	}
 
 	virtual MapleDeviceType get_device_type()
@@ -1823,8 +1873,13 @@ struct maple_naomi_jamma : maple_sega_controller
 						fclose(f);
 						printf("Loaded EEPROM from %s\n", eeprom_file.c_str());
 					}
+					else if (naomi_default_eeprom != NULL)
+					{
+						printf("Using default EEPROM file\n");
+						memcpy(EEPROM, naomi_default_eeprom, 0x80);
+					}
 					else
-						printf("EEPROM file not found at %s\n", eeprom_file.c_str());
+						printf("EEPROM file not found at %s and no default found\n", eeprom_file.c_str());
 				}
 #endif
 				//printf("EEprom READ\n");

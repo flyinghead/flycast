@@ -32,7 +32,8 @@ enum BlobType {
 	SwapWordBytes = 0,
 	InterleavedWord,
 	Copy,
-	Key
+	Key,
+	Eeprom
 };
 
 enum CartridgeType {
@@ -162,6 +163,30 @@ BIOS[] =
 			//{ 3, "zukinver0930.ic25", 0x000000, 0x200000 },
 			//ROM_SYSTEM_BIOS( 25, "bios25", "epr-21576h (multi-region hack)" )
 			//{ 3, "epr-21576h_multi.ic27", 0x000000, 0x200000 },
+			{ 0, NULL, 0, 0 },
+		}
+	},
+	{
+		"naomigd.zip",
+		{
+			//ROM_SYSTEM_BIOS( 0, "bios0", "epr-21576e (Japan)" )
+			//{ 0, "epr-21576e.ic27",  0x000000, 0x200000 },
+			//ROM_SYSTEM_BIOS( 1, "bios1", "epr-21576g (Japan)" )
+			//{ 0, "epr-21576g.ic27",  0x000000, 0x200000 },
+			//ROM_SYSTEM_BIOS( 2, "bios2", "epr-21576h (Japan)" )
+			{ 0, "epr-21576h.ic27",  0x000000, 0x200000 },
+			//ROM_SYSTEM_BIOS( 3, "bios3", "epr-21578h (Export)" )
+			{ 2, "epr-21578h.ic27",  0x000000, 0x200000 },
+			//ROM_SYSTEM_BIOS( 4, "bios4", "epr-21578g (Export)" )
+			//{ 0, "epr-21578g.ic27",  0x000000, 0x200000 },
+			//ROM_SYSTEM_BIOS( 5, "bios5", "epr-21578e (Export)" )
+			//{ 0, "epr-21578e.ic27",  0x000000, 0x200000 },
+			//ROM_SYSTEM_BIOS( 6, "bios6", "epr-21577h (USA)" )
+			{ 1, "epr-21577h.ic27",  0x000000, 0x200000 },
+			//ROM_SYSTEM_BIOS( 7, "bios7", "epr-21577g (USA)" )
+			//{ 0, "epr-21577g.ic27",  0x000000, 0x200000 },
+			//ROM_SYSTEM_BIOS( 8, "bios8", "epr-21577e (USA)" )
+			//{ 0, "epr-21577e.ic27",  0x000000, 0x200000 },
 			{ 0, NULL, 0, 0 },
 		}
 	},
@@ -298,6 +323,37 @@ Games[] =
         },
         NULL,
         &mvsc2_inputs
+    },
+    // Mushiking The King Of Beetle (2K3 2ND, World)
+    {
+        "mushike.zip",
+        0x4000000,
+        0x3892fb3a,
+        NULL,
+        M1,
+        {
+            { "epr-24217.ic11",  0x0000000, 0x0400000 },
+            { "mpr-24218.ic17s", 0x1000000, 0x0800000, InterleavedWord },
+            { "mpr-24219.ic18",  0x1000002, 0x0800000, InterleavedWord },
+            { "mpr-24220.ic19s", 0x2000000, 0x0800000, InterleavedWord },
+            { "mpr-24221.ic20",  0x2000002, 0x0800000, InterleavedWord },
+            { "mpr-24222.ic21s", 0x3000000, 0x0800000, InterleavedWord },
+            { "mpr-24223.ic22",  0x3000002, 0x0800000, InterleavedWord },
+            { "copy",            0x400000,  0xc00000,  Copy, 0x1000000 },
+            
+            //ROM_REGION(0x200, "some_eeprom", 0)
+            //{ "25lc040.ic13s", 0, 0x200, CRC(9adb86c2) SHA1(682d06b2004809c3c7ff2f4f9bc0bde0e51885c0) )
+            
+            // MUSHIKING
+            // The King of Beetle
+            // TYPE-1
+            // 800
+            // note: this dump from "empty/dead" Management Chip with no game run count left
+            //ROM_REGION( 0x80, "rf_tag", 0 )
+            //{ "mushi_type1.bin", 0, 0x80, CRC(8f36572b) SHA1(87e00e56d07a961e9180c7da02e35f7fd216dbae) )
+            
+            { NULL, 0, 0 },
+        }
     },
     // Quiz Ah Megamisama (JPN, USA, EXP, KOR, AUS)
     {
@@ -1128,6 +1184,44 @@ Games[] =
             { NULL, 0, 0 },
         }
     },
+    // Derby Owners Club World Edition (Rev B)
+    {
+        "drbyocwb.zip",
+        0x7800000,
+        0xffffffff, // not populated
+        NULL,
+        M2,
+        {
+            { "epr-22336b.ic22", 0x000000,  0x400000  },
+            { "mpr-22328.ic1",   0x0800000, 0x1000000 },
+            { "mpr-22329.ic2",   0x1800000, 0x1000000 },
+            { "mpr-22330.ic3",   0x2800000, 0x1000000 },
+            { "mpr-22331.ic4",   0x3800000, 0x1000000 },
+            { "mpr-22332.ic5",   0x4800000, 0x1000000 },
+            { "mpr-22333.ic6",   0x5800000, 0x1000000 },
+            { "mpr-22334.ic7",   0x6800000, 0x1000000 },
+            { NULL, 0, 0 },
+        }
+    },
+    // Derby Owners Club World Edition (Rev C)
+    {
+        "drbyocwc.zip",
+        0x7800000,
+        0xffffffff, // not populated
+        NULL,
+        M2,
+        {
+            { "epr-22336c.ic22", 0x000000,  0x400000  },
+            { "mpr-22328.ic1",   0x0800000, 0x1000000 },
+            { "mpr-22329.ic2",   0x1800000, 0x1000000 },
+            { "mpr-22330.ic3",   0x2800000, 0x1000000 },
+            { "mpr-22331.ic4",   0x3800000, 0x1000000 },
+            { "mpr-22332.ic5",   0x4800000, 0x1000000 },
+            { "mpr-22333.ic6",   0x5800000, 0x1000000 },
+            { "mpr-22334.ic7",   0x6800000, 0x1000000 },
+            { NULL, 0, 0 },
+        }
+    },
     // Dead or Alive 2 (JPN, USA, EXP, KOR, AUS)
     {
         "doa2.zip",
@@ -1863,27 +1957,27 @@ Games[] =
             { NULL, 0, 0 },
         }
     },
-    // Mushiking The King Of Beetles - Mushiking II / III / III+ (Ver. 1.001) (World)
+    // Mushiking The King Of Beetles - Mushiking IV / V / VI (World)
     {
-        "mushi2eo.zip",
-        0x07800000,
+        "mushi2k4.zip",
+        0x5800000,
         0xffffffff, // not populated
         NULL,
         M2,
         {
-            { "fpr-24333.ic8", 0x0000000, 0x4000000 },
-            { "fpr-24334.ic9", 0x4000000, 0x4000000 },
-            
-            //ROM_REGION( 0x800, "pic_readout", 0 )
-            //ROM_LOAD( "317-0437-com.ic3", 0, 0x800, CRC(3b6fcee8) SHA1(65fbdd3b8c61a4b5ccb6389b25483a7ecdc0794d) )
-            
+            { "epr-24241.ic22", 0x00000000, 0x00400000 },
+            { "mpr-24242.ic1",  0x00800000, 0x01000000 },
+            { "mpr-24243.ic2",  0x01800000, 0x01000000 },
+            { "mpr-24244.ic3",  0x02800000, 0x01000000 },
+            { "mpr-24245.ic4",  0x03800000, 0x01000000 },
+            { "mpr-24246.ic5",  0x04800000, 0x01000000 },
             { NULL, 0, 0 },
         }
     },
-    // Mushiking The King Of Beetle 2K5 1st
+    // Mushiking The King Of Beetles 2005 First (Japan)
 	{
         "mushi2k5.zip",
-        0x07800000,
+        0x7800000,
         0xffffffff, // not populated
 		NULL,
         M2,
@@ -3403,45 +3497,6 @@ Games[] =
             { NULL, 0, 0 },
         }
     },
-    // Derby Owners Club World Edition (Rev B)
-    {
-        "drbyocwb.zip",
-        0x7800000,
-        0x0000000,
-        "naomi.zip",
-        M4,
-        {
-            { "epr-22336b.ic22", 0x000000,  0x400000  },
-            { "mpr-22328.ic1",   0x0800000, 0x1000000 },
-            { "mpr-22329.ic2",   0x1800000, 0x1000000 },
-            { "mpr-22330.ic3",   0x2800000, 0x1000000 },
-            { "mpr-22331.ic4",   0x3800000, 0x1000000 },
-            { "mpr-22332.ic5",   0x4800000, 0x1000000 },
-            { "mpr-22333.ic6",   0x5800000, 0x1000000 },
-            { "mpr-22334.ic7",   0x6800000, 0x1000000 },
-            
-            { NULL, 0, 0 },
-        }
-    },
-    // Derby Owners Club World Edition (Rev C)
-    {
-        "drbyocwc.zip",
-        0x7800000,
-        0x0000000,
-        "naomi.zip",
-        M4,
-        {
-            { "epr-22336c.ic22", 0x000000,  0x400000  },
-            { "mpr-22328.ic1",   0x0800000, 0x1000000 },
-            { "mpr-22329.ic2",   0x1800000, 0x1000000 },
-            { "mpr-22330.ic3",   0x2800000, 0x1000000 },
-            { "mpr-22331.ic4",   0x3800000, 0x1000000 },
-            { "mpr-22332.ic5",   0x4800000, 0x1000000 },
-            { "mpr-22333.ic6",   0x5800000, 0x1000000 },
-            { "mpr-22334.ic7",   0x6800000, 0x1000000 },
-            { NULL, 0, 0 },
-        }
-    },
     // Illvelo (Illmatic Envelope)
     {
         "illvelo.zip",
@@ -3533,6 +3588,23 @@ Games[] =
             { NULL, 0, 0 },
         }
     },
+    // Mushiking The King Of Beetles - Mushiking II / III / III+ (Ver. 1.001) (World)
+    {
+        "mushi2eo.zip",
+        0x8000000,
+        0x5502,
+        "naomi.zip",
+        M4,
+        {
+            { "fpr-24333.ic8", 0x0000000, 0x4000000 },
+            { "fpr-24334.ic9", 0x4000000, 0x4000000 },
+            
+            //ROM_REGION( 0x800, "pic_readout", 0 )
+            //ROM_LOAD( "317-0437-com.ic3", 0, 0x800, CRC(3b6fcee8) SHA1(65fbdd3b8c61a4b5ccb6389b25483a7ecdc0794d) )
+            
+            { NULL, 0, 0 },
+        }
+    },
     // MushiKing II - The King Of Beetle II ENG (Ver. 1.001)
     {
         "mushik2e.zip",
@@ -3544,6 +3616,25 @@ Games[] =
             { "fpr-24333.ic8", 0x0000000, 0x4000000 },
             { "epr-24357.ic7", 0x0000000, 0x0400000 },
             { "fpr-24334.ic9", 0x4000000, 0x4000000 },
+            
+            //ROM_REGION( 0x800, "pic_readout", 0 )
+            //ROM_LOAD( "317-0437-com.ic3", 0, 0x800, CRC(3b6fcee8) SHA1(65fbdd3b8c61a4b5ccb6389b25483a7ecdc0794d) )
+            { "317-0437-com.ic3", 0, 0x800, Key },
+            
+            { NULL, 0, 0 },
+        }
+    },
+    // Mushiking The King Of Beetles - Mushiking IV / V / VI (World)
+    // change game version (4/5/6): in BACKUP DATA CLEAR menu hold P1 and P2 buttons 1 for 3 seconds, then change version number in appeared menu and select YES(CLEAR)
+    {
+        "mushik4e.zip",
+        0x8000000,
+        0x5502,
+        "naomi.zip",
+        M4,
+        {
+            { "fpr-24417.ic8", 0x0000000, 0x4000000 },
+            { "fpr-24418.ic9", 0x4000000, 0x4000000 },
             
             //ROM_REGION( 0x800, "pic_readout", 0 )
             //ROM_LOAD( "317-0437-com.ic3", 0, 0x800, CRC(3b6fcee8) SHA1(65fbdd3b8c61a4b5ccb6389b25483a7ecdc0794d) )
@@ -3632,6 +3723,9 @@ Games[] =
         {
             { "fpr-24338.ic8", 0x0000000, 0x4000000 },
             { "fpr-24339.ic9", 0x4000000, 0x4000000 },
+            
+            //ROM_REGION( 0x800, "pic_readout", 0 )
+            //ROM_LOAD( "317-0435-jpn.ic3", 0, 0x800, BAD_DUMP CRC(b553d900) SHA1(ed1c3c2053f2c0e98cb5c4d99f93143a66c29e5c) )
             { "317-0435-jpn.ic3", 0, 0x800, Key },
             { NULL, 0, 0 },
         }
@@ -3661,6 +3755,7 @@ Games[] =
 		GD,
 		{
 			{ "317-5097-jpn.pic", 0, 0x4000 },
+			{ "bdrdown-default-eeprom.bin", 0, 0x80, Eeprom },
 			{ NULL, 0, 0 },
 		},
 		"gdl-0023a",
@@ -3674,6 +3769,7 @@ Games[] =
 		GD,
 		{
 			{ "317-5102-com.pic", 0, 0x4000 },
+			{ "cfield-default-eeprom.bin", 0, 0x80, Eeprom },
 			{ NULL, 0, 0 },
 		},
 		"gdl-0025",
@@ -3758,6 +3854,58 @@ Games[] =
 			{ NULL, 0, 0 },
 		},
 		"gdl-0007a",
+	},
+	// Dragon Treasure (Rev B) (GDS-0030B)
+	{
+		"dragntr.zip",
+		0x4000,
+		0,
+		"naomi.zip",
+		GD,
+		{
+			{ "317-0363-com.pic", 0, 0x4000 },
+			{ NULL, 0, 0 },
+		},
+		"gds-0030b",
+	},
+	// Dragon Treasure (Rev A) (GDS-0030A)
+	{
+		"dragntra.zip",
+		0x4000,
+		0,
+		"naomi.zip",
+		GD,
+		{
+			{ "317-0363-com.pic", 0, 0x4000 },
+			{ NULL, 0, 0 },
+		},
+		"gds-0030a",
+	},
+	// Dragon Treasure 2 (Rev A) (GDS-0037A)
+	{
+		"dragntr2.zip",
+		0x4000,
+		0,
+		"naomi.zip",
+		GD,
+		{
+			{ "317-0389-com.pic", 0, 0x4000 },
+			{ NULL, 0, 0 },
+		},
+		"gds-0037a",
+	},
+	// Dragon Treasure 3 (Rev A) (GDS-0041A)
+	{
+		"dragntr3.zip",
+		0x4000,
+		0,
+		"naomi.zip",
+		GD,
+		{
+			{ "317-xxxx-com.pic", 0, 0x4000 },
+			{ NULL, 0, 0 },
+		},
+		"gds-0041a",
 	},
 	// Virtua Golf / Dynamic Golf (Rev A) (GDS-0009A)
 	{
@@ -3846,6 +3994,7 @@ Games[] =
 		GD,
 		{
 			{ "317-5069-com.pic", 0, 0x4000 },
+			{ "gundmgd-default-eeprom.bin", 0, 0x80, Eeprom },
 			{ NULL, 0, 0 },
 		},
 		"gdl-0001",
@@ -3859,6 +4008,7 @@ Games[] =
 		GD,
 		{
 			{ "317-5079-com.pic", 0, 0x4000 },
+			{ "gundmxgd-default-eeprom.bin", 0, 0x80, Eeprom },
 			{ NULL, 0, 0 },
 		},
 		"gdl-0006",
@@ -3898,6 +4048,7 @@ Games[] =
 		GD,
 		{
 			{ "317-5125-com.pic", 0, 0x4000 },
+			{ "karous-default-eeprom.bin", 0, 0x80, Eeprom },
 			{ NULL, 0, 0 },
 		},
 		"gdl-0040",
@@ -3911,6 +4062,7 @@ Games[] =
 		GD,
 		{
 			{ "317-0323-com.pic", 0, 0x4000 },
+			{ "keyboard-default-eeprom.bin", 0, 0x80, Eeprom },
 			{ NULL, 0, 0 },
 		},
 		"gds-0017",
@@ -4015,6 +4167,7 @@ Games[] =
 		GD,
 		{
 			{ "317-5084-jpn.pic", 0, 0x4000 },
+			{ "moeru-default-eeprom.bin", 0, 0x80, Eeprom },
 			{ NULL, 0, 0 },
 		},
 		"gdl-0013",
@@ -4054,6 +4207,7 @@ Games[] =
 		GD,
 		{
 			{ "317-5100-jpn.pic", 0, 0x4000 },
+			{ "psyvar2-default-eeprom.bin", 0, 0x80, Eeprom },
 			{ NULL, 0, 0 },
 		},
 		"gdl-0024",
@@ -4067,6 +4221,7 @@ Games[] =
 		GD,
 		{
 			{ "317-0375-com.pic", 0, 0x4000 },
+			{ "puyofev-default-eeprom.bin", 0, 0x80, Eeprom },
 			{ NULL, 0, 0 },
 		},
 		"gds-0034",
@@ -4080,6 +4235,7 @@ Games[] =
 		GD,
 		{
 			{ "317-0375-com.pic", 0, 0x4000 },
+			{ "puyofev-default-eeprom.bin", 0, 0x80, Eeprom },
 			{ NULL, 0, 0 },
 		},
 		"gds-0031",
@@ -4093,6 +4249,7 @@ Games[] =
 		GD,
 		{
 			{ "317-5090-jpn.pic", 0, 0x4000 },
+			{ "quizqgd-default-eeprom.bin", 0, 0x80, Eeprom },
 			{ NULL, 0, 0 },
 		},
 		"gdl-0017",
@@ -4106,6 +4263,7 @@ Games[] =
 		GD,
 		{
 			{ "317-5110-jpn.pic", 0, 0x4000 },
+			{ "radirgy-default-eeprom.bin", 0, 0x80, Eeprom },
 			{ NULL, 0, 0 },
 		},
 		"gdl-0032a",
@@ -4119,6 +4277,7 @@ Games[] =
 		GD,
 		{
 			{ "317-5110-jpn.pic", 0, 0x4000 },
+			{ "radirgy-default-eeprom.bin", 0, 0x80, Eeprom },
 			{ NULL, 0, 0 },
 		},
 		"gdl-0032",
@@ -4132,6 +4291,7 @@ Games[] =
 		GD,
 		{
 			{ "317-5107-jpn.pic", 0, 0x4000 },
+			{ "senko-default-eeprom.bin", 0, 0x80, Eeprom },
 			{ NULL, 0, 0 },
 		},
 		"gdl-0030a",
@@ -4145,6 +4305,7 @@ Games[] =
 		GD,
 		{
 			{ "317-5107-jpn.pic", 0, 0x4000 },
+			{ "senkoo-default-eeprom.bin", 0, 0x80, Eeprom },
 			{ NULL, 0, 0 },
 		},
 		"gdl-0030",
@@ -4171,6 +4332,7 @@ Games[] =
 		GD,
 		{
 			{ "317-5072-com.pic", 0, 0x4000 },
+			{ "sfz3ugd-default-eeprom.bin", 0, 0x80, Eeprom },
 			{ NULL, 0, 0 },
 		},
 		"gdl-0002",
@@ -4223,6 +4385,7 @@ Games[] =
 		GD,
 		{
 			{ "317-5095-jpn.pic", 0, 0x4000 },
+			{ "shikgam2-default-eeprom.bin", 0, 0x80, Eeprom },
 			{ NULL, 0, 0 },
 		},
 		"gdl-0021",
@@ -4275,6 +4438,7 @@ Games[] =
 		GD,
 		{
 			{ "317-5108-jpn.pic", 0, 0x4000 },
+			{ "ss2005-default-eeprom.bin", 0, 0x80, Eeprom },
 			{ NULL, 0, 0 },
 		},
 		"gdl-0031a",
@@ -4288,6 +4452,7 @@ Games[] =
 		GD,
 		{
 			{ "317-5108-jpn.pic", 0, 0x4000 },
+			{ "ss2005-default-eeprom.bin", 0, 0x80, Eeprom },
 			{ NULL, 0, 0 },
 		},
 		"gdl-0031",
@@ -4327,6 +4492,7 @@ Games[] =
 		GD,
 		{
 			{ "317-5093-jpn.pic", 0, 0x4000 },
+			{ "tetkiwam-default-eeprom.bin", 0, 0x80, Eeprom },
 			{ NULL, 0, 0 },
 		},
 		"gdl-0020",
@@ -4340,6 +4506,7 @@ Games[] =
 		GD,
 		{
 			{ "317-5121-jpn.pic", 0, 0x4000 },
+			{ "trgheart-default-eeprom.bin", 0, 0x80, Eeprom },
 			{ NULL, 0, 0 },
 		},
 		"gdl-0036a",
@@ -4353,6 +4520,7 @@ Games[] =
 		GD,
 		{
 			{ "317-5121-jpn.pic", 0, 0x4000 },
+			{ "trgheart-default-eeprom.bin", 0, 0x80, Eeprom },
 			{ NULL, 0, 0 },
 		},
 		"gdl-0036",
@@ -4366,6 +4534,7 @@ Games[] =
 		GD,
 		{
 			{ "317-5103-jpn.pic", 0, 0x4000 },
+			{ "trizeal-default-eeprom.bin", 0, 0x80, Eeprom },
 			{ NULL, 0, 0 },
 		},
 		"gdl-0026",
@@ -4379,6 +4548,7 @@ Games[] =
 		GD,
 		{
 			{ "317-5117-jpn.pic", 0, 0x4000 },
+			{ "undefeat-default-eeprom.bin", 0, 0x80, Eeprom },
 			{ NULL, 0, 0 },
 		},
 		"gdl-0035",
@@ -4392,6 +4562,7 @@ Games[] =
 		GD,
 		{
 			{ "317-5096-jpn.pic", 0, 0x4000 },
+			{ "usagiym-default-eeprom.bin", 0, 0x80, Eeprom },
 			{ NULL, 0, 0 },
 		},
 		"gdl-0022",
