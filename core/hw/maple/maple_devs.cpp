@@ -1619,7 +1619,7 @@ struct maple_naomi_jamma : maple_sega_controller
 		}
 	}
 
-	void send_jvs_messages(u32 node_id, u32 channel, bool use_repeat, u32 length, u8 *data)
+	void send_jvs_messages(u32 node_id, u32 channel, bool use_repeat, u32 length, u8 *data, bool repeat_first)
 	{
 		u8 temp_buffer[256];
 		if (data)
@@ -1636,7 +1636,15 @@ struct maple_naomi_jamma : maple_sega_controller
 			u32 repeat_len = jvs_repeat_request[node_id - 1][0];
 			if (use_repeat && repeat_len > 0)
 			{
-				memcpy(temp_buffer + length, &jvs_repeat_request[node_id - 1][1], repeat_len);
+				if (repeat_first)
+				{
+					memmove(temp_buffer + repeat_len, temp_buffer, length);
+					memcpy(temp_buffer, &jvs_repeat_request[node_id - 1][1], repeat_len);
+				}
+				else
+				{
+					memcpy(temp_buffer + length, &jvs_repeat_request[node_id - 1][1], repeat_len);
+				}
 				length += repeat_len;
 			}
 			send_jvs_message(node_id, channel, length, temp_buffer);
@@ -1760,7 +1768,7 @@ struct maple_naomi_jamma : maple_sega_controller
 
 			case 0x17:	// Transmit without repeat
 				jvs_receive_length[channel] = 0;
-				send_jvs_messages(node_id, channel, false, len, cmd);
+				send_jvs_messages(node_id, channel, false, len, cmd, false);
 				w8(MDRS_JVSReply);
 				w8(0);
 				w8(0x20);
@@ -1772,9 +1780,21 @@ struct maple_naomi_jamma : maple_sega_controller
 				break;
 
 			case 0x19:	// Transmit with repeat
-			case 0x21:
 				jvs_receive_length[channel] = 0;
-				send_jvs_messages(node_id, channel, true, len, cmd);
+				send_jvs_messages(node_id, channel, true, len, cmd, true);
+				w8(MDRS_JVSReply);
+				w8(0);
+				w8(0x20);
+				w8(0x01);
+				w8(0x18);	// always
+				w8(channel);
+				w8(sense_line(node_id));
+				w8(0);
+				break;
+
+			case 0x21:	// Transmit with repeat
+				jvs_receive_length[channel] = 0;
+				send_jvs_messages(node_id, channel, true, len, cmd, false);
 				w8(MDRS_JVSReply);
 				w8(0);
 				w8(0x20);
@@ -1802,7 +1822,7 @@ struct maple_naomi_jamma : maple_sega_controller
 						cmd = &dma_buffer_in[idx + 2];
 						idx += len + 2;
 
-						send_jvs_messages(node_id, channel, true, len, cmd);
+						send_jvs_messages(node_id, channel, true, len, cmd, false);
 					}
 
 					w8(MDRS_JVSReply);
@@ -1818,7 +1838,7 @@ struct maple_naomi_jamma : maple_sega_controller
 
 			case 0x33:	// Receive then transmit with repeat (15 then 21)
 				receive_jvs_messages(channel);
-				send_jvs_messages(node_id, channel, true, len, cmd);
+				send_jvs_messages(node_id, channel, true, len, cmd, false);
 				w8(MDRS_JVSReply);
 				w8(0);
 				w8(0x20);
@@ -1978,7 +1998,8 @@ struct maple_naomi_jamma : maple_sega_controller
 				{
 					u32 hash = XXH32(ram, 0x10000, 0);
 					LOGJVS("JVS Firmware hash %08x\n", hash);
-					if (hash == 0xa7c50459)
+					if (hash == 0xa7c50459	// CT
+							|| hash == 0xae841e36)	// HOTD2
 						crazy_mode = true;
 					else
 						crazy_mode = false;
