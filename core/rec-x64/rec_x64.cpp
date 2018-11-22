@@ -42,14 +42,15 @@ void ngen_mainloop(void* v_cntx)
 {
 	Sh4RCB* ctx = (Sh4RCB*)((u8*)v_cntx - sizeof(Sh4RCB));
 
-	cycle_counter = 0;
+	cycle_counter = SH4_TIMESLICE;
 
 	while (sh4_int_bCpuRun) {
-		cycle_counter = SH4_TIMESLICE;
 		do {
 			DynarecCodeEntryPtr rcb = bm_GetCode(ctx->cntx.pc);
 			rcb();
 		} while (cycle_counter > 0);
+
+		cycle_counter += SH4_TIMESLICE;
 
 		if (UpdateSystem()) {
 			rdv_DoInterrupts_pc(ctx->cntx.pc);
