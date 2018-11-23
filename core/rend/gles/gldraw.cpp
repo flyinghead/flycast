@@ -169,7 +169,7 @@ __forceinline
 			ShaderUniforms.trilinear_alpha = 1.0 - ShaderUniforms.trilinear_alpha;
 	}
 	else
-		ShaderUniforms.trilinear_alpha = 1.0;
+		ShaderUniforms.trilinear_alpha = 1.f;
 
 	bool color_clamp = gp->tsp.ColorClamp && (pvrrc.fog_clamp_min != 0 || pvrrc.fog_clamp_max != 0xffffffff);
 
@@ -184,7 +184,8 @@ __forceinline
 												  gp->tsp.FogCtrl,
 												  gp->pcw.Gouraud,
 												  gp->tcw.PixelFmt == PixelBumpMap,
-												  color_clamp)];
+												  color_clamp,
+												  ShaderUniforms.trilinear_alpha != 1.f)];
 	
 	if (CurrentShader->program == -1)
 		CompilePipelineShader(CurrentShader);
@@ -1107,7 +1108,7 @@ void DrawFramebuffer(float w, float h)
 
 	ShaderUniforms.trilinear_alpha = 1.0;
 
-	PipelineShader *shader = &gl.pogram_table[GetProgramID(0, 1, 1, 0, 1, 0, 0, 2, false, false, false)];
+	PipelineShader *shader = &gl.pogram_table[GetProgramID(0, 1, 1, 0, 1, 0, 0, 2, false, false, false, false)];
 	if (shader->program == -1)
 		CompilePipelineShader(shader);
 	else

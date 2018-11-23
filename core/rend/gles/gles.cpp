@@ -155,6 +155,7 @@ const char* PixelPipelineShader =
 #define pp_Gouraud %d \n\
 #define pp_BumpMap %d \n\
 #define FogClamping %d \n\
+#define pp_TriLinear %d \n\
 #define PI 3.1415926 \n\
 \n\
 #define GLES2 0 \n\
@@ -218,7 +219,7 @@ lowp float fog_mode2(highp float w) \n\
 	return fog_coef.FOG_CHANNEL; \n\
 } \n\
  \n\
-highp vec4 fog_clamp(highp vec4 col) \n\
+highp vec4 fog_clamp(lowp vec4 col) \n\
 { \n\
 #if FogClamping == 1 \n\
 	return clamp(col, fog_clamp_min, fog_clamp_max); \n\
@@ -310,7 +311,9 @@ void main() \n\
 	} \n\
 	#endif\n\
 	 \n\
+	#if pp_TriLinear == 1 \n\
 	color *= trilinear_alpha; \n\
+	#endif \n\
 	 \n\
 	#if cp_AlphaTest == 1 \n\
 		color.a=1.0; \n\
@@ -444,8 +447,11 @@ GLuint fogTextureId;
 
 			gl.setup.surface = eglCreateWindowSurface(gl.setup.display, config, (EGLNativeWindowType)wind, NULL);
 
-			if (eglCheck())
+			if (eglCheck() || gl.setup.surface == EGL_NO_SURFACE)
+			{
+				printf("EGL Error: eglCreateWindowSurface failed\n");
 				return false;
+			}
 
 			eglBindAPI(EGL_OPENGL_ES_API);
 			if (eglCheck())
@@ -857,7 +863,7 @@ GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentShader)
 
 int GetProgramID(u32 cp_AlphaTest, u32 pp_ClipTestMode,
 							u32 pp_Texture, u32 pp_UseAlpha, u32 pp_IgnoreTexA, u32 pp_ShadInstr, u32 pp_Offset,
-							u32 pp_FogCtrl, bool pp_Gouraud, bool pp_BumpMap, bool fog_clamping)
+							u32 pp_FogCtrl, bool pp_Gouraud, bool pp_BumpMap, bool fog_clamping, bool trilinear)
 {
 	u32 rv=0;
 
@@ -872,6 +878,7 @@ int GetProgramID(u32 cp_AlphaTest, u32 pp_ClipTestMode,
 	rv<<=1; rv|=pp_Gouraud;
 	rv<<=1; rv|=pp_BumpMap;
 	rv<<=1; rv|=fog_clamping;
+	rv<<=1; rv|=trilinear;
 
 	return rv;
 }
@@ -887,7 +894,7 @@ bool CompilePipelineShader(	PipelineShader* s)
 	sprintf(pshader,PixelPipelineShader, gl.glsl_version_header, gl.gl_version,
                 s->cp_AlphaTest,s->pp_ClipTestMode,s->pp_UseAlpha,
                 s->pp_Texture,s->pp_IgnoreTexA,s->pp_ShadInstr,s->pp_Offset,s->pp_FogCtrl, s->pp_Gouraud, s->pp_BumpMap,
-				s->fog_clamping);
+				s->fog_clamping, s->trilinear);
 
 	s->program=gl_CompileAndLink(vshader, pshader);
 
@@ -1010,21 +1017,26 @@ bool gl_create_resources()
 										{
 											forl(fog_clamping,1)
 											{
-											dshader=&gl.pogram_table[GetProgramID(cp_AlphaTest,pp_ClipTestMode,pp_Texture,pp_UseAlpha,pp_IgnoreTexA,
-																	pp_ShadInstr,pp_Offset,pp_FogCtrl, (bool)pp_Gouraud, (bool)pp_BumpMap, (bool)fog_clamping)];
+												forl(trilinear,1)
+												{
+													dshader=&gl.pogram_table[GetProgramID(cp_AlphaTest,pp_ClipTestMode,pp_Texture,pp_UseAlpha,pp_IgnoreTexA,
+																			pp_ShadInstr,pp_Offset,pp_FogCtrl, (bool)pp_Gouraud, (bool)pp_BumpMap, (bool)fog_clamping,
+																			(bool)trilinear)];
 
-												dshader->cp_AlphaTest = cp_AlphaTest;
-												dshader->pp_ClipTestMode = pp_ClipTestMode-1;
-												dshader->pp_Texture = pp_Texture;
-												dshader->pp_UseAlpha = pp_UseAlpha;
-												dshader->pp_IgnoreTexA = pp_IgnoreTexA;
-												dshader->pp_ShadInstr = pp_ShadInstr;
-												dshader->pp_Offset = pp_Offset;
-												dshader->pp_FogCtrl = pp_FogCtrl;
-												dshader->pp_Gouraud = pp_Gouraud;
-												dshader->pp_BumpMap = pp_BumpMap;
-												dshader->fog_clamping = fog_clamping;
-												dshader->program = -1;
+														dshader->cp_AlphaTest = cp_AlphaTest;
+														dshader->pp_ClipTestMode = pp_ClipTestMode-1;
+														dshader->pp_Texture = pp_Texture;
+														dshader->pp_UseAlpha = pp_UseAlpha;
+														dshader->pp_IgnoreTexA = pp_IgnoreTexA;
+														dshader->pp_ShadInstr = pp_ShadInstr;
+														dshader->pp_Offset = pp_Offset;
+														dshader->pp_FogCtrl = pp_FogCtrl;
+														dshader->pp_Gouraud = pp_Gouraud;
+														dshader->pp_BumpMap = pp_BumpMap;
+														dshader->fog_clamping = fog_clamping;
+														dshader->trilinear = trilinear;
+														dshader->program = -1;
+												}
 											}
 										}
 									}

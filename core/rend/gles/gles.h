@@ -74,6 +74,7 @@ struct PipelineShader
 	u32 pp_Texture, pp_UseAlpha, pp_IgnoreTexA, pp_ShadInstr, pp_Offset, pp_FogCtrl;
 	bool pp_Gouraud, pp_BumpMap;
 	bool fog_clamping;
+	bool trilinear;
 };
 
 
@@ -100,7 +101,7 @@ struct gl_ctx
 
 	} modvol_shader;
 
-	PipelineShader pogram_table[12288];
+	PipelineShader pogram_table[24576];
 	struct
 	{
 		GLuint program,scale,depth_scale;
@@ -160,7 +161,7 @@ void OSD_HOOK();
 void OSD_DRAW(GLuint shader_program);
 int GetProgramID(u32 cp_AlphaTest, u32 pp_ClipTestMode,
 							u32 pp_Texture, u32 pp_UseAlpha, u32 pp_IgnoreTexA, u32 pp_ShadInstr, u32 pp_Offset,
-							u32 pp_FogCtrl, bool pp_Gouraud, bool pp_BumpMap, bool fog_clamping);
+							u32 pp_FogCtrl, bool pp_Gouraud, bool pp_BumpMap, bool fog_clamping, bool trilinear);
 
 GLuint gl_CompileShader(const char* shader, GLuint type);
 GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentShader);
