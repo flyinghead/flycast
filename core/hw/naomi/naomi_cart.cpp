@@ -326,9 +326,12 @@ static bool naomi_cart_LoadZip(char *filename)
 	const char *bios = "naomi";
 	if (game->bios != NULL)
 		bios = game->bios;
-	if (!naomi_LoadBios(bios, archive, parent_archive, settings.dreamcast.region))
+	u32 region_flag = settings.dreamcast.region;
+	if (region_flag > game->region_flag)
+	   region_flag = game->region_flag;
+	if (!naomi_LoadBios(bios, archive, parent_archive, region_flag))
 	{
-		printf("Warning: Region %d bios not found in %s\n", settings.dreamcast.region, bios);
+		printf("Warning: Region %d bios not found in %s\n", region_flag, bios);
 		if (!naomi_LoadBios(bios, archive, parent_archive, -1))
 		{
 			// If a specific BIOS is needed for this game, fail.
