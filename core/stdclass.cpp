@@ -128,6 +128,21 @@ string get_game_basename()
 	return game_dir;
 }
 
+string get_game_dir()
+{
+	char image_path[512];
+	cfgLoadStr("config", "image", image_path, "");
+	string game_dir = image_path;
+	size_t lastindex = game_dir.find_last_of("/");
+#ifdef _WIN32
+	size_t lastindex2 = game_dir.find_last_of("\\");
+	lastindex = max(lastindex, lastindex2);
+#endif
+	if (lastindex != -1)
+		game_dir = game_dir.substr(0, lastindex + 1);
+	return game_dir;
+}
+
 #if 0
 //File Enumeration
 void FindAllFiles(FileFoundCB* callback,wchar* dir,void* param)

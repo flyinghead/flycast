@@ -2,7 +2,6 @@
 #include "naomi_regs.h"
 #include "cfg/cfg.h"
 #include "naomi.h"
-#include "deps/libzip/zip.h"
 #include "decrypt.h"
 #include "naomi_roms.h"
 #include "hw/flashrom/flashrom.h"
@@ -11,6 +10,7 @@
 #include "m4cartridge.h"
 #include "awcartridge.h"
 #include "gdcartridge.h"
+#include "archive/archive.h"
 
 Cartridge *CurrentCartridge;
 bool bios_loaded = false;
@@ -174,7 +174,7 @@ static void parse_comment(const char *line)
 
 extern RomChip sys_rom;
 
-static bool naomi_LoadBios(const char *filename, zip *child_zip, int region)
+static bool naomi_LoadBios(const char *filename, Archive *child_archive, Archive *parent_archive, int region)
 {
 	int biosid = 0;
 	for (; BIOS[biosid].name != NULL; biosid++)
@@ -193,7 +193,7 @@ static bool naomi_LoadBios(const char *filename, zip *child_zip, int region)
 #else
 	std::string basepath = get_readonly_data_path("/");
 #endif
-	zip *zip_archive = zip_open((basepath + filename).c_str(), 0, NULL);
+	Archive *bios_archive = OpenArchive((basepath + filename).c_str());
 
 	bool found_region = false;
 
@@ -216,11 +216,13 @@ static bool naomi_LoadBios(const char *filename, zip *child_zip, int region)
 		}
 		else
 		{
-			zip_file* file = NULL;
-			if (child_zip != NULL)
-			   file = zip_fopen(child_zip, bios->blobs[romid].filename, 0);
-			if (file == NULL && zip_archive != NULL)
-				file = zip_fopen(zip_archive, bios->blobs[romid].filename, 0);
+			ArchiveFile *file = NULL;
+			if (child_archive != NULL)
+			   file = child_archive->OpenFile(bios->blobs[romid].filename);
+			if (file == NULL && parent_archive != NULL)
+				file = parent_archive->OpenFile(bios->blobs[romid].filename);
+			if (file == NULL && bios_archive != NULL)
+				file = bios_archive->OpenFile(bios->blobs[romid].filename);
 			if (!file) {
 				printf("%s: Cannot open %s\n", filename, bios->blobs[romid].filename);
 				goto error;
@@ -228,8 +230,8 @@ static bool naomi_LoadBios(const char *filename, zip *child_zip, int region)
 			if (bios->blobs[romid].blob_type == Normal)
 			{
 				verify(bios->blobs[romid].offset + bios->blobs[romid].length <= BIOS_SIZE);
-				size_t read = zip_fread(file, sys_rom.data + bios->blobs[romid].offset, bios->blobs[romid].length);
-				printf("Mapped %s: %lx bytes at %07x\n", bios->blobs[romid].filename, read, bios->blobs[romid].offset);
+				u32 read = file->Read(sys_rom.data + bios->blobs[romid].offset, bios->blobs[romid].length);
+				printf("Mapped %s: %x bytes at %07x\n", bios->blobs[romid].filename, read, bios->blobs[romid].offset);
 			}
 			else if (bios->blobs[romid].blob_type == InterleavedWord)
 			{
@@ -237,26 +239,26 @@ static bool naomi_LoadBios(const char *filename, zip *child_zip, int region)
 				if (buf == NULL)
 				{
 					printf("malloc failed\n");
-					zip_fclose(file);
+					delete file;
 					goto error;
 				}
 				verify(bios->blobs[romid].offset + bios->blobs[romid].length <= BIOS_SIZE);
-				size_t read = zip_fread(file, buf, bios->blobs[romid].length);
+				u32 read = file->Read(buf, bios->blobs[romid].length);
 				u16 *to = (u16 *)(sys_rom.data + bios->blobs[romid].offset);
 				u16 *from = (u16 *)buf;
 				for (int i = bios->blobs[romid].length / 2; --i >= 0; to++)
 					*to++ = *from++;
 				free(buf);
-				printf("Mapped %s: %lx bytes (interleaved word) at %07x\n", bios->blobs[romid].filename, read, bios->blobs[romid].offset);
+				printf("Mapped %s: %x bytes (interleaved word) at %07x\n", bios->blobs[romid].filename, read, bios->blobs[romid].offset);
 			}
 			else
 				die("Unknown blob type\n");
-			zip_fclose(file);
+			delete file;
 		}
 	}
 
-	if (zip_archive != NULL)
-		zip_close(zip_archive);
+	if (bios_archive != NULL)
+		delete bios_archive;
 
 #if DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
 	// Reload the writeable portion of the FlashROM
@@ -266,8 +268,8 @@ static bool naomi_LoadBios(const char *filename, zip *child_zip, int region)
 	return found_region;
 
 error:
-	if (zip_archive != NULL)
-		zip_close(zip_archive);
+	if (bios_archive != NULL)
+		delete bios_archive;
 	return false;
 }
 
@@ -281,10 +283,16 @@ static bool naomi_cart_LoadZip(char *filename)
 		p = filename;
 	else
 		p++;
+	char game_name[128];
+	strncpy(game_name, p, sizeof(game_name) - 1);
+	game_name[sizeof(game_name) - 1] = 0;
+	char *dot = strrchr(game_name, '.');
+	if (dot != NULL)
+		*dot = 0;
 
 	int gameid = 0;
 	for (; Games[gameid].name != NULL; gameid++)
-		if (!stricmp(Games[gameid].name, p))
+		if (!stricmp(Games[gameid].name, game_name))
 			break;
 	if (Games[gameid].name == NULL)
 	{
@@ -294,20 +302,34 @@ static bool naomi_cart_LoadZip(char *filename)
 
 	struct Game *game = &Games[gameid];
 
-	zip *zip_archive = zip_open(filename, 0, NULL);
-	if (zip_archive == NULL)
+	Archive *archive = OpenArchive(filename);
+	if (archive != NULL)
+		printf("Opened %s\n", filename);
+
+	Archive *parent_archive = NULL;
+	if (game->parent_name != NULL)
 	{
-		printf("Cannot open %s\n", filename);
+		parent_archive = OpenArchive((get_game_dir() + game->parent_name).c_str());
+		if (parent_archive != NULL)
+			printf("Opened %s\n", game->parent_name);
+	}
+
+	if (archive == NULL && parent_archive == NULL)
+	{
+		if (game->parent_name != NULL)
+			printf("Cannot open %s or %s\n", filename, game->parent_name);
+		else
+			printf("Cannot open %s\n", filename);
 		return false;
 	}
 
-	const char *bios = "naomi.zip";
+	const char *bios = "naomi";
 	if (game->bios != NULL)
 		bios = game->bios;
-	if (!naomi_LoadBios(bios, zip_archive, settings.dreamcast.region))
+	if (!naomi_LoadBios(bios, archive, parent_archive, settings.dreamcast.region))
 	{
 		printf("Warning: Region %d bios not found in %s\n", settings.dreamcast.region, bios);
-		if (!naomi_LoadBios(bios, zip_archive, -1))
+		if (!naomi_LoadBios(bios, archive, parent_archive, -1))
 		{
 			// If a specific BIOS is needed for this game, fail.
 			if (game->bios != NULL || !bios_loaded)
@@ -362,7 +384,11 @@ static bool naomi_cart_LoadZip(char *filename)
 		}
 		else
 		{
-			zip_file* file = zip_fopen(zip_archive, game->blobs[romid].filename, 0);
+			ArchiveFile* file = NULL;
+			if (archive != NULL)
+				file = archive->OpenFile(game->blobs[romid].filename);
+			if (file == NULL && parent_archive != NULL)
+				file = parent_archive->OpenFile(game->blobs[romid].filename);
 			if (!file) {
 				printf("%s: Cannot open %s\n", filename, game->blobs[romid].filename);
 				goto error;
@@ -370,8 +396,8 @@ static bool naomi_cart_LoadZip(char *filename)
 			if (game->blobs[romid].blob_type == Normal)
 			{
 				u8 *dst = (u8 *)CurrentCartridge->GetPtr(game->blobs[romid].offset, len);
-				size_t read = zip_fread(file, dst, game->blobs[romid].length);
-				printf("Mapped %s: %lx bytes at %07x\n", game->blobs[romid].filename, read, game->blobs[romid].offset);
+				u32 read = file->Read(dst, game->blobs[romid].length);
+				printf("Mapped %s: %x bytes at %07x\n", game->blobs[romid].filename, read, game->blobs[romid].offset);
 			}
 			else if (game->blobs[romid].blob_type == InterleavedWord)
 			{
@@ -379,16 +405,16 @@ static bool naomi_cart_LoadZip(char *filename)
 				if (buf == NULL)
 				{
 					printf("malloc failed\n");
-					zip_fclose(file);
+					delete file;
 					goto error;
 				}
-				size_t read = zip_fread(file, buf, game->blobs[romid].length);
+				u32 read = file->Read(buf, game->blobs[romid].length);
 				u16 *to = (u16 *)CurrentCartridge->GetPtr(game->blobs[romid].offset, len);
 				u16 *from = (u16 *)buf;
 				for (int i = game->blobs[romid].length / 2; --i >= 0; to++)
 					*to++ = *from++;
 				free(buf);
-				printf("Mapped %s: %lx bytes (interleaved word) at %07x\n", game->blobs[romid].filename, read, game->blobs[romid].offset);
+				printf("Mapped %s: %x bytes (interleaved word) at %07x\n", game->blobs[romid].filename, read, game->blobs[romid].offset);
 			}
 			else if (game->blobs[romid].blob_type == Key)
 			{
@@ -396,12 +422,12 @@ static bool naomi_cart_LoadZip(char *filename)
 				if (buf == NULL)
 				{
 					printf("malloc failed\n");
-					zip_fclose(file);
+					delete file;
 					goto error;
 				}
-				size_t read = zip_fread(file, buf, game->blobs[romid].length);
+				u32 read = file->Read(buf, game->blobs[romid].length);
 				CurrentCartridge->SetKeyData(buf);
-				printf("Loaded %s: %lx bytes cart key\n", game->blobs[romid].filename, read);
+				printf("Loaded %s: %x bytes cart key\n", game->blobs[romid].filename, read);
 			}
 			else if (game->blobs[romid].blob_type == Eeprom)
 			{
@@ -409,19 +435,22 @@ static bool naomi_cart_LoadZip(char *filename)
 				if (naomi_default_eeprom == NULL)
 				{
 					printf("malloc failed\n");
-					zip_fclose(file);
+					delete file;
 					goto error;
 				}
-				size_t read = zip_fread(file, naomi_default_eeprom, game->blobs[romid].length);
-				printf("Loaded %s: %lx bytes default eeprom\n", game->blobs[romid].filename, read);
+				u32 read = file->Read(naomi_default_eeprom, game->blobs[romid].length);
+				printf("Loaded %s: %x bytes default eeprom\n", game->blobs[romid].filename, read);
 			}
 			else
 				die("Unknown blob type\n");
-			zip_fclose(file);
+			delete file;
 		}
 		romid++;
 	}
-	zip_close(zip_archive);
+	if (archive != NULL)
+		delete archive;
+	if (parent_archive != NULL)
+		delete parent_archive;
 
 	CurrentCartridge->Init();
 
@@ -431,7 +460,10 @@ static bool naomi_cart_LoadZip(char *filename)
 	return true;
 
 error:
-	zip_close(zip_archive);
+	if (archive != NULL)
+		delete archive;
+	if (parent_archive != NULL)
+		delete parent_archive;
 	delete CurrentCartridge;
 	CurrentCartridge = NULL;
 	return false;
@@ -468,14 +500,16 @@ bool naomi_cart_LoadRom(char* file)
 
 	char *pdot = strrchr(file, '.');
 
-	if (pdot != NULL && (!strcmp(pdot, ".zip") || !strcmp(pdot, ".ZIP")))
+	if (pdot != NULL
+			&& (!strcmp(pdot, ".zip") || !strcmp(pdot, ".ZIP")
+				|| !strcmp(pdot, ".7z") || !strcmp(pdot, ".7Z")))
 		return naomi_cart_LoadZip(file);
 
 	// Try to load BIOS from naomi.zip
-	if (!naomi_LoadBios("naomi.zip", NULL, settings.dreamcast.region))
+	if (!naomi_LoadBios("naomi", NULL, NULL, settings.dreamcast.region))
 	{
 	   printf("Warning: Region %d bios not found in naomi.zip\n", settings.dreamcast.region);
-	   if (!naomi_LoadBios("naomi.zip", NULL, -1))
+	   if (!naomi_LoadBios("naomi", NULL, NULL, -1))
 	   {
 		  if (!bios_loaded)
 		  {

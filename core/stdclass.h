@@ -273,6 +273,7 @@ bool file_exists(const string& filename);
 
 string get_game_save_prefix();
 string get_game_basename();
+string get_game_dir();
 
 class VArray2
 {

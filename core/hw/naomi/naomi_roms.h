@@ -60,7 +60,7 @@ struct BIOS_t
 BIOS[] =
 {
 	{
-		"airlbios.zip",
+		"airlbios",
 		{
 			{ 2, "epr-21802.ic27", 0x000000, 0x200000 },
 			{ 1, "epr-21801.ic27", 0x000000, 0x200000 },
@@ -68,7 +68,7 @@ BIOS[] =
 		}
 	},
 	{
-		"awbios.zip",
+		"awbios",
 		{
 			{ 0, "bios0.ic23", 0x000000, 0x020000 },
 			//or
@@ -77,7 +77,7 @@ BIOS[] =
 		}
 	},
 	{
-		"f355bios.zip",
+		"f355bios",
 		{
 			{ 2, "epr-22851.ic27", 0x000000, 0x200000 },
 			{ 1, "epr-22850.ic27", 0x000000, 0x200000 },
@@ -86,7 +86,7 @@ BIOS[] =
 		}
 	},
 	{
-		"f355dlx.zip",
+		"f355dlx",
 		{
 			// Ferrari F355 Deluxe (Export)
 			{ 2, "epr-21864.ic27", 0x000000, 0x200000 },
@@ -102,14 +102,14 @@ BIOS[] =
 		}
 	},
 	{
-		"hod2bios.zip",
+		"hod2bios",
 		{
 			{ 0, "epr-21331.ic27", 0x000000, 0x200000 },
 			{ 0, NULL, 0, 0 },
 		}
 	},
 	{
-		"naomi.zip",
+		"naomi",
 		{
 			//ROM_SYSTEM_BIOS( 0, "bios0",   "epr-21576h (Japan)" )
 			{ 0, "epr-21576h.ic27", 0x000000, 0x200000 },
@@ -167,7 +167,7 @@ BIOS[] =
 		}
 	},
 	{
-		"naomigd.zip",
+		"naomigd",
 		{
 			//ROM_SYSTEM_BIOS( 0, "bios0", "epr-21576e (Japan)" )
 			//{ 0, "epr-21576e.ic27",  0x000000, 0x200000 },
@@ -198,6 +198,7 @@ BIOS[] =
 struct Game
 {
 	const char* name;
+	const char* parent_name;
 	u32 size;
 	u32 key;
 	const char *bios;
@@ -218,7 +219,8 @@ Games[] =
     // Naomi M1 Roms
     // Giant Gram 2000 (JPN, USA, EXP, KOR, AUS)
     { 
-        "gram2000.zip",
+        "gram2000",
+		NULL,
         0x0b000000,
         0x7f805c3f,
         NULL,
@@ -250,10 +252,11 @@ Games[] =
     },
     // Kick '4' Cash (Export)
     {
-        "kick4csh.zip",
+        "kick4csh",
+		NULL,
         0x9000000,
         0x820857c9,
-        "naomi.zip",	// Needs Export BIOS
+        "naomi",	// Needs Export BIOS
         M1,
         {
             { "epr-24212.ic11",   0x0000000, 0x400000 },
@@ -288,7 +291,8 @@ Games[] =
     },
     // Marvel Vs. Capcom 2 New Age of Heroes (Export, Korea, Rev A)    
     {
-        "mvsc2.zip",
+        "mvsc2",
+		NULL,
         0x08800000,
         0xc18b6e7c,
         NULL,
@@ -326,7 +330,8 @@ Games[] =
     },
     // Mushiking The King Of Beetle (2K3 2ND, World)
     {
-        "mushike.zip",
+        "mushike",
+		NULL,
         0x4000000,
         0x3892fb3a,
         NULL,
@@ -357,7 +362,8 @@ Games[] =
     },
     // Quiz Ah Megamisama (JPN, USA, EXP, KOR, AUS)
     {
-        "qmegamis.zip",
+        "qmegamis",
+		NULL,
         0x9000200,
         0xcd9b4896,
         NULL,
@@ -385,7 +391,8 @@ Games[] =
     },
     // Shootout Pool
     {
-        "shootopl.zip",
+        "shootopl",
+		NULL,
         0x3000000,
         0xa0f37ca7,
         NULL,
@@ -402,7 +409,8 @@ Games[] =
     },
     // Shootout Pool The Medal / Shootout Pool Prize (Rev A)
     {
-        "shootpl.zip",
+        "shootpl",
+		NULL,
         0x3000000,
         0x9dbde9cd,
         NULL,
@@ -423,7 +431,8 @@ Games[] =
     },
     // Shootout Pool The Medal Ver. B / Shootout Pool Prize Ver. B
     {
-        "shootplm.zip",
+        "shootplm",
+		NULL,
         0x3000000,
         0x9dbde9cd,
         NULL,
@@ -440,7 +449,8 @@ Games[] =
     },
     // Shootout Pool Prize (Export) / Shootout Pool The Medal (Japan) Version B (prototype)
     {
-        "shootplmp.zip",
+        "shootplmp",
+		"shootplm",
         0x3000000,
         0x9dbde9cd,
         NULL,
@@ -458,7 +468,8 @@ Games[] =
 
     // Touch de Uno! 2 (Japan)
     {
-        "tduno2.zip",
+        "tduno2",
+		NULL,
         0x4000000,
         0x2f6f0f8d,
         NULL,
@@ -482,7 +493,8 @@ Games[] =
     },
     // Virtua Tennis 2 / Power Smash 2 (Rev A)
     {
-        "vtenis2c.zip",
+        "vtenis2c",
+		NULL,
         0x0a000000,
         0x2d2d4743,
         NULL,
@@ -516,7 +528,8 @@ Games[] =
     // Naomi M2/M3 Roms
     // 18 Wheeler (deluxe) (Rev A)
     {
-        "18wheelr.zip",
+        "18wheelr",
+		NULL,
         0x0a800000,
         0x2807cf54,
         NULL,
@@ -550,7 +563,8 @@ Games[] =
     },
     // 18 Wheeler (deluxe)
     {
-        "18wheelro.zip",
+        "18wheelro",
+		"18wheelr",
         0x0a800000,
         0x2807cf54,
         NULL,
@@ -599,7 +613,8 @@ Games[] =
     },
     // 18 Wheeler (deluxe) (Rev T)
     {
-        "18wheelrt.zip",
+        "18wheelrt",
+		"18wheelr",
         0x0a800000,
         0x2807cf54,
         NULL,
@@ -648,7 +663,8 @@ Games[] =
     },
     // 18 Wheeler (standard)
     {
-        "18wheels.zip",
+        "18wheels",
+		"18wheelr",
         0x0a800000,
         0x2807cf54,
         NULL,
@@ -694,7 +710,8 @@ Games[] =
     },
     // 18 Wheeler (upright)
     {
-        "18wheelu.zip",
+        "18wheelu",
+		"18wheelr",
         0x0a800000,
         0x2807cf54,
         NULL,
@@ -739,10 +756,11 @@ Games[] =
     },
     // Airline Pilots (Rev B) 
     {
-        "alpilot.zip",
+        "alpilot",
+		NULL,
         0x0b000000,
         0x28070e41,
-        NULL, //"airlbios.zip",
+        "airlbios",
         M2,
         {
             { "epr-21787b.ic22", 0x0000000, 0x400000 },
@@ -767,10 +785,11 @@ Games[] =
     },
     // Airline Pilots (Japan, Rev A)
     {
-        "alpilotj.zip",
+        "alpilotj",
+		NULL,
         0x0b000000,
         0x28070e41,
-        NULL, //"airlbios.zip",
+        "airlbios",
         M2,
         {
             { "epr-21739a.ic22", 0x000000,  0x400000 },
@@ -790,7 +809,8 @@ Games[] =
     },
     // Alien Front (Rev T)
 	{
-        "alienfnt.zip",
+        "alienfnt",
+		NULL,
         0x05800000,
         0x28174343,
         NULL,
@@ -809,7 +829,8 @@ Games[] =
     },
     // Alien Front (Rev A)
     {
-        "alienfnta.zip",
+        "alienfnta",
+		"alienfnt",
         0x05800000,
         0x28174343,
         NULL,
@@ -828,7 +849,8 @@ Games[] =
     },
     // Capcom Vs. SNK Millennium Fight 2000 (JPN, USA, EXP, KOR, AUS) (Rev C)
     {
-        "capsnk.zip",
+        "capsnk",
+		NULL,
         0x07800000,
         0x00000000,
         NULL,
@@ -849,7 +871,8 @@ Games[] =
     },
     // Capcom Vs. SNK Millennium Fight 2000 (Rev A)
     {
-        "capsnka.zip",
+        "capsnka",
+		"capsnk",
         0x07800000,
         0x00000000,
         NULL,
@@ -870,7 +893,8 @@ Games[] =
     },
     // Capcom Vs. SNK Millennium Fight 2000
     {
-        "capsnkb.zip",
+        "capsnkb",
+		"capsnk",
         0x07800000,
         0x00000000,
         NULL,
@@ -891,7 +915,8 @@ Games[] =
     },
     // Crackin' DJ
     {
-        "crackndj.zip",
+        "crackndj",
+		NULL,
         0x0a800000,
         0x281c2347,
         NULL,
@@ -913,7 +938,8 @@ Games[] =
     },
     // Crackin' DJ Part 2 (Japan)
     {
-        "crakndj2.zip",
+        "crakndj2",
+		NULL,
         0x0a800000,
         0x28428247,
         NULL,
@@ -949,7 +975,8 @@ Games[] =
     },
     // Crazy Taxi
     {
-        "crzytaxi.zip",
+        "crzytaxi",
+		NULL,
         0x08800000,
         0x280d2f45,
         NULL,
@@ -976,7 +1003,8 @@ Games[] =
     },
     // Cosmic Smash (Rev A)
     {
-        "csmash.zip",
+        "csmash",
+		NULL,
         0x04800000,
         0x28103347,
         NULL,
@@ -996,7 +1024,8 @@ Games[] =
     },
     // Cosmic Smash
     {
-        "csmasho.zip",
+        "csmasho",
+		"csmash",
         0x04800000,
         0x28103347,
         NULL,
@@ -1016,7 +1045,8 @@ Games[] =
     },
     // Cannon Spike / Gun Spike
     {
-        "cspike.zip",
+        "cspike",
+		NULL,
         0x06800000,
         0x000e2010,
         NULL,
@@ -1042,7 +1072,8 @@ Games[] =
     },
     // Death Crimson OX (JPN, USA, EXP, KOR, AUS)
     {
-        "deathcox.zip",
+        "deathcox",
+		NULL,
         0x05800000,
         0x000b64d0,
         NULL,
@@ -1066,7 +1097,8 @@ Games[] =
     },
     // Death Crimson OX
     {
-        "deathcoxo.zip",
+        "deathcoxo",
+		"deathcox",
         0x05800000,
         0x000b64d0,
         NULL,
@@ -1090,7 +1122,8 @@ Games[] =
     },
     // Derby Owners Club 2000 (Rev A)
 	{
-        "derbyo2k.zip",
+        "derbyo2k",
+		NULL,
         0x8800000,
         0xffffffff, // not populated
         NULL,
@@ -1118,7 +1151,8 @@ Games[] =
     },
     // Derby Owners Club (JPN, USA, EXP, KOR, AUS) (Rev B)
     {
-        "derbyoc.zip",
+        "derbyoc",
+		NULL,
         0x07800000,
 		0x280fee35,
         NULL,
@@ -1144,7 +1178,8 @@ Games[] =
     },
     // Derby Owners Club II (JPN, USA, EXP, KOR, AUS) (Rev B)
     {
-        "derbyoc2.zip",
+        "derbyoc2",
+		NULL,
         0x0b800000,
         0x2a436bb7,
         NULL,
@@ -1167,7 +1202,8 @@ Games[] =
     },
     // Derby Owners Club World Edition (JPN, USA, EXP, KOR, AUS) (Rev D)
     {
-        "derbyocw.zip",
+        "derbyocw",
+		NULL,
         0x07800000,
         0xffffffff, // not populated
         NULL,
@@ -1186,7 +1222,8 @@ Games[] =
     },
     // Derby Owners Club World Edition (Rev B)
     {
-        "drbyocwb.zip",
+        "drbyocwb",
+		"derbyocw",
         0x7800000,
         0xffffffff, // not populated
         NULL,
@@ -1205,7 +1242,8 @@ Games[] =
     },
     // Derby Owners Club World Edition (Rev C)
     {
-        "drbyocwc.zip",
+        "drbyocwc",
+		"derbyocw",
         0x7800000,
         0xffffffff, // not populated
         NULL,
@@ -1224,7 +1262,8 @@ Games[] =
     },
     // Dead or Alive 2 (JPN, USA, EXP, KOR, AUS)
     {
-        "doa2.zip",
+        "doa2",
+		"doa2m",
         0xb000000,
         0x0008ad01,
         NULL,
@@ -1262,7 +1301,8 @@ Games[] =
 	},
     // Dead or Alive 2 (Rev A)
     {
-        "doa2a.zip",
+        "doa2a",
+		"doa2m",
         0xb000000,
         0x0008ad01,
         NULL,
@@ -1300,7 +1340,8 @@ Games[] =
     },
     // Dead or Alive 2 Millennium (JPN, USA, EXP, KOR, AUS)
 	{
-        "doa2m.zip",
+        "doa2m",
+		NULL,
         0xb000000,
 		0x0008ad01,
 		NULL,
@@ -1337,7 +1378,8 @@ Games[] =
 	},
     // Dynamite Baseball '99 (JPN) / World Series '99 (USA, EXP, KOR, AUS) (Rev B) ***
 	{
-        "dybb99.zip",
+        "dybb99",
+		NULL,
         0x0a000000,
         0x2804ae71,
         NULL,
@@ -1369,7 +1411,8 @@ Games[] =
 	},
 	// Dynamite Baseball NAOMI (Japan)
 	{
-		"dybbnao.zip",
+		"dybbnao",
+		NULL,
 		0x0b000000,
 		0x280e6ae1,
 		NULL,
@@ -1403,10 +1446,11 @@ Games[] =
 	},
     // Ferrari F355 Challenge (deluxe)
 	{
-		"f355.zip",
+		"f355",
+		NULL,
 		0x0b000000,
 		0x280e8f84,
-		"f355dlx.zip",
+		"f355dlx",
 		M2,
 		{
 			{ "epr-21902.ic22",  0x0000000, 0x0400000 },
@@ -1442,10 +1486,11 @@ Games[] =
 	},
     // Ferrari F355 Challenge (twin)
 	{
-		"f355twin.zip",
+		"f355twin",
+		NULL,
 		0x0b000000,
 		0x2806efd4,
-		"f355bios.zip",
+		"f355bios",
 		M2,
 		{
 			{ "epr-22848.ic22",  0x0000000, 0x400000 },
@@ -1475,10 +1520,11 @@ Games[] =
 	},
     // Ferrari F355 Challenge (twin/deluxe, preview)
     {
-        "f355twinp.zip",
+        "f355twinp",
+		"f355twin",
         0x0b000000,
         0x2806efd4,
-        "f355bios.zip",
+        "f355bios",
         M2,
         {
             { "epr-22848p.ic22", 0x0000000, 0x400000 },
@@ -1508,10 +1554,11 @@ Games[] =
     },
     // Ferrari F355 Challenge 2 (twin)
 	{
-		"f355twn2.zip",
+		"f355twn2",
+		NULL,
         0xb000000,
 		0x281666c6,
-		"f355bios.zip",
+		"f355bios",
 		M2,
 		{
 			{ "epr-23399.ic22",  0x0000000, 0x400000 },
@@ -1542,7 +1589,8 @@ Games[] =
 	},
     // Giant Gram: All Japan Pro Wrestling 2 (JPN, USA, EXP, KOR, AUS)
 	{
-		"ggram2.zip",
+		"ggram2",
+		NULL,
         0x06000000,
 		0x28074a61,
 		NULL,
@@ -1566,7 +1614,8 @@ Games[] =
 	},
     // Guilty Gear X (JPN)
 	{
-        "ggx.zip",
+        "ggx",
+		NULL,
         0x07800000,
         0x00076110,
         NULL,
@@ -1592,7 +1641,8 @@ Games[] =
 	},
 	// Mobile Suit Gundam: Federation Vs. Zeon
 	{
-		"gundmct.zip",
+		"gundmct",
+		NULL,
 		0x0a800000,
 		0x000e8010,
 		NULL,
@@ -1614,7 +1664,8 @@ Games[] =
 	},
     // Gun Survivor 2 Biohazard Code: Veronica (BHF2 Ver. E)
 	{
-        "gunsur2.zip",
+        "gunsur2",
+		NULL,
 		0x10000000,
 		0x000680d0,
 		NULL,
@@ -1642,7 +1693,8 @@ Games[] =
     },
 	// Gun Survivor 2 Biohazard Code: Veronica (Japan, BHF1 Ver.E)
 	{
-		"gunsur2j.zip",		// FIXME not booting, no test mode
+		"gunsur2j",		// FIXME not booting, no test mode
+		"gunsur2",
 		0x10000000,
 		0x000680d0,
 		NULL,
@@ -1670,7 +1722,8 @@ Games[] =
     },
 	// Giga Wing 2
 	{
-		"gwing2.zip",
+		"gwing2",
+		NULL,
 		0x05800000,
 		0x000b25d0,
 		NULL,
@@ -1688,7 +1741,8 @@ Games[] =
 	},
     // Heavy Metal Geomatrix (JPN, USA, EUR, ASI, AUS) (Rev B)
 	{
-        "hmgeo.zip",
+        "hmgeo",
+		NULL,
         0x06000000,
         0x00038510,
         NULL,
@@ -1711,10 +1765,11 @@ Games[] =
     },
     // House of the Dead 2
     {
-        "hotd2.zip",
+        "hotd2",
+		NULL,
         0xa800000,
         0xfffffff, // not populated
-        "hod2bios.zip",
+        "hod2bios",
         M2,
         {
             { "epr-21585.ic22",  0x0000000, 0x200000 },
@@ -1744,10 +1799,11 @@ Games[] =
     },
     // The House of the Dead 2
     {
-        "hotd2o.zip",
+        "hotd2o",
+		NULL,
         0xa800000,
         0xfffffff, // not populated
-        "hod2bios.zip",
+        "hod2bios",
         M2,
         {
             { "epr-21385.ic22",  0x0000000, 0x200000 },
@@ -1777,10 +1833,11 @@ Games[] =
     },
     // The House of the Dead 2 (Export)
     {
-        "hotd2e.zip",
+        "hotd2e",
+		NULL,
         0xa800000,
         0xfffffff, // not populated
-        "hod2bios.zip",
+        "hod2bios",
         M2,
         {
             { "epr-21805.ic22",  0x0000000, 0x200000 },
@@ -1810,10 +1867,11 @@ Games[] =
     },
     // The House of the Dead 2 (prototype)
     {
-        "hotd2p.zip",
+        "hotd2p",
+		NULL,
         0xa800000,
         0xfffffff, // not populated
-        "hod2bios.zip",
+        "hod2bios",
         M2,
         {
             { "hotd2proto.ic22", 0x000000,  0x200000 },
@@ -1843,7 +1901,8 @@ Games[] =
     },
     // Inu No Osanpo / Dog Walking (Rev A)
     {
-        "inunoos.zip",
+        "inunoos",
+		NULL,
         0x08800000,
         0x294bc3e3,
         NULL,
@@ -1871,7 +1930,8 @@ Games[] =
 	},
 	// Jambo! Safari (Rev A)
 	{
-		"jambo.zip",
+		"jambo",
+		NULL,
 		0x08800000,
 		0x280fab95,
 		NULL,
@@ -1891,7 +1951,8 @@ Games[] =
 	},
     // Mars TV (JPN)
 	{
-        "marstv.zip",
+        "marstv",
+		NULL,
         0x08000000,
         0x280b8ef5,
         NULL,
@@ -1919,7 +1980,8 @@ Games[] =
 	},
     // Mazan: Flash of the Blade (MAZ2 Ver. A)
 	{
-        "mazan.zip",
+        "mazan",
+		NULL,
         0x10000000,
         0x280fea94,
         NULL,
@@ -1939,7 +2001,8 @@ Games[] =
 	},
     // Mazan: Flash of the Blade (US, MAZ3 Ver.A)
     {
-        "mazanu.zip",
+        "mazanu",
+		"mazan",
         0x10000000,
         0x280fea94,
         NULL,
@@ -1959,7 +2022,8 @@ Games[] =
     },
     // Mushiking The King Of Beetles - Mushiking IV / V / VI (World)
     {
-        "mushi2k4.zip",
+        "mushi2k4",
+		NULL,
         0x5800000,
         0xffffffff, // not populated
         NULL,
@@ -1976,7 +2040,8 @@ Games[] =
     },
     // Mushiking The King Of Beetles 2005 First (Japan)
 	{
-        "mushi2k5.zip",
+        "mushi2k5",
+		NULL,
         0x7800000,
         0xffffffff, // not populated
 		NULL,
@@ -1995,7 +2060,8 @@ Games[] =
 	},
     // Mushiking The King Of Beetle (MUSHIUSA '04 1ST, Prototype)
     {
-        "mushikep.zip",
+        "mushikep",
+		"mushike",
         0x07800000,
         0xffffffff, // not populated
         NULL,
@@ -2021,7 +2087,8 @@ Games[] =
     },
 	// Marvel Vs. Capcom 2 New Age of Heroes (USA, Rev A)
 	{
-		"mvsc2u.zip",
+		"mvsc2u",
+		"mvsc2",
 		0x07800000,
 		0x0002c840,
 		NULL,
@@ -2052,7 +2119,8 @@ Games[] =
     },
     // Ninja Assault (NJA3 Ver. A)
 	{
-        "ninjaslt.zip",
+        "ninjaslt",
+		NULL,
         0xb000000,
 		0x000ca510,
 		NULL,
@@ -2079,7 +2147,8 @@ Games[] =
 	},
     // Ninja Assault (Asia, NJA4 Ver.A)
     {
-        "ninjaslta.zip",
+        "ninjaslta",
+		"ninjaslt",
         0xb000000,
         0x000ca510,
         NULL,
@@ -2107,7 +2176,8 @@ Games[] =
     },
     // Ninja Assault (Japan, NJA1 Ver.A)
     {
-        "ninjasltj.zip",
+        "ninjasltj",
+		"ninjaslt",
         0xb000000,
         0x000ca510,
         NULL,
@@ -2136,7 +2206,8 @@ Games[] =
     },
     // Ninja Assault (US, NJA3 Ver.A)
     {
-        "ninjasltu.zip",
+        "ninjasltu",
+		"ninjaslt",
         0xb000000,
         0x000ca510,
         NULL,
@@ -2165,7 +2236,8 @@ Games[] =
     },
     // Oinori-daimyoujin Matsuri
     {
-        "oinori.zip",
+        "oinori",
+		NULL,
         0x05800000,
         0xffffffff, // not populated
         NULL,
@@ -2182,7 +2254,8 @@ Games[] =
     },
     // OutTrigger (JPN, USA, EXP, KOR, AUS)
 	{
-		"otrigger.zip",
+		"otrigger",
+		NULL,
         0xa000000,
 		0x280fea94,
 		NULL,
@@ -2216,7 +2289,8 @@ Games[] =
     },
     // Moero! Justice Gakuen (JPN) / Project Justice (USA, EXP, KOR, AUS) (Rev A)
     {
-        "pjustic.zip",
+        "pjustic",
+		NULL,
         0x0b800000,
         0x000725d0,
         NULL,
@@ -2239,7 +2313,8 @@ Games[] =
 	},
 	// Power Stone
 	{
-		"pstone.zip",
+		"pstone",
+		NULL,
 		0x04800000,
 		0x000e69c1,
 		NULL,
@@ -2260,7 +2335,8 @@ Games[] =
 	},
 	// Power Stone 2
 	{
-		"pstone2.zip",
+		"pstone2",
+		NULL,
 		0x05000000,
 		0x000b8dc0,
 		NULL,
@@ -2281,7 +2357,8 @@ Games[] =
 	},
     // Power Stone 2 (bootleg)
     {
-        "pstone2b.zip",
+        "pstone2b",
+		"pstone2",
         0x05000000,
         0x000b8dc0,
         NULL,
@@ -2302,7 +2379,8 @@ Games[] =
     },
 	// Puyo Puyo Da! (Japan)
 	{
-		"puyoda.zip",
+		"puyoda",
+		NULL,
 		0x0a800000,
 		0x000acd40,
 		NULL,
@@ -2334,7 +2412,8 @@ Games[] =
 	},
 	// Ring Out 4x4 (Rev A)
 	{
-		"ringout.zip",
+		"ringout",
+		NULL,
 		0x05800000,
 		0x280b1e40,
 		NULL,
@@ -2356,7 +2435,8 @@ Games[] =
 	},
     // Ring Out 4x4
     {
-        "ringouto.zip",
+        "ringouto",
+		"ringout",
         0x05800000,
         0x280b1e40,
         NULL,
@@ -2378,7 +2458,8 @@ Games[] =
     },
 	// Samba De Amigo (Rev B)
 	{
-		"samba.zip",
+		"samba",
+		NULL,
 		0x08800000,
 		0x280a8b5d,
 		NULL,
@@ -2406,7 +2487,8 @@ Games[] =
 	},
     // Samba De Amigo (USA, prototype)
     {
-        "sambap.zip",
+        "sambap",
+		NULL,
         0x08800000,
         0x280a8b5d,
         NULL,
@@ -2432,7 +2514,8 @@ Games[] =
     },
 	//Samba de Amigo ver. 2000 (Japan)
 	{
-		"samba2k.zip",
+		"samba2k",
+		NULL,
 		0x0b800000,
 		0x281702cf,
 		NULL,
@@ -2455,7 +2538,8 @@ Games[] =
 	},
 	// Sega Tetris
 	{
-		"sgtetris.zip",
+		"sgtetris",
+		NULL,
 		0x03800000,
 		0x2808ae51,
 		NULL,
@@ -2474,7 +2558,8 @@ Games[] =
 	},
     // Dengen Tenshi Taisen Janshi Shangri-la (JPN, USA, EXP, KOR, AUS)
 	{
-        "shangril.zip",
+        "shangril",
+		NULL,
         0x06800000,
         0xffffffff, // not populated
         NULL,
@@ -2498,7 +2583,8 @@ Games[] =
 	},
     // Star Horse (satellite)
     { 
-        "shorse.zip",
+        "shorse",
+		NULL,
         0x7000000,
         0xffffffff, // not populated
         NULL,
@@ -2521,7 +2607,8 @@ Games[] =
     },
     // Star Horse (live and backup)
     {
-        "shorsel.zip",
+        "shorsel",
+		"shorse",
         0x7000000,
         0xffffffff, // not populated
         NULL,
@@ -2556,7 +2643,8 @@ Games[] =
     },
     // Star Horse (main screens)
     {
-        "shorsem.zip",
+        "shorsem",
+		"shorse",
         0x7000000,
         0xffffffff, // not populated
         NULL,
@@ -2576,7 +2664,8 @@ Games[] =
     },
     // Star Horse Progress (backup data)
     {
-        "shorsepb.zip",
+        "shorsepb",
+		"shorsep",
         0x7000000,
         0xffffffff, // not populated
         NULL,
@@ -2593,7 +2682,8 @@ Games[] =
     },
     // Star Horse Progress (live, Rev A)
     {
-        "shorsepl.zip",
+        "shorsepl",
+		"shorsep",
         0x7000000,
         0xffffffff, // not populated
         NULL,
@@ -2616,7 +2706,8 @@ Games[] =
     },
     // Star Horse Progress (main screens)
     {
-        "shorsepm.zip",
+        "shorsepm",
+		"shorsep",
         0x7000000,
         0xffffffff, // not populated
         NULL,
@@ -2634,7 +2725,8 @@ Games[] =
     },
     // Star Horse Progress (sound & backup)
     {
-        "shorseps.zip",
+        "shorseps",
+		"shorsep",
         0x7000000,
         0xffffffff, // not populated
         NULL,
@@ -2652,7 +2744,8 @@ Games[] =
     },
     // Super Major League '99
 	{
-        "smlg99.zip",
+        "smlg99",
+		NULL,
         0x0b000000,
         0x28048a01,
         NULL,
@@ -2686,7 +2779,8 @@ Games[] =
 	},
 	// Slashout
 	{
-		"slasho.zip",
+		"slasho",
+		NULL,
 		0x09000000,
 		0x281a66ca,
 		NULL,
@@ -2715,7 +2809,8 @@ Games[] =
 	},
 	// Sega Marine Fishing
 	{
-		"smarinef.zip",
+		"smarinef",
+		NULL,
 		0x06800000,
         0xffffffff, // not populated
 		NULL,
@@ -2739,7 +2834,8 @@ Games[] =
 	},
     // Spawn In the Demon's Hand (JPN, USA, EUR, ASI, AUS) (Rev B)
 	{
-        "spawn.zip",
+        "spawn",
+		NULL,
         0x05800000,
         0x00078d01,
 		NULL,
@@ -2761,7 +2857,8 @@ Games[] =
 	},
 	// Sega Strike Fighter (Rev A)
 	{
-		"sstrkfgt.zip",
+		"sstrkfgt",
+		NULL,
 		0x0b000000,
 		0x28132303,
 		NULL,
@@ -2793,7 +2890,8 @@ Games[] =
 	},
     // Sega Strike Fighter (Rev A, no training mode)
     {
-        "sstrkfgta.zip",
+        "sstrkfgta",
+		"sstrkfgt",
         0x0b000000,
         0x28132303,
         NULL,
@@ -2825,7 +2923,8 @@ Games[] =
     },
     // Idol Janshi Suchie-Pai 3 (JPN)
 	{
-        "suchie3.zip",
+        "suchie3",
+		NULL,
         0x07800000,
         0x000368e1,
 		NULL,
@@ -2852,7 +2951,8 @@ Games[] =
     },
     // Touch de Uno! / Unou Nouryoku Check Machine
     {
-        "tduno.zip",
+        "tduno",
+		NULL,
         0x04000000,
         0x28028ea5,
         NULL,
@@ -2877,7 +2977,8 @@ Games[] =
 	},
 	// The Typing of the Dead (Rev A)
 	{
-		"totd.zip",
+		"totd",
+		NULL,
 		0x0b000000,
         0xffffffff, // not populated
 		NULL,
@@ -2911,7 +3012,8 @@ Games[] =
 	},
     // The Typing of the Dead
     {
-        "totdo.zip",
+        "totdo",
+		"totd",
         0x0b000000,
         0xffffffff, // not populated
         NULL,
@@ -2944,7 +3046,8 @@ Games[] =
     },
     // Shin Nihon Pro Wrestling Toukon Retsuden 4 Arcade Edition (TRF1 Ver. A)
     {
-        "toukon4.zip",
+        "toukon4",
+		NULL,
         0x10000000,
         0x052e2901,
         NULL,
@@ -2972,7 +3075,8 @@ Games[] =
     },
 	// Toy Fighter
 	{
-		"toyfight.zip",
+		"toyfight",
+		NULL,
 		0x08000000,
 		0x2802ca85,
 		NULL,
@@ -2994,7 +3098,8 @@ Games[] =
 	},
 	// Virtua NBA (USA)
 	{
-		"virnba.zip",
+		"virnba",
+		NULL,
 		0x0b000000,
         0xffffffff, // not populated
 		NULL,
@@ -3027,7 +3132,8 @@ Games[] =
 	},
     // Virtua NBA
     {
-        "virnbao.zip",
+        "virnbao",
+		"virnba",
         0x0b000000,
         0xffffffff, // not populated
         NULL,
@@ -3060,7 +3166,8 @@ Games[] =
     },
     // Virtua NBA (prototype)
     {
-        "virnbap.zip",
+        "virnbap",
+		"virnba",
         0x0b000000,
         0xffffffff, // not populated
         NULL,
@@ -3093,7 +3200,8 @@ Games[] =
     },
     // Virtual On Oratorio Tangram M.S.B.S. ver5.66 2000 Edition
     {
-        "vonot.zip",
+        "vonot",
+		NULL,
         0x07000000,
         0x28010715,
         NULL,
@@ -3118,7 +3226,8 @@ Games[] =
     },
     // Virtua Striker 2 Ver. 2000 (JPN, USA, EXP, KOR, AUS) (Rev C)
     {
-		"vs2_2k.zip",
+		"vs2_2k",
+		NULL,
         0x8000000,
 		0x28088b08,
 		NULL,
@@ -3145,7 +3254,8 @@ Games[] =
 	},
     // Virtua Striker 2 Ver. 2000
     {
-        "vs2_2ko.zip",
+        "vs2_2ko",
+		"vs2_2k",
         0x8000000,
         0x28088b08,
         NULL,
@@ -3172,7 +3282,8 @@ Games[] =
     },
     // Virtua Tennis (USA, EXP, KOR, AUS) / Power Smash (JPN)
 	{
-        "vtennis.zip",
+        "vtennis",
+		NULL,
 		0x06000000,
 		0x2803eb15,
 		NULL,
@@ -3195,7 +3306,8 @@ Games[] =
 	},
     // Wave Runner GP
 	{
-        "wrungp.zip",
+        "wrungp",
+		NULL,
         0x06800000,
         0xffffffff, // not populated
 		NULL,
@@ -3213,7 +3325,8 @@ Games[] =
 	},
     // Wave Runner GP (USA, Rev A)
     {
-        "wrungpo.zip",
+        "wrungpo",
+		"wrungp",
         0x06800000,
         0xffffffff, // not populated
         NULL,
@@ -3237,7 +3350,8 @@ Games[] =
     },
     // World Kicks (WK2 Ver. A)
 	{
-        "wldkicks.zip",
+        "wldkicks",
+		NULL,
         0xb000000,
 		0x052e2901,
 		NULL,
@@ -3259,7 +3373,8 @@ Games[] =
 	},
     // World Kicks (Japan, WK1 Ver.A)
     {
-        "wldkicksj.zip",
+        "wldkicksj",
+		"wldkicks",
         0xb000000,
         0x052e2901,
         NULL,
@@ -3281,7 +3396,8 @@ Games[] =
     },
     // World Kicks (US, WK3 Ver.A)
     {
-        "wldkicksu.zip",
+        "wldkicksu",
+		"wldkicks",
         0xb000000,
         0x052e2901,
         NULL,
@@ -3303,7 +3419,8 @@ Games[] =
     },
     // World Kicks PCB (Japan, WKC1 Ver.A)
     {
-        "wldkickspj.zip",
+        "wldkickspj",
+		"wldkicks",
         0xb000000,
         0x052e2901,
         NULL,
@@ -3325,7 +3442,8 @@ Games[] =
     },
     // World Kicks PCB (World, WKC2 Ver.A)
     {
-        "wldkickspw.zip",
+        "wldkickspw",
+		"wldkicks",
         0xb000000,
         0x052e2901,
         NULL,
@@ -3347,7 +3465,8 @@ Games[] =
     },
     // WWF Royal Rumble (JPN, USA, EXP, KOR, AUS)
 	{
-        "wwfroyal.zip",
+        "wwfroyal",
+		NULL,
         0x08800000,
         0x281627c3,
 		NULL,
@@ -3367,7 +3486,8 @@ Games[] =
 	},
 	// Zero Gunner 2
 	{
-		"zerogu2.zip",
+		"zerogu2",
+		NULL,
 		0x05800000,
 		0x0007c010,
 		NULL,
@@ -3384,7 +3504,8 @@ Games[] =
 	},
 	// Zombie Revenge
 	{
-        "zombrvn.zip",
+        "zombrvn",
+		NULL,
         0xa000000,
         0x28012b41,
         NULL,
@@ -3416,7 +3537,8 @@ Games[] =
     },
 	// Zombie Revenge
 	{
-		"zombrvno.zip",
+		"zombrvno",
+		"zombrvn",
 		0x0a000000,
 		0x28012b41,
 		NULL,
@@ -3449,10 +3571,11 @@ Games[] =
     // Naomi M4 Roms
     // Akatsuki Blitzkampf Ausf. Achse (Japan)
     {
-        "ausfache.zip",
+        "ausfache",
+		NULL,
         0x10000000,
         0x5504,
-        "naomi.zip",
+        "naomi",
         M4,
         {
             { "ic8.bin", 0x0000000, 0x4000000 },
@@ -3464,10 +3587,11 @@ Games[] =
     },
     // Asian Dynamite
     {
-        "asndynmt.zip",
+        "asndynmt",
+		NULL,
         0x10000000,
         0x5504,
-        "naomi.zip",
+        "naomi",
         M4,
         {
             { "fpr-24382.ic8",  0x0000000, 0x4000000 },
@@ -3480,10 +3604,11 @@ Games[] =
     },
     // Asian Dynamite / Dynamite Deka EX (older)
     {
-        "asndynmto.zip",
+        "asndynmto",
+		"asndynmt",
         0x10000000,
         0x5504,
-        "naomi.zip",
+        "naomi",
         M4,
         {
             { "fpr-24382.ic8",  0x0000000, 0x4000000 },
@@ -3499,10 +3624,11 @@ Games[] =
     },
     // Illvelo (Illmatic Envelope)
     {
-        "illvelo.zip",
+        "illvelo",
+		NULL,
         0x10000000,
         0x5504,
-        "naomi.zip",
+        "naomi",
         M4,
         {
             { "fpr-24437.ic8",  0x0000000, 0x4000000 },
@@ -3514,10 +3640,11 @@ Games[] =
     },
     // Manic Panic Ghosts! *** BAD DUMP ***
     {
-        "manicpnc.zip",
+        "manicpnc",
+		NULL,
         0x14000000,
         0x5505,
-        "naomi.zip",
+        "naomi",
         M4,
         {
             { "fpr-24408.ic8",  0x00000000, 0x4000000 },
@@ -3538,10 +3665,11 @@ Games[] =
     },
     // Mamoru-kun wa Norowarete Shimatta!
     {
-        "mamonoro.zip",
+        "mamonoro",
+		NULL,
         0x10000000,
         0x5504,
-        "naomi.zip",
+        "naomi",
         M4,
         {
             { "ic8.bin",  0x0000000, 0x4000000 },
@@ -3553,10 +3681,11 @@ Games[] =
     },
     // Melty Blood Actress Again Version A (Japan, Rev A)
     {
-        "mbaa.zip",
+        "mbaa",
+		NULL,
         0x18000000,
         0x5586,
-        "naomi.zip",
+        "naomi",
         M4,
         {
             { "ic8.bin",       0x00000000, 0x4000000 },
@@ -3572,10 +3701,11 @@ Games[] =
     },
     // Melty Blood Actress Again (Japan) (Clone)
     {
-        "mbaao.zip",
+        "mbaao",
+		"mbaa",
         0x18000000,
         0x5506,
-        "naomi.zip",
+        "naomi",
         M4,
         {
             { "ic8.bin",       0x00000000, 0x4000000 },
@@ -3590,10 +3720,11 @@ Games[] =
     },
     // Mushiking The King Of Beetles - Mushiking II / III / III+ (Ver. 1.001) (World)
     {
-        "mushi2eo.zip",
+        "mushi2eo",
+		"mushik2e",
         0x8000000,
         0x5502,
-        "naomi.zip",
+        "naomi",
         M4,
         {
             { "fpr-24333.ic8", 0x0000000, 0x4000000 },
@@ -3607,10 +3738,11 @@ Games[] =
     },
     // MushiKing II - The King Of Beetle II ENG (Ver. 1.001)
     {
-        "mushik2e.zip",
+        "mushik2e",
+		NULL,
         0x8000000,
         0x5582,
-        "naomi.zip",
+        "naomi",
         M4,
         {
             { "fpr-24333.ic8", 0x0000000, 0x4000000 },
@@ -3627,10 +3759,11 @@ Games[] =
     // Mushiking The King Of Beetles - Mushiking IV / V / VI (World)
     // change game version (4/5/6): in BACKUP DATA CLEAR menu hold P1 and P2 buttons 1 for 3 seconds, then change version number in appeared menu and select YES(CLEAR)
     {
-        "mushik4e.zip",
+        "mushik4e",
+		NULL,
         0x8000000,
         0x5502,
-        "naomi.zip",
+        "naomi",
         M4,
         {
             { "fpr-24417.ic8", 0x0000000, 0x4000000 },
@@ -3645,10 +3778,11 @@ Games[] =
     },
     // Pokasuka Ghost *** BAD DUMP ***
     {
-        "pokasuka.zip",
+        "pokasuka",
+		NULL,
         0x14000000,
         0x5505,
-        "naomi.zip",
+        "naomi",
         M4,
         {
             { "fpr-24365.ic8",  0x00000000, 0x4000000 },
@@ -3669,10 +3803,11 @@ Games[] =
     },
     // Radirgy Noa
     {
-        "radirgyn.zip",
+        "radirgyn",
+		NULL,
         0x10000000,
         0x5504,
-        "naomi.zip",
+        "naomi",
         M4,
         {
             { "ic8.bin", 0x0000000, 0x4000000 },
@@ -3683,10 +3818,11 @@ Games[] =
     },
     // Rhythm Tengoku
     {
-        "rhytngk.zip",
+        "rhytngk",
+		NULL,
         0x10000000,
         0x5504,
-        "naomi.zip",
+        "naomi",
         M4,
         {
             { "fpr-24423.ic8",  0x00000000, 0x4000000 },
@@ -3699,7 +3835,8 @@ Games[] =
     },
     // Shooting Love 2007
     {
-        "sl2007.zip",
+        "sl2007",
+		NULL,
         0x10000000,
         0x5504,
         NULL, // requires epr-21576g.ic27
@@ -3715,10 +3852,11 @@ Games[] =
     },
     // Touch De Zunou (Rev A) *** BAD DUMP ***
     {
-        "zunou.zip",
+        "zunou",
+		NULL,
         0x8000000,
         0x5502,
-        "naomi.zip",
+        "naomi",
         M4,
         {
             { "fpr-24338.ic8", 0x0000000, 0x4000000 },
@@ -3735,10 +3873,11 @@ Games[] =
 
 	// Azumanga Daioh Puzzle Bobble (GDL-0018)
 	{
-		"azumanga.zip",
+		"azumanga",
+		NULL,
 		0x4000,
 		0,
-		"naomi.zip",
+		"naomi",
 		GD,
 		{
 			{ "317-5091-jpn.pic", 0, 0x4000 },
@@ -3748,10 +3887,11 @@ Games[] =
 	},
 	// Border Down (Rev A) (GDL-0023A)
 	{
-		"bdrdown.zip",
+		"bdrdown",
+		NULL,
 		0x4000,
 		0,
-		"naomi.zip",
+		"naomi",
 		GD,
 		{
 			{ "317-5097-jpn.pic", 0, 0x4000 },
@@ -3762,10 +3902,11 @@ Games[] =
 	},
 	// Chaos Field (Japan) (GDL-0025)
 	{
-		"cfield.zip",
+		"cfield",
+		NULL,
 		0x4000,
 		0,
-		"naomi.zip",
+		"naomi",
 		GD,
 		{
 			{ "317-5102-com.pic", 0, 0x4000 },
@@ -3776,10 +3917,11 @@ Games[] =
 	},
 	// Musapey's Choco Marker (Rev A) (GDL-0014A)
 	{
-		"chocomk.zip",
+		"chocomk",
+		NULL,
 		0x4000,
 		0,
-		"naomi.zip",
+		"naomi",
 		GD,
 		{
 			{ "317-5085-jpn.pic", 0, 0x4000 },
@@ -3789,10 +3931,11 @@ Games[] =
 	},
 	// Cleopatra Fortune Plus (GDL-0012)
 	{
-		"cleoftp.zip",
+		"cleoftp",
+		NULL,
 		0x4000,
 		0,
-		"naomi.zip",
+		"naomi",
 		GD,
 		{
 			{ "317-5083-com.pic", 0, 0x4000 },
@@ -3802,10 +3945,11 @@ Games[] =
 	},
 	// Confidential Mission (GDS-0001)
 	{
-		"confmiss.zip",
+		"confmiss",
+		NULL,
 		0x4000,
 		0,
-		"naomi.zip",
+		"naomi",
 		GD,
 		{
 			{ "317-0298-com.pic",  0, 0x4000 },
@@ -3815,10 +3959,11 @@ Games[] =
 	},
 	// Capcom Vs. SNK Millennium Fight 2000 Pro (Japan) (GDL-0004)
 	{
-		"cvsgd.zip",
+		"cvsgd",
+		NULL,
 		0x4000,
 		0,
-		"naomi.zip",
+		"naomi",
 		GD,
 		{
 			{ "317-5076-jpn.pic", 0, 0x4000 },
@@ -3830,10 +3975,11 @@ Games[] =
 	// ver 010804
 	// with Japan BIOS will be shown 010705, likely forgot / was not cared to update it
 	{
-		"cvs2.zip",
+		"cvs2",
+		NULL,
 		0x4000,
 		0,
-		"naomi.zip",
+		"naomi",
 		GD,
 		{
 			{ "317-5078-com.pic", 0, 0x4000 },
@@ -3844,10 +3990,11 @@ Games[] =
 	// Capcom Vs. SNK 2 Millionaire Fighting 2001 (Rev A) (GDL-0007A)
 	// ver 010705
 	{
-		"cvs2mf.zip",
+		"cvs2mf",
+		"cvs2",
 		0x4000,
 		0,
-		"naomi.zip",
+		"naomi",
 		GD,
 		{
 			{ "317-5078-com.pic", 0, 0x4000 },
@@ -3857,10 +4004,11 @@ Games[] =
 	},
 	// Dragon Treasure (Rev B) (GDS-0030B)
 	{
-		"dragntr.zip",
+		"dragntr",
+		NULL,
 		0x4000,
 		0,
-		"naomi.zip",
+		"naomi",
 		GD,
 		{
 			{ "317-0363-com.pic", 0, 0x4000 },
@@ -3870,10 +4018,11 @@ Games[] =
 	},
 	// Dragon Treasure (Rev A) (GDS-0030A)
 	{
-		"dragntra.zip",
+		"dragntra",
+		NULL,
 		0x4000,
 		0,
-		"naomi.zip",
+		"naomi",
 		GD,
 		{
 			{ "317-0363-com.pic", 0, 0x4000 },
@@ -3883,10 +4032,11 @@ Games[] =
 	},
 	// Dragon Treasure 2 (Rev A) (GDS-0037A)
 	{
-		"dragntr2.zip",
+		"dragntr2",
+		NULL,
 		0x4000,
 		0,
-		"naomi.zip",
+		"naomi",
 		GD,
 		{
 			{ "317-0389-com.pic", 0, 0x4000 },
@@ -3896,10 +4046,11 @@ Games[] =
 	},
 	// Dragon Treasure 3 (Rev A) (GDS-0041A)
 	{
-		"dragntr3.zip",
+		"dragntr3",
+		NULL,
 		0x4000,
 		0,
-		"naomi.zip",
+		"naomi",
 		GD,
 		{
 			{ "317-xxxx-com.pic", 0, 0x4000 },
@@ -3909,10 +4060,11 @@ Games[] =
 	},
 	// Virtua Golf / Dynamic Golf (Rev A) (GDS-0009A)
 	{
-		"dygolf.zip",
+		"dygolf",
+		NULL,
 		0x4000,
 		0,
-		"naomi.zip",
+		"naomi",
 		GD,
 		{
 			{ "317-0308-com.pic", 0, 0x4000 },
@@ -3922,10 +4074,11 @@ Games[] =
 	},
 	// Guilty Gear XX (GDL-0011)
 	{
-		"ggxx.zip",
+		"ggxx",
+		NULL,
 		0x4000,
 		0,
-		"naomi.zip",
+		"naomi",
 		GD,
 		{
 			{ "317-5082-com.pic", 0, 0x4000 },
@@ -3935,10 +4088,11 @@ Games[] =
 	},
 	// Guilty Gear XX Accent Core (Japan) (GDL-0041)
 	{
-		"ggxxac.zip",
+		"ggxxac",
+		NULL,
 		0x4000,
 		0,
-		"naomi.zip",
+		"naomi",
 		GD,
 		{
 			{ "317-5126-jpn.pic", 0, 0x4000 },
@@ -3948,10 +4102,11 @@ Games[] =
 	},
 	// Guilty Gear XX #Reload (Japan, Rev A) (GDL-0019A)
 	{
-		"ggxxrl.zip",
+		"ggxxrl",
+		NULL,
 		0x4000,
 		0,
-		"naomi.zip",
+		"naomi",
 		GD,
 		{
 			{ "317-5092-jpn.pic", 0, 0x4000 },
@@ -3961,10 +4116,11 @@ Games[] =
 	},
 	// Guilty Gear XX #Reload (Japan) (GDL-0019)
 	{
-		"ggxxrlo.zip",
+		"ggxxrlo",
+		"ggxxrl",
 		0x4000,
 		0,
-		"naomi.zip",
+		"naomi",
 		GD,
 		{
 			{ "317-5092-jpn.pic" , 0, 0x4000 },
@@ -3974,10 +4130,11 @@ Games[] =
 	},
 	// Guilty Gear XX Slash (Japan, Rev A) (GDL-0033A)
 	{
-		"ggxxsla.zip",
+		"ggxxsla",
+		NULL,
 		0x4000,
 		0,
-		"naomi.zip",
+		"naomi",
 		GD,
 		{
 			{ "317-5111-jpn.pic", 0, 0x4000 },
@@ -3987,10 +4144,11 @@ Games[] =
 	},
 	// Mobile Suit Gundam: Federation Vs. Zeon (GDL-0001)
 	{
-		"gundmgd.zip",
+		"gundmgd",
+		NULL,
 		0x4000,
 		0,
-		"naomi.zip",
+		"naomi",
 		GD,
 		{
 			{ "317-5069-com.pic", 0, 0x4000 },
@@ -4001,10 +4159,11 @@ Games[] =
 	},
 	// Mobile Suit Gundam: Federation Vs. Zeon DX (USA, Japan) (GDL-0006)
 	{
-		"gundmxgd.zip",
+		"gundmxgd",
+		NULL,
 		0x4000,
 		0,
-		"naomi.zip",
+		"naomi",
 		GD,
 		{
 			{ "317-5079-com.pic", 0, 0x4000 },
@@ -4015,10 +4174,11 @@ Games[] =
 	},
 	// Ikaruga (GDL-0010)
 	{
-		"ikaruga.zip",
+		"ikaruga",
+		NULL,
 		0x4000,
 		0,
-		"naomi.zip",
+		"naomi",
 		GD,
 		{
 			{ "317-5081-jpn.pic", 0, 0x4000 },
@@ -4028,10 +4188,11 @@ Games[] =
 	},
 	// Jingi Storm - The Arcade (Japan) (GDL-0037)
 	{
-		"jingystm.zip",
+		"jingystm",
+		NULL,
 		0x4000,
 		0,
-		"naomi.zip",
+		"naomi",
 		GD,
 		{
 			{ "317-5122-jpn.pic", 0, 0x4000 },
@@ -4041,10 +4202,11 @@ Games[] =
 	},
 	// Karous (Japan) (GDL-0040)
 	{
-		"karous.zip",
+		"karous",
+		NULL,
 		0x4000,
 		0,
-		"naomi.zip",
+		"naomi",
 		GD,
 		{
 			{ "317-5125-com.pic", 0, 0x4000 },
@@ -4055,10 +4217,11 @@ Games[] =
 	},
 	// La Keyboard (GDS-0017)
 	{
-		"keyboard.zip",
+		"keyboard",
+		NULL,
 		0x4000,
 		0,
-		"naomi.zip",
+		"naomi",
 		GD,
 		{
 			{ "317-0323-com.pic", 0, 0x4000 },
@@ -4069,10 +4232,11 @@ Games[] =
 	},
 	// Kurukuru Chameleon (Japan) (GDL-0034)
 	{
-		"kurucham.zip",
+		"kurucham",
+		NULL,
 		0x4000,
 		0,
-		"naomi.zip",
+		"naomi",
 		GD,
 		{
 			{ "317-5115-jpn.pic", 0, 0x4000 },
@@ -4082,10 +4246,11 @@ Games[] =
 	},
 	// Lupin The Third - The Shooting (GDS-0018)
 	{
-		"lupinsho.zip",
+		"lupinsho",
+		NULL,
 		0x4000,
 		0,
-		"naomi.zip",
+		"naomi",
 		GD,
 		{
 			{ "317-0325-jpn.pic", 0, 0x4000 },
@@ -4095,10 +4260,11 @@ Games[] =
 	},
 	// Lupin The Third - The Typing (Rev A) (GDS-0021A)
 	{
-		"luptype.zip",
+		"luptype",
+		NULL,
 		0x4000,
 		0,
-		"naomi.zip",
+		"naomi",
 		GD,
 		{
 			{ "317-0332-jpn.pic", 0, 0x4000 },
@@ -4108,10 +4274,11 @@ Games[] =
 	},
 	// Melty Blood Act Cadenza Version B2 (Japan) (GDL-0039A)
 	{
-		"meltyb.zip",
+		"meltyb",
+		NULL,
 		0x4000,
 		0,
-		"naomi.zip",
+		"naomi",
 		GD,
 		{
 			{ "317-5124-jpn.pic", 0, 0x4000 },
@@ -4121,10 +4288,11 @@ Games[] =
 	},
 	// Melty Blood Act Cadenza Ver. A (Japan) (GDL-0028C)
 	{
-		"meltybld.zip",
+		"meltybld",
+		NULL,
 		0x4000,
 		0,
-		"naomi.zip",
+		"naomi",
 		GD,
 		{
 			{ "317-5104-jpn.pic", 0, 0x4000 },
@@ -4134,10 +4302,11 @@ Games[] =
 	},
 	// Melty Blood Act Cadenza (Japan) (GDL-0028)
 	{
-		"meltyblo.zip",
+		"meltyblo",
+		"meltybld",
 		0x4000,
 		0,
-		"naomi.zip",
+		"naomi",
 		GD,
 		{
 			{ "317-5104-jpn.pic", 0, 0x4000 },
@@ -4147,10 +4316,11 @@ Games[] =
 	},
 	// Melty Blood Act Cadenza Version B (Japan) (GDL-0039)
 	{
-		"meltybo.zip",
+		"meltybo",
+		"meltyb",
 		0x4000,
 		0,
-		"naomi.zip",
+		"naomi",
 		GD,
 		{
 			{ "317-5124-jpn.pic", 0, 0x4000 },
@@ -4160,10 +4330,11 @@ Games[] =
 	},
 	// Moeru Casinyo (Japan) (GDL-0013)
 	{
-		"moeru.zip",
+		"moeru",
+		NULL,
 		0x4000,
 		0,
-		"naomi.zip",
+		"naomi",
 		GD,
 		{
 			{ "317-5084-jpn.pic", 0, 0x4000 },
@@ -4174,10 +4345,11 @@ Games[] =
 	},
 	// The Maze of the Kings (GDS-0022)
 	{
-		"mok.zip",
+		"mok",
+		NULL,
 		0x4000,
 		0,
-		"naomi.zip",
+		"naomi",
 		GD,
 		{
 			{ "317-0333-com.pic", 0, 0x4000 },
@@ -4187,10 +4359,11 @@ Games[] =
 	},
 	// Monkey Ball (GDS-0008)
 	{
-		"monkeyba.zip",
+		"monkeyba",
+		NULL,
 		0x4000,
 		0,
-		"naomi.zip",
+		"naomi",
 		GD,
 		{
 			{ "317-0307-com.pic", 0, 0x4000 },
@@ -4200,10 +4373,11 @@ Games[] =
 	},
 	// Psyvariar 2 - The Will To Fabricate (Japan) (GDL-0024)
 	{
-		"psyvar2.zip",
+		"psyvar2",
+		NULL,
 		0x4000,
 		0,
-		"naomi.zip",
+		"naomi",
 		GD,
 		{
 			{ "317-5100-jpn.pic", 0, 0x4000 },
@@ -4214,10 +4388,11 @@ Games[] =
 	},
 	// Puyo Pop Fever (World) (GDS-0034)
 	{
-		"puyofev.zip",
+		"puyofev",
+		NULL,
 		0x4000,
 		0,
-		"naomi.zip",
+		"naomi",
 		GD,
 		{
 			{ "317-0375-com.pic", 0, 0x4000 },
@@ -4228,10 +4403,11 @@ Games[] =
 	},
 	// Puyo Puyo Fever (Japan) (GDS-0031)
 	{
-		"puyofevj.zip",
+		"puyofevj",
+		"puyofev",
 		0x4000,
 		0,
-		"naomi.zip",
+		"naomi",
 		GD,
 		{
 			{ "317-0375-com.pic", 0, 0x4000 },
@@ -4242,10 +4418,11 @@ Games[] =
 	},
 	// Quiz Keitai Q mode (GDL-0017)
 	{
-		"quizqgd.zip",
+		"quizqgd",
+		NULL,
 		0x4000,
 		0,
-		"naomi.zip",
+		"naomi",
 		GD,
 		{
 			{ "317-5090-jpn.pic", 0, 0x4000 },
@@ -4256,10 +4433,11 @@ Games[] =
 	},
 	// Radirgy (Japan, Rev A) (GDL-0032A)
 	{
-		"radirgy.zip",
+		"radirgy",
+		NULL,
 		0x4000,
 		0,
-		"naomi.zip",
+		"naomi",
 		GD,
 		{
 			{ "317-5110-jpn.pic", 0, 0x4000 },
@@ -4270,10 +4448,11 @@ Games[] =
 	},
 	// Radirgy (Japan) (GDL-0032)
 	{
-		"radirgyo.zip",
+		"radirgyo",
+		"radirgy",
 		0x4000,
 		0,
-		"naomi.zip",
+		"naomi",
 		GD,
 		{
 			{ "317-5110-jpn.pic", 0, 0x4000 },
@@ -4284,10 +4463,11 @@ Games[] =
 	},
 	// Senko No Ronde (Japan, Rev A) (GDL-0030A)
 	{
-		"senko.zip",
+		"senko",
+		NULL,
 		0x4000,
 		0,
-		"naomi.zip",
+		"naomi",
 		GD,
 		{
 			{ "317-5107-jpn.pic", 0, 0x4000 },
@@ -4298,10 +4478,11 @@ Games[] =
 	},
 	// Senko No Ronde (Japan) (GDL-0030)
 	{
-		"senkoo.zip",
+		"senkoo",
+		"senko",
 		0x4000,
 		0,
-		"naomi.zip",
+		"naomi",
 		GD,
 		{
 			{ "317-5107-jpn.pic", 0, 0x4000 },
@@ -4312,10 +4493,11 @@ Games[] =
 	},
 	// Senko No Ronde Special (Export, Japan) (GDL-0038)
 	{
-		"senkosp.zip",
+		"senkosp",
+		NULL,
 		0x4000,
 		0,
-		"naomi.zip",
+		"naomi",
 		GD,
 		{
 			{ "317-5123-com.pic", 0, 0x4000 },
@@ -4325,10 +4507,11 @@ Games[] =
 	},
 	// Street Fighter Zero 3 Upper (Japan) (GDL-0002)
 	{
-		"sfz3ugd.zip",
+		"sfz3ugd",
+		NULL,
 		0x4000,
 		0,
-		"naomi.zip",
+		"naomi",
 		GD,
 		{
 			{ "317-5072-com.pic", 0, 0x4000 },
@@ -4339,10 +4522,11 @@ Games[] =
 	},
 	// Shakatto Tambourine (Rev B) (GDS-0002B)
 	{
-		"shaktam.zip",
+		"shaktam",
+		NULL,
 		0x4000,
 		0,
-		"naomi.zip",
+		"naomi",
 		GD,
 		{
 			{ "317-0299-com.pic", 0, 0x4000 },
@@ -4352,10 +4536,11 @@ Games[] =
 	},
 	// Shakatto Tambourine Cho Powerup Chu (2K1 AUT) (GDS-0016)
 	{
-		"shaktamb.zip",
+		"shaktamb",
+		NULL,
 		0x4000,
 		0,
-		"naomi.zip",
+		"naomi",
 		GD,
 		{
 			{ "317-0321-com.pic", 0, 0x4000 },
@@ -4365,10 +4550,11 @@ Games[] =
 	},
 	// Shakatto Tambourine Motto Norinori Shinkyoku Tsuika (2K1 SPR) (GDS-0013)
 	{
-		"shaktmsp.zip",
+		"shaktmsp",
+		NULL,
 		0x4000,
 		0,
-		"naomi.zip",
+		"naomi",
 		GD,
 		{
 			{ "317-0315-com.pic", 0, 0x4000 },
@@ -4378,10 +4564,11 @@ Games[] =
 	},
 	// Shikigami No Shiro II / The Castle of Shikigami II (GDL-0021)
 	{
-		"shikgam2.zip",
+		"shikgam2",
+		NULL,
 		0x4000,
 		0,
-		"naomi.zip",
+		"naomi",
 		GD,
 		{
 			{ "317-5095-jpn.pic", 0, 0x4000 },
@@ -4392,10 +4579,11 @@ Games[] =
 	},
 	// Slashout (GDS-0004)
 	{
-		"slashout.zip",
+		"slashout",
+		NULL,
 		0x4000,
 		0,
-		"naomi.zip",
+		"naomi",
 		GD,
 		{
 			{ "317-0302-com.pic",  0, 0x4000 },
@@ -4405,10 +4593,11 @@ Games[] =
 	},
 	// Spikers Battle (GDS-0005)
 	{
-		"spkrbtl.zip",
+		"spkrbtl",
+		NULL,
 		0x4000,
 		0,
-		"naomi.zip",
+		"naomi",
 		GD,
 		{
 			{ "317-0303-com.pic", 0, 0x4000 },
@@ -4418,10 +4607,11 @@ Games[] =
 	},
 	// Sports Jam (GDS-0003)
 	{
-		"sprtjam.zip",
+		"sprtjam",
+		NULL,
 		0x4000,
 		0,
-		"naomi.zip",
+		"naomi",
 		GD,
 		{
 			{ "317-0300-com.pic", 0, 0x4000 },
@@ -4431,10 +4621,11 @@ Games[] =
 	},
 	// Super Shanghai 2005 (Japan, Rev A) (GDL-0031A)
 	{
-		"ss2005.zip",
+		"ss2005",
+		NULL,
 		0x4000,
 		0,
-		"naomi.zip",
+		"naomi",
 		GD,
 		{
 			{ "317-5108-jpn.pic", 0, 0x4000 },
@@ -4445,10 +4636,11 @@ Games[] =
 	},
 	// Super Shanghai 2005 (Japan) (GDL-0031)
 	{
-		"ss2005o.zip",
+		"ss2005o",
+		"ss2005",
 		0x4000,
 		0,
-		"naomi.zip",
+		"naomi",
 		GD,
 		{
 			{ "317-5108-jpn.pic", 0, 0x4000 },
@@ -4459,10 +4651,11 @@ Games[] =
 	},
 	// Doki Doki Idol Star Seeker (GDL-0005)
 	{
-		"starseek.zip",
+		"starseek",
+		NULL,
 		0x4000,
 		0,
-		"naomi.zip",
+		"naomi",
 		GD,
 		{
 			{ "317-5077-jpn.pic", 0, 0x4000 },
@@ -4472,10 +4665,11 @@ Games[] =
 	},
 	// Noukone Puzzle Takoron (Japan) (GDL-0042)
 	{
-		"takoron.zip",
+		"takoron",
+		NULL,
 		0x4000,
 		0,
-		"naomi.zip",
+		"naomi",
 		GD,
 		{
 			{ "317-5127-jpn.pic", 0, 0x4000 },
@@ -4485,10 +4679,11 @@ Games[] =
 	},
 	// Tetris Kiwamemichi (Japan) (GDL-0020)
 	{
-		"tetkiwam.zip",
+		"tetkiwam",
+		NULL,
 		0x4000,
 		0,
-		"naomi.zip",
+		"naomi",
 		GD,
 		{
 			{ "317-5093-jpn.pic", 0, 0x4000 },
@@ -4499,10 +4694,11 @@ Games[] =
 	},
 	// Trigger Heart Exelica Ver.A (Japan) (GDL-0036A)
 	{
-		"trgheart.zip",
+		"trgheart",
+		NULL,
 		0x4000,
 		0,
-		"naomi.zip",
+		"naomi",
 		GD,
 		{
 			{ "317-5121-jpn.pic", 0, 0x4000 },
@@ -4513,10 +4709,11 @@ Games[] =
 	},
 	// Trigger Heart Exelica (Japan) (GDL-0036)
 	{
-		"trghearto.zip",
+		"trghearto",
+		"trgheart",
 		0x4000,
 		0,
-		"naomi.zip",
+		"naomi",
 		GD,
 		{
 			{ "317-5121-jpn.pic", 0, 0x4000 },
@@ -4527,10 +4724,11 @@ Games[] =
 	},
 	// Trizeal (Japan) (GDL-0026)
 	{
-		"trizeal.zip",
+		"trizeal",
+		NULL,
 		0x4000,
 		0,
-		"naomi.zip",
+		"naomi",
 		GD,
 		{
 			{ "317-5103-jpn.pic", 0, 0x4000 },
@@ -4541,10 +4739,11 @@ Games[] =
 	},
 	// Under Defeat (Japan) (GDL-0035)
 	{
-		"undefeat.zip",
+		"undefeat",
+		NULL,
 		0x4000,
 		0,
-		"naomi.zip",
+		"naomi",
 		GD,
 		{
 			{ "317-5117-jpn.pic", 0, 0x4000 },
@@ -4555,10 +4754,11 @@ Games[] =
 	},
 	// Usagi - Yamashiro Mahjong Hen (Japan) (GDL-0022)
 	{
-		"usagiym.zip",
+		"usagiym",
+		NULL,
 		0x4000,
 		0,
-		"naomi.zip",
+		"naomi",
 		GD,
 		{
 			{ "317-5096-jpn.pic", 0, 0x4000 },
@@ -4569,10 +4769,11 @@ Games[] =
 	},
 	// Virtua Athletics / Virtua Athlete (GDS-0019)
 	{
-		"vathlete.zip",
+		"vathlete",
+		NULL,
 		0x4000,
 		0,
-		"naomi.zip",
+		"naomi",
 		GD,
 		{
 			{ "317-0330-com.pic", 0, 0x4000 },
@@ -4582,10 +4783,11 @@ Games[] =
 	},
 	// Virtua Tennis 2 / Power Smash 2 (Rev A) (GDS-0015A)
 	{
-		"vtennis2.zip",
+		"vtennis2",
+		NULL,
 		0x4000,
 		0,
-		"naomi.zip",
+		"naomi",
 		GD,
 		{
 			{ "317-0318-com.pic", 0, 0x4000 },
@@ -4595,10 +4797,11 @@ Games[] =
 	},
 	// Virtua Tennis / Power Smash (GDS-0011)
 	{
-		"vtennisg.zip",
+		"vtennisg",
+		NULL,
 		0x4000,
 		0,
-		"naomi.zip",
+		"naomi",
 		GD,
 		{
 			{ "317-0312-com.pic", 0, 0x4000 },
@@ -4608,10 +4811,11 @@ Games[] =
 	},
 	// World Series Baseball / Super Major League (GDS-0010)
 	{
-		"wsbbgd.zip",
+		"wsbbgd",
+		NULL,
 		0x4000,
 		0,
-		"naomi.zip",
+		"naomi",
 		GD,
 		{
 			{ "317-0309-com.pic", 0, 0x4000 },
@@ -4624,10 +4828,11 @@ Games[] =
 
     // Animal Basket (24 Jan 2005)
 	{
-        "anmlbskt.zip",
+        "anmlbskt",
+		NULL,
         0x4000000,
         0x0000000,
-        "awbios.zip",
+        "awbios",
         AW,
         {
             { "vm2001f01.u3",  0x0000000, 0x800000 },
@@ -4640,10 +4845,11 @@ Games[] =
     },
     // Animal Basket (19 Jan 2005)
     {
-        "anmlbskta.zip",
+        "anmlbskta",
+		"anmlbskt",
         0x4000000,
         0x0000000,
-        "awbios.zip",
+        "awbios",
         AW,
         {
             { "u3",  0x0000000, 0x1000000 },
@@ -4657,10 +4863,11 @@ Games[] =
     },
     // Sega Bass Fishing Challenge Version A
     {
-        "basschal.zip",
+        "basschal",
+		NULL,
         0x8000000,
         0x0000000,
-        "awbios.zip",
+        "awbios",
         AW,
         {
             { "vera.u3",      0x00000000, 0x01000000 },
@@ -4677,10 +4884,11 @@ Games[] =
     },
     // Sega Bass Fishing Challenge
     {
-        "basschalo.zip",
+        "basschalo",
+		"basschal",
         0x8000000,
         0x0000000,
-        "awbios.zip",
+        "awbios",
         AW,
         {
             { "610-0811.u3",  0x00000000, 0x01000000 },
@@ -4697,10 +4905,11 @@ Games[] =
     },
     // Block Pong-Pong
     {
-        "blokpong.zip",
+        "blokpong",
+		NULL,
         0x4000000,
         0x0000000,
-        "awbios.zip",
+        "awbios",
         AW,
         {
             { "u3", 0x0000000, 0x1000000 },
@@ -4715,10 +4924,11 @@ Games[] =
     },
     // Sega Clay Challenge
     {
-        "claychal.zip",
+        "claychal",
+		NULL,
         0x8000100,
         0x0000000,
-        "awbios.zip",
+        "awbios",
         AW,
         {
             { "608-2161.u3",  0x0000000, 0x1000100 },
@@ -4735,10 +4945,11 @@ Games[] =
     },
     // Demolish Fist
     {
-        "demofist.zip",
+        "demofist",
+		NULL,
         0x8000000,
         0x0000000,
-        "awbios.zip",
+        "awbios",
         AW,
         {
             { "ax0601p01.ic18", 0x0000000, 0x0800000 },
@@ -4755,10 +4966,11 @@ Games[] =
     },
     // Dirty Pigskin Football
     {
-        "dirtypig.zip",
+        "dirtypig",
+		NULL,
         0x8000000,
         0x0000000,
-        "awbios.zip",
+        "awbios",
         AW,
         {
             { "695-0014.u3",  0x0000000, 0x1000000 },
@@ -4775,10 +4987,11 @@ Games[] =
     },
     // Dolphin Blue
     {
-        "dolphin.zip",
+        "dolphin",
+		NULL,
         0x8000000,
         0x0000000,
-        "awbios.zip",
+        "awbios",
         AW,
         {
             { "ax0401p01.ic18", 0x0000000, 0x0800000 },
@@ -4793,10 +5006,11 @@ Games[] =
     },
     // Fist Of The North Star
     {
-        "fotns.zip",
+        "fotns",
+		NULL,
         0x8000000,
         0x0000000,
-        "awbios.zip",
+        "awbios",
         AW,
         {
             { "ax1901p01.ic18", 0x0000000, 0x0800000 },
@@ -4813,10 +5027,11 @@ Games[] =
     },
     // Faster Than Speed
     {
-        "ftspeed.zip",
+        "ftspeed",
+		NULL,
         0x9000000,
         0x0000000,
-        "awbios.zip",
+        "awbios",
         AW,
         {
             { "ax1701p01.ic18", 0x0000000, 0x0800000 },
@@ -4834,10 +5049,11 @@ Games[] =
     },
     // Guilty Gear Isuka
     {
-        "ggisuka.zip",
+        "ggisuka",
+		NULL,
         0x9000000,
         0x0000000,
-        "awbios.zip",
+        "awbios",
         AW,
         {
             { "ax1201p01.ic18", 0x0000000, 0x0800000 },
@@ -4855,10 +5071,11 @@ Games[] =
     },
     // Guilty Gear X ver. 1.5
     {
-        "ggx15.zip",
+        "ggx15",
+		NULL,
         0x8000000,
         0x0000000,
-        "awbios.zip",
+        "awbios",
         AW,
         {
             { "ax0801p01.ic18", 0x0000000, 0x0800000 },
@@ -4875,10 +5092,11 @@ Games[] =
     },
     // The King of Fighters Neowave
     {
-        "kofnw.zip",
+        "kofnw",
+		NULL,
         0x8000000,
         0x0000000,
-        "awbios.zip",
+        "awbios",
         AW,
         {
             { "ax2201en_p01.ic18", 0x0000000, 0x0800000 },
@@ -4894,10 +5112,11 @@ Games[] =
     },
     // The King of Fighters Neowave (Japan)
     {
-        "kofnwj.zip",
+        "kofnwj",
+		"kofnw",
         0x8000000,
         0x0000000,
-        "awbios.zip",
+        "awbios",
         AW,
         {
             { "ax2201jp_p01.ic18", 0x0000000, 0x0800000 },
@@ -4914,10 +5133,11 @@ Games[] =
     },
     // The King of Fighters XI
     {
-        "kofxi.zip",
+        "kofxi",
+		NULL,
         0x14000000,
         0x00000000,
-        "awbios.zip",
+        "awbios",
         AW,
         {
             { "ax3201p01.fmem1", 0x00000000, 0x0800000 },
@@ -4934,10 +5154,11 @@ Games[] =
     },
     // Knights of Valour - The Seven Spirits
     {
-        "kov7sprt.zip",
+        "kov7sprt",
+		NULL,
         0x8000000,
         0x0000000,
-        "awbios.zip",
+        "awbios",
         AW,
         {
             { "ax1301p01.ic18", 0x0000000, 0x0800000 },
@@ -4954,10 +5175,11 @@ Games[] =
     },
     // Maximum Speed
     {
-        "maxspeed.zip",
+        "maxspeed",
+		NULL,
         0x9000000,
         0x0000000,
-        "awbios.zip",
+        "awbios",
         AW,
         {
             { "ax0501p01.ic18", 0x0000000, 0x0800000 },
@@ -4974,10 +5196,11 @@ Games[] =
     },
     // Metal Slug 6
     {
-        "mslug6.zip",
+        "mslug6",
+		NULL,
         0xc000000,
         0x0000000,
-        "awbios.zip",
+        "awbios",
         AW,
         {
             { "ax3001p01.fmem1", 0x0000000, 0x0800000 },
@@ -4991,10 +5214,11 @@ Games[] =
     },
     // NeoGeo Battle Coliseum
     {
-        "ngbc.zip",
+        "ngbc",
+		NULL,
         0x14000000,
         0x00000000,
-        "awbios.zip",
+        "awbios",
         AW,
         {
             { "ax3301en_p01.fmem1", 0x00000000, 0x0800000 },
@@ -5011,10 +5235,11 @@ Games[] =
     },
     // NeoGeo Battle Coliseum (Japan)
     {
-        "ngbcj.zip",
+        "ngbcj",
+		"ngbc",
         0x14000000,
         0x00000000,
-        "awbios.zip",
+        "awbios",
         AW,
         {
             { "ax3301p01.fmem1", 0x00000000, 0x0800000 },
@@ -5031,10 +5256,11 @@ Games[] =
     },
     // Ranger Mission
     {
-        "rangrmsn.zip",
+        "rangrmsn",
+		NULL,
         0x8000000,
         0x0000000,
-        "awbios.zip",
+        "awbios",
         AW,
         {
             { "ax1601p01.ic18", 0x0000000, 0x0800000 },
@@ -5049,10 +5275,11 @@ Games[] =
     },
     // The Rumble Fish
     {
-        "rumblef.zip",
+        "rumblef",
+		NULL,
         0x8000000,
         0x0000000,
-        "awbios.zip",
+        "awbios",
         AW,
         {
             { "ax1801p01.ic18", 0x0000000, 0x0800000 },
@@ -5069,10 +5296,11 @@ Games[] =
     },
     // The Rumble Fish (prototype)
     {
-        "rumblefp.zip",
+        "rumblefp",
+		"rumblef",
         0x8000000,
         0x0000000,
-        "awbios.zip",
+        "awbios",
         AW,
         {
             { "ic12", 0x00000000, 0x00800000 },
@@ -5097,10 +5325,11 @@ Games[] =
     },
     // The Rumble Fish 2
     {
-        "rumblef2.zip",
+        "rumblef2",
+		NULL,
         0xe000000,
         0x0000000,
-        "awbios.zip",
+        "awbios",
         AW,
         {
             { "ax3401p01.fmem1", 0x0000000, 0x0800000 },
@@ -5115,10 +5344,11 @@ Games[] =
     },
     // The Rumble Fish 2 (prototype)
     {
-        "rumblf2p.zip",
+        "rumblf2p",
+		"rumblef2",
         0xe000000,
         0x0000000,
-        "awbios.zip",
+        "awbios",
         AW,
         {
             { "ic12", 0x00000000, 0x00800000 },
@@ -5143,10 +5373,11 @@ Games[] =
     },
     // Net Select: Salaryman Kintaro
     {
-        "salmankt.zip",
+        "salmankt",
+		NULL,
         0x9000000,
         0x0000000,
-        "awbios.zip",
+        "awbios",
         AW,
         {
             { "ax1401p01.ic18", 0x0000000, 0x0800000 },
@@ -5163,10 +5394,11 @@ Games[] =
     },
     // Samurai Spirits Tenkaichi Kenkakuden
     {
-        "samsptk.zip",
+        "samsptk",
+		NULL,
         0x14000000,
         0x00000000,
-        "awbios.zip",
+        "awbios",
         AW,
         {
             { "ax2901p01.fmem1", 0x00000000, 0x0800000 },
@@ -5183,10 +5415,11 @@ Games[] =
     },
     // Sports Shooting USA
     {
-        "sprtshot.zip",
+        "sprtshot",
+		NULL,
         0x8000000,
         0x0000000,
-        "awbios.zip",
+        "awbios",
         AW,
         {
             { "ax0101p01.ic18", 0x0000000, 0x0800000 },
@@ -5200,10 +5433,11 @@ Games[] =
     },
     // Sushi Bar
     {
-        "sushibar.zip",
+        "sushibar",
+		NULL,
         0x8000000,
         0x0000000,
-        "awbios.zip",
+        "awbios",
         AW,
         {
             { "ic12", 0x00000000, 0x00800000 },
@@ -5218,10 +5452,11 @@ Games[] =
     },
     // Net Select Horse Racing: Victory Furlong"
     {
-        "vfurlong.zip",
+        "vfurlong",
+		NULL,
         0x9000000,
         0x0000000,
-        "awbios.zip",
+        "awbios",
         AW,
         {
             { "ax2001p01.ic18", 0x0000000, 0x0800000 },
@@ -5238,10 +5473,11 @@ Games[] =
     },
     // WaiWai Drive
     {
-        "waidrive.zip",
+        "waidrive",
+		NULL,
         0x4000000,
         0x0000000,
-        "awbios.zip",
+        "awbios",
         AW,
         {
             { "u3", 0x0000000, 0x1000000 },
@@ -5252,10 +5488,11 @@ Games[] =
     },
     // Extreme Hunting
     {
-        "xtrmhunt.zip",
+        "xtrmhunt",
+		NULL,
         0x8000000,
         0x0000000,
-        "awbios.zip",
+        "awbios",
         AW,
         {
             { "ax2401p01.ic18", 0x0000000, 0x0800000 },
@@ -5270,10 +5507,11 @@ Games[] =
     },
     // Extreme Hunting 2
     {
-        "xtrmhnt2.zip",
+        "xtrmhnt2",
+		NULL,
         0x8000000,
         0x0000000,
-        "awbios.zip",
+        "awbios",
         AW,
         {
             { "610-0752.u3",    0x0000000, 0x1000000 },
@@ -5297,4 +5535,3 @@ Games[] =
 		NULL
 	}
 };
-
