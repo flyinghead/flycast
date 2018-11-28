@@ -14,6 +14,9 @@ AS=${CC_PREFIX}as
 STRIP=${CC_PREFIX}strip
 LD=${CC}
 
+CHD5_LZMA := 1
+CHD5_FLAC := 1
+
 MFLAGS :=
 ASFLAGS :=
 LDFLAGS :=
@@ -232,6 +235,15 @@ else ifneq (,$(findstring vero4k,$(platform)))
 
 else
     $(error Unknown platform)
+endif
+
+# 7-Zip/LZMA settings (CHDv5)
+ifdef CHD5_LZMA
+	CFLAGS += -D_7ZIP_ST -DCHD5_LZMA
+endif
+
+ifdef CHD5_FLAC
+	CFLAGS += -DCHD5_FLAC
 endif
 
 RZDCY_SRC_DIR = $(LOCAL_PATH)/../../core
