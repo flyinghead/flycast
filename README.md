@@ -127,7 +127,7 @@ make
 ```
 
 ### Using snap
-- Refer to our [snap README](https:github.com/reicast/reicast-emulator/snap/README.md)
+- Refer to our [snap README](https://github.com/reicast/reicast-emulator/tree/master/snap/README.md)
 
 Translations
 ------------
