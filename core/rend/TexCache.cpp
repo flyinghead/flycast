@@ -8,6 +8,7 @@
 #include "hw/pvr/pvr_regs.h"
 #include "hw/mem/_vmem.h"
 #include "deps/xbrz/xbrz.h"
+#include "deps/xxhash/xxhash.h"
 
 u8* vq_codebook;
 u32 palette_index;
@@ -72,27 +73,13 @@ void BuildTwiddleTables()
 
 static OnLoad btt(&BuildTwiddleTables);
 
-// FNV-1a hashing algorithm
-#define HASH_OFFSET 2166136261
-#define HASH_PRIME 16777619
-
-#define HASH_PALETTE(palette_hash, bpp)	do { u32 &hash = palette_hash[i >> bpp]; \
-		if ((i & ((1 << bpp) - 1)) == 0) \
-			hash = HASH_OFFSET; \
-		u8 *p = (u8 *)&palette32_ram[i]; \
-		hash = (hash ^ p[0]) * HASH_PRIME; \
-		hash = (hash ^ p[1]) * HASH_PRIME; \
-		hash = (hash ^ p[2]) * HASH_PRIME; \
-		hash = (hash ^ p[3]) * HASH_PRIME; } while (false)
-#define HASH_PALETTE_16() HASH_PALETTE(pal_hash_16, 4)
-#define HASH_PALETTE_256() HASH_PALETTE(pal_hash_256, 8)
-
 void palette_update()
 {
-	if (pal_needs_update==false)
+	if (!pal_needs_update)
 		return;
 
 	pal_needs_update=false;
+
 	switch(PAL_RAM_CTRL&3)
 	{
 	case 0:
@@ -100,8 +87,6 @@ void palette_update()
 		{
 			palette16_ram[i] = ARGB1555(PALETTE_RAM[i]);
 			palette32_ram[i] = ARGB1555_32(PALETTE_RAM[i]);
-			HASH_PALETTE_16();
-			HASH_PALETTE_256();
 		}
 		break;
 
@@ -110,8 +95,6 @@ void palette_update()
 		{
 			palette16_ram[i] = ARGB565(PALETTE_RAM[i]);
 			palette32_ram[i] = ARGB565_32(PALETTE_RAM[i]);
-			HASH_PALETTE_16();
-			HASH_PALETTE_256();
 		}
 		break;
 
@@ -120,8 +103,6 @@ void palette_update()
 		{
 			palette16_ram[i] = ARGB4444(PALETTE_RAM[i]);
 			palette32_ram[i] = ARGB4444_32(PALETTE_RAM[i]);
-			HASH_PALETTE_16();
-			HASH_PALETTE_256();
 		}
 		break;
 
@@ -130,12 +111,13 @@ void palette_update()
 		{
 			palette16_ram[i] = ARGB8888(PALETTE_RAM[i]);
 			palette32_ram[i] = ARGB8888_32(PALETTE_RAM[i]);
-			HASH_PALETTE_16();
-			HASH_PALETTE_256();
 		}
 		break;
 	}
-
+	for (int i = 0; i < 64; i++)
+		pal_hash_16[i] = XXH32(&palette32_ram[i << 4], 16 * 4, 7);
+	for (int i = 0; i < 4; i++)
+		pal_hash_256[i] = XXH32(&palette32_ram[i << 8], 256 * 4, 7);
 }
 
 
