@@ -531,6 +531,7 @@ void LoadSettings()
 #else
     // TODO Expose this with JNI
 	settings.rend.Clipping = 1;
+	settings.aica.NoBatch = 1;
 
 	// Configured on a per-game basis
 	settings.rend.ExtraDepthScale = 1.f;
