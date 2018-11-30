@@ -803,8 +803,8 @@ static float LastTexCacheStats;
 // Only use TexU and TexV from TSP in the cache key
 //     TexV : 7, TexU : 7
 const TSP TSPTextureCacheMask = { { 7, 7 } };
-//     TexAddr : 0x1FFFFF, Reserved : 0, StrideSel : 1, ScanOrder : 1, PixelFmt : 7, VQ_Comp : 1, MipMapped : 1
-const TCW TCWTextureCacheMask = { { 0x1FFFFF, 0, 1, 1, 7, 1, 1 } };
+//     TexAddr : 0x1FFFFF, Reserved : 0, StrideSel : 0, ScanOrder : 1, PixelFmt : 7, VQ_Comp : 1, MipMapped : 1
+const TCW TCWTextureCacheMask = { { 0x1FFFFF, 0, 0, 1, 7, 1, 1 } };
 
 TextureCacheData *getTextureCacheData(TSP tsp, TCW tcw) {
 	u64 key = tsp.full & TSPTextureCacheMask.full;
@@ -823,6 +823,8 @@ TextureCacheData *getTextureCacheData(TSP tsp, TCW tcw) {
 	if (tx != TexCache.end())
 	{
 		tf = &tx->second;
+		// Needed if the texture is updated
+		tf->tcw.StrideSel = tcw.StrideSel;
 	}
 	else //create if not existing
 	{
