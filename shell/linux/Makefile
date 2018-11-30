@@ -381,8 +381,13 @@ ifdef NAOMI
     DC_PLATFORM=naomi
     EXECUTABLE=reicast_naomi.$(PLATFORM_EXT)
     EXECUTABLE_NAME=reicast-naomi
+else ifdef ATOMISWAVE
+    CFLAGS += -D DC_PLATFORM=DC_PLATFORM_ATOMISWAVE -D SAVE_EPPROM
+    DC_PLATFORM=atomiswave
+    EXECUTABLE=reicast_awave.$(PLATFORM_EXT)
+    EXECUTABLE_NAME=reicast-awave
 else ifdef DISPFRAME
-    CFLAGS += -D TARGET_DISPFRAME
+    CFLAGS += -D TARGET_DISPFRAME #-D TARGET_NAOMI
     DC_PLATFORM=dispframe
     EXECUTABLE=dispframe.$(PLATFORM_EXT)
     EXECUTABLE_NAME=dispframe
