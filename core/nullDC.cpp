@@ -206,6 +206,12 @@ void LoadSpecialSettings()
 		printf("Enabling Dynarec safe mode for game %s\n", reios_product_number);
 		settings.dynarec.safemode = 1;
 	}
+	// NHL 2K2
+	if (!strncmp("MK-51182", reios_product_number, 8))
+	{
+		printf("Enabling Extra depth scaling for game %s\n", reios_product_number);
+		settings.rend.ExtraDepthScale = 1000;
+	}
 #elif DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
 	if (!strcmp("METAL SLUG 6", naomi_game_id) || !strcmp("WAVE RUNNER GP", naomi_game_id))
 	{
@@ -581,6 +587,7 @@ void LoadCustom()
 	char *reios_id = naomi_game_id;
 	char *reios_software_name = naomi_game_id;
 #endif
+	printf("Game ID is [%s]\n", reios_id);
 
 	LoadSpecialSettings();	// Default per-game settings
 
