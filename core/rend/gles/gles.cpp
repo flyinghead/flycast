@@ -118,18 +118,15 @@ void main() \n\
 	vtx_base=in_base; \n\
 	vtx_offs=in_offs; \n\
 	vtx_uv=in_uv; \n\
-	vec4 vpos=in_pos; \n\
-#if TARGET_GL == GL3 \n\
-    if (isinf(vpos.z)) \n\
-        vpos.w = 1.18e-38; \n\
-	else \n\
-#endif \n\
-		vpos.w = extra_depth_scale / vpos.z; \n\
-#if TARGET_GL != GLES2 \n\
-	if (vpos.w < 0.0) { \n\
-		gl_Position = vec4(0.0, 0.0, 0.0, vpos.w); \n\
+	highp vec4 vpos = in_pos; \n\
+	if (vpos.z < 0.0 || vpos.z > 3.4e37) \n\
+	{ \n\
+		gl_Position = vec4(0.0, 0.0, 1.0, 1.0 / vpos.z); \n\
 		return; \n\
 	} \n\
+	\n\
+	vpos.w = extra_depth_scale / vpos.z; \n\
+#if TARGET_GL != GLES2 \n\
 	vpos.z = vpos.w; \n\
 #else \n\
 	vpos.z=depth_scale.x+depth_scale.y*vpos.w;  \n\

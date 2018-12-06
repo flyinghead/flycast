@@ -47,14 +47,13 @@ void main() \n\
 	vtx_offs1 = in_offs1; \n\
 	vtx_uv1 = in_uv1; \n\
 	vec4 vpos=in_pos; \n\
-	if (vpos.z < 0.0) { \n\
+	if (vpos.z < 0.0 || vpos.z > 3.4e37) \n\
+	{ \n\
 		gl_Position = vec4(0.0, 0.0, 1.0, 1.0 / vpos.z); \n\
 		return; \n\
 	} \n\
-	if (isinf(vpos.z)) \n\
-		vpos.w = 1.18e-38; \n\
-	else \n\
-		vpos.w = extra_depth_scale / vpos.z; \n\
+	\n\
+	vpos.w = extra_depth_scale / vpos.z; \n\
 	vpos.z = vpos.w; \n\
 	vpos.xy=vpos.xy*scale.xy-scale.zw;  \n\
 	vpos.xy*=vpos.w;  \n\
