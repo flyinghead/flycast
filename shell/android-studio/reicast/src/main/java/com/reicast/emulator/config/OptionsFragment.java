@@ -279,6 +279,17 @@ public class OptionsFragment extends Fragment {
 		dynarec_opt.setChecked(Emulator.dynarecopt);
 		dynarec_opt.setOnCheckedChangeListener(dynarec_options);
 
+		OnCheckedChangeListener safemode_option = new OnCheckedChangeListener() {
+
+			public void onCheckedChanged(CompoundButton buttonView,
+										 boolean isChecked) {
+				mPrefs.edit().putBoolean(Emulator.pref_dynsafemode, isChecked).apply();
+			}
+		};
+		CompoundButton safemode_opt = (CompoundButton) getView().findViewById(R.id.dynarec_safemode);
+		safemode_opt.setChecked(mPrefs.getBoolean(Emulator.pref_dynsafemode, Emulator.dynsafemode));
+		safemode_opt.setOnCheckedChangeListener(safemode_option);
+
 		OnCheckedChangeListener unstable_option = new OnCheckedChangeListener() {
 
 			public void onCheckedChanged(CompoundButton buttonView,
@@ -339,7 +350,7 @@ public class OptionsFragment extends Fragment {
 				getActivity(), R.layout.spinner_selected, broadcasts);
 		broadcastAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		broadcast_spnr.setAdapter(broadcastAdapter);
-		broadcast_spnr.setSelection(mPrefs.getInt(Emulator.pref_broadcast, Emulator.broadcast), true);
+		broadcast_spnr.setSelection(Math.min(mPrefs.getInt(Emulator.pref_broadcast, Emulator.broadcast), broadcast_spnr.getCount() - 1), true);
 
 		broadcast_spnr.setOnItemSelectedListener(new OnItemSelectedListener() {
 

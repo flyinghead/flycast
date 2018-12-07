@@ -37,7 +37,7 @@ public class Emulator extends Application {
     public static int dcregion = 3;
     public static int broadcast = 4;
     public static boolean limitfps = true;
-    public static boolean nobatch = false;
+    public static boolean nobatch = true;
     public static boolean nosound = false;
     public static boolean interrupt = false;
     public static boolean mipmaps = true;
