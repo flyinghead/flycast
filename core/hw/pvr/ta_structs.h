@@ -2,7 +2,7 @@
 
 #pragma once
 //bits that affect drawing (for caching params)
-#define PCW_DRAW_MASK (0x000000CC)
+#define PCW_DRAW_MASK (0x000000CE)
 
 #pragma pack(push, 1)   // n = 1
 //	Global Param/misc structs
@@ -13,7 +13,7 @@ union PCW
 	{
 		//Obj Control        //affects drawing ?
 		u32 UV_16bit    : 1; //0
-		u32 Gouraud     : 1; //0
+		u32 Gouraud     : 1; //1
 		u32 Offset      : 1; //1
 		u32 Texture     : 1; //1
 		u32 Col_Type    : 2; //00

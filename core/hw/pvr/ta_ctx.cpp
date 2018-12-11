@@ -156,8 +156,7 @@ bool QueueRender(TA_context* ctx)
 		//  sh4 run at > 120% on the last slice
 		//  and SynchronousRendering is enabled
 		frame_finished.Wait();
-		verify(!rqueue);
-	} 
+	}
 
 	if (rqueue) {
 		// FIXME if the discarded render is a RTT we'll have a texture missing. But waiting for the current frame to finish kills performance...
