@@ -210,7 +210,7 @@ void LoadSpecialSettings()
 	if (!strncmp("MK-51182", reios_product_number, 8))
 	{
 		printf("Enabling Extra depth scaling for game %s\n", reios_product_number);
-		settings.rend.ExtraDepthScale = 1000;
+		settings.rend.ExtraDepthScale = 10000;
 	}
 #elif DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
 	if (!strcmp("METAL SLUG 6", naomi_game_id) || !strcmp("WAVE RUNNER GP", naomi_game_id))
@@ -253,6 +253,11 @@ void LoadSpecialSettings()
 	{
 		printf("Enabling specific JVS setup for game %s\n", naomi_game_id);
 		settings.input.JammaSetup = 5;
+	}
+	else if (!strcmp(" BIOHAZARD  GUN SURVIVOR2", naomi_game_id))
+	{
+		printf("Enabling specific JVS setup for game %s\n", naomi_game_id);
+		settings.input.JammaSetup = 7;
 	}
 	if (!strcmp("COSMIC SMASH IN JAPAN", naomi_game_id))
 	{

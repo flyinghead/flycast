@@ -472,7 +472,7 @@ Games[] =
         0x9dbde9cd,
         NULL,
         M1,
-        REGION_AUSTRALIA,
+        REGION_JAPAN,
         {
             { "rom0.ic22", 0x0000000, 0x400000 },
             { "rom1.ic1s", 0x0800000, 0x800000 },
@@ -492,7 +492,7 @@ Games[] =
         0x2f6f0f8d,
         NULL,
         M1,
-        REGION_AUSTRALIA,
+        REGION_JAPAN,
         {
             { "epr-23071.ic11",  0x0000000, 0x0200000 },
             { "epr-23071.ic11",  0x0200000, 0x0200000 }, // reload
@@ -977,7 +977,7 @@ Games[] =
         0x28428247,
         NULL,
         M2,
-        REGION_AUSTRALIA,
+        REGION_JAPAN,
         {
             { "epr-23674.ic22", 0x0000000, 0x400000 },
             { "rom1.ic1s",      0x0800000, 0x800000 },
@@ -1467,7 +1467,7 @@ Games[] =
 		0x280e6ae1,
 		NULL,
 		M2,
-        REGION_AUSTRALIA,
+        REGION_JAPAN,
 		{
 			{ "epr-21575.ic22",  0x0000000, 0x0200000 },
             { "epr-21575.ic22",  0x0200000, 0x0200000 }, // reload
@@ -2015,8 +2015,10 @@ Games[] =
 			{ "mpr-22824.ic7",  0x3800000, 0x800000 },
 			{ "mpr-22825.ic8",  0x4000000, 0x800000 },
 			{ NULL, 0, 0 },
-		}
-	},
+		},
+        NULL,
+        &jambo_inputs
+    },
     // Mars TV (JPN)
 	{
         "marstv",
@@ -2025,7 +2027,7 @@ Games[] =
         0x280b8ef5,
         NULL,
         M2,
-        REGION_AUSTRALIA,
+        REGION_JAPAN,
 		{
             { "epr-22993.ic22",  0x0000000, 0x200000 },
             { "epr-22993.ic22",  0x0200000, 0x200000 }, // reload
@@ -2118,7 +2120,7 @@ Games[] =
         0xffffffff, // not populated
 		NULL,
         M2,
-        REGION_AUSTRALIA,
+        REGION_JAPAN,
 		{
             { "epr-24286.ic22", 0x0000000, 0x0400000 },
             { "mpr-24276.ic1",  0x0800000, 0x1000000 },
@@ -2470,7 +2472,7 @@ Games[] =
 		0x000acd40,
 		NULL,
 		M2,
-        REGION_AUSTRALIA,
+        REGION_JAPAN,
 		{
 			{ "epr-22206.ic22", 0x0000000, 0x400000 },
 			{ "mpr-22186.ic1",   0x0800000, 0x800000 },
@@ -2610,7 +2612,7 @@ Games[] =
 		0x281702cf,
 		NULL,
 		M2,
-        REGION_AUSTRALIA,
+        REGION_JAPAN,
 		{
 			{ "epr-23600.ic22", 0x00000000, 0x0400000 },
 			{ "mpr-23589.ic1",  0x00800000, 0x1000000 },
@@ -3035,7 +3037,7 @@ Games[] =
         0x000368e1,
 		NULL,
         M2,
-        REGION_AUSTRALIA,
+        REGION_JAPAN,
 		{
             { "epr-21979.ic22", 0x0000000, 0x0200000 },
             { "epr-21979.ic22", 0x0200000, 0x0200000 }, // reload
@@ -3338,7 +3340,9 @@ Games[] =
             { "mpr-23193.ic12s", 0x6000000, 0x800000 },
             { "mpr-23194.ic13s", 0x6800000, 0x800000 },
             { NULL, 0, 0 },
-        }
+    },
+        NULL,
+        &vonot_inputs
     },
     // Virtua Striker 2 Ver. 2000 (JPN, USA, EXP, KOR, AUS) (Rev C)
     {
@@ -3619,7 +3623,7 @@ Games[] =
 		0x0007c010,
 		NULL,
 		M2,
-        REGION_AUSTRALIA,
+        REGION_JAPAN,
 		{
 			{ "epr-23689.ic22", 0x0000000, 0x0400000 },
 			{ "mpr-23684.ic1",  0x0800000, 0x1000000 },
@@ -3724,7 +3728,7 @@ Games[] =
         0x5504,
         "naomi",
         M4,
-        REGION_AUSTRALIA,
+        REGION_EXPORT,
         {
             { "fpr-24382.ic8",  0x0000000, 0x4000000 },
             { "fpr-24383.ic9",  0x4000000, 0x4000000 },
@@ -3742,15 +3746,13 @@ Games[] =
         0x5504,
         "naomi",
         M4,
-        REGION_AUSTRALIA,
+        REGION_EXPORT,
         {
             { "fpr-24382.ic8",  0x0000000, 0x4000000 },
             { "fpr-24383.ic9",  0x4000000, 0x4000000 },
             { "fpr-24384.ic10", 0x8000000, 0x4000000 },
             { "fpr-24385.ic11", 0xc000000, 0x4000000 },
-            
-            //ROM_REGION( 0x800, "pic_readout", 0 )
-            //ROM_LOAD( "317-0495-com.ic3", 0, 0x800, CRC(c229a59b) SHA1(497dcc1e4e52eb044a8b709edbd00126cef212b1) )
+			{ "317-0495-com.ic3", 0, 0x800, Key },
             
             { NULL, 0, 0 },
         }
@@ -3763,7 +3765,7 @@ Games[] =
         0x5504,
         "naomi",
         M4,
-        REGION_AUSTRALIA,
+        REGION_JAPAN,
         {
             { "fpr-24437.ic8",  0x0000000, 0x4000000 },
             { "fpr-24438.ic9",  0x4000000, 0x4000000 },
@@ -3780,7 +3782,7 @@ Games[] =
         0x5505,
         "naomi",
         M4,
-        REGION_AUSTRALIA,
+        REGION_EXPORT,
         {
             { "fpr-24408.ic8",  0x00000000, 0x4000000 },
             { "fpr-24372.ic9",  0x04000000, 0x4000000 },
@@ -3806,7 +3808,7 @@ Games[] =
         0x5504,
         "naomi",
         M4,
-        REGION_AUSTRALIA,
+        REGION_JAPAN,
         {
             { "ic8.bin",  0x0000000, 0x4000000 },
             { "ic9.bin",  0x4000000, 0x4000000 },
@@ -3823,7 +3825,7 @@ Games[] =
         0x5586,
         "naomi",
         M4,
-        REGION_AUSTRALIA,
+        REGION_JAPAN,
         {
             { "ic8.bin",       0x00000000, 0x4000000 },
             { "epr-24455.ic7", 0x00000000, 0x0400000 }, // EPR mode, overwrite FPR data
@@ -3844,7 +3846,7 @@ Games[] =
         0x5506,
         "naomi",
         M4,
-        REGION_AUSTRALIA,
+        REGION_JAPAN,
         {
             { "ic8.bin",       0x00000000, 0x4000000 },
             { "ic9.bin",       0x04000000, 0x4000000 },
@@ -3864,14 +3866,11 @@ Games[] =
         0x5502,
         "naomi",
         M4,
-        REGION_AUSTRALIA,
+        REGION_EXPORT,
         {
             { "fpr-24333.ic8", 0x0000000, 0x4000000 },
             { "fpr-24334.ic9", 0x4000000, 0x4000000 },
-            
-            //ROM_REGION( 0x800, "pic_readout", 0 )
-            //ROM_LOAD( "317-0437-com.ic3", 0, 0x800, CRC(3b6fcee8) SHA1(65fbdd3b8c61a4b5ccb6389b25483a7ecdc0794d) )
-            
+            { "317-0437-com.ic3", 0, 0x800, Key },
             { NULL, 0, 0 },
         }
     },
@@ -3883,7 +3882,7 @@ Games[] =
         0x5582,
         "naomi",
         M4,
-        REGION_AUSTRALIA,
+        REGION_EXPORT,
         {
             { "fpr-24333.ic8", 0x0000000, 0x4000000 },
             { "epr-24357.ic7", 0x0000000, 0x0400000 },
@@ -3905,7 +3904,7 @@ Games[] =
         0x5502,
         "naomi",
         M4,
-        REGION_AUSTRALIA,
+        REGION_EXPORT,
         {
             { "fpr-24417.ic8", 0x0000000, 0x4000000 },
             { "fpr-24418.ic9", 0x4000000, 0x4000000 },
@@ -3925,7 +3924,7 @@ Games[] =
         0x5505,
         "naomi",
         M4,
-        REGION_AUSTRALIA,
+        REGION_JAPAN,
         {
             { "fpr-24365.ic8",  0x00000000, 0x4000000 },
             { "fpr-24366.ic9",  0x04000000, 0x4000000 },
@@ -3951,7 +3950,7 @@ Games[] =
         0x5504,
         "naomi",
         M4,
-        REGION_AUSTRALIA,
+        REGION_JAPAN,
         {
             { "ic8.bin", 0x0000000, 0x4000000 },
             { "ic9.bin", 0x4000000, 0x4000000 },
@@ -3967,7 +3966,7 @@ Games[] =
         0x5504,
         "naomi",
         M4,
-        REGION_AUSTRALIA,
+        REGION_JAPAN,
         {
             { "fpr-24423.ic8",  0x00000000, 0x4000000 },
             { "fpr-24424.ic9",  0x04000000, 0x4000000 },
@@ -3985,7 +3984,7 @@ Games[] =
         0x5504,
         NULL, // requires epr-21576g.ic27
         M4,
-        REGION_AUSTRALIA,   // not a real M4, rom header decrypted
+        REGION_EXPORT,   // not a real M4, rom header decrypted
         {
             { "fpr-24413.ic8",  0x0000000, 0x4000000 },
             { "fpr-24414.ic9",  0x4000000, 0x4000000 },
@@ -4003,7 +4002,7 @@ Games[] =
         0x5502,
         "naomi",
         M4,
-        REGION_AUSTRALIA,
+        REGION_JAPAN,
         {
             { "fpr-24338.ic8", 0x0000000, 0x4000000 },
             { "fpr-24339.ic9", 0x4000000, 0x4000000 },
@@ -4056,7 +4055,7 @@ Games[] =
 		0,
 		"naomi",
 		GD,
-        REGION_AUSTRALIA,
+        REGION_JAPAN,
 		{
 			{ "317-5102-com.pic", 0, 0x4000 },
 			{ "cfield-default-eeprom.bin", 0, 0x80, Eeprom },
@@ -4117,7 +4116,7 @@ Games[] =
 		0,
 		"naomi",
 		GD,
-        REGION_AUSTRALIA,
+        REGION_JAPAN,
 		{
 			{ "317-5076-jpn.pic", 0, 0x4000 },
 			{ NULL, 0, 0 },
@@ -4270,7 +4269,7 @@ Games[] =
 		0,
 		"naomi",
 		GD,
-        REGION_AUSTRALIA,
+        REGION_JAPAN,
 		{
 			{ "317-5092-jpn.pic", 0, 0x4000 },
 			{ NULL, 0, 0 },
@@ -4285,7 +4284,7 @@ Games[] =
 		0,
 		"naomi",
 		GD,
-        REGION_AUSTRALIA,
+        REGION_JAPAN,
 		{
 			{ "317-5092-jpn.pic" , 0, 0x4000 },
 			{ NULL, 0, 0 },
@@ -4300,7 +4299,7 @@ Games[] =
 		0,
 		"naomi",
 		GD,
-        REGION_AUSTRALIA,
+        REGION_JAPAN,
 		{
 			{ "317-5111-jpn.pic", 0, 0x4000 },
 			{ NULL, 0, 0 },
@@ -4362,7 +4361,7 @@ Games[] =
 		0,
 		"naomi",
 		GD,
-        REGION_AUSTRALIA,
+        REGION_JAPAN,
 		{
 			{ "317-5122-jpn.pic", 0, 0x4000 },
 			{ NULL, 0, 0 },
@@ -4377,7 +4376,7 @@ Games[] =
 		0,
 		"naomi",
 		GD,
-        REGION_AUSTRALIA,
+        REGION_JAPAN,
 		{
 			{ "317-5125-com.pic", 0, 0x4000 },
 			{ "karous-default-eeprom.bin", 0, 0x80, Eeprom },
@@ -4409,7 +4408,7 @@ Games[] =
 		0,
 		"naomi",
 		GD,
-        REGION_AUSTRALIA,
+        REGION_JAPAN,
 		{
 			{ "317-5115-jpn.pic", 0, 0x4000 },
 			{ NULL, 0, 0 },
@@ -4454,7 +4453,7 @@ Games[] =
 		0,
 		"naomi",
 		GD,
-        REGION_AUSTRALIA,
+        REGION_JAPAN,
 		{
 			{ "317-5124-jpn.pic", 0, 0x4000 },
 			{ NULL, 0, 0 },
@@ -4469,7 +4468,7 @@ Games[] =
 		0,
 		"naomi",
 		GD,
-        REGION_AUSTRALIA,
+        REGION_JAPAN,
 		{
 			{ "317-5104-jpn.pic", 0, 0x4000 },
 			{ NULL, 0, 0 },
@@ -4484,7 +4483,7 @@ Games[] =
 		0,
 		"naomi",
 		GD,
-        REGION_AUSTRALIA,
+        REGION_JAPAN,
 		{
 			{ "317-5104-jpn.pic", 0, 0x4000 },
 			{ NULL, 0, 0 },
@@ -4499,7 +4498,7 @@ Games[] =
 		0,
 		"naomi",
 		GD,
-        REGION_AUSTRALIA,
+        REGION_JAPAN,
 		{
 			{ "317-5124-jpn.pic", 0, 0x4000 },
 			{ NULL, 0, 0 },
@@ -4514,7 +4513,7 @@ Games[] =
 		0,
 		"naomi",
 		GD,
-        REGION_AUSTRALIA,
+        REGION_JAPAN,
 		{
 			{ "317-5084-jpn.pic", 0, 0x4000 },
 			{ "moeru-default-eeprom.bin", 0, 0x80, Eeprom },
@@ -4592,7 +4591,7 @@ Games[] =
 		0,
 		"naomi",
 		GD,
-        REGION_AUSTRALIA,
+        REGION_JAPAN,
 		{
 			{ "317-0375-com.pic", 0, 0x4000 },
 			{ "puyofev-default-eeprom.bin", 0, 0x80, Eeprom },
@@ -4624,7 +4623,7 @@ Games[] =
 		0,
 		"naomi",
 		GD,
-        REGION_AUSTRALIA,
+        REGION_JAPAN,
 		{
 			{ "317-5110-jpn.pic", 0, 0x4000 },
 			{ "radirgy-default-eeprom.bin", 0, 0x80, Eeprom },
@@ -4640,7 +4639,7 @@ Games[] =
 		0,
 		"naomi",
 		GD,
-        REGION_AUSTRALIA,
+        REGION_JAPAN,
 		{
 			{ "317-5110-jpn.pic", 0, 0x4000 },
 			{ "radirgy-default-eeprom.bin", 0, 0x80, Eeprom },
@@ -4656,7 +4655,7 @@ Games[] =
 		0,
 		"naomi",
 		GD,
-        REGION_AUSTRALIA,
+        REGION_JAPAN,
 		{
 			{ "317-5107-jpn.pic", 0, 0x4000 },
 			{ "senko-default-eeprom.bin", 0, 0x80, Eeprom },
@@ -4672,7 +4671,7 @@ Games[] =
 		0,
 		"naomi",
 		GD,
-        REGION_AUSTRALIA,
+        REGION_JAPAN,
 		{
 			{ "317-5107-jpn.pic", 0, 0x4000 },
 			{ "senkoo-default-eeprom.bin", 0, 0x80, Eeprom },
@@ -4688,7 +4687,7 @@ Games[] =
 		0,
 		"naomi",
 		GD,
-        REGION_AUSTRALIA,
+        REGION_JAPAN, // one of the few exceptions that doesn't work with USA bios while they work with Export bios, so it's safer to restrict it to Japan bios
 		{
 			{ "317-5123-com.pic", 0, 0x4000 },
 			{ NULL, 0, 0 },
@@ -4825,7 +4824,7 @@ Games[] =
 		0,
 		"naomi",
 		GD,
-        REGION_AUSTRALIA,
+        REGION_JAPAN,
 		{
 			{ "317-5108-jpn.pic", 0, 0x4000 },
 			{ "ss2005-default-eeprom.bin", 0, 0x80, Eeprom },
@@ -4841,7 +4840,7 @@ Games[] =
 		0,
 		"naomi",
 		GD,
-        REGION_AUSTRALIA,
+        REGION_JAPAN,
 		{
 			{ "317-5108-jpn.pic", 0, 0x4000 },
 			{ "ss2005-default-eeprom.bin", 0, 0x80, Eeprom },
@@ -4872,7 +4871,7 @@ Games[] =
 		0,
 		"naomi",
 		GD,
-        REGION_AUSTRALIA,
+        REGION_JAPAN,
 		{
 			{ "317-5127-jpn.pic", 0, 0x4000 },
 			{ NULL, 0, 0 },
@@ -4887,7 +4886,7 @@ Games[] =
 		0,
 		"naomi",
 		GD,
-        REGION_AUSTRALIA,
+        REGION_JAPAN,
 		{
 			{ "317-5093-jpn.pic", 0, 0x4000 },
 			{ "tetkiwam-default-eeprom.bin", 0, 0x80, Eeprom },
@@ -4903,7 +4902,7 @@ Games[] =
 		0,
 		"naomi",
 		GD,
-        REGION_AUSTRALIA,
+        REGION_JAPAN,
 		{
 			{ "317-5121-jpn.pic", 0, 0x4000 },
 			{ "trgheart-default-eeprom.bin", 0, 0x80, Eeprom },
@@ -4919,7 +4918,7 @@ Games[] =
 		0,
 		"naomi",
 		GD,
-        REGION_AUSTRALIA,
+        REGION_JAPAN,
 		{
 			{ "317-5121-jpn.pic", 0, 0x4000 },
 			{ "trgheart-default-eeprom.bin", 0, 0x80, Eeprom },
@@ -4935,7 +4934,7 @@ Games[] =
 		0,
 		"naomi",
 		GD,
-        REGION_AUSTRALIA,
+        REGION_JAPAN,
 		{
 			{ "317-5103-jpn.pic", 0, 0x4000 },
 			{ "trizeal-default-eeprom.bin", 0, 0x80, Eeprom },
@@ -4951,7 +4950,7 @@ Games[] =
 		0,
 		"naomi",
 		GD,
-        REGION_AUSTRALIA,
+        REGION_JAPAN,
 		{
 			{ "317-5117-jpn.pic", 0, 0x4000 },
 			{ "undefeat-default-eeprom.bin", 0, 0x80, Eeprom },
@@ -4967,7 +4966,7 @@ Games[] =
 		0,
 		"naomi",
 		GD,
-        REGION_AUSTRALIA,
+        REGION_JAPAN,
 		{
 			{ "317-5096-jpn.pic", 0, 0x4000 },
 			{ "usagiym-default-eeprom.bin", 0, 0x80, Eeprom },

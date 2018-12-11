@@ -1989,7 +1989,6 @@ struct maple_naomi_jamma : maple_sega_controller
 			case MDC_JVSUploadFirmware:
 			{
 				static u8 *ram;
-				static XXH32_state_t* state;
 
 				if (ram == NULL)
 					ram = (u8 *)calloc(0x10000, 1);

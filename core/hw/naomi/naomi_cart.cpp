@@ -373,8 +373,7 @@ static bool naomi_cart_LoadZip(char *filename)
 	CurrentCartridge->SetKey(game->key);
 	naomi_game_inputs = game->inputs;
 
-	int romid = 0;
-	while (game->blobs[romid].filename != NULL)
+	for (int romid = 0; game->blobs[romid].filename != NULL; romid++)
 	{
 		u32 len = game->blobs[romid].length;
 
@@ -394,7 +393,11 @@ static bool naomi_cart_LoadZip(char *filename)
 				file = parent_archive->OpenFile(game->blobs[romid].filename);
 			if (!file) {
 				printf("%s: Cannot open %s\n", filename, game->blobs[romid].filename);
-				goto error;
+				if (game->blobs[romid].blob_type != Eeprom)
+					// Default eeprom file is optional
+					goto error;
+				else
+					continue;
 			}
 			if (game->blobs[romid].blob_type == Normal)
 			{
@@ -448,7 +451,6 @@ static bool naomi_cart_LoadZip(char *filename)
 				die("Unknown blob type\n");
 			delete file;
 		}
-		romid++;
 	}
 	if (archive != NULL)
 		delete archive;

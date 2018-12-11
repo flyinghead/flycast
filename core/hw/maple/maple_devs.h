@@ -36,6 +36,7 @@ enum NAOMI_KEYS
 	NAOMI_BTN5_KEY = 1 << 4,
 	NAOMI_BTN6_KEY = 1 << 3,
 	NAOMI_BTN7_KEY = 1 << 2,
+	NAOMI_BTN8_KEY = 1 << 16,
 
 	NAOMI_TEST_KEY = 1 << 1,
 
