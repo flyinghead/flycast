@@ -37,9 +37,9 @@ void YUV_init()
 
 	YUV_dest=TA_YUV_TEX_BASE&VRAM_MASK;//TODO : add the masking needed
 	TA_YUV_TEX_CNT=0;
-	YUV_blockcount=(((TA_YUV_TEX_CTRL>>0)&0x3F)+1)*(((TA_YUV_TEX_CTRL>>8)&0x3F)+1);
+	YUV_blockcount = (TA_YUV_TEX_CTRL.yuv_u_size + 1) * (TA_YUV_TEX_CTRL.yuv_v_size + 1);
 
-	if ((TA_YUV_TEX_CTRL>>16 )&1)
+	if (TA_YUV_TEX_CTRL.yuv_tex != 0)
 	{
 		die ("YUV: Not supported configuration\n");
 		YUV_x_size=16;
@@ -47,8 +47,8 @@ void YUV_init()
 	}
 	else // yesh!!!
 	{
-		YUV_x_size=(((TA_YUV_TEX_CTRL>>0)&0x3F)+1)*16;
-		YUV_y_size=(((TA_YUV_TEX_CTRL>>8)&0x3F)+1)*16;
+		YUV_x_size = (TA_YUV_TEX_CTRL.yuv_u_size + 1) * 16;
+		YUV_y_size = (TA_YUV_TEX_CTRL.yuv_v_size + 1) * 16;
 	}
 }
 
@@ -164,7 +164,7 @@ void YUV_data(u32* data , u32 count)
 		YUV_init();
 	}
 
-	u32 block_size=(TA_YUV_TEX_CTRL & (1<<24))==0?384:512;
+	u32 block_size = TA_YUV_TEX_CTRL.yuv_form == 0 ? 384 : 512;
 
 	verify(block_size==384); //no support for 512
 

@@ -371,6 +371,21 @@ union TA_GLOB_TILE_CLIP_type
 	u32 full;
 };
  
+union TA_YUV_TEX_CTRL_type
+{
+	struct
+	{
+		u32 yuv_u_size	: 6;
+		u32 reserved1	: 2;
+		u32 yuv_v_size	: 6;
+		u32 reserved2	: 2;
+		u32 yuv_tex		: 1;
+		u32 reserved3	: 7;
+		u32 yuv_form	: 1;
+		u32 reserved4	: 7;
+	};
+	u32 full;
+};
 
 // TA REGS
 #define TA_OL_BASE_addr         0x00000124 // RW  Object list write start address
@@ -483,7 +498,7 @@ union TA_GLOB_TILE_CLIP_type
 #define TA_ALLOC_CTRL     PvrReg(TA_ALLOC_CTRL_addr,u32)     // RW Object list control
 #define TA_LIST_INIT      PvrReg(TA_LIST_INIT_addr,u32)      // RW TA initialization
 #define TA_YUV_TEX_BASE   PvrReg(TA_YUV_TEX_BASE_addr,u32)   // RW YUV422 texture write start address
-#define TA_YUV_TEX_CTRL   PvrReg(TA_YUV_TEX_CTRL_addr,u32)   // RW YUV converter control
+#define TA_YUV_TEX_CTRL   PvrReg(TA_YUV_TEX_CTRL_addr, TA_YUV_TEX_CTRL_type)   // RW YUV converter control
 #define TA_YUV_TEX_CNT    PvrReg(TA_YUV_TEX_CNT_addr,u32)    // R  YUV converter macro block counter value
 
 #define TA_LIST_CONT      PvrReg(TA_LIST_CONT_addr,u32)      // RW TA continuation processing
