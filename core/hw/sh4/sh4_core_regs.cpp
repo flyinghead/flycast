@@ -47,14 +47,9 @@ bool UpdateSR()
 		{
 			printf("UpdateSR MD=0;RB=1 , this must not happen\n");
 			sr.RB =0;//error - must always be 0
-			if (old_sr.RB)
-				ChangeGPR();//switch
 		}
-		else
-		{
-			if (old_sr.RB)
-				ChangeGPR();//switch
-		}
+		if (old_sr.RB)
+			ChangeGPR();//switch
 	}
 
 	old_sr.status=sr.status;

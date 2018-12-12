@@ -2010,10 +2010,10 @@ extern "C" void CompileCode()
 				if (op_flags & OP_SETS_PC)
 					armv_imm_to_reg(R15_ARM_NEXT,pc+4);
 
-				#if HOST_CPU==CPU_X86
-					if ( !(op_flags & OP_SETS_PC) )
-						armv_imm_to_reg(R15_ARM_NEXT,pc+4);
-				#endif
+#if HOST_CPU==CPU_X86
+				if ( !(op_flags & OP_SETS_PC) )
+					armv_imm_to_reg(R15_ARM_NEXT,pc+4);
+#endif
 
 				armv_intpr(opcd);
 

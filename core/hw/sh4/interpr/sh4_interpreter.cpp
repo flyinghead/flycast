@@ -238,15 +238,6 @@ int DreamcastSecond(int tag, int c, int j)
 	return SH4_MAIN_CLOCK;
 }
 
-int UpdateSystem_rec()
-{
-	//WIP
-	if (Sh4cntx.sh4_sched_next<0)
-		sh4_sched_tick(448);
-
-	return Sh4cntx.interrupt_pend;
-}
-
 //448 Cycles (fixed)
 int UpdateSystem()
 {

@@ -9,6 +9,9 @@
 #include "hw/pvr/spg.h"
 #include <time.h>
 
+#include "deps/zlib/zlib.h"
+#include "deps/xxhash/xxhash.h"
+
 #if _ANDROID
 #include <android/log.h>
 #include <jni.h>
@@ -21,9 +24,6 @@
 #else
 #define LOGJVS(...)
 #endif
-
-#include "deps/zlib/zlib.h"
-#include "deps/xxhash/xxhash.h"
 
 #define SAVE_EPROM 1
 

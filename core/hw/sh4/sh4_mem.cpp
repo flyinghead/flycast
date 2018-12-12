@@ -248,6 +248,7 @@ void WriteMemBlock_nommu_dma(u32 dst,u32 src,u32 size)
 	}
 	else
 	{
+		verify(size % 4 == 0);
 		for (u32 i=0;i<size;i+=4)
 		{
 			WriteMem32_nommu(dst+i,ReadMem32_nommu(src+i));
@@ -257,11 +258,6 @@ void WriteMemBlock_nommu_dma(u32 dst,u32 src,u32 size)
 void WriteMemBlock_nommu_ptr(u32 dst,u32* src,u32 size)
 {
 	u32 dst_msk;
-	if (size % 4 != 0)
-	{
-		EMUERROR("invalid size %d. Ignored", size);
-		return;
-	}
 
 	void* dst_ptr=_vmem_get_ptr2(dst,dst_msk);
 
@@ -272,9 +268,21 @@ void WriteMemBlock_nommu_ptr(u32 dst,u32* src,u32 size)
 	}
 	else
 	{
-		for (u32 i=0;i<size;i+=4)
+		for (u32 i = 0; i < size;)
 		{
-			WriteMem32_nommu(dst+i,src[i>>2]);
+			u32 left = size - i;
+			if (left >= 4)
+			{
+				WriteMem32_nommu(dst + i, src[i >> 2]);
+				i += 4;
+			}
+			else if (left >= 2)
+			{
+				WriteMem16_nommu(dst + i, ((u16 *)src)[i >> 1]);
+				i += 2;
+			}
+			else
+				WriteMem8_nommu(dst + i, ((u8 *)src)[i++]);
 		}
 	}
 }
