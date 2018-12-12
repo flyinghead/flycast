@@ -282,7 +282,10 @@ void WriteMemBlock_nommu_ptr(u32 dst,u32* src,u32 size)
 				i += 2;
 			}
 			else
-				WriteMem8_nommu(dst + i, ((u8 *)src)[i++]);
+			{
+				WriteMem8_nommu(dst + i, ((u8 *)src)[i]);
+				i++;
+			}
 		}
 	}
 }
