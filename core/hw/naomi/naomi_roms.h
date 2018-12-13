@@ -3982,9 +3982,9 @@ Games[] =
 		NULL,
         0x10000000,
         0x5504,
-        NULL, // requires epr-21576g.ic27
+		"naomi",
         M4,
-        REGION_EXPORT,   // not a real M4, rom header decrypted
+        REGION_EXPORT,
         {
             { "fpr-24413.ic8",  0x0000000, 0x4000000 },
             { "fpr-24414.ic9",  0x4000000, 0x4000000 },
