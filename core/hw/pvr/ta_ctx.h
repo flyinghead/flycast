@@ -131,7 +131,7 @@ struct rend_context
 	u32 fog_clamp_max;
 
 	List<Vertex>      verts;
-	List<u16>         idx;
+	List<u32>         idx;
 	List<ModTriangle> modtrig;
 	List<ModifierVolumeParam>  global_param_mvo;
 	List<ModifierVolumeParam>  global_param_mvo_tr;
@@ -159,6 +159,8 @@ struct rend_context
 		isRenderFramebuffer = false;
 	}
 };
+
+#define TA_DATA_SIZE (8 * 1024 * 1024)
 
 //vertex lists
 struct TA_context
@@ -199,7 +201,7 @@ struct TA_context
 
 	void Alloc()
 	{
-		tad.Reset((u8*)OS_aligned_malloc(32, 8*1024*1024));
+		tad.Reset((u8*)OS_aligned_malloc(32, TA_DATA_SIZE));
 
 		rend.verts.InitBytes(4 * 1024 * 1024, &rend.Overrun, "verts");	//up to 4 mb of vtx data/frame = ~ 96k vtx/frame
 		rend.idx.Init(120 * 1024, &rend.Overrun, "idx");				//up to 120K indexes ( idx have stripification overhead )
@@ -218,6 +220,7 @@ struct TA_context
 
 	void Reset()
 	{
+		verify(tad.End() - tad.thd_root < TA_DATA_SIZE);
 		tad.Clear();
 		rend_inuse.Lock();
 		rend.Clear();
@@ -227,6 +230,7 @@ struct TA_context
 
 	void Free()
 	{
+		verify(tad.End() - tad.thd_root < TA_DATA_SIZE);
 		OS_aligned_free(tad.thd_root);
 		rend.verts.Free();
 		rend.idx.Free();

@@ -275,7 +275,7 @@ void DrawList(const List<PolyParam>& gply, int first, int count)
 		if (params->count>2) //this actually happens for some games. No idea why ..
 		{
 			SetGPState<Type,SortingEnabled>(params);
-			glDrawElements(GL_TRIANGLE_STRIP, params->count, GL_UNSIGNED_SHORT, (GLvoid*)(2*params->first)); glCheck();
+			glDrawElements(GL_TRIANGLE_STRIP, params->count, GL_UNSIGNED_INT, (GLvoid*)(sizeof(u32) * params->first)); glCheck();
 		}
 
 		params++;
@@ -296,7 +296,7 @@ void SortPParams(int first, int count)
 		return;
 
 	Vertex* vtx_base=pvrrc.verts.head();
-	u16* idx_base=pvrrc.idx.head();
+	u32* idx_base = pvrrc.idx.head();
 
 	PolyParam* pp = &pvrrc.global_param_tr.head()[first];
 	PolyParam* pp_end = pp + count;
@@ -309,7 +309,7 @@ void SortPParams(int first, int count)
 		}
 		else
 		{
-			u16* idx=idx_base+pp->first;
+			u32* idx = idx_base + pp->first;
 
 			Vertex* vtx=vtx_base+idx[0];
 			Vertex* vtx_end=vtx_base + idx[pp->count-1]+1;
@@ -334,7 +334,7 @@ Vertex* vtx_sort_base;
 
 struct IndexTrig
 {
-	u16 id[3];
+	u32 id[3];
 	u16 pid;
 	f32 z;
 };
@@ -343,8 +343,8 @@ struct IndexTrig
 struct SortTrigDrawParam
 {
 	PolyParam* ppid;
-	u16 first;
-	u16 count;
+	u32 first;
+	u32 count;
 };
 
 float min3(float v0,float v1,float v2)
@@ -358,7 +358,7 @@ float max3(float v0,float v1,float v2)
 }
 
 
-float minZ(Vertex* v,u16* mod)
+float minZ(Vertex* v, u32* mod)
 {
 	return min(min(v[mod[0]].z,v[mod[1]].z),v[mod[2]].z);
 }
@@ -471,7 +471,7 @@ bool PP_EQ(PolyParam* pp0, PolyParam* pp1)
 
 static vector<SortTrigDrawParam>	pidx_sort;
 
-void fill_id(u16* d, Vertex* v0, Vertex* v1, Vertex* v2,  Vertex* vb)
+void fill_id(u32* d, Vertex* v0, Vertex* v1, Vertex* v2,  Vertex* vb)
 {
 	d[0]=v0-vb;
 	d[1]=v1-vb;
@@ -488,7 +488,7 @@ void GenSorted(int first, int count)
 		return;
 
 	Vertex* vtx_base=pvrrc.verts.head();
-	u16* idx_base=pvrrc.idx.head();
+	u32* idx_base = pvrrc.idx.head();
 
 	PolyParam* pp_base = &pvrrc.global_param_tr.head()[first];
 	PolyParam* pp = pp_base;
@@ -524,7 +524,7 @@ void GenSorted(int first, int count)
 
 		if (pp->count>2)
 		{
-			u16* idx=idx_base+pp->first;
+			u32* idx = idx_base + pp->first;
 
 			Vertex* vtx=vtx_base+idx[0];
 			Vertex* vtx_end=vtx_base + idx[pp->count-1]-1;
@@ -694,7 +694,7 @@ void GenSorted(int first, int count)
 #endif
 
 	//re-assemble them into drawing commands
-	static vector<u16> vidx_sort;
+	static vector<u32> vidx_sort;
 
 	vidx_sort.resize(aused*3);
 
@@ -703,7 +703,7 @@ void GenSorted(int first, int count)
 	for (u32 i=0; i<aused; i++)
 	{
 		int pid=lst[i].pid;
-		u16* midx=lst[i].id;
+		u32* midx = lst[i].id;
 
 		vidx_sort[i*3 + 0]=midx[0];
 		vidx_sort[i*3 + 1]=midx[1];
@@ -711,7 +711,7 @@ void GenSorted(int first, int count)
 
 		if (idx!=pid /* && !PP_EQ(&pp_base[pid],&pp_base[idx]) */ )
 		{
-			SortTrigDrawParam stdp={pp_base + pid, (u16)(i*3), 0};
+			SortTrigDrawParam stdp = { pp_base + pid, i * 3, 0 };
 			
 			if (idx!=-1)
 			{
@@ -736,7 +736,7 @@ void GenSorted(int first, int count)
 	{
 		//Bind and upload sorted index buffer
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs2); glCheck();
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER,vidx_sort.size()*2,&vidx_sort[0],GL_STREAM_DRAW);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, vidx_sort.size() * sizeof(u32), &vidx_sort[0], GL_STREAM_DRAW);
 
 		if (tess_gen) printf("Generated %.2fK Triangles !\n",tess_gen/1000.0);
 	}
@@ -762,7 +762,7 @@ void DrawSorted(bool multipass)
 				if (pidx_sort[p].count>2) //this actually happens for some games. No idea why ..
 				{
 					SetGPState<ListType_Translucent,true>(params);
-					glDrawElements(GL_TRIANGLES, pidx_sort[p].count, GL_UNSIGNED_SHORT, (GLvoid*)(2*pidx_sort[p].first)); glCheck();
+					glDrawElements(GL_TRIANGLES, pidx_sort[p].count, GL_UNSIGNED_INT, (GLvoid*)(sizeof(u32) * pidx_sort[p].first)); glCheck();
 				
 #if 0
 					//Verify restriping -- only valid if no sort
@@ -806,7 +806,7 @@ void DrawSorted(bool multipass)
 
 						SetCull(params->isp.CullMode ^ gcflip);
 
-						glDrawElements(GL_TRIANGLES, pidx_sort[p].count, GL_UNSIGNED_SHORT, (GLvoid*)(2 * pidx_sort[p].first));
+						glDrawElements(GL_TRIANGLES, pidx_sort[p].count, GL_UNSIGNED_INT, (GLvoid*)(sizeof(u32) * pidx_sort[p].first));
 					}
 				}
 				glcache.StencilMask(0xFF);

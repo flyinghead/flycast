@@ -285,7 +285,7 @@ static void DrawList(const List<PolyParam>& gply, int first, int count, int pass
 			}
 			gl4ShaderUniforms.poly_number = params - gply.head();
 			SetGPState<Type,SortingEnabled>(params, pass);
-			glDrawElements(GL_TRIANGLE_STRIP, params->count, GL_UNSIGNED_SHORT, (GLvoid*)(2*params->first)); glCheck();
+			glDrawElements(GL_TRIANGLE_STRIP, params->count, GL_UNSIGNED_INT, (GLvoid*)(sizeof(u32) * params->first)); glCheck();
 		}
 
 		params++;

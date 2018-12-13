@@ -837,7 +837,7 @@ struct softrend : Renderer
 	void RenderParamList(List<PolyParam>* param_list, RECT* area) {
 
 		Vertex* verts = pvrrc.verts.head();
-		u16* idx = pvrrc.idx.head();
+		u32* idx = pvrrc.idx.head();
 
 		PolyParam* params = param_list->head();
 		int param_count = param_list->used();
@@ -846,7 +846,7 @@ struct softrend : Renderer
 		{
 			int vertex_count = params[i].count - 2;
 
-			u16* poly_idx = &idx[params[i].first];
+			u32* poly_idx = &idx[params[i].first];
 
 			for (int v = 0; v < vertex_count; v++) {
 				////<alpha_blend, pp_UseAlpha, pp_Texture, pp_IgnoreTexA, pp_ShadInstr, pp_Offset >
