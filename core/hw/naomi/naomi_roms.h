@@ -3984,7 +3984,7 @@ Games[] =
         0x5504,
 		"naomi",
         M4,
-        REGION_EXPORT,
+        REGION_JAPAN,
         {
             { "fpr-24413.ic8",  0x0000000, 0x4000000 },
             { "fpr-24414.ic9",  0x4000000, 0x4000000 },

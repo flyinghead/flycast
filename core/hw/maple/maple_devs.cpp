@@ -98,8 +98,6 @@ enum MapleDeviceRV
 	MDRS_JVSReply		 = 0x87, // JVS I/O
 };
 
-NaomiInputMapping Naomi_Mapping;
-
 #define SWAP32(a) ((((a) & 0xff) << 24)  | (((a) & 0xff00) << 8) | (((a) >> 8) & 0xff00) | (((a) >> 24) & 0xff))
 
 //fill in the info
@@ -1340,6 +1338,33 @@ extern s8 joyx[4],joyy[4];
 extern u8 rt[4], lt[4];
 char EEPROM[0x100];
 bool EEPROM_loaded = false;
+
+static u16 getJoystickXAxis()
+{
+	return (joyx[0] + 128) << 8;
+}
+
+static u16 getJoystickYAxis()
+{
+	return (joyy[0] + 128) << 8;
+}
+
+static u16 getLeftTriggerAxis()
+{
+	return lt[0] << 8;
+}
+
+static u16 getRightTriggerAxis()
+{
+	return rt[0] << 8;
+}
+
+NaomiInputMapping Naomi_Mapping = {
+	{ getJoystickXAxis, getJoystickYAxis, getRightTriggerAxis, getLeftTriggerAxis },
+	{ 0,    0,    0,    0,    0,    0,    0,    0,    0, 1,    1,    0, 0 },
+	{ 0x40, 0x01, 0x02, 0x80, 0x20, 0x10, 0x08, 0x04, 0, 0x80, 0x40, 0, 0 },
+//  SERVICE BTN1  BTN0  START UP    DOWN  LEFT  RIGHT    BTN2  BTN3
+};
 
 /*
  * Sega JVS I/O board
