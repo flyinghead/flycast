@@ -727,6 +727,8 @@ GLuint fogTextureId;
 
 void findGLVersion()
 {
+	gl.index_type = GL_UNSIGNED_INT;
+
 	while (true)
 		if (glGetError() == GL_NO_ERROR)
 			break;
@@ -746,6 +748,7 @@ void findGLVersion()
 		{
 			gl.gl_version = "GLES2";
 			gl.glsl_version_header = "";
+			gl.index_type = GL_UNSIGNED_SHORT;
 		}
 		gl.fog_image_format = GL_ALPHA;
 	}
@@ -1566,6 +1569,24 @@ bool ProcessFrame(TA_context* ctx)
 	return !ctx->rend.Overrun;
 }
 
+static void upload_vertex_indices()
+{
+	if (gl.index_type == GL_UNSIGNED_SHORT)
+	{
+		static bool overrun;
+		static List<u16> short_idx;
+		if (short_idx.daty != NULL)
+			short_idx.Free();
+		short_idx.Init(pvrrc.idx.used(), &overrun, NULL);
+		for (u32 *p = pvrrc.idx.head(); p < pvrrc.idx.LastPtr(0); p++)
+			*(short_idx.Append()) = *p;
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, short_idx.bytes(), short_idx.head(), GL_STREAM_DRAW);
+	}
+	else
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER,pvrrc.idx.bytes(),pvrrc.idx.head(),GL_STREAM_DRAW);
+	glCheck();
+}
+
 bool RenderFrame()
 {
 	DoCleanup();
@@ -1890,7 +1911,7 @@ bool RenderFrame()
 
 		glBufferData(GL_ARRAY_BUFFER,pvrrc.verts.bytes(),pvrrc.verts.head(),GL_STREAM_DRAW); glCheck();
 
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER,pvrrc.idx.bytes(),pvrrc.idx.head(),GL_STREAM_DRAW);
+		upload_vertex_indices();
 
 		//Modvol VBO
 		if (pvrrc.modtrig.used())
@@ -1960,7 +1981,11 @@ bool RenderFrame()
 	{
 		glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
 		glClear(GL_COLOR_BUFFER_BIT);
+		glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.geometry); glCheck();
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs); glCheck();
 		DrawFramebuffer(dc_width, dc_height);
+		glBufferData(GL_ARRAY_BUFFER, pvrrc.verts.bytes(), pvrrc.verts.head(), GL_STREAM_DRAW);
+		upload_vertex_indices();
 	}
 	#if HOST_OS==OS_WINDOWS
 		//Sleep(40); //to test MT stability

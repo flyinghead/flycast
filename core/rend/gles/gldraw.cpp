@@ -275,7 +275,8 @@ void DrawList(const List<PolyParam>& gply, int first, int count)
 		if (params->count>2) //this actually happens for some games. No idea why ..
 		{
 			SetGPState<Type,SortingEnabled>(params);
-			glDrawElements(GL_TRIANGLE_STRIP, params->count, GL_UNSIGNED_INT, (GLvoid*)(sizeof(u32) * params->first)); glCheck();
+			glDrawElements(GL_TRIANGLE_STRIP, params->count, gl.index_type,
+					(GLvoid*)(gl.get_index_size() * params->first)); glCheck();
 		}
 
 		params++;
@@ -736,7 +737,20 @@ void GenSorted(int first, int count)
 	{
 		//Bind and upload sorted index buffer
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs2); glCheck();
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, vidx_sort.size() * sizeof(u32), &vidx_sort[0], GL_STREAM_DRAW);
+		if (gl.index_type == GL_UNSIGNED_SHORT)
+		{
+			static bool overrun;
+			static List<u16> short_vidx;
+			if (short_vidx.daty != NULL)
+				short_vidx.Free();
+			short_vidx.Init(vidx_sort.size(), &overrun, NULL);
+			for (int i = 0; i < vidx_sort.size(); i++)
+				*(short_vidx.Append()) = vidx_sort[i];
+			glBufferData(GL_ELEMENT_ARRAY_BUFFER, short_vidx.bytes(), short_vidx.head(), GL_STREAM_DRAW);
+		}
+		else
+			glBufferData(GL_ELEMENT_ARRAY_BUFFER, vidx_sort.size() * sizeof(u32), &vidx_sort[0], GL_STREAM_DRAW);
+		glCheck();
 
 		if (tess_gen) printf("Generated %.2fK Triangles !\n",tess_gen/1000.0);
 	}
@@ -762,7 +776,8 @@ void DrawSorted(bool multipass)
 				if (pidx_sort[p].count>2) //this actually happens for some games. No idea why ..
 				{
 					SetGPState<ListType_Translucent,true>(params);
-					glDrawElements(GL_TRIANGLES, pidx_sort[p].count, GL_UNSIGNED_INT, (GLvoid*)(sizeof(u32) * pidx_sort[p].first)); glCheck();
+					glDrawElements(GL_TRIANGLES, pidx_sort[p].count, gl.index_type,
+							(GLvoid*)(gl.get_index_size() * pidx_sort[p].first)); glCheck();
 				
 #if 0
 					//Verify restriping -- only valid if no sort
@@ -806,7 +821,8 @@ void DrawSorted(bool multipass)
 
 						SetCull(params->isp.CullMode ^ gcflip);
 
-						glDrawElements(GL_TRIANGLES, pidx_sort[p].count, GL_UNSIGNED_INT, (GLvoid*)(sizeof(u32) * pidx_sort[p].first));
+						glDrawElements(GL_TRIANGLES, pidx_sort[p].count, gl.index_type,
+								(GLvoid*)(gl.get_index_size() * pidx_sort[p].first));
 					}
 				}
 				glcache.StencilMask(0xFF);
@@ -1128,7 +1144,4 @@ void DrawFramebuffer(float w, float h)
 
 	glcache.DeleteTextures(1, &fbTextureId);
 	fbTextureId = 0;
-
-	glBufferData(GL_ARRAY_BUFFER, pvrrc.verts.bytes(), pvrrc.verts.head(), GL_STREAM_DRAW);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, pvrrc.idx.bytes(), pvrrc.idx.head(), GL_STREAM_DRAW);
 }

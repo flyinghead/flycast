@@ -121,7 +121,9 @@ struct gl_ctx
 	int gl_major;
 	bool is_gles;
 	GLuint fog_image_format;
-	//GLuint matrix;
+	GLenum index_type;
+
+	size_t get_index_size() { return index_type == GL_UNSIGNED_INT ? sizeof(u32) : sizeof(u16); }
 };
 
 extern gl_ctx gl;
