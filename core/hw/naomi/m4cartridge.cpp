@@ -147,7 +147,7 @@ bool M4Cartridge::Read(u32 offset, u32 size, void *dst) {
 		return true;
 	}
 	else
-		return NaomiCartridge::Read(offset, size, dst);
+		return NaomiCartridge::Read(offset & 0x1ffffffe, size, dst);
 }
 
 void *M4Cartridge::GetDmaPtr(u32 &limit)
@@ -278,11 +278,18 @@ std::string M4Cartridge::GetGameId()
 	if (RomSize < 0x30 + 0x20)
 		return "(ROM too small)";
 
-	rom_cur_address = 0;
-	enc_reset();
-	enc_fill();
+	std::string game_id;
+	if (RomPtr[0] == 'N' && RomPtr[1] == 'A')
+		game_id = std::string((char *)(RomPtr + 0x30), 0x20);
+	else
+	{
+		rom_cur_address = 0;
+		enc_reset();
+		enc_fill();
 
-	std::string game_id((char *)(buffer + 0x30), 0x20);
+		game_id = std::string((char *)(buffer + 0x30), 0x20);
+	}
+
 	while (!game_id.empty() && game_id.back() == ' ')
 		game_id.pop_back();
 	return game_id;
