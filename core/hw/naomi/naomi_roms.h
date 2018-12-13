@@ -785,7 +785,7 @@ Games[] =
 		NULL,
         0x0b000000,
         0x28070e41,
-        "airlbios",
+        "naomi",
         M2,
         REGION_AUSTRALIA,
         {
@@ -815,7 +815,7 @@ Games[] =
 		NULL,
         0x0b000000,
         0x28070e41,
-        "airlbios",
+        "naomi",
         M2,
         REGION_AUSTRALIA,
         {
