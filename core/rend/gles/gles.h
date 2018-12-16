@@ -43,9 +43,21 @@
 
 //vertex types
 extern u32 gcflip;
+extern u32 rttDepthCounter;
 
+extern bool isExtensionSupported(const char *);
+
+enum rttSelectedOption
+{
+	Disabled = 0,
+	Zeros,
+	Ones,
+	ShadowCircle,
+	Full
+};
 
 void DrawStrips();
+void checkIfUpdated();
 
 struct PipelineShader
 {
@@ -118,7 +130,6 @@ void SortPParams();
 
 void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt);
 void ReadRTT();
-void FreeRTTBuffers();
 int GetProgramID(u32 cp_AlphaTest, u32 pp_ClipTestMode,
 							u32 pp_Texture, u32 pp_UseAlpha, u32 pp_IgnoreTexA, u32 pp_ShadInstr, u32 pp_Offset,
 							u32 pp_FogCtrl);

@@ -747,7 +747,7 @@ public class OptionsFragment extends Fragment {
 		Emulator.cable = 3;
 		Emulator.dcregion = 3;
 		Emulator.broadcast = 4;
-		Emulator.rtt = 3;
+		Emulator.rtt = 1;
 		Emulator.limitfps = true;
 		Emulator.mipmaps = true;
 		Emulator.widescreen = false;

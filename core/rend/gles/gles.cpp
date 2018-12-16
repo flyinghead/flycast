@@ -175,8 +175,8 @@ const char* VertexShaderSource =
 
 //0 - not in use
 //1 - in use since the last frame
-//2 - not anymore in use (e.g. exit to menu)
 u8 rttInUse = 0;
+u32 rttDepthCounter = 0;
 
 /*
 
@@ -392,6 +392,10 @@ gl_ctx gl;
 
 int screen_width;
 int screen_height;
+
+bool isExtensionSupported(const char * name) {
+	return strstr((const char *)glGetString(GL_EXTENSIONS), name) != NULL;
+}
 
 #if (HOST_OS != OS_DARWIN) && !defined(TARGET_NACL32)
 #if defined(GLES) && !defined(USE_SDL)
@@ -1450,7 +1454,7 @@ void OSD_DRAW()
 
 bool ProcessFrame(TA_context* ctx)
 {
-	if (ctx->rend.isRTT && settings.dreamcast.rttOption == 0)
+	if (ctx->rend.isRTT && settings.dreamcast.rttOption == Disabled)
 	{
 		return false;
 	}
@@ -1582,16 +1586,11 @@ bool RenderFrame()
 	{
 		gcflip=1;
 
-		//For some reason this produces wrong results
-		//so for now its hacked based like on the d3d code
-
-		dc_width = FB_X_CLIP.max - FB_X_CLIP.min + 1;
+		dc_width =  FB_W_LINESTRIDE.stride ? FB_W_LINESTRIDE.stride * 4 : FB_X_CLIP.max - FB_X_CLIP.min + 1;
 		dc_height  = FB_Y_CLIP.max - FB_Y_CLIP.min + 1;
-		//u32 pvr_stride=(FB_W_LINESTRIDE.stride)*8;
 	}
 
 	float scale_x=1, scale_y=1;
-
 	float scissoring_scale_x = 1;
 
 	if (!is_rtt)
@@ -1616,8 +1615,6 @@ bool RenderFrame()
 
 	dc_width  *= scale_x;
 	dc_height *= scale_y;
-
-	glUseProgram(gl.modvol_shader.program);
 
 	/*
 
@@ -1646,16 +1643,27 @@ bool RenderFrame()
 	/*
 		Handle Dc to screen scaling
 	*/
+	float dc2s_scale_h = screen_height / 480.0;
+	float ds2s_offs_x = (screen_width - dc2s_scale_h * 640.0) / 2;
 
-	float dc2s_scale_h = is_rtt ? (screen_width / dc_width) : (screen_height / 480.0);
-	float ds2s_offs_x =  is_rtt ? 0 : ((screen_width - dc2s_scale_h * 640.0) / 2);
+	if (!is_rtt) {
+		ShaderUniforms.scale_coefs[0] = 2.0f / (screen_width / dc2s_scale_h * scale_x);
+		ShaderUniforms.scale_coefs[2] = 1 - 2 * ds2s_offs_x / screen_width;
+	} else {
+		if (dc_width == (FB_X_CLIP.max - FB_X_CLIP.min + 1)) {
+			ShaderUniforms.scale_coefs[0] = 2.0f / (dc_width * scale_x);
+		}
+		else { //is stride
+			ShaderUniforms.scale_coefs[0] = 2.0f / ((FB_X_CLIP.max - FB_X_CLIP.min + 1) * scale_x);
+		}
+		dc2s_scale_h = screen_width / dc_width;
+		ds2s_offs_x = 0;
+		ShaderUniforms.scale_coefs[2] = 1;
+	}
 
 	//-1 -> too much to left
-	ShaderUniforms.scale_coefs[0]=2.0f/(screen_width/dc2s_scale_h*scale_x);
 	ShaderUniforms.scale_coefs[1]=(is_rtt?2:-2)/dc_height;
-	ShaderUniforms.scale_coefs[2]=1-2*ds2s_offs_x/(screen_width);
 	ShaderUniforms.scale_coefs[3]=(is_rtt?1:-1);
-
 
 	ShaderUniforms.depth_coefs[0]=2/(vtx_max_fZ-vtx_min_fZ);
 	ShaderUniforms.depth_coefs[1]=-vtx_min_fZ-1;
@@ -1663,7 +1671,6 @@ bool RenderFrame()
 	ShaderUniforms.depth_coefs[3]=0;
 
 	//printf("scale: %f, %f, %f, %f\n",scale_coefs[0],scale_coefs[1],scale_coefs[2],scale_coefs[3]);
-
 
 	//VERT and RAM fog color constants
 	u8* fog_colvert_bgra=(u8*)&FOG_COL_VERT;
@@ -1722,6 +1729,7 @@ bool RenderFrame()
 
 		ShaderUniforms.Set(s);
 	}
+
 	//setup render target first
 	if (is_rtt)
 	{
@@ -1740,7 +1748,7 @@ bool RenderFrame()
 
 		case 2: //0x2   4444 ARGB 16 bit
 			channels=GL_RGBA;
-			format=GL_UNSIGNED_SHORT_5_5_5_1;
+			format=GL_UNSIGNED_SHORT_4_4_4_4;
 			break;
 
 		case 3://0x3    1555 ARGB 16 bit    The alpha value is determined by comparison with the value of fb_alpha_threshold.
@@ -1749,38 +1757,28 @@ bool RenderFrame()
 			break;
 
 		case 4: //0x4   888 RGB 24 bit packed
-			channels=GL_RGB;
-			format=GL_UNSIGNED_SHORT_5_6_5;
-			break;
-
 		case 5: //0x5   0888 KRGB 32 bit    K is the value of fk_kval.
-			channels=GL_RGBA;
-			format=GL_UNSIGNED_SHORT_4_4_4_4;
-			break;
-
 		case 6: //0x6   8888 ARGB 32 bit
-			channels=GL_RGBA;
-			format=GL_UNSIGNED_SHORT_4_4_4_4;
-			break;
-
 		case 7: //7     invalid
-			die("7 is not valid");
-			break;
+		default:
+			die("Not supported RTT format");
+			return false;
 		}
-		BindRTT(FB_W_SOF1&VRAM_MASK,FB_X_CLIP.max-FB_X_CLIP.min+1,FB_Y_CLIP.max-FB_Y_CLIP.min+1,channels,format);
+
+		if (rttInUse == 1) {
+			rttDepthCounter++;
+		}
+		BindRTT(FB_W_SOF1 & VRAM_MASK, dc_width, dc_height, channels, format);
 		rttInUse = 1;
 	}
 	else
 	{
 #if HOST_OS != OS_DARWIN
-        if (rttInUse == 1) {
-            ReadRTT();
-            rttInUse = 2;
-        }
-        else if (rttInUse == 2) {
-            FreeRTTBuffers();
-            rttInUse = 0;
-        }
+		if (rttInUse == 1) {
+			ReadRTT();
+			rttInUse = 0;
+		}
+		rttDepthCounter = 0;
 
 		glBindFramebuffer(GL_FRAMEBUFFER,0);
 		glViewport(0, 0, screen_width, screen_height);
@@ -1840,12 +1838,12 @@ bool RenderFrame()
 	else
 		glEnable(GL_SCISSOR_TEST);
 
-
 	//restore scale_x
 	scale_x /= scissoring_scale_x;
 
-	if (!(is_rtt && (settings.dreamcast.rttOption > 0 && settings.dreamcast.rttOption <= 3)))
+	if (!(is_rtt && (settings.dreamcast.rttOption > Disabled && settings.dreamcast.rttOption <= ShadowCircle)))
 	{
+		checkIfUpdated();
 		DrawStrips();
 	}
 

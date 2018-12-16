@@ -35,7 +35,7 @@ public class Emulator extends Application {
     public static int cable = 3;
     public static int dcregion = 3;
     public static int broadcast = 4;
-    public static int rtt = 3;
+    public static int rtt = 1;
     public static boolean limitfps = true;
     public static boolean nobatch = false;
     public static boolean nosound = false;
