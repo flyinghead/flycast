@@ -534,8 +534,9 @@ GLint checkSupportedReadType()
 
 void handleKRGB1555(GLint w, GLint h, FBT &fbt) {
 	const u32 kval_upper_bit = fbt.kval_bit;
+	GLint framebufferReadType = checkSupportedReadType();
 
-	if (checkSupportedReadType() == GL_UNSIGNED_SHORT_5_5_5_1) {
+	if (framebufferReadType == GL_UNSIGNED_SHORT_5_5_5_1) {
 		glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, fbt.texData);
 
 		// convert RGBA5551 to KRGB1555
@@ -544,6 +545,13 @@ void handleKRGB1555(GLint w, GLint h, FBT &fbt) {
 			fbt.texData[i] = (kval_upper_bit << 15) | ((*dataPointer & 0xFFFE) >> 1);
 			*dataPointer++;
 		}
+	}
+	else if (framebufferReadType == GL_UNSIGNED_BYTE) {
+		// Adreno 506 slow rendering fix - 'texconv' in case of RGBA5551 format is not needed
+		glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, temp_tex_buffer_32);
+		glBindTexture(GL_TEXTURE_2D, fbt.tex);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, temp_tex_buffer_32);
+		fbt.updated = false;
 	}
 	else {
 		glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, temp_tex_buffer_32);
@@ -627,8 +635,9 @@ void handleARGB4444(GLint w, GLint h, FBT &fbt)
 
 void handleARGB1555(GLint w, GLint h, FBT &fbt) {
 	const u32 fb_alpha_threshold = fbt.fb_alpha_threshold;
+	GLint framebufferReadType = checkSupportedReadType();
 
-	if (checkSupportedReadType() == GL_UNSIGNED_SHORT_5_5_5_1) {
+	if (framebufferReadType == GL_UNSIGNED_SHORT_5_5_5_1) {
 		glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, fbt.texData);
 
 		// convert RGBA5551 to ARGB1555
@@ -639,6 +648,13 @@ void handleARGB1555(GLint w, GLint h, FBT &fbt) {
 			fbt.texData[i] = (alpha << 15) | ((*dataPointer & 0xFFFE) >> 1);
 			*dataPointer++;
 		}
+	}
+	else if (framebufferReadType == GL_UNSIGNED_BYTE) {
+		// Adreno 506 slow rendering fix - 'texconv' in case of RGBA5551 format is not needed
+		glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, temp_tex_buffer_32);
+		glBindTexture(GL_TEXTURE_2D, fbt.tex);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, temp_tex_buffer_32);
+		fbt.updated = false;
 	}
 	else {
 		glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, temp_tex_buffer_32);

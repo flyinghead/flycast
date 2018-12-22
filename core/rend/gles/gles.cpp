@@ -1733,27 +1733,43 @@ bool RenderFrame()
 	//setup render target first
 	if (is_rtt)
 	{
-		GLuint channels,format;
+		const char * renderer = (char *)glGetString(GL_RENDERER);
+		const char * adreno506Renderer = "Adreno (TM) 506";
+		GLuint channels, format;
 		switch(FB_W_CTRL.fb_packmode)
 		{
 		case 0: //0x0   0555 KRGB 16 bit  (default)	Bit 15 is the value of fb_kval[7].
 			channels=GL_RGBA;
-			format=GL_UNSIGNED_SHORT_5_5_5_1;
+			// When using RGBA5551 format on Adreno 506, rendering is extremely slow
+			// (probably by some internal format conversions), thus using GL_UNSIGNED_BYTE
+			if (!strcmp(renderer, adreno506Renderer)) {
+				format = GL_UNSIGNED_BYTE;
+			}
+			else {
+				format = GL_UNSIGNED_SHORT_5_5_5_1;
+			}
 			break;
 
 		case 1: //0x1   565 RGB 16 bit
-			channels=GL_RGB;
-			format=GL_UNSIGNED_SHORT_5_6_5;
+			channels = GL_RGB;
+			format = GL_UNSIGNED_SHORT_5_6_5;
 			break;
 
 		case 2: //0x2   4444 ARGB 16 bit
-			channels=GL_RGBA;
-			format=GL_UNSIGNED_SHORT_4_4_4_4;
+			channels = GL_RGBA;
+			format = GL_UNSIGNED_SHORT_4_4_4_4;
 			break;
 
 		case 3://0x3    1555 ARGB 16 bit    The alpha value is determined by comparison with the value of fb_alpha_threshold.
-			channels=GL_RGBA;
-			format=GL_UNSIGNED_SHORT_5_5_5_1;
+			channels = GL_RGBA;
+			// When using RGBA5551 format on Adreno 506, rendering is extremely slow
+			// (probably by some internal format conversions), thus using GL_UNSIGNED_BYTE
+			if (!strcmp(renderer, adreno506Renderer)) {
+				format = GL_UNSIGNED_BYTE;
+			}
+			else {
+				format = GL_UNSIGNED_SHORT_5_5_5_1;
+			}
 			break;
 
 		case 4: //0x4   888 RGB 24 bit packed
