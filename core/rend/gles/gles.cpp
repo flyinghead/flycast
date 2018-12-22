@@ -1859,7 +1859,7 @@ bool RenderFrame()
 
 	if (!(is_rtt && (settings.dreamcast.rttOption > Disabled && settings.dreamcast.rttOption <= ShadowCircle)))
 	{
-		checkIfUpdated();
+		rttCheckIfUpdated();
 		DrawStrips();
 	}
 

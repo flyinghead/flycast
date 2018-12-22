@@ -296,15 +296,13 @@ struct TextureCacheData
 
 		//texture conversion work
 		PixelBuffer pbt;
-		pbt.p_buffer_start=pbt.p_current_line=temp_tex_buffer;
+		pbt.p_buffer_start = pbt.p_current_line = temp_tex_buffer;
 
-
-		u32 stride=w;
-
+		u32 stride = w;
 		if (tcw.StrideSel && tcw.ScanOrder && tex->PL) 
-			stride=(TEXT_CONTROL&31)*32; //I think this needs +1 ?
+			stride = (TEXT_CONTROL & 31) * 32;
 
-		if(texconv!=0)
+		if(texconv != 0)
 		{
 			if (isSourceVram) {
 				pbt.pixels_per_line = w;
@@ -332,11 +330,12 @@ struct TextureCacheData
 
 		if (texID) {
 			glBindTexture(GL_TEXTURE_2D, texID);
-			GLuint comps=textype == GL_UNSIGNED_SHORT_5_6_5 ? GL_RGB : GL_RGBA;
+			GLuint comps = textype == GL_UNSIGNED_SHORT_5_6_5 ? GL_RGB : GL_RGBA;
 
 			if (isSourceVram) {
 				glTexImage2D(GL_TEXTURE_2D, 0, comps, w, h, 0, comps, textype, temp_tex_buffer);
-			} else {
+			}
+			else {
 				glTexImage2D(GL_TEXTURE_2D, 0, comps, stride, h, 0, comps, textype, temp_tex_buffer);
 			}
 			if (tcw.MipMapped && settings.rend.UseMipmaps)
@@ -767,7 +766,7 @@ void ReadRTT()
 	}
 }
 
-void checkIfUpdated() {
+void rttCheckIfUpdated() {
 	if(!pvrrc.isRTT && delayedUpdateQueue.size())
 	{
 		for (set<u32>::iterator it=delayedUpdateQueue.begin(); it != delayedUpdateQueue.end(); ++it) {

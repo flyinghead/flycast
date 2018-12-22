@@ -57,7 +57,7 @@ enum rttSelectedOption
 };
 
 void DrawStrips();
-void checkIfUpdated();
+void rttCheckIfUpdated();
 
 struct PipelineShader
 {
