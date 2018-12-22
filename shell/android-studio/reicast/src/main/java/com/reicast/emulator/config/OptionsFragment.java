@@ -72,6 +72,7 @@ public class OptionsFragment extends Fragment {
 		void recreateActivity();
 		void onMainBrowseSelected(String path_entry, boolean games, String query);
 		void launchBIOSdetection();
+		void synchronousRenderingNotice();
 	}
 
 	@Override  @SuppressWarnings("deprecation")
@@ -388,6 +389,9 @@ public class OptionsFragment extends Fragment {
 		rtt_spnr.setOnItemSelectedListener(new OnItemSelectedListener() {
 			public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
 				mPrefs.edit().putInt(Emulator.pref_rtt, pos).apply();
+				if (pos == 4) {
+					mCallback.synchronousRenderingNotice();
+				}
 			}
 
 			public void onNothingSelected(AdapterView<?> arg0) {

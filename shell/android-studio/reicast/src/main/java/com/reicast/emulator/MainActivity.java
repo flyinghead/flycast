@@ -339,6 +339,13 @@ public class MainActivity extends AppCompatActivity implements
 		builder.show();
 	}
 
+	public void synchronousRenderingNotice() {
+		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		builder.setMessage(R.string.synchronous_rendering_notice);
+		builder.create();
+		builder.show();
+	}
+
 	@Override
 	public void onConfigurationChanged(Configuration newConfig) {
 		super.onConfigurationChanged(newConfig);

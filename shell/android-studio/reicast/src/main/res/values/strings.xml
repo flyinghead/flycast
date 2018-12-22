@@ -182,4 +182,7 @@
     <string name="popup_button_audio">Emu Sound</string>
     <string name="popup_button_turbo">Turbo</string>
     <string name="textview">disk_loading</string>
+
+    <string name="synchronous_rendering_notice">It is recommended to enable `Synchronous Rendering` option as well</string>
+
 </resources>

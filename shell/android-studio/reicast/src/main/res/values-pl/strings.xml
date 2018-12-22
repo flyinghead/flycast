@@ -65,4 +65,6 @@
     <string name="about">O nas</string>
     <string name="rateme">Oceń nas</string>
 
+    <string name="synchronous_rendering_notice">Zalecane jest także włączenie opcji `Synchronous Rendering`</string>
+
 </resources>
