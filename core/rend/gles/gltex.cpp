@@ -37,6 +37,7 @@ set<u32> delayedUpdateQueue;
 #endif
 
 u16 temp_tex_buffer[1024*1024];
+u32 temp_tex_buffer_32[1024*1024];
 extern u32 decoded_colors[3][65536];
 
 typedef void TexConvFP(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height);
@@ -440,8 +441,7 @@ void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 
 	if (iter != renderedTextures.end()) {
 		renderedTexture = &iter->second;
-	}
-	else {
+	} else {
 		renderedTexture = &renderedTextures[location];
 	}
 
@@ -466,6 +466,7 @@ void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 	// Generate and bind a render buffer which will become a depth buffer
 	if (!renderedTexture->depthb) {
 		glGenRenderbuffers(1, &renderedTexture->depthb);
+
 		glBindRenderbuffer(GL_RENDERBUFFER, renderedTexture->depthb);
 
 		/*
@@ -491,9 +492,10 @@ void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 		createTexture(fbw, fbh, channels, fmt, renderedTexture->renderTex);
 	}
 
-	// Create the object that will allow us to render to the aforementioned texture
+	// Create the object that will allow us to render to the aforementioned texture (one for every rtt texture address)
 	if (!renderedTexture->fbo) {
 		glGenFramebuffers(1, &renderedTexture->fbo);
+
 		glBindFramebuffer(GL_FRAMEBUFFER, renderedTexture->fbo);
 
 		// Attach the texture to the FBO
@@ -514,54 +516,188 @@ void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 	glViewport(0, 0, fbw, fbh);
 }
 
-void handlePackModeRTT(GLint w, GLint h, FBT& fbt)
+GLint checkSupportedReadFormat()
 {
-	u16 *dataPointer = fbt.texData;
+	//framebuffer from which we are reading must be bound before
+	GLint format;
+	glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_FORMAT, &format);
+	return format;
+}
+
+GLint checkSupportedReadType()
+{
+	//framebuffer from which we are reading must be bound before
+	GLint type;
+	glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_TYPE, &type);
+	return type;
+}
+
+void handleKRGB1555(GLint w, GLint h, FBT &fbt) {
 	const u32 kval_upper_bit = fbt.kval_bit;
+
+	if (checkSupportedReadType() == GL_UNSIGNED_SHORT_5_5_5_1) {
+		glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, fbt.texData);
+
+		// convert RGBA5551 to KRGB1555
+		const u16 *dataPointer = fbt.texData;
+		for (u32 i = 0; i < w * h; i++) {
+			fbt.texData[i] = (kval_upper_bit << 15) | ((*dataPointer & 0xFFFE) >> 1);
+			*dataPointer++;
+		}
+	}
+	else {
+		glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, temp_tex_buffer_32);
+
+		// convert R8G8B8A8 to KRGB1555
+		const u32 *dataPointer32 = temp_tex_buffer_32;
+		for (u32 i = 0; i < w * h; i++) {
+			//additional variables just for better visibility
+			const u8 blue = ((*dataPointer32 & 0x00FF0000UL) >> 19); //5bits for blue
+			const u8 green = ((*dataPointer32 & 0x0000FF00UL) >> 11); //5bits for green
+			const u8 red = (*dataPointer32 & 0x000000FFUL) >> 3; //5bits for red
+
+			//convert to 16bit color with K value bit
+			temp_tex_buffer_32[i] =  (kval_upper_bit << 15) | (red << 10) | (green << 5) | blue;
+			*dataPointer32++;
+
+			//assign to 16bit buffer (type conversions should use static_cast<> in C++)
+			fbt.texData[i] = (u16)temp_tex_buffer_32[i];
+		}
+	}
+}
+
+void handleRGB565(GLint w, GLint h, FBT &fbt)
+{
+	if (checkSupportedReadType() == GL_UNSIGNED_SHORT_5_6_5) {
+		// can be directly read
+		glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, fbt.texData);
+	}
+	else {
+		glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, temp_tex_buffer_32);
+
+		// convert R8G8B8A8 to RGB565
+		const u32 *dataPointer32 = temp_tex_buffer_32;
+		for (u32 i = 0; i < w * h; i++) {
+			//additional variables just for better visibility
+			const u8 blue = ((*dataPointer32 & 0x00FF0000UL) >> 19); //5bits for blue
+			const u8 green = ((*dataPointer32 & 0x0000FF00UL) >> 10); //6bits for green
+			const u8 red = (*dataPointer32 & 0x000000FFUL) >> 3; //5bits for red
+
+			//convert to 16bit color
+			temp_tex_buffer_32[i] = (red << 11) | (green << 5) | blue;
+			*dataPointer32++;
+
+			//assign to 16bit buffer (type conversions should use static_cast<> in C++)
+			fbt.texData[i] = (u16)temp_tex_buffer_32[i];
+		}
+	}
+}
+
+void handleARGB4444(GLint w, GLint h, FBT &fbt)
+{
+	if (checkSupportedReadType() == GL_UNSIGNED_SHORT_4_4_4_4) {
+		glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4, fbt.texData);
+
+		// convert RGBA4444 to ARGB4444
+		const u16 *dataPointer = fbt.texData;
+		for (u32 i = 0; i < w * h; i++) {
+			fbt.texData[i] = ((*dataPointer & 0x000F) << 12) | ((*dataPointer & 0xFFF0) >> 4);
+			*dataPointer++;
+		}
+	}
+	else {
+		// convert R8G8B8A8 to ARGB4444
+		const u32 *dataPointer32 = temp_tex_buffer_32;
+		for (u32 i = 0; i < w * h; i++) {
+			//additional variables just for better visibility
+			const u8 alpha = ((*dataPointer32 & 0xFF000000UL) >> 28); //4bits for alpha
+			const u8 blue = ((*dataPointer32 & 0x00FF0000UL) >> 20); //4bits for blue
+			const u8 green = ((*dataPointer32 & 0x0000FF00UL) >> 12); //4bits for green
+			const u8 red = (*dataPointer32 & 0x000000FFUL) >> 4; //4bits for red
+
+			//convert to 16bit color with alpha swap
+			temp_tex_buffer_32[i] =  (alpha << 12) | (red << 8) | (green << 4) | blue;
+			*dataPointer32++;
+
+			//assign to 16bit buffer (type conversions should use static_cast<> in C++)
+			fbt.texData[i] = (u16)temp_tex_buffer_32[i];
+		}
+	}
+}
+
+void handleARGB1555(GLint w, GLint h, FBT &fbt) {
 	const u32 fb_alpha_threshold = fbt.fb_alpha_threshold;
 
+	if (checkSupportedReadType() == GL_UNSIGNED_SHORT_5_5_5_1) {
+		glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, fbt.texData);
+
+		// convert RGBA5551 to ARGB1555
+		const u16 *dataPointer = fbt.texData;
+		for (u32 i = 0; i < w * h; i++) {
+			// value has 1-bit precision only (RGBA5551), where fb_alpha_threshold is 8-bit
+			const u16 alpha = (*dataPointer & 0x0001) >= fb_alpha_threshold ? 1 : 0;
+			fbt.texData[i] = (alpha << 15) | ((*dataPointer & 0xFFFE) >> 1);
+			*dataPointer++;
+		}
+	}
+	else {
+		glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, temp_tex_buffer_32);
+
+		// convert R8G8B8A8 to ARGB1555
+		const u32 *dataPointer32 = temp_tex_buffer_32;
+		for (u32 i = 0; i < w * h; i++) {
+			//additional variables just for better visibility
+			const u8 alpha = ((*dataPointer32 & 0xFF000000UL) >> 31); //1bit for alpha
+			const u8 blue = ((*dataPointer32 & 0x00FF0000UL) >> 19); //5bits for blue
+			const u8 green = ((*dataPointer32 & 0x0000FF00UL) >> 11); //5bits for green
+			const u8 red = (*dataPointer32 & 0x000000FFUL) >> 3; //5bits for red
+
+			const u8 alphaThresholded = (alpha >= fb_alpha_threshold) ? 1 : 0;
+
+			//convert to 16bit color and make the alpha channel swap
+			temp_tex_buffer_32[i] =  (alphaThresholded << 15) | (red << 10) | (green << 5) | blue;
+			*dataPointer32++;
+
+			//assign to 16bit buffer (type conversions should use static_cast<> in C++)
+			fbt.texData[i] = (u16)temp_tex_buffer_32[i];
+		}
+	}
+}
+
+void handlePackModeRTT(GLint w, GLint h, FBT &fbt)
+{
 	switch (fbt.fb_packmode) {
 		case 0: //0x0   0555 KRGB 16 bit  (default)	Bit 15 is the value of fb_kval[7].
-			glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, fbt.texData);
-			// convert RGBA5551 to KRGB1555
-			for (u32 i = 0; i < w * h; i++)
-			{
-				fbt.texData[i] = (kval_upper_bit << 15) | ((*dataPointer & 0xFFFE) >> 1);
-				*dataPointer++;
-			}
+		{
+			handleKRGB1555(w, h, fbt);
 			break;
+		}
 
 		case 1: //0x1   565 RGB 16 bit
-			glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, fbt.texData);
+		{
+			handleRGB565(w, h, fbt);
 			break;
+		}
 
 		case 2: //0x2   4444 ARGB 16 bit
-			glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4, fbt.texData);
-			// convert RGBA4444 to ARGB4444
-			for (u32 i = 0; i < w * h; i++)
-			{
-				fbt.texData[i] = ((*dataPointer & 0x000F) << 12) | ((*dataPointer & 0xFFF0) >> 4);
-				*dataPointer++;
-			}
+		{
+			handleARGB4444(w, h, fbt);
 			break;
+		}
 
 		case 3: //0x3    1555 ARGB 16 bit    The alpha value is determined by comparison with the value of fb_alpha_threshold.
-			glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, fbt.texData);
-			// convert RGBA5551 to ARGB1555
-			for (u32 i = 0; i < w * h; i++)
-			{
-				// value has 1-bit precision only (RGBA5551), where fb_alpha_threshold is 8-bit
-				const u16 alpha = (*dataPointer & 0x0001) >= fb_alpha_threshold ? 1 : 0;
-				fbt.texData[i] = (alpha << 15) | ((*dataPointer & 0xFFFE) >> 1);
-				*dataPointer++;
-			}
+		{
+			handleARGB1555(w, h, fbt);
 			break;
+		}
 
 		default:
+		{
 			//clear unsupported texture to avoid artifacts
 			memset(temp_tex_buffer, '\0', w * h);
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4, temp_tex_buffer);
 			break;
+		}
 	}
 }
 
@@ -571,45 +707,46 @@ void ReadRTT()
 
 	for ( it = renderedTextures.begin(); it != renderedTextures.end(); it++ )
 	{
-		if(!it->second.updated) {
+		FBT &fbt = it->second;
+		if(!fbt.updated) {
 			continue;
 		}
 
-		GLint w = it->second.w;
-		GLint h = it->second.h;
+		GLint w = fbt.w;
+		GLint h = fbt.h;
 
 		if (settings.dreamcast.rttOption == ShadowCircle)
 		{
-			glBindTexture(GL_TEXTURE_2D, it->second.tex);
+			glBindTexture(GL_TEXTURE_2D, fbt.tex);
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, shadowCircleW, shadowCircleH, 0,
 						 GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4, shadowCircleTexture[0]);
-			it->second.updated = false;
+			fbt.updated = false;
 		}
 		else if (settings.dreamcast.rttOption == Ones)
 		{
 			for (u32 i = 0; i < w * h; i++)
 				temp_tex_buffer[i] = (u16)~0;
 
-			glBindTexture(GL_TEXTURE_2D, it->second.tex);
+			glBindTexture(GL_TEXTURE_2D, fbt.tex);
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4, temp_tex_buffer);
-			it->second.updated = false;
+			fbt.updated = false;
 		}
 		else if (settings.dreamcast.rttOption == Zeros)
 		{
 			for (u32 i = 0; i < w * h; i++)
 				temp_tex_buffer[i] = 0;
 
-			glBindTexture(GL_TEXTURE_2D, it->second.tex);
+			glBindTexture(GL_TEXTURE_2D, fbt.tex);
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4, temp_tex_buffer);
-			it->second.updated = false;
+			fbt.updated = false;
 		}
 		else if (settings.dreamcast.rttOption == Full)
 		{
-			glBindFramebuffer(GL_FRAMEBUFFER, it->second.fbo);
-			if (!it->second.texDataValid) {
-				handlePackModeRTT(w, h, it->second);
+			glBindFramebuffer(GL_FRAMEBUFFER, fbt.fbo);
+			if (!fbt.texDataValid) {
+				handlePackModeRTT(w, h, fbt);
 			}
-			it->second.texDataValid = true;
+			fbt.texDataValid = true;
 		}
 	}
 }
