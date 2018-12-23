@@ -364,6 +364,26 @@ public class OptionsFragment extends Fragment {
 			}
 		});
 
+		String[] languages = getResources().getStringArray(R.array.languages);
+		Spinner language_spnr = (Spinner) getView().findViewById(R.id.language_spinner);
+		ArrayAdapter<String> languageAdapter = new ArrayAdapter<>(
+				getActivity(), R.layout.spinner_selected, languages);
+		languageAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		language_spnr.setAdapter(languageAdapter);
+		language_spnr.setSelection(Math.min(mPrefs.getInt(Emulator.pref_language, Emulator.language), language_spnr.getCount() - 1), true);
+
+		language_spnr.setOnItemSelectedListener(new OnItemSelectedListener() {
+
+			public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
+				mPrefs.edit().putInt(Emulator.pref_language, pos).apply();
+
+			}
+
+			public void onNothingSelected(AdapterView<?> arg0) {
+
+			}
+		});
+
 		OnCheckedChangeListener limitfps_option = new OnCheckedChangeListener() {
 
 			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -698,6 +718,7 @@ public class OptionsFragment extends Fragment {
 		mPrefs.edit().remove(Emulator.pref_cable).apply();
 		mPrefs.edit().remove(Emulator.pref_dcregion).apply();
 		mPrefs.edit().remove(Emulator.pref_broadcast).apply();
+		mPrefs.edit().remove(Emulator.pref_language).apply();
 		mPrefs.edit().remove(Emulator.pref_limitfps).apply();
 		mPrefs.edit().remove(Emulator.pref_mipmaps).apply();
 		mPrefs.edit().remove(Emulator.pref_widescreen).apply();

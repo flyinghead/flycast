@@ -42,6 +42,7 @@
     <string name="select_cable">Cable Type</string>
     <string name="select_region">DC Region</string>
     <string name="select_broadcast">Broadcast</string>
+    <string name="select_language">Language</string>
     <string name="select_limitfps">Limit FPS</string>
     <string name="select_mipmaps">Use Mipmaps (fixes SGX540)</string>
     <string name="select_stretch">Widescreen Mode</string>
@@ -180,4 +181,13 @@
     <string name="popup_button_audio">Emu Sound</string>
     <string name="popup_button_turbo">Turbo</string>
     <string name="textview">disk_loading</string>
+    <string-array name="languages">
+        <item>Japanese</item>
+        <item>English</item>
+        <item>German</item>
+        <item>French</item>
+        <item>Spanish</item>
+        <item>Italian</item>
+        <item>Default</item>
+    </string-array>
 </resources>

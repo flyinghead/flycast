@@ -21,27 +21,17 @@ int dma_sched_id;
 
 u32 GetRTC_now()
 {
-	
-	time_t rawtime=0;
-	tm  timeinfo;
-	timeinfo.tm_year=1998-1900;
-	timeinfo.tm_mon=11-1;
-	timeinfo.tm_mday=27;
-	timeinfo.tm_hour=0;
-	timeinfo.tm_min=0;
-	timeinfo.tm_sec=0;
-
-	rawtime=mktime( &timeinfo );
-	
-	rawtime=time (0)-rawtime;//get delta of time since the known dc date
-	
-	time_t temp=time(0);
-	timeinfo=*localtime(&temp);
-	if (timeinfo.tm_isdst)
-		rawtime+=24*3600;//add an hour if dst (maybe rtc has a reg for that ? *watch* and add it if yes :)
-
-	u32 RTC=0x5bfc8900 + (u32)rawtime;// add delta to known dc time
-	return RTC;
+	// The Dreamcast Epoch time is 1/1/50 00:00 but without support for time zone or DST.
+	// We compute the TZ/DST current time offset and add it to the result
+	// as if we were in the UTC time zone (as well as the DC Epoch)
+	time_t rawtime = time(NULL);
+	struct tm localtm, gmtm;
+	localtm = *localtime(&rawtime);
+	gmtm = *gmtime(&rawtime);
+	gmtm.tm_isdst = -1;
+	time_t time_offset = mktime(&localtm) - mktime(&gmtm);
+	// 1/1/50 to 1/1/70 is 20 years and 5 leap days
+	return (20 * 365 + 5) * 24 * 60 * 60 + rawtime + time_offset;
 }
 
 u32 ReadMem_aica_rtc(u32 addr,u32 sz)

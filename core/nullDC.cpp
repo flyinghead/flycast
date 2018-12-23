@@ -491,6 +491,7 @@ void dc_start()
 
 void LoadSettings()
 {
+	settings.dreamcast.RTC			= GetRTC_now();
 #ifndef _ANDROID
 	settings.dynarec.Enable			= cfgLoadInt("config","Dynarec.Enabled", 1)!=0;
 	settings.dynarec.idleskip		= cfgLoadInt("config","Dynarec.idleskip",1)!=0;
@@ -498,9 +499,9 @@ void LoadSettings()
 	settings.dynarec.safemode		= cfgLoadInt("config", "Dynarec.safe-mode", 0);
 	//disable_nvmem can't be loaded, because nvmem init is before cfg load
 	settings.dreamcast.cable		= cfgLoadInt("config","Dreamcast.Cable",3);
-	settings.dreamcast.RTC			= cfgLoadInt("config","Dreamcast.RTC",GetRTC_now());
 	settings.dreamcast.region		= cfgLoadInt("config","Dreamcast.Region",3);
 	settings.dreamcast.broadcast	= cfgLoadInt("config","Dreamcast.Broadcast",4);
+	settings.dreamcast.language     = cfgLoadInt("config","Dreamcast.Language", 6);
 	settings.aica.LimitFPS			= cfgLoadInt("config","aica.LimitFPS",1);
 	settings.aica.NoBatch			= cfgLoadInt("config","aica.NoBatch",0);
     settings.aica.NoSound			= cfgLoadInt("config","aica.NoSound",0);
@@ -625,7 +626,6 @@ void SaveSettings()
 	cfgSaveInt("config","Dynarec.Enabled",		settings.dynarec.Enable);
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST
 	cfgSaveInt("config","Dreamcast.Cable",		settings.dreamcast.cable);
-	cfgSaveInt("config","Dreamcast.RTC",		settings.dreamcast.RTC);
 	cfgSaveInt("config","Dreamcast.Region",		settings.dreamcast.region);
 	cfgSaveInt("config","Dreamcast.Broadcast",	settings.dreamcast.broadcast);
 #endif

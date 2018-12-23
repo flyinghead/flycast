@@ -36,6 +36,7 @@ public final class JNIdc
 	public static native void cable(int cable);
 	public static native void region(int region);
 	public static native void broadcast(int broadcast);
+	public static native void language(int language);
 	public static native void limitfps(int limiter);
 	public static native void nobatch(int nobatch);
 	public static native void nosound(int noaudio);
@@ -48,7 +49,6 @@ public final class JNIdc
 	public static native void modvols(int volumes);
 	public static native void bootdisk(String disk);
 	public static native void usereios(int reios);
-	public static native void dreamtime(long clock);
 
 	public static void show_osd() {
 		JNIdc.vjoy(13, 1,0,0,0);

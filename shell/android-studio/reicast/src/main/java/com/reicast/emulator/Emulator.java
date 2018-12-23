@@ -5,7 +5,6 @@ import android.app.Application;
 import android.content.SharedPreferences;
 import android.support.v7.app.AppCompatDelegate;
 
-import com.android.util.DreamTime;
 import com.reicast.emulator.emu.JNIdc;
 
 public class Emulator extends Application {
@@ -17,6 +16,7 @@ public class Emulator extends Application {
     public static final String pref_cable = "dc_cable";
     public static final String pref_dcregion = "dc_region";
     public static final String pref_broadcast = "dc_broadcast";
+    public static final String pref_language = "dc_language";
     public static final String pref_limitfps = "limit_fps";
     public static final String pref_nosound = "sound_disabled";
     public static final String pref_interrupt = "delay_interrupt";
@@ -36,6 +36,7 @@ public class Emulator extends Application {
     public static int cable = 3;
     public static int dcregion = 3;
     public static int broadcast = 4;
+    public static int language = 6;
     public static boolean limitfps = true;
     public static boolean nobatch = true;
     public static boolean nosound = false;
@@ -61,6 +62,7 @@ public class Emulator extends Application {
         Emulator.cable = mPrefs.getInt(pref_cable, cable);
         Emulator.dcregion = mPrefs.getInt(pref_dcregion, dcregion);
         Emulator.broadcast = mPrefs.getInt(pref_broadcast, broadcast);
+        Emulator.language = mPrefs.getInt(pref_language, language);
         Emulator.limitfps = mPrefs.getBoolean(pref_limitfps, limitfps);
         Emulator.nosound = mPrefs.getBoolean(pref_nosound, nosound);
         Emulator.mipmaps = mPrefs.getBoolean(pref_mipmaps, mipmaps);
@@ -85,6 +87,7 @@ public class Emulator extends Application {
         JNIdc.cable(Emulator.cable);
         JNIdc.region(Emulator.dcregion);
         JNIdc.broadcast(Emulator.broadcast);
+        JNIdc.language(Emulator.language);
         JNIdc.limitfps(Emulator.limitfps ? 1 : 0);
         JNIdc.nobatch(Emulator.nobatch ? 1 : 0);
         JNIdc.nosound(Emulator.nosound ? 1 : 0);
@@ -97,7 +100,6 @@ public class Emulator extends Application {
         JNIdc.modvols(Emulator.modvols ? 1 : 0);
         JNIdc.usereios(Emulator.usereios ? 1 : 0);
         JNIdc.bootdisk(Emulator.bootdisk);
-        JNIdc.dreamtime(DreamTime.getDreamtime());
     }
 
     public void loadGameConfiguration(String gameId) {

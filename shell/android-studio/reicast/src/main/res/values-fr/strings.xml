@@ -35,6 +35,7 @@ Last Edit: 21 May 2014
     <string name="select_unstable">Optimisations instables</string>
     <string name="select_region">Région du bios</string>
     <string name="select_broadcast">Diffusion</string>
+    <string name="select_language">Langue</string>
     <string name="select_limitfps">Limiter le nombre de FPS</string>
     <string name="select_mipmaps">Rendu Mipmaps (correctif pour l\'ancien SGX540)</string>
     <string name="select_stretch">Mode portrait (écran large)</string>
@@ -106,4 +107,13 @@ Last Edit: 21 May 2014
     <string name="downloadWarning">ATTENTION: Vous êtes sur le point de télécharger vos VMUs depuis Dropbox, veuillez s\'il vous plait prendre en considération que ceci va ECRASER vos VMUs actuelles!! Par ailleurs une copie de sauvegarde va être créé dans le dossier VmuBackups!</string>
     <string name="uploadVMU">Envoyer VMU</string>
     <string name="downloadVMU">Télécharger VMU</string>
+    <string-array name="languages">
+        <item>Japonais</item>
+        <item>Anglais</item>
+        <item>Allemand</item>
+        <item>Français</item>
+        <item>Espagnol</item>
+        <item>Italien</item>
+        <item>Défaut</item>
+    </string-array>
 </resources>
