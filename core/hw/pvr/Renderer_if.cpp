@@ -346,6 +346,7 @@ static void rend_term_renderer()
 		delete fallback_renderer;
 		fallback_renderer = NULL;
 	}
+	killtex();
 }
 
 void* rend_thread(void* p)
@@ -618,7 +619,6 @@ void rend_term()
 #if !defined(TARGET_NO_THREADS)
 	rthd.WaitToEnd();
 #endif
-	killtex();
 	tactx_Term();
 }
 
