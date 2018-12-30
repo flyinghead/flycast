@@ -7,7 +7,7 @@
 #include "deps/libpng/png.h"
 #include "deps/xxhash/xxhash.h"
 #include "CustomTexture.h"
-#include "reios.h"
+#include "reios/reios.h"
 
 /*
 Textures
