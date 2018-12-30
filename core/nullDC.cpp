@@ -94,8 +94,6 @@ s32 plugins_Init()
 	//if (s32 rv = libExtDevice_Init())
 	//	return rv;
 
-
-
 	return rv_ok;
 }
 
@@ -298,6 +296,7 @@ void LoadSettings()
 	settings.aica.LimitFPS			= cfgLoadInt("config", "aica.LimitFPS", 1);
 	settings.aica.NoBatch			= cfgLoadInt("config", "aica.NoBatch", 0);
 	settings.aica.NoSound			= cfgLoadInt("config", "aica.NoSound", 0);
+	settings.aica.OldSyncronousDma	= cfgLoadBool("config", "aica.OldSyncronousDma", false);
 	settings.rend.UseMipmaps		= cfgLoadInt("config", "rend.UseMipmaps", 1);
 	settings.rend.WideScreen		= cfgLoadInt("config", "rend.WideScreen", 0);
 	settings.rend.Clipping			= cfgLoadInt("config", "rend.Clipping", 1);
@@ -320,10 +319,10 @@ void LoadSettings()
 	// Configured on a per-game basis
 	settings.dynarec.safemode		= 0;
 	settings.rend.ModifierVolumes	= 1;
-#endif
 
 	settings.pvr.HashLogFile		= cfgLoadStr("testing", "ta.HashLogFile", "");
 	settings.pvr.HashCheckFile		= cfgLoadStr("testing", "ta.HashCheckFile", "");
+#endif
 
 #if SUPPORT_DISPMANX
 	settings.dispmanx.Width			= cfgLoadInt("dispmanx","width",640);
@@ -354,8 +353,15 @@ void LoadCustom()
 {
 	char *reios_id = reios_disk_id();
 
-	cfgSaveStr(reios_id, "software.name", reios_software_name);
-	settings.dynarec.Enable			= cfgLoadInt(reios_id,"Dynarec.Enabled", settings.dynarec.Enable ? 1 : 0) != 0;
+	char *p = reios_id + strlen(reios_id) - 1;
+	while (p >= reios_id && *p == ' ')
+		*p-- = '\0';
+	if (p < reios_id || *p == '\0')
+		return;
+
+	if (reios_software_name[0] != '\0')
+		cfgSaveStr(reios_id, "software.name", reios_software_name);
+	settings.dynarec.Enable			= cfgGameInt(reios_id,"Dynarec.Enabled", settings.dynarec.Enable ? 1 : 0) != 0;
 	settings.dynarec.idleskip		= cfgGameInt(reios_id,"Dynarec.idleskip", settings.dynarec.idleskip ? 1 : 0) != 0;
 	settings.dynarec.unstable_opt	= cfgGameInt(reios_id,"Dynarec.unstable-opt", settings.dynarec.unstable_opt);
 	settings.dynarec.safemode		= cfgGameInt(reios_id,"Dynarec.safemode", settings.dynarec.safemode);
@@ -369,6 +375,9 @@ void LoadCustom()
 
 	settings.pvr.MaxThreads			= cfgGameInt(reios_id, "pvr.MaxThreads", settings.pvr.MaxThreads);
 	settings.pvr.SynchronousRender	= cfgGameInt(reios_id, "pvr.SynchronousRendering", settings.pvr.SynchronousRender);
+	settings.dreamcast.cable = cfgGameInt(reios_id, "Dreamcast.Cable", settings.dreamcast.cable);
+	settings.dreamcast.region = cfgGameInt(reios_id, "Dreamcast.Region", settings.dreamcast.region);
+	settings.dreamcast.broadcast = cfgGameInt(reios_id, "Dreamcast.Broadcast", settings.dreamcast.broadcast);
 }
 
 void SaveSettings()

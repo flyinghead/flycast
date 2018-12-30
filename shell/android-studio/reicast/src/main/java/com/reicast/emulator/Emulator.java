@@ -20,7 +20,7 @@ public class Emulator extends Application {
     public static final String pref_limitfps = "limit_fps";
     public static final String pref_nosound = "sound_disabled";
     public static final String pref_mipmaps = "use_mipmaps";
-    public static final String pref_widescreen = "stretch_view";
+    public static final String pref_resolution = "resolution";
     public static final String pref_frameskip = "frame_skip";
     public static final String pref_pvrrender = "pvr_render";
     public static final String pref_syncedrender = "synced_render";
@@ -41,6 +41,7 @@ public class Emulator extends Application {
     public static boolean nosound = false;
     public static boolean mipmaps = true;
     public static boolean widescreen = false;
+    public static boolean crtview = false;
     public static boolean subdivide = false;
     public static int frameskip = 0;
     public static boolean pvrrender = false;
@@ -48,7 +49,7 @@ public class Emulator extends Application {
     public static boolean modvols = true;
     public static String bootdisk = null;
     public static boolean usereios = false;
-    
+
     /**
      * Load the user configuration from preferences
      *
@@ -63,7 +64,8 @@ public class Emulator extends Application {
         Emulator.limitfps = mPrefs.getBoolean(pref_limitfps, limitfps);
         Emulator.nosound = mPrefs.getBoolean(pref_nosound, nosound);
         Emulator.mipmaps = mPrefs.getBoolean(pref_mipmaps, mipmaps);
-        Emulator.widescreen = mPrefs.getBoolean(pref_widescreen, widescreen);
+        Emulator.widescreen = mPrefs.getInt(pref_resolution, 0) == 2;
+        Emulator.crtview = mPrefs.getInt(pref_resolution, 0) == 1;
         Emulator.frameskip = mPrefs.getInt(pref_frameskip, frameskip);
         Emulator.pvrrender = mPrefs.getBoolean(pref_pvrrender, pvrrender);
         Emulator.syncedrender = mPrefs.getBoolean(pref_syncedrender, syncedrender);

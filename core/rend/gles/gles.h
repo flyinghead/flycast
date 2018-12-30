@@ -65,7 +65,7 @@ struct PipelineShader
 
 	GLuint scale,depth_scale;
 	GLuint pp_ClipTest,cp_AlphaTestValue;
-	GLuint sp_FOG_COL_RAM,sp_FOG_COL_VERT,sp_FOG_DENSITY,sp_LOG_FOG_COEFS;
+	GLuint sp_FOG_COL_RAM,sp_FOG_COL_VERT,sp_FOG_DENSITY;
 
 	//
 	u32 cp_AlphaTest; s32 pp_ClipTestMode;
@@ -109,7 +109,11 @@ struct gl_ctx
 #endif
 	} vbo;
 
-
+	const char *gl_version;
+	const char *glsl_version_header;
+	int gl_major;
+	bool is_gles;
+	GLuint fog_image_format;
 	//GLuint matrix;
 };
 

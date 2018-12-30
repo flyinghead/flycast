@@ -430,7 +430,7 @@ void os_SetWindowText(const char* text)
 void os_MakeExecutable(void* ptr, u32 sz)
 {
 	DWORD old;
-	VirtualProtect(ptr,sizeof(sz),PAGE_EXECUTE_READWRITE,&old);
+	VirtualProtect(ptr, sz, PAGE_EXECUTE_READWRITE, &old);  // sizeof(sz) really?
 }
 
 

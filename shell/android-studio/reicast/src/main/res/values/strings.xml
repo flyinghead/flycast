@@ -15,6 +15,7 @@
     <string name="config_home">Please configure a home directory.</string>
     <string name="config_data">Please move BIOS to %1$s/data/</string>
     <string name="config_game">Please configure a game directory.</string>
+    <string name="permission_blocked">Permission(s) blocked:%1$s</string>
     <string name="unsupported">Unsupported kernel version!</string>
     <string name="locate">Locate</string>
     <string name="browse">Browse</string>
@@ -45,7 +46,7 @@
     <string name="select_rtt">Render to texture</string>
     <string name="select_limitfps">Limit FPS</string>
     <string name="select_mipmaps">Use Mipmaps (fixes SGX540)</string>
-    <string name="select_stretch">Widescreen Mode</string>
+    <string name="select_resolution">Resolution Mode</string>
     <string name="set_frameskip">Frameskip Value</string>
     <string name="select_render">PVR Rendering (does nothing for now)</string>
     <string name="select_syncrender">Synchronous Rendering</string>

@@ -2,6 +2,8 @@
 #include "types.h"
 #include "cfg/cfg.h"
 #include "linux-dist/main.h"
+#include "hw/maple/maple_devs.h"
+#include "hw/maple/maple_cfg.h"
 #include "sdl/sdl.h"
 #ifndef GLES
 #include "khronos/GL3/gl3w.h"
@@ -84,7 +86,7 @@ void input_sdl_init()
 		ButtonCount = SDL_JoystickNumButtons(JoySDL);
 		Name = SDL_JoystickName(JoySDL);
 
-		printf("SDK: Found '%s' joystick with %d axes and %d buttons\n", Name, AxisCount, ButtonCount);
+		printf("SDL: Found '%s' joystick with %d axes and %d buttons\n", Name, AxisCount, ButtonCount);
 
 		if (Name != NULL && strcmp(Name,"Microsoft X-Box 360 pad")==0)
 		{
@@ -92,10 +94,18 @@ void input_sdl_init()
 			sdl_map_axis = sdl_map_axis_xbox360;
 			printf("Using Xbox 360 map\n");
 		}
+		
+		// Create the first controller with two VMUs
+		// (only when evdev is not available as it's already configured via evdev then)
+		// TODO: make this configurable
+		#ifndef USE_EVDEV
+		printf("SDL: Creating controller in first port with 2 VMUs");
+		mcfg_CreateController(0, MDT_SegaVMU, MDT_SegaVMU);
+		#endif
 	}
 	else
 	{
-		printf("SDK: No Joystick Found\n");
+		printf("SDL: No Joystick Found\n");
 	}
 
 	#ifdef TARGET_PANDORA

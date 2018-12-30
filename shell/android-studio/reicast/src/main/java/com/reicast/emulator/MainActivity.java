@@ -20,7 +20,6 @@ import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
@@ -41,6 +40,7 @@ import com.reicast.emulator.config.InputFragment;
 import com.reicast.emulator.config.OptionsFragment;
 import com.reicast.emulator.config.PGConfigFragment;
 import com.reicast.emulator.debug.GenerateLogs;
+import com.reicast.emulator.cloud.CloudFragment;
 import com.reicast.emulator.emu.JNIdc;
 
 import java.lang.Thread.UncaughtExceptionHandler;
@@ -265,7 +265,8 @@ public class MainActivity extends AppCompatActivity implements
 		Intent intent = new Intent("com.reicast.EMULATOR",
 				uri, getApplicationContext(), GL2JNIActivity.class);
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
-			intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+			intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION
+					| Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
 		startActivity(intent);
 	}
 
@@ -567,6 +568,23 @@ public class MainActivity extends AppCompatActivity implements
 							| View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
 							| View.SYSTEM_UI_FLAG_FULLSCREEN
 							| View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+		}
+	}
+
+	@Override
+	public void onRequestPermissionsResult(
+			int requestCode, @NonNull String permissions[], @NonNull int[] grantResults) {
+		if (requestCode == PERMISSION_REQUEST) {
+			if (!(grantResults.length > 0 && grantResults[0]
+					== PackageManager.PERMISSION_GRANTED)) {
+				StringBuilder disabled = new StringBuilder();
+				for (String permission : permissions) {
+					disabled.append("\n");
+					disabled.append(permission);
+				}
+				showToastMessage(getString(R.string.permission_blocked,
+						disabled.toString()), Snackbar.LENGTH_LONG);
+			}
 		}
 	}
 

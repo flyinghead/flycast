@@ -14,6 +14,9 @@ AS=${CC_PREFIX}as
 STRIP=${CC_PREFIX}strip
 LD=${CC}
 
+CHD5_LZMA := 1
+CHD5_FLAC := 1
+
 MFLAGS :=
 ASFLAGS :=
 LDFLAGS :=
@@ -150,7 +153,7 @@ else ifneq (,$(findstring rpi,$(platform)))
         USE_GLES := 1
     else
         INCS += -I/opt/vc/include/ -I/opt/vc/include/interface/vmcs_host/linux -I/opt/vc/include/interface/vcos/pthreads
-        LIBS += -L/opt/vc/lib/ -lbcm_host
+        LIBS += -L/opt/vc/lib/ -lbcm_host -ldl
         LIBS += -lbrcmEGL -lbrcmGLESv2
         CFLAGS += -D TARGET_VIDEOCORE
         CXXFLAGS += -DGLES
@@ -234,6 +237,15 @@ else
     $(error Unknown platform)
 endif
 
+# 7-Zip/LZMA settings (CHDv5)
+ifdef CHD5_LZMA
+	CFLAGS += -D_7ZIP_ST -DCHD5_LZMA
+endif
+
+ifdef CHD5_FLAC
+	CFLAGS += -DCHD5_FLAC
+endif
+
 RZDCY_SRC_DIR = $(LOCAL_PATH)/../../core
 include $(RZDCY_SRC_DIR)/core.mk
 
@@ -247,7 +259,7 @@ CXXFLAGS += -fno-rtti -fpermissive -fno-operator-names
 
 INCS += -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps -I$(RZDCY_SRC_DIR)/khronos
 
-LIBS += -lm -lrt -ldl
+LIBS += -lm -lrt
 LIBS  += -lpthread
 
 PREFIX ?= /usr/local
@@ -294,6 +306,7 @@ endif
 
 ifdef USE_EVDEV
     CXXFLAGS += -D USE_EVDEV
+    LIBS += -ldl
 endif
 
 ifdef USE_JOYSTICK

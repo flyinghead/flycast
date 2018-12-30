@@ -396,14 +396,16 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_query(JNIEnv *env,job
     jmethodID reiosInfoMid=env->GetMethodID(env->GetObjectClass(emu_thread),"reiosInfo","(Ljava/lang/String;Ljava/lang/String;)V");
 
     char *id = (char*)malloc(11);
-    strcpy(id, reios_disk_id());
-    jstring reios_id = env->NewStringUTF(id);
+    // Verify that there is an ID assigned
+    if ((id != NULL) && (id[0] == '\0')) {
+        strcpy(id, reios_disk_id());
+        jstring reios_id = env->NewStringUTF(id);
+        char *name = (char *) malloc(129);
+        strcpy(name, reios_software_name);
+        jstring reios_name = env->NewStringUTF(name);
 
-    char *name = (char*)malloc(129);
-    strcpy(name, reios_software_name);
-    jstring reios_name = env->NewStringUTF(name);
-
-    env->CallVoidMethod(emu_thread, reiosInfoMid, reios_id, reios_name);
+        env->CallVoidMethod(emu_thread, reiosInfoMid, reios_id, reios_name);
+    }
 
     dc_init();
 }

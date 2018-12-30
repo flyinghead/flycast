@@ -34,5 +34,8 @@
         android:id="@+id/about_menu"
         android:icon="@drawable/ic_info_outline"
         android:title="@string/about" />
+    <item
+        android:id="@+id/version_spacer"
+        android:title=""/>
 
 </menu>
