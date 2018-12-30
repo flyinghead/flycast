@@ -724,6 +724,8 @@ struct settings_t
 		int TextureUpscale;
 		int MaxFilteredTextureSize;
 		f32 ExtraDepthScale;
+		bool CustomTextures;
+		bool DumpTextures;
 	} rend;
 
 	struct

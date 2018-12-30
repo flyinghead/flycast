@@ -2039,7 +2039,7 @@ void png_cstd_read(png_structp png_ptr, png_bytep data, png_size_t length)
 	fread(data,1, length,pngfile);
 }
 
-GLuint loadPNG(const string& fname, int &width, int &height)
+u8* loadPNGData(const string& fname, int &width, int &height, bool bottom_to_top)
 {
 	const char* filename=fname.c_str();
 	FILE* file = fopen(filename, "rb");
@@ -2047,7 +2047,7 @@ GLuint loadPNG(const string& fname, int &width, int &height)
 
 	if (!file)
 	{
-		printf("Error opening %s\n", filename);
+		EMUERROR("Error opening %s\n", filename);
 		return TEXTURE_LOAD_ERROR;
 	}
 
@@ -2157,11 +2157,32 @@ GLuint loadPNG(const string& fname, int &width, int &height)
 	}
 
 	// set the individual row_pointers to point at the correct offsets of image_data
-	for (int i = 0; i < height; ++i)
-		row_pointers[height - 1 - i] = image_data + i * rowbytes;
+	if (bottom_to_top)
+	{
+		for (int i = 0; i < height; ++i)
+			row_pointers[height - 1 - i] = image_data + i * rowbytes;
+	}
+	else
+	{
+		for (int i = 0; i < height; ++i)
+			row_pointers[i] = image_data + i * rowbytes;
+	}
 
 	//read the png into image_data through row_pointers
 	png_read_image(png_ptr, row_pointers);
+
+	png_destroy_read_struct(&png_ptr, &info_ptr, &end_info);
+	delete[] row_pointers;
+	fclose(file);
+
+	return image_data;
+}
+
+GLuint loadPNG(const string& fname, int &width, int &height, bool bottom_to_top)
+{
+	png_byte *image_data = loadPNGData(fname, width, height);
+	if (image_data == NULL)
+		return TEXTURE_LOAD_ERROR;
 
 	//Now generate the OpenGL texture object
 	GLuint texture = glcache.GenTexture();
@@ -2170,11 +2191,7 @@ GLuint loadPNG(const string& fname, int &width, int &height)
 		GL_UNSIGNED_BYTE, (GLvoid*) image_data);
 	glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
-	//clean up memory and close stuff
-	png_destroy_read_struct(&png_ptr, &info_ptr, &end_info);
 	delete[] image_data;
-	delete[] row_pointers;
-	fclose(file);
 
 	return texture;
 }

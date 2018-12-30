@@ -520,6 +520,8 @@ void LoadSettings()
 	settings.rend.ExtraDepthScale = atof(extra_depth_scale_str);
 	if (settings.rend.ExtraDepthScale == 0)
 		settings.rend.ExtraDepthScale = 1.f;
+	settings.rend.CustomTextures = cfgLoadInt("config", "rend.CustomTextures", 0);
+	settings.rend.DumpTextures = cfgLoadInt("config", "rend.DumpTextures", 0);
 
 	settings.pvr.subdivide_transp	= cfgLoadInt("config","pvr.Subdivide",0);
 	

@@ -205,6 +205,7 @@
 		AE2A2D7E21D6851E004B308D /* Lzma2Dec.c in Sources */ = {isa = PBXBuildFile; fileRef = AE2A2D7021D6851D004B308D /* Lzma2Dec.c */; };
 		AE2A2D7F21D6851E004B308D /* 7zFile.c in Sources */ = {isa = PBXBuildFile; fileRef = AE2A2D7321D6851D004B308D /* 7zFile.c */; };
 		AE2A2D8021D6851E004B308D /* 7zDec.c in Sources */ = {isa = PBXBuildFile; fileRef = AE2A2D7721D6851E004B308D /* 7zDec.c */; };
+		AE2A2D8321D7DB78004B308D /* CustomTexture.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE2A2D8121D7DB77004B308D /* CustomTexture.cpp */; };
 		AE4FF4E1211588B5009BF202 /* font.png in Resources */ = {isa = PBXBuildFile; fileRef = AE4FF4E0211588B5009BF202 /* font.png */; };
 		AE649BB62188689000EF4A81 /* xxhash.c in Sources */ = {isa = PBXBuildFile; fileRef = AE649BB42188689000EF4A81 /* xxhash.c */; };
 		AE649BF3218C552500EF4A81 /* bitmath.c in Sources */ = {isa = PBXBuildFile; fileRef = AE649BCD218C552500EF4A81 /* bitmath.c */; };
@@ -657,6 +658,8 @@
 		AE2A2D7521D6851D004B308D /* 7zCrc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = 7zCrc.h; sourceTree = "<group>"; };
 		AE2A2D7621D6851E004B308D /* Lzma2Dec.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Lzma2Dec.h; sourceTree = "<group>"; };
 		AE2A2D7721D6851E004B308D /* 7zDec.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = 7zDec.c; sourceTree = "<group>"; };
+		AE2A2D8121D7DB77004B308D /* CustomTexture.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CustomTexture.cpp; sourceTree = "<group>"; };
+		AE2A2D8221D7DB78004B308D /* CustomTexture.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CustomTexture.h; sourceTree = "<group>"; };
 		AE4FF4E0211588B5009BF202 /* font.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = font.png; path = ../../../linux/font.png; sourceTree = "<group>"; };
 		AE649BB42188689000EF4A81 /* xxhash.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = xxhash.c; sourceTree = "<group>"; };
 		AE649BB52188689000EF4A81 /* xxhash.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = xxhash.h; sourceTree = "<group>"; };
@@ -1586,6 +1589,8 @@
 		84B7BE9B1B72720200F9733F /* gles */ = {
 			isa = PBXGroup;
 			children = (
+				AE2A2D8121D7DB77004B308D /* CustomTexture.cpp */,
+				AE2A2D8221D7DB78004B308D /* CustomTexture.h */,
 				AE2A2D4921D6820D004B308D /* glcache.h */,
 				84B7BE9C1B72720200F9733F /* gldraw.cpp */,
 				84B7BE9D1B72720200F9733F /* gles.cpp */,
@@ -2119,6 +2124,7 @@
 				84B7BEB31B72720200F9733F /* coreio.cpp in Sources */,
 				84B7BF281B72720200F9733F /* dsp.cpp in Sources */,
 				84B7BF3D1B72720200F9733F /* Renderer_if.cpp in Sources */,
+				AE2A2D8321D7DB78004B308D /* CustomTexture.cpp in Sources */,
 				84B7BF191B72720200F9733F /* deflate.c in Sources */,
 				84B7BF7E1B72720200F9733F /* TexCache.cpp in Sources */,
 				AEFF7F4E214D9D590068CE11 /* pico_dev_ppp.c in Sources */,
