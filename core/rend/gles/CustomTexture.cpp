@@ -30,32 +30,36 @@ void CustomTexture::LoaderThread()
 {
 	while (initialized)
 	{
-		TextureCacheData *texture = NULL;
+		TextureCacheData *texture;
 		
-		work_queue_mutex.Lock();
-		if (!work_queue.empty())
-		{
-			texture = work_queue.back();
-			work_queue.pop_back();
-		}
-		work_queue_mutex.Unlock();
-		
-		if (texture != NULL)
-		{
-			// FIXME texture may have been deleted. Need to detect this.
-			texture->ComputeHash();
-			int width, height;
-			u8 *image_data = LoadCustomTexture(texture->texture_hash, width, height);
-			if (image_data != NULL)
+		do {
+			texture = NULL;
+
+			work_queue_mutex.Lock();
+			if (!work_queue.empty())
 			{
-				if (texture->custom_image_data != NULL)
-					delete [] texture->custom_image_data;
-				texture->custom_width = width;
-				texture->custom_height = height;
-				texture->custom_image_data = image_data;
+				texture = work_queue.back();
+				work_queue.pop_back();
 			}
-			texture->custom_load_in_progress = false;
-		}
+			work_queue_mutex.Unlock();
+			
+			if (texture != NULL)
+			{
+				// FIXME texture may have been deleted. Need to detect this.
+				texture->ComputeHash();
+				int width, height;
+				u8 *image_data = LoadCustomTexture(texture->texture_hash, width, height);
+				if (image_data != NULL)
+				{
+					if (texture->custom_image_data != NULL)
+						delete [] texture->custom_image_data;
+					texture->custom_width = width;
+					texture->custom_height = height;
+					texture->custom_image_data = image_data;
+				}
+				texture->custom_load_in_progress = false;
+			}
+		} while (texture != NULL);
 		
 		wakeup_thread.Wait();
 	}
@@ -115,7 +119,10 @@ u8* CustomTexture::LoadCustomTexture(u32 hash, int& width, int& height)
 void CustomTexture::LoadCustomTextureAsync(TextureCacheData *texture_data)
 {
 	if (!Init())
+	{
+		texture_data->custom_load_in_progress = false;
 		return;
+	}
 	work_queue_mutex.Lock();
 	work_queue.insert(work_queue.begin(), texture_data);
 	work_queue_mutex.Unlock();
