@@ -408,6 +408,7 @@ void TextureCacheData::Update()
 	}
 	if (settings.rend.CustomTextures)
 	{
+		custom_load_in_progress = true;
 		custom_texture.LoadCustomTextureAsync(this);
 	}
 
@@ -560,8 +561,11 @@ bool TextureCacheData::NeedsUpdate() {
 	return rc;
 }
 	
-void TextureCacheData::Delete()
+bool TextureCacheData::Delete()
 {
+	if (custom_load_in_progress)
+		return false;
+	
 	if (pData) {
 		#if FEAT_HAS_SOFTREND
 			_mm_free(pData);
@@ -579,6 +583,8 @@ void TextureCacheData::Delete()
 	lock_block=0;
 	if (custom_image_data != NULL)
 		delete [] custom_image_data;
+	
+	return true;
 }
 
 
@@ -951,10 +957,11 @@ void CollectCleanup() {
 	}
 
 	for (size_t i=0; i<list.size(); i++) {
-		//printf("Deleting %d\n",TexCache[list[i]].texID);
-		TexCache[list[i]].Delete();
-
-		TexCache.erase(list[i]);
+		if (TexCache[list[i]].Delete())
+		{
+			//printf("Deleting %d\n", TexCache[list[i]].texID);
+			TexCache.erase(list[i]);
+		}
 	}
 }
 

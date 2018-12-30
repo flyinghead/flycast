@@ -54,6 +54,7 @@ void CustomTexture::LoaderThread()
 				texture->custom_height = height;
 				texture->custom_image_data = image_data;
 			}
+			texture->custom_load_in_progress = false;
 		}
 		
 		wakeup_thread.Wait();

@@ -270,6 +270,7 @@ struct TextureCacheData
 	u8* custom_image_data;		// loaded custom image data
 	u32 custom_width;
 	u32 custom_height;
+	bool custom_load_in_progress;
 	
 	void PrintTextureName();
 	
@@ -285,5 +286,5 @@ struct TextureCacheData
 	void CheckCustomTexture();
 	//true if : dirty or paletted texture and hashes don't match
 	bool NeedsUpdate();
-	void Delete();
+	bool Delete();
 };
