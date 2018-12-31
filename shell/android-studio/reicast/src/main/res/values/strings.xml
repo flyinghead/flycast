@@ -56,6 +56,7 @@
     <string name="select_sound">Disable Emulator Sound</string>
     <string name="select_depth">View Rendering Depth</string>
     <string name="boot_disk">Boot Disk (ie. Gameshark, Utopia)</string>
+    <string name="select_customtex">Load Custom Textures</string>
 
     <string name="reset_emu">Reset Emu</string>
     <string name="reset_emu_title">Reset Emulator Settings</string>

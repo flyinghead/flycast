@@ -180,6 +180,8 @@ cThread webui_thd(&webui_th,0);
 void LoadSpecialSettings()
 {
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST
+	printf("Game ID is [%s]\n", reios_product_number);
+	
 	// Tony Hawk's Pro Skater 2
 	if (!strncmp("T13008D", reios_product_number, 7) || !strncmp("T13006N", reios_product_number, 7)
 			// Tony Hawk's Pro Skater 1
@@ -213,6 +215,8 @@ void LoadSpecialSettings()
 		settings.rend.ExtraDepthScale = 10000;
 	}
 #elif DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
+	printf("Game ID is [%s]\n", naomi_game_id);
+	
 	if (!strcmp("METAL SLUG 6", naomi_game_id) || !strcmp("WAVE RUNNER GP", naomi_game_id))
 	{
 		printf("Enabling Dynarec safe mode for game %s\n", naomi_game_id);
@@ -596,7 +600,6 @@ void LoadCustom()
 	char *reios_id = naomi_game_id;
 	char *reios_software_name = naomi_game_id;
 #endif
-	printf("Game ID is [%s]\n", reios_id);
 
 	LoadSpecialSettings();	// Default per-game settings
 

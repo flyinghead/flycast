@@ -475,6 +475,15 @@ public class OptionsFragment extends Fragment {
 		synced_render.setChecked(mPrefs.getBoolean(Emulator.pref_syncedrender, Emulator.syncedrender));
 		synced_render.setOnCheckedChangeListener(synchronous);
 
+		OnCheckedChangeListener customtex = new OnCheckedChangeListener() {
+			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+				mPrefs.edit().putBoolean(Emulator.pref_customtextures, isChecked).apply();
+			}
+		};
+		CompoundButton custom_textures = (CompoundButton) getView().findViewById(R.id.customtex_option);
+		custom_textures.setChecked(mPrefs.getBoolean(Emulator.pref_customtextures, Emulator.customtextures));
+		custom_textures.setOnCheckedChangeListener(customtex);
+
 		final EditText bootdiskEdit = (EditText) getView().findViewById(R.id.boot_disk);
 		bootdiskEdit.setText(mPrefs.getString(Emulator.pref_bootdisk, Emulator.bootdisk));
 

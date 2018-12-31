@@ -49,6 +49,7 @@ public final class JNIdc
 	public static native void modvols(int volumes);
 	public static native void bootdisk(String disk);
 	public static native void usereios(int reios);
+	public static native void customtextures(int customtex);
 
 	public static void show_osd() {
 		JNIdc.vjoy(13, 1,0,0,0);

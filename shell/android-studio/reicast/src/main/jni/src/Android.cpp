@@ -65,6 +65,7 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_syncedrender(JNIEnv *
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_modvols(JNIEnv *env,jobject obj, jint volumes)  __attribute__((visibility("default")));
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_bootdisk(JNIEnv *env,jobject obj, jstring disk)  __attribute__((visibility("default")));
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_usereios(JNIEnv *env,jobject obj, jint reios)  __attribute__((visibility("default")));
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_customtextures(JNIEnv *env,jobject obj, jint customtex)  __attribute__((visibility("default")));
 };
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_dynarec(JNIEnv *env,jobject obj, jint dynarec)
@@ -161,6 +162,11 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_modvols(JNIEnv *env,j
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_usereios(JNIEnv *env,jobject obj, jint reios)
 {
     settings.bios.UseReios = reios;
+}
+
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_customtextures(JNIEnv *env,jobject obj, jint customtex)
+{
+    settings.rend.CustomTextures = customtex;
 }
 
 void egl_stealcntx();

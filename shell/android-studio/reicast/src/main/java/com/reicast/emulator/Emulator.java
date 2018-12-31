@@ -28,6 +28,7 @@ public class Emulator extends Application {
     public static final String pref_modvols = "modifier_volumes";
     public static final String pref_bootdisk = "boot_disk";
     public static final String pref_usereios = "use_reios";
+    public static final String pref_customtextures = "custom_textures";
 
     public static boolean dynarecopt = true;
     public static boolean idleskip = true;
@@ -51,7 +52,8 @@ public class Emulator extends Application {
     public static String bootdisk = null;
     public static boolean usereios = false;
     public static boolean nativeact = false;
-    
+    public static boolean customtextures = false;
+
     /**
      * Load the user configuration from preferences
      *
@@ -73,6 +75,7 @@ public class Emulator extends Application {
         Emulator.bootdisk = mPrefs.getString(pref_bootdisk, bootdisk);
         Emulator.usereios = mPrefs.getBoolean(pref_usereios, usereios);
         Emulator.nativeact = mPrefs.getBoolean(pref_nativeact, nativeact);
+        Emulator.customtextures = mPrefs.getBoolean(pref_customtextures, customtextures);
     }
 
     /**
@@ -100,6 +103,7 @@ public class Emulator extends Application {
         JNIdc.modvols(Emulator.modvols ? 1 : 0);
         JNIdc.usereios(Emulator.usereios ? 1 : 0);
         JNIdc.bootdisk(Emulator.bootdisk);
+        JNIdc.customtextures(Emulator.customtextures ? 1 : 0);
     }
 
     public void loadGameConfiguration(String gameId) {
@@ -112,6 +116,7 @@ public class Emulator extends Application {
         JNIdc.syncedrender(mPrefs.getBoolean(pref_syncedrender, syncedrender) ? 1 : 0);
         JNIdc.modvols(mPrefs.getBoolean(pref_modvols, modvols) ? 1 : 0);
         JNIdc.bootdisk(mPrefs.getString(pref_bootdisk, bootdisk));
+        JNIdc.customtextures(mPrefs.getBoolean(pref_customtextures, customtextures) ? 1 : 0);
     }
 
     static {
