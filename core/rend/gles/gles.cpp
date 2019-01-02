@@ -2048,7 +2048,7 @@ u8* loadPNGData(const string& fname, int &width, int &height, bool bottom_to_top
 	if (!file)
 	{
 		EMUERROR("Error opening %s\n", filename);
-		return TEXTURE_LOAD_ERROR;
+		return NULL;
 	}
 
 	//header for testing if it is a png
@@ -2062,8 +2062,8 @@ u8* loadPNGData(const string& fname, int &width, int &height, bool bottom_to_top
 	if (!is_png)
 	{
 		fclose(file);
-		printf("Not a PNG file : %s", filename);
-		return TEXTURE_LOAD_ERROR;
+		printf("Not a PNG file : %s\n", filename);
+		return NULL;
 	}
 
 	//create png struct
@@ -2072,8 +2072,8 @@ u8* loadPNGData(const string& fname, int &width, int &height, bool bottom_to_top
 	if (!png_ptr)
 	{
 		fclose(file);
-		printf("Unable to create PNG struct : %s", filename);
-		return (TEXTURE_LOAD_ERROR);
+		printf("Unable to create PNG struct : %s\n", filename);
+		return (NULL);
 	}
 
 	//create png info struct
@@ -2081,9 +2081,9 @@ u8* loadPNGData(const string& fname, int &width, int &height, bool bottom_to_top
 	if (!info_ptr)
 	{
 		png_destroy_read_struct(&png_ptr, (png_infopp) NULL, (png_infopp) NULL);
-		printf("Unable to create PNG info : %s", filename);
+		printf("Unable to create PNG info : %s\n", filename);
 		fclose(file);
-		return (TEXTURE_LOAD_ERROR);
+		return (NULL);
 	}
 
 	//create png info struct
@@ -2091,18 +2091,18 @@ u8* loadPNGData(const string& fname, int &width, int &height, bool bottom_to_top
 	if (!end_info)
 	{
 		png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp) NULL);
-		printf("Unable to create PNG end info : %s", filename);
+		printf("Unable to create PNG end info : %s\n", filename);
 		fclose(file);
-		return (TEXTURE_LOAD_ERROR);
+		return (NULL);
 	}
 
 	//png error stuff, not sure libpng man suggests this.
 	if (setjmp(png_jmpbuf(png_ptr)))
 	{
 		fclose(file);
-		printf("Error during setjmp : %s", filename);
+		printf("Error during setjmp : %s\n", filename);
 		png_destroy_read_struct(&png_ptr, &info_ptr, &end_info);
-		return (TEXTURE_LOAD_ERROR);
+		return (NULL);
 	}
 
 	//init png reading
@@ -2139,9 +2139,9 @@ u8* loadPNGData(const string& fname, int &width, int &height, bool bottom_to_top
 	{
 		//clean up memory and close stuff
 		png_destroy_read_struct(&png_ptr, &info_ptr, &end_info);
-		printf("Unable to allocate image_data while loading %s ", filename);
+		printf("Unable to allocate image_data while loading %s\n", filename);
 		fclose(file);
-		return TEXTURE_LOAD_ERROR;
+		return NULL;
 	}
 
 	//row_pointers is for pointing to image_data for reading the png with libpng
@@ -2151,9 +2151,9 @@ u8* loadPNGData(const string& fname, int &width, int &height, bool bottom_to_top
 		//clean up memory and close stuff
 		png_destroy_read_struct(&png_ptr, &info_ptr, &end_info);
 		delete[] image_data;
-		printf("Unable to allocate row_pointer while loading %s ", filename);
+		printf("Unable to allocate row_pointer while loading %s\n", filename);
 		fclose(file);
-		return TEXTURE_LOAD_ERROR;
+		return NULL;
 	}
 
 	// set the individual row_pointers to point at the correct offsets of image_data

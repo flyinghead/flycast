@@ -30,11 +30,13 @@ public:
 	~CustomTexture() { Terminate(); }
 	u8* LoadCustomTexture(u32 hash, int& width, int& height);
 	void LoadCustomTextureAsync(TextureCacheData *texture_data);
+	void DumpTexture(u32 hash, int w, int h, GLuint textype, void *temp_tex_buffer);
 
 private:
 	bool Init();
 	void Terminate();
 	void LoaderThread();
+	std::string GetGameId();
 	
 	static void *loader_thread_func(void *param) { ((CustomTexture *)param)->LoaderThread(); return NULL; }
 	
