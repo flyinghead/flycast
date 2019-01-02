@@ -113,18 +113,27 @@ void CDI_get_tracks (FILE *fsource, image_s *image)
      fread(&image->tracks, 2, 1, fsource);
 }
 
-void CDI_init (FILE *fsource, image_s *image, char *fsourcename)
+bool CDI_init (FILE *fsource, image_s *image, const char *fsourcename)
 {
 	image->length = core_fsize(fsource);
 
-     if (image->length < 8) printf( "Image file is too short");
+	if (image->length < 8)
+	{
+		printf("%s: Image file is too short\n", fsourcename);
+		return false;
+	}
 
-     fseek(fsource, image->length-8, SEEK_SET);
-     fread(&image->version, 4, 1, fsource);
-     fread(&image->header_offset, 4, 1, fsource);
+	fseek(fsource, image->length-8, SEEK_SET);
+	fread(&image->version, 4, 1, fsource);
+	fread(&image->header_offset, 4, 1, fsource);
 
-   //  if (errno != 0) printf( fsourcename);
-     if (image->header_offset == 0) printf( "Bad image format");
+	if ((image->version != CDI_V2 && image->version != CDI_V3 && image->version != CDI_V35)
+			|| image->header_offset == 0)
+	{
+		printf("%s: Bad image format\n", fsourcename);
+		return false;
+	}
+	return true;
 }
 
 void CDI_get_sessions (FILE *fsource, image_s *image)
