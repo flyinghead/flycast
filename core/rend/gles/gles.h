@@ -40,12 +40,35 @@
 #define VERTEX_COL_OFFS_ARRAY 2
 #define VERTEX_UV_ARRAY 3
 
+struct float2
+{
+	float x;
+	float y;
+};
+
+struct float3
+{
+	float x;
+	float y;
+	float z;
+};
+
+struct GLFramebufferData {
+	GLuint framebuffer;
+	GLuint framebufferRenderbuffer;
+	GLuint framebufferTexture;
+	GLuint positionsBuffer;
+	GLuint texcoordsBuffer;
+	GLuint indexBuffer;
+};
 
 //vertex types
 extern u32 gcflip;
 
+extern GLFramebufferData fullscreenQuad;
 
 void DrawStrips();
+void DrawFullscreenQuad(float, float, float, float);
 
 struct PipelineShader
 {
@@ -97,6 +120,7 @@ struct gl_ctx
 #endif
 	} vbo;
 
+	GLuint fullscreenQuadShader;
 
 	//GLuint matrix;
 };
@@ -124,3 +148,5 @@ int GetProgramID(u32 cp_AlphaTest, u32 pp_ClipTestMode,
 bool CompilePipelineShader(PipelineShader* s);
 #define TEXTURE_LOAD_ERROR 0
 GLuint loadPNG(const string& subpath, int &width, int &height);
+
+void SetupMainVBO();

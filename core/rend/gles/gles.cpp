@@ -386,11 +386,35 @@ void main() \n\
 	" FRAGCOL "=vtx_base*" TEXLOOKUP "(tex,uv.st); \n\n\
 }";
 
+const char * FullscreenQuadVertexShader =
+	"attribute vec3 a_position;\n\
+	attribute vec2 a_texcoord;\n\
+	\n\
+	varying vec2 v_texcoord;  \n\
+	\n\
+	void main()\n\
+	{\n\
+	    v_texcoord = a_texcoord;\n\
+	    gl_Position = vec4(a_position, 1);\n\
+	}";
+
+const char * FullscreenQuadFragmentShader =
+	"precision mediump float;\n\
+	uniform sampler2D s_texture;\n\
+	\n\
+	varying vec2 v_texcoord;\n\
+	\n\
+	void main()\n\
+	{\n\
+	    gl_FragColor = texture2D(s_texture, v_texcoord.st);\n\
+	}";
 
 gl_ctx gl;
 
 int screen_width;
 int screen_height;
+
+GLFramebufferData fullscreenQuad;
 
 #if (HOST_OS != OS_DARWIN) && !defined(TARGET_NACL32)
 #if defined(GLES) && !defined(USE_SDL)
@@ -758,7 +782,10 @@ GLuint gl_CompileShader(const char* shader,GLuint type)
 	return rv;
 }
 
-GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentShader)
+GLuint gl_CompileAndLink(
+	const char* VertexShader,
+	const char* FragmentShader,
+	void (*bindAttribLocationCallback)(GLuint) = NULL)
 {
 	//create shaders
 	GLuint vs=gl_CompileShader(VertexShader ,GL_VERTEX_SHADER);
@@ -768,15 +795,9 @@ GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentShader)
 	glAttachShader(program, vs);
 	glAttachShader(program, ps);
 
-	//bind vertex attribute to vbo inputs
-	glBindAttribLocation(program, VERTEX_POS_ARRAY,      "in_pos");
-	glBindAttribLocation(program, VERTEX_COL_BASE_ARRAY, "in_base");
-	glBindAttribLocation(program, VERTEX_COL_OFFS_ARRAY, "in_offs");
-	glBindAttribLocation(program, VERTEX_UV_ARRAY,       "in_uv");
-
-#ifndef GLES
-	glBindFragDataLocation(program, 0, "FragColor");
-#endif
+	if (bindAttribLocationCallback != NULL) {
+		bindAttribLocationCallback(program);
+	}
 
 	glLinkProgram(program);
 
@@ -800,6 +821,8 @@ GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentShader)
 		die("shader compile fail\n");
 	}
 
+	glDetachShader(program, vs);
+	glDetachShader(program, ps);
 	glDeleteShader(vs);
 	glDeleteShader(ps);
 
@@ -828,6 +851,65 @@ int GetProgramID(u32 cp_AlphaTest, u32 pp_ClipTestMode,
 	return rv;
 }
 
+void generateFullscreenQuadVertices() {
+	const u32 verticesNumber = 4;
+	const u32 indicesNumber = 6;
+
+	const float3 quadPositions[] =
+		{
+			{  1.0f,  1.0f, 0.0f },
+			{ -1.0f,  1.0f, 0.0f },
+			{ -1.0f, -1.0f, 0.0f },
+			{  1.0f, -1.0f, 0.0f },
+		};
+	if (!fullscreenQuad.positionsBuffer) {
+		glGenBuffers(1, &fullscreenQuad.positionsBuffer);
+	}
+	glBindBuffer(GL_ARRAY_BUFFER, fullscreenQuad.positionsBuffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float3) * verticesNumber, quadPositions, GL_STATIC_DRAW);
+
+	const float2 quadTexcoords[] =
+		{
+			{ 1.0f, 1.0f },
+			{ 0.0f, 1.0f },
+			{ 0.0f, 0.0f },
+			{ 1.0f, 0.0f },
+		};
+	if (!fullscreenQuad.texcoordsBuffer) {
+		glGenBuffers(1, &fullscreenQuad.texcoordsBuffer);
+	}
+	glBindBuffer(GL_ARRAY_BUFFER, fullscreenQuad.texcoordsBuffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float2) * verticesNumber, quadTexcoords, GL_STATIC_DRAW);
+
+	const u8 quadIndices[] =
+		{
+			0, 1, 2,
+			0, 2, 3,
+		};
+	if (!fullscreenQuad.indexBuffer) {
+		glGenBuffers(1, &fullscreenQuad.indexBuffer);
+	}
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, fullscreenQuad.indexBuffer);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(u8) * indicesNumber, quadIndices, GL_STATIC_DRAW);
+
+	// Unbind
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+}
+
+void bindDefaultAttribLocations(GLuint program)
+{
+	//bind vertex attribute to vbo inputs
+	glBindAttribLocation(program, VERTEX_POS_ARRAY,      "in_pos");
+	glBindAttribLocation(program, VERTEX_COL_BASE_ARRAY, "in_base");
+	glBindAttribLocation(program, VERTEX_COL_OFFS_ARRAY, "in_offs");
+	glBindAttribLocation(program, VERTEX_UV_ARRAY,       "in_uv");
+
+#ifndef GLES
+	glBindFragDataLocation(program, 0, "FragColor");
+#endif
+}
+
 bool CompilePipelineShader(	PipelineShader* s)
 {
 	char pshader[8192];
@@ -836,7 +918,7 @@ bool CompilePipelineShader(	PipelineShader* s)
                 s->cp_AlphaTest,s->pp_ClipTestMode,s->pp_UseAlpha,
                 s->pp_Texture,s->pp_IgnoreTexA,s->pp_ShadInstr,s->pp_Offset,s->pp_FogCtrl);
 
-	s->program=gl_CompileAndLink(VertexShaderSource,pshader);
+	s->program = gl_CompileAndLink(VertexShaderSource, pshader, bindDefaultAttribLocations);
 
 
 	//setup texture 0 as the input for the shader
@@ -940,19 +1022,21 @@ bool gl_create_resources()
 		}
 	}
 
-
-
-	gl.modvol_shader.program=gl_CompileAndLink(VertexShaderSource,ModifierVolumeShader);
+	gl.modvol_shader.program = gl_CompileAndLink(VertexShaderSource, ModifierVolumeShader, bindDefaultAttribLocations);
 	gl.modvol_shader.scale          = glGetUniformLocation(gl.modvol_shader.program, "scale");
 	gl.modvol_shader.sp_ShaderColor = glGetUniformLocation(gl.modvol_shader.program, "sp_ShaderColor");
 	gl.modvol_shader.depth_scale    = glGetUniformLocation(gl.modvol_shader.program, "depth_scale");
 
-
-	gl.OSD_SHADER.program=gl_CompileAndLink(VertexShaderSource,OSD_Shader);
+	gl.OSD_SHADER.program = gl_CompileAndLink(VertexShaderSource, OSD_Shader, bindDefaultAttribLocations);
 	printf("OSD: %d\n",gl.OSD_SHADER.program);
 	gl.OSD_SHADER.scale=glGetUniformLocation(gl.OSD_SHADER.program, "scale");
 	gl.OSD_SHADER.depth_scale=glGetUniformLocation(gl.OSD_SHADER.program, "depth_scale");
 	glUniform1i(glGetUniformLocation(gl.OSD_SHADER.program, "tex"),0);		//bind osd texture to slot 0
+
+	if (!gl.fullscreenQuadShader) {
+		gl.fullscreenQuadShader = gl_CompileAndLink(FullscreenQuadVertexShader, FullscreenQuadFragmentShader);
+		generateFullscreenQuadVertices();
+	}
 
 	//#define PRECOMPILE_SHADERS
 	#ifdef PRECOMPILE_SHADERS
@@ -984,8 +1068,6 @@ GLuint gl_CompileShader(const char* shader,GLuint type);
 bool gl_create_resources();
 
 //setup
-
-
 bool gles_init()
 {
 
@@ -1015,7 +1097,12 @@ bool gles_init()
 	return true;
 }
 
-
+bool isExtensionSupported(const char * name) {
+	if (!strstr((const char *)glGetString(GL_EXTENSIONS), name)) {
+		return false;
+	}
+	return true;
+}
 
 float fog_coefs[]={0,0};
 void tryfit(float* x,float* y)
@@ -1445,6 +1532,57 @@ void OSD_DRAW()
 #endif
 }
 
+void fullscreenQuadCreateTemporaryFBO(float &screenToNativeX, float &screenToNativeY) {
+	// Generate and bind a render buffer which will become a depth buffer
+	if (!fullscreenQuad.framebufferRenderbuffer) {
+		glGenRenderbuffers(1, &fullscreenQuad.framebufferRenderbuffer);
+		glBindRenderbuffer(GL_RENDERBUFFER, fullscreenQuad.framebufferRenderbuffer);
+#ifdef GLES
+		if (isExtensionSupported("GL_OES_packed_depth_stencil")) {
+			glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8_OES, screen_width, screen_height);
+		}
+		else if (isExtensionSupported("GL_OES_depth24")) {
+			glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24_OES, screen_width, screen_height);
+		}
+		else {
+			glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, screen_width, screen_height);
+		}
+#else
+		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, screen_width, screen_height);
+#endif
+	}
+
+	// Create a texture for rendering to - may be a color render buffer as well
+	if (!fullscreenQuad.framebufferTexture) {
+		glGenTextures(1, &fullscreenQuad.framebufferTexture);
+		glBindTexture(GL_TEXTURE_2D, fullscreenQuad.framebufferTexture);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, screen_width, screen_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+	}
+
+	// Create the object that will allow us to render to the aforementioned texture (one for every rtt texture address)
+	if (!fullscreenQuad.framebuffer) {
+		glGenFramebuffers(1, &fullscreenQuad.framebuffer);
+		glBindFramebuffer(GL_FRAMEBUFFER, fullscreenQuad.framebuffer);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fullscreenQuad.framebufferTexture, 0);
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, fullscreenQuad.framebufferRenderbuffer);
+		if (isExtensionSupported("GL_OES_packed_depth_stencil")) {
+			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, fullscreenQuad.framebufferRenderbuffer);
+		}
+
+		GLuint uStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+		verify(uStatus == GL_FRAMEBUFFER_COMPLETE);
+	}
+	else {
+		glBindFramebuffer(GL_FRAMEBUFFER, fullscreenQuad.framebuffer);
+	}
+
+	glViewport(0, 0, screen_width * screenToNativeX, screen_height * screenToNativeY);
+}
+
 bool ProcessFrame(TA_context* ctx)
 {
 	//disable RTTs for now ..
@@ -1565,8 +1703,10 @@ bool RenderFrame()
 	//float A=-B*max_invW+vnear;
 
 	//these should be adjusted based on the current PVR scaling etc params
-	float dc_width=640;
-	float dc_height=480;
+	float dc_width = 640;
+	float dc_height = 480;
+	float screenToNativeX = 1;
+	float screenToNativeY = 1;
 
 	if (!is_rtt)
 	{
@@ -1772,8 +1912,7 @@ bool RenderFrame()
 	else
 	{
 #if HOST_OS != OS_DARWIN
-        //Fix this in a proper way
-		glBindFramebuffer(GL_FRAMEBUFFER,0);
+		fullscreenQuadCreateTemporaryFBO(screenToNativeX, screenToNativeY);
 #endif
 	}
 
@@ -1822,15 +1961,6 @@ bool RenderFrame()
 		printf("SCI: %f, %f, %f, %f\n", offs_x+pvrrc.fb_X_CLIP.min/scale_x,(pvrrc.fb_Y_CLIP.min/scale_y)*dc2s_scale_h,(pvrrc.fb_X_CLIP.max-pvrrc.fb_X_CLIP.min+1)/scale_x*dc2s_scale_h,(pvrrc.fb_Y_CLIP.max-pvrrc.fb_Y_CLIP.min+1)/scale_y*dc2s_scale_h);
 	#endif
 
-	glScissor(offs_x+pvrrc.fb_X_CLIP.min/scale_x,(pvrrc.fb_Y_CLIP.min/scale_y)*dc2s_scale_h,(pvrrc.fb_X_CLIP.max-pvrrc.fb_X_CLIP.min+1)/scale_x*dc2s_scale_h,(pvrrc.fb_Y_CLIP.max-pvrrc.fb_Y_CLIP.min+1)/scale_y*dc2s_scale_h);
-	if (settings.rend.WideScreen && pvrrc.fb_X_CLIP.min==0 && ((pvrrc.fb_X_CLIP.max+1)/scale_x==640) && (pvrrc.fb_Y_CLIP.min==0) && ((pvrrc.fb_Y_CLIP.max+1)/scale_y==480 ) )
-	{
-		glDisable(GL_SCISSOR_TEST);
-	}
-	else
-		glEnable(GL_SCISSOR_TEST);
-
-
 	//restore scale_x
 	scale_x /= scissoring_scale_x;
 
@@ -1843,6 +1973,10 @@ bool RenderFrame()
 	eglCheck();
 
 	KillTex=false;
+
+	if (!is_rtt) {
+		DrawFullscreenQuad(screenToNativeX, screenToNativeY, scale_x, scale_y);
+	}
 
 	return !is_rtt;
 }
