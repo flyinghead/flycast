@@ -617,6 +617,8 @@ struct settings_t
 		bool WideScreen;
 		bool ModifierVolumes;
 		bool Clipping;
+		u32 VerticalResolution;
+		u32 HorizontalResolution;
 	} rend;
 
 	struct

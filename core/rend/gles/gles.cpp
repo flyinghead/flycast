@@ -1705,8 +1705,8 @@ bool RenderFrame()
 	//these should be adjusted based on the current PVR scaling etc params
 	float dc_width = 640;
 	float dc_height = 480;
-	float screenToNativeX = 1;
-	float screenToNativeY = 1;
+	float screenToNativeXScale = settings.rend.HorizontalResolution / 100.0f;
+	float screenToNativeYScale = settings.rend.VerticalResolution / 100.0f;
 
 	if (!is_rtt)
 	{
@@ -1912,7 +1912,12 @@ bool RenderFrame()
 	else
 	{
 #if HOST_OS != OS_DARWIN
-		fullscreenQuadCreateTemporaryFBO(screenToNativeX, screenToNativeY);
+		if (settings.rend.VerticalResolution == 100 && settings.rend.HorizontalResolution == 100) {
+			glViewport(0, 0, screen_width, screen_height);
+		}
+		else {
+			fullscreenQuadCreateTemporaryFBO(screenToNativeXScale, screenToNativeYScale);
+		}
 #endif
 	}
 
@@ -1964,6 +1969,16 @@ bool RenderFrame()
 	//restore scale_x
 	scale_x /= scissoring_scale_x;
 
+	if (settings.rend.VerticalResolution == 100 && settings.rend.HorizontalResolution == 100) {
+       glScissor(offs_x+pvrrc.fb_X_CLIP.min/scale_x,(pvrrc.fb_Y_CLIP.min/scale_y)*dc2s_scale_h,(pvrrc.fb_X_CLIP.max-pvrrc.fb_X_CLIP.min+1)/scale_x*dc2s_scale_h,(pvrrc.fb_Y_CLIP.max-pvrrc.fb_Y_CLIP.min+1)/scale_y*dc2s_scale_h);
+       if (settings.rend.WideScreen && pvrrc.fb_X_CLIP.min==0 && ((pvrrc.fb_X_CLIP.max+1)/scale_x==640) && (pvrrc.fb_Y_CLIP.min==0) && ((pvrrc.fb_Y_CLIP.max+1)/scale_y==480 ) )
+	   {
+		   glDisable(GL_SCISSOR_TEST);
+	   }
+	   else
+		   glEnable(GL_SCISSOR_TEST);
+	}
+
 	DrawStrips();
 
 	#if HOST_OS==OS_WINDOWS
@@ -1974,8 +1989,8 @@ bool RenderFrame()
 
 	KillTex=false;
 
-	if (!is_rtt) {
-		DrawFullscreenQuad(screenToNativeX, screenToNativeY, scale_x, scale_y);
+	if (!is_rtt && (settings.rend.VerticalResolution != 100 || settings.rend.HorizontalResolution != 100)) {
+		DrawFullscreenQuad(screenToNativeXScale, screenToNativeYScale, scale_x, scale_y);
 	}
 
 	return !is_rtt;

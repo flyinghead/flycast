@@ -26,6 +26,8 @@ public class Emulator extends Application {
     public static final String pref_pvrrender = "pvr_render";
     public static final String pref_syncedrender = "synced_render";
     public static final String pref_modvols = "modifier_volumes";
+    public static final String pref_resolutionv = "resolution_vertical";
+    public static final String pref_resolutionh = "resolution_horizontal";
     public static final String pref_bootdisk = "boot_disk";
     public static final String pref_usereios = "use_reios";
 
@@ -47,6 +49,8 @@ public class Emulator extends Application {
     public static boolean pvrrender = false;
     public static boolean syncedrender = false;
     public static boolean modvols = true;
+    public static int resolutionv = 100;
+    public static int resolutionh = 100;
     public static String bootdisk = null;
     public static boolean usereios = false;
     public static boolean nativeact = false;
@@ -68,6 +72,8 @@ public class Emulator extends Application {
         Emulator.frameskip = mPrefs.getInt(pref_frameskip, frameskip);
         Emulator.pvrrender = mPrefs.getBoolean(pref_pvrrender, pvrrender);
         Emulator.syncedrender = mPrefs.getBoolean(pref_syncedrender, syncedrender);
+        Emulator.resolutionv = mPrefs.getInt(pref_resolutionv, resolutionv);
+        Emulator.resolutionh = mPrefs.getInt(pref_resolutionh, resolutionh);
         Emulator.bootdisk = mPrefs.getString(pref_bootdisk, bootdisk);
         Emulator.usereios = mPrefs.getBoolean(pref_usereios, usereios);
         Emulator.nativeact = mPrefs.getBoolean(pref_nativeact, nativeact);
@@ -97,6 +103,8 @@ public class Emulator extends Application {
         JNIdc.syncedrender(Emulator.syncedrender ? 1 : 0);
         JNIdc.modvols(Emulator.modvols ? 1 : 0);
         JNIdc.usereios(Emulator.usereios ? 1 : 0);
+        JNIdc.frameskip(Emulator.resolutionv);
+        JNIdc.frameskip(Emulator.resolutionh);
         JNIdc.bootdisk(Emulator.bootdisk);
         JNIdc.dreamtime(DreamTime.getDreamtime());
     }
@@ -111,6 +119,8 @@ public class Emulator extends Application {
         JNIdc.pvrrender(mPrefs.getBoolean(pref_pvrrender, pvrrender) ? 1 : 0);
         JNIdc.syncedrender(mPrefs.getBoolean(pref_syncedrender, syncedrender) ? 1 : 0);
         JNIdc.modvols(mPrefs.getBoolean(pref_modvols, modvols) ? 1 : 0);
+        JNIdc.resolutionv(mPrefs.getInt(pref_resolutionv, resolutionv));
+        JNIdc.resolutionh(mPrefs.getInt(pref_resolutionh, resolutionh));
         JNIdc.bootdisk(mPrefs.getString(pref_bootdisk, bootdisk));
     }
 

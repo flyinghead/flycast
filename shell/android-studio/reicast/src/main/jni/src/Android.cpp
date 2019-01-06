@@ -63,6 +63,8 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_frameskip(JNIEnv *env
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_pvrrender(JNIEnv *env,jobject obj, jint render)  __attribute__((visibility("default")));
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_syncedrender(JNIEnv *env,jobject obj, jint sync)  __attribute__((visibility("default")));
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_modvols(JNIEnv *env,jobject obj, jint volumes)  __attribute__((visibility("default")));
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_resolutionv(JNIEnv *env,jobject obj, jint resolutionv)  __attribute__((visibility("default")));
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_resolutionh(JNIEnv *env,jobject obj, jint resolutionh)  __attribute__((visibility("default")));
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_bootdisk(JNIEnv *env,jobject obj, jstring disk)  __attribute__((visibility("default")));
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_usereios(JNIEnv *env,jobject obj, jint reios)  __attribute__((visibility("default")));
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_dreamtime(JNIEnv *env,jobject obj, jlong clock)  __attribute__((visibility("default")));
@@ -157,6 +159,16 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_syncedrender(JNIEnv *
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_modvols(JNIEnv *env,jobject obj, jint volumes)
 {
     settings.rend.ModifierVolumes = volumes;
+}
+
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_resolutionv(JNIEnv *env,jobject obj, jint resolutionv)
+{
+    settings.rend.VerticalResolution = resolutionv;
+}
+
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_resolutionh(JNIEnv *env,jobject obj, jint resolutionh)
+{
+    settings.rend.HorizontalResolution = resolutionh;
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_usereios(JNIEnv *env,jobject obj, jint reios)

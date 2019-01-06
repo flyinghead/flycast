@@ -719,6 +719,65 @@
                 </LinearLayout>
             </TableRow>
 
+            <TableRow
+                android:layout_marginTop="10dp"
+                android:gravity="center_vertical" >
+
+                <TextView
+                    android:id="@+id/resolution"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center_vertical|left"
+                    android:text="@string/resolution" />
+            </TableRow>
+
+            <TableRow
+                android:layout_marginTop="5dp"
+                android:gravity="center_vertical" >
+
+                <TextView
+                    android:id="@+id/resolutionh"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center_vertical|left"
+                    android:text="@string/resolution_horizontal" />
+
+                <SeekBar
+                    android:id="@+id/resolutionh_seekbar"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ems="10"
+                    android:gravity="center_vertical|left"
+                    android:max="99"
+                    android:progress="99" />
+            </TableRow>
+
+            <TableRow
+                android:layout_marginTop="5dp"
+                android:gravity="center_vertical" >
+
+                <TextView
+                    android:id="@+id/resolutionv"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center_vertical|left"
+                    android:text="@string/resolution_vertical" />
+
+                <SeekBar
+                    android:id="@+id/resolutionv_seekbar"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ems="10"
+                    android:gravity="center_vertical|left"
+                    android:max="99"
+                    android:progress="99" />
+            </TableRow>
+
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

@@ -1081,7 +1081,7 @@ void DrawModVols()
 		glStencilFunc(GL_EQUAL,0x81,0x81); //only pixels that are Modvol enabled, and in area 1
 		
 		//clear the stencil result bit
-		glStencilMask(0x3);    //write to lsb 
+		glStencilMask(0x3);    //write to lsb
 		glStencilOp(GL_ZERO,GL_ZERO,GL_ZERO);
 #ifndef NO_STENCIL_WORKAROUND
 		//looks like a driver bug ?

@@ -432,6 +432,52 @@ public class OptionsFragment extends Fragment {
 			}
 		});
 
+		int resolutionVertical = mPrefs.getInt(Emulator.pref_resolutionv, Emulator.resolutionv);
+		final String verticalText = getActivity().getString(R.string.resolution_vertical) + " ";
+
+		final TextView resolutionVerticalView = getView().findViewById(R.id.resolutionv);
+		resolutionVerticalView.setText((verticalText + "(" + String.valueOf(resolutionVertical) + "%)"));
+
+		final SeekBar resolutionVerticalSeek = getView().findViewById(R.id.resolutionv_seekbar);
+		resolutionVerticalSeek.setProgress(resolutionVertical - 1);
+		resolutionVerticalSeek.setIndeterminate(false);
+		resolutionVerticalSeek.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
+			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+				resolutionVerticalView.setText((verticalText + "(" + String.valueOf(progress + 1) + "%)"));
+			}
+
+			public void onStartTrackingTouch(SeekBar seekBar) {
+			}
+
+			public void onStopTrackingTouch(SeekBar seekBar) {
+				int progress = seekBar.getProgress();
+				mPrefs.edit().putInt(Emulator.pref_resolutionv, progress + 1).apply();
+			}
+		});
+
+		int resolutionHorizontal = mPrefs.getInt(Emulator.pref_resolutionh, Emulator.resolutionh);
+		final String horizontalText = getActivity().getString(R.string.resolution_horizontal) + " ";
+
+		final TextView resolutionHorizontalView = getView().findViewById(R.id.resolutionh);
+		resolutionHorizontalView.setText((horizontalText + "(" + String.valueOf(resolutionHorizontal) + "%)"));
+
+		final SeekBar resolutionHorizontalSeek = getView().findViewById(R.id.resolutionh_seekbar);
+		resolutionHorizontalSeek.setProgress(resolutionHorizontal - 1);
+		resolutionHorizontalSeek.setIndeterminate(false);
+		resolutionHorizontalSeek.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
+			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+				resolutionHorizontalView.setText((horizontalText + "(" + String.valueOf(progress + 1) + "%)"));
+			}
+
+			public void onStartTrackingTouch(SeekBar seekBar) {
+			}
+
+			public void onStopTrackingTouch(SeekBar seekBar) {
+				int progress = seekBar.getProgress();
+				mPrefs.edit().putInt(Emulator.pref_resolutionh, progress + 1).apply();
+			}
+		});
+
 		OnCheckedChangeListener pvr_rendering = new OnCheckedChangeListener() {
 
 			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {

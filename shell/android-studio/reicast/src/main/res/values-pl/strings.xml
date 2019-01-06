@@ -23,6 +23,9 @@
     <string name="select_stretch">Tryb Szerokoekranowy</string>
     <string name="set_frameskip">Wartość Frameskip</string>
     <string name="select_render">PVR Rendering (na razie nie działa)</string>
+    <string name="resolution">Rozdzielczość (mniej = szybciej)</string>
+    <string name="resolution_vertical">Pionowa</string>
+    <string name="resolution_horizontal">Pozioma</string>
 
     <string name="games_listing">Dostępne gry Dreamcast\'a</string>
 
