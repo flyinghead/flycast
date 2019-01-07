@@ -49,6 +49,10 @@ ifdef CPP_REC
     RZDCY_MODULES += rec-cpp/
 endif
 
+ifdef ARM64_REC
+    RZDCY_MODULES += rec-ARM64/ deps/vixl/ deps/vixl/aarch64/
+endif
+
 ifndef NO_REND
     RZDCY_MODULES += rend/gles/
     ifndef USE_GLES
@@ -85,6 +89,7 @@ ifdef FOR_WINDOWS
 endif
 
 RZDCY_FILES := $(foreach dir,$(addprefix $(RZDCY_SRC_DIR)/,$(RZDCY_MODULES)),$(wildcard $(dir)*.cpp))
+RZDCY_FILES += $(foreach dir,$(addprefix $(RZDCY_SRC_DIR)/,$(RZDCY_MODULES)),$(wildcard $(dir)*.cc))
 RZDCY_FILES += $(foreach dir,$(addprefix $(RZDCY_SRC_DIR)/,$(RZDCY_MODULES)),$(wildcard $(dir)*.c))
 RZDCY_FILES += $(foreach dir,$(addprefix $(RZDCY_SRC_DIR)/,$(RZDCY_MODULES)),$(wildcard $(dir)*.S))
 
@@ -109,10 +114,15 @@ RZDCY_CFLAGS	:= \
 			RZDCY_CFLAGS += -march=armv7-a -mtune=cortex-a9 -mfpu=vfpv3-d16
 			RZDCY_CFLAGS += -DTARGET_LINUX_ARMELv7
 		else
-			ifndef ISMIPS
-				RZDCY_CFLAGS += -DTARGET_LINUX_x86
+			ifdef ISARM64
+				RZDCY_CFLAGS += -march=armv8-a
+				RZDCY_CFLAGS += -DTARGET_LINUX_ARMv8
 			else
-				RZDCY_CFLAGS += -DTARGET_LINUX_MIPS
+				ifdef ISMIPS
+					RZDCY_CFLAGS += -DTARGET_LINUX_MIPS
+				else
+					RZDCY_CFLAGS += -DTARGET_LINUX_x86
+				endif
 			endif
 		endif
 	else
@@ -121,7 +131,8 @@ RZDCY_CFLAGS :=
 endif
 
 RZDCY_CFLAGS += -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/rend/gles -I$(RZDCY_SRC_DIR)/deps \
-		-I$(RZDCY_SRC_DIR)/deps/picotcp/include -I$(RZDCY_SRC_DIR)/deps/picotcp/modules
+		-I$(RZDCY_SRC_DIR)/deps/picotcp/include -I$(RZDCY_SRC_DIR)/deps/picotcp/modules \
+		 -I$(RZDCY_SRC_DIR)/deps/vixl
 
 ifdef NO_REC
   RZDCY_CFLAGS += -DTARGET_NO_REC

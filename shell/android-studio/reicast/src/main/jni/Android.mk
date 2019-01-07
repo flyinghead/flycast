@@ -31,6 +31,16 @@ else
   NOT_ARM := 
 endif
 
+ifeq ($(TARGET_ARCH_ABI),arm64-v8a)
+#  CPP_REC := 1
+  ARM64_REC := 1
+  ISARM64 := 1
+else
+#  CPP_REC :=
+  ARM64_REC :=
+  ISARM64 :=
+endif
+
 ifeq ($(TARGET_ARCH_ABI),x86)
   X86_REC := 1
 else
@@ -92,11 +102,15 @@ LOCAL_LDLIBS	:= -llog -lGLESv2 -lEGL -lz
 #-Wl,-Map,./res/raw/syms.mp3
 LOCAL_ARM_MODE	:= arm
 
-ifeq ($(TARGET_ARCH),mips)
+ifeq ($(TARGET_ARCH_ABI),mips)
   LOCAL_LDFLAGS += -Wl,--gc-sections
 else
-  LOCAL_LDFLAGS += -Wl,--gc-sections,--icf=safe
-  LOCAL_LDLIBS +=  -Wl,--no-warn-shared-textrel
+  ifeq ($(TARGET_ARCH_ABI),arm64-v8a)
+    LOCAL_LDFLAGS += -Wl,--gc-sections
+  else
+    LOCAL_LDFLAGS += -Wl,--gc-sections,--icf=safe
+    LOCAL_LDLIBS +=  -Wl,--no-warn-shared-textrel
+  endif
 endif
 
 

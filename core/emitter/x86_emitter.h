@@ -232,7 +232,7 @@ struct /*__declspec(dllexport)*/  x86_ptr_imm
 		this->ptr=ptr;
 	}
 
-#if HOST_CPU != CPU_X64
+#if HOST_CPU == CPU_X86
 #if !defined(WIN32) && !defined(TARGET_OS_MAC)
 	template<typename Rv, typename ...Args>
 	x86_ptr_imm(Rv(* ptr)(Args...))

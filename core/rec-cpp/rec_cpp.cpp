@@ -1148,10 +1148,12 @@ string getCTN(foas f) {
 	return it->first;
 }
 
+#define CODE_ENTRY_COUNT 16384
+
 struct {
 	void* fnb;
 	void(*runner)(void* fnb);
-} dispatchb[8192];
+} dispatchb[CODE_ENTRY_COUNT];
 
 template<int n>
 void disaptchn() {
@@ -1176,10 +1178,10 @@ int idxnxx = 0;
 #define REP_8192(x, phrase) REP_4096(x, phrase), REP_4096(x+4096, phrase)
 
 
-DynarecCodeEntryPtr FNS[] = { REP_8192(0, &disaptchn) };
+DynarecCodeEntryPtr FNS[] = { REP_8192(0, &disaptchn), REP_8192(8192, &disaptchn) };
 
 DynarecCodeEntryPtr getndpn_forreal(int n) {
-	if (n >= 8192)
+	if (n >= CODE_ENTRY_COUNT)
 		return 0;
 	else
 		return FNS[n];
