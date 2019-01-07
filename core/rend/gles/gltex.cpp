@@ -403,7 +403,7 @@ struct FBT
 {
 	u32 texAddress;
 	u16 texData[1024*1024];
-	GLuint depthb;
+	GLuint renderBuffer;
 	GLuint tex;
 	GLuint renderTex;
 	GLuint fbo;
@@ -463,10 +463,10 @@ void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 	}
 
 	// Generate and bind a render buffer which will become a depth buffer
-	if (!renderedTexture->depthb) {
-		glGenRenderbuffers(1, &renderedTexture->depthb);
+	if (!renderedTexture->renderBuffer) {
+		glGenRenderbuffers(1, &renderedTexture->renderBuffer);
 
-		glBindRenderbuffer(GL_RENDERBUFFER, renderedTexture->depthb);
+		glBindRenderbuffer(GL_RENDERBUFFER, renderedTexture->renderBuffer);
 
 		/*
 			Currently it is unknown to GL that we want our new render buffer to be a depth buffer.
@@ -475,7 +475,10 @@ void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 		*/
 
 #ifdef GLES
-		if (isExtensionSupported("GL_OES_depth24")) {
+		if (isExtensionSupported("GL_OES_packed_depth_stencil")) {
+			glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8_OES, fbw, fbh);
+		}
+		else if (isExtensionSupported("GL_OES_depth24")) {
 			glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24_OES, fbw, fbh);
 		}
 		else {
@@ -500,8 +503,11 @@ void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 		// Attach the texture to the FBO
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, renderedTexture->renderTex, 0);
 
-		// Attach the depth buffer we created earlier to our FBO.
-		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, renderedTexture->depthb);
+		// Attach the depth (and/or stencil) buffer we created earlier to our FBO.
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, renderedTexture->renderBuffer);
+		if (isExtensionSupported("GL_OES_packed_depth_stencil")) {
+			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, renderedTexture->renderBuffer);
+		}
 
 		// Check that our FBO creation was successful
 		GLuint uStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
