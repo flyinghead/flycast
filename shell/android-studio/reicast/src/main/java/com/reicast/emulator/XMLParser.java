@@ -3,6 +3,7 @@ package com.reicast.emulator;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
@@ -11,6 +12,8 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Build;
+import android.support.v4.content.ContextCompat;
+import android.support.v4.widget.ImageViewCompat;
 import android.view.View;
 import android.view.View.OnLongClickListener;
 import android.widget.ImageView;
@@ -75,7 +78,7 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 		initializeDefaults();
 	}
 
-	public void setGameID(String id) {
+	private void setGameID(String id) {
 		this.gameId = id;
 	}
 
@@ -83,7 +86,7 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 	protected String doInBackground(String... params) {
 		String filename = game_name = params[0];
 		if (isNetworkAvailable() && mPrefs.getBoolean(Config.pref_gamedetails, false)) {
-			String xmlUrl = "";
+			String xmlUrl;
 			if (gameId != null) {
 				xmlUrl = "http://legacy.thegamesdb.net/api/GetGame.php?platform=sega+dreamcast&id=" + gameId;
 			} else {
@@ -187,6 +190,7 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 							game_icon = new BitmapDrawable(
 									mContext.get().getResources(), gameImage);
 						} else {
+							//noinspection deprecation
 							game_icon = new BitmapDrawable(gameImage);
 						}
 						((ImageView) childview.get().findViewById(
@@ -219,7 +223,22 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 							: nameLower.endsWith(".cdi") ? R.drawable.cdi
 							: R.drawable.disk_unknown);
 		}
-		((ImageView) childview.get().findViewById(R.id.item_icon)).setImageDrawable(game_icon);
+		ImageView icon = (ImageView) childview.get().findViewById(R.id.item_icon);
+		icon.setImageDrawable(game_icon);
+		int app_theme = mPrefs.getInt(Config.pref_app_theme, 0);
+		if (app_theme == 7) {
+			childview.get().setBackgroundResource(R.drawable.game_selector_dream);
+			ImageViewCompat.setImageTintList(icon, ColorStateList.valueOf(
+					ContextCompat.getColor(mContext.get(), R.color.colorDreamTint)));
+		} else if (app_theme == 1) {
+			childview.get().setBackgroundResource(R.drawable.game_selector_blue);
+			ImageViewCompat.setImageTintList(icon, ColorStateList.valueOf(
+					ContextCompat.getColor(mContext.get(), R.color.colorBlueTint)));
+		} else {
+			childview.get().setBackgroundResource(R.drawable.game_selector_dark);
+			ImageViewCompat.setImageTintList(icon, ColorStateList.valueOf(
+					ContextCompat.getColor(mContext.get(), R.color.colorDarkTint)));
+		}
 	}
 
 	private boolean isNetworkAvailable() {
@@ -233,18 +252,6 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 		} else {
 			return activeNetworkInfo != null && activeNetworkInfo.isConnected();
 		}
-	}
-
-	public Drawable getGameIcon() {
-		return game_icon;
-	}
-
-	public String getGameTitle() {
-		return game_name;
-	}
-
-	public String getGameDetails() {
-		return game_details;
 	}
 
 	private Document getDomElement(String xml) {
@@ -339,9 +346,7 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 					Bitmap bitmap = BitmapFactory.decodeStream(bis, null, options);
 					bis.close();
 					im.close();
-					bis = null;
-					im = null;
-					OutputStream fOut = null;
+					OutputStream fOut;
 					if (!file.getParentFile().exists()) {
 						file.getParentFile().mkdir();
 					}

@@ -106,7 +106,7 @@ public class InputModFragment extends Fragment {
 
 		String[] rstick = getResources().getStringArray(R.array.right_stick);
 		right_stick_spinner = (Spinner) getView().findViewById(R.id.rstick_spinner);
-		ArrayAdapter<String> rstickAdapter = new ArrayAdapter<String>(
+		ArrayAdapter<String> rstickAdapter = new ArrayAdapter<>(
 				getActivity(), android.R.layout.simple_spinner_item, rstick);
 		rstickAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		right_stick_spinner.setAdapter(rstickAdapter);
@@ -385,7 +385,7 @@ public class InputModFragment extends Fragment {
 
 		Spinner player_spnr = (Spinner) getView().findViewById(
 				R.id.player_spinner);
-		ArrayAdapter<String> playerAdapter = new ArrayAdapter<String>(
+		ArrayAdapter<String> playerAdapter = new ArrayAdapter<>(
 				getActivity(), android.R.layout.simple_spinner_item,
 				controllers);
 		playerAdapter
@@ -426,8 +426,8 @@ public class InputModFragment extends Fragment {
 		Bitmap image = null;
 		try {
 			File buttons = null;
-			InputStream bitmap = null;
-			String theme = mPrefs.getString(Config.pref_theme, null);
+			InputStream bitmap;
+			String theme = mPrefs.getString(Config.pref_button_theme, null);
 			if (theme != null) {
 				buttons = new File(theme);
 			}
@@ -440,7 +440,6 @@ public class InputModFragment extends Fragment {
 			options.inSampleSize = sS;
 			image = BitmapFactory.decodeStream(bitmap, null, options);
 			bitmap.close();
-			bitmap = null;
 			Matrix matrix = new Matrix();
 			matrix.postScale(32, 32);
 			Bitmap resizedBitmap = Bitmap.createBitmap(image, x, y, 64 / sS,
@@ -456,7 +455,6 @@ public class InputModFragment extends Fragment {
 			if (sS == 2) {
 				if (image != null) {
 					image.recycle();
-					image = null;
 				}
 				sS = 4;
 				return getButtonImage(x, y);
@@ -494,7 +492,7 @@ public class InputModFragment extends Fragment {
 
 	private class mapKeyCode extends AlertDialog.Builder {
 
-		public mapKeyCode(Context c) {
+		mapKeyCode(Context c) {
 			super(c);
 		}
 
@@ -535,18 +533,15 @@ public class InputModFragment extends Fragment {
 		 * @param button
 		 *            The label of the button being assigned
 		 */
-		private int mapButton(int keyCode, String button) {
+		private void mapButton(int keyCode, String button) {
 			if (Build.MODEL.startsWith("R800")) {
 				if (keyCode == KeyEvent.KEYCODE_MENU)
-					return -1;
+					return;
 			} else {
 				if (keyCode == KeyEvent.KEYCODE_BACK)
-					return -1;
+					return;
 			}
-
 			mPrefs.edit().putInt(button + player, keyCode).apply();
-
-			return keyCode;
 		}
 
 		private void mapAxis(final String button, final TextView output) {
@@ -638,7 +633,8 @@ public class InputModFragment extends Fragment {
 			if (label.contains(":")) {
 				label = label.substring(0, label.indexOf(":"));
 			}
-			output.setText(label + ": " + keyCode);
+			label += ": " + keyCode;
+			output.setText(label);
 			return true;
 		} else {
 			String label = output.getText().toString();

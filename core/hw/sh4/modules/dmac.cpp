@@ -135,7 +135,7 @@ void DMAC_Ch2St()
 
 	// The DMA end interrupt flag (SB_ISTNRM - bit 19: DTDE2INT) is set to "1."
 	//-> fixed , holly_PVR_DMA is for different use now (fixed the interrupts enum too)
-	asic_RaiseInterruptWait(holly_CH2_DMA);
+	asic_RaiseInterrupt(holly_CH2_DMA);
 }
 
 //on demand data transfer

@@ -381,6 +381,11 @@ int main(int argc, wchar* argv[])
 		signal(SIGKILL, clean_exit);
 	#endif
 
+
+	if(ParseCommandLine(argc,argv)) {
+		return rv_cli_finish;
+	}
+
 	/* Set directories */
 	set_user_config_dir(find_user_config_dir());
 	set_user_data_dir(find_user_data_dir());

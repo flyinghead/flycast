@@ -152,7 +152,7 @@ INLINE void YUV_ConvertMacroBlock(u8* datap)
 	{
 		YUV_init();
 		
-		asic_RaiseInterruptWait(holly_YUV_DMA);
+		asic_RaiseInterrupt(holly_YUV_DMA);
 	}
 }
 void YUV_data(u32* data , u32 count)

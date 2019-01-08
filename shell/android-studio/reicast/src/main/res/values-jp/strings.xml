@@ -21,7 +21,6 @@
     
     <string name="optimization_opts">最適化とデバッグの設定</string>
     <string name="experimental_opts">実験的</string>
-    <string name="select_native">ネイティブインタフェースを使用</string>
     <string name="select_dynarec">Dynarecの設定</string>
     <string name="select_unstable">不安定な最適化</string>
     <string name="select_region">DC地域</string>
@@ -48,7 +47,7 @@
     <string name="controller_b">コントローラB</string>
     <string name="controller_c">コントローラC</string>
     <string name="controller_d">コントローラD</string>
-    <string name="controller_not_connected">コントローラが接続されていません</string>
+    <string name="controller_not_connected">コントローラが接続されていません %1$s</string>
     <string name="controller_none_selected">コントローラが選択されていない。</string>
     <string name="select">選択する</string>
     <string name="remove">削除する</string>

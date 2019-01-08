@@ -1,5 +1,6 @@
 package com.reicast.emulator.emu;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -18,7 +19,6 @@ import android.widget.TextView;
 
 import com.reicast.emulator.Emulator;
 import com.reicast.emulator.GL2JNIActivity;
-import com.reicast.emulator.GL2JNINative;
 import com.reicast.emulator.MainActivity;
 import com.reicast.emulator.R;
 import com.reicast.emulator.config.Config;
@@ -43,13 +43,10 @@ public class OnScreenMenu {
 	private boolean syncedrender;
 
 	public OnScreenMenu(Activity context, SharedPreferences prefs) {
-		if (context instanceof GL2JNINative) {
-			this.mContext = (GL2JNINative) context;
-		}
 		if (context instanceof GL2JNIActivity) {
-			this.mContext = (GL2JNIActivity) context;
+			this.mContext = context;
 		}
-		popups = new Vector<PopupWindow>();
+		popups = new Vector<>();
 		if (prefs != null) {
 			masteraudio = !Emulator.nosound;
 			audio = masteraudio;
@@ -58,9 +55,6 @@ public class OnScreenMenu {
 		vmuLcd = new VmuLcd(mContext);
 		vmuLcd.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
-				if (mContext instanceof GL2JNINative) {
-					((GL2JNINative) OnScreenMenu.this.mContext).toggleVmu();
-				}
 				if (mContext instanceof GL2JNIActivity) {
 					((GL2JNIActivity) OnScreenMenu.this.mContext).toggleVmu();
 				}
@@ -68,10 +62,7 @@ public class OnScreenMenu {
 		});
 	}
 
-	void displayDebugPopup(final PopupWindow popUp) {
-		if (mContext instanceof GL2JNINative) {
-			((GL2JNINative) mContext).displayDebug(new DebugPopup(mContext));
-		}
+	private void displayDebugPopup() {
 		if (mContext instanceof GL2JNIActivity) {
 			((GL2JNIActivity) mContext).displayDebug(new DebugPopup(mContext));
 		}
@@ -102,10 +93,6 @@ public class OnScreenMenu {
 	private void removePopUp(PopupWindow window) {
 		window.dismiss();
 		popups.remove(window);
-		if (mContext instanceof GL2JNINative) {
-			((GL2JNINative) mContext)
-					.displayPopUp(((GL2JNINative) OnScreenMenu.this.mContext).popUp);
-		}
 		if (mContext instanceof GL2JNIActivity) {
 			((GL2JNIActivity) mContext)
 					.displayPopUp(((GL2JNIActivity) OnScreenMenu.this.mContext).popUp);
@@ -114,8 +101,9 @@ public class OnScreenMenu {
 
 	public class DebugPopup extends PopupWindow {
 
-		public DebugPopup(Context c) {
+	    DebugPopup(Context c) {
 			super(c);
+            //noinspection deprecation
 			setBackgroundDrawable(new BitmapDrawable());
 
 			View shell = mContext.getLayoutInflater().inflate(R.layout.menu_popup_debug, null);
@@ -171,10 +159,7 @@ public class OnScreenMenu {
 		}
 	}
 
-	void displayConfigPopup(final PopupWindow popUp) {
-		if (mContext instanceof GL2JNINative) {
-			((GL2JNINative) mContext).displayConfig(new ConfigPopup(mContext));
-		}
+	private void displayConfigPopup() {
 		if (mContext instanceof GL2JNIActivity) {
 			((GL2JNIActivity) mContext)
 					.displayConfig(new ConfigPopup(mContext));
@@ -189,8 +174,9 @@ public class OnScreenMenu {
 		private Button fdown;
 		private Button fup;
 
-		public ConfigPopup(Context c) {
+		ConfigPopup(Context c) {
 			super(c);
+            //noinspection deprecation
 			setBackgroundDrawable(new BitmapDrawable());
 
 			View shell = mContext.getLayoutInflater().inflate(R.layout.menu_popup_config, null);
@@ -273,10 +259,6 @@ public class OnScreenMenu {
 			OnClickListener clickAudio = new OnClickListener() {
 				public void onClick(View v) {
 					if (audio) {
-						if (mContext instanceof GL2JNINative) {
-							((GL2JNINative) mContext).mView
-									.audioDisable(true);
-						}
 						if (mContext instanceof GL2JNIActivity) {
 							((GL2JNIActivity) mContext).mView
 									.audioDisable(true);
@@ -284,10 +266,6 @@ public class OnScreenMenu {
 						audio = false;
 						addimg(audiosetting, R.drawable.enable_sound, this);
 					} else {
-						if (mContext instanceof GL2JNINative) {
-							((GL2JNINative) mContext).mView
-									.audioDisable(false);
-						}
 						if (mContext instanceof GL2JNIActivity) {
 							((GL2JNIActivity) mContext).mView
 									.audioDisable(false);
@@ -310,10 +288,6 @@ public class OnScreenMenu {
 			OnClickListener clickTurbo = new OnClickListener() {
 				public void onClick(View v) {
 					if (boosted) {
-						if (mContext instanceof GL2JNINative) {
-							((GL2JNINative) mContext).mView
-									.audioDisable(!audio);
-						}
 						if (mContext instanceof GL2JNIActivity) {
 							((GL2JNIActivity) mContext).mView
 									.audioDisable(!audio);
@@ -324,9 +298,6 @@ public class OnScreenMenu {
 						framelimit.setEnabled(true);
 						JNIdc.frameskip(frames);
 						enableState(fdown, fup);
-						if (mContext instanceof GL2JNINative) {
-							((GL2JNINative) mContext).mView.fastForward(false);
-						}
 						if (mContext instanceof GL2JNIActivity) {
 							((GL2JNIActivity) mContext).mView
 									.fastForward(false);
@@ -334,9 +305,6 @@ public class OnScreenMenu {
 						boosted = false;
 						addimg(fastforward, R.drawable.star, this);
 					} else {
-						if (mContext instanceof GL2JNINative) {
-							((GL2JNINative) mContext).mView.audioDisable(true);
-						}
 						if (mContext instanceof GL2JNIActivity) {
 							((GL2JNIActivity) mContext).mView
 									.audioDisable(true);
@@ -348,9 +316,6 @@ public class OnScreenMenu {
 						JNIdc.frameskip(5);
 						fdown.setEnabled(false);
 						fup.setEnabled(false);
-						if (mContext instanceof GL2JNINative) {
-							((GL2JNINative) mContext).mView.fastForward(true);
-						}
 						if (mContext instanceof GL2JNIActivity) {
 							((GL2JNIActivity) mContext).mView.fastForward(true);
 						}
@@ -471,7 +436,8 @@ public class OnScreenMenu {
 		private LinearLayout vmuIcon;
 		LinearLayout.LayoutParams params;
 
-		private LinearLayout.LayoutParams setVmuParams() {
+		@SuppressLint("RtlHardcoded")
+        private LinearLayout.LayoutParams setVmuParams() {
 			int vpX = getPixelsFromDp(72, mContext);
 			int vpY = getPixelsFromDp(52, mContext);
 			LinearLayout.LayoutParams vmuParams = new LinearLayout.LayoutParams(
@@ -484,6 +450,7 @@ public class OnScreenMenu {
 
 		public MainPopup(Context c) {
 			super(c);
+			//noinspection deprecation
 			setBackgroundDrawable(new BitmapDrawable());
 
 			View shell = mContext.getLayoutInflater().inflate(R.layout.menu_popup_main, null);
@@ -515,7 +482,7 @@ public class OnScreenMenu {
 
 			OnClickListener clickOptions = new OnClickListener() {
 				public void onClick(View v) {
-					displayConfigPopup(MainPopup.this);
+					displayConfigPopup();
 					popups.remove(MainPopup.this);
 					dismiss();
 				}
@@ -525,7 +492,7 @@ public class OnScreenMenu {
 
 			OnClickListener clickDebugging = new OnClickListener() {
 				public void onClick(View v) {
-					displayDebugPopup(MainPopup.this);
+					displayDebugPopup();
 					popups.remove(MainPopup.this);
 					dismiss();
 				}
@@ -536,10 +503,6 @@ public class OnScreenMenu {
 			OnClickListener clickScreenshot = new OnClickListener() {
 				public void onClick(View v) {
 					// screenshot
-					if (mContext instanceof GL2JNINative) {
-						((GL2JNINative) OnScreenMenu.this.mContext)
-								.screenGrab();
-					}
 					if (mContext instanceof GL2JNIActivity) {
 						((GL2JNIActivity) OnScreenMenu.this.mContext)
 								.screenGrab();
@@ -552,11 +515,11 @@ public class OnScreenMenu {
 			OnClickListener clickExit = new OnClickListener() {
 				public void onClick(View v) {
 					if (Config.externalIntent) {
-						((Activity) mContext).finish();
+						mContext.finish();
 					} else {
 						Intent inte = new Intent(mContext, MainActivity.class);
 						mContext.startActivity(inte);
-						((Activity) mContext).finish();
+						mContext.finish();
 					}
 				}
 			};

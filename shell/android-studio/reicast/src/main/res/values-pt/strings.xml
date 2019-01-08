@@ -31,7 +31,6 @@
     <string name="select_reios">Usar reios BIOS</string>
     <string name="select_bios">Região da BIOS (dc_flash[X].bin)</string>
     <string name="select_details">Habilitar detalhes do jogo</string>
-    <string name="select_native">Modo nativo [Sem OSD]</string>	
     <string name="select_dynarec">Habilitar Recompilador Dinâmico (Dynarec)</string>
     <string name="select_unstable">Otimizações instáveis</string>
     <string name="select_cable">Tipo de cabo</string>	
@@ -64,7 +63,7 @@
     <string name="controller_b">Controle B</string>
     <string name="controller_c">Controle C</string>
     <string name="controller_d">Controle D</string>
-    <string name="controller_not_connected">Controle não está Conectado</string>
+    <string name="controller_not_connected">Controle não está Conectado %1$s</string>
     <string name="controller_none_selected">Nenhum controle selecionado</string>
     <string name="select">Selecionar</string>
     <string name="remove">Remover</string>

@@ -39,7 +39,7 @@ typedef struct track_s
 #define CDI_V35 0x80000006
 
 unsigned long ask_type(core_file *fsource, long header_position);
-void CDI_init(core_file *fsource, image_s *image, char *fsourcename);
+bool CDI_init(core_file *fsource, image_s *image, const char *fsourcename);
 void CDI_get_sessions(core_file *fsource, image_s *image);
 void CDI_get_tracks(core_file *fsource, image_s *image);
 void CDI_read_track(core_file *fsource, image_s *image, track_s *track);

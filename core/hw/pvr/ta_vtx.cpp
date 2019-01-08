@@ -545,6 +545,7 @@ public:
 
 			ta_type_lut[i]=rv;
 		}
+		VerxexDataFP = NullVertexData;
 	}
 	/*
 	Volume,Col_Type,Texture,Offset,Gouraud,16bit_UV
@@ -1223,6 +1224,8 @@ public:
 
 		SFaceBaseColor=spr->BaseCol;
 		SFaceOffsColor=spr->OffsCol;
+        
+        d_pp->isp.CullMode ^= 1;
 	}
 
 	#define append_sprite(indx) \
@@ -1244,17 +1247,17 @@ public:
 	__forceinline
 		static void AppendSpriteVertexA(TA_Sprite1A* sv)
 	{
-		u16* idx=vdrc.idx.Append(6);
+        u16* idx=vdrc.idx.Append(6);
 		u32 vbase=vdrc.verts.used();
 
 		idx[0]=vbase+0;
 		idx[1]=vbase+1;
 		idx[2]=vbase+2;
 		idx[3]=vbase+3;
-		idx[4]=vbase+3;
-		idx[5]=vbase+4;
+        idx[4]=vbase+3;
+        idx[5]=vbase+4;
 
-		CurrentPP->count=vdrc.idx.used()-CurrentPP->first-2;
+        CurrentPP->count=vdrc.idx.used()-CurrentPP->first-2;
 
 		Vertex* cv = vdrc.verts.Append(4);
 
@@ -1437,8 +1440,6 @@ int ta_parse_cnt = 0;
 */
 bool ta_parse_vdrc(TA_context* ctx)
 {
-	bool rv=false;
-
 	verify( vd_ctx == 0);
 	vd_ctx = ctx;
 	vd_rc = vd_ctx->rend;
@@ -1457,15 +1458,18 @@ bool ta_parse_vdrc(TA_context* ctx)
 
 		}
 		while(ta_data<=ta_data_end);
-
-		rv = true; //whatever
 	}
+	bool overrun = ctx->rend.Overrun;
 
 	vd_ctx->rend = vd_rc;
 	vd_ctx = 0;
 	ctx->rend_inuse.Unlock();
 
-	return rv;
+	ctx->rend.Overrun = overrun;
+	if (overrun)
+		printf("Warning: TA context overrun\n");
+
+	return !overrun;
 }
 
 

@@ -302,10 +302,11 @@ struct vram_block
 
 enum ndc_error_codes
 {
-	rv_ok = 0,		//no error
+	rv_ok = 0,			//no error
+	rv_cli_finish=69,	//clean exit after -help or -version , should we just use rv_ok?
 
-	rv_error=-2,	//error
-	rv_serror=-1,	//silent error , it has been reported to the user
+	rv_error=-2,		//error
+	rv_serror=-1,		//silent error , it has been reported to the user
 };
 
 //Simple struct to store window rect  ;)
@@ -655,7 +656,7 @@ struct settings_t
 		u32 DSPEnabled;		//0 -> no, 1 -> yes
 		u32 NoBatch;
 		u32 NoSound;        //0 ->sound, 1 -> no sound
-		u32 DelayInterrupt;
+		bool OldSyncronousDma;		// 0 -> sync dma (old behavior), 1 -> async dma (fixes some games, partial implementation)
 	} aica;
 
 #if USE_OMX

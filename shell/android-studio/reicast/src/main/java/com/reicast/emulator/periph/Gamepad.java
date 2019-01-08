@@ -20,7 +20,7 @@ public class Gamepad {
 	public static final String pref_player2 = "device_descriptor_player_2";
 	public static final String pref_player3 = "device_descriptor_player_3";
 	public static final String pref_player4 = "device_descriptor_player_4";
-	public static final String pref_pad = "controller";
+	private static final String pref_pad = "controller";
 
 	public static final String pref_mic = "mic_plugged_in";
 
@@ -91,70 +91,70 @@ public class Gamepad {
 
 	public int[] getConsoleController() {
 		return new int[] {
-				OuyaController.BUTTON_O,          key_CONT_A,
-				OuyaController.BUTTON_A,          key_CONT_B,
-				OuyaController.BUTTON_U,          key_CONT_X,
-				OuyaController.BUTTON_Y,          key_CONT_Y,
+				OuyaController.BUTTON_O,			key_CONT_A,
+				OuyaController.BUTTON_A,			key_CONT_B,
+				OuyaController.BUTTON_U,			key_CONT_X,
+				OuyaController.BUTTON_Y,			key_CONT_Y,
 
-				OuyaController.BUTTON_DPAD_UP,    key_CONT_DPAD_UP,
-				OuyaController.BUTTON_DPAD_DOWN,  key_CONT_DPAD_DOWN,
-				OuyaController.BUTTON_DPAD_LEFT,  key_CONT_DPAD_LEFT,
-				OuyaController.BUTTON_DPAD_RIGHT, key_CONT_DPAD_RIGHT,
+				OuyaController.BUTTON_DPAD_UP,		key_CONT_DPAD_UP,
+				OuyaController.BUTTON_DPAD_DOWN,	key_CONT_DPAD_DOWN,
+				OuyaController.BUTTON_DPAD_LEFT,	key_CONT_DPAD_LEFT,
+				OuyaController.BUTTON_DPAD_RIGHT,	key_CONT_DPAD_RIGHT,
 
-				getStartButtonCode(),             key_CONT_START,
-				getSelectButtonCode(),            getSelectButtonCode()
+				getStartButtonCode(),				key_CONT_START,
+				getSelectButtonCode(),				getSelectButtonCode()
 				// Redundant, but verifies it is mapped properly
 		};
 	}
 
 	public int[] getOUYAController() {
 		return new int[] {
-				OuyaController.BUTTON_O,          key_CONT_A,
-				OuyaController.BUTTON_A,          key_CONT_B,
-				OuyaController.BUTTON_U,          key_CONT_X,
-				OuyaController.BUTTON_Y,          key_CONT_Y,
+				OuyaController.BUTTON_O,			key_CONT_A,
+				OuyaController.BUTTON_A,			key_CONT_B,
+				OuyaController.BUTTON_U,			key_CONT_X,
+				OuyaController.BUTTON_Y,			key_CONT_Y,
 
-				OuyaController.BUTTON_DPAD_UP,    key_CONT_DPAD_UP,
-				OuyaController.BUTTON_DPAD_DOWN,  key_CONT_DPAD_DOWN,
-				OuyaController.BUTTON_DPAD_LEFT,  key_CONT_DPAD_LEFT,
-				OuyaController.BUTTON_DPAD_RIGHT, key_CONT_DPAD_RIGHT,
+				OuyaController.BUTTON_DPAD_UP,		key_CONT_DPAD_UP,
+				OuyaController.BUTTON_DPAD_DOWN,	key_CONT_DPAD_DOWN,
+				OuyaController.BUTTON_DPAD_LEFT,	key_CONT_DPAD_LEFT,
+				OuyaController.BUTTON_DPAD_RIGHT,	key_CONT_DPAD_RIGHT,
 
-				getStartButtonCode(),             key_CONT_START,
-				OuyaController.BUTTON_R3,         key_CONT_START
+				getStartButtonCode(),				key_CONT_START,
+				OuyaController.BUTTON_R3,			key_CONT_START
 		};
 	}
 
 	public int[] getMogaController() {
 		return new int[] {
-				KeyEvent.KEYCODE_BUTTON_A,   key_CONT_A,
-				KeyEvent.KEYCODE_BUTTON_B,   key_CONT_B,
-				KeyEvent.KEYCODE_BUTTON_X,   key_CONT_X,
-				KeyEvent.KEYCODE_BUTTON_Y,   key_CONT_Y,
+				KeyEvent.KEYCODE_BUTTON_A,			key_CONT_A,
+				KeyEvent.KEYCODE_BUTTON_B,			key_CONT_B,
+				KeyEvent.KEYCODE_BUTTON_X,			key_CONT_X,
+				KeyEvent.KEYCODE_BUTTON_Y,			key_CONT_Y,
 
-				KeyEvent.KEYCODE_DPAD_UP,    key_CONT_DPAD_UP,
-				KeyEvent.KEYCODE_DPAD_DOWN,  key_CONT_DPAD_DOWN,
-				KeyEvent.KEYCODE_DPAD_LEFT,  key_CONT_DPAD_LEFT,
-				KeyEvent.KEYCODE_DPAD_RIGHT, key_CONT_DPAD_RIGHT,
+				KeyEvent.KEYCODE_DPAD_UP,			key_CONT_DPAD_UP,
+				KeyEvent.KEYCODE_DPAD_DOWN,			key_CONT_DPAD_DOWN,
+				KeyEvent.KEYCODE_DPAD_LEFT,			key_CONT_DPAD_LEFT,
+				KeyEvent.KEYCODE_DPAD_RIGHT,		key_CONT_DPAD_RIGHT,
 
-				getStartButtonCode(),        key_CONT_START,
-				getSelectButtonCode(),       getSelectButtonCode()
+				getStartButtonCode(),				key_CONT_START,
+				getSelectButtonCode(),				getSelectButtonCode()
 		};
 	}
 
-	public int[] setModifiedKeys(String id, int playerNum, SharedPreferences mPrefs) {
+	private int[] setModifiedKeys(String id, SharedPreferences mPrefs) {
 		return new int[] {
-				mPrefs.getInt(pref_button_a + id, OuyaController.BUTTON_O),             key_CONT_A,
-				mPrefs.getInt(pref_button_b + id, OuyaController.BUTTON_A),             key_CONT_B,
-				mPrefs.getInt(pref_button_x + id, OuyaController.BUTTON_U),             key_CONT_X,
-				mPrefs.getInt(pref_button_y + id, OuyaController.BUTTON_Y),             key_CONT_Y,
+				mPrefs.getInt(pref_button_a + id, OuyaController.BUTTON_O), key_CONT_A,
+				mPrefs.getInt(pref_button_b + id, OuyaController.BUTTON_A), key_CONT_B,
+				mPrefs.getInt(pref_button_x + id, OuyaController.BUTTON_U), key_CONT_X,
+				mPrefs.getInt(pref_button_y + id, OuyaController.BUTTON_Y), key_CONT_Y,
 
-				mPrefs.getInt(pref_dpad_up + id, OuyaController.BUTTON_DPAD_UP),        key_CONT_DPAD_UP,
-				mPrefs.getInt(pref_dpad_down + id, OuyaController.BUTTON_DPAD_DOWN),    key_CONT_DPAD_DOWN,
-				mPrefs.getInt(pref_dpad_left + id, OuyaController.BUTTON_DPAD_LEFT),    key_CONT_DPAD_LEFT,
-				mPrefs.getInt(pref_dpad_right + id, OuyaController.BUTTON_DPAD_RIGHT),  key_CONT_DPAD_RIGHT,
+				mPrefs.getInt(pref_dpad_up + id, OuyaController.BUTTON_DPAD_UP), key_CONT_DPAD_UP,
+				mPrefs.getInt(pref_dpad_down + id, OuyaController.BUTTON_DPAD_DOWN), key_CONT_DPAD_DOWN,
+				mPrefs.getInt(pref_dpad_left + id, OuyaController.BUTTON_DPAD_LEFT), key_CONT_DPAD_LEFT,
+				mPrefs.getInt(pref_dpad_right + id, OuyaController.BUTTON_DPAD_RIGHT), key_CONT_DPAD_RIGHT,
 
-				mPrefs.getInt(pref_button_start + id, getStartButtonCode()),            key_CONT_START,
-				mPrefs.getInt(pref_button_select + id, getSelectButtonCode()),          getSelectButtonCode()
+				mPrefs.getInt(pref_button_start + id, getStartButtonCode()), key_CONT_START,
+				mPrefs.getInt(pref_button_select + id, getSelectButtonCode()), getSelectButtonCode()
 		};
 	}
 
@@ -177,7 +177,7 @@ public class Gamepad {
 		}
 	}
 
-	public int getStartButtonCode() {
+	private int getStartButtonCode() {
 		return KeyEvent.KEYCODE_BUTTON_START;
 	}
 
@@ -192,7 +192,7 @@ public class Gamepad {
 	}
 
 	public void setCustomMapping(String id, int playerNum, SharedPreferences prefs) {
-		map[playerNum] = setModifiedKeys(id, playerNum, prefs);
+		map[playerNum] = setModifiedKeys(id, prefs);
 	}
 
 	public void initJoyStickLayout(int playerNum) {
@@ -202,27 +202,21 @@ public class Gamepad {
 		}
 	}
 
-	public void runCompatibilityMode(int joy, SharedPreferences prefs) {
-		for (int n = 0; n < 4; n++) {
-			if (compat[n]) {
-				String id = portId[n];
-				joystick[n] = prefs.getBoolean(Gamepad.pref_js_merged + id, false);
-				getCompatibilityMap(n, portId[n], prefs);
-				initJoyStickLayout(n);
-			}
-		}
-	}
-
 	public void fullCompatibilityMode(SharedPreferences prefs) {
-		for (int n = 0; n < 4; n++) {
-			runCompatibilityMode(n, prefs);
+		for (int joy = 0; joy < 4; joy++) {
+			if (compat[joy]) {
+				String id = portId[joy];
+				joystick[joy] = prefs.getBoolean(Gamepad.pref_js_merged + id, false);
+				getCompatibilityMap(joy, portId[joy], prefs);
+				initJoyStickLayout(joy);
+			}
 		}
 	}
 
 	public void getCompatibilityMap(int playerNum, String id, SharedPreferences prefs) {
 		name[playerNum] = prefs.getInt(Gamepad.pref_pad + id, -1);
 		if (name[playerNum] != -1) {
-			map[playerNum] = setModifiedKeys(id, playerNum, prefs);
+			map[playerNum] = setModifiedKeys(id, prefs);
 		}
 	}
 }

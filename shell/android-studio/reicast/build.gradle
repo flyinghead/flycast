@@ -25,21 +25,19 @@ def getVersionName = { ->
 }
 
 android {
-    compileSdkVersion 25
+    compileSdkVersion 26
     buildToolsVersion "27.0.3"
 
     defaultConfig {
         applicationId "com.reicast.emulator"
         minSdkVersion 16
-        targetSdkVersion 25
+        targetSdkVersion 26
         versionCode getBuildId()
         versionName getVersionName()
         vectorDrawables.useSupportLibrary = true
 
         ndk {
             moduleName "dc"
-                abiFilters 'armeabi-v7a', 'x86'
-            moduleName "sexplay"
                 abiFilters 'armeabi-v7a', 'x86'
         }
     }
@@ -56,11 +54,13 @@ android {
     buildTypes {
         debug {
             debuggable true
+            minifyEnabled true
             zipAlignEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
         }
         release {
             debuggable false
-            minifyEnabled false
+            minifyEnabled true
             zipAlignEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
             signingConfig signingConfigs.release
@@ -101,6 +101,7 @@ dependencies {
     implementation 'org.bouncycastle:bcprov-jdk16:1.46'
     implementation 'commons-io:commons-io:2.6'
     implementation 'org.apache.commons:commons-lang3:3.7'
+    implementation 'com.dropbox.core:dropbox-core-sdk:3.0.9'
     implementation ('com.googlecode.json-simple:json-simple:1.1.1') {
         exclude module: 'junit'
     }

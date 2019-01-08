@@ -31,7 +31,6 @@
     <string name="select_reios">Verwende reios-BIOS</string>
     <string name="select_bios">BIOS-Region (dc_flash[X].bin)</string>
     <string name="select_details">Aktiviere Spiele-Details</string>
-    <string name="select_native">Nativer Modus [Kein OSD]</string>
     <string name="select_dynarec">Dynarec-Optionen</string>
     <string name="select_unstable">Instabile Optimierungen</string>
     <string name="select_cable">Kabeltyp</string>
@@ -65,7 +64,7 @@
     <string name="controller_c">Controller C</string>
     <string name="controller_d">Controller D</string>
     <string name="controller_not_connected">Controller nicht verbunden</string>
-    <string name="controller_none_selected">Kein Controller ausgewählt</string>
+    <string name="controller_none_selected">Kein Controller ausgewählt %1$s</string>
     <string name="select">Auswählen</string>
     <string name="remove">Entfernen</string>
     <string name="select_controller_title">Controller auswählen</string>

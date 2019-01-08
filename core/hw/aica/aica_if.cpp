@@ -9,6 +9,7 @@
 #include "hw/holly/sb.h"
 #include "types.h"
 #include "hw/holly/holly_intc.h"
+#include "hw/sh4/sh4_sched.h"
 
 #include <time.h>
 
@@ -16,6 +17,8 @@ VArray2 aica_ram;
 u32 VREG;//video reg =P
 u32 ARMRST;//arm reset reg
 u32 rtc_EN=0;
+int dma_sched_id;
+
 u32 GetRTC_now()
 {
 	
@@ -178,27 +181,27 @@ void aica_Term()
 
 }
 
-s32 aica_pending_dma = 0;
-
-void aica_periodical(u32 cycl)
+int dma_end_sched(int tag, int cycl, int jitt)
 {
-	if (aica_pending_dma > 0)
-	{
-		verify(SB_ADST==1);
+	u32 len=SB_ADLEN & 0x7FFFFFFF;
 
-		cycl = (aica_pending_dma <= 0) ? 0 : cycl;
-		aica_pending_dma-=cycl;
+	if (SB_ADLEN & 0x80000000)
+		SB_ADEN=1;//
+	else
+		SB_ADEN=0;//
 
-		if (aica_pending_dma <= 0)
-		{
-			//log("%u %d\n",cycl,(s32)aica_pending_dma);
-			asic_RaiseInterrupt(holly_SPU_DMA);
-			aica_pending_dma = 0;
-			SB_ADST=0;
-		}
-	}
+	SB_ADSTAR+=len;
+	SB_ADSTAG+=len;
+	SB_ADST = 0x00000000;//dma done
+	SB_ADLEN = 0x00000000;
+
+	// indicate that dma is not happening, or has been paused
+	SB_ADSUSP |= 0x10;
+
+	asic_RaiseInterrupt(holly_SPU_DMA);
+
+	return 0;
 }
-
 
 void Write_SB_ADST(u32 addr, u32 data)
 {
@@ -218,8 +221,6 @@ void Write_SB_ADST(u32 addr, u32 data)
 			u32 src=SB_ADSTAR;
 			u32 dst=SB_ADSTAG;
 			u32 len=SB_ADLEN & 0x7FFFFFFF;
-			
-			u32 total_bytes=0;
 
 			if ((SB_ADDIR&1)==1)
 			{
@@ -238,21 +239,24 @@ void Write_SB_ADST(u32 addr, u32 data)
 				WriteMem32_nommu(dst+i,data);
 			}
 			*/
-			if (SB_ADLEN & 0x80000000)
-				SB_ADEN=1;//
-			else
-				SB_ADEN=0;//
 
-			SB_ADSTAR+=len;
-			SB_ADSTAG+=len;
-			total_bytes+=len;
-			SB_ADST    = settings.aica.DelayInterrupt ? 1 : 0x00000000;//dma done
-			SB_ADLEN   = 0x00000000;
- 	 
-			aica_pending_dma = ((total_bytes * 200000000) / 65536) + 1;
- 	 
-			if (!settings.aica.DelayInterrupt)
-				asic_RaiseInterruptWait(holly_SPU_DMA);
+			// idicate that dma is in progress
+			SB_ADSUSP &= ~0x10;
+
+			if (!settings.aica.OldSyncronousDma)
+			{
+
+				// Schedule the end of DMA transfer interrupt
+				int cycles = len * (SH4_MAIN_CLOCK / 2 / 25000000);       // 16 bits @ 25 MHz
+				if (cycles < 4096)
+					dma_end_sched(0, 0, 0);
+				else
+					sh4_sched_request(dma_sched_id, cycles);
+			}
+			else
+			{
+				dma_end_sched(0, 0, 0);
+			}
 		}
 	}
 }
@@ -306,7 +310,7 @@ void Write_SB_E1ST(u32 addr, u32 data)
 			SB_E1LEN = 0x00000000;
 
 			
-			asic_RaiseInterruptWait(holly_EXT_DMA1);
+			asic_RaiseInterrupt(holly_EXT_DMA1);
 		}
 	}
 }
@@ -326,6 +330,7 @@ void aica_sb_Init()
 
 	//sb_regs[((SB_E1ST_addr-SB_BASE)>>2)].flags=REG_32BIT_READWRITE | REG_READ_DATA;
 	//sb_regs[((SB_E1ST_addr-SB_BASE)>>2)].writeFunction=Write_SB_E1ST;
+	dma_sched_id = sh4_sched_register(0, &dma_end_sched);
 }
 
 void aica_sb_Reset(bool Manual)

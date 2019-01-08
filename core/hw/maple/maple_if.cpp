@@ -187,7 +187,7 @@ int maple_schd(int tag, int c, int j)
 	if (SB_MDEN&1)
 	{
 		SB_MDST=0;
-		asic_RaiseInterruptWait(holly_MAPLE_DMA);
+		asic_RaiseInterrupt(holly_MAPLE_DMA);
 	}
 	else
 	{

@@ -30,7 +30,6 @@
     <string name="optimization_opts">Opzioni di Ottimizzazione e di Debugging </string>
     <string name="experimental_opts">Opzioni Sperimentali (Possono causare problemi)</string>
     <string name="select_details">Abilita i Dettagli del Gioco</string>
-    <string name="select_native">Abilita Interfaccia Nativa</string>
     <string name="select_dynarec">Dynarec</string>
     <string name="select_unstable">Ottimizzazioni Instabili</string>
     <string name="select_region">Regione del DC</string>

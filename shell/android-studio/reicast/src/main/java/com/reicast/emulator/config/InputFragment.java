@@ -49,7 +49,6 @@ public class InputFragment extends Fragment {
 	private AlertDialog alertDialogSelectController;
 	private SharedPreferences mPrefs;
 	private CompoundButton switchTouchVibrationEnabled;
-	private CompoundButton micPluggedIntoController;
 
 	Vibrator vib;
 
@@ -58,7 +57,7 @@ public class InputFragment extends Fragment {
 		void onEditorSelected(Uri uri);
 	}
 
-    @Override
+    @Override @SuppressWarnings("deprecation")
     public void onAttach(Activity activity) {
         super.onAttach(activity);
 
@@ -100,21 +99,24 @@ public class InputFragment extends Fragment {
 		Config.vibrationDuration = mPrefs.getInt(Config.pref_vibrationDuration, 20);
 		vib = (Vibrator) getActivity().getSystemService(Context.VIBRATOR_SERVICE);
 
-		ImageView icon_a = (ImageView) getView().findViewById(
-				R.id.controller_icon_a);
-		icon_a.setAlpha(0.8f);
-		ImageView icon_b = (ImageView) getView().findViewById(
-				R.id.controller_icon_b);
-		icon_b.setAlpha(0.8f);
-		ImageView icon_c = (ImageView) getView().findViewById(
-				R.id.controller_icon_c);
-		icon_c.setAlpha(0.8f);
-		ImageView icon_d = (ImageView) getView().findViewById(
-				R.id.controller_icon_d);
-		icon_d.setAlpha(0.8f);
+		try {
+			ImageView icon_a = (ImageView) getView().findViewById(
+					R.id.controller_icon_a);
+			icon_a.setAlpha(0.8f);
+			ImageView icon_b = (ImageView) getView().findViewById(
+					R.id.controller_icon_b);
+			icon_b.setAlpha(0.8f);
+			ImageView icon_c = (ImageView) getView().findViewById(
+					R.id.controller_icon_c);
+			icon_c.setAlpha(0.8f);
+			ImageView icon_d = (ImageView) getView().findViewById(
+					R.id.controller_icon_d);
+			icon_d.setAlpha(0.8f);
+		} catch (NullPointerException ex) {
+			// Couldn't find images, so leave them opaque
+		}
 
-		Button buttonLaunchEditor = (Button) getView().findViewById(
-				R.id.buttonLaunchEditor);
+		Button buttonLaunchEditor = (Button) getView().findViewById(R.id.buttonLaunchEditor);
 		buttonLaunchEditor.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
                 mCallback.onEditorSelected(Uri.EMPTY);
@@ -142,7 +144,7 @@ public class InputFragment extends Fragment {
 			}
 
 			public void onStartTrackingTouch(SeekBar seekBar) {
-				// TODO Auto-generated method stub
+
 			}
 
 			public void onStopTrackingTouch(SeekBar seekBar) {
@@ -170,7 +172,7 @@ public class InputFragment extends Fragment {
 		}
 		switchTouchVibrationEnabled.setOnCheckedChangeListener(touch_vibration);
 
-		micPluggedIntoController = (CompoundButton) getView().findViewById(R.id.micEnabled);
+		CompoundButton micPluggedIntoController = (CompoundButton) getView().findViewById(R.id.micEnabled);
 		boolean micPluggedIn = mPrefs.getBoolean(Gamepad.pref_mic, false);
 		micPluggedIntoController.setChecked(micPluggedIn);
 		if (getActivity().getPackageManager().hasSystemFeature(PackageManager.FEATURE_MICROPHONE)) {
@@ -323,9 +325,8 @@ public class InputFragment extends Fragment {
 			buttonRemoveControllerPlayer1.setEnabled(true);
 		} else {
 			if (deviceDescriptorPlayer1 != null) {
-				textViewDeviceDescriptorPlayer1
-						.setText(getString(R.string.controller_not_connected)
-								+ " (" + deviceDescriptorPlayer1 + ")");
+				textViewDeviceDescriptorPlayer1.setText(getString(R.string.controller_not_connected,
+						"(" + deviceDescriptorPlayer1 + ")"));
 				buttonRemoveControllerPlayer1.setEnabled(true);
 			} else {
 				textViewDeviceDescriptorPlayer1
@@ -343,9 +344,8 @@ public class InputFragment extends Fragment {
 			buttonRemoveControllerPlayer2.setEnabled(true);
 		} else {
 			if (deviceDescriptorPlayer2 != null) {
-				textViewDeviceDescriptorPlayer2
-						.setText(getString(R.string.controller_not_connected)
-								+ " (" + deviceDescriptorPlayer2 + ")");
+				textViewDeviceDescriptorPlayer2.setText(getString(R.string.controller_not_connected,
+						"(" + deviceDescriptorPlayer2 + ")"));
 				buttonRemoveControllerPlayer2.setEnabled(true);
 			} else {
 				textViewDeviceDescriptorPlayer2
@@ -357,7 +357,7 @@ public class InputFragment extends Fragment {
 		String[] periphs = getResources().getStringArray(R.array.peripherals);
 
 		Spinner p2periph1spnr = (Spinner) getView().findViewById(R.id.spnr_player2_periph1);
-		ArrayAdapter<String> p2periph1Adapter = new ArrayAdapter<String>(
+		ArrayAdapter<String> p2periph1Adapter = new ArrayAdapter<>(
 				getActivity(), R.layout.spinner_selected, periphs);
 		p2periph1Adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		p2periph1spnr.setAdapter(p2periph1Adapter);
@@ -377,7 +377,7 @@ public class InputFragment extends Fragment {
 		});
 
 		Spinner p2periph2spnr = (Spinner) getView().findViewById(R.id.spnr_player2_periph2);
-		ArrayAdapter<String> p2periph2Adapter = new ArrayAdapter<String>(
+		ArrayAdapter<String> p2periph2Adapter = new ArrayAdapter<>(
 				getActivity(), R.layout.spinner_selected, periphs);
 		p2periph2Adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		p2periph2spnr.setAdapter(p2periph2Adapter);
@@ -405,9 +405,8 @@ public class InputFragment extends Fragment {
 			buttonRemoveControllerPlayer3.setEnabled(true);
 		} else {
 			if (deviceDescriptorPlayer3 != null) {
-				textViewDeviceDescriptorPlayer3
-						.setText(getString(R.string.controller_not_connected)
-								+ " (" + deviceDescriptorPlayer3 + ")");
+				textViewDeviceDescriptorPlayer3.setText(getString(R.string.controller_not_connected,
+						"(" + deviceDescriptorPlayer3 + ")"));
 				buttonRemoveControllerPlayer3.setEnabled(true);
 			} else {
 				textViewDeviceDescriptorPlayer3
@@ -417,7 +416,7 @@ public class InputFragment extends Fragment {
 		}
 
 		Spinner p3periph1spnr = (Spinner) getView().findViewById(R.id.spnr_player3_periph1);
-		ArrayAdapter<String> p3periph1Adapter = new ArrayAdapter<String>(
+		ArrayAdapter<String> p3periph1Adapter = new ArrayAdapter<>(
 				getActivity(), R.layout.spinner_selected, periphs);
 		p3periph1Adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		p3periph1spnr.setAdapter(p3periph1Adapter);
@@ -437,7 +436,7 @@ public class InputFragment extends Fragment {
 		});
 
 		Spinner p3periph2spnr = (Spinner) getView().findViewById(R.id.spnr_player3_periph2);
-		ArrayAdapter<String> p3periph2Adapter = new ArrayAdapter<String>(
+		ArrayAdapter<String> p3periph2Adapter = new ArrayAdapter<>(
 				getActivity(), R.layout.spinner_selected, periphs);
 		p3periph2Adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		p3periph2spnr.setAdapter(p3periph2Adapter);
@@ -465,9 +464,8 @@ public class InputFragment extends Fragment {
 			buttonRemoveControllerPlayer4.setEnabled(true);
 		} else {
 			if (deviceDescriptorPlayer4 != null) {
-				textViewDeviceDescriptorPlayer4
-						.setText(getString(R.string.controller_not_connected)
-								+ " (" + deviceDescriptorPlayer4 + ")");
+				textViewDeviceDescriptorPlayer4.setText(getString(R.string.controller_not_connected,
+						"(" + deviceDescriptorPlayer4 + ")"));
 				buttonRemoveControllerPlayer4.setEnabled(true);
 			} else {
 				textViewDeviceDescriptorPlayer4
@@ -477,7 +475,7 @@ public class InputFragment extends Fragment {
 		}
 
 		Spinner p4periph1spnr = (Spinner) getView().findViewById(R.id.spnr_player4_periph1);
-		ArrayAdapter<String> p4periph1Adapter = new ArrayAdapter<String>(
+		ArrayAdapter<String> p4periph1Adapter = new ArrayAdapter<>(
 				getActivity(), R.layout.spinner_selected, periphs);
 		p4periph1Adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		p4periph1spnr.setAdapter(p4periph1Adapter);
@@ -497,7 +495,7 @@ public class InputFragment extends Fragment {
 		});
 
 		Spinner p4periph2spnr = (Spinner) getView().findViewById(R.id.spnr_player4_periph2);
-		ArrayAdapter<String> p4periph2Adapter = new ArrayAdapter<String>(
+		ArrayAdapter<String> p4periph2Adapter = new ArrayAdapter<>(
 				getActivity(), R.layout.spinner_selected, periphs);
 		p4periph2Adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		p4periph2spnr.setAdapter(p4periph2Adapter);

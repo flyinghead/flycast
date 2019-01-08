@@ -30,7 +30,6 @@ Last Edit: 21 May 2014
     <string name="optimization_opts">Options d\'optimisations et de débogage</string>
     <string name="experimental_opts">Experimental (peut causer des crashs)</string>
     <string name="select_details">Activer le détail des jeux</string>
-    <string name="select_native">Activer l\'interface native</string>
     <string name="select_dynarec">Dynarec</string>
     <string name="select_unstable">Optimisations instables</string>
     <string name="select_region">Région du bios</string>
@@ -61,7 +60,7 @@ Last Edit: 21 May 2014
     <string name="controller_b">Manette B</string>
     <string name="controller_c">Manette C</string>
     <string name="controller_d">Manette D</string>
-    <string name="controller_not_connected">Manette non connectée</string>
+    <string name="controller_not_connected">Manette non connectée %1$s</string>
     <string name="controller_none_selected">Aucune manette selectionnée</string>
     <string name="select">Choisir</string>
     <string name="remove">Supprimer</string>

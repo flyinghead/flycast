@@ -72,60 +72,21 @@ void RaiseAsicErr(HollyInterruptID inter)
 	asic_RL6Pending();
 }
 
-static void asic_RaiseInterruptInternal(HollyInterruptID inter)
-{
-   u8 m=inter>>8;
-   switch(m)
-   {
-      case 0:
-         RaiseAsicNormal(inter);
-         break;
-      case 1:
-         RaiseAsicExt(inter);
-         break;
-      case 2:
-         RaiseAsicErr(inter);
-         break;
-   }
-}
-
-static HollyInterruptID dmatmp1;
-static HollyInterruptID dmatmp2;
-static HollyInterruptID OldDmaId;
-
 void asic_RaiseInterrupt(HollyInterruptID inter)
 {
-   asic_RaiseInterruptInternal(inter);
-}
-
-void asic_RaiseInterruptWait(HollyInterruptID inter)
-{
-#if 0
-   /* IRQ wait slots are here. This is a hack.
-    * Up until now, more than 3 and less than 2 wait slots
-    * break stuff.
-    *
-    * Currently using 2 wait slots. */
-   OldDmaId = dmatmp2;
-   dmatmp2  = dmatmp1;
-   dmatmp1  = inter;
-
-   switch (OldDmaId)
-   {
-      case holly_CH2_DMA:
-      case holly_EXT_DMA1:
-      case holly_GDROM_CMD:
-      case holly_MAPLE_DMA:
-      case holly_YUV_DMA:
-      case holly_PVR_DMA:
-      case holly_PVR_SortDMA:
-      case holly_SPU_DMA:
-         asic_RaiseInterruptInternal(OldDmaId);
-         break;
-   }
-#else
-   asic_RaiseInterruptInternal(inter);
-#endif
+	u8 m=inter>>8;
+	switch(m)
+	{
+	case 0:
+		RaiseAsicNormal(inter);
+		break;
+	case 1:
+		RaiseAsicExt(inter);
+		break;
+	case 2:
+		RaiseAsicErr(inter);
+		break;
+	}
 }
 
 u32 Read_SB_ISTNRM(u32 addr)

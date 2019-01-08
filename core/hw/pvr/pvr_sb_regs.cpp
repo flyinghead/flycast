@@ -68,7 +68,7 @@ void do_pvr_dma()
 	SB_PDST = 0x00000000;
 
 	//TODO : *CHECKME* is that ok here ? the docs don't say here it's used [PVR-DMA , bit 11]
-	asic_RaiseInterruptWait(holly_PVR_DMA);
+	asic_RaiseInterrupt(holly_PVR_DMA);
 }
 void RegWrite_SB_PDST(u32 addr, u32 data)
 {
@@ -122,7 +122,7 @@ void pvr_do_sort_dma()
 
 	// End of DMA :)
 	SB_SDST=0;
-	asic_RaiseInterruptWait(holly_PVR_SortDMA);
+	asic_RaiseInterrupt(holly_PVR_SortDMA);
 }
 // Auto sort DMA :|
 void RegWrite_SB_SDST(u32 addr, u32 data)

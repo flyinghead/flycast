@@ -274,7 +274,7 @@ void gd_set_state(gd_states state)
 			GDStatus.DRQ=1;
 			GDStatus.BSY=0;
 			//(4)   INTRQ is set, and a host interrupt is issued.
-			asic_RaiseInterruptWait(holly_GDROM_CMD);
+			asic_RaiseInterrupt(holly_GDROM_CMD);
 			/*
 			The number of bytes normally is the byte number in the register at the time of receiving 
 			the command, but it may also be the total of several devices handled by the buffer at that point.
@@ -332,7 +332,7 @@ void gd_set_state(gd_states state)
 			GDStatus.DRQ=0;
 			GDStatus.BSY=0;
 			//Make INTRQ valid
-			asic_RaiseInterruptWait(holly_GDROM_CMD);
+			asic_RaiseInterrupt(holly_GDROM_CMD);
 
 			//command finished !
 			gd_set_state(gds_waitcmd);
@@ -477,7 +477,7 @@ void gd_process_ata_cmd()
 		GDStatus.BSY=0;
 		GDStatus.CHECK=1;
 
-		asic_RaiseInterruptWait(holly_GDROM_CMD);
+		asic_RaiseInterrupt(holly_GDROM_CMD);
 		gd_set_state(gds_waitcmd);
 		break;
 
@@ -516,7 +516,7 @@ void gd_process_ata_cmd()
 		GDStatus.DSC=0;
 		GDStatus.DF=0;
 		GDStatus.CHECK=0;
-		asic_RaiseInterruptWait(holly_GDROM_CMD);  //???
+		asic_RaiseInterrupt(holly_GDROM_CMD);  //???
 		gd_set_state(gds_waitcmd);
 		break;
 
@@ -1155,7 +1155,7 @@ int GDRomschd(int i, int c, int j)
 		//printf("Streamed GDMA end - %d bytes transferred\n",SB_GDLEND);
 		SB_GDST=0;//done
 		// The DMA end interrupt flag
-		asic_RaiseInterruptWait(holly_GDROM_DMA);
+		asic_RaiseInterrupt(holly_GDROM_DMA);
 	}
 	//Read ALL sectors
 	if (read_params.remaining_sectors==0)

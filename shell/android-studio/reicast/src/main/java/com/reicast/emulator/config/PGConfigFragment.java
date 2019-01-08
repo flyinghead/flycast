@@ -62,7 +62,10 @@ public class PGConfigFragment extends Fragment {
 	private CompoundButton pvr_render;
 	private CompoundButton synced_render;
 	private CompoundButton modifier_volumes;
-	private CompoundButton interrupt_opt;
+	private Spinner cable_spnr;
+	private Spinner region_spnr;
+	private Spinner broadcast_spnr;
+	private ArrayAdapter<String> broadcastAdapter;
 	private EditText bootdiskEdit;
 
 	@Override
@@ -102,7 +105,9 @@ public class PGConfigFragment extends Fragment {
 		pvr_render = (CompoundButton) getView().findViewById(R.id.render_option);
 		synced_render = (CompoundButton) getView().findViewById(R.id.syncrender_option);
 		modifier_volumes = (CompoundButton) getView().findViewById(R.id.modvols_option);
-		interrupt_opt = (CompoundButton) getView().findViewById(R.id.interrupt_option);
+		cable_spnr = (Spinner) getView().findViewById(R.id.cable_spinner);
+		region_spnr = (Spinner) getView().findViewById(R.id.region_spinner);
+		broadcast_spnr = (Spinner) getView().findViewById(R.id.broadcast_spinner);
 		bootdiskEdit = (EditText) getView().findViewById(R.id.boot_disk);
 	}
 
@@ -115,8 +120,14 @@ public class PGConfigFragment extends Fragment {
 				.putInt(Emulator.pref_frameskip, frameSeek.getProgress())
 				.putBoolean(Emulator.pref_pvrrender, pvr_render.isChecked())
 				.putBoolean(Emulator.pref_syncedrender, synced_render.isChecked())
-				.putBoolean(Emulator.pref_modvols, modifier_volumes.isChecked())
-				.putBoolean(Emulator.pref_interrupt, interrupt_opt.isChecked()).apply();
+				.putBoolean(Emulator.pref_modvols, modifier_volumes.isChecked()).apply();
+
+		mPrefs.edit().putInt(Emulator.pref_cable, cable_spnr.getSelectedItemPosition()).apply();
+		mPrefs.edit().putInt(Emulator.pref_dcregion, region_spnr.getSelectedItemPosition()).apply();
+		String item = broadcastAdapter.getItem(broadcast_spnr.getSelectedItemPosition());
+		int broadcastValue = getBroadcastValue(item);
+		mPrefs.edit().putInt(Emulator.pref_broadcast, broadcastValue).apply();
+
 		if (bootdiskEdit.getText() != null)
 			mPrefs.edit().putString(Emulator.pref_bootdisk,
 					bootdiskEdit.getText().toString()).apply();
@@ -135,7 +146,9 @@ public class PGConfigFragment extends Fragment {
 				.remove(Emulator.pref_pvrrender)
 				.remove(Emulator.pref_syncedrender)
 				.remove(Emulator.pref_modvols)
-				.remove(Emulator.pref_interrupt)
+				.remove(Emulator.pref_cable)
+				.remove(Emulator.pref_dcregion)
+				.remove(Emulator.pref_broadcast)
 				.remove(Emulator.pref_bootdisk).apply();
 		showToastMessage(getActivity().getString(R.string.pgconfig_cleared), Snackbar.LENGTH_SHORT);
 		configureViewByGame(gameId);
@@ -144,11 +157,13 @@ public class PGConfigFragment extends Fragment {
 	private void configureViewByGame(final String gameId) {
 		final SharedPreferences mPrefs = getActivity()
 				.getSharedPreferences(gameId, Activity.MODE_PRIVATE);
+		Compat compat = new Compat();
 		switchJoystickDpadEnabled.setChecked(mPrefs.getBoolean(
 				Gamepad.pref_js_merged + "_A", false));
 		dynarec_opt.setChecked(mPrefs.getBoolean(Emulator.pref_dynarecopt, Emulator.dynarecopt));
 		unstable_opt.setChecked(mPrefs.getBoolean(Emulator.pref_unstable, Emulator.unstableopt));
-		safemode_opt.setChecked(mPrefs.getBoolean(Emulator.pref_dynsafemode, Emulator.dynsafemode));
+		safemode_opt.setChecked(mPrefs.getBoolean(
+				Emulator.pref_dynsafemode, compat.useSafeMode(gameId)));
 
 		int frameskip = mPrefs.getInt(Emulator.pref_frameskip, Emulator.frameskip);
 		mainFrames.setText(String.valueOf(frameskip));
@@ -191,7 +206,34 @@ public class PGConfigFragment extends Fragment {
 		pvr_render.setChecked(mPrefs.getBoolean(Emulator.pref_pvrrender, Emulator.pvrrender));
 		synced_render.setChecked(mPrefs.getBoolean(Emulator.pref_syncedrender, Emulator.syncedrender));
 		modifier_volumes.setChecked(mPrefs.getBoolean(Emulator.pref_modvols, Emulator.modvols));
-		interrupt_opt.setChecked(mPrefs.getBoolean(Emulator.pref_interrupt, Emulator.interrupt));
+
+		String[] cables = getResources().getStringArray(R.array.cable);
+		ArrayAdapter<String> cableAdapter = new ArrayAdapter<>(getActivity(), R.layout.spinner_selected, cables);
+		cableAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		cable_spnr.setAdapter(cableAdapter);
+		cable_spnr.setSelection(mPrefs.getInt(Emulator.pref_cable,
+				compat.isVGACompatible(gameId)), true);
+
+		String[] regions = getResources().getStringArray(R.array.region);
+		ArrayAdapter<String> regionAdapter = new ArrayAdapter<>(getActivity(), R.layout.spinner_selected, regions);
+		regionAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		region_spnr.setAdapter(regionAdapter);
+		region_spnr.setSelection(mPrefs.getInt(Emulator.pref_dcregion, Emulator.dcregion), true);
+
+		String[] broadcasts = getResources().getStringArray(R.array.broadcast);
+		Spinner broadcast_spnr = (Spinner) getView().findViewById(R.id.broadcast_spinner);
+		broadcastAdapter = new ArrayAdapter<>(getActivity(), R.layout.spinner_selected, broadcasts);
+		broadcastAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		broadcast_spnr.setAdapter(broadcastAdapter);
+
+		String cast = getBroadcastName(mPrefs.getInt(Emulator.pref_broadcast, Emulator.broadcast));
+		for (int i = 0; i < broadcasts.length; i++) {
+			if (broadcasts[i].equals(cast)) {
+				broadcast_spnr.setSelection(i, true);
+				break;
+			}
+		}
+		
 		bootdiskEdit.setText(mPrefs.getString(Emulator.pref_bootdisk, Emulator.bootdisk));
 
 		bootdiskEdit.setOnEditorActionListener(new EditText.OnEditorActionListener() {
@@ -396,5 +438,35 @@ public class PGConfigFragment extends Fragment {
 		textView.setCompoundDrawablePadding(getResources()
 				.getDimensionPixelOffset(R.dimen.snackbar_icon_padding));
 		snackbar.show();
+	}
+
+	private int getBroadcastValue(String broadcastName) {
+		if (broadcastName.equals("NTSC-J"))
+			return 0;
+		else if (broadcastName.equals("NTSC-U"))
+			return 4;
+		else if (broadcastName.equals("PAL-M"))
+			return 6;
+		else if (broadcastName.equals("PAL-N"))
+			return 7;
+		else if (broadcastName.equals("PAL-E"))
+			return 9;
+		else
+			return -1;
+	}
+
+	private String getBroadcastName(int broadcastValue) {
+		if (broadcastValue == 0)
+			return "NTSC-J";
+		else if (broadcastValue == 4)
+			return "NTSC-U";
+		else if (broadcastValue == 6)
+			return "PAL-M";
+		else if (broadcastValue == 7)
+			return "PAL-N";
+		else if (broadcastValue == 9)
+			return "PAL-E";
+		else
+			return null;
 	}
 }

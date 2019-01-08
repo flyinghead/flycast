@@ -53,7 +53,6 @@ import java.io.OutputStream;
 import java.lang.ref.WeakReference;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 
 public class OptionsFragment extends Fragment {
@@ -70,11 +69,12 @@ public class OptionsFragment extends Fragment {
 
 	// Container Activity must implement this interface
 	public interface OnClickListener {
+		void recreateActivity();
 		void onMainBrowseSelected(String path_entry, boolean games, String query);
 		void launchBIOSdetection();
 	}
 
-	@Override
+	@Override  @SuppressWarnings("deprecation")
 	public void onAttach(Activity activity) {
 		super.onAttach(activity);
 
@@ -117,8 +117,8 @@ public class OptionsFragment extends Fragment {
 		// Specialized handler for devices with an extSdCard mount for external
 		HashSet<String> extStorage = FileBrowser.getExternalMounts();
 		if (extStorage != null && !extStorage.isEmpty()) {
-			for (Iterator<String> sd = extStorage.iterator(); sd.hasNext();) {
-				String sdCardPath = sd.next().replace("mnt/media_rw", "storage");
+			for (String sd : extStorage) {
+				String sdCardPath = sd.replace("mnt/media_rw", "storage");
 				if (!sdCardPath.equals(sdcard.getAbsolutePath())) {
 					game_directory = sdCardPath;
 				}
@@ -130,7 +130,6 @@ public class OptionsFragment extends Fragment {
 		app.getConfigurationPrefs(mPrefs);
 
 		// Generate the menu options and fill in existing settings
-
 		Button mainBrowse = (Button) getView().findViewById(R.id.browse_main_path);
 		mSpnrThemes = (Spinner) getView().findViewById(R.id.pick_button_theme);
 		new LocateThemes(this).execute(home_directory + "/themes");
@@ -181,6 +180,39 @@ public class OptionsFragment extends Fragment {
 		CompoundButton reios_opt = (CompoundButton) getView().findViewById(R.id.reios_option);
 		reios_opt.setChecked(mPrefs.getBoolean(Emulator.pref_usereios, false));
 		reios_opt.setOnCheckedChangeListener(reios_options);
+
+		String[] app_themes = getResources().getStringArray(R.array.themes_app);
+		Spinner aSpnrThemes = (Spinner) getView().findViewById(R.id.pick_app_theme);
+		ArrayAdapter<String> themeAdapter = new ArrayAdapter<>(getActivity(),
+				android.R.layout.simple_spinner_item, app_themes);
+		themeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		aSpnrThemes.setAdapter(themeAdapter);
+		int app_theme = mPrefs.getInt(Config.pref_app_theme, 0);
+		if (app_theme == 7) {
+			aSpnrThemes.setSelection(themeAdapter.getPosition("Dream"), true);
+		} else {
+			aSpnrThemes.setSelection(app_theme, true);
+		}
+		aSpnrThemes.setOnItemSelectedListener(new OnItemSelectedListener() {
+			@Override
+			public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
+				String theme = String.valueOf(parentView.getItemAtPosition(position));
+				int current = mPrefs.getInt(Config.pref_app_theme, 0);
+				if (theme.equals("Dream")) {
+					mPrefs.edit().putInt(Config.pref_app_theme, 7).apply();
+					if (current != 7)
+						mCallback.recreateActivity();
+				} else {
+					mPrefs.edit().putInt(Config.pref_app_theme, position).apply();
+					if (current != position)
+						mCallback.recreateActivity();
+				}
+			}
+			@Override
+			public void onNothingSelected(AdapterView<?> parentView) {
+
+			}
+		});
 
 		OnCheckedChangeListener details_options = new OnCheckedChangeListener() {
 
@@ -239,11 +271,11 @@ public class OptionsFragment extends Fragment {
 		String[] bios = getResources().getStringArray(R.array.bios);
 		codes = getResources().getStringArray(R.array.bioscode);
 		Spinner bios_spnr = (Spinner) getView().findViewById(R.id.bios_spinner);
-		ArrayAdapter<String> biosAdapter = new ArrayAdapter<String>(
+		ArrayAdapter<String> biosAdapter = new ArrayAdapter<>(
 				getActivity(), android.R.layout.simple_spinner_item, bios);
 		biosAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		bios_spnr.setAdapter(biosAdapter);
-		String region = mPrefs.getString("localized", codes[4]);
+		String region = mPrefs.getString(Config.bios_code, codes[4]);
 		bios_spnr.setSelection(biosAdapter.getPosition(region), true);
 		bios_spnr.setOnItemSelectedListener(new OnItemSelectedListener() {
 
@@ -256,17 +288,6 @@ public class OptionsFragment extends Fragment {
 			}
 
 		});
-
-		OnCheckedChangeListener native_options = new OnCheckedChangeListener() {
-
-			public void onCheckedChanged(CompoundButton buttonView,
-										 boolean isChecked) {
-				mPrefs.edit().putBoolean(Emulator.pref_nativeact, isChecked).apply();
-			}
-		};
-		CompoundButton native_opt = (CompoundButton) getView().findViewById(R.id.native_option);
-		native_opt.setChecked(mPrefs.getBoolean(Emulator.pref_nativeact, Emulator.nativeact));
-		native_opt.setOnCheckedChangeListener(native_options);
 
 		OnCheckedChangeListener dynarec_options = new OnCheckedChangeListener() {
 
@@ -290,68 +311,32 @@ public class OptionsFragment extends Fragment {
 		unstable_opt.setChecked(mPrefs.getBoolean(Emulator.pref_unstable, Emulator.unstableopt));
 		unstable_opt.setOnCheckedChangeListener(unstable_option);
 
-		String[] cables = getResources().getStringArray(R.array.cable);
-		Spinner cable_spnr = (Spinner) getView().findViewById(R.id.cable_spinner);
-		ArrayAdapter<String> cableAdapter = new ArrayAdapter<String>(
-				getActivity(), R.layout.spinner_selected, cables);
-		cableAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-		cable_spnr.setAdapter(cableAdapter);
+		setSpinner(R.array.cable, R.id.cable_spinner,
+				Emulator.pref_cable, Emulator.cable, false);
 
-		cable_spnr.setSelection(mPrefs.getInt(
-				Emulator.pref_cable, Emulator.cable) - 1, true);
-
-		cable_spnr.setOnItemSelectedListener(new OnItemSelectedListener() {
-
-			public void onItemSelected(AdapterView<?> parent, View view,
-									   int pos, long id) {
-				mPrefs.edit().putInt(Emulator.pref_cable, pos + 1).apply();
-			}
-
-			public void onNothingSelected(AdapterView<?> arg0) {
-
-			}
-
-		});
-
-		String[] regions = getResources().getStringArray(R.array.region);
-		Spinner region_spnr = (Spinner) getView().findViewById(R.id.region_spinner);
-		ArrayAdapter<String> regionAdapter = new ArrayAdapter<String>(
-				getActivity(), R.layout.spinner_selected, regions);
-		regionAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-		region_spnr.setAdapter(regionAdapter);
-		region_spnr.setSelection(mPrefs.getInt(Emulator.pref_dcregion, Emulator.dcregion), true);
-		region_spnr.setOnItemSelectedListener(new OnItemSelectedListener() {
-			public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
-				mPrefs.edit().putInt(Emulator.pref_dcregion, pos).apply();
-
-			}
-
-			public void onNothingSelected(AdapterView<?> arg0) {
-
-			}
-		});
+		setSpinner(R.array.region, R.id.region_spinner,
+				Emulator.pref_dcregion, Emulator.dcregion, false);
 
 		String[] broadcasts = getResources().getStringArray(R.array.broadcast);
 		Spinner broadcast_spnr = (Spinner) getView().findViewById(R.id.broadcast_spinner);
-		ArrayAdapter<String> broadcastAdapter = new ArrayAdapter<String>(
+		ArrayAdapter<String> broadcastAdapter = new ArrayAdapter<>(
 				getActivity(), R.layout.spinner_selected, broadcasts);
 		broadcastAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		broadcast_spnr.setAdapter(broadcastAdapter);
 
-		int select = 0;
-		String cast = String.valueOf(mPrefs.getInt(Emulator.pref_broadcast, Emulator.broadcast));
+		String cast = getBroadcastName(mPrefs.getInt(Emulator.pref_broadcast, Emulator.broadcast));
 		for (int i = 0; i < broadcasts.length; i++) {
-			if (broadcasts[i].startsWith(cast + " - "))
-				select = i;
+			if (broadcasts[i].equals(cast)) {
+				broadcast_spnr.setSelection(i, true);
+				break;
+			}
 		}
-
-		broadcast_spnr.setSelection(select, true);
 		broadcast_spnr.setOnItemSelectedListener(new OnItemSelectedListener() {
 
 			public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
 				String item = parent.getItemAtPosition(pos).toString();
-				String selection = item.substring(0, item.indexOf(" - "));
-				mPrefs.edit().putInt(Emulator.pref_broadcast, Integer.parseInt(selection)).apply();
+				int broadcastValue = getBroadcastValue(item);
+				mPrefs.edit().putInt(Emulator.pref_broadcast, broadcastValue).apply();
 
 			}
 
@@ -380,15 +365,8 @@ public class OptionsFragment extends Fragment {
 		mipmap_opt.setChecked(mPrefs.getBoolean(Emulator.pref_mipmaps, Emulator.mipmaps));
 		mipmap_opt.setOnCheckedChangeListener(mipmaps_option);
 
-		OnCheckedChangeListener full_screen = new OnCheckedChangeListener() {
-
-			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-				mPrefs.edit().putBoolean(Emulator.pref_widescreen, isChecked).apply();
-			}
-		};
-		CompoundButton stretch_view = (CompoundButton) getView().findViewById(R.id.stretch_option);
-		stretch_view.setChecked(mPrefs.getBoolean(Emulator.pref_widescreen, Emulator.widescreen));
-		stretch_view.setOnCheckedChangeListener(full_screen);
+		setSpinner(R.array.resolution, R.id.resolution_spinner,
+				Emulator.pref_resolution, 0, false);
 
 		int frameskip = mPrefs.getInt(Emulator.pref_frameskip, Emulator.frameskip);
 
@@ -569,28 +547,9 @@ public class OptionsFragment extends Fragment {
 		sound_opt.setChecked(sound);
 		sound_opt.setOnCheckedChangeListener(emu_sound);
 
-		String[] depths = getResources().getStringArray(R.array.depth);
 
-		Spinner depth_spnr = (Spinner) getView().findViewById(R.id.depth_spinner);
-		ArrayAdapter<String> depthAdapter = new ArrayAdapter<String>(
-				getActivity(), R.layout.spinner_selected, depths);
-		depthAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-		depth_spnr.setAdapter(depthAdapter);
-
-		String depth = String.valueOf(mPrefs.getInt(Config.pref_renderdepth, 24));
-		depth_spnr.setSelection(depthAdapter.getPosition(depth), true);
-
-		depth_spnr.setOnItemSelectedListener(new OnItemSelectedListener() {
-
-			public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
-				int render = Integer.parseInt(parent.getItemAtPosition(pos).toString());
-				mPrefs.edit().putInt(Config.pref_renderdepth, render).apply();
-			}
-
-			public void onNothingSelected(AdapterView<?> arg0) {
-
-			}
-		});
+		setSpinner(R.array.depth, R.id.depth_spinner,
+				Config.pref_renderdepth, 24, true);
 
 		Button resetEmu = (Button) getView().findViewById(R.id.reset_emu_btn);
 		resetEmu.setOnClickListener(new View.OnClickListener() {
@@ -610,6 +569,40 @@ public class OptionsFragment extends Fragment {
 		});
 	}
 
+	private void setSpinner(int array, int view, final String pref, int def, final boolean parse) {
+		String[] stringArray = getResources().getStringArray(array);
+		Spinner spinner = (Spinner) getView().findViewById(view);
+		ArrayAdapter<String> adapter = new ArrayAdapter<>(
+				getActivity(), R.layout.spinner_selected, stringArray);
+		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		spinner.setAdapter(adapter);
+
+		if (parse) {
+			String value = String.valueOf(mPrefs.getInt(pref, def));
+			spinner.setSelection(adapter.getPosition(value), true);
+		} else {
+			spinner.setSelection(mPrefs.getInt(pref, def), true);
+		}
+
+		spinner.setOnItemSelectedListener(new OnItemSelectedListener() {
+
+			public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
+				if (parse) {
+					int value = Integer.parseInt(parent.getItemAtPosition(pos).toString());
+					mPrefs.edit().putInt(pref, value).apply();
+				} else {
+					mPrefs.edit().putInt(pref, pos).apply();
+				}
+
+			}
+
+			public void onNothingSelected(AdapterView<?> arg0) {
+
+			}
+
+		});
+	}
+
 	private static class LocateThemes extends AsyncTask<String, Integer, List<File>> {
 		private WeakReference<OptionsFragment> options;
 
@@ -620,17 +613,14 @@ public class OptionsFragment extends Fragment {
 		@Override
 		protected List<File> doInBackground(String... paths) {
 			File storage = new File(paths[0]);
-			String[] mediaTypes = options.get().getResources().getStringArray(R.array.themes);
+			String[] mediaTypes = options.get().getResources().getStringArray(R.array.themes_ext);
 			FilenameFilter[] filter = new FilenameFilter[mediaTypes.length];
 			int i = 0;
 			for (final String type : mediaTypes) {
 				filter[i] = new FilenameFilter() {
 					public boolean accept(File dir, String name) {
-						if (dir.getName().startsWith(".") || name.startsWith(".")) {
-							return false;
-						} else {
-							return StringUtils.endsWithIgnoreCase(name, "." + type);
-						}
+						return !dir.getName().startsWith(".") && !name.startsWith(".")
+								&& StringUtils.endsWithIgnoreCase(name, "." + type);
 					}
 				};
 				i++;
@@ -648,7 +638,7 @@ public class OptionsFragment extends Fragment {
 					themes[i] = items.get(i).getName();
 				}
 				themes[items.size()] = "None";
-				ArrayAdapter<String> themeAdapter = new ArrayAdapter<String>(
+				ArrayAdapter<String> themeAdapter = new ArrayAdapter<>(
 						options.get().getActivity(), android.R.layout.simple_spinner_item, themes);
 				themeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 				options.get().mSpnrThemes.setAdapter(themeAdapter);
@@ -657,10 +647,10 @@ public class OptionsFragment extends Fragment {
 					public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
 						String theme = String.valueOf(parentView.getItemAtPosition(position));
 						if (theme.equals("None")) {
-							options.get().mPrefs.edit().remove(Config.pref_theme).apply();
+							options.get().mPrefs.edit().remove(Config.pref_button_theme).apply();
 						} else {
 							String theme_path = options.get().home_directory + "/themes/" + theme;
-							options.get().mPrefs.edit().putString(Config.pref_theme, theme_path).apply();
+							options.get().mPrefs.edit().putString(Config.pref_button_theme, theme_path).apply();
 						}
 					}
 					@Override
@@ -675,10 +665,14 @@ public class OptionsFragment extends Fragment {
 	}
 
 	private void hideSoftKeyBoard() {
-		InputMethodManager iMm = (InputMethodManager) getActivity()
-				.getSystemService(Context.INPUT_METHOD_SERVICE);
-		if (iMm != null && iMm.isAcceptingText()) {
-			iMm.hideSoftInputFromWindow(getActivity().getCurrentFocus().getWindowToken(), 0);
+		try {
+			InputMethodManager iMm = (InputMethodManager) getActivity()
+					.getSystemService(Context.INPUT_METHOD_SERVICE);
+			if (iMm != null && iMm.isAcceptingText()) {
+				iMm.hideSoftInputFromWindow(getActivity().getCurrentFocus().getWindowToken(), 0);
+			}
+		} catch (NullPointerException e) {
+			// Keyboard may still be visible
 		}
 	}
 
@@ -726,14 +720,13 @@ public class OptionsFragment extends Fragment {
 				ex.printStackTrace();
 				local.renameTo(flash);
 			}
-			mPrefs.edit().putString("localized", localized).apply();
+			mPrefs.edit().putString(Config.bios_code, localized).apply();
 		}
 	}
 
 	private void resetEmuSettings() {
 		mPrefs.edit().remove(Emulator.pref_usereios).apply();
 		mPrefs.edit().remove(Config.pref_gamedetails).apply();
-		mPrefs.edit().remove(Emulator.pref_nativeact).apply();
 		mPrefs.edit().remove(Emulator.pref_dynarecopt).apply();
 		mPrefs.edit().remove(Emulator.pref_unstable).apply();
 		mPrefs.edit().remove(Emulator.pref_cable).apply();
@@ -741,7 +734,7 @@ public class OptionsFragment extends Fragment {
 		mPrefs.edit().remove(Emulator.pref_broadcast).apply();
 		mPrefs.edit().remove(Emulator.pref_limitfps).apply();
 		mPrefs.edit().remove(Emulator.pref_mipmaps).apply();
-		mPrefs.edit().remove(Emulator.pref_widescreen).apply();
+		mPrefs.edit().remove(Emulator.pref_resolution).apply();
 		mPrefs.edit().remove(Emulator.pref_frameskip).apply();
 		mPrefs.edit().remove(Emulator.pref_pvrrender).apply();
 		mPrefs.edit().remove(Emulator.pref_syncedrender).apply();
@@ -752,9 +745,25 @@ public class OptionsFragment extends Fragment {
 		mPrefs.edit().remove(Config.pref_rendertype).apply();
 		mPrefs.edit().remove(Emulator.pref_nosound).apply();
 		mPrefs.edit().remove(Config.pref_renderdepth).apply();
-		mPrefs.edit().remove(Config.pref_theme).apply();
+		mPrefs.edit().remove(Config.pref_button_theme).apply();
 
-		getActivity().finish();
+		Emulator.usereios = false;
+		Emulator.dynarecopt = true;
+		Emulator.unstableopt = false;
+		Emulator.cable = 3;
+		Emulator.dcregion = 3;
+		Emulator.broadcast = 4;
+		Emulator.limitfps = true;
+		Emulator.mipmaps = true;
+		Emulator.widescreen = false;
+		Emulator.crtview = false;
+		Emulator.frameskip = 0;
+		Emulator.pvrrender = false;
+		Emulator.syncedrender = false;
+		Emulator.bootdisk = null;
+		Emulator.nosound = false;
+
+		mCallback.recreateActivity();
 	}
 
 	private void showToastMessage(String message, int duration) {
@@ -778,5 +787,35 @@ public class OptionsFragment extends Fragment {
 		textView.setCompoundDrawablePadding(getResources()
 				.getDimensionPixelOffset(R.dimen.snackbar_icon_padding));
 		snackbar.show();
+	}
+
+	private int getBroadcastValue(String broadcastName) {
+		if (broadcastName.equals("NTSC-J"))
+			return 0;
+		else if (broadcastName.equals("NTSC-U"))
+			return 4;
+		else if (broadcastName.equals("PAL-M"))
+			return 6;
+		else if (broadcastName.equals("PAL-N"))
+			return 7;
+		else if (broadcastName.equals("PAL-E"))
+			return 9;
+		else
+			return -1;
+	}
+
+	private String getBroadcastName(int broadcastValue) {
+		if (broadcastValue == 0)
+			return "NTSC-J";
+		else if (broadcastValue == 4)
+			return "NTSC-U";
+		else if (broadcastValue == 6)
+			return "PAL-M";
+		else if (broadcastValue == 7)
+			return "PAL-N";
+		else if (broadcastValue == 9)
+			return "PAL-E";
+		else
+			return null;
 	}
 }

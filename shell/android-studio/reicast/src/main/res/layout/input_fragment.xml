@@ -169,7 +169,7 @@
                         android:layout_width="48dp"
                         android:layout_height="48dp"
                         android:layout_centerInParent="true"
-                        android:scaleType="fitCenter" />
+                        android:scaleType="fitCenter"/>
 
                     <TextView
                         android:layout_width="0dp"
@@ -226,7 +226,7 @@
                             android:layout_height="48dp"
                             android:layout_centerInParent="true"
                             android:scaleType="fitCenter"
-                            app:srcCompat="@drawable/input" />
+                            app:srcCompat="@drawable/input"/>
 
                         <TextView
                             android:id="@+id/controller_text_a"
@@ -317,7 +317,7 @@
                             android:layout_height="48dp"
                             android:layout_centerInParent="true"
                             android:scaleType="fitCenter"
-                            app:srcCompat="@drawable/input" />
+                            app:srcCompat="@drawable/input"/>
 
                         <TextView
                             android:id="@+id/controller_text_b"
@@ -422,7 +422,7 @@
                             android:layout_height="48dp"
                             android:layout_centerInParent="true"
                             android:scaleType="fitCenter"
-                            app:srcCompat="@drawable/input" />
+                            app:srcCompat="@drawable/input"/>
 
                         <TextView
                             android:id="@+id/controller_text_c"
@@ -527,7 +527,7 @@
                             android:layout_height="48dp"
                             android:layout_centerInParent="true"
                             android:scaleType="fitCenter"
-                            app:srcCompat="@drawable/input" />
+                            app:srcCompat="@drawable/input"/>
 
                         <TextView
                             android:id="@+id/controller_text_d"

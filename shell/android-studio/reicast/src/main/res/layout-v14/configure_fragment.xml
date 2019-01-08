@@ -124,11 +124,11 @@
             android:orientation="vertical" >
 
             <TextView
-                android:id="@+id/button_theme_label"
+                android:id="@+id/app_theme_label"
                 android:layout_width="wrap_content"
                 android:layout_height="0dip"
                 android:layout_weight="1"
-                android:text="@string/button_theme" />
+                android:text="@string/app_theme" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -136,7 +136,7 @@
                 android:orientation="horizontal" >
 
                 <Spinner
-                    android:id="@+id/pick_button_theme"
+                    android:id="@+id/pick_app_theme"
                     android:layout_width="0dip"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
@@ -184,6 +184,35 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginLeft="6dp"
+            android:layout_marginTop="10dp"
+            android:orientation="vertical" >
+
+            <TextView
+                android:id="@+id/button_theme_label"
+                android:layout_width="wrap_content"
+                android:layout_height="0dip"
+                android:layout_weight="1"
+                android:text="@string/button_theme" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal" >
+
+                <Spinner
+                    android:id="@+id/pick_button_theme"
+                    android:layout_width="0dip"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ems="10" >
+                </Spinner>
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="6dp"
             android:layout_marginTop="20dp"
             android:orientation="vertical" >
 
@@ -216,34 +245,6 @@
             android:layout_height="wrap_content"
             android:layout_marginLeft="6dp"
             android:stretchColumns="*" >
-
-            <TableRow
-                android:layout_marginTop="10dp"
-                android:gravity="center_vertical" >
-
-                <TextView
-                    android:id="@+id/native_text"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="0.5"
-                    android:ems="10"
-                    android:gravity="center_vertical|left"
-                    android:text="@string/select_native" />
-
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:gravity="right"
-                    android:orientation="vertical" >
-
-                    <Switch
-                        android:id="@+id/native_option"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:focusable="true" />
-                </LinearLayout>
-            </TableRow>
 
             <TableRow
                 android:layout_marginTop="10dp"
@@ -306,13 +307,13 @@
                 android:gravity="center_vertical" >
 
                 <TextView
-                    android:id="@+id/stretch_text"
+                    android:id="@+id/resolution_text"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_weight="0.5"
                     android:ems="10"
                     android:gravity="center_vertical|left"
-                    android:text="@string/select_stretch" />
+                    android:text="@string/select_resolution" />
 
                 <LinearLayout
                     android:layout_width="wrap_content"
@@ -321,11 +322,12 @@
                     android:gravity="right"
                     android:orientation="vertical" >
 
-                    <Switch
-                        android:id="@+id/stretch_option"
+                    <Spinner
+                        android:id="@+id/resolution_spinner"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:focusable="true" />
+                        android:layout_height="0dp"
+                        android:layout_weight="1"
+                        android:ems="10" />
                 </LinearLayout>
             </TableRow>
 

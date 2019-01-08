@@ -14,6 +14,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
 import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
@@ -39,6 +40,7 @@ import com.reicast.emulator.config.InputFragment;
 import com.reicast.emulator.config.OptionsFragment;
 import com.reicast.emulator.config.PGConfigFragment;
 import com.reicast.emulator.debug.GenerateLogs;
+import com.reicast.emulator.cloud.CloudFragment;
 import com.reicast.emulator.emu.JNIdc;
 
 import java.lang.Thread.UncaughtExceptionHandler;
@@ -52,10 +54,17 @@ public class MainActivity extends AppCompatActivity implements
 	private SharedPreferences mPrefs;
 	private boolean hasAndroidMarket = false;
 
-	private UncaughtExceptionHandler mUEHandler;
-
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
+        mPrefs = PreferenceManager.getDefaultSharedPreferences(this);
+        int app_theme = mPrefs.getInt(Config.pref_app_theme, 0);
+        if (app_theme == 7) {
+			setTheme(R.style.AppTheme_Dream);
+		} else if (app_theme == 1) {
+        	setTheme(R.style.AppTheme_Blue);
+        } else {
+            setTheme(R.style.AppTheme);
+        }
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 
@@ -64,7 +73,6 @@ public class MainActivity extends AppCompatActivity implements
 				public void onSystemUiVisibilityChange(int visibility) {
 					if ((visibility & View.SYSTEM_UI_FLAG_FULLSCREEN) == 0) {
 						getWindow().getDecorView().setSystemUiVisibility(
-//                            View.SYSTEM_UI_FLAG_LAYOUT_STABLE | 
 								View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
 										| View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
 										| View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
@@ -78,14 +86,12 @@ public class MainActivity extends AppCompatActivity implements
 					WindowManager.LayoutParams.FLAG_FULLSCREEN);
 		}
 
-		mPrefs = PreferenceManager.getDefaultSharedPreferences(this);
-
 		String prior_error = mPrefs.getString("prior_error", null);
 		if (prior_error != null) {
 			displayLogOutput(prior_error);
 			mPrefs.edit().remove("prior_error").apply();
 		} else {
-			mUEHandler = new Thread.UncaughtExceptionHandler() {
+			UncaughtExceptionHandler mUEHandler = new Thread.UncaughtExceptionHandler() {
 				public void uncaughtException(Thread t, Throwable error) {
 					if (error != null) {
 						StringBuilder output = new StringBuilder();
@@ -95,6 +101,8 @@ public class MainActivity extends AppCompatActivity implements
 						}
 						mPrefs.edit().putString("prior_error", output.toString()).apply();
 						error.printStackTrace();
+						android.os.Process.killProcess(android.os.Process.myPid());
+						System.exit(0);
 					}
 				}
 			};
@@ -152,6 +160,7 @@ public class MainActivity extends AppCompatActivity implements
 
 			}
 		};
+		//noinspection deprecation
 		drawer.setDrawerListener(toggle);
 		toggle.syncState();
 
@@ -184,10 +193,21 @@ public class MainActivity extends AppCompatActivity implements
 					return false;
 				}
 				@Override
-				public boolean onQueryTextChange(String s) {
+				public boolean onQueryTextChange(String query) {
 					return false;
 				}
 			});
+		}
+
+		try {
+			String versionName = getPackageManager()
+					.getPackageInfo(getPackageName(), 0).versionName;
+			int versionCode = getPackageManager()
+					.getPackageInfo(getPackageName(), 0).versionCode;
+			((TextView) navigationView.findViewById(R.id.version)).setText(
+					getString(R.string.revision_text, versionName, String.valueOf(versionCode)));
+		} catch (PackageManager.NameNotFoundException e) {
+			e.printStackTrace();
 		}
 	}
 
@@ -237,15 +257,17 @@ public class MainActivity extends AppCompatActivity implements
 
 		JNIdc.config(home_directory);
 
-		Emulator.nativeact = PreferenceManager.getDefaultSharedPreferences(
-				getApplicationContext()).getBoolean(Emulator.pref_nativeact, Emulator.nativeact);
-		if (Emulator.nativeact) {
-			startActivity(new Intent("com.reicast.EMULATOR", uri, getApplicationContext(),
-					GL2JNINative.class));
-		} else {
-			startActivity(new Intent("com.reicast.EMULATOR", uri, getApplicationContext(),
-					GL2JNIActivity.class));
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+			uri = Uri.parse(uri.toString().replace("content://"
+					+ uri.getAuthority() + "/external_files", "/storage"));
 		}
+
+		Intent intent = new Intent("com.reicast.EMULATOR",
+				uri, getApplicationContext(), GL2JNIActivity.class);
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
+			intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION
+					| Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+		startActivity(intent);
 	}
 
 	public void onFolderSelected(Uri uri) {
@@ -262,7 +284,6 @@ public class MainActivity extends AppCompatActivity implements
 		getSupportFragmentManager().beginTransaction().replace(
 				R.id.fragment_container, optsFrag, "OPTIONS_FRAG").commit();
 		setTitle(R.string.settings);
-		return;
 	}
 
 	/**
@@ -327,8 +348,7 @@ public class MainActivity extends AppCompatActivity implements
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
 		if (keyCode == KeyEvent.KEYCODE_BACK) {
-			Fragment fragment = (FileBrowser) getSupportFragmentManager()
-					.findFragmentByTag("MAIN_BROWSER");
+			Fragment fragment = getSupportFragmentManager().findFragmentByTag("MAIN_BROWSER");
 			if (fragment != null && fragment.isVisible()) {
 				boolean readyToQuit = true;
 				if (fragment.getArguments() != null) {
@@ -380,9 +400,18 @@ public class MainActivity extends AppCompatActivity implements
 		super.onPostCreate(savedInstanceState);
 	}
 
-	@SuppressWarnings("StatementWithEmptyBody")
+	public void recreateActivity() {
+		this.recreate();
+		OptionsFragment optionsFrag = new OptionsFragment();
+		getSupportFragmentManager()
+				.beginTransaction()
+				.replace(R.id.fragment_container, optionsFrag, "OPTIONS_FRAG")
+				.addToBackStack(null).commit();
+		// Prevents a crash, but actually just reloads the FileBrowser fragment
+	}
+
 	@Override
-	public boolean onNavigationItemSelected(MenuItem item) {
+	public boolean onNavigationItemSelected(@NonNull MenuItem item) {
 		// Handle navigation view item clicks here.
 		DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
 
@@ -532,6 +561,23 @@ public class MainActivity extends AppCompatActivity implements
 							| View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
 							| View.SYSTEM_UI_FLAG_FULLSCREEN
 							| View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+		}
+	}
+
+	@Override
+	public void onRequestPermissionsResult(
+			int requestCode, @NonNull String permissions[], @NonNull int[] grantResults) {
+		if (requestCode == PERMISSION_REQUEST) {
+			if (!(grantResults.length > 0 && grantResults[0]
+					== PackageManager.PERMISSION_GRANTED)) {
+				StringBuilder disabled = new StringBuilder();
+				for (String permission : permissions) {
+					disabled.append("\n");
+					disabled.append(permission);
+				}
+				showToastMessage(getString(R.string.permission_blocked,
+						disabled.toString()), Snackbar.LENGTH_LONG);
+			}
 		}
 	}
 

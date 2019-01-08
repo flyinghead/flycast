@@ -7,6 +7,7 @@
     <string name="system_path">System Path\n  (location of data folder with dc_boot.bin/dc_flash.bin inside)</string>
     <string name="browser_path">Default System Path</string>
     <string name="games_path">Storage Path\n  (location of *.gdi, *.chd or *.cdi images)</string>
+    <string name="app_theme">Application Theme</string>
     <string name="button_theme">Onscreen Button Theme</string>
     <string name="bios_selection">Select a BIOS source</string>
 
@@ -14,6 +15,7 @@
     <string name="config_home">Please configure a home directory.</string>
     <string name="config_data">Please move BIOS to %1$s/data/</string>
     <string name="config_game">Please configure a game directory.</string>
+    <string name="permission_blocked">Permission(s) blocked:%1$s</string>
     <string name="unsupported">Unsupported kernel version!</string>
     <string name="locate">Locate</string>
     <string name="browse">Browse</string>
@@ -35,7 +37,6 @@
     <string name="select_reios">Use reios BIOS</string>
     <string name="select_bios">BIOS Region (dc_flash[X].bin)</string>
     <string name="select_details">Enable Game Details</string>
-    <string name="select_native">Native Gamepad Mode [No OSD]</string>
     <string name="select_dynarec">Dynamic Recompiler</string>
     <string name="select_unstable">Unstable Optimisations</string>
     <string name="select_safemode">Bypass Div Matching</string>
@@ -44,12 +45,11 @@
     <string name="select_broadcast">Broadcast</string>
     <string name="select_limitfps">Limit FPS</string>
     <string name="select_mipmaps">Use Mipmaps (fixes SGX540)</string>
-    <string name="select_stretch">Widescreen Mode</string>
+    <string name="select_resolution">Resolution Mode</string>
     <string name="set_frameskip">Frameskip Value</string>
     <string name="select_render">PVR Rendering (does nothing for now)</string>
     <string name="select_syncrender">Synchronous Rendering</string>
-    <string name="select_modvols">Modifier Volumes</string>
-    <string name="select_interrupt">Delayed Interrupt</string>
+    <string name="select_modvols">Enable Modifier Volumes</string>
     <string name="select_fps">Show On-Screen FPS</string>
     <string name="select_software">Use Software Layer</string>
     <string name="select_sound">Disable Emulator Sound</string>
@@ -76,6 +76,8 @@
 
     <string name="games_listing">Game List</string>
     <string name="search_hint">Game (ie. Crazy Taxi)</string>
+    <string name="clear_search">Clear Search Results</string>
+    <string name="no_games">No games found for current search</string>
     
     <string name="game_details">Game Info - %1$s</string>
     <string name="info_unavailable">Game Info Unavailable</string>
@@ -92,10 +94,10 @@
     <string name="controller_b">Controller B</string>
     <string name="controller_c">Controller C</string>
     <string name="controller_d">Controller D</string>
-    <string name="controller_not_connected">Controller Not Connected</string>
+    <string name="controller_not_connected">Controller Not Connected %1$s</string>
     <string name="controller_none_selected">No Controller Selected</string>
     <string name="select">Select</string>
-    <string name="remove">Remove</string>
+    <string name="remove">Clear</string>
     <string name="select_controller_title">Select Controller</string>
     <string name="select_controller_message">Press any button on the controller %1$s to assign to port</string>
     <string name="controller_already_in_use">This controller is already in use!</string>

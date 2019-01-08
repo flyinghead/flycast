@@ -9,8 +9,7 @@ import com.android.util.DreamTime;
 import com.reicast.emulator.emu.JNIdc;
 
 public class Emulator extends Application {
-    
-    public static final String pref_nativeact = "enable_native";
+
     public static final String pref_dynarecopt = "dynarec_opt";
     public static final String pref_unstable = "unstable_opt";
     public static final String pref_dynsafemode = "dyn_safemode";
@@ -19,9 +18,8 @@ public class Emulator extends Application {
     public static final String pref_broadcast = "dc_broadcast";
     public static final String pref_limitfps = "limit_fps";
     public static final String pref_nosound = "sound_disabled";
-    public static final String pref_interrupt = "delay_interrupt";
     public static final String pref_mipmaps = "use_mipmaps";
-    public static final String pref_widescreen = "stretch_view";
+    public static final String pref_resolution = "resolution";
     public static final String pref_frameskip = "frame_skip";
     public static final String pref_pvrrender = "pvr_render";
     public static final String pref_syncedrender = "synced_render";
@@ -41,9 +39,9 @@ public class Emulator extends Application {
     public static boolean limitfps = true;
     public static boolean nobatch = false;
     public static boolean nosound = false;
-    public static boolean interrupt = false;
     public static boolean mipmaps = true;
     public static boolean widescreen = false;
+    public static boolean crtview = false;
     public static boolean subdivide = false;
     public static int frameskip = 0;
     public static boolean pvrrender = false;
@@ -53,8 +51,7 @@ public class Emulator extends Application {
     public static int resolutionh = 100;
     public static String bootdisk = null;
     public static boolean usereios = false;
-    public static boolean nativeact = false;
-    
+
     /**
      * Load the user configuration from preferences
      *
@@ -68,7 +65,8 @@ public class Emulator extends Application {
         Emulator.limitfps = mPrefs.getBoolean(pref_limitfps, limitfps);
         Emulator.nosound = mPrefs.getBoolean(pref_nosound, nosound);
         Emulator.mipmaps = mPrefs.getBoolean(pref_mipmaps, mipmaps);
-        Emulator.widescreen = mPrefs.getBoolean(pref_widescreen, widescreen);
+        Emulator.widescreen = mPrefs.getInt(pref_resolution, 0) == 2;
+        Emulator.crtview = mPrefs.getInt(pref_resolution, 0) == 1;
         Emulator.frameskip = mPrefs.getInt(pref_frameskip, frameskip);
         Emulator.pvrrender = mPrefs.getBoolean(pref_pvrrender, pvrrender);
         Emulator.syncedrender = mPrefs.getBoolean(pref_syncedrender, syncedrender);
@@ -76,7 +74,6 @@ public class Emulator extends Application {
         Emulator.resolutionh = mPrefs.getInt(pref_resolutionh, resolutionh);
         Emulator.bootdisk = mPrefs.getString(pref_bootdisk, bootdisk);
         Emulator.usereios = mPrefs.getBoolean(pref_usereios, usereios);
-        Emulator.nativeact = mPrefs.getBoolean(pref_nativeact, nativeact);
     }
 
     /**
@@ -94,7 +91,6 @@ public class Emulator extends Application {
         JNIdc.limitfps(Emulator.limitfps ? 1 : 0);
         JNIdc.nobatch(Emulator.nobatch ? 1 : 0);
         JNIdc.nosound(Emulator.nosound ? 1 : 0);
-        JNIdc.delayinterrupt(Emulator.interrupt ? 1 : 0);
         JNIdc.mipmaps(Emulator.mipmaps ? 1 : 0);
         JNIdc.widescreen(Emulator.widescreen ? 1 : 0);
         JNIdc.subdivide(Emulator.subdivide ? 1 : 0);
@@ -114,7 +110,6 @@ public class Emulator extends Application {
         JNIdc.dynarec(mPrefs.getBoolean(pref_dynarecopt, dynarecopt) ? 1 : 0);
         JNIdc.unstable(mPrefs.getBoolean(pref_unstable, unstableopt) ? 1 : 0);
         JNIdc.safemode(mPrefs.getBoolean(pref_dynsafemode, dynsafemode) ? 1 : 0);
-        JNIdc.delayinterrupt(mPrefs.getBoolean(pref_interrupt, interrupt) ? 1 : 0);
         JNIdc.frameskip(mPrefs.getInt(pref_frameskip, frameskip));
         JNIdc.pvrrender(mPrefs.getBoolean(pref_pvrrender, pvrrender) ? 1 : 0);
         JNIdc.syncedrender(mPrefs.getBoolean(pref_syncedrender, syncedrender) ? 1 : 0);

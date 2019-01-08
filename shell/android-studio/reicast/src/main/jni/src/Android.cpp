@@ -55,7 +55,6 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_broadcast(JNIEnv *env
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_limitfps(JNIEnv *env,jobject obj, jint limiter)  __attribute__((visibility("default")));
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_nobatch(JNIEnv *env,jobject obj, jint nobatch)  __attribute__((visibility("default")));
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_nosound(JNIEnv *env,jobject obj, jint noaudio)  __attribute__((visibility("default")));
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_delayinterrupt(JNIEnv *env,jobject obj, jint delayed)  __attribute__((visibility("default")));
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_mipmaps(JNIEnv *env,jobject obj, jint mipmaps)  __attribute__((visibility("default")));
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_widescreen(JNIEnv *env,jobject obj, jint stretch)  __attribute__((visibility("default")));
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_subdivide(JNIEnv *env,jobject obj, jint subdivide)  __attribute__((visibility("default")));
@@ -118,11 +117,6 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_nobatch(JNIEnv *env,j
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_nosound(JNIEnv *env,jobject obj, jint noaudio)
 {
     settings.aica.NoSound = noaudio;
-}
-
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_delayinterrupt(JNIEnv *env,jobject obj, jint delayed)
-{
-    settings.aica.DelayInterrupt = delayed;
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_mipmaps(JNIEnv *env,jobject obj, jint mipmaps)
@@ -408,14 +402,16 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_query(JNIEnv *env,job
     jmethodID reiosInfoMid=env->GetMethodID(env->GetObjectClass(emu_thread),"reiosInfo","(Ljava/lang/String;Ljava/lang/String;)V");
 
     char *id = (char*)malloc(11);
-    strcpy(id, reios_disk_id());
-    jstring reios_id = env->NewStringUTF(id);
+    // Verify that there is an ID assigned
+    if ((id != NULL) && (id[0] == '\0')) {
+        strcpy(id, reios_disk_id());
+        jstring reios_id = env->NewStringUTF(id);
+        char *name = (char *) malloc(129);
+        strcpy(name, reios_software_name);
+        jstring reios_name = env->NewStringUTF(name);
 
-    char *name = (char*)malloc(129);
-    strcpy(name, reios_software_name);
-    jstring reios_name = env->NewStringUTF(name);
-
-    env->CallVoidMethod(emu_thread, reiosInfoMid, reios_id, reios_name);
+        env->CallVoidMethod(emu_thread, reiosInfoMid, reios_id, reios_name);
+    }
 
     dc_init();
 }
