@@ -1,8 +1,10 @@
-#include <unistd.h>
-#include <sys/mman.h>
 #include "types.h"
 
 #if FEAT_SHREC == DYNAREC_JIT
+
+#include <unistd.h>
+#include <sys/mman.h>
+#include <map>
 
 #include "deps/vixl/aarch64/macro-assembler-aarch64.h"
 using namespace vixl::aarch64;
@@ -163,10 +165,11 @@ public:
 		if (force_checks)
 			CheckBlock(block);
 
-		Stp(x29, x30, MemOperand(sp, -16, PreIndex));
-		Mov(x29, sp);
+		Stp(x28, x30, MemOperand(sp, -16, PreIndex));
+		// Use x28 as sh4 context pointer
+		Mov(x28, reinterpret_cast<uintptr_t>(&p_sh4rcb->cntx));
 
-		Mov(x9, (size_t)&cycle_counter);
+		Mov(x9, reinterpret_cast<uintptr_t>(&cycle_counter));
 		Ldr(w10, MemOperand(x9));
 		Sub(w10, w10, block->guest_cycles);
 		Str(w10, MemOperand(x9));
@@ -179,28 +182,26 @@ public:
 			case shop_ifb:	// Interpreter fallback
 				if (op.rs1._imm)	// if NeedPC()
 				{
-					Mov(x9, (size_t)&next_pc);
 					Mov(w10, op.rs2._imm);
-					Str(w10, MemOperand(x9));
+					Str(w10, sh4_context_mem_operand(&next_pc));
 				}
 				Mov(*call_regs[0], op.rs3._imm);
 
 				CallRuntime(OpDesc[op.rs3._imm]->oph);
+				reg_cache.clear();
 				break;
 
 			case shop_jcond:
 			case shop_jdyn:
-				Mov(x9, (size_t)op.rs1.reg_ptr());
-
-				Ldr(w10, MemOperand(x9));
+				Ldr(w10, sh4_context_mem_operand(op.rs1.reg_ptr()));
 
 				if (op.rs2.is_imm()) {
 					Mov(w9, op.rs2._imm);
 					Add(w10, w10, w9);
 				}
 
-				Mov(x9, (size_t)op.rd.reg_ptr());
-				Str(w10, MemOperand(x9));
+				Str(w10, sh4_context_mem_operand(op.rd.reg_ptr()));
+				reg_cache.clear();
 				break;
 
 			case shop_mov32:
@@ -215,8 +216,8 @@ public:
 				verify(op.rd.is_reg());
 				verify(op.rs1.is_reg() || op.rs1.is_imm());
 
-				shil_param_to_host_reg(op.rs1, x10);
-				host_reg_to_shil_param(op.rd, x10);
+				shil_param_to_host_reg(op.rs1, x15);
+				host_reg_to_shil_param(op.rd, x15);
 				break;
 
 			case shop_readm:
@@ -226,6 +227,7 @@ public:
 				{
 					shil_param_to_host_reg(op.rs3, w10);
 					Add(*call_regs[0], *call_regs[0], w10);
+					flush_reg_cache(*call_regs[0]);
 				}
 
 				u32 size = op.flags & 0x7f;
@@ -254,6 +256,7 @@ public:
 					die("1..8 bytes");
 					break;
 				}
+				reg_cache.clear();
 
 				if (size != 8)
 					host_reg_to_shil_param(op.rd, w0);
@@ -269,6 +272,7 @@ public:
 				{
 					shil_param_to_host_reg(op.rs3, w10);
 					Add(*call_regs[0], *call_regs[0], w10);
+					flush_reg_cache(*call_regs[0]);
 				}
 
 				u32 size = op.flags & 0x7f;
@@ -299,6 +303,7 @@ public:
 					die("1..8 bytes");
 					break;
 				}
+				reg_cache.clear();
 			}
 			break;
 
@@ -308,8 +313,6 @@ public:
 			}
 		}
 
-		Mov(x9, (size_t)&next_pc);
-
 		switch (block->BlockType)
 		{
 
@@ -317,7 +320,7 @@ public:
 		case BET_StaticCall:
 			// next_pc = block->BranchBlock;
 			Ldr(w10, block->BranchBlock);
-			Str(w10, MemOperand(x9));
+			Str(w10, sh4_context_mem_operand(&next_pc));
 			break;
 
 		case BET_Cond_0:
@@ -330,10 +333,9 @@ public:
 				Mov(w10, block->NextBlock);
 
 				if (block->has_jcond)
-					Mov(x11, (size_t)&Sh4cntx.jdyn);
+					Ldr(w11, sh4_context_mem_operand(&Sh4cntx.jdyn));
 				else
-					Mov(x11, (size_t)&sr.T);
-				Ldr(w11, MemOperand(x11));
+					Ldr(w11, sh4_context_mem_operand(&sr.T));
 
 				Cmp(w11, block->BlockType & 1);
 				Label branch_not_taken;
@@ -342,7 +344,7 @@ public:
 				Mov(w10, block->BranchBlock);
 				Bind(&branch_not_taken);
 
-				Str(w10, MemOperand(x9));
+				Str(w10, sh4_context_mem_operand(&next_pc));
 			}
 			break;
 
@@ -350,9 +352,8 @@ public:
 		case BET_DynamicCall:
 		case BET_DynamicRet:
 			// next_pc = *jdyn;
-			Mov(x10, (size_t)&Sh4cntx.jdyn);
-			Ldr(w10, MemOperand(x10));
-			Str(w10, MemOperand(x9));
+			Ldr(w10, sh4_context_mem_operand(&Sh4cntx.jdyn));
+			Str(w10, sh4_context_mem_operand(&next_pc));
 			break;
 
 		case BET_DynamicIntr:
@@ -360,15 +361,14 @@ public:
 			if (block->BlockType == BET_DynamicIntr)
 			{
 				// next_pc = *jdyn;
-				Mov(x10, (size_t)&Sh4cntx.jdyn);
-				Ldr(w10, MemOperand(x10));
+				Ldr(w10, sh4_context_mem_operand(&Sh4cntx.jdyn));
 			}
 			else
 			{
 				// next_pc = next_pc_value;
 				Mov(w10, block->NextBlock);
 			}
-			Str(w10, MemOperand(x9));
+			Str(w10, sh4_context_mem_operand(&next_pc));
 
 			CallRuntime(UpdateINTC);
 			break;
@@ -378,7 +378,7 @@ public:
 		}
 
 
-		Ldp(x29, x30, MemOperand(sp, 16, PostIndex));
+		Ldp(x28, x30, MemOperand(sp, 16, PostIndex));
 		Ret();
 
 		Label code_end;
@@ -464,8 +464,7 @@ public:
 
 			case CPT_f32:
 				if (prm.is_reg()) {
-					Mov(x9, (size_t)prm.reg_ptr());
-					Ldr(*call_fregs[fregused], MemOperand(x9));
+					Ldr(*call_fregs[fregused], sh4_context_mem_operand(prm.reg_ptr()));
 				}
 				else {
 					verify(prm.is_null());
@@ -475,8 +474,9 @@ public:
 
 			case CPT_ptr:
 				verify(prm.is_reg());
+				flush_reg_cache(*call_regs64[regused]);
 				// push the ptr itself
-				Mov(*call_regs64[regused++], (size_t)prm.reg_ptr());
+				Mov(*call_regs64[regused++], reinterpret_cast<uintptr_t>(prm.reg_ptr()));
 
 				break;
 			case CPT_u32rv:
@@ -488,55 +488,51 @@ public:
 			}
 		}
 		CallRuntime((void (*)())function);
+		reg_cache.clear();
 	}
 
 private:
 	void CheckBlock(RuntimeBlockInfo* block)
 	{
 		s32 sz = block->sh4_code_size;
-		u32 sa = block->addr;
 
 		Label blockcheck_fail;
 		Label blockcheck_success;
 
+		u8* ptr = GetMemPtr(block->addr, sz);
+		if (ptr == NULL)
+			// FIXME Can a block cross a RAM / non-RAM boundary??
+			return;
+
+		Mov(x9, reinterpret_cast<uintptr_t>(ptr));
+
 		while (sz > 0)
 		{
-			void* ptr = GetMemPtr(sa, sz > 8 ? 8 : sz);
-			if (ptr != NULL)
+			if (sz >= 8)
 			{
-				Mov(x9, (size_t)reinterpret_cast<uintptr_t>(ptr));
-
-				if (sz >= 8)
-				{
-					Ldr(x10, MemOperand(x9));
-					Mov(x11, *(u64*)ptr);
-					Cmp(x10, x11);
-					sz -= 8;
-					sa += 8;
-				}
-				else if (sz >= 4)
-				{
-					Ldr(w10, MemOperand(x9));
-					Mov(w11, *(u32*)ptr);
-					Cmp(w10, w11);
-					sz -= 4;
-					sa += 4;
-				}
-				else
-				{
-					Ldrh(w10, MemOperand(x9));
-					Mov(w11, *(u16*)ptr);
-					Cmp(w10, w11);
-					sz -= 2;
-					sa += 2;
-				}
-				B(ne, &blockcheck_fail);
+				Ldr(x10, MemOperand(x9, 8, PostIndex));
+				Ldr(x11, *(u64*)ptr);
+				Cmp(x10, x11);
+				sz -= 8;
+				ptr += 8;
+			}
+			else if (sz >= 4)
+			{
+				Ldr(w10, MemOperand(x9, 4, PostIndex));
+				Ldr(w11, *(u32*)ptr);
+				Cmp(w10, w11);
+				sz -= 4;
+				ptr += 4;
 			}
 			else
 			{
-				sz -= 4;
-				sa += 4;
+				Ldrh(w10, MemOperand(x9, 2, PostIndex));
+				Mov(w11, *(u16*)ptr);
+				Cmp(w10, w11);
+				sz -= 2;
+				ptr += 2;
 			}
+			B(ne, &blockcheck_fail);
 		}
 		B(&blockcheck_success);
 
@@ -547,14 +543,34 @@ private:
 		Bind(&blockcheck_success);
 	}
 
+	MemOperand sh4_context_mem_operand(void *p)
+	{
+		u32 offset = (u8*)p - (u8*)&p_sh4rcb->cntx;
+		verify((offset & 3) == 0 && offset <= 16380);	// FIXME 64-bit regs need multiple of 8 up to 32760
+		return MemOperand(x28, offset);
+	}
+
 	void shil_param_to_host_reg(const shil_param& param, const Register& reg)
 	{
 		if (param.is_imm()) {
 			Mov(reg, param._imm);
+			flush_reg_cache(reg);
 		}
 		else if (param.is_reg()) {
-			Mov(x9, (size_t)param.reg_ptr());
-			Ldr(reg, MemOperand(x9));
+			const Register *cached_reg = reg_cache[param._reg];
+			if (cached_reg != NULL)
+			{
+				if (cached_reg != &reg)
+				{
+					Mov(reg, *cached_reg);
+					set_reg_cache(param._reg, reg);
+				}
+			}
+			else
+			{
+				Ldr(reg, sh4_context_mem_operand(param.reg_ptr()));
+				set_reg_cache(param._reg, reg);
+			}
 		}
 		else {
 			verify(param.is_null());
@@ -563,8 +579,24 @@ private:
 
 	void host_reg_to_shil_param(const shil_param& param, const CPURegister& reg)
 	{
-		Mov(x9, (size_t)param.reg_ptr());
-		Str(reg, MemOperand(x9));
+		Str(reg, sh4_context_mem_operand(param.reg_ptr()));
+		if (reg.IsRegister())
+			set_reg_cache(param._reg, (const Register&)reg);
+	}
+
+	void set_reg_cache(Sh4RegType sh4_reg_type, const Register& reg)
+	{
+		flush_reg_cache(reg);
+		reg_cache[sh4_reg_type] = &reg;
+	}
+
+	void flush_reg_cache(const Register& reg)
+	{
+		for (auto it = reg_cache.begin(); it != reg_cache.end();)
+			if (it->second != NULL && it->second->GetCode() == reg.GetCode())
+				it = reg_cache.erase(it);
+			else
+				it++;
 	}
 
 	struct CC_PS
@@ -576,7 +608,7 @@ private:
 	std::vector<const WRegister*> call_regs;
 	std::vector<const XRegister*> call_regs64;
 	std::vector<const VRegister*> call_fregs;
-
+	std::map<Sh4RegType, const Register*> reg_cache;
 };
 
 static Arm64Assembler* compiler;
