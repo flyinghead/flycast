@@ -103,8 +103,8 @@ public class Emulator extends Application {
         JNIdc.syncedrender(Emulator.syncedrender ? 1 : 0);
         JNIdc.modvols(Emulator.modvols ? 1 : 0);
         JNIdc.usereios(Emulator.usereios ? 1 : 0);
-        JNIdc.frameskip(Emulator.resolutionv);
-        JNIdc.frameskip(Emulator.resolutionh);
+        JNIdc.resolutionv(Emulator.resolutionv);
+        JNIdc.resolutionh(Emulator.resolutionh);
         JNIdc.bootdisk(Emulator.bootdisk);
         JNIdc.dreamtime(DreamTime.getDreamtime());
     }

@@ -745,6 +745,8 @@ public class OptionsFragment extends Fragment {
 		mPrefs.edit().remove(Emulator.pref_frameskip).apply();
 		mPrefs.edit().remove(Emulator.pref_pvrrender).apply();
 		mPrefs.edit().remove(Emulator.pref_syncedrender).apply();
+		mPrefs.edit().remove(Emulator.pref_resolutionv).apply();
+		mPrefs.edit().remove(Emulator.pref_resolutionh).apply();
 		mPrefs.edit().remove(Emulator.pref_bootdisk).apply();
 		mPrefs.edit().remove(Config.pref_showfps).apply();
 		mPrefs.edit().remove(Config.pref_rendertype).apply();

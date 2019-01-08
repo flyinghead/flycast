@@ -1156,7 +1156,7 @@ void DrawStrips()
 	}
 }
 
-void fullscreenQuadPrepareFramebuffer(float scale_x, float scale_y) {
+void fullscreenQuadPrepareFramebuffer(float xScale, float yScale) {
 	// Bind the default framebuffer
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glViewport(0, 0, screen_width, screen_height);
@@ -1175,8 +1175,8 @@ void fullscreenQuadPrepareFramebuffer(float scale_x, float scale_y) {
 	u32 reducedWidthOffset = (screen_width - reducedWidth) / 2;
 	glScissor(reducedWidthOffset, 0, reducedWidth, screen_height);
 	if (settings.rend.WideScreen &&
-		(pvrrc.fb_X_CLIP.min==0) && ((pvrrc.fb_X_CLIP.max+1)/scale_x==640) &&
-		(pvrrc.fb_Y_CLIP.min==0) && ((pvrrc.fb_Y_CLIP.max+1)/scale_y==480 ))
+		(pvrrc.fb_X_CLIP.min==0) && ((pvrrc.fb_X_CLIP.max+1)/xScale==640) &&
+		(pvrrc.fb_Y_CLIP.min==0) && ((pvrrc.fb_Y_CLIP.max+1)/yScale==480 ))
 	{
 		glDisable(GL_SCISSOR_TEST);
 	}
@@ -1186,8 +1186,8 @@ void fullscreenQuadPrepareFramebuffer(float scale_x, float scale_y) {
 	}
 }
 
-void fullscreenQuadBindVertexData(
-	float screenToNativeX, float screenToNativeY, GLint &vsPosition, GLint &vsTexcoord, GLint &fsTexture)
+void fullscreenQuadBindVertexData(float screenToNativeXScale, float screenToNativeYScale,
+	GLint & vsPosition, GLint & vsTexcoord, GLint & fsTexture)
 {
 	u32 quadVerticesNumber = 4;
 	glUseProgram(gl.fullscreenQuadShader);
@@ -1200,10 +1200,10 @@ void fullscreenQuadBindVertexData(
 	glEnableVertexAttribArray( vsTexcoord );
 	const float2 texcoordsArray[] =
 		{
-			{ screenToNativeX,   screenToNativeY },
-			{ 0.0f,              screenToNativeY },
-			{ 0.0f,              0.0f            },
-			{ screenToNativeX,   0.0f            },
+			{ screenToNativeXScale,   screenToNativeYScale },
+			{ 0.0f,                   screenToNativeYScale },
+			{ 0.0f,                   0.0f                 },
+			{ screenToNativeXScale,   0.0f                 },
 		};
 	glBufferData(GL_ARRAY_BUFFER, sizeof(float2) * quadVerticesNumber, texcoordsArray, GL_STATIC_DRAW);
 	glVertexAttribPointer(vsTexcoord, 2, GL_FLOAT, GL_FALSE, 0, 0);
@@ -1215,7 +1215,7 @@ void fullscreenQuadBindVertexData(
 	glUniform1i(fsTexture, 0);
 }
 
-void DrawFullscreenQuad(float screenToNativeX, float screenToNativeY, float scale_x, float scale_y) {
+void DrawFullscreenQuad(float screenToNativeXScale, float screenToNativeYScale, float xScale, float yScale) {
 	u32 quadIndicesNumber = 6;
 	GLint boundArrayBuffer = 0;
 	GLint boundElementArrayBuffer = 0;
@@ -1226,8 +1226,8 @@ void DrawFullscreenQuad(float screenToNativeX, float screenToNativeY, float scal
 	glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &boundArrayBuffer);
 	glGetIntegerv(GL_ELEMENT_ARRAY_BUFFER_BINDING, &boundElementArrayBuffer);
 
-	fullscreenQuadPrepareFramebuffer(scale_x, scale_y);
-	fullscreenQuadBindVertexData(screenToNativeX, screenToNativeY, vsPosition, vsTexcoord, fsTexture);
+	fullscreenQuadPrepareFramebuffer(xScale, yScale);
+	fullscreenQuadBindVertexData(screenToNativeXScale, screenToNativeYScale, vsPosition, vsTexcoord, fsTexture);
 
 	glDrawElements(GL_TRIANGLES, quadIndicesNumber, GL_UNSIGNED_BYTE, 0);
 
