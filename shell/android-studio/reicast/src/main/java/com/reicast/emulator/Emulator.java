@@ -23,6 +23,7 @@ public class Emulator extends Application {
     public static final String pref_mipmaps = "use_mipmaps";
     public static final String pref_widescreen = "stretch_view";
     public static final String pref_frameskip = "frame_skip";
+    public static final String pref_clipping = "clipping";
     public static final String pref_pvrrender = "pvr_render";
     public static final String pref_syncedrender = "synced_render";
     public static final String pref_modvols = "modifier_volumes";
@@ -44,6 +45,7 @@ public class Emulator extends Application {
     public static boolean widescreen = false;
     public static boolean subdivide = false;
     public static int frameskip = 0;
+    public static boolean clipping = false;
     public static boolean pvrrender = false;
     public static boolean syncedrender = false;
     public static boolean modvols = true;
@@ -66,6 +68,7 @@ public class Emulator extends Application {
         Emulator.mipmaps = mPrefs.getBoolean(pref_mipmaps, mipmaps);
         Emulator.widescreen = mPrefs.getBoolean(pref_widescreen, widescreen);
         Emulator.frameskip = mPrefs.getInt(pref_frameskip, frameskip);
+        Emulator.clipping = mPrefs.getBoolean(pref_clipping, clipping);
         Emulator.pvrrender = mPrefs.getBoolean(pref_pvrrender, pvrrender);
         Emulator.syncedrender = mPrefs.getBoolean(pref_syncedrender, syncedrender);
         Emulator.bootdisk = mPrefs.getString(pref_bootdisk, bootdisk);
@@ -93,6 +96,7 @@ public class Emulator extends Application {
         JNIdc.widescreen(Emulator.widescreen ? 1 : 0);
         JNIdc.subdivide(Emulator.subdivide ? 1 : 0);
         JNIdc.frameskip(Emulator.frameskip);
+        JNIdc.clipping(Emulator.clipping ? 1 : 0);
         JNIdc.pvrrender(Emulator.pvrrender ? 1 : 0);
         JNIdc.syncedrender(Emulator.syncedrender ? 1 : 0);
         JNIdc.modvols(Emulator.modvols ? 1 : 0);

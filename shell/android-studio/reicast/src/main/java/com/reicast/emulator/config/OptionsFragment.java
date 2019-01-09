@@ -370,6 +370,16 @@ public class OptionsFragment extends Fragment {
 		limit_fps.setChecked(mPrefs.getBoolean(Emulator.pref_limitfps, Emulator.limitfps));
 		limit_fps.setOnCheckedChangeListener(limitfps_option);
 
+		OnCheckedChangeListener clipping_option = new OnCheckedChangeListener() {
+
+			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+				mPrefs.edit().putBoolean(Emulator.pref_clipping, isChecked).apply();
+			}
+		};
+		CompoundButton clipping_fps = (CompoundButton) getView().findViewById(R.id.clipping_option);
+		clipping_fps.setChecked(mPrefs.getBoolean(Emulator.pref_clipping, Emulator.clipping));
+		clipping_fps.setOnCheckedChangeListener(clipping_option);
+
 		OnCheckedChangeListener mipmaps_option = new OnCheckedChangeListener() {
 
 			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -697,6 +707,7 @@ public class OptionsFragment extends Fragment {
 		mPrefs.edit().remove(Emulator.pref_mipmaps).apply();
 		mPrefs.edit().remove(Emulator.pref_widescreen).apply();
 		mPrefs.edit().remove(Emulator.pref_frameskip).apply();
+		mPrefs.edit().remove(Emulator.pref_clipping).apply();
 		mPrefs.edit().remove(Emulator.pref_pvrrender).apply();
 		mPrefs.edit().remove(Emulator.pref_syncedrender).apply();
 		mPrefs.edit().remove(Emulator.pref_bootdisk).apply();
