@@ -738,6 +738,31 @@ public:
 				Faddp(regalloc.MapVRegister(op.rd), v1.V2S());
 				break;
 
+			case shop_ftrv:
+				Add(x9, x28, sh4_context_mem_operand(op.rs1.reg_ptr()).GetOffset());
+				Ld1(v0.V4S(), MemOperand(x9));
+				Add(x9, x28, sh4_context_mem_operand(op.rs2.reg_ptr()).GetOffset());
+				Ld1(v1.V4S(), MemOperand(x9, 16, PostIndex));
+				Ld1(v2.V4S(), MemOperand(x9, 16, PostIndex));
+				Ld1(v3.V4S(), MemOperand(x9, 16, PostIndex));
+				Ld1(v4.V4S(), MemOperand(x9, 16, PostIndex));
+				Fmul(v5.V4S(), v1.V4S(), s0, 0);
+				Fmla(v5.V4S(), v2.V4S(), s0, 1);
+				Fmla(v5.V4S(), v3.V4S(), s0, 2);
+				Fmla(v5.V4S(), v4.V4S(), s0, 3);
+				Add(x9, x28, sh4_context_mem_operand(op.rd.reg_ptr()).GetOffset());
+				St1(v5.V4S(), MemOperand(x9));
+				break;
+
+			case shop_frswap:
+				Add(x9, x28, sh4_context_mem_operand(op.rs1.reg_ptr()).GetOffset());
+				Add(x10, x28, sh4_context_mem_operand(op.rd.reg_ptr()).GetOffset());
+				Ld4(v0.V2D(), v1.V2D(), v2.V2D(), v3.V2D(), MemOperand(x9));
+				Ld4(v4.V2D(), v5.V2D(), v6.V2D(), v7.V2D(), MemOperand(x10));
+				St4(v4.V2D(), v5.V2D(), v6.V2D(), v7.V2D(), MemOperand(x9));
+				St4(v0.V2D(), v1.V2D(), v2.V2D(), v3.V2D(), MemOperand(x10));
+				break;
+
 			case shop_cvt_f2i_t:
 				Fcvtzs(regalloc.MapRegister(op.rd), regalloc.MapVRegister(op.rs1));
 				break;
