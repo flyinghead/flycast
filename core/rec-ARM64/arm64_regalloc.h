@@ -43,7 +43,7 @@ static eFReg alloc_fregs[] = { S8, S9, S10, S11, S12, S13, S14, S15, (eFReg)-1 }
 
 class Arm64Assembler;
 
-struct Arm64RegAlloc : RegAlloc<eReg, eFReg, false>
+struct Arm64RegAlloc : RegAlloc<eReg, eFReg, false>		// TODO explode_spans=true (default, x86) breaks things. Why?
 {
 	Arm64RegAlloc(Arm64Assembler *assembler) : assembler(assembler) {}
 
@@ -65,9 +65,9 @@ struct Arm64RegAlloc : RegAlloc<eReg, eFReg, false>
 		return Register::GetWRegFromCode(ereg);
 	}
 
-	const VRegister& MapVRegister(const shil_param& param)
+	const VRegister& MapVRegister(const shil_param& param, u32 index = 0)
 	{
-		eFReg ereg = mapf(param);
+		eFReg ereg = mapfv(param, index);
 		if (ereg == (eFReg)-1)
 			die("VRegister not allocated");
 		return VRegister::GetSRegFromCode(ereg);
