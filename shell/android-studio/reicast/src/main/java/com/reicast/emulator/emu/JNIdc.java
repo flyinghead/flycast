@@ -43,6 +43,7 @@ public final class JNIdc
 	public static native void widescreen(int stretch);
 	public static native void subdivide(int subdivide);
 	public static native void frameskip(int frames);
+	public static native void clipping(int clipping);
 	public static native void pvrrender(int render);
 	public static native void syncedrender(int sync);
 	public static native void modvols(int volumes);
