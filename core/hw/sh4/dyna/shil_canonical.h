@@ -310,13 +310,12 @@ shil_compile
 	shil_cf_arg_u32(rs1);
 	shil_cf(f1);
 	shil_cf_rv_u64(rd);
-	//die();
 )
 
 shil_opc_end()
 
 
-//shop_adc	//add with carry
+//shop_sbc	// substract with carry
 shil_opc(sbc)
 shil_canonical
 (
@@ -345,7 +344,6 @@ shil_compile
 	shil_cf_arg_u32(rs1);
 	shil_cf(f1);
 	shil_cf_rv_u64(rd);
-	//die();
 )
 shil_opc_end()
 
@@ -468,7 +466,6 @@ shil_compile
 	shil_cf_arg_u32(rs1);
 	shil_cf(f1);
 	shil_cf_rv_u32(rd);
-	//die();
 )
 shil_opc_end()
 
@@ -494,7 +491,6 @@ shil_compile
 	shil_cf_arg_u32(rs1);
 	shil_cf(f1);
 	shil_cf_rv_u32(rd);
-	//die();
 )
 
 shil_opc_end()
@@ -512,7 +508,6 @@ shil_compile
 	shil_cf_arg_u32(rs1);
 	shil_cf(f1);
 	shil_cf_rv_u32(rd);
-	//die();
 )
 
 shil_opc_end()
@@ -531,7 +526,6 @@ shil_compile
 	shil_cf_arg_u32(rs1);
 	shil_cf(f1);
 	shil_cf_rv_u32(rd);
-	//die();
 )
 
 shil_opc_end()
@@ -583,7 +577,6 @@ shil_compile
 	shil_cf_arg_u32(rs1);
 	shil_cf(f1);
 	shil_cf_rv_u64(rd);
-	//die();
 )
 
 shil_opc_end()
@@ -608,7 +601,6 @@ shil_compile
 	shil_cf_arg_u32(rs1);
 	shil_cf(f1);
 	shil_cf_rv_u64(rd);
-	//die();
 )
 
 shil_opc_end()
@@ -633,7 +625,6 @@ shil_compile
 	shil_cf_arg_u32(rs1);
 	shil_cf(f1);
 	shil_cf_rv_u32(rd);
-	//die();
 )
 
 shil_opc_end()
@@ -720,7 +711,6 @@ shil_compile
 	shil_cf_arg_u32(rs1);
 	shil_cf(f1);
 	shil_cf_rv_f32(rd);
-	//die();
 )
 
 shil_opc_end()
@@ -738,7 +728,6 @@ shil_compile
 	shil_cf_arg_u32(rs1);
 	shil_cf(f1);
 	shil_cf_rv_f32(rd);
-	//die();
 )
 
 shil_opc_end()
@@ -769,7 +758,6 @@ shil_compile
 	{
 		shil_cf(f2);
 	}
-	//die();
 )
 
 shil_opc_end()
