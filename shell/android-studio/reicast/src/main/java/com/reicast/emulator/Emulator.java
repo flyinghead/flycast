@@ -61,6 +61,7 @@ public class Emulator extends Application {
     public void getConfigurationPrefs(SharedPreferences mPrefs) {
         Emulator.dynarecopt = mPrefs.getBoolean(pref_dynarecopt, dynarecopt);
         Emulator.unstableopt = mPrefs.getBoolean(pref_unstable, unstableopt);
+        Emulator.dynsafemode = mPrefs.getBoolean(pref_dynsafemode, dynsafemode);
         Emulator.cable = mPrefs.getInt(pref_cable, cable);
         Emulator.dcregion = mPrefs.getInt(pref_dcregion, dcregion);
         Emulator.broadcast = mPrefs.getInt(pref_broadcast, broadcast);
