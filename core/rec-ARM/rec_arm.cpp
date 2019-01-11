@@ -197,13 +197,6 @@ typedef void BinaryOP       (eReg Rd, eReg Rn, eReg Rm,       ConditionCode CC);
 typedef void BinaryOPImm    (eReg Rd, eReg Rn, s32 sImm8,     ConditionCode CC);
 typedef void UnaryOP        (eReg Rd, eReg Rs);
 
-
-u32* GetRegPtr(u32 reg)
-{
-	return Sh4_int_GetRegisterPtr((Sh4RegType)reg);
-}
-
-
 // you pick reg, loads Base with reg addr, no reg. mapping yet !
 void LoadSh4Reg_mem(eReg Rt, u32 Sh4_Reg, eCC CC=CC_AL)
 {
@@ -343,7 +336,6 @@ extern "C" void ngen_LinkBlock_cond_Branch_stub();
 extern "C" void ngen_LinkBlock_cond_Next_stub();
 
 extern "C" void ngen_FailedToFindBlock_();
-void (*ngen_FailedToFindBlock)()=&ngen_FailedToFindBlock_;  // in asm
 
 #include <map>
 
@@ -2258,7 +2250,9 @@ void ngen_init()
     verify(FPCB_OFFSET == -0x2100000 || FPCB_OFFSET == -0x4100000);
     verify(rcb_noffs(p_sh4rcb->fpcb) == FPCB_OFFSET);
     
-	for (int s=0;s<6;s++)
+    ngen_FailedToFindBlock = &ngen_FailedToFindBlock_;
+
+    for (int s=0;s<6;s++)
 	{
 		void* fn=s==0?(void*)_vmem_ReadMem8SX32:
 				 s==1?(void*)_vmem_ReadMem16SX32:

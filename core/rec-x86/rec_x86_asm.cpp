@@ -62,7 +62,6 @@ naked void ngen_FailedToFindBlock_()
 const u32 cpurun_offset=offsetof(Sh4RCB,cntx.CpuRunning);
 const u32 nextpc_offset=offsetof(Sh4RCB,cntx.pc);
 
-void (*ngen_FailedToFindBlock)()=&ngen_FailedToFindBlock_;
 naked void ngen_mainloop(void* cntx)
 {
 	__asm
@@ -138,6 +137,5 @@ naked void DYNACALL ngen_blockcheckfail2(u32 addr)
 	u32 gas_offs=offsetof(Sh4RCB,cntx.jdyn);
 	u32 cpurun_offset=offsetof(Sh4RCB,cntx.CpuRunning);
 	u32 nextpc_offset=offsetof(Sh4RCB,cntx.pc);
-	void (*ngen_FailedToFindBlock)()=&ngen_FailedToFindBlock_;
 #endif
 #endif

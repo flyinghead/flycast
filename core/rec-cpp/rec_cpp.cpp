@@ -37,12 +37,6 @@ struct DynaRBI : RuntimeBlockInfo
 int cycle_counter;
 extern int mips_counter;
 
-void ngen_FailedToFindBlock_internal() {
-	rdv_FailedToFindBlock(Sh4cntx.pc);
-}
-
-void(*ngen_FailedToFindBlock)() = &ngen_FailedToFindBlock_internal;
-
 void ngen_mainloop(void* v_cntx)
 {
 	Sh4RCB* ctx = (Sh4RCB*)((u8*)v_cntx - sizeof(Sh4RCB));
@@ -81,12 +75,7 @@ RuntimeBlockInfo* ngen_AllocateBlock()
 	return new DynaRBI();
 }
 
-u32* GetRegPtr(u32 reg)
-{
-	return Sh4_int_GetRegisterPtr((Sh4RegType)reg);
-}
-
-void ngen_blockcheckfail(u32 pc) {
+static void ngen_blockcheckfail(u32 pc) {
 	printf("REC CPP: SMC invalidation at %08X\n", pc);
 	rdv_BlockCheckFail(pc);
 }

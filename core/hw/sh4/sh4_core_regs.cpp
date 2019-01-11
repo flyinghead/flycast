@@ -260,3 +260,8 @@ u32 sh4context_offset_regtype(Sh4RegType sh4_reg)
 {
 	return sh4context_offset_u32(sh4_reg);
 }
+
+u32* GetRegPtr(u32 reg)
+{
+	return Sh4_int_GetRegisterPtr((Sh4RegType)reg);
+}

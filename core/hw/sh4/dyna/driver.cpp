@@ -252,6 +252,12 @@ DynarecCodeEntryPtr DYNACALL rdv_FailedToFindBlock(u32 pc)
 	return rdv_CompilePC();
 }
 
+static void ngen_FailedToFindBlock_internal() {
+	rdv_FailedToFindBlock(Sh4cntx.pc);
+}
+
+void (*ngen_FailedToFindBlock)() = &ngen_FailedToFindBlock_internal;
+
 extern u32 rebuild_counter;
 
 

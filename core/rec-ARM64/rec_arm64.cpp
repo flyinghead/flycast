@@ -92,27 +92,6 @@ static void CacheFlush(void* start, void* end)
 #endif
 }
 
-static void ngen_FailedToFindBlock_internal() {
-	rdv_FailedToFindBlock(Sh4cntx.pc);
-}
-
-void(*ngen_FailedToFindBlock)() = &ngen_FailedToFindBlock_internal;
-
-extern "C" {
-
-void *bm_GetCodeInternal(u32 pc)
-{
-	return (void*)bm_GetCode(pc);
-}
-
-void UpdateSystemInternal(u32 pc)
-{
-	if (UpdateSystem())
-		rdv_DoInterrupts_pc(pc);
-}
-
-}
-
 void ngen_mainloop(void* v_cntx)
 {
 	Sh4RCB* ctx = (Sh4RCB*)((u8*)v_cntx - sizeof(Sh4RCB));
@@ -140,14 +119,13 @@ void ngen_mainloop(void* v_cntx)
 
 	"slice_loop:					\n\t"
 		"ldr w0, [x28, %1]			\n\t"	// pc
-		"bl bm_GetCodeInternal		\n\t"
+		"bl bm_GetCode2				\n\t"
 		"blr x0						\n\t"
 		"cmp w27, #0				\n\t"
 		"b.gt slice_loop			\n\t"
 
 		"add w27, w27, %2			\n\t"	// SH4_TIMESLICE
-		"ldr w0, [x28, %1]			\n\t"	// pc
-		"bl UpdateSystemInternal	\n\t"
+		"bl UpdateSystem_INTC		\n\t"
 		"b run_loop					\n\t"
 
 	"end_run_loop:					\n\t"
@@ -188,12 +166,7 @@ RuntimeBlockInfo* ngen_AllocateBlock()
 	return new DynaRBI();
 }
 
-u32* GetRegPtr(u32 reg)
-{
-	return Sh4_int_GetRegisterPtr((Sh4RegType)reg);
-}
-
-void ngen_blockcheckfail(u32 pc) {
+static void ngen_blockcheckfail(u32 pc) {
 	printf("arm64 JIT: SMC invalidation at %08X\n", pc);
 	rdv_BlockCheckFail(pc);
 }
@@ -722,14 +695,12 @@ public:
 
 				if (CCN_MMUCR.AT)
 				{
-					Mov(x9, reinterpret_cast<uintptr_t>(&do_sqw_mmu));
+					Ldr(x9, reinterpret_cast<uintptr_t>(&do_sqw_mmu));
 				}
 				else
 				{
-					verify(offsetof(Sh4RCB, cntx) - offsetof(Sh4RCB, do_sqw_nommu) > 0);
 					Sub(x9, x28, offsetof(Sh4RCB, cntx) - offsetof(Sh4RCB, do_sqw_nommu));
 					Ldr(x9, MemOperand(x9));
-					verify(offsetof(Sh4RCB, cntx) - offsetof(Sh4RCB, sq_buffer) > 0);
 					Sub(x1, x28, offsetof(Sh4RCB, cntx) - offsetof(Sh4RCB, sq_buffer));
 				}
 				if (!frame_reg_saved)

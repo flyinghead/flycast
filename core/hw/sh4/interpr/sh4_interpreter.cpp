@@ -254,8 +254,10 @@ int UpdateSystem()
 
 int UpdateSystem_INTC()
 {
-	UpdateSystem();
-	return UpdateINTC();
+	if (UpdateSystem())
+		return UpdateINTC();
+	else
+		return 0;
 }
 
 void sh4_int_resetcache() { }

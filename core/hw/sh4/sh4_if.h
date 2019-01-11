@@ -354,3 +354,5 @@ s32 rcb_poffs(T* ptr)
 //Get an interface to sh4 interpreter
 void Get_Sh4Interpreter(sh4_if* cpu);
 void Get_Sh4Recompiler(sh4_if* cpu);
+
+u32* GetRegPtr(u32 reg);

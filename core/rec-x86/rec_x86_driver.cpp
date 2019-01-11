@@ -257,11 +257,6 @@ void DYNACALL PrintBlock(u32 pc)
 	printf("\n");
 }
 
-u32* GetRegPtr(u32 reg)
-{
-	return Sh4_int_GetRegisterPtr((Sh4RegType)reg);
-}
-
 u32 cvld;
 u32 rdmt[6];
 extern u32 memops_t,memops_l;
@@ -763,6 +758,8 @@ void* mem_code[3][2][5];
 
 void ngen_init()
 {
+	ngen_FailedToFindBlock = &ngen_FailedToFindBlock_;
+
 	//Setup emitter
 	x86e = new x86_block();
 	x86e->Init(0,0);
