@@ -2633,6 +2633,7 @@ void MacroAssembler::PrintfNoPreserve(const char* format,
     }
     dc32(arg_pattern_list);  // kPrintfArgPatternListOffset
   } else {
+#undef printf
     Register tmp = temps.AcquireX();
     Mov(tmp, reinterpret_cast<uintptr_t>(printf));
     Blr(tmp);
