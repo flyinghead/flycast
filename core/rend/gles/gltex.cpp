@@ -420,14 +420,14 @@ struct FBT
 	FBT(): initialized(false), updated(false), tf({0}), tex(0), renderTex(0), texDataValid(false) {}
 };
 
-void createTexture(u32 w, u32 h, u32 format, u32 type, GLuint & textureID) {
+void createTexture(u32 w, u32 h, u32 textureFormat, u32 textureType, GLuint & textureID) {
 	glGenTextures(1, &textureID);
 	glBindTexture(GL_TEXTURE_2D, textureID);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexImage2D(GL_TEXTURE_2D, 0, format, w, h, 0, format, type, 0);
+	glTexImage2D(GL_TEXTURE_2D, 0, textureFormat, w, h, 0, textureFormat, textureType, 0);
 }
 
 map<u32, FBT> renderedTextures;
@@ -524,17 +524,17 @@ void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 GLint checkSupportedReadFormat()
 {
 	//framebuffer from which we are reading must be bound before
-	GLint format;
-	glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_FORMAT, &format);
-	return format;
+	GLint readFormat;
+	glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_FORMAT, &readFormat);
+	return readFormat;
 }
 
 GLint checkSupportedReadType()
 {
 	//framebuffer from which we are reading must be bound before
-	GLint type;
-	glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_TYPE, &type);
-	return type;
+	GLint readType;
+	glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_TYPE, &readType);
+	return readType;
 }
 
 void handleKRGB1555(GLint w, GLint h, FBT &fbt) {
@@ -715,7 +715,7 @@ void handlePackModeRTT(GLint w, GLint h, FBT &fbt)
 		default:
 		{
 			//clear unsupported texture to avoid artifacts
-			memset(temp_tex_buffer, '\0', w * h);
+			memset(temp_tex_buffer, '\0', (size_t)((long long) w * h));
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4, temp_tex_buffer);
 			break;
 		}
