@@ -485,7 +485,8 @@ void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 			glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, fbw, fbh);
 		}
 #else
-		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, fbw, fbh);
+		//OpenGL >= 3.0 is required
+		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, fbw, fbh);
 #endif
 	}
 
@@ -505,10 +506,14 @@ void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 
 		// Attach the depth (and/or stencil) buffer we created earlier to our FBO.
 		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, renderedTexture->renderBuffer);
+#ifdef GLES
 		if (isExtensionSupported("GL_OES_packed_depth_stencil")) {
 			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, renderedTexture->renderBuffer);
 		}
-
+#else
+		//OpenGL >= 3.0 is required
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, renderedTexture->renderBuffer);
+#endif
 		// Check that our FBO creation was successful
 		GLuint uStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 
