@@ -543,7 +543,7 @@ GLint checkSupportedReadType()
 }
 
 void handleKRGB1555(GLint w, GLint h, FBT &fbt) {
-	const u32 kval_upper_bit = fbt.kval_bit;
+	const u32 kval_bit = fbt.kval_bit;
 	GLint framebufferReadType = checkSupportedReadType();
 
 	if (framebufferReadType == GL_UNSIGNED_SHORT_5_5_5_1) {
@@ -552,13 +552,16 @@ void handleKRGB1555(GLint w, GLint h, FBT &fbt) {
 		// convert RGBA5551 to KRGB1555
 		const u16 *dataPointer = fbt.texData;
 		for (u32 i = 0; i < w * h; i++) {
-			fbt.texData[i] = (kval_upper_bit << 15) | ((*dataPointer & 0xFFFE) >> 1);
+			fbt.texData[i] = (kval_bit << 15) | ((*dataPointer & 0xFFFE) >> 1);
 			*dataPointer++;
 		}
 	}
 	else if (framebufferReadType == GL_UNSIGNED_BYTE) {
 		// Adreno 506 slow rendering fix - 'texconv' in case of RGBA5551 format is not needed
 		glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, temp_tex_buffer_32);
+		for (u32 i = 0; i < w * h; i++) {
+			temp_tex_buffer_32[i] =  (kval_bit << 31) | (temp_tex_buffer_32[i] & 0x00FFFFFF);
+		}
 		glBindTexture(GL_TEXTURE_2D, fbt.tex);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, temp_tex_buffer_32);
 		fbt.updated = false;
@@ -575,7 +578,7 @@ void handleKRGB1555(GLint w, GLint h, FBT &fbt) {
 			const u8 red = (*dataPointer32 & 0x000000FFUL) >> 3; //5bits for red
 
 			//convert to 16bit color with K value bit
-			temp_tex_buffer_32[i] =  (kval_upper_bit << 15) | (red << 10) | (green << 5) | blue;
+			temp_tex_buffer_32[i] =  (kval_bit << 15) | (red << 10) | (green << 5) | blue;
 			*dataPointer32++;
 
 			//assign to 16bit buffer (type conversions should use static_cast<> in C++)
@@ -624,6 +627,8 @@ void handleARGB4444(GLint w, GLint h, FBT &fbt)
 		}
 	}
 	else {
+		glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, temp_tex_buffer_32);
+
 		// convert R8G8B8A8 to ARGB4444
 		const u32 *dataPointer32 = temp_tex_buffer_32;
 		for (u32 i = 0; i < w * h; i++) {
@@ -662,6 +667,10 @@ void handleARGB1555(GLint w, GLint h, FBT &fbt) {
 	else if (framebufferReadType == GL_UNSIGNED_BYTE) {
 		// Adreno 506 slow rendering fix - 'texconv' in case of RGBA5551 format is not needed
 		glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, temp_tex_buffer_32);
+		for (u32 i = 0; i < w * h; i++) {
+			const u8 alphaThresholded = ((temp_tex_buffer_32[i] >> 31) >= fb_alpha_threshold) ? 1 : 0;
+			temp_tex_buffer_32[i] =  (alphaThresholded << 31) | (temp_tex_buffer_32[i] & 0x00FFFFFF);
+		}
 		glBindTexture(GL_TEXTURE_2D, fbt.tex);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, temp_tex_buffer_32);
 		fbt.updated = false;
