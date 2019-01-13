@@ -10,6 +10,7 @@
 
 #include "hw/sh4/sh4_core.h"
 #include "hw/sh4/sh4_mem.h"
+#include "hw/sh4/sh4_rom.h"
 #include "emitter/x86_emitter.h"
 #include "profiler/profiler.h"
 #include "oslib/oslib.h"
@@ -34,6 +35,8 @@ void ngen_mainloop(void* v_cntx)
 	__asm__ volatile (
 			"pushq %%rbx					\n\t"
 			"pushq %%rbp					\n\t"
+			"pushq %%rdi					\n\t"
+			"pushq %%rsi					\n\t"
 			"pushq %%r12					\n\t"
 			"pushq %%r13					\n\t"
 			"pushq %%r14					\n\t"
@@ -47,28 +50,28 @@ void ngen_mainloop(void* v_cntx)
 			"vmovdqu %%xmm13, 80(%%rsp)		\n\t"
 			"vmovdqu %%xmm14, 96(%%rsp)		\n\t"
 			"vmovdqu %%xmm15, 112(%%rsp)	\n\t"
-			"movl %2, cycle_counter(%%rip)	\n"		// SH4_TIMESLICE
+			"movl %[_SH4_TIMESLICE], cycle_counter(%%rip)	\n"
 
 		"run_loop:							\n\t"
 			"movq p_sh4rcb(%%rip), %%rax	\n\t"
-			"movl %p0(%%rax), %%edx			\n\t"	// CpuRunning
+			"movl %p[CpuRunning](%%rax), %%edx	\n\t"
 			"testl %%edx, %%edx				\n\t"
 			"je end_run_loop				\n"
 
 		"slice_loop:						\n\t"
 			"movq p_sh4rcb(%%rip), %%rax	\n\t"
 #ifdef _WIN32
-			"movl %p1(%%rax), %%ecx			\n\t"	// pc
+			"movl %p[pc](%%rax), %%ecx		\n\t"
 #else
-			"movl %p1(%%rax), %%edi			\n\t"	// pc
+			"movl %p[pc](%%rax), %%edi		\n\t"
 #endif
-			"call _Z10bm_GetCodej			\n\t"	// was bm_GetCode2
+			"call bm_GetCode2				\n\t"
 			"call *%%rax					\n\t"
 			"movl cycle_counter(%%rip), %%ecx \n\t"
 			"testl %%ecx, %%ecx				\n\t"
 			"jg slice_loop					\n\t"
 
-			"addl %2, %%ecx					\n\t"	// SH4_TIMESLICE
+			"addl %[_SH4_TIMESLICE], %%ecx	\n\t"
 			"movl %%ecx, cycle_counter(%%rip)	\n\t"
 			"call UpdateSystem_INTC			\n\t"
 			"jmp run_loop					\n"
@@ -87,12 +90,14 @@ void ngen_mainloop(void* v_cntx)
 			"popq %%r14						\n\t"
 			"popq %%r13						\n\t"
 			"popq %%r12						\n\t"
+			"popq %%rsi						\n\t"
+			"popq %%rdi						\n\t"
 			"popq %%rbp						\n\t"
 			"popq %%rbx						\n\t"
 			:
-			: "i"(offsetof(Sh4RCB, cntx.CpuRunning)),
-			  "i"(offsetof(Sh4RCB, cntx.pc)),
-			  "i"(SH4_TIMESLICE)
+			: [CpuRunning] "i"(offsetof(Sh4RCB, cntx.CpuRunning)),
+			  [pc] "i"(offsetof(Sh4RCB, cntx.pc)),
+			  [_SH4_TIMESLICE] "i"(SH4_TIMESLICE)
 			: "memory"
 	);
 }
@@ -382,10 +387,9 @@ public:
 					mov(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rs1));
 				cmp(regalloc.MapRegister(op.rs3), 1);	// C = ~rs3
 				cmc();		// C = rs3
-				mov(ecx, 1);
-				mov(regalloc.MapRegister(op.rd2), 0);
 				adc(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rs2)); // (C,rd)=rs1+rs2+rs3(C)
-				cmovc(regalloc.MapRegister(op.rd2), ecx);	// rd2 = C
+				setc(al);
+				movzx(regalloc.MapRegister(op.rd2), al);	// rd2 = C
 				break;
 			/* FIXME buggy
 			case shop_sbc:
@@ -407,13 +411,12 @@ public:
 					mov(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rs1));
 				cmp(regalloc.MapRegister(op.rs2), 1);	// C = ~rs2
 				cmc();		// C = rs2
-				mov(eax, 1);
-				mov(regalloc.MapRegister(op.rd2), 0);
 				if (op.op == shop_rocr)
 					rcr(regalloc.MapRegister(op.rd), 1);
 				else
 					rcl(regalloc.MapRegister(op.rd), 1);
-				cmovc(regalloc.MapRegister(op.rd2), eax);	// rd2 = C
+				setc(al);
+				movzx(regalloc.MapRegister(op.rd2), al);	// rd2 = C
 				break;
 
 			case shop_shld:
@@ -471,30 +474,29 @@ public:
 						else
 							cmp(regalloc.MapRegister(op.rs1), regalloc.MapRegister(op.rs2));
 					}
-					mov(regalloc.MapRegister(op.rd), 0);
-					mov(ecx, 1);
 					switch (op.op)
 					{
 					case shop_test:
 					case shop_seteq:
-						cmove(regalloc.MapRegister(op.rd), ecx);
+						sete(al);
 						break;
 					case shop_setge:
-						cmovge(regalloc.MapRegister(op.rd), ecx);
+						setge(al);
 						break;
 					case shop_setgt:
-						cmovg(regalloc.MapRegister(op.rd), ecx);
+						setg(al);
 						break;
 					case shop_setae:
-						cmovnc(regalloc.MapRegister(op.rd), ecx);
+						setae(al);
 						break;
 					case shop_setab:
-						cmova(regalloc.MapRegister(op.rd), ecx);
+						seta(al);
 						break;
 					default:
 						die("invalid case");
 						break;
 					}
+					movzx(regalloc.MapRegister(op.rd), al);
 				}
 				break;
 /*
@@ -640,29 +642,34 @@ public:
 
 			case shop_fsetgt:
 			case shop_fseteq:
-				movss(xmm0, regalloc.MapXRegister(op.rs1));
+				ucomiss(regalloc.MapXRegister(op.rs1), regalloc.MapXRegister(op.rs2));
 				if (op.op == shop_fsetgt)
-					cmpnless(xmm0, regalloc.MapXRegister(op.rs2));
+				{
+					seta(al);
+				}
 				else
-					cmpeqss(xmm0, regalloc.MapXRegister(op.rs2));
-				movd(regalloc.MapRegister(op.rd), xmm0);
-				and(regalloc.MapRegister(op.rd), 1);
+				{
+					//special case
+					//We want to take in account the 'unordered' case on the fpu
+					lahf();
+					test(ah, 0x44);
+					setnp(al);
+				}
+				movzx(regalloc.MapRegister(op.rd), al);
 				break;
 
-/*
 			case shop_fsca:
-				Mov(x1, reinterpret_cast<uintptr_t>(&sin_table));
-				Add(x1, x1, Operand(regalloc.MapRegister(op.rs1), UXTH, 3));
-				// TODO use regalloc
-				//Ldr(regalloc.MapVRegister(op.rd, 0), MemOperand(x1, 4, PostIndex));
-				//Ldr(regalloc.MapVRegister(op.rd, 1), MemOperand(x1));
 				regalloc.writeback_fpu += 2;
-				Ldr(w2, MemOperand(x1, 4, PostIndex));
-				Str(w2, sh4_context_mem_operand(op.rd.reg_ptr()));
-				Ldr(w2, MemOperand(x1));
-				Str(w2, sh4_context_mem_operand(GetRegPtr(op.rd._reg + 1)));
+				movzx(rax, Xbyak::Reg16(regalloc.MapRegister(op.rs1).getIdx()));
+				mov(rcx, (uintptr_t)&sin_table);
+				//movss(regalloc.MapXRegister(op.rd), dword[rcx + rax * 8]);
+				//sub(rcx, 4);
+				//movss(Xbyak::Xmm(regalloc.MapXRegister(op.rd).getIdx() + 1), dword[rcx + rax * 8]);
+				mov(rcx, qword[rcx + rax * 8]);
+				mov(rdx, (uintptr_t)op.rd.reg_ptr());
+				mov(qword[rdx], rcx);
 				break;
-
+/*
 			case shop_fipr:
 				Add(x9, x28, sh4_context_mem_operand(op.rs1.reg_ptr()).GetOffset());
 				Ld1(v0.V4S(), MemOperand(x9));
@@ -704,7 +711,10 @@ public:
 				break;
 */
 			case shop_cvt_f2i_t:
-				cvtss2si(regalloc.MapRegister(op.rd), regalloc.MapXRegister(op.rs1));
+				mov(rcx, (uintptr_t)&cvtf2i_pos_saturation);
+				movss(xmm0, dword[rcx]);
+				minss(xmm0, regalloc.MapXRegister(op.rs1));
+				cvtss2si(regalloc.MapRegister(op.rd), xmm0);
 				break;
 			case shop_cvt_i2f_n:
 			case shop_cvt_i2f_z:
@@ -869,7 +879,6 @@ public:
 		mov(rax, (size_t)GetRegPtr(reg));
 		mov(Xbyak::Reg32(nreg), dword[rax]);
 	}
-
 	void RegWriteback(u32 reg, Xbyak::Operand::Code nreg)
 	{
 		mov(rax, (size_t)GetRegPtr(reg));
@@ -1025,9 +1034,11 @@ private:
 
 	X64RegAlloc regalloc;
 	static const u32 float_sign_mask;
+	static const f32 cvtf2i_pos_saturation;
 };
 
 const u32 BlockCompiler::float_sign_mask = 0x80000000;
+const f32 BlockCompiler::cvtf2i_pos_saturation = 2147483520.0f;		// IEEE 754: 0x4effffff;
 
 void X64RegAlloc::Preload(u32 reg, Xbyak::Operand::Code nreg)
 {
