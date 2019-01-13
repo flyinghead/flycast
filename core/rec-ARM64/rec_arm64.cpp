@@ -556,25 +556,25 @@ public:
 			case shop_shl:
 				if (op.rs2.is_imm())
 					Lsl(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rs1), op.rs2._imm);
-				else if (op.rs3.is_reg())
+				else if (op.rs2.is_reg())
 					Lsl(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rs1), regalloc.MapRegister(op.rs2));
 				break;
 			case shop_shr:
 				if (op.rs2.is_imm())
 					Lsr(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rs1), op.rs2._imm);
-				else if (op.rs3.is_reg())
+				else if (op.rs2.is_reg())
 					Lsr(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rs1), regalloc.MapRegister(op.rs2));
 				break;
 			case shop_sar:
 				if (op.rs2.is_imm())
 					Asr(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rs1), op.rs2._imm);
-				else if (op.rs3.is_reg())
+				else if (op.rs2.is_reg())
 					Asr(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rs1), regalloc.MapRegister(op.rs2));
 				break;
 			case shop_ror:
 				if (op.rs2.is_imm())
 					Ror(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rs1), op.rs2._imm);
-				else if (op.rs3.is_reg())
+				else if (op.rs2.is_reg())
 					Ror(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rs1), regalloc.MapRegister(op.rs2));
 				break;
 
@@ -605,11 +605,13 @@ public:
 			case shop_shad:
 				// TODO optimize
 				Cmp(regalloc.MapRegister(op.rs2), 0);
-				Csel(w1, regalloc.MapRegister(op.rs2), wzr, ge);
+				Csel(w1, regalloc.MapRegister(op.rs2), wzr, ge);	// if shift >= 0 then w1 = shift else w1 = 0
 				Mov(w0, wzr);	// wzr not supported by csneg
-				Csneg(w2, w0, regalloc.MapRegister(op.rs2), ge);
-				Lsl(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rs1), w1);
-				if (op.op == shop_shld)
+				Csneg(w2, w0, regalloc.MapRegister(op.rs2), ge);	// if shift < 0 then w2 = -shift else w2 = 0
+				Cmp(w2, 32);
+				Csel(w2, 31, w2, eq);								// if shift == -32 then w2 = 31
+				Lsl(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rs1), w1);		// Left shift by w1
+				if (op.op == shop_shld)													// Right shift by w2
 					// Logical shift
 					Lsr(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rd), w2);
 				else
@@ -776,10 +778,8 @@ public:
 				//Ldr(regalloc.MapVRegister(op.rd, 0), MemOperand(x1, 4, PostIndex));
 				//Ldr(regalloc.MapVRegister(op.rd, 1), MemOperand(x1));
 				regalloc.writeback_fpu += 2;
-				Ldr(w2, MemOperand(x1, 4, PostIndex));
-				Str(w2, sh4_context_mem_operand(op.rd.reg_ptr()));
-				Ldr(w2, MemOperand(x1));
-				Str(w2, sh4_context_mem_operand(GetRegPtr(op.rd._reg + 1)));
+				Ldr(x2, MemOperand(x1));
+				Str(x2, sh4_context_mem_operand(op.rd.reg_ptr()));
 				break;
 
 			case shop_fipr:

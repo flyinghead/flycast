@@ -72,9 +72,4 @@ struct Arm64RegAlloc : RegAlloc<eReg, eFReg, false>		// TODO explode_spans=true 
 	Arm64Assembler *assembler;
 };
 
-extern Arm64RegAlloc reg;
-
-
-
-
 #endif /* CORE_REC_ARM64_ARM64_REGALLOC_H_ */
