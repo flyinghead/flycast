@@ -1601,7 +1601,8 @@ void fullscreenQuadCreateTemporaryFBO(float & screenToNativeXScale, float & scre
 			glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, screen_width, screen_height);
 		}
 #else
-		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, screen_width, screen_height);
+		//OpenGL >= 3.0 is required
+		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, screen_width, screen_height);
 #endif
 	}
 
@@ -1622,10 +1623,14 @@ void fullscreenQuadCreateTemporaryFBO(float & screenToNativeXScale, float & scre
 		glBindFramebuffer(GL_FRAMEBUFFER, fullscreenQuad.framebuffer);
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fullscreenQuad.framebufferTexture, 0);
 		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, fullscreenQuad.framebufferRenderbuffer);
+#ifdef GLES
 		if (isExtensionSupported("GL_OES_packed_depth_stencil")) {
 			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, fullscreenQuad.framebufferRenderbuffer);
 		}
-
+#else
+		//OpenGL >= 3.0 is required
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, fullscreenQuad.framebufferRenderbuffer);
+#endif
 		GLuint uStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 		verify(uStatus == GL_FRAMEBUFFER_COMPLETE);
 	}
