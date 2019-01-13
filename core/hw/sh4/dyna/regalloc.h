@@ -540,6 +540,15 @@ struct RegAlloc
 			}
 			else
 			{
+				if (op->op == shop_ftrv)
+				{
+					for (int sid = 0; sid < 16; sid++)
+					{
+						flush_span(reg_fr_0 + sid);
+						flush_span(reg_xf_0 + sid);
+					}
+				}
+
 				set<shil_param> reg_wt;
 				set<shil_param> reg_rd;
 
@@ -1083,14 +1092,15 @@ struct RegAlloc
 
 			if (spn->begining(current_opid) && spn->preload)
 			{
-				//printf("Op %d: Preloading r%d to %d\n",current_opid,spn->regstart,spn->nreg);
 				if (spn->fpr)
 				{
+					//printf("Op %d: Preloading f%d to %d\n",current_opid,spn->regstart,spn->nregf);
 					preload_fpu++;
 					Preload_FPU(spn->regstart,spn->nregf);
 				}
 				else
 				{
+					//printf("Op %d: Preloading r%d to %d\n",current_opid,spn->regstart,spn->nreg);
 					preload_gpr++;
 					Preload(spn->regstart,spn->nreg);
 				}
@@ -1106,14 +1116,15 @@ struct RegAlloc
 
 			if (spn->ending(current_opid) && spn->writeback)
 			{
-				//printf("Op %d: Writing back r%d to %d\n",current_opid,spn->regstart,spn->nreg);
 				if (spn->fpr)
 				{
+					//printf("Op %d: Writing back f%d from %d\n",current_opid,spn->regstart,spn->nregf);
 					writeback_fpu++;
 					Writeback_FPU(spn->regstart,spn->nregf);
 				}
 				else
 				{
+					//printf("Op %d: Writing back r%d from %d\n",current_opid,spn->regstart,spn->nreg);
 					writeback_gpr++;
 					Writeback(spn->regstart,spn->nreg);
 				}
