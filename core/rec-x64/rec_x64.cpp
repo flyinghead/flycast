@@ -3,6 +3,9 @@
 #include "types.h"
 
 #if FEAT_SHREC == DYNAREC_JIT && HOST_CPU == CPU_X64
+#define EXPLODE_SPANS
+//#define PROFILING
+
 #include "hw/sh4/sh4_opcode_list.h"
 #include "hw/sh4/dyna/ngen.h"
 #include "hw/sh4/modules/ccn.h"
@@ -19,7 +22,6 @@
 struct DynaRBI : RuntimeBlockInfo
 {
 	virtual u32 Relink() {
-		//verify(false);
 		return 0;
 	}
 
@@ -29,6 +31,24 @@ struct DynaRBI : RuntimeBlockInfo
 };
 
 int cycle_counter;
+
+double host_cpu_time;
+u64 guest_cpu_cycles;
+
+#ifdef PROFILING
+static double slice_start;
+extern "C"
+{
+static __attribute((used)) void start_slice()
+{
+	slice_start = os_GetSeconds();
+}
+static __attribute((used)) void end_slice()
+{
+	host_cpu_time += os_GetSeconds() - slice_start;
+}
+}
+#endif
 
 void ngen_mainloop(void* v_cntx)
 {
@@ -41,15 +61,7 @@ void ngen_mainloop(void* v_cntx)
 			"pushq %%r13					\n\t"
 			"pushq %%r14					\n\t"
 			"pushq %%r15					\n\t"
-			"subq $136, %%rsp				\n\t"	// 128 for xmm regs plus 8 for stack 16-byte alignment
-			"vmovdqu %%xmm8, 0(%%rsp)		\n\t"
-			"vmovdqu %%xmm9, 16(%%rsp)		\n\t"
-			"vmovdqu %%xmm10, 32(%%rsp)		\n\t"
-			"vmovdqu %%xmm11, 48(%%rsp)		\n\t"
-			"vmovdqu %%xmm12, 64(%%rsp) 	\n\t"
-			"vmovdqu %%xmm13, 80(%%rsp)		\n\t"
-			"vmovdqu %%xmm14, 96(%%rsp)		\n\t"
-			"vmovdqu %%xmm15, 112(%%rsp)	\n\t"
+			"subq $8, %%rsp					\n\t"	// 8 for stack 16-byte alignment
 			"movl %[_SH4_TIMESLICE], cycle_counter(%%rip)	\n"
 
 		"run_loop:							\n\t"
@@ -57,6 +69,9 @@ void ngen_mainloop(void* v_cntx)
 			"movl %p[CpuRunning](%%rax), %%edx	\n\t"
 			"testl %%edx, %%edx				\n\t"
 			"je end_run_loop				\n"
+#ifdef PROFILING
+			"call start_slice				\n\t"
+#endif
 
 		"slice_loop:						\n\t"
 			"movq p_sh4rcb(%%rip), %%rax	\n\t"
@@ -73,19 +88,14 @@ void ngen_mainloop(void* v_cntx)
 
 			"addl %[_SH4_TIMESLICE], %%ecx	\n\t"
 			"movl %%ecx, cycle_counter(%%rip)	\n\t"
+#ifdef PROFILING
+			"call end_slice					\n\t"
+#endif
 			"call UpdateSystem_INTC			\n\t"
 			"jmp run_loop					\n"
 
 		"end_run_loop:						\n\t"
-			"vmovdqu 0(%%rsp), %%xmm8		\n\t"
-			"vmovdqu 16(%%rsp), %%xmm9		\n\t"
-			"vmovdqu 32(%%rsp), %%xmm10		\n\t"
-			"vmovdqu 48(%%rsp), %%xmm11		\n\t"
-			"vmovdqu 64(%%rsp), %%xmm12 	\n\t"
-			"vmovdqu 80(%%rsp), %%xmm13		\n\t"
-			"vmovdqu 96(%%rsp), %%xmm14		\n\t"
-			"vmovdqu 112(%%rsp), %%xmm15	\n\t"
-			"addq $136, %%rsp				\n\t"
+			"addq $8, %%rsp					\n\t"
 			"popq %%r15						\n\t"
 			"popq %%r14						\n\t"
 			"popq %%r13						\n\t"
@@ -169,6 +179,11 @@ public:
 
 		mov(rax, (size_t)&cycle_counter);
 		sub(dword[rax], block->guest_cycles);
+#ifdef PROFILING
+		mov(rax, (uintptr_t)&guest_cpu_cycles);
+		mov(ecx, block->guest_cycles);
+		add(qword[rax], rcx);
+#endif
 #ifdef _WIN32
 		sub(rsp, 0x28);		// 32-byte shadow space + 8 byte alignment
 #else
@@ -192,7 +207,7 @@ public:
 
 				mov(call_regs[0], op.rs3._imm);
 
-				call((void*)OpDesc[op.rs3._imm]->oph);
+				GenCall(OpDesc[op.rs3._imm]->oph);
 				break;
 
 			case shop_jcond:
@@ -223,20 +238,18 @@ public:
 
 			case shop_mov64:
 			{
-				verify(op.rd.is_reg());
-				verify(op.rs1.is_reg() || op.rs1.is_imm());
+				verify(op.rd.is_r64());
+				verify(op.rs1.is_r64());
 
-				if (op.rs1.is_imm())
-				{
-					mov(rax, op.rs1._imm);
-				}
-				else
-				{
-					mov(rax, (uintptr_t)op.rs1.reg_ptr());
-					mov(rax, qword[rax]);
-				}
+#ifdef EXPLODE_SPANS
+				movss(regalloc.MapXRegister(op.rd, 0), regalloc.MapXRegister(op.rs1, 0));
+				movss(regalloc.MapXRegister(op.rd, 1), regalloc.MapXRegister(op.rs1, 1));
+#else
+				mov(rax, (uintptr_t)op.rs1.reg_ptr());
+				mov(rax, qword[rax]);
 				mov(rcx, (uintptr_t)op.rd.reg_ptr());
 				mov(qword[rcx], rax);
+#endif
 			}
 			break;
 
@@ -249,27 +262,27 @@ public:
 						add(call_regs[0], op.rs3._imm);
 					else
 					{
-						shil_param_to_host_reg(op.rs3, eax);
-						add(call_regs[0], eax);
+						shil_param_to_host_reg(op.rs3, edx);
+						add(call_regs[0], edx);
 					}
 				}
 
 				u32 size = op.flags & 0x7f;
 
 				if (size == 1) {
-					call((void*)ReadMem8);
+					GenCall(ReadMem8);
 					movsx(rcx, al);
 				}
 				else if (size == 2) {
-					call((void*)ReadMem16);
+					GenCall(ReadMem16);
 					movsx(rcx, ax);
 				}
 				else if (size == 4) {
-					call((void*)ReadMem32);
+					GenCall(ReadMem32);
 					mov(rcx, rax);
 				}
 				else if (size == 8) {
-					call((void*)ReadMem64);
+					GenCall(ReadMem64);
 					mov(rcx, rax);
 				}
 				else {
@@ -279,8 +292,15 @@ public:
 				if (size != 8)
 					host_reg_to_shil_param(op.rd, ecx);
 				else {
-					mov(rax, (uintptr_t)GetRegPtr(op.rd._reg));
+#ifdef EXPLODE_SPANS
+					verify(op.rd.count() == 2 && regalloc.IsAllocf(op.rd, 0) && regalloc.IsAllocf(op.rd, 1));
+					movd(regalloc.MapXRegister(op.rd, 0), ecx);
+					shr(rcx, 32);
+					movd(regalloc.MapXRegister(op.rd, 1), ecx);
+#else
+					mov(rax, (uintptr_t)op.rd.reg_ptr());
 					mov(qword[rax], rcx);
+#endif
 				}
 			}
 			break;
@@ -295,46 +315,54 @@ public:
 						add(call_regs[0], op.rs3._imm);
 					else
 					{
-						shil_param_to_host_reg(op.rs3, eax);
-						add(call_regs[0], eax);
+						shil_param_to_host_reg(op.rs3, edx);	// edx is call_regs[1] on win32 so it's safe here
+						add(call_regs[0], edx);
 					}
 				}
 
 				if (size != 8)
 					shil_param_to_host_reg(op.rs2, call_regs[1]);
 				else {
-					mov(rax, (uintptr_t)GetRegPtr(op.rs2._reg));
+#ifdef EXPLODE_SPANS
+					verify(op.rs2.count() == 2 && regalloc.IsAllocf(op.rs2, 0) && regalloc.IsAllocf(op.rs2, 1));
+					movd(call_regs[1], regalloc.MapXRegister(op.rs2, 1));
+					shl(call_regs64[1], 32);
+					movd(eax, regalloc.MapXRegister(op.rs2, 0));
+					or(call_regs64[1], rax);
+#else
+					mov(rax, (uintptr_t)op.rs2.reg_ptr());
 					mov(call_regs64[1], qword[rax]);
+#endif
 				}
 
 				if (size == 1)
-					call((void*)WriteMem8);
+					GenCall(WriteMem8);
 				else if (size == 2)
-					call((void*)WriteMem16);
+					GenCall(WriteMem16);
 				else if (size == 4)
-					call((void*)WriteMem32);
+					GenCall(WriteMem32);
 				else if (size == 8)
-					call((void*)WriteMem64);
+					GenCall(WriteMem64);
 				else {
 					die("1..8 bytes");
 				}
 			}
 			break;
 
+#ifndef CANONICAL_TEST
 			case shop_sync_sr:
-				call(UpdateSR);
+				GenCall(UpdateSR);
 				break;
 			case shop_sync_fpscr:
-				call(UpdateFPSCR);
+				GenCall(UpdateFPSCR);
 				break;
-/*
+
 			case shop_swaplb:
-				Mov(w9, Operand(regalloc.MapRegister(op.rs1), LSR, 16));
-				Rev16(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rs1));
-				Bfc(regalloc.MapRegister(op.rd), 16, 16);
-				Orr(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rd), Operand(w9, LSL, 16));
+				if (regalloc.mapg(op.rd) != regalloc.mapg(op.rs1))
+					mov(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rs1));
+				ror(Xbyak::Reg16(regalloc.MapRegister(op.rd).getIdx()), 8);
 				break;
-*/
+
 			case shop_neg:
 				if (regalloc.mapg(op.rd) != regalloc.mapg(op.rs1))
 					mov(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rs1));
@@ -438,7 +466,7 @@ public:
 					test(ecx, 0x1f);
 					jnz(non_zero);
 					if (op.op == shop_shld)
-						mov(regalloc.MapRegister(op.rd), 0);
+						xor(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rd));
 					else
 						sar(regalloc.MapRegister(op.rd), 31);
 					jmp(exit);
@@ -501,18 +529,7 @@ public:
 				break;
 /*
 			case shop_setpeq:
-				Eor(w1, regalloc.MapRegister(op.rs1), regalloc.MapRegister(op.rs2));
-
-				Mov(regalloc.MapRegister(op.rd), wzr);
-				Mov(w2, wzr);	// wzr not supported by csinc (?!)
-				Tst(w1, 0xFF000000);
-				Csinc(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rd), w2, ne);
-				Tst(w1, 0x00FF0000);
-				Csinc(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rd), w2, ne);
-				Tst(w1, 0x0000FF00);
-				Csinc(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rd), w2, ne);
-				Tst(w1, 0x000000FF);
-				Csinc(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rd), w2, ne);
+				// TODO
 				break;
 */
 			case shop_mul_u16:
@@ -534,49 +551,23 @@ public:
 				break;
 			case shop_mul_u64:
 				mov(eax, regalloc.MapRegister(op.rs1));
-				mul(regalloc.MapRegister(op.rs2));
+				mov(ecx, regalloc.MapRegister(op.rs2));
+				mul(rcx);
 				mov(regalloc.MapRegister(op.rd), eax);
-				mov(regalloc.MapRegister(op.rd2), edx);
+				shr(rax, 32);
+				mov(regalloc.MapRegister(op.rd2), eax);
 				break;
 			case shop_mul_s64:
-				mov(eax, regalloc.MapRegister(op.rs1));
-				imul(regalloc.MapRegister(op.rs2));
+				movsxd(rax, regalloc.MapRegister(op.rs1));
+				movsxd(rcx, regalloc.MapRegister(op.rs2));
+				mul(rcx);
 				mov(regalloc.MapRegister(op.rd), eax);
-				mov(regalloc.MapRegister(op.rd2), edx);
+				shr(rax, 32);
+				mov(regalloc.MapRegister(op.rd2), eax);
 				break;
 /*
 			case shop_pref:
-				Mov(w0, regalloc.MapRegister(op.rs1));
-				if (op.flags != 0x1337)
-				{
-					Lsr(w1, regalloc.MapRegister(op.rs1), 26);
-					Cmp(w1, 0x38);
-				}
-
-				if (CCN_MMUCR.AT)
-				{
-					Ldr(x9, reinterpret_cast<uintptr_t>(&do_sqw_mmu));
-				}
-				else
-				{
-					Sub(x9, x28, offsetof(Sh4RCB, cntx) - offsetof(Sh4RCB, do_sqw_nommu));
-					Ldr(x9, MemOperand(x9));
-					Sub(x1, x28, offsetof(Sh4RCB, cntx) - offsetof(Sh4RCB, sq_buffer));
-				}
-				if (!frame_reg_saved)
-				{
-					Str(x30, MemOperand(sp, -16, PreIndex));
-					frame_reg_saved = true;
-				}
-				if (op.flags == 0x1337)
-					Blr(x9);
-				else
-				{
-					Label no_branch;
-					B(&no_branch, ne);
-					Blr(x9);
-					Bind(&no_branch);
-				}
+				// TODO
 				break;
 */
 			case shop_ext_s8:
@@ -605,23 +596,16 @@ public:
 				break;
 
 			case shop_fabs:
-				mov(rcx, (size_t)&float_sign_mask);
-				if (regalloc.mapf(op.rd) != regalloc.mapf(op.rs1))
-				{
-					movss(regalloc.MapXRegister(op.rd), dword[rcx]);
-					pandn(regalloc.MapXRegister(op.rd), regalloc.MapXRegister(op.rs1));
-				}
-				else
-				{
-					movss(xmm0, regalloc.MapXRegister(op.rd));
-					movss(regalloc.MapXRegister(op.rd), dword[rcx]);
-					pandn(regalloc.MapXRegister(op.rd), xmm0);
-				}
-				break;
-			case shop_fneg:
-				mov(rcx, (size_t)&float_sign_mask);
 				if (regalloc.mapf(op.rd) != regalloc.mapf(op.rs1))
 					movss(regalloc.MapXRegister(op.rd), regalloc.MapXRegister(op.rs1));
+				mov(rcx, (size_t)&float_abs_mask);
+				movss(xmm0, dword[rcx]);
+				pand(regalloc.MapXRegister(op.rd), xmm0);
+				break;
+			case shop_fneg:
+				if (regalloc.mapf(op.rd) != regalloc.mapf(op.rs1))
+					movss(regalloc.MapXRegister(op.rd), regalloc.MapXRegister(op.rs1));
+				mov(rcx, (size_t)&float_sign_mask);
 				movss(xmm0, dword[rcx]);
 				pxor(regalloc.MapXRegister(op.rd), xmm0);
 				break;
@@ -659,67 +643,69 @@ public:
 				break;
 
 			case shop_fsca:
-				regalloc.writeback_fpu += 2;
 				movzx(rax, Xbyak::Reg16(regalloc.MapRegister(op.rs1).getIdx()));
 				mov(rcx, (uintptr_t)&sin_table);
-				//movss(regalloc.MapXRegister(op.rd), dword[rcx + rax * 8]);
-				//sub(rcx, 4);
-				//movss(Xbyak::Xmm(regalloc.MapXRegister(op.rd).getIdx() + 1), dword[rcx + rax * 8]);
+#ifdef EXPLODE_SPANS
+				movss(regalloc.MapXRegister(op.rd, 0), dword[rcx + rax * 8]);
+				movss(regalloc.MapXRegister(op.rd, 1), dword[rcx + (rax * 8) + 4]);
+#else
 				mov(rcx, qword[rcx + rax * 8]);
 				mov(rdx, (uintptr_t)op.rd.reg_ptr());
 				mov(qword[rdx], rcx);
+#endif
 				break;
-/*
+
 			case shop_fipr:
-				Add(x9, x28, sh4_context_mem_operand(op.rs1.reg_ptr()).GetOffset());
-				Ld1(v0.V4S(), MemOperand(x9));
-				if (op.rs1._reg != op.rs2._reg)
-				{
-					Add(x9, x28, sh4_context_mem_operand(op.rs2.reg_ptr()).GetOffset());
-					Ld1(v1.V4S(), MemOperand(x9));
-					Fmul(v0.V4S(), v0.V4S(), v1.V4S());
-				}
-				else
-					Fmul(v0.V4S(), v0.V4S(), v0.V4S());
-				Faddp(v1.V4S(), v0.V4S(), v0.V4S());
-				Faddp(regalloc.MapVRegister(op.rd), v1.V2S());
+				mov(rax, (size_t)op.rs1.reg_ptr());
+				movaps(regalloc.MapXRegister(op.rd), dword[rax]);
+				mov(rax, (size_t)op.rs2.reg_ptr());
+				mulps(regalloc.MapXRegister(op.rd), dword[rax]);
+				haddps(regalloc.MapXRegister(op.rd), regalloc.MapXRegister(op.rd));
+				haddps(regalloc.MapXRegister(op.rd), regalloc.MapXRegister(op.rd));
 				break;
 
 			case shop_ftrv:
-				Add(x9, x28, sh4_context_mem_operand(op.rs1.reg_ptr()).GetOffset());
-				Ld1(v0.V4S(), MemOperand(x9));
-				Add(x9, x28, sh4_context_mem_operand(op.rs2.reg_ptr()).GetOffset());
-				Ld1(v1.V4S(), MemOperand(x9, 16, PostIndex));
-				Ld1(v2.V4S(), MemOperand(x9, 16, PostIndex));
-				Ld1(v3.V4S(), MemOperand(x9, 16, PostIndex));
-				Ld1(v4.V4S(), MemOperand(x9, 16, PostIndex));
-				Fmul(v5.V4S(), v1.V4S(), s0, 0);
-				Fmla(v5.V4S(), v2.V4S(), s0, 1);
-				Fmla(v5.V4S(), v3.V4S(), s0, 2);
-				Fmla(v5.V4S(), v4.V4S(), s0, 3);
-				Add(x9, x28, sh4_context_mem_operand(op.rd.reg_ptr()).GetOffset());
-				St1(v5.V4S(), MemOperand(x9));
+				mov(rax, (uintptr_t)op.rs1.reg_ptr());
+				vmovaps(xmm0, xword[rax]);					// fn[0-4]
+				mov(rax, (uintptr_t)op.rs2.reg_ptr());		// fm[0-15]
+
+				pshufd(xmm1, xmm0, 0x00);					// fn[0]
+				vmulps(xmm2, xmm1, xword[rax]);				// fm[0-3]
+				pshufd(xmm1, xmm0, 0x55);					// fn[1]
+				vfmadd231ps(xmm2, xmm1, xword[rax + 16]);	// fm[4-7]
+				pshufd(xmm1, xmm0, 0xaa);					// fn[2]
+				vfmadd231ps(xmm2, xmm1, xword[rax + 32]);	// fm[8-11]
+				pshufd(xmm1, xmm0, 0xff);					// fn[3]
+				vfmadd231ps(xmm2, xmm1, xword[rax + 48]);	// fm[12-15]
+				mov(rax, (uintptr_t)op.rd.reg_ptr());
+				vmovaps(xword[rax], xmm2);
 				break;
 
 			case shop_frswap:
-				Add(x9, x28, sh4_context_mem_operand(op.rs1.reg_ptr()).GetOffset());
-				Add(x10, x28, sh4_context_mem_operand(op.rd.reg_ptr()).GetOffset());
-				Ld4(v0.V2D(), v1.V2D(), v2.V2D(), v3.V2D(), MemOperand(x9));
-				Ld4(v4.V2D(), v5.V2D(), v6.V2D(), v7.V2D(), MemOperand(x10));
-				St4(v4.V2D(), v5.V2D(), v6.V2D(), v7.V2D(), MemOperand(x9));
-				St4(v0.V2D(), v1.V2D(), v2.V2D(), v3.V2D(), MemOperand(x10));
+				mov(rax, (uintptr_t)op.rs1.reg_ptr());
+				mov(rcx, (uintptr_t)op.rd.reg_ptr());
+				vmovaps(ymm0, yword[rax]);
+				vmovaps(ymm1, yword[rcx]);
+				vmovaps(yword[rax], ymm1);
+				vmovaps(yword[rcx], ymm0);
+
+				vmovaps(ymm0, yword[rax + 32]);
+				vmovaps(ymm1, yword[rcx + 32]);
+				vmovaps(yword[rax + 32], ymm1);
+				vmovaps(yword[rcx + 32], ymm0);
 				break;
-*/
+
 			case shop_cvt_f2i_t:
 				mov(rcx, (uintptr_t)&cvtf2i_pos_saturation);
 				movss(xmm0, dword[rcx]);
 				minss(xmm0, regalloc.MapXRegister(op.rs1));
-				cvtss2si(regalloc.MapRegister(op.rd), xmm0);
+				cvttss2si(regalloc.MapRegister(op.rd), xmm0);
 				break;
 			case shop_cvt_i2f_n:
 			case shop_cvt_i2f_z:
 				cvtsi2ss(regalloc.MapXRegister(op.rd), regalloc.MapRegister(op.rs1));
 				break;
+#endif
 
 			default:
 				shil_chf[op.op](&op);
@@ -783,7 +769,7 @@ public:
 				mov(dword[rax], block->NextBlock);
 			}
 
-			call((void*)UpdateINTC);
+			GenCall(UpdateINTC);
 			break;
 
 		default:
@@ -804,12 +790,12 @@ public:
 		emit_Skip(getSize());
 	}
 
-	void ngen_CC_Start(shil_opcode* op)
+	void ngen_CC_Start(const shil_opcode& op)
 	{
 		CC_pars.clear();
 	}
 
-	void ngen_CC_param(shil_opcode& op, shil_param& prm, CanonicalParamType tp) {
+	void ngen_CC_param(const shil_opcode& op, const shil_param& prm, CanonicalParamType tp) {
 		switch (tp)
 		{
 
@@ -823,7 +809,7 @@ public:
 		break;
 
 
-		//store from EAX
+		// store from EAX
 		case CPT_u64rvL:
 		case CPT_u32rv:
 			mov(rcx, rax);
@@ -831,18 +817,24 @@ public:
 			break;
 
 		case CPT_u64rvH:
+			// assuming CPT_u64rvL has just been called
 			shr(rcx, 32);
 			host_reg_to_shil_param(prm, ecx);
 			break;
 
-			//Store from ST(0)
+		// store from xmm0
 		case CPT_f32rv:
 			host_reg_to_shil_param(prm, xmm0);
+#ifdef EXPLODE_SPANS
+			// The x86 dynarec saves to mem as well
+			//mov(rax, (uintptr_t)prm.reg_ptr());
+			//movd(dword[rax], xmm0);
+#endif
 			break;
 		}
 	}
 
-	void ngen_CC_Call(shil_opcode*op, void* function)
+	void ngen_CC_Call(const shil_opcode& op, void* function)
 	{
 		int regused = 0;
 		int xmmused = 0;
@@ -850,7 +842,7 @@ public:
 		for (int i = CC_pars.size(); i-- > 0;)
 		{
 			verify(xmmused < 4 && regused < 4);
-			shil_param& prm = *CC_pars[i].prm;
+			const shil_param& prm = *CC_pars[i].prm;
 			switch (CC_pars[i].type) {
 				//push the contents
 
@@ -871,7 +863,7 @@ public:
 				break;
 			}
 		}
-		call(function);
+		GenCall((void (*)())function);
 	}
 
 	void RegPreload(u32 reg, Xbyak::Operand::Code nreg)
@@ -956,6 +948,25 @@ private:
 		(this->*natop)(regalloc.MapXRegister(op.rd), regalloc.MapXRegister(op.rs2));
 	}
 
+	template<class Ret, class... Params>
+	void GenCall(Ret(*function)(Params...))
+	{
+		sub(rsp, 16);
+		movd(ptr[rsp + 0], xmm8);
+		movd(ptr[rsp + 4], xmm9);
+		movd(ptr[rsp + 8], xmm10);
+		movd(ptr[rsp + 12], xmm11);
+
+		call(function);
+
+		movd(xmm8, ptr[rsp + 0]);
+		movd(xmm9, ptr[rsp + 4]);
+		movd(xmm10, ptr[rsp + 8]);
+		movd(xmm11, ptr[rsp + 12]);
+		add(rsp, 16);
+	}
+
+	// uses eax/rax
 	void shil_param_to_host_reg(const shil_param& param, const Xbyak::Reg& reg)
 	{
 		if (param.is_imm())
@@ -970,13 +981,7 @@ private:
 		}
 		else if (param.is_reg())
 		{
-			if (param.is_r64f())
-			{
-				// TODO use regalloc
-				mov(rax, (uintptr_t)param.reg_ptr());
-				mov(reg, qword[rax]);
-			}
-			else if (param.is_r32f())
+			if (param.is_r32f())
 			{
 				if (!reg.isXMM())
 					movd((const Xbyak::Reg32 &)reg, regalloc.MapXRegister(param));
@@ -997,15 +1002,10 @@ private:
 		}
 	}
 
+	// uses rax
 	void host_reg_to_shil_param(const shil_param& param, const Xbyak::Reg& reg)
 	{
-		if (reg.isREG(64))
-		{
-			// TODO use regalloc
-			mov(rcx, (uintptr_t)param.reg_ptr());
-			mov(qword[rcx], reg);
-		}
-		else if (regalloc.IsAllocg(param))
+		if (regalloc.IsAllocg(param))
 		{
 			if (!reg.isXMM())
 				mov(regalloc.MapRegister(param), (const Xbyak::Reg32 &)reg);
@@ -1028,16 +1028,18 @@ private:
 	struct CC_PS
 	{
 		CanonicalParamType type;
-		shil_param* prm;
+		const shil_param* prm;
 	};
 	vector<CC_PS> CC_pars;
 
 	X64RegAlloc regalloc;
 	static const u32 float_sign_mask;
+	static const u32 float_abs_mask;
 	static const f32 cvtf2i_pos_saturation;
 };
 
 const u32 BlockCompiler::float_sign_mask = 0x80000000;
+const u32 BlockCompiler::float_abs_mask = 0x7fffffff;
 const f32 BlockCompiler::cvtf2i_pos_saturation = 2147483520.0f;		// IEEE 754: 0x4effffff;
 
 void X64RegAlloc::Preload(u32 reg, Xbyak::Operand::Code nreg)
@@ -1072,7 +1074,7 @@ void ngen_Compile(RuntimeBlockInfo* block, bool force_checks, bool reset, bool s
 
 void ngen_CC_Start(shil_opcode* op)
 {
-	compiler->ngen_CC_Start(op);
+	compiler->ngen_CC_Start(*op);
 }
 
 void ngen_CC_Param(shil_opcode* op, shil_param* par, CanonicalParamType tp)
@@ -1080,9 +1082,9 @@ void ngen_CC_Param(shil_opcode* op, shil_param* par, CanonicalParamType tp)
 	compiler->ngen_CC_param(*op, *par, tp);
 }
 
-void ngen_CC_Call(shil_opcode*op, void* function)
+void ngen_CC_Call(shil_opcode* op, void* function)
 {
-	compiler->ngen_CC_Call(op, function);
+	compiler->ngen_CC_Call(*op, function);
 }
 
 void ngen_CC_Finish(shil_opcode* op)

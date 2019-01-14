@@ -30,11 +30,17 @@ static Xbyak::Operand::Code alloc_regs[] = { Xbyak::Operand::RBX, Xbyak::Operand
 static Xbyak::Operand::Code alloc_regs[] = { Xbyak::Operand::RBX, Xbyak::Operand::RBP, Xbyak::Operand::R12, Xbyak::Operand::R13,
 		Xbyak::Operand::R14, Xbyak::Operand::R15, (Xbyak::Operand::Code)-1 };
 #endif
-static s8 alloc_fregs[] = { 8, 9, 10, 11, 12, 13, 14, 15, -1 };		// XMM8-15
+static s8 alloc_fregs[] = { 8, 9, 10, 11, -1 };		// XMM8-11
 
 class BlockCompiler;
 
-struct X64RegAlloc : RegAlloc<Xbyak::Operand::Code, s8, false>
+struct X64RegAlloc : RegAlloc<Xbyak::Operand::Code, s8,
+#ifdef EXPLODE_SPANS
+														true
+#else
+														false
+#endif
+															 >
 {
 	X64RegAlloc(BlockCompiler *compiler) : compiler(compiler) {}
 
