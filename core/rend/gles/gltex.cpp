@@ -413,6 +413,7 @@ struct FBT
 	u32 kval_bit;
 	u32 fb_alpha_threshold;
 	u32 fb_packmode;
+	bool is565;
 	bool texDataValid;
 	bool updated;
 	bool initialized;
@@ -420,7 +421,8 @@ struct FBT
 	FBT(): initialized(false), updated(false), tf({0}), tex(0), renderTex(0), texDataValid(false) {}
 };
 
-void createTexture(u32 w, u32 h, u32 textureFormat, u32 textureType, GLuint & textureID) {
+void createTexture(u32 w, u32 h, u32 textureFormat, u32 textureType, GLuint & textureID)
+{
 	glGenTextures(1, &textureID);
 	glBindTexture(GL_TEXTURE_2D, textureID);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -452,8 +454,9 @@ void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 	renderedTexture->fb_alpha_threshold = FB_W_CTRL.fb_alpha_threshold;
 	renderedTexture->w = fbw;
 	renderedTexture->h = fbh;
+	renderedTexture->is565 = (fmt == GL_UNSIGNED_SHORT_5_6_5);
 
-	if (!renderedTexture->tex) {
+	if (!renderedTexture->tex && (fmt != GL_UNSIGNED_SHORT_5_6_5) && (fmt != GL_UNSIGNED_SHORT_4_4_4_4)) {
 		createTexture(fbw, fbh, channels, fmt, renderedTexture->tex);
 	}
 
@@ -587,67 +590,6 @@ void handleKRGB1555(GLint w, GLint h, FBT &fbt) {
 	}
 }
 
-void handleRGB565(GLint w, GLint h, FBT &fbt)
-{
-	if (checkSupportedReadType() == GL_UNSIGNED_SHORT_5_6_5) {
-		// can be directly read
-		glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, fbt.texData);
-	}
-	else {
-		glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, temp_tex_buffer_32);
-
-		// convert R8G8B8A8 to RGB565
-		const u32 *dataPointer32 = temp_tex_buffer_32;
-		for (u32 i = 0; i < w * h; i++) {
-			//additional variables just for better visibility
-			const u8 blue = ((*dataPointer32 & 0x00FF0000UL) >> 19); //5bits for blue
-			const u8 green = ((*dataPointer32 & 0x0000FF00UL) >> 10); //6bits for green
-			const u8 red = (*dataPointer32 & 0x000000FFUL) >> 3; //5bits for red
-
-			//convert to 16bit color
-			temp_tex_buffer_32[i] = (red << 11) | (green << 5) | blue;
-			*dataPointer32++;
-
-			//assign to 16bit buffer (type conversions should use static_cast<> in C++)
-			fbt.texData[i] = (u16)temp_tex_buffer_32[i];
-		}
-	}
-}
-
-void handleARGB4444(GLint w, GLint h, FBT &fbt)
-{
-	if (checkSupportedReadType() == GL_UNSIGNED_SHORT_4_4_4_4) {
-		glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4, fbt.texData);
-
-		// convert RGBA4444 to ARGB4444
-		const u16 *dataPointer = fbt.texData;
-		for (u32 i = 0; i < w * h; i++) {
-			fbt.texData[i] = ((*dataPointer & 0x000F) << 12) | ((*dataPointer & 0xFFF0) >> 4);
-			*dataPointer++;
-		}
-	}
-	else {
-		glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, temp_tex_buffer_32);
-
-		// convert R8G8B8A8 to ARGB4444
-		const u32 *dataPointer32 = temp_tex_buffer_32;
-		for (u32 i = 0; i < w * h; i++) {
-			//additional variables just for better visibility
-			const u8 alpha = ((*dataPointer32 & 0xFF000000UL) >> 28); //4bits for alpha
-			const u8 blue = ((*dataPointer32 & 0x00FF0000UL) >> 20); //4bits for blue
-			const u8 green = ((*dataPointer32 & 0x0000FF00UL) >> 12); //4bits for green
-			const u8 red = (*dataPointer32 & 0x000000FFUL) >> 4; //4bits for red
-
-			//convert to 16bit color with alpha swap
-			temp_tex_buffer_32[i] =  (alpha << 12) | (red << 8) | (green << 4) | blue;
-			*dataPointer32++;
-
-			//assign to 16bit buffer (type conversions should use static_cast<> in C++)
-			fbt.texData[i] = (u16)temp_tex_buffer_32[i];
-		}
-	}
-}
-
 void handleARGB1555(GLint w, GLint h, FBT &fbt) {
 	const u32 fb_alpha_threshold = fbt.fb_alpha_threshold;
 	GLint framebufferReadType = checkSupportedReadType();
@@ -710,13 +652,14 @@ void handlePackModeRTT(GLint w, GLint h, FBT &fbt)
 
 		case 1: //0x1   565 RGB 16 bit
 		{
-			handleRGB565(w, h, fbt);
+			//handled elsewhere
 			break;
 		}
 
 		case 2: //0x2   4444 ARGB 16 bit
 		{
-			handleARGB4444(w, h, fbt);
+			fbt.tex = fbt.renderTex;
+			fbt.updated = false;
 			break;
 		}
 
@@ -777,7 +720,9 @@ void ReadRTT()
 		}
 		else if (settings.dreamcast.rttOption == Full)
 		{
-			glBindFramebuffer(GL_FRAMEBUFFER, fbt.fbo);
+			if (fbt.fb_packmode != 1) {
+				glBindFramebuffer(GL_FRAMEBUFFER, fbt.fbo);
+			}
 			if (!fbt.texDataValid) {
 				handlePackModeRTT(w, h, fbt);
 			}
@@ -791,7 +736,7 @@ void rttCheckIfUpdated() {
 	{
 		for (set<u32>::iterator it=delayedUpdateQueue.begin(); it != delayedUpdateQueue.end(); ++it) {
 			//We can directly read because this address exists already
-			if(renderedTextures[*it].initialized && renderedTextures[*it].updated)
+			if (renderedTextures[*it].initialized && renderedTextures[*it].updated)
 			{
 				renderedTextures[*it].tf.Update(false, renderedTextures[*it].texData);
 				renderedTextures[*it].updated = false;
@@ -815,8 +760,55 @@ void initializeRttTexture(const TSP & tsp, const TCW & tcw, FBT * tempRenderedTe
 	}
 }
 
-GLuint gl_GetTexture(TSP tsp, TCW tcw) {
+void handleRGB565Exceptions(FBT &fbt, u32 newTexAddr)
+{
+	GLint w = fbt.w;
+	GLint h = fbt.h;
 
+	if (fbt.tf.tex->type != GL_UNSIGNED_SHORT_5_6_5)
+	{
+		if (!fbt.tex || (fbt.tex == fbt.renderTex)) {
+			createTexture((u32) w, (u32) h, GL_RGBA, fbt.tf.tex->type, fbt.tex);
+		}
+		fbt.tf.texID = fbt.tex;
+
+		glBindFramebuffer(GL_FRAMEBUFFER, fbt.fbo);
+		if (checkSupportedReadType() == GL_UNSIGNED_SHORT_5_6_5) {
+			// can be directly read
+			glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, fbt.texData);
+		}
+		else {
+			glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, temp_tex_buffer_32);
+
+			// convert R8G8B8A8 to RGB565
+			const u32 *dataPointer32 = temp_tex_buffer_32;
+			for (u32 i = 0; i < w * h; i++) {
+				//additional variables just for better visibility
+				const u8 blue = ((*dataPointer32 & 0x00FF0000UL) >> 19); //5bits for blue
+				const u8 green = ((*dataPointer32 & 0x0000FF00UL) >> 10); //6bits for green
+				const u8 red = (*dataPointer32 & 0x000000FFUL) >> 3; //5bits for red
+
+				//convert to 16bit color
+				temp_tex_buffer_32[i] = (red << 11) | (green << 5) | blue;
+				*dataPointer32++;
+
+				//assign to 16bit buffer (type conversions should use static_cast<> in C++)
+				fbt.texData[i] = (u16)temp_tex_buffer_32[i];
+			}
+		}
+		delayedUpdateQueue.insert(newTexAddr);
+	}
+	else {
+		if (fbt.tex && (fbt.tex != fbt.renderTex)) { //to avoid memory leaks
+			glDeleteTextures(1, &fbt.tex);
+		}
+		fbt.tex = fbt.renderTex;
+		fbt.updated = false;
+	}
+}
+
+GLuint gl_GetTexture(TSP tsp, TCW tcw)
+{
 	FBT* tempRenderedTexture = NULL;
 	map<u32, FBT>::iterator it = renderedTextures.find(tcw.TexAddr);
 	if (it != renderedTextures.end()) {
@@ -830,12 +822,18 @@ GLuint gl_GetTexture(TSP tsp, TCW tcw) {
 		//if there was no update, it is not an RTT frame (BindRTT was not invoked) then proceed the standard way
 		if (tempRenderedTexture->tf.tcw.full == tcw.full)
 		{
-			if (tempRenderedTexture->updated)
+			if (tempRenderedTexture->updated && !tempRenderedTexture->is565)
 			{
 				delayedUpdateQueue.insert(tcw.TexAddr);
 				tempRenderedTexture->tf.tsp = tsp;
 				tempRenderedTexture->tf.Create(false);
 				tempRenderedTexture->tf.texID = tempRenderedTexture->tex;
+			}
+			else if (tempRenderedTexture->updated && tempRenderedTexture->is565)
+			{
+				tempRenderedTexture->tf.tsp = tsp;
+				tempRenderedTexture->tf.Create(false);
+				handleRGB565Exceptions(*tempRenderedTexture, tcw.TexAddr);
 			}
 			return tempRenderedTexture->tex;
 		}
