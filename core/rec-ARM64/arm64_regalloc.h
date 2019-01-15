@@ -39,7 +39,11 @@ static eFReg alloc_fregs[] = { S8, S9, S10, S11, S12, S13, S14, S15, (eFReg)-1 }
 
 class Arm64Assembler;
 
-struct Arm64RegAlloc : RegAlloc<eReg, eFReg, false>		// TODO explode_spans=true (default, x86) breaks things. Why?
+struct Arm64RegAlloc : RegAlloc<eReg, eFReg
+#ifndef EXPLODE_SPANS
+											, false
+#endif
+													>
 {
 	Arm64RegAlloc(Arm64Assembler *assembler) : assembler(assembler) {}
 

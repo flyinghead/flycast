@@ -28,6 +28,8 @@
 #include "deps/vixl/aarch64/macro-assembler-aarch64.h"
 using namespace vixl::aarch64;
 
+#define EXPLODE_SPANS
+
 #include "hw/sh4/sh4_opcode_list.h"
 
 #include "hw/sh4/sh4_mmr.h"
@@ -110,21 +112,21 @@ void ngen_mainloop(void* v_cntx)
 		// Use x28 as sh4 context pointer
 		"mov x28, %0				\n\t"
 		// Use x27 as cycle_counter
-		"mov w27, %2				\n\t"	// SH4_TIMESLICE
+		"mov w27, %[_SH4_TIMESLICE]	\n\t"
 
 	"run_loop:						\n\t"
-		"ldr w0, [x28, %3]			\n\t"	// CpuRunning
+		"ldr w0, [x28, %[CpuRunning]]	\n\t"
 		"cmp w0, #0					\n\t"
 		"b.eq end_run_loop			\n\t"
 
 	"slice_loop:					\n\t"
-		"ldr w0, [x28, %1]			\n\t"	// pc
+		"ldr w0, [x28, %[pc]]		\n\t"
 		"bl bm_GetCode2				\n\t"
 		"blr x0						\n\t"
 		"cmp w27, #0				\n\t"
 		"b.gt slice_loop			\n\t"
 
-		"add w27, w27, %2			\n\t"	// SH4_TIMESLICE
+		"add w27, w27, %[_SH4_TIMESLICE]	\n\t"
 		"bl UpdateSystem_INTC		\n\t"
 		"b run_loop					\n\t"
 
@@ -139,10 +141,10 @@ void ngen_mainloop(void* v_cntx)
 		"ldp x21, x22, [sp, #16]	\n\t"
 		"ldp x19, x20, [sp], #144	\n\t"
 		:
-		: "r"(reinterpret_cast<uintptr_t>(&ctx->cntx)),
-		  "i"(offsetof(Sh4Context, pc)),
-		  "i"(SH4_TIMESLICE),
-		  "i"(offsetof(Sh4Context, CpuRunning))
+		: [cntx] "r"(reinterpret_cast<uintptr_t>(&ctx->cntx)),
+		  [pc] "i"(offsetof(Sh4Context, pc)),
+		  [_SH4_TIMESLICE] "i"(SH4_TIMESLICE),
+		  [CpuRunning] "i"(offsetof(Sh4Context, CpuRunning))
 		: "memory"
 	);
 }
@@ -338,8 +340,13 @@ public:
 				verify(op.rd.is_reg());
 				verify(op.rs1.is_reg() || op.rs1.is_imm());
 
+#ifdef EXPLODE_SPANS
+				Fmov(regalloc.MapVRegister(op.rd, 0), regalloc.MapVRegister(op.rs1, 0));
+				Fmov(regalloc.MapVRegister(op.rd, 1), regalloc.MapVRegister(op.rs1, 1));
+#else
 				shil_param_to_host_reg(op.rs1, x15);
 				host_reg_to_shil_param(op.rd, x15);
+#endif
 				break;
 
 			case shop_readm:
@@ -476,7 +483,16 @@ public:
 					if (size != 8)
 						host_reg_to_shil_param(op.rd, w0);
 					else
+					{
+#ifdef EXPLODE_SPANS
+						verify(op.rd.count() == 2 && regalloc.IsAllocf(op.rd, 0) && regalloc.IsAllocf(op.rd, 1));
+						Fmov(regalloc.MapVRegister(op.rd, 0), w0);
+						Lsr(x0, x0, 32);
+						Fmov(regalloc.MapVRegister(op.rd, 1), w0);
+#else
 						host_reg_to_shil_param(op.rd, x0);
+#endif
+					}
 				}
 			}
 			break;
@@ -489,7 +505,17 @@ public:
 				if (size != 8)
 					shil_param_to_host_reg(op.rs2, *call_regs[1]);
 				else
+				{
+#ifdef EXPLODE_SPANS
+					verify(op.rs2.count() == 2 && regalloc.IsAllocf(op.rs2, 0) && regalloc.IsAllocf(op.rs2, 1));
+					Fmov(*call_regs[1], regalloc.MapVRegister(op.rs2, 1));
+					Lsl(*call_regs64[1], *call_regs64[1], 32);
+					Fmov(w2, regalloc.MapVRegister(op.rs2, 0));
+					Orr(*call_regs64[1], *call_regs64[1], x2);
+#else
 					shil_param_to_host_reg(op.rs2, *call_regs64[1]);
+#endif
+				}
 
 				switch (size)
 				{
@@ -774,12 +800,13 @@ public:
 			case shop_fsca:
 				Mov(x1, reinterpret_cast<uintptr_t>(&sin_table));
 				Add(x1, x1, Operand(regalloc.MapRegister(op.rs1), UXTH, 3));
-				// TODO use regalloc
-				//Ldr(regalloc.MapVRegister(op.rd, 0), MemOperand(x1, 4, PostIndex));
-				//Ldr(regalloc.MapVRegister(op.rd, 1), MemOperand(x1));
-				regalloc.writeback_fpu += 2;
+#ifdef EXPLODE_SPANS
+				Ldr(regalloc.MapVRegister(op.rd, 0), MemOperand(x1, 4, PostIndex));
+				Ldr(regalloc.MapVRegister(op.rd, 1), MemOperand(x1));
+#else
 				Ldr(x2, MemOperand(x1));
 				Str(x2, sh4_context_mem_operand(op.rd.reg_ptr()));
+#endif
 				break;
 
 			case shop_fipr:

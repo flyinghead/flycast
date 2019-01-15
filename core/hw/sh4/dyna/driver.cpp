@@ -486,10 +486,6 @@ void recSh4_Term()
 	printf("recSh4 Term\n");
 	bm_Term();
 	Sh4_int_Term();
-
-#if HOST_OS == OS_LINUX
-	//hum ?
-#endif
 }
 
 bool recSh4_IsCpuRunning()
@@ -508,8 +504,6 @@ void Get_Sh4Recompiler(sh4_if* rv)
 	rv->Init = recSh4_Init;
 	rv->Term = recSh4_Term;
 	rv->IsCpuRunning = recSh4_IsCpuRunning;
-	//rv->GetRegister=Sh4_int_GetRegister;
-	//rv->SetRegister=Sh4_int_SetRegister;
 	rv->ResetCache = recSh4_ClearCache;
 }
 #endif
