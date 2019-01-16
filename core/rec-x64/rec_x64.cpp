@@ -60,7 +60,9 @@ void ngen_mainloop(void* v_cntx)
 {
 	__asm__ volatile (
 			"pushq %%rbx					\n\t"
+#ifndef __MACH__	// rbp is pushed in the standard function prologue
 			"pushq %%rbp					\n\t"
+#endif
 #ifdef _WIN32
 			"pushq %%rdi					\n\t"
 			"pushq %%rsi					\n\t"
@@ -138,7 +140,9 @@ void ngen_mainloop(void* v_cntx)
 			"popq %%rsi						\n\t"
 			"popq %%rdi						\n\t"
 #endif
+#ifndef __MACH__
 			"popq %%rbp						\n\t"
+#endif
 			"popq %%rbx						\n\t"
 			:
 			: [CpuRunning] "i"(offsetof(Sh4RCB, cntx.CpuRunning)),
@@ -417,7 +421,7 @@ public:
 					movd(call_regs[1], regalloc.MapXRegister(op.rs2, 1));
 					shl(call_regs64[1], 32);
 					movd(eax, regalloc.MapXRegister(op.rs2, 0));
-					or(call_regs64[1], rax);
+					or_(call_regs64[1], rax);
 #else
 					mov(rax, (uintptr_t)op.rs2.reg_ptr());
 					mov(call_regs64[1], qword[rax]);
@@ -460,17 +464,17 @@ public:
 			case shop_not:
 				if (regalloc.mapg(op.rd) != regalloc.mapg(op.rs1))
 					mov(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rs1));
-				not(regalloc.MapRegister(op.rd));
+				not_(regalloc.MapRegister(op.rd));
 				break;
 
 			case shop_and:
-				GenBinaryOp(op, &BlockCompiler::and);
+				GenBinaryOp(op, &BlockCompiler::and_);
 				break;
 			case shop_or:
-				GenBinaryOp(op, &BlockCompiler::or);
+				GenBinaryOp(op, &BlockCompiler::or_);
 				break;
 			case shop_xor:
-				GenBinaryOp(op, &BlockCompiler::xor);
+				GenBinaryOp(op, &BlockCompiler::xor_);
 				break;
 			case shop_add:
 				GenBinaryOp(op, &BlockCompiler::add);
@@ -555,7 +559,7 @@ public:
 					test(ecx, 0x1f);
 					jnz(non_zero);
 					if (op.op == shop_shld)
-						xor(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rd));
+						xor_(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rd));
 					else
 						sar(regalloc.MapRegister(op.rd), 31);
 					jmp(exit);
