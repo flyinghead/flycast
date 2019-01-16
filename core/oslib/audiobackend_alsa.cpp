@@ -8,10 +8,6 @@ snd_pcm_t *handle;
 // We're making these functions static - there's no need to pollute the global namespace
 static void alsa_init()
 {
-
-	long loops;
-	int size;
-
 	snd_pcm_hw_params_t *params;
 	unsigned int val;
 	int dir=-1;
