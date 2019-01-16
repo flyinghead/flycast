@@ -53,13 +53,9 @@ void ExecuteDelayslot();
 void ExecuteDelayslot_RTE();
 
 
-#if HOST_OS==OS_LINUX || HOST_OS==OS_DARWIN
 extern "C" {
-#endif
 
 int UpdateSystem();
 int UpdateSystem_INTC();
 
-#if HOST_OS==OS_LINUX || HOST_OS==OS_DARWIN
 }
-#endif
