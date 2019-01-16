@@ -50,18 +50,51 @@ static __attribute((used)) void end_slice()
 }
 #endif
 
+#ifdef __MACH__
+#define _U "_"
+#else
+#define _U
+#endif
+
 void ngen_mainloop(void* v_cntx)
 {
 	__asm__ volatile (
 			"pushq %%rbx					\n\t"
 			"pushq %%rbp					\n\t"
+#ifdef _WIN32
 			"pushq %%rdi					\n\t"
 			"pushq %%rsi					\n\t"
+#endif
 			"pushq %%r12					\n\t"
 			"pushq %%r13					\n\t"
 			"pushq %%r14					\n\t"
 			"pushq %%r15					\n\t"
 			"subq $8, %%rsp					\n\t"	// 8 for stack 16-byte alignment
+#if defined(__MACH__) || defined(_ANDROID)
+			"movl %[_SH4_TIMESLICE], " _U "cycle_counter(%%rip)	\n"
+
+		"1:							  			\n\t"
+			"movq " _U "p_sh4rcb(%%rip), %%rax	\n\t"
+			"movl %c[CpuRunning](%%rax), %%edx	\n\t"
+			"testl %%edx, %%edx					\n\t"
+			"je 3f								\n"
+
+		"2:								 		\n\t"
+			"movq " _U "p_sh4rcb(%%rip), %%rax	\n\t"
+			"movl %c[pc](%%rax), %%edi			\n\t"
+			"call " _U "bm_GetCode2				\n\t"
+			"call *%%rax						\n\t"
+			"movl " _U "cycle_counter(%%rip), %%ecx \n\t"
+			"testl %%ecx, %%ecx					\n\t"
+			"jg 2b								\n\t"
+
+			"addl %[_SH4_TIMESLICE], %%ecx		\n\t"
+			"movl %%ecx, " _U "cycle_counter(%%rip)	\n\t"
+			"call " _U "UpdateSystem_INTC		\n\t"
+			"jmp 1b								\n"
+
+		"3:										\n\t"
+#else
 			"movl %[_SH4_TIMESLICE], cycle_counter(%%rip)	\n"
 
 		"run_loop:							\n\t"
@@ -95,13 +128,16 @@ void ngen_mainloop(void* v_cntx)
 			"jmp run_loop					\n"
 
 		"end_run_loop:						\n\t"
+#endif	// !__MACH__
 			"addq $8, %%rsp					\n\t"
 			"popq %%r15						\n\t"
 			"popq %%r14						\n\t"
 			"popq %%r13						\n\t"
 			"popq %%r12						\n\t"
+#ifdef _WIN32
 			"popq %%rsi						\n\t"
 			"popq %%rdi						\n\t"
+#endif
 			"popq %%rbp						\n\t"
 			"popq %%rbx						\n\t"
 			:
@@ -255,52 +291,105 @@ public:
 
 			case shop_readm:
 			{
-				shil_param_to_host_reg(op.rs1, call_regs[0]);
-				if (!op.rs3.is_null())
-				{
-					if (op.rs3.is_imm())
-						add(call_regs[0], op.rs3._imm);
-					else
-					{
-						shil_param_to_host_reg(op.rs3, edx);
-						add(call_regs[0], edx);
-					}
-				}
-
 				u32 size = op.flags & 0x7f;
 
-				if (size == 1) {
-					GenCall(ReadMem8);
-					movsx(rcx, al);
-				}
-				else if (size == 2) {
-					GenCall(ReadMem16);
-					movsx(rcx, ax);
-				}
-				else if (size == 4) {
-					GenCall(ReadMem32);
-					mov(rcx, rax);
-				}
-				else if (size == 8) {
-					GenCall(ReadMem64);
-					mov(rcx, rax);
-				}
-				else {
-					die("1..8 bytes");
-				}
+				if (op.rs1.is_imm())
+				{
+					bool isram = false;
+					void* ptr = _vmem_read_const(op.rs1._imm, isram, size);
 
-				if (size != 8)
-					host_reg_to_shil_param(op.rd, ecx);
-				else {
+					if (isram)
+					{
+						// Immediate pointer to RAM: super-duper fast access
+						mov(rax, reinterpret_cast<uintptr_t>(ptr));
+						switch (size)
+						{
+						case 2:
+							movsx(regalloc.MapRegister(op.rd), word[rax]);
+							break;
+
+						case 4:
+							if (regalloc.IsAllocg(op.rd))
+								mov(regalloc.MapRegister(op.rd), dword[rax]);
+							else
+								movd(regalloc.MapXRegister(op.rd), dword[rax]);
+							break;
+
+						default:
+							die("Invalid immediate size");
+						}
+					}
+					else
+					{
+						// Not RAM: the returned pointer is a memory handler
+						mov(call_regs[0], op.rs1._imm);
+
+						switch(size)
+						{
+						case 2:
+							GenCall((void (*)())ptr);
+							movsx(ecx, ax);
+							break;
+
+						case 4:
+							GenCall((void (*)())ptr);
+							mov(ecx, eax);
+							break;
+
+						default:
+							die("Invalid immediate size");
+						}
+						host_reg_to_shil_param(op.rd, ecx);
+					}
+				}
+				else
+				{
+					// Not an immediate address
+					shil_param_to_host_reg(op.rs1, call_regs[0]);
+					if (!op.rs3.is_null())
+					{
+						if (op.rs3.is_imm())
+							add(call_regs[0], op.rs3._imm);
+						else
+						{
+							shil_param_to_host_reg(op.rs3, edx);
+							add(call_regs[0], edx);
+						}
+					}
+
+					if (size == 1) {
+						GenCall(ReadMem8);
+						movsx(ecx, al);
+					}
+					else if (size == 2) {
+						GenCall(ReadMem16);
+						movsx(ecx, ax);
+					}
+					else if (size == 4) {
+						GenCall(ReadMem32);
+						mov(ecx, eax);
+					}
+					else if (size == 8) {
+						GenCall(ReadMem64);
+						mov(rcx, rax);
+					}
+					else {
+						die("1..8 bytes");
+					}
+
+					if (size != 8)
+						host_reg_to_shil_param(op.rd, ecx);
+					else {
 #ifdef EXPLODE_SPANS
-					verify(op.rd.count() == 2 && regalloc.IsAllocf(op.rd, 0) && regalloc.IsAllocf(op.rd, 1));
-					movd(regalloc.MapXRegister(op.rd, 0), ecx);
-					shr(rcx, 32);
-					movd(regalloc.MapXRegister(op.rd, 1), ecx);
+						verify(op.rd.count() == 2 && regalloc.IsAllocf(op.rd, 0) && regalloc.IsAllocf(op.rd, 1));
+						movd(regalloc.MapXRegister(op.rd, 0), ecx);
+						shr(rcx, 32);
+						movd(regalloc.MapXRegister(op.rd, 1), ecx);
 #else
-					mov(rax, (uintptr_t)op.rd.reg_ptr());
-					mov(qword[rax], rcx);
+						mov(rax, (uintptr_t)op.rd.reg_ptr());
+						mov(qword[rax], rcx);
 #endif
+					}
 				}
 			}
 			break;
@@ -861,6 +950,9 @@ public:
 				mov(call_regs64[regused++], (size_t)prm.reg_ptr());
 
 				break;
+            default:
+               // Other cases handled in ngen_CC_param
+               break;
 			}
 		}
 		GenCall((void (*)())function);
