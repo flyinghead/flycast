@@ -78,7 +78,7 @@ class CodeBuffer {
   template <typename T>
   T GetOffsetAddress(ptrdiff_t offset) const {
     VIXL_STATIC_ASSERT(sizeof(T) >= sizeof(uintptr_t));
-    VIXL_ASSERT((offset >= 0) && (offset <= (cursor_ - buffer_)));
+    //VIXL_ASSERT((offset >= 0) && (offset <= (cursor_ - buffer_)));	// hack to have negative offsets
     return reinterpret_cast<T>(buffer_ + offset);
   }
 

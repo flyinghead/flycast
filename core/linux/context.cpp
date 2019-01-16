@@ -53,10 +53,6 @@ void context_segfault(rei_host_context_t* reictx, void* segfault_ctx, bool to_se
 	#endif
 #elif HOST_CPU == CPU_ARM64
 	bicopy(reictx->pc, MCTX(.pc), to_segfault);
-	u64* r =(u64*) &MCTX(.regs[0]);
-
-	for (int i = 0; i < 31; i++)
-		bicopy(reictx->r[i], r[i], to_segfault);
 #elif HOST_CPU == CPU_X86
 	#if defined(__FreeBSD__)
 		bicopy(reictx->pc, MCTX(.mc_eip), to_segfault);

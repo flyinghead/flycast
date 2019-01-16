@@ -50,7 +50,7 @@ void sigill_handler(int sn, siginfo_t * si, void *segfault_ctx) {
 	unat pc = (unat)ctx.pc;
 	bool dyna_cde = (pc>(unat)CodeCache) && (pc<(unat)(CodeCache + CODE_SIZE));
 	
-	printf("SIGILL @ %08X, fault_handler+0x%08X ... %08X -> was not in vram, %d\n", pc, pc - (unat)sigill_handler, (unat)si->si_addr, dyna_cde);
+	printf("SIGILL @ %lx -> %p was not in vram, dynacode:%d\n", pc, si->si_addr, dyna_cde);
 	
 	//printf("PC is used here %08X\n", pc);
     kill(getpid(), SIGABRT);
@@ -93,14 +93,17 @@ void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 		#elif HOST_CPU == CPU_X64
 			//x64 has no rewrite support
 		#elif HOST_CPU == CPU_ARM64
-			// arm64 has no rewrite support
+			else if (dyna_cde && ngen_Rewrite(ctx.pc, 0, 0))
+			{
+				context_to_segfault(&ctx, segfault_ctx);
+			}
 		#else
 			#error JIT: Not supported arch
 		#endif
 	#endif
 	else
 	{
-		printf("SIGSEGV @ %u (fault_handler+0x%u) ... %p -> was not in vram\n", ctx.pc, ctx.pc - (unat)fault_handler, si->si_addr);
+		printf("SIGSEGV @ %lx -> %p was not in vram, dynacode:%d\n", ctx.pc, si->si_addr, dyna_cde);
 		die("segfault");
 		signal(SIGSEGV, SIG_DFL);
 	}

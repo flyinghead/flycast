@@ -30,9 +30,6 @@ op_agent_t          oprofHandle;
 
 typedef vector<RuntimeBlockInfo*> bm_List;
 
-#define BLOCKS_IN_PAGE_LIST_COUNT (RAM_SIZE/4096)
-bm_List blocks_page[BLOCKS_IN_PAGE_LIST_COUNT];
-
 bm_List all_blocks;
 bm_List del_blocks;
 #include <set>
@@ -140,12 +137,6 @@ RuntimeBlockInfo* bm_GetStaleBlock(void* dynarec_code)
 
 void bm_AddBlock(RuntimeBlockInfo* blk)
 {
-	/*
-	if (IsOnRam(blk->addr) && PageIsConst(blk->addr))
-	{
-		blocks_page[(blk->addr&RAM_MASK)/PAGE_SIZE].push_back(blk);
-	}
-	*/
 	all_blocks.push_back(blk);
 	if (blkmap.find(blk)!=blkmap.end())
 	{
@@ -373,11 +364,6 @@ void bm_vmem_pagefill(void** ptr,u32 PAGE_SZ)
 void bm_Reset()
 {
 	ngen_ResetBlocks();
-	for (u32 i=0; i<BLOCKS_IN_PAGE_LIST_COUNT; i++)
-	{
-		blocks_page[i].clear();
-	}
-
 	_vmem_bm_reset();
 
 	for (size_t i=0; i<all_blocks.size(); i++)

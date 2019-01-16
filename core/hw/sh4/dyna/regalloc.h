@@ -465,10 +465,6 @@ struct RegAlloc
 					for (int i=reg_gbr;i<=reg_fpul;i++)
 						flush_span(i);
 
-					for (int i=reg_gbr;i<=reg_fpul;i++)
-						flush_span(i);
-
-
 					switch(OpDesc[op->rs3._imm]->mask)
 					{
 					case Mask_imm8:

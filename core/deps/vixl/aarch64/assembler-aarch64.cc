@@ -58,7 +58,7 @@ void Assembler::bind(Label* label) {
 
 
 void Assembler::BindToOffset(Label* label, ptrdiff_t offset) {
-  VIXL_ASSERT((offset >= 0) && (offset <= GetBuffer()->GetCursorOffset()));
+//  VIXL_ASSERT((offset >= 0) && (offset <= GetBuffer()->GetCursorOffset()));	// hack to have negative offsets
   VIXL_ASSERT(offset % kInstructionSize == 0);
 
   label->Bind(offset);
