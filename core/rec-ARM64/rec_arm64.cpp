@@ -100,15 +100,16 @@ void ngen_mainloop(void* v_cntx)
 
 	__asm__ volatile
 	(
-		"stp x19, x20, [sp, #-144]!	\n\t"
+		"stp x19, x20, [sp, #-160]!	\n\t"
 		"stp x21, x22, [sp, #16]	\n\t"
 		"stp x23, x24, [sp, #32]	\n\t"
 		"stp x25, x26, [sp, #48]	\n\t"
 		"stp x27, x28, [sp, #64]	\n\t"
-		"stp s8, s9, [sp, #80]		\n\t"
-		"stp s10, s11, [sp, #96]	\n\t"
-		"stp s12, s13, [sp, #112]	\n\t"
-		"stp s14, s15, [sp, #128]	\n\t"
+		"stp x29, x30, [sp, #80]	\n\t"
+		"stp s8, s9, [sp, #96]		\n\t"
+		"stp s10, s11, [sp, #112]	\n\t"
+		"stp s12, s13, [sp, #128]	\n\t"
+		"stp s14, s15, [sp, #144]	\n\t"
 		// Use x28 as sh4 context pointer
 		"mov x28, %0				\n\t"
 		// Use x27 as cycle_counter
@@ -130,15 +131,16 @@ void ngen_mainloop(void* v_cntx)
 		"b run_loop					\n\t"
 
 	"end_run_loop:					\n\t"
-		"ldp s14, s15, [sp, #128]	\n\t"
-		"ldp s12, s13, [sp, #112]	\n\t"
-		"ldp s10, s11, [sp, #96]	\n\t"
-		"ldp s8, s9, [sp, #80]		\n\t"
+		"ldp s14, s15, [sp, #144]	\n\t"
+		"ldp s12, s13, [sp, #128]	\n\t"
+		"ldp s10, s11, [sp, #112]	\n\t"
+		"ldp s8, s9, [sp, #96]		\n\t"
+		"ldp x29, x30, [sp, #80]	\n\t"
 		"ldp x27, x28, [sp, #64]	\n\t"
 		"ldp x25, x26, [sp, #48]	\n\t"
 		"ldp x23, x24, [sp, #32]	\n\t"
 		"ldp x21, x22, [sp, #16]	\n\t"
-		"ldp x19, x20, [sp], #144	\n\t"
+		"ldp x19, x20, [sp], #160	\n\t"
 		:
 		: [cntx] "r"(reinterpret_cast<uintptr_t>(&ctx->cntx)),
 		  [pc] "i"(offsetof(Sh4Context, pc)),
