@@ -1219,9 +1219,9 @@ void DrawFullscreenQuad(float screenToNativeXScale, float screenToNativeYScale, 
 	u32 quadIndicesNumber = 6;
 	GLint boundArrayBuffer = 0;
 	GLint boundElementArrayBuffer = 0;
-	GLint vsPosition= glGetAttribLocation(gl.fullscreenQuadShader, "a_position");
-	GLint vsTexcoord= glGetAttribLocation(gl.fullscreenQuadShader, "a_texcoord");
-	GLint fsTexture = glGetUniformLocation(gl.fullscreenQuadShader, "s_texture");
+	GLint vsPosition= glGetAttribLocation(gl.fullscreenQuadShader, "position");
+	GLint vsTexcoord= glGetAttribLocation(gl.fullscreenQuadShader, "texture_coord");
+	GLint fsTexture = glGetUniformLocation(gl.fullscreenQuadShader, "texture_data");
 
 	glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &boundArrayBuffer);
 	glGetIntegerv(GL_ELEMENT_ARRAY_BUFFER_BINDING, &boundElementArrayBuffer);

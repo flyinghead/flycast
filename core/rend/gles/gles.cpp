@@ -421,27 +421,61 @@ void main() \n\
 	gl_FragColor=vtx_base*texture(tex,uv.st); \n\n\
 }";
 
-const char * FullscreenQuadVertexShader =
-	"attribute vec3 a_position;\n\
-	attribute vec2 a_texcoord;\n\
+const char* FullscreenQuadVertexShader =
+	"%s \n\
 	\n\
-	varying vec2 v_texcoord;  \n\
+	#define TARGET_GL %s \n\
 	\n\
-	void main()\n\
-	{\n\
-	    v_texcoord = a_texcoord;\n\
-	    gl_Position = vec4(a_position, 1);\n\
+	#define GLES2 0 \n\
+	#define GLES3 1 \n\
+	#define GL2 2 \n\
+	#define GL3 3 \n\
+	\n\
+	#if TARGET_GL == GLES2 || TARGET_GL == GL2 \n\
+	#define in attribute \n\
+	#define out varying \n\
+	#endif \n\
+	\n\
+	in vec3 position; \n\
+	in vec2 texture_coord; \n\
+	\n\
+	out vec2 vs_texture_coord; \n\
+	\n\
+	void main() \n\
+	{ \n\
+	    vs_texture_coord = texture_coord; \n\
+	    gl_Position = vec4(position, 1); \n\
 	}";
 
-const char * FullscreenQuadFragmentShader =
-	"precision mediump float;\n\
-	uniform sampler2D s_texture;\n\
+const char* FullscreenQuadFragmentShader =
+	"%s \n\
 	\n\
-	varying vec2 v_texcoord;\n\
+	#define TARGET_GL %s \n\
 	\n\
-	void main()\n\
-	{\n\
-	    gl_FragColor = texture2D(s_texture, v_texcoord.st);\n\
+	#define GLES2 0 \n\
+	#define GLES3 1 \n\
+	#define GL2 2 \n\
+	#define GL3 3 \n\
+	\n\
+	#if TARGET_GL == GLES2 || TARGET_GL == GLES3 \n\
+	precision mediump float; \n\
+	#endif \n\
+	\n\
+	#if TARGET_GL != GLES2 && TARGET_GL != GL2 \n\
+	out vec4 FragColor; \n\
+	#define gl_FragColor FragColor \n\
+	#else \n\
+	#define in varying \n\
+	#define texture texture2D \n\
+	#endif \n\
+	\n\
+	uniform sampler2D texture_data; \n\
+	\n\
+	in vec2 vs_texture_coord; \n\
+	\n\
+	void main() \n\
+	{ \n\
+	    gl_FragColor = texture(texture_data, vs_texture_coord.st); \n\
 	}";
 
 gl_ctx gl;
@@ -848,7 +882,15 @@ GLuint gl_CompileShader(const char* shader,GLuint type)
 		*compile_log=0;
 
 		glGetShaderInfoLog(rv, compile_log_len, &compile_log_len, compile_log);
-		printf("Shader: %s \n%s\n",result?"compiled!":"failed to compile",compile_log);
+		if (type == GL_VERTEX_SHADER) {
+			printf("Vertex shader: %s \n%s\n", result ? "compiled!" : "failed to compile", compile_log);
+		}
+		else if (type == GL_FRAGMENT_SHADER) {
+			printf("Fragment shader: %s \n%s\n", result ? "compiled!" : "failed to compile", compile_log);
+		}
+		else {
+			printf("Shader: %s \n%s\n", result ? "compiled!" : "failed to compile", compile_log);
+		}
 
 		free(compile_log);
 	}
@@ -1100,9 +1142,10 @@ bool gl_create_resources()
 
 	findGLVersion();
 
-	char vshader[8192];
+	const u32 maxShaderSize = 8192;
+	char vshader[maxShaderSize];
 	sprintf(vshader, VertexShaderSource, gl.glsl_version_header, gl.gl_version);
-	char fshader[8192];
+	char fshader[maxShaderSize];
 	sprintf(fshader, ModifierVolumeShader, gl.glsl_version_header, gl.gl_version);
 
 	gl.modvol_shader.program = gl_CompileAndLink(vshader, fshader, bindDefaultAttribLocations);
@@ -1119,8 +1162,10 @@ bool gl_create_resources()
 	gl.OSD_SHADER.depth_scale=glGetUniformLocation(gl.OSD_SHADER.program, "depth_scale");
 	glUniform1i(glGetUniformLocation(gl.OSD_SHADER.program, "tex"),0);		//bind osd texture to slot 0
 
-	if (!gl.fullscreenQuadShader) {
-		gl.fullscreenQuadShader = gl_CompileAndLink(FullscreenQuadVertexShader, FullscreenQuadFragmentShader);
+	if ((settings.rend.VerticalResolution != 100 || settings.rend.HorizontalResolution != 100) && !gl.fullscreenQuadShader) {
+		sprintf(vshader, FullscreenQuadVertexShader, gl.glsl_version_header, gl.gl_version);
+		sprintf(fshader, FullscreenQuadFragmentShader,  gl.glsl_version_header, gl.gl_version);
+		gl.fullscreenQuadShader = gl_CompileAndLink(vshader, fshader);
 		generateFullscreenQuadVertices();
 	}
 

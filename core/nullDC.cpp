@@ -300,9 +300,9 @@ void LoadSettings()
 	settings.rend.WideScreen		= cfgLoadInt("config", "rend.WideScreen", 0);
 	settings.rend.Clipping			= cfgLoadInt("config", "rend.Clipping", 1);
 	settings.rend.
-	    VerticalResolution			= cfgLoadInt("config", "rend.VerticalResolution", 100);
+	    VerticalResolution			= cfgLoadInt("config", "rend.ResolutionPercentage", 100);
 	settings.rend.
-	    HorizontalResolution		= cfgLoadInt("config", "rend.HorizontalResolution", 100);
+	    HorizontalResolution		= cfgLoadInt("config", "rend.ResolutionPercentage", 100);
 
 	settings.pvr.subdivide_transp	= cfgLoadInt("config", "pvr.Subdivide", 0);
 
@@ -370,10 +370,6 @@ void LoadCustom()
 	settings.dynarec.safemode		= cfgGameInt(reios_id,"Dynarec.safemode", settings.dynarec.safemode);
 	settings.rend.ModifierVolumes	= cfgGameInt(reios_id,"rend.ModifierVolumes", settings.rend.ModifierVolumes);
 	settings.rend.Clipping			= cfgGameInt(reios_id,"rend.Clipping", settings.rend.Clipping);
-	settings.rend.
-	    VerticalResolution			= cfgGameInt(reios_id, "rend.VerticalResolution", settings.rend.VerticalResolution);
-	settings.rend.
-	    HorizontalResolution		= cfgGameInt(reios_id, "rend.HorizontalResolution", settings.rend.HorizontalResolution);
 
 	settings.pvr.subdivide_transp	= cfgGameInt(reios_id,"pvr.Subdivide", settings.pvr.subdivide_transp);
 
