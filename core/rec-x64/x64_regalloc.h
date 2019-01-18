@@ -26,11 +26,12 @@
 #ifdef _WIN32
 static Xbyak::Operand::Code alloc_regs[] = { Xbyak::Operand::RBX, Xbyak::Operand::RBP, Xbyak::Operand::RDI, Xbyak::Operand::RSI,
 		Xbyak::Operand::R12, Xbyak::Operand::R13, Xbyak::Operand::R14, Xbyak::Operand::R15, (Xbyak::Operand::Code)-1 };
+static s8 alloc_fregs[] = { 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, -1 };          // XMM6 to XMM15 are callee-saved in Windows
 #else
 static Xbyak::Operand::Code alloc_regs[] = { Xbyak::Operand::RBX, Xbyak::Operand::RBP, Xbyak::Operand::R12, Xbyak::Operand::R13,
 		Xbyak::Operand::R14, Xbyak::Operand::R15, (Xbyak::Operand::Code)-1 };
-#endif
 static s8 alloc_fregs[] = { 8, 9, 10, 11, -1 };		// XMM8-11
+#endif
 
 class BlockCompiler;
 

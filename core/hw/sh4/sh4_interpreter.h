@@ -56,6 +56,6 @@ void ExecuteDelayslot_RTE();
 extern "C" {
 
 int UpdateSystem();
-int UpdateSystem_INTC();
+__attribute__((used)) int UpdateSystem_INTC();
 
 }

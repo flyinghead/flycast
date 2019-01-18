@@ -1,4 +1,5 @@
 #include "deps/xbyak/xbyak.h"
+#include "deps/xbyak/xbyak_util.h"
 
 #include "types.h"
 
@@ -56,104 +57,132 @@ static __attribute((used)) void end_slice()
 #define _U
 #endif
 
+#ifdef _WIN32
+#define WIN32_ONLY(x) x
+#else
+#define WIN32_ONLY(x)
+#endif
+
+#define STRINGIFY(x) #x
+#define _S(x) STRINGIFY(x)
+#if RAM_SIZE == 16*1024*1024
+#define CPU_RUNNING 68157284
+#define PC 68157256
+#elif RAM_SIZE == 32*1024*1024
+#define CPU_RUNNING 135266148
+#define PC 135266120
+#else
+#error RAM_SIZE unknown
+#endif
+
+#ifdef _WIN32
+        // Fully naked function in win32 for proper SEH prologue
+	__asm__ (
+			".text                          \n\t"
+			".p2align 4,,15                 \n\t"
+			".globl ngen_mainloop           \n\t"
+			".def   ngen_mainloop;  .scl    2;      .type   32;     .endef  \n\t"
+			".seh_proc      ngen_mainloop   \n\t"
+		"ngen_mainloop:                     \n\t"
+#else
 void ngen_mainloop(void* v_cntx)
 {
-	__asm__ volatile (
-			"pushq %%rbx					\n\t"
+	__asm__ (
+#endif
+			"pushq %rbx						\n\t"
+WIN32_ONLY( ".seh_pushreg %rbx				\n\t")
 #ifndef __MACH__	// rbp is pushed in the standard function prologue
-			"pushq %%rbp					\n\t"
+			"pushq %rbp                     \n\t"
 #endif
 #ifdef _WIN32
-			"pushq %%rdi					\n\t"
-			"pushq %%rsi					\n\t"
+			".seh_pushreg %rbp              \n\t"
+			"pushq %rdi                     \n\t"
+			".seh_pushreg %rdi              \n\t"
+			"pushq %rsi                     \n\t"
+			".seh_pushreg %rsi              \n\t"
 #endif
-			"pushq %%r12					\n\t"
-			"pushq %%r13					\n\t"
-			"pushq %%r14					\n\t"
-			"pushq %%r15					\n\t"
-			"subq $8, %%rsp					\n\t"	// 8 for stack 16-byte alignment
-#if defined(__MACH__) || defined(_ANDROID)
-			"movl %[_SH4_TIMESLICE], " _U "cycle_counter(%%rip)	\n"
-
-		"1:							  			\n\t"
-			"movq " _U "p_sh4rcb(%%rip), %%rax	\n\t"
-			"movl %c[CpuRunning](%%rax), %%edx	\n\t"
-			"testl %%edx, %%edx					\n\t"
-			"je 3f								\n"
-
-		"2:								 		\n\t"
-			"movq " _U "p_sh4rcb(%%rip), %%rax	\n\t"
-			"movl %c[pc](%%rax), %%edi			\n\t"
-			"call " _U "bm_GetCode2				\n\t"
-			"call *%%rax						\n\t"
-			"movl " _U "cycle_counter(%%rip), %%ecx \n\t"
-			"testl %%ecx, %%ecx					\n\t"
-			"jg 2b								\n\t"
-
-			"addl %[_SH4_TIMESLICE], %%ecx		\n\t"
-			"movl %%ecx, " _U "cycle_counter(%%rip)	\n\t"
-			"call " _U "UpdateSystem_INTC		\n\t"
-			"jmp 1b								\n"
-
-		"3:										\n\t"
+			"pushq %r12                     \n\t"
+WIN32_ONLY( ".seh_pushreg %r12              \n\t")
+			"pushq %r13                     \n\t"
+WIN32_ONLY( ".seh_pushreg %r13              \n\t")
+			"pushq %r14                     \n\t"
+WIN32_ONLY( ".seh_pushreg %r14              \n\t")
+			"pushq %r15                     \n\t"
+#ifdef _WIN32
+			".seh_pushreg %r15              \n\t"
+			"subq $40, %rsp                 \n\t"   // 32-byte shadow space + 8 for stack 16-byte alignment
+			".seh_stackalloc 40             \n\t"
+			".seh_endprologue               \n\t"
 #else
-			"movl %[_SH4_TIMESLICE], cycle_counter(%%rip)	\n"
+			"subq $8, %rsp                  \n\t"   // 8 for stack 16-byte alignment
+#endif
+			"movl $" _S(SH4_TIMESLICE) "," _U "cycle_counter(%rip)  \n"
 
-		"run_loop:							\n\t"
-			"movq p_sh4rcb(%%rip), %%rax	\n\t"
-			"movl %p[CpuRunning](%%rax), %%edx	\n\t"
-			"testl %%edx, %%edx				\n\t"
-			"je end_run_loop				\n"
+		"1:                                 \n\t"   // run_loop
+			"movq " _U "p_sh4rcb(%rip), %rax		\n\t"
+			"movl " _S(CPU_RUNNING) "(%rax), %edx	\n\t"
+			"testl %edx, %edx               \n\t"
+			"je 3f                          \n"     // end_run_loop
+
+		"2:                                 \n\t"   // slice_loop
+			"movq " _U "p_sh4rcb(%rip), %rax	\n\t"
+#ifdef _WIN32
+			"movl " _S(PC)"(%rax), %ecx     \n\t"
+#else
+			"movl " _S(PC)"(%rax), %edi     \n\t"
+#endif
+			"call " _U "bm_GetCode2         \n\t"
+			"call *%rax                     \n\t"
+			"movl " _U "cycle_counter(%rip), %ecx \n\t"
+			"testl %ecx, %ecx               \n\t"
+			"jg 2b                          \n\t"   // slice_loop
+
+			"addl $" _S(SH4_TIMESLICE) ", %ecx		\n\t"
+			"movl %ecx, " _U "cycle_counter(%rip)	\n\t"
+#ifdef PROFILING
+			"call end_slice					\n\t"
+#endif
+			"call " _U "UpdateSystem_INTC   \n\t"
+			"jmp 1b                         \n"     // run_loop
 #ifdef PROFILING
 			"call start_slice				\n\t"
 #endif
 
-		"slice_loop:						\n\t"
-			"movq p_sh4rcb(%%rip), %%rax	\n\t"
+		"3:                                 \n\t"   // end_run_loop
+
 #ifdef _WIN32
-			"movl %p[pc](%%rax), %%ecx		\n\t"
+			"addq $40, %rsp                 \n\t"
 #else
-			"movl %p[pc](%%rax), %%edi		\n\t"
+			"addq $8, %rsp                  \n\t"
 #endif
-			"call bm_GetCode2				\n\t"
-			"call *%%rax					\n\t"
-			"movl cycle_counter(%%rip), %%ecx \n\t"
-			"testl %%ecx, %%ecx				\n\t"
-			"jg slice_loop					\n\t"
-
-			"addl %[_SH4_TIMESLICE], %%ecx	\n\t"
-			"movl %%ecx, cycle_counter(%%rip)	\n\t"
-#ifdef PROFILING
-			"call end_slice					\n\t"
-#endif
-			"call UpdateSystem_INTC			\n\t"
-			"jmp run_loop					\n"
-
-		"end_run_loop:						\n\t"
-#endif	// !__MACH__
-			"addq $8, %%rsp					\n\t"
-			"popq %%r15						\n\t"
-			"popq %%r14						\n\t"
-			"popq %%r13						\n\t"
-			"popq %%r12						\n\t"
+			"popq %r15                      \n\t"
+			"popq %r14                      \n\t"
+			"popq %r13                      \n\t"
+			"popq %r12                      \n\t"
 #ifdef _WIN32
-			"popq %%rsi						\n\t"
-			"popq %%rdi						\n\t"
+			"popq %rsi                      \n\t"
+			"popq %rdi                      \n\t"
 #endif
 #ifndef __MACH__
-			"popq %%rbp						\n\t"
+			"popq %rbp                      \n\t"
 #endif
-			"popq %%rbx						\n\t"
-			:
-			: [CpuRunning] "i"(offsetof(Sh4RCB, cntx.CpuRunning)),
-			  [pc] "i"(offsetof(Sh4RCB, cntx.pc)),
-			  [_SH4_TIMESLICE] "i"(SH4_TIMESLICE)
-			: "memory"
+			"popq %rbx                      \n\t"
+#ifdef _WIN32
+			"ret                            \n\t"
+			".seh_endproc                   \n"
+	);
+#else
 	);
 }
+#endif
+
+#undef _U
+#undef _S
 
 void ngen_init()
 {
+	verify(CPU_RUNNING == offsetof(Sh4RCB, cntx.CpuRunning));
+	verify(PC == offsetof(Sh4RCB, cntx.pc));
 }
 
 void ngen_ResetBlocks()
@@ -217,8 +246,7 @@ public:
 		}
 		regalloc.DoAlloc(block);
 
-		mov(rax, (size_t)&cycle_counter);
-		sub(dword[rax], block->guest_cycles);
+		sub(dword[rip + &cycle_counter], block->guest_cycles);
 #ifdef PROFILING
 		mov(rax, (uintptr_t)&guest_cpu_cycles);
 		mov(ecx, block->guest_cycles);
@@ -321,6 +349,7 @@ public:
 
 						default:
 							die("Invalid immediate size");
+  							break;
 						}
 					}
 					else
@@ -342,6 +371,7 @@ public:
 
 						default:
 							die("Invalid immediate size");
+  							break;
 						}
 						host_reg_to_shil_param(op.rd, ecx);
 					}
@@ -355,10 +385,7 @@ public:
 						if (op.rs3.is_imm())
 							add(call_regs[0], op.rs3._imm);
 						else
-						{
-							shil_param_to_host_reg(op.rs3, edx);
-							add(call_regs[0], edx);
-						}
+							add(call_regs[0], regalloc.MapRegister(op.rs3));
 					}
 
 					if (size == 1) {
@@ -407,10 +434,7 @@ public:
 					if (op.rs3.is_imm())
 						add(call_regs[0], op.rs3._imm);
 					else
-					{
-						shil_param_to_host_reg(op.rs3, edx);	// edx is call_regs[1] on win32 so it's safe here
-						add(call_regs[0], edx);
-					}
+						add(call_regs[0], regalloc.MapRegister(op.rs3));
 				}
 
 				if (size != 8)
@@ -710,7 +734,14 @@ public:
 			case shop_fmac:
 				if (regalloc.mapf(op.rd) != regalloc.mapf(op.rs1))
 					movss(regalloc.MapXRegister(op.rd), regalloc.MapXRegister(op.rs1));
-				vfmadd231ss(regalloc.MapXRegister(op.rd), regalloc.MapXRegister(op.rs2), regalloc.MapXRegister(op.rs3));
+				if (cpu.has(Xbyak::util::Cpu::tFMA))
+					vfmadd231ss(regalloc.MapXRegister(op.rd), regalloc.MapXRegister(op.rs2), regalloc.MapXRegister(op.rs3));
+				else
+				{
+					movss(xmm0, regalloc.MapXRegister(op.rs2));
+					mulss(xmm0, regalloc.MapXRegister(op.rs3));
+					addss(regalloc.MapXRegister(op.rd), xmm0);
+				}
 				break;
 
 			case shop_fsrra:
@@ -749,43 +780,104 @@ public:
 				break;
 
 			case shop_fipr:
-				mov(rax, (size_t)op.rs1.reg_ptr());
-				movaps(regalloc.MapXRegister(op.rd), dword[rax]);
-				mov(rax, (size_t)op.rs2.reg_ptr());
-				mulps(regalloc.MapXRegister(op.rd), dword[rax]);
-				haddps(regalloc.MapXRegister(op.rd), regalloc.MapXRegister(op.rd));
-				haddps(regalloc.MapXRegister(op.rd), regalloc.MapXRegister(op.rd));
+				{
+					mov(rax, (size_t)op.rs1.reg_ptr());
+					movaps(regalloc.MapXRegister(op.rd), dword[rax]);
+					mov(rax, (size_t)op.rs2.reg_ptr());
+					mulps(regalloc.MapXRegister(op.rd), dword[rax]);
+					const Xbyak::Xmm &rd = regalloc.MapXRegister(op.rd);
+					// Only first-generation 64-bit CPUs lack SSE3 support
+					if (cpu.has(Xbyak::util::Cpu::tSSE3))
+					{
+						haddps(rd, rd);
+						haddps(rd, rd);
+					}
+					else
+					{
+						movhlps(xmm1, rd);
+						addps(rd, xmm1);
+						movaps(xmm1, rd);
+						shufps(xmm1, xmm1,1);
+						addss(rd, xmm1);
+					}
+				}
 				break;
 
 			case shop_ftrv:
 				mov(rax, (uintptr_t)op.rs1.reg_ptr());
-				vmovaps(xmm0, xword[rax]);					// fn[0-4]
-				mov(rax, (uintptr_t)op.rs2.reg_ptr());		// fm[0-15]
+				if (cpu.has(Xbyak::util::Cpu::tFMA))
+				{
+					movaps(xmm0, xword[rax]);					// fn[0-4]
+					mov(rax, (uintptr_t)op.rs2.reg_ptr());		// fm[0-15]
 
-				pshufd(xmm1, xmm0, 0x00);					// fn[0]
-				vmulps(xmm2, xmm1, xword[rax]);				// fm[0-3]
-				pshufd(xmm1, xmm0, 0x55);					// fn[1]
-				vfmadd231ps(xmm2, xmm1, xword[rax + 16]);	// fm[4-7]
-				pshufd(xmm1, xmm0, 0xaa);					// fn[2]
-				vfmadd231ps(xmm2, xmm1, xword[rax + 32]);	// fm[8-11]
-				pshufd(xmm1, xmm0, 0xff);					// fn[3]
-				vfmadd231ps(xmm2, xmm1, xword[rax + 48]);	// fm[12-15]
-				mov(rax, (uintptr_t)op.rd.reg_ptr());
-				vmovaps(xword[rax], xmm2);
+					pshufd(xmm1, xmm0, 0x00);					// fn[0]
+					vmulps(xmm2, xmm1, xword[rax]);				// fm[0-3]
+					pshufd(xmm1, xmm0, 0x55);					// fn[1]
+					vfmadd231ps(xmm2, xmm1, xword[rax + 16]);	// fm[4-7]
+					pshufd(xmm1, xmm0, 0xaa);					// fn[2]
+					vfmadd231ps(xmm2, xmm1, xword[rax + 32]);	// fm[8-11]
+					pshufd(xmm1, xmm0, 0xff);					// fn[3]
+					vfmadd231ps(xmm2, xmm1, xword[rax + 48]);	// fm[12-15]
+					mov(rax, (uintptr_t)op.rd.reg_ptr());
+					movaps(xword[rax], xmm2);
+				}
+				else
+				{
+					movaps(xmm3, xword[rax]);                   //xmm0=vector
+					pshufd(xmm0, xmm3, 0);                      //xmm0={v0}
+					pshufd(xmm1, xmm3, 0x55);                   //xmm1={v1}
+					pshufd(xmm2, xmm3, 0xaa);                   //xmm2={v2}
+					pshufd(xmm3, xmm3, 0xff);                   //xmm3={v3}
+
+					//do the matrix mult !
+					mov(rax, (uintptr_t)op.rs2.reg_ptr());
+					mulps(xmm0, xword[rax + 0]);   //v0*=vm0
+					mulps(xmm1, xword[rax + 16]);  //v1*=vm1
+					mulps(xmm2, xword[rax + 32]);  //v2*=vm2
+					mulps(xmm3, xword[rax + 48]);  //v3*=vm3
+
+					addps(xmm0, xmm1);	 //sum it all up
+					addps(xmm2, xmm3);
+					addps(xmm0, xmm2);
+
+					mov(rax, (uintptr_t)op.rd.reg_ptr());
+					movaps(xword[rax], xmm0);
+
+				}
 				break;
 
 			case shop_frswap:
 				mov(rax, (uintptr_t)op.rs1.reg_ptr());
 				mov(rcx, (uintptr_t)op.rd.reg_ptr());
-				vmovaps(ymm0, yword[rax]);
-				vmovaps(ymm1, yword[rcx]);
-				vmovaps(yword[rax], ymm1);
-				vmovaps(yword[rcx], ymm0);
+				if (cpu.has(Xbyak::util::Cpu::tAVX512F))
+				{
+					vmovaps(zmm0, zword[rax]);
+					vmovaps(zmm1, zword[rcx]);
+					vmovaps(zword[rax], zmm1);
+					vmovaps(zword[rcx], zmm0);
+				}
+				else if (cpu.has(Xbyak::util::Cpu::tAVX))
+				{
+					vmovaps(ymm0, yword[rax]);
+					vmovaps(ymm1, yword[rcx]);
+					vmovaps(yword[rax], ymm1);
+					vmovaps(yword[rcx], ymm0);
 
-				vmovaps(ymm0, yword[rax + 32]);
-				vmovaps(ymm1, yword[rcx + 32]);
-				vmovaps(yword[rax + 32], ymm1);
-				vmovaps(yword[rcx + 32], ymm0);
+					vmovaps(ymm0, yword[rax + 32]);
+					vmovaps(ymm1, yword[rcx + 32]);
+					vmovaps(yword[rax + 32], ymm1);
+					vmovaps(yword[rcx + 32], ymm0);
+				}
+				else
+				{
+					for (int i = 0; i < 4; i++)
+					{
+						movaps(xmm0, xword[rax + (i * 16)]);
+						movaps(xmm1, xword[rcx + (i * 16)]);
+						movaps(xword[rax + (i * 16)], xmm1);
+						movaps(xword[rcx + (i * 16)], xmm0);
+					}
+				}
 				break;
 
 			case shop_cvt_f2i_t:
@@ -1047,19 +1139,24 @@ private:
 	template<class Ret, class... Params>
 	void GenCall(Ret(*function)(Params...))
 	{
+#ifndef _WIN32
+		// Need to save xmm registers as they are not preserved in linux/mach
 		sub(rsp, 16);
 		movd(ptr[rsp + 0], xmm8);
 		movd(ptr[rsp + 4], xmm9);
 		movd(ptr[rsp + 8], xmm10);
 		movd(ptr[rsp + 12], xmm11);
+#endif
 
 		call(function);
 
+#ifndef _WIN32
 		movd(xmm8, ptr[rsp + 0]);
 		movd(xmm9, ptr[rsp + 4]);
 		movd(xmm10, ptr[rsp + 8]);
 		movd(xmm11, ptr[rsp + 12]);
 		add(rsp, 16);
+#endif
 	}
 
 	// uses eax/rax
@@ -1129,6 +1226,7 @@ private:
 	vector<CC_PS> CC_pars;
 
 	X64RegAlloc regalloc;
+	Xbyak::util::Cpu cpu;
 	static const u32 float_sign_mask;
 	static const u32 float_abs_mask;
 	static const f32 cvtf2i_pos_saturation;
