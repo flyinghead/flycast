@@ -54,27 +54,39 @@ const u32* sdl_map_axis = sdl_map_axis_usb;
 u32  JSensitivity[256];  // To have less sensitive value on nubs
 #endif
 
+bool haptic_init = false;
+static SDL_Haptic* haptic = NULL;
+int effect_id = 0;
+
 void input_sdl_init()
 {
-	if (SDL_WasInit(SDL_INIT_JOYSTICK) == 0)
+	u32 subsystem_init = SDL_WasInit(SDL_INIT_JOYSTICK | SDL_INIT_HAPTIC);
+
+	if ((subsystem_init & SDL_INIT_JOYSTICK) == 0)
 	{
 		if (SDL_InitSubSystem(SDL_INIT_JOYSTICK) < 0)
 		{
-			die("error initializing SDL Joystick subsystem");
+			die("SDL: error initializing Joystick subsystem");
 		}
 	}
+
+	// Trying to initialize haptic subsystem (rumble)
+	if ((subsystem_init & SDL_INIT_HAPTIC) == 0)
+	{
+		haptic_init = (SDL_InitSubSystem(SDL_INIT_HAPTIC) == 0);
+	}
+
 	// Open joystick device
 	int numjoys = SDL_NumJoysticks();
-	printf("Number of Joysticks found = %i\n", numjoys);
+	printf("SDL: Number of Joysticks found = %i\n", numjoys);
 	if (numjoys > 0)
 	{
 		JoySDL = SDL_JoystickOpen(0);
 	}
 
-	printf("Joystick opened\n");
-
 	if (JoySDL)
 	{
+		printf("SDL: Joystick opened\n");
 		int AxisCount,ButtonCount;
 		const char* Name;
 
@@ -87,14 +99,21 @@ void input_sdl_init()
 		Name = SDL_JoystickName(JoySDL);
 
 		printf("SDL: Found '%s' joystick with %d axes and %d buttons\n", Name, AxisCount, ButtonCount);
+		if (haptic_init)
+		{
+			if (SDL_JoystickIsHaptic(JoySDL) == SDL_TRUE)
+				printf("SDL: Rumble support available\n");
+			else
+				printf("SDL: Rumble support NOT available\n");
+		}
 
 		if (Name != NULL && strcmp(Name,"Microsoft X-Box 360 pad")==0)
 		{
 			sdl_map_btn  = sdl_map_btn_xbox360;
 			sdl_map_axis = sdl_map_axis_xbox360;
-			printf("Using Xbox 360 map\n");
+			printf("SDL: Using Xbox 360 map\n");
 		}
-		
+
 		// Create the first controller with two VMUs
 		// (only when evdev is not available as it's already configured via evdev then)
 		// TODO: make this configurable
@@ -400,6 +419,60 @@ void input_sdl_handle(u32 port)
 				break;
 		}
 	}
+}
+
+void input_sdl_rumble(u32 port, u16 pow_strong, u16 pow_weak)
+{
+	// No haptic supported, no need for rumble
+	if (!haptic_init)
+		return;
+
+	// If already open, close it to stop the current rumble effect
+	if (haptic)
+	{
+		if (effect_id != 0)
+		{
+			SDL_HapticStopEffect( haptic, effect_id );
+			SDL_HapticDestroyEffect( haptic, effect_id );
+			effect_id = 0;
+		}
+
+		SDL_HapticClose(haptic);
+		haptic = NULL;
+	}
+
+	// Open the device
+	if (!haptic)
+		haptic = SDL_HapticOpenFromJoystick( JoySDL );
+
+	if (!haptic)
+		return;
+
+	// Check if the haptic supports the left/right effect
+  	if ((SDL_HapticQuery(haptic) & SDL_HAPTIC_LEFTRIGHT) == 0)
+	{
+  		SDL_HapticClose(haptic);
+		haptic = NULL;
+
+		// Disable haptic/rumble
+		haptic_init = false;
+
+  		return;
+  	}
+
+ 	// Create the effect
+	SDL_HapticEffect effect;
+	SDL_memset(&effect, 0, sizeof(SDL_HapticEffect) ); // 0 is safe default
+	effect.type = SDL_HAPTIC_LEFTRIGHT;
+	effect.leftright.large_magnitude = pow_strong;
+	effect.leftright.small_magnitude = pow_weak;
+	effect.leftright.length = 0;
+
+	// Upload the effect
+	effect_id = SDL_HapticNewEffect(haptic, &effect);
+
+	// Let's play the effect
+	SDL_HapticRunEffect(haptic, effect_id, 1);
 }
 
 void sdl_window_set_text(const char* text)

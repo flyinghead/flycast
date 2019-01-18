@@ -144,24 +144,29 @@ void UpdateInputState(u32 port)
 
 void UpdateVibration(u32 port, u32 value)
 {
+	u8 POW_POS = (value >> 8) & 0x3;
+	u8 POW_NEG = (value >> 12) & 0x3;
+	u8 FREQ = (value >> 16) & 0xFF;
+
+	double pow = (POW_POS + POW_NEG) / 7.0;
+	double pow_l = pow * (0x3B - FREQ) / 17.0;
+	double pow_r = pow * (FREQ - 0x07) / 15.0;
+
+	if (pow_l > 1.0) pow_l = 1.0;
+	if (pow_r > 1.0) pow_r = 1.0;
+
+	u16 pow_strong = (u16)(65535 * pow_l);
+	u16 pow_weak = (u16)(65535 * pow_r);
+
 	#if defined(USE_EVDEV)
-		u8 POW_POS = (value >> 8) & 0x3;
-		u8 POW_NEG = (value >> 12) & 0x3;
-		u8 FREQ = (value >> 16) & 0xFF;
-
-		double pow = (POW_POS + POW_NEG) / 7.0;
-		double pow_l = pow * (0x3B - FREQ) / 17.0;
-		double pow_r = pow * (FREQ - 0x07) / 15.0;
-
-		if (pow_l > 1.0) pow_l = 1.0;
-		if (pow_r > 1.0) pow_r = 1.0;
-
-		u16 pow_strong = (u16)(65535 * pow_l);
-		u16 pow_weak = (u16)(65535 * pow_r);
-
 		input_evdev_rumble(port, pow_strong, pow_weak);
 	#endif
+
+	#if defined(USE_SDL)
+		input_sdl_rumble(port, pow_strong, pow_weak);
+	#endif
 }
+
 
 void os_DoEvents()
 {
