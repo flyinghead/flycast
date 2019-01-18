@@ -488,8 +488,12 @@ void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 			glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, fbw, fbh);
 		}
 #else
-		//OpenGL >= 3.0 is required
-		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, fbw, fbh);
+		if (!strcmp(gl.gl_version, "GL2")) {
+			glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, fbw, fbh);
+		}
+		else {
+			glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, fbw, fbh);
+		}
 #endif
 	}
 
@@ -514,8 +518,10 @@ void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, renderedTexture->renderBuffer);
 		}
 #else
-		//OpenGL >= 3.0 is required
-		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, renderedTexture->renderBuffer);
+		if (!strcmp(gl.gl_version, "GL3")) {
+			//OpenGL >= 3.0 is required
+			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, renderedTexture->renderBuffer);
+		}
 #endif
 		// Check that our FBO creation was successful
 		GLuint uStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
