@@ -556,6 +556,17 @@ public class OptionsFragment extends Fragment {
 		sound_opt.setChecked(sound);
 		sound_opt.setOnCheckedChangeListener(emu_sound);
 
+		CompoundButton dsp_opt = (CompoundButton) getView().findViewById(R.id.dsp_option);
+		OnCheckedChangeListener emu_dsp = new OnCheckedChangeListener() {
+
+			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+				mPrefs.edit().putBoolean(Emulator.pref_nobatch, isChecked).apply();
+			}
+		};
+		boolean dsp = mPrefs.getBoolean(Emulator.pref_nobatch, true);
+		dsp_opt.setChecked(dsp);
+		dsp_opt.setOnCheckedChangeListener(emu_dsp);
+
 		String[] depths = getResources().getStringArray(R.array.depth);
 
 		Spinner depth_spnr = (Spinner) getView().findViewById(R.id.depth_spinner);
@@ -738,6 +749,7 @@ public class OptionsFragment extends Fragment {
 		mPrefs.edit().remove(Config.pref_showfps).apply();
 		mPrefs.edit().remove(Config.pref_rendertype).apply();
 		mPrefs.edit().remove(Emulator.pref_nosound).apply();
+		mPrefs.edit().remove(Emulator.pref_nobatch).apply();
 		mPrefs.edit().remove(Config.pref_renderdepth).apply();
 		mPrefs.edit().remove(Config.pref_theme).apply();
 

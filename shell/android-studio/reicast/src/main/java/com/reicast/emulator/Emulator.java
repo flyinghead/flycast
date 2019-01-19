@@ -19,6 +19,7 @@ public class Emulator extends Application {
     public static final String pref_language = "dc_language";
     public static final String pref_limitfps = "limit_fps";
     public static final String pref_nosound = "sound_disabled";
+    public static final String pref_nobatch = "nobatch";
     public static final String pref_interrupt = "delay_interrupt";
     public static final String pref_mipmaps = "use_mipmaps";
     public static final String pref_widescreen = "stretch_view";
@@ -68,6 +69,7 @@ public class Emulator extends Application {
         Emulator.language = mPrefs.getInt(pref_language, language);
         Emulator.limitfps = mPrefs.getBoolean(pref_limitfps, limitfps);
         Emulator.nosound = mPrefs.getBoolean(pref_nosound, nosound);
+        Emulator.nobatch = mPrefs.getBoolean(pref_nobatch, nobatch);
         Emulator.mipmaps = mPrefs.getBoolean(pref_mipmaps, mipmaps);
         Emulator.widescreen = mPrefs.getBoolean(pref_widescreen, widescreen);
         Emulator.frameskip = mPrefs.getInt(pref_frameskip, frameskip);
