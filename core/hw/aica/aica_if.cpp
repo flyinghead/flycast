@@ -36,7 +36,6 @@ u32 GetRTC_now()
 
 u32 ReadMem_aica_rtc(u32 addr,u32 sz)
 {
-	//settings.dreamcast.RTC=GetRTC_now();
 	switch( addr & 0xFF )
 	{
 	case 0:
@@ -61,7 +60,6 @@ void WriteMem_aica_rtc(u32 addr,u32 data,u32 sz)
 			settings.dreamcast.RTC&=0xFFFF;
 			settings.dreamcast.RTC|=(data&0xFFFF)<<16;
 			rtc_EN=0;
-			SaveSettings();
 		}
 		return;
 	case 4:
