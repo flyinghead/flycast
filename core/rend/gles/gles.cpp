@@ -1646,12 +1646,8 @@ void fullscreenQuadCreateTemporaryFBO(float & screenToNativeXScale, float & scre
 			glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, screen_width, screen_height);
 		}
 #else
-		if (!strcmp(gl.gl_version, "GL2")) {
-			glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, screen_width, screen_height);
-		}
-		else {
-			glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, screen_width, screen_height);
-		}
+		//OpenGL >= 3.0 is required
+		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, screen_width, screen_height);
 #endif
 	}
 
@@ -1677,10 +1673,8 @@ void fullscreenQuadCreateTemporaryFBO(float & screenToNativeXScale, float & scre
 			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, fullscreenQuad.framebufferRenderbuffer);
 		}
 #else
-		if (!strcmp(gl.gl_version, "GL3")) {
-			//OpenGL >= 3.0 is required
-			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, fullscreenQuad.framebufferRenderbuffer);
-		}
+		//OpenGL >= 3.0 is required
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, fullscreenQuad.framebufferRenderbuffer);
 #endif
 		GLuint uStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 		verify(uStatus == GL_FRAMEBUFFER_COMPLETE);
