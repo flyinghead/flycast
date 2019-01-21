@@ -28,7 +28,7 @@
 #include "deps/vixl/aarch64/macro-assembler-aarch64.h"
 using namespace vixl::aarch64;
 
-#define EXPLODE_SPANS
+//#define EXPLODE_SPANS
 
 #include "hw/sh4/sh4_opcode_list.h"
 
@@ -54,7 +54,7 @@ struct DynaRBI : RuntimeBlockInfo
 };
 
 // Code borrowed from Dolphin https://github.com/dolphin-emu/dolphin
-static void CacheFlush(void* start, void* end)
+void Arm64CacheFlush(void* start, void* end)
 {
 	if (start == end)
 		return;
@@ -94,6 +94,26 @@ static void CacheFlush(void* start, void* end)
 #endif
 }
 
+double host_cpu_time;
+u64 guest_cpu_cycles;
+
+#ifdef PROFILING
+#include <time.h>
+
+static clock_t slice_start;
+extern "C"
+{
+static __attribute((used)) void start_slice()
+{
+	slice_start = clock();
+}
+static __attribute((used)) void end_slice()
+{
+	host_cpu_time += (double)(clock() - slice_start) / CLOCKS_PER_SEC;
+}
+}
+#endif
+
 void ngen_mainloop(void* v_cntx)
 {
 	Sh4RCB* ctx = (Sh4RCB*)((u8*)v_cntx - sizeof(Sh4RCB));
@@ -105,11 +125,11 @@ void ngen_mainloop(void* v_cntx)
 		"stp x23, x24, [sp, #32]	\n\t"
 		"stp x25, x26, [sp, #48]	\n\t"
 		"stp x27, x28, [sp, #64]	\n\t"
-		"stp x29, x30, [sp, #80]	\n\t"
+		"stp s14, s15, [sp, #80]	\n\t"
 		"stp s8, s9, [sp, #96]		\n\t"
 		"stp s10, s11, [sp, #112]	\n\t"
 		"stp s12, s13, [sp, #128]	\n\t"
-		"stp s14, s15, [sp, #144]	\n\t"
+		"stp x29, x30, [sp, #144]	\n\t"
 		// Use x28 as sh4 context pointer
 		"mov x28, %0				\n\t"
 		// Use x27 as cycle_counter
@@ -118,6 +138,9 @@ void ngen_mainloop(void* v_cntx)
 	"run_loop:						\n\t"
 		"ldr w0, [x28, %[CpuRunning]]	\n\t"
 		"cbz w0, end_run_loop		\n\t"
+#ifdef PROFILING
+		"bl start_slice				\n\t"
+#endif
 
 	"slice_loop:					\n\t"
 		"ldr w0, [x28, %[pc]]		\n\t"
@@ -127,15 +150,18 @@ void ngen_mainloop(void* v_cntx)
 		"b.gt slice_loop			\n\t"
 
 		"add w27, w27, %[_SH4_TIMESLICE]	\n\t"
+#ifdef PROFILING
+		"bl end_slice				\n\t"
+#endif
 		"bl UpdateSystem_INTC		\n\t"
 		"b run_loop					\n\t"
 
 	"end_run_loop:					\n\t"
-		"ldp s14, s15, [sp, #144]	\n\t"
+		"ldp x29, x30, [sp, #144]	\n\t"
 		"ldp s12, s13, [sp, #128]	\n\t"
 		"ldp s10, s11, [sp, #112]	\n\t"
 		"ldp s8, s9, [sp, #96]		\n\t"
-		"ldp x29, x30, [sp, #80]	\n\t"
+		"ldp s14, s15, [sp, #80]	\n\t"
 		"ldp x27, x28, [sp, #64]	\n\t"
 		"ldp x25, x26, [sp, #48]	\n\t"
 		"ldp x23, x24, [sp, #32]	\n\t"
@@ -260,6 +286,9 @@ public:
 	void ngen_Compile(RuntimeBlockInfo* block, bool force_checks, bool reset, bool staging, bool optimise)
 	{
 		//printf("REC-ARM64 compiling %08x\n", block->addr);
+#ifdef PROFILING
+		SaveFramePointer();
+#endif
 		this->block = block;
 		if (force_checks)
 			CheckBlock(block);
@@ -269,7 +298,12 @@ public:
 
 		// scheduler
 		Sub(w27, w27, block->guest_cycles);
-
+#ifdef PROFILING
+		Ldr(x11, (uintptr_t)&guest_cpu_cycles);
+		Ldr(x0, MemOperand(x11));
+		Add(x0, x0, block->guest_cycles);
+		Str(x0, MemOperand(x11));
+#endif
 		for (size_t i = 0; i < block->oplist.size(); i++)
 		{
 			shil_opcode& op  = block->oplist[i];
@@ -352,11 +386,9 @@ public:
 				break;
 
 			case shop_swaplb:
-				// TODO Optimize
 				Mov(w9, Operand(regalloc.MapRegister(op.rs1), LSR, 16));
 				Rev16(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rs1));
-				Bfc(regalloc.MapRegister(op.rd), 16, 16);
-				Orr(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rd), Operand(w9, LSL, 16));
+				Bfi(regalloc.MapRegister(op.rd), w9, 16, 16);
 				break;
 
 			case shop_neg:
@@ -918,7 +950,7 @@ public:
 
 			emit_Skip(block->host_code_size);
 		}
-		CacheFlush(GetBuffer()->GetStartAddress<void*>(), GetBuffer()->GetEndAddress<void*>());
+		Arm64CacheFlush(GetBuffer()->GetStartAddress<void*>(), GetBuffer()->GetEndAddress<void*>());
 #if 0
 		if (rewrite)
 		{
@@ -944,7 +976,7 @@ private:
 	void GenCallRuntime(R (*function)(P...))
 	{
 		SaveFramePointer();
-		uintptr_t offset = reinterpret_cast<uintptr_t>(function) - GetBuffer()->GetStartAddress<uintptr_t>();
+		ptrdiff_t offset = reinterpret_cast<uintptr_t>(function) - GetBuffer()->GetStartAddress<uintptr_t>();
 		Label function_label;
 		BindToOffset(&function_label, offset);
 		Bl(&function_label);
@@ -1368,16 +1400,16 @@ void Arm64RegAlloc::Writeback_FPU(u32 reg, eFReg nreg)
 
 extern "C" void do_sqw_nommu_area_3(u32 dst, u8* sqb)
 {
-	__asm__ volatile
+	__asm__
 	(
+		"and x12, x0, #0x20			\n\t"	// SQ# selection, isolate
+		"add x12, x12, x1			\n\t"	// SQ# selection, add to SQ ptr
+		"ld2 { v0.2D, v1.2D }, [x12]\n\t"
 		"movz x11, #0x0C00, lsl #16 \n\t"
 		"add x11, x1, x11			\n\t"	// get ram ptr from x1, part 1
-		"and x12, x0, #0x20			\n\t"	// SQ# selection, isolate
 		"ubfx x0, x0, #5, #20		\n\t"	// get ram offset
-		"add x1, x12, x1			\n\t"	// SQ# selection, add to SQ ptr
 		"add x11, x11, #512			\n\t"	// get ram ptr from x1, part 2
 		"add x11, x11, x0, lsl #5	\n\t"	// ram + offset
-		"ld2 { v0.2D, v1.2D }, [x1]	\n\t"
 		"st2 { v0.2D, v1.2D }, [x11] \n\t"
 		"ret						\n"
 
