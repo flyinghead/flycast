@@ -1,12 +1,13 @@
-#include "deps/xbyak/xbyak.h"
-#include "deps/xbyak/xbyak_util.h"
-
-#include "types.h"
+#include "build.h"
 
 #if FEAT_SHREC == DYNAREC_JIT && HOST_CPU == CPU_X64
 #define EXPLODE_SPANS
 //#define PROFILING
 
+#include "deps/xbyak/xbyak.h"
+#include "deps/xbyak/xbyak_util.h"
+
+#include "types.h"
 #include "hw/sh4/sh4_opcode_list.h"
 #include "hw/sh4/dyna/ngen.h"
 #include "hw/sh4/modules/ccn.h"
@@ -123,6 +124,9 @@ WIN32_ONLY( ".seh_pushreg %r14              \n\t")
 			"movl " _S(CPU_RUNNING) "(%rax), %edx	\n\t"
 			"testl %edx, %edx               \n\t"
 			"je 3f                          \n"     // end_run_loop
+#ifdef PROFILING
+			"call start_slice				\n\t"
+#endif
 
 		"2:                                 \n\t"   // slice_loop
 			"movq " _U "p_sh4rcb(%rip), %rax	\n\t"
@@ -144,9 +148,6 @@ WIN32_ONLY( ".seh_pushreg %r14              \n\t")
 #endif
 			"call " _U "UpdateSystem_INTC   \n\t"
 			"jmp 1b                         \n"     // run_loop
-#ifdef PROFILING
-			"call start_slice				\n\t"
-#endif
 
 		"3:                                 \n\t"   // end_run_loop
 
@@ -805,6 +806,7 @@ public:
 
 			case shop_ftrv:
 				mov(rax, (uintptr_t)op.rs1.reg_ptr());
+#if 0	// vfmadd231ps and vmulps cause rounding proglems
 				if (cpu.has(Xbyak::util::Cpu::tFMA))
 				{
 					movaps(xmm0, xword[rax]);					// fn[0-4]
@@ -822,6 +824,7 @@ public:
 					movaps(xword[rax], xmm2);
 				}
 				else
+#endif
 				{
 					movaps(xmm3, xword[rax]);                   //xmm0=vector
 					pshufd(xmm0, xmm3, 0);                      //xmm0={v0}
