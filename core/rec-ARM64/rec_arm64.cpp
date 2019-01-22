@@ -633,7 +633,6 @@ public:
 					Ldr(x9, MemOperand(x9));
 					Sub(x1, x28, offsetof(Sh4RCB, cntx) - offsetof(Sh4RCB, sq_buffer));
 				}
-				SaveFramePointer();
 				if (op.flags == 0x1337)
 					Blr(x9);
 				else
@@ -937,7 +936,6 @@ public:
 	{
 		regalloc.DoAlloc(block);
 		regalloc.current_opid = opid;
-		frame_reg_saved = true;
 	}
 
 	u32 RelinkBlock(RuntimeBlockInfo *block)
@@ -1070,7 +1068,6 @@ private:
 	template <typename R, typename... P>
 	void GenCallRuntime(R (*function)(P...))
 	{
-		SaveFramePointer();
 		ptrdiff_t offset = reinterpret_cast<uintptr_t>(function) - GetBuffer()->GetStartAddress<uintptr_t>();
 		verify(offset >= -128 * 1024 * 1024 && offset <= 128 * 1024 * 1024);
 		verify((offset & 3) == 0);
