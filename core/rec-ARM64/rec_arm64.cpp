@@ -42,13 +42,21 @@ using namespace vixl::aarch64;
 
 #undef do_sqw_nommu
 
+extern "C" void no_update();
+extern "C" void intc_sched();
+extern "C" void ngen_blockcheckfail(u32 pc);
+
+extern "C" void ngen_LinkBlock_Generic_stub();
+extern "C" void ngen_LinkBlock_cond_Branch_stub();
+extern "C" void ngen_LinkBlock_cond_Next_stub();
+
+extern "C" void ngen_FailedToFindBlock_();
+
 struct DynaRBI : RuntimeBlockInfo
 {
-	virtual u32 Relink() {
-		return 0;
-	}
+	virtual u32 Relink() override;
 
-	virtual void Relocate(void* dst) {
+	virtual void Relocate(void* dst) override {
 		verify(false);
 	}
 };
@@ -114,11 +122,53 @@ static __attribute((used)) void end_slice()
 }
 #endif
 
+__asm__
+(
+		".hidden ngen_LinkBlock_cond_Branch_stub	\n\t"
+		".globl ngen_LinkBlock_cond_Branch_stub		\n\t"
+	"ngen_LinkBlock_cond_Branch_stub:		\n\t"
+		"mov w1, #1							\n\t"
+		"b ngen_LinkBlock_Shared_stub		\n"
+
+		".hidden ngen_LinkBlock_cond_Next_stub	\n\t"
+		".globl ngen_LinkBlock_cond_Next_stub	\n\t"
+	"ngen_LinkBlock_cond_Next_stub:			\n\t"
+		"mov w1, #0							\n\t"
+		"b ngen_LinkBlock_Shared_stub		\n"
+
+		".hidden ngen_LinkBlock_Generic_stub	\n\t"
+		".globl ngen_LinkBlock_Generic_stub	\n\t"
+	"ngen_LinkBlock_Generic_stub:			\n\t"
+		"mov w1, w29						\n\t"	// djump/pc -> in case we need it ..
+		//"b ngen_LinkBlock_Shared_stub		\n"
+
+		".hidden ngen_LinkBlock_Shared_stub	\n\t"
+		".globl ngen_LinkBlock_Shared_stub	\n\t"
+	"ngen_LinkBlock_Shared_stub:			\n\t"
+		"mov x0, lr							\n\t"
+		"sub x0, x0, #4						\n\t"	// go before the call
+		"bl rdv_LinkBlock					\n\t"
+		"br x0								\n"
+
+		".hidden ngen_FailedToFindBlock_	\n\t"
+		".globl ngen_FailedToFindBlock_		\n\t"
+	"ngen_FailedToFindBlock_:				\n\t"
+		"mov w0, w29						\n\t"
+		"bl rdv_FailedToFindBlock			\n\t"
+		"br x0								\n"
+
+		".hidden ngen_blockcheckfail		\n\t"
+		".globl ngen_blockcheckfail			\n\t"
+	"ngen_blockcheckfail:					\n\t"
+		"bl rdv_BlockCheckFail				\n\t"
+		"br x0								\n"
+);
+
 void ngen_mainloop(void* v_cntx)
 {
 	Sh4RCB* ctx = (Sh4RCB*)((u8*)v_cntx - sizeof(Sh4RCB));
 
-	__asm__ volatile
+	__asm__
 	(
 		"stp x19, x20, [sp, #-160]!	\n\t"
 		"stp x21, x22, [sp, #16]	\n\t"
@@ -131,32 +181,48 @@ void ngen_mainloop(void* v_cntx)
 		"stp s12, s13, [sp, #128]	\n\t"
 		"stp x29, x30, [sp, #144]	\n\t"
 		// Use x28 as sh4 context pointer
-		"mov x28, %0				\n\t"
+		"mov x28, %[cntx]			\n\t"
 		// Use x27 as cycle_counter
 		"mov w27, %[_SH4_TIMESLICE]	\n\t"
+		// w29 is next_pc
+		"ldr w29, [x28, %[pc]]		\n\t"
+		"b no_update				\n"
 
-	"run_loop:						\n\t"
-		"ldr w0, [x28, %[CpuRunning]]	\n\t"
-		"cbz w0, end_run_loop		\n\t"
-#ifdef PROFILING
-		"bl start_slice				\n\t"
-#endif
-
-	"slice_loop:					\n\t"
-		"ldr w0, [x28, %[pc]]		\n\t"
-		"bl bm_GetCode2				\n\t"
-		"blr x0						\n\t"
-		"cmp w27, #0				\n\t"
-		"b.gt slice_loop			\n\t"
-
+		".hidden intc_sched			\n\t"
+		".globl intc_sched			\n\t"
+	"intc_sched:					\n\t"
 		"add w27, w27, %[_SH4_TIMESLICE]	\n\t"
-#ifdef PROFILING
-		"bl end_slice				\n\t"
-#endif
-		"bl UpdateSystem_INTC		\n\t"
-		"b run_loop					\n\t"
+		"mov x29, lr				\n\r"	// Trashing pc here but it will be reset at the end of the block or in DoInterrupts
+		"bl UpdateSystem			\n\t"
+		"mov lr, x29				\n\t"
+		"cbnz w0, .do_interrupts	\n\t"
+		"ret						\n"
 
-	"end_run_loop:					\n\t"
+	".do_interrupts:				\n\t"
+		"mov x0, x29				\n\t"
+		"bl rdv_DoInterrupts		\n\t"	// Updates next_pc based on host pc
+		"mov w29, w0				\n"
+
+		".hidden no_update			\n\t"
+		".globl no_update			\n\t"
+	"no_update:						\n\t"	// next_pc _MUST_ be on w29
+		"ldr w0, [x28, %[CpuRunning]] \n\t"
+		"cbz w0, .end_mainloop		\n\t"
+
+		"movz x2, %[RCB_SIZE], lsl #16	\n\t"
+		"sub x2, x28, x2			\n\t"
+		"add x2, x2, %[SH4CTX_SIZE]	\n\t"
+#if RAM_SIZE == 33554432
+		"ubfx w1, w29, #1, #24		\n\t"
+#elif RAM_SIZE == 16777216
+		"ubfx w1, w29, #1, #23		\n\t"
+#else
+#error "Define RAM_SIZE"
+#endif
+		"ldr x0, [x2, x1, lsl #3]	\n\t"
+		"br x0						\n"
+
+	".end_mainloop:					\n\t"
 		"ldp x29, x30, [sp, #144]	\n\t"
 		"ldp s12, s13, [sp, #128]	\n\t"
 		"ldp s10, s11, [sp, #112]	\n\t"
@@ -167,17 +233,20 @@ void ngen_mainloop(void* v_cntx)
 		"ldp x23, x24, [sp, #32]	\n\t"
 		"ldp x21, x22, [sp, #16]	\n\t"
 		"ldp x19, x20, [sp], #160	\n\t"
-		:
-		: [cntx] "r"(reinterpret_cast<uintptr_t>(&ctx->cntx)),
-		  [pc] "i"(offsetof(Sh4Context, pc)),
-		  [_SH4_TIMESLICE] "i"(SH4_TIMESLICE),
-		  [CpuRunning] "i"(offsetof(Sh4Context, CpuRunning))
-		: "memory"
+	:
+	: [cntx] "r"(reinterpret_cast<uintptr_t>(&ctx->cntx)),
+	  [pc] "i"(offsetof(Sh4Context, pc)),
+	  [_SH4_TIMESLICE] "i"(SH4_TIMESLICE),
+	  [CpuRunning] "i"(offsetof(Sh4Context, CpuRunning)),
+	  [RCB_SIZE] "i" (sizeof(Sh4RCB) >> 16),
+	  [SH4CTX_SIZE] "i" (sizeof(Sh4Context))
+	: "memory"
 	);
 }
 
 void ngen_init()
 {
+	ngen_FailedToFindBlock = &ngen_FailedToFindBlock_;
 }
 
 void ngen_ResetBlocks()
@@ -193,11 +262,6 @@ void ngen_GetFeatures(ngen_features* dst)
 RuntimeBlockInfo* ngen_AllocateBlock()
 {
 	return new DynaRBI();
-}
-
-static void ngen_blockcheckfail(u32 pc) {
-	printf("arm64 JIT: SMC invalidation at %08X\n", pc);
-	rdv_BlockCheckFail(pc);
 }
 
 class Arm64Assembler : public MacroAssembler
@@ -297,7 +361,12 @@ public:
 		regalloc.DoAlloc(block);
 
 		// scheduler
-		Sub(w27, w27, block->guest_cycles);
+		Subs(w27, w27, block->guest_cycles);
+		Label cycles_remaining;
+		B(&cycles_remaining, pl);
+		GenCallRuntime(intc_sched);
+		Bind(&cycles_remaining);
+
 #ifdef PROFILING
 		Ldr(x11, (uintptr_t)&guest_cpu_cycles);
 		Ldr(x0, MemOperand(x11));
@@ -325,12 +394,11 @@ public:
 			case shop_jcond:
 			case shop_jdyn:
 				if (op.rs2.is_imm())
-				{
-					Add(w10, regalloc.MapRegister(op.rs1), op.rs2._imm);
-					Mov(regalloc.MapRegister(op.rd), w10);
-				}
+					Add(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rs1), op.rs2._imm);
 				else
 					Mov(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rs1));
+				// Save it for the branching at the end of the block
+				Mov(w29, regalloc.MapRegister(op.rd));
 				break;
 
 			case shop_mov32:
@@ -450,9 +518,9 @@ public:
 				break;
 
 			case shop_rocr:
-				Ubfm(w0, regalloc.MapRegister(op.rs1), 0, 0);										// w0 = rs1[0]
+				Ubfx(w0, regalloc.MapRegister(op.rs1), 0, 1);										// w0 = rs1[0] (new C)
 				Mov(regalloc.MapRegister(op.rd), Operand(regalloc.MapRegister(op.rs1), LSR, 1));	// rd = rs1 >> 1
-				Orr(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rd), Operand(regalloc.MapRegister(op.rs2), LSL, 31));	// rd |= C << 31
+				Bfi(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rs2), 31, 1);				// rd |= C << 31
 				Mov(regalloc.MapRegister(op.rd2), w0);												// rd2 = w0 (new C)
 				break;
 			case shop_rocl:
@@ -694,73 +762,10 @@ public:
 			regalloc.OpEnd(&op);
 		}
 
-		switch (block->BlockType)
-		{
+		block->relink_offset = (u32)GetBuffer()->GetCursorOffset();
+		block->relink_data = 0;
 
-		case BET_StaticJump:
-		case BET_StaticCall:
-			// next_pc = block->BranchBlock;
-			Ldr(w10, block->BranchBlock);
-			Str(w10, sh4_context_mem_operand(&next_pc));
-			break;
-
-		case BET_Cond_0:
-		case BET_Cond_1:
-			{
-				// next_pc = next_pc_value;
-				// if (*jdyn == 0)
-				//   next_pc = branch_pc_value;
-
-				Mov(w10, block->NextBlock);
-
-				if (block->has_jcond)
-					Ldr(w11, sh4_context_mem_operand(&Sh4cntx.jdyn));
-				else
-					Ldr(w11, sh4_context_mem_operand(&sr.T));
-
-				Cmp(w11, block->BlockType & 1);
-				Label branch_not_taken;
-
-				B(ne, &branch_not_taken);
-				Mov(w10, block->BranchBlock);
-				Bind(&branch_not_taken);
-
-				Str(w10, sh4_context_mem_operand(&next_pc));
-			}
-			break;
-
-		case BET_DynamicJump:
-		case BET_DynamicCall:
-		case BET_DynamicRet:
-			// next_pc = *jdyn;
-			Ldr(w10, sh4_context_mem_operand(&Sh4cntx.jdyn));
-			Str(w10, sh4_context_mem_operand(&next_pc));
-			break;
-
-		case BET_DynamicIntr:
-		case BET_StaticIntr:
-			if (block->BlockType == BET_DynamicIntr)
-			{
-				// next_pc = *jdyn;
-				Ldr(w10, sh4_context_mem_operand(&Sh4cntx.jdyn));
-			}
-			else
-			{
-				// next_pc = next_pc_value;
-				Mov(w10, block->NextBlock);
-			}
-			Str(w10, sh4_context_mem_operand(&next_pc));
-
-			GenCallRuntime(UpdateINTC);
-			break;
-
-		default:
-			die("Invalid block end type");
-		}
-
-		if (frame_reg_saved)
-			Ldr(x30, MemOperand(sp, 16, PostIndex));
-		Ret();
+		RelinkBlock(block);
 
 		Finalize();
 	}
@@ -935,6 +940,96 @@ public:
 		frame_reg_saved = true;
 	}
 
+	u32 RelinkBlock(RuntimeBlockInfo *block)
+	{
+		ptrdiff_t start_offset = GetBuffer()->GetCursorOffset();
+
+		switch (block->BlockType)
+		{
+
+		case BET_StaticJump:
+		case BET_StaticCall:
+			// next_pc = block->BranchBlock;
+			if (block->pBranchBlock == NULL)
+				GenCallRuntime(ngen_LinkBlock_Generic_stub);
+			else
+				GenBranch(block->pBranchBlock->code);
+			break;
+
+		case BET_Cond_0:
+		case BET_Cond_1:
+			{
+				// next_pc = next_pc_value;
+				// if (*jdyn == 0)
+				//   next_pc = branch_pc_value;
+
+				if (block->has_jcond)
+					Ldr(w11, sh4_context_mem_operand(&Sh4cntx.jdyn));
+				else
+					Ldr(w11, sh4_context_mem_operand(&sr.T));
+
+				Cmp(w11, block->BlockType & 1);
+
+				Label branch_not_taken;
+
+				B(ne, &branch_not_taken);
+				if (block->pBranchBlock != NULL)
+					GenBranch(block->pBranchBlock->code);
+				else
+					GenCallRuntime(ngen_LinkBlock_cond_Branch_stub);
+
+				Bind(&branch_not_taken);
+
+				if (block->pNextBlock != NULL)
+					GenBranch(block->pNextBlock->code);
+				else
+					GenCallRuntime(ngen_LinkBlock_cond_Next_stub);
+			}
+			break;
+
+		case BET_DynamicJump:
+		case BET_DynamicCall:
+		case BET_DynamicRet:
+			// next_pc = *jdyn;
+
+			Str(w29, sh4_context_mem_operand(&next_pc));
+			// TODO Call no_update instead (and check CpuRunning less frequently?)
+			Mov(x2, sizeof(Sh4RCB));
+			Sub(x2, x28, x2);
+			Add(x2, x2, sizeof(Sh4Context));		// x2 now points to FPCB
+#if RAM_SIZE == 33554432
+			Ubfx(w1, w29, 1, 24);
+#else
+			Ubfx(w1, w29, 1, 23);
+#endif
+			Ldr(x15, MemOperand(x2, x1, LSL, 3));	// Get block entry point
+			Br(x15);
+
+			break;
+
+		case BET_DynamicIntr:
+		case BET_StaticIntr:
+			if (block->BlockType == BET_StaticIntr)
+				// next_pc = next_pc_value;
+				Mov(w29, block->NextBlock);
+			// else next_pc = *jdyn (already in w29)
+
+			Str(w29, sh4_context_mem_operand(&next_pc));
+
+			GenCallRuntime(UpdateINTC);
+
+			Ldr(w29, sh4_context_mem_operand(&next_pc));
+
+			GenBranch(no_update);
+			break;
+
+		default:
+			die("Invalid block end type");
+		}
+
+		return GetBuffer()->GetCursorOffset() - start_offset;
+	}
+
 	void Finalize(bool rewrite = false)
 	{
 		Label code_end;
@@ -952,11 +1047,11 @@ public:
 		}
 		Arm64CacheFlush(GetBuffer()->GetStartAddress<void*>(), GetBuffer()->GetEndAddress<void*>());
 #if 0
-		if (rewrite)
+//		if (rewrite)
 		{
-			Instruction* instr_start = GetBuffer()->GetStartAddress<Instruction*>();
-			Instruction* instr_end = GetLabelAddress<Instruction*>(&code_end);
-//			Instruction* instr_end = (Instruction*)((u8 *)block->code + block->host_code_size);
+			Instruction* instr_start = (Instruction*)block->code;
+//			Instruction* instr_end = GetLabelAddress<Instruction*>(&code_end);
+			Instruction* instr_end = (Instruction*)((u8 *)block->code + block->host_code_size);
 			Decoder decoder;
 			Disassembler disasm;
 			decoder.AppendVisitor(&disasm);
@@ -977,9 +1072,25 @@ private:
 	{
 		SaveFramePointer();
 		ptrdiff_t offset = reinterpret_cast<uintptr_t>(function) - GetBuffer()->GetStartAddress<uintptr_t>();
+		verify(offset >= -128 * 1024 * 1024 && offset <= 128 * 1024 * 1024);
+		verify((offset & 3) == 0);
 		Label function_label;
 		BindToOffset(&function_label, offset);
 		Bl(&function_label);
+	}
+
+	template <typename R, typename... P>
+	void GenBranch(R (*code)(P...), Condition cond = al)
+	{
+		ptrdiff_t offset = reinterpret_cast<uintptr_t>(code) - GetBuffer()->GetStartAddress<uintptr_t>();
+		verify(offset >= -128 * 1024 * 1024 && offset < 128 * 1024 * 1024);
+		verify((offset & 3) == 0);
+		Label code_label;
+		BindToOffset(&code_label, offset);
+		if (cond == al)
+			B(&code_label);
+		else
+			B(&code_label, cond);
 	}
 
 	void GenReadMemory(const shil_opcode& op, size_t opid)
@@ -988,8 +1099,6 @@ private:
 
 		if (GenReadMemoryImmediate(op))
 			return;
-
-		SaveFramePointer();	// needed if rewritten
 
 		GenMemAddr(op, call_regs[0]);
 
@@ -1121,8 +1230,6 @@ private:
 
 	void GenWriteMemory(const shil_opcode& op, size_t opid)
 	{
-		SaveFramePointer();	// needed if rewritten
-
 		GenMemAddr(op, call_regs[0]);
 
 		u32 size = op.flags & 0x7f;
@@ -1287,15 +1394,6 @@ private:
 		}
 	}
 
-	void SaveFramePointer()
-	{
-		if (!frame_reg_saved)
-		{
-			Str(x30, MemOperand(sp, -16, PreIndex));
-			frame_reg_saved = true;
-		}
-	}
-
 	struct CC_PS
 	{
 		CanonicalParamType type;
@@ -1306,7 +1404,6 @@ private:
 	std::vector<const XRegister*> call_regs64;
 	std::vector<const VRegister*> call_fregs;
 	Arm64RegAlloc regalloc;
-	bool frame_reg_saved = false;
 	RuntimeBlockInfo* block;
 	const int read_memory_rewrite_size = 6;	// worst case for u64: add, bfc, ldr, fmov, lsr, fmov
 											// FIXME rewrite size per read/write size?
@@ -1349,12 +1446,11 @@ void ngen_CC_Finish(shil_opcode* op)
 
 bool ngen_Rewrite(unat& host_pc, unat, unat)
 {
-	u32 guest_pc = p_sh4rcb->cntx.pc;
-	//printf("ngen_Rewrite pc %p code addr %08x\n", host_pc, guest_pc);
-	RuntimeBlockInfo *block = bm_GetBlock(guest_pc);
+	//printf("ngen_Rewrite pc %p\n", host_pc);
+	RuntimeBlockInfo *block = bm_GetBlock((void *)host_pc);
 	if (block == NULL)
 	{
-		printf("ngen_Rewrite: Block at %08x not found\n", guest_pc);
+		printf("ngen_Rewrite: Block at %p not found\n", (void *)host_pc);
 		return false;
 	}
 	u32 *code_ptr = (u32*)host_pc;
@@ -1378,6 +1474,18 @@ bool ngen_Rewrite(unat& host_pc, unat, unat)
 	host_pc = (unat)(code_ptr - 2);
 
 	return true;
+}
+
+u32 DynaRBI::Relink()
+{
+	//printf("DynaRBI::Relink %08x\n", this->addr);
+	Arm64Assembler *compiler = new Arm64Assembler((u8 *)this->code + this->relink_offset);
+
+	u32 code_size = compiler->RelinkBlock(this);
+	compiler->Finalize(true);
+	delete compiler;
+
+	return code_size;
 }
 
 void Arm64RegAlloc::Preload(u32 reg, eReg nreg)

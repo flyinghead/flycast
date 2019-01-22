@@ -34,7 +34,7 @@ enum eFReg {
 	S17, S18, S19, S20, S21, S22, S23, S24, S25, S26, S27, S28, S29, S30, S31
 };
 
-static eReg alloc_regs[] = { W19, W20, W21, W22, W23, W24, W25, W26, W29, (eReg)-1 };
+static eReg alloc_regs[] = { W19, W20, W21, W22, W23, W24, W25, W26, (eReg)-1 };
 static eFReg alloc_fregs[] = { S8, S9, S10, S11, S12, S13, S14, S15, (eFReg)-1 };
 
 class Arm64Assembler;
