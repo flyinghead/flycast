@@ -8,7 +8,7 @@
 #include "aica_if.h"
 #include "aica_mem.h"
 
-#if HOST_CPU != CPU_X86 || FEAT_DSPREC != DYNAREC_JIT
+#if FEAT_DSPREC != DYNAREC_JIT
 
 #ifdef RELEASE
 #undef verify
