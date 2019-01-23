@@ -68,7 +68,7 @@ struct dsp_t
 	signed int Y;          //13 bit
 	signed int B;          //26 bit
 	signed int INPUTS;     //24 bit
-	signed int MEMVAL;
+	signed int MEMVAL[4];
 	signed int FRC_REG;    //13 bit
 	signed int Y_REG;      //24 bit
 	unsigned int ADDR;
