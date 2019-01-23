@@ -200,7 +200,7 @@ void armv_bic(ARM::eReg regd, ARM::eReg regn, u32 imm)
 	assembler->Bic(Register::GetWRegFromCode(regd), Register::GetWRegFromCode(regn), imm);
 }
 
-static class android_buf : public std::stringbuf
+class android_buf : public std::stringbuf
 {
 public:
     virtual int sync() override {
@@ -326,7 +326,7 @@ void armEmit32(u32 opcode)
 						// RRX
 						assembler->Cset(w14, cs);						// w14 = C
 						assembler->Mov(w15, Operand(rm, LSR, 1));		// w15 = rm >> 1
-						assembler->Orr(w15, w15, Operand(w14, LSL, 31));// w15 |= C << 31
+						assembler->Bfi(w15, w14, 31, 1);				// w15[31] = C
 						if (set_flags && logical_op)
 							assembler->Ubfx(w14, rm, 0, 1);				// w14 = rm[0] (new C)
 					}
