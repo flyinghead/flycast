@@ -27,8 +27,8 @@ public:
 	virtual void AdvancePtr(u32 size) override;
 	virtual std::string GetGameId() override;
 
-	void SetKey(u32 key);
-	void SetKeyData(u8 *key) { SetKey(key[0] | (key[1] << 8) | (key[2] << 16) | (key[3] << 24)); }
+	void SetKey(u32 key) override;
+	void SetKeyData(u8 *key) override { SetKey(key[0] | (key[1] << 8) | (key[2] << 16) | (key[3] << 24)); }
 
 private:
 	virtual void device_reset();

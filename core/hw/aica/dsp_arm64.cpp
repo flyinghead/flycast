@@ -261,8 +261,8 @@ public:
 
 			// ACCUM
 			//s64 v = ((s64)X * (s64)Y) >> 10;	// magic value from dynarec. 1 sign bit + 24-1 bits + 13-1 bits -> 26 bits?
-			const vixl::aarch64::Register X64 = Register::GetXRegFromCode(X_alias->GetCode());
-			const vixl::aarch64::Register Y64 = Register::GetXRegFromCode(Y.GetCode());
+			const Register& X64 = Register::GetXRegFromCode(X_alias->GetCode());
+			const Register& Y64 = Register::GetXRegFromCode(Y.GetCode());
 			Sxtw(X64, *X_alias);
 			Sxtw(Y64, Y);
 			Mul(x0, X64, Y64);
@@ -340,7 +340,7 @@ public:
 			if (op.EWT)
 			{
 				// 4 ????
-				//DSPData->EFREG[op.EWA] += SHIFTED >> 4;	// dynarec uses = instead of +=
+				//DSPData->EFREG[op.EWA] += SHIFTED >> 4;	// x86 dynarec uses = instead of +=
 				MemOperand mem_operand = dspdata_operand(DSPData->EFREG, op.EWA);
 				Ldr(w1, mem_operand);
 				Asr(w2, SHIFTED, 4);

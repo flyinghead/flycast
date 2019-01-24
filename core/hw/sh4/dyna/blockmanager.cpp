@@ -165,22 +165,6 @@ void bm_AddBlock(RuntimeBlockInfo* blk)
 
 }
 
-u32 PAGE_STATE[RAM_SIZE/32];
-
-bool PageIsConst(u32 addr)
-{
-	if (IsOnRam(addr))
-	{
-		addr&=RAM_MASK;
-		if (addr>0x0010100)
-		{
-			return PAGE_STATE[addr/32]&(1<<addr);
-		}
-	}
-
-	return false;
-}
-
 bool UDgreaterX ( RuntimeBlockInfo* elem1, RuntimeBlockInfo* elem2 )
 {	
 	return elem1->runs > elem2->runs;
