@@ -32,7 +32,7 @@ extern void Arm64CacheFlush(void* start, void* end);
 class DSPAssembler : public MacroAssembler
 {
 public:
-	DSPAssembler(u8 *code_buffer, size_t size) : MacroAssembler(code_buffer, size), aica_ram_lit(&aica_ram[0], GetLiteralPool()) {}
+	DSPAssembler(u8 *code_buffer, size_t size) : MacroAssembler(code_buffer, size), aica_ram_lit(NULL) 	{}
 
 	void Compile(struct dsp_t *DSP)
 	{
@@ -307,7 +307,7 @@ public:
 				{
 					//MEMVAL[(step + 2) & 3] = UNPACK(*(u16 *)&aica_ram[ADDR & ARAM_MASK]);
 					CalculateADDR(ADDR, op, ADRS_REG, MDEC_CT);
-					Ldr(x1, &aica_ram_lit);
+					Ldr(x1, GetAicaRam());
 					MemOperand aram_op(x1, Register::GetXRegFromCode(ADDR.GetCode()));
 					Ldrh(w0, aram_op);
 					GenCallRuntime(UNPACK);
@@ -321,7 +321,7 @@ public:
 					GenCallRuntime(PACK);
 
 					CalculateADDR(ADDR, op, ADRS_REG, MDEC_CT);
-					Ldr(x1, &aica_ram_lit);
+					Ldr(x1, GetAicaRam());
 					MemOperand aram_op(x1, Register::GetXRegFromCode(ADDR.GetCode()));
 					Strh(w0, aram_op);
 				}
@@ -462,6 +462,13 @@ private:
 			die("Unsupported ARAM_SIZE");
 	}
 
+	Literal<u8*> *GetAicaRam()
+	{
+		if (aica_ram_lit == NULL)
+			aica_ram_lit = new Literal<u8*>(&aica_ram[0], GetLiteralPool(), RawLiteral::kDeletedOnPoolDestruction);
+		return aica_ram_lit;
+	}
+
 	void Disassemble(Instruction* instr_start, Instruction* instr_end)
 	{
 		Decoder decoder;
@@ -477,7 +484,7 @@ private:
 	}
 
 	struct dsp_t *DSP;
-	Literal<u8*> aica_ram_lit;
+	Literal<u8*> *aica_ram_lit;
 };
 
 void dsp_recompile()

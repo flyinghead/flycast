@@ -2247,6 +2247,7 @@ void ngen_ResetBlocks()
 */
 void ngen_init()
 {
+	printf("Initializing the ARM32 dynarec\n");
     verify(FPCB_OFFSET == -0x2100000 || FPCB_OFFSET == -0x4100000);
     verify(rcb_noffs(p_sh4rcb->fpcb) == FPCB_OFFSET);
     

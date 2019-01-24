@@ -246,6 +246,7 @@ void ngen_mainloop(void* v_cntx)
 
 void ngen_init()
 {
+	printf("Initializing the ARM64 dynarec\n");
 	ngen_FailedToFindBlock = &ngen_FailedToFindBlock_;
 }
 
