@@ -66,14 +66,14 @@ static __attribute((used)) void end_slice()
 
 #define STRINGIFY(x) #x
 #define _S(x) STRINGIFY(x)
-#if RAM_SIZE == 16*1024*1024
+#if RAM_SIZE_MAX == 16*1024*1024
 #define CPU_RUNNING 68157284
 #define PC 68157256
-#elif RAM_SIZE == 32*1024*1024
+#elif RAM_SIZE_MAX == 32*1024*1024
 #define CPU_RUNNING 135266148
 #define PC 135266120
 #else
-#error RAM_SIZE unknown
+#error RAM_SIZE_MAX unknown
 #endif
 
 #ifdef _WIN32

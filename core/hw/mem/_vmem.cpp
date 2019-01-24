@@ -396,10 +396,15 @@ void _vmem_term()
 u8* virt_ram_base;
 
 void* malloc_pages(size_t size) {
-
-	u8* rv = (u8*)malloc(size + PAGE_SIZE);
-
-	return rv + PAGE_SIZE - ((unat)rv % PAGE_SIZE);
+#ifdef _ISOC11_SOURCE
+	return aligned_alloc(PAGE_SIZE, size);
+#else
+	void *data;
+	if (posix_memalign(&data, PAGE_SIZE, size) != 0)
+		return NULL;
+	else
+		return data;
+#endif
 }
 
 bool _vmem_reserve_nonvmem()
@@ -435,6 +440,14 @@ void _vmem_bm_reset() {
     {
 		bm_vmem_pagefill((void**)p_sh4rcb->fpcb, FPCB_SIZE);
 	}
+}
+
+static void _vmem_release_nonvmem()
+{
+	free(p_sh4rcb);
+	free(vram.data);
+	free(aica_ram.data);
+	free(mem_b.data);
 }
 
 #if !defined(TARGET_NO_NVMEM)
@@ -483,9 +496,9 @@ void* _nvmem_unused_buffer(u32 start,u32 end)
 
 void* _nvmem_alloc_mem()
 {
-	mem_handle=CreateFileMapping(INVALID_HANDLE_VALUE,0,PAGE_READWRITE ,0,RAM_SIZE + VRAM_SIZE +ARAM_SIZE,0);
+	mem_handle = CreateFileMapping(INVALID_HANDLE_VALUE, 0, PAGE_READWRITE, 0, RAM_SIZE_MAX + VRAM_SIZE_MAX + ARAM_SIZE_MAX, 0);
 
-	void* rv=(u8*)VirtualAlloc(0,512*1024*1024 + sizeof(Sh4RCB) + ARAM_SIZE,MEM_RESERVE,PAGE_NOACCESS);
+	void* rv= (u8*)VirtualAlloc(0, 512*1024*1024 + sizeof(Sh4RCB) + ARAM_SIZE_MAX, MEM_RESERVE, PAGE_NOACCESS);
 	if (rv) VirtualFree(rv,0,MEM_RELEASE);
 	return rv;
 }
@@ -585,7 +598,7 @@ error:
 		string path = get_writable_data_path("/dcnzorz_mem");
         fd = open(path.c_str(),O_CREAT|O_RDWR|O_TRUNC,S_IRWXU|S_IRWXG|S_IRWXO);
         unlink(path.c_str());
-        verify(ftruncate(fd,RAM_SIZE + VRAM_SIZE +ARAM_SIZE)==0);
+        verify(ftruncate(fd, RAM_SIZE_MAX + VRAM_SIZE_MAX + ARAM_SIZE_MAX) == 0);
 #elif !defined(_ANDROID)
 		fd = shm_open("/dcnzorz_mem", O_CREAT | O_EXCL | O_RDWR,S_IREAD | S_IWRITE);
 		shm_unlink("/dcnzorz_mem");
@@ -595,10 +608,10 @@ error:
 			unlink("dcnzorz_mem");
 		}
 
-		verify(ftruncate(fd,RAM_SIZE + VRAM_SIZE +ARAM_SIZE)==0);
+		verify(ftruncate(fd, RAM_SIZE_MAX + VRAM_SIZE_MAX + ARAM_SIZE_MAX) == 0);
 #else
 
-		fd = ashmem_create_region(0,RAM_SIZE + VRAM_SIZE +ARAM_SIZE);
+		fd = ashmem_create_region(0, RAM_SIZE_MAX + VRAM_SIZE_MAX + ARAM_SIZE_MAX);
 		if (false)//this causes writebacks to flash -> slow and stuttery 
 		{
 		fd = open("/data/data/com.reicast.emulator/files/dcnzorz_mem",O_CREAT|O_RDWR|O_TRUNC,S_IRWXU|S_IRWXG|S_IRWXO);
@@ -608,7 +621,7 @@ error:
 
 		
 
-		u32 sz= 512*1024*1024 + sizeof(Sh4RCB) + ARAM_SIZE + 0x10000;
+		u32 sz = 512*1024*1024 + sizeof(Sh4RCB) + ARAM_SIZE_MAX + 0x10000;
 		void* rv=mmap(0, sz, PROT_NONE, MAP_PRIVATE | MAP_ANON, -1, 0);
 		verify(rv != NULL);
 		munmap(rv,sz);
@@ -695,6 +708,7 @@ bool _vmem_reserve()
 	
 	p_sh4rcb=(Sh4RCB*)virt_ram_base;
 
+	// Map the sh4 context but protect access to Sh4RCB.fpcb[]
 #if HOST_OS==OS_WINDOWS
 	//verify(p_sh4rcb==VirtualAlloc(p_sh4rcb,sizeof(Sh4RCB),MEM_RESERVE|MEM_COMMIT,PAGE_READWRITE));
 	verify(p_sh4rcb==VirtualAlloc(p_sh4rcb,sizeof(Sh4RCB),MEM_RESERVE,PAGE_NOACCESS));
@@ -771,15 +785,30 @@ bool _vmem_reserve()
 
 	return virt_ram_base!=0;
 }
+
+void _vmem_release()
+{
+	if (!_nvmem_enabled())
+		_vmem_release_nonvmem();
+	else
+	{
+		if (virt_ram_base != NULL)
+		{
+			munmap(virt_ram_base, 0x20000000);
+			virt_ram_base = NULL;
+		}
+		close(fd);
+	}
+}
+
 #else
 
 bool _vmem_reserve()
 {
 	return _vmem_reserve_nonvmem();
 }
-#endif
-
 void _vmem_release()
 {
-	//TODO
+	_vmem_release_nonvmem();
 }
+#endif

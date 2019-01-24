@@ -177,14 +177,14 @@ CSYM(no_update):              @ next_pc _MUST_ be on r4 *R4 NOT R0 anymore*
 	cmp r0,#0
 	beq CSYM(cleanup)
 
-#if DC_PLATFORM == DC_PLATFORM_NAOMI
+#if RAM_SIZE_MAX == 33554432
 	sub r2,r8,#0x4100000
-	ubfx r1,r4,#1,#24
-#elif DC_PLATFORM == DC_PLATFORM_DREAMCAST
+	ubfx r1,r4,#1,#24			@ 24+1 bits: 32 MB
+#elif RAM_SIZE_MAX == 16777216
 	sub r2,r8,#0x2100000
-	ubfx r1,r4,#1,#23
+	ubfx r1,r4,#1,#23			@ 23+1 bits: 16 MB
 #else
-#error "Define DC_PLATFORM"
+#error "Define RAM_SIZE_MAX"
 #endif
 	ldr pc,[r2,r1,lsl #2]
 
@@ -241,7 +241,7 @@ HIDDEN(arm_dispatch)
 CSYM(arm_dispatch):
 	ldrd r0,r1,[r8,#184]		@load: Next PC, interrupt
 
-	ubfx r2,r0,#2,#21
+	ubfx r2,r0,#2,#21		@ assuming 8 MB address space max (23 bits)
 	cmp r1,#0
 	bne arm_dofiq
 

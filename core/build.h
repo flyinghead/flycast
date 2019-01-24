@@ -286,6 +286,10 @@
 	#define FEAT_HAS_SOFTREND BUILD_COMPILER == COMPILER_VC	//GCC wants us to enable sse4 globaly to enable intrins
 #endif
 
+#define RAM_SIZE_MAX (32*1024*1024)
+#define VRAM_SIZE_MAX (16*1024*1024)
+#define ARAM_SIZE_MAX (8*1024*1024)
+
 //Depricated build configs
 #ifdef HOST_NO_REC
 #error Dont use HOST_NO_REC

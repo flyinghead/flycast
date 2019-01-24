@@ -686,7 +686,7 @@ u8 ARM7_TCB[ICacheSize+4096] __attribute__((section("__TEXT, .text")));
 using namespace ARM;
 
 
-void* EntryPoints[ARAM_SIZE/4];
+void* EntryPoints[ARAM_SIZE_MAX/4];
 
 enum OpType
 {
@@ -1509,7 +1509,7 @@ naked void arm_dispatch()
 #if HOST_OS == OS_LINUX
 	__asm ( "arm_dispatch:				\n\t"
 				"mov %0, %%eax			\n\t"
-			 	"and $0x1FFFFC, %%eax	\n\t"
+			 	"and $0x7FFFFC, %%eax	\n\t"
 				"cmp $0, %1				\n\t"
 			 	"jne arm_dofiq			\n\t"
 			 	"jmp *%2(%%eax)			\n"
@@ -1529,7 +1529,7 @@ naked void arm_dispatch()
 	{
 arm_disp:
 		mov eax,reg[R15_ARM_NEXT*4].I
-		and eax,0x1FFFFC
+		and eax,0x7FFFFC
 		cmp reg[INTR_PEND*4].I,0
 		jne arm_dofiq
 		jmp [EntryPoints+eax]
@@ -2146,8 +2146,8 @@ extern "C" void CompileCode()
 void FlushCache()
 {
 	icPtr=ICache;
-	for (u32 i=0;i<ARAM_SIZE/4;i++)
-		EntryPoints[i]=(void*)&arm_compilecode;
+	for (u32 i = 0; i < ARRAY_SIZE(EntryPoints); i++)
+		EntryPoints[i] = &arm_compilecode;
 }
 
 

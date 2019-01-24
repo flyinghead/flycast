@@ -402,7 +402,7 @@ u32 DynaRBI::Relink()
 #ifdef CALLSTACK
 #error offset broken
 		SUB(r2, r8, -FPCB_OFFSET);
-#if RAM_SIZE == 33554432
+#if RAM_SIZE_MAX == 33554432
 		UBFX(r1, r4, 1, 24);
 #else
 		UBFX(r1, r4, 1, 23);
@@ -429,7 +429,7 @@ u32 DynaRBI::Relink()
 			//this is faster
 			//why ? (Icache ?)
 			SUB(r2, r8, -FPCB_OFFSET);
-#if RAM_SIZE == 33554432
+#if RAM_SIZE_MAX == 33554432
 			UBFX(r1, r4, 1, 24);
 #else
 			UBFX(r1, r4, 1, 23);
@@ -448,7 +448,7 @@ u32 DynaRBI::Relink()
 			{
 				SUB(r2, r8, -FPCB_OFFSET);
 
-#if RAM_SIZE == 33554432
+#if RAM_SIZE_MAX == 33554432
 				UBFX(r1, r4, 1, 24);
 #else
 				UBFX(r1, r4, 1, 23);
@@ -463,7 +463,7 @@ u32 DynaRBI::Relink()
 			verify(pBranchBlock==0);
 			SUB(r2, r8, -FPCB_OFFSET);
 
-#if RAM_SIZE == 33554432
+#if RAM_SIZE_MAX == 33554432
 			UBFX(r1, r4, 1, 24);
 #else
 			UBFX(r1, r4, 1, 23);

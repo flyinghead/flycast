@@ -212,12 +212,12 @@ void ngen_mainloop(void* v_cntx)
 		"movz x2, %[RCB_SIZE], lsl #16	\n\t"
 		"sub x2, x28, x2			\n\t"
 		"add x2, x2, %[SH4CTX_SIZE]	\n\t"
-#if RAM_SIZE == 33554432
-		"ubfx w1, w29, #1, #24		\n\t"
-#elif RAM_SIZE == 16777216
-		"ubfx w1, w29, #1, #23		\n\t"
+#if RAM_SIZE_MAX == 33554432
+		"ubfx w1, w29, #1, #24		\n\t"	// 24+1 bits: 32 MB
+#elif RAM_SIZE_MAX == 16777216
+		"ubfx w1, w29, #1, #23		\n\t"	// 23+1 bits: 16 MB
 #else
-#error "Define RAM_SIZE"
+#error "Define RAM_SIZE_MAX"
 #endif
 		"ldr x0, [x2, x1, lsl #3]	\n\t"
 		"br x0						\n"
@@ -995,7 +995,7 @@ public:
 			Mov(x2, sizeof(Sh4RCB));
 			Sub(x2, x28, x2);
 			Add(x2, x2, sizeof(Sh4Context));		// x2 now points to FPCB
-#if RAM_SIZE == 33554432
+#if RAM_SIZE_MAX == 33554432
 			Ubfx(w1, w29, 1, 24);
 #else
 			Ubfx(w1, w29, 1, 23);
