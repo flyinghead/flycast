@@ -2147,7 +2147,7 @@ void FlushCache()
 {
 	icPtr=ICache;
 	for (u32 i = 0; i < ARRAY_SIZE(EntryPoints); i++)
-		EntryPoints[i] = &arm_compilecode;
+		EntryPoints[i] = (void*)&arm_compilecode;
 }
 
 
