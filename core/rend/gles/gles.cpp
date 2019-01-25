@@ -1630,7 +1630,8 @@ void OSD_DRAW()
 #endif
 }
 
-void fullscreenQuadCreateTemporaryFBO(float & screenToNativeXScale, float & screenToNativeY) {
+void fullscreenQuadCreateTemporaryFBO(float & screenToNativeXScale, float & screenToNativeYScale)
+{
 	// Generate and bind a render buffer which will become a depth buffer
 	if (!fullscreenQuad.framebufferRenderbuffer) {
 		glGenRenderbuffers(1, &fullscreenQuad.framebufferRenderbuffer);
@@ -1683,7 +1684,7 @@ void fullscreenQuadCreateTemporaryFBO(float & screenToNativeXScale, float & scre
 		glBindFramebuffer(GL_FRAMEBUFFER, fullscreenQuad.framebuffer);
 	}
 
-	glViewport(0, 0, screen_width * screenToNativeXScale, screen_height * screenToNativeY);
+	glViewport(0, 0, screen_width * screenToNativeXScale, screen_height * screenToNativeYScale);
 }
 
 bool ProcessFrame(TA_context* ctx)
@@ -1808,8 +1809,16 @@ bool RenderFrame()
 	//these should be adjusted based on the current PVR scaling etc params
 	float dc_width = 640;
 	float dc_height = 480;
-	float screenToNativeXScale = settings.rend.HorizontalResolution / 100.0f;
-	float screenToNativeYScale = settings.rend.VerticalResolution / 100.0f;
+	float screenToNativeXScale = 1.0f;
+	float screenToNativeYScale = 1.0f;
+
+	if (settings.rend.HorizontalResolution >= 1 && settings.rend.HorizontalResolution < 100) {
+		screenToNativeXScale = settings.rend.HorizontalResolution / 100.0f;
+	}
+
+	if (settings.rend.VerticalResolution >= 1 && settings.rend.VerticalResolution < 100) {
+		screenToNativeYScale = settings.rend.VerticalResolution / 100.0f;
+	}
 
 	if (!is_rtt)
 	{
