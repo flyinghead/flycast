@@ -19,7 +19,7 @@
 
 #include "build.h"
 
-#if	HOST_CPU == CPU_ARM64 && FEAT_DSPREC != DYNAREC_NONE
+#if HOST_CPU == CPU_ARM64 && FEAT_DSPREC != DYNAREC_NONE
 
 #include <sys/mman.h>
 #include "dsp.h"
@@ -32,7 +32,7 @@ extern void Arm64CacheFlush(void* start, void* end);
 class DSPAssembler : public MacroAssembler
 {
 public:
-	DSPAssembler(u8 *code_buffer, size_t size) : MacroAssembler(code_buffer, size), aica_ram_lit(NULL) 	{}
+	DSPAssembler(u8 *code_buffer, size_t size) : MacroAssembler(code_buffer, size), aica_ram_lit(NULL) {}
 
 	void Compile(struct dsp_t *DSP)
 	{
@@ -44,7 +44,10 @@ public:
 			// Clear EFREG
 			Mov(x1, (uintptr_t)DSPData);
 			MemOperand efreg_op = dspdata_operand(DSPData->EFREG);	// just for the offset
-			Add(x0, x1, efreg_op.GetOffset());
+			if (efreg_op.IsRegisterOffset())
+				Add(x0, x1, efreg_op.GetRegisterOffset());
+			else
+				Add(x0, x1, efreg_op.GetOffset());
 			Stp(xzr, xzr, MemOperand(x0, 0));
 			Stp(xzr, xzr, MemOperand(x0, 16));
 			Stp(xzr, xzr, MemOperand(x0, 32));
@@ -57,17 +60,17 @@ public:
 
 		Instruction* instr_start = GetBuffer()->GetStartAddress<Instruction*>();
 
-		Stp(x19, x20, MemOperand(sp, -96, PostIndex));
+		Stp(x29, x30, MemOperand(sp, -96, PreIndex));
 		Stp(x21, x22, MemOperand(sp, 16));
 		Stp(x23, x24, MemOperand(sp, 32));
 		Stp(x25, x26, MemOperand(sp, 48));
 		Stp(x27, x28, MemOperand(sp, 64));
-		Stp(x29, x30, MemOperand(sp, 80));
+		Stp(x19, x20, MemOperand(sp, 80));
 		Mov(x28, (uintptr_t)&DSP->TEMP[0]);		// x28 points to TEMP, right after the code
 		Mov(x27, (uintptr_t)DSPData);			// x27 points to DSPData
 		const Register& INPUTS = w25;	// 24 bits
 		const Register& ACC = w19;		// 26 bits - saved
-		const Register& B = w29;		// 26 bits - saved
+		const Register& B = w26;		// 26 bits - saved
 		const Register& X = w10;		// 24 bits
 		const Register& Y = w9;			// 13 bits
 		const Register& FRC_REG = w20;	// 13 bits - saved
@@ -78,7 +81,10 @@ public:
 
 		//memset(DSPData->EFREG, 0, sizeof(DSPData->EFREG));
 		MemOperand efreg_op = dspdata_operand(DSPData->EFREG);
-		Add(x0, x27, efreg_op.GetOffset());
+		if (efreg_op.IsRegisterOffset())
+			Add(x0, x27, efreg_op.GetRegisterOffset());
+		else
+			Add(x0, x27, efreg_op.GetOffset());
 		Stp(xzr, xzr, MemOperand(x0, 0));
 		Stp(xzr, xzr, MemOperand(x0, 16));
 		Stp(xzr, xzr, MemOperand(x0, 32));
@@ -319,11 +325,12 @@ public:
 					// *(u16 *)&aica_ram[ADDR & ARAM_MASK] = PACK(SHIFTED);
 					Mov(w0, SHIFTED);
 					GenCallRuntime(PACK);
+					Mov(w2, w0);
 
 					CalculateADDR(ADDR, op, ADRS_REG, MDEC_CT);
 					Ldr(x1, GetAicaRam());
 					MemOperand aram_op(x1, Register::GetXRegFromCode(ADDR.GetCode()));
-					Strh(w0, aram_op);
+					Strh(w2, aram_op);
 				}
 			}
 
@@ -366,8 +373,8 @@ public:
 		Ldp(x23, x24, MemOperand(sp, 32));
 		Ldp(x25, x26, MemOperand(sp, 48));
 		Ldp(x27, x28, MemOperand(sp, 64));
-		Ldp(x29, x30, MemOperand(sp, 80));
-		Ldp(x19, x20, MemOperand(sp, 96, PreIndex));
+		Ldp(x19, x20, MemOperand(sp, 80));
+		Ldp(x29, x30, MemOperand(sp, 96, PostIndex));
 		Ret();
 #ifndef _ANDROID
 		instr_cur = GetBuffer()->GetEndAddress<Instruction*>();
