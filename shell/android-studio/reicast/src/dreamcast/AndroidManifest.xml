@@ -40,6 +40,16 @@
 		            android:mimeType="*/*"
 		            android:pathPattern=".*\\.cdi"
 		            android:scheme="file" />
+		        <data
+		            android:host="*"
+		            android:mimeType="*/*"
+		            android:pathPattern=".*\\.CUE"
+		            android:scheme="file" />
+		        <data
+		            android:host="*"
+		            android:mimeType="*/*"
+		            android:pathPattern=".*\\.cue"
+		            android:scheme="file" />
 		    </intent-filter>
 		</activity>
 	</application>

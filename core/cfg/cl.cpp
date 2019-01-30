@@ -133,7 +133,8 @@ bool ParseCommandLine(int argc,wchar* argv[])
 
 			if (extension
 				&& (stricmp(extension, ".cdi") == 0 || stricmp(extension, ".chd") == 0
-					|| stricmp(extension, ".gdi") == 0 || stricmp(extension, ".lst") == 0))
+					|| stricmp(extension, ".gdi") == 0 || stricmp(extension, ".lst") == 0
+					|| stricmp(extension, ".cue") == 0))
 			{
 				printf("Using '%s' as cd image\n", *arg);
 				cfgSetVirtual("config", "image", *arg);
