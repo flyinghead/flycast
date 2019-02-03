@@ -793,21 +793,6 @@ void* dc_loadstate_thread(void* p)
     	return NULL;
 	}
 
-	if ( ! dc_serialize(&data, &total_size) )
-	{
-		printf("Failed to load state - could not initialize total size\n") ;
-		cleanup_serialize(data) ;
-    	return NULL;
-	}
-
-	data = malloc(total_size) ;
-	if ( data == NULL )
-	{
-		printf("Failed to load state - could not malloc %d bytes", total_size) ;
-		cleanup_serialize(data) ;
-    	return NULL;
-	}
-
 	filename = get_savestate_file_path();
 	f = fopen(filename.c_str(), "rb") ;
 
@@ -816,6 +801,16 @@ void* dc_loadstate_thread(void* p)
 		printf("Failed to load state - could not open %s for reading\n", filename.c_str()) ;
 		cleanup_serialize(data) ;
     	return NULL;
+	}
+	fseek(f, 0, SEEK_END);
+	total_size = ftell(f);
+	fseek(f, 0, SEEK_SET);
+	data = malloc(total_size) ;
+	if ( data == NULL )
+	{
+		printf("Failed to load state - could not malloc %d bytes", total_size) ;
+		cleanup_serialize(data) ;
+		return NULL;
 	}
 
 	fread(data, 1, total_size, f) ;
