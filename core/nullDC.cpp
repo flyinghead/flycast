@@ -187,7 +187,9 @@ void LoadSpecialSettings()
 			// Tony Hawk's Pro Skater 1
 			|| !strncmp("T40205N", reios_product_number, 7)
 			// Tony Hawk's Skateboarding
-			|| !strncmp("T40204D", reios_product_number, 7))
+			|| !strncmp("T40204D", reios_product_number, 7)
+			// Skies of Arcadia
+			|| !strncmp("MK-51052", reios_product_number, 8))
 		settings.rend.RenderToTextureBuffer = 1;
 	if (!strncmp("HDR-0176", reios_product_number, 8) || !strncmp("RDC-0057", reios_product_number, 8))
 		// Cosmic Smash
