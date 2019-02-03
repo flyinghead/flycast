@@ -4,7 +4,7 @@
     
     <string name="system_path">システムパス（dc_boot.bin／dc_flash.binの場所）</string>
     <string name="browser_path">デフォルトのシステムパス</string>
-    <string name="games_path">ストレージパス（*.gdi、*.cdi、または*.cdhイメージの場所）</string>
+    <string name="games_path">ストレージパス（*.gdi、*.cdi、*.cue、または*.chdイメージの場所）</string>
     <string name="game_path">デフォルトゲーム·ストレージ</string>
     <string name="config_home">ホームディレクトリを設定してください。</string>
     <string name="config_game">ゲームディレクトリを設定してください。</string>

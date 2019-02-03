@@ -3,7 +3,7 @@
     <string name="menu_settings">Configuración</string>
     <string name="system_path">Ruta de acceso del sistema (ubicación de la carpeta de datos con dc_boot.bin / dc_flash.bin interior)</string>
     <string name="browser_path">Ruta por defecto del sistema</string>
-    <string name="games_path">Ruta de Almacenamiento (ubicación de .gdi .chd o Imágenes .cdi )</string>
+    <string name="games_path">Ruta de Almacenamiento (ubicación de .gdi .chd .cue o Imágenes .cdi )</string>
     <string name="game_path">Por defecto Game Almacenamiento</string>
     
     <string name="boot_bios">Boot Bios Dreamcast</string>

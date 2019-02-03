@@ -10,7 +10,7 @@ Last Edit: 21 May 2014
  
     <string name="system_path">Répertoire système (emplacement du répertoire \'data\' comprenant les fichiers \'dc_boot.bin\' et \'dc_flash.bin\')</string>
     <string name="browser_path">Répertoire système par défaut</string>
-    <string name="games_path">Répertoire des jeux (emplacement de vos fichiers images au format gdi, chd ou cdi)</string>
+    <string name="games_path">Répertoire des jeux (emplacement de vos fichiers images au format gdi, chd, cue ou cdi)</string>
     <string name="game_path">Répertoire des jeux par défaut</string>
     <string name="config_home">Veuillez configurer le répertoire racine</string>
     <string name="config_game">Veuillez configurer le répertoire des jeux</string>

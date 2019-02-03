@@ -4,7 +4,7 @@
 
     <string name="system_path">Системный путь (расположение папки data с файлами dc_boot.bin и dc_flash.bin)</string>
     <string name="browser_path">Системный путь по умолчанию</string>
-    <string name="games_path">Папка хранения образов (.gdi, .chd, .cdi)</string>
+    <string name="games_path">Папка хранения образов (.gdi, .chd, .cue, .cdi)</string>
     <string name="button_theme">Тема оформления экранных кнопок</string>
     <string name="bios_selection">Укажите папку с BIOS</string>
     

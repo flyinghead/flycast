@@ -4,7 +4,7 @@
 
     <string name="system_path">System-Pfad (Speicherort des data Ordners welcher dc_boot.bin und dc_flash.bin enthält)</string>
     <string name="browser_path">Standard-System-Pfad</string>
-    <string name="games_path">Spiele-Pfad (Speicherort von .gdi, .chd oder .cdi Abbildern)</string>
+    <string name="games_path">Spiele-Pfad (Speicherort von .gdi, .chd, .cue oder .cdi Abbildern)</string>
     <string name="button_theme">Onscreen-Button-Theme</string>
 
     <string name="game_path">Standard-Spiele-Pfad</string>

@@ -4,7 +4,7 @@
 
     <string name="system_path">Diretório da BIOS (local dos arquivos dc_boot.bin/dc_flash.bin)</string>
     <string name="browser_path">Diretório padrão de jogos</string>
-    <string name="games_path">Diretório dos jogos (local das imagens .gdi, .chd ou .cdi)</string>
+    <string name="games_path">Diretório dos jogos (local das imagens .gdi, .chd, .cue ou .cdi)</string>
     <string name="button_theme">Tema dos botões na tela</string>
 	
     <string name="game_path">Diretório padrão de jogos</string>	
