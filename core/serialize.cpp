@@ -34,7 +34,8 @@ enum serialize_version_enum {
 	V1,
 	V2,
 	V3,
-	V4
+	V4,
+	V5_LIBRETRO
 } ;
 
 //./core/hw/arm7/arm_mem.cpp
@@ -1163,6 +1164,410 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	return true ;
 }
 
+static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
+{
+	int i = 0;
+	int j = 0;
+
+	REICAST_US(aica_interr) ;
+	REICAST_US(aica_reg_L) ;
+	REICAST_US(e68k_out) ;
+	REICAST_US(e68k_reg_L) ;
+	REICAST_US(e68k_reg_M) ;
+
+	REICAST_USA(arm_Reg,RN_ARM_REG_COUNT);
+	REICAST_US(armIrqEnable);
+	REICAST_US(armFiqEnable);
+	REICAST_US(armMode);
+	REICAST_US(Arm7Enabled);
+	REICAST_USA(cpuBitsSet,256);
+	REICAST_US(intState);
+	REICAST_US(stopState);
+	REICAST_US(holdState);
+
+	REICAST_US(dsp);
+
+	for ( i = 0 ; i < 3 ; i++)
+	{
+		REICAST_US(timers[i].c_step);
+		REICAST_US(timers[i].m_step);
+	}
+
+
+	REICAST_USA(aica_ram.data,aica_ram.size) ;
+	REICAST_US(VREG);
+	REICAST_US(ARMRST);
+	REICAST_US(rtc_EN);
+
+	REICAST_USA(aica_reg,0x8000);
+
+
+
+	REICAST_USA(volume_lut,16);
+	REICAST_USA(tl_lut,256 + 768);
+	REICAST_USA(AEG_ATT_SPS,64);
+	REICAST_USA(AEG_DSR_SPS,64);
+	REICAST_US(pl);
+	REICAST_US(pr);
+
+	channel_unserialize(data, total_size) ;
+
+	REICAST_USA(cdda_sector,CDDA_SIZE);
+	REICAST_US(cdda_index);
+	REICAST_USA(mxlr,64);
+	REICAST_US(samples_gen);
+
+
+	register_unserialize(sb_regs, data, total_size) ;
+	REICAST_US(SB_ISTNRM);
+	REICAST_US(SB_FFST_rc);
+	REICAST_US(SB_FFST);
+
+
+
+	//this is one-time init, no updates - don't need to serialize
+	//extern RomChip sys_rom;
+
+	REICAST_US(i); //LIBRETRO_S(sys_nvmem_sram.size);
+	verify(i == 0);
+	REICAST_US(i); //LIBRETRO_S(sys_nvmem_sram.mask);
+	//LIBRETRO_SA(sys_nvmem_sram.data,sys_nvmem_sram.size);
+
+	REICAST_US(sys_nvmem.size);
+	REICAST_US(sys_nvmem.mask);
+	REICAST_US(sys_nvmem.state);
+	REICAST_USA(sys_nvmem.data,sys_nvmem.size);
+
+
+	//this is one-time init, no updates - don't need to serialize
+	//extern _vmem_handler area0_handler;
+
+
+
+
+	REICAST_USA(reply_11,16) ;
+
+
+
+	REICAST_US(sns_asc);
+	REICAST_US(sns_ascq);
+	REICAST_US(sns_key);
+
+	REICAST_US(packet_cmd);
+	REICAST_US(set_mode_offset);
+	REICAST_US(read_params);
+	REICAST_US(packet_cmd);
+	REICAST_US(read_buff);
+	REICAST_US(pio_buff);
+	REICAST_US(set_mode_offset);
+	REICAST_US(ata_cmd);
+	REICAST_US(cdda);
+	REICAST_US(gd_state);
+	REICAST_US(gd_disk_type);
+	REICAST_US(data_write_mode);
+	REICAST_US(DriveSel);
+	REICAST_US(Error);
+	REICAST_US(IntReason);
+	REICAST_US(Features);
+	REICAST_US(SecCount);
+	REICAST_US(SecNumber);
+	REICAST_US(GDStatus);
+	REICAST_US(ByteCount);
+	REICAST_US(i); //LIBRETRO_S(GDROM_TICK);
+
+	REICAST_USA(EEPROM,0x100);
+	REICAST_US(EEPROM_loaded);
+
+
+	REICAST_US(maple_ddt_pending_reset);
+
+	mcfg_UnserializeDevices(data, total_size);
+
+	REICAST_US(FrameCount);
+	REICAST_US(pend_rend);
+
+
+	REICAST_USA(YUV_tempdata,512/4);
+	REICAST_US(YUV_dest);
+	REICAST_US(YUV_blockcount);
+	REICAST_US(YUV_x_curr);
+	REICAST_US(YUV_y_curr);
+	REICAST_US(YUV_x_size);
+	REICAST_US(YUV_y_size);
+
+	bool dumbool;
+	REICAST_US(dumbool); //LIBRETRO_S(fog_needs_update);
+	REICAST_USA(pvr_regs,pvr_RegSize);
+	fog_needs_update = true ;
+
+	REICAST_US(in_vblank);
+	REICAST_US(clc_pvr_scanline);
+	REICAST_US(pvr_numscanlines);
+	REICAST_US(prv_cur_scanline);
+	REICAST_US(vblk_cnt);
+	REICAST_US(Line_Cycles);
+	REICAST_US(Frame_Cycles);
+	REICAST_US(speed_load_mspdf);
+	REICAST_US(mips_counter);
+	REICAST_US(full_rps);
+
+	REICAST_USA(ta_type_lut,256);
+	REICAST_USA(ta_fsm,2049);
+	REICAST_US(ta_fsm_cl);
+
+	REICAST_US(dumbool); //LIBRETRO_S(pal_needs_update);
+	for (int i = 0; i < 4; i++) REICAST_US(j); //LIBRETRO_SA(_pal_rev_256,4);
+	for (int i = 0; i < 64; i++) REICAST_US(j); //LIBRETRO_SA(_pal_rev_16,64);
+	for (int i = 0; i < 4; i++) REICAST_US(j); //LIBRETRO_SA(pal_rev_256,4);
+	for (int i = 0; i < 64; i++) REICAST_US(j); //LIBRETRO_SA(pal_rev_16,64);
+	for ( i = 0 ; i < 3 ; i++ )
+	{
+		u32 buf[65536]; //u32 *ptr = decoded_colors[i] ;
+		REICAST_US(buf); //LIBRETRO_SA(ptr,65536);
+	}
+
+	REICAST_US(tileclip_val);
+	REICAST_USA(f32_su8_tbl,65536);
+	REICAST_USA(FaceBaseColor,4);
+	REICAST_USA(FaceOffsColor,4);
+	REICAST_US(SFaceBaseColor);
+	REICAST_US(SFaceOffsColor);
+
+	pal_needs_update = true;
+	REICAST_US(i); //LIBRETRO_S(palette_index);
+	REICAST_US(dumbool); //LIBRETRO_S(KillTex);
+	for (int i = 0; i < 1024; i++) REICAST_US(j); //LIBRETRO_SA(palette16_ram,1024);
+	for (int i = 0; i < 1024; i++) REICAST_US(j); //LIBRETRO_SA(palette32_ram,1024);
+	for (i = 0 ; i < 2 ; i++)
+		for (j = 0 ; j < 8 ; j++)
+		{
+			u32 buf[1024]; //u32 *ptr = detwiddle[i][j] ;
+			REICAST_US(buf); //LIBRETRO_SA(ptr,1024);
+		}
+	REICAST_USA(vram.data, vram.size);
+
+	REICAST_USA(OnChipRAM.data,OnChipRAM_SIZE);
+
+	register_unserialize(CCN, data, total_size) ;
+	register_unserialize(UBC, data, total_size) ;
+	register_unserialize(BSC, data, total_size) ;
+	register_unserialize(DMAC, data, total_size) ;
+	register_unserialize(CPG, data, total_size) ;
+	register_unserialize(RTC, data, total_size) ;
+	register_unserialize(INTC, data, total_size) ;
+	register_unserialize(TMU, data, total_size) ;
+	register_unserialize(SCI, data, total_size) ;
+	register_unserialize(SCIF, data, total_size) ;
+
+	REICAST_USA(mem_b.data, mem_b.size);
+
+
+
+	REICAST_US(IRLPriority);
+	REICAST_USA(InterruptEnvId,32);
+	REICAST_USA(InterruptBit,32);
+	REICAST_USA(InterruptLevelBit,16);
+	REICAST_US(interrupt_vpend);
+	REICAST_US(interrupt_vmask);
+	REICAST_US(decoded_srimask);
+
+
+
+
+	REICAST_US(i) ;
+	if ( i == 0 )
+		do_sqw_nommu = &do_sqw_nommu_area_3 ;
+	else if ( i == 1 )
+		do_sqw_nommu = &do_sqw_nommu_area_3_nonvmem ;
+	else if ( i == 2 )
+		do_sqw_nommu = (sqw_fp*)&TAWriteSQ ;
+	else if ( i == 3 )
+		do_sqw_nommu = &do_sqw_nommu_full ;
+
+
+
+	REICAST_USA((*p_sh4rcb).sq_buffer,64/8);
+
+	//store these before unserializing and then restore after
+	//void *getptr = &((*p_sh4rcb).cntx.sr.GetFull) ;
+	//void *setptr = &((*p_sh4rcb).cntx.sr.SetFull) ;
+	REICAST_US((*p_sh4rcb).cntx);
+	//(*p_sh4rcb).cntx.sr.GetFull = getptr ;
+	//(*p_sh4rcb).cntx.sr.SetFull = setptr ;
+
+	REICAST_US(old_rm);
+	REICAST_US(old_dn);
+
+
+
+
+	REICAST_US(sh4_sched_ffb);
+	REICAST_US(sh4_sched_intr);
+
+	//extern vector<sched_list> list;
+
+	REICAST_US(list[aica_schid].tag) ;
+	REICAST_US(list[aica_schid].start) ;
+	REICAST_US(list[aica_schid].end) ;
+
+	REICAST_US(list[rtc_schid].tag) ;
+	REICAST_US(list[rtc_schid].start) ;
+	REICAST_US(list[rtc_schid].end) ;
+
+	REICAST_US(list[gdrom_schid].tag) ;
+	REICAST_US(list[gdrom_schid].start) ;
+	REICAST_US(list[gdrom_schid].end) ;
+
+	REICAST_US(list[maple_schid].tag) ;
+	REICAST_US(list[maple_schid].start) ;
+	REICAST_US(list[maple_schid].end) ;
+
+	REICAST_US(list[dma_sched_id].tag) ;
+	REICAST_US(list[dma_sched_id].start) ;
+	REICAST_US(list[dma_sched_id].end) ;
+
+	for (int i = 0; i < 3; i++)
+	{
+		REICAST_US(list[tmu_sched[i]].tag) ;
+		REICAST_US(list[tmu_sched[i]].start) ;
+		REICAST_US(list[tmu_sched[i]].end) ;
+	}
+
+	REICAST_US(list[render_end_schid].tag) ;
+	REICAST_US(list[render_end_schid].start) ;
+	REICAST_US(list[render_end_schid].end) ;
+
+	REICAST_US(list[vblank_schid].tag) ;
+	REICAST_US(list[vblank_schid].start) ;
+	REICAST_US(list[vblank_schid].end) ;
+
+	REICAST_US(list[time_sync].tag) ;
+	REICAST_US(list[time_sync].start) ;
+	REICAST_US(list[time_sync].end) ;
+
+	REICAST_US(list[modem_sched].tag) ;
+    REICAST_US(list[modem_sched].start) ;
+    REICAST_US(list[modem_sched].end) ;
+
+
+
+	REICAST_US(SCIF_SCFSR2);
+	REICAST_US(SCIF_SCFRDR2);
+	REICAST_US(SCIF_SCFDR2);
+
+
+	REICAST_US(BSC_PDTRA);
+
+
+
+
+	REICAST_USA(tmu_shift,3);
+	REICAST_USA(tmu_mask,3);
+	REICAST_USA(tmu_mask64,3);
+	REICAST_USA(old_mode,3);
+	REICAST_USA(tmu_ch_base,3);
+	REICAST_USA(tmu_ch_base64,3);
+
+
+
+
+	REICAST_USA(CCN_QACR_TR,2);
+
+
+
+
+	REICAST_USA(UTLB,64);
+	REICAST_USA(ITLB,4);
+#if defined(NO_MMU)
+	REICAST_USA(sq_remap,64);
+#else
+	REICAST_USA(ITLB_LRU_USE,64);
+	REICAST_US(mmu_error_TT);
+#endif
+
+
+
+
+	REICAST_US(NullDriveDiscType);
+	REICAST_USA(q_subchannel,96);
+
+	REICAST_US(i);	// FLASH_SIZE
+	REICAST_US(i);	// BBSRAM_SIZE
+	REICAST_US(i);	// BIOS_SIZE
+	REICAST_US(i);	// RAM_SIZE
+	REICAST_US(i);	// ARAM_SIZE
+	REICAST_US(i);	// VRAM_SIZE
+	REICAST_US(i);	// RAM_MASK
+	REICAST_US(i);	// ARAM_MASK
+	REICAST_US(i);	// VRAM_MASK
+
+
+
+	REICAST_US(naomi_updates);
+	REICAST_US(BoardID);
+	REICAST_US(GSerialBuffer);
+	REICAST_US(BSerialBuffer);
+	REICAST_US(GBufPos);
+	REICAST_US(BBufPos);
+	REICAST_US(GState);
+	REICAST_US(BState);
+	REICAST_US(GOldClk);
+	REICAST_US(BOldClk);
+	REICAST_US(BControl);
+	REICAST_US(BCmd);
+	REICAST_US(BLastCmd);
+	REICAST_US(GControl);
+	REICAST_US(GCmd);
+	REICAST_US(GLastCmd);
+	REICAST_US(SerStep);
+	REICAST_US(SerStep2);
+	REICAST_USA(BSerial,69);
+	REICAST_USA(GSerial,69);
+	REICAST_US(reg_dimm_3c);
+	REICAST_US(reg_dimm_40);
+	REICAST_US(reg_dimm_44);
+	REICAST_US(reg_dimm_48);
+	REICAST_US(reg_dimm_4c);
+	REICAST_US(NaomiDataRead);
+
+	REICAST_US(i); //LIBRETRO_S(cycle_counter);
+#if FEAT_SHREC == DYNAREC_CPP
+	REICAST_US(idxnxx);
+#else
+	REICAST_US(i);
+#endif
+
+	REICAST_US(state);
+	REICAST_US(div_som_reg1);
+	REICAST_US(div_som_reg2);
+	REICAST_US(div_som_reg3);
+
+
+
+
+	//REICAST_USA(CodeCache,CODE_SIZE) ;
+	//REICAST_USA(SH4_TCB,CODE_SIZE+4096);
+	REICAST_US(LastAddr);
+	REICAST_US(LastAddr_min);
+	REICAST_USA(block_hash,1024);
+
+
+	REICAST_USA(RegisterWrite,sh4_reg_count);
+	REICAST_USA(RegisterRead,sh4_reg_count);
+	REICAST_US(fallback_blocks);
+	REICAST_US(total_blocks);
+	REICAST_US(REMOVED_OPS);
+
+	REICAST_US(settings.dreamcast.broadcast);
+	REICAST_US(settings.dreamcast.cable);
+	REICAST_US(settings.dreamcast.region);
+
+	if (CurrentCartridge != NULL)
+		CurrentCartridge->Unserialize(data, total_size);
+
+	return true ;
+}
+
 bool dc_unserialize(void **data, unsigned int *total_size)
 {
 	int i = 0;
@@ -1172,6 +1577,8 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	*total_size = 0 ;
 
 	REICAST_US(version) ;
+	if (version == V5_LIBRETRO)
+		return dc_unserialize_libretro(data, total_size);
 	if (version != V4)
 	{
 		fprintf(stderr, "Save State version not supported: %d\n", version);
