@@ -56,7 +56,7 @@ Disc* cue_parse(const wchar* file)
 
 	size_t cue_len = core_fsize(fsource);
 
-	char cue_data[8193] = { 0 };
+	char cue_data[64 * 1024] = { 0 };
 
 	if (cue_len >= sizeof(cue_data))
 	{
@@ -72,7 +72,6 @@ Disc* cue_parse(const wchar* file)
 
 	string basepath = OS_dirname(file);
 
-	bool high_density_area = false;
 	u32 current_fad = 150;
 	string track_filename;
 	u32 track_number = -1;
@@ -88,7 +87,6 @@ Disc* cue_parse(const wchar* file)
 			cuesheet >> token;
 			if (token == "HIGH-DENSITY")
 			{
-				high_density_area = true;
 				current_fad = 45000 + 150;
 			}
 			else if (token != "SINGLE-DENSITY")
@@ -136,9 +134,6 @@ Disc* cue_parse(const wchar* file)
 			cuesheet >> index_num;
 			if (index_num == 1)
 			{
-				string offset;
-				cuesheet >> offset;
-
 				Track t;
 				t.ADDR = 0;
 				t.StartFAD = current_fad;
@@ -151,12 +146,17 @@ Disc* cue_parse(const wchar* file)
 					return NULL;
 				}
 				u32 sector_size = getSectorSize(track_type);
+				if (sector_size == 0)
+				{
+					printf("CUE file: track %d has unknown sector type: %s\n", track_number, track_type.c_str());
+					return NULL;
+				}
 				if (core_fsize(track_file) % sector_size != 0)
 					printf("Warning: Size of track %s is not multiple of sector size %d\n", track_filename.c_str(), sector_size);
 				current_fad = t.StartFAD + (u32)core_fsize(track_file) / sector_size;
 				
-				printf("file[%d] \"%s\": StartFAD:%d, sector_size:%d file_size:%d\n", disc->tracks.size(),
-						track_filename.c_str(), t.StartFAD, sector_size, (u32)core_fsize(track_file));
+				//printf("file[%lu] \"%s\": StartFAD:%d, sector_size:%d file_size:%d\n", disc->tracks.size(),
+				//		track_filename.c_str(), t.StartFAD, sector_size, (u32)core_fsize(track_file));
 
 				t.file = new RawTrackFile(track_file, 0, t.StartFAD, sector_size);
 				disc->tracks.push_back(t);
@@ -165,8 +165,6 @@ Disc* cue_parse(const wchar* file)
 				track_type.clear();
 				track_filename.clear();
 			}
-			else
-				current_fad += 150;
 		}
 
 	}
