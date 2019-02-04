@@ -746,7 +746,11 @@ public:
 				break;
 
 			case shop_fsrra:
-				rsqrtss(regalloc.MapXRegister(op.rd), regalloc.MapXRegister(op.rs1));
+				// RSQRTSS has an |error| <= 1.5*2^-12 where the SH4 FSRRA needs |error| <= 2^-21
+				sqrtss(xmm0, regalloc.MapXRegister(op.rs1));
+				mov(eax, 0x3f800000);	// 1.0
+				movd(regalloc.MapXRegister(op.rd), eax);
+				divss(regalloc.MapXRegister(op.rd), xmm0);
 				break;
 
 			case shop_fsetgt:
