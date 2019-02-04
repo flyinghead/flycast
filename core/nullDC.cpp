@@ -299,6 +299,10 @@ void LoadSettings()
 	settings.rend.UseMipmaps		= cfgLoadInt("config", "rend.UseMipmaps", 1);
 	settings.rend.WideScreen		= cfgLoadInt("config", "rend.WideScreen", 0);
 	settings.rend.Clipping			= cfgLoadInt("config", "rend.Clipping", 1);
+	settings.rend.
+	    VerticalResolution			= cfgLoadInt("config", "rend.ResolutionPercentage", 100);
+	settings.rend.
+	    HorizontalResolution		= cfgLoadInt("config", "rend.ResolutionPercentage", 100);
 
 	settings.pvr.subdivide_transp	= cfgLoadInt("config", "pvr.Subdivide", 0);
 

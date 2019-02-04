@@ -45,6 +45,9 @@
     <string name="select_software">Softwarerendering erzwingen</string>
     <string name="select_sound">Emulator-Sound deaktivieren</string>
     <string name="select_depth">Rendering-Tiefe</string>
+    <string name="resolution">Auflösung (niedriger = schneller)</string>
+    <string name="resolution_vertical">Vertikal</string>
+    <string name="resolution_horizontal">Horizontal</string>
 
     <string name="games_listing">Verfügbare Dreamcast-Spiele</string>
 

@@ -420,6 +420,31 @@ public class OptionsFragment extends Fragment {
 			}
 		});
 
+		int resolutionVertical = mPrefs.getInt(Emulator.pref_resolutionv, Emulator.resolutionv);
+		final String resolutionText = getActivity().getString(R.string.resolution) + ": ";
+
+		final TextView resolutionTextView = getView().findViewById(R.id.resolution);
+		resolutionTextView.setText((resolutionText + String.valueOf(resolutionVertical) + "%"));
+
+		final SeekBar resolutionVHSeek = getView().findViewById(R.id.resolutionvh_seekbar);
+		resolutionVHSeek.setProgress(resolutionVertical - 1); //can take vertical OR horizontal (the same values)
+		resolutionVHSeek.setIndeterminate(false);
+		resolutionVHSeek.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
+			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+				resolutionTextView.setText((resolutionText + String.valueOf(progress + 1) + "%"));
+			}
+
+			public void onStartTrackingTouch(SeekBar seekBar) {
+			}
+
+			public void onStopTrackingTouch(SeekBar seekBar) {
+				int progress = seekBar.getProgress();
+				//the same progress for both resolutions
+				mPrefs.edit().putInt(Emulator.pref_resolutionv, progress + 1).apply();
+				mPrefs.edit().putInt(Emulator.pref_resolutionh, progress + 1).apply();
+			}
+		});
+
 		OnCheckedChangeListener pvr_rendering = new OnCheckedChangeListener() {
 
 			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -703,6 +728,8 @@ public class OptionsFragment extends Fragment {
 		mPrefs.edit().remove(Emulator.pref_clipping).apply();
 		mPrefs.edit().remove(Emulator.pref_pvrrender).apply();
 		mPrefs.edit().remove(Emulator.pref_syncedrender).apply();
+		mPrefs.edit().remove(Emulator.pref_resolutionv).apply();
+		mPrefs.edit().remove(Emulator.pref_resolutionh).apply();
 		mPrefs.edit().remove(Emulator.pref_bootdisk).apply();
 		mPrefs.edit().remove(Config.pref_showfps).apply();
 		mPrefs.edit().remove(Config.pref_rendertype).apply();
