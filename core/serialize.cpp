@@ -1235,7 +1235,12 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 
 	REICAST_US(sys_nvmem.size);
 	REICAST_US(sys_nvmem.mask);
+#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
 	REICAST_US(sys_nvmem.state);
+#else
+	// FIXME
+	die("Naomi/Atomiswave libretro savestates are not supported");
+#endif
 	REICAST_USA(sys_nvmem.data,sys_nvmem.size);
 
 
