@@ -71,6 +71,8 @@ namespace ImGui
     void MyFunction(const char* name, const MyMatrix44& v);
 }
 */
+#include "build.h"
+
 #if HOST_OS == OS_DARWIN
 #define IMGUI_IMPL_OPENGL_LOADER_CUSTOM <OpenGL/gl3.h>
 #else
