@@ -13,6 +13,7 @@
 #include "cfg/cfg.h"
 #include "linux-dist/x11.h"
 #include "linux-dist/main.h"
+#include "rend/gui.h"
 
 #if FEAT_HAS_NIXPROF
 #include "profiler/profiler.h"
@@ -47,7 +48,6 @@ extern bool naomi_test_button;
 void dc_stop(void);
 bool dc_loadstate(void);
 bool dc_savestate(void);
-void dc_enable_dynarec(bool enable);
 
 enum
 {
@@ -395,20 +395,15 @@ void input_x11_handle()
 					}
 					if (x11_keyboard_input)
 					{
-						// Normal keyboard handling
-						if (e.type == KeyRelease && e.xkey.keycode == KEY_ESC
-								&& !(e.xkey.state & (ControlMask | ShiftMask | Mod1Mask)))
-						{
-							dc_stop();
-						}
 #ifndef RELEASE
-						else if (e.xkey.keycode == KEY_F10)
+						if (e.xkey.keycode == KEY_F10)
 						{
 							// Dump the next frame into a file
 							dump_frame_switch = e.type == KeyPress;
 						}
+						else
 #elif FEAT_HAS_NIXPROF
-						else if (e.type == KeyRelease && e.xkey.keycode == KEY_F10)
+						if (e.type == KeyRelease && e.xkey.keycode == KEY_F10)
 						{
 							if (sample_Switch(3000)) {
 								printf("Starting profiling\n");
@@ -416,8 +411,9 @@ void input_x11_handle()
 								printf("Stopping profiling\n");
 							}
 						}
+						else
 #endif
-						else if (e.type == KeyRelease && e.xkey.keycode == KEY_F11)
+						if (e.type == KeyRelease && e.xkey.keycode == KEY_F11)
 						{
 							x11_fullscreen = !x11_fullscreen;
 							x11_window_set_fullscreen(x11_fullscreen);
@@ -430,13 +426,6 @@ void input_x11_handle()
 						{
 							dc_loadstate() ;
 						}
-						else if (e.type == KeyRelease && e.xkey.keycode == KEY_F12)
-						{
-							extern bool renderer_changed;
-							settings.pvr.rend = settings.pvr.rend == 0 ? 3 : 0;		// Alternate between per-pixel and per-triangle
-							printf("OpenGL: renderer changed to %d\n", settings.pvr.rend);
-							renderer_changed = true;
-						}
 #if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
 						else if (e.xkey.keycode == KEY_F8)
 						{
@@ -447,11 +436,12 @@ void input_x11_handle()
 							naomi_test_button = e.type == KeyPress;
 						}
 #endif
-						else if (e.type == KeyRelease && e.xkey.keycode == KEY_F6)
+						else if (e.type == KeyRelease && e.xkey.keycode == KEY_TAB)
 						{
-							dc_enable_dynarec(settings.dynarec.Enable == 0);
+							gui_open_settings();
 						}
-						else
+
+						if (!gui_is_open())
 						{
 							int dc_key = x11_keymap[e.xkey.keycode];
 
@@ -609,6 +599,9 @@ void x11_window_create()
 			return;
 		}
 		x11Screen = XDefaultScreen(x11Display);
+		float xdpi = (float)DisplayWidth(x11Display, x11Screen) / DisplayWidthMM(x11Display, x11Screen) * 25.4;
+		float ydpi = (float)DisplayHeight(x11Display, x11Screen) / DisplayHeightMM(x11Display, x11Screen) * 25.4;
+		screen_dpi = max(xdpi, ydpi);
 
 		// Gets the window parameters
 		sRootWindow = RootWindow(x11Display, x11Screen);
@@ -682,8 +675,7 @@ void x11_window_create()
 
 		// Add to these for handling other events
 		sWA.event_mask = StructureNotifyMask | ExposureMask | ButtonPressMask | ButtonReleaseMask | KeyPressMask | KeyReleaseMask;
-		if (settings.input.DCMouse)
-			sWA.event_mask |= PointerMotionMask | FocusChangeMask;
+		sWA.event_mask |= PointerMotionMask | FocusChangeMask;
 		ui32Mask = CWBackPixel | CWBorderPixel | CWEventMask | CWColormap;
 
 		x11_width = cfgLoadInt("x11", "width", DEFAULT_WINDOW_WIDTH);

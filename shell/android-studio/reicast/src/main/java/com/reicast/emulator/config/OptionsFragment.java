@@ -525,10 +525,10 @@ public class OptionsFragment extends Fragment {
 
 			public void onCheckedChanged(CompoundButton buttonView,
 										 boolean isChecked) {
-				mPrefs.edit().putBoolean(Config.pref_showfps, isChecked).apply();
+				mPrefs.edit().putBoolean(Emulator.pref_showfps, isChecked).apply();
 			}
 		};
-		boolean counter = mPrefs.getBoolean(Config.pref_showfps, false);
+		boolean counter = mPrefs.getBoolean(Emulator.pref_showfps, false);
 		fps_opt.setChecked(counter);
 		fps_opt.setOnCheckedChangeListener(fps_options);
 
@@ -746,10 +746,14 @@ public class OptionsFragment extends Fragment {
 		mPrefs.edit().remove(Emulator.pref_pvrrender).apply();
 		mPrefs.edit().remove(Emulator.pref_syncedrender).apply();
 		mPrefs.edit().remove(Emulator.pref_bootdisk).apply();
-		mPrefs.edit().remove(Config.pref_showfps).apply();
+		mPrefs.edit().remove(Emulator.pref_showfps).apply();
 		mPrefs.edit().remove(Config.pref_rendertype).apply();
 		mPrefs.edit().remove(Emulator.pref_nosound).apply();
 		mPrefs.edit().remove(Emulator.pref_nobatch).apply();
+		mPrefs.edit().remove(Emulator.pref_customtextures).apply();
+		mPrefs.edit().remove(Emulator.pref_modvols).apply();
+		mPrefs.edit().remove(Emulator.pref_clipping).apply();
+		mPrefs.edit().remove(Emulator.pref_dynsafemode).apply();
 		mPrefs.edit().remove(Config.pref_renderdepth).apply();
 		mPrefs.edit().remove(Config.pref_theme).apply();
 

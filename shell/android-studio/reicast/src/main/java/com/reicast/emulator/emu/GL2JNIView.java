@@ -17,6 +17,7 @@ import android.os.Handler;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
 import android.util.AttributeSet;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
@@ -134,6 +135,9 @@ public class GL2JNIView extends GLSurfaceView
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
 
+        DisplayMetrics dm = context.getResources().getDisplayMetrics();
+        JNIdc.screenDpi((int)Math.max(dm.xdpi, dm.ydpi));
+
         JNIdc.config(prefs.getString(Config.pref_home,
                 Environment.getExternalStorageDirectory().getAbsolutePath()));
 
@@ -159,7 +163,7 @@ public class GL2JNIView extends GLSurfaceView
                 JNIdc.data(1, GL2JNIActivity.syms);
         }
         JNIdc.init(fileName);
-        JNIdc.query(ethd);
+        JNIdc.query(ethd, context.getApplicationContext());
 
         // By default, GLSurfaceView() creates a RGB_565 opaque surface.
         // If we want a translucent one, we should change the surface's
@@ -291,6 +295,8 @@ public class GL2JNIView extends GLSurfaceView
     public static int[] rt = new int[4];
     public static int[] jx = new int[4];
     public static int[] jy = new int[4];
+    public static int[] mouse_pos = { -32768, -32768 };
+    public static int mouse_btns = 0xFFFF;
 
     float editLastX = 0, editLastY = 0;
 
@@ -309,130 +315,124 @@ public class GL2JNIView extends GLSurfaceView
         int aid = event.getActionMasked();
         int pid = event.getActionIndex();
 
-        if (editVjoyMode && selectedVjoyElement != -1 && aid == MotionEvent.ACTION_MOVE && !scaleGestureDetector.isInProgress()) {
-            float x = (event.getX()-tx)/scl;
-            float y = (event.getY()-ty)/scl;
+        if (!JNIdc.guiIsOpen()) {
+            if (editVjoyMode && selectedVjoyElement != -1 && aid == MotionEvent.ACTION_MOVE && !scaleGestureDetector.isInProgress()) {
+                float x = (event.getX() - tx) / scl;
+                float y = (event.getY() - ty) / scl;
 
-            if (editLastX != 0 && editLastY != 0) {
-                float deltaX = x - editLastX;
-                float deltaY = y - editLastY;
+                if (editLastX != 0 && editLastY != 0) {
+                    float deltaX = x - editLastX;
+                    float deltaY = y - editLastY;
 
-                vjoy_d_custom[selectedVjoyElement][0] += isTablet() ? deltaX * 2 : deltaX;
-                vjoy_d_custom[selectedVjoyElement][1] += isTablet() ? deltaY * 2 : deltaY;
+                    vjoy_d_custom[selectedVjoyElement][0] += isTablet() ? deltaX * 2 : deltaX;
+                    vjoy_d_custom[selectedVjoyElement][1] += isTablet() ? deltaY * 2 : deltaY;
 
-                requestLayout();
+                    requestLayout();
+                }
+
+                editLastX = x;
+                editLastY = y;
+
+                return true;
             }
 
-            editLastX = x;
-            editLastY = y;
+            for (int i = 0; i < event.getPointerCount(); i++) {
+                float x = (event.getX(i) - tx) / scl;
+                float y = (event.getY(i) - ty) / scl;
+                if (anal_id != event.getPointerId(i)) {
+                    if (aid == MotionEvent.ACTION_POINTER_UP && pid == i)
+                        continue;
+                    for (int j = 0; j < vjoy.length; j++) {
+                        if (x > vjoy[j][0] && x <= (vjoy[j][0] + vjoy[j][2])) {
+                            /*
+                                //Disable pressure sensitive R/L
+                                //Doesn't really work properly
 
-            return true;
-        }
-
-        for (int i=0;i<event.getPointerCount();i++)
-        {
-            float x = (event.getX(i)-tx)/scl;
-            float y = (event.getY(i)-ty)/scl;
-            if (anal_id != event.getPointerId(i))
-            {
-                if (aid == MotionEvent.ACTION_POINTER_UP && pid==i)
-                    continue;
-                for (int j=0;j<vjoy.length;j++)
-                {
-                    if(x>vjoy[j][0] && x<=(vjoy[j][0]+vjoy[j][2]))
-                    {
-						/*
-							//Disable pressure sensitive R/L
-							//Doesn't really work properly
-
-							int pre=(int)(event.getPressure(i)*255);
-							if (pre>20)
-							{
-								pre-=20;
-								pre*=7;
-							}
-							if (pre>255) pre=255;
-						*/
-
-                        int pre = 255;
-
-                        if (y > vjoy[j][1] && y <= (vjoy[j][1]+vjoy[j][3]))
-                        {
-                            if (vjoy[j][4] >= -2)
-                            {
-                                if (vjoy[j][5]==0)
-                                    if (!editVjoyMode && touchVibrationEnabled)
-                                        vib.vibrate(vibrationDuration);
-                                vjoy[j][5]=2;
-                            }
-
-
-                            if (vjoy[j][4] == -3)
-                            {
-                                if (editVjoyMode) {
-                                    selectedVjoyElement = 5; // Analog
-                                    resetEditMode();
-                                } else {
-                                    vjoy[j+1][0]=x-vjoy[j+1][2]/2;
-                                    vjoy[j+1][1]=y-vjoy[j+1][3]/2;
-
-                                    JNIdc.vjoy(j+1, vjoy[j+1][0], vjoy[j+1][1] , vjoy[j+1][2], vjoy[j+1][3]);
-                                    anal_id=event.getPointerId(i);
+                                int pre=(int)(event.getPressure(i)*255);
+                                if (pre>20)
+                                {
+                                    pre-=20;
+                                    pre*=7;
                                 }
-                            } else if (vjoy[j][4] != -4) {
-                                if (vjoy[j][4] == -1) {
+                                if (pre>255) pre=255;
+                            */
+
+                            int pre = 255;
+
+                            if (y > vjoy[j][1] && y <= (vjoy[j][1] + vjoy[j][3])) {
+                                if (vjoy[j][4] >= -2) {
+                                    if (vjoy[j][5] == 0)
+                                        if (!editVjoyMode && touchVibrationEnabled)
+                                            vib.vibrate(vibrationDuration);
+                                    vjoy[j][5] = 2;
+                                }
+
+
+                                if (vjoy[j][4] == -3) {
                                     if (editVjoyMode) {
-                                        selectedVjoyElement = 3; // Left Trigger
+                                        selectedVjoyElement = 5; // Analog
                                         resetEditMode();
                                     } else {
-                                        lt[0] = pre;
-                                        lt_id = event.getPointerId(i);
+                                        vjoy[j + 1][0] = x - vjoy[j + 1][2] / 2;
+                                        vjoy[j + 1][1] = y - vjoy[j + 1][3] / 2;
+
+                                        JNIdc.vjoy(j + 1, vjoy[j + 1][0], vjoy[j + 1][1], vjoy[j + 1][2], vjoy[j + 1][3]);
+                                        anal_id = event.getPointerId(i);
                                     }
-                                } else if (vjoy[j][4] == -2) {
-                                    if (editVjoyMode) {
-                                        selectedVjoyElement = 4; // Right Trigger
-                                        resetEditMode();
+                                } else if (vjoy[j][4] != -4) {
+                                    if (vjoy[j][4] == -1) {
+                                        if (editVjoyMode) {
+                                            selectedVjoyElement = 3; // Left Trigger
+                                            resetEditMode();
+                                        } else {
+                                            lt[0] = pre;
+                                            lt_id = event.getPointerId(i);
+                                        }
+                                    } else if (vjoy[j][4] == -2) {
+                                        if (editVjoyMode) {
+                                            selectedVjoyElement = 4; // Right Trigger
+                                            resetEditMode();
+                                        } else {
+                                            rt[0] = pre;
+                                            rt_id = event.getPointerId(i);
+                                        }
                                     } else {
-                                        rt[0] = pre;
-                                        rt_id = event.getPointerId(i);
+                                        if (editVjoyMode) {
+                                            selectedVjoyElement = getElementIdFromButtonId(j);
+                                            resetEditMode();
+                                        } else
+                                            rv &= ~(int) vjoy[j][4];
                                     }
-                                } else {
-                                    if (editVjoyMode) {
-                                        selectedVjoyElement = getElementIdFromButtonId(j);
-                                        resetEditMode();
-                                    } else
-                                        rv &= ~(int) vjoy[j][4];
                                 }
                             }
                         }
                     }
+                } else {
+                    if (x < vjoy[11][0])
+                        x = vjoy[11][0];
+                    else if (x > (vjoy[11][0] + vjoy[11][2]))
+                        x = vjoy[11][0] + vjoy[11][2];
+
+                    if (y < vjoy[11][1])
+                        y = vjoy[11][1];
+                    else if (y > (vjoy[11][1] + vjoy[11][3]))
+                        y = vjoy[11][1] + vjoy[11][3];
+
+                    int j = 11;
+                    vjoy[j + 1][0] = x - vjoy[j + 1][2] / 2;
+                    vjoy[j + 1][1] = y - vjoy[j + 1][3] / 2;
+
+                    JNIdc.vjoy(j + 1, vjoy[j + 1][0], vjoy[j + 1][1], vjoy[j + 1][2], vjoy[j + 1][3]);
+
                 }
-            } else {
-                if (x<vjoy[11][0])
-                    x=vjoy[11][0];
-                else if (x>(vjoy[11][0]+vjoy[11][2]))
-                    x=vjoy[11][0]+vjoy[11][2];
-
-                if (y<vjoy[11][1])
-                    y=vjoy[11][1];
-                else if (y>(vjoy[11][1]+vjoy[11][3]))
-                    y=vjoy[11][1]+vjoy[11][3];
-
-                int j=11;
-                vjoy[j+1][0]=x-vjoy[j+1][2]/2;
-                vjoy[j+1][1]=y-vjoy[j+1][3]/2;
-
-                JNIdc.vjoy(j+1, vjoy[j+1][0], vjoy[j+1][1] , vjoy[j+1][2], vjoy[j+1][3]);
-
             }
-        }
 
-        for (int j=0;j<vjoy.length;j++)
-        {
-            if (vjoy[j][5]==2)
-                vjoy[j][5]=1;
-            else if (vjoy[j][5]==1)
-                vjoy[j][5]=0;
+            for (int j = 0; j < vjoy.length; j++) {
+                if (vjoy[j][5] == 2)
+                    vjoy[j][5] = 1;
+                else if (vjoy[j][5] == 1)
+                    vjoy[j][5] = 0;
+            }
         }
 
         switch(aid)
@@ -449,6 +449,7 @@ public class GL2JNIView extends GLSurfaceView
                 rt_id=-1;
                 for (int j=0;j<vjoy.length;j++)
                     vjoy[j][5]=0;
+                mouse_btns = 0xFFFF;
                 break;
 
             case MotionEvent.ACTION_POINTER_UP:
@@ -471,9 +472,31 @@ public class GL2JNIView extends GLSurfaceView
 
             case MotionEvent.ACTION_POINTER_DOWN:
             case MotionEvent.ACTION_DOWN:
+                if (event.getPointerCount() != 1)
+                {
+                    mouse_btns = 0xFFFF;
+                }
+                else
+                {
+                    MotionEvent.PointerCoords pointerCoords = new MotionEvent.PointerCoords();
+                    event.getPointerCoords(0, pointerCoords);
+                    mouse_pos[0] = Math.round((pointerCoords.x - tx) / scl);
+                    mouse_pos[1] = Math.round(pointerCoords.y / scl);
+                    mouse_btns = 0xFFFB;    // Mouse button A down
+                }
+                break;
+
+            case MotionEvent.ACTION_MOVE:
+                if (event.getPointerCount() == 1)
+                {
+                    MotionEvent.PointerCoords pointerCoords = new MotionEvent.PointerCoords();
+                    event.getPointerCoords(0, pointerCoords);
+                    mouse_pos[0] = Math.round((pointerCoords.x - tx) / scl);
+                    mouse_pos[1] = Math.round(pointerCoords.y / scl);
+                }
                 break;
         }
-        if (getResources().getString(R.string.flavor).equals("naomi"))
+        if (getResources().getString(R.string.flavor).equals("naomi"))  // FIXME
         {
             if (lt[0] != 0)
                 rv &= ~VJoy.key_CONT_C; // Service key/coin
@@ -507,7 +530,7 @@ public class GL2JNIView extends GLSurfaceView
     }
 
     public void pushInput(){
-        JNIdc.kcode(kcode_raw,lt,rt,jx,jy);
+        JNIdc.kcode(kcode_raw,lt,rt,jx,jy,mouse_pos,mouse_btns);
     }
 
     private static class Renderer implements GLSurfaceView.Renderer
@@ -532,6 +555,8 @@ public class GL2JNIView extends GLSurfaceView
                 mView.takeScreenshot = false;
                 FileUtils.saveScreenshot(mView.getContext(), mView.getWidth(), mView.getHeight(), gl);
             }
+            if (mView.ethd.getState() == Thread.State.TERMINATED)
+                System.exit(0);
         }
 
         public void onSurfaceChanged(GL10 gl,int width,int height)

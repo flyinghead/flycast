@@ -6,6 +6,7 @@
 
 #include "oslib/oslib.h"
 #include "rend/rend.h"
+#include "rend/gui.h"
 
 //Fragment and vertex shaders code
 
@@ -540,6 +541,8 @@ static bool gl_create_resources()
 	glUniform1i(glGetUniformLocation(gl4.OSD_SHADER.program, "tex"),0);		//bind osd texture to slot 0
 
 	gl_load_osd_resources();
+
+	gui_init();
 
 	// Create the buffer for Translucent poly params
 	glGenBuffers(1, &gl4.vbo.tr_poly_params);

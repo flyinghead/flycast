@@ -2,6 +2,7 @@
 #include "ta.h"
 #include "hw/pvr/pvr_mem.h"
 #include "rend/TexCache.h"
+#include "rend/gui.h"
 
 #include "deps/zlib/zlib.h"
 
@@ -269,12 +270,31 @@ bool rend_single_frame()
 	do
 	{
 #if !defined(TARGET_NO_THREADS)
+		if (gui_is_open())
+		{
+			if (!rs.Wait(1000 / 60))
+			{
+				gui_display_ui();
+				FinishRender(NULL);
+				return true;
+			}
+		}
+		else
+		{
 #if defined(_ANDROID)
-		if (!rs.Wait(100))
-			return false;
+			if (!rs.Wait(100))
+				return false;
 #else
-		rs.Wait();
+			rs.Wait();
 #endif
+		}
+#else
+		if (gui_is_open())
+		{
+			gui_display_ui();
+			FinishRender(NULL);
+			return true;
+		}
 #endif
 		if (!renderer_enabled)
 			return false;
@@ -284,8 +304,10 @@ bool rend_single_frame()
 	while (!_pvrrc);
 	bool do_swp = rend_frame(_pvrrc, true);
 
+#if !defined(TARGET_NO_THREADS)
 	if (_pvrrc->rend.isRTT)
 		re.Set();
+#endif
 
 	//clear up & free data ..
 	FinishRender(_pvrrc);
@@ -648,6 +670,7 @@ void check_framebuffer_write()
 
 void rend_cancel_emu_wait()
 {
+	FinishRender(NULL);
 #if !defined(TARGET_NO_THREADS)
 	re.Set();
 #endif

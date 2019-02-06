@@ -2,6 +2,7 @@
 #include "glcache.h"
 #include "rend/TexCache.h"
 #include "cfg/cfg.h"
+#include "rend/gui.h"
 
 #ifdef TARGET_PANDORA
 #include <unistd.h>
@@ -736,6 +737,7 @@ void findGLVersion()
 	if (glGetError() == GL_INVALID_ENUM)
 		gl.gl_major = 2;
 	const char *version = (const char *)glGetString(GL_VERSION);
+	printf("OpenGL version: %s\n", version);
 	if (!strncmp(version, "OpenGL ES", 9))
 	{
 		gl.is_gles = true;
@@ -1081,6 +1083,8 @@ bool gl_create_resources()
 	#endif
 
 	gl_load_osd_resources();
+
+	gui_init();
 
 	return true;
 }

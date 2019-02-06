@@ -19,14 +19,15 @@
 #include "hw/sh4/sh4_sched.h"
 #include "hw/pvr/Renderer_if.h"
 #include "hw/pvr/spg.h"
+#include "hw/aica/dsp.h"
 
 void FlushCache();
+static void LoadCustom();
 
 settings_t settings;
 static bool continue_running = false;
 static cMutex mtx_serialization ;
 static cMutex mtx_mainloop ;
-static int new_dynarec_setting = -1;
 
 /*
 	libndc
@@ -426,6 +427,7 @@ void dc_run()
 {
     while ( true )
     {
+    	bool dynarec_enabled = settings.dynarec.Enable;
     	continue_running = false ;
     	mtx_mainloop.Lock() ;
     	sh4_cpu.Run();
@@ -434,9 +436,8 @@ void dc_run()
     	mtx_serialization.Lock() ;
     	mtx_serialization.Unlock() ;
 
-    	if (new_dynarec_setting != -1 && new_dynarec_setting != settings.dynarec.Enable)
+    	if (dynarec_enabled != settings.dynarec.Enable)
     	{
-    		settings.dynarec.Enable = new_dynarec_setting;
     		if (settings.dynarec.Enable)
     		{
     			Get_Sh4Recompiler(&sh4_cpu);
@@ -463,9 +464,7 @@ void dc_term()
 
 	mcfg_DestroyDevices();
 
-#ifndef _ANDROID
 	SaveSettings();
-#endif
 	SaveRomFiles(get_writable_data_path("/data/"));
 
     TermAudio();
@@ -588,7 +587,7 @@ void LoadSettings()
 */
 }
 
-void LoadCustom()
+static void LoadCustom()
 {
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST
 	char *reios_id = reios_disk_id();
@@ -628,17 +627,43 @@ void LoadCustom()
 #endif
 }
 
+#ifndef _ANDROID
 void SaveSettings()
 {
-	cfgSaveInt("config","Dynarec.Enabled",		settings.dynarec.Enable);
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-	cfgSaveInt("config","Dreamcast.Cable",		settings.dreamcast.cable);
-	cfgSaveInt("config","Dreamcast.Region",		settings.dreamcast.region);
-	cfgSaveInt("config","Dreamcast.Broadcast",	settings.dreamcast.broadcast);
-#endif
-}
+	cfgSaveInt("config", "Dynarec.Enabled", settings.dynarec.Enable);
+	cfgSaveInt("config", "Dreamcast.Cable", settings.dreamcast.cable);
+	cfgSaveInt("config", "Dreamcast.Region", settings.dreamcast.region);
+	cfgSaveInt("config", "Dreamcast.Broadcast", settings.dreamcast.broadcast);
+	cfgSaveInt("config", "Dynarec.idleskip", settings.dynarec.idleskip);
+	cfgSaveInt("config", "Dynarec.unstable-opt", settings.dynarec.unstable_opt);
+	cfgSaveInt("config", "Dynarec.safe-mode", settings.dynarec.safemode);
+	cfgSaveInt("config", "Dreamcast.Language", settings.dreamcast.language);
+	cfgSaveInt("config", "aica.LimitFPS", settings.aica.LimitFPS);
+	cfgSaveInt("config", "aica.NoBatch", settings.aica.NoBatch);
+	cfgSaveInt("config", "rend.WideScreen", settings.rend.WideScreen);
+	cfgSaveInt("config", "rend.ShowFPS", settings.rend.ShowFPS);
+	cfgSaveInt("config", "rend.RenderToTextureBuffer", settings.rend.RenderToTextureBuffer);
+	cfgSaveInt("config", "rend.RenderToTextureUpscale", settings.rend.RenderToTextureUpscale);
+	cfgSaveInt("config", "rend.ModifierVolumes", settings.rend.ModifierVolumes);
+	cfgSaveInt("config", "rend.Clipping", settings.rend.Clipping);
+	cfgSaveInt("config", "rend.TextureUpscale", settings.rend.TextureUpscale);
+	cfgSaveInt("config", "rend.MaxFilteredTextureSize", settings.rend.MaxFilteredTextureSize);
+	cfgSaveInt("config", "rend.CustomTextures", settings.rend.CustomTextures);
+	cfgSaveInt("config", "rend.DumpTextures", settings.rend.DumpTextures);
+	cfgSaveInt("config", "ta.skip", settings.pvr.ta_skip);
+	cfgSaveInt("config", "pvr.rend", settings.pvr.rend);
 
-bool wait_until_dc_running()
+	cfgSaveInt("config", "pvr.MaxThreads", settings.pvr.MaxThreads);
+	cfgSaveInt("config", "pvr.SynchronousRendering", settings.pvr.SynchronousRender);
+
+	cfgSaveInt("config", "Debug.SerialConsoleEnabled", settings.debug.SerialConsole);
+	cfgSaveInt("input", "DCKeyboard", settings.input.DCKeyboard);
+	cfgSaveInt("input", "DCMouse", settings.input.DCMouse);
+	cfgSaveInt("input", "MouseSensitivity", settings.input.MouseSensitivity);
+}
+#endif
+
+static bool wait_until_dc_running()
 {
 	int64_t start_time = get_time_usec() ;
 	const int64_t FIVE_SECONDS = 5*1000000 ;
@@ -653,7 +678,7 @@ bool wait_until_dc_running()
 	return true ;
 }
 
-bool acquire_mainloop_lock()
+static bool acquire_mainloop_lock()
 {
 	bool result = false ;
 	int64_t start_time = get_time_usec() ;
@@ -667,24 +692,51 @@ bool acquire_mainloop_lock()
 	return result ;
 }
 
-void dc_enable_dynarec(bool enable)
+bool dc_pause_emu()
 {
-#if FEAT_SHREC != DYNAREC_NONE
-	continue_running = true;
-	new_dynarec_setting = enable;
-	dc_stop();
+	if (sh4_cpu.IsCpuRunning())
+	{
+#ifndef TARGET_NO_THREADS
+		mtx_serialization.Lock();
+		if (!wait_until_dc_running()) {
+			printf("Can't open settings - dc loop kept running\n");
+			mtx_serialization.Unlock();
+			return false;
+		}
+
+		dc_stop();
+
+		if (!acquire_mainloop_lock())
+		{
+			printf("Can't open settings - could not acquire main loop lock\n");
+			continue_running = true;
+			mtx_serialization.Unlock();
+			return false;
+		}
+#else
+		dc_stop();
 #endif
+	}
+	return true;
 }
 
-void cleanup_serialize(void *data)
+void dc_resume_emu(bool continue_running)
+{
+	if (!sh4_cpu.IsCpuRunning())
+	{
+		::continue_running = continue_running;
+		rend_cancel_emu_wait();
+		mtx_serialization.Unlock();
+		mtx_mainloop.Unlock();
+	}
+}
+
+static void cleanup_serialize(void *data)
 {
 	if ( data != NULL )
 		free(data) ;
 
-	continue_running = true ;
-	mtx_serialization.Unlock() ;
-	mtx_mainloop.Unlock() ;
-
+	dc_resume_emu(true);
 }
 
 static string get_savestate_file_path()
@@ -702,7 +754,7 @@ static string get_savestate_file_path()
 	return get_writable_data_path("/data/") + state_file;
 }
 
-void* dc_savestate_thread(void* p)
+static void* dc_savestate_thread(void* p)
 {
 	string filename;
 	unsigned int total_size = 0 ;
@@ -710,22 +762,8 @@ void* dc_savestate_thread(void* p)
 	void *data_ptr = NULL ;
 	FILE *f ;
 
-	mtx_serialization.Lock() ;
-	if ( !wait_until_dc_running()) {
-		printf("Failed to save state - dc loop kept running\n") ;
-    	mtx_serialization.Unlock() ;
-    	return NULL;
-	}
-
-	dc_stop() ;
-
-	if ( !acquire_mainloop_lock() )
-	{
-		printf("Failed to save state - could not acquire main loop lock\n") ;
-		continue_running = true ;
-		mtx_serialization.Unlock() ;
-    	return NULL;
-	}
+	if (!dc_pause_emu())
+		return NULL;
 
 	if ( ! dc_serialize(&data, &total_size) )
 	{
@@ -770,7 +808,7 @@ void* dc_savestate_thread(void* p)
 	return NULL;
 }
 
-void* dc_loadstate_thread(void* p)
+static void* dc_loadstate_thread(void* p)
 {
 	string filename;
 	unsigned int total_size = 0 ;
@@ -778,22 +816,8 @@ void* dc_loadstate_thread(void* p)
 	void *data_ptr = NULL ;
 	FILE *f ;
 
-	mtx_serialization.Lock() ;
-	if ( !wait_until_dc_running()) {
-		printf("Failed to load state - dc loop kept running\n") ;
-    	mtx_serialization.Unlock() ;
-    	return NULL;
-	}
-
-	dc_stop() ;
-
-	if ( !acquire_mainloop_lock() )
-	{
-		printf("Failed to load state - could not acquire main loop lock\n") ;
-		continue_running = true ;
-		mtx_serialization.Unlock() ;
-    	return NULL;
-	}
+	if (!dc_pause_emu())
+		return NULL;
 
 	filename = get_savestate_file_path();
 	f = fopen(filename.c_str(), "rb") ;
@@ -833,12 +857,12 @@ void* dc_loadstate_thread(void* p)
     	return NULL;
 	}
 
+    dsp.dyndirty = true;
     sh4_sched_ffts();
     CalculateSync();
 
     cleanup_serialize(data) ;
 	printf("Loaded state from %s size %d\n", filename.c_str(), total_size) ;
-	rend_cancel_emu_wait();
 
 	return NULL;
 }

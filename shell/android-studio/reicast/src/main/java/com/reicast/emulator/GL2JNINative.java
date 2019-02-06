@@ -26,8 +26,6 @@ import com.reicast.emulator.emu.GL2JNIView;
 import com.reicast.emulator.emu.JNIdc;
 import com.reicast.emulator.emu.OnScreenMenu;
 import com.reicast.emulator.emu.OnScreenMenu.FpsPopup;
-import com.reicast.emulator.emu.OnScreenMenu.MainPopup;
-import com.reicast.emulator.emu.OnScreenMenu.VmuPopup;
 import com.reicast.emulator.periph.Gamepad;
 import com.reicast.emulator.periph.SipEmulator;
 
@@ -39,8 +37,6 @@ import tv.ouya.console.api.OuyaController;
 public class GL2JNINative extends NativeActivity {
 	public GL2JNIView mView;
 	OnScreenMenu menu;
-	public MainPopup popUp;
-	VmuPopup vmuPop;
 	FpsPopup fpsPop;
 	private SharedPreferences prefs;
 
@@ -212,21 +208,7 @@ public class GL2JNINative extends NativeActivity {
 			JNIdc.setupMic(sip);
 		}
 
-		popUp = menu.new MainPopup(this);
-		vmuPop = menu.new VmuPopup(this);
-		if(prefs.getBoolean(Config.pref_vmu, false)){
-			//kind of a hack - if the user last had the vmu on screen
-			//inverse it and then "toggle"
-			prefs.edit().putBoolean(Config.pref_vmu, false).apply();
-			//can only display a popup after onCreate
-			mView.post(new Runnable() {
-				public void run() {
-					toggleVmu();
-				}
-			});
-		}
-		JNIdc.setupVmu(menu.getVmu());
-		if (prefs.getBoolean(Config.pref_showfps, false)) {
+		if (Emulator.showfps) {
 			fpsPop = menu.new FpsPopup(this);
 			mView.setFpsDisplay(fpsPop);
 			mView.post(new Runnable() {
@@ -247,74 +229,8 @@ public class GL2JNINative extends NativeActivity {
 		fpsPop.update(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
 	}
 
-	public void toggleVmu() {
-		boolean showFloating = !prefs.getBoolean(Config.pref_vmu, false);
-		if (showFloating) {
-			if (popUp.isShowing()) {
-				popUp.dismiss();
-			}
-			//remove from popup menu
-			popUp.hideVmu();
-			//add to floating window
-			vmuPop.showVmu();
-			vmuPop.showAtLocation(mView, Gravity.TOP | Gravity.RIGHT, 4, 4);
-			vmuPop.update(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
-		} else {
-			vmuPop.dismiss();
-			//remove from floating window
-			vmuPop.hideVmu();
-			//add back to popup menu
-			popUp.showVmu();
-		}
-		prefs.edit().putBoolean(Config.pref_vmu, showFloating).apply();
-	}
-
-	public void screenGrab() {
-		mView.screenGrab();
-	}
-
-	public void displayPopUp(PopupWindow popUp) {
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-			popUp.showAtLocation(mView, Gravity.BOTTOM, 0, 60);
-		} else {
-			popUp.showAtLocation(mView, Gravity.BOTTOM, 0, 0);
-		}
-		popUp.update(LayoutParams.WRAP_CONTENT,
-				LayoutParams.WRAP_CONTENT);
-	}
-
-	public void displayConfig(PopupWindow popUpConfig) {
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-			popUpConfig.showAtLocation(mView, Gravity.BOTTOM, 0, 60);
-		} else {
-			popUpConfig.showAtLocation(mView, Gravity.BOTTOM, 0, 0);
-		}
-		popUpConfig.update(LayoutParams.WRAP_CONTENT,
-				LayoutParams.WRAP_CONTENT);
-	}
-
-	public void displayDebug(PopupWindow popUpDebug) {
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-			popUpDebug.showAtLocation(mView, Gravity.BOTTOM, 0, 60);
-		} else {
-			popUpDebug.showAtLocation(mView, Gravity.BOTTOM, 0, 0);
-		}
-		popUpDebug.update(LayoutParams.WRAP_CONTENT,
-				LayoutParams.WRAP_CONTENT);
-	}
-
 	private boolean showMenu() {
-		if (popUp != null) {
-			if (menu.dismissPopUps()) {
-				popUp.dismiss();
-			} else {
-				if (!popUp.isShowing()) {
-					displayPopUp(popUp);
-				} else {
-					popUp.dismiss();
-				}
-			}
-		}
+		JNIdc.guiOpenSettings();
 		return true;
 	}
 

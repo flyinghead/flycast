@@ -756,14 +756,14 @@ struct settings_t
 	{
 		u32 HW_mixing;		//(0) -> SW , 1 -> HW , 2 -> Auto
 		u32 BufferSize;		//In samples ,*4 for bytes (1024)
-		u32 LimitFPS;		//0 -> no , (1) -> limit
+		bool LimitFPS;		// defaults to true
 		u32 GlobalFocus;	//0 -> only hwnd , (1) -> Global
 		u32 BufferCount;	//BufferCount+2 buffers used , max 60 , default 0
 		u32 CDDAMute;
 		u32 GlobalMute;
 		u32 DSPEnabled;		//0 -> no, 1 -> yes
-		u32 NoBatch;
-		u32 NoSound;        //0 ->sound, 1 -> no sound
+		bool NoBatch;
+		bool NoSound;
 	} aica;
 
 #if USE_OMX
@@ -826,7 +826,7 @@ struct settings_t
 		u32 rend;
 		
 		u32 MaxThreads;
-		u32 SynchronousRender;
+		bool SynchronousRender;
 
 		string HashLogFile;
 		string HashCheckFile;
@@ -852,7 +852,6 @@ struct settings_t
 extern settings_t settings;
 
 void LoadSettings();
-void LoadCustom();
 void SaveSettings();
 u32 GetRTC_now();
 extern u32 patchRB;
