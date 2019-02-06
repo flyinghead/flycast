@@ -50,7 +50,6 @@ public class Emulator extends Application {
     public static boolean interrupt = false;
     public static boolean mipmaps = true;
     public static boolean widescreen = false;
-    public static boolean subdivide = false;
     public static int frameskip = 0;
     public static int pvrrender = 0;
     public static boolean syncedrender = false;
@@ -97,43 +96,42 @@ public class Emulator extends Application {
      *
      */
     public void loadConfigurationPrefs() {
-        JNIdc.dynarec(Emulator.dynarecopt);
-        JNIdc.idleskip(Emulator.idleskip);
-        JNIdc.unstable(Emulator.unstableopt);
-        JNIdc.safemode(Emulator.dynsafemode);
-        JNIdc.cable(Emulator.cable);
-        JNIdc.region(Emulator.dcregion);
-        JNIdc.broadcast(Emulator.broadcast);
-        JNIdc.language(Emulator.language);
-        JNIdc.limitfps(Emulator.limitfps);
-        JNIdc.nobatch(Emulator.nobatch);
-        JNIdc.nosound(Emulator.nosound);
-        JNIdc.mipmaps(Emulator.mipmaps);
-        JNIdc.widescreen(Emulator.widescreen);
-        JNIdc.subdivide(Emulator.subdivide);
-        JNIdc.frameskip(Emulator.frameskip);
-        JNIdc.pvrrender(Emulator.pvrrender);
-        JNIdc.syncedrender(Emulator.syncedrender);
-        JNIdc.modvols(Emulator.modvols);
-        JNIdc.clipping(Emulator.clipping);
-        JNIdc.usereios(Emulator.usereios);
+        JNIdc.setDynarec(Emulator.dynarecopt);
+        JNIdc.setIdleskip(Emulator.idleskip);
+        JNIdc.setUnstable(Emulator.unstableopt);
+        JNIdc.setSafemode(Emulator.dynsafemode);
+        JNIdc.setCable(Emulator.cable);
+        JNIdc.setRegion(Emulator.dcregion);
+        JNIdc.setBroadcast(Emulator.broadcast);
+        JNIdc.setLanguage(Emulator.language);
+        JNIdc.setLimitfps(Emulator.limitfps);
+        JNIdc.setNobatch(Emulator.nobatch);
+        JNIdc.setNosound(Emulator.nosound);
+        JNIdc.setMipmaps(Emulator.mipmaps);
+        JNIdc.setWidescreen(Emulator.widescreen);
+        JNIdc.setFrameskip(Emulator.frameskip);
+        JNIdc.setPvrrender(Emulator.pvrrender);
+        JNIdc.setSyncedrender(Emulator.syncedrender);
+        JNIdc.setModvols(Emulator.modvols);
+        JNIdc.setClipping(Emulator.clipping);
+        JNIdc.setUsereios(Emulator.usereios);
         JNIdc.bootdisk(Emulator.bootdisk);
-        JNIdc.customtextures(Emulator.customtextures);
-        JNIdc.showfps(Emulator.showfps);
+        JNIdc.setCustomtextures(Emulator.customtextures);
+        JNIdc.setShowfps(Emulator.showfps);
     }
 
     public void loadGameConfiguration(String gameId) {
         SharedPreferences mPrefs = getSharedPreferences(gameId, Activity.MODE_PRIVATE);
-        JNIdc.dynarec(mPrefs.getBoolean(pref_dynarecopt, dynarecopt));
-        JNIdc.unstable(mPrefs.getBoolean(pref_unstable, unstableopt));
-        JNIdc.safemode(mPrefs.getBoolean(pref_dynsafemode, dynsafemode));
-        JNIdc.frameskip(mPrefs.getInt(pref_frameskip, frameskip));
-        JNIdc.pvrrender(mPrefs.getInt(pref_pvrrender, pvrrender));
-        JNIdc.syncedrender(mPrefs.getBoolean(pref_syncedrender, syncedrender));
-        JNIdc.modvols(mPrefs.getBoolean(pref_modvols, modvols));
-        JNIdc.clipping(mPrefs.getBoolean(pref_clipping, clipping));
+        JNIdc.setDynarec(mPrefs.getBoolean(pref_dynarecopt, dynarecopt));
+        JNIdc.setUnstable(mPrefs.getBoolean(pref_unstable, unstableopt));
+        JNIdc.setSafemode(mPrefs.getBoolean(pref_dynsafemode, dynsafemode));
+        JNIdc.setFrameskip(mPrefs.getInt(pref_frameskip, frameskip));
+        JNIdc.setPvrrender(mPrefs.getInt(pref_pvrrender, pvrrender));
+        JNIdc.setSyncedrender(mPrefs.getBoolean(pref_syncedrender, syncedrender));
+        JNIdc.setModvols(mPrefs.getBoolean(pref_modvols, modvols));
+        JNIdc.setClipping(mPrefs.getBoolean(pref_clipping, clipping));
         JNIdc.bootdisk(mPrefs.getString(pref_bootdisk, bootdisk));
-        JNIdc.customtextures(mPrefs.getBoolean(pref_customtextures, customtextures));
+        JNIdc.setCustomtextures(mPrefs.getBoolean(pref_customtextures, customtextures));
     }
 
     /**
@@ -158,9 +156,8 @@ public class Emulator extends Application {
         Emulator.nosound = JNIdc.getNosound();
         Emulator.mipmaps = JNIdc.getMipmaps();
         Emulator.widescreen = JNIdc.getWidescreen();
-        //JNIdc.subdivide(Emulator.subdivide);
         Emulator.frameskip = JNIdc.getFrameskip();
-        //Emulator.pvrrender = JNIdc.getPvrrender();
+        Emulator.pvrrender = JNIdc.getPvrrender();
         Emulator.syncedrender = JNIdc.getSyncedrender();
         Emulator.modvols = JNIdc.getModvols();
         Emulator.clipping = JNIdc.getClipping();
@@ -184,6 +181,7 @@ public class Emulator extends Application {
                 .putBoolean(Emulator.pref_mipmaps, Emulator.mipmaps)
                 .putBoolean(Emulator.pref_widescreen, Emulator.widescreen)
                 .putInt(Emulator.pref_frameskip, Emulator.frameskip)
+                .putInt(Emulator.pref_pvrrender, Emulator.pvrrender)
                 .putBoolean(Emulator.pref_syncedrender, Emulator.syncedrender)
                 .putBoolean(Emulator.pref_modvols, Emulator.modvols)
                 .putBoolean(Emulator.pref_clipping, Emulator.clipping)
