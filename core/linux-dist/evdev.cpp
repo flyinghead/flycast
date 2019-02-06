@@ -98,7 +98,7 @@
 		}
 		s32 min = abs.minimum;
 		s32 max = abs.maximum;
-		printf("evdev: range of axis %d is from %d to %d\n", code, min, max);
+		//printf("evdev: range of axis %d is from %d to %d\n", code, min, max);
 		if(inverted)
 		{
 			this->range = (min - max);
@@ -183,7 +183,7 @@
 			}
 			else
 			{
-				printf("%s = %s (%d)\n", dc_key.c_str(), keycode.c_str(), code);
+				//printf("%s = %s (%d)\n", dc_key.c_str(), keycode.c_str(), code);
 			}
 		}
 		else
@@ -201,11 +201,11 @@
 
 				if (name != NULL)
 				{
-					printf("%s = %s (%d)\n", dc_key.c_str(), name, code);
+					//printf("%s = %s (%d)\n", dc_key.c_str(), name, code);
 				}
 				else
 				{
-					printf("%s = %d\n", dc_key.c_str(), code);
+					//printf("%s = %d\n", dc_key.c_str(), code);
 				}
 			}
 		}
@@ -322,7 +322,7 @@
 
 		char name[256] = "Unknown";
 
-		printf("evdev: Trying to open device at '%s'\n", device);
+		//printf("evdev: Trying to open device at '%s'\n", device);
 
 		int fd = open(device, O_RDWR);
 
@@ -346,7 +346,7 @@
 				{
 					// custom mapping defined in config, use that
 					mapping_fname = custom_mapping_fname;
-					printf("evdev: user defined custom mapping found (%s)\n", custom_mapping_fname);
+					//printf("evdev: user defined custom mapping found (%s)\n", custom_mapping_fname);
 				}
 				else
 				{
@@ -367,7 +367,7 @@
 						string dir = get_readonly_data_path(mapping_path);
 						free(mapping_path);
 						if (file_exists(dir)) {
-							printf("evdev: found a named mapping for the device (%s)\n", name_cfg);
+							//printf("evdev: found a named mapping for the device (%s)\n", name_cfg);
 							mapping_fname = name_cfg;
 						}
 						else {
@@ -416,7 +416,7 @@
 
 					if(mapping_fd != NULL)
 					{
-						printf("evdev: reading mapping file: '%s'\n", mapping_fname);
+						//printf("evdev: reading mapping file: '%s'\n", mapping_fname);
 						loaded_mappings.insert(std::make_pair(string(mapping_fname), load_mapping(mapping_fd)));
 						fclose(mapping_fd);
 
@@ -437,7 +437,7 @@
 		}
 		else
 		{
-			perror("evdev: open");
+			perror(device);
 			return -1;
 		}
 	}

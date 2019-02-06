@@ -249,7 +249,7 @@ void ConfigFile::parse(FILE* file)
 			char* value = trim_ws(separator + 1);
 			if (name == NULL || value == NULL)
 			{
-				printf("Malformed entry on config - ignoring @ %d(%s)\n",cline, tl);
+				//printf("Malformed entry on config - ignoring @ %d(%s)\n",cline, tl);
 				continue;
 			}
 			else
