@@ -69,28 +69,28 @@ JNIEXPORT jboolean JNICALL Java_com_reicast_emulator_emu_JNIdc_getUsereios(JNIEn
 JNIEXPORT jboolean JNICALL Java_com_reicast_emulator_emu_JNIdc_getCustomtextures(JNIEnv *env,jobject obj)  __attribute__((visibility("default")));
 JNIEXPORT jboolean JNICALL Java_com_reicast_emulator_emu_JNIdc_getShowfps(JNIEnv *env,jobject obj)  __attribute__((visibility("default")));
 
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_dynarec(JNIEnv *env,jobject obj, jint dynarec)  __attribute__((visibility("default")));
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_idleskip(JNIEnv *env,jobject obj, jint idleskip)  __attribute__((visibility("default")));
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_unstable(JNIEnv *env,jobject obj, jint unstable)  __attribute__((visibility("default")));
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_safemode(JNIEnv *env,jobject obj, jint safemode)  __attribute__((visibility("default")));
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_dynarec(JNIEnv *env,jobject obj, jboolean dynarec)  __attribute__((visibility("default")));
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_idleskip(JNIEnv *env,jobject obj, jboolean idleskip)  __attribute__((visibility("default")));
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_unstable(JNIEnv *env,jobject obj, jboolean unstable)  __attribute__((visibility("default")));
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_safemode(JNIEnv *env,jobject obj, jboolean safemode)  __attribute__((visibility("default")));
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_cable(JNIEnv *env,jobject obj, jint cable)  __attribute__((visibility("default")));
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_region(JNIEnv *env,jobject obj, jint region)  __attribute__((visibility("default")));
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_broadcast(JNIEnv *env,jobject obj, jint broadcast)  __attribute__((visibility("default")));
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_language(JNIEnv *env,jobject obj, jint language)  __attribute__((visibility("default")));
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_limitfps(JNIEnv *env,jobject obj, jint limiter)  __attribute__((visibility("default")));
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_nobatch(JNIEnv *env,jobject obj, jint nobatch)  __attribute__((visibility("default")));
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_nosound(JNIEnv *env,jobject obj, jint noaudio)  __attribute__((visibility("default")));
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_mipmaps(JNIEnv *env,jobject obj, jint mipmaps)  __attribute__((visibility("default")));
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_widescreen(JNIEnv *env,jobject obj, jint stretch)  __attribute__((visibility("default")));
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_subdivide(JNIEnv *env,jobject obj, jint subdivide)  __attribute__((visibility("default")));
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_limitfps(JNIEnv *env,jobject obj, jboolean limiter)  __attribute__((visibility("default")));
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_nobatch(JNIEnv *env,jobject obj, jboolean nobatch)  __attribute__((visibility("default")));
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_nosound(JNIEnv *env,jobject obj, jboolean noaudio)  __attribute__((visibility("default")));
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_mipmaps(JNIEnv *env,jobject obj, jboolean mipmaps)  __attribute__((visibility("default")));
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_widescreen(JNIEnv *env,jobject obj, jboolean stretch)  __attribute__((visibility("default")));
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_subdivide(JNIEnv *env,jobject obj, jboolean subdivide)  __attribute__((visibility("default")));
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_frameskip(JNIEnv *env,jobject obj, jint frames)  __attribute__((visibility("default")));
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_pvrrender(JNIEnv *env,jobject obj, jint render)  __attribute__((visibility("default")));
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_syncedrender(JNIEnv *env,jobject obj, jint sync)  __attribute__((visibility("default")));
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_modvols(JNIEnv *env,jobject obj, jint volumes)  __attribute__((visibility("default")));
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_syncedrender(JNIEnv *env,jobject obj, jboolean sync)  __attribute__((visibility("default")));
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_modvols(JNIEnv *env,jobject obj, jboolean volumes)  __attribute__((visibility("default")));
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_clipping(JNIEnv *env,jobject obj, jboolean clipping)  __attribute__((visibility("default")));
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_bootdisk(JNIEnv *env,jobject obj, jstring disk)  __attribute__((visibility("default")));
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_usereios(JNIEnv *env,jobject obj, jint reios)  __attribute__((visibility("default")));
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_customtextures(JNIEnv *env,jobject obj, jint customtex)  __attribute__((visibility("default")));
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_usereios(JNIEnv *env,jobject obj, jboolean reios)  __attribute__((visibility("default")));
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_customtextures(JNIEnv *env,jobject obj, jboolean customtex)  __attribute__((visibility("default")));
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_showfps(JNIEnv *env,jobject obj, jboolean showfps)  __attribute__((visibility("default")));
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_screenDpi(JNIEnv *env,jobject obj, jint screenDpi)  __attribute__((visibility("default")));
@@ -203,22 +203,22 @@ JNIEXPORT jboolean JNICALL Java_com_reicast_emulator_emu_JNIdc_getShowfps(JNIEnv
     return settings.rend.ShowFPS;
 }
 
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_dynarec(JNIEnv *env,jobject obj, jint dynarec)
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_dynarec(JNIEnv *env,jobject obj, jboolean dynarec)
 {
     settings.dynarec.Enable = dynarec;
 }
 
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_idleskip(JNIEnv *env,jobject obj, jint idleskip)
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_idleskip(JNIEnv *env,jobject obj, jboolean idleskip)
 {
     settings.dynarec.idleskip = idleskip;
 }
 
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_unstable(JNIEnv *env,jobject obj, jint unstable)
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_unstable(JNIEnv *env,jobject obj, jboolean unstable)
 {
     settings.dynarec.unstable_opt = unstable;
 }
 
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_safemode(JNIEnv *env,jobject obj, jint safemode)
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_safemode(JNIEnv *env,jobject obj, jboolean safemode)
 {
     settings.dynarec.safemode = safemode;
 }
@@ -243,32 +243,32 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_language(JNIEnv *env,
     settings.dreamcast.language = language;
 }
 
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_limitfps(JNIEnv *env,jobject obj, jint limiter)
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_limitfps(JNIEnv *env,jobject obj, jboolean limiter)
 {
     settings.aica.LimitFPS = limiter;
 }
 
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_nobatch(JNIEnv *env,jobject obj, jint nobatch)
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_nobatch(JNIEnv *env,jobject obj, jboolean nobatch)
 {
     settings.aica.NoBatch = nobatch;
 }
 
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_nosound(JNIEnv *env,jobject obj, jint noaudio)
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_nosound(JNIEnv *env,jobject obj, jboolean noaudio)
 {
     settings.aica.NoSound = noaudio;
 }
 
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_mipmaps(JNIEnv *env,jobject obj, jint mipmaps)
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_mipmaps(JNIEnv *env,jobject obj, jboolean mipmaps)
 {
     settings.rend.UseMipmaps = mipmaps;
 }
 
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_widescreen(JNIEnv *env,jobject obj, jint stretch)
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_widescreen(JNIEnv *env,jobject obj, jboolean stretch)
 {
     settings.rend.WideScreen = stretch;
 }
 
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_subdivide(JNIEnv *env,jobject obj, jint subdivide)
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_subdivide(JNIEnv *env,jobject obj, jboolean subdivide)
 {
     settings.pvr.subdivide_transp = subdivide;
 }
@@ -283,12 +283,12 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_pvrrender(JNIEnv *env
     settings.pvr.rend = render;
 }
 
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_syncedrender(JNIEnv *env,jobject obj, jint sync)
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_syncedrender(JNIEnv *env,jobject obj, jboolean sync)
 {
     settings.pvr.SynchronousRender = sync;
 }
 
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_modvols(JNIEnv *env,jobject obj, jint volumes)
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_modvols(JNIEnv *env,jobject obj, jboolean volumes)
 {
     settings.rend.ModifierVolumes = volumes;
 }
@@ -298,12 +298,12 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_clipping(JNIEnv *env,
     settings.rend.Clipping = clipping;
 }
 
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_usereios(JNIEnv *env,jobject obj, jint reios)
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_usereios(JNIEnv *env,jobject obj, jboolean reios)
 {
     settings.bios.UseReios = reios;
 }
 
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_customtextures(JNIEnv *env,jobject obj, jint customtex)
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_customtextures(JNIEnv *env,jobject obj, jboolean customtex)
 {
     settings.rend.CustomTextures = customtex;
 }

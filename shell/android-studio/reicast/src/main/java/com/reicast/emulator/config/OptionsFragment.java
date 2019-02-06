@@ -149,7 +149,7 @@ public class OptionsFragment extends Fragment {
 			@Override
 			public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
 				if (actionId == EditorInfo.IME_ACTION_DONE
-						|| (event.getKeyCode() == KeyEvent.KEYCODE_ENTER
+						|| (event != null && event.getKeyCode() == KeyEvent.KEYCODE_ENTER
 						&& event.getAction() == KeyEvent.ACTION_DOWN)) {
 					if (event == null || !event.isShiftPressed()) {
 						if (v.getText() != null) {
@@ -221,7 +221,7 @@ public class OptionsFragment extends Fragment {
 			@Override
 			public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
 				if (actionId == EditorInfo.IME_ACTION_DONE
-						|| (event.getKeyCode() == KeyEvent.KEYCODE_ENTER
+						|| (event != null && event.getKeyCode() == KeyEvent.KEYCODE_ENTER
 						&& event.getAction() == KeyEvent.ACTION_DOWN)) {
 					if (event == null || !event.isShiftPressed()) {
 						if (v.getText() != null) {
@@ -440,7 +440,7 @@ public class OptionsFragment extends Fragment {
 			@Override
 			public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
 				if (actionId == EditorInfo.IME_ACTION_DONE
-						|| (event.getKeyCode() == KeyEvent.KEYCODE_ENTER
+						|| (event != null && event.getKeyCode() == KeyEvent.KEYCODE_ENTER
 						&& event.getAction() == KeyEvent.ACTION_DOWN)) {
 					if (event == null || !event.isShiftPressed()) {
 						if (v.getText() != null) {
@@ -455,16 +455,6 @@ public class OptionsFragment extends Fragment {
 				return false;
 			}
 		});
-
-		OnCheckedChangeListener pvr_rendering = new OnCheckedChangeListener() {
-
-			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-				mPrefs.edit().putBoolean(Emulator.pref_pvrrender, isChecked).apply();
-			}
-		};
-		CompoundButton pvr_render = (CompoundButton) getView().findViewById(R.id.render_option);
-		pvr_render.setChecked(mPrefs.getBoolean(Emulator.pref_pvrrender, Emulator.pvrrender));
-		pvr_render.setOnCheckedChangeListener(pvr_rendering);
 
 		OnCheckedChangeListener synchronous = new OnCheckedChangeListener() {
 			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -491,7 +481,7 @@ public class OptionsFragment extends Fragment {
 					@Override
 					public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
 						if (actionId == EditorInfo.IME_ACTION_DONE
-								|| (event.getKeyCode() == KeyEvent.KEYCODE_ENTER
+								|| (event != null && event.getKeyCode() == KeyEvent.KEYCODE_ENTER
 								&& event.getAction() == KeyEvent.ACTION_DOWN)) {
 							if (event == null || !event.isShiftPressed()) {
 								String disk = null;

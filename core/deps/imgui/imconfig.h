@@ -71,7 +71,11 @@ namespace ImGui
     void MyFunction(const char* name, const MyMatrix44& v);
 }
 */
+#if HOST_OS == OS_DARWIN
+#define IMGUI_IMPL_OPENGL_LOADER_CUSTOM <OpenGL/gl3.h>
+#else
 #define IMGUI_IMPL_OPENGL_LOADER_CUSTOM <GL3/gl3w.h>
+#endif
 
 #ifdef _ANDROID
 #include <android/log.h>

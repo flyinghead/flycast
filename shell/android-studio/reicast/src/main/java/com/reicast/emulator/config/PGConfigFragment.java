@@ -173,7 +173,7 @@ public class PGConfigFragment extends Fragment {
 			@Override
 			public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
 				if (actionId == EditorInfo.IME_ACTION_DONE
-						|| (event.getKeyCode() == KeyEvent.KEYCODE_ENTER
+						|| (event != null && event.getKeyCode() == KeyEvent.KEYCODE_ENTER
 						&& event.getAction() == KeyEvent.ACTION_DOWN)) {
 					if (event == null || !event.isShiftPressed()) {
 						if (v.getText() != null) {
@@ -188,7 +188,6 @@ public class PGConfigFragment extends Fragment {
 			}
 		});
 
-		pvr_render.setChecked(mPrefs.getBoolean(Emulator.pref_pvrrender, Emulator.pvrrender));
 		synced_render.setChecked(mPrefs.getBoolean(Emulator.pref_syncedrender, Emulator.syncedrender));
 		modifier_volumes.setChecked(mPrefs.getBoolean(Emulator.pref_modvols, Emulator.modvols));
 		interrupt_opt.setChecked(mPrefs.getBoolean(Emulator.pref_interrupt, Emulator.interrupt));
@@ -198,7 +197,7 @@ public class PGConfigFragment extends Fragment {
 			@Override
 			public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
 				if (actionId == EditorInfo.IME_ACTION_DONE
-						|| (event.getKeyCode() == KeyEvent.KEYCODE_ENTER
+						|| (event != null && event.getKeyCode() == KeyEvent.KEYCODE_ENTER
 						&& event.getAction() == KeyEvent.ACTION_DOWN)) {
 					if (event == null || !event.isShiftPressed()) {
 						String disk;
