@@ -1,35 +1,57 @@
 #include "oslib/audiobackend_alsa.h"
 #if USE_ALSA
 #include <alsa/asoundlib.h>
+#include "cfg/cfg.h"
 
 snd_pcm_t *handle;
 
 // We're making these functions static - there's no need to pollute the global namespace
 static void alsa_init()
 {
-
-	long loops;
-	int size;
-
 	snd_pcm_hw_params_t *params;
 	unsigned int val;
 	int dir=-1;
 	snd_pcm_uframes_t frames;
 
-	/* Open PCM device for playback. */
-	int rc = snd_pcm_open(&handle, "default", SND_PCM_STREAM_PLAYBACK, 0);
+	string device = cfgLoadStr("alsa", "device", "");
 
-	if (rc<0)
-		rc = snd_pcm_open(&handle, "plughw:0,0,0", SND_PCM_STREAM_PLAYBACK, 0);
+	int rc = -1;
+	if (device == "")
+	{
+		printf("ALSA: trying to determine audio device\n");
+		/* Open PCM device for playback. */
+		device = "default";
+		rc = snd_pcm_open(&handle, device.c_str(), SND_PCM_STREAM_PLAYBACK, 0);
 
-	if (rc<0)
-		rc = snd_pcm_open(&handle, "plughw:0,0", SND_PCM_STREAM_PLAYBACK, 0);
+		if (rc < 0)
+		{
+			device = "plughw:0,0,0";
+			rc = snd_pcm_open(&handle, device.c_str(), SND_PCM_STREAM_PLAYBACK, 0);
+		}
+
+		if (rc < 0)
+		{
+			device = "plughw:0,0";
+			rc = snd_pcm_open(&handle, device.c_str(), SND_PCM_STREAM_PLAYBACK, 0);
+		}
+
+		if (rc >= 0)
+		{
+			// init successfull, write value back to config
+			cfgSaveStr("alsa", "device", device.c_str());
+		}
+	}
+	else {
+		rc = snd_pcm_open(&handle, device.c_str(), SND_PCM_STREAM_PLAYBACK, 0);
+	}
 
 	if (rc < 0)
 	{
-		fprintf(stderr, "unable to open PCM device: %s\n", snd_strerror(rc));
+		fprintf(stderr, "unable to open PCM device %s: %s\n", device.c_str(), snd_strerror(rc));
 		return;
 	}
+
+	printf("ALSA: Successfully initialized \"%s\"\n", device.c_str());
 
 	/* Allocate a hardware parameters object. */
 	snd_pcm_hw_params_alloca(&params);
