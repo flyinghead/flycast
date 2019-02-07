@@ -72,6 +72,16 @@ public final class JNIdc
 	public static native void setCustomtextures(boolean customtex);
     public static native boolean getShowfps();
     public static native void setShowfps(boolean showfps);
+	public static native boolean getRenderToTextureBuffer();
+	public static native void setRenderToTextureBuffer(boolean render);
+	public static native int getRenderToTextureUpscale();
+	public static native void setRenderToTextureUpscale(int upscale);
+	public static native int getTextureUpscale();
+	public static native void setTextureUpscale(int upscale);
+	public static native int getMaxFilteredTextureSize();
+	public static native void setMaxFilteredTextureSize(int maxSize);
+	public static native int getMaxThreads();
+	public static native void setMaxThreads(int maxThreads);
 
 	public static native void screenDpi(int screenDpi);
 	public static native void guiOpenSettings();

@@ -35,6 +35,11 @@ public class Emulator extends Application {
     public static final String pref_usereios = "use_reios";
     public static final String pref_customtextures = "custom_textures";
     public static final String pref_showfps = "show_fps";
+    public static final String pref_RenderToTextureBuffer = "RenderToTextureBuffer";
+    public static final String pref_RenderToTextureUpscale = "RenderToTextureUpscale";
+    public static final String pref_TextureUpscale = "TextureUpscale";
+    public static final String pref_MaxFilteredTextureSize= "MaxFilteredTextureSize";
+    public static final String pref_MaxThreads = "MaxThreads";
 
     public static boolean dynarecopt = true;
     public static boolean idleskip = true;
@@ -60,6 +65,11 @@ public class Emulator extends Application {
     public static boolean nativeact = false;
     public static boolean customtextures = false;
     public static boolean showfps = false;
+    public static boolean RenderToTextureBuffer = false;
+    public static int RenderToTextureUpscale = 1;
+    public static int TextureUpscale = 1;
+    public static int MaxFilteredTextureSize = 256;
+    public static int MaxThreads = 1;
 
     /**
      * Load the user configuration from preferences
@@ -89,6 +99,11 @@ public class Emulator extends Application {
         Emulator.nativeact = mPrefs.getBoolean(pref_nativeact, nativeact);
         Emulator.customtextures = mPrefs.getBoolean(pref_customtextures, customtextures);
         Emulator.showfps = mPrefs.getBoolean(pref_showfps, showfps);
+        Emulator.RenderToTextureBuffer = mPrefs.getBoolean(pref_RenderToTextureBuffer, RenderToTextureBuffer);
+        Emulator.RenderToTextureUpscale = mPrefs.getInt(pref_RenderToTextureUpscale, RenderToTextureUpscale);
+        Emulator.TextureUpscale = mPrefs.getInt(pref_TextureUpscale, TextureUpscale);
+        Emulator.MaxFilteredTextureSize = mPrefs.getInt(pref_MaxFilteredTextureSize, MaxFilteredTextureSize);
+        Emulator.MaxThreads = mPrefs.getInt(pref_MaxThreads, MaxThreads);
     }
 
     /**
@@ -118,6 +133,11 @@ public class Emulator extends Application {
         JNIdc.bootdisk(Emulator.bootdisk);
         JNIdc.setCustomtextures(Emulator.customtextures);
         JNIdc.setShowfps(Emulator.showfps);
+        JNIdc.setRenderToTextureBuffer(Emulator.RenderToTextureBuffer);
+        JNIdc.setRenderToTextureUpscale(Emulator.RenderToTextureUpscale);
+        JNIdc.setTextureUpscale(Emulator.TextureUpscale);
+        JNIdc.setMaxFilteredTextureSize(Emulator.MaxFilteredTextureSize);
+        JNIdc.setMaxThreads(Emulator.MaxThreads);
     }
 
     public void loadGameConfiguration(String gameId) {
@@ -165,6 +185,11 @@ public class Emulator extends Application {
         //Emulator.bootdisk = JNIdc.getBootdisk();
         Emulator.customtextures = JNIdc.getCustomtextures();
         Emulator.showfps = JNIdc.getShowfps();
+        Emulator.RenderToTextureBuffer = JNIdc.getRenderToTextureBuffer();
+        Emulator.RenderToTextureUpscale = JNIdc.getRenderToTextureUpscale();
+        Emulator.TextureUpscale = JNIdc.getTextureUpscale();
+        Emulator.MaxFilteredTextureSize = JNIdc.getMaxFilteredTextureSize();
+        Emulator.MaxThreads = JNIdc.getMaxThreads();
 
         prefs.edit()
                 .putBoolean(Emulator.pref_dynarecopt, Emulator.dynarecopt)
@@ -188,6 +213,11 @@ public class Emulator extends Application {
                 .putBoolean(Emulator.pref_usereios, Emulator.usereios)
                 .putBoolean(Emulator.pref_customtextures, Emulator.customtextures)
                 .putBoolean(Emulator.pref_showfps, Emulator.showfps)
+                .putBoolean(Emulator.pref_RenderToTextureBuffer, Emulator.RenderToTextureBuffer)
+                .putInt(Emulator.pref_RenderToTextureUpscale, Emulator.RenderToTextureUpscale)
+                .putInt(Emulator.pref_TextureUpscale, Emulator.TextureUpscale)
+                .putInt(Emulator.pref_MaxFilteredTextureSize, Emulator.MaxFilteredTextureSize)
+                .putInt(Emulator.pref_MaxThreads, Emulator.MaxThreads)
                 .apply();
     }
 

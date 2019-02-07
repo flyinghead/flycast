@@ -548,15 +548,11 @@ void LoadSettings()
 	settings.input.MouseSensitivity = cfgLoadInt("input", "MouseSensitivity", 100);
 	settings.input.JammaSetup = cfgLoadInt("input", "JammaSetup", 0);
 #else
-    // TODO Expose this with JNI
-	settings.rend.Clipping = 1;
-	settings.rend.RenderToTextureUpscale = 1;
-	settings.rend.TextureUpscale = 1;
+	settings.rend.RenderToTextureUpscale = max(1, settings.rend.RenderToTextureUpscale);
+	settings.rend.TextureUpscale = max(1, settings.rend.TextureUpscale);
 
 	// Configured on a per-game basis
-	settings.rend.ExtraDepthScale = 1.f;
-	settings.dynarec.safemode	= 0;
-	settings.input.JammaSetup = 0;
+	settings.rend.ExtraDepthScale = max(1.f, settings.rend.ExtraDepthScale);
 #endif
 
 	settings.pvr.HashLogFile	= cfgLoadStr("testing", "ta.HashLogFile", "");

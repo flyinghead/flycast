@@ -79,6 +79,11 @@ SETTINGS_ACCESSORS(Clipping, rend.Clipping, jboolean)
 SETTINGS_ACCESSORS(Usereios, bios.UseReios, jboolean)
 SETTINGS_ACCESSORS(Customtextures, rend.CustomTextures, jboolean)
 SETTINGS_ACCESSORS(Showfps, rend.ShowFPS, jboolean)
+SETTINGS_ACCESSORS(RenderToTextureBuffer, rend.RenderToTextureBuffer, jboolean)
+SETTINGS_ACCESSORS(RenderToTextureUpscale, rend.RenderToTextureUpscale, jint)
+SETTINGS_ACCESSORS(TextureUpscale, rend.TextureUpscale, jint)
+SETTINGS_ACCESSORS(MaxFilteredTextureSize, rend.MaxFilteredTextureSize, jint)
+SETTINGS_ACCESSORS(MaxThreads, pvr.MaxThreads, jint)
 
 JNIEXPORT jint JNICALL Java_com_reicast_emulator_emu_JNIdc_getBootdisk(JNIEnv *env,jobject obj)  __attribute__((visibility("default")));
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_bootdisk(JNIEnv *env,jobject obj, jstring disk)  __attribute__((visibility("default")));
