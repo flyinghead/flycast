@@ -407,6 +407,7 @@ CHAR_SPACE:=$(CHAR_EMPTY) $(CHAR_EMPTY)
 BUILDDIR:=obj-$(DC_PLATFORM)-$(subst $(CHAR_SPACE),-,$(platform))
 
 OBJECTS=$(RZDCY_FILES:.cpp=.build_obj)
+OBJECTS:=$(OBJECTS:.cc=.build_obj)
 OBJECTS:=$(OBJECTS:.c=.build_obj)
 OBJECTS:=$(OBJECTS:.S=.build_obj)
 OBJECTS:=$(patsubst $(RZDCY_SRC_DIR)/%,$(BUILDDIR)/%,$(OBJECTS))
@@ -414,6 +415,7 @@ OBJECTS:=$(patsubst $(RZDCY_SRC_DIR)/%,$(BUILDDIR)/%,$(OBJECTS))
 DEPDIR := .dep-$(BUILDDIR)
 DEPFLAGS = -MT $@ -MD -MP -MF $(DEPDIR)/$*.Td
 DEPS=$(RZDCY_FILES:.cpp=.d)
+DEPS:=$(DEPS:.cc=.d)
 DEPS:=$(DEPS:.c=.d)
 DEPS:=$(DEPS:.S=.d)
 DEPS:=$(patsubst $(RZDCY_SRC_DIR)/%,$(DEPDIR)/%,$(DEPS))
@@ -432,6 +434,13 @@ $(EXECUTABLE_STRIPPED): $(EXECUTABLE)
 
 $(BUILDDIR)/%.build_obj : $(RZDCY_SRC_DIR)/%.cpp
 $(BUILDDIR)/%.build_obj: $(RZDCY_SRC_DIR)/%.cpp $(DEPDIR)/%.d
+	mkdir -p $(dir $@)
+	mkdir -p .dep-$(dir $@)
+	$(CXX) $(EXTRAFLAGS) $(INCS) $(DEPFLAGS) $(CFLAGS) $(MFLAGS) $(CXXFLAGS) $< -o $@
+	$(POSTCOMPILE)
+
+$(BUILDDIR)/%.build_obj : $(RZDCY_SRC_DIR)/%.cc
+$(BUILDDIR)/%.build_obj: $(RZDCY_SRC_DIR)/%.cc $(DEPDIR)/%.d
 	mkdir -p $(dir $@)
 	mkdir -p .dep-$(dir $@)
 	$(CXX) $(EXTRAFLAGS) $(INCS) $(DEPFLAGS) $(CFLAGS) $(MFLAGS) $(CXXFLAGS) $< -o $@
