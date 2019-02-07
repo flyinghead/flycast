@@ -3,6 +3,7 @@
 #include "cfg/cfg.h"
 #include "linux-dist/main.h"
 #include "sdl/sdl.h"
+#include "rend/gui.h"
 #ifndef GLES
 #include "khronos/GL3/gl3w.h"
 #endif
@@ -168,6 +169,8 @@ void input_sdl_handle(u32 port)
 						SET_FLAG(kcode[port], DC_BTN_X, value);
 						break;
 					case SDLK_MENU:
+						gui_open_settings();
+						break;
 					case SDLK_ESCAPE:
 						dc_stop();
 						break;

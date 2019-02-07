@@ -1,6 +1,7 @@
 #include "oslib\oslib.h"
 #include "oslib\audiostream.h"
 #include "imgread\common.h"
+#include "rend\gui.h"
 
 #define _WIN32_WINNT 0x0500
 #include <windows.h>
@@ -106,7 +107,6 @@ PCHAR*
 void dc_stop(void);
 void dc_savestate();
 void dc_loadstate();
-void dc_enable_dynarec(bool enable);
 
 bool VramLockedWrite(u8* address);
 bool ngen_Rewrite(unat& addr,unat retadr,unat acc);
@@ -272,8 +272,8 @@ void UpdateInputState(u32 port)
 		coin_chute = GetAsyncKeyState(VK_F8);
 		naomi_test_button = GetAsyncKeyState(VK_F7);
 #endif
-		if (GetAsyncKeyState(VK_F6))
-			dc_enable_dynarec(settings.dynarec.Enable == 0);
+		if (GetAsyncKeyState(VK_TAB))
+			gui_open_settings();
 }
 
 void UpdateController(u32 port)

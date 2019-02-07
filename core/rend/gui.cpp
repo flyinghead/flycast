@@ -25,12 +25,14 @@
 #include "imgui/imgui_impl_opengl3.h"
 #include "imgui/roboto_medium.h"
 #include "gles/gles.h"
+#include "linux-dist/main.h"	// FIXME for kcode[] and DC_BTN_x
 
 extern bool dc_pause_emu();
 extern void dc_resume_emu(bool continue_running);
 extern void dc_loadstate();
 extern void dc_savestate();
 extern void dc_reset();
+extern void UpdateInputState(u32 port);
 
 extern int screen_width, screen_height;
 extern u8 kb_shift; 		// shift keys pressed (bitmask)
@@ -60,7 +62,7 @@ void gui_init()
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
 
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
-	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;   // Enable Gamepad Controls
+	io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;   // Enable Gamepad Controls
 
 	io.KeyMap[ImGuiKey_Tab] = 0x2B;
 	io.KeyMap[ImGuiKey_LeftArrow] = 0x50;
@@ -128,6 +130,9 @@ static void ImGui_Impl_NewFrame()
 
 	ImGuiIO& io = ImGui::GetIO();
 
+	os_DoEvents();
+	UpdateInputState(0);
+
 	// Read keyboard modifiers inputs
 	io.KeyCtrl = (kb_shift & (0x01 | 0x10)) != 0;
 	io.KeyShift = (kb_shift & (0x02 | 0x20)) != 0;
@@ -166,6 +171,27 @@ static void ImGui_Impl_NewFrame()
 	io.MouseDown[1] = (mo_buttons & (1 << 1)) == 0;
 	io.MouseDown[2] = (mo_buttons & (1 << 3)) == 0;
 	io.MouseDown[3] = (mo_buttons & (1 << 0)) == 0;
+
+	io.NavInputs[ImGuiNavInput_Activate] = (kcode[0] & DC_BTN_A) == 0;
+	io.NavInputs[ImGuiNavInput_Cancel] = (kcode[0] & DC_BTN_B) == 0;
+	io.NavInputs[ImGuiNavInput_Input] = (kcode[0] & DC_BTN_X) == 0;
+	io.NavInputs[ImGuiNavInput_Menu] = (kcode[0] & DC_BTN_Y) == 0;
+	io.NavInputs[ImGuiNavInput_DpadLeft] = (kcode[0] & DC_DPAD_LEFT) == 0;
+	io.NavInputs[ImGuiNavInput_DpadRight] = (kcode[0] & DC_DPAD_RIGHT) == 0;
+	io.NavInputs[ImGuiNavInput_DpadUp] = (kcode[0] & DC_DPAD_UP) == 0;
+	io.NavInputs[ImGuiNavInput_DpadDown] = (kcode[0] & DC_DPAD_DOWN) == 0;
+	io.NavInputs[ImGuiNavInput_LStickLeft] = joyx[0] < 0 ? -(float)joyx[0] / 128 : 0.f;
+	if (io.NavInputs[ImGuiNavInput_LStickLeft] < 0.05f)
+		io.NavInputs[ImGuiNavInput_LStickLeft] = 0.f;
+	io.NavInputs[ImGuiNavInput_LStickRight] = joyx[0] > 0 ? (float)joyx[0] / 128 : 0.f;
+	if (io.NavInputs[ImGuiNavInput_LStickRight] < 0.05f)
+		io.NavInputs[ImGuiNavInput_LStickRight] = 0.f;
+	io.NavInputs[ImGuiNavInput_LStickUp] = joyy[0] < 0 ? -(float)joyy[0] / 128.f : 0.f;
+	if (io.NavInputs[ImGuiNavInput_LStickUp] < 0.05f)
+		io.NavInputs[ImGuiNavInput_LStickUp] = 0.f;
+	io.NavInputs[ImGuiNavInput_LStickDown] = joyy[0] > 0 ? (float)joyy[0] / 128.f : 0.f;
+	if (io.NavInputs[ImGuiNavInput_LStickDown] < 0.05f)
+		io.NavInputs[ImGuiNavInput_LStickDown] = 0.f;
 }
 
 static double last_render;
@@ -454,11 +480,9 @@ void gui_display_ui()
 	switch (gui_state)
 	{
 	case Settings:
-		os_DoEvents();
 		gui_display_settings();
 		break;
 	case Commands:
-		os_DoEvents();
 		gui_display_commands();
 		break;
 	case Closed:

@@ -23,6 +23,7 @@
 
 void FlushCache();
 static void LoadCustom();
+void dc_resume_emu(bool continue_running);
 
 settings_t settings;
 static bool continue_running = false;
@@ -486,7 +487,10 @@ void dc_pause()
 
 void dc_stop()
 {
-	sh4_cpu.Stop();
+	if (sh4_cpu.IsCpuRunning())
+		sh4_cpu.Stop();
+	else
+		dc_resume_emu(false);
 }
 
 void dc_start()
