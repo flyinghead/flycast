@@ -37,7 +37,7 @@ void DetectCpuFeatures()
 	if (detected) return;
 	detected=true;
 
-#if HOST_OS==OS_WINDOWS
+#ifdef _MSC_VER
 	__try
 	{
 		__asm addps xmm0,xmm0
@@ -84,7 +84,7 @@ void DetectCpuFeatures()
 	{
 		mmx=false;
 	}
-	#endif
+#endif
 }
 
 

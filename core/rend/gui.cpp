@@ -130,7 +130,6 @@ static void ImGui_Impl_NewFrame()
 
 	ImGuiIO& io = ImGui::GetIO();
 
-	os_DoEvents();
 	UpdateInputState(0);
 
 	// Read keyboard modifiers inputs

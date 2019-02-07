@@ -396,7 +396,9 @@ void _vmem_term()
 u8* virt_ram_base;
 
 void* malloc_pages(size_t size) {
-#ifdef _ISOC11_SOURCE
+#if HOST_OS == OS_WINDOWS
+	return _aligned_malloc(size, PAGE_SIZE);
+#elif defined(_ISOC11_SOURCE)
 	return aligned_alloc(PAGE_SIZE, size);
 #else
 	void *data;
@@ -794,10 +796,16 @@ void _vmem_release()
 	{
 		if (virt_ram_base != NULL)
 		{
+#if HOST_OS == OS_WINDOWS
+			VirtualFree(virt_ram_base, 0, MEM_RELEASE);
+#else
 			munmap(virt_ram_base, 0x20000000);
+#endif
 			virt_ram_base = NULL;
 		}
+#if HOST_OS != OS_WINDOWS
 		close(fd);
+#endif
 	}
 }
 

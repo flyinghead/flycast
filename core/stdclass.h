@@ -305,7 +305,6 @@ public:
     }
 };
 
-int ExeptionHandler(u32 dwCode, void* pExceptionPointers);
 int msgboxf(const wchar* text,unsigned int type,...);
 
 

@@ -27,8 +27,8 @@ void dc_resume_emu(bool continue_running);
 
 settings_t settings;
 static bool continue_running = false;
-static cMutex mtx_serialization ;
 static cMutex mtx_mainloop ;
+static cResetEvent resume_mainloop(false, true);
 
 /*
 	libndc
@@ -426,6 +426,8 @@ bool dc_is_running()
 #ifndef TARGET_DISPFRAME
 void dc_run()
 {
+	resume_mainloop.Set();
+
     while ( true )
     {
     	bool dynarec_enabled = settings.dynarec.Enable;
@@ -434,8 +436,8 @@ void dc_run()
     	sh4_cpu.Run();
         mtx_mainloop.Unlock() ;
 
-    	mtx_serialization.Lock() ;
-    	mtx_serialization.Unlock() ;
+        while (!resume_mainloop.Wait(20))
+        	os_DoEvents();
 
     	if (dynarec_enabled != settings.dynarec.Enable)
     	{
@@ -697,10 +699,10 @@ bool dc_pause_emu()
 	if (sh4_cpu.IsCpuRunning())
 	{
 #ifndef TARGET_NO_THREADS
-		mtx_serialization.Lock();
+		resume_mainloop.Reset();
 		if (!wait_until_dc_running()) {
 			printf("Can't open settings - dc loop kept running\n");
-			mtx_serialization.Unlock();
+			resume_mainloop.Set();
 			return false;
 		}
 
@@ -710,7 +712,7 @@ bool dc_pause_emu()
 		{
 			printf("Can't open settings - could not acquire main loop lock\n");
 			continue_running = true;
-			mtx_serialization.Unlock();
+			resume_mainloop.Set();
 			return false;
 		}
 #else
@@ -726,7 +728,7 @@ void dc_resume_emu(bool continue_running)
 	{
 		::continue_running = continue_running;
 		rend_cancel_emu_wait();
-		mtx_serialization.Unlock();
+		resume_mainloop.Set();
 		mtx_mainloop.Unlock();
 	}
 }
