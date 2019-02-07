@@ -438,6 +438,7 @@ void dc_run()
 
         while (!resume_mainloop.Wait(20))
         	os_DoEvents();
+        resume_mainloop.Set();
 
     	if (dynarec_enabled != settings.dynarec.Enable)
     	{
@@ -699,12 +700,11 @@ bool dc_pause_emu()
 	if (sh4_cpu.IsCpuRunning())
 	{
 #ifndef TARGET_NO_THREADS
-		resume_mainloop.Reset();
 		if (!wait_until_dc_running()) {
 			printf("Can't open settings - dc loop kept running\n");
-			resume_mainloop.Set();
 			return false;
 		}
+		resume_mainloop.Reset();
 
 		dc_stop();
 

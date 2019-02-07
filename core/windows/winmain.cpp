@@ -5,6 +5,7 @@
 
 #define _WIN32_WINNT 0x0500
 #include <windows.h>
+#include <windowsx.h>
 
 #include <Xinput.h>
 #include "hw\maple\maple_cfg.h"
@@ -193,6 +194,9 @@ s8 joyx[4],joyy[4];
 u8 rt[4],lt[4];
 extern bool coin_chute;
 extern bool naomi_test_button;
+extern s32 mo_x_abs;
+extern s32 mo_y_abs;
+extern u32 mo_buttons;
 
 #define key_CONT_C            (1 << 0)
 #define key_CONT_B            (1 << 1)
@@ -334,6 +338,14 @@ void UpdateVibration(u32 port, u32 value)
 		XInputSetState(port, &vib);
 }
 
+// Windows class name to register
+#define WINDOW_CLASS "nilDC"
+
+// Width and height of the window
+#define WINDOW_WIDTH  1280
+#define WINDOW_HEIGHT 720
+
+
 LRESULT CALLBACK WndProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	switch (message)
@@ -357,6 +369,26 @@ LRESULT CALLBACK WndProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		PostQuitMessage(0);
 		return 1;
 
+	case WM_LBUTTONDOWN:
+	case WM_LBUTTONUP:
+	case WM_MBUTTONDOWN:
+	case WM_MBUTTONUP:
+	case WM_RBUTTONDOWN:
+	case WM_RBUTTONUP:
+	case WM_MOUSEMOVE:
+		int xPos = GET_X_LPARAM(lParam);
+		int yPos = GET_Y_LPARAM(lParam);
+		mo_x_abs = (xPos - (WINDOW_WIDTH - 640 * WINDOW_HEIGHT / 480) / 2) * 480 / WINDOW_HEIGHT;
+		mo_y_abs = yPos * 480 / WINDOW_HEIGHT;
+		mo_buttons = 0xffffffff;
+		if (wParam & MK_LBUTTON)
+			mo_buttons &= ~(1 << 2);
+		if (wParam & MK_MBUTTON)
+			mo_buttons &= ~(1 << 3);
+		if (wParam & MK_RBUTTON)
+			mo_buttons &= ~(1 << 1);
+		break;
+
 	default:
 		break;
 	}
@@ -364,14 +396,6 @@ LRESULT CALLBACK WndProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	// Calls the default window procedure for messages we did not handle
 	return DefWindowProc(hWnd, message, wParam, lParam);
 }
-
-// Windows class name to register
-#define WINDOW_CLASS "nilDC"
-
-// Width and height of the window
-#define WINDOW_WIDTH  1280
-#define WINDOW_HEIGHT 720
-
 
 void* window_win;
 void os_CreateWindow()
