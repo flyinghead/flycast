@@ -1,4 +1,5 @@
 #if defined(USE_SDL)
+#include <map>
 #include "types.h"
 #include "cfg/cfg.h"
 #include "linux-dist/main.h"
@@ -52,6 +53,149 @@ const u32* sdl_map_axis = sdl_map_axis_usb;
 #ifdef TARGET_PANDORA
 u32  JSensitivity[256];  // To have less sensitive value on nubs
 #endif
+
+static std::map<int, u8> kb_map;
+static u32 kb_used = 0;
+extern u8 kb_key[6];		// normal keys pressed
+extern u8 kb_shift; 		// shift keys pressed (bitmask)
+extern u32 mo_buttons;
+extern s32 mo_x_abs;
+extern s32 mo_y_abs;
+
+static void init_kb_map()
+{
+	//04-1D Letter keys A-Z (in alphabetic order)
+	kb_map[SDLK_a] = 0x04;
+	kb_map[SDLK_b] = 0x05;
+	kb_map[SDLK_c] = 0x06;
+	kb_map[SDLK_d] = 0x07;
+	kb_map[SDLK_e] = 0x08;
+	kb_map[SDLK_f] = 0x09;
+	kb_map[SDLK_g] = 0x0A;
+	kb_map[SDLK_h] = 0x0B;
+	kb_map[SDLK_i] = 0x0C;
+	kb_map[SDLK_j] = 0x0D;
+	kb_map[SDLK_k] = 0x0E;
+	kb_map[SDLK_l] = 0x0F;
+	kb_map[SDLK_m] = 0x10;
+	kb_map[SDLK_n] = 0x11;
+	kb_map[SDLK_o] = 0x12;
+	kb_map[SDLK_p] = 0x13;
+	kb_map[SDLK_q] = 0x14;
+	kb_map[SDLK_r] = 0x15;
+	kb_map[SDLK_s] = 0x16;
+	kb_map[SDLK_t] = 0x17;
+	kb_map[SDLK_u] = 0x18;
+	kb_map[SDLK_v] = 0x19;
+	kb_map[SDLK_w] = 0x1A;
+	kb_map[SDLK_x] = 0x1B;
+	kb_map[SDLK_y] = 0x1C;
+	kb_map[SDLK_z] = 0x1D;
+
+	//1E-27 Number keys 1-0
+	kb_map[SDLK_1] = 0x1E;
+	kb_map[SDLK_2] = 0x1F;
+	kb_map[SDLK_3] = 0x20;
+	kb_map[SDLK_4] = 0x21;
+	kb_map[SDLK_5] = 0x22;
+	kb_map[SDLK_6] = 0x23;
+	kb_map[SDLK_7] = 0x24;
+	kb_map[SDLK_8] = 0x25;
+	kb_map[SDLK_9] = 0x26;
+	kb_map[SDLK_0] = 0x27;
+
+	kb_map[SDLK_RETURN] = 0x28;
+	kb_map[SDLK_ESCAPE] = 0x29;
+	kb_map[SDLK_BACKSPACE] = 0x2A;
+	kb_map[SDLK_TAB] = 0x2B;
+	kb_map[SDLK_SPACE] = 0x2C;
+
+	kb_map[SDLK_MINUS] = 0x2D;	// -
+	kb_map[SDLK_EQUALS] = 0x2E;	// =
+	kb_map[SDLK_LEFTBRACKET] = 0x2F;	// [
+	kb_map[SDLK_RIGHTBRACKET] = 0x30;	// ]
+
+	kb_map[SDLK_BACKSLASH] = 0x31;	// \ (US) unsure of keycode
+
+	//32-34 "]", ";" and ":" (the 3 keys right of L)
+	kb_map[SDLK_ASTERISK] = 0x32;	// ~ (non-US) *,µ in FR layout
+	kb_map[SDLK_SEMICOLON] = 0x33;	// ;
+	kb_map[SDLK_QUOTE] = 0x34;	// '
+
+	//35 hankaku/zenkaku / kanji (top left)
+	kb_map[SDLK_BACKQUOTE] = 0x35;	// `~ (US)
+
+	//36-38 ",", "." and "/" (the 3 keys right of M)
+	kb_map[SDLK_COMMA] = 0x36;
+	kb_map[SDLK_PERIOD] = 0x37;
+	kb_map[SDLK_SLASH] = 0x38;
+
+	// CAPSLOCK
+	kb_map[SDLK_CAPSLOCK] = 0x39;
+
+	//3A-45 Function keys F1-F12
+	for (int i = 0;i < 10; i++)
+		kb_map[SDLK_F1 + i] = 0x3A + i;
+	kb_map[SDLK_F11] = 0x44;
+	kb_map[SDLK_F12] = 0x45;
+
+	//46-4E Control keys above cursor keys
+	kb_map[SDLK_PRINTSCREEN] = 0x46;		// Print Screen
+	kb_map[SDLK_SCROLLLOCK] = 0x47;		// Scroll Lock
+	kb_map[SDLK_PAUSE] = 0x48;		// Pause
+	kb_map[SDLK_INSERT] = 0x49;
+	kb_map[SDLK_HOME] = 0x4A;
+	kb_map[SDLK_PAGEUP] = 0x4B;
+	kb_map[SDLK_DELETE] = 0x4C;
+	kb_map[SDLK_END] = 0x4D;
+	kb_map[SDLK_PAGEDOWN] = 0x4E;
+
+	//4F-52 Cursor keys
+	kb_map[SDLK_RIGHT] = 0x4F;
+	kb_map[SDLK_LEFT] = 0x50;
+	kb_map[SDLK_DOWN] = 0x51;
+	kb_map[SDLK_UP] = 0x52;
+
+	//53 Num Lock (Numeric keypad)
+	kb_map[SDLK_NUMLOCKCLEAR] = 0x53;
+	//54 "/" (Numeric keypad)
+	kb_map[SDLK_KP_DIVIDE] = 0x54;
+	//55 "*" (Numeric keypad)
+	kb_map[SDLK_KP_MULTIPLY] = 0x55;
+	//56 "-" (Numeric keypad)
+	kb_map[SDLK_KP_MINUS] = 0x56;
+	//57 "+" (Numeric keypad)
+	kb_map[SDLK_KP_PLUS] = 0x57;
+	//58 Enter (Numeric keypad)
+	kb_map[SDLK_KP_ENTER] = 0x58;
+	//59-62 Number keys 1-0 (Numeric keypad)
+	kb_map[SDLK_KP_1] = 0x59;
+	kb_map[SDLK_KP_2] = 0x5A;
+	kb_map[SDLK_KP_3] = 0x5B;
+	kb_map[SDLK_KP_4] = 0x5C;
+	kb_map[SDLK_KP_5] = 0x5D;
+	kb_map[SDLK_KP_6] = 0x5E;
+	kb_map[SDLK_KP_7] = 0x5F;
+	kb_map[SDLK_KP_8] = 0x60;
+	kb_map[SDLK_KP_9] = 0x61;
+	kb_map[SDLK_KP_0] = 0x62;
+	//63 "." (Numeric keypad)
+	kb_map[SDLK_KP_PERIOD] = 0x63;
+	//64 #| (non-US)
+	//kb_map[94] = 0x64;
+	//65 S3 key
+	//66-A4 Not used
+	//A5-DF Reserved
+	//E0 Left Control
+	//E1 Left Shift
+	//E2 Left Alt
+	//E3 Left S1
+	//E4 Right Control
+	//E5 Right Shift
+	//E6 Right Alt
+	//E7 Right S3
+	//E8-FF Reserved
+}
 
 void input_sdl_init()
 {
@@ -116,17 +260,28 @@ void input_sdl_init()
 		}
 	#endif
 
-	SDL_SetRelativeMouseMode(SDL_TRUE);
+	SDL_SetRelativeMouseMode(SDL_FALSE);
+
+	init_kb_map();
+}
+
+static void set_mouse_position(int x, int y)
+{
+	int width, height;
+	SDL_GetWindowSize(window, &width, &height);
+	if (width != 0 && height != 0)
+	{
+		float scale = 480.f / height;
+		mo_x_abs = (x - (width - 640.f / scale) / 2.f) * scale;
+		mo_y_abs = y * scale;
+	}
 }
 
 void input_sdl_handle(u32 port)
 {
 	#define SET_FLAG(field, mask, expr) field =((expr) ? (field & ~mask) : (field | mask))
-	static int mouse_use = 0;
 	SDL_Event event;
 	int k, value;
-	int xx, yy;
-	const char *num_mode[] = {"Off", "Up/Down => RT/LT", "Left/Right => LT/RT", "U/D/L/R => A/B/X/Y"};
 	while (SDL_PollEvent(&event))
 	{
 		switch (event.type)
@@ -138,9 +293,7 @@ void input_sdl_handle(u32 port)
 			case SDL_KEYUP:
 				k = event.key.keysym.sym;
 				value = (event.type == SDL_KEYDOWN) ? 1 : 0;
-				printf("type %i key %i \n", event.type, k);
 				switch (k) {
-					//TODO: Better keymaps for non-pandora platforms
 					case SDLK_SPACE:
 						SET_FLAG(kcode[port], DC_BTN_C, value);
 						break;
@@ -156,46 +309,33 @@ void input_sdl_handle(u32 port)
 					case SDLK_RIGHT:
 						SET_FLAG(kcode[port], DC_DPAD_RIGHT, value);
 						break;
-					case SDLK_PAGEUP:
+					case SDLK_d:
 						SET_FLAG(kcode[port], DC_BTN_Y, value);
 						break;
-					case SDLK_PAGEDOWN:
+					case SDLK_x:
 						SET_FLAG(kcode[port], DC_BTN_A, value);
 						break;
-					case SDLK_END:
+					case SDLK_c:
 						SET_FLAG(kcode[port], DC_BTN_B, value);
 						break;
-					case SDLK_HOME:
+					case SDLK_s:
 						SET_FLAG(kcode[port], DC_BTN_X, value);
 						break;
 					case SDLK_MENU:
+					case SDLK_TAB:
 						gui_open_settings();
 						break;
-					case SDLK_ESCAPE:
-						dc_stop();
-						break;
-					case SDLK_RSHIFT:
+					case SDLK_f:
 						lt[port] = (value ? 255 : 0);
 						break;
-					case SDLK_RCTRL:
+					case SDLK_v:
 						rt[port] = (value ? 255 : 0);;
 						break;
-					case SDLK_LALT:
+					case SDLK_RETURN:
 						SET_FLAG(kcode[port], DC_BTN_START, value);
-						break;
-					case SDLK_k:
-						SET_FLAG(kcode[port], DC_BTN_A, value);
 						break;
 
 				#if defined(TARGET_PANDORA)
-					case SDLK_n:
-						if (value)
-						{
-							mouse_use = (mouse_use + 1) % 4;
-							snprintf(OSD_Info, 128, "Right Nub mode: %s\n", num_mode[mouse_use]);
-							OSD_Delay=300;
-						}
-						break;
 					case SDLK_s:
 						if (value)
 						{
@@ -219,6 +359,50 @@ void input_sdl_handle(u32 port)
 						}
 						break;
 				#endif
+				}
+				{
+					auto it = kb_map.find(k);
+					if (it != kb_map.end())
+					{
+						u8 dc_keycode = it->second;
+						if (event.type == SDL_KEYDOWN)
+						{
+							if (kb_used < 6)
+							{
+								bool found = false;
+								for (int i = 0; !found && i < 6; i++)
+								{
+									if (kb_key[i] == dc_keycode)
+										found = true;
+								}
+								if (!found)
+								{
+									kb_key[kb_used] = dc_keycode;
+									kb_used++;
+								}
+							}
+						}
+						else
+						{
+							if (kb_used > 0)
+							{
+								for (int i = 0; i < 6; i++)
+								{
+									if (kb_key[i] == dc_keycode)
+									{
+										kb_used--;
+										for (int j = i; j < 5; j++)
+											kb_key[j] = kb_key[j + 1];
+										kb_key[5] = 0;
+									}
+								}
+							}
+						}
+						if (event.key.keysym.mod & (KMOD_LSHIFT | KMOD_RSHIFT))
+							SET_FLAG(kb_shift, (0x02 | 0x20), event.type == SDL_KEYUP);
+						if (event.key.keysym.mod & (KMOD_LCTRL | KMOD_RCTRL))
+							SET_FLAG(kb_shift, (0x01 | 0x10), event.type == SDL_KEYUP);
+					}
 				}
 				break;
 			case SDL_JOYBUTTONDOWN:
@@ -311,85 +495,29 @@ void input_sdl_handle(u32 port)
 					}
 				}
 				break;
+
 			case SDL_MOUSEMOTION:
-					xx = event.motion.xrel;
-					yy = event.motion.yrel;
+				set_mouse_position(event.motion.x, event.motion.y);
+				SET_FLAG(mo_buttons, 1 << 2, event.motion.state & SDL_BUTTON_LMASK);
+				SET_FLAG(mo_buttons, 1 << 1, event.motion.state & SDL_BUTTON_RMASK);
+				SET_FLAG(mo_buttons, 1 << 3, event.motion.state & SDL_BUTTON_MMASK);
+				break;
 
-					// some caping and dead zone...
-					if (abs(xx) < 4)
-					{
-						xx = 0;
-					}
-					if (abs(yy) < 4)
-					{
-						yy = 0;
-					}
-
-					xx = xx * 255 / 20;
-					yy = yy * 255 / 20;
-
-					if (xx > 255)
-					{
-						xx = 255;
-					}
-					else if (xx<-255)
-					{
-						xx = -255;
-					}
-
-					if (yy > 255)
-					{
-						yy = 255;
-					}
-					else if (yy<-255)
-					{
-						yy = -255;
-					}
-
-					//if (abs(xx)>0 || abs(yy)>0) printf("mouse %i, %i\n", xx, yy);
-					switch (mouse_use)
-					{
-						case 0:  // nothing
-							break;
-						case 1:  // Up=RT, Down=LT
-							if (yy<0)
-							{
-								rt[port] = -yy;
-							}
-							else if (yy>0)
-							{
-								lt[port] = yy;
-							}
-							break;
-						case 2:  // Left=LT, Right=RT
-							if (xx < 0)
-							{
-								lt[port] = -xx;
-							}
-							else if (xx > 0)
-							{
-								rt[port] = xx;
-							}
-							break;
-						case 3:  // Nub = ABXY
-							if (xx < -127)
-							{
-								kcode[port] &= ~DC_BTN_X;
-							}
-							else if (xx > 127)
-							{
-								kcode[port] &= ~DC_BTN_B;
-							}
-							if (yy < -127)
-							{
-								kcode[port] &= ~DC_BTN_Y;
-							}
-							else if (yy > 127)
-							{
-								kcode[port] &= ~DC_BTN_A;
-							}
-							break;
-					}
+			case SDL_MOUSEBUTTONDOWN:
+			case SDL_MOUSEBUTTONUP:
+				set_mouse_position(event.button.x, event.button.y);
+				switch (event.button.button)
+				{
+				case SDL_BUTTON_LEFT:
+					SET_FLAG(mo_buttons, 1 << 2, event.button.state == SDL_PRESSED);
+					break;
+				case SDL_BUTTON_RIGHT:
+					SET_FLAG(mo_buttons, 1 << 1, event.button.state == SDL_PRESSED);
+					break;
+				case SDL_BUTTON_MIDDLE:
+					SET_FLAG(mo_buttons, 1 << 3, event.button.state == SDL_PRESSED);
+					break;
+				}
 				break;
 		}
 	}
@@ -424,7 +552,7 @@ void sdl_window_create()
 	#ifdef TARGET_PANDORA
 		flags |= SDL_FULLSCREEN;
 	#else
-		flags |= SDL_SWSURFACE;
+		flags |= SDL_SWSURFACE | SDL_WINDOW_RESIZABLE;
 	#endif
 
 	#ifdef GLES
