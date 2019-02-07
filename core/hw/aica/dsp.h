@@ -64,10 +64,7 @@ struct dsp_t
 	//various dsp regs
 	signed int ACC;        //26 bit
 	signed int SHIFTED;    //24 bit
-	signed int X;          //24 bit
-	signed int Y;          //13 bit
 	signed int B;          //26 bit
-	signed int INPUTS;     //24 bit
 	signed int MEMVAL[4];
 	signed int FRC_REG;    //13 bit
 	signed int Y_REG;      //24 bit
