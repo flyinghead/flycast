@@ -275,3 +275,4 @@ void VDecEnd();
 //must be moved to proper header
 void FillBGP(TA_context* ctx);
 bool UsingAutoSort(int pass_number);
+bool rend_framePending();

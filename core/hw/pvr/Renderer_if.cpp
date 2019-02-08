@@ -272,7 +272,7 @@ bool rend_single_frame()
 #if !defined(TARGET_NO_THREADS)
 		if (gui_is_open())
 		{
-			if (!rs.Wait(1000 / 60))
+			if (!rend_framePending() || !rs.Wait(1000 / 60))
 			{
 				gui_display_ui();
 				FinishRender(NULL);

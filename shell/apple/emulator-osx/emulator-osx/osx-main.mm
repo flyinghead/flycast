@@ -6,9 +6,11 @@
 //  Copyright (c) 2015 reicast. All rights reserved.
 //
 #import <Carbon/Carbon.h>
+#import <AppKit/AppKit.h>
 
 #include "types.h"
 #include "hw/maple/maple_cfg.h"
+#include "rend/gui.h"
 #include <sys/stat.h>
 
 #include <OpenGL/gl3.h>
@@ -116,7 +118,8 @@ void* emuthread(void*) {
     has_init = false;
 
     dc_term();
-
+	[[NSApplication sharedApplication] terminate:NULL];
+	
     return 0;
 }
 
@@ -135,10 +138,15 @@ bool rend_single_frame();
 bool rend_framePending();
 bool gles_init();
 
+extern "C" bool emu_frame_pending()
+{
+	return rend_framePending() || gui_is_open();
+}
+
 extern "C" int emu_single_frame(int w, int h) {
     if (!has_init)
         return true;
-    if (!rend_framePending())
+    if (!emu_frame_pending())
         return 0;
     screen_width = w;
     screen_height = h;
@@ -170,11 +178,6 @@ extern "C" void emu_gles_init() {
     CFRelease(mainBundle);
 
     gles_init();
-}
-
-extern "C" bool emu_frame_pending()
-{
-    return rend_framePending();
 }
 
 enum DCPad {
@@ -248,5 +251,7 @@ extern "C" void emu_key_input(UInt16 keyCode, int state) {
 		case 0x78:     dc_savestate(); break;
 		// F4
 		case 0x76:     dc_loadstate(); break;
+		// Tab
+		case 0x30:     gui_open_settings(); break;
     }
 }

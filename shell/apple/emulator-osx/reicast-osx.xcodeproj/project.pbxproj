@@ -255,6 +255,13 @@
 		AE8C274121122E2500D4D8F4 /* Changelog.txt in Resources */ = {isa = PBXBuildFile; fileRef = AE8C273B21122E2500D4D8F4 /* Changelog.txt */; };
 		AE8C274221122E2500D4D8F4 /* License.txt in Resources */ = {isa = PBXBuildFile; fileRef = AE8C273C21122E2500D4D8F4 /* License.txt */; };
 		AE8C274321122E2500D4D8F4 /* xbrz.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE8C273D21122E2500D4D8F4 /* xbrz.cpp */; };
+		AEE62768220D7B4400EC7E89 /* cue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEE62767220D7B4300EC7E89 /* cue.cpp */; };
+		AEE6276B220D7B5500EC7E89 /* gui.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEE6276A220D7B5500EC7E89 /* gui.cpp */; };
+		AEE6277A220D7B7E00EC7E89 /* imgui.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEE6276E220D7B7E00EC7E89 /* imgui.cpp */; };
+		AEE6277B220D7B7E00EC7E89 /* imgui_demo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEE62770220D7B7E00EC7E89 /* imgui_demo.cpp */; };
+		AEE6277C220D7B7E00EC7E89 /* imgui_draw.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEE62771220D7B7E00EC7E89 /* imgui_draw.cpp */; };
+		AEE6277D220D7B7E00EC7E89 /* imgui_impl_opengl3.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEE62772220D7B7E00EC7E89 /* imgui_impl_opengl3.cpp */; };
+		AEE6277E220D7B7E00EC7E89 /* imgui_widgets.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEE62775220D7B7E00EC7E89 /* imgui_widgets.cpp */; };
 		AEFF7ECC214AEC810068CE11 /* modem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEFF7EC7214AEC800068CE11 /* modem.cpp */; };
 		AEFF7F4D214D9D590068CE11 /* pico_arp.c in Sources */ = {isa = PBXBuildFile; fileRef = AEFF7EFA214D9D590068CE11 /* pico_arp.c */; };
 		AEFF7F4E214D9D590068CE11 /* pico_dev_ppp.c in Sources */ = {isa = PBXBuildFile; fileRef = AEFF7EFE214D9D590068CE11 /* pico_dev_ppp.c */; };
@@ -764,6 +771,22 @@
 		AE8C273E21122E2500D4D8F4 /* xbrz.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = xbrz.h; sourceTree = "<group>"; };
 		AE8C273F21122E2500D4D8F4 /* xbrz_config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = xbrz_config.h; sourceTree = "<group>"; };
 		AE8C274021122E2500D4D8F4 /* xbrz_tools.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = xbrz_tools.h; sourceTree = "<group>"; };
+		AEE62767220D7B4300EC7E89 /* cue.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = cue.cpp; sourceTree = "<group>"; };
+		AEE62769220D7B5500EC7E89 /* gui.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = gui.h; sourceTree = "<group>"; };
+		AEE6276A220D7B5500EC7E89 /* gui.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = gui.cpp; sourceTree = "<group>"; };
+		AEE6276D220D7B7E00EC7E89 /* imconfig.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = imconfig.h; sourceTree = "<group>"; };
+		AEE6276E220D7B7E00EC7E89 /* imgui.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = imgui.cpp; sourceTree = "<group>"; };
+		AEE6276F220D7B7E00EC7E89 /* imgui.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = imgui.h; sourceTree = "<group>"; };
+		AEE62770220D7B7E00EC7E89 /* imgui_demo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = imgui_demo.cpp; sourceTree = "<group>"; };
+		AEE62771220D7B7E00EC7E89 /* imgui_draw.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = imgui_draw.cpp; sourceTree = "<group>"; };
+		AEE62772220D7B7E00EC7E89 /* imgui_impl_opengl3.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = imgui_impl_opengl3.cpp; sourceTree = "<group>"; };
+		AEE62773220D7B7E00EC7E89 /* imgui_impl_opengl3.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = imgui_impl_opengl3.h; sourceTree = "<group>"; };
+		AEE62774220D7B7E00EC7E89 /* imgui_internal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = imgui_internal.h; sourceTree = "<group>"; };
+		AEE62775220D7B7E00EC7E89 /* imgui_widgets.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = imgui_widgets.cpp; sourceTree = "<group>"; };
+		AEE62776220D7B7E00EC7E89 /* imstb_rectpack.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = imstb_rectpack.h; sourceTree = "<group>"; };
+		AEE62777220D7B7E00EC7E89 /* imstb_textedit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = imstb_textedit.h; sourceTree = "<group>"; };
+		AEE62778220D7B7E00EC7E89 /* imstb_truetype.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = imstb_truetype.h; sourceTree = "<group>"; };
+		AEE62779220D7B7E00EC7E89 /* roboto_medium.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = roboto_medium.h; sourceTree = "<group>"; };
 		AEFF7EC7214AEC800068CE11 /* modem.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = modem.cpp; sourceTree = "<group>"; };
 		AEFF7EC8214AEC800068CE11 /* modem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = modem.h; sourceTree = "<group>"; };
 		AEFF7EC9214AEC800068CE11 /* modem_regs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = modem_regs.h; sourceTree = "<group>"; };
@@ -987,6 +1010,7 @@
 				84B7BD1F1B72720100F9733F /* coreio */,
 				84B7BD221B72720100F9733F /* crypto */,
 				AE649BB7218C552500EF4A81 /* flac */,
+				AEE6276C220D7B7E00EC7E89 /* imgui */,
 				84B7BD2D1B72720100F9733F /* libelf */,
 				84B7BD351B72720100F9733F /* libpng */,
 				84B7BD661B72720100F9733F /* libzip */,
@@ -1433,6 +1457,7 @@
 				84B7BE441B72720100F9733F /* chd.cpp */,
 				84B7BE451B72720100F9733F /* common.cpp */,
 				84B7BE461B72720100F9733F /* common.h */,
+				AEE62767220D7B4300EC7E89 /* cue.cpp */,
 				84B7BE471B72720100F9733F /* gd_driver.h */,
 				84B7BE481B72720100F9733F /* gdi.cpp */,
 				84B7BE491B72720100F9733F /* ImgReader.cpp */,
@@ -1578,6 +1603,8 @@
 			isa = PBXGroup;
 			children = (
 				84B7BE9B1B72720200F9733F /* gles */,
+				AEE6276A220D7B5500EC7E89 /* gui.cpp */,
+				AEE62769220D7B5500EC7E89 /* gui.h */,
 				84B7BEA21B72720200F9733F /* rend.h */,
 				84B7BEA51B72720200F9733F /* TexCache.cpp */,
 				84B7BEA61B72720200F9733F /* TexCache.h */,
@@ -1860,6 +1887,26 @@
 			path = xbrz;
 			sourceTree = "<group>";
 		};
+		AEE6276C220D7B7E00EC7E89 /* imgui */ = {
+			isa = PBXGroup;
+			children = (
+				AEE6276D220D7B7E00EC7E89 /* imconfig.h */,
+				AEE6276E220D7B7E00EC7E89 /* imgui.cpp */,
+				AEE6276F220D7B7E00EC7E89 /* imgui.h */,
+				AEE62770220D7B7E00EC7E89 /* imgui_demo.cpp */,
+				AEE62771220D7B7E00EC7E89 /* imgui_draw.cpp */,
+				AEE62772220D7B7E00EC7E89 /* imgui_impl_opengl3.cpp */,
+				AEE62773220D7B7E00EC7E89 /* imgui_impl_opengl3.h */,
+				AEE62774220D7B7E00EC7E89 /* imgui_internal.h */,
+				AEE62775220D7B7E00EC7E89 /* imgui_widgets.cpp */,
+				AEE62776220D7B7E00EC7E89 /* imstb_rectpack.h */,
+				AEE62777220D7B7E00EC7E89 /* imstb_textedit.h */,
+				AEE62778220D7B7E00EC7E89 /* imstb_truetype.h */,
+				AEE62779220D7B7E00EC7E89 /* roboto_medium.h */,
+			);
+			path = imgui;
+			sourceTree = "<group>";
+		};
 		AEFF7EC6214AEC800068CE11 /* modem */ = {
 			isa = PBXGroup;
 			children = (
@@ -2130,6 +2177,7 @@
 				AEFF7F4E214D9D590068CE11 /* pico_dev_ppp.c in Sources */,
 				84B7BEE41B72720200F9733F /* zip_delete.c in Sources */,
 				84B7BF1A1B72720200F9733F /* infback.c in Sources */,
+				AEE6277C220D7B7E00EC7E89 /* imgui_draw.cpp in Sources */,
 				AE649C29218C553A00EF4A81 /* Delta.c in Sources */,
 				84B7BF431B72720200F9733F /* decoder.cpp in Sources */,
 				84B7BEBB1B72720200F9733F /* elf64.cpp in Sources */,
@@ -2188,6 +2236,7 @@
 				AE1E294020A96B0B00FC6BA2 /* rec_x64.cpp in Sources */,
 				AE80EDC521594ACE00F7800F /* dns.cpp in Sources */,
 				AEFF7F76214D9D590068CE11 /* pico_tree.c in Sources */,
+				AEE6277A220D7B7E00EC7E89 /* imgui.cpp in Sources */,
 				84B7BEB91B72720200F9733F /* elf.cpp in Sources */,
 				84B7BF6D1B72720200F9733F /* README.md in Sources */,
 				84B7BF2B1B72720200F9733F /* arm_mem.cpp in Sources */,
@@ -2241,6 +2290,7 @@
 				84B7BF391B72720200F9733F /* drkPvr.cpp in Sources */,
 				84B7BF621B72720200F9733F /* context.cpp in Sources */,
 				AEFF7F72214D9D590068CE11 /* pico_protocol.c in Sources */,
+				AEE6277D220D7B7E00EC7E89 /* imgui_impl_opengl3.cpp in Sources */,
 				84B7BF6A1B72720200F9733F /* audiobackend_pulseaudio.cpp in Sources */,
 				84B7BF3F1B72720200F9733F /* ta.cpp in Sources */,
 				84B7BF751B72720200F9733F /* gdrom_hle.cpp in Sources */,
@@ -2264,9 +2314,11 @@
 				AE649BFA218C552500EF4A81 /* float.c in Sources */,
 				84B7BF631B72720200F9733F /* nixprof.cpp in Sources */,
 				AE649C24218C553A00EF4A81 /* Alloc.c in Sources */,
+				AEE62768220D7B4400EC7E89 /* cue.cpp in Sources */,
 				AE649BFF218C552500EF4A81 /* lpc_intrin_sse2.c in Sources */,
 				AE649C3E218C555600EF4A81 /* huffman.c in Sources */,
 				AE80EDB72157D4D500F7800F /* serialize.cpp in Sources */,
+				AEE6276B220D7B5500EC7E89 /* gui.cpp in Sources */,
 				84B7BF6C1B72720200F9733F /* profiler.cpp in Sources */,
 				84B7BF161B72720200F9733F /* adler32.c in Sources */,
 				AEFF7F73214D9D590068CE11 /* pico_socket.c in Sources */,
@@ -2284,6 +2336,7 @@
 				84B7BF1C1B72720200F9733F /* inflate.c in Sources */,
 				84B7BF071B72720200F9733F /* zip_set_name.c in Sources */,
 				84B7BF241B72720200F9733F /* x86_emitter.cpp in Sources */,
+				AEE6277B220D7B7E00EC7E89 /* imgui_demo.cpp in Sources */,
 				AE649BFE218C552500EF4A81 /* lpc_intrin_sse.c in Sources */,
 				AE2A2D7A21D6851E004B308D /* 7zArcIn.c in Sources */,
 				84B7BF471B72720200F9733F /* sh4_interpreter.cpp in Sources */,
@@ -2316,6 +2369,7 @@
 				AE2A2D5E21D68470004B308D /* decrypt.cpp in Sources */,
 				AEFF7F56214D9D590068CE11 /* pico_ethernet.c in Sources */,
 				84B7BEF71B72720200F9733F /* zip_fread.c in Sources */,
+				AEE6277E220D7B7E00EC7E89 /* imgui_widgets.cpp in Sources */,
 				84B7BF771B72720200F9733F /* reios_elf.cpp in Sources */,
 				AE2A2D6721D684DB004B308D /* archive.cpp in Sources */,
 				84B7BF5C1B72720200F9733F /* common.cpp in Sources */,
