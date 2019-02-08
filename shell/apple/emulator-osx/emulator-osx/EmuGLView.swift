@@ -35,8 +35,8 @@ class EmuGLView: NSOpenGLView, NSWindowDelegate {
     override func awakeFromNib() {
         let renderTimer = Timer.scheduledTimer(timeInterval: 0.001, target: self, selector: #selector(EmuGLView.timerTick), userInfo: nil, repeats: true)
         
-        RunLoop.current.add(renderTimer, forMode: RunLoopMode.defaultRunLoopMode);
-        RunLoop.current.add(renderTimer, forMode: RunLoopMode.eventTrackingRunLoopMode);
+        RunLoop.current.add(renderTimer, forMode: RunLoopMode.defaultRunLoopMode)
+        RunLoop.current.add(renderTimer, forMode: RunLoopMode.eventTrackingRunLoopMode)
         
         let attrs:[NSOpenGLPixelFormatAttribute] =
         [
@@ -52,29 +52,32 @@ class EmuGLView: NSOpenGLView, NSWindowDelegate {
         
         let pf = NSOpenGLPixelFormat(attributes:attrs)
         
-        let context = NSOpenGLContext(format: pf!, share: nil);
-        
-        self.pixelFormat = pf;
-        self.openGLContext = context;
+        let context = NSOpenGLContext(format: pf!, share: nil)
+
+        self.pixelFormat = pf
+        self.openGLContext = context
         
         openGLContext!.makeCurrentContext()
-        emu_gles_init();
+        emu_gles_init()
     }
     
    
     func timerTick() {
         if (emu_frame_pending())
         {
-            self.needsDisplay = true;
+            self.needsDisplay = true
         }
     }
     
     override func keyDown(with e: NSEvent) {
-        emu_key_input(e.keyCode, 1);
+		if (!e.isARepeat)
+		{
+        	emu_key_input(e.keyCode, 1, UInt32(e.modifierFlags.rawValue))
+		}
     }
     
     override func keyUp(with e: NSEvent) {
-        emu_key_input(e.keyCode, 0);
+        emu_key_input(e.keyCode, 0, UInt32(e.modifierFlags.rawValue))
     }
 	
 	private func setMousePos(_ event: NSEvent)
