@@ -1175,8 +1175,17 @@ void fullscreenQuadPrepareFramebuffer(float xScale, float yScale) {
 
 	// Reduce width to keep 4:3 aspect ratio (640x480)
 	u32 reducedWidth = 4 * screen_height / 3;
-	u32 reducedWidthOffset = (screen_width - reducedWidth) / 2;
-	glScissor(reducedWidthOffset, 0, reducedWidth, screen_height);
+
+	// handle odd/even screen width
+	if (screen_width % 2 == 0) {
+		u32 reducedWidthOffset = (screen_width - reducedWidth) / 2;
+		glScissor(reducedWidthOffset, 0, reducedWidth, screen_height);
+	}
+	else {
+		u32 reducedWidthOffset = (screen_width + 1 - reducedWidth) / 2;
+		glScissor(reducedWidthOffset, 0, reducedWidth - 1, screen_height);
+	}
+
 	if (settings.rend.WideScreen &&
 		(pvrrc.fb_X_CLIP.min==0) && ((pvrrc.fb_X_CLIP.max+1)/xScale==640) &&
 		(pvrrc.fb_Y_CLIP.min==0) && ((pvrrc.fb_Y_CLIP.max+1)/yScale==480 ))

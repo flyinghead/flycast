@@ -1902,6 +1902,10 @@ bool RenderFrame()
 	*/
 	float dc2s_scale_h = screen_height / 480.0;
 	float ds2s_offs_x = (screen_width - dc2s_scale_h * 640.0) / 2;
+	// handle odd screen width
+	if (screen_width % 2) {
+		ds2s_offs_x = (screen_width + 1 - dc2s_scale_h * 640.0) / 2;
+	}
 
 	if (!is_rtt) {
 		ShaderUniforms.scale_coefs[0] = 2.0f / (screen_width / dc2s_scale_h * scale_x);
@@ -2118,7 +2122,13 @@ bool RenderFrame()
 				width *= dc2s_scale_h;
 				height *= dc2s_scale_h;
 			}
-			glScissor(min_x + 0.5f, min_y + 0.5f, width + 0.5f, height + 0.5f);
+			// handle odd/even screen width
+			if (screen_width % 2 == 0) {
+				glScissor(min_x + 0.5f, min_y + 0.5f, width + 0.5f, height + 0.5f);
+			}
+			else {
+				glScissor(min_x + 0.5f, min_y + 0.5f, width + 0.5f - 1, height + 0.5f);
+			}
 			glEnable(GL_SCISSOR_TEST);
 		}
 	}
