@@ -76,10 +76,48 @@ class EmuGLView: NSOpenGLView, NSWindowDelegate {
     override func keyUp(with e: NSEvent) {
         emu_key_input(e.keyCode, 0);
     }
-    
+	
+	private func setMousePos(_ event: NSEvent)
+	{
+		let point = convert(event.locationInWindow, from: self)
+		let size = frame.size
+		let scale = 480.0 / size.height
+		mo_x_abs = Int32((point.x - (size.width - 640.0 / scale) / 2.0) * scale)
+		mo_y_abs = Int32((size.height - point.y) * scale)
+	}
+	override func mouseDown(with event: NSEvent) {
+		mo_buttons &= ~(1 << 2)
+		setMousePos(event)
+	}
+	override func mouseUp(with event: NSEvent) {
+		mo_buttons |= 1 << 2;
+		setMousePos(event)
+	}
+	override func rightMouseDown(with event: NSEvent) {
+		mo_buttons &= ~(1 << 1)
+		setMousePos(event)
+	}
+	override func rightMouseUp(with event: NSEvent) {
+		mo_buttons |= 1 << 1
+		setMousePos(event)
+	}
+	// Not dispatched by default. Need to set Window.acceptsMouseMovedEvents to true
+	override func mouseMoved(with event: NSEvent) {
+		setMousePos(event)
+	}
+	override func mouseDragged(with event: NSEvent) {
+		mo_buttons &= ~(1 << 2)
+		setMousePos(event)
+	}
+	override func rightMouseDragged(with event: NSEvent) {
+		mo_buttons &= ~(1 << 1)
+		setMousePos(event)
+	}
+	
     override func viewDidMoveToWindow() {
         super.viewDidMoveToWindow()
         self.window!.delegate = self
+		self.window!.acceptsMouseMovedEvents = true
     }
     
     func windowWillClose(_ notification: Notification) {

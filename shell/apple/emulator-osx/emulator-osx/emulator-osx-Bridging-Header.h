@@ -16,4 +16,7 @@ int emu_single_frame(int w, int h);
 void emu_gles_init();
 void emu_key_input(UInt16 keyCode, int state);
 bool emu_frame_pending();
+extern unsigned int mo_buttons;
+extern int mo_x_abs;
+extern int mo_y_abs;
 #endif
