@@ -1183,12 +1183,10 @@ void fullscreenQuadPrepareFramebuffer(float xScale, float yScale) {
 	}
 	else {
 		u32 reducedWidthOffset = (screen_width + 1 - reducedWidth) / 2;
-		glScissor(reducedWidthOffset, 0, reducedWidth - 1, screen_height);
+		glScissor(reducedWidthOffset, 0, reducedWidth, screen_height);
 	}
 
-	if (settings.rend.WideScreen &&
-		(pvrrc.fb_X_CLIP.min==0) && ((pvrrc.fb_X_CLIP.max+1)/xScale==640) &&
-		(pvrrc.fb_Y_CLIP.min==0) && ((pvrrc.fb_Y_CLIP.max+1)/yScale==480 ))
+	if (settings.rend.WideScreen)
 	{
 		glDisable(GL_SCISSOR_TEST);
 	}

@@ -2091,9 +2091,6 @@ bool RenderFrame()
 		glBufferData(GL_ARRAY_BUFFER,pvrrc.modtrig.bytes(),pvrrc.modtrig.head(),GL_STREAM_DRAW); glCheck();
 	}
 
-	int offs_x=ds2s_offs_x+0.5f;
-	//this needs to be scaled
-
 	//not all scaling affects pixel operations, scale to adjust for that
 	scale_x *= scissoring_scale_x;
 
@@ -2105,30 +2102,16 @@ bool RenderFrame()
 	#endif
 
 	if (is_rtt || (settings.rend.VerticalResolution == 100 && settings.rend.HorizontalResolution == 100)) {
-		if (settings.rend.WideScreen && pvrrc.fb_X_CLIP.min == 0 &&
-			((pvrrc.fb_X_CLIP.max + 1) / scale_x == 640) && (pvrrc.fb_Y_CLIP.min == 0) &&
-			((pvrrc.fb_Y_CLIP.max + 1) / scale_y == 480)) {
+		glScissor(ds2s_offs_x + 0.5f + pvrrc.fb_X_CLIP.min / scale_x,
+			(pvrrc.fb_Y_CLIP.min / scale_y) * dc2s_scale_h,
+			(pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1) / scale_x * dc2s_scale_h,
+			(pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1) / scale_y * dc2s_scale_h);
+		if (settings.rend.WideScreen)
+		{
 			glDisable(GL_SCISSOR_TEST);
-		} else {
-			float width = (pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1) / scale_x;
-			float height = (pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1) / scale_y;
-			float min_x = pvrrc.fb_X_CLIP.min / scale_x;
-			float min_y = pvrrc.fb_Y_CLIP.min / scale_y;
-			if (!is_rtt) {
-				// Add x offset for aspect ratio > 4/3
-				min_x = min_x * dc2s_scale_h + ds2s_offs_x;
-				// Invert y coordinates when rendering to screen
-				min_y = screen_height - (min_y + height) * dc2s_scale_h;
-				width *= dc2s_scale_h;
-				height *= dc2s_scale_h;
-			}
-			// handle odd/even screen width
-			if (screen_width % 2 == 0) {
-				glScissor(min_x + 0.5f, min_y + 0.5f, width + 0.5f, height + 0.5f);
-			}
-			else {
-				glScissor(min_x + 0.5f, min_y + 0.5f, width + 0.5f - 1, height + 0.5f);
-			}
+		}
+		else
+		{
 			glEnable(GL_SCISSOR_TEST);
 		}
 	}
