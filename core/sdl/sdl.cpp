@@ -367,34 +367,29 @@ void input_sdl_handle(u32 port)
 						u8 dc_keycode = it->second;
 						if (event.type == SDL_KEYDOWN)
 						{
-							if (kb_used < 6)
+							if (kb_used < ARRAY_SIZE(kb_key))
 							{
 								bool found = false;
-								for (int i = 0; !found && i < 6; i++)
+								for (int i = 0; !found && i < kb_used; i++)
 								{
 									if (kb_key[i] == dc_keycode)
 										found = true;
 								}
 								if (!found)
-								{
-									kb_key[kb_used] = dc_keycode;
-									kb_used++;
-								}
+									kb_key[kb_used++] = dc_keycode;
 							}
 						}
 						else
 						{
-							if (kb_used > 0)
+							for (int i = 0; i < kb_used; i++)
 							{
-								for (int i = 0; i < 6; i++)
+								if (kb_key[i] == dc_keycode)
 								{
-									if (kb_key[i] == dc_keycode)
-									{
-										kb_used--;
-										for (int j = i; j < 5; j++)
-											kb_key[j] = kb_key[j + 1];
-										kb_key[5] = 0;
-									}
+									kb_used--;
+									for (int j = i; j < ARRAY_SIZE(kb_key) - 1; j++)
+										kb_key[j] = kb_key[j + 1];
+									kb_key[ARRAY_SIZE(kb_key) - 1] = 0;
+									break;
 								}
 							}
 						}
