@@ -373,7 +373,7 @@ static void gui_display_settings()
 				ImGui::EndCombo();
 			}
             ImGui::SameLine();
-            ShowHelpMarker("The language as configured in the Dreamcast BIOS.");
+            ShowHelpMarker("The language as configured in the Dreamcast BIOS");
 
 			const char *broadcast[] = { "NTSC", "PAL", "PAL/M", "PAL/N", "Default" };
 			if (ImGui::BeginCombo("Broadcast", broadcast[settings.dreamcast.broadcast], ImGuiComboFlags_None))
@@ -388,6 +388,8 @@ static void gui_display_settings()
 				}
 				ImGui::EndCombo();
 			}
+            ImGui::SameLine();
+            ShowHelpMarker("TV broadcasting standard for non-VGA modes");
 
 			const char *region[] = { "Japan", "USA", "Europe", "Default" };
 			if (ImGui::BeginCombo("Region", region[settings.dreamcast.region], ImGuiComboFlags_None))
@@ -402,6 +404,8 @@ static void gui_display_settings()
 				}
 				ImGui::EndCombo();
 			}
+            ImGui::SameLine();
+            ShowHelpMarker("BIOS region");
 
 			const char *cable[] = { "VGA", "RGB Component", "TV Composite" };
 			if (ImGui::BeginCombo("Cable", cable[settings.dreamcast.cable == 0 ? 0 : settings.dreamcast.cable - 1], ImGuiComboFlags_None))
@@ -416,6 +420,8 @@ static void gui_display_settings()
 				}
 				ImGui::EndCombo();
 			}
+            ImGui::SameLine();
+            ShowHelpMarker("Video connection type");
 
 			ImGui::PopStyleVar();
 			ImGui::EndTabItem();
@@ -426,7 +432,11 @@ static void gui_display_settings()
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST
 			ImGui::SliderInt("Players", (int *)&playerCount, 1, 4);
 			ImGui::Checkbox("Emulate keyboard", &settings.input.DCKeyboard);
+            ImGui::SameLine();
+            ShowHelpMarker("Emulate a Dreamcast keyboard");
 			ImGui::Checkbox("Emulate mouse", &settings.input.DCMouse);
+            ImGui::SameLine();
+            ShowHelpMarker("Emulate a Dreamcast mouse");
 #endif
 			ImGui::SliderInt("Mouse sensitivity", (int *)&settings.input.MouseSensitivity, 1, 500);
 			ImGui::PopStyleVar();
@@ -440,31 +450,59 @@ static void gui_display_settings()
 		    {
 		    	ImGui::Columns(2, "renderers", false);
 		    	ImGui::RadioButton("Per Triangle", (int *)&settings.pvr.rend, 0);
+	            ImGui::SameLine();
+	            ShowHelpMarker("Sort transparent polygons per triangle. Fast but may produce graphical glitches");
 		    	ImGui::NextColumn();
 		    	ImGui::RadioButton("Per Pixel", (int *)&settings.pvr.rend, 3);
+	            ImGui::SameLine();
+	            ShowHelpMarker("Sort transparent polygons per pixel. Slower but accurate");
 		    	ImGui::Columns(1, NULL, false);
 		    }
 #endif
 		    if (ImGui::CollapsingHeader("Rendering Options", ImGuiTreeNodeFlags_DefaultOpen))
 		    {
 		    	ImGui::Checkbox("Synchronous Rendering", &settings.pvr.SynchronousRender);
+	            ImGui::SameLine();
+	            ShowHelpMarker("Reduce frame skipping by pausing the CPU when possible. Recommended for most platforms");
 		    	ImGui::Checkbox("Clipping", &settings.rend.Clipping);
+	            ImGui::SameLine();
+	            ShowHelpMarker("Enable clipping. May produce graphical errors when disabled");
 		    	ImGui::Checkbox("Shadows", &settings.rend.ModifierVolumes);
+	            ImGui::SameLine();
+	            ShowHelpMarker("Enable modifier volumes, usually used for shadows");
 		    	ImGui::Checkbox("Widescreen", &settings.rend.WideScreen);
+	            ImGui::SameLine();
+	            ShowHelpMarker("Draw geometry outside of the normal 4:3 aspect ratio. May produce graphical glitches in the revealed areas");
 		    	ImGui::Checkbox("Show FPS Counter", &settings.rend.ShowFPS);
+	            ImGui::SameLine();
+	            ShowHelpMarker("Show on-screen frame/sec counter");
 		    	ImGui::SliderInt("Frame Skipping", (int *)&settings.pvr.ta_skip, 0, 6);
+	            ImGui::SameLine();
+	            ShowHelpMarker("Number of frames to skip between two actually rendered frames");
 		    }
 		    if (ImGui::CollapsingHeader("Render to Texture", ImGuiTreeNodeFlags_DefaultOpen))
 		    {
 		    	ImGui::Checkbox("Copy to VRAM", &settings.rend.RenderToTextureBuffer);
+	            ImGui::SameLine();
+	            ShowHelpMarker("Copy rendered-to textures back to VRAM. Slower but accurate");
 		    	ImGui::SliderInt("Render to Texture Upscaling", (int *)&settings.rend.RenderToTextureUpscale, 1, 8);
+	            ImGui::SameLine();
+	            ShowHelpMarker("Upscale rendered-to textures. Should be the same as the screen or window upscale ratio, or lower for slow platforms");
 		    }
 		    if (ImGui::CollapsingHeader("Texture Upscaling", ImGuiTreeNodeFlags_DefaultOpen))
 		    {
 		    	ImGui::SliderInt("Texture Upscaling", (int *)&settings.rend.TextureUpscale, 1, 8);
+	            ImGui::SameLine();
+	            ShowHelpMarker("Upscale textures with the xBRZ algorithm. Only on fast platforms and for certain games");
 		    	ImGui::SliderInt("Upscaled Texture Max Size", (int *)&settings.rend.MaxFilteredTextureSize, 8, 1024);
+	            ImGui::SameLine();
+	            ShowHelpMarker("Textures larger than this dimension squared will not be upscaled");
 		    	ImGui::SliderInt("Max Threads", (int *)&settings.pvr.MaxThreads, 1, 8);
+	            ImGui::SameLine();
+	            ShowHelpMarker("Maximum number of threads to use for texture upscaling. Recommended: number of physical cores minus one");
 		    	ImGui::Checkbox("Load Custom Textures", &settings.rend.CustomTextures);
+	            ImGui::SameLine();
+	            ShowHelpMarker("Load custom/high-res textures from data/textures/<game id>");
 		    }
 			ImGui::PopStyleVar();
 			ImGui::EndTabItem();
@@ -473,8 +511,14 @@ static void gui_display_settings()
 		{
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
 			ImGui::Checkbox("Disable Sound", &settings.aica.NoSound);
+            ImGui::SameLine();
+            ShowHelpMarker("Disable the emulator sound output");
 			ImGui::Checkbox("Enable DSP", &settings.aica.NoBatch);
+            ImGui::SameLine();
+            ShowHelpMarker("Enable the Dreamcast Digital Sound Processor. Only recommended on fast and arm64 platforms");
 			ImGui::Checkbox("Limit FPS", &settings.aica.LimitFPS);
+            ImGui::SameLine();
+            ShowHelpMarker("Use the sound output to limit the speed of the emulator. Recommended in most cases");
 			ImGui::PopStyleVar();
 			ImGui::EndTabItem();
 		}
@@ -485,22 +529,36 @@ static void gui_display_settings()
 		    {
 				ImGui::Columns(2, "cpu_modes", false);
 				ImGui::RadioButton("Dynarec", &dynarec_enabled, 1);
+	            ImGui::SameLine();
+	            ShowHelpMarker("Use the dynamic recompiler. Recommended in most cases");
 				ImGui::NextColumn();
 				ImGui::RadioButton("Interpreter", &dynarec_enabled, 0);
+	            ImGui::SameLine();
+	            ShowHelpMarker("Use the interpreter. Very slow but may help in case of a dynarec problem");
 				ImGui::Columns(1, NULL, false);
 		    }
 		    if (ImGui::CollapsingHeader("Dynarec Options", dynarec_enabled ? ImGuiTreeNodeFlags_DefaultOpen : ImGuiTreeNodeFlags_None))
 		    {
 		    	ImGui::Checkbox("Safe Mode", &settings.dynarec.safemode);
+	            ImGui::SameLine();
+	            ShowHelpMarker("Do not optimize integer division. Recommended");
 		    	ImGui::Checkbox("Unstable Optimizations", &settings.dynarec.unstable_opt);
+	            ImGui::SameLine();
+	            ShowHelpMarker("Enable unsafe optimizations. May cause crash or environmental disaster");
 		    	ImGui::Checkbox("Idle Skip", &settings.dynarec.idleskip);
+	            ImGui::SameLine();
+	            ShowHelpMarker("Skip wait loops. Recommended");
 		    }
 		    if (ImGui::CollapsingHeader("Other", ImGuiTreeNodeFlags_DefaultOpen))
 		    {
 #ifndef GLES
 				ImGui::Checkbox("Serial Console", &settings.debug.SerialConsole);
+	            ImGui::SameLine();
+	            ShowHelpMarker("Dump the Dreamcast serial console to stdout");
 #endif
 				ImGui::Checkbox("Dump Textures", &settings.rend.DumpTextures);
+	            ImGui::SameLine();
+	            ShowHelpMarker("Dump all textures into data/texdump/<game id>");
 		    }
 			ImGui::PopStyleVar();
 			ImGui::EndTabItem();
