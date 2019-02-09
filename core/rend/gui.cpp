@@ -89,6 +89,15 @@ void gui_init()
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();
     //ImGui::StyleColorsClassic();
+    ImGui::GetStyle().TabRounding = 0.f;
+    ImGui::GetStyle().ItemSpacing = ImVec2(8, 8);		// from 8,4
+    ImGui::GetStyle().ItemInnerSpacing = ImVec2(4, 6);	// from 4,4
+    //ImGui::GetStyle().WindowRounding = 0.f;
+#ifdef _ANDROID
+    ImGui::GetStyle().GrabMinSize = 20.0f;				// from 10
+    ImGui::GetStyle().ScrollbarSize = 24.0f;			// from 16
+    ImGui::GetStyle().TouchExtraPadding = ImVec2(1, 1);	// from 0,0
+#endif
 
     // Setup Platform/Renderer bindings
 #ifdef GLES
@@ -265,7 +274,6 @@ static void gui_display_commands()
 
     ImGui::Begin("Reicast", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
 
-    ImGui::Spacing();
 	ImGui::Columns(2, "buttons", false);
 	if (ImGui::Button("Load State", ImVec2(150 * scaling, 50 * scaling)))
 	{
@@ -278,7 +286,6 @@ static void gui_display_commands()
 		gui_state = ClosedNoResume;
 		dc_savestate();
 	}
-	ImGui::Spacing(); ImGui::Spacing();
 
 	ImGui::NextColumn();
 	if (ImGui::Button("Settings", ImVec2(150 * scaling, 50 * scaling)))
@@ -290,7 +297,6 @@ static void gui_display_commands()
 	{
 		gui_state = Closed;
 	}
-	ImGui::Spacing(); ImGui::Spacing();
 
 	ImGui::NextColumn();
 	if (ImGui::Button("Restart", ImVec2(150 * scaling, 50 * scaling)))
@@ -303,7 +309,6 @@ static void gui_display_commands()
 	{
 		dc_resume_emu(false);
 	}
-	ImGui::Spacing();
 
     ImGui::End();
 
@@ -346,11 +351,14 @@ static void gui_display_settings()
 #endif
        	SaveSettings();
     }
-	ImGui::Spacing(); ImGui::Spacing();
+	ImVec2 normal_padding = ImGui::GetStyle().FramePadding;
+	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * scaling, 6 * scaling));		// from 4, 3
+
     if (ImGui::BeginTabBar("settings", ImGuiTabBarFlags_NoTooltip))
     {
 		if (ImGui::BeginTabItem("General"))
 		{
+			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
 			const char *languages[] = { "Japanese", "English", "German", "French", "Spanish", "Italian", "Default" };
 			if (ImGui::BeginCombo("Language", languages[settings.dreamcast.language], ImGuiComboFlags_None))
 			{
@@ -359,6 +367,8 @@ static void gui_display_settings()
 					bool is_selected = settings.dreamcast.language == i;
 					if (ImGui::Selectable(languages[i], &is_selected))
 						settings.dreamcast.language = i;
+	                if (is_selected)
+	                    ImGui::SetItemDefaultFocus();
 				}
 				ImGui::EndCombo();
 			}
@@ -373,6 +383,8 @@ static void gui_display_settings()
 					bool is_selected = settings.dreamcast.broadcast == i;
 					if (ImGui::Selectable(broadcast[i], &is_selected))
 						settings.dreamcast.broadcast = i;
+	                if (is_selected)
+	                    ImGui::SetItemDefaultFocus();
 				}
 				ImGui::EndCombo();
 			}
@@ -385,85 +397,117 @@ static void gui_display_settings()
 					bool is_selected = settings.dreamcast.region == i;
 					if (ImGui::Selectable(region[i], &is_selected))
 						settings.dreamcast.region = i;
+	                if (is_selected)
+	                    ImGui::SetItemDefaultFocus();
 				}
 				ImGui::EndCombo();
 			}
 
-			const char *cable[] = { "VGA", "VGA", "RGB Component", "TV Composite" };
-			if (ImGui::BeginCombo("Cable", cable[settings.dreamcast.cable], ImGuiComboFlags_None))
+			const char *cable[] = { "VGA", "RGB Component", "TV Composite" };
+			if (ImGui::BeginCombo("Cable", cable[settings.dreamcast.cable == 0 ? 0 : settings.dreamcast.cable - 1], ImGuiComboFlags_None))
 			{
 				for (int i = 0; i < IM_ARRAYSIZE(cable); i++)
 				{
-					bool is_selected = settings.dreamcast.cable == i;
+					bool is_selected = i == 0 ? settings.dreamcast.cable <= 1 : settings.dreamcast.cable - 1 == i;
 					if (ImGui::Selectable(cable[i], &is_selected))
-						settings.dreamcast.cable = i;
+						settings.dreamcast.cable = i == 0 ? 0 : i + 1;
+	                if (is_selected)
+	                    ImGui::SetItemDefaultFocus();
 				}
 				ImGui::EndCombo();
 			}
 
+			ImGui::PopStyleVar();
 			ImGui::EndTabItem();
 		}
 		if (ImGui::BeginTabItem("Controls"))
 		{
+			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST
 			ImGui::SliderInt("Players", (int *)&playerCount, 1, 4);
 			ImGui::Checkbox("Emulate keyboard", &settings.input.DCKeyboard);
 			ImGui::Checkbox("Emulate mouse", &settings.input.DCMouse);
 #endif
 			ImGui::SliderInt("Mouse sensitivity", (int *)&settings.input.MouseSensitivity, 1, 500);
+			ImGui::PopStyleVar();
 			ImGui::EndTabItem();
 		}
 		if (ImGui::BeginTabItem("Video"))
 		{
-			ImGui::Text("Renderer");
-			ImGui::Columns(2, "renderers", false);
-			ImGui::RadioButton("Per-triangle", (int *)&settings.pvr.rend, 0);
-			ImGui::NextColumn();
-			ImGui::RadioButton("Per-pixel", (int *)&settings.pvr.rend, 3);
-			ImGui::Columns(1, NULL, false);
-			ImGui::Separator();
-			ImGui::Checkbox("Synchronous rendering", &settings.pvr.SynchronousRender);
-			ImGui::Checkbox("Clipping", &settings.rend.Clipping);
-			ImGui::Checkbox("Shadows", &settings.rend.ModifierVolumes);
-			ImGui::Checkbox("Widescreen", &settings.rend.WideScreen);
-			ImGui::Checkbox("Show FPS counter", &settings.rend.ShowFPS);
-			ImGui::SliderInt("Frame skipping", (int *)&settings.pvr.ta_skip, 0, 6);
-			ImGui::Separator();
-			ImGui::Checkbox("Render textures to VRAM", &settings.rend.RenderToTextureBuffer);
-			ImGui::SliderInt("Render to texture upscaling", (int *)&settings.rend.RenderToTextureUpscale, 1, 8);
-			ImGui::Separator();
-			ImGui::SliderInt("Texture upscaling", (int *)&settings.rend.TextureUpscale, 1, 8);
-			ImGui::SliderInt("Upscaled texture max size", (int *)&settings.rend.MaxFilteredTextureSize, 8, 1024);
-			ImGui::SliderInt("Max threads", (int *)&settings.pvr.MaxThreads, 1, 8);
-			ImGui::Checkbox("Load custom textures", &settings.rend.CustomTextures);
+			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
+#ifndef GLES
+		    if (ImGui::CollapsingHeader("Transparent Sorting", ImGuiTreeNodeFlags_DefaultOpen))
+		    {
+		    	ImGui::Columns(2, "renderers", false);
+		    	ImGui::RadioButton("Per Triangle", (int *)&settings.pvr.rend, 0);
+		    	ImGui::NextColumn();
+		    	ImGui::RadioButton("Per Pixel", (int *)&settings.pvr.rend, 3);
+		    	ImGui::Columns(1, NULL, false);
+		    }
+#endif
+		    if (ImGui::CollapsingHeader("Rendering Options", ImGuiTreeNodeFlags_DefaultOpen))
+		    {
+		    	ImGui::Checkbox("Synchronous Rendering", &settings.pvr.SynchronousRender);
+		    	ImGui::Checkbox("Clipping", &settings.rend.Clipping);
+		    	ImGui::Checkbox("Shadows", &settings.rend.ModifierVolumes);
+		    	ImGui::Checkbox("Widescreen", &settings.rend.WideScreen);
+		    	ImGui::Checkbox("Show FPS Counter", &settings.rend.ShowFPS);
+		    	ImGui::SliderInt("Frame Skipping", (int *)&settings.pvr.ta_skip, 0, 6);
+		    }
+		    if (ImGui::CollapsingHeader("Render to Texture", ImGuiTreeNodeFlags_DefaultOpen))
+		    {
+		    	ImGui::Checkbox("Copy to VRAM", &settings.rend.RenderToTextureBuffer);
+		    	ImGui::SliderInt("Render to Texture Upscaling", (int *)&settings.rend.RenderToTextureUpscale, 1, 8);
+		    }
+		    if (ImGui::CollapsingHeader("Texture Upscaling", ImGuiTreeNodeFlags_DefaultOpen))
+		    {
+		    	ImGui::SliderInt("Texture Upscaling", (int *)&settings.rend.TextureUpscale, 1, 8);
+		    	ImGui::SliderInt("Upscaled Texture Max Size", (int *)&settings.rend.MaxFilteredTextureSize, 8, 1024);
+		    	ImGui::SliderInt("Max Threads", (int *)&settings.pvr.MaxThreads, 1, 8);
+		    	ImGui::Checkbox("Load Custom Textures", &settings.rend.CustomTextures);
+		    }
+			ImGui::PopStyleVar();
 			ImGui::EndTabItem();
 		}
 		if (ImGui::BeginTabItem("Audio"))
 		{
-			ImGui::Checkbox("Disable sound", &settings.aica.NoSound);
+			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
+			ImGui::Checkbox("Disable Sound", &settings.aica.NoSound);
 			ImGui::Checkbox("Enable DSP", &settings.aica.NoBatch);
 			ImGui::Checkbox("Limit FPS", &settings.aica.LimitFPS);
+			ImGui::PopStyleVar();
 			ImGui::EndTabItem();
 		}
 		if (ImGui::BeginTabItem("Advanced"))
 		{
-			ImGui::Text("CPU Mode");
-			ImGui::Columns(2, "cpu_modes", false);
-			ImGui::RadioButton("Dynarec", &dynarec_enabled, 1);
-			ImGui::NextColumn();
-			ImGui::RadioButton("Interpreter", &dynarec_enabled, 0);
-			ImGui::Columns(1, NULL, false);
-			ImGui::Separator();
-			ImGui::Checkbox("Dynarec safe mode", &settings.dynarec.safemode);
-			ImGui::Checkbox("Dynarec unstable opt.", &settings.dynarec.unstable_opt);
-			ImGui::Checkbox("Dynarec idle skip", &settings.dynarec.idleskip);
-			ImGui::Checkbox("Serial console", &settings.debug.SerialConsole);
-			ImGui::Checkbox("Dump textures", &settings.rend.DumpTextures);
+			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
+		    if (ImGui::CollapsingHeader("CPU Mode", ImGuiTreeNodeFlags_DefaultOpen))
+		    {
+				ImGui::Columns(2, "cpu_modes", false);
+				ImGui::RadioButton("Dynarec", &dynarec_enabled, 1);
+				ImGui::NextColumn();
+				ImGui::RadioButton("Interpreter", &dynarec_enabled, 0);
+				ImGui::Columns(1, NULL, false);
+		    }
+		    if (ImGui::CollapsingHeader("Dynarec Options", dynarec_enabled ? ImGuiTreeNodeFlags_DefaultOpen : ImGuiTreeNodeFlags_None))
+		    {
+		    	ImGui::Checkbox("Safe Mode", &settings.dynarec.safemode);
+		    	ImGui::Checkbox("Unstable Optimizations", &settings.dynarec.unstable_opt);
+		    	ImGui::Checkbox("Idle Skip", &settings.dynarec.idleskip);
+		    }
+		    if (ImGui::CollapsingHeader("Other", ImGuiTreeNodeFlags_DefaultOpen))
+		    {
+#ifndef GLES
+				ImGui::Checkbox("Serial Console", &settings.debug.SerialConsole);
+#endif
+				ImGui::Checkbox("Dump Textures", &settings.rend.DumpTextures);
+		    }
+			ImGui::PopStyleVar();
 			ImGui::EndTabItem();
 		}
-
 		ImGui::EndTabBar();
     }
+    ImGui::PopStyleVar();
     ImGui::End();
 
     ImGui::Render();
