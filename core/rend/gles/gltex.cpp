@@ -432,6 +432,17 @@ void createTexture(u32 w, u32 h, u32 textureFormat, u32 textureType, GLuint & te
 	glTexImage2D(GL_TEXTURE_2D, 0, textureFormat, w, h, 0, textureFormat, textureType, 0);
 }
 
+double binaryFractionToDouble(u32 numberIntegerPart, u32 numberFractionalPart, u32 fractionalPartLength)
+{
+	double sum = 0;
+
+	for (u32 i = 1; i <= fractionalPartLength; ++i) {
+		sum += !!(numberFractionalPart & (1 << fractionalPartLength - i)) * pow(.5, i);
+	}
+
+	return numberIntegerPart + sum;
+}
+
 map<u32, FBT> renderedTextures;
 
 void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
@@ -444,6 +455,12 @@ void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 		renderedTexture = &iter->second;
 	} else {
 		renderedTexture = &renderedTextures[location];
+	}
+
+	u32 fbhViewport = fbh;
+	if (SCALER_CTL.vscalefactor != 0x0400) {
+		fbh = round(fbw * binaryFractionToDouble(
+			SCALER_CTL.vscalefactor >> 10, SCALER_CTL.vscalefactor & 0x3FF, 10));
 	}
 
 	renderedTexture->texAddress = location;
@@ -526,7 +543,7 @@ void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 		glBindFramebuffer(GL_FRAMEBUFFER, renderedTexture->fbo);
 	}
 
-	glViewport(0, 0, fbw, fbh);
+	glViewport(0, 0, fbw, fbhViewport);
 }
 
 GLint checkSupportedReadFormat()
