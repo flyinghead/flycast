@@ -563,6 +563,8 @@ bool isExtensionSupported(const char * name) {
 		screen_width=w;
 		screen_height=h;
 
+		gl.renderer = (char *)glGetString(GL_RENDERER);
+
 		printf("EGL config: %p, %08X, %08X %dx%d\n",gl.setup.context,gl.setup.display,gl.setup.surface,w,h);
 		return true;
 	}
@@ -1983,16 +1985,14 @@ bool RenderFrame()
 	//setup render target first
 	if (is_rtt)
 	{
-		const char * renderer = (char *)glGetString(GL_RENDERER);
-		const char * adreno506Renderer = "Adreno (TM) 506";
 		GLuint channels, format;
 		switch(FB_W_CTRL.fb_packmode)
 		{
 		case 0: //0x0   0555 KRGB 16 bit  (default)	Bit 15 is the value of fb_kval[7].
 			channels=GL_RGBA;
 			// When using RGBA5551 format on Adreno 506, rendering is extremely slow
-			// (probably by some internal format conversions), thus using GL_UNSIGNED_BYTE
-			if (!strcmp(renderer, adreno506Renderer)) {
+			// (probably by some internal format conversions), thus using GL_UNSIGNED_BYTE for Adreno
+			if (!strncmp(gl.renderer, gl.workarounds.adrenoRenderer, 6)) {
 				format = GL_UNSIGNED_BYTE;
 			}
 			else {
@@ -2013,8 +2013,8 @@ bool RenderFrame()
 		case 3://0x3    1555 ARGB 16 bit    The alpha value is determined by comparison with the value of fb_alpha_threshold.
 			channels = GL_RGBA;
 			// When using RGBA5551 format on Adreno 506, rendering is extremely slow
-			// (probably by some internal format conversions), thus using GL_UNSIGNED_BYTE
-			if (!strcmp(renderer, adreno506Renderer)) {
+			// (probably by some internal format conversions), thus using GL_UNSIGNED_BYTE for Adreno
+			if (!strncmp(gl.renderer, gl.workarounds.adrenoRenderer, 6)) {
 				format = GL_UNSIGNED_BYTE;
 			}
 			else {

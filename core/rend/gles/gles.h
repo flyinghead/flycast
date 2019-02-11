@@ -127,6 +127,11 @@ struct gl_ctx
 
 	struct
 	{
+		const char *adrenoRenderer = "Adreno";
+	} workarounds;
+
+	struct
+	{
 		GLuint geometry,modvols,idxs,idxs2;
 #ifndef GLES
 		GLuint vao;
@@ -135,6 +140,7 @@ struct gl_ctx
 
 	GLuint fullscreenQuadShader;
 
+	const char *renderer;
 	const char *gl_version;
 	const char *glsl_version_header;
 	int gl_major;
