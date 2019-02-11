@@ -459,7 +459,7 @@ void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 
 	u32 fbhViewport = fbh;
 	if (SCALER_CTL.vscalefactor != 0x0400) {
-		fbh = round(fbw * binaryFractionToDouble(
+		fbh = round(fbh * binaryFractionToDouble(
 			SCALER_CTL.vscalefactor >> 10, SCALER_CTL.vscalefactor & 0x3FF, 10));
 	}
 
