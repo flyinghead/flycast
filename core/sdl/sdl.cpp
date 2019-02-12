@@ -10,6 +10,7 @@
 #include "khronos/GL3/gl3w.h"
 #endif
 #endif
+#include "hw/maple/maple_devs.h"
 #include "sdl_gamepad.h"
 #include "sdl_keyboard.h"
 
@@ -23,8 +24,6 @@ static SDL_GLContext glcontext;
 #endif
 #define WINDOW_HEIGHT  480
 
-static SDLGamepadDevice* sdl_gamepads[4] = { NULL };
-static SDL_JoystickID joystick_ids[ARRAY_SIZE(sdl_gamepads)] = { 0 };
 static SDLMouseGamepadDevice* sdl_mouse_gamepad = NULL;
 static SDLKbGamepadDevice* sdl_kb_gamepad = NULL;
 static SDLKeyboardDevice* sdl_keyboard = NULL;
@@ -44,6 +43,25 @@ extern s32 mo_y_abs;
 
 extern int screen_width, screen_height;
 
+static void sdl_open_joystick(int index)
+{
+	SDL_Joystick *pJoystick = SDL_JoystickOpen(index);
+
+	if (pJoystick == NULL)
+	{
+		printf("SDL: Cannot open joystick %d\n", index + 1);
+		return;
+	}
+	new SDLGamepadDevice(index < MAPLE_PORTS ? index : -1, pJoystick);	// TODO save/restore maple port
+}
+
+static void sdl_close_joystick(SDL_JoystickID instance)
+{
+	SDLGamepadDevice *device = SDLGamepadDevice::GetSDLGamepad(instance);
+	if (device != NULL)
+		delete device;
+}
+
 void input_sdl_init()
 {
 	if (SDL_WasInit(SDL_INIT_JOYSTICK) == 0)
@@ -53,25 +71,10 @@ void input_sdl_init()
 			die("error initializing SDL Joystick subsystem");
 		}
 	}
-	// Open joystick device
-	int numjoys = SDL_NumJoysticks();
-	printf("Number of Joysticks found = %i\n", numjoys);
-	for (int i = 0; i < numjoys && i < ARRAY_SIZE(sdl_gamepads); i++)
-	{
-		SDL_Joystick *pJoystick = SDL_JoystickOpen(i);
 
-		if (pJoystick == NULL)
-		{
-			printf("Cannot open joystick %d\n", i + 1);
-			continue;
-		}
-		joystick_ids[i] = SDL_JoystickInstanceID(pJoystick);
-
-		sdl_gamepads[i] = new SDLGamepadDevice(i, pJoystick);
-	}
 	SDL_SetRelativeMouseMode(SDL_FALSE);
 
-	sdl_keyboard = new SDLKeyboardDevice(0);		// FIXME ports!
+	sdl_keyboard = new SDLKeyboardDevice(0);		// FIXME maple ports!
 	sdl_kb_gamepad = new SDLKbGamepadDevice(0);
 	sdl_mouse_gamepad = new SDLMouseGamepadDevice(0);
 }
@@ -113,20 +116,18 @@ void input_sdl_handle(u32 port)
 				break;
 			case SDL_JOYBUTTONDOWN:
 			case SDL_JOYBUTTONUP:
-				for (int i = 0; i < ARRAY_SIZE(sdl_gamepads); i++)
-					if (joystick_ids[i] == event.jbutton.which)
-					{
-						sdl_gamepads[i]->gamepad_btn_input(event.jbutton.button, event.type == SDL_JOYBUTTONDOWN);
-						break;
-					}
+				{
+					SDLGamepadDevice *device = SDLGamepadDevice::GetSDLGamepad((SDL_JoystickID)event.jbutton.which);
+					if (device != NULL)
+						device->gamepad_btn_input(event.jbutton.button, event.type == SDL_JOYBUTTONDOWN);
+				}
 				break;
 			case SDL_JOYAXISMOTION:
-				for (int i = 0; i < ARRAY_SIZE(sdl_gamepads); i++)
-					if (joystick_ids[i] == event.jaxis.which)
-					{
-						sdl_gamepads[i]->gamepad_axis_input(event.jaxis.axis, event.jaxis.value);
-						break;
-					}
+				{
+					SDLGamepadDevice *device = SDLGamepadDevice::GetSDLGamepad((SDL_JoystickID)event.jaxis.which);
+					if (device != NULL)
+						device->gamepad_axis_input(event.jaxis.axis, event.jaxis.value);
+				}
 				break;
 
 			case SDL_MOUSEMOTION:
@@ -152,6 +153,14 @@ void input_sdl_handle(u32 port)
 					break;
 				}
 				sdl_mouse_gamepad->gamepad_btn_input(event.button.button, event.button.state == SDL_PRESSED);
+				break;
+
+			case SDL_JOYDEVICEADDED:
+				sdl_open_joystick(event.jdevice.which);
+				break;
+
+			case SDL_JOYDEVICEREMOVED:
+				sdl_close_joystick((SDL_JoystickID)event.jdevice.which);
 				break;
 		}
 	}

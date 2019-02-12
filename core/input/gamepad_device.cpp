@@ -137,7 +137,7 @@ unsigned int GamepadDevice::get_axis_range(u32 axis) {
 
 std::string GamepadDevice::make_mapping_filename()
 {
-	std::string mapping_file = std::string(api_name()) + "_" + name();
+	std::string mapping_file = api_name() + "_" + name();
 	std::replace(mapping_file.begin(), mapping_file.end(), '/', '-');
 	std::replace(mapping_file.begin(), mapping_file.end(), '\\', '-');
 	std::replace(mapping_file.begin(), mapping_file.end(), ':', '-');

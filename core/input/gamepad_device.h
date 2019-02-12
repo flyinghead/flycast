@@ -26,8 +26,8 @@ class GamepadDevice
 {
 	typedef void (*input_detected_cb)(u32 code);
 public:
-	virtual const char* api_name() = 0;
-	virtual const char* name() = 0;
+	const std::string& api_name() { return _api_name; }
+	const std::string& name() { return _name; }
 	int maple_port() { return _maple_port; }
 	void set_maple_port(int port) { _maple_port = port; }
 	void gamepad_btn_input(u32 code, bool pressed);
@@ -64,7 +64,7 @@ public:
 	static GamepadDevice *GetGamepad(int index);
 
 protected:
-	GamepadDevice(int maple_port) : _maple_port(maple_port), input_mapper(NULL), _input_detected(NULL) {
+	GamepadDevice(int maple_port, const char *api_name) : _api_name(api_name), _maple_port(maple_port), input_mapper(NULL), _input_detected(NULL) {
 		_gamepads_mutex.lock();
 		_gamepads.push_back(this);
 		_gamepads_mutex.unlock();
@@ -73,6 +73,7 @@ protected:
 
 	virtual void load_axis_min_max(u32 axis) {}
 
+	std::string _name;
 	InputMapping *input_mapper;
 	std::map<u32, int> axis_min_values;
 	std::map<u32, unsigned int> axis_ranges;
@@ -82,6 +83,7 @@ private:
 	unsigned int get_axis_range(u32 axis);
 	std::string make_mapping_filename();
 
+	std::string _api_name;
 	int _maple_port;
 	bool _detecting_button = false;
 	input_detected_cb _input_detected;

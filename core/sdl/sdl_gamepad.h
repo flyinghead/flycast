@@ -44,29 +44,47 @@ public:
 class SDLGamepadDevice : public GamepadDevice
 {
 public:
-	SDLGamepadDevice(int maple_port, SDL_Joystick* sdl_joystick) : GamepadDevice(maple_port), sdl_joystick(sdl_joystick)
+	SDLGamepadDevice(int maple_port, SDL_Joystick* sdl_joystick) : GamepadDevice(maple_port, "SDL"), sdl_joystick(sdl_joystick)
 	{
 		_name = SDL_JoystickName(sdl_joystick);
+		sdl_joystick_instance = SDL_JoystickInstanceID(sdl_joystick);
+		printf("SDL: Opened joystick on port %d: '%s' ", maple_port, _name.c_str());
 		if (!find_mapping())
 		{
 			if (_name == "Microsoft X-Box 360 pad")
 			{
 				input_mapper = new Xbox360InputMapping();
-				printf("Using Xbox 360 mapping\n");
+				printf("using Xbox 360 mapping\n");
 			}
 			else
 			{
 				input_mapper = new DefaultInputMapping();
-				printf("Using default mapping\n");
+				printf("using default mapping\n");
 			}
 			save_mapping();
 		}
+		else
+			printf("using custom mapping '%s'\n", input_mapper->name.c_str());
+		auto it = sdl_gamepads.find(sdl_joystick_instance);
+		if (it != sdl_gamepads.end())
+			delete it->second;
+		sdl_gamepads[sdl_joystick_instance] = this;
 	}
-	virtual const char* api_name() override { return "SDL"; }
-	virtual const char* name() override { return _name.c_str(); }
 	virtual ~SDLGamepadDevice() override
 	{
+		printf("SDL: Joystick '%s' on port %d disconnected\n", _name.c_str(), maple_port());
 		SDL_JoystickClose(sdl_joystick);
+		sdl_gamepads.erase(sdl_joystick_instance);
+	}
+	SDL_JoystickID sdl_instance() { return sdl_joystick_instance; }
+
+	static SDLGamepadDevice *GetSDLGamepad(SDL_JoystickID id)
+	{
+		auto it = sdl_gamepads.find(id);
+		if (it != sdl_gamepads.end())
+			return it->second;
+		else
+			return NULL;
 	}
 
 protected:
@@ -77,9 +95,12 @@ protected:
 	}
 
 private:
-	std::string _name;
 	SDL_Joystick* sdl_joystick;
+	SDL_JoystickID sdl_joystick_instance;
+	static std::map<SDL_JoystickID, SDLGamepadDevice*> sdl_gamepads;
 };
+
+std::map<SDL_JoystickID, SDLGamepadDevice*> SDLGamepadDevice::sdl_gamepads;
 
 class KbInputMapping : public InputMapping
 {
@@ -107,13 +128,12 @@ public:
 class SDLKbGamepadDevice : public GamepadDevice
 {
 public:
-	SDLKbGamepadDevice(int maple_port) : GamepadDevice(maple_port)
+	SDLKbGamepadDevice(int maple_port) : GamepadDevice(maple_port, "SDL")
 	{
+		_name = "Keyboard";
 		if (!find_mapping())
 			input_mapper = new KbInputMapping();
 	}
-	virtual const char* api_name() override { return "SDL"; }
-	virtual const char* name() override { return "Keyboard"; }
 	virtual ~SDLKbGamepadDevice() {}
 };
 
@@ -134,13 +154,12 @@ public:
 class SDLMouseGamepadDevice : public GamepadDevice
 {
 public:
-	SDLMouseGamepadDevice(int maple_port) : GamepadDevice(maple_port)
+	SDLMouseGamepadDevice(int maple_port) : GamepadDevice(maple_port, "SDL")
 	{
+		_name = "Mouse";
 		if (!find_mapping())
 			input_mapper = new MouseInputMapping();
 	}
-	virtual const char* api_name() override { return "SDL"; }
-	virtual const char* name() override { return "Mouse"; }
 	virtual ~SDLMouseGamepadDevice() {}
 };
 

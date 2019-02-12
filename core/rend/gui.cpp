@@ -616,9 +616,9 @@ static void gui_display_settings()
 					GamepadDevice *gamepad = GamepadDevice::GetGamepad(i);
 					if (gamepad == NULL)
 						continue;
-					ImGui::Text("%s", gamepad->api_name());
+					ImGui::Text("%s", gamepad->api_name().c_str());
 					ImGui::NextColumn();
-					ImGui::Text("%s", gamepad->name());
+					ImGui::Text("%s", gamepad->name().c_str());
 					ImGui::NextColumn();
 					char port_name[32];
 					sprintf(port_name, "##mapleport%d", i);
