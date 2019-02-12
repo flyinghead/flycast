@@ -262,6 +262,8 @@
 		AEE6277C220D7B7E00EC7E89 /* imgui_draw.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEE62771220D7B7E00EC7E89 /* imgui_draw.cpp */; };
 		AEE6277D220D7B7E00EC7E89 /* imgui_impl_opengl3.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEE62772220D7B7E00EC7E89 /* imgui_impl_opengl3.cpp */; };
 		AEE6277E220D7B7E00EC7E89 /* imgui_widgets.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEE62775220D7B7E00EC7E89 /* imgui_widgets.cpp */; };
+		AEE6278722131BB500EC7E89 /* gamepad_device.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEE6278222131BB500EC7E89 /* gamepad_device.cpp */; };
+		AEE6278822131BB500EC7E89 /* mapping.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEE6278522131BB500EC7E89 /* mapping.cpp */; };
 		AEFF7ECC214AEC810068CE11 /* modem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEFF7EC7214AEC800068CE11 /* modem.cpp */; };
 		AEFF7F4D214D9D590068CE11 /* pico_arp.c in Sources */ = {isa = PBXBuildFile; fileRef = AEFF7EFA214D9D590068CE11 /* pico_arp.c */; };
 		AEFF7F4E214D9D590068CE11 /* pico_dev_ppp.c in Sources */ = {isa = PBXBuildFile; fileRef = AEFF7EFE214D9D590068CE11 /* pico_dev_ppp.c */; };
@@ -787,6 +789,12 @@
 		AEE62777220D7B7E00EC7E89 /* imstb_textedit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = imstb_textedit.h; sourceTree = "<group>"; };
 		AEE62778220D7B7E00EC7E89 /* imstb_truetype.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = imstb_truetype.h; sourceTree = "<group>"; };
 		AEE62779220D7B7E00EC7E89 /* roboto_medium.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = roboto_medium.h; sourceTree = "<group>"; };
+		AEE6278122131BB500EC7E89 /* gamepad.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = gamepad.h; sourceTree = "<group>"; };
+		AEE6278222131BB500EC7E89 /* gamepad_device.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = gamepad_device.cpp; sourceTree = "<group>"; };
+		AEE6278322131BB500EC7E89 /* gamepad_device.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = gamepad_device.h; sourceTree = "<group>"; };
+		AEE6278422131BB500EC7E89 /* keyboard_device.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = keyboard_device.h; sourceTree = "<group>"; };
+		AEE6278522131BB500EC7E89 /* mapping.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = mapping.cpp; sourceTree = "<group>"; };
+		AEE6278622131BB500EC7E89 /* mapping.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mapping.h; sourceTree = "<group>"; };
 		AEFF7EC7214AEC800068CE11 /* modem.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = modem.cpp; sourceTree = "<group>"; };
 		AEFF7EC8214AEC800068CE11 /* modem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = modem.h; sourceTree = "<group>"; };
 		AEFF7EC9214AEC800068CE11 /* modem_regs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = modem_regs.h; sourceTree = "<group>"; };
@@ -971,6 +979,7 @@
 				84B7BDB81B72720100F9733F /* emitter */,
 				84B7BDC61B72720100F9733F /* hw */,
 				84B7BE421B72720100F9733F /* imgread */,
+				AEE6278022131BB500EC7E89 /* input */,
 				84B7BE4D1B72720100F9733F /* khronos */,
 				84B7BE641B72720100F9733F /* linux */,
 				84B7BE6E1B72720200F9733F /* nullDC.cpp */,
@@ -1907,6 +1916,20 @@
 			path = imgui;
 			sourceTree = "<group>";
 		};
+		AEE6278022131BB500EC7E89 /* input */ = {
+			isa = PBXGroup;
+			children = (
+				AEE6278122131BB500EC7E89 /* gamepad.h */,
+				AEE6278222131BB500EC7E89 /* gamepad_device.cpp */,
+				AEE6278322131BB500EC7E89 /* gamepad_device.h */,
+				AEE6278422131BB500EC7E89 /* keyboard_device.h */,
+				AEE6278522131BB500EC7E89 /* mapping.cpp */,
+				AEE6278622131BB500EC7E89 /* mapping.h */,
+			);
+			name = input;
+			path = ../../../core/input;
+			sourceTree = "<group>";
+		};
 		AEFF7EC6214AEC800068CE11 /* modem */ = {
 			isa = PBXGroup;
 			children = (
@@ -2234,6 +2257,7 @@
 				84B7BF7B1B72720200F9733F /* gltex.cpp in Sources */,
 				84B7BEF41B72720200F9733F /* zip_filerange_crc.c in Sources */,
 				AE1E294020A96B0B00FC6BA2 /* rec_x64.cpp in Sources */,
+				AEE6278822131BB500EC7E89 /* mapping.cpp in Sources */,
 				AE80EDC521594ACE00F7800F /* dns.cpp in Sources */,
 				AEFF7F76214D9D590068CE11 /* pico_tree.c in Sources */,
 				AEE6277A220D7B7E00EC7E89 /* imgui.cpp in Sources */,
@@ -2269,6 +2293,7 @@
 				AE649C28218C553A00EF4A81 /* CpuArch.c in Sources */,
 				84B7BEE01B72720200F9733F /* mkstemp.c in Sources */,
 				84B7BF261B72720200F9733F /* aica_if.cpp in Sources */,
+				AEE6278722131BB500EC7E89 /* gamepad_device.cpp in Sources */,
 				84B7BF171B72720200F9733F /* compress.c in Sources */,
 				AE649C3C218C555600EF4A81 /* cdrom.c in Sources */,
 				AE649BF3218C552500EF4A81 /* bitmath.c in Sources */,
