@@ -59,8 +59,7 @@ struct IMapleConfigMap
 };
 
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-void mcfg_CreateDevicesFromConfig();
-void mcfg_CreateController(u32 bus, MapleDeviceType maple_type1, MapleDeviceType maple_type2);
+void mcfg_CreateDevices();
 #else
 void mcfg_CreateNAOMIJamma();
 void mcfg_CreateAtomisWaveControllers();

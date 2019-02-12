@@ -105,7 +105,7 @@ void os_CreateWindow() {
 
 void os_SetupInput() {
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-	mcfg_CreateDevicesFromConfig();
+	mcfg_CreateDevices();
 #endif
 }
 

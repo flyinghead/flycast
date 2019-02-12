@@ -11,7 +11,7 @@ RZDCY_MODULES	:=	cfg/ hw/arm7/ hw/aica/ hw/holly/ hw/ hw/gdrom/ hw/maple/ hw/mod
  hw/extdev/ hw/arm/ hw/naomi/ imgread/ ./ deps/coreio/ deps/zlib/ deps/chdr/ deps/crypto/ \
  deps/libelf/ deps/chdpsr/ arm_emitter/ rend/ reios/ deps/libpng/ deps/xbrz/ \
  deps/picotcp/modules/ deps/picotcp/stack/ deps/xxhash/ deps/libzip/ deps/imgui/ \
- archive/
+ archive/ input/
 
 ifdef CHD5_LZMA
 	RZDCY_MODULES += deps/lzma/

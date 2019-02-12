@@ -25,7 +25,8 @@
 #include "imgui/imgui_impl_opengl3.h"
 #include "imgui/roboto_medium.h"
 #include "gles/gles.h"
-#include "linux-dist/main.h"	// FIXME for kcode[] and DC_BTN_x
+#include "input/gamepad_device.h"
+#include "linux-dist/main.h"	// FIXME for kcode[]
 
 extern bool dc_pause_emu();
 extern void dc_resume_emu(bool continue_running);
@@ -45,7 +46,7 @@ extern bool renderer_changed;
 int screen_dpi = 96;
 
 static bool inited = false;
-static float scaling = 1.f;
+static float scaling = 1;
 static enum { Closed, Commands, Settings, ClosedNoResume } gui_state;
 static bool settings_opening;
 static bool touch_up;
@@ -60,6 +61,8 @@ void gui_init()
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
+
+	io.IniFilename = NULL;
 
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;   // Enable Gamepad Controls
@@ -89,10 +92,10 @@ void gui_init()
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();
     //ImGui::StyleColorsClassic();
-    ImGui::GetStyle().TabRounding = 0.f;
+    ImGui::GetStyle().TabRounding = 0;
     ImGui::GetStyle().ItemSpacing = ImVec2(8, 8);		// from 8,4
     ImGui::GetStyle().ItemInnerSpacing = ImVec2(4, 6);	// from 4,4
-    //ImGui::GetStyle().WindowRounding = 0.f;
+    //ImGui::GetStyle().WindowRounding = 0;
 #ifdef _ANDROID
     ImGui::GetStyle().GrabMinSize = 20.0f;				// from 10
     ImGui::GetStyle().ScrollbarSize = 24.0f;			// from 16
@@ -317,6 +320,128 @@ static void gui_display_commands()
     settings_opening = false;
 }
 
+const char *maple_device_types[] = { "None", "Sega Controller", "Light Gun", "Keyboard", "Mouse" };
+const char *maple_expansion_device_types[] = { "None", "Sega VMU", "Purupuru", "Microphone" };
+
+static const char *maple_device_name(MapleDeviceType type)
+{
+	switch (type)
+	{
+	case MDT_SegaController:
+		return maple_device_types[1];
+	case MDT_LightGun:
+		return maple_device_types[2];
+	case MDT_Keyboard:
+		return maple_device_types[3];
+	case MDT_Mouse:
+		return maple_device_types[4];
+	case MDT_None:
+	default:
+		return maple_device_types[0];
+	}
+}
+
+static MapleDeviceType maple_device_type_from_index(int idx)
+{
+	switch (idx)
+	{
+	case 1:
+		return MDT_SegaController;
+	case 2:
+		return MDT_LightGun;
+	case 3:
+		return MDT_Keyboard;
+	case 4:
+		return MDT_Mouse;
+	case 0:
+	default:
+		return MDT_None;
+	}
+}
+
+static const char *maple_expansion_device_name(MapleDeviceType type)
+{
+	switch (type)
+	{
+	case MDT_SegaVMU:
+		return maple_expansion_device_types[1];
+	case MDT_PurupuruPack:
+		return maple_expansion_device_types[2];
+	case MDT_Microphone:
+		return maple_expansion_device_types[3];
+	case MDT_None:
+	default:
+		return maple_expansion_device_types[0];
+	}
+}
+
+const char *maple_ports[] = { "None", "A", "B", "C", "D" };
+const DreamcastKey button_keys[] = { DC_BTN_START, DC_BTN_A, DC_BTN_B, DC_BTN_X, DC_BTN_Y, DC_DPAD_UP, DC_DPAD_DOWN, DC_DPAD_LEFT, DC_DPAD_RIGHT,
+		EMU_BTN_MENU, EMU_BTN_ESCAPE, EMU_BTN_TRIGGER_LEFT, EMU_BTN_TRIGGER_RIGHT,
+		DC_BTN_C, DC_BTN_D, DC_BTN_Z, DC_DPAD2_UP, DC_DPAD2_DOWN, DC_DPAD2_LEFT, DC_DPAD2_RIGHT };
+const char *button_names[] = { "Start", "A", "B", "X", "Y", "DPad Up", "DPad Down", "DPad Left", "DPad Right",
+		"Menu", "Exit", "Left Trigger", "Right Trigger",
+		"C", "D", "Z", "Right Dpad Up", "Right DPad Down", "Right DPad Left", "Right DPad Right" };
+const DreamcastKey axis_keys[] = { DC_AXIS_X, DC_AXIS_Y, DC_AXIS_LT, DC_AXIS_RT, EMU_AXIS_DPAD1_X, EMU_AXIS_DPAD1_Y, EMU_AXIS_DPAD2_X, EMU_AXIS_DPAD2_Y };
+const char *axis_names[] = { "Stick X", "Stick Y", "Left Trigger", "Right Trigger", "DPad X", "DPad Y", "Right DPad X", "Right DPad Y" };
+
+static MapleDeviceType maple_expansion_device_type_from_index(int idx)
+{
+	switch (idx)
+	{
+	case 1:
+		return MDT_SegaVMU;
+	case 2:
+		return MDT_PurupuruPack;
+	case 3:
+		return MDT_Microphone;
+	case 0:
+	default:
+		return MDT_None;
+	}
+}
+
+static GamepadDevice *mapped_device;
+static u32 mapped_code;
+static double map_start_time;
+
+static void input_detected(u32 code)
+{
+	mapped_code = code;
+}
+
+static void detect_input_popup(int index, bool analog)
+{
+	ImVec2 padding = ImVec2(20 * scaling, 20 * scaling);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, padding);
+	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, padding);
+	if (ImGui::BeginPopupModal(analog ? "Map Axis" : "Map Button", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
+	{
+		ImGui::Text("Waiting for %s '%s'...", analog ? "axis" : "button", analog ? axis_names[index] : button_names[index]);
+		double now = os_GetSeconds();
+		ImGui::Text("Time out in %d s", (int)(5 - (now - map_start_time)));
+		if (mapped_code != -1)
+		{
+			if (analog)
+			{
+				u32 previous_mapping = mapped_device->get_input_mapping()->get_axis_code(axis_keys[index]);
+				bool inverted = false;
+				if (previous_mapping != -1)
+					inverted = mapped_device->get_input_mapping()->get_axis_inverted(previous_mapping);
+				// FIXME Allow inverted to be set
+				mapped_device->get_input_mapping()->set_axis(axis_keys[index], mapped_code, inverted);
+			}
+			else
+				mapped_device->get_input_mapping()->set_button(button_keys[index], mapped_code);
+			ImGui::CloseCurrentPopup();
+		}
+		else if (now - map_start_time >= 5)
+			ImGui::CloseCurrentPopup();
+		ImGui::EndPopup();
+	}
+	ImGui::PopStyleVar(2);
+}
+
 static void gui_display_settings()
 {
 	ImGui_Impl_NewFrame();
@@ -324,7 +449,6 @@ static void gui_display_settings()
 
 	int dynarec_enabled = settings.dynarec.Enable;
 	u32 renderer = settings.pvr.rend;
-	int playerCount = cfgLoadInt("players", "nb", 1);
 
     if (!settings_opening)
     	ImGui_ImplOpenGL3_DrawBackground();
@@ -342,12 +466,9 @@ static void gui_display_settings()
     {
     	gui_state = Commands;
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-       	if (playerCount != cfgLoadInt("players", "nb", 1))
-       	{
-       		cfgSaveInt("players", "nb", playerCount);
-       		mcfg_DestroyDevices();
-       		mcfg_CreateDevicesFromConfig();
-       	}
+    	// TODO only if changed? sleep time on emu thread?
+    	mcfg_DestroyDevices();
+   		mcfg_CreateDevices();
 #endif
        	SaveSettings();
     }
@@ -430,15 +551,189 @@ static void gui_display_settings()
 		{
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-			ImGui::SliderInt("Players", (int *)&playerCount, 1, 4);
-			ImGui::Checkbox("Emulate keyboard", &settings.input.DCKeyboard);
-            ImGui::SameLine();
-            ShowHelpMarker("Emulate a Dreamcast keyboard");
-			ImGui::Checkbox("Emulate mouse", &settings.input.DCMouse);
-            ImGui::SameLine();
-            ShowHelpMarker("Emulate a Dreamcast mouse");
+		    if (ImGui::CollapsingHeader("Dreamcast Devices", ImGuiTreeNodeFlags_DefaultOpen))
+		    {
+				for (int bus = 0; bus < MAPLE_PORTS; bus++)
+				{
+					ImGui::Text("Device %c", bus + 'A');
+					ImGui::SameLine();
+					char device_name[32];
+					sprintf(device_name, "##device%d", bus);
+					float w = ImGui::CalcItemWidth() / 3;
+					ImGui::PushItemWidth(w);
+					if (ImGui::BeginCombo(device_name, maple_device_name((MapleDeviceType)settings.input.maple_devices[bus]), ImGuiComboFlags_None))
+					{
+						for (int i = 0; i < IM_ARRAYSIZE(maple_device_types); i++)
+						{
+							bool is_selected = settings.input.maple_devices[bus] == maple_device_type_from_index(i);
+							if (ImGui::Selectable(maple_device_types[i], &is_selected))
+								settings.input.maple_devices[bus] = maple_device_type_from_index(i);
+							if (is_selected)
+								ImGui::SetItemDefaultFocus();
+						}
+						ImGui::EndCombo();
+					}
+					int port_count = settings.input.maple_devices[bus] == MDT_SegaController ? 2 : settings.input.maple_devices[bus] == MDT_LightGun ? 1 : 0;
+					for (int port = 0; port < port_count; port++)
+					{
+						ImGui::SameLine();
+						sprintf(device_name, "##device%d.%d", bus, port + 1);
+						ImGui::PushID(device_name);
+						if (ImGui::BeginCombo(device_name, maple_expansion_device_name((MapleDeviceType)settings.input.maple_expansion_devices[bus][port]), ImGuiComboFlags_None))
+						{
+							for (int i = 0; i < IM_ARRAYSIZE(maple_expansion_device_types); i++)
+							{
+								bool is_selected = settings.input.maple_expansion_devices[bus][port] == maple_expansion_device_type_from_index(i);
+								if (ImGui::Selectable(maple_expansion_device_types[i], &is_selected))
+									settings.input.maple_expansion_devices[bus][port] = maple_expansion_device_type_from_index(i);
+								if (is_selected)
+									ImGui::SetItemDefaultFocus();
+							}
+							ImGui::EndCombo();
+						}
+						ImGui::PopID();
+					}
+					ImGui::PopItemWidth();
+				}
+				ImGui::Spacing();
+		    }
 #endif
+		    if (ImGui::CollapsingHeader("Physical Devices", ImGuiTreeNodeFlags_DefaultOpen))
+		    {
+				ImGui::Columns(4, "renderers", false);
+				ImGui::Text("System");
+				ImGui::SetColumnWidth(-1, ImGui::CalcTextSize("System").x + ImGui::GetStyle().FramePadding.x * 2.0f + ImGui::GetStyle().ItemSpacing.x);
+				ImGui::NextColumn();
+				ImGui::Text("Name");
+				ImGui::NextColumn();
+				ImGui::Text("Port");
+				ImGui::SetColumnWidth(-1, ImGui::CalcTextSize("None").x * 1.6f + ImGui::GetStyle().FramePadding.x * 2.0f + ImGui::GetFrameHeight()
+					+ ImGui::GetStyle().ItemInnerSpacing.x	+ ImGui::GetStyle().ItemSpacing.x);
+				ImGui::NextColumn();
+				ImGui::NextColumn();
+				for (int i = 0; i < GamepadDevice::GetGamepadCount(); i++)
+				{
+					GamepadDevice *gamepad = GamepadDevice::GetGamepad(i);
+					if (gamepad == NULL)
+						continue;
+					ImGui::Text("%s", gamepad->api_name());
+					ImGui::NextColumn();
+					ImGui::Text("%s", gamepad->name());
+					ImGui::NextColumn();
+					char port_name[32];
+					sprintf(port_name, "##mapleport%d", i);
+					ImGui::PushID(port_name);
+					if (ImGui::BeginCombo(port_name, maple_ports[gamepad->maple_port() + 1]))
+					{
+						for (int j = -1; j < MAPLE_PORTS; j++)
+						{
+							bool is_selected = gamepad->maple_port() == j;
+							if (ImGui::Selectable(maple_ports[j + 1], &is_selected))
+								gamepad->set_maple_port(j);
+							if (is_selected)
+								ImGui::SetItemDefaultFocus();
+						}
+
+						ImGui::EndCombo();
+					}
+					ImGui::NextColumn();
+					if (ImGui::Button("Map"))
+						ImGui::OpenPopup("Controller Mapping");
+
+					if (ImGui::BeginPopupModal("Controller Mapping", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
+					{
+						const float width = 350 * scaling;
+						const float height = 450 * scaling;
+						const float col0_width = ImGui::CalcTextSize("Right DPad Downxxx").x + ImGui::GetStyle().FramePadding.x * 2.0f + ImGui::GetStyle().ItemSpacing.x;
+						const float col1_width = width
+								- ImGui::GetStyle().GrabMinSize
+								- (col0_width + ImGui::GetStyle().ItemSpacing.x)
+								- (ImGui::CalcTextSize("Map").x + ImGui::GetStyle().FramePadding.x * 2.0f + ImGui::GetStyle().ItemSpacing.x);
+
+						if (ImGui::Button("Done", ImVec2(100 * scaling, 30 * scaling)))
+						{
+							ImGui::CloseCurrentPopup();
+							gamepad->save_mapping();
+						}
+						ImGui::SetItemDefaultFocus();
+
+						char key_id[32];
+						ImGui::BeginGroup();
+						ImGui::Text("  Buttons  ");
+
+						ImGui::BeginChildFrame(ImGui::GetID("buttons"), ImVec2(width, height), ImGuiWindowFlags_None);
+						ImGui::Columns(3, "bindings", false);
+						ImGui::SetColumnWidth(0, col0_width);
+						ImGui::SetColumnWidth(1, col1_width);
+						for (int j = 0; j < ARRAY_SIZE(button_keys); j++)
+						{
+							sprintf(key_id, "key_id%d", j);
+							ImGui::PushID(key_id);
+							ImGui::Text("%s", button_names[j]);
+							ImGui::NextColumn();
+							u32 code = gamepad->get_input_mapping()->get_button_code(button_keys[j]);
+							if (code != -1)
+								ImGui::Text("%d", code);
+							ImGui::NextColumn();
+							if (ImGui::Button("Map"))
+							{
+								map_start_time = os_GetSeconds();
+								ImGui::OpenPopup("Map Button");
+								mapped_device = gamepad;
+								mapped_code = -1;
+								gamepad->detect_btn_input(&input_detected);
+							}
+							detect_input_popup(j, false);
+							ImGui::NextColumn();
+							ImGui::PopID();
+						}
+						ImGui::EndChildFrame();
+						ImGui::EndGroup();
+
+						ImGui::SameLine();
+
+						ImGui::BeginGroup();
+						ImGui::Text("  Analog Axes  ");
+						ImGui::BeginChildFrame(ImGui::GetID("analog"), ImVec2(width, height), ImGuiWindowFlags_None);
+						ImGui::Columns(3, "bindings", false);
+						ImGui::SetColumnWidth(0, col0_width);
+						ImGui::SetColumnWidth(1, col1_width);
+
+						for (int j = 0; j < ARRAY_SIZE(axis_keys); j++)
+						{
+							sprintf(key_id, "axis_id%d", j);
+							ImGui::PushID(key_id);
+							ImGui::Text("%s", axis_names[j]);
+							ImGui::NextColumn();
+							u32 code = gamepad->get_input_mapping()->get_axis_code(axis_keys[j]);
+							if (code != -1)
+								ImGui::Text("%d", code);
+							ImGui::NextColumn();
+							if (ImGui::Button("Map"))
+							{
+								map_start_time = os_GetSeconds();
+								ImGui::OpenPopup("Map Axis");
+								mapped_device = gamepad;
+								mapped_code = -1;
+								gamepad->detect_axis_input(&input_detected);
+							}
+							detect_input_popup(j, true);
+							ImGui::NextColumn();
+							ImGui::PopID();
+						}
+						ImGui::EndChildFrame();
+						ImGui::EndGroup();
+						ImGui::EndPopup();
+					}
+					ImGui::NextColumn();
+					ImGui::PopID();
+				}
+		    }
+	    	ImGui::Columns(1, NULL, false);
+
+	    	ImGui::Spacing();
 			ImGui::SliderInt("Mouse sensitivity", (int *)&settings.input.MouseSensitivity, 1, 500);
+
 			ImGui::PopStyleVar();
 			ImGui::EndTabItem();
 		}

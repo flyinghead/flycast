@@ -4,10 +4,10 @@
 #include "linux-dist/evdev.h"
 #include "linux-dist/main.h"
 #include "hw/maple/maple_devs.h"
-#include "hw/maple/maple_cfg.h"
 #include "cfg/cfg.h"
 #include "cfg/ini.h"
 #include "rend/gui.h"
+#include "input/gamepad.h"
 #include <vector>
 #include <map>
 #include <dlfcn.h>
@@ -504,9 +504,6 @@
 							}
 						}
 					}
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-					mcfg_CreateController(port, GetMapleDeviceType(evdev_controllers[port].mapping->Maple_Device1, port), GetMapleDeviceType(evdev_controllers[port].mapping->Maple_Device2, port));
-#endif
 				}
 			}
 		}

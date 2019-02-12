@@ -554,6 +554,16 @@ void LoadSettings()
 	settings.input.DCMouse = cfgLoadInt("input", "DCMouse", 0);
 	settings.input.MouseSensitivity = cfgLoadInt("input", "MouseSensitivity", 100);
 	settings.input.JammaSetup = cfgLoadInt("input", "JammaSetup", 0);
+	for (int i = 0; i < MAPLE_PORTS; i++)
+	{
+		char device_name[32];
+		sprintf(device_name, "device%d", i + 1);
+		settings.input.maple_devices[i] = (MapleDeviceType)cfgLoadInt("input", device_name, i == 0 ? MDT_SegaController : MDT_None);
+		sprintf(device_name, "device%d.1", i + 1);
+		settings.input.maple_expansion_devices[i][0] = (MapleDeviceType)cfgLoadInt("input", device_name, i == 0 ? MDT_SegaVMU : MDT_None);
+		sprintf(device_name, "device%d.2", i + 1);
+		settings.input.maple_expansion_devices[i][1] = (MapleDeviceType)cfgLoadInt("input", device_name, i == 0 ? MDT_SegaVMU : MDT_None);
+	}
 #else
 	settings.rend.RenderToTextureUpscale = max(1, settings.rend.RenderToTextureUpscale);
 	settings.rend.TextureUpscale = max(1, settings.rend.TextureUpscale);
@@ -663,6 +673,17 @@ void SaveSettings()
 	cfgSaveInt("input", "DCKeyboard", settings.input.DCKeyboard);
 	cfgSaveInt("input", "DCMouse", settings.input.DCMouse);
 	cfgSaveInt("input", "MouseSensitivity", settings.input.MouseSensitivity);
+	for (int i = 0; i < MAPLE_PORTS; i++)
+	{
+		char device_name[32];
+		sprintf(device_name, "device%d", i + 1);
+		cfgSaveInt("input", device_name, (s32)settings.input.maple_devices[i]);
+		sprintf(device_name, "device%d.1", i + 1);
+		cfgSaveInt("input", device_name, (s32)settings.input.maple_expansion_devices[i][0]);
+		sprintf(device_name, "device%d.2", i + 1);
+		cfgSaveInt("input", device_name, (s32)settings.input.maple_expansion_devices[i][1]);
+	}
+
 }
 #endif
 

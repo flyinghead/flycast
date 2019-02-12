@@ -113,36 +113,35 @@ void mcfg_CreateAtomisWaveControllers()
 	// Sega Bass Fishing Challenge  needs a mouse (track-ball) on port 3
 }
 
-void mcfg_CreateController(u32 bus, MapleDeviceType maple_type1, MapleDeviceType maple_type2)
+void mcfg_CreateDevices()
 {
-	mcfg_Create(MDT_SegaController, bus, 5);
+	for (int bus = 0; bus < MAPLE_PORTS; ++bus)
+	{
+		switch ((MapleDeviceType)settings.input.maple_devices[bus])
+		{
+		case MDT_SegaController:
+			mcfg_Create(MDT_SegaController, bus, 5);
+			if (settings.input.maple_expansion_devices[bus][0] != MDT_None)
+				mcfg_Create((MapleDeviceType)settings.input.maple_expansion_devices[bus][0], bus, 0);
+			if (settings.input.maple_expansion_devices[bus][1] != MDT_None)
+				mcfg_Create((MapleDeviceType)settings.input.maple_expansion_devices[bus][1], bus, 1);
+			break;
 
-	if (maple_type1 != MDT_None)
-		mcfg_Create(maple_type1, bus, 0);
+		case MDT_Keyboard:
+			mcfg_Create(MDT_Keyboard, bus, 5);
+			break;
 
-	if (maple_type2 != MDT_None)
-		mcfg_Create(maple_type2, bus, 1);
-}
+		case MDT_Mouse:
+			mcfg_Create(MDT_Mouse, bus, 5);
+			break;
 
-void mcfg_CreateDevicesFromConfig()
-{
-	// Create the configure controller count
-	int numberOfControl = cfgLoadInt("players", "nb", 1);
-
-	if (numberOfControl <= 0)
-		numberOfControl = 1;
-	if (numberOfControl > 4)
-		numberOfControl = 4;
-
-	for (int i = 0; i < numberOfControl; i++)
-		// Default to two VMUs on each controller
-		mcfg_CreateController(i, MDT_SegaVMU, MDT_SegaVMU);
-
-	if (settings.input.DCKeyboard && numberOfControl < 4)
-		mcfg_Create(MDT_Keyboard, numberOfControl++, 5);
-
-	if (settings.input.DCMouse != 0 && numberOfControl < 4)
-		mcfg_Create(MDT_Mouse, numberOfControl++, 5);
+		case MDT_LightGun:
+			mcfg_Create(MDT_LightGun, bus, 5);
+			if (settings.input.maple_expansion_devices[bus][0] != MDT_None)
+				mcfg_Create((MapleDeviceType)settings.input.maple_expansion_devices[bus][0], bus, 0);
+			break;
+		}
+	}
 }
 
 void mcfg_DestroyDevices()

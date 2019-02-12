@@ -105,7 +105,6 @@ int dc_init();
 void dc_run();
 void dc_pause();
 void dc_term();
-void mcfg_Create(MapleDeviceType type,u32 bus,u32 port);
 
 bool VramLockedWrite(u8* address);
 
@@ -214,16 +213,23 @@ void os_SetupInput()
 {
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST
     // Create first controller
-    mcfg_CreateController(0, MDT_SegaVMU, GetMapleDeviceType(controller_periphs[0][1]));
+	settings.input.maple_devices[0] = MDT_SegaController;
+	settings.input.maple_expansion_devices[0][0] = MDT_SegaVMU;
+	settings.input.maple_expansion_devices[0][1] = GetMapleDeviceType(controller_periphs[0][1]);
 
-    // Add additonal controllers
-    for (int i = 0; i < 3; i++)
+    // Add additional controllers
+    for (int i = 1; i < 4; i++)
     {
-        if (add_controllers[i])
-            mcfg_CreateController(i + 1,
-                                  GetMapleDeviceType(controller_periphs[i + 1][0]),
-                                  GetMapleDeviceType(controller_periphs[i + 1][1]));
+        if (add_controllers[i - 1])
+        {
+        	settings.input.maple_devices[i] = MDT_SegaController;
+        	settings.input.maple_expansion_devices[i][0] = GetMapleDeviceType(controller_periphs[i][0]);
+        	settings.input.maple_expansion_devices[i][1] = GetMapleDeviceType(controller_periphs[i][1]);
+        }
+        else
+        	settings.input.maple_devices[i] = MDT_None;
     }
+    mcfg_CreateDevices();
 #endif
 }
 
@@ -450,6 +456,7 @@ JNIEXPORT jint JNICALL Java_com_reicast_emulator_emu_JNIdc_send(JNIEnv *env,jobj
     else if (cmd==2)
     {
     }
+    return 0;
 }
 
 JNIEXPORT jint JNICALL Java_com_reicast_emulator_emu_JNIdc_data(JNIEnv *env, jobject obj, jint id, jbyteArray d)

@@ -846,6 +846,8 @@ struct settings_t
 		u32 MouseSensitivity;
 		u32 JammaSetup;			// 0: standard, 1: 4-players, 2: rotary encoders, 3: Sega Marine Fishing,
 								// 4: dual I/O boards (4P), 5: Namco JYU board (Ninja Assault)
+		int maple_devices[4];
+		int maple_expansion_devices[4][2];
 	} input;
 };
 
