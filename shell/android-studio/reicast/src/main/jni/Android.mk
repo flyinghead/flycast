@@ -113,8 +113,6 @@ else
   endif
 endif
 
-
-
 #
 # android has poor support for hardfp calling.
 # r9b+ is required, and it only works for internal calls
@@ -134,14 +132,3 @@ endif
 #endif
 
 include $(BUILD_SHARED_LIBRARY)
-
-include $(CLEAR_VARS)
-
-LOCAL_MODULE    := sexplay
-LOCAL_SRC_FILES := $(wildcard $(LOCAL_PATH)/jni/src/XperiaPlay.c)
-LOCAL_LDLIBS    := -llog -landroid -lEGL -lGLESv1_CM
-LOCAL_STATIC_LIBRARIES := android_native_app_glue
-
-include $(BUILD_SHARED_LIBRARY)
-
-$(call import-module,android/native_app_glue)

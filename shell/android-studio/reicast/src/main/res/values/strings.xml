@@ -35,7 +35,6 @@
     <string name="select_reios">Use reios BIOS</string>
     <string name="select_bios">BIOS Region (dc_flash[X].bin)</string>
     <string name="select_details">Enable Game Details</string>
-    <string name="select_native">Native Gamepad Mode [No OSD]</string>
     <string name="select_dynarec">Dynamic Recompiler</string>
     <string name="select_unstable">Unstable Optimisations</string>
     <string name="select_safemode">Bypass Div Matching</string>

@@ -30,7 +30,7 @@ public:
 	const std::string& name() { return _name; }
 	int maple_port() { return _maple_port; }
 	void set_maple_port(int port) { _maple_port = port; }
-	void gamepad_btn_input(u32 code, bool pressed);
+	virtual void gamepad_btn_input(u32 code, bool pressed);
 	void gamepad_axis_input(u32 code, int value);
 	virtual ~GamepadDevice() {
 		save_mapping();

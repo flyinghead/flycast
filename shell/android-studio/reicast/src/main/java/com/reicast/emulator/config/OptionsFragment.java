@@ -257,17 +257,6 @@ public class OptionsFragment extends Fragment {
 
 		});
 
-		OnCheckedChangeListener native_options = new OnCheckedChangeListener() {
-
-			public void onCheckedChanged(CompoundButton buttonView,
-										 boolean isChecked) {
-				mPrefs.edit().putBoolean(Emulator.pref_nativeact, isChecked).apply();
-			}
-		};
-		CompoundButton native_opt = (CompoundButton) getView().findViewById(R.id.native_option);
-		native_opt.setChecked(mPrefs.getBoolean(Emulator.pref_nativeact, Emulator.nativeact));
-		native_opt.setOnCheckedChangeListener(native_options);
-
 		OnCheckedChangeListener dynarec_options = new OnCheckedChangeListener() {
 
 			public void onCheckedChanged(CompoundButton buttonView,
@@ -722,7 +711,6 @@ public class OptionsFragment extends Fragment {
 	private void resetEmuSettings() {
 		mPrefs.edit().remove(Emulator.pref_usereios).apply();
 		mPrefs.edit().remove(Config.pref_gamedetails).apply();
-		mPrefs.edit().remove(Emulator.pref_nativeact).apply();
 		mPrefs.edit().remove(Emulator.pref_dynarecopt).apply();
 		mPrefs.edit().remove(Emulator.pref_unstable).apply();
 		mPrefs.edit().remove(Emulator.pref_cable).apply();
@@ -746,6 +734,28 @@ public class OptionsFragment extends Fragment {
 		mPrefs.edit().remove(Emulator.pref_dynsafemode).apply();
 		mPrefs.edit().remove(Config.pref_renderdepth).apply();
 		mPrefs.edit().remove(Config.pref_theme).apply();
+
+
+		Emulator.usereios = false;
+		Emulator.dynarecopt = true;
+		Emulator.unstableopt = false;
+		Emulator.cable = 3;
+		Emulator.dcregion = 3;
+		Emulator.broadcast = 4;
+		Emulator.language = 6;
+		Emulator.limitfps = true;
+		Emulator.mipmaps = true;
+		Emulator.widescreen = false;
+		Emulator.frameskip = 0;
+		Emulator.pvrrender = 0;
+		Emulator.syncedrender = true;
+		Emulator.bootdisk = null;
+		Emulator.nosound = false;
+		Emulator.nobatch = false;
+		Emulator.customtextures = false;
+		Emulator.modvols = true;
+		Emulator.clipping = true;
+		Emulator.dynsafemode = true;
 
 		getActivity().finish();
 	}

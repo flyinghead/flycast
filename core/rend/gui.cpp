@@ -442,6 +442,94 @@ static void detect_input_popup(int index, bool analog)
 	ImGui::PopStyleVar(2);
 }
 
+static void controller_mapping_popup(GamepadDevice *gamepad)
+{
+	if (ImGui::BeginPopupModal("Controller Mapping", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
+	{
+		const float width = 350 * scaling;
+		const float height = 450 * scaling;
+		const float col0_width = ImGui::CalcTextSize("Right DPad Downxxx").x + ImGui::GetStyle().FramePadding.x * 2.0f + ImGui::GetStyle().ItemSpacing.x;
+		const float col1_width = width
+				- ImGui::GetStyle().GrabMinSize
+				- (col0_width + ImGui::GetStyle().ItemSpacing.x)
+				- (ImGui::CalcTextSize("Map").x + ImGui::GetStyle().FramePadding.x * 2.0f + ImGui::GetStyle().ItemSpacing.x);
+
+		if (ImGui::Button("Done", ImVec2(100 * scaling, 30 * scaling)))
+		{
+			ImGui::CloseCurrentPopup();
+			gamepad->save_mapping();
+		}
+		ImGui::SetItemDefaultFocus();
+
+		char key_id[32];
+		ImGui::BeginGroup();
+		ImGui::Text("  Buttons  ");
+
+		ImGui::BeginChildFrame(ImGui::GetID("buttons"), ImVec2(width, height), ImGuiWindowFlags_None);
+		ImGui::Columns(3, "bindings", false);
+		ImGui::SetColumnWidth(0, col0_width);
+		ImGui::SetColumnWidth(1, col1_width);
+		for (int j = 0; j < ARRAY_SIZE(button_keys); j++)
+		{
+			sprintf(key_id, "key_id%d", j);
+			ImGui::PushID(key_id);
+			ImGui::Text("%s", button_names[j]);
+			ImGui::NextColumn();
+			u32 code = gamepad->get_input_mapping()->get_button_code(button_keys[j]);
+			if (code != -1)
+				ImGui::Text("%d", code);
+			ImGui::NextColumn();
+			if (ImGui::Button("Map"))
+			{
+				map_start_time = os_GetSeconds();
+				ImGui::OpenPopup("Map Button");
+				mapped_device = gamepad;
+				mapped_code = -1;
+				gamepad->detect_btn_input(&input_detected);
+			}
+			detect_input_popup(j, false);
+			ImGui::NextColumn();
+			ImGui::PopID();
+		}
+		ImGui::EndChildFrame();
+		ImGui::EndGroup();
+
+		ImGui::SameLine();
+
+		ImGui::BeginGroup();
+		ImGui::Text("  Analog Axes  ");
+		ImGui::BeginChildFrame(ImGui::GetID("analog"), ImVec2(width, height), ImGuiWindowFlags_None);
+		ImGui::Columns(3, "bindings", false);
+		ImGui::SetColumnWidth(0, col0_width);
+		ImGui::SetColumnWidth(1, col1_width);
+
+		for (int j = 0; j < ARRAY_SIZE(axis_keys); j++)
+		{
+			sprintf(key_id, "axis_id%d", j);
+			ImGui::PushID(key_id);
+			ImGui::Text("%s", axis_names[j]);
+			ImGui::NextColumn();
+			u32 code = gamepad->get_input_mapping()->get_axis_code(axis_keys[j]);
+			if (code != -1)
+				ImGui::Text("%d", code);
+			ImGui::NextColumn();
+			if (ImGui::Button("Map"))
+			{
+				map_start_time = os_GetSeconds();
+				ImGui::OpenPopup("Map Axis");
+				mapped_device = gamepad;
+				mapped_code = -1;
+				gamepad->detect_axis_input(&input_detected);
+			}
+			detect_input_popup(j, true);
+			ImGui::NextColumn();
+			ImGui::PopID();
+		}
+		ImGui::EndChildFrame();
+		ImGui::EndGroup();
+		ImGui::EndPopup();
+	}
+}
 static void gui_display_settings()
 {
 	ImGui_Impl_NewFrame();
@@ -640,91 +728,8 @@ static void gui_display_settings()
 					if (ImGui::Button("Map"))
 						ImGui::OpenPopup("Controller Mapping");
 
-					if (ImGui::BeginPopupModal("Controller Mapping", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
-					{
-						const float width = 350 * scaling;
-						const float height = 450 * scaling;
-						const float col0_width = ImGui::CalcTextSize("Right DPad Downxxx").x + ImGui::GetStyle().FramePadding.x * 2.0f + ImGui::GetStyle().ItemSpacing.x;
-						const float col1_width = width
-								- ImGui::GetStyle().GrabMinSize
-								- (col0_width + ImGui::GetStyle().ItemSpacing.x)
-								- (ImGui::CalcTextSize("Map").x + ImGui::GetStyle().FramePadding.x * 2.0f + ImGui::GetStyle().ItemSpacing.x);
+					controller_mapping_popup(gamepad);
 
-						if (ImGui::Button("Done", ImVec2(100 * scaling, 30 * scaling)))
-						{
-							ImGui::CloseCurrentPopup();
-							gamepad->save_mapping();
-						}
-						ImGui::SetItemDefaultFocus();
-
-						char key_id[32];
-						ImGui::BeginGroup();
-						ImGui::Text("  Buttons  ");
-
-						ImGui::BeginChildFrame(ImGui::GetID("buttons"), ImVec2(width, height), ImGuiWindowFlags_None);
-						ImGui::Columns(3, "bindings", false);
-						ImGui::SetColumnWidth(0, col0_width);
-						ImGui::SetColumnWidth(1, col1_width);
-						for (int j = 0; j < ARRAY_SIZE(button_keys); j++)
-						{
-							sprintf(key_id, "key_id%d", j);
-							ImGui::PushID(key_id);
-							ImGui::Text("%s", button_names[j]);
-							ImGui::NextColumn();
-							u32 code = gamepad->get_input_mapping()->get_button_code(button_keys[j]);
-							if (code != -1)
-								ImGui::Text("%d", code);
-							ImGui::NextColumn();
-							if (ImGui::Button("Map"))
-							{
-								map_start_time = os_GetSeconds();
-								ImGui::OpenPopup("Map Button");
-								mapped_device = gamepad;
-								mapped_code = -1;
-								gamepad->detect_btn_input(&input_detected);
-							}
-							detect_input_popup(j, false);
-							ImGui::NextColumn();
-							ImGui::PopID();
-						}
-						ImGui::EndChildFrame();
-						ImGui::EndGroup();
-
-						ImGui::SameLine();
-
-						ImGui::BeginGroup();
-						ImGui::Text("  Analog Axes  ");
-						ImGui::BeginChildFrame(ImGui::GetID("analog"), ImVec2(width, height), ImGuiWindowFlags_None);
-						ImGui::Columns(3, "bindings", false);
-						ImGui::SetColumnWidth(0, col0_width);
-						ImGui::SetColumnWidth(1, col1_width);
-
-						for (int j = 0; j < ARRAY_SIZE(axis_keys); j++)
-						{
-							sprintf(key_id, "axis_id%d", j);
-							ImGui::PushID(key_id);
-							ImGui::Text("%s", axis_names[j]);
-							ImGui::NextColumn();
-							u32 code = gamepad->get_input_mapping()->get_axis_code(axis_keys[j]);
-							if (code != -1)
-								ImGui::Text("%d", code);
-							ImGui::NextColumn();
-							if (ImGui::Button("Map"))
-							{
-								map_start_time = os_GetSeconds();
-								ImGui::OpenPopup("Map Axis");
-								mapped_device = gamepad;
-								mapped_code = -1;
-								gamepad->detect_axis_input(&input_detected);
-							}
-							detect_input_popup(j, true);
-							ImGui::NextColumn();
-							ImGui::PopID();
-						}
-						ImGui::EndChildFrame();
-						ImGui::EndGroup();
-						ImGui::EndPopup();
-					}
 					ImGui::NextColumn();
 					ImGui::PopID();
 				}

@@ -10,8 +10,6 @@ import android.util.Log;
 import com.reicast.emulator.emu.JNIdc;
 
 public class Emulator extends Application {
-    
-    public static final String pref_nativeact = "enable_native";
     public static final String pref_dynarecopt = "dynarec_opt";
     public static final String pref_unstable = "unstable_opt";
     public static final String pref_dynsafemode = "dyn_safemode";
@@ -44,25 +42,24 @@ public class Emulator extends Application {
     public static boolean dynarecopt = true;
     public static boolean idleskip = true;
     public static boolean unstableopt = false;
-    public static boolean dynsafemode = false;
+    public static boolean dynsafemode = true;
     public static int cable = 3;
     public static int dcregion = 3;
     public static int broadcast = 4;
     public static int language = 6;
     public static boolean limitfps = true;
-    public static boolean nobatch = true;
+    public static boolean nobatch = false;
     public static boolean nosound = false;
     public static boolean interrupt = false;
     public static boolean mipmaps = true;
     public static boolean widescreen = false;
     public static int frameskip = 0;
     public static int pvrrender = 0;
-    public static boolean syncedrender = false;
+    public static boolean syncedrender = true;
     public static boolean modvols = true;
     public static boolean clipping = true;
     public static String bootdisk = null;
     public static boolean usereios = false;
-    public static boolean nativeact = false;
     public static boolean customtextures = false;
     public static boolean showfps = false;
     public static boolean RenderToTextureBuffer = false;
@@ -96,7 +93,6 @@ public class Emulator extends Application {
         Emulator.clipping = mPrefs.getBoolean(pref_clipping, clipping);
         Emulator.bootdisk = mPrefs.getString(pref_bootdisk, bootdisk);
         Emulator.usereios = mPrefs.getBoolean(pref_usereios, usereios);
-        Emulator.nativeact = mPrefs.getBoolean(pref_nativeact, nativeact);
         Emulator.customtextures = mPrefs.getBoolean(pref_customtextures, customtextures);
         Emulator.showfps = mPrefs.getBoolean(pref_showfps, showfps);
         Emulator.RenderToTextureBuffer = mPrefs.getBoolean(pref_RenderToTextureBuffer, RenderToTextureBuffer);
