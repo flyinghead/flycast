@@ -37,7 +37,7 @@ public:
 	void Compile(struct dsp_t *DSP)
 	{
 		this->DSP = DSP;
-		//printf("DSPAssembler::DSPCompile recompiling for arm64\n");
+		//printf("DSPAssembler::DSPCompile recompiling for arm64 at %p\n", GetBuffer()->GetStartAddress<void*>());
 
 		if (DSP->Stopped)
 		{
@@ -54,6 +54,9 @@ public:
 			Stp(xzr, xzr, MemOperand(x0, 48));
 			Ret();
 			FinalizeCode();
+#ifdef _ANDROID
+			Arm64CacheFlush(GetBuffer()->GetStartAddress<void*>(), GetBuffer()->GetEndAddress<void*>());
+#endif
 
 			return;
 		}
