@@ -131,7 +131,7 @@ public:
 		previous_kcode = kcode;
 	}
 
-	static const int VIRTUAL_GAMEPAD_ID = 123456;
+	static const int VIRTUAL_GAMEPAD_ID = 0x12345678;	// must match the Java definition
 
 protected:
 	virtual void load_axis_min_max(u32 axis) override
