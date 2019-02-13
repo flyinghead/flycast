@@ -30,8 +30,8 @@ public:
 	const std::string& name() { return _name; }
 	int maple_port() { return _maple_port; }
 	void set_maple_port(int port) { _maple_port = port; }
-	virtual void gamepad_btn_input(u32 code, bool pressed);
-	void gamepad_axis_input(u32 code, int value);
+	virtual bool gamepad_btn_input(u32 code, bool pressed);
+	bool gamepad_axis_input(u32 code, int value);
 	virtual ~GamepadDevice() {
 		save_mapping();
 		_gamepads_mutex.lock();
@@ -59,12 +59,15 @@ public:
 	}
 	InputMapping *get_input_mapping() { return input_mapper; }
 	void save_mapping();
+	bool remappable() { return _remappable; }
 
 	static int GetGamepadCount();
 	static GamepadDevice *GetGamepad(int index);
 
 protected:
-	GamepadDevice(int maple_port, const char *api_name) : _api_name(api_name), _maple_port(maple_port), input_mapper(NULL), _input_detected(NULL) {
+	GamepadDevice(int maple_port, const char *api_name, bool remappable = true)
+		: _api_name(api_name), _maple_port(maple_port), input_mapper(NULL), _input_detected(NULL), _remappable(remappable)
+	{
 		_gamepads_mutex.lock();
 		_gamepads.push_back(this);
 		_gamepads_mutex.unlock();
@@ -87,6 +90,7 @@ private:
 	int _maple_port;
 	bool _detecting_button = false;
 	input_detected_cb _input_detected;
+	bool _remappable;
 
 	static std::vector<GamepadDevice *> _gamepads;
 	static std::mutex _gamepads_mutex;

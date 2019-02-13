@@ -18,10 +18,7 @@ public final class JNIdc
 	public static native void rendinit(int w, int y);
 	public static native boolean rendframe();
 
-	public static native void kcode(int[] kcode, int[] lt, int[] rt, int[] jx, int[] jy, int[] mouse_pos, int mouse_btns);
-
 	public static native void vjoy(int id,float x, float y, float w, float h);
-	//public static native int play(short result[],int size);
 
 	public static native void initControllers(boolean[] controllers, int[][] peripherals);
 
@@ -93,5 +90,5 @@ public final class JNIdc
 
 	public static void hide_osd() {
 		JNIdc.vjoy(13, 0,0,0,0);
-	}
+	}	// FIXME use HideOSD()
 }

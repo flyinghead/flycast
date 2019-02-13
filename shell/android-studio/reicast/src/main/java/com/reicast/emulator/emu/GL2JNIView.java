@@ -19,6 +19,7 @@ import android.preference.PreferenceManager;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.InputDevice;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.ScaleGestureDetector.SimpleOnScaleGestureListener;
@@ -32,6 +33,7 @@ import com.reicast.emulator.R;
 import com.reicast.emulator.config.Config;
 import com.reicast.emulator.emu.OnScreenMenu.FpsPopup;
 import com.reicast.emulator.periph.Gamepad;
+import com.reicast.emulator.periph.InputDeviceManager;
 import com.reicast.emulator.periph.VJoy;
 
 import java.io.UnsupportedEncodingException;
@@ -183,8 +185,6 @@ public class GL2JNIView extends GLSurfaceView
         // Set the renderer responsible for frame rendering
         setRenderer(rend = new Renderer(this));
 
-        pushInput(); //initializes controller codes
-
         ethd.start();
 
     }
@@ -285,18 +285,18 @@ public class GL2JNIView extends GLSurfaceView
             return 0; // DPAD diagonials
     }
 
-    public static int[] kcode_raw = { 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF };
-    public static int[] lt = new int[4];
-    public static int[] rt = new int[4];
-    public static int[] jx = new int[4];
-    public static int[] jy = new int[4];
+    public static int left_trigger = 0;
+    public static int right_trigger = 0;
     public static int[] mouse_pos = { -32768, -32768 };
-    public static int mouse_btns = 0xFFFF;
+    public static int mouse_btns = 0;
 
     float editLastX = 0, editLastY = 0;
 
     @Override public boolean onTouchEvent(final MotionEvent event)
     {
+        if (event.getSource() != InputDevice.SOURCE_TOUCHSCREEN)
+            // Ignore real mice, trackballs, etc.
+            return false;
         JNIdc.show_osd();
 
         scaleGestureDetector.onTouchEvent(event);
@@ -380,7 +380,7 @@ public class GL2JNIView extends GLSurfaceView
                                             selectedVjoyElement = 3; // Left Trigger
                                             resetEditMode();
                                         } else {
-                                            lt[0] = pre;
+                                            left_trigger = pre;
                                             lt_id = event.getPointerId(i);
                                         }
                                     } else if (vjoy[j][4] == -2) {
@@ -388,7 +388,7 @@ public class GL2JNIView extends GLSurfaceView
                                             selectedVjoyElement = 4; // Right Trigger
                                             resetEditMode();
                                         } else {
-                                            rt[0] = pre;
+                                            right_trigger = pre;
                                             rt_id = event.getPointerId(i);
                                         }
                                     } else {
@@ -436,32 +436,32 @@ public class GL2JNIView extends GLSurfaceView
             case MotionEvent.ACTION_CANCEL:
                 selectedVjoyElement = -1;
                 reset_analog();
-                anal_id=-1;
-                rv=0xFFFF;
-                rt[0]=0;
-                lt[0]=0;
-                lt_id=-1;
-                rt_id=-1;
-                for (int j=0;j<vjoy.length;j++)
-                    vjoy[j][5]=0;
-                mouse_btns = 0xFFFF;
+                anal_id = -1;
+                rv = 0xFFFF;
+                right_trigger = 0;
+                left_trigger = 0;
+                lt_id = -1;
+                rt_id = -1;
+                for (int j= 0 ;j < vjoy.length; j++)
+                    vjoy[j][5] = 0;
+                mouse_btns = 0;
                 break;
 
             case MotionEvent.ACTION_POINTER_UP:
                 if (event.getPointerId(event.getActionIndex())==anal_id)
                 {
                     reset_analog();
-                    anal_id=-1;
+                    anal_id = -1;
                 }
                 else if (event.getPointerId(event.getActionIndex())==lt_id)
                 {
-                    lt[0]=0;
-                    lt_id=-1;
+                    left_trigger = 0;
+                    lt_id = -1;
                 }
                 else if (event.getPointerId(event.getActionIndex())==rt_id)
                 {
-                    rt[0]=0;
-                    rt_id=-1;
+                    right_trigger = 0;
+                    rt_id = -1;
                 }
                 break;
 
@@ -469,7 +469,7 @@ public class GL2JNIView extends GLSurfaceView
             case MotionEvent.ACTION_DOWN:
                 if (event.getPointerCount() != 1)
                 {
-                    mouse_btns = 0xFFFF;
+                    mouse_btns = 0;
                 }
                 else
                 {
@@ -477,7 +477,7 @@ public class GL2JNIView extends GLSurfaceView
                     event.getPointerCoords(0, pointerCoords);
                     mouse_pos[0] = Math.round((pointerCoords.x - tx) / scl);
                     mouse_pos[1] = Math.round(pointerCoords.y / scl);
-                    mouse_btns = 0xFFFB;    // Mouse button A down
+                    mouse_btns = MotionEvent.BUTTON_PRIMARY;    // Mouse left button down
                 }
                 break;
 
@@ -493,13 +493,13 @@ public class GL2JNIView extends GLSurfaceView
         }
         if (getResources().getString(R.string.flavor).equals("naomi"))  // FIXME
         {
-            if (lt[0] != 0)
+            if (left_trigger != 0)
                 rv &= ~VJoy.key_CONT_C; // Service key/coin
         }
-        kcode_raw[0] = rv;
-        jx[0] = get_anal(11, 0);
-        jy[0] = get_anal(11, 1);
-        pushInput();
+        int joyx = get_anal(11, 0);
+        int joyy = get_anal(11, 1);
+        InputDeviceManager.getInstance().virtualGamepadEvent(rv, joyx, joyy, left_trigger, right_trigger);
+        InputDeviceManager.getInstance().mouseEvent(mouse_pos[0], mouse_pos[1], mouse_btns);
         return(true);
     }
 
@@ -522,10 +522,6 @@ public class GL2JNIView extends GLSurfaceView
         public void onScaleEnd(ScaleGestureDetector detector) {
             selectedVjoyElement = -1;
         }
-    }
-
-    public void pushInput(){
-        JNIdc.kcode(kcode_raw,lt,rt,jx,jy,mouse_pos,mouse_btns);
     }
 
     private static class Renderer implements GLSurfaceView.Renderer

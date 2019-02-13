@@ -1232,6 +1232,14 @@ float vjoy_sz[2][14] = {
 	{ 64,64,64,64, 64,64,64,64, 64, 64,64, 128, 64 },
 };
 
+void HideOSD()
+{
+	vjoy_pos[13][0] = 0;
+	vjoy_pos[13][1] = 0;
+	vjoy_pos[13][2] = 0;
+	vjoy_pos[13][3] = 0;
+}
+
 static void DrawButton(float* xy, u32 state)
 {
 	Vertex vtx;

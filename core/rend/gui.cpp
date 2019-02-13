@@ -251,6 +251,7 @@ void gui_open_settings()
 	{
 		gui_state = Commands;
 		settings_opening = true;
+		HideOSD();
 	}
 }
 
@@ -725,7 +726,7 @@ static void gui_display_settings()
 						ImGui::EndCombo();
 					}
 					ImGui::NextColumn();
-					if (ImGui::Button("Map"))
+					if (gamepad->remappable() && ImGui::Button("Map"))
 						ImGui::OpenPopup("Controller Mapping");
 
 					controller_mapping_popup(gamepad);

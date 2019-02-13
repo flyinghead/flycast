@@ -1,5 +1,6 @@
 #include <string.h>
 #include <vector>
+#include <sys/types.h>
 #include <sys/stat.h>
 #include "types.h"
 #include "cfg/cfg.h"
@@ -141,6 +142,15 @@ string get_game_dir()
 	if (lastindex != -1)
 		game_dir = game_dir.substr(0, lastindex + 1);
 	return game_dir;
+}
+
+bool make_directory(const string& path)
+{
+	return mkdir(path.c_str()
+#ifndef _WIN32
+					, 0755
+#endif
+			) == 0;
 }
 
 #if 0

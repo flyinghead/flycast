@@ -30,7 +30,7 @@ extern s8 joyx[4], joyy[4];
 std::vector<GamepadDevice *> GamepadDevice::_gamepads;
 std::mutex GamepadDevice::_gamepads_mutex;
 
-void GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
+bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 {
 	if (_input_detected != NULL && _detecting_button && pressed)
 	{
@@ -38,10 +38,8 @@ void GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 		_input_detected = NULL;
 	}
 	if (input_mapper == NULL || _maple_port < 0 || _maple_port >= ARRAY_SIZE(kcode))
-		return;
+		return false;
 	DreamcastKey key = input_mapper->get_button_id(code);
-
-	printf("%d: BUTTON %x -> %d\n", _maple_port, code, key);
 
 	if (key < 0x10000)
 	{
@@ -67,12 +65,15 @@ void GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 			rt[_maple_port] = pressed ? 255 : 0;
 			break;
 		default:
-			break;
+			return false;
 		}
 	}
+
+	//printf("%d: BUTTON %s %x -> %d. kcode=%x\n", _maple_port, pressed ? "down" : "up", code, key, kcode[_maple_port]);
+	return true;
 }
 
-void GamepadDevice::gamepad_axis_input(u32 code, int value)
+bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 {
 	s32 v = (value - get_axis_min_value(code)) * 255 / get_axis_range(code) - 128; //-128 ... + 127 range
 	if (_input_detected != NULL && !_detecting_button && (v >= 64 || v <= -64))
@@ -81,7 +82,7 @@ void GamepadDevice::gamepad_axis_input(u32 code, int value)
 		_input_detected = NULL;
 	}
 	if (input_mapper == NULL || _maple_port < 0 || _maple_port >= ARRAY_SIZE(kcode))
-		return;
+		return false;
 	DreamcastKey key = input_mapper->get_axis_id(code);
 
 	if ((int)key < 0x10000)
@@ -102,6 +103,8 @@ void GamepadDevice::gamepad_axis_input(u32 code, int value)
 			lt[_maple_port] = (u8)(v + 128);
 		else if (key == DC_AXIS_RT)
 			rt[_maple_port] = (u8)(v + 128);
+		else
+			return false;
 	}
 	else if (((int)key >> 16) == 2) // Analog axes
 	{
@@ -110,7 +113,13 @@ void GamepadDevice::gamepad_axis_input(u32 code, int value)
 			joyx[_maple_port] = (s8)v;
 		else if (key == DC_AXIS_Y)
 			joyy[_maple_port] = (s8)v;
+		else
+			return false;
 	}
+	else
+		return false;
+
+	return true;
 }
 
 int GamepadDevice::get_axis_min_value(u32 axis) {

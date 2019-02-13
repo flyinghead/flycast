@@ -146,27 +146,18 @@ void CustomTexture::LoadCustomTextureAsync(TextureCacheData *texture_data)
 	wakeup_thread.Set();
 }
 
-static int mkdir_(const char *path)
-{
-	return mkdir(path
-#ifndef _WIN32
-					, 0755
-#endif
-			);
-}
-
 void CustomTexture::DumpTexture(u32 hash, int w, int h, GLuint textype, void *temp_tex_buffer)
 {
 	std::string base_dump_dir = get_writable_data_path("/data/texdump/");
 	if (!file_exists(base_dump_dir))
-		mkdir_(base_dump_dir.c_str());
+		make_directory(base_dump_dir);
 	std::string game_id = GetGameId();
 	if (game_id.length() == 0)
 	   return;
 
 	base_dump_dir += game_id + "/";
 	if (!file_exists(base_dump_dir))
-		mkdir_(base_dump_dir.c_str());
+		make_directory(base_dump_dir);
 
 	std::stringstream path;
 	path << base_dump_dir << std::hex << hash << ".png";

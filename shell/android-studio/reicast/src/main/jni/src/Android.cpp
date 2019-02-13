@@ -19,6 +19,7 @@
 #include "reios/reios.h"
 #include "imgread/common.h"
 #include "rend/gui.h"
+#include "android_gamepad.h"
 
 #define SETTINGS_ACCESSORS(jsetting, csetting, type)                                                                                                    \
 JNIEXPORT type JNICALL Java_com_reicast_emulator_emu_JNIdc_get ## jsetting(JNIEnv *env, jobject obj)  __attribute__((visibility("default")));           \
@@ -47,9 +48,7 @@ JNIEXPORT jint JNICALL Java_com_reicast_emulator_emu_JNIdc_data(JNIEnv *env,jobj
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_rendinit(JNIEnv *env,jobject obj,jint w,jint h)  __attribute__((visibility("default")));
 JNIEXPORT jboolean JNICALL Java_com_reicast_emulator_emu_JNIdc_rendframe(JNIEnv *env,jobject obj)  __attribute__((visibility("default")));
 
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_kcode(JNIEnv * env, jobject obj, jintArray k_code, jintArray l_t, jintArray r_t, jintArray jx, jintArray jy, jintArray mouse_pos, jint mouse_btns)  __attribute__((visibility("default")));
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_vjoy(JNIEnv * env, jobject obj,u32 id,float x, float y, float w, float h)  __attribute__((visibility("default")));
-//JNIEXPORT jint JNICALL Java_com_reicast_emulator_emu_JNIdc_play(JNIEnv *env,jobject obj,jshortArray result,jint size);
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_initControllers(JNIEnv *env, jobject obj, jbooleanArray controllers, jobjectArray peripherals)  __attribute__((visibility("default")));
 
@@ -91,6 +90,13 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_bootdisk(JNIEnv *env,
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_screenDpi(JNIEnv *env,jobject obj, jint screenDpi)  __attribute__((visibility("default")));
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_guiOpenSettings(JNIEnv *env,jobject obj)  __attribute__((visibility("default")));
 JNIEXPORT jboolean JNICALL Java_com_reicast_emulator_emu_JNIdc_guiIsOpen(JNIEnv *env,jobject obj)  __attribute__((visibility("default")));
+
+JNIEXPORT void JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_joystickAdded(JNIEnv *env, jobject obj, jint id, jstring name)  __attribute__((visibility("default")));
+JNIEXPORT void JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_joystickRemoved(JNIEnv *env, jobject obj, jint id)  __attribute__((visibility("default")));
+JNIEXPORT void JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_virtualGamepadEvent(JNIEnv *env, jobject obj, jint kcode, jint joyx, jint joyy, jint lt, jint rt)  __attribute__((visibility("default")));
+JNIEXPORT jboolean JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_joystickButtonEvent(JNIEnv *env, jobject obj, jint id, jint key, jboolean pressed)  __attribute__((visibility("default")));
+JNIEXPORT jboolean JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_joystickAxisEvent(JNIEnv *env, jobject obj, jint id, jint key, jint value) __attribute__((visibility("default")));
+JNIEXPORT void JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_mouseEvent(JNIEnv *env, jobject obj, jint xpos, jint ypos, jint buttons) __attribute__((visibility("default")));
 };
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_screenDpi(JNIEnv *env,jobject obj, jint screenDpi)
@@ -121,7 +127,7 @@ static char gamedisk[256];
 static bool add_controllers[3] = { false, false, false };
 int **controller_periphs;
 
-u16 kcode[4];
+u16 kcode[4] = { 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF };
 u32 vks[4];
 s8 joyx[4],joyy[4];
 u8 rt[4],lt[4];
@@ -470,42 +476,13 @@ JNIEXPORT jint JNICALL Java_com_reicast_emulator_emu_JNIdc_data(JNIEnv *env, job
         env->GetByteArrayRegion(d,0,len,(jbyte*)syms);
         sample_Syms(syms, (size_t)len);
     }
+    return 0;
 }
 
 
 JNIEXPORT jboolean JNICALL Java_com_reicast_emulator_emu_JNIdc_rendframe(JNIEnv *env,jobject obj)
 {
     return (jboolean)rend_single_frame();
-}
-
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_kcode(JNIEnv * env, jobject obj, jintArray k_code, jintArray l_t, jintArray r_t, jintArray jx, jintArray jy, jintArray mouse_pos, jint mouse_btns)
-{
-    jint *k_code_body = env->GetIntArrayElements(k_code, 0);
-    jint *l_t_body = env->GetIntArrayElements(l_t, 0);
-    jint *r_t_body = env->GetIntArrayElements(r_t, 0);
-    jint *jx_body = env->GetIntArrayElements(jx, 0);
-    jint *jy_body = env->GetIntArrayElements(jy, 0);
-
-    for(int i = 0; i < 4; i++)
-    {
-        kcode[i] = k_code_body[i];
-        lt[i] = l_t_body[i];
-        rt[i] = r_t_body[i];
-        joyx[i] = jx_body[i];
-        joyy[i] = jy_body[i];
-    }
-
-    env->ReleaseIntArrayElements(k_code, k_code_body, 0);
-    env->ReleaseIntArrayElements(l_t, l_t_body, 0);
-    env->ReleaseIntArrayElements(r_t, r_t_body, 0);
-    env->ReleaseIntArrayElements(jx, jx_body, 0);
-    env->ReleaseIntArrayElements(jy, jy_body, 0);
-
-    jint *mouse_pos_body = env->GetIntArrayElements(mouse_pos, 0);
-    mo_x_abs = mouse_pos_body[0];
-    mo_y_abs = mouse_pos_body[1];
-    env->ReleaseIntArrayElements(mouse_pos, mouse_pos_body, 0);
-    mo_buttons = mouse_btns;
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_rendinit(JNIEnv * env, jobject obj, jint w,jint h)
@@ -661,4 +638,59 @@ void SaveSettings()
 
     if (detach_thread)
         g_jvm->DetachCurrentThread();
+}
+
+JNIEXPORT void JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_joystickAdded(JNIEnv *env, jobject obj, jint id, jstring name)
+{
+    const char* joyname = env->GetStringUTFChars(name,0);
+    new AndroidGamepadDevice(0, id, joyname);
+    env->ReleaseStringUTFChars(name, joyname);
+
+}
+JNIEXPORT void JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_joystickRemoved(JNIEnv *env, jobject obj, jint id)
+{
+    AndroidGamepadDevice *device = AndroidGamepadDevice::GetAndroidGamepad(id);
+    if (device != NULL)
+    	delete device;
+}
+
+JNIEXPORT void JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_virtualGamepadEvent(JNIEnv *env, jobject obj, jint kcode, jint joyx, jint joyy, jint lt, jint rt)
+{
+    AndroidGamepadDevice *device = AndroidGamepadDevice::GetAndroidGamepad(AndroidGamepadDevice::VIRTUAL_GAMEPAD_ID);
+    if (device != NULL)
+        device->virtual_gamepad_event(kcode, joyx, joyy, lt, rt);
+}
+
+JNIEXPORT jboolean JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_joystickButtonEvent(JNIEnv *env, jobject obj, jint id, jint key, jboolean pressed)
+{
+    AndroidGamepadDevice *device = AndroidGamepadDevice::GetAndroidGamepad(id);
+    if (device != NULL)
+        return device->gamepad_btn_input(key, pressed);
+    else
+    	return false;
+
+}
+JNIEXPORT jboolean JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_joystickAxisEvent(JNIEnv *env, jobject obj, jint id, jint key, jint value)
+{
+    AndroidGamepadDevice *device = AndroidGamepadDevice::GetAndroidGamepad(id);
+    if (device != NULL)
+    	return device->gamepad_axis_input(key, value);
+    else
+    	return false;
+}
+
+JNIEXPORT void JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_mouseEvent(JNIEnv *env, jobject obj, jint xpos, jint ypos, jint buttons)
+{
+    mo_x_abs = xpos;
+    mo_y_abs = ypos;
+    mo_buttons = 0xFFFF;
+    if (buttons & 1)	// Left
+    	mo_buttons &= ~4;
+    if (buttons & 2)	// Right
+    	mo_buttons &= ~2;
+    if (buttons & 4)	// Middle
+    	mo_buttons &= ~8;
+    mouse_gamepad.gamepad_btn_input(1, (buttons & 1) != 0);
+    mouse_gamepad.gamepad_btn_input(2, (buttons & 2) != 0);
+    mouse_gamepad.gamepad_btn_input(4, (buttons & 4) != 0);
 }

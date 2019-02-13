@@ -74,3 +74,20 @@ private:
 
 	static std::map<std::string, InputMapping *> loaded_mappings;
 };
+
+class IdentityInputMapping : public InputMapping
+{
+public:
+	IdentityInputMapping() {
+		name = "Default";
+		for (int i = 0; i < 16; i++)
+			set_button((DreamcastKey)(1 << i), 1 << i);
+		set_axis(DC_AXIS_X, DC_AXIS_X, false);
+		set_axis(DC_AXIS_Y, DC_AXIS_Y, false);
+		set_axis(DC_AXIS_LT, DC_AXIS_LT, false);
+		set_axis(DC_AXIS_RT, DC_AXIS_RT, false);
+		set_axis(DC_AXIS_X2, DC_AXIS_X2, false);
+		set_axis(DC_AXIS_Y2, DC_AXIS_Y2, false);
+		dirty = false;
+	}
+};

@@ -159,6 +159,7 @@ void ReadRTTBuffer();
 void RenderFramebuffer();
 void DrawFramebuffer(float w, float h);
 
+void HideOSD();
 void OSD_HOOK();
 void OSD_DRAW(GLuint shader_program);
 int GetProgramID(u32 cp_AlphaTest, u32 pp_ClipTestMode,

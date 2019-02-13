@@ -270,6 +270,7 @@ string get_writable_data_path(const string& filename);
 string get_readonly_config_path(const string& filename);
 string get_readonly_data_path(const string& filename);
 bool file_exists(const string& filename);
+bool make_directory(const string& path);
 
 string get_game_save_prefix();
 string get_game_basename();

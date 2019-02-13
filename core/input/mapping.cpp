@@ -156,7 +156,8 @@ InputMapping *InputMapping::LoadMapping(const char *name)
 	auto it = loaded_mappings.find(name);
 	if (it != loaded_mappings.end())
 		return it->second;
-	std::string path = get_readonly_data_path((std::string("/mappings/") + name).c_str());
+
+	std::string path = get_writable_config_path((std::string("/mappings/") + name).c_str());
 	FILE *fp = fopen(path.c_str(), "r");
 	if (fp == NULL)
 		return NULL;
@@ -173,10 +174,15 @@ bool InputMapping::save(const char *name)
 	if (!is_dirty())
 		return true;
 
-	std::string path = get_writable_config_path((std::string("/mappings/") + name).c_str());
+	std::string path = get_writable_config_path("/mappings/");
+	make_directory(path);
+	path = get_writable_config_path((std::string("/mappings/") + name).c_str());
 	FILE *fp = fopen(path.c_str(), "w");
 	if (fp == NULL)
+	{
+		printf("Cannot save controller mappings into %s\n", path.c_str());
 		return false;
+	}
 	ConfigFile mf;
 
 	mf.set("emulator", "mapping_name", this->name);
