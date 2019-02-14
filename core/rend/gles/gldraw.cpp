@@ -73,6 +73,7 @@ extern int screen_height;
 
 PipelineShader* CurrentShader;
 u32 gcflip;
+static GLuint g_previous_frame_tex;
 
 s32 SetTileClip(u32 val, GLint uniform)
 {
@@ -1106,13 +1107,13 @@ void DrawStrips()
 	}
 }
 
-void DrawFramebuffer(float w, float h)
+static void DrawQuad(GLuint texId, float x, float y, float w, float h, float u0, float v0, float u1, float v1)
 {
 	struct Vertex vertices[] = {
-		{ 0, h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 1 },
-		{ 0, 0, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 0 },
-		{ w, h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 1 },
-		{ w, 0, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 0 },
+		{ x,     y + h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, u0, v1 },
+		{ x,     y,     1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, u0, v0 },
+		{ x + w, y + h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, u1, v1 },
+		{ x + w, y,     1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, u1, v0 },
 	};
 	GLushort indices[] = { 0, 1, 2, 1, 3 };
 
@@ -1134,14 +1135,57 @@ void DrawFramebuffer(float w, float h)
 	}
 
 	glActiveTexture(GL_TEXTURE0);
-	glcache.BindTexture(GL_TEXTURE_2D, fbTextureId);
+	glcache.BindTexture(GL_TEXTURE_2D, texId);
 
 	SetupMainVBO();
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STREAM_DRAW);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STREAM_DRAW);
 
 	glDrawElements(GL_TRIANGLE_STRIP, 5, GL_UNSIGNED_SHORT, (void *)0);
+}
 
+void DrawFramebuffer(float w, float h)
+{
+	DrawQuad(fbTextureId, 0, 0, 640.f, 480.f, 0, 0, 1, 1);
 	glcache.DeleteTextures(1, &fbTextureId);
 	fbTextureId = 0;
+}
+
+void save_current_frame()
+{
+#ifndef GLES
+	glReadBuffer(GL_FRONT);
+#endif
+	// (Re-)create the texture and reserve space for it
+	if (g_previous_frame_tex != 0)
+		glcache.DeleteTextures(1, &g_previous_frame_tex);
+	glGenTextures(1, &g_previous_frame_tex);
+	glBindTexture(GL_TEXTURE_2D, g_previous_frame_tex);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, screen_width, screen_height, 0, GL_RGB, GL_UNSIGNED_BYTE, (GLvoid*)NULL);
+
+	// Copy the current framebuffer into it
+	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, screen_width, screen_height);
+	glCheck();
+}
+
+bool render_last_frame()
+{
+	if (g_previous_frame_tex == 0)
+		return false;
+
+#if HOST_OS != OS_DARWIN
+	//Fix this in a proper way
+	glBindFramebuffer(GL_FRAMEBUFFER,0);
+#endif
+	glViewport(0, 0, screen_width, screen_height);
+
+    float scl = 480.f / screen_height;
+    float tx = (screen_width * scl - 640.f) / 2;
+	DrawQuad(g_previous_frame_tex, -tx, 0, 640.f + tx * 2, 480.f, 0, 1, 1, 0);
+
+	return true;
 }

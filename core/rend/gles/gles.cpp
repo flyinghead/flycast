@@ -476,7 +476,10 @@ GLuint fogTextureId;
 
 		// Required when doing partial redraws
         if (!eglSurfaceAttrib(gl.setup.display, gl.setup.surface, EGL_SWAP_BEHAVIOR, EGL_BUFFER_PRESERVED))
-        	printf("eglSurfaceAttrib(EGL_SWAP_BEHAVIOR, EGL_BUFFER_PRESERVED) failed\n");
+        {
+        	printf("Swap buffers are not preserved. Last frame copy enabled\n");
+        	gl.swap_buffer_not_preserved = true;
+        }
 
 		printf("EGL config: %p, %08X, %08X %dx%d\n",gl.setup.context,gl.setup.display,gl.setup.surface,w,h);
 		return true;
@@ -2009,6 +2012,8 @@ bool RenderFrame()
 
 	if (is_rtt)
 		ReadRTTBuffer();
+	else if (gl.swap_buffer_not_preserved)
+		save_current_frame();
 
 	return !is_rtt;
 }

@@ -197,7 +197,7 @@ void    ImGui_ImplOpenGL3_RenderDrawData(ImDrawData* draw_data, bool save_backgr
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, fb_width, fb_height, 0, GL_RGB, GL_UNSIGNED_BYTE, (GLvoid*)NULL);
 
 		// Copy the current framebuffer into it
-		glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 0, 0, fb_width, fb_height, 0);
+		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, fb_width, fb_height);
     }
 
     // Setup render state: alpha-blending enabled, no face culling, no depth testing, scissor enabled, polygon fill

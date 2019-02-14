@@ -98,6 +98,7 @@ bool fb_dirty;
 TA_context* _pvrrc;
 void SetREP(TA_context* cntx);
 void killtex();
+bool render_last_frame();
 
 void dump_frame(const char* file, TA_context* ctx, u8* vram, u8* vram_ref = NULL) {
 	FILE* fw = fopen(file, "wb");
@@ -281,6 +282,7 @@ bool rend_single_frame()
 		}
 		else
 		{
+			render_last_frame();
 #if defined(_ANDROID)
 			if (!rs.Wait(100))
 				return false;

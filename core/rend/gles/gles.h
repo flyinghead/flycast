@@ -122,6 +122,7 @@ struct gl_ctx
 	bool is_gles;
 	GLuint fog_image_format;
 	GLenum index_type;
+	bool swap_buffer_not_preserved;
 
 	size_t get_index_size() { return index_type == GL_UNSIGNED_INT ? sizeof(u32) : sizeof(u16); }
 };
@@ -144,6 +145,8 @@ void gl_load_osd_resources();
 void gl_swap();
 bool ProcessFrame(TA_context* ctx);
 void UpdateFogTexture(u8 *fog_table, GLenum texture_slot, GLint fog_image_format);
+void save_current_frame();
+bool render_last_frame();
 
 text_info raw_GetTexture(TSP tsp, TCW tcw);
 void killtex();
