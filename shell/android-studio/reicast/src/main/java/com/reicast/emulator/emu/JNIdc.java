@@ -20,7 +20,8 @@ public final class JNIdc
 
 	public static native void vjoy(int id,float x, float y, float w, float h);
 
-	public static native void initControllers(boolean[] controllers, int[][] peripherals);
+	public static native void getControllers(int[] controllers, int[][] peripherals);
+	public static native void initControllers(int[] controllers, int[][] peripherals);
 
 	public static native void setupMic(Object sip);
 	public static native void diskSwap(String disk);

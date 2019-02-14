@@ -189,9 +189,12 @@ public class OptionsFragment extends Fragment {
 				mPrefs.edit().putBoolean(Config.pref_gamedetails, isChecked).apply();
 				if (!isChecked) {
 					File dir = new File(getActivity().getExternalFilesDir(null), "images");
-					for (File file : dir.listFiles()) {
-						if (!file.isDirectory()) {
-							file.delete();
+                    File[] files = dir == null ? null : dir.listFiles();
+					if (files != null) {
+						for (File file : files) {
+							if (!file.isDirectory()) {
+								file.delete();
+							}
 						}
 					}
 				}

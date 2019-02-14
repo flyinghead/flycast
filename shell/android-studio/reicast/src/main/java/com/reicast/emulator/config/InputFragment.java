@@ -173,26 +173,9 @@ public class InputFragment extends Fragment {
 		switchTouchVibrationEnabled.setOnCheckedChangeListener(touch_vibration);
 
 		CompoundButton micPluggedIntoController = (CompoundButton) getView().findViewById(R.id.micEnabled);
-		boolean micPluggedIn = mPrefs.getBoolean(Gamepad.pref_mic, false);
+		boolean micPluggedIn = Emulator.micPluggedIn();
 		micPluggedIntoController.setChecked(micPluggedIn);
-		if (getActivity().getPackageManager().hasSystemFeature(PackageManager.FEATURE_MICROPHONE)) {
-			// Microphone is present on the device
-			micPluggedIntoController
-					.setOnCheckedChangeListener(new OnCheckedChangeListener() {
-						public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-							mPrefs.edit().putBoolean(Gamepad.pref_mic, isChecked).apply();
-							if (isChecked && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-									ActivityCompat.requestPermissions(getActivity(),
-											new String[] {
-													Manifest.permission.RECORD_AUDIO
-											},
-											PERMISSION_REQUEST);
-							}
-						}
-					});
-		} else {
-			micPluggedIntoController.setEnabled(false);
-		}
+		micPluggedIntoController.setEnabled(false);
 
 		Button buttonKeycodeEditor = (Button) getView().findViewById(
 				R.id.buttonKeycodeEditor);

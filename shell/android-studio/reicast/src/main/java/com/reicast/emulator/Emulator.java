@@ -38,6 +38,19 @@ public class Emulator extends Application {
     public static final String pref_TextureUpscale = "TextureUpscale";
     public static final String pref_MaxFilteredTextureSize= "MaxFilteredTextureSize";
     public static final String pref_MaxThreads = "MaxThreads";
+    public static final String pref_controller_type = "controller_type";
+    public static final String pref_peripheral_type = "peripheral_type";
+    // see MapleDeviceType in hw/maple/maple_devs.h
+    public static final int MDT_SegaController = 0;
+    public static final int MDT_SegaVMU = 1;
+    public static final int MDT_Microphone = 2;
+    public static final int MDT_PurupuruPack = 3;
+    public static final int MDT_Keyboard = 4;
+    public static final int MDT_Mouse = 5;
+    public static final int MDT_LightGun = 6;
+    public static final int MDT_NaomiJamma = 7;
+    public static final int MDT_None = 8;
+    public static final int MDT_Count = 9;
 
     public static boolean dynarecopt = true;
     public static boolean idleskip = true;
@@ -67,6 +80,18 @@ public class Emulator extends Application {
     public static int TextureUpscale = 1;
     public static int MaxFilteredTextureSize = 256;
     public static int MaxThreads = 1;
+    public static int maple_devices[] = {
+            MDT_SegaController,
+            MDT_None,
+            MDT_None,
+            MDT_None
+    };
+    public static int maple_expansion_devices[][] = {
+        { MDT_SegaVMU, MDT_None },
+        { MDT_None, MDT_None },
+        { MDT_None, MDT_None },
+        { MDT_None, MDT_None },
+    };
 
     /**
      * Load the user configuration from preferences
@@ -100,6 +125,11 @@ public class Emulator extends Application {
         Emulator.TextureUpscale = mPrefs.getInt(pref_TextureUpscale, TextureUpscale);
         Emulator.MaxFilteredTextureSize = mPrefs.getInt(pref_MaxFilteredTextureSize, MaxFilteredTextureSize);
         Emulator.MaxThreads = mPrefs.getInt(pref_MaxThreads, MaxThreads);
+        for (int i = 0; i < maple_devices.length; i++) {
+            maple_devices[i] = mPrefs.getInt(pref_controller_type + i, Emulator.maple_devices[i]);
+            maple_expansion_devices[i][0] = mPrefs.getInt(pref_peripheral_type + i + "0", Emulator.maple_expansion_devices[i][0]);
+            maple_expansion_devices[i][1] = mPrefs.getInt(pref_peripheral_type + i + "1", Emulator.maple_expansion_devices[i][1]);
+        }
     }
 
     /**
@@ -134,6 +164,7 @@ public class Emulator extends Application {
         JNIdc.setTextureUpscale(Emulator.TextureUpscale);
         JNIdc.setMaxFilteredTextureSize(Emulator.MaxFilteredTextureSize);
         JNIdc.setMaxThreads(Emulator.MaxThreads);
+        JNIdc.initControllers(maple_devices, maple_expansion_devices);
     }
 
     public void loadGameConfiguration(String gameId) {
@@ -186,8 +217,9 @@ public class Emulator extends Application {
         Emulator.TextureUpscale = JNIdc.getTextureUpscale();
         Emulator.MaxFilteredTextureSize = JNIdc.getMaxFilteredTextureSize();
         Emulator.MaxThreads = JNIdc.getMaxThreads();
+        JNIdc.getControllers(maple_devices, maple_expansion_devices);
 
-        prefs.edit()
+        SharedPreferences.Editor editor = prefs.edit()
                 .putBoolean(Emulator.pref_dynarecopt, Emulator.dynarecopt)
                 .putBoolean(Emulator.pref_idleskip, Emulator.idleskip)
                 .putBoolean(Emulator.pref_unstable, Emulator.unstableopt)
@@ -213,8 +245,21 @@ public class Emulator extends Application {
                 .putInt(Emulator.pref_RenderToTextureUpscale, Emulator.RenderToTextureUpscale)
                 .putInt(Emulator.pref_TextureUpscale, Emulator.TextureUpscale)
                 .putInt(Emulator.pref_MaxFilteredTextureSize, Emulator.MaxFilteredTextureSize)
-                .putInt(Emulator.pref_MaxThreads, Emulator.MaxThreads)
-                .apply();
+                .putInt(Emulator.pref_MaxThreads, Emulator.MaxThreads);
+        for (int i = 0; i < maple_devices.length; i++) {
+            editor.putInt(pref_controller_type + i, Emulator.maple_devices[i]);
+            editor.putInt(pref_peripheral_type + i + "0", Emulator.maple_expansion_devices[i][0]);
+            editor.putInt(pref_peripheral_type + i + "1", Emulator.maple_expansion_devices[i][1]);
+        }
+        editor.apply();
+    }
+
+    public static boolean micPluggedIn() {
+        for (int i = 0; i < maple_expansion_devices.length; i++)
+            if (maple_expansion_devices[i][0] == MDT_Microphone
+                    || maple_expansion_devices[i][1] == MDT_Microphone)
+                return true;
+        return false;
     }
 
     static {

@@ -50,7 +50,8 @@ JNIEXPORT jboolean JNICALL Java_com_reicast_emulator_emu_JNIdc_rendframe(JNIEnv 
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_vjoy(JNIEnv * env, jobject obj,u32 id,float x, float y, float w, float h)  __attribute__((visibility("default")));
 
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_initControllers(JNIEnv *env, jobject obj, jbooleanArray controllers, jobjectArray peripherals)  __attribute__((visibility("default")));
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_initControllers(JNIEnv *env, jobject obj, jintArray controllers, jobjectArray peripherals)  __attribute__((visibility("default")));
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_getControllers(JNIEnv *env, jobject obj, jintArray controllers, jobjectArray peripherals)  __attribute__((visibility("default")));
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setupMic(JNIEnv *env,jobject obj,jobject sip)  __attribute__((visibility("default")));
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_diskSwap(JNIEnv *env,jobject obj,jstring disk)  __attribute__((visibility("default")));
@@ -122,10 +123,6 @@ extern int screen_width,screen_height;
 
 static u64 tvs_base;
 static char gamedisk[256];
-
-// Additonal controllers 2, 3 and 4 connected ?
-static bool add_controllers[3] = { false, false, false };
-int **controller_periphs;
 
 u16 kcode[4] = { 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF };
 u32 vks[4];
@@ -218,23 +215,6 @@ MapleDeviceType GetMapleDeviceType(int value)
 void os_SetupInput()
 {
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-    // Create first controller
-	settings.input.maple_devices[0] = MDT_SegaController;
-	settings.input.maple_expansion_devices[0][0] = MDT_SegaVMU;
-	settings.input.maple_expansion_devices[0][1] = GetMapleDeviceType(controller_periphs[0][1]);
-
-    // Add additional controllers
-    for (int i = 1; i < 4; i++)
-    {
-        if (add_controllers[i - 1])
-        {
-        	settings.input.maple_devices[i] = MDT_SegaController;
-        	settings.input.maple_expansion_devices[i][0] = GetMapleDeviceType(controller_periphs[i][0]);
-        	settings.input.maple_expansion_devices[i][1] = GetMapleDeviceType(controller_periphs[i][1]);
-        }
-        else
-        	settings.input.maple_devices[i] = MDT_None;
-    }
     mcfg_CreateDevices();
 #endif
 }
@@ -379,6 +359,22 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_run(JNIEnv *env,jobje
 }
 
 int msgboxf(const wchar* text,unsigned int type,...) {
+    if (g_jvm == NULL)
+        return 0;
+
+    JNIEnv *env;
+    bool detach_thread = false;
+    int rc = g_jvm->GetEnv((void **)&env, JNI_VERSION_1_6);
+    if (rc  == JNI_EDETACHED) {
+        if (g_jvm->AttachCurrentThread(&env, NULL) != 0)
+            // abort
+            return 0;
+        detach_thread = true;
+    }
+    else if (rc == JNI_EVERSION)
+        // abort
+        return 0;
+
     va_list args;
 
     wchar temp[2048];
@@ -390,7 +386,12 @@ int msgboxf(const wchar* text,unsigned int type,...) {
     jbyteArray bytes = jenv->NewByteArray(byteCount);
     jenv->SetByteArrayRegion(bytes, 0, byteCount, (jbyte *) temp);
 
-    return jenv->CallIntMethod(emu, coreMessageMid, bytes);
+    rc = (int)jenv->CallIntMethod(emu, coreMessageMid, bytes);
+
+    if (detach_thread)
+        g_jvm->DetachCurrentThread();
+
+    return rc;
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setupMic(JNIEnv *env,jobject obj,jobject sip)
@@ -511,27 +512,35 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_vjoy(JNIEnv * env, jo
     }
 }
 
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_initControllers(JNIEnv *env, jobject obj, jbooleanArray controllers, jobjectArray peripherals)
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_initControllers(JNIEnv *env, jobject obj, jintArray controllers, jobjectArray peripherals)
 {
-    jboolean *controllers_body = env->GetBooleanArrayElements(controllers, 0);
-    memcpy(add_controllers, controllers_body, 3);
-    env->ReleaseBooleanArrayElements(controllers, controllers_body, 0);
+    jint *controllers_body = env->GetIntArrayElements(controllers, 0);
+    memcpy(settings.input.maple_devices, controllers_body, sizeof(settings.input.maple_devices));
+    env->ReleaseIntArrayElements(controllers, controllers_body, 0);
 
     int obj_len = env->GetArrayLength(peripherals);
-    jintArray port = (jintArray) env->GetObjectArrayElement(peripherals, 0);
-    int port_len = env->GetArrayLength(port);
-    controller_periphs = new int*[obj_len];
     for (int i = 0; i < obj_len; ++i) {
-        port = (jintArray) env->GetObjectArrayElement(peripherals, i);
-        jint *items = env->GetIntArrayElements(port, 0);
-        controller_periphs[i] = new int[port_len];
-        for (int j = 0; j < port_len; ++j) {
-            controller_periphs[i][j]= items[j];
-        }
-    }
-    for (int i = 0; i < obj_len; i++) {
         jintArray port = (jintArray) env->GetObjectArrayElement(peripherals, i);
         jint *items = env->GetIntArrayElements(port, 0);
+        settings.input.maple_expansion_devices[i][0] = items[0];
+        settings.input.maple_expansion_devices[i][1] = items[1];
+        env->ReleaseIntArrayElements(port, items, 0);
+        env->DeleteLocalRef(port);
+    }
+}
+
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_getControllers(JNIEnv *env, jobject obj, jintArray controllers, jobjectArray peripherals)
+{
+    jint *controllers_body = env->GetIntArrayElements(controllers, 0);
+    memcpy(controllers_body, settings.input.maple_devices, sizeof(settings.input.maple_devices));
+    env->ReleaseIntArrayElements(controllers, controllers_body, 0);
+
+    int obj_len = env->GetArrayLength(peripherals);
+    for (int i = 0; i < obj_len; ++i) {
+        jintArray port = (jintArray) env->GetObjectArrayElement(peripherals, i);
+        jint *items = env->GetIntArrayElements(port, 0);
+        items[0] = settings.input.maple_expansion_devices[i][0];
+        items[1] = settings.input.maple_expansion_devices[i][1];
         env->ReleaseIntArrayElements(port, items, 0);
         env->DeleteLocalRef(port);
     }
@@ -610,7 +619,7 @@ void os_DebugBreak()
 {
     // TODO: notify the parent thread about it ...
 
-	raise(SIGSTOP);
+	raise(SIGABRT);
 	
     // Attach debugger here to figure out what went wrong
     for(;;) ;

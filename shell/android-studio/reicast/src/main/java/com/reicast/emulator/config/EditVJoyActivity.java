@@ -56,9 +56,6 @@ public class EditVJoyActivity extends Activity {
 
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
 
-		JNIdc.initControllers(new boolean[] { false, false, false },
-				new int[][] { {1, 1}, {0, 0}, {0, 0}, {0, 0} });
-
 		if (getIntent().getAction().equals("com.reicast.EMULATOR"))
 			fileName = Uri.decode(getIntent().getData().toString());
 

@@ -1,12 +1,16 @@
 package com.reicast.emulator;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.InputDevice;
@@ -31,7 +35,7 @@ import java.util.HashMap;
 
 import tv.ouya.console.api.OuyaController;
 
-public class GL2JNIActivity extends Activity {
+public class GL2JNIActivity extends Activity implements ActivityCompat.OnRequestPermissionsResultCallback {
     public GL2JNIView mView;
     OnScreenMenu menu;
     FpsPopup fpsPop;
@@ -125,9 +129,8 @@ public class GL2JNIActivity extends Activity {
             }
         }
 
-        JNIdc.initControllers(
-                new boolean[] { player2connected, player3connected, player4connected },
-                new int[][] { p1periphs, p2periphs, p3periphs, p4periphs });
+        JNIdc.initControllers(Emulator.maple_devices, Emulator.maple_expansion_devices);
+
         int joys[] = InputDevice.getDeviceIds();
         for (int joy: joys) {
             String descriptor;
@@ -202,11 +205,18 @@ public class GL2JNIActivity extends Activity {
         setContentView(mView);
 
         //setup mic
-        boolean micPluggedIn = prefs.getBoolean(Gamepad.pref_mic, false);
-        if (micPluggedIn) {
-            SipEmulator sip = new SipEmulator();
-            sip.startRecording();
-            JNIdc.setupMic(sip);
+        if (Emulator.micPluggedIn()) {
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                ActivityCompat.requestPermissions(this,
+                        new String[]{
+                                Manifest.permission.RECORD_AUDIO
+                        },
+                        0);
+            }
+            else
+            {
+                onRequestPermissionsResult(0, new String[] { Manifest.permission.RECORD_AUDIO }, new int[] { PackageManager.PERMISSION_GRANTED });
+            }
         }
 
         if (Emulator.showfps) {
@@ -349,5 +359,15 @@ public class GL2JNIActivity extends Activity {
     protected void onResume() {
         super.onResume();
         mView.onResume();
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (permissions.length > 0 && permissions[0] == Manifest.permission.RECORD_AUDIO && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            SipEmulator sip = new SipEmulator();
+            sip.startRecording();
+            JNIdc.setupMic(sip);
+        }
     }
 }
