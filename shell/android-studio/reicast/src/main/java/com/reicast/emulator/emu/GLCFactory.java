@@ -121,7 +121,7 @@ public class GLCFactory {
                 int s = findConfigAttrib(egl,display,config,EGL10.EGL_STENCIL_SIZE,0);
 
                 // We need at least mDepthSize and mStencilSize bits
-                if (d>=mDepthSize || s>=mStencilSize)
+                if (d >= mDepthSize && s >= mStencilSize)
                 {
                     // We want an *exact* match for red/green/blue/alpha
                     int r = findConfigAttrib(egl,display,config,EGL10.EGL_RED_SIZE,  0);
