@@ -118,6 +118,7 @@ public class MainActivity extends AppCompatActivity implements
 		if (!getFilesDir().exists()) {
 			getFilesDir().mkdir();
 		}
+		JNIdc.initEnvironment(getApplicationContext());
 
 		// When viewing a resource, pass its URI to the native code for opening
 		Intent intent = getIntent();

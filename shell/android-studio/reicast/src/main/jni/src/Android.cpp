@@ -35,9 +35,10 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_set ## jsetting(JNIEn
 
 extern "C"
 {
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_initEnvironment(JNIEnv *env, jobject obj, jobject emulator)  __attribute__((visibility("default")));
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_config(JNIEnv *env,jobject obj,jstring dirName)  __attribute__((visibility("default")));
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_init(JNIEnv *env,jobject obj,jstring fileName)  __attribute__((visibility("default")));
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_query(JNIEnv *env,jobject obj,jobject emu_thread, jobject emulator)  __attribute__((visibility("default")));
+JNIEXPORT jstring JNICALL Java_com_reicast_emulator_emu_JNIdc_init(JNIEnv *env,jobject obj,jstring fileName)  __attribute__((visibility("default")));
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_query(JNIEnv *env,jobject obj,jobject emu_thread)  __attribute__((visibility("default")));
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_run(JNIEnv *env,jobject obj,jobject emu_thread)  __attribute__((visibility("default")));
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_pause(JNIEnv *env,jobject obj)  __attribute__((visibility("default")));
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_destroy(JNIEnv *env,jobject obj)  __attribute__((visibility("default")));
@@ -107,8 +108,7 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_screenDpi(JNIEnv *env
 
 void egl_stealcntx();
 void SetApplicationPath(wchar *path);
-void reios_init(int argc,wchar* argv[]);
-int dc_init();
+int dc_init(int argc, wchar* argv[]);
 void dc_run();
 void dc_pause();
 void dc_term();
@@ -136,36 +136,18 @@ extern u32 mo_buttons;
 
 extern bool print_stats;
 
-
+//stuff for saving prefs
+JavaVM* g_jvm;
+jobject g_emulator;
+jmethodID saveSettingsMid;
 
 void os_DoEvents()
 {
     // @@@ Nothing here yet
 }
 
-//
-// Native thread that runs the actual nullDC emulator
-//
-static void *ThreadHandler(void *UserData)
+void os_CreateWindow()
 {
-    char *Args[3];
-    const char *P;
-
-    // Make up argument list
-    P       = (const char *)UserData;
-    Args[0] = (char*)"dc";
-    Args[1] = (char*)"-config";
-    Args[2] = P&&P[0]? (char *)malloc(strlen(P)+32):0;
-
-    if(Args[2])
-    {
-        strcpy(Args[2],"config:image=");
-        strcat(Args[2],P);
-    }
-
-    // Run nullDC emulator
-    reios_init(Args[2]? 3:1,Args);
-    return 0;
 }
 
 //
@@ -223,6 +205,21 @@ void os_SetWindowText(char const *Text)
 {
     putinf("%s",Text);
 }
+
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_initEnvironment(JNIEnv *env, jobject obj, jobject emulator)
+{
+    // Initialize platform-specific stuff
+    common_linux_setup();
+
+    // Keep reference to global JVM and Emulator objects
+    if (g_jvm == NULL)
+        env->GetJavaVM(&g_jvm);
+    if (g_emulator == NULL) {
+        g_emulator = env->NewGlobalRef(emulator);
+        saveSettingsMid = env->GetMethodID(env->GetObjectClass(emulator), "SaveSettings", "()V");
+    }
+}
+
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_config(JNIEnv *env,jobject obj,jstring dirName)
 {
     // Set home directory based on User config
@@ -248,7 +245,7 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_bootdisk(JNIEnv *env,
     }
 }
 
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_init(JNIEnv *env,jobject obj,jstring fileName)
+JNIEXPORT jstring JNICALL Java_com_reicast_emulator_emu_JNIdc_init(JNIEnv *env,jobject obj,jstring fileName)
 {
     // Get filename string from Java
     const char* P = fileName ? env->GetStringUTFChars(fileName,0) : 0;
@@ -261,22 +258,40 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_init(JNIEnv *env,jobj
         env->ReleaseStringUTFChars(fileName,P);
     }
 
-    // Initialize platform-specific stuff
-    common_linux_setup();
-
     // Set configuration
     settings.profile.run_counts = 0;
 
+    // Make up argument list
+    char *args[3];
+    args[0] = "dc";
+    args[1] = "-config";
+    args[2] = gamedisk[0] != 0 ? (char *)malloc(strlen(gamedisk) + 32) : NULL;
 
-/*
-  // Start native thread
-  pthread_attr_init(&PTAttr);
-  pthread_attr_setdetachstate(&PTAttr,PTHREAD_CREATE_DETACHED);
-  pthread_create(&PThread,&PTAttr,ThreadHandler,CurFileName);
-  pthread_attr_destroy(&PTAttr);
-  */
+    if (args[2] != NULL)
+    {
+        strcpy(args[2], "config:image=");
+        strcat(args[2], gamedisk);
+    }
 
-    ThreadHandler(gamedisk);
+    // Run nullDC emulator
+    int rc = dc_init(args[2] ? 3 : 1, args);
+
+    if (args[2] != NULL)
+        free(args[2]);
+
+    jstring msg = NULL;
+    if (rc == -5)
+        msg = env->NewStringUTF("BIOS files cannot be found");
+    else if (rc == -4)
+        msg = env->NewStringUTF("Cannot find configuration");
+    else if (rc == -3)
+        msg = env->NewStringUTF("Sound/GPU initialization failed");
+    else if (rc == 69)
+        msg = env->NewStringUTF("Invalid command line");
+    else if (rc == -1)
+        msg = env->NewStringUTF("Memory initialization failed");
+
+    return msg;
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_diskSwap(JNIEnv *env,jobject obj,jstring disk)
@@ -317,12 +332,49 @@ jmethodID getmicdata;
 jobject vmulcd = NULL;
 jbyteArray jpix = NULL;
 jmethodID updatevmuscreen;
-//stuff for saving prefs
-JavaVM* g_jvm;
-jobject g_emulator;
-jmethodID saveSettingsMid;
 
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_query(JNIEnv *env,jobject obj,jobject emu_thread, jobject emulator)
+// Convenience class to get the java environment for the current thread.
+// Also attach the threads, and detach it on destruction, if needed. This is probably not very efficient
+// but shouldn't be needed except for error reporting.
+class JVMAttacher {
+public:
+    JVMAttacher() : env(NULL), detach_thread(false) {
+        if (g_jvm == NULL) {
+            log_error("g_jvm == NULL");
+            return;
+        }
+        int rc = g_jvm->GetEnv((void **)&env, JNI_VERSION_1_6);
+        if (rc  == JNI_EDETACHED) {
+            if (g_jvm->AttachCurrentThread(&env, NULL) != 0) {
+                log_error("AttachCurrentThread failed");
+                return;
+            }
+            detach_thread = true;
+        }
+        else if (rc == JNI_EVERSION) {
+            log_error("JNI version error");
+            return;
+        }
+    }
+
+    ~JVMAttacher()
+    {
+        if (detach_thread)
+            g_jvm->DetachCurrentThread();
+    }
+
+    void log_error(const char *reason)
+    {
+        LOGE("JVMAttacher cannot attach to JVM: %s", reason);
+    }
+
+    bool failed() { return env == NULL; }
+
+    JNIEnv *env;
+    bool detach_thread = false;
+};
+
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_query(JNIEnv *env,jobject obj,jobject emu_thread)
 {
     jmethodID reiosInfoMid=env->GetMethodID(env->GetObjectClass(emu_thread),"reiosInfo","(Ljava/lang/String;Ljava/lang/String;)V");
 
@@ -335,12 +387,6 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_query(JNIEnv *env,job
     jstring reios_name = env->NewStringUTF(name);
 
     env->CallVoidMethod(emu_thread, reiosInfoMid, reios_id, reios_name);
-
-    env->GetJavaVM(&g_jvm);
-    g_emulator = env->NewGlobalRef(emulator);
-    saveSettingsMid = env->GetMethodID(env->GetObjectClass(emulator), "SaveSettings", "()V");
-
-    dc_init();
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_run(JNIEnv *env,jobject obj,jobject emu_thread)
@@ -359,20 +405,8 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_run(JNIEnv *env,jobje
 }
 
 int msgboxf(const wchar* text,unsigned int type,...) {
-    if (g_jvm == NULL)
-        return 0;
-
-    JNIEnv *env;
-    bool detach_thread = false;
-    int rc = g_jvm->GetEnv((void **)&env, JNI_VERSION_1_6);
-    if (rc  == JNI_EDETACHED) {
-        if (g_jvm->AttachCurrentThread(&env, NULL) != 0)
-            // abort
-            return 0;
-        detach_thread = true;
-    }
-    else if (rc == JNI_EVERSION)
-        // abort
+    JVMAttacher attacher;
+    if (attacher.failed())
         return 0;
 
     va_list args;
@@ -386,12 +420,7 @@ int msgboxf(const wchar* text,unsigned int type,...) {
     jbyteArray bytes = jenv->NewByteArray(byteCount);
     jenv->SetByteArrayRegion(bytes, 0, byteCount, (jbyte *) temp);
 
-    rc = (int)jenv->CallIntMethod(emu, coreMessageMid, bytes);
-
-    if (detach_thread)
-        g_jvm->DetachCurrentThread();
-
-    return rc;
+    return (int)attacher.env->CallIntMethod(emu, coreMessageMid, bytes);
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setupMic(JNIEnv *env,jobject obj,jobject sip)
@@ -619,7 +648,8 @@ void os_DebugBreak()
 {
     // TODO: notify the parent thread about it ...
 
-	raise(SIGABRT);
+	//raise(SIGABRT);
+    pthread_exit(NULL);
 	
     // Attach debugger here to figure out what went wrong
     for(;;) ;
@@ -627,26 +657,42 @@ void os_DebugBreak()
 
 void SaveSettings()
 {
-    if (g_jvm == NULL)
+    JVMAttacher attacher;
+    if (attacher.failed())
         return;
 
-    JNIEnv *env;
-    bool detach_thread = false;
-    int rc = g_jvm->GetEnv((void **)&env, JNI_VERSION_1_6);
-    if (rc  == JNI_EDETACHED) {
-        if (g_jvm->AttachCurrentThread(&env, NULL) != 0)
-            // abort
-            return;
-        detach_thread = true;
-    }
-    else if (rc == JNI_EVERSION)
-        // abort
+    attacher.env->CallVoidMethod(g_emulator, saveSettingsMid);
+}
+
+void LoadSpecialSettings();
+
+void LoadCustom()
+{
+    JVMAttacher attacher;
+    if (attacher.failed())
         return;
+#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
+    char *reios_id = reios_disk_id();
 
-    env->CallVoidMethod(g_emulator, saveSettingsMid);
+    char *p = reios_id + strlen(reios_id) - 1;
+    while (p >= reios_id && *p == ' ')
+        *p-- = '\0';
+    if (*p == '\0')
+        return;
+#elif DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
+    char *reios_id = naomi_game_id;
+	char *reios_software_name = naomi_game_id;
+#endif
 
-    if (detach_thread)
-        g_jvm->DetachCurrentThread();
+    LoadSpecialSettings();	// Default per-game settings
+
+    jmethodID loadGameConfigurationMid = attacher.env->GetMethodID(attacher.env->GetObjectClass(g_emulator), "loadGameConfiguration", "(Ljava/lang/String;)V");
+
+    char *id = (char*)malloc(11);
+    strcpy(id, reios_id);
+    jstring jreios_id = attacher.env->NewStringUTF(id);
+
+    attacher.env->CallVoidMethod(g_emulator, loadGameConfigurationMid, jreios_id);
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_joystickAdded(JNIEnv *env, jobject obj, jint id, jstring name)

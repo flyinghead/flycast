@@ -5,9 +5,10 @@ public final class JNIdc
 {
 	static { System.loadLibrary("dc"); }
 
+	public static native void initEnvironment(Object emulator);
 	public static native void config(String dirName);
-	public static native void init(String fileName);
-	public static native void query(Object thread, Object emulator);
+	public static native String init(String fileName);
+	public static native void query(Object thread);
 	public static native void run(Object track);
 	public static native void pause();
 	public static native void destroy();

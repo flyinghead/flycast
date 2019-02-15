@@ -22,7 +22,7 @@
 #include "hw/aica/dsp.h"
 
 void FlushCache();
-static void LoadCustom();
+void LoadCustom();
 void dc_resume_emu(bool continue_running);
 
 settings_t settings;
@@ -202,6 +202,8 @@ void LoadSpecialSettings()
 		|| !strncmp("T15112N", reios_product_number, 7)
 		// Star Wars - Episode I - Racer (United Kingdom)
 		|| !strncmp("T23001D", reios_product_number, 7)
+		// Star Wars - Episode I - Racer (USA)
+		|| !strncmp("T23001N", reios_product_number, 7)
 		// Record of Lodoss War (EU)
 		|| !strncmp("T7012D", reios_product_number, 6)
 		// Record of Lodoss War (USA)
@@ -284,13 +286,7 @@ void dc_reset()
 	sh4_cpu.Reset(false);
 }
 
-#if defined(_ANDROID)
-int reios_init_value;
-
-void reios_init(int argc,wchar* argv[])
-#else
 int dc_init(int argc,wchar* argv[])
-#endif
 {
 	setbuf(stdin,0);
 	setbuf(stdout,0);
@@ -298,12 +294,7 @@ int dc_init(int argc,wchar* argv[])
 	if (!_vmem_reserve())
 	{
 		printf("Failed to alloc mem\n");
-#if defined(_ANDROID)
-		reios_init_value = -1;
-		return;
-#else
 		return -1;
-#endif
 	}
 
 #if !defined(TARGET_NO_WEBUI) && !defined(TARGET_NO_THREADS)
@@ -312,29 +303,16 @@ int dc_init(int argc,wchar* argv[])
 
 	if(ParseCommandLine(argc,argv))
 	{
-#if defined(_ANDROID)
-        reios_init_value = 69;
-        return;
-#else
         return 69;
-#endif
 	}
 	if(!cfgOpen())
 	{
 		msgboxf("Unable to open config file",MBX_ICONERROR);
-#if defined(_ANDROID)
-		reios_init_value = -4;
-		return;
-#else
 		return -4;
-#endif
 	}
 	LoadSettings();
-#ifndef _ANDROID
-	os_CreateWindow();
-#endif
 
-	int rv = 0;
+	os_CreateWindow();
 
 #if HOST_OS != OS_DARWIN
     #define DATA_PATH "/data/"
@@ -344,43 +322,26 @@ int dc_init(int argc,wchar* argv[])
 
 	if (settings.bios.UseReios || !LoadRomFiles(get_readonly_data_path(DATA_PATH)))
 	{
+#ifdef USE_REIOS
 		if (!LoadHle(get_readonly_data_path(DATA_PATH)))
 		{
-#if defined(_ANDROID)
-			reios_init_value = -4;
-			return;
-#else
-			return -3;
-#endif
+			return -5;
 		}
 		else
 		{
 			printf("Did not load bios, using reios\n");
 		}
+#else
+        return -5;
+#endif
 	}
 
 	if (plugins_Init())
 	{
-#if defined(_ANDROID)
-			reios_init_value = -4;
-			return;
-#else
-			return -3;
-#endif
+		return -3;
 	}
 
-#if defined(_ANDROID)
-}
-
-int dc_init()
-{
-	int rv = 0;
-	if (reios_init_value != 0)
-		return reios_init_value;
-	LoadSpecialSettings();
-#else
 	LoadCustom();
-#endif
 
 #if FEAT_SHREC != DYNAREC_NONE
 	Get_Sh4Recompiler(&sh4_cpu);
@@ -414,8 +375,8 @@ int dc_init()
 #endif
 
 	dc_reset();
-	
-	return rv;
+
+	return 0;
 }
 
 bool dc_is_running()
@@ -572,9 +533,6 @@ void LoadSettings()
 	settings.rend.ExtraDepthScale = max(1.f, settings.rend.ExtraDepthScale);
 #endif
 
-	settings.pvr.HashLogFile	= cfgLoadStr("testing", "ta.HashLogFile", "");
-	settings.pvr.HashCheckFile	= cfgLoadStr("testing", "ta.HashCheckFile", "");
-
 #if SUPPORT_DISPMANX
 	settings.dispmanx.Width		= cfgLoadInt("dispmanx","width",640);
 	settings.dispmanx.Height	= cfgLoadInt("dispmanx","height",480);
@@ -600,7 +558,8 @@ void LoadSettings()
 */
 }
 
-static void LoadCustom()
+#ifndef _ANDROID
+void LoadCustom()
 {
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST
 	char *reios_id = reios_disk_id();
@@ -640,7 +599,6 @@ static void LoadCustom()
 #endif
 }
 
-#ifndef _ANDROID
 void SaveSettings()
 {
 	cfgSaveInt("config", "Dynarec.Enabled", settings.dynarec.Enable);

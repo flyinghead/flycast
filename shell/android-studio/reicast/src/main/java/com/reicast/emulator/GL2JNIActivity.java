@@ -89,46 +89,6 @@ public class GL2JNIActivity extends Activity implements ActivityCompat.OnRequest
                 prefs.getString(Gamepad.pref_player4, null), 3);
         pad.deviceDescriptor_PlayerNum.remove(null);
 
-        boolean player2connected = false;
-        boolean player3connected = false;
-        boolean player4connected = false;
-        int p1periphs[] = {
-                1, // Hardcoded VMU
-                prefs.getBoolean(Gamepad.pref_mic, false) ? 2 : 1
-        };
-        int p2periphs[] = {
-                prefs.getInt(Gamepad.p2_peripheral + 1, 0),
-                prefs.getInt(Gamepad.p2_peripheral + 2, 0)
-        };
-        int p3periphs[] = {
-                prefs.getInt(Gamepad.p3_peripheral + 1, 0),
-                prefs.getInt(Gamepad.p3_peripheral + 2, 0)
-        };
-        int p4periphs[] = {
-                prefs.getInt(Gamepad.p4_peripheral + 1, 0),
-                prefs.getInt(Gamepad.p4_peripheral + 2, 0)
-        };
-
-        for (HashMap.Entry<String, Integer> e : pad.deviceDescriptor_PlayerNum.entrySet()) {
-            String descriptor = e.getKey();
-            Integer playerNum = e.getValue();
-
-            switch (playerNum) {
-                case 1:
-                    if (descriptor != null)
-                        player2connected = true;
-                    break;
-                case 2:
-                    if (descriptor != null)
-                        player3connected = true;
-                    break;
-                case 3:
-                    if (descriptor != null)
-                        player4connected = true;
-                    break;
-            }
-        }
-
         JNIdc.initControllers(Emulator.maple_devices, Emulator.maple_expansion_devices);
 
         int joys[] = InputDevice.getDeviceIds();
@@ -199,10 +159,15 @@ public class GL2JNIActivity extends Activity implements ActivityCompat.OnRequest
         if (getIntent().getAction().equals("com.reicast.EMULATOR"))
             fileName = Uri.decode(getIntent().getData().toString());
 
-        // Create the actual GLES view
-        mView = new GL2JNIView(GL2JNIActivity.this, fileName, false,
-                prefs.getInt(Config.pref_renderdepth, 24), 8, false);
-        setContentView(mView);
+        try {
+            // Create the actual GLES view
+            mView = new GL2JNIView(GL2JNIActivity.this, fileName, false,
+                    prefs.getInt(Config.pref_renderdepth, 24), 8, false);
+            setContentView(mView);
+        } catch (GL2JNIView.EmulatorInitFailed e) {
+            finish();
+            return;
+        }
 
         //setup mic
         if (Emulator.micPluggedIn()) {
@@ -346,8 +311,11 @@ public class GL2JNIActivity extends Activity implements ActivityCompat.OnRequest
     protected void onDestroy() {
         super.onDestroy();
         InputDeviceManager.getInstance().stopListening();
-        mView.onDestroy();
-        JNIdc.destroy();
+        if (mView != null) {
+            mView.onDestroy();
+            // FIXME This should be called to deinit what's been inited...
+            JNIdc.destroy();
+        }
     }
 
     @Override

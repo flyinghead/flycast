@@ -109,7 +109,7 @@ public class GL2JNIView extends GLSurfaceView
     }
 
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
-    public GL2JNIView(Context context, String newFileName, boolean translucent,
+    public GL2JNIView(final Context context, String newFileName, boolean translucent,
                       int depth, int stencil, boolean editVjoyMode) {
         super(context);
         this.context = context;
@@ -159,8 +159,20 @@ public class GL2JNIView extends GLSurfaceView
         if (GL2JNIActivity.syms != null)
             JNIdc.data(1, GL2JNIActivity.syms);
 
-        JNIdc.init(fileName);
-        JNIdc.query(ethd, context.getApplicationContext());
+        final String initStatus = JNIdc.init(fileName);
+        if (initStatus != null)
+        {
+            handler.post(new Runnable() {
+                public void run() {
+                    Log.e("initialization", "dc_init: " + initStatus);
+                    Toast.makeText(context, initStatus, Toast.LENGTH_SHORT).show();
+                }
+            });
+
+
+            throw new EmulatorInitFailed();
+        }
+        JNIdc.query(ethd);
 
         // By default, GLSurfaceView() creates a RGB_565 opaque surface.
         // If we want a translucent one, we should change the surface's
@@ -548,8 +560,10 @@ public class GL2JNIView extends GLSurfaceView
                 mView.takeScreenshot = false;
                 FileUtils.saveScreenshot(mView.getContext(), mView.getWidth(), mView.getHeight(), gl);
             }
-            if (mView.ethd.getState() == Thread.State.TERMINATED)
+            if (mView.ethd.getState() == Thread.State.TERMINATED) {
                 System.exit(0);
+                // Ideally: ((Activity)mView.getContext()).finish();
+            }
         }
 
         public void onSurfaceChanged(GL10 gl,int width,int height)
@@ -736,4 +750,6 @@ public class GL2JNIView extends GLSurfaceView
         takeScreenshot = true;
     }
 
+    public static class EmulatorInitFailed extends RuntimeException {
+    }
 }
