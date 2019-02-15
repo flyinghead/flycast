@@ -15,6 +15,7 @@
 #include "rend/TexCache.h"
 #include "hw/maple/maple_devs.h"
 #include "hw/maple/maple_if.h"
+#include "hw/naomi/naomi_cart.h"
 #include "oslib/audiobackend_android.h"
 #include "reios/reios.h"
 #include "imgread/common.h"
