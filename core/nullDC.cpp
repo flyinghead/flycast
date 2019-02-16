@@ -352,6 +352,7 @@ int dc_init(int argc,wchar* argv[])
 			printf("Did not load bios, using reios\n");
 		}
 #else
+		printf("Cannot find BIOS files\n");
         return -5;
 #endif
 	}
@@ -555,7 +556,6 @@ void LoadSettings(bool game_specific)
 	const char *config_section = game_specific ? cfgGetGameId() : "config";
 	const char *input_section = game_specific ? cfgGetGameId() : "input";
 
-#ifndef _ANDROID
 	settings.dynarec.Enable			= cfgLoadBool(config_section, "Dynarec.Enabled", settings.dynarec.Enable);
 	settings.dynarec.idleskip		= cfgLoadBool(config_section, "Dynarec.idleskip", settings.dynarec.idleskip);
 	settings.dynarec.unstable_opt	= cfgLoadBool(config_section, "Dynarec.unstable-opt", settings.dynarec.unstable_opt);
@@ -613,13 +613,6 @@ void LoadSettings(bool game_specific)
 		sprintf(device_name, "device%d.2", i + 1);
 		settings.input.maple_expansion_devices[i][1] = (MapleDeviceType)cfgLoadInt(input_section, device_name, settings.input.maple_expansion_devices[i][1]);
 	}
-#else
-	settings.rend.RenderToTextureUpscale = max(1, settings.rend.RenderToTextureUpscale);
-	settings.rend.TextureUpscale = max(1, settings.rend.TextureUpscale);
-
-	// Configured on a per-game basis
-	settings.rend.ExtraDepthScale = max(1.f, settings.rend.ExtraDepthScale);
-#endif
 
 #if SUPPORT_DISPMANX
 	settings.dispmanx.Width		= cfgLoadInt(game_specific ? cfgGetGameId() : "dispmanx", "width", settings.dispmanx.Width);
@@ -646,7 +639,6 @@ void LoadSettings(bool game_specific)
 */
 }
 
-#ifndef _ANDROID
 void LoadCustom()
 {
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST
@@ -662,11 +654,12 @@ void LoadCustom()
 	char *reios_software_name = naomi_game_id;
 #endif
 
-	LoadSpecialSettings();	// Default per-game settings
+	// Default per-game settings
+	LoadSpecialSettings();
 
 	cfgSetGameId(reios_id);
 
-	// Reload game-specific settings
+	// Reload per-game settings
 	LoadSettings(true);
 }
 
@@ -714,7 +707,6 @@ void SaveSettings()
 	}
 
 }
-#endif
 
 static bool wait_until_dc_running()
 {
