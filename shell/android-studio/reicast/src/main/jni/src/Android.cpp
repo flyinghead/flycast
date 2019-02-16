@@ -31,7 +31,7 @@ JNIEXPORT type JNICALL Java_com_reicast_emulator_emu_JNIdc_get ## jsetting(JNIEn
 }                                                                                                                                                       \
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_set ## jsetting(JNIEnv *env, jobject obj, type v)                                            \
 {                                                                                                                                                       \
-    settings.csetting = v;                                                                                                                              \
+    /* settings.csetting = v; */                                                                                                                        \
 }
 
 extern "C"
@@ -655,7 +655,7 @@ void os_DebugBreak()
     // Attach debugger here to figure out what went wrong
     for(;;) ;
 }
-
+/*
 void SaveSettings()
 {
     JVMAttacher attacher;
@@ -695,6 +695,7 @@ void LoadCustom()
 
     attacher.env->CallVoidMethod(g_emulator, loadGameConfigurationMid, jreios_id);
 }
+*/
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_joystickAdded(JNIEnv *env, jobject obj, jint id, jstring name, jint maple_port)
 {

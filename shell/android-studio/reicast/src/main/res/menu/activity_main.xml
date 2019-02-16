@@ -10,9 +10,11 @@
     <item android:title="@string/input"
         android:id="@+id/input_menu"
         android:icon="@mipmap/menu_input" />
+    <!--
     <item android:title="@string/pgconfig"
         android:id="@+id/pgconfig_menu"
         android:icon="@mipmap/menu_config" />
+    -->
     <item android:title="@string/cloud"
         android:id="@+id/cloud_menu"
         android:icon="@mipmap/menu_cloud" />

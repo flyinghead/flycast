@@ -512,7 +512,7 @@ public class GL2JNIView extends GLSurfaceView
         int joyy = get_anal(11, 1);
         InputDeviceManager.getInstance().virtualGamepadEvent(rv, joyx, joyy, left_trigger, right_trigger);
         // Only register the mouse event if no virtual gamepad button is down
-        if (rv == 0xFFFF)
+        if (!editVjoyMode && rv == 0xFFFF)
             InputDeviceManager.getInstance().mouseEvent(mouse_pos[0], mouse_pos[1], mouse_btns);
         return(true);
     }

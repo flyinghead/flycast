@@ -430,24 +430,6 @@ public class MainActivity extends AppCompatActivity implements
 				drawer.closeDrawer(GravityCompat.START);
 				return true;
 
-			case R.id.pgconfig_menu:
-				PGConfigFragment pgconfigFrag = (PGConfigFragment) getSupportFragmentManager()
-						.findFragmentByTag("PGCONFIG_FRAG");
-				if (pgconfigFrag != null) {
-					if (pgconfigFrag.isVisible()) {
-						drawer.closeDrawer(GravityCompat.START);
-						return true;
-					}
-				}
-				pgconfigFrag = new PGConfigFragment();
-				getSupportFragmentManager()
-						.beginTransaction()
-						.replace(R.id.fragment_container, pgconfigFrag, "PGCONFIG_FRAG")
-						.addToBackStack(null).commit();
-				setTitle(R.string.pgconfig);
-				drawer.closeDrawer(GravityCompat.START);
-				return true;
-
 			case R.id.input_menu:
 				InputFragment inputFrag = (InputFragment) getSupportFragmentManager()
 						.findFragmentByTag("INPUT_FRAG");
