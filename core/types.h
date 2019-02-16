@@ -793,43 +793,11 @@ struct settings_t
 
 	struct
 	{
-		struct
-		{
-			u32 ResolutionMode;
-			u32 VSync;
-		} Video;
-
-		struct 
-		{
-			u32 MultiSampleCount;
-			u32 MultiSampleQuality;
-			u32 AspectRatioMode;
-		} Enhancements;
-
-		struct
-		{
-			u32 PaletteMode;
-			u32 AlphaSortMode;
-			u32 ModVolMode;
-			u32 ZBufferMode;
-			u32 TexCacheMode;
-		} Emulation;
-
-		struct
-		{
-			u32 ShowFPS;
-			u32 ShowStats;
-		} OSD;
-
 		u32 ta_skip;
-		u32 subdivide_transp;
 		u32 rend;
 		
 		u32 MaxThreads;
 		bool SynchronousRender;
-
-		string HashLogFile;
-		string HashCheckFile;
 	} pvr;
 
 	struct {
@@ -841,8 +809,6 @@ struct settings_t
 	} validate;
 
 	struct {
-		bool DCKeyboard;
-		bool DCMouse;
 		u32 MouseSensitivity;
 		u32 JammaSetup;			// 0: standard, 1: 4-players, 2: rotary encoders, 3: Sega Marine Fishing,
 								// 4: dual I/O boards (4P), 5: Namco JYU board (Ninja Assault)
@@ -853,7 +819,8 @@ struct settings_t
 
 extern settings_t settings;
 
-void LoadSettings();
+void InitSettings();
+void LoadSettings(bool game_specific);
 void SaveSettings();
 u32 GetRTC_now();
 extern u32 patchRB;

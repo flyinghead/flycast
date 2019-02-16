@@ -550,6 +550,7 @@ static void gui_display_settings()
     	ImGui::SetNextWindowSize(ImVec2(screen_width * 90.f / 100.f, screen_height * 90.f / 100.f));
 
     ImGui::Begin("Settings", NULL, /*ImGuiWindowFlags_AlwaysAutoResize |*/ ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
+	ImVec2 normal_padding = ImGui::GetStyle().FramePadding;
 
     if (ImGui::Button("Done", ImVec2(100 * scaling, 30 * scaling)))
     {
@@ -561,7 +562,24 @@ static void gui_display_settings()
 #endif
        	SaveSettings();
     }
-	ImVec2 normal_padding = ImGui::GetStyle().FramePadding;
+    ImGui::SameLine();
+	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * scaling, normal_padding.y));
+    if (cfgHasGameSpecificConfig())
+    {
+        if (ImGui::Button("Delete Game Config", ImVec2(0, 30 * scaling)))
+        {
+        	cfgDeleteGameSpecificConfig();
+        	InitSettings();
+        	LoadSettings(false);
+        }
+    }
+    else
+    {
+        if (ImGui::Button("Make Game Config", ImVec2(0, 30 * scaling)))
+        	cfgMakeGameSpecificConfig();
+    }
+    ImGui::PopStyleVar();
+
 	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * scaling, 6 * scaling));		// from 4, 3
 
     if (ImGui::BeginTabBar("settings", ImGuiTabBarFlags_NoTooltip))

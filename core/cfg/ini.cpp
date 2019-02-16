@@ -39,12 +39,12 @@ bool ConfigEntry::get_bool()
 
 /* ConfigSection */
 
-bool ConfigSection::has_entry(string name)
+bool ConfigSection::has_entry(const std::string& name)
 {
 	return (this->entries.count(name) == 1);
 };
 
-ConfigEntry* ConfigSection::get_entry(string name)
+ConfigEntry* ConfigSection::get_entry(const std::string& name)
 {
 	if(this->has_entry(name))
 	{
@@ -53,15 +53,20 @@ ConfigEntry* ConfigSection::get_entry(string name)
 	return NULL;
 };
 
-void ConfigSection::set(string name, string value)
+void ConfigSection::set(const std::string& name, const std::string& value)
 {
 	ConfigEntry new_entry = { value };
 	this->entries[name] = new_entry;
 };
 
+void ConfigSection::delete_entry(const std::string& name)
+{
+	this->entries.erase(name);
+}
+
 /* ConfigFile */
 
-ConfigSection* ConfigFile::add_section(string name, bool is_virtual)
+ConfigSection* ConfigFile::add_section(const std::string& name, bool is_virtual)
 {
 	ConfigSection new_section;
 	if (is_virtual)
@@ -73,12 +78,12 @@ ConfigSection* ConfigFile::add_section(string name, bool is_virtual)
 	return &this->sections[name];
 };
 
-bool ConfigFile::has_section(string name)
+bool ConfigFile::has_section(const std::string& name)
 {
 	return (this->virtual_sections.count(name) == 1 || this->sections.count(name) == 1);
 }
 
-bool ConfigFile::has_entry(string section_name, string entry_name)
+bool ConfigFile::has_entry(const std::string& section_name, const std::string& entry_name)
 {
 	ConfigSection* section = this->get_section(section_name, true);
 	if ((section != NULL) && section->has_entry(entry_name))
@@ -89,7 +94,7 @@ bool ConfigFile::has_entry(string section_name, string entry_name)
 	return ((section != NULL) && section->has_entry(entry_name));
 }
 
-ConfigSection* ConfigFile::get_section(string name, bool is_virtual)
+ConfigSection* ConfigFile::get_section(const std::string& name, bool is_virtual)
 {
 	if(is_virtual)
 	{
@@ -108,7 +113,7 @@ ConfigSection* ConfigFile::get_section(string name, bool is_virtual)
 	return NULL;
 };
 
-ConfigEntry* ConfigFile::get_entry(string section_name, string entry_name)
+ConfigEntry* ConfigFile::get_entry(const std::string& section_name, const std::string& entry_name)
 {
 	ConfigSection* section = this->get_section(section_name, true);
 	if(section != NULL && section->has_entry(entry_name))
@@ -125,7 +130,7 @@ ConfigEntry* ConfigFile::get_entry(string section_name, string entry_name)
 
 }
 
-string ConfigFile::get(string section_name, string entry_name, string default_value)
+string ConfigFile::get(const std::string& section_name, const std::string& entry_name, const std::string& default_value)
 {
 	ConfigEntry* entry = this->get_entry(section_name, entry_name);
 	if (entry == NULL)
@@ -138,7 +143,7 @@ string ConfigFile::get(string section_name, string entry_name, string default_va
 	}
 }
 
-int ConfigFile::get_int(string section_name, string entry_name, int default_value)
+int ConfigFile::get_int(const std::string& section_name, const std::string& entry_name, int default_value)
 {
 	ConfigEntry* entry = this->get_entry(section_name, entry_name);
 	if (entry == NULL)
@@ -151,7 +156,7 @@ int ConfigFile::get_int(string section_name, string entry_name, int default_valu
 	}
 }
 
-bool ConfigFile::get_bool(string section_name, string entry_name, bool default_value)
+bool ConfigFile::get_bool(const std::string& section_name, const std::string& entry_name, bool default_value)
 {
 	ConfigEntry* entry = this->get_entry(section_name, entry_name);
 	if (entry == NULL)
@@ -164,7 +169,7 @@ bool ConfigFile::get_bool(string section_name, string entry_name, bool default_v
 	}
 }
 
-void ConfigFile::set(string section_name, string entry_name, string value, bool is_virtual)
+void ConfigFile::set(const std::string& section_name, const std::string& entry_name, const std::string& value, bool is_virtual)
 {
 	ConfigSection* section = this->get_section(section_name, is_virtual);
 	if(section == NULL)
@@ -174,14 +179,14 @@ void ConfigFile::set(string section_name, string entry_name, string value, bool 
 	section->set(entry_name, value);
 };
 
-void ConfigFile::set_int(string section_name, string entry_name, int value, bool is_virtual)
+void ConfigFile::set_int(const std::string& section_name, const std::string& entry_name, int value, bool is_virtual)
 {
 	std::stringstream str_value;
 	str_value << value;
 	this->set(section_name, entry_name, str_value.str(), is_virtual);
 }
 
-void ConfigFile::set_bool(string section_name, string entry_name, bool value, bool is_virtual)
+void ConfigFile::set_bool(const std::string& section_name, const std::string& entry_name, bool value, bool is_virtual)
 {
 	string str_value = (value ? "yes" : "no");
 	this->set(section_name, entry_name, str_value, is_virtual);
@@ -281,3 +286,16 @@ void ConfigFile::save(FILE* file)
 		fputs("\n", file);
 	}
 }
+
+void ConfigFile::delete_section(const std::string& section_name) {
+	sections.erase(section_name);
+	virtual_sections.erase(section_name);
+}
+
+void ConfigFile::delete_entry(const std::string& section_name, const std::string& entry_name)
+{
+	ConfigSection *section = get_section(section_name, false);
+	if (section != NULL)
+		section->delete_entry(entry_name);
+}
+

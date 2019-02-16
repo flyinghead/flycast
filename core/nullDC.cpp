@@ -26,6 +26,12 @@ void LoadCustom();
 void dc_resume_emu(bool continue_running);
 
 settings_t settings;
+// Set if game has corresponding option by default, so that it's not saved in the config
+static bool rtt_to_buffer_game;
+static bool safemode_game;
+static bool tr_poly_depth_mask_game;
+static bool extra_depth_game;
+
 static bool continue_running = false;
 static cMutex mtx_mainloop ;
 static cResetEvent resume_mainloop(false, true);
@@ -183,6 +189,10 @@ void LoadSpecialSettings()
 {
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST
 	printf("Game ID is [%s]\n", reios_product_number);
+	rtt_to_buffer_game = false;
+	safemode_game = false;
+	tr_poly_depth_mask_game = false;
+	extra_depth_game = false;
 	
 	// Tony Hawk's Pro Skater 2
 	if (!strncmp("T13008D", reios_product_number, 7) || !strncmp("T13006N", reios_product_number, 7)
@@ -192,10 +202,16 @@ void LoadSpecialSettings()
 			|| !strncmp("T40204D", reios_product_number, 7)
 			// Skies of Arcadia
 			|| !strncmp("MK-51052", reios_product_number, 8))
+	{
 		settings.rend.RenderToTextureBuffer = 1;
+		rtt_to_buffer_game = true;
+	}
 	if (!strncmp("HDR-0176", reios_product_number, 8) || !strncmp("RDC-0057", reios_product_number, 8))
+	{
 		// Cosmic Smash
 		settings.rend.TranslucentPolygonDepthMask = 1;
+		tr_poly_depth_mask_game = true;
+	}
 	// Pro Pinball Trilogy
 	if (!strncmp("T30701D", reios_product_number, 7)
 		// Demolition Racer
@@ -213,12 +229,14 @@ void LoadSpecialSettings()
 	{
 		printf("Enabling Dynarec safe mode for game %s\n", reios_product_number);
 		settings.dynarec.safemode = 1;
+		safemode_game = true;
 	}
 	// NHL 2K2
 	if (!strncmp("MK-51182", reios_product_number, 8))
 	{
 		printf("Enabling Extra depth scaling for game %s\n", reios_product_number);
 		settings.rend.ExtraDepthScale = 10000;
+		extra_depth_game = true;
 	}
 #elif DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
 	printf("Game ID is [%s]\n", naomi_game_id);
@@ -227,12 +245,13 @@ void LoadSpecialSettings()
 	{
 		printf("Enabling Dynarec safe mode for game %s\n", naomi_game_id);
 		settings.dynarec.safemode = 1;
+		safemode_game = true;
 	}
 	if (!strcmp("SAMURAI SPIRITS 6", naomi_game_id))
 	{
 		printf("Enabling Extra depth scaling for game %s\n", naomi_game_id);
 		settings.rend.ExtraDepthScale = 1e26;
-
+		extra_depth_game = true;
 	}
 	if (!strcmp("DYNAMIC GOLF", naomi_game_id)
 			|| !strcmp("SHOOTOUT POOL", naomi_game_id)
@@ -273,7 +292,7 @@ void LoadSpecialSettings()
 	{
 		printf("Enabling translucent depth multipass for game %s\n", naomi_game_id);
 		settings.rend.TranslucentPolygonDepthMask = true;
-
+		tr_poly_depth_mask_game = true;
 	}
 #endif
 }
@@ -310,7 +329,8 @@ int dc_init(int argc,wchar* argv[])
 		msgboxf("Unable to open config file",MBX_ICONERROR);
 		return -4;
 	}
-	LoadSettings();
+	InitSettings();
+	LoadSettings(false);
 
 	os_CreateWindow();
 
@@ -462,68 +482,136 @@ void dc_start()
 	sh4_cpu.Start();
 }
 
-void LoadSettings()
+void InitSettings()
 {
 	settings.dreamcast.RTC			= GetRTC_now();
+	settings.dynarec.Enable			= true;
+	settings.dynarec.idleskip		= true;
+	settings.dynarec.unstable_opt	= false;
+	settings.dynarec.safemode		= true;
+	settings.dreamcast.cable		= 3;	// TV composite
+	settings.dreamcast.region		= 3;	// default
+	settings.dreamcast.broadcast	= 4;	// default
+	settings.dreamcast.language     = 6;	// default
+	settings.aica.LimitFPS			= true;
+	settings.aica.NoBatch			= false;	// This also controls the DSP. Disabled by default
+    settings.aica.NoSound			= false;
+	settings.rend.UseMipmaps		= true;
+	settings.rend.WideScreen		= false;
+	settings.rend.ShowFPS			= false;
+	settings.rend.RenderToTextureBuffer = false;
+	settings.rend.RenderToTextureUpscale = 1;
+	settings.rend.TranslucentPolygonDepthMask = false;
+	settings.rend.ModifierVolumes	= true;
+	settings.rend.Clipping			= true;
+	settings.rend.TextureUpscale	= 1;
+	settings.rend.MaxFilteredTextureSize = 256;
+	settings.rend.ExtraDepthScale   = 1.f;
+	settings.rend.CustomTextures    = false;
+	settings.rend.DumpTextures      = false;
+
+	settings.pvr.ta_skip			= 0;
+	settings.pvr.rend				= 0;
+
+	settings.pvr.MaxThreads		    = 3;
+	settings.pvr.SynchronousRender	= true;
+
+	settings.debug.SerialConsole	= false;
+
+	settings.bios.UseReios		    = 0;
+	settings.reios.ElfFile		    = "";
+
+	settings.validate.OpenGlChecks  = false;
+
+	settings.input.MouseSensitivity = 100;
+	settings.input.JammaSetup = 0;
+	for (int i = 0; i < MAPLE_PORTS; i++)
+	{
+		settings.input.maple_devices[i] = i == 0 ? MDT_SegaController : MDT_None;
+		settings.input.maple_expansion_devices[i][0] = i == 0 ? MDT_SegaVMU : MDT_None;
+		settings.input.maple_expansion_devices[i][1] = i == 0 ? MDT_SegaVMU : MDT_None;
+	}
+
+#if SUPPORT_DISPMANX
+	settings.dispmanx.Width		= 640;
+	settings.dispmanx.Height	= 480;
+	settings.dispmanx.Keep_Aspect = true;
+#endif
+
+#if (HOST_OS != OS_LINUX || defined(_ANDROID) || defined(TARGET_PANDORA))
+	settings.aica.BufferSize = 2048;
+#else
+	settings.aica.BufferSize = 1024;
+#endif
+
+#if USE_OMX
+	settings.omx.Audio_Latency	= 100;
+	settings.omx.Audio_HDMI		= true;
+#endif
+}
+
+void LoadSettings(bool game_specific)
+{
+	const char *config_section = game_specific ? cfgGetGameId() : "config";
+	const char *input_section = game_specific ? cfgGetGameId() : "input";
+
 #ifndef _ANDROID
-	settings.dynarec.Enable			= cfgLoadInt("config","Dynarec.Enabled", 1)!=0;
-	settings.dynarec.idleskip		= cfgLoadInt("config","Dynarec.idleskip",1)!=0;
-	settings.dynarec.unstable_opt	= cfgLoadInt("config","Dynarec.unstable-opt",0);
-	settings.dynarec.safemode		= cfgLoadInt("config", "Dynarec.safe-mode", 0);
+	settings.dynarec.Enable			= cfgLoadBool(config_section, "Dynarec.Enabled", settings.dynarec.Enable);
+	settings.dynarec.idleskip		= cfgLoadBool(config_section, "Dynarec.idleskip", settings.dynarec.idleskip);
+	settings.dynarec.unstable_opt	= cfgLoadBool(config_section, "Dynarec.unstable-opt", settings.dynarec.unstable_opt);
+	settings.dynarec.safemode		= cfgLoadBool(config_section, "Dynarec.safe-mode", settings.dynarec.safemode);
 	//disable_nvmem can't be loaded, because nvmem init is before cfg load
-	settings.dreamcast.cable		= cfgLoadInt("config","Dreamcast.Cable",3);
-	settings.dreamcast.region		= cfgLoadInt("config","Dreamcast.Region",3);
-	settings.dreamcast.broadcast	= cfgLoadInt("config","Dreamcast.Broadcast",4);
-	settings.dreamcast.language     = cfgLoadInt("config","Dreamcast.Language", 6);
-	settings.aica.LimitFPS			= cfgLoadInt("config","aica.LimitFPS",1);
-	settings.aica.NoBatch			= cfgLoadInt("config","aica.NoBatch",0);
-    settings.aica.NoSound			= cfgLoadInt("config","aica.NoSound",0);
-	settings.rend.UseMipmaps		= cfgLoadInt("config","rend.UseMipmaps",1);
-	settings.rend.WideScreen		= cfgLoadInt("config","rend.WideScreen",0);
-	settings.rend.ShowFPS			= cfgLoadInt("config", "rend.ShowFPS", 0);
-	settings.rend.RenderToTextureBuffer = cfgLoadInt("config", "rend.RenderToTextureBuffer", 0);
-	settings.rend.RenderToTextureUpscale = cfgLoadInt("config", "rend.RenderToTextureUpscale", 1);
-	settings.rend.TranslucentPolygonDepthMask = cfgLoadInt("config", "rend.TranslucentPolygonDepthMask", 0);
-	settings.rend.ModifierVolumes	= cfgLoadInt("config","rend.ModifierVolumes",1);
-	settings.rend.Clipping			= cfgLoadInt("config","rend.Clipping",1);
-	settings.rend.TextureUpscale	= cfgLoadInt("config","rend.TextureUpscale", 1);
-	settings.rend.MaxFilteredTextureSize = cfgLoadInt("config","rend.MaxFilteredTextureSize", 256);
-	char extra_depth_scale_str[128];
-	cfgLoadStr("config","rend.ExtraDepthScale", extra_depth_scale_str, "1");
-	settings.rend.ExtraDepthScale = atof(extra_depth_scale_str);
-	if (settings.rend.ExtraDepthScale == 0)
-		settings.rend.ExtraDepthScale = 1.f;
-	settings.rend.CustomTextures = cfgLoadInt("config", "rend.CustomTextures", 0);
-	settings.rend.DumpTextures = cfgLoadInt("config", "rend.DumpTextures", 0);
+	settings.dreamcast.cable		= cfgLoadInt(config_section, "Dreamcast.Cable", settings.dreamcast.cable);
+	settings.dreamcast.region		= cfgLoadInt(config_section, "Dreamcast.Region", settings.dreamcast.region);
+	settings.dreamcast.broadcast	= cfgLoadInt(config_section, "Dreamcast.Broadcast", settings.dreamcast.broadcast);
+	settings.dreamcast.language     = cfgLoadInt(config_section, "Dreamcast.Language", settings.dreamcast.language);
+	settings.aica.LimitFPS			= cfgLoadBool(config_section, "aica.LimitFPS", settings.aica.LimitFPS);
+	settings.aica.NoBatch			= cfgLoadBool(config_section, "aica.NoBatch", settings.aica.NoBatch);
+    settings.aica.NoSound			= cfgLoadBool(config_section, "aica.NoSound", settings.aica.NoSound);
+	settings.rend.UseMipmaps		= cfgLoadBool(config_section, "rend.UseMipmaps", settings.rend.UseMipmaps);
+	settings.rend.WideScreen		= cfgLoadBool(config_section, "rend.WideScreen", settings.rend.WideScreen);
+	settings.rend.ShowFPS			= cfgLoadBool(config_section, "rend.ShowFPS", settings.rend.ShowFPS);
+	settings.rend.RenderToTextureBuffer = cfgLoadBool(config_section, "rend.RenderToTextureBuffer", settings.rend.RenderToTextureBuffer);
+	settings.rend.RenderToTextureUpscale = cfgLoadInt(config_section, "rend.RenderToTextureUpscale", settings.rend.RenderToTextureUpscale);
+	settings.rend.TranslucentPolygonDepthMask = cfgLoadBool(config_section, "rend.TranslucentPolygonDepthMask", settings.rend.TranslucentPolygonDepthMask);
+	settings.rend.ModifierVolumes	= cfgLoadBool(config_section, "rend.ModifierVolumes", settings.rend.ModifierVolumes);
+	settings.rend.Clipping			= cfgLoadBool(config_section, "rend.Clipping", settings.rend.Clipping);
+	settings.rend.TextureUpscale	= cfgLoadInt(config_section, "rend.TextureUpscale", settings.rend.TextureUpscale);
+	settings.rend.MaxFilteredTextureSize = cfgLoadInt(config_section,"rend.MaxFilteredTextureSize", settings.rend.MaxFilteredTextureSize);
+	std::string extra_depth_scale_str = cfgLoadStr(config_section,"rend.ExtraDepthScale", "");
+	if (!extra_depth_scale_str.empty())
+	{
+		settings.rend.ExtraDepthScale = atof(extra_depth_scale_str.c_str());
+		if (settings.rend.ExtraDepthScale == 0)
+			settings.rend.ExtraDepthScale = 1.f;
+	}
+	settings.rend.CustomTextures    = cfgLoadBool(config_section, "rend.CustomTextures", settings.rend.CustomTextures);
+	settings.rend.DumpTextures      = cfgLoadBool(config_section, "rend.DumpTextures", settings.rend.DumpTextures);
 
-	settings.pvr.subdivide_transp	= cfgLoadInt("config","pvr.Subdivide",0);
-	
-	settings.pvr.ta_skip			= cfgLoadInt("config","ta.skip",0);
-	settings.pvr.rend				= cfgLoadInt("config","pvr.rend",0);
+	settings.pvr.ta_skip			= cfgLoadInt(config_section, "ta.skip", settings.pvr.ta_skip);
+	settings.pvr.rend				= cfgLoadInt(config_section, "pvr.rend", settings.pvr.rend);
 
-	settings.pvr.MaxThreads		= cfgLoadInt("config", "pvr.MaxThreads", 3);
-	settings.pvr.SynchronousRender	= cfgLoadInt("config", "pvr.SynchronousRendering", 0);
+	settings.pvr.MaxThreads		    = cfgLoadInt(config_section, "pvr.MaxThreads", settings.pvr.MaxThreads);
+	settings.pvr.SynchronousRender	= cfgLoadBool(config_section, "pvr.SynchronousRendering", settings.pvr.SynchronousRender);
 
-	settings.debug.SerialConsole	= cfgLoadInt("config", "Debug.SerialConsoleEnabled", 0) != 0;
+	settings.debug.SerialConsole	= cfgLoadBool(config_section, "Debug.SerialConsoleEnabled", settings.debug.SerialConsole);
 
-	settings.bios.UseReios		= cfgLoadInt("config", "bios.UseReios", 0);
-	settings.reios.ElfFile		= cfgLoadStr("reios", "ElfFile", "");
+	settings.bios.UseReios		    = cfgLoadBool(config_section, "bios.UseReios", settings.bios.UseReios);
+	settings.reios.ElfFile		    = cfgLoadStr(game_specific ? cfgGetGameId() : "reios", "ElfFile", settings.reios.ElfFile.c_str());
 
-	settings.validate.OpenGlChecks = cfgLoadInt("validate", "OpenGlChecks", 0) != 0;
+	settings.validate.OpenGlChecks  = cfgLoadBool(game_specific ? cfgGetGameId() : "validate", "OpenGlChecks", settings.validate.OpenGlChecks);
 
-	settings.input.DCKeyboard = cfgLoadInt("input", "DCKeyboard", 0);
-	settings.input.DCMouse = cfgLoadInt("input", "DCMouse", 0);
-	settings.input.MouseSensitivity = cfgLoadInt("input", "MouseSensitivity", 100);
-	settings.input.JammaSetup = cfgLoadInt("input", "JammaSetup", 0);
+	settings.input.MouseSensitivity = cfgLoadInt(input_section, "MouseSensitivity", settings.input.MouseSensitivity);
+	settings.input.JammaSetup = cfgLoadInt(input_section, "JammaSetup", settings.input.JammaSetup);
 	for (int i = 0; i < MAPLE_PORTS; i++)
 	{
 		char device_name[32];
 		sprintf(device_name, "device%d", i + 1);
-		settings.input.maple_devices[i] = (MapleDeviceType)cfgLoadInt("input", device_name, i == 0 ? MDT_SegaController : MDT_None);
+		settings.input.maple_devices[i] = (MapleDeviceType)cfgLoadInt(input_section, device_name, settings.input.maple_devices[i]);
 		sprintf(device_name, "device%d.1", i + 1);
-		settings.input.maple_expansion_devices[i][0] = (MapleDeviceType)cfgLoadInt("input", device_name, i == 0 ? MDT_SegaVMU : MDT_None);
+		settings.input.maple_expansion_devices[i][0] = (MapleDeviceType)cfgLoadInt(input_section, device_name, settings.input.maple_expansion_devices[i][0]);
 		sprintf(device_name, "device%d.2", i + 1);
-		settings.input.maple_expansion_devices[i][1] = (MapleDeviceType)cfgLoadInt("input", device_name, i == 0 ? MDT_SegaVMU : MDT_None);
+		settings.input.maple_expansion_devices[i][1] = (MapleDeviceType)cfgLoadInt(input_section, device_name, settings.input.maple_expansion_devices[i][1]);
 	}
 #else
 	settings.rend.RenderToTextureUpscale = max(1, settings.rend.RenderToTextureUpscale);
@@ -534,9 +622,9 @@ void LoadSettings()
 #endif
 
 #if SUPPORT_DISPMANX
-	settings.dispmanx.Width		= cfgLoadInt("dispmanx","width",640);
-	settings.dispmanx.Height	= cfgLoadInt("dispmanx","height",480);
-	settings.dispmanx.Keep_Aspect	= cfgLoadBool("dispmanx","maintain_aspect",true);
+	settings.dispmanx.Width		= cfgLoadInt(game_specific ? cfgGetGameId() : "dispmanx", "width", settings.dispmanx.Width);
+	settings.dispmanx.Height	= cfgLoadInt(game_specific ? cfgGetGameId() : "dispmanx", "height", settings.dispmanx.Height);
+	settings.dispmanx.Keep_Aspect	= cfgLoadBool(game_specific ? cfgGetGameId() : "dispmanx", "maintain_aspect", settings.dispmanx.Keep_Aspect);
 #endif
 
 #if (HOST_OS != OS_LINUX || defined(_ANDROID) || defined(TARGET_PANDORA))
@@ -546,8 +634,8 @@ void LoadSettings()
 #endif
 
 #if USE_OMX
-	settings.omx.Audio_Latency	= cfgLoadInt("omx","audio_latency",100);
-	settings.omx.Audio_HDMI		= cfgLoadBool("omx","audio_hdmi",true);
+	settings.omx.Audio_Latency	= cfgLoadInt(game_specific ? cfgGetGameId() : "omx", "audio_latency", settings.omx.Audio_Latency);
+	settings.omx.Audio_HDMI		= cfgLoadBool(game_specific ? cfgGetGameId() : "omx", "audio_hdmi", settings.omx.Audio_HDMI);
 #endif
 
 /*
@@ -576,60 +664,43 @@ void LoadCustom()
 
 	LoadSpecialSettings();	// Default per-game settings
 
-	if (reios_software_name[0] != '\0')
-		cfgSaveStr(reios_id, "software.name", reios_software_name);
-	settings.dynarec.Enable		= cfgGameInt(reios_id,"Dynarec.Enabled", settings.dynarec.Enable ? 1 : 0) != 0;
-	settings.dynarec.idleskip	= cfgGameInt(reios_id,"Dynarec.idleskip", settings.dynarec.idleskip ? 1 : 0) != 0;
-	settings.dynarec.unstable_opt	= cfgGameInt(reios_id,"Dynarec.unstable-opt", settings.dynarec.unstable_opt);
-	settings.dynarec.safemode	= cfgGameInt(reios_id,"Dynarec.safe-mode", settings.dynarec.safemode);
-	settings.rend.ModifierVolumes	= cfgGameInt(reios_id,"rend.ModifierVolumes", settings.rend.ModifierVolumes);
-	settings.rend.Clipping		= cfgGameInt(reios_id,"rend.Clipping", settings.rend.Clipping);
+	cfgSetGameId(reios_id);
 
-	settings.pvr.subdivide_transp	= cfgGameInt(reios_id,"pvr.Subdivide", settings.pvr.subdivide_transp);
-
-	settings.pvr.ta_skip		= cfgGameInt(reios_id,"ta.skip", settings.pvr.ta_skip);
-	settings.pvr.rend		= cfgGameInt(reios_id,"pvr.rend", settings.pvr.rend);
-
-	settings.pvr.MaxThreads		= cfgGameInt(reios_id, "pvr.MaxThreads", settings.pvr.MaxThreads);
-	settings.pvr.SynchronousRender	= cfgGameInt(reios_id, "pvr.SynchronousRendering", settings.pvr.SynchronousRender);
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-	settings.dreamcast.cable = cfgGameInt(reios_id, "Dreamcast.Cable", settings.dreamcast.cable);
-	settings.dreamcast.region = cfgGameInt(reios_id, "Dreamcast.Region", settings.dreamcast.region);
-	settings.dreamcast.broadcast = cfgGameInt(reios_id, "Dreamcast.Broadcast", settings.dreamcast.broadcast);
-#endif
+	// Reload game-specific settings
+	LoadSettings(true);
 }
 
 void SaveSettings()
 {
-	cfgSaveInt("config", "Dynarec.Enabled", settings.dynarec.Enable);
+	cfgSaveBool("config", "Dynarec.Enabled", settings.dynarec.Enable);
 	cfgSaveInt("config", "Dreamcast.Cable", settings.dreamcast.cable);
 	cfgSaveInt("config", "Dreamcast.Region", settings.dreamcast.region);
 	cfgSaveInt("config", "Dreamcast.Broadcast", settings.dreamcast.broadcast);
-	cfgSaveInt("config", "Dynarec.idleskip", settings.dynarec.idleskip);
-	cfgSaveInt("config", "Dynarec.unstable-opt", settings.dynarec.unstable_opt);
-	cfgSaveInt("config", "Dynarec.safe-mode", settings.dynarec.safemode);
+	cfgSaveBool("config", "Dynarec.idleskip", settings.dynarec.idleskip);
+	cfgSaveBool("config", "Dynarec.unstable-opt", settings.dynarec.unstable_opt);
+	if (!safemode_game || !settings.dynarec.safemode)
+		cfgSaveBool("config", "Dynarec.safe-mode", settings.dynarec.safemode);
 	cfgSaveInt("config", "Dreamcast.Language", settings.dreamcast.language);
-	cfgSaveInt("config", "aica.LimitFPS", settings.aica.LimitFPS);
-	cfgSaveInt("config", "aica.NoBatch", settings.aica.NoBatch);
-	cfgSaveInt("config", "rend.WideScreen", settings.rend.WideScreen);
-	cfgSaveInt("config", "rend.ShowFPS", settings.rend.ShowFPS);
-	cfgSaveInt("config", "rend.RenderToTextureBuffer", settings.rend.RenderToTextureBuffer);
+	cfgSaveBool("config", "aica.LimitFPS", settings.aica.LimitFPS);
+	cfgSaveBool("config", "aica.NoBatch", settings.aica.NoBatch);
+	cfgSaveBool("config", "rend.WideScreen", settings.rend.WideScreen);
+	cfgSaveBool("config", "rend.ShowFPS", settings.rend.ShowFPS);
+	if (!rtt_to_buffer_game || !settings.rend.RenderToTextureBuffer)
+		cfgSaveBool("config", "rend.RenderToTextureBuffer", settings.rend.RenderToTextureBuffer);
 	cfgSaveInt("config", "rend.RenderToTextureUpscale", settings.rend.RenderToTextureUpscale);
-	cfgSaveInt("config", "rend.ModifierVolumes", settings.rend.ModifierVolumes);
-	cfgSaveInt("config", "rend.Clipping", settings.rend.Clipping);
+	cfgSaveBool("config", "rend.ModifierVolumes", settings.rend.ModifierVolumes);
+	cfgSaveBool("config", "rend.Clipping", settings.rend.Clipping);
 	cfgSaveInt("config", "rend.TextureUpscale", settings.rend.TextureUpscale);
 	cfgSaveInt("config", "rend.MaxFilteredTextureSize", settings.rend.MaxFilteredTextureSize);
-	cfgSaveInt("config", "rend.CustomTextures", settings.rend.CustomTextures);
-	cfgSaveInt("config", "rend.DumpTextures", settings.rend.DumpTextures);
+	cfgSaveBool("config", "rend.CustomTextures", settings.rend.CustomTextures);
+	cfgSaveBool("config", "rend.DumpTextures", settings.rend.DumpTextures);
 	cfgSaveInt("config", "ta.skip", settings.pvr.ta_skip);
 	cfgSaveInt("config", "pvr.rend", settings.pvr.rend);
 
 	cfgSaveInt("config", "pvr.MaxThreads", settings.pvr.MaxThreads);
-	cfgSaveInt("config", "pvr.SynchronousRendering", settings.pvr.SynchronousRender);
+	cfgSaveBool("config", "pvr.SynchronousRendering", settings.pvr.SynchronousRender);
 
-	cfgSaveInt("config", "Debug.SerialConsoleEnabled", settings.debug.SerialConsole);
-	cfgSaveInt("input", "DCKeyboard", settings.input.DCKeyboard);
-	cfgSaveInt("input", "DCMouse", settings.input.DCMouse);
+	cfgSaveBool("config", "Debug.SerialConsoleEnabled", settings.debug.SerialConsole);
 	cfgSaveInt("input", "MouseSensitivity", settings.input.MouseSensitivity);
 	for (int i = 0; i < MAPLE_PORTS; i++)
 	{
@@ -722,9 +793,7 @@ static void cleanup_serialize(void *data)
 
 static string get_savestate_file_path()
 {
-	char image_path[512];
-	cfgLoadStr("config", "image", image_path, "./");
-	string state_file = image_path;
+	string state_file = cfgLoadStr("config", "image", "noname.chd");
 	size_t lastindex = state_file.find_last_of("/");
 	if (lastindex != -1)
 		state_file = state_file.substr(lastindex + 1);

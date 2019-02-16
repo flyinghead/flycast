@@ -73,7 +73,6 @@ s32 libGDR_Init()
 	if (!InitDrive())
 		return rv_serror;
 	libCore_gdrom_disc_change();
-	LoadSettings();
 	settings.imgread.PatchRegion=true;
 	return rv_ok;
 }

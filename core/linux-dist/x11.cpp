@@ -375,19 +375,16 @@ void input_x11_handle()
 						}
 					}
 
-					if (settings.input.DCMouse)
+					// Start/stop mouse capture with Left Ctrl + Left Alt
+					if (e.type == KeyPress
+							&& ((e.xkey.keycode == KEY_LALT && (e.xkey.state & ControlMask))
+								|| (e.xkey.keycode == KEY_LCTRL && (e.xkey.state & Mod1Mask))))
 					{
-						// Start/stop mouse capture with Left Ctrl + Left Alt
-						if (e.type == KeyPress
-								&& ((e.xkey.keycode == KEY_LALT && (e.xkey.state & ControlMask))
-									|| (e.xkey.keycode == KEY_LCTRL && (e.xkey.state & Mod1Mask))))
-						{
-							capturing_mouse = !capturing_mouse;
-							if (capturing_mouse)
-								x11_capture_mouse();
-							else
-								x11_uncapture_mouse();
-						}
+						capturing_mouse = !capturing_mouse;
+						if (capturing_mouse)
+							x11_capture_mouse();
+						else
+							x11_uncapture_mouse();
 					}
 					if (x11_keyboard_input)
 					{
@@ -508,16 +505,14 @@ void input_x11_handle()
 				mo_y_abs = e.xmotion.y * 480 / x11_height;
 
 				// For mouse
-				if (settings.input.DCMouse)
-				{
-					mouse_moved = true;
-					if (prev_x != -1)
-						mo_x_delta += (f32)(e.xmotion.x - prev_x) * settings.input.MouseSensitivity / 100.f;
-					if (prev_y != -1)
-						mo_y_delta += (f32)(e.xmotion.y - prev_y) * settings.input.MouseSensitivity / 100.f;
-					prev_x = e.xmotion.x;
-					prev_y = e.xmotion.y;
-				}
+				mouse_moved = true;
+				if (prev_x != -1)
+					mo_x_delta += (f32)(e.xmotion.x - prev_x) * settings.input.MouseSensitivity / 100.f;
+				if (prev_y != -1)
+					mo_y_delta += (f32)(e.xmotion.y - prev_y) * settings.input.MouseSensitivity / 100.f;
+				prev_x = e.xmotion.x;
+				prev_y = e.xmotion.y;
+
 				break;
 		}
 	}

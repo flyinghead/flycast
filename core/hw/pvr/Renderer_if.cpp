@@ -576,14 +576,6 @@ void rend_end_wait()
 
 bool rend_init()
 {
-	if ((fLogFrames = fopen(settings.pvr.HashLogFile.c_str(), "wb"))) {
-		printf("Saving frame hashes to: '%s'\n", settings.pvr.HashLogFile.c_str());
-	}
-
-	if ((fCheckFrames = fopen(settings.pvr.HashCheckFile.c_str(), "rb"))) {
-		printf("Comparing frame hashes against: '%s'\n", settings.pvr.HashCheckFile.c_str());
-	}
-
 	rend_create_renderer();
 
 #if !defined(_ANDROID) && HOST_OS != OS_DARWIN
