@@ -52,7 +52,7 @@ static void sdl_open_joystick(int index)
 		printf("SDL: Cannot open joystick %d\n", index + 1);
 		return;
 	}
-	new SDLGamepadDevice(index < MAPLE_PORTS ? index : -1, pJoystick);	// TODO save/restore maple port
+	new SDLGamepadDevice(index < MAPLE_PORTS ? index : -1, pJoystick);
 }
 
 static void sdl_close_joystick(SDL_JoystickID instance)
@@ -74,7 +74,7 @@ void input_sdl_init()
 
 	SDL_SetRelativeMouseMode(SDL_FALSE);
 
-	sdl_keyboard = new SDLKeyboardDevice(0);		// FIXME maple ports!
+	sdl_keyboard = new SDLKeyboardDevice(0);
 	sdl_kb_gamepad = new SDLKbGamepadDevice(0);
 	sdl_mouse_gamepad = new SDLMouseGamepadDevice(0);
 }

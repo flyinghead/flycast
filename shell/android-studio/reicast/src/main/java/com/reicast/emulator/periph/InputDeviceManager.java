@@ -11,10 +11,12 @@ public final class InputDeviceManager implements InputManager.InputDeviceListene
     static { System.loadLibrary("dc"); }
     private static final InputDeviceManager INSTANCE = new InputDeviceManager();
     private InputManager inputManager;
+    private int maple_port = 0;
 
     public void startListening(Context applicationContext)
     {
-        joystickAdded(VIRTUAL_GAMEPAD_ID, "Virtual Gamepad");
+        if (applicationContext.getPackageManager().hasSystemFeature("android.hardware.touchscreen"))
+            joystickAdded(VIRTUAL_GAMEPAD_ID, "Virtual Gamepad", maple_port == 3 ? 3 : maple_port++);
         int[] ids = InputDevice.getDeviceIds();
         for (int id : ids)
             onInputDeviceAdded(id);
@@ -33,12 +35,19 @@ public final class InputDeviceManager implements InputManager.InputDeviceListene
     public void onInputDeviceAdded(int i) {
         InputDevice device = InputDevice.getDevice(i);
         if ((device.getSources() & InputDevice.SOURCE_CLASS_BUTTON) == InputDevice.SOURCE_CLASS_BUTTON) {
-            joystickAdded(i, device.getName());
+            int port = 0;
+            if ((device.getSources() & InputDevice.SOURCE_CLASS_JOYSTICK) == InputDevice.SOURCE_CLASS_JOYSTICK) {
+                port = this.maple_port == 3 ? 3 : this.maple_port++;
+            }
+            joystickAdded(i, device.getName(), port);
         }
     }
 
     @Override
     public void onInputDeviceRemoved(int i) {
+        if (maple_port > 0)
+            // TODO The removed device might not be a gamepad/joystick
+            maple_port--;
         joystickRemoved(i);
     }
 
@@ -54,6 +63,6 @@ public final class InputDeviceManager implements InputManager.InputDeviceListene
     public native boolean joystickButtonEvent(int id, int button, boolean pressed);
     public native boolean joystickAxisEvent(int id, int button, int value);
     public native void mouseEvent(int xpos, int ypos, int buttons);
-    private native void joystickAdded(int id, String name);
+    private native void joystickAdded(int id, String name, int maple_port);
     private native void joystickRemoved(int id);
 }
