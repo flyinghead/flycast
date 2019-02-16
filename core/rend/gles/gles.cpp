@@ -481,7 +481,7 @@ GLuint fogTextureId;
         	gl.swap_buffer_not_preserved = true;
         }
 
-		printf("EGL config: %p, %08X, %08X %dx%d\n",gl.setup.context,gl.setup.display,gl.setup.surface,w,h);
+		printf("EGL config: %p, %p, %p %dx%d\n",gl.setup.context,gl.setup.display,gl.setup.surface,w,h);
 		return true;
 	}
 
@@ -1914,6 +1914,7 @@ bool RenderFrame()
 	glcache.DepthMask(GL_TRUE);
 	glClearDepthf(0.0);
 	glStencilMask(0xFF); glCheck();
+    glClearStencil(0);
 	glClear(GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); glCheck();
 
 	//move vertex to gpu
