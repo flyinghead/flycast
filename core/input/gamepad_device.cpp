@@ -40,6 +40,8 @@ bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 	if (input_mapper == NULL || _maple_port < 0 || _maple_port >= ARRAY_SIZE(kcode))
 		return false;
 	DreamcastKey key = input_mapper->get_button_id(code);
+	if (key == EMU_BTN_NONE)
+		return false;
 
 	if (key < 0x10000)
 	{

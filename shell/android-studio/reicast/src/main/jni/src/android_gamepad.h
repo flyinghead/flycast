@@ -191,6 +191,6 @@ public:
 			return GamepadDevice::gamepad_btn_input(code, pressed);
 	}
 };
-
-AndroidMouseGamepadDevice mouse_gamepad(0);
+// FIXME Don't connect it by default or any screen touch will register as button A press
+AndroidMouseGamepadDevice mouse_gamepad(-1);
 
