@@ -15,6 +15,7 @@ public final class InputDeviceManager implements InputManager.InputDeviceListene
 
     public void startListening(Context applicationContext)
     {
+        maple_port = 0;
         if (applicationContext.getPackageManager().hasSystemFeature("android.hardware.touchscreen"))
             joystickAdded(VIRTUAL_GAMEPAD_ID, "Virtual Gamepad", maple_port == 3 ? 3 : maple_port++);
         int[] ids = InputDevice.getDeviceIds();

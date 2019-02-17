@@ -956,6 +956,7 @@ struct gl4rend : Renderer
 	   CollectCleanup();
 
 	   gl_term();
+	   gl_free_osd_resources();
 	}
 
 	bool Process(TA_context* ctx) { return ProcessFrame(ctx); }

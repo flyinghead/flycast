@@ -29,6 +29,9 @@ int fbdev = -1;
 #define GL_MAJOR_VERSION                  0x821B
 #endif
 #endif
+#ifdef _ANDROID
+#include <android/native_window.h> // requires ndk r5 or newer
+#endif
 
 /*
 GL|ES 2
@@ -407,7 +410,6 @@ GLuint fogTextureId;
 	// Create a basic GLES context
 	bool gl_init(void* wind, void* disp)
 	{
-	#if !defined(_ANDROID)
 		gl.setup.native_wind=(EGLNativeWindowType)wind;
 		gl.setup.native_disp=(EGLNativeDisplayType)disp;
 
@@ -431,7 +433,13 @@ GLuint fogTextureId;
 
 		if (gl.setup.surface == 0)
 		{
-			EGLint pi32ConfigAttribs[]  = { EGL_SURFACE_TYPE, EGL_WINDOW_BIT, EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT , EGL_DEPTH_SIZE, 24, EGL_STENCIL_SIZE, 8, EGL_NONE };
+			EGLint pi32ConfigAttribs[]  = {
+					EGL_SURFACE_TYPE, EGL_WINDOW_BIT | EGL_SWAP_BEHAVIOR_PRESERVED_BIT,
+					EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
+					EGL_DEPTH_SIZE, 24,
+					EGL_STENCIL_SIZE, 8,
+					EGL_NONE
+			};
 			EGLint pi32ContextAttribs[] = { EGL_CONTEXT_CLIENT_VERSION, 2 , EGL_NONE };
 
 			int num_config;
@@ -439,9 +447,29 @@ GLuint fogTextureId;
 			EGLConfig config;
 			if (!eglChooseConfig(gl.setup.display, pi32ConfigAttribs, &config, 1, &num_config) || (num_config != 1))
 			{
-				printf("EGL Error: eglChooseConfig failed\n");
+                // Fall back to non preserved swap buffers
+                EGLint pi32ConfigFallbackAttribs[] = {
+						EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
+						EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
+						EGL_DEPTH_SIZE, 24,
+						EGL_STENCIL_SIZE, 8,
+						EGL_NONE
+				};
+				if (!eglChooseConfig(gl.setup.display, pi32ConfigFallbackAttribs, &config, 1, &num_config) || (num_config != 1))
+				{
+					printf("EGL Error: eglChooseConfig failed\n");
+					return false;
+				}
+			}
+#ifdef _ANDROID
+			EGLint format;
+			if (!eglGetConfigAttrib(gl.setup.display, config, EGL_NATIVE_VISUAL_ID, &format))
+			{
+				printf("eglGetConfigAttrib() returned error %d", eglGetError());
 				return false;
 			}
+			ANativeWindow_setBuffersGeometry((ANativeWindow *)wind, 0, 0, format);
+#endif
 
 			gl.setup.surface = eglCreateWindowSurface(gl.setup.display, config, (EGLNativeWindowType)wind, NULL);
 
@@ -460,7 +488,6 @@ GLuint fogTextureId;
 			if (eglCheck())
 				return false;
 		}
-	#endif
 
 		eglMakeCurrent(gl.setup.display, gl.setup.surface, gl.setup.surface, gl.setup.context);
 
@@ -485,13 +512,6 @@ GLuint fogTextureId;
 		return true;
 	}
 
-	void egl_stealcntx()
-	{
-		gl.setup.context=eglGetCurrentContext();
-		gl.setup.display=eglGetCurrentDisplay();
-		gl.setup.surface=eglGetCurrentSurface(EGL_DRAW);
-	}
-
 	//swap buffers
 	void gl_swap()
 	{
@@ -508,25 +528,38 @@ GLuint fogTextureId;
 	//destroy the gles context and free resources
 	void gl_term()
 	{
-	#if HOST_OS==OS_WINDOWS
+		glDeleteProgram(gl.modvol_shader.program);
+		glDeleteBuffers(1, &gl.vbo.geometry);
+		gl.vbo.geometry = 0;
+		glDeleteBuffers(1, &gl.vbo.modvols);
+		glDeleteBuffers(1, &gl.vbo.idxs);
+		glDeleteBuffers(1, &gl.vbo.idxs2);
+		glcache.DeleteTextures(1, &fbTextureId);
+		fbTextureId = 0;
+		gl_free_osd_resources();
+
+		memset(gl.pogram_table, 0, sizeof(gl.pogram_table));
+
+#if HOST_OS==OS_WINDOWS
 		ReleaseDC((HWND)gl.setup.native_wind,(HDC)gl.setup.native_disp);
-	#endif
-	#ifdef TARGET_PANDORA
-		eglMakeCurrent( gl.setup.display, NULL, NULL, EGL_NO_CONTEXT );
-		if (gl.setup.context)
+#endif
+#if defined(TARGET_PANDORA) || defined(_ANDROID)
+		eglMakeCurrent(gl.setup.display, NULL, NULL, EGL_NO_CONTEXT);
+		if (gl.setup.context != NULL)
 			eglDestroyContext(gl.setup.display, gl.setup.context);
-		if (gl.setup.surface)
+		if (gl.setup.surface != NULL)
 			eglDestroySurface(gl.setup.display, gl.setup.surface);
+#ifdef TARGET_PANDORA
 		if (gl.setup.display)
 			eglTerminate(gl.setup.display);
 		if (fbdev>=0)
 			close( fbdev );
-
 		fbdev=-1;
-		gl.setup.context=0;
-		gl.setup.surface=0;
-		gl.setup.display=0;
-	#endif
+#endif
+		gl.setup.context = NULL;
+		gl.setup.surface = NULL;
+		gl.setup.display = NULL;
+#endif
 	}
 #else
 
@@ -956,7 +989,6 @@ bool CompilePipelineShader(	PipelineShader* s)
 }
 
 GLuint osd_tex;
-GLuint osd_font;
 
 void gl_load_osd_resources()
 {
@@ -964,18 +996,15 @@ void gl_load_osd_resources()
 	int w, h;
 	if (osd_tex == 0)
 		osd_tex = loadPNG(get_readonly_data_path("/data/buttons.png"), w, h);
-	if (osd_font == 0)
-	{
-#ifdef TARGET_PANDORA
-		osd_font = loadPNG(get_readonly_data_path("/font2.png"), w, h);
-#else
-		osd_font = loadPNG(get_readonly_data_path("/pixmaps/font.png"), w, h);
-		if (osd_font == 0)
-			osd_font = loadPNG(get_readonly_data_path("/font.png"), w, h);
-#endif
-	}
 }
 
+void gl_free_osd_resources()
+{
+    if (osd_tex != 0) {
+        glcache.DeleteTextures(1, &osd_tex);
+        osd_tex = 0;
+    }
+}
 bool gl_create_resources()
 {
 	if (gl.vbo.geometry != 0)
@@ -1289,112 +1318,6 @@ static void ClearBG()
 
 void DrawButton2(float* xy, bool state) { DrawButton(xy,state?0:255); }
 
-static void DrawCenteredText(float yy, float scale, int transparency, const char* text)
-// Draw a centered text. Font is loaded from font2.png file. Each char is 16*16 size, so scale it down so it's not too big
-// Transparency 255=opaque, 0=not visible
-{
-  Vertex vtx;
-
-  vtx.z=1;
-
-  float w=float(strlen(text)*14)*scale;
-
-  float x=320-w/2.0f;
-  float y=yy;
-  float h=16.0f*scale;
-  w=14.0f*scale;
-  float step=32.0f/512.0f;
-  float step2=4.0f/512.0f;
-
-  if (transparency<0) transparency=0;
-  if (transparency>255) transparency=255;
-
-  for (int i=0; i<strlen(text); i++) {
-    int c=text[i];
-    float u=float(c%16);
-    float v=float(c/16);
-
-    vtx.col[0]=vtx.col[1]=vtx.col[2]=255;
-    vtx.col[3]=transparency;
-
-    vtx.x=x; vtx.y=y;
-    vtx.u=u*step+step2; vtx.v=v*step+step2;
-    *pvrrc.verts.Append()=vtx;
-
-    vtx.x=x+w; vtx.y=y;
-    vtx.u=u*step+step-step2; vtx.v=v*step+step2;
-    *pvrrc.verts.Append()=vtx;
-
-    vtx.x=x; vtx.y=y+h;
-    vtx.u=u*step+step2; vtx.v=v*step+step-step2;
-    *pvrrc.verts.Append()=vtx;
-
-    vtx.x=x+w; vtx.y=y+h;
-    vtx.u=u*step+step-step2; vtx.v=v*step+step-step2;
-    *pvrrc.verts.Append()=vtx;
-
-    x+=w;
-
-    osd_count+=4;
-  }
-}
-static void DrawRightedText(float yy, float scale, int transparency, const char* text)
-// Draw a text right justified. Font is loaded from font.png file. Each char is 16*16 size, so scale it down so it's not too big
-// Transparency 255=opaque, 0=not visible
-{
-  Vertex vtx;
-
-  vtx.z=1;
-
-  float w = float(strlen(text) * 14) * scale * scale_x;
-
-  float x = scale_x / 2 * (640 + screen_width * 480 / screen_height) - w;
-  float y = yy * scale_y;
-  float h = 16.0f * scale * scale_y;
-  w = 14.0f * scale * scale_x;
-  float step=32.0f/512.0f;
-  float step2=4.0f/512.0f;
-
-  if (transparency<0) transparency=0;
-  if (transparency>255) transparency=255;
-
-  for (int i=0; i<strlen(text); i++) {
-    int c=text[i];
-    float u=float(c%16);
-    float v=float(c/16);
-
-    vtx.col[0]=vtx.col[1]=vtx.col[2]=255;
-    vtx.col[3]=transparency;
-
-    vtx.x=x; vtx.y=y;
-    vtx.u=u*step+step2; vtx.v=v*step+step2;
-    *pvrrc.verts.Append()=vtx;
-
-    vtx.x=x+w; vtx.y=y;
-    vtx.u=u*step+step-step2; vtx.v=v*step+step2;
-    *pvrrc.verts.Append()=vtx;
-
-    vtx.x=x; vtx.y=y+h;
-    vtx.u=u*step+step2; vtx.v=v*step+step-step2;
-    *pvrrc.verts.Append()=vtx;
-
-    vtx.x=x+w; vtx.y=y+h;
-    vtx.u=u*step+step-step2; vtx.v=v*step+step-step2;
-    *pvrrc.verts.Append()=vtx;
-
-    x+=w;
-
-    osd_count+=4;
-  }
-}
-
-#ifdef TARGET_PANDORA
-char OSD_Info[128];
-int  OSD_Delay=0;
-char OSD_Counters[256];
-int  OSD_Counter=0;
-#endif
-
 static float LastFPSTime;
 static int lastFrameCount = 0;
 static float fps = -1;
@@ -1427,28 +1350,6 @@ void OSD_HOOK()
 		DrawButton2(vjoy_pos[12],0);
 	}
 	#endif
-	#ifdef TARGET_PANDORA
-	  if (OSD_Delay) {
-		DrawCenteredText(400, 1.0f, (OSD_Delay<255)?OSD_Delay:255, OSD_Info);
-		OSD_Delay--;    //*TODO* Delay should be in ms, not in ticks...
-	  }
-	  if (OSD_Counter) {
-		DrawRightedText(20, 1.0f, 255, OSD_Counters);
-	  }
-	#endif
-
-	if (settings.rend.ShowFPS && osd_font) {
-		if (os_GetSeconds() - LastFPSTime > 0.5) {
-			fps = (FrameCount - lastFrameCount) / (os_GetSeconds() - LastFPSTime);
-			LastFPSTime = os_GetSeconds();
-			lastFrameCount = FrameCount;
-		}
-		if (fps >= 0) {
-			char text[32];
-			sprintf(text, "F:%.1f", fps);
-			DrawRightedText(460, 1.f, 196, text);
-		}
-	}
 }
 
 #define OSD_TEX_W 512
@@ -1518,41 +1419,20 @@ void OSD_DRAW(GLuint shader_program)
 			glDrawArrays(GL_TRIANGLE_STRIP,osd_base+i*4,4);
 	}
 #endif
-  if (osd_font)
-  {
-    float u=0;
-    float v=0;
-
-    verify(glIsProgram(shader_program));
-
-	float dc_width=640;
-	float dc_height=480;
-
-	float dc2s_scale_h=screen_height/480.0f;
-	float ds2s_offs_x=(screen_width-dc2s_scale_h*640)/2;
-
-
-    glcache.BindTexture(GL_TEXTURE_2D,osd_font);
-    glcache.UseProgram(shader_program);
-
-    glcache.Enable(GL_BLEND);
-    glcache.Disable(GL_DEPTH_TEST);
-    glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-
-    glcache.DepthMask(false);
-    glcache.DepthFunc(GL_ALWAYS);
-
-
-    glcache.Disable(GL_CULL_FACE);
-    glcache.Disable(GL_SCISSOR_TEST);
-
-
-    int dfa=osd_count/4;
-
-   	for (int i=0;i<dfa;i++)
-		glDrawArrays(GL_TRIANGLE_STRIP,osd_base+i*4,4);
- }
+	if (settings.rend.ShowFPS)
+	{
+		double now = os_GetSeconds();
+		if (now - LastFPSTime >= 1.0) {
+			fps = (FrameCount - lastFrameCount) / (now - LastFPSTime);
+			LastFPSTime = now;
+			lastFrameCount = FrameCount;
+		}
+		if (fps >= 0) {
+			char text[32];
+			sprintf(text, "F:%.1f", fps);
+			gui_display_fps(text);
+		}
+	}
 }
 
 bool ProcessFrame(TA_context* ctx)
@@ -2033,6 +1913,7 @@ struct glesrend : Renderer
 	{
 		if (KillTex)
 			killtex();
+		gl_term();
 	}
 
 	bool Process(TA_context* ctx) { return ProcessFrame(ctx); }

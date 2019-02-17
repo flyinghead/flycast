@@ -21,6 +21,8 @@
 void gui_init();
 void gui_open_settings();
 bool gui_is_open();
-bool gui_display_ui();
+void gui_display_ui();
+void gui_display_fps(const char *string);
+void gui_term();
 
 extern int screen_dpi;

@@ -344,8 +344,10 @@ static void rend_create_renderer()
 #endif
 }
 
-static void rend_init_renderer()
+void rend_init_renderer()
 {
+	if (renderer == NULL)
+		rend_create_renderer();
 	if (!renderer->Init())
     {
 		delete renderer;
@@ -360,7 +362,7 @@ static void rend_init_renderer()
     }
 }
 
-static void rend_term_renderer()
+void rend_term_renderer()
 {
 	renderer->Term();
 	delete renderer;
@@ -371,6 +373,7 @@ static void rend_term_renderer()
 		fallback_renderer = NULL;
 	}
 	killtex();
+	gui_term();
 }
 
 void* rend_thread(void* p)

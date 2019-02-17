@@ -1,16 +1,13 @@
 package com.reicast.emulator.emu;
 
-
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
-import android.graphics.PixelFormat;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
-import android.opengl.GLSurfaceView;
 import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
@@ -22,52 +19,20 @@ import android.util.Log;
 import android.view.InputDevice;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
-import android.view.ScaleGestureDetector.SimpleOnScaleGestureListener;
+import android.view.SurfaceView;
 import android.view.View;
 import android.widget.Toast;
 
-import com.android.util.FileUtils;
 import com.reicast.emulator.Emulator;
-import com.reicast.emulator.GL2JNIActivity;
+import com.reicast.emulator.NativeGLActivity;
 import com.reicast.emulator.R;
 import com.reicast.emulator.config.Config;
-import com.reicast.emulator.emu.OnScreenMenu.FpsPopup;
-import com.reicast.emulator.periph.Gamepad;
 import com.reicast.emulator.periph.InputDeviceManager;
 import com.reicast.emulator.periph.VJoy;
 
 import java.io.UnsupportedEncodingException;
 
-import javax.microedition.khronos.egl.EGLConfig;
-import javax.microedition.khronos.opengles.GL10;
-
-
-/**
- * A simple GLSurfaceView sub-class that demonstrate how to perform
- * OpenGL ES 2.0 rendering into a GL Surface. Note the following important
- * details:
- *
- * - The class must use a custom context factory to enable 2.0 rendering.
- *   See ContextFactory class definition below.
- *
- * - The class must use a custom EGLConfigChooser to be able to select
- *   an EGLConfig that supports 2.0. This is done by providing a config
- *   specification to eglChooseConfig() that has the attribute
- *   EGL10.ELG_RENDERABLE_TYPE containing the EGL_OPENGL_ES2_BIT flag
- *   set. See ConfigChooser class definition below.
- *
- * - The class must select the surface's format, then choose an EGLConfig
- *   that matches it exactly (with regards to red/green/blue/alpha channels
- *   bit depths). Failure to do so would result in an EGL_BAD_MATCH error.
- */
-
-public class GL2JNIView extends GLSurfaceView
-{
-    public static final boolean DEBUG = false;
-
-    public static final int LAYER_TYPE_SOFTWARE = 1;
-    public static final int LAYER_TYPE_HARDWARE = 2;
-
+public class NativeGLView extends SurfaceView {
     private static String fileName;
     private EmuThread ethd;
     private Handler handler = new Handler();
@@ -82,8 +47,6 @@ public class GL2JNIView extends GLSurfaceView
 
     private static final float[][] vjoy = VJoy.baseVJoy();
 
-    Renderer rend;
-
     private boolean touchVibrationEnabled;
     private int vibrationDuration;
     Context context;
@@ -96,21 +59,16 @@ public class GL2JNIView extends GLSurfaceView
         requestLayout();
     }
 
-    public void setFpsDisplay(FpsPopup fpsPop) {
-        rend.fpsPop = fpsPop;
-    }
-
-    public GL2JNIView(Context context) {
+    public NativeGLView(Context context) {
         super(context);
     }
 
-    public GL2JNIView(Context context, AttributeSet attrs) {
+    public NativeGLView(Context context, AttributeSet attrs) {
         super(context, attrs);
     }
 
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
-    public GL2JNIView(final Context context, String newFileName, boolean translucent,
-                      int depth, int stencil, boolean editVjoyMode) {
+    public NativeGLView(final Context context, String newFileName, boolean editVjoyMode) {
         super(context);
         this.context = context;
         this.editVjoyMode = editVjoyMode;
@@ -120,7 +78,7 @@ public class GL2JNIView extends GLSurfaceView
             setOnSystemUiVisibilityChangeListener (new OnSystemUiVisibilityChangeListener() {
                 public void onSystemUiVisibilityChange(int visibility) {
                     if ((visibility & SYSTEM_UI_FLAG_FULLSCREEN) == 0) {
-                        GL2JNIView.this.setSystemUiVisibility(
+                        NativeGLView.this.setSystemUiVisibility(
                                 SYSTEM_UI_FLAG_IMMERSIVE_STICKY
                                         | SYSTEM_UI_FLAG_FULLSCREEN
                                         | SYSTEM_UI_FLAG_HIDE_NAVIGATION);
@@ -129,8 +87,6 @@ public class GL2JNIView extends GLSurfaceView
                 }
             });
         }
-
-        setPreserveEGLContextOnPause(true);
 
         vib = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
 
@@ -156,8 +112,8 @@ public class GL2JNIView extends GLSurfaceView
         // This is the game we are going to run
         fileName = newFileName;
 
-        if (GL2JNIActivity.syms != null)
-            JNIdc.data(1, GL2JNIActivity.syms);
+        if (NativeGLActivity.syms != null)
+            JNIdc.data(1, NativeGLActivity.syms);
 
         final String initStatus = JNIdc.init(fileName);
         if (initStatus != null)
@@ -172,38 +128,25 @@ public class GL2JNIView extends GLSurfaceView
 
             throw new EmulatorInitFailed();
         }
-        // FIXME JNIdc.query((ethd);
-
-        // By default, GLSurfaceView() creates a RGB_565 opaque surface.
-        // If we want a translucent one, we should change the surface's
-        // format here, using PixelFormat.TRANSLUCENT for GL Surfaces
-        // is interpreted as any 32-bit surface with alpha by SurfaceFlinger.
-        if(translucent)
-        	this.getHolder().setFormat(PixelFormat.TRANSLUCENT);
-        else
-        	this.getHolder().setFormat(PixelFormat.RGBX_8888);
-
-        // Setup the context factory for 2.0 rendering.
-        // See ContextFactory class definition below
-        setEGLContextFactory(new GLCFactory.ContextFactory());
-
-        // We need to choose an EGLConfig that matches the format of
-        // our surface exactly. This is going to be done in our
-        // custom config chooser. See ConfigChooser class definition
-        // below.
-        setEGLConfigChooser(new GLCFactory.ConfigChooser(
-                8, 8, 8, translucent ? 8 : 0, depth, stencil));
+        JNIdc.query(ethd);
 
         // Set the renderer responsible for frame rendering
-        setRenderer(rend = new Renderer(this));
+        //setRenderer(rend = new GL2JNIView.Renderer(this));
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                // FIXME STOP AT SOME POINT!!
+                if (ethd.getState() == Thread.State.TERMINATED)
+                    ((Activity)getContext()).finish();
+                else {
+                    JNIdc.rendframe();
+                    handler.post(this);
+                }
+            }
+        });
 
         ethd.start();
 
-    }
-
-    public GLSurfaceView.Renderer getRenderer()
-    {
-        return rend;
     }
 
     private void reset_analog()
@@ -518,7 +461,7 @@ public class GL2JNIView extends GLSurfaceView
     }
 
     private class OscOnScaleGestureListener extends
-            SimpleOnScaleGestureListener {
+            ScaleGestureDetector.SimpleOnScaleGestureListener {
 
         @Override
         public boolean onScale(ScaleGestureDetector detector) {
@@ -535,85 +478,6 @@ public class GL2JNIView extends GLSurfaceView
         @Override
         public void onScaleEnd(ScaleGestureDetector detector) {
             selectedVjoyElement = -1;
-        }
-    }
-
-    private static class Renderer implements GLSurfaceView.Renderer
-    {
-
-        private GL2JNIView mView;
-        private FPSCounter fps = new FPSCounter();
-        private FpsPopup fpsPop;
-
-        Renderer (GL2JNIView mView) {
-            this.mView = mView;
-        }
-
-        public void onDrawFrame(GL10 gl)
-        {
-            if (JNIdc.rendframe()) {
-                if (fpsPop != null && fpsPop.isShowing()) {
-                    fps.logFrame();
-                }
-            }
-            if(mView.takeScreenshot){
-                mView.takeScreenshot = false;
-                FileUtils.saveScreenshot(mView.getContext(), mView.getWidth(), mView.getHeight(), gl);
-            }
-            if (mView.ethd.getState() == Thread.State.TERMINATED) {
-                System.exit(0);
-                // Ideally: ((Activity)mView.getContext()).finish();
-            }
-        }
-
-        public void onSurfaceChanged(GL10 gl,int width,int height)
-        {
-            gl.glViewport(0, 0, width, height);
-            if (Emulator.widescreen) {
-                // FIXME JNIdc.rendinit(width, height);
-            } else {
-                // FIXME JNIdc.rendinit(height * (4 / 3), height);
-            }
-        }
-
-        public void onSurfaceCreated(GL10 gl,EGLConfig config)
-        {
-            onSurfaceChanged(gl, 800, 480);
-        }
-
-        class FPSCounter {
-            long startTime = System.nanoTime();
-            int frames = 0;
-
-            void logFrame() {
-                frames++;
-                if (System.nanoTime() - startTime >= 1000000000) {
-                    final int current_frames = frames;
-                    frames = 0;
-                    startTime = System.nanoTime();
-                    mView.post(new Runnable() {
-                        public void run() {
-                            fpsPop.setText(current_frames);
-                        }
-                    });
-                }
-            }
-        }
-    }
-
-    public void audioDisable(boolean disabled) {
-        if (disabled) {
-            ethd.Player.pause();
-        } else {
-            ethd.Player.play();
-        }
-    }
-
-    public void fastForward(boolean enabled) {
-        if (enabled) {
-            ethd.setPriority(Thread.MIN_PRIORITY);
-        } else {
-            ethd.setPriority(Thread.NORM_PRIORITY);
         }
     }
 
@@ -652,7 +516,7 @@ public class GL2JNIView extends GLSurfaceView
                 Player.play();
             }
 
-            // FIXME JNIdc.run(this);
+            JNIdc.run(this);
         }
 
         int WriteBuffer(short[] samples, int wait)
@@ -710,18 +574,18 @@ public class GL2JNIView extends GLSurfaceView
                 SharedPreferences mPrefs = context.getSharedPreferences(gameId, Activity.MODE_PRIVATE);
                 Emulator app = (Emulator) context.getApplicationContext();
                 app.loadGameConfiguration(gameId);
-                if (context instanceof GL2JNIActivity)
-                    ((GL2JNIActivity) context).getPad().joystick[0] = mPrefs.getBoolean(
-                            Gamepad.pref_js_merged + "_A",
-                            ((GL2JNIActivity) context).getPad().joystick[0]);
+//                if (context instanceof GL2JNIActivity)
+//                    ((GL2JNIActivity) context).getPad().joystick[0] = mPrefs.getBoolean(
+//                            Gamepad.pref_js_merged + "_A",
+//                            ((GL2JNIActivity) context).getPad().joystick[0]);
                 mPrefs.edit().putString(Config.game_title, reiosSoftware.trim()).apply();
             }
         }
     }
 
-    public void onDestroy() {
-        // Workaround for ANR when returning to menu
-        System.exit(0);
+    public void stop() {
+        //JNIdc.destroy();
+        JNIdc.stop();
         try {
             ethd.join();
         } catch (InterruptedException e) {
@@ -734,7 +598,7 @@ public class GL2JNIView extends GLSurfaceView
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
         if (hasFocus && Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            GL2JNIView.this.setSystemUiVisibility(
+            setSystemUiVisibility(
                     View.SYSTEM_UI_FLAG_LAYOUT_STABLE
                             | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
                             | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
@@ -743,11 +607,6 @@ public class GL2JNIView extends GLSurfaceView
                             | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
             requestLayout();
         }
-    }
-
-    private boolean takeScreenshot = false;
-    public void screenGrab() {
-        takeScreenshot = true;
     }
 
     public static class EmulatorInitFailed extends RuntimeException {

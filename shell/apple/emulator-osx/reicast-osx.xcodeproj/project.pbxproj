@@ -206,7 +206,6 @@
 		AE2A2D7F21D6851E004B308D /* 7zFile.c in Sources */ = {isa = PBXBuildFile; fileRef = AE2A2D7321D6851D004B308D /* 7zFile.c */; };
 		AE2A2D8021D6851E004B308D /* 7zDec.c in Sources */ = {isa = PBXBuildFile; fileRef = AE2A2D7721D6851E004B308D /* 7zDec.c */; };
 		AE2A2D8321D7DB78004B308D /* CustomTexture.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE2A2D8121D7DB77004B308D /* CustomTexture.cpp */; };
-		AE4FF4E1211588B5009BF202 /* font.png in Resources */ = {isa = PBXBuildFile; fileRef = AE4FF4E0211588B5009BF202 /* font.png */; };
 		AE649BB62188689000EF4A81 /* xxhash.c in Sources */ = {isa = PBXBuildFile; fileRef = AE649BB42188689000EF4A81 /* xxhash.c */; };
 		AE649BF3218C552500EF4A81 /* bitmath.c in Sources */ = {isa = PBXBuildFile; fileRef = AE649BCD218C552500EF4A81 /* bitmath.c */; };
 		AE649BF4218C552500EF4A81 /* bitreader.c in Sources */ = {isa = PBXBuildFile; fileRef = AE649BCE218C552500EF4A81 /* bitreader.c */; };
@@ -669,7 +668,6 @@
 		AE2A2D7721D6851E004B308D /* 7zDec.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = 7zDec.c; sourceTree = "<group>"; };
 		AE2A2D8121D7DB77004B308D /* CustomTexture.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CustomTexture.cpp; sourceTree = "<group>"; };
 		AE2A2D8221D7DB78004B308D /* CustomTexture.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CustomTexture.h; sourceTree = "<group>"; };
-		AE4FF4E0211588B5009BF202 /* font.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = font.png; path = ../../../linux/font.png; sourceTree = "<group>"; };
 		AE649BB42188689000EF4A81 /* xxhash.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = xxhash.c; sourceTree = "<group>"; };
 		AE649BB52188689000EF4A81 /* xxhash.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = xxhash.h; sourceTree = "<group>"; };
 		AE649BBA218C552500EF4A81 /* all.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = all.h; sourceTree = "<group>"; };
@@ -945,7 +943,6 @@
 		84A388B61B1CDD3E000166C0 /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
-				AE4FF4E0211588B5009BF202 /* font.png */,
 				84A388B71B1CDD3E000166C0 /* Info.plist */,
 			);
 			name = "Supporting Files";
@@ -2151,7 +2148,6 @@
 				84A388BB1B1CDD3E000166C0 /* Images.xcassets in Resources */,
 				84A388BE1B1CDD3E000166C0 /* MainMenu.xib in Resources */,
 				AE8C274121122E2500D4D8F4 /* Changelog.txt in Resources */,
-				AE4FF4E1211588B5009BF202 /* font.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -1,22 +1,28 @@
 package com.reicast.emulator.emu;
 
+import android.view.Surface;
+
+import com.reicast.emulator.Emulator;
+import com.reicast.emulator.periph.SipEmulator;
 
 public final class JNIdc
 {
 	static { System.loadLibrary("dc"); }
 
-	public static native void initEnvironment(Object emulator);
+	public static native void initEnvironment(Emulator emulator);
 	public static native void config(String dirName);
 	public static native String init(String fileName);
-	public static native void query(Object thread);
-	public static native void run(Object track);
+	public static native void query(NativeGLView.EmuThread thread);
+	public static native void run(NativeGLView.EmuThread thread);
 	public static native void pause();
+	public static native void resume();
+	public static native void stop();
 	public static native void destroy();
 
 	public static native int send(int cmd, int opt);
 	public static native int data(int cmd, byte[] data);
 
-	public static native void rendinit(int w, int y);
+	public static native void rendinit(Surface surface, int w, int h);
 	public static native boolean rendframe();
 
 	public static native void vjoy(int id,float x, float y, float w, float h);
@@ -24,7 +30,7 @@ public final class JNIdc
 	public static native void getControllers(int[] controllers, int[][] peripherals);
 	public static native void initControllers(int[] controllers, int[][] peripherals);
 
-	public static native void setupMic(Object sip);
+	public static native void setupMic(SipEmulator sip);
 	public static native void diskSwap(String disk);
 	public static native void vmuSwap();
 	public static native void setupVmu(Object sip);

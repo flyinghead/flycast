@@ -65,6 +65,12 @@
             android:theme="@android:style/Theme.NoTitleBar.Fullscreen" >
         </activity>
         <activity
+            android:name="com.reicast.emulator.NativeGLActivity"
+            android:configChanges="orientation|navigation|screenSize|screenLayout|uiMode|keyboard|keyboardHidden"
+            android:screenOrientation="sensorLandscape"
+            android:theme="@android:style/Theme.NoTitleBar.Fullscreen" >
+        </activity>
+        <activity
             android:name="com.dropbox.client2.android.AuthActivity"
             android:configChanges="orientation|keyboard"
             android:launchMode="singleTask" >

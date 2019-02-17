@@ -312,6 +312,7 @@ static void gui_display_commands()
 	if (ImGui::Button("Exit", ImVec2(150 * scaling, 50 * scaling)))
 	{
 		dc_resume_emu(false);
+		gui_state = ClosedNoResume;
 	}
 
     ImGui::End();
@@ -445,10 +446,12 @@ static void detect_input_popup(int index, bool analog)
 
 static void controller_mapping_popup(GamepadDevice *gamepad)
 {
+	ImGui::SetNextWindowPos(ImVec2(0, 0));
+	ImGui::SetNextWindowSize(ImVec2(screen_width, screen_height));
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
 	if (ImGui::BeginPopupModal("Controller Mapping", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
 	{
-		const float width = 350 * scaling;
-		const float height = 450 * scaling;
+		const float width = screen_width / 2;
 		const float col0_width = ImGui::CalcTextSize("Right DPad Downxxx").x + ImGui::GetStyle().FramePadding.x * 2.0f + ImGui::GetStyle().ItemSpacing.x;
 		const float col1_width = width
 				- ImGui::GetStyle().GrabMinSize
@@ -466,7 +469,7 @@ static void controller_mapping_popup(GamepadDevice *gamepad)
 		ImGui::BeginGroup();
 		ImGui::Text("  Buttons  ");
 
-		ImGui::BeginChildFrame(ImGui::GetID("buttons"), ImVec2(width, height), ImGuiWindowFlags_None);
+		ImGui::BeginChildFrame(ImGui::GetID("buttons"), ImVec2(width, 0), ImGuiWindowFlags_None);
 		ImGui::Columns(3, "bindings", false);
 		ImGui::SetColumnWidth(0, col0_width);
 		ImGui::SetColumnWidth(1, col1_width);
@@ -499,7 +502,7 @@ static void controller_mapping_popup(GamepadDevice *gamepad)
 
 		ImGui::BeginGroup();
 		ImGui::Text("  Analog Axes  ");
-		ImGui::BeginChildFrame(ImGui::GetID("analog"), ImVec2(width, height), ImGuiWindowFlags_None);
+		ImGui::BeginChildFrame(ImGui::GetID("analog"), ImVec2(width, 0), ImGuiWindowFlags_None);
 		ImGui::Columns(3, "bindings", false);
 		ImGui::SetColumnWidth(0, col0_width);
 		ImGui::SetColumnWidth(1, col1_width);
@@ -530,6 +533,7 @@ static void controller_mapping_popup(GamepadDevice *gamepad)
 		ImGui::EndGroup();
 		ImGui::EndPopup();
 	}
+	ImGui::PopStyleVar();
 }
 static void gui_display_settings()
 {
@@ -914,4 +918,29 @@ void gui_display_ui()
 		dc_resume_emu(true);
 	else if (gui_state == ClosedNoResume)
 		gui_state = Closed;
+}
+
+void gui_display_fps(const char *string)
+{
+	ImGui_Impl_NewFrame();
+    ImGui::NewFrame();
+
+    ImGui::SetNextWindowBgAlpha(0);
+    ImGui::SetNextWindowPos(ImVec2(0, screen_height), ImGuiCond_Always, ImVec2(0.f, 1.f));	// Lower left corner
+
+    ImGui::Begin("##fps", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav
+    		| ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoBackground);
+    ImGui::SetWindowFontScale(2);
+    ImGui::TextColored(ImVec4(1, 1, 0, 0.7), string);
+    ImGui::End();
+
+    ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+}
+
+void gui_term()
+{
+	inited = false;
+	ImGui_ImplOpenGL3_Shutdown();
+	ImGui::DestroyContext();
 }

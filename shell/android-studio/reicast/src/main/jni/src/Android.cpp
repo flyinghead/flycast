@@ -9,6 +9,8 @@
 #include <EGL/egl.h>
 #include <GLES2/gl2.h>
 #include <types.h>
+#include <android/native_window.h>
+#include <android/native_window_jni.h>
 
 #include "hw/maple/maple_cfg.h"
 #include "profiler/profiler.h"
@@ -42,12 +44,14 @@ JNIEXPORT jstring JNICALL Java_com_reicast_emulator_emu_JNIdc_init(JNIEnv *env,j
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_query(JNIEnv *env,jobject obj,jobject emu_thread)  __attribute__((visibility("default")));
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_run(JNIEnv *env,jobject obj,jobject emu_thread)  __attribute__((visibility("default")));
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_pause(JNIEnv *env,jobject obj)  __attribute__((visibility("default")));
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_resume(JNIEnv *env,jobject obj)  __attribute__((visibility("default")));
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_stop(JNIEnv *env,jobject obj)  __attribute__((visibility("default")));
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_destroy(JNIEnv *env,jobject obj)  __attribute__((visibility("default")));
 
 JNIEXPORT jint JNICALL Java_com_reicast_emulator_emu_JNIdc_send(JNIEnv *env,jobject obj,jint id, jint v)  __attribute__((visibility("default")));
 JNIEXPORT jint JNICALL Java_com_reicast_emulator_emu_JNIdc_data(JNIEnv *env,jobject obj,jint id, jbyteArray d)  __attribute__((visibility("default")));
 
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_rendinit(JNIEnv *env,jobject obj,jint w,jint h)  __attribute__((visibility("default")));
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_rendinit(JNIEnv *env, jobject obj, jobject surface, jint w, jint h)  __attribute__((visibility("default")));
 JNIEXPORT jboolean JNICALL Java_com_reicast_emulator_emu_JNIdc_rendframe(JNIEnv *env,jobject obj)  __attribute__((visibility("default")));
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_vjoy(JNIEnv * env, jobject obj,u32 id,float x, float y, float w, float h)  __attribute__((visibility("default")));
@@ -112,12 +116,16 @@ void SetApplicationPath(wchar *path);
 int dc_init(int argc, wchar* argv[]);
 void dc_run();
 void dc_pause();
+void dc_pause_emu();
+void dc_resume_emu(bool continue_running);
+void dc_stop();
 void dc_term();
 
 bool VramLockedWrite(u8* address);
 
 bool rend_single_frame();
-bool gles_init();
+void rend_init_renderer();
+void rend_term_renderer();
 
 //extern cResetEvent rs,re;
 extern int screen_width,screen_height;
@@ -141,6 +149,7 @@ extern bool print_stats;
 JavaVM* g_jvm;
 jobject g_emulator;
 jmethodID saveSettingsMid;
+static ANativeWindow *g_window = 0;
 
 void os_DoEvents()
 {
@@ -168,14 +177,12 @@ void UpdateVibration(u32 port, u32 value)
 
 void *libPvr_GetRenderTarget()
 {
-    // No X11 window in Android
-    return(0);
+    return g_window;    // the surface to render to
 }
 
 void *libPvr_GetRenderSurface()
 {
-    // No X11 display in Android
-    return(0);
+    return NULL;    // default display
 }
 
 void common_linux_setup();
@@ -393,9 +400,8 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_query(JNIEnv *env,job
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_run(JNIEnv *env,jobject obj,jobject emu_thread)
 {
     install_prof_handler(0);
-
-    jenv=env;
-    emu=emu_thread;
+    jenv = env;
+    emu = env->NewGlobalRef(emu_thread);
 
     jsamples=env->NewShortArray(SAMPLE_COUNT*2);
     writemid=env->GetMethodID(env->GetObjectClass(emu),"WriteBuffer","([SI)I");
@@ -403,6 +409,8 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_run(JNIEnv *env,jobje
     dieMid=env->GetMethodID(env->GetObjectClass(emu),"Die","()V");
 
     dc_run();
+
+    env->DeleteGlobalRef(emu);
 }
 
 int msgboxf(const wchar* text,unsigned int type,...) {
@@ -416,10 +424,11 @@ int msgboxf(const wchar* text,unsigned int type,...) {
     va_start(args, type);
     vsprintf(temp, text, args);
     va_end(args);
+    LOGE("%s", temp);
 
     int byteCount = strlen(temp);
-    jbyteArray bytes = jenv->NewByteArray(byteCount);
-    jenv->SetByteArrayRegion(bytes, 0, byteCount, (jbyte *) temp);
+    jbyteArray bytes = attacher.env->NewByteArray(byteCount);
+    attacher.env->SetByteArrayRegion(bytes, 0, byteCount, (jbyte *) temp);
 
     return (int)attacher.env->CallIntMethod(emu, coreMessageMid, bytes);
 }
@@ -441,6 +450,17 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setupVmu(JNIEnv *env,
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_pause(JNIEnv *env,jobject obj)
 {
     dc_pause();
+    dc_pause_emu();
+}
+
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_resume(JNIEnv *env,jobject obj)
+{
+    dc_resume_emu(true);
+}
+
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_stop(JNIEnv *env,jobject obj)
+{
+    dc_stop();
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_destroy(JNIEnv *env,jobject obj)
@@ -510,25 +530,33 @@ JNIEXPORT jint JNICALL Java_com_reicast_emulator_emu_JNIdc_data(JNIEnv *env, job
     return 0;
 }
 
+extern void gl_swap();
 
 JNIEXPORT jboolean JNICALL Java_com_reicast_emulator_emu_JNIdc_rendframe(JNIEnv *env,jobject obj)
 {
-    return (jboolean)rend_single_frame();
+    if (g_window == NULL)
+        return false;
+    jboolean ret = (jboolean)rend_single_frame();
+    if (ret)
+        gl_swap();
+    return ret;
 }
 
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_rendinit(JNIEnv * env, jobject obj, jint w,jint h)
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_rendinit(JNIEnv * env, jobject obj, jobject surface, jint width, jint height)
 {
-    screen_width  = w;
-    screen_height = h;
-
-    //gles_term();
-
-    egl_stealcntx();
-
-    if (!gles_init())
-    die("OPENGL FAILED");
-
-    install_prof_handler(1);
+    if (surface != NULL)
+    {
+        g_window = ANativeWindow_fromSurface(env, surface);
+        rend_init_renderer();
+        screen_width = width;
+        screen_height = height;
+    }
+    else
+    {
+        rend_term_renderer();
+        ANativeWindow_release(g_window);
+        g_window = NULL;
+    }
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_vjoy(JNIEnv * env, jobject obj,u32 id,float x, float y, float w, float h)

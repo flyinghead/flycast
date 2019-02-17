@@ -142,6 +142,7 @@ enum ModifierVolumeMode { Xor, Or, Inclusion, Exclusion, ModeCount };
 
 bool gl_init(void* wind, void* disp);
 void gl_load_osd_resources();
+void gl_free_osd_resources();
 void gl_swap();
 bool ProcessFrame(TA_context* ctx);
 void UpdateFogTexture(u8 *fog_table, GLenum texture_slot, GLint fog_image_format);

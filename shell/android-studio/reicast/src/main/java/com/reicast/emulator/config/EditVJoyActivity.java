@@ -2,14 +2,14 @@ package com.reicast.emulator.config;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.KeyEvent;
+import android.view.SurfaceHolder;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup.LayoutParams;
@@ -19,15 +19,15 @@ import android.widget.ImageView.ScaleType;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 
+import com.reicast.emulator.BaseNativeGLActivity;
 import com.reicast.emulator.MainActivity;
 import com.reicast.emulator.R;
-import com.reicast.emulator.emu.GL2JNIView;
 import com.reicast.emulator.emu.JNIdc;
+import com.reicast.emulator.emu.NativeGLView;
 import com.reicast.emulator.emu.OnScreenMenu;
 import com.reicast.emulator.periph.VJoy;
 
-public class EditVJoyActivity extends Activity {
-	GL2JNIView mView;
+public class EditVJoyActivity extends BaseNativeGLActivity {
 	PopupWindow popUp;
 	LayoutParams params;
 
@@ -51,47 +51,13 @@ public class EditVJoyActivity extends Activity {
 
 		String fileName = null;
 
+		editVjoyMode = true;
 		// Call parent onCreate()
 		super.onCreate(icicle);
-
-		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-
-		if (getIntent().getAction().equals("com.reicast.EMULATOR"))
-			fileName = Uri.decode(getIntent().getData().toString());
-
-		// Create the actual GLES view
-		mView = new GL2JNIView(EditVJoyActivity.this, fileName, false,
-				prefs.getInt(Config.pref_renderdepth, 24), 0, true);
-		mView.setFpsDisplay(null);
-		setContentView(mView);
 
 		vjoy_d_cached = VJoy.readCustomVjoyValues(getApplicationContext());
 
 		JNIdc.show_osd();
-	}
-
-	@Override
-	protected void onPause() {
-		super.onPause();
-		mView.onPause();
-	}
-
-	@Override
-	protected void onStop() {
-		super.onStop();
-//		mView.onStop();
-	}
-
-	@Override
-	protected void onResume() {
-		super.onResume();
-		mView.onResume();
-	}
-
-	@Override
-	protected void onDestroy() {
-		super.onDestroy();
-		mView.onDestroy();
 	}
 
 	PopupWindow createVJoyPopup() {

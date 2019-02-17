@@ -20,6 +20,7 @@
 #include "hw/pvr/Renderer_if.h"
 #include "hw/pvr/spg.h"
 #include "hw/aica/dsp.h"
+#include "imgread/common.h"
 
 void FlushCache();
 void LoadCustom();
@@ -94,7 +95,7 @@ int64_t get_time_usec(void)
 }
 
 
-int GetFile(char *szFileName, char *szParse=0, u32 flags=0)
+int GetFile(char *szFileName, char *szParse /* = 0 */, u32 flags /* = 0 */)
 {
 	cfgLoadStr("config","image",szFileName,"null");
 	if (strcmp(szFileName,"null")==0)
@@ -305,11 +306,27 @@ void dc_reset()
 	sh4_cpu.Reset(false);
 }
 
+static bool init_done;
+
 int dc_init(int argc,wchar* argv[])
 {
 	setbuf(stdin,0);
 	setbuf(stdout,0);
 	setbuf(stderr,0);
+	if (init_done)
+	{
+		if(ParseCommandLine(argc,argv))
+		{
+	        return 69;
+		}
+		InitSettings();
+		LoadSettings(false);
+		if (DiscSwap())
+			LoadCustom();
+		dc_reset();
+
+		return 0;
+	}
 	if (!_vmem_reserve())
 	{
 		printf("Failed to alloc mem\n");
@@ -394,6 +411,7 @@ int dc_init(int argc,wchar* argv[])
 #elif DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
 	mcfg_CreateAtomisWaveControllers();
 #endif
+	init_done = true;
 
 	dc_reset();
 

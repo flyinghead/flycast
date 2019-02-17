@@ -52,6 +52,7 @@ public class MainActivity extends AppCompatActivity implements
 
 	private SharedPreferences mPrefs;
 	private boolean hasAndroidMarket = false;
+	private boolean activity_paused = false;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -118,7 +119,7 @@ public class MainActivity extends AppCompatActivity implements
 		if (!getFilesDir().exists()) {
 			getFilesDir().mkdir();
 		}
-		JNIdc.initEnvironment(getApplicationContext());
+		JNIdc.initEnvironment((Emulator)getApplicationContext());
 
 		// When viewing a resource, pass its URI to the native code for opening
 		Intent intent = getIntent();
@@ -224,6 +225,9 @@ public class MainActivity extends AppCompatActivity implements
 	}
 
 	public void onEditorSelected(Uri uri) {
+		if (activity_paused)
+			return;
+		activity_paused = true;
 		String home_directory = mPrefs.getString(Config.pref_home,
 				Environment.getExternalStorageDirectory().getAbsolutePath());
 
@@ -234,6 +238,9 @@ public class MainActivity extends AppCompatActivity implements
 	}
 
 	public void onGameSelected(Uri uri) {
+		if (activity_paused)
+			return;
+		activity_paused = true;
 		String home_directory = mPrefs.getString(Config.pref_home,
 				Environment.getExternalStorageDirectory().getAbsolutePath());
 
@@ -245,7 +252,7 @@ public class MainActivity extends AppCompatActivity implements
 		}
 
 		Intent intent = new Intent("com.reicast.EMULATOR",
-				uri, getApplicationContext(), GL2JNIActivity.class);
+				uri, getApplicationContext(), NativeGLActivity.class);
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
 			intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
 		startActivity(intent);
@@ -369,6 +376,8 @@ public class MainActivity extends AppCompatActivity implements
 	@Override
 	protected void onResume() {
 		super.onResume();
+		activity_paused = false;
+
 		CloudFragment cloudfragment = (CloudFragment) getSupportFragmentManager()
 				.findFragmentByTag("CLOUD_FRAG");
 		if (cloudfragment != null && cloudfragment.isVisible()) {
