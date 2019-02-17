@@ -758,6 +758,9 @@ GLuint fogTextureId;
 			}
 		#endif
 	#endif
+void gl_term()
+{
+}
 #endif
 
 #endif
