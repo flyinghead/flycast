@@ -528,6 +528,7 @@ void InitSettings()
 	settings.rend.ExtraDepthScale   = 1.f;
 	settings.rend.CustomTextures    = false;
 	settings.rend.DumpTextures      = false;
+	settings.rend.ScreenScaling     = 100;
 
 	settings.pvr.ta_skip			= 0;
 	settings.pvr.rend				= 0;
@@ -605,6 +606,8 @@ void LoadSettings(bool game_specific)
 	}
 	settings.rend.CustomTextures    = cfgLoadBool(config_section, "rend.CustomTextures", settings.rend.CustomTextures);
 	settings.rend.DumpTextures      = cfgLoadBool(config_section, "rend.DumpTextures", settings.rend.DumpTextures);
+	settings.rend.ScreenScaling     = cfgLoadInt(config_section, "rend.ScreenScaling", settings.rend.ScreenScaling);
+	settings.rend.ScreenScaling = min(max(1, settings.rend.ScreenScaling), 100);
 
 	settings.pvr.ta_skip			= cfgLoadInt(config_section, "ta.skip", settings.pvr.ta_skip);
 	settings.pvr.rend				= cfgLoadInt(config_section, "pvr.rend", settings.pvr.rend);
@@ -705,6 +708,7 @@ void SaveSettings()
 	cfgSaveInt("config", "rend.MaxFilteredTextureSize", settings.rend.MaxFilteredTextureSize);
 	cfgSaveBool("config", "rend.CustomTextures", settings.rend.CustomTextures);
 	cfgSaveBool("config", "rend.DumpTextures", settings.rend.DumpTextures);
+	cfgSaveInt("config", "rend.ScreenScaling", settings.rend.ScreenScaling);
 	cfgSaveInt("config", "ta.skip", settings.pvr.ta_skip);
 	cfgSaveInt("config", "pvr.rend", settings.pvr.rend);
 

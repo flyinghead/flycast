@@ -726,6 +726,7 @@ struct settings_t
 		f32 ExtraDepthScale;
 		bool CustomTextures;
 		bool DumpTextures;
+		int ScreenScaling;	// in percent. 50 means half the native resolution
 	} rend;
 
 	struct

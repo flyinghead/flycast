@@ -481,18 +481,13 @@ typedef map<u64,TextureCacheData>::iterator TexCacheIter;
 
 TextureCacheData *getTextureCacheData(TSP tsp, TCW tcw);
 
-FBT fb_rtt;
-
 void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 {
-	FBT& rv=fb_rtt;
+	if (gl.rtt.fbo) glDeleteFramebuffers(1,&gl.rtt.fbo);
+	if (gl.rtt.tex) glcache.DeleteTextures(1,&gl.rtt.tex);
+	if (gl.rtt.depthb) glDeleteRenderbuffers(1,&gl.rtt.depthb);
 
-	if (rv.fbo) glDeleteFramebuffers(1,&rv.fbo);
-	if (rv.tex) glcache.DeleteTextures(1,&rv.tex);
-	if (rv.depthb) glDeleteRenderbuffers(1,&rv.depthb);
-	if (rv.stencilb) glDeleteRenderbuffers(1,&rv.stencilb);
-
-	rv.TexAddr=addy>>3;
+	gl.rtt.TexAddr=addy>>3;
 
 	// Find the smallest power of two texture that fits into the viewport
 	int fbh2 = 2;
@@ -513,8 +508,8 @@ void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 	//glGetIntegerv(GL_FRAMEBUFFER_BINDING, &m_i32OriginalFbo);
 
 	// Generate and bind a render buffer which will become a depth buffer shared between our two FBOs
-	glGenRenderbuffers(1, &rv.depthb);
-	glBindRenderbuffer(GL_RENDERBUFFER, rv.depthb);
+	glGenRenderbuffers(1, &gl.rtt.depthb);
+	glBindRenderbuffer(GL_RENDERBUFFER, gl.rtt.depthb);
 
 	/*
 		Currently it is unknown to GL that we want our new render buffer to be a depth buffer.
@@ -534,8 +529,8 @@ void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 #endif
 
 	// Create a texture for rendering to
-	rv.tex = glcache.GenTexture();
-	glcache.BindTexture(GL_TEXTURE_2D, rv.tex);
+	gl.rtt.tex = glcache.GenTexture();
+	glcache.BindTexture(GL_TEXTURE_2D, gl.rtt.tex);
 
 	glTexImage2D(GL_TEXTURE_2D, 0, channels, fbw2, fbh2, 0, channels, fmt, 0);
 	glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -543,19 +538,19 @@ void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 	glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	// Create the object that will allow us to render to the aforementioned texture
-	glGenFramebuffers(1, &rv.fbo);
-	glBindFramebuffer(GL_FRAMEBUFFER, rv.fbo);
+	glGenFramebuffers(1, &gl.rtt.fbo);
+	glBindFramebuffer(GL_FRAMEBUFFER, gl.rtt.fbo);
 
 	// Attach the texture to the FBO
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, rv.tex, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, gl.rtt.tex, 0);
 
 	// Attach the depth buffer we created earlier to our FBO.
-	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rv.depthb);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, gl.rtt.depthb);
 
 #ifdef GLES
 	if (gl.GL_OES_packed_depth_stencil_supported)
 #endif
-		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rv.depthb);
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, gl.rtt.depthb);
 
 	// Check that our FBO creation was successful
 	GLuint uStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
@@ -582,7 +577,7 @@ void ReadRTTBuffer() {
 
 	if (settings.rend.RenderToTextureBuffer)
 	{
-		u32 tex_addr = fb_rtt.TexAddr << 3;
+		u32 tex_addr = gl.rtt.TexAddr << 3;
 
 		// Manually mark textures as dirty and remove all vram locks before calling glReadPixels
 		// (deadlock on rpi)
@@ -673,12 +668,12 @@ void ReadRTTBuffer() {
     //dumpRtTexture(fb_rtt.TexAddr, w, h);
 
     if (w > 1024 || h > 1024 || settings.rend.RenderToTextureBuffer) {
-    	glcache.DeleteTextures(1, &fb_rtt.tex);
+    	glcache.DeleteTextures(1, &gl.rtt.tex);
     }
     else
     {
     	// TexAddr : fb_rtt.TexAddr, Reserved : 0, StrideSel : 0, ScanOrder : 1
-    	TCW tcw = { { fb_rtt.TexAddr, 0, 0, 1 } };
+    	TCW tcw = { { gl.rtt.TexAddr, 0, 0, 1 } };
     	switch (fb_packmode) {
     	case 0:
     	case 3:
@@ -700,16 +695,15 @@ void ReadRTTBuffer() {
     		glcache.DeleteTextures(1, &texture_data->texID);
     	else
     		texture_data->Create(false);
-    	texture_data->texID = fb_rtt.tex;
+    	texture_data->texID = gl.rtt.tex;
     	texture_data->dirty = 0;
     	if (texture_data->lock_block == NULL)
     		texture_data->lock_block = libCore_vramlock_Lock(texture_data->sa_tex, texture_data->sa + texture_data->size - 1, texture_data);
     }
-    fb_rtt.tex = 0;
+    gl.rtt.tex = 0;
 
-	if (fb_rtt.fbo) { glDeleteFramebuffers(1,&fb_rtt.fbo); fb_rtt.fbo = 0; }
-	if (fb_rtt.depthb) { glDeleteRenderbuffers(1,&fb_rtt.depthb); fb_rtt.depthb = 0; }
-	if (fb_rtt.stencilb) { glDeleteRenderbuffers(1,&fb_rtt.stencilb); fb_rtt.stencilb = 0; }
+	if (gl.rtt.fbo) { glDeleteFramebuffers(1,&gl.rtt.fbo); gl.rtt.fbo = 0; }
+	if (gl.rtt.depthb) { glDeleteRenderbuffers(1,&gl.rtt.depthb); gl.rtt.depthb = 0; }
 
 }
 
@@ -1012,3 +1006,69 @@ void RenderFramebuffer()
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pb.data());
 }
 
+void init_output_framebuffer(int width, int height)
+{
+	if (width != gl.ofbo.width || height != gl.ofbo.height)
+	{
+		if (gl.ofbo.fbo != 0)
+		{
+			glDeleteFramebuffers(1, &gl.ofbo.fbo);
+			gl.ofbo.fbo = 0;
+			glDeleteRenderbuffers(1, &gl.ofbo.depthb);
+			glcache.DeleteTextures(1, &gl.ofbo.tex);
+		}
+		gl.ofbo.width = width;
+		gl.ofbo.height = height;
+	}
+	if (gl.ofbo.fbo == 0)
+	{
+		// Create the depth+stencil renderbuffer
+		glGenRenderbuffers(1, &gl.ofbo.depthb);
+		glBindRenderbuffer(GL_RENDERBUFFER, gl.ofbo.depthb);
+
+#ifdef GLES
+		if (gl.GL_OES_packed_depth_stencil_supported)
+			glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8_OES, width, height);
+		else if (gl.GL_OES_depth24_supported)
+			glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24_OES, width, height);
+		else
+			glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, width, height);
+#else
+		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
+#endif
+		// Create a texture for rendering to
+		gl.ofbo.tex = glcache.GenTexture();
+		glcache.BindTexture(GL_TEXTURE_2D, gl.ofbo.tex);
+
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+		// Create the framebuffer
+		glGenFramebuffers(1, &gl.ofbo.fbo);
+		glBindFramebuffer(GL_FRAMEBUFFER, gl.ofbo.fbo);
+
+		// Attach the depth buffer to our FBO.
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, gl.ofbo.depthb);
+
+#ifdef GLES
+		if (gl.GL_OES_packed_depth_stencil_supported)
+#endif
+			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, gl.ofbo.depthb);
+
+		// Attach the texture to the FBO
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, gl.ofbo.tex, 0);
+
+		// Check that our FBO creation was successful
+		GLuint uStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+
+		verify(uStatus == GL_FRAMEBUFFER_COMPLETE);
+	}
+	else
+		glBindFramebuffer(GL_FRAMEBUFFER, gl.ofbo.fbo);
+
+	glViewport(0, 0, width, height);
+	glCheck();
+}

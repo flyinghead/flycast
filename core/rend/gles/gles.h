@@ -116,6 +116,23 @@ struct gl_ctx
 #endif
 	} vbo;
 
+	struct
+	{
+		u32 TexAddr;
+		GLuint depthb;
+		GLuint tex;
+		GLuint fbo;
+	} rtt;
+
+	struct
+	{
+		GLuint depthb;
+		GLuint tex;
+		GLuint fbo;
+		int width;
+		int height;
+	} ofbo;
+
 	const char *gl_version;
 	const char *glsl_version_header;
 	int gl_major;
@@ -148,8 +165,6 @@ void gl_free_osd_resources();
 void gl_swap();
 bool ProcessFrame(TA_context* ctx);
 void UpdateFogTexture(u8 *fog_table, GLenum texture_slot, GLint fog_image_format);
-void save_current_frame();
-bool render_last_frame();
 
 text_info raw_GetTexture(TSP tsp, TCW tcw);
 void killtex();
@@ -164,9 +179,10 @@ void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt);
 void ReadRTTBuffer();
 void RenderFramebuffer();
 void DrawFramebuffer(float w, float h);
+void init_output_framebuffer(int width, int height);
+void render_output_framebuffer();
 
 void HideOSD();
-void OSD_HOOK();
 void OSD_DRAW(GLuint shader_program);
 int GetProgramID(u32 cp_AlphaTest, u32 pp_ClipTestMode,
 							u32 pp_Texture, u32 pp_UseAlpha, u32 pp_IgnoreTexA, u32 pp_ShadInstr, u32 pp_Offset,
@@ -225,17 +241,6 @@ extern struct ShaderUniforms_t
 	}
 
 } ShaderUniforms;
-
-// Render to texture
-struct FBT
-{
-	u32 TexAddr;
-	GLuint depthb,stencilb;
-	GLuint tex;
-	GLuint fbo;
-};
-
-extern FBT fb_rtt;
 
 struct PvrTexInfo;
 template <class pixel_type> class PixelBuffer;

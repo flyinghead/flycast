@@ -751,7 +751,7 @@ void gl_term()
 
 	memset(gl.pogram_table, 0, sizeof(gl.pogram_table));
 
-#if HOST_OS==OS_WINDOWS
+ #if HOST_OS==OS_WINDOWS
 	ReleaseDC((HWND)gl.setup.native_wind,(HDC)gl.setup.native_disp);
 #elif defined(TARGET_PANDORA) || defined(_ANDROID)
 	eglMakeCurrent(gl.setup.display, NULL, NULL, EGL_NO_CONTEXT);
@@ -1247,10 +1247,6 @@ extern u8 rt[4],lt[4];
 #define key_CONT_DPAD2_LEFT  (1 << 14)
 #define key_CONT_DPAD2_RIGHT (1 << 15)
 
-u32 osd_base;
-u32 osd_count;
-
-
 #if defined(_ANDROID)
 extern float vjoy_pos[14][8];
 #else
@@ -1278,7 +1274,10 @@ float vjoy_pos[14][8]=
 };
 #endif // !_ANDROID
 
-float vjoy_sz[2][14] = {
+static List<Vertex> osd_vertices;
+static bool osd_vertices_overrun;
+
+static const float vjoy_sz[2][14] = {
 	{ 64,64,64,64, 64,64,64,64, 64, 90,90, 128, 64 },
 	{ 64,64,64,64, 64,64,64,64, 64, 64,64, 128, 64 },
 };
@@ -1312,63 +1311,48 @@ static void DrawButton(float* xy, u32 state)
 
 	vtx.x=x; vtx.y=y;
 	vtx.u=xy[4]; vtx.v=xy[5];
-	*pvrrc.verts.Append()=vtx;
+	*osd_vertices.Append() = vtx;
 
 	vtx.x=x+w; vtx.y=y;
 	vtx.u=xy[6]; vtx.v=xy[5];
-	*pvrrc.verts.Append()=vtx;
+	*osd_vertices.Append() = vtx;
 
 	vtx.x=x; vtx.y=y+h;
 	vtx.u=xy[4]; vtx.v=xy[7];
-	*pvrrc.verts.Append()=vtx;
+	*osd_vertices.Append() = vtx;
 
 	vtx.x=x+w; vtx.y=y+h;
 	vtx.u=xy[6]; vtx.v=xy[7];
-	*pvrrc.verts.Append()=vtx;
-
-	osd_count+=4;
+	*osd_vertices.Append() = vtx;
 }
 
-static void ClearBG()
-{
-
-}
-
-
-void DrawButton2(float* xy, bool state) { DrawButton(xy,state?0:255); }
+static void DrawButton2(float* xy, bool state) { DrawButton(xy,state?0:255); }
 
 static float LastFPSTime;
 static int lastFrameCount = 0;
 static float fps = -1;
 
-void OSD_HOOK()
+static void osd_gen_vertices()
 {
-	osd_base=pvrrc.verts.used();
-	osd_count=0;
+	osd_vertices.Init(ARRAY_SIZE(vjoy_pos) * 4, &osd_vertices_overrun, "OSD vertices");
+	DrawButton2(vjoy_pos[0],kcode[0]&key_CONT_DPAD_LEFT);
+	DrawButton2(vjoy_pos[1],kcode[0]&key_CONT_DPAD_UP);
+	DrawButton2(vjoy_pos[2],kcode[0]&key_CONT_DPAD_RIGHT);
+	DrawButton2(vjoy_pos[3],kcode[0]&key_CONT_DPAD_DOWN);
 
-	#ifndef TARGET_PANDORA
-	if (osd_tex)
-	{
-		DrawButton2(vjoy_pos[0],kcode[0]&key_CONT_DPAD_LEFT);
-		DrawButton2(vjoy_pos[1],kcode[0]&key_CONT_DPAD_UP);
-		DrawButton2(vjoy_pos[2],kcode[0]&key_CONT_DPAD_RIGHT);
-		DrawButton2(vjoy_pos[3],kcode[0]&key_CONT_DPAD_DOWN);
+	DrawButton2(vjoy_pos[4],kcode[0]&key_CONT_X);
+	DrawButton2(vjoy_pos[5],kcode[0]&key_CONT_Y);
+	DrawButton2(vjoy_pos[6],kcode[0]&key_CONT_B);
+	DrawButton2(vjoy_pos[7],kcode[0]&key_CONT_A);
 
-		DrawButton2(vjoy_pos[4],kcode[0]&key_CONT_X);
-		DrawButton2(vjoy_pos[5],kcode[0]&key_CONT_Y);
-		DrawButton2(vjoy_pos[6],kcode[0]&key_CONT_B);
-		DrawButton2(vjoy_pos[7],kcode[0]&key_CONT_A);
+	DrawButton2(vjoy_pos[8],kcode[0]&key_CONT_START);
 
-		DrawButton2(vjoy_pos[8],kcode[0]&key_CONT_START);
+	DrawButton(vjoy_pos[9],lt[0]);
 
-		DrawButton(vjoy_pos[9],lt[0]);
+	DrawButton(vjoy_pos[10],rt[0]);
 
-		DrawButton(vjoy_pos[10],rt[0]);
-
-		DrawButton2(vjoy_pos[11],1);
-		DrawButton2(vjoy_pos[12],0);
-	}
-	#endif
+	DrawButton2(vjoy_pos[11],1);
+	DrawButton2(vjoy_pos[12],0);
 }
 
 #define OSD_TEX_W 512
@@ -1376,9 +1360,11 @@ void OSD_HOOK()
 
 void OSD_DRAW(GLuint shader_program)
 {
-	#ifndef TARGET_PANDORA
+#ifndef TARGET_PANDORA
 	if (osd_tex)
 	{
+		osd_gen_vertices();
+
 		float u=0;
 		float v=0;
 
@@ -1405,22 +1391,7 @@ void OSD_DRAW(GLuint shader_program)
 		glcache.BindTexture(GL_TEXTURE_2D, osd_tex);
 		glcache.UseProgram(shader_program);
 
-		//reset rendering scale
-/*
-		float dc_width=640;
-		float dc_height=480;
-
-		float dc2s_scale_h=screen_height/480.0f;
-		float ds2s_offs_x=(screen_width-dc2s_scale_h*640)/2;
-
-		//-1 -> too much to left
-		ShaderUniforms.scale_coefs[0]=2.0f/(screen_width/dc2s_scale_h);
-		ShaderUniforms.scale_coefs[1]=-2/dc_height;
-		ShaderUniforms.scale_coefs[2]=1-2*ds2s_offs_x/(screen_width);
-		ShaderUniforms.scale_coefs[3]=-1;
-
-		glUniform4fv( gl.OSD_SHADER.scale, 1, ShaderUniforms.scale_coefs);
-*/
+		glBufferData(GL_ARRAY_BUFFER, osd_vertices.bytes(), osd_vertices.head(), GL_STREAM_DRAW);
 
 		glcache.Enable(GL_BLEND);
 		glcache.Disable(GL_DEPTH_TEST);
@@ -1432,10 +1403,10 @@ void OSD_DRAW(GLuint shader_program)
 		glcache.Disable(GL_CULL_FACE);
 		glcache.Disable(GL_SCISSOR_TEST);
 
-		int dfa=osd_count/4;
+		int dfa = osd_vertices.used() / 4;
 
-		for (int i=0;i<dfa;i++)
-			glDrawArrays(GL_TRIANGLE_STRIP,osd_base+i*4,4);
+		for (int i = 0; i < dfa; i++)
+			glDrawArrays(GL_TRIANGLE_STRIP, i * 4, 4);
 	}
 #endif
 	if (settings.rend.ShowFPS)
@@ -1502,9 +1473,6 @@ bool RenderFrame()
 	DoCleanup();
 
 	bool is_rtt=pvrrc.isRTT;
-
-	if (!is_rtt)
-		OSD_HOOK();
 
 	//if (FrameCount&7) return;
 
@@ -1669,14 +1637,16 @@ bool RenderFrame()
 	/*
 		Handle Dc to screen scaling
 	*/
+	float screen_scaling = is_rtt ? 1.f : settings.rend.ScreenScaling / 100.f;
 	float dc2s_scale_h = is_rtt ? (screen_width / dc_width) : (screen_height / 480.0);
-	float ds2s_offs_x =  is_rtt ? 0 : ((screen_width - dc2s_scale_h * 640.0) / 2);
+	dc2s_scale_h *=  screen_scaling;
+	float ds2s_offs_x =  is_rtt ? 0 : (((screen_width * screen_scaling) - dc2s_scale_h * 640.0) / 2);
 
 	//-1 -> too much to left
-	ShaderUniforms.scale_coefs[0]=2.0f/(screen_width/dc2s_scale_h*scale_x);
-	ShaderUniforms.scale_coefs[1]=(is_rtt ? 2 : -2) / dc_height;		// FIXME CT2 needs 480 here instead of dc_height=512
-	ShaderUniforms.scale_coefs[2]=1-2*ds2s_offs_x/(screen_width);
-	ShaderUniforms.scale_coefs[3]=(is_rtt?1:-1);
+	ShaderUniforms.scale_coefs[0] = 2.0f / (screen_width * screen_scaling / dc2s_scale_h * scale_x);
+	ShaderUniforms.scale_coefs[1]= (is_rtt ? 2 : -2) / dc_height;		// FIXME CT2 needs 480 here instead of dc_height=512
+	ShaderUniforms.scale_coefs[2]= 1 - 2 * ds2s_offs_x / (screen_width * screen_scaling);
+	ShaderUniforms.scale_coefs[3]= (is_rtt ? 1 : -1);
 
 
 	ShaderUniforms.depth_coefs[0]=2/(vtx_max_fZ-vtx_min_fZ);
@@ -1789,11 +1759,18 @@ bool RenderFrame()
 	}
 	else
 	{
+		if (settings.rend.ScreenScaling != 100 || gl.swap_buffer_not_preserved)
+		{
+			init_output_framebuffer(screen_width * settings.rend.ScreenScaling / 100, screen_height * settings.rend.ScreenScaling / 100);
+		}
+		else
+		{
 #if HOST_OS != OS_DARWIN
-        //Fix this in a proper way
-		glBindFramebuffer(GL_FRAMEBUFFER,0);
+			//Fix this in a proper way
+			glBindFramebuffer(GL_FRAMEBUFFER,0);
 #endif
-		glViewport(0, 0, screen_width, screen_height);
+			glViewport(0, 0, screen_width, screen_height);
+		}
 	}
 
 	bool wide_screen_on = !is_rtt && settings.rend.WideScreen
@@ -1892,8 +1869,6 @@ bool RenderFrame()
 	{
 		glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
 		glClear(GL_COLOR_BUFFER_BIT);
-		glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.geometry); glCheck();
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs); glCheck();
 		DrawFramebuffer(dc_width, dc_height);
 		glBufferData(GL_ARRAY_BUFFER, pvrrc.verts.bytes(), pvrrc.verts.head(), GL_STREAM_DRAW);
 		upload_vertex_indices();
@@ -1908,8 +1883,8 @@ bool RenderFrame()
 
 	if (is_rtt)
 		ReadRTTBuffer();
-	else if (gl.swap_buffer_not_preserved)
-		save_current_frame();
+	else if (settings.rend.ScreenScaling != 100 || gl.swap_buffer_not_preserved)
+		render_output_framebuffer();
 
 	return !is_rtt;
 }

@@ -799,6 +799,9 @@ static void gui_display_settings()
 		    	ImGui::Checkbox("Show FPS Counter", &settings.rend.ShowFPS);
 	            ImGui::SameLine();
 	            ShowHelpMarker("Show on-screen frame/sec counter");
+		    	ImGui::SliderInt("Scaling", (int *)&settings.rend.ScreenScaling, 1, 100);
+	            ImGui::SameLine();
+	            ShowHelpMarker("Downscaling factor relative to native screen resolution. Higher is better");
 		    	ImGui::SliderInt("Frame Skipping", (int *)&settings.pvr.ta_skip, 0, 6);
 	            ImGui::SameLine();
 	            ShowHelpMarker("Number of frames to skip between two actually rendered frames");

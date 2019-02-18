@@ -3,12 +3,10 @@
 
 GLuint gl4BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 {
-	FBT& rv=fb_rtt;
+	if (gl.rtt.fbo) glDeleteFramebuffers(1,&gl.rtt.fbo);
+	if (gl.rtt.tex) glcache.DeleteTextures(1,&gl.rtt.tex);
 
-	if (rv.fbo) glDeleteFramebuffers(1,&rv.fbo);
-	if (rv.tex) glcache.DeleteTextures(1,&rv.tex);
-
-	rv.TexAddr=addy>>3;
+	gl.rtt.TexAddr=addy>>3;
 
 	// Find the smallest power of two texture that fits the viewport
 	int fbh2 = 2;
@@ -29,17 +27,17 @@ GLuint gl4BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 	//glGetIntegerv(GL_FRAMEBUFFER_BINDING, &m_i32OriginalFbo);
 
 	// Create a texture for rendering to
-	rv.tex = glcache.GenTexture();
-	glcache.BindTexture(GL_TEXTURE_2D, rv.tex);
+	gl.rtt.tex = glcache.GenTexture();
+	glcache.BindTexture(GL_TEXTURE_2D, gl.rtt.tex);
 
 	glTexImage2D(GL_TEXTURE_2D, 0, channels, fbw2, fbh2, 0, channels, fmt, 0);
 
 	// Create the object that will allow us to render to the aforementioned texture
-	glGenFramebuffers(1, &rv.fbo);
-	glBindFramebuffer(GL_FRAMEBUFFER, rv.fbo);
+	glGenFramebuffers(1, &gl.rtt.fbo);
+	glBindFramebuffer(GL_FRAMEBUFFER, gl.rtt.fbo);
 
 	// Attach the texture to the FBO
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, rv.tex, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, gl.rtt.tex, 0);
 
 	// Check that our FBO creation was successful
 	GLuint uStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
@@ -48,5 +46,5 @@ GLuint gl4BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 
 	glViewport(0, 0, fbw, fbh);		// TODO CLIP_X/Y min?
 
-	return rv.fbo;
+	return gl.rtt.fbo;
 }

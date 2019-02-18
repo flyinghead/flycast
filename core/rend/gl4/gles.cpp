@@ -686,9 +686,6 @@ static bool RenderFrame()
 
 	//printf("scale: %f, %f, %f, %f\n",gl4ShaderUniforms.scale_coefs[0],gl4ShaderUniforms.scale_coefs[1],gl4ShaderUniforms.scale_coefs[2],gl4ShaderUniforms.scale_coefs[3]);
 
-	if (!is_rtt)
-		OSD_HOOK();
-
 	//VERT and RAM fog color constants
 	u8* fog_colvert_bgra=(u8*)&FOG_COL_VERT;
 	u8* fog_colram_bgra=(u8*)&FOG_COL_RAM;

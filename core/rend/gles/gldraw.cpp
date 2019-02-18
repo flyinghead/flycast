@@ -1150,41 +1150,17 @@ void DrawFramebuffer(float w, float h)
 	fbTextureId = 0;
 }
 
-void save_current_frame()
+void render_output_framebuffer()
 {
-#ifndef GLES
-	glReadBuffer(GL_FRONT);
-#endif
-	// (Re-)create the texture and reserve space for it
-	if (g_previous_frame_tex != 0)
-		glcache.DeleteTextures(1, &g_previous_frame_tex);
-	glGenTextures(1, &g_previous_frame_tex);
-	glBindTexture(GL_TEXTURE_2D, g_previous_frame_tex);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, screen_width, screen_height, 0, GL_RGB, GL_UNSIGNED_BYTE, (GLvoid*)NULL);
-
-	// Copy the current framebuffer into it
-	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, screen_width, screen_height);
-	glCheck();
-}
-
-bool render_last_frame()
-{
-	if (g_previous_frame_tex == 0)
-		return false;
-
 #if HOST_OS != OS_DARWIN
 	//Fix this in a proper way
-	glBindFramebuffer(GL_FRAMEBUFFER,0);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 #endif
 	glViewport(0, 0, screen_width, screen_height);
+	if (gl.ofbo.tex == 0)
+		return;
 
     float scl = 480.f / screen_height;
     float tx = (screen_width * scl - 640.f) / 2;
-	DrawQuad(g_previous_frame_tex, -tx, 0, 640.f + tx * 2, 480.f, 0, 1, 1, 0);
-
-	return true;
+	DrawQuad(gl.ofbo.tex, -tx, 0, 640.f + tx * 2, 480.f, 0, 1, 1, 0);
 }
