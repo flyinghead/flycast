@@ -71,6 +71,7 @@ public class EditVJoyActivity extends BaseNativeGLActivity {
 
 		hlay.addView(addbut(R.drawable.apply, new OnClickListener() {
 			public void onClick(View v) {
+				stopEmulator();
 				Intent inte = new Intent(EditVJoyActivity.this, MainActivity.class);
 				startActivity(inte);
 				finish();

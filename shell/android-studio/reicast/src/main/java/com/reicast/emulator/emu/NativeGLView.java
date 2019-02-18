@@ -135,7 +135,6 @@ public class NativeGLView extends SurfaceView {
         handler.post(new Runnable() {
             @Override
             public void run() {
-                // FIXME STOP AT SOME POINT!!
                 if (ethd.getState() == Thread.State.TERMINATED)
                     ((Activity)getContext()).finish();
                 else {
@@ -516,6 +515,7 @@ public class NativeGLView extends SurfaceView {
                 Player.play();
             }
 
+            Log.i("NativeGLView", "Running emulator");
             JNIdc.run(this);
         }
 
@@ -584,6 +584,7 @@ public class NativeGLView extends SurfaceView {
     }
 
     public void stop() {
+        Log.i("NativeGLView", "Stopping emulator");
         //JNIdc.destroy();
         JNIdc.stop();
         try {
@@ -591,6 +592,7 @@ public class NativeGLView extends SurfaceView {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+        Log.i("NativeGLView", "Stopping emulator completed");
     }
 
     @TargetApi(19)

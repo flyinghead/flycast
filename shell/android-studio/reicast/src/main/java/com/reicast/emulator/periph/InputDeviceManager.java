@@ -47,7 +47,6 @@ public final class InputDeviceManager implements InputManager.InputDeviceListene
     @Override
     public void onInputDeviceRemoved(int i) {
         if (maple_port > 0)
-            // TODO The removed device might not be a gamepad/joystick
             maple_port--;
         joystickRemoved(i);
     }

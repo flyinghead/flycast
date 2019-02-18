@@ -119,12 +119,14 @@ void dc_pause_emu();
 void dc_resume_emu(bool continue_running);
 void dc_stop();
 void dc_term();
+bool dc_is_running();
 
 bool VramLockedWrite(u8* address);
 
 bool rend_single_frame();
 void rend_init_renderer();
 void rend_term_renderer();
+void rend_cancel_emu_wait();
 bool egl_makecurrent();
 
 //extern cResetEvent rs,re;
@@ -411,13 +413,10 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_run(JNIEnv *env,jobje
     dc_run();
 
     env->DeleteGlobalRef(emu);
+    emu = NULL;
 }
 
 int msgboxf(const wchar* text,unsigned int type,...) {
-    JVMAttacher attacher;
-    if (attacher.failed())
-        return 0;
-
     va_list args;
 
     wchar temp[2048];
@@ -425,6 +424,12 @@ int msgboxf(const wchar* text,unsigned int type,...) {
     vsprintf(temp, text, args);
     va_end(args);
     LOGE("%s", temp);
+
+    if (emu == NULL)
+        return 0;
+    JVMAttacher attacher;
+    if (attacher.failed())
+        return 0;
 
     int byteCount = strlen(temp);
     jbyteArray bytes = attacher.env->NewByteArray(byteCount);
@@ -460,7 +465,10 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_resume(JNIEnv *env,jo
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_stop(JNIEnv *env,jobject obj)
 {
-    dc_stop();
+    if (dc_is_running()) {
+        dc_stop();
+        rend_cancel_emu_wait();
+    }
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_destroy(JNIEnv *env,jobject obj)
@@ -636,11 +644,6 @@ void androidaudio_term()
     // Move along, there is nothing to see here!
 }
 
-bool os_IsAudioBuffered()
-{
-    return jenv->CallIntMethod(emu,writemid,jsamples,-1)==0;
-}
-
 audiobackend_t audiobackend_android = {
         "android", // Slug
         "Android Audio", // Name
@@ -686,47 +689,6 @@ void os_DebugBreak()
     // Attach debugger here to figure out what went wrong
     for(;;) ;
 }
-/*
-void SaveSettings()
-{
-    JVMAttacher attacher;
-    if (attacher.failed())
-        return;
-
-    attacher.env->CallVoidMethod(g_emulator, saveSettingsMid);
-}
-
-void LoadSpecialSettings();
-
-void LoadCustom()
-{
-    JVMAttacher attacher;
-    if (attacher.failed())
-        return;
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-    char *reios_id = reios_disk_id();
-
-    char *p = reios_id + strlen(reios_id) - 1;
-    while (p >= reios_id && *p == ' ')
-        *p-- = '\0';
-    if (*p == '\0')
-        return;
-#elif DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
-    char *reios_id = naomi_game_id;
-	char *reios_software_name = naomi_game_id;
-#endif
-
-    LoadSpecialSettings();	// Default per-game settings
-
-    jmethodID loadGameConfigurationMid = attacher.env->GetMethodID(attacher.env->GetObjectClass(g_emulator), "loadGameConfiguration", "(Ljava/lang/String;)V");
-
-    char *id = (char*)malloc(11);
-    strcpy(id, reios_id);
-    jstring jreios_id = attacher.env->NewStringUTF(id);
-
-    attacher.env->CallVoidMethod(g_emulator, loadGameConfigurationMid, jreios_id);
-}
-*/
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_joystickAdded(JNIEnv *env, jobject obj, jint id, jstring name, jint maple_port)
 {

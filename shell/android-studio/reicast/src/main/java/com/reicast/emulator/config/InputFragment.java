@@ -79,9 +79,10 @@ public class InputFragment extends Fragment {
 		Config.vibrationDuration = mPrefs.getInt(Config.pref_vibrationDuration, 20);
 		vib = (Vibrator) getActivity().getSystemService(Context.VIBRATOR_SERVICE);
 
-		Button buttonLaunchEditor = (Button) getView().findViewById(R.id.buttonLaunchEditor);
+		final Button buttonLaunchEditor = (Button) getView().findViewById(R.id.buttonLaunchEditor);
 		buttonLaunchEditor.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
+				buttonLaunchEditor.setEnabled(false);
                 mCallback.onEditorSelected(Uri.EMPTY);
 			}
 		});
@@ -135,6 +136,13 @@ public class InputFragment extends Fragment {
 		}
 		switchTouchVibrationEnabled.setOnCheckedChangeListener(touch_vibration);
 		updateVibration();
+	}
+
+	@Override
+	public void onResume() {
+		super.onResume();
+		Button buttonLaunchEditor = (Button) getView().findViewById(R.id.buttonLaunchEditor);
+		buttonLaunchEditor.setEnabled(isBIOSAvailable());
 	}
 
 	private boolean isBIOSAvailable() {

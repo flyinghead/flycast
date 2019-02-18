@@ -47,6 +47,10 @@ public class BaseNativeGLActivity extends Activity implements SurfaceHolder.Call
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        stopEmulator();
+    }
+
+    protected void stopEmulator() {
         if (mView != null) {
             mView.stop();
         }
