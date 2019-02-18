@@ -931,7 +931,7 @@ void gui_display_fps(const char *string)
     ImGui::Begin("##fps", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav
     		| ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoBackground);
     ImGui::SetWindowFontScale(2);
-    ImGui::TextColored(ImVec4(1, 1, 0, 0.7), string);
+    ImGui::TextColored(ImVec4(1, 1, 0, 0.7), "%s", string);
     ImGui::End();
 
     ImGui::Render();

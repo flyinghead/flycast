@@ -123,6 +123,8 @@ struct gl_ctx
 	GLuint fog_image_format;
 	GLenum index_type;
 	bool swap_buffer_not_preserved;
+	bool GL_OES_packed_depth_stencil_supported;
+	bool GL_OES_depth24_supported;
 
 	size_t get_index_size() { return index_type == GL_UNSIGNED_INT ? sizeof(u32) : sizeof(u16); }
 };

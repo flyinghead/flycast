@@ -820,6 +820,15 @@ void findGLVersion()
 			gl.fog_image_format = GL_ALPHA;
 		}
 	}
+#ifdef GLES
+	const char *extensions = (const char *)glGetString(GL_EXTENSIONS);
+	if (strstr(extensions, "GL_OES_packed_depth_stencil") != NULL)
+		gl.GL_OES_packed_depth_stencil_supported = true;
+	if (strstr(extensions, "GL_OES_depth24") != NULL)
+		gl.GL_OES_depth24_supported = true;
+	if (!gl.GL_OES_packed_depth_stencil_supported)
+		printf("Packed depth/stencil not supported: no modifier volumes when rendering to a texture\n");
+#endif
 }
 
 struct ShaderUniforms_t ShaderUniforms;

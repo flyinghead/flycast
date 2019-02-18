@@ -978,8 +978,7 @@ void DrawModVols(int first, int count)
 
 	SetupModvolVBO();
 
-	glcache.Enable(GL_BLEND);
-	glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glcache.Disable(GL_BLEND);
 
 	glcache.UseProgram(gl.modvol_shader.program);
 	glUniform1f(gl.modvol_shader.sp_ShaderColor, 1 - FPU_SHAD_SCALE.scale_factor / 256.f);
