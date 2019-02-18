@@ -407,6 +407,14 @@ GLuint fogTextureId;
 
 #if (HOST_OS != OS_DARWIN) && !defined(TARGET_NACL32)
 #if defined(GLES) && !defined(USE_SDL)
+
+	bool egl_makecurrent()
+	{
+		if (gl.setup.surface == EGL_NO_SURFACE || gl.setup.context == EGL_NO_CONTEXT)
+			return false;
+		return eglMakeCurrent(gl.setup.display, gl.setup.surface, gl.setup.surface, gl.setup.context);
+	}
+
 	// Create a basic GLES context
 	bool gl_init(void* wind, void* disp)
 	{
@@ -465,34 +473,39 @@ GLuint fogTextureId;
 			EGLint format;
 			if (!eglGetConfigAttrib(gl.setup.display, config, EGL_NATIVE_VISUAL_ID, &format))
 			{
-				printf("eglGetConfigAttrib() returned error %d", eglGetError());
+				printf("eglGetConfigAttrib() returned error %x\n", eglGetError());
 				return false;
 			}
 			ANativeWindow_setBuffersGeometry((ANativeWindow *)wind, 0, 0, format);
 #endif
-
 			gl.setup.surface = eglCreateWindowSurface(gl.setup.display, config, (EGLNativeWindowType)wind, NULL);
 
-			if (eglCheck() || gl.setup.surface == EGL_NO_SURFACE)
+			if (gl.setup.surface == EGL_NO_SURFACE)
 			{
-				printf("EGL Error: eglCreateWindowSurface failed\n");
+				printf("EGL Error: eglCreateWindowSurface failed: %x\n", eglGetError());
 				return false;
 			}
 
-			eglBindAPI(EGL_OPENGL_ES_API);
-			if (eglCheck())
+			if (!eglBindAPI(EGL_OPENGL_ES_API))
+			{
+				printf("eglBindAPI() failed: %x\n", eglGetError());
 				return false;
+			}
 
 			gl.setup.context = eglCreateContext(gl.setup.display, config, NULL, pi32ContextAttribs);
 
-			if (eglCheck())
+			if (gl.setup.context == EGL_NO_CONTEXT)
+			{
+				printf("eglCreateContext() failed: %x\n", eglGetError());
 				return false;
+			}
 		}
 
-		eglMakeCurrent(gl.setup.display, gl.setup.surface, gl.setup.surface, gl.setup.context);
-
-		if (eglCheck())
+		if (!egl_makecurrent())
+		{
+			printf("eglMakeCurrent() failed: %x\n", eglGetError());
 			return false;
+		}
 
 		EGLint w,h;
 		eglQuerySurface(gl.setup.display, gl.setup.surface, EGL_WIDTH, &w);
@@ -753,9 +766,9 @@ void gl_term()
 		close( fbdev );
 	fbdev=-1;
 #endif
-	gl.setup.context = NULL;
-	gl.setup.surface = NULL;
-	gl.setup.display = NULL;
+	gl.setup.context = EGL_NO_CONTEXT;
+	gl.setup.surface = EGL_NO_SURFACE;
+	gl.setup.display = EGL_NO_DISPLAY;
 #endif	// TARGET_PANDORA || _ANDROID
 }
 

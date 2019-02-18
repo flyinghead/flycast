@@ -4,9 +4,9 @@ import android.app.Activity;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.util.Log;
 import android.view.SurfaceHolder;
 
-import com.reicast.emulator.config.EditVJoyActivity;
 import com.reicast.emulator.emu.JNIdc;
 import com.reicast.emulator.emu.NativeGLView;
 
@@ -59,11 +59,13 @@ public class BaseNativeGLActivity extends Activity implements SurfaceHolder.Call
 
     @Override
     public void surfaceChanged(SurfaceHolder holder, int format, int w, int h) {
+        //Log.i("BaseNativeGLActivity", "surfaceChanged: " + w + "x" + h);
         JNIdc.rendinit(holder.getSurface(), w, h);
     }
 
     @Override
     public void surfaceDestroyed(SurfaceHolder holder) {
+        //Log.i("BaseNativeGLActivity", "surfaceDestroyed");
         JNIdc.rendinit(null, 0, 0);
     }
 }

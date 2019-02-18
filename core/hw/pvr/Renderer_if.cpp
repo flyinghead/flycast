@@ -364,6 +364,8 @@ void rend_init_renderer()
 
 void rend_term_renderer()
 {
+	killtex();
+	gui_term();
 	renderer->Term();
 	delete renderer;
 	renderer = NULL;
@@ -372,8 +374,6 @@ void rend_term_renderer()
 		delete fallback_renderer;
 		fallback_renderer = NULL;
 	}
-	killtex();
-	gui_term();
 }
 
 void* rend_thread(void* p)

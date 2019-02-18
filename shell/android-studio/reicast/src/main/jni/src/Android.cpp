@@ -111,7 +111,6 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_screenDpi(JNIEnv *env
     screen_dpi = screenDpi;
 }
 
-void egl_stealcntx();
 void SetApplicationPath(wchar *path);
 int dc_init(int argc, wchar* argv[]);
 void dc_run();
@@ -126,6 +125,7 @@ bool VramLockedWrite(u8* address);
 bool rend_single_frame();
 void rend_init_renderer();
 void rend_term_renderer();
+bool egl_makecurrent();
 
 //extern cResetEvent rs,re;
 extern int screen_width,screen_height;
@@ -536,6 +536,8 @@ JNIEXPORT jboolean JNICALL Java_com_reicast_emulator_emu_JNIdc_rendframe(JNIEnv 
 {
     if (g_window == NULL)
         return false;
+    if (!egl_makecurrent())
+        return false;
     jboolean ret = (jboolean)rend_single_frame();
     if (ret)
         gl_swap();
@@ -553,6 +555,7 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_rendinit(JNIEnv * env
     }
     else
     {
+        egl_makecurrent();
         rend_term_renderer();
         ANativeWindow_release(g_window);
         g_window = NULL;
