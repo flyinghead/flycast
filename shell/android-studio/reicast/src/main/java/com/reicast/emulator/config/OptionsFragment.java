@@ -72,6 +72,7 @@ public class OptionsFragment extends Fragment {
 		void recreateActivity();
 		void onMainBrowseSelected(String path_entry, boolean games, String query);
 		void launchBIOSdetection();
+		void synchronousRenderingNotice();
 	}
 
 	@Override  @SuppressWarnings("deprecation")
@@ -342,6 +343,25 @@ public class OptionsFragment extends Fragment {
 
 			public void onNothingSelected(AdapterView<?> arg0) {
 
+			}
+		});
+
+		String[] rtts = getResources().getStringArray(R.array.rtt);
+		Spinner rtt_spnr = (Spinner) getView().findViewById(R.id.rtt_spinner);
+		ArrayAdapter<String> rttAdapter = new ArrayAdapter<>(
+				getActivity(), R.layout.spinner_selected, rtts);
+		rttAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		rtt_spnr.setAdapter(rttAdapter);
+		rtt_spnr.setSelection(mPrefs.getInt(Emulator.pref_rtt, Emulator.rtt), true);
+		rtt_spnr.setOnItemSelectedListener(new OnItemSelectedListener() {
+			public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
+				mPrefs.edit().putInt(Emulator.pref_rtt, pos).apply();
+				if (pos == 4) {
+					mCallback.synchronousRenderingNotice();
+				}
+			}
+
+			public void onNothingSelected(AdapterView<?> arg0) {
 			}
 		});
 
@@ -721,6 +741,7 @@ public class OptionsFragment extends Fragment {
 		mPrefs.edit().remove(Emulator.pref_cable).apply();
 		mPrefs.edit().remove(Emulator.pref_dcregion).apply();
 		mPrefs.edit().remove(Emulator.pref_broadcast).apply();
+		mPrefs.edit().remove(Emulator.pref_rtt).apply();
 		mPrefs.edit().remove(Emulator.pref_limitfps).apply();
 		mPrefs.edit().remove(Emulator.pref_mipmaps).apply();
 		mPrefs.edit().remove(Emulator.pref_resolution).apply();
@@ -743,6 +764,7 @@ public class OptionsFragment extends Fragment {
 		Emulator.cable = 3;
 		Emulator.dcregion = 3;
 		Emulator.broadcast = 4;
+		Emulator.rtt = 1;
 		Emulator.limitfps = true;
 		Emulator.mipmaps = true;
 		Emulator.widescreen = false;

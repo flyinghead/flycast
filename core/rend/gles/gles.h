@@ -65,10 +65,23 @@ struct GLFramebufferData {
 //vertex types
 extern u32 gcflip;
 
+extern u32 rttDepthCounter;
 extern GLFramebufferData fullscreenQuad;
+
+enum rttSelectedOption
+{
+	Disabled = 0,
+	Zeros,
+	Ones,
+	ShadowCircle,
+	Full
+};
 
 void DrawStrips();
 void DrawFullscreenQuad(float, float, float, float);
+
+bool isExtensionSupported(const char *);
+void rttCheckIfUpdated();
 
 struct PipelineShader
 {
@@ -114,6 +127,11 @@ struct gl_ctx
 
 	struct
 	{
+		const char *adrenoRenderer = "Adreno";
+	} workarounds;
+
+	struct
+	{
 		GLuint geometry,modvols,idxs,idxs2;
 #ifndef GLES
 		GLuint vao;
@@ -122,6 +140,7 @@ struct gl_ctx
 
 	GLuint fullscreenQuadShader;
 
+	const char *renderer;
 	const char *gl_version;
 	const char *glsl_version_header;
 	int gl_major;
@@ -147,9 +166,11 @@ void DoCleanup();
 void SortPParams();
 
 void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt);
+void ReadRTT();
 int GetProgramID(u32 cp_AlphaTest, u32 pp_ClipTestMode,
 							u32 pp_Texture, u32 pp_UseAlpha, u32 pp_IgnoreTexA, u32 pp_ShadInstr, u32 pp_Offset,
 							u32 pp_FogCtrl);
+void InitShadowCircle();
 
 bool CompilePipelineShader(PipelineShader* s);
 #define TEXTURE_LOAD_ERROR 0

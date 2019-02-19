@@ -1,4 +1,5 @@
 #include <math.h>
+#include <types.h>
 #include "gles.h"
 #include "rend/TexCache.h"
 #include "cfg/cfg.h"
@@ -177,10 +178,10 @@ const char* VertexShaderSource =
 
 #endif
 
-
-
-
-
+//0 - not in use
+//1 - in use since the last frame
+u8 rttInUse = 0;
+u32 rttDepthCounter = 0;
 
 /*
 
@@ -482,9 +483,16 @@ gl_ctx gl;
 
 int screen_width;
 int screen_height;
-GLuint fogTextureId;
 
+int currentScreenWidth = -1;
+int currentScreenHeight = -1;
+
+GLuint fogTextureId;
 GLFramebufferData fullscreenQuad;
+
+bool isExtensionSupported(const char * name) {
+	return strstr((const char *)glGetString(GL_EXTENSIONS), name) != NULL;
+}
 
 #if (HOST_OS != OS_DARWIN) && !defined(TARGET_NACL32)
 #if defined(GLES) && !defined(USE_SDL)
@@ -554,6 +562,8 @@ GLFramebufferData fullscreenQuad;
 
 		screen_width=w;
 		screen_height=h;
+
+		gl.renderer = (char *)glGetString(GL_RENDERER);
 
 		printf("EGL config: %p, %08X, %08X %dx%d\n",gl.setup.context,gl.setup.display,gl.setup.surface,w,h);
 		return true;
@@ -1209,6 +1219,8 @@ bool gles_init()
 	if (!gl_create_resources())
 		return false;
 
+	InitShadowCircle();
+
 #if defined(GLES) && HOST_OS != OS_DARWIN && !defined(TARGET_NACL32)
 	#ifdef TARGET_PANDORA
 	fbdev=open("/dev/fb0", O_RDONLY);
@@ -1225,13 +1237,6 @@ bool gles_init()
 		gl_swap();
 	}
 
-	return true;
-}
-
-bool isExtensionSupported(const char * name) {
-	if (!strstr((const char *)glGetString(GL_EXTENSIONS), name)) {
-		return false;
-	}
 	return true;
 }
 
@@ -1635,15 +1640,16 @@ void fullscreenQuadCreateTemporaryFBO(float & screenToNativeXScale, float & scre
 	// Generate and bind a render buffer which will become a depth buffer
 	if (!fullscreenQuad.framebufferRenderbuffer) {
 		glGenRenderbuffers(1, &fullscreenQuad.framebufferRenderbuffer);
+	}
+	if (currentScreenWidth != screen_width || currentScreenHeight != screen_height) {
+
 		glBindRenderbuffer(GL_RENDERBUFFER, fullscreenQuad.framebufferRenderbuffer);
 #ifdef GLES
 		if (isExtensionSupported("GL_OES_packed_depth_stencil")) {
 			glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8_OES, screen_width, screen_height);
-		}
-		else if (isExtensionSupported("GL_OES_depth24")) {
+		} else if (isExtensionSupported("GL_OES_depth24")) {
 			glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24_OES, screen_width, screen_height);
-		}
-		else {
+		} else {
 			glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, screen_width, screen_height);
 		}
 #else
@@ -1660,6 +1666,10 @@ void fullscreenQuadCreateTemporaryFBO(float & screenToNativeXScale, float & scre
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, screen_width, screen_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+	}
+	if (currentScreenWidth != screen_width || currentScreenHeight != screen_height) {
+		glBindTexture(GL_TEXTURE_2D, fullscreenQuad.framebufferTexture);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, screen_width, screen_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
 	}
 
@@ -1689,9 +1699,10 @@ void fullscreenQuadCreateTemporaryFBO(float & screenToNativeXScale, float & scre
 
 bool ProcessFrame(TA_context* ctx)
 {
-	//disable RTTs for now ..
-	if (ctx->rend.isRTT)
+	if (ctx->rend.isRTT && settings.dreamcast.rttOption == Disabled)
+	{
 		return false;
+	}
 
 	ctx->rend_inuse.Lock();
 	ctx->MarkRend();
@@ -1830,16 +1841,8 @@ bool RenderFrame()
 	{
 		gcflip=1;
 
-		//For some reason this produces wrong results
-		//so for now its hacked based like on the d3d code
-		/*
-		dc_width=FB_X_CLIP.max-FB_X_CLIP.min+1;
-		dc_height=FB_Y_CLIP.max-FB_Y_CLIP.min+1;
-		u32 pvr_stride=(FB_W_LINESTRIDE.stride)*8;
-		*/
-
-		dc_width=640;
-		dc_height=480;
+		dc_width =  FB_W_LINESTRIDE.stride ? FB_W_LINESTRIDE.stride * 4 : FB_X_CLIP.max - FB_X_CLIP.min + 1;
+		dc_height  = FB_Y_CLIP.max - FB_Y_CLIP.min + 1;
 	}
 
 	scale_x = 1;
@@ -1899,15 +1902,31 @@ bool RenderFrame()
 	/*
 		Handle Dc to screen scaling
 	*/
-	float dc2s_scale_h=screen_height/480.0f;
-	float ds2s_offs_x=(screen_width-dc2s_scale_h*640)/2;
+	float dc2s_scale_h = screen_height / 480.0;
+	float ds2s_offs_x = (screen_width - dc2s_scale_h * 640.0) / 2;
+	// handle odd screen width
+	if (screen_width % 2) {
+		ds2s_offs_x = (screen_width + 1 - dc2s_scale_h * 640.0) / 2;
+	}
+
+	if (!is_rtt) {
+		ShaderUniforms.scale_coefs[0] = 2.0f / (screen_width / dc2s_scale_h * scale_x);
+		ShaderUniforms.scale_coefs[2] = 1 - 2 * ds2s_offs_x / screen_width;
+	} else {
+		if (dc_width == (FB_X_CLIP.max - FB_X_CLIP.min + 1)) {
+			ShaderUniforms.scale_coefs[0] = 2.0f / (dc_width * scale_x);
+		}
+		else { //is stride
+			ShaderUniforms.scale_coefs[0] = 2.0f / ((FB_X_CLIP.max - FB_X_CLIP.min + 1) * scale_x);
+		}
+		dc2s_scale_h = screen_width / dc_width;
+		ds2s_offs_x = 0;
+		ShaderUniforms.scale_coefs[2] = 1;
+	}
 
 	//-1 -> too much to left
-	ShaderUniforms.scale_coefs[0]=2.0f/(screen_width/dc2s_scale_h*scale_x);
 	ShaderUniforms.scale_coefs[1]=(is_rtt?2:-2)/dc_height;
-	ShaderUniforms.scale_coefs[2]=1-2*ds2s_offs_x/(screen_width);
 	ShaderUniforms.scale_coefs[3]=(is_rtt?1:-1);
-
 
 	ShaderUniforms.depth_coefs[0]=2/(vtx_max_fZ-vtx_min_fZ);
 	ShaderUniforms.depth_coefs[1]=-vtx_min_fZ-1;
@@ -1915,7 +1934,6 @@ bool RenderFrame()
 	ShaderUniforms.depth_coefs[3]=0;
 
 	//printf("scale: %f, %f, %f, %f\n",scale_coefs[0],scale_coefs[1],scale_coefs[2],scale_coefs[3]);
-
 
 	//VERT and RAM fog color constants
 	u8* fog_colvert_bgra=(u8*)&FOG_COL_VERT;
@@ -1945,7 +1963,6 @@ bool RenderFrame()
 	glUniform4fv( gl.modvol_shader.scale, 1, ShaderUniforms.scale_coefs);
 	glUniform4fv( gl.modvol_shader.depth_scale, 1, ShaderUniforms.depth_coefs);
 
-
 	GLfloat td[4]={0.5,0,0,0};
 
 	glUseProgram(gl.OSD_SHADER.program);
@@ -1964,61 +1981,79 @@ bool RenderFrame()
 
 		ShaderUniforms.Set(s);
 	}
+
 	//setup render target first
 	if (is_rtt)
 	{
-		GLuint channels,format;
+		GLuint channels, format;
 		switch(FB_W_CTRL.fb_packmode)
 		{
 		case 0: //0x0   0555 KRGB 16 bit  (default)	Bit 15 is the value of fb_kval[7].
 			channels=GL_RGBA;
-			format=GL_UNSIGNED_SHORT_5_5_5_1;
+			// When using RGBA5551 format on Adreno 506, rendering is extremely slow
+			// (probably by some internal format conversions), thus using GL_UNSIGNED_BYTE for Adreno
+			if (!strncmp(gl.renderer, gl.workarounds.adrenoRenderer, 6)) {
+				format = GL_UNSIGNED_BYTE;
+			}
+			else {
+				format = GL_UNSIGNED_SHORT_5_5_5_1;
+			}
 			break;
 
 		case 1: //0x1   565 RGB 16 bit
-			channels=GL_RGB;
-			format=GL_UNSIGNED_SHORT_5_6_5;
+			channels = GL_RGB;
+			format = GL_UNSIGNED_SHORT_5_6_5;
 			break;
 
 		case 2: //0x2   4444 ARGB 16 bit
-			channels=GL_RGBA;
-			format=GL_UNSIGNED_SHORT_5_5_5_1;
+			channels = GL_RGBA;
+			format = GL_UNSIGNED_SHORT_4_4_4_4;
 			break;
 
 		case 3://0x3    1555 ARGB 16 bit    The alpha value is determined by comparison with the value of fb_alpha_threshold.
-			channels=GL_RGBA;
-			format=GL_UNSIGNED_SHORT_5_5_5_1;
+			channels = GL_RGBA;
+			// When using RGBA5551 format on Adreno 506, rendering is extremely slow
+			// (probably by some internal format conversions), thus using GL_UNSIGNED_BYTE for Adreno
+			if (!strncmp(gl.renderer, gl.workarounds.adrenoRenderer, 6)) {
+				format = GL_UNSIGNED_BYTE;
+			}
+			else {
+				format = GL_UNSIGNED_SHORT_5_5_5_1;
+			}
 			break;
 
 		case 4: //0x4   888 RGB 24 bit packed
-			channels=GL_RGB;
-			format=GL_UNSIGNED_SHORT_5_6_5;
-			break;
-
 		case 5: //0x5   0888 KRGB 32 bit    K is the value of fk_kval.
-			channels=GL_RGBA;
-			format=GL_UNSIGNED_SHORT_4_4_4_4;
-			break;
-
 		case 6: //0x6   8888 ARGB 32 bit
-			channels=GL_RGBA;
-			format=GL_UNSIGNED_SHORT_4_4_4_4;
-			break;
-
 		case 7: //7     invalid
-			die("7 is not valid");
-			break;
+		default:
+			die("Not supported RTT format");
+			return false;
 		}
-		BindRTT(FB_W_SOF1&VRAM_MASK,FB_X_CLIP.max-FB_X_CLIP.min+1,FB_Y_CLIP.max-FB_Y_CLIP.min+1,channels,format);
+
+		if (rttInUse == 1) {
+			rttDepthCounter++;
+		}
+		BindRTT(FB_W_SOF1 & VRAM_MASK, dc_width, dc_height, channels, format);
+		rttInUse = 1;
 	}
 	else
 	{
 #if HOST_OS != OS_DARWIN
+		if (rttInUse == 1) {
+			ReadRTT();
+			rttInUse = 0;
+		}
+		rttDepthCounter = 0;
+
 		if (settings.rend.VerticalResolution == 100 && settings.rend.HorizontalResolution == 100) {
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 			glViewport(0, 0, screen_width, screen_height);
 		}
 		else {
 			fullscreenQuadCreateTemporaryFBO(screenToNativeXScale, screenToNativeYScale);
+			currentScreenWidth = screen_width;
+			currentScreenHeight = screen_height;
 		}
 #endif
 	}
@@ -2056,9 +2091,6 @@ bool RenderFrame()
 		glBufferData(GL_ARRAY_BUFFER,pvrrc.modtrig.bytes(),pvrrc.modtrig.head(),GL_STREAM_DRAW); glCheck();
 	}
 
-	int offs_x=ds2s_offs_x+0.5f;
-	//this needs to be scaled
-
 	//not all scaling affects pixel operations, scale to adjust for that
 	scale_x *= scissoring_scale_x;
 
@@ -2069,25 +2101,17 @@ bool RenderFrame()
 		printf("SCI: %f, %f, %f, %f\n", offs_x+pvrrc.fb_X_CLIP.min/scale_x,(pvrrc.fb_Y_CLIP.min/scale_y)*dc2s_scale_h,(pvrrc.fb_X_CLIP.max-pvrrc.fb_X_CLIP.min+1)/scale_x*dc2s_scale_h,(pvrrc.fb_Y_CLIP.max-pvrrc.fb_Y_CLIP.min+1)/scale_y*dc2s_scale_h);
 	#endif
 
-	if (settings.rend.VerticalResolution == 100 && settings.rend.HorizontalResolution == 100) {
-		if (settings.rend.WideScreen && pvrrc.fb_X_CLIP.min == 0 &&
-			((pvrrc.fb_X_CLIP.max + 1) / scale_x == 640) && (pvrrc.fb_Y_CLIP.min == 0) &&
-			((pvrrc.fb_Y_CLIP.max + 1) / scale_y == 480)) {
+	if (is_rtt || (settings.rend.VerticalResolution == 100 && settings.rend.HorizontalResolution == 100)) {
+		glScissor(ds2s_offs_x + 0.5f + pvrrc.fb_X_CLIP.min / scale_x,
+			(pvrrc.fb_Y_CLIP.min / scale_y) * dc2s_scale_h,
+			(pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1) / scale_x * dc2s_scale_h,
+			(pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1) / scale_y * dc2s_scale_h);
+		if (settings.rend.WideScreen)
+		{
 			glDisable(GL_SCISSOR_TEST);
-		} else {
-			float width = (pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1) / scale_x;
-			float height = (pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1) / scale_y;
-			float min_x = pvrrc.fb_X_CLIP.min / scale_x;
-			float min_y = pvrrc.fb_Y_CLIP.min / scale_y;
-			if (!is_rtt) {
-				// Add x offset for aspect ratio > 4/3
-				min_x = min_x * dc2s_scale_h + ds2s_offs_x;
-				// Invert y coordinates when rendering to screen
-				min_y = screen_height - (min_y + height) * dc2s_scale_h;
-				width *= dc2s_scale_h;
-				height *= dc2s_scale_h;
-			}
-			glScissor(min_x + 0.5f, min_y + 0.5f, width + 0.5f, height + 0.5f);
+		}
+		else
+		{
 			glEnable(GL_SCISSOR_TEST);
 		}
 	}
@@ -2095,7 +2119,11 @@ bool RenderFrame()
 	//restore scale_x
 	scale_x /= scissoring_scale_x;
 
-	DrawStrips();
+	if (!(is_rtt && (settings.dreamcast.rttOption > Disabled && settings.dreamcast.rttOption <= ShadowCircle)))
+	{
+		rttCheckIfUpdated();
+		DrawStrips();
+	}
 
 	#if HOST_OS==OS_WINDOWS
 		//Sleep(40); //to test MT stability

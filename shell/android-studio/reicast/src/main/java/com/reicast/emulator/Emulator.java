@@ -16,6 +16,7 @@ public class Emulator extends Application {
     public static final String pref_cable = "dc_cable";
     public static final String pref_dcregion = "dc_region";
     public static final String pref_broadcast = "dc_broadcast";
+    public static final String pref_rtt = "dc_rtt";
     public static final String pref_limitfps = "limit_fps";
     public static final String pref_nosound = "sound_disabled";
     public static final String pref_mipmaps = "use_mipmaps";
@@ -37,6 +38,7 @@ public class Emulator extends Application {
     public static int cable = 3;
     public static int dcregion = 3;
     public static int broadcast = 4;
+    public static int rtt = 1;
     public static boolean limitfps = true;
     public static boolean nobatch = false;
     public static boolean nosound = false;
@@ -64,6 +66,7 @@ public class Emulator extends Application {
         Emulator.cable = mPrefs.getInt(pref_cable, cable);
         Emulator.dcregion = mPrefs.getInt(pref_dcregion, dcregion);
         Emulator.broadcast = mPrefs.getInt(pref_broadcast, broadcast);
+        Emulator.rtt = mPrefs.getInt(pref_rtt, rtt);
         Emulator.limitfps = mPrefs.getBoolean(pref_limitfps, limitfps);
         Emulator.nosound = mPrefs.getBoolean(pref_nosound, nosound);
         Emulator.mipmaps = mPrefs.getBoolean(pref_mipmaps, mipmaps);
@@ -91,6 +94,7 @@ public class Emulator extends Application {
         JNIdc.cable(Emulator.cable);
         JNIdc.region(Emulator.dcregion);
         JNIdc.broadcast(Emulator.broadcast);
+        JNIdc.rtt(Emulator.rtt);
         JNIdc.limitfps(Emulator.limitfps ? 1 : 0);
         JNIdc.nobatch(Emulator.nobatch ? 1 : 0);
         JNIdc.nosound(Emulator.nosound ? 1 : 0);

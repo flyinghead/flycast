@@ -146,15 +146,18 @@ s32 SetTileClip(u32 val, bool set)
 		return 0;
 	
 	if (set && clip_mode) {
-		csy = 480 - csy;
-		cey = 480 - cey;
-		float dc2s_scale_h = screen_height / 480.0f;
-		float ds2s_offs_x = (screen_width - dc2s_scale_h * 640) / 2;
-		csx = csx * dc2s_scale_h + ds2s_offs_x;
-		cex = cex * dc2s_scale_h + ds2s_offs_x;
-		csy = csy * dc2s_scale_h;
-		cey = cey * dc2s_scale_h;
-		glUniform4f(CurrentShader->pp_ClipTest, csx, cey, cex, csy);
+		if (!pvrrc.isRTT) {
+			float t = cey;
+			cey = 480 - csy;
+			csy = 480 - t;
+			float dc2s_scale_h = screen_height / 480.0f;
+			float ds2s_offs_x = (screen_width - dc2s_scale_h * 640) / 2;
+			csx = csx * dc2s_scale_h + ds2s_offs_x;
+			cex = cex * dc2s_scale_h + ds2s_offs_x;
+			csy = csy * dc2s_scale_h;
+			cey = cey * dc2s_scale_h;
+		}
+		glUniform4f(CurrentShader->pp_ClipTest, csx, csy, cex, cey);
 	}
 
 	return clip_mode;
@@ -1172,11 +1175,18 @@ void fullscreenQuadPrepareFramebuffer(float xScale, float yScale) {
 
 	// Reduce width to keep 4:3 aspect ratio (640x480)
 	u32 reducedWidth = 4 * screen_height / 3;
-	u32 reducedWidthOffset = (screen_width - reducedWidth) / 2;
-	glScissor(reducedWidthOffset, 0, reducedWidth, screen_height);
-	if (settings.rend.WideScreen &&
-		(pvrrc.fb_X_CLIP.min==0) && ((pvrrc.fb_X_CLIP.max+1)/xScale==640) &&
-		(pvrrc.fb_Y_CLIP.min==0) && ((pvrrc.fb_Y_CLIP.max+1)/yScale==480 ))
+
+	// handle odd/even screen width
+	if (screen_width % 2 == 0) {
+		u32 reducedWidthOffset = (screen_width - reducedWidth) / 2;
+		glScissor(reducedWidthOffset, 0, reducedWidth, screen_height);
+	}
+	else {
+		u32 reducedWidthOffset = (screen_width + 1 - reducedWidth) / 2;
+		glScissor(reducedWidthOffset, 0, reducedWidth, screen_height);
+	}
+
+	if (settings.rend.WideScreen)
 	{
 		glDisable(GL_SCISSOR_TEST);
 	}

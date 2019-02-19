@@ -38,6 +38,7 @@
     <string name="select_cable">Тип кабеля</string>
     <string name="select_region">Регион Dreamcast</string>
     <string name="select_broadcast">Система ТВ</string>
+    <string name="select_rtt">Рендеринг текстуры (RTT)</string>
     <string name="select_limitfps">Ограничение FPS</string>
     <string name="select_mipmaps">MIP-карты (откл. для SGX540)</string>
     <string name="select_stretch">Широкоэкранный режим</string>

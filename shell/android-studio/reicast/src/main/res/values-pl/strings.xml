@@ -18,6 +18,7 @@
     <string name="select_dynarec">Opcje Dynarec</string>
     <string name="select_unstable">Niestabilne optymalizacje</string>
     <string name="select_region">Region DC</string>
+    <string name="select_rtt">Renderuj do tekstury</string>
     <string name="select_limitfps">Limit FPS</string>
     <string name="select_mipmaps">Użyj Mipmap (fix dla starego SGX540)</string>
     <string name="select_stretch">Tryb Szerokoekranowy</string>
@@ -66,5 +67,7 @@
     <string name="input">Kontrolery</string>
     <string name="about">O nas</string>
     <string name="rateme">Oceń nas</string>
+
+    <string name="synchronous_rendering_notice">Zalecane jest także włączenie opcji `Synchronous Rendering`</string>
 
 </resources>

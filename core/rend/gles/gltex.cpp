@@ -1,6 +1,13 @@
 #include "gles.h"
 #include "rend/TexCache.h"
 #include "hw/pvr/pvr_mem.h"
+#include <cmath>
+#include <map>
+#include <set>
+
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
 
 /*
 Textures
@@ -20,11 +27,17 @@ Compression
 	look into it, but afaik PVRC is not realtime doable
 */
 
+const u32 shadowCircleW = 128;
+const u32 shadowCircleH = 128;
+u16 shadowCircleTexture[shadowCircleW][shadowCircleH] = {0};
+set<u32> delayedUpdateQueue;
+
 #if FEAT_HAS_SOFTREND
 	#include <xmmintrin.h>
 #endif
 
 u16 temp_tex_buffer[1024*1024];
+u32 temp_tex_buffer_32[1024*1024];
 extern u32 decoded_colors[3][65536];
 
 typedef void TexConvFP(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height);
@@ -138,7 +151,7 @@ struct TextureCacheData
 		else {
 			texID = 0;
 		}
-		
+
 		pData = 0;
 		tex_type = 0;
 
@@ -222,7 +235,7 @@ struct TextureCacheData
 				verify(tcw.VQ_Comp==0);
 				//Planar textures support stride selection, mostly used for non power of 2 textures (videos)
 				int stride=w;
-				if (tcw.StrideSel) 
+				if (tcw.StrideSel)
 					stride=(TEXT_CONTROL&31)*32;
 				//Call the format specific conversion code
 				texconv=tex->PL;
@@ -260,8 +273,12 @@ struct TextureCacheData
 		}
 	}
 
-	void Update()
+	void Update(bool isSourceVram = true, u16 *sourceData = NULL)
 	{
+		if (!isSourceVram && !sourceData) {
+			return;
+		}
+
 		//texture state tracking stuff
 		Updates++;
 		dirty=0;
@@ -274,22 +291,28 @@ struct TextureCacheData
 			pal_local_rev=*pal_table_rev; //make sure to update the local rev, so it won't have to redo the tex
 		}
 
-		palette_index=indirect_color_ptr; //might be used if pal. tex
-		vq_codebook=(u8*)&vram[indirect_color_ptr];  //might be used if VQ tex
+		palette_index = indirect_color_ptr; //might be used if pal. tex
+		vq_codebook = (u8 *) &vram[indirect_color_ptr];  //might be used if VQ tex
 
 		//texture conversion work
 		PixelBuffer pbt;
-		pbt.p_buffer_start=pbt.p_current_line=temp_tex_buffer;
-		pbt.pixels_per_line=w;
+		pbt.p_buffer_start = pbt.p_current_line = temp_tex_buffer;
 
-		u32 stride=w;
-
+		u32 stride = w;
 		if (tcw.StrideSel && tcw.ScanOrder && tex->PL) 
-			stride=(TEXT_CONTROL&31)*32; //I think this needs +1 ?
+			stride = (TEXT_CONTROL & 31) * 32;
 
-		if(texconv!=0)
+		if(texconv != 0)
 		{
-			texconv(&pbt,(u8*)&vram[sa],stride,h);
+			if (isSourceVram) {
+				pbt.pixels_per_line = w;
+				texconv(&pbt, (u8*)&vram[sa], stride, h);
+			}
+			else
+			{
+				pbt.pixels_per_line = stride;
+				texconv(&pbt, (u8*)sourceData, stride, h);
+			}
 		}
 		else
 		{
@@ -301,13 +324,20 @@ struct TextureCacheData
 		//PrintTextureName();
 
 		//lock the texture to detect changes in it
-		lock_block = libCore_vramlock_Lock(sa_tex,sa+size-1,this);
+		if (isSourceVram) {
+			lock_block = libCore_vramlock_Lock(sa_tex, sa + size - 1, this);
+		}
 
 		if (texID) {
-			//upload to OpenGL !
 			glBindTexture(GL_TEXTURE_2D, texID);
-			GLuint comps=textype==GL_UNSIGNED_SHORT_5_6_5?GL_RGB:GL_RGBA;
-			glTexImage2D(GL_TEXTURE_2D, 0,comps , w, h, 0, comps, textype, temp_tex_buffer);
+			GLuint comps = textype == GL_UNSIGNED_SHORT_5_6_5 ? GL_RGB : GL_RGBA;
+
+			if (isSourceVram) {
+				glTexImage2D(GL_TEXTURE_2D, 0, comps, w, h, 0, comps, textype, temp_tex_buffer);
+			}
+			else {
+				glTexImage2D(GL_TEXTURE_2D, 0, comps, stride, h, 0, comps, textype, temp_tex_buffer);
+			}
 			if (tcw.MipMapped && settings.rend.UseMipmaps)
 				glGenerateMipmap(GL_TEXTURE_2D);
 		}
@@ -364,7 +394,6 @@ struct TextureCacheData
 	}
 };
 
-#include <map>
 map<u64,TextureCacheData> TexCache;
 typedef map<u64,TextureCacheData>::iterator TexCacheIter;
 
@@ -372,111 +401,489 @@ typedef map<u64,TextureCacheData>::iterator TexCacheIter;
 
 struct FBT
 {
-	u32 TexAddr;
-	GLuint depthb,stencilb;
+	u32 texAddress;
+	u16 texData[1024*1024];
+	GLuint renderBuffer;
 	GLuint tex;
+	GLuint renderTex;
 	GLuint fbo;
+	u32 w;
+	u32 h;
+	TextureCacheData tf;
+	u32 kval_bit;
+	u32 fb_alpha_threshold;
+	u32 fb_packmode;
+	bool is565;
+	bool texDataValid;
+	bool updated;
+	bool initialized;
+
+	FBT(): initialized(false), updated(false), tf({0}), tex(0), renderTex(0), texDataValid(false) {}
 };
 
-FBT fb_rtt;
+void createTexture(u32 w, u32 h, u32 textureFormat, u32 textureType, GLuint & textureID)
+{
+	glGenTextures(1, &textureID);
+	glBindTexture(GL_TEXTURE_2D, textureID);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexImage2D(GL_TEXTURE_2D, 0, textureFormat, w, h, 0, textureFormat, textureType, 0);
+}
+
+double binaryFractionToDouble(u32 numberIntegerPart, u32 numberFractionalPart, u32 fractionalPartLength)
+{
+	double sum = 0;
+
+	for (u32 i = 1; i <= fractionalPartLength; ++i) {
+		sum += !!(numberFractionalPart & (1 << fractionalPartLength - i)) * pow(.5, i);
+	}
+
+	return numberIntegerPart + sum;
+}
+
+map<u32, FBT> renderedTextures;
 
 void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 {
-	FBT& rv=fb_rtt;
+	FBT *renderedTexture;
+	u32 location = addy >> 3;
+	map<u32, FBT>::iterator iter = renderedTextures.find(location);
 
-	if (rv.fbo) glDeleteFramebuffers(1,&rv.fbo);
-	if (rv.tex) glDeleteTextures(1,&rv.tex);
-	if (rv.depthb) glDeleteRenderbuffers(1,&rv.depthb);
-	if (rv.stencilb) glDeleteRenderbuffers(1,&rv.stencilb);
+	if (iter != renderedTextures.end()) {
+		renderedTexture = &iter->second;
+	} else {
+		renderedTexture = &renderedTextures[location];
+	}
 
-	rv.TexAddr=addy>>3;
+	u32 fbhViewport = fbh;
+	if (SCALER_CTL.vscalefactor != 0x0400) {
+		fbh = round(fbh * binaryFractionToDouble(
+			SCALER_CTL.vscalefactor >> 10, SCALER_CTL.vscalefactor & 0x3FF, 10));
+	}
 
-	// Find the largest square power of two texture that fits into the viewport
+	renderedTexture->texAddress = location;
+	renderedTexture->fb_packmode = FB_W_CTRL.fb_packmode;
+	renderedTexture->updated = true;
+	renderedTexture->texDataValid = false;
+	renderedTexture->kval_bit = (FB_W_CTRL.fb_kval & 0x80) >> 7;
+	renderedTexture->fb_alpha_threshold = FB_W_CTRL.fb_alpha_threshold;
+	renderedTexture->w = fbw;
+	renderedTexture->h = fbh;
+	renderedTexture->is565 = (fmt == GL_UNSIGNED_SHORT_5_6_5);
 
-	// Get the currently bound frame buffer object. On most platforms this just gives 0.
-	//glGetIntegerv(GL_FRAMEBUFFER_BINDING, &m_i32OriginalFbo);
+	if (!renderedTexture->tex && (fmt != GL_UNSIGNED_SHORT_5_6_5) && (fmt != GL_UNSIGNED_SHORT_4_4_4_4)) {
+		createTexture(fbw, fbh, channels, fmt, renderedTexture->tex);
+	}
 
-	// Generate and bind a render buffer which will become a depth buffer shared between our two FBOs
-	glGenRenderbuffers(1, &rv.depthb);
-	glBindRenderbuffer(GL_RENDERBUFFER, rv.depthb);
+	//if 'full RTT' is disabled we can return here
+	if (settings.dreamcast.rttOption != Full) {
+		return;
+	}
 
-	/*
-		Currently it is unknown to GL that we want our new render buffer to be a depth buffer.
-		glRenderbufferStorage will fix this and in this case will allocate a depth buffer
-		m_i32TexSize by m_i32TexSize.
-	*/
+	// Generate and bind a render buffer which will become a depth buffer
+	if (!renderedTexture->renderBuffer) {
+		glGenRenderbuffers(1, &renderedTexture->renderBuffer);
+
+		glBindRenderbuffer(GL_RENDERBUFFER, renderedTexture->renderBuffer);
+
+		/*
+			Currently it is unknown to GL that we want our new render buffer to be a depth buffer.
+			glRenderbufferStorage will fix this and in this case will allocate a depth buffer
+			m_i32TexSize by m_i32TexSize.
+		*/
 
 #ifdef GLES
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24_OES, fbw, fbh);
+		if (isExtensionSupported("GL_OES_packed_depth_stencil")) {
+			glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8_OES, fbw, fbh);
+		}
+		else if (isExtensionSupported("GL_OES_depth24")) {
+			glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24_OES, fbw, fbh);
+		}
+		else {
+			glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, fbw, fbh);
+		}
 #else
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, fbw, fbh);
+		//OpenGL >= 3.0 is required
+		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, fbw, fbh);
 #endif
+	}
 
-	glGenRenderbuffers(1, &rv.stencilb);
-	glBindRenderbuffer(GL_RENDERBUFFER, rv.stencilb);
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_STENCIL_INDEX8, fbw, fbh);
+	// Create a texture for rendering to - may be a color render buffer as well
+	if (!renderedTexture->renderTex) {
+		createTexture(fbw, fbh, channels, fmt, renderedTexture->renderTex);
+	}
 
-	// Create a texture for rendering to
-	glGenTextures(1, &rv.tex);
-	glBindTexture(GL_TEXTURE_2D, rv.tex);
+	// Create the object that will allow us to render to the aforementioned texture (one for every rtt texture address)
+	if (!renderedTexture->fbo) {
+		glGenFramebuffers(1, &renderedTexture->fbo);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, channels, fbw, fbh, 0, channels, fmt, 0);
+		glBindFramebuffer(GL_FRAMEBUFFER, renderedTexture->fbo);
 
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		// Attach the texture to the FBO
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, renderedTexture->renderTex, 0);
 
-	// Create the object that will allow us to render to the aforementioned texture
-	glGenFramebuffers(1, &rv.fbo);
-	glBindFramebuffer(GL_FRAMEBUFFER, rv.fbo);
+		// Attach the depth (and/or stencil) buffer we created earlier to our FBO.
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, renderedTexture->renderBuffer);
+#ifdef GLES
+		if (isExtensionSupported("GL_OES_packed_depth_stencil")) {
+			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, renderedTexture->renderBuffer);
+		}
+#else
+		//OpenGL >= 3.0 is required
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, renderedTexture->renderBuffer);
+#endif
+		// Check that our FBO creation was successful
+		GLuint uStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 
-	// Attach the texture to the FBO
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, rv.tex, 0);
+		verify(uStatus == GL_FRAMEBUFFER_COMPLETE);
+	}
+	else {
+		glBindFramebuffer(GL_FRAMEBUFFER, renderedTexture->fbo);
+	}
 
-	// Attach the depth buffer we created earlier to our FBO.
-	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rv.depthb);
+	glViewport(0, 0, fbw, fbhViewport);
+}
 
-	// Check that our FBO creation was successful
-	GLuint uStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+GLint checkSupportedReadFormat()
+{
+	//framebuffer from which we are reading must be bound before
+	GLint readFormat;
+	glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_FORMAT, &readFormat);
+	return readFormat;
+}
 
-	verify(uStatus == GL_FRAMEBUFFER_COMPLETE);
+GLint checkSupportedReadType()
+{
+	//framebuffer from which we are reading must be bound before
+	GLint readType;
+	glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_TYPE, &readType);
+	return readType;
+}
+
+void handleKRGB1555(GLint w, GLint h, FBT &fbt) {
+	const u32 kval_bit = fbt.kval_bit;
+	GLint framebufferReadType = checkSupportedReadType();
+
+	if (framebufferReadType == GL_UNSIGNED_SHORT_5_5_5_1) {
+		glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, fbt.texData);
+
+		// convert RGBA5551 to KRGB1555
+		const u16 *dataPointer = fbt.texData;
+		for (u32 i = 0; i < w * h; i++) {
+			fbt.texData[i] = (kval_bit << 15) | ((*dataPointer & 0xFFFE) >> 1);
+			*dataPointer++;
+		}
+	}
+	else if (framebufferReadType == GL_UNSIGNED_BYTE) {
+		// Adreno 506 slow rendering fix - 'texconv' in case of RGBA5551 format is not needed
+		glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, temp_tex_buffer_32);
+		for (u32 i = 0; i < w * h; i++) {
+			temp_tex_buffer_32[i] =  (kval_bit << 31) | (temp_tex_buffer_32[i] & 0x00FFFFFF);
+		}
+		glBindTexture(GL_TEXTURE_2D, fbt.tex);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, temp_tex_buffer_32);
+		fbt.updated = false;
+	}
+	else {
+		glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, temp_tex_buffer_32);
+
+		// convert R8G8B8A8 to KRGB1555
+		const u32 *dataPointer32 = temp_tex_buffer_32;
+		for (u32 i = 0; i < w * h; i++) {
+			//additional variables just for better visibility
+			const u8 blue = ((*dataPointer32 & 0x00FF0000UL) >> 19); //5bits for blue
+			const u8 green = ((*dataPointer32 & 0x0000FF00UL) >> 11); //5bits for green
+			const u8 red = (*dataPointer32 & 0x000000FFUL) >> 3; //5bits for red
+
+			//convert to 16bit color with K value bit
+			temp_tex_buffer_32[i] =  (kval_bit << 15) | (red << 10) | (green << 5) | blue;
+			*dataPointer32++;
+
+			//assign to 16bit buffer (type conversions should use static_cast<> in C++)
+			fbt.texData[i] = (u16)temp_tex_buffer_32[i];
+		}
+	}
+}
+
+void handleARGB1555(GLint w, GLint h, FBT &fbt) {
+	const u32 fb_alpha_threshold = fbt.fb_alpha_threshold;
+	GLint framebufferReadType = checkSupportedReadType();
+
+	if (framebufferReadType == GL_UNSIGNED_SHORT_5_5_5_1) {
+		glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, fbt.texData);
+
+		// convert RGBA5551 to ARGB1555
+		const u16 *dataPointer = fbt.texData;
+		for (u32 i = 0; i < w * h; i++) {
+			// value has 1-bit precision only (RGBA5551), where fb_alpha_threshold is 8-bit
+			const u16 alpha = (*dataPointer & 0x0001) >= fb_alpha_threshold ? 1 : 0;
+			fbt.texData[i] = (alpha << 15) | ((*dataPointer & 0xFFFE) >> 1);
+			*dataPointer++;
+		}
+	}
+	else if (framebufferReadType == GL_UNSIGNED_BYTE) {
+		// Adreno 506 slow rendering fix - 'texconv' in case of RGBA5551 format is not needed
+		glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, temp_tex_buffer_32);
+		for (u32 i = 0; i < w * h; i++) {
+			const u8 alphaThresholded = ((temp_tex_buffer_32[i] >> 31) >= fb_alpha_threshold) ? 1 : 0;
+			temp_tex_buffer_32[i] =  (alphaThresholded << 31) | (temp_tex_buffer_32[i] & 0x00FFFFFF);
+		}
+		glBindTexture(GL_TEXTURE_2D, fbt.tex);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, temp_tex_buffer_32);
+		fbt.updated = false;
+	}
+	else {
+		glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, temp_tex_buffer_32);
+
+		// convert R8G8B8A8 to ARGB1555
+		const u32 *dataPointer32 = temp_tex_buffer_32;
+		for (u32 i = 0; i < w * h; i++) {
+			//additional variables just for better visibility
+			const u8 alpha = ((*dataPointer32 & 0xFF000000UL) >> 31); //1bit for alpha
+			const u8 blue = ((*dataPointer32 & 0x00FF0000UL) >> 19); //5bits for blue
+			const u8 green = ((*dataPointer32 & 0x0000FF00UL) >> 11); //5bits for green
+			const u8 red = (*dataPointer32 & 0x000000FFUL) >> 3; //5bits for red
+
+			const u8 alphaThresholded = (alpha >= fb_alpha_threshold) ? 1 : 0;
+
+			//convert to 16bit color and make the alpha channel swap
+			temp_tex_buffer_32[i] =  (alphaThresholded << 15) | (red << 10) | (green << 5) | blue;
+			*dataPointer32++;
+
+			//assign to 16bit buffer (type conversions should use static_cast<> in C++)
+			fbt.texData[i] = (u16)temp_tex_buffer_32[i];
+		}
+	}
+}
+
+void handlePackModeRTT(GLint w, GLint h, FBT &fbt)
+{
+	switch (fbt.fb_packmode) {
+		case 0: //0x0   0555 KRGB 16 bit  (default)	Bit 15 is the value of fb_kval[7].
+		{
+			handleKRGB1555(w, h, fbt);
+			break;
+		}
+
+		case 1: //0x1   565 RGB 16 bit
+		{
+			//handled elsewhere
+			break;
+		}
+
+		case 2: //0x2   4444 ARGB 16 bit
+		{
+			fbt.tex = fbt.renderTex;
+			fbt.updated = false;
+			break;
+		}
+
+		case 3: //0x3    1555 ARGB 16 bit    The alpha value is determined by comparison with the value of fb_alpha_threshold.
+		{
+			handleARGB1555(w, h, fbt);
+			break;
+		}
+
+		default:
+		{
+			//clear unsupported texture to avoid artifacts
+			memset(temp_tex_buffer, '\0', (size_t)((long long) w * h));
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4, temp_tex_buffer);
+			break;
+		}
+	}
+}
+
+void ReadRTT()
+{
+	map<u32, FBT>::iterator it;
+
+	for ( it = renderedTextures.begin(); it != renderedTextures.end(); it++ )
+	{
+		FBT &fbt = it->second;
+		if(!fbt.updated) {
+			continue;
+		}
+
+		GLint w = fbt.w;
+		GLint h = fbt.h;
+
+		if (settings.dreamcast.rttOption == ShadowCircle)
+		{
+			glBindTexture(GL_TEXTURE_2D, fbt.tex);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, shadowCircleW, shadowCircleH, 0,
+						 GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4, shadowCircleTexture[0]);
+			fbt.updated = false;
+		}
+		else if (settings.dreamcast.rttOption == Ones)
+		{
+			for (u32 i = 0; i < w * h; i++)
+				temp_tex_buffer[i] = (u16)~0;
+
+			glBindTexture(GL_TEXTURE_2D, fbt.tex);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4, temp_tex_buffer);
+			fbt.updated = false;
+		}
+		else if (settings.dreamcast.rttOption == Zeros)
+		{
+			for (u32 i = 0; i < w * h; i++)
+				temp_tex_buffer[i] = 0;
+
+			glBindTexture(GL_TEXTURE_2D, fbt.tex);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4, temp_tex_buffer);
+			fbt.updated = false;
+		}
+		else if (settings.dreamcast.rttOption == Full)
+		{
+			if (fbt.fb_packmode != 1) {
+				glBindFramebuffer(GL_FRAMEBUFFER, fbt.fbo);
+			}
+			if (!fbt.texDataValid) {
+				handlePackModeRTT(w, h, fbt);
+			}
+			fbt.texDataValid = true;
+		}
+	}
+}
+
+void rttCheckIfUpdated() {
+	if(!pvrrc.isRTT && delayedUpdateQueue.size())
+	{
+		for (set<u32>::iterator it=delayedUpdateQueue.begin(); it != delayedUpdateQueue.end(); ++it) {
+			//We can directly read because this address exists already
+			if (renderedTextures[*it].initialized && renderedTextures[*it].updated)
+			{
+				renderedTextures[*it].tf.Update(false, renderedTextures[*it].texData);
+				renderedTextures[*it].updated = false;
+			}
+		}
+		delayedUpdateQueue.clear();
+	}
+}
+
+void initializeRttTexture(const TSP & tsp, const TCW & tcw, FBT * tempRenderedTexture) {
+	if (!tempRenderedTexture->initialized)
+	{
+		tempRenderedTexture->tf.tsp = tsp;
+		tempRenderedTexture->tf.tcw = tcw;
+		tempRenderedTexture->tf.Create(false);
+		tempRenderedTexture->tf.texID = tempRenderedTexture->tex;
+		for (u32 i = 0; i < sizeof(tempRenderedTexture->texData)/sizeof(tempRenderedTexture->texData[0]); ++i) {
+			tempRenderedTexture->texData[i] = 0;
+		}
+		tempRenderedTexture->initialized = true;
+	}
+}
+
+void handleRGB565Exceptions(FBT &fbt, u32 newTexAddr)
+{
+	GLint w = fbt.w;
+	GLint h = fbt.h;
+
+	if (fbt.tf.tex->type != GL_UNSIGNED_SHORT_5_6_5)
+	{
+		if (!fbt.tex || (fbt.tex == fbt.renderTex)) {
+			createTexture((u32) w, (u32) h, GL_RGBA, fbt.tf.tex->type, fbt.tex);
+		}
+		fbt.tf.texID = fbt.tex;
+
+		glBindFramebuffer(GL_FRAMEBUFFER, fbt.fbo);
+		if (checkSupportedReadType() == GL_UNSIGNED_SHORT_5_6_5) {
+			// can be directly read
+			glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, fbt.texData);
+		}
+		else {
+			glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, temp_tex_buffer_32);
+
+			// convert R8G8B8A8 to RGB565
+			const u32 *dataPointer32 = temp_tex_buffer_32;
+			for (u32 i = 0; i < w * h; i++) {
+				//additional variables just for better visibility
+				const u8 blue = ((*dataPointer32 & 0x00FF0000UL) >> 19); //5bits for blue
+				const u8 green = ((*dataPointer32 & 0x0000FF00UL) >> 10); //6bits for green
+				const u8 red = (*dataPointer32 & 0x000000FFUL) >> 3; //5bits for red
+
+				//convert to 16bit color
+				temp_tex_buffer_32[i] = (red << 11) | (green << 5) | blue;
+				*dataPointer32++;
+
+				//assign to 16bit buffer (type conversions should use static_cast<> in C++)
+				fbt.texData[i] = (u16)temp_tex_buffer_32[i];
+			}
+		}
+		delayedUpdateQueue.insert(newTexAddr);
+	}
+	else {
+		if (fbt.tex && (fbt.tex != fbt.renderTex)) { //to avoid memory leaks
+			glDeleteTextures(1, &fbt.tex);
+		}
+		fbt.tex = fbt.renderTex;
+		fbt.updated = false;
+	}
 }
 
 GLuint gl_GetTexture(TSP tsp, TCW tcw)
 {
-	if (tcw.TexAddr==fb_rtt.TexAddr && fb_rtt.tex)
-	{
-		return fb_rtt.tex;
+	FBT* tempRenderedTexture = NULL;
+	map<u32, FBT>::iterator it = renderedTextures.find(tcw.TexAddr);
+	if (it != renderedTextures.end()) {
+		tempRenderedTexture = &it->second;
+	}
+
+	if (tempRenderedTexture && tcw.TexAddr == tempRenderedTexture->texAddress) {
+		//create for the first time
+		initializeRttTexture(tsp, tcw, tempRenderedTexture);
+
+		//if there was no update, it is not an RTT frame (BindRTT was not invoked) then proceed the standard way
+		if (tempRenderedTexture->tf.tcw.full == tcw.full)
+		{
+			if (tempRenderedTexture->updated && !tempRenderedTexture->is565)
+			{
+				delayedUpdateQueue.insert(tcw.TexAddr);
+				tempRenderedTexture->tf.tsp = tsp;
+				tempRenderedTexture->tf.Create(false);
+				tempRenderedTexture->tf.texID = tempRenderedTexture->tex;
+			}
+			else if (tempRenderedTexture->updated && tempRenderedTexture->is565)
+			{
+				tempRenderedTexture->tf.tsp = tsp;
+				tempRenderedTexture->tf.Create(false);
+				handleRGB565Exceptions(*tempRenderedTexture, tcw.TexAddr);
+			}
+			return tempRenderedTexture->tex;
+		}
 	}
 
 	//lookup texture
-	TextureCacheData* tf;
+	TextureCacheData *tf;
 	//= TexCache.Find(tcw.full,tsp.full);
-	u64 key=((u64)tcw.full<<32) | tsp.full;
+	u64 key = ((u64) tcw.full << 32) | tsp.full;
 
-	TexCacheIter tx=TexCache.find(key);
+	TexCacheIter tx = TexCache.find(key);
 
-	if (tx!=TexCache.end())
-	{
-		tf=&tx->second;
+	if (tx != TexCache.end()) {
+		tf = &tx->second;
 	}
 	else //create if not existing
 	{
-		TextureCacheData tfc={0};
-		TexCache[key]=tfc;
+		TextureCacheData tfc = {0};
+		TexCache[key] = tfc;
 
-		tx=TexCache.find(key);
-		tf=&tx->second;
+		tx = TexCache.find(key);
+		tf = &tx->second;
 
-		tf->tsp=tsp;
-		tf->tcw=tcw;
+		tf->tsp = tsp;
+		tf->tcw = tcw;
+
 		tf->Create(true);
 	}
 
 	//update if needed
-	if (tf->NeedsUpdate())
+	if (tf->NeedsUpdate()) {
 		tf->Update();
+	}
 
 	//update state for opts/stuff
 	tf->Lookups++;
@@ -484,7 +891,6 @@ GLuint gl_GetTexture(TSP tsp, TCW tcw)
 	//return gl texture
 	return tf->texID;
 }
-
 
 text_info raw_GetTexture(TSP tsp, TCW tcw)
 {
@@ -526,8 +932,7 @@ text_info raw_GetTexture(TSP tsp, TCW tcw)
 	rv.width = tf->w;
 	rv.pdata = tf->pData;
 	rv.textype = tf->tex_type;
-	
-	
+
 	return rv;
 }
 
@@ -549,7 +954,6 @@ void CollectCleanup() {
 	for (size_t i=0; i<list.size(); i++) {
 		//printf("Deleting %d\n",TexCache[list[i]].texID);
 		TexCache[list[i]].Delete();
-
 		TexCache.erase(list[i]);
 	}
 }
@@ -557,6 +961,30 @@ void CollectCleanup() {
 void DoCleanup() {
 
 }
+
+void InitShadowCircle() {
+	s32 middle_x = shadowCircleW / 2;
+	s32 middle_y = shadowCircleH / 2;
+	u32 radius = 25;
+
+	s32 x = 0, y = 0;
+	for (s32 i = 0; i <= 360; i = i + 2) {
+		x = s32(radius * cos(i * M_PI / 180));
+		y = s32(radius * sin(i * M_PI / 180));
+		shadowCircleTexture[middle_x + x][middle_y + y] = 0x5555;
+
+		if (y < 0) {
+			for (s32 j = 0; j < abs(y); ++j) {
+				shadowCircleTexture[middle_x + x][middle_y - j] = 0xAAAA;
+			}
+		} else {
+			for (s32 j = 1; j < y; ++j) {
+				shadowCircleTexture[middle_x + x][middle_y + j] = 0xAAAA;
+			}
+		}
+	}
+}
+
 void killtex()
 {
 	for (TexCacheIter i=TexCache.begin();i!=TexCache.end();i++)

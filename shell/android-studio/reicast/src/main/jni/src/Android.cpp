@@ -52,6 +52,7 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_safemode(JNIEnv *env,
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_cable(JNIEnv *env,jobject obj, jint cable)  __attribute__((visibility("default")));
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_region(JNIEnv *env,jobject obj, jint region)  __attribute__((visibility("default")));
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_broadcast(JNIEnv *env,jobject obj, jint broadcast)  __attribute__((visibility("default")));
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_rtt(JNIEnv *env,jobject obj, jint rtt)  __attribute__((visibility("default")));
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_clipping(JNIEnv *env,jobject obj, jint clipping)  __attribute__((visibility("default")));
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_limitfps(JNIEnv *env,jobject obj, jint limiter)  __attribute__((visibility("default")));
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_nobatch(JNIEnv *env,jobject obj, jint nobatch)  __attribute__((visibility("default")));
@@ -105,6 +106,11 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_broadcast(JNIEnv *env
     settings.dreamcast.broadcast = broadcast;
 }
 
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_rtt(JNIEnv *env,jobject obj, jint rtt)
+{
+    settings.dreamcast.rttOption = rtt;
+}
+
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_limitfps(JNIEnv *env,jobject obj, jint limiter)
 {
     settings.aica.LimitFPS = limiter;
@@ -127,7 +133,7 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_mipmaps(JNIEnv *env,j
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_clipping(JNIEnv *env,jobject obj, jint clipping)
 {
-	settings.rend.Clipping = clipping;
+    settings.rend.Clipping = clipping;
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_widescreen(JNIEnv *env,jobject obj, jint stretch)
