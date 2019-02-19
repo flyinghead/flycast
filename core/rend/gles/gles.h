@@ -1,19 +1,21 @@
 #pragma once
 #include "rend/rend.h"
 
+#if (defined(GLES) && !defined(TARGET_NACL32) && !defined(TARGET_IPHONE) && !defined(USE_SDL)) || defined(_ANDROID)
+#define USE_EGL
+#include <EGL/egl.h>
+#include <EGL/eglext.h>
+#endif
 
 #ifdef GLES
 #if defined(TARGET_IPHONE) //apple-specific ogles2 headers
 //#include <APPLE/egl.h>
 #include <OpenGLES/ES2/gl.h>
 #include <OpenGLES/ES2/glext.h>
-#else
-#if !defined(TARGET_NACL32)
-#include <EGL/egl.h>
 #endif
-#include <GLES2/gl2.h>
-#include <GLES2/gl2ext.h>
-#endif
+#include <GLES32/gl32.h>
+#include <GLES32/gl2ext.h>
+#include "gl32funcs.h"
 
 #ifndef GL_NV_draw_path
 //IMGTEC GLES emulation
@@ -23,12 +25,10 @@
 #pragma comment(lib,"libGLES20.lib")
 #endif
 
-#else
-#if HOST_OS == OS_DARWIN
+#elif HOST_OS == OS_DARWIN
     #include <OpenGL/gl3.h>
 #else
 	#include <GL3/gl3w.h>
-#endif
 #endif
 
 #ifndef GL_UNSIGNED_INT_8_8_8_8
@@ -80,7 +80,7 @@ struct PipelineShader
 
 struct gl_ctx
 {
-#if defined(GLES) && HOST_OS != OS_DARWIN && !defined(TARGET_NACL32)
+#ifdef USE_EGL
 	struct
 	{
 		EGLNativeWindowType native_wind;

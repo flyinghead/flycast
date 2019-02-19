@@ -133,7 +133,7 @@ endif
 
 RZDCY_CFLAGS += -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/rend/gles -I$(RZDCY_SRC_DIR)/deps \
 		-I$(RZDCY_SRC_DIR)/deps/picotcp/include -I$(RZDCY_SRC_DIR)/deps/picotcp/modules \
-		 -I$(RZDCY_SRC_DIR)/deps/vixl
+		 -I$(RZDCY_SRC_DIR)/deps/vixl -I$(RZDCY_SRC_DIR)/khronos
 
 ifdef NO_REC
   RZDCY_CFLAGS += -DTARGET_NO_REC

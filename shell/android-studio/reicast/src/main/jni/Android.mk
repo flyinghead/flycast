@@ -98,7 +98,7 @@ LOCAL_PRELINK_MODULE  := false
 LOCAL_MODULE	:= dc
 LOCAL_DISABLE_FORMAT_STRING_CHECKS=true
 LOCAL_ASFLAGS := -fPIC -fvisibility=hidden
-LOCAL_LDLIBS	:= -llog -lGLESv2 -lEGL -lz -landroid
+LOCAL_LDLIBS	:= -llog -lEGL -lz -landroid
 #-Wl,-Map,./res/raw/syms.mp3
 LOCAL_ARM_MODE	:= arm
 

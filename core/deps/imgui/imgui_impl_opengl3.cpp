@@ -74,7 +74,8 @@
 
 #ifdef USE_GL_ES3
 // OpenGL ES 3
-#include <GLES3/gl3.h>  // Use GL ES 3
+#include <GLES32/gl32.h>  // Use GL ES 3
+#include "rend/gles/gl32funcs.h"
 #else
 // Regular OpenGL
 // About OpenGL function loaders: modern OpenGL doesn't have a standard header file and requires individual function pointers to be loaded manually.

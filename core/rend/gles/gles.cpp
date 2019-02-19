@@ -405,8 +405,9 @@ int screen_width;
 int screen_height;
 GLuint fogTextureId;
 
-#if (HOST_OS != OS_DARWIN) && !defined(TARGET_NACL32)
-#if defined(GLES) && !defined(USE_SDL)
+#ifdef USE_EGL
+
+	extern "C" void load_gles_symbols();
 
 	bool egl_makecurrent()
 	{
@@ -448,7 +449,6 @@ GLuint fogTextureId;
 					EGL_STENCIL_SIZE, 8,
 					EGL_NONE
 			};
-			EGLint pi32ContextAttribs[] = { EGL_CONTEXT_CLIENT_VERSION, 2 , EGL_NONE };
 
 			int num_config;
 
@@ -486,18 +486,44 @@ GLuint fogTextureId;
 				return false;
 			}
 
-			if (!eglBindAPI(EGL_OPENGL_ES_API))
+#ifndef GLES
+			bool try_full_gl = true;
+			if (!eglBindAPI(EGL_OPENGL_API))
 			{
-				printf("eglBindAPI() failed: %x\n", eglGetError());
-				return false;
+				printf("eglBindAPI(EGL_OPENGL_API) failed: %x\n", eglGetError());
+				try_full_gl = false;
 			}
-
-			gl.setup.context = eglCreateContext(gl.setup.display, config, NULL, pi32ContextAttribs);
-
+			if (try_full_gl)
+			{
+				EGLint contextAttrs[] = { EGL_CONTEXT_MAJOR_VERSION_KHR, 3,
+										  EGL_CONTEXT_OPENGL_PROFILE_MASK_KHR, EGL_CONTEXT_OPENGL_COMPATIBILITY_PROFILE_BIT_KHR,
+										  EGL_NONE };
+				gl.setup.context = eglCreateContext(gl.setup.display, config, NULL, contextAttrs);
+				if (gl.setup.context != EGL_NO_CONTEXT)
+				{
+					egl_makecurrent();
+					if (gl3wInit())
+						printf("gl3wInit() failed\n", major, minor);
+				}
+			}
+#endif
 			if (gl.setup.context == EGL_NO_CONTEXT)
 			{
-				printf("eglCreateContext() failed: %x\n", eglGetError());
-				return false;
+				if (!eglBindAPI(EGL_OPENGL_ES_API))
+				{
+					printf("eglBindAPI() failed: %x\n", eglGetError());
+					return false;
+				}
+				EGLint contextAttrs[] = { EGL_CONTEXT_CLIENT_VERSION, 2 , EGL_NONE };
+
+				gl.setup.context = eglCreateContext(gl.setup.display, config, NULL, contextAttrs);
+
+				if (gl.setup.context == EGL_NO_CONTEXT)
+				{
+					printf("eglCreateContext() failed: %x\n", eglGetError());
+					return false;
+				}
+				load_gles_symbols();
 			}
 		}
 
@@ -538,7 +564,26 @@ GLuint fogTextureId;
 		eglSwapBuffers(gl.setup.display, gl.setup.surface);
 	}
 
-#elif HOST_OS == OS_WINDOWS
+	void gl_term()
+	{
+		eglMakeCurrent(gl.setup.display, NULL, NULL, EGL_NO_CONTEXT);
+		if (gl.setup.context != NULL)
+			eglDestroyContext(gl.setup.display, gl.setup.context);
+		if (gl.setup.surface != NULL)
+			eglDestroySurface(gl.setup.display, gl.setup.surface);
+#ifdef TARGET_PANDORA
+		if (gl.setup.display)
+			eglTerminate(gl.setup.display);
+		if (fbdev>=0)
+			close( fbdev );
+		fbdev=-1;
+#endif
+		gl.setup.context = EGL_NO_CONTEXT;
+		gl.setup.surface = EGL_NO_SURFACE;
+		gl.setup.display = EGL_NO_DISPLAY;
+	}
+
+#elif HOST_OS == OS_WINDOWS && !defined(USE_SDL)
 	#define WGL_DRAW_TO_WINDOW_ARB         0x2001
 	#define WGL_ACCELERATION_ARB           0x2003
 	#define WGL_SWAP_METHOD_ARB            0x2007
@@ -678,7 +723,13 @@ GLuint fogTextureId;
 		wglSwapLayerBuffers(ourWindowHandleToDeviceContext,WGL_SWAP_MAIN_PLANE);
 		//SwapBuffers(ourWindowHandleToDeviceContext);
 	}
-#elif defined(SUPPORT_X11)
+
+	void gl_term()
+	{
+		ReleaseDC((HWND)gl.setup.native_wind,(HDC)gl.setup.native_disp);
+	}
+
+#elif defined(SUPPORT_X11) && !defined(USE_SDL)
 	//! windows && X11
 	//let's assume glx for now
 
@@ -730,11 +781,16 @@ GLuint fogTextureId;
 			glXSwapBuffers((Display*)libPvr_GetRenderSurface(), (GLXDrawable)libPvr_GetRenderTarget());
 		#endif
 	}
-#endif	// X11
-#endif	// HOST_OS != OS_DARWIN && !TARGET_NACL32
 
-//destroy the gles context and free resources
-void gl_term()
+	void gl_term()
+	{
+	}
+
+#else
+extern void gl_term();
+#endif
+
+static void gles_term()
 {
 	glDeleteProgram(gl.modvol_shader.program);
 	glDeleteProgram(gl.OSD_SHADER.program);
@@ -751,26 +807,7 @@ void gl_term()
 	free_output_framebuffer();
 
 	memset(gl.pogram_table, 0, sizeof(gl.pogram_table));
-
- #if HOST_OS==OS_WINDOWS
-	ReleaseDC((HWND)gl.setup.native_wind,(HDC)gl.setup.native_disp);
-#elif defined(TARGET_PANDORA) || defined(_ANDROID)
-	eglMakeCurrent(gl.setup.display, NULL, NULL, EGL_NO_CONTEXT);
-	if (gl.setup.context != NULL)
-		eglDestroyContext(gl.setup.display, gl.setup.context);
-	if (gl.setup.surface != NULL)
-		eglDestroySurface(gl.setup.display, gl.setup.surface);
-#ifdef TARGET_PANDORA
-	if (gl.setup.display)
-		eglTerminate(gl.setup.display);
-	if (fbdev>=0)
-		close( fbdev );
-	fbdev=-1;
-#endif
-	gl.setup.context = EGL_NO_CONTEXT;
-	gl.setup.surface = EGL_NO_SURFACE;
-	gl.setup.display = EGL_NO_DISPLAY;
-#endif	// TARGET_PANDORA || _ANDROID
+	gl_term();
 }
 
 void findGLVersion()
@@ -1032,6 +1069,7 @@ bool gl_create_resources()
 		return true;
 
 #ifndef GLES
+	verify(glGenVertexArrays != NULL);
 	//create vao
 	//This is really not "proper", vaos are supposed to be defined once
 	//i keep updating the same one to make the es2 code work in 3.1 context
@@ -1143,8 +1181,6 @@ bool gl_create_resources()
 
 //swap buffers
 void gl_swap();
-//destroy the gles context and free resources
-void gl_term();
 
 GLuint gl_CompileShader(const char* shader,GLuint type);
 
@@ -1164,7 +1200,7 @@ bool gles_init()
 	if (!gl_create_resources())
 		return false;
 
-#if defined(GLES) && HOST_OS != OS_DARWIN && !defined(TARGET_NACL32)
+#ifdef USE_EGL
 	#ifdef TARGET_PANDORA
 	fbdev=open("/dev/fb0", O_RDONLY);
 	#else
@@ -1904,7 +1940,7 @@ struct glesrend : Renderer
 	{
 		if (KillTex)
 			killtex();
-		gl_term();
+		gles_term();
 	}
 
 	bool Process(TA_context* ctx) { return ProcessFrame(ctx); }
