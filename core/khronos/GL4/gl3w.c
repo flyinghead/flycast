@@ -88,6 +88,23 @@ static GL3WglProc get_proc(const char *proc)
 	*(void **)(&res) = dlsym(libgl, proc);
 	return res;
 }
+#elif defined(_ANDROID)
+#include <dlfcn.h>
+#include <EGL/egl.h>
+
+static int open_libgl(void)
+{
+	return GL3W_OK;
+}
+
+static void close_libgl(void)
+{
+}
+
+static GL3WglProc get_proc(const char *proc)
+{
+	return (GL3WglProc)eglGetProcAddress(proc);
+}
 #else
 #include <dlfcn.h>
 

@@ -504,7 +504,7 @@ GLuint fogTextureId;
 				{
 					egl_makecurrent();
 					if (gl3wInit())
-						printf("gl3wInit() failed\n", major, minor);
+						printf("gl3wInit() failed\n");
 				}
 			}
 #endif
@@ -524,7 +524,13 @@ GLuint fogTextureId;
 					printf("eglCreateContext() failed: %x\n", eglGetError());
 					return false;
 				}
+#ifdef GLES
 				load_gles_symbols();
+#else
+				egl_makecurrent();
+				if (gl3wInit())
+				    printf("gl3wInit() failed\n");
+#endif
 			}
 		}
 
