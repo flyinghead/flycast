@@ -568,6 +568,9 @@ GLuint fogTextureId;
 	void gl_term()
 	{
 		eglMakeCurrent(gl.setup.display, NULL, NULL, EGL_NO_CONTEXT);
+#if HOST_OS == OS_WINDOWS
+		ReleaseDC((HWND)gl.setup.native_wind,(HDC)gl.setup.native_disp);
+#endif
 		if (gl.setup.context != NULL)
 			eglDestroyContext(gl.setup.display, gl.setup.context);
 		if (gl.setup.surface != NULL)
@@ -727,9 +730,7 @@ GLuint fogTextureId;
 
 	void gl_term()
 	{
-		ReleaseDC((HWND)gl.setup.native_wind,(HDC)gl.setup.native_disp);
 	}
-
 #elif defined(SUPPORT_X11) && !defined(USE_SDL)
 	//! windows && X11
 	//let's assume glx for now
