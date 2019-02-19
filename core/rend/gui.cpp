@@ -22,7 +22,7 @@
 #include "cfg/cfg.h"
 #include "hw/maple/maple_cfg.h"
 #include "imgui/imgui.h"
-#include "imgui/imgui_impl_opengl3.h"
+#include "gles/imgui_impl_opengl3.h"
 #include "imgui/roboto_medium.h"
 #include "gles/gles.h"
 #include "input/gamepad_device.h"
