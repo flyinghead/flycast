@@ -26,7 +26,6 @@ namespace xbrz
 template <uint32_t N> inline
 unsigned char getByte(uint32_t val) { return static_cast<unsigned char>((val >> (8 * N)) & 0xff); }
 // Note that we use RGBA, not ARGB
-#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__ && defined(GLES)
 inline unsigned char getAlpha(uint32_t pix) { return getByte<3>(pix); }
 inline unsigned char getRed  (uint32_t pix) { return getByte<0>(pix); }
 inline unsigned char getGreen(uint32_t pix) { return getByte<1>(pix); }
@@ -34,15 +33,6 @@ inline unsigned char getBlue (uint32_t pix) { return getByte<2>(pix); }
 
 inline uint32_t makePixel(unsigned char a, unsigned char r, unsigned char g, unsigned char b) { return (a << 24)  | (b << 16) | (g << 8) | r; }
 inline uint32_t makePixel(                 unsigned char r, unsigned char g, unsigned char b) { return 0xFF000000 | (b << 16) | (g << 8) | r; }
-#else
-inline unsigned char getAlpha(uint32_t pix) { return getByte<0>(pix); }
-inline unsigned char getRed  (uint32_t pix) { return getByte<3>(pix); }
-inline unsigned char getGreen(uint32_t pix) { return getByte<2>(pix); }
-inline unsigned char getBlue (uint32_t pix) { return getByte<1>(pix); }
-
-inline uint32_t makePixel(unsigned char a, unsigned char r, unsigned char g, unsigned char b) { return (r << 24) | (g << 16) | (b << 8) | a; }
-inline uint32_t makePixel(                 unsigned char r, unsigned char g, unsigned char b) { return (r << 24) | (g << 16) | (b << 8) | 0xFF; }
-#endif
 
 inline uint32_t rgb555to888(uint16_t pix) { return ((pix & 0x7C00) << 9) | ((pix & 0x03E0) << 6) | ((pix & 0x001F) << 3); }
 inline uint32_t rgb565to888(uint16_t pix) { return ((pix & 0xF800) << 8) | ((pix & 0x07E0) << 5) | ((pix & 0x001F) << 3); }

@@ -207,18 +207,15 @@ void CustomTexture::DumpTexture(u32 hash, int w, int h, GLuint textype, void *te
 				src++;
 			}
 			break;
-		case GL_UNSIGNED_INT_8_8_8_8:
+		case GL_UNSIGNED_BYTE:
 			for (int x = 0; x < w; x++)
 			{
-#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__ || defined(GLES)
 				*(u32 *)dst = *(u32 *)src;
 				dst += 4;
-#else
-				*dst++ = ((u8 *)src)[3];
-				*dst++ = ((u8 *)src)[2];
-				*dst++ = ((u8 *)src)[1];
-				*dst++ = ((u8 *)src)[0];
-#endif
+//				*dst++ = ((u8 *)src)[3];
+//				*dst++ = ((u8 *)src)[2];
+//				*dst++ = ((u8 *)src)[1];
+//				*dst++ = ((u8 *)src)[0];
 				src += 2;
 			}
 			break;
