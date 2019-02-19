@@ -1006,7 +1006,7 @@ void RenderFramebuffer()
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pb.data());
 }
 
-void init_output_framebuffer(int width, int height)
+GLuint init_output_framebuffer(int width, int height)
 {
 	if (width != gl.ofbo.width || height != gl.ofbo.height)
 	{
@@ -1071,4 +1071,19 @@ void init_output_framebuffer(int width, int height)
 
 	glViewport(0, 0, width, height);
 	glCheck();
+
+	return gl.ofbo.fbo;
+}
+
+void free_output_framebuffer()
+{
+	if (gl.ofbo.fbo != 0)
+	{
+		glDeleteFramebuffers(1, &gl.ofbo.fbo);
+		gl.ofbo.fbo = 0;
+		glDeleteRenderbuffers(1, &gl.ofbo.depthb);
+		gl.ofbo.depthb = 0;
+		glcache.DeleteTextures(1, &gl.ofbo.tex);
+		gl.ofbo.tex = 0;
+	}
 }

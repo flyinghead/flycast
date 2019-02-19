@@ -1150,7 +1150,7 @@ void DrawFramebuffer(float w, float h)
 	fbTextureId = 0;
 }
 
-void render_output_framebuffer()
+bool render_output_framebuffer()
 {
 #if HOST_OS != OS_DARWIN
 	//Fix this in a proper way
@@ -1158,9 +1158,11 @@ void render_output_framebuffer()
 #endif
 	glViewport(0, 0, screen_width, screen_height);
 	if (gl.ofbo.tex == 0)
-		return;
+		return false;
 
     float scl = 480.f / screen_height;
     float tx = (screen_width * scl - 640.f) / 2;
 	DrawQuad(gl.ofbo.tex, -tx, 0, 640.f + tx * 2, 480.f, 0, 1, 1, 0);
+
+	return true;
 }

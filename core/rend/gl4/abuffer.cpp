@@ -4,6 +4,7 @@
  *  Created on: May 26, 2018
  *      Author: raph
  */
+#include <math.h>
 #include "gl4.h"
 #include "rend/gles/glcache.h"
 
@@ -277,12 +278,10 @@ void main(void) \n\
 } \n\
 ";
 
-void DrawQuad();
-
 void initABuffer()
 {
-	g_imageWidth = screen_width;
-	g_imageHeight = screen_height;
+	g_imageWidth = (int)roundf(screen_width * settings.rend.ScreenScaling / 100.f);
+	g_imageHeight = (int)roundf(screen_height * settings.rend.ScreenScaling / 100.f);
 
 	if (g_imageWidth > 0 && g_imageHeight > 0)
 	{
@@ -363,7 +362,7 @@ void initABuffer()
 	glcache.UseProgram(g_abuffer_clear_shader.program);
 	gl4ShaderUniforms.Set(&g_abuffer_clear_shader);
 
-	DrawQuad();
+	abufferDrawQuad();
 	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 
 	glCheck();
@@ -400,6 +399,9 @@ void termABuffer()
 
 void reshapeABuffer(int w, int h)
 {
+	w = (int)roundf(w * settings.rend.ScreenScaling / 100.f);
+	h = (int)roundf(h * settings.rend.ScreenScaling / 100.f);
+
 	if (w != g_imageWidth || h != g_imageHeight) {
 		if (pixels_pointers != 0)
 		{
@@ -411,25 +413,25 @@ void reshapeABuffer(int w, int h)
 	}
 }
 
-void DrawQuad()
+void abufferDrawQuad(bool upsideDown, float x, float y, float w, float h)
 {
+	if (w == 0 || h == 0)
+	{
+	    float scl = 480.f / screen_height;
+	    float tx = (screen_width * scl - 640.f) / 2;
+
+		x = -tx;
+		y = 0.f;
+		w = 640.f + tx * 2;
+		h = 480.f;
+	}
 	glBindVertexArray(g_quadVertexArray);
 
-	float xmin = (gl4ShaderUniforms.scale_coefs[2] - 1) / gl4ShaderUniforms.scale_coefs[0];
-	float xmax = (gl4ShaderUniforms.scale_coefs[2] + 1) / gl4ShaderUniforms.scale_coefs[0];
-	float ymin = (gl4ShaderUniforms.scale_coefs[3] - 1) / gl4ShaderUniforms.scale_coefs[1];
-	float ymax = (gl4ShaderUniforms.scale_coefs[3] + 1) / gl4ShaderUniforms.scale_coefs[1];
-	if (ymin > ymax)
-	{
-		float t = ymin;
-		ymin = ymax;
-		ymax = t;
-	}
 	struct Vertex vertices[] = {
-			{ xmin, ymax, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 1 },
-			{ xmin, ymin, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 0 },
-			{ xmax, ymax, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 1 },
-			{ xmax, ymin, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 0 },
+			{ x,     y + h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, upsideDown ? 0.f : 1.f },
+			{ x,     y,     1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, upsideDown ? 1.f : 0.f },
+			{ x + w, y + h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, upsideDown ? 0.f : 1.f },
+			{ x + w, y,     1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, upsideDown ? 1.f : 0.f },
 	};
 	GLushort indices[] = { 0, 1, 2, 1, 3 };
 
@@ -563,7 +565,7 @@ void renderABuffer(bool sortFragments)
 	glcache.Disable(GL_CULL_FACE);
 	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_BUFFER_UPDATE_BARRIER_BIT);
 
-	DrawQuad();
+	abufferDrawQuad();
 
 	glCheck();
 
@@ -572,7 +574,7 @@ void renderABuffer(bool sortFragments)
 	gl4ShaderUniforms.Set(&g_abuffer_clear_shader);
 
 	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
-	DrawQuad();
+	abufferDrawQuad();
 
 	glActiveTexture(GL_TEXTURE0);
 

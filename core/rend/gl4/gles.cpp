@@ -608,11 +608,12 @@ static bool gles_init()
 
 static bool RenderFrame()
 {
-	static int old_screen_width, old_screen_height;
-	if (screen_width != old_screen_width || screen_height != old_screen_height) {
+	static int old_screen_width, old_screen_height, old_screen_scaling;
+	if (screen_width != old_screen_width || screen_height != old_screen_height || settings.rend.ScreenScaling != old_screen_scaling) {
 		rend_resize(screen_width, screen_height);
 		old_screen_width = screen_width;
 		old_screen_height = screen_height;
+		old_screen_scaling = settings.rend.ScreenScaling;
 	}
 	DoCleanup();
 
@@ -673,14 +674,16 @@ static bool RenderFrame()
 	/*
 		Handle Dc to screen scaling
 	*/
+	float screen_scaling = is_rtt ? 1.f : settings.rend.ScreenScaling / 100.f;
 	float dc2s_scale_h = is_rtt ? (screen_width / dc_width) : (screen_height / 480.0);
-	float ds2s_offs_x =  is_rtt ? 0 : ((screen_width - dc2s_scale_h * 640.0) / 2);
+	dc2s_scale_h *=  screen_scaling;
+	float ds2s_offs_x =  is_rtt ? 0 : (((screen_width * screen_scaling) - dc2s_scale_h * 640.0) / 2);
 
 	//-1 -> too much to left
-	gl4ShaderUniforms.scale_coefs[0]=2.0f/(screen_width/dc2s_scale_h*scale_x);
-	gl4ShaderUniforms.scale_coefs[1]=(is_rtt ? 2 : -2) / dc_height;		// FIXME CT2 needs 480 here instead of dc_height=512
-	gl4ShaderUniforms.scale_coefs[2]=1-2*ds2s_offs_x/(screen_width);
-	gl4ShaderUniforms.scale_coefs[3]=(is_rtt?1:-1);
+	gl4ShaderUniforms.scale_coefs[0] = 2.0f / (screen_width * screen_scaling / dc2s_scale_h * scale_x);
+	gl4ShaderUniforms.scale_coefs[1] = (is_rtt ? 2 : -2) / dc_height;		// FIXME CT2 needs 480 here instead of dc_height=512
+	gl4ShaderUniforms.scale_coefs[2] = 1 - 2 * ds2s_offs_x / (screen_width * screen_scaling);
+	gl4ShaderUniforms.scale_coefs[3] = (is_rtt ? 1 : -1);
 
 	gl4ShaderUniforms.extra_depth_scale = settings.rend.ExtraDepthScale;
 
@@ -777,12 +780,16 @@ static bool RenderFrame()
 	}
 	else
 	{
-#if HOST_OS != OS_DARWIN
-        //Fix this in a proper way
-		glBindFramebuffer(GL_FRAMEBUFFER,0);
-#endif
-		glViewport(0, 0, screen_width, screen_height);
-		output_fbo = 0;
+		if (settings.rend.ScreenScaling != 100 || gl.swap_buffer_not_preserved)
+		{
+			output_fbo = init_output_framebuffer(screen_width * screen_scaling, screen_height * screen_scaling);
+		}
+		else
+		{
+			glBindFramebuffer(GL_FRAMEBUFFER,0);
+			glViewport(0, 0, screen_width, screen_height);
+			output_fbo = 0;
+		}
 	}
 
 	bool wide_screen_on = !is_rtt && settings.rend.WideScreen
@@ -888,6 +895,8 @@ static bool RenderFrame()
 
 	if (is_rtt)
 		ReadRTTBuffer();
+	else if (settings.rend.ScreenScaling != 100 || gl.swap_buffer_not_preserved)
+		gl4_render_output_framebuffer();
 
 	return !is_rtt;
 }
@@ -954,10 +963,12 @@ struct gl4rend : Renderer
 
 	   gl_term();
 	   gl_free_osd_resources();
+	   free_output_framebuffer();
 	}
 
 	bool Process(TA_context* ctx) { return ProcessFrame(ctx); }
 	bool Render() { return RenderFrame(); }
+	bool RenderLastFrame() { return gl4_render_output_framebuffer(); }
 
 	void Present() { gl_swap(); }
 

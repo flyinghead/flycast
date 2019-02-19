@@ -282,7 +282,9 @@ bool rend_single_frame()
 		}
 		else
 		{
-			render_output_framebuffer();
+			if (renderer != NULL)
+				renderer->RenderLastFrame();
+
 #if defined(_ANDROID)
 			if (!rs.Wait(100))
 				return false;
@@ -297,6 +299,8 @@ bool rend_single_frame()
 			FinishRender(NULL);
 			return true;
 		}
+		if (renderer != NULL)
+			renderer->RenderLastFrame();
 #endif
 		if (!renderer_enabled)
 			return false;

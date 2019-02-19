@@ -1,3 +1,4 @@
+#include <math.h>
 #include "gl4.h"
 #include "rend/gles/glcache.h"
 #include "rend/rend.h"
@@ -409,20 +410,20 @@ void renderABuffer(bool sortFragments);
 void DrawTranslucentModVols(int first, int count);
 void checkOverflowAndReset();
 
-static GLuint CreateColorFBOTexture()
+static GLuint CreateColorFBOTexture(int width, int height)
 {
 	GLuint texId = glcache.GenTexture();
 	glBindTexture(GL_TEXTURE_2D, texId);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, screen_width, screen_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texId, 0);
 	glCheck();
 
 	return texId;
 }
 
-static void CreateTextures()
+static void CreateTextures(int width, int height)
 {
 	stencilTexId = glcache.GenTexture();
 	glBindTexture(GL_TEXTURE_2D, stencilTexId); glCheck();
@@ -430,11 +431,11 @@ static void CreateTextures()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	// Using glTexStorage2D instead of glTexImage2D to satisfy requirement GL_TEXTURE_IMMUTABLE_FORMAT=true, needed for glTextureView below
-	glTexStorage2D(GL_TEXTURE_2D, 1, GL_DEPTH32F_STENCIL8, screen_width, screen_height);
+	glTexStorage2D(GL_TEXTURE_2D, 1, GL_DEPTH32F_STENCIL8, width, height);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, stencilTexId, 0); glCheck();
 	glCheck();
 
-	opaqueTexId = CreateColorFBOTexture();
+	opaqueTexId = CreateColorFBOTexture(width, height);
 
 	depthTexId = glcache.GenTexture();
 	glTextureView(depthTexId, GL_TEXTURE_2D, stencilTexId, GL_DEPTH32F_STENCIL8, 0, 1, 0, 1);
@@ -449,13 +450,15 @@ static void CreateTextures()
 void gl4DrawStrips(GLuint output_fbo)
 {
 	checkOverflowAndReset();
+	int scaled_width = (int)roundf(screen_width * settings.rend.ScreenScaling / 100.f);
+	int scaled_height = (int)roundf(screen_height * settings.rend.ScreenScaling / 100.f);
 
 	if (geom_fbo == 0)
 	{
 		glGenFramebuffers(1, &geom_fbo);
 		glBindFramebuffer(GL_FRAMEBUFFER, geom_fbo);
 
-		CreateTextures();
+		CreateTextures(scaled_width, scaled_height);
 
 		GLuint uStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 
@@ -465,7 +468,7 @@ void gl4DrawStrips(GLuint output_fbo)
 	{
 		glBindFramebuffer(GL_FRAMEBUFFER, geom_fbo);
 		if (stencilTexId == 0)
-			CreateTextures();
+			CreateTextures(scaled_width, scaled_height);
 	}
 	if (texSamplers[0] == 0)
 		glGenSamplers(2, texSamplers);
@@ -531,14 +534,14 @@ void gl4DrawStrips(GLuint output_fbo)
 					glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_STENCIL_TEXTURE_MODE, GL_DEPTH_COMPONENT);
 					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-					glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH32F_STENCIL8, screen_width, screen_height, 0, GL_DEPTH_STENCIL, GL_FLOAT_32_UNSIGNED_INT_24_8_REV, NULL); glCheck();
+					glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH32F_STENCIL8, scaled_width, scaled_height, 0, GL_DEPTH_STENCIL, GL_FLOAT_32_UNSIGNED_INT_24_8_REV, NULL); glCheck();
 					glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, depthSaveTexId, 0); glCheck();
 				}
 				GLuint uStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 				verify(uStatus == GL_FRAMEBUFFER_COMPLETE);
 
 				glBindFramebuffer(GL_READ_FRAMEBUFFER, geom_fbo);
-				glBlitFramebuffer(0, 0, screen_width, screen_height, 0, 0, screen_width, screen_height, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+				glBlitFramebuffer(0, 0, scaled_width, scaled_height, 0, 0, scaled_width, scaled_height, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
 				glCheck();
 
 				glBindFramebuffer(GL_FRAMEBUFFER, geom_fbo);
@@ -570,7 +573,7 @@ void gl4DrawStrips(GLuint output_fbo)
 				// FIXME This is pretty slow apparently (CS)
 				glBindFramebuffer(GL_DRAW_FRAMEBUFFER, geom_fbo);
 				glBindFramebuffer(GL_READ_FRAMEBUFFER, depth_fbo);
-				glBlitFramebuffer(0, 0, screen_width, screen_height, 0, 0, screen_width, screen_height, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+				glBlitFramebuffer(0, 0, scaled_width, scaled_height, 0, 0, scaled_width, scaled_height, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
 				glCheck();
 				glBindFramebuffer(GL_FRAMEBUFFER, geom_fbo);
 			}
@@ -638,7 +641,7 @@ void gl4DrawStrips(GLuint output_fbo)
 				//
 				// PASS 3c: Render a-buffer to temporary texture
 				//
-				GLuint texId = CreateColorFBOTexture();
+				GLuint texId = CreateColorFBOTexture(scaled_width, scaled_height);
 
 				glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
@@ -679,23 +682,15 @@ void gl4DrawStrips(GLuint output_fbo)
 	SetupMainVBO();
 }
 
-void gl4DrawFramebuffer(float w, float h)
+static void gl4_draw_quad_texture(GLuint texture, bool upsideDown, float x = 0.f, float y = 0.f, float w = 0.f, float h = 0.f)
 {
-	struct Vertex vertices[] = {
-		{ 0, h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 1 },
-		{ 0, 0, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 0 },
-		{ w, h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 1 },
-		{ w, 0, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 0 },
-	};
-	GLushort indices[] = { 0, 1, 2, 1, 3 };
-
 	glcache.Disable(GL_SCISSOR_TEST);
 	glcache.Disable(GL_DEPTH_TEST);
 	glcache.Disable(GL_STENCIL_TEST);
 	glcache.Disable(GL_CULL_FACE);
 	glcache.Disable(GL_BLEND);
 
-	gl4ShaderUniforms.trilinear_alpha = 1.0;
+	ShaderUniforms.trilinear_alpha = 1.0;
 
 	setCurrentShader(0,
 				0,
@@ -715,17 +710,25 @@ void gl4DrawFramebuffer(float w, float h)
 	gl4ShaderUniforms.Set(CurrentShader);
 
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, fbTextureId);
+	glBindTexture(GL_TEXTURE_2D, texture);
 
-	SetupMainVBO();
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STREAM_DRAW);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STREAM_DRAW);
+	abufferDrawQuad(upsideDown, x, y, w, h);
+}
 
-	glDrawElements(GL_TRIANGLE_STRIP, 5, GL_UNSIGNED_SHORT, (void *)0);
-
+void gl4DrawFramebuffer(float w, float h)
+{
+	gl4_draw_quad_texture(fbTextureId, false, 0, 0, w, h);
 	glcache.DeleteTextures(1, &fbTextureId);
 	fbTextureId = 0;
+}
 
-	glBufferData(GL_ARRAY_BUFFER, pvrrc.verts.bytes(), pvrrc.verts.head(), GL_STREAM_DRAW);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, pvrrc.idx.bytes(), pvrrc.idx.head(), GL_STREAM_DRAW);
+bool gl4_render_output_framebuffer()
+{
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glViewport(0, 0, screen_width, screen_height);
+	if (gl.ofbo.tex == 0)
+		return false;
+
+	gl4_draw_quad_texture(gl.ofbo.tex, true);
+	return true;
 }

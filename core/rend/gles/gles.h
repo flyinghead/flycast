@@ -179,8 +179,9 @@ void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt);
 void ReadRTTBuffer();
 void RenderFramebuffer();
 void DrawFramebuffer(float w, float h);
-void init_output_framebuffer(int width, int height);
-void render_output_framebuffer();
+GLuint init_output_framebuffer(int width, int height);
+bool render_output_framebuffer();
+void free_output_framebuffer();
 
 void HideOSD();
 void OSD_DRAW(GLuint shader_program);

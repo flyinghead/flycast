@@ -748,6 +748,7 @@ void gl_term()
 	glcache.DeleteTextures(1, &fogTextureId);
 	fogTextureId = 0;
 	gl_free_osd_resources();
+	free_output_framebuffer();
 
 	memset(gl.pogram_table, 0, sizeof(gl.pogram_table));
 
@@ -1761,7 +1762,7 @@ bool RenderFrame()
 	{
 		if (settings.rend.ScreenScaling != 100 || gl.swap_buffer_not_preserved)
 		{
-			init_output_framebuffer(screen_width * settings.rend.ScreenScaling / 100, screen_height * settings.rend.ScreenScaling / 100);
+			init_output_framebuffer(screen_width * screen_scaling, screen_height * screen_scaling);
 		}
 		else
 		{
@@ -1908,7 +1909,7 @@ struct glesrend : Renderer
 
 	bool Process(TA_context* ctx) { return ProcessFrame(ctx); }
 	bool Render() { return RenderFrame(); }
-
+	bool RenderLastFrame() { return render_output_framebuffer(); }
 	void Present() { gl_swap(); glViewport(0, 0, screen_width, screen_height); }
 
 	void DrawOSD() { OSD_DRAW(gl.OSD_SHADER.program); }

@@ -76,6 +76,8 @@ extern int screen_height;
 
 GLuint gl4BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt);
 void gl4DrawFramebuffer(float w, float h);
+bool gl4_render_output_framebuffer();
+void abufferDrawQuad(bool upsideDown = false, float x = 0.f, float y = 0.f, float w = 0.f, float h = 0.f);
 
 extern const char *gl4PixelPipelineShader;
 bool gl4CompilePipelineShader(gl4PipelineShader* s, const char *source = gl4PixelPipelineShader);
