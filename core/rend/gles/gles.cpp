@@ -18,7 +18,8 @@ int fbdev = -1;
 
 #ifndef GLES
 #if HOST_OS != OS_DARWIN
-#include <GL3/gl3w.c>
+#undef ARRAY_SIZE	// macros are evil
+#include <GL4/gl3w.c>
 #pragma comment(lib,"Opengl32.lib")
 #endif
 #else
@@ -837,6 +838,13 @@ void findGLVersion()
 			gl.index_type = GL_UNSIGNED_SHORT;
 		}
 		gl.fog_image_format = GL_ALPHA;
+		const char *extensions = (const char *)glGetString(GL_EXTENSIONS);
+		if (strstr(extensions, "GL_OES_packed_depth_stencil") != NULL)
+			gl.GL_OES_packed_depth_stencil_supported = true;
+		if (strstr(extensions, "GL_OES_depth24") != NULL)
+			gl.GL_OES_depth24_supported = true;
+		if (!gl.GL_OES_packed_depth_stencil_supported)
+			printf("Packed depth/stencil not supported: no modifier volumes when rendering to a texture\n");
 	}
 	else
 	{
@@ -858,15 +866,6 @@ void findGLVersion()
 			gl.fog_image_format = GL_ALPHA;
 		}
 	}
-#ifdef GLES
-	const char *extensions = (const char *)glGetString(GL_EXTENSIONS);
-	if (strstr(extensions, "GL_OES_packed_depth_stencil") != NULL)
-		gl.GL_OES_packed_depth_stencil_supported = true;
-	if (strstr(extensions, "GL_OES_depth24") != NULL)
-		gl.GL_OES_depth24_supported = true;
-	if (!gl.GL_OES_packed_depth_stencil_supported)
-		printf("Packed depth/stencil not supported: no modifier volumes when rendering to a texture\n");
-#endif
 }
 
 struct ShaderUniforms_t ShaderUniforms;
@@ -916,8 +915,9 @@ GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentShader)
 	glBindAttribLocation(program, VERTEX_COL_OFFS1_ARRAY, "in_offs1");
 	glBindAttribLocation(program, VERTEX_UV1_ARRAY,       "in_uv1");
 
-#ifndef GLES
-	glBindFragDataLocation(program, 0, "FragColor");
+#ifdef glBindFragDataLocation
+	if (!gl.is_gles && gl.gl_major >= 3)
+		glBindFragDataLocation(program, 0, "FragColor");
 #endif
 
 	glLinkProgram(program);
@@ -1068,13 +1068,16 @@ bool gl_create_resources()
 		// Assume the resources have already been created
 		return true;
 
-#ifndef GLES
-	verify(glGenVertexArrays != NULL);
-	//create vao
-	//This is really not "proper", vaos are supposed to be defined once
-	//i keep updating the same one to make the es2 code work in 3.1 context
-	glGenVertexArrays(1, &gl.vbo.vao);
-#endif
+	findGLVersion();
+
+	if (gl.gl_major >= 3)
+	{
+		verify(glGenVertexArrays != NULL);
+		//create vao
+		//This is really not "proper", vaos are supposed to be defined once
+		//i keep updating the same one to make the es2 code work in 3.1 context
+		glGenVertexArrays(1, &gl.vbo.vao);
+	}
 
 	//create vbos
 	glGenBuffers(1, &gl.vbo.geometry);
@@ -1140,8 +1143,6 @@ bool gl_create_resources()
 			}
 		}
 	}
-
-	findGLVersion();
 	
 	char vshader[8192];
 	sprintf(vshader, VertexShaderSource, gl.glsl_version_header, gl.gl_version, 1);
@@ -1218,8 +1219,9 @@ bool gles_init()
 	glClear(GL_COLOR_BUFFER_BIT);
 	gl_swap();
 
-#ifdef GLES
-	glHint(GL_GENERATE_MIPMAP_HINT, GL_FASTEST);
+#ifdef GL_GENERATE_MIPMAP_HINT
+	if (gl.is_gles)
+		glHint(GL_GENERATE_MIPMAP_HINT, GL_FASTEST);
 #endif
 
 	if (settings.rend.TextureUpscale > 1)

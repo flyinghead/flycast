@@ -103,13 +103,7 @@ void gui_init()
 #endif
 
     // Setup Platform/Renderer bindings
-#ifdef GLES
-    ImGui_ImplOpenGL3_Init("#version 100");		// OpenGL ES 2.0
-#elif HOST_OS == OS_DARWIN
-    ImGui_ImplOpenGL3_Init("#version 140");		// OpenGL 3.1
-#else
-    ImGui_ImplOpenGL3_Init("#version 130");		// OpenGL 3.0
-#endif
+    ImGui_ImplOpenGL3_Init();
 
     // Load Fonts
     // - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use ImGui::PushFont()/PopFont() to select them.
@@ -768,8 +762,8 @@ static void gui_display_settings()
 		if (ImGui::BeginTabItem("Video"))
 		{
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
-#ifndef GLES
-		    if (ImGui::CollapsingHeader("Transparent Sorting", ImGuiTreeNodeFlags_DefaultOpen))
+#if !defined(GLES) && HOST_OS != OS_DARWIN
+		    if (!gl.is_gles && gl.gl_major >= 4 && ImGui::CollapsingHeader("Transparent Sorting", ImGuiTreeNodeFlags_DefaultOpen))
 		    {
 		    	ImGui::Columns(2, "renderers", false);
 		    	ImGui::RadioButton("Per Triangle", (int *)&settings.pvr.rend, 0);
@@ -877,7 +871,7 @@ static void gui_display_settings()
 		    }
 		    if (ImGui::CollapsingHeader("Other", ImGuiTreeNodeFlags_DefaultOpen))
 		    {
-#ifndef GLES
+#ifndef _ANDROID
 				ImGui::Checkbox("Serial Console", &settings.debug.SerialConsole);
 	            ImGui::SameLine();
 	            ShowHelpMarker("Dump the Dreamcast serial console to stdout");

@@ -28,7 +28,7 @@
 #elif HOST_OS == OS_DARWIN
     #include <OpenGL/gl3.h>
 #else
-	#include <GL3/gl3w.h>
+	#include <GL4/gl3w.h>
 #endif
 
 #ifndef GL_UNSIGNED_INT_8_8_8_8
@@ -46,10 +46,6 @@
 #define VERTEX_COL_BASE1_ARRAY 4
 #define VERTEX_COL_OFFS1_ARRAY 5
 #define VERTEX_UV1_ARRAY 6
-
-#ifndef GL_UNSIGNED_INT_8_8_8_8
-#define GL_UNSIGNED_INT_8_8_8_8 0x8035
-#endif
 
 //vertex types
 extern u32 gcflip;
@@ -111,9 +107,7 @@ struct gl_ctx
 	struct
 	{
 		GLuint geometry,modvols,idxs,idxs2;
-#ifndef GLES
 		GLuint vao;
-#endif
 	} vbo;
 
 	struct

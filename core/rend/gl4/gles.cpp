@@ -492,7 +492,9 @@ bool gl4CompilePipelineShader(	gl4PipelineShader* s, const char *source /* = Pix
 	return glIsProgram(s->program)==GL_TRUE;
 }
 
-static void gl_term(void)
+void gl_term();
+
+static void gles_term(void)
 {
 	gl4.vbo.geometry = 0;
 	glDeleteProgram(gl4.modvol_shader.program);
@@ -508,6 +510,7 @@ static void gl_term(void)
 		delete it->second;
 	}
 	gl4.shaders.clear();
+	gl_term();
 }
 
 static bool gl_create_resources()
@@ -961,9 +964,9 @@ struct gl4rend : Renderer
 
 	   CollectCleanup();
 
-	   gl_term();
 	   gl_free_osd_resources();
 	   free_output_framebuffer();
+	   gles_term();
 	}
 
 	bool Process(TA_context* ctx) { return ProcessFrame(ctx); }
