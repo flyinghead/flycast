@@ -276,9 +276,9 @@ void    ImGui_ImplOpenGL3_RenderDrawData(ImDrawData* draw_data, bool save_backgr
     if (gl.gl_major >= 3 && glBindSampler != NULL)
     	glBindSampler(0, last_sampler);
     glActiveTexture(last_active_texture);
+    glBindBuffer(GL_ARRAY_BUFFER, last_array_buffer);
     if (gl.gl_major >= 3)
     	glBindVertexArray(last_vertex_array);
-    glBindBuffer(GL_ARRAY_BUFFER, last_array_buffer);
     glBlendEquationSeparate(last_blend_equation_rgb, last_blend_equation_alpha);
     glBlendFuncSeparate(last_blend_src_rgb, last_blend_dst_rgb, last_blend_src_alpha, last_blend_dst_alpha);
     if (last_enable_blend) glEnable(GL_BLEND); else glDisable(GL_BLEND);

@@ -54,7 +54,8 @@ struct gl4_ctx
 	struct
 	{
 		GLuint geometry,modvols,idxs,idxs2;
-		GLuint vao;
+		GLuint main_vao;
+		GLuint modvol_vao;
 		GLuint tr_poly_params;
 	} vbo;
 
@@ -229,6 +230,7 @@ bool isTwoVolumes(const PolyParam pp) \n\
  \n\
 "
 
+void gl4SetupMainVBO();
 void gl4SetupModvolVBO();
 
 extern struct gl4ShaderUniforms_t

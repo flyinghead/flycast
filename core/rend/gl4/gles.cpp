@@ -496,9 +496,9 @@ void gl_term();
 
 static void gles_term(void)
 {
-	gl4.vbo.geometry = 0;
 	glDeleteProgram(gl4.modvol_shader.program);
 	glDeleteBuffers(1, &gl4.vbo.geometry);
+	gl4.vbo.geometry = 0;
 	glDeleteBuffers(1, &gl4.vbo.modvols);
 	glDeleteBuffers(1, &gl4.vbo.idxs);
 	glDeleteBuffers(1, &gl4.vbo.idxs2);
@@ -510,6 +510,9 @@ static void gles_term(void)
 		delete it->second;
 	}
 	gl4.shaders.clear();
+	glDeleteVertexArrays(1, &gl4.vbo.main_vao);
+	glDeleteVertexArrays(1, &gl4.vbo.modvol_vao);
+
 	gl_term();
 }
 
@@ -519,16 +522,20 @@ static bool gl_create_resources()
 		// Assume the resources have already been created
 		return true;
 
+	findGLVersion();
+
 	//create vao
-	//This is really not "proper", vaos are supposed to be defined once
-	//i keep updating the same one to make the es2 code work in 3.1 context
-	glGenVertexArrays(1, &gl4.vbo.vao);
+	glGenVertexArrays(1, &gl4.vbo.main_vao);
+	glGenVertexArrays(1, &gl4.vbo.modvol_vao);
 
 	//create vbos
 	glGenBuffers(1, &gl4.vbo.geometry);
 	glGenBuffers(1, &gl4.vbo.modvols);
 	glGenBuffers(1, &gl4.vbo.idxs);
 	glGenBuffers(1, &gl4.vbo.idxs2);
+
+	gl4SetupMainVBO();
+	gl4SetupModvolVBO();
 
 	char vshader[16384];
 	sprintf(vshader, VertexShaderSource, 1);

@@ -293,9 +293,9 @@ static void DrawList(const List<PolyParam>& gply, int first, int count, int pass
 	}
 }
 
-static void SetupMainVBO()
+void gl4SetupMainVBO()
 {
-	glBindVertexArray(gl4.vbo.vao);
+	glBindVertexArray(gl4.vbo.main_vao);
 
 	glBindBuffer(GL_ARRAY_BUFFER, gl4.vbo.geometry); glCheck();
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl4.vbo.idxs); glCheck();
@@ -325,20 +325,13 @@ static void SetupMainVBO()
 
 void gl4SetupModvolVBO()
 {
-	glBindVertexArray(gl4.vbo.vao);
+	glBindVertexArray(gl4.vbo.modvol_vao);
 
 	glBindBuffer(GL_ARRAY_BUFFER, gl4.vbo.modvols); glCheck();
 
 	//setup vertex buffers attrib pointers
 	glEnableVertexAttribArray(VERTEX_POS_ARRAY); glCheck();
 	glVertexAttribPointer(VERTEX_POS_ARRAY, 3, GL_FLOAT, GL_FALSE, sizeof(float)*3, (void*)0); glCheck();
-
-	glDisableVertexAttribArray(VERTEX_UV_ARRAY);
-	glDisableVertexAttribArray(VERTEX_COL_OFFS_ARRAY);
-	glDisableVertexAttribArray(VERTEX_COL_BASE_ARRAY);
-	glDisableVertexAttribArray(VERTEX_UV1_ARRAY);
-	glDisableVertexAttribArray(VERTEX_COL_OFFS1_ARRAY);
-	glDisableVertexAttribArray(VERTEX_COL_BASE1_ARRAY);
 }
 
 static void DrawModVols(int first, int count)
@@ -346,7 +339,7 @@ static void DrawModVols(int first, int count)
 	if (count == 0 || pvrrc.modtrig.used() == 0)
 		return;
 
-	gl4SetupModvolVBO();
+	glBindVertexArray(gl4.vbo.modvol_vao);
 
 	glcache.UseProgram(gl4.modvol_shader.program);
 
@@ -358,7 +351,6 @@ static void DrawModVols(int first, int count)
 		//simply draw the volumes -- for debugging
 		SetCull(0);
 		glDrawArrays(GL_TRIANGLES, first, count * 3);
-		SetupMainVBO();
 	}
 	else
 	{
@@ -397,11 +389,10 @@ static void DrawModVols(int first, int count)
 				mod_base = -1;
 			}
 		}
-
-		SetupMainVBO();
 	}
 
 	//restore states
+	glBindVertexArray(gl4.vbo.main_vao);
 	glcache.Enable(GL_DEPTH_TEST);
 	glcache.DepthMask(GL_TRUE);
 }
@@ -477,7 +468,6 @@ void gl4DrawStrips(GLuint output_fbo)
 	glStencilMask(0xFF);
 	glClear(GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); glCheck();
 
-	SetupMainVBO();
 	//Draw the strips !
 
 	//We use sampler 0
@@ -515,6 +505,7 @@ void gl4DrawStrips(GLuint output_fbo)
 			previous_pass = current_pass;
 			continue;
 		}
+		glBindVertexArray(gl4.vbo.main_vao);
 
 		if (!skip_op_pt)
 		{
@@ -650,7 +641,6 @@ void gl4DrawStrips(GLuint output_fbo)
 				glBindTexture(GL_TEXTURE_2D, opaqueTexId);
 
 				renderABuffer(current_pass.autosort);
-				SetupMainVBO();
 
 				glcache.DeleteTextures(1, &opaqueTexId);
 				opaqueTexId = texId;
@@ -679,7 +669,6 @@ void gl4DrawStrips(GLuint output_fbo)
 	glBindSampler(0, 0);
 	glBindTexture(GL_TEXTURE_2D, opaqueTexId);
 	renderABuffer(previous_pass.autosort);
-	SetupMainVBO();
 }
 
 static void gl4_draw_quad_texture(GLuint texture, bool upsideDown, float x = 0.f, float y = 0.f, float w = 0.f, float h = 0.f)

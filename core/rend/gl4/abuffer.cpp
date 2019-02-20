@@ -354,8 +354,30 @@ void initABuffer()
 	if (g_quadVertexArray == 0)
 		glGenVertexArrays(1, &g_quadVertexArray);
 	if (g_quadBuffer == 0)
+	{
+		glBindVertexArray(g_quadVertexArray);
 		glGenBuffers(1, &g_quadBuffer);
+		glBindBuffer(GL_ARRAY_BUFFER, g_quadBuffer); glCheck();
 
+		glEnableVertexAttribArray(VERTEX_POS_ARRAY); glCheck();
+		glVertexAttribPointer(VERTEX_POS_ARRAY, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex,x)); glCheck();
+
+		glEnableVertexAttribArray(VERTEX_COL_BASE_ARRAY); glCheck();
+		glVertexAttribPointer(VERTEX_COL_BASE_ARRAY, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*)offsetof(Vertex,col)); glCheck();
+
+		glEnableVertexAttribArray(VERTEX_COL_OFFS_ARRAY); glCheck();
+		glVertexAttribPointer(VERTEX_COL_OFFS_ARRAY, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*)offsetof(Vertex,spc)); glCheck();
+
+		glEnableVertexAttribArray(VERTEX_UV_ARRAY); glCheck();
+		glVertexAttribPointer(VERTEX_UV_ARRAY, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex,u)); glCheck();
+
+		glDisableVertexAttribArray(VERTEX_UV1_ARRAY);
+		glDisableVertexAttribArray(VERTEX_COL_OFFS1_ARRAY);
+		glDisableVertexAttribArray(VERTEX_COL_BASE1_ARRAY);
+
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); glCheck();
+		glBindVertexArray(0);
+	}
 	glCheck();
 
 	// Clear A-buffer pointers
@@ -437,32 +459,17 @@ void abufferDrawQuad(bool upsideDown, float x, float y, float w, float h)
 
 	glBindBuffer(GL_ARRAY_BUFFER, g_quadBuffer); glCheck();
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STREAM_DRAW); glCheck();
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); glCheck();
-
-	glEnableVertexAttribArray(VERTEX_POS_ARRAY); glCheck();
-	glVertexAttribPointer(VERTEX_POS_ARRAY, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex,x)); glCheck();
-
-	glEnableVertexAttribArray(VERTEX_COL_BASE_ARRAY); glCheck();
-	glVertexAttribPointer(VERTEX_COL_BASE_ARRAY, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*)offsetof(Vertex,col)); glCheck();
-
-	glEnableVertexAttribArray(VERTEX_COL_OFFS_ARRAY); glCheck();
-	glVertexAttribPointer(VERTEX_COL_OFFS_ARRAY, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*)offsetof(Vertex,spc)); glCheck();
-
-	glEnableVertexAttribArray(VERTEX_UV_ARRAY); glCheck();
-	glVertexAttribPointer(VERTEX_UV_ARRAY, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex,u)); glCheck();
-
-	glDisableVertexAttribArray(VERTEX_UV1_ARRAY);
-	glDisableVertexAttribArray(VERTEX_COL_OFFS1_ARRAY);
-	glDisableVertexAttribArray(VERTEX_COL_BASE1_ARRAY);
 
 	glDrawElements(GL_TRIANGLE_STRIP, 5, GL_UNSIGNED_SHORT, indices); glCheck();
+	glBindVertexArray(0);
+	glCheck();
 }
 
 void DrawTranslucentModVols(int first, int count)
 {
 	if (count == 0 || pvrrc.modtrig.used() == 0)
 		return;
-	gl4SetupModvolVBO();
+	glBindVertexArray(gl4.vbo.modvol_vao);
 
 	glActiveTexture(GL_TEXTURE2);
 	glBindTexture(GL_TEXTURE_2D, 0);
@@ -524,6 +531,7 @@ void DrawTranslucentModVols(int first, int count)
 			mod_base = -1;
 		}
 	}
+	glBindVertexArray(gl4.vbo.main_vao);
 }
 
 void checkOverflowAndReset()
