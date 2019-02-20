@@ -327,6 +327,7 @@ public class GL2JNIActivity extends Activity implements ActivityCompat.OnRequest
     protected void onResume() {
         super.onResume();
         mView.onResume();
+        JNIdc.resume();
     }
 
     @Override

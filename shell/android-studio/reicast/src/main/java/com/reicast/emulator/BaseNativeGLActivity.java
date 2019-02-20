@@ -64,12 +64,12 @@ public class BaseNativeGLActivity extends Activity implements SurfaceHolder.Call
     @Override
     public void surfaceChanged(SurfaceHolder holder, int format, int w, int h) {
         //Log.i("BaseNativeGLActivity", "surfaceChanged: " + w + "x" + h);
-        JNIdc.rendinit(holder.getSurface(), w, h);
+        JNIdc.rendinitNative(holder.getSurface(), w, h);
     }
 
     @Override
     public void surfaceDestroyed(SurfaceHolder holder) {
         //Log.i("BaseNativeGLActivity", "surfaceDestroyed");
-        JNIdc.rendinit(null, 0, 0);
+        JNIdc.rendinitNative(null, 0, 0);
     }
 }

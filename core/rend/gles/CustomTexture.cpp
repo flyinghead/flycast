@@ -212,10 +212,6 @@ void CustomTexture::DumpTexture(u32 hash, int w, int h, GLuint textype, void *te
 			{
 				*(u32 *)dst = *(u32 *)src;
 				dst += 4;
-//				*dst++ = ((u8 *)src)[3];
-//				*dst++ = ((u8 *)src)[2];
-//				*dst++ = ((u8 *)src)[1];
-//				*dst++ = ((u8 *)src)[0];
 				src += 2;
 			}
 			break;

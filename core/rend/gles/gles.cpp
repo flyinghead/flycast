@@ -409,6 +409,7 @@ GLuint fogTextureId;
 #ifdef USE_EGL
 
 	extern "C" void load_gles_symbols();
+	static bool created_context;
 
 	bool egl_makecurrent()
 	{
@@ -532,6 +533,12 @@ GLuint fogTextureId;
 				    printf("gl3wInit() failed\n");
 #endif
 			}
+			created_context = true;
+		}
+		else if (glGetError == NULL)
+		{
+			// Needed when the context is not created here (Android, iOS)
+			load_gles_symbols();
 		}
 
 		if (!egl_makecurrent())
@@ -558,6 +565,13 @@ GLuint fogTextureId;
 		return true;
 	}
 
+	void egl_stealcntx()
+	{
+		gl.setup.context = eglGetCurrentContext();
+		gl.setup.display = eglGetCurrentDisplay();
+		gl.setup.surface = eglGetCurrentSurface(EGL_DRAW);
+	}
+
 	//swap buffers
 	void gl_swap()
 	{
@@ -573,10 +587,13 @@ GLuint fogTextureId;
 
 	void gl_term()
 	{
+		if (!created_context)
+			return;
+		created_context = false;
 		eglMakeCurrent(gl.setup.display, NULL, NULL, EGL_NO_CONTEXT);
 #if HOST_OS == OS_WINDOWS
 		ReleaseDC((HWND)gl.setup.native_wind,(HDC)gl.setup.native_disp);
-#endif
+#else
 		if (gl.setup.context != NULL)
 			eglDestroyContext(gl.setup.display, gl.setup.context);
 		if (gl.setup.surface != NULL)
@@ -588,6 +605,7 @@ GLuint fogTextureId;
 			close( fbdev );
 		fbdev=-1;
 #endif
+#endif	// !OS_WINDOWS
 		gl.setup.context = EGL_NO_CONTEXT;
 		gl.setup.surface = EGL_NO_SURFACE;
 		gl.setup.display = EGL_NO_DISPLAY;

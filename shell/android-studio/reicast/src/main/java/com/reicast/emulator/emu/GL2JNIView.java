@@ -7,9 +7,6 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.graphics.PixelFormat;
-import android.media.AudioFormat;
-import android.media.AudioManager;
-import android.media.AudioTrack;
 import android.opengl.GLSurfaceView;
 import android.os.Build;
 import android.os.Environment;
@@ -36,8 +33,6 @@ import com.reicast.emulator.periph.Gamepad;
 import com.reicast.emulator.periph.InputDeviceManager;
 import com.reicast.emulator.periph.VJoy;
 
-import java.io.UnsupportedEncodingException;
-
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
@@ -61,7 +56,7 @@ import javax.microedition.khronos.opengles.GL10;
  *   bit depths). Failure to do so would result in an EGL_BAD_MATCH error.
  */
 
-public class GL2JNIView extends GLSurfaceView
+public class GL2JNIView extends GLSurfaceView implements IEmulatorView
 {
     public static final boolean DEBUG = false;
 
@@ -142,7 +137,7 @@ public class GL2JNIView extends GLSurfaceView
         JNIdc.config(prefs.getString(Config.pref_home,
                 Environment.getExternalStorageDirectory().getAbsolutePath()));
 
-        ethd = new EmuThread(!Emulator.nosound);
+        ethd = new EmuThread(this);
 
         touchVibrationEnabled = prefs.getBoolean(Config.pref_touchvibe, true);
         vibrationDuration = prefs.getInt(Config.pref_vibrationDuration, 20);
@@ -172,7 +167,7 @@ public class GL2JNIView extends GLSurfaceView
 
             throw new EmulatorInitFailed();
         }
-        // FIXME JNIdc.query((ethd);
+        JNIdc.query(ethd);
 
         // By default, GLSurfaceView() creates a RGB_565 opaque surface.
         // If we want a translucent one, we should change the surface's
@@ -517,6 +512,41 @@ public class GL2JNIView extends GLSurfaceView
         return(true);
     }
 
+    @Override
+    public boolean hasSound() {
+        return !Emulator.nosound;
+    }
+
+    @Override
+    public void reiosInfo(String reiosId, String reiosSoftware) {
+        if (fileName != null) {
+            String gameId = reiosId.replaceAll("[^a-zA-Z0-9]+", "").toLowerCase();
+            SharedPreferences mPrefs = context.getSharedPreferences(gameId, Activity.MODE_PRIVATE);
+            Emulator app = (Emulator) context.getApplicationContext();
+            app.loadGameConfiguration(gameId);
+            if (context instanceof GL2JNIActivity)
+                ((GL2JNIActivity) context).getPad().joystick[0] = mPrefs.getBoolean(
+                        Gamepad.pref_js_merged + "_A",
+                        ((GL2JNIActivity) context).getPad().joystick[0]);
+            mPrefs.edit().putString(Config.game_title, reiosSoftware.trim()).apply();
+        }
+    }
+
+    @Override
+    public void postMessage(final String msg) {
+        handler.post(new Runnable() {
+            public void run() {
+                Log.d(context.getPackageName(), msg);
+                Toast.makeText(context, msg, Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    @Override
+    public void finish() {
+        ((Activity) context).finish();
+    }
+
     private class OscOnScaleGestureListener extends
             SimpleOnScaleGestureListener {
 
@@ -551,7 +581,7 @@ public class GL2JNIView extends GLSurfaceView
 
         public void onDrawFrame(GL10 gl)
         {
-            if (JNIdc.rendframe()) {
+            if (JNIdc.rendframeJava()) {
                 if (fpsPop != null && fpsPop.isShowing()) {
                     fps.logFrame();
                 }
@@ -561,6 +591,7 @@ public class GL2JNIView extends GLSurfaceView
                 FileUtils.saveScreenshot(mView.getContext(), mView.getWidth(), mView.getHeight(), gl);
             }
             if (mView.ethd.getState() == Thread.State.TERMINATED) {
+                JNIdc.rendtermJava();
                 System.exit(0);
                 // Ideally: ((Activity)mView.getContext()).finish();
             }
@@ -570,9 +601,9 @@ public class GL2JNIView extends GLSurfaceView
         {
             gl.glViewport(0, 0, width, height);
             if (Emulator.widescreen) {
-                // FIXME JNIdc.rendinit(width, height);
+                JNIdc.rendinitJava(width, height);
             } else {
-                // FIXME JNIdc.rendinit(height * (4 / 3), height);
+                JNIdc.rendinitJava(height * (4 / 3), height);
             }
         }
 
@@ -614,108 +645,6 @@ public class GL2JNIView extends GLSurfaceView
             ethd.setPriority(Thread.MIN_PRIORITY);
         } else {
             ethd.setPriority(Thread.NORM_PRIORITY);
-        }
-    }
-
-    class EmuThread extends Thread
-    {
-        AudioTrack Player;
-        long pos;	//write position
-        long size;	//size in frames
-        private boolean sound;
-
-        EmuThread(boolean sound) {
-            this.sound = sound;
-        }
-
-        @Override public void run()
-        {
-            if (sound) {
-                int min=AudioTrack.getMinBufferSize(44100,AudioFormat.CHANNEL_OUT_STEREO,AudioFormat.ENCODING_PCM_16BIT);
-
-                if (2048>min)
-                    min=2048;
-
-                Player = new AudioTrack(
-                        AudioManager.STREAM_MUSIC,
-                        44100,
-                        AudioFormat.CHANNEL_OUT_STEREO,
-                        AudioFormat.ENCODING_PCM_16BIT,
-                        min,
-                        AudioTrack.MODE_STREAM
-                );
-
-                size=min/4;
-                pos=0;
-
-                Log.i("audcfg", "Audio streaming: buffer size " + min + " samples / " + min/44100.0 + " ms");
-                Player.play();
-            }
-
-            // FIXME JNIdc.run(this);
-        }
-
-        int WriteBuffer(short[] samples, int wait)
-        {
-            if (sound) {
-                int newdata=samples.length/2;
-
-                if (wait==0)
-                {
-                    //user bytes = write-read
-                    //available = size - (write - play)
-                    long used=pos-Player.getPlaybackHeadPosition();
-                    long avail=size-used;
-
-                    //Log.i("audcfg", "u: " + used + " a: " + avail);
-                    if (avail<newdata)
-                        return 0;
-                }
-
-                pos+=newdata;
-
-                Player.write(samples, 0, samples.length);
-            }
-
-            return 1;
-        }
-
-        void showMessage(final String msg) {
-            handler.post(new Runnable() {
-                public void run() {
-                    Log.d(context.getPackageName(), msg);
-                    Toast.makeText(context, msg, Toast.LENGTH_SHORT).show();
-                }
-            });
-        }
-
-        int coreMessage(byte[] msg) {
-            try {
-                showMessage(new String(msg, "UTF-8"));
-            }
-            catch (UnsupportedEncodingException e) {
-                showMessage("coreMessage: Failed to display error");
-            }
-            return 1;
-        }
-
-        void Die() {
-            showMessage("Something went wrong and reicast crashed.\nPlease report this on the reicast forums.");
-            ((Activity) context).finish();
-        }
-
-        void reiosInfo(String reiosId, String reiosSoftware) {
-            if (fileName != null) {
-                String gameId = reiosId.replaceAll("[^a-zA-Z0-9]+", "").toLowerCase();
-                SharedPreferences mPrefs = context.getSharedPreferences(gameId, Activity.MODE_PRIVATE);
-                Emulator app = (Emulator) context.getApplicationContext();
-                app.loadGameConfiguration(gameId);
-                if (context instanceof GL2JNIActivity)
-                    ((GL2JNIActivity) context).getPad().joystick[0] = mPrefs.getBoolean(
-                            Gamepad.pref_js_merged + "_A",
-                            ((GL2JNIActivity) context).getPad().joystick[0]);
-                mPrefs.edit().putString(Config.game_title, reiosSoftware.trim()).apply();
-            }
         }
     }
 

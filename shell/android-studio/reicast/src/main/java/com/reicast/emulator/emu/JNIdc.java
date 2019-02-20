@@ -12,8 +12,8 @@ public final class JNIdc
 	public static native void initEnvironment(Emulator emulator);
 	public static native void config(String dirName);
 	public static native String init(String fileName);
-	public static native void query(NativeGLView.EmuThread thread);
-	public static native void run(NativeGLView.EmuThread thread);
+	public static native void query(EmuThread thread);
+	public static native void run(EmuThread thread);
 	public static native void pause();
 	public static native void resume();
 	public static native void stop();
@@ -22,8 +22,11 @@ public final class JNIdc
 	public static native int send(int cmd, int opt);
 	public static native int data(int cmd, byte[] data);
 
-	public static native void rendinit(Surface surface, int w, int h);
-	public static native boolean rendframe();
+	public static native void rendinitNative(Surface surface, int w, int h);
+	public static native boolean rendframeNative();
+	public static native void rendinitJava(int w, int h);
+	public static native boolean rendframeJava();
+	public static native void rendtermJava();
 
 	public static native void vjoy(int id,float x, float y, float w, float h);
 

@@ -5,9 +5,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
-import android.media.AudioFormat;
-import android.media.AudioManager;
-import android.media.AudioTrack;
 import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
@@ -30,14 +27,12 @@ import com.reicast.emulator.config.Config;
 import com.reicast.emulator.periph.InputDeviceManager;
 import com.reicast.emulator.periph.VJoy;
 
-import java.io.UnsupportedEncodingException;
-
-public class NativeGLView extends SurfaceView {
+public class NativeGLView extends SurfaceView implements IEmulatorView {
     private static String fileName;
     private EmuThread ethd;
     private Handler handler = new Handler();
 
-    Vibrator vib;
+    private Vibrator vib;
 
     private boolean editVjoyMode = false;
     private int selectedVjoyElement = -1;
@@ -49,7 +44,7 @@ public class NativeGLView extends SurfaceView {
 
     private boolean touchVibrationEnabled;
     private int vibrationDuration;
-    Context context;
+    private Context context;
 
     public void restoreCustomVjoyValues(float[][] vjoy_d_cached) {
         vjoy_d_custom = vjoy_d_cached;
@@ -98,7 +93,7 @@ public class NativeGLView extends SurfaceView {
         JNIdc.config(prefs.getString(Config.pref_home,
                 Environment.getExternalStorageDirectory().getAbsolutePath()));
 
-        ethd = new EmuThread(!Emulator.nosound);
+        ethd = new EmuThread(this);
 
         touchVibrationEnabled = prefs.getBoolean(Config.pref_touchvibe, true);
         vibrationDuration = prefs.getInt(Config.pref_vibrationDuration, 20);
@@ -130,15 +125,14 @@ public class NativeGLView extends SurfaceView {
         }
         JNIdc.query(ethd);
 
-        // Set the renderer responsible for frame rendering
-        //setRenderer(rend = new GL2JNIView.Renderer(this));
+        // Continuously render frames until the emulator stops
         handler.post(new Runnable() {
             @Override
             public void run() {
                 if (ethd.getState() == Thread.State.TERMINATED)
                     ((Activity)getContext()).finish();
                 else {
-                    JNIdc.rendframe();
+                    JNIdc.rendframeNative();
                     handler.post(this);
                 }
             }
@@ -157,22 +151,22 @@ public class NativeGLView extends SurfaceView {
         JNIdc.vjoy(j+1, vjoy[j+1][0], vjoy[j+1][1], vjoy[j+1][2], vjoy[j+1][3]);
     }
 
-    int get_anal(int j, int axis)
+    private int get_anal(int j, int axis)
     {
         return (int) (((vjoy[j+1][axis]+vjoy[j+1][axis+2]/2) - vjoy[j][axis] - vjoy[j][axis+2]/2)*254/vjoy[j][axis+2]);
     }
 
-    float vbase(float p, float m, float scl)
+    private float vbase(float p, float m, float scl)
     {
         return (int) ( m - (m -p)*scl);
     }
 
-    float vbase(float p, float scl)
+    private float vbase(float p, float scl)
     {
         return (int) (p*scl );
     }
 
-    public boolean isTablet() {
+    private boolean isTablet() {
         return (getContext().getResources().getConfiguration().screenLayout
                 & Configuration.SCREENLAYOUT_SIZE_MASK)
                 >= Configuration.SCREENLAYOUT_SIZE_LARGE;
@@ -215,7 +209,7 @@ public class NativeGLView extends SurfaceView {
         VJoy.writeCustomVjoyValues(vjoy_d_custom, context);
     }
 
-    int anal_id=-1, lt_id=-1, rt_id=-1;
+    private int anal_id=-1, lt_id=-1, rt_id=-1;
 
     public void resetEditMode() {
         editLastX = 0;
@@ -239,12 +233,12 @@ public class NativeGLView extends SurfaceView {
             return 0; // DPAD diagonials
     }
 
-    public static int left_trigger = 0;
-    public static int right_trigger = 0;
-    public static int[] mouse_pos = { -32768, -32768 };
-    public static int mouse_btns = 0;
+    private static int left_trigger = 0;
+    private static int right_trigger = 0;
+    private static int[] mouse_pos = { -32768, -32768 };
+    private static int mouse_btns = 0;
 
-    float editLastX = 0, editLastY = 0;
+    private float editLastX = 0, editLastY = 0;
 
     @Override public boolean onTouchEvent(final MotionEvent event)
     {
@@ -459,6 +453,37 @@ public class NativeGLView extends SurfaceView {
         return(true);
     }
 
+    @Override
+    public boolean hasSound() {
+        return !Emulator.nosound;
+    }
+
+    @Override
+    public void reiosInfo(String reiosId, String reiosSoftware) {
+        if (fileName != null) {
+            String gameId = reiosId.replaceAll("[^a-zA-Z0-9]+", "").toLowerCase();
+            SharedPreferences mPrefs = context.getSharedPreferences(gameId, Activity.MODE_PRIVATE);
+            Emulator app = (Emulator) context.getApplicationContext();
+            app.loadGameConfiguration(gameId);
+            mPrefs.edit().putString(Config.game_title, reiosSoftware.trim()).apply();
+        }
+    }
+
+    @Override
+    public void postMessage(final String msg) {
+        handler.post(new Runnable() {
+            public void run() {
+                Log.d(context.getPackageName(), msg);
+                Toast.makeText(context, msg, Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    @Override
+    public void finish() {
+        ((Activity) context).finish();
+    }
+
     private class OscOnScaleGestureListener extends
             ScaleGestureDetector.SimpleOnScaleGestureListener {
 
@@ -477,109 +502,6 @@ public class NativeGLView extends SurfaceView {
         @Override
         public void onScaleEnd(ScaleGestureDetector detector) {
             selectedVjoyElement = -1;
-        }
-    }
-
-    class EmuThread extends Thread
-    {
-        AudioTrack Player;
-        long pos;	//write position
-        long size;	//size in frames
-        private boolean sound;
-
-        EmuThread(boolean sound) {
-            this.sound = sound;
-        }
-
-        @Override public void run()
-        {
-            if (sound) {
-                int min=AudioTrack.getMinBufferSize(44100,AudioFormat.CHANNEL_OUT_STEREO,AudioFormat.ENCODING_PCM_16BIT);
-
-                if (2048>min)
-                    min=2048;
-
-                Player = new AudioTrack(
-                        AudioManager.STREAM_MUSIC,
-                        44100,
-                        AudioFormat.CHANNEL_OUT_STEREO,
-                        AudioFormat.ENCODING_PCM_16BIT,
-                        min,
-                        AudioTrack.MODE_STREAM
-                );
-
-                size=min/4;
-                pos=0;
-
-                Log.i("audcfg", "Audio streaming: buffer size " + min + " samples / " + min/44100.0 + " ms");
-                Player.play();
-            }
-
-            Log.i("NativeGLView", "Running emulator");
-            JNIdc.run(this);
-        }
-
-        int WriteBuffer(short[] samples, int wait)
-        {
-            if (sound) {
-                int newdata=samples.length/2;
-
-                if (wait==0)
-                {
-                    //user bytes = write-read
-                    //available = size - (write - play)
-                    long used=pos-Player.getPlaybackHeadPosition();
-                    long avail=size-used;
-
-                    //Log.i("audcfg", "u: " + used + " a: " + avail);
-                    if (avail<newdata)
-                        return 0;
-                }
-
-                pos+=newdata;
-
-                Player.write(samples, 0, samples.length);
-            }
-
-            return 1;
-        }
-
-        void showMessage(final String msg) {
-            handler.post(new Runnable() {
-                public void run() {
-                    Log.d(context.getPackageName(), msg);
-                    Toast.makeText(context, msg, Toast.LENGTH_SHORT).show();
-                }
-            });
-        }
-
-        int coreMessage(byte[] msg) {
-            try {
-                showMessage(new String(msg, "UTF-8"));
-            }
-            catch (UnsupportedEncodingException e) {
-                showMessage("coreMessage: Failed to display error");
-            }
-            return 1;
-        }
-
-        void Die() {
-            showMessage("Something went wrong and reicast crashed.\nPlease report this on the reicast forums.");
-            ((Activity) context).finish();
-        }
-
-        void reiosInfo(String reiosId, String reiosSoftware) {
-            if (fileName != null) {
-                String gameId = reiosId.replaceAll("[^a-zA-Z0-9]+", "").toLowerCase();
-                SharedPreferences mPrefs = context.getSharedPreferences(gameId, Activity.MODE_PRIVATE);
-                Emulator app = (Emulator) context.getApplicationContext();
-                app.loadGameConfiguration(gameId);
-//                if (context instanceof GL2JNIActivity)
-//                    ((GL2JNIActivity) context).getPad().joystick[0] = mPrefs.getBoolean(
-//                            Gamepad.pref_js_merged + "_A",
-//                            ((GL2JNIActivity) context).getPad().joystick[0]);
-                mPrefs.edit().putString(Config.game_title, reiosSoftware.trim()).apply();
-            }
         }
     }
 
