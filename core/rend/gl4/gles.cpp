@@ -857,7 +857,7 @@ static bool RenderFrame()
 				// Add x offset for aspect ratio > 4/3
             	min_x = min_x * dc2s_scale_h + ds2s_offs_x;
 				// Invert y coordinates when rendering to screen
-				min_y = screen_height - (min_y + height) * dc2s_scale_h;
+				min_y = screen_height * screen_scaling - (min_y + height) * dc2s_scale_h;
 				width *= dc2s_scale_h;
 				height *= dc2s_scale_h;
 

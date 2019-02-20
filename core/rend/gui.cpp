@@ -540,12 +540,9 @@ static void gui_display_settings()
     if (!settings_opening)
     	ImGui_ImplOpenGL3_DrawBackground();
 
-    ImGui::SetNextWindowPos(ImVec2(screen_width / 2.f, screen_height / 2.f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
-    if (scaling < 1.5f)
-    	ImGui::SetNextWindowSize(ImVec2(screen_height / 480.f * 640.f * 90.f / 100.f, screen_height * 90.f / 100.f));
-    else
-    	// Use the entire screen width
-    	ImGui::SetNextWindowSize(ImVec2(screen_width * 90.f / 100.f, screen_height * 90.f / 100.f));
+	ImGui::SetNextWindowPos(ImVec2(0, 0));
+	ImGui::SetNextWindowSize(ImVec2(screen_width, screen_height));
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
 
     ImGui::Begin("Settings", NULL, /*ImGuiWindowFlags_AlwaysAutoResize |*/ ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
 	ImVec2 normal_padding = ImGui::GetStyle().FramePadding;
@@ -887,6 +884,7 @@ static void gui_display_settings()
     }
     ImGui::PopStyleVar();
     ImGui::End();
+    ImGui::PopStyleVar();
 
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData(), false);
