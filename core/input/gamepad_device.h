@@ -51,7 +51,7 @@ public:
 	}
 	InputMapping *get_input_mapping() { return input_mapper; }
 	void save_mapping();
-	bool remappable() { return _remappable; }
+	bool remappable() { return _remappable && input_mapper != NULL; }
 
 	static void Register(std::shared_ptr<GamepadDevice> gamepad)
 	{

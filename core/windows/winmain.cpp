@@ -2,6 +2,7 @@
 #include "oslib\audiostream.h"
 #include "imgread\common.h"
 #include "rend\gui.h"
+#include "xinput_gamepad.h"
 
 #define _WIN32_WINNT 0x0500
 #include <windows.h>
@@ -122,6 +123,7 @@ void os_SetupInput()
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST
 	mcfg_CreateDevices();
 #endif
+	XInputGamepadDevice::CreateDevices();
 }
 
 LONG ExeptionHandler(EXCEPTION_POINTERS *ExceptionInfo)
@@ -293,40 +295,10 @@ void UpdateInputState(u32 port)
 }
 
 void UpdateController(u32 port)
-	{
-		XINPUT_STATE state;
-
-		if (XInputGetState(port, &state) == 0)
-		{
-			WORD xbutton = state.Gamepad.wButtons;
-
-			if (xbutton & XINPUT_GAMEPAD_A)
-				kcode[port] &= ~key_CONT_A;
-			if (xbutton & XINPUT_GAMEPAD_B)
-				kcode[port] &= ~key_CONT_B;
-			if (xbutton & XINPUT_GAMEPAD_Y)
-				kcode[port] &= ~key_CONT_Y;
-			if (xbutton & XINPUT_GAMEPAD_X)
-				kcode[port] &= ~key_CONT_X;
-
-			if (xbutton & XINPUT_GAMEPAD_START)
-				kcode[port] &= ~key_CONT_START;
-
-			if (xbutton & XINPUT_GAMEPAD_DPAD_UP)
-				kcode[port] &= ~key_CONT_DPAD_UP;
-			if (xbutton & XINPUT_GAMEPAD_DPAD_DOWN)
-				kcode[port] &= ~key_CONT_DPAD_DOWN;
-			if (xbutton & XINPUT_GAMEPAD_DPAD_LEFT)
-				kcode[port] &= ~key_CONT_DPAD_LEFT;
-			if (xbutton & XINPUT_GAMEPAD_DPAD_RIGHT)
-				kcode[port] &= ~key_CONT_DPAD_RIGHT;
-
-			lt[port] |= state.Gamepad.bLeftTrigger;
-			rt[port] |= state.Gamepad.bRightTrigger;
-
-			joyx[port] |=  state.Gamepad.sThumbLX / 257;
-			joyy[port] |= -state.Gamepad.sThumbLY / 257;
-		}
+{
+	std::shared_ptr<XInputGamepadDevice> gamepad = XInputGamepadDevice::GetXInputDevice(port);
+	if (gamepad != NULL)
+		gamepad->ReadInput();
 	}
 
 void UpdateVibration(u32 port, u32 value)

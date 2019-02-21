@@ -1,6 +1,5 @@
 #include "../input/gamepad_device.h"
 #include "evdev.h"
-#include "rend/gui.h"
 
 class EvdevGamepadDevice : public GamepadDevice
 {

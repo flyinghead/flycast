@@ -55,10 +55,12 @@ bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 		switch (key)
 		{
 		case EMU_BTN_ESCAPE:
-			dc_stop();
+			if (pressed)
+				dc_stop();
 			break;
 		case EMU_BTN_MENU:
-			gui_open_settings();
+			if (pressed)
+				gui_open_settings();
 			break;
 		case EMU_BTN_TRIGGER_LEFT:
 			lt[_maple_port] = pressed ? 255 : 0;

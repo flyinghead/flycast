@@ -418,17 +418,21 @@ static void detect_input_popup(int index, bool analog)
 		ImGui::Text("Time out in %d s", (int)(5 - (now - map_start_time)));
 		if (mapped_code != -1)
 		{
-			if (analog)
+			InputMapping *input_mapping = mapped_device->get_input_mapping();
+			if (input_mapping != NULL)
 			{
-				u32 previous_mapping = mapped_device->get_input_mapping()->get_axis_code(axis_keys[index]);
-				bool inverted = false;
-				if (previous_mapping != -1)
-					inverted = mapped_device->get_input_mapping()->get_axis_inverted(previous_mapping);
-				// FIXME Allow inverted to be set
-				mapped_device->get_input_mapping()->set_axis(axis_keys[index], mapped_code, inverted);
+				if (analog)
+				{
+					u32 previous_mapping = input_mapping->get_axis_code(axis_keys[index]);
+					bool inverted = false;
+					if (previous_mapping != -1)
+						inverted = input_mapping->get_axis_inverted(previous_mapping);
+					// FIXME Allow inverted to be set
+					input_mapping->set_axis(axis_keys[index], mapped_code, inverted);
+				}
+				else
+					input_mapping->set_button(button_keys[index], mapped_code);
 			}
-			else
-				mapped_device->get_input_mapping()->set_button(button_keys[index], mapped_code);
 			mapped_device = NULL;
 			ImGui::CloseCurrentPopup();
 		}
@@ -456,7 +460,8 @@ static void controller_mapping_popup(std::shared_ptr<GamepadDevice> gamepad)
 				- (col0_width + ImGui::GetStyle().ItemSpacing.x)
 				- (ImGui::CalcTextSize("Map").x + ImGui::GetStyle().FramePadding.x * 2.0f + ImGui::GetStyle().ItemSpacing.x);
 
-		if (ImGui::Button("Done", ImVec2(100 * scaling, 30 * scaling)))
+		InputMapping *input_mapping = gamepad->get_input_mapping();
+		if (input_mapping == NULL || ImGui::Button("Done", ImVec2(100 * scaling, 30 * scaling)))
 		{
 			ImGui::CloseCurrentPopup();
 			gamepad->save_mapping();
@@ -477,7 +482,7 @@ static void controller_mapping_popup(std::shared_ptr<GamepadDevice> gamepad)
 			ImGui::PushID(key_id);
 			ImGui::Text("%s", button_names[j]);
 			ImGui::NextColumn();
-			u32 code = gamepad->get_input_mapping()->get_button_code(button_keys[j]);
+			u32 code = input_mapping->get_button_code(button_keys[j]);
 			if (code != -1)
 				ImGui::Text("%d", code);
 			ImGui::NextColumn();
@@ -511,7 +516,7 @@ static void controller_mapping_popup(std::shared_ptr<GamepadDevice> gamepad)
 			ImGui::PushID(key_id);
 			ImGui::Text("%s", axis_names[j]);
 			ImGui::NextColumn();
-			u32 code = gamepad->get_input_mapping()->get_axis_code(axis_keys[j]);
+			u32 code = input_mapping->get_axis_code(axis_keys[j]);
 			if (code != -1)
 				ImGui::Text("%d", code);
 			ImGui::NextColumn();
