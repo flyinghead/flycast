@@ -436,6 +436,10 @@ void dc_run()
     	sh4_cpu.Run();
         mtx_mainloop.Unlock() ;
 
+#ifdef _WIN32
+        // Avoid the looping audio when the emulator is paused
+        TermAudio();
+#endif
         while (!resume_mainloop.Wait(20))
         	os_DoEvents();
         resume_mainloop.Set();
@@ -456,6 +460,9 @@ void dc_run()
     	}
     	if (!continue_running)
     		break ;
+#ifdef _WIN32
+    	InitAudio();
+#endif
     }
 }
 #endif
