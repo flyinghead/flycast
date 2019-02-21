@@ -1,8 +1,8 @@
 #include "oslib\oslib.h"
 #include "oslib\audiostream.h"
 #include "imgread\common.h"
-#include "rend\gui.h"
 #include "xinput_gamepad.h"
+#include "win_keyboard.h"
 
 #define _WIN32_WINNT 0x0500
 #include <windows.h>
@@ -107,23 +107,24 @@ PCHAR*
 }
 
 void dc_stop(void);
-void dc_savestate();
-void dc_loadstate();
 
 bool VramLockedWrite(u8* address);
 bool ngen_Rewrite(unat& addr,unat retadr,unat acc);
 bool BM_LockedWrite(u8* address);
-void UpdateController(u32 port);
 
-static void init_kb_map();
+static std::shared_ptr<WinKbGamepadDevice> kb_gamepad;
+static std::shared_ptr<WinMouseGamepadDevice> mouse_gamepad;
 
 void os_SetupInput()
 {
-	init_kb_map();
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST
 	mcfg_CreateDevices();
 #endif
 	XInputGamepadDevice::CreateDevices();
+	kb_gamepad = std::make_shared<WinKbGamepadDevice>(0);
+	GamepadDevice::Register(kb_gamepad);
+	mouse_gamepad = std::make_shared<WinMouseGamepadDevice>(0);
+	GamepadDevice::Register(mouse_gamepad);
 }
 
 LONG ExeptionHandler(EXCEPTION_POINTERS *ExceptionInfo)
@@ -194,7 +195,7 @@ int msgboxf(const wchar* text,unsigned int type,...)
 }
 
 // Gamepads
-u16 kcode[4];
+u16 kcode[4] = { 0xffff, 0xffff, 0xffff, 0xffff };
 u32 vks[4];
 s8 joyx[4],joyy[4];
 u8 rt[4],lt[4];
@@ -205,101 +206,35 @@ extern s32 mo_x_abs;
 extern s32 mo_y_abs;
 extern u32 mo_buttons;
 // Keyboard
-static u32 kb_used = 0;
-extern u8 kb_key[6];		// normal keys pressed
-extern u8 kb_shift; 		// shift keys pressed (bitmask)
-static u8 kb_map[256];
-// Used to differentiate between main enter key and num keypad one
-#define VK_NUMPAD_RETURN 0x0E
+static Win32KeyboardDevice keyboard(0);
 
-#define key_CONT_C            (1 << 0)
-#define key_CONT_B            (1 << 1)
-#define key_CONT_A            (1 << 2)
-#define key_CONT_START        (1 << 3)
-#define key_CONT_DPAD_UP      (1 << 4)
-#define key_CONT_DPAD_DOWN    (1 << 5)
-#define key_CONT_DPAD_LEFT    (1 << 6)
-#define key_CONT_DPAD_RIGHT   (1 << 7)
-#define key_CONT_Z            (1 << 8)
-#define key_CONT_Y            (1 << 9)
-#define key_CONT_X            (1 << 10)
-#define key_CONT_D            (1 << 11)
-#define key_CONT_DPAD2_UP     (1 << 12)
-#define key_CONT_DPAD2_DOWN   (1 << 13)
-#define key_CONT_DPAD2_LEFT   (1 << 14)
-#define key_CONT_DPAD2_RIGHT  (1 << 15)
 void UpdateInputState(u32 port)
-	{
-		//joyx[port]=pad.Lx;
-		//joyy[port]=pad.Ly;
-		lt[port]=GetAsyncKeyState('A')?255:0;
-		rt[port]=GetAsyncKeyState('S')?255:0;
-
-		joyx[port]=joyy[port]=0;
-
-		if (GetAsyncKeyState('J'))
-			joyx[port]-=126;
-		if (GetAsyncKeyState('L'))
-			joyx[port]+=126;
-
-		if (GetAsyncKeyState('I'))
-			joyy[port]-=126;
-		if (GetAsyncKeyState('K'))
-			joyy[port]+=126;
-
-		kcode[port]=0xFFFF;
-		if (GetAsyncKeyState('V'))
-			kcode[port]&=~key_CONT_A;
-		if (GetAsyncKeyState('C'))
-			kcode[port]&=~key_CONT_B;
-		if (GetAsyncKeyState('X'))
-			kcode[port]&=~key_CONT_Y;
-		if (GetAsyncKeyState('Z'))
-			kcode[port]&=~key_CONT_X;
-
-		if (GetAsyncKeyState(VK_SHIFT))
-			kcode[port]&=~key_CONT_START;
-
-		if (GetAsyncKeyState(VK_UP))
-			kcode[port]&=~key_CONT_DPAD_UP;
-		if (GetAsyncKeyState(VK_DOWN))
-			kcode[port]&=~key_CONT_DPAD_DOWN;
-		if (GetAsyncKeyState(VK_LEFT))
-			kcode[port]&=~key_CONT_DPAD_LEFT;
-		if (GetAsyncKeyState(VK_RIGHT))
-			kcode[port]&=~key_CONT_DPAD_RIGHT;
-
-		UpdateController(port);
-
-		if (GetAsyncKeyState(VK_F1))
-			settings.pvr.ta_skip = 100;
-
-//		if (GetAsyncKeyState(VK_F2))
-//			settings.pvr.ta_skip = 0;
-		if (GetAsyncKeyState(VK_F2))
-			dc_savestate();
-		if (GetAsyncKeyState(VK_F4))
-			dc_loadstate();
-
-
-		if (GetAsyncKeyState(VK_F10))
-			DiscSwap();
-		if (GetAsyncKeyState(VK_ESCAPE))
-			dc_stop();
-#if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
-		coin_chute = GetAsyncKeyState(VK_F8);
-		naomi_test_button = GetAsyncKeyState(VK_F7);
-#endif
-		if (GetAsyncKeyState(VK_TAB))
-			gui_open_settings();
-}
-
-void UpdateController(u32 port)
 {
+	/*
+		 Disabled for now. Need new EMU_BTN_ANA_LEFT/RIGHT/.. virtual controller keys
+
+	joyx[port]=joyy[port]=0;
+
+	if (GetAsyncKeyState('J'))
+		joyx[port]-=126;
+	if (GetAsyncKeyState('L'))
+		joyx[port]+=126;
+
+	if (GetAsyncKeyState('I'))
+		joyy[port]-=126;
+	if (GetAsyncKeyState('K'))
+		joyy[port]+=126;
+	*/
 	std::shared_ptr<XInputGamepadDevice> gamepad = XInputGamepadDevice::GetXInputDevice(port);
 	if (gamepad != NULL)
 		gamepad->ReadInput();
-	}
+
+#if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
+		// FIXME
+		coin_chute = GetAsyncKeyState(VK_F8);
+		naomi_test_button = GetAsyncKeyState(VK_F7);
+#endif
+}
 
 void UpdateVibration(u32 port, u32 value)
 {
@@ -359,6 +294,28 @@ LRESULT CALLBACK WndProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_MBUTTONUP:
 	case WM_RBUTTONDOWN:
 	case WM_RBUTTONUP:
+		switch (message)
+		{
+		case WM_LBUTTONDOWN:
+			mouse_gamepad->gamepad_btn_input(0, true);
+			break;
+		case WM_LBUTTONUP:
+			mouse_gamepad->gamepad_btn_input(0, false);
+			break;
+		case WM_MBUTTONDOWN:
+			mouse_gamepad->gamepad_btn_input(1, true);
+			break;
+		case WM_MBUTTONUP:
+			mouse_gamepad->gamepad_btn_input(1, false);
+			break;
+		case WM_RBUTTONDOWN:
+			mouse_gamepad->gamepad_btn_input(2, true);
+			break;
+		case WM_RBUTTONUP:
+			mouse_gamepad->gamepad_btn_input(2, false);
+			break;
+		}
+		/* no break */
 	case WM_MOUSEMOVE:
 		{
 			int xPos = GET_X_LPARAM(lParam);
@@ -377,59 +334,17 @@ LRESULT CALLBACK WndProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 	case WM_KEYDOWN:
 	case WM_KEYUP:
-		if (wParam == VK_SHIFT)
-		{
-			if (message == WM_KEYDOWN)
-				kb_shift |= 0x02 | 0x20;
-			else
-				kb_shift &= ~(0x02 | 0x20);
-		}
-		else if (wParam == VK_CONTROL)
-		{
-			if (message == WM_KEYDOWN)
-				kb_shift |= 0x01 | 0x10;
-			else
-				kb_shift &= ~(0x01 | 0x10);
-		}
-		else
 		{
 			u8 keycode;
-			if (wParam == VK_RETURN && (lParam & (1 << 24) != 0))
+			// bit 24 indicates whether the key is an extended key, such as the right-hand ALT and CTRL keys that appear on an enhanced 101- or 102-key keyboard.
+			// (It also distinguishes between the main Return key and the numeric keypad Enter key)
+			// The value is 1 if it is an extended key; otherwise, it is 0.
+			if (wParam == VK_RETURN && ((lParam & (1 << 24)) != 0))
 				keycode = VK_NUMPAD_RETURN;
 			else
 				keycode = wParam & 0xff;
-			u8 dc_keycode = kb_map[keycode];
-			if (dc_keycode != 0)
-			{
-				if (message == WM_KEYDOWN)
-				{
-					if (kb_used < ARRAY_SIZE(kb_key))
-					{
-						bool found = false;
-						for (int i = 0; !found && i < kb_used; i++)
-						{
-							if (kb_key[i] == dc_keycode)
-								found = true;
-						}
-						if (!found)
-							kb_key[kb_used++] = dc_keycode;
-					}
-				}
-				else
-				{
-					for (int i = 0; i < kb_used; i++)
-					{
-						if (kb_key[i] == dc_keycode)
-						{
-							kb_used--;
-							for (int j = i; j < ARRAY_SIZE(kb_key) - 1; j++)
-								kb_key[j] = kb_key[j + 1];
-							kb_key[ARRAY_SIZE(kb_key) - 1] = 0;
-							break;
-						}
-					}
-				}
-			}
+			kb_gamepad->gamepad_btn_input(keycode, message == WM_KEYDOWN);
+			keyboard.keyboard_input(keycode, message == WM_KEYDOWN);
 		}
 		break;
 
@@ -892,136 +807,3 @@ void VArray2::UnLockRegion(u32 offset,u32 size)
 
 int get_mic_data(u8* buffer) { return 0; }
 int push_vmu_screen(u8* buffer) { return 0; }
-
-static void init_kb_map()
-{
-	//04-1D Letter keys A-Z (in alphabetic order)
-	kb_map['A'] = 0x04;
-	kb_map['B'] = 0x05;
-	kb_map['C'] = 0x06;
-	kb_map['D'] = 0x07;
-	kb_map['E'] = 0x08;
-	kb_map['F'] = 0x09;
-	kb_map['G'] = 0x0A;
-	kb_map['H'] = 0x0B;
-	kb_map['I'] = 0x0C;
-	kb_map['J'] = 0x0D;
-	kb_map['K'] = 0x0E;
-	kb_map['L'] = 0x0F;
-	kb_map['M'] = 0x10;
-	kb_map['N'] = 0x11;
-	kb_map['O'] = 0x12;
-	kb_map['P'] = 0x13;
-	kb_map['Q'] = 0x14;
-	kb_map['R'] = 0x15;
-	kb_map['S'] = 0x16;
-	kb_map['T'] = 0x17;
-	kb_map['U'] = 0x18;
-	kb_map['V'] = 0x19;
-	kb_map['W'] = 0x1A;
-	kb_map['X'] = 0x1B;
-	kb_map['Y'] = 0x1C;
-	kb_map['Z'] = 0x1D;
-
-	//1E-27 Number keys 1-0
-	kb_map['1'] = 0x1E;
-	kb_map['2'] = 0x1F;
-	kb_map['3'] = 0x20;
-	kb_map['4'] = 0x21;
-	kb_map['5'] = 0x22;
-	kb_map['6'] = 0x23;
-	kb_map['7'] = 0x24;
-	kb_map['8'] = 0x25;
-	kb_map['9'] = 0x26;
-	kb_map['0'] = 0x27;
-
-	kb_map[VK_RETURN] = 0x28;
-	kb_map[VK_ESCAPE] = 0x29;
-	kb_map[VK_BACK] = 0x2A;
-	kb_map[VK_TAB] = 0x2B;
-	kb_map[VK_SPACE] = 0x2C;
-
-	kb_map[VK_OEM_MINUS] = 0x2D;	// -
-	kb_map[VK_OEM_PLUS] = 0x2E;	// =
-	kb_map[VK_OEM_4] = 0x2F;	// [
-	kb_map[VK_OEM_6] = 0x30;	// ]
-
-	kb_map[VK_OEM_5] = 0x31;	// \ (US) unsure of keycode
-
-	//32-34 "]", ";" and ":" (the 3 keys right of L)
-	kb_map[VK_OEM_8] = 0x32;	// ~ (non-US) *,µ in FR layout
-	kb_map[VK_OEM_1] = 0x33;	// ;
-	kb_map[VK_OEM_7] = 0x34;	// '
-
-	//35 hankaku/zenkaku / kanji (top left)
-	kb_map[VK_OEM_3] = 0x35;	// `~ (US)
-
-	//36-38 ",", "." and "/" (the 3 keys right of M)
-	kb_map[VK_OEM_COMMA] = 0x36;
-	kb_map[VK_OEM_PERIOD] = 0x37;
-	kb_map[VK_OEM_2] = 0x38;
-
-	// CAPSLOCK
-	kb_map[VK_CAPITAL] = 0x39;
-
-	//3A-45 Function keys F1-F12
-	for (int i = 0;i < 12; i++)
-		kb_map[VK_F1 + i] = 0x3A + i;
-
-	//46-4E Control keys above cursor keys
-	kb_map[VK_SNAPSHOT] = 0x46;		// Print Screen
-	kb_map[VK_SCROLL] = 0x47;		// Scroll Lock
-	kb_map[VK_PAUSE] = 0x48;		// Pause
-	kb_map[VK_INSERT] = 0x49;
-	kb_map[VK_HOME] = 0x4A;
-	kb_map[VK_PRIOR] = 0x4B;
-	kb_map[VK_DELETE] = 0x4C;
-	kb_map[VK_END] = 0x4D;
-	kb_map[VK_NEXT] = 0x4E;
-
-	//4F-52 Cursor keys
-	kb_map[VK_RIGHT] = 0x4F;
-	kb_map[VK_LEFT] = 0x50;
-	kb_map[VK_DOWN] = 0x51;
-	kb_map[VK_UP] = 0x52;
-
-	//53 Num Lock (Numeric keypad)
-	kb_map[VK_NUMLOCK] = 0x53;
-	//54 "/" (Numeric keypad)
-	kb_map[VK_DIVIDE] = 0x54;
-	//55 "*" (Numeric keypad)
-	kb_map[VK_MULTIPLY] = 0x55;
-	//56 "-" (Numeric keypad)
-	kb_map[VK_SUBTRACT] = 0x56;
-	//57 "+" (Numeric keypad)
-	kb_map[VK_ADD] = 0x57;
-	//58 Enter (Numeric keypad)
-	kb_map[VK_NUMPAD_RETURN] = 0x58;
-	//59-62 Number keys 1-0 (Numeric keypad)
-	kb_map[VK_NUMPAD1] = 0x59;
-	kb_map[VK_NUMPAD2] = 0x5A;
-	kb_map[VK_NUMPAD3] = 0x5B;
-	kb_map[VK_NUMPAD4] = 0x5C;
-	kb_map[VK_NUMPAD5] = 0x5D;
-	kb_map[VK_NUMPAD6] = 0x5E;
-	kb_map[VK_NUMPAD7] = 0x5F;
-	kb_map[VK_NUMPAD8] = 0x60;
-	kb_map[VK_NUMPAD9] = 0x61;
-	kb_map[VK_NUMPAD0] = 0x62;
-	//63 "." (Numeric keypad)
-	kb_map[VK_DECIMAL] = 0x63;
-	//64 #| (non-US)
-	//kb_map[94] = 0x64;
-	//65 S3 key
-	//66-A4 Not used
-	//A5-DF Reserved
-	//E0 Left Control
-	//E1 Left Shift
-	//E2 Left Alt
-	//E3 Left S1
-	//E4 Right Control
-	//E5 Right Shift
-	//E6 Right Alt
-	//E7 Right S3
-	//E8-FF Reserved
-}

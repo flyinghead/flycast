@@ -1,5 +1,6 @@
-#include "../input/gamepad_device.h"
 #include <Xinput.h>
+#include "input/gamepad_device.h"
+#include "rend/gui.h"
 
 class XInputMapping : public InputMapping
 {
@@ -46,23 +47,56 @@ public:
 			if (input_mapper == NULL)
 				Open();
 			u32 xbutton = state.Gamepad.wButtons;
+			u32 changes = xbutton ^ last_buttons_state;
 
 			for (int i = 0; i < 16; i++)
+				if ((changes & (1 << i)) != 0)
+					gamepad_btn_input(1 << i, (xbutton & (1 << i)) != 0);
+			last_buttons_state = xbutton;
+
+			if (state.Gamepad.bLeftTrigger != last_left_trigger)
 			{
-				gamepad_btn_input(1 << i, (xbutton & (1 << i)) != 0);
+				gamepad_axis_input(0, state.Gamepad.bLeftTrigger);
+				last_left_trigger = state.Gamepad.bLeftTrigger;
 			}
-			gamepad_axis_input(0, state.Gamepad.bLeftTrigger);
-			gamepad_axis_input(1, state.Gamepad.bRightTrigger);
-			gamepad_axis_input(2, state.Gamepad.sThumbLX);
-			gamepad_axis_input(3, state.Gamepad.sThumbLY);
-			gamepad_axis_input(4, state.Gamepad.sThumbRX);
-			gamepad_axis_input(5, state.Gamepad.sThumbRY);
+			if (state.Gamepad.bRightTrigger != last_right_trigger)
+			{
+				gamepad_axis_input(1, state.Gamepad.bRightTrigger);
+				last_right_trigger = state.Gamepad.bRightTrigger;
+			}
+			if (state.Gamepad.sThumbLX != last_left_thumb_x)
+			{
+				gamepad_axis_input(2, state.Gamepad.sThumbLX);
+				last_left_thumb_x = state.Gamepad.sThumbLX;
+			}
+			if (state.Gamepad.sThumbLY != last_left_thumb_y)
+			{
+				gamepad_axis_input(3, state.Gamepad.sThumbLY);
+				last_left_thumb_y = state.Gamepad.sThumbLY;
+			}
+			if (state.Gamepad.sThumbRX != last_right_thumb_x)
+			{
+				gamepad_axis_input(4, state.Gamepad.sThumbRX);
+				last_right_thumb_x = state.Gamepad.sThumbRX;
+			}
+			if (state.Gamepad.sThumbRY != last_right_thumb_y)
+			{
+				gamepad_axis_input(5, state.Gamepad.sThumbRY);
+				last_right_thumb_y = state.Gamepad.sThumbRY;
+			}
 		}
 		else if (input_mapper != NULL)
 		{
 			printf("xinput: Controller '%s' on port %d disconnected\n", _name.c_str(), _xinput_port);
 			GamepadDevice::Unregister(xinput_gamepads[_xinput_port]);
 			input_mapper = NULL;
+			last_buttons_state = 0;
+			last_left_trigger = 0;
+			last_right_trigger = 0;
+			last_left_thumb_x = 0;
+			last_left_thumb_y = 0;
+			last_right_thumb_x = 0;
+			last_right_thumb_y = 0;
 		}
 	}
 
@@ -121,7 +155,86 @@ protected:
 private:
 
 	const int _xinput_port;
+	u32 last_buttons_state = 0;
+	u8 last_left_trigger = 0;
+	u8 last_right_trigger = 0;
+	s16 last_left_thumb_x = 0;
+	s16 last_left_thumb_y = 0;
+	s16 last_right_thumb_x = 0;
+	s16 last_right_thumb_y = 0;
 	static std::vector<std::shared_ptr<XInputGamepadDevice>> xinput_gamepads;
 };
 
 std::vector<std::shared_ptr<XInputGamepadDevice>> XInputGamepadDevice::xinput_gamepads(XUSER_MAX_COUNT);
+
+class KbInputMapping : public InputMapping
+{
+public:
+	KbInputMapping()
+	{
+		name = "Windows Keyboard";
+		set_button(DC_BTN_A, 'X');
+		set_button(DC_BTN_B, 'C');
+		set_button(DC_BTN_X, 'S');
+		set_button(DC_BTN_Y, 'D');
+		set_button(DC_DPAD_UP, VK_UP);
+		set_button(DC_DPAD_DOWN, VK_DOWN);
+		set_button(DC_DPAD_LEFT, VK_LEFT);
+		set_button(DC_DPAD_RIGHT, VK_RIGHT);
+		set_button(DC_BTN_START, VK_RETURN);
+		set_button(EMU_BTN_TRIGGER_LEFT, 'F');
+		set_button(EMU_BTN_TRIGGER_RIGHT, 'V');
+		set_button(EMU_BTN_MENU, VK_TAB);
+
+		dirty = false;
+	}
+};
+
+class WinKbGamepadDevice : public GamepadDevice
+{
+public:
+	WinKbGamepadDevice(int maple_port) : GamepadDevice(maple_port, "win32")
+	{
+		_name = "Keyboard";
+		if (!find_mapping())
+			input_mapper = new KbInputMapping();
+	}
+	virtual ~WinKbGamepadDevice() {}
+};
+
+class MouseInputMapping : public InputMapping
+{
+public:
+	MouseInputMapping()
+	{
+		name = "Mouse";
+		set_button(DC_BTN_A, 0);	// Left
+		set_button(DC_BTN_B, 2);	// Right
+		set_button(DC_BTN_START, 1);// Middle
+
+		dirty = false;
+	}
+};
+
+class WinMouseGamepadDevice : public GamepadDevice
+{
+public:
+	WinMouseGamepadDevice(int maple_port) : GamepadDevice(maple_port, "win32")
+	{
+		_name = "Mouse";
+		if (!find_mapping())
+			input_mapper = new MouseInputMapping();
+	}
+	virtual ~WinMouseGamepadDevice() {}
+	bool gamepad_btn_input(u32 code, bool pressed) override
+	{
+		if (gui_is_open())
+			// Don't register mouse clicks as gamepad presses when gui is open
+			// This makes the gamepad presses to be handled first and the mouse position to be ignored
+			// TODO Make this generic
+			return false;
+		else
+			return GamepadDevice::gamepad_btn_input(code, pressed);
+	}
+};
+

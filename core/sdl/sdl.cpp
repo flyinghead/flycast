@@ -24,8 +24,8 @@ static SDL_GLContext glcontext;
 #endif
 #define WINDOW_HEIGHT  480
 
-static SDLMouseGamepadDevice* sdl_mouse_gamepad = NULL;
-static SDLKbGamepadDevice* sdl_kb_gamepad = NULL;
+static std::shared_ptr<SDLMouseGamepadDevice> sdl_mouse_gamepad;
+static std::shared_ptr<SDLKbGamepadDevice> sdl_kb_gamepad;
 static SDLKeyboardDevice* sdl_keyboard = NULL;
 
 extern void dc_stop();
@@ -76,8 +76,10 @@ void input_sdl_init()
 	SDL_SetRelativeMouseMode(SDL_FALSE);
 
 	sdl_keyboard = new SDLKeyboardDevice(0);
-	sdl_kb_gamepad = new SDLKbGamepadDevice(0);
-	sdl_mouse_gamepad = new SDLMouseGamepadDevice(0);
+	sdl_kb_gamepad = std::make_shared<SDLKbGamepadDevice>(0);
+	GamepadDevice::Register(sdl_kb_gamepad);
+	sdl_mouse_gamepad = std::make_shared<SDLMouseGamepadDevice>(0);
+	GamepadDevice::Register(sdl_mouse_gamepad);
 }
 
 static void set_mouse_position(int x, int y)
