@@ -65,20 +65,24 @@ public:
 		}
 		else
 			printf("using custom mapping '%s'\n", input_mapper->name.c_str());
-		auto it = sdl_gamepads.find(sdl_joystick_instance);
-		if (it != sdl_gamepads.end())
-			delete it->second;
-		sdl_gamepads[sdl_joystick_instance] = this;
 	}
-	virtual ~SDLGamepadDevice() override
+
+	SDL_JoystickID sdl_instance() { return sdl_joystick_instance; }
+
+	void Close()
 	{
 		printf("SDL: Joystick '%s' on port %d disconnected\n", _name.c_str(), maple_port());
 		SDL_JoystickClose(sdl_joystick);
+		GamepadDevice::Unregister(gamepad);
 		sdl_gamepads.erase(sdl_joystick_instance);
 	}
-	SDL_JoystickID sdl_instance() { return sdl_joystick_instance; }
 
-	static SDLGamepadDevice *GetSDLGamepad(SDL_JoystickID id)
+	static void AddSDLGamepad(std::shared_ptr<SDLGamepadDevice> gamepad)
+	{
+		sdl_gamepads[gamepad->sdl_joystick_instance] = gamepad;
+		GamepadDevice::Register(gamepad);
+	}
+	static std::shared_ptr<SDLGamepadDevice> GetSDLGamepad(SDL_JoystickID id)
 	{
 		auto it = sdl_gamepads.find(id);
 		if (it != sdl_gamepads.end())
@@ -97,10 +101,10 @@ protected:
 private:
 	SDL_Joystick* sdl_joystick;
 	SDL_JoystickID sdl_joystick_instance;
-	static std::map<SDL_JoystickID, SDLGamepadDevice*> sdl_gamepads;
+	static std::map<SDL_JoystickID, std::shared_ptr<SDLGamepadDevice>> sdl_gamepads;
 };
 
-std::map<SDL_JoystickID, SDLGamepadDevice*> SDLGamepadDevice::sdl_gamepads;
+std::map<SDL_JoystickID, std::shared_ptr<SDLGamepadDevice>> SDLGamepadDevice::sdl_gamepads;
 
 class KbInputMapping : public InputMapping
 {

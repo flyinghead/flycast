@@ -92,18 +92,13 @@ public:
 		}
 		else
 			printf("using custom mapping '%s'\n", input_mapper->name.c_str());
-		auto it = android_gamepads.find(id);
-		if (it != android_gamepads.end())
-			delete it->second;
-		android_gamepads[id] = this;
 	}
 	virtual ~AndroidGamepadDevice() override
 	{
 		printf("Android: Joystick '%s' on port %d disconnected\n", _name.c_str(), maple_port());
-		android_gamepads.erase(android_id);
 	}
 
-	static AndroidGamepadDevice *GetAndroidGamepad(int id)
+	static std::shared_ptr<AndroidGamepadDevice> GetAndroidGamepad(int id)
 	{
 		auto it = android_gamepads.find(id);
 		if (it != android_gamepads.end())
@@ -111,6 +106,18 @@ public:
 		else
 			return NULL;
 	}
+
+	static void AddAndroidGamepad(std::shared_ptr<AndroidGamepadDevice> gamepad)
+	{
+		android_gamepads[gamepad->android_id] = gamepad;
+		GamepadDevice::Register(gamepad);
+	};
+
+	static void RemoveAndroidGamepad(std::shared_ptr<AndroidGamepadDevice> gamepad)
+	{
+		android_gamepads.erase(gamepad->android_id);
+		GamepadDevice::Unregister(gamepad);
+	};
 
 	void virtual_gamepad_event(int kcode, int joyx, int joyy, int lt, int rt)
 	{
@@ -150,11 +157,11 @@ protected:
 
 private:
 	int android_id;
-	static std::map<int, AndroidGamepadDevice*> android_gamepads;
+	static std::map<int, std::shared_ptr<AndroidGamepadDevice>> android_gamepads;
 	u16 previous_kcode = 0xffff;
 };
 
-std::map<int, AndroidGamepadDevice*> AndroidGamepadDevice::android_gamepads;
+std::map<int, std::shared_ptr<AndroidGamepadDevice>> AndroidGamepadDevice::android_gamepads;
 
 class MouseInputMapping : public InputMapping
 {

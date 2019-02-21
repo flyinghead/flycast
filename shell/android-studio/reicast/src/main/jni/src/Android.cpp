@@ -717,27 +717,28 @@ void os_DebugBreak()
 JNIEXPORT void JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_joystickAdded(JNIEnv *env, jobject obj, jint id, jstring name, jint maple_port)
 {
     const char* joyname = env->GetStringUTFChars(name,0);
-    new AndroidGamepadDevice(maple_port, id, joyname);
+    std::shared_ptr<AndroidGamepadDevice> gamepad = std::make_shared<AndroidGamepadDevice>(maple_port, id, joyname);
+    AndroidGamepadDevice::AddAndroidGamepad(gamepad);
     env->ReleaseStringUTFChars(name, joyname);
 
 }
 JNIEXPORT void JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_joystickRemoved(JNIEnv *env, jobject obj, jint id)
 {
-    AndroidGamepadDevice *device = AndroidGamepadDevice::GetAndroidGamepad(id);
+    std::shared_ptr<AndroidGamepadDevice> device = AndroidGamepadDevice::GetAndroidGamepad(id);
     if (device != NULL)
-    	delete device;
+        AndroidGamepadDevice::RemoveAndroidGamepad(device);
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_virtualGamepadEvent(JNIEnv *env, jobject obj, jint kcode, jint joyx, jint joyy, jint lt, jint rt)
 {
-    AndroidGamepadDevice *device = AndroidGamepadDevice::GetAndroidGamepad(AndroidGamepadDevice::VIRTUAL_GAMEPAD_ID);
+    std::shared_ptr<AndroidGamepadDevice> device = AndroidGamepadDevice::GetAndroidGamepad(AndroidGamepadDevice::VIRTUAL_GAMEPAD_ID);
     if (device != NULL)
         device->virtual_gamepad_event(kcode, joyx, joyy, lt, rt);
 }
 
 JNIEXPORT jboolean JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_joystickButtonEvent(JNIEnv *env, jobject obj, jint id, jint key, jboolean pressed)
 {
-    AndroidGamepadDevice *device = AndroidGamepadDevice::GetAndroidGamepad(id);
+    std::shared_ptr<AndroidGamepadDevice> device = AndroidGamepadDevice::GetAndroidGamepad(id);
     if (device != NULL)
         return device->gamepad_btn_input(key, pressed);
     else
@@ -746,7 +747,7 @@ JNIEXPORT jboolean JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_j
 }
 JNIEXPORT jboolean JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_joystickAxisEvent(JNIEnv *env, jobject obj, jint id, jint key, jint value)
 {
-    AndroidGamepadDevice *device = AndroidGamepadDevice::GetAndroidGamepad(id);
+    std::shared_ptr<AndroidGamepadDevice> device = AndroidGamepadDevice::GetAndroidGamepad(id);
     if (device != NULL)
     	return device->gamepad_axis_input(key, value);
     else

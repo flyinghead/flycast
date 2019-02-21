@@ -397,7 +397,7 @@ static MapleDeviceType maple_expansion_device_type_from_index(int idx)
 	}
 }
 
-static GamepadDevice *mapped_device;
+static std::shared_ptr<GamepadDevice> mapped_device;
 static u32 mapped_code;
 static double map_start_time;
 
@@ -429,16 +429,20 @@ static void detect_input_popup(int index, bool analog)
 			}
 			else
 				mapped_device->get_input_mapping()->set_button(button_keys[index], mapped_code);
+			mapped_device = NULL;
 			ImGui::CloseCurrentPopup();
 		}
 		else if (now - map_start_time >= 5)
+		{
+			mapped_device = NULL;
 			ImGui::CloseCurrentPopup();
+		}
 		ImGui::EndPopup();
 	}
 	ImGui::PopStyleVar(2);
 }
 
-static void controller_mapping_popup(GamepadDevice *gamepad)
+static void controller_mapping_popup(std::shared_ptr<GamepadDevice> gamepad)
 {
 	ImGui::SetNextWindowPos(ImVec2(0, 0));
 	ImGui::SetNextWindowSize(ImVec2(screen_width, screen_height));
@@ -715,8 +719,8 @@ static void gui_display_settings()
 				ImGui::NextColumn();
 				for (int i = 0; i < GamepadDevice::GetGamepadCount(); i++)
 				{
-					GamepadDevice *gamepad = GamepadDevice::GetGamepad(i);
-					if (gamepad == NULL)
+					std::shared_ptr<GamepadDevice> gamepad = GamepadDevice::GetGamepad(i);
+					if (!gamepad)
 						continue;
 					ImGui::Text("%s", gamepad->api_name().c_str());
 					ImGui::NextColumn();

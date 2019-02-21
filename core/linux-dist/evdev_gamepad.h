@@ -54,16 +54,11 @@ public:
 		}
 		else
 			printf("using custom mapping '%s'\n", input_mapper->name.c_str());
-		auto it = evdev_gamepads.find(_devnode);
-		if (it != evdev_gamepads.end())
-			delete it->second;
-		evdev_gamepads[_devnode] = this;
 	}
 	virtual ~EvdevGamepadDevice() override
 	{
 		printf("evdev: Device '%s' on port %d disconnected\n", _name.c_str(), maple_port());
 		close(_fd);
-		evdev_gamepads.erase(_devnode);
 	}
 
 	// FIXME add to base class
@@ -99,7 +94,7 @@ public:
 		}
 	}
 
-	static EvdevGamepadDevice *GetControllerForPort(int port)
+	static std::shared_ptr<EvdevGamepadDevice> GetControllerForPort(int port)
 	{
 		for (auto pair : evdev_gamepads)
 			if (pair.second->maple_port() == port)
@@ -107,7 +102,7 @@ public:
 		return NULL;
 	}
 
-	static EvdevGamepadDevice *GetControllerForDevnode(const char *devnode)
+	static std::shared_ptr<EvdevGamepadDevice> GetControllerForDevnode(const char *devnode)
 	{
 		auto it = evdev_gamepads.find(devnode);
 		if (it == evdev_gamepads.end())
@@ -124,7 +119,18 @@ public:
 	static void CloseDevices()
 	{
 		while (!evdev_gamepads.empty())
-			delete evdev_gamepads.begin()->second;
+			RemoveDevice(evdev_gamepads.begin()->second);
+	}
+
+	static void AddDevice(std::shared_ptr<EvdevGamepadDevice> gamepad)
+	{
+		evdev_gamepads[gamepad->_devnode] = gamepad;
+		GamepadDevice::Register(gamepad);
+	}
+	static void RemoveDevice(std::shared_ptr<EvdevGamepadDevice> gamepad)
+	{
+		evdev_gamepads.erase(gamepad->_devnode);
+		GamepadDevice::Unregister(gamepad);
 	}
 
 protected:
@@ -167,7 +173,7 @@ private:
 	int _fd;
 	std::string _devnode;
 	int _rumble_effect_id;
-	static std::map<std::string, EvdevGamepadDevice*> evdev_gamepads;
+	static std::map<std::string, std::shared_ptr<EvdevGamepadDevice>> evdev_gamepads;
 };
 
-std::map<std::string, EvdevGamepadDevice*> EvdevGamepadDevice::evdev_gamepads;
+std::map<std::string, std::shared_ptr<EvdevGamepadDevice>> EvdevGamepadDevice::evdev_gamepads;

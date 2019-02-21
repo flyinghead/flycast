@@ -27,7 +27,7 @@ extern u16 kcode[4];
 extern u8 rt[4], lt[4];
 extern s8 joyx[4], joyy[4];
 
-std::vector<GamepadDevice *> GamepadDevice::_gamepads;
+std::vector<std::shared_ptr<GamepadDevice>> GamepadDevice::_gamepads;
 std::mutex GamepadDevice::_gamepads_mutex;
 
 bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
@@ -183,10 +183,10 @@ int GamepadDevice::GetGamepadCount()
 	return count;
 }
 
-GamepadDevice *GamepadDevice::GetGamepad(int index)
+std::shared_ptr<GamepadDevice> GamepadDevice::GetGamepad(int index)
 {
 	_gamepads_mutex.lock();
-	GamepadDevice *dev;
+	std::shared_ptr<GamepadDevice> dev;
 	if (index >= 0 && index < _gamepads.size())
 		dev = _gamepads[index];
 	else

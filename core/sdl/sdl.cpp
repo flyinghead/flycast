@@ -52,14 +52,15 @@ static void sdl_open_joystick(int index)
 		printf("SDL: Cannot open joystick %d\n", index + 1);
 		return;
 	}
-	new SDLGamepadDevice(index < MAPLE_PORTS ? index : -1, pJoystick);
+	std::shared_ptr<SDLGamepadDevice> gamepad = std::make_shared<SDLGamepadDevice>(index < MAPLE_PORTS ? index : -1, pJoystick);
+	SDLGamepadDevice::AddSDLGamepad(gamepad);
 }
 
 static void sdl_close_joystick(SDL_JoystickID instance)
 {
-	SDLGamepadDevice *device = SDLGamepadDevice::GetSDLGamepad(instance);
-	if (device != NULL)
-		delete device;
+	std::shared_ptr<SDLGamepadDevice> gamepad = SDLGamepadDevice::GetSDLGamepad(instance);
+	if (gamepad != NULL)
+		gamepad->Close();
 }
 
 void input_sdl_init()
@@ -91,6 +92,7 @@ static void set_mouse_position(int x, int y)
 	}
 }
 
+// FIXME this shouldn't be done by port. Need something like: handle_events() then get_port(0), get_port(2), ...
 void input_sdl_handle(u32 port)
 {
 	#define SET_FLAG(field, mask, expr) field =((expr) ? (field & ~mask) : (field | mask))
@@ -117,14 +119,14 @@ void input_sdl_handle(u32 port)
 			case SDL_JOYBUTTONDOWN:
 			case SDL_JOYBUTTONUP:
 				{
-					SDLGamepadDevice *device = SDLGamepadDevice::GetSDLGamepad((SDL_JoystickID)event.jbutton.which);
+					std::shared_ptr<SDLGamepadDevice> device = SDLGamepadDevice::GetSDLGamepad((SDL_JoystickID)event.jbutton.which);
 					if (device != NULL)
 						device->gamepad_btn_input(event.jbutton.button, event.type == SDL_JOYBUTTONDOWN);
 				}
 				break;
 			case SDL_JOYAXISMOTION:
 				{
-					SDLGamepadDevice *device = SDLGamepadDevice::GetSDLGamepad((SDL_JoystickID)event.jaxis.which);
+					std::shared_ptr<SDLGamepadDevice> device = SDLGamepadDevice::GetSDLGamepad((SDL_JoystickID)event.jaxis.which);
 					if (device != NULL)
 						device->gamepad_axis_input(event.jaxis.axis, event.jaxis.value);
 				}

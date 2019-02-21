@@ -18,6 +18,7 @@
  */
 
 #pragma once
+#include <memory>
 #include <mutex>
 #include "types.h"
 #include "mapping.h"
@@ -32,17 +33,8 @@ public:
 	void set_maple_port(int port) { _maple_port = port; }
 	virtual bool gamepad_btn_input(u32 code, bool pressed);
 	bool gamepad_axis_input(u32 code, int value);
-	virtual ~GamepadDevice() {
-		save_mapping();
-		_gamepads_mutex.lock();
-		for (auto it = _gamepads.begin(); it != _gamepads.end(); it++)
-			if (*it == this)
-			{
-				_gamepads.erase(it);
-				break;
-			}
-		_gamepads_mutex.unlock();
-	}
+	virtual ~GamepadDevice() {}
+	
 	void detect_btn_input(input_detected_cb button_pressed)
 	{
 		_input_detected = button_pressed;
@@ -61,16 +53,33 @@ public:
 	void save_mapping();
 	bool remappable() { return _remappable; }
 
+	static void Register(std::shared_ptr<GamepadDevice> gamepad)
+	{
+		_gamepads_mutex.lock();
+		_gamepads.push_back(gamepad);
+		_gamepads_mutex.unlock();
+	}
+
+	static void Unregister(std::shared_ptr<GamepadDevice> gamepad)
+	{
+		gamepad->save_mapping();
+		_gamepads_mutex.lock();
+		for (auto it = _gamepads.begin(); it != _gamepads.end(); it++)
+			if (*it == gamepad)
+			{
+				_gamepads.erase(it);
+				break;
+			}
+		_gamepads_mutex.unlock();
+	}
+
 	static int GetGamepadCount();
-	static GamepadDevice *GetGamepad(int index);
+	static std::shared_ptr<GamepadDevice> GetGamepad(int index);
 
 protected:
 	GamepadDevice(int maple_port, const char *api_name, bool remappable = true)
 		: _api_name(api_name), _maple_port(maple_port), input_mapper(NULL), _input_detected(NULL), _remappable(remappable)
 	{
-		_gamepads_mutex.lock();
-		_gamepads.push_back(this);
-		_gamepads_mutex.unlock();
 	}
 	bool find_mapping(const char *custom_mapping = NULL);
 
@@ -92,6 +101,6 @@ private:
 	input_detected_cb _input_detected;
 	bool _remappable;
 
-	static std::vector<GamepadDevice *> _gamepads;
+	static std::vector<std::shared_ptr<GamepadDevice>> _gamepads;
 	static std::mutex _gamepads_mutex;
 };

@@ -18,19 +18,20 @@ static void input_evdev_add_device(const char *devnode)
 	int fd = open(devnode, O_RDWR);
 	if (fd >= 0)
 	{
-		new EvdevGamepadDevice(maple_port, devnode, fd);
+		std::shared_ptr<EvdevGamepadDevice> gamepad = std::make_shared<EvdevGamepadDevice>(maple_port, devnode, fd);
 		if (maple_port < 3)
 			maple_port++;
+		EvdevGamepadDevice::AddDevice(gamepad);
 	}
 }
 
 static void input_evdev_remove_device(const char *devnode)
 {
-	EvdevGamepadDevice *gamepad = EvdevGamepadDevice::GetControllerForDevnode(devnode);
+	std::shared_ptr<EvdevGamepadDevice> gamepad = EvdevGamepadDevice::GetControllerForDevnode(devnode);
 	if (gamepad != NULL)
 	{
 		maple_port = gamepad->maple_port();	// Reuse the maple port for the next device connected
-		delete gamepad;
+		EvdevGamepadDevice::RemoveDevice(gamepad);
 	}
 }
 
@@ -212,7 +213,7 @@ bool input_evdev_handle(u32 port)
 
 void input_evdev_rumble(u32 port, u16 pow_strong, u16 pow_weak)
 {
-	EvdevGamepadDevice *dev = EvdevGamepadDevice::GetControllerForPort(port);
+	std::shared_ptr<EvdevGamepadDevice> dev = EvdevGamepadDevice::GetControllerForPort(port);
 	if (dev != NULL)
 		dev->Rumble(pow_strong, pow_weak);
 }
