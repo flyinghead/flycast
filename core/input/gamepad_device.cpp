@@ -199,8 +199,5 @@ void GamepadDevice::save_mapping()
 {
 	if (input_mapper == NULL)
 		return;
-	std::string filename = make_mapping_filename();
-	if (!input_mapper->is_dirty())
-		return;
 	input_mapper->save(make_mapping_filename().c_str());
 }

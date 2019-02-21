@@ -1,6 +1,5 @@
 #include "../input/gamepad_device.h"
 #include "sdl.h"
-#include "rend/gui.h"
 
 class DefaultInputMapping : public InputMapping
 {

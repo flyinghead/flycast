@@ -7,6 +7,7 @@ USE_OSS := 1
 #USE_PULSEAUDIO := 1
 #USE_LIBAO := 1
 USE_EVDEV := 1
+USE_UDEV := 1
 PLATFORM_EXT := elf
 
 CXX=${CC_PREFIX}g++
@@ -27,6 +28,7 @@ CXXFLAGS :=
 
 ifneq (, $(filter $(shell uname -s), FreeBSD OpenBSD NetBSD DragonFly))
     CFLAGS += -DTARGET_BSD
+    undefine USE_UDEV
 else
     USE_ALSA := 1
 #    USE_JOYSTICK := 1
@@ -253,6 +255,7 @@ endif
     undefine USE_ALSA
     undefine USE_OSS
     undefine USE_EVDEV
+    undefine USE_UDEV
     undefine FOR_LINUX
     undefine WEBUI
     NO_NIXPROF := 1
@@ -326,6 +329,10 @@ endif
 
 ifdef USE_EVDEV
     CXXFLAGS += -D USE_EVDEV
+ifdef USE_UDEV
+    CXXFLAGS += -D USE_UDEV
+    LIBS += -ludev
+endif
 endif
 
 ifdef USE_JOYSTICK

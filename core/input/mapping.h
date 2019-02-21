@@ -25,6 +25,14 @@
 class InputMapping
 {
 public:
+	InputMapping() {}
+	InputMapping(const InputMapping& other) {
+		name = other.name;
+	    buttons = other.buttons;
+	    axes = other.axes;
+	    axes_inverted = other.axes_inverted;
+	}
+
 	std::string name;
 
 	DreamcastKey get_button_id(u32 code)
@@ -65,7 +73,7 @@ public:
 	static InputMapping *LoadMapping(const char *name);
 
 protected:
-	bool dirty;
+	bool dirty = false;
 
 private:
 	std::map<u32, DreamcastKey> buttons;
@@ -88,6 +96,5 @@ public:
 		set_axis(DC_AXIS_RT, DC_AXIS_RT, false);
 		set_axis(DC_AXIS_X2, DC_AXIS_X2, false);
 		set_axis(DC_AXIS_Y2, DC_AXIS_Y2, false);
-		dirty = false;
 	}
 };

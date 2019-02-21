@@ -171,7 +171,8 @@ InputMapping *InputMapping::LoadMapping(const char *name)
 
 bool InputMapping::save(const char *name)
 {
-	if (!is_dirty())
+	loaded_mappings[name] = this;
+	if (!dirty)
 		return true;
 
 	std::string path = get_writable_config_path("/mappings/");

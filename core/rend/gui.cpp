@@ -186,16 +186,16 @@ static void ImGui_Impl_NewFrame()
 	io.NavInputs[ImGuiNavInput_DpadUp] = (kcode[0] & DC_DPAD_UP) == 0;
 	io.NavInputs[ImGuiNavInput_DpadDown] = (kcode[0] & DC_DPAD_DOWN) == 0;
 	io.NavInputs[ImGuiNavInput_LStickLeft] = joyx[0] < 0 ? -(float)joyx[0] / 128 : 0.f;
-	if (io.NavInputs[ImGuiNavInput_LStickLeft] < 0.05f)
+	if (io.NavInputs[ImGuiNavInput_LStickLeft] < 0.1f)
 		io.NavInputs[ImGuiNavInput_LStickLeft] = 0.f;
 	io.NavInputs[ImGuiNavInput_LStickRight] = joyx[0] > 0 ? (float)joyx[0] / 128 : 0.f;
-	if (io.NavInputs[ImGuiNavInput_LStickRight] < 0.05f)
+	if (io.NavInputs[ImGuiNavInput_LStickRight] < 0.1f)
 		io.NavInputs[ImGuiNavInput_LStickRight] = 0.f;
 	io.NavInputs[ImGuiNavInput_LStickUp] = joyy[0] < 0 ? -(float)joyy[0] / 128.f : 0.f;
-	if (io.NavInputs[ImGuiNavInput_LStickUp] < 0.05f)
+	if (io.NavInputs[ImGuiNavInput_LStickUp] < 0.1f)
 		io.NavInputs[ImGuiNavInput_LStickUp] = 0.f;
 	io.NavInputs[ImGuiNavInput_LStickDown] = joyy[0] > 0 ? (float)joyy[0] / 128.f : 0.f;
-	if (io.NavInputs[ImGuiNavInput_LStickDown] < 0.05f)
+	if (io.NavInputs[ImGuiNavInput_LStickDown] < 0.1f)
 		io.NavInputs[ImGuiNavInput_LStickDown] = 0.f;
 }
 
