@@ -23,9 +23,9 @@ public:
 		set_axis(DC_AXIS_LT, 0, false);
 		set_axis(DC_AXIS_RT, 1, false);
 		set_axis(DC_AXIS_X, 2, false);
-		set_axis(DC_AXIS_Y, 3, false);
+		set_axis(DC_AXIS_Y, 3, true);
 		set_axis(DC_AXIS_X2, 4, false);
-		set_axis(DC_AXIS_Y2, 5, false);
+		set_axis(DC_AXIS_Y2, 5, true);
 		dirty = false;
 	}
 };
