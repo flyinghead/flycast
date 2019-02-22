@@ -1,30 +1,25 @@
 version: git-{branch}-{build}
-os: Visual Studio 2017
+image: Visual Studio 2017
 
 environment:
   matrix:
-  - Toolset: v141
+  - EXTRA_PATH: C:\mingw-w64\x86_64-7.2.0-posix-seh-rt_v5-rev1\bin\
+    LAUNCH_BUILD: mingw32-make platform=win32
+    LAUNCH_PATH: shell\linux\
 
-configuration:
-  - Release
-
-platform:
-  - x86
-  - x64
-
-build:
-  project: shell/reicast.sln
-  parallel: true
-  verbosity: minimal
-
+build_script:
+- cmd: >-
+    set PATH=%EXTRA_PATH%;%PATH%
+    cd %LAUNCH_PATH%
+    %LAUNCH_BUILD%
+  
 after_build:
   - cmd: mkdir artifacts
-  - cmd: set PLATFORM2=%PLATFORM:x86=Win32%
-  - cmd: move WorkDir\reicast_%PLATFORM2%_Fast.exe artifacts/reicast-win_%PLATFORM%-fast-%APPVEYOR_REPO_COMMIT%.exe
+  - cmd: move shell\linux\reicast.exe artifacts/reicast-win_x64-fast-%APPVEYOR_REPO_COMMIT%.exe
 
 artifacts:
   - path: artifacts
-    name: reicast-win_$(platform)-fast-$(APPVEYOR_REPO_COMMIT)
+    name: reicast-win_x64-fast-$(APPVEYOR_REPO_COMMIT)
 
 deploy:
 - provider: S3
@@ -34,5 +29,5 @@ deploy:
   region: eu-west-1
   bucket: reicast-builds-windows
   folder: 'builds/heads/$(APPVEYOR_REPO_BRANCH)-$(APPVEYOR_REPO_COMMIT)'
-  artifact: reicast-win_$(platform)-fast-$(APPVEYOR_REPO_COMMIT)
+  artifact: reicast-win_x64-fast-$(APPVEYOR_REPO_COMMIT)
   set_public: true
