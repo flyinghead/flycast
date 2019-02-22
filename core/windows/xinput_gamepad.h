@@ -110,12 +110,16 @@ public:
 	}
 	virtual void update_rumble() override
 	{
-		if (vib_inclination > 0)
+		if (vib_stop_time > 0)
 		{
 			int rem_time = (vib_stop_time - os_GetSeconds()) * 1000;
 			if (rem_time <= 0)
-				vib_inclination = 0;
-			do_rumble(vib_inclination * rem_time);
+			{
+				vib_stop_time = 0;
+				do_rumble(0);
+			}
+			else if (vib_inclination > 0)
+				do_rumble(vib_inclination * rem_time);
 		}
 	}
 
@@ -174,7 +178,7 @@ protected:
 private:
 	void do_rumble(float power)
 	{
-
+		printf("do_rumble %f\n", power);
 		XINPUT_VIBRATION vib;
 
 		vib.wLeftMotorSpeed = (u16)(65535 * power);
