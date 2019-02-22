@@ -1065,19 +1065,19 @@ struct maple_sega_purupuru : maple_base
 					INC = 0;
 				bool CNT = VIBSET & 1;
 
-				   float power = min((POW_POS + POW_NEG) / 7.0, 1.0);
+				float power = min((POW_POS + POW_NEG) / 7.0, 1.0);
 
-				   u32 duration_ms;
-				   if (FREQ > 0 && (!CNT || INC))
-					   duration_ms = min((int)(1000 * (INC ? abs(INC) * max(POW_POS, POW_NEG) : 1) / FREQ), (int)AST_ms);
-				   else
-					   duration_ms = AST_ms;
-				   float inclination;
-				   if (INC == 0 || power == 0)
-					   inclination = 0.0;
-				   else
-					   inclination = FREQ / (1000.0 * INC * max(POW_POS, POW_NEG));
-				   config->SetVibration(power, inclination, duration_ms);
+				u32 duration_ms;
+				if (FREQ > 0 && (!CNT || INC))
+					duration_ms = min((int)(1000 * (INC ? abs(INC) * max(POW_POS, POW_NEG) : 1) / FREQ), (int)AST_ms);
+				else
+					duration_ms = AST_ms;
+				float inclination;
+				if (INC == 0 || power == 0)
+					inclination = 0.0;
+				else
+					inclination = FREQ / (1000.0 * INC * max(POW_POS, POW_NEG));
+				config->SetVibration(power, inclination, duration_ms);
 			}
 
 			return MDRS_DeviceReply;
