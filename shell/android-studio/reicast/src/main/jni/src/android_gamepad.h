@@ -19,6 +19,9 @@
 
 #include "input/gamepad_device.h"
 
+static jobject input_device_manager;
+static jmethodID input_device_manager_rumble;
+
 enum {
 	AXIS_X = 0,
 	AXIS_Y = 1,
@@ -137,6 +140,15 @@ public:
 		gamepad_axis_input(DC_AXIS_RT, rt);
 		previous_kcode = kcode;
 	}
+
+	void rumble(float power, float inclination, u32 duration_ms) override
+    {
+        JVMAttacher jvm_attacher;
+        if (jvm_attacher.failed())
+            return;
+        jboolean has_vibrator = jvm_attacher.env->CallBooleanMethod(input_device_manager, input_device_manager_rumble, android_id, power, inclination, duration_ms);
+        _rumble_enabled = has_vibrator;
+    }
 
 	static const int VIRTUAL_GAMEPAD_ID = 0x12345678;	// must match the Java definition
 

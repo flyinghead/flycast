@@ -93,6 +93,7 @@ protected:
 	InputMapping *input_mapper;
 	std::map<u32, int> axis_min_values;
 	std::map<u32, unsigned int> axis_ranges;
+	bool _rumble_enabled = true;
 
 private:
 	int get_axis_min_value(u32 axis);
@@ -104,8 +105,6 @@ private:
 	bool _detecting_button = false;
 	input_detected_cb _input_detected;
 	bool _remappable;
-
-	bool _rumble_enabled = true;
 
 	static std::vector<std::shared_ptr<GamepadDevice>> _gamepads;
 	static std::mutex _gamepads_mutex;

@@ -22,6 +22,50 @@
 #include "reios/reios.h"
 #include "imgread/common.h"
 #include "rend/gui.h"
+
+JavaVM* g_jvm;
+
+// Convenience class to get the java environment for the current thread.
+// Also attach the threads, and detach it on destruction, if needed. This is probably not very efficient
+// but shouldn't be needed except for error reporting.
+class JVMAttacher {
+public:
+    JVMAttacher() : env(NULL), detach_thread(false) {
+        if (g_jvm == NULL) {
+            log_error("g_jvm == NULL");
+            return;
+        }
+        int rc = g_jvm->GetEnv((void **)&env, JNI_VERSION_1_6);
+        if (rc  == JNI_EDETACHED) {
+            if (g_jvm->AttachCurrentThread(&env, NULL) != 0) {
+                log_error("AttachCurrentThread failed");
+                return;
+            }
+            detach_thread = true;
+        }
+        else if (rc == JNI_EVERSION) {
+            log_error("JNI version error");
+            return;
+        }
+    }
+
+    ~JVMAttacher()
+    {
+        if (detach_thread)
+            g_jvm->DetachCurrentThread();
+    }
+
+    void log_error(const char *reason)
+    {
+        LOGE("JVMAttacher cannot attach to JVM: %s", reason);
+    }
+
+    bool failed() { return env == NULL; }
+
+    JNIEnv *env;
+    bool detach_thread = false;
+};
+
 #include "android_gamepad.h"
 
 #define SETTINGS_ACCESSORS(jsetting, csetting, type)                                                                                                    \
@@ -101,6 +145,7 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_screenDpi(JNIEnv *env
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_guiOpenSettings(JNIEnv *env,jobject obj)  __attribute__((visibility("default")));
 JNIEXPORT jboolean JNICALL Java_com_reicast_emulator_emu_JNIdc_guiIsOpen(JNIEnv *env,jobject obj)  __attribute__((visibility("default")));
 
+JNIEXPORT void JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_init(JNIEnv *env, jobject obj) __attribute__((visibility("default")));
 JNIEXPORT void JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_joystickAdded(JNIEnv *env, jobject obj, jint id, jstring name, jint maple_port)  __attribute__((visibility("default")));
 JNIEXPORT void JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_joystickRemoved(JNIEnv *env, jobject obj, jint id)  __attribute__((visibility("default")));
 JNIEXPORT void JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_virtualGamepadEvent(JNIEnv *env, jobject obj, jint kcode, jint joyx, jint joyy, jint lt, jint rt)  __attribute__((visibility("default")));
@@ -151,7 +196,6 @@ extern u32 mo_buttons;
 extern bool print_stats;
 
 //stuff for saving prefs
-JavaVM* g_jvm;
 jobject g_emulator;
 jmethodID saveSettingsMid;
 static ANativeWindow *g_window = 0;
@@ -340,47 +384,6 @@ jmethodID getmicdata;
 jobject vmulcd = NULL;
 jbyteArray jpix = NULL;
 jmethodID updatevmuscreen;
-
-// Convenience class to get the java environment for the current thread.
-// Also attach the threads, and detach it on destruction, if needed. This is probably not very efficient
-// but shouldn't be needed except for error reporting.
-class JVMAttacher {
-public:
-    JVMAttacher() : env(NULL), detach_thread(false) {
-        if (g_jvm == NULL) {
-            log_error("g_jvm == NULL");
-            return;
-        }
-        int rc = g_jvm->GetEnv((void **)&env, JNI_VERSION_1_6);
-        if (rc  == JNI_EDETACHED) {
-            if (g_jvm->AttachCurrentThread(&env, NULL) != 0) {
-                log_error("AttachCurrentThread failed");
-                return;
-            }
-            detach_thread = true;
-        }
-        else if (rc == JNI_EVERSION) {
-            log_error("JNI version error");
-            return;
-        }
-    }
-
-    ~JVMAttacher()
-    {
-        if (detach_thread)
-            g_jvm->DetachCurrentThread();
-    }
-
-    void log_error(const char *reason)
-    {
-        LOGE("JVMAttacher cannot attach to JVM: %s", reason);
-    }
-
-    bool failed() { return env == NULL; }
-
-    JNIEnv *env;
-    bool detach_thread = false;
-};
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_query(JNIEnv *env,jobject obj,jobject emu_thread)
 {
@@ -707,6 +710,12 @@ void os_DebugBreak()
 	
     // Attach debugger here to figure out what went wrong
     for(;;) ;
+}
+
+JNIEXPORT void JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_init(JNIEnv *env, jobject obj)
+{
+    input_device_manager = env->NewGlobalRef(obj);
+    input_device_manager_rumble = env->GetMethodID(env->GetObjectClass(obj), "Rumble", "(IFFI)Z");
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_joystickAdded(JNIEnv *env, jobject obj, jint id, jstring name, jint maple_port)

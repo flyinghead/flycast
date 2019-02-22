@@ -2,6 +2,7 @@ package com.reicast.emulator;
 
 import android.app.Activity;
 import android.app.Application;
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatDelegate;
@@ -10,6 +11,8 @@ import android.util.Log;
 import com.reicast.emulator.emu.JNIdc;
 
 public class Emulator extends Application {
+    private static Context context;
+
     public static final String pref_dynarecopt = "dynarec_opt";
     public static final String pref_unstable = "unstable_opt";
     public static final String pref_dynsafemode = "dyn_safemode";
@@ -260,6 +263,16 @@ public class Emulator extends Application {
                     || maple_expansion_devices[i][1] == MDT_Microphone)
                 return true;
         return false;
+    }
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        Emulator.context = getApplicationContext();
+    }
+
+    public static Context getAppContext() {
+        return Emulator.context;
     }
 
     static {
