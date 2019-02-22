@@ -53,6 +53,10 @@ public:
 	void save_mapping();
 	bool remappable() { return _remappable && input_mapper != NULL; }
 
+	virtual void rumble(float power, float inclination, u32 duration_ms) {}
+	virtual void update_rumble() {}
+	bool is_rumble_enabled() { return _rumble_enabled; }
+
 	static void Register(std::shared_ptr<GamepadDevice> gamepad)
 	{
 		_gamepads_mutex.lock();
@@ -100,6 +104,8 @@ private:
 	bool _detecting_button = false;
 	input_detected_cb _input_detected;
 	bool _remappable;
+
+	bool _rumble_enabled = true;
 
 	static std::vector<std::shared_ptr<GamepadDevice>> _gamepads;
 	static std::mutex _gamepads_mutex;

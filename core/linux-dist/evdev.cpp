@@ -211,13 +211,5 @@ bool input_evdev_handle(u32 port)
 	return true;
 }
 
-void input_evdev_rumble(u32 port, u16 pow_strong, u16 pow_weak)
-{
-	std::shared_ptr<EvdevGamepadDevice> dev = EvdevGamepadDevice::GetControllerForPort(port);
-	if (dev != NULL)
-		dev->Rumble(pow_strong, pow_weak);
-}
-
-
 #endif	// USE_EVDEV
 

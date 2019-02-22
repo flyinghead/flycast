@@ -236,27 +236,6 @@ void UpdateInputState(u32 port)
 #endif
 }
 
-void UpdateVibration(u32 port, u32 value)
-{
-		u8 POW_POS = (value >> 8) & 0x3;
-		u8 POW_NEG = (value >> 12) & 0x3;
-		u8 FREQ = (value >> 16) & 0xFF;
-
-		XINPUT_VIBRATION vib;
-
-		double pow = (POW_POS + POW_NEG) / 7.0;
-		double pow_l = pow * (0x3B - FREQ) / 17.0;
-		double pow_r = pow * (FREQ - 0x07) / 15.0;
-
-		if (pow_l > 1.0) pow_l = 1.0;
-		if (pow_r > 1.0) pow_r = 1.0;
-
-		vib.wLeftMotorSpeed = (u16)(65535 * pow_l);
-		vib.wRightMotorSpeed = (u16)(65535 * pow_r);
-
-		XInputSetState(port, &vib);
-}
-
 // Windows class name to register
 #define WINDOW_CLASS "nilDC"
 

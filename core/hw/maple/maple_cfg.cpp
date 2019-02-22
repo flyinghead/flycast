@@ -22,7 +22,7 @@ Plugins:
 		ImageUpdate(data);
 */
 void UpdateInputState(u32 port);
-void UpdateVibration(u32 port, u32 value);
+void UpdateVibration(u32 port, float power, float inclination, u32 duration_ms);
 
 extern u16 kcode[4];
 extern u32 vks[4];
@@ -46,10 +46,10 @@ struct MapleConfigMap : IMapleConfigMap
 		this->player_num = player_num;
 	}
 
-	void SetVibration(u32 value)
+	void SetVibration(float power, float inclination, u32 duration_ms)
 	{
 		int player_num = this->player_num == -1 ? dev->bus_id : this->player_num;
-		UpdateVibration(player_num, value);
+		UpdateVibration(player_num, power, inclination, duration_ms);
 	}
 
 	void GetInput(PlainJoystickState* pjs)

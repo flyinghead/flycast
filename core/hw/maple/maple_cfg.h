@@ -52,7 +52,7 @@ struct PlainJoystickState
 
 struct IMapleConfigMap
 {
-	virtual void SetVibration(u32 value) = 0;
+	virtual void SetVibration(float power, float inclination, u32 duration_ms) = 0;
 	virtual void GetInput(PlainJoystickState* pjs)=0;
 	virtual void SetImage(void* img)=0;
 	virtual ~IMapleConfigMap() {}

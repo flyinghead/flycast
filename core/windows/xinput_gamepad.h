@@ -40,6 +40,8 @@ public:
 
 	void ReadInput()
 	{
+		update_rumble();
+
 		XINPUT_STATE state;
 
 		if (XInputGetState(_xinput_port, &state) == 0)
@@ -99,6 +101,23 @@ public:
 			last_right_thumb_y = 0;
 		}
 	}
+	virtual void rumble(float power, float inclination, u32 duration_ms) override
+	{
+		vib_inclination = inclination * power;
+		vib_stop_time = os_GetSeconds() + duration_ms / 1000.0;
+
+		do_rumble(power);
+	}
+	virtual void update_rumble() override
+	{
+		if (vib_inclination > 0)
+		{
+			int rem_time = (vib_stop_time - os_GetSeconds()) * 1000;
+			if (rem_time <= 0)
+				vib_inclination = 0;
+			do_rumble(vib_inclination * rem_time);
+		}
+	}
 
 	void Open()
 	{
@@ -153,6 +172,16 @@ protected:
 	}
 
 private:
+	void do_rumble(float power)
+	{
+
+		XINPUT_VIBRATION vib;
+
+		vib.wLeftMotorSpeed = (u16)(65535 * power);
+		vib.wRightMotorSpeed = (u16)(65535 * power);
+
+		XInputSetState(_xinput_port, &vib);
+	}
 
 	const int _xinput_port;
 	u32 last_buttons_state = 0;
@@ -162,6 +191,8 @@ private:
 	s16 last_left_thumb_y = 0;
 	s16 last_right_thumb_x = 0;
 	s16 last_right_thumb_y = 0;
+	double vib_stop_time;
+	float vib_inclination;
 	static std::vector<std::shared_ptr<XInputGamepadDevice>> xinput_gamepads;
 };
 

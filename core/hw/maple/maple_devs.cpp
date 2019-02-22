@@ -957,7 +957,7 @@ struct maple_microphone: maple_base
 
 struct maple_sega_purupuru : maple_base
 {
-	u16 AST, AST_ms;
+	u16 AST = 19, AST_ms = 5000;
 	u32 VIBSET;
 
 	virtual MapleDeviceType get_device_type()
@@ -1053,8 +1053,32 @@ struct maple_sega_purupuru : maple_base
 		case MDCF_SetCondition:
 
 			VIBSET = *(u32*)&dma_buffer_in[4];
-			//Do the rumble thing!
-			config->SetVibration(VIBSET);
+			{
+				//Do the rumble thing!
+				u8 POW_POS = (VIBSET >> 8) & 0x7;
+				u8 POW_NEG = (VIBSET >> 12) & 0x7;
+				u8 FREQ = (VIBSET >> 16) & 0xFF;
+				s16 INC = (VIBSET >> 24) & 0xFF;
+				if (VIBSET & 0x8000)			// INH
+					INC = -INC;
+				else if (!(VIBSET & 0x0800))	// EXH
+					INC = 0;
+				bool CNT = VIBSET & 1;
+
+				   float power = min((POW_POS + POW_NEG) / 7.0, 1.0);
+
+				   u32 duration_ms;
+				   if (FREQ > 0 && (!CNT || INC))
+					   duration_ms = min((int)(1000 * (INC ? abs(INC) * max(POW_POS, POW_NEG) : 1) / FREQ), (int)AST_ms);
+				   else
+					   duration_ms = AST_ms;
+				   float inclination;
+				   if (INC == 0 || power == 0)
+					   inclination = 0.0;
+				   else
+					   inclination = FREQ / (1000.0 * INC * max(POW_POS, POW_NEG));
+				   config->SetVibration(power, inclination, duration_ms);
+			}
 
 			return MDRS_DeviceReply;
 

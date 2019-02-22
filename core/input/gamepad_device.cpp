@@ -207,3 +207,14 @@ void GamepadDevice::save_mapping()
 		return;
 	input_mapper->save(make_mapping_filename().c_str());
 }
+
+void UpdateVibration(u32 port, float power, float inclination, u32 duration_ms)
+{
+	int i = GamepadDevice::GetGamepadCount() - 1;
+	for ( ; i >= 0; i--)
+	{
+		std::shared_ptr<GamepadDevice> gamepad = GamepadDevice::GetGamepad(i);
+		if (gamepad != NULL && gamepad->maple_port() == port && gamepad->is_rumble_enabled())
+			gamepad->rumble(power, inclination, duration_ms);
+	}
+}

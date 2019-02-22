@@ -1,4 +1,5 @@
 #include "../input/gamepad_device.h"
+#include "oslib/oslib.h"
 #include "evdev.h"
 
 class EvdevGamepadDevice : public GamepadDevice
@@ -60,36 +61,22 @@ public:
 		close(_fd);
 	}
 
-	// FIXME add to base class
-	void Rumble(u16 pow_strong, u16 pow_weak)
+	virtual void rumble(float power, float inclination, u32 duration_ms) override
 	{
-		printf("RUMBLE: %u / %u (%d)\n", pow_strong, pow_weak, _rumble_effect_id);
-		struct ff_effect effect;
-		effect.type = FF_RUMBLE;
-		effect.id = _rumble_effect_id;
-		effect.u.rumble.strong_magnitude = pow_strong;
-		effect.u.rumble.weak_magnitude = pow_weak;
-		effect.replay.length = 0;
-		effect.replay.delay = 0;
-		if (ioctl(_fd, EVIOCSFF, &effect) == -1)
-		{
-			perror("evdev: Force feedback error");
-			_rumble_effect_id = -2;
-		}
-		else
-		{
-			_rumble_effect_id = effect.id;
+		vib_inclination = inclination * power;
+		vib_stop_time = os_GetSeconds() + duration_ms / 1000.0;
 
-			// Let's play the effect
-			input_event play;
-			play.type = EV_FF;
-			play.code = effect.id;
-			play.value = 1;
-			if (write(_fd, (const void*) &play, sizeof(play)) == -1)
-			{
-				perror("evdev: Force feedback error");
-				_rumble_effect_id = -2;
-			}
+		do_rumble(power, duration_ms);
+	}
+	virtual void update_rumble() override
+	{
+		if (vib_inclination > 0)
+		{
+			int rem_time = (vib_stop_time - os_GetSeconds()) * 1000;
+			if (rem_time <= 0)
+				vib_inclination = 0;
+			else
+				do_rumble(vib_inclination * rem_time, rem_time);
 		}
 	}
 
@@ -151,6 +138,7 @@ protected:
 private:
 	void read_input()
 	{
+		update_rumble();
 		input_event ie;
 
 		while (read(_fd, &ie, sizeof(ie)) == sizeof(ie))
@@ -168,10 +156,47 @@ private:
 		}
 
 	}
+	void do_rumble(float power, u32 duration_ms)
+	{
+		// Remove previous effect
+		if (_rumble_effect_id != -1)
+			ioctl(_fd, EVIOCRMFF, _rumble_effect_id);
+
+		// Upload new effect
+		struct ff_effect effect;
+		effect.type = FF_RUMBLE;
+		effect.id = -1;		// Let the driver assign one
+		effect.direction = 0;
+		effect.replay.length = (u16)duration_ms;
+		effect.replay.delay = 0;
+		effect.u.rumble.strong_magnitude = (s16)(power * 32767);
+		effect.u.rumble.weak_magnitude = (s16)(power * 32767);
+		if (ioctl(_fd, EVIOCSFF, &effect) == -1)
+		{
+			perror("evdev: Force feedback error");
+			_rumble_effect_id = -1;
+		}
+		else
+		{
+			_rumble_effect_id = effect.id;
+
+			// Let's play the effect
+			input_event play;
+			play.type = EV_FF;
+			play.code = effect.id;
+			play.value = 1;
+			if (write(_fd, (const void*) &play, sizeof(play)) == -1)
+			{
+				perror("evdev: Force feedback error");
+			}
+		}
+	}
 
 	int _fd;
 	std::string _devnode;
-	int _rumble_effect_id;
+	int _rumble_effect_id = -1;
+	float vib_inclination = 0;
+	double vib_stop_time = 0;
 	static std::map<std::string, std::shared_ptr<EvdevGamepadDevice>> evdev_gamepads;
 };
 
