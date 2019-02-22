@@ -73,7 +73,7 @@ public:
 	{
 		printf("SDL: Joystick '%s' on port %d disconnected\n", _name.c_str(), maple_port());
 		SDL_JoystickClose(sdl_joystick);
-		GamepadDevice::Unregister(gamepad);
+		GamepadDevice::Unregister(sdl_gamepads[sdl_joystick_instance]);
 		sdl_gamepads.erase(sdl_joystick_instance);
 	}
 
