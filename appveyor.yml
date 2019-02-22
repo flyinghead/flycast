@@ -3,7 +3,7 @@ image: Visual Studio 2017
 
 environment:
   matrix:
-  - EXTRA_PATH: C:\mingw-w64\x86_64-7.2.0-posix-seh-rt_v5-rev1\bin\
+  - EXTRA_PATH: C:\mingw-w64\x86_64-7.2.0-posix-seh-rt_v5-rev1\mingw64\bin\
     LAUNCH_BUILD: mingw32-make platform=win32
     LAUNCH_PATH: shell\linux\
 
