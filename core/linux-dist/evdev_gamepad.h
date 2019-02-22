@@ -145,7 +145,7 @@ protected:
 		}
 		axis_min_values[axis] = abs.minimum;
 		axis_ranges[axis] = abs.maximum - abs.minimum;
-		printf("evdev: range of axis %d is from %d to %d\n", axis, axis_min_values[axis], axis_min_values[axis] + axis_ranges[axis]);
+		//printf("evdev: range of axis %d is from %d to %d\n", axis, axis_min_values[axis], axis_min_values[axis] + axis_ranges[axis]);
 	}
 
 private:

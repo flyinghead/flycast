@@ -1,5 +1,6 @@
 #if defined(SUPPORT_X11)
 #include <map>
+#include <memory>
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 #include <X11/Xutil.h>
@@ -19,19 +20,57 @@
 #if FEAT_HAS_NIXPROF
 #include "profiler/profiler.h"
 #endif
+#include "x11_keyboard.h"
 
 #if defined(TARGET_PANDORA)
-	#define DEFAULT_FULLSCREEN    1
+	#define DEFAULT_FULLSCREEN    true
 	#define DEFAULT_WINDOW_WIDTH  800
 #else
-	#define DEFAULT_FULLSCREEN    0
+	#define DEFAULT_FULLSCREEN    false
 	#define DEFAULT_WINDOW_WIDTH  640
 #endif
 #define DEFAULT_WINDOW_HEIGHT   480
 
-map<int, int> x11_keymap;
-int x11_dc_buttons = 0xFFFF;
+
+class MouseInputMapping : public InputMapping
+{
+public:
+	MouseInputMapping()
+	{
+		name = "X11 Mouse";
+		set_button(DC_BTN_A, Button1);
+		set_button(DC_BTN_B, Button3);
+		set_button(DC_BTN_START, Button2);
+
+		dirty = false;
+	}
+};
+
+class X11MouseGamepadDevice : public GamepadDevice
+{
+public:
+	X11MouseGamepadDevice(int maple_port) : GamepadDevice(maple_port, "X11")
+	{
+		_name = "Mouse";
+		if (!find_mapping())
+			input_mapper = new MouseInputMapping();
+	}
+	bool gamepad_btn_input(u32 code, bool pressed) override
+	{
+		if (gui_is_open())
+			// Don't register mouse clicks as gamepad presses when gui is open
+			// This makes the gamepad presses to be handled first and the mouse position to be ignored
+			// TODO Make this generic
+			return false;
+		else
+			return GamepadDevice::gamepad_btn_input(code, pressed);
+	}
+};
+
 int x11_keyboard_input = 0;
+static std::shared_ptr<X11KeyboardDevice> x11_keyboard;
+static std::shared_ptr<X11KbGamepadDevice> kb_gamepad;
+static std::shared_ptr<X11MouseGamepadDevice> mouse_gamepad;
 
 int x11_width;
 int x11_height;
@@ -45,10 +84,9 @@ void* x11_vis;
 
 extern bool dump_frame_switch;
 extern bool naomi_test_button;
+extern bool coin_chute;
 
 void dc_stop(void);
-bool dc_loadstate(void);
-bool dc_savestate(void);
 
 enum
 {
@@ -93,148 +131,6 @@ void event_x11_handle()
 	}
 }
 
-u8 kb_map[256];
-
-static void init_kb_map()
-{
-	//04-1D Letter keys A-Z (in alphabetic order)
-	kb_map[KEY_A] = 0x04;
-	kb_map[KEY_B] = 0x05;
-	kb_map[KEY_C] = 0x06;
-	kb_map[KEY_D] = 0x07;
-	kb_map[KEY_E] = 0x08;
-	kb_map[KEY_F] = 0x09;
-	kb_map[KEY_G] = 0x0A;
-	kb_map[KEY_H] = 0x0B;
-	kb_map[KEY_I] = 0x0C;
-	kb_map[KEY_J] = 0x0D;
-	kb_map[KEY_K] = 0x0E;
-	kb_map[KEY_L] = 0x0F;
-	kb_map[KEY_M] = 0x10;
-	kb_map[KEY_N] = 0x11;
-	kb_map[KEY_O] = 0x12;
-	kb_map[KEY_P] = 0x13;
-	kb_map[KEY_Q] = 0x14;
-	kb_map[KEY_R] = 0x15;
-	kb_map[KEY_S] = 0x16;
-	kb_map[KEY_T] = 0x17;
-	kb_map[KEY_U] = 0x18;
-	kb_map[KEY_V] = 0x19;
-	kb_map[KEY_W] = 0x1A;
-	kb_map[KEY_X] = 0x1B;
-	kb_map[KEY_Y] = 0x1C;
-	kb_map[KEY_Z] = 0x1D;
-
-	//1E-27 Number keys 1-0
-	kb_map[KEY_1] = 0x1E;
-	kb_map[KEY_2] = 0x1F;
-	kb_map[KEY_3] = 0x20;
-	kb_map[KEY_4] = 0x21;
-	kb_map[KEY_5] = 0x22;
-	kb_map[KEY_6] = 0x23;
-	kb_map[KEY_7] = 0x24;
-	kb_map[KEY_8] = 0x25;
-	kb_map[KEY_9] = 0x26;
-	kb_map[KEY_0] = 0x27;
-
-	kb_map[KEY_RETURN] = 0x28;
-	kb_map[KEY_ESC] = 0x29;
-	kb_map[KEY_BACKSPACE] = 0x2A;
-	kb_map[KEY_TAB] = 0x2B;
-	kb_map[KEY_SPACE] = 0x2C;
-
-	kb_map[20] = 0x2D;	// -
-	kb_map[21] = 0x2E;	// =
-	kb_map[34] = 0x2F;	// [
-	kb_map[35] = 0x30;	// ]
-
-	kb_map[94] = 0x31;	// \ (US) unsure of keycode
-
-	//32-34 "]", ";" and ":" (the 3 keys right of L)
-	kb_map[51] = 0x32;	// ~ (non-US) *,µ in FR layout
-	kb_map[47] = 0x33;	// ;
-	kb_map[48] = 0x34;	// '
-
-	//35 hankaku/zenkaku / kanji (top left)
-	kb_map[49] = 0x35;	// `~ (US)
-
-	//36-38 ",", "." and "/" (the 3 keys right of M)
-	kb_map[59] = 0x36;
-	kb_map[60] = 0x37;
-	kb_map[61] = 0x38;
-
-	// CAPSLOCK
-	kb_map[66] = 0x39;
-
-	//3A-45 Function keys F1-F12
-	for (int i = 0;i < 10; i++)
-		kb_map[KEY_F1 + i] = 0x3A + i;
-	kb_map[KEY_F11] = 0x44;
-	kb_map[KEY_F12] = 0x45;
-
-	//46-4E Control keys above cursor keys
-	kb_map[107] = 0x46;		// Print Screen
-	kb_map[78] = 0x47;		// Scroll Lock
-	kb_map[127] = 0x48;		// Pause
-	kb_map[KEY_INS] = 0x49;
-	kb_map[KEY_HOME] = 0x4A;
-	kb_map[KEY_PGUP] = 0x4B;
-	kb_map[KEY_DEL] = 0x4C;
-	kb_map[KEY_END] = 0x4D;
-	kb_map[KEY_PGDOWN] = 0x4E;
-
-	//4F-52 Cursor keys
-	kb_map[KEY_RIGHT] = 0x4F;
-	kb_map[KEY_LEFT] = 0x50;
-	kb_map[KEY_DOWN] = 0x51;
-	kb_map[KEY_UP] = 0x52;
-
-	//53 Num Lock (Numeric keypad)
-	kb_map[77] = 0x53;
-	//54 "/" (Numeric keypad)
-	kb_map[106] = 0x54;
-	//55 "*" (Numeric keypad)
-	kb_map[63] = 0x55;
-	//56 "-" (Numeric keypad)
-	kb_map[82] = 0x56;
-	//57 "+" (Numeric keypad)
-	kb_map[86] = 0x57;
-	//58 Enter (Numeric keypad)
-	kb_map[104] = 0x58;
-	//59-62 Number keys 1-0 (Numeric keypad)
-	kb_map[87] = 0x59;
-	kb_map[88] = 0x5A;
-	kb_map[89] = 0x5B;
-	kb_map[83] = 0x5C;
-	kb_map[84] = 0x5D;
-	kb_map[85] = 0x5E;
-	kb_map[79] = 0x5F;
-	kb_map[80] = 0x60;
-	kb_map[81] = 0x61;
-	kb_map[90] = 0x62;
-	//63 "." (Numeric keypad)
-	kb_map[91] = 0x63;
-	//64 #| (non-US)
-	//kb_map[94] = 0x64;
-	//65 S3 key
-	//66-A4 Not used
-	//A5-DF Reserved
-	//E0 Left Control
-	//E1 Left Shift
-	//E2 Left Alt
-	//E3 Left S1
-	//E4 Right Control
-	//E5 Right Shift
-	//E6 Right Alt
-	//E7 Right S3
-	//E8-FF Reserved
-}
-
-static u32 kb_used = 0;
-extern u8 kb_shift; 		// shift keys pressed (bitmask)
-extern u8 kb_led; 			// leds currently lit
-extern u8 kb_key[6];		// normal keys pressed
-
 extern u32 mo_buttons;
 extern f32 mo_x_delta;
 extern f32 mo_y_delta;
@@ -244,8 +140,6 @@ extern s32 mo_y_abs;
 
 static bool capturing_mouse;
 static Cursor empty_cursor = None;
-
-extern bool coin_chute;
 
 static Cursor create_empty_cursor()
 {
@@ -331,49 +225,9 @@ void input_x11_handle()
 							continue;
 					}
 					// Dreamcast keyboard emulation
-					if (e.xkey.keycode == KEY_LSHIFT || e.xkey.keycode == KEY_RSHIFT)
-						if (e.type == KeyRelease)
-							kb_shift &= ~(0x02 | 0x20);
-						else
-							kb_shift |= (0x02 | 0x20);
-					if (e.xkey.keycode == KEY_LCTRL || e.xkey.keycode == KEY_RCTRL)
-						if (e.type == KeyRelease)
-							kb_shift &= ~(0x01 | 0x10);
-						else
-							kb_shift |= (0x01 | 0x10);
-
-					u8 dc_keycode = kb_map[e.xkey.keycode & 0xFF];
-					if (dc_keycode != 0)
-					{
-						if (e.type == KeyPress)
-						{
-							if (kb_used < ARRAY_SIZE(kb_key))
-							{
-								bool found = false;
-								for (int i = 0; !found && i < kb_used; i++)
-								{
-									if (kb_key[i] == dc_keycode)
-										found = true;
-								}
-								if (!found)
-									kb_key[kb_used++] = dc_keycode;
-							}
-						}
-						else
-						{
-							for (int i = 0; i < kb_used; i++)
-							{
-								if (kb_key[i] == dc_keycode)
-								{
-									kb_used--;
-									for (int j = i; j < ARRAY_SIZE(kb_key) - 1; j++)
-										kb_key[j] = kb_key[j + 1];
-									kb_key[ARRAY_SIZE(kb_key) - 1] = 0;
-									break;
-								}
-							}
-						}
-					}
+					x11_keyboard->keyboard_input(e.xkey.keycode, e.type == KeyPress);
+					// keyboard-based emulated gamepad
+					kb_gamepad->gamepad_btn_input(e.xkey.keycode, e.type == KeyPress);
 
 					// Start/stop mouse capture with Left Ctrl + Left Alt
 					if (e.type == KeyPress
@@ -386,9 +240,10 @@ void input_x11_handle()
 						else
 							x11_uncapture_mouse();
 					}
+					// TODO Move this to bindable keys or in the gui menu
 					if (x11_keyboard_input)
 					{
-#ifndef RELEASE
+#if 1
 						if (e.xkey.keycode == KEY_F10)
 						{
 							// Dump the next frame into a file
@@ -411,14 +266,6 @@ void input_x11_handle()
 							x11_fullscreen = !x11_fullscreen;
 							x11_window_set_fullscreen(x11_fullscreen);
 						}
-						else if (e.type == KeyRelease && e.xkey.keycode == KEY_F2)
-						{
-							dc_savestate() ;
-						}
-						else if (e.type == KeyRelease && e.xkey.keycode == KEY_F4)
-						{
-							dc_loadstate() ;
-						}
 #if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
 						else if (e.xkey.keycode == KEY_F8)
 						{
@@ -429,43 +276,6 @@ void input_x11_handle()
 							naomi_test_button = e.type == KeyPress;
 						}
 #endif
-						else if (e.type == KeyRelease && e.xkey.keycode == KEY_TAB)
-						{
-							gui_open_settings();
-						}
-
-						if (!gui_is_open())
-						{
-							int dc_key = x11_keymap[e.xkey.keycode];
-
-							if (dc_key == DC_AXIS_LT)
-							{
-								if (e.type == KeyPress)
-									lt[0] = 255;
-								else
-									lt[0] = 0;
-							}
-							else if (dc_key == DC_AXIS_RT)
-							{
-								if (e.type == KeyPress)
-									rt[0] = 255;
-								else
-									rt[0] = 0;
-							}
-
-							if (e.type == KeyPress)
-							{
-								kcode[0] &= ~dc_key;
-							}
-							else
-							{
-								kcode[0] |= dc_key;
-							}
-
-							#if defined(_DEBUG)
-							printf("KEY: %d -> %d: %d\n", e.xkey.keycode, dc_key, x11_dc_buttons );
-							#endif
-						}
 					}
 				}
 				break;
@@ -480,6 +290,7 @@ void input_x11_handle()
 
 			case ButtonPress:
 			case ButtonRelease:
+				mouse_gamepad->gamepad_btn_input(e.xbutton.button, e.type == ButtonPress);
 				{
 					u32 button_mask = 0;
 					if (e.xbutton.button == Button1)		// Left button
@@ -497,7 +308,7 @@ void input_x11_handle()
 							mo_buttons |= button_mask;
 					}
 				}
-				// FALL THROUGH
+				/* no break */
 
 			case MotionNotify:
 				// For Light gun
@@ -528,38 +339,15 @@ void input_x11_handle()
 
 void input_x11_init()
 {
-	x11_keymap[KEY_LEFT] = DC_DPAD_LEFT;
-	x11_keymap[KEY_RIGHT] = DC_DPAD_RIGHT;
+	x11_keyboard = std::make_shared<X11KeyboardDevice>(0);
+	kb_gamepad = std::make_shared<X11KbGamepadDevice>(0);
+	GamepadDevice::Register(kb_gamepad);
+	mouse_gamepad = std::make_shared<X11MouseGamepadDevice>(0);
+	GamepadDevice::Register(mouse_gamepad);
 
-	x11_keymap[KEY_UP] = DC_DPAD_UP;
-	x11_keymap[KEY_DOWN] = DC_DPAD_DOWN;
-
-	// Layout on a real DC controller
-	//   Y
-	// X   B
-	//   A
-	x11_keymap[KEY_S] = DC_BTN_X;
-	x11_keymap[KEY_X] = DC_BTN_A;
-	x11_keymap[KEY_D] = DC_BTN_Y;
-	x11_keymap[KEY_C] = DC_BTN_B;
-
-	// Used by some "arcade" controllers
-	x11_keymap[KEY_Q] = DC_BTN_Z;
-	x11_keymap[KEY_W] = DC_BTN_C;
-	x11_keymap[KEY_E] = DC_BTN_D;
-
-	// Start button (triangle)
-	x11_keymap[KEY_RETURN] = DC_BTN_START;
-
-	// Shoulder trigger
-	x11_keymap[KEY_F] = DC_AXIS_LT;
-	x11_keymap[KEY_V] = DC_AXIS_RT;
-	
 	x11_keyboard_input = (cfgLoadInt("input", "enable_x11_keyboard", 1) >= 1);
 	if (!x11_keyboard_input)
 		printf("X11 Keyboard input disabled by config.\n");
-
-	init_kb_map();
 }
 
 void x11_window_create()
@@ -671,7 +459,7 @@ void x11_window_create()
 
 		x11_width = cfgLoadInt("x11", "width", DEFAULT_WINDOW_WIDTH);
 		x11_height = cfgLoadInt("x11", "height", DEFAULT_WINDOW_HEIGHT);
-		x11_fullscreen = (cfgLoadInt("x11", "fullscreen", DEFAULT_FULLSCREEN) > 0);
+		x11_fullscreen = cfgLoadBool("x11", "fullscreen", DEFAULT_FULLSCREEN);
 
 		if (x11_width < 0 || x11_height < 0)
 		{
@@ -772,9 +560,17 @@ void x11_gl_context_destroy()
 
 void x11_window_destroy()
 {
+	destroy_empty_cursor();
+
 	// close XWindow
 	if (x11_win)
 	{
+		if (!x11_fullscreen)
+		{
+			cfgSaveInt("x11", "width", x11_width);
+			cfgSaveInt("x11", "height", x11_height);
+		}
+		cfgSaveBool("x11", "fullscreen", x11_fullscreen);
 		XDestroyWindow((Display*)x11_disp, (Window)x11_win);
 		x11_win = NULL;
 	}
