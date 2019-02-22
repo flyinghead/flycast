@@ -10,10 +10,13 @@ environment:
 build_script:
 - cmd: >-
     set PATH=%EXTRA_PATH%;%PATH%
+    
     cd %LAUNCH_PATH%
+    
     %LAUNCH_BUILD%
   
 after_build:
+  - cmd: cd ..\..
   - cmd: mkdir artifacts
   - cmd: move shell\linux\reicast.exe artifacts/reicast-win_x64-fast-%APPVEYOR_REPO_COMMIT%.exe
 
