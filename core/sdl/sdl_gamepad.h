@@ -1,4 +1,5 @@
 #include "../input/gamepad_device.h"
+#include "oslib/oslib.h"
 #include "sdl.h"
 
 class DefaultInputMapping : public InputMapping
@@ -65,13 +66,44 @@ public:
 		}
 		else
 			printf("using custom mapping '%s'\n", input_mapper->name.c_str());
+		sdl_haptic = SDL_HapticOpenFromJoystick(sdl_joystick);
+		if (SDL_HapticRumbleInit(sdl_haptic) != 0)
+		{
+			SDL_HapticClose(sdl_haptic);
+			sdl_haptic = NULL;
+		}
+
 	}
 
-	SDL_JoystickID sdl_instance() { return sdl_joystick_instance; }
+	virtual void rumble(float power, float inclination, u32 duration_ms) override
+	{
+		if (sdl_haptic != NULL)
+		{
+			vib_inclination = inclination * power;
+			vib_stop_time = os_GetSeconds() + duration_ms / 1000.0;
 
-	void Close()
+			SDL_HapticRumblePlay(sdl_haptic, power, duration_ms);
+		}
+	}
+	virtual void update_rumble() override
+	{
+		if (sdl_haptic == NULL)
+			return;
+		if (vib_inclination > 0)
+		{
+			int rem_time = (vib_stop_time - os_GetSeconds()) * 1000;
+			if (rem_time <= 0)
+				vib_inclination = 0;
+			else
+				SDL_HapticRumblePlay(sdl_haptic, vib_inclination * rem_time, rem_time);
+		}
+	}
+
+	void close()
 	{
 		printf("SDL: Joystick '%s' on port %d disconnected\n", _name.c_str(), maple_port());
+		if (sdl_haptic != NULL)
+			SDL_HapticClose(sdl_haptic);
 		SDL_JoystickClose(sdl_joystick);
 		GamepadDevice::Unregister(sdl_gamepads[sdl_joystick_instance]);
 		sdl_gamepads.erase(sdl_joystick_instance);
@@ -90,6 +122,11 @@ public:
 		else
 			return NULL;
 	}
+	static void UpdateRumble()
+	{
+		for (auto pair : sdl_gamepads)
+			pair.second->update_rumble();
+	}
 
 protected:
 	virtual void load_axis_min_max(u32 axis) override
@@ -101,6 +138,9 @@ protected:
 private:
 	SDL_Joystick* sdl_joystick;
 	SDL_JoystickID sdl_joystick_instance;
+	SDL_Haptic *sdl_haptic;
+	float vib_inclination = 0;
+	double vib_stop_time = 0;
 	static std::map<SDL_JoystickID, std::shared_ptr<SDLGamepadDevice>> sdl_gamepads;
 };
 

@@ -60,7 +60,7 @@ static void sdl_close_joystick(SDL_JoystickID instance)
 {
 	std::shared_ptr<SDLGamepadDevice> gamepad = SDLGamepadDevice::GetSDLGamepad(instance);
 	if (gamepad != NULL)
-		gamepad->Close();
+		gamepad->close();
 }
 
 void input_sdl_init()
@@ -72,6 +72,8 @@ void input_sdl_init()
 			die("error initializing SDL Joystick subsystem");
 		}
 	}
+	if (SDL_WasInit(SDL_INIT_HAPTIC) == 0)
+		SDL_InitSubSystem(SDL_INIT_HAPTIC);
 
 	SDL_SetRelativeMouseMode(SDL_FALSE);
 
@@ -97,6 +99,9 @@ static void set_mouse_position(int x, int y)
 // FIXME this shouldn't be done by port. Need something like: handle_events() then get_port(0), get_port(2), ...
 void input_sdl_handle(u32 port)
 {
+	if (port == 0)	// FIXME hack
+		SDLGamepadDevice::UpdateRumble();
+
 	#define SET_FLAG(field, mask, expr) field =((expr) ? (field & ~mask) : (field | mask))
 	SDL_Event event;
 	while (SDL_PollEvent(&event))
