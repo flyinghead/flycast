@@ -2,10 +2,10 @@
 #include "input/keyboard_device.h"
 #include "sdl.h"
 
-class SDLKeyboardDevice : public KeyboardDevice<SDL_Keycode>
+class SDLKeyboardDevice : public KeyboardDeviceTemplate<SDL_Keycode>
 {
 public:
-	SDLKeyboardDevice(int maple_port) : KeyboardDevice(maple_port)
+	SDLKeyboardDevice(int maple_port) : KeyboardDeviceTemplate(maple_port)
 	{
 		//04-1D Letter keys A-Z (in alphabetic order)
 		kb_map[SDLK_a] = 0x04;

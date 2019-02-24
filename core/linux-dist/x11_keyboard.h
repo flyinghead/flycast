@@ -3,10 +3,10 @@
 #include "input/gamepad_device.h"
 #include "x11.h"
 
-class X11KeyboardDevice : public KeyboardDevice<int>
+class X11KeyboardDevice : public KeyboardDeviceTemplate<int>
 {
 public:
-	X11KeyboardDevice(int maple_port) : KeyboardDevice(maple_port)
+	X11KeyboardDevice(int maple_port) : KeyboardDeviceTemplate(maple_port)
 	{
 		//04-1D Letter keys A-Z (in alphabetic order)
 		kb_map[KEY_A] = 0x04;

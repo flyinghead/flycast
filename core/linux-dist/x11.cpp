@@ -212,6 +212,14 @@ void input_x11_handle()
 		switch(e.type)
 		{
 			case KeyPress:
+				{
+					char buf[2];
+					KeySym keysym_return;
+					int len = XLookupString(&e.xkey, buf, 1, &keysym_return, NULL);
+					if (len > 0)
+						x11_keyboard->keyboard_character(buf[0]);
+				}
+				/* no break */
 			case KeyRelease:
 				{
 					if (e.type == KeyRelease && XEventsQueued(display, QueuedAfterReading))
@@ -293,12 +301,26 @@ void input_x11_handle()
 				mouse_gamepad->gamepad_btn_input(e.xbutton.button, e.type == ButtonPress);
 				{
 					u32 button_mask = 0;
-					if (e.xbutton.button == Button1)		// Left button
+					switch (e.xbutton.button)
+					{
+					case Button1:		// Left button
 						button_mask = 1 << 2;
-					else if (e.xbutton.button == Button2)	// Middle button
+						break;
+					case Button2:		// Middle button
 						button_mask = 1 << 3;
-					else if (e.xbutton.button == Button3)	// Right button
+						break;
+					case Button3:		// Right button
 						button_mask = 1 << 1;
+						break;
+					case Button4: 		// Mouse wheel up
+						mo_wheel_delta -= 16;
+						break;
+					case Button5: 		// Mouse wheel down
+						mo_wheel_delta += 16;
+						break;
+					default:
+						break;
+					}
 
 					if (button_mask)
 					{
