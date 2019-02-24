@@ -40,6 +40,9 @@ extern void dc_stop();
 extern u32 mo_buttons;
 extern s32 mo_x_abs;
 extern s32 mo_y_abs;
+extern f32 mo_x_delta;
+extern f32 mo_y_delta;
+extern f32 mo_wheel_delta;
 
 extern int screen_width, screen_height;
 
@@ -84,6 +87,9 @@ void input_sdl_init()
 	GamepadDevice::Register(sdl_mouse_gamepad);
 }
 
+static int mouse_prev_x = -1;
+static int mouse_prev_y = -1;
+
 static void set_mouse_position(int x, int y)
 {
 	int width, height;
@@ -93,6 +99,13 @@ static void set_mouse_position(int x, int y)
 		float scale = 480.f / height;
 		mo_x_abs = (x - (width - 640.f / scale) / 2.f) * scale;
 		mo_y_abs = y * scale;
+		if (mouse_prev_x != -1)
+		{
+			mo_x_delta += (f32)(x - mouse_prev_x) * settings.input.MouseSensitivity / 100.f;
+			mo_y_delta += (f32)(y - mouse_prev_y) * settings.input.MouseSensitivity / 100.f;
+		}
+		mouse_prev_x = x;
+		mouse_prev_y = y;
 	}
 }
 
@@ -123,6 +136,11 @@ void input_sdl_handle(u32 port)
 					sdl_keyboard->keyboard_input(event.key.keysym.sym, event.type == SDL_KEYDOWN, modifier_keys);
 				}
 				break;
+			case SDL_TEXTINPUT:
+				for (int i = 0; event.text.text[i] != '\0'; i++)
+					sdl_keyboard->keyboard_character(event.text.text[i]);
+				break;
+
 			case SDL_JOYBUTTONDOWN:
 			case SDL_JOYBUTTONUP:
 				{
@@ -162,6 +180,10 @@ void input_sdl_handle(u32 port)
 					break;
 				}
 				sdl_mouse_gamepad->gamepad_btn_input(event.button.button, event.button.state == SDL_PRESSED);
+				break;
+
+			case SDL_MOUSEWHEEL:
+				mo_wheel_delta -= event.wheel.y * 35;
 				break;
 
 			case SDL_JOYDEVICEADDED:
