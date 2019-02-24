@@ -205,6 +205,9 @@ extern bool naomi_test_button;
 extern s32 mo_x_abs;
 extern s32 mo_y_abs;
 extern u32 mo_buttons;
+extern f32 mo_x_delta;
+extern f32 mo_y_delta;
+extern f32 mo_wheel_delta;
 // Keyboard
 static Win32KeyboardDevice keyboard(0);
 
@@ -297,6 +300,8 @@ LRESULT CALLBACK WndProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		/* no break */
 	case WM_MOUSEMOVE:
 		{
+			static int prev_x = -1;
+			static int prev_y = -1;
 			int xPos = GET_X_LPARAM(lParam);
 			int yPos = GET_Y_LPARAM(lParam);
 			mo_x_abs = (xPos - (WINDOW_WIDTH - 640 * WINDOW_HEIGHT / 480) / 2) * 480 / WINDOW_HEIGHT;
@@ -308,7 +313,19 @@ LRESULT CALLBACK WndProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				mo_buttons &= ~(1 << 3);
 			if (wParam & MK_RBUTTON)
 				mo_buttons &= ~(1 << 1);
+			if (prev_x != -1)
+			{
+				mo_x_delta += (f32)(xPos - prev_x) * settings.input.MouseSensitivity / 100.f;
+				mo_y_delta += (f32)(yPos - prev_y) * settings.input.MouseSensitivity / 100.f;
+			}
+			prev_x = xPos;
+			prev_y = yPos;
 		}
+		if (message != WM_MOUSEMOVE)
+			return 0;
+		break;
+	case WM_MOUSEWHEEL:
+		mo_wheel_delta -= (float)GET_WHEEL_DELTA_WPARAM(wParam)/(float)WHEEL_DELTA * 16;
 		break;
 
 	case WM_KEYDOWN:
@@ -326,6 +343,9 @@ LRESULT CALLBACK WndProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			keyboard.keyboard_input(keycode, message == WM_KEYDOWN);
 		}
 		break;
+	case WM_CHAR:
+		keyboard.keyboard_character(message.wParam);
+		return 0;
 
 	default:
 		break;
