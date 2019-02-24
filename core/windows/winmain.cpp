@@ -344,7 +344,7 @@ LRESULT CALLBACK WndProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		}
 		break;
 	case WM_CHAR:
-		keyboard.keyboard_character(message.wParam);
+		keyboard.keyboard_character((char)wParam);
 		return 0;
 
 	default:
