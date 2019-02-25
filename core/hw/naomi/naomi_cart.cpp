@@ -337,6 +337,12 @@ error:
 	return false;
 }
 
+#if HOST_OS == OS_WINDOWS
+#define CloseFile(f)	CloseHandle(f)
+#else
+#define CloseFile(f)	close(f)
+#endif
+
 bool naomi_cart_LoadRom(char* file)
 {
 	printf("\nnullDC-Naomi rom loader v1.2\n");
@@ -463,7 +469,7 @@ bool naomi_cart_LoadRom(char* file)
 	{
 		for (int i = 0; i < RomCacheMapCount; i++)
 			if (RomCacheMap[i] != INVALID_FD)
-				close(RomCacheMap[i]);
+				CloseFile(RomCacheMap[i]);
 		RomCacheMapCount = 0;
 		delete[] RomCacheMap;
 	}
@@ -546,11 +552,7 @@ bool naomi_cart_LoadRom(char* file)
 	{
 		for (size_t i = 0; i < files.size(); i++)
 			if (RomCacheMap[i] != INVALID_FD)
-#if HOST_OS == OS_WINDOWS
-				CloseHandle(RomCacheMap[i]);
-#else
-				close(RomCacheMap[i]);
-#endif
+				CloseFile(RomCacheMap[i]);
 		return false;
 	}
 

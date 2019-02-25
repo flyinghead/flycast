@@ -1013,15 +1013,20 @@ static void add_game_directory(const std::string& path, std::vector<GameMedia>& 
 		if (name == "." || name == "..")
 			continue;
 		std::string child_path = path + "/" + name;
-		if (entry->d_type == DT_UNKNOWN)
+		bool is_dir = false;
+#ifndef _WIN32
+		if (entry->d_type == DT_DIR)
+			is_dir = true;
+		if (entry->d_type == DT_UNKNOWN || entry->d_type == DT_LNK)
+#endif
 		{
 			struct stat st;
 			if (stat(child_path.c_str(), &st) != 0)
 				continue;
 			if (S_ISDIR(st.st_mode))
-				entry->d_type = DT_DIR;
+				is_dir = true;
 		}
-		if (entry->d_type == DT_DIR)
+		if (is_dir)
 		{
 			add_game_directory(child_path, game_list);
 		}
@@ -1116,11 +1121,13 @@ static void gui_display_content()
         for (auto game : game_list)
         	if (filter.PassFilter(game.name.c_str()))
         	{
+    			ImGui::PushID(game.path.c_str());
 				if (ImGui::Selectable(game.name.c_str()))
 				{
 					gui_start_game(game.path);
 					gui_state = ClosedNoResume;
 				}
+				ImGui::PopID();
         	}
         ImGui::PopStyleVar();
     }

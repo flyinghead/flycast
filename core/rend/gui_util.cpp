@@ -37,6 +37,7 @@ static bool subfolders_read;
 #ifdef _WIN32
 static const std::string separators = "/\\";
 static const std::string native_separator = "\\";
+#define WIN32_PSEUDO_ROOT ":"
 #else
 static const std::string separators = "/";
 static const std::string native_separator = "/";
@@ -56,8 +57,15 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
 			select_current_directory = home;
 #elif HOST_OS == OS_WINDOWS
 		const char *home = getenv("HOMEPATH");
+		const char *home_drive = getenv("HOMEDRIVE");
 		if (home != NULL)
-			select_current_directory = home;
+		{
+			if (home_drive != NULL)
+				select_current_directory = home_drive;
+			else
+				select_current_directory.clear();
+			select_current_directory += home;
+		}
 #endif
 		if (select_current_directory.empty())
 		{
@@ -85,13 +93,14 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
 			select_subfolders.clear();
 			error_message.clear();
 #ifdef _WIN32
-			if (select_current_directory.empty())
+			if (select_current_directory == WIN32_PSEUDO_ROOT)
 			{
+				error_message = "Drives";
 				// List all the drives
 				u32 drives = GetLogicalDrives();
 				for (int i = 0; i < 32; i++)
 					if ((drives & (1 << i)) != 0)
-						select_subfolders.push_back(std::string(1, (char)('A' + i) + ":\\");
+						select_subfolders.push_back(std::string(1, (char)('A' + i)) + ":\\");
 			}
 			else
 #endif
@@ -116,15 +125,20 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
 						if (name == "..")
 							dotdot_seen = true;
 						std::string child_path = path + "/" + name;
+						bool is_dir = false;
+#ifndef _WIN32
+						if (entry->d_type == DT_DIR)
+							is_dir = true;
 						if (entry->d_type == DT_UNKNOWN || entry->d_type == DT_LNK)
+#endif
 						{
 							struct stat st;
 							if (stat(child_path.c_str(), &st) != 0)
 								continue;
 							if (S_ISDIR(st.st_mode))
-								entry->d_type = DT_DIR;
+								is_dir = true;
 						}
-						if (entry->d_type == DT_DIR && access(child_path.c_str(), R_OK) == 0)
+						if (is_dir && access(child_path.c_str(), R_OK) == 0)
 							select_subfolders.push_back(name);
 					}
 					closedir(dir);
@@ -158,7 +172,7 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
 						continue;
 #ifdef _WIN32
 					if (path.size() == 2 && path[1] == ':')
-						child_path = "";
+						child_path = WIN32_PSEUDO_ROOT;
 					else
 #endif
 					if (path == ".")
@@ -173,17 +187,22 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
 				else if (path.size() >= 2 && path.substr(path.size() - 2) == "..")
 					child_path = path + native_separator + "..";
 				else
+				{
 					child_path = path.substr(0, last_sep);
+#ifdef _WIN32
+					if (child_path.size() == 2 && child_path[1] == ':')		// C: -> C:/
+						child_path += native_separator;
+#endif
+				}
 			}
 			else
 			{
-				if (!path.empty())
-				{
-					std::string::size_type last_sep = path.find_last_of(separators);
-					if (last_sep == path.size() - 1)
-						path.pop_back();
-				}
-				child_path = path + native_separator + name;
+#ifdef _WIN32
+				if (path == WIN32_PSEUDO_ROOT)
+					child_path = name;
+				else
+#endif
+					child_path = path + native_separator + name;
 			}
 			if (ImGui::Selectable(name.c_str()))
 			{

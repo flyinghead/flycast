@@ -276,6 +276,10 @@ static bool init_done;
 
 int reicast_init(int argc, char* argv[])
 {
+#ifdef _WIN32
+	setbuf(stdout, 0);
+	setbuf(stderr, 0);
+#endif
 	if (!_vmem_reserve())
 	{
 		printf("Failed to alloc mem\n");
