@@ -203,7 +203,7 @@ public class GL2JNIActivity extends Activity {
 
         // Create the actual GLES view
         mView = new GL2JNIView(GL2JNIActivity.this, fileName, false,
-                prefs.getInt(Config.pref_renderdepth, 24), 0, false);
+                prefs.getInt(Config.pref_renderdepth, 24), 8, false);
         setContentView(mView);
 
         //setup mic
