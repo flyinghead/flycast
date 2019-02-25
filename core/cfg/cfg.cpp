@@ -21,7 +21,7 @@ void savecfgf()
 	FILE* cfgfile = fopen(cfgPath.c_str(),"wt");
 	if (!cfgfile)
 	{
-		printf("Error : Unable to open file for saving \n");
+		printf("Error: Unable to open file '%s' for saving\n", cfgPath.c_str());
 	}
 	else
 	{
@@ -76,6 +76,10 @@ void  cfgSaveStr(const wchar * Section, const wchar * Key, const wchar * String)
 
 bool cfgOpen()
 {
+	if (get_writable_config_path("").empty())
+		// Config dir not set (android onboarding)
+		return false;
+
 	const char* filename = "/emu.cfg";
 	string config_path_read = get_readonly_config_path(filename);
 	cfgPath = get_writable_config_path(filename);

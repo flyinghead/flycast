@@ -270,6 +270,8 @@ bool rend_single_frame()
 	//wait render start only if no frame pending
 	do
 	{
+		// FIXME not here
+		os_DoEvents();
 #if !defined(TARGET_NO_THREADS)
 		if (gui_is_open())
 		{
@@ -285,12 +287,8 @@ bool rend_single_frame()
 			if (renderer != NULL)
 				renderer->RenderLastFrame();
 
-#if defined(_ANDROID)
 			if (!rs.Wait(100))
 				return false;
-#else
-			rs.Wait();
-#endif
 		}
 #else
 		if (gui_is_open())
@@ -378,6 +376,7 @@ void rend_term_renderer()
 		delete fallback_renderer;
 		fallback_renderer = NULL;
 	}
+	tactx_Term();
 }
 
 void* rend_thread(void* p)
@@ -385,33 +384,6 @@ void* rend_thread(void* p)
 #if FEAT_HAS_NIXPROF
 	install_prof_handler(1);
 #endif
-
-	#if SET_AFNT
-	cpu_set_t mask;
-
-	/* CPU_ZERO initializes all the bits in the mask to zero. */
-
-	CPU_ZERO( &mask );
-
-
-
-	/* CPU_SET sets only the bit corresponding to cpu. */
-
-	CPU_SET( 1, &mask );
-
-
-
-	/* sched_setaffinity returns 0 in success */
-
-	if( sched_setaffinity( 0, sizeof(mask), &mask ) == -1 )
-
-	{
-
-		printf("WARNING: Could not set CPU Affinity, continuing...\n");
-
-	}
-	#endif
-
 
 	rend_init_renderer();
 
@@ -435,10 +407,6 @@ void* rend_thread(void* p)
 
 	return NULL;
 }
-
-#if !defined(TARGET_NO_THREADS)
-cThread rthd(rend_thread,0);
-#endif
 
 bool pend_rend = false;
 
@@ -570,79 +538,9 @@ void rend_end_render()
 	}
 }
 
-/*
-void rend_end_wait()
-{
-	#if HOST_OS!=OS_WINDOWS && !defined(_ANDROID)
-	//	if (!re.state) printf("Render End: Waiting ...\n");
-	#endif
-	re.Wait();
-	pvrrc.InUse=false;
-}
-*/
-
-bool rend_init()
-{
-	rend_create_renderer();
-
-#if !defined(_ANDROID) && HOST_OS != OS_DARWIN
-  #if !defined(TARGET_NO_THREADS)
-    rthd.Start();
-  #else
-    rend_init_renderer();
-
-    renderer->Resize(640, 480);
-  #endif
-#endif
-
-#if SET_AFNT
-	cpu_set_t mask;
-
-
-
-	/* CPU_ZERO initializes all the bits in the mask to zero. */
-
-	CPU_ZERO( &mask );
-
-
-
-	/* CPU_SET sets only the bit corresponding to cpu. */
-
-	CPU_SET( 0, &mask );
-
-
-
-	/* sched_setaffinity returns 0 in success */
-
-	if( sched_setaffinity( 0, sizeof(mask), &mask ) == -1 )
-
-	{
-
-		printf("WARNING: Could not set CPU Affinity, continuing...\n");
-
-	}
-#endif
-
-	return true;
-}
-
-void rend_term()
+void rend_stop_renderer()
 {
 	renderer_enabled = false;
-#if !defined(TARGET_NO_THREADS)
-	rs.Set();
-#endif
-
-	if (fCheckFrames)
-		fclose(fCheckFrames);
-
-	if (fLogFrames)
-		fclose(fLogFrames);
-
-#if !defined(TARGET_NO_THREADS)
-	rthd.WaitToEnd();
-#endif
-	tactx_Term();
 }
 
 void rend_vblank()
@@ -656,8 +554,6 @@ void rend_vblank()
 	}
 	render_called = false;
 	check_framebuffer_write();
-
-	os_DoEvents();
 }
 
 void check_framebuffer_write()

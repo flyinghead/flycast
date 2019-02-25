@@ -28,7 +28,7 @@ static std::shared_ptr<SDLMouseGamepadDevice> sdl_mouse_gamepad;
 static std::shared_ptr<SDLKbGamepadDevice> sdl_kb_gamepad;
 static SDLKeyboardDevice* sdl_keyboard = NULL;
 
-extern void dc_stop();
+extern void dc_exit();
 
 #ifdef TARGET_PANDORA
 	extern char OSD_Info[128];
@@ -122,7 +122,7 @@ void input_sdl_handle(u32 port)
 		switch (event.type)
 		{
 			case SDL_QUIT:
-				dc_stop();
+				dc_exit();
 				break;
 			case SDL_KEYDOWN:
 			case SDL_KEYUP:

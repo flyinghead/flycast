@@ -689,7 +689,7 @@ bool reios_init(u8* rom, u8* flash) {
 }
 
 void reios_reset() {
-
+	pre_init = false;
 }
 
 void reios_term() {

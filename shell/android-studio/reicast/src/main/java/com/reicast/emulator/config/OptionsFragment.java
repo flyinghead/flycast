@@ -111,7 +111,7 @@ public class OptionsFragment extends Fragment {
 
 		mPrefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
 
-		// Specialized handler for devices with an extSdCard mount for external
+		// FIXME Specialized handler for devices with an extSdCard mount for external
 		HashSet<String> extStorage = FileBrowser.getExternalMounts();
 		if (extStorage != null && !extStorage.isEmpty()) {
 			for (String sd : extStorage) {
@@ -157,7 +157,7 @@ public class OptionsFragment extends Fragment {
 										Snackbar.LENGTH_SHORT);
 							}
 							mPrefs.edit().putString(Config.pref_home, home_directory).apply();
-							JNIdc.config(home_directory);
+							//JNIdc.config(home_directory);
 							new LocateThemes(OptionsFragment.this).execute(home_directory + "/themes");
 						}
 						hideSoftKeyBoard();

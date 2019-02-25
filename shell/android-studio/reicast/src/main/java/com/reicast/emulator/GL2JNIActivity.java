@@ -333,7 +333,7 @@ public class GL2JNIActivity extends Activity implements ActivityCompat.OnRequest
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (permissions.length > 0 && permissions[0] == Manifest.permission.RECORD_AUDIO && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+        if (permissions.length > 0 && Manifest.permission.RECORD_AUDIO .equals(permissions[0]) && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             SipEmulator sip = new SipEmulator();
             sip.startRecording();
             JNIdc.setupMic(sip);

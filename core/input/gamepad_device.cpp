@@ -21,7 +21,7 @@
 #include "gamepad_device.h"
 #include "rend/gui.h"
 
-extern void dc_stop();
+extern void dc_exit();
 
 extern u16 kcode[4];
 extern u8 rt[4], lt[4];
@@ -56,7 +56,7 @@ bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 		{
 		case EMU_BTN_ESCAPE:
 			if (pressed)
-				dc_stop();
+				dc_exit();
 			break;
 		case EMU_BTN_MENU:
 			if (pressed)

@@ -90,8 +90,8 @@ public class NativeGLView extends SurfaceView implements IEmulatorView {
         DisplayMetrics dm = context.getResources().getDisplayMetrics();
         JNIdc.screenDpi((int)Math.max(dm.xdpi, dm.ydpi));
 
-        JNIdc.config(prefs.getString(Config.pref_home,
-                Environment.getExternalStorageDirectory().getAbsolutePath()));
+        //JNIdc.config(prefs.getString(Config.pref_home,
+        //        Environment.getExternalStorageDirectory().getAbsolutePath()));
 
         ethd = new EmuThread(this);
 
@@ -109,7 +109,7 @@ public class NativeGLView extends SurfaceView implements IEmulatorView {
 
         if (NativeGLActivity.syms != null)
             JNIdc.data(1, NativeGLActivity.syms);
-
+/*
         final String initStatus = JNIdc.init(fileName);
         if (initStatus != null)
         {
@@ -120,25 +120,25 @@ public class NativeGLView extends SurfaceView implements IEmulatorView {
                 }
             });
 
-
             throw new EmulatorInitFailed();
         }
         JNIdc.query(ethd);
-
+*/
         // Continuously render frames until the emulator stops
         handler.post(new Runnable() {
             @Override
             public void run() {
-                if (ethd.getState() == Thread.State.TERMINATED)
-                    ((Activity)getContext()).finish();
-                else {
+                //if (ethd.getState() == Thread.State.TERMINATED)
+                //    ((Activity)getContext()).finish();
+                //else
+                {
                     JNIdc.rendframeNative();
                     handler.post(this);
                 }
             }
         });
 
-        ethd.start();
+        ethd.run(); // FIXME Not a thread anymore
 
     }
 
@@ -509,11 +509,13 @@ public class NativeGLView extends SurfaceView implements IEmulatorView {
         Log.i("NativeGLView", "Stopping emulator");
         //JNIdc.destroy();
         JNIdc.stop();
+        /*
         try {
             ethd.join();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+        */
         Log.i("NativeGLView", "Stopping emulator completed");
     }
 

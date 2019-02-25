@@ -38,7 +38,6 @@ import com.reicast.emulator.config.Config;
 import com.reicast.emulator.config.EditVJoyActivity;
 import com.reicast.emulator.config.InputFragment;
 import com.reicast.emulator.config.OptionsFragment;
-import com.reicast.emulator.config.PGConfigFragment;
 import com.reicast.emulator.debug.GenerateLogs;
 import com.reicast.emulator.emu.JNIdc;
 
@@ -47,7 +46,7 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements
 		NavigationView.OnNavigationItemSelectedListener, FileBrowser.OnItemSelectedListener,
-		OptionsFragment.OnClickListener, InputFragment.OnClickListener  {
+		OptionsFragment.OnClickListener, InputFragment.OnClickListener {
 	private static final int PERMISSION_REQUEST = 1001;
 
 	private SharedPreferences mPrefs;
@@ -119,7 +118,14 @@ public class MainActivity extends AppCompatActivity implements
 		if (!getFilesDir().exists()) {
 			getFilesDir().mkdir();
 		}
-		JNIdc.initEnvironment((Emulator)getApplicationContext());
+		String home_directory = mPrefs.getString(Config.pref_home, "");
+		String result = JNIdc.initEnvironment((Emulator)getApplicationContext(), home_directory);
+		if (result != null)
+			showToastMessage("Initialization failed: " + result,
+					Snackbar.LENGTH_LONG);
+
+		String android_home_directory = Environment.getExternalStorageDirectory().getAbsolutePath();
+		JNIdc.config(android_home_directory);
 
 		// When viewing a resource, pass its URI to the native code for opening
 		Intent intent = getIntent();
@@ -231,7 +237,7 @@ public class MainActivity extends AppCompatActivity implements
 		String home_directory = mPrefs.getString(Config.pref_home,
 				Environment.getExternalStorageDirectory().getAbsolutePath());
 
-		JNIdc.config(home_directory);
+		//JNIdc.config(home_directory);
 
 		startActivity(new Intent("com.reicast.EMULATOR", uri,
 				getApplicationContext(), EditVJoyActivity.class));
@@ -244,7 +250,7 @@ public class MainActivity extends AppCompatActivity implements
 		String home_directory = mPrefs.getString(Config.pref_home,
 				Environment.getExternalStorageDirectory().getAbsolutePath());
 
-		JNIdc.config(home_directory);
+		//JNIdc.config(home_directory);
 
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
 			uri = Uri.parse(uri.toString().replace("content://"
@@ -547,4 +553,14 @@ public class MainActivity extends AppCompatActivity implements
 				.getDimensionPixelOffset(R.dimen.snackbar_icon_padding));
 		snackbar.show();
 	}
+
+	@Override
+	public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+		super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+		if (permissions.length > 0 && (Manifest.permission.READ_EXTERNAL_STORAGE.equals(permissions[0]) || Manifest.permission.WRITE_EXTERNAL_STORAGE.equals(permissions[0]))
+				&& grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+			onGameSelected(Uri.parse("file://whatever"));
+		}
+	}
+
 }

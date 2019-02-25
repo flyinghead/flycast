@@ -300,6 +300,7 @@ void tactx_Term()
 		ctx_list[i]->Free();
 		delete ctx_list[i];
 	}
+	ctx_list.clear();
 	mtx_pool.Lock();
 	{
 		for (size_t i = 0; i < ctx_pool.size(); i++)
@@ -308,5 +309,6 @@ void tactx_Term()
 			delete ctx_pool[i];
 		}
 	}
+	ctx_pool.clear();
 	mtx_pool.Unlock();
 }

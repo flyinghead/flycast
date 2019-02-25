@@ -8,6 +8,7 @@ import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatDelegate;
 import android.util.Log;
 
+import com.reicast.emulator.config.Config;
 import com.reicast.emulator.emu.JNIdc;
 
 public class Emulator extends Application {
@@ -188,9 +189,9 @@ public class Emulator extends Application {
      * Fetch current configuration settings from the emulator and save them
      *
      */
-    public void SaveSettings()
+    public void SaveAndroidSettings(String homeDirectory)
     {
-        Log.i("Emulator", "SaveSettings: saving preferences");
+        Log.i("Emulator", "SaveAndroidSettings: saving preferences");
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
 
         Emulator.dynarecopt = JNIdc.getDynarec();
@@ -223,6 +224,7 @@ public class Emulator extends Application {
         JNIdc.getControllers(maple_devices, maple_expansion_devices);
 
         SharedPreferences.Editor editor = prefs.edit()
+                .putString(Config.pref_home, homeDirectory)
                 .putBoolean(Emulator.pref_dynarecopt, Emulator.dynarecopt)
                 .putBoolean(Emulator.pref_idleskip, Emulator.idleskip)
                 .putBoolean(Emulator.pref_unstable, Emulator.unstableopt)

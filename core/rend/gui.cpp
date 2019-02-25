@@ -16,7 +16,10 @@
     You should have received a copy of the GNU General Public License
     along with reicast.  If not, see <https://www.gnu.org/licenses/>.
  */
+#include <algorithm>
 #include <math.h>
+#include <dirent.h>
+#include <sys/stat.h>
 
 #include "oslib/oslib.h"
 #include "cfg/cfg.h"
@@ -26,14 +29,18 @@
 #include "imgui/roboto_medium.h"
 #include "gles/gles.h"
 #include "input/gamepad_device.h"
+#include "input/keyboard_device.h"
 #include "linux-dist/main.h"	// FIXME for kcode[]
+#include "gui_util.h"
 
-extern bool dc_pause_emu();
-extern void dc_resume_emu(bool continue_running);
 extern void dc_loadstate();
 extern void dc_savestate();
+extern void dc_stop();
 extern void dc_reset();
+extern void dc_resume();
+extern int dc_start_game(const char *path);
 extern void UpdateInputState(u32 port);
+extern bool game_started;
 
 extern int screen_width, screen_height;
 extern u8 kb_shift; 		// shift keys pressed (bitmask)
@@ -41,13 +48,16 @@ extern u8 kb_key[6];		// normal keys pressed
 extern s32 mo_x_abs;
 extern s32 mo_y_abs;
 extern u32 mo_buttons;
+extern f32 mo_x_delta;
+extern f32 mo_y_delta;
+extern f32 mo_wheel_delta;
 extern bool renderer_changed;
 
 int screen_dpi = 96;
 
 static bool inited = false;
 static float scaling = 1;
-static enum { Closed, Commands, Settings, ClosedNoResume } gui_state;
+static enum { Closed, Commands, Settings, ClosedNoResume, Main, Onboarding } gui_state = Main;
 static bool settings_opening;
 static bool touch_up;
 
@@ -172,6 +182,14 @@ static void ImGui_Impl_NewFrame()
 			touch_up = true;
 	}
 #endif
+	if (io.WantCaptureMouse)
+	{
+		io.MouseWheel = -mo_wheel_delta / 16;
+		// Reset all relative mouse positions
+		mo_x_delta = 0;
+		mo_y_delta = 0;
+		mo_wheel_delta = 0;
+	}
 	io.MouseDown[0] = (mo_buttons & (1 << 2)) == 0;
 	io.MouseDown[1] = (mo_buttons & (1 << 1)) == 0;
 	io.MouseDown[2] = (mo_buttons & (1 << 3)) == 0;
@@ -180,7 +198,7 @@ static void ImGui_Impl_NewFrame()
 	io.NavInputs[ImGuiNavInput_Activate] = (kcode[0] & DC_BTN_A) == 0;
 	io.NavInputs[ImGuiNavInput_Cancel] = (kcode[0] & DC_BTN_B) == 0;
 	io.NavInputs[ImGuiNavInput_Input] = (kcode[0] & DC_BTN_X) == 0;
-	io.NavInputs[ImGuiNavInput_Menu] = (kcode[0] & DC_BTN_Y) == 0;
+	//io.NavInputs[ImGuiNavInput_Menu] = (kcode[0] & DC_BTN_Y) == 0;
 	io.NavInputs[ImGuiNavInput_DpadLeft] = (kcode[0] & DC_DPAD_LEFT) == 0;
 	io.NavInputs[ImGuiNavInput_DpadRight] = (kcode[0] & DC_DPAD_RIGHT) == 0;
 	io.NavInputs[ImGuiNavInput_DpadUp] = (kcode[0] & DC_DPAD_UP) == 0;
@@ -197,6 +215,13 @@ static void ImGui_Impl_NewFrame()
 	io.NavInputs[ImGuiNavInput_LStickDown] = joyy[0] > 0 ? (float)joyy[0] / 128.f : 0.f;
 	if (io.NavInputs[ImGuiNavInput_LStickDown] < 0.1f)
 		io.NavInputs[ImGuiNavInput_LStickDown] = 0.f;
+
+	if (KeyboardDevice::GetInstance() != NULL)
+	{
+		std:string input_text = KeyboardDevice::GetInstance()->get_character_input();
+		if (io.WantCaptureKeyboard)
+			io.AddInputCharactersUTF8(input_text.c_str());
+	}
 }
 
 static double last_render;
@@ -256,11 +281,7 @@ bool gui_is_open()
 
 static void gui_display_commands()
 {
-	if (!dc_pause_emu())
-	{
-		gui_state = Closed;
-		return;
-	}
+	dc_stop();
 
 	ImGui_Impl_NewFrame();
     ImGui::NewFrame();
@@ -305,8 +326,9 @@ static void gui_display_commands()
 	ImGui::NextColumn();
 	if (ImGui::Button("Exit", ImVec2(150 * scaling, 50 * scaling)))
 	{
-		dc_resume_emu(false);
-		gui_state = ClosedNoResume;
+		// Exit to main menu
+		gui_state = Main;
+		game_started = false;
 	}
 
     ImGui::End();
@@ -538,6 +560,18 @@ static void controller_mapping_popup(std::shared_ptr<GamepadDevice> gamepad)
 	}
 	ImGui::PopStyleVar();
 }
+
+static bool game_list_done;		// Set to false to refresh the game list
+
+void directory_selected_callback(bool cancelled, std::string selection)
+{
+	if (!cancelled)
+	{
+		settings.dreamcast.ContentPath.push_back(selection);
+		game_list_done = false;
+	}
+}
+
 static void gui_display_settings()
 {
 	ImGui_Impl_NewFrame();
@@ -558,7 +592,10 @@ static void gui_display_settings()
 
     if (ImGui::Button("Done", ImVec2(100 * scaling, 30 * scaling)))
     {
-    	gui_state = Commands;
+    	if (game_started)
+    		gui_state = Commands;
+    	else
+    		gui_state = Main;
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST
     	// TODO only if changed? sleep time on emu thread?
     	mcfg_DestroyDevices();
@@ -566,23 +603,26 @@ static void gui_display_settings()
 #endif
        	SaveSettings();
     }
-    ImGui::SameLine();
-	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * scaling, normal_padding.y));
-    if (cfgHasGameSpecificConfig())
-    {
-        if (ImGui::Button("Delete Game Config", ImVec2(0, 30 * scaling)))
-        {
-        	cfgDeleteGameSpecificConfig();
-        	InitSettings();
-        	LoadSettings(false);
-        }
-    }
-    else
-    {
-        if (ImGui::Button("Make Game Config", ImVec2(0, 30 * scaling)))
-        	cfgMakeGameSpecificConfig();
-    }
-    ImGui::PopStyleVar();
+	if (game_started)
+	{
+	    ImGui::SameLine();
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * scaling, normal_padding.y));
+		if (cfgHasGameSpecificConfig())
+		{
+			if (ImGui::Button("Delete Game Config", ImVec2(0, 30 * scaling)))
+			{
+				cfgDeleteGameSpecificConfig();
+				InitSettings();
+				LoadSettings(false);
+			}
+		}
+		else
+		{
+			if (ImGui::Button("Make Game Config", ImVec2(0, 30 * scaling)))
+				cfgMakeGameSpecificConfig();
+		}
+	    ImGui::PopStyleVar();
+	}
 
 	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * scaling, 6 * scaling));		// from 4, 3
 
@@ -654,6 +694,46 @@ static void gui_display_settings()
 			}
             ImGui::SameLine();
             ShowHelpMarker("Video connection type");
+
+            static int current_item;
+            std::vector<const char *> paths;
+            for (auto path : settings.dreamcast.ContentPath)
+            	paths.push_back(path.c_str());
+
+            ImVec2 size;
+            size.x = 0.0f;
+            size.y = (ImGui::GetTextLineHeightWithSpacing() + ImGui::GetStyle().FramePadding.y * 2.f)
+            				* (settings.dreamcast.ContentPath.size() + 1) ;//+ ImGui::GetStyle().FramePadding.y * 2.f;
+
+            if (ImGui::ListBoxHeader("Content Location", size))
+            {
+            	int to_delete = -1;
+                for (int i = 0; i < settings.dreamcast.ContentPath.size(); i++)
+                {
+                	ImGui::PushID(settings.dreamcast.ContentPath[i].c_str());
+                    ImGui::AlignTextToFramePadding();
+                	ImGui::Text("%s", settings.dreamcast.ContentPath[i].c_str());
+                	ImGui::SameLine(ImGui::GetContentRegionAvailWidth() - ImGui::CalcTextSize("X").x - ImGui::GetStyle().FramePadding.x);
+                	if (ImGui::Button("X"))
+                		to_delete = i;
+                	ImGui::PopID();
+                }
+                ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(24 * scaling, 3 * scaling));
+            	if (ImGui::Button("Add"))
+            		ImGui::OpenPopup("Select Directory");
+        		select_directory_popup("Select Directory", scaling, &directory_selected_callback);
+        		ImGui::PopStyleVar();
+
+        		ImGui::ListBoxFooter();
+            	if (to_delete >= 0)
+            	{
+            		settings.dreamcast.ContentPath.erase(settings.dreamcast.ContentPath.begin() + to_delete);
+        			game_list_done = false;
+            	}
+            }
+            ImGui::SameLine();
+            ShowHelpMarker("The directories where your games are stored");
+
 
 			ImGui::PopStyleVar();
 			ImGui::EndTabItem();
@@ -903,6 +983,182 @@ static void gui_display_settings()
    	settings.dynarec.Enable = (bool)dynarec_enabled;
 }
 
+#ifdef _ANDROID
+static std::string current_library_path("/storage/emulated/0/Download");
+#else
+static std::string current_library_path("/home/raph/RetroPie/roms/dreamcast/");
+#endif
+struct GameMedia {
+	std::string name;
+	std::string path;
+};
+
+static bool operator<(const GameMedia &left, const GameMedia &right)
+{
+	return left.name < right.name;
+}
+
+static void add_game_directory(const std::string& path, std::vector<GameMedia>& game_list)
+{
+	//printf("Exploring %s\n", path.c_str());
+	DIR *dir = opendir(path.c_str());
+	if (dir == NULL)
+		return;
+	while (true)
+	{
+		struct dirent *entry = readdir(dir);
+		if (entry == NULL)
+			break;
+		std:string name(entry->d_name);
+		if (name == "." || name == "..")
+			continue;
+		std::string child_path = path + "/" + name;
+		if (entry->d_type == DT_UNKNOWN)
+		{
+			struct stat st;
+			if (stat(child_path.c_str(), &st) != 0)
+				continue;
+			if (S_ISDIR(st.st_mode))
+				entry->d_type = DT_DIR;
+		}
+		if (entry->d_type == DT_DIR)
+		{
+			add_game_directory(child_path, game_list);
+		}
+		else
+		{
+#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
+			if (name.size() >= 4)
+			{
+				std::string extension = name.substr(name.size() - 4).c_str();
+				//printf("  found game %s ext %s\n", entry->d_name, extension.c_str());
+				if (stricmp(extension.c_str(), ".cdi") && stricmp(extension.c_str(), ".gdi") && stricmp(extension.c_str(), ".chd") && stricmp(extension.c_str(), ".cue"))
+					continue;
+				game_list.push_back({ name, child_path });
+			}
+#else
+			std::string::size_type dotpos = name.find_last_of(".");
+			if (dotpos == std::string::npos || dotpos == name.size() - 1)
+				continue;
+			std::string extension = name.substr(dotpos);
+			if (stricmp(extension.c_str(), ".zip") && stricmp(extension.c_str(), ".7z") && stricmp(extension.c_str(), ".bin")
+					 && stricmp(extension.c_str(), ".lst") && stricmp(extension.c_str(), ".dat"))
+				continue;
+			game_list.push_back({ name, child_path });
+#endif
+		}
+	}
+	closedir(dir);
+}
+
+static std::vector<GameMedia> game_list;
+
+static void fetch_game_list()
+{
+	if (game_list_done)
+		return;
+	game_list.clear();
+	for (auto path : settings.dreamcast.ContentPath)
+		add_game_directory(path, game_list);
+	std::stable_sort(game_list.begin(), game_list.end());
+	game_list_done = true;
+}
+
+static void gui_display_demo()
+{
+	ImGui_Impl_NewFrame();
+    ImGui::NewFrame();
+
+	ImGui::ShowDemoWindow();
+	ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData(), false);
+}
+
+static void gui_start_game(const std::string& path)
+{
+	dc_start_game(path.c_str());
+}
+
+static void gui_display_content()
+{
+	ImGui_Impl_NewFrame();
+    ImGui::NewFrame();
+
+	ImGui::SetNextWindowPos(ImVec2(0, 0));
+	ImGui::SetNextWindowSize(ImVec2(screen_width, screen_height));
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
+
+    ImGui::Begin("##main", NULL, ImGuiWindowFlags_NoDecoration);
+
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(20 * scaling, 8 * scaling));		// from 8, 4
+    ImGui::AlignTextToFramePadding();
+    ImGui::Text("GAMES");
+
+    static ImGuiTextFilter filter;
+    if (KeyboardDevice::GetInstance() != NULL)
+    {
+        ImGui::SameLine(0, 32 * scaling);
+    	filter.Draw("Filter");
+    }
+
+    ImGui::SameLine(ImGui::GetContentRegionAvailWidth() - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f /*+ ImGui::GetStyle().ItemSpacing.x*/);
+    if (ImGui::Button("Settings"))//, ImVec2(0, 30 * scaling)))
+    	gui_state = Settings;
+    ImGui::PopStyleVar();
+
+    fetch_game_list();
+
+	// Only if Filter and Settings aren't focused... ImGui::SetNextWindowFocus();
+	ImGui::BeginChild(ImGui::GetID("library"), ImVec2(0, 0), true);
+    {
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8 * scaling, 20 * scaling));		// from 8, 4
+
+        for (auto game : game_list)
+        	if (filter.PassFilter(game.name.c_str()))
+        	{
+				if (ImGui::Selectable(game.name.c_str()))
+				{
+					gui_start_game(game.path);
+					gui_state = ClosedNoResume;
+				}
+        	}
+        ImGui::PopStyleVar();
+    }
+	ImGui::EndChild();
+	ImGui::End();
+    ImGui::PopStyleVar();
+
+	ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData(), false);
+}
+
+void systemdir_selected_callback(bool cancelled, std::string selection)
+{
+	if (!cancelled)
+	{
+		set_user_config_dir(selection);
+		set_user_data_dir(selection);
+		if (cfgOpen())
+		{
+			LoadSettings(false);
+			gui_state = Main;
+			// FIXME Save config dir in android app prefs
+		}
+	}
+}
+
+void gui_display_onboarding()
+{
+	ImGui_Impl_NewFrame();
+    ImGui::NewFrame();
+
+	ImGui::OpenPopup("Select System Directory");
+	select_directory_popup("Select System Directory", scaling, &systemdir_selected_callback);
+
+	ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData(), false);
+}
+
 void gui_display_ui()
 {
 	switch (gui_state)
@@ -913,13 +1169,20 @@ void gui_display_ui()
 	case Commands:
 		gui_display_commands();
 		break;
+	case Main:
+		//gui_display_demo();
+		gui_display_content();
+		break;
 	case Closed:
 	case ClosedNoResume:
+		break;
+	case Onboarding:
+		gui_display_onboarding();
 		break;
 	}
 
 	if (gui_state == Closed)
-		dc_resume_emu(true);
+		dc_resume();
 	else if (gui_state == ClosedNoResume)
 		gui_state = Closed;
 }
@@ -940,6 +1203,11 @@ void gui_display_fps(const char *string)
 
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+}
+
+void gui_open_onboarding()
+{
+	gui_state = Onboarding;
 }
 
 void gui_term()

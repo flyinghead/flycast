@@ -28,17 +28,11 @@ void libPvr_Reset(bool Manual)
 {
 	Regs_Reset(Manual);
 	spg_Reset(Manual);
-	//rend_reset(); //*TODO* wtf ?
 }
 
 s32 libPvr_Init()
 {
 	if (!spg_Init())
-	{
-		//failed
-		return rv_error;
-	}
-	if (!rend_init())
 	{
 		//failed
 		return rv_error;
@@ -50,6 +44,5 @@ s32 libPvr_Init()
 //called when exiting from sh4 thread , from the new thread context (for any thread specific de init) :P
 void libPvr_Term()
 {
-	rend_term();
 	spg_Term();
 }

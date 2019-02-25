@@ -106,7 +106,7 @@ PCHAR*
 	return argv;
 }
 
-void dc_stop(void);
+void dc_exit(void);
 
 bool VramLockedWrite(u8* address);
 bool ngen_Rewrite(unat& addr,unat retadr,unat acc);
@@ -658,16 +658,19 @@ int CALLBACK WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine
 #endif
 #endif
 	{
-		int dc_init(int argc,wchar* argv[]);
-		void dc_run();
+		int reicast_init(int argc, char* argv[]);
+		void *rend_thread(void *);
 		void dc_term();
-		dc_init(argc,argv);
+
+		if (reicast_init(argc, argv) != 0)
+			die("Reicast initialization failed");
 
 		#ifdef _WIN64
 			setup_seh();
 		#endif
 
-		dc_run();
+		rend_thread(NULL);
+
 		dc_term();
 	}
 #ifndef __GNUC__
@@ -710,7 +713,7 @@ void os_DoEvents()
 		// If the message is WM_QUIT, exit the while loop
 		if (msg.message == WM_QUIT)
 		{
-			dc_stop();
+			dc_exit();
 		}
 
 		// Translate the message and dispatch it to WindowProc()

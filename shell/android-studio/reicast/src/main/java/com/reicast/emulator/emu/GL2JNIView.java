@@ -134,8 +134,8 @@ public class GL2JNIView extends GLSurfaceView implements IEmulatorView
         DisplayMetrics dm = context.getResources().getDisplayMetrics();
         JNIdc.screenDpi((int)Math.max(dm.xdpi, dm.ydpi));
 
-        JNIdc.config(prefs.getString(Config.pref_home,
-                Environment.getExternalStorageDirectory().getAbsolutePath()));
+        //JNIdc.config(prefs.getString(Config.pref_home,
+        //        Environment.getExternalStorageDirectory().getAbsolutePath()));
 
         ethd = new EmuThread(this);
 

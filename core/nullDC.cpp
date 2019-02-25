@@ -13,7 +13,6 @@
 #include "hw/maple/maple_cfg.h"
 #include "hw/sh4/sh4_mem.h"
 
-#include "webui/server.h"
 #include "hw/naomi/naomi_cart.h"
 #include "reios/reios.h"
 #include "hw/sh4/sh4_sched.h"
@@ -21,10 +20,12 @@
 #include "hw/pvr/spg.h"
 #include "hw/aica/dsp.h"
 #include "imgread/common.h"
+#include "rend/gui.h"
 
 void FlushCache();
 void LoadCustom();
-void dc_resume_emu(bool continue_running);
+void* dc_run(void*);
+void dc_resume();
 
 settings_t settings;
 // Set if game has corresponding option by default, so that it's not saved in the config
@@ -33,26 +34,7 @@ static bool safemode_game;
 static bool tr_poly_depth_mask_game;
 static bool extra_depth_game;
 
-static bool continue_running = false;
-static cMutex mtx_mainloop ;
-static cResetEvent resume_mainloop(false, true);
-
-/*
-	libndc
-
-	//initialise (and parse the command line)
-	ndc_init(argc,argv);
-
-	...
-	//run a dreamcast slice
-	//either a frame, or up to 25 ms of emulation
-	//returns 1 if the frame is ready (fb needs to be flipped -- i'm looking at you android)
-	ndc_step();
-
-	...
-	//terminate (and free everything)
-	ndc_term()
-*/
+cThread emu_thread(&dc_run, NULL);
 
 #if HOST_OS==OS_WINDOWS
 #include <windows.h>
@@ -133,14 +115,14 @@ s32 plugins_Init()
 	if (s32 rv = libPvr_Init())
 		return rv;
 
-	#ifndef TARGET_DISPFRAME
+#ifndef TARGET_DISPFRAME
 	if (s32 rv = libGDR_Init())
 		return rv;
-	#endif
-	#if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
+#endif
+#if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
 	if (!naomi_cart_SelectFile(libPvr_GetRenderTarget()))
 		return rv_serror;
-	#endif
+#endif
 
 	if (s32 rv = libAICA_Init())
 		return rv;
@@ -148,18 +130,12 @@ s32 plugins_Init()
 	if (s32 rv = libARM_Init())
 		return rv;
 
-	//if (s32 rv = libExtDevice_Init())
-	//	return rv;
-
-
-
 	return rv_ok;
 }
 
 void plugins_Term()
 {
 	//term all plugins
-	//libExtDevice_Term();
 	libARM_Term();
 	libAICA_Term();
 	libGDR_Term();
@@ -168,23 +144,13 @@ void plugins_Term()
 
 void plugins_Reset(bool Manual)
 {
+	reios_reset();
 	libPvr_Reset(Manual);
 	libGDR_Reset(Manual);
 	libAICA_Reset(Manual);
 	libARM_Reset(Manual);
 	//libExtDevice_Reset(Manual);
 }
-
-#if !defined(TARGET_NO_WEBUI) && !defined(TARGET_NO_THREADS)
-
-void* webui_th(void* p)
-{
-	webui_start();
-	return 0;
-}
-
-cThread webui_thd(&webui_th,0);
-#endif
 
 void LoadSpecialSettings()
 {
@@ -308,48 +274,60 @@ void dc_reset()
 
 static bool init_done;
 
-int dc_init(int argc,wchar* argv[])
+int reicast_init(int argc, char* argv[])
 {
-	setbuf(stdin,0);
-	setbuf(stdout,0);
-	setbuf(stderr,0);
-	if (init_done)
-	{
-		if(ParseCommandLine(argc,argv))
-		{
-	        return 69;
-		}
-		InitSettings();
-		LoadSettings(false);
-		if (DiscSwap())
-			LoadCustom();
-		dc_reset();
-
-		return 0;
-	}
 	if (!_vmem_reserve())
 	{
 		printf("Failed to alloc mem\n");
 		return -1;
 	}
-
-#if !defined(TARGET_NO_WEBUI) && !defined(TARGET_NO_THREADS)
-	webui_thd.Start();
-#endif
-
-	if(ParseCommandLine(argc,argv))
+	if (ParseCommandLine(argc, argv))
 	{
         return 69;
 	}
-	if(!cfgOpen())
-	{
-		msgboxf("Unable to open config file",MBX_ICONERROR);
-		return -4;
-	}
 	InitSettings();
-	LoadSettings(false);
+	if (!cfgOpen())
+	{
+		printf("Config directory is not set. Starting onboarding\n");
+		gui_open_onboarding();
+	}
+	else
+		LoadSettings(false);
 
 	os_CreateWindow();
+	os_SetupInput();
+
+	// Needed to avoid crash calling dc_is_running() in gui
+	Get_Sh4Interpreter(&sh4_cpu);
+	sh4_cpu.Init();
+
+	return 0;
+}
+
+bool game_started;
+
+int dc_start_game(const char *path)
+{
+	cfgSetVirtual("config", "image", path);
+
+	if (init_done)
+	{
+		InitSettings();
+		LoadSettings(false);
+#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
+		if (DiscSwap())
+			LoadCustom();
+#elif DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
+		if (!naomi_cart_SelectFile(libPvr_GetRenderTarget()))
+			return rv_serror;
+#endif
+		dc_reset();
+
+		game_started = true;
+		dc_resume();
+
+		return 0;
+	}
 
 #if HOST_OS != OS_DARWIN
     #define DATA_PATH "/data/"
@@ -357,6 +335,7 @@ int dc_init(int argc,wchar* argv[])
     #define DATA_PATH "/"
 #endif
 
+	settings.dreamcast.RTC = GetRTC_now();	// FIXME This shouldn't be in settings anymore
 	if (settings.bios.UseReios || !LoadRomFiles(get_readonly_data_path(DATA_PATH)))
 	{
 #ifdef USE_REIOS
@@ -375,9 +354,7 @@ int dc_init(int argc,wchar* argv[])
 	}
 
 	if (plugins_Init())
-	{
 		return -3;
-	}
 
 	LoadCustom();
 
@@ -392,19 +369,13 @@ int dc_init(int argc,wchar* argv[])
 #endif
 	{
 		Get_Sh4Interpreter(&sh4_cpu);
-#if FEAT_SHREC == DYNAREC_NONE
 		sh4_cpu.Init();
-#endif
 		printf("Using Interpreter\n");
 	}
-
-    InitAudio();
 
 	mem_Init();
 
 	mem_map_default();
-
-	os_SetupInput();
 
 #if DC_PLATFORM == DC_PLATFORM_NAOMI
 	mcfg_CreateNAOMIJamma();
@@ -415,6 +386,9 @@ int dc_init(int argc,wchar* argv[])
 
 	dc_reset();
 
+	game_started = true;
+	dc_resume();
+
 	return 0;
 }
 
@@ -424,46 +398,26 @@ bool dc_is_running()
 }
 
 #ifndef TARGET_DISPFRAME
-void dc_run()
+void* dc_run(void*)
 {
-	resume_mainloop.Set();
+	InitAudio();
 
-    while ( true )
-    {
-    	bool dynarec_enabled = settings.dynarec.Enable;
-    	continue_running = false ;
-    	mtx_mainloop.Lock() ;
-    	sh4_cpu.Run();
-        mtx_mainloop.Unlock() ;
+	if (settings.dynarec.Enable)
+	{
+		Get_Sh4Recompiler(&sh4_cpu);
+		printf("Using Recompiler\n");
+	}
+	else
+	{
+		Get_Sh4Interpreter(&sh4_cpu);
+		printf("Using Interpreter\n");
+	}
+   	sh4_cpu.Run();
 
-#ifdef _WIN32
-        // Avoid the looping audio when the emulator is paused
-        TermAudio();
-#endif
-        while (!resume_mainloop.Wait(20))
-        	os_DoEvents();
-        resume_mainloop.Set();
+	SaveRomFiles(get_writable_data_path("/data/"));
+    TermAudio();
 
-    	if (dynarec_enabled != settings.dynarec.Enable)
-    	{
-    		if (settings.dynarec.Enable)
-    		{
-    			Get_Sh4Recompiler(&sh4_cpu);
-    			printf("Using Recompiler\n");
-    		}
-    		else
-    		{
-    			Get_Sh4Interpreter(&sh4_cpu);
-    			printf("Using Interpreter\n");
-    		}
-    		sh4_cpu.ResetCache();
-    	}
-    	if (!continue_running)
-    		break ;
-#ifdef _WIN32
-    	InitAudio();
-#endif
-    }
+    return NULL;
 }
 #endif
 
@@ -476,36 +430,19 @@ void dc_term()
 	mcfg_DestroyDevices();
 
 	SaveSettings();
-	SaveRomFiles(get_writable_data_path("/data/"));
-
-    TermAudio();
-
-#if !defined(TARGET_NO_WEBUI) && !defined(TARGET_NO_THREADS)
-    extern void sighandler(int sig);
-	sighandler(0);
-	webui_thd.WaitToEnd();
-#endif
-
 }
-
-#if defined(_ANDROID)
-void dc_pause()
-{
-	SaveRomFiles(get_writable_data_path("/data/"));
-}
-#endif
 
 void dc_stop()
 {
-	if (sh4_cpu.IsCpuRunning())
-		sh4_cpu.Stop();
-	else
-		dc_resume_emu(false);
+	sh4_cpu.Stop();
+	rend_cancel_emu_wait();
+	emu_thread.WaitToEnd();
 }
 
-void dc_start()
+void dc_exit()
 {
-	sh4_cpu.Start();
+	dc_stop();
+	rend_stop_renderer();
 }
 
 void InitSettings()
@@ -659,6 +596,23 @@ void LoadSettings(bool game_specific)
 	settings.omx.Audio_HDMI		= cfgLoadBool(game_specific ? cfgGetGameId() : "omx", "audio_hdmi", settings.omx.Audio_HDMI);
 #endif
 
+	if (!game_specific)
+	{
+		settings.dreamcast.ContentPath.clear();
+		std::string paths = cfgLoadStr(config_section, "Dreamcast.ContentPath", "");
+		std::string::size_type start = 0;
+		while (true)
+		{
+			std::string::size_type end = paths.find(';', start);
+			if (end == std::string::npos)
+				end = paths.size();
+			if (start != end)
+				settings.dreamcast.ContentPath.push_back(paths.substr(start, end - start));
+			if (end == paths.size())
+				break;
+			start = end + 1;
+		}
+	}
 /*
 	//make sure values are valid
 	settings.dreamcast.cable	= min(max(settings.dreamcast.cable,    0),3);
@@ -734,74 +688,24 @@ void SaveSettings()
 		sprintf(device_name, "device%d.2", i + 1);
 		cfgSaveInt("input", device_name, (s32)settings.input.maple_expansion_devices[i][1]);
 	}
-
-}
-
-static bool wait_until_dc_running()
-{
-	int64_t start_time = get_time_usec() ;
-	const int64_t FIVE_SECONDS = 5*1000000 ;
-	while(!dc_is_running())
+	// FIXME This should never be a game-specific setting
+	std::string paths;
+	for (auto path : settings.dreamcast.ContentPath)
 	{
-		if ( start_time+FIVE_SECONDS < get_time_usec() )
-		{
-			//timeout elapsed - dc not getting a chance to run - just bail
-			return false ;
-		}
+		if (!paths.empty())
+			paths += ";";
+		paths += path;
 	}
-	return true ;
-}
-
-static bool acquire_mainloop_lock()
-{
-	bool result = false ;
-	int64_t start_time = get_time_usec() ;
-	const int64_t FIVE_SECONDS = 5*1000000 ;
-
-	while ( ( start_time+FIVE_SECONDS > get_time_usec() ) && !(result = mtx_mainloop.TryLock())  )
-	{
-		rend_cancel_emu_wait() ;
-	}
-
-	return result ;
-}
-
-bool dc_pause_emu()
-{
-	if (sh4_cpu.IsCpuRunning())
-	{
-#ifndef TARGET_NO_THREADS
-		if (!wait_until_dc_running()) {
-			printf("Can't open settings - dc loop kept running\n");
-			return false;
-		}
-		resume_mainloop.Reset();
-
-		dc_stop();
-
-		if (!acquire_mainloop_lock())
-		{
-			printf("Can't open settings - could not acquire main loop lock\n");
-			continue_running = true;
-			resume_mainloop.Set();
-			return false;
-		}
-#else
-		dc_stop();
+	cfgSaveStr("config", "Dreamcast.ContentPath", paths.c_str());
+#ifdef _ANDROID
+	void SaveAndroidSettings();
+	SaveAndroidSettings();
 #endif
-	}
-	return true;
 }
 
-void dc_resume_emu(bool continue_running)
+void dc_resume()
 {
-	if (!sh4_cpu.IsCpuRunning())
-	{
-		::continue_running = continue_running;
-		rend_cancel_emu_wait();
-		resume_mainloop.Set();
-		mtx_mainloop.Unlock();
-	}
+	emu_thread.Start();
 }
 
 static void cleanup_serialize(void *data)
@@ -809,7 +713,7 @@ static void cleanup_serialize(void *data)
 	if ( data != NULL )
 		free(data) ;
 
-	dc_resume_emu(true);
+	dc_resume();
 }
 
 static string get_savestate_file_path()
@@ -825,7 +729,7 @@ static string get_savestate_file_path()
 	return get_writable_data_path("/data/") + state_file;
 }
 
-static void* dc_savestate_thread(void* p)
+void dc_savestate()
 {
 	string filename;
 	unsigned int total_size = 0 ;
@@ -833,14 +737,13 @@ static void* dc_savestate_thread(void* p)
 	void *data_ptr = NULL ;
 	FILE *f ;
 
-	if (!dc_pause_emu())
-		return NULL;
+	dc_stop();
 
 	if ( ! dc_serialize(&data, &total_size) )
 	{
 		printf("Failed to save state - could not initialize total size\n") ;
 		cleanup_serialize(data) ;
-    	return NULL;
+    	return;
 	}
 
 	data = malloc(total_size) ;
@@ -848,7 +751,7 @@ static void* dc_savestate_thread(void* p)
 	{
 		printf("Failed to save state - could not malloc %d bytes", total_size) ;
 		cleanup_serialize(data) ;
-    	return NULL;
+    	return;
 	}
 
 	data_ptr = data ;
@@ -857,7 +760,7 @@ static void* dc_savestate_thread(void* p)
 	{
 		printf("Failed to save state - could not serialize data\n") ;
 		cleanup_serialize(data) ;
-    	return NULL;
+    	return;
 	}
 
 	filename = get_savestate_file_path();
@@ -867,7 +770,7 @@ static void* dc_savestate_thread(void* p)
 	{
 		printf("Failed to save state - could not open %s for writing\n", filename.c_str()) ;
 		cleanup_serialize(data) ;
-    	return NULL;
+    	return;
 	}
 
 	fwrite(data, 1, total_size, f) ;
@@ -875,11 +778,9 @@ static void* dc_savestate_thread(void* p)
 
 	cleanup_serialize(data) ;
 	printf("Saved state to %s\n size %d", filename.c_str(), total_size) ;
-
-	return NULL;
 }
 
-static void* dc_loadstate_thread(void* p)
+void dc_loadstate()
 {
 	string filename;
 	unsigned int total_size = 0 ;
@@ -887,8 +788,7 @@ static void* dc_loadstate_thread(void* p)
 	void *data_ptr = NULL ;
 	FILE *f ;
 
-	if (!dc_pause_emu())
-		return NULL;
+	dc_stop();
 
 	filename = get_savestate_file_path();
 	f = fopen(filename.c_str(), "rb") ;
@@ -897,7 +797,7 @@ static void* dc_loadstate_thread(void* p)
 	{
 		printf("Failed to load state - could not open %s for reading\n", filename.c_str()) ;
 		cleanup_serialize(data) ;
-    	return NULL;
+    	return;
 	}
 	fseek(f, 0, SEEK_END);
 	total_size = ftell(f);
@@ -907,7 +807,7 @@ static void* dc_loadstate_thread(void* p)
 	{
 		printf("Failed to load state - could not malloc %d bytes", total_size) ;
 		cleanup_serialize(data) ;
-		return NULL;
+		return;
 	}
 
 	fread(data, 1, total_size, f) ;
@@ -925,7 +825,7 @@ static void* dc_loadstate_thread(void* p)
 	{
 		printf("Failed to load state - could not unserialize data\n") ;
 		cleanup_serialize(data) ;
-    	return NULL;
+    	return;
 	}
 
     dsp.dyndirty = true;
@@ -934,19 +834,4 @@ static void* dc_loadstate_thread(void* p)
 
     cleanup_serialize(data) ;
 	printf("Loaded state from %s size %d\n", filename.c_str(), total_size) ;
-
-	return NULL;
-}
-
-
-void dc_savestate()
-{
-	cThread thd(dc_savestate_thread,0);
-	thd.Start() ;
-}
-
-void dc_loadstate()
-{
-	cThread thd(dc_loadstate_thread,0);
-	thd.Start() ;
 }

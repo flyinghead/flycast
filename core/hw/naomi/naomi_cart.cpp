@@ -461,6 +461,9 @@ bool naomi_cart_LoadRom(char* file)
 
 	if (RomCacheMap)
 	{
+		for (int i = 0; i < RomCacheMapCount; i++)
+			if (RomCacheMap[i] != INVALID_FD)
+				close(RomCacheMap[i]);
 		RomCacheMapCount = 0;
 		delete[] RomCacheMap;
 	}

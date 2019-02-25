@@ -9,7 +9,7 @@ public final class JNIdc
 {
 	static { System.loadLibrary("dc"); }
 
-	public static native void initEnvironment(Emulator emulator);
+	public static native String initEnvironment(Emulator emulator, String homeDirectory);
 	public static native void config(String dirName);
 	public static native String init(String fileName);
 	public static native void query(EmuThread thread);

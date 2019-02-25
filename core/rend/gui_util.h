@@ -16,14 +16,8 @@
     You should have received a copy of the GNU General Public License
     along with reicast.  If not, see <https://www.gnu.org/licenses/>.
  */
-#pragma once
+#include <string>
 
-void gui_init();
-void gui_open_settings();
-bool gui_is_open();
-void gui_display_ui();
-void gui_display_fps(const char *string);
-void gui_open_onboarding();
-void gui_term();
+typedef void (*StringCallback)(bool cancelled, std::string selection);
 
-extern int screen_dpi;
+void select_directory_popup(const char *prompt, float scaling, StringCallback callback);

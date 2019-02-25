@@ -396,7 +396,7 @@ public class FileBrowser extends Fragment {
 								mCallback.onFolderSelected(
 										Uri.fromFile(new File(home_directory)));
 							}
-							JNIdc.config(home_directory);
+							//JNIdc.config(home_directory);
 						}
 					}
 				});
@@ -545,7 +545,7 @@ public class FileBrowser extends Fragment {
 												browser.get().mCallback.onFolderSelected(Uri.fromFile(
 														new File(browser.get().home_directory)));
 											}
-											JNIdc.config(browser.get().home_directory);
+											//JNIdc.config(browser.get().home_directory);
 										}
 
 									}

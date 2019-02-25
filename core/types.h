@@ -750,7 +750,7 @@ struct settings_t
 		u32 region;			// 0 -> JP, 1 -> USA, 2 -> EU, 3 -> default
 		u32 broadcast;		// 0 -> NTSC, 1 -> PAL, 2 -> PAL/M, 3 -> PAL/N, 4 -> default
 		u32 language;		// 0 -> JP, 1 -> EN, 2 -> DE, 3 -> FR, 4 -> SP, 5 -> IT, 6 -> default
-
+		std::vector<std::string> ContentPath;
 	} dreamcast;
 
 	struct
@@ -917,11 +917,6 @@ void libGDR_GetToc(u32* toc,u32 area);
 u32 libGDR_GetDiscType();
 void libGDR_GetSessionInfo(u8* pout,u8 session);
 
-
-//ExtDev
-s32 libExtDevice_Init();
-void libExtDevice_Reset(bool M);
-void libExtDevice_Term();
 
 // 0x00600000 - 0x006007FF [NAOMI] (modem area for dreamcast)
 u32  libExtDevice_ReadMem_A0_006(u32 addr,u32 size);

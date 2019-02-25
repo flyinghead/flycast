@@ -179,9 +179,9 @@ void os_CreateWindow()
 }
 
 void common_linux_setup();
-int dc_init(int argc,wchar* argv[]);
-void dc_run();
+int reicast_init(int argc, char* argv[]);
 void dc_term();
+void* rend_thread(void* p);
 
 #ifdef TARGET_PANDORA
 	void gl_term();
@@ -391,14 +391,14 @@ int main(int argc, wchar* argv[])
 
 	settings.profile.run_counts=0;
 
-	if (dc_init(argc,argv))
+	if (reicast_init(argc, argv))
 		die("Reicast initialization failed\n");
 
 	#if !defined(TARGET_EMSCRIPTEN)
 		#if FEAT_HAS_NIXPROF
 		install_prof_handler(0);
 		#endif
-		dc_run();
+		rend_thread(NULL);
 	#else
 		emscripten_set_main_loop(&dc_run, 100, false);
 	#endif
