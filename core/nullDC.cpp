@@ -324,6 +324,12 @@ int dc_start_game(const char *path)
 #elif DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
 		if (!naomi_cart_SelectFile(libPvr_GetRenderTarget()))
 			return rv_serror;
+		LoadCustom();
+#if DC_PLATFORM == DC_PLATFORM_NAOMI
+		mcfg_CreateNAOMIJamma();
+#elif DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
+		mcfg_CreateAtomisWaveControllers();
+#endif
 #endif
 		dc_reset();
 
