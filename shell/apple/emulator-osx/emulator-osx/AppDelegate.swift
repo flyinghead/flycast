@@ -15,11 +15,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
-        emu_main();
     }
 
     func applicationWillTerminate(_ aNotification: Notification) {
-        emu_dc_stop()
+        emu_dc_exit()
     }
     
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {

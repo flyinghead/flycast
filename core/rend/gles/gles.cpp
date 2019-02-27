@@ -68,6 +68,7 @@ Tile clip
 
 #include "oslib/oslib.h"
 #include "rend/rend.h"
+#include "input/gamepad.h"
 
 float fb_scale_x,fb_scale_y;
 float scale_x, scale_y;
@@ -1294,23 +1295,6 @@ void UpdateFogTexture(u8 *fog_table, GLenum texture_slot, GLint fog_image_format
 extern u16 kcode[4];
 extern u8 rt[4],lt[4];
 
-#define key_CONT_C           (1 << 0)
-#define key_CONT_B           (1 << 1)
-#define key_CONT_A           (1 << 2)
-#define key_CONT_START       (1 << 3)
-#define key_CONT_DPAD_UP     (1 << 4)
-#define key_CONT_DPAD_DOWN   (1 << 5)
-#define key_CONT_DPAD_LEFT   (1 << 6)
-#define key_CONT_DPAD_RIGHT  (1 << 7)
-#define key_CONT_Z           (1 << 8)
-#define key_CONT_Y           (1 << 9)
-#define key_CONT_X           (1 << 10)
-#define key_CONT_D           (1 << 11)
-#define key_CONT_DPAD2_UP    (1 << 12)
-#define key_CONT_DPAD2_DOWN  (1 << 13)
-#define key_CONT_DPAD2_LEFT  (1 << 14)
-#define key_CONT_DPAD2_RIGHT (1 << 15)
-
 #if defined(_ANDROID)
 extern float vjoy_pos[14][8];
 #else
@@ -1392,24 +1376,20 @@ static void DrawButton(float* xy, u32 state)
 
 static void DrawButton2(float* xy, bool state) { DrawButton(xy,state?0:255); }
 
-static float LastFPSTime;
-static int lastFrameCount = 0;
-static float fps = -1;
-
 static void osd_gen_vertices()
 {
 	osd_vertices.Init(ARRAY_SIZE(vjoy_pos) * 4, &osd_vertices_overrun, "OSD vertices");
-	DrawButton2(vjoy_pos[0],kcode[0]&key_CONT_DPAD_LEFT);
-	DrawButton2(vjoy_pos[1],kcode[0]&key_CONT_DPAD_UP);
-	DrawButton2(vjoy_pos[2],kcode[0]&key_CONT_DPAD_RIGHT);
-	DrawButton2(vjoy_pos[3],kcode[0]&key_CONT_DPAD_DOWN);
+	DrawButton2(vjoy_pos[0],kcode[0] & DC_DPAD_LEFT);
+	DrawButton2(vjoy_pos[1],kcode[0] & DC_DPAD_UP);
+	DrawButton2(vjoy_pos[2],kcode[0] & DC_DPAD_RIGHT);
+	DrawButton2(vjoy_pos[3],kcode[0] & DC_DPAD_DOWN);
 
-	DrawButton2(vjoy_pos[4],kcode[0]&key_CONT_X);
-	DrawButton2(vjoy_pos[5],kcode[0]&key_CONT_Y);
-	DrawButton2(vjoy_pos[6],kcode[0]&key_CONT_B);
-	DrawButton2(vjoy_pos[7],kcode[0]&key_CONT_A);
+	DrawButton2(vjoy_pos[4],kcode[0] & DC_BTN_X);
+	DrawButton2(vjoy_pos[5],kcode[0] & DC_BTN_Y);
+	DrawButton2(vjoy_pos[6],kcode[0] & DC_BTN_B);
+	DrawButton2(vjoy_pos[7],kcode[0] & DC_BTN_A);
 
-	DrawButton2(vjoy_pos[8],kcode[0]&key_CONT_START);
+	DrawButton2(vjoy_pos[8],kcode[0] & DC_BTN_START);
 
 	DrawButton(vjoy_pos[9],lt[0]);
 
@@ -1473,20 +1453,7 @@ void OSD_DRAW(GLuint shader_program)
 			glDrawArrays(GL_TRIANGLE_STRIP, i * 4, 4);
 	}
 #endif
-	if (settings.rend.ShowFPS)
-	{
-		double now = os_GetSeconds();
-		if (now - LastFPSTime >= 1.0) {
-			fps = (FrameCount - lastFrameCount) / (now - LastFPSTime);
-			LastFPSTime = now;
-			lastFrameCount = FrameCount;
-		}
-		if (fps >= 0) {
-			char text[32];
-			sprintf(text, "F:%.1f", fps);
-			gui_display_fps(text);
-		}
-	}
+	gui_display_osd();
 }
 
 bool ProcessFrame(TA_context* ctx)

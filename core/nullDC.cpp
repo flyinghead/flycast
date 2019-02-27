@@ -752,6 +752,7 @@ void dc_savestate()
 	if ( ! dc_serialize(&data, &total_size) )
 	{
 		printf("Failed to save state - could not initialize total size\n") ;
+		gui_display_notification("Save state failed", 2000);
 		cleanup_serialize(data) ;
     	return;
 	}
@@ -760,6 +761,7 @@ void dc_savestate()
 	if ( data == NULL )
 	{
 		printf("Failed to save state - could not malloc %d bytes", total_size) ;
+		gui_display_notification("Save state failed - memory full", 2000);
 		cleanup_serialize(data) ;
     	return;
 	}
@@ -769,6 +771,7 @@ void dc_savestate()
 	if ( ! dc_serialize(&data_ptr, &total_size) )
 	{
 		printf("Failed to save state - could not serialize data\n") ;
+		gui_display_notification("Save state failed", 2000);
 		cleanup_serialize(data) ;
     	return;
 	}
@@ -779,6 +782,7 @@ void dc_savestate()
 	if ( f == NULL )
 	{
 		printf("Failed to save state - could not open %s for writing\n", filename.c_str()) ;
+		gui_display_notification("Cannot open save file", 2000);
 		cleanup_serialize(data) ;
     	return;
 	}
@@ -788,6 +792,7 @@ void dc_savestate()
 
 	cleanup_serialize(data) ;
 	printf("Saved state to %s\n size %d", filename.c_str(), total_size) ;
+	gui_display_notification("State saved", 1000);
 }
 
 void dc_loadstate()
@@ -806,6 +811,7 @@ void dc_loadstate()
 	if ( f == NULL )
 	{
 		printf("Failed to load state - could not open %s for reading\n", filename.c_str()) ;
+		gui_display_notification("Save state not found", 2000);
 		cleanup_serialize(data) ;
     	return;
 	}
@@ -816,6 +822,7 @@ void dc_loadstate()
 	if ( data == NULL )
 	{
 		printf("Failed to load state - could not malloc %d bytes", total_size) ;
+		gui_display_notification("Failed to load state - memory full", 2000);
 		cleanup_serialize(data) ;
 		return;
 	}
@@ -834,6 +841,7 @@ void dc_loadstate()
 	if ( ! dc_unserialize(&data_ptr, &total_size) )
 	{
 		printf("Failed to load state - could not unserialize data\n") ;
+		gui_display_notification("Invalid save state", 2000);
 		cleanup_serialize(data) ;
     	return;
 	}

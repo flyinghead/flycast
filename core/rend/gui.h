@@ -22,7 +22,8 @@ void gui_init();
 void gui_open_settings();
 bool gui_is_open();
 void gui_display_ui();
-void gui_display_fps(const char *string);
+void gui_display_notification(const char *msg, int duration);
+void gui_display_osd();
 void gui_open_onboarding();
 void gui_term();
 

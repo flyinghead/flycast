@@ -1212,6 +1212,73 @@ void gui_display_fps(const char *string)
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
+static float LastFPSTime;
+static int lastFrameCount = 0;
+static float fps = -1;
+
+static std::string osd_message;
+static double osd_message_end;
+
+void gui_display_notification(const char *msg, int duration)
+{
+	osd_message = msg;
+	osd_message_end = os_GetSeconds() + (double)duration / 1000.0;
+}
+
+static std::string getFPSNotification()
+{
+	if (settings.rend.ShowFPS)
+	{
+		double now = os_GetSeconds();
+		if (now - LastFPSTime >= 1.0) {
+			fps = (FrameCount - lastFrameCount) / (now - LastFPSTime);
+			LastFPSTime = now;
+			lastFrameCount = FrameCount;
+		}
+		if (fps >= 0) {
+			char text[32];
+			sprintf(text, "F:%.1f", fps);
+
+			return std::string(text);
+		}
+	}
+	return std::string("");
+}
+
+void gui_display_osd()
+{
+	double now = os_GetSeconds();
+	if (!osd_message.empty())
+	{
+		if (now >= osd_message_end)
+			osd_message.clear();
+	}
+	std::string message;
+	if (osd_message.empty())
+	{
+		message = getFPSNotification();
+		if (message.empty())
+			return;
+	}
+	else
+		message = osd_message;
+
+	ImGui_Impl_NewFrame();
+    ImGui::NewFrame();
+
+    ImGui::SetNextWindowBgAlpha(0);
+    ImGui::SetNextWindowPos(ImVec2(0, screen_height), ImGuiCond_Always, ImVec2(0.f, 1.f));	// Lower left corner
+
+    ImGui::Begin("##osd", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav
+    		| ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoBackground);
+    ImGui::SetWindowFontScale(1.5);
+    ImGui::TextColored(ImVec4(1, 1, 0, 0.7), "%s", message.c_str());
+    ImGui::End();
+
+    ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+}
+
 void gui_open_onboarding()
 {
 	gui_state = Onboarding;
