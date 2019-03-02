@@ -360,6 +360,47 @@ void main() \n\
 	gl_FragColor=vec4(0.0, 0.0, 0.0, sp_ShaderColor); \n\
 }";
 
+const char* OSD_VertexShader =
+"\
+%s \n\
+#define TARGET_GL %s \n\
+ \n\
+#define GLES2 0 \n\
+#define GLES3 1 \n\
+#define GL2 2 \n\
+#define GL3 3 \n\
+ \n\
+#if TARGET_GL == GL2 \n\
+#define highp \n\
+#define lowp \n\
+#define mediump \n\
+#endif \n\
+#if TARGET_GL == GLES2 || TARGET_GL == GL2 \n\
+#define in attribute \n\
+#define out varying \n\
+#endif \n\
+ \n\
+uniform highp vec4      scale; \n\
+ \n\
+in highp vec4    in_pos; \n\
+in lowp vec4     in_base; \n\
+in mediump vec2  in_uv; \n\
+ \n\
+out lowp vec4 vtx_base; \n\
+out mediump vec2 vtx_uv; \n\
+ \n\
+void main() \n\
+{ \n\
+	vtx_base = in_base; \n\
+	vtx_uv = in_uv; \n\
+	highp vec4 vpos = in_pos; \n\
+	\n\
+	vpos.w = 1.0; \n\
+	vpos.z = vpos.w; \n\
+	vpos.xy = vpos.xy * scale.xy - scale.zw;  \n\
+	gl_Position = vpos; \n\
+}";
+
 const char* OSD_Shader =
 "\
 %s \n\
@@ -383,13 +424,7 @@ out highp vec4 FragColor; \n\
 #define texture texture2D \n\
 #endif \n\
  \n\
-#if TARGET_GL == GL3 || TARGET_GL == GLES3 \n\
-#define INTERPOLATION smooth \n\
-#else \n\
-#define INTERPOLATION \n\
-#endif \n\
- \n\
-INTERPOLATION in lowp vec4 vtx_base; \n\
+in lowp vec4 vtx_base; \n\
 in mediump vec2 vtx_uv; \n\
 /* Vertex input*/ \n\
 uniform sampler2D tex; \n\
@@ -820,7 +855,6 @@ extern void gl_term();
 static void gles_term()
 {
 	glDeleteProgram(gl.modvol_shader.program);
-	glDeleteProgram(gl.OSD_SHADER.program);
 	glDeleteBuffers(1, &gl.vbo.geometry);
 	gl.vbo.geometry = 0;
 	glDeleteBuffers(1, &gl.vbo.modvols);
@@ -1075,6 +1109,15 @@ GLuint osd_tex;
 
 void gl_load_osd_resources()
 {
+	char vshader[8192];
+	char fshader[8192];
+
+	sprintf(vshader, OSD_VertexShader, gl.glsl_version_header, gl.gl_version);
+	sprintf(fshader, OSD_Shader, gl.glsl_version_header, gl.gl_version);
+
+	gl.OSD_SHADER.program = gl_CompileAndLink(vshader, fshader);
+	gl.OSD_SHADER.scale = glGetUniformLocation(gl.OSD_SHADER.program, "scale");
+	glUniform1i(glGetUniformLocation(gl.OSD_SHADER.program, "tex"), 0);		//bind osd texture to slot 0
 
 	int w, h;
 	if (osd_tex == 0)
@@ -1083,6 +1126,8 @@ void gl_load_osd_resources()
 
 void gl_free_osd_resources()
 {
+	glDeleteProgram(gl.OSD_SHADER.program);
+
     if (osd_tex != 0) {
         glcache.DeleteTextures(1, &osd_tex);
         osd_tex = 0;
@@ -1180,15 +1225,6 @@ bool gl_create_resources()
 	gl.modvol_shader.sp_ShaderColor = glGetUniformLocation(gl.modvol_shader.program, "sp_ShaderColor");
 	gl.modvol_shader.depth_scale    = glGetUniformLocation(gl.modvol_shader.program, "depth_scale");
 	gl.modvol_shader.extra_depth_scale = glGetUniformLocation(gl.modvol_shader.program, "extra_depth_scale");
-
-	sprintf(fshader, OSD_Shader, gl.glsl_version_header, gl.gl_version);
-
-	gl.OSD_SHADER.program=gl_CompileAndLink(vshader, fshader);
-	printf("OSD: %d\n",gl.OSD_SHADER.program);
-	gl.OSD_SHADER.scale=glGetUniformLocation(gl.OSD_SHADER.program, "scale");
-	gl.OSD_SHADER.depth_scale=glGetUniformLocation(gl.OSD_SHADER.program, "depth_scale");
-	gl.OSD_SHADER.extra_depth_scale = glGetUniformLocation(gl.OSD_SHADER.program, "extra_depth_scale");
-	glUniform1i(glGetUniformLocation(gl.OSD_SHADER.program, "tex"),0);		//bind osd texture to slot 0
 
 	//#define PRECOMPILE_SHADERS
 	#ifdef PRECOMPILE_SHADERS
@@ -1342,12 +1378,7 @@ static void DrawButton(float* xy, u32 state)
 {
 	Vertex vtx;
 
-	vtx.z=1;
-
-	float x = xy[0] * scale_x;
-	float y = xy[1] * scale_y;
-	float w = xy[2] * scale_x;
-	float h = xy[3] * scale_y;
+	vtx.z = 1;
 
 	vtx.col[0]=vtx.col[1]=vtx.col[2]=(0x7F-0x40*state/255)*vjoy_pos[13][0];
 
@@ -1357,19 +1388,19 @@ static void DrawButton(float* xy, u32 state)
 
 
 
-	vtx.x=x; vtx.y=y;
+	vtx.x = xy[0]; vtx.y = xy[1];
 	vtx.u=xy[4]; vtx.v=xy[5];
 	*osd_vertices.Append() = vtx;
 
-	vtx.x=x+w; vtx.y=y;
+	vtx.x = xy[0] + xy[2]; vtx.y = xy[1];
 	vtx.u=xy[6]; vtx.v=xy[5];
 	*osd_vertices.Append() = vtx;
 
-	vtx.x=x; vtx.y=y+h;
+	vtx.x = xy[0]; vtx.y = xy[1] + xy[3];
 	vtx.u=xy[4]; vtx.v=xy[7];
 	*osd_vertices.Append() = vtx;
 
-	vtx.x=x+w; vtx.y=y+h;
+	vtx.x = xy[0] + xy[2]; vtx.y = xy[1] + xy[3];
 	vtx.u=xy[6]; vtx.v=xy[7];
 	*osd_vertices.Append() = vtx;
 }
@@ -1402,7 +1433,7 @@ static void osd_gen_vertices()
 #define OSD_TEX_W 512
 #define OSD_TEX_H 256
 
-void OSD_DRAW(GLuint shader_program)
+void OSD_DRAW()
 {
 #ifndef TARGET_PANDORA
 	if (osd_tex)
@@ -1430,12 +1461,24 @@ void OSD_DRAW(GLuint shader_program)
 			//v+=vjoy_pos[i][3];
 		}
 
-		verify(glIsProgram(shader_program));
+		verify(glIsProgram(gl.OSD_SHADER.program));
+		glcache.UseProgram(gl.OSD_SHADER.program);
 
+		float scale_h = screen_height / 480.f;
+		float offs_x = (screen_width - scale_h * 640.f) / 2.f;
+		float scale[4];
+		scale[0] = 2.f / (screen_width / scale_h);
+		scale[1]= -2.f / 480.f;
+		scale[2]= 1.f - 2.f * offs_x / screen_width;
+		scale[3]= -1.f;
+		glUniform4fv(gl.OSD_SHADER.scale, 1, scale);
+
+		glActiveTexture(GL_TEXTURE0);
 		glcache.BindTexture(GL_TEXTURE_2D, osd_tex);
-		glcache.UseProgram(shader_program);
 
-		glBufferData(GL_ARRAY_BUFFER, osd_vertices.bytes(), osd_vertices.head(), GL_STREAM_DRAW);
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+		glBufferData(GL_ARRAY_BUFFER, osd_vertices.bytes(), osd_vertices.head(), GL_STREAM_DRAW); glCheck();
 
 		glcache.Enable(GL_BLEND);
 		glcache.Disable(GL_DEPTH_TEST);
@@ -1446,6 +1489,7 @@ void OSD_DRAW(GLuint shader_program)
 
 		glcache.Disable(GL_CULL_FACE);
 		glcache.Disable(GL_SCISSOR_TEST);
+		glViewport(0, 0, screen_width, screen_height);
 
 		int dfa = osd_vertices.used() / 4;
 
@@ -1729,13 +1773,6 @@ bool RenderFrame()
 	glUniform4fv( gl.modvol_shader.depth_scale, 1, ShaderUniforms.depth_coefs);
 	glUniform1f(gl.modvol_shader.extra_depth_scale, ShaderUniforms.extra_depth_scale);
 
-	GLfloat td[4]={0.5,0,0,0};
-
-	glcache.UseProgram(gl.OSD_SHADER.program);
-	glUniform4fv( gl.OSD_SHADER.scale, 1, ShaderUniforms.scale_coefs);
-	glUniform4fv( gl.OSD_SHADER.depth_scale, 1, td);
-	glUniform1f(gl.OSD_SHADER.extra_depth_scale, 1.0f);
-
 	ShaderUniforms.PT_ALPHA=(PT_ALPHA_REF&0xFF)/255.0f;
 
 //	for (u32 i=0;i<sizeof(gl.pogram_table)/sizeof(gl.pogram_table[0]);i++)
@@ -1942,7 +1979,22 @@ struct glesrend : Renderer
 	bool RenderLastFrame() { return render_output_framebuffer(); }
 	void Present() { gl_swap(); glViewport(0, 0, screen_width, screen_height); }
 
-	void DrawOSD() { OSD_DRAW(gl.OSD_SHADER.program); }
+	void DrawOSD()
+	{
+		if (gl.gl_major >= 3)
+			glBindVertexArray(gl.vbo.vao);
+		glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.geometry); glCheck();
+		glEnableVertexAttribArray(VERTEX_POS_ARRAY);
+		glVertexAttribPointer(VERTEX_POS_ARRAY, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex,x));
+
+		glEnableVertexAttribArray(VERTEX_COL_BASE_ARRAY);
+		glVertexAttribPointer(VERTEX_COL_BASE_ARRAY, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*)offsetof(Vertex,col));
+
+		glEnableVertexAttribArray(VERTEX_UV_ARRAY);
+		glVertexAttribPointer(VERTEX_UV_ARRAY, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex,u));
+
+		OSD_DRAW();
+	}
 
 	virtual u32 GetTexture(TSP tsp, TCW tcw) {
 		return gl_GetTexture(tsp, tcw);

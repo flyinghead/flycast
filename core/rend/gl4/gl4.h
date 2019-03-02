@@ -45,11 +45,6 @@ struct gl4_ctx
 	} modvol_shader;
 
 	std::map<int, gl4PipelineShader *> shaders;
-	struct
-	{
-		GLuint program,scale;
-		GLuint extra_depth_scale;
-	} OSD_SHADER;
 
 	struct
 	{

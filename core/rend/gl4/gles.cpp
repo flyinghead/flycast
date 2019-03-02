@@ -389,22 +389,6 @@ void main() \n\
 	\n\
 }";
 
-static const char* OSD_Shader =
-" \
-#version 140 \n\
-out vec4 FragColor; \n\
- \n\
-smooth in lowp vec4 vtx_base; \n\
-       in mediump vec2 vtx_uv; \n\
-/* Vertex input*/ \n\
-uniform sampler2D tex; \n\
-void main() \n\
-{ \n\
-	mediump vec2 uv = vtx_uv; \n\
-	uv.y = 1.0 - uv.y; \n\
-	FragColor = vtx_base * texture(tex, uv.st); \n\n\
-}";
-
 gl4_ctx gl4;
 
 struct gl4ShaderUniforms_t gl4ShaderUniforms;
@@ -543,12 +527,6 @@ static bool gl_create_resources()
 	gl4.modvol_shader.program=gl_CompileAndLink(vshader, ModifierVolumeShader);
 	gl4.modvol_shader.scale          = glGetUniformLocation(gl4.modvol_shader.program, "scale");
 	gl4.modvol_shader.extra_depth_scale = glGetUniformLocation(gl4.modvol_shader.program, "extra_depth_scale");
-
-
-	gl4.OSD_SHADER.program=gl_CompileAndLink(vshader, OSD_Shader);
-	gl4.OSD_SHADER.scale=glGetUniformLocation(gl4.OSD_SHADER.program, "scale");
-	gl4.OSD_SHADER.extra_depth_scale = glGetUniformLocation(gl4.OSD_SHADER.program, "extra_depth_scale");
-	glUniform1i(glGetUniformLocation(gl4.OSD_SHADER.program, "tex"),0);		//bind osd texture to slot 0
 
 	gl_load_osd_resources();
 
@@ -737,12 +715,6 @@ static bool RenderFrame()
 	glUniform4fv( gl4.modvol_shader.scale, 1, gl4ShaderUniforms.scale_coefs);
 
 	glUniform1f(gl4.modvol_shader.extra_depth_scale, gl4ShaderUniforms.extra_depth_scale);
-
-	GLfloat td[4]={0.5,0,0,0};
-
-	glcache.UseProgram(gl4.OSD_SHADER.program);
-	glUniform4fv( gl4.OSD_SHADER.scale, 1, gl4ShaderUniforms.scale_coefs);
-	glUniform1f(gl4.OSD_SHADER.extra_depth_scale, 1.0f);
 
 	gl4ShaderUniforms.PT_ALPHA=(PT_ALPHA_REF&0xFF)/255.0f;
 
@@ -982,7 +954,13 @@ struct gl4rend : Renderer
 
 	void Present() { gl_swap(); }
 
-	void DrawOSD() { OSD_DRAW(gl4.OSD_SHADER.program); }
+	void DrawOSD()
+	{
+		glBindVertexArray(gl4.vbo.main_vao);
+		glBindBuffer(GL_ARRAY_BUFFER, gl4.vbo.geometry); glCheck();
+
+		OSD_DRAW();
+	}
 
 	virtual u32 GetTexture(TSP tsp, TCW tcw) {
 		return gl_GetTexture(tsp, tcw);
