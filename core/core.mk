@@ -5,6 +5,7 @@
 #LDFLAGS	:= -Wl,-Map,$(notdir $@).map,--gc-sections -Wl,-O3 -Wl,--sort-common 
 
 RZDCY_SRC_DIR ?= $(call my-dir)
+VERSION_SRC := $(RZDCY_SRC_DIR)/version/version.cpp
 
 RZDCY_MODULES	:=	cfg/ hw/arm7/ hw/aica/ hw/holly/ hw/ hw/gdrom/ hw/maple/ hw/modem/ \
  hw/mem/ hw/pvr/ hw/sh4/ hw/sh4/interpr/ hw/sh4/modules/ plugins/ profiler/ oslib/ \
@@ -93,6 +94,7 @@ RZDCY_FILES := $(foreach dir,$(addprefix $(RZDCY_SRC_DIR)/,$(RZDCY_MODULES)),$(w
 RZDCY_FILES += $(foreach dir,$(addprefix $(RZDCY_SRC_DIR)/,$(RZDCY_MODULES)),$(wildcard $(dir)*.cc))
 RZDCY_FILES += $(foreach dir,$(addprefix $(RZDCY_SRC_DIR)/,$(RZDCY_MODULES)),$(wildcard $(dir)*.c))
 RZDCY_FILES += $(foreach dir,$(addprefix $(RZDCY_SRC_DIR)/,$(RZDCY_MODULES)),$(wildcard $(dir)*.S))
+RZDCY_FILES += $(VERSION_SRC)
 
 ifdef FOR_PANDORA
 RZDCY_CFLAGS	:= \
@@ -153,3 +155,9 @@ ifdef CHD5_FLAC
 endif
 
 RZDCY_CXXFLAGS := $(RZDCY_CFLAGS) -fno-exceptions -fno-rtti -std=gnu++11
+
+$(VERSION_SRC):
+	echo "const char *version = \"`git describe --tags --always`\";" > $(VERSION_SRC)
+	echo "const char *git_hash = \"`git rev-parse --short HEAD`\";" >> $(VERSION_SRC)
+	echo "const char *build_date = \"`date '+%Y-%m-%d %H:%M:%S %Z'`\";" >> $(VERSION_SRC)
+

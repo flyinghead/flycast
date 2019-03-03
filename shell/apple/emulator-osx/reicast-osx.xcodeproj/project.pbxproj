@@ -206,6 +206,7 @@
 		AE2A2D7F21D6851E004B308D /* 7zFile.c in Sources */ = {isa = PBXBuildFile; fileRef = AE2A2D7321D6851D004B308D /* 7zFile.c */; };
 		AE2A2D8021D6851E004B308D /* 7zDec.c in Sources */ = {isa = PBXBuildFile; fileRef = AE2A2D7721D6851E004B308D /* 7zDec.c */; };
 		AE2A2D8321D7DB78004B308D /* CustomTexture.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE2A2D8121D7DB77004B308D /* CustomTexture.cpp */; };
+		AE60BDA7222B802A00FA8A5B /* version.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE60BDA6222B802A00FA8A5B /* version.cpp */; };
 		AE649BB62188689000EF4A81 /* xxhash.c in Sources */ = {isa = PBXBuildFile; fileRef = AE649BB42188689000EF4A81 /* xxhash.c */; };
 		AE649BF3218C552500EF4A81 /* bitmath.c in Sources */ = {isa = PBXBuildFile; fileRef = AE649BCD218C552500EF4A81 /* bitmath.c */; };
 		AE649BF4218C552500EF4A81 /* bitreader.c in Sources */ = {isa = PBXBuildFile; fileRef = AE649BCE218C552500EF4A81 /* bitreader.c */; };
@@ -672,6 +673,8 @@
 		AE2A2D8221D7DB78004B308D /* CustomTexture.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CustomTexture.h; sourceTree = "<group>"; };
 		AE60BD9F22256E2500FA8A5B /* osx_keyboard.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = osx_keyboard.h; sourceTree = "<group>"; };
 		AE60BDA02225725800FA8A5B /* osx_gamepad.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = osx_gamepad.h; sourceTree = "<group>"; };
+		AE60BDA3222B7E1F00FA8A5B /* version.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = version.h; sourceTree = "<group>"; };
+		AE60BDA6222B802A00FA8A5B /* version.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = version.cpp; sourceTree = "<group>"; };
 		AE649BB42188689000EF4A81 /* xxhash.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = xxhash.c; sourceTree = "<group>"; };
 		AE649BB52188689000EF4A81 /* xxhash.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = xxhash.h; sourceTree = "<group>"; };
 		AE649BBA218C552500EF4A81 /* all.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = all.h; sourceTree = "<group>"; };
@@ -996,6 +999,7 @@
 				AE1E293E20A96B0B00FC6BA2 /* rec-x64 */,
 				84B7BE8F1B72720200F9733F /* reios */,
 				84B7BE981B72720200F9733F /* rend */,
+				AE60BDA1222B7E1F00FA8A5B /* version */,
 				AE80EDB62157D4D500F7800F /* serialize.cpp */,
 				84B7BEA71B72720200F9733F /* stdclass.cpp */,
 				84B7BEA81B72720200F9733F /* stdclass.h */,
@@ -1688,6 +1692,16 @@
 			path = archive;
 			sourceTree = "<group>";
 		};
+		AE60BDA1222B7E1F00FA8A5B /* version */ = {
+			isa = PBXGroup;
+			children = (
+				AE60BDA6222B802A00FA8A5B /* version.cpp */,
+				AE60BDA3222B7E1F00FA8A5B /* version.h */,
+			);
+			name = version;
+			path = ../../../core/version;
+			sourceTree = "<group>";
+		};
 		AE649BB32188689000EF4A81 /* xxhash */ = {
 			isa = PBXGroup;
 			children = (
@@ -2078,6 +2092,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 84A388CD1B1CDD3F000166C0 /* Build configuration list for PBXNativeTarget "reicast-osx" */;
 			buildPhases = (
+				AE60BDA5222B7E8000FA8A5B /* ShellScript */,
 				84A388AF1B1CDD3E000166C0 /* Sources */,
 				84A388B01B1CDD3E000166C0 /* Frameworks */,
 				84A388B11B1CDD3E000166C0 /* Resources */,
@@ -2172,6 +2187,22 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		AE60BDA5222B7E8000FA8A5B /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "echo \"const char *version = \\\"`git describe --tags --always`\\\";\" > $SRCROOT/../../../core/version/version.cpp\necho \"const char *git_hash = \\\"`git rev-parse --short HEAD`\\\";\" >> $SRCROOT/../../../core/version/version.cpp\necho \"const char *build_date = \\\"`date '+%Y-%m-%d %H:%M:%S %Z'`\\\";\" >> $SRCROOT/../../../core/version/version.cpp\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		84A388AF1B1CDD3E000166C0 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -2258,6 +2289,7 @@
 				AE8C27342111A31100D4D8F4 /* dsp_interp.cpp in Sources */,
 				84B7BF421B72720200F9733F /* blockmanager.cpp in Sources */,
 				84B7BEE21B72720200F9733F /* zip_add_dir.c in Sources */,
+				AE60BDA7222B802A00FA8A5B /* version.cpp in Sources */,
 				84967CC91B8F49EE005F1140 /* pngset.c in Sources */,
 				84B7BEE61B72720200F9733F /* zip_entry_free.c in Sources */,
 				84B7BF511B72720200F9733F /* tmu.cpp in Sources */,
