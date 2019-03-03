@@ -396,7 +396,7 @@ int main(int argc, wchar* argv[])
 
 	#if !defined(TARGET_EMSCRIPTEN)
 		#if FEAT_HAS_NIXPROF
-		install_prof_handler(0);
+		install_prof_handler(1);
 		#endif
 		rend_thread(NULL);
 	#else

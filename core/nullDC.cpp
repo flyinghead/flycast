@@ -21,6 +21,7 @@
 #include "hw/aica/dsp.h"
 #include "imgread/common.h"
 #include "rend/gui.h"
+#include "profiler/profiler.h"
 
 void FlushCache();
 void LoadCustom();
@@ -323,7 +324,7 @@ int dc_start_game(const char *path)
 			LoadCustom();
 #elif DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
 		if (!naomi_cart_SelectFile(libPvr_GetRenderTarget()))
-			return rv_serror;
+			return -6;
 		LoadCustom();
 #if DC_PLATFORM == DC_PLATFORM_NAOMI
 		mcfg_CreateNAOMIJamma();
@@ -410,6 +411,10 @@ bool dc_is_running()
 #ifndef TARGET_DISPFRAME
 void* dc_run(void*)
 {
+#if FEAT_HAS_NIXPROF
+	install_prof_handler(0);
+#endif
+
 	InitAudio();
 
 	if (settings.dynarec.Enable)
@@ -668,6 +673,7 @@ void SaveSettings()
 	cfgSaveInt("config", "Dreamcast.Language", settings.dreamcast.language);
 	cfgSaveBool("config", "aica.LimitFPS", settings.aica.LimitFPS);
 	cfgSaveBool("config", "aica.NoBatch", settings.aica.NoBatch);
+	cfgSaveBool("config", "aica.NoSound", settings.aica.NoSound);
 	cfgSaveBool("config", "rend.WideScreen", settings.rend.WideScreen);
 	cfgSaveBool("config", "rend.ShowFPS", settings.rend.ShowFPS);
 	if (!rtt_to_buffer_game || !settings.rend.RenderToTextureBuffer)
