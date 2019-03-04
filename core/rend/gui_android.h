@@ -16,20 +16,5 @@
     You should have received a copy of the GNU General Public License
     along with reicast.  If not, see <https://www.gnu.org/licenses/>.
  */
-#pragma once
-
-void gui_init();
-void gui_open_settings();
-bool gui_is_open();
-void gui_display_ui();
-void gui_display_notification(const char *msg, int duration);
-void gui_display_osd();
-void gui_open_onboarding();
-void gui_term();
-
-extern int screen_dpi;
-
-typedef enum { Closed, Commands, Settings, ClosedNoResume, Main, Onboarding, VJoyEdit, VJoyEditCommands } GuiState;
-extern GuiState gui_state;
-void ImGui_Impl_NewFrame();
-
+void gui_display_vjoy_commands(int screen_width, int screen_height, float scaling);
+void vjoy_start_editing();

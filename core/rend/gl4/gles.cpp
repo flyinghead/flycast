@@ -954,12 +954,12 @@ struct gl4rend : Renderer
 
 	void Present() { gl_swap(); }
 
-	void DrawOSD()
+	void DrawOSD(bool clear_screen)
 	{
 		glBindVertexArray(gl4.vbo.main_vao);
 		glBindBuffer(GL_ARRAY_BUFFER, gl4.vbo.geometry); glCheck();
 
-		OSD_DRAW();
+		OSD_DRAW(clear_screen);
 	}
 
 	virtual u32 GetTexture(TSP tsp, TCW tcw) {

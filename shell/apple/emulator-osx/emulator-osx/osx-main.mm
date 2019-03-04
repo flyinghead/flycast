@@ -20,19 +20,6 @@ OSXKeyboardDevice keyboard(0);
 static std::shared_ptr<OSXKbGamepadDevice> kb_gamepad(0);
 static std::shared_ptr<OSXMouseGamepadDevice> mouse_gamepad(0);
 
-int msgboxf(const wchar* text,unsigned int type,...)
-{
-    va_list args;
-
-    wchar temp[2048];
-    va_start(args, type);
-    vsprintf(temp, text, args);
-    va_end(args);
-
-    puts(temp);
-    return 0;
-}
-
 int darw_printf(const wchar* text,...) {
     va_list args;
 

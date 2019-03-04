@@ -1,50 +1,77 @@
 package com.reicast.emulator;
 
 import android.Manifest;
-import android.app.Activity;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.constraint.ConstraintLayout;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
-import android.view.SurfaceHolder;
+import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.Window;
+import android.widget.FrameLayout;
+import android.widget.TextView;
 
+import com.reicast.emulator.config.Config;
+import com.reicast.emulator.debug.GenerateLogs;
+import com.reicast.emulator.emu.AudioBackend;
 import com.reicast.emulator.emu.JNIdc;
-import com.reicast.emulator.emu.NativeGLView;
 import com.reicast.emulator.periph.InputDeviceManager;
 import com.reicast.emulator.periph.SipEmulator;
+import com.reicast.emulator.periph.VJoy;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import tv.ouya.console.api.OuyaController;
 
-public class NativeGLActivity extends BaseNativeGLActivity implements ActivityCompat.OnRequestPermissionsResultCallback {
+public final class NativeGLActivity extends BaseNativeGLActivity implements ActivityCompat.OnRequestPermissionsResultCallback {
     public static byte[] syms;
+    private float[][] vjoy_d_cached;    // Used for VJoy editing
+    private AudioBackend audioBackend;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         requestWindowFeature(Window.FEATURE_NO_TITLE);
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         InputDeviceManager.getInstance().startListening(getApplicationContext());
 
         Emulator app = (Emulator)getApplicationContext();
-        app.getConfigurationPrefs(prefs);
+        app.getConfigurationPrefs();
 
         OuyaController.init(this);
-        JNIdc.initControllers(Emulator.maple_devices, Emulator.maple_expansion_devices);
-
-        app.loadConfigurationPrefs();
 
         super.onCreate(savedInstanceState);
 
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        String home_directory = prefs.getString(Config.pref_home, "");
+        String result = JNIdc.initEnvironment((Emulator)getApplicationContext(), home_directory);
+        if (result != null)
+            showToastMessage("Initialization failed: " + result, Snackbar.LENGTH_LONG);
+
+        String android_home_directory = Environment.getExternalStorageDirectory().getAbsolutePath();
+        List<String> pathList = new ArrayList<>();
+        pathList.add(android_home_directory);
+        pathList.addAll(FileBrowser.getExternalMounts());
+        Log.i("reicast", "External storage dirs: " + pathList);
+        JNIdc.setExternalStorageDirectories(pathList.toArray());
+
+        register(this);
+
+        audioBackend = new AudioBackend();
+
+        // FIXME Maple microphone can be plugged at any time with in-game gui
+        // so this perm may be required at any time as well
         //setup mic
         if (Emulator.micPluggedIn()) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -124,6 +151,8 @@ public class NativeGLActivity extends BaseNativeGLActivity implements ActivityCo
     protected void onDestroy() {
         super.onDestroy();
         InputDeviceManager.getInstance().stopListening();
+        register(null);
+        audioBackend.release();
     }
 
     @Override
@@ -135,4 +164,46 @@ public class NativeGLActivity extends BaseNativeGLActivity implements ActivityCo
             JNIdc.setupMic(sip);
         }
     }
+
+    private void showToastMessage(String message, int duration) {
+        View view = findViewById(android.R.id.content);
+        Snackbar snackbar = Snackbar.make(view, message, duration);
+        View snackbarLayout = snackbar.getView();
+        TextView textView = (TextView) snackbarLayout.findViewById(
+                android.support.design.R.id.snackbar_text);
+        textView.setGravity(Gravity.CENTER_VERTICAL);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1)
+            textView.setTextAlignment(View.TEXT_ALIGNMENT_GRAVITY);
+        textView.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_notification, 0, 0, 0);
+        textView.setCompoundDrawablePadding(getResources()
+                .getDimensionPixelOffset(R.dimen.snackbar_icon_padding));
+        snackbar.show();
+    }
+
+    // Called from native code
+    private void VJoyStartEditing() {
+        vjoy_d_cached = VJoy.readCustomVjoyValues(getApplicationContext());
+        JNIdc.show_osd();
+        mView.setEditVjoyMode(true);
+    }
+    // Called from native code
+    private void VJoyResetEditing() {
+        VJoy.resetCustomVjoyValues(getApplicationContext());
+        mView.vjoy_d_custom = VJoy
+                .readCustomVjoyValues(getApplicationContext());
+        mView.resetEditMode();
+        mView.requestLayout();
+    }
+    // Called from native code
+    private void VJoyStopEditing(boolean canceled) {
+        if (canceled)
+            mView.restoreCustomVjoyValues(vjoy_d_cached);
+        mView.setEditVjoyMode(false);
+    }
+    // Called from native code
+    private void generateErrorLog() {
+        new GenerateLogs(this).execute(getFilesDir().getAbsolutePath());
+    }
+
+    private static native void register(NativeGLActivity activity);
 }

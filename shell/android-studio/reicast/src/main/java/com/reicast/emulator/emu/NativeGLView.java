@@ -16,6 +16,7 @@ import android.util.Log;
 import android.view.InputDevice;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
+import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.widget.Toast;
@@ -27,9 +28,7 @@ import com.reicast.emulator.config.Config;
 import com.reicast.emulator.periph.InputDeviceManager;
 import com.reicast.emulator.periph.VJoy;
 
-public class NativeGLView extends SurfaceView implements IEmulatorView {
-    private static String fileName;
-    private EmuThread ethd;
+public class NativeGLView extends SurfaceView implements SurfaceHolder.Callback {
     private Handler handler = new Handler();
 
     private Vibrator vib;
@@ -42,9 +41,8 @@ public class NativeGLView extends SurfaceView implements IEmulatorView {
 
     private static final float[][] vjoy = VJoy.baseVJoy();
 
-    private boolean touchVibrationEnabled;
-    private int vibrationDuration;
     private Context context;
+    private boolean paused = false;
 
     public void restoreCustomVjoyValues(float[][] vjoy_d_cached) {
         vjoy_d_custom = vjoy_d_cached;
@@ -54,19 +52,15 @@ public class NativeGLView extends SurfaceView implements IEmulatorView {
         requestLayout();
     }
 
-    public NativeGLView(Context context) {
-        super(context);
-    }
-
-    public NativeGLView(Context context, AttributeSet attrs) {
-        super(context, attrs);
-    }
-
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
-    public NativeGLView(final Context context, String newFileName, boolean editVjoyMode) {
-        super(context);
+    public NativeGLView(Context context) {
+        this(context, null);
+    }
+
+    public NativeGLView(final Context context, AttributeSet attrs) {
+        super(context, attrs);
+        getHolder().addCallback(this);
         this.context = context;
-        this.editVjoyMode = editVjoyMode;
         setKeepScreenOn(true);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
@@ -90,56 +84,31 @@ public class NativeGLView extends SurfaceView implements IEmulatorView {
         DisplayMetrics dm = context.getResources().getDisplayMetrics();
         JNIdc.screenDpi((int)Math.max(dm.xdpi, dm.ydpi));
 
-        //JNIdc.config(prefs.getString(Config.pref_home,
-        //        Environment.getExternalStorageDirectory().getAbsolutePath()));
-
-        ethd = new EmuThread(this);
-
-        touchVibrationEnabled = prefs.getBoolean(Config.pref_touchvibe, true);
-        vibrationDuration = prefs.getInt(Config.pref_vibrationDuration, 20);
-
         this.setLayerType(prefs.getInt(Config.pref_rendertype, LAYER_TYPE_HARDWARE), null);
 
         vjoy_d_custom = VJoy.readCustomVjoyValues(context);
 
         scaleGestureDetector = new ScaleGestureDetector(context, new OscOnScaleGestureListener());
 
-        // This is the game we are going to run
-        fileName = newFileName;
-
         if (NativeGLActivity.syms != null)
             JNIdc.data(1, NativeGLActivity.syms);
-/*
-        final String initStatus = JNIdc.init(fileName);
-        if (initStatus != null)
-        {
-            handler.post(new Runnable() {
-                public void run() {
-                    Log.e("initialization", "dc_init: " + initStatus);
-                    Toast.makeText(context, initStatus, Toast.LENGTH_SHORT).show();
-                }
-            });
 
-            throw new EmulatorInitFailed();
-        }
-        JNIdc.query(ethd);
-*/
-        // Continuously render frames until the emulator stops
+        startRendering();
+    }
+
+    private void startRendering() {
+        // Continuously render frames
+        handler.removeCallbacksAndMessages(null);
         handler.post(new Runnable() {
             @Override
             public void run() {
-                //if (ethd.getState() == Thread.State.TERMINATED)
-                //    ((Activity)getContext()).finish();
-                //else
+                if (!paused)
                 {
                     JNIdc.rendframeNative();
                     handler.post(this);
                 }
             }
         });
-
-        ethd.run(); // FIXME Not a thread anymore
-
     }
 
     private void reset_analog()
@@ -184,6 +153,10 @@ public class NativeGLView extends SurfaceView implements IEmulatorView {
 
         float a_x = -tx+ 24*scl;
         float a_y=- 24*scl;
+
+        // Not sure how this can happen
+        if (vjoy_d_custom == null)
+            return;
 
         float[][] vjoy_d = VJoy.getVjoy_d(vjoy_d_custom);
 
@@ -305,8 +278,8 @@ public class NativeGLView extends SurfaceView implements IEmulatorView {
                             if (y > vjoy[j][1] && y <= (vjoy[j][1] + vjoy[j][3])) {
                                 if (vjoy[j][4] >= -2) {
                                     if (vjoy[j][5] == 0)
-                                        if (!editVjoyMode && touchVibrationEnabled)
-                                            vib.vibrate(vibrationDuration);
+                                        if (!editVjoyMode && Emulator.vibrationDuration > 0)
+                                            vib.vibrate(Emulator.vibrationDuration);
                                     vjoy[j][5] = 2;
                                 }
 
@@ -448,40 +421,37 @@ public class NativeGLView extends SurfaceView implements IEmulatorView {
         int joyy = get_anal(11, 1);
         InputDeviceManager.getInstance().virtualGamepadEvent(rv, joyx, joyy, left_trigger, right_trigger);
         // Only register the mouse event if no virtual gamepad button is down
-        if (!editVjoyMode && rv == 0xFFFF)
+        if ((!editVjoyMode && rv == 0xFFFF) || JNIdc.guiIsOpen())
             InputDeviceManager.getInstance().mouseEvent(mouse_pos[0], mouse_pos[1], mouse_btns);
         return(true);
     }
 
     @Override
-    public boolean hasSound() {
-        return !Emulator.nosound;
+    public void surfaceCreated(SurfaceHolder surfaceHolder) {
+
     }
 
     @Override
-    public void reiosInfo(String reiosId, String reiosSoftware) {
-        if (fileName != null) {
-            String gameId = reiosId.replaceAll("[^a-zA-Z0-9]+", "").toLowerCase();
-            SharedPreferences mPrefs = context.getSharedPreferences(gameId, Activity.MODE_PRIVATE);
-            Emulator app = (Emulator) context.getApplicationContext();
-            app.loadGameConfiguration(gameId);
-            mPrefs.edit().putString(Config.game_title, reiosSoftware.trim()).apply();
-        }
+    public void surfaceChanged(SurfaceHolder surfaceHolder, int format, int w, int h) {
+        //Log.i("reicast", "NativeGLView.surfaceChanged: " + w + "x" + h);
+        JNIdc.rendinitNative(surfaceHolder.getSurface(), w, h);
     }
 
     @Override
-    public void postMessage(final String msg) {
-        handler.post(new Runnable() {
-            public void run() {
-                Log.d(context.getPackageName(), msg);
-                Toast.makeText(context, msg, Toast.LENGTH_SHORT).show();
-            }
-        });
+    public void surfaceDestroyed(SurfaceHolder surfaceHolder) {
+        //Log.i("reicast", "NativeGLView.surfaceDestroyed");
+        JNIdc.rendinitNative(null, 0, 0);
     }
 
-    @Override
-    public void finish() {
-        ((Activity) context).finish();
+    public void pause() {
+        paused = true;
+        JNIdc.pause();
+    }
+
+    public void resume() {
+        paused = false;
+        JNIdc.resume();
+        startRendering();
     }
 
     private class OscOnScaleGestureListener extends
@@ -505,20 +475,6 @@ public class NativeGLView extends SurfaceView implements IEmulatorView {
         }
     }
 
-    public void stop() {
-        Log.i("NativeGLView", "Stopping emulator");
-        //JNIdc.destroy();
-        JNIdc.stop();
-        /*
-        try {
-            ethd.join();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        */
-        Log.i("NativeGLView", "Stopping emulator completed");
-    }
-
     @TargetApi(19)
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
@@ -535,6 +491,8 @@ public class NativeGLView extends SurfaceView implements IEmulatorView {
         }
     }
 
-    public static class EmulatorInitFailed extends RuntimeException {
+    public void setEditVjoyMode(boolean editVjoyMode) {
+        this.editVjoyMode = editVjoyMode;
+        selectedVjoyElement = -1;
     }
 }

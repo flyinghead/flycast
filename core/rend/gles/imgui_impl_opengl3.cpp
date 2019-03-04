@@ -579,4 +579,9 @@ void ImGui_ImplOpenGL3_DrawBackground()
 		ImGui::GetWindowDrawList()->AddImage((ImTextureID)(uintptr_t)g_BackgroundTexture, ImVec2(0, 0), io.DisplaySize, ImVec2(0, 1), ImVec2(1, 0), 0xffffffff);
 		ImGui::End();
 	}
+	else
+	{
+		glClearColor(0, 0, 0, 0);
+		glClear(GL_COLOR_BUFFER_BIT);
+	}
 }

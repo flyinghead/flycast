@@ -28,7 +28,6 @@ import com.reicast.emulator.Emulator;
 import com.reicast.emulator.GL2JNIActivity;
 import com.reicast.emulator.R;
 import com.reicast.emulator.config.Config;
-import com.reicast.emulator.emu.OnScreenMenu.FpsPopup;
 import com.reicast.emulator.periph.Gamepad;
 import com.reicast.emulator.periph.InputDeviceManager;
 import com.reicast.emulator.periph.VJoy;
@@ -56,15 +55,13 @@ import javax.microedition.khronos.opengles.GL10;
  *   bit depths). Failure to do so would result in an EGL_BAD_MATCH error.
  */
 
-public class GL2JNIView extends GLSurfaceView implements IEmulatorView
+public class GL2JNIView extends GLSurfaceView
 {
     public static final boolean DEBUG = false;
 
     public static final int LAYER_TYPE_SOFTWARE = 1;
     public static final int LAYER_TYPE_HARDWARE = 2;
 
-    private static String fileName;
-    private EmuThread ethd;
     private Handler handler = new Handler();
 
     Vibrator vib;
@@ -79,8 +76,6 @@ public class GL2JNIView extends GLSurfaceView implements IEmulatorView
 
     Renderer rend;
 
-    private boolean touchVibrationEnabled;
-    private int vibrationDuration;
     Context context;
 
     public void restoreCustomVjoyValues(float[][] vjoy_d_cached) {
@@ -89,10 +84,6 @@ public class GL2JNIView extends GLSurfaceView implements IEmulatorView
 
         resetEditMode();
         requestLayout();
-    }
-
-    public void setFpsDisplay(FpsPopup fpsPop) {
-        rend.fpsPop = fpsPop;
     }
 
     public GL2JNIView(Context context) {
@@ -104,7 +95,7 @@ public class GL2JNIView extends GLSurfaceView implements IEmulatorView
     }
 
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
-    public GL2JNIView(final Context context, String newFileName, boolean translucent,
+    public GL2JNIView(final Context context, boolean translucent,
                       int depth, int stencil, boolean editVjoyMode) {
         super(context);
         this.context = context;
@@ -134,40 +125,14 @@ public class GL2JNIView extends GLSurfaceView implements IEmulatorView
         DisplayMetrics dm = context.getResources().getDisplayMetrics();
         JNIdc.screenDpi((int)Math.max(dm.xdpi, dm.ydpi));
 
-        //JNIdc.config(prefs.getString(Config.pref_home,
-        //        Environment.getExternalStorageDirectory().getAbsolutePath()));
-
-        ethd = new EmuThread(this);
-
-        touchVibrationEnabled = prefs.getBoolean(Config.pref_touchvibe, true);
-        vibrationDuration = prefs.getInt(Config.pref_vibrationDuration, 20);
-
         this.setLayerType(prefs.getInt(Config.pref_rendertype, LAYER_TYPE_HARDWARE), null);
 
         vjoy_d_custom = VJoy.readCustomVjoyValues(context);
 
         scaleGestureDetector = new ScaleGestureDetector(context, new OscOnScaleGestureListener());
 
-        // This is the game we are going to run
-        fileName = newFileName;
-
         if (GL2JNIActivity.syms != null)
             JNIdc.data(1, GL2JNIActivity.syms);
-
-        final String initStatus = JNIdc.init(fileName);
-        if (initStatus != null)
-        {
-            handler.post(new Runnable() {
-                public void run() {
-                    Log.e("initialization", "dc_init: " + initStatus);
-                    Toast.makeText(context, initStatus, Toast.LENGTH_SHORT).show();
-                }
-            });
-
-
-            throw new EmulatorInitFailed();
-        }
-        JNIdc.query(ethd);
 
         // By default, GLSurfaceView() creates a RGB_565 opaque surface.
         // If we want a translucent one, we should change the surface's
@@ -191,9 +156,6 @@ public class GL2JNIView extends GLSurfaceView implements IEmulatorView
 
         // Set the renderer responsible for frame rendering
         setRenderer(rend = new Renderer(this));
-
-        ethd.start();
-
     }
 
     public GLSurfaceView.Renderer getRenderer()
@@ -364,8 +326,8 @@ public class GL2JNIView extends GLSurfaceView implements IEmulatorView
                             if (y > vjoy[j][1] && y <= (vjoy[j][1] + vjoy[j][3])) {
                                 if (vjoy[j][4] >= -2) {
                                     if (vjoy[j][5] == 0)
-                                        if (!editVjoyMode && touchVibrationEnabled)
-                                            vib.vibrate(vibrationDuration);
+                                        if (!editVjoyMode && Emulator.vibrationDuration > 0)
+                                            vib.vibrate(Emulator.vibrationDuration);
                                     vjoy[j][5] = 2;
                                 }
 
@@ -507,44 +469,9 @@ public class GL2JNIView extends GLSurfaceView implements IEmulatorView
         int joyy = get_anal(11, 1);
         InputDeviceManager.getInstance().virtualGamepadEvent(rv, joyx, joyy, left_trigger, right_trigger);
         // Only register the mouse event if no virtual gamepad button is down
-        if (!editVjoyMode && rv == 0xFFFF)
+        if ((!editVjoyMode && rv == 0xFFFF) || JNIdc.guiIsOpen())
             InputDeviceManager.getInstance().mouseEvent(mouse_pos[0], mouse_pos[1], mouse_btns);
         return(true);
-    }
-
-    @Override
-    public boolean hasSound() {
-        return !Emulator.nosound;
-    }
-
-    @Override
-    public void reiosInfo(String reiosId, String reiosSoftware) {
-        if (fileName != null) {
-            String gameId = reiosId.replaceAll("[^a-zA-Z0-9]+", "").toLowerCase();
-            SharedPreferences mPrefs = context.getSharedPreferences(gameId, Activity.MODE_PRIVATE);
-            Emulator app = (Emulator) context.getApplicationContext();
-            app.loadGameConfiguration(gameId);
-            if (context instanceof GL2JNIActivity)
-                ((GL2JNIActivity) context).getPad().joystick[0] = mPrefs.getBoolean(
-                        Gamepad.pref_js_merged + "_A",
-                        ((GL2JNIActivity) context).getPad().joystick[0]);
-            mPrefs.edit().putString(Config.game_title, reiosSoftware.trim()).apply();
-        }
-    }
-
-    @Override
-    public void postMessage(final String msg) {
-        handler.post(new Runnable() {
-            public void run() {
-                Log.d(context.getPackageName(), msg);
-                Toast.makeText(context, msg, Toast.LENGTH_SHORT).show();
-            }
-        });
-    }
-
-    @Override
-    public void finish() {
-        ((Activity) context).finish();
     }
 
     private class OscOnScaleGestureListener extends
@@ -572,8 +499,6 @@ public class GL2JNIView extends GLSurfaceView implements IEmulatorView
     {
 
         private GL2JNIView mView;
-        private FPSCounter fps = new FPSCounter();
-        private FpsPopup fpsPop;
 
         Renderer (GL2JNIView mView) {
             this.mView = mView;
@@ -582,73 +507,32 @@ public class GL2JNIView extends GLSurfaceView implements IEmulatorView
         public void onDrawFrame(GL10 gl)
         {
             if (JNIdc.rendframeJava()) {
-                if (fpsPop != null && fpsPop.isShowing()) {
-                    fps.logFrame();
-                }
             }
             if(mView.takeScreenshot){
                 mView.takeScreenshot = false;
                 FileUtils.saveScreenshot(mView.getContext(), mView.getWidth(), mView.getHeight(), gl);
-            }
-            if (mView.ethd.getState() == Thread.State.TERMINATED) {
-                JNIdc.rendtermJava();
-                System.exit(0);
-                // Ideally: ((Activity)mView.getContext()).finish();
             }
         }
 
         public void onSurfaceChanged(GL10 gl,int width,int height)
         {
             gl.glViewport(0, 0, width, height);
-            if (Emulator.widescreen) {
+            // TODO Is this required? The renderer sets the viewport and scissor test correctly
+//            if (Emulator.widescreen) {
                 JNIdc.rendinitJava(width, height);
-            } else {
-                JNIdc.rendinitJava(height * (4 / 3), height);
-            }
+//            } else {
+//                JNIdc.rendinitJava(height * (4 / 3), height);
+//            }
         }
 
         public void onSurfaceCreated(GL10 gl,EGLConfig config)
         {
             onSurfaceChanged(gl, 800, 480);
         }
-
-        class FPSCounter {
-            long startTime = System.nanoTime();
-            int frames = 0;
-
-            void logFrame() {
-                frames++;
-                if (System.nanoTime() - startTime >= 1000000000) {
-                    final int current_frames = frames;
-                    frames = 0;
-                    startTime = System.nanoTime();
-                    mView.post(new Runnable() {
-                        public void run() {
-                            fpsPop.setText(current_frames);
-                        }
-                    });
-                }
-            }
-        }
-    }
-
-    public void audioDisable(boolean disabled) {
-        if (disabled) {
-            ethd.Player.pause();
-        } else {
-            ethd.Player.play();
-        }
-    }
-
-    public void fastForward(boolean enabled) {
-        if (enabled) {
-            ethd.setPriority(Thread.MIN_PRIORITY);
-        } else {
-            ethd.setPriority(Thread.NORM_PRIORITY);
-        }
     }
 
     public void onDestroy() {
+        /*
         // Workaround for ANR when returning to menu
         System.exit(0);
         try {
@@ -656,6 +540,7 @@ public class GL2JNIView extends GLSurfaceView implements IEmulatorView
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+        */
     }
 
     @TargetApi(19)
@@ -677,8 +562,5 @@ public class GL2JNIView extends GLSurfaceView implements IEmulatorView
     private boolean takeScreenshot = false;
     public void screenGrab() {
         takeScreenshot = true;
-    }
-
-    public static class EmulatorInitFailed extends RuntimeException {
     }
 }

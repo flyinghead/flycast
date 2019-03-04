@@ -93,7 +93,11 @@ public class GenerateLogs extends AsyncTask<String, Integer, String> {
 				build_version = MM;
 			} else if (build_sdk >= 24 && build_sdk < 26) {
 				build_version = NT;
-			} else if (build_sdk >= 26) {
+			} else if (build_sdk >= 26 && build_sdk < 28) {
+				build_version = "Oreo";
+			} else if (build_sdk == 28) {
+				build_version = "Pie";
+			} else if (build_sdk > 28) {
 				build_version = NL;
 			}
 			s += build_version + " (" + build_sdk + ")";
@@ -212,8 +216,8 @@ public class GenerateLogs extends AsyncTask<String, Integer, String> {
 	}
 
 	private void showToastMessage(String message, int duration) {
-		ConstraintLayout layout = (ConstraintLayout)
-				((Activity) mContext.get()).findViewById(R.id.mainui_layout);
+		View layout =
+				((Activity) mContext.get()).findViewById(android.R.id.content);
 		Snackbar snackbar = Snackbar.make(layout, message, duration);
 		View snackbarLayout = snackbar.getView();
 		ConstraintLayout.LayoutParams lp = new ConstraintLayout.LayoutParams(

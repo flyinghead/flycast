@@ -21,6 +21,7 @@
 #include <dirent.h>
 #include <sys/stat.h>
 
+#include "gui.h"
 #include "oslib/oslib.h"
 #include "cfg/cfg.h"
 #include "hw/maple/maple_cfg.h"
@@ -32,6 +33,8 @@
 #include "input/keyboard_device.h"
 #include "linux-dist/main.h"	// FIXME for kcode[]
 #include "gui_util.h"
+#include "gui_android.h"
+#include "version/version.h"
 
 extern void dc_loadstate();
 extern void dc_savestate();
@@ -57,7 +60,7 @@ int screen_dpi = 96;
 
 static bool inited = false;
 static float scaling = 1;
-static enum { Closed, Commands, Settings, ClosedNoResume, Main, Onboarding } gui_state = Main;
+GuiState gui_state = Main;
 static bool settings_opening;
 static bool touch_up;
 
@@ -138,7 +141,7 @@ void gui_init()
     printf("Screen DPI is %d, size %d x %d. Scaling by %.2f\n", screen_dpi, screen_width, screen_height, scaling);
 }
 
-static void ImGui_Impl_NewFrame()
+void ImGui_Impl_NewFrame()
 {
 	ImGui_ImplOpenGL3_NewFrame();
 	ImGui::GetIO().DisplaySize.x = screen_width;
@@ -272,11 +275,15 @@ void gui_open_settings()
 		settings_opening = true;
 		HideOSD();
 	}
+	else if (gui_state == VJoyEdit)
+	{
+		gui_state = VJoyEditCommands;
+	}
 }
 
 bool gui_is_open()
 {
-	return gui_state != Closed;
+	return gui_state != Closed && gui_state != VJoyEdit;
 }
 
 static void gui_display_commands()
@@ -561,6 +568,32 @@ static void controller_mapping_popup(std::shared_ptr<GamepadDevice> gamepad)
 	ImGui::PopStyleVar();
 }
 
+static std::string error_msg;
+
+static void error_popup()
+{
+	if (!error_msg.empty())
+	{
+		if (ImGui::BeginPopupModal("Error", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
+		{
+			ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 400.f * scaling);
+			ImGui::TextWrapped(error_msg.c_str());
+			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * scaling, 3 * scaling));
+			float currentwidth = ImGui::GetContentRegionAvailWidth();
+			ImGui::SetCursorPosX((currentwidth - 80.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x);
+			if (ImGui::Button("OK", ImVec2(80.f * scaling, 0.f)))
+			{
+				error_msg.clear();
+				ImGui::CloseCurrentPopup();
+			}
+			ImGui::SetItemDefaultFocus();
+			ImGui::PopStyleVar();
+			ImGui::EndPopup();
+		}
+		ImGui::OpenPopup("Error");
+	}
+}
+
 static bool game_list_done;		// Set to false to refresh the game list
 
 void directory_selected_callback(bool cancelled, std::string selection)
@@ -833,6 +866,18 @@ static void gui_display_settings()
 
 					controller_mapping_popup(gamepad);
 
+#ifdef _ANDROID
+					if (gamepad->is_virtual_gamepad())
+					{
+						if (ImGui::Button("Edit"))
+						{
+							vjoy_start_editing();
+							gui_state = VJoyEdit;
+						}
+						ImGui::SameLine();
+						ImGui::SliderInt("Haptic", &settings.input.VirtualGamepadVibration, 0, 60);
+					}
+#endif
 					ImGui::NextColumn();
 					ImGui::PopID();
 				}
@@ -969,6 +1014,78 @@ static void gui_display_settings()
 			ImGui::PopStyleVar();
 			ImGui::EndTabItem();
 		}
+		if (ImGui::BeginTabItem("About"))
+		{
+			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
+		    if (ImGui::CollapsingHeader("Reicast", ImGuiTreeNodeFlags_DefaultOpen))
+		    {
+				ImGui::Text("Version: %s", version);
+				ImGui::Text("Git Hash: %s", git_hash);
+				ImGui::Text("Build Date: %s", build_date);
+				ImGui::Text("Target: %s",
+#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
+						"Dreamcast"
+#elif DC_PLATFORM == DC_PLATFORM_NAOMI
+						"Naomi"
+#elif DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
+						"Atomiswave"
+#else
+						"Unknown"
+#endif
+						);
+		    }
+		    if (ImGui::CollapsingHeader("Platform", ImGuiTreeNodeFlags_DefaultOpen))
+		    {
+		    	ImGui::Text("CPU: %s",
+#if HOST_CPU == CPU_X86
+					"x86"
+#elif HOST_CPU == CPU_ARM
+					"ARM"
+#elif HOST_CPU == CPU_MIPS
+					"MIPS"
+#elif HOST_CPU == CPU_X64
+					"x86/64"
+#elif HOST_CPU == CPU_GENERIC
+					"Generic"
+#elif HOST_CPU == CPU_ARM64
+					"ARM64"
+#else
+					"Unknown"
+#endif
+						);
+		    	ImGui::Text("Operating System: %s",
+#ifdef _ANDROID
+					"Android"
+#elif HOST_OS == OS_LINUX
+					"Linux"
+#elif HOST_OS == OS_DARWIN
+#if TARGET_IPHONE
+		    		"iOS"
+#else
+					"OSX"
+#endif
+#elif HOST_OS == OS_WINDOWS
+					"Windows"
+#else
+					"Unknown"
+#endif
+						);
+		    }
+		    if (ImGui::CollapsingHeader("Open GL", ImGuiTreeNodeFlags_DefaultOpen))
+		    {
+				ImGui::Text("Renderer: %s", (const char *)glGetString(GL_RENDERER));
+				ImGui::Text("Version: %s", (const char *)glGetString(GL_VERSION));
+		    }
+#ifdef _ANDROID
+		    ImGui::Separator();
+		    if (ImGui::Button("Send Logs")) {
+		    	void android_send_logs();
+		    	android_send_logs();
+		    }
+#endif
+			ImGui::PopStyleVar();
+			ImGui::EndTabItem();
+		}
 		ImGui::EndTabBar();
     }
     ImGui::PopStyleVar();
@@ -1081,7 +1198,25 @@ static void gui_display_demo()
 
 static void gui_start_game(const std::string& path)
 {
-	dc_start_game(path.c_str());
+	int rc = dc_start_game(path.c_str());
+	if (rc != 0)
+	{
+		gui_state = Main;
+		game_started = false;
+		switch (rc) {
+		case -3:
+			error_msg = "Audio/video initialization failed";
+			break;
+		case -5:
+			error_msg = "Cannot find BIOS files";
+			break;
+		case -6:
+			error_msg = "Cannot load NAOMI rom";
+			break;
+		default:
+			break;
+		}
+	}
 }
 
 static void gui_display_content()
@@ -1124,8 +1259,8 @@ static void gui_display_content()
     			ImGui::PushID(game.path.c_str());
 				if (ImGui::Selectable(game.name.c_str()))
 				{
-					gui_start_game(game.path);
 					gui_state = ClosedNoResume;
+					gui_start_game(game.path);
 				}
 				ImGui::PopID();
         	}
@@ -1134,6 +1269,8 @@ static void gui_display_content()
 	ImGui::EndChild();
 	ImGui::End();
     ImGui::PopStyleVar();
+
+	error_popup();
 
 	ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData(), false);
@@ -1149,7 +1286,9 @@ void systemdir_selected_callback(bool cancelled, std::string selection)
 		{
 			LoadSettings(false);
 			gui_state = Main;
-			// FIXME Save config dir in android app prefs
+			if (settings.dreamcast.ContentPath.empty())
+				settings.dreamcast.ContentPath.push_back(selection);
+			SaveSettings();
 		}
 	}
 }
@@ -1185,6 +1324,13 @@ void gui_display_ui()
 		break;
 	case Onboarding:
 		gui_display_onboarding();
+		break;
+	case VJoyEdit:
+		break;
+	case VJoyEditCommands:
+#ifdef _ANDROID
+		gui_display_vjoy_commands(screen_width, screen_height, scaling);
+#endif
 		break;
 	}
 
@@ -1235,9 +1381,9 @@ static std::string getFPSNotification()
 			LastFPSTime = now;
 			lastFrameCount = FrameCount;
 		}
-		if (fps >= 0) {
+		if (fps >= 0.f && fps < 9999.f) {
 			char text[32];
-			sprintf(text, "F:%.1f", fps);
+			snprintf(text, sizeof(text), "F:%.1f", fps);
 
 			return std::string(text);
 		}
@@ -1247,6 +1393,8 @@ static std::string getFPSNotification()
 
 void gui_display_osd()
 {
+	if (gui_state == VJoyEdit)
+		return;
 	double now = os_GetSeconds();
 	if (!osd_message.empty())
 	{
@@ -1290,3 +1438,18 @@ void gui_term()
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui::DestroyContext();
 }
+
+int msgboxf(const wchar* text, unsigned int type, ...) {
+    va_list args;
+
+    wchar temp[2048];
+    va_start(args, type);
+    vsnprintf(temp, sizeof(temp), text, args);
+    va_end(args);
+    printf("%s", temp);
+
+    gui_display_notification(temp, 2000);
+
+    return 1;
+}
+

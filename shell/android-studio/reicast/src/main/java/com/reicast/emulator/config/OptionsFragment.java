@@ -124,7 +124,7 @@ public class OptionsFragment extends Fragment {
 
 		home_directory = mPrefs.getString(Config.pref_home, home_directory);
 		Emulator app = (Emulator) getActivity().getApplicationContext();
-		app.getConfigurationPrefs(mPrefs);
+		app.getConfigurationPrefs();
 
 		// Generate the menu options and fill in existing settings
 
@@ -422,53 +422,12 @@ public class OptionsFragment extends Fragment {
 	}
 
 	private void resetEmuSettings() {
-		mPrefs.edit().remove(Emulator.pref_usereios).apply();
 		mPrefs.edit().remove(Config.pref_gamedetails).apply();
-		mPrefs.edit().remove(Emulator.pref_dynarecopt).apply();
-		mPrefs.edit().remove(Emulator.pref_unstable).apply();
-		mPrefs.edit().remove(Emulator.pref_cable).apply();
-		mPrefs.edit().remove(Emulator.pref_dcregion).apply();
-		mPrefs.edit().remove(Emulator.pref_broadcast).apply();
-		mPrefs.edit().remove(Emulator.pref_language).apply();
-		mPrefs.edit().remove(Emulator.pref_limitfps).apply();
-		mPrefs.edit().remove(Emulator.pref_mipmaps).apply();
-		mPrefs.edit().remove(Emulator.pref_widescreen).apply();
-		mPrefs.edit().remove(Emulator.pref_frameskip).apply();
-		mPrefs.edit().remove(Emulator.pref_pvrrender).apply();
-		mPrefs.edit().remove(Emulator.pref_syncedrender).apply();
-		mPrefs.edit().remove(Emulator.pref_bootdisk).apply();
-		mPrefs.edit().remove(Emulator.pref_showfps).apply();
 		mPrefs.edit().remove(Config.pref_rendertype).apply();
-		mPrefs.edit().remove(Emulator.pref_nosound).apply();
-		mPrefs.edit().remove(Emulator.pref_nobatch).apply();
-		mPrefs.edit().remove(Emulator.pref_customtextures).apply();
-		mPrefs.edit().remove(Emulator.pref_modvols).apply();
-		mPrefs.edit().remove(Emulator.pref_clipping).apply();
-		mPrefs.edit().remove(Emulator.pref_dynsafemode).apply();
 		mPrefs.edit().remove(Config.pref_renderdepth).apply();
 		mPrefs.edit().remove(Config.pref_theme).apply();
 
-
-		Emulator.usereios = false;
-		Emulator.dynarecopt = true;
-		Emulator.unstableopt = false;
-		Emulator.cable = 3;
-		Emulator.dcregion = 3;
-		Emulator.broadcast = 4;
-		Emulator.language = 6;
-		Emulator.limitfps = true;
-		Emulator.mipmaps = true;
-		Emulator.widescreen = false;
-		Emulator.frameskip = 0;
-		Emulator.pvrrender = 0;
-		Emulator.syncedrender = true;
-		Emulator.bootdisk = null;
 		Emulator.nosound = false;
-		Emulator.nobatch = false;
-		Emulator.customtextures = false;
-		Emulator.modvols = true;
-		Emulator.clipping = true;
-		Emulator.dynsafemode = true;
 
 		getActivity().finish();
 	}

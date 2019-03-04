@@ -1433,7 +1433,7 @@ static void osd_gen_vertices()
 #define OSD_TEX_W 512
 #define OSD_TEX_H 256
 
-void OSD_DRAW()
+void OSD_DRAW(bool clear_screen)
 {
 #ifndef TARGET_PANDORA
 	if (osd_tex)
@@ -1491,6 +1491,11 @@ void OSD_DRAW()
 		glcache.Disable(GL_SCISSOR_TEST);
 		glViewport(0, 0, screen_width, screen_height);
 
+		if (clear_screen)
+		{
+			glcache.ClearColor(0.7f, 0.7f, 0.7f, 1.f);
+			glClear(GL_COLOR_BUFFER_BIT);
+		}
 		int dfa = osd_vertices.used() / 4;
 
 		for (int i = 0; i < dfa; i++)
@@ -1979,7 +1984,7 @@ struct glesrend : Renderer
 	bool RenderLastFrame() { return render_output_framebuffer(); }
 	void Present() { gl_swap(); glViewport(0, 0, screen_width, screen_height); }
 
-	void DrawOSD()
+	void DrawOSD(bool clear_screen)
 	{
 		if (gl.gl_major >= 3)
 			glBindVertexArray(gl.vbo.vao);
@@ -1993,7 +1998,7 @@ struct glesrend : Renderer
 		glEnableVertexAttribArray(VERTEX_UV_ARRAY);
 		glVertexAttribPointer(VERTEX_UV_ARRAY, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex,u));
 
-		OSD_DRAW();
+		OSD_DRAW(clear_screen);
 	}
 
 	virtual u32 GetTexture(TSP tsp, TCW tcw) {

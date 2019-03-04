@@ -504,6 +504,7 @@ void InitSettings()
 
 	settings.input.MouseSensitivity = 100;
 	settings.input.JammaSetup = 0;
+	settings.input.VirtualGamepadVibration = 20;
 	for (int i = 0; i < MAPLE_PORTS; i++)
 	{
 		settings.input.maple_devices[i] = i == 0 ? MDT_SegaController : MDT_None;
@@ -583,6 +584,7 @@ void LoadSettings(bool game_specific)
 
 	settings.input.MouseSensitivity = cfgLoadInt(input_section, "MouseSensitivity", settings.input.MouseSensitivity);
 	settings.input.JammaSetup = cfgLoadInt(input_section, "JammaSetup", settings.input.JammaSetup);
+	settings.input.VirtualGamepadVibration = cfgLoadInt(input_section, "VirtualGamepadVibration", settings.input.VirtualGamepadVibration);
 	for (int i = 0; i < MAPLE_PORTS; i++)
 	{
 		char device_name[32];

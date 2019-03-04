@@ -63,7 +63,7 @@ public final class InputDeviceManager implements InputManager.InputDeviceListene
     }
 
     // Called from native code
-    private boolean Rumble(int i, float power, float inclination, int duration_ms) {
+    private boolean rumble(int i, float power, float inclination, int duration_ms) {
         Vibrator vibrator;
         if (i == VIRTUAL_GAMEPAD_ID) {
             vibrator = (Vibrator)Emulator.getAppContext().getSystemService(Context.VIBRATOR_SERVICE);

@@ -181,19 +181,6 @@ void SetupPath()
 	set_user_data_dir(fn);
 }
 
-int msgboxf(const wchar* text,unsigned int type,...)
-{
-	va_list args;
-
-	wchar temp[2048];
-	va_start(args, type);
-	vsprintf(temp, text, args);
-	va_end(args);
-
-
-	return MessageBox(NULL,temp,VER_SHORTNAME,type | MB_TASKMODAL);
-}
-
 // Gamepads
 u16 kcode[4] = { 0xffff, 0xffff, 0xffff, 0xffff };
 u32 vks[4];

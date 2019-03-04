@@ -260,7 +260,7 @@ bool rend_frame(TA_context* ctx, bool draw_osd) {
 	bool do_swp = proc && renderer->Render();
 
 	if (do_swp && draw_osd)
-		renderer->DrawOSD();
+		renderer->DrawOSD(false);
 
 	return do_swp;
 }
@@ -273,14 +273,13 @@ bool rend_single_frame()
 		// FIXME not here
 		os_DoEvents();
 #if !defined(TARGET_NO_THREADS)
-		if (gui_is_open())
+		if (gui_is_open() || gui_state == VJoyEdit)
 		{
-			if (!rs.Wait(1000 / 60) || !rend_framePending())	// !rend_framePending() needed for OSX
-			{
-				gui_display_ui();
-				FinishRender(NULL);
-				return true;
-			}
+			gui_display_ui();
+			if (gui_state == VJoyEdit && renderer != NULL)
+				renderer->DrawOSD(true);
+			FinishRender(NULL);
+			return true;
 		}
 		else
 		{
@@ -381,10 +380,6 @@ void rend_term_renderer()
 
 void* rend_thread(void* p)
 {
-#if FEAT_HAS_NIXPROF
-	install_prof_handler(1);
-#endif
-
 	rend_init_renderer();
 
 	//we don't know if this is true, so let's not speculate here

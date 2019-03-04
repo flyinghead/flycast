@@ -54,20 +54,6 @@
 #include "profiler/profiler.h"
 #endif
 
-int msgboxf(const wchar* text, unsigned int type, ...)
-{
-	va_list args;
-
-	wchar temp[2048];
-	va_start(args, type);
-	vsprintf(temp, text, args);
-	va_end(args);
-
-	//printf(NULL,temp,VER_SHORTNAME,type | MB_TASKMODAL);
-	puts(temp);
-	return MBX_OK;
-}
-
 void* x11_win = 0;
 void* x11_disp = 0;
 

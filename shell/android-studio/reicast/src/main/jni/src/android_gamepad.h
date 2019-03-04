@@ -143,12 +143,10 @@ public:
 
 	void rumble(float power, float inclination, u32 duration_ms) override
     {
-        JVMAttacher jvm_attacher;
-        if (jvm_attacher.failed())
-            return;
-        jboolean has_vibrator = jvm_attacher.env->CallBooleanMethod(input_device_manager, input_device_manager_rumble, android_id, power, inclination, duration_ms);
+        jboolean has_vibrator = jvm_attacher.getEnv()->CallBooleanMethod(input_device_manager, input_device_manager_rumble, android_id, power, inclination, duration_ms);
         _rumble_enabled = has_vibrator;
     }
+	bool is_virtual_gamepad() override { return android_id == VIRTUAL_GAMEPAD_ID; }
 
 	static const int VIRTUAL_GAMEPAD_ID = 0x12345678;	// must match the Java definition
 
@@ -198,7 +196,7 @@ public:
 		if (!find_mapping())
 			input_mapper = new MouseInputMapping();
 	}
-	virtual ~AndroidMouseGamepadDevice() {}
+
 	bool gamepad_btn_input(u32 code, bool pressed) override
 	{
 		if (gui_is_open())

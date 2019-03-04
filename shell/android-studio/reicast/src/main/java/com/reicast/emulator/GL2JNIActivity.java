@@ -26,7 +26,6 @@ import com.reicast.emulator.config.Config;
 import com.reicast.emulator.emu.GL2JNIView;
 import com.reicast.emulator.emu.JNIdc;
 import com.reicast.emulator.emu.OnScreenMenu;
-import com.reicast.emulator.emu.OnScreenMenu.FpsPopup;
 import com.reicast.emulator.periph.Gamepad;
 import com.reicast.emulator.periph.InputDeviceManager;
 import com.reicast.emulator.periph.SipEmulator;
@@ -37,8 +36,6 @@ import tv.ouya.console.api.OuyaController;
 
 public class GL2JNIActivity extends Activity implements ActivityCompat.OnRequestPermissionsResultCallback {
     public GL2JNIView mView;
-    OnScreenMenu menu;
-    FpsPopup fpsPop;
     private SharedPreferences prefs;
 
     private Gamepad pad = new Gamepad();
@@ -57,8 +54,7 @@ public class GL2JNIActivity extends Activity implements ActivityCompat.OnRequest
         InputDeviceManager.getInstance().startListening(getApplicationContext());
 
         Emulator app = (Emulator)getApplicationContext();
-        app.getConfigurationPrefs(prefs);
-        menu = new OnScreenMenu(GL2JNIActivity.this, prefs);
+        app.getConfigurationPrefs();
 
         pad.isOuyaOrTV = pad.IsOuyaOrTV(GL2JNIActivity.this, false);
 
@@ -89,7 +85,7 @@ public class GL2JNIActivity extends Activity implements ActivityCompat.OnRequest
                 prefs.getString(Gamepad.pref_player4, null), 3);
         pad.deviceDescriptor_PlayerNum.remove(null);
 
-        JNIdc.initControllers(Emulator.maple_devices, Emulator.maple_expansion_devices);
+ //       JNIdc.initControllers(Emulator.maple_devices, Emulator.maple_expansion_devices);
 
         int joys[] = InputDevice.getDeviceIds();
         for (int joy: joys) {
@@ -153,21 +149,10 @@ public class GL2JNIActivity extends Activity implements ActivityCompat.OnRequest
             pad.fullCompatibilityMode(prefs);
         }
 
-        app.loadConfigurationPrefs();
-
-        // When viewing a resource, pass its URI to the native code for opening
-        if (getIntent().getAction().equals("com.reicast.EMULATOR"))
-            fileName = Uri.decode(getIntent().getData().toString());
-
-        try {
             // Create the actual GLES view
-            mView = new GL2JNIView(GL2JNIActivity.this, fileName, false,
+        mView = new GL2JNIView(GL2JNIActivity.this, false,
                     prefs.getInt(Config.pref_renderdepth, 24), 8, false);
-            setContentView(mView);
-        } catch (GL2JNIView.EmulatorInitFailed e) {
-            finish();
-            return;
-        }
+        setContentView(mView);
 
         //setup mic
         if (Emulator.micPluggedIn()) {
@@ -183,25 +168,10 @@ public class GL2JNIActivity extends Activity implements ActivityCompat.OnRequest
                 onRequestPermissionsResult(0, new String[] { Manifest.permission.RECORD_AUDIO }, new int[] { PackageManager.PERMISSION_GRANTED });
             }
         }
-
-        if (Emulator.showfps) {
-            fpsPop = menu.new FpsPopup(this);
-            mView.setFpsDisplay(fpsPop);
-            mView.post(new Runnable() {
-                public void run() {
-                    displayFPS();
-                }
-            });
-        }
     }
 
     public Gamepad getPad() {
         return pad;
-    }
-
-    public void displayFPS() {
-        fpsPop.showAtLocation(mView, Gravity.TOP | Gravity.LEFT, 20, 20);
-        fpsPop.update(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
     }
 
     public void screenGrab() {
@@ -313,7 +283,6 @@ public class GL2JNIActivity extends Activity implements ActivityCompat.OnRequest
         InputDeviceManager.getInstance().stopListening();
         if (mView != null) {
             mView.onDestroy();
-            // FIXME This should be called to deinit what's been inited...
             JNIdc.destroy();
         }
     }

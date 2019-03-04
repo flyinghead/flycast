@@ -52,6 +52,7 @@ public:
 	InputMapping *get_input_mapping() { return input_mapper; }
 	void save_mapping();
 	bool remappable() { return _remappable && input_mapper != NULL; }
+	virtual bool is_virtual_gamepad() { return false; }
 
 	virtual void rumble(float power, float inclination, u32 duration_ms) {}
 	virtual void update_rumble() {}

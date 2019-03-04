@@ -815,6 +815,7 @@ struct settings_t
 								// 4: dual I/O boards (4P), 5: Namco JYU board (Ninja Assault)
 		int maple_devices[4];
 		int maple_expansion_devices[4][2];
+		int VirtualGamepadVibration;
 	} input;
 };
 
