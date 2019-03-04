@@ -37,11 +37,11 @@ static bool subfolders_read;
 #ifdef _WIN32
 static const std::string separators = "/\\";
 static const std::string native_separator = "\\";
-#define WIN32_PSEUDO_ROOT ":"
 #else
 static const std::string separators = "/";
 static const std::string native_separator = "/";
 #endif
+#define PSEUDO_ROOT ":"
 
 void select_directory_popup(const char *prompt, float scaling, StringCallback callback)
 {
@@ -50,7 +50,13 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
 #if defined(_ANDROID)
 		const char *home = getenv("REICAST_HOME");
 		if (home != NULL)
-			select_current_directory = home;
+		{
+			const char *pcolon = strchr(home, ':');
+			if (pcolon != NULL)
+				select_current_directory = std::string(home, pcolon - home);
+			else
+				select_current_directory = home;
+		}
 #elif HOST_OS == OS_LINUX || HOST_OS == OS_DARWIN
 		const char *home = getenv("HOME");
 		if (home != NULL)
@@ -93,7 +99,7 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
 			select_subfolders.clear();
 			error_message.clear();
 #ifdef _WIN32
-			if (select_current_directory == WIN32_PSEUDO_ROOT)
+			if (select_current_directory == PSEUDO_ROOT)
 			{
 				error_message = "Drives";
 				// List all the drives
@@ -101,6 +107,27 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
 				for (int i = 0; i < 32; i++)
 					if ((drives & (1 << i)) != 0)
 						select_subfolders.push_back(std::string(1, (char)('A' + i)) + ":\\");
+			}
+			else
+#elif _ANDROID
+			if (select_current_directory == PSEUDO_ROOT)
+			{
+				error_message = "Storage Locations";
+				const char *home = getenv("REICAST_HOME");
+				while (home != NULL)
+				{
+					const char *pcolon = strchr(home, ':');
+					if (pcolon != NULL)
+					{
+						select_subfolders.push_back(std::string(home, pcolon - home));
+						home = pcolon + 1;
+					}
+					else
+					{
+						select_subfolders.push_back(home);
+						home = NULL;
+					}
+				}
 			}
 			else
 #endif
@@ -122,8 +149,6 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
 						std:string name(entry->d_name);
 						if (name == ".")
 							continue;
-						if (name == "..")
-							dotdot_seen = true;
 						std::string child_path = path + "/" + name;
 						bool is_dir = false;
 #ifndef _WIN32
@@ -139,10 +164,14 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
 								is_dir = true;
 						}
 						if (is_dir && access(child_path.c_str(), R_OK) == 0)
+						{
+							if (name == "..")
+								dotdot_seen = true;
 							select_subfolders.push_back(name);
+						}
 					}
 					closedir(dir);
-#ifdef _WIN32
+#if defined(_WIN32) || defined(_ANDROID)
 					if (!dotdot_seen)
 						select_subfolders.push_back("..");
 #endif
@@ -172,7 +201,7 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
 						continue;
 #ifdef _WIN32
 					if (path.size() == 2 && path[1] == ':')
-						child_path = WIN32_PSEUDO_ROOT;
+						child_path = PSEUDO_ROOT;
 					else
 #endif
 					if (path == ".")
@@ -194,11 +223,15 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
 						child_path += native_separator;
 #endif
 				}
+#ifdef _ANDROID
+				if (access(child_path.c_str(), R_OK) != 0)
+					child_path = PSEUDO_ROOT;
+#endif
 			}
 			else
 			{
-#ifdef _WIN32
-				if (path == WIN32_PSEUDO_ROOT)
+#if defined(_WIN32) || defined(_ANDROID)
+				if (path == PSEUDO_ROOT)
 					child_path = name;
 				else
 #endif
