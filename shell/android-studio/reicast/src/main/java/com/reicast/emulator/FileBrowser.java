@@ -177,7 +177,7 @@ public class FileBrowser extends Fragment {
 		if (temp == null || !new File(temp).isDirectory()) {
 			showToastMessage(getActivity().getString(R.string.config_home), Snackbar.LENGTH_LONG);
 		}
-		installButtons();
+		installButtons(mPrefs);
 		if (!games) {
 			new LocateGames(this, R.array.flash).execute(home_directory);
 		} else {
@@ -185,19 +185,21 @@ public class FileBrowser extends Fragment {
 		}
 	}
 
-	private void installButtons() {
+	public static void installButtons(SharedPreferences prefs) {
 		try {
 			File buttons = null;
-			String theme = mPrefs.getString(Config.pref_theme, null);
+			// TODO button themes
+			String theme = prefs.getString(Config.pref_theme, null);
 			if (theme != null) {
 				buttons = new File(theme);
 			}
+			String home_directory = prefs.getString(Config.pref_home, Environment.getExternalStorageDirectory().getAbsolutePath());
 			File file = new File(home_directory, "data/buttons.png");
 			InputStream in = null;
 			if (buttons != null && buttons.exists()) {
 				in = new FileInputStream(buttons);
 			} else if (!file.exists() || file.length() == 0) {
-				in = getActivity().getAssets().open("buttons.png");
+				in = Emulator.getAppContext().getAssets().open("buttons.png");
 			}
 			if (in != null) {
 				OutputStream out = new FileOutputStream(file);

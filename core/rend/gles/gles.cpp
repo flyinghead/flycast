@@ -1435,8 +1435,10 @@ static void osd_gen_vertices()
 
 void OSD_DRAW(bool clear_screen)
 {
-#ifndef TARGET_PANDORA
-	if (osd_tex)
+#ifdef _ANDROID
+	if (osd_tex == 0)
+		gl_load_osd_resources();
+	if (osd_tex != 0)
 	{
 		osd_gen_vertices();
 

@@ -1,5 +1,6 @@
 package com.reicast.emulator;
 
+import android.app.Activity;
 import android.app.Application;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -13,6 +14,7 @@ import com.reicast.emulator.emu.JNIdc;
 
 public class Emulator extends Application {
     private static Context context;
+    private static Activity currentActivity;
 
     // see MapleDeviceType in hw/maple/maple_devs.h
     public static final int MDT_SegaController = 0;
@@ -67,6 +69,11 @@ public class Emulator extends Application {
         prefs.edit()
                 .putString(Config.pref_home, homeDirectory).apply();
         AudioBackend.getInstance().enableSound(!Emulator.nosound);
+
+        FileBrowser.installButtons(prefs);
+        if (micPluggedIn() && currentActivity instanceof NativeGLActivity) {
+            ((NativeGLActivity)currentActivity).requestRecordAudioPermission();
+        }
     }
 
     public static boolean micPluggedIn() {
@@ -86,6 +93,14 @@ public class Emulator extends Application {
 
     public static Context getAppContext() {
         return Emulator.context;
+    }
+
+    public static Activity getCurrentActivity() {
+        return Emulator.currentActivity;
+    }
+
+    public static void setCurrentActivity(Activity activity) {
+        Emulator.currentActivity = activity;
     }
 
     static {

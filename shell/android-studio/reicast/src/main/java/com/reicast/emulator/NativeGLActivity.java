@@ -6,6 +6,7 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -40,6 +41,7 @@ public final class NativeGLActivity extends BaseNativeGLActivity implements Acti
     public static byte[] syms;
     private float[][] vjoy_d_cached;    // Used for VJoy editing
     private AudioBackend audioBackend;
+    private Handler handler = new Handler();
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -48,6 +50,7 @@ public final class NativeGLActivity extends BaseNativeGLActivity implements Acti
 
         Emulator app = (Emulator)getApplicationContext();
         app.getConfigurationPrefs();
+        Emulator.setCurrentActivity(this);
 
         OuyaController.init(this);
 
@@ -73,19 +76,8 @@ public final class NativeGLActivity extends BaseNativeGLActivity implements Acti
         // FIXME Maple microphone can be plugged at any time with in-game gui
         // so this perm may be required at any time as well
         //setup mic
-        if (Emulator.micPluggedIn()) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                ActivityCompat.requestPermissions(this,
-                        new String[]{
-                                Manifest.permission.RECORD_AUDIO
-                        },
-                        0);
-            }
-            else
-            {
-                onRequestPermissionsResult(0, new String[] { Manifest.permission.RECORD_AUDIO }, new int[] { PackageManager.PERMISSION_GRANTED });
-            }
-        }
+        if (Emulator.micPluggedIn())
+            requestRecordAudioPermission();
     }
 
     private boolean showMenu() {
@@ -165,6 +157,29 @@ public final class NativeGLActivity extends BaseNativeGLActivity implements Acti
         InputDeviceManager.getInstance().stopListening();
         register(null);
         audioBackend.release();
+        Emulator.setCurrentActivity(null);
+    }
+
+    void requestRecordAudioPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    mView.setVisibility(View.INVISIBLE);
+                    ActivityCompat.requestPermissions(NativeGLActivity.this,
+                            new String[]{
+                                    Manifest.permission.RECORD_AUDIO
+                            },
+                            0);
+
+                }
+            });
+        }
+        else
+        {
+            onRequestPermissionsResult(0, new String[] { Manifest.permission.RECORD_AUDIO },
+                    new int[] { PackageManager.PERMISSION_GRANTED });
+        }
     }
 
     @Override
@@ -175,6 +190,8 @@ public final class NativeGLActivity extends BaseNativeGLActivity implements Acti
             sip.startRecording();
             JNIdc.setupMic(sip);
         }
+
+        mView.setVisibility(View.VISIBLE);
     }
 
     private void showToastMessage(String message, int duration) {
