@@ -117,8 +117,10 @@ public class FileBrowser extends Fragment {
 					String[] parts = line.split(" ");
 					for (String part : parts) {
 						if (part.startsWith("/"))
-							if (!StringUtils.containsIgnoreCase(part, "vold"))
+							if (!StringUtils.containsIgnoreCase(part, "vold")) {
+								part = part.replace("/mnt/media_rw", "/storage");
 								out.add(part);
+							}
 					}
 				}
 			}

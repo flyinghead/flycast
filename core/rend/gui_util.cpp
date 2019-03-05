@@ -117,7 +117,6 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
 				while (home != NULL)
 				{
 					const char *pcolon = strchr(home, ':');
-					// FIXME Java was doing this: String sdCardPath = sd.replace("mnt/media_rw", "storage");
 					if (pcolon != NULL)
 					{
 						select_subfolders.push_back(std::string(home, pcolon - home));
