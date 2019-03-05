@@ -11,7 +11,7 @@ platform:
 
 configuration:
   - Release-140
-  - Debug-140
+#  - Debug-140
   
 build:
   project: shell/reicast.sln
