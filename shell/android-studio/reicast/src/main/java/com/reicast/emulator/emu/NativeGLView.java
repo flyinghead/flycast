@@ -8,6 +8,7 @@ import android.content.res.Configuration;
 import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
+import android.os.SystemClock;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
 import android.util.AttributeSet;
@@ -98,8 +99,9 @@ public class NativeGLView extends SurfaceView implements SurfaceHolder.Callback 
 
     private void startRendering() {
         // Continuously render frames
+        //Log.i("reicast", "NativeGLView.startRendering in 500 ms");
         handler.removeCallbacksAndMessages(null);
-        handler.post(new Runnable() {
+        handler.postAtTime(new Runnable() {
             @Override
             public void run() {
                 if (!paused)
@@ -108,7 +110,7 @@ public class NativeGLView extends SurfaceView implements SurfaceHolder.Callback 
                     handler.post(this);
                 }
             }
-        });
+        }, SystemClock.uptimeMillis() + 500);
     }
 
     private void reset_analog()
@@ -441,17 +443,22 @@ public class NativeGLView extends SurfaceView implements SurfaceHolder.Callback 
     public void surfaceDestroyed(SurfaceHolder surfaceHolder) {
         //Log.i("reicast", "NativeGLView.surfaceDestroyed");
         JNIdc.rendinitNative(null, 0, 0);
+        paused = true;
     }
 
     public void pause() {
         paused = true;
         JNIdc.pause();
+        //Log.i("reicast", "NativeGLView.pause");
     }
 
     public void resume() {
-        paused = false;
-        JNIdc.resume();
-        startRendering();
+        if (paused) {
+            //Log.i("reicast", "NativeGLView.resume");
+            paused = false;
+            JNIdc.resume();
+            startRendering();
+        }
     }
 
     private class OscOnScaleGestureListener extends

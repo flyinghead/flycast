@@ -148,6 +148,18 @@ public final class NativeGLActivity extends BaseNativeGLActivity implements Acti
     }
 
     @Override
+    protected void onPause() {
+        super.onPause();
+        mView.pause();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        mView.resume();
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
         InputDeviceManager.getInstance().stopListening();
