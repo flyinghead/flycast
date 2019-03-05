@@ -1,3 +1,4 @@
+.DEFAULT_GOAL := all
 LOCAL_PATH := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 FOR_LINUX :=1
 #NO_REC := 1

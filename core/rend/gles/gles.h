@@ -175,7 +175,7 @@ bool render_output_framebuffer();
 void free_output_framebuffer();
 
 void HideOSD();
-void OSD_DRAW();
+void OSD_DRAW(bool clear_screen);
 int GetProgramID(u32 cp_AlphaTest, u32 pp_ClipTestMode,
 							u32 pp_Texture, u32 pp_UseAlpha, u32 pp_IgnoreTexA, u32 pp_ShadInstr, u32 pp_Offset,
 							u32 pp_FogCtrl, bool pp_Gouraud, bool pp_BumpMap, bool fog_clamping, bool trilinear);
