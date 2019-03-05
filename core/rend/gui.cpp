@@ -767,6 +767,19 @@ static void gui_display_settings()
             ImGui::SameLine();
             ShowHelpMarker("The directories where your games are stored");
 
+            if (ImGui::ListBoxHeader("Home Directory", 1))
+            {
+            	ImGui::AlignTextToFramePadding();
+                ImGui::Text("%s", get_writable_config_path("").c_str());
+#ifdef _ANDROID
+                ImGui::SameLine(ImGui::GetContentRegionAvailWidth() - ImGui::CalcTextSize("Change").x - ImGui::GetStyle().FramePadding.x);
+                if (ImGui::Button("Change"))
+                	gui_state = Onboarding;
+#endif
+                ImGui::ListBoxFooter();
+            }
+            ImGui::SameLine();
+            ShowHelpMarker("The directory where reicast saves configuration files and VMUs. BIOS files should be in the data subdirectory");
 
 			ImGui::PopStyleVar();
 			ImGui::EndTabItem();
