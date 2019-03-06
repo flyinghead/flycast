@@ -73,8 +73,6 @@ public final class NativeGLActivity extends BaseNativeGLActivity implements Acti
 
         audioBackend = new AudioBackend();
 
-        // FIXME Maple microphone can be plugged at any time with in-game gui
-        // so this perm may be required at any time as well
         //setup mic
         if (Emulator.micPluggedIn())
             requestRecordAudioPermission();
@@ -218,8 +216,7 @@ public final class NativeGLActivity extends BaseNativeGLActivity implements Acti
     // Called from native code
     private void VJoyResetEditing() {
         VJoy.resetCustomVjoyValues(getApplicationContext());
-        mView.vjoy_d_custom = VJoy
-                .readCustomVjoyValues(getApplicationContext());
+        mView.readCustomVjoyValues();
         mView.resetEditMode();
         mView.requestLayout();
     }
