@@ -75,7 +75,7 @@ public final class AudioBackend {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 audioTrack.write(samples, 0, samples.length, wait ? AudioTrack.WRITE_BLOCKING : AudioTrack.WRITE_NON_BLOCKING);
             } else {
-                if (wait)
+                if (!wait)
                 {
                     int newdata = samples.length / 2;
 
