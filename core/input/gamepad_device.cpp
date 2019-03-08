@@ -117,12 +117,29 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 	else if (((int)key >> 16) == 2) // Analog axes
 	{
 		//printf("AXIS %d Mapped to %d -> %d\n", key, value, v);
+		s8 *this_axis;
+		s8 *other_axis;
 		if (key == DC_AXIS_X)
-			joyx[_maple_port] = (s8)v;
+		{
+			this_axis = &joyx[_maple_port];
+			other_axis = &joyy[_maple_port];
+		}
 		else if (key == DC_AXIS_Y)
-			joyy[_maple_port] = (s8)v;
+		{
+			this_axis = &joyy[_maple_port];
+			other_axis = &joyx[_maple_port];
+		}
 		else
 			return false;
+		// Radial dead zone
+		// FIXME compute both axes at the same time
+		if ((float)(v * v + *other_axis * *other_axis) < _dead_zone * _dead_zone * 128.f * 128.f * 2.f)
+		{
+			*this_axis = 0;
+			*other_axis = 0;
+		}
+		else
+			*this_axis = (s8)v;
 	}
 	else
 		return false;

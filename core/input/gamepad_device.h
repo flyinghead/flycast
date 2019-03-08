@@ -106,6 +106,7 @@ private:
 	bool _detecting_button = false;
 	input_detected_cb _input_detected;
 	bool _remappable;
+	float _dead_zone = 0.1f;
 
 	static std::vector<std::shared_ptr<GamepadDevice>> _gamepads;
 	static std::mutex _gamepads_mutex;
