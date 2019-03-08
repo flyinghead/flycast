@@ -62,7 +62,7 @@ private:
 	static const u8 k_sboxes[4][16];
 
 	u16 m4id;
-	u8 *m_key_data;			// 2048 bytes
+	u8 *m_key_data = NULL;			// 2048 bytes
 	u16 subkey1, subkey2;
 	u16 one_round[0x10000];
 

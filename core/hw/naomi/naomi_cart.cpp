@@ -164,7 +164,19 @@ static bool naomi_cart_LoadZip(char *filename)
 	}
 
 	struct Game *game = &Games[gameid];
-
+#if DC_PLATFORM == DC_PLATFORM_NAOMI
+	if (game->cart_type == AW)
+	{
+		msgboxf("Atomiswave cartridges are not supported by NAOMI", 0);
+		return false;
+	}
+#else
+	if (game->cart_type != AW)
+	{
+		msgboxf("NAOMI cartridges are not supported by Atomiswave", 0);
+		return false;
+	}
+#endif
 	Archive *archive = OpenArchive(filename);
 	if (archive != NULL)
 		printf("Opened %s\n", filename);
