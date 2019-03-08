@@ -124,7 +124,7 @@ s32 SetTileClip(u32 val, GLint uniform)
 			csy = csy * dc2s_scale_h;
 			cey = cey * dc2s_scale_h;
 		}
-		else
+		else if (!settings.rend.RenderToTextureBuffer)
 		{
 			csx *= settings.rend.RenderToTextureUpscale;
 			csy *= settings.rend.RenderToTextureUpscale;

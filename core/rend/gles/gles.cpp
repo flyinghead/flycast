@@ -476,8 +476,6 @@ GLuint fogTextureId;
 			return false;
 		}
 
-		printf("Info: EGL version %d.%d\n",maj,min);
-
 		if (gl.setup.surface == 0)
 		{
 			EGLint pi32ConfigAttribs[]  = {

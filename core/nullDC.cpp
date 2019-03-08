@@ -169,7 +169,9 @@ void LoadSpecialSettings()
 			// Tony Hawk's Skateboarding
 			|| !strncmp("T40204D", reios_product_number, 7)
 			// Skies of Arcadia
-			|| !strncmp("MK-51052", reios_product_number, 8))
+			|| !strncmp("MK-51052", reios_product_number, 8)
+			// Flag to Flag
+			|| !strncmp("MK-51007", reios_product_number, 8))
 	{
 		settings.rend.RenderToTextureBuffer = 1;
 		rtt_to_buffer_game = true;
@@ -309,11 +311,18 @@ int reicast_init(int argc, char* argv[])
 	return 0;
 }
 
+#if HOST_OS != OS_DARWIN
+#define DATA_PATH "/data/"
+#else
+#define DATA_PATH "/"
+#endif
+
 bool game_started;
 
 int dc_start_game(const char *path)
 {
-	cfgSetVirtual("config", "image", path);
+	if (path != NULL)
+		cfgSetVirtual("config", "image", path);
 
 	if (init_done)
 	{
@@ -323,6 +332,7 @@ int dc_start_game(const char *path)
 		if (DiscSwap())
 			LoadCustom();
 #elif DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
+		LoadRomFiles(get_readonly_data_path(DATA_PATH));
 		if (!naomi_cart_SelectFile(libPvr_GetRenderTarget()))
 			return -6;
 		LoadCustom();
@@ -339,12 +349,6 @@ int dc_start_game(const char *path)
 
 		return 0;
 	}
-
-#if HOST_OS != OS_DARWIN
-    #define DATA_PATH "/data/"
-#else
-    #define DATA_PATH "/"
-#endif
 
 	settings.dreamcast.RTC = GetRTC_now();	// FIXME This shouldn't be in settings anymore
 	if (settings.bios.UseReios || !LoadRomFiles(get_readonly_data_path(DATA_PATH)))
