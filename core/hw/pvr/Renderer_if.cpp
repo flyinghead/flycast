@@ -279,6 +279,9 @@ bool rend_single_frame()
 			if (gui_state == VJoyEdit && renderer != NULL)
 				renderer->DrawOSD(true);
 			FinishRender(NULL);
+			// Use the rendering start event to wait between two frames but save its value
+			if (rs.Wait(17))
+				rs.Set();
 			return true;
 		}
 		else
