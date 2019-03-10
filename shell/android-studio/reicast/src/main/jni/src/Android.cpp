@@ -437,19 +437,19 @@ JNIEXPORT jboolean JNICALL Java_com_reicast_emulator_emu_JNIdc_rendframeNative(J
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_rendinitNative(JNIEnv * env, jobject obj, jobject surface, jint width, jint height)
 {
+    if (g_window != NULL)
+    {
+        egl_makecurrent();
+        rend_term_renderer();
+        ANativeWindow_release(g_window);
+        g_window = NULL;
+    }
     if (surface != NULL)
     {
         g_window = ANativeWindow_fromSurface(env, surface);
         rend_init_renderer();
         screen_width = width;
         screen_height = height;
-    }
-    else
-    {
-        egl_makecurrent();
-        rend_term_renderer();
-        ANativeWindow_release(g_window);
-        g_window = NULL;
     }
 }
 
@@ -640,11 +640,19 @@ JNIEXPORT jboolean JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_j
     	return false;
 
 }
+
+static std::map<std::pair<jint, jint>, jint> previous_axis_values;
+
 JNIEXPORT jboolean JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_joystickAxisEvent(JNIEnv *env, jobject obj, jint id, jint key, jint value)
 {
     std::shared_ptr<AndroidGamepadDevice> device = AndroidGamepadDevice::GetAndroidGamepad(id);
-    if (device != NULL)
+    // Only handle Left Stick on an Xbox 360 controller if there was actual
+    // motion on the stick, otherwise event can be handled as a DPAD event
+    if (device != NULL && previous_axis_values[std::make_pair(id, key)] != value)
+    {
+    	previous_axis_values[std::make_pair(id, key)] = value;
     	return device->gamepad_axis_input(key, value);
+    }
     else
     	return false;
 }
