@@ -359,11 +359,7 @@ bool naomi_cart_LoadRom(char* file)
 {
 	printf("\nnullDC-Naomi rom loader v1.2\n");
 
-	if (CurrentCartridge != NULL)
-	{
-		delete CurrentCartridge;
-		CurrentCartridge = NULL;
-	}
+	naomi_cart_Close();
 
 	size_t folder_pos = strlen(file) - 1;
 	while (folder_pos>1 && (file[folder_pos] != '\\' && file[folder_pos] != '/'))
@@ -613,28 +609,30 @@ bool naomi_cart_LoadRom(char* file)
 	return true;
 }
 
-bool naomi_cart_SelectFile(void* handle)
+void naomi_cart_Close()
+{
+	if (CurrentCartridge != NULL)
+	{
+		delete CurrentCartridge;
+		CurrentCartridge = NULL;
+	}
+	if (RomCacheMap != NULL)
+	{
+		for (int i = 0; i < RomCacheMapCount; i++)
+			if (RomCacheMap[i] != INVALID_FD)
+				CloseFile(RomCacheMap[i]);
+		RomCacheMapCount = 0;
+		delete[] RomCacheMap;
+		RomCacheMap = NULL;
+	}
+}
+
+bool naomi_cart_SelectFile()
 {
 	char SelectedFile[512];
 
 	cfgLoadStr("config", "image", SelectedFile, "null");
 	
-#if HOST_OS == OS_WINDOWS
-	if (strcmp(SelectedFile, "null") == 0) {
-		OPENFILENAME ofn = { 0 };
-		ofn.lStructSize = sizeof(OPENFILENAME);
-		ofn.hInstance = (HINSTANCE)GetModuleHandle(0);
-		ofn.lpstrFile = SelectedFile;
-		ofn.nMaxFile = MAX_PATH;
-		ofn.lpstrFilter = "*.lst\0*.lst\0*.bin\0*.bin\0*.dat\0*.dat\0\0";
-		ofn.nFilterIndex = 0;
-		ofn.hwndOwner = (HWND)handle;
-		ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
-
-		if (GetOpenFileName(&ofn) <= 0)
-			return true;
-	}
-#endif
 	if (!naomi_cart_LoadRom(SelectedFile))
 	{
 		printf("Cannot load %s: error %d\n", SelectedFile, errno);

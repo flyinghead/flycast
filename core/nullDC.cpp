@@ -80,33 +80,9 @@ int64_t get_time_usec(void)
 
 int GetFile(char *szFileName, char *szParse /* = 0 */, u32 flags /* = 0 */)
 {
-	cfgLoadStr("config","image",szFileName,"null");
-	if (strcmp(szFileName,"null")==0)
-	{
-	#if HOST_OS==OS_WINDOWS
-		OPENFILENAME ofn;
-		ZeroMemory( &ofn , sizeof( ofn));
-	ofn.lStructSize = sizeof ( ofn );
-	ofn.hwndOwner = NULL  ;
-	ofn.lpstrFile = szFileName ;
-	ofn.lpstrFile[0] = '\0';
-	ofn.nMaxFile = MAX_PATH;
-	ofn.lpstrFilter = "All\0*.*\0\0";
-	ofn.nFilterIndex =1;
-	ofn.lpstrFileTitle = NULL ;
-	ofn.nMaxFileTitle = 0 ;
-	ofn.lpstrInitialDir=NULL ;
-	ofn.Flags = OFN_PATHMUSTEXIST|OFN_FILEMUSTEXIST ;
+	cfgLoadStr("config", "image", szFileName, "");
 
-		if (GetOpenFileNameA(&ofn))
-		{
-			//already there
-			//strcpy(szFileName,ofn.lpstrFile);
-		}
-	#endif
-	}
-
-	return 1;
+	return szFileName[0] != '\0' ? 1 : 0;
 }
 
 
@@ -121,7 +97,7 @@ s32 plugins_Init()
 		return rv;
 #endif
 #if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
-	if (!naomi_cart_SelectFile(libPvr_GetRenderTarget()))
+	if (!naomi_cart_SelectFile())
 		return rv_serror;
 #endif
 
@@ -333,7 +309,7 @@ int dc_start_game(const char *path)
 			LoadCustom();
 #elif DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
 		LoadRomFiles(get_readonly_data_path(DATA_PATH));
-		if (!naomi_cart_SelectFile(libPvr_GetRenderTarget()))
+		if (!naomi_cart_SelectFile())
 			return -6;
 		LoadCustom();
 #if DC_PLATFORM == DC_PLATFORM_NAOMI
@@ -443,6 +419,9 @@ void* dc_run(void*)
 void dc_term()
 {
 	sh4_cpu.Term();
+#if DC_PLATFORM != DC_PLATFORM_DREAMCAST
+	naomi_cart_Close();
+#endif
 	plugins_Term();
 	_vmem_release();
 

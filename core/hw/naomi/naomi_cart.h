@@ -78,7 +78,8 @@ private:
 	u8 naomi_cart_ram[64 * 1024];
 };
 
-bool naomi_cart_SelectFile(void* handle);
+bool naomi_cart_SelectFile();
+void naomi_cart_Close();
 
 extern char naomi_game_id[];
 extern u8 *naomi_default_eeprom;
