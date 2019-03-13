@@ -109,7 +109,7 @@ int showhelp(wchar** arg,int cl)
 }
 bool ParseCommandLine(int argc,wchar* argv[])
 {
-
+	cfgSetVirtual("config", "image", "");
 	int cl=argc-2;
 	wchar** arg=argv+1;
 	while(cl>=0)

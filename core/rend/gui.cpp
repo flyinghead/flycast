@@ -281,11 +281,6 @@ void gui_open_settings()
 	}
 }
 
-bool gui_is_open()
-{
-	return gui_state != Closed && gui_state != VJoyEdit;
-}
-
 static void gui_display_commands()
 {
 	dc_stop();
@@ -336,9 +331,18 @@ static void gui_display_commands()
 		// Exit to main menu
 		gui_state = Main;
 		game_started = false;
+		cfgSetVirtual("config", "image", "");
 	}
 
-    ImGui::End();
+#if 0
+	ImGui::NextColumn();
+	if (ImGui::Button("RenderDone Int", ImVec2(150 * scaling, 50 * scaling)))
+	{
+		asic_RaiseInterrupt(holly_RENDER_DONE);
+		gui_state = Closed;
+	}
+#endif
+	ImGui::End();
 
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData(), settings_opening);
@@ -577,7 +581,7 @@ static void error_popup()
 		if (ImGui::BeginPopupModal("Error", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
 		{
 			ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 400.f * scaling);
-			ImGui::TextWrapped(error_msg.c_str());
+			ImGui::TextWrapped("%s", error_msg.c_str());
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * scaling, 3 * scaling));
 			float currentwidth = ImGui::GetContentRegionAvailWidth();
 			ImGui::SetCursorPosX((currentwidth - 80.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x);
@@ -1211,7 +1215,7 @@ static void gui_display_demo()
 
 static void gui_start_game(const std::string& path)
 {
-	int rc = dc_start_game(path.c_str());
+	int rc = dc_start_game(path.empty() ? NULL : path.c_str());
 	if (rc != 0)
 	{
 		gui_state = Main;
@@ -1224,7 +1228,7 @@ static void gui_start_game(const std::string& path)
 			error_msg = "Cannot find BIOS files";
 			break;
 		case -6:
-			error_msg = "Cannot load NAOMI rom";
+			error_msg = "Cannot load NAOMI rom or BIOS";
 			break;
 		default:
 			break;
@@ -1330,7 +1334,16 @@ void gui_display_ui()
 		break;
 	case Main:
 		//gui_display_demo();
-		gui_display_content();
+		{
+			std::string game_file = cfgLoadStr("config", "image", "");
+			if (!game_file.empty())
+			{
+				gui_state = ClosedNoResume;
+				gui_start_game(game_file);
+			}
+			else
+				gui_display_content();
+		}
 		break;
 	case Closed:
 	case ClosedNoResume:
