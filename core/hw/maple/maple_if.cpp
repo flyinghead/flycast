@@ -55,6 +55,7 @@ void maple_vblank()
 			else
 			{
 				//printf("DDT vblank\n");
+				SB_MDST = 1;
 				maple_DoDma();
 				SB_MDST = 0;
 				if ((SB_MSYS>>12)&1)
@@ -117,7 +118,7 @@ void maple_DoDma()
 	verify(SB_MDST &1)
 
 #if debug_maple
-	printf("Maple: DoMapleDma\n");
+	printf("Maple: DoMapleDma SB_MDSTAR=%x\n", SB_MDSTAR);
 #endif
 	u32 addr = SB_MDSTAR;
 	u32 xfer_count=0;
