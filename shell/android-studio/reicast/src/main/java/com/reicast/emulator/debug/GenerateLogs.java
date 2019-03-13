@@ -205,7 +205,6 @@ public class GenerateLogs extends AsyncTask<String, Integer, String> {
 	@Override
 	protected void onPostExecute(final String response) {
 		if (response != null) {
-			showToastMessage(mContext.get().getString(R.string.log_saved), Snackbar.LENGTH_LONG);
 			android.content.ClipboardManager clipboard = (android.content.ClipboardManager) mContext.get()
 					.getSystemService(Context.CLIPBOARD_SERVICE);
 			android.content.ClipData clip = android.content.ClipData.newPlainText("logcat", response);
@@ -213,35 +212,5 @@ public class GenerateLogs extends AsyncTask<String, Integer, String> {
 			Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(Config.git_issues));
 			mContext.get().startActivity(browserIntent);
 		}
-	}
-
-	private void showToastMessage(String message, int duration) {
-		View layout =
-				((Activity) mContext.get()).findViewById(android.R.id.content);
-		Snackbar snackbar = Snackbar.make(layout, message, duration);
-		View snackbarLayout = snackbar.getView();
-		ConstraintLayout.LayoutParams lp = new ConstraintLayout.LayoutParams(
-				ConstraintLayout.LayoutParams.MATCH_PARENT,
-				ConstraintLayout.LayoutParams.WRAP_CONTENT
-		);
-		lp.setMargins(0, 0, 0, 0);
-		snackbarLayout.setLayoutParams(lp);
-		TextView textView = (TextView) snackbarLayout.findViewById(
-				android.support.design.R.id.snackbar_text);
-		textView.setGravity(Gravity.CENTER_VERTICAL);
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1)
-			textView.setTextAlignment(View.TEXT_ALIGNMENT_GRAVITY);
-		Drawable drawable;
-		if (android.os.Build.VERSION.SDK_INT > Build.VERSION_CODES.M) {
-			drawable = mContext.get().getResources().getDrawable(
-					R.drawable.ic_send, ((Activity) mContext.get()).getTheme());
-		} else {
-			drawable = VectorDrawableCompat.create(mContext.get().getResources(),
-					R.drawable.ic_send, ((Activity) mContext.get()).getTheme());
-		}
-		textView.setCompoundDrawablesWithIntrinsicBounds(drawable, null, null, null);
-		textView.setCompoundDrawablePadding(mContext.get().getResources()
-				.getDimensionPixelOffset(R.dimen.snackbar_icon_padding));
-		snackbar.show();
 	}
 }

@@ -156,7 +156,7 @@ public class MainActivity extends AppCompatActivity {
 		if (gameUri != null)
 			JNIdc.setGameUri(gameUri.toString());
 		Intent intent = new Intent("com.reicast.EMULATOR",
-		//		uri, getApplicationContext(), GL2JNIActivity.class);
+				//gameUri, getApplicationContext(), GL2JNIActivity.class);
 				gameUri, getApplicationContext(), NativeGLActivity.class);
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
 			intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);

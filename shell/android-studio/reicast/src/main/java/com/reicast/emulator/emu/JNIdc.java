@@ -39,6 +39,7 @@ public final class JNIdc
 	public static native void screenDpi(int screenDpi);
 	public static native void guiOpenSettings();
 	public static native boolean guiIsOpen();
+	public static native boolean guiIsContentBrowser();
 
 	public static void show_osd() {
 		JNIdc.vjoy(13, 1,0,0,0);

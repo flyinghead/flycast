@@ -67,7 +67,6 @@ public class NativeGLView extends SurfaceView implements SurfaceHolder.Callback 
 
     private void startRendering() {
         // Continuously render frames
-        //Log.i("reicast", "NativeGLView.startRendering in 500 ms");
         handler.removeCallbacksAndMessages(null);
         handler.postAtTime(new Runnable() {
             @Override
@@ -113,7 +112,6 @@ public class NativeGLView extends SurfaceView implements SurfaceHolder.Callback 
     public void surfaceDestroyed(SurfaceHolder surfaceHolder) {
         //Log.i("reicast", "NativeGLView.surfaceDestroyed");
         JNIdc.rendinitNative(null, 0, 0);
-        paused = true;
     }
 
     public void pause() {
@@ -127,8 +125,8 @@ public class NativeGLView extends SurfaceView implements SurfaceHolder.Callback 
             //Log.i("reicast", "NativeGLView.resume");
             paused = false;
             JNIdc.resume();
-            startRendering();
         }
+        startRendering();
     }
 
     @TargetApi(19)
