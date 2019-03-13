@@ -43,7 +43,7 @@ u32 sb_ReadMem(u32 addr,u32 sz)
 	if (sb_regs[offset].flags & sz)
 	{
 #endif
-		if (!(sb_regs[offset].flags & REG_RF) )
+		if (!(sb_regs[offset].flags & (REG_RF|REG_WO)))
 		{
 			if (sz==4)
 				return sb_regs[offset].data32;
@@ -55,7 +55,7 @@ u32 sb_ReadMem(u32 addr,u32 sz)
 		else
 		{
 			//printf("SB: %08X\n",addr);
-			if (sb_regs[offset].readFunctionAddr == NULL)
+			if ((sb_regs[offset].flags & REG_WO) || sb_regs[offset].readFunctionAddr == NULL)
 			{
 				EMUERROR("sb_ReadMem write-only reg %08x %d\n", addr, sz);
 				return 0;
