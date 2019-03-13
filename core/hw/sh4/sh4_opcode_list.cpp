@@ -345,20 +345,20 @@ sh4_opcodelistentry opcodes[]=
 	{0                          ,i1100_1111_iiii_iiii   ,Mask_imm8      ,0xCF00 ,Normal         ,"or.b #<imm8>,@(R0,GBR)"               ,4,4,CO,fix_none},  // or.b #<imm>,@(R0,GBR)
 
 	//and here are the new ones :D
-	{0                          ,i1111_nnnn_mmmm_0000   ,Mask_n_m       ,0xF000,Normal          ,"fadd <FREG_M_SD_F>,<FREG_N_SD_F>"     ,1,3,FE,fix_none    ,dec_Bin_frNfrM(shop_fadd)},    //fadd <FREG_M>,<FREG_N>
-	{0                          ,i1111_nnnn_mmmm_0001   ,Mask_n_m       ,0xF001,Normal          ,"fsub <FREG_M_SD_F>,<FREG_N_SD_F>"     ,1,3,FE,fix_none    ,dec_Bin_frNfrM(shop_fsub)},    //fsub <FREG_M>,<FREG_N>
-	{0                          ,i1111_nnnn_mmmm_0010   ,Mask_n_m       ,0xF002,Normal          ,"fmul <FREG_M_SD_F>,<FREG_N_SD_F>"     ,1,3,FE,fix_none    ,dec_Bin_frNfrM(shop_fmul)},    //fmul <FREG_M>,<FREG_N>
-	{0                          ,i1111_nnnn_mmmm_0011   ,Mask_n_m       ,0xF003,Normal          ,"fdiv <FREG_M_SD_F>,<FREG_N_SD_F>"     ,1,12,FE,fix_none   ,dec_Bin_frNfrM(shop_fdiv)},//fdiv <FREG_M>,<FREG_N>
-	{0                          ,i1111_nnnn_mmmm_0100   ,Mask_n_m       ,0xF004,Normal          ,"fcmp/eq <FREG_M_SD_F>,<FREG_N>_SD_F"  ,1,4,FE,fix_none    ,dec_cmp(shop_fseteq,PRM_FRN,PRM_FRM)}, //fcmp/eq <FREG_M>,<FREG_N>
-	{0                          ,i1111_nnnn_mmmm_0101   ,Mask_n_m       ,0xF005,Normal          ,"fcmp/gt <FREG_M_SD_F>,<FREG_N_SD_F>"  ,1,4,FE,fix_none    ,dec_cmp(shop_fsetgt,PRM_FRN,PRM_FRM)}, //fcmp/gt <FREG_M>,<FREG_N>
-	{0                          ,i1111_nnnn_mmmm_0110   ,Mask_n_m       ,0xF006,Normal          ,"fmov.s @(R0,<REG_M>),<FREG_N_SD_A>"   ,1,2,LS,fix_none    ,dec_MRd(PRM_FRN_SZ,PRM_RM_R0,4)},  //fmov.s @(R0,<REG_M>),<FREG_N>
-	{0                          ,i1111_nnnn_mmmm_0111   ,Mask_n_m       ,0xF007,Normal          ,"fmov.s <FREG_M_SD_A>,@(R0,<REG_N>)"   ,1,1,LS,fix_none    ,dec_MWt(PRM_RN_R0,PRM_FRM_SZ,4)},  //fmov.s <FREG_M>,@(R0,<REG_N>)
-	{0                          ,i1111_nnnn_mmmm_1000   ,Mask_n_m       ,0xF008,Normal          ,"fmov.s @<REG_M>,<FREG_N_SD_A>"        ,1,2,LS,fix_none    ,dec_MRd(PRM_FRN_SZ,PRM_RM,4)}, //fmov.s @<REG_M>,<FREG_N>
-	{0                          ,i1111_nnnn_mmmm_1001   ,Mask_n_m       ,0xF009,Normal          ,"fmov.s @<REG_M>+,<FREG_N_SD_A>"       ,1,2,LS,fix_none    ,dec_MRd(PRM_FRN_SZ,PRM_RM,-4)},    //fmov.s @<REG_M>+,<FREG_N>
-	{0                          ,i1111_nnnn_mmmm_1010   ,Mask_n_m       ,0xF00A,Normal          ,"fmov.s <FREG_M_SD_A>,@<REG_N>"        ,1,1,LS,fix_none    ,dec_MWt(PRM_RN,PRM_FRM_SZ,4)}, //fmov.s <FREG_M>,@<REG_N>
-	{0                          ,i1111_nnnn_mmmm_1011   ,Mask_n_m       ,0xF00B,Normal          ,"fmov.s <FREG_M_SD_A>,@-<REG_N>"       ,1,1,LS,rn_fpu_4    ,dec_MWt(PRM_RN,PRM_FRM_SZ,-4)},    //fmov.s <FREG_M>,@-<REG_N>
-	{0                          ,i1111_nnnn_mmmm_1100   ,Mask_n_m       ,0xF00C,Normal          ,"fmov <FREG_M_SD_A>,<FREG_N_SD_A>"     ,1,0,LS,fix_none    ,dec_Fill(DM_UnaryOp,PRM_FRN_SZ,PRM_FRM_SZ,shop_mov32)},    //fmov <FREG_M>,<FREG_N>
-	{0                          ,i1111_nnnn_0101_1101   ,Mask_n         ,0xF05D,Normal          ,"fabs <FREG_N_SD_F>"                   ,1,0,LS,fix_none    ,dec_Un_frNfrN(shop_fabs)}, //fabs <FREG_N>
+	{0                          ,i1111_nnnn_mmmm_0000   ,Mask_n_m       ,0xF000,Normal          ,"fadd <FREG_M_SD_F>,<FREG_N>"          ,1,3,FE,fix_none    ,dec_Bin_frNfrM(shop_fadd)},    //fadd <FREG_M>,<FREG_N>
+	{0                          ,i1111_nnnn_mmmm_0001   ,Mask_n_m       ,0xF001,Normal          ,"fsub <FREG_M_SD_F>,<FREG_N>"          ,1,3,FE,fix_none    ,dec_Bin_frNfrM(shop_fsub)},    //fsub <FREG_M>,<FREG_N>
+	{0                          ,i1111_nnnn_mmmm_0010   ,Mask_n_m       ,0xF002,Normal          ,"fmul <FREG_M_SD_F>,<FREG_N>"          ,1,3,FE,fix_none    ,dec_Bin_frNfrM(shop_fmul)},    //fmul <FREG_M>,<FREG_N>
+	{0                          ,i1111_nnnn_mmmm_0011   ,Mask_n_m       ,0xF003,Normal          ,"fdiv <FREG_M_SD_F>,<FREG_N>"          ,1,12,FE,fix_none   ,dec_Bin_frNfrM(shop_fdiv)},//fdiv <FREG_M>,<FREG_N>
+	{0                          ,i1111_nnnn_mmmm_0100   ,Mask_n_m       ,0xF004,Normal          ,"fcmp/eq <FREG_M>,<FREG_N>"            ,1,4,FE,fix_none    ,dec_cmp(shop_fseteq,PRM_FRN,PRM_FRM)}, //fcmp/eq <FREG_M>,<FREG_N>
+	{0                          ,i1111_nnnn_mmmm_0101   ,Mask_n_m       ,0xF005,Normal          ,"fcmp/gt <FREG_M>,<FREG_N>"            ,1,4,FE,fix_none    ,dec_cmp(shop_fsetgt,PRM_FRN,PRM_FRM)}, //fcmp/gt <FREG_M>,<FREG_N>
+	{0                          ,i1111_nnnn_mmmm_0110   ,Mask_n_m       ,0xF006,Normal          ,"fmov.s @(R0,<REG_M>),<FREG_N>"        ,1,2,LS,fix_none    ,dec_MRd(PRM_FRN_SZ,PRM_RM_R0,4)},  //fmov.s @(R0,<REG_M>),<FREG_N>
+	{0                          ,i1111_nnnn_mmmm_0111   ,Mask_n_m       ,0xF007,Normal          ,"fmov.s <FREG_M>,@(R0,<REG_N>)"        ,1,1,LS,fix_none    ,dec_MWt(PRM_RN_R0,PRM_FRM_SZ,4)},  //fmov.s <FREG_M>,@(R0,<REG_N>)
+	{0                          ,i1111_nnnn_mmmm_1000   ,Mask_n_m       ,0xF008,Normal          ,"fmov.s @<REG_M>,<FREG_N>"             ,1,2,LS,fix_none    ,dec_MRd(PRM_FRN_SZ,PRM_RM,4)}, //fmov.s @<REG_M>,<FREG_N>
+	{0                          ,i1111_nnnn_mmmm_1001   ,Mask_n_m       ,0xF009,Normal          ,"fmov.s @<REG_M>+,<FREG_N>"            ,1,2,LS,fix_none    ,dec_MRd(PRM_FRN_SZ,PRM_RM,-4)},    //fmov.s @<REG_M>+,<FREG_N>
+	{0                          ,i1111_nnnn_mmmm_1010   ,Mask_n_m       ,0xF00A,Normal          ,"fmov.s <FREG_M>,@<REG_N>"             ,1,1,LS,fix_none    ,dec_MWt(PRM_RN,PRM_FRM_SZ,4)}, //fmov.s <FREG_M>,@<REG_N>
+	{0                          ,i1111_nnnn_mmmm_1011   ,Mask_n_m       ,0xF00B,Normal          ,"fmov.s <FREG_M>,@-<REG_N>"            ,1,1,LS,rn_fpu_4    ,dec_MWt(PRM_RN,PRM_FRM_SZ,-4)},    //fmov.s <FREG_M>,@-<REG_N>
+	{0                          ,i1111_nnnn_mmmm_1100   ,Mask_n_m       ,0xF00C,Normal          ,"fmov <FREG_M>,<FREG_N>"               ,1,0,LS,fix_none    ,dec_Fill(DM_UnaryOp,PRM_FRN_SZ,PRM_FRM_SZ,shop_mov32)},    //fmov <FREG_M>,<FREG_N>
+	{0                          ,i1111_nnnn_0101_1101   ,Mask_n         ,0xF05D,Normal          ,"fabs <FREG_N>"                        ,1,0,LS,fix_none    ,dec_Un_frNfrN(shop_fabs)}, //fabs <FREG_N>
 	{0                          ,i1111_nnn0_1111_1101   ,Mask_nh3bit    ,0xF0FD,Normal          ,"FSCA FPUL, <DR_N>"                    ,1,4,FE,fix_none    ,dec_Fill(DM_UnaryOp,PRM_FPN,PRM_FPUL,shop_fsca)},  //FSCA FPUL, DRn//F0FD//1111_nnnn_1111_1101
 	{0                          ,i1111_nnnn_1011_1101   ,Mask_n         ,0xF0BD,Normal          ,"fcnvds <DR_N>,FPUL"                   ,1,4,FE,fix_none},  //fcnvds <DR_N>,FPUL
 	{0                          ,i1111_nnnn_1010_1101   ,Mask_n         ,0xF0AD,Normal          ,"fcnvsd FPUL,<DR_N>"                   ,1,4,FE,fix_none},  //fcnvsd FPUL,<DR_N>
@@ -366,8 +366,8 @@ sh4_opcodelistentry opcodes[]=
 	{0                          ,i1111_nnnn_1000_1101   ,Mask_n         ,0xF08D,Normal          ,"fldi0 <FREG_N>"                       ,1,0,LS,fix_none    ,dec_Fill(DM_UnaryOp,PRM_FRN,PRM_ZERO,shop_mov32)}, //fldi0 <FREG_N>
 	{0                          ,i1111_nnnn_1001_1101   ,Mask_n         ,0xF09D,Normal          ,"fldi1 <FREG_N>"                       ,1,0,LS,fix_none    ,dec_Fill(DM_UnaryOp,PRM_FRN,PRM_ONE_F32,shop_mov32)},  //fldi1 <FREG_N>
 	{0                          ,i1111_nnnn_0001_1101   ,Mask_n         ,0xF01D,Normal          ,"flds <FREG_N>,FPUL"                   ,1,0,LS,fix_none    ,dec_Fill(DM_UnaryOp,PRM_FPUL,PRM_FRN,shop_mov32)}, //flds <FREG_N>,FPUL
-	{0                          ,i1111_nnnn_0010_1101   ,Mask_n         ,0xF02D,Normal          ,"float FPUL,<FREG_N_SD_F>"             ,1,3,FE,fix_none    ,dec_Fill(DM_UnaryOp,PRM_FRN,PRM_FPUL,shop_cvt_i2f_n)}, //float FPUL,<FREG_N>
-	{0                          ,i1111_nnnn_0100_1101   ,Mask_n         ,0xF04D,Normal          ,"fneg <FREG_N_SD_F> "                  ,1,0,LS,fix_none    ,dec_Un_frNfrN(shop_fneg)}, //fneg <FREG_N>
+	{0                          ,i1111_nnnn_0010_1101   ,Mask_n         ,0xF02D,Normal          ,"float FPUL,<FREG_N>"                  ,1,3,FE,fix_none    ,dec_Fill(DM_UnaryOp,PRM_FRN,PRM_FPUL,shop_cvt_i2f_n)}, //float FPUL,<FREG_N>
+	{0                          ,i1111_nnnn_0100_1101   ,Mask_n         ,0xF04D,Normal          ,"fneg <FREG_N> "                       ,1,0,LS,fix_none    ,dec_Un_frNfrN(shop_fneg)}, //fneg <FREG_N>
 	{dec_i1111_1011_1111_1101   ,i1111_1011_1111_1101   ,Mask_none      ,0xFBFD,WritesFPSCR     ,"frchg"                                ,1,2,FE,fix_none},  //frchg
 	{dec_i1111_0011_1111_1101   ,i1111_0011_1111_1101   ,Mask_none      ,0xF3FD,WritesFPSCR     ,"fschg"                                ,1,2,FE,fix_none},  //fschg
 	{0                          ,i1111_nnnn_0110_1101   ,Mask_n         ,0xF06D,Normal          ,"fsqrt <FREG_N>"                       ,1,12,FE,fix_none   ,dec_Un_frNfrN(shop_fsqrt)},//fsqrt <FREG_N>
@@ -455,3 +455,170 @@ void BuildOpcodeTables()
 
 
 static OnLoad ol_bot(&BuildOpcodeTables);
+
+static bool strcmp2(const char* &str1_o,const char * str2)
+{
+	u32 sz=0;
+	const char* str1=str1_o;
+	while (*str2!='\0')
+	{
+		if (*str1!=*str2)
+		{
+			return false;// nope , theyre diferent
+		}
+		sz++;
+		str1++;str2++;//next char
+	}
+
+	str1_o+=sz;
+	return true;
+}
+
+std::string disassemble_op(const char* tx1, u32 pc, u16 opcode)
+{
+	std::string text;
+	char buf[256];
+
+	while (*tx1!='\0')
+	{
+		if (*tx1=='<')
+		{
+			tx1++;
+			if (strcmp2(tx1,"REG_N>"))
+			{
+				sprintf(buf,"R%d",GetN(opcode));
+			}
+			else if (strcmp2(tx1,"REG_M>") )
+			{
+				sprintf(buf,"R%d",GetM(opcode));
+			}
+			else if (strcmp2(tx1,"FREG_N>"))
+			{
+				sprintf(buf,"FR%d",GetN(opcode));
+			}
+			else if (strcmp2(tx1,"FREG_M>"))
+			{
+				sprintf(buf,"FR%d",GetM(opcode));
+			}
+			else if (strcmp2(tx1,"RM_BANK>"))
+			{
+				sprintf(buf,"R%d_BANK",GetM(opcode)&0x7);
+			}
+			else if (strcmp2(tx1,"DFREG_N>"))
+			{
+				sprintf(buf,"DR%d",GetN(opcode)>>1);
+			}
+			else if (strcmp2(tx1,"DFREG_M>"))
+			{
+				sprintf(buf,"DR%d",GetM(opcode)>>1);
+			}
+			else if (strcmp2(tx1,"XDFREG_N>"))
+			{
+				u32 t=GetN(opcode);
+				if (t & 0x1)
+					sprintf(buf,"XD%d",t>>1);
+				else
+					sprintf(buf,"DR%d",t>>1);
+			}
+			else if (strcmp2(tx1,"XDFREG_M>"))
+			{
+				u32 t=GetM(opcode);
+				if (t & 0x1)
+					sprintf(buf,"XD%d",t>>1);
+				else
+					sprintf(buf,"DR%d",t>>1);
+			}
+			else if (strcmp2(tx1,"disp4b>"))
+			{
+				sprintf(buf,"0x%X",GetImm4(opcode)*1);
+			}
+			else if (strcmp2(tx1,"disp4w>"))
+			{
+				sprintf(buf,"0x%X",GetImm4(opcode)*2);
+			}
+			else if (strcmp2(tx1,"disp4dw>"))
+			{
+				sprintf(buf,"0x%X",GetImm4(opcode)*4);
+			}
+			else if (strcmp2(tx1,"PCdisp8w>"))
+			{
+				sprintf(buf,"0x%X[PC]",(pc)+4+(GetImm8(opcode)<<1));
+			}
+			else if (strcmp2(tx1,"PCdisp8d>"))
+			{
+				sprintf(buf,"0x%X[PC]",(pc&0xFFFFFFFC)+4+(GetImm8(opcode)<<2));
+			}
+			else if (strcmp2(tx1,"disp8b>"))
+			{
+				sprintf(buf,"0x%X",GetImm8(opcode)*1);
+			}
+			else if (strcmp2(tx1,"disp8w>"))
+			{
+				sprintf(buf,"0x%X",GetImm8(opcode)*2);
+			}
+			else if (strcmp2(tx1,"disp8dw>"))
+			{
+				sprintf(buf,"0x%X",GetImm8(opcode)*4);
+			}
+			else if (strcmp2(tx1,"GBRdisp8b>"))
+			{
+				sprintf(buf,"0x%X",GetImm8(opcode)*1 + p_sh4rcb->cntx.gbr);
+			}
+			else if (strcmp2(tx1,"GBRdisp8w>"))
+			{
+				sprintf(buf,"0x%X",GetImm8(opcode)*2 + p_sh4rcb->cntx.gbr);
+			}
+			else if (strcmp2(tx1,"GBRdisp8dw>"))
+			{
+				sprintf(buf,"0x%X",GetImm8(opcode)*4 + p_sh4rcb->cntx.gbr);
+			}
+			else if (strcmp2(tx1,"bdisp8>"))
+			{
+				sprintf(buf,"0x%X",((GetSImm8(opcode))*2 + 4 + pc));
+			}
+			else if (strcmp2(tx1,"bdisp12>"))
+			{
+				sprintf(buf,"0x%X",((  ((s16)((GetImm12(opcode))<<4)) >>3)  + pc + 4));
+			}
+			else if (strcmp2(tx1,"imm8>"))
+			{
+				sprintf(buf,"0x%X",GetImm8(opcode));
+			}
+			else if (strcmp2(tx1,"simm8>"))
+			{
+				sprintf(buf,"%d",GetSImm8(opcode));
+			}
+			else if (strcmp2(tx1,"simm8hex>"))
+			{
+				sprintf(buf,"0x%X",GetSImm8(opcode));
+			}
+			else
+			{
+				u32 ti=0;
+				while (tx1[ti]!='\0')
+				{
+					if (tx1[ti]=='>')
+						break;
+					else
+						ti++;
+				}
+
+				printf("Sh4Dissasm : Tag not known\"%s\"\n",tx1);
+
+				buf[0] = '<';
+				buf[1] = *tx1;
+				buf[2] = '\0';
+				tx1++;
+			}
+			text += buf;
+		}
+		else
+		{
+			text += *tx1;
+			tx1++;
+		}
+	}
+
+	return text;
+}
+
