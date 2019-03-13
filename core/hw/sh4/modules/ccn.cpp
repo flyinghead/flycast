@@ -8,7 +8,7 @@
 #include "../sh4_core.h"
 #include "hw/pvr/pvr_mem.h"
 #include "hw/mem/_vmem.h"
-
+#include "mmu.h"
 
 //Types
 
@@ -51,9 +51,15 @@ void CCN_MMUCR_write(u32 addr, u32 value)
 //		printf("<*******>MMU Enabled , ONLY SQ remaps work<*******>\n");
 //	}
 	
-	if (temp.TI)
+	if (temp.TI != 0)
 	{
-		temp.TI=0;
+		for (u32 i = 0; i < 4; i++)
+			ITLB[i].Data.V = 0;
+
+		for (u32 i = 0; i < 64; i++)
+			UTLB[i].Data.V = 0;
+
+		temp.TI = 0;
 	}
 	CCN_MMUCR=temp;
 }
