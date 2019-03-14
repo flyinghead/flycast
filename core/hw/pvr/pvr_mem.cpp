@@ -14,7 +14,7 @@
 //TODO : move code later to a plugin
 //TODO : Fix registers arrays , they must be smaller now doe to the way SB registers are handled
 #include "hw/holly/holly_intc.h"
-
+#include "hw/holly/sb.h"
 
 //YUV converter code :)
 //inits the YUV converter
