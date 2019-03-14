@@ -80,6 +80,7 @@ void DMAC_Ch2St()
 	else if((dst >= 0x11000000) && (dst <= 0x11FFFFE0))
 	{
 		//printf(">>\tDMAC: TEX LNMODE0 Ch2 DMA SRC=%X DST=%X LEN=%X SB_LMMODE0 %d\n", src, dst, len, SB_LMMODE0);
+		SB_C2DSTAT += len;
 
 		if (SB_LMMODE0 == 0)
 		{
@@ -139,7 +140,6 @@ void DMAC_Ch2St()
 
 	SB_C2DST = 0x00000000;
 	SB_C2DLEN = 0x00000000;
-	SB_C2DSTAT = (src );
 
 	// The DMA end interrupt flag (SB_ISTNRM - bit 19: DTDE2INT) is set to "1."
 	//-> fixed , holly_PVR_DMA is for different use now (fixed the interrupts enum too)

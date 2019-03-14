@@ -187,7 +187,7 @@ u32 RegRead_SB_FFST(u32 addr)
 	{
 		SB_FFST^=31;
 	}
-	return 0; //SB_FFST -> does the fifo status has really to be faked ?
+	return SB_FFST; // does the fifo status has really to be faked ?
 }
 
 void SB_SFRES_write32(u32 addr, u32 data)
@@ -766,6 +766,7 @@ void sb_Init()
 	SB_SBREV=0xB;
 	SB_G2ID=0x12;
 	SB_G1SYSM=((0x0<<4) | (0x1));
+	SB_TFREM = 8;
 
 	asic_reg_Init();
 

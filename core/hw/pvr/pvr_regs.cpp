@@ -84,7 +84,7 @@ void pvr_WriteReg(u32 paddr,u32 data)
 		}
 		return;
 	}
-	if (addr == TA_YUV_TEX_BASE_addr)
+	if (addr == TA_YUV_TEX_BASE_addr || addr == TA_YUV_TEX_CTRL_addr)
 	{
 		PvrReg(addr, u32) = data;
 		YUV_init();
