@@ -679,6 +679,7 @@ void SaveSettings()
 
 	cfgSaveBool("config", "Debug.SerialConsoleEnabled", settings.debug.SerialConsole);
 	cfgSaveInt("input", "MouseSensitivity", settings.input.MouseSensitivity);
+	cfgSaveInt("input", "VirtualGamepadVibration", settings.input.VirtualGamepadVibration);
 	for (int i = 0; i < MAPLE_PORTS; i++)
 	{
 		char device_name[32];
