@@ -44,4 +44,5 @@ public final class JNIdc
 	public static void show_osd() {
 		JNIdc.vjoy(13, 1,0,0,0);
 	}
+	public static native void hideOsd();
 }

@@ -2,6 +2,7 @@ package com.reicast.emulator.emu;
 
 import android.content.Context;
 import android.content.res.Configuration;
+import android.os.Handler;
 import android.os.Vibrator;
 import android.view.InputDevice;
 import android.view.MotionEvent;
@@ -19,6 +20,14 @@ public class VirtualJoystickDelegate {
     private boolean editVjoyMode = false;
     private int selectedVjoyElement = -1;
     private ScaleGestureDetector scaleGestureDetector;
+
+    private Handler handler = new Handler();
+    private Runnable hideOsdRunnable = new Runnable() {
+        @Override
+        public void run() {
+            JNIdc.hideOsd();
+        }
+    };
 
     private float[][] vjoy_d_custom;
 
@@ -154,6 +163,8 @@ public class VirtualJoystickDelegate {
             // Ignore real mice, trackballs, etc.
             return false;
         JNIdc.show_osd();
+        this.handler.removeCallbacks(hideOsdRunnable);
+        this.handler.postDelayed(hideOsdRunnable, 10000);
 
         scaleGestureDetector.onTouchEvent(event);
 

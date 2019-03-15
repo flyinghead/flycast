@@ -16,6 +16,7 @@
 #include "hw/pvr/Renderer_if.h"
 #include "profiler/profiler.h"
 #include "rend/TexCache.h"
+#include "rend/gles/gles.h"
 #include "hw/maple/maple_devs.h"
 #include "hw/maple/maple_if.h"
 #include "hw/naomi/naomi_cart.h"
@@ -97,6 +98,7 @@ JNIEXPORT jboolean JNICALL Java_com_reicast_emulator_emu_JNIdc_rendframeJava(JNI
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_rendtermJava(JNIEnv *env, jobject obj)  __attribute__((visibility("default")));
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_vjoy(JNIEnv * env, jobject obj,int id,float x, float y, float w, float h)  __attribute__((visibility("default")));
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_hideOsd(JNIEnv * env, jobject obj)  __attribute__((visibility("default")));
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_getControllers(JNIEnv *env, jobject obj, jintArray controllers, jobjectArray peripherals)  __attribute__((visibility("default")));
 
@@ -483,6 +485,10 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_vjoy(JNIEnv * env, jo
         vjoy_pos[id][2] = w;
         vjoy_pos[id][3] = h;
     }
+}
+
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_hideOsd(JNIEnv * env, jobject obj) {
+    HideOSD();
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_getControllers(JNIEnv *env, jobject obj, jintArray controllers, jobjectArray peripherals)
