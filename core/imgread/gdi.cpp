@@ -137,6 +137,7 @@ Disc* load_gdi(const char* file)
 		t.StartFAD=FADS+150;
 		t.EndFAD=0;		//fill it in
 		t.file=0;
+		t.CTRL = CTRL;
 
 		if (SSIZE!=0)
 		{
