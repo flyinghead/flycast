@@ -17,6 +17,7 @@ bool UTLB_Sync(u32 entry);
 void ITLB_Sync(u32 entry);
 
 bool mmu_match(u32 va, CCN_PTEH_type Address, CCN_PTEL_type Data);
+void mmu_set_state();
 
 #if defined(NO_MMU)
 	bool inline mmu_TranslateSQW(u32 addr, u32* mapped) {

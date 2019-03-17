@@ -454,6 +454,7 @@ void InitSettings()
 	settings.dreamcast.region		= 3;	// default
 	settings.dreamcast.broadcast	= 4;	// default
 	settings.dreamcast.language     = 6;	// default
+	settings.dreamcast.FullMMU      = false;
 	settings.aica.LimitFPS			= true;
 	settings.aica.NoBatch			= false;	// This also controls the DSP. Disabled by default
     settings.aica.NoSound			= false;
@@ -527,6 +528,7 @@ void LoadSettings(bool game_specific)
 	settings.dreamcast.region		= cfgLoadInt(config_section, "Dreamcast.Region", settings.dreamcast.region);
 	settings.dreamcast.broadcast	= cfgLoadInt(config_section, "Dreamcast.Broadcast", settings.dreamcast.broadcast);
 	settings.dreamcast.language     = cfgLoadInt(config_section, "Dreamcast.Language", settings.dreamcast.language);
+	settings.dreamcast.FullMMU      = cfgLoadBool(config_section, "Dreamcast.FullMMU", settings.dreamcast.FullMMU);
 	settings.aica.LimitFPS			= cfgLoadBool(config_section, "aica.LimitFPS", settings.aica.LimitFPS);
 	settings.aica.NoBatch			= cfgLoadBool(config_section, "aica.NoBatch", settings.aica.NoBatch);
     settings.aica.NoSound			= cfgLoadBool(config_section, "aica.NoSound", settings.aica.NoSound);
@@ -651,6 +653,7 @@ void SaveSettings()
 	cfgSaveInt("config", "Dreamcast.Cable", settings.dreamcast.cable);
 	cfgSaveInt("config", "Dreamcast.Region", settings.dreamcast.region);
 	cfgSaveInt("config", "Dreamcast.Broadcast", settings.dreamcast.broadcast);
+	cfgSaveBool("config", "Dreamcast.FullMMU", settings.dreamcast.FullMMU);
 	cfgSaveBool("config", "Dynarec.idleskip", settings.dynarec.idleskip);
 	cfgSaveBool("config", "Dynarec.unstable-opt", settings.dynarec.unstable_opt);
 	if (!safemode_game || !settings.dynarec.safemode)
@@ -838,6 +841,7 @@ void dc_loadstate()
     	return;
 	}
 
+	mmu_set_state();
     dsp.dyndirty = true;
     sh4_sched_ffts();
     CalculateSync();

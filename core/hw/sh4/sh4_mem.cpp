@@ -19,14 +19,6 @@
 //main system mem
 VArray2 mem_b;
 
-u8 DYNACALL ReadMem8_i(u32 addr);
-u16 DYNACALL ReadMem16_i(u32 addr);
-u32 DYNACALL ReadMem32_i(u32 addr);
-
-void DYNACALL WriteMem8_i(u32 addr,u8 data);
-void DYNACALL WriteMem16_i(u32 addr,u16 data);
-void DYNACALL WriteMem32_i(u32 addr,u32 data);
-
 void _vmem_init();
 void _vmem_reset();
 void _vmem_term();

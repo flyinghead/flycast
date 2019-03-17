@@ -751,6 +751,7 @@ struct settings_t
 		u32 broadcast;		// 0 -> NTSC, 1 -> PAL, 2 -> PAL/M, 3 -> PAL/N, 4 -> default
 		u32 language;		// 0 -> JP, 1 -> EN, 2 -> DE, 3 -> FR, 4 -> SP, 5 -> IT, 6 -> default
 		std::vector<std::string> ContentPath;
+		bool FullMMU;
 	} dreamcast;
 
 	struct
