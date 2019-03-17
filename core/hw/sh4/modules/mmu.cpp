@@ -78,6 +78,10 @@ defining NO_MMU disables the full mmu emulation
 
 #include "hw/mem/_vmem.h"
 
+#ifdef TRACE_WINCE_SYSCALLS
+#include "wince.h"
+#endif
+
 #define printf_mmu(...)
 #define printf_win32(...)
 
@@ -229,8 +233,20 @@ void mmu_raise_exception(u32 mmu_error, u32 address, u32 am)
 			RaiseException(0xE0, 0x100);
 		else							//IADDERR - Instruction Address Error
 		{
+#ifdef TRACE_WINCE_SYSCALLS
+			bool skip_exception = false;
+			if (!print_wince_syscall(address, skip_exception))
+				printf_mmu("MMU_ERROR_BADADDR(i) 0x%X\n", address);
+			//if (!skip_exception)
+				RaiseException(0xE0, 0x100);
+			//else {
+			//	SH4ThrownException ex = { 0, 0, 0 };
+			//	throw ex;
+			//}
+#else
 			printf_mmu("MMU_ERROR_BADADDR(i) 0x%X\n", address);
 			RaiseException(0xE0, 0x100);
+#endif
 			return;
 		}
 		printf_mmu("MMU_ERROR_BADADDR(d) 0x%X, handled\n", address);
@@ -413,6 +429,17 @@ u32 mmu_data_translation(u32 va, u32& rv)
 
 	if (lookup != MMU_ERROR_NONE)
 		return lookup;
+
+#ifdef TRACE_WINCE_SYSCALLS
+	if (unresolved_unicode_string != 0)
+	{
+		if (va == unresolved_unicode_string)
+		{
+			unresolved_unicode_string = 0;
+			printf("RESOLVED %s\n", get_unicode_string(va).c_str());
+		}
+	}
+#endif
 
 	u32 md = UTLB[entry].Data.PR >> 1;
 

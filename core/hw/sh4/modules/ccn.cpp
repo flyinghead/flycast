@@ -46,12 +46,8 @@ void CCN_MMUCR_write(u32 addr, u32 value)
 	CCN_MMUCR_type temp;
 	temp.reg_data=value;
 
-	if (temp.AT != CCN_MMUCR.AT)
-	{
-		//printf("<*******>MMU Enabled , ONLY SQ remaps work<*******>\n");
-		mmu_set_state();
-	}
-	
+	bool mmu_changed_state = temp.AT != CCN_MMUCR.AT;
+
 	if (temp.TI != 0)
 	{
 		for (u32 i = 0; i < 4; i++)
@@ -63,6 +59,12 @@ void CCN_MMUCR_write(u32 addr, u32 value)
 		temp.TI = 0;
 	}
 	CCN_MMUCR=temp;
+
+	if (mmu_changed_state)
+	{
+		//printf("<*******>MMU Enabled , ONLY SQ remaps work<*******>\n");
+		mmu_set_state();
+	}
 }
 void CCN_CCR_write(u32 addr, u32 value)
 {
