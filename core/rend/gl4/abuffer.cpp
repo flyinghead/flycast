@@ -565,6 +565,14 @@ void checkOverflowAndReset()
 
 void renderABuffer(bool sortFragments)
 {
+	// Reset scale params to a standard 640x480 dc screen
+	float scale_h = screen_height / 480.f;
+	float offs_x = (screen_width - scale_h * 640.f) / 2.f;
+	gl4ShaderUniforms.scale_coefs[0] = 2.f / (screen_width / scale_h);
+	gl4ShaderUniforms.scale_coefs[1]= -2.f / 480.f;
+	gl4ShaderUniforms.scale_coefs[2]= 1.f - 2.f * offs_x / screen_width;
+	gl4ShaderUniforms.scale_coefs[3]= -1.f;
+
 	// Render to output FBO
 	glcache.UseProgram(sortFragments ? g_abuffer_final_shader.program : g_abuffer_final_nosort_shader.program);
 	gl4ShaderUniforms.Set(&g_abuffer_final_shader);
