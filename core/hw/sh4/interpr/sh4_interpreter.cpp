@@ -25,18 +25,27 @@
 #include <time.h>
 #include <float.h>
 
-#define SH4_TIMESLICE (448)
 #define CPU_RATIO      (8)
 
 //uh uh
 #define GetN(str) ((str>>8) & 0xf)
 #define GetM(str) ((str>>4) & 0xf)
 
+static s32 l;
+
+static void ExecuteOpcode(u16 op)
+{
+	if ((op & 0xF000) == 0xF000 && op != 0xFFFD && sr.FD == 1)
+		RaiseFPUDisableException();
+	OpPtr[op](op);
+	l -= CPU_RATIO;
+}
+
 void Sh4_int_Run()
 {
 	sh4_int_bCpuRun=true;
 
-	s32 l=SH4_TIMESLICE;
+	l = SH4_TIMESLICE;
 
 #if !defined(TARGET_BOUNDED_EXECUTION)
 	do
@@ -53,16 +62,15 @@ void Sh4_int_Run()
 				next_pc += 2;
 				u32 op = IReadMem16(addr);
 
-				OpPtr[op](op);
-				l -= CPU_RATIO;
+				ExecuteOpcode(op);
 			} while (l > 0);
 			l += SH4_TIMESLICE;
 			UpdateSystem_INTC();
 #if !defined(NO_MMU)
 		}
-		catch (SH4ThrownException ex) {
+		catch (SH4ThrownException& ex) {
 			Do_Exception(ex.epc, ex.expEvn, ex.callVect);
-			l -= CPU_RATIO * 5;
+			l -= CPU_RATIO * 5;	// an exception requires the instruction pipeline to drain, so approx 5 cycles
 		}
 #endif
 #if !defined(TARGET_BOUNDED_EXECUTION)
@@ -159,12 +167,14 @@ void ExecuteDelayslot()
 		u32 addr = next_pc;
 		next_pc += 2;
 		u32 op = IReadMem16(addr);
-		if (op != 0)
-			ExecuteOpcode(op);
+
+		ExecuteOpcode(op);
 #if !defined(NO_MMU)
 	}
-	catch (SH4ThrownException ex) {
+	catch (SH4ThrownException& ex) {
 		ex.epc -= 2;
+		if (ex.callVect == 0x800)	// FPU disable exception
+			ex.callVect = 0x820;	// Slot FPU disable exception
 		//printf("Delay slot exception\n");
 		throw ex;
 	}
@@ -173,18 +183,14 @@ void ExecuteDelayslot()
 
 void ExecuteDelayslot_RTE()
 {
-	u32 oldsr = sh4_sr_GetFull();
-
 #if !defined(NO_MMU)
 	try {
 #endif
-		sh4_sr_SetFull(ssr);
-
 		ExecuteDelayslot();
 #if !defined(NO_MMU)
 	}
-	catch (SH4ThrownException ex) {
-		msgboxf("RTE Exception", MBX_ICONERROR);
+	catch (SH4ThrownException& ex) {
+		msgboxf("Exception in RTE delay slot", MBX_ICONERROR);
 	}
 #endif
 }
@@ -238,16 +244,16 @@ int DreamcastSecond(int tag, int c, int j)
 	return SH4_MAIN_CLOCK;
 }
 
-//448 Cycles (fixed)
+// every SH4_TIMESLICE cycles
 int UpdateSystem()
 {
 	//this is an optimisation (mostly for ARM)
 	//makes scheduling easier !
 	//update_fp* tmu=pUpdateTMU;
 	
-	Sh4cntx.sh4_sched_next-=448;
+	Sh4cntx.sh4_sched_next-=SH4_TIMESLICE;
 	if (Sh4cntx.sh4_sched_next<0)
-		sh4_sched_tick(448);
+		sh4_sched_tick(SH4_TIMESLICE);
 
 	return Sh4cntx.interrupt_pend;
 }

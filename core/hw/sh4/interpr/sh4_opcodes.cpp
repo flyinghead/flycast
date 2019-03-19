@@ -132,6 +132,8 @@ sh4op(i0000_nnnn_1mmm_0010)
 //sts FPUL,<REG_N>
 sh4op(i0000_nnnn_0101_1010)
 {
+	if (sr.FD == 1)
+		RaiseFPUDisableException();
 	u32 n = GetN(op);
 	r[n] = fpul;
 }
@@ -311,7 +313,8 @@ sh4op(i0010_nnnn_mmmm_0110)
 //sts.l FPUL,@-<REG_N>
 sh4op(i0100_nnnn_0101_0010)
 {
-	//iNimp("sts.l FPUL,@-<REG_N>");
+	if (sr.FD == 1)
+		RaiseFPUDisableException();
 	u32 n = GetN(op);
 
 	u32 addr = r[n] - 4;
@@ -466,7 +469,8 @@ sh4op(i0100_nnnn_0010_0110)
 //lds.l @<REG_N>+,FPUL
 sh4op(i0100_nnnn_0101_0110)
 {
-	//iNimp("lds.l @<REG_N>+,FPU");
+	if (sr.FD == 1)
+		RaiseFPUDisableException();
 	u32 n = GetN(op);
 
 	ReadMemU32(fpul,r[n]);
@@ -574,6 +578,8 @@ sh4op(i0100_nnnn_0010_1010)
 //lds <REG_N>,FPUL
 sh4op(i0100_nnnn_0101_1010)
 {
+	if (sr.FD == 1)
+		RaiseFPUDisableException();
 	u32 n = GetN(op);
 	fpul =r[n];
 }
@@ -927,14 +933,18 @@ sh4op(i0000_nnnn_0000_0011)
  //rte
 sh4op(i0000_0000_0010_1011)
 {
-	//iNimp("rte");
-	//sr.SetFull(ssr);
 	u32 newpc = spc;
+	// FIXME In an RTE delay slot, status register (SR) bits are referenced as follows.
+	// In instruction access, the MD bit is used before modification, and in data access, 
+	// the MD bit is accessed after modification.
+	// The other bits—S, T, M, Q, FD, BL, and RB—after modification are used for delay slot
+	// instruction execution. The STC and STC.L SR instructions access all SR bits after modification.
+	sh4_sr_SetFull(ssr);
+	bool interrupt_pending = UpdateSR();
 	ExecuteDelayslot_RTE();
 	next_pc = newpc;
-	if (UpdateSR())
+	if (interrupt_pending)
 	{
-		//FIXME olny if interrupts got on
 		UpdateINTC();
 	}
 }
@@ -1229,6 +1239,7 @@ sh4op(i0000_0000_0011_1000)
 	//printf("ldtlb %d/%d\n",CCN_MMUCR.URC,CCN_MMUCR.URB);
 	UTLB[CCN_MMUCR.URC].Data=CCN_PTEL;
 	UTLB[CCN_MMUCR.URC].Address=CCN_PTEH;
+	UTLB[CCN_MMUCR.URC].Assistance=CCN_PTEA;
 
 	UTLB_Sync(CCN_MMUCR.URC);
 }
@@ -1551,21 +1562,21 @@ sh4op(i0100_nnnn_mmmm_1111)
 	u32 m = GetM(op);
 	if (sr.S!=0)
 	{
-		printf("mac.w @<REG_M>+,@<REG_N>+ : s=%d\n",sr.S);
+		die("mac.w @<REG_M>+,@<REG_N>+ : S=1");
 	}
 	else
 	{
 		s32 rm,rn;
 
 		rn = (s32)(s16)ReadMem16(r[n]);
-		r[n]+=2;
 		//if (n==m)
 		//{
 		//	r[n]+=2;
 		//	r[m]+=2;
 		//}
-		rm = (s32)(s16)ReadMem16(r[m]);
+		rm = (s32)(s16)ReadMem16(r[m] + (n == m ? 2 : 0));
 
+		r[n]+=2;
 		r[m]+=2;
 
 		s32 mul=rm * rn;
@@ -1583,8 +1594,8 @@ sh4op(i0000_nnnn_mmmm_1111)
 	verify(sr.S==0);
 
 	ReadMemS32(rm,r[m]);
+	ReadMemS32(rn,r[n] + (n == m ? 4 : 0));
 	r[m] += 4;
-	ReadMemS32(rn,r[n]);
 	r[n] += 4;
 
 	mac.full += (s64)rm * (s64)rn;
@@ -2135,7 +2146,8 @@ sh4op(i0000_nnnn_0000_0010)//0002
  //sts FPSCR,<REG_N>
 sh4op(i0000_nnnn_0110_1010)
 {
-	//iNimp("sts FPSCR,<REG_N>");
+	if (sr.FD == 1)
+		RaiseFPUDisableException();
 	u32 n = GetN(op);
 	r[n] = fpscr.full;
 	UpdateFPSCR();
@@ -2144,23 +2156,26 @@ sh4op(i0000_nnnn_0110_1010)
 //sts.l FPSCR,@-<REG_N>
 sh4op(i0100_nnnn_0110_0010)
 {
+	if (sr.FD == 1)
+		RaiseFPUDisableException();
 	u32 n = GetN(op);
+	WriteMemU32(r[n] - 4, fpscr.full);
 	r[n] -= 4;
-	WriteMemU32(r[n],fpscr.full);
 }
 
 //stc.l SR,@-<REG_N>
 sh4op(i0100_nnnn_0000_0011)
 {
-	//iNimp("stc.l SR,@-<REG_N>");
 	u32 n = GetN(op);
+	WriteMemU32(r[n] - 4, sh4_sr_GetFull());
 	r[n] -= 4;
-	WriteMemU32(r[n], sh4_sr_GetFull());
 }
 
 //lds.l @<REG_N>+,FPSCR
 sh4op(i0100_nnnn_0110_0110)
 {
+	if (sr.FD == 1)
+		RaiseFPUDisableException();
 	u32 n = GetN(op);
 
 	ReadMemU32(fpscr.full,r[n]);
@@ -2189,6 +2204,8 @@ sh4op(i0100_nnnn_0000_0111)
 //lds <REG_N>,FPSCR
 sh4op(i0100_nnnn_0110_1010)
 {
+	if (sr.FD == 1)
+		RaiseFPUDisableException();
 	u32 n = GetN(op);
 	fpscr.full = r[n];
 	UpdateFPSCR();

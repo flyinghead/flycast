@@ -301,18 +301,20 @@ void DYNACALL WriteMem_P4(u32 addr,T data)
 		break;
 
 	case 0xF3:
-		if (addr&0x800000)
-		{
-			EMUERROR("Unhandled p4 Write [Instruction TLB data array 2] 0x%x = %x",addr,data);
-		}
-		else
 		{
 			u32 entry=(addr>>8)&3;
-			ITLB[entry].Data.reg_data=data;
+			if (addr&0x800000)
+			{
+				ITLB[entry].Assistance.reg_data = data & 0xf;
+			}
+			else
+			{
+				ITLB[entry].Data.reg_data=data;
+			}
 			ITLB_Sync(entry);
+
 			return;
 		}
-		break;
 
 	case 0xF4:
 		{
@@ -380,18 +382,20 @@ void DYNACALL WriteMem_P4(u32 addr,T data)
 		break;
 
 	case 0xF7:
-		if (addr&0x800000)
-		{
-			EMUERROR("Unhandled p4 Write [Unified TLB data array 2] 0x%x = %x",addr,data);
-		}
-		else
 		{
 			u32 entry=(addr>>8)&63;
-			UTLB[entry].Data.reg_data=data;
+			if (addr&0x800000)
+			{
+				UTLB[entry].Assistance.reg_data = data & 0xf;
+			}
+			else
+			{
+				UTLB[entry].Data.reg_data=data;
+			}
 			UTLB_Sync(entry);
+
 			return;
 		}
-		break;
 
 	case 0xFF:
 		EMUERROR("Unhandled p4 Write [area7] 0x%x = %x",addr,data);

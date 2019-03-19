@@ -78,6 +78,10 @@ defining NO_MMU disables the full mmu emulation
 
 #include "hw/mem/_vmem.h"
 
+u32 mmu_full_lookup(u32 va, u32& idx, u32& rv, bool internal = false);
+
+//#define TRACE_WINCE_SYSCALLS
+
 #ifdef TRACE_WINCE_SYSCALLS
 #include "wince.h"
 #endif
@@ -287,12 +291,14 @@ bool mmu_match(u32 va, CCN_PTEH_type Address, CCN_PTEL_type Data)
 	return false;
 }
 //Do a full lookup on the UTLB entry's
-u32 mmu_full_lookup(u32 va, u32& idx, u32& rv)
+u32 mmu_full_lookup(u32 va, u32& idx, u32& rv, bool internal)
 {
-	CCN_MMUCR.URC++;
-	if (CCN_MMUCR.URB == CCN_MMUCR.URC)
-		CCN_MMUCR.URC = 0;
-
+	if (!internal)
+	{
+		CCN_MMUCR.URC++;
+		if (CCN_MMUCR.URB == CCN_MMUCR.URC)
+			CCN_MMUCR.URC = 0;
+	}
 
 	u32 entry = 0;
 	u32 nom = 0;

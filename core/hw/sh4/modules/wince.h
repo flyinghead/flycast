@@ -7,16 +7,54 @@
 #define SH_CURTHREAD            1
 #define SH_CURPROC              2
 
+static bool read_mem32(u32 addr, u32& data)
+{
+	u32 pa;
+	u32 idx;
+	if (mmu_full_lookup(addr, idx, pa, true) != MMU_ERROR_NONE)
+		return false;
+	data = ReadMem32_nommu(pa);
+	return true;
+}
+
+static bool read_mem16(u32 addr, u16& data)
+{
+	u32 pa;
+	u32 idx;
+	if (mmu_full_lookup(addr, idx, pa, true) != MMU_ERROR_NONE)
+		return false;
+	data = ReadMem16_nommu(pa);
+	return true;
+}
+
+static bool read_mem8(u32 addr, u8& data)
+{
+	u32 pa;
+	u32 idx;
+	if (mmu_full_lookup(addr, idx, pa, true) != MMU_ERROR_NONE)
+		return false;
+	data = ReadMem8_nommu(pa);
+	return true;
+}
+
 static inline u32 GetCurrentThreadId()
 {
 	u32 addr = PUserKData + SYSHANDLE_OFFSET + SH_CURTHREAD * 4;
-	return mmu_ReadMem32(addr);
+	u32 tid;
+	if (read_mem32(addr, tid))
+		return tid;
+	else
+		return 0;
 }
 
 static inline u32 GetCurrentProcessId()
 {
 	u32 addr = PUserKData + SYSHANDLE_OFFSET + SH_CURPROC * 4;
-	return mmu_ReadMem32(addr);
+	u32 pid;
+	if (read_mem32(addr, pid))
+		return pid;
+	else
+		return 0;
 }
 
 #define FIRST_METHOD					0xFFFFFE01
@@ -174,38 +212,38 @@ u32 unresolved_unicode_string;
 
 std::string get_unicode_string(u32 addr)
 {
-	try {
-		std::string str;
-		while (true)
+	std::string str;
+	while (true)
+	{
+		u16 c;
+		if (!read_mem16(addr, c))
 		{
-			int c = mmu_ReadMem16(addr);
-			if (c == 0)
-				break;
-			str += (char)c;
-			addr += 2;
+			unresolved_unicode_string = addr;
+			return "(page fault)";
 		}
-		return str;
-	} catch (SH4ThrownException& ex) {
-		unresolved_unicode_string = addr;
-		return "(page fault)";
+		if (c == 0)
+			break;
+		str += (char)c;
+		addr += 2;
 	}
+	return str;
 }
 std::string get_ascii_string(u32 addr)
 {
-	try {
-		std::string str;
-		while (true)
+	std::string str;
+	while (true)
+	{
+		u8 c;
+		if (!read_mem8(addr++, c))
 		{
-			int c = mmu_ReadMem8(addr++);
-			if (c == 0)
-				break;
-			str += (char)c;
+			unresolved_ascii_string = addr;
+			return "(page fault)";
 		}
-		return str;
-	} catch (SH4ThrownException& ex) {
-		unresolved_ascii_string = addr;
-		return "(page fault)";
+		if (c == 0)
+			break;
+		str += (char)c;
 	}
+	return str;
 }
 
 static bool print_wince_syscall(u32 address, bool &skip_exception)
@@ -282,7 +320,9 @@ static bool print_wince_syscall(u32 address, bool &skip_exception)
 			printf(" p = %x, id = %x\n", r[4], r[5]);
 		else
 			printf("\n");
-
+		// might be useful to detect errors? (hidden & dangerous)
+		//if (!strcmp("GetProcName", method))
+		//	os_DebugBreak();
 		return true;
 	}
 	else

@@ -6,6 +6,7 @@ struct TLB_Entry
 {
 	CCN_PTEH_type Address;
 	CCN_PTEL_type Data;
+	CCN_PTEA_type Assistance;
 };
 
 extern TLB_Entry UTLB[64];

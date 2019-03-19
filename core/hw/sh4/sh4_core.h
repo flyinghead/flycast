@@ -109,6 +109,19 @@ struct SH4ThrownException {
 	u32 callVect;
 };
 
+static INLINE void RaiseFPUDisableException()
+{
+#if !defined(NO_MMU)
+	if (settings.dreamcast.FullMMU)
+	{
+		SH4ThrownException ex = { next_pc - 2, 0x800, 0x100 };
+		throw ex;
+	}
+#else
+	msgboxf("Can't raise exceptions yet", MBX_ICONERROR);
+#endif
+}
+
 // The SH4 sets the signaling bit to 0 for qNaN (unlike all recent CPUs). Some games relies on this.
 static INLINE f32 fixNaN(f32 f)
 {
