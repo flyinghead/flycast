@@ -11,7 +11,7 @@ static bool read_mem32(u32 addr, u32& data)
 {
 	u32 pa;
 	u32 idx;
-	if (mmu_full_lookup(addr, idx, pa, true) != MMU_ERROR_NONE)
+	if (mmu_full_lookup<true>(addr, idx, pa) != MMU_ERROR_NONE)
 		return false;
 	data = ReadMem32_nommu(pa);
 	return true;
@@ -21,7 +21,7 @@ static bool read_mem16(u32 addr, u16& data)
 {
 	u32 pa;
 	u32 idx;
-	if (mmu_full_lookup(addr, idx, pa, true) != MMU_ERROR_NONE)
+	if (mmu_full_lookup<true>(addr, idx, pa) != MMU_ERROR_NONE)
 		return false;
 	data = ReadMem16_nommu(pa);
 	return true;
@@ -31,7 +31,7 @@ static bool read_mem8(u32 addr, u8& data)
 {
 	u32 pa;
 	u32 idx;
-	if (mmu_full_lookup(addr, idx, pa, true) != MMU_ERROR_NONE)
+	if (mmu_full_lookup<true>(addr, idx, pa) != MMU_ERROR_NONE)
 		return false;
 	data = ReadMem8_nommu(pa);
 	return true;
