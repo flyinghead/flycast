@@ -22,6 +22,9 @@ enum OpcodeType
 	NO_GP        = 512,
 	NO_SP        = 1024,
 
+	UsesFPU      = 2048, // Floating point op
+	FWritesFPSCR = UsesFPU | WritesFPSCR,
+
 	// Heh, not basic :P
 	ReadWritePC  = ReadsPC|WritesPC,     // Read and writes pc :P
 	WritesSRRWPC = WritesSR|ReadsPC|WritesPC,

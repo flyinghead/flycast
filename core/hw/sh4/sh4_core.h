@@ -118,7 +118,7 @@ static INLINE void RaiseFPUDisableException()
 		throw ex;
 	}
 #else
-	msgboxf("Can't raise exceptions yet", MBX_ICONERROR);
+	msgboxf("Full MMU support needed", MBX_ICONERROR);
 #endif
 }
 

@@ -75,6 +75,10 @@ struct sh4_opcodelistentry
 		return (type & WritesFPSCR)!=0;
 	}
 
+	INLINE bool IsFloatingPoint() const
+	{
+		return (type & UsesFPU) != 0;
+	}
 };
 
 extern sh4_opcodelistentry* OpDesc[0x10000];

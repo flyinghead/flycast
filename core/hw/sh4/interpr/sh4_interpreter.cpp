@@ -35,7 +35,7 @@ static s32 l;
 
 static void ExecuteOpcode(u16 op)
 {
-	if ((op & 0xF000) == 0xF000 && op != 0xFFFD && sr.FD == 1)
+	if (sr.FD == 1 && OpDesc[op]->IsFloatingPoint())
 		RaiseFPUDisableException();
 	OpPtr[op](op);
 	l -= CPU_RATIO;
@@ -168,13 +168,16 @@ void ExecuteDelayslot()
 		next_pc += 2;
 		u32 op = IReadMem16(addr);
 
-		ExecuteOpcode(op);
+		if (op != 0)	// Looney Tunes: Space Race hack
+			ExecuteOpcode(op);
 #if !defined(NO_MMU)
 	}
 	catch (SH4ThrownException& ex) {
 		ex.epc -= 2;
-		if (ex.callVect == 0x800)	// FPU disable exception
-			ex.callVect = 0x820;	// Slot FPU disable exception
+		if (ex.expEvn == 0x800)	// FPU disable exception
+			ex.expEvn = 0x820;	// Slot FPU disable exception
+		else if (ex.expEvn == 0x180)	// Illegal instruction exception
+			ex.expEvn = 0x1A0;			// Slot illegal instruction exception
 		//printf("Delay slot exception\n");
 		throw ex;
 	}
