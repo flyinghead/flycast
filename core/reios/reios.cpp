@@ -114,6 +114,7 @@ char reios_boot_filename[17];
 char reios_software_company[17];
 char reios_software_name[129];
 char reios_bootfile[32];
+bool reios_windows_ce = false;
 
 bool pre_init = false;
 
@@ -150,6 +151,7 @@ char* reios_disk_id() {
 	memcpy(&reios_boot_filename[0], &ip_bin[96],   16 * sizeof(char));
 	memcpy(&reios_software_company[0], &ip_bin[112],   16 * sizeof(char));
 	memcpy(&reios_software_name[0], &ip_bin[128],   128 * sizeof(char));
+	reios_windows_ce = memcmp("0WINCEOS.BIN", &reios_boot_filename[0], 12) == 0;
 
 	return reios_product_number;
 }

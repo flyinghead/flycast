@@ -1726,18 +1726,20 @@ void FillBGP(TA_context* ctx)
 	}
 
 	float ZV=0;
+	f32 bg_depth = ISP_BACKGND_D.f;
+	reinterpret_cast<u32&>(bg_depth) &= 0xFFFFFFF0;	// ISP_BACKGND_D has only 28 bits
 
 	cv[0].x=-2000;
 	cv[0].y=-2000;
-	cv[0].z=ISP_BACKGND_D.f;
+	cv[0].z=bg_depth;
 
 	cv[1].x=640*scale_x + 2000;
 	cv[1].y=0;
-	cv[1].z=ISP_BACKGND_D.f;
+	cv[1].z=bg_depth;
 
 	cv[2].x=-2000;
 	cv[2].y=480+2000;
-	cv[2].z=ISP_BACKGND_D.f;
+	cv[2].z=bg_depth;
 
 	cv[3]=cv[2];
 	cv[3].x=640*scale_x+2000;

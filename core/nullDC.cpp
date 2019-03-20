@@ -138,6 +138,13 @@ void LoadSpecialSettings()
 	tr_poly_depth_mask_game = false;
 	extra_depth_game = false;
 	
+	if (reios_windows_ce)
+	{
+		printf("Enabling Extra depth scaling for Windows CE games\n");
+		settings.rend.ExtraDepthScale = 0.1;
+		extra_depth_game = true;
+	}
+
 	// Tony Hawk's Pro Skater 2
 	if (!strncmp("T13008D", reios_product_number, 7) || !strncmp("T13006N", reios_product_number, 7)
 			// Tony Hawk's Pro Skater 1
