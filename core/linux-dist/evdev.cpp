@@ -161,7 +161,7 @@
 
 	std::map<std::string, EvdevControllerMapping> loaded_mappings;
 
-	int load_keycode(ConfigFile* cfg, string section, string dc_key)
+	int load_keycode(emucfg::ConfigFile* cfg, string section, string dc_key)
 	{
 		int code = -1;
 
@@ -217,7 +217,7 @@
 
 	EvdevControllerMapping load_mapping(FILE* fd)
 	{
-		ConfigFile mf;
+		emucfg::ConfigFile mf;
 		mf.parse(fd);
 
 		EvdevControllerMapping mapping = {

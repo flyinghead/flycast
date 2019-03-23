@@ -2,6 +2,8 @@
 #include "types.h"
 #include <map>
 
+namespace emucfg {
+
 struct ConfigEntry {
 	string value;
 	string get_string();
@@ -41,3 +43,6 @@ struct ConfigFile {
 		void set_int(string section_name, string entry_name, int value, bool is_virtual = false);
 		void set_bool(string section_name, string entry_name, bool value, bool is_virtual = false);
 };
+
+} // namespace emucfg
+
