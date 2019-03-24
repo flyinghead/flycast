@@ -31,59 +31,26 @@ bool sse_3=true;
 bool ssse_3=true;
 bool mmx=true;
 
-void DetectCpuFeatures()
-{
+void DetectCpuFeatures() {
 	static bool detected=false;
 	if (detected) return;
 	detected=true;
 
-#if HOST_OS==OS_WINDOWS
-	__try
-	{
-		__asm addps xmm0,xmm0
-	}
-	__except(1) 
-	{
-		sse_1=false;
-	}
-
-	__try
-	{
-		__asm addpd xmm0,xmm0
-	}
-	__except(1) 
-	{
-		sse_2=false;
-	}
-
-	__try
-	{
-		__asm addsubpd xmm0,xmm0
-	}
-	__except(1) 
-	{
-		sse_3=false;
-	}
-
-	__try
-	{
-		__asm phaddw xmm0,xmm0
-	}
-	__except(1) 
-	{
-		ssse_3=false;
-	}
-
-	
-	__try
-	{
-		__asm paddd mm0,mm1
-		__asm emms;
-	}
-	__except(1) 
-	{
-		mmx=false;
-	}
+	#if BUILD_COMPILER == COMPILER_VC
+	#include <intrin.h>
+	int info[4];
+	__cpuid(info, 1);
+	mmx    = info[3] & (1 << 23);
+	sse_1  = info[3] & (1 << 25);
+	sse_2  = info[3] & (1 << 26);
+	sse_3  = info[2] & (1 <<  0);
+	ssse_3 = info[2] & (1 <<  9);
+	#else
+	mmx    = __builtin_cpu_supports("mmx");
+	sse_1  = __builtin_cpu_supports("sse");
+	sse_2  = __builtin_cpu_supports("sse2");
+	sse_3  = __builtin_cpu_supports("sse3");
+	ssse_3 = __builtin_cpu_supports("ssse3");
 	#endif
 }
 
@@ -296,7 +263,6 @@ void ngen_Compile(RuntimeBlockInfo* block,bool force_checks, bool reset, bool st
 
 	((DynaRBI*)block)->reloc_info=0;
 
-	
 	//Setup emitter
 	x86e = new x86_block();
 	x86e->Init(0,0);
