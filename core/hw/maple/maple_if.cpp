@@ -2,6 +2,7 @@
 #include <string.h>
 
 #include "maple_if.h"
+#include "maple_cfg.h"
 
 #include "cfg/cfg.h"
 
@@ -36,6 +37,7 @@ int maple_schid;
 */
 
 void maple_DoDma();
+static void maple_handle_reconnect();
 
 //really hackish
 //misses delay , and stop/start implementation
@@ -69,6 +71,7 @@ void maple_vblank()
 			maple_ddt_pending_reset=false;
 		}
 	}
+	maple_handle_reconnect();
 }
 void maple_SB_MSHTCL_Write(u32 addr, u32 data)
 {
@@ -272,4 +275,21 @@ void maple_Reset(bool Manual)
 void maple_Term()
 {
 	
+}
+
+static u64 reconnect_time;
+
+void maple_ReconnectDevices()
+{
+	mcfg_DestroyDevices();
+	reconnect_time = sh4_sched_now64() + SH4_MAIN_CLOCK / 10;
+}
+
+static void maple_handle_reconnect()
+{
+	if (reconnect_time != 0 && reconnect_time <= sh4_sched_now64())
+	{
+		reconnect_time = 0;
+		mcfg_CreateDevices();
+	}
 }

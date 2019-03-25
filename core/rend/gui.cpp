@@ -24,7 +24,7 @@
 #include "gui.h"
 #include "oslib/oslib.h"
 #include "cfg/cfg.h"
-#include "hw/maple/maple_cfg.h"
+#include "hw/maple/maple_if.h"
 #include "imgui/imgui.h"
 #include "gles/imgui_impl_opengl3.h"
 #include "imgui/roboto_medium.h"
@@ -634,9 +634,7 @@ static void gui_display_settings()
     	else
     		gui_state = Main;
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-    	// TODO only if changed? sleep time on emu thread?
-    	mcfg_DestroyDevices();
-   		mcfg_CreateDevices();
+    	maple_ReconnectDevices();
 #endif
        	SaveSettings();
     }
