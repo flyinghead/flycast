@@ -20,6 +20,8 @@ struct RuntimeBlockInfo: RuntimeBlockInfo_Core
 	void Setup(u32 pc,fpscr_t fpu_cfg);
 	const char* hash(bool full=true, bool reloc=false);
 
+	u32 vaddr;
+
 	u32 host_code_size;	//in bytes
 	u32 sh4_code_size; //in bytes
 
@@ -33,7 +35,8 @@ struct RuntimeBlockInfo: RuntimeBlockInfo_Core
 	u32 guest_cycles;
 	u32 guest_opcodes;
 	u32 host_opcodes;
-
+	bool has_fpu_op;
+	u32 asid;	// if not 0xFFFFFFFF then private page belonging to this id
 
 	u32 BranchBlock; //if not 0xFFFFFFFF then jump target
 	u32 NextBlock;   //if not 0xFFFFFFFF then next block (by position)
@@ -94,6 +97,7 @@ RuntimeBlockInfo* bm_GetStaleBlock(void* dynarec_code);
 RuntimeBlockInfo* DYNACALL bm_GetBlock(u32 addr);
 
 void bm_AddBlock(RuntimeBlockInfo* blk);
+void bm_RemoveBlock(RuntimeBlockInfo* block);
 void bm_Reset();
 void bm_Periodical_1s();
 void bm_Periodical_14k();

@@ -18,6 +18,7 @@
 //#include "../intc.h"
 //#include "../tmu.h"
 #include "hw/sh4/sh4_mem.h"
+#include "hw/sh4/sh4_sched.h"
 
 
 #if HOST_OS==OS_LINUX && defined(DYNA_OPROF)
@@ -86,6 +87,7 @@ u32 bm_gc_luc,bm_gcf_luc;
 
 #define FPCA(x) ((DynarecCodeEntryPtr&)sh4rcb.fpcb[(x>>1)&FPCB_MASK])
 
+// addr must be a physical address
 DynarecCodeEntryPtr DYNACALL bm_GetCode(u32 addr)
 {
 	//rdv_FailedToFindBlock_pc=addr;
@@ -94,11 +96,51 @@ DynarecCodeEntryPtr DYNACALL bm_GetCode(u32 addr)
 	return (DynarecCodeEntryPtr)rv;
 }
 
+// addr must be a virtual address
 DynarecCodeEntryPtr DYNACALL bm_GetCode2(u32 addr)
 {
-	return (DynarecCodeEntryPtr)bm_GetCode(addr);
+#ifndef NO_MMU
+	if (!mmu_enabled())
+#endif
+		return (DynarecCodeEntryPtr)bm_GetCode(addr);
+#ifndef NO_MMU
+	else
+	{
+		if (addr & 1)
+		{
+			switch (addr)
+			{
+			case 0xfffffde7: // GetTickCount
+				// This should make this syscall faster
+				r[0] = sh4_sched_now64() * 1000 / SH4_MAIN_CLOCK;
+				next_pc = pr;
+				addr = next_pc;
+				break;
+			default:
+				Do_Exception(addr, 0xE0, 0x100);
+				addr = next_pc;
+				break;
+			}
+		}
+
+		try {
+			u32 paddr;
+			bool shared;
+			mmu_instruction_translation(addr, paddr, shared);
+
+			return (DynarecCodeEntryPtr)bm_GetCode(paddr);
+		} catch (SH4ThrownException& ex) {
+			Do_Exception(addr, ex.expEvn, ex.callVect);
+			u32 paddr;
+			bool shared;
+			mmu_instruction_translation(next_pc, paddr, shared);
+			return (DynarecCodeEntryPtr)bm_GetCode(paddr);
+		}
+	}
+#endif
 }
 
+// addr must be a physical address
 RuntimeBlockInfo* DYNACALL bm_GetBlock(u32 addr)
 {
 	DynarecCodeEntryPtr cde=bm_GetCode(addr);
@@ -163,6 +205,22 @@ void bm_AddBlock(RuntimeBlockInfo* blk)
 	}
 #endif
 
+}
+
+void bm_RemoveBlock(RuntimeBlockInfo* block)
+{
+	verify((void*)bm_GetCode(block->addr) != (void*)ngen_FailedToFindBlock);
+	FPCA(block->addr) = ngen_FailedToFindBlock;
+	auto it = blkmap.find(block);
+	if (it != blkmap.end())
+		blkmap.erase(it);
+	for (auto it = all_blocks.begin(); it != all_blocks.end(); it++)
+		if (*it == block)
+		{
+			all_blocks.erase(it);
+			break;
+		}
+	delete block;
 }
 
 bool UDgreaterX ( RuntimeBlockInfo* elem1, RuntimeBlockInfo* elem2 )
@@ -594,7 +652,8 @@ void print_blocks()
 		if (f)
 		{
 			fprintf(f,"block: %p\n",blk);
-			fprintf(f,"addr: %08X\n",blk->addr);
+			fprintf(f,"vaddr: %08X\n",blk->vaddr);
+			fprintf(f,"paddr: %08X\n",blk->addr);
 			fprintf(f,"hash: %s\n",blk->hash());
 			fprintf(f,"hash_rloc: %s\n",blk->hash(false,true));
 			fprintf(f,"code: %p\n",blk->code);
@@ -624,17 +683,21 @@ void print_blocks()
 				if (gcode!=op->guest_offs)
 				{
 					gcode=op->guest_offs;
-					u32 rpc=blk->addr+gcode;
-					u16 op=ReadMem16(rpc);
+					u32 rpc=blk->vaddr+gcode;
+					try {
+						u16 op=IReadMem16(rpc);
 
-					char temp[128];
-					OpDesc[op]->Disassemble(temp,rpc,op);
+						char temp[128];
+						OpDesc[op]->Disassemble(temp,rpc,op);
 
-					fprintf(f,"//g:%s\n",temp);
+						fprintf(f,"//g: %04X %s\n", op, temp);
+					} catch (SH4ThrownException& ex) {
+						fprintf(f,"//g: ???? (page fault)\n");
+					}
 				}
 
 				string s=op->dissasm();
-				fprintf(f,"//il:%d:%d:%s\n",op->guest_offs,op->host_offs,s.c_str());
+				fprintf(f,"//il:%d:%d: %s\n",op->guest_offs,op->host_offs,s.c_str());
 			}
 			
 			fprint_hex(f,"//h:",pucode,hcode,blk->host_code_size);

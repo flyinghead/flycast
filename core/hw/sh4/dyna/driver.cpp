@@ -14,6 +14,7 @@
 #include "hw/sh4/sh4_interrupts.h"
 
 #include "hw/sh4/sh4_mem.h"
+#include "hw/sh4/modules/mmu.h"
 #include "hw/pvr/pvr_mem.h"
 #include "hw/aica/aica_if.h"
 #include "hw/gdrom/gdrom_if.h"
@@ -118,7 +119,7 @@ u32 emit_FreeSpace()
 	return CODE_SIZE-LastAddr;
 }
 
-
+// pc must be a physical address
 bool DoCheck(u32 pc)
 {
 	if (IsOnRam(pc))
@@ -202,8 +203,19 @@ void RuntimeBlockInfo::Setup(u32 rpc,fpscr_t rfpu_cfg)
 	has_jcond=false;
 	BranchBlock=NextBlock=csc_RetCache=0xFFFFFFFF;
 	BlockType=BET_SCL_Intr;
+	has_fpu_op = false;
+	asid = 0xFFFFFFFF;
 	
-	addr=rpc;
+	vaddr = rpc;
+	if (mmu_enabled())
+	{
+		bool shared;
+		mmu_instruction_translation(vaddr, addr, shared);
+		if (addr != vaddr && !shared)
+			asid = CCN_PTEH.ASID;
+	}
+	else
+		addr = vaddr;
 	fpu_cfg=rfpu_cfg;
 	
 	oplist.clear();
@@ -219,37 +231,44 @@ DynarecCodeEntryPtr rdv_CompilePC()
 	if (emit_FreeSpace()<16*1024 || pc==0x8c0000e0 || pc==0xac010000 || pc==0xac008300)
 		recSh4_ClearCache();
 
-	RuntimeBlockInfo* rv=0;
-	do
-	{
-		RuntimeBlockInfo* rbi = ngen_AllocateBlock();
-		if (rv==0) rv=rbi;
-
+	RuntimeBlockInfo* rbi = ngen_AllocateBlock();
+#ifndef NO_MMU
+	try {
+#endif
 		rbi->Setup(pc,fpscr);
 
-		
+
 		bool do_opts=((rbi->addr&0x3FFFFFFF)>0x0C010100);
 		rbi->staging_runs=do_opts?100:-100;
 		ngen_Compile(rbi,DoCheck(rbi->addr),(pc&0xFFFFFF)==0x08300 || (pc&0xFFFFFF)==0x10000,false,do_opts);
 		verify(rbi->code!=0);
 
 		bm_AddBlock(rbi);
+#ifndef NO_MMU
+	} catch (SH4ThrownException& ex) {
+		delete rbi;
+		throw ex;
+	}
+#endif
 
-		if (rbi->BlockType==BET_Cond_0 || rbi->BlockType==BET_Cond_1)
-			pc=rbi->NextBlock;
-		else
-			pc=0;
-	} while(false && pc);
-
-	return rv->code;
+	return rbi->code;
 }
 
 DynarecCodeEntryPtr DYNACALL rdv_FailedToFindBlock(u32 pc)
 {
 	//printf("rdv_FailedToFindBlock ~ %08X\n",pc);
-	next_pc=pc;
+#ifndef NO_MMU
+	try {
+#endif
+		next_pc=pc;
 
-	return rdv_CompilePC();
+		return rdv_CompilePC();
+#ifndef NO_MMU
+	} catch (SH4ThrownException& ex) {
+		Do_Exception(pc, ex.expEvn, ex.callVect);
+		return bm_GetCode2(next_pc);
+	}
+#endif
 }
 
 static void ngen_FailedToFindBlock_internal() {
@@ -258,9 +277,6 @@ static void ngen_FailedToFindBlock_internal() {
 
 void (*ngen_FailedToFindBlock)() = &ngen_FailedToFindBlock_internal;
 
-extern u32 rebuild_counter;
-
-
 u32 DYNACALL rdv_DoInterrupts_pc(u32 pc) {
 	next_pc = pc;
 	UpdateINTC();
@@ -268,37 +284,39 @@ u32 DYNACALL rdv_DoInterrupts_pc(u32 pc) {
 	//We can only safely relocate/etc stuff here, as in other generic update cases
 	//There's a RET, meaning the code can't move around
 	//Interrupts happen at least 50 times/second, so its not a problem ..
+	/*
 	if (rebuild_counter == 0)
 	{
 		// TODO: Why is this commented, etc.
 		//bm_Rebuild();
 	}
+	*/
 
 	return next_pc;
 }
 
-void bm_Rebuild();
 u32 DYNACALL rdv_DoInterrupts(void* block_cpde)
 {
 	RuntimeBlockInfo* rbi = bm_GetBlock(block_cpde);
-	return rdv_DoInterrupts_pc(rbi->addr);
+	return rdv_DoInterrupts_pc(rbi->vaddr);
 }
 
-DynarecCodeEntryPtr DYNACALL rdv_BlockCheckFail(u32 pc)
+// addr must be the physical address of the start of the block
+DynarecCodeEntryPtr DYNACALL rdv_BlockCheckFail(u32 addr)
 {
-	next_pc=pc;
-	recSh4_ClearCache();
+	RuntimeBlockInfo *block = bm_GetBlock(addr);
+	bm_RemoveBlock(block);
 	return rdv_CompilePC();
 }
 
-DynarecCodeEntryPtr rdv_FindCode()
-{
-	DynarecCodeEntryPtr rv=bm_GetCode(next_pc);
-	if (rv==ngen_FailedToFindBlock)
-		return 0;
-	
-	return rv;
-}
+//DynarecCodeEntryPtr rdv_FindCode()
+//{
+//	DynarecCodeEntryPtr rv=bm_GetCode(next_pc);
+//	if (rv==ngen_FailedToFindBlock)
+//		return 0;
+//
+//	return rv;
+//}
 
 DynarecCodeEntryPtr rdv_FindOrCompile()
 {

@@ -50,11 +50,8 @@ void CCN_MMUCR_write(u32 addr, u32 value)
 
 	if (temp.TI != 0)
 	{
-		for (u32 i = 0; i < 4; i++)
-			ITLB[i].Data.V = 0;
-
-		for (u32 i = 0; i < 64; i++)
-			UTLB[i].Data.V = 0;
+		//sh4_cpu.ResetCache();
+		mmu_flush_table();
 
 		temp.TI = 0;
 	}
@@ -63,6 +60,7 @@ void CCN_MMUCR_write(u32 addr, u32 value)
 	if (mmu_changed_state)
 	{
 		//printf("<*******>MMU Enabled , ONLY SQ remaps work<*******>\n");
+		sh4_cpu.ResetCache();
 		mmu_set_state();
 	}
 }

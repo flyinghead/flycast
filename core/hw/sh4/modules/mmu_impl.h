@@ -10,7 +10,7 @@
 #define MMU_ERROR_NONE	   0
 //TLB miss
 #define MMU_ERROR_TLB_MISS 1
-//TLB Multyhit
+//TLB Multihit
 #define MMU_ERROR_TLB_MHIT 2
 //Mem is read/write protected (depends on translation type)
 #define MMU_ERROR_PROTECTED 3
@@ -20,15 +20,6 @@
 #define MMU_ERROR_BADADDR 5
 //Can't Execute
 #define MMU_ERROR_EXECPROT 6
-
-//Translation Types
-//Opcode read
-#define MMU_TT_IREAD 0
-//Data write
-#define MMU_TT_DWRITE 1
-//Data write
-#define MMU_TT_DREAD 2
-//Do an mmu lookup for va , returns translation status , if MMU_ERROR_NONE , rv is set to translated index
 
 extern u32 mmu_error_TT;
 

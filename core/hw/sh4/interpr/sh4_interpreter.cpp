@@ -173,11 +173,7 @@ void ExecuteDelayslot()
 #if !defined(NO_MMU)
 	}
 	catch (SH4ThrownException& ex) {
-		ex.epc -= 2;
-		if (ex.expEvn == 0x800)	// FPU disable exception
-			ex.expEvn = 0x820;	// Slot FPU disable exception
-		else if (ex.expEvn == 0x180)	// Illegal instruction exception
-			ex.expEvn = 0x1A0;			// Slot illegal instruction exception
+		AdjustDelaySlotException(ex);
 		//printf("Delay slot exception\n");
 		throw ex;
 	}

@@ -368,7 +368,8 @@ struct RegAlloc
 		verify(opid>=0 && opid<block->oplist.size());
 		shil_opcode* op=&block->oplist[opid];
 
-		return op->op == shop_sync_fpscr || op->op == shop_sync_sr || op->op == shop_ifb;
+		return op->op == shop_sync_fpscr || op->op == shop_sync_sr || op->op == shop_ifb
+				 || (mmu_enabled() && (op->op == shop_readm || op->op == shop_writem || op->op == shop_pref));
 	}
 
 	bool IsRegWallOp(RuntimeBlockInfo* block, int opid, bool is_fpr)
@@ -495,6 +496,12 @@ struct RegAlloc
 				else if (op->op==shop_sync_fpscr)
 				{
 					fp=true;
+				}
+				else
+				{
+					all = true;
+					fp = true;
+					gpr_b = true;
 				}
 
 				if (all)
@@ -1102,6 +1109,30 @@ struct RegAlloc
 			RegSpan* spn=all_spans[sid];
 
 			if (spn->ending(current_opid) && spn->writeback)
+			{
+				if (spn->fpr)
+				{
+					//printf("Op %d: Writing back f%d from %d\n",current_opid,spn->regstart,spn->nregf);
+					writeback_fpu++;
+					Writeback_FPU(spn->regstart,spn->nregf);
+				}
+				else
+				{
+					//printf("Op %d: Writing back r%d from %d\n",current_opid,spn->regstart,spn->nreg);
+					writeback_gpr++;
+					Writeback(spn->regstart,spn->nreg);
+				}
+			}
+		}
+	}
+
+	void BailOut(u32 opid)
+	{
+		for (u32 sid = 0; sid < all_spans.size(); sid++)
+		{
+			RegSpan* spn = all_spans[sid];
+
+			if (spn->end >= opid && spn->start < opid && spn->writeback)
 			{
 				if (spn->fpr)
 				{

@@ -151,6 +151,7 @@ struct shil_opcode
 
 	u16 host_offs;
 	u16 guest_offs;
+	bool delay_slot;
 
 	string dissasm();
 };

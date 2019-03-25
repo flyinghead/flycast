@@ -122,6 +122,15 @@ static INLINE void RaiseFPUDisableException()
 #endif
 }
 
+static INLINE void AdjustDelaySlotException(SH4ThrownException& ex)
+{
+	ex.epc -= 2;
+	if (ex.expEvn == 0x800)	// FPU disable exception
+		ex.expEvn = 0x820;	// Slot FPU disable exception
+	else if (ex.expEvn == 0x180)	// Illegal instruction exception
+		ex.expEvn = 0x1A0;			// Slot illegal instruction exception
+}
+
 // The SH4 sets the signaling bit to 0 for qNaN (unlike all recent CPUs). Some games relies on this.
 static INLINE f32 fixNaN(f32 f)
 {

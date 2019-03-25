@@ -71,6 +71,16 @@ struct X64RegAlloc : RegAlloc<Xbyak::Operand::Code, s8,
 		return Xbyak::Xmm(ereg);
 	}
 
+	bool IsMapped(const Xbyak::Xmm &xmm, size_t opid)
+	{
+		for (size_t sid = 0; sid < all_spans.size(); sid++)
+		{
+			if (all_spans[sid]->nregf == xmm.getIdx() && all_spans[sid]->contains(opid))
+				return true;
+		}
+		return false;
+	}
+
 	BlockCompiler *compiler;
 };
 

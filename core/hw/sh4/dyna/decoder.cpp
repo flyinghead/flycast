@@ -82,7 +82,8 @@ void Emit(shilop op,shil_param rd=shil_param(),shil_param rs1=shil_param(),shil_
 	sp.rs1=(rs1);
 	sp.rs2=(rs2);
 	sp.rs3=(rs3);
-	sp.guest_offs=state.cpu.rpc-blk->addr;
+	sp.guest_offs = state.cpu.rpc - blk->vaddr;
+	sp.delay_slot = state.cpu.is_delayslot;
 
 	blk->oplist.push_back(sp);
 }
@@ -96,21 +97,13 @@ void dec_fallback(u32 op)
 
 	opcd.rs2=shil_param(FMT_IMM,state.cpu.rpc+2);
 	opcd.rs3=shil_param(FMT_IMM,op);
+
+	opcd.guest_offs = state.cpu.rpc - blk->vaddr;
+	opcd.delay_slot = state.cpu.is_delayslot;
 	blk->oplist.push_back(opcd);
 }
 
 #if 1
-
-#define FMT_I32 ERROR!WRONG++!!
-#define FMT_F32 ERROR!WRONG++!!
-#define FMT_F32 ERROR!WRONG++!!
-#define FMT_TYPE ERROR!WRONG++!!
-
-#define FMT_REG ERROR!WRONG++!!
-#define FMT_IMM ERROR!WRONG++!!
-
-#define FMT_PARAM ERROR!WRONG++!!
-#define FMT_MASK ERROR!WRONG++!!
 
 void dec_DynamicSet(u32 regbase,u32 offs=0)
 {
@@ -277,6 +270,7 @@ sh4dec(i0000_0000_0001_1011)
 }
 
 //ldc.l @<REG_N>+,SR
+/*
 sh4dec(i0100_nnnn_0000_0111)
 {
 	/*
@@ -290,9 +284,10 @@ sh4dec(i0100_nnnn_0000_0111)
 	{
 		//FIXME only if interrupts got on .. :P
 		UpdateINTC();
-	}*/
+	}* /
 	dec_End(0xFFFFFFFF,BET_StaticIntr,false);
 }
+*/
 
 //ldc <REG_N>,SR
 sh4dec(i0100_nnnn_0000_1110)
@@ -309,6 +304,7 @@ sh4dec(i0000_0000_0000_1001)
 {
 }
 
+//fschg
 sh4dec(i1111_0011_1111_1101)
 {
 	//fpscr.SZ is bit 20
@@ -594,7 +590,7 @@ u32 MatchDiv32(u32 pc , Sh4RegType &reg1,Sh4RegType &reg2 , Sh4RegType &reg3)
 	u32 match=1;
 	for (int i=0;i<32;i++)
 	{
-		u16 opcode=ReadMem16(v_pc);
+		u16 opcode=IReadMem16(v_pc);
 		v_pc+=2;
 		if ((opcode&MASK_N)==ROTCL_KEY)
 		{
@@ -610,7 +606,7 @@ u32 MatchDiv32(u32 pc , Sh4RegType &reg1,Sh4RegType &reg2 , Sh4RegType &reg3)
 			break;
 		}
 		
-		opcode=ReadMem16(v_pc);
+		opcode=IReadMem16(v_pc);
 		v_pc+=2;
 		if ((opcode&MASK_N_M)==DIV1_KEY)
 		{
@@ -684,11 +680,11 @@ bool MatchDiv32s(u32 op,u32 pc)
 	else //no match ...
 	{
 		/*
-		printf("%04X\n",ReadMem16(pc-2));
-		printf("%04X\n",ReadMem16(pc-0));
-		printf("%04X\n",ReadMem16(pc+2));
-		printf("%04X\n",ReadMem16(pc+4));
-		printf("%04X\n",ReadMem16(pc+6));*/
+		printf("%04X\n",IReadMem16(pc-2));
+		printf("%04X\n",IReadMem16(pc-0));
+		printf("%04X\n",IReadMem16(pc+2));
+		printf("%04X\n",IReadMem16(pc+4));
+		printf("%04X\n",IReadMem16(pc+6));*/
 		return false;
 	}
 }
@@ -697,11 +693,11 @@ bool MatchDiv32s(u32 op,u32 pc)
 //This ended up too rare (and too hard to match)
 bool MatchDiv0S_0(u32 pc)
 {
-	if (ReadMem16(pc+0)==0x233A && //XOR   r3,r3
-		ReadMem16(pc+2)==0x2137 && //DIV0S r3,r1
-		ReadMem16(pc+4)==0x322A && //SUBC  r2,r2
-		ReadMem16(pc+6)==0x313A && //SUBC  r3,r1
-		(ReadMem16(pc+8)&0xF00F)==0x2007) //DIV0S x,x
+	if (IReadMem16(pc+0)==0x233A && //XOR   r3,r3
+		IReadMem16(pc+2)==0x2137 && //DIV0S r3,r1
+		IReadMem16(pc+4)==0x322A && //SUBC  r2,r2
+		IReadMem16(pc+6)==0x313A && //SUBC  r3,r1
+		(IReadMem16(pc+8)&0xF00F)==0x2007) //DIV0S x,x
 		return true;
 	else
 		return false;
@@ -829,7 +825,7 @@ bool dec_generic(u32 op)
 			bool update_after=false;
 			if ((s32)e<0)
 			{
-				if (rs1._reg!=rs2._reg) //reg shouldn't be updated if its written
+				if (rs1._reg!=rs2._reg && !mmu_enabled()) //reg shouldn't be updated if its written
 				{
 					Emit(shop_sub,rs1,rs1,mk_imm(-e));
 				}
@@ -998,7 +994,7 @@ void state_Setup(u32 rpc,fpscr_t fpu_cfg)
 	state.cpu.FPR64=fpu_cfg.PR;
 	state.cpu.FSZ64=fpu_cfg.SZ;
 	state.cpu.RoundToZero=fpu_cfg.RM==1;
-	verify(fpu_cfg.RM<2);
+	//verify(fpu_cfg.RM<2);	// Happens with many wince games (set to 3)
 	//what about fp/fs ?
 
 	state.NextOp=NDO_NextOp;
@@ -1014,7 +1010,7 @@ void state_Setup(u32 rpc,fpscr_t fpu_cfg)
 void dec_DecodeBlock(RuntimeBlockInfo* rbi,u32 max_cycles)
 {
 	blk=rbi;
-	state_Setup(blk->addr,blk->fpu_cfg);
+	state_Setup(blk->vaddr, blk->fpu_cfg);
 	ngen_GetFeatures(&state.ngen);
 	
 	blk->guest_opcodes=0;
@@ -1057,7 +1053,7 @@ void dec_DecodeBlock(RuntimeBlockInfo* rbi,u32 max_cycles)
 					}
 					*/
 
-					u32 op=ReadMem16(state.cpu.rpc);
+					u32 op=IReadMem16(state.cpu.rpc);
 					if (op==0 && state.cpu.is_delayslot)
 					{
 						printf("Delayslot 0 hack!\n");
@@ -1069,6 +1065,8 @@ void dec_DecodeBlock(RuntimeBlockInfo* rbi,u32 max_cycles)
 							blk->guest_cycles+=0;
 						else
 							blk->guest_cycles+=CPU_RATIO;
+						if (OpDesc[op]->IsFloatingPoint())
+							blk->has_fpu_op = true;
 
 						verify(!(state.cpu.is_delayslot && OpDesc[op]->SetPC()));
 						if (state.ngen.OnlyDynamicEnds || !OpDesc[op]->rec_oph)
@@ -1116,7 +1114,7 @@ void dec_DecodeBlock(RuntimeBlockInfo* rbi,u32 max_cycles)
 	}
 
 _end:
-	blk->sh4_code_size=state.cpu.rpc-blk->addr;
+	blk->sh4_code_size=state.cpu.rpc-blk->vaddr;
 	blk->NextBlock=state.NextAddr;
 	blk->BranchBlock=state.JumpAddr;
 	blk->BlockType=state.BlockType;
@@ -1150,12 +1148,12 @@ _end:
 			//Small-n-simple idle loop detector :p
 			if (state.info.has_readm && !state.info.has_writem && !state.info.has_fpu && blk->guest_opcodes<6)
 			{
-				if (blk->BlockType==BET_Cond_0 || (blk->BlockType==BET_Cond_1 && blk->BranchBlock<=blk->addr))
+				if (blk->BlockType==BET_Cond_0 || (blk->BlockType==BET_Cond_1 && blk->BranchBlock<=blk->vaddr))
 				{
 					blk->guest_cycles*=3;
 				}
 
-				if (blk->BranchBlock==blk->addr)
+				if (blk->BranchBlock==blk->vaddr)
 				{
 					blk->guest_cycles*=10;
 				}
