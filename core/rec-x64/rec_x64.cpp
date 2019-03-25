@@ -266,7 +266,6 @@ static void interpreter_fallback(u16 op, u32 pc)
 		OpDesc[op]->oph(op);
 		exception_raised = 0;
 	} catch (SH4ThrownException& ex) {
-		printf("HOLY SHIT! interpreter_fallback exception pc %08x evn %x vect %x\n", pc, ex.expEvn, ex.callVect);
 		if (pc & 1)
 		{
 			// Delay slot

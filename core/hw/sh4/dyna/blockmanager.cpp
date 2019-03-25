@@ -684,16 +684,20 @@ void print_blocks()
 				{
 					gcode=op->guest_offs;
 					u32 rpc=blk->vaddr+gcode;
+#ifndef NO_MMU
 					try {
+#endif
 						u16 op=IReadMem16(rpc);
 
 						char temp[128];
 						OpDesc[op]->Disassemble(temp,rpc,op);
 
 						fprintf(f,"//g: %04X %s\n", op, temp);
+#ifndef NO_MMU
 					} catch (SH4ThrownException& ex) {
 						fprintf(f,"//g: ???? (page fault)\n");
 					}
+#endif
 				}
 
 				string s=op->dissasm();
