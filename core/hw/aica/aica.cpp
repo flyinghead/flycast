@@ -205,6 +205,7 @@ s32 libAICA_Init()
 
 void libAICA_Reset(bool m)
 {
+	sgc_Init();
 }
 
 void libAICA_Term()
