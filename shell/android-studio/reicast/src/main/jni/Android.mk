@@ -29,6 +29,16 @@ else
   NOT_ARM := 
 endif
 
+ifeq ($(TARGET_ARCH_ABI),arm64-v8a)
+#  CPP_REC := 1
+  ARM64_REC := 1
+  ISARM64 := 1
+else
+#  CPP_REC :=
+  ARM64_REC :=
+  ISARM64 :=
+endif
+
 ifeq ($(TARGET_ARCH_ABI),x86)
   X86_REC := 1
 else
@@ -64,13 +74,20 @@ ifdef CHD5_FLAC
 	LOCAL_CFLAGS += -DCHD5_FLAC
 endif
 
+ifdef NAOMI
+LOCAL_CFLAGS += -DTARGET_NAOMI=1
+LOCAL_CPPFLAGS += -DTARGET_NAOMI=1
+LOCAL_CXXFLAGS += -DTARGET_NAOMI=1
+endif
+
 # LOCAL_CFLAGS += -std=c++11
-LOCAL_CXXFLAGS += -std=c++11
+LOCAL_CXXFLAGS += -std=c++11 -fopenmp
+LOCAL_LDFLAGS  += -fopenmp
 
 ifeq ($(TARGET_ARCH_ABI),x86)
-  LOCAL_CFLAGS+= -DTARGET_NO_AREC
-  LOCAL_CXXFLAGS+= -DTARGET_NO_AREC -fpermissive
-  LOCAL_CPPFLAGS+= -DTARGET_NO_AREC
+  LOCAL_CFLAGS+= -DTARGET_NO_AREC -DTARGET_NO_OPENMP
+  LOCAL_CXXFLAGS+= -DTARGET_NO_AREC -fpermissive -DTARGET_NO_OPENMP
+  LOCAL_CPPFLAGS+= -DTARGET_NO_AREC -DTARGET_NO_OPENMP
 endif
 
 LOCAL_CPP_FEATURES := 
@@ -80,18 +97,20 @@ LOCAL_PRELINK_MODULE  := false
 LOCAL_MODULE	:= dc
 LOCAL_DISABLE_FORMAT_STRING_CHECKS=true
 LOCAL_ASFLAGS := -fPIC -fvisibility=hidden
-LOCAL_LDLIBS	:= -llog -lGLESv2 -lEGL -lz 
+LOCAL_LDLIBS	:= -llog -lEGL -lz -landroid
 #-Wl,-Map,./res/raw/syms.mp3
 LOCAL_ARM_MODE	:= arm
 
-ifeq ($(TARGET_ARCH),mips)
+ifeq ($(TARGET_ARCH_ABI),mips)
   LOCAL_LDFLAGS += -Wl,--gc-sections
 else
-  LOCAL_LDFLAGS += -Wl,--gc-sections,--icf=safe
-  LOCAL_LDLIBS +=  -Wl,--no-warn-shared-textrel
+  ifeq ($(TARGET_ARCH_ABI),arm64-v8a)
+    LOCAL_LDFLAGS += -Wl,--gc-sections
+  else
+    LOCAL_LDFLAGS += -Wl,--gc-sections,--icf=safe
+    LOCAL_LDLIBS +=  -Wl,--no-warn-shared-textrel
+  endif
 endif
-
-
 
 #
 # android has poor support for hardfp calling.

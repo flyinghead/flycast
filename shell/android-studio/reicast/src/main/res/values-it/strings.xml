@@ -10,7 +10,7 @@
     
     <string name="system_path">Percorso di Sistema (Percorso della cartella dati contenente dc_boot.bin/dc_flash.bin)</string>
     <string name="browser_path">Percorso di Sistema di default</string>
-    <string name="games_path">Percorso Archivio (Percorso delle immagini *.gdi, *.chd e *.cdi)</string>
+    <string name="games_path">Percorso Archivio (Percorso delle immagini *.gdi, *.chd, *.cue e *.cdi)</string>
     <string name="game_path">Percorso Archivio Giochi di default</string>
     <string name="config_home">Si prega di selezioanre la cartella principale (home).</string>
     <string name="config_game">Si prega di selezionare la cartella dei giochi.</string>

@@ -43,12 +43,6 @@ struct PlainJoystickState
 		joy[0]=joy[1]=joy[2]=joy[3]=0x80;
 		trigger[0]=trigger[1]=0;
 	}
-	static const u32 ButtonMask = PJBI_B | PJBI_A | PJBI_START | PJBI_DPAD_UP |
-	                              PJBI_DPAD_DOWN | PJBI_DPAD_LEFT | PJBI_DPAD_RIGHT | PJBI_Y | PJBI_X;
-
-	static const u32 AxisMask = PJAI_X1 | PJAI_Y1;
-
-	static const u32 TriggerMask = PJTI_L | PJTI_R;
 
 	u32 kcode;
 
@@ -58,17 +52,19 @@ struct PlainJoystickState
 
 struct IMapleConfigMap
 {
-	virtual void SetVibration(u32 value) = 0;
+	virtual void SetVibration(float power, float inclination, u32 duration_ms) = 0;
 	virtual void GetInput(PlainJoystickState* pjs)=0;
 	virtual void SetImage(void* img)=0;
 	virtual ~IMapleConfigMap() {}
 };
 
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-void mcfg_CreateDevicesFromConfig();
-void mcfg_CreateController(u32 bus, MapleDeviceType maple_type1, MapleDeviceType maple_type2);
+void mcfg_CreateDevices();
 #else
 void mcfg_CreateNAOMIJamma();
+void mcfg_CreateAtomisWaveControllers();
 #endif
 
 void mcfg_DestroyDevices();
+void mcfg_SerializeDevices(void **data, unsigned int *total_size);
+void mcfg_UnserializeDevices(void **data, unsigned int *total_size);

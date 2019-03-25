@@ -24,13 +24,6 @@
 u64 sh4_sched_ffb;
 u32 sh4_sched_intr;
 
-struct sched_list
-{
-	sh4_sched_callback* cb;
-	int tag;
-	int start;
-	int end;
-};
 
 vector<sched_list> list;
 
@@ -146,7 +139,8 @@ void handle_cb(int id)
 	list[id].end=-1;
 	int re_sch=list[id].cb(list[id].tag,remain,jitter);
 
-	if (re_sch>0)	sh4_sched_request(id,re_sch-jitter);
+	if (re_sch > 0)
+		sh4_sched_request(id, max(0, re_sch - jitter));
 }
 
 void sh4_sched_tick(int cycles)

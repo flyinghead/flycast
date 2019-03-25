@@ -46,14 +46,14 @@
 #include "blockmanager.h"
 
 
-#define CODE_SIZE   (6*1024*1024)
+#define CODE_SIZE   (10*1024*1024)
 
 
 //alternative emit ptr, set to 0 to use the main buffer
 extern u32* emit_ptr;
 extern u8* CodeCache;
 
-#if HOST_OS==OS_LINUX || HOST_OS==OS_DARWIN
+#ifdef __cplusplus
 extern "C" {
 #endif
 
@@ -94,12 +94,6 @@ void ngen_ResetBlocks();
 extern void (*ngen_FailedToFindBlock)();
 //the dynarec mainloop
 void ngen_mainloop(void* cntx);
-//ngen features
-struct ngen_features
-{
-	bool OnlyDynamicEnds;     //if set the block endings aren't handled natively and only Dynamic block end type is used
-	bool InterpreterFallback; //if set all the non-branch opcodes are handled with the ifb opcode
-};
 
 void ngen_GetFeatures(ngen_features* dst);
 
@@ -122,6 +116,6 @@ void ngen_CC_Finish(shil_opcode* op);
 
 RuntimeBlockInfo* ngen_AllocateBlock();
 
-#if HOST_OS==OS_LINUX || HOST_OS==OS_DARWIN
+#ifdef __cplusplus
 }
 #endif

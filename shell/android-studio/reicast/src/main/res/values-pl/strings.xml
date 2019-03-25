@@ -4,7 +4,7 @@
 
     <string name="system_path">Ścieżka systemowa (lokalizacja folderu zawierającego dc_boot.bin/dc_flash.bin)</string>
     <string name="browser_path">Domyślna ścieżka systemowa</string>
-    <string name="games_path">Ścieżka obrazów (lokalizacja obrazów dysków .gdi, .chd or .cdi)</string>
+    <string name="games_path">Ścieżka obrazów (lokalizacja obrazów dysków .gdi, .chd, .cue or .cdi)</string>
     <string name="game_path">Domyślna ścieżka obrazów</string>
     
     <string name="boot_bios">Uruchom BIOS\'a Dreamcast\'a</string>

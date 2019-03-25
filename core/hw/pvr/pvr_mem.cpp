@@ -14,7 +14,7 @@
 //TODO : move code later to a plugin
 //TODO : Fix registers arrays , they must be smaller now doe to the way SB registers are handled
 #include "hw/holly/holly_intc.h"
-
+#include "hw/holly/sb.h"
 
 //YUV converter code :)
 //inits the YUV converter
@@ -30,6 +30,8 @@ u32 YUV_y_curr;
 u32 YUV_x_size;
 u32 YUV_y_size;
 
+static u32 YUV_index = 0;
+
 void YUV_init()
 {
 	YUV_x_curr=0;
@@ -37,9 +39,9 @@ void YUV_init()
 
 	YUV_dest=TA_YUV_TEX_BASE&VRAM_MASK;//TODO : add the masking needed
 	TA_YUV_TEX_CNT=0;
-	YUV_blockcount=(((TA_YUV_TEX_CTRL>>0)&0x3F)+1)*(((TA_YUV_TEX_CTRL>>8)&0x3F)+1);
+	YUV_blockcount = (TA_YUV_TEX_CTRL.yuv_u_size + 1) * (TA_YUV_TEX_CTRL.yuv_v_size + 1);
 
-	if ((TA_YUV_TEX_CTRL>>16 )&1)
+	if (TA_YUV_TEX_CTRL.yuv_tex != 0)
 	{
 		die ("YUV: Not supported configuration\n");
 		YUV_x_size=16;
@@ -47,9 +49,10 @@ void YUV_init()
 	}
 	else // yesh!!!
 	{
-		YUV_x_size=(((TA_YUV_TEX_CTRL>>0)&0x3F)+1)*16;
-		YUV_y_size=(((TA_YUV_TEX_CTRL>>8)&0x3F)+1)*16;
+		YUV_x_size = (TA_YUV_TEX_CTRL.yuv_u_size + 1) * 16;
+		YUV_y_size = (TA_YUV_TEX_CTRL.yuv_v_size + 1) * 16;
 	}
+	YUV_index = 0;
 }
 
 
@@ -155,6 +158,7 @@ INLINE void YUV_ConvertMacroBlock(u8* datap)
 		asic_RaiseInterrupt(holly_YUV_DMA);
 	}
 }
+
 void YUV_data(u32* data , u32 count)
 {
 	if (YUV_blockcount==0)
@@ -164,18 +168,38 @@ void YUV_data(u32* data , u32 count)
 		YUV_init();
 	}
 
-	u32 block_size=(TA_YUV_TEX_CTRL & (1<<24))==0?384:512;
+	u32 block_size = TA_YUV_TEX_CTRL.yuv_form == 0 ? 384 : 512;
 
 	verify(block_size==384); //no support for 512
 
-	
 	count*=32;
 
-	while(count>=block_size)
+	while (count > 0)
 	{
-		YUV_ConvertMacroBlock((u8*)data); //convert block
-		data+=block_size>>2;
-		count-=block_size;
+		if (YUV_index + count >= block_size)
+		{
+			//more or exactly one block remaining
+			u32 dr = block_size - YUV_index;				//remaining bytes til block end
+			if (YUV_index == 0)
+			{
+				// Avoid copy
+				YUV_ConvertMacroBlock((u8 *)data);				//convert block
+			}
+			else
+			{
+				memcpy(&YUV_tempdata[YUV_index >> 2], data, dr);//copy em
+				YUV_ConvertMacroBlock((u8 *)&YUV_tempdata[0]);	//convert block
+				YUV_index = 0;
+			}
+			data += dr >> 2;									//count em
+			count -= dr;
+		}
+		else
+		{	//less that a whole block remaining
+			memcpy(&YUV_tempdata[YUV_index >> 2], data, count);	//append it
+			YUV_index += count;
+			count = 0;
+		}
 	}
 
 	verify(count==0);
@@ -194,11 +218,11 @@ u8 DYNACALL pvr_read_area1_8(u32 addr)
 
 u16 DYNACALL pvr_read_area1_16(u32 addr)
 {
-	return *(u16*)&vram[pvr_map32(addr) & VRAM_MASK];
+	return *(u16*)&vram[pvr_map32(addr)];
 }
 u32 DYNACALL pvr_read_area1_32(u32 addr)
 {
-	return *(u32*)&vram[pvr_map32(addr) & VRAM_MASK];
+	return *(u32*)&vram[pvr_map32(addr)];
 }
 
 //write
@@ -208,16 +232,29 @@ void DYNACALL pvr_write_area1_8(u32 addr,u8 data)
 }
 void DYNACALL pvr_write_area1_16(u32 addr,u16 data)
 {
-	*(u16*)&vram[pvr_map32(addr) & VRAM_MASK]=data;
+    u32 vaddr = addr & VRAM_MASK;
+    if (!fb_dirty
+        && ((vaddr >= fb1_watch_addr_start && vaddr < fb1_watch_addr_end)
+            || (vaddr >= fb2_watch_addr_start && vaddr < fb2_watch_addr_end)))
+    {
+        fb_dirty = true;
+    }
+	*(u16*)&vram[pvr_map32(addr)]=data;
 }
 void DYNACALL pvr_write_area1_32(u32 addr,u32 data)
 {
-	*(u32*)&vram[pvr_map32(addr) & VRAM_MASK] = data;
+    u32 vaddr = addr & VRAM_MASK;
+    if (!fb_dirty
+        && ((vaddr >= fb1_watch_addr_start && vaddr < fb1_watch_addr_end)
+            || (vaddr >= fb2_watch_addr_start && vaddr < fb2_watch_addr_end)))
+    {
+        fb_dirty = true;
+    }
+	*(u32*)&vram[pvr_map32(addr)] = data;
 }
 
 void TAWrite(u32 address,u32* data,u32 count)
 {
-	//printf("TAWrite 0x%08X %d\n",address,count);
 	u32 address_w=address&0x1FFFFFF;//correct ?
 	if (address_w<0x800000)//TA poly
 	{
@@ -230,7 +267,8 @@ void TAWrite(u32 address,u32* data,u32 count)
 	else //Vram Writef
 	{
 		//shouldn't really get here (?) -> works on dc :D need to handle lmmodes
-		//printf("Vram Write 0x%X , size %d\n",address,count*32);
+		//printf("Vram TAWrite 0x%X , bkls %d\n",address,count);
+		verify(SB_LMMODE0 == 0);
 		memcpy(&vram.data[address&VRAM_MASK],data,count*32);
 	}
 }
@@ -258,10 +296,22 @@ extern "C" void DYNACALL TAWriteSQ(u32 address,u8* sqb)
 	}
 	else //Vram Writef
 	{
-		//shouldn't really get here (?)
-		//printf("Vram Write 0x%X , size %d\n",address,count*32);
-		u8* vram=sqb+512+0x04000000;
-		MemWrite32(&vram[address_w&(VRAM_MASK-0x1F)],sq);
+		// Used by WinCE
+		//printf("Vram TAWriteSQ 0x%X SB_LMMODE0 %d\n",address, SB_LMMODE0);
+		if (SB_LMMODE0 == 0)
+		{
+			// 64b path
+			u8* vram=sqb+512+0x04000000;
+			MemWrite32(&vram[address_w&(VRAM_MASK-0x1F)],sq);
+		}
+		else
+		{
+			// 32b path
+			for (int i = 0; i < 8; i++, address_w += 4)
+			{
+				pvr_write_area1_32(address_w, ((u32 *)sq)[i]);
+			}
+		}
 	}
 }
 #endif
@@ -279,28 +329,28 @@ void pvr_Reset(bool Manual)
 
 u32 pvr_map32(u32 offset32)
 {
-		//64b wide bus is achieved by interleaving the banks every 32 bits
-		const u32 bank_bit = VRAM_BANK_BIT;
-		const u32 static_bits = VRAM_MASK - (VRAM_BANK_BIT * 2 - 1) | 3;
-		const u32 offset_bits = (VRAM_BANK_BIT - 1) & ~3;
+	//64b wide bus is achieved by interleaving the banks every 32 bits
+	const u32 bank_bit = VRAM_BANK_BIT;
+	const u32 static_bits = (VRAM_MASK - (VRAM_BANK_BIT * 2 - 1)) | 3;
+	const u32 offset_bits = (VRAM_BANK_BIT - 1) & ~3;
 
-		u32 bank = (offset32 & VRAM_BANK_BIT) / VRAM_BANK_BIT;
+	u32 bank = (offset32 & VRAM_BANK_BIT) / VRAM_BANK_BIT;
 
-		u32 rv = offset32 & static_bits;
+	u32 rv = offset32 & static_bits;
 
-		rv |= (offset32 & offset_bits) * 2;
+	rv |= (offset32 & offset_bits) * 2;
 
-		rv |= bank * 4;
-
-		return rv;
+	rv |= bank * 4;
+	
+	return rv;
 }
 
 
 f32 vrf(u32 addr)
 {
-	return *(f32*)&vram[pvr_map32(addr) & VRAM_MASK];
+	return *(f32*)&vram[pvr_map32(addr)];
 }
 u32 vri(u32 addr)
 {
-	return *(u32*)&vram[pvr_map32(addr) & VRAM_MASK];
+	return *(u32*)&vram[pvr_map32(addr)];
 }

@@ -83,10 +83,12 @@ PolyParam* CurrentPP=&nullPP;
 List<PolyParam>* CurrentPPlist;
 
 //TA state vars	
-DECL_ALIGN(4) static u8 FaceBaseColor[4];
-DECL_ALIGN(4) static u8 FaceOffsColor[4];
-DECL_ALIGN(4) static u32 SFaceBaseColor;
-DECL_ALIGN(4) static u32 SFaceOffsColor;
+DECL_ALIGN(4) u8 FaceBaseColor[4];
+DECL_ALIGN(4) u8 FaceOffsColor[4];
+DECL_ALIGN(4) u8 FaceBaseColor1[4];
+DECL_ALIGN(4) u8 FaceOffsColor1[4];
+DECL_ALIGN(4) u32 SFaceBaseColor;
+DECL_ALIGN(4) u32 SFaceOffsColor;
 
 
 
@@ -425,8 +427,8 @@ public:
 				//32B
 			case ParamType_Object_List_Set:
 				{
+					printf("Unsupported list type: ParamType_Object_List_Set\n");	// NAOMI Virtual on Oratorio Tangram
 
-					die("ParamType_Object_List_Set");
 					// *cough* ignore it :p
 					data+=SZ32;
 				}
@@ -769,12 +771,9 @@ public:
 	{
 		CurrentPP=&nullPP;
 		CurrentPPlist=0;
-		if (ListType==ListType_Opaque_Modifier_Volume)
-		{
-			ISP_Modvol p;
-			p.id=vdrc.modtrig.used();
-			*vdrc.global_param_mvo.Append()=p;
-		}
+
+		if (ListType == ListType_Opaque_Modifier_Volume || ListType == ListType_Translucent_Modifier_Volume)
+			EndModVol();
 	}
 
 	/*
@@ -812,6 +811,9 @@ public:
 			if (d_pp->pcw.Texture) {
 				d_pp->texid = renderer->GetTexture(d_pp->tsp,d_pp->tcw);
 			}
+			d_pp->tsp1.full = -1;
+			d_pp->tcw1.full = -1;
+			d_pp->texid1 = -1;
 		}
 	}
 
@@ -864,6 +866,11 @@ public:
 		TA_PolyParam3* pp=(TA_PolyParam3*)vpp;
 
 		glob_param_bdc(pp);
+
+		CurrentPP->tsp1.full = pp->tsp1.full;
+		CurrentPP->tcw1.full = pp->tcw1.full;
+		if (pp->pcw.Texture)
+			CurrentPP->texid1 = renderer->GetTexture(pp->tsp1, pp->tcw1);
 	}
 	__forceinline
 		static void TACALL AppendPolyParam4A(void* vpp)
@@ -871,13 +878,19 @@ public:
 		TA_PolyParam4A* pp=(TA_PolyParam4A*)vpp;
 
 		glob_param_bdc(pp);
+
+		CurrentPP->tsp1.full = pp->tsp1.full;
+		CurrentPP->tcw1.full = pp->tcw1.full;
+		if (pp->pcw.Texture)
+			CurrentPP->texid1 = renderer->GetTexture(pp->tsp1, pp->tcw1);
 	}
 	__forceinline
 		static void TACALL AppendPolyParam4B(void* vpp)
 	{
 		TA_PolyParam4B* pp=(TA_PolyParam4B*)vpp;
 
-		poly_float_color(FaceBaseColor,FaceColor0);
+		poly_float_color(FaceBaseColor, FaceColor0);
+		poly_float_color(FaceBaseColor1, FaceColor1);
 	}
 
 	//Poly Strip handling
@@ -888,14 +901,6 @@ public:
 	{
 		CurrentPP->count=vdrc.idx.used() - CurrentPP->first;
 
-		int vbase=vdrc.verts.used();
-
-		*vdrc.idx.Append()=vbase-1;
-		*vdrc.idx.Append()=vbase;
-
-		if (CurrentPP->count&1)
-			*vdrc.idx.Append()=vbase;
-#if STRIPS_AS_PPARAMS
 		if (CurrentPPlist==&vdrc.global_param_tr)
 		{
 			PolyParam* d_pp =CurrentPPlist->Append(); 
@@ -904,7 +909,16 @@ public:
 			d_pp->first=vdrc.idx.used(); 
 			d_pp->count=0; 
 		}
-#endif
+		else
+		{
+			int vbase=vdrc.verts.used();
+
+			*vdrc.idx.Append()=vbase-1;
+			*vdrc.idx.Append()=vbase;
+
+			if (CurrentPP->count&1)
+				*vdrc.idx.Append()=vbase;
+		}
 	}
 
 
@@ -944,6 +958,14 @@ public:
 	#define vert_uv_16(u_name,v_name) \
 		cv->u = f16(vtx->u_name);\
 		cv->v = f16(vtx->v_name);
+
+	#define vert_uv1_32(u_name,v_name) \
+		cv->u1 = (vtx->u_name);\
+		cv->v1 = (vtx->v_name);
+
+	#define vert_uv1_16(u_name,v_name) \
+		cv->u1 = f16(vtx->u_name);\
+		cv->v1 = f16(vtx->v_name);
 
 		//Color conversions
 	#define vert_packed_color_(to,src) \
@@ -987,6 +1009,20 @@ public:
 		cv->spc[1] = FaceOffsColor[1]*satint/256;  \
 		cv->spc[2] = FaceOffsColor[2]*satint/256;  \
 		cv->spc[3] = FaceOffsColor[3]; }
+
+	#define vert_face_base_color1(baseint) \
+		{ u32 satint=float_to_satu8(vtx->baseint); \
+		cv->col1[0] = FaceBaseColor1[0]*satint/256;  \
+		cv->col1[1] = FaceBaseColor1[1]*satint/256;  \
+		cv->col1[2] = FaceBaseColor1[2]*satint/256;  \
+		cv->col1[3] = FaceBaseColor1[3]; }
+
+	#define vert_face_offs_color1(offsint) \
+		{ u32 satint=float_to_satu8(vtx->offsint); \
+		cv->spc1[0] = FaceOffsColor1[0]*satint/256;  \
+		cv->spc1[1] = FaceOffsColor1[1]*satint/256;  \
+		cv->spc1[2] = FaceOffsColor1[2]*satint/256;  \
+		cv->spc1[3] = FaceOffsColor1[3]; }
 
 	//vert_float_color_(cv->spc,FaceOffsColor[3],FaceOffsColor[0]*satint/256,FaceOffsColor[1]*satint/256,FaceOffsColor[2]*satint/256); }
 
@@ -1113,6 +1149,7 @@ public:
 		vert_cvt_base;
 
 		vert_packed_color(col,BaseCol0);
+		vert_packed_color(col1, BaseCol1);
 	}
 
 	//(Non-Textured, Intensity,	with Two Volumes)
@@ -1122,6 +1159,7 @@ public:
 		vert_cvt_base;
 
 		vert_face_base_color(BaseInt0);
+		vert_face_base_color1(BaseInt1);
 	}
 
 	//(Textured, Packed Color,	with Two Volumes)	
@@ -1140,6 +1178,10 @@ public:
 	{
 		vert_res_base;
 
+		vert_packed_color(col1, BaseCol1);
+		vert_packed_color(spc1, OffsCol1);
+
+		vert_uv1_32(u1, v1);
 	}
 
 	//(Textured, Packed Color, 16bit UV, with Two Volumes)
@@ -1158,6 +1200,10 @@ public:
 	{
 		vert_res_base;
 
+		vert_packed_color(col1, BaseCol1);
+		vert_packed_color(spc1, OffsCol1);
+
+		vert_uv1_16(u1, v1);
 	}
 
 	//(Textured, Intensity,	with Two Volumes)
@@ -1176,6 +1222,10 @@ public:
 	{
 		vert_res_base;
 
+		vert_face_base_color1(BaseInt1);
+		vert_face_offs_color1(OffsInt1);
+
+		vert_uv1_32(u1,v1);
 	}
 
 	//(Textured, Intensity, 16bit UV, with Two Volumes)
@@ -1194,6 +1244,10 @@ public:
 	{
 		vert_res_base;
 
+		vert_face_base_color1(BaseInt1);
+		vert_face_offs_color1(OffsInt1);
+
+		vert_uv1_16(u1, v1);
 	}
 
 	//Sprites
@@ -1221,6 +1275,9 @@ public:
 		if (d_pp->pcw.Texture) {
 			d_pp->texid = renderer->GetTexture(d_pp->tsp,d_pp->tcw);
 		}
+		d_pp->tcw1.full = -1;
+		d_pp->tsp1.full = -1;
+		d_pp->texid1 = -1;
 
 		SFaceBaseColor=spr->BaseCol;
 		SFaceOffsColor=spr->OffsCol;
@@ -1247,7 +1304,7 @@ public:
 	__forceinline
 		static void AppendSpriteVertexA(TA_Sprite1A* sv)
 	{
-        u16* idx=vdrc.idx.Append(6);
+		u32* idx = vdrc.idx.Append(6);
 		u32 vbase=vdrc.verts.used();
 
 		idx[0]=vbase+0;
@@ -1359,7 +1416,7 @@ public:
 			vert[-1].z=vert[0].z;
 			CurrentPP->count+=2;
 		}*/
-#if STRIPS_AS_PPARAMS
+
 		if (CurrentPPlist==&vdrc.global_param_tr)
 		{
 			PolyParam* d_pp =CurrentPPlist->Append(); 
@@ -1368,25 +1425,45 @@ public:
 			d_pp->first=vdrc.idx.used(); 
 			d_pp->count=0;
 		}
-#endif
 	}
 
-	//ModVolumes
+	// Modifier Volumes Vertex handlers
+	
+	static void EndModVol()
+	{
+		List<ModifierVolumeParam> *list = NULL;
+		if (CurrentList == ListType_Opaque_Modifier_Volume)
+			list = &vdrc.global_param_mvo;
+		else if (CurrentList == ListType_Translucent_Modifier_Volume)
+			list = &vdrc.global_param_mvo_tr;
+		else
+			return;
+		if (list->used() > 0)
+		{
+			ModifierVolumeParam *p = &(list->head()[list->used() - 1]);
+			p->count = vdrc.modtrig.used() - p->first;
+		}
+	}
 
-	//Mod Volume Vertex handlers
 	static void StartModVol(TA_ModVolParam* param)
 	{
-		if (CurrentList!=ListType_Opaque_Modifier_Volume)
+		EndModVol();
+
+		ModifierVolumeParam *p = NULL;
+		if (CurrentList == ListType_Opaque_Modifier_Volume)
+			p = vdrc.global_param_mvo.Append();
+		else if (CurrentList == ListType_Translucent_Modifier_Volume)
+			p = vdrc.global_param_mvo_tr.Append();
+		else
 			return;
-		ISP_Modvol* p=vdrc.global_param_mvo.Append();
-		p->full=param->isp.full;
-		p->VolumeLast=param->pcw.Volume;
-		p->id=vdrc.modtrig.used();
+		p->isp.full = param->isp.full;
+		p->isp.VolumeLast = param->pcw.Volume != 0;
+		p->first = vdrc.modtrig.used();
 	}
 	__forceinline
 		static void AppendModVolVertexA(TA_ModVolA* mvv)
 	{
-		if (CurrentList!=ListType_Opaque_Modifier_Volume)
+		if (CurrentList != ListType_Opaque_Modifier_Volume && CurrentList != ListType_Translucent_Modifier_Volume)
 			return;
 		lmr=vdrc.modtrig.Append();
 
@@ -1406,7 +1483,7 @@ public:
 	__forceinline
 		static void AppendModVolVertexB(TA_ModVolB* mvv)
 	{
-		if (CurrentList!=ListType_Opaque_Modifier_Volume)
+		if (CurrentList != ListType_Opaque_Modifier_Volume && CurrentList != ListType_Translucent_Modifier_Volume)
 			return;
 		lmr->y2=mvv->y2;
 		lmr->z2=mvv->z2;
@@ -1419,7 +1496,7 @@ public:
 
 		//allocate storage for BG poly
 		vd_rc.global_param_op.Append();
-		u16* idx=vd_rc.idx.Append(4);
+		u32* idx = vd_rc.idx.Append(4);
 		int vbase=vd_rc.verts.used();
 
 		idx[0]=vbase+0;
@@ -1430,6 +1507,7 @@ public:
 	}
 };
 
+static bool ClearZBeforePass(int pass_number);
 
 FifoSplitter<0> TAFifo0;
 
@@ -1440,24 +1518,56 @@ int ta_parse_cnt = 0;
 */
 bool ta_parse_vdrc(TA_context* ctx)
 {
+	bool rv=false;
 	verify( vd_ctx == 0);
 	vd_ctx = ctx;
 	vd_rc = vd_ctx->rend;
 	
 	ta_parse_cnt++;
-	if (0 == (ta_parse_cnt %  ( settings.pvr.ta_skip + 1)))
+	if (ctx->rend.isRTT || 0 == (ta_parse_cnt %  ( settings.pvr.ta_skip + 1)))
 	{
 		TAFifo0.vdec_init();
 		
-		Ta_Dma* ta_data=(Ta_Dma*)vd_rc.proc_start;
-		Ta_Dma* ta_data_end=((Ta_Dma*)vd_rc.proc_end)-1;
-
-		do
+		for (int pass = 0; pass <= ctx->tad.render_pass_count; pass++)
 		{
-			ta_data =TaCmd(ta_data,ta_data_end);
+			ctx->MarkRend(pass);
+			vd_rc.proc_start = ctx->rend.proc_start;
+			vd_rc.proc_end = ctx->rend.proc_end;
 
+			Ta_Dma* ta_data=(Ta_Dma*)vd_rc.proc_start;
+			Ta_Dma* ta_data_end=((Ta_Dma*)vd_rc.proc_end)-1;
+
+			do
+			{
+				ta_data =TaCmd(ta_data,ta_data_end);
+
+			}
+			while(ta_data<=ta_data_end);
+
+			RenderPass *render_pass = vd_rc.render_passes.Append();
+			render_pass->op_count = vd_rc.global_param_op.used();
+			render_pass->mvo_count = vd_rc.global_param_mvo.used();
+			render_pass->pt_count = vd_rc.global_param_pt.used();
+			render_pass->tr_count = vd_rc.global_param_tr.used();
+			render_pass->mvo_tr_count = vd_rc.global_param_mvo_tr.used();
+			render_pass->autosort = UsingAutoSort(pass);
+			render_pass->z_clear = ClearZBeforePass(pass);
 		}
-		while(ta_data<=ta_data_end);
+		bool empty_context = true;
+		
+		// Don't draw empty contexts.
+		// Apparently the background plane is only drawn if it at least one polygon is drawn.
+		for (PolyParam *pp = vd_rc.global_param_op.head() + 1;
+			 empty_context && pp < vd_rc.global_param_op.LastPtr(0); pp++)
+			if (pp->count > 2)
+				empty_context = false;
+		for (PolyParam *pp = vd_rc.global_param_pt.head(); empty_context && pp < vd_rc.global_param_pt.LastPtr(0); pp++)
+			if (pp->count > 2)
+				empty_context = false;
+		for (PolyParam *pp = vd_rc.global_param_tr.head(); empty_context && pp < vd_rc.global_param_tr.LastPtr(0); pp++)
+			if (pp->count > 2)
+				empty_context = false;
+		rv = !empty_context;
 	}
 	bool overrun = ctx->rend.Overrun;
 
@@ -1466,10 +1576,8 @@ bool ta_parse_vdrc(TA_context* ctx)
 	ctx->rend_inuse.Unlock();
 
 	ctx->rend.Overrun = overrun;
-	if (overrun)
-		printf("Warning: TA context overrun\n");
 
-	return !overrun;
+	return rv;
 }
 
 
@@ -1566,10 +1674,10 @@ void FillBGP(TA_context* ctx)
 	PolyParam* bgpp=ctx->rend.global_param_op.head();
 	Vertex* cv=ctx->rend.verts.head();
 
-	bool PSVM=FPU_SHAD_SCALE.intesity_shadow!=0; //double parameters for volumes
+	bool PSVM=FPU_SHAD_SCALE.intensity_shadow!=0; //double parameters for volumes
 
 	//Get the strip base
-	u32 strip_base=(param_base + ISP_BACKGND_T.tag_address*4);	//this is *not* VRAM_MASK on purpose.It fixes naomi bios and quite a few naomi games
+	u32 strip_base=(param_base + ISP_BACKGND_T.tag_address*4) & 0x7FFFFF;	//this is *not* VRAM_MASK on purpose.It fixes naomi bios and quite a few naomi games
 	//i have *no* idea why that happens, they manage to set the render target over there as well
 	//and that area is *not* written by the games (they instead write the params on 000000 instead of 800000)
 	//could be a h/w bug ? param_base is 400000 and tag is 100000*4
@@ -1593,18 +1701,21 @@ void FillBGP(TA_context* ctx)
 	bgpp->isp.full=vri(strip_base);
 	bgpp->tsp.full=vri(strip_base+4);
 	bgpp->tcw.full=vri(strip_base+8);
+	bgpp->tcw1.full = -1;
+	bgpp->tsp1.full = -1;
+	bgpp->texid1 = -1;
 	bgpp->count=4;
 	bgpp->first=0;
 	bgpp->tileclip=0;//disabled ! HA ~
 
 	bgpp->isp.DepthMode=7;// -> this makes things AWFULLY slow .. sometimes
 	bgpp->isp.CullMode=0;// -> so that its not culled, or somehow else hidden !
-	bgpp->tsp.FogCtrl=2;
 	//Set some pcw bits .. I should really get rid of pcw ..
 	bgpp->pcw.UV_16bit=bgpp->isp.UV_16b;
 	bgpp->pcw.Gouraud=bgpp->isp.Gouraud;
 	bgpp->pcw.Offset=bgpp->isp.Offset;
 	bgpp->pcw.Texture=bgpp->isp.Texture;
+	bgpp->pcw.Shadow = ISP_BACKGND_T.shadow;
 
 	float scale_x= (SCALER_CTL.hscale) ? 2.f:1.f;	//if AA hack the hacked pos value hacks
 	for (int i=0;i<3;i++)
@@ -1614,29 +1725,62 @@ void FillBGP(TA_context* ctx)
 	}
 
 	float ZV=0;
+	f32 bg_depth = ISP_BACKGND_D.f;
+	reinterpret_cast<u32&>(bg_depth) &= 0xFFFFFFF0;	// ISP_BACKGND_D has only 28 bits
 
 	cv[0].x=-2000;
 	cv[0].y=-2000;
-	cv[0].z=ISP_BACKGND_D.f;
+	cv[0].z=bg_depth;
 
 	cv[1].x=640*scale_x + 2000;
 	cv[1].y=0;
-	cv[1].z=ISP_BACKGND_D.f;
+	cv[1].z=bg_depth;
 
 	cv[2].x=-2000;
 	cv[2].y=480+2000;
-	cv[2].z=ISP_BACKGND_D.f;
+	cv[2].z=bg_depth;
 
 	cv[3]=cv[2];
 	cv[3].x=640*scale_x+2000;
 	cv[3].y=480+2000;
-	cv[3].z=ISP_BACKGND_D.f;
 }
 
-bool UsingAutoSort()
+static RegionArrayTile getRegionTile(int pass_number)
+{
+	u32 addr = REGION_BASE;
+	bool empty_first_region = true;
+	for (int i = 0; i < 5; i++)
+		if ((vri(addr + (i + 1) * 4) & 0x80000000) == 0)
+		{
+			empty_first_region = false;
+			break;
+		}
+	if (empty_first_region)
+		addr += 6 * 4;
+
+	RegionArrayTile tile;
+	tile.full = vri(addr + pass_number * 6 * 4);
+
+	return tile;
+}
+
+bool UsingAutoSort(int pass_number)
 {
 	if (((FPU_PARAM_CFG >> 21) & 1) == 0)
+		// Type 1 region header type
 		return ((ISP_FEED_CFG & 1) == 0);
 	else
-		return ((vri(REGION_BASE) >> 29) & 1) == 0;
+	{
+		// Type 2
+		RegionArrayTile tile = getRegionTile(pass_number);
+
+		return !tile.PreSort;
+	}
+}
+
+static bool ClearZBeforePass(int pass_number)
+{
+	RegionArrayTile tile = getRegionTile(pass_number);
+
+	return !tile.NoZClear;
 }

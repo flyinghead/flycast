@@ -8,7 +8,7 @@
 #include "../sh4_core.h"
 #include "hw/pvr/pvr_mem.h"
 #include "hw/mem/_vmem.h"
-
+#include "mmu.h"
 
 //Types
 
@@ -46,16 +46,25 @@ void CCN_MMUCR_write(u32 addr, u32 value)
 	CCN_MMUCR_type temp;
 	temp.reg_data=value;
 
-	if ((temp.AT!=CCN_MMUCR.AT) && (temp.AT==1))
+	bool mmu_changed_state = temp.AT != CCN_MMUCR.AT;
+
+	if (temp.TI != 0)
 	{
-		printf("<*******>MMU Enabled , ONLY SQ remaps work<*******>\n");
-	}
-	
-	if (temp.TI)
-	{
-		temp.TI=0;
+		for (u32 i = 0; i < 4; i++)
+			ITLB[i].Data.V = 0;
+
+		for (u32 i = 0; i < 64; i++)
+			UTLB[i].Data.V = 0;
+
+		temp.TI = 0;
 	}
 	CCN_MMUCR=temp;
+
+	if (mmu_changed_state)
+	{
+		//printf("<*******>MMU Enabled , ONLY SQ remaps work<*******>\n");
+		mmu_set_state();
+	}
 }
 void CCN_CCR_write(u32 addr, u32 value)
 {
@@ -66,8 +75,10 @@ void CCN_CCR_write(u32 addr, u32 value)
 	//what is 0xAC13DBF8 from ?
 	if (temp.ICI && curr_pc!=0xAC13DBF8)
 	{
-		printf("Sh4: i-cache invalidation %08X\n",curr_pc);
-		sh4_cpu.ResetCache();
+		//printf("Sh4: i-cache invalidation %08X\n",curr_pc);
+		// Shikigami No Shiro II sets ICI frequently
+		// Any reason to flush the dynarec cache for this?
+		//sh4_cpu.ResetCache();
 	}
 
 	temp.ICI=0;
@@ -75,6 +86,17 @@ void CCN_CCR_write(u32 addr, u32 value)
 
 	CCN_CCR=temp;
 }
+
+static u32 CPU_VERSION_read(u32 addr)
+{
+	return 0x040205c1;	// this is what a real SH7091 in a Dreamcast returns - the later Naomi BIOSes check and care!
+}
+
+static u32 CCN_PRR_read(u32 addr)
+{
+	return 0;
+}
+
 //Init/Res/Term
 void ccn_init()
 {
@@ -111,6 +133,9 @@ void ccn_init()
 	//CCN INTEVT 0xFF000028 0x1F000028 32 Undefined Undefined Held Held Iclk
 	sh4_rio_reg(CCN,CCN_INTEVT_addr,RIO_DATA,32);
 
+	// CPU VERSION 0xFF000030 0x1F000030 (undocumented)
+	sh4_rio_reg(CCN,CPU_VERSION_addr, RIO_RO_FUNC, 32, &CPU_VERSION_read, 0);
+
 	//CCN PTEA 0xFF000034 0x1F000034 32 Undefined Undefined Held Held Iclk
 	sh4_rio_reg(CCN,CCN_PTEA_addr,RIO_DATA,32);
 
@@ -119,6 +144,10 @@ void ccn_init()
 
 	//CCN QACR1 0xFF00003C 0x1F00003C 32 Undefined Undefined Held Held Iclk
 	sh4_rio_reg(CCN,CCN_QACR1_addr,RIO_WF,32,0,&CCN_QACR_write<1>);
+
+	// CCN PRR 0xFF000044 0x1F000044 (undocumented)
+	sh4_rio_reg(CCN,CCN_PRR_addr, RIO_RO_FUNC, 32, &CCN_PRR_read, 0);
+
 }
 
 void ccn_reset()

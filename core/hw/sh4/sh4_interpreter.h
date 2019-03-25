@@ -22,6 +22,9 @@ enum OpcodeType
 	NO_GP        = 512,
 	NO_SP        = 1024,
 
+	UsesFPU      = 2048, // Floating point op
+	FWritesFPSCR = UsesFPU | WritesFPSCR,
+
 	// Heh, not basic :P
 	ReadWritePC  = ReadsPC|WritesPC,     // Read and writes pc :P
 	WritesSRRWPC = WritesSR|ReadsPC|WritesPC,
@@ -38,6 +41,7 @@ enum OpcodeType
 //interface
 void Sh4_int_Run();
 void Sh4_int_Stop();
+void Sh4_int_Start();
 void Sh4_int_Step();
 void Sh4_int_Skip();
 void Sh4_int_Reset(bool Manual);
@@ -51,14 +55,12 @@ void Sh4_int_SetRegister(Sh4RegType reg,u32 regdata);
 void ExecuteDelayslot();
 void ExecuteDelayslot_RTE();
 
+#define SH4_TIMESLICE (448)	// at 112 Bangai-O doesn't start. 224 is ok
+							// at 448 Gundam Side Story hangs on Sega copyright screen, 224 ok, 672 ok(!)
 
-#if HOST_OS==OS_LINUX || HOST_OS==OS_DARWIN
 extern "C" {
-#endif
 
 int UpdateSystem();
-int UpdateSystem_INTC();
+__attribute__((used)) int UpdateSystem_INTC();
 
-#if HOST_OS==OS_LINUX || HOST_OS==OS_DARWIN
 }
-#endif

@@ -2,42 +2,40 @@
 #define __khrplatform_h_
 
 /*
- ** Copyright (c) 2008-2009 The Khronos Group Inc.
- **
- ** Permission is hereby granted, free of charge, to any person obtaining a
- ** copy of this software and/or associated documentation files (the
- ** "Materials"), to deal in the Materials without restriction, including
- ** without limitation the rights to use, copy, modify, merge, publish,
- ** distribute, sublicense, and/or sell copies of the Materials, and to
- ** permit persons to whom the Materials are furnished to do so, subject to
- ** the following conditions:
- **
- ** The above copyright notice and this permission notice shall be included
- ** in all copies or substantial portions of the Materials.
- **
- ** THE MATERIALS ARE PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
- ** EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- ** MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
- ** IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
- ** CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
- ** TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
- ** MATERIALS OR THE USE OR OTHER DEALINGS IN THE MATERIALS.
- */
+** Copyright (c) 2008-2018 The Khronos Group Inc.
+**
+** Permission is hereby granted, free of charge, to any person obtaining a
+** copy of this software and/or associated documentation files (the
+** "Materials"), to deal in the Materials without restriction, including
+** without limitation the rights to use, copy, modify, merge, publish,
+** distribute, sublicense, and/or sell copies of the Materials, and to
+** permit persons to whom the Materials are furnished to do so, subject to
+** the following conditions:
+**
+** The above copyright notice and this permission notice shall be included
+** in all copies or substantial portions of the Materials.
+**
+** THE MATERIALS ARE PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+** EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+** MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+** IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+** CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+** TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+** MATERIALS OR THE USE OR OTHER DEALINGS IN THE MATERIALS.
+*/
 
 /* Khronos platform-specific types and definitions.
  *
- * $Revision: 23298 $ on $Date: 2013-09-30 17:07:13 -0700 (Mon, 30 Sep 2013) $
+ * The master copy of khrplatform.h is maintained in the Khronos EGL
+ * Registry repository at https://github.com/KhronosGroup/EGL-Registry
+ * The last semantic modification to khrplatform.h was at commit ID:
+ *      67a3e0864c2d75ea5287b9f3d2eb74a745936692
  *
  * Adopters may modify this file to suit their platform. Adopters are
  * encouraged to submit platform specific modifications to the Khronos
  * group so that they can be included in future versions of this file.
- * Please submit changes by sending them to the public Khronos Bugzilla
- * (http://khronos.org/bugzilla) by filing a bug against product
- * "Khronos (general)" component "Registry".
- *
- * A predefined template which fills in some of the bug fields can be
- * reached using http://tinyurl.com/khrplatform-h-bugreport, but you
- * must create a Bugzilla login first.
+ * Please submit changes by filing pull requests or issues on
+ * the EGL Registry repository linked above.
  *
  *
  * See the Implementer's Guidelines for information about where this file
@@ -101,6 +99,8 @@
 #   define KHRONOS_APICALL __declspec(dllimport)
 #elif defined (__SYMBIAN32__)
 #   define KHRONOS_APICALL IMPORT_C
+#elif defined(__ANDROID__)
+#   define KHRONOS_APICALL __attribute__((visibility("default")))
 #else
 #   define KHRONOS_APICALL
 #endif
@@ -112,7 +112,7 @@
  * name in the function prototype.
  */
 #if defined(_WIN32) && !defined(_WIN32_WCE) && !defined(__SCITECH_SNAP__)
-/* Win32 but not WinCE */
+    /* Win32 but not WinCE */
 #   define KHRONOS_APIENTRY __stdcall
 #else
 #   define KHRONOS_APIENTRY

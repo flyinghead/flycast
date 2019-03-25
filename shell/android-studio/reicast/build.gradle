@@ -38,7 +38,7 @@ android {
 
         ndk {
             moduleName "dc"
-                abiFilters 'armeabi-v7a', 'x86'
+                abiFilters 'armeabi-v7a', 'arm64-v8a'
         }
     }
 
@@ -64,6 +64,17 @@ android {
             zipAlignEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
             signingConfig signingConfigs.release
+        }
+    }
+
+    flavorDimensions "systemtype"
+    productFlavors {
+        dreamcast {
+        }
+        naomi {
+            applicationId = "com.reicast.emulator.naomi"
+            versionNameSuffix " Naomi"
+            externalNativeBuild { ndkBuild { arguments "NAOMI=1" } }
         }
     }
 
@@ -101,7 +112,6 @@ dependencies {
     implementation 'org.bouncycastle:bcprov-jdk16:1.46'
     implementation 'commons-io:commons-io:2.6'
     implementation 'org.apache.commons:commons-lang3:3.7'
-    implementation 'com.dropbox.core:dropbox-core-sdk:3.0.9'
     implementation ('com.googlecode.json-simple:json-simple:1.1.1') {
         exclude module: 'junit'
     }

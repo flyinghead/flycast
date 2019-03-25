@@ -3,6 +3,7 @@
 Disc* chd_parse(const wchar* file);
 Disc* gdi_parse(const wchar* file);
 Disc* cdi_parse(const wchar* file);
+Disc* cue_parse(const wchar* file);
 #if HOST_OS==OS_WINDOWS
 Disc* ioctl_parse(const wchar* file);
 #endif
@@ -15,6 +16,7 @@ Disc*(*drivers[])(const wchar* path)=
 	chd_parse,
 	gdi_parse,
 	cdi_parse,
+	cue_parse,
 #if HOST_OS==OS_WINDOWS
 	ioctl_parse,
 #endif
@@ -137,12 +139,10 @@ Disc* OpenDisc(const wchar* fn)
 		rv = drivers[i](fn);
 
 		if (rv && cdi_parse == drivers[i]) {
-			const wchar warn_str[] = "Warning: CDI Image Loaded!\n  Many CDI images are known to be defective, GDI or CHD format is preferred. Please only file bug reports when using images known to be good (GDI or CHD).";
-#ifdef _ANDROID
-			printf(warn_str);
-#else
-			msgboxf(warn_str, MBX_ICONASTERISK);// if (OS_DlgYes!=os_Dialog(OS_DialogYesNo, cdiWarn_S)) rv=0;
-#endif
+			const wchar warn_str[] = "Warning: CDI Image Loaded!\n  Many CDI images are known to be defective, GDI, CUE or CHD format is preferred. "
+					"Please only file bug reports when using images known to be good (GDI, CUE or CHD).";
+			printf("%s\n", warn_str);
+
 			break;
 		}
 	}
@@ -238,6 +238,10 @@ bool InitDrive(u32 fileflags)
 
 bool DiscSwap(u32 fileflags)
 {
+	// These Additional Sense Codes mean "The lid was closed"
+	sns_asc = 0x28;
+	sns_ascq = 0x00;
+	sns_key = 0x6;
 	if (settings.imgread.LoadDefaultImage)
 	{
 		printf("Loading default image \"%s\"\n",settings.imgread.DefaultImage);
@@ -265,16 +269,10 @@ bool DiscSwap(u32 fileflags)
 	{
 		NullDriveDiscType=Open;
 		gd_setdisc();
-		sns_asc=0x28;
-		sns_ascq=0x00;
-		sns_key=0x6;
 		return true;
 	}
 	else if (gfrv == -1)
 	{
-		sns_asc=0x28;
-		sns_ascq=0x00;
-		sns_key=0x6;
 		return false;
 	}
 
@@ -290,18 +288,9 @@ bool DiscSwap(u32 fileflags)
 		//msgboxf("Selected image failed to load",MBX_ICONERROR);
 		NullDriveDiscType=Open;
 		gd_setdisc();
-		sns_asc=0x28;
-		sns_ascq=0x00;
-		sns_key=0x6;
-		return true;
 	}
-	else
-	{
-		sns_asc=0x28;
-		sns_ascq=0x00;
-		sns_key=0x6;
-		return true;
-	}
+
+	return true;
 }
 #endif
 

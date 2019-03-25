@@ -4,13 +4,8 @@
 #include "ta.h"
 #include "spg.h"
 
-u32 palette_ram[1024];
 bool pal_needs_update=true;
 bool fog_needs_update=true;
-u32 _pal_rev_256[4]={0};
-u32 _pal_rev_16[64]={0};
-u32 pal_rev_256[4]={0};
-u32 pal_rev_16[64]={0};
 
 u8 pvr_regs[pvr_RegSize];
 
@@ -62,32 +57,43 @@ void pvr_WriteReg(u32 paddr,u32 data)
 		ta_vtx_ListCont();
 	}
 	
-	if (addr == FB_R_CTRL_addr || 
-		addr == SPG_CONTROL_addr || 
-		addr == SPG_LOAD_addr)
+	if (addr == SPG_CONTROL_addr || addr == SPG_LOAD_addr)
 	{
-		PvrReg(addr,u32)=data;
-		CalculateSync();
+		if (PvrReg(addr, u32) != data)
+		{
+			PvrReg(addr, u32) = data;
+			CalculateSync();
+		}
 		return;
 	}
-
-	if (addr == TA_YUV_TEX_BASE_addr)
+	if (addr == FB_R_CTRL_addr)
+	{
+		bool vclk_div_changed = (PvrReg(addr, u32) ^ data) & (1 << 23);
+		PvrReg(addr, u32) = data;
+		if (vclk_div_changed)
+			CalculateSync();
+		return;
+	}
+	if (addr == FB_R_SIZE_addr)
+	{
+		if (PvrReg(addr, u32) != data)
+		{
+			PvrReg(addr, u32) = data;
+			fb_dirty = false;
+			check_framebuffer_write();
+		}
+		return;
+	}
+	if (addr == TA_YUV_TEX_BASE_addr || addr == TA_YUV_TEX_CTRL_addr)
 	{
 		PvrReg(addr, u32) = data;
 		YUV_init();
 		return;
 	}
 
-	if (addr>=PALETTE_RAM_START_addr)
+	if (addr>=PALETTE_RAM_START_addr && PvrReg(addr,u32)!=data)
 	{
-		if (PvrReg(addr,u32)!=data)
-		{
-			u32 pal=(addr/4)&1023;
-
-			pal_needs_update=true;
-			_pal_rev_256[pal>>8]++;
-			_pal_rev_16[pal>>4]++;
-		}
+		pal_needs_update=true;
 	}
 
 	if (addr>=FOG_TABLE_START_addr && addr<=FOG_TABLE_END_addr && PvrReg(addr,u32)!=data)

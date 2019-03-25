@@ -23,21 +23,6 @@
 #include <unistd.h>
 #include "hw/maple/maple_cfg.h"
 
-
-int msgboxf(const wchar* text,unsigned int type,...)
-{
-    va_list args;
-
-    wchar temp[2048];
-    va_start(args, type);
-    vsprintf(temp, text, args);
-    va_end(args);
-
-    //printf(NULL,temp,VER_SHORTNAME,type | MB_TASKMODAL);
-    puts(temp);
-    return 0;
-}
-
 int darw_printf(const wchar* text,...) {
     va_list args;
 
@@ -104,14 +89,12 @@ void os_CreateWindow() {
 }
 
 void os_SetupInput() {
-	mcfg_CreateDevicesFromConfig();
+#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
+	mcfg_CreateDevices();
+#endif
 }
 
 void UpdateInputState(u32 port) {
-
-}
-
-void UpdateVibration(u32 port, u32 value) {
 
 }
 

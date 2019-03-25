@@ -28,6 +28,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#ifdef _WIN32
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -199,3 +200,4 @@ HANDLE WINAPI flac_internal_CreateFile_utf8(const char *lpFileName, DWORD dwDesi
 		return handle;
 	}
 }
+#endif // _WIN32

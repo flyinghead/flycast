@@ -21,19 +21,29 @@ extern VArray2 mem_b;
 #define WriteMem64 _vmem_WriteMem64
 //#define WriteMem64(addr,reg) {  _vmem_WriteMem32(addr,((u32*)reg)[0]);_vmem_WriteMem32((addr)+4, ((u32*)reg)[1]); }
 #else
-#include "modules/mmu.h"
-#define ReadMem8 mmu_ReadMem8
-#define ReadMem16 mmu_ReadMem16
-#define IReadMem16 mmu_IReadMem16
-#define ReadMem32 mmu_ReadMem32
-#define ReadMem64 mmu_ReadMem64
 
-#define WriteMem8 mmu_WriteMem8
-#define WriteMem16 mmu_WriteMem16
-#define WriteMem32 mmu_WriteMem32
-#define WriteMem64 mmu_WriteMem64
+typedef u8 (*ReadMem8Func)(u32 addr);
+typedef u16 (*ReadMem16Func)(u32 addr);
+typedef u32 (*ReadMem32Func)(u32 addr);
+typedef u64 (*ReadMem64Func)(u32 addr);
+
+typedef void (*WriteMem8Func)(u32 addr, u8 data);
+typedef void (*WriteMem16Func)(u32 addr, u16 data);
+typedef void (*WriteMem32Func)(u32 addr, u32 data);
+typedef void (*WriteMem64Func)(u32 addr, u64 data);
+
+extern ReadMem8Func ReadMem8;
+extern ReadMem16Func ReadMem16;
+extern ReadMem16Func IReadMem16;
+extern ReadMem32Func ReadMem32;
+extern ReadMem64Func ReadMem64;
+
+extern WriteMem8Func WriteMem8;
+extern WriteMem16Func WriteMem16;
+extern WriteMem32Func WriteMem32;
+extern WriteMem64Func WriteMem64;
+
 #endif
-
 
 #define ReadMem8_nommu _vmem_ReadMem8
 #define ReadMem16_nommu _vmem_ReadMem16

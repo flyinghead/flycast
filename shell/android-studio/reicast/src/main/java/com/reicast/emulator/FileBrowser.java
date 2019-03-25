@@ -3,7 +3,6 @@ package com.reicast.emulator;
 import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.content.res.ColorStateList;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -17,9 +16,7 @@ import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.Snackbar;
 import android.support.graphics.drawable.VectorDrawableCompat;
 import android.support.v4.app.Fragment;
-import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
-import android.support.v4.widget.ImageViewCompat;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -116,8 +113,10 @@ public class FileBrowser extends Fragment {
 					String[] parts = line.split(" ");
 					for (String part : parts) {
 						if (part.startsWith("/"))
-							if (!StringUtils.containsIgnoreCase(part, "vold"))
+							if (!StringUtils.containsIgnoreCase(part, "vold")) {
+								part = part.replace("/mnt/media_rw", "/storage");
 								out.add(part);
+							}
 					}
 				}
 			}
@@ -174,7 +173,7 @@ public class FileBrowser extends Fragment {
 		if (temp == null || !new File(temp).isDirectory()) {
 			showToastMessage(getActivity().getString(R.string.config_home), Snackbar.LENGTH_LONG);
 		}
-		installButtons();
+		installButtons(mPrefs);
 		if (!games) {
 			new LocateGames(this, R.array.flash).execute(home_directory);
 		} else {
@@ -182,24 +181,21 @@ public class FileBrowser extends Fragment {
 		}
 	}
 
-	private void installButtons() {
+	public static void installButtons(SharedPreferences prefs) {
 		try {
 			File buttons = null;
-			String theme = mPrefs.getString(Config.pref_button_theme, null);
+			// TODO button themes
+			String theme = prefs.getString(Config.pref_theme, null);
 			if (theme != null) {
 				buttons = new File(theme);
 			}
+			String home_directory = prefs.getString(Config.pref_home, Environment.getExternalStorageDirectory().getAbsolutePath());
 			File file = new File(home_directory, "data/buttons.png");
 			InputStream in = null;
 			if (buttons != null && buttons.exists()) {
 				in = new FileInputStream(buttons);
 			} else if (!file.exists() || file.length() == 0) {
-				try {
-					file.createNewFile();
-				} catch (Exception e) {
-					// N+ files be broken
-				}
-				in = getActivity().getAssets().open("buttons.png");
+				in = Emulator.getAppContext().getAssets().open("buttons.png");
 			}
 			if (in != null) {
 				OutputStream out = new FileOutputStream(file);
@@ -319,7 +315,7 @@ public class FileBrowser extends Fragment {
 	}
 
 	private void createListHeader(String header_text, View view, boolean hasBios) {
-		if (hasBios) {
+		if (hasBios && getResources().getString(R.string.flavor).equals("dreamcast")) {
 			final View childview = getActivity().getLayoutInflater().inflate(
 					R.layout.bios_list_item, null, false);
 
@@ -414,7 +410,7 @@ public class FileBrowser extends Fragment {
 								mCallback.onFolderSelected(
 										Uri.fromFile(new File(home_directory)));
 							}
-							JNIdc.config(home_directory);
+							//JNIdc.config(home_directory);
 						}
 					}
 				});
@@ -549,7 +545,7 @@ public class FileBrowser extends Fragment {
 												browser.get().mCallback.onFolderSelected(Uri.fromFile(
 														new File(browser.get().home_directory)));
 											}
-											JNIdc.config(browser.get().home_directory);
+											//JNIdc.config(browser.get().home_directory);
 										}
 
 									}
@@ -581,27 +577,6 @@ public class FileBrowser extends Fragment {
     }
 
 	private void configureTheme(View childview, boolean useTint) {
-		int app_theme = mPrefs.getInt(Config.pref_app_theme, 0);
-		ImageView icon = (ImageView) childview.findViewById(R.id.item_icon);
-		if (app_theme == 7) {
-			childview.findViewById(R.id.childview)
-					.setBackgroundResource(R.drawable.game_selector_dream);
-			if (useTint)
-				ImageViewCompat.setImageTintList(icon, ColorStateList.valueOf(
-						ContextCompat.getColor(getActivity(), R.color.colorDreamTint)));
-		} else if (app_theme == 1) {
-			childview.findViewById(R.id.childview)
-					.setBackgroundResource(R.drawable.game_selector_blue);
-			if (useTint)
-				ImageViewCompat.setImageTintList(icon, ColorStateList.valueOf(
-						ContextCompat.getColor(getActivity(), R.color.colorBlueTint)));
-		} else {
-			childview.findViewById(R.id.childview)
-					.setBackgroundResource(R.drawable.game_selector_dark);
-			if (useTint)
-				ImageViewCompat.setImageTintList(icon, ColorStateList.valueOf(
-						ContextCompat.getColor(getActivity(), R.color.colorDarkTint)));
-		}
 	}
 
 	private void showToastMessage(String message, int duration) {

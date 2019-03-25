@@ -427,7 +427,7 @@ public class InputModFragment extends Fragment {
 		try {
 			File buttons = null;
 			InputStream bitmap;
-			String theme = mPrefs.getString(Config.pref_button_theme, null);
+			String theme = mPrefs.getString(Config.pref_theme, null);
 			if (theme != null) {
 				buttons = new File(theme);
 			}

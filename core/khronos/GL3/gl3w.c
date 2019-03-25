@@ -76,6 +76,22 @@ static void *get_proc(const char *proc)
 	CFRelease(procname);
 	return res;
 }
+#elif defined(_ANDROID)
+#include <dlfcn.h>
+#include <EGL/egl.h>
+
+static void open_libgl(void)
+{
+}
+
+static void close_libgl(void)
+{
+}
+
+static void *get_proc(const char *proc)
+{
+	return (void *)eglGetProcAddress(proc);
+}
 #else
 #include <dlfcn.h>
 #include <GL/glx.h>

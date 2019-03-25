@@ -3,9 +3,12 @@
 #include "imgread\common.h"
 #include "stdclass.h"
 #include "cfg/cfg.h"
+#include "xinput_gamepad.h"
+#include "win_keyboard.h"
 
 #define _WIN32_WINNT 0x0500
 #include <windows.h>
+#include <windowsx.h>
 
 #include <Xinput.h>
 #include "hw\maple\maple_cfg.h"
@@ -105,16 +108,25 @@ PCHAR*
 	return argv;
 }
 
-void dc_stop(void);
+void dc_exit(void);
 
 bool VramLockedWrite(u8* address);
 bool ngen_Rewrite(unat& addr,unat retadr,unat acc);
 bool BM_LockedWrite(u8* address);
-void UpdateController(u32 port);
+
+static std::shared_ptr<WinKbGamepadDevice> kb_gamepad;
+static std::shared_ptr<WinMouseGamepadDevice> mouse_gamepad;
 
 void os_SetupInput()
 {
-	mcfg_CreateDevicesFromConfig();
+#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
+	mcfg_CreateDevices();
+#endif
+	XInputGamepadDevice::CreateDevices();
+	kb_gamepad = std::make_shared<WinKbGamepadDevice>(0);
+	GamepadDevice::Register(kb_gamepad);
+	mouse_gamepad = std::make_shared<WinMouseGamepadDevice>(0);
+	GamepadDevice::Register(mouse_gamepad);
 }
 
 LONG ExeptionHandler(EXCEPTION_POINTERS *ExceptionInfo)
@@ -171,151 +183,58 @@ void SetupPath()
 	set_user_data_dir(fn);
 }
 
-int msgboxf(const wchar* text,unsigned int type,...)
-{
-	va_list args;
-
-	wchar temp[2048];
-	va_start(args, type);
-	vsprintf(temp, text, args);
-	va_end(args);
-
-
-	return MessageBox(NULL,temp,VER_SHORTNAME,type | MB_TASKMODAL);
-}
-
-u16 kcode[4];
+// Gamepads
+u16 kcode[4] = { 0xffff, 0xffff, 0xffff, 0xffff };
 u32 vks[4];
 s8 joyx[4],joyy[4];
 u8 rt[4],lt[4];
-#define key_CONT_C            (1 << 0)
-#define key_CONT_B            (1 << 1)
-#define key_CONT_A            (1 << 2)
-#define key_CONT_START        (1 << 3)
-#define key_CONT_DPAD_UP      (1 << 4)
-#define key_CONT_DPAD_DOWN    (1 << 5)
-#define key_CONT_DPAD_LEFT    (1 << 6)
-#define key_CONT_DPAD_RIGHT   (1 << 7)
-#define key_CONT_Z            (1 << 8)
-#define key_CONT_Y            (1 << 9)
-#define key_CONT_X            (1 << 10)
-#define key_CONT_D            (1 << 11)
-#define key_CONT_DPAD2_UP     (1 << 12)
-#define key_CONT_DPAD2_DOWN   (1 << 13)
-#define key_CONT_DPAD2_LEFT   (1 << 14)
-#define key_CONT_DPAD2_RIGHT  (1 << 15)
+extern bool coin_chute;
+extern bool naomi_test_button;
+// Mouse
+extern s32 mo_x_abs;
+extern s32 mo_y_abs;
+extern u32 mo_buttons;
+extern f32 mo_x_delta;
+extern f32 mo_y_delta;
+extern f32 mo_wheel_delta;
+// Keyboard
+static Win32KeyboardDevice keyboard(0);
+
 void UpdateInputState(u32 port)
-	{
-		//joyx[port]=pad.Lx;
-		//joyy[port]=pad.Ly;
-		lt[port]=GetAsyncKeyState('A')?255:0;
-		rt[port]=GetAsyncKeyState('S')?255:0;
-
-		joyx[port]=joyy[port]=0;
-
-		if (GetAsyncKeyState('J'))
-			joyx[port]-=126;
-		if (GetAsyncKeyState('L'))
-			joyx[port]+=126;
-
-		if (GetAsyncKeyState('I'))
-			joyy[port]-=126;
-		if (GetAsyncKeyState('K'))
-			joyy[port]+=126;
-
-		kcode[port]=0xFFFF;
-		if (GetAsyncKeyState('V'))
-			kcode[port]&=~key_CONT_A;
-		if (GetAsyncKeyState('C'))
-			kcode[port]&=~key_CONT_B;
-		if (GetAsyncKeyState('X'))
-			kcode[port]&=~key_CONT_Y;
-		if (GetAsyncKeyState('Z'))
-			kcode[port]&=~key_CONT_X;
-
-		if (GetAsyncKeyState(VK_SHIFT))
-			kcode[port]&=~key_CONT_START;
-
-		if (GetAsyncKeyState(VK_UP))
-			kcode[port]&=~key_CONT_DPAD_UP;
-		if (GetAsyncKeyState(VK_DOWN))
-			kcode[port]&=~key_CONT_DPAD_DOWN;
-		if (GetAsyncKeyState(VK_LEFT))
-			kcode[port]&=~key_CONT_DPAD_LEFT;
-		if (GetAsyncKeyState(VK_RIGHT))
-			kcode[port]&=~key_CONT_DPAD_RIGHT;
-
-		UpdateController(port);
-
-		if (GetAsyncKeyState(VK_F1))
-			settings.pvr.ta_skip = 100;
-
-		if (GetAsyncKeyState(VK_F2))
-			settings.pvr.ta_skip = 0;
-
-		if (GetAsyncKeyState(VK_F10))
-			DiscSwap();
-		if (GetAsyncKeyState(VK_ESCAPE))
-			dc_stop();
-	}
-
-void UpdateController(u32 port)
-	{
-		XINPUT_STATE state;
-
-		if (XInputGetState(port, &state) == 0)
-		{
-			WORD xbutton = state.Gamepad.wButtons;
-
-			if (xbutton & XINPUT_GAMEPAD_A)
-				kcode[port] &= ~key_CONT_A;
-			if (xbutton & XINPUT_GAMEPAD_B)
-				kcode[port] &= ~key_CONT_B;
-			if (xbutton & XINPUT_GAMEPAD_Y)
-				kcode[port] &= ~key_CONT_Y;
-			if (xbutton & XINPUT_GAMEPAD_X)
-				kcode[port] &= ~key_CONT_X;
-
-			if (xbutton & XINPUT_GAMEPAD_START)
-				kcode[port] &= ~key_CONT_START;
-
-			if (xbutton & XINPUT_GAMEPAD_DPAD_UP)
-				kcode[port] &= ~key_CONT_DPAD_UP;
-			if (xbutton & XINPUT_GAMEPAD_DPAD_DOWN)
-				kcode[port] &= ~key_CONT_DPAD_DOWN;
-			if (xbutton & XINPUT_GAMEPAD_DPAD_LEFT)
-				kcode[port] &= ~key_CONT_DPAD_LEFT;
-			if (xbutton & XINPUT_GAMEPAD_DPAD_RIGHT)
-				kcode[port] &= ~key_CONT_DPAD_RIGHT;
-
-			lt[port] |= state.Gamepad.bLeftTrigger;
-			rt[port] |= state.Gamepad.bRightTrigger;
-
-			joyx[port] |=  state.Gamepad.sThumbLX / 257;
-			joyy[port] |= -state.Gamepad.sThumbLY / 257;
-		}
-	}
-
-void UpdateVibration(u32 port, u32 value)
 {
-		u8 POW_POS = (value >> 8) & 0x3;
-		u8 POW_NEG = (value >> 12) & 0x3;
-		u8 FREQ = (value >> 16) & 0xFF;
+	/*
+		 Disabled for now. Need new EMU_BTN_ANA_LEFT/RIGHT/.. virtual controller keys
 
-		XINPUT_VIBRATION vib;
+	joyx[port]=joyy[port]=0;
 
-		double pow = (POW_POS + POW_NEG) / 7.0;
-		double pow_l = pow * (0x3B - FREQ) / 17.0;
-		double pow_r = pow * (FREQ - 0x07) / 15.0;
+	if (GetAsyncKeyState('J'))
+		joyx[port]-=126;
+	if (GetAsyncKeyState('L'))
+		joyx[port]+=126;
 
-		if (pow_l > 1.0) pow_l = 1.0;
-		if (pow_r > 1.0) pow_r = 1.0;
+	if (GetAsyncKeyState('I'))
+		joyy[port]-=126;
+	if (GetAsyncKeyState('K'))
+		joyy[port]+=126;
+	*/
+	std::shared_ptr<XInputGamepadDevice> gamepad = XInputGamepadDevice::GetXInputDevice(port);
+	if (gamepad != NULL)
+		gamepad->ReadInput();
 
-		vib.wLeftMotorSpeed = (u16)(65535 * pow_l);
-		vib.wRightMotorSpeed = (u16)(65535 * pow_r);
-
-		XInputSetState(port, &vib);
+#if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
+		// FIXME
+		coin_chute = GetAsyncKeyState(VK_F8);
+		naomi_test_button = GetAsyncKeyState(VK_F7);
+#endif
 }
+
+// Windows class name to register
+#define WINDOW_CLASS "nilDC"
+
+// Width and height of the window
+#define WINDOW_WIDTH  1280
+#define WINDOW_HEIGHT 720
+
 
 LRESULT CALLBACK WndProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -340,6 +259,83 @@ LRESULT CALLBACK WndProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		PostQuitMessage(0);
 		return 1;
 
+	case WM_LBUTTONDOWN:
+	case WM_LBUTTONUP:
+	case WM_MBUTTONDOWN:
+	case WM_MBUTTONUP:
+	case WM_RBUTTONDOWN:
+	case WM_RBUTTONUP:
+		switch (message)
+		{
+		case WM_LBUTTONDOWN:
+			mouse_gamepad->gamepad_btn_input(0, true);
+			break;
+		case WM_LBUTTONUP:
+			mouse_gamepad->gamepad_btn_input(0, false);
+			break;
+		case WM_MBUTTONDOWN:
+			mouse_gamepad->gamepad_btn_input(1, true);
+			break;
+		case WM_MBUTTONUP:
+			mouse_gamepad->gamepad_btn_input(1, false);
+			break;
+		case WM_RBUTTONDOWN:
+			mouse_gamepad->gamepad_btn_input(2, true);
+			break;
+		case WM_RBUTTONUP:
+			mouse_gamepad->gamepad_btn_input(2, false);
+			break;
+		}
+		/* no break */
+	case WM_MOUSEMOVE:
+		{
+			static int prev_x = -1;
+			static int prev_y = -1;
+			int xPos = GET_X_LPARAM(lParam);
+			int yPos = GET_Y_LPARAM(lParam);
+			mo_x_abs = (xPos - (WINDOW_WIDTH - 640 * WINDOW_HEIGHT / 480) / 2) * 480 / WINDOW_HEIGHT;
+			mo_y_abs = yPos * 480 / WINDOW_HEIGHT;
+			mo_buttons = 0xffffffff;
+			if (wParam & MK_LBUTTON)
+				mo_buttons &= ~(1 << 2);
+			if (wParam & MK_MBUTTON)
+				mo_buttons &= ~(1 << 3);
+			if (wParam & MK_RBUTTON)
+				mo_buttons &= ~(1 << 1);
+			if (prev_x != -1)
+			{
+				mo_x_delta += (f32)(xPos - prev_x) * settings.input.MouseSensitivity / 100.f;
+				mo_y_delta += (f32)(yPos - prev_y) * settings.input.MouseSensitivity / 100.f;
+			}
+			prev_x = xPos;
+			prev_y = yPos;
+		}
+		if (message != WM_MOUSEMOVE)
+			return 0;
+		break;
+	case WM_MOUSEWHEEL:
+		mo_wheel_delta -= (float)GET_WHEEL_DELTA_WPARAM(wParam)/(float)WHEEL_DELTA * 16;
+		break;
+
+	case WM_KEYDOWN:
+	case WM_KEYUP:
+		{
+			u8 keycode;
+			// bit 24 indicates whether the key is an extended key, such as the right-hand ALT and CTRL keys that appear on an enhanced 101- or 102-key keyboard.
+			// (It also distinguishes between the main Return key and the numeric keypad Enter key)
+			// The value is 1 if it is an extended key; otherwise, it is 0.
+			if (wParam == VK_RETURN && ((lParam & (1 << 24)) != 0))
+				keycode = VK_NUMPAD_RETURN;
+			else
+				keycode = wParam & 0xff;
+			kb_gamepad->gamepad_btn_input(keycode, message == WM_KEYDOWN);
+			keyboard.keyboard_input(keycode, message == WM_KEYDOWN);
+		}
+		break;
+	case WM_CHAR:
+		keyboard.keyboard_character((char)wParam);
+		return 0;
+
 	default:
 		break;
 	}
@@ -347,14 +343,6 @@ LRESULT CALLBACK WndProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	// Calls the default window procedure for messages we did not handle
 	return DefWindowProc(hWnd, message, wParam, lParam);
 }
-
-// Windows class name to register
-#define WINDOW_CLASS "nilDC"
-
-// Width and height of the window
-#define WINDOW_WIDTH  1280
-#define WINDOW_HEIGHT 720
-
 
 void* window_win;
 void os_CreateWindow()
@@ -432,46 +420,6 @@ void os_MakeExecutable(void* ptr, u32 sz)
 	DWORD old;
 	VirtualProtect(ptr, sz, PAGE_EXECUTE_READWRITE, &old);  // sizeof(sz) really?
 }
-
-
-u64 cycl_glob;
-cResetEvent evt_hld(false,true);
-
-
-double speed_load_mspdf;
-extern double full_rps;
-
-
-void os_consume(double t)
-{
-	double cyc=t*190*1000*1000;
-
-	if ((cycl_glob+cyc)<10*1000*1000)
-	{
-		InterlockedExchangeAdd(&cycl_glob,(u64)cyc);
-	}
-	else
-	{
-		cycl_glob=10*1000*1000;
-	}
-
-	evt_hld.Set();
-}
-
-void* tick_th(void* p)
-{
-		SetThreadPriority(GetCurrentThread(),THREAD_PRIORITY_TIME_CRITICAL);
-		double old=os_GetSeconds();
-		for(;;)
-		{
-			Sleep(4);
-			double newt=os_GetSeconds();
-			os_consume(newt-old);
-			old=newt;
-		}
-}
-
-cThread tick_thd(&tick_th,0);
 
 void ReserveBottomMemory()
 {
@@ -702,34 +650,40 @@ int CALLBACK WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine
 
 #endif
 
-
-	if(ParseCommandLine(argc,argv)) {
-		return rv_cli_finish;
-	}
-
 	ReserveBottomMemory();
-	tick_thd.Start();
 	SetupPath();
 
-	//SetUnhandledExceptionFilter(&ExeptionHandler);
+#ifndef __GNUC__
 	__try
-	{
-		int dc_init(int argc,wchar* argv[]);
-		void dc_run();
-		void dc_term();
-		if (0 == dc_init(argc, argv))
-		{
+#else
 #ifdef _WIN64
-			setup_seh();
+	AddVectoredExceptionHandler(1, ExeptionHandler);
+#else
+	SetUnhandledExceptionFilter(&ExeptionHandler);
 #endif
-			dc_run();
-			dc_term();
-		}
+#endif
+	{
+		int reicast_init(int argc, char* argv[]);
+		void *rend_thread(void *);
+		void dc_term();
+
+		if (reicast_init(argc, argv) != 0)
+			die("Reicast initialization failed");
+
+		#ifdef _WIN64
+			setup_seh();
+		#endif
+
+		rend_thread(NULL);
+
+		dc_term();
 	}
+#ifndef __GNUC__
 	__except( ExeptionHandler(GetExceptionInformation()) )
 	{
 		printf("Unhandled exception - Emulation thread halted...\n");
 	}
+#endif
 	SetUnhandledExceptionFilter(0);
 
 	return 0;
@@ -764,7 +718,7 @@ void os_DoEvents()
 		// If the message is WM_QUIT, exit the while loop
 		if (msg.message == WM_QUIT)
 		{
-			dc_stop();
+			dc_exit();
 		}
 
 		// Translate the message and dispatch it to WindowProc()
@@ -788,7 +742,7 @@ cThread::cThread(ThreadEntryFP* function,void* prm)
 
 void cThread::Start()
 {
-	hThread=CreateThread(NULL,NULL,(LPTHREAD_START_ROUTINE)Entry,param,0,NULL);
+	hThread=CreateThread(NULL,0,(LPTHREAD_START_ROUTINE)Entry,param,0,NULL);
 	ResumeThread(hThread);
 }
 
@@ -827,12 +781,12 @@ void cResetEvent::Reset()//reset
 	#endif
 	ResetEvent(hEvent);
 }
-void cResetEvent::Wait(u32 msec)//Wait for signal , then reset
+bool cResetEvent::Wait(u32 msec)//Wait for signal , then reset
 {
 	#if defined(DEBUG_THREADS)
 		Sleep(rand() % 10);
 	#endif
-	WaitForSingleObject(hEvent,msec);
+	return WaitForSingleObject(hEvent,msec) == WAIT_OBJECT_0;
 }
 void cResetEvent::Wait()//Wait for signal , then reset
 {

@@ -3,7 +3,10 @@
 #include <alsa/asoundlib.h>
 #include "cfg/cfg.h"
 
-snd_pcm_t *handle;
+static snd_pcm_t *handle;
+static bool pcm_blocking = true;
+static snd_pcm_uframes_t buffer_size;
+static snd_pcm_uframes_t period_size;
 
 // We're making these functions static - there's no need to pollute the global namespace
 static void alsa_init()
@@ -11,7 +14,6 @@ static void alsa_init()
 	snd_pcm_hw_params_t *params;
 	unsigned int val;
 	int dir=-1;
-	snd_pcm_uframes_t frames;
 
 	string device = cfgLoadStr("alsa", "device", "");
 
@@ -100,20 +102,24 @@ static void alsa_init()
 	}
 
 	/* Set period size to settings.aica.BufferSize frames. */
-	frames = 2 * 1024;//settings.aica.BufferSize;
-	rc=snd_pcm_hw_params_set_period_size_near(handle, params, &frames, &dir);
+	period_size = settings.aica.BufferSize;
+	rc=snd_pcm_hw_params_set_period_size_near(handle, params, &period_size, &dir);
 	if (rc < 0)
 	{
 		fprintf(stderr, "Error:snd_pcm_hw_params_set_buffer_size_near %s\n", snd_strerror(rc));
 		return;
 	}
-	frames*=4;
-	rc=snd_pcm_hw_params_set_buffer_size_near(handle, params, &frames);
+	else
+		printf("ALSA: period size set to %ld\n", period_size);
+	buffer_size = (44100 * 100 /* settings.omx.Audio_Latency */ / 1000 / period_size + 1) * period_size;
+	rc=snd_pcm_hw_params_set_buffer_size_near(handle, params, &buffer_size);
 	if (rc < 0)
 	{
 		fprintf(stderr, "Error:snd_pcm_hw_params_set_buffer_size_near %s\n", snd_strerror(rc));
 		return;
 	}
+	else
+		printf("ALSA: buffer size set to %ld\n", buffer_size);
 
 	/* Write the parameters to the driver */
 	rc = snd_pcm_hw_params(handle, params);
@@ -126,7 +132,10 @@ static void alsa_init()
 
 static u32 alsa_push(void* frame, u32 samples, bool wait)
 {
-	snd_pcm_nonblock(handle, wait ? 0 : 1);
+	if (wait != pcm_blocking) {
+		snd_pcm_nonblock(handle, wait ? 0 : 1);
+		pcm_blocking = wait;
+	}
 
 	int rc = snd_pcm_writei(handle, frame, samples);
 	if (rc == -EPIPE)
@@ -134,7 +143,20 @@ static u32 alsa_push(void* frame, u32 samples, bool wait)
 		/* EPIPE means underrun */
 		fprintf(stderr, "ALSA: underrun occurred\n");
 		snd_pcm_prepare(handle);
-		alsa_push(frame, samples * 8, wait);
+		// Write some silence then our samples
+		const size_t silence_size = period_size * 4;
+		void *silence = alloca(silence_size * 4);
+		memset(silence, 0, silence_size * 4);
+		rc = snd_pcm_writei(handle, silence, silence_size);
+		if (rc < 0)
+			fprintf(stderr, "ALSA: error from writei(silence): %s\n", snd_strerror(rc));
+		else if (rc < silence_size)
+			fprintf(stderr, "ALSA: short write from writei(silence): %d/%ld frames\n", rc, silence_size);
+		rc = snd_pcm_writei(handle, frame, samples);
+		if (rc < 0)
+			fprintf(stderr, "ALSA: error from writei(again): %s\n", snd_strerror(rc));
+		else if (rc < samples)
+			fprintf(stderr, "ALSA: short write from writei(again): %d/%d frames\n", rc, samples);
 	}
 	else if (rc < 0)
 	{

@@ -5,9 +5,13 @@
 #if BUILD_COMPILER==COMPILER_VC
 #define DECL_ALIGN(x) __declspec(align(x))
 #else
+#ifndef __forceinline
 #define __forceinline inline
+#endif
 #define DECL_ALIGN(x) __attribute__((aligned(x)))
+#ifndef _WIN32
 #define __debugbreak
+#endif
 #endif
 
 
@@ -261,12 +265,12 @@ struct vram_block
 	
 	#define BUILD_ATOMISWAVE 1
 
-	//Atomiswave : 16(?) mb ram, 16 mb vram, 8 mb aram, 64kb bios, 64k flash
+	//Atomiswave : 16 mb ram, 8 mb vram, 8 mb aram, 128kb bios on flash, 128kb battery-backed ram
 	#define RAM_SIZE (16*1024*1024)
-	#define VRAM_SIZE (16*1024*1024)
+	#define VRAM_SIZE (8*1024*1024)
 	#define ARAM_SIZE (8*1024*1024)
-	#define BIOS_SIZE (64*1024)
-	#define FLASH_SIZE (64*1024)
+	#define BIOS_SIZE (128*1024)
+	#define BBSRAM_SIZE (128*1024)
 
 	#define ROM_PREFIX "aw_"
 	#define ROM_NAMES ";bios.ic23_l"
@@ -463,13 +467,13 @@ using namespace std;
 #endif
 
 //no inline -- fixme
-#if HOST_OS==OS_WINDOWS
+#if BUILD_COMPILER == COMPILER_VC
 #define NOINLINE __declspec(noinline)
 #else
 #define NOINLINE __attribute__ ((noinline))
 #endif
 
-#if HOST_OS==OS_WINDOWS
+#if BUILD_COMPILER == COMPILER_VC
 #define likely(x) x
 #define unlikely(x) x
 #else
@@ -480,16 +484,16 @@ using namespace std;
 //basic includes
 #include "stdclass.h"
 
-#define EMUERROR(x)( printf("Error in %s:" "%s" ":%d  -> " x "\n", __FILE__,__FUNCTION__ ,__LINE__ ))
-#define EMUERROR2(x,a)(printf("Error in %s:" "%s" ":%d  -> " x "\n)",__FILE__,__FUNCTION__,__LINE__,a))
-#define EMUERROR3(x,a,b)(printf("Error in %s:" "%s" ":%d  -> " x "\n)",__FILE__,__FUNCTION__,__LINE__,a,b))
-#define EMUERROR4(x,a,b,c)(printf("Error in %s:" "%s" ":%d  -> " x "\n",__FILE__,__FUNCTION__,__LINE__,a,b,c))
-
-#define EMUWARN(x)(printf(      "Warning in %s:" "%s" ":%d  -> " x "\n"),__FILE__,__FUNCTION__,__LINE__))
-#define EMUWARN2(x,a)(printf(   "Warning in %s:" "%s" ":%d  -> " x "\n"),__FILE__,__FUNCTION__,__LINE__,a))
-#define EMUWARN3(x,a,b)(printf( "Warning in %s:" "%s" ":%d  -> " x "\n"),__FILE__,__FUNCTION__,__LINE__,a,b))
-#define EMUWARN4(x,a,b,c)(printf("Warning in %s:" "%s" ":%d  -> " x "\n"),__FILE__,__FUNCTION__,__LINE__,a,b,c))
-
+#ifndef RELEASE
+#define EMUERROR(format, ...) printf("Error in %s:%s:%d: " format "\n", \
+		strlen(__FILE__) <= 20 ? __FILE__ : __FILE__ + strlen(__FILE__) - 20, \
+		__FUNCTION__, __LINE__, ##__VA_ARGS__)
+#else
+#define EMUERROR(format, ...)
+#endif
+#define EMUERROR2 EMUERROR
+#define EMUERROR3 EMUERROR
+#define EMUERROR4 EMUERROR
 
 #ifndef NO_MMU
 #define _X_x_X_MMU_VER_STR "/mmu"
@@ -517,6 +521,102 @@ using namespace std;
 
 void os_DebugBreak();
 #define dbgbreak os_DebugBreak()
+
+bool rc_serialize(void *src, unsigned int src_size, void **dest, unsigned int *total_size) ;
+bool rc_unserialize(void *src, unsigned int src_size, void **dest, unsigned int *total_size);
+bool dc_serialize(void **data, unsigned int *total_size);
+bool dc_unserialize(void **data, unsigned int *total_size);
+
+#define REICAST_S(v) rc_serialize(&(v), sizeof(v), data, total_size)
+#define REICAST_US(v) rc_unserialize(&(v), sizeof(v), data, total_size)
+
+#define REICAST_SA(v_arr,num) rc_serialize(v_arr, sizeof(v_arr[0])*num, data, total_size)
+#define REICAST_USA(v_arr,num) rc_unserialize(v_arr, sizeof(v_arr[0])*num, data, total_size)
+
+enum
+{
+	RN_CPSR      = 16,
+	RN_SPSR      = 17,
+
+	R13_IRQ      = 18,
+	R14_IRQ      = 19,
+	SPSR_IRQ     = 20,
+	R13_USR      = 26,
+	R14_USR      = 27,
+	R13_SVC      = 28,
+	R14_SVC      = 29,
+	SPSR_SVC     = 30,
+	R13_ABT      = 31,
+	R14_ABT      = 32,
+	SPSR_ABT     = 33,
+	R13_UND      = 34,
+	R14_UND      = 35,
+	SPSR_UND     = 36,
+	R8_FIQ       = 37,
+	R9_FIQ       = 38,
+	R10_FIQ      = 39,
+	R11_FIQ      = 40,
+	R12_FIQ      = 41,
+	R13_FIQ      = 42,
+	R14_FIQ      = 43,
+	SPSR_FIQ     = 44,
+	RN_PSR_FLAGS = 45,
+	R15_ARM_NEXT = 46,
+	INTR_PEND    = 47,
+	CYCL_CNT     = 48,
+
+	RN_ARM_REG_COUNT,
+};
+
+typedef union
+{
+	struct
+	{
+		u8 B0;
+		u8 B1;
+		u8 B2;
+		u8 B3;
+	} B;
+
+	struct
+	{
+		u16 W0;
+		u16 W1;
+	} W;
+
+	union
+	{
+		struct
+		{
+			u32 _pad0 : 28;
+			u32 V     : 1; //Bit 28
+			u32 C     : 1; //Bit 29
+			u32 Z     : 1; //Bit 30
+			u32 N     : 1; //Bit 31
+		};
+
+		struct
+		{
+			u32 _pad1 : 28;
+			u32 NZCV  : 4; //Bits [31:28]
+		};
+	} FLG;
+
+	struct
+	{
+		u32 M     : 5;  //mode, PSR[4:0]
+		u32 _pad0 : 1;  //not used / zero
+		u32 F     : 1;  //FIQ disable, PSR[6]
+		u32 I     : 1;  //IRQ disable, PSR[7]
+		u32 _pad1 : 20; //not used / zero
+		u32 NZCV  : 4;  //Bits [31:28]
+	} PSR;
+
+	u32 I;
+} reg_pair;
+
+
+
 
 #if COMPILER_VC==BUILD_COMPILER
 #pragma warning( disable : 4127 4996 /*4244*/)
@@ -616,10 +716,18 @@ struct settings_t
 	{
 		bool UseMipmaps;
 		bool WideScreen;
+		bool ShowFPS;
+		bool RenderToTextureBuffer;
+		int RenderToTextureUpscale;
+		bool TranslucentPolygonDepthMask;
 		bool ModifierVolumes;
 		bool Clipping;
-		u32 VerticalResolution;
-		u32 HorizontalResolution;
+		int TextureUpscale;
+		int MaxFilteredTextureSize;
+		f32 ExtraDepthScale;
+		bool CustomTextures;
+		bool DumpTextures;
+		int ScreenScaling;	// in percent. 50 means half the native resolution
 	} rend;
 
 	struct
@@ -638,26 +746,28 @@ struct settings_t
 
 	struct
 	{
-		u32 cable;
+		u32 cable;			// 0 -> VGA, 1 -> VGA, 2 -> RGB, 3 -> TV
 		u32 RTC;
-		u32 region;
-		u32 broadcast;
-		u32 rttOption;
+		u32 region;			// 0 -> JP, 1 -> USA, 2 -> EU, 3 -> default
+		u32 broadcast;		// 0 -> NTSC, 1 -> PAL, 2 -> PAL/M, 3 -> PAL/N, 4 -> default
+		u32 language;		// 0 -> JP, 1 -> EN, 2 -> DE, 3 -> FR, 4 -> SP, 5 -> IT, 6 -> default
+		std::vector<std::string> ContentPath;
+		bool FullMMU;
 	} dreamcast;
 
 	struct
 	{
 		u32 HW_mixing;		//(0) -> SW , 1 -> HW , 2 -> Auto
 		u32 BufferSize;		//In samples ,*4 for bytes (1024)
-		u32 LimitFPS;		//0 -> no , (1) -> limit
+		bool LimitFPS;		// defaults to true
 		u32 GlobalFocus;	//0 -> only hwnd , (1) -> Global
 		u32 BufferCount;	//BufferCount+2 buffers used , max 60 , default 0
 		u32 CDDAMute;
 		u32 GlobalMute;
 		u32 DSPEnabled;		//0 -> no, 1 -> yes
-		u32 NoBatch;
-		u32 NoSound;        //0 ->sound, 1 -> no sound
-		bool OldSyncronousDma;		// 0 -> sync dma (old behavior), 1 -> async dma (fixes some games, partial implementation)
+		bool OldSyncronousDma;		// 1 -> sync dma (old behavior), 0 -> async dma (fixes some games, partial implementation)
+		bool NoBatch;
+		bool NoSound;
 	} aica;
 
 #if USE_OMX
@@ -687,43 +797,11 @@ struct settings_t
 
 	struct
 	{
-		struct
-		{
-			u32 ResolutionMode;
-			u32 VSync;
-		} Video;
-
-		struct 
-		{
-			u32 MultiSampleCount;
-			u32 MultiSampleQuality;
-			u32 AspectRatioMode;
-		} Enhancements;
-
-		struct
-		{
-			u32 PaletteMode;
-			u32 AlphaSortMode;
-			u32 ModVolMode;
-			u32 ZBufferMode;
-			u32 TexCacheMode;
-		} Emulation;
-
-		struct
-		{
-			u32 ShowFPS;
-			u32 ShowStats;
-		} OSD;
-
 		u32 ta_skip;
-		u32 subdivide_transp;
 		u32 rend;
 		
 		u32 MaxThreads;
-		u32 SynchronousRender;
-
-		string HashLogFile;
-		string HashCheckFile;
+		bool SynchronousRender;
 	} pvr;
 
 	struct {
@@ -733,12 +811,21 @@ struct settings_t
 	struct {
 		bool OpenGlChecks;
 	} validate;
+
+	struct {
+		u32 MouseSensitivity;
+		u32 JammaSetup;			// 0: standard, 1: 4-players, 2: rotary encoders, 3: Sega Marine Fishing,
+								// 4: dual I/O boards (4P), 5: Namco JYU board (Ninja Assault)
+		int maple_devices[4];
+		int maple_expansion_devices[4][2];
+		int VirtualGamepadVibration;
+	} input;
 };
 
 extern settings_t settings;
 
-void LoadSettings();
-void LoadCustom();
+void InitSettings();
+void LoadSettings(bool game_specific);
 void SaveSettings();
 u32 GetRTC_now();
 extern u32 patchRB;
@@ -835,13 +922,9 @@ u32 libGDR_GetDiscType();
 void libGDR_GetSessionInfo(u8* pout,u8 session);
 
 
-//ExtDev
-s32 libExtDevice_Init();
-void libExtDevice_Reset(bool M);
-void libExtDevice_Term();
-
-static u32  libExtDevice_ReadMem_A0_006(u32 addr,u32 size) { return 0; }
-static void libExtDevice_WriteMem_A0_006(u32 addr,u32 data,u32 size) { }
+// 0x00600000 - 0x006007FF [NAOMI] (modem area for dreamcast)
+u32  libExtDevice_ReadMem_A0_006(u32 addr,u32 size);
+void libExtDevice_WriteMem_A0_006(u32 addr,u32 data,u32 size);
 
 //Area 0 , 0x01000000- 0x01FFFFFF	[Ext. Device]
 static u32 libExtDevice_ReadMem_A0_010(u32 addr,u32 size) { return 0; }
@@ -889,3 +972,8 @@ struct OnLoad
 	typedef void OnLoadFP();
 	OnLoad(OnLoadFP* fp) { fp(); }
 };
+
+#ifndef ARRAY_SIZE
+#define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
+#endif
+

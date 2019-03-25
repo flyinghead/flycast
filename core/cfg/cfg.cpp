@@ -9,17 +9,19 @@
 #include "cfg.h"
 #include "ini.h"
 
-string cfgPath;
-bool save_config = true;
+static string cfgPath;
+static bool save_config = true;
 
-emucfg::ConfigFile cfgdb;
+static emucfg::ConfigFile cfgdb;
+static string game_id;
+static bool has_game_specific_config = false;
 
 void savecfgf()
 {
 	FILE* cfgfile = fopen(cfgPath.c_str(),"wt");
 	if (!cfgfile)
 	{
-		printf("Error : Unable to open file for saving \n");
+		printf("Error: Unable to open file '%s' for saving\n", cfgPath.c_str());
 	}
 	else
 	{
@@ -29,12 +31,23 @@ void savecfgf()
 }
 void  cfgSaveStr(const wchar * Section, const wchar * Key, const wchar * String)
 {
-	cfgdb.set(string(Section), string(Key), string(String));
+	const std::string section(Section);
+	const std::string key(Key);
+	const std::string value(String);
+	if (cfgHasGameSpecificConfig())
+	{
+		if (cfgdb.get(section, key, "") == value)
+			// Same value as main config: delete entry
+			cfgdb.delete_entry(game_id, key);
+		else
+			cfgdb.set(game_id, key, value);
+	}
+	else
+		cfgdb.set(section, key, value);
 	if(save_config)
 	{
 		savecfgf();
 	}
-	//WritePrivateProfileString(Section,Key,String,cfgPath);
 }
 //New config code
 
@@ -53,21 +66,6 @@ void  cfgSaveStr(const wchar * Section, const wchar * Key, const wchar * String)
 	If a cfgSave* is made on a value defined by command line , then the command line value is replaced by it
 
 	cfg values set by command line are not written to the cfg file , unless a cfgSave* is used
-
-	There are some special values , all of em are on the emu namespace :)
-
-	These are readonly :
-
-	emu:AppPath		: Returns the path where the emulator is stored
-	emu:PluginPath	: Returns the path where the plugins are loaded from
-	emu:DataPath	: Returns the path where the bios/data files are
-
-	emu:FullName	: str,returns the emulator's name + version string (ex."nullDC v1.0.0 Private Beta 2 built on {datetime}")
-	emu:ShortName	: str,returns the emulator's name + version string , short form (ex."nullDC 1.0.0pb2")
-	emu:Name		: str,returns the emulator's name (ex."nullDC")
-
-	These are read/write
-	emu:Caption		: str , get/set the window caption
 */
 
 ///////////////////////////////
@@ -78,6 +76,10 @@ void  cfgSaveStr(const wchar * Section, const wchar * Key, const wchar * String)
 
 bool cfgOpen()
 {
+	if (get_writable_config_path("").empty())
+		// Config dir not set (android onboarding)
+		return false;
+
 	const char* filename = "/emu.cfg";
 	string config_path_read = get_readonly_config_path(filename);
 	cfgPath = get_writable_config_path(filename);
@@ -125,6 +127,7 @@ s32  cfgExists(const wchar * Section, const wchar * Key)
 		return (cfgdb.has_section(string(Section)) ? 1 : 0);
 	}
 }
+
 void  cfgLoadStr(const wchar * Section, const wchar * Key, wchar * Return,const wchar* Default)
 {
 	string value = cfgdb.get(Section, Key, Default);
@@ -134,60 +137,71 @@ void  cfgLoadStr(const wchar * Section, const wchar * Key, wchar * Return,const 
 
 string  cfgLoadStr(const wchar * Section, const wchar * Key, const wchar* Default)
 {
-	if(!cfgdb.has_entry(string(Section), string(Key)))
-	{
-		cfgSaveStr(Section, Key, Default);
-	}
-	return cfgdb.get(string(Section), string(Key), string(Default));
+	std::string v = cfgdb.get(string(Section), string(Key), string(Default));
+	if (cfgHasGameSpecificConfig())
+		v = cfgdb.get(game_id, string(Key), v);
+
+	return v;
 }
 
 //These are helpers , mainly :)
 void  cfgSaveInt(const wchar * Section, const wchar * Key, s32 Int)
 {
-	cfgdb.set_int(string(Section), string(Key), Int);
-	if(save_config)
-	{
-		savecfgf();
-	}
+	char str[32];
+	sprintf(str, "%d", Int);
+	cfgSaveStr(Section, Key, str);
 }
 
-s32  cfgLoadInt(const wchar * Section, const wchar * Key,s32 Default)
+s32 cfgLoadInt(const wchar * Section, const wchar * Key,s32 Default)
 {
-	if(!cfgdb.has_entry(string(Section), string(Key)))
-	{
-		cfgSaveInt(Section, Key, Default);
-	}
-	return cfgdb.get_int(string(Section), string(Key), Default);
-}
+	s32 v = cfgdb.get_int(string(Section), string(Key), Default);
+	if (cfgHasGameSpecificConfig())
+		v = cfgdb.get_int(game_id, string(Key), v);
 
-s32  cfgGameInt(const wchar * Section, const wchar * Key,s32 Default)
-{
-    if(cfgdb.has_entry(string(Section), string(Key)))
-    {
-        return cfgdb.get_int(string(Section), string(Key), Default);
-    }
-    return Default;
+    return v;
 }
 
 void  cfgSaveBool(const wchar * Section, const wchar * Key, bool BoolValue)
 {
-	cfgdb.set_bool(string(Section), string(Key), BoolValue);
-	if(save_config)
-	{
-		savecfgf();
-	}
+	cfgSaveStr(Section, Key, BoolValue ? "yes" : "no");
 }
 
 bool  cfgLoadBool(const wchar * Section, const wchar * Key,bool Default)
 {
-	if(!cfgdb.has_entry(string(Section), string(Key)))
-	{
-		cfgSaveBool(Section, Key, Default);
-	}
-	return cfgdb.get_bool(string(Section), string(Key), Default);
+	bool v = cfgdb.get_bool(string(Section), string(Key), Default);
+	if (cfgHasGameSpecificConfig())
+		v = cfgdb.get_bool(game_id, string(Key), v);
+
+    return v;
 }
 
 void cfgSetVirtual(const wchar * Section, const wchar * Key, const wchar * String)
 {
 	cfgdb.set(string(Section), string(Key), string(String), true);
+}
+
+void cfgSetGameId(const char *id)
+{
+	game_id = id;
+}
+
+const char *cfgGetGameId()
+{
+	return game_id.c_str();
+}
+
+bool cfgHasGameSpecificConfig()
+{
+	return has_game_specific_config || cfgdb.has_section(game_id);
+}
+
+void cfgMakeGameSpecificConfig()
+{
+	has_game_specific_config = true;
+}
+
+void cfgDeleteGameSpecificConfig()
+{
+	has_game_specific_config = false;
+	cfgdb.delete_section(game_id);
 }

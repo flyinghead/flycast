@@ -19,14 +19,6 @@
 //main system mem
 VArray2 mem_b;
 
-u8 DYNACALL ReadMem8_i(u32 addr);
-u16 DYNACALL ReadMem16_i(u32 addr);
-u32 DYNACALL ReadMem32_i(u32 addr);
-
-void DYNACALL WriteMem8_i(u32 addr,u8 data);
-void DYNACALL WriteMem16_i(u32 addr,u16 data);
-void DYNACALL WriteMem32_i(u32 addr,u32 data);
-
 void _vmem_init();
 void _vmem_reset();
 void _vmem_term();
@@ -248,6 +240,7 @@ void WriteMemBlock_nommu_dma(u32 dst,u32 src,u32 size)
 	}
 	else
 	{
+		verify(size % 4 == 0);
 		for (u32 i=0;i<size;i+=4)
 		{
 			WriteMem32_nommu(dst+i,ReadMem32_nommu(src+i));
@@ -257,7 +250,6 @@ void WriteMemBlock_nommu_dma(u32 dst,u32 src,u32 size)
 void WriteMemBlock_nommu_ptr(u32 dst,u32* src,u32 size)
 {
 	u32 dst_msk;
-	verify(size % 4 == 0);
 
 	void* dst_ptr=_vmem_get_ptr2(dst,dst_msk);
 
@@ -268,9 +260,24 @@ void WriteMemBlock_nommu_ptr(u32 dst,u32* src,u32 size)
 	}
 	else
 	{
-		for (u32 i=0;i<size;i+=4)
+		for (u32 i = 0; i < size;)
 		{
-			WriteMem32_nommu(dst+i,src[i>>2]);
+			u32 left = size - i;
+			if (left >= 4)
+			{
+				WriteMem32_nommu(dst + i, src[i >> 2]);
+				i += 4;
+			}
+			else if (left >= 2)
+			{
+				WriteMem16_nommu(dst + i, ((u16 *)src)[i >> 1]);
+				i += 2;
+			}
+			else
+			{
+				WriteMem8_nommu(dst + i, ((u8 *)src)[i]);
+				i++;
+			}
 		}
 	}
 }
@@ -320,7 +327,7 @@ u8* GetMemPtr(u32 Addr,u32 size)
 		case 6:
 		case 7:
 		default:
-			printf("Get MemPtr unsupported area : addr=0x%X\n",Addr);
+//			EMUERROR("unsupported area : addr=0x%X",Addr);
 			return 0;
 	}
 }

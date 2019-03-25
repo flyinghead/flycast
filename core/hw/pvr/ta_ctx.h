@@ -17,6 +17,12 @@ struct Vertex
 	u8 spc[4];
 
 	float u,v;
+
+	// Two volumes format
+	u8 col1[4];
+	u8 spc1[4];
+
+	float u1,v1;
 };
 
 struct PolyParam
@@ -35,12 +41,16 @@ struct PolyParam
 	float zvZ;
 	u32 tileclip;
 	//float zMin,zMax;
+	TSP tsp1;
+	TCW tcw1;
+	u32 texid1;
 };
 
-struct ModParam
+struct ModifierVolumeParam
 {
-	u32 first;		//entry index , holds vertex/pos data
+	u32 first;
 	u32 count;
+	ISP_Modvol isp;
 };
 
 struct ModTriangle
@@ -55,16 +65,26 @@ struct  tad_context
 	u8* thd_data;
 	u8* thd_root;
 	u8* thd_old_data;
+	u8 *render_passes[10];
+	u32 render_pass_count;
 
 	void Clear()
 	{
 		thd_old_data = thd_data = thd_root;
+		render_pass_count = 0;
 	}
 
 	void ClearPartial()
 	{
 		thd_old_data = thd_data;
 		thd_data = thd_root;
+	}
+
+	void Continue()
+	{
+		render_passes[render_pass_count] = End();
+		if (render_pass_count < sizeof(render_passes) / sizeof(u8*) - 1)
+			render_pass_count++;
 	}
 	
 	u8* End()
@@ -75,8 +95,19 @@ struct  tad_context
 	void Reset(u8* ptr)
 	{
 		thd_data = thd_root = thd_old_data = ptr;
+		render_pass_count = 0;
 	}
 
+};
+
+struct RenderPass {
+	bool autosort;
+	bool z_clear;
+	u32 op_count;
+	u32 mvo_count;
+	u32 pt_count;
+	u32 tr_count;
+	u32 mvo_tr_count;
 };
 
 struct rend_context
@@ -89,21 +120,26 @@ struct rend_context
 
 	bool Overrun;
 	bool isRTT;
-	bool isAutoSort;
-
+	bool isRenderFramebuffer;
+	
 	double early;
 
 	FB_X_CLIP_type    fb_X_CLIP;
 	FB_Y_CLIP_type    fb_Y_CLIP;
+	
+	u32 fog_clamp_min;
+	u32 fog_clamp_max;
 
 	List<Vertex>      verts;
-	List<u16>         idx;
+	List<u32>         idx;
 	List<ModTriangle> modtrig;
-	List<ISP_Modvol>  global_param_mvo;
+	List<ModifierVolumeParam>  global_param_mvo;
+	List<ModifierVolumeParam>  global_param_mvo_tr;
 
 	List<PolyParam>   global_param_op;
 	List<PolyParam>   global_param_pt;
 	List<PolyParam>   global_param_tr;
+	List<RenderPass>  render_passes;
 
 	void Clear()
 	{
@@ -114,12 +150,17 @@ struct rend_context
 		global_param_tr.Clear();
 		modtrig.Clear();
 		global_param_mvo.Clear();
+		global_param_mvo_tr.Clear();
+		render_passes.Clear();
 
 		Overrun=false;
 		fZ_min= 1000000.0f;
 		fZ_max= 1.0f;
+		isRenderFramebuffer = false;
 	}
 };
+
+#define TA_DATA_SIZE (8 * 1024 * 1024)
 
 //vertex lists
 struct TA_context
@@ -150,29 +191,36 @@ struct TA_context
 			sa2:    idx: 36094, vtx: 24520, op: 1330, pt: 10, tr: 177, mvo: 39, modt: 360, ov: 0
 	*/
 
-	void MarkRend()
+	void MarkRend(u32 render_pass)
 	{
-		rend.proc_start = tad.thd_root;
-		rend.proc_end = tad.End();
+		verify(render_pass <= tad.render_pass_count);
+
+		rend.proc_start = render_pass == 0 ? tad.thd_root : tad.render_passes[render_pass - 1];
+		rend.proc_end = render_pass == tad.render_pass_count ? tad.End() : tad.render_passes[render_pass];
 	}
+
 	void Alloc()
 	{
-		tad.Reset((u8*)OS_aligned_malloc(32, 8*1024*1024));
+		tad.Reset((u8*)OS_aligned_malloc(32, TA_DATA_SIZE));
 
-		rend.verts.InitBytes(2*1024*1024,&rend.Overrun); //up to 2 mb of vtx data/frame = ~ 76k vtx/frame
-		rend.idx.Init(120*1024,&rend.Overrun);			//up to 120K indexes ( idx have stripification overhead )
-		rend.global_param_op.Init(4096,&rend.Overrun);
-		rend.global_param_pt.Init(4096,&rend.Overrun);
-		rend.global_param_mvo.Init(4096,&rend.Overrun);
-		rend.global_param_tr.Init(8192,&rend.Overrun);
+		rend.verts.InitBytes(4 * 1024 * 1024, &rend.Overrun, "verts");	//up to 4 mb of vtx data/frame = ~ 96k vtx/frame
+		rend.idx.Init(120 * 1024, &rend.Overrun, "idx");				//up to 120K indexes ( idx have stripification overhead )
+		rend.global_param_op.Init(8192, &rend.Overrun, "global_param_op");
+		rend.global_param_pt.Init(4096, &rend.Overrun, "global_param_pt");
+		rend.global_param_mvo.Init(4096, &rend.Overrun, "global_param_mvo");
+		rend.global_param_tr.Init(10240, &rend.Overrun, "global_param_tr");
+		rend.global_param_mvo_tr.Init(4096, &rend.Overrun, "global_param_mvo_tr");
 
-		rend.modtrig.Init(8192,&rend.Overrun);
+		rend.modtrig.Init(16384, &rend.Overrun, "modtrig");
 		
+		rend.render_passes.Init(sizeof(RenderPass) * 10, &rend.Overrun, "render_passes");	// 10 render passes
+
 		Reset();
 	}
 
 	void Reset()
 	{
+		verify(tad.End() - tad.thd_root < TA_DATA_SIZE);
 		tad.Clear();
 		rend_inuse.Lock();
 		rend.Clear();
@@ -182,6 +230,7 @@ struct TA_context
 
 	void Free()
 	{
+		verify(tad.End() - tad.thd_root < TA_DATA_SIZE);
 		OS_aligned_free(tad.thd_root);
 		rend.verts.Free();
 		rend.idx.Free();
@@ -190,6 +239,8 @@ struct TA_context
 		rend.global_param_tr.Free();
 		rend.modtrig.Free();
 		rend.global_param_mvo.Free();
+		rend.global_param_mvo_tr.Free();
+		rend.render_passes.Free();
 	}
 };
 
@@ -205,7 +256,7 @@ TA_context* tactx_Pop(u32 addr);
 
 TA_context* tactx_Alloc();
 void tactx_Recycle(TA_context* poped_ctx);
-
+void tactx_Term();
 /*
 	Ta Context
 
@@ -223,4 +274,5 @@ void VDecEnd();
 
 //must be moved to proper header
 void FillBGP(TA_context* ctx);
-bool UsingAutoSort();
+bool UsingAutoSort(int pass_number);
+bool rend_framePending();

@@ -169,16 +169,6 @@ struct sr_t
 		u32 status;
 	};
 	u32 T;
-	INLINE u32 GetFull()
-	{
-		return (status & 0x700083F2) | T;
-	}
-
-	INLINE void SetFull(u32 value)
-	{
-		status=value & 0x700083F2;
-		T=value&1;
-	}
 
 };
 
@@ -225,6 +215,7 @@ struct fpscr_t
 
 typedef void RunFP();
 typedef void StopFP();
+typedef void StartFP();
 typedef void StepFP();
 typedef void SkipFP();
 typedef void ResetFP(bool Manual);
@@ -251,6 +242,7 @@ struct sh4_if
 	TermFP* ResetCache;
 
 	IsCpuRunningFP* IsCpuRunning;
+	StartFP* Start;
 };
 
 
@@ -294,9 +286,10 @@ struct Sh4Context
 		u64 raw[64-8];
 	};
 
-	u32 offset(u32 sh4_reg);
-	u32 offset(Sh4RegType sh4_reg) { return offset(sh4_reg); }
 };
+
+u32 sh4context_offset_u32(u32 sh4_reg);
+u32 sh4context_offset_regtype(Sh4RegType sh4_reg);
 
 void DYNACALL do_sqw_mmu(u32 dst);
 extern "C" void DYNACALL do_sqw_nommu_area_3(u32 dst, u8* sqb);
@@ -306,7 +299,7 @@ void DYNACALL do_sqw_nommu_full(u32 dst, u8* sqb);
 typedef void DYNACALL sqw_fp(u32 dst,u8* sqb);
 typedef void DYNACALL TaListVoidFP(void* data);
 
-#define FPCB_SIZE (RAM_SIZE/2)
+#define FPCB_SIZE (RAM_SIZE_MAX/2)
 #define FPCB_MASK (FPCB_SIZE -1)
 //#defeine FPCB_PAD 0x40000
 #define FPCB_PAD 0x100000
@@ -323,6 +316,17 @@ struct Sh4RCB
 
 extern Sh4RCB* p_sh4rcb;
 extern u8* sh4_dyna_rcb;
+
+INLINE u32 sh4_sr_GetFull()
+{
+	return (p_sh4rcb->cntx.sr.status & 0x700083F2) | p_sh4rcb->cntx.sr.T;
+}
+
+INLINE void sh4_sr_SetFull(u32 value)
+{
+	p_sh4rcb->cntx.sr.status=value & 0x700083F2;
+	p_sh4rcb->cntx.sr.T=value&1;
+}
 
 #define do_sqw_nommu sh4rcb.do_sqw_nommu
 
@@ -350,3 +354,5 @@ s32 rcb_poffs(T* ptr)
 //Get an interface to sh4 interpreter
 void Get_Sh4Interpreter(sh4_if* cpu);
 void Get_Sh4Recompiler(sh4_if* cpu);
+
+u32* GetRegPtr(u32 reg);

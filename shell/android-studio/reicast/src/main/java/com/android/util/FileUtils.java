@@ -32,34 +32,6 @@ import javax.microedition.khronos.opengles.GL10;
 
 public class FileUtils {
 
-	public void saveArray(String filename, List<String> output_field) {
-		try {
-			FileOutputStream fos = new FileOutputStream(filename);
-			GZIPOutputStream gzos = new GZIPOutputStream(fos);
-			ObjectOutputStream out = new ObjectOutputStream(gzos);
-			out.writeObject(output_field);
-			out.flush();
-			out.close();
-		} catch (IOException e) {
-			e.getStackTrace();
-		}
-	}
-
-	@SuppressWarnings("unchecked")
-	public List<String> loadArray(String filename) {
-		try {
-			FileInputStream fis = new FileInputStream(filename);
-			GZIPInputStream gzis = new GZIPInputStream(fis);
-			ObjectInputStream in = new ObjectInputStream(gzis);
-			List<String> read_field = (List<String>) in.readObject();
-			in.close();
-			return read_field;
-		} catch (Exception e) {
-			e.getStackTrace();
-		}
-		return null;
-	}
-
 	public Collection<File> listFiles(File directory, FilenameFilter[] filter,
 			int recurse) {
 

@@ -30,9 +30,6 @@ op_agent_t          oprofHandle;
 
 typedef vector<RuntimeBlockInfo*> bm_List;
 
-#define BLOCKS_IN_PAGE_LIST_COUNT (RAM_SIZE/4096)
-bm_List blocks_page[BLOCKS_IN_PAGE_LIST_COUNT];
-
 bm_List all_blocks;
 bm_List del_blocks;
 #include <set>
@@ -122,7 +119,7 @@ RuntimeBlockInfo* bm_GetBlock(void* dynarec_code)
 	}
 	else
 	{
-		printf("bm_GetBlock(%8s) failed ..\n",dynarec_code);
+		printf("bm_GetBlock(%p) failed ..\n",dynarec_code);
 		return 0;
 	}
 }
@@ -140,16 +137,10 @@ RuntimeBlockInfo* bm_GetStaleBlock(void* dynarec_code)
 
 void bm_AddBlock(RuntimeBlockInfo* blk)
 {
-	/*
-	if (IsOnRam(blk->addr) && PageIsConst(blk->addr))
-	{
-		blocks_page[(blk->addr&RAM_MASK)/PAGE_SIZE].push_back(blk);
-	}
-	*/
 	all_blocks.push_back(blk);
 	if (blkmap.find(blk)!=blkmap.end())
 	{
-		printf("DUP: %08X %08X %08X %08X\n", (*blkmap.find(blk))->addr,(*blkmap.find(blk))->code,blk->addr,blk->code);
+		printf("DUP: %08X %p %08X %p\n", (*blkmap.find(blk))->addr,(*blkmap.find(blk))->code,blk->addr,blk->code);
 		verify(false);
 	}
 	blkmap.insert(blk);
@@ -172,22 +163,6 @@ void bm_AddBlock(RuntimeBlockInfo* blk)
 	}
 #endif
 
-}
-
-u32 PAGE_STATE[RAM_SIZE/32];
-
-bool PageIsConst(u32 addr)
-{
-	if (IsOnRam(addr))
-	{
-		addr&=RAM_MASK;
-		if (addr>0x0010100)
-		{
-			return PAGE_STATE[addr/32]&(1<<addr);
-		}
-	}
-
-	return false;
 }
 
 bool UDgreaterX ( RuntimeBlockInfo* elem1, RuntimeBlockInfo* elem2 )
@@ -373,11 +348,6 @@ void bm_vmem_pagefill(void** ptr,u32 PAGE_SZ)
 void bm_Reset()
 {
 	ngen_ResetBlocks();
-	for (u32 i=0; i<BLOCKS_IN_PAGE_LIST_COUNT; i++)
-	{
-		blocks_page[i].clear();
-	}
-
 	_vmem_bm_reset();
 
 	for (size_t i=0; i<all_blocks.size(); i++)
@@ -427,6 +397,10 @@ void bm_Term()
 	
 	oprofHandle=0;
 #endif
+	bm_Reset();
+	for (int i = 0; i < del_blocks.size(); i++)
+		delete del_blocks[i];
+	del_blocks.clear();
 }
 
 void bm_WriteBlockMap(const string& file)
@@ -437,9 +411,9 @@ void bm_WriteBlockMap(const string& file)
 		printf("Writing block map !\n");
 		for (size_t i=0; i<all_blocks.size(); i++)
 		{
-			fprintf(f,"block: %d:%08X:%08X:%d:%d:%d\n",all_blocks[i]->BlockType,all_blocks[i]->addr,all_blocks[i]->code,all_blocks[i]->host_code_size,all_blocks[i]->guest_cycles,all_blocks[i]->guest_opcodes);
+			fprintf(f,"block: %d:%08X:%p:%d:%d:%d\n",all_blocks[i]->BlockType,all_blocks[i]->addr,all_blocks[i]->code,all_blocks[i]->host_code_size,all_blocks[i]->guest_cycles,all_blocks[i]->guest_opcodes);
 			for(size_t j=0;j<all_blocks[i]->oplist.size();j++)
-				fprintf(f,"\top: %d:%d:%s\n",j,all_blocks[i]->oplist[j].guest_offs,all_blocks[i]->oplist[j].dissasm().c_str());
+				fprintf(f,"\top: %zd:%d:%s\n",j,all_blocks[i]->oplist[j].guest_offs,all_blocks[i]->oplist[j].dissasm().c_str());
 		}
 		fclose(f);
 		printf("Finished writing block map\n");
@@ -470,7 +444,7 @@ void sh4_jitsym(FILE* out)
 {
 	for (size_t i=0; i<all_blocks.size(); i++)
 	{
-		fprintf(out,"%08p %d %08X\n",all_blocks[i]->code,all_blocks[i]->host_code_size,all_blocks[i]->addr);
+		fprintf(out,"%p %d %08X\n",all_blocks[i]->code,all_blocks[i]->host_code_size,all_blocks[i]->addr);
 	}
 }
 
@@ -499,7 +473,7 @@ void bm_PrintTopBlocks()
 	double sel_hops=0;
 	for (size_t i=0;i<(all_blocks.size()/100);i++)
 	{
-		printf("Block %08X: %06X, r: %d (c: %d, s: %d, h: %d) (r: %.2f%%, c: %.2f%%, h: %.2f%%)\n",
+		printf("Block %08X: %p, r: %d (c: %d, s: %d, h: %d) (r: %.2f%%, c: %.2f%%, h: %.2f%%)\n",
 			all_blocks[i]->addr, all_blocks[i]->code,all_blocks[i]->runs,
 			all_blocks[i]->guest_cycles,all_blocks[i]->guest_opcodes,all_blocks[i]->host_opcodes,
 
@@ -515,7 +489,7 @@ void bm_PrintTopBlocks()
 	size_t i;
 	for (i=all_blocks.size()/100;sel_hops/total_hops<50;i++)
 	{
-		printf("Block %08X: %06X, r: %d (c: %d, s: %d, h: %d) (r: %.2f%%, c: %.2f%%, h: %.2f%%)\n",
+		printf("Block %08X: %p, r: %d (c: %d, s: %d, h: %d) (r: %.2f%%, c: %.2f%%, h: %.2f%%)\n",
 			all_blocks[i]->addr, all_blocks[i]->code,all_blocks[i]->runs,
 			all_blocks[i]->guest_cycles,all_blocks[i]->guest_opcodes,all_blocks[i]->host_opcodes,
 
@@ -619,21 +593,21 @@ void print_blocks()
 
 		if (f)
 		{
-			fprintf(f,"block: %08X\n",blk);
+			fprintf(f,"block: %p\n",blk);
 			fprintf(f,"addr: %08X\n",blk->addr);
 			fprintf(f,"hash: %s\n",blk->hash());
 			fprintf(f,"hash_rloc: %s\n",blk->hash(false,true));
-			fprintf(f,"code: %08X\n",blk->code);
+			fprintf(f,"code: %p\n",blk->code);
 			fprintf(f,"runs: %d\n",blk->runs);
 			fprintf(f,"BlockType: %d\n",blk->BlockType);
 			fprintf(f,"NextBlock: %08X\n",blk->NextBlock);
 			fprintf(f,"BranchBlock: %08X\n",blk->BranchBlock);
-			fprintf(f,"pNextBlock: %08X\n",blk->pNextBlock);
-			fprintf(f,"pBranchBlock: %08X\n",blk->pBranchBlock);
+			fprintf(f,"pNextBlock: %p\n",blk->pNextBlock);
+			fprintf(f,"pBranchBlock: %p\n",blk->pBranchBlock);
 			fprintf(f,"guest_cycles: %d\n",blk->guest_cycles);
 			fprintf(f,"guest_opcodes: %d\n",blk->guest_opcodes);
 			fprintf(f,"host_opcodes: %d\n",blk->host_opcodes);
-			fprintf(f,"il_opcodes: %d\n",blk->oplist.size());
+			fprintf(f,"il_opcodes: %zd\n",blk->oplist.size());
 
 			u32 hcode=0;
 			s32 gcode=-1;
@@ -654,7 +628,7 @@ void print_blocks()
 					u16 op=ReadMem16(rpc);
 
 					char temp[128];
-					OpDesc[op]->Dissasemble(temp,rpc,op);
+					OpDesc[op]->Disassemble(temp,rpc,op);
 
 					fprintf(f,"//g:%s\n",temp);
 				}

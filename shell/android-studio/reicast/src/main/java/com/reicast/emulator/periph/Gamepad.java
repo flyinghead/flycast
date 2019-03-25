@@ -66,18 +66,12 @@ public class Gamepad {
 	public int[] name = { -1, -1, -1, -1 };
 	public float[] globalLS_X = new float[4], globalLS_Y = new float[4],
 			previousLS_X = new float[4], previousLS_Y = new float[4];
-	public boolean[] wasKeyStick = { false, false, false, false };
 	public int map[][] = new int[4][];
 
 	public SparseArray<String> deviceId_deviceDescriptor = new SparseArray<>();
 	public HashMap<String, Integer> deviceDescriptor_PlayerNum = new HashMap<>();
 
-	public SparseIntArray playerNumX = new SparseIntArray();
-
 	public boolean isOuyaOrTV;
-//	public boolean isNvidiaShield;
-
-	public static final int Xperia_Touchpad = 1048584;
 
 	private static final int key_CONT_B          = 0x0002;
 	private static final int key_CONT_A          = 0x0004;
@@ -183,12 +177,6 @@ public class Gamepad {
 
 	public int getSelectButtonCode() {
 		return KeyEvent.KEYCODE_BUTTON_SELECT;
-	}
-
-	public boolean IsNvidiaShield() {
-		return android.os.Build.MODEL.equals("SHIELD")
-				|| android.os.Build.DEVICE.equals("roth")
-				|| android.os.Build.PRODUCT.equals("thor");
 	}
 
 	public void setCustomMapping(String id, int playerNum, SharedPreferences prefs) {

@@ -6,8 +6,7 @@
     
     <string name="system_path">System Path\n  (location of data folder with dc_boot.bin/dc_flash.bin inside)</string>
     <string name="browser_path">Default System Path</string>
-    <string name="games_path">Storage Path\n  (location of *.gdi, *.chd or *.cdi images)</string>
-    <string name="app_theme">Application Theme</string>
+    <string name="games_path">Storage Path\n  (location of *.gdi, *.chd, *.cue or *.cdi images)</string>
     <string name="button_theme">Onscreen Button Theme</string>
     <string name="bios_selection">Select a BIOS source</string>
 
@@ -43,7 +42,7 @@
     <string name="select_cable">Cable Type</string>
     <string name="select_region">DC Region</string>
     <string name="select_broadcast">Broadcast</string>
-    <string name="select_rtt">Render to texture</string>
+    <string name="select_language">Language</string>
     <string name="select_limitfps">Limit FPS</string>
     <string name="select_mipmaps">Use Mipmaps (fixes SGX540)</string>
     <string name="select_resolution">Resolution Mode</string>
@@ -54,12 +53,13 @@
     <string name="select_fps">Show On-Screen FPS</string>
     <string name="select_software">Use Software Layer</string>
     <string name="select_sound">Disable Emulator Sound</string>
+    <string name="select_dsp">Enable DSP</string>
     <string name="select_depth">View Rendering Depth</string>
     <string name="resolution">Resolution (lower = faster)</string>
     <string name="resolution_vertical">Vertical</string>
     <string name="resolution_horizontal">Horizontal</string>
     <string name="boot_disk">Boot Disk (ie. Gameshark, Utopia)</string>
-    <string name="clipping">Clipping</string>
+    <string name="select_customtex">Load Custom Textures</string>
 
     <string name="reset_emu">Reset Emu</string>
     <string name="reset_emu_title">Reset Emulator Settings</string>
@@ -190,4 +190,13 @@
 
     <string name="synchronous_rendering_notice">It is recommended to enable `Synchronous Rendering` option as well</string>
 
+    <string-array name="languages">
+        <item>Japanese</item>
+        <item>English</item>
+        <item>German</item>
+        <item>French</item>
+        <item>Spanish</item>
+        <item>Italian</item>
+        <item>Default</item>
+    </string-array>
 </resources>

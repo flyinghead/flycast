@@ -35,27 +35,26 @@ struct CHDTrack : TrackFile
 {
 	CHDDisc* disc;
 	u32 StartFAD;
-	u32 Offset;
+	s32 Offset;
 	u32 fmt;
 	bool swap_bytes;
 
-	CHDTrack(CHDDisc* disc, u32 StartFAD, u32 Offset, u32 fmt, bool swap_bytes)
+	CHDTrack(CHDDisc* disc, u32 StartFAD, s32 Offset, u32 fmt, bool swap_bytes)
 	{
 		this->disc=disc;
 		this->StartFAD=StartFAD;
-		this->Offset=Offset;
+		this->Offset = Offset;
 		this->fmt=fmt;
 		this->swap_bytes = swap_bytes;
 	}
 
 	virtual void Read(u32 FAD, u8* dst, SectorFormat* sector_type, u8* subcode, SubcodeFormat* subcode_type)
 	{
-		s32 fad_offs = FAD + Offset;
-		u32 hunk = fad_offs / disc->sph;
-
-		if (disc->old_hunk != hunk)
+		u32 fad_offs = FAD + Offset;
+		u32 hunk=(fad_offs)/disc->sph;
+		if (disc->old_hunk!=hunk)
 		{
-			chd_read(disc->chd, hunk, disc->hunk_mem); //CHDERR_NONE
+			chd_read(disc->chd,hunk,disc->hunk_mem); //CHDERR_NONE
 			disc->old_hunk = hunk;
 		}
 
@@ -85,7 +84,10 @@ bool CHDDisc::TryOpen(const wchar* file)
 	chd_error err=chd_open(file,CHD_OPEN_READ,0,&chd);
 
 	if (err!=CHDERR_NONE)
+	{
+		printf("chd: chd_open failed for file %s: %d\n", file, err);
 		return false;
+	}
 
 	printf("chd: parsing file %s\n",file);
 
@@ -109,7 +111,6 @@ bool CHDDisc::TryOpen(const wchar* file)
 	u32 temp_len;
 	u32 total_frames = 150;
 
-	u32 total_secs = 0;
 	u32 Offset = 0;
 
 	for(;;)
