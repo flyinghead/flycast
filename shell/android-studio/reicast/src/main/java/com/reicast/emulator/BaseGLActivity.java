@@ -42,6 +42,7 @@ public class BaseGLActivity extends Activity implements ActivityCompat.OnRequest
     private AudioBackend audioBackend;
     private Handler handler = new Handler();
     public static byte[] syms;
+    private boolean audioPermissionRequested;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -173,6 +174,9 @@ public class BaseGLActivity extends Activity implements ActivityCompat.OnRequest
     }
 
     void requestRecordAudioPermission() {
+        if (audioPermissionRequested)
+            return;
+        audioPermissionRequested = true;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             handler.post(new Runnable() {
                 @Override
@@ -202,6 +206,7 @@ public class BaseGLActivity extends Activity implements ActivityCompat.OnRequest
             sip.startRecording();
             JNIdc.setupMic(sip);
         }
+        mView.setVisibility(View.VISIBLE);
     }
 
     // Called from native code
