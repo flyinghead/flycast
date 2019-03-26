@@ -14,6 +14,8 @@
 
 #include "hw/naomi/naomi.h"
 
+extern void dc_request_reset();
+
 Array<RegisterStruct> sb_regs(0x540);
 
 //(addr>= 0x005F6800) && (addr<=0x005F7CFF) -> 0x1500 bytes -> 0x540 possible registers , 125 actually exist only
@@ -194,7 +196,8 @@ void SB_SFRES_write32(u32 addr, u32 data)
 {
 	if ((u16)data==0x7611)
 	{
-		printf("SB/HOLLY: System reset requested -- but cannot SOFT_RESET\n");
+		printf("SB/HOLLY: System reset requested\n");
+		dc_request_reset();
 	}
 }
 void sb_Init()

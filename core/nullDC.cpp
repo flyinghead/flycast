@@ -259,6 +259,7 @@ void dc_reset()
 }
 
 static bool init_done;
+static bool reset_requested;
 
 int reicast_init(int argc, char* argv[])
 {
@@ -414,9 +415,18 @@ void* dc_run(void*)
 		Get_Sh4Interpreter(&sh4_cpu);
 		printf("Using Interpreter\n");
 	}
-   	sh4_cpu.Run();
+	do {
+		reset_requested = false;
 
-	SaveRomFiles(get_writable_data_path("/data/"));
+		sh4_cpu.Run();
+
+   		SaveRomFiles(get_writable_data_path("/data/"));
+   		if (reset_requested)
+   		{
+   			dc_reset();
+   		}
+	} while (reset_requested);
+
     TermAudio();
 
     return NULL;
@@ -442,6 +452,13 @@ void dc_stop()
 	sh4_cpu.Stop();
 	rend_cancel_emu_wait();
 	emu_thread.WaitToEnd();
+}
+
+// Called on the emulator thread for soft reset
+void dc_request_reset()
+{
+	reset_requested = true;
+	sh4_cpu.Stop();
 }
 
 void dc_exit()
