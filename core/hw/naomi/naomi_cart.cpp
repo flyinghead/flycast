@@ -636,10 +636,10 @@ bool naomi_cart_SelectFile()
 	if (!naomi_cart_LoadRom(SelectedFile))
 	{
 		printf("Cannot load %s: error %d\n", SelectedFile, errno);
+		cfgSetVirtual("config", "image", "");
+
 		return false;
 	}
-
-	cfgSaveStr("emu", "gamefile", SelectedFile);
 
 	return true;
 }

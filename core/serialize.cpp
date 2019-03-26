@@ -617,7 +617,6 @@ extern u8 q_subchannel[96];
 
 //./core/hw/naomi/naomi.o
 extern u32 naomi_updates;
-extern u32 BoardID;
 extern u32 GSerialBuffer;
 extern u32 BSerialBuffer;
 extern int GBufPos;
@@ -1094,7 +1093,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	REICAST_SA(q_subchannel,96);
 
 	REICAST_S(naomi_updates);
-	REICAST_S(BoardID);
+	REICAST_S(i);	//BoardID
 	REICAST_S(GSerialBuffer);
 	REICAST_S(BSerialBuffer);
 	REICAST_S(GBufPos);
@@ -1509,7 +1508,7 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 
 
 	REICAST_US(naomi_updates);
-	REICAST_US(BoardID);
+	REICAST_US(i); // BoardID
 	REICAST_US(GSerialBuffer);
 	REICAST_US(BSerialBuffer);
 	REICAST_US(GBufPos);
@@ -1900,7 +1899,7 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 
 
 	REICAST_US(naomi_updates);
-	REICAST_US(BoardID);
+	REICAST_US(i); // BoardID
 	REICAST_US(GSerialBuffer);
 	REICAST_US(BSerialBuffer);
 	REICAST_US(GBufPos);

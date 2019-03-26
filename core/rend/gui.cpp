@@ -1268,6 +1268,17 @@ static void gui_display_content()
     {
 		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8 * scaling, 20 * scaling));		// from 8, 4
 
+#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
+		ImGui::PushID("bios");
+		if (ImGui::Selectable("Dreamcast BIOS"))
+		{
+			gui_state = ClosedNoResume;
+			cfgSetVirtual("config", "image", "");
+			gui_start_game("");
+		}
+		ImGui::PopID();
+#endif
+
         for (auto game : game_list)
         	if (filter.PassFilter(game.name.c_str()))
         	{
@@ -1470,7 +1481,7 @@ int msgboxf(const wchar* text, unsigned int type, ...) {
     va_start(args, type);
     vsnprintf(temp, sizeof(temp), text, args);
     va_end(args);
-    printf("%s", temp);
+    printf("%s\n", temp);
 
     gui_display_notification(temp, 2000);
 

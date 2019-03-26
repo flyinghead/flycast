@@ -96,10 +96,6 @@ s32 plugins_Init()
 	if (s32 rv = libGDR_Init())
 		return rv;
 #endif
-#if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
-	if (!naomi_cart_SelectFile())
-		return rv_serror;
-#endif
 
 	if (s32 rv = libAICA_Init())
 		return rv;
@@ -312,11 +308,25 @@ int dc_start_game(const char *path)
 	{
 		InitSettings();
 		LoadSettings(false);
+		settings.dreamcast.RTC = GetRTC_now();	// FIXME This shouldn't be in settings anymore
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-		if (DiscSwap())
-			LoadCustom();
+		if (!settings.bios.UseReios)
+#endif
+			LoadRomFiles(get_readonly_data_path(DATA_PATH));
+#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
+		if (path == NULL)
+		{
+			// Boot BIOS
+			settings.imgread.LastImage[0] = 0;
+			TermDrive();
+			InitDrive();
+		}
+		else
+		{
+			if (DiscSwap())
+				LoadCustom();
+		}
 #elif DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
-		LoadRomFiles(get_readonly_data_path(DATA_PATH));
 		if (!naomi_cart_SelectFile())
 			return -6;
 		LoadCustom();
@@ -354,6 +364,11 @@ int dc_start_game(const char *path)
 
 	if (plugins_Init())
 		return -3;
+
+#if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
+	if (!naomi_cart_SelectFile())
+		return -6;
+#endif
 
 	LoadCustom();
 
