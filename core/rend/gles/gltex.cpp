@@ -243,6 +243,8 @@ void TextureCacheData::ComputeHash()
 	texture_hash = XXH32(&vram[sa], size, 7);
 	if (IsPaletted())
 		texture_hash ^= palette_hash;
+	old_texture_hash = texture_hash;
+	texture_hash ^= tcw.full;
 }
 	
 void TextureCacheData::Update()

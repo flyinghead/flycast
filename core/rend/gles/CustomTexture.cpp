@@ -50,6 +50,10 @@ void CustomTexture::LoaderThread()
 				texture->ComputeHash();
 				int width, height;
 				u8 *image_data = LoadCustomTexture(texture->texture_hash, width, height);
+				if (image_data == NULL)
+				{
+					image_data = LoadCustomTexture(texture->old_texture_hash, width, height);
+				}
 				if (image_data != NULL)
 				{
 					if (texture->custom_image_data != NULL)
@@ -126,7 +130,7 @@ u8* CustomTexture::LoadCustomTexture(u32 hash, int& width, int& height)
 	std::stringstream path;
 	path << textures_path << std::hex << hash << ".png";
 
-	u8 *image_data = loadPNGData(path.str(), width, height, false);
+	u8 *image_data = loadPNGData(path.str(), width, height);
 	if (image_data == NULL)
 		unknown_hashes.insert(hash);
 
@@ -173,8 +177,8 @@ void CustomTexture::DumpTexture(u32 hash, int w, int h, GLuint textype, void *te
 	png_bytepp rows = (png_bytepp)malloc(h * sizeof(png_bytep));
 	for (int y = 0; y < h; y++)
 	{
-		rows[y] = (png_bytep)malloc(w * 4);	// 32-bit per pixel
-		u8 *dst = (u8 *)rows[y];
+		rows[h - y - 1] = (png_bytep)malloc(w * 4);	// 32-bit per pixel
+		u8 *dst = (u8 *)rows[h - y - 1];
 		switch (textype)
 		{
 		case GL_UNSIGNED_SHORT_4_4_4_4:

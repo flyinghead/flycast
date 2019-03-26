@@ -184,8 +184,8 @@ GLuint gl_CompileShader(const char* shader, GLuint type);
 GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentShader);
 bool CompilePipelineShader(PipelineShader* s);
 #define TEXTURE_LOAD_ERROR 0
-u8* loadPNGData(const string& subpath, int &width, int &height, bool bottom_to_top = true);
-GLuint loadPNG(const string& subpath, int &width, int &height, bool bottom_to_top = true);
+u8* loadPNGData(const string& subpath, int &width, int &height);
+GLuint loadPNG(const string& subpath, int &width, int &height);
 
 extern struct ShaderUniforms_t
 {
@@ -271,6 +271,7 @@ struct TextureCacheData
 	//VQ quantizers table for VQ tex
 	//a texture can't be both VQ and PAL at the same time
 	u32 texture_hash;			// xxhash of texture data, used for custom textures
+	u32 old_texture_hash;		// legacy hash
 	u8* custom_image_data;		// loaded custom image data
 	u32 custom_width;
 	u32 custom_height;

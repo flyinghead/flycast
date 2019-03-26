@@ -2018,7 +2018,7 @@ void png_cstd_read(png_structp png_ptr, png_bytep data, png_size_t length)
 	fread(data,1, length,pngfile);
 }
 
-u8* loadPNGData(const string& fname, int &width, int &height, bool bottom_to_top)
+u8* loadPNGData(const string& fname, int &width, int &height)
 {
 	const char* filename=fname.c_str();
 	FILE* file = fopen(filename, "rb");
@@ -2136,16 +2136,8 @@ u8* loadPNGData(const string& fname, int &width, int &height, bool bottom_to_top
 	}
 
 	// set the individual row_pointers to point at the correct offsets of image_data
-	if (bottom_to_top)
-	{
-		for (int i = 0; i < height; ++i)
-			row_pointers[height - 1 - i] = image_data + i * rowbytes;
-	}
-	else
-	{
-		for (int i = 0; i < height; ++i)
-			row_pointers[i] = image_data + i * rowbytes;
-	}
+	for (int i = 0; i < height; ++i)
+		row_pointers[height - 1 - i] = image_data + i * rowbytes;
 
 	//read the png into image_data through row_pointers
 	png_read_image(png_ptr, row_pointers);
@@ -2157,7 +2149,7 @@ u8* loadPNGData(const string& fname, int &width, int &height, bool bottom_to_top
 	return image_data;
 }
 
-GLuint loadPNG(const string& fname, int &width, int &height, bool bottom_to_top)
+GLuint loadPNG(const string& fname, int &width, int &height)
 {
 	png_byte *image_data = loadPNGData(fname, width, height);
 	if (image_data == NULL)
