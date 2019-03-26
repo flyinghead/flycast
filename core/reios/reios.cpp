@@ -657,7 +657,7 @@ u32 hook_addr(hook_fp* fn) {
 	if (hooks_rev.count(fn))
 		return hooks_rev[fn];
 	else {
-		printf("hook_addr: Failed to reverse lookup %08X\n", (unat)fn);
+		printf("hook_addr: Failed to reverse lookup %p\n", 	fn);
 		verify(false);
 		return 0;
 	}
