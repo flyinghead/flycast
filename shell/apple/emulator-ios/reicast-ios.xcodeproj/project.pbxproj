@@ -226,6 +226,10 @@
 		9C7A3B4E18C806E00070BB5F /* stdclass.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A3A9918C806E00070BB5F /* stdclass.cpp */; };
 		9C7A3B5918C81A4F0070BB5F /* SWRevealViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A3B5818C81A4F0070BB5F /* SWRevealViewController.m */; };
 		9C7A3BC418C84EA10070BB5F /* MainStoryboard.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BC318C84EA10070BB5F /* MainStoryboard.storyboard */; };
+		AE8C27372111EA0200D4D8F4 /* dsp_interp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE8C27352111EA0200D4D8F4 /* dsp_interp.cpp */; };
+		AE8C274C21122F0E00D4D8F4 /* Changelog.txt in Resources */ = {isa = PBXBuildFile; fileRef = AE8C274521122F0E00D4D8F4 /* Changelog.txt */; };
+		AE8C274D21122F0E00D4D8F4 /* License.txt in Resources */ = {isa = PBXBuildFile; fileRef = AE8C274621122F0E00D4D8F4 /* License.txt */; };
+		AE8C274E21122F0E00D4D8F4 /* xbrz.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE8C274721122F0E00D4D8F4 /* xbrz.cpp */; };
 		EBDF37561BB96E1B001191B5 /* audiobackend_coreaudio.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EBDF37541BB96E1B001191B5 /* audiobackend_coreaudio.cpp */; };
 		EBDF375A1BB96ECD001191B5 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EBDF37591BB96ECD001191B5 /* AudioToolbox.framework */; };
 /* End PBXBuildFile section */
@@ -605,6 +609,13 @@
 		9C7A3B5718C81A4F0070BB5F /* SWRevealViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SWRevealViewController.h; sourceTree = "<group>"; };
 		9C7A3B5818C81A4F0070BB5F /* SWRevealViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SWRevealViewController.m; sourceTree = "<group>"; };
 		9C7A3BC318C84EA10070BB5F /* MainStoryboard.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; path = MainStoryboard.storyboard; sourceTree = "<group>"; };
+		AE8C27352111EA0200D4D8F4 /* dsp_interp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dsp_interp.cpp; sourceTree = "<group>"; };
+		AE8C274521122F0E00D4D8F4 /* Changelog.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Changelog.txt; sourceTree = "<group>"; };
+		AE8C274621122F0E00D4D8F4 /* License.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = License.txt; sourceTree = "<group>"; };
+		AE8C274721122F0E00D4D8F4 /* xbrz.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = xbrz.cpp; sourceTree = "<group>"; };
+		AE8C274821122F0E00D4D8F4 /* xbrz.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = xbrz.h; sourceTree = "<group>"; };
+		AE8C274921122F0E00D4D8F4 /* xbrz_config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = xbrz_config.h; sourceTree = "<group>"; };
+		AE8C274A21122F0E00D4D8F4 /* xbrz_tools.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = xbrz_tools.h; sourceTree = "<group>"; };
 		EBDF37541BB96E1B001191B5 /* audiobackend_coreaudio.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = audiobackend_coreaudio.cpp; sourceTree = "<group>"; };
 		EBDF37551BB96E1B001191B5 /* audiobackend_coreaudio.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = audiobackend_coreaudio.h; sourceTree = "<group>"; };
 		EBDF37571BB96E75001191B5 /* AudioUnit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioUnit.framework; path = System/Library/Frameworks/AudioUnit.framework; sourceTree = SDKROOT; };
@@ -934,6 +945,7 @@
 				9C7A396218C806DE0070BB5F /* libelf */,
 				9C7A396A18C806DE0070BB5F /* libpng */,
 				9C7A397E18C806DF0070BB5F /* libzip */,
+				AE8C274421122F0E00D4D8F4 /* xbrz */,
 			);
 			path = deps;
 			sourceTree = "<group>";
@@ -1104,6 +1116,7 @@
 				9C7A39E518C806DF0070BB5F /* aica_mem.h */,
 				9C7A39E618C806DF0070BB5F /* dsp.cpp */,
 				9C7A39E718C806DF0070BB5F /* dsp.h */,
+				AE8C27352111EA0200D4D8F4 /* dsp_interp.cpp */,
 				9C7A39E818C806DF0070BB5F /* sgc_if.cpp */,
 				9C7A39E918C806DF0070BB5F /* sgc_if.h */,
 			);
@@ -1397,6 +1410,19 @@
 			path = gles;
 			sourceTree = "<group>";
 		};
+		AE8C274421122F0E00D4D8F4 /* xbrz */ = {
+			isa = PBXGroup;
+			children = (
+				AE8C274521122F0E00D4D8F4 /* Changelog.txt */,
+				AE8C274621122F0E00D4D8F4 /* License.txt */,
+				AE8C274721122F0E00D4D8F4 /* xbrz.cpp */,
+				AE8C274821122F0E00D4D8F4 /* xbrz.h */,
+				AE8C274921122F0E00D4D8F4 /* xbrz_config.h */,
+				AE8C274A21122F0E00D4D8F4 /* xbrz_tools.h */,
+			);
+			path = xbrz;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -1428,7 +1454,7 @@
 				ORGANIZATIONNAME = reicast;
 				TargetAttributes = {
 					87078A8218A47FE90034C7A0 = {
-						DevelopmentTeam = QRT73U549N;
+                        DevelopmentTeam = QRT73U549N;
 					};
 				};
 			};
@@ -1465,6 +1491,7 @@
 				87D92F491B7A1B4800D8FD9E /* RTrigger.png in Resources */,
 				87D92F4B1B7A1B4800D8FD9E /* Start.png in Resources */,
 				9C7A393318C804A80070BB5F /* reicast.entitlements in Resources */,
+				AE8C274D21122F0E00D4D8F4 /* License.txt in Resources */,
 				87D92F391B7A1B4800D8FD9E /* 210-twitterbird.png in Resources */,
 				87D92F3A1B7A1B4800D8FD9E /* 210-twitterbird@2x.png in Resources */,
 				87D92F3D1B7A1B4800D8FD9E /* DPad.png in Resources */,
@@ -1493,6 +1520,7 @@
 				87D92F3B1B7A1B4800D8FD9E /* ABXYPad.png in Resources */,
 				87D92F481B7A1B4800D8FD9E /* menuicon@2x.png in Resources */,
 				87D92F371B7A1B4800D8FD9E /* 210-octocat.png in Resources */,
+				AE8C274C21122F0E00D4D8F4 /* Changelog.txt in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1548,6 +1576,7 @@
 				9C7A3B3318C806E00070BB5F /* sh4_rom.cpp in Sources */,
 				877652C91B6157FC00437F10 /* ngen_arm.S in Sources */,
 				9C7A3B1918C806E00070BB5F /* spg.cpp in Sources */,
+				AE8C274E21122F0E00D4D8F4 /* xbrz.cpp in Sources */,
 				9C7A3AE318C806E00070BB5F /* zip_source_buffer.c in Sources */,
 				9C7A3B2318C806E00070BB5F /* sh4_opcodes.cpp in Sources */,
 				84967C951B8F492C005F1140 /* pngmem.c in Sources */,
@@ -1615,6 +1644,7 @@
 				9C7A3ACB18C806E00070BB5F /* zip_file_error_clear.c in Sources */,
 				9C7A3ACE18C806E00070BB5F /* zip_file_strerror.c in Sources */,
 				9C7A3AED18C806E00070BB5F /* zip_unchange.c in Sources */,
+				AE8C27372111EA0200D4D8F4 /* dsp_interp.cpp in Sources */,
 				877652C31B6157BD00437F10 /* audiobackend_directsound.cpp in Sources */,
 				9C7A3B1F18C806E00070BB5F /* driver.cpp in Sources */,
 				9C7A3B2018C806E00070BB5F /* shil.cpp in Sources */,

@@ -99,62 +99,19 @@ int setconfig(wchar** arg,int cl)
 	return rv;
 }
 
-#ifndef _ANDROID
-#include "version.h"
-#else
-#define REICAST_VERSION "r7-android-tmp"
-#endif
-
-#if !defined(DEF_CONSOLE)
-#if defined(linux) || defined(_ANDROID)
-#define DEF_CONSOLE
-#endif
-#endif
-
-#if defined(_WIN32)
-#include <conio.h>
-#endif
-
-void cli_pause()
-{
-#ifdef DEF_CONSOLE
-	return;
-#endif
-
-#if defined(_WIN32)
-	printf("\nPress a key to exit.\n");
-	_getch();
-#else
-	printf("\nPress enter to exit.\n");
-	char c = getchar();
-#endif
-}
-
-
-
 int showhelp(wchar** arg,int cl)
 {
 	printf("\nAvailable commands :\n");
 
 	printf("-config	section:key=value [, ..]: add a virtual config value\n Virtual config values won't be saved to the .cfg file\n unless a different value is written to em\nNote :\n You can specify many settings in the xx:yy=zz , gg:hh=jj , ...\n format.The spaces between the values and ',' are needed.\n");
 	printf("\n-help: show help info\n");
-	printf("\n-version: show current version #\n\n");
 
-	cli_pause();
-	return 0;
-}
-
-
-int showversion(wchar** arg,int cl)
-{
-	printf("\nReicast Version: # %s built on %s \n", REICAST_VERSION, __DATE__);
-
-	cli_pause();
 	return 0;
 }
 
 bool ParseCommandLine(int argc,wchar* argv[])
 {
+	cfgSetVirtual("config", "image", "");
 	int cl=argc-2;
 	wchar** arg=argv+1;
 	while(cl>=0)
@@ -162,11 +119,6 @@ bool ParseCommandLine(int argc,wchar* argv[])
 		if (stricmp(*arg,"-help")==0 || stricmp(*arg,"--help")==0)
 		{
 			showhelp(arg,cl);
-			return true;
-		}
-		if (stricmp(*arg,"-version")==0 || stricmp(*arg,"--version")==0)
-		{
-			showversion(arg,cl);
 			return true;
 		}
 		else if (stricmp(*arg,"-config")==0 || stricmp(*arg,"--config")==0)
@@ -181,7 +133,8 @@ bool ParseCommandLine(int argc,wchar* argv[])
 
 			if (extension
 				&& (stricmp(extension, ".cdi") == 0 || stricmp(extension, ".chd") == 0
-					|| stricmp(extension, ".gdi") == 0 || stricmp(extension, ".lst") == 0))
+					|| stricmp(extension, ".gdi") == 0 || stricmp(extension, ".lst") == 0
+					|| stricmp(extension, ".cue") == 0))
 			{
 				printf("Using '%s' as cd image\n", *arg);
 				cfgSetVirtual("config", "image", *arg);
@@ -194,7 +147,12 @@ bool ParseCommandLine(int argc,wchar* argv[])
 			}
 			else
 			{
+#if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
+				printf("Using '%s' as rom\n", *arg);
+				cfgSetVirtual("config", "image", *arg);
+#else
 				printf("wtf %s is supposed to do ?\n",*arg);
+#endif
 			}
 		}
 		arg++;

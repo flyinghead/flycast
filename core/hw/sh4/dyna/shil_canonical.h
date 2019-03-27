@@ -140,9 +140,9 @@ shil_compile \
 #define BIN_OP_I2(tp,z) BIN_OP_I_BASE( return ((tp) r1) z ((tp) r2); ,u32,u32)
 #define BIN_OP_I3(z,w) BIN_OP_I_BASE( return (r1 z r2) w; ,u32,u32)
 #define BIN_OP_I4(tp,z,rt,pt) BIN_OP_I_BASE( return ((tp)(pt)r1) z ((tp)(pt)r2); ,u32,rt)
-	
-#define BIN_OP_F(z) BIN_OP_I_BASE( return r1 z r2; ,f32,f32)
-#define BIN_OP_FU(z) BIN_OP_I_BASE( return r1 z r2; ,f32,u32)
+
+#define BIN_OP_F(z) BIN_OP_I_BASE( return fixNaN(r1 z r2); ,f32,f32)
+#define BIN_OP_FU(z) BIN_OP_I_BASE( return fixNaN(r1 z r2); ,f32,u32)
 
 #define UN_OP_I(z) UN_OP_I_BASE( return z (r1); ,u32)
 #define UN_OP_F(z) UN_OP_I_BASE( return z (r1); ,f32)
@@ -310,13 +310,12 @@ shil_compile
 	shil_cf_arg_u32(rs1);
 	shil_cf(f1);
 	shil_cf_rv_u64(rd);
-	//die();
 )
 
 shil_opc_end()
 
 
-//shop_adc	//add with carry
+//shop_sbc	// substract with carry
 shil_opc(sbc)
 shil_canonical
 (
@@ -345,7 +344,6 @@ shil_compile
 	shil_cf_arg_u32(rs1);
 	shil_cf(f1);
 	shil_cf_rv_u64(rd);
-	//die();
 )
 shil_opc_end()
 
@@ -468,7 +466,6 @@ shil_compile
 	shil_cf_arg_u32(rs1);
 	shil_cf(f1);
 	shil_cf_rv_u32(rd);
-	//die();
 )
 shil_opc_end()
 
@@ -494,7 +491,6 @@ shil_compile
 	shil_cf_arg_u32(rs1);
 	shil_cf(f1);
 	shil_cf_rv_u32(rd);
-	//die();
 )
 
 shil_opc_end()
@@ -512,7 +508,6 @@ shil_compile
 	shil_cf_arg_u32(rs1);
 	shil_cf(f1);
 	shil_cf_rv_u32(rd);
-	//die();
 )
 
 shil_opc_end()
@@ -531,7 +526,6 @@ shil_compile
 	shil_cf_arg_u32(rs1);
 	shil_cf(f1);
 	shil_cf_rv_u32(rd);
-	//die();
 )
 
 shil_opc_end()
@@ -583,7 +577,6 @@ shil_compile
 	shil_cf_arg_u32(rs1);
 	shil_cf(f1);
 	shil_cf_rv_u64(rd);
-	//die();
 )
 
 shil_opc_end()
@@ -608,7 +601,6 @@ shil_compile
 	shil_cf_arg_u32(rs1);
 	shil_cf(f1);
 	shil_cf_rv_u64(rd);
-	//die();
 )
 
 shil_opc_end()
@@ -633,7 +625,6 @@ shil_compile
 	shil_cf_arg_u32(rs1);
 	shil_cf(f1);
 	shil_cf_rv_u32(rd);
-	//die();
 )
 
 shil_opc_end()
@@ -688,7 +679,6 @@ shil_compile
 	shil_cf_arg_f32(rs1);
 	shil_cf(f1);
 	shil_cf_rv_u32(rd);
-	//die();
 )
 
 shil_opc_end()
@@ -706,7 +696,6 @@ shil_compile
 	shil_cf_arg_u32(rs1);
 	shil_cf(f1);
 	shil_cf_rv_f32(rd);
-	//die();
 )
 
 shil_opc_end()
@@ -724,7 +713,6 @@ shil_compile
 	shil_cf_arg_u32(rs1);
 	shil_cf(f1);
 	shil_cf_rv_f32(rd);
-	//die();
 )
 
 shil_opc_end()
@@ -755,7 +743,6 @@ shil_compile
 	{
 		shil_cf(f2);
 	}
-	//die();
 )
 
 shil_opc_end()
@@ -863,7 +850,7 @@ f32,f1,(float* fn, float* fm),
 	idp+=fn[2]*fm[2];
 	idp+=fn[3]*fm[3];
 
-	return idp;
+	return fixNaN(idp);
 )
 
 shil_compile
@@ -872,7 +859,6 @@ shil_compile
 	shil_cf_arg_ptr(rs1);
 	shil_cf(fipr_impl);
 	shil_cf_rv_f32(rd);
-	//die();
 )
 
 shil_opc_end()
@@ -909,10 +895,10 @@ void,f1,(float* fd,float* fn, float* fm),
 		 fm[11] * fn[2] +
 		 fm[15] * fn[3];
 
-	fd[0] = v1;
-	fd[1] = v2;
-	fd[2] = v3;
-	fd[3] = v4;
+	fd[0] = fixNaN(v1);
+	fd[1] = fixNaN(v2);
+	fd[2] = fixNaN(v3);
+	fd[3] = fixNaN(v4);
 )
 shil_compile
 (
@@ -920,7 +906,6 @@ shil_compile
 	shil_cf_arg_ptr(rs1);
 	shil_cf_arg_ptr(rd);
 	shil_cf(ftrv_impl);
-	//die();
 )
 shil_opc_end()
 
@@ -929,7 +914,7 @@ shil_opc(fmac)
 shil_canonical
 (
 f32,f1,(float fn, float f0,float fm),
-	return fn + f0 * fm;
+	return fixNaN(fn + f0 * fm);
 )
 shil_compile
 (
@@ -938,7 +923,6 @@ shil_compile
 	shil_cf_arg_f32(rs1);
 	shil_cf(f1);
 	shil_cf_rv_f32(rd);
-	//die();
 )
 shil_opc_end()
 

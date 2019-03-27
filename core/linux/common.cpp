@@ -19,9 +19,13 @@
 #include <sys/param.h>
 #include <sys/mman.h>
 #include <sys/time.h>
-#if !defined(TARGET_BSD) && !defined(_ANDROID) && !defined(TARGET_IPHONE) && !defined(TARGET_NACL32) && !defined(TARGET_EMSCRIPTEN) && !defined(TARGET_OSX)
+#if !defined(TARGET_BSD) && !defined(_ANDROID) && !defined(TARGET_IPHONE) && !defined(TARGET_NACL32) && !defined(TARGET_EMSCRIPTEN) && !defined(TARGET_OSX) && !defined(TARGET_OSX_X64)
   #include <sys/personality.h>
   #include <dlfcn.h>
+#endif
+#if HOST_OS == OS_DARWIN
+#include <mach/clock.h>
+#include <mach/mach.h>
 #endif
 #include <unistd.h>
 #include "hw/sh4/dyna/blockmanager.h"
@@ -46,12 +50,10 @@ void sigill_handler(int sn, siginfo_t * si, void *segfault_ctx) {
 	unat pc = (unat)ctx.pc;
 	bool dyna_cde = (pc>(unat)CodeCache) && (pc<(unat)(CodeCache + CODE_SIZE));
 	
-	printf("SIGILL @ %08X, fault_handler+0x%08X ... %08X -> was not in vram, %d\n", pc, pc - (unat)sigill_handler, (unat)si->si_addr, dyna_cde);
+	printf("SIGILL @ %lx -> %p was not in vram, dynacode:%d\n", pc, si->si_addr, dyna_cde);
 	
-	printf("Entering infiniloop");
-
-	for (;;);
-	printf("PC is used here %08X\n", pc);
+	//printf("PC is used here %08X\n", pc);
+    kill(getpid(), SIGABRT);
 }
 #endif
 
@@ -90,13 +92,18 @@ void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 			}
 		#elif HOST_CPU == CPU_X64
 			//x64 has no rewrite support
+		#elif HOST_CPU == CPU_ARM64
+			else if (dyna_cde && ngen_Rewrite(ctx.pc, 0, 0))
+			{
+				context_to_segfault(&ctx, segfault_ctx);
+			}
 		#else
 			#error JIT: Not supported arch
 		#endif
 	#endif
 	else
 	{
-		printf("SIGSEGV @ %u (fault_handler+0x%u) ... %p -> was not in vram\n", ctx.pc, ctx.pc - (unat)fault_handler, si->si_addr);
+		printf("SIGSEGV @ %lx -> %p was not in vram, dynacode:%d\n", ctx.pc, si->si_addr, dyna_cde);
 		die("segfault");
 		signal(SIGSEGV, SIG_DFL);
 	}
@@ -134,12 +141,20 @@ cThread::cThread(ThreadEntryFP* function,void* prm)
 
 void cThread::Start()
 {
-		pthread_create( (pthread_t*)&hThread, NULL, Entry, param);
+	verify(hThread == NULL);
+	if (pthread_create( (pthread_t*)&hThread, NULL, Entry, param))
+	{
+		die("Thread creation failed");
+	}
 }
 
 void cThread::WaitToEnd()
 {
-	pthread_join((pthread_t)hThread,0);
+	if (hThread != NULL)
+	{
+		pthread_join((pthread_t)hThread,0);
+		hThread = NULL;
+	}
 }
 
 //End thread class
@@ -171,9 +186,39 @@ void cResetEvent::Reset()//reset
 	state=false;
 	pthread_mutex_unlock( &mutx );
 }
-void cResetEvent::Wait(u32 msec)//Wait for signal , then reset
+bool cResetEvent::Wait(u32 msec)//Wait for signal , then reset
 {
-	verify(false);
+	pthread_mutex_lock( &mutx );
+	if (!state)
+	{
+		struct timespec ts;
+#if HOST_OS == OS_DARWIN
+		// OSX doesn't have clock_gettime.
+		clock_serv_t cclock;
+		mach_timespec_t mts;
+
+		host_get_clock_service(mach_host_self(), CALENDAR_CLOCK, &cclock);
+		clock_get_time(cclock, &mts);
+		mach_port_deallocate(mach_task_self(), cclock);
+		ts.tv_sec = mts.tv_sec;
+		ts.tv_nsec = mts.tv_nsec;
+#else
+		clock_gettime(CLOCK_REALTIME, &ts);
+#endif
+		ts.tv_sec += msec / 1000;
+		ts.tv_nsec += (msec % 1000) * 1000000;
+		while (ts.tv_nsec > 1000000000)
+		{
+			ts.tv_nsec -= 1000000000;
+			ts.tv_sec++;
+		}
+		pthread_cond_timedwait( &cond, &mutx, &ts );
+	}
+	bool rc = state;
+	state=false;
+	pthread_mutex_unlock( &mutx );
+
+	return rc;
 }
 void cResetEvent::Wait()//Wait for signal , then reset
 {
@@ -202,7 +247,7 @@ void VArray2::LockRegion(u32 offset,u32 size)
 	}
 
 	#else
-		printf("VA2: LockRegion\n");
+		//printf("VA2: LockRegion\n");
 	#endif
 }
 
@@ -253,7 +298,7 @@ void VArray2::UnLockRegion(u32 offset,u32 size)
 		die("mprotect  failed ..\n");
 	}
 	#else
-		printf("VA2: UnLockRegion\n");
+		//printf("VA2: UnLockRegion\n");
 	#endif
 }
 double os_GetSeconds()

@@ -85,7 +85,7 @@ void recSh4_Run()
 	sh4_int_bCpuRun=true;
 
 	sh4_dyna_rcb=(u8*)&Sh4cntx + sizeof(Sh4cntx);
-	printf("cntx // fpcb offset: %d // pc offset: %d // pc %08X\n",(u8*)&sh4rcb.fpcb-sh4_dyna_rcb,(u8*)&sh4rcb.cntx.pc-sh4_dyna_rcb,sh4rcb.cntx.pc);
+	printf("cntx // fpcb offset: %td // pc offset: %td // pc %08X\n",(u8*)&sh4rcb.fpcb - sh4_dyna_rcb, (u8*)&sh4rcb.cntx.pc - sh4_dyna_rcb,sh4rcb.cntx.pc);
 	
 	verify(rcb_noffs(&next_pc)==-184);
 	ngen_mainloop(sh4_dyna_rcb);
@@ -252,6 +252,12 @@ DynarecCodeEntryPtr DYNACALL rdv_FailedToFindBlock(u32 pc)
 	return rdv_CompilePC();
 }
 
+static void ngen_FailedToFindBlock_internal() {
+	rdv_FailedToFindBlock(Sh4cntx.pc);
+}
+
+void (*ngen_FailedToFindBlock)() = &ngen_FailedToFindBlock_internal;
+
 extern u32 rebuild_counter;
 
 
@@ -382,6 +388,11 @@ void recSh4_Stop()
 	Sh4_int_Stop();
 }
 
+void recSh4_Start()
+{
+	Sh4_int_Start();
+}
+
 void recSh4_Step()
 {
 	Sh4_int_Step();
@@ -420,6 +431,7 @@ void recSh4_Init()
 	}
 	
 #if defined(_WIN64)
+#ifdef _MSC_VER
 	for (int i = 10; i < 1300; i++) {
 
 
@@ -431,6 +443,10 @@ void recSh4_Init()
 		if (CodeCache)
 			break;
 	}
+#else
+	CodeCache = (u8*)VirtualAlloc(NULL, CODE_SIZE, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+#endif
+	verify(CodeCache != NULL);
 #else
 	CodeCache = (u8*)(((unat)SH4_TCB+4095)& ~4095);
 #endif
@@ -470,10 +486,6 @@ void recSh4_Term()
 	printf("recSh4 Term\n");
 	bm_Term();
 	Sh4_int_Term();
-
-#if HOST_OS == OS_LINUX
-	//hum ?
-#endif
 }
 
 bool recSh4_IsCpuRunning()
@@ -485,14 +497,13 @@ void Get_Sh4Recompiler(sh4_if* rv)
 {
 	rv->Run = recSh4_Run;
 	rv->Stop = recSh4_Stop;
+	rv->Start = recSh4_Start;
 	rv->Step = recSh4_Step;
 	rv->Skip = recSh4_Skip;
 	rv->Reset = recSh4_Reset;
 	rv->Init = recSh4_Init;
 	rv->Term = recSh4_Term;
 	rv->IsCpuRunning = recSh4_IsCpuRunning;
-	//rv->GetRegister=Sh4_int_GetRegister;
-	//rv->SetRegister=Sh4_int_SetRegister;
 	rv->ResetCache = recSh4_ClearCache;
 }
 #endif

@@ -465,10 +465,6 @@ struct RegAlloc
 					for (int i=reg_gbr;i<=reg_fpul;i++)
 						flush_span(i);
 
-					for (int i=reg_gbr;i<=reg_fpul;i++)
-						flush_span(i);
-
-
 					switch(OpDesc[op->rs3._imm]->mask)
 					{
 					case Mask_imm8:
@@ -1083,14 +1079,15 @@ struct RegAlloc
 
 			if (spn->begining(current_opid) && spn->preload)
 			{
-				//printf("Op %d: Preloading r%d to %d\n",current_opid,spn->regstart,spn->nreg);
 				if (spn->fpr)
 				{
+					//printf("Op %d: Preloading f%d to %d\n",current_opid,spn->regstart,spn->nregf);
 					preload_fpu++;
 					Preload_FPU(spn->regstart,spn->nregf);
 				}
 				else
 				{
+					//printf("Op %d: Preloading r%d to %d\n",current_opid,spn->regstart,spn->nreg);
 					preload_gpr++;
 					Preload(spn->regstart,spn->nreg);
 				}
@@ -1106,14 +1103,15 @@ struct RegAlloc
 
 			if (spn->ending(current_opid) && spn->writeback)
 			{
-				//printf("Op %d: Writing back r%d to %d\n",current_opid,spn->regstart,spn->nreg);
 				if (spn->fpr)
 				{
+					//printf("Op %d: Writing back f%d from %d\n",current_opid,spn->regstart,spn->nregf);
 					writeback_fpu++;
 					Writeback_FPU(spn->regstart,spn->nregf);
 				}
 				else
 				{
+					//printf("Op %d: Writing back r%d from %d\n",current_opid,spn->regstart,spn->nreg);
 					writeback_gpr++;
 					Writeback(spn->regstart,spn->nreg);
 				}

@@ -3,7 +3,7 @@
     <string name="menu_settings">設置</string>
     <string name="system_path">系統路徑 (dc_boot.bin/dc_flash.bin 所在的路徑)</string>
     <string name="browser_path">默認系統路徑</string>
-    <string name="games_path">儲存路徑 (.gdi, .chd 或 .cdi 鏡像所在的路徑)</string>
+    <string name="games_path">儲存路徑 (.gdi, .chd, .cue 或 .cdi 鏡像所在的路徑)</string>
     <string name="game_path">默認儲存路徑</string>
     <string name="boot_bios">啟動Dreamcast Bios</string>
     <string name="missing_bios">找不到BIOS. 需要Dreamcast的BIOS才能讓模擬器運行.請把BIOS文件放置在  %1$s/data/dc_boot.bin</string>

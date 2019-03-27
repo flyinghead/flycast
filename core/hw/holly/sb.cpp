@@ -10,8 +10,11 @@
 #include "hw/gdrom/gdrom_if.h"
 #include "hw/maple/maple_if.h"
 #include "hw/aica/aica_if.h"
+#include "hw/modem/modem.h"
 
 #include "hw/naomi/naomi.h"
+
+extern void dc_request_reset();
 
 Array<RegisterStruct> sb_regs(0x540);
 
@@ -42,7 +45,7 @@ u32 sb_ReadMem(u32 addr,u32 sz)
 	if (sb_regs[offset].flags & sz)
 	{
 #endif
-		if (!(sb_regs[offset].flags & REG_RF) )
+		if (!(sb_regs[offset].flags & (REG_RF|REG_WO)))
 		{
 			if (sz==4)
 				return sb_regs[offset].data32;
@@ -54,6 +57,11 @@ u32 sb_ReadMem(u32 addr,u32 sz)
 		else
 		{
 			//printf("SB: %08X\n",addr);
+			if ((sb_regs[offset].flags & REG_WO) || sb_regs[offset].readFunctionAddr == NULL)
+			{
+				EMUERROR("sb_ReadMem write-only reg %08x %d\n", addr, sz);
+				return 0;
+			}
 			return sb_regs[offset].readFunctionAddr(addr);
 		}
 #ifdef TRACE
@@ -133,7 +141,8 @@ void sbio_write_noacc(u32 addr, u32 data) { verify(false); }
 void sbio_write_const(u32 addr, u32 data) { verify(false); }
 
 void sb_write_zero(u32 addr, u32 data) { verify(data==0); }
-void sb_write_gdrom_unlock(u32 addr, u32 data) { verify(data==0 || data==0x001fffff || data==0x42fe); } /* CS writes 0x42fe*/
+void sb_write_gdrom_unlock(u32 addr, u32 data) { verify(data==0 || data==0x001fffff || data==0x42fe || data == 0xa677
+		 	 	 	 	 	 	 	 	 	 	 	 	 || data == 0x3ff); } /* CS writes 0x42fe, AtomisWave 0xa677, Naomi Dev BIOS 0x3ff */
 
 
 void sb_rio_register(u32 reg_addr, RegIO flags, RegReadAddrFP* rf, RegWriteAddrFP* wf)
@@ -180,14 +189,15 @@ u32 RegRead_SB_FFST(u32 addr)
 	{
 		SB_FFST^=31;
 	}
-	return 0; //SB_FFST -> does the fifo status has really to be faked ?
+	return SB_FFST; // does the fifo status has really to be faked ?
 }
 
 void SB_SFRES_write32(u32 addr, u32 data)
 {
 	if ((u16)data==0x7611)
 	{
-		printf("SB/HOLLY: System reset requested -- but cannot SOFT_RESET\n");
+		printf("SB/HOLLY: System reset requested\n");
+		dc_request_reset();
 	}
 }
 void sb_Init()
@@ -759,10 +769,11 @@ void sb_Init()
 	SB_SBREV=0xB;
 	SB_G2ID=0x12;
 	SB_G1SYSM=((0x0<<4) | (0x1));
+	SB_TFREM = 8;
 
 	asic_reg_Init();
 
-#if DC_PLATFORM!=DC_PLATFORM_NAOMI
+#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
 	gdrom_reg_Init();
 #else
 	naomi_reg_Init();
@@ -771,12 +782,16 @@ void sb_Init()
 	pvr_sb_Init();
 	maple_Init();
 	aica_sb_Init();
+
+#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
+	ModemInit();
+#endif
 }
 
 void sb_Reset(bool Manual)
 {
 	asic_reg_Reset(Manual);
-#if DC_PLATFORM!=DC_PLATFORM_NAOMI
+#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
 	gdrom_reg_Reset(Manual);
 #else
 	naomi_reg_Reset(Manual);
@@ -791,7 +806,7 @@ void sb_Term()
 	aica_sb_Term();
 	maple_Term();
 	pvr_sb_Term();
-#if DC_PLATFORM!=DC_PLATFORM_NAOMI
+#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
 	gdrom_reg_Term();
 #else
 	naomi_reg_Term();

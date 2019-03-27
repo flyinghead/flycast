@@ -3,7 +3,6 @@ package com.reicast.emulator;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
@@ -12,8 +11,6 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Build;
-import android.support.v4.content.ContextCompat;
-import android.support.v4.widget.ImageViewCompat;
 import android.view.View;
 import android.view.View.OnLongClickListener;
 import android.widget.ImageView;
@@ -225,20 +222,6 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 		}
 		ImageView icon = (ImageView) childview.get().findViewById(R.id.item_icon);
 		icon.setImageDrawable(game_icon);
-		int app_theme = mPrefs.getInt(Config.pref_app_theme, 0);
-		if (app_theme == 7) {
-			childview.get().setBackgroundResource(R.drawable.game_selector_dream);
-			ImageViewCompat.setImageTintList(icon, ColorStateList.valueOf(
-					ContextCompat.getColor(mContext.get(), R.color.colorDreamTint)));
-		} else if (app_theme == 1) {
-			childview.get().setBackgroundResource(R.drawable.game_selector_blue);
-			ImageViewCompat.setImageTintList(icon, ColorStateList.valueOf(
-					ContextCompat.getColor(mContext.get(), R.color.colorBlueTint)));
-		} else {
-			childview.get().setBackgroundResource(R.drawable.game_selector_dark);
-			ImageViewCompat.setImageTintList(icon, ColorStateList.valueOf(
-					ContextCompat.getColor(mContext.get(), R.color.colorDarkTint)));
-		}
 	}
 
 	private boolean isNetworkAvailable() {

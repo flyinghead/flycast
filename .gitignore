@@ -29,12 +29,28 @@ DerivedData
 *.hmap
 emulator.xccheckout
 reicast.xccheckout
+build/*
+*.so
+*Karen_angelXwind*
+local.properties
+ant.properties
+*build_obj
+*.d
+Workdir/data
+Workdir/reicast*
+Workdir/vmu*
+Workdir/webui*
+Workdir/emu.cfg
+Workdir/lib*ant.properties
 reicast-ios.xccheckout
 
 # Linux General
 shell/linux/.map
 shell/linux/nosym-reicast.elf
 shell/linux/reicast.elf
+shell/linux/reicast_naomi.elf
+shell/linux/reicast_awave.elf
+shell/linux/dispframe.elf
 
 # Visual Studio
 generated

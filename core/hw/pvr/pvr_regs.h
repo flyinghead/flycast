@@ -354,11 +354,38 @@ union FPU_SHAD_SCALE_type
 	struct
 	{
 		u32 scale_factor    : 8;
-		u32 intesity_shadow : 1;
+		u32 intensity_shadow : 1;
+	};
+	u32 full;
+};
+
+union TA_GLOB_TILE_CLIP_type
+{
+	struct
+	{
+		u32 tile_x_num	: 6;
+		u32 reserved 	: 10;
+		u32 tile_y_num  : 4;
+		u32 reserved2	: 12;
 	};
 	u32 full;
 };
  
+union TA_YUV_TEX_CTRL_type
+{
+	struct
+	{
+		u32 yuv_u_size	: 6;
+		u32 reserved1	: 2;
+		u32 yuv_v_size	: 6;
+		u32 reserved2	: 2;
+		u32 yuv_tex		: 1;
+		u32 reserved3	: 7;
+		u32 yuv_form	: 1;
+		u32 reserved4	: 7;
+	};
+	u32 full;
+};
 
 // TA REGS
 #define TA_OL_BASE_addr         0x00000124 // RW  Object list write start address
@@ -467,11 +494,11 @@ union FPU_SHAD_SCALE_type
 #define TA_ISP_LIMIT      PvrReg(TA_ISP_LIMIT_addr,u32)      // RW Current ISP/TSP Parameter write address
 #define TA_NEXT_OPB       PvrReg(TA_NEXT_OPB_addr,u32)       // R  Global Tile clip control
 #define TA_ITP_CURRENT    PvrReg(TA_ITP_CURRENT_addr,u32)    // R  Current ISP/TSP Parameter write address
-#define TA_GLOB_TILE_CLIP PvrReg(TA_GLOB_TILE_CLIP_addr,u32) // RW Global Tile clip control
+#define TA_GLOB_TILE_CLIP PvrReg(TA_GLOB_TILE_CLIP_addr, TA_GLOB_TILE_CLIP_type) // RW Global Tile clip control
 #define TA_ALLOC_CTRL     PvrReg(TA_ALLOC_CTRL_addr,u32)     // RW Object list control
 #define TA_LIST_INIT      PvrReg(TA_LIST_INIT_addr,u32)      // RW TA initialization
 #define TA_YUV_TEX_BASE   PvrReg(TA_YUV_TEX_BASE_addr,u32)   // RW YUV422 texture write start address
-#define TA_YUV_TEX_CTRL   PvrReg(TA_YUV_TEX_CTRL_addr,u32)   // RW YUV converter control
+#define TA_YUV_TEX_CTRL   PvrReg(TA_YUV_TEX_CTRL_addr, TA_YUV_TEX_CTRL_type)   // RW YUV converter control
 #define TA_YUV_TEX_CNT    PvrReg(TA_YUV_TEX_CNT_addr,u32)    // R  YUV converter macro block counter value
 
 #define TA_LIST_CONT      PvrReg(TA_LIST_CONT_addr,u32)      // RW TA continuation processing

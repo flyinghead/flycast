@@ -13,6 +13,7 @@
 #include <sys/mman.h>
 #include <sys/time.h>
 #include "hw/sh4/dyna/blockmanager.h"
+#include "hw/maple/maple_cfg.h"
 #include <unistd.h>
 
 #if defined(TARGET_EMSCRIPTEN)
@@ -53,20 +54,6 @@
 #include "profiler/profiler.h"
 #endif
 
-int msgboxf(const wchar* text, unsigned int type, ...)
-{
-	va_list args;
-
-	wchar temp[2048];
-	va_start(args, type);
-	vsprintf(temp, text, args);
-	va_end(args);
-
-	//printf(NULL,temp,VER_SHORTNAME,type | MB_TASKMODAL);
-	puts(temp);
-	return MBX_OK;
-}
-
 void* x11_win = 0;
 void* x11_disp = 0;
 
@@ -95,32 +82,36 @@ void emit_WriteCodeCache();
 
 void os_SetupInput()
 {
-	#if defined(USE_EVDEV)
-		input_evdev_init();
-	#endif
+#if defined(USE_EVDEV)
+	input_evdev_init();
+#endif
 
-	#if defined(USE_JOYSTICK)
-		int joystick_device_id = cfgLoadInt("input", "joystick_device_id", JOYSTICK_DEFAULT_DEVICE_ID);
-		if (joystick_device_id < 0) {
-			puts("Legacy Joystick input disabled by config.\n");
-		}
-		else
-		{
-			int joystick_device_length = snprintf(NULL, 0, JOYSTICK_DEVICE_STRING, joystick_device_id);
-			char* joystick_device = (char*)malloc(joystick_device_length + 1);
-			sprintf(joystick_device, JOYSTICK_DEVICE_STRING, joystick_device_id);
-			joystick_fd = input_joystick_init(joystick_device);
-			free(joystick_device);
-		}
-	#endif
+#if defined(USE_JOYSTICK)
+	int joystick_device_id = cfgLoadInt("input", "joystick_device_id", JOYSTICK_DEFAULT_DEVICE_ID);
+	if (joystick_device_id < 0) {
+		puts("Legacy Joystick input disabled by config.\n");
+	}
+	else
+	{
+		int joystick_device_length = snprintf(NULL, 0, JOYSTICK_DEVICE_STRING, joystick_device_id);
+		char* joystick_device = (char*)malloc(joystick_device_length + 1);
+		sprintf(joystick_device, JOYSTICK_DEVICE_STRING, joystick_device_id);
+		joystick_fd = input_joystick_init(joystick_device);
+		free(joystick_device);
+	}
+#endif
 
-	#if defined(SUPPORT_X11)
-		input_x11_init();
-	#endif
+#if defined(SUPPORT_X11)
+	input_x11_init();
+#endif
 
-	#if defined(USE_SDL)
-		input_sdl_init();
-	#endif
+#if defined(USE_SDL)
+	input_sdl_init();
+#endif
+
+#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
+	mcfg_CreateDevices();
+#endif
 }
 
 void UpdateInputState(u32 port)
@@ -142,32 +133,6 @@ void UpdateInputState(u32 port)
 	#endif
 }
 
-void UpdateVibration(u32 port, u32 value)
-{
-	u8 POW_POS = (value >> 8) & 0x3;
-	u8 POW_NEG = (value >> 12) & 0x3;
-	u8 FREQ = (value >> 16) & 0xFF;
-
-	double pow = (POW_POS + POW_NEG) / 7.0;
-	double pow_l = pow * (0x3B - FREQ) / 17.0;
-	double pow_r = pow * (FREQ - 0x07) / 15.0;
-
-	if (pow_l > 1.0) pow_l = 1.0;
-	if (pow_r > 1.0) pow_r = 1.0;
-
-	u16 pow_strong = (u16)(65535 * pow_l);
-	u16 pow_weak = (u16)(65535 * pow_r);
-
-	#if defined(USE_EVDEV)
-		input_evdev_rumble(port, pow_strong, pow_weak);
-	#endif
-
-	#if defined(USE_SDL)
-		input_sdl_rumble(port, pow_strong, pow_weak);
-	#endif
-}
-
-
 void os_DoEvents()
 {
 	#if defined(SUPPORT_X11)
@@ -178,7 +143,6 @@ void os_DoEvents()
 
 void os_SetWindowText(const char * text)
 {
-	printf("%s\n",text);
 	#if defined(SUPPORT_X11)
 		x11_window_set_text(text);
 	#endif
@@ -201,9 +165,9 @@ void os_CreateWindow()
 }
 
 void common_linux_setup();
-int dc_init(int argc,wchar* argv[]);
-void dc_run();
+int reicast_init(int argc, char* argv[]);
 void dc_term();
+void* rend_thread(void* p);
 
 #ifdef TARGET_PANDORA
 	void gl_term();
@@ -378,18 +342,12 @@ std::vector<string> find_system_data_dirs()
 	return dirs;
 }
 
-
 int main(int argc, wchar* argv[])
 {
 	#ifdef TARGET_PANDORA
 		signal(SIGSEGV, clean_exit);
 		signal(SIGKILL, clean_exit);
 	#endif
-
-
-	if(ParseCommandLine(argc,argv)) {
-		return rv_cli_finish;
-	}
 
 	/* Set directories */
 	set_user_config_dir(find_user_config_dir());
@@ -419,13 +377,14 @@ int main(int argc, wchar* argv[])
 
 	settings.profile.run_counts=0;
 
-	dc_init(argc,argv);
+	if (reicast_init(argc, argv))
+		die("Reicast initialization failed\n");
 
 	#if !defined(TARGET_EMSCRIPTEN)
 		#if FEAT_HAS_NIXPROF
-		install_prof_handler(0);
+		install_prof_handler(1);
 		#endif
-		dc_run();
+		rend_thread(NULL);
 	#else
 		emscripten_set_main_loop(&dc_run, 100, false);
 	#endif

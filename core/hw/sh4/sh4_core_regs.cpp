@@ -47,14 +47,9 @@ bool UpdateSR()
 		{
 			printf("UpdateSR MD=0;RB=1 , this must not happen\n");
 			sr.RB =0;//error - must always be 0
-			if (old_sr.RB)
-				ChangeGPR();//switch
 		}
-		else
-		{
-			if (old_sr.RB)
-				ChangeGPR();//switch
-		}
+		if (old_sr.RB)
+			ChangeGPR();//switch
 	}
 
 	old_sr.status=sr.status;
@@ -117,6 +112,25 @@ void SetFloatStatusReg()
 				: "=r"(raa)
 				: "r"(x), "r"(y)
 			);
+	#elif HOST_CPU == CPU_ARM64
+		static const unsigned long off_mask = 0x04080000;
+        unsigned long on_mask = 0x02000000;    // DN=1 Any operation involving one or more NaNs returns the Default NaN
+
+        if (fpscr.RM == 1)		// if round to 0, set the flag
+        	on_mask |= 3 << 22;
+
+        if (fpscr.DN)
+        	on_mask |= 1 << 24;	// flush denormalized numbers to zero
+
+        asm volatile
+            (
+                "MRS    x10, FPCR     \n\t"
+                "AND    x10, x10, %0  \n\t"
+                "ORR    x10, x10, %1  \n\t"
+                "MSR    FPCR, x10     \n\t"
+                :
+                : "r"(off_mask), "r"(on_mask)
+            );
     #else
         printf("SetFloatStatusReg: Unsupported platform\n");
     #endif
@@ -234,11 +248,20 @@ u32* Sh4_int_GetRegisterPtr(Sh4RegType reg)
 	}
 }
 
-u32 Sh4Context::offset(u32 sh4_reg)
+u32 sh4context_offset_u32(u32 sh4_reg)
 {
 	void* addr=Sh4_int_GetRegisterPtr((Sh4RegType)sh4_reg);
 	u32 offs=(u8*)addr-(u8*)&Sh4cntx;
 	verify(offs<sizeof(Sh4cntx));
 
 	return offs;
+}
+u32 sh4context_offset_regtype(Sh4RegType sh4_reg)
+{
+	return sh4context_offset_u32(sh4_reg);
+}
+
+u32* GetRegPtr(u32 reg)
+{
+	return Sh4_int_GetRegisterPtr((Sh4RegType)reg);
 }

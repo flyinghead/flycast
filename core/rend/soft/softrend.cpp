@@ -824,7 +824,6 @@ struct softrend : Renderer
 			return false;
 
 		ctx->rend_inuse.Lock();
-		ctx->MarkRend();
 
 		if (!ta_parse_vdrc(ctx))
 			return false;
@@ -838,7 +837,7 @@ struct softrend : Renderer
 	void RenderParamList(List<PolyParam>* param_list, RECT* area) {
 
 		Vertex* verts = pvrrc.verts.head();
-		u16* idx = pvrrc.idx.head();
+		u32* idx = pvrrc.idx.head();
 
 		PolyParam* params = param_list->head();
 		int param_count = param_list->used();
@@ -847,7 +846,7 @@ struct softrend : Renderer
 		{
 			int vertex_count = params[i].count - 2;
 
-			u16* poly_idx = &idx[params[i].first];
+			u32* poly_idx = &idx[params[i].first];
 
 			for (int v = 0; v < vertex_count; v++) {
 				////<alpha_blend, pp_UseAlpha, pp_Texture, pp_IgnoreTexA, pp_ShadInstr, pp_Offset >
@@ -865,8 +864,8 @@ struct softrend : Renderer
 		if (pvrrc.verts.used()<3)
 			return false;
 
-		if (pvrrc.isAutoSort)
-			SortPParams();
+		if (pvrrc.render_passes.head()[0].autosort)
+			SortPParams(0, pvrrc.global_param_tr.used());
 
 		int tcount = omp_get_num_procs() - 1;
 		if (tcount == 0) tcount = 1;

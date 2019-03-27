@@ -108,3 +108,38 @@ struct SH4ThrownException {
 	u32 expEvn;
 	u32 callVect;
 };
+
+static INLINE void RaiseFPUDisableException()
+{
+#if !defined(NO_MMU)
+	if (settings.dreamcast.FullMMU)
+	{
+		SH4ThrownException ex = { next_pc - 2, 0x800, 0x100 };
+		throw ex;
+	}
+#else
+	msgboxf("Full MMU support needed", MBX_ICONERROR);
+#endif
+}
+
+// The SH4 sets the signaling bit to 0 for qNaN (unlike all recent CPUs). Some games relies on this.
+static INLINE f32 fixNaN(f32 f)
+{
+//	u32& hex = *(u32 *)&f;
+//	// no fast-math
+//	if (f != f)
+//		hex = 0x7fbfffff;
+//	// fast-math
+//	if ((hex & 0x7fffffff) > 0x7f800000)
+//		hex = 0x7fbfffff;
+	return f;
+}
+
+static INLINE f64 fixNaN64(f64 f)
+{
+	// no fast-math
+//	return f == f ? f : 0x7ff7ffffffffffffll;
+	// fast-math
+//	return (*(u64 *)&f & 0x7fffffffffffffffll) <= 0x7f80000000000000ll ? f : 0x7ff7ffffffffffffll;
+	return f;
+}

@@ -62,9 +62,6 @@ void term_mem();
 #define AICA_RAM_SIZE (ARAM_SIZE)
 #define AICA_RAM_MASK (ARAM_MASK)
 
-#define AICA_MEMMAP_RAM_SIZE (8*1024*1024)				//this is the max for the map, the actual ram size is AICA_RAM_SIZE
-#define AICA_MEMMAP_RAM_MASK (AICA_MEMMAP_RAM_SIZE-1)
-
 extern bool e68k_out;
 
 void update_armintc();

@@ -2,6 +2,7 @@
 #include <string.h>
 
 #include "maple_if.h"
+#include "maple_cfg.h"
 
 #include "cfg/cfg.h"
 
@@ -12,6 +13,15 @@
 #include "types.h"
 #include "hw/holly/holly_intc.h"
 #include "hw/maple/maple_helper.h"
+
+enum MaplePattern
+{
+	MP_Start,
+	MP_SDCKBOccupy = 2,
+	MP_Reset,
+	MP_SDCKBOccupyCancel,
+	MP_NOP = 7
+};
 
 maple_device* MapleDevices[4][6];
 
@@ -27,6 +37,7 @@ int maple_schid;
 */
 
 void maple_DoDma();
+static void maple_handle_reconnect();
 
 //really hackish
 //misses delay , and stop/start implementation
@@ -46,6 +57,7 @@ void maple_vblank()
 			else
 			{
 				//printf("DDT vblank\n");
+				SB_MDST = 1;
 				maple_DoDma();
 				SB_MDST = 0;
 				if ((SB_MSYS>>12)&1)
@@ -59,6 +71,9 @@ void maple_vblank()
 			maple_ddt_pending_reset=false;
 		}
 	}
+#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
+	maple_handle_reconnect();
+#endif
 }
 void maple_SB_MSHTCL_Write(u32 addr, u32 data)
 {
@@ -83,7 +98,7 @@ void maple_SB_MDEN_Write(u32 addr, u32 data)
 
 	if ((data & 0x1)==0  && SB_MDST)
 	{
-		die("Maple DMA abort ?\n");
+		printf("Maple DMA abort ?\n");
 	}
 }
 
@@ -108,7 +123,7 @@ void maple_DoDma()
 	verify(SB_MDST &1)
 
 #if debug_maple
-	printf("Maple: DoMapleDma\n");
+	printf("Maple: DoMapleDma SB_MDSTAR=%x\n", SB_MDSTAR);
 #endif
 	u32 addr = SB_MDSTAR;
 	u32 xfer_count=0;
@@ -120,13 +135,15 @@ void maple_DoDma()
 		u32 header_2 = ReadMem32_nommu(addr + 4) &0x1FFFFFE0;
 
 		last = (header_1 >> 31) == 1;//is last transfer ?
-		u32 plen = (header_1 & 0xFF )+1;//transfer length
-		u32 maple_op=(header_1>>8)&7;
+		u32 plen = (header_1 & 0xFF )+1;//transfer length (32-bit unit)
+		u32 maple_op=(header_1>>8)&7;	// Pattern selection: 0 - START, 2 - SDCKB occupy permission, 3 - RESET, 4 - SDCKB occupy cancel, 7 - NOP
 		xfer_count+=plen*4;
 
 		//this is kinda wrong .. but meh
 		//really need to properly process the commands at some point
-		if (maple_op==0)
+		switch (maple_op)
+		{
+		case MP_Start:
 		{
 			if (!IsOnSh4Ram(header_2))
 			{
@@ -138,6 +155,12 @@ void maple_DoDma()
 			u32 outlen=0;
 
 			u32* p_data =(u32*) GetMemPtr(addr + 8,(plen)*sizeof(u32));
+			if (p_data == NULL)
+			{
+				printf("MAPLE ERROR : INVALID SB_MDSTAR value 0x%X\n", addr);
+				SB_MDST=0;
+				return;
+			}
 			
 			//Command code 
 			u32 command=p_data[0] &0xFF;
@@ -154,17 +177,13 @@ void maple_DoDma()
 
 			if (MapleDevices[bus][5] && MapleDevices[bus][port])
 			{
-				resp=MapleDevices[bus][port]->Dma(command,&p_data[1],inlen,&p_out[1],outlen);
-
-				if(reci&0x20)
-					reci|=maple_GetAttachedDevices(bus);
-
-				verify(u8(outlen/4)*4==outlen);
-				p_out[0]=(resp<<0)|(send<<8)|(reci<<16)|((outlen/4)<<24);
-				xfer_count+=outlen+4;
+				u32 outlen = MapleDevices[bus][port]->RawDma(&p_data[0], inlen + 4, &p_out[0]);
+				xfer_count += outlen;
 			}
 			else
 			{
+				if (port != 5 && command != 1)
+					printf("MAPLE: Unknown device bus %d port %d cmd %d\n", bus, port, command);
 				outlen=4;
 				p_out[0]=0xFFFFFFFF;
 			}
@@ -172,8 +191,32 @@ void maple_DoDma()
 			//goto next command
 			addr += 2 * 4 + plen * 4;
 		}
-		else
+		break;
+
+		case MP_SDCKBOccupy:
 		{
+			u32 bus = (header_1 >> 16) & 3;
+			if (MapleDevices[bus][5])
+				MapleDevices[bus][5]->get_lightgun_pos();
+
+			addr += 1 * 4;
+		}
+		break;
+
+		case MP_SDCKBOccupyCancel:
+			addr += 1 * 4;
+			break;
+
+		case MP_Reset:
+			addr += 1 * 4;
+			break;
+
+		case MP_NOP:
+			addr += 1 * 4;
+			break;
+
+		default:
+			printf("MAPLE: Unknown maple_op == %d length %d\n", maple_op, plen * 4);
 			addr += 1 * 4;
 		}
 	}
@@ -235,3 +278,22 @@ void maple_Term()
 {
 	
 }
+
+#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
+static u64 reconnect_time;
+
+void maple_ReconnectDevices()
+{
+	mcfg_DestroyDevices();
+	reconnect_time = sh4_sched_now64() + SH4_MAIN_CLOCK / 10;
+}
+
+static void maple_handle_reconnect()
+{
+	if (reconnect_time != 0 && reconnect_time <= sh4_sched_now64())
+	{
+		reconnect_time = 0;
+		mcfg_CreateDevices();
+	}
+}
+#endif

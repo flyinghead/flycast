@@ -6,6 +6,7 @@ struct TLB_Entry
 {
 	CCN_PTEH_type Address;
 	CCN_PTEL_type Data;
+	CCN_PTEA_type Assistance;
 };
 
 extern TLB_Entry UTLB[64];
@@ -17,6 +18,7 @@ bool UTLB_Sync(u32 entry);
 void ITLB_Sync(u32 entry);
 
 bool mmu_match(u32 va, CCN_PTEH_type Address, CCN_PTEL_type Data);
+void mmu_set_state();
 
 #if defined(NO_MMU)
 	bool inline mmu_TranslateSQW(u32 addr, u32* mapped) {

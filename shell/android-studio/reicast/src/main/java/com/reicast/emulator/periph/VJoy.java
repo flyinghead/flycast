@@ -6,6 +6,7 @@ import android.preference.PreferenceManager;
 
 public class VJoy {
 
+	public static final int key_CONT_C          = 0x0001;
 	public static final int key_CONT_B          = 0x0002;
 	public static final int key_CONT_A          = 0x0004;
 	public static final int key_CONT_START      = 0x0008;

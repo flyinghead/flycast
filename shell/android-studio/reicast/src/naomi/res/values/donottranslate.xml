@@ -1,0 +1,14 @@
+<resources>
+
+    <string name="app_name" translatable="false">reicast Naomi</string>
+    <string name="flavor" translatable="false">naomi</string>
+
+    <string-array name="images">
+        <item>bin</item>
+        <item>dat</item>
+        <item>lst</item>
+        <item>zip</item>
+        <item>7z</item>
+    </string-array>
+
+</resources>

@@ -46,6 +46,8 @@ u32 read_u32bi(u8* ptr) {
 	return (ptr[4]<<24) | (ptr[5]<<16) | (ptr[6]<<8) | (ptr[7]<<0);
 }
 
+static bool bootfile_inited = false;
+
 bool reios_locate_bootfile(const char* bootfile="1ST_READ.BIN") {
 	u32 data_len = 2048 * 1024;
 	u8* temp = new u8[data_len];
@@ -89,6 +91,8 @@ bool reios_locate_bootfile(const char* bootfile="1ST_READ.BIN") {
 			}
 
 			delete[] temp;
+
+			bootfile_inited = true;
 			return true;
 		}
 	}
@@ -110,6 +114,7 @@ char reios_boot_filename[17];
 char reios_software_company[17];
 char reios_software_name[129];
 char reios_bootfile[32];
+bool reios_windows_ce = false;
 
 bool pre_init = false;
 
@@ -146,31 +151,10 @@ char* reios_disk_id() {
 	memcpy(&reios_boot_filename[0], &ip_bin[96],   16 * sizeof(char));
 	memcpy(&reios_software_company[0], &ip_bin[112],   16 * sizeof(char));
 	memcpy(&reios_software_name[0], &ip_bin[128],   128 * sizeof(char));
+	reios_windows_ce = memcmp("0WINCEOS.BIN", &reios_boot_filename[0], 12) == 0;
 
 	return reios_product_number;
 }
-
-const char* reios_locate_ip() {
-
-	if (!pre_init) reios_pre_init();
-
-	printf("reios: loading ip.bin from FAD: %d\n", base_fad);
-
-	libGDR_ReadSector(GetMemPtr(0x8c008000, 0), base_fad, 16, 2048);
-	
-	memset(reios_bootfile, 0, sizeof(reios_bootfile));
-	memcpy(reios_bootfile, GetMemPtr(0x8c008060, 0), 16);
-
-	printf("reios: bootfile is '%s'\n", reios_bootfile);
-
-	for (int i = 15; i >= 0; i--) {
-		if (reios_bootfile[i] != ' ')
-			break;
-		reios_bootfile[i] = 0;
-	}
-	return reios_bootfile;
-}
-
 
 void reios_sys_system() {
 	debugf("reios_sys_system\n");
@@ -617,24 +601,30 @@ void reios_boot() {
 	}
 	else {
 		if (DC_PLATFORM == DC_PLATFORM_DREAMCAST) {
-			const char* bootfile = reios_locate_ip();
-			if (!bootfile || !reios_locate_bootfile(bootfile))
+			if (!bootfile_inited)
 				msgboxf("Failed to locate bootfile", MBX_ICONERROR);
 			reios_setup_state(0xac008300);
 		}
 		else {
 			verify(DC_PLATFORM == DC_PLATFORM_NAOMI);
-			
-			u32* sz = (u32*)naomi_cart_GetPtr(0x368, 4);
-			if (!sz) {
+			if (CurrentCartridge == NULL)
+			{
+				printf("No cartridge loaded\n");
+				return;
+			}
+			u32 data_size = 4;
+			u32* sz = (u32*)CurrentCartridge->GetPtr(0x368, data_size);
+			if (!sz || data_size != 4) {
 				msgboxf("Naomi boot failure", MBX_ICONERROR);
 			}
 
 			int size = *sz;
 
-			verify(size < RAM_SIZE && naomi_cart_GetPtr(size - 1, 1) && "Invalid cart size");
+			data_size = 1;
+			verify(size < RAM_SIZE && CurrentCartridge->GetPtr(size - 1, data_size) && "Invalid cart size");
 
-			WriteMemBlock_nommu_ptr(0x0c020000, (u32*)naomi_cart_GetPtr(0, size), size);
+			data_size = size;
+			WriteMemBlock_nommu_ptr(0x0c020000, (u32*)CurrentCartridge->GetPtr(0, data_size), size);
 
 			reios_setuo_naomi(0x0c021000);
 		}
@@ -667,7 +657,7 @@ u32 hook_addr(hook_fp* fn) {
 	if (hooks_rev.count(fn))
 		return hooks_rev[fn];
 	else {
-		printf("hook_addr: Failed to reverse lookup %08X\n", (unat)fn);
+		printf("hook_addr: Failed to reverse lookup %p\n", 	fn);
 		verify(false);
 		return 0;
 	}
@@ -701,7 +691,7 @@ bool reios_init(u8* rom, u8* flash) {
 }
 
 void reios_reset() {
-
+	pre_init = false;
 }
 
 void reios_term() {

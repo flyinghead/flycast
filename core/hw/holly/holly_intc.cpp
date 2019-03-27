@@ -91,6 +91,10 @@ void asic_RaiseInterrupt(HollyInterruptID inter)
 
 u32 Read_SB_ISTNRM(u32 addr)
 {
+	/* Note that the two highest bits indicate
+	 * the OR'ed result of all the bits in
+	 * SB_ISTEXT and SB_ISTERR, respectively,
+	 * and writes to these two bits are ignored. */
 	u32 tmp = SB_ISTNRM & 0x3FFFFFFF;
 
 	if (SB_ISTEXT)
@@ -104,6 +108,7 @@ u32 Read_SB_ISTNRM(u32 addr)
 
 void Write_SB_ISTNRM(u32 addr, u32 data)
 {
+	/* writing a 1 clears the interrupt */
 	SB_ISTNRM &= ~data;
 
 	asic_RL2Pending();

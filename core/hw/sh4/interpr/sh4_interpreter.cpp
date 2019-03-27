@@ -25,18 +25,27 @@
 #include <time.h>
 #include <float.h>
 
-#define SH4_TIMESLICE (448)
 #define CPU_RATIO      (8)
 
 //uh uh
 #define GetN(str) ((str>>8) & 0xf)
 #define GetM(str) ((str>>4) & 0xf)
 
+static s32 l;
+
+static void ExecuteOpcode(u16 op)
+{
+	if (sr.FD == 1 && OpDesc[op]->IsFloatingPoint())
+		RaiseFPUDisableException();
+	OpPtr[op](op);
+	l -= CPU_RATIO;
+}
+
 void Sh4_int_Run()
 {
 	sh4_int_bCpuRun=true;
 
-	s32 l=SH4_TIMESLICE;
+	l = SH4_TIMESLICE;
 
 #if !defined(TARGET_BOUNDED_EXECUTION)
 	do
@@ -53,16 +62,15 @@ void Sh4_int_Run()
 				next_pc += 2;
 				u32 op = IReadMem16(addr);
 
-				OpPtr[op](op);
-				l -= CPU_RATIO;
+				ExecuteOpcode(op);
 			} while (l > 0);
 			l += SH4_TIMESLICE;
 			UpdateSystem_INTC();
 #if !defined(NO_MMU)
 		}
-		catch (SH4ThrownException ex) {
+		catch (SH4ThrownException& ex) {
 			Do_Exception(ex.epc, ex.expEvn, ex.callVect);
-			l -= CPU_RATIO * 5;
+			l -= CPU_RATIO * 5;	// an exception requires the instruction pipeline to drain, so approx 5 cycles
 		}
 #endif
 #if !defined(TARGET_BOUNDED_EXECUTION)
@@ -79,6 +87,14 @@ void Sh4_int_Stop()
 	if (sh4_int_bCpuRun)
 	{
 		sh4_int_bCpuRun=false;
+	}
+}
+
+void Sh4_int_Start()
+{
+	if (!sh4_int_bCpuRun)
+	{
+		sh4_int_bCpuRun=true;
 	}
 }
 
@@ -124,7 +140,7 @@ void Sh4_int_Reset(bool Manual)
 		gbr=ssr=spc=sgr=dbr=vbr=0;
 		mac.full=pr=fpul=0;
 
-		sr.SetFull(0x700000F0);
+		sh4_sr_SetFull(0x700000F0);
 		old_sr.status=sr.status;
 		UpdateSR();
 
@@ -151,12 +167,17 @@ void ExecuteDelayslot()
 		u32 addr = next_pc;
 		next_pc += 2;
 		u32 op = IReadMem16(addr);
-		if (op != 0)
+
+		if (op != 0)	// Looney Tunes: Space Race hack
 			ExecuteOpcode(op);
 #if !defined(NO_MMU)
 	}
-	catch (SH4ThrownException ex) {
+	catch (SH4ThrownException& ex) {
 		ex.epc -= 2;
+		if (ex.expEvn == 0x800)	// FPU disable exception
+			ex.expEvn = 0x820;	// Slot FPU disable exception
+		else if (ex.expEvn == 0x180)	// Illegal instruction exception
+			ex.expEvn = 0x1A0;			// Slot illegal instruction exception
 		//printf("Delay slot exception\n");
 		throw ex;
 	}
@@ -165,18 +186,14 @@ void ExecuteDelayslot()
 
 void ExecuteDelayslot_RTE()
 {
-	u32 oldsr = sr.GetFull();
-
 #if !defined(NO_MMU)
 	try {
 #endif
-		sr.SetFull(ssr);
-
 		ExecuteDelayslot();
 #if !defined(NO_MMU)
 	}
-	catch (SH4ThrownException ex) {
-		msgboxf("RTE Exception", MBX_ICONERROR);
+	catch (SH4ThrownException& ex) {
+		msgboxf("Exception in RTE delay slot", MBX_ICONERROR);
 	}
 #endif
 }
@@ -187,13 +204,12 @@ void ExecuteDelayslot_RTE()
 #define AICA_SAMPLE_GCM 441
 #define AICA_SAMPLE_CYCLES (SH4_MAIN_CLOCK/(44100/AICA_SAMPLE_GCM)*32)
 
-int aica_schid;
-int rtc_schid;
+int aica_schid = -1;
+int rtc_schid = -1;
 
 //14336 Cycles
 
 const int AICA_TICK=145124;
-extern void aica_periodical(u32 cycl);
 
 int AicaUpdate(int tag, int c, int j)
 {
@@ -231,33 +247,26 @@ int DreamcastSecond(int tag, int c, int j)
 	return SH4_MAIN_CLOCK;
 }
 
-int UpdateSystem_rec()
-{
-	//WIP
-	if (Sh4cntx.sh4_sched_next<0)
-		sh4_sched_tick(448);
-
-	return Sh4cntx.interrupt_pend;
-}
-
-//448 Cycles (fixed)
+// every SH4_TIMESLICE cycles
 int UpdateSystem()
 {
 	//this is an optimisation (mostly for ARM)
 	//makes scheduling easier !
 	//update_fp* tmu=pUpdateTMU;
 	
-	Sh4cntx.sh4_sched_next-=448;
+	Sh4cntx.sh4_sched_next-=SH4_TIMESLICE;
 	if (Sh4cntx.sh4_sched_next<0)
-		sh4_sched_tick(448);
+		sh4_sched_tick(SH4_TIMESLICE);
 
 	return Sh4cntx.interrupt_pend;
 }
 
 int UpdateSystem_INTC()
 {
-	UpdateSystem();
-	return UpdateINTC();
+	if (UpdateSystem())
+		return UpdateINTC();
+	else
+		return 0;
 }
 
 void sh4_int_resetcache() { }
@@ -266,6 +275,7 @@ void Get_Sh4Interpreter(sh4_if* rv)
 {
 	rv->Run=Sh4_int_Run;
 	rv->Stop=Sh4_int_Stop;
+	rv->Start=Sh4_int_Start;
 	rv->Step=Sh4_int_Step;
 	rv->Skip=Sh4_int_Skip;
 	rv->Reset=Sh4_int_Reset;
@@ -280,11 +290,14 @@ void Sh4_int_Init()
 {
 	verify(sizeof(Sh4cntx)==448);
 
-	aica_schid=sh4_sched_register(0,&AicaUpdate);
-	sh4_sched_request(aica_schid,AICA_TICK);
+	if (aica_schid == -1)
+	{
+		aica_schid=sh4_sched_register(0,&AicaUpdate);
+		sh4_sched_request(aica_schid,AICA_TICK);
 
-	rtc_schid=sh4_sched_register(0,&DreamcastSecond);
-	sh4_sched_request(rtc_schid,SH4_MAIN_CLOCK);
+		rtc_schid=sh4_sched_register(0,&DreamcastSecond);
+		sh4_sched_request(rtc_schid,SH4_MAIN_CLOCK);
+	}
 	memset(&p_sh4rcb->cntx, 0, sizeof(p_sh4rcb->cntx));
 }
 

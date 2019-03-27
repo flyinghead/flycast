@@ -4,7 +4,7 @@
     
     <string name="system_path">System sti (placering af data folderen, som indeholder dc_boot.bin/dc_flash.bin)</string>
     <string name="browser_path">Standard system sti</string>
-    <string name="games_path">Spil sti (placering af .gdi, .chd eller .cdi afbildninger)</string>
+    <string name="games_path">Spil sti (placering af .gdi, .chd, .cue eller .cdi afbildninger)</string>
     <string name="game_path">Standard spil sti</string>
     <string name="config_home">Konfigurer venligst et hjemme katalog.</string>
     <string name="config_game">Konfigurer venligst et spil katalog.</string>

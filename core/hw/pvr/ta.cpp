@@ -276,6 +276,7 @@ static OnLoad ol_fillfsm(&fill_fsm);
 void ta_vtx_ListCont()
 {
 	SetCurrentTARC(TA_CURRENT_CTX);
+	ta_tad.Continue();
 
 	ta_cur_state=TAS_NS;
 }

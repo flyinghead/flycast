@@ -254,14 +254,12 @@ void os_DoEvents() {
 }
 
 void os_SetupInput() {
-	mcfg_CreateDevicesFromConfig();
+#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
+	mcfg_CreateDevices();
+#endif
 }
 
 void UpdateInputState(u32 port) {
-
-}
-
-void UpdateVibration(u32 port, u32 value) {
 
 }
 

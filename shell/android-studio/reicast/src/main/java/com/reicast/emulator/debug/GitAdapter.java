@@ -74,16 +74,6 @@ public class GitAdapter extends BaseAdapter {
 		View vi = convertView;
 		if (convertView == null)
 			vi = this.inflater.inflate(R.layout.change_item, null);
-
-		int app_theme = mPrefs.getInt(Config.pref_app_theme, 0);
-		if (app_theme == 7) {
-			vi.setBackgroundResource(R.drawable.list_selector_dream);
-		} else if (app_theme == 1) {
-			vi.setBackgroundResource(R.drawable.list_selector_blue);
-		} else {
-			vi.setBackgroundResource(R.drawable.list_selector_dark);
-		}
-
 		TextView dateText = (TextView) vi.findViewById(R.id.date);
 		TextView committerText = (TextView) vi.findViewById(R.id.committer);
 		TextView titleText = (TextView) vi.findViewById(R.id.title);

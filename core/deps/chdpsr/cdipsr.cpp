@@ -85,7 +85,9 @@ void CDI_read_track (FILE *fsource, image_s *image, track_s *track)
                case 0 : track->sector_size = 2048; break;
                case 1 : track->sector_size = 2336; break;
                case 2 : track->sector_size = 2352; break;
-               default: printf("Unsupported sector size");
+               case 4 : track->sector_size = 2448; break;
+               default: printf("Unsupported sector size. value %ld\n", track->sector_size_value);
+               		break;
                }
 
          if (track->mode > 2) printf( "Unsupported format: Track mode not supported");

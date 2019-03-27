@@ -201,7 +201,7 @@ public :
 	~cResetEvent();
 	void Set();		//Set state to signaled
 	void Reset();	//Set state to non signaled
-	void Wait(u32 msec);//Wait for signal , then reset[if auto]
+	bool Wait(u32 msec);//Wait for signal , then reset[if auto]. Returns false if timed out
 	void Wait();	//Wait for signal , then reset[if auto]
 };
 
@@ -240,6 +240,14 @@ public :
 		pthread_mutex_lock(&mutx);
 #endif
 	}
+	bool TryLock()
+	{
+#if HOST_OS==OS_WINDOWS
+		return TryEnterCriticalSection(&cs);
+#else
+		return pthread_mutex_trylock(&mutx)==0;
+#endif
+	}
 	void Unlock()
 	{
 #if HOST_OS==OS_WINDOWS
@@ -262,7 +270,11 @@ string get_writable_data_path(const string& filename);
 string get_readonly_config_path(const string& filename);
 string get_readonly_data_path(const string& filename);
 bool file_exists(const string& filename);
+bool make_directory(const string& path);
 
+string get_game_save_prefix();
+string get_game_basename();
+string get_game_dir();
 
 class VArray2
 {
@@ -294,7 +306,6 @@ public:
     }
 };
 
-int ExeptionHandler(u32 dwCode, void* pExceptionPointers);
 int msgboxf(const wchar* text,unsigned int type,...);
 
 

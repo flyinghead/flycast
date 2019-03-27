@@ -138,6 +138,7 @@
 #define CPU_MIPS     0x20000003
 #define CPU_X64      0x20000004
 #define CPU_GENERIC  0x20000005 //used for pnacl, emscripten, etc
+#define CPU_ARM64    0x20000006
 
 //BUILD_COMPILER
 #define COMPILER_VC  0x30000001
@@ -152,7 +153,7 @@
 //automatic
 
 #if defined(_WIN32) && !defined(TARGET_WIN86) && !defined(TARGET_WIN64)
-	#if !defined(_M_AMD64)
+	#if !defined(_M_AMD64) && !defined(__x86_64__)
 		#define TARGET_WIN86
 	#else
 		#define TARGET_WIN64
@@ -178,6 +179,9 @@
 #elif defined(TARGET_LINUX_ARMELv7)
 	#define HOST_OS OS_LINUX
 	#define HOST_CPU CPU_ARM
+#elif defined(TARGET_LINUX_ARMv8)
+	#define HOST_OS OS_LINUX
+	#define HOST_CPU CPU_ARM64
 #elif defined(TARGET_LINUX_x86)
 	#define HOST_OS OS_LINUX
 	#define HOST_CPU CPU_X86
@@ -198,7 +202,10 @@
     #define HOST_CPU CPU_ARM
 #elif defined(TARGET_OSX)
     #define HOST_OS OS_DARWIN
-    #define HOST_CPU CPU_GENERIC
+    #define HOST_CPU CPU_X86
+#elif defined(TARGET_OSX_X64)
+    #define HOST_OS OS_DARWIN
+    #define HOST_CPU CPU_X64
 #else
 	#error Invalid Target: TARGET_* not defined
 #endif
@@ -250,7 +257,7 @@
 #endif
 
 #ifndef FEAT_AREC
-	#if HOST_CPU == CPU_ARM || HOST_CPU == CPU_X86
+	#if HOST_CPU == CPU_ARM || HOST_CPU == CPU_ARM64
 		#define FEAT_AREC DYNAREC_JIT
 	#else
 		#define FEAT_AREC DYNAREC_NONE
@@ -258,7 +265,7 @@
 #endif
 
 #ifndef FEAT_DSPREC
-	#if HOST_CPU == CPU_X86
+	#if HOST_CPU == CPU_X86 || HOST_CPU == CPU_ARM64
 		#define FEAT_DSPREC DYNAREC_JIT
 	#else
 		#define FEAT_DSPREC DYNAREC_NONE
@@ -278,6 +285,10 @@
 #ifndef FEAT_HAS_SOFTREND
 	#define FEAT_HAS_SOFTREND BUILD_COMPILER == COMPILER_VC	//GCC wants us to enable sse4 globaly to enable intrins
 #endif
+
+#define RAM_SIZE_MAX (32*1024*1024)
+#define VRAM_SIZE_MAX (16*1024*1024)
+#define ARAM_SIZE_MAX (8*1024*1024)
 
 //Depricated build configs
 #ifdef HOST_NO_REC

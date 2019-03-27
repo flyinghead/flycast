@@ -15,32 +15,42 @@
 #include "oslib/audiobackend_coreaudio.h"
 
 #if HOST_OS == OS_DARWIN
+#include <atomic>
 
 //#include <CoreAudio/CoreAudio.h>
 #include <AudioUnit/AudioUnit.h>
 
 AudioUnit audioUnit;
 
-u8 samples_temp[1024 * 4];
+// ~ 93 ms
+#define BUFSIZE (4 * 1024 * 4)
+static u8 samples_temp[BUFSIZE];
 
-volatile int samples_ptr = 0;
+static std::atomic<int> samples_wptr;
+static std::atomic<int> samples_rptr;
+static cResetEvent bufferEmpty(false, true);
 
-OSStatus coreaudio_callback(void* ctx, AudioUnitRenderActionFlags* flags, const AudioTimeStamp* ts,
+static OSStatus coreaudio_callback(void* ctx, AudioUnitRenderActionFlags* flags, const AudioTimeStamp* ts,
                             UInt32 bus, UInt32 frames, AudioBufferList* abl)
 {
     verify(frames <= 1024);
-    
-    u8* src = samples_temp;
-    
-    for (int i = 0; i < abl->mNumberBuffers; i++) {
-        memcpy(abl->mBuffers[i].mData, src, abl->mBuffers[i].mDataByteSize);
-        src += abl->mBuffers[i].mDataByteSize;
+
+    for (int i = 0; i < abl->mNumberBuffers; i++)
+    {
+        u32 buf_size = abl->mBuffers[i].mDataByteSize;
+        if ((samples_wptr - samples_rptr + BUFSIZE) % BUFSIZE < buf_size)
+        {
+            //printf("Core Audio: buffer underrun");
+            memset(abl->mBuffers[i].mData, '\0', buf_size);
+        }
+        else
+        {
+            memcpy(abl->mBuffers[i].mData, samples_temp + samples_rptr, buf_size);
+            samples_rptr = (samples_rptr + buf_size) % BUFSIZE;
+        }
     }
     
-    samples_ptr -= frames * 2 * 2;
-    
-    if (samples_ptr < 0)
-        samples_ptr = 0;
+    bufferEmpty.Set();
     
     return noErr;
 }
@@ -103,16 +113,26 @@ static void coreaudio_init()
     err = AudioOutputUnitStart(audioUnit);
 
     verify(err == noErr);
+    
+    bufferEmpty.Set();
 }
 
 static u32 coreaudio_push(void* frame, u32 samples, bool wait)
 {
-    /* Yeah, right */
-    while (samples_ptr != 0 && wait) ;
-    
-    if (samples_ptr == 0) {
-        memcpy(&samples_temp[samples_ptr], frame, samples * 4);
-        samples_ptr += samples * 4;
+    int byte_size = samples * 4;
+    while (true)
+    {
+        int space = (samples_rptr - samples_wptr + BUFSIZE) % BUFSIZE;
+        if (space != 0 && byte_size > space - 1)
+        {
+            if (!wait)
+                break;
+            bufferEmpty.Wait();
+            continue;
+        }
+        memcpy(&samples_temp[samples_wptr], frame, byte_size);
+        samples_wptr = (samples_wptr + byte_size) % BUFSIZE;
+        break;
     }
     
     return 1;
@@ -130,6 +150,8 @@ static void coreaudio_term()
     
     err = AudioComponentInstanceDispose(audioUnit);
     verify(err == noErr);
+    
+    bufferEmpty.Set();
 }
 
 audiobackend_t audiobackend_coreaudio = {

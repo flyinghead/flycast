@@ -50,7 +50,9 @@
 	
 	self.diskImages = [[NSMutableArray alloc] init];
 	NSArray *files = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:[self documents].path error:NULL];
-	NSPredicate *diskPredicate = [NSPredicate predicateWithFormat:@"self ENDSWITH '.chd' || self ENDSWITH '.gdi' || self ENDSWITH '.cdi' || self ENDSWITH '.CHD' || self ENDSWITH '.GDI' || self ENDSWITH '.CDI'"];
+	NSPredicate *diskPredicate = [NSPredicate predicateWithFormat:@"self ENDSWITH '.chd' || self ENDSWITH '.gdi' 
+		|| self ENDSWITH '.cdi' || self ENDSWITH '.cue' || self ENDSWITH '.CHD' || self ENDSWITH '.GDI' 
+		|| self ENDSWITH '.CDI' || self ENDSWITH '.CUE'"];
 	self.diskImages = [NSMutableArray arrayWithArray:[files filteredArrayUsingPredicate:diskPredicate]];
 }
 

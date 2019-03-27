@@ -8,9 +8,9 @@ struct dsp_t
 
 	//buffered DSP state
 	//24 bit wide
-	u32 TEMP[128];
+	s32 TEMP[128];
 	//24 bit wide
-	u32 MEMS[32];
+	s32 MEMS[32];
 	//20 bit wide
 	s32 MIXS[16];
 	
@@ -59,16 +59,13 @@ struct dsp_t
 		u32 NOFL_2;
 	}regs;
 	//DEC counter :)
-	u32 DEC;
+	//u32 DEC;
 
 	//various dsp regs
 	signed int ACC;        //26 bit
 	signed int SHIFTED;    //24 bit
-	signed int X;          //24 bit
-	signed int Y;          //13 bit
 	signed int B;          //26 bit
-	signed int INPUTS;     //24 bit
-	signed int MEMVAL;
+	signed int MEMVAL[4];
 	signed int FRC_REG;    //13 bit
 	signed int Y_REG;      //24 bit
 	unsigned int ADDR;
@@ -81,6 +78,8 @@ struct dsp_t
 	//EFREG *16
 	//EXTS  *2
 
+	// Interpreter flags
+	bool Stopped;
 
 	//Dynarec flags
 	bool dyndirty;
@@ -93,3 +92,38 @@ void dsp_init();
 void dsp_term();
 void dsp_step();
 void dsp_writenmem(u32 addr);
+
+struct _INST
+{
+	unsigned int TRA;
+	unsigned int TWT;
+	unsigned int TWA;
+
+	unsigned int XSEL;
+	unsigned int YSEL;
+	unsigned int IRA;
+	unsigned int IWT;
+	unsigned int IWA;
+
+	unsigned int EWT;
+	unsigned int EWA;
+	unsigned int ADRL;
+	unsigned int FRCL;
+	unsigned int SHIFT;
+	unsigned int YRL;
+	unsigned int NEGB;
+	unsigned int ZERO;
+	unsigned int BSEL;
+
+	unsigned int NOFL;  //MRQ set
+	unsigned int TABLE; //MRQ set
+	unsigned int MWT;   //MRQ set
+	unsigned int MRD;   //MRQ set
+	unsigned int MASA;  //MRQ set
+	unsigned int ADREB; //MRQ set
+	unsigned int NXADR; //MRQ set
+};
+
+void DecodeInst(u32 *IPtr,_INST *i);
+u16 DYNACALL PACK(s32 val);
+s32 DYNACALL UNPACK(u16 val);

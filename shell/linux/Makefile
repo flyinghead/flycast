@@ -1,3 +1,4 @@
+.DEFAULT_GOAL := all
 LOCAL_PATH := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 FOR_LINUX :=1
 #NO_REC := 1
@@ -7,13 +8,14 @@ USE_OSS := 1
 #USE_PULSEAUDIO := 1
 #USE_LIBAO := 1
 USE_EVDEV := 1
+USE_UDEV := 1
+PLATFORM_EXT := elf
 
 CXX=${CC_PREFIX}g++
 CC=${CC_PREFIX}gcc
 AS=${CC_PREFIX}as
 STRIP=${CC_PREFIX}strip
 LD=${CC}
-
 CHD5_LZMA := 1
 CHD5_FLAC := 1
 
@@ -27,6 +29,7 @@ CXXFLAGS :=
 
 ifneq (, $(filter $(shell uname -s), FreeBSD OpenBSD NetBSD DragonFly))
     CFLAGS += -DTARGET_BSD
+    undefine USE_UDEV
 else
     USE_ALSA := 1
 #    USE_JOYSTICK := 1
@@ -100,8 +103,8 @@ ifneq (,$(findstring x86,$(platform)))
     MFLAGS += -m32
     ASFLAGS += --32
     LDFLAGS += -m32
-    CFLAGS += -m32 -D TARGET_LINUX_x86 -D TARGET_NO_AREC -fsingle-precision-constant
-    CXXFLAGS += -fno-exceptions
+    CFLAGS += -m32 -D TARGET_LINUX_x86 -D TARGET_NO_AREC -fno-builtin-sqrtf
+    CXXFLAGS += -fexceptions
 
     ifneq (,$(findstring sse4_1,$(platform)))
         HAS_SOFTREND := 1
@@ -112,7 +115,7 @@ else ifneq (,$(findstring x64,$(platform)))
     X64_REC := 1
     NOT_ARM := 1
     USE_X11 := 1
-    CFLAGS += -D TARGET_LINUX_x64 -D TARGET_NO_AREC -fsingle-precision-constant
+    CFLAGS += -D TARGET_LINUX_x64 -D TARGET_NO_AREC -fno-builtin-sqrtf
     CXXFLAGS += -fexceptions
 
     ifneq (,$(findstring sse4_1,$(platform)))
@@ -233,6 +236,31 @@ else ifneq (,$(findstring vero4k,$(platform)))
     USE_GLES := 1
     USE_SDL := 1
 
+# Windows
+else ifneq (,$(findstring win32,$(platform)))
+    NOT_ARM := 1
+    CFLAGS += -DTARGET_NO_WEBUI -fno-builtin-sqrtf -funroll-loops -DHAVE_FSEEKO -D TARGET_NO_AREC
+    LDFLAGS += -static-libgcc -static-libstdc++
+    LIBS := -lopengl32 -lwinmm -lgdi32 -lwsock32 -ldsound -lcomctl32 -lcomdlg32 -lxinput -liphlpapi
+    PLATFORM_EXT := exe
+    CC = gcc
+    CXX = g++
+ifeq ($(WITH_DYNAREC), x86)
+    X86_REC := 1
+    LDFLAGS += -m32
+    CFLAGS += -m32
+else
+    X64_REC := 1
+endif
+    undefine USE_X11
+    undefine USE_ALSA
+    undefine USE_OSS
+    undefine USE_EVDEV
+    undefine USE_UDEV
+    undefine FOR_LINUX
+    undefine WEBUI
+    NO_NIXPROF := 1
+    FOR_WINDOWS := 1
 else
     $(error Unknown platform)
 endif
@@ -249,28 +277,25 @@ endif
 RZDCY_SRC_DIR = $(LOCAL_PATH)/../../core
 include $(RZDCY_SRC_DIR)/core.mk
 
-LDFLAGS += -g -Wl,-Map,$(notdir $@).map,--gc-sections -Wl,-O3 -Wl,--sort-common
+LDFLAGS += -g -Wl,-Map,$(notdir $@).map,--gc-sections -Wl,-O3 -Wl,--sort-common -fopenmp
 
-CFLAGS += -g -O3 -D RELEASE -c -D USES_HOMEDIR #-D NO_REND
+CFLAGS += $(RZDCY_CFLAGS) -g -O3 -D RELEASE -c -D USES_HOMEDIR -fopenmp #-D NO_REND
 CFLAGS += -frename-registers -fno-strict-aliasing
 CFLAGS += -ffast-math -ftree-vectorize
 
-CXXFLAGS += -fno-rtti -fpermissive -fno-operator-names
+CXXFLAGS += $(RZDCY_CFLAGS) -fno-rtti -fpermissive -fno-operator-names -D_GLIBCXX_USE_CXX11_ABI=0 -std=gnu++11
 
 INCS += -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps -I$(RZDCY_SRC_DIR)/khronos
 
-LIBS += -lm -lrt
-LIBS  += -lpthread
+LIBS += -lm -lpthread
+ifdef FOR_LINUX
+LIBS += -lrt -ldl
+endif
 
 PREFIX ?= /usr/local
 MAN_DIR ?= ${PREFIX}/share/man/man1
 MENUENTRY_DIR ?= ${PREFIX}/share/applications
 ICON_DIR ?= ${PREFIX}/share/pixmaps
-
-ifndef NOT_ARM
-    AS=${CC_PREFIX}gcc
-    ASFLAGS += $(CFLAGS)
-endif
 
 ifdef USE_SDL
     CXXFLAGS += `sdl2-config --cflags` -D USE_SDL
@@ -306,7 +331,7 @@ endif
 
 ifdef USE_EVDEV
     CXXFLAGS += -D USE_EVDEV
-    LIBS += -ldl
+    LIBS += -ludev
 endif
 
 ifdef USE_JOYSTICK
@@ -338,8 +363,7 @@ ifdef USE_LIBAO
 endif
 
 ifdef HAS_SOFTREND
-    CFLAGS += -fopenmp -msse4.1
-    LDFLAGS += -fopenmp
+    CFLAGS += -msse4.1
 endif
 
 # these are also handled on core.mk, but ignored here
@@ -348,7 +372,7 @@ endif
 ifdef USE_GLES
     CXXFLAGS += -DGLES
     LIBS += -lEGL -lGLESv2
-else
+else ifdef FOR_LINUX
     LIBS += -ldl -lGL #for desktop gl
 endif
 
@@ -357,16 +381,31 @@ ifdef HAS_SOFTREND
     CXXFLAGS += -DTARGET_SOFTREND
 endif
 
-EXECUTABLE_STRIPPED=nosym-reicast.elf
+EXECUTABLE_STRIPPED=nosym-reicast.$(PLATFORM_EXT)
 ifdef NAOMI
     CFLAGS += -D TARGET_NAOMI
     DC_PLATFORM=naomi
-    EXECUTABLE=reicast_naomi.elf
+    EXECUTABLE=reicast_naomi.$(PLATFORM_EXT)
     EXECUTABLE_NAME=reicast-naomi
+else ifdef ATOMISWAVE
+    CFLAGS += -D DC_PLATFORM=DC_PLATFORM_ATOMISWAVE
+    DC_PLATFORM=atomiswave
+    EXECUTABLE=reicast_awave.$(PLATFORM_EXT)
+    EXECUTABLE_NAME=reicast-awave
+else ifdef DISPFRAME
+    CFLAGS += -D TARGET_DISPFRAME #-D TARGET_NAOMI
+    DC_PLATFORM=dispframe
+    EXECUTABLE=dispframe.$(PLATFORM_EXT)
+    EXECUTABLE_NAME=dispframe
 else
     DC_PLATFORM=dreamcast
-    EXECUTABLE=reicast.elf
+    EXECUTABLE=reicast.$(PLATFORM_EXT)
     EXECUTABLE_NAME=reicast
+endif
+
+ifndef NOT_ARM
+    AS=${CC_PREFIX}gcc
+    ASFLAGS += $(CFLAGS)
 endif
 
 CHAR_EMPTY:=
@@ -374,32 +413,51 @@ CHAR_SPACE:=$(CHAR_EMPTY) $(CHAR_EMPTY)
 BUILDDIR:=obj-$(DC_PLATFORM)-$(subst $(CHAR_SPACE),-,$(platform))
 
 OBJECTS=$(RZDCY_FILES:.cpp=.build_obj)
+OBJECTS:=$(OBJECTS:.cc=.build_obj)
 OBJECTS:=$(OBJECTS:.c=.build_obj)
 OBJECTS:=$(OBJECTS:.S=.build_obj)
 OBJECTS:=$(patsubst $(RZDCY_SRC_DIR)/%,$(BUILDDIR)/%,$(OBJECTS))
+
+DEPDIR := .dep-$(BUILDDIR)
+DEPFLAGS = -MT $@ -MD -MP -MF $(DEPDIR)/$*.Td
+DEPS=$(RZDCY_FILES:.cpp=.d)
+DEPS:=$(DEPS:.cc=.d)
+DEPS:=$(DEPS:.c=.d)
+DEPS:=$(DEPS:.S=.d)
+DEPS:=$(patsubst $(RZDCY_SRC_DIR)/%,$(DEPDIR)/%,$(DEPS))
+POSTCOMPILE = mv -f $(DEPDIR)/$*.Td $(DEPDIR)/$*.d
 
 all: $(CPPFILES) $(EXECUTABLE) $(EXECUTABLE_STRIPPED)
 ifneq (,$(findstring gcwz,$(platform)))
 	mksquashfs $(EXECUTABLE_STRIPPED) $(GCWZ_PKG_FILES) $(GCWZ_PKG) -all-root
 endif
 
-VERSION_HEADER=$(RZDCY_SRC_DIR)/version.h
-$(VERSION_HEADER):
-	echo \#define REICAST_VERSION \"$(shell git describe)\" >$(RZDCY_SRC_DIR)/version.h
-
-$(EXECUTABLE): $(VERSION_HEADER) $(OBJECTS)
+$(EXECUTABLE): $(OBJECTS)
 	$(CXX) $(MFLAGS) $(EXTRAFLAGS) $(LDFLAGS) $(OBJECTS) $(LIBS) -o $@
 
 $(EXECUTABLE_STRIPPED): $(EXECUTABLE)
 	cp $< $@ && $(STRIP) $@
 
 $(BUILDDIR)/%.build_obj : $(RZDCY_SRC_DIR)/%.cpp
+$(BUILDDIR)/%.build_obj: $(RZDCY_SRC_DIR)/%.cpp $(DEPDIR)/%.d
 	mkdir -p $(dir $@)
-	$(CXX) $(EXTRAFLAGS) $(INCS) $(CFLAGS) $(MFLAGS) $(CXXFLAGS) $< -o $@
+	mkdir -p .dep-$(dir $@)
+	$(CXX) $(EXTRAFLAGS) $(INCS) $(DEPFLAGS) $(CFLAGS) $(MFLAGS) $(CXXFLAGS) $< -o $@
+	$(POSTCOMPILE)
+
+$(BUILDDIR)/%.build_obj : $(RZDCY_SRC_DIR)/%.cc
+$(BUILDDIR)/%.build_obj: $(RZDCY_SRC_DIR)/%.cc $(DEPDIR)/%.d
+	mkdir -p $(dir $@)
+	mkdir -p .dep-$(dir $@)
+	$(CXX) $(EXTRAFLAGS) $(INCS) $(DEPFLAGS) $(CFLAGS) $(MFLAGS) $(CXXFLAGS) $< -o $@
+	$(POSTCOMPILE)
 
 $(BUILDDIR)/%.build_obj : $(RZDCY_SRC_DIR)/%.c
+$(BUILDDIR)/%.build_obj: $(RZDCY_SRC_DIR)/%.c $(DEPDIR)/%.d
 	mkdir -p $(dir $@)
-	$(CC) $(EXTRAFLAGS) $(INCS) $(CFLAGS) $< -o $@
+	mkdir -p .dep-$(dir $@)
+	$(CC) $(EXTRAFLAGS) $(INCS) $(DEPFLAGS) $(CFLAGS) $< -o $@
+	$(POSTCOMPILE)
 
 $(BUILDDIR)/%.build_obj : $(RZDCY_SRC_DIR)/%.S
 	mkdir -p $(dir $@)
@@ -439,4 +497,9 @@ uninstall:
 	rm -f $(DESTDIR)$(ICON_DIR)/reicast.png
 
 clean:
-	rm -f $(VERSION_HEADER) $(OBJECTS) $(EXECUTABLE) $(EXECUTABLE_STRIPPED) .map
+	rm -f $(OBJECTS) $(EXECUTABLE) $(EXECUTABLE_STRIPPED) .map
+
+.PRECIOUS = $(DEPDIR)/%.d
+$(DEPDIR)/%.d: ;
+
+-include $(DEPS)
