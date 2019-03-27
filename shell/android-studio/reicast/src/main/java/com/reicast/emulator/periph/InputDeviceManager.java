@@ -34,8 +34,10 @@ public final class InputDeviceManager implements InputManager.InputDeviceListene
 
     public void stopListening()
     {
-        inputManager.unregisterInputDeviceListener(this);
-        inputManager = null;
+        if (inputManager != null) {
+            inputManager.unregisterInputDeviceListener(this);
+            inputManager = null;
+        }
         joystickRemoved(VIRTUAL_GAMEPAD_ID);
     }
 

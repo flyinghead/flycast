@@ -33,7 +33,7 @@ extern int screen_width, screen_height;
 
 static std::string select_current_directory;
 static std::vector<std::string> select_subfolders;
-static bool subfolders_read;
+bool subfolders_read;
 #ifdef _WIN32
 static const std::string separators = "/\\";
 static const std::string native_separator = "\\";

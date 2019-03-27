@@ -25,6 +25,7 @@ void gui_display_notification(const char *msg, int duration);
 void gui_display_osd();
 void gui_open_onboarding();
 void gui_term();
+void gui_refresh_files();
 
 extern int screen_dpi;
 

@@ -259,6 +259,7 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setExternalStorageDir
         env->DeleteLocalRef(dir);
     }
     setenv("REICAST_HOME", paths.c_str(), 1);
+    gui_refresh_files();
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_bootdisk(JNIEnv *env,jobject obj, jstring disk) {

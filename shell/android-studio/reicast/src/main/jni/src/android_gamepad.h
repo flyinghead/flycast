@@ -67,6 +67,23 @@ public:
 	}
 };
 
+class ShieldRemoteInputMapping : public InputMapping
+{
+public:
+	ShieldRemoteInputMapping()
+	{
+		name = "Default";
+		set_button(DC_BTN_A, 23);
+		set_button(DC_DPAD_UP, 19);
+		set_button(DC_DPAD_DOWN, 20);
+		set_button(DC_DPAD_LEFT, 21);
+		set_button(DC_DPAD_RIGHT, 22);
+		set_button(EMU_BTN_MENU, 4);
+
+		dirty = false;
+	}
+};
+
 class AndroidGamepadDevice : public GamepadDevice
 {
 public:
@@ -89,7 +106,10 @@ public:
 		}
 		else if (!find_mapping())
 		{
-			input_mapper = new DefaultInputMapping();
+			if (_name == "SHIELD Remote")
+				input_mapper = new ShieldRemoteInputMapping();
+			else
+				input_mapper = new DefaultInputMapping();
 			save_mapping();
 			printf("using default mapping\n");
 		}

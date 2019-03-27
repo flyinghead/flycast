@@ -1,6 +1,5 @@
 package com.reicast.emulator;
 
-import android.app.Activity;
 import android.app.Application;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -14,31 +13,23 @@ import com.reicast.emulator.emu.JNIdc;
 
 public class Emulator extends Application {
     private static Context context;
-    private static Activity currentActivity;
+    private static BaseGLActivity currentActivity;
 
     // see MapleDeviceType in hw/maple/maple_devs.h
-    public static final int MDT_SegaController = 0;
-    public static final int MDT_SegaVMU = 1;
     public static final int MDT_Microphone = 2;
-    public static final int MDT_PurupuruPack = 3;
-    public static final int MDT_Keyboard = 4;
-    public static final int MDT_Mouse = 5;
-    public static final int MDT_LightGun = 6;
-    public static final int MDT_NaomiJamma = 7;
     public static final int MDT_None = 8;
-    public static final int MDT_Count = 9;
 
     public static boolean nosound = false;
     public static int vibrationDuration = 20;
 
     public static int maple_devices[] = {
-            MDT_SegaController,
+            MDT_None,
             MDT_None,
             MDT_None,
             MDT_None
     };
     public static int maple_expansion_devices[][] = {
-        { MDT_SegaVMU, MDT_None },
+        { MDT_None, MDT_None },
         { MDT_None, MDT_None },
         { MDT_None, MDT_None },
         { MDT_None, MDT_None },
@@ -56,7 +47,7 @@ public class Emulator extends Application {
 
     /**
      * Fetch current configuration settings from the emulator and save them
-     *
+     * Called from JNI code
      */
     public void SaveAndroidSettings(String homeDirectory)
     {
@@ -71,8 +62,8 @@ public class Emulator extends Application {
         AudioBackend.getInstance().enableSound(!Emulator.nosound);
 
         FileBrowser.installButtons(prefs);
-        if (micPluggedIn() && currentActivity instanceof NativeGLActivity) {
-            ((NativeGLActivity)currentActivity).requestRecordAudioPermission();
+        if (micPluggedIn() && currentActivity instanceof BaseGLActivity) {
+            ((BaseGLActivity)currentActivity).requestRecordAudioPermission();
         }
     }
 
@@ -95,11 +86,11 @@ public class Emulator extends Application {
         return Emulator.context;
     }
 
-    public static Activity getCurrentActivity() {
+    public static BaseGLActivity getCurrentActivity() {
         return Emulator.currentActivity;
     }
 
-    public static void setCurrentActivity(Activity activity) {
+    public static void setCurrentActivity(BaseGLActivity activity) {
         Emulator.currentActivity = activity;
     }
 
