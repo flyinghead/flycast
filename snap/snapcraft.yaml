@@ -39,6 +39,7 @@ parts:
       - libgles2-mesa-dev
       - mesa-common-dev
       - pkg-config
+      - libudev-dev
     stage-packages:
       - libevdev2
     after: [desktop-gtk2, alsa]
