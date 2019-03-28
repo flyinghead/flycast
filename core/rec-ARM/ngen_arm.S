@@ -58,6 +58,7 @@ bkpt #0
 bkpt
 #endif
 ubfx r0,r3,#5,#19		@ get vram offset
+						@ should be only 18 bits for 8MB VRAM but it wraps around on dc
 add r3,r1,#0x04000000	@ get vram ptr from r1, part 1
 add r3,#512				@ get ram ptr from r1, part 2
 add r3,r0,lsl #5		@ ram + offset
@@ -180,6 +181,7 @@ CSYM(no_update):              @ next_pc _MUST_ be on r4 *R4 NOT R0 anymore*
 #if RAM_SIZE_MAX == 33554432
 	sub r2,r8,#0x4100000
 	ubfx r1,r4,#1,#24			@ 24+1 bits: 32 MB
+								@ RAM wraps around so if actual RAM size is 16MB, we won't overflow
 #elif RAM_SIZE_MAX == 16777216
 	sub r2,r8,#0x2100000
 	ubfx r1,r4,#1,#23			@ 23+1 bits: 16 MB
@@ -241,7 +243,13 @@ HIDDEN(arm_dispatch)
 CSYM(arm_dispatch):
 	ldrd r0,r1,[r8,#184]		@load: Next PC, interrupt
 
+#if ARAM_SIZE == 2*1024*1024
+	ubfx r2,r0,#2,#19		@ assuming 2 MB address space max (21 bits)
+#elif ARAM_SIZE == 8*1024*1024
 	ubfx r2,r0,#2,#21		@ assuming 8 MB address space max (23 bits)
+#else
+#error Unsupported AICA RAM size
+#endif
 	cmp r1,#0
 	bne arm_dofiq
 

@@ -286,10 +286,6 @@
 	#define FEAT_HAS_SOFTREND BUILD_COMPILER == COMPILER_VC	//GCC wants us to enable sse4 globaly to enable intrins
 #endif
 
-#define RAM_SIZE_MAX (32*1024*1024)
-#define VRAM_SIZE_MAX (16*1024*1024)
-#define ARAM_SIZE_MAX (8*1024*1024)
-
 //Depricated build configs
 #ifdef HOST_NO_REC
 #error Dont use HOST_NO_REC
@@ -298,3 +294,108 @@
 #ifdef HOST_NO_AREC
 #error Dont use HOST_NO_AREC
 #endif
+
+// TARGET PLATFORM
+
+#define RAM_SIZE_MAX (32*1024*1024)
+#define VRAM_SIZE_MAX (16*1024*1024)
+#define ARAM_SIZE_MAX (8*1024*1024)
+
+#if (DC_PLATFORM==DC_PLATFORM_DREAMCAST)
+
+	#define BUILD_DREAMCAST 1
+
+	//DC : 16 mb ram, 8 mb vram, 2 mb aram, 2 mb bios, 128k flash
+	#define RAM_SIZE (16*1024*1024)
+	#define VRAM_SIZE (8*1024*1024)
+	#define ARAM_SIZE (2*1024*1024)
+	#define BIOS_SIZE (2*1024*1024)
+	#define FLASH_SIZE (128*1024)
+
+	#define ROM_PREFIX "dc_"
+	#define ROM_NAMES
+	#define NVR_OPTIONAL 0
+
+#elif  (DC_PLATFORM==DC_PLATFORM_DEV_UNIT)
+
+	#define BUILD_DEV_UNIT 1
+
+	//Devkit : 32 mb ram, 8? mb vram, 2? mb aram, 2? mb bios, ? flash
+	#define RAM_SIZE (32*1024*1024)
+	#define VRAM_SIZE (8*1024*1024)
+	#define ARAM_SIZE (2*1024*1024)
+	#define BIOS_SIZE (2*1024*1024)
+	#define FLASH_SIZE (128*1024)
+
+	#define ROM_PREFIX "hkt_"
+	#define ROM_NAMES
+	#define NVR_OPTIONAL 0
+
+#elif  (DC_PLATFORM==DC_PLATFORM_NAOMI)
+
+	//Naomi : 32 mb ram, 16 mb vram, 8 mb aram, 2 mb bios, ? flash
+	#define RAM_SIZE (32*1024*1024)
+	#define VRAM_SIZE (16*1024*1024)
+	#define ARAM_SIZE (8*1024*1024)
+	#define BIOS_SIZE (2*1024*1024)
+	#define BBSRAM_SIZE (32*1024)
+
+	#define ROM_PREFIX "naomi_"
+	#define ROM_NAMES ";epr-21576d.bin"
+	#define NVR_OPTIONAL 1
+
+#elif  (DC_PLATFORM==DC_PLATFORM_NAOMI2)
+
+	//Naomi2 : 32 mb ram, 16 mb vram, 8 mb aram, 2 mb bios, ? flash
+	#define RAM_SIZE (32*1024*1024)
+	#define VRAM_SIZE (16*1024*1024)
+	#define ARAM_SIZE (8*1024*1024)
+	#define BIOS_SIZE (2*1024*1024)
+	#define BBSRAM_SIZE (32*1024)
+
+	#define ROM_PREFIX "n2_"
+	#define ROM_NAMES
+	#define NVR_OPTIONAL 1
+
+#elif  (DC_PLATFORM==DC_PLATFORM_ATOMISWAVE)
+
+	#define BUILD_ATOMISWAVE 1
+
+	//Atomiswave : 16 mb ram, 8 mb vram, 8 mb aram, 128kb bios on flash, 128kb battery-backed ram
+	#define RAM_SIZE (16*1024*1024)
+	#define VRAM_SIZE (8*1024*1024)
+	#define ARAM_SIZE (8*1024*1024)
+	#define BIOS_SIZE (128*1024)
+	#define BBSRAM_SIZE (128*1024)
+
+	#define ROM_PREFIX "aw_"
+	#define ROM_NAMES ";bios.ic23_l"
+	#define NVR_OPTIONAL 1
+
+#else
+	#error invalid build config
+#endif
+
+#define RAM_MASK	(RAM_SIZE-1)
+#define VRAM_MASK	(VRAM_SIZE-1)
+#define ARAM_MASK	(ARAM_SIZE-1)
+#define BIOS_MASK	(BIOS_SIZE-1)
+
+#ifdef FLASH_SIZE
+#define FLASH_MASK	(FLASH_SIZE-1)
+#endif
+
+#ifdef BBSRAM_SIZE
+#define BBSRAM_MASK	(BBSRAM_SIZE-1)
+#endif
+
+#define GD_CLOCK 33868800				//GDROM XTAL -- 768fs
+
+#define AICA_CORE_CLOCK (GD_CLOCK*4/3)		//[45158400]  GD->PLL 3:4 -> AICA CORE	 -- 1024fs
+#define ADAC_CLOCK (AICA_CORE_CLOCK/2)		//[11289600]  44100*256, AICA CORE -> PLL 4:1 -> ADAC -- 256fs
+#define AICA_ARM_CLOCK (AICA_CORE_CLOCK/2)	//[22579200]  AICA CORE -> PLL 2:1 -> ARM
+#define AICA_SDRAM_CLOCK (GD_CLOCK*2)		//[67737600]  GD-> PLL 2 -> SDRAM
+#define SH4_MAIN_CLOCK (200*1000*1000)		//[200000000] XTal(13.5) -> PLL (33.3) -> PLL 1:6 (200)
+#define SH4_RAM_CLOCK (100*1000*1000)		//[100000000] XTal(13.5) -> PLL (33.3) -> PLL 1:3 (100)	, also suplied to HOLLY chip
+#define G2_BUS_CLOCK (25*1000*1000)			//[25000000]  from Holly, from SH4_RAM_CLOCK w/ 2 2:1 plls
+
