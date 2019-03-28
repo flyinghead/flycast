@@ -618,7 +618,7 @@ public:
 
 			case shop_pref:
 				Mov(w0, regalloc.MapRegister(op.rs1));
-				if (op.flags != 0x1337)
+				//if (op.flags != 0x1337)
 				{
 					Lsr(w1, regalloc.MapRegister(op.rs1), 26);
 					Cmp(w1, 0x38);
@@ -634,9 +634,9 @@ public:
 					Ldr(x9, MemOperand(x9));
 					Sub(x1, x28, offsetof(Sh4RCB, cntx) - offsetof(Sh4RCB, sq_buffer));
 				}
-				if (op.flags == 0x1337)
-					Blr(x9);
-				else
+				//if (op.flags == 0x1337)
+				//	Blr(x9);
+				//else
 				{
 					Label no_branch;
 					B(&no_branch, ne);
