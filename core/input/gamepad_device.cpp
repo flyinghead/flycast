@@ -20,6 +20,7 @@
 #include <limits.h>
 #include "gamepad_device.h"
 #include "rend/gui.h"
+#include "oslib/oslib.h"
 
 extern void dc_exit();
 
@@ -32,7 +33,8 @@ std::mutex GamepadDevice::_gamepads_mutex;
 
 bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 {
-	if (_input_detected != NULL && _detecting_button && pressed)
+	if (_input_detected != NULL && _detecting_button 
+			&& os_GetSeconds() >= _detection_start_time && pressed)
 	{
 		_input_detected(code);
 		_input_detected = NULL;
@@ -84,7 +86,8 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 		v = (get_axis_min_value(code) + get_axis_range(code) - value) * 255 / get_axis_range(code) - 128;
 	else
 		v = (value - get_axis_min_value(code)) * 255 / get_axis_range(code) - 128; //-128 ... + 127 range
-	if (_input_detected != NULL && !_detecting_button && (v >= 64 || v <= -64))
+	if (_input_detected != NULL && !_detecting_button 
+			&& os_GetSeconds() >= _detection_start_time && (v >= 64 || v <= -64))
 	{
 		_input_detected(code);
 		_input_detected = NULL;
@@ -235,3 +238,18 @@ void UpdateVibration(u32 port, float power, float inclination, u32 duration_ms)
 			gamepad->rumble(power, inclination, duration_ms);
 	}
 }
+
+void GamepadDevice::detect_btn_input(input_detected_cb button_pressed)
+{
+	_input_detected = button_pressed;
+	_detecting_button = true;
+	_detection_start_time = os_GetSeconds() + 0.2;
+}
+
+void GamepadDevice::detect_axis_input(input_detected_cb axis_moved)
+{
+	_input_detected = axis_moved;
+	_detecting_button = false;
+	_detection_start_time = os_GetSeconds() + 0.2;
+}
+
