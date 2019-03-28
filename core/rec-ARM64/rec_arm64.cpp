@@ -617,31 +617,25 @@ public:
 				break;
 
 			case shop_pref:
-				Mov(w0, regalloc.MapRegister(op.rs1));
-				//if (op.flags != 0x1337)
 				{
 					Lsr(w1, regalloc.MapRegister(op.rs1), 26);
 					Cmp(w1, 0x38);
-				}
+					Label not_sqw;
+					B(&not_sqw, ne);
+					Mov(w0, regalloc.MapRegister(op.rs1));
 
-				if (CCN_MMUCR.AT)
-				{
-					Ldr(x9, reinterpret_cast<uintptr_t>(&do_sqw_mmu));
-				}
-				else
-				{
-					Sub(x9, x28, offsetof(Sh4RCB, cntx) - offsetof(Sh4RCB, do_sqw_nommu));
-					Ldr(x9, MemOperand(x9));
-					Sub(x1, x28, offsetof(Sh4RCB, cntx) - offsetof(Sh4RCB, sq_buffer));
-				}
-				//if (op.flags == 0x1337)
-				//	Blr(x9);
-				//else
-				{
-					Label no_branch;
-					B(&no_branch, ne);
+					if (CCN_MMUCR.AT)
+					{
+						Ldr(x9, reinterpret_cast<uintptr_t>(&do_sqw_mmu));
+					}
+					else
+					{
+						Sub(x9, x28, offsetof(Sh4RCB, cntx) - offsetof(Sh4RCB, do_sqw_nommu));
+						Ldr(x9, MemOperand(x9));
+						Sub(x1, x28, offsetof(Sh4RCB, cntx) - offsetof(Sh4RCB, sq_buffer));
+					}
 					Blr(x9);
-					Bind(&no_branch);
+					Bind(&not_sqw);
 				}
 				break;
 
