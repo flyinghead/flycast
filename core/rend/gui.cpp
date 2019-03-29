@@ -64,6 +64,10 @@ GuiState gui_state = Main;
 static bool settings_opening;
 static bool touch_up;
 
+static void display_vmus();
+static void reset_vmus();
+static void term_vmus();
+
 void gui_init()
 {
 	if (inited)
@@ -289,6 +293,8 @@ static void gui_display_commands()
     ImGui::NewFrame();
     if (!settings_opening)
     	ImGui_ImplOpenGL3_DrawBackground();
+
+	display_vmus();
 
     ImGui::SetNextWindowPos(ImVec2(screen_width / 2.f, screen_height / 2.f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
     ImGui::SetNextWindowSize(ImVec2(330 * scaling, 0));
@@ -635,6 +641,7 @@ static void gui_display_settings()
     		gui_state = Main;
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST
     	maple_ReconnectDevices();
+    	reset_vmus();
 #endif
        	SaveSettings();
     }
@@ -1470,6 +1477,7 @@ void gui_open_onboarding()
 void gui_term()
 {
 	inited = false;
+	term_vmus();
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui::DestroyContext();
 }
@@ -1494,4 +1502,94 @@ void gui_refresh_files()
 {
 	game_list_done = false;
 	subfolders_read = false;
+}
+
+#define VMU_WIDTH (70 * 48 * scaling / 32)
+#define VMU_HEIGHT (70 * scaling)
+#define VMU_PADDING (8 * scaling)
+static u32 vmu_lcd_data[8][48 * 32];
+static bool vmu_lcd_status[8];
+static ImTextureID vmu_lcd_tex_ids[8];
+
+int push_vmu_screen(int vmu_id, u8* buffer)
+{
+	u32 *p = &vmu_lcd_data[vmu_id][0];
+	for (int i = 0; i < ARRAY_SIZE(vmu_lcd_data[vmu_id]); i++, buffer++)
+		*p++ = *buffer != 0 ? 0xFFFFFFFFu : 0xFF000000u;
+	vmu_lcd_status[vmu_id] = true;
+
+	return 0;
+}
+
+static const int vmu_coords[8][2] = {
+		{ 0 , 0 },
+		{ 0 , 0 },
+		{ 1 , 0 },
+		{ 1 , 0 },
+		{ 0 , 1 },
+		{ 0 , 1 },
+		{ 1 , 1 },
+		{ 1 , 1 },
+};
+
+static void display_vmus()
+{
+	if (!game_started)
+		return;
+    ImGui::SetNextWindowBgAlpha(0);
+    ImGui::SetNextWindowPos(ImVec2(0, 0));
+    ImGui::SetNextWindowSize(ImVec2(screen_width, screen_height));
+
+    ImGui::Begin("vmu-window", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoInputs
+    		| ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoFocusOnAppearing);
+	for (int i = 0; i < 8; i++)
+	{
+		if (!vmu_lcd_status[i])
+			continue;
+
+		if (vmu_lcd_tex_ids[i] != (ImTextureID)0)
+			ImGui_ImplOpenGL3_DeleteVmuTexture(vmu_lcd_tex_ids[i]);
+		vmu_lcd_tex_ids[i] = ImGui_ImplOpenGL3_CreateVmuTexture(vmu_lcd_data[i]);
+
+	    int x = vmu_coords[i][0];
+	    int y = vmu_coords[i][1];
+	    ImVec2 pos;
+	    if (x == 0)
+	    	pos.x = VMU_PADDING;
+	    else
+	    	pos.x = screen_width - VMU_WIDTH - VMU_PADDING;
+	    if (y == 0)
+	    {
+	    	pos.y = VMU_PADDING;
+	    	if (i & 1)
+	    		pos.y += VMU_HEIGHT + VMU_PADDING;
+	    }
+	    else
+	    {
+	    	pos.y = screen_height - VMU_HEIGHT - VMU_PADDING;
+	    	if (i & 1)
+	    		pos.y -= VMU_HEIGHT + VMU_PADDING;
+	    }
+	    ImVec2 pos_b(pos.x + VMU_WIDTH, pos.y + VMU_HEIGHT);
+		ImGui::GetWindowDrawList()->AddImage(vmu_lcd_tex_ids[i], pos, pos_b, ImVec2(0, 1), ImVec2(1, 0), 0xC0ffffff);
+	}
+    ImGui::End();
+}
+
+static void reset_vmus()
+{
+	for (int i = 0; i < ARRAY_SIZE(vmu_lcd_status); i++)
+		vmu_lcd_status[i] = false;
+}
+
+static void term_vmus()
+{
+	for (int i = 0; i < ARRAY_SIZE(vmu_lcd_status); i++)
+	{
+		if (vmu_lcd_tex_ids[i] != (ImTextureID)0)
+		{
+			ImGui_ImplOpenGL3_DeleteVmuTexture(vmu_lcd_tex_ids[i]);
+			vmu_lcd_tex_ids[i] = (ImTextureID)0;
+		}
+	}
 }

@@ -183,7 +183,7 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
 		}
 
 		ImGui::Text("%s", error_message.empty() ? select_current_directory.c_str() : error_message.c_str());
-		ImGui::BeginChild(ImGui::GetID("dir_list"), ImVec2(0, -ImGui::CalcTextSize("Cancel").y - ImGui::GetStyle().FramePadding. y * 2 - ImGui::GetStyle().ItemSpacing.y), true);
+		ImGui::BeginChild(ImGui::GetID("dir_list"), ImVec2(0, - 30 * scaling - ImGui::GetStyle().ItemSpacing.y), true);
 
 		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8 * scaling, 20 * scaling));		// from 8, 4
 
@@ -245,14 +245,14 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
 		}
 		ImGui::PopStyleVar();
 		ImGui::EndChild();
-		if (ImGui::Button("Select Current Directory"))
+		if (ImGui::Button("Select Current Directory", ImVec2(0, 30 * scaling)))
 		{
 			subfolders_read = false;
 			callback(false, select_current_directory);
 			ImGui::CloseCurrentPopup();
 		}
 		ImGui::SameLine();
-		if (ImGui::Button("Cancel"))
+		if (ImGui::Button("Cancel", ImVec2(0, 30 * scaling)))
 		{
 			subfolders_read = false;
 			callback(true, "");

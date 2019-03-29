@@ -315,10 +315,6 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_diskSwap(JNIEnv *env,
 //stuff for microphone
 jobject sipemu;
 jmethodID getmicdata;
-//stuff for vmu lcd
-jobject vmulcd = NULL;
-jbyteArray jpix = NULL;
-jmethodID updatevmuscreen;
 extern bool game_started;
 
 //stuff for audio
@@ -331,12 +327,6 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setupMic(JNIEnv *env,
 {
     sipemu = env->NewGlobalRef(sip);
     getmicdata = env->GetMethodID(env->GetObjectClass(sipemu),"getData","()[B");
-}
-
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setupVmu(JNIEnv *env,jobject obj,jobject vmu)
-{
-    vmulcd = env->NewGlobalRef(vmu);
-    updatevmuscreen = env->GetMethodID(env->GetObjectClass(vmu),"updateBytes","([B)V");
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_pause(JNIEnv *env,jobject obj)
@@ -360,18 +350,6 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_stop(JNIEnv *env,jobj
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_destroy(JNIEnv *env,jobject obj)
 {
     dc_term();
-}
-
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_vmuSwap(JNIEnv *env,jobject obj)
-{
-    maple_device* olda = MapleDevices[0][0];
-    maple_device* oldb = MapleDevices[0][1];
-    MapleDevices[0][0] = NULL;
-    MapleDevices[0][1] = NULL;
-    usleep(50000);//50 ms, wait for host to detect disconnect
-
-    MapleDevices[0][0] = oldb;
-    MapleDevices[0][1] = olda;
 }
 
 JNIEXPORT jint JNICALL Java_com_reicast_emulator_emu_JNIdc_send(JNIEnv *env,jobject obj,jint cmd, jint param)
@@ -581,19 +559,6 @@ int get_mic_data(u8* buffer)
     }
     jvm_attacher.getEnv()->GetByteArrayRegion(jdata, 0, SIZE_OF_MIC_DATA, (jbyte*)buffer);
     jvm_attacher.getEnv()->DeleteLocalRef(jdata);
-    return 1;
-}
-
-int push_vmu_screen(u8* buffer)
-{
-    if(vmulcd==NULL){
-        return 0;
-    }
-    if(jpix==NULL){
-        jpix = jvm_attacher.getEnv()->NewByteArray(1536);
-    }
-    jvm_attacher.getEnv()->SetByteArrayRegion(jpix, 0, 1536, (jbyte*)buffer);
-    jvm_attacher.getEnv()->CallVoidMethod(vmulcd, updatevmuscreen, jpix);
     return 1;
 }
 
