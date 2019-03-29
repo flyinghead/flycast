@@ -234,7 +234,7 @@ public:
 	WinKbGamepadDevice(int maple_port) : GamepadDevice(maple_port, "win32")
 	{
 		_name = "Keyboard";
-		_unique_id = "win_keyboard;
+		_unique_id = "win_keyboard";
 		if (!find_mapping())
 			input_mapper = new KbInputMapping();
 	}
@@ -261,7 +261,7 @@ public:
 	WinMouseGamepadDevice(int maple_port) : GamepadDevice(maple_port, "win32")
 	{
 		_name = "Mouse";
-		_unique_id = "win_mouse;
+		_unique_id = "win_mouse";
 		if (!find_mapping())
 			input_mapper = new MouseInputMapping();
 	}
