@@ -50,6 +50,13 @@ public:
 		_name = SDL_JoystickName(sdl_joystick);
 		sdl_joystick_instance = SDL_JoystickInstanceID(sdl_joystick);
 		printf("SDL: Opened joystick on port %d: '%s' ", maple_port, _name.c_str());
+		SDL_JoystickGUID guid = SDL_JoystickGetGUID(sdl_joystick);
+		char buf[33];
+		SDL_JoystickGetGUIDString(guid, buf, sizeof(buf));
+		_unique_id = buf;
+		if (_unique_id.empty())
+			_unique_id = _name;
+
 		if (!find_mapping())
 		{
 			if (_name == "Microsoft X-Box 360 pad")
@@ -175,6 +182,7 @@ public:
 	SDLKbGamepadDevice(int maple_port) : GamepadDevice(maple_port, "SDL")
 	{
 		_name = "Keyboard";
+		_unique_id = "sdl_keyboard;
 		if (!find_mapping())
 			input_mapper = new KbInputMapping();
 	}
@@ -201,6 +209,7 @@ public:
 	SDLMouseGamepadDevice(int maple_port) : GamepadDevice(maple_port, "SDL")
 	{
 		_name = "Mouse";
+		_unique_id = "sdl_mouse";
 		if (!find_mapping())
 			input_mapper = new MouseInputMapping();
 	}

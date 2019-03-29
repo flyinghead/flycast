@@ -87,10 +87,12 @@ public:
 class AndroidGamepadDevice : public GamepadDevice
 {
 public:
-	AndroidGamepadDevice(int maple_port, int id, const char *name) : GamepadDevice(maple_port, "Android", id != VIRTUAL_GAMEPAD_ID), android_id(id)
+	AndroidGamepadDevice(int maple_port, int id, const char *name, const char *unique_id)
+		: GamepadDevice(maple_port, "Android", id != VIRTUAL_GAMEPAD_ID), android_id(id)
 	{
 		_name = name;
-		printf("Android: Opened joystick %d on port %d: '%s' ", id, maple_port, _name.c_str());
+		_unique_id = unique_id;
+		printf("Android: Opened joystick %d on port %d: '%s' descriptor '%s'", id, maple_port, _name.c_str(), _unique_id.c_str());
 		if (id == VIRTUAL_GAMEPAD_ID)
 		{
 			input_mapper = new IdentityInputMapping();
@@ -213,6 +215,7 @@ public:
 	AndroidMouseGamepadDevice(int maple_port) : GamepadDevice(maple_port, "Android")
 	{
 		_name = "Mouse";
+		_unique_id = "android_mouse";
 		if (!find_mapping())
 			input_mapper = new MouseInputMapping();
 	}

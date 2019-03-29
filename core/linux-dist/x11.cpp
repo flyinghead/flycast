@@ -52,6 +52,7 @@ public:
 	X11MouseGamepadDevice(int maple_port) : GamepadDevice(maple_port, "X11")
 	{
 		_name = "Mouse";
+		_unique_id = "x11_mouse";
 		if (!find_mapping())
 			input_mapper = new MouseInputMapping();
 	}

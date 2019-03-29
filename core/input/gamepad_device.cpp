@@ -21,6 +21,9 @@
 #include "gamepad_device.h"
 #include "rend/gui.h"
 #include "oslib/oslib.h"
+#include "cfg/cfg.h"
+
+#define MAPLE_PORT_CFG_PREFIX "maple_"
 
 extern void dc_exit();
 
@@ -253,3 +256,36 @@ void GamepadDevice::detect_axis_input(input_detected_cb axis_moved)
 	_detection_start_time = os_GetSeconds() + 0.2;
 }
 
+void GamepadDevice::Register(std::shared_ptr<GamepadDevice> gamepad)
+{
+	int maple_port = cfgLoadInt("input",
+			(MAPLE_PORT_CFG_PREFIX + gamepad->unique_id()).c_str(), 12345);
+	if (maple_port != 12345)
+		gamepad->set_maple_port(maple_port);
+
+	_gamepads_mutex.lock();
+	_gamepads.push_back(gamepad);
+	_gamepads_mutex.unlock();
+}
+
+void GamepadDevice::Unregister(std::shared_ptr<GamepadDevice> gamepad)
+{
+	gamepad->save_mapping();
+	_gamepads_mutex.lock();
+	for (auto it = _gamepads.begin(); it != _gamepads.end(); it++)
+		if (*it == gamepad) {
+			_gamepads.erase(it);
+			break;
+		}
+	_gamepads_mutex.unlock();
+}
+
+void GamepadDevice::SaveMaplePorts()
+{
+	for (int i = 0; i < GamepadDevice::GetGamepadCount(); i++)
+	{
+		std::shared_ptr<GamepadDevice> gamepad = GamepadDevice::GetGamepad(i);
+		if (gamepad != NULL && !gamepad->unique_id().empty())
+			cfgSaveInt("input", (MAPLE_PORT_CFG_PREFIX + gamepad->unique_id()).c_str(), gamepad->maple_port());
+	}
+}

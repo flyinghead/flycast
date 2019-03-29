@@ -181,6 +181,7 @@ public:
 	X11KbGamepadDevice(int maple_port) : GamepadDevice(maple_port, "X11")
 	{
 		_name = "Keyboard";
+		_unique_id = "x11_keyboard";
 		if (!find_mapping())
 			input_mapper = new KbInputMapping();
 	}
