@@ -644,8 +644,7 @@ struct maple_sega_vmu: maple_base
 							}
 						}
 						config->SetImage(lcd_data_decoded);
-						if (bus_id <= 3 && bus_port <= 1)
-							push_vmu_screen(bus_id * 2 + bus_port, lcd_data_decoded);
+						push_vmu_screen(bus_id, bus_port, lcd_data_decoded);
 #if 0
 						// Update LCD window
 						if (!dev->lcd.visible)

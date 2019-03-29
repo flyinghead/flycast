@@ -1511,14 +1511,15 @@ static u32 vmu_lcd_data[8][48 * 32];
 static bool vmu_lcd_status[8];
 static ImTextureID vmu_lcd_tex_ids[8];
 
-int push_vmu_screen(int vmu_id, u8* buffer)
+void push_vmu_screen(int bus_id, int bus_port, u8* buffer)
 {
+	int vmu_id = bus_id * 2 + bus_port;
+	if (vmu_id < 0 || vmu_id >= ARRAY_SIZE(vmu_lcd_data))
+		return;
 	u32 *p = &vmu_lcd_data[vmu_id][0];
 	for (int i = 0; i < ARRAY_SIZE(vmu_lcd_data[vmu_id]); i++, buffer++)
 		*p++ = *buffer != 0 ? 0xFFFFFFFFu : 0xFF000000u;
 	vmu_lcd_status[vmu_id] = true;
-
-	return 0;
 }
 
 static const int vmu_coords[8][2] = {

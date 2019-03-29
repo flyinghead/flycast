@@ -102,5 +102,5 @@ maple_device* maple_Create(MapleDeviceType type);
 #ifndef TARGET_PANDORA
 int get_mic_data(u8* buffer); //implemented in Android.cpp
 #endif
-int push_vmu_screen(int vmu_id, u8* buffer); // vmu_id: 0-7
+void push_vmu_screen(int bus_id, int bus_port, u8* buffer);
 #define MAPLE_PORTS 4
