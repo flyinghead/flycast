@@ -256,6 +256,7 @@ void gd_set_state(gd_states state)
 
 void gd_setdisc()
 {
+	cdda.playing = false;
 	DiscType newd = (DiscType)libGDR_GetDiscType();
 	
 	switch(newd)

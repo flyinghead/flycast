@@ -2,16 +2,19 @@ package com.reicast.emulator;
 
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.v4.app.ActivityCompat;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.RelativeLayout;
 
 import com.reicast.emulator.config.Config;
 import com.reicast.emulator.emu.GL2JNIView;
 import com.reicast.emulator.emu.JNIdc;
 import com.reicast.emulator.periph.VJoy;
 
-public class GL2JNIActivity extends BaseGLActivity implements ActivityCompat.OnRequestPermissionsResultCallback {
+public class GL2JNIActivity extends BaseGLActivity {
+    private static ViewGroup mLayout;   // used for text input
+
     @Override
     protected void onCreate(Bundle icicle) {
         requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -28,11 +31,10 @@ public class GL2JNIActivity extends BaseGLActivity implements ActivityCompat.OnR
         // Create the actual GLES view
         mView = new GL2JNIView(GL2JNIActivity.this, false,
                     prefs.getInt(Config.pref_renderdepth, 24), 8);
-        setContentView(mView);
+        mLayout = new RelativeLayout(this);
+        mLayout.addView(mView);
 
-        //setup mic
-        if (Emulator.micPluggedIn())
-            requestRecordAudioPermission();
+        setContentView(mLayout);
     }
 
     public void screenGrab() {
@@ -40,23 +42,18 @@ public class GL2JNIActivity extends BaseGLActivity implements ActivityCompat.OnR
     }
 
     @Override
-    protected void onPause() {
-        super.onPause();
+    protected void doPause() {
         ((GL2JNIView)mView).onPause();
         JNIdc.pause();
     }
 
     @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        if (mView != null) {
-            ((GL2JNIView)mView).onDestroy();
-        }
+    protected boolean isSurfaceReady() {
+        return true;    // FIXME
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
+    protected void doResume() {
         ((GL2JNIView)mView).onResume();
         JNIdc.resume();
     }

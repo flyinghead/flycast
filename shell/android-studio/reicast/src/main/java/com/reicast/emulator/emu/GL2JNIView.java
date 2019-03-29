@@ -2,35 +2,21 @@ package com.reicast.emulator.emu;
 
 
 import android.annotation.TargetApi;
-import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.content.res.Configuration;
 import android.graphics.PixelFormat;
 import android.opengl.GLSurfaceView;
 import android.os.Build;
-import android.os.Environment;
 import android.os.Handler;
-import android.os.Vibrator;
 import android.preference.PreferenceManager;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
-import android.util.Log;
-import android.view.InputDevice;
 import android.view.MotionEvent;
-import android.view.ScaleGestureDetector;
-import android.view.ScaleGestureDetector.SimpleOnScaleGestureListener;
 import android.view.View;
-import android.widget.Toast;
 
 import com.android.util.FileUtils;
-import com.reicast.emulator.Emulator;
 import com.reicast.emulator.GL2JNIActivity;
-import com.reicast.emulator.R;
 import com.reicast.emulator.config.Config;
-import com.reicast.emulator.periph.Gamepad;
-import com.reicast.emulator.periph.InputDeviceManager;
-import com.reicast.emulator.periph.VJoy;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -189,12 +175,7 @@ public class GL2JNIView extends GLSurfaceView
         public void onSurfaceChanged(GL10 gl,int width,int height)
         {
             gl.glViewport(0, 0, width, height);
-            // TODO Is this required? The renderer sets the viewport and scissor test correctly
-//            if (Emulator.widescreen) {
-                JNIdc.rendinitJava(width, height);
-//            } else {
-//                JNIdc.rendinitJava(height * (4 / 3), height);
-//            }
+            JNIdc.rendinitJava(width, height);
         }
 
         public void onSurfaceCreated(GL10 gl,EGLConfig config)
@@ -203,16 +184,10 @@ public class GL2JNIView extends GLSurfaceView
         }
     }
 
-    public void onDestroy() {
-        /*
-        // Workaround for ANR when returning to menu
-        System.exit(0);
-        try {
-            ethd.join();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        */
+    @Override
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        JNIdc.rendtermJava();
     }
 
     @TargetApi(19)

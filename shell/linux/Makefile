@@ -331,7 +331,10 @@ endif
 
 ifdef USE_EVDEV
     CXXFLAGS += -D USE_EVDEV
+ifdef USE_UDEV
+    CXXFLAGS += -D USE_UDEV
     LIBS += -ludev
+endif
 endif
 
 ifdef USE_JOYSTICK

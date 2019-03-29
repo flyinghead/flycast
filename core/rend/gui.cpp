@@ -1488,3 +1488,10 @@ int msgboxf(const wchar* text, unsigned int type, ...) {
     return 1;
 }
 
+extern bool subfolders_read;
+
+void gui_refresh_files()
+{
+	game_list_done = false;
+	subfolders_read = false;
+}

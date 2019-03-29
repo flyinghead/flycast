@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools">
     <application android:name="com.reicast.emulator.Emulator">
 	    <activity
-		    android:name="com.reicast.emulator.MainActivity">
+		    android:name="com.reicast.emulator.NativeGLActivity">
 		    <intent-filter>
 		        <action android:name="android.intent.action.VIEW" />
 		

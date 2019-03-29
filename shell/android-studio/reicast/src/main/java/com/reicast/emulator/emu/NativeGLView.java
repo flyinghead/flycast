@@ -14,12 +14,14 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 
+import com.reicast.emulator.Emulator;
 import com.reicast.emulator.NativeGLActivity;
 import com.reicast.emulator.config.Config;
 
 public class NativeGLView extends SurfaceView implements SurfaceHolder.Callback {
     private Handler handler = new Handler();
 
+    private boolean surfaceReady = false;
     private boolean paused = false;
     VirtualJoystickDelegate vjoyDelegate;
 
@@ -36,6 +38,9 @@ public class NativeGLView extends SurfaceView implements SurfaceHolder.Callback 
         super(context, attrs);
         getHolder().addCallback(this);
         setKeepScreenOn(true);
+        setFocusable(true);
+        setFocusableInTouchMode(true);
+        requestFocus();
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             setOnSystemUiVisibilityChangeListener (new OnSystemUiVisibilityChangeListener() {
@@ -105,13 +110,21 @@ public class NativeGLView extends SurfaceView implements SurfaceHolder.Callback 
     @Override
     public void surfaceChanged(SurfaceHolder surfaceHolder, int format, int w, int h) {
         //Log.i("reicast", "NativeGLView.surfaceChanged: " + w + "x" + h);
+        surfaceReady = true;
         JNIdc.rendinitNative(surfaceHolder.getSurface(), w, h);
+        Emulator.getCurrentActivity().handleStateChange(false);
     }
 
     @Override
     public void surfaceDestroyed(SurfaceHolder surfaceHolder) {
         //Log.i("reicast", "NativeGLView.surfaceDestroyed");
+        surfaceReady = false;
         JNIdc.rendinitNative(null, 0, 0);
+        Emulator.getCurrentActivity().handleStateChange(true);
+    }
+
+    public boolean isSurfaceReady() {
+        return surfaceReady;
     }
 
     public void pause() {
@@ -124,6 +137,9 @@ public class NativeGLView extends SurfaceView implements SurfaceHolder.Callback 
         if (paused) {
             //Log.i("reicast", "NativeGLView.resume");
             paused = false;
+            setFocusable(true);
+            setFocusableInTouchMode(true);
+            requestFocus();
             JNIdc.resume();
         }
         startRendering();

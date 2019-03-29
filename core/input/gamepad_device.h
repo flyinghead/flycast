@@ -35,16 +35,8 @@ public:
 	bool gamepad_axis_input(u32 code, int value);
 	virtual ~GamepadDevice() {}
 	
-	void detect_btn_input(input_detected_cb button_pressed)
-	{
-		_input_detected = button_pressed;
-		_detecting_button = true;
-	}
-	void detect_axis_input(input_detected_cb axis_moved)
-	{
-		_input_detected = axis_moved;
-		_detecting_button = false;
-	}
+	void detect_btn_input(input_detected_cb button_pressed);
+	void detect_axis_input(input_detected_cb axis_moved);
 	void cancel_detect_input()
 	{
 		_input_detected = NULL;
@@ -104,6 +96,7 @@ private:
 	std::string _api_name;
 	int _maple_port;
 	bool _detecting_button = false;
+	double _detection_start_time;
 	input_detected_cb _input_detected;
 	bool _remappable;
 	float _dead_zone = 0.1f;
