@@ -1294,48 +1294,63 @@ private:
 
 	void CheckBlock(RuntimeBlockInfo* block)
 	{
-		s32 sz = block->sh4_code_size;
+		if (settings.dynarec.SmcCheckLevel == NoCheck)
+			return;
 
 		Label blockcheck_fail;
 		Label blockcheck_success;
 
-		u8* ptr = GetMemPtr(block->addr, sz);
-		if (ptr == NULL)
-			// FIXME Can a block cross a RAM / non-RAM boundary??
-			return;
-
-		Ldr(x9, reinterpret_cast<uintptr_t>(ptr));
-
-		while (sz > 0)
+		if (settings.dynarec.SmcCheckLevel == FastCheck)
 		{
-			if (sz >= 8)
-			{
-				Ldr(x10, MemOperand(x9, 8, PostIndex));
-				Ldr(x11, *(u64*)ptr);
-				Cmp(x10, x11);
-				sz -= 8;
-				ptr += 8;
-			}
-			else if (sz >= 4)
-			{
-				Ldr(w10, MemOperand(x9, 4, PostIndex));
-				Ldr(w11, *(u32*)ptr);
-				Cmp(w10, w11);
-				sz -= 4;
-				ptr += 4;
-			}
-			else
-			{
-				Ldrh(w10, MemOperand(x9, 2, PostIndex));
-				Mov(w11, *(u16*)ptr);
-				Cmp(w10, w11);
-				sz -= 2;
-				ptr += 2;
-			}
-			B(ne, &blockcheck_fail);
+			u8* ptr = GetMemPtr(block->addr, 4);
+			if (ptr == NULL)
+				return;
+			Ldr(x9, reinterpret_cast<uintptr_t>(ptr));
+			Ldr(w10, MemOperand(x9));
+			Ldr(w11, *(u32*)ptr);
+			Cmp(w10, w11);
+			B(eq, &blockcheck_success);
 		}
-		B(&blockcheck_success);
+		else	// FullCheck
+		{
+			s32 sz = block->sh4_code_size;
 
+			u8* ptr = GetMemPtr(block->addr, sz);
+			if (ptr == NULL)
+				return;
+
+			Ldr(x9, reinterpret_cast<uintptr_t>(ptr));
+
+			while (sz > 0)
+			{
+				if (sz >= 8)
+				{
+					Ldr(x10, MemOperand(x9, 8, PostIndex));
+					Ldr(x11, *(u64*)ptr);
+					Cmp(x10, x11);
+					sz -= 8;
+					ptr += 8;
+				}
+				else if (sz >= 4)
+				{
+					Ldr(w10, MemOperand(x9, 4, PostIndex));
+					Ldr(w11, *(u32*)ptr);
+					Cmp(w10, w11);
+					sz -= 4;
+					ptr += 4;
+				}
+				else
+				{
+					Ldrh(w10, MemOperand(x9, 2, PostIndex));
+					Mov(w11, *(u16*)ptr);
+					Cmp(w10, w11);
+					sz -= 2;
+					ptr += 2;
+				}
+				B(ne, &blockcheck_fail);
+			}
+			B(&blockcheck_success);
+		}
 		Bind(&blockcheck_fail);
 		Ldr(w0, block->addr);
 		TailCallRuntime(ngen_blockcheckfail);

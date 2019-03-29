@@ -494,6 +494,7 @@ void InitSettings()
 	settings.dreamcast.broadcast	= 4;	// default
 	settings.dreamcast.language     = 6;	// default
 	settings.dreamcast.FullMMU      = false;
+	settings.dynarec.SmcCheckLevel  = NoCheck;
 	settings.aica.LimitFPS			= true;
 	settings.aica.NoBatch			= false;	// This also controls the DSP. Disabled by default
     settings.aica.NoSound			= false;
@@ -562,6 +563,7 @@ void LoadSettings(bool game_specific)
 	settings.dynarec.idleskip		= cfgLoadBool(config_section, "Dynarec.idleskip", settings.dynarec.idleskip);
 	settings.dynarec.unstable_opt	= cfgLoadBool(config_section, "Dynarec.unstable-opt", settings.dynarec.unstable_opt);
 	settings.dynarec.safemode		= cfgLoadBool(config_section, "Dynarec.safe-mode", settings.dynarec.safemode);
+	settings.dynarec.SmcCheckLevel  = (SmcCheckEnum)cfgLoadInt(config_section, "Dynarec.SmcCheckLevel", settings.dynarec.SmcCheckLevel);
 	//disable_nvmem can't be loaded, because nvmem init is before cfg load
 	settings.dreamcast.cable		= cfgLoadInt(config_section, "Dreamcast.Cable", settings.dreamcast.cable);
 	settings.dreamcast.region		= cfgLoadInt(config_section, "Dreamcast.Region", settings.dreamcast.region);
@@ -697,6 +699,8 @@ void SaveSettings()
 	cfgSaveBool("config", "Dynarec.unstable-opt", settings.dynarec.unstable_opt);
 	if (!safemode_game || !settings.dynarec.safemode)
 		cfgSaveBool("config", "Dynarec.safe-mode", settings.dynarec.safemode);
+	cfgSaveInt("config", "Dynarec.SmcCheckLevel", (int)settings.dynarec.SmcCheckLevel);
+
 	cfgSaveInt("config", "Dreamcast.Language", settings.dreamcast.language);
 	cfgSaveBool("config", "aica.LimitFPS", settings.aica.LimitFPS);
 	cfgSaveBool("config", "aica.NoBatch", settings.aica.NoBatch);

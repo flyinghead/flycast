@@ -1087,40 +1087,55 @@ private:
 	typedef void (BlockCompiler::*X64BinaryFOp)(const Xbyak::Xmm&, const Xbyak::Operand&);
 
 	void CheckBlock(RuntimeBlockInfo* block) {
+		if (settings.dynarec.SmcCheckLevel == NoCheck)
+			return;
 		mov(call_regs[0], block->addr);
 
-		s32 sz=block->sh4_code_size;
-		u32 sa=block->addr;
-
-		while (sz > 0)
+		if (settings.dynarec.SmcCheckLevel == FastCheck)
 		{
-			void* ptr = (void*)GetMemPtr(sa, sz > 8 ? 8 : sz);
+			void* ptr = (void*)GetMemPtr(block->addr, 4);
 			if (ptr)
 			{
 				mov(rax, reinterpret_cast<uintptr_t>(ptr));
-
-				if (sz >= 8) {
-					mov(rdx, *(u64*)ptr);
-					cmp(qword[rax], rdx);
-					sz -= 8;
-					sa += 8;
-				}
-				else if (sz >= 4) {
-					mov(edx, *(u32*)ptr);
-					cmp(dword[rax], edx);
-					sz -= 4;
-					sa += 4;
-				}
-				else {
-					mov(edx, *(u16*)ptr);
-					cmp(word[rax],dx);
-					sz -= 2;
-					sa += 2;
-				}
+				mov(edx, *(u32*)ptr);
+				cmp(dword[rax], edx);
 				jne(reinterpret_cast<const void*>(&ngen_blockcheckfail));
 			}
 		}
+		else
+		{
+			s32 sz=block->sh4_code_size;
+			u32 sa=block->addr;
 
+			while (sz > 0)
+			{
+				void* ptr = (void*)GetMemPtr(sa, sz > 8 ? 8 : sz);
+				if (ptr)
+				{
+					mov(rax, reinterpret_cast<uintptr_t>(ptr));
+
+					if (sz >= 8) {
+						mov(rdx, *(u64*)ptr);
+						cmp(qword[rax], rdx);
+						sz -= 8;
+						sa += 8;
+					}
+					else if (sz >= 4) {
+						mov(edx, *(u32*)ptr);
+						cmp(dword[rax], edx);
+						sz -= 4;
+						sa += 4;
+					}
+					else {
+						mov(edx, *(u16*)ptr);
+						cmp(word[rax],dx);
+						sz -= 2;
+						sa += 2;
+					}
+					jne(reinterpret_cast<const void*>(&ngen_blockcheckfail));
+				}
+			}
+		}
 	}
 
 	void GenBinaryOp(const shil_opcode &op, X64BinaryOp natop)

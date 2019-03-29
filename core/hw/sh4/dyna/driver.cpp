@@ -86,6 +86,12 @@ void recSh4_Run()
 
 	sh4_dyna_rcb=(u8*)&Sh4cntx + sizeof(Sh4cntx);
 	printf("cntx // fpcb offset: %td // pc offset: %td // pc %08X\n",(u8*)&sh4rcb.fpcb - sh4_dyna_rcb, (u8*)&sh4rcb.cntx.pc - sh4_dyna_rcb,sh4rcb.cntx.pc);
+	if (!settings.dynarec.safemode)
+		printf("Warning: Dynarec safe mode is off\n");
+	if (settings.dynarec.unstable_opt)
+		printf("Warning: Unstable optimizations is on\n");
+	if (settings.dynarec.SmcCheckLevel != FullCheck)
+		printf("Warning: SMC check mode is %d\n", settings.dynarec.SmcCheckLevel);
 	
 	verify(rcb_noffs(&next_pc)==-184);
 	ngen_mainloop(sh4_dyna_rcb);

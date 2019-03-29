@@ -231,23 +231,36 @@ extern int mips_counter;
 
 void CheckBlock(RuntimeBlockInfo* block,x86_ptr_imm place)
 {
-	s32 sz=block->sh4_code_size;
-	u32 sa=block->addr;
-	while(sz>0)
+	if (settings.dynarec.SmcCheckLevel == NoCheck)
+		return;
+	if (settings.dynarec.SmcCheckLevel == FastCheck)
 	{
-		void* ptr=(void*)GetMemPtr(sa,4);
+		void* ptr = (void*)GetMemPtr(block->addr, 4);
 		if (ptr)
 		{
-			if (sz==2)
-				x86e->Emit(op_cmp16,ptr,*(u16*)ptr);
-			else
-				x86e->Emit(op_cmp32,ptr,*(u32*)ptr);
-			x86e->Emit(op_jne,place);
+			x86e->Emit(op_cmp32, ptr, *(u32*)ptr);
+			x86e->Emit(op_jne, place);
 		}
-		sz-=4;
-		sa+=4;
 	}
-	
+	else	// FullCheck
+	{
+		s32 sz=block->sh4_code_size;
+		u32 sa=block->addr;
+		while(sz>0)
+		{
+			void* ptr=(void*)GetMemPtr(sa,4);
+			if (ptr)
+			{
+				if (sz==2)
+					x86e->Emit(op_cmp16,ptr,*(u16*)ptr);
+				else
+					x86e->Emit(op_cmp32,ptr,*(u32*)ptr);
+				x86e->Emit(op_jne,place);
+			}
+			sz-=4;
+			sa+=4;
+		}
+	}
 }
 
 
