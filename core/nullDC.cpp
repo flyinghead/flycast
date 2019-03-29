@@ -494,7 +494,7 @@ void InitSettings()
 	settings.dreamcast.broadcast	= 4;	// default
 	settings.dreamcast.language     = 6;	// default
 	settings.dreamcast.FullMMU      = false;
-	settings.dynarec.SmcCheckLevel  = NoCheck;
+	settings.dynarec.SmcCheckLevel  = FullCheck;
 	settings.aica.LimitFPS			= true;
 	settings.aica.NoBatch			= false;	// This also controls the DSP. Disabled by default
     settings.aica.NoSound			= false;
