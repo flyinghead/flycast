@@ -644,9 +644,8 @@ struct maple_sega_vmu: maple_base
 							}
 						}
 						config->SetImage(lcd_data_decoded);
-#if !defined(TARGET_PANDORA) && HOST_OS != OS_DARWIN
-						push_vmu_screen(lcd_data_decoded);
-#endif
+						if (bus_id <= 3 && bus_port <= 1)
+							push_vmu_screen(bus_id * 2 + bus_port, lcd_data_decoded);
 #if 0
 						// Update LCD window
 						if (!dev->lcd.visible)
@@ -791,7 +790,7 @@ struct maple_microphone: maple_base
 		switch (cmd)
 		{
 		case MDC_DeviceRequest:
-			LOGI("maple_microphone::dma MDC_DeviceRequest");
+			LOGI("maple_microphone::dma MDC_DeviceRequest\n");
 			//this was copied from the controller case with just the id and name replaced!
 
 			//caps
@@ -826,7 +825,7 @@ struct maple_microphone: maple_base
 
 		case MDCF_GetCondition:
 			{
-				LOGI("maple_microphone::dma MDCF_GetCondition");
+				LOGI("maple_microphone::dma MDCF_GetCondition\n");
 				//this was copied from the controller case with just the id replaced!
 
 				//PlainJoystickState pjs;
@@ -863,7 +862,7 @@ struct maple_microphone: maple_base
 
 		case MDC_DeviceReset:
 			//uhhh do nothing?
-			LOGI("maple_microphone::dma MDC_DeviceReset");
+			LOGI("maple_microphone::dma MDC_DeviceReset\n");
 			return MDRS_DeviceReply;
 
 		case MDCF_MICControl:
@@ -932,7 +931,7 @@ struct maple_microphone: maple_base
 					LOGI("maple_microphone::dma MDCF_MICControl set gain %#010x\n",secondword);
 					return MDRS_DeviceReply;
 				case MDRE_TransmitAgain:
-					LOGW("maple_microphone::dma MDCF_MICControl MDRE_TransminAgain");
+					LOGW("maple_microphone::dma MDCF_MICControl MDRE_TransmitAgain\n");
 					//apparently this doesnt matter
 					//wptr(micdata, SIZE_OF_MIC_DATA);
 					return MDRS_DeviceReply;//MDRS_DataTransfer;
