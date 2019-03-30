@@ -167,12 +167,12 @@ SmcCheckEnum DoCheck(u32 pc)
 
 		// Full Check everything
 		case FullCheck:
-			return FastCheck;
+			return FullCheck;
 
 		default:
 			die("Unhandled settings.dynarec.SmcCheckLevel");
+			return FullCheck;
 	}
-	
 }
 
 void AnalyseBlock(RuntimeBlockInfo* blk);

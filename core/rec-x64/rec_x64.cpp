@@ -1108,12 +1108,12 @@ private:
 		 		s32 sz=block->sh4_code_size;
 				u32 sa=block->addr;
 
-				mov(call_regs[0], block->addr);
-
-				while (sz > 0)
+				void* ptr = (void*)GetMemPtr(sa, sz > 8 ? 8 : sz);
+				if (ptr)
 				{
-					void* ptr = (void*)GetMemPtr(sa, sz > 8 ? 8 : sz);
-					if (ptr)
+					mov(call_regs[0], block->addr);
+
+					while (sz > 0)
 					{
 						mov(rax, reinterpret_cast<uintptr_t>(ptr));
 
@@ -1136,8 +1136,9 @@ private:
 							sa += 2;
 						}
 						jne(reinterpret_cast<const void*>(&ngen_blockcheckfail));
+						ptr = (void*)GetMemPtr(sa, sz > 8 ? 8 : sz);
 					}
-				}
+		 		}
 		 	}
 		 	break;
 
