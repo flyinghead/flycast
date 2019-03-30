@@ -240,7 +240,7 @@ else ifneq (,$(findstring vero4k,$(platform)))
 else ifneq (,$(findstring win32,$(platform)))
     NOT_ARM := 1
     CFLAGS += -DTARGET_NO_WEBUI -fno-builtin-sqrtf -funroll-loops -DHAVE_FSEEKO -D TARGET_NO_AREC
-    LDFLAGS += -static-libgcc -static-libstdc++
+    LDFLAGS += -static-libgcc -static-libstdc++ -Wl,-subsystem,windows
     LIBS := -lopengl32 -lwinmm -lgdi32 -lwsock32 -ldsound -lcomctl32 -lcomdlg32 -lxinput -liphlpapi
     PLATFORM_EXT := exe
     CC = gcc
@@ -289,7 +289,7 @@ INCS += -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps -I$(RZDCY_SRC_DIR)/khronos
 
 LIBS += -lm -lpthread
 ifdef FOR_LINUX
-LIBS += -lrt -ldl
+LIBS += -lrt
 endif
 
 PREFIX ?= /usr/local

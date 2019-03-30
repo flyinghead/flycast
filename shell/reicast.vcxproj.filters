@@ -568,6 +568,72 @@
     <ClCompile Include="..\core\deps\chdr\huffman.c">
       <Filter>deps\chdr</Filter>
     </ClCompile>
+    <ClCompile Include="..\core\rend\gui.cpp">
+      <Filter>rend</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\rend\gui_util.cpp">
+      <Filter>rend</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\imgui\imgui.cpp">
+      <Filter>deps\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\imgui\imgui_demo.cpp">
+      <Filter>deps\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\imgui\imgui_draw.cpp">
+      <Filter>deps\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\imgui\imgui_widgets.cpp">
+      <Filter>deps\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\dirent\dirent.c">
+      <Filter>deps\dirent</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\input\gamepad_device.cpp">
+      <Filter>input</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\input\keyboard_device.cpp">
+      <Filter>input</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\input\mapping.cpp">
+      <Filter>input</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\rend\gles\CustomTexture.cpp">
+      <Filter>rend\gles</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\rend\gles\gl32funcs.c">
+      <Filter>rend\gles</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\rend\gles\imgui_impl_opengl3.cpp">
+      <Filter>rend\gles</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\hw\naomi\awcartridge.cpp">
+      <Filter>hw\naomi</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\hw\naomi\decrypt.cpp">
+      <Filter>hw\naomi</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\hw\naomi\gdcartridge.cpp">
+      <Filter>hw\naomi</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\hw\naomi\m1cartridge.cpp">
+      <Filter>hw\naomi</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\hw\naomi\m4cartridge.cpp">
+      <Filter>hw\naomi</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\archive\7zArchive.cpp">
+      <Filter>archive</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\archive\archive.cpp">
+      <Filter>archive</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\archive\ZipArchive.cpp">
+      <Filter>archive</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\imgread\cue.cpp">
+      <Filter>imgread</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="hw">
@@ -722,6 +788,18 @@
     </Filter>
     <Filter Include="deps\flac\src\libFLAC">
       <UniqueIdentifier>{4c52c0a3-9e35-4285-a062-290d3667e1d1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="deps\imgui">
+      <UniqueIdentifier>{0746d3c7-838f-43ed-817b-8215a24b87d4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="archive">
+      <UniqueIdentifier>{29043329-ba53-45d5-8513-a5ee92c73853}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="deps\dirent">
+      <UniqueIdentifier>{ff6259dd-375b-46bb-a2ad-bf2825eb81ee}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="input">
+      <UniqueIdentifier>{8fea504f-a313-4ab2-b25b-74e80fe449c8}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -1214,6 +1292,96 @@
     <ClInclude Include="..\core\deps\chdr\huffman.h">
       <Filter>deps\chdr</Filter>
     </ClInclude>
+    <ClInclude Include="..\core\rend\gui.h">
+      <Filter>rend</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\rend\gui_util.h">
+      <Filter>rend</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\imgui\imconfig.h">
+      <Filter>deps\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\imgui\imgui.h">
+      <Filter>deps\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\imgui\imgui_internal.h">
+      <Filter>deps\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\imgui\imstb_rectpack.h">
+      <Filter>deps\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\imgui\imstb_textedit.h">
+      <Filter>deps\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\imgui\imstb_truetype.h">
+      <Filter>deps\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\imgui\roboto_medium.h">
+      <Filter>deps\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\dirent\dirent.h">
+      <Filter>deps\dirent</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\input\gamepad.h">
+      <Filter>input</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\input\gamepad_device.h">
+      <Filter>input</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\input\keyboard_device.h">
+      <Filter>input</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\input\mapping.h">
+      <Filter>input</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\rend\gles\CustomTexture.h">
+      <Filter>rend\gles</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\rend\gles\gl32funcs.h">
+      <Filter>rend\gles</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\rend\gles\imgui_impl_opengl3.h">
+      <Filter>rend\gles</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\hw\naomi\awave_regs.h">
+      <Filter>hw\naomi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\hw\naomi\awcartridge.h">
+      <Filter>hw\naomi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\hw\naomi\decrypt.h">
+      <Filter>hw\naomi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\hw\naomi\gdcartridge.h">
+      <Filter>hw\naomi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\hw\naomi\m1cartridge.h">
+      <Filter>hw\naomi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\hw\naomi\m4cartridge.h">
+      <Filter>hw\naomi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\hw\naomi\naomi_roms.h">
+      <Filter>hw\naomi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\hw\naomi\naomi_roms_input.h">
+      <Filter>hw\naomi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\archive\7zArchive.h">
+      <Filter>archive</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\archive\archive.h">
+      <Filter>archive</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\archive\ZipArchive.h">
+      <Filter>archive</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\windows\win_keyboard.h">
+      <Filter>windows</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\windows\xinput_gamepad.h">
+      <Filter>windows</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\core\deps\zlib\Makefile">
@@ -1225,5 +1393,8 @@
     <None Include="..\core\rec-x86\rec_lin86_asm.S">
       <Filter>rec-x86</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <MASM Include="..\core\rec-x64\msvc.asm" />
   </ItemGroup>
 </Project>

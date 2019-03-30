@@ -32,7 +32,9 @@ struct DynaRBI : RuntimeBlockInfo
 	}
 };
 
-int cycle_counter;
+extern "C" {
+	int cycle_counter;
+}
 
 double host_cpu_time;
 u64 guest_cpu_cycles;
@@ -75,6 +77,8 @@ static __attribute((used)) void end_slice()
 #else
 #error RAM_SIZE_MAX unknown
 #endif
+
+#ifndef _MSC_VER
 
 #ifdef _WIN32
         // Fully naked function in win32 for proper SEH prologue
@@ -177,6 +181,7 @@ WIN32_ONLY( ".seh_pushreg %r14              \n\t")
 }
 #endif
 
+#endif	// !_MSC_VER
 #undef _U
 #undef _S
 

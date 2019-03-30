@@ -5,6 +5,10 @@
 #include "types.h"
 #include "cfg/cfg.h"
 
+#ifdef WIN32
+#include <direct.h>
+#endif
+
 #if BUILD_COMPILER==COMPILER_VC
 	#include <io.h>
 	#define access _access
@@ -140,11 +144,11 @@ string get_game_dir()
 
 bool make_directory(const string& path)
 {
-	return mkdir(path.c_str()
-#ifndef _WIN32
-					, 0755
+#ifdef WIN32
+	return _mkdir(path.c_str()) == 0;
+#else
+	return mkdir(path.c_str(), 0755) == 0;
 #endif
-			) == 0;
 }
 
 #if 0
