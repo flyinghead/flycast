@@ -36,6 +36,7 @@ public:
 	OSXKbGamepadDevice(int maple_port) : GamepadDevice(maple_port, "OSX")
 	{
 		_name = "Keyboard";
+		_unique_id = "osx_keyboard";
 		if (!find_mapping())
 			input_mapper = new KbInputMapping();
 	}
@@ -61,6 +62,7 @@ public:
 	OSXMouseGamepadDevice(int maple_port) : GamepadDevice(maple_port, "OSX")
 	{
 		_name = "Mouse";
+		_unique_id = "osx_mouse";
 		if (!find_mapping())
 			input_mapper = new MouseInputMapping();
 	}

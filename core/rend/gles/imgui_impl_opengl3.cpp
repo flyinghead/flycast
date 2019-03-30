@@ -585,3 +585,20 @@ void ImGui_ImplOpenGL3_DrawBackground()
 		glClear(GL_COLOR_BUFFER_BIT);
 	}
 }
+
+ImTextureID ImGui_ImplOpenGL3_CreateVmuTexture(const unsigned int *data)
+{
+	GLuint tex_id;
+    glGenTextures(1, &tex_id);
+    glBindTexture(GL_TEXTURE_2D, tex_id);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 48, 32, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+
+    return reinterpret_cast<ImTextureID>(tex_id);
+}
+
+void ImGui_ImplOpenGL3_DeleteVmuTexture(ImTextureID tex_id)
+{
+	glDeleteTextures(1, &(GLuint &)tex_id);
+}

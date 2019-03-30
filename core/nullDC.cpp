@@ -22,6 +22,7 @@
 #include "imgread/common.h"
 #include "rend/gui.h"
 #include "profiler/profiler.h"
+#include "input/gamepad_device.h"
 
 void FlushCache();
 void LoadCustom();
@@ -741,6 +742,9 @@ void SaveSettings()
 		paths += path;
 	}
 	cfgSaveStr("config", "Dreamcast.ContentPath", paths.c_str());
+
+	GamepadDevice::SaveMaplePorts();
+
 #ifdef _ANDROID
 	void SaveAndroidSettings();
 	SaveAndroidSettings();

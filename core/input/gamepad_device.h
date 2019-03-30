@@ -31,6 +31,7 @@ public:
 	const std::string& name() { return _name; }
 	int maple_port() { return _maple_port; }
 	void set_maple_port(int port) { _maple_port = port; }
+	const std::string& unique_id() { return _unique_id; }
 	virtual bool gamepad_btn_input(u32 code, bool pressed);
 	bool gamepad_axis_input(u32 code, int value);
 	virtual ~GamepadDevice() {}
@@ -50,28 +51,13 @@ public:
 	virtual void update_rumble() {}
 	bool is_rumble_enabled() { return _rumble_enabled; }
 
-	static void Register(std::shared_ptr<GamepadDevice> gamepad)
-	{
-		_gamepads_mutex.lock();
-		_gamepads.push_back(gamepad);
-		_gamepads_mutex.unlock();
-	}
+	static void Register(std::shared_ptr<GamepadDevice> gamepad);
 
-	static void Unregister(std::shared_ptr<GamepadDevice> gamepad)
-	{
-		gamepad->save_mapping();
-		_gamepads_mutex.lock();
-		for (auto it = _gamepads.begin(); it != _gamepads.end(); it++)
-			if (*it == gamepad)
-			{
-				_gamepads.erase(it);
-				break;
-			}
-		_gamepads_mutex.unlock();
-	}
+	static void Unregister(std::shared_ptr<GamepadDevice> gamepad);
 
 	static int GetGamepadCount();
 	static std::shared_ptr<GamepadDevice> GetGamepad(int index);
+	static void SaveMaplePorts();
 
 protected:
 	GamepadDevice(int maple_port, const char *api_name, bool remappable = true)
@@ -83,6 +69,7 @@ protected:
 	virtual void load_axis_min_max(u32 axis) {}
 
 	std::string _name;
+	std::string _unique_id = "";
 	InputMapping *input_mapper;
 	std::map<u32, int> axis_min_values;
 	std::map<u32, unsigned int> axis_ranges;

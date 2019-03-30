@@ -408,7 +408,6 @@ int main(int argc, wchar* argv[])
 #endif
 
 int get_mic_data(u8* buffer) { return 0; }
-int push_vmu_screen(u8* buffer) { return 0; }
 
 void os_DebugBreak()
 {
