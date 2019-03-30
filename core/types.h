@@ -601,6 +601,11 @@ struct RegisterStruct
 	u32 flags;					//Access flags !
 };
 
+enum SmcCheckEnum {
+	FullCheck = 0,
+	FastCheck = 1,
+	NoCheck = 2
+};
 
 struct settings_t
 {
@@ -637,6 +642,7 @@ struct settings_t
 		bool unstable_opt;
 		bool safemode;
 		bool disable_nvmem;
+		SmcCheckEnum SmcCheckLevel;
 	} dynarec;
 	
 	struct

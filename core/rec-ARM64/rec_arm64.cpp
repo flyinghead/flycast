@@ -348,15 +348,15 @@ public:
 		return *ret_reg;
 	}
 
-	void ngen_Compile(RuntimeBlockInfo* block, bool force_checks, bool reset, bool staging, bool optimise)
+	void ngen_Compile(RuntimeBlockInfo* block, SmcCheckEnum smc_checks, bool reset, bool staging, bool optimise)
 	{
 		//printf("REC-ARM64 compiling %08x\n", block->addr);
 #ifdef PROFILING
 		SaveFramePointer();
 #endif
 		this->block = block;
-		if (force_checks)
-			CheckBlock(block);
+		
+		CheckBlock(smc_checks, block);
 
 		// run register allocator
 		regalloc.DoAlloc(block);
@@ -1292,49 +1292,72 @@ private:
 		verify (GetCursorAddress<Instruction *>() - start_instruction == code_size * kInstructionSize);
 	}
 
-	void CheckBlock(RuntimeBlockInfo* block)
+	void CheckBlock(SmcCheckEnum smc_checks, RuntimeBlockInfo* block)
 	{
-		s32 sz = block->sh4_code_size;
 
 		Label blockcheck_fail;
 		Label blockcheck_success;
 
-		u8* ptr = GetMemPtr(block->addr, sz);
-		if (ptr == NULL)
-			// FIXME Can a block cross a RAM / non-RAM boundary??
-			return;
+		switch (smc_checks) {
+			case NoCheck:
+				return;
 
-		Ldr(x9, reinterpret_cast<uintptr_t>(ptr));
-
-		while (sz > 0)
-		{
-			if (sz >= 8)
-			{
-				Ldr(x10, MemOperand(x9, 8, PostIndex));
-				Ldr(x11, *(u64*)ptr);
-				Cmp(x10, x11);
-				sz -= 8;
-				ptr += 8;
-			}
-			else if (sz >= 4)
-			{
-				Ldr(w10, MemOperand(x9, 4, PostIndex));
+			case FastCheck: {
+				u8* ptr = GetMemPtr(block->addr, 4);
+				if (ptr == NULL)
+					return;
+				Ldr(x9, reinterpret_cast<uintptr_t>(ptr));
+				Ldr(w10, MemOperand(x9));
 				Ldr(w11, *(u32*)ptr);
 				Cmp(w10, w11);
-				sz -= 4;
-				ptr += 4;
+				B(eq, &blockcheck_success);
 			}
-			else
-			{
-				Ldrh(w10, MemOperand(x9, 2, PostIndex));
-				Mov(w11, *(u16*)ptr);
-				Cmp(w10, w11);
-				sz -= 2;
-				ptr += 2;
+			break;
+
+			case FullCheck: {
+				s32 sz = block->sh4_code_size;
+
+				u8* ptr = GetMemPtr(block->addr, sz);
+				if (ptr == NULL)
+					return;
+
+				Ldr(x9, reinterpret_cast<uintptr_t>(ptr));
+
+				while (sz > 0)
+				{
+					if (sz >= 8)
+					{
+						Ldr(x10, MemOperand(x9, 8, PostIndex));
+						Ldr(x11, *(u64*)ptr);
+						Cmp(x10, x11);
+						sz -= 8;
+						ptr += 8;
+					}
+					else if (sz >= 4)
+					{
+						Ldr(w10, MemOperand(x9, 4, PostIndex));
+						Ldr(w11, *(u32*)ptr);
+						Cmp(w10, w11);
+						sz -= 4;
+						ptr += 4;
+					}
+					else
+					{
+						Ldrh(w10, MemOperand(x9, 2, PostIndex));
+						Mov(w11, *(u16*)ptr);
+						Cmp(w10, w11);
+						sz -= 2;
+						ptr += 2;
+					}
+					B(ne, &blockcheck_fail);
+				}
+				B(&blockcheck_success);
 			}
-			B(ne, &blockcheck_fail);
+			break;
+
+			default:
+				die("unhandled smc_checks");
 		}
-		B(&blockcheck_success);
 
 		Bind(&blockcheck_fail);
 		Ldr(w0, block->addr);
@@ -1404,13 +1427,13 @@ private:
 
 static Arm64Assembler* compiler;
 
-void ngen_Compile(RuntimeBlockInfo* block, bool force_checks, bool reset, bool staging, bool optimise)
+void ngen_Compile(RuntimeBlockInfo* block, SmcCheckEnum smc_checks, bool reset, bool staging, bool optimise)
 {
 	verify(emit_FreeSpace() >= 16 * 1024);
 
 	compiler = new Arm64Assembler();
 
-	compiler->ngen_Compile(block, force_checks, reset, staging, optimise);
+	compiler->ngen_Compile(block, smc_checks, reset, staging, optimise);
 
 	delete compiler;
 	compiler = NULL;
