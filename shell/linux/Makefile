@@ -421,6 +421,12 @@ OBJECTS:=$(OBJECTS:.c=.build_obj)
 OBJECTS:=$(OBJECTS:.S=.build_obj)
 OBJECTS:=$(patsubst $(RZDCY_SRC_DIR)/%,$(BUILDDIR)/%,$(OBJECTS))
 
+ifdef FOR_WINDOWS
+OBJECTS+=$(BUILDDIR)/reicastres.build_obj
+$(BUILDDIR)/reicastres.build_obj: $(LOCAL_PATH)/../windows/reicast.rc $(LOCAL_PATH)/../windows/reicast.ico $(RZDCY_SRC_DIR)/version.h
+	windres $< $@
+endif
+
 DEPDIR := .dep-$(BUILDDIR)
 DEPFLAGS = -MT $@ -MD -MP -MF $(DEPDIR)/$*.Td
 DEPS=$(RZDCY_FILES:.cpp=.d)
@@ -500,7 +506,7 @@ uninstall:
 	rm -f $(DESTDIR)$(ICON_DIR)/reicast.png
 
 clean:
-	rm -f $(OBJECTS) $(EXECUTABLE) $(EXECUTABLE_STRIPPED) .map
+	rm -f $(OBJECTS) $(EXECUTABLE) $(EXECUTABLE_STRIPPED) .map $(RZDCY_SRC_DIR)/version.h
 
 .PRECIOUS = $(DEPDIR)/%.d
 $(DEPDIR)/%.d: ;

@@ -34,7 +34,7 @@
 #include "linux-dist/main.h"	// FIXME for kcode[]
 #include "gui_util.h"
 #include "gui_android.h"
-#include "version/version.h"
+#include "version.h"
 
 extern void dc_loadstate();
 extern void dc_savestate();
@@ -1041,9 +1041,9 @@ static void gui_display_settings()
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
 		    if (ImGui::CollapsingHeader("Reicast", ImGuiTreeNodeFlags_DefaultOpen))
 		    {
-				ImGui::Text("Version: %s", version);
-				ImGui::Text("Git Hash: %s", git_hash);
-				ImGui::Text("Build Date: %s", build_date);
+				ImGui::Text("Version: %s", REICAST_VERSION);
+				ImGui::Text("Git Hash: %s", GIT_HASH);
+				ImGui::Text("Build Date: %s", BUILD_DATE);
 				ImGui::Text("Target: %s",
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST
 						"Dreamcast"
