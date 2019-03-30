@@ -1015,11 +1015,11 @@ static void gui_display_settings()
 	            ImGui::SameLine();
 	            ShowHelpMarker("Skip wait loops. Recommended");
 				ImGui::PushItemWidth(ImGui::CalcTextSize("Largeenough").x);
-	            const char *preview = settings.dynarec.SmcCheckLevel == NoCheck ? "None" : settings.dynarec.SmcCheckLevel == FastCheck ? "Fast" : "Full";
+	            const char *preview = settings.dynarec.SmcCheckLevel == NoCheck ? "Faster" : settings.dynarec.SmcCheckLevel == FastCheck ? "Fast" : "Full";
 				if (ImGui::BeginCombo("SMC Checks", preview	, ImGuiComboFlags_None))
 				{
 					bool is_selected = settings.dynarec.SmcCheckLevel == NoCheck;
-					if (ImGui::Selectable("None", &is_selected))
+					if (ImGui::Selectable("Faster", &is_selected))
 						settings.dynarec.SmcCheckLevel = NoCheck;
 					if (is_selected)
 						ImGui::SetItemDefaultFocus();

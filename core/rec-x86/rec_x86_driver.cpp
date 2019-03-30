@@ -229,42 +229,50 @@ u32 rdmt[6];
 extern u32 memops_t,memops_l;
 extern int mips_counter;
 
-void CheckBlock(RuntimeBlockInfo* block,x86_ptr_imm place)
+//TODO: Get back validating mode for this
+void CheckBlock(SmcCheckEnum smc_checks, RuntimeBlockInfo* block)
 {
-	if (settings.dynarec.SmcCheckLevel == NoCheck)
-		return;
-	if (settings.dynarec.SmcCheckLevel == FastCheck)
-	{
-		void* ptr = (void*)GetMemPtr(block->addr, 4);
-		if (ptr)
-		{
-			x86e->Emit(op_cmp32, ptr, *(u32*)ptr);
-			x86e->Emit(op_jne, place);
-		}
-	}
-	else	// FullCheck
-	{
-		s32 sz=block->sh4_code_size;
-		u32 sa=block->addr;
-		while(sz>0)
-		{
-			void* ptr=(void*)GetMemPtr(sa,4);
+	switch (smc_checks) {
+		case NoCheck:
+			break;
+
+		case FastCheck: {
+			void* ptr = (void*)GetMemPtr(block->addr, 4);
 			if (ptr)
 			{
-				if (sz==2)
-					x86e->Emit(op_cmp16,ptr,*(u16*)ptr);
-				else
-					x86e->Emit(op_cmp32,ptr,*(u32*)ptr);
-				x86e->Emit(op_jne,place);
+				x86e->Emit(op_cmp32, ptr, *(u32*)ptr);
+				x86e->Emit(op_jne, x86_ptr_imm(ngen_blockcheckfail));
 			}
-			sz-=4;
-			sa+=4;
 		}
+		break;
+
+		case FullCheck: {
+			s32 sz=block->sh4_code_size;
+			u32 sa=block->addr;
+			while(sz>0)
+			{
+				void* ptr=(void*)GetMemPtr(sa,4);
+				if (ptr)
+				{
+					if (sz==2)
+						x86e->Emit(op_cmp16,ptr,*(u16*)ptr);
+					else
+						x86e->Emit(op_cmp32,ptr,*(u32*)ptr);
+					x86e->Emit(op_jne,x86_ptr_imm(ngen_blockcheckfail));
+				}
+				sz-=4;
+				sa+=4;
+			}
+		}
+		break;
+
+		default:
+			die("unhandled smc_checks");
 	}
 }
 
 
-void ngen_Compile(RuntimeBlockInfo* block,bool force_checks, bool reset, bool staging,bool optimise)
+void ngen_Compile(RuntimeBlockInfo* block, SmcCheckEnum smc_checks, bool reset, bool staging,bool optimise)
 {
 	//initialise stuff
 	DetectCpuFeatures();
@@ -295,7 +303,7 @@ void ngen_Compile(RuntimeBlockInfo* block,bool force_checks, bool reset, bool st
 	//block invl. checks
 	x86e->Emit(op_mov32,ECX,block->addr);
 
-	CheckBlock(block,force_checks?x86_ptr_imm(ngen_blockcheckfail):x86_ptr_imm(ngen_blockcheckfail2));
+	CheckBlock(smc_checks, block);
 
 	//Scheduler
 	x86_Label* no_up=x86e->CreateLabel(false,8);

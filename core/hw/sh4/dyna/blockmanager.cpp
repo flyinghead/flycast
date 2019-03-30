@@ -304,6 +304,8 @@ void bm_Rebuild()
 {
 	return;
 
+	die("this is broken in multiple levels, including compile options");
+
 	void RASDASD();
 	RASDASD();
 
@@ -321,7 +323,7 @@ void bm_Rebuild()
 			//constprop(all_blocks[i]);
 //#endif
 		}
-		ngen_Compile(all_blocks[i],false,false,all_blocks[i]->staging_runs>0,do_opts);
+		ngen_Compile(all_blocks[i],NoCheck,false,all_blocks[i]->staging_runs>0,do_opts);
 
 		blkmap.insert(all_blocks[i]);
 		verify(bm_GetBlock((RuntimeBlockInfo*)all_blocks[i]->code)==all_blocks[i]);

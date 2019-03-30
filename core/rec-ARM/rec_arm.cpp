@@ -2082,7 +2082,7 @@ __default:
 }
 
 
-void ngen_Compile(RuntimeBlockInfo* block,bool force_checks, bool reset, bool staging,bool optimise)
+void ngen_Compile(RuntimeBlockInfo* block, SmcCheckEnum smc_checks, bool reset, bool staging,bool optimise)
 {
 	//printf("Compile: %08X, %d, %d\n",block->addr,staging,optimise);
 	block->code=(DynarecCodeEntryPtr)EMIT_GET_PTR();
@@ -2114,10 +2114,11 @@ void ngen_Compile(RuntimeBlockInfo* block,bool force_checks, bool reset, bool st
 	reg.OpBegin(&block->oplist[0],0);
 
 	//scheduler
-	if (force_checks && settings.dynarec.SmcCheckLevel != NoCheck)
-	{
-		if (settings.dynarec.SmcCheckLevel == FastCheck)
-		{
+	switch (smc_checks) {
+		case NoCheck:
+			break;
+
+		case FastCheck: {
 			MOV32(r0,block->addr);
 			u32* ptr=(u32*)GetMemPtr(block->addr,4);
 			MOV32(r2,(u32)ptr);
@@ -2126,8 +2127,9 @@ void ngen_Compile(RuntimeBlockInfo* block,bool force_checks, bool reset, bool st
 			CMP(r1,r2);
 			JUMP((u32)ngen_blockcheckfail, CC_NE);
 		}
-		else	// FullCheck
-		{
+		break;
+
+		case FullCheck: {
 			s32 sz = block->sh4_code_size;
 			u32 addr = block->addr;
 			MOV32(r0,addr);
@@ -2159,6 +2161,11 @@ void ngen_Compile(RuntimeBlockInfo* block,bool force_checks, bool reset, bool st
 					sz -= 2;
 				}
 			}
+		}
+		break;
+
+		default: {
+			die("unhandled smc_checks");
 		}
 	}
 
