@@ -448,27 +448,27 @@ $(EXECUTABLE_STRIPPED): $(EXECUTABLE)
 	cp $< $@ && $(STRIP) $@
 
 $(BUILDDIR)/%.build_obj : $(RZDCY_SRC_DIR)/%.cpp
-$(BUILDDIR)/%.build_obj: $(RZDCY_SRC_DIR)/%.cpp $(DEPDIR)/%.d
+$(BUILDDIR)/%.build_obj: $(RZDCY_SRC_DIR)/%.cpp $(DEPDIR)/%.d $(VERSION_HEADER)
 	mkdir -p $(dir $@)
 	mkdir -p .dep-$(dir $@)
 	$(CXX) $(EXTRAFLAGS) $(INCS) $(DEPFLAGS) $(CFLAGS) $(MFLAGS) $(CXXFLAGS) $< -o $@
 	$(POSTCOMPILE)
 
 $(BUILDDIR)/%.build_obj : $(RZDCY_SRC_DIR)/%.cc
-$(BUILDDIR)/%.build_obj: $(RZDCY_SRC_DIR)/%.cc $(DEPDIR)/%.d
+$(BUILDDIR)/%.build_obj: $(RZDCY_SRC_DIR)/%.cc $(DEPDIR)/%.d $(VERSION_HEADER)
 	mkdir -p $(dir $@)
 	mkdir -p .dep-$(dir $@)
 	$(CXX) $(EXTRAFLAGS) $(INCS) $(DEPFLAGS) $(CFLAGS) $(MFLAGS) $(CXXFLAGS) $< -o $@
 	$(POSTCOMPILE)
 
 $(BUILDDIR)/%.build_obj : $(RZDCY_SRC_DIR)/%.c
-$(BUILDDIR)/%.build_obj: $(RZDCY_SRC_DIR)/%.c $(DEPDIR)/%.d
+$(BUILDDIR)/%.build_obj: $(RZDCY_SRC_DIR)/%.c $(DEPDIR)/%.d $(VERSION_HEADER)
 	mkdir -p $(dir $@)
 	mkdir -p .dep-$(dir $@)
 	$(CC) $(EXTRAFLAGS) $(INCS) $(DEPFLAGS) $(CFLAGS) $< -o $@
 	$(POSTCOMPILE)
 
-$(BUILDDIR)/%.build_obj : $(RZDCY_SRC_DIR)/%.S
+$(BUILDDIR)/%.build_obj : $(RZDCY_SRC_DIR)/%.S $(VERSION_HEADER)
 	mkdir -p $(dir $@)
 	$(AS) $(ASFLAGS) $(INCS) $< -o $@
 
@@ -506,7 +506,7 @@ uninstall:
 	rm -f $(DESTDIR)$(ICON_DIR)/reicast.png
 
 clean:
-	rm -f $(OBJECTS) $(EXECUTABLE) $(EXECUTABLE_STRIPPED) .map $(RZDCY_SRC_DIR)/version.h
+	rm -f $(OBJECTS) $(EXECUTABLE) $(EXECUTABLE_STRIPPED) .map $(VERSION_HEADER)
 
 .PRECIOUS = $(DEPDIR)/%.d
 $(DEPDIR)/%.d: ;
