@@ -695,7 +695,7 @@ int CALLBACK WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine
 #endif
 	SetUnhandledExceptionFilter(0);
 	cfgSaveBool("windows", "maximized", window_maximized);
-	if (!window_maximized)
+	if (!window_maximized && screen_width != 0 && screen_width != 0)
 	{
 		cfgSaveInt("windows", "width", screen_width);
 		cfgSaveInt("windows", "height", screen_height);
