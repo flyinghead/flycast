@@ -232,9 +232,10 @@ void UpdateInputState(u32 port)
 #define WINDOW_CLASS "nilDC"
 
 // Width and height of the window
-#define WINDOW_WIDTH  1280
-#define WINDOW_HEIGHT 720
-
+#define DEFAULT_WINDOW_WIDTH  1280
+#define DEFAULT_WINDOW_HEIGHT 720
+extern int screen_width, screen_height;
+static bool window_maximized = false;
 
 LRESULT CALLBACK WndProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -258,6 +259,12 @@ LRESULT CALLBACK WndProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_CLOSE:
 		PostQuitMessage(0);
 		return 1;
+
+	case WM_SIZE:
+		screen_width = LOWORD(lParam);
+		screen_height = HIWORD(lParam);
+		window_maximized = (wParam & SIZE_MAXIMIZED) != 0;
+		return 0;
 
 	case WM_LBUTTONDOWN:
 	case WM_LBUTTONUP:
@@ -293,8 +300,8 @@ LRESULT CALLBACK WndProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			static int prev_y = -1;
 			int xPos = GET_X_LPARAM(lParam);
 			int yPos = GET_Y_LPARAM(lParam);
-			mo_x_abs = (xPos - (WINDOW_WIDTH - 640 * WINDOW_HEIGHT / 480) / 2) * 480 / WINDOW_HEIGHT;
-			mo_y_abs = yPos * 480 / WINDOW_HEIGHT;
+			mo_x_abs = (xPos - (screen_width - 640 * screen_height / 480) / 2) * 480 / screen_height;
+			mo_y_abs = yPos * 480 / screen_height;
 			mo_buttons = 0xffffffff;
 			if (wParam & MK_LBUTTON)
 				mo_buttons &= ~(1 << 2);
@@ -354,12 +361,13 @@ void os_CreateWindow()
 	sWC.cbWndExtra = 0;
 	sWC.hInstance = (HINSTANCE)GetModuleHandle(0);
 	sWC.hIcon = 0;
-	sWC.hCursor = 0;
+	sWC.hCursor = LoadCursor(NULL, IDC_ARROW);
 	sWC.lpszMenuName = 0;
 	sWC.hbrBackground = (HBRUSH) GetStockObject(WHITE_BRUSH);
 	sWC.lpszClassName = WINDOW_CLASS;
-	unsigned int nWidth = WINDOW_WIDTH;
-	unsigned int nHeight = WINDOW_HEIGHT;
+	screen_width = cfgLoadInt("windows", "width", DEFAULT_WINDOW_WIDTH);
+	screen_height = cfgLoadInt("windows", "height", DEFAULT_WINDOW_HEIGHT);
+	window_maximized = cfgLoadBool("windows", "maximized", false);
 
 	ATOM registerClass = RegisterClass(&sWC);
 	if (!registerClass)
@@ -369,9 +377,10 @@ void os_CreateWindow()
 
 	// Create the eglWindow
 	RECT sRect;
-	SetRect(&sRect, 0, 0, nWidth, nHeight);
-	AdjustWindowRectEx(&sRect, WS_CAPTION | WS_SYSMENU, false, 0);
-	HWND hWnd = CreateWindow( WINDOW_CLASS, VER_FULLNAME, WS_VISIBLE | WS_SYSMENU,
+	SetRect(&sRect, 0, 0, screen_width, screen_height);
+	AdjustWindowRectEx(&sRect, WS_OVERLAPPEDWINDOW, false, 0);
+
+	HWND hWnd = CreateWindow( WINDOW_CLASS, VER_FULLNAME, WS_VISIBLE | WS_OVERLAPPEDWINDOW | (window_maximized ? WS_MAXIMIZE : 0),
 		0, 0, sRect.right-sRect.left, sRect.bottom-sRect.top, NULL, NULL, sWC.hInstance, NULL);
 
 	window_win=hWnd;
@@ -685,6 +694,12 @@ int CALLBACK WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine
 	}
 #endif
 	SetUnhandledExceptionFilter(0);
+	cfgSaveBool("windows", "maximized", window_maximized);
+	if (!window_maximized)
+	{
+		cfgSaveInt("windows", "width", screen_width);
+		cfgSaveInt("windows", "height", screen_height);
+	}
 
 	return 0;
 }
