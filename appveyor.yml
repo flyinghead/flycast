@@ -18,7 +18,7 @@ build_script:
 after_build:
   - cmd: cd ..\..
   - cmd: mkdir artifacts
-  - cmd: move shell\linux\reicast.exe artifacts/reicast-win_x64-fast-%APPVEYOR_REPO_COMMIT%.exe
+  - cmd: move shell\linux\nosym-reicast.exe artifacts/reicast-win_x64-fast-%APPVEYOR_REPO_COMMIT%.exe
   - cmd: copy %EXTRA_PATH%\libgcc_s_seh-1.dll artifacts
   - cmd: copy %EXTRA_PATH%\libwinpthread-1.dll artifacts
   - cmd: copy %EXTRA_PATH%\libgomp-1.dll artifacts
