@@ -560,7 +560,10 @@ GLuint fogTextureId;
 					return false;
 				}
 #ifdef GLES
+// EGL only supports runtime loading with android? TDB
+#ifdef _ANDROID
 				load_gles_symbols();
+#endif
 #else
 				egl_makecurrent();
 				if (gl3wInit())
