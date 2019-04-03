@@ -415,16 +415,20 @@ public class VirtualJoystickDelegate {
         @Override
         public void run() {
             while (!stopping) {
+                boolean doVibrate;
                 synchronized (this) {
+                    doVibrate = false;
                     try {
                         this.wait();
                     } catch (InterruptedException e) {
                     }
                     if (vibrate) {
-                        vibrator.vibrate(Emulator.vibrationDuration);
+                        doVibrate = true;
                         vibrate = false;
                     }
                 }
+                if (doVibrate)
+                    vibrator.vibrate(Emulator.vibrationDuration);
             }
         }
 
