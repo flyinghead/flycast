@@ -67,6 +67,7 @@
 #endif
 
 #include "gles.h"
+#include "glcache.h"
 
 // OpenGL Data
 static char         g_GlslVersionString[32] = "";
@@ -588,11 +589,10 @@ void ImGui_ImplOpenGL3_DrawBackground()
 
 ImTextureID ImGui_ImplOpenGL3_CreateVmuTexture(const unsigned int *data)
 {
-	GLuint tex_id;
-    glGenTextures(1, &tex_id);
-    glBindTexture(GL_TEXTURE_2D, tex_id);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	GLuint tex_id = glcache.GenTexture();
+    glcache.BindTexture(GL_TEXTURE_2D, tex_id);
+    glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 48, 32, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 
     return reinterpret_cast<ImTextureID>(tex_id);
@@ -600,5 +600,5 @@ ImTextureID ImGui_ImplOpenGL3_CreateVmuTexture(const unsigned int *data)
 
 void ImGui_ImplOpenGL3_DeleteVmuTexture(ImTextureID tex_id)
 {
-	glDeleteTextures(1, &(GLuint &)tex_id);
+	glcache.DeleteTextures(1, &(GLuint &)tex_id);
 }
