@@ -1408,24 +1408,6 @@ void gui_display_ui()
 		gui_state = Closed;
 }
 
-void gui_display_fps(const char *string)
-{
-	ImGui_Impl_NewFrame();
-    ImGui::NewFrame();
-
-    ImGui::SetNextWindowBgAlpha(0);
-    ImGui::SetNextWindowPos(ImVec2(0, screen_height), ImGuiCond_Always, ImVec2(0.f, 1.f));	// Lower left corner
-
-    ImGui::Begin("##fps", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav
-    		| ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoBackground);
-    ImGui::SetWindowFontScale(2);
-    ImGui::TextColored(ImVec4(1, 1, 0, 0.7), "%s", string);
-    ImGui::End();
-
-    ImGui::Render();
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-}
-
 static float LastFPSTime;
 static int lastFrameCount = 0;
 static float fps = -1;

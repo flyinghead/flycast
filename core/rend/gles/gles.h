@@ -1,5 +1,5 @@
 #pragma once
-#include <map>
+#include <unordered_map>
 #include "rend/rend.h"
 
 #if (defined(GLES) && !defined(TARGET_NACL32) && HOST_OS != OS_DARWIN && !defined(USE_SDL)) || defined(_ANDROID)
@@ -94,7 +94,7 @@ struct gl_ctx
 
 	} modvol_shader;
 
-	std::map<u32, PipelineShader> shaders;
+	std::unordered_map<u32, PipelineShader> shaders;
 
 	struct
 	{

@@ -1,6 +1,6 @@
 #pragma once
 #include "rend/gles/gles.h"
-#include <map>
+#include <unordered_map>
 
 void gl4DrawStrips(GLuint output_fbo);
 
@@ -44,7 +44,7 @@ struct gl4_ctx
 		GLuint extra_depth_scale;
 	} modvol_shader;
 
-	std::map<int, gl4PipelineShader *> shaders;
+	std::unordered_map<u32, gl4PipelineShader> shaders;
 
 	struct
 	{
@@ -53,16 +53,6 @@ struct gl4_ctx
 		GLuint modvol_vao;
 		GLuint tr_poly_params;
 	} vbo;
-
-	gl4PipelineShader *getShader(int programId) {
-		gl4PipelineShader *shader = shaders[programId];
-		if (shader == NULL) {
-			shader = new gl4PipelineShader();
-			shaders[programId] = shader;
-			shader->program = -1;
-		}
-		return shader;
-	}
 };
 
 extern gl4_ctx gl4;
