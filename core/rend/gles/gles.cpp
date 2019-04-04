@@ -1150,7 +1150,9 @@ bool gl_create_resources()
 		//create vao
 		//This is really not "proper", vaos are supposed to be defined once
 		//i keep updating the same one to make the es2 code work in 3.1 context
+#if !defined(GLES) || defined(_ANDROID)
 		glGenVertexArrays(1, &gl.vbo.vao);
+#endif
 	}
 
 	//create vbos
@@ -1991,8 +1993,10 @@ struct glesrend : Renderer
 
 	void DrawOSD(bool clear_screen)
 	{
+#if !defined(GLES) || defined(_ANDROID)
 		if (gl.gl_major >= 3)
 			glBindVertexArray(gl.vbo.vao);
+#endif
 		glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.geometry); glCheck();
 		glEnableVertexAttribArray(VERTEX_POS_ARRAY);
 		glVertexAttribPointer(VERTEX_POS_ARRAY, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex,x));

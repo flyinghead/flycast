@@ -161,6 +161,7 @@ void    ImGui_ImplOpenGL3_RenderDrawData(ImDrawData* draw_data, bool save_backgr
 
     if (save_background)
     {
+#if !defined(GLES) || defined(_ANDROID)
     	if (!gl.is_gles && glReadBuffer != NULL)
     		glReadBuffer(GL_FRONT);
 
@@ -177,6 +178,7 @@ void    ImGui_ImplOpenGL3_RenderDrawData(ImDrawData* draw_data, bool save_backgr
 
 		// Copy the current framebuffer into it
 		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, fb_width, fb_height);
+#endif
     }
 
     // Setup render state: alpha-blending enabled, no face culling, no depth testing, scissor enabled, polygon fill
@@ -208,10 +210,12 @@ void    ImGui_ImplOpenGL3_RenderDrawData(ImDrawData* draw_data, bool save_backgr
     glUseProgram(g_ShaderHandle);
     glUniform1i(g_AttribLocationTex, 0);
     glUniformMatrix4fv(g_AttribLocationProjMtx, 1, GL_FALSE, &ortho_projection[0][0]);
+#if !defined(GLES) || defined(_ANDROID)
     if (gl.gl_major >= 3 && glBindSampler != NULL)
     	glBindSampler(0, 0); // We use combined texture/sampler state. Applications using GL 3.3 may set that otherwise.
-
+#endif
     GLuint vao_handle = 0;
+#if !defined(GLES) || defined(_ANDROID)
     if (gl.gl_major >= 3)
     {
 		// Recreate the VAO every time
@@ -219,6 +223,7 @@ void    ImGui_ImplOpenGL3_RenderDrawData(ImDrawData* draw_data, bool save_backgr
 		glGenVertexArrays(1, &vao_handle);
 		glBindVertexArray(vao_handle);
     }
+#endif
     glBindBuffer(GL_ARRAY_BUFFER, g_VboHandle);
     glEnableVertexAttribArray(g_AttribLocationPosition);
     glEnableVertexAttribArray(g_AttribLocationUV);
@@ -267,18 +272,23 @@ void    ImGui_ImplOpenGL3_RenderDrawData(ImDrawData* draw_data, bool save_backgr
             idx_buffer_offset += pcmd->ElemCount;
         }
     }
+#if !defined(GLES) || defined(_ANDROID)
     if (vao_handle != 0)
     	glDeleteVertexArrays(1, &vao_handle);
-
+#endif
     // Restore modified GL state
     glUseProgram(last_program);
     glBindTexture(GL_TEXTURE_2D, last_texture);
+#if !defined(GLES) || defined(_ANDROID)
     if (gl.gl_major >= 3 && glBindSampler != NULL)
     	glBindSampler(0, last_sampler);
+#endif
     glActiveTexture(last_active_texture);
     glBindBuffer(GL_ARRAY_BUFFER, last_array_buffer);
+#if !defined(GLES) || defined(_ANDROID)
     if (gl.gl_major >= 3)
     	glBindVertexArray(last_vertex_array);
+#endif
     glBlendEquationSeparate(last_blend_equation_rgb, last_blend_equation_alpha);
     glBlendFuncSeparate(last_blend_src_rgb, last_blend_dst_rgb, last_blend_src_alpha, last_blend_dst_alpha);
     if (last_enable_blend) glEnable(GL_BLEND); else glDisable(GL_BLEND);
@@ -537,8 +547,10 @@ bool    ImGui_ImplOpenGL3_CreateDeviceObjects()
     // Restore modified GL state
     glBindTexture(GL_TEXTURE_2D, last_texture);
     glBindBuffer(GL_ARRAY_BUFFER, last_array_buffer);
+#if !defined(GLES) || defined(_ANDROID)
     if (gl.gl_major >= 3)
     	glBindVertexArray(last_vertex_array);
+#endif
 
     return true;
 }
