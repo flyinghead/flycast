@@ -940,6 +940,9 @@ static void gui_display_settings()
 		    	ImGui::Checkbox("Shadows", &settings.rend.ModifierVolumes);
 	            ImGui::SameLine();
 	            ShowHelpMarker("Enable modifier volumes, usually used for shadows");
+		    	ImGui::Checkbox("Fog", &settings.rend.Fog);
+	            ImGui::SameLine();
+	            ShowHelpMarker("Enable fog effects");
 		    	ImGui::Checkbox("Widescreen", &settings.rend.WideScreen);
 	            ImGui::SameLine();
 	            ShowHelpMarker("Draw geometry outside of the normal 4:3 aspect ratio. May produce graphical glitches in the revealed areas");
