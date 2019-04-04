@@ -173,6 +173,7 @@ __forceinline
 		ShaderUniforms.trilinear_alpha = 1.f;
 
 	bool color_clamp = gp->tsp.ColorClamp && (pvrrc.fog_clamp_min != 0 || pvrrc.fog_clamp_max != 0xffffffff);
+	int fog_ctrl = settings.rend.Fog ? gp->tsp.FogCtrl : 2;
 
 	CurrentShader = GetProgram(Type == ListType_Punch_Through ? 1 : 0,
 								  SetTileClip(gp->tileclip, -1) + 1,
@@ -181,7 +182,7 @@ __forceinline
 								  gp->tsp.IgnoreTexA,
 								  gp->tsp.ShadInstr,
 								  gp->pcw.Offset,
-								  gp->tsp.FogCtrl,
+								  fog_ctrl,
 								  gp->pcw.Gouraud,
 								  gp->tcw.PixelFmt == PixelBumpMap,
 								  color_clamp,

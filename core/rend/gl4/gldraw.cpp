@@ -153,6 +153,8 @@ template <u32 Type, bool SortingEnabled>
 		bool two_volumes_mode = (gp->tsp1.full != -1) && Type != ListType_Translucent;
 		bool color_clamp = gp->tsp.ColorClamp && (pvrrc.fog_clamp_min != 0 || pvrrc.fog_clamp_max != 0xffffffff);
 
+		int fog_ctrl = settings.rend.Fog ? gp->tsp.FogCtrl : 2;
+
 		int depth_func = 0;
 		if (Type == ListType_Translucent)
 		{
@@ -169,7 +171,7 @@ template <u32 Type, bool SortingEnabled>
 				gp->tsp.IgnoreTexA,
 				gp->tsp.ShadInstr,
 				gp->pcw.Offset,
-				gp->tsp.FogCtrl,
+				fog_ctrl,
 				two_volumes_mode,
 				depth_func,
 				gp->pcw.Gouraud,

@@ -633,6 +633,7 @@ struct settings_t
 		bool CustomTextures;
 		bool DumpTextures;
 		int ScreenScaling;	// in percent. 50 means half the native resolution
+		bool Fog;
 	} rend;
 
 	struct
