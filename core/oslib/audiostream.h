@@ -1,5 +1,6 @@
 #pragma once
 #include "types.h"
+#include <tuple>
 
 //Get used size in the ring buffer
 u32 asRingUsedCount();
@@ -24,3 +25,8 @@ extern bool RegisterAudioBackend(audiobackend_t* backend);
 extern void InitAudio();
 extern u32 PushAudio(void* frame, u32 amt, bool wait);
 extern void TermAudio();
+
+u32 GetAudioBackendCount();
+void SortAudioBackends();
+audiobackend_t* GetAudioBackend(int num);
+audiobackend_t* GetAudioBackend(std::string slug);

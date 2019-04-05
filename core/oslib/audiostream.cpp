@@ -28,9 +28,18 @@ static unsigned int audiobackends_num_registered = 0;
 static audiobackend_t **audiobackends = NULL;
 static audiobackend_t *audiobackend_current = NULL;
 
+u32 GetAudioBackendCount()
+{
+	return audiobackends_num_registered;
+}
+
+audiobackend_t* GetAudioBackend(int num)
+{
+	return audiobackends[num];
+}
+
 bool RegisterAudioBackend(audiobackend_t *backend)
 {
-	printf("RegisterAUdio!\n");
 	/* This function announces the availability of an audio backend to reicast. */
 	// Check if backend is valid
 	if (backend == NULL)
@@ -73,9 +82,8 @@ bool RegisterAudioBackend(audiobackend_t *backend)
 	return true;
 }
 
-static audiobackend_t* GetAudioBackend(std::string slug)
+audiobackend_t* GetAudioBackend(std::string slug)
 {
-	printf("AudioBackend: %s\n", slug);
 	if (slug == "none")
 	{
 			printf("WARNING: Audio backend set to \"none\"!\n");
@@ -146,7 +154,7 @@ void WriteSample(s16 r, s16 l)
 }
 
 static bool backends_sorted = false;
-void SortBackends()
+void SortAudioBackends()
 {
 	if (backends_sorted)
 		return;
@@ -180,9 +188,9 @@ void InitAudio()
 		return;
 	}
 
-	SortBackends();
+	SortAudioBackends();
 
-	string audiobackend_slug = cfgLoadStr("audio", "backend", "auto"); // FIXME: This could be made a parameter
+	string audiobackend_slug = settings.audio.backend;
 	audiobackend_current = GetAudioBackend(audiobackend_slug);
 	if (audiobackend_current == NULL) {
 		printf("WARNING: Running without audio!\n");
