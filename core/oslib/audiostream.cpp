@@ -145,6 +145,27 @@ void WriteSample(s16 r, s16 l)
 	}
 }
 
+static bool backends_sorted = false;
+void SortBackends()
+{
+	if (backends_sorted)
+		return;
+
+	// Sort backends by slug
+	for (int n = audiobackends_num_registered; n > 0; n--)
+	{
+		for (int i = 0; i < n-1; i++)
+		{
+			if (audiobackends[i]->slug > audiobackends[i+1]->slug)
+			{
+				audiobackend_t* swap = audiobackends[i];
+				audiobackends[i] = audiobackends[i+1];
+				audiobackends[i+1] = swap;
+			}
+		}
+	}
+}
+
 void InitAudio()
 {
 	if (cfgLoadInt("audio", "disable", 0)) {
@@ -152,12 +173,14 @@ void InitAudio()
 		return;
 	}
 
-	cfgSaveInt("audio","disable",0);
+	cfgSaveInt("audio", "disable", 0);
 
 	if (audiobackend_current != NULL) {
 		printf("ERROR: The audio backend \"%s\" (%s) has already been initialized, you need to terminate it before you can call audio_init() again!\n", audiobackend_current->slug.c_str(), audiobackend_current->name.c_str());
 		return;
 	}
+
+	SortBackends();
 
 	string audiobackend_slug = cfgLoadStr("audio", "backend", "auto"); // FIXME: This could be made a parameter
 	audiobackend_current = GetAudioBackend(audiobackend_slug);
