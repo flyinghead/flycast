@@ -489,9 +489,8 @@ static void gles_term(void)
 	glDeleteBuffers(1, &gl4.vbo.tr_poly_params);
 	for (auto it = gl4.shaders.begin(); it != gl4.shaders.end(); it++)
 	{
-		if (it->second->program != -1)
-			glDeleteProgram(it->second->program);
-		delete it->second;
+		if (it->second.program != 0)
+			glDeleteProgram(it->second.program);
 	}
 	gl4.shaders.clear();
 	glDeleteVertexArrays(1, &gl4.vbo.main_vao);
@@ -704,7 +703,7 @@ static bool RenderFrame()
 	gl4ShaderUniforms.fog_clamp_max[2] = ((pvrrc.fog_clamp_max >> 0) & 0xFF) / 255.0f;
 	gl4ShaderUniforms.fog_clamp_max[3] = ((pvrrc.fog_clamp_max >> 24) & 0xFF) / 255.0f;
 	
-	if (fog_needs_update)
+	if (fog_needs_update && settings.rend.Fog)
 	{
 		fog_needs_update = false;
 		UpdateFogTexture((u8 *)FOG_TABLE, GL_TEXTURE5, GL_RED);

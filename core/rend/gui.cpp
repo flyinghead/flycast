@@ -940,6 +940,9 @@ static void gui_display_settings()
 		    	ImGui::Checkbox("Shadows", &settings.rend.ModifierVolumes);
 	            ImGui::SameLine();
 	            ShowHelpMarker("Enable modifier volumes, usually used for shadows");
+		    	ImGui::Checkbox("Fog", &settings.rend.Fog);
+	            ImGui::SameLine();
+	            ShowHelpMarker("Enable fog effects");
 		    	ImGui::Checkbox("Widescreen", &settings.rend.WideScreen);
 	            ImGui::SameLine();
 	            ShowHelpMarker("Draw geometry outside of the normal 4:3 aspect ratio. May produce graphical glitches in the revealed areas");
@@ -1403,24 +1406,6 @@ void gui_display_ui()
 		dc_resume();
 	else if (gui_state == ClosedNoResume)
 		gui_state = Closed;
-}
-
-void gui_display_fps(const char *string)
-{
-	ImGui_Impl_NewFrame();
-    ImGui::NewFrame();
-
-    ImGui::SetNextWindowBgAlpha(0);
-    ImGui::SetNextWindowPos(ImVec2(0, screen_height), ImGuiCond_Always, ImVec2(0.f, 1.f));	// Lower left corner
-
-    ImGui::Begin("##fps", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav
-    		| ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoBackground);
-    ImGui::SetWindowFontScale(2);
-    ImGui::TextColored(ImVec4(1, 1, 0, 0.7), "%s", string);
-    ImGui::End();
-
-    ImGui::Render();
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
 static float LastFPSTime;

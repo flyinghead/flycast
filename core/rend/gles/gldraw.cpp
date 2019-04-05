@@ -173,28 +173,25 @@ __forceinline
 		ShaderUniforms.trilinear_alpha = 1.f;
 
 	bool color_clamp = gp->tsp.ColorClamp && (pvrrc.fog_clamp_min != 0 || pvrrc.fog_clamp_max != 0xffffffff);
+	int fog_ctrl = settings.rend.Fog ? gp->tsp.FogCtrl : 2;
 
-	CurrentShader = &gl.pogram_table[
-									 GetProgramID(Type == ListType_Punch_Through ? 1 : 0,
-											 	  SetTileClip(gp->tileclip, -1) + 1,
-												  gp->pcw.Texture,
-												  gp->tsp.UseAlpha,
-												  gp->tsp.IgnoreTexA,
-												  gp->tsp.ShadInstr,
-												  gp->pcw.Offset,
-												  gp->tsp.FogCtrl,
-												  gp->pcw.Gouraud,
-												  gp->tcw.PixelFmt == PixelBumpMap,
-												  color_clamp,
-												  ShaderUniforms.trilinear_alpha != 1.f)];
+	CurrentShader = GetProgram(Type == ListType_Punch_Through ? 1 : 0,
+								  SetTileClip(gp->tileclip, -1) + 1,
+								  gp->pcw.Texture,
+								  gp->tsp.UseAlpha,
+								  gp->tsp.IgnoreTexA,
+								  gp->tsp.ShadInstr,
+								  gp->pcw.Offset,
+								  fog_ctrl,
+								  gp->pcw.Gouraud,
+								  gp->tcw.PixelFmt == PixelBumpMap,
+								  color_clamp,
+								  ShaderUniforms.trilinear_alpha != 1.f);
 	
-	if (CurrentShader->program == -1)
-		CompilePipelineShader(CurrentShader);
-	else
-	{
-		glcache.UseProgram(CurrentShader->program);
-		ShaderUniforms.Set(CurrentShader);
-	}
+	glcache.UseProgram(CurrentShader->program);
+	if (CurrentShader->trilinear_alpha != -1)
+		glUniform1f(CurrentShader->trilinear_alpha, ShaderUniforms.trilinear_alpha);
+
 	SetTileClip(gp->tileclip, CurrentShader->pp_ClipTest);
 
 	//This bit control which pixels are affected
@@ -1122,14 +1119,8 @@ static void DrawQuad(GLuint texId, float x, float y, float w, float h, float u0,
 
 	ShaderUniforms.trilinear_alpha = 1.0;
 
-	PipelineShader *shader = &gl.pogram_table[GetProgramID(0, 1, 1, 0, 1, 0, 0, 2, false, false, false, false)];
-	if (shader->program == -1)
-		CompilePipelineShader(shader);
-	else
-	{
-		glcache.UseProgram(shader->program);
-		ShaderUniforms.Set(shader);
-	}
+	PipelineShader *shader = GetProgram(0, 1, 1, 0, 1, 0, 0, 2, false, false, false, false);
+	glcache.UseProgram(shader->program);
 
 	glActiveTexture(GL_TEXTURE0);
 	glcache.BindTexture(GL_TEXTURE_2D, texId);

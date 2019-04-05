@@ -865,7 +865,7 @@ static void gles_term()
 	gl_free_osd_resources();
 	free_output_framebuffer();
 
-	memset(gl.pogram_table, 0, sizeof(gl.pogram_table));
+	gl.shaders.clear();
 	gl_term();
 }
 
@@ -1014,7 +1014,7 @@ GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentShader)
 	return program;
 }
 
-int GetProgramID(u32 cp_AlphaTest, u32 pp_ClipTestMode,
+PipelineShader *GetProgram(u32 cp_AlphaTest, u32 pp_ClipTestMode,
 							u32 pp_Texture, u32 pp_UseAlpha, u32 pp_IgnoreTexA, u32 pp_ShadInstr, u32 pp_Offset,
 							u32 pp_FogCtrl, bool pp_Gouraud, bool pp_BumpMap, bool fog_clamping, bool trilinear)
 {
@@ -1033,7 +1033,25 @@ int GetProgramID(u32 cp_AlphaTest, u32 pp_ClipTestMode,
 	rv<<=1; rv|=fog_clamping;
 	rv<<=1; rv|=trilinear;
 
-	return rv;
+	PipelineShader *shader = &gl.shaders[rv];
+	if (shader->program == 0)
+	{
+		shader->cp_AlphaTest = cp_AlphaTest;
+		shader->pp_ClipTestMode = pp_ClipTestMode-1;
+		shader->pp_Texture = pp_Texture;
+		shader->pp_UseAlpha = pp_UseAlpha;
+		shader->pp_IgnoreTexA = pp_IgnoreTexA;
+		shader->pp_ShadInstr = pp_ShadInstr;
+		shader->pp_Offset = pp_Offset;
+		shader->pp_FogCtrl = pp_FogCtrl;
+		shader->pp_Gouraud = pp_Gouraud;
+		shader->pp_BumpMap = pp_BumpMap;
+		shader->fog_clamping = fog_clamping;
+		shader->trilinear = trilinear;
+		CompilePipelineShader(shader);
+	}
+
+	return shader;
 }
 
 bool CompilePipelineShader(	PipelineShader* s)
@@ -1156,65 +1174,6 @@ bool gl_create_resources()
 	glGenBuffers(1, &gl.vbo.idxs);
 	glGenBuffers(1, &gl.vbo.idxs2);
 
-	memset(gl.pogram_table,0,sizeof(gl.pogram_table));
-
-	PipelineShader* dshader=0;
-	u32 compile=0;
-#define forl(name,max) for(u32 name=0;name<=max;name++)
-	forl(cp_AlphaTest,1)
-	{
-		forl(pp_ClipTestMode,2)
-		{
-			forl(pp_UseAlpha,1)
-			{
-				forl(pp_Texture,1)
-				{
-					forl(pp_FogCtrl,3)
-					{
-						forl(pp_IgnoreTexA,1)
-						{
-							forl(pp_ShadInstr,3)
-							{
-								forl(pp_Offset,1)
-								{
-									forl(pp_Gouraud,1)
-									{
-										forl(pp_BumpMap,1)
-										{
-											forl(fog_clamping,1)
-											{
-												forl(trilinear,1)
-												{
-													dshader=&gl.pogram_table[GetProgramID(cp_AlphaTest,pp_ClipTestMode,pp_Texture,pp_UseAlpha,pp_IgnoreTexA,
-																			pp_ShadInstr,pp_Offset,pp_FogCtrl, (bool)pp_Gouraud, (bool)pp_BumpMap, (bool)fog_clamping,
-																			(bool)trilinear)];
-
-														dshader->cp_AlphaTest = cp_AlphaTest;
-														dshader->pp_ClipTestMode = pp_ClipTestMode-1;
-														dshader->pp_Texture = pp_Texture;
-														dshader->pp_UseAlpha = pp_UseAlpha;
-														dshader->pp_IgnoreTexA = pp_IgnoreTexA;
-														dshader->pp_ShadInstr = pp_ShadInstr;
-														dshader->pp_Offset = pp_Offset;
-														dshader->pp_FogCtrl = pp_FogCtrl;
-														dshader->pp_Gouraud = pp_Gouraud;
-														dshader->pp_BumpMap = pp_BumpMap;
-														dshader->fog_clamping = fog_clamping;
-														dshader->trilinear = trilinear;
-														dshader->program = -1;
-												}
-											}
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-	
 	char vshader[8192];
 	sprintf(vshader, VertexShaderSource, gl.glsl_version_header, gl.gl_version, 1);
 	char fshader[8192];
@@ -1768,7 +1727,7 @@ bool RenderFrame()
 	ShaderUniforms.fog_clamp_max[2] = ((pvrrc.fog_clamp_max >> 0) & 0xFF) / 255.0f;
 	ShaderUniforms.fog_clamp_max[3] = ((pvrrc.fog_clamp_max >> 24) & 0xFF) / 255.0f;
 	
-	if (fog_needs_update)
+	if (fog_needs_update && settings.rend.Fog)
 	{
 		fog_needs_update = false;
 		UpdateFogTexture((u8 *)FOG_TABLE, GL_TEXTURE1, gl.fog_image_format);
@@ -1782,16 +1741,12 @@ bool RenderFrame()
 
 	ShaderUniforms.PT_ALPHA=(PT_ALPHA_REF&0xFF)/255.0f;
 
-//	for (u32 i=0;i<sizeof(gl.pogram_table)/sizeof(gl.pogram_table[0]);i++)
-//	{
-//		PipelineShader* s=&gl.pogram_table[i];
-//		if (s->program == -1)
-//			continue;
-//
-//		glcache.UseProgram(s->program);
-//
-//		ShaderUniforms.Set(s);
-//	}
+	for (auto it : gl.shaders)
+	{
+		glcache.UseProgram(it.second.program);
+		ShaderUniforms.Set(&it.second);
+	}
+
 	//setup render target first
 	if (is_rtt)
 	{
