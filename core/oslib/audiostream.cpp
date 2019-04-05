@@ -2,14 +2,6 @@
 #include "cfg/cfg.h"
 #include "oslib/oslib.h"
 #include "audiostream.h"
-#include "oslib/audiobackend_directsound.h"
-#include "oslib/audiobackend_android.h"
-#include "oslib/audiobackend_alsa.h"
-#include "oslib/audiobackend_oss.h"
-#include "oslib/audiobackend_pulseaudio.h"
-#include "oslib/audiobackend_coreaudio.h"
-#include "oslib/audiobackend_omx.h"
-#include "oslib/audiobackend_libao.h"
 
 struct SoundFrame { s16 l;s16 r; };
 #define SAMPLE_COUNT 512
@@ -25,18 +17,20 @@ u32 gen_samples=0;
 
 double time_diff = 128/44100.0;
 double time_last;
+
 #ifdef LOG_SOUND
+// TODO Only works on Windows!
 WaveWriter rawout("d:\\aica_out.wav");
 #endif
 
-static bool audiobackends_registered = false;
 static unsigned int audiobackends_num_max = 1;
 static unsigned int audiobackends_num_registered = 0;
-static audiobackend_t **audiobackends = static_cast<audiobackend_t**>(calloc(audiobackends_num_max, sizeof(audiobackend_t*)));
+static audiobackend_t **audiobackends = NULL;
 static audiobackend_t *audiobackend_current = NULL;
 
 bool RegisterAudioBackend(audiobackend_t *backend)
 {
+	printf("RegisterAUdio!\n");
 	/* This function announces the availability of an audio backend to reicast. */
 	// Check if backend is valid
 	if (backend == NULL)
@@ -44,10 +38,16 @@ bool RegisterAudioBackend(audiobackend_t *backend)
 		printf("ERROR: Tried to register invalid audio backend (NULL pointer).\n");
 		return false;
 	}
+
 	if (backend->slug == "auto" || backend->slug == "none") {
 		printf("ERROR: Tried to register invalid audio backend (slug \"%s\" is a reserved keyword).\n", backend->slug.c_str());
 		return false;
 	}
+
+	// First call to RegisterAudioBackend(), create the backend structure;
+	if (audiobackends == NULL)
+		audiobackends = static_cast<audiobackend_t**>(calloc(audiobackends_num_max, sizeof(audiobackend_t*)));
+
 	// Check if we need to allocate addition memory for storing the pointers and allocate if neccessary
 	if (audiobackends_num_registered == audiobackends_num_max)
 	{
@@ -67,46 +67,20 @@ bool RegisterAudioBackend(audiobackend_t *backend)
 		}
 		audiobackends = new_ptr;
 	}
+
 	audiobackends[audiobackends_num_registered] = backend;
 	audiobackends_num_registered++;
 	return true;
 }
 
-void RegisterAllAudioBackends() {
-		#if HOST_OS==OS_WINDOWS
-		RegisterAudioBackend(&audiobackend_directsound);
-		#endif
-		#if ANDROID
-		RegisterAudioBackend(&audiobackend_android);
-		#endif
-		#if USE_OMX
-		RegisterAudioBackend(&audiobackend_omx);
-		#endif
-		#if USE_ALSA
-		RegisterAudioBackend(&audiobackend_alsa);
-		#endif
-		#if USE_OSS
-		RegisterAudioBackend(&audiobackend_oss);
-		#endif
-		#if USE_PULSEAUDIO
-		RegisterAudioBackend(&audiobackend_pulseaudio);
-		#endif
-		#if USE_LIBAO
-		RegisterAudioBackend(&audiobackend_libao);
-		#endif
-        #if HOST_OS == OS_DARWIN
-        RegisterAudioBackend(&audiobackend_coreaudio);
-        #endif
-		audiobackends_registered = true;
-}
-
 static audiobackend_t* GetAudioBackend(std::string slug)
 {
+	printf("AudioBackend: %s\n", slug);
 	if (slug == "none")
 	{
 			printf("WARNING: Audio backend set to \"none\"!\n");
 	}
-	else if(audiobackends_num_registered > 0)
+	else if (audiobackends_num_registered > 0)
 	{
 		if (slug == "auto")
 		{
@@ -135,7 +109,8 @@ static audiobackend_t* GetAudioBackend(std::string slug)
 	return NULL;
 }
 
-u32 PushAudio(void* frame, u32 amt, bool wait) {
+u32 PushAudio(void* frame, u32 amt, bool wait)
+{
 	if (audiobackend_current != NULL) {
 		return audiobackend_current->push(frame, amt, wait);
 	}
@@ -151,6 +126,7 @@ u32 asRingUsedCount()
 	//s32 sz=(WritePtr+1)%RingBufferSampleCount-ReadPtr;
 	//return sz<0?sz+RingBufferSampleCount:sz;
 }
+
 u32 asRingFreeCount()
 {
 	return RingBufferSampleCount-asRingUsedCount();
@@ -178,11 +154,6 @@ void InitAudio()
 
 	cfgSaveInt("audio","disable",0);
 
-	if (!audiobackends_registered) {
-		//FIXME: There might some nicer way to do this.
-		RegisterAllAudioBackends();
-	}
-
 	if (audiobackend_current != NULL) {
 		printf("ERROR: The audio backend \"%s\" (%s) has already been initialized, you need to terminate it before you can call audio_init() again!\n", audiobackend_current->slug.c_str(), audiobackend_current->name.c_str());
 		return;
@@ -194,8 +165,9 @@ void InitAudio()
 		printf("WARNING: Running without audio!\n");
 		return;
 	}
+
 	printf("Initializing audio backend \"%s\" (%s)...\n", audiobackend_current->slug.c_str(), audiobackend_current->name.c_str());
-	audiobackend_current->init();	
+	audiobackend_current->init();
 }
 
 void TermAudio()
@@ -204,5 +176,5 @@ void TermAudio()
 		audiobackend_current->term();
 		printf("Terminating audio backend \"%s\" (%s)...\n", audiobackend_current->slug.c_str(), audiobackend_current->name.c_str());
 		audiobackend_current = NULL;
-	}	
+	}
 }

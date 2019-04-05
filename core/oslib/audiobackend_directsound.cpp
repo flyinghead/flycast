@@ -1,4 +1,4 @@
-#include "oslib/audiobackend_directsound.h"
+#include "oslib/audiostream.h"
 #if HOST_OS==OS_WINDOWS
 #include "oslib.h"
 #include <initguid.h>
@@ -19,31 +19,31 @@ static void directsound_init()
 	verifyc(dsound->SetCooperativeLevel((HWND)libPvr_GetRenderTarget(),DSSCL_PRIORITY));
 	IDirectSoundBuffer* buffer_;
 
-	WAVEFORMATEX wfx; 
-	DSBUFFERDESC desc; 
+	WAVEFORMATEX wfx;
+	DSBUFFERDESC desc;
 
-	// Set up WAV format structure. 
+	// Set up WAV format structure.
 
-	memset(&wfx, 0, sizeof(WAVEFORMATEX)); 
-	wfx.wFormatTag = WAVE_FORMAT_PCM; 
-	wfx.nChannels = 2; 
-	wfx.nSamplesPerSec = 44100; 
-	wfx.nBlockAlign = 4; 
-	wfx.nAvgBytesPerSec = wfx.nSamplesPerSec * wfx.nBlockAlign; 
-	wfx.wBitsPerSample = 16; 
+	memset(&wfx, 0, sizeof(WAVEFORMATEX));
+	wfx.wFormatTag = WAVE_FORMAT_PCM;
+	wfx.nChannels = 2;
+	wfx.nSamplesPerSec = 44100;
+	wfx.nBlockAlign = 4;
+	wfx.nAvgBytesPerSec = wfx.nSamplesPerSec * wfx.nBlockAlign;
+	wfx.wBitsPerSample = 16;
 
-	// Set up DSBUFFERDESC structure. 
+	// Set up DSBUFFERDESC structure.
 
 	ds_ring_size=8192*wfx.nBlockAlign;
 
-	memset(&desc, 0, sizeof(DSBUFFERDESC)); 
-	desc.dwSize = sizeof(DSBUFFERDESC); 
-	desc.dwFlags = DSBCAPS_GETCURRENTPOSITION2 | DSBCAPS_CTRLPOSITIONNOTIFY;// _CTRLPAN | DSBCAPS_CTRLVOLUME | DSBCAPS_CTRLFREQUENCY; 
-	
-	desc.dwBufferBytes = ds_ring_size; 
-	desc.lpwfxFormat = &wfx; 
+	memset(&desc, 0, sizeof(DSBUFFERDESC));
+	desc.dwSize = sizeof(DSBUFFERDESC);
+	desc.dwFlags = DSBCAPS_GETCURRENTPOSITION2 | DSBCAPS_CTRLPOSITIONNOTIFY;// _CTRLPAN | DSBCAPS_CTRLVOLUME | DSBCAPS_CTRLFREQUENCY;
 
-	
+	desc.dwBufferBytes = ds_ring_size;
+	desc.lpwfxFormat = &wfx;
+
+
 
 	if (settings.aica.HW_mixing==0)
 	{
@@ -71,7 +71,7 @@ static void directsound_init()
 
 	//Play the buffer !
 	verifyc(buffer->Play(0,0,DSBPLAY_LOOPING));
-	
+
 }
 
 
@@ -159,7 +159,7 @@ static u32 directsound_push(void* frame, u32 samples, bool wait)
 	wait &= w;
 	*/
 	int ffs=1;
-	
+
 	/*
 	while (directsound_IsAudioBufferedLots() && wait)
 		if (ffs == 0)
@@ -175,7 +175,7 @@ static u32 directsound_push(void* frame, u32 samples, bool wait)
 static void directsound_term()
 {
 	buffer->Stop();
-	
+
 	buffer->Release();
 	dsound->Release();
 }
@@ -187,4 +187,6 @@ audiobackend_t audiobackend_directsound = {
     &directsound_push,
     &directsound_term
 };
+
+static bool ds = RegisterAudioBackend(&audiobackend_directsound);
 #endif

@@ -1,4 +1,4 @@
-#include "oslib/audiobackend_libao.h"
+#include "oslib/audiostream.h"
 #ifdef USE_LIBAO
 
 #include <ao/ao.h>
@@ -10,12 +10,12 @@ static void libao_init()
 {
 	ao_initialize();
 	memset(&aoformat, 0, sizeof(aoformat));
-	
+
 	aoformat.bits = 16;
 	aoformat.channels = 2;
 	aoformat.rate = 44100;
 	aoformat.byte_format = AO_FMT_LITTLE;
-	
+
 	aodevice = ao_open_live(ao_default_driver_id(), &aoformat, NULL); // Live output
 	if (!aodevice)
 		aodevice = ao_open_live(ao_driver_id("null"), &aoformat, NULL);
@@ -23,13 +23,13 @@ static void libao_init()
 
 static u32 libao_push(void* frame, u32 samples, bool wait)
 {
-	if (aodevice) 
+	if (aodevice)
 		ao_play(aodevice, (char*)frame, samples * 4);
-	
+
 	return 1;
 }
 
-static void libao_term() 
+static void libao_term()
 {
 	if (aodevice)
 	{
@@ -46,4 +46,5 @@ audiobackend_t audiobackend_libao = {
 		&libao_term
 };
 
+static bool ao = RegisterAudioBackend(&audiobackend_libao);
 #endif

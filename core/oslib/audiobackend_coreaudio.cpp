@@ -1,18 +1,18 @@
 /*
     Simple Core Audio backend for osx (and maybe ios?)
     Based off various audio core samples and dolphin's code
- 
+
     This is part of the Reicast project, please consult the
     LICENSE file for licensing & related information
- 
+
     This could do with some locking logic to avoid
     race conditions, and some variable length buffer
     logic to support chunk sizes other than 512 bytes
- 
+
     It does work on my macmini though
  */
 
-#include "oslib/audiobackend_coreaudio.h"
+#include "oslib/audiostream.h"
 
 #if HOST_OS == OS_DARWIN
 #include <atomic>
@@ -49,9 +49,9 @@ static OSStatus coreaudio_callback(void* ctx, AudioUnitRenderActionFlags* flags,
             samples_rptr = (samples_rptr + buf_size) % BUFSIZE;
         }
     }
-    
+
     bufferEmpty.Set();
-    
+
     return noErr;
 }
 
@@ -63,7 +63,7 @@ static void coreaudio_init()
     AudioStreamBasicDescription format;
     AudioComponentDescription desc;
     AudioComponent component;
-    
+
     desc.componentType = kAudioUnitType_Output;
 #if !defined(TARGET_IPHONE)
     desc.componentSubType = kAudioUnitSubType_DefaultOutput;
@@ -75,12 +75,12 @@ static void coreaudio_init()
     desc.componentFlagsMask = 0;
     desc.componentManufacturer = kAudioUnitManufacturer_Apple;
     component = AudioComponentFindNext(nullptr, &desc);
-    
+
     verify(component != nullptr);
-    
+
     err = AudioComponentInstanceNew(component, &audioUnit);
     verify(err == noErr);
-    
+
     FillOutASBDForLPCM(format, 44100,
                        2, 16, 16, false, false, false);
     err = AudioUnitSetProperty(audioUnit,
@@ -88,7 +88,7 @@ static void coreaudio_init()
                                kAudioUnitScope_Input, 0, &format,
                                sizeof(AudioStreamBasicDescription));
     verify(err == noErr);
-    
+
     callback_struct.inputProc = coreaudio_callback;
     callback_struct.inputProcRefCon = 0;
     err = AudioUnitSetProperty(audioUnit,
@@ -96,24 +96,24 @@ static void coreaudio_init()
                                kAudioUnitScope_Input, 0, &callback_struct,
                                sizeof callback_struct);
     verify(err == noErr);
-    
+
     /*
     err = AudioUnitSetParameter(audioUnit,
                                 kHALOutputParam_Volume,
                                 kAudioUnitParameterFlag_Output, 0,
                                 1, 0);
     verify(err == noErr);
-    
+
     */
-    
+
     err = AudioUnitInitialize(audioUnit);
-    
+
     verify(err == noErr);
-    
+
     err = AudioOutputUnitStart(audioUnit);
 
     verify(err == noErr);
-    
+
     bufferEmpty.Set();
 }
 
@@ -134,23 +134,23 @@ static u32 coreaudio_push(void* frame, u32 samples, bool wait)
         samples_wptr = (samples_wptr + byte_size) % BUFSIZE;
         break;
     }
-    
+
     return 1;
 }
 
 static void coreaudio_term()
 {
     OSStatus err;
-    
+
     err = AudioOutputUnitStop(audioUnit);
     verify(err == noErr);
-    
+
     err = AudioUnitUninitialize(audioUnit);
     verify(err == noErr);
-    
+
     err = AudioComponentInstanceDispose(audioUnit);
     verify(err == noErr);
-    
+
     bufferEmpty.Set();
 }
 
@@ -161,4 +161,7 @@ audiobackend_t audiobackend_coreaudio = {
     &coreaudio_push,
     &coreaudio_term
 };
+
+static bool core = RegisterAudioBackend(&audiobackend_coreaudio);
+
 #endif
