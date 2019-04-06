@@ -4,6 +4,7 @@
 #include "maple_devs.h"
 #include "maple_cfg.h"
 #include "cfg/cfg.h"
+#include "hw/naomi/naomi_cart.h"
 
 #define HAS_VMU
 /*
@@ -28,12 +29,30 @@ extern u16 kcode[4];
 extern u32 vks[4];
 extern s8 joyx[4],joyy[4];
 extern u8 rt[4],lt[4];
-extern bool naomi_test_button;
 
 u8 GetBtFromSgn(s8 val)
 {
 	return val+128;
 }
+
+u32 awave_button_mapping[] = {
+		AWAVE_SERVICE_KEY,	// DC_BTN_C
+		AWAVE_BTN1_KEY,		// DC_BTN_B
+		AWAVE_BTN0_KEY,		// DC_BTN_A
+		AWAVE_START_KEY,	// DC_BTN_START
+		AWAVE_UP_KEY,		// DC_DPAD_UP
+		AWAVE_DOWN_KEY,		// DC_DPAD_DOWN
+		AWAVE_LEFT_KEY,		// DC_DPAD_LEFT
+		AWAVE_RIGHT_KEY,	// DC_DPAD_RIGHT
+		AWAVE_TEST_KEY,		// DC_BTN_Z
+		AWAVE_BTN3_KEY,		// DC_BTN_Y
+		AWAVE_BTN2_KEY,		// DC_BTN_X
+		AWAVE_COIN_KEY,		// DC_BTN_D
+		// DC_DPAD2_UP
+		// DC_DPAD2_DOWN
+		// DC_DPAD2_LEFT
+		// DC_DPAD2_RIGHT
+};
 
 struct MapleConfigMap : IMapleConfigMap
 {
@@ -59,23 +78,48 @@ struct MapleConfigMap : IMapleConfigMap
 
 		pjs->kcode=kcode[player_num];
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-		pjs->kcode |= 0xF901;
-#elif DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
-		if (naomi_test_button)
-			pjs->kcode &= ~(1 << 14);
-//		if (!(pjs->kcode & (1 << 9)))	// Hack (Y -> service btn)
-//			pjs->kcode &= ~(1 << 13);
-#endif
+		pjs->kcode |= 0xF901;		// mask off DPad2, C, D and Z
 		pjs->joy[PJAI_X1]=GetBtFromSgn(joyx[player_num]);
 		pjs->joy[PJAI_Y1]=GetBtFromSgn(joyy[player_num]);
 		pjs->trigger[PJTI_R]=rt[player_num];
 		pjs->trigger[PJTI_L]=lt[player_num];
+#elif DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
+		pjs->kcode = 0xFFFF;
+		for (int i = 0; i < 16; i++)
+		{
+			if ((kcode[player_num] & (1 << i)) == 0)
+				pjs->kcode &= ~awave_button_mapping[i];
+		}
+		pjs->joy[PJAI_X1] = GetBtFromSgn(joyx[player_num]);
+		if (NaomiGameInputs != NULL && NaomiGameInputs->axes[1].name != NULL && NaomiGameInputs->axes[1].type == Half)
+		{
+			// Driving games: put axis 2 on RT (accel) and axis 3 on LT (brake)
+			pjs->joy[PJAI_Y1] = rt[player_num];
+			pjs->joy[PJAI_X2] = lt[player_num];
+		}
+		else
+		{
+			pjs->joy[PJAI_Y1] = GetBtFromSgn(joyy[player_num]);
+			pjs->joy[PJAI_X2] = rt[player_num];
+			pjs->joy[PJAI_Y2] = lt[player_num];
+		}
+#endif
 	}
 	void SetImage(void* img)
 	{
 		//?
 	}
 };
+
+bool maple_atomiswave_coin_chute(int slot)
+{
+	for (int i = 0; i < 16; i++)
+	{
+		if (awave_button_mapping[i] == AWAVE_COIN_KEY && (kcode[slot] & (1 << i)) == 0)
+			return true;
+	}
+	return false;
+}
 
 void mcfg_Create(MapleDeviceType type, u32 bus, u32 port, s32 player_num = -1)
 {
@@ -100,8 +144,12 @@ void mcfg_CreateAtomisWaveControllers()
 	// Then other devices on port 2 and 3 for analog axes, light guns, ...
 	mcfg_Create(MDT_SegaController, 0, 5);
 	mcfg_Create(MDT_SegaController, 1, 5);
-//	mcfg_Create(MDT_SegaController, 2, 5, 0);
-//	mcfg_Create(MDT_SegaController, 3, 5, 1);
+	if (NaomiGameInputs != NULL && NaomiGameInputs->axes[0].name != NULL)
+	{
+		// Game needs analog axes
+		mcfg_Create(MDT_SegaController, 2, 5, 0);
+		mcfg_Create(MDT_SegaController, 3, 5, 1);
+	}
 //	mcfg_Create(MDT_LightGun, 2, 5, 0);
 //	mcfg_Create(MDT_LightGun, 3, 5, 1);
 //	mcfg_Create(MDT_Mouse, 2, 5, 0);
