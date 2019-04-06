@@ -53,7 +53,7 @@ private:
 	cThread loader_thread;
 #endif
 	cResetEvent wakeup_thread;
-	std::vector<struct TextureCacheData *> work_queue;
+	std::vector<TextureCacheData *> work_queue;
 	cMutex work_queue_mutex;
 };
 

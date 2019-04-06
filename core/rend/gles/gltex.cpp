@@ -296,10 +296,7 @@ void TextureCacheData::Update()
 		}
 	}
 	if (settings.rend.CustomTextures)
-	{
-		custom_load_in_progress = true;
 		custom_texture.LoadCustomTextureAsync(this);
-	}
 
 	void *temp_tex_buffer = NULL;
 	u32 upscaled_w = w;
@@ -428,7 +425,7 @@ void TextureCacheData::UploadToGPU(GLuint textype, int width, int height, u8 *te
 
 void TextureCacheData::CheckCustomTexture()
 {
-	if (custom_image_data != NULL)
+	if (custom_load_in_progress == 0 && custom_image_data != NULL)
 	{
 		UploadToGPU(GL_UNSIGNED_BYTE, custom_width, custom_height, custom_image_data);
 		delete [] custom_image_data;
@@ -446,7 +443,7 @@ bool TextureCacheData::NeedsUpdate() {
 	
 bool TextureCacheData::Delete()
 {
-	if (custom_load_in_progress)
+	if (custom_load_in_progress > 0)
 		return false;
 	
 	if (pData) {
@@ -736,11 +733,7 @@ TextureCacheData *getTextureCacheData(TSP tsp, TCW tcw) {
 	}
 	else //create if not existing
 	{
-		TextureCacheData tfc={0};
-		TexCache[key] = tfc;
-
-		tx=TexCache.find(key);
-		tf=&tx->second;
+		tf=&TexCache[key];
 
 		tf->tsp = tsp;
 		tf->tcw = tcw;
@@ -800,11 +793,7 @@ text_info raw_GetTexture(TSP tsp, TCW tcw)
 	}
 	else //create if not existing
 	{
-		TextureCacheData tfc = { 0 };
-		TexCache[key] = tfc;
-
-		tx = TexCache.find(key);
-		tf = &tx->second;
+		tf = &TexCache[key];
 
 		tf->tsp = tsp;
 		tf->tcw = tcw;

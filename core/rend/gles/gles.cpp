@@ -1838,9 +1838,6 @@ bool RenderFrame()
 			glBufferData(GL_ARRAY_BUFFER,pvrrc.modtrig.bytes(),pvrrc.modtrig.head(),GL_STREAM_DRAW); glCheck();
 		}
 
-		int offs_x=ds2s_offs_x+0.5f;
-		//this needs to be scaled
-
 		//not all scaling affects pixel operations, scale to adjust for that
 		scale_x *= scissoring_scale_x;
 
