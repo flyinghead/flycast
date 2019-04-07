@@ -120,6 +120,7 @@ struct gl_ctx
 	struct
 	{
 		GLuint depthb;
+		GLuint colorb;
 		GLuint tex;
 		GLuint fbo;
 		int width;

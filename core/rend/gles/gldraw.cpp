@@ -1141,17 +1141,27 @@ void DrawFramebuffer(float w, float h)
 
 bool render_output_framebuffer()
 {
-#if HOST_OS != OS_DARWIN
-	//Fix this in a proper way
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-#endif
-	glViewport(0, 0, screen_width, screen_height);
-	if (gl.ofbo.tex == 0)
-		return false;
-
-    float scl = 480.f / screen_height;
-    float tx = (screen_width * scl - 640.f) / 2;
-	DrawQuad(gl.ofbo.tex, -tx, 0, 640.f + tx * 2, 480.f, 0, 1, 1, 0);
-
+	glcache.Disable(GL_SCISSOR_TEST);
+	if (gl.gl_major < 3)
+	{
+		glViewport(0, 0, screen_width, screen_height);
+		if (gl.ofbo.tex == 0)
+			return false;
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		float scl = 480.f / screen_height;
+		float tx = (screen_width * scl - 640.f) / 2;
+		DrawQuad(gl.ofbo.tex, -tx, 0, 640.f + tx * 2, 480.f, 0, 1, 1, 0);
+	}
+	else
+	{
+		if (gl.ofbo.fbo == 0)
+			return false;
+		glBindFramebuffer(GL_READ_FRAMEBUFFER, gl.ofbo.fbo);
+		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+		glBlitFramebuffer(0, 0, gl.ofbo.width, gl.ofbo.height,
+				0, 0, screen_width, screen_height,
+				GL_COLOR_BUFFER_BIT, GL_LINEAR);
+    	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	}
 	return true;
 }

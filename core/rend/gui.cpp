@@ -952,6 +952,9 @@ static void gui_display_settings()
 		    	ImGui::SliderInt("Scaling", (int *)&settings.rend.ScreenScaling, 1, 100);
 	            ImGui::SameLine();
 	            ShowHelpMarker("Downscaling factor relative to native screen resolution. Higher is better");
+		    	ImGui::SliderInt("Horizontal Stretching", (int *)&settings.rend.ScreenStretching, 100, 150);
+	            ImGui::SameLine();
+	            ShowHelpMarker("Stretch the screen horizontally");
 		    	ImGui::SliderInt("Frame Skipping", (int *)&settings.pvr.ta_skip, 0, 6);
 	            ImGui::SameLine();
 	            ShowHelpMarker("Number of frames to skip between two actually rendered frames");
@@ -1251,6 +1254,7 @@ static void gui_start_game(const std::string& path)
 	{
 		gui_state = Main;
 		game_started = false;
+		cfgSetVirtual("config", "image", "");
 		switch (rc) {
 		case -3:
 			error_msg = "Audio/video initialization failed";

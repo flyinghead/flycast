@@ -632,7 +632,8 @@ struct settings_t
 		f32 ExtraDepthScale;
 		bool CustomTextures;
 		bool DumpTextures;
-		int ScreenScaling;	// in percent. 50 means half the native resolution
+		int ScreenScaling;		// in percent. 50 means half the native resolution
+		int ScreenStretching;	// in percent. 150 means stretch from 4/3 to 6/3
 		bool Fog;
 	} rend;
 

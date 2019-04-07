@@ -1678,15 +1678,16 @@ bool RenderFrame()
 	/*
 		Handle Dc to screen scaling
 	*/
-	float screen_scaling = is_rtt ? 1.f : settings.rend.ScreenScaling / 100.f;
+	float screen_stretching = settings.rend.ScreenStretching / 100.f;
+	float screen_scaling = settings.rend.ScreenScaling / 100.f;
+
 	float dc2s_scale_h = is_rtt ? (screen_width / dc_width) : (screen_height / 480.0);
-	dc2s_scale_h *=  screen_scaling;
-	float ds2s_offs_x =  is_rtt ? 0 : (((screen_width * screen_scaling) - dc2s_scale_h * 640.0) / 2);
+	float ds2s_offs_x =  is_rtt ? 0 : ((screen_width - dc2s_scale_h * 640.0 * screen_stretching) / 2);
 
 	//-1 -> too much to left
-	ShaderUniforms.scale_coefs[0] = 2.0f / (screen_width * screen_scaling / dc2s_scale_h * scale_x);
+	ShaderUniforms.scale_coefs[0] = 2.0f / (screen_width / dc2s_scale_h * scale_x) * screen_stretching;
 	ShaderUniforms.scale_coefs[1]= (is_rtt ? 2 : -2) / dc_height;		// FIXME CT2 needs 480 here instead of dc_height=512
-	ShaderUniforms.scale_coefs[2]= 1 - 2 * ds2s_offs_x / (screen_width * screen_scaling);
+	ShaderUniforms.scale_coefs[2]= 1 - 2 * ds2s_offs_x / screen_width;
 	ShaderUniforms.scale_coefs[3]= (is_rtt ? 1 : -1);
 
 
@@ -1791,7 +1792,7 @@ bool RenderFrame()
 	{
 		if (settings.rend.ScreenScaling != 100 || gl.swap_buffer_not_preserved)
 		{
-			init_output_framebuffer(screen_width * screen_scaling, screen_height * screen_scaling);
+			init_output_framebuffer(screen_width * screen_scaling + 0.5f, screen_height * screen_scaling + 0.5f);
 		}
 		else
 		{
@@ -1857,21 +1858,21 @@ bool RenderFrame()
 			if (!is_rtt)
 			{
 				// Add x offset for aspect ratio > 4/3
-				min_x = min_x * dc2s_scale_h + ds2s_offs_x;
+				min_x = min_x * dc2s_scale_h * screen_stretching + ds2s_offs_x * screen_scaling;
 				// Invert y coordinates when rendering to screen
-				min_y = screen_height * screen_scaling - (min_y + height) * dc2s_scale_h;
-				width *= dc2s_scale_h;
-				height *= dc2s_scale_h;
+				min_y = (screen_height - (min_y + height) * dc2s_scale_h) * screen_scaling;
+				width *= dc2s_scale_h * screen_scaling * screen_stretching;
+				height *= dc2s_scale_h * screen_scaling;
 
 				if (ds2s_offs_x > 0)
 				{
-					float rounded_offs_x = ds2s_offs_x + 0.5f;
+					float scaled_offs_x = ds2s_offs_x * screen_scaling;
 
 					glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
 					glcache.Enable(GL_SCISSOR_TEST);
-					glScissor(0, 0, rounded_offs_x, screen_height);
+					glScissor(0, 0, scaled_offs_x + 0.5f, screen_height * screen_scaling + 0.5f);
 					glClear(GL_COLOR_BUFFER_BIT);
-					glScissor(screen_width - rounded_offs_x, 0, rounded_offs_x, screen_height);
+					glScissor(screen_width * screen_scaling - scaled_offs_x + 0.5f, 0, scaled_offs_x + 1.f, screen_height * screen_scaling + 0.5f);
 					glClear(GL_COLOR_BUFFER_BIT);
 				}
 			}
