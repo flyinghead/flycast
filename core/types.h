@@ -635,6 +635,7 @@ struct settings_t
 		int ScreenScaling;		// in percent. 50 means half the native resolution
 		int ScreenStretching;	// in percent. 150 means stretch from 4/3 to 6/3
 		bool Fog;
+		bool FloatVMUs;
 	} rend;
 
 	struct

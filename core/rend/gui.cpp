@@ -294,7 +294,9 @@ static void gui_display_commands()
     if (!settings_opening)
     	ImGui_ImplOpenGL3_DrawBackground();
 
-	display_vmus();
+    if (!settings.rend.FloatVMUs)
+    	// If floating VMUs, they are already visible on the background
+    	display_vmus();
 
     ImGui::SetNextWindowPos(ImVec2(screen_width / 2.f, screen_height / 2.f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
     ImGui::SetNextWindowSize(ImVec2(330 * scaling, 0));
@@ -617,6 +619,8 @@ void directory_selected_callback(bool cancelled, std::string selection)
 
 static void gui_display_settings()
 {
+	static bool maple_devices_changed;
+
 	ImGui_Impl_NewFrame();
     ImGui::NewFrame();
 
@@ -639,10 +643,14 @@ static void gui_display_settings()
     		gui_state = Commands;
     	else
     		gui_state = Main;
+    	if (maple_devices_changed)
+    	{
+    		maple_devices_changed = false;
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-    	maple_ReconnectDevices();
-    	reset_vmus();
+    		maple_ReconnectDevices();
+    		reset_vmus();
 #endif
+    	}
        	SaveSettings();
     }
 	if (game_started)
@@ -813,7 +821,10 @@ static void gui_display_settings()
 						{
 							bool is_selected = settings.input.maple_devices[bus] == maple_device_type_from_index(i);
 							if (ImGui::Selectable(maple_device_types[i], &is_selected))
+							{
 								settings.input.maple_devices[bus] = maple_device_type_from_index(i);
+								maple_devices_changed = true;
+							}
 							if (is_selected)
 								ImGui::SetItemDefaultFocus();
 						}
@@ -831,7 +842,10 @@ static void gui_display_settings()
 							{
 								bool is_selected = settings.input.maple_expansion_devices[bus][port] == maple_expansion_device_type_from_index(i);
 								if (ImGui::Selectable(maple_expansion_device_types[i], &is_selected))
+								{
 									settings.input.maple_expansion_devices[bus][port] = maple_expansion_device_type_from_index(i);
+									maple_devices_changed = true;
+								}
 								if (is_selected)
 									ImGui::SetItemDefaultFocus();
 							}
@@ -949,6 +963,9 @@ static void gui_display_settings()
 		    	ImGui::Checkbox("Show FPS Counter", &settings.rend.ShowFPS);
 	            ImGui::SameLine();
 	            ShowHelpMarker("Show on-screen frame/sec counter");
+		    	ImGui::Checkbox("Show VMU in game", &settings.rend.FloatVMUs);
+	            ImGui::SameLine();
+	            ShowHelpMarker("Show the VMU LCD screens while in game");
 		    	ImGui::SliderInt("Scaling", (int *)&settings.rend.ScreenScaling, 1, 100);
 	            ImGui::SameLine();
 	            ShowHelpMarker("Downscaling factor relative to native screen resolution. Higher is better");
@@ -1459,26 +1476,32 @@ void gui_display_osd()
 	if (osd_message.empty())
 	{
 		message = getFPSNotification();
-		if (message.empty())
-			return;
 	}
 	else
 		message = osd_message;
 
-	ImGui_Impl_NewFrame();
-    ImGui::NewFrame();
+	if (!message.empty() || settings.rend.FloatVMUs)
+	{
+		ImGui_Impl_NewFrame();
+		ImGui::NewFrame();
 
-    ImGui::SetNextWindowBgAlpha(0);
-    ImGui::SetNextWindowPos(ImVec2(0, screen_height), ImGuiCond_Always, ImVec2(0.f, 1.f));	// Lower left corner
+		if (!message.empty())
+		{
+			ImGui::SetNextWindowBgAlpha(0);
+			ImGui::SetNextWindowPos(ImVec2(0, screen_height), ImGuiCond_Always, ImVec2(0.f, 1.f));	// Lower left corner
 
-    ImGui::Begin("##osd", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav
-    		| ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoBackground);
-    ImGui::SetWindowFontScale(1.5);
-    ImGui::TextColored(ImVec4(1, 1, 0, 0.7), "%s", message.c_str());
-    ImGui::End();
+			ImGui::Begin("##osd", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav
+					| ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoBackground);
+			ImGui::SetWindowFontScale(1.5);
+			ImGui::TextColored(ImVec4(1, 1, 0, 0.7), "%s", message.c_str());
+			ImGui::End();
+		}
+		if (settings.rend.FloatVMUs)
+			display_vmus();
 
-    ImGui::Render();
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+		ImGui::Render();
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+	}
 }
 
 void gui_open_onboarding()

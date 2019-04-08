@@ -517,6 +517,7 @@ void InitSettings()
 	settings.rend.ScreenScaling     = 100;
 	settings.rend.ScreenStretching  = 100;
 	settings.rend.Fog				= true;
+	settings.rend.FloatVMUs			= false;
 
 	settings.pvr.ta_skip			= 0;
 	settings.pvr.rend				= 0;
@@ -601,6 +602,7 @@ void LoadSettings(bool game_specific)
 	settings.rend.ScreenScaling = min(max(1, settings.rend.ScreenScaling), 100);
 	settings.rend.ScreenStretching  = cfgLoadInt(config_section, "rend.ScreenStretching", settings.rend.ScreenStretching);
 	settings.rend.Fog				= cfgLoadBool(config_section, "rend.Fog", settings.rend.Fog);
+	settings.rend.FloatVMUs			= cfgLoadBool(config_section, "rend.FloatVMUs", settings.rend.FloatVMUs);
 
 	settings.pvr.ta_skip			= cfgLoadInt(config_section, "ta.skip", settings.pvr.ta_skip);
 	settings.pvr.rend				= cfgLoadInt(config_section, "pvr.rend", settings.pvr.rend);
@@ -726,6 +728,7 @@ void SaveSettings()
 	cfgSaveInt("config", "rend.ScreenScaling", settings.rend.ScreenScaling);
 	cfgSaveInt("config", "rend.ScreenStretching", settings.rend.ScreenStretching);
 	cfgSaveBool("config", "rend.Fog", settings.rend.Fog);
+	cfgSaveBool("config", "rend.FloatVMUs", settings.rend.FloatVMUs);
 	cfgSaveInt("config", "ta.skip", settings.pvr.ta_skip);
 	cfgSaveInt("config", "pvr.rend", settings.pvr.rend);
 
