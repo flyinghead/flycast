@@ -115,7 +115,7 @@ bool maple_atomiswave_coin_chute(int slot)
 {
 	for (int i = 0; i < 16; i++)
 	{
-		if (awave_button_mapping[i] == AWAVE_COIN_KEY && (kcode[slot] & (1 << i)) == 0)
+		if ((kcode[slot] & (1 << i)) == 0 && awave_button_mapping[i] == AWAVE_COIN_KEY)
 			return true;
 	}
 	return false;
