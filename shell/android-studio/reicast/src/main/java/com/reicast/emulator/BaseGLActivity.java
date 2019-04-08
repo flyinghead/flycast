@@ -298,7 +298,7 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
     }
 
     // Called from native code
-    private void generateErrorLog() {
+    protected void generateErrorLog() {
         try {
             new GenerateLogs(this).execute(getFilesDir().getAbsolutePath());
 		} catch (RuntimeException e) {

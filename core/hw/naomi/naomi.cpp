@@ -6,6 +6,7 @@
 #include "hw/holly/sb.h"
 #include "hw/sh4/sh4_mem.h"
 #include "hw/holly/holly_intc.h"
+#include "hw/maple/maple_cfg.h"
 
 #include "naomi.h"
 #include "naomi_cart.h"
@@ -634,7 +635,6 @@ void Update_naomi()
 }
 
 static u8 aw_maple_devs;
-extern bool coin_chute;
 
 u32 libExtDevice_ReadMem_A0_006(u32 addr,u32 size) {
 	addr &= 0x7ff;
@@ -653,12 +653,13 @@ u32 libExtDevice_ReadMem_A0_006(u32 addr,u32 size) {
 			aw_ram_test_skipped = true;
 			return 0;
 		}
-		if (coin_chute)
 		{
-			// FIXME Coin Error if coin_chute is set for too long
-			return 0xE;
+			u8 coin_input = 0xF;
+			for (int slot = 0; slot < 4; slot++)
+				if (maple_atomiswave_coin_chute(slot))
+					coin_input &= ~(1 << slot);
+			return coin_input;
 		}
-		return 0xF;
 
 	case 0x284:		// Atomiswave maple devices
 		// ddcc0000 where cc/dd are the types of devices on maple bus 2 and 3:

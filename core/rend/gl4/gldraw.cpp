@@ -697,11 +697,15 @@ void gl4DrawFramebuffer(float w, float h)
 
 bool gl4_render_output_framebuffer()
 {
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glViewport(0, 0, screen_width, screen_height);
-	if (gl.ofbo.tex == 0)
+	glcache.Disable(GL_SCISSOR_TEST);
+	if (gl.ofbo.fbo == 0)
 		return false;
-
-	gl4_draw_quad_texture(gl.ofbo.tex, true);
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, gl.ofbo.fbo);
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+	glBlitFramebuffer(0, 0, gl.ofbo.width, gl.ofbo.height,
+			0, 0, screen_width, screen_height,
+			GL_COLOR_BUFFER_BIT, GL_LINEAR);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	return true;
 }

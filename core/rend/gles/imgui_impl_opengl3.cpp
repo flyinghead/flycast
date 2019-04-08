@@ -510,6 +510,9 @@ void ImGui_ImplOpenGL3_DestroyDeviceObjects()
 
 void ImGui_ImplOpenGL3_DrawBackground()
 {
+	glcache.Disable(GL_SCISSOR_TEST);
+	glcache.ClearColor(0, 0, 0, 0);
+	glClear(GL_COLOR_BUFFER_BIT);
 	if (g_BackgroundTexture != 0)
 	{
 		ImGuiIO& io = ImGui::GetIO();
@@ -519,11 +522,6 @@ void ImGui_ImplOpenGL3_DrawBackground()
 				| ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoBackground);
 		ImGui::GetWindowDrawList()->AddImage((ImTextureID)(uintptr_t)g_BackgroundTexture, ImVec2(0, 0), io.DisplaySize, ImVec2(0, 1), ImVec2(1, 0), 0xffffffff);
 		ImGui::End();
-	}
-	else
-	{
-		glcache.ClearColor(0, 0, 0, 0);
-		glClear(GL_COLOR_BUFFER_BIT);
 	}
 }
 
