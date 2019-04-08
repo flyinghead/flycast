@@ -656,7 +656,6 @@ struct settings_t
 	struct
 	{
 		u32 cable;			// 0 -> VGA, 1 -> VGA, 2 -> RGB, 3 -> TV
-		u32 RTC;
 		u32 region;			// 0 -> JP, 1 -> USA, 2 -> EU, 3 -> default
 		u32 broadcast;		// 0 -> NTSC, 1 -> PAL, 2 -> PAL/M, 3 -> PAL/N, 4 -> default
 		u32 language;		// 0 -> JP, 1 -> EN, 2 -> DE, 3 -> FR, 4 -> SP, 5 -> IT, 6 -> default

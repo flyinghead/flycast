@@ -18,6 +18,7 @@ u32 VREG;//video reg =P
 u32 ARMRST;//arm reset reg
 u32 rtc_EN=0;
 int dma_sched_id;
+u32 RealTimeClock;
 
 u32 GetRTC_now()
 {
@@ -39,9 +40,9 @@ u32 ReadMem_aica_rtc(u32 addr,u32 sz)
 	switch( addr & 0xFF )
 	{
 	case 0:
-		return settings.dreamcast.RTC>>16;
+		return RealTimeClock>>16;
 	case 4:
-		return settings.dreamcast.RTC &0xFFFF;
+		return RealTimeClock &0xFFFF;
 	case 8:
 		return 0;
 	}
@@ -57,16 +58,16 @@ void WriteMem_aica_rtc(u32 addr,u32 data,u32 sz)
 	case 0:
 		if (rtc_EN)
 		{
-			settings.dreamcast.RTC&=0xFFFF;
-			settings.dreamcast.RTC|=(data&0xFFFF)<<16;
+			RealTimeClock&=0xFFFF;
+			RealTimeClock|=(data&0xFFFF)<<16;
 			rtc_EN=0;
 		}
 		return;
 	case 4:
 		if (rtc_EN)
 		{
-			settings.dreamcast.RTC&=0xFFFF0000;
-			settings.dreamcast.RTC|= data&0xFFFF;
+			RealTimeClock&=0xFFFF0000;
+			RealTimeClock|= data&0xFFFF;
 			//TODO: Clean the internal timer ?
 		}
 		return;
@@ -153,15 +154,12 @@ void WriteMem_aica_reg(u32 addr,u32 data,u32 sz)
 //Init/res/term
 void aica_Init()
 {
-	//mmnnn ? gotta fill it w/ something
+	RealTimeClock = GetRTC_now();
 }
 
 void aica_Reset(bool Manual)
 {
-	if (!Manual)
-	{
-		aica_ram.Zero();
-	}
+	aica_Init();
 }
 
 void aica_Term()

@@ -313,7 +313,6 @@ int dc_start_game(const char *path)
 	{
 		InitSettings();
 		LoadSettings(false);
-		settings.dreamcast.RTC = GetRTC_now();	// FIXME This shouldn't be in settings anymore
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST
 		if (!settings.bios.UseReios)
 #endif
@@ -351,7 +350,6 @@ int dc_start_game(const char *path)
 		return 0;
 	}
 
-	settings.dreamcast.RTC = GetRTC_now();	// FIXME This shouldn't be in settings anymore
 	if (settings.bios.UseReios || !LoadRomFiles(get_readonly_data_path(DATA_PATH)))
 	{
 #ifdef USE_REIOS
@@ -491,7 +489,6 @@ void dc_exit()
 
 void InitSettings()
 {
-	settings.dreamcast.RTC			= GetRTC_now();
 	settings.dynarec.Enable			= true;
 	settings.dynarec.idleskip		= true;
 	settings.dynarec.unstable_opt	= false;

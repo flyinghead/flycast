@@ -232,7 +232,7 @@ int AicaUpdate(int tag, int c, int j)
 
 int DreamcastSecond(int tag, int c, int j)
 {
-	settings.dreamcast.RTC++;
+	RealTimeClock++;
 
 #if 1 //HOST_OS==OS_WINDOWS
 	prof_periodical();
