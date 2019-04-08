@@ -661,17 +661,29 @@ static bool RenderFrame()
 	/*
 		Handle Dc to screen scaling
 	*/
-	float screen_scaling = is_rtt ? 1.f : settings.rend.ScreenScaling / 100.f;
+	float screen_scaling = settings.rend.ScreenScaling / 100.f;
 	float screen_stretching = settings.rend.ScreenStretching / 100.f;
 
-	float dc2s_scale_h = is_rtt ? (screen_width / dc_width) : (screen_height / 480.0);
-	float ds2s_offs_x =  is_rtt ? 0 : ((screen_width - dc2s_scale_h * 640.0 * screen_stretching) / 2);
+	float dc2s_scale_h;
+	float ds2s_offs_x;
 
-	//-1 -> too much to left
-	gl4ShaderUniforms.scale_coefs[0] = 2.0f / (screen_width / dc2s_scale_h * scale_x) * screen_stretching;
-	gl4ShaderUniforms.scale_coefs[1] = (is_rtt ? 2 : -2) / dc_height;		// FIXME CT2 needs 480 here instead of dc_height=512
-	gl4ShaderUniforms.scale_coefs[2] = 1 - 2 * ds2s_offs_x / screen_width;
-	gl4ShaderUniforms.scale_coefs[3] = (is_rtt ? 1 : -1);
+	if (is_rtt)
+	{
+		gl4ShaderUniforms.scale_coefs[0] = 2.0f / dc_width;
+		gl4ShaderUniforms.scale_coefs[1] = 2.0f / dc_height;	// FIXME CT2 needs 480 here instead of dc_height=512
+		gl4ShaderUniforms.scale_coefs[2] = 1;
+		gl4ShaderUniforms.scale_coefs[3] = 1;
+	}
+	else
+	{
+		dc2s_scale_h = screen_height / 480.0;
+		ds2s_offs_x =  (screen_width - dc2s_scale_h * 640.0 * screen_stretching) / 2;
+		//-1 -> too much to left
+		gl4ShaderUniforms.scale_coefs[0] = 2.0f / (screen_width / dc2s_scale_h * scale_x) * screen_stretching;
+		gl4ShaderUniforms.scale_coefs[1] = -2.0f / dc_height;
+		gl4ShaderUniforms.scale_coefs[2] = 1 - 2 * ds2s_offs_x / screen_width;
+		gl4ShaderUniforms.scale_coefs[3] = -1;
+	}
 
 	gl4ShaderUniforms.extra_depth_scale = settings.rend.ExtraDepthScale;
 
