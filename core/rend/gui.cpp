@@ -35,6 +35,8 @@
 #include "gui_util.h"
 #include "gui_android.h"
 #include "version/version.h"
+#include "oslib/audiostream.h"
+
 
 extern void dc_loadstate();
 extern void dc_savestate();
@@ -992,6 +994,48 @@ static void gui_display_settings()
 			ImGui::Checkbox("Disable Sound", &settings.aica.NoSound);
             ImGui::SameLine();
             ShowHelpMarker("Disable the emulator sound output");
+
+			audiobackend_t* backend = NULL;;
+			std::string backend_name = settings.audio.backend;
+			if (backend_name != "auto" && backend_name != "none")
+			{
+				backend = GetAudioBackend(settings.audio.backend);
+				if (backend != NULL)
+					backend_name = backend->slug;
+			}
+
+			SortAudioBackends();
+			if (ImGui::BeginCombo("Audio Backend", backend_name.c_str(), ImGuiComboFlags_None))
+			{
+				bool is_selected = (settings.audio.backend == "auto");
+				if (ImGui::Selectable("auto", &is_selected))
+					settings.audio.backend = "auto";
+				ImGui::SameLine(); ImGui::Text("-");
+				ImGui::SameLine(); ImGui::Text("Autoselect audio backend");
+
+				is_selected = (settings.audio.backend == "none");
+				if (ImGui::Selectable("none", &is_selected))
+					settings.audio.backend = "none";
+				ImGui::SameLine(); ImGui::Text("-");
+				ImGui::SameLine(); ImGui::Text("No audio backend");
+
+				for (int i = 0; i < GetAudioBackendCount(); i++)
+				{
+					audiobackend_t* backend = GetAudioBackend(i);
+					is_selected = (settings.audio.backend == backend->slug);
+
+					if (ImGui::Selectable(backend->slug.c_str(), &is_selected))
+						settings.audio.backend = backend->slug;
+					ImGui::SameLine(); ImGui::Text("-");
+					ImGui::SameLine(); ImGui::Text(backend->name.c_str());
+	                if (is_selected)
+	                    ImGui::SetItemDefaultFocus();
+				}
+				ImGui::EndCombo();
+			}
+            ImGui::SameLine();
+            ShowHelpMarker("The audio backend to use");
+
 			ImGui::Checkbox("Enable DSP", &settings.aica.NoBatch);
             ImGui::SameLine();
             ShowHelpMarker("Enable the Dreamcast Digital Sound Processor. Only recommended on fast and arm64 platforms");

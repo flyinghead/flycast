@@ -20,7 +20,7 @@
 #include "hw/maple/maple_devs.h"
 #include "hw/maple/maple_if.h"
 #include "hw/naomi/naomi_cart.h"
-#include "oslib/audiobackend_android.h"
+#include "oslib/audiostream.h"
 #include "imgread/common.h"
 #include "rend/gui.h"
 #include "cfg/cfg.h"
@@ -529,6 +529,9 @@ audiobackend_t audiobackend_android = {
         &androidaudio_term
 };
 
+static bool android = RegisterAudioBackend(&audiobackend_android);
+
+
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_AudioBackend_setInstance(JNIEnv *env, jobject obj, jobject instance)
 {
     if (g_audioBackend != NULL)
@@ -568,7 +571,7 @@ void os_DebugBreak()
 
 	raise(SIGABRT);
     //pthread_exit(NULL);
-	
+
     // Attach debugger here to figure out what went wrong
     for(;;) ;
 }

@@ -134,7 +134,7 @@ void LoadSpecialSettings()
 	safemode_game = false;
 	tr_poly_depth_mask_game = false;
 	extra_depth_game = false;
-	
+
 	if (reios_windows_ce)
 	{
 		printf("Enabling Extra depth scaling for Windows CE games\n");
@@ -190,7 +190,7 @@ void LoadSpecialSettings()
 	}
 #elif DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
 	printf("Game ID is [%s]\n", naomi_game_id);
-	
+
 	if (!strcmp("METAL SLUG 6", naomi_game_id) || !strcmp("WAVE RUNNER GP", naomi_game_id))
 	{
 		printf("Enabling Dynarec safe mode for game %s\n", naomi_game_id);
@@ -501,6 +501,7 @@ void InitSettings()
 	settings.aica.LimitFPS			= true;
 	settings.aica.NoBatch			= false;	// This also controls the DSP. Disabled by default
     settings.aica.NoSound			= false;
+	settings.audio.backend 			= "auto";
 	settings.rend.UseMipmaps		= true;
 	settings.rend.WideScreen		= false;
 	settings.rend.ShowFPS			= false;
@@ -563,6 +564,7 @@ void LoadSettings(bool game_specific)
 {
 	const char *config_section = game_specific ? cfgGetGameId() : "config";
 	const char *input_section = game_specific ? cfgGetGameId() : "input";
+	const char *audio_section = game_specific ? cfgGetGameId() : "audio";
 
 	settings.dynarec.Enable			= cfgLoadBool(config_section, "Dynarec.Enabled", settings.dynarec.Enable);
 	settings.dynarec.idleskip		= cfgLoadBool(config_section, "Dynarec.idleskip", settings.dynarec.idleskip);
@@ -578,6 +580,7 @@ void LoadSettings(bool game_specific)
 	settings.aica.LimitFPS			= cfgLoadBool(config_section, "aica.LimitFPS", settings.aica.LimitFPS);
 	settings.aica.NoBatch			= cfgLoadBool(config_section, "aica.NoBatch", settings.aica.NoBatch);
     settings.aica.NoSound			= cfgLoadBool(config_section, "aica.NoSound", settings.aica.NoSound);
+    settings.audio.backend			= cfgLoadStr(audio_section, "backend", settings.audio.backend.c_str());
 	settings.rend.UseMipmaps		= cfgLoadBool(config_section, "rend.UseMipmaps", settings.rend.UseMipmaps);
 	settings.rend.WideScreen		= cfgLoadBool(config_section, "rend.WideScreen", settings.rend.WideScreen);
 	settings.rend.ShowFPS			= cfgLoadBool(config_section, "rend.ShowFPS", settings.rend.ShowFPS);
@@ -712,6 +715,7 @@ void SaveSettings()
 	cfgSaveBool("config", "aica.LimitFPS", settings.aica.LimitFPS);
 	cfgSaveBool("config", "aica.NoBatch", settings.aica.NoBatch);
 	cfgSaveBool("config", "aica.NoSound", settings.aica.NoSound);
+	cfgSaveStr("audio", "backend", settings.audio.backend.c_str());
 	cfgSaveBool("config", "rend.WideScreen", settings.rend.WideScreen);
 	cfgSaveBool("config", "rend.ShowFPS", settings.rend.ShowFPS);
 	if (!rtt_to_buffer_game || !settings.rend.RenderToTextureBuffer)

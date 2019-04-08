@@ -1,4 +1,4 @@
-#include "oslib/audiobackend_alsa.h"
+#include "oslib/audiostream.h"
 #if USE_ALSA
 #include <alsa/asoundlib.h>
 #include "cfg/cfg.h"
@@ -175,11 +175,13 @@ static void alsa_term()
 	snd_pcm_close(handle);
 }
 
-audiobackend_t audiobackend_alsa = {
+static audiobackend_t audiobackend_alsa = {
     "alsa", // Slug
     "Advanced Linux Sound Architecture", // Name
     &alsa_init,
     &alsa_push,
     &alsa_term
 };
+
+static bool alsa = RegisterAudioBackend(&audiobackend_alsa);
 #endif
