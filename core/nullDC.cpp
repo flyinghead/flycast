@@ -213,12 +213,14 @@ void LoadSpecialSettings()
 		printf("Enabling JVS rotary encoders for game %s\n", naomi_game_id);
 		settings.input.JammaSetup = 2;
 	}
-	else if (!strcmp("POWER STONE 2 JAPAN", naomi_game_id))
+	else if (!strcmp("POWER STONE 2 JAPAN", naomi_game_id)		// Naomi
+			|| !strcmp("GUILTY GEAR isuka", naomi_game_id))		// AW
 	{
 		printf("Enabling 4-player setup for game %s\n", naomi_game_id);
 		settings.input.JammaSetup = 1;
 	}
-	else if (!strcmp("SEGA MARINE FISHING JAPAN", naomi_game_id))
+	else if (!strcmp("SEGA MARINE FISHING JAPAN", naomi_game_id)
+				|| !strcmp(naomi_game_id, "BASS FISHING SIMULATOR VER.A"))	// AW
 	{
 		printf("Enabling specific JVS setup for game %s\n", naomi_game_id);
 		settings.input.JammaSetup = 3;
@@ -228,9 +230,11 @@ void LoadSpecialSettings()
 		printf("Enabling specific JVS setup for game %s\n", naomi_game_id);
 		settings.input.JammaSetup = 4;
 	}
-	else if (!strcmp("NINJA ASSAULT", naomi_game_id))
+	else if (!strcmp("NINJA ASSAULT", naomi_game_id)
+				|| !strcmp(naomi_game_id, "Sports Shooting USA")	// AW
+				|| !strcmp(naomi_game_id, "SEGA CLAY CHALLENGE"))	// AW
 	{
-		printf("Enabling specific JVS setup for game %s\n", naomi_game_id);
+		printf("Enabling lightgun setup for game %s\n", naomi_game_id);
 		settings.input.JammaSetup = 5;
 	}
 	else if (!strcmp(" BIOHAZARD  GUN SURVIVOR2", naomi_game_id))

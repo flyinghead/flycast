@@ -313,7 +313,7 @@ struct maple_sega_controller: maple_base
 
 struct maple_atomiswave_controller: maple_sega_controller
 {
-	virtual u32 get_capabilities() {
+	virtual u32 get_capabilities() override {
 		// byte 0: 0  0  0  0  0  0  0  0
 		// byte 1: 0  0  a5 a4 a3 a2 a1 a0
 		// byte 2: R2 L2 D2 U2 D  X  Y  Z
@@ -322,11 +322,11 @@ struct maple_atomiswave_controller: maple_sega_controller
 		return 0xff663f00;	// 6 analog axes, X Y L2/D2(?) A B C Start U D L R
 	}
 
-	virtual u32 process_kcode(u32 kcode) {
+	virtual u32 process_kcode(u32 kcode) override {
 		return kcode | AWAVE_TRIGGER_KEY;
 	}
 
-	virtual u32 get_analog_axis(int index, const PlainJoystickState &pjs) {
+	virtual u32 get_analog_axis(int index, const PlainJoystickState &pjs) override {
 		switch (index)
 		{
 		case 2:
@@ -1329,6 +1329,10 @@ struct maple_mouse : maple_base
 
 struct maple_lightgun : maple_base
 {
+	virtual u32 process_kcode(u32 kcode) {
+		return kcode | 0xFF01;
+	}
+
 	virtual MapleDeviceType get_device_type()
 	{
 		return MDT_LightGun;
@@ -1377,21 +1381,13 @@ struct maple_lightgun : maple_base
 			PlainJoystickState pjs;
 			config->GetInput(&pjs);
 
-			// Also use the mouse buttons
-			if (!(mo_buttons & 4))	// Left button
-				pjs.kcode &= ~4;	// A
-			if (!(mo_buttons & 2))	// Right button
-				pjs.kcode &= ~2;	// B
-			if (!(mo_buttons & 8))	// Wheel button
-				pjs.kcode &= ~8;	// Start
-
 			//caps
 			//4
 			w32(MFID_0_Input);
 
 			//state data
 			//2 key code
-			w16(pjs.kcode | 0xFF01);
+			w16(process_kcode(pjs.kcode));
 
 			//not used
 			//2
@@ -1414,6 +1410,13 @@ struct maple_lightgun : maple_base
 	{
 		read_lightgun_position(mo_x_abs, mo_y_abs);
 		// TODO If NAOMI, set some bits at 0x600284 http://64darksoft.blogspot.com/2013/10/atomiswage-to-naomi-update-4.html
+	}
+};
+
+struct atomiswave_lightgun : maple_lightgun
+{
+	virtual u32 process_kcode(u32 kcode) override {
+		return (kcode & AWAVE_TRIGGER_KEY) == 0 ? ~AWAVE_BTN0_KEY : ~0;
 	}
 };
 
@@ -2650,7 +2653,11 @@ maple_device* maple_Create(MapleDeviceType type)
 		break;
 
 	case MDT_LightGun:
+#if DC_PLATFORM != DC_PLATFORM_ATOMISWAVE
 		rv = new maple_lightgun();
+#else
+		rv = new atomiswave_lightgun();
+#endif
 		break;
 
 	case MDT_NaomiJamma:
