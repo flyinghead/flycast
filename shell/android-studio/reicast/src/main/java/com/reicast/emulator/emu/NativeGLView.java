@@ -19,8 +19,6 @@ import com.reicast.emulator.NativeGLActivity;
 import com.reicast.emulator.config.Config;
 
 public class NativeGLView extends SurfaceView implements SurfaceHolder.Callback {
-    private Handler handler = new Handler();
-
     private boolean surfaceReady = false;
     private boolean paused = false;
     VirtualJoystickDelegate vjoyDelegate;
@@ -66,23 +64,6 @@ public class NativeGLView extends SurfaceView implements SurfaceHolder.Callback 
 
         if (NativeGLActivity.syms != null)
             JNIdc.data(1, NativeGLActivity.syms);
-
-        startRendering();
-    }
-
-    private void startRendering() {
-        // Continuously render frames
-        handler.removeCallbacksAndMessages(null);
-        handler.postAtTime(new Runnable() {
-            @Override
-            public void run() {
-                if (!paused)
-                {
-                    JNIdc.rendframeNative();
-                    handler.post(this);
-                }
-            }
-        }, SystemClock.uptimeMillis() + 500);
     }
 
     @Override
@@ -111,7 +92,7 @@ public class NativeGLView extends SurfaceView implements SurfaceHolder.Callback 
     public void surfaceChanged(SurfaceHolder surfaceHolder, int format, int w, int h) {
         //Log.i("reicast", "NativeGLView.surfaceChanged: " + w + "x" + h);
         surfaceReady = true;
-        JNIdc.rendinitNative(surfaceHolder.getSurface(), w, h);
+        JNIdc.rendinitNative(surfaceHolder.getSurface());
         Emulator.getCurrentActivity().handleStateChange(false);
     }
 
@@ -119,7 +100,7 @@ public class NativeGLView extends SurfaceView implements SurfaceHolder.Callback 
     public void surfaceDestroyed(SurfaceHolder surfaceHolder) {
         //Log.i("reicast", "NativeGLView.surfaceDestroyed");
         surfaceReady = false;
-        JNIdc.rendinitNative(null, 0, 0);
+        JNIdc.rendinitNative(null);
         Emulator.getCurrentActivity().handleStateChange(true);
     }
 
@@ -142,7 +123,6 @@ public class NativeGLView extends SurfaceView implements SurfaceHolder.Callback 
             requestFocus();
             JNIdc.resume();
         }
-        startRendering();
     }
 
     @TargetApi(19)
