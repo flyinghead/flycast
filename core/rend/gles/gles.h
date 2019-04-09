@@ -96,6 +96,7 @@ struct gl_ctx
 	} modvol_shader;
 
 	std::unordered_map<u32, PipelineShader> shaders;
+	bool rotate90;
 
 	struct
 	{

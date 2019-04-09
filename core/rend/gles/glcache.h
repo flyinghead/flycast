@@ -149,6 +149,19 @@ public:
 		return _texture_ids[--_texture_cache_size];
 	}
 
+	void DeleteProgram(GLuint program)
+	{
+		GLsizei shader_count;
+		GLuint shaders[2];
+		glGetAttachedShaders(program, ARRAY_SIZE(shaders), &shader_count, shaders);
+		for (int i = 0; i < shader_count; i++)
+			glDeleteShader(shaders[i]);
+
+		glDeleteProgram(program);
+		if (_program == program)
+			_program = 0;
+	}
+
 	void Reset() {
 		_texture = 0xFFFFFFFFu;
 		_src_blend_factor = 0xFFFFFFFFu;

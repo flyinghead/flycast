@@ -636,6 +636,7 @@ struct settings_t
 		int ScreenStretching;	// in percent. 150 means stretch from 4/3 to 6/3
 		bool Fog;
 		bool FloatVMUs;
+		bool Rotate90;			// Rotate the screen 90 deg CC
 	} rend;
 
 	struct

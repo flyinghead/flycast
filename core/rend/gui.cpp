@@ -804,13 +804,14 @@ static void gui_display_settings()
 		if (ImGui::BeginTabItem("Controls"))
 		{
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
+#if DC_PLATFORM == DC_PLATFORM_DREAMCAST || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
 		    if (ImGui::CollapsingHeader("Dreamcast Devices", ImGuiTreeNodeFlags_DefaultOpen))
 		    {
 				for (int bus = 0; bus < MAPLE_PORTS; bus++)
 				{
 					ImGui::Text("Device %c", bus + 'A');
 					ImGui::SameLine();
+#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
 					char device_name[32];
 					sprintf(device_name, "##device%d", bus);
 					float w = ImGui::CalcItemWidth() / 3;
@@ -854,6 +855,10 @@ static void gui_display_settings()
 						ImGui::PopID();
 					}
 					ImGui::PopItemWidth();
+#elif DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
+					if (MapleDevices[bus][5] != NULL)
+						ImGui::Text("%s", maple_device_name(MapleDevices[bus][5]->get_device_type()));
+#endif
 				}
 				ImGui::Spacing();
 		    }
@@ -966,6 +971,9 @@ static void gui_display_settings()
 		    	ImGui::Checkbox("Show VMU in game", &settings.rend.FloatVMUs);
 	            ImGui::SameLine();
 	            ShowHelpMarker("Show the VMU LCD screens while in game");
+		    	ImGui::Checkbox("Rotate screen 90°", &settings.rend.Rotate90);
+	            ImGui::SameLine();
+	            ShowHelpMarker("Rotate the screen 90° counterclockwise");
 		    	ImGui::SliderInt("Scaling", (int *)&settings.rend.ScreenScaling, 1, 100);
 	            ImGui::SameLine();
 	            ShowHelpMarker("Downscaling factor relative to native screen resolution. Higher is better");
