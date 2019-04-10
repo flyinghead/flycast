@@ -199,6 +199,35 @@ struct maple_base: maple_device
 */
 struct maple_sega_controller: maple_base
 {
+	virtual u32 get_capabilities() {
+		// byte 0: 0  0  0  0  0  0  0  0
+		// byte 1: 0  0  a5 a4 a3 a2 a1 a0
+		// byte 2: R2 L2 D2 U2 D  X  Y  Z
+		// byte 3: R  L  D  U  St A  B  C
+
+		return 0xfe060f00;	// 4 analog axes (0-3) X Y A B Start U D L R
+	}
+
+	virtual u32 transform_kcode(u32 kcode) {
+		return kcode;
+	}
+
+	virtual u32 get_analog_axis(int index, const PlainJoystickState &pjs) {
+		switch (index)
+		{
+		case 0:
+			return pjs.trigger[PJTI_R];		// Right trigger
+		case 1:
+			return pjs.trigger[PJTI_L];		// Left trigger
+		case 2:
+			return pjs.joy[PJAI_X1];		// Stick X
+		case 3:
+			return pjs.joy[PJAI_Y1];		// Stick Y
+		default:
+			return 0x80;					// unused
+		}
+	}
+
 	virtual MapleDeviceType get_device_type()
 	{
 		return MDT_SegaController;
@@ -216,14 +245,9 @@ struct maple_sega_controller: maple_base
 
 			//struct data
 			//3*4
-#if DC_PLATFORM != DC_PLATFORM_ATOMISWAVE
-			w32(0xfe060f00);
-#else
-			// More buttons, more digital axes
-			w32(0xff663f00);
-#endif
-			w32( 0);
-			w32( 0);
+			w32(get_capabilities());
+			w32(0);
+			w32(0);
 
 			//1	area code
 			w8(0xFF);
@@ -254,54 +278,28 @@ struct maple_sega_controller: maple_base
 				//4
 				w32(MFID_0_Input);
 
-#if DC_PLATFORM != DC_PLATFORM_ATOMISWAVE
 				//state data
 				//2 key code
-				w16(pjs.kcode);
+				w16(transform_kcode(pjs.kcode));
 
 				//triggers
 				//1 R
-				w8(pjs.trigger[PJTI_R]);
+				w8(get_analog_axis(0, pjs));
 				//1 L
-				w8(pjs.trigger[PJTI_L]);
+				w8(get_analog_axis(1, pjs));
 
 				//joyx
 				//1
-				w8(pjs.joy[PJAI_X1]);
+				w8(get_analog_axis(2, pjs));
 				//joyy
 				//1
-				w8(pjs.joy[PJAI_Y1]);
+				w8(get_analog_axis(3, pjs));
 
 				//not used
 				//1
-				w8(0x80);
+				w8(get_analog_axis(4, pjs));
 				//1
-				w8(0x80);
-#else
-				//state data
-				//2 key code
-				w16(pjs.kcode | AWAVE_TRIGGER_KEY);
-
-			   //not used
-			   //1
-			   w8(0);
-			   //1
-			   w8(0);
-
-			   //joyx
-			   //1
-			   w8(pjs.joy[PJAI_X1]);
-			   //joyy
-			   //1
-			   w8(pjs.joy[PJAI_Y1]);
-
-			   //joyrx
-			   //1
-			   w8(pjs.joy[PJAI_X2]);
-			   //joyry
-			   //1
-			   w8(pjs.joy[PJAI_Y2]);
-#endif
+				w8(get_analog_axis(5, pjs));
 			}
 
 			return MDRS_DataTransfer;
@@ -309,6 +307,38 @@ struct maple_sega_controller: maple_base
 		default:
 			//printf("UNKOWN MAPLE COMMAND %d\n",cmd);
 			return MDRE_UnknownCmd;
+		}
+	}
+};
+
+struct maple_atomiswave_controller: maple_sega_controller
+{
+	virtual u32 get_capabilities() override {
+		// byte 0: 0  0  0  0  0  0  0  0
+		// byte 1: 0  0  a5 a4 a3 a2 a1 a0
+		// byte 2: R2 L2 D2 U2 D  X  Y  Z
+		// byte 3: R  L  D  U  St A  B  C
+
+		return 0xff663f00;	// 6 analog axes, X Y L2/D2(?) A B C Start U D L R
+	}
+
+	virtual u32 transform_kcode(u32 kcode) override {
+		return kcode | AWAVE_TRIGGER_KEY;
+	}
+
+	virtual u32 get_analog_axis(int index, const PlainJoystickState &pjs) override {
+		switch (index)
+		{
+		case 2:
+			return pjs.joy[PJAI_X1];
+		case 3:
+			return pjs.joy[PJAI_Y1];
+		case 4:
+			return pjs.joy[PJAI_X2];
+		case 5:
+			return pjs.joy[PJAI_Y2];
+		default:
+			return 0x80;
 		}
 	}
 };
@@ -1299,6 +1329,10 @@ struct maple_mouse : maple_base
 
 struct maple_lightgun : maple_base
 {
+	virtual u32 transform_kcode(u32 kcode) {
+		return kcode | 0xFF01;
+	}
+
 	virtual MapleDeviceType get_device_type()
 	{
 		return MDT_LightGun;
@@ -1347,21 +1381,13 @@ struct maple_lightgun : maple_base
 			PlainJoystickState pjs;
 			config->GetInput(&pjs);
 
-			// Also use the mouse buttons
-			if (!(mo_buttons & 4))	// Left button
-				pjs.kcode &= ~4;	// A
-			if (!(mo_buttons & 2))	// Right button
-				pjs.kcode &= ~2;	// B
-			if (!(mo_buttons & 8))	// Wheel button
-				pjs.kcode &= ~8;	// Start
-
 			//caps
 			//4
 			w32(MFID_0_Input);
 
 			//state data
 			//2 key code
-			w16(pjs.kcode | 0xFF01);
+			w16(transform_kcode(pjs.kcode));
 
 			//not used
 			//2
@@ -1384,6 +1410,13 @@ struct maple_lightgun : maple_base
 	{
 		read_lightgun_position(mo_x_abs, mo_y_abs);
 		// TODO If NAOMI, set some bits at 0x600284 http://64darksoft.blogspot.com/2013/10/atomiswage-to-naomi-update-4.html
+	}
+};
+
+struct atomiswave_lightgun : maple_lightgun
+{
+	virtual u32 transform_kcode(u32 kcode) override {
+		return (kcode & AWAVE_TRIGGER_KEY) == 0 ? ~AWAVE_BTN0_KEY : ~0;
 	}
 };
 
@@ -2592,7 +2625,11 @@ maple_device* maple_Create(MapleDeviceType type)
 	switch(type)
 	{
 	case MDT_SegaController:
-		rv=new maple_sega_controller();
+#if DC_PLATFORM != DC_PLATFORM_ATOMISWAVE
+		rv = new maple_sega_controller();
+#else
+		rv = new maple_atomiswave_controller();
+#endif
 		break;
 
 	case MDT_Microphone:
@@ -2616,7 +2653,11 @@ maple_device* maple_Create(MapleDeviceType type)
 		break;
 
 	case MDT_LightGun:
+#if DC_PLATFORM != DC_PLATFORM_ATOMISWAVE
 		rv = new maple_lightgun();
+#else
+		rv = new atomiswave_lightgun();
+#endif
 		break;
 
 	case MDT_NaomiJamma:

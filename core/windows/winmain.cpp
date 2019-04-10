@@ -749,6 +749,7 @@ cThread::cThread(ThreadEntryFP* function,void* prm)
 
 void cThread::Start()
 {
+	verify(hThread == NULL);
 	hThread=CreateThread(NULL,0,(LPTHREAD_START_ROUTINE)Entry,param,0,NULL);
 	ResumeThread(hThread);
 }
@@ -756,6 +757,8 @@ void cThread::Start()
 void cThread::WaitToEnd()
 {
 	WaitForSingleObject(hThread,INFINITE);
+	CloseHandle(hThread);
+	hThread = NULL;
 }
 //End thread class
 

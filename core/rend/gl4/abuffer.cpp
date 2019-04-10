@@ -331,23 +331,23 @@ void initABuffer()
 	{
 		char source[16384];
 		sprintf(source, final_shader_source, 1);
-		gl4CompilePipelineShader(&g_abuffer_final_shader, source);
+		gl4CompilePipelineShader(&g_abuffer_final_shader, false, source);
 	}
 	if (g_abuffer_final_nosort_shader.program == 0)
 	{
 		char source[16384];
 		sprintf(source, final_shader_source, 0);
-		gl4CompilePipelineShader(&g_abuffer_final_nosort_shader, source);
+		gl4CompilePipelineShader(&g_abuffer_final_nosort_shader, false, source);
 	}
 	if (g_abuffer_clear_shader.program == 0)
-		gl4CompilePipelineShader(&g_abuffer_clear_shader, clear_shader_source);
+		gl4CompilePipelineShader(&g_abuffer_clear_shader, false, clear_shader_source);
 	if (g_abuffer_tr_modvol_shaders[0].program == 0)
 	{
 		char source[16384];
 		for (int mode = 0; mode < ModeCount; mode++)
 		{
 			sprintf(source, tr_modvol_shader_source, mode);
-			gl4CompilePipelineShader(&g_abuffer_tr_modvol_shaders[mode], source);
+			gl4CompilePipelineShader(&g_abuffer_tr_modvol_shaders[mode], false, source);
 		}
 	}
 
@@ -416,6 +416,17 @@ void termABuffer()
 	{
 		glDeleteBuffers(1, &g_quadBuffer);
 		g_quadBuffer = 0;
+	}
+	glcache.DeleteProgram(g_abuffer_final_shader.program);
+	g_abuffer_final_shader.program = 0;
+	glcache.DeleteProgram(g_abuffer_final_nosort_shader.program);
+	g_abuffer_final_nosort_shader.program = 0;
+	glcache.DeleteProgram(g_abuffer_clear_shader.program);
+	g_abuffer_clear_shader.program = 0;
+	for (int mode = 0; mode < ModeCount; mode++)
+	{
+		glcache.DeleteProgram(g_abuffer_tr_modvol_shaders[mode].program);
+		g_abuffer_tr_modvol_shaders[mode].program = 0;
 	}
 }
 

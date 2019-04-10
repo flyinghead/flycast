@@ -114,13 +114,30 @@ s32 SetTileClip(u32 val, GLint uniform)
 			csy /= scale_y;
 			cex /= scale_x;
 			cey /= scale_y;
-			float t = cey;
-			cey = 480 - csy;
-			csy = 480 - t;
-			float dc2s_scale_h = screen_height / 480.0f;
-			float ds2s_offs_x = (screen_width - dc2s_scale_h * 640) / 2;
-			csx = csx * dc2s_scale_h + ds2s_offs_x;
-			cex = cex * dc2s_scale_h + ds2s_offs_x;
+			float dc2s_scale_h;
+			float ds2s_offs_x;
+			float screen_stretching = settings.rend.ScreenStretching / 100.f;
+
+			if (settings.rend.Rotate90)
+			{
+				float t = cex;
+				cex = cey;
+				cey = 640 - csx;
+				csx = csy;
+				csy = 640 - t;
+				dc2s_scale_h = screen_height / 640.0f;
+				ds2s_offs_x =  (screen_width - dc2s_scale_h * 480.0 * screen_stretching) / 2;
+			}
+			else
+			{
+				float t = cey;
+				cey = 480 - csy;
+				csy = 480 - t;
+				dc2s_scale_h = screen_height / 480.0f;
+				ds2s_offs_x =  (screen_width - dc2s_scale_h * 640.0 * screen_stretching) / 2;
+			}
+			csx = csx * dc2s_scale_h * screen_stretching + ds2s_offs_x;
+			cex = cex * dc2s_scale_h * screen_stretching + ds2s_offs_x;
 			csy = csy * dc2s_scale_h;
 			cey = cey * dc2s_scale_h;
 		}

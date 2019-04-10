@@ -45,6 +45,7 @@ struct gl4_ctx
 	} modvol_shader;
 
 	std::unordered_map<u32, gl4PipelineShader> shaders;
+	bool rotate90;
 
 	struct
 	{
@@ -66,7 +67,8 @@ bool gl4_render_output_framebuffer();
 void abufferDrawQuad(bool upsideDown = false, float x = 0.f, float y = 0.f, float w = 0.f, float h = 0.f);
 
 extern const char *gl4PixelPipelineShader;
-bool gl4CompilePipelineShader(gl4PipelineShader* s, const char *source = gl4PixelPipelineShader);
+bool gl4CompilePipelineShader(gl4PipelineShader* s, bool rotate_90, const char *source = gl4PixelPipelineShader);
+void gl4_delete_shaders();
 
 extern GLuint stencilTexId;
 extern GLuint depthTexId;

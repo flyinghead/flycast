@@ -49,6 +49,11 @@ static gl4PipelineShader *gl4GetProgram(u32 cp_AlphaTest, u32 pp_ClipTestMode,
 							u32 pp_Texture, u32 pp_UseAlpha, u32 pp_IgnoreTexA, u32 pp_ShadInstr, u32 pp_Offset,
 							u32 pp_FogCtrl, bool pp_TwoVolumes, u32 pp_DepthFunc, bool pp_Gouraud, bool pp_BumpMap, bool fog_clamping, int pass)
 {
+	if (settings.rend.Rotate90 != gl4.rotate90)
+	{
+		gl4_delete_shaders();
+		gl4.rotate90 = settings.rend.Rotate90;
+	}
 	u32 rv=0;
 
 	rv|=pp_ClipTestMode;
@@ -83,7 +88,7 @@ static gl4PipelineShader *gl4GetProgram(u32 cp_AlphaTest, u32 pp_ClipTestMode,
 		shader->pp_BumpMap = pp_BumpMap;
 		shader->fog_clamping = fog_clamping;
 		shader->pass = pass;
-		gl4CompilePipelineShader(shader);
+		gl4CompilePipelineShader(shader, settings.rend.Rotate90);
 	}
 
 	return shader;

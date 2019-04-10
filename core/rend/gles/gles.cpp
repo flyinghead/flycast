@@ -79,6 +79,7 @@ const char* VertexShaderSource =
 %s \n\
 #define TARGET_GL %s \n\
 #define pp_Gouraud %d \n\
+#define ROTATE_90 %d \n\
  \n\
 #define GLES2 0 \n\
 #define GLES3 1 \n\
@@ -136,6 +137,9 @@ void main() \n\
 	vpos.z = vpos.w; \n\
 #else \n\
 	vpos.z=depth_scale.x+depth_scale.y*vpos.w;  \n\
+#endif \n\
+#if ROTATE_90 == 1 \n\
+	vpos.xy = vec2(vpos.y, -vpos.x);  \n\
 #endif \n\
 	vpos.xy=vpos.xy*scale.xy-scale.zw;  \n\
 	vpos.xy*=vpos.w;  \n\
@@ -850,9 +854,20 @@ GLuint fogTextureId;
 extern void gl_term();
 #endif
 
+static void gl_delete_shaders()
+{
+	for (auto it : gl.shaders)
+	{
+		if (it.second.program != 0)
+			glcache.DeleteProgram(it.second.program);
+	}
+	gl.shaders.clear();
+	glcache.DeleteProgram(gl.modvol_shader.program);
+	gl.modvol_shader.program = 0;
+}
+
 static void gles_term()
 {
-	glDeleteProgram(gl.modvol_shader.program);
 	glDeleteBuffers(1, &gl.vbo.geometry);
 	gl.vbo.geometry = 0;
 	glDeleteBuffers(1, &gl.vbo.modvols);
@@ -865,7 +880,7 @@ static void gles_term()
 	gl_free_osd_resources();
 	free_output_framebuffer();
 
-	gl.shaders.clear();
+	gl_delete_shaders();
 	gl_term();
 }
 
@@ -1018,6 +1033,11 @@ PipelineShader *GetProgram(u32 cp_AlphaTest, u32 pp_ClipTestMode,
 							u32 pp_Texture, u32 pp_UseAlpha, u32 pp_IgnoreTexA, u32 pp_ShadInstr, u32 pp_Offset,
 							u32 pp_FogCtrl, bool pp_Gouraud, bool pp_BumpMap, bool fog_clamping, bool trilinear)
 {
+	if (settings.rend.Rotate90 != gl.rotate90)
+	{
+		gl_delete_shaders();
+		gl.rotate90 = settings.rend.Rotate90;
+	}
 	u32 rv=0;
 
 	rv|=pp_ClipTestMode;
@@ -1058,7 +1078,7 @@ bool CompilePipelineShader(	PipelineShader* s)
 {
 	char vshader[8192];
 
-	sprintf(vshader, VertexShaderSource, gl.glsl_version_header, gl.gl_version, s->pp_Gouraud);
+	sprintf(vshader, VertexShaderSource, gl.glsl_version_header, gl.gl_version, s->pp_Gouraud, settings.rend.Rotate90);
 
 	char pshader[8192];
 
@@ -1144,13 +1164,30 @@ void gl_load_osd_resources()
 
 void gl_free_osd_resources()
 {
-	glDeleteProgram(gl.OSD_SHADER.program);
+	glcache.DeleteProgram(gl.OSD_SHADER.program);
 
     if (osd_tex != 0) {
         glcache.DeleteTextures(1, &osd_tex);
         osd_tex = 0;
     }
 }
+
+static void create_modvol_shader()
+{
+	if (gl.modvol_shader.program != 0)
+		return;
+	char vshader[8192];
+	sprintf(vshader, VertexShaderSource, gl.glsl_version_header, gl.gl_version, 1, settings.rend.Rotate90);
+	char fshader[8192];
+	sprintf(fshader, ModifierVolumeShader, gl.glsl_version_header, gl.gl_version);
+
+	gl.modvol_shader.program=gl_CompileAndLink(vshader, fshader);
+	gl.modvol_shader.scale          = glGetUniformLocation(gl.modvol_shader.program, "scale");
+	gl.modvol_shader.sp_ShaderColor = glGetUniformLocation(gl.modvol_shader.program, "sp_ShaderColor");
+	gl.modvol_shader.depth_scale    = glGetUniformLocation(gl.modvol_shader.program, "depth_scale");
+	gl.modvol_shader.extra_depth_scale = glGetUniformLocation(gl.modvol_shader.program, "extra_depth_scale");
+}
+
 bool gl_create_resources()
 {
 	if (gl.vbo.geometry != 0)
@@ -1174,25 +1211,7 @@ bool gl_create_resources()
 	glGenBuffers(1, &gl.vbo.idxs);
 	glGenBuffers(1, &gl.vbo.idxs2);
 
-	char vshader[8192];
-	sprintf(vshader, VertexShaderSource, gl.glsl_version_header, gl.gl_version, 1);
-	char fshader[8192];
-	sprintf(fshader, ModifierVolumeShader, gl.glsl_version_header, gl.gl_version);
-
-	gl.modvol_shader.program=gl_CompileAndLink(vshader, fshader);
-	gl.modvol_shader.scale          = glGetUniformLocation(gl.modvol_shader.program, "scale");
-	gl.modvol_shader.sp_ShaderColor = glGetUniformLocation(gl.modvol_shader.program, "sp_ShaderColor");
-	gl.modvol_shader.depth_scale    = glGetUniformLocation(gl.modvol_shader.program, "depth_scale");
-	gl.modvol_shader.extra_depth_scale = glGetUniformLocation(gl.modvol_shader.program, "extra_depth_scale");
-
-	//#define PRECOMPILE_SHADERS
-	#ifdef PRECOMPILE_SHADERS
-	for (u32 i=0;i<sizeof(gl.pogram_table)/sizeof(gl.pogram_table[0]);i++)
-	{
-		if (!CompilePipelineShader(	&gl.pogram_table[i] ))
-			return false;
-	}
-	#endif
+	create_modvol_shader();
 
 	gl_load_osd_resources();
 
@@ -1512,6 +1531,7 @@ static void upload_vertex_indices()
 bool RenderFrame()
 {
 	DoCleanup();
+	create_modvol_shader();
 
 	bool is_rtt=pvrrc.isRTT;
 
@@ -1681,15 +1701,38 @@ bool RenderFrame()
 	float screen_stretching = settings.rend.ScreenStretching / 100.f;
 	float screen_scaling = settings.rend.ScreenScaling / 100.f;
 
-	float dc2s_scale_h = is_rtt ? (screen_width / dc_width) : (screen_height / 480.0);
-	float ds2s_offs_x =  is_rtt ? 0 : ((screen_width - dc2s_scale_h * 640.0 * screen_stretching) / 2);
+	float dc2s_scale_h;
+	float ds2s_offs_x;
 
-	//-1 -> too much to left
-	ShaderUniforms.scale_coefs[0] = 2.0f / (screen_width / dc2s_scale_h * scale_x) * screen_stretching;
-	ShaderUniforms.scale_coefs[1]= (is_rtt ? 2 : -2) / dc_height;		// FIXME CT2 needs 480 here instead of dc_height=512
-	ShaderUniforms.scale_coefs[2]= 1 - 2 * ds2s_offs_x / screen_width;
-	ShaderUniforms.scale_coefs[3]= (is_rtt ? 1 : -1);
-
+	if (is_rtt)
+	{
+		ShaderUniforms.scale_coefs[0] = 2.0f / dc_width;
+		ShaderUniforms.scale_coefs[1] = 2.0f / dc_height;	// FIXME CT2 needs 480 here instead of dc_height=512
+		ShaderUniforms.scale_coefs[2] = 1;
+		ShaderUniforms.scale_coefs[3] = 1;
+	}
+	else
+	{
+		if (settings.rend.Rotate90)
+		{
+			dc2s_scale_h = screen_height / 640.0f;
+			ds2s_offs_x =  (screen_width - dc2s_scale_h * 480.0f * screen_stretching) / 2;
+			ShaderUniforms.scale_coefs[0] = 2.0f / (screen_width / dc2s_scale_h * scale_x) * screen_stretching;
+			ShaderUniforms.scale_coefs[1] = -2.0f / dc_width;
+			ShaderUniforms.scale_coefs[2] = 1 - 2 * ds2s_offs_x / screen_width;
+			ShaderUniforms.scale_coefs[3] = 1;
+		}
+		else
+		{
+			dc2s_scale_h = screen_height / 480.0f;
+			ds2s_offs_x =  (screen_width - dc2s_scale_h * 640.0f * screen_stretching) / 2;
+			ShaderUniforms.scale_coefs[0] = 2.0f / (screen_width / dc2s_scale_h * scale_x) * screen_stretching;
+			ShaderUniforms.scale_coefs[1] = -2.0f / dc_height;
+			ShaderUniforms.scale_coefs[2] = 1 - 2 * ds2s_offs_x / screen_width;
+			ShaderUniforms.scale_coefs[3] = -1;
+		}
+		//-1 -> too much to left
+	}
 
 	ShaderUniforms.depth_coefs[0]=2/(vtx_max_fZ-vtx_min_fZ);
 	ShaderUniforms.depth_coefs[1]=-vtx_min_fZ-1;
@@ -1857,11 +1900,20 @@ bool RenderFrame()
 			float min_y = pvrrc.fb_Y_CLIP.min / scale_y;
 			if (!is_rtt)
 			{
+				if (settings.rend.Rotate90)
+				{
+					float t = width;
+					width = height;
+					height = t;
+					t = min_x;
+					min_x = min_y;
+					min_y = 640 - t - height;
+				}
 				// Add x offset for aspect ratio > 4/3
-				min_x = min_x * dc2s_scale_h * screen_stretching + ds2s_offs_x * screen_scaling;
+				min_x = (min_x * dc2s_scale_h * screen_stretching + ds2s_offs_x) * screen_scaling;
 				// Invert y coordinates when rendering to screen
 				min_y = (screen_height - (min_y + height) * dc2s_scale_h) * screen_scaling;
-				width *= dc2s_scale_h * screen_scaling * screen_stretching;
+				width *= dc2s_scale_h * screen_stretching * screen_scaling;
 				height *= dc2s_scale_h * screen_scaling;
 
 				if (ds2s_offs_x > 0)

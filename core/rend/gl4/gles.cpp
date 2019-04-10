@@ -14,6 +14,7 @@ static const char* VertexShaderSource =
 "\
 #version 140 \n\
 #define pp_Gouraud %d \n\
+#define ROTATE_90 %d \n\
  \n\
 #if pp_Gouraud == 0 \n\
 #define INTERPOLATION flat \n\
@@ -56,6 +57,9 @@ void main() \n\
 	\n\
 	vpos.w = extra_depth_scale / vpos.z; \n\
 	vpos.z = vpos.w; \n\
+#if ROTATE_90 == 1 \n\
+	vpos.xy = vec2(vpos.y, -vpos.x);  \n\
+#endif \n\
 	vpos.xy=vpos.xy*scale.xy-scale.zw;  \n\
 	vpos.xy*=vpos.w;  \n\
 	gl_Position = vpos; \n\
@@ -393,11 +397,11 @@ gl4_ctx gl4;
 
 struct gl4ShaderUniforms_t gl4ShaderUniforms;
 
-bool gl4CompilePipelineShader(	gl4PipelineShader* s, const char *source /* = PixelPipelineShader */)
+bool gl4CompilePipelineShader(	gl4PipelineShader* s, bool rotate_90, const char *source /* = PixelPipelineShader */)
 {
 	char vshader[16384];
 
-	sprintf(vshader, VertexShaderSource, s->pp_Gouraud);
+	sprintf(vshader, VertexShaderSource, s->pp_Gouraud, rotate_90);
 
 	char pshader[16384];
 
@@ -478,25 +482,43 @@ bool gl4CompilePipelineShader(	gl4PipelineShader* s, const char *source /* = Pix
 
 void gl_term();
 
+void gl4_delete_shaders()
+{
+	for (auto it : gl4.shaders)
+	{
+		if (it.second.program != 0)
+			glcache.DeleteProgram(it.second.program);
+	}
+	gl4.shaders.clear();
+	glcache.DeleteProgram(gl4.modvol_shader.program);
+	gl4.modvol_shader.program = 0;
+}
+
 static void gles_term(void)
 {
-	glDeleteProgram(gl4.modvol_shader.program);
 	glDeleteBuffers(1, &gl4.vbo.geometry);
 	gl4.vbo.geometry = 0;
 	glDeleteBuffers(1, &gl4.vbo.modvols);
 	glDeleteBuffers(1, &gl4.vbo.idxs);
 	glDeleteBuffers(1, &gl4.vbo.idxs2);
 	glDeleteBuffers(1, &gl4.vbo.tr_poly_params);
-	for (auto it = gl4.shaders.begin(); it != gl4.shaders.end(); it++)
-	{
-		if (it->second.program != 0)
-			glDeleteProgram(it->second.program);
-	}
-	gl4.shaders.clear();
+	gl4_delete_shaders();
 	glDeleteVertexArrays(1, &gl4.vbo.main_vao);
 	glDeleteVertexArrays(1, &gl4.vbo.modvol_vao);
 
 	gl_term();
+}
+
+static void create_modvol_shader()
+{
+	if (gl4.modvol_shader.program != 0)
+		return;
+	char vshader[16384];
+	sprintf(vshader, VertexShaderSource, 1, settings.rend.Rotate90);
+
+	gl4.modvol_shader.program=gl_CompileAndLink(vshader, ModifierVolumeShader);
+	gl4.modvol_shader.scale          = glGetUniformLocation(gl4.modvol_shader.program, "scale");
+	gl4.modvol_shader.extra_depth_scale = glGetUniformLocation(gl4.modvol_shader.program, "extra_depth_scale");
 }
 
 static bool gl_create_resources()
@@ -520,12 +542,7 @@ static bool gl_create_resources()
 	gl4SetupMainVBO();
 	gl4SetupModvolVBO();
 
-	char vshader[16384];
-	sprintf(vshader, VertexShaderSource, 1);
-
-	gl4.modvol_shader.program=gl_CompileAndLink(vshader, ModifierVolumeShader);
-	gl4.modvol_shader.scale          = glGetUniformLocation(gl4.modvol_shader.program, "scale");
-	gl4.modvol_shader.extra_depth_scale = glGetUniformLocation(gl4.modvol_shader.program, "extra_depth_scale");
+	create_modvol_shader();
 
 	gl_load_osd_resources();
 
@@ -603,6 +620,7 @@ static bool RenderFrame()
 		old_screen_scaling = settings.rend.ScreenScaling;
 	}
 	DoCleanup();
+	create_modvol_shader();
 
 	bool is_rtt=pvrrc.isRTT;
 
@@ -661,17 +679,41 @@ static bool RenderFrame()
 	/*
 		Handle Dc to screen scaling
 	*/
-	float screen_scaling = is_rtt ? 1.f : settings.rend.ScreenScaling / 100.f;
+	float screen_scaling = settings.rend.ScreenScaling / 100.f;
 	float screen_stretching = settings.rend.ScreenStretching / 100.f;
 
-	float dc2s_scale_h = is_rtt ? (screen_width / dc_width) : (screen_height / 480.0);
-	float ds2s_offs_x =  is_rtt ? 0 : ((screen_width - dc2s_scale_h * 640.0 * screen_stretching) / 2);
+	float dc2s_scale_h;
+	float ds2s_offs_x;
 
-	//-1 -> too much to left
-	gl4ShaderUniforms.scale_coefs[0] = 2.0f / (screen_width / dc2s_scale_h * scale_x) * screen_stretching;
-	gl4ShaderUniforms.scale_coefs[1] = (is_rtt ? 2 : -2) / dc_height;		// FIXME CT2 needs 480 here instead of dc_height=512
-	gl4ShaderUniforms.scale_coefs[2] = 1 - 2 * ds2s_offs_x / screen_width;
-	gl4ShaderUniforms.scale_coefs[3] = (is_rtt ? 1 : -1);
+	if (is_rtt)
+	{
+		gl4ShaderUniforms.scale_coefs[0] = 2.0f / dc_width;
+		gl4ShaderUniforms.scale_coefs[1] = 2.0f / dc_height;	// FIXME CT2 needs 480 here instead of dc_height=512
+		gl4ShaderUniforms.scale_coefs[2] = 1;
+		gl4ShaderUniforms.scale_coefs[3] = 1;
+	}
+	else
+	{
+		if (settings.rend.Rotate90)
+		{
+			dc2s_scale_h = screen_height / 640.0;
+			ds2s_offs_x =  (screen_width - dc2s_scale_h * 480.0 * screen_stretching) / 2;
+			gl4ShaderUniforms.scale_coefs[0] = 2.0f / (screen_width / dc2s_scale_h * scale_x) * screen_stretching;
+			gl4ShaderUniforms.scale_coefs[1] = -2.0f / dc_width;
+			gl4ShaderUniforms.scale_coefs[2] = 1 - 2 * ds2s_offs_x / screen_width;
+			gl4ShaderUniforms.scale_coefs[3] = 1;
+		}
+		else
+		{
+			dc2s_scale_h = screen_height / 480.0;
+			ds2s_offs_x =  (screen_width - dc2s_scale_h * 640.0 * screen_stretching) / 2;
+			//-1 -> too much to left
+			gl4ShaderUniforms.scale_coefs[0] = 2.0f / (screen_width / dc2s_scale_h * scale_x) * screen_stretching;
+			gl4ShaderUniforms.scale_coefs[1] = -2.0f / dc_height;
+			gl4ShaderUniforms.scale_coefs[2] = 1 - 2 * ds2s_offs_x / screen_width;
+			gl4ShaderUniforms.scale_coefs[3] = -1;
+		}
+	}
 
 	gl4ShaderUniforms.extra_depth_scale = settings.rend.ExtraDepthScale;
 
@@ -826,11 +868,20 @@ static bool RenderFrame()
 			float min_y = pvrrc.fb_Y_CLIP.min / scale_y;
 			if (!is_rtt)
 			{
+				if (settings.rend.Rotate90)
+				{
+					float t = width;
+					width = height;
+					height = t;
+					t = min_x;
+					min_x = min_y;
+					min_y = 640 - t - height;
+				}
 				// Add x offset for aspect ratio > 4/3
-            	min_x = min_x * dc2s_scale_h * screen_stretching + ds2s_offs_x * screen_scaling;
+            	min_x = (min_x * dc2s_scale_h * screen_stretching + ds2s_offs_x) * screen_scaling;
 				// Invert y coordinates when rendering to screen
 				min_y = (screen_height - (min_y + height) * dc2s_scale_h) * screen_scaling;
-				width *= dc2s_scale_h * screen_scaling * screen_stretching;
+				width *= dc2s_scale_h * screen_stretching * screen_scaling;
 				height *= dc2s_scale_h * screen_scaling;
 
 				if (ds2s_offs_x > 0)

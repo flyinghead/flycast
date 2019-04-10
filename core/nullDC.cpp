@@ -213,12 +213,14 @@ void LoadSpecialSettings()
 		printf("Enabling JVS rotary encoders for game %s\n", naomi_game_id);
 		settings.input.JammaSetup = 2;
 	}
-	else if (!strcmp("POWER STONE 2 JAPAN", naomi_game_id))
+	else if (!strcmp("POWER STONE 2 JAPAN", naomi_game_id)		// Naomi
+			|| !strcmp("GUILTY GEAR isuka", naomi_game_id))		// AW
 	{
 		printf("Enabling 4-player setup for game %s\n", naomi_game_id);
 		settings.input.JammaSetup = 1;
 	}
-	else if (!strcmp("SEGA MARINE FISHING JAPAN", naomi_game_id))
+	else if (!strcmp("SEGA MARINE FISHING JAPAN", naomi_game_id)
+				|| !strcmp(naomi_game_id, "BASS FISHING SIMULATOR VER.A"))	// AW
 	{
 		printf("Enabling specific JVS setup for game %s\n", naomi_game_id);
 		settings.input.JammaSetup = 3;
@@ -228,9 +230,11 @@ void LoadSpecialSettings()
 		printf("Enabling specific JVS setup for game %s\n", naomi_game_id);
 		settings.input.JammaSetup = 4;
 	}
-	else if (!strcmp("NINJA ASSAULT", naomi_game_id))
+	else if (!strcmp("NINJA ASSAULT", naomi_game_id)
+				|| !strcmp(naomi_game_id, "Sports Shooting USA")	// AW
+				|| !strcmp(naomi_game_id, "SEGA CLAY CHALLENGE"))	// AW
 	{
-		printf("Enabling specific JVS setup for game %s\n", naomi_game_id);
+		printf("Enabling lightgun setup for game %s\n", naomi_game_id);
 		settings.input.JammaSetup = 5;
 	}
 	else if (!strcmp(" BIOHAZARD  GUN SURVIVOR2", naomi_game_id))
@@ -309,7 +313,6 @@ int dc_start_game(const char *path)
 	{
 		InitSettings();
 		LoadSettings(false);
-		settings.dreamcast.RTC = GetRTC_now();	// FIXME This shouldn't be in settings anymore
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST
 		if (!settings.bios.UseReios)
 #endif
@@ -347,7 +350,6 @@ int dc_start_game(const char *path)
 		return 0;
 	}
 
-	settings.dreamcast.RTC = GetRTC_now();	// FIXME This shouldn't be in settings anymore
 	if (settings.bios.UseReios || !LoadRomFiles(get_readonly_data_path(DATA_PATH)))
 	{
 #ifdef USE_REIOS
@@ -487,7 +489,6 @@ void dc_exit()
 
 void InitSettings()
 {
-	settings.dreamcast.RTC			= GetRTC_now();
 	settings.dynarec.Enable			= true;
 	settings.dynarec.idleskip		= true;
 	settings.dynarec.unstable_opt	= false;
@@ -518,6 +519,8 @@ void InitSettings()
 	settings.rend.ScreenScaling     = 100;
 	settings.rend.ScreenStretching  = 100;
 	settings.rend.Fog				= true;
+	settings.rend.FloatVMUs			= false;
+	settings.rend.Rotate90			= false;
 
 	settings.pvr.ta_skip			= 0;
 	settings.pvr.rend				= 0;
@@ -604,6 +607,8 @@ void LoadSettings(bool game_specific)
 	settings.rend.ScreenScaling = min(max(1, settings.rend.ScreenScaling), 100);
 	settings.rend.ScreenStretching  = cfgLoadInt(config_section, "rend.ScreenStretching", settings.rend.ScreenStretching);
 	settings.rend.Fog				= cfgLoadBool(config_section, "rend.Fog", settings.rend.Fog);
+	settings.rend.FloatVMUs			= cfgLoadBool(config_section, "rend.FloatVMUs", settings.rend.FloatVMUs);
+	settings.rend.Rotate90			= cfgLoadBool(config_section, "rend.Rotate90", settings.rend.Rotate90);
 
 	settings.pvr.ta_skip			= cfgLoadInt(config_section, "ta.skip", settings.pvr.ta_skip);
 	settings.pvr.rend				= cfgLoadInt(config_section, "pvr.rend", settings.pvr.rend);
@@ -730,6 +735,8 @@ void SaveSettings()
 	cfgSaveInt("config", "rend.ScreenScaling", settings.rend.ScreenScaling);
 	cfgSaveInt("config", "rend.ScreenStretching", settings.rend.ScreenStretching);
 	cfgSaveBool("config", "rend.Fog", settings.rend.Fog);
+	cfgSaveBool("config", "rend.FloatVMUs", settings.rend.FloatVMUs);
+	cfgSaveBool("config", "rend.Rotate90", settings.rend.Rotate90);
 	cfgSaveInt("config", "ta.skip", settings.pvr.ta_skip);
 	cfgSaveInt("config", "pvr.rend", settings.pvr.rend);
 

@@ -91,8 +91,7 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_destroy(JNIEnv *env,j
 JNIEXPORT jint JNICALL Java_com_reicast_emulator_emu_JNIdc_send(JNIEnv *env,jobject obj,jint id, jint v)  __attribute__((visibility("default")));
 JNIEXPORT jint JNICALL Java_com_reicast_emulator_emu_JNIdc_data(JNIEnv *env,jobject obj,jint id, jbyteArray d)  __attribute__((visibility("default")));
 
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_rendinitNative(JNIEnv *env, jobject obj, jobject surface, jint w, jint h)  __attribute__((visibility("default")));
-JNIEXPORT jboolean JNICALL Java_com_reicast_emulator_emu_JNIdc_rendframeNative(JNIEnv *env,jobject obj)  __attribute__((visibility("default")));
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_rendinitNative(JNIEnv *env, jobject obj, jobject surface)  __attribute__((visibility("default")));
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_rendinitJava(JNIEnv *env, jobject obj, jint w, jint h)  __attribute__((visibility("default")));
 JNIEXPORT jboolean JNICALL Java_com_reicast_emulator_emu_JNIdc_rendframeJava(JNIEnv *env, jobject obj)  __attribute__((visibility("default")));
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_rendtermJava(JNIEnv *env, jobject obj)  __attribute__((visibility("default")));
@@ -404,35 +403,57 @@ JNIEXPORT jint JNICALL Java_com_reicast_emulator_emu_JNIdc_data(JNIEnv *env, job
 
 extern void gl_swap();
 extern void egl_stealcntx();
+volatile static bool render_running;
+volatile static bool render_reinit;
 
-JNIEXPORT jboolean JNICALL Java_com_reicast_emulator_emu_JNIdc_rendframeNative(JNIEnv *env,jobject obj)
+void *render_thread_func(void *)
 {
-    if (g_window == NULL)
-        return false;
-    if (!egl_makecurrent())
-        return false;
-    jboolean ret = (jboolean)rend_single_frame();
-    if (ret)
-        gl_swap();
-    return ret;
+	render_running = true;
+
+	rend_init_renderer();
+
+    while (render_running) {
+        if (render_reinit)
+        {
+        	render_reinit = false;
+        	rend_init_renderer();
+        }
+        else
+            if (!egl_makecurrent())
+                break;;
+
+        bool ret = rend_single_frame();
+        if (ret)
+            gl_swap();
+    }
+    egl_makecurrent();
+    rend_term_renderer();
+    ANativeWindow_release(g_window);
+    g_window = NULL;
+	render_running = false;
+
+    return NULL;
 }
 
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_rendinitNative(JNIEnv * env, jobject obj, jobject surface, jint width, jint height)
+static cThread render_thread(render_thread_func, NULL);
+
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_rendinitNative(JNIEnv * env, jobject obj, jobject surface)
 {
-    if (g_window != NULL)
-    {
-        egl_makecurrent();
-        rend_term_renderer();
-        ANativeWindow_release(g_window);
-        g_window = NULL;
-    }
-    if (surface != NULL)
-    {
+	if (render_thread.hThread != NULL)
+	{
+		if (surface == NULL)
+		{
+			render_running = false;
+	        render_thread.WaitToEnd();
+		}
+		else
+			render_reinit = true;
+	}
+	else if (surface != NULL)
+	{
         g_window = ANativeWindow_fromSurface(env, surface);
-        rend_init_renderer();
-        screen_width = width;
-        screen_height = height;
-    }
+        render_thread.Start();
+	}
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_rendinitJava(JNIEnv * env, jobject obj, jint width, jint height)

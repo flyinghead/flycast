@@ -115,7 +115,7 @@ bool maple_atomiswave_coin_chute(int slot)
 {
 	for (int i = 0; i < 16; i++)
 	{
-		if (awave_button_mapping[i] == AWAVE_COIN_KEY && (kcode[slot] & (1 << i)) == 0)
+		if ((kcode[slot] & (1 << i)) == 0 && awave_button_mapping[i] == AWAVE_COIN_KEY)
 			return true;
 	}
 	return false;
@@ -149,16 +149,27 @@ void mcfg_CreateAtomisWaveControllers()
 		// Game needs analog axes
 		mcfg_Create(MDT_SegaController, 2, 5, 0);
 		mcfg_Create(MDT_SegaController, 3, 5, 1);
+		// Faster Than Speed			needs 1 std controller on port 0 (digital inputs) and one on port 2 (analog axes)
+		// Maximum Speed				same
 	}
-//	mcfg_Create(MDT_LightGun, 2, 5, 0);
-//	mcfg_Create(MDT_LightGun, 3, 5, 1);
-//	mcfg_Create(MDT_Mouse, 2, 5, 0);
-	// Guilty Gear Isuka (4P)		needs 4 std controllers
-	// Faster Than Speed			needs 1 std controller on port 0 (digital inputs) and one on port 2 (analog axes)
-	// Maximum Speed				same
-	// Clay Challenge				needs 2 std controllers on port 0 & 1 (digital in) and light guns on port 2 & 3
-	// Sports Shooting				same
-	// Sega Bass Fishing Challenge  needs a mouse (track-ball) on port 3
+	else if (settings.input.JammaSetup == 1)
+	{
+		// 4 players
+		mcfg_Create(MDT_SegaController, 2, 5);
+		mcfg_Create(MDT_SegaController, 3, 5);
+	}
+	else if (settings.input.JammaSetup == 5)
+	{
+		// Clay Challenge				needs 2 std controllers on port 0 & 1 (digital in) and light guns on port 2 & 3
+		// Sports Shooting				same
+		mcfg_Create(MDT_LightGun, 2, 5, 0);
+		mcfg_Create(MDT_LightGun, 3, 5, 1);
+	}
+	else if (settings.input.JammaSetup == 3)
+	{
+		// Sega Bass Fishing Challenge  needs a mouse (track-ball) on port 2
+		mcfg_Create(MDT_Mouse, 2, 5, 0);
+	}
 }
 
 void mcfg_CreateDevices()
