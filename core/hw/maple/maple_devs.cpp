@@ -208,7 +208,7 @@ struct maple_sega_controller: maple_base
 		return 0xfe060f00;	// 4 analog axes (0-3) X Y A B Start U D L R
 	}
 
-	virtual u32 process_kcode(u32 kcode) {
+	virtual u32 transform_kcode(u32 kcode) {
 		return kcode;
 	}
 
@@ -280,7 +280,7 @@ struct maple_sega_controller: maple_base
 
 				//state data
 				//2 key code
-				w16(process_kcode(pjs.kcode));
+				w16(transform_kcode(pjs.kcode));
 
 				//triggers
 				//1 R
@@ -322,7 +322,7 @@ struct maple_atomiswave_controller: maple_sega_controller
 		return 0xff663f00;	// 6 analog axes, X Y L2/D2(?) A B C Start U D L R
 	}
 
-	virtual u32 process_kcode(u32 kcode) override {
+	virtual u32 transform_kcode(u32 kcode) override {
 		return kcode | AWAVE_TRIGGER_KEY;
 	}
 
@@ -1329,7 +1329,7 @@ struct maple_mouse : maple_base
 
 struct maple_lightgun : maple_base
 {
-	virtual u32 process_kcode(u32 kcode) {
+	virtual u32 transform_kcode(u32 kcode) {
 		return kcode | 0xFF01;
 	}
 
@@ -1387,7 +1387,7 @@ struct maple_lightgun : maple_base
 
 			//state data
 			//2 key code
-			w16(process_kcode(pjs.kcode));
+			w16(transform_kcode(pjs.kcode));
 
 			//not used
 			//2
@@ -1415,7 +1415,7 @@ struct maple_lightgun : maple_base
 
 struct atomiswave_lightgun : maple_lightgun
 {
-	virtual u32 process_kcode(u32 kcode) override {
+	virtual u32 transform_kcode(u32 kcode) override {
 		return (kcode & AWAVE_TRIGGER_KEY) == 0 ? ~AWAVE_BTN0_KEY : ~0;
 	}
 };
