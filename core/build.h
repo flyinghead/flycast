@@ -127,10 +127,18 @@
 #define DC_PLATFORM_AURORA      6   /* Needs to be done, Uses newer 300 mhz sh4 + 150 mhz pvr mbx SoC */
 
 
+
 //HOST_OS
 #define OS_WINDOWS   0x10000001
 #define OS_LINUX     0x10000002
 #define OS_DARWIN    0x10000003
+#define OS_IOS       0x10000004
+#define OS_ANDROID   0x10000005
+
+#define OS_UWP       0x10000011
+#define OS_NSW_HOS   0x80000001
+#define OS_PS4_BSD   0x80000002
+
 
 //HOST_CPU
 #define CPU_X86      0x20000001
@@ -138,11 +146,16 @@
 #define CPU_MIPS     0x20000003
 #define CPU_X64      0x20000004
 #define CPU_GENERIC  0x20000005 //used for pnacl, emscripten, etc
-#define CPU_ARM64    0x20000006
+#define CPU_PPC      0x20000006
+#define CPU_PPC64    0x20000007
+#define CPU_A64      0x20000008
+#define CPU_MIPS64   0x20000009
 
 //BUILD_COMPILER
-#define COMPILER_VC  0x30000001
-#define COMPILER_GCC 0x30000002
+#define COMPILER_VC    0x30000001
+#define COMPILER_GCC   0x30000002
+#define COMPILER_CLANG 0x30000003
+#define COMPILER_INTEL 0x30000004
 
 //FEAT_SHREC, FEAT_AREC, FEAT_DSPREC
 #define DYNAREC_NONE	0x40000001
@@ -151,6 +164,8 @@
 
 
 //automatic
+
+#ifndef CMAKE_BUILD
 
 #if defined(_WIN32) && !defined(TARGET_WIN86) && !defined(TARGET_WIN64)
 	#if !defined(_M_AMD64) && !defined(__x86_64__)
@@ -233,6 +248,8 @@
 #define FEAT_DSPREC DYNAREC_NONE
 #endif
 
+#endif	// !CMAKE_BUILD
+
 
 #if defined(TARGET_NO_NIXPROF)
 #define FEAT_HAS_NIXPROF 0
@@ -294,6 +311,21 @@
 #ifdef HOST_NO_AREC
 #error Dont use HOST_NO_AREC
 #endif
+
+
+// Compiler Related
+
+#define COMPILER_VC_OR_CLANG_WIN32 ((BUILD_COMPILER == COMPILER_VC) || (BUILD_COMPILER == COMPILER_CLANG) && defined(WIN32))
+
+#if BUILD_COMPILER!=COMPILER_VC
+#define ATTR_USED   __attribute__((used))
+#define ATTR_UNUSED __attribute__((used))
+#else
+#define ATTR_USED
+#define ATTR_UNUSED
+#endif
+
+
 
 // TARGET PLATFORM
 

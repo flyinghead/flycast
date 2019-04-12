@@ -240,7 +240,7 @@ else ifneq (,$(findstring vero4k,$(platform)))
 else ifneq (,$(findstring win32,$(platform)))
     NOT_ARM := 1
     CFLAGS += -DTARGET_NO_WEBUI -fno-builtin-sqrtf -funroll-loops -DHAVE_FSEEKO -D TARGET_NO_AREC
-    LDFLAGS += -static-libgcc -static-libstdc++
+    LDFLAGS += -static-libgcc -static-libstdc++ -Wl,-subsystem,windows
     LIBS := -lopengl32 -lwinmm -lgdi32 -lwsock32 -ldsound -lcomctl32 -lcomdlg32 -lxinput -liphlpapi
     PLATFORM_EXT := exe
     CC = gcc
@@ -289,7 +289,7 @@ INCS += -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps -I$(RZDCY_SRC_DIR)/khronos
 
 LIBS += -lm -lpthread
 ifdef FOR_LINUX
-LIBS += -lrt -ldl
+LIBS += -lrt
 endif
 
 PREFIX ?= /usr/local
@@ -421,6 +421,12 @@ OBJECTS:=$(OBJECTS:.c=.build_obj)
 OBJECTS:=$(OBJECTS:.S=.build_obj)
 OBJECTS:=$(patsubst $(RZDCY_SRC_DIR)/%,$(BUILDDIR)/%,$(OBJECTS))
 
+ifdef FOR_WINDOWS
+OBJECTS+=$(BUILDDIR)/reicastres.build_obj
+$(BUILDDIR)/reicastres.build_obj: $(LOCAL_PATH)/../windows/reicast.rc $(LOCAL_PATH)/../windows/reicast.ico $(RZDCY_SRC_DIR)/version.h
+	windres $< $@
+endif
+
 DEPDIR := .dep-$(BUILDDIR)
 DEPFLAGS = -MT $@ -MD -MP -MF $(DEPDIR)/$*.Td
 DEPS=$(RZDCY_FILES:.cpp=.d)
@@ -442,27 +448,27 @@ $(EXECUTABLE_STRIPPED): $(EXECUTABLE)
 	cp $< $@ && $(STRIP) $@
 
 $(BUILDDIR)/%.build_obj : $(RZDCY_SRC_DIR)/%.cpp
-$(BUILDDIR)/%.build_obj: $(RZDCY_SRC_DIR)/%.cpp $(DEPDIR)/%.d
+$(BUILDDIR)/%.build_obj: $(RZDCY_SRC_DIR)/%.cpp $(DEPDIR)/%.d $(VERSION_HEADER)
 	mkdir -p $(dir $@)
 	mkdir -p .dep-$(dir $@)
 	$(CXX) $(EXTRAFLAGS) $(INCS) $(DEPFLAGS) $(CFLAGS) $(MFLAGS) $(CXXFLAGS) $< -o $@
 	$(POSTCOMPILE)
 
 $(BUILDDIR)/%.build_obj : $(RZDCY_SRC_DIR)/%.cc
-$(BUILDDIR)/%.build_obj: $(RZDCY_SRC_DIR)/%.cc $(DEPDIR)/%.d
+$(BUILDDIR)/%.build_obj: $(RZDCY_SRC_DIR)/%.cc $(DEPDIR)/%.d $(VERSION_HEADER)
 	mkdir -p $(dir $@)
 	mkdir -p .dep-$(dir $@)
 	$(CXX) $(EXTRAFLAGS) $(INCS) $(DEPFLAGS) $(CFLAGS) $(MFLAGS) $(CXXFLAGS) $< -o $@
 	$(POSTCOMPILE)
 
 $(BUILDDIR)/%.build_obj : $(RZDCY_SRC_DIR)/%.c
-$(BUILDDIR)/%.build_obj: $(RZDCY_SRC_DIR)/%.c $(DEPDIR)/%.d
+$(BUILDDIR)/%.build_obj: $(RZDCY_SRC_DIR)/%.c $(DEPDIR)/%.d $(VERSION_HEADER)
 	mkdir -p $(dir $@)
 	mkdir -p .dep-$(dir $@)
 	$(CC) $(EXTRAFLAGS) $(INCS) $(DEPFLAGS) $(CFLAGS) $< -o $@
 	$(POSTCOMPILE)
 
-$(BUILDDIR)/%.build_obj : $(RZDCY_SRC_DIR)/%.S
+$(BUILDDIR)/%.build_obj : $(RZDCY_SRC_DIR)/%.S $(VERSION_HEADER)
 	mkdir -p $(dir $@)
 	$(AS) $(ASFLAGS) $(INCS) $< -o $@
 
@@ -500,7 +506,7 @@ uninstall:
 	rm -f $(DESTDIR)$(ICON_DIR)/reicast.png
 
 clean:
-	rm -f $(OBJECTS) $(EXECUTABLE) $(EXECUTABLE_STRIPPED) .map
+	rm -f $(OBJECTS) $(EXECUTABLE) $(EXECUTABLE_STRIPPED) .map $(VERSION_HEADER)
 
 .PRECIOUS = $(DEPDIR)/%.d
 $(DEPDIR)/%.d: ;

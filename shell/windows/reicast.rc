@@ -1,0 +1,39 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+#include "../../core/version.h"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDI_ICON1               ICON                    "reicast.ico"
+
+/////////////////////////////////////////////////////////////////////////////
+
+1 VERSIONINFO
+FILEVERSION     1,0,0,0
+PRODUCTVERSION  1,0,0,0
+BEGIN
+  BLOCK "StringFileInfo"
+  BEGIN
+    BLOCK "040904E4"
+    BEGIN
+      VALUE "CompanyName", "Reicast Team"
+      VALUE "FileDescription", "Reicast"
+      VALUE "FileVersion", REICAST_VERSION
+      VALUE "InternalName", "reicast"
+      VALUE "LegalCopyright", "Copyright (c) Reicast Team. All rights reserved."
+      VALUE "OriginalFilename", "reicast.exe"
+      VALUE "ProductName", "Reicast"
+      VALUE "ProductVersion", REICAST_VERSION
+    END
+  END
+  BLOCK "VarFileInfo"
+  BEGIN
+    VALUE "Translation", 0x409, 1252
+  END
+END

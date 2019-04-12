@@ -638,15 +638,31 @@ int CALLBACK WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine
 	int argc=0;
 	wchar* cmd_line=GetCommandLineA();
 	wchar** argv=CommandLineToArgvA(cmd_line,&argc);
-	if(strstr(cmd_line,"NoConsole")==0)
+	for (int i = 0; i < argc; i++)
 	{
-		if (AllocConsole())
+		if (!stricmp(argv[i], "-console"))
 		{
-			freopen("CON","w",stdout);
-			freopen("CON","w",stderr);
-			freopen("CON","r",stdin);
+			if (AllocConsole())
+			{
+				freopen("CON", "w", stdout);
+				freopen("CON", "w", stderr);
+				freopen("CON", "r", stdin);
+			}
+			SetConsoleCtrlHandler((PHANDLER_ROUTINE)CtrlHandler, TRUE);
 		}
-		SetConsoleCtrlHandler( (PHANDLER_ROUTINE) CtrlHandler, TRUE );
+		else if (!stricmp(argv[i], "-log"))
+		{
+			const char *logfile;
+			if (i < argc - 1)
+			{
+				logfile = argv[i + 1];
+				i++;
+			}
+			else
+				logfile = "reicast-log.txt";
+			freopen(logfile, "w", stdout);
+			freopen(logfile, "w", stderr);
+		}
 	}
 
 #endif
@@ -654,14 +670,13 @@ int CALLBACK WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine
 	ReserveBottomMemory();
 	SetupPath();
 
-#ifndef __GNUC__
-	__try
-#else
 #ifdef _WIN64
 	AddVectoredExceptionHandler(1, ExeptionHandler);
 #else
-	SetUnhandledExceptionFilter(&ExeptionHandler);
+	SetUnhandledExceptionFilter((LPTOP_LEVEL_EXCEPTION_FILTER)&ExeptionHandler);
 #endif
+#ifndef __GNUC__
+	__try
 #endif
 	{
 		int reicast_init(int argc, char* argv[]);

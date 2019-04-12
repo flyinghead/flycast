@@ -162,6 +162,11 @@ ROM board internal layouts:
 */
 #include "awcartridge.h"
 #include "awave_regs.h"
+#ifdef _MSC_VER
+#undef min
+#undef max
+#include <algorithm>
+#endif
 
 u32 AWCartridge::ReadMem(u32 address, u32 size) {
 	verify(size != 1);

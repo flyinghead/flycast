@@ -112,6 +112,8 @@ else
   endif
 endif
 
+$(LOCAL_SRC_FILES): $(VERSION_HEADER)
+
 #
 # android has poor support for hardfp calling.
 # r9b+ is required, and it only works for internal calls
