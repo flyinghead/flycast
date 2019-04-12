@@ -14,6 +14,7 @@ static const char* VertexShaderSource =
 "\
 #version 140 \n\
 #define pp_Gouraud %d \n\
+#define ROTATE_90 %d \n\
  \n\
 #if pp_Gouraud == 0 \n\
 #define INTERPOLATION flat \n\
@@ -56,6 +57,9 @@ void main() \n\
 	\n\
 	vpos.w = extra_depth_scale / vpos.z; \n\
 	vpos.z = vpos.w; \n\
+#if ROTATE_90 == 1 \n\
+	vpos.xy = vec2(vpos.y, -vpos.x);  \n\
+#endif \n\
 	vpos.xy=vpos.xy*scale.xy-scale.zw;  \n\
 	vpos.xy*=vpos.w;  \n\
 	gl_Position = vpos; \n\
@@ -393,11 +397,11 @@ gl4_ctx gl4;
 
 struct gl4ShaderUniforms_t gl4ShaderUniforms;
 
-bool gl4CompilePipelineShader(	gl4PipelineShader* s, const char *source /* = PixelPipelineShader */)
+bool gl4CompilePipelineShader(	gl4PipelineShader* s, bool rotate_90, const char *source /* = PixelPipelineShader */)
 {
 	char vshader[16384];
 
-	sprintf(vshader, VertexShaderSource, s->pp_Gouraud);
+	sprintf(vshader, VertexShaderSource, s->pp_Gouraud, rotate_90);
 
 	char pshader[16384];
 
@@ -478,26 +482,43 @@ bool gl4CompilePipelineShader(	gl4PipelineShader* s, const char *source /* = Pix
 
 void gl_term();
 
+void gl4_delete_shaders()
+{
+	for (auto it : gl4.shaders)
+	{
+		if (it.second.program != 0)
+			glcache.DeleteProgram(it.second.program);
+	}
+	gl4.shaders.clear();
+	glcache.DeleteProgram(gl4.modvol_shader.program);
+	gl4.modvol_shader.program = 0;
+}
+
 static void gles_term(void)
 {
-	glDeleteProgram(gl4.modvol_shader.program);
 	glDeleteBuffers(1, &gl4.vbo.geometry);
 	gl4.vbo.geometry = 0;
 	glDeleteBuffers(1, &gl4.vbo.modvols);
 	glDeleteBuffers(1, &gl4.vbo.idxs);
 	glDeleteBuffers(1, &gl4.vbo.idxs2);
 	glDeleteBuffers(1, &gl4.vbo.tr_poly_params);
-	for (auto it = gl4.shaders.begin(); it != gl4.shaders.end(); it++)
-	{
-		if (it->second->program != -1)
-			glDeleteProgram(it->second->program);
-		delete it->second;
-	}
-	gl4.shaders.clear();
+	gl4_delete_shaders();
 	glDeleteVertexArrays(1, &gl4.vbo.main_vao);
 	glDeleteVertexArrays(1, &gl4.vbo.modvol_vao);
 
 	gl_term();
+}
+
+static void create_modvol_shader()
+{
+	if (gl4.modvol_shader.program != 0)
+		return;
+	char vshader[16384];
+	sprintf(vshader, VertexShaderSource, 1, settings.rend.Rotate90);
+
+	gl4.modvol_shader.program=gl_CompileAndLink(vshader, ModifierVolumeShader);
+	gl4.modvol_shader.scale          = glGetUniformLocation(gl4.modvol_shader.program, "scale");
+	gl4.modvol_shader.extra_depth_scale = glGetUniformLocation(gl4.modvol_shader.program, "extra_depth_scale");
 }
 
 static bool gl_create_resources()
@@ -521,12 +542,7 @@ static bool gl_create_resources()
 	gl4SetupMainVBO();
 	gl4SetupModvolVBO();
 
-	char vshader[16384];
-	sprintf(vshader, VertexShaderSource, 1);
-
-	gl4.modvol_shader.program=gl_CompileAndLink(vshader, ModifierVolumeShader);
-	gl4.modvol_shader.scale          = glGetUniformLocation(gl4.modvol_shader.program, "scale");
-	gl4.modvol_shader.extra_depth_scale = glGetUniformLocation(gl4.modvol_shader.program, "extra_depth_scale");
+	create_modvol_shader();
 
 	gl_load_osd_resources();
 
@@ -604,6 +620,7 @@ static bool RenderFrame()
 		old_screen_scaling = settings.rend.ScreenScaling;
 	}
 	DoCleanup();
+	create_modvol_shader();
 
 	bool is_rtt=pvrrc.isRTT;
 
@@ -662,16 +679,41 @@ static bool RenderFrame()
 	/*
 		Handle Dc to screen scaling
 	*/
-	float screen_scaling = is_rtt ? 1.f : settings.rend.ScreenScaling / 100.f;
-	float dc2s_scale_h = is_rtt ? (screen_width / dc_width) : (screen_height / 480.0);
-	dc2s_scale_h *=  screen_scaling;
-	float ds2s_offs_x =  is_rtt ? 0 : (((screen_width * screen_scaling) - dc2s_scale_h * 640.0) / 2);
+	float screen_scaling = settings.rend.ScreenScaling / 100.f;
+	float screen_stretching = settings.rend.ScreenStretching / 100.f;
 
-	//-1 -> too much to left
-	gl4ShaderUniforms.scale_coefs[0] = 2.0f / (screen_width * screen_scaling / dc2s_scale_h * scale_x);
-	gl4ShaderUniforms.scale_coefs[1] = (is_rtt ? 2 : -2) / dc_height;		// FIXME CT2 needs 480 here instead of dc_height=512
-	gl4ShaderUniforms.scale_coefs[2] = 1 - 2 * ds2s_offs_x / (screen_width * screen_scaling);
-	gl4ShaderUniforms.scale_coefs[3] = (is_rtt ? 1 : -1);
+	float dc2s_scale_h;
+	float ds2s_offs_x;
+
+	if (is_rtt)
+	{
+		gl4ShaderUniforms.scale_coefs[0] = 2.0f / dc_width;
+		gl4ShaderUniforms.scale_coefs[1] = 2.0f / dc_height;	// FIXME CT2 needs 480 here instead of dc_height=512
+		gl4ShaderUniforms.scale_coefs[2] = 1;
+		gl4ShaderUniforms.scale_coefs[3] = 1;
+	}
+	else
+	{
+		if (settings.rend.Rotate90)
+		{
+			dc2s_scale_h = screen_height / 640.0;
+			ds2s_offs_x =  (screen_width - dc2s_scale_h * 480.0 * screen_stretching) / 2;
+			gl4ShaderUniforms.scale_coefs[0] = 2.0f / (screen_width / dc2s_scale_h * scale_x) * screen_stretching;
+			gl4ShaderUniforms.scale_coefs[1] = -2.0f / dc_width;
+			gl4ShaderUniforms.scale_coefs[2] = 1 - 2 * ds2s_offs_x / screen_width;
+			gl4ShaderUniforms.scale_coefs[3] = 1;
+		}
+		else
+		{
+			dc2s_scale_h = screen_height / 480.0;
+			ds2s_offs_x =  (screen_width - dc2s_scale_h * 640.0 * screen_stretching) / 2;
+			//-1 -> too much to left
+			gl4ShaderUniforms.scale_coefs[0] = 2.0f / (screen_width / dc2s_scale_h * scale_x) * screen_stretching;
+			gl4ShaderUniforms.scale_coefs[1] = -2.0f / dc_height;
+			gl4ShaderUniforms.scale_coefs[2] = 1 - 2 * ds2s_offs_x / screen_width;
+			gl4ShaderUniforms.scale_coefs[3] = -1;
+		}
+	}
 
 	gl4ShaderUniforms.extra_depth_scale = settings.rend.ExtraDepthScale;
 
@@ -704,7 +746,7 @@ static bool RenderFrame()
 	gl4ShaderUniforms.fog_clamp_max[2] = ((pvrrc.fog_clamp_max >> 0) & 0xFF) / 255.0f;
 	gl4ShaderUniforms.fog_clamp_max[3] = ((pvrrc.fog_clamp_max >> 24) & 0xFF) / 255.0f;
 	
-	if (fog_needs_update)
+	if (fog_needs_update && settings.rend.Fog)
 	{
 		fog_needs_update = false;
 		UpdateFogTexture((u8 *)FOG_TABLE, GL_TEXTURE5, GL_RED);
@@ -764,7 +806,7 @@ static bool RenderFrame()
 	{
 		if (settings.rend.ScreenScaling != 100 || gl.swap_buffer_not_preserved)
 		{
-			output_fbo = init_output_framebuffer(screen_width * screen_scaling, screen_height * screen_scaling);
+			output_fbo = init_output_framebuffer(screen_width * screen_scaling + 0.5f, screen_height * screen_scaling + 0.5f);
 		}
 		else
 		{
@@ -826,22 +868,31 @@ static bool RenderFrame()
 			float min_y = pvrrc.fb_Y_CLIP.min / scale_y;
 			if (!is_rtt)
 			{
+				if (settings.rend.Rotate90)
+				{
+					float t = width;
+					width = height;
+					height = t;
+					t = min_x;
+					min_x = min_y;
+					min_y = 640 - t - height;
+				}
 				// Add x offset for aspect ratio > 4/3
-            	min_x = min_x * dc2s_scale_h + ds2s_offs_x;
+            	min_x = (min_x * dc2s_scale_h * screen_stretching + ds2s_offs_x) * screen_scaling;
 				// Invert y coordinates when rendering to screen
-				min_y = screen_height * screen_scaling - (min_y + height) * dc2s_scale_h;
-				width *= dc2s_scale_h;
-				height *= dc2s_scale_h;
+				min_y = (screen_height - (min_y + height) * dc2s_scale_h) * screen_scaling;
+				width *= dc2s_scale_h * screen_stretching * screen_scaling;
+				height *= dc2s_scale_h * screen_scaling;
 
 				if (ds2s_offs_x > 0)
 				{
-					float rounded_offs_x = ds2s_offs_x + 0.5f;
+					float scaled_offs_x = ds2s_offs_x * screen_scaling;
 
 					glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
 					glcache.Enable(GL_SCISSOR_TEST);
-					glScissor(0, 0, rounded_offs_x, screen_height);
+					glScissor(0, 0, scaled_offs_x + 0.5f, screen_height * screen_scaling + 0.5f);
 					glClear(GL_COLOR_BUFFER_BIT);
-					glScissor(screen_width - rounded_offs_x, 0, rounded_offs_x, screen_height);
+					glScissor(screen_width * screen_scaling - scaled_offs_x + 0.5f, 0, scaled_offs_x + 1.f, screen_height * screen_scaling + 0.5f);
 					glClear(GL_COLOR_BUFFER_BIT);
 				}
 			}

@@ -52,5 +52,56 @@
 		            android:scheme="file" />
 		    </intent-filter>
 		</activity>
+		<activity-alias
+			android:name="com.reicast.emulator.MainActivity"
+			android:targetActivity="com.reicast.emulator.NativeGLActivity">
+			<intent-filter>
+				<action android:name="android.intent.action.VIEW" />
+
+				<category android:name="android.intent.category.DEFAULT" />
+				<category android:name="android.intent.category.BROWSABLE" />
+
+				<data
+					android:host="*"
+					android:mimeType="*/*"
+					android:pathPattern=".*\\.GDI"
+					android:scheme="file" />
+				<data
+					android:host="*"
+					android:mimeType="*/*"
+					android:pathPattern=".*\\.gdi"
+					android:scheme="file" />
+				<data
+					android:host="*"
+					android:mimeType="*/*"
+					android:pathPattern=".*\\.CHD"
+					android:scheme="file" />
+				<data
+					android:host="*"
+					android:mimeType="*/*"
+					android:pathPattern=".*\\.chd"
+					android:scheme="file" />
+				<data
+					android:host="*"
+					android:mimeType="*/*"
+					android:pathPattern=".*\\.CDI"
+					android:scheme="file" />
+				<data
+					android:host="*"
+					android:mimeType="*/*"
+					android:pathPattern=".*\\.cdi"
+					android:scheme="file" />
+				<data
+					android:host="*"
+					android:mimeType="*/*"
+					android:pathPattern=".*\\.CUE"
+					android:scheme="file" />
+				<data
+					android:host="*"
+					android:mimeType="*/*"
+					android:pathPattern=".*\\.cue"
+					android:scheme="file" />
+			</intent-filter>
+		</activity-alias>
 	</application>
 </manifest>

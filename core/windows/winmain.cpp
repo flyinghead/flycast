@@ -188,8 +188,6 @@ u16 kcode[4] = { 0xffff, 0xffff, 0xffff, 0xffff };
 u32 vks[4];
 s8 joyx[4],joyy[4];
 u8 rt[4],lt[4];
-extern bool coin_chute;
-extern bool naomi_test_button;
 // Mouse
 extern s32 mo_x_abs;
 extern s32 mo_y_abs;
@@ -220,12 +218,6 @@ void UpdateInputState(u32 port)
 	std::shared_ptr<XInputGamepadDevice> gamepad = XInputGamepadDevice::GetXInputDevice(port);
 	if (gamepad != NULL)
 		gamepad->ReadInput();
-
-#if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
-		// FIXME
-		coin_chute = GetAsyncKeyState(VK_F8);
-		naomi_test_button = GetAsyncKeyState(VK_F7);
-#endif
 }
 
 // Windows class name to register
@@ -772,6 +764,7 @@ cThread::cThread(ThreadEntryFP* function,void* prm)
 
 void cThread::Start()
 {
+	verify(hThread == NULL);
 	hThread=CreateThread(NULL,0,(LPTHREAD_START_ROUTINE)Entry,param,0,NULL);
 	ResumeThread(hThread);
 }
@@ -779,6 +772,8 @@ void cThread::Start()
 void cThread::WaitToEnd()
 {
 	WaitForSingleObject(hThread,INFINITE);
+	CloseHandle(hThread);
+	hThread = NULL;
 }
 //End thread class
 

@@ -86,6 +86,15 @@ void recSh4_Run()
 
 	sh4_dyna_rcb=(u8*)&Sh4cntx + sizeof(Sh4cntx);
 	printf("cntx // fpcb offset: %td // pc offset: %td // pc %08X\n",(u8*)&sh4rcb.fpcb - sh4_dyna_rcb, (u8*)&sh4rcb.cntx.pc - sh4_dyna_rcb,sh4rcb.cntx.pc);
+
+	if (!settings.dynarec.safemode)
+		printf("Warning: Dynarec safe mode is off\n");
+
+	if (settings.dynarec.unstable_opt)
+		printf("Warning: Unstable optimizations is on\n");
+
+	if (settings.dynarec.SmcCheckLevel != FullCheck)
+		printf("Warning: SMC check mode is %d\n", settings.dynarec.SmcCheckLevel);
 	
 	verify(rcb_noffs(&next_pc)==-184);
 	ngen_mainloop(sh4_dyna_rcb);
@@ -119,34 +128,51 @@ u32 emit_FreeSpace()
 }
 
 
-bool DoCheck(u32 pc)
+SmcCheckEnum DoCheck(u32 pc)
 {
-	if (IsOnRam(pc))
-	{
-		if (!settings.dynarec.unstable_opt)
-			return true;
 
-		pc&=0xFFFFFF;
-		switch(pc)
-		{
-			//DOA2LE
-			case 0x3DAFC6:
-			case 0x3C83F8:
+	switch (settings.dynarec.SmcCheckLevel) {
 
-			//Shenmue 2
-			case 0x348000:
-				
-			//Shenmue
-			case 0x41860e:
-			
+		// Heuristic-elimintaed FastChecks
+		case NoCheck: {
+			if (IsOnRam(pc))
+			{
+				pc&=0xFFFFFF;
+				switch(pc)
+				{
+					//DOA2LE
+					case 0x3DAFC6:
+					case 0x3C83F8:
 
-				return true;
+					//Shenmue 2
+					case 0x348000:
+						
+					//Shenmue
+					case 0x41860e:
+					
 
-			default:
-				return false;
+						return FastCheck;
+
+					default:
+						return NoCheck;
+				}
+			}
+			return NoCheck;
 		}
+		break;
+
+		// Fast Check everything
+		case FastCheck:
+			return FastCheck;
+
+		// Full Check everything
+		case FullCheck:
+			return FullCheck;
+
+		default:
+			die("Unhandled settings.dynarec.SmcCheckLevel");
+			return FullCheck;
 	}
-	return false;
 }
 
 void AnalyseBlock(RuntimeBlockInfo* blk);

@@ -1,4 +1,4 @@
-#include "oslib/audiobackend_oss.h"
+#include "oslib/audiostream.h"
 #ifdef USE_OSS
 #include <sys/ioctl.h>
 #include <sys/fcntl.h>
@@ -51,4 +51,5 @@ audiobackend_t audiobackend_oss = {
 		&oss_term
 };
 
+static bool oss = RegisterAudioBackend(&audiobackend_oss);
 #endif

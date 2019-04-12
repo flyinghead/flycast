@@ -110,6 +110,6 @@ struct InputDescriptors
    AxisDescriptor axes[8];
 };
 
-extern InputDescriptors *naomi_game_inputs;
+extern InputDescriptors *NaomiGameInputs;
 
 #endif //NAOMI_CART_H

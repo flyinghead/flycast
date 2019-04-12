@@ -84,8 +84,6 @@ Atom wmDeleteMessage;
 void* x11_vis;
 
 extern bool dump_frame_switch;
-extern bool naomi_test_button;
-extern bool coin_chute;
 
 void dc_exit(void);
 
@@ -275,16 +273,6 @@ void input_x11_handle()
 							x11_fullscreen = !x11_fullscreen;
 							x11_window_set_fullscreen(x11_fullscreen);
 						}
-#if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
-						else if (e.xkey.keycode == KEY_F8)
-						{
-							coin_chute = e.type == KeyPress;
-						}
-						else if (e.xkey.keycode == KEY_F7)
-						{
-							naomi_test_button = e.type == KeyPress;
-						}
-#endif
 					}
 				}
 				break;

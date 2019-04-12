@@ -32,7 +32,7 @@ fd_t*	RomCacheMap = NULL;
 u32		RomCacheMapCount;
 
 char naomi_game_id[33];
-InputDescriptors *naomi_game_inputs;
+InputDescriptors *NaomiGameInputs;
 u8 *naomi_default_eeprom;
 
 extern RomChip sys_rom;
@@ -246,7 +246,7 @@ static bool naomi_cart_LoadZip(char *filename)
 		break;
 	}
 	CurrentCartridge->SetKey(game->key);
-	naomi_game_inputs = game->inputs;
+	NaomiGameInputs = game->inputs;
 
 	for (int romid = 0; game->blobs[romid].filename != NULL; romid++)
 	{

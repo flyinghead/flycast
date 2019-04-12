@@ -1,4 +1,4 @@
-#include "oslib/audiobackend_omx.h"
+#include "oslib/audiostream.h"
 #if USE_OMX
 
 #include <IL/OMX_Broadcom.h>
@@ -316,4 +316,5 @@ audiobackend_t audiobackend_omx = {
     &omx_term
 };
 
+static bool omx = RegisterAudioBackend(&audiobackend_omx);
 #endif

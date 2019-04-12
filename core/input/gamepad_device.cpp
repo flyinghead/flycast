@@ -51,7 +51,39 @@ bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 	if (key < 0x10000)
 	{
 		if (pressed)
+		{
 			kcode[_maple_port] &= ~(u16)key;
+			// Avoid two opposite dpad keys being pressed simultaneously
+			switch (key)
+			{
+			case DC_DPAD_UP:
+				kcode[_maple_port] |= (u16)DC_DPAD_DOWN;
+				break;
+			case DC_DPAD_DOWN:
+				kcode[_maple_port] |= (u16)DC_DPAD_UP;
+				break;
+			case DC_DPAD_LEFT:
+				kcode[_maple_port] |= (u16)DC_DPAD_RIGHT;
+				break;
+			case DC_DPAD_RIGHT:
+				kcode[_maple_port] |= (u16)DC_DPAD_LEFT;
+				break;
+			case DC_DPAD2_UP:
+				kcode[_maple_port] |= (u16)DC_DPAD2_DOWN;
+				break;
+			case DC_DPAD2_DOWN:
+				kcode[_maple_port] |= (u16)DC_DPAD2_UP;
+				break;
+			case DC_DPAD2_LEFT:
+				kcode[_maple_port] |= (u16)DC_DPAD2_RIGHT;
+				break;
+			case DC_DPAD2_RIGHT:
+				kcode[_maple_port] |= (u16)DC_DPAD2_LEFT;
+				break;
+			default:
+				break;
+			}
+		}
 		else
 			kcode[_maple_port] |= (u16)key;
 	}

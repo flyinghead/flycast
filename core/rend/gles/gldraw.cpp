@@ -114,13 +114,30 @@ s32 SetTileClip(u32 val, GLint uniform)
 			csy /= scale_y;
 			cex /= scale_x;
 			cey /= scale_y;
-			float t = cey;
-			cey = 480 - csy;
-			csy = 480 - t;
-			float dc2s_scale_h = screen_height / 480.0f;
-			float ds2s_offs_x = (screen_width - dc2s_scale_h * 640) / 2;
-			csx = csx * dc2s_scale_h + ds2s_offs_x;
-			cex = cex * dc2s_scale_h + ds2s_offs_x;
+			float dc2s_scale_h;
+			float ds2s_offs_x;
+			float screen_stretching = settings.rend.ScreenStretching / 100.f;
+
+			if (settings.rend.Rotate90)
+			{
+				float t = cex;
+				cex = cey;
+				cey = 640 - csx;
+				csx = csy;
+				csy = 640 - t;
+				dc2s_scale_h = screen_height / 640.0f;
+				ds2s_offs_x =  (screen_width - dc2s_scale_h * 480.0 * screen_stretching) / 2;
+			}
+			else
+			{
+				float t = cey;
+				cey = 480 - csy;
+				csy = 480 - t;
+				dc2s_scale_h = screen_height / 480.0f;
+				ds2s_offs_x =  (screen_width - dc2s_scale_h * 640.0 * screen_stretching) / 2;
+			}
+			csx = csx * dc2s_scale_h * screen_stretching + ds2s_offs_x;
+			cex = cex * dc2s_scale_h * screen_stretching + ds2s_offs_x;
 			csy = csy * dc2s_scale_h;
 			cey = cey * dc2s_scale_h;
 		}
@@ -173,28 +190,25 @@ __forceinline
 		ShaderUniforms.trilinear_alpha = 1.f;
 
 	bool color_clamp = gp->tsp.ColorClamp && (pvrrc.fog_clamp_min != 0 || pvrrc.fog_clamp_max != 0xffffffff);
+	int fog_ctrl = settings.rend.Fog ? gp->tsp.FogCtrl : 2;
 
-	CurrentShader = &gl.pogram_table[
-									 GetProgramID(Type == ListType_Punch_Through ? 1 : 0,
-											 	  SetTileClip(gp->tileclip, -1) + 1,
-												  gp->pcw.Texture,
-												  gp->tsp.UseAlpha,
-												  gp->tsp.IgnoreTexA,
-												  gp->tsp.ShadInstr,
-												  gp->pcw.Offset,
-												  gp->tsp.FogCtrl,
-												  gp->pcw.Gouraud,
-												  gp->tcw.PixelFmt == PixelBumpMap,
-												  color_clamp,
-												  ShaderUniforms.trilinear_alpha != 1.f)];
+	CurrentShader = GetProgram(Type == ListType_Punch_Through ? 1 : 0,
+								  SetTileClip(gp->tileclip, -1) + 1,
+								  gp->pcw.Texture,
+								  gp->tsp.UseAlpha,
+								  gp->tsp.IgnoreTexA,
+								  gp->tsp.ShadInstr,
+								  gp->pcw.Offset,
+								  fog_ctrl,
+								  gp->pcw.Gouraud,
+								  gp->tcw.PixelFmt == PixelBumpMap,
+								  color_clamp,
+								  ShaderUniforms.trilinear_alpha != 1.f);
 	
-	if (CurrentShader->program == -1)
-		CompilePipelineShader(CurrentShader);
-	else
-	{
-		glcache.UseProgram(CurrentShader->program);
-		ShaderUniforms.Set(CurrentShader);
-	}
+	glcache.UseProgram(CurrentShader->program);
+	if (CurrentShader->trilinear_alpha != -1)
+		glUniform1f(CurrentShader->trilinear_alpha, ShaderUniforms.trilinear_alpha);
+
 	SetTileClip(gp->tileclip, CurrentShader->pp_ClipTest);
 
 	//This bit control which pixels are affected
@@ -1122,14 +1136,8 @@ static void DrawQuad(GLuint texId, float x, float y, float w, float h, float u0,
 
 	ShaderUniforms.trilinear_alpha = 1.0;
 
-	PipelineShader *shader = &gl.pogram_table[GetProgramID(0, 1, 1, 0, 1, 0, 0, 2, false, false, false, false)];
-	if (shader->program == -1)
-		CompilePipelineShader(shader);
-	else
-	{
-		glcache.UseProgram(shader->program);
-		ShaderUniforms.Set(shader);
-	}
+	PipelineShader *shader = GetProgram(0, 1, 1, 0, 1, 0, 0, 2, false, false, false, false);
+	glcache.UseProgram(shader->program);
 
 	glActiveTexture(GL_TEXTURE0);
 	glcache.BindTexture(GL_TEXTURE_2D, texId);
@@ -1150,17 +1158,27 @@ void DrawFramebuffer(float w, float h)
 
 bool render_output_framebuffer()
 {
-#if HOST_OS != OS_DARWIN
-	//Fix this in a proper way
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-#endif
-	glViewport(0, 0, screen_width, screen_height);
-	if (gl.ofbo.tex == 0)
-		return false;
-
-    float scl = 480.f / screen_height;
-    float tx = (screen_width * scl - 640.f) / 2;
-	DrawQuad(gl.ofbo.tex, -tx, 0, 640.f + tx * 2, 480.f, 0, 1, 1, 0);
-
+	glcache.Disable(GL_SCISSOR_TEST);
+	if (gl.gl_major < 3)
+	{
+		glViewport(0, 0, screen_width, screen_height);
+		if (gl.ofbo.tex == 0)
+			return false;
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		float scl = 480.f / screen_height;
+		float tx = (screen_width * scl - 640.f) / 2;
+		DrawQuad(gl.ofbo.tex, -tx, 0, 640.f + tx * 2, 480.f, 0, 1, 1, 0);
+	}
+	else
+	{
+		if (gl.ofbo.fbo == 0)
+			return false;
+		glBindFramebuffer(GL_READ_FRAMEBUFFER, gl.ofbo.fbo);
+		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+		glBlitFramebuffer(0, 0, gl.ofbo.width, gl.ofbo.height,
+				0, 0, screen_width, screen_height,
+				GL_COLOR_BUFFER_BIT, GL_LINEAR);
+    	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	}
 	return true;
 }

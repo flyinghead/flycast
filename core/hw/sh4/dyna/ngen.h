@@ -85,7 +85,7 @@ u32 DYNACALL rdv_DoInterrupts_pc(u32 pc);
 void ngen_init();
 
 //Called to compile a block
-void ngen_Compile(RuntimeBlockInfo* block,bool force_checks, bool reset, bool staging,bool optimise);
+void ngen_Compile(RuntimeBlockInfo* block, SmcCheckEnum smc_checks, bool reset, bool staging,bool optimise);
 
 //Called when blocks are reseted
 void ngen_ResetBlocks();
