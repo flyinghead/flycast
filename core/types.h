@@ -385,9 +385,9 @@ using namespace std;
 #include "stdclass.h"
 
 #ifndef RELEASE
-#define EMUERROR(format, ...) printf("Error in %s:%s:%d: " format "\n", \
-		strlen(__FILE__) <= 20 ? __FILE__ : __FILE__ + strlen(__FILE__) - 20, \
-		__FUNCTION__, __LINE__, ##__VA_ARGS__)
+#define EMUERROR(format, ...) printf("Error in %20s:%s:%d: " format "\n", \
+		__FILE__, __FUNCTION__, __LINE__, ##__VA_ARGS__)
+//strlen(__FILE__) <= 20 ? __FILE__ : __FILE__ + strlen(__FILE__) - 20, 
 #else
 #define EMUERROR(format, ...)
 #endif
@@ -521,7 +521,7 @@ typedef union
 #if COMPILER_VC==BUILD_COMPILER
 #pragma warning( disable : 4127 4996 /*4244*/)
 #else
-#define stricmp strcasecmp
+#define stricmp _stricmp // ISO , was strcasecmp
 #endif
 
 #ifndef STRIP_TEXT

@@ -5,12 +5,10 @@
 #include "types.h"
 #include "cfg/cfg.h"
 
-#ifdef WIN32
-#include <direct.h>
-#endif
 
-#if BUILD_COMPILER==COMPILER_VC
+#if BUILD_COMPILER==COMPILER_VC || (WIN32 && BUILD_COMPILER==COMPILER_CLANG)
 	#include <io.h>
+	#include <direct.h>
 	#define access _access
 	#define R_OK   4
 #else

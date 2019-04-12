@@ -441,7 +441,7 @@ extern u32 old_dn;
 //./core/hw/sh4/sh4_sched.o
 extern u64 sh4_sched_ffb;
 extern u32 sh4_sched_intr;
-extern vector<sched_list> list;
+extern vector<sched_list> sch_list;
 //extern int sh4_sched_next_id;
 
 
@@ -975,8 +975,6 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	REICAST_S(decoded_srimask);
 
 
-
-
 	//default to nommu_full
 	i = 3 ;
 	if ( do_sqw_nommu == &do_sqw_nommu_area_3)
@@ -1008,48 +1006,49 @@ bool dc_serialize(void **data, unsigned int *total_size)
 
 	//extern vector<sched_list> list;
 
-	REICAST_S(list[aica_schid].tag) ;
-	REICAST_S(list[aica_schid].start) ;
-	REICAST_S(list[aica_schid].end) ;
 
-	REICAST_S(list[rtc_schid].tag) ;
-	REICAST_S(list[rtc_schid].start) ;
-	REICAST_S(list[rtc_schid].end) ;
+	REICAST_S(sch_list[aica_schid].tag) ;
+	REICAST_S(sch_list[aica_schid].start) ;
+	REICAST_S(sch_list[aica_schid].end) ;
 
-	REICAST_S(list[gdrom_schid].tag) ;
-	REICAST_S(list[gdrom_schid].start) ;
-	REICAST_S(list[gdrom_schid].end) ;
+	REICAST_S(sch_list[rtc_schid].tag) ;
+	REICAST_S(sch_list[rtc_schid].start) ;
+	REICAST_S(sch_list[rtc_schid].end) ;
 
-	REICAST_S(list[maple_schid].tag) ;
-	REICAST_S(list[maple_schid].start) ;
-	REICAST_S(list[maple_schid].end) ;
+	REICAST_S(sch_list[gdrom_schid].tag) ;
+	REICAST_S(sch_list[gdrom_schid].start) ;
+	REICAST_S(sch_list[gdrom_schid].end) ;
 
-	REICAST_S(list[dma_sched_id].tag) ;
-	REICAST_S(list[dma_sched_id].start) ;
-	REICAST_S(list[dma_sched_id].end) ;
+	REICAST_S(sch_list[maple_schid].tag) ;
+	REICAST_S(sch_list[maple_schid].start) ;
+	REICAST_S(sch_list[maple_schid].end) ;
+
+	REICAST_S(sch_list[dma_sched_id].tag) ;
+	REICAST_S(sch_list[dma_sched_id].start) ;
+	REICAST_S(sch_list[dma_sched_id].end) ;
 
 	for (int i = 0; i < 3; i++)
 	{
-		REICAST_S(list[tmu_sched[i]].tag) ;
-		REICAST_S(list[tmu_sched[i]].start) ;
-		REICAST_S(list[tmu_sched[i]].end) ;
+		REICAST_S(sch_list[tmu_sched[i]].tag) ;
+		REICAST_S(sch_list[tmu_sched[i]].start) ;
+		REICAST_S(sch_list[tmu_sched[i]].end) ;
 	}
 
-	REICAST_S(list[render_end_schid].tag) ;
-	REICAST_S(list[render_end_schid].start) ;
-	REICAST_S(list[render_end_schid].end) ;
+	REICAST_S(sch_list[render_end_schid].tag) ;
+	REICAST_S(sch_list[render_end_schid].start) ;
+	REICAST_S(sch_list[render_end_schid].end) ;
 
-	REICAST_S(list[vblank_schid].tag) ;
-	REICAST_S(list[vblank_schid].start) ;
-	REICAST_S(list[vblank_schid].end) ;
+	REICAST_S(sch_list[vblank_schid].tag) ;
+	REICAST_S(sch_list[vblank_schid].start) ;
+	REICAST_S(sch_list[vblank_schid].end) ;
 
-	REICAST_S(list[time_sync].tag) ;
-	REICAST_S(list[time_sync].start) ;
-	REICAST_S(list[time_sync].end) ;
+	REICAST_S(sch_list[time_sync].tag) ;
+	REICAST_S(sch_list[time_sync].start) ;
+	REICAST_S(sch_list[time_sync].end) ;
 
-	REICAST_S(list[modem_sched].tag) ;
-    REICAST_S(list[modem_sched].start) ;
-    REICAST_S(list[modem_sched].end) ;
+	REICAST_S(sch_list[modem_sched].tag) ;
+    REICAST_S(sch_list[modem_sched].start) ;
+    REICAST_S(sch_list[modem_sched].end) ;
 
 
 
@@ -1408,50 +1407,50 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	REICAST_US(sh4_sched_ffb);
 	REICAST_US(sh4_sched_intr);
 
-	//extern vector<sched_list> list;
+	//extern vector<sched_list> sch_list;
 
-	REICAST_US(list[aica_schid].tag) ;
-	REICAST_US(list[aica_schid].start) ;
-	REICAST_US(list[aica_schid].end) ;
+	REICAST_US(sch_list[aica_schid].tag) ;
+	REICAST_US(sch_list[aica_schid].start) ;
+	REICAST_US(sch_list[aica_schid].end) ;
 
-	REICAST_US(list[rtc_schid].tag) ;
-	REICAST_US(list[rtc_schid].start) ;
-	REICAST_US(list[rtc_schid].end) ;
+	REICAST_US(sch_list[rtc_schid].tag) ;
+	REICAST_US(sch_list[rtc_schid].start) ;
+	REICAST_US(sch_list[rtc_schid].end) ;
 
-	REICAST_US(list[gdrom_schid].tag) ;
-	REICAST_US(list[gdrom_schid].start) ;
-	REICAST_US(list[gdrom_schid].end) ;
+	REICAST_US(sch_list[gdrom_schid].tag) ;
+	REICAST_US(sch_list[gdrom_schid].start) ;
+	REICAST_US(sch_list[gdrom_schid].end) ;
 
-	REICAST_US(list[maple_schid].tag) ;
-	REICAST_US(list[maple_schid].start) ;
-	REICAST_US(list[maple_schid].end) ;
+	REICAST_US(sch_list[maple_schid].tag) ;
+	REICAST_US(sch_list[maple_schid].start) ;
+	REICAST_US(sch_list[maple_schid].end) ;
 
-	REICAST_US(list[dma_sched_id].tag) ;
-	REICAST_US(list[dma_sched_id].start) ;
-	REICAST_US(list[dma_sched_id].end) ;
+	REICAST_US(sch_list[dma_sched_id].tag) ;
+	REICAST_US(sch_list[dma_sched_id].start) ;
+	REICAST_US(sch_list[dma_sched_id].end) ;
 
 	for (int i = 0; i < 3; i++)
 	{
-		REICAST_US(list[tmu_sched[i]].tag) ;
-		REICAST_US(list[tmu_sched[i]].start) ;
-		REICAST_US(list[tmu_sched[i]].end) ;
+		REICAST_US(sch_list[tmu_sched[i]].tag) ;
+		REICAST_US(sch_list[tmu_sched[i]].start) ;
+		REICAST_US(sch_list[tmu_sched[i]].end) ;
 	}
 
-	REICAST_US(list[render_end_schid].tag) ;
-	REICAST_US(list[render_end_schid].start) ;
-	REICAST_US(list[render_end_schid].end) ;
+	REICAST_US(sch_list[render_end_schid].tag) ;
+	REICAST_US(sch_list[render_end_schid].start) ;
+	REICAST_US(sch_list[render_end_schid].end) ;
 
-	REICAST_US(list[vblank_schid].tag) ;
-	REICAST_US(list[vblank_schid].start) ;
-	REICAST_US(list[vblank_schid].end) ;
+	REICAST_US(sch_list[vblank_schid].tag) ;
+	REICAST_US(sch_list[vblank_schid].start) ;
+	REICAST_US(sch_list[vblank_schid].end) ;
 
-	REICAST_US(list[time_sync].tag) ;
-	REICAST_US(list[time_sync].start) ;
-	REICAST_US(list[time_sync].end) ;
+	REICAST_US(sch_list[time_sync].tag) ;
+	REICAST_US(sch_list[time_sync].start) ;
+	REICAST_US(sch_list[time_sync].end) ;
 
-	REICAST_US(list[modem_sched].tag) ;
-    REICAST_US(list[modem_sched].start) ;
-    REICAST_US(list[modem_sched].end) ;
+	REICAST_US(sch_list[modem_sched].tag) ;
+    REICAST_US(sch_list[modem_sched].start) ;
+    REICAST_US(sch_list[modem_sched].end) ;
 
 
 
@@ -1800,48 +1799,48 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 
 	//extern vector<sched_list> list;
 
-	REICAST_US(list[aica_schid].tag) ;
-	REICAST_US(list[aica_schid].start) ;
-	REICAST_US(list[aica_schid].end) ;
+	REICAST_US(sch_list[aica_schid].tag) ;
+	REICAST_US(sch_list[aica_schid].start) ;
+	REICAST_US(sch_list[aica_schid].end) ;
 
-	REICAST_US(list[rtc_schid].tag) ;
-	REICAST_US(list[rtc_schid].start) ;
-	REICAST_US(list[rtc_schid].end) ;
+	REICAST_US(sch_list[rtc_schid].tag) ;
+	REICAST_US(sch_list[rtc_schid].start) ;
+	REICAST_US(sch_list[rtc_schid].end) ;
 
-	REICAST_US(list[gdrom_schid].tag) ;
-	REICAST_US(list[gdrom_schid].start) ;
-	REICAST_US(list[gdrom_schid].end) ;
+	REICAST_US(sch_list[gdrom_schid].tag) ;
+	REICAST_US(sch_list[gdrom_schid].start) ;
+	REICAST_US(sch_list[gdrom_schid].end) ;
 
-	REICAST_US(list[maple_schid].tag) ;
-	REICAST_US(list[maple_schid].start) ;
-	REICAST_US(list[maple_schid].end) ;
+	REICAST_US(sch_list[maple_schid].tag) ;
+	REICAST_US(sch_list[maple_schid].start) ;
+	REICAST_US(sch_list[maple_schid].end) ;
 
-	REICAST_US(list[dma_sched_id].tag) ;
-	REICAST_US(list[dma_sched_id].start) ;
-	REICAST_US(list[dma_sched_id].end) ;
+	REICAST_US(sch_list[dma_sched_id].tag) ;
+	REICAST_US(sch_list[dma_sched_id].start) ;
+	REICAST_US(sch_list[dma_sched_id].end) ;
 
 	for (int i = 0; i < 3; i++)
 	{
-		REICAST_US(list[tmu_sched[i]].tag) ;
-		REICAST_US(list[tmu_sched[i]].start) ;
-		REICAST_US(list[tmu_sched[i]].end) ;
+		REICAST_US(sch_list[tmu_sched[i]].tag) ;
+		REICAST_US(sch_list[tmu_sched[i]].start) ;
+		REICAST_US(sch_list[tmu_sched[i]].end) ;
 	}
 
-	REICAST_US(list[render_end_schid].tag) ;
-	REICAST_US(list[render_end_schid].start) ;
-	REICAST_US(list[render_end_schid].end) ;
+	REICAST_US(sch_list[render_end_schid].tag) ;
+	REICAST_US(sch_list[render_end_schid].start) ;
+	REICAST_US(sch_list[render_end_schid].end) ;
 
-	REICAST_US(list[vblank_schid].tag) ;
-	REICAST_US(list[vblank_schid].start) ;
-	REICAST_US(list[vblank_schid].end) ;
+	REICAST_US(sch_list[vblank_schid].tag) ;
+	REICAST_US(sch_list[vblank_schid].start) ;
+	REICAST_US(sch_list[vblank_schid].end) ;
 
-	REICAST_US(list[time_sync].tag) ;
-	REICAST_US(list[time_sync].start) ;
-	REICAST_US(list[time_sync].end) ;
+	REICAST_US(sch_list[time_sync].tag) ;
+	REICAST_US(sch_list[time_sync].start) ;
+	REICAST_US(sch_list[time_sync].end) ;
 
-	REICAST_US(list[modem_sched].tag) ;
-    REICAST_US(list[modem_sched].start) ;
-    REICAST_US(list[modem_sched].end) ;
+	REICAST_US(sch_list[modem_sched].tag) ;
+    REICAST_US(sch_list[modem_sched].start) ;
+    REICAST_US(sch_list[modem_sched].end) ;
 
 
 

@@ -39,7 +39,8 @@
 #include "linux-dist/main.h"	// FIXME for kcode[]
 #include "gui_util.h"
 #include "gui_android.h"
-#include "version/version.h"
+
+#include "version.h"
 #include "oslib/audiostream.h"
 
 
