@@ -149,7 +149,7 @@
     {
       "environments": [
         {
-          "MINGW64_ROOT": "C:\\msys64\\mingw64",
+          //"MINGW64_ROOT": "C:\\msys64\\mingw64",
           "BIN_ROOT": "${env.MINGW64_ROOT}\\bin",
           "FLAVOR": "x86_64-w64-mingw32",
           "TOOLSET_VERSION": "7.3.0",
@@ -184,7 +184,7 @@
     {
       "environments": [
         {
-          "MINGW64_ROOT": "C:\\msys64\\mingw64",
+          //"MINGW64_ROOT": "C:\\msys64\\mingw64",
           "BIN_ROOT": "${env.MINGW64_ROOT}\\bin",
           "FLAVOR": "x86_64-w64-mingw32",
           "TOOLSET_VERSION": "7.3.0",

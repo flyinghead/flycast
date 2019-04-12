@@ -289,7 +289,7 @@ elseif ((${BUILD_COMPILER} EQUAL ${COMPILER_GCC}) OR
 		(${BUILD_COMPILER} EQUAL ${COMPILER_CLANG})) # AND NOT ${HOST_OS} EQUAL ${OS_WINDOWS}))
 
   
-  set(_C_FLAGS "-fno-operator-names") # or   add_definitions(/DXBYAK_NO_OP_NAMES)
+  set(_C_FLAGS "-fno-operator-names -fpermissive") # or   add_definitions(/DXBYAK_NO_OP_NAMES)
   
   
   if(USE_32B OR TARGET_LINUX_X86)
@@ -305,7 +305,7 @@ elseif ((${BUILD_COMPILER} EQUAL ${COMPILER_GCC}) OR
   endif() # X86 family
   
     
-  set(_CXX_FLAGS "${_CXX_FLAGS} -std=c++17") # -fcxx-exceptions") ## xbyak needs exceptions
+  set(_CXX_FLAGS "${_CXX_FLAGS} -std=c++11") # -fcxx-exceptions") ## xbyak needs exceptions
 
 
 endif()

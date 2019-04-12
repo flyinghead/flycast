@@ -149,4 +149,4 @@ char *read_name(char *reader, char *buffer, int *count)
 	return name;
 }
 
-#endif // BUILD_COMPILER!=COMPILER_VC
+#endif // !COMPILER_VC_OR_CLANG_WIN32

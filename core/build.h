@@ -315,6 +315,8 @@
 
 // Compiler Related
 
+#define COMPILER_VC_OR_CLANG_WIN32 ((BUILD_COMPILER == COMPILER_VC) || (BUILD_COMPILER == COMPILER_CLANG) && defined(WIN32))
+
 #if BUILD_COMPILER!=COMPILER_VC
 #define ATTR_USED   __attribute__((used))
 #define ATTR_UNUSED __attribute__((used))

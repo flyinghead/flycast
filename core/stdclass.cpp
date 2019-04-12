@@ -6,7 +6,7 @@
 #include "cfg/cfg.h"
 
 
-#if BUILD_COMPILER==COMPILER_VC || BUILD_COMPILER==COMPILER_CLANG && defined(WIN32)
+#if COMPILER_VC_OR_CLANG_WIN32
 	#include <io.h>
 	#include <direct.h>
 	#define access _access
@@ -142,8 +142,12 @@ string get_game_dir()
 
 bool make_directory(const string& path)
 {
-#ifdef BUILD_COMPILER==COMPILER_VC || (BUILD_COMPILER==COMPILER_CLANG && defined(WIN32))
-	return _mkdir(path.c_str()) == 0;
+#if COMPILER_VC_OR_CLANG_WIN32
+#define mkdir _mkdir
+#endif
+
+#ifdef _WIN32
+	return mkdir(path.c_str()) == 0;
 #else
 	return mkdir(path.c_str(), 0755) == 0;
 #endif
