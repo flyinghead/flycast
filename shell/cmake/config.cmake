@@ -62,8 +62,8 @@ set(DYNAREC_CPP    0x40000003)
 
 set(COMPILER_VC    0x30000001)  # BUILD_COMPILER
 set(COMPILER_GCC   0x30000002)
-set(COMPILER_CLANG 0x30000002)
-set(COMPILER_INTEL 0x30000002)
+set(COMPILER_CLANG 0x30000003)
+set(COMPILER_INTEL 0x30000004)
 
 
 
@@ -265,11 +265,10 @@ endif()
 
 
 
-
 ## Setup some common flags 
 #
 if ((${BUILD_COMPILER} EQUAL ${COMPILER_VC}) OR
-	(${BUILD_COMPILER} EQUAL ${COMPILER_CLANG} AND ${HOST_OS} EQUAL ${OS_WINDOWS}))
+	(${BUILD_COMPILER} EQUAL ${COMPILER_CLANG}) AND (${HOST_OS} STREQUAL ${OS_WINDOWS}))
 
   if((${HOST_CPU} EQUAL ${CPU_X64}) AND (${FEAT_SHREC} EQUAL ${DYNAREC_JIT})) # AND NOT "${NINJA}" STREQUAL "")
     set(FEAT_SHREC  ${DYNAREC_CPP})
@@ -278,12 +277,12 @@ if ((${BUILD_COMPILER} EQUAL ${COMPILER_VC}) OR
 		
   add_definitions(/D_CRT_SECURE_NO_WARNINGS /D_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES=1)
 
-if(${BUILD_COMPILER} EQUAL ${COMPILER_CLANG})
-  add_definitions(/DXBYAK_NO_OP_NAMES /DTARGET_NO_OPENMP)  #*FIXME* check openmp on clang-cl
-  remove_definitions(/U_HAS_STD_BYTE)
-  set(_CXX_FLAGS "/std:c++14")	# /U_HAS_STD_BYTE not working, have to use c++14 not 17 :|
-  set(_C_FLAGS "-Wno-unused-function -Wno-unused-variable")
-endif()
+  if(${BUILD_COMPILER} EQUAL ${COMPILER_CLANG})
+    add_definitions(/DXBYAK_NO_OP_NAMES /DTARGET_NO_OPENMP)  #*FIXME* check openmp on clang-cl
+    remove_definitions(/U_HAS_STD_BYTE)
+    set(_CXX_FLAGS "/std:c++14")	# /U_HAS_STD_BYTE not working, have to use c++14 not 17 :|
+    set(_C_FLAGS "-Wno-unused-function -Wno-unused-variable")
+  endif()
 
 
 elseif ((${BUILD_COMPILER} EQUAL ${COMPILER_GCC}) OR
@@ -316,8 +315,8 @@ set(_CXX_FLAGS "${_CXX_FLAGS} ${_C_FLAGS}")
 
 
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${_C_FLAGS}")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${_CXX_FLAGS}")
+set(CMAKE_C_FLAGS " ${_C_FLAGS}") # ${CMAKE_C_FLAGS}   -- these hold default VC flags for non VC Build ?
+set(CMAKE_CXX_FLAGS " ${_CXX_FLAGS}") # ${CMAKE_CXX_FLAGS}
 
 
 
