@@ -287,10 +287,6 @@ if ((${BUILD_COMPILER} EQUAL ${COMPILER_VC}) OR
 
 elseif ((${BUILD_COMPILER} EQUAL ${COMPILER_GCC}) OR
 		(${BUILD_COMPILER} EQUAL ${COMPILER_CLANG})) # AND NOT ${HOST_OS} EQUAL ${OS_WINDOWS}))
-
-  
-  set(_C_FLAGS "-fno-operator-names -fpermissive") # or   add_definitions(/DXBYAK_NO_OP_NAMES)
-  
   
   if(USE_32B OR TARGET_LINUX_X86)
     set(_C_FLAGS "${_C_FLAGS} -m32")
@@ -305,7 +301,7 @@ elseif ((${BUILD_COMPILER} EQUAL ${COMPILER_GCC}) OR
   endif() # X86 family
   
     
-  set(_CXX_FLAGS "${_CXX_FLAGS} -std=c++11") # -fcxx-exceptions") ## xbyak needs exceptions
+  set(_CXX_FLAGS "${_CXX_FLAGS} -fno-operator-names -fpermissive -std=c++11") # -fcxx-exceptions") ## xbyak needs exceptions
 
 
 endif()
@@ -419,60 +415,6 @@ add_definitions(-DDEF_CONSOLE)
 
 set(RE_CMAKE_CONFIGURED 1)
 #add_definitions(-D=${})
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-### These were for internal testing, don't use ###
-#
-function(CpuIs CpuType Res)
-  set(${Res} OFF PARENT_SCOPE)
-  if (${HOST_CPU} EQUAL ${CpuType})
-    set(${Res} ON PARENT_SCOPE)
-  endif()
-endfunction()
-
-macro(CpuIsX86 res)
-  CpuIs(CPU_X86 ${res})
-endmacro()
-
-macro(CpuIsX64 res)
-  CpuIs(CPU_X64 ${res})
-endmacro()
-
-macro(CpuIsARM res)
-  CpuIs(CPU_ARM ${res})
-endmacro()
-
-macro(CpuIsA64 res)
-  CpuIs(CPU_A64 ${res})
-endmacro()
-
-macro(CpuIsPPC res)
-  CpuIs(CPU_PPC ${res})
-endmacro()
-
-macro(CpuIsPPC64 res)
-  CpuIs(CPU_PPC64 ${res})
-endmacro()
-
-macro(CpuIsMIPS res)
-  CpuIs(CPU_MIPS ${res})
-endmacro()
-
-macro(CpuIsMIPS64 res)
-  CpuIs(CPU_MIPS64 ${res})
-endmacro()
 
 
 

@@ -12,23 +12,9 @@ set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 
-## built-in cmake modules #
-#
-#include(CheckIncludeFiles)
-#include(CheckFunctionExists)
-#include(CheckCSourceCompiles)
-
-#set(CMAKE_BINARY_DIR       ${CMAKE_CURRENT_BINARY_DIR}/bin)
-#set(LIBRARY_OUTPUT_PATH    ${CMAKE_CURRENT_BINARY_DIR})
-#set(EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR})
-
-
-
 set(reicast_root_path  "${CMAKE_CURRENT_SOURCE_DIR}")
 set(reicast_core_path  "${reicast_root_path}/core")
 set(reicast_shell_path "${reicast_root_path}/shell")
-
-include_directories ("${reicast_core_path}")
 
 list(APPEND CMAKE_MODULE_PATH "${reicast_shell_path}/cmake")
 
@@ -77,7 +63,6 @@ set(core_SRCS
   ${reios_SRCS}
   ${imgread_SRCS}
   ${profiler_SRCS}
-# ${archive_SRCS}
   ${d_core}/archive/archive.cpp ${d_core}/archive/archive.h
   ${d_core}/nullDC.cpp
   ${d_core}/stdclass.cpp
@@ -85,6 +70,10 @@ set(core_SRCS
   ${d_core}/serialize.cpp
 )
 
+  
+if(${BUILD_COMPILER} EQUAL ${COMPILER_GCC})	# Add Clang if NOT WIN32 *FIXME* 
+  list(APPEND core_SRCS ${archive_SRCS})
+endif()
 
 if(${FEAT_SHREC} EQUAL ${DYNAREC_JIT})
 #
@@ -149,9 +138,6 @@ set(pico_SRCS ${picoModS} ${picoStkS})
 
 set(deps_SRCS
   ${lz_SRCS}
-# ${lzip_SRCS}
-# ${lzma_SRCS}
-# ${pico_SRCS}
   ${lpng_SRCS}
   ${lelf_SRCS}
   ${chdr_SRCS}
@@ -166,7 +152,13 @@ set(deps_SRCS
   ${xbyak_H}
 )
   
-
+if(${BUILD_COMPILER} EQUAL ${COMPILER_GCC})	# Add Clang if NOT WIN32 *FIXME* 
+  list(APPEND deps_SRCS
+    ${lzip_SRCS}
+    ${lzma_SRCS}
+    ${pico_SRCS}
+  )
+endif()
 
 ### libosd.cmake ################################################################################
 
@@ -187,7 +179,7 @@ if (${HOST_OS} EQUAL ${OS_WINDOWS})
   list(APPEND osd_SRCS ${d_aout}/audiobackend_directsound.cpp)
   
   
-  link_libraries(Dsound.lib winmm.lib)
+  link_libraries(dsound.lib winmm.lib xinput.lib wsock32.lib opengl32.lib)
 
   
 elseif (${HOST_OS} EQUAL ${OS_LINUX} OR ${HOST_OS} EQUAL ${OS_ANDROID})
@@ -246,6 +238,12 @@ else()
 endif()
 
 
+
+## 
+
+include_directories ("${reicast_core_path}")
+
+add_definitions(-D_7ZIP_ST -DCHD5_LZMA)
 
 
 
