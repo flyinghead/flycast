@@ -518,10 +518,10 @@ typedef union
 
 
 
-#if COMPILER_VC==BUILD_COMPILER
+#if BUILD_COMPILER==COMPILER_VC || BUILD_COMPILER==COMPILER_CLANG && WIN32
 #pragma warning( disable : 4127 4996 /*4244*/)
 #else
-#define stricmp _stricmp // ISO , was strcasecmp
+#define stricmp strcasecmp
 #endif
 
 #ifndef STRIP_TEXT

@@ -86,6 +86,8 @@
         }
       ]
     },
+
+    // Console SDK's
     {
       "name": "PS4 SDK",
       "generator": "Ninja",
@@ -114,6 +116,8 @@
       "buildCommandArgs": "-v",
       "ctestCommandArgs": ""
     },
+
+    // UWP and VS Gen (temp?)
     {
       "name": "uwp-x64-Release",
       "generator": "Visual Studio 15 2017 Win64",
