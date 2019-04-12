@@ -142,7 +142,7 @@ string get_game_dir()
 
 bool make_directory(const string& path)
 {
-#ifdef WIN32
+#ifdef BUILD_COMPILER==COMPILER_VC || (BUILD_COMPILER==COMPILER_CLANG && defined(WIN32))
 	return _mkdir(path.c_str()) == 0;
 #else
 	return mkdir(path.c_str(), 0755) == 0;
