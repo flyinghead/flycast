@@ -305,7 +305,7 @@ elseif ((${BUILD_COMPILER} EQUAL ${COMPILER_GCC}) OR
   endif() # X86 family
   
     
-  set(_CXX_FLAGS "${_CXX_FLAGS} -std=c++17 -fcxx-exceptions") ## xbyak needs exceptions
+  set(_CXX_FLAGS "${_CXX_FLAGS} -std=c++17") # -fcxx-exceptions") ## xbyak needs exceptions
 
 
 endif()

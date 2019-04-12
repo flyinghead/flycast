@@ -518,7 +518,7 @@ typedef union
 
 
 
-#if BUILD_COMPILER==COMPILER_VC || BUILD_COMPILER==COMPILER_CLANG && WIN32
+#if BUILD_COMPILER==COMPILER_VC || BUILD_COMPILER==COMPILER_CLANG && defined(WIN32)
 #pragma warning( disable : 4127 4996 /*4244*/)
 #else
 #define stricmp strcasecmp

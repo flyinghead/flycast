@@ -20,7 +20,7 @@
  */
 #include "types.h"
 
-#if BUILD_COMPILER!=COMPILER_VC && (BUILD_COMPILER!=COMPILER_CLANG || !WIN32)
+#if BUILD_COMPILER!=COMPILER_VC && (BUILD_COMPILER!=COMPILER_CLANG || !defined(WIN32))
 
 #include <stdio.h>
 #include <errno.h>

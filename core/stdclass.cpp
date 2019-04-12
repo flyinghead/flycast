@@ -6,7 +6,7 @@
 #include "cfg/cfg.h"
 
 
-#if BUILD_COMPILER==COMPILER_VC || (WIN32 && BUILD_COMPILER==COMPILER_CLANG)
+#if BUILD_COMPILER==COMPILER_VC || BUILD_COMPILER==COMPILER_CLANG && defined(WIN32)
 	#include <io.h>
 	#include <direct.h>
 	#define access _access
