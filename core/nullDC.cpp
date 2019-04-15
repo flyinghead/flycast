@@ -844,6 +844,9 @@ void dc_loadstate()
 #if FEAT_AREC == DYNAREC_JIT
     FlushCache();
 #endif
+#ifndef NO_MMU
+    mmu_flush_table();
+#endif
 
 	if ( ! dc_unserialize(&data_ptr, &total_size) )
 	{

@@ -35,7 +35,8 @@ enum serialize_version_enum {
 	V2,
 	V3,
 	V4,
-	V5_LIBRETRO
+	V5_LIBRETRO,
+	V5 = 100
 } ;
 
 //./core/hw/arm7/arm_mem.cpp
@@ -434,6 +435,9 @@ extern Sh4RCB* p_sh4rcb;
 //extern u8* sh4_dyna_rcb;
 extern u32 old_rm;
 extern u32 old_dn;
+extern f32 saved_xffr[32];
+extern u32 saved_fpul;
+extern fpscr_t saved_fpscr;
 
 
 
@@ -791,7 +795,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 {
 	int i = 0;
 	int j = 0;
-	serialize_version_enum version = V4 ;
+	serialize_version_enum version = V5 ;
 
 	*total_size = 0 ;
 
@@ -999,8 +1003,9 @@ bool dc_serialize(void **data, unsigned int *total_size)
 
 	REICAST_S(old_rm);
 	REICAST_S(old_dn);
-
-
+	REICAST_S(saved_xffr);
+	REICAST_S(saved_fpul);
+	REICAST_S(saved_fpscr);
 
 
 	REICAST_S(sh4_sched_ffb);
@@ -1581,7 +1586,7 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	REICAST_US(version) ;
 	if (version == V5_LIBRETRO)
 		return dc_unserialize_libretro(data, total_size);
-	if (version != V4)
+	if (version != V4 && version < V5)
 	{
 		fprintf(stderr, "Save State version not supported: %d\n", version);
 		return false;
@@ -1789,9 +1794,12 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 
 	REICAST_US(old_rm);
 	REICAST_US(old_dn);
-
-
-
+	if (version >= V5)
+	{
+		REICAST_US(saved_xffr);
+		REICAST_US(saved_fpul);
+		REICAST_US(saved_fpscr);
+	}
 
 	REICAST_US(sh4_sched_ffb);
 	REICAST_US(sh4_sched_intr);
