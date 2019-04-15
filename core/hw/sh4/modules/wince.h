@@ -39,7 +39,7 @@ static bool read_mem8(u32 addr, u8& data)
 	return true;
 }
 
-static inline u32 GetCurrentThreadId()
+static inline u32 getCurrentThreadId()
 {
 	u32 addr = PUserKData + SYSHANDLE_OFFSET + SH_CURTHREAD * 4;
 	u32 tid;
@@ -49,7 +49,7 @@ static inline u32 GetCurrentThreadId()
 		return 0;
 }
 
-static inline u32 GetCurrentProcessId()
+static inline u32 getCurrentProcessId()
 {
 	u32 addr = PUserKData + SYSHANDLE_OFFSET + SH_CURPROC * 4;
 	u32 pid;
@@ -294,7 +294,7 @@ static bool print_wince_syscall(u32 address)
 			sprintf(method_buf, "[%d]", meth_id);
 			method = method_buf;
 		}
-		printf("WinCE %08x %04x.%04x %s: %s", address, GetCurrentProcessId() & 0xffff, GetCurrentThreadId() & 0xffff, api, method);
+		printf("WinCE %08x %04x.%04x %s: %s", address, getCurrentProcessId() & 0xffff, getCurrentThreadId() & 0xffff, api, method);
 		if (address == 0xfffffd51)		// SetLastError
 			printf(" dwErrCode = %x\n", r[4]);
 		else if (address == 0xffffd5ef)	// CreateFile

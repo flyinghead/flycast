@@ -125,9 +125,9 @@ WIN32_ONLY( ".seh_pushreg %r14              \n\t")
 			"movl $" _S(SH4_TIMESLICE) "," _U "cycle_counter(%rip)  \n"
 
 #ifdef _WIN32
-			"movq $" _U "jmp_env, %rcx     \n\t"	// SETJMP
+			"lea " _U "jmp_env(%rip), %rcx	\n\t"	// SETJMP
 #else
-			"movq $" _U "jmp_env, %rdi     \n\t"
+			"lea " _U "jmp_env(%rip), %rdi	\n\t"
 #endif
 			"call " _U "setjmp				\n\t"
 //			"testl %rax, %rax               \n\t"
