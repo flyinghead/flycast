@@ -1,6 +1,8 @@
 #include "build.h"
 
 #if FEAT_SHREC == DYNAREC_JIT && HOST_CPU == CPU_X64
+#include <setjmp.h>
+
 #define EXPLODE_SPANS
 //#define PROFILING
 
@@ -77,6 +79,8 @@ static __attribute((used)) void end_slice()
 #error RAM_SIZE_MAX unknown
 #endif
 
+jmp_buf jmp_env;
+
 #ifdef _WIN32
         // Fully naked function in win32 for proper SEH prologue
 	__asm__ (
@@ -120,6 +124,14 @@ WIN32_ONLY( ".seh_pushreg %r14              \n\t")
 #endif
 			"movl $" _S(SH4_TIMESLICE) "," _U "cycle_counter(%rip)  \n"
 
+#ifdef _WIN32
+			"movq $" _U "jmp_env, %rcx     \n\t"	// SETJMP
+#else
+			"movq $" _U "jmp_env, %rdi     \n\t"
+#endif
+			"call " _U "setjmp				\n\t"
+//			"testl %rax, %rax               \n\t"
+
 		"1:                                 \n\t"   // run_loop
 			"movq " _U "p_sh4rcb(%rip), %rax		\n\t"
 			"movl " _S(CPU_RUNNING) "(%rax), %edx	\n\t"
@@ -136,7 +148,7 @@ WIN32_ONLY( ".seh_pushreg %r14              \n\t")
 #else
 			"movl " _S(PC)"(%rax), %edi     \n\t"
 #endif
-			"call " _U "bm_GetCode2         \n\t"
+			"call " _U "bm_GetCodeByVAddr	\n\t"
 			"call *%rax                     \n\t"
 			"movl " _U "cycle_counter(%rip), %ecx \n\t"
 			"testl %ecx, %ecx               \n\t"
@@ -212,51 +224,31 @@ static u32 exception_raised;
 template<typename T>
 static T ReadMemNoEx(u32 addr, u32 pc)
 {
-	try {
-		exception_raised = 0;
-		if (sizeof(T) == 1)
-			return ReadMem8(addr);
-		else if (sizeof(T) == 2)
-			return ReadMem16(addr);
-		else if (sizeof(T) == 4)
-			return ReadMem32(addr);
-		else if (sizeof(T) == 8)
-			return ReadMem64(addr);
-	} catch (SH4ThrownException& ex) {
+	T rv = mmu_ReadMemNoEx<T>(addr, &exception_raised);
+	if (exception_raised)
+	{
 		if (pc & 1)
-		{
 			// Delay slot
-			AdjustDelaySlotException(ex);
-			pc--;
-		}
-		Do_Exception(pc, ex.expEvn, ex.callVect);
-		exception_raised = 1;
-		return 0;
+			spc = pc - 1;
+		else
+			spc = pc;
+		longjmp(jmp_env, 1);
 	}
+	return rv;
 }
 
 template<typename T>
 static void WriteMemNoEx(u32 addr, T data, u32 pc)
 {
-	try {
-		if (sizeof(T) == 1)
-			WriteMem8(addr, data);
-		else if (sizeof(T) == 2)
-			WriteMem16(addr, data);
-		else if (sizeof(T) == 4)
-			WriteMem32(addr, data);
-		else if (sizeof(T) == 8)
-			WriteMem64(addr, data);
-		exception_raised = 0;
-	} catch (SH4ThrownException& ex) {
+	exception_raised = mmu_WriteMemNoEx<T>(addr, data);
+	if (exception_raised)
+	{
 		if (pc & 1)
-		{
 			// Delay slot
-			AdjustDelaySlotException(ex);
-			pc--;
-		}
-		Do_Exception(pc, ex.expEvn, ex.callVect);
-		exception_raised = 1;
+			spc = pc - 1;
+		else
+			spc = pc;
+		longjmp(jmp_env, 1);
 	}
 }
 
@@ -352,7 +344,7 @@ public:
 		sub(rsp, 0x8);		// align stack
 #endif
 		Xbyak::Label exit_block;
-
+/*
 		if (mmu_enabled() && block->has_fpu_op)
 		{
 			Xbyak::Label fpu_enabled;
@@ -367,7 +359,7 @@ public:
 			jmp(exit_block, T_NEAR);
 			L(fpu_enabled);
 		}
-
+*/
 		for (current_opid = 0; current_opid < block->oplist.size(); current_opid++)
 		{
 			shil_opcode& op  = block->oplist[current_opid];
@@ -449,25 +441,32 @@ public:
 			{
 				u32 size = op.flags & 0x7f;
 				bool immediate_address = op.rs1.is_imm();
-				if (immediate_address && mmu_enabled() && (op.rs1._imm >> 12) != (block->vaddr >> 12))
+				u32 addr = op.rs1._imm;
+				if (immediate_address && mmu_enabled())
 				{
-					// When full mmu is on, only consider addresses in the same 4k page
-					immediate_address = false;
+					if ((op.rs1._imm >> 12) != (block->vaddr >> 12))
+					{
+						// When full mmu is on, only consider addresses in the same 4k page
+						immediate_address = false;
+					}
+					else
+					{
+						u32 paddr;
+						u32 rv;
+						if (size == 2)
+							rv = mmu_data_translation<MMU_TT_DREAD, u16>(addr, paddr);
+						else if (size == 4)
+							rv = mmu_data_translation<MMU_TT_DREAD, u32>(addr, paddr);
+						else
+							die("Invalid immediate size");
+						if (rv != MMU_ERROR_NONE)
+							immediate_address = false;
+						else
+							addr = paddr;
+					}
 				}
 				if (immediate_address)
 				{
-					u32 addr = op.rs1._imm;
-					if (mmu_enabled())
-					{
-						u32 paddr;
-						if (size == 2)
-							mmu_data_translation<MMU_TT_DREAD, u16>(addr, paddr);
-						else if (size == 4)
-							mmu_data_translation<MMU_TT_DREAD, u32>(addr, paddr);
-						else
-							die("Invalid immediate size");
-						addr = paddr;
-					}
 					bool isram = false;
 					void* ptr = _vmem_read_const(addr, isram, size);
 
@@ -581,11 +580,11 @@ public:
 						die("1..8 bytes");
 					}
 
-					if (mmu_enabled())
-					{
-						test(dword[(void *)&exception_raised], 1);
-						jnz(exit_block, T_NEAR);
-					}
+//					if (mmu_enabled())
+//					{
+//						test(dword[(void *)&exception_raised], 1);
+//						jnz(exit_block, T_NEAR);
+//					}
 
 					if (size != 8)
 						host_reg_to_shil_param(op.rd, ecx);
@@ -674,11 +673,11 @@ public:
 					die("1..8 bytes");
 				}
 
-				if (mmu_enabled())
-				{
-					test(dword[(void *)&exception_raised], 1);
-					jnz(exit_block, T_NEAR);
-				}
+//				if (mmu_enabled())
+//				{
+//					test(dword[(void *)&exception_raised], 1);
+//					jnz(exit_block, T_NEAR);
+//				}
 			}
 			break;
 
@@ -1353,6 +1352,10 @@ private:
 //			cmp(byte[rax], block->asid);
 //			jne(reinterpret_cast<const void*>(&ngen_blockcheckfail));
 //		}
+		// FIXME Neither of these tests should be necessary
+		// However the decoder makes various assumptions about the current PC value, which are simply not
+		// true in a virtualized memory model. So this can only work if virtual and phy addresses are the
+		// same at compile and run times.
 		if (mmu_enabled())
 		{
 			mov(rax, (uintptr_t)&next_pc);

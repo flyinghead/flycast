@@ -84,7 +84,7 @@ naked void ngen_mainloop(void* cntx)
 		//next_pc _MUST_ be on ecx
 no_update:
 		mov esi,ecx;
-		call bm_GetCode
+		call bm_GetCodeByVAddr
 		jmp eax;
 
 intc_sched_offs:

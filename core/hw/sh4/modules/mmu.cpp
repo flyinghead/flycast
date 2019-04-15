@@ -101,7 +101,7 @@ WriteMem16Func WriteMem16;
 WriteMem32Func WriteMem32;
 WriteMem64Func WriteMem64;
 
-const u32 mmu_mask[4] =
+extern const u32 mmu_mask[4] =
 {
 	((0xFFFFFFFF) >> 10) << 10,	//1 kb page
 	((0xFFFFFFFF) >> 12) << 12,	//4 kb page
@@ -109,7 +109,7 @@ const u32 mmu_mask[4] =
 	((0xFFFFFFFF) >> 20) << 20	//1 MB page
 };
 
-const u32 fast_reg_lut[8] =
+extern const u32 fast_reg_lut[8] =
 {
 	0, 0, 0, 0	//P0-U0
 	, 1		//P1
@@ -134,6 +134,7 @@ const u32 ITLB_LRU_AND[4] =
 };
 u32 ITLB_LRU_USE[64];
 
+#ifndef FAST_MMU
 //sync mem mapping to mmu , suspend compiled blocks if needed.entry is a UTLB entry # , -1 is for full sync
 bool UTLB_Sync(u32 entry)
 {
@@ -160,6 +161,7 @@ void ITLB_Sync(u32 entry)
 {
 	printf_mmu("ITLB MEM remap %d : 0x%X to 0x%X : %d\n", entry, ITLB[entry].Address.VPN << 10, ITLB[entry].Data.PPN << 10, ITLB[entry].Data.V);
 }
+#endif
 
 void RaiseException(u32 expEvnt, u32 callVect) {
 #if !defined(NO_MMU)
@@ -170,15 +172,11 @@ void RaiseException(u32 expEvnt, u32 callVect) {
 #endif
 }
 
-u32 mmu_error_TT;
 void mmu_raise_exception(u32 mmu_error, u32 address, u32 am)
 {
 	printf_mmu("mmu_raise_exception -> pc = 0x%X : ", next_pc);
 	CCN_TEA = address;
 	CCN_PTEH.VPN = address >> 10;
-
-	//save translation type error :)
-	mmu_error_TT = am;
 
 	switch (mmu_error)
 	{
@@ -262,6 +260,94 @@ void mmu_raise_exception(u32 mmu_error, u32 address, u32 am)
 	die("Unknown mmu_error");
 }
 
+
+void DoMMUException(u32 address, u32 mmu_error, u32 access_type)
+{
+	printf_mmu("DoMMUException -> pc = 0x%X : ", next_pc);
+	CCN_TEA = address;
+	CCN_PTEH.VPN = address >> 10;
+
+	switch (mmu_error)
+	{
+		//No error
+	case MMU_ERROR_NONE:
+		printf("Error : mmu_raise_exception(MMU_ERROR_NONE)\n");
+		break;
+
+		//TLB miss
+	case MMU_ERROR_TLB_MISS:
+		printf_mmu("MMU_ERROR_UTLB_MISS 0x%X, handled\n", address);
+		if (access_type == MMU_TT_DWRITE)			//WTLBMISS - Write Data TLB Miss Exception
+			Do_Exception(next_pc, 0x60, 0x400);
+		else if (access_type == MMU_TT_DREAD)		//RTLBMISS - Read Data TLB Miss Exception
+			Do_Exception(next_pc, 0x40, 0x400);
+		else							//ITLBMISS - Instruction TLB Miss Exception
+			Do_Exception(next_pc, 0x40, 0x400);
+
+		return;
+		break;
+
+		//TLB Multihit
+	case MMU_ERROR_TLB_MHIT:
+		printf("MMU_ERROR_TLB_MHIT @ 0x%X\n", address);
+		break;
+
+		//Mem is read/write protected (depends on translation type)
+	case MMU_ERROR_PROTECTED:
+		printf_mmu("MMU_ERROR_PROTECTED 0x%X, handled\n", address);
+		if (access_type == MMU_TT_DWRITE)			//WRITEPROT - Write Data TLB Protection Violation Exception
+			Do_Exception(next_pc, 0xC0, 0x100);
+		else if (access_type == MMU_TT_DREAD)		//READPROT - Data TLB Protection Violation Exception
+			Do_Exception(next_pc, 0xA0, 0x100);
+		else
+		{
+			verify(false);
+		}
+		return;
+		break;
+
+		//Mem is write protected , firstwrite
+	case MMU_ERROR_FIRSTWRITE:
+		printf_mmu("MMU_ERROR_FIRSTWRITE\n");
+		verify(access_type == MMU_TT_DWRITE);
+		//FIRSTWRITE - Initial Page Write Exception
+		Do_Exception(next_pc, 0x80, 0x100);
+
+		return;
+		break;
+
+		//data read/write missasligned
+	case MMU_ERROR_BADADDR:
+		if (access_type == MMU_TT_DWRITE)			//WADDERR - Write Data Address Error
+			Do_Exception(next_pc, 0x100, 0x100);
+		else if (access_type == MMU_TT_DREAD)		//RADDERR - Read Data Address Error
+			Do_Exception(next_pc, 0xE0, 0x100);
+		else							//IADDERR - Instruction Address Error
+		{
+#ifdef TRACE_WINCE_SYSCALLS
+			if (!print_wince_syscall(address))
+#endif
+				printf_mmu("MMU_ERROR_BADADDR(i) 0x%X\n", address);
+			Do_Exception(next_pc, 0xE0, 0x100);
+			return;
+		}
+		printf_mmu("MMU_ERROR_BADADDR(d) 0x%X, handled\n", address);
+		return;
+		break;
+
+		//Can't Execute
+	case MMU_ERROR_EXECPROT:
+		printf("MMU_ERROR_EXECPROT 0x%X\n", address);
+
+		//EXECPROT - Instruction TLB Protection Violation Exception
+		Do_Exception(next_pc, 0xA0, 0x100);
+		return;
+		break;
+	}
+
+	die("Unknown mmu_error");
+}
+
 bool mmu_match(u32 va, CCN_PTEH_type Address, CCN_PTEL_type Data)
 {
 	if (Data.V == 0)
@@ -283,6 +369,7 @@ bool mmu_match(u32 va, CCN_PTEH_type Address, CCN_PTEL_type Data)
 	return false;
 }
 
+#ifndef FAST_MMU
 //Do a full lookup on the UTLB entry's
 template<bool internal>
 u32 mmu_full_lookup(u32 va, const TLB_Entry** tlb_entry_ret, u32& rv)
@@ -328,6 +415,7 @@ u32 mmu_full_lookup(u32 va, const TLB_Entry** tlb_entry_ret, u32& rv)
 
 	return MMU_ERROR_NONE;
 }
+#endif
 
 //Simple QACR translation for mmu (when AT is off)
 u32 mmu_QACR_SQ(u32 va)
@@ -342,6 +430,7 @@ u32 mmu_QACR_SQ(u32 va)
 	va &= ~0x1f;
 	return QACR + va;
 }
+
 template<u32 translation_type>
 u32 mmu_full_SQ(u32 va, u32& rv)
 {
@@ -387,11 +476,14 @@ u32 mmu_full_SQ(u32 va, u32& rv)
 	}
 	return MMU_ERROR_NONE;
 }
+template u32 mmu_full_SQ<MMU_TT_DWRITE>(u32 va, u32& rv);
+
+#ifndef FAST_MMU
 template<u32 translation_type, typename T>
-void mmu_data_translation(u32 va, u32& rv)
+u32 mmu_data_translation(u32 va, u32& rv)
 {
 	if (va & (sizeof(T) - 1))
-		mmu_raise_exception(MMU_ERROR_BADADDR, va, translation_type);
+		return MMU_ERROR_BADADDR;
 
 	if (translation_type == MMU_TT_DWRITE)
 	{
@@ -399,23 +491,23 @@ void mmu_data_translation(u32 va, u32& rv)
 		{
 			u32 lookup = mmu_full_SQ<translation_type>(va, rv);
 			if (lookup != MMU_ERROR_NONE)
-				mmu_raise_exception(lookup, va, translation_type);
+				return lookup;
 
 			rv = va;	//SQ writes are not translated, only write backs are.
-			return;
+			return MMU_ERROR_NONE;
 		}
 	}
 
 	if ((sr.MD == 0) && (va & 0x80000000) != 0)
 	{
 		//if on kernel, and not SQ addr -> error
-		mmu_raise_exception(MMU_ERROR_BADADDR, va, translation_type);
+		return MMU_ERROR_BADADDR;
 	}
 
 	if (sr.MD == 1 && ((va & 0xFC000000) == 0x7C000000))
 	{
 		rv = va;
-		return;
+		return MMU_ERROR_NONE;
 	}
 
 	// Not called if CCN_MMUCR.AT == 0
@@ -423,14 +515,14 @@ void mmu_data_translation(u32 va, u32& rv)
 	if (fast_reg_lut[va >> 29] != 0)
 	{
 		rv = va;
-		return;
+		return MMU_ERROR_NONE;
 	}
 
 	const TLB_Entry *entry;
 	u32 lookup = mmu_full_lookup(va, &entry, rv);
 
 	if (lookup != MMU_ERROR_NONE)
-		mmu_raise_exception(lookup, va, translation_type);
+		return lookup;
 
 #ifdef TRACE_WINCE_SYSCALLS
 	if (unresolved_unicode_string != 0)
@@ -449,7 +541,7 @@ void mmu_data_translation(u32 va, u32& rv)
 	//Priv mode protection
 	if ((md == 0) && sr.MD == 0)
 	{
-		mmu_raise_exception(MMU_ERROR_PROTECTED, va, translation_type);
+		return MMU_ERROR_PROTECTED;
 	}
 
 	//X0 -> read olny
@@ -459,32 +551,34 @@ void mmu_data_translation(u32 va, u32& rv)
 	if (translation_type == MMU_TT_DWRITE)
 	{
 		if ((entry->Data.PR & 1) == 0)
-			mmu_raise_exception(MMU_ERROR_PROTECTED, va, translation_type);
+			return MMU_ERROR_PROTECTED;
 		else if (entry->Data.D == 0)
-			mmu_raise_exception(MMU_ERROR_FIRSTWRITE, va, translation_type);
+			return MMU_ERROR_FIRSTWRITE;
 	}
+	return MMU_ERROR_NONE;
 }
 
-template void mmu_data_translation<MMU_TT_DREAD, u16>(u32 va, u32& rv);
-template void mmu_data_translation<MMU_TT_DREAD, u32>(u32 va, u32& rv);
+template u32 mmu_data_translation<MMU_TT_DREAD, u16>(u32 va, u32& rv);
+template u32 mmu_data_translation<MMU_TT_DREAD, u32>(u32 va, u32& rv);
+template u32 mmu_data_translation<MMU_TT_DWRITE, u64>(u32 va, u32& rv);
 
-void mmu_instruction_translation(u32 va, u32& rv, bool& shared)
+u32 mmu_instruction_translation(u32 va, u32& rv, bool& shared)
 {
 	if (va & 1)
 	{
-		mmu_raise_exception(MMU_ERROR_BADADDR, va, MMU_TT_IREAD);
+		return MMU_ERROR_BADADDR;
 	}
 	if ((sr.MD == 0) && (va & 0x80000000) != 0)
 	{
 		//if SQ disabled , or if if SQ on but out of SQ mem then BAD ADDR ;)
 		if (va >= 0xE0000000)
-			mmu_raise_exception(MMU_ERROR_BADADDR, va, MMU_TT_IREAD);
+			return MMU_ERROR_BADADDR;
 	}
 
 	if ((CCN_MMUCR.AT == 0) || (fast_reg_lut[va >> 29] != 0))
 	{
 		rv = va;
-		return;
+		return MMU_ERROR_NONE;
 	}
 
 	bool mmach = false;
@@ -521,7 +615,7 @@ retry_ITLB_Match:
 		u32 lookup = mmu_full_lookup(va, &tlb_entry, rv);
 
 		if (lookup != MMU_ERROR_NONE)
-			mmu_raise_exception(lookup, va, MMU_TT_IREAD);
+			return lookup;
 
 		u32 replace_index = ITLB_LRU_USE[CCN_MMUCR.LRUI];
 		verify(replace_index != 0xFFFFFFFF);
@@ -535,11 +629,11 @@ retry_ITLB_Match:
 	{
 		if (nom)
 		{
-			mmu_raise_exception(MMU_ERROR_TLB_MHIT, va, MMU_TT_IREAD);
+			return MMU_ERROR_TLB_MHIT;
 		}
 		else
 		{
-			mmu_raise_exception(MMU_ERROR_TLB_MISS, va, MMU_TT_IREAD);
+			return MMU_ERROR_TLB_MISS;
 		}
 	}
 
@@ -552,25 +646,27 @@ retry_ITLB_Match:
 	//Priv mode protection
 	if ((md == 0) && sr.MD == 0)
 	{
-		mmu_raise_exception(MMU_ERROR_PROTECTED, va, MMU_TT_IREAD);
+		return MMU_ERROR_PROTECTED;
 	}
+	return MMU_ERROR_NONE;
 }
+#endif
 
 void mmu_set_state()
 {
 	if (CCN_MMUCR.AT == 1 && settings.dreamcast.FullMMU)
 	{
 		printf("Enabling Full MMU support\n");
-		ReadMem8 = &mmu_ReadMem8;
-		ReadMem16 = &mmu_ReadMem16;
 		IReadMem16 = &mmu_IReadMem16;
-		ReadMem32 = &mmu_ReadMem32;
-		ReadMem64 = &mmu_ReadMem64;
+		ReadMem8 = &mmu_ReadMem<u8>;
+		ReadMem16 = &mmu_ReadMem<u16>;
+		ReadMem32 = &mmu_ReadMem<u32>;
+		ReadMem64 = &mmu_ReadMem<u64>;
 
-		WriteMem8 = &mmu_WriteMem8;
-		WriteMem16 = &mmu_WriteMem16;
-		WriteMem32 = &mmu_WriteMem32;
-		WriteMem64 = &mmu_WriteMem64;
+		WriteMem8 = &mmu_WriteMem<u8>;
+		WriteMem16 = &mmu_WriteMem<u16>;
+		WriteMem32 = &mmu_WriteMem<u32>;
+		WriteMem64 = &mmu_WriteMem<u64>;
 		mmu_flush_table();
 	}
 	else
@@ -619,6 +715,7 @@ void MMU_term()
 {
 }
 
+#ifndef FAST_MMU
 void mmu_flush_table()
 {
 	//printf("MMU tables flushed\n");
@@ -631,66 +728,95 @@ void mmu_flush_table()
 	for (u32 i = 0; i < 64; i++)
 		UTLB[i].Data.V = 0;
 }
+#endif
 
-u8 DYNACALL mmu_ReadMem8(u32 adr)
+template<typename T>
+T DYNACALL mmu_ReadMem(u32 adr)
 {
 	u32 addr;
-	mmu_data_translation<MMU_TT_DREAD, u8>(adr, addr);
-	return _vmem_ReadMem8(addr);
+	u32 rv = mmu_data_translation<MMU_TT_DREAD, T>(adr, addr);
+	if (rv != MMU_ERROR_NONE)
+		mmu_raise_exception(rv, adr, MMU_TT_DREAD);
+	return _vmem_readt<T, T>(addr);
 }
 
-u16 DYNACALL mmu_ReadMem16(u32 adr)
-{
-	u32 addr;
-	mmu_data_translation<MMU_TT_DREAD, u16>(adr, addr);
-	return _vmem_ReadMem16(addr);
-}
 u16 DYNACALL mmu_IReadMem16(u32 vaddr)
 {
 	u32 addr;
 	bool shared;
-	mmu_instruction_translation(vaddr, addr, shared);
+	u32 rv = mmu_instruction_translation(vaddr, addr, shared);
+	if (rv != MMU_ERROR_NONE)
+		mmu_raise_exception(rv, vaddr, MMU_TT_IREAD);
 	return _vmem_ReadMem16(addr);
 }
 
-u32 DYNACALL mmu_ReadMem32(u32 adr)
+template<typename T>
+void DYNACALL mmu_WriteMem(u32 adr, T data)
 {
 	u32 addr;
-	mmu_data_translation<MMU_TT_DREAD, u32>(adr, addr);
-	return _vmem_ReadMem32(addr);
-}
-u64 DYNACALL mmu_ReadMem64(u32 adr)
-{
-	u32 addr;
-	mmu_data_translation<MMU_TT_DREAD, u64>(adr, addr);
-	return _vmem_ReadMem64(addr);
+	u32 rv = mmu_data_translation<MMU_TT_DWRITE, T>(adr, addr);
+	if (rv != MMU_ERROR_NONE)
+		mmu_raise_exception(rv, adr, MMU_TT_DWRITE);
+	_vmem_writet<T>(addr, data);
 }
 
-void DYNACALL mmu_WriteMem8(u32 adr, u8 data)
+template<typename T>
+T DYNACALL mmu_ReadMemNoEx(u32 adr, u32 *exception_occurred)
 {
 	u32 addr;
-	mmu_data_translation<MMU_TT_DWRITE, u8>(adr, addr);
-	_vmem_WriteMem8(addr, data);
+	u32 rv = mmu_data_translation<MMU_TT_DREAD, T>(adr, addr);
+	if (rv != MMU_ERROR_NONE)
+	{
+		DoMMUException(adr, rv, MMU_TT_DREAD);
+		*exception_occurred = 1;
+		return 0;
+	}
+	else
+	{
+		*exception_occurred = 0;
+		return _vmem_readt<T, T>(addr);
+	}
+}
+template u8 mmu_ReadMemNoEx<u8>(u32 adr, u32 *exception_occurred);
+template u16 mmu_ReadMemNoEx<u16>(u32 adr, u32 *exception_occurred);
+template u32 mmu_ReadMemNoEx<u32>(u32 adr, u32 *exception_occurred);
+template u64 mmu_ReadMemNoEx<u64>(u32 adr, u32 *exception_occurred);
+
+u16 DYNACALL mmu_IReadMem16NoEx(u32 vaddr, u32 *exception_occurred)
+{
+	u32 addr;
+	bool shared;
+	u32 rv = mmu_instruction_translation(vaddr, addr, shared);
+	if (rv != MMU_ERROR_NONE)
+	{
+		DoMMUException(vaddr, rv, MMU_TT_IREAD);
+		*exception_occurred = 1;
+		return 0;
+	}
+	else
+	{
+		*exception_occurred = 0;
+		return _vmem_ReadMem16(addr);
+	}
 }
 
-void DYNACALL mmu_WriteMem16(u32 adr, u16 data)
+template<typename T>
+u32 DYNACALL mmu_WriteMemNoEx(u32 adr, T data)
 {
 	u32 addr;
-	mmu_data_translation<MMU_TT_DWRITE, u16>(adr, addr);
-	_vmem_WriteMem16(addr, data);
+	u32 rv = mmu_data_translation<MMU_TT_DWRITE, T>(adr, addr);
+	if (rv != MMU_ERROR_NONE)
+	{
+		DoMMUException(adr, rv, MMU_TT_DWRITE);
+		return 1;
+	}
+	_vmem_writet<T>(addr, data);
+	return 0;
 }
-void DYNACALL mmu_WriteMem32(u32 adr, u32 data)
-{
-	u32 addr;
-	mmu_data_translation<MMU_TT_DWRITE, u32>(adr, addr);
-	_vmem_WriteMem32(addr, data);
-}
-void DYNACALL mmu_WriteMem64(u32 adr, u64 data)
-{
-	u32 addr;
-	mmu_data_translation<MMU_TT_DWRITE, u64>(adr, addr);
-	_vmem_WriteMem64(addr, data);
-}
+template u32 mmu_WriteMemNoEx<u8>(u32 adr, u8 data);
+template u32 mmu_WriteMemNoEx<u16>(u32 adr, u16 data);
+template u32 mmu_WriteMemNoEx<u32>(u32 adr, u32 data);
+template u32 mmu_WriteMemNoEx<u64>(u32 adr, u64 data);
 
 bool mmu_TranslateSQW(u32 adr, u32* out)
 {

@@ -115,7 +115,9 @@
 
 */
 
-#define NO_MMU
+//#define NO_MMU
+#define FAST_MMU
+#define USE_WINCE_HACK
 
 #define DC_PLATFORM_MASK        7
 #define DC_PLATFORM_DREAMCAST   0   /* Works, for the most part */

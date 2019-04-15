@@ -492,8 +492,7 @@ extern TLB_Entry ITLB[4];
 #if defined(NO_MMU)
 extern u32 sq_remap[64];
 #else
-extern u32 ITLB_LRU_USE[64];
-extern u32 mmu_error_TT;
+static u32 ITLB_LRU_USE[64];
 #endif
 
 
@@ -1085,7 +1084,6 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	REICAST_SA(sq_remap,64);
 #else
 	REICAST_SA(ITLB_LRU_USE,64);
-	REICAST_S(mmu_error_TT);
 #endif
 
 
@@ -1487,7 +1485,6 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	REICAST_USA(sq_remap,64);
 #else
 	REICAST_USA(ITLB_LRU_USE,64);
-	REICAST_US(mmu_error_TT);
 #endif
 
 
@@ -1877,7 +1874,6 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	REICAST_USA(sq_remap,64);
 #else
 	REICAST_USA(ITLB_LRU_USE,64);
-	REICAST_US(mmu_error_TT);
 #endif
 
 

@@ -34,6 +34,7 @@ static bool rtt_to_buffer_game;
 static bool safemode_game;
 static bool tr_poly_depth_mask_game;
 static bool extra_depth_game;
+static bool full_mmu_game;
 
 cThread emu_thread(&dc_run, NULL);
 
@@ -137,12 +138,15 @@ void LoadSpecialSettings()
 	safemode_game = false;
 	tr_poly_depth_mask_game = false;
 	extra_depth_game = false;
+	full_mmu_game = false;
 	
 	if (reios_windows_ce)
 	{
-		printf("Enabling Extra depth scaling for Windows CE games\n");
+		printf("Enabling Full MMU and Extra depth scaling for Windows CE game\n");
 		settings.rend.ExtraDepthScale = 0.1;
 		extra_depth_game = true;
+		settings.dreamcast.FullMMU = true;
+		full_mmu_game = true;
 	}
 
 	// Tony Hawk's Pro Skater 2
@@ -660,7 +664,8 @@ void SaveSettings()
 	cfgSaveInt("config", "Dreamcast.Cable", settings.dreamcast.cable);
 	cfgSaveInt("config", "Dreamcast.Region", settings.dreamcast.region);
 	cfgSaveInt("config", "Dreamcast.Broadcast", settings.dreamcast.broadcast);
-	cfgSaveBool("config", "Dreamcast.FullMMU", settings.dreamcast.FullMMU);
+	if (!full_mmu_game || !settings.dreamcast.FullMMU)
+		cfgSaveBool("config", "Dreamcast.FullMMU", settings.dreamcast.FullMMU);
 	cfgSaveBool("config", "Dynarec.idleskip", settings.dynarec.idleskip);
 	cfgSaveBool("config", "Dynarec.unstable-opt", settings.dynarec.unstable_opt);
 	if (!safemode_game || !settings.dynarec.safemode)

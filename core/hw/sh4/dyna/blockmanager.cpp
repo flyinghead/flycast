@@ -97,7 +97,7 @@ DynarecCodeEntryPtr DYNACALL bm_GetCode(u32 addr)
 }
 
 // addr must be a virtual address
-DynarecCodeEntryPtr DYNACALL bm_GetCode2(u32 addr)
+DynarecCodeEntryPtr DYNACALL bm_GetCodeByVAddr(u32 addr)
 {
 #ifndef NO_MMU
 	if (!mmu_enabled())
@@ -110,32 +110,47 @@ DynarecCodeEntryPtr DYNACALL bm_GetCode2(u32 addr)
 		{
 			switch (addr)
 			{
+#ifdef USE_WINCE_HACK
 			case 0xfffffde7: // GetTickCount
 				// This should make this syscall faster
 				r[0] = sh4_sched_now64() * 1000 / SH4_MAIN_CLOCK;
 				next_pc = pr;
-				addr = next_pc;
 				break;
+
+			case 0xfffffd05: // QueryPerformanceCounter(u64 *)
+				{
+					u32 paddr;
+					if (mmu_data_translation<MMU_TT_DWRITE, u64>(r[4], paddr) == MMU_ERROR_NONE)
+					{
+						_vmem_WriteMem64(paddr, sh4_sched_now64() >> 4);
+						r[0] = 1;
+						next_pc = pr;
+					}
+					else
+					{
+						Do_Exception(addr, 0xE0, 0x100);
+					}
+				}
+				break;
+#endif
+
 			default:
 				Do_Exception(addr, 0xE0, 0x100);
-				addr = next_pc;
 				break;
 			}
+			addr = next_pc;
 		}
 
-		try {
-			u32 paddr;
-			bool shared;
-			mmu_instruction_translation(addr, paddr, shared);
-
-			return (DynarecCodeEntryPtr)bm_GetCode(paddr);
-		} catch (SH4ThrownException& ex) {
-			Do_Exception(addr, ex.expEvn, ex.callVect);
-			u32 paddr;
-			bool shared;
+		u32 paddr;
+		bool shared;
+		u32 rv = mmu_instruction_translation(addr, paddr, shared);
+		if (rv != MMU_ERROR_NONE)
+		{
+			DoMMUException(addr, rv, MMU_TT_IREAD);
 			mmu_instruction_translation(next_pc, paddr, shared);
-			return (DynarecCodeEntryPtr)bm_GetCode(paddr);
 		}
+
+		return (DynarecCodeEntryPtr)bm_GetCode(paddr);
 	}
 #endif
 }
@@ -220,6 +235,7 @@ void bm_RemoveBlock(RuntimeBlockInfo* block)
 			all_blocks.erase(it);
 			break;
 		}
+	// FIXME need to remove refs
 	delete block;
 }
 

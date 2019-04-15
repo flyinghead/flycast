@@ -17,7 +17,7 @@ struct RuntimeBlockInfo_Core
 
 struct RuntimeBlockInfo: RuntimeBlockInfo_Core
 {
-	void Setup(u32 pc,fpscr_t fpu_cfg);
+	bool Setup(u32 pc,fpscr_t fpu_cfg);
 	const char* hash(bool full=true, bool reloc=false);
 
 	u32 vaddr;
@@ -89,7 +89,7 @@ void bm_WriteBlockMap(const string& file);
 DynarecCodeEntryPtr DYNACALL bm_GetCode(u32 addr);
 
 extern "C" {
-__attribute__((used)) DynarecCodeEntryPtr DYNACALL bm_GetCode2(u32 addr);
+__attribute__((used)) DynarecCodeEntryPtr DYNACALL bm_GetCodeByVAddr(u32 addr);
 }
 
 RuntimeBlockInfo* bm_GetBlock(void* dynarec_code);

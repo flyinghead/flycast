@@ -1007,13 +1007,15 @@ void state_Setup(u32 rpc,fpscr_t fpu_cfg)
 	state.info.has_fpu=false;
 }
 
-void dec_DecodeBlock(RuntimeBlockInfo* rbi,u32 max_cycles)
+bool dec_DecodeBlock(RuntimeBlockInfo* rbi,u32 max_cycles)
 {
 	blk=rbi;
 	state_Setup(blk->vaddr, blk->fpu_cfg);
 	ngen_GetFeatures(&state.ngen);
 	
 	blk->guest_opcodes=0;
+	// If full MMU, don't allow the block to extend past the end of the current 4K page
+	u32 max_pc = mmu_enabled() ? ((state.cpu.rpc >> 12) + 1) << 12 : 0xFFFFFFFF;
 	
 	for(;;)
 	{
@@ -1025,10 +1027,8 @@ void dec_DecodeBlock(RuntimeBlockInfo* rbi,u32 max_cycles)
 			//there is no break here by design
 		case NDO_NextOp:
 			{
-				if ( 
-					( (blk->oplist.size() >= BLOCK_MAX_SH_OPS_SOFT) || (blk->guest_cycles >= max_cycles) )
-					&& !state.cpu.is_delayslot
-					)
+				if ((blk->oplist.size() >= BLOCK_MAX_SH_OPS_SOFT || blk->guest_cycles >= max_cycles || state.cpu.rpc >= max_pc)
+						&& !state.cpu.is_delayslot)
 				{
 					dec_End(state.cpu.rpc,BET_StaticJump,false);
 				}
@@ -1053,7 +1053,16 @@ void dec_DecodeBlock(RuntimeBlockInfo* rbi,u32 max_cycles)
 					}
 					*/
 
-					u32 op=IReadMem16(state.cpu.rpc);
+					u32 op;
+					if (!mmu_enabled())
+						op = IReadMem16(state.cpu.rpc);
+					else
+					{
+						u32 exception_occurred;
+						op = mmu_IReadMem16NoEx(state.cpu.rpc, &exception_occurred);
+						if (exception_occurred)
+							return false;
+					}
 					if (op==0 && state.cpu.is_delayslot)
 					{
 						printf("Delayslot 0 hack!\n");
@@ -1104,8 +1113,8 @@ void dec_DecodeBlock(RuntimeBlockInfo* rbi,u32 max_cycles)
 
 		case NDO_Jump:
 			die("Too old");
-			state.NextOp=state.JumpOp;
-			state.cpu.rpc=state.JumpAddr;
+			//state.NextOp=state.JumpOp;
+			//state.cpu.rpc=state.JumpAddr;
 			break;
 
 		case NDO_End:
@@ -1187,6 +1196,8 @@ _end:
 	//make sure we don't use wayy-too-few cycles
 	blk->guest_cycles=max(1U,blk->guest_cycles);
 	blk=0;
+
+	return true;
 }
 
 #endif

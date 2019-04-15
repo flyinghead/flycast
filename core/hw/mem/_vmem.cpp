@@ -183,6 +183,11 @@ INLINE Trv DYNACALL _vmem_readt(u32 addr)
 		}
 	}
 }
+template u8 DYNACALL _vmem_readt<u8, u8>(u32 addr);
+template u16 DYNACALL _vmem_readt<u16, u16>(u32 addr);
+template u32 DYNACALL _vmem_readt<u32, u32>(u32 addr);
+template u64 DYNACALL _vmem_readt<u64, u64>(u32 addr);
+
 template<typename T>
 INLINE void DYNACALL _vmem_writet(u32 addr,T data)
 {
@@ -225,6 +230,10 @@ INLINE void DYNACALL _vmem_writet(u32 addr,T data)
 		}
 	}
 }
+template void DYNACALL _vmem_writet<u8>(u32 addr, u8 data);
+template void DYNACALL _vmem_writet<u16>(u32 addr, u16 data);
+template void DYNACALL _vmem_writet<u32>(u32 addr, u32 data);
+template void DYNACALL _vmem_writet<u64>(u32 addr, u64 data);
 
 //ReadMem/WriteMem functions
 //ReadMem
@@ -552,7 +561,7 @@ error:
 }
 #endif
 
-	int fd;
+	int vmem_fd;
 	void* _nvmem_unused_buffer(u32 start,u32 end)
 	{
 		void* ptr=mmap(&virt_ram_base[start], end-start, PROT_NONE, MAP_FIXED | MAP_PRIVATE | MAP_ANON, -1, 0);
@@ -572,7 +581,7 @@ error:
 		verify((addrsz%size)==0);
 		verify(map_times>=1);
 		u32 prot=PROT_READ|(w?PROT_WRITE:0);
-		rv= mmap(&virt_ram_base[dst], size, prot, MAP_SHARED | MAP_NOSYNC | MAP_FIXED, fd, offset);
+		rv= mmap(&virt_ram_base[dst], size, prot, MAP_SHARED | MAP_NOSYNC | MAP_FIXED, vmem_fd, offset);
 		if (MAP_FAILED==rv || rv!=(void*)&virt_ram_base[dst] || (mprotect(rv,size,prot)!=0)) 
 		{
 			printf("MAP1 failed %d\n",errno);
@@ -582,7 +591,7 @@ error:
 		for (u32 i=1;i<map_times;i++)
 		{
 			dst+=size;
-			ptr=mmap(&virt_ram_base[dst], size, prot , MAP_SHARED | MAP_NOSYNC | MAP_FIXED, fd, offset);
+			ptr=mmap(&virt_ram_base[dst], size, prot , MAP_SHARED | MAP_NOSYNC | MAP_FIXED, vmem_fd, offset);
 			if (MAP_FAILED==ptr || ptr!=(void*)&virt_ram_base[dst] || (mprotect(rv,size,prot)!=0))
 			{
 				printf("MAP2 failed %d\n",errno);
@@ -598,26 +607,26 @@ error:
         
 #if HOST_OS == OS_DARWIN
 		string path = get_writable_data_path("/dcnzorz_mem");
-        fd = open(path.c_str(),O_CREAT|O_RDWR|O_TRUNC,S_IRWXU|S_IRWXG|S_IRWXO);
+		vmem_fd = open(path.c_str(),O_CREAT|O_RDWR|O_TRUNC,S_IRWXU|S_IRWXG|S_IRWXO);
         unlink(path.c_str());
-        verify(ftruncate(fd, RAM_SIZE_MAX + VRAM_SIZE_MAX + ARAM_SIZE_MAX) == 0);
+        verify(ftruncate(vmem_fd, RAM_SIZE_MAX + VRAM_SIZE_MAX + ARAM_SIZE_MAX) == 0);
 #elif !defined(_ANDROID)
-		fd = shm_open("/dcnzorz_mem", O_CREAT | O_EXCL | O_RDWR,S_IREAD | S_IWRITE);
+        vmem_fd = shm_open("/dcnzorz_mem", O_CREAT | O_EXCL | O_RDWR,S_IREAD | S_IWRITE);
 		shm_unlink("/dcnzorz_mem");
-		if (fd==-1)
+		if (vmem_fd==-1)
 		{
-			fd = open("dcnzorz_mem",O_CREAT|O_RDWR|O_TRUNC,S_IRWXU|S_IRWXG|S_IRWXO);
+			vmem_fd = open("dcnzorz_mem",O_CREAT|O_RDWR|O_TRUNC,S_IRWXU|S_IRWXG|S_IRWXO);
 			unlink("dcnzorz_mem");
 		}
 
-		verify(ftruncate(fd, RAM_SIZE_MAX + VRAM_SIZE_MAX + ARAM_SIZE_MAX) == 0);
+		verify(ftruncate(vmem_fd, RAM_SIZE_MAX + VRAM_SIZE_MAX + ARAM_SIZE_MAX) == 0);
 #else
 
-		fd = ashmem_create_region(0, RAM_SIZE_MAX + VRAM_SIZE_MAX + ARAM_SIZE_MAX);
+		vmem_fd = ashmem_create_region(0, RAM_SIZE_MAX + VRAM_SIZE_MAX + ARAM_SIZE_MAX);
 		if (false)//this causes writebacks to flash -> slow and stuttery 
 		{
-		fd = open("/data/data/com.reicast.emulator/files/dcnzorz_mem",O_CREAT|O_RDWR|O_TRUNC,S_IRWXU|S_IRWXG|S_IRWXO);
-		unlink("/data/data/com.reicast.emulator/files/dcnzorz_mem");
+			vmem_fd = open("/data/data/com.reicast.emulator/files/dcnzorz_mem",O_CREAT|O_RDWR|O_TRUNC,S_IRWXU|S_IRWXG|S_IRWXO);
+			unlink("/data/data/com.reicast.emulator/files/dcnzorz_mem");
 		}
 #endif
 
@@ -730,7 +739,7 @@ bool _vmem_reserve()
 	//I really should check teh docs before codin ;p
 	//[0x00800000,0x00A00000);
 	map_buffer(0x00800000,0x01000000,MAP_ARAM_START_OFFSET,ARAM_SIZE,false);
-	map_buffer(0x20000000,0x20000000+ARAM_SIZE,MAP_ARAM_START_OFFSET,ARAM_SIZE,true);
+	map_buffer(0x02800000,0x02800000+ARAM_SIZE,MAP_ARAM_START_OFFSET,ARAM_SIZE,true);
 
 	aica_ram.size=ARAM_SIZE;
 	aica_ram.data=(u8*)ptr;
@@ -804,7 +813,7 @@ void _vmem_release()
 			virt_ram_base = NULL;
 		}
 #if HOST_OS != OS_WINDOWS
-		close(fd);
+		close(vmem_fd);
 #endif
 	}
 }

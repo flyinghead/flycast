@@ -194,7 +194,7 @@ const char* RuntimeBlockInfo::hash(bool full, bool relocable)
 	return block_hash;
 }
 
-void RuntimeBlockInfo::Setup(u32 rpc,fpscr_t rfpu_cfg)
+bool RuntimeBlockInfo::Setup(u32 rpc,fpscr_t rfpu_cfg)
 {
 	staging_runs=addr=lookups=runs=host_code_size=0;
 	guest_cycles=guest_opcodes=host_opcodes=0;
@@ -210,7 +210,12 @@ void RuntimeBlockInfo::Setup(u32 rpc,fpscr_t rfpu_cfg)
 	if (mmu_enabled())
 	{
 		bool shared;
-		mmu_instruction_translation(vaddr, addr, shared);
+		u32 rv = mmu_instruction_translation(vaddr, addr, shared);
+		if (rv != MMU_ERROR_NONE)
+		{
+			DoMMUException(vaddr, rv, MMU_TT_IREAD);
+			return false;
+		}
 		if (addr != vaddr && !shared)
 			asid = CCN_PTEH.ASID;
 	}
@@ -220,8 +225,12 @@ void RuntimeBlockInfo::Setup(u32 rpc,fpscr_t rfpu_cfg)
 	
 	oplist.clear();
 
-	dec_DecodeBlock(this,SH4_TIMESLICE/2);
+	if (!dec_DecodeBlock(this,SH4_TIMESLICE/2))
+		return false;
+
 	AnalyseBlock(this);
+
+	return true;
 }
 
 DynarecCodeEntryPtr rdv_CompilePC()
@@ -232,43 +241,36 @@ DynarecCodeEntryPtr rdv_CompilePC()
 		recSh4_ClearCache();
 
 	RuntimeBlockInfo* rbi = ngen_AllocateBlock();
-#ifndef NO_MMU
-	try {
-#endif
-		rbi->Setup(pc,fpscr);
 
-
-		bool do_opts=((rbi->addr&0x3FFFFFFF)>0x0C010100);
-		rbi->staging_runs=do_opts?100:-100;
-		ngen_Compile(rbi,DoCheck(rbi->addr),(pc&0xFFFFFF)==0x08300 || (pc&0xFFFFFF)==0x10000,false,do_opts);
-		verify(rbi->code!=0);
-
-		bm_AddBlock(rbi);
-#ifndef NO_MMU
-	} catch (SH4ThrownException& ex) {
+	if (!rbi->Setup(pc,fpscr))
+	{
 		delete rbi;
-		throw ex;
+		return NULL;
 	}
-#endif
+
+	bool do_opts=((rbi->addr&0x3FFFFFFF)>0x0C010100);
+	rbi->staging_runs=do_opts?100:-100;
+	ngen_Compile(rbi,DoCheck(rbi->addr),(pc&0xFFFFFF)==0x08300 || (pc&0xFFFFFF)==0x10000,false,do_opts);
+	verify(rbi->code!=0);
+
+	bm_AddBlock(rbi);
 
 	return rbi->code;
+}
+
+DynarecCodeEntryPtr DYNACALL rdv_FailedToFindBlock_pc()
+{
+	return rdv_FailedToFindBlock(next_pc);
 }
 
 DynarecCodeEntryPtr DYNACALL rdv_FailedToFindBlock(u32 pc)
 {
 	//printf("rdv_FailedToFindBlock ~ %08X\n",pc);
-#ifndef NO_MMU
-	try {
-#endif
-		next_pc=pc;
-
-		return rdv_CompilePC();
-#ifndef NO_MMU
-	} catch (SH4ThrownException& ex) {
-		Do_Exception(pc, ex.expEvn, ex.callVect);
-		return bm_GetCode2(next_pc);
-	}
-#endif
+	next_pc=pc;
+	DynarecCodeEntryPtr code = rdv_CompilePC();
+	if (code == NULL)
+		code = bm_GetCodeByVAddr(next_pc);
+	return code;
 }
 
 static void ngen_FailedToFindBlock_internal() {
@@ -304,8 +306,17 @@ u32 DYNACALL rdv_DoInterrupts(void* block_cpde)
 // addr must be the physical address of the start of the block
 DynarecCodeEntryPtr DYNACALL rdv_BlockCheckFail(u32 addr)
 {
-	RuntimeBlockInfo *block = bm_GetBlock(addr);
-	bm_RemoveBlock(block);
+	if (mmu_enabled())
+	{
+		RuntimeBlockInfo *block = bm_GetBlock(addr);
+		//printf("rdv_BlockCheckFail addr %08x vaddr %08x pc %08x\n", addr, block->vaddr, next_pc);
+		bm_RemoveBlock(block);
+	}
+	else
+	{
+		next_pc = addr;
+		recSh4_ClearCache();
+	}
 	return rdv_CompilePC();
 }
 
@@ -320,7 +331,7 @@ DynarecCodeEntryPtr DYNACALL rdv_BlockCheckFail(u32 addr)
 
 DynarecCodeEntryPtr rdv_FindOrCompile()
 {
-	DynarecCodeEntryPtr rv=bm_GetCode(next_pc);
+	DynarecCodeEntryPtr rv=bm_GetCodeByVAddr(next_pc);
 	if (rv==ngen_FailedToFindBlock)
 		rv=rdv_CompilePC();
 	
@@ -359,7 +370,7 @@ void* DYNACALL rdv_LinkBlock(u8* code,u32 dpc)
 
 	DynarecCodeEntryPtr rv=rdv_FindOrCompile();
 
-	bool do_link=bm_GetBlock(code)==rbi;
+	bool do_link = !mmu_enabled() && bm_GetBlock(code) == rbi;
 
 	if (do_link)
 	{

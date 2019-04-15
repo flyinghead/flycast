@@ -45,7 +45,7 @@ struct ngen_features
 };
 
 struct RuntimeBlockInfo;
-void dec_DecodeBlock(RuntimeBlockInfo* rbi,u32 max_cycles);
+bool dec_DecodeBlock(RuntimeBlockInfo* rbi,u32 max_cycles);
 
 struct state_t
 {

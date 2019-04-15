@@ -9,7 +9,7 @@
 .globl cycle_counter
 .globl loop_no_update
 .globl intc_sched
-.globl bm_GetCode
+.globl bm_GetCodeByVAddr
 .globl cycle_counter
 .globl UpdateSystem
 .globl rdv_DoInterrupts
@@ -109,7 +109,7 @@ ngen_mainloop:
 #	next_pc _MUST_ be on ecx
 no_update:
 	mov esi,ecx
-	call _Z10bm_GetCodej #bm_GetCode
+	call bm_GetCodeByVAddr
 	jmp eax
 
 intc_sched_offs:

@@ -49,11 +49,13 @@ u8 DYNACALL _vmem_ReadMem8(u32 Address);
 u16 DYNACALL _vmem_ReadMem16(u32 Address);
 u32 DYNACALL _vmem_ReadMem32(u32 Address);
 u64 DYNACALL _vmem_ReadMem64(u32 Address);
+template<typename T, typename Trv> Trv DYNACALL _vmem_readt(u32 addr);
 //WriteMem(s)
 void DYNACALL _vmem_WriteMem8(u32 Address,u8 data);
 void DYNACALL _vmem_WriteMem16(u32 Address,u16 data);
 void DYNACALL _vmem_WriteMem32(u32 Address,u32 data);
 void DYNACALL _vmem_WriteMem64(u32 Address,u64 data);
+template<typename T> void DYNACALL _vmem_writet(u32 addr, T data);
 
 //should be called at start up to ensure it will succeed :)
 bool _vmem_reserve();
