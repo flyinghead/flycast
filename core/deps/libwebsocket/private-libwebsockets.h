@@ -18,7 +18,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  *  MA  02110-1301  USA
  */
-
+#pragma once
 #include "build.h"
 
 /* The Libwebsocket version */
@@ -203,7 +203,6 @@ typedef unsigned __int64 u_int64_t;
 #else
 
 #include <sys/stat.h>
-#include <sys/cdefs.h>
 #include <sys/time.h>
 
 #if defined(__APPLE__)

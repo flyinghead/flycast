@@ -1,5 +1,6 @@
 #pragma once
 #include <SDL2/SDL.h>
+#include "types.h"
 
 extern void input_sdl_init();
 extern void input_sdl_handle(u32 port);

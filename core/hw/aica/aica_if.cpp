@@ -21,32 +21,21 @@ int dma_sched_id;
 
 u32 GetRTC_now()
 {
-	
-	time_t rawtime=0;
-	tm  timeinfo;
-	timeinfo.tm_year=1998-1900;
-	timeinfo.tm_mon=11-1;
-	timeinfo.tm_mday=27;
-	timeinfo.tm_hour=0;
-	timeinfo.tm_min=0;
-	timeinfo.tm_sec=0;
-
-	rawtime=mktime( &timeinfo );
-	
-	rawtime=time (0)-rawtime;//get delta of time since the known dc date
-	
-	time_t temp=time(0);
-	timeinfo=*localtime(&temp);
-	if (timeinfo.tm_isdst)
-		rawtime+=24*3600;//add an hour if dst (maybe rtc has a reg for that ? *watch* and add it if yes :)
-
-	u32 RTC=0x5bfc8900 + (u32)rawtime;// add delta to known dc time
-	return RTC;
+	// The Dreamcast Epoch time is 1/1/50 00:00 but without support for time zone or DST.
+	// We compute the TZ/DST current time offset and add it to the result
+	// as if we were in the UTC time zone (as well as the DC Epoch)
+	time_t rawtime = time(NULL);
+	struct tm localtm, gmtm;
+	localtm = *localtime(&rawtime);
+	gmtm = *gmtime(&rawtime);
+	gmtm.tm_isdst = -1;
+	time_t time_offset = mktime(&localtm) - mktime(&gmtm);
+	// 1/1/50 to 1/1/70 is 20 years and 5 leap days
+	return (20 * 365 + 5) * 24 * 60 * 60 + rawtime + time_offset;
 }
 
 u32 ReadMem_aica_rtc(u32 addr,u32 sz)
 {
-	//settings.dreamcast.RTC=GetRTC_now();
 	switch( addr & 0xFF )
 	{
 	case 0:
@@ -71,7 +60,6 @@ void WriteMem_aica_rtc(u32 addr,u32 data,u32 sz)
 			settings.dreamcast.RTC&=0xFFFF;
 			settings.dreamcast.RTC|=(data&0xFFFF)<<16;
 			rtc_EN=0;
-			SaveSettings();
 		}
 		return;
 	case 4:
@@ -305,6 +293,48 @@ void Write_SB_E1ST(u32 addr, u32 data)
 	}
 }
 
+void Write_SB_E2ST(u32 addr, u32 data)
+{
+	if ((data & 1) && (SB_E2EN & 1))
+	{
+		u32 src=SB_E2STAR;
+		u32 dst=SB_E2STAG;
+		u32 len=SB_E2LEN & 0x7FFFFFFF;
+
+		if (SB_E2DIR==1)
+		{
+			u32 t=src;
+			src=dst;
+			dst=t;
+			printf("G2-EXT2 DMA : SB_E2DIR==1 DMA Read to 0x%X from 0x%X %d bytes\n",dst,src,len);
+		}
+		else
+			printf("G2-EXT2 DMA : SB_E2DIR==0:DMA Write to 0x%X from 0x%X %d bytes\n",dst,src,len);
+
+		WriteMemBlock_nommu_dma(dst,src,len);
+
+		if (SB_E2LEN & 0x80000000)
+			SB_E2EN=1;
+		else
+			SB_E2EN=0;
+
+		SB_E2STAR+=len;
+		SB_E2STAG+=len;
+		SB_E2ST = 0x00000000;//dma done
+		SB_E2LEN = 0x00000000;
+
+
+		asic_RaiseInterrupt(holly_EXT_DMA2);
+	}
+}
+
+
+void Write_SB_DDST(u32 addr, u32 data)
+{
+	if (data & 1)
+		die("SB_DDST DMA not implemented");
+}
+
 void aica_sb_Init()
 {
 	//NRM
@@ -317,6 +347,8 @@ void aica_sb_Init()
 	//THIS IS NOT AICA, its G2-EXT (BBA)
 
 	sb_rio_register(SB_E1ST_addr,RIO_WF,0,&Write_SB_E1ST);
+	sb_rio_register(SB_E2ST_addr,RIO_WF,0,&Write_SB_E2ST);
+	sb_rio_register(SB_DDST_addr,RIO_WF,0,&Write_SB_DDST);
 
 	//sb_regs[((SB_E1ST_addr-SB_BASE)>>2)].flags=REG_32BIT_READWRITE | REG_READ_DATA;
 	//sb_regs[((SB_E1ST_addr-SB_BASE)>>2)].writeFunction=Write_SB_E1ST;

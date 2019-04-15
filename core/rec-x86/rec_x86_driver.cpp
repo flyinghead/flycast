@@ -20,7 +20,7 @@ struct DynaRBI: RuntimeBlockInfo
 
 x86_block* x86e;
 
-u32 cycle_counter;
+int cycle_counter;
 
 void* loop_no_update;
 void* intc_sched;
@@ -37,7 +37,7 @@ void DetectCpuFeatures()
 	if (detected) return;
 	detected=true;
 
-#if HOST_OS==OS_WINDOWS
+#ifdef _MSC_VER
 	__try
 	{
 		__asm addps xmm0,xmm0
@@ -84,7 +84,7 @@ void DetectCpuFeatures()
 	{
 		mmx=false;
 	}
-	#endif
+#endif
 }
 
 
@@ -255,11 +255,6 @@ void DYNACALL PrintBlock(u32 pc)
 	for (int i=0;i<16;i++)
 		printf("%08X ",r[i]);
 	printf("\n");
-}
-
-u32* GetRegPtr(u32 reg)
-{
-	return Sh4_int_GetRegisterPtr((Sh4RegType)reg);
 }
 
 u32 cvld;
@@ -763,6 +758,8 @@ void* mem_code[3][2][5];
 
 void ngen_init()
 {
+	ngen_FailedToFindBlock = &ngen_FailedToFindBlock_;
+
 	//Setup emitter
 	x86e = new x86_block();
 	x86e->Init(0,0);

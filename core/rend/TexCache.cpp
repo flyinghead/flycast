@@ -8,12 +8,15 @@
 #include "hw/pvr/pvr_regs.h"
 #include "hw/mem/_vmem.h"
 #include "deps/xbrz/xbrz.h"
+#include "deps/xxhash/xxhash.h"
 
 u8* vq_codebook;
 u32 palette_index;
 bool KillTex=false;
 u32 palette16_ram[1024];
 u32 palette32_ram[1024];
+u32 pal_hash_256[4];
+u32 pal_hash_16[64];
 
 u32 detwiddle[2][8][1024];
 //input : address in the yyyyyxxxxx format
@@ -72,12 +75,11 @@ static OnLoad btt(&BuildTwiddleTables);
 
 void palette_update()
 {
-	if (pal_needs_update==false)
+	if (!pal_needs_update)
 		return;
-	memcpy(pal_rev_256,_pal_rev_256,sizeof(pal_rev_256));
-	memcpy(pal_rev_16,_pal_rev_16,sizeof(pal_rev_16));
 
 	pal_needs_update=false;
+
 	switch(PAL_RAM_CTRL&3)
 	{
 	case 0:
@@ -112,7 +114,10 @@ void palette_update()
 		}
 		break;
 	}
-
+	for (int i = 0; i < 64; i++)
+		pal_hash_16[i] = XXH32(&palette32_ram[i << 4], 16 * 4, 7);
+	for (int i = 0; i < 4; i++)
+		pal_hash_256[i] = XXH32(&palette32_ram[i << 8], 256 * 4, 7);
 }
 
 

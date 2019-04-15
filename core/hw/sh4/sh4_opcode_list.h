@@ -22,6 +22,8 @@ enum sh4_eu
 	sh4_eu_max
 };
 
+std::string disassemble_op(const char* tx1, u32 pc, u16 opcode);
+
 //exception fixup needed , added it to fix exception on opcodes that modify before exept :)
 enum sh4_exept_fixup
 {
@@ -47,9 +49,10 @@ struct sh4_opcodelistentry
 	sh4_exept_fixup ex_fixup;
 	u64 decode;
 	u64 fallbacks;
-	void Dissasemble(char* strout,u32 pc , u16 params) const
+	void Disassemble(char* strout, u32 pc, u16 op) const
 	{
-		sprintf(strout,"%s:%08X:%04X",diss,pc,params);
+		std::string text = disassemble_op(diss, pc, op);
+		strcpy(strout, text.c_str());
 	}
 
 	INLINE bool SetPC() const
@@ -72,11 +75,14 @@ struct sh4_opcodelistentry
 		return (type & WritesFPSCR)!=0;
 	}
 
+	INLINE bool IsFloatingPoint() const
+	{
+		return (type & UsesFPU) != 0;
+	}
 };
 
 extern sh4_opcodelistentry* OpDesc[0x10000];
 extern sh4_opcodelistentry opcodes[];
-#define ExecuteOpcode(op) {OpPtr[op](op);}
 
 void DissasembleOpcode(u16 opcode,u32 pc,char* Dissasm);
 enum DecParam

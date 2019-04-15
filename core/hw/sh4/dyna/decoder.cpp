@@ -68,62 +68,8 @@ shil_param mk_regi(int reg)
 {
 	return mk_reg((Sh4RegType)reg);
 }
-enum NextDecoderOperation
-{
-	NDO_NextOp,     //pc+=2
-	NDO_End,        //End the block, Type = BlockEndType
-	NDO_Delayslot,  //pc+=2, NextOp=DelayOp
-	NDO_Jump,       //pc=JumpAddr,NextOp=JumpOp
-};
 
-
-struct
-{
-	NextDecoderOperation NextOp;
-	NextDecoderOperation DelayOp;
-	NextDecoderOperation JumpOp;
-	u32 JumpAddr;
-	u32 NextAddr;
-	BlockEndType BlockType;
-
-	struct
-	{
-		bool FPR64; //64 bit FPU opcodes
-		bool FSZ64; //64 bit FPU moves
-		bool RoundToZero; //false -> Round to nearest.
-		u32 rpc;
-		bool is_delayslot;
-	} cpu;
-
-	ngen_features ngen;
-
-	struct
-	{
-		bool has_readm;
-		bool has_writem;
-		bool has_fpu;
-	} info;
-
-	void Setup(u32 rpc,fpscr_t fpu_cfg)
-	{
-		cpu.rpc=rpc;
-		cpu.is_delayslot=false;
-		cpu.FPR64=fpu_cfg.PR;
-		cpu.FSZ64=fpu_cfg.SZ;
-		cpu.RoundToZero=fpu_cfg.RM==1;
-		verify(fpu_cfg.RM<2);
-		//what about fp/fs ?
-
-		NextOp=NDO_NextOp;
-		BlockType=BET_SCL_Intr;
-		JumpAddr=0xFFFFFFFF;
-		NextAddr=0xFFFFFFFF;
-
-		info.has_readm=false;
-		info.has_writem=false;
-		info.has_fpu=false;
-	}
-} state;
+state_t state ;
 
 void Emit(shilop op,shil_param rd=shil_param(),shil_param rs1=shil_param(),shil_param rs2=shil_param(),u32 flags=0,shil_param rs3=shil_param(),shil_param rd2=shil_param())
 {
@@ -694,7 +640,7 @@ u32 MatchDiv32(u32 pc , Sh4RegType &reg1,Sh4RegType &reg2 , Sh4RegType &reg3)
 }
 bool MatchDiv32u(u32 op,u32 pc)
 {
-	if (settings.dynarec.DisableDivMatching)
+	if (settings.dynarec.safemode)
 		return false;
 
 	div_som_reg1=NoReg;
@@ -716,7 +662,7 @@ bool MatchDiv32u(u32 op,u32 pc)
 
 bool MatchDiv32s(u32 op,u32 pc)
 {
-	if (settings.dynarec.DisableDivMatching)
+	if (settings.dynarec.safemode)
 		return false;
 
 	u32 n = GetN(op);
@@ -1045,10 +991,30 @@ bool dec_generic(u32 op)
 	return true;
 }
 
+void state_Setup(u32 rpc,fpscr_t fpu_cfg)
+{
+	state.cpu.rpc=rpc;
+	state.cpu.is_delayslot=false;
+	state.cpu.FPR64=fpu_cfg.PR;
+	state.cpu.FSZ64=fpu_cfg.SZ;
+	state.cpu.RoundToZero=fpu_cfg.RM==1;
+	verify(fpu_cfg.RM<2);
+	//what about fp/fs ?
+
+	state.NextOp=NDO_NextOp;
+	state.BlockType=BET_SCL_Intr;
+	state.JumpAddr=0xFFFFFFFF;
+	state.NextAddr=0xFFFFFFFF;
+
+	state.info.has_readm=false;
+	state.info.has_writem=false;
+	state.info.has_fpu=false;
+}
+
 void dec_DecodeBlock(RuntimeBlockInfo* rbi,u32 max_cycles)
 {
 	blk=rbi;
-	state.Setup(blk->addr,blk->fpu_cfg);
+	state_Setup(blk->addr,blk->fpu_cfg);
 	ngen_GetFeatures(&state.ngen);
 	
 	blk->guest_opcodes=0;

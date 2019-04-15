@@ -25,12 +25,12 @@
             android:layout_marginRight="6dp"
             android:layout_marginTop="2dp"
             android:scaleType="fitCenter"
-            app:srcCompat="@drawable/gdi" />
+            app:srcCompat="@drawable/disk_unknown" />
 
         <TextView
             android:id="@+id/item_name"
             style="@android:style/TextAppearance.Small"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
             android:layout_weight="1"

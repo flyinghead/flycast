@@ -35,9 +35,6 @@ enum shil_param_type
 #define SHIL_MODE 0
 #include "shil_canonical.h"
 
-//this should be really removed ...
-u32* GetRegPtr(u32 reg);
-
 struct shil_param
 {
 	shil_param()

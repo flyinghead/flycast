@@ -1,10 +1,9 @@
 #include <signal.h>
-#include "hw/pvr/ta_ctx.h"
 #include "cfg/cfg.h"
 #include "rend/TexCache.h"
+#include "rend/rend.h"
 
 extern cResetEvent rs;
-extern int renderer_enabled;
 extern cResetEvent frame_finished;
 extern TA_context* rqueue;
 
@@ -30,8 +29,12 @@ void dc_run()
 
 	double t0 = os_GetSeconds();
 	TA_context*ctx = read_frame(frame_path);
+	ctx->rend.fog_clamp_min = FOG_CLAMP_MIN;
+	ctx->rend.fog_clamp_max = FOG_CLAMP_MAX;
 	double t1 = os_GetSeconds();
-	printf("Loaded context in %g ms\n", (t1- t0) * 1000);
+	fog_needs_update = true;
+	pal_needs_update = true;
+	printf("Loaded context in %g ms\n", (t1 - t0) * 1000);
 
 	while(renderer_enabled)
 	{

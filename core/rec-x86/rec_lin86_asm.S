@@ -93,7 +93,10 @@ ngen_mainloop:
 	push ebp
 	push ebx
 
-	mov ecx,0xA0000000
+	mov ecx, [p_sh4rcb]
+	add ecx, [nextpc_offset]
+	mov ecx, [ecx]
+
 	mov dword ptr cycle_counter, 448 #SH4_TIMESLICE
 
     lea eax, no_update

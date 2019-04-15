@@ -3,231 +3,169 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdarg.h>
-#include <android/log.h>  
+#include <android/log.h>
 #include <unistd.h>
-
-#include <EGL/egl.h>
-#include <GLES2/gl2.h>
-#include <GLES2/gl2ext.h>
+#include <stdlib.h>
 
 #include "types.h"
+#include <android/native_window.h>
+#include <android/native_window_jni.h>
+#include <types.h>
+
+#include "hw/maple/maple_cfg.h"
+#include "hw/pvr/Renderer_if.h"
 #include "profiler/profiler.h"
-#include "cfg/cfg.h"
 #include "rend/TexCache.h"
+#include "rend/gles/gles.h"
 #include "hw/maple/maple_devs.h"
 #include "hw/maple/maple_if.h"
+#include "hw/naomi/naomi_cart.h"
 #include "oslib/audiobackend_android.h"
+#include "imgread/common.h"
+#include "rend/gui.h"
+#include "cfg/cfg.h"
 
-#include "utils.h"
+JavaVM* g_jvm;
+
+// Convenience class to get the java environment for the current thread.
+// Also attach the threads, and detach it on destruction, if needed.
+class JVMAttacher {
+public:
+    JVMAttacher() : _env(NULL), _detach_thread(false) {
+    }
+    JNIEnv *getEnv()
+    {
+        if (_env == NULL)
+        {
+            if (g_jvm == NULL) {
+                die("g_jvm == NULL");
+                return NULL;
+            }
+            int rc = g_jvm->GetEnv((void **)&_env, JNI_VERSION_1_6);
+            if (rc  == JNI_EDETACHED) {
+                if (g_jvm->AttachCurrentThread(&_env, NULL) != 0) {
+                    die("AttachCurrentThread failed");
+                    return NULL;
+                }
+                _detach_thread = true;
+            }
+            else if (rc == JNI_EVERSION) {
+                die("JNI version error");
+                return NULL;
+            }
+        }
+        return _env;
+    }
+
+    ~JVMAttacher()
+    {
+        if (_detach_thread)
+            g_jvm->DetachCurrentThread();
+    }
+
+private:
+    JNIEnv *_env;
+    bool _detach_thread;
+};
+static thread_local JVMAttacher jvm_attacher;
+
+#include "android_gamepad.h"
+
+#define SETTINGS_ACCESSORS(jsetting, csetting, type)                                                                                                    \
+JNIEXPORT type JNICALL Java_com_reicast_emulator_emu_JNIdc_get ## jsetting(JNIEnv *env, jobject obj)  __attribute__((visibility("default")));           \
+JNIEXPORT type JNICALL Java_com_reicast_emulator_emu_JNIdc_get ## jsetting(JNIEnv *env, jobject obj)                                                    \
+{                                                                                                                                                       \
+    return settings.csetting;                                                                                                                           \
+}
 
 extern "C"
 {
-  JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_config(JNIEnv *env,jobject obj,jstring dirName)  __attribute__((visibility("default")));
-  JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_init(JNIEnv *env,jobject obj,jstring fileName)  __attribute__((visibility("default")));
-  JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_run(JNIEnv *env,jobject obj,jobject emu_thread)  __attribute__((visibility("default")));
-  JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_pause(JNIEnv *env,jobject obj)  __attribute__((visibility("default")));
-  JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_destroy(JNIEnv *env,jobject obj)  __attribute__((visibility("default")));
+JNIEXPORT jstring JNICALL Java_com_reicast_emulator_emu_JNIdc_initEnvironment(JNIEnv *env, jobject obj, jobject emulator, jstring homeDirectory)  __attribute__((visibility("default")));
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setExternalStorageDirectories(JNIEnv *env, jobject obj, jobjectArray pathList)  __attribute__((visibility("default")));
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setGameUri(JNIEnv *env,jobject obj,jstring fileName)  __attribute__((visibility("default")));
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_pause(JNIEnv *env,jobject obj)  __attribute__((visibility("default")));
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_resume(JNIEnv *env,jobject obj)  __attribute__((visibility("default")));
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_stop(JNIEnv *env,jobject obj)  __attribute__((visibility("default")));
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_destroy(JNIEnv *env,jobject obj)  __attribute__((visibility("default")));
 
-  JNIEXPORT jint JNICALL Java_com_reicast_emulator_emu_JNIdc_send(JNIEnv *env,jobject obj,jint id, jint v)  __attribute__((visibility("default")));
-  JNIEXPORT jint JNICALL Java_com_reicast_emulator_emu_JNIdc_data(JNIEnv *env,jobject obj,jint id, jbyteArray d)  __attribute__((visibility("default")));
+JNIEXPORT jint JNICALL Java_com_reicast_emulator_emu_JNIdc_send(JNIEnv *env,jobject obj,jint id, jint v)  __attribute__((visibility("default")));
+JNIEXPORT jint JNICALL Java_com_reicast_emulator_emu_JNIdc_data(JNIEnv *env,jobject obj,jint id, jbyteArray d)  __attribute__((visibility("default")));
 
-  JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_rendinit(JNIEnv *env,jobject obj,jint w,jint h)  __attribute__((visibility("default")));
-  JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_rendframe(JNIEnv *env,jobject obj)  __attribute__((visibility("default")));
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_rendinitNative(JNIEnv *env, jobject obj, jobject surface, jint w, jint h)  __attribute__((visibility("default")));
+JNIEXPORT jboolean JNICALL Java_com_reicast_emulator_emu_JNIdc_rendframeNative(JNIEnv *env,jobject obj)  __attribute__((visibility("default")));
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_rendinitJava(JNIEnv *env, jobject obj, jint w, jint h)  __attribute__((visibility("default")));
+JNIEXPORT jboolean JNICALL Java_com_reicast_emulator_emu_JNIdc_rendframeJava(JNIEnv *env, jobject obj)  __attribute__((visibility("default")));
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_rendtermJava(JNIEnv *env, jobject obj)  __attribute__((visibility("default")));
 
-  JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_kcode(JNIEnv * env, jobject obj, jintArray k_code, jintArray l_t, jintArray r_t, jintArray jx, jintArray jy)  __attribute__((visibility("default")));
-  JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_vjoy(JNIEnv * env, jobject obj,u32 id,float x, float y, float w, float h)  __attribute__((visibility("default")));
-  //JNIEXPORT jint JNICALL Java_com_reicast_emulator_emu_JNIdc_play(JNIEnv *env,jobject obj,jshortArray result,jint size);
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_vjoy(JNIEnv * env, jobject obj,int id,float x, float y, float w, float h)  __attribute__((visibility("default")));
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_hideOsd(JNIEnv * env, jobject obj)  __attribute__((visibility("default")));
 
-  JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_initControllers(JNIEnv *env, jobject obj, jbooleanArray controllers)  __attribute__((visibility("default")));
-  
-  JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setupMic(JNIEnv *env,jobject obj,jobject sip)  __attribute__((visibility("default")));
-  JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_diskSwap(JNIEnv *env,jobject obj, jstring newdisk)  __attribute__((visibility("default")));
-  JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_vmuSwap(JNIEnv *env,jobject obj)  __attribute__((visibility("default")));
-  JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setupVmu(JNIEnv *env,jobject obj,jobject sip)  __attribute__((visibility("default")));
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_getControllers(JNIEnv *env, jobject obj, jintArray controllers, jobjectArray peripherals)  __attribute__((visibility("default")));
 
-    JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_dynarec(JNIEnv *env,jobject obj, jint dynarec)  __attribute__((visibility("default")));
-    JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_idleskip(JNIEnv *env,jobject obj, jint idleskip)  __attribute__((visibility("default")));
-    JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_unstable(JNIEnv *env,jobject obj, jint unstable)  __attribute__((visibility("default")));
-    JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_cable(JNIEnv *env,jobject obj, jint cable)  __attribute__((visibility("default")));
-    JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_region(JNIEnv *env,jobject obj, jint region)  __attribute__((visibility("default")));
-    JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_broadcast(JNIEnv *env,jobject obj, jint broadcast)  __attribute__((visibility("default")));
-    JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_limitfps(JNIEnv *env,jobject obj, jint limiter)  __attribute__((visibility("default")));
-    JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_nobatch(JNIEnv *env,jobject obj, jint nobatch)  __attribute__((visibility("default")));
-    JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_nosound(JNIEnv *env,jobject obj, jint noaudio)  __attribute__((visibility("default")));
-    JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_mipmaps(JNIEnv *env,jobject obj, jint mipmaps)  __attribute__((visibility("default")));
-    JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_widescreen(JNIEnv *env,jobject obj, jint stretch)  __attribute__((visibility("default")));
-    JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_subdivide(JNIEnv *env,jobject obj, jint subdivide)  __attribute__((visibility("default")));
-    JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_frameskip(JNIEnv *env,jobject obj, jint frames)  __attribute__((visibility("default")));
-    JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_pvrrender(JNIEnv *env,jobject obj, jint render)  __attribute__((visibility("default")));
-    JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_syncedrender(JNIEnv *env,jobject obj, jint sync)  __attribute__((visibility("default")));
-    JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_modvols(JNIEnv *env,jobject obj, jint volumes)  __attribute__((visibility("default")));
-    JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_bootdisk(JNIEnv *env,jobject obj, jstring disk)  __attribute__((visibility("default")));
-    JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_usereios(JNIEnv *env,jobject obj, jint reios)  __attribute__((visibility("default")));
-    JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_dreamtime(JNIEnv *env,jobject obj, jlong clock)  __attribute__((visibility("default")));
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setupMic(JNIEnv *env,jobject obj,jobject sip)  __attribute__((visibility("default")));
+
+SETTINGS_ACCESSORS(Nosound, aica.NoSound, jboolean)
+SETTINGS_ACCESSORS(Widescreen, rend.WideScreen, jboolean)
+SETTINGS_ACCESSORS(VirtualGamepadVibration, input.VirtualGamepadVibration, jint);
+
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_screenDpi(JNIEnv *env,jobject obj, jint screenDpi)  __attribute__((visibility("default")));
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_guiOpenSettings(JNIEnv *env,jobject obj)  __attribute__((visibility("default")));
+JNIEXPORT jboolean JNICALL Java_com_reicast_emulator_emu_JNIdc_guiIsOpen(JNIEnv *env,jobject obj)  __attribute__((visibility("default")));
+JNIEXPORT jboolean JNICALL Java_com_reicast_emulator_emu_JNIdc_guiIsContentBrowser(JNIEnv *env,jobject obj)  __attribute__((visibility("default")));
+
+JNIEXPORT void JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_init(JNIEnv *env, jobject obj) __attribute__((visibility("default")));
+JNIEXPORT void JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_joystickAdded(JNIEnv *env, jobject obj, jint id, jstring name, jint maple_port)  __attribute__((visibility("default")));
+JNIEXPORT void JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_joystickRemoved(JNIEnv *env, jobject obj, jint id)  __attribute__((visibility("default")));
+JNIEXPORT void JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_virtualGamepadEvent(JNIEnv *env, jobject obj, jint kcode, jint joyx, jint joyy, jint lt, jint rt)  __attribute__((visibility("default")));
+JNIEXPORT jboolean JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_joystickButtonEvent(JNIEnv *env, jobject obj, jint id, jint key, jboolean pressed)  __attribute__((visibility("default")));
+JNIEXPORT jboolean JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_joystickAxisEvent(JNIEnv *env, jobject obj, jint id, jint key, jint value) __attribute__((visibility("default")));
+JNIEXPORT void JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_mouseEvent(JNIEnv *env, jobject obj, jint xpos, jint ypos, jint buttons) __attribute__((visibility("default")));
+
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_AudioBackend_setInstance(JNIEnv *env, jobject obj, jobject instance) __attribute__((visibility("default")));
+
+JNIEXPORT void JNICALL Java_com_reicast_emulator_BaseGLActivity_register(JNIEnv *env, jobject obj, jobject activity) __attribute__((visibility("default")));
 };
 
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_dynarec(JNIEnv *env,jobject obj, jint dynarec)
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_screenDpi(JNIEnv *env,jobject obj, jint screenDpi)
 {
-    settings.dynarec.Enable = dynarec;
+    screen_dpi = screenDpi;
 }
 
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_idleskip(JNIEnv *env,jobject obj, jint idleskip)
-{
-    settings.dynarec.idleskip = idleskip;
-}
-
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_unstable(JNIEnv *env,jobject obj, jint unstable)
-{
-    settings.dynarec.unstable_opt = unstable;
-}
-
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_cable(JNIEnv *env,jobject obj, jint cable)
-{
-    settings.dreamcast.cable = cable;
-}
-
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_region(JNIEnv *env,jobject obj, jint region)
-{
-    settings.dreamcast.region = region;
-}
-
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_broadcast(JNIEnv *env,jobject obj, jint broadcast)
-{
-    settings.dreamcast.broadcast = broadcast;
-}
-
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_limitfps(JNIEnv *env,jobject obj, jint limiter)
-{
-    settings.aica.LimitFPS = limiter;
-}
-
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_nobatch(JNIEnv *env,jobject obj, jint nobatch)
-{
-    settings.aica.NoBatch = nobatch;
-}
-
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_nosound(JNIEnv *env,jobject obj, jint noaudio)
-{
-    settings.aica.NoSound = noaudio;
-}
-
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_mipmaps(JNIEnv *env,jobject obj, jint mipmaps)
-{
-    settings.rend.UseMipmaps = mipmaps;
-}
-
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_widescreen(JNIEnv *env,jobject obj, jint stretch)
-{
-    settings.rend.WideScreen = stretch;
-}
-
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_subdivide(JNIEnv *env,jobject obj, jint subdivide)
-{
-    settings.pvr.subdivide_transp = subdivide;
-}
-
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_frameskip(JNIEnv *env,jobject obj, jint frames)
-{
-    settings.pvr.ta_skip = frames;
-}
-
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_pvrrender(JNIEnv *env,jobject obj, jint render)
-{
-    settings.pvr.rend = render;
-}
-
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_syncedrender(JNIEnv *env,jobject obj, jint sync)
-{
-    settings.pvr.SynchronousRendering = sync;
-}
-
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_modvols(JNIEnv *env,jobject obj, jint volumes)
-{
-    settings.rend.ModifierVolumes = volumes;
-}
-
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_bootdisk(JNIEnv *env,jobject obj, jstring disk)
-{
-
-}
-
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_usereios(JNIEnv *env,jobject obj, jint reios)
-{
-	settings.bios.UseReios = reios;
-}
-
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_dreamtime(JNIEnv *env,jobject obj, jlong clock)
-{
-    settings.dreamcast.RTC = (u32)(clock);
-}
-
-void egl_stealcntx();
-void SetApplicationPath(wchar *path);
-int dc_init(int argc,wchar* argv[]);
-void dc_run();
-void dc_pause();
+int reicast_init(int argc, char* argv[]);
+void dc_resume();
+void dc_stop();
 void dc_term();
-void mcfg_Create(MapleDeviceType type,u32 bus,u32 port);
 
-bool VramLockedWrite(u8* address);
+bool egl_makecurrent();
 
-bool rend_single_frame();
-bool gles_init();
-
-//extern cResetEvent rs,re;
 extern int screen_width,screen_height;
 
-static u64 tvs_base;
-static char CurFileName[256];
+static char gamedisk[256];
 
-// Additonal controllers 2, 3 and 4 connected ?
-static bool add_controllers[3] = { false, false, false };
-
-u16 kcode[4];
+u16 kcode[4] = { 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF };
 u32 vks[4];
 s8 joyx[4],joyy[4];
 u8 rt[4],lt[4];
 float vjoy_pos[14][8];
 
+extern s32 mo_x_abs;
+extern s32 mo_y_abs;
+extern u32 mo_buttons;
+
 extern bool print_stats;
 
-
+//stuff for saving prefs
+jobject g_emulator;
+jmethodID saveAndroidSettingsMid;
+static ANativeWindow *g_window = 0;
 
 void os_DoEvents()
 {
-  // @@@ Nothing here yet
+    // @@@ Nothing here yet
 }
 
-//
-// Native thread that runs the actual nullDC emulator
-//
-static void *ThreadHandler(void *UserData)
+void os_CreateWindow()
 {
-  char *Args[3];
-  const char *P;
-
-  // Make up argument list
-  P       = (const char *)UserData;
-  Args[0] = (char*)"dc";
-  Args[1] = (char*)"-config";
-  Args[2] = P&&P[0]? (char *)malloc(strlen(P)+32):0;
-
-  if(Args[2])
-  {
-    strcpy(Args[2],"config:image=");
-    strcat(Args[2],P);
-  }
-
-  // Add additonal controllers
-  for (int i = 0; i < 3; i++)
-  {
-    if (add_controllers[i])
-      mcfg_Create(MDT_SegaController,i+1,5);
-  }
-
-  // Run nullDC emulator
-  dc_init(Args[2]? 3:1,Args);
-    return 0;
 }
 
 //
@@ -237,85 +175,142 @@ static void *ThreadHandler(void *UserData)
 
 void UpdateInputState(u32 Port)
 {
-  // @@@ Nothing here yet
+    // @@@ Nothing here yet
 }
 
-void UpdateVibration(u32 port, u32 value)
+void *libPvr_GetRenderTarget()
 {
-	
+    return g_window;    // the surface to render to
 }
 
-void *libPvr_GetRenderTarget() 
+void *libPvr_GetRenderSurface()
 {
-  // No X11 window in Android 
-  return(0);
-}
-
-void *libPvr_GetRenderSurface() 
-{ 
-  // No X11 display in Android 
-  return(0);
+    return NULL;    // default display
 }
 
 void common_linux_setup();
 
+void os_SetupInput()
+{
+#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
+    mcfg_CreateDevices();
+#endif
+}
+
 void os_SetWindowText(char const *Text)
 {
-	putinf("%s",Text);
+    putinf("%s",Text);
 }
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_config(JNIEnv *env,jobject obj,jstring dirName)
+
+JNIEXPORT jstring JNICALL Java_com_reicast_emulator_emu_JNIdc_initEnvironment(JNIEnv *env, jobject obj, jobject emulator, jstring homeDirectory)
 {
-  // Set home directory based on User config
-  const char* D = dirName? env->GetStringUTFChars(dirName,0):0;
-	set_user_config_dir(D);
-	set_user_data_dir(D);
-	printf("Config dir is: %s\n", get_writable_config_path("/").c_str());
-	printf("Data dir is:   %s\n", get_writable_data_path("/").c_str());
-  env->ReleaseStringUTFChars(dirName,D);
+    // Initialize platform-specific stuff
+    common_linux_setup();
+
+    bool first_init = false;
+
+    // Keep reference to global JVM and Emulator objects
+    if (g_jvm == NULL)
+    {
+        first_init = true;
+        env->GetJavaVM(&g_jvm);
+    }
+    if (g_emulator == NULL) {
+        g_emulator = env->NewGlobalRef(emulator);
+        saveAndroidSettingsMid = env->GetMethodID(env->GetObjectClass(emulator), "SaveAndroidSettings", "(Ljava/lang/String;)V");
+    }
+    // Set home directory based on User config
+    const char* path = homeDirectory != NULL ? env->GetStringUTFChars(homeDirectory, 0) : "";
+    set_user_config_dir(path);
+    set_user_data_dir(path);
+    printf("Config dir is: %s\n", get_writable_config_path("").c_str());
+    printf("Data dir is:   %s\n", get_writable_data_path("").c_str());
+    if (homeDirectory != NULL)
+    	env->ReleaseStringUTFChars(homeDirectory, path);
+
+    if (first_init)
+    {
+        // Do one-time initialization
+        jstring msg = NULL;
+        int rc = reicast_init(0, NULL);
+        if (rc == -4)
+            msg = env->NewStringUTF("Cannot find configuration");
+        else if (rc == 69)
+            msg = env->NewStringUTF("Invalid command line");
+        else if (rc == -1)
+            msg = env->NewStringUTF("Memory initialization failed");
+        return msg;
+    }
+    else
+        return NULL;
 }
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_init(JNIEnv *env,jobject obj,jstring fileName)
+
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setExternalStorageDirectories(JNIEnv *env, jobject obj, jobjectArray pathList)
 {
-  // Get filename string from Java
-  const char* P = fileName? env->GetStringUTFChars(fileName,0):0;
-  if(!P) CurFileName[0] = '\0';
-  else
-  {
-    printf("Got URI: '%s'\n",P);
-    strncpy(CurFileName,(strlen(P)>=7)&&!memcmp(P,"file://",7)? P+7:P,sizeof(CurFileName));
-    CurFileName[sizeof(CurFileName)-1] = '\0';
-    env->ReleaseStringUTFChars(fileName,P);
-  }
-
-  printf("Opening file: '%s'\n",CurFileName);
-
-  // Initialize platform-specific stuff
-  common_linux_setup();
-
-  // Set configuration
-  settings.profile.run_counts = 0;
-  
-
-/*
-  // Start native thread
-  pthread_attr_init(&PTAttr);
-  pthread_attr_setdetachstate(&PTAttr,PTHREAD_CREATE_DETACHED);
-  pthread_create(&PThread,&PTAttr,ThreadHandler,CurFileName);
-  pthread_attr_destroy(&PTAttr);
-  */
-
-  ThreadHandler(CurFileName);
+    std::string paths;
+    int obj_len = env->GetArrayLength(pathList);
+    for (int i = 0; i < obj_len; ++i) {
+        jstring dir = (jstring)env->GetObjectArrayElement(pathList, i);
+        const char* p = env->GetStringUTFChars(dir, 0);
+        if (!paths.empty())
+            paths += ":";
+        paths += p;
+        env->ReleaseStringUTFChars(dir, p);
+        env->DeleteLocalRef(dir);
+    }
+    setenv("REICAST_HOME", paths.c_str(), 1);
 }
 
-#define SAMPLE_COUNT 512
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_bootdisk(JNIEnv *env,jobject obj, jstring disk) {
+    if (disk != NULL) {
+        settings.imgread.LoadDefaultImage = true;
+        const char *P = env->GetStringUTFChars(disk, 0);
+        if (!P) settings.imgread.DefaultImage[0] = '\0';
+        else {
+            printf("Boot Disk URI: '%s'\n", P);
+            strncpy(settings.imgread.DefaultImage,(strlen(P)>=7)&&!memcmp(
+                    P,"file://",7)? P+7:P,sizeof(settings.imgread.DefaultImage));
+            settings.imgread.DefaultImage[sizeof(settings.imgread.DefaultImage) - 1] = '\0';
+        }
+    }
+}
 
-JNIEnv* jenv; //we are abusing the f*** out of this poor guy
-//JavaVM* javaVM = NULL; //this seems like the right way to go
-//stuff for audio
-jshortArray jsamples;
-jmethodID writemid;
-jmethodID coreMessageMid;
-jmethodID dieMid;
-jobject emu;
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setGameUri(JNIEnv *env,jobject obj,jstring fileName)
+{
+    if (fileName != NULL)
+    {
+        // Get filename string from Java
+        const char* file_path = env->GetStringUTFChars(fileName, 0);
+        printf("Game Disk URI: '%s'\n", file_path);
+        strncpy(gamedisk, strlen(file_path) >= 7 && !memcmp(file_path, "file://", 7) ? file_path + 7 : file_path, sizeof(gamedisk));
+        gamedisk[sizeof(gamedisk) - 1] = '\0';
+        env->ReleaseStringUTFChars(fileName, file_path);
+
+        cfgSetVirtual("config", "image", file_path);
+    }
+}
+
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_diskSwap(JNIEnv *env,jobject obj,jstring disk)
+{
+    if (settings.imgread.LoadDefaultImage) {
+        strncpy(settings.imgread.DefaultImage, gamedisk, sizeof(settings.imgread.DefaultImage));
+        settings.imgread.DefaultImage[sizeof(settings.imgread.DefaultImage) - 1] = '\0';
+        DiscSwap();
+    } else if (disk != NULL) {
+        settings.imgread.LoadDefaultImage = true;
+        const char *P = env->GetStringUTFChars(disk, 0);
+        if (!P) settings.imgread.DefaultImage[0] = '\0';
+        else {
+            printf("Swap Disk URI: '%s'\n", P);
+            strncpy(settings.imgread.DefaultImage,(strlen(P)>=7)&&!memcmp(
+                    P,"file://",7)? P+7:P,sizeof(settings.imgread.DefaultImage));
+            settings.imgread.DefaultImage[sizeof(settings.imgread.DefaultImage) - 1] = '\0';
+            env->ReleaseStringUTFChars(disk, P);
+        }
+        DiscSwap();
+    }
+}
+
 //stuff for microphone
 jobject sipemu;
 jmethodID getmicdata;
@@ -323,260 +318,411 @@ jmethodID getmicdata;
 jobject vmulcd = NULL;
 jbyteArray jpix = NULL;
 jmethodID updatevmuscreen;
+extern bool game_started;
 
-
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_run(JNIEnv *env,jobject obj,jobject emu_thread)
-{
-	install_prof_handler(0);
-
-	jenv=env;
-	emu=emu_thread;
-
-	jsamples=env->NewShortArray(SAMPLE_COUNT*2);
-	writemid=env->GetMethodID(env->GetObjectClass(emu),"WriteBuffer","([SI)I");
-    coreMessageMid=env->GetMethodID(env->GetObjectClass(emu),"coreMessage","([B)V");
-    dieMid=env->GetMethodID(env->GetObjectClass(emu),"Die","()V");
-//	msgboxf("HELLO!", MBX_OK);
-	
-	dc_run();
-}
-
-int msgboxf(const wchar* Text,unsigned int Type,...)
-{
-  wchar S[2048];
-  va_list Args;
-
-  va_start(Args,Type);
-  vsnprintf(S, 2048,Text,Args);
-  va_end(Args);
-  puts(S);
-
-  int byteCount = strlen(S);
-  jbyteArray bytes = jenv->NewByteArray(byteCount);
-  jenv->SetByteArrayRegion(bytes, 0, byteCount, (jbyte*)S);
-
-  jenv->CallVoidMethod(emu,coreMessageMid,bytes);
-
-  return (MBX_OK);
-}
+//stuff for audio
+#define SAMPLE_COUNT 512
+jshortArray jsamples;
+jmethodID writeBufferMid;
+static jobject g_audioBackend;
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setupMic(JNIEnv *env,jobject obj,jobject sip)
 {
-	sipemu = env->NewGlobalRef(sip);
-	getmicdata = env->GetMethodID(env->GetObjectClass(sipemu),"getData","()[B");	
-	delete MapleDevices[0][1];
-	mcfg_Create(MDT_Microphone,0,1);
+    sipemu = env->NewGlobalRef(sip);
+    getmicdata = env->GetMethodID(env->GetObjectClass(sipemu),"getData","()[B");
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setupVmu(JNIEnv *env,jobject obj,jobject vmu)
 {
-	//env->GetJavaVM(&javaVM);
-	vmulcd = env->NewGlobalRef(vmu);
-	updatevmuscreen = env->GetMethodID(env->GetObjectClass(vmu),"updateBytes","([B)V");
-	//jpix=env->NewByteArray(1536);
+    vmulcd = env->NewGlobalRef(vmu);
+    updatevmuscreen = env->GetMethodID(env->GetObjectClass(vmu),"updateBytes","([B)V");
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_pause(JNIEnv *env,jobject obj)
 {
-	dc_pause();
+    if (game_started)
+        dc_stop();
+}
+
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_resume(JNIEnv *env,jobject obj)
+{
+    if (game_started)
+        dc_resume();
+}
+
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_stop(JNIEnv *env,jobject obj)
+{
+    if (game_started)
+        dc_stop();
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_destroy(JNIEnv *env,jobject obj)
 {
-	dc_term();
-}
-
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_diskSwap(JNIEnv *env,jobject obj, jstring newdisk)
-{
-	// Needs actual code to swap a disk
+    dc_term();
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_vmuSwap(JNIEnv *env,jobject obj)
 {
-	maple_device* olda = MapleDevices[0][0];
-	maple_device* oldb = MapleDevices[0][1];
-	MapleDevices[0][0] = NULL;
-	MapleDevices[0][1] = NULL;
-	usleep(50000);//50 ms, wait for host to detect disconnect
+    maple_device* olda = MapleDevices[0][0];
+    maple_device* oldb = MapleDevices[0][1];
+    MapleDevices[0][0] = NULL;
+    MapleDevices[0][1] = NULL;
+    usleep(50000);//50 ms, wait for host to detect disconnect
 
-	MapleDevices[0][0] = oldb;
-	MapleDevices[0][1] = olda;
+    MapleDevices[0][0] = oldb;
+    MapleDevices[0][1] = olda;
 }
 
 JNIEXPORT jint JNICALL Java_com_reicast_emulator_emu_JNIdc_send(JNIEnv *env,jobject obj,jint cmd, jint param)
 {
-	if (cmd==0)
-	{
-		if (param==0)
-		{
-			KillTex=true;
-			printf("Killing texture cache\n");
-		}
+    if (cmd==0)
+    {
+        if (param==0)
+        {
+            KillTex=true;
+            printf("Killing texture cache\n");
+        }
 
-		if (param==1)
-		{
-			settings.pvr.ta_skip^=1;
-			printf("settings.pvr.ta_skip: %d\n",settings.pvr.ta_skip);
-		}
-		if (param==2)
-		{
-		#if FEAT_SHREC != DYNAREC_NONE
-			print_stats=true;
-			printf("Storing blocks ...\n");
-		#endif
-		}
-	}
-	else if (cmd==1)
-	{
-    if (param==0)
-      sample_Stop();
-    else
-      sample_Start(param);
-	}
-	else if (cmd==2)
-	{
-	}
+        if (param==1)
+        {
+            settings.pvr.ta_skip^=1;
+            printf("settings.pvr.ta_skip: %d\n",settings.pvr.ta_skip);
+        }
+        if (param==2)
+        {
+#if FEAT_SHREC != DYNAREC_NONE
+            print_stats=true;
+            printf("Storing blocks ...\n");
+#endif
+        }
+    }
+    else if (cmd==1)
+    {
+        if (param==0)
+            sample_Stop();
+        else
+            sample_Start(param);
+    }
+    else if (cmd==2)
+    {
+    }
+    return 0;
 }
 
 JNIEXPORT jint JNICALL Java_com_reicast_emulator_emu_JNIdc_data(JNIEnv *env, jobject obj, jint id, jbyteArray d)
 {
-	if (id==1)
-	{
-		printf("Loading symtable (%p,%p,%d,%p)\n",env,obj,id,d);
-		jsize len=env->GetArrayLength(d);
-		u8* syms=(u8*)malloc((size_t)len);
-		printf("Loading symtable to %8s, %d\n",syms,len);
-		env->GetByteArrayRegion(d,0,len,(jbyte*)syms);
-		sample_Syms(syms, (size_t)len);
-	}
+    if (id==1)
+    {
+        printf("Loading symtable (%p,%p,%d,%p)\n",env,obj,id,d);
+        jsize len=env->GetArrayLength(d);
+        u8* syms=(u8*)malloc((size_t)len);
+        printf("Loading symtable to %8s, %d\n",syms,len);
+        env->GetByteArrayRegion(d,0,len,(jbyte*)syms);
+        sample_Syms(syms, (size_t)len);
+    }
+    return 0;
 }
 
+extern void gl_swap();
+extern void egl_stealcntx();
 
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_rendframe(JNIEnv *env,jobject obj)
+JNIEXPORT jboolean JNICALL Java_com_reicast_emulator_emu_JNIdc_rendframeNative(JNIEnv *env,jobject obj)
 {
-	while(!rend_single_frame()) ;
+    if (g_window == NULL)
+        return false;
+    if (!egl_makecurrent())
+        return false;
+    jboolean ret = (jboolean)rend_single_frame();
+    if (ret)
+        gl_swap();
+    return ret;
 }
 
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_kcode(JNIEnv * env, jobject obj, jintArray k_code, jintArray l_t, jintArray r_t, jintArray jx, jintArray jy)
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_rendinitNative(JNIEnv * env, jobject obj, jobject surface, jint width, jint height)
 {
-	jint *k_code_body = env->GetIntArrayElements(k_code, 0);
-	jint *l_t_body = env->GetIntArrayElements(l_t, 0);
-	jint *r_t_body = env->GetIntArrayElements(r_t, 0);
-	jint *jx_body = env->GetIntArrayElements(jx, 0);
-	jint *jy_body = env->GetIntArrayElements(jy, 0);
-
-	for(int i = 0; i < 4; i++)
-	{
-		kcode[i] = k_code_body[i];	
-		lt[i] = l_t_body[i];
-		rt[i] = r_t_body[i];
-		joyx[i] = jx_body[i];
-		joyy[i] = jy_body[i];
-	}
-
-	env->ReleaseIntArrayElements(k_code, k_code_body, 0);
-	env->ReleaseIntArrayElements(l_t, l_t_body, 0);
-	env->ReleaseIntArrayElements(r_t, r_t_body, 0);
-	env->ReleaseIntArrayElements(jx, jx_body, 0);
-	env->ReleaseIntArrayElements(jy, jy_body, 0);
+    if (g_window != NULL)
+    {
+        egl_makecurrent();
+        rend_term_renderer();
+        ANativeWindow_release(g_window);
+        g_window = NULL;
+    }
+    if (surface != NULL)
+    {
+        g_window = ANativeWindow_fromSurface(env, surface);
+        rend_init_renderer();
+        screen_width = width;
+        screen_height = height;
+    }
 }
 
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_rendinit(JNIEnv * env, jobject obj, jint w,jint h)
-{             
-  screen_width  = w;
-  screen_height = h;
-
-  //gles_term();
-
-  egl_stealcntx();
-
-  if (!gles_init())
-	die("OPENGL FAILED");
-
-  install_prof_handler(1);
-}
-
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_vjoy(JNIEnv * env, jobject obj,u32 id,float x, float y, float w, float h)
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_rendinitJava(JNIEnv * env, jobject obj, jint width, jint height)
 {
-  if(id<sizeof(vjoy_pos)/sizeof(vjoy_pos[0]))
-  {
-    vjoy_pos[id][0] = x;
-    vjoy_pos[id][1] = y;
-	vjoy_pos[id][2] = w;
-	vjoy_pos[id][3] = h;
-  }
+    screen_width = width;
+    screen_height = height;
+    egl_stealcntx();
+    rend_init_renderer();
 }
 
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_initControllers(JNIEnv *env, jobject obj, jbooleanArray controllers)
+JNIEXPORT jboolean JNICALL Java_com_reicast_emulator_emu_JNIdc_rendframeJava(JNIEnv *env,jobject obj)
 {
-	jboolean *controllers_body = env->GetBooleanArrayElements(controllers, 0);
-	memcpy(add_controllers, controllers_body, 3);
-	env->ReleaseBooleanArrayElements(controllers, controllers_body, 0);
+    egl_stealcntx();
+    return (jboolean)rend_single_frame();
+}
+
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_rendtermJava(JNIEnv * env, jobject obj)
+{
+    egl_stealcntx();
+    rend_term_renderer();
+}
+
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_vjoy(JNIEnv * env, jobject obj,int id,float x, float y, float w, float h)
+{
+    if(id<sizeof(vjoy_pos)/sizeof(vjoy_pos[0]))
+    {
+        vjoy_pos[id][0] = x;
+        vjoy_pos[id][1] = y;
+        vjoy_pos[id][2] = w;
+        vjoy_pos[id][3] = h;
+    }
+}
+
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_hideOsd(JNIEnv * env, jobject obj) {
+    HideOSD();
+}
+
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_getControllers(JNIEnv *env, jobject obj, jintArray controllers, jobjectArray peripherals)
+{
+    jint *controllers_body = env->GetIntArrayElements(controllers, 0);
+    memcpy(controllers_body, settings.input.maple_devices, sizeof(settings.input.maple_devices));
+    env->ReleaseIntArrayElements(controllers, controllers_body, 0);
+
+    int obj_len = env->GetArrayLength(peripherals);
+    for (int i = 0; i < obj_len; ++i) {
+        jintArray port = (jintArray) env->GetObjectArrayElement(peripherals, i);
+        jint *items = env->GetIntArrayElements(port, 0);
+        items[0] = settings.input.maple_expansion_devices[i][0];
+        items[1] = settings.input.maple_expansion_devices[i][1];
+        env->ReleaseIntArrayElements(port, items, 0);
+        env->DeleteLocalRef(port);
+    }
+}
+
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_guiOpenSettings(JNIEnv *env, jobject obj)
+{
+    gui_open_settings();
+}
+
+JNIEXPORT jboolean JNICALL Java_com_reicast_emulator_emu_JNIdc_guiIsOpen(JNIEnv *env, jobject obj)
+{
+    return gui_is_open();
+}
+
+JNIEXPORT jboolean JNICALL Java_com_reicast_emulator_emu_JNIdc_guiIsContentBrowser(JNIEnv *env,jobject obj)
+{
+    return gui_is_content_browser();
 }
 
 // Audio Stuff
 u32 androidaudio_push(void* frame, u32 amt, bool wait)
 {
-	verify(amt==SAMPLE_COUNT);
-	//yeah, do some audio piping magic here !
-	jenv->SetShortArrayRegion(jsamples,0,amt*2,(jshort*)frame);
-	return jenv->CallIntMethod(emu,writemid,jsamples,wait);
+    verify(amt==SAMPLE_COUNT);
+    //yeah, do some audio piping magic here !
+    jvm_attacher.getEnv()->SetShortArrayRegion(jsamples, 0, amt * 2, (jshort *)frame);
+    return jvm_attacher.getEnv()->CallIntMethod(g_audioBackend, writeBufferMid, jsamples, wait);
 }
 
 void androidaudio_init()
 {
-  // Nothing to do here...
+    // Nothing to do here...
 }
 
 void androidaudio_term()
 {
-  // Move along, there is nothing to see here!
-}
-
-bool os_IsAudioBuffered()
-{
-    return jenv->CallIntMethod(emu,writemid,jsamples,-1)==0;
+    // Move along, there is nothing to see here!
 }
 
 audiobackend_t audiobackend_android = {
-    "android", // Slug
-    "Android Audio", // Name
-    &androidaudio_init,
-    &androidaudio_push,
-    &androidaudio_term
+        "android", // Slug
+        "Android Audio", // Name
+        &androidaudio_init,
+        &androidaudio_push,
+        &androidaudio_term
 };
+
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_AudioBackend_setInstance(JNIEnv *env, jobject obj, jobject instance)
+{
+    if (g_audioBackend != NULL)
+        env->DeleteGlobalRef(g_audioBackend);
+    if (instance == NULL) {
+        g_audioBackend = NULL;
+        if (jsamples != NULL) {
+            env->DeleteGlobalRef(jsamples);
+            jsamples = NULL;
+        }
+    }
+    else {
+        g_audioBackend = env->NewGlobalRef(instance);
+        writeBufferMid = env->GetMethodID(env->GetObjectClass(g_audioBackend), "writeBuffer", "([SZ)I");
+        if (jsamples == NULL) {
+            jsamples = env->NewShortArray(SAMPLE_COUNT * 2);
+            jsamples = (jshortArray) env->NewGlobalRef(jsamples);
+        }
+    }
+}
 
 int get_mic_data(u8* buffer)
 {
-	jbyteArray jdata = (jbyteArray)jenv->CallObjectMethod(sipemu,getmicdata);
-	if(jdata==NULL){
-		//LOGW("get_mic_data NULL");
-		return 0;
-	}
-	jenv->GetByteArrayRegion(jdata, 0, SIZE_OF_MIC_DATA, (jbyte*)buffer);
-	jenv->DeleteLocalRef(jdata);
-	return 1;
+    jbyteArray jdata = (jbyteArray)jvm_attacher.getEnv()->CallObjectMethod(sipemu,getmicdata);
+    if(jdata==NULL){
+        //LOGW("get_mic_data NULL");
+        return 0;
+    }
+    jvm_attacher.getEnv()->GetByteArrayRegion(jdata, 0, SIZE_OF_MIC_DATA, (jbyte*)buffer);
+    jvm_attacher.getEnv()->DeleteLocalRef(jdata);
+    return 1;
 }
 
 int push_vmu_screen(u8* buffer)
 {
-	if(vmulcd==NULL){
-		return 0;
-	}
-	JNIEnv *env = jenv;
-	//javaVM->AttachCurrentThread(&env, NULL);
-	if(jpix==NULL){
-		jpix=env->NewByteArray(1536);
-	}
-	env->SetByteArrayRegion(jpix,0,1536,(jbyte*)buffer);
-	env->CallVoidMethod(vmulcd,updatevmuscreen,jpix);
-	return 1;
+    if(vmulcd==NULL){
+        return 0;
+    }
+    if(jpix==NULL){
+        jpix = jvm_attacher.getEnv()->NewByteArray(1536);
+    }
+    jvm_attacher.getEnv()->SetByteArrayRegion(jpix, 0, 1536, (jbyte*)buffer);
+    jvm_attacher.getEnv()->CallVoidMethod(vmulcd, updatevmuscreen, jpix);
+    return 1;
 }
 
 void os_DebugBreak()
 {
     // TODO: notify the parent thread about it ...
 
+	raise(SIGABRT);
+    //pthread_exit(NULL);
+	
     // Attach debugger here to figure out what went wrong
     for(;;) ;
+}
+
+void SaveAndroidSettings()
+{
+    jstring homeDirectory = jvm_attacher.getEnv()->NewStringUTF(get_writable_config_path("").c_str());
+
+    jvm_attacher.getEnv()->CallVoidMethod(g_emulator, saveAndroidSettingsMid, homeDirectory);
+    jvm_attacher.getEnv()->DeleteLocalRef(homeDirectory);
+}
+
+JNIEXPORT void JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_init(JNIEnv *env, jobject obj)
+{
+    input_device_manager = env->NewGlobalRef(obj);
+    input_device_manager_rumble = env->GetMethodID(env->GetObjectClass(obj), "rumble", "(IFFI)Z");
+}
+
+JNIEXPORT void JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_joystickAdded(JNIEnv *env, jobject obj, jint id, jstring name, jint maple_port)
+{
+    const char* joyname = env->GetStringUTFChars(name,0);
+    std::shared_ptr<AndroidGamepadDevice> gamepad = std::make_shared<AndroidGamepadDevice>(maple_port, id, joyname);
+    AndroidGamepadDevice::AddAndroidGamepad(gamepad);
+    env->ReleaseStringUTFChars(name, joyname);
+
+}
+JNIEXPORT void JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_joystickRemoved(JNIEnv *env, jobject obj, jint id)
+{
+    std::shared_ptr<AndroidGamepadDevice> device = AndroidGamepadDevice::GetAndroidGamepad(id);
+    if (device != NULL)
+        AndroidGamepadDevice::RemoveAndroidGamepad(device);
+}
+
+JNIEXPORT void JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_virtualGamepadEvent(JNIEnv *env, jobject obj, jint kcode, jint joyx, jint joyy, jint lt, jint rt)
+{
+    std::shared_ptr<AndroidGamepadDevice> device = AndroidGamepadDevice::GetAndroidGamepad(AndroidGamepadDevice::VIRTUAL_GAMEPAD_ID);
+    if (device != NULL)
+        device->virtual_gamepad_event(kcode, joyx, joyy, lt, rt);
+}
+
+JNIEXPORT jboolean JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_joystickButtonEvent(JNIEnv *env, jobject obj, jint id, jint key, jboolean pressed)
+{
+    std::shared_ptr<AndroidGamepadDevice> device = AndroidGamepadDevice::GetAndroidGamepad(id);
+    if (device != NULL)
+        return device->gamepad_btn_input(key, pressed);
+    else
+    	return false;
+
+}
+
+static std::map<std::pair<jint, jint>, jint> previous_axis_values;
+
+JNIEXPORT jboolean JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_joystickAxisEvent(JNIEnv *env, jobject obj, jint id, jint key, jint value)
+{
+    std::shared_ptr<AndroidGamepadDevice> device = AndroidGamepadDevice::GetAndroidGamepad(id);
+    // Only handle Left Stick on an Xbox 360 controller if there was actual
+    // motion on the stick, otherwise event can be handled as a DPAD event
+    if (device != NULL && previous_axis_values[std::make_pair(id, key)] != value)
+    {
+    	previous_axis_values[std::make_pair(id, key)] = value;
+    	return device->gamepad_axis_input(key, value);
+    }
+    else
+    	return false;
+}
+
+JNIEXPORT void JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_mouseEvent(JNIEnv *env, jobject obj, jint xpos, jint ypos, jint buttons)
+{
+    mo_x_abs = xpos;
+    mo_y_abs = ypos;
+    mo_buttons = 0xFFFF;
+    if (buttons & 1)	// Left
+    	mo_buttons &= ~4;
+    if (buttons & 2)	// Right
+    	mo_buttons &= ~2;
+    if (buttons & 4)	// Middle
+    	mo_buttons &= ~8;
+    mouse_gamepad.gamepad_btn_input(1, (buttons & 1) != 0);
+    mouse_gamepad.gamepad_btn_input(2, (buttons & 2) != 0);
+    mouse_gamepad.gamepad_btn_input(4, (buttons & 4) != 0);
+}
+
+static jobject g_activity;
+static jmethodID VJoyStartEditingMID;
+static jmethodID VJoyStopEditingMID;
+static jmethodID VJoyResetEditingMID;
+
+JNIEXPORT void JNICALL Java_com_reicast_emulator_BaseGLActivity_register(JNIEnv *env, jobject obj, jobject activity)
+{
+    if (g_activity != NULL)
+    {
+        env->DeleteGlobalRef(g_activity);
+        g_activity = NULL;
+    }
+    if (activity != NULL) {
+        g_activity = env->NewGlobalRef(activity);
+        VJoyStartEditingMID = env->GetMethodID(env->GetObjectClass(activity), "VJoyStartEditing", "()V");
+        VJoyStopEditingMID = env->GetMethodID(env->GetObjectClass(activity), "VJoyStopEditing", "(Z)V");
+        VJoyResetEditingMID = env->GetMethodID(env->GetObjectClass(activity), "VJoyResetEditing", "()V");
+    }
+}
+
+void vjoy_start_editing()
+{
+    jvm_attacher.getEnv()->CallVoidMethod(g_activity, VJoyStartEditingMID);
+}
+
+void vjoy_reset_editing()
+{
+    jvm_attacher.getEnv()->CallVoidMethod(g_activity, VJoyResetEditingMID);
+}
+
+void vjoy_stop_editing(bool canceled)
+{
+    jvm_attacher.getEnv()->CallVoidMethod(g_activity, VJoyStopEditingMID, canceled);
+}
+
+void android_send_logs()
+{
+    JNIEnv *env = jvm_attacher.getEnv();
+    jmethodID generateErrorLogMID = env->GetMethodID(env->GetObjectClass(g_activity), "generateErrorLog", "()V");
+    env->CallVoidMethod(g_activity, generateErrorLogMID);
 }

@@ -197,13 +197,6 @@ typedef void BinaryOP       (eReg Rd, eReg Rn, eReg Rm,       ConditionCode CC);
 typedef void BinaryOPImm    (eReg Rd, eReg Rn, s32 sImm8,     ConditionCode CC);
 typedef void UnaryOP        (eReg Rd, eReg Rs);
 
-
-u32* GetRegPtr(u32 reg)
-{
-	return Sh4_int_GetRegisterPtr((Sh4RegType)reg);
-}
-
-
 // you pick reg, loads Base with reg addr, no reg. mapping yet !
 void LoadSh4Reg_mem(eReg Rt, u32 Sh4_Reg, eCC CC=CC_AL)
 {
@@ -343,7 +336,6 @@ extern "C" void ngen_LinkBlock_cond_Branch_stub();
 extern "C" void ngen_LinkBlock_cond_Next_stub();
 
 extern "C" void ngen_FailedToFindBlock_();
-void (*ngen_FailedToFindBlock)()=&ngen_FailedToFindBlock_;  // in asm
 
 #include <map>
 
@@ -410,7 +402,7 @@ u32 DynaRBI::Relink()
 #ifdef CALLSTACK
 #error offset broken
 		SUB(r2, r8, -FPCB_OFFSET);
-#if RAM_SIZE == 33554432
+#if RAM_SIZE_MAX == 33554432
 		UBFX(r1, r4, 1, 24);
 #else
 		UBFX(r1, r4, 1, 23);
@@ -437,7 +429,7 @@ u32 DynaRBI::Relink()
 			//this is faster
 			//why ? (Icache ?)
 			SUB(r2, r8, -FPCB_OFFSET);
-#if RAM_SIZE == 33554432
+#if RAM_SIZE_MAX == 33554432
 			UBFX(r1, r4, 1, 24);
 #else
 			UBFX(r1, r4, 1, 23);
@@ -456,7 +448,7 @@ u32 DynaRBI::Relink()
 			{
 				SUB(r2, r8, -FPCB_OFFSET);
 
-#if RAM_SIZE == 33554432
+#if RAM_SIZE_MAX == 33554432
 				UBFX(r1, r4, 1, 24);
 #else
 				UBFX(r1, r4, 1, 23);
@@ -471,7 +463,7 @@ u32 DynaRBI::Relink()
 			verify(pBranchBlock==0);
 			SUB(r2, r8, -FPCB_OFFSET);
 
-#if RAM_SIZE == 33554432
+#if RAM_SIZE_MAX == 33554432
 			UBFX(r1, r4, 1, 24);
 #else
 			UBFX(r1, r4, 1, 23);
@@ -2124,14 +2116,37 @@ void ngen_Compile(RuntimeBlockInfo* block,bool force_checks, bool reset, bool st
 	//scheduler
 	if (force_checks)
 	{
-		MOV32(r0,block->addr);
-		u32* ptr=(u32*)GetMemPtr(block->addr,4);
-		MOV32(r2,(u32)ptr);
-		LDR(r2,r2,0);
-		MOV32(r1,*ptr);
-		CMP(r1,r2);
+		s32 sz = block->sh4_code_size;
+		u32 addr = block->addr;
+		MOV32(r0,addr);
 
-		JUMP((u32)ngen_blockcheckfail, CC_NE);
+		while (sz > 0)
+		{
+			if (sz > 2)
+			{
+				u32* ptr=(u32*)GetMemPtr(addr,4);
+				MOV32(r2,(u32)ptr);
+				LDR(r2,r2,0);
+				MOV32(r1,*ptr);
+				CMP(r1,r2);
+
+				JUMP((u32)ngen_blockcheckfail, CC_NE);
+				addr += 4;
+				sz -= 4;
+			}
+			else
+			{
+				u16* ptr = (u16 *)GetMemPtr(addr, 2);
+				MOV32(r2, (u32)ptr);
+				LDRH(r2, r2, 0, AL);
+				MOVW(r1, *ptr, AL);
+				CMP(r1, r2);
+
+				JUMP((u32)ngen_blockcheckfail, CC_NE);
+				addr += 2;
+				sz -= 2;
+			}
+		}
 	}
 
 	u32 cyc=block->guest_cycles;
@@ -2232,10 +2247,13 @@ void ngen_ResetBlocks()
 */
 void ngen_init()
 {
+	printf("Initializing the ARM32 dynarec\n");
     verify(FPCB_OFFSET == -0x2100000 || FPCB_OFFSET == -0x4100000);
     verify(rcb_noffs(p_sh4rcb->fpcb) == FPCB_OFFSET);
     
-	for (int s=0;s<6;s++)
+    ngen_FailedToFindBlock = &ngen_FailedToFindBlock_;
+
+    for (int s=0;s<6;s++)
 	{
 		void* fn=s==0?(void*)_vmem_ReadMem8SX32:
 				 s==1?(void*)_vmem_ReadMem16SX32:
@@ -2339,4 +2357,9 @@ RuntimeBlockInfo* ngen_AllocateBlock()
 	return new DynaRBI();
 };
 
+void CacheFlush()
+{
+	printf("Flushing cache from %08x to %08x\n", &CodeCache[0], &CodeCache[CODE_SIZE - 1]);
+	//CacheFlush(&CodeCache[0], &CodeCache[CODE_SIZE - 1]);
+}
 #endif

@@ -6,10 +6,6 @@
 
 bool pal_needs_update=true;
 bool fog_needs_update=true;
-u32 _pal_rev_256[4]={0};
-u32 _pal_rev_16[64]={0};
-u32 pal_rev_256[4]={0};
-u32 pal_rev_16[64]={0};
 
 u8 pvr_regs[pvr_RegSize];
 
@@ -88,23 +84,16 @@ void pvr_WriteReg(u32 paddr,u32 data)
 		}
 		return;
 	}
-	if (addr == TA_YUV_TEX_BASE_addr)
+	if (addr == TA_YUV_TEX_BASE_addr || addr == TA_YUV_TEX_CTRL_addr)
 	{
 		PvrReg(addr, u32) = data;
 		YUV_init();
 		return;
 	}
 
-	if (addr>=PALETTE_RAM_START_addr)
+	if (addr>=PALETTE_RAM_START_addr && PvrReg(addr,u32)!=data)
 	{
-		if (PvrReg(addr,u32)!=data)
-		{
-			u32 pal=(addr/4)&1023;
-
-			pal_needs_update=true;
-			_pal_rev_256[pal>>8]++;
-			_pal_rev_16[pal>>4]++;
-		}
+		pal_needs_update=true;
 	}
 
 	if (addr>=FOG_TABLE_START_addr && addr<=FOG_TABLE_END_addr && PvrReg(addr,u32)!=data)

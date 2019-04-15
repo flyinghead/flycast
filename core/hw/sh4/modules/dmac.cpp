@@ -79,42 +79,51 @@ void DMAC_Ch2St()
 	// If SB_C2DSTAT reg is inrange from 0x11000000 to 0x11FFFFE0,	 set 1 in SB_LMMODE0 reg.
 	else if((dst >= 0x11000000) && (dst <= 0x11FFFFE0))
 	{
-		//printf(">>\tDMAC: TEX LNMODE0 Ch2 DMA SRC=%X DST=%X LEN=%X | LN(%X::%X)\n", src, dst, len, *pSB_LMMODE0, *pSB_LMMODE1 );
+		//printf(">>\tDMAC: TEX LNMODE0 Ch2 DMA SRC=%X DST=%X LEN=%X SB_LMMODE0 %d\n", src, dst, len, SB_LMMODE0);
+		SB_C2DSTAT += len;
 
-		dst=(dst&0xFFFFFF) |0xa4000000;
-		/*WriteMemBlock_nommu_ptr(dst,(u32*)GetMemPtr(src,len),len);
-		src+=len;*/
-		u32 p_addr=src & RAM_MASK;
-		while(len)
+		if (SB_LMMODE0 == 0)
 		{
-			if ((p_addr+len)>RAM_SIZE)
+			// 64-bit path
+			dst=(dst&0xFFFFFF) |0xa4000000;
+			u32 p_addr=src & RAM_MASK;
+			while(len)
 			{
-				//u32 *sys_buf=(u32 *)GetMemPtr(src,len);//(&mem_b[src&RAM_MASK]);
-				u32 new_len=RAM_SIZE-p_addr;
-				WriteMemBlock_nommu_dma(dst,src,new_len);
-				len-=new_len;
-				src+=new_len;
-				dst+=new_len;
-			}
-			else
-			{
-				//u32 *sys_buf=(u32 *)GetMemPtr(src,len);//(&mem_b[src&RAM_MASK]);
-				//WriteMemBlock_nommu_ptr(dst,sys_buf,len);
-				WriteMemBlock_nommu_dma(dst,src,len);
-				src+=len;
-				break;
+				if ((p_addr+len)>RAM_SIZE)
+				{
+					u32 new_len=RAM_SIZE-p_addr;
+					WriteMemBlock_nommu_dma(dst,src,new_len);
+					len-=new_len;
+					src+=new_len;
+					dst+=new_len;
+				}
+				else
+				{
+					WriteMemBlock_nommu_dma(dst,src,len);
+					src+=len;
+					break;
+				}
 			}
 		}
-	//	*pSB_LMMODE0 = 1;           // this prob was done by system already
-	//	WriteMem(SB_LMMODE1, 0, 4); // should this be done ?
+		else
+		{
+			// 32-bit path
+			dst = (dst & 0xFFFFFF) | 0xa5000000;
+			while (len > 0)
+			{
+				u32 v = ReadMem32(src);
+				pvr_write_area1_32(dst, v);
+				len -= 4;
+				src += 4;
+				dst += 4;
+			}
+		}
 	}
 	// If SB_C2DSTAT reg is in range from 0x13000000 to 0x13FFFFE0, set 1 in SB_LMMODE1 reg.
 	else if((dst >= 0x13000000) && (dst <= 0x13FFFFE0))
 	{
 		die(".\tPVR DList DMA LNMODE1\n\n");
 		src+=len;
-	//	*pSB_LMMODE1 = 1;           // this prob was done by system already
-	//	WriteMem(SB_LMMODE0, 0, 4); // should this be done ?
 	}
 	else 
 	{ 
@@ -131,7 +140,6 @@ void DMAC_Ch2St()
 
 	SB_C2DST = 0x00000000;
 	SB_C2DLEN = 0x00000000;
-	SB_C2DSTAT = (src );
 
 	// The DMA end interrupt flag (SB_ISTNRM - bit 19: DTDE2INT) is set to "1."
 	//-> fixed , holly_PVR_DMA is for different use now (fixed the interrupts enum too)

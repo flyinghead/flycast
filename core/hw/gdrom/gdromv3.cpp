@@ -1,4 +1,4 @@
-﻿/*
+/*
 	gdrom, v3
 	Overly complex implementation of a very ugly device
 */
@@ -24,103 +24,14 @@ signed int sns_asc=0;
 signed int sns_ascq=0;
 signed int sns_key=0;
 
-enum gd_states
-{
-	//Generic
-	gds_waitcmd,
-	gds_procata,
-	gds_waitpacket,
-	gds_procpacket,
-	gds_pio_send_data,
-	gds_pio_get_data,
-	gds_pio_end,
-	gds_procpacketdone,
-
-	//Command spec.
-	gds_readsector_pio,
-	gds_readsector_dma,
-	gds_process_set_mode,
-};
-
-static struct
-{
-	u32 start_sector;
-	u32 remaining_sectors;
-	u32 sector_type;
-} read_params;
-
-static struct
-{
-	u32 index;
-	union
-	{
-		u16 data_16[6];
-		u8 data_8[12];
-		//Spi command structs
-		union 
-		{
-			struct 
-			{
-				u8 cc;
-
-				u8 prmtype  : 1 ;
-				u8 expdtype : 3 ;
-				//	u8 datasel	: 4 ;
-				u8 other    : 1 ; //"other" data. I guess that means SYNC/ECC/EDC ?
-				u8 data     : 1 ; //user data. 2048 for mode1, 2048 for m2f1, 2324 for m2f2
-				u8 subh     : 1 ; //8 bytes, mode2 subheader
-				u8 head     : 1 ; //4 bytes, main CDROM header
-
-				u8 block[10];
-			};
-
-			struct 
-			{
-				u8 b[12];
-			};
-		}GDReadBlock;
-	};
-} packet_cmd;
-
-//Buffer for sector reads [dma]
-static struct
-{
-	u32 cache_index;
-	u32 cache_size;
-	u8 cache[2352 * 8192];	//up to 8192 sectors
-} read_buff;
-
-//pio buffer
-static struct
-{
-	gd_states next_state;
-	u32 index;
-	u32 size;
-	u16 data[0x10000>>1]; //64 kb
-} pio_buff;
 
 u32 set_mode_offset;
-static struct
-{
-	u8 command;
-} ata_cmd;
-
-static struct
-{
-	bool playing;
-	u32 repeats;
-	union
-	{
-		u32 FAD;
-		struct
-		{
-			u8 B0; // MSB
-			u8 B1; // Middle byte
-			u8 B2; // LSB
-		};
-	}CurrAddr,EndAddr,StartAddr;
-} cdda;
-
+read_params_t read_params ;
+packet_cmd_t packet_cmd ;
+read_buff_t read_buff ;
+pio_buff_t pio_buff ;
+ata_cmd_t ata_cmd ;
+cdda_t cdda ;
 
 gd_states gd_state;
 DiscType gd_disk_type;
@@ -144,16 +55,7 @@ u32 data_write_mode=0;
 	
 	GD_StatusT GDStatus;
 
-	static union
-	{
-		struct
-		{
-			u8 low;
-			u8 hi;
-		};
-
-		u16 full;
-	} ByteCount;
+	ByteCount_t ByteCount;
 	
 //end
 
@@ -216,6 +118,7 @@ void FillReadBuffer()
 	read_params.start_sector+=count;
 	read_params.remaining_sectors-=count;
 }
+
 
 void gd_set_state(gd_states state)
 {
@@ -1070,7 +973,18 @@ void WriteMem_gdrom(u32 Addr, u32 data, u32 sz)
 	}
 }
 
-const int GDROM_TICK=1500000;
+static int getGDROMTicks()
+{
+	if (SB_GDST & 1)
+	{
+		if (SB_GDLEN - SB_GDLEND > 10240)
+			return 1000000;										// Large transfers: GD-ROM transfer rate 1.8 MB/s
+		else
+			return min((u32)10240, SB_GDLEN - SB_GDLEND) * 2;	// Small transfers: Max G1 bus rate: 50 MHz x 16 bits
+	}
+	else
+		return 0;
+}
 
 //is this needed ?
 int GDRomschd(int i, int c, int j)
@@ -1091,7 +1005,7 @@ int GDRomschd(int i, int c, int j)
 	if(SB_GDLEN & 0x1F) 
 	{
 		die("\n!\tGDROM: SB_GDLEN has invalid size !\n");
-		return GDROM_TICK;
+		return 0;
 	}
 
 	//if we don't have any more sectors to read
@@ -1168,7 +1082,7 @@ int GDRomschd(int i, int c, int j)
 		}
 	}
 
-	return GDROM_TICK;
+	return getGDROMTicks();
 }
 
 //DMA Start
@@ -1186,8 +1100,15 @@ void GDROM_DmaStart(u32 addr, u32 data)
 		SB_GDSTARD=SB_GDSTAR;
 		SB_GDLEND=0;
 		//printf("GDROM-DMA start addr %08X len %d\n", SB_GDSTAR, SB_GDLEN);
-		GDRomschd(0,0,0);
-		sh4_sched_request(gdrom_schid,GDROM_TICK);
+
+		int ticks = getGDROMTicks();
+		if (ticks < 448)	// FIXME #define
+		{
+			ticks = GDRomschd(0,0,0);
+		}
+
+		if (ticks)
+			sh4_sched_request(gdrom_schid, ticks);
 	}
 }
 

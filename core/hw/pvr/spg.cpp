@@ -71,8 +71,6 @@ void CalculateSync()
 	sh4_sched_request(vblank_schid,Line_Cycles);
 }
 
-void os_wait_cycl(u32 c);
-
 int elapse_time(int tag, int cycl, int jit)
 {
 #if HOST_OS==OS_WINDOWS
@@ -80,15 +78,15 @@ int elapse_time(int tag, int cycl, int jit)
 #endif
 	return min(max(Frame_Cycles,(u32)1*1000*1000),(u32)8*1000*1000);
 }
-#if HOST_OS==OS_WINDOWS
-extern double speed_load_mspdf;
-#else
+
 double speed_load_mspdf;
-#endif
 
 int mips_counter;
 
 double full_rps;
+
+static u32 lightgun_line = 0xffff;
+static u32 lightgun_hpos;
 
 u32 fskip=0;
 //called from sh4 context , should update pvr/ta state and everything else
@@ -186,8 +184,8 @@ int spg_line_sched(int tag, int cycl, int jit)
 					mode,res,fullvbs,
 					spd_fps,fskip/ts);
 				#else
-				printf("%s/%c - %4.2f (%4.2f) - %4.2f - V: %4.2f (%.2f, %s%s%4.2f) R: %4.2f+%4.2f VTX: %4.2f%c, MIPS: %.2f\n",
-					VER_SHORTNAME,'n',mspdf,speed_load_mspdf,spd_cpu*100/200,spd_vbs,
+				printf("%s/%c - %4.2f - %4.2f - V: %4.2f (%.2f, %s%s%4.2f) R: %4.2f+%4.2f VTX: %4.2f%c, MIPS: %.2f\n",
+					VER_SHORTNAME,'n',mspdf,spd_cpu*100/200,spd_vbs,
 					spd_vbs/full_rps,mode,res,fullvbs,
 					spd_fps,fskip/ts
 					, mv, mv_c, mips_counter/ 1024.0 / 1024.0);
@@ -197,6 +195,12 @@ int spg_line_sched(int tag, int cycl, int jit)
 				fskip=0;
 				last_fps=os_GetSeconds();
 			}
+		}
+		if (lightgun_line != 0xffff && lightgun_line == prv_cur_scanline)
+		{
+			SPG_TRIGGER_POS = ((lightgun_line & 0x3FF) << 16) | (lightgun_hpos & 0x3FF);
+			asic_RaiseInterrupt(holly_MAPLE_DMA);
+			lightgun_line = 0xffff;
 		}
 	}
 
@@ -225,9 +229,25 @@ int spg_line_sched(int tag, int cycl, int jit)
 	if (min_scanline<pvr_numscanlines)
 		min_active=min(min_active,pvr_numscanlines);
 
+	if (lightgun_line != 0xffff && min_scanline < lightgun_line)
+		min_active = min(min_active, lightgun_line);
+
 	min_active=max(min_active,min_scanline);
 
 	return (min_active-prv_cur_scanline)*Line_Cycles;
+}
+
+void read_lightgun_position(int x, int y)
+{
+	if (y < 0 || y >= 480 || x < 0 || x >= 640)
+		// Off screen
+		lightgun_line = 0xffff;
+	else
+	{
+		lightgun_line = y / (SPG_CONTROL.interlace ? 2 : 1) + SPG_VBLANK_INT.vblank_out_interrupt_line_number;
+		lightgun_hpos = x * (SPG_HBLANK.hstart - SPG_HBLANK.hbend) / 640 + SPG_HBLANK.hbend * 2;	// Ok but why *2 ????
+		lightgun_hpos = min((u32)0x3FF, lightgun_hpos);
+	}
 }
 
 int rend_end_sch(int tag, int cycl, int jitt)

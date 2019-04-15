@@ -144,7 +144,7 @@ static u32 directsound_push(void* frame, u32 samples, bool wait)
 {
 
 	u16* f=(u16*)frame;
-
+	/*
 	bool w=false;
 
 	for (u32 i = 0; i < samples*2; i++)
@@ -157,7 +157,7 @@ static u32 directsound_push(void* frame, u32 samples, bool wait)
 	}
 
 	wait &= w;
-
+	*/
 	int ffs=1;
 	
 	/*

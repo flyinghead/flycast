@@ -113,8 +113,7 @@ void bsc_init()
 	sh4_rio_reg(BSC,BSC_GPIOIC_addr,RIO_DATA,16);
 
 	//note: naomi//aw might depend on rfcr
-	
-#if DC_PLATFORM == DC_PLATFORM_NAOMI
+#if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
 	sh4_rio_reg(BSC, BSC_RFCR_addr, RIO_RO, 16);
 	BSC_RFCR.full = 17;
 #endif

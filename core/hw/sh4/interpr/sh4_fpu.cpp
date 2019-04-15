@@ -525,7 +525,7 @@ sh4op(i1111_nnmm_1110_1101)
 sh4op(i1111_nnnn_1000_1101)
 {
 	if (fpscr.PR!=0)
-		die("fldi0 <Dreg_N>");
+		return;
 
 	u32 n = GetN(op);
 
@@ -537,7 +537,7 @@ sh4op(i1111_nnnn_1000_1101)
 sh4op(i1111_nnnn_1001_1101)
 {
 	if (fpscr.PR!=0)
-		die("fldi1 <Dreg_N>");
+		return;
 
 	u32 n = GetN(op);
 

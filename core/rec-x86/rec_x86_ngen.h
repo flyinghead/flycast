@@ -35,7 +35,7 @@ void DYNACALL ngen_blockcheckfail2(u32 addr);
 
 extern x86_block* x86e;
 
-extern u32 cycle_counter;
+extern int cycle_counter;
 
 extern void* loop_no_update;
 extern void* intc_sched;

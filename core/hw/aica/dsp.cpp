@@ -70,6 +70,39 @@ s32 DYNACALL UNPACK(u16 val)
 	return uval;
 }
 
+void DecodeInst(u32 *IPtr,_INST *i)
+{
+	i->TRA=(IPtr[0]>>9)&0x7F;
+	i->TWT=(IPtr[0]>>8)&0x01;
+	i->TWA=(IPtr[0]>>1)&0x7F;
+
+	i->XSEL=(IPtr[1]>>15)&0x01;
+	i->YSEL=(IPtr[1]>>13)&0x03;
+	i->IRA=(IPtr[1]>>7)&0x3F;
+	i->IWT=(IPtr[1]>>6)&0x01;
+	i->IWA=(IPtr[1]>>1)&0x1F;
+
+	i->TABLE=(IPtr[2]>>15)&0x01;
+	i->MWT=(IPtr[2]>>14)&0x01;
+	i->MRD=(IPtr[2]>>13)&0x01;
+	i->EWT=(IPtr[2]>>12)&0x01;
+	i->EWA=(IPtr[2]>>8)&0x0F;
+	i->ADRL=(IPtr[2]>>7)&0x01;
+	i->FRCL=(IPtr[2]>>6)&0x01;
+	i->SHIFT=(IPtr[2]>>4)&0x03;
+	i->YRL=(IPtr[2]>>3)&0x01;
+	i->NEGB=(IPtr[2]>>2)&0x01;
+	i->ZERO=(IPtr[2]>>1)&0x01;
+	i->BSEL=(IPtr[2]>>0)&0x01;
+
+	i->NOFL=(IPtr[3]>>15)&1;		//????
+	//i->COEF=(IPtr[3]>>9)&0x3f;
+
+	i->MASA=(IPtr[3]>>9)&0x3f;	//???
+	i->ADREB=(IPtr[3]>>8)&0x1;
+	i->NXADR=(IPtr[3]>>7)&0x1;
+}
+
 #if HOST_CPU == CPU_X86 && FEAT_DSPREC == DYNAREC_JIT
 #include "emitter/x86_emitter.h"
 
@@ -155,41 +188,13 @@ void dsp_init()
 
 
 	//os_MakeExecutable(dsp.DynCode,sizeof(dsp.DynCode));
+#if HOST_OS == OS_WINDOWS
+	DWORD old;
+	VirtualProtect(dsp.DynCode, sizeof(dsp.DynCode), PAGE_EXECUTE_READWRITE, &old);
+#endif
+
 }
 void dsp_recompile();
-void DecodeInst(u32 *IPtr,_INST *i)
-{
-	i->TRA=(IPtr[0]>>9)&0x7F;
-	i->TWT=(IPtr[0]>>8)&0x01;
-	i->TWA=(IPtr[0]>>1)&0x7F;
-	
-	i->XSEL=(IPtr[1]>>15)&0x01;
-	i->YSEL=(IPtr[1]>>13)&0x03;
-	i->IRA=(IPtr[1]>>7)&0x3F;
-	i->IWT=(IPtr[1]>>6)&0x01;
-	i->IWA=(IPtr[1]>>1)&0x1F;
-
-	i->TABLE=(IPtr[2]>>15)&0x01;
-	i->MWT=(IPtr[2]>>14)&0x01;
-	i->MRD=(IPtr[2]>>13)&0x01;
-	i->EWT=(IPtr[2]>>12)&0x01;
-	i->EWA=(IPtr[2]>>8)&0x0F;
-	i->ADRL=(IPtr[2]>>7)&0x01;
-	i->FRCL=(IPtr[2]>>6)&0x01;
-	i->SHIFT=(IPtr[2]>>4)&0x03;
-	i->YRL=(IPtr[2]>>3)&0x01;
-	i->NEGB=(IPtr[2]>>2)&0x01;
-	i->ZERO=(IPtr[2]>>1)&0x01;
-	i->BSEL=(IPtr[2]>>0)&0x01;
-
-	i->NOFL=(IPtr[3]>>15)&1;		//????
-	//i->COEF=(IPtr[3]>>9)&0x3f;
-	
-	i->MASA=(IPtr[3]>>9)&0x3f;	//???
-	i->ADREB=(IPtr[3]>>8)&0x1;
-	i->NXADR=(IPtr[3]>>7)&0x1;
-}
-
 
 void* dyna_realloc(void*ptr,u32 oldsize,u32 newsize)
 {

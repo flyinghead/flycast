@@ -8,7 +8,7 @@
 #include "aica_if.h"
 #include "aica_mem.h"
 
-#if HOST_CPU != CPU_X86 || FEAT_DSPREC != DYNAREC_JIT
+#if FEAT_DSPREC != DYNAREC_JIT
 
 #ifdef RELEASE
 #undef verify
@@ -266,7 +266,7 @@ void AICADSP_Step(struct dsp_t *DSP)
 					//if (NOFL)
 					//	MEMVAL[(step + 2) & 3] = (*(s16 *)&aica_ram[ADDR]) << 8;
 					//else
-						MEMVAL[(step + 2) & 3] = UNPACK(*(u16 *)&aica_ram[ADDR]);
+						MEMVAL[(step + 2) & 3] = UNPACK(*(u16 *)&aica_ram[ADDR & ARAM_MASK]);
 				}
 				if (MWT)
 				{
@@ -274,7 +274,7 @@ void AICADSP_Step(struct dsp_t *DSP)
 					//if (NOFL)
 					//	*(s16 *)&aica_ram[ADDR] = SHIFTED >> 8;
 					//else
-						*(u16 *)&aica_ram[ADDR] = PACK(SHIFTED);
+						*(u16 *)&aica_ram[ADDR & ARAM_MASK] = PACK(SHIFTED);
 				}
 			}
 		}

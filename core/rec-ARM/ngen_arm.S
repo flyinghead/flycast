@@ -26,7 +26,7 @@ HIDDEN(do_sqw_nommu_area_3)
 CSYM(do_sqw_nommu_area_3):
 add r3,r1,#0x0C000000	@ get ram ptr from r1, part 1
 and r2,r0,#0x20			@ SQ# selection, isolate
-ubfx r0,r0,#5,#19		@ get ram offset
+ubfx r0,r0,#5,#20		@ get ram offset
 add r1,r2				@ SQ# selection, add to SQ ptr
 add r3,#512				@ get ram ptr from r1, part 2
 add r3,r0,lsl #5		@ ram + offset
@@ -57,7 +57,7 @@ bkpt #0
 #else
 bkpt
 #endif
-ubfx r0,r3,#5,#18		@ get vram offset
+ubfx r0,r3,#5,#19		@ get vram offset
 add r3,r1,#0x04000000	@ get vram ptr from r1, part 1
 add r3,#512				@ get ram ptr from r1, part 2
 add r3,r0,lsl #5		@ ram + offset
@@ -177,12 +177,14 @@ CSYM(no_update):              @ next_pc _MUST_ be on r4 *R4 NOT R0 anymore*
 	cmp r0,#0
 	beq CSYM(cleanup)
 
-#if DC_PLATFORM == DC_PLATFORM_NAOMI
+#if RAM_SIZE_MAX == 33554432
 	sub r2,r8,#0x4100000
-	ubfx r1,r4,#1,#24
-#else
+	ubfx r1,r4,#1,#24			@ 24+1 bits: 32 MB
+#elif RAM_SIZE_MAX == 16777216
 	sub r2,r8,#0x2100000
-	ubfx r1,r4,#1,#23
+	ubfx r1,r4,#1,#23			@ 23+1 bits: 16 MB
+#else
+#error "Define RAM_SIZE_MAX"
 #endif
 	ldr pc,[r2,r1,lsl #2]
 
@@ -198,11 +200,13 @@ bx lr
 end_ngen_mainloop:
 @@@@@@@@@@ ngen_mainloop @@@@@@@@@@
 
+#if FEAT_AREC == DYNAREC_JIT
 .global CSYM(arm_compilecode)
 HIDDEN(arm_compilecode)
 CSYM(arm_compilecode):
 bl CSYM(CompileCode)
 b CSYM(arm_dispatch)
+#endif
 
 #ifdef TARGET_IPHONE
 Xarm_Reg: .word CSYM(arm_Reg)
@@ -235,13 +239,9 @@ push {r4,r5,r8,r9,lr}
 .global CSYM(arm_dispatch)
 HIDDEN(arm_dispatch)
 CSYM(arm_dispatch):
-	#ifdef TARGET_IPHONE
 	ldrd r0,r1,[r8,#184]		@load: Next PC, interrupt
-	#else
-	ldrd r0,[r8,#184]		@load: Next PC, interrupt
-	#endif
 
-	ubfx r2,r0,#2,#19
+	ubfx r2,r0,#2,#21		@ assuming 8 MB address space max (23 bits)
 	cmp r1,#0
 	bne arm_dofiq
 

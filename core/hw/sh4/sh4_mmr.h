@@ -85,6 +85,9 @@ void sh4_rio_reg(Array<RegisterStruct>& arr, u32 addr, RegIO flags, u32 sz, RegR
 //CCN INTEVT 0xFF000028 0x1F000028 32 Undefined Undefined Held Held Iclk
 #define CCN_INTEVT_addr 0x1F000028
 
+// Undocumented. Returns 0x040205c1
+#define CPU_VERSION_addr 0x1F000030
+
 //CCN PTEA 0xFF000034 0x1F000034 32 Undefined Undefined Held Held Iclk
 #define CCN_PTEA_addr 0x1F000034
 
@@ -93,6 +96,9 @@ void sh4_rio_reg(Array<RegisterStruct>& arr, u32 addr, RegIO flags, u32 sz, RegR
 
 //CCN QACR1 0xFF00003C 0x1F00003C 32 Undefined Undefined Held Held Iclk
 #define CCN_QACR1_addr 0x1F00003C
+
+// Undocumented. Returns 0
+#define CCN_PRR_addr 0x1F000044
 
 //UBC module registers base
 #define UBC_BASE_addr 0x1F200000
@@ -318,6 +324,9 @@ void sh4_rio_reg(Array<RegisterStruct>& arr, u32 addr, RegIO flags, u32 sz, RegR
 
 //INTC IPRC 0xFFD0000C 0x1FD0000C 16 0x0000 0x0000 Held Held Pclk
 #define INTC_IPRC_addr 0x1FD0000C
+
+//INTC IPRD 0xFFD00010 0x1FD00010 16 0xDA74 0xDA74 Held Held Pclk	(SH7750S, SH7750R only)
+#define INTC_IPRD_addr 0x1FD00010
 
 //TMU module registers base
 #define TMU_BASE_addr 0x1FD80000
@@ -1154,7 +1163,7 @@ union DMAC_CHCR_type
 		u32 AL    : 1; //Acknowledge Level
 		u32 AM    : 1; //Acknowledge Mode
 		u32 RL    : 1; //In normal DMA mode, this bit is valid only in CHCR0 and CHCR1. In DDT mode, this bit is invalid.
-		u32 DS    : 1; //In normal DMA mode, this bit is valid only in CHCR0 and CHCR1. In DDT mode, it is valid in CHCR0–CHCR3.
+		u32 DS    : 1; //In normal DMA mode, this bit is valid only in CHCR0 and CHCR1. In DDT mode, it is valid in CHCR0ï¿½CHCR3.
 
 		u32 res1  : 4;
 

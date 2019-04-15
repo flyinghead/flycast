@@ -13,6 +13,7 @@
 #include <sys/mman.h>
 #include <sys/time.h>
 #include "hw/sh4/dyna/blockmanager.h"
+#include "hw/maple/maple_cfg.h"
 #include <unistd.h>
 
 #if defined(TARGET_EMSCRIPTEN)
@@ -53,20 +54,6 @@
 #include "profiler/profiler.h"
 #endif
 
-int msgboxf(const wchar* text, unsigned int type, ...)
-{
-	va_list args;
-
-	wchar temp[2048];
-	va_start(args, type);
-	vsprintf(temp, text, args);
-	va_end(args);
-
-	//printf(NULL,temp,VER_SHORTNAME,type | MB_TASKMODAL);
-	puts(temp);
-	return MBX_OK;
-}
-
 void* x11_win = 0;
 void* x11_disp = 0;
 
@@ -88,98 +75,43 @@ s8 joyx[4], joyy[4];
 
 void emit_WriteCodeCache();
 
-#if defined(USE_EVDEV)
-	/* evdev input */
-	static EvdevController evdev_controllers[4] = {
-		{ -1, NULL },
-		{ -1, NULL },
-		{ -1, NULL },
-		{ -1, NULL }
-	};
-#endif
-
 #if defined(USE_JOYSTICK)
 	/* legacy joystick input */
 	static int joystick_fd = -1; // Joystick file descriptor
 #endif
 
-void SetupInput()
+void os_SetupInput()
 {
-	#if defined(USE_EVDEV)
-		int evdev_device_id[4] = { -1, -1, -1, -1 };
-		size_t size_needed;
-		int port, i;
+#if defined(USE_EVDEV)
+	input_evdev_init();
+#endif
 
-		char* evdev_device;
+#if defined(USE_JOYSTICK)
+	int joystick_device_id = cfgLoadInt("input", "joystick_device_id", JOYSTICK_DEFAULT_DEVICE_ID);
+	if (joystick_device_id < 0) {
+		puts("Legacy Joystick input disabled by config.\n");
+	}
+	else
+	{
+		int joystick_device_length = snprintf(NULL, 0, JOYSTICK_DEVICE_STRING, joystick_device_id);
+		char* joystick_device = (char*)malloc(joystick_device_length + 1);
+		sprintf(joystick_device, JOYSTICK_DEVICE_STRING, joystick_device_id);
+		joystick_fd = input_joystick_init(joystick_device);
+		free(joystick_device);
+	}
+#endif
 
-		for (port = 0; port < 4; port++)
-		{
-			size_needed = snprintf(NULL, 0, EVDEV_DEVICE_CONFIG_KEY, port+1) + 1;
-			char* evdev_config_key = (char*)malloc(size_needed);
-			sprintf(evdev_config_key, EVDEV_DEVICE_CONFIG_KEY, port+1);
-			evdev_device_id[port] = cfgLoadInt("input", evdev_config_key, EVDEV_DEFAULT_DEVICE_ID(port+1));
-			free(evdev_config_key);
+#if defined(SUPPORT_X11)
+	input_x11_init();
+#endif
 
-			// Check if the same device is already in use on another port
-			if (evdev_device_id[port] < 0)
-			{
-				printf("evdev: Controller %d disabled by config.\n", port + 1);
-			}
-			else
-			{
-				size_needed = snprintf(NULL, 0, EVDEV_DEVICE_STRING, evdev_device_id[port]) + 1;
-				evdev_device = (char*)malloc(size_needed);
-				sprintf(evdev_device, EVDEV_DEVICE_STRING, evdev_device_id[port]);
+#if defined(USE_SDL)
+	input_sdl_init();
+#endif
 
-				size_needed = snprintf(NULL, 0, EVDEV_MAPPING_CONFIG_KEY, port+1) + 1;
-				evdev_config_key = (char*)malloc(size_needed);
-				sprintf(evdev_config_key, EVDEV_MAPPING_CONFIG_KEY, port+1);
-
-				string tmp;
-				const char* mapping = (cfgExists("input", evdev_config_key) == 2 ? (tmp = cfgLoadStr("input", evdev_config_key, "")).c_str() : NULL);
-				free(evdev_config_key);
-
-				input_evdev_init(&evdev_controllers[port], evdev_device, mapping);
-
-				free(evdev_device);
-
-				for (i = 0; i < port; i++)
-				{
-						if (evdev_device_id[port] == evdev_device_id[i])
-						{
-							// Multiple controllers with the same device, check for multiple button assignments
-							if (input_evdev_button_duplicate_button(evdev_controllers[i].mapping, evdev_controllers[port].mapping))
-							{
-								printf("WARNING: One or more button(s) of this device is also used in the configuration of input device %d (mapping: %s)\n", i, evdev_controllers[i].mapping->name);
-							}
-						}
-				}
-			}
-		}
-	#endif
-
-	#if defined(USE_JOYSTICK)
-		int joystick_device_id = cfgLoadInt("input", "joystick_device_id", JOYSTICK_DEFAULT_DEVICE_ID);
-		if (joystick_device_id < 0) {
-			puts("Legacy Joystick input disabled by config.\n");
-		}
-		else
-		{
-			int joystick_device_length = snprintf(NULL, 0, JOYSTICK_DEVICE_STRING, joystick_device_id);
-			char* joystick_device = (char*)malloc(joystick_device_length + 1);
-			sprintf(joystick_device, JOYSTICK_DEVICE_STRING, joystick_device_id);
-			joystick_fd = input_joystick_init(joystick_device);
-			free(joystick_device);
-		}
-	#endif
-
-	#if defined(SUPPORT_X11)
-		input_x11_init();
-	#endif
-
-	#if defined(USE_SDL)
-		input_sdl_init();
-	#endif
+#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
+	mcfg_CreateDevices();
+#endif
 }
 
 void UpdateInputState(u32 port)
@@ -193,32 +125,11 @@ void UpdateInputState(u32 port)
 	#endif
 
 	#if defined(USE_EVDEV)
-		input_evdev_handle(&evdev_controllers[port], port);
+		input_evdev_handle(port);
 	#endif
 
 	#if defined(USE_SDL)
 		input_sdl_handle(port);
-	#endif
-}
-
-void UpdateVibration(u32 port, u32 value)
-{
-	#if defined(USE_EVDEV)
-		u8 POW_POS = (value >> 8) & 0x3;
-		u8 POW_NEG = (value >> 12) & 0x3;
-		u8 FREQ = (value >> 16) & 0xFF;
-
-		double pow = (POW_POS + POW_NEG) / 7.0;
-		double pow_l = pow * (0x3B - FREQ) / 17.0;
-		double pow_r = pow * (FREQ - 0x07) / 15.0;
-
-		if (pow_l > 1.0) pow_l = 1.0;
-		if (pow_r > 1.0) pow_r = 1.0;
-
-		u16 pow_strong = (u16)(65535 * pow_l);
-		u16 pow_weak = (u16)(65535 * pow_r);
-
-		input_evdev_rumble(&evdev_controllers[port], pow_strong, pow_weak);
 	#endif
 }
 
@@ -254,9 +165,9 @@ void os_CreateWindow()
 }
 
 void common_linux_setup();
-int dc_init(int argc,wchar* argv[]);
-void dc_run();
+int reicast_init(int argc, char* argv[]);
 void dc_term();
+void* rend_thread(void* p);
 
 #ifdef TARGET_PANDORA
 	void gl_term();
@@ -363,7 +274,7 @@ string find_user_data_dir()
 			// If XDG_DATA_HOME is set explicitly, we'll use that instead of $HOME/.config
 			data = (string)getenv("XDG_DATA_HOME") + "/reicast";
 		}
-		
+
 		if(!data.empty())
 		{
 			if((stat(data.c_str(), &info) != 0) || !(info.st_mode & S_IFDIR))
@@ -466,15 +377,14 @@ int main(int argc, wchar* argv[])
 
 	settings.profile.run_counts=0;
 
-	dc_init(argc,argv);
-
-	SetupInput();
+	if (reicast_init(argc, argv))
+		die("Reicast initialization failed\n");
 
 	#if !defined(TARGET_EMSCRIPTEN)
 		#if FEAT_HAS_NIXPROF
-		install_prof_handler(0);
+		install_prof_handler(1);
 		#endif
-		dc_run();
+		rend_thread(NULL);
 	#else
 		emscripten_set_main_loop(&dc_run, 100, false);
 	#endif
@@ -486,13 +396,7 @@ int main(int argc, wchar* argv[])
 	dc_term();
 
 	#if defined(USE_EVDEV)
-		for (int port = 0; port < 4 ; port++)
-		{
-			if(evdev_controllers[port].fd >= 0)
-			{
-				close(evdev_controllers[port].fd);
-			}
-		}
+		input_evdev_close();
 	#endif
 
 	#if defined(SUPPORT_X11)

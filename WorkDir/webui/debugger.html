@@ -302,10 +302,9 @@ function reset() {
 		} 
 
 		socket_lm.onmessage =function got_packet(msg) {
-			j = msg.data.split(';');
-			f = 0;
+			var j = msg.data.split(';'), f = 0;
 			while (f < j.length - 1) {
-				i = j[f].split(' ');
+				var i = j[f].split(' ');
 				if (i[0] == 'd') {
 					ctx.strokeStyle = i[1];
 					ctx.beginPath();

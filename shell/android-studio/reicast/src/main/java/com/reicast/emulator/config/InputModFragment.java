@@ -1,6 +1,5 @@
 package com.reicast.emulator.config;
 
-import android.annotation.TargetApi;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
@@ -39,14 +38,16 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+import tv.ouya.console.api.OuyaController;
+
 public class InputModFragment extends Fragment {
 
 	private SharedPreferences mPrefs;
 
-	private CompoundButton switchJoystickDpadEnabled;
-	private CompoundButton switchRightStickLREnabled;
 	private CompoundButton switchModifiedLayoutEnabled;
 	private CompoundButton switchCompatibilityEnabled;
+	private Spinner right_stick_spinner;
+	private CompoundButton switchJoystickDpadEnabled;
 
 	private TextView a_button_text;
 	private TextView b_button_text;
@@ -60,16 +61,13 @@ public class InputModFragment extends Fragment {
 	private TextView dpad_right_text;
 	private TextView start_button_text;
 	private TextView select_button_text;
+	private TextView joystick_x_text;
+	private TextView joystick_y_text;
 
 	private String player = "_A";
 	private int sS = 2;
 	private int playerNum = -1;
 	private mapKeyCode mKey;
-
-	// Container Activity must implement this interface
-	public interface OnClickListener {
-		void onMainBrowseSelected(String path_entry, boolean games);
-	}
 
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -92,8 +90,6 @@ public class InputModFragment extends Fragment {
 
 		switchJoystickDpadEnabled = (CompoundButton) getView().findViewById(
 				R.id.switchJoystickDpadEnabled);
-		switchRightStickLREnabled = (CompoundButton) getView().findViewById(
-				R.id.switchRightStickLREnabled);
 		switchModifiedLayoutEnabled = (CompoundButton) getView().findViewById(
 				R.id.switchModifiedLayoutEnabled);
 		switchCompatibilityEnabled = (CompoundButton) getView().findViewById(
@@ -108,14 +104,23 @@ public class InputModFragment extends Fragment {
 
 		switchJoystickDpadEnabled.setOnCheckedChangeListener(joystick_mode);
 
-		OnCheckedChangeListener rstick_mode = new OnCheckedChangeListener() {
-			public void onCheckedChanged(CompoundButton buttonView,
-										 boolean isChecked) {
-				mPrefs.edit().putBoolean(Gamepad.pref_js_rbuttons + player, isChecked).apply();
-			}
-		};
+		String[] rstick = getResources().getStringArray(R.array.right_stick);
+		right_stick_spinner = (Spinner) getView().findViewById(R.id.rstick_spinner);
+		ArrayAdapter<String> rstickAdapter = new ArrayAdapter<>(
+				getActivity(), android.R.layout.simple_spinner_item, rstick);
+		rstickAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		right_stick_spinner.setAdapter(rstickAdapter);
+		right_stick_spinner.setOnItemSelectedListener(new OnItemSelectedListener() {
 
-		switchRightStickLREnabled.setOnCheckedChangeListener(rstick_mode);
+			public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
+				mPrefs.edit().putInt(Gamepad.pref_js_rstick + player, pos).apply();
+			}
+
+			public void onNothingSelected(AdapterView<?> arg0) {
+
+			}
+
+		});
 
 		OnCheckedChangeListener modified_layout = new OnCheckedChangeListener() {
 			public void onCheckedChanged(CompoundButton buttonView,
@@ -303,6 +308,40 @@ public class InputModFragment extends Fragment {
 			}
 		});
 
+		joystick_x_text = (TextView) getView().findViewById(
+				R.id.joystick_x_axis);
+		Button joystick_x = (Button) getView().findViewById(
+				R.id.joystick_x_edit);
+		joystick_x.setOnClickListener(new View.OnClickListener() {
+			public void onClick(View v) {
+				mKey.mapAxis(Gamepad.pref_axis_x, joystick_x_text);
+			}
+		});
+		Button joystick_x_remove = (Button) getView().findViewById(
+				R.id.remove_joystick_x);
+		joystick_x_remove.setOnClickListener(new View.OnClickListener() {
+			public void onClick(View v) {
+				remKeyCode(Gamepad.pref_axis_x, joystick_x_text);
+			}
+		});
+
+		joystick_y_text = (TextView) getView().findViewById(
+				R.id.joystick_y_axis);
+		Button joystick_y = (Button) getView().findViewById(
+				R.id.joystick_y_edit);
+		joystick_y.setOnClickListener(new View.OnClickListener() {
+			public void onClick(View v) {
+				mKey.mapAxis(Gamepad.pref_axis_y, joystick_y_text);
+			}
+		});
+		Button joystick_y_remove = (Button) getView().findViewById(
+				R.id.remove_joystick_y);
+		joystick_y_remove.setOnClickListener(new View.OnClickListener() {
+			public void onClick(View v) {
+				remKeyCode(Gamepad.pref_axis_y, joystick_y_text);
+			}
+		});
+
 		ImageView start_button_icon = (ImageView) getView().findViewById(
 				R.id.start_button_icon);
 		start_button_icon.setImageDrawable(getButtonImage(0, 64 / sS));
@@ -346,7 +385,7 @@ public class InputModFragment extends Fragment {
 
 		Spinner player_spnr = (Spinner) getView().findViewById(
 				R.id.player_spinner);
-		ArrayAdapter<String> playerAdapter = new ArrayAdapter<String>(
+		ArrayAdapter<String> playerAdapter = new ArrayAdapter<>(
 				getActivity(), android.R.layout.simple_spinner_item,
 				controllers);
 		playerAdapter
@@ -387,7 +426,7 @@ public class InputModFragment extends Fragment {
 		Bitmap image = null;
 		try {
 			File buttons = null;
-			InputStream bitmap = null;
+			InputStream bitmap;
 			String theme = mPrefs.getString(Config.pref_theme, null);
 			if (theme != null) {
 				buttons = new File(theme);
@@ -401,7 +440,6 @@ public class InputModFragment extends Fragment {
 			options.inSampleSize = sS;
 			image = BitmapFactory.decodeStream(bitmap, null, options);
 			bitmap.close();
-			bitmap = null;
 			Matrix matrix = new Matrix();
 			matrix.postScale(32, 32);
 			Bitmap resizedBitmap = Bitmap.createBitmap(image, x, y, 64 / sS,
@@ -417,7 +455,6 @@ public class InputModFragment extends Fragment {
 			if (sS == 2) {
 				if (image != null) {
 					image.recycle();
-					image = null;
 				}
 				sS = 4;
 				return getButtonImage(x, y);
@@ -454,11 +491,8 @@ public class InputModFragment extends Fragment {
 	}
 
 	private class mapKeyCode extends AlertDialog.Builder {
-		private String button;
-		private TextView output;
-		private boolean isMapping;
 
-		public mapKeyCode(Context c) {
+		mapKeyCode(Context c) {
 			super(c);
 		}
 
@@ -471,23 +505,18 @@ public class InputModFragment extends Fragment {
 		 *            The output display for the assigned button value
 		 */
 		public void intiateSearch(final String button, final TextView output) {
-			this.button = button;
-			this.output = output;
-			isMapping = true;
 			AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
 			builder.setTitle(R.string.map_keycode_title);
 			builder.setMessage(getString(R.string.map_keycode_message, button.replace("_", " ")));
 			builder.setNegativeButton(R.string.cancel,
 					new DialogInterface.OnClickListener() {
 						public void onClick(DialogInterface dialog, int which) {
-							isMapping = false;
 							dialog.dismiss();
 						}
 					});
 			builder.setOnKeyListener(new Dialog.OnKeyListener() {
 				public boolean onKey(DialogInterface dialog, int keyCode, KeyEvent event) {
-					mapButton(keyCode, event);
-					isMapping = false;
+					mapButton(keyCode, button);
 					dialog.dismiss();
 					return getKeyCode(button, output);
 				}
@@ -501,68 +530,82 @@ public class InputModFragment extends Fragment {
 		 *
 		 * @param keyCode
 		 *            The keycode generated by the button being assigned
-		 * @param event
-		 *            The keyevent generated by the button being assigned
+		 * @param button
+		 *            The label of the button being assigned
 		 */
-		private int mapButton(int keyCode, KeyEvent event) {
+		private void mapButton(int keyCode, String button) {
 			if (Build.MODEL.startsWith("R800")) {
 				if (keyCode == KeyEvent.KEYCODE_MENU)
-					return -1;
+					return;
 			} else {
 				if (keyCode == KeyEvent.KEYCODE_BACK)
-					return -1;
+					return;
 			}
-
 			mPrefs.edit().putInt(button + player, keyCode).apply();
-
-			return keyCode;
 		}
 
-		public boolean dispatchTouchEvent(MotionEvent ev) {
-			if (isMapping) {
-				if ((ev.getSource() & InputDevice.SOURCE_CLASS_JOYSTICK) != 0) {
-					if (ev.getAxisValue(MotionEvent.AXIS_HAT_X) != 0) {
-
-					}
-					if (ev.getAxisValue(MotionEvent.AXIS_HAT_Y) != 0) {
-
-					}
-					if (ev.getAxisValue(MotionEvent.AXIS_Z) != 0) {
-
-					}
-					if (ev.getAxisValue(MotionEvent.AXIS_RZ) != 0) {
-
-					}
-					if (ev.getAxisValue(MotionEvent.AXIS_RTRIGGER) != 0) {
-
-					}
-					if (ev.getAxisValue(MotionEvent.AXIS_LTRIGGER) != 0) {
-
-					}
-					if (ev.getAxisValue(MotionEvent.AXIS_THROTTLE) != 0) {
-
-					}
-					if (ev.getAxisValue(MotionEvent.AXIS_BRAKE) != 0) {
-
-					}
-					String label = output.getText().toString();
-					if (label.contains(":")) {
-						label = label.substring(0, label.indexOf(":"));
-					}
-
-					output.setText(label + ": " + ev.getAction());
+		private void mapAxis(final String button, final TextView output) {
+			AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+			builder.setTitle(R.string.map_keycode_title);
+			builder.setMessage(getString(R.string.map_keycode_message, button.replace("_", " ")));
+			View view = getLayoutInflater().inflate(R.layout.joystick_dialog, null);
+			builder.setView(view);
+			builder.setCancelable(false);
+			builder.create();
+			final Dialog dialog = builder.show();
+			view.findViewById(R.id.joystick_cancel_btn).setOnClickListener(new View.OnClickListener() {
+				public void onClick(View view) {
+					dialog.dismiss();
 				}
-
-			}
-			return dispatchTouchEvent(ev);
+			});
+			view.requestFocusFromTouch();
+			view.setOnGenericMotionListener(new View.OnGenericMotionListener() {
+				@Override
+				public boolean onGenericMotion(View view, MotionEvent event) {
+					int axis = -1;
+					if ((event.getSource() & InputDevice.SOURCE_JOYSTICK) ==
+							InputDevice.SOURCE_JOYSTICK &&
+							event.getAction() == MotionEvent.ACTION_MOVE) {
+						if (event.getAxisValue(MotionEvent.AXIS_X) != 0) {
+							axis = MotionEvent.AXIS_X;
+						}
+						if (event.getAxisValue(MotionEvent.AXIS_Y) != 0) {
+							axis = MotionEvent.AXIS_Y;
+						}
+						if (event.getAxisValue(MotionEvent.AXIS_RX) != 0) {
+							axis = MotionEvent.AXIS_RX;
+						}
+						if (event.getAxisValue(MotionEvent.AXIS_RY) != 0) {
+							axis = MotionEvent.AXIS_RY;
+						}
+						if (event.getAxisValue(MotionEvent.AXIS_HAT_X) != 0) {
+							axis = MotionEvent.AXIS_HAT_X;
+						}
+						if (event.getAxisValue(MotionEvent.AXIS_HAT_Y) != 0) {
+							axis = MotionEvent.AXIS_HAT_Y;
+						}
+						if (new Gamepad().IsOuyaOrTV(getActivity(), true)) {
+							if (event.getAxisValue(OuyaController.AXIS_LS_X) != 0) {
+								axis = OuyaController.AXIS_LS_X;
+							}
+							if (event.getAxisValue(OuyaController.AXIS_LS_Y) != 0) {
+								axis = OuyaController.AXIS_LS_Y;
+							}
+						}
+						mPrefs.edit().putInt(button + player, axis).apply();
+						dialog.dismiss();
+						return getKeyCode(button, output);
+					}
+					return true;
+				}
+			});
 		}
 	}
 
 	private void updateController(String player) {
 		switchJoystickDpadEnabled.setChecked(mPrefs.getBoolean(
 				Gamepad.pref_js_merged + player, false));
-		switchRightStickLREnabled.setChecked(mPrefs.getBoolean(
-				Gamepad.pref_js_rbuttons + player, true));
+		right_stick_spinner.setSelection(mPrefs.getInt(Gamepad.pref_js_rstick + player, 0));
 		switchModifiedLayoutEnabled.setChecked(mPrefs.getBoolean(
 				Gamepad.pref_js_modified + player, false));
 		switchCompatibilityEnabled.setChecked(mPrefs.getBoolean(
@@ -577,6 +620,8 @@ public class InputModFragment extends Fragment {
 		getKeyCode(Gamepad.pref_dpad_down, dpad_down_text);
 		getKeyCode(Gamepad.pref_dpad_left, dpad_left_text);
 		getKeyCode(Gamepad.pref_dpad_right, dpad_right_text);
+		getKeyCode(Gamepad.pref_axis_x, joystick_x_text);
+		getKeyCode(Gamepad.pref_axis_y, joystick_y_text);
 		getKeyCode(Gamepad.pref_button_start, start_button_text);
 		getKeyCode(Gamepad.pref_button_select, select_button_text);
 	}
@@ -588,7 +633,8 @@ public class InputModFragment extends Fragment {
 			if (label.contains(":")) {
 				label = label.substring(0, label.indexOf(":"));
 			}
-			output.setText(label + ": " + keyCode);
+			label += ": " + keyCode;
+			output.setText(label);
 			return true;
 		} else {
 			String label = output.getText().toString();

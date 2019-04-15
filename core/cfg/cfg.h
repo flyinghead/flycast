@@ -21,3 +21,9 @@ s32  cfgExists(const wchar * Section, const wchar * Key);
 void cfgSetVirtual(const wchar * lpSection, const wchar * lpKey, const wchar * lpString);
 
 bool ParseCommandLine(int argc,wchar* argv[]);
+
+void cfgSetGameId(const char *id);
+const char *cfgGetGameId();
+bool cfgHasGameSpecificConfig();
+void cfgMakeGameSpecificConfig();
+void cfgDeleteGameSpecificConfig();

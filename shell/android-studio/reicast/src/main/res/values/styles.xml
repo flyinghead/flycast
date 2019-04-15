@@ -44,7 +44,7 @@
         <item name="android:paddingLeft">4dp</item>
         <item name="android:paddingBottom">4dp</item>
         <item name="android:textColor">#ffff00</item>
-        <item name="android:textSize">32dp</item>
+        <item name="android:textSize">32sp</item>
         <item name="android:shadowColor">#000000</item>
         <item name="android:shadowDx">1</item>
         <item name="android:shadowDy">1</item>

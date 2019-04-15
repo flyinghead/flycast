@@ -73,8 +73,9 @@ extern int screen_height;
 
 PipelineShader* CurrentShader;
 u32 gcflip;
+static GLuint g_previous_frame_tex;
 
-s32 SetTileClip(u32 val, bool set)
+s32 SetTileClip(u32 val, GLint uniform)
 {
 	if (!settings.rend.Clipping)
 		return 0;
@@ -105,7 +106,7 @@ s32 SetTileClip(u32 val, bool set)
 	if (csx <= 0 && csy <= 0 && cex >= 640 && cey >= 480)
 		return 0;
 
-	if (set && clip_mode)
+	if (uniform >= 0 && clip_mode)
 	{
 		if (!pvrrc.isRTT)
 		{
@@ -123,7 +124,14 @@ s32 SetTileClip(u32 val, bool set)
 			csy = csy * dc2s_scale_h;
 			cey = cey * dc2s_scale_h;
 		}
-		glUniform4f(CurrentShader->pp_ClipTest, csx, csy, cex, cey);
+		else if (!settings.rend.RenderToTextureBuffer)
+		{
+			csx *= settings.rend.RenderToTextureUpscale;
+			csy *= settings.rend.RenderToTextureUpscale;
+			cex *= settings.rend.RenderToTextureUpscale;
+			cey *= settings.rend.RenderToTextureUpscale;
+		}
+		glUniform4f(uniform, csx, csy, cex, cey);
 	}
 
 	return clip_mode;
@@ -162,11 +170,13 @@ __forceinline
 			ShaderUniforms.trilinear_alpha = 1.0 - ShaderUniforms.trilinear_alpha;
 	}
 	else
-		ShaderUniforms.trilinear_alpha = 1.0;
+		ShaderUniforms.trilinear_alpha = 1.f;
+
+	bool color_clamp = gp->tsp.ColorClamp && (pvrrc.fog_clamp_min != 0 || pvrrc.fog_clamp_max != 0xffffffff);
 
 	CurrentShader = &gl.pogram_table[
 									 GetProgramID(Type == ListType_Punch_Through ? 1 : 0,
-											 	  SetTileClip(gp->tileclip, false) + 1,
+											 	  SetTileClip(gp->tileclip, -1) + 1,
 												  gp->pcw.Texture,
 												  gp->tsp.UseAlpha,
 												  gp->tsp.IgnoreTexA,
@@ -175,7 +185,8 @@ __forceinline
 												  gp->tsp.FogCtrl,
 												  gp->pcw.Gouraud,
 												  gp->tcw.PixelFmt == PixelBumpMap,
-												  pvrrc.fog_clamp_min != 0 || pvrrc.fog_clamp_max != 0xffffffff)];
+												  color_clamp,
+												  ShaderUniforms.trilinear_alpha != 1.f)];
 	
 	if (CurrentShader->program == -1)
 		CompilePipelineShader(CurrentShader);
@@ -184,7 +195,7 @@ __forceinline
 		glcache.UseProgram(CurrentShader->program);
 		ShaderUniforms.Set(CurrentShader);
 	}
-	SetTileClip(gp->tileclip,true);
+	SetTileClip(gp->tileclip, CurrentShader->pp_ClipTest);
 
 	//This bit control which pixels are affected
 	//by modvols
@@ -265,7 +276,8 @@ void DrawList(const List<PolyParam>& gply, int first, int count)
 		if (params->count>2) //this actually happens for some games. No idea why ..
 		{
 			SetGPState<Type,SortingEnabled>(params);
-			glDrawElements(GL_TRIANGLE_STRIP, params->count, GL_UNSIGNED_SHORT, (GLvoid*)(2*params->first)); glCheck();
+			glDrawElements(GL_TRIANGLE_STRIP, params->count, gl.index_type,
+					(GLvoid*)(gl.get_index_size() * params->first)); glCheck();
 		}
 
 		params++;
@@ -286,7 +298,7 @@ void SortPParams(int first, int count)
 		return;
 
 	Vertex* vtx_base=pvrrc.verts.head();
-	u16* idx_base=pvrrc.idx.head();
+	u32* idx_base = pvrrc.idx.head();
 
 	PolyParam* pp = &pvrrc.global_param_tr.head()[first];
 	PolyParam* pp_end = pp + count;
@@ -299,7 +311,7 @@ void SortPParams(int first, int count)
 		}
 		else
 		{
-			u16* idx=idx_base+pp->first;
+			u32* idx = idx_base + pp->first;
 
 			Vertex* vtx=vtx_base+idx[0];
 			Vertex* vtx_end=vtx_base + idx[pp->count-1]+1;
@@ -324,7 +336,7 @@ Vertex* vtx_sort_base;
 
 struct IndexTrig
 {
-	u16 id[3];
+	u32 id[3];
 	u16 pid;
 	f32 z;
 };
@@ -333,8 +345,8 @@ struct IndexTrig
 struct SortTrigDrawParam
 {
 	PolyParam* ppid;
-	u16 first;
-	u16 count;
+	u32 first;
+	u32 count;
 };
 
 float min3(float v0,float v1,float v2)
@@ -348,7 +360,7 @@ float max3(float v0,float v1,float v2)
 }
 
 
-float minZ(Vertex* v,u16* mod)
+float minZ(Vertex* v, u32* mod)
 {
 	return min(min(v[mod[0]].z,v[mod[1]].z),v[mod[2]].z);
 }
@@ -461,7 +473,7 @@ bool PP_EQ(PolyParam* pp0, PolyParam* pp1)
 
 static vector<SortTrigDrawParam>	pidx_sort;
 
-void fill_id(u16* d, Vertex* v0, Vertex* v1, Vertex* v2,  Vertex* vb)
+void fill_id(u32* d, Vertex* v0, Vertex* v1, Vertex* v2,  Vertex* vb)
 {
 	d[0]=v0-vb;
 	d[1]=v1-vb;
@@ -478,7 +490,7 @@ void GenSorted(int first, int count)
 		return;
 
 	Vertex* vtx_base=pvrrc.verts.head();
-	u16* idx_base=pvrrc.idx.head();
+	u32* idx_base = pvrrc.idx.head();
 
 	PolyParam* pp_base = &pvrrc.global_param_tr.head()[first];
 	PolyParam* pp = pp_base;
@@ -514,7 +526,7 @@ void GenSorted(int first, int count)
 
 		if (pp->count>2)
 		{
-			u16* idx=idx_base+pp->first;
+			u32* idx = idx_base + pp->first;
 
 			Vertex* vtx=vtx_base+idx[0];
 			Vertex* vtx_end=vtx_base + idx[pp->count-1]-1;
@@ -684,7 +696,7 @@ void GenSorted(int first, int count)
 #endif
 
 	//re-assemble them into drawing commands
-	static vector<u16> vidx_sort;
+	static vector<u32> vidx_sort;
 
 	vidx_sort.resize(aused*3);
 
@@ -693,7 +705,7 @@ void GenSorted(int first, int count)
 	for (u32 i=0; i<aused; i++)
 	{
 		int pid=lst[i].pid;
-		u16* midx=lst[i].id;
+		u32* midx = lst[i].id;
 
 		vidx_sort[i*3 + 0]=midx[0];
 		vidx_sort[i*3 + 1]=midx[1];
@@ -701,7 +713,7 @@ void GenSorted(int first, int count)
 
 		if (idx!=pid /* && !PP_EQ(&pp_base[pid],&pp_base[idx]) */ )
 		{
-			SortTrigDrawParam stdp={pp_base + pid, (u16)(i*3), 0};
+			SortTrigDrawParam stdp = { pp_base + pid, i * 3, 0 };
 			
 			if (idx!=-1)
 			{
@@ -726,7 +738,20 @@ void GenSorted(int first, int count)
 	{
 		//Bind and upload sorted index buffer
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs2); glCheck();
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER,vidx_sort.size()*2,&vidx_sort[0],GL_STREAM_DRAW);
+		if (gl.index_type == GL_UNSIGNED_SHORT)
+		{
+			static bool overrun;
+			static List<u16> short_vidx;
+			if (short_vidx.daty != NULL)
+				short_vidx.Free();
+			short_vidx.Init(vidx_sort.size(), &overrun, NULL);
+			for (int i = 0; i < vidx_sort.size(); i++)
+				*(short_vidx.Append()) = vidx_sort[i];
+			glBufferData(GL_ELEMENT_ARRAY_BUFFER, short_vidx.bytes(), short_vidx.head(), GL_STREAM_DRAW);
+		}
+		else
+			glBufferData(GL_ELEMENT_ARRAY_BUFFER, vidx_sort.size() * sizeof(u32), &vidx_sort[0], GL_STREAM_DRAW);
+		glCheck();
 
 		if (tess_gen) printf("Generated %.2fK Triangles !\n",tess_gen/1000.0);
 	}
@@ -752,7 +777,8 @@ void DrawSorted(bool multipass)
 				if (pidx_sort[p].count>2) //this actually happens for some games. No idea why ..
 				{
 					SetGPState<ListType_Translucent,true>(params);
-					glDrawElements(GL_TRIANGLES, pidx_sort[p].count, GL_UNSIGNED_SHORT, (GLvoid*)(2*pidx_sort[p].first)); glCheck();
+					glDrawElements(GL_TRIANGLES, pidx_sort[p].count, gl.index_type,
+							(GLvoid*)(gl.get_index_size() * pidx_sort[p].first)); glCheck();
 				
 #if 0
 					//Verify restriping -- only valid if no sort
@@ -796,7 +822,8 @@ void DrawSorted(bool multipass)
 
 						SetCull(params->isp.CullMode ^ gcflip);
 
-						glDrawElements(GL_TRIANGLES, pidx_sort[p].count, GL_UNSIGNED_SHORT, (GLvoid*)(2 * pidx_sort[p].first));
+						glDrawElements(GL_TRIANGLES, pidx_sort[p].count, gl.index_type,
+								(GLvoid*)(gl.get_index_size() * pidx_sort[p].first));
 					}
 				}
 				glcache.StencilMask(0xFF);
@@ -905,11 +932,10 @@ void SetMVS_Mode(ModifierVolumeMode mv_mode, ISP_Modvol ispc)
 }
 
 
-void SetupMainVBO()
+static void SetupMainVBO()
 {
-#ifndef GLES
-	glBindVertexArray(gl.vbo.vao);
-#endif
+	if (gl.gl_major >= 3)
+		glBindVertexArray(gl.vbo.vao);
 
 	glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.geometry); glCheck();
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs); glCheck();
@@ -930,9 +956,8 @@ void SetupMainVBO()
 
 void SetupModvolVBO()
 {
-#ifndef GLES
-	glBindVertexArray(gl.vbo.vao);
-#endif
+	if (gl.gl_major >= 3)
+		glBindVertexArray(gl.vbo.vao);
 
 	glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.modvols); glCheck();
 
@@ -951,8 +976,7 @@ void DrawModVols(int first, int count)
 
 	SetupModvolVBO();
 
-	glcache.Enable(GL_BLEND);
-	glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glcache.Disable(GL_BLEND);
 
 	glcache.UseProgram(gl.modvol_shader.program);
 	glUniform1f(gl.modvol_shader.sp_ShaderColor, 1 - FPU_SHAD_SCALE.scale_factor / 256.f);
@@ -1080,13 +1104,13 @@ void DrawStrips()
 	}
 }
 
-void DrawFramebuffer(float w, float h)
+static void DrawQuad(GLuint texId, float x, float y, float w, float h, float u0, float v0, float u1, float v1)
 {
 	struct Vertex vertices[] = {
-		{ 0, h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 1 },
-		{ 0, 0, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 0 },
-		{ w, h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 1 },
-		{ w, 0, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 0 },
+		{ x,     y + h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, u0, v1 },
+		{ x,     y,     1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, u0, v0 },
+		{ x + w, y + h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, u1, v1 },
+		{ x + w, y,     1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, u1, v0 },
 	};
 	GLushort indices[] = { 0, 1, 2, 1, 3 };
 
@@ -1098,7 +1122,7 @@ void DrawFramebuffer(float w, float h)
 
 	ShaderUniforms.trilinear_alpha = 1.0;
 
-	PipelineShader *shader = &gl.pogram_table[GetProgramID(0, 1, 1, 0, 1, 0, 0, 2, false, false, false)];
+	PipelineShader *shader = &gl.pogram_table[GetProgramID(0, 1, 1, 0, 1, 0, 0, 2, false, false, false, false)];
 	if (shader->program == -1)
 		CompilePipelineShader(shader);
 	else
@@ -1108,17 +1132,35 @@ void DrawFramebuffer(float w, float h)
 	}
 
 	glActiveTexture(GL_TEXTURE0);
-	glcache.BindTexture(GL_TEXTURE_2D, fbTextureId);
+	glcache.BindTexture(GL_TEXTURE_2D, texId);
 
 	SetupMainVBO();
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STREAM_DRAW);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STREAM_DRAW);
 
 	glDrawElements(GL_TRIANGLE_STRIP, 5, GL_UNSIGNED_SHORT, (void *)0);
+}
 
+void DrawFramebuffer(float w, float h)
+{
+	DrawQuad(fbTextureId, 0, 0, 640.f, 480.f, 0, 0, 1, 1);
 	glcache.DeleteTextures(1, &fbTextureId);
 	fbTextureId = 0;
+}
 
-	glBufferData(GL_ARRAY_BUFFER, pvrrc.verts.bytes(), pvrrc.verts.head(), GL_STREAM_DRAW);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, pvrrc.idx.bytes(), pvrrc.idx.head(), GL_STREAM_DRAW);
+bool render_output_framebuffer()
+{
+#if HOST_OS != OS_DARWIN
+	//Fix this in a proper way
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+#endif
+	glViewport(0, 0, screen_width, screen_height);
+	if (gl.ofbo.tex == 0)
+		return false;
+
+    float scl = 480.f / screen_height;
+    float tx = (screen_width * scl - 640.f) / 2;
+	DrawQuad(gl.ofbo.tex, -tx, 0, 640.f + tx * 2, 480.f, 0, 1, 1, 0);
+
+	return true;
 }

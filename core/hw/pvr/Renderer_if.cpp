@@ -2,6 +2,7 @@
 #include "ta.h"
 #include "hw/pvr/pvr_mem.h"
 #include "rend/TexCache.h"
+#include "rend/gui.h"
 
 #include "deps/zlib/zlib.h"
 
@@ -76,7 +77,9 @@ u32 VertexCount=0;
 u32 FrameCount=1;
 
 Renderer* renderer;
+static Renderer* fallback_renderer;
 bool renderer_enabled = true;	// Signals the renderer thread to exit
+bool renderer_changed = false;	// Signals the renderer thread to switch renderer
 
 #if !defined(TARGET_NO_THREADS)
 cResetEvent rs(false,true);
@@ -94,6 +97,8 @@ bool fb_dirty;
 
 TA_context* _pvrrc;
 void SetREP(TA_context* cntx);
+void killtex();
+bool render_output_framebuffer();
 
 void dump_frame(const char* file, TA_context* ctx, u8* vram, u8* vram_ref = NULL) {
 	FILE* fw = fopen(file, "wb");
@@ -103,7 +108,7 @@ void dump_frame(const char* file, TA_context* ctx, u8* vram, u8* vram_ref = NULL
 
 	u32 bytes = ctx->tad.End() - ctx->tad.thd_root;
 
-	fwrite("TAFRAME3", 1, 8, fw);
+	fwrite("TAFRAME4", 1, 8, fw);
 
 	fwrite(&ctx->rend.isRTT, 1, sizeof(ctx->rend.isRTT), fw);
 	u32 zero = 0;
@@ -168,9 +173,16 @@ TA_context* read_frame(const char* file, u8* vram_ref = NULL) {
 
 	fread(id0, 1, 8, fw);
 
-	if (memcmp(id0, "TAFRAME3", 8) != 0) {
+	if (memcmp(id0, "TAFRAME", 7) != 0 || (id0[7] != '3' && id0[7] != '4')) {
 		fclose(fw);
 		return 0;
+	}
+	int sizeofPolyParam = sizeof(PolyParam);
+	int sizeofVertex = sizeof(Vertex);
+	if (id0[7] == '3')
+	{
+		sizeofPolyParam -= 12;
+		sizeofVertex -= 16;
 	}
 
 	TA_context* ctx = tactx_Alloc();
@@ -184,8 +196,10 @@ TA_context* read_frame(const char* file, u8* vram_ref = NULL) {
 	fread(&ctx->rend.fb_X_CLIP.full, 1, sizeof(ctx->rend.fb_X_CLIP.full), fw);
 	fread(&ctx->rend.fb_Y_CLIP.full, 1, sizeof(ctx->rend.fb_Y_CLIP.full), fw);
 
-	fread(ctx->rend.global_param_op.Append(), 1, sizeof(PolyParam), fw);
-	fread(ctx->rend.verts.Append(4), 1, 4 * sizeof(Vertex), fw);
+	fread(ctx->rend.global_param_op.Append(), 1, sizeofPolyParam, fw);
+	Vertex *vtx = ctx->rend.verts.Append(4);
+	for (int i = 0; i < 4; i++)
+		fread(vtx + i, 1, sizeofVertex, fw);
 
 	fread(&t, 1, sizeof(t), fw);
 	verify(t == VRAM_SIZE);
@@ -246,7 +260,7 @@ bool rend_frame(TA_context* ctx, bool draw_osd) {
 	bool do_swp = proc && renderer->Render();
 
 	if (do_swp && draw_osd)
-		renderer->DrawOSD();
+		renderer->DrawOSD(false);
 
 	return do_swp;
 }
@@ -256,8 +270,37 @@ bool rend_single_frame()
 	//wait render start only if no frame pending
 	do
 	{
+		// FIXME not here
+		os_DoEvents();
 #if !defined(TARGET_NO_THREADS)
-		rs.Wait();
+		if (gui_is_open() || gui_state == VJoyEdit)
+		{
+			gui_display_ui();
+			if (gui_state == VJoyEdit && renderer != NULL)
+				renderer->DrawOSD(true);
+			FinishRender(NULL);
+			// Use the rendering start event to wait between two frames but save its value
+			if (rs.Wait(17))
+				rs.Set();
+			return true;
+		}
+		else
+		{
+			if (renderer != NULL)
+				renderer->RenderLastFrame();
+
+			if (!rs.Wait(100))
+				return false;
+		}
+#else
+		if (gui_is_open())
+		{
+			gui_display_ui();
+			FinishRender(NULL);
+			return true;
+		}
+		if (renderer != NULL)
+			renderer->RenderLastFrame();
 #endif
 		if (!renderer_enabled)
 			return false;
@@ -267,8 +310,10 @@ bool rend_single_frame()
 	while (!_pvrrc);
 	bool do_swp = rend_frame(_pvrrc, true);
 
+#if !defined(TARGET_NO_THREADS)
 	if (_pvrrc->rend.isRTT)
 		re.Set();
+#endif
 
 	//clear up & free data ..
 	FinishRender(_pvrrc);
@@ -277,42 +322,68 @@ bool rend_single_frame()
 	return do_swp;
 }
 
+static void rend_create_renderer()
+{
+#ifdef NO_REND
+	renderer	 = rend_norend();
+#else
+	switch (settings.pvr.rend)
+	{
+	default:
+	case 0:
+		renderer = rend_GLES2();
+		break;
+#if FEAT_HAS_SOFTREND
+	case 2:
+		renderer = rend_softrend();
+		break;
+#endif
+#if !defined(GLES) && HOST_OS != OS_DARWIN
+	case 3:
+		renderer = rend_GL4();
+		fallback_renderer = rend_GLES2();
+		break;
+#endif
+	}
+#endif
+}
+
+void rend_init_renderer()
+{
+	if (renderer == NULL)
+		rend_create_renderer();
+	if (!renderer->Init())
+    {
+		delete renderer;
+    	if (fallback_renderer == NULL || !fallback_renderer->Init())
+    	{
+    		if (fallback_renderer != NULL)
+    			delete fallback_renderer;
+    		die("Renderer initialization failed\n");
+    	}
+    	printf("Selected renderer initialization failed. Falling back to default renderer.\n");
+    	renderer  = fallback_renderer;
+    }
+}
+
+void rend_term_renderer()
+{
+	killtex();
+	gui_term();
+	renderer->Term();
+	delete renderer;
+	renderer = NULL;
+	if (fallback_renderer != NULL)
+	{
+		delete fallback_renderer;
+		fallback_renderer = NULL;
+	}
+	tactx_Term();
+}
+
 void* rend_thread(void* p)
 {
-#if FEAT_HAS_NIXPROF
-	install_prof_handler(1);
-#endif
-
-	#if SET_AFNT
-	cpu_set_t mask;
-
-	/* CPU_ZERO initializes all the bits in the mask to zero. */
-
-	CPU_ZERO( &mask );
-
-
-
-	/* CPU_SET sets only the bit corresponding to cpu. */
-
-	CPU_SET( 1, &mask );
-
-
-
-	/* sched_setaffinity returns 0 in success */
-
-	if( sched_setaffinity( 0, sizeof(mask), &mask ) == -1 )
-
-	{
-
-		printf("WARNING: Could not set CPU Affinity, continuing...\n");
-
-	}
-	#endif
-
-
-
-	if (!renderer->Init())
-		die("rend->init() failed\n");
+	rend_init_renderer();
 
 	//we don't know if this is true, so let's not speculate here
 	//renderer->Resize(640, 480);
@@ -321,14 +392,19 @@ void* rend_thread(void* p)
 	{
 		if (rend_single_frame())
 			renderer->Present();
+		if (renderer_changed)
+		{
+			renderer_changed = false;
+			rend_term_renderer();
+			rend_create_renderer();
+			rend_init_renderer();
+		}
 	}
+
+	rend_term_renderer();
 
 	return NULL;
 }
-
-#if !defined(TARGET_NO_THREADS)
-cThread rthd(rend_thread,0);
-#endif
 
 bool pend_rend = false;
 
@@ -366,7 +442,6 @@ void rend_start_render()
 			}
 
 			if (fCheckFrames) {
-				u8 v;
 				u8 digest2[16];
 				int ch = fgetc(fCheckFrames);
 
@@ -420,7 +495,8 @@ void rend_start_render()
 #if HOST_OS==OS_WINDOWS && 0
 			printf("max: idx: %d, vtx: %d, op: %d, pt: %d, tr: %d, mvo: %d, modt: %d, ov: %d\n", max_idx, max_vtx, max_op, max_pt, max_tr, max_mvo, max_modt, ovrn);
 #endif
-			if (QueueRender(ctx))  {
+			if (QueueRender(ctx))
+			{
 				palette_update();
 #if !defined(TARGET_NO_THREADS)
 				rs.Set();
@@ -454,114 +530,15 @@ void rend_end_render()
 #if !defined(TARGET_NO_THREADS)
 		re.Wait();
 #else
-		renderer->Present();
+		if (renderer != NULL)
+			renderer->Present();
 #endif
 	}
 }
 
-/*
-void rend_end_wait()
-{
-	#if HOST_OS!=OS_WINDOWS && !defined(_ANDROID)
-	//	if (!re.state) printf("Render End: Waiting ...\n");
-	#endif
-	re.Wait();
-	pvrrc.InUse=false;
-}
-*/
-
-bool rend_init()
-{
-	if (fLogFrames = fopen(settings.pvr.HashLogFile.c_str(), "wb")) {
-		printf("Saving frame hashes to: '%s'\n", settings.pvr.HashLogFile.c_str());
-	}
-
-	if (fCheckFrames = fopen(settings.pvr.HashCheckFile.c_str(), "rb")) {
-		printf("Comparing frame hashes against: '%s'\n", settings.pvr.HashCheckFile.c_str());
-	}
-
-#ifdef NO_REND
-	renderer	 = rend_norend();
-#else
-
-
-	switch (settings.pvr.rend) {
-		default:
-		case 0:
-			renderer = rend_GLES2();
-			break;
-#if HOST_OS == OS_WINDOWS
-		case 1:
-			renderer = rend_D3D11();
-			break;
-#endif
-
-#if FEAT_HAS_SOFTREND
-		case 2:
-			renderer = rend_softrend();
-			break;
-#endif
-	}
-
-#endif
-
-#if !defined(_ANDROID) && HOST_OS != OS_DARWIN
-  #if !defined(TARGET_NO_THREADS)
-    rthd.Start();
-  #else
-    if (!renderer->Init()) die("rend->init() failed\n");
-
-    renderer->Resize(640, 480);
-  #endif
-#endif
-
-#if SET_AFNT
-	cpu_set_t mask;
-
-
-
-	/* CPU_ZERO initializes all the bits in the mask to zero. */
-
-	CPU_ZERO( &mask );
-
-
-
-	/* CPU_SET sets only the bit corresponding to cpu. */
-
-	CPU_SET( 0, &mask );
-
-
-
-	/* sched_setaffinity returns 0 in success */
-
-	if( sched_setaffinity( 0, sizeof(mask), &mask ) == -1 )
-
-	{
-
-		printf("WARNING: Could not set CPU Affinity, continuing...\n");
-
-	}
-#endif
-
-	return true;
-}
-
-void rend_term()
+void rend_stop_renderer()
 {
 	renderer_enabled = false;
-#if !defined(TARGET_NO_THREADS)
-	rs.Set();
-#endif
-
-	if (fCheckFrames)
-		fclose(fCheckFrames);
-
-	if (fLogFrames)
-		fclose(fLogFrames);
-
-#if !defined(TARGET_NO_THREADS)
-	rthd.WaitToEnd();
-#endif
 }
 
 void rend_vblank()
@@ -575,15 +552,22 @@ void rend_vblank()
 	}
 	render_called = false;
 	check_framebuffer_write();
-
-	os_DoEvents();
 }
 
 void check_framebuffer_write()
 {
-	u32 fb_size = (FB_R_SIZE.fb_y_size + 1) * (FB_R_SIZE.fb_x_size + FB_R_SIZE.fb_modulus) / 4;
-	fb1_watch_addr_start = FB_R_SOF1;
-	fb1_watch_addr_end = FB_R_SOF1 + fb_size - 1;
-	fb2_watch_addr_start = FB_R_SOF2;
-	fb2_watch_addr_end = FB_R_SOF2 + fb_size - 1;
+	u32 fb_size = (FB_R_SIZE.fb_y_size + 1) * (FB_R_SIZE.fb_x_size + FB_R_SIZE.fb_modulus) * 4;
+	fb1_watch_addr_start = FB_R_SOF1 & VRAM_MASK;
+	fb1_watch_addr_end = fb1_watch_addr_start + fb_size;
+	fb2_watch_addr_start = FB_R_SOF2 & VRAM_MASK;
+	fb2_watch_addr_end = fb2_watch_addr_start + fb_size;
 }
+
+void rend_cancel_emu_wait()
+{
+	FinishRender(NULL);
+#if !defined(TARGET_NO_THREADS)
+	re.Set();
+#endif
+}
+

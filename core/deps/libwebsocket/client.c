@@ -396,8 +396,7 @@ int lws_client_socket_service(struct libwebsocket_context *context,
 		 * definitively ready from browser pov.
 		 */
 		len = 1;
-		while (wsi->u.hdr.parser_state != WSI_PARSING_COMPLETE &&
-								      len > 0) {
+		while (wsi->u.hdr.parser_state != WSI_PARSING_COMPLETE) {
 			n = lws_ssl_capable_read(wsi, &c, 1);
 			lws_latency(context, wsi, "send lws_issue_raw", n, n == 1);
 			switch (n) {

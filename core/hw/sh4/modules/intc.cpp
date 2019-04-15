@@ -38,6 +38,10 @@ void write_INTC_IPRC(u32 addr, u32 data)
 		SIIDRebuild(); //we need to rebuild the table
 	}
 }
+static u32 read_INTC_IPRD(u32 addr)
+{
+	return 0;
+}
 
 //Init/Res/Term
 void intc_init()
@@ -53,6 +57,9 @@ void intc_init()
 
 	//INTC IPRC 0xFFD0000C 0x1FD0000C 16 0x0000 0x0000 Held Held Pclk
 	sh4_rio_reg(INTC,INTC_IPRC_addr,RIO_WF,16,0,&write_INTC_IPRC);
+
+	//INTC IPRD 0xFFD00010 0x1FD00010 16 0xDA74 0xDA74 Held Held Pclk	(SH7750S, SH7750R only)
+	sh4_rio_reg(INTC,INTC_IPRD_addr,RIO_RO_FUNC,16,&read_INTC_IPRD);
 
 	interrupts_init();
 }

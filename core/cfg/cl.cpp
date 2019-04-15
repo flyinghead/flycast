@@ -109,7 +109,7 @@ int showhelp(wchar** arg,int cl)
 }
 bool ParseCommandLine(int argc,wchar* argv[])
 {
-
+	cfgSetVirtual("config", "image", "");
 	int cl=argc-2;
 	wchar** arg=argv+1;
 	while(cl>=0)
@@ -133,7 +133,8 @@ bool ParseCommandLine(int argc,wchar* argv[])
 
 			if (extension
 				&& (stricmp(extension, ".cdi") == 0 || stricmp(extension, ".chd") == 0
-					|| stricmp(extension, ".gdi") == 0 || stricmp(extension, ".lst") == 0))
+					|| stricmp(extension, ".gdi") == 0 || stricmp(extension, ".lst") == 0
+					|| stricmp(extension, ".cue") == 0))
 			{
 				printf("Using '%s' as cd image\n", *arg);
 				cfgSetVirtual("config", "image", *arg);
@@ -146,7 +147,12 @@ bool ParseCommandLine(int argc,wchar* argv[])
 			}
 			else
 			{
+#if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
+				printf("Using '%s' as rom\n", *arg);
+				cfgSetVirtual("config", "image", *arg);
+#else
 				printf("wtf %s is supposed to do ?\n",*arg);
+#endif
 			}
 		}
 		arg++;

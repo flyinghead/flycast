@@ -10,7 +10,7 @@ Last Edit: 21 May 2014
  
     <string name="system_path">Répertoire système (emplacement du répertoire \'data\' comprenant les fichiers \'dc_boot.bin\' et \'dc_flash.bin\')</string>
     <string name="browser_path">Répertoire système par défaut</string>
-    <string name="games_path">Répertoire des jeux (emplacement de vos fichiers images au format gdi, chd ou cdi)</string>
+    <string name="games_path">Répertoire des jeux (emplacement de vos fichiers images au format gdi, chd, cue ou cdi)</string>
     <string name="game_path">Répertoire des jeux par défaut</string>
     <string name="config_home">Veuillez configurer le répertoire racine</string>
     <string name="config_game">Veuillez configurer le répertoire des jeux</string>
@@ -30,11 +30,11 @@ Last Edit: 21 May 2014
     <string name="optimization_opts">Options d\'optimisations et de débogage</string>
     <string name="experimental_opts">Experimental (peut causer des crashs)</string>
     <string name="select_details">Activer le détail des jeux</string>
-    <string name="select_native">Activer l\'interface native</string>
     <string name="select_dynarec">Dynarec</string>
     <string name="select_unstable">Optimisations instables</string>
     <string name="select_region">Région du bios</string>
     <string name="select_broadcast">Diffusion</string>
+    <string name="select_language">Langue</string>
     <string name="select_limitfps">Limiter le nombre de FPS</string>
     <string name="select_mipmaps">Rendu Mipmaps (correctif pour l\'ancien SGX540)</string>
     <string name="select_stretch">Mode portrait (écran large)</string>
@@ -44,8 +44,8 @@ Last Edit: 21 May 2014
     <string name="select_software">Forcer le rendu logiciel</string>
     <string name="select_sound">Désactiver le son de l\'émulateur</string>
     <string name="select_depth">Rendu de profondeur</string>
-    <string name="default_disk">Réglage du disque par défaut</string>
- 
+    <string name="select_customtex">Textures personnalisées</string>
+
     <string name="games_listing">Liste des jeux disponibles</string>
 
     <string name="game_details">Infos du jeu - %1$s</string>
@@ -62,7 +62,7 @@ Last Edit: 21 May 2014
     <string name="controller_b">Manette B</string>
     <string name="controller_c">Manette C</string>
     <string name="controller_d">Manette D</string>
-    <string name="controller_not_connected">Manette non connectée</string>
+    <string name="controller_not_connected">Manette non connectée %1$s</string>
     <string name="controller_none_selected">Aucune manette selectionnée</string>
     <string name="select">Choisir</string>
     <string name="remove">Supprimer</string>
@@ -73,15 +73,11 @@ Last Edit: 21 May 2014
     <string name="modified_layout">Activer la fonction de disposition des touches</string>
     <string name="controller_compat">Activer le mode de compatibilité</string>
     <string name="controller_unavailable">Manette IME détéctée!\nVeuillez S\'il vous plait désactiver l\'interface native</string>
-    <string name="mic_in_port_2">Microphone branché au port 2</string>
-     
+
     <string name="customize_physical_controls">Customiser les touches physiques</string>
     <string name="map_keycode_title">Modifier la manette</string>
     <string name="map_keycode_message">Pressez une nouvelle touche pour %1$s</string>
-     
-    <string name="moga_pro_connect">MOGA Pro connecté</string>
-    <string name="moga_connect">MOGA connecté</string>
- 
+
     <string name="about_text">reicast est un émulateur dreamcast</string>
     <string name="revision_text">Version: %1$s [%2$s]</string>
  
@@ -111,4 +107,13 @@ Last Edit: 21 May 2014
     <string name="downloadWarning">ATTENTION: Vous êtes sur le point de télécharger vos VMUs depuis Dropbox, veuillez s\'il vous plait prendre en considération que ceci va ECRASER vos VMUs actuelles!! Par ailleurs une copie de sauvegarde va être créé dans le dossier VmuBackups!</string>
     <string name="uploadVMU">Envoyer VMU</string>
     <string name="downloadVMU">Télécharger VMU</string>
+    <string-array name="languages">
+        <item>Japonais</item>
+        <item>Anglais</item>
+        <item>Allemand</item>
+        <item>Français</item>
+        <item>Espagnol</item>
+        <item>Italien</item>
+        <item>Défaut</item>
+    </string-array>
 </resources>

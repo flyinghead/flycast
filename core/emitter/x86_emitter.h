@@ -1,6 +1,9 @@
 #pragma once
 #include "types.h"
 #include "x86_op_classes.h"
+#if HOST_OS == OS_DARWIN
+	#include <TargetConditionals.h>
+#endif
 
 using namespace std;
 //Oh god , x86 is a sooo badly designed opcode arch -_-
@@ -229,8 +232,8 @@ struct /*__declspec(dllexport)*/  x86_ptr_imm
 		this->ptr=ptr;
 	}
 
-#if HOST_CPU != CPU_X64
-#ifndef WIN32
+#if HOST_CPU == CPU_X86
+#if !defined(WIN32) && !defined(TARGET_OS_MAC)
 	template<typename Rv, typename ...Args>
 	x86_ptr_imm(Rv(* ptr)(Args...))
 	{

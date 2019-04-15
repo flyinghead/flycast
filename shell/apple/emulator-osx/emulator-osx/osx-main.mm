@@ -6,39 +6,34 @@
 //  Copyright (c) 2015 reicast. All rights reserved.
 //
 #import <Carbon/Carbon.h>
-
-#include "types.h"
+#import <AppKit/AppKit.h>
+#include <OpenGL/gl3.h>
 #include <sys/stat.h>
 
-#include <OpenGL/gl3.h>
+#include "types.h"
+#include "hw/maple/maple_cfg.h"
+#include "rend/gui.h"
+#include "osx_keyboard.h"
+#include "osx_gamepad.h"
 
-int msgboxf(const wchar* text,unsigned int type,...)
-{
-    va_list args;
-    
-    wchar temp[2048];
-    va_start(args, type);
-    vsprintf(temp, text, args);
-    va_end(args);
-    
-    puts(temp);
-    return 0;
-}
+OSXKeyboardDevice keyboard(0);
+static std::shared_ptr<OSXKbGamepadDevice> kb_gamepad(0);
+static std::shared_ptr<OSXMouseGamepadDevice> mouse_gamepad(0);
 
 int darw_printf(const wchar* text,...) {
     va_list args;
-    
+
     wchar temp[2048];
     va_start(args, text);
     vsprintf(temp, text, args);
     va_end(args);
-    
+
     NSLog(@"%s", temp);
-    
+
     return 0;
 }
 
-u16 kcode[4] = { 0xFFFF };
+u16 kcode[4] = { 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF };
 u32 vks[4];
 s8 joyx[4],joyy[4];
 u8 rt[4],lt[4];
@@ -51,20 +46,27 @@ void os_SetWindowText(const char * text) {
 }
 
 void os_DoEvents() {
-    
+
 }
 
 
 void UpdateInputState(u32 port) {
-    
-}
-
-void UpdateVibration(u32 port, u32 value) {
 
 }
 
 void os_CreateWindow() {
-    
+
+}
+
+void os_SetupInput() {
+	kb_gamepad = std::make_shared<OSXKbGamepadDevice>(0);
+	GamepadDevice::Register(kb_gamepad);
+	mouse_gamepad = std::make_shared<OSXMouseGamepadDevice>(0);
+	GamepadDevice::Register(mouse_gamepad);
+
+#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
+	mcfg_CreateDevices();
+#endif
 }
 
 void* libPvr_GetRenderTarget() {
@@ -73,7 +75,7 @@ void* libPvr_GetRenderTarget() {
 
 void* libPvr_GetRenderSurface() {
     return 0;
-    
+
 }
 
 bool gl_init(void*, void*) {
@@ -81,57 +83,40 @@ bool gl_init(void*, void*) {
 }
 
 void gl_term() {
-    
+
 }
 
 void gl_swap() {
-    
+
 }
 
 void common_linux_setup();
-int dc_init(int argc,wchar* argv[]);
-void dc_run();
-void dc_term();
-void dc_stop();
+int reicast_init(int argc, char* argv[]);
+void dc_exit();
+void dc_resume();
+void rend_init_renderer();
 
-bool has_init = false;
-void* emuthread(void*) {
-    settings.profile.run_counts=0;
-    common_linux_setup();
-    char* argv[] = { "reicast" };
-    
-    dc_init(1,argv);
-    
-    has_init = true;
-    
-    dc_run();
-    
-    has_init = false;
-    
-    dc_term();
-
-    return 0;
-}
-
-extern "C" void emu_dc_stop()
+extern "C" void emu_dc_exit()
 {
-    dc_stop();
+    dc_exit();
 }
 
-pthread_t emu_thread;
-extern "C" void emu_main() {
-    pthread_create(&emu_thread, 0, &emuthread, 0);
+extern "C" void emu_dc_resume()
+{
+	dc_resume();
 }
 
 extern int screen_width,screen_height;
 bool rend_single_frame();
 bool rend_framePending();
-bool gles_init();
+
+extern "C" bool emu_frame_pending()
+{
+	return rend_framePending() || gui_is_open();
+}
 
 extern "C" int emu_single_frame(int w, int h) {
-    if (!has_init)
-        return true;
-    if (!rend_framePending())
+    if (!emu_frame_pending())
         return 0;
     screen_width = w;
     screen_height = h;
@@ -139,7 +124,7 @@ extern "C" int emu_single_frame(int w, int h) {
     return rend_single_frame();
 }
 
-extern "C" void emu_gles_init() {
+extern "C" void emu_gles_init(int width, int height) {
     char *home = getenv("HOME");
     if (home != NULL)
     {
@@ -162,77 +147,37 @@ extern "C" void emu_gles_init() {
     CFRelease(resourcesURL);
     CFRelease(mainBundle);
 
-    gles_init();
+	// Calculate screen DPI
+	NSScreen *screen = [NSScreen mainScreen];
+	NSDictionary *description = [screen deviceDescription];
+	NSSize displayPixelSize = [[description objectForKey:NSDeviceSize] sizeValue];
+	CGSize displayPhysicalSize = CGDisplayScreenSize([[description objectForKey:@"NSScreenNumber"] unsignedIntValue]);
+	screen_dpi = (int)(displayPixelSize.width / displayPhysicalSize.width) * 25.4f;
+	screen_width = width;
+	screen_height = height;
+
+	rend_init_renderer();
 }
 
-extern "C" bool emu_frame_pending()
+extern "C" int emu_reicast_init()
 {
-    return rend_framePending();
+	common_linux_setup();
+	return reicast_init(0, NULL);
 }
 
-enum DCPad {
-    Btn_C		= 1,
-    Btn_B		= 1<<1,
-    Btn_A		= 1<<2,
-    Btn_Start	= 1<<3,
-    DPad_Up		= 1<<4,
-    DPad_Down	= 1<<5,
-    DPad_Left	= 1<<6,
-    DPad_Right	= 1<<7,
-    Btn_Z		= 1<<8,
-    Btn_Y		= 1<<9,
-    Btn_X		= 1<<10,
-    Btn_D		= 1<<11,
-    DPad2_Up	= 1<<12,
-    DPad2_Down	= 1<<13,
-    DPad2_Left	= 1<<14,
-    DPad2_Right	= 1<<15,
-    
-    Axis_LT= 0x10000,
-    Axis_RT= 0x10001,
-    Axis_X= 0x20000,
-    Axis_Y= 0x20001,
-};
-
-static void handle_key(int dckey, int state) {
-    if (state)
-        kcode[0] &= ~dckey;
-    else
-        kcode[0] |= dckey;
+extern "C" void emu_key_input(UInt16 keyCode, bool pressed, UInt modifierFlags) {
+	keyboard.keyboard_input(keyCode, pressed, keyboard.convert_modifier_keys(modifierFlags));
+	if ((modifierFlags
+		 & (NSEventModifierFlagShift | NSEventModifierFlagControl | NSEventModifierFlagOption | NSEventModifierFlagCommand)) == 0)
+		kb_gamepad->gamepad_btn_input(keyCode, pressed);
+}
+extern "C" void emu_character_input(const char *characters) {
+	if (characters != NULL)
+		while (*characters != '\0')
+			keyboard.keyboard_character(*characters++);
 }
 
-static void handle_trig(u8* dckey, int state) {
-    if (state)
-        dckey[0] = 255;
-    else
-        dckey[0] = 0;
-}
-
-extern "C" void emu_key_input(UInt16 keyCode, int state) {
-    switch(keyCode) {
-        // Z
-        case 0x06:     handle_key(Btn_X, state); break;
-        // X
-        case 0x07:     handle_key(Btn_Y, state); break;
-        // C
-        case 0x08:     handle_key(Btn_B, state); break;
-        // V
-        case 0x09:     handle_key(Btn_A, state); break;
-
-        // A
-        case 0x00:     handle_trig(lt, state); break;
-        // S
-        case 0x01:     handle_trig(rt, state); break;
-
-        // Left arrow
-        case 0x7b:     handle_key(DPad_Left, state); break;
-        // Down arrow
-        case 0x7d:     handle_key(DPad_Down, state); break;
-        // Right arrow
-        case 0x7c:     handle_key(DPad_Right, state); break;
-        // Up arrow
-        case 0x7e:     handle_key(DPad_Up, state); break;
-        // Enter
-        case 0x24:     handle_key(Btn_Start, state); break;
-    }
+extern "C" void emu_mouse_buttons(int button, bool pressed)
+{
+	mouse_gamepad->gamepad_btn_input(button, pressed);
 }

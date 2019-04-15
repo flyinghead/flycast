@@ -41,7 +41,9 @@ int posix_memalign(void** memptr, size_t alignment, size_t size) {
 void* OS_aligned_malloc(size_t align, size_t size)
 {
         void *result;
-        #if HOST_OS == OS_WINDOWS
+	#ifdef __MINGW32__
+		return __mingw_aligned_malloc(size, align);
+        #elif HOST_OS == OS_WINDOWS
                 result = _aligned_malloc(size, align);
         #else
                 if(posix_memalign(&result, align, size)) result = 0;
@@ -52,7 +54,9 @@ void* OS_aligned_malloc(size_t align, size_t size)
 // helper for 32 byte aligned memory de-allocation
 void OS_aligned_free(void *ptr)
 {
-        #if HOST_OS == OS_WINDOWS
+	#ifdef __MINGW32__
+		__mingw_aligned_free(ptr);
+        #elif HOST_OS == OS_WINDOWS
                 _aligned_free(ptr);
         #else
                 free(ptr);
@@ -146,14 +150,13 @@ bool QueueRender(TA_context* ctx)
 
  	bool too_fast = (cycle_span / time_span) > (SH4_MAIN_CLOCK * 1.2);
 	
-	if (rqueue && too_fast && settings.pvr.SynchronousRendering) {
+	if (rqueue && too_fast && settings.pvr.SynchronousRender) {
 		//wait for a frame if
 		//  we have another one queue'd and
 		//  sh4 run at > 120% on the last slice
 		//  and SynchronousRendering is enabled
 		frame_finished.Wait();
-		verify(!rqueue);
-	} 
+	}
 
 	if (rqueue) {
 		// FIXME if the discarded render is a RTT we'll have a texture missing. But waiting for the current frame to finish kills performance...
@@ -195,12 +198,13 @@ bool rend_framePending() {
 
 void FinishRender(TA_context* ctx)
 {
-	verify(rqueue == ctx);
+	verify(ctx == NULL || rqueue == ctx);
 	mtx_rqueue.Lock();
 	rqueue = 0;
 	mtx_rqueue.Unlock();
 
-	tactx_Recycle(ctx);
+	if (ctx != NULL)
+		tactx_Recycle(ctx);
 	frame_finished.Set();
 }
 
@@ -287,4 +291,24 @@ TA_context* tactx_Pop(u32 addr)
 		}
 	}
 	return 0;
+}
+
+void tactx_Term()
+{
+	for (size_t i = 0; i < ctx_list.size(); i++)
+	{
+		ctx_list[i]->Free();
+		delete ctx_list[i];
+	}
+	ctx_list.clear();
+	mtx_pool.Lock();
+	{
+		for (size_t i = 0; i < ctx_pool.size(); i++)
+		{
+			ctx_pool[i]->Free();
+			delete ctx_pool[i];
+		}
+	}
+	ctx_pool.clear();
+	mtx_pool.Unlock();
 }
