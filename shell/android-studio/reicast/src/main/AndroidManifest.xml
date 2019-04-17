@@ -53,14 +53,8 @@
         <activity
             android:name="com.reicast.emulator.NativeGLActivity"
             android:configChanges="orientation|navigation|screenSize|screenLayout|uiMode|keyboard|keyboardHidden"
-            android:screenOrientation="sensorLandscape">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-                <category android:name="tv.ouya.intent.category.GAME" />
-                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
-            </intent-filter>
-        </activity>
+            android:screenOrientation="sensorLandscape"
+            android:exported="true"/>
         <activity-alias
             android:name="com.reicast.emulator.MainActivity"
             android:targetActivity="com.reicast.emulator.NativeGLActivity">
