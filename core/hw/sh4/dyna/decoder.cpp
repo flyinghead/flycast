@@ -825,15 +825,16 @@ bool dec_generic(u32 op)
 			bool update_after=false;
 			if ((s32)e<0)
 			{
-				if (rs1._reg!=rs2._reg && !mmu_enabled()) //reg shouldn't be updated if its written
+				if (rs1._reg!=rs2._reg) //reg shouldn't be updated if its written
 				{
-					Emit(shop_sub,rs1,rs1,mk_imm(-e));
-				}
-				else
-				{
-					verify(rs3.is_null());
-					rs3=mk_imm(e);
-					update_after=true;
+					if (!mmu_enabled())
+						Emit(shop_sub,rs1,rs1,mk_imm(-e));
+					else
+					{
+						verify(rs3.is_null());
+						rs3=mk_imm(e);
+						update_after=true;
+					}
 				}
 			}
 
@@ -1075,7 +1076,16 @@ bool dec_DecodeBlock(RuntimeBlockInfo* rbi,u32 max_cycles)
 						else
 							blk->guest_cycles+=CPU_RATIO;
 						if (OpDesc[op]->IsFloatingPoint())
+						{
+							if (sr.FD == 1)
+							{
+								// We need to know FPSCR to compile the block, so let the exception handler run first
+								// as it may change the fp registers
+								Do_Exception(next_pc, 0x800, 0x100);
+								return false;
+							}
 							blk->has_fpu_op = true;
+						}
 
 						verify(!(state.cpu.is_delayslot && OpDesc[op]->SetPC()));
 						if (state.ngen.OnlyDynamicEnds || !OpDesc[op]->rec_oph)
