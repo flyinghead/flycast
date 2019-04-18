@@ -55,28 +55,6 @@ bool UpdateSR()
 		if (old_sr.RB)
 			ChangeGPR();//switch
 	}
-	// Hack: save fp registers when disabling fp ops, restore them when re-enabled
-	// We assume that fp ops are disabled to avoid saving/restoring fp registers as
-	// long as they're not used by the kernel
-	if (sr.FD != old_sr.FD)
-	{
-		if (sr.FD)
-		{
-			// Disable floating-point
-			memcpy(saved_xffr, Sh4cntx.xffr, sizeof(saved_xffr));
-			saved_fpul = fpul;
-			saved_fpscr = fpscr;
-		}
-		else
-		{
-			// Enable floating-point
-			memcpy(Sh4cntx.xffr, saved_xffr, sizeof(saved_xffr));
-			fpul = saved_fpul;
-			fpscr = saved_fpscr;
-			old_fpscr.FR = fpscr.FR;	// Make sure we don't switch bank
-			UpdateFPSCR();
-		}
-	}
 
 	old_sr.status=sr.status;
 
@@ -168,6 +146,7 @@ void SetFloatStatusReg()
 //called when fpscr is changed and we must check for reg banks etc..
 void UpdateFPSCR()
 {
+	verify(fpscr.PR == 0 || fpscr.SZ == 0);
 	if (fpscr.FR !=old_fpscr.FR)
 		ChangeFP(); // FPU bank change
 

@@ -252,11 +252,10 @@ static void WriteMemNoEx(u32 addr, T data, u32 pc)
 	}
 }
 
-static void interpreter_fallback(u16 op, u32 pc)
+static void interpreter_fallback(u16 op, OpCallFP *oph, u32 pc)
 {
 	try {
-		OpDesc[op]->oph(op);
-		exception_raised = 0;
+		oph(op);
 	} catch (SH4ThrownException& ex) {
 		if (pc & 1)
 		{
@@ -265,7 +264,7 @@ static void interpreter_fallback(u16 op, u32 pc)
 			pc--;
 		}
 		Do_Exception(pc, ex.expEvn, ex.callVect);
-		exception_raised = 1;
+		longjmp(jmp_env, 1);
 	}
 }
 
@@ -294,7 +293,7 @@ static void do_sqw_nommu_local(u32 addr, u8* sqb)
 class BlockCompiler : public Xbyak::CodeGenerator
 {
 public:
-	BlockCompiler() : Xbyak::CodeGenerator(64 * 1024, emit_GetCCPtr()), regalloc(this)
+	BlockCompiler() : Xbyak::CodeGenerator(emit_FreeSpace(), emit_GetCCPtr()), regalloc(this)
 	{
 		#if HOST_OS == OS_WINDOWS
 			call_regs.push_back(ecx);
@@ -344,13 +343,12 @@ public:
 		sub(rsp, 0x8);		// align stack
 #endif
 		Xbyak::Label exit_block;
-/*
+
 		if (mmu_enabled() && block->has_fpu_op)
 		{
 			Xbyak::Label fpu_enabled;
 			mov(rax, (uintptr_t)&sr);
-			mov(eax, dword[rax]);
-			and_(eax, 0x8000);			// test SR.FD bit
+			test(dword[rax], 0x8000);			// test SR.FD bit
 			jz(fpu_enabled);
 			mov(call_regs[0], block->vaddr);	// pc
 			mov(call_regs[1], 0x800);			// event
@@ -359,7 +357,7 @@ public:
 			jmp(exit_block, T_NEAR);
 			L(fpu_enabled);
 		}
-*/
+
 		for (current_opid = 0; current_opid < block->oplist.size(); current_opid++)
 		{
 			shil_opcode& op  = block->oplist[current_opid];
@@ -370,6 +368,12 @@ public:
 
 			case shop_ifb:
 				{
+					if (mmu_enabled())
+					{
+						mov(call_regs64[1], reinterpret_cast<uintptr_t>(*OpDesc[op.rs3._imm]->oph));	// op handler
+						mov(call_regs[2], block->vaddr + op.guest_offs - (op.delay_slot ? 1 : 0));	// pc
+					}
+
 					if (op.rs1._imm)
 					{
 						mov(rax, (size_t)&next_pc);
@@ -379,18 +383,9 @@ public:
 					mov(call_regs[0], op.rs3._imm);
 					
 					if (!mmu_enabled())
-					{
 						GenCall(OpDesc[op.rs3._imm]->oph);
-					}
 					else
-					{
-						mov(call_regs[1], block->vaddr + op.guest_offs - (op.delay_slot ? 1 : 0));	// pc
-
 						GenCall(interpreter_fallback);
-
-						test(dword[(void *)&exception_raised], 1);
-						jnz(exit_block, T_NEAR);
-					}
 				}
 				break;
 
@@ -1160,6 +1155,7 @@ public:
 			}
 			regalloc.OpEnd(&op);
 		}
+		regalloc.Cleanup();
 
 		mov(rax, (size_t)&next_pc);
 
@@ -1511,6 +1507,7 @@ private:
 				else
 				{
 					mov(rax, (size_t)param.reg_ptr());
+					verify(!reg.isXMM());
 					mov((const Xbyak::Reg32 &)reg, dword[rax]);
 				}
 			}
