@@ -46,7 +46,7 @@ void DMAC_Ch2St()
 		return;
 	}
 
-//	printf(">>\tDMAC: Ch2 DMA SRC=%X DST=%X LEN=%X\n", src, dst, len );
+	//printf(">>\tDMAC: Ch2 DMA SRC=%X DST=%X LEN=%X\n", src, dst, len );
 
 	// Direct DList DMA (Ch2)
 
@@ -80,7 +80,6 @@ void DMAC_Ch2St()
 	else if((dst >= 0x11000000) && (dst <= 0x11FFFFE0))
 	{
 		//printf(">>\tDMAC: TEX LNMODE0 Ch2 DMA SRC=%X DST=%X LEN=%X SB_LMMODE0 %d\n", src, dst, len, SB_LMMODE0);
-		SB_C2DSTAT += len;
 
 		if (SB_LMMODE0 == 0)
 		{
@@ -111,13 +110,14 @@ void DMAC_Ch2St()
 			dst = (dst & 0xFFFFFF) | 0xa5000000;
 			while (len > 0)
 			{
-				u32 v = ReadMem32(src);
+				u32 v = ReadMem32_nommu(src);
 				pvr_write_area1_32(dst, v);
 				len -= 4;
 				src += 4;
 				dst += 4;
 			}
 		}
+		SB_C2DSTAT = dst;
 	}
 	// If SB_C2DSTAT reg is in range from 0x13000000 to 0x13FFFFE0, set 1 in SB_LMMODE1 reg.
 	else if((dst >= 0x13000000) && (dst <= 0x13FFFFE0))
@@ -135,11 +135,11 @@ void DMAC_Ch2St()
 	// Setup some of the regs so it thinks we've finished DMA
 
 	DMAC_SAR(2) = (src);
-	DMAC_CHCR(2).full &= 0xFFFFFFFE;
-	DMAC_DMATCR(2) = 0x00000000;
+	DMAC_CHCR(2).TE = 1;
+	DMAC_DMATCR(2) = 0;
 
-	SB_C2DST = 0x00000000;
-	SB_C2DLEN = 0x00000000;
+	SB_C2DST = 0;
+	SB_C2DLEN = 0;
 
 	// The DMA end interrupt flag (SB_ISTNRM - bit 19: DTDE2INT) is set to "1."
 	//-> fixed , holly_PVR_DMA is for different use now (fixed the interrupts enum too)
