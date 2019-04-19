@@ -37,6 +37,8 @@ struct RuntimeBlockInfo: RuntimeBlockInfo_Core
 	u32 host_opcodes;
 	bool has_fpu_op;
 	u32 asid;	// if not 0xFFFFFFFF then private page belonging to this id
+	u32 blockcheck_failures;
+	bool temp_block;
 
 	u32 BranchBlock; //if not 0xFFFFFFFF then jump target
 	u32 NextBlock;   //if not 0xFFFFFFFF then next block (by position)
@@ -99,6 +101,7 @@ RuntimeBlockInfo* DYNACALL bm_GetBlock(u32 addr);
 void bm_AddBlock(RuntimeBlockInfo* blk);
 void bm_RemoveBlock(RuntimeBlockInfo* block);
 void bm_Reset();
+void bm_ResetTempCache(bool full);
 void bm_Periodical_1s();
 void bm_Periodical_14k();
 void bm_Sort();

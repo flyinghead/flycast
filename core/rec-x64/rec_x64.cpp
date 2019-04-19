@@ -215,7 +215,7 @@ RuntimeBlockInfo* ngen_AllocateBlock()
 }
 
 static void ngen_blockcheckfail(u32 pc) {
-	printf("X64 JIT: SMC invalidation at %08X\n", pc);
+	//printf("X64 JIT: SMC invalidation at %08X\n", pc);
 	rdv_BlockCheckFail(pc);
 }
 

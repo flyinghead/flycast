@@ -45,9 +45,12 @@
 #include "decoder.h"
 #include "blockmanager.h"
 
-
 #define CODE_SIZE   (10*1024*1024)
-
+#ifdef NO_MMU
+#define TEMP_CODE_SIZE (0)
+#else
+#define TEMP_CODE_SIZE (1024*1024)
+#endif
 
 //alternative emit ptr, set to 0 to use the main buffer
 extern u32* emit_ptr;
@@ -69,7 +72,7 @@ DynarecCodeEntryPtr DYNACALL rdv_FailedToFindBlock_pc();
 //Called when a block check failed, and the block needs to be invalidated
 DynarecCodeEntryPtr DYNACALL rdv_BlockCheckFail(u32 pc);
 //Called to compile code @pc
-DynarecCodeEntryPtr rdv_CompilePC();
+DynarecCodeEntryPtr rdv_CompilePC(u32 blockcheck_failures);
 //Returns 0 if there is no code @pc, code ptr otherwise
 //DynarecCodeEntryPtr rdv_FindCode();
 //Finds or compiles code @pc

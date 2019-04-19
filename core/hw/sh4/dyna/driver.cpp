@@ -1,4 +1,5 @@
 #include "types.h"
+#include <unordered_set>
 
 #if HOST_OS==OS_WINDOWS
 #include <windows.h>
@@ -30,7 +31,7 @@
 //uh uh
 
 #if !defined(_WIN64)
-u8 SH4_TCB[CODE_SIZE+4096]
+u8 SH4_TCB[CODE_SIZE + TEMP_CODE_SIZE + 4096]
 #if HOST_OS == OS_WINDOWS || FEAT_SHREC != DYNAREC_JIT
 	;
 #elif HOST_OS == OS_LINUX
@@ -43,11 +44,15 @@ u8 SH4_TCB[CODE_SIZE+4096]
 #endif
 
 u8* CodeCache;
-
+u8* TempCodeCache;
 
 u32 LastAddr;
 u32 LastAddr_min;
+u32 TempLastAddr;
 u32* emit_ptr=0;
+u32* emit_ptr_limit;
+
+std::unordered_set<u32> smc_hotspots;
 
 void* emit_GetCCPtr() { return emit_ptr==0?(void*)&CodeCache[LastAddr]:(void*)emit_ptr; }
 void emit_SetBaseAddr() { LastAddr_min = LastAddr; }
@@ -73,10 +78,20 @@ void RASDASD()
 	LastAddr=LastAddr_min;
 	memset(emit_GetCCPtr(),0xCC,emit_FreeSpace());
 }
+
+void clear_temp_cache(bool full)
+{
+	//printf("recSh4:Temp Code Cache clear at %08X\n", curr_pc);
+	TempLastAddr = 0;
+	bm_ResetTempCache(full);
+}
+
 void recSh4_ClearCache()
 {
 	LastAddr=LastAddr_min;
 	bm_Reset();
+	smc_hotspots.clear();
+	clear_temp_cache(true);
 
 	printf("recSh4:Dynarec Cache clear at %08X\n",curr_pc);
 }
@@ -112,11 +127,18 @@ void emit_Write32(u32 data)
 
 void emit_Skip(u32 sz)
 {
-	LastAddr+=sz;
+	if (emit_ptr)
+		emit_ptr = (u32*)((u8*)emit_ptr + sz);
+	else
+		LastAddr+=sz;
+
 }
 u32 emit_FreeSpace()
 {
-	return CODE_SIZE-LastAddr;
+	if (emit_ptr)
+		return (emit_ptr_limit - emit_ptr) * sizeof(u32);
+	else
+		return CODE_SIZE-LastAddr;
 }
 
 // pc must be a physical address
@@ -205,6 +227,7 @@ bool RuntimeBlockInfo::Setup(u32 rpc,fpscr_t rfpu_cfg)
 	BlockType=BET_SCL_Intr;
 	has_fpu_op = false;
 	asid = 0xFFFFFFFF;
+	temp_block = false;
 	
 	vaddr = rpc;
 	if (mmu_enabled())
@@ -233,7 +256,7 @@ bool RuntimeBlockInfo::Setup(u32 rpc,fpscr_t rfpu_cfg)
 	return true;
 }
 
-DynarecCodeEntryPtr rdv_CompilePC()
+DynarecCodeEntryPtr rdv_CompilePC(u32 blockcheck_failures)
 {
 	u32 pc=next_pc;
 
@@ -247,13 +270,28 @@ DynarecCodeEntryPtr rdv_CompilePC()
 		delete rbi;
 		return NULL;
 	}
-
+	rbi->blockcheck_failures = blockcheck_failures;
+	if (smc_hotspots.find(rbi->addr) != smc_hotspots.end())
+	{
+		if (TEMP_CODE_SIZE - TempLastAddr < 16 * 1024)
+			clear_temp_cache(false);
+		emit_ptr = (u32 *)(TempCodeCache + TempLastAddr);
+		emit_ptr_limit = (u32 *)(TempCodeCache + TEMP_CODE_SIZE);
+		rbi->temp_block = true;
+	}
 	bool do_opts=((rbi->addr&0x3FFFFFFF)>0x0C010100);
 	rbi->staging_runs=do_opts?100:-100;
 	ngen_Compile(rbi,DoCheck(rbi->addr),(pc&0xFFFFFF)==0x08300 || (pc&0xFFFFFF)==0x10000,false,do_opts);
 	verify(rbi->code!=0);
 
 	bm_AddBlock(rbi);
+
+	if (emit_ptr != NULL)
+	{
+		TempLastAddr = (u8*)emit_ptr - TempCodeCache;
+		emit_ptr = NULL;
+		emit_ptr_limit = NULL;
+	}
 
 	return rbi->code;
 }
@@ -267,7 +305,7 @@ DynarecCodeEntryPtr DYNACALL rdv_FailedToFindBlock(u32 pc)
 {
 	//printf("rdv_FailedToFindBlock ~ %08X\n",pc);
 	next_pc=pc;
-	DynarecCodeEntryPtr code = rdv_CompilePC();
+	DynarecCodeEntryPtr code = rdv_CompilePC(0);
 	if (code == NULL)
 		code = bm_GetCodeByVAddr(next_pc);
 	return code;
@@ -306,10 +344,17 @@ u32 DYNACALL rdv_DoInterrupts(void* block_cpde)
 // addr must be the physical address of the start of the block
 DynarecCodeEntryPtr DYNACALL rdv_BlockCheckFail(u32 addr)
 {
+	u32 blockcheck_failures = 0;
 	if (mmu_enabled())
 	{
 		RuntimeBlockInfo *block = bm_GetBlock(addr);
-		//printf("rdv_BlockCheckFail addr %08x vaddr %08x pc %08x\n", addr, block->vaddr, next_pc);
+		blockcheck_failures = block->blockcheck_failures + 1;
+		if (blockcheck_failures > 5)
+		{
+			bool inserted = smc_hotspots.insert(addr).second;
+			//if (inserted)
+			//	printf("rdv_BlockCheckFail SMC hotspot @ %08x fails %d\n", addr, blockcheck_failures);
+		}
 		bm_RemoveBlock(block);
 	}
 	else
@@ -317,7 +362,7 @@ DynarecCodeEntryPtr DYNACALL rdv_BlockCheckFail(u32 addr)
 		next_pc = addr;
 		recSh4_ClearCache();
 	}
-	return rdv_CompilePC();
+	return rdv_CompilePC(blockcheck_failures);
 }
 
 //DynarecCodeEntryPtr rdv_FindCode()
@@ -333,7 +378,7 @@ DynarecCodeEntryPtr rdv_FindOrCompile()
 {
 	DynarecCodeEntryPtr rv=bm_GetCodeByVAddr(next_pc);
 	if (rv==ngen_FailedToFindBlock)
-		rv=rdv_CompilePC();
+		rv=rdv_CompilePC(0);
 	
 	return rv;
 }
@@ -467,13 +512,13 @@ void recSh4_Init()
 		//align to next page ..
 		u8* ptr = (u8*)recSh4_Init - i * 1024 * 1024;
 
-		CodeCache = (u8*)VirtualAlloc(ptr, CODE_SIZE, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);//; (u8*)(((unat)SH4_TCB+4095)& ~4095);
+		CodeCache = (u8*)VirtualAlloc(ptr, CODE_SIZE + TEMP_CODE_SIZE, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);//; (u8*)(((unat)SH4_TCB+4095)& ~4095);
 
 		if (CodeCache)
 			break;
 	}
 #else
-	CodeCache = (u8*)VirtualAlloc(NULL, CODE_SIZE, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+	CodeCache = (u8*)VirtualAlloc(NULL, CODE_SIZE + TEMP_CODE_SIZE, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
 #endif
 	verify(CodeCache != NULL);
 #else
@@ -481,19 +526,19 @@ void recSh4_Init()
 #endif
 
 #if HOST_OS == OS_DARWIN
-    munmap(CodeCache, CODE_SIZE);
-    CodeCache = (u8*)mmap(CodeCache, CODE_SIZE, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_FIXED | MAP_PRIVATE | MAP_ANON, 0, 0);
+    munmap(CodeCache, CODE_SIZE + TEMP_CODE_SIZE);
+    CodeCache = (u8*)mmap(CodeCache, CODE_SIZE + TEMP_CODE_SIZE, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_FIXED | MAP_PRIVATE | MAP_ANON, 0, 0);
 #endif
 
 #if HOST_OS == OS_WINDOWS
 	DWORD old;
-	VirtualProtect(CodeCache,CODE_SIZE,PAGE_EXECUTE_READWRITE,&old);
+	VirtualProtect(CodeCache,CODE_SIZE + TEMP_CODE_SIZE,PAGE_EXECUTE_READWRITE,&old);
 #elif HOST_OS == OS_LINUX || HOST_OS == OS_DARWIN
 	
 	printf("\n\t CodeCache addr: %p | from: %p | addr here: %p\n", CodeCache, CodeCache, recSh4_Init);
 
 	#if FEAT_SHREC == DYNAREC_JIT
-		if (mprotect(CodeCache, CODE_SIZE, PROT_READ|PROT_WRITE|PROT_EXEC))
+		if (mprotect(CodeCache, CODE_SIZE + TEMP_CODE_SIZE, PROT_READ|PROT_WRITE|PROT_EXEC))
 		{
 			perror("\n\tError,Couldn’t mprotect CodeCache!");
 			die("Couldn’t mprotect CodeCache");
@@ -501,12 +546,13 @@ void recSh4_Init()
 	#endif
 
 #if TARGET_IPHONE
-	memset((u8*)mmap(CodeCache, CODE_SIZE, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_FIXED | MAP_PRIVATE | MAP_ANON, 0, 0),0xFF,CODE_SIZE);
+	memset((u8*)mmap(CodeCache, CODE_SIZE + TEMP_CODE_SIZE, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_FIXED | MAP_PRIVATE | MAP_ANON, 0, 0),0xFF,CODE_SIZE + TEMP_CODE_SIZE);
 #else
-	memset(CodeCache,0xFF,CODE_SIZE);
+	memset(CodeCache,0xFF,CODE_SIZE + TEMP_CODE_SIZE);
 #endif
 
 #endif
+	TempCodeCache = CodeCache + CODE_SIZE;
 	ngen_init();
 }
 

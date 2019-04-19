@@ -32,6 +32,7 @@ op_agent_t          oprofHandle;
 typedef vector<RuntimeBlockInfo*> bm_List;
 
 bm_List all_blocks;
+bm_List all_temp_blocks;
 bm_List del_blocks;
 #include <set>
 
@@ -39,7 +40,7 @@ struct BlockMapCMP
 {
 	static bool is_code(RuntimeBlockInfo* blk)
 	{
-		if ((unat)((u8*)blk-CodeCache)<CODE_SIZE)
+		if ((unat)((u8*)blk-CodeCache)<CODE_SIZE + TEMP_CODE_SIZE)
 			return true;
 		else
 			return false;
@@ -93,7 +94,7 @@ DynarecCodeEntryPtr DYNACALL bm_GetCode(u32 addr)
 	//rdv_FailedToFindBlock_pc=addr;
 	DynarecCodeEntryPtr rv=(DynarecCodeEntryPtr)FPCA(addr);
 
-	return (DynarecCodeEntryPtr)rv;
+	return rv;
 }
 
 // addr must be a virtual address
@@ -102,7 +103,7 @@ DynarecCodeEntryPtr DYNACALL bm_GetCodeByVAddr(u32 addr)
 #ifndef NO_MMU
 	if (!mmu_enabled())
 #endif
-		return (DynarecCodeEntryPtr)bm_GetCode(addr);
+		return bm_GetCode(addr);
 #ifndef NO_MMU
 	else
 	{
@@ -150,7 +151,7 @@ DynarecCodeEntryPtr DYNACALL bm_GetCodeByVAddr(u32 addr)
 			mmu_instruction_translation(next_pc, paddr, shared);
 		}
 
-		return (DynarecCodeEntryPtr)bm_GetCode(paddr);
+		return bm_GetCode(paddr);
 	}
 #endif
 }
@@ -194,7 +195,10 @@ RuntimeBlockInfo* bm_GetStaleBlock(void* dynarec_code)
 
 void bm_AddBlock(RuntimeBlockInfo* blk)
 {
-	all_blocks.push_back(blk);
+	if (!blk->temp_block)
+		all_blocks.push_back(blk);
+	else
+		all_temp_blocks.push_back(blk);
 	if (blkmap.find(blk)!=blkmap.end())
 	{
 		printf("DUP: %08X %p %08X %p\n", (*blkmap.find(blk))->addr,(*blkmap.find(blk))->code,blk->addr,blk->code);
@@ -229,14 +233,26 @@ void bm_RemoveBlock(RuntimeBlockInfo* block)
 	auto it = blkmap.find(block);
 	if (it != blkmap.end())
 		blkmap.erase(it);
-	for (auto it = all_blocks.begin(); it != all_blocks.end(); it++)
-		if (*it == block)
-		{
-			all_blocks.erase(it);
-			break;
-		}
+	if (!block->temp_block)
+	{
+		for (auto it = all_blocks.begin(); it != all_blocks.end(); it++)
+			if (*it == block)
+			{
+				all_blocks.erase(it);
+				break;
+			}
+	}
+	else
+	{
+		for (auto it = all_temp_blocks.begin(); it != all_temp_blocks.end(); it++)
+			if (*it == block)
+			{
+				all_temp_blocks.erase(it);
+				break;
+			}
+	}
 	// FIXME need to remove refs
-	delete block;
+	del_blocks.push_back(block);
 }
 
 bool UDgreaterX ( RuntimeBlockInfo* elem1, RuntimeBlockInfo* elem2 )
@@ -451,6 +467,21 @@ void bm_Reset()
 #endif
 }
 
+void bm_ResetTempCache(bool full)
+{
+	if (!full)
+	{
+		for (auto block : all_temp_blocks)
+		{
+			FPCA(block->addr) = ngen_FailedToFindBlock;
+			auto it = blkmap.find(block);
+			if (it != blkmap.end())
+				blkmap.erase(it);
+		}
+	}
+	del_blocks.insert(del_blocks.begin(),all_temp_blocks.begin(),all_temp_blocks.end());
+	all_temp_blocks.clear();
+}
 
 void bm_Init()
 {
