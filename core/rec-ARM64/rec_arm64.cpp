@@ -220,7 +220,6 @@ void ngen_mainloop(void* v_cntx)
 	"no_update:						\n\t"	// next_pc _MUST_ be on w29
 		"ldr w0, [x28, %[CpuRunning]] \n\t"
 		"cbz w0, .end_mainloop		\n\t"
-		"ldr w29, [x28, %[pc]]		\n\t"	// shouldn't be necessary
 
 #ifdef NO_MMU
 		"movz x2, %[RCB_SIZE], lsl #16	\n\t"
@@ -237,7 +236,7 @@ void ngen_mainloop(void* v_cntx)
 		"br x0						\n"
 #else
 		"mov w0, w29				\n\t"
-		"bl bm_GetCodeByVAddr				\n\t"
+		"bl bm_GetCodeByVAddr		\n\t"
 		"br x0						\n"
 #endif
 
@@ -323,13 +322,11 @@ static void WriteMemNoEx(u32 addr, T data, u32 pc)
 #endif
 }
 
-static u32 interpreter_fallback(u16 op, u32 pc)
+static void interpreter_fallback(u16 op, OpCallFP *oph, u32 pc)
 {
 	try {
-		OpDesc[op]->oph(op);
-		return 0;
+		oph(op);
 	} catch (SH4ThrownException& ex) {
-		die("IFB exception");
 		if (pc & 1)
 		{
 			// Delay slot
@@ -337,19 +334,15 @@ static u32 interpreter_fallback(u16 op, u32 pc)
 			pc--;
 		}
 		Do_Exception(pc, ex.expEvn, ex.callVect);
-		return 1;
+		longjmp(jmp_env, 1);
 	}
 }
-
-static u32 exception_raised;
 
 static void do_sqw_mmu_no_ex(u32 addr, u32 pc)
 {
 	try {
 		do_sqw_mmu(addr);
-		exception_raised = 0;
 	} catch (SH4ThrownException& ex) {
-		die("do_sqw_mmu exception");
 		if (pc & 1)
 		{
 			// Delay slot
@@ -357,8 +350,7 @@ static void do_sqw_mmu_no_ex(u32 addr, u32 pc)
 			pc--;
 		}
 		Do_Exception(pc, ex.expEvn, ex.callVect);
-		exception_raised = 1;
-		printf("SQW MMU EXCEPTION\n");
+		longjmp(jmp_env, 1);
 	}
 }
 
@@ -371,7 +363,7 @@ public:
 	Arm64Assembler() : Arm64Assembler(emit_GetCCPtr())
 	{
 	}
-	Arm64Assembler(void *buffer) : MacroAssembler((u8 *)buffer, 64 * 1024), regalloc(this)
+	Arm64Assembler(void *buffer) : MacroAssembler((u8 *)buffer, emit_FreeSpace()), regalloc(this)
 	{
 		call_regs.push_back(&w0);
 		call_regs.push_back(&w1);
@@ -520,13 +512,10 @@ public:
 				}
 				else
 				{
-					Mov(*call_regs[1], block->vaddr + op.guest_offs - (op.delay_slot ? 1 : 0));	// pc
+					Mov(*call_regs64[1], reinterpret_cast<uintptr_t>(*OpDesc[op.rs3._imm]->oph));	// op handler
+					Mov(*call_regs[2], block->vaddr + op.guest_offs - (op.delay_slot ? 1 : 0));	// pc
 
 					GenCallRuntime(interpreter_fallback);
-
-					Cmp(w0, 0);
-					Ldr(w29, sh4_context_mem_operand(&next_pc));
-					GenBranch(no_update, ne);
 				}
 
 				break;
@@ -788,10 +777,6 @@ public:
 						Mov(*call_regs[1], block->vaddr + op.guest_offs - (op.delay_slot ? 1 : 0));	// pc
 
 						GenCallRuntime(do_sqw_mmu_no_ex);
-
-						Cmp(w0, 0);
-						Ldr(w29, sh4_context_mem_operand(&next_pc));
-						GenBranch(no_update, ne);
 					}
 					else
 					{
@@ -927,6 +912,7 @@ public:
 			}
 			regalloc.OpEnd(&op);
 		}
+		regalloc.Cleanup();
 
 		block->relink_offset = (u32)GetBuffer()->GetCursorOffset();
 		block->relink_data = 0;
@@ -1710,7 +1696,7 @@ private:
 	std::vector<const XRegister*> call_regs64;
 	std::vector<const VRegister*> call_fregs;
 	Arm64RegAlloc regalloc;
-	RuntimeBlockInfo* block;
+	RuntimeBlockInfo* block = NULL;
 	const int read_memory_rewrite_size = 6;	// worst case for u64: add, bfc, ldr, fmov, lsr, fmov
 											// FIXME rewrite size per read/write size?
 	const int write_memory_rewrite_size = 3;
