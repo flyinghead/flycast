@@ -1057,6 +1057,7 @@ bool dec_DecodeBlock(RuntimeBlockInfo* rbi,u32 max_cycles)
 					u32 op;
 					if (!mmu_enabled())
 						op = IReadMem16(state.cpu.rpc);
+#ifndef NO_MMU
 					else
 					{
 						u32 exception_occurred;
@@ -1064,6 +1065,7 @@ bool dec_DecodeBlock(RuntimeBlockInfo* rbi,u32 max_cycles)
 						if (exception_occurred)
 							return false;
 					}
+#endif
 					if (op==0 && state.cpu.is_delayslot)
 					{
 						printf("Delayslot 0 hack!\n");
@@ -1157,7 +1159,7 @@ _end:
 	if (settings.dynarec.idleskip)
 	{
 		//Experimental hash-id based idle skip
-		if (strstr(idle_hash,blk->hash(false,true)))
+		if (strstr(idle_hash,blk->hash(false,true)))	// FIXME don't hash temp blocks. Use xxhash instead of sha1
 		{
 			//printf("IDLESKIP: %08X reloc match %s\n",blk->addr,blk->hash(false,true));
 			blk->guest_cycles=max_cycles*100;

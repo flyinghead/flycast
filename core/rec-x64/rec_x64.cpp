@@ -224,6 +224,7 @@ static u32 exception_raised;
 template<typename T>
 static T ReadMemNoEx(u32 addr, u32 pc)
 {
+#ifndef NO_MMU
 	T rv = mmu_ReadMemNoEx<T>(addr, &exception_raised);
 	if (exception_raised)
 	{
@@ -235,11 +236,16 @@ static T ReadMemNoEx(u32 addr, u32 pc)
 		longjmp(jmp_env, 1);
 	}
 	return rv;
+#else
+	// not used
+	return (T)0;
+#endif
 }
 
 template<typename T>
 static void WriteMemNoEx(u32 addr, T data, u32 pc)
 {
+#ifndef NO_MMU
 	exception_raised = mmu_WriteMemNoEx<T>(addr, data);
 	if (exception_raised)
 	{
@@ -250,6 +256,7 @@ static void WriteMemNoEx(u32 addr, T data, u32 pc)
 			spc = pc;
 		longjmp(jmp_env, 1);
 	}
+#endif
 }
 
 static void interpreter_fallback(u16 op, OpCallFP *oph, u32 pc)

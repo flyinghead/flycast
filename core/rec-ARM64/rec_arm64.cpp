@@ -290,6 +290,7 @@ RuntimeBlockInfo* ngen_AllocateBlock()
 template<typename T>
 static T ReadMemNoEx(u32 addr, u32 pc)
 {
+#ifndef NO_MMU
 	u32 ex;
 	T rv = mmu_ReadMemNoEx<T>(addr, &ex);
 	if (ex)
@@ -301,11 +302,15 @@ static T ReadMemNoEx(u32 addr, u32 pc)
 		longjmp(jmp_env, 1);
 	}
 	return rv;
+#else
+	return (T)0;	// not used
+#endif
 }
 
 template<typename T>
 static void WriteMemNoEx(u32 addr, T data, u32 pc)
 {
+#ifndef NO_MMU
 	u32 ex = mmu_WriteMemNoEx<T>(addr, data);
 	if (ex)
 	{
@@ -315,6 +320,7 @@ static void WriteMemNoEx(u32 addr, T data, u32 pc)
 			spc = pc;
 		longjmp(jmp_env, 1);
 	}
+#endif
 }
 
 static u32 interpreter_fallback(u16 op, u32 pc)
@@ -1619,7 +1625,7 @@ private:
 		TailCallRuntime(ngen_blockcheckfail);
 
 		Bind(&blockcheck_success);
-/*
+
 		if (mmu_enabled() && block->has_fpu_op)
 		{
 			Label fpu_enabled;
@@ -1635,7 +1641,6 @@ private:
 
 			Bind(&fpu_enabled);
 		}
-*/
 	}
 
 	void shil_param_to_host_reg(const shil_param& param, const Register& reg)
