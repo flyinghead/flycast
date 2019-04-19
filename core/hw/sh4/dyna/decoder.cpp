@@ -1200,6 +1200,9 @@ _end:
 	{
 		blk->guest_cycles*=1.5;
 	}
+	// Win CE boost
+	if (mmu_enabled())
+		blk->guest_cycles *= 2;
 
 	//make sure we don't use wayy-too-many cycles
 	blk->guest_cycles=min(blk->guest_cycles,max_cycles);
