@@ -175,12 +175,81 @@ static void alsa_term()
 	snd_pcm_close(handle);
 }
 
+std::vector<std::string> alsa_get_devicelist()
+{
+	std::vector<std::string> result;
+
+	char **hints;
+	int err = snd_device_name_hint(-1, "pcm", (void***)&hints);
+
+	// Error initializing ALSA
+	if (err != 0)
+		return result;
+
+
+	char** n = hints;
+	while (*n != NULL)
+	{
+		// Get the type (NULL/Input/Output)
+		char *type = snd_device_name_get_hint(*n, "IOID");
+		char *name = snd_device_name_get_hint(*n, "NAME");
+
+		if (name != NULL)
+		{
+			// We only want output or special devices (like "default" or "pulse")
+			// TODO Only those with type == NULL?
+			if (type == NULL || strcmp(type, "Output") == 0)
+			{
+				// TODO Check if device works (however we need to hash the resulting list then)
+				/*snd_pcm_t *handle;
+				int rc = snd_pcm_open(&handle, name, SND_PCM_STREAM_PLAYBACK, 0);
+
+				if (rc == 0)
+				{
+					result.push_back(name);
+					snd_pcm_close(handle);
+				}
+				*/
+
+				result.push_back(name);
+			}
+
+		}
+
+		if (type != NULL)
+			free(type);
+
+		if (name != NULL)
+			free(name);
+
+		n++;
+	}
+
+	snd_device_name_free_hint((void**)hints);
+
+	return result;
+}
+
+static audio_option_t* alsa_audio_options(int* option_count)
+{
+	*option_count = 1;
+	static audio_option_t result[1];
+
+	result[0].cfg_name = "device";
+	result[0].caption = "Device";
+	result[0].type = list;
+	result[0].list_callback = alsa_get_devicelist;
+
+	return result;
+}
+
 static audiobackend_t audiobackend_alsa = {
     "alsa", // Slug
     "Advanced Linux Sound Architecture", // Name
     &alsa_init,
     &alsa_push,
-    &alsa_term
+    &alsa_term,
+	&alsa_audio_options
 };
 
 static bool alsa = RegisterAudioBackend(&audiobackend_alsa);

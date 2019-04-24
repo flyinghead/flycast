@@ -1036,6 +1036,8 @@ static void gui_display_settings()
 			}
 
 			SortAudioBackends();
+
+			audiobackend_t* current_backend = backend;
 			if (ImGui::BeginCombo("Audio Backend", backend_name.c_str(), ImGuiComboFlags_None))
 			{
 				bool is_selected = (settings.audio.backend == "auto");
@@ -1052,8 +1054,11 @@ static void gui_display_settings()
 
 				for (int i = 0; i < GetAudioBackendCount(); i++)
 				{
-					audiobackend_t* backend = GetAudioBackend(i);
+					backend = GetAudioBackend(i);
 					is_selected = (settings.audio.backend == backend->slug);
+
+					if (is_selected)
+						current_backend = backend;
 
 					if (ImGui::Selectable(backend->slug.c_str(), &is_selected))
 						settings.audio.backend = backend->slug;
@@ -1066,6 +1071,52 @@ static void gui_display_settings()
 			}
             ImGui::SameLine();
             ShowHelpMarker("The audio backend to use");
+
+			if (current_backend != NULL && current_backend->get_options != NULL)
+			{
+				// get backend specific options
+				int option_count;
+				audio_option_t* options = current_backend->get_options(&option_count);
+
+				// initialize options if not already done
+				std::map<std::string, std::string>* cfg_entries = &settings.audio.options[current_backend->slug];
+				bool populate_entries = (cfg_entries->size() == 0);
+
+				for (int o = 0; o < option_count; o++)
+				{
+					std::string value;
+					if (populate_entries)
+					{
+						value = cfgLoadStr(current_backend->slug.c_str(), options->cfg_name.c_str(), "");
+						(*cfg_entries)[options->cfg_name] = value;
+					}
+					value = (*cfg_entries)[options->cfg_name];
+
+					if (options->type == list)
+					{
+						if (ImGui::BeginCombo(options->caption.c_str(), value.c_str(), ImGuiComboFlags_None))
+						{
+							bool is_selected = false;
+							std::vector<std::string> list_items = options->list_callback();
+							for (std::vector<std::string>::iterator it = list_items.begin() ; it != list_items.end(); ++it)
+							{
+								std::string cur = (std::string)*it;
+								is_selected = (value == cur);
+								if (ImGui::Selectable(cur.c_str(), &is_selected))
+								{
+									(*cfg_entries)[options->cfg_name] = cur;
+								}
+
+								if (is_selected)
+									ImGui::SetItemDefaultFocus();
+							}
+							ImGui::EndCombo();
+						}
+					}
+
+					options++;
+				}
+			}
 
 			ImGui::Checkbox("Enable DSP", &settings.aica.NoBatch);
             ImGui::SameLine();
