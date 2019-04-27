@@ -9,6 +9,7 @@ USE_OSS := 1
 #USE_LIBAO := 1
 USE_EVDEV := 1
 USE_UDEV := 1
+USE_MODEM := 1
 PLATFORM_EXT := elf
 
 CXX=${CC_PREFIX}g++
@@ -263,15 +264,6 @@ endif
     FOR_WINDOWS := 1
 else
     $(error Unknown platform)
-endif
-
-# 7-Zip/LZMA settings (CHDv5)
-ifdef CHD5_LZMA
-	CFLAGS += -D_7ZIP_ST -DCHD5_LZMA
-endif
-
-ifdef CHD5_FLAC
-	CFLAGS += -DCHD5_FLAC
 endif
 
 RZDCY_SRC_DIR = $(LOCAL_PATH)/../../core
