@@ -29,9 +29,9 @@ public:
 	CustomTexture()
 		:
 #ifndef TARGET_NO_THREADS
-		loader_thread(loader_thread_func, this),
+		loader_thread(loader_thread_func, this)
 #endif
-		wakeup_thread(false, true) {}
+		{}
 	~CustomTexture() { Terminate(); }
 	u8* LoadCustomTexture(u32 hash, int& width, int& height);
 	void LoadCustomTextureAsync(TextureCacheData *texture_data);

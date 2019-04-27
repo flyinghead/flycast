@@ -166,38 +166,41 @@ public:
 #if !defined(HOST_NO_THREADS)
 typedef  void* ThreadEntryFP(void* param);
 
-typedef void* THREADHANDLE;
-
-class cThread
-{
+class cThread {
 private:
-	ThreadEntryFP* Entry;
+	ThreadEntryFP* entry;
 	void* param;
 public :
-	THREADHANDLE hThread;
-	cThread(ThreadEntryFP* function,void* param);
-	
+	#if HOST_OS==OS_WINDOWS
+	HANDLE hThread;
+	#else
+	pthread_t *hThread;
+	#endif
+
+	cThread(ThreadEntryFP* function, void* param)
+		:entry(function), param(param), hThread(NULL) {}
+	~cThread() { WaitToEnd(); }
 	void Start();
 	void WaitToEnd();
 };
 #endif
+
+
 //Wait Events
 typedef void* EVENTHANDLE;
 class cResetEvent
 {
-
 private:
 #if HOST_OS==OS_WINDOWS
 	EVENTHANDLE hEvent;
 #else
 	pthread_mutex_t mutx;
 	pthread_cond_t cond;
-
+	bool state;
 #endif
 
 public :
-	bool state;
-	cResetEvent(bool State,bool Auto);
+	cResetEvent();
 	~cResetEvent();
 	void Set();		//Set state to signaled
 	void Reset();	//Set state to non signaled

@@ -82,8 +82,7 @@ bool renderer_enabled = true;	// Signals the renderer thread to exit
 bool renderer_changed = false;	// Signals the renderer thread to switch renderer
 
 #if !defined(TARGET_NO_THREADS)
-cResetEvent rs(false,true);
-cResetEvent re(false,true);
+cResetEvent rs, re;
 #endif
 
 int max_idx,max_mvo,max_op,max_pt,max_tr,max_vtx,max_modt, ovrn;
