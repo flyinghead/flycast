@@ -124,7 +124,7 @@ void VDecEnd()
 
 cMutex mtx_rqueue;
 TA_context* rqueue;
-cResetEvent frame_finished(false, true);
+cResetEvent frame_finished;
 
 double last_frame = 0;
 u64 last_cyces = 0;
