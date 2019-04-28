@@ -825,16 +825,15 @@ bool dec_generic(u32 op)
 			bool update_after=false;
 			if ((s32)e<0)
 			{
-				if (rs1._reg!=rs2._reg) //reg shouldn't be updated if its written
+				if (rs1._reg!=rs2._reg && !mmu_enabled()) //reg shouldn't be updated if its written
 				{
-					if (!mmu_enabled())
-						Emit(shop_sub,rs1,rs1,mk_imm(-e));
-					else
-					{
-						verify(rs3.is_null());
-						rs3=mk_imm(e);
-						update_after=true;
-					}
+					Emit(shop_sub,rs1,rs1,mk_imm(-e));
+				}
+				else
+				{
+					verify(rs3.is_null());
+					rs3=mk_imm(e);
+					update_after=true;
 				}
 			}
 
