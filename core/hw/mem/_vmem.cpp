@@ -561,7 +561,7 @@ error:
 }
 #endif
 
-	int vmem_fd;
+	int vmem_fd = -1;
 	void* _nvmem_unused_buffer(u32 start,u32 end)
 	{
 		void* ptr=mmap(&virt_ram_base[start], end-start, PROT_NONE, MAP_FIXED | MAP_PRIVATE | MAP_ANON, -1, 0);
@@ -679,7 +679,7 @@ bool BM_LockedWrite(u8* address)
 		return false;
 	
 #if FEAT_SHREC != DYNAREC_NONE
-	u32 addr=address-(u8*)p_sh4rcb->fpcb;
+	size_t addr=address-(u8*)p_sh4rcb->fpcb;
 
 	address=(u8*)p_sh4rcb->fpcb+ (addr&~PAGE_MASK);
 
@@ -739,7 +739,7 @@ bool _vmem_reserve()
 	//I really should check teh docs before codin ;p
 	//[0x00800000,0x00A00000);
 	map_buffer(0x00800000,0x01000000,MAP_ARAM_START_OFFSET,ARAM_SIZE,false);
-	map_buffer(0x02800000,0x02800000+ARAM_SIZE,MAP_ARAM_START_OFFSET,ARAM_SIZE,true);
+	map_buffer(0x20000000,0x20000000+ARAM_SIZE,MAP_ARAM_START_OFFSET,ARAM_SIZE,true);
 
 	aica_ram.size=ARAM_SIZE;
 	aica_ram.data=(u8*)ptr;
@@ -786,7 +786,7 @@ bool _vmem_reserve()
 	//[0x10000000,0x20000000) -> unused
 	unused_buffer(0x10000000,0x20000000);
 
-	printf("vmem reserve: base: %08X, aram: %08x, vram: %08X, ram: %08X\n",virt_ram_base,aica_ram.data,vram.data,mem_b.data);
+	printf("vmem reserve: base: %p, aram: %p, vram: %p, ram: %p\n",virt_ram_base,aica_ram.data,vram.data,mem_b.data);
 
 	aica_ram.Zero();
 	vram.Zero();
