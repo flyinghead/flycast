@@ -116,7 +116,7 @@ static void vmem32_protect_buffer(u32 start, u32 size)
 	verify((start & PAGE_MASK) == 0);
 #if HOST_OS == OS_WINDOWS
 	DWORD old;
-	VirtualProtect(vmem32_base + start, end - start, PAGE_READONLY, &old);
+	VirtualProtect(vmem32_base + start, size, PAGE_READONLY, &old);
 #else
 	mprotect(&vmem32_base[start], size, PROT_READ);
 #endif
@@ -127,7 +127,7 @@ static void vmem32_unprotect_buffer(u32 start, u32 size)
 	verify((start & PAGE_MASK) == 0);
 #if HOST_OS == OS_WINDOWS
 	DWORD old;
-	VirtualProtect(vmem32_base + start, end - start, PAGE_READWRITE, &old);
+	VirtualProtect(vmem32_base + start, size, PAGE_READWRITE, &old);
 #else
 	mprotect(&vmem32_base[start], size, PROT_READ | PROT_WRITE);
 #endif
