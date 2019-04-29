@@ -2066,7 +2066,7 @@ sh4op(i0000_nnnn_0110_1010)
 {
 	u32 n = GetN(op);
 	r[n] = fpscr.full;
-	UpdateFPSCR();
+	//UpdateFPSCR();
 }
 
 //sts.l FPSCR,@-<REG_N>

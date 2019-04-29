@@ -736,6 +736,7 @@ struct settings_t
 		bool unstable_opt;
 		bool safemode;
 		bool disable_nvmem;
+		bool disable_vmem32;
 	} dynarec;
 	
 	struct

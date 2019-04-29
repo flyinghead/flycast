@@ -39,6 +39,7 @@ using namespace vixl::aarch64;
 #include "hw/sh4/dyna/ngen.h"
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/sh4_rom.h"
+#include "hw/mem/vmem32.h"
 #include "arm64_regalloc.h"
 
 #undef do_sqw_nommu
@@ -185,8 +186,8 @@ void ngen_mainloop(void* v_cntx)
 		"stp x29, x30, [sp, #144]	\n\t"
 
 		"stp %[cntx], %[cycle_counter], [sp, #-16]!	\n\t"	// Push context, cycle_counter address
-		"mov w27, %[_SH4_TIMESLICE]	\n\t"
-		"str w27, [%[cycle_counter]]	\n\t"
+		"mov w1, %[_SH4_TIMESLICE]	\n\t"
+		"str w1, [%[cycle_counter]]	\n\t"
 
 		"mov x0, %[jmp_env]			\n\t"	// SETJMP
 		"bl setjmp					\n\t"
@@ -195,15 +196,17 @@ void ngen_mainloop(void* v_cntx)
 		"ldr x28, [sp]				\n\t"	// Set context
 		// w29 is next_pc
 		"ldr w29, [x28, %[pc]]		\n\t"
+		// x27 is vmem32_base
+		"ldr x27, [x28, %[vmem32_base]]	\n\t"
 		"b no_update				\n"
 
 		".hidden intc_sched			\n\t"
 		".globl intc_sched			\n\t"
 	"intc_sched:					\n\t"
-		"ldr x27, [sp, #8]			\n\t"	// &cycle_counter
-		"ldr w0, [x27]				\n\t"	// cycle_counter
+		"ldr x1, [sp, #8]			\n\t"	// &cycle_counter
+		"ldr w0, [x1]				\n\t"	// cycle_counter
 		"add w0, w0, %[_SH4_TIMESLICE]	\n\t"
-		"str w0, [x27]				\n\t"
+		"str w0, [x1]				\n\t"
 		"mov x29, lr				\n\t"	// Trashing pc here but it will be reset at the end of the block or in DoInterrupts
 		"bl UpdateSystem			\n\t"
 		"mov lr, x29				\n\t"
@@ -260,7 +263,8 @@ void ngen_mainloop(void* v_cntx)
 	  [RCB_SIZE] "i" (sizeof(Sh4RCB) >> 16),
 	  [SH4CTX_SIZE] "i" (sizeof(Sh4Context)),
 	  [jmp_env] "r"(reinterpret_cast<uintptr_t>(jmp_env)),
-	  [cycle_counter] "r"(reinterpret_cast<uintptr_t>(&cycle_counter))
+	  [cycle_counter] "r"(reinterpret_cast<uintptr_t>(&cycle_counter)),
+  	  [vmem32_base] "i"(offsetof(Sh4Context, vmem32_base))
 	: "memory"
 	);
 }
@@ -476,10 +480,10 @@ public:
 		regalloc.DoAlloc(block);
 
 		// scheduler
-		Mov(x27, reinterpret_cast<uintptr_t>(&cycle_counter));
-		Ldr(w0, MemOperand(x27));
+		Mov(x1, reinterpret_cast<uintptr_t>(&cycle_counter));
+		Ldr(w0, MemOperand(x1));
 		Subs(w0, w0, block->guest_cycles);
-		Str(w0, MemOperand(x27));
+		Str(w0, MemOperand(x1));
 		Label cycles_remaining;
 		B(&cycles_remaining, pl);
 		GenCallRuntime(intc_sched);
@@ -568,11 +572,11 @@ public:
 				break;
 
 			case shop_readm:
-				GenReadMemory(op, i);
+				GenReadMemory(op, i, optimise);
 				break;
 
 			case shop_writem:
-				GenWriteMemory(op, i);
+				GenWriteMemory(op, i, optimise);
 				break;
 
 			case shop_sync_sr:
@@ -1073,10 +1077,10 @@ public:
 
 	void GenWriteMemorySlow(const shil_opcode& op)
 	{
+		Instruction *start_instruction = GetCursorAddress<Instruction *>();
 		if (mmu_enabled())
 			Mov(*call_regs[2], block->vaddr + op.guest_offs - (op.delay_slot ? 1 : 0));	// pc
 
-		Instruction *start_instruction = GetCursorAddress<Instruction *>();
 		u32 size = op.flags & 0x7f;
 		switch (size)
 		{
@@ -1117,7 +1121,10 @@ public:
 
 	void InitializeRewrite(RuntimeBlockInfo *block, size_t opid)
 	{
-		regalloc.DoAlloc(block);
+		this->block = block;
+		// with full mmu, all regs are flushed before mem ops
+		if (!mmu_enabled())
+			regalloc.DoAlloc(block);
 		regalloc.current_opid = opid;
 	}
 
@@ -1308,14 +1315,14 @@ private:
 			B(&code_label, cond);
 	}
 
-	void GenReadMemory(const shil_opcode& op, size_t opid)
+	void GenReadMemory(const shil_opcode& op, size_t opid, bool optimise)
 	{
 		if (GenReadMemoryImmediate(op))
 			return;
 
 		GenMemAddr(op, call_regs[0]);
 
-		if (GenReadMemoryFast(op, opid))
+		if (optimise && GenReadMemoryFast(op, opid))
 			return;
 
 		GenReadMemorySlow(op);
@@ -1431,59 +1438,104 @@ private:
 	bool GenReadMemoryFast(const shil_opcode& op, size_t opid)
 	{
 		// Direct memory access. Need to handle SIGSEGV and rewrite block as needed. See ngen_Rewrite()
-		if (!_nvmem_enabled() || mmu_enabled())
+		if (!_nvmem_enabled() || (mmu_enabled() && !vmem32_enabled()))
 			return false;
 
 		Instruction *start_instruction = GetCursorAddress<Instruction *>();
 
-		// WARNING: the rewrite code relies on having two ops before the memory access
+		const XRegister* base_reg;
+		const XRegister* offset_reg;
+		// WARNING: the rewrite code relies on having two ops before the memory access (3 when mmu is enabled)
 		// Update ngen_Rewrite (and perhaps read_memory_rewrite_size) if adding or removing code
-		Add(w1, *call_regs[0], sizeof(Sh4Context), LeaveFlags);
-		Bfc(w1, 29, 3);		// addr &= ~0xE0000000
+		if (!mmu_enabled())
+		{
+			Add(w1, *call_regs[0], sizeof(Sh4Context), LeaveFlags);
+			Bfc(w1, 29, 3);		// addr &= ~0xE0000000
+			base_reg = &x28;
+			offset_reg = &x1;
+		}
+		else
+		{
+			u32 exception_pc = block->vaddr + op.guest_offs - (op.delay_slot ? 2 : 0);
+			// 3 ops before memory access
+			Mov(w8, exception_pc & 0xFFFF);
+			Movk(w8, exception_pc >> 16, 16);
+			Str(w8, sh4_context_mem_operand(&p_sh4rcb->cntx.exception_pc));
+			base_reg = &x27;
+			offset_reg = call_regs64[0];
+		}
 
 		//printf("direct read memory access opid %d pc %p code addr %08x\n", opid, GetCursorAddress<void *>(), this->block->addr);
 		this->block->memory_accesses[GetCursorAddress<void *>()] = (u32)opid;
 
 		u32 size = op.flags & 0x7f;
-		switch(size)
+		if (regalloc.IsAllocAny(op.rd))
 		{
-		case 1:
-			Ldrsb(regalloc.MapRegister(op.rd), MemOperand(x28, x1, SXTW));
-			break;
+			switch(size)
+			{
+			case 1:
+				Ldrsb(regalloc.MapRegister(op.rd), MemOperand(*base_reg, *offset_reg));
+				break;
 
-		case 2:
-			Ldrsh(regalloc.MapRegister(op.rd), MemOperand(x28, x1, SXTW));
-			break;
+			case 2:
+				Ldrsh(regalloc.MapRegister(op.rd), MemOperand(*base_reg, *offset_reg));
+				break;
 
-		case 4:
-			if (!op.rd.is_r32f())
-				Ldr(regalloc.MapRegister(op.rd), MemOperand(x28, x1));
-			else
-				Ldr(regalloc.MapVRegister(op.rd), MemOperand(x28, x1));
-			break;
+			case 4:
+				if (!op.rd.is_r32f())
+					Ldr(regalloc.MapRegister(op.rd), MemOperand(*base_reg, *offset_reg));
+				else
+					Ldr(regalloc.MapVRegister(op.rd), MemOperand(*base_reg, *offset_reg));
+				break;
 
-		case 8:
-			Ldr(x1, MemOperand(x28, x1));
-			break;
-		}
+			case 8:
+				Ldr(x1, MemOperand(*base_reg, *offset_reg));
+				break;
+			}
 
-		if (size == 8)
-		{
+			if (size == 8)
+			{
 #ifdef EXPLODE_SPANS
-			verify(op.rd.count() == 2 && regalloc.IsAllocf(op.rd, 0) && regalloc.IsAllocf(op.rd, 1));
-			Fmov(regalloc.MapVRegister(op.rd, 0), w1);
-			Lsr(x1, x1, 32);
-			Fmov(regalloc.MapVRegister(op.rd, 1), w1);
+				verify(op.rd.count() == 2 && regalloc.IsAllocf(op.rd, 0) && regalloc.IsAllocf(op.rd, 1));
+				Fmov(regalloc.MapVRegister(op.rd, 0), w1);
+				Lsr(x1, x1, 32);
+				Fmov(regalloc.MapVRegister(op.rd, 1), w1);
 #else
-			Str(x1, sh4_context_mem_operand(op.rd.reg_ptr()));
+				Str(x1, sh4_context_mem_operand(op.rd.reg_ptr()));
 #endif
+			}
+		}
+		else
+		{
+			switch(size)
+			{
+			case 1:
+				Ldrsb(w1, MemOperand(*base_reg, *offset_reg));
+				break;
+
+			case 2:
+				Ldrsh(w1, MemOperand(*base_reg, *offset_reg));
+				break;
+
+			case 4:
+				Ldr(w1, MemOperand(*base_reg, *offset_reg));
+				break;
+
+			case 8:
+				Ldr(x1, MemOperand(*base_reg, *offset_reg));
+				break;
+			}
+			if (size == 8)
+				Str(x1, sh4_context_mem_operand(op.rd.reg_ptr()));
+			else
+				Str(w1, sh4_context_mem_operand(op.rd.reg_ptr()));
 		}
 		EnsureCodeSize(start_instruction, read_memory_rewrite_size);
 
 		return true;
 	}
 
-	void GenWriteMemory(const shil_opcode& op, size_t opid)
+	void GenWriteMemory(const shil_opcode& op, size_t opid, bool optimise)
 	{
 		GenMemAddr(op, call_regs[0]);
 
@@ -1502,7 +1554,7 @@ private:
 			shil_param_to_host_reg(op.rs2, *call_regs64[1]);
 #endif
 		}
-		if (GenWriteMemoryFast(op, opid))
+		if (optimise && GenWriteMemoryFast(op, opid))
 			return;
 
 		GenWriteMemorySlow(op);
@@ -1511,15 +1563,31 @@ private:
 	bool GenWriteMemoryFast(const shil_opcode& op, size_t opid)
 	{
 		// Direct memory access. Need to handle SIGSEGV and rewrite block as needed. See ngen_Rewrite()
-		if (!_nvmem_enabled() || mmu_enabled())
+		if (!_nvmem_enabled() || (mmu_enabled() && !vmem32_enabled()))
 			return false;
 
 		Instruction *start_instruction = GetCursorAddress<Instruction *>();
 
-		// WARNING: the rewrite code relies on having two ops before the memory access
+		const XRegister* base_reg;
+		const XRegister* offset_reg;
+		// WARNING: the rewrite code relies on having two ops before the memory access (3 when mmu is enabled)
 		// Update ngen_Rewrite (and perhaps write_memory_rewrite_size) if adding or removing code
-		Add(w7, *call_regs[0], sizeof(Sh4Context), LeaveFlags);
-		Bfc(w7, 29, 3);		// addr &= ~0xE0000000
+		if (!mmu_enabled())
+		{
+			Add(w7, *call_regs[0], sizeof(Sh4Context), LeaveFlags);
+			Bfc(w7, 29, 3);		// addr &= ~0xE0000000
+			base_reg = &x28;
+			offset_reg = &x7;
+		}
+		else
+		{
+			u32 exception_pc = block->vaddr + op.guest_offs - (op.delay_slot ? 2 : 0);
+			Mov(w8, exception_pc & 0xFFFF);
+			Movk(w8, exception_pc >> 16, 16);
+			Str(w8, sh4_context_mem_operand(&p_sh4rcb->cntx.exception_pc));
+			base_reg = &x27;
+			offset_reg = call_regs64[0];
+		}
 
 		//printf("direct write memory access opid %d pc %p code addr %08x\n", opid, GetCursorAddress<void *>(), this->block->addr);
 		this->block->memory_accesses[GetCursorAddress<void *>()] = (u32)opid;
@@ -1528,19 +1596,19 @@ private:
 		switch(size)
 		{
 		case 1:
-			Strb(w1, MemOperand(x28, x7, SXTW));
+			Strb(w1, MemOperand(*base_reg, *offset_reg));
 			break;
 
 		case 2:
-			Strh(w1, MemOperand(x28, x7, SXTW));
+			Strh(w1, MemOperand(*base_reg, *offset_reg));
 			break;
 
 		case 4:
-			Str(w1, MemOperand(x28, x7));
+			Str(w1, MemOperand(*base_reg, *offset_reg));
 			break;
 
 		case 8:
-			Str(x1, MemOperand(x28, x7));
+			Str(x1, MemOperand(*base_reg, *offset_reg));
 			break;
 		}
 		EnsureCodeSize(start_instruction, write_memory_rewrite_size);
@@ -1699,7 +1767,7 @@ private:
 	RuntimeBlockInfo* block = NULL;
 	const int read_memory_rewrite_size = 6;	// worst case for u64: add, bfc, ldr, fmov, lsr, fmov
 											// FIXME rewrite size per read/write size?
-	const int write_memory_rewrite_size = 3;
+	const int write_memory_rewrite_size = 4;
 };
 
 static Arm64Assembler* compiler;
@@ -1755,7 +1823,7 @@ bool ngen_Rewrite(unat& host_pc, unat, unat)
 	u32 opid = it->second;
 	verify(opid < block->oplist.size());
 	const shil_opcode& op = block->oplist[opid];
-	Arm64Assembler *assembler = new Arm64Assembler(code_ptr - 2);	// Skip the 2 preceding ops (bic, add)
+	Arm64Assembler *assembler = new Arm64Assembler(code_ptr - 2 - (mmu_enabled() ? 1 : 0));	// Skip the 2 preceding ops (bic, add)
 	assembler->InitializeRewrite(block, opid);
 	if (op.op == shop_readm)
 		assembler->GenReadMemorySlow(op);
@@ -1763,9 +1831,14 @@ bool ngen_Rewrite(unat& host_pc, unat, unat)
 		assembler->GenWriteMemorySlow(op);
 	assembler->Finalize(true);
 	delete assembler;
-	host_pc = (unat)(code_ptr - 2);
+	host_pc = (unat)(code_ptr - 2 - (mmu_enabled() ? 1 : 0));
 
 	return true;
+}
+
+void ngen_HandleException()
+{
+	longjmp(jmp_env, 1);
 }
 
 u32 DynaRBI::Relink()

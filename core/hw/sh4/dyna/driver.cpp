@@ -88,12 +88,11 @@ void clear_temp_cache(bool full)
 
 void recSh4_ClearCache()
 {
+	printf("recSh4:Dynarec Cache clear at %08X free space %d\n",curr_pc, emit_FreeSpace());
 	LastAddr=LastAddr_min;
 	bm_Reset();
 	smc_hotspots.clear();
 	clear_temp_cache(true);
-
-	printf("recSh4:Dynarec Cache clear at %08X\n",curr_pc);
 }
 
 void recSh4_Run()
@@ -279,7 +278,7 @@ DynarecCodeEntryPtr rdv_CompilePC(u32 blockcheck_failures)
 		emit_ptr_limit = (u32 *)(TempCodeCache + TEMP_CODE_SIZE);
 		rbi->temp_block = true;
 	}
-	bool do_opts=((rbi->addr&0x3FFFFFFF)>0x0C010100);
+	bool do_opts = !rbi->temp_block; //((rbi->addr&0x3FFFFFFF)>0x0C010100);
 	rbi->staging_runs=do_opts?100:-100;
 	ngen_Compile(rbi,DoCheck(rbi->addr),(pc&0xFFFFFF)==0x08300 || (pc&0xFFFFFF)==0x10000,false,do_opts);
 	verify(rbi->code!=0);

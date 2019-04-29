@@ -6,6 +6,7 @@
 #include "oslib/oslib.h"
 #include "oslib/audiostream.h"
 #include "hw/mem/_vmem.h"
+#include "hw/mem/vmem32.h"
 #include "stdclass.h"
 #include "cfg/cfg.h"
 
@@ -140,7 +141,9 @@ void LoadSpecialSettings()
 	extra_depth_game = false;
 	full_mmu_game = false;
 	
-	if (reios_windows_ce)
+	if (reios_windows_ce
+			// Half-life
+			|| !strncmp("MK-51035", reios_product_number, 8))
 	{
 		printf("Enabling Full MMU and Extra depth scaling for Windows CE game\n");
 		settings.rend.ExtraDepthScale = 0.1;
@@ -275,6 +278,13 @@ int reicast_init(int argc, char* argv[])
 		printf("Failed to alloc mem\n");
 		return -1;
 	}
+#ifdef HOST_64BIT_CPU
+	if (!vmem32_init())
+	{
+		printf("Failed to alloc 32-bit mem space\n");
+		return -1;
+	}
+#endif
 	if (ParseCommandLine(argc, argv))
 	{
         return 69;
@@ -461,6 +471,7 @@ void InitSettings()
 	settings.dynarec.idleskip		= true;
 	settings.dynarec.unstable_opt	= false;
 	settings.dynarec.safemode		= true;
+	settings.dynarec.disable_vmem32	= false;
 	settings.dreamcast.cable		= 3;	// TV composite
 	settings.dreamcast.region		= 3;	// default
 	settings.dreamcast.broadcast	= 4;	// default
@@ -534,6 +545,7 @@ void LoadSettings(bool game_specific)
 	settings.dynarec.idleskip		= cfgLoadBool(config_section, "Dynarec.idleskip", settings.dynarec.idleskip);
 	settings.dynarec.unstable_opt	= cfgLoadBool(config_section, "Dynarec.unstable-opt", settings.dynarec.unstable_opt);
 	settings.dynarec.safemode		= cfgLoadBool(config_section, "Dynarec.safe-mode", settings.dynarec.safemode);
+	settings.dynarec.disable_vmem32 = cfgLoadBool(config_section, "Dynarec.DisableVmem32", settings.dynarec.disable_vmem32);
 	//disable_nvmem can't be loaded, because nvmem init is before cfg load
 	settings.dreamcast.cable		= cfgLoadInt(config_section, "Dreamcast.Cable", settings.dreamcast.cable);
 	settings.dreamcast.region		= cfgLoadInt(config_section, "Dreamcast.Region", settings.dreamcast.region);
@@ -670,6 +682,7 @@ void SaveSettings()
 	cfgSaveBool("config", "Dynarec.unstable-opt", settings.dynarec.unstable_opt);
 	if (!safemode_game || !settings.dynarec.safemode)
 		cfgSaveBool("config", "Dynarec.safe-mode", settings.dynarec.safemode);
+	cfgSaveBool("config", "Dynarec.DisableVmem32", settings.dynarec.disable_vmem32);
 	cfgSaveInt("config", "Dreamcast.Language", settings.dreamcast.language);
 	cfgSaveBool("config", "aica.LimitFPS", settings.aica.LimitFPS);
 	cfgSaveBool("config", "aica.NoBatch", settings.aica.NoBatch);

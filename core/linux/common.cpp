@@ -29,6 +29,7 @@
 #endif
 #include <unistd.h>
 #include "hw/sh4/dyna/blockmanager.h"
+#include "hw/mem/vmem32.h"
 
 #include "linux/context.h"
 
@@ -48,7 +49,7 @@ void sigill_handler(int sn, siginfo_t * si, void *segfault_ctx) {
     context_from_segfault(&ctx, segfault_ctx);
 
 	unat pc = (unat)ctx.pc;
-	bool dyna_cde = (pc>(unat)CodeCache) && (pc<(unat)(CodeCache + CODE_SIZE));
+	bool dyna_cde = (pc>(unat)CodeCache) && (pc<(unat)(CodeCache + CODE_SIZE + TEMP_CODE_SIZE));
 	
 	printf("SIGILL @ %lx -> %p was not in vram, dynacode:%d\n", pc, si->si_addr, dyna_cde);
 	
@@ -64,12 +65,21 @@ void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 
 	context_from_segfault(&ctx, segfault_ctx);
 
-	bool dyna_cde = ((unat)ctx.pc>(unat)CodeCache) && ((unat)ctx.pc<(unat)(CodeCache + CODE_SIZE));
+	bool dyna_cde = ((unat)ctx.pc>(unat)CodeCache) && ((unat)ctx.pc<(unat)(CodeCache + CODE_SIZE + TEMP_CODE_SIZE));
 
 	//ucontext_t* ctx=(ucontext_t*)ctxr;
 	//printf("mprot hit @ ptr 0x%08X @@ code: %08X, %d\n",si->si_addr,ctx->uc_mcontext.arm_pc,dyna_cde);
 
-	
+#if !defined(NO_MMU) && defined(HOST_64BIT_CPU)
+#if HOST_CPU == CPU_ARM64
+	u32 op = *(u32*)ctx.pc;
+	bool write = (op & 0x00400000) == 0;
+#elif HOST_CPU == CPU_X64
+	bool write = false;	// TODO?
+#endif
+	if (vmem32_handle_signal(si->si_addr, write))
+		return;
+#endif
 	if (VramLockedWrite((u8*)si->si_addr) || BM_LockedWrite((u8*)si->si_addr))
 		return;
 	#if FEAT_SHREC == DYNAREC_JIT
@@ -91,7 +101,10 @@ void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 				context_to_segfault(&ctx, segfault_ctx);
 			}
 		#elif HOST_CPU == CPU_X64
-			//x64 has no rewrite support
+			else if (dyna_cde && ngen_Rewrite((unat&)ctx.pc, 0, 0))
+			{
+				context_to_segfault(&ctx, segfault_ctx);
+			}
 		#elif HOST_CPU == CPU_ARM64
 			else if (dyna_cde && ngen_Rewrite(ctx.pc, 0, 0))
 			{

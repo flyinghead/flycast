@@ -19,6 +19,7 @@
 #include "hw/sh4/sh4_core.h"
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/sh4_rom.h"
+#include "hw/mem/vmem32.h"
 #include "emitter/x86_emitter.h"
 #include "profiler/profiler.h"
 #include "oslib/oslib.h"
@@ -130,7 +131,6 @@ WIN32_ONLY( ".seh_pushreg %r14              \n\t")
 			"lea " _U "jmp_env(%rip), %rdi	\n\t"
 #endif
 			"call " _U "setjmp				\n\t"
-//			"testl %rax, %rax               \n\t"
 
 		"1:                                 \n\t"   // run_loop
 			"movq " _U "p_sh4rcb(%rip), %rax		\n\t"
@@ -219,13 +219,8 @@ static void ngen_blockcheckfail(u32 pc) {
 	rdv_BlockCheckFail(pc);
 }
 
-static u32 exception_raised;
-
-template<typename T>
-static T ReadMemNoEx(u32 addr, u32 pc)
+static void handle_mem_exception(u32 exception_raised, u32 pc)
 {
-#ifndef NO_MMU
-	T rv = mmu_ReadMemNoEx<T>(addr, &exception_raised);
 	if (exception_raised)
 	{
 		if (pc & 1)
@@ -233,8 +228,19 @@ static T ReadMemNoEx(u32 addr, u32 pc)
 			spc = pc - 1;
 		else
 			spc = pc;
+		cycle_counter += CPU_RATIO * 2;	// probably more is needed but no easy way to find out
 		longjmp(jmp_env, 1);
 	}
+}
+
+template<typename T>
+static T ReadMemNoEx(u32 addr, u32 pc)
+{
+#ifndef NO_MMU
+	u32 exception_raised;
+	T rv = mmu_ReadMemNoEx<T>(addr, &exception_raised);
+	handle_mem_exception(exception_raised, pc);
+
 	return rv;
 #else
 	// not used
@@ -246,17 +252,22 @@ template<typename T>
 static void WriteMemNoEx(u32 addr, T data, u32 pc)
 {
 #ifndef NO_MMU
-	exception_raised = mmu_WriteMemNoEx<T>(addr, data);
-	if (exception_raised)
-	{
-		if (pc & 1)
-			// Delay slot
-			spc = pc - 1;
-		else
-			spc = pc;
-		longjmp(jmp_env, 1);
-	}
+	u32 exception_raised = mmu_WriteMemNoEx<T>(addr, data);
+	handle_mem_exception(exception_raised, pc);
 #endif
+}
+
+static void handle_sh4_exception(SH4ThrownException& ex, u32 pc)
+{
+	if (pc & 1)
+	{
+		// Delay slot
+		AdjustDelaySlotException(ex);
+		pc--;
+	}
+	Do_Exception(pc, ex.expEvn, ex.callVect);
+	cycle_counter += CPU_RATIO * 4;	// probably more is needed
+	longjmp(jmp_env, 1);
 }
 
 static void interpreter_fallback(u16 op, OpCallFP *oph, u32 pc)
@@ -264,14 +275,7 @@ static void interpreter_fallback(u16 op, OpCallFP *oph, u32 pc)
 	try {
 		oph(op);
 	} catch (SH4ThrownException& ex) {
-		if (pc & 1)
-		{
-			// Delay slot
-			AdjustDelaySlotException(ex);
-			pc--;
-		}
-		Do_Exception(pc, ex.expEvn, ex.callVect);
-		longjmp(jmp_env, 1);
+		handle_sh4_exception(ex, pc);
 	}
 }
 
@@ -279,16 +283,8 @@ static void do_sqw_mmu_no_ex(u32 addr, u32 pc)
 {
 	try {
 		do_sqw_mmu(addr);
-		exception_raised = 0;
 	} catch (SH4ThrownException& ex) {
-		if (pc & 1)
-		{
-			// Delay slot
-			AdjustDelaySlotException(ex);
-			pc--;
-		}
-		Do_Exception(pc, ex.expEvn, ex.callVect);
-		exception_raised = 1;
+		handle_sh4_exception(ex, pc);
 	}
 }
 
@@ -300,7 +296,9 @@ static void do_sqw_nommu_local(u32 addr, u8* sqb)
 class BlockCompiler : public Xbyak::CodeGenerator
 {
 public:
-	BlockCompiler() : Xbyak::CodeGenerator(emit_FreeSpace(), emit_GetCCPtr()), regalloc(this)
+	BlockCompiler() : BlockCompiler((u8 *)emit_GetCCPtr()) {}
+
+	BlockCompiler(u8 *code_ptr) : Xbyak::CodeGenerator(emit_FreeSpace(), code_ptr), regalloc(this)
 	{
 		#if HOST_OS == OS_WINDOWS
 			call_regs.push_back(ecx);
@@ -333,17 +331,11 @@ public:
 	void compile(RuntimeBlockInfo* block, bool force_checks, bool reset, bool staging, bool optimise)
 	{
 		//printf("X86_64 compiling %08x to %p\n", block->addr, emit_GetCCPtr());
+		current_opid = -1;
 		if (force_checks) {
 			CheckBlock(block);
 		}
-		regalloc.DoAlloc(block);
 
-		sub(dword[rip + &cycle_counter], block->guest_cycles);
-#ifdef PROFILING
-		mov(rax, (uintptr_t)&guest_cpu_cycles);
-		mov(ecx, block->guest_cycles);
-		add(qword[rax], rcx);
-#endif
 #ifdef _WIN32
 		sub(rsp, 0x28);		// 32-byte shadow space + 8 byte alignment
 #else
@@ -364,6 +356,13 @@ public:
 			jmp(exit_block, T_NEAR);
 			L(fpu_enabled);
 		}
+		sub(dword[rip + &cycle_counter], block->guest_cycles);
+#ifdef PROFILING
+		mov(rax, (uintptr_t)&guest_cpu_cycles);
+		mov(ecx, block->guest_cycles);
+		add(qword[rax], rcx);
+#endif
+		regalloc.DoAlloc(block);
 
 		for (current_opid = 0; current_opid < block->oplist.size(); current_opid++)
 		{
@@ -440,98 +439,7 @@ public:
 			break;
 
 			case shop_readm:
-			{
-				u32 size = op.flags & 0x7f;
-				bool immediate_address = op.rs1.is_imm();
-				u32 addr = op.rs1._imm;
-				if (immediate_address && mmu_enabled())
-				{
-					if ((op.rs1._imm >> 12) != (block->vaddr >> 12))
-					{
-						// When full mmu is on, only consider addresses in the same 4k page
-						immediate_address = false;
-					}
-					else
-					{
-						u32 paddr;
-						u32 rv;
-						if (size == 2)
-							rv = mmu_data_translation<MMU_TT_DREAD, u16>(addr, paddr);
-						else if (size == 4)
-							rv = mmu_data_translation<MMU_TT_DREAD, u32>(addr, paddr);
-						else
-							die("Invalid immediate size");
-						if (rv != MMU_ERROR_NONE)
-							immediate_address = false;
-						else
-							addr = paddr;
-					}
-				}
-				if (immediate_address)
-				{
-					bool isram = false;
-					void* ptr = _vmem_read_const(addr, isram, size);
-
-					if (isram)
-					{
-						// Immediate pointer to RAM: super-duper fast access
-						mov(rax, reinterpret_cast<uintptr_t>(ptr));
-						switch (size)
-						{
-						case 2:
-							if (regalloc.IsAllocg(op.rd))
-								movsx(regalloc.MapRegister(op.rd), word[rax]);
-							else
-							{
-								movsx(eax, word[rax]);
-								mov(rcx, (uintptr_t)op.rd.reg_ptr());
-								mov(dword[rcx], eax);
-							}
-							break;
-
-						case 4:
-							if (regalloc.IsAllocg(op.rd))
-								mov(regalloc.MapRegister(op.rd), dword[rax]);
-							else if (regalloc.IsAllocf(op.rd))
-								movd(regalloc.MapXRegister(op.rd), dword[rax]);
-							else
-							{
-								mov(eax, dword[rax]);
-								mov(rcx, (uintptr_t)op.rd.reg_ptr());
-								mov(dword[rcx], eax);
-							}
-							break;
-
-						default:
-							die("Invalid immediate size");
-  							break;
-						}
-					}
-					else
-					{
-						// Not RAM: the returned pointer is a memory handler
-						mov(call_regs[0], addr);
-
-						switch(size)
-						{
-						case 2:
-							GenCall((void (*)())ptr);
-							movsx(ecx, ax);
-							break;
-
-						case 4:
-							GenCall((void (*)())ptr);
-							mov(ecx, eax);
-							break;
-
-						default:
-							die("Invalid immediate size");
-  							break;
-						}
-						host_reg_to_shil_param(op.rd, ecx);
-					}
-				}
-				else
+				if (!GenReadMemImmediate(op, block))
 				{
 					// Not an immediate address
 					shil_param_to_host_reg(op.rs1, call_regs[0]);
@@ -547,47 +455,10 @@ public:
 							add(call_regs[0], dword[rax]);
 						}
 					}
-					if (mmu_enabled())
-						mov(call_regs[1], block->vaddr + op.guest_offs - (op.delay_slot ? 1 : 0));	// pc
+					if (!optimise || !GenReadMemoryFast(op, block))
+						GenReadMemorySlow(op, block);
 
-					if (size == 1) {
-						if (!mmu_enabled())
-							GenCall(ReadMem8);
-						else
-							GenCall(ReadMemNoEx<u8>);
-						movsx(ecx, al);
-					}
-					else if (size == 2) {
-						if (!mmu_enabled())
-							GenCall(ReadMem16);
-						else
-							GenCall(ReadMemNoEx<u16>);
-						movsx(ecx, ax);
-					}
-					else if (size == 4) {
-						if (!mmu_enabled())
-							GenCall(ReadMem32);
-						else
-							GenCall(ReadMemNoEx<u32>);
-						mov(ecx, eax);
-					}
-					else if (size == 8) {
-						if (!mmu_enabled())
-							GenCall(ReadMem64);
-						else
-							GenCall(ReadMemNoEx<u64>);
-						mov(rcx, rax);
-					}
-					else {
-						die("1..8 bytes");
-					}
-
-//					if (mmu_enabled())
-//					{
-//						test(dword[(void *)&exception_raised], 1);
-//						jnz(exit_block, T_NEAR);
-//					}
-
+					u32 size = op.flags & 0x7f;
 					if (size != 8)
 						host_reg_to_shil_param(op.rd, ecx);
 					else {
@@ -606,12 +477,10 @@ public:
 						}
 					}
 				}
-			}
-			break;
+				break;
 
 			case shop_writem:
 			{
-				u32 size = op.flags & 0x7f;
 				shil_param_to_host_reg(op.rs1, call_regs[0]);
 				if (!op.rs3.is_null())
 				{
@@ -626,6 +495,7 @@ public:
 					}
 				}
 
+				u32 size = op.flags & 0x7f;
 				if (size != 8)
 					shil_param_to_host_reg(op.rs2, call_regs[1]);
 				else {
@@ -644,42 +514,8 @@ public:
 						mov(call_regs64[1], qword[rax]);
 					}
 				}
-				if (mmu_enabled())
-					mov(call_regs[2], block->vaddr + op.guest_offs - (op.delay_slot ? 1 : 0));	// pc
-
-				if (size == 1) {
-					if (!mmu_enabled())
-						GenCall(WriteMem8);
-					else
-						GenCall(WriteMemNoEx<u8>);
-				}
-				else if (size == 2) {
-					if (!mmu_enabled())
-						GenCall(WriteMem16);
-					else
-						GenCall(WriteMemNoEx<u16>);
-				}
-				else if (size == 4) {
-					if (!mmu_enabled())
-						GenCall(WriteMem32);
-					else
-						GenCall(WriteMemNoEx<u32>);
-				}
-				else if (size == 8) {
-					if (!mmu_enabled())
-						GenCall(WriteMem64);
-					else
-						GenCall(WriteMemNoEx<u64>);
-				}
-				else {
-					die("1..8 bytes");
-				}
-
-//				if (mmu_enabled())
-//				{
-//					test(dword[(void *)&exception_raised], 1);
-//					jnz(exit_block, T_NEAR);
-//				}
+				if (!optimise || !GenWriteMemoryFast(op, block))
+					GenWriteMemorySlow(op, block);
 			}
 			break;
 
@@ -729,8 +565,8 @@ public:
 					mov(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rs1));	\
 				if (op.rs2.is_imm())	\
 					natop(regalloc.MapRegister(op.rd), op.rs2._imm);	\
-				else if (op.rs2.is_reg())	\
-					natop(regalloc.MapRegister(op.rd), Xbyak::Reg8(regalloc.MapRegister(op.rs2).getIdx()));
+				else  \
+					die("Unsupported operand");
 			case shop_shl:
 				SHIFT_OP(shl)
 				break;
@@ -925,9 +761,6 @@ public:
 						mov(call_regs[1], block->vaddr + op.guest_offs - (op.delay_slot ? 1 : 0));	// pc
 
 						GenCall(do_sqw_mmu_no_ex);
-
-						test(dword[(void *)&exception_raised], 1);
-						jnz(exit_block, T_NEAR);
 					}
 					else
 					{
@@ -1163,6 +996,7 @@ public:
 			regalloc.OpEnd(&op);
 		}
 		regalloc.Cleanup();
+		current_opid = -1;
 
 		mov(rax, (size_t)&next_pc);
 
@@ -1240,6 +1074,118 @@ public:
 		block->host_code_size = getSize();
 
 		emit_Skip(getSize());
+	}
+
+	void GenReadMemorySlow(const shil_opcode& op, RuntimeBlockInfo* block)
+	{
+		const u8 *start_addr = getCurr();
+		if (mmu_enabled())
+			mov(call_regs[1], block->vaddr + op.guest_offs - (op.delay_slot ? 1 : 0));	// pc
+
+		u32 size = op.flags & 0x7f;
+		switch (size) {
+		case 1:
+			if (!mmu_enabled())
+				GenCall(ReadMem8);
+			else
+				GenCall(ReadMemNoEx<u8>);
+			movsx(ecx, al);
+			break;
+		case 2:
+			if (!mmu_enabled())
+				GenCall(ReadMem16);
+			else
+				GenCall(ReadMemNoEx<u16>);
+			movsx(ecx, ax);
+			break;
+
+		case 4:
+			if (!mmu_enabled())
+				GenCall(ReadMem32);
+			else
+				GenCall(ReadMemNoEx<u32>);
+			mov(ecx, eax);
+			break;
+		case 8:
+			if (!mmu_enabled())
+				GenCall(ReadMem64);
+			else
+				GenCall(ReadMemNoEx<u64>);
+			mov(rcx, rax);
+			break;
+		default:
+			die("1..8 bytes");
+		}
+
+		if (mmu_enabled())
+		{
+			Xbyak::Label quick_exit;
+			if (getCurr() - start_addr <= read_mem_op_size - 6)
+				jmp(quick_exit, T_NEAR);
+			while (getCurr() - start_addr < read_mem_op_size)
+				nop();
+			L(quick_exit);
+			verify(getCurr() - start_addr == read_mem_op_size);
+		}
+	}
+
+	void GenWriteMemorySlow(const shil_opcode& op, RuntimeBlockInfo* block)
+	{
+		const u8 *start_addr = getCurr();
+		if (mmu_enabled())
+			mov(call_regs[2], block->vaddr + op.guest_offs - (op.delay_slot ? 1 : 0));	// pc
+
+		u32 size = op.flags & 0x7f;
+		switch (size) {
+		case 1:
+			if (!mmu_enabled())
+				GenCall(WriteMem8);
+			else
+				GenCall(WriteMemNoEx<u8>);
+			break;
+		case 2:
+			if (!mmu_enabled())
+				GenCall(WriteMem16);
+			else
+				GenCall(WriteMemNoEx<u16>);
+			break;
+		case 4:
+			if (!mmu_enabled())
+				GenCall(WriteMem32);
+			else
+				GenCall(WriteMemNoEx<u32>);
+			break;
+		case 8:
+			if (!mmu_enabled())
+				GenCall(WriteMem64);
+			else
+				GenCall(WriteMemNoEx<u64>);
+			break;
+		default:
+			die("1..8 bytes");
+		}
+		if (mmu_enabled())
+		{
+			Xbyak::Label quick_exit;
+			if (getCurr() - start_addr <= write_mem_op_size - 6)
+				jmp(quick_exit, T_NEAR);
+			while (getCurr() - start_addr < write_mem_op_size)
+				nop();
+			L(quick_exit);
+			verify(getCurr() - start_addr == write_mem_op_size);
+		}
+	}
+
+	void InitializeRewrite(RuntimeBlockInfo *block, size_t opid)
+	{
+		// shouldn't be necessary since all regs are flushed before mem access when mmu is enabled
+		//regalloc.DoAlloc(block);
+		regalloc.current_opid = opid;
+	}
+
+	void FinalizeRewrite()
+	{
+		ready();
 	}
 
 	void ngen_CC_Start(const shil_opcode& op)
@@ -1346,16 +1292,188 @@ private:
 	typedef void (BlockCompiler::*X64BinaryOp)(const Xbyak::Operand&, const Xbyak::Operand&);
 	typedef void (BlockCompiler::*X64BinaryFOp)(const Xbyak::Xmm&, const Xbyak::Operand&);
 
+	bool GenReadMemImmediate(const shil_opcode& op, RuntimeBlockInfo* block)
+	{
+		if (!op.rs1.is_imm())
+			return false;
+		u32 size = op.flags & 0x7f;
+		u32 addr = op.rs1._imm;
+		if (mmu_enabled())
+		{
+			if ((addr >> 12) != (block->vaddr >> 12))
+				// When full mmu is on, only consider addresses in the same 4k page
+				return false;
+
+			u32 paddr;
+			u32 rv;
+			if (size == 2)
+				rv = mmu_data_translation<MMU_TT_DREAD, u16>(addr, paddr);
+			else if (size == 4)
+				rv = mmu_data_translation<MMU_TT_DREAD, u32>(addr, paddr);
+			else
+				die("Invalid immediate size");
+			if (rv != MMU_ERROR_NONE)
+				return false;
+
+			addr = paddr;
+		}
+		bool isram = false;
+		void* ptr = _vmem_read_const(addr, isram, size);
+
+		if (isram)
+		{
+			// Immediate pointer to RAM: super-duper fast access
+			mov(rax, reinterpret_cast<uintptr_t>(ptr));
+			switch (size)
+			{
+			case 2:
+				if (regalloc.IsAllocg(op.rd))
+					movsx(regalloc.MapRegister(op.rd), word[rax]);
+				else
+				{
+					movsx(eax, word[rax]);
+					mov(rcx, (uintptr_t)op.rd.reg_ptr());
+					mov(dword[rcx], eax);
+				}
+				break;
+
+			case 4:
+				if (regalloc.IsAllocg(op.rd))
+					mov(regalloc.MapRegister(op.rd), dword[rax]);
+				else if (regalloc.IsAllocf(op.rd))
+					movd(regalloc.MapXRegister(op.rd), dword[rax]);
+				else
+				{
+					mov(eax, dword[rax]);
+					mov(rcx, (uintptr_t)op.rd.reg_ptr());
+					mov(dword[rcx], eax);
+				}
+				break;
+
+			default:
+				die("Invalid immediate size");
+					break;
+			}
+		}
+		else
+		{
+			// Not RAM: the returned pointer is a memory handler
+			mov(call_regs[0], addr);
+
+			switch(size)
+			{
+			case 2:
+				GenCall((void (*)())ptr);
+				movsx(ecx, ax);
+				break;
+
+			case 4:
+				GenCall((void (*)())ptr);
+				mov(ecx, eax);
+				break;
+
+			default:
+				die("Invalid immediate size");
+					break;
+			}
+			host_reg_to_shil_param(op.rd, ecx);
+		}
+
+		return true;
+	}
+
+	bool GenReadMemoryFast(const shil_opcode& op, RuntimeBlockInfo* block)
+	{
+		if (!mmu_enabled() || !vmem32_enabled())
+			return false;
+		const u8 *start_addr = getCurr();
+
+		mov(rax, (uintptr_t)&p_sh4rcb->cntx.exception_pc);
+		mov(dword[rax], block->vaddr + op.guest_offs - (op.delay_slot ? 2 : 0));
+
+		mov(rax, (uintptr_t)p_sh4rcb->cntx.vmem32_base);
+
+		u32 size = op.flags & 0x7f;
+		verify(getCurr() - start_addr == 26);
+
+		block->memory_accesses[(void*)getCurr()] = (u32)current_opid;
+		switch (size)
+		{
+		case 1:
+			movsx(ecx, byte[rax + call_regs64[0]]);
+			break;
+
+		case 2:
+			movsx(ecx, word[rax + call_regs64[0]]);
+			break;
+
+		case 4:
+			mov(ecx, dword[rax + call_regs64[0]]);
+			break;
+
+		case 8:
+			mov(rcx, qword[rax + call_regs64[0]]);
+			break;
+
+		default:
+			die("1..8 bytes");
+		}
+
+		while (getCurr() - start_addr < read_mem_op_size)
+			nop();
+		verify(getCurr() - start_addr == read_mem_op_size);
+
+		return true;
+	}
+
+	bool GenWriteMemoryFast(const shil_opcode& op, RuntimeBlockInfo* block)
+	{
+		if (!mmu_enabled() || !vmem32_enabled())
+			return false;
+		const u8 *start_addr = getCurr();
+
+		mov(rax, (uintptr_t)&p_sh4rcb->cntx.exception_pc);
+		mov(dword[rax], block->vaddr + op.guest_offs - (op.delay_slot ? 2 : 0));
+
+		mov(rax, (uintptr_t)p_sh4rcb->cntx.vmem32_base);
+
+		u32 size = op.flags & 0x7f;
+		verify(getCurr() - start_addr == 26);
+
+		block->memory_accesses[(void*)getCurr()] = (u32)current_opid;
+		switch (size)
+		{
+		case 1:
+			mov(byte[rax + call_regs64[0] + 0], Xbyak::Reg8(call_regs[1].getIdx(), call_regs[1] == edi || call_regs[1] == esi));
+			break;
+
+		case 2:
+			mov(word[rax + call_regs64[0]], Xbyak::Reg16(call_regs[1].getIdx()));
+			break;
+
+		case 4:
+			mov(dword[rax + call_regs64[0]], call_regs[1]);
+			break;
+
+		case 8:
+			mov(qword[rax + call_regs64[0]], call_regs64[1]);
+			break;
+
+		default:
+			die("1..8 bytes");
+		}
+
+		while (getCurr() - start_addr < write_mem_op_size)
+			nop();
+		verify(getCurr() - start_addr == write_mem_op_size);
+
+		return true;
+	}
+
 	void CheckBlock(RuntimeBlockInfo* block) {
 		mov(call_regs[0], block->addr);
 
-//		if (mmu_enabled() && block->asid != 0xFFFFFFFF)
-//		{
-//			mov(rax, (uintptr_t)&CCN_PTEH.reg_data);
-//			cmp(byte[rax], block->asid);
-//			jne(reinterpret_cast<const void*>(&ngen_blockcheckfail));
-//		}
-		// FIXME Neither of these tests should be necessary
+		// FIXME This test shouldn't be necessary
 		// However the decoder makes various assumptions about the current PC value, which are simply not
 		// true in a virtualized memory model. So this can only work if virtual and phy addresses are the
 		// same at compile and run times.
@@ -1424,10 +1542,10 @@ private:
 	void GenCall(Ret(*function)(Params...))
 	{
 #ifndef _WIN32
-		bool xmm8_mapped = regalloc.IsMapped(xmm8, current_opid);
-		bool xmm9_mapped = regalloc.IsMapped(xmm9, current_opid);
-		bool xmm10_mapped = regalloc.IsMapped(xmm10, current_opid);
-		bool xmm11_mapped = regalloc.IsMapped(xmm11, current_opid);
+		bool xmm8_mapped = current_opid != -1 && regalloc.IsMapped(xmm8, current_opid);
+		bool xmm9_mapped = current_opid != -1 && regalloc.IsMapped(xmm9, current_opid);
+		bool xmm10_mapped = current_opid != -1 && regalloc.IsMapped(xmm10, current_opid);
+		bool xmm11_mapped = current_opid != -1 && regalloc.IsMapped(xmm11, current_opid);
 
 		// Need to save xmm registers as they are not preserved in linux/mach
 		int offset = 0;
@@ -1587,11 +1705,15 @@ private:
 	static const u32 float_sign_mask;
 	static const u32 float_abs_mask;
 	static const f32 cvtf2i_pos_saturation;
+	static const u32 read_mem_op_size;
+	static const u32 write_mem_op_size;
 };
 
 const u32 BlockCompiler::float_sign_mask = 0x80000000;
 const u32 BlockCompiler::float_abs_mask = 0x7fffffff;
 const f32 BlockCompiler::cvtf2i_pos_saturation = 2147483520.0f;		// IEEE 754: 0x4effffff;
+const u32 BlockCompiler::read_mem_op_size = 30;
+const u32 BlockCompiler::write_mem_op_size = 30;
 
 void X64RegAlloc::Preload(u32 reg, Xbyak::Operand::Code nreg)
 {
@@ -1640,5 +1762,48 @@ void ngen_CC_Call(shil_opcode* op, void* function)
 
 void ngen_CC_Finish(shil_opcode* op)
 {
+}
+
+bool ngen_Rewrite(unat& host_pc, unat, unat)
+{
+	if (!mmu_enabled() || !vmem32_enabled())
+		return false;
+
+	//printf("ngen_Rewrite pc %p\n", host_pc);
+	RuntimeBlockInfo *block = bm_GetBlock((void *)host_pc);
+	if (block == NULL)
+	{
+		printf("ngen_Rewrite: Block at %p not found\n", (void *)host_pc);
+		return false;
+	}
+	u8 *code_ptr = (u8*)host_pc;
+	auto it = block->memory_accesses.find(code_ptr);
+	if (it == block->memory_accesses.end())
+	{
+		printf("ngen_Rewrite: memory access at %p not found (%lu entries)\n", code_ptr, block->memory_accesses.size());
+		return false;
+	}
+	u32 opid = it->second;
+	verify(opid < block->oplist.size());
+	const shil_opcode& op = block->oplist[opid];
+
+	BlockCompiler *assembler = new BlockCompiler(code_ptr - 26);
+	assembler->InitializeRewrite(block, opid);
+	if (op.op == shop_readm)
+		assembler->GenReadMemorySlow(op, block);
+	else
+		assembler->GenWriteMemorySlow(op, block);
+	assembler->FinalizeRewrite();
+	verify(block->host_code_size >= assembler->getSize());
+	delete assembler;
+	block->memory_accesses.erase(it);
+	host_pc = (unat)(code_ptr - 26);
+
+	return true;
+}
+
+void ngen_HandleException()
+{
+	longjmp(jmp_env, 1);
 }
 #endif

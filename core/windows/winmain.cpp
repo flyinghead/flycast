@@ -1,6 +1,7 @@
 #include "oslib\oslib.h"
 #include "oslib\audiostream.h"
 #include "imgread\common.h"
+#include "hw\mem\vmem32.h"
 #include "xinput_gamepad.h"
 #include "win_keyboard.h"
 
@@ -141,6 +142,11 @@ LONG ExeptionHandler(EXCEPTION_POINTERS *ExceptionInfo)
 	u8* address=(u8*)pExceptionRecord->ExceptionInformation[1];
 
 	//printf("[EXC] During access to : 0x%X\n", address);
+#if !defined(NO_MMU) && defined(HOST_64BIT_CPU)
+	bool write = false;	// TODO?
+	if (vmem32_handle_signal(ep->ContextRecord->Rcx, write))
+		return EXCEPTION_CONTINUE_EXECUTION;
+#endif
 
 	if (VramLockedWrite(address))
 	{
@@ -152,13 +158,19 @@ LONG ExeptionHandler(EXCEPTION_POINTERS *ExceptionInfo)
 		return EXCEPTION_CONTINUE_EXECUTION;
 	}
 #endif
-#if FEAT_SHREC == DYNAREC_JIT && HOST_CPU == CPU_X86
+#if FEAT_SHREC == DYNAREC_JIT
+#if HOST_CPU == CPU_X86
 		else if ( ngen_Rewrite((unat&)ep->ContextRecord->Eip,*(unat*)ep->ContextRecord->Esp,ep->ContextRecord->Eax) )
 		{
 			//remove the call from call stack
 			ep->ContextRecord->Esp+=4;
 			//restore the addr from eax to ecx so its valid again
 			ep->ContextRecord->Ecx=ep->ContextRecord->Eax;
+			return EXCEPTION_CONTINUE_EXECUTION;
+		}
+#elif HOST_CPU == CPU_X64
+		else if (dyna_cde && ngen_Rewrite((unat&)ep->ContextRecord->Rip, 0, 0))
+		{
 			return EXCEPTION_CONTINUE_EXECUTION;
 		}
 #endif
@@ -576,7 +588,7 @@ _In_opt_ PVOID Context
 	//	(DWORD)((u8 *)__gnat_SEH_error_handler - CodeCache);
 	/* Set its scope to the entire program.  */
 	Table[0].BeginAddress = 0;// (CodeCache - (u8*)__ImageBase);
-	Table[0].EndAddress = /*(CodeCache - (u8*)__ImageBase) +*/ CODE_SIZE;
+	Table[0].EndAddress = /*(CodeCache - (u8*)__ImageBase) +*/ CODE_SIZE + TEMP_CODE_SIZE;
 	Table[0].UnwindData = (DWORD)((u8 *)unwind_info - CodeCache);
 	printf("TABLE CALLBACK\n");
 	//for (;;);
@@ -605,13 +617,13 @@ void setup_seh() {
 		//(DWORD)((u8 *)__gnat_SEH_error_handler - CodeCache);
 	/* Set its scope to the entire program.  */
 	Table[0].BeginAddress = 0;// (CodeCache - (u8*)__ImageBase);
-	Table[0].EndAddress = /*(CodeCache - (u8*)__ImageBase) +*/ CODE_SIZE;
+	Table[0].EndAddress = /*(CodeCache - (u8*)__ImageBase) +*/ CODE_SIZE + TEMP_CODE_SIZE;
 	Table[0].UnwindData = (DWORD)((u8 *)unwind_info - CodeCache);
 	/* Register the unwind information.  */
 	RtlAddFunctionTable(Table, 1, (DWORD64)CodeCache);
 #endif
 
-	//verify(RtlInstallFunctionTableCallback((unat)CodeCache | 0x3, (DWORD64)CodeCache, CODE_SIZE, seh_callback, 0, 0));
+	//verify(RtlInstallFunctionTableCallback((unat)CodeCache | 0x3, (DWORD64)CodeCache, CODE_SIZE + TEMP_CODE_SIZE, seh_callback, 0, 0));
 }
 #endif
 

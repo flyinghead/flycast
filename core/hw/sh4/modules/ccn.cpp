@@ -8,6 +8,7 @@
 #include "../sh4_core.h"
 #include "hw/pvr/pvr_mem.h"
 #include "hw/mem/_vmem.h"
+#include "hw/mem/vmem32.h"
 #include "mmu.h"
 
 //Types
@@ -41,6 +42,16 @@ void CCN_QACR_write(u32 addr, u32 value)
 	}
 }
 
+void CCN_PTEH_write(u32 addr, u32 value)
+{
+	CCN_PTEH_type temp;
+	temp.reg_data = value;
+	if (temp.ASID != CCN_PTEH.ASID && vmem32_enabled())
+		vmem32_flush_mmu();
+
+	CCN_PTEH = temp;
+}
+
 void CCN_MMUCR_write(u32 addr, u32 value)
 {
 	CCN_MMUCR_type temp;
@@ -52,6 +63,8 @@ void CCN_MMUCR_write(u32 addr, u32 value)
 	{
 		//sh4_cpu.ResetCache();
 		mmu_flush_table();
+		if (vmem32_enabled())
+			vmem32_flush_mmu();
 
 		temp.TI = 0;
 	}
@@ -99,7 +112,7 @@ static u32 CCN_PRR_read(u32 addr)
 void ccn_init()
 {
 	//CCN PTEH 0xFF000000 0x1F000000 32 Undefined Undefined Held Held Iclk
-	sh4_rio_reg(CCN,CCN_PTEH_addr,RIO_DATA,32);
+	sh4_rio_reg(CCN,CCN_PTEH_addr,RIO_WF,32,0,&CCN_PTEH_write);
 
 	//CCN PTEL 0xFF000004 0x1F000004 32 Undefined Undefined Held Held Iclk
 	sh4_rio_reg(CCN,CCN_PTEL_addr,RIO_DATA,32);

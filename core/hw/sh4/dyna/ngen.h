@@ -100,6 +100,7 @@ extern void (*ngen_FailedToFindBlock)();
 void ngen_mainloop(void* cntx);
 
 void ngen_GetFeatures(ngen_features* dst);
+void ngen_HandleException();
 
 //Canonical callback interface
 enum CanonicalParamType

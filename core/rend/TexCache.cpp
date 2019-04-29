@@ -7,6 +7,8 @@
 #include "TexCache.h"
 #include "hw/pvr/pvr_regs.h"
 #include "hw/mem/_vmem.h"
+#include "hw/mem/vmem32.h"
+#include "hw/sh4/modules/mmu.h"
 #include "deps/xbrz/xbrz.h"
 #include "deps/xxhash/xxhash.h"
 
@@ -213,6 +215,8 @@ vram_block* libCore_vramlock_Lock(u32 start_offset64,u32 end_offset64,void* user
 		if (_nvmem_enabled() && VRAM_SIZE == 0x800000) {
 			vram.LockRegion(block->start + VRAM_SIZE, block->len);
 		}
+		if (mmu_enabled())
+			vmem32_protect_vram(block);
 		
 		vramlock_list_add(block);
 		
@@ -222,11 +226,8 @@ vram_block* libCore_vramlock_Lock(u32 start_offset64,u32 end_offset64,void* user
 	return block;
 }
 
-
-bool VramLockedWrite(u8* address)
+bool VramLockedWriteOffset(size_t offset)
 {
-	size_t offset=address-vram.data;
-
 	if (offset<VRAM_SIZE)
 	{
 
@@ -268,6 +269,16 @@ bool VramLockedWrite(u8* address)
 		return false;
 }
 
+bool VramLockedWrite(u8* address)
+{
+	size_t offset=address-vram.data;
+
+	if (offset < 0x01000000)
+		return VramLockedWriteOffset(offset & (VRAM_SIZE - 1));
+	else
+		return false;
+}
+
 //unlocks mem
 //also frees the handle
 void libCore_vramlock_Unlock_block(vram_block* block)
@@ -284,6 +295,8 @@ void libCore_vramlock_Unlock_block_wb(vram_block* block)
 		msgboxf("Error : block end is after vram , skipping unlock",MBX_OK);
 	else
 	{
+		if (mmu_enabled())
+			vmem32_unprotect_vram(block);
 		vramlock_list_remove(block);
 		//more work needed
 		free(block);

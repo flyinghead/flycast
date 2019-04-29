@@ -613,19 +613,5 @@ template void texture_VQ<convBMP_TW<pp_565>, u16>(PixelBuffer<u16>* pb,u8* p_in,
 #define tex1555_VQ32 texture_VQ<conv1555_TW32<pp_8888>, u32>
 #define tex4444_VQ32 texture_VQ<conv4444_TW32<pp_8888>, u32>
 
-#define Is_64_Bit(addr) ((addr &0x1000000)==0)
- 
-//vram_block, vramLockCBFP on plugin headers
-
-
-u32 vramlock_ConvAddrtoOffset64(u32 Address);
-u32 vramlock_ConvOffset32toOffset64(u32 offset32);
-
-void vramlock_Unlock_block(vram_block* block);
-vram_block* vramlock_Lock_32(u32 start_offset32,u32 end_offset32,void* userdata);
-vram_block* vramlock_Lock_64(u32 start_offset64,u32 end_offset64,void* userdata);
-
-void vram_LockedWrite(u32 offset64);
-
 void DePosterize(u32* source, u32* dest, int width, int height);
 void UpscalexBRZ(int factor, u32* source, u32* dest, int width, int height, bool has_alpha);
