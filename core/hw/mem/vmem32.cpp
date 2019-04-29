@@ -104,38 +104,32 @@ static void* vmem32_map_buffer(u32 dst, u32 addrsz, u32 offset, u32 size, bool w
 
 static void vmem32_unmap_buffer(u32 start, u64 end)
 {
-#if HOST_OS == OS_LINUX
-	mmap(&vmem32_base[start], end - start, PROT_NONE, MAP_FIXED | MAP_PRIVATE | MAP_ANON, -1, 0);
-#elif HOST_OS == OS_WINDOWS
+#if HOST_OS == OS_WINDOWS
 	VirtualAlloc(&vmem32_base[start], end - start, MEM_RESERVE, PAGE_NOACCESS);
 #else
-#error Unsupported OS
+	mmap(&vmem32_base[start], end - start, PROT_NONE, MAP_FIXED | MAP_PRIVATE | MAP_ANON, -1, 0);
 #endif
 }
 
 static void vmem32_protect_buffer(u32 start, u32 size)
 {
 	verify((start & PAGE_MASK) == 0);
-#if HOST_OS == OS_LINUX
-	mprotect(&vmem32_base[start], size, PROT_READ);
-#elif HOST_OS == OS_WINDOWS
+#if HOST_OS == OS_WINDOWS
 	DWORD old;
 	VirtualProtect(vmem32_base + start, end - start, PAGE_READONLY, &old);
 #else
-#error Unsupported OS
+	mprotect(&vmem32_base[start], size, PROT_READ);
 #endif
 }
 
 static void vmem32_unprotect_buffer(u32 start, u32 size)
 {
 	verify((start & PAGE_MASK) == 0);
-#if HOST_OS == OS_LINUX
-	mprotect(&vmem32_base[start], size, PROT_READ | PROT_WRITE);
-#elif HOST_OS == OS_WINDOWS
+#if HOST_OS == OS_WINDOWS
 	DWORD old;
 	VirtualProtect(vmem32_base + start, end - start, PAGE_READWRITE, &old);
 #else
-#error Unsupported OS
+	mprotect(&vmem32_base[start], size, PROT_READ | PROT_WRITE);
 #endif
 }
 
@@ -359,18 +353,16 @@ bool vmem32_init()
 	if (!_nvmem_enabled())
 		return false;
 #ifdef HOST_64BIT_CPU
-#if HOST_OS == OS_LINUX
-	void* rv = mmap(0, VMEM32_SIZE, PROT_NONE, MAP_PRIVATE | MAP_ANON, -1, 0);
-	verify(rv != NULL);
-	munmap(rv, VMEM32_SIZE);
-	vmem32_base = (u8*)rv;
-#elif HOST_OS == OS_WINDOWS
+#if HOST_OS == OS_WINDOWS
 	void* rv = (u8 *)VirtualAlloc(0, VMEM32_SIZE, MEM_RESERVE, PAGE_NOACCESS);
 	if (rv != NULL)
 		VirtualFree(rv, 0, MEM_RELEASE);
 	vmem32_base = (u8*)rv;
 #else
-#error Unsupported OS
+	void* rv = mmap(0, VMEM32_SIZE, PROT_NONE, MAP_PRIVATE | MAP_ANON, -1, 0);
+	verify(rv != NULL);
+	munmap(rv, VMEM32_SIZE);
+	vmem32_base = (u8*)rv;
 #endif
 
 	vmem32_unmap_buffer(0, VMEM32_SIZE);
@@ -389,7 +381,11 @@ void vmem32_term()
 {
 	if (vmem32_base != NULL)
 	{
+#if HOST_OS == OS_WINDOWS
+		VirtualFree(vmem32_base, 0, MEM_RELEASE);
+#else
 		munmap(vmem32_base, VMEM32_SIZE);
+#endif
 		vmem32_base = NULL;
 	}
 }
