@@ -53,8 +53,8 @@ static const u64 AREA7_ADDRESS = 0x7C000000L;
 #define VRAM_PROT_SEGMENT (1024 * 1024)	// vram protection regions are grouped by 1MB segment
 
 u8* vmem32_base;
-unordered_set<u32> vram_mapped_pages;
-vector<vram_block*> vram_blocks[VRAM_SIZE / VRAM_PROT_SEGMENT];
+std::unordered_set<u32> vram_mapped_pages;
+std::vector<vram_block*> vram_blocks[VRAM_SIZE / VRAM_PROT_SEGMENT];
 
 // stats
 u64 vmem32_page_faults;
@@ -105,7 +105,7 @@ static void* vmem32_map_buffer(u32 dst, u32 addrsz, u32 offset, u32 size, bool w
 static void vmem32_unmap_buffer(u32 start, u64 end)
 {
 #if HOST_OS == OS_WINDOWS
-	VirtualAlloc(&vmem32_base[start], end - start, MEM_RESERVE, PAGE_NOACCESS);
+	UnmapViewOfFile(&vmem32_base[start]);
 #else
 	mmap(&vmem32_base[start], end - start, PROT_NONE, MAP_FIXED | MAP_PRIVATE | MAP_ANON, -1, 0);
 #endif
@@ -352,6 +352,10 @@ bool vmem32_init()
 {
 	if (!_nvmem_enabled())
 		return false;
+#if HOST_OS == OS_WINDOWS
+	// disabled on windows for now
+	return true;
+#endif
 #ifdef HOST_64BIT_CPU
 #if HOST_OS == OS_WINDOWS
 	void* rv = (u8 *)VirtualAlloc(0, VMEM32_SIZE, MEM_RESERVE, PAGE_NOACCESS);
@@ -382,7 +386,22 @@ void vmem32_term()
 	if (vmem32_base != NULL)
 	{
 #if HOST_OS == OS_WINDOWS
-		VirtualFree(vmem32_base, 0, MEM_RELEASE);
+		vmem32_flush_mmu();
+		// Aica ram
+		vmem32_unmap_buffer(0x80800000, 0x80800000 + 0x00800000);	// P1
+		vmem32_unmap_buffer(0x82800000, 0x82800000 + ARAM_SIZE);
+		vmem32_unmap_buffer(0xA0800000, 0xA0800000 + 0x00800000);	// P2
+		vmem32_unmap_buffer(0xA2800000, 0xA2800000 + ARAM_SIZE);
+
+		// Vram
+		vmem32_unmap_buffer(0x84000000, 0x84000000 + 0x01000000);	// P1
+		vmem32_unmap_buffer(0x86000000, 0x86000000 + 0x01000000);
+		vmem32_unmap_buffer(0xA4000000, 0xA4000000 + 0x01000000);	// P2
+		vmem32_unmap_buffer(0xA6000000, 0xA6000000 + 0x01000000);
+
+		// System ram
+		vmem32_unmap_buffer(0x8C000000, 0x8C000000 + 0x04000000);	// P1
+		vmem32_unmap_buffer(0xAC000000, 0xAC000000 + 0x04000000);	// P2
 #else
 		munmap(vmem32_base, VMEM32_SIZE);
 #endif

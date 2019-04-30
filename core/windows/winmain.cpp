@@ -142,9 +142,9 @@ LONG ExeptionHandler(EXCEPTION_POINTERS *ExceptionInfo)
 	u8* address=(u8*)pExceptionRecord->ExceptionInformation[1];
 
 	//printf("[EXC] During access to : 0x%X\n", address);
-#if !defined(NO_MMU) && defined(HOST_64BIT_CPU)
+#if 0
 	bool write = false;	// TODO?
-	if (vmem32_handle_signal(ep->ContextRecord->Rcx, write))
+	if (vmem32_handle_signal(address, write))
 		return EXCEPTION_CONTINUE_EXECUTION;
 #endif
 
