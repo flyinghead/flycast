@@ -117,10 +117,14 @@ audiobackend_t* GetAudioBackend(std::string slug)
 	return NULL;
 }
 
+extern double full_rps;
+
 u32 PushAudio(void* frame, u32 amt, bool wait)
 {
+    bool do_wait = (full_rps<50.f)?false:wait;
+
 	if (audiobackend_current != NULL) {
-		return audiobackend_current->push(frame, amt, wait);
+		return audiobackend_current->push(frame, amt, do_wait);
 	}
 	return 0;
 }
