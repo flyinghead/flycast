@@ -158,6 +158,7 @@ if(${BUILD_COMPILER} EQUAL ${COMPILER_GCC})	# Add Clang if NOT WIN32 *FIXME*
     ${lzma_SRCS}
     ${pico_SRCS}
   )
+  add_definitions(-D_7ZIP_ST -DCHD5_LZMA)
 endif()
 
 ### libosd.cmake ################################################################################
@@ -243,7 +244,6 @@ endif()
 
 include_directories ("${reicast_core_path}")
 
-add_definitions(-D_7ZIP_ST -DCHD5_LZMA)
 
 
 
