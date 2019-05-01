@@ -198,6 +198,10 @@ extern f32 mo_wheel_delta;
 // Keyboard
 static Win32KeyboardDevice keyboard(0);
 
+
+void ToggleFullscreen();
+
+
 void UpdateInputState(u32 port)
 {
 	/*
@@ -331,6 +335,14 @@ LRESULT CALLBACK WndProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			keyboard.keyboard_input(keycode, message == WM_KEYDOWN);
 		}
 		break;
+	
+	case WM_SYSKEYDOWN:
+		if (wParam == VK_RETURN)
+			if ((HIWORD(lParam) & KF_ALTDOWN))
+				ToggleFullscreen();
+		
+		break;
+
 	case WM_CHAR:
 		keyboard.keyboard_character((char)wParam);
 		return 0;
@@ -387,6 +399,45 @@ void* libPvr_GetRenderSurface()
 {
 	return GetDC((HWND)window_win);
 }
+
+
+void ToggleFullscreen()
+{
+	static RECT rSaved;
+	static bool fullscreen=false;
+	HWND hWnd = (HWND)window_win;
+
+	fullscreen = !fullscreen;
+
+
+	if (fullscreen)
+	{
+		GetWindowRect(hWnd, &rSaved);
+
+		MONITORINFO mi = { sizeof(mi) };
+		HMONITOR hmon = MonitorFromWindow(hWnd, MONITOR_DEFAULTTONEAREST);
+		if (GetMonitorInfo(hmon, &mi)) {
+
+			SetWindowLongPtr(hWnd, GWL_EXSTYLE, WS_EX_APPWINDOW | WS_EX_TOPMOST);
+			SetWindowLongPtr(hWnd, GWL_STYLE, WS_POPUP | WS_VISIBLE);
+
+			SetWindowPos(hWnd, HWND_TOPMOST, mi.rcMonitor.left, mi.rcMonitor.top,
+				mi.rcMonitor.right - mi.rcMonitor.left, mi.rcMonitor.bottom - mi.rcMonitor.top, 
+				SWP_SHOWWINDOW|SWP_FRAMECHANGED|SWP_ASYNCWINDOWPOS);
+		}
+	}
+	else {
+		
+		SetWindowLongPtr(hWnd, GWL_EXSTYLE, WS_EX_APPWINDOW | WS_EX_TOPMOST);
+		SetWindowLongPtr(hWnd, GWL_STYLE, WS_VISIBLE | WS_OVERLAPPEDWINDOW | (window_maximized ? WS_MAXIMIZE : 0));
+
+		SetWindowPos(hWnd, NULL, rSaved.left, rSaved.top,
+			rSaved.right - rSaved.left, rSaved.bottom - rSaved.top, 
+			SWP_SHOWWINDOW|SWP_FRAMECHANGED|SWP_ASYNCWINDOWPOS|SWP_NOZORDER);
+	}
+
+}
+
 
 BOOL CtrlHandler( DWORD fdwCtrlType )
 {
