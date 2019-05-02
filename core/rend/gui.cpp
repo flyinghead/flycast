@@ -1099,7 +1099,20 @@ static void gui_display_settings()
 					}
 					value = (*cfg_entries)[options->cfg_name];
 
-					if (options->type == list)
+					if (options->type == integer)
+					{
+						int val = stoi(value);
+						ImGui::SliderInt(options->caption.c_str(), &val, options->min_value, options->max_value);
+						(*cfg_entries)[options->cfg_name] = to_string(val);
+					}
+					else if (options->type == checkbox)
+					{
+						bool check = (value == "1");
+						ImGui::Checkbox(options->caption.c_str(), &check);
+						std::string cur = check ? "1" : "0";
+						(*cfg_entries)[options->cfg_name] = cur;
+					}
+					else if (options->type == list)
 					{
 						if (ImGui::BeginCombo(options->caption.c_str(), value.c_str(), ImGuiComboFlags_None))
 						{
@@ -1119,6 +1132,9 @@ static void gui_display_settings()
 							}
 							ImGui::EndCombo();
 						}
+					}
+					else {
+						printf("Unknown option\n");
 					}
 
 					options++;

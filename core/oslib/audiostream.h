@@ -14,8 +14,8 @@ void UpdateBuff(u8* pos);
 typedef std::vector<std::string> (*audio_option_callback_t)();
 enum audio_option_type
 {
-	text = 0
-,	integer = 1
+	integer = 0
+,	checkbox = 1
 ,	list = 2
 };
 
