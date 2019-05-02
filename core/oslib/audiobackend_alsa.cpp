@@ -18,30 +18,43 @@ static void alsa_init()
 	string device = cfgLoadStr("alsa", "device", "");
 
 	int rc = -1;
-	if (device == "")
+	if (device == "" || device == "auto")
 	{
 		printf("ALSA: trying to determine audio device\n");
-		/* Open PCM device for playback. */
+
+		// trying default device
 		device = "default";
 		rc = snd_pcm_open(&handle, device.c_str(), SND_PCM_STREAM_PLAYBACK, 0);
 
+		// "default" didn't work, try first device
 		if (rc < 0)
 		{
 			device = "plughw:0,0,0";
 			rc = snd_pcm_open(&handle, device.c_str(), SND_PCM_STREAM_PLAYBACK, 0);
+
+			if (rc < 0)
+			{
+				device = "plughw:0,0";
+				rc = snd_pcm_open(&handle, device.c_str(), SND_PCM_STREAM_PLAYBACK, 0);
+			}
 		}
 
+		// first didn't work, try second
 		if (rc < 0)
 		{
-			device = "plughw:0,0";
+			device = "plughw:1,0";
 			rc = snd_pcm_open(&handle, device.c_str(), SND_PCM_STREAM_PLAYBACK, 0);
 		}
 
-		if (rc >= 0)
+		// try pulse audio backend
+		if (rc < 0)
 		{
-			// init successfull, write value back to config
-			cfgSaveStr("alsa", "device", device.c_str());
+			device = "pulse";
+			rc = snd_pcm_open(&handle, device.c_str(), SND_PCM_STREAM_PLAYBACK, 0);
 		}
+
+		if (rc < 0)
+			printf("ALSA: unable to automatically determine audio device.\n");
 	}
 	else {
 		rc = snd_pcm_open(&handle, device.c_str(), SND_PCM_STREAM_PLAYBACK, 0);
@@ -186,6 +199,8 @@ std::vector<std::string> alsa_get_devicelist()
 	if (err != 0)
 		return result;
 
+	// special value to automatically detect on initialization
+	result.push_back("auto");
 
 	char** n = hints;
 	while (*n != NULL)
