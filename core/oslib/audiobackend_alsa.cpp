@@ -62,7 +62,7 @@ static void alsa_init()
 
 	if (rc < 0)
 	{
-		fprintf(stderr, "unable to open PCM device %s: %s\n", device.c_str(), snd_strerror(rc));
+		fprintf(stderr, "ALSA: unable to open PCM device %s: %s\n", device.c_str(), snd_strerror(rc));
 		return;
 	}
 
@@ -75,7 +75,7 @@ static void alsa_init()
 	rc=snd_pcm_hw_params_any(handle, params);
 	if (rc < 0)
 	{
-		fprintf(stderr, "Error:snd_pcm_hw_params_any %s\n", snd_strerror(rc));
+		fprintf(stderr, "ALSA: Error:snd_pcm_hw_params_any %s\n", snd_strerror(rc));
 		return;
 	}
 
@@ -85,7 +85,7 @@ static void alsa_init()
 	rc=snd_pcm_hw_params_set_access(handle, params, SND_PCM_ACCESS_RW_INTERLEAVED);
 	if (rc < 0)
 	{
-		fprintf(stderr, "Error:snd_pcm_hw_params_set_access %s\n", snd_strerror(rc));
+		fprintf(stderr, "ALSA: Error:snd_pcm_hw_params_set_access %s\n", snd_strerror(rc));
 		return;
 	}
 
@@ -93,7 +93,7 @@ static void alsa_init()
 	rc=snd_pcm_hw_params_set_format(handle, params, SND_PCM_FORMAT_S16_LE);
 	if (rc < 0)
 	{
-		fprintf(stderr, "Error:snd_pcm_hw_params_set_format %s\n", snd_strerror(rc));
+		fprintf(stderr, "ALSA: Error:snd_pcm_hw_params_set_format %s\n", snd_strerror(rc));
 		return;
 	}
 
@@ -101,7 +101,7 @@ static void alsa_init()
 	rc=snd_pcm_hw_params_set_channels(handle, params, 2);
 	if (rc < 0)
 	{
-		fprintf(stderr, "Error:snd_pcm_hw_params_set_channels %s\n", snd_strerror(rc));
+		fprintf(stderr, "ALSA: Error:snd_pcm_hw_params_set_channels %s\n", snd_strerror(rc));
 		return;
 	}
 
@@ -110,7 +110,7 @@ static void alsa_init()
 	rc=snd_pcm_hw_params_set_rate_near(handle, params, &val, &dir);
 	if (rc < 0)
 	{
-		fprintf(stderr, "Error:snd_pcm_hw_params_set_rate_near %s\n", snd_strerror(rc));
+		fprintf(stderr, "ALSA: Error:snd_pcm_hw_params_set_rate_near %s\n", snd_strerror(rc));
 		return;
 	}
 
@@ -119,26 +119,31 @@ static void alsa_init()
 	rc=snd_pcm_hw_params_set_period_size_near(handle, params, &period_size, &dir);
 	if (rc < 0)
 	{
-		fprintf(stderr, "Error:snd_pcm_hw_params_set_buffer_size_near %s\n", snd_strerror(rc));
+		fprintf(stderr, "ALSA: Error:snd_pcm_hw_params_set_buffer_size_near %s\n", snd_strerror(rc));
 		return;
 	}
 	else
+	{
 		printf("ALSA: period size set to %ld\n", period_size);
+	}
+
 	buffer_size = (44100 * 100 /* settings.omx.Audio_Latency */ / 1000 / period_size + 1) * period_size;
 	rc=snd_pcm_hw_params_set_buffer_size_near(handle, params, &buffer_size);
 	if (rc < 0)
 	{
-		fprintf(stderr, "Error:snd_pcm_hw_params_set_buffer_size_near %s\n", snd_strerror(rc));
+		fprintf(stderr, "ALSA: Error:snd_pcm_hw_params_set_buffer_size_near %s\n", snd_strerror(rc));
 		return;
 	}
 	else
+	{
 		printf("ALSA: buffer size set to %ld\n", buffer_size);
+	}
 
 	/* Write the parameters to the driver */
 	rc = snd_pcm_hw_params(handle, params);
 	if (rc < 0)
 	{
-		fprintf(stderr, "Unable to set hw parameters: %s\n", snd_strerror(rc));
+		fprintf(stderr, "ALSA: Unable to set hw parameters: %s\n", snd_strerror(rc));
 		return;
 	}
 }
