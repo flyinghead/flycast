@@ -141,7 +141,6 @@ u32 asRingFreeCount()
 }
 
 extern double mspdf;
-double mspdf_smooth;
 void WriteSample(s16 r, s16 l)
 {
 	const u32 ptr=(WritePtr+1)%RingBufferSampleCount;
@@ -151,8 +150,7 @@ void WriteSample(s16 r, s16 l)
 
 	if (WritePtr==(SAMPLE_COUNT-1))
 	{
-		mspdf_smooth = mspdf_smooth * 0.9 + mspdf * 0.1;
-		bool do_wait = settings.aica.LimitFPS && (mspdf_smooth <= 11);
+		bool do_wait = settings.aica.LimitFPS && (mspdf <= 11);
 
 		PushAudio(RingBuffer,SAMPLE_COUNT, do_wait);
 	}
