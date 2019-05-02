@@ -88,6 +88,8 @@ double full_rps;
 static u32 lightgun_line = 0xffff;
 static u32 lightgun_hpos;
 
+double mspdf;
+
 u32 fskip=0;
 //called from sh4 context , should update pvr/ta state and everything else
 int spg_line_sched(int tag, int cycl, int jit)
@@ -174,7 +176,7 @@ int spg_line_sched(int tag, int cycl, int jit)
 				}
 
 				double frames_done=spd_cpu/2;
-				double mspdf=1/frames_done*1000;
+				mspdf=1/frames_done*1000;
 
 				full_rps=(spd_fps+fskip/ts);
 

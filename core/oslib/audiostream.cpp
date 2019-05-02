@@ -117,14 +117,10 @@ audiobackend_t* GetAudioBackend(std::string slug)
 	return NULL;
 }
 
-extern double full_rps;
-
 u32 PushAudio(void* frame, u32 amt, bool wait)
 {
-    bool do_wait = (full_rps<50.f)?false:wait;
-
 	if (audiobackend_current != NULL) {
-		return audiobackend_current->push(frame, amt, do_wait);
+		return audiobackend_current->push(frame, amt, wait);
 	}
 	return 0;
 }
@@ -144,6 +140,8 @@ u32 asRingFreeCount()
 	return RingBufferSampleCount-asRingUsedCount();
 }
 
+extern double mspdf;
+double mspdf_smooth;
 void WriteSample(s16 r, s16 l)
 {
 	const u32 ptr=(WritePtr+1)%RingBufferSampleCount;
@@ -153,7 +151,10 @@ void WriteSample(s16 r, s16 l)
 
 	if (WritePtr==(SAMPLE_COUNT-1))
 	{
-		PushAudio(RingBuffer,SAMPLE_COUNT,settings.aica.LimitFPS);
+		mspdf_smooth = mspdf_smooth * 0.9 + mspdf * 0.1;
+		bool do_wait = settings.aica.LimitFPS && (mspdf_smooth <= 11);
+
+		PushAudio(RingBuffer,SAMPLE_COUNT, do_wait);
 	}
 }
 
