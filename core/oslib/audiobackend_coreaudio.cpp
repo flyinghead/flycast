@@ -159,7 +159,8 @@ audiobackend_t audiobackend_coreaudio = {
     "Core Audio", // Name
     &coreaudio_init,
     &coreaudio_push,
-    &coreaudio_term
+    &coreaudio_term,
+	NULL
 };
 
 static bool core = RegisterAudioBackend(&audiobackend_coreaudio);

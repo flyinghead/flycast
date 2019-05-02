@@ -43,7 +43,8 @@ audiobackend_t audiobackend_libao = {
 		"libao", // Name
 		&libao_init,
 		&libao_push,
-		&libao_term
+		&libao_term,
+		NULL
 };
 
 static bool ao = RegisterAudioBackend(&audiobackend_libao);
