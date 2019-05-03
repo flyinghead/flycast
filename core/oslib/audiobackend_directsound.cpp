@@ -185,7 +185,8 @@ audiobackend_t audiobackend_directsound = {
     "Microsoft DirectSound", // Name
     &directsound_init,
     &directsound_push,
-    &directsound_term
+    &directsound_term,
+	NULL
 };
 
 static bool ds = RegisterAudioBackend(&audiobackend_directsound);

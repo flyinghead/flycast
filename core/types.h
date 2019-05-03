@@ -344,6 +344,7 @@ int darw_printf(const wchar* Text,...);
 //includes from c++rt
 #include <vector>
 #include <string>
+#include <map>
 using namespace std;
 
 //used for asm-olny functions
@@ -387,7 +388,7 @@ using namespace std;
 #ifndef RELEASE
 #define EMUERROR(format, ...) printf("Error in %20s:%s:%d: " format "\n", \
 		__FILE__, __FUNCTION__, __LINE__, ##__VA_ARGS__)
-//strlen(__FILE__) <= 20 ? __FILE__ : __FILE__ + strlen(__FILE__) - 20, 
+//strlen(__FILE__) <= 20 ? __FILE__ : __FILE__ + strlen(__FILE__) - 20,
 #else
 #define EMUERROR(format, ...)
 #endif
@@ -681,7 +682,12 @@ struct settings_t
 
 	struct{
 		std::string backend;
+
+		// slug<<key, value>>
+		std::map<std::string, std::map<std::string, std::string>> options;
 	} audio;
+
+
 #if USE_OMX
 	struct
 	{

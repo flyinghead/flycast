@@ -43,7 +43,8 @@ audiobackend_t audiobackend_pulseaudio = {
 		"PulseAudio", // Name
 		&pulseaudio_init,
 		&pulseaudio_push,
-		&pulseaudio_term
+		&pulseaudio_term,
+		NULL
 };
 
 static bool pulse = RegisterAudioBackend(&audiobackend_pulseaudio);

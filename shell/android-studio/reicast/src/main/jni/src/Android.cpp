@@ -547,7 +547,8 @@ audiobackend_t audiobackend_android = {
         "Android Audio", // Name
         &androidaudio_init,
         &androidaudio_push,
-        &androidaudio_term
+        &androidaudio_term,
+        NULL
 };
 
 static bool android = RegisterAudioBackend(&audiobackend_android);

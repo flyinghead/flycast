@@ -721,6 +721,26 @@ void SaveSettings()
 	cfgSaveBool("config", "aica.NoBatch", settings.aica.NoBatch);
 	cfgSaveBool("config", "aica.NoSound", settings.aica.NoSound);
 	cfgSaveStr("audio", "backend", settings.audio.backend.c_str());
+
+	// Write backend specific settings
+	// std::map<std::string, std::map<std::string, std::string>>
+	for (std::map<std::string, std::map<std::string, std::string>>::iterator it = settings.audio.options.begin(); it != settings.audio.options.end(); ++it)
+	{
+
+		std::pair<std::string, std::map<std::string, std::string>> p = (std::pair<std::string, std::map<std::string, std::string>>)*it;
+		std::string section = p.first;
+		std::map<std::string, std::string> options = p.second;
+
+		for (std::map<std::string, std::string>::iterator it2 = options.begin(); it2 != options.end(); ++it2)
+		{
+			std::pair<std::string, std::string> p2 = (std::pair<std::string, std::string>)*it2;
+			std::string key = p2.first;
+			std::string val = p2.second;
+
+			cfgSaveStr(section.c_str(), key.c_str(), val.c_str());
+		}
+	}
+
 	cfgSaveBool("config", "rend.WideScreen", settings.rend.WideScreen);
 	cfgSaveBool("config", "rend.ShowFPS", settings.rend.ShowFPS);
 	if (!rtt_to_buffer_game || !settings.rend.RenderToTextureBuffer)

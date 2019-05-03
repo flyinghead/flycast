@@ -48,7 +48,8 @@ audiobackend_t audiobackend_oss = {
 		"Open Sound System", // Name
 		&oss_init,
 		&oss_push,
-		&oss_term
+		&oss_term,
+		NULL
 };
 
 static bool oss = RegisterAudioBackend(&audiobackend_oss);
