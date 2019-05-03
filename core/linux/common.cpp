@@ -70,7 +70,7 @@ void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 	//ucontext_t* ctx=(ucontext_t*)ctxr;
 	//printf("mprot hit @ ptr 0x%08X @@ code: %08X, %d\n",si->si_addr,ctx->uc_mcontext.arm_pc,dyna_cde);
 
-#if !defined(NO_MMU) && defined(HOST_64BIT_CPU)
+#if !defined(NO_MMU) && defined(HOST_64BIT_CPU) && HOST_OS != OS_WINDOWS
 #if HOST_CPU == CPU_ARM64
 	u32 op = *(u32*)ctx.pc;
 	bool write = (op & 0x00400000) == 0;

@@ -266,6 +266,8 @@
 		AEE6278E2224762000EC7E89 /* imgui_impl_opengl3.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEE6278B2224762000EC7E89 /* imgui_impl_opengl3.cpp */; };
 		AEE6279422247C0A00EC7E89 /* gui_util.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEE6279222247C0A00EC7E89 /* gui_util.cpp */; };
 		AEE6279622247C2B00EC7E89 /* keyboard_device.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEE6279522247C2B00EC7E89 /* keyboard_device.cpp */; };
+		AEF25642227C441F00348550 /* vmem32.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEF25640227C441F00348550 /* vmem32.cpp */; };
+		AEF25646227C442F00348550 /* fastmmu.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEF25644227C442F00348550 /* fastmmu.cpp */; };
 		AEFF7ECC214AEC810068CE11 /* modem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEFF7EC7214AEC800068CE11 /* modem.cpp */; };
 		AEFF7F4D214D9D590068CE11 /* pico_arp.c in Sources */ = {isa = PBXBuildFile; fileRef = AEFF7EFA214D9D590068CE11 /* pico_arp.c */; };
 		AEFF7F4E214D9D590068CE11 /* pico_dev_ppp.c in Sources */ = {isa = PBXBuildFile; fileRef = AEFF7EFE214D9D590068CE11 /* pico_dev_ppp.c */; };
@@ -803,6 +805,11 @@
 		AEE6279222247C0A00EC7E89 /* gui_util.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = gui_util.cpp; sourceTree = "<group>"; };
 		AEE6279322247C0A00EC7E89 /* gui_util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = gui_util.h; sourceTree = "<group>"; };
 		AEE6279522247C2B00EC7E89 /* keyboard_device.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = keyboard_device.cpp; sourceTree = "<group>"; };
+		AEF25640227C441F00348550 /* vmem32.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = vmem32.cpp; sourceTree = "<group>"; };
+		AEF25641227C441F00348550 /* vmem32.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = vmem32.h; sourceTree = "<group>"; };
+		AEF25643227C442F00348550 /* mmu_impl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mmu_impl.h; sourceTree = "<group>"; };
+		AEF25644227C442F00348550 /* fastmmu.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = fastmmu.cpp; sourceTree = "<group>"; };
+		AEF25645227C442F00348550 /* wince.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = wince.h; sourceTree = "<group>"; };
 		AEFF7EC7214AEC800068CE11 /* modem.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = modem.cpp; sourceTree = "<group>"; };
 		AEFF7EC8214AEC800068CE11 /* modem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = modem.h; sourceTree = "<group>"; };
 		AEFF7EC9214AEC800068CE11 /* modem_regs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = modem_regs.h; sourceTree = "<group>"; };
@@ -1355,6 +1362,8 @@
 		84B7BDF41B72720100F9733F /* mem */ = {
 			isa = PBXGroup;
 			children = (
+				AEF25640227C441F00348550 /* vmem32.cpp */,
+				AEF25641227C441F00348550 /* vmem32.h */,
 				84B7BDF51B72720100F9733F /* _vmem.cpp */,
 				84B7BDF61B72720100F9733F /* _vmem.h */,
 			);
@@ -1450,6 +1459,9 @@
 		84B7BE211B72720100F9733F /* modules */ = {
 			isa = PBXGroup;
 			children = (
+				AEF25644227C442F00348550 /* fastmmu.cpp */,
+				AEF25643227C442F00348550 /* mmu_impl.h */,
+				AEF25645227C442F00348550 /* wince.h */,
 				84B7BE221B72720100F9733F /* bsc.cpp */,
 				84B7BE231B72720100F9733F /* ccn.cpp */,
 				84B7BE241B72720100F9733F /* ccn.h */,
@@ -2209,6 +2221,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				AE649C01218C552500EF4A81 /* md5.c in Sources */,
+				AEF25642227C441F00348550 /* vmem32.cpp in Sources */,
 				84967CC61B8F49EE005F1140 /* pngrio.c in Sources */,
 				84B7BF741B72720200F9733F /* descrambl.cpp in Sources */,
 				AE649BF9218C552500EF4A81 /* fixed_intrin_ssse3.c in Sources */,
@@ -2423,6 +2436,7 @@
 				AE649BF7218C552500EF4A81 /* fixed.c in Sources */,
 				AEFF7F5B214D9D590068CE11 /* pico_socket_tcp.c in Sources */,
 				AE649C27218C553A00EF4A81 /* BraIA64.c in Sources */,
+				AEF25646227C442F00348550 /* fastmmu.cpp in Sources */,
 				84B7BF4A1B72720200F9733F /* ccn.cpp in Sources */,
 				AEFF7F5F214D9D590068CE11 /* pico_udp.c in Sources */,
 				AEFF7F70214D9D590068CE11 /* pico_frame.c in Sources */,
