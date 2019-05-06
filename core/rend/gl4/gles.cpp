@@ -656,6 +656,8 @@ static bool RenderFrame()
 	{
 		scale_x=fb_scale_x;
 		scale_y=fb_scale_y;
+		if (SCALER_CTL.interlace == 0)
+			scale_y *= SCALER_CTL.vscalefactor / 0x400;
 
 		//work out scaling parameters !
 		//Pixel doubling is on VO, so it does not affect any pixel operations
@@ -868,6 +870,12 @@ static bool RenderFrame()
 			float min_y = pvrrc.fb_Y_CLIP.min / scale_y;
 			if (!is_rtt)
 			{
+				if (SCALER_CTL.interlace)
+				{
+					// Clipping is done after scaling/filtering so account for that if enabled
+					height *= SCALER_CTL.vscalefactor / 0x400;
+					min_y *= SCALER_CTL.vscalefactor / 0x400;
+				}
 				if (settings.rend.Rotate90)
 				{
 					float t = width;
