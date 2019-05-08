@@ -45,6 +45,7 @@ ifeq (,$(platform))
     else ifeq ($(ARCH), $(filter $(ARCH), x86_64 AMD64 amd64))
         platform = x64
     else ifneq (,$(findstring aarch64,$(ARCH)))
+        platform = arm64
         HARDWARE = $(shell grep Hardware /proc/cpuinfo)
         ifneq (,$(findstring Vero4K,$(HARDWARE)))
             platform = vero4k
@@ -121,6 +122,15 @@ else ifneq (,$(findstring x64,$(platform)))
     ifneq (,$(findstring sse4_1,$(platform)))
         HAS_SOFTREND := 1
     endif
+
+# Generic 64 bit ARM (armv8) Linux
+else ifneq (,$(findstring arm64,$(platform)))
+    NOT_ARM := 1
+    USE_X11 := 1
+    ARM64_REC := 1
+    ISARM64 := 1
+    CFLAGS += -D TARGET_LINUX_ARMv8 -D TARGET_NO_AREC -fno-builtin-sqrtf
+    CXXFLAGS += -fexceptions
 
 # Generic 32 bit ARMhf (a.k.a. ARMv7h)
 else ifneq (,$(findstring armv7h,$(platform)))
