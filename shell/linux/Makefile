@@ -6,6 +6,7 @@ FOR_LINUX :=1
 WEBUI :=1
 USE_OSS := 1
 #USE_PULSEAUDIO := 1
+#USE_SDLAUDIO := 1
 #USE_LIBAO := 1
 USE_EVDEV := 1
 USE_UDEV := 1
@@ -358,6 +359,11 @@ endif
 ifdef USE_PULSEAUDIO
     CXXFLAGS += `pkg-config --cflags libpulse-simple` -D USE_PULSEAUDIO
     LIBS += `pkg-config --libs libpulse-simple`
+endif
+
+ifdef USE_SDLAUDIO
+    CXXFLAGS += `sdl2-config --cflags` -D USE_SDL_AUDIO
+    LIBS += `sdl2-config --libs`
 endif
 
 ifdef USE_LIBAO
