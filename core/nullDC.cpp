@@ -36,6 +36,7 @@ static bool safemode_game;
 static bool tr_poly_depth_mask_game;
 static bool extra_depth_game;
 static bool full_mmu_game;
+static bool disable_vmem32_game;
 
 cThread emu_thread(&dc_run, NULL);
 
@@ -140,6 +141,7 @@ void LoadSpecialSettings()
 	tr_poly_depth_mask_game = false;
 	extra_depth_game = false;
 	full_mmu_game = false;
+	disable_vmem32_game = false;
 	
 	if (reios_windows_ce
 			// Half-life
@@ -197,6 +199,23 @@ void LoadSpecialSettings()
 		printf("Enabling Extra depth scaling for game %s\n", reios_product_number);
 		settings.rend.ExtraDepthScale = 10000;
 		extra_depth_game = true;
+	}
+	// Super Producers
+	if (!strncmp("T14303M", reios_product_number, 7)
+		// Giant Killers
+		|| !strncmp("T45401D 50", reios_product_number, 10)
+		// Wild Metal (US)
+		|| !strncmp("T42101N 00", reios_product_number, 10)
+		// Wild Metal (EU)
+		|| !strncmp("T40501D-50", reios_product_number, 10)
+		// Resident Evil 2 (US)
+		|| !strncmp("T1205N", reios_product_number, 6)
+		// Resident Evil 2 (EU)
+		|| !strncmp("T7004D  50", reios_product_number, 10))
+	{
+		printf("Disabling 32-bit virtual memory for game %s\n", reios_product_number);
+		settings.dynarec.disable_vmem32 = true;
+		disable_vmem32_game = true;
 	}
 #elif DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
 	printf("Game ID is [%s]\n", naomi_game_id);
@@ -682,7 +701,8 @@ void SaveSettings()
 	cfgSaveBool("config", "Dynarec.unstable-opt", settings.dynarec.unstable_opt);
 	if (!safemode_game || !settings.dynarec.safemode)
 		cfgSaveBool("config", "Dynarec.safe-mode", settings.dynarec.safemode);
-	cfgSaveBool("config", "Dynarec.DisableVmem32", settings.dynarec.disable_vmem32);
+	if (!disable_vmem32_game || !settings.dynarec.disable_vmem32)
+		cfgSaveBool("config", "Dynarec.DisableVmem32", settings.dynarec.disable_vmem32);
 	cfgSaveInt("config", "Dreamcast.Language", settings.dreamcast.language);
 	cfgSaveBool("config", "aica.LimitFPS", settings.aica.LimitFPS);
 	cfgSaveBool("config", "aica.NoBatch", settings.aica.NoBatch);
