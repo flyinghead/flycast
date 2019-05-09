@@ -1420,9 +1420,12 @@ private:
 	std::vector<const VRegister*> call_fregs;
 	Arm64RegAlloc regalloc;
 	RuntimeBlockInfo* block;
+	const int write_memory_rewrite_size = 3;  // same size (fast write) for any size: add, bfc, str
+	#ifdef EXPLODE_SPANS
 	const int read_memory_rewrite_size = 6;	// worst case for u64: add, bfc, ldr, fmov, lsr, fmov
-											// FIXME rewrite size per read/write size?
-	const int write_memory_rewrite_size = 3;
+	#else
+	const int read_memory_rewrite_size = 4;	// worst case for u64: add, bfc, ldr, str
+	#endif
 };
 
 static Arm64Assembler* compiler;
