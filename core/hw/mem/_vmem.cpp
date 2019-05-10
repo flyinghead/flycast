@@ -440,7 +440,7 @@ void _vmem_bm_reset() {
     if (!virt_ram_base)
 #endif
     {
-		bm_vmem_pagefill((void**)p_sh4rcb->fpcb, FPCB_SIZE);
+		bm_vmem_pagefill((void**)p_sh4rcb->fpcb, sizeof(p_sh4rcb->fpcb));
 	}
 }
 

@@ -8,7 +8,7 @@
 		#define __USE_GNU 1
 	#endif
 
-  #if !defined(TARGET_NO_EXCEPTIONS)
+  #if !defined(TARGET_NO_NVMEM)
     #include <ucontext.h>
   #endif
 #endif
@@ -29,7 +29,7 @@ void bicopy(Ta& rei, Tb& seg, bool to_segfault) {
 
 void context_segfault(rei_host_context_t* reictx, void* segfault_ctx, bool to_segfault) {
 
-#if !defined(TARGET_NO_EXCEPTIONS)
+#if !defined(TARGET_NO_NVMEM)
 #if HOST_CPU == CPU_ARM
 	#if defined(__FreeBSD__)
 		bicopy(reictx->pc, MCTX(.__gregs[_REG_PC]), to_segfault);

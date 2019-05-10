@@ -34,7 +34,7 @@
 
 #include "hw/sh4/dyna/ngen.h"
 
-#if !defined(TARGET_NO_EXCEPTIONS)
+#if !defined(TARGET_NO_NVMEM)
 bool ngen_Rewrite(unat& addr,unat retadr,unat acc);
 u32* ngen_readm_fail_v2(u32* ptr,u32* regs,u32 saddr);
 bool VramLockedWrite(u8* address);
@@ -57,7 +57,6 @@ void sigill_handler(int sn, siginfo_t * si, void *segfault_ctx) {
 }
 #endif
 
-#if !defined(TARGET_NO_EXCEPTIONS)
 void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 {
 	rei_host_context_t ctx;
@@ -108,12 +107,9 @@ void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 		signal(SIGSEGV, SIG_DFL);
 	}
 }
-#endif
 
-#endif
-void install_fault_handler (void)
+void install_fault_handler(void)
 {
-#if !defined(TARGET_NO_EXCEPTIONS)
 	struct sigaction act, segv_oact;
 	memset(&act, 0, sizeof(act));
 	act.sa_sigaction = fault_handler;
@@ -127,14 +123,17 @@ void install_fault_handler (void)
     act.sa_sigaction = sigill_handler;
     sigaction(SIGILL, &act, &segv_oact);
 #endif
-#endif
 }
+#else  // !defined(TARGET_NO_NVMEM)
+// No exceptions/nvmem dummy handlers.
+void install_fault_handler(void) {}
+#endif // !defined(TARGET_NO_NVMEM)
 
 #include <errno.h>
 
 void VArray2::LockRegion(u32 offset,u32 size)
 {
-	#if !defined(TARGET_NO_EXCEPTIONS)
+	#if !defined(TARGET_NO_NVMEM)
 	u32 inpage=offset & PAGE_MASK;
 	u32 rv=mprotect (data+offset-inpage, size+inpage, PROT_READ );
 	if (rv!=0)
@@ -185,7 +184,7 @@ void print_mem_addr()
 
 void VArray2::UnLockRegion(u32 offset,u32 size)
 {
-	#if !defined(TARGET_NO_EXCEPTIONS)
+	#if !defined(TARGET_NO_NVMEM)
 	u32 inpage=offset & PAGE_MASK;
 	u32 rv=mprotect (data+offset-inpage, size+inpage, PROT_READ | PROT_WRITE);
 	if (rv!=0)
