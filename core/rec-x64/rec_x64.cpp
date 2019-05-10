@@ -1394,7 +1394,11 @@ private:
 		mov(rax, (uintptr_t)p_sh4rcb->cntx.vmem32_base);
 
 		u32 size = op.flags & 0x7f;
-		verify(getCurr() - start_addr == 26);
+		//verify(getCurr() - start_addr == 26);
+		if (mem_access_offset == 0)
+			mem_access_offset = getCurr() - start_addr;
+		else
+			verify(getCurr() - start_addr == mem_access_offset);
 
 		block->memory_accesses[(void*)getCurr()] = (u32)current_opid;
 		switch (size)
@@ -1438,7 +1442,11 @@ private:
 		mov(rax, (uintptr_t)p_sh4rcb->cntx.vmem32_base);
 
 		u32 size = op.flags & 0x7f;
-		verify(getCurr() - start_addr == 26);
+		//verify(getCurr() - start_addr == 26);
+		if (mem_access_offset == 0)
+			mem_access_offset = getCurr() - start_addr;
+		else
+			verify(getCurr() - start_addr == mem_access_offset);
 
 		block->memory_accesses[(void*)getCurr()] = (u32)current_opid;
 		switch (size)
@@ -1707,6 +1715,8 @@ private:
 	static const f32 cvtf2i_pos_saturation;
 	static const u32 read_mem_op_size;
 	static const u32 write_mem_op_size;
+public:
+	static u32 mem_access_offset;
 };
 
 const u32 BlockCompiler::float_sign_mask = 0x80000000;
@@ -1714,6 +1724,7 @@ const u32 BlockCompiler::float_abs_mask = 0x7fffffff;
 const f32 BlockCompiler::cvtf2i_pos_saturation = 2147483520.0f;		// IEEE 754: 0x4effffff;
 const u32 BlockCompiler::read_mem_op_size = 30;
 const u32 BlockCompiler::write_mem_op_size = 30;
+u32 BlockCompiler::mem_access_offset = 0;
 
 void X64RegAlloc::Preload(u32 reg, Xbyak::Operand::Code nreg)
 {
@@ -1787,7 +1798,7 @@ bool ngen_Rewrite(unat& host_pc, unat, unat)
 	verify(opid < block->oplist.size());
 	const shil_opcode& op = block->oplist[opid];
 
-	BlockCompiler *assembler = new BlockCompiler(code_ptr - 26);
+	BlockCompiler *assembler = new BlockCompiler(code_ptr - BlockCompiler::mem_access_offset);
 	assembler->InitializeRewrite(block, opid);
 	if (op.op == shop_readm)
 		assembler->GenReadMemorySlow(op, block);
@@ -1797,7 +1808,7 @@ bool ngen_Rewrite(unat& host_pc, unat, unat)
 	verify(block->host_code_size >= assembler->getSize());
 	delete assembler;
 	block->memory_accesses.erase(it);
-	host_pc = (unat)(code_ptr - 26);
+	host_pc = (unat)(code_ptr - BlockCompiler::mem_access_offset);
 
 	return true;
 }

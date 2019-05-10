@@ -3,10 +3,22 @@
 #include <sstream>
 #include <algorithm>
 
+// On windows, transform / to \\
+
+string normalize_path_separator(string path)
+{
+	#if HOST_OS == OS_WINDOWS
+		std::replace( path.begin(), path.end(), '/', '\\');
+	#endif
+
+	return path;
+}
+
 // given file/name.ext or file\name.ext returns file/ or file\, depending on the platform
 // given name.ext returns ./ or .\, depending on the platform
 string OS_dirname(string file)
 {
+	file = normalize_path_separator(file);
 	#if HOST_OS == OS_WINDOWS
 		const char sep = '\\';
 	#else
@@ -23,19 +35,6 @@ string OS_dirname(string file)
 	}
 
 	return file.substr(0, last_slash + 1);
-}
-
-// On windows, transform / to \\
-// On linux, transform \\ to /
-string normalize_path_separator(string path)
-{
-	#if HOST_OS == OS_WINDOWS
-		std::replace( path.begin(), path.end(), '/', '\\');
-	#else
-		std::replace( path.begin(), path.end(), '\\', '/');
-	#endif
-
-	return path;
 }
 
 #if 0 // TODO: Move this to some tests, make it platform agnostic
