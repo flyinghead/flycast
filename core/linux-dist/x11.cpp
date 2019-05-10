@@ -361,6 +361,11 @@ void input_x11_init()
 		printf("X11 Keyboard input disabled by config.\n");
 }
 
+static int x11_error_handler(Display *, XErrorEvent *)
+{
+	return 0;
+}
+
 void x11_window_create()
 {
 	if (cfgLoadInt("pvr", "nox11", 0) == 0)
@@ -519,20 +524,22 @@ void x11_window_create()
 				GLX_CONTEXT_PROFILE_MASK_ARB, GLX_CONTEXT_CORE_PROFILE_BIT_ARB,
 				None
 			};
+			int (*old_handler)(Display *, XErrorEvent *) = XSetErrorHandler(&x11_error_handler);
 
 			x11_glc = glXCreateContextAttribsARB(x11Display, bestFbc, 0, True, context_attribs);
 			if (!x11_glc)
 			{
 				printf("Open GL 4.3 not supported\n");
-				// Try GL 3.1
+				// Try GL 3.0
 				context_attribs[1] = 3;
-				context_attribs[3] = 1;
+				context_attribs[3] = 0;
 				x11_glc = glXCreateContextAttribsARB(x11Display, bestFbc, 0, True, context_attribs);
 				if (!x11_glc)
 				{
-					die("Open GL 3.1 not supported\n");
+					die("Open GL 3.0 not supported\n");
 				}
 			}
+			XSetErrorHandler(old_handler);
 			XSync(x11Display, False);
 
 		#endif
