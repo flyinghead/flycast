@@ -125,12 +125,10 @@ WIN32_ONLY( ".seh_pushreg %r14              \n\t")
 #endif
 			"movl $" _S(SH4_TIMESLICE) "," _U "cycle_counter(%rip)  \n"
 
-#ifdef _WIN32
-			"lea " _U "jmp_env(%rip), %rcx	\n\t"	// SETJMP
-#else
+#ifndef _WIN32
 			"lea " _U "jmp_env(%rip), %rdi	\n\t"
-#endif
 			"call " _U "setjmp				\n\t"
+#endif
 
 		"1:                                 \n\t"   // run_loop
 			"movq " _U "p_sh4rcb(%rip), %rax		\n\t"
@@ -229,15 +227,18 @@ static void handle_mem_exception(u32 exception_raised, u32 pc)
 		else
 			spc = pc;
 		cycle_counter += CPU_RATIO * 2;	// probably more is needed but no easy way to find out
+#ifndef _WIN32
 		longjmp(jmp_env, 1);
+#endif
 	}
 }
+
+static u32 exception_raised;
 
 template<typename T>
 static T ReadMemNoEx(u32 addr, u32 pc)
 {
 #ifndef NO_MMU
-	u32 exception_raised;
 	T rv = mmu_ReadMemNoEx<T>(addr, &exception_raised);
 	handle_mem_exception(exception_raised, pc);
 
@@ -249,11 +250,12 @@ static T ReadMemNoEx(u32 addr, u32 pc)
 }
 
 template<typename T>
-static void WriteMemNoEx(u32 addr, T data, u32 pc)
+static u32 WriteMemNoEx(u32 addr, T data, u32 pc)
 {
 #ifndef NO_MMU
 	u32 exception_raised = mmu_WriteMemNoEx<T>(addr, data);
 	handle_mem_exception(exception_raised, pc);
+	return exception_raised;
 #endif
 }
 
@@ -267,24 +269,34 @@ static void handle_sh4_exception(SH4ThrownException& ex, u32 pc)
 	}
 	Do_Exception(pc, ex.expEvn, ex.callVect);
 	cycle_counter += CPU_RATIO * 4;	// probably more is needed
+#ifndef _WIN32
 	longjmp(jmp_env, 1);
+#endif
 }
 
-static void interpreter_fallback(u16 op, OpCallFP *oph, u32 pc)
+static u32 interpreter_fallback(u16 op, OpCallFP *oph, u32 pc)
 {
 	try {
 		oph(op);
+#ifdef _WIN32
+		return 0;
+#endif
 	} catch (SH4ThrownException& ex) {
 		handle_sh4_exception(ex, pc);
+		return 1;
 	}
 }
 
-static void do_sqw_mmu_no_ex(u32 addr, u32 pc)
+static u32 do_sqw_mmu_no_ex(u32 addr, u32 pc)
 {
 	try {
 		do_sqw_mmu(addr);
+#ifdef _WIN32
+		return 0;
+#endif
 	} catch (SH4ThrownException& ex) {
 		handle_sh4_exception(ex, pc);
+		return 1;
 	}
 }
 
@@ -341,7 +353,6 @@ public:
 #else
 		sub(rsp, 0x8);		// align stack
 #endif
-		Xbyak::Label exit_block;
 
 		if (mmu_enabled() && block->has_fpu_op)
 		{
@@ -370,28 +381,32 @@ public:
 
 			regalloc.OpBegin(&op, current_opid);
 
-			switch (op.op) {
-
+			switch (op.op)
+			{
 			case shop_ifb:
+				if (mmu_enabled())
 				{
-					if (mmu_enabled())
-					{
-						mov(call_regs64[1], reinterpret_cast<uintptr_t>(*OpDesc[op.rs3._imm]->oph));	// op handler
-						mov(call_regs[2], block->vaddr + op.guest_offs - (op.delay_slot ? 1 : 0));	// pc
-					}
+					mov(call_regs64[1], reinterpret_cast<uintptr_t>(*OpDesc[op.rs3._imm]->oph));	// op handler
+					mov(call_regs[2], block->vaddr + op.guest_offs - (op.delay_slot ? 1 : 0));	// pc
+				}
 
-					if (op.rs1._imm)
-					{
-						mov(rax, (size_t)&next_pc);
-						mov(dword[rax], op.rs2._imm);
-					}
+				if (op.rs1._imm)
+				{
+					mov(rax, (size_t)&next_pc);
+					mov(dword[rax], op.rs2._imm);
+				}
 
-					mov(call_regs[0], op.rs3._imm);
+				mov(call_regs[0], op.rs3._imm);
 					
-					if (!mmu_enabled())
-						GenCall(OpDesc[op.rs3._imm]->oph);
-					else
-						GenCall(interpreter_fallback);
+				if (!mmu_enabled())
+					GenCall(OpDesc[op.rs3._imm]->oph);
+				else
+				{
+					GenCall(interpreter_fallback);
+#ifdef _WIN32
+					test(eax, 1);
+					jnz(exit_block, T_NEAR);
+#endif
 				}
 				break;
 
@@ -761,6 +776,10 @@ public:
 						mov(call_regs[1], block->vaddr + op.guest_offs - (op.delay_slot ? 1 : 0));	// pc
 
 						GenCall(do_sqw_mmu_no_ex);
+#ifdef _WIN32
+						test(eax, 1);
+						jnz(exit_block, T_NEAR);
+#endif
 					}
 					else
 					{
@@ -900,7 +919,7 @@ public:
 
 			case shop_ftrv:
 				mov(rax, (uintptr_t)op.rs1.reg_ptr());
-#if 0	// vfmadd231ps and vmulps cause rounding proglems
+#if 0	// vfmadd231ps and vmulps cause rounding problems
 				if (cpu.has(Xbyak::util::Cpu::tFMA))
 				{
 					movaps(xmm0, xword[rax]);					// fn[0-4]
@@ -1117,7 +1136,7 @@ public:
 			die("1..8 bytes");
 		}
 
-		if (mmu_enabled())
+		if (mmu_enabled() && vmem32_enabled())
 		{
 			Xbyak::Label quick_exit;
 			if (getCurr() - start_addr <= read_mem_op_size - 6)
@@ -1127,6 +1146,13 @@ public:
 			L(quick_exit);
 			verify(getCurr() - start_addr == read_mem_op_size);
 		}
+#ifdef _WIN32
+		if (mmu_enabled())
+		{
+			test(dword[(void *)&exception_raised], 1);
+			jnz(exit_block, T_NEAR);
+		}
+#endif
 	}
 
 	void GenWriteMemorySlow(const shil_opcode& op, RuntimeBlockInfo* block)
@@ -1164,7 +1190,7 @@ public:
 		default:
 			die("1..8 bytes");
 		}
-		if (mmu_enabled())
+		if (mmu_enabled() && vmem32_enabled())
 		{
 			Xbyak::Label quick_exit;
 			if (getCurr() - start_addr <= write_mem_op_size - 6)
@@ -1174,6 +1200,13 @@ public:
 			L(quick_exit);
 			verify(getCurr() - start_addr == write_mem_op_size);
 		}
+#ifdef _WIN32
+		if (mmu_enabled())
+		{
+			test(eax, 1);
+			jnz(exit_block, T_NEAR);
+		}
+#endif
 	}
 
 	void InitializeRewrite(RuntimeBlockInfo *block, size_t opid)
@@ -1710,6 +1743,7 @@ private:
 	X64RegAlloc regalloc;
 	Xbyak::util::Cpu cpu;
 	size_t current_opid;
+	Xbyak::Label exit_block;
 	static const u32 float_sign_mask;
 	static const u32 float_abs_mask;
 	static const f32 cvtf2i_pos_saturation;
