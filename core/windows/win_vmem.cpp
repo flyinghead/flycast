@@ -89,8 +89,8 @@ void vmem_platform_create_mappings(const vmem_mapping *vmem_maps, unsigned numma
 				unsigned offset = vmem_maps[i].start_address + j * vmem_maps[i].memsize;
 
 				void *ptr = MapViewOfFileEx(mem_handle, protection, 0, vmem_maps[i].memoffset,
-				                    vmem_maps[i].memsize, &virt_ram_base[vmem_maps[i].start_address]);
-				verify(ptr == &virt_ram_base[vmem_maps[i].start_address]);
+				                    vmem_maps[i].memsize, &virt_ram_base[offset]);
+				verify(ptr == &virt_ram_base[offset]);
 			}
 		}
 	}
