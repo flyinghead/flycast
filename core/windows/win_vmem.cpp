@@ -3,6 +3,8 @@
 #include <windows.h>
 #include <windowsx.h>
 
+#include "hw/mem/_vmem.h"
+
 // Implementation of the vmem related function for Windows platforms.
 // For now this probably does some assumptions on the CPU/platform.
 
@@ -29,7 +31,7 @@ static char * base_alloc = NULL;
 
 // Plase read the POSIX implementation for more information. On Windows this is
 // rather straightforward.
-VMemType vmem_platform_init(void *vmem_base_addr, void *sh4rcb_addr) {
+VMemType vmem_platform_init(void **vmem_base_addr, void **sh4rcb_addr) {
 	// Firt let's try to allocate the in-memory file
 	mem_handle = CreateFileMapping(INVALID_HANDLE_VALUE, 0, PAGE_READWRITE, 0, RAM_SIZE_MAX + VRAM_SIZE_MAX + ARAM_SIZE_MAX, 0);
 
@@ -38,8 +40,8 @@ VMemType vmem_platform_init(void *vmem_base_addr, void *sh4rcb_addr) {
 	base_alloc = (char*)VirtualAlloc(0, memsize, MEM_RESERVE, PAGE_NOACCESS);
 
 	// Calculate pointers now
-	sh4rcb_addr = &base_alloc[0];
-	vmem_base_addr = &base_alloc[sizeof(Sh4RCB)];
+	*sh4rcb_addr = &base_alloc[0];
+	*vmem_base_addr = &base_alloc[sizeof(Sh4RCB)];
 
 	return MemType512MB;
 }
