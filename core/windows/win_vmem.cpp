@@ -12,13 +12,13 @@
 // The implementation allows it to be empty (that is, to not lock memory).
 
 void VLockedMemory::LockRegion(unsigned offset, unsigned size) {
-	verify(offset + size < this->size && size != 0);
+	//verify(offset + size < this->size && size != 0);
 	DWORD old;
 	VirtualProtect(&data[offset], size, PAGE_READONLY, &old);
 }
 
 void VLockedMemory::UnLockRegion(unsigned offset, unsigned size) {
-	verify(offset + size <= this->size && size != 0);
+	//verify(offset + size <= this->size && size != 0);
 	DWORD old;
 	VirtualProtect(&data[offset], size, PAGE_READWRITE, &old);
 }
@@ -69,6 +69,12 @@ void vmem_platform_create_mappings(const vmem_mapping *vmem_maps, unsigned numma
 
 	// Unmap the whole section
 	VirtualFree(base_alloc, 0, MEM_RELEASE);
+
+	// Map the SH4CB block too
+	void *base_ptr = VirtualAlloc(base_alloc, sizeof(Sh4RCB), MEM_RESERVE, PAGE_NOACCESS);
+	verify(base_ptr == base_alloc);
+	void *cntx_ptr = VirtualAlloc((u8*)p_sh4rcb + sizeof(p_sh4rcb->fpcb), sizeof(Sh4RCB) - sizeof(p_sh4rcb->fpcb), MEM_COMMIT, PAGE_READWRITE);
+	verify(cntx_ptr == (u8*)p_sh4rcb + sizeof(p_sh4rcb->fpcb));
 
 	for (unsigned i = 0; i < nummaps; i++) {
 		unsigned address_range_size = vmem_maps[i].end_address - vmem_maps[i].start_address;
