@@ -21,7 +21,6 @@ _vmem_WriteMem32FP* _vmem_WF32[HANDLER_COUNT];
 //upper 8b of the address
 void* _vmem_MemInfo_ptr[0x100];
 
-
 void _vmem_get_ptrs(u32 sz,bool write,void*** vmap,void*** func)
 {
 	*vmap=_vmem_MemInfo_ptr;
@@ -385,10 +384,7 @@ void _vmem_reset()
 	verify(_vmem_register_handler(0,0,0,0,0,0)==0);
 }
 
-void _vmem_term()
-{
-
-}
+void _vmem_term() {}
 
 #include "hw/pvr/pvr_mem.h"
 #include "hw/sh4/sh4_mem.h"
@@ -409,414 +405,119 @@ void* malloc_pages(size_t size) {
 #endif
 }
 
-bool _vmem_reserve_nonvmem()
-{
-	virt_ram_base = 0;
-
-	p_sh4rcb=(Sh4RCB*)malloc_pages(sizeof(Sh4RCB));
-
-	mem_b.size=RAM_SIZE;
-	mem_b.data=(u8*)malloc_pages(RAM_SIZE);
-
-	vram.size=VRAM_SIZE;
-	vram.data=(u8*)malloc_pages(VRAM_SIZE);
-
-	aica_ram.size=ARAM_SIZE;
-	aica_ram.data=(u8*)malloc_pages(ARAM_SIZE);
-
-	return true;
-}
-
-void _vmem_bm_reset_nvmem();
-
+// Resets the FPCB table (by either clearing it to the default val
+// or by flushing it and making it fault on access again.
 void _vmem_bm_reset() {
-	if (virt_ram_base) {
-		#if !defined(TARGET_NO_NVMEM)
-			_vmem_bm_reset_nvmem();
-		#endif
-	}
-
-#ifndef TARGET_IPHONE
-    if (!virt_ram_base)
-#endif
-    {
+	// If we allocated it via vmem:
+	if (virt_ram_base)
+		vmem_platform_reset_mem(p_sh4rcb->fpcb, sizeof(p_sh4rcb->fpcb));
+	else
+		// We allocated it via a regular malloc/new/whatever on the heap
 		bm_vmem_pagefill((void**)p_sh4rcb->fpcb, sizeof(p_sh4rcb->fpcb));
-	}
 }
 
-static void _vmem_release_nonvmem()
-{
-	free(p_sh4rcb);
-	free(vram.data);
-	free(aica_ram.data);
-	free(mem_b.data);
-}
+// This gets called whenever there is a pagefault, it is possible that it lands
+// on the fpcb memory range, which is allocated on miss. Returning true tells the
+// fault handler this was us, and that the page is resolved and can continue the execution.
+bool BM_LockedWrite(u8* address) {
+	if (!virt_ram_base)
+		return false;  // No vmem, therefore not us who caused this.
 
-#if !defined(TARGET_NO_NVMEM)
+	uintptr_t ptrint = (uintptr_t)address;
+	uintptr_t start  = (uintptr_t)p_sh4rcb->fpcb;
+	uintptr_t end    = start + sizeof(p_sh4rcb->fpcb);
 
-#define MAP_RAM_START_OFFSET  0
-#define MAP_VRAM_START_OFFSET (MAP_RAM_START_OFFSET+RAM_SIZE)
-#define MAP_ARAM_START_OFFSET (MAP_VRAM_START_OFFSET+VRAM_SIZE)
-
-#if HOST_OS==OS_WINDOWS
-#include <Windows.h>
-HANDLE mem_handle;
-
-void* _nvmem_map_buffer(u32 dst,u32 addrsz,u32 offset,u32 size, bool w)
-{
-	void* ptr;
-	void* rv;
-
-	u32 map_times=addrsz/size;
-	verify((addrsz%size)==0);
-	verify(map_times>=1);
-
-	rv= MapViewOfFileEx(mem_handle,FILE_MAP_READ | (w?FILE_MAP_WRITE:0),0,offset,size,&virt_ram_base[dst]);
-	if (!rv)
-		return 0;
-
-	for (u32 i=1;i<map_times;i++)
-	{
-		dst+=size;
-		ptr=MapViewOfFileEx(mem_handle,FILE_MAP_READ | (w?FILE_MAP_WRITE:0),0,offset,size,&virt_ram_base[dst]);
-		if (!ptr) return 0;
-	}
-
-	return rv;
-}
-
-
-void* _nvmem_unused_buffer(u32 start,u32 end)
-{
-	void* ptr=VirtualAlloc(&virt_ram_base[start],end-start,MEM_RESERVE,PAGE_NOACCESS);
-
-	if (ptr == 0)
-		return 0;
-
-	return ptr;
-}
-
-void* _nvmem_alloc_mem()
-{
-	mem_handle = CreateFileMapping(INVALID_HANDLE_VALUE, 0, PAGE_READWRITE, 0, RAM_SIZE_MAX + VRAM_SIZE_MAX + ARAM_SIZE_MAX, 0);
-
-	void* rv= (u8*)VirtualAlloc(0, 512*1024*1024 + sizeof(Sh4RCB) + ARAM_SIZE_MAX, MEM_RESERVE, PAGE_NOACCESS);
-	if (rv) VirtualFree(rv,0,MEM_RELEASE);
-	return rv;
-}
-
-#else
-	#include <sys/mman.h>
-	#include <sys/types.h>
-	#include <sys/stat.h>
-	#include <fcntl.h>
-	#include <errno.h>
-	#include <unistd.h>
-
-#ifndef MAP_NOSYNC
-#define MAP_NOSYNC       0 //missing from linux :/ -- could be the cause of android slowness ?
-#endif
-
-#ifdef _ANDROID
-#include <linux/ashmem.h>
-
-#ifndef ASHMEM_DEVICE
-#define ASHMEM_DEVICE "/dev/ashmem"
-#endif
-int ashmem_create_region(const char *name, size_t size)
-{
-	int fd, ret;
-
-	fd = open(ASHMEM_DEVICE, O_RDWR);
-	if (fd < 0)
-		return fd;
-
-	if (name) {
-		char buf[ASHMEM_NAME_LEN];
-
-		strlcpy(buf, name, sizeof(buf));
-		ret = ioctl(fd, ASHMEM_SET_NAME, buf);
-		if (ret < 0)
-			goto error;
-	}
-
-	ret = ioctl(fd, ASHMEM_SET_SIZE, size);
-	if (ret < 0)
-		goto error;
-
-	return fd;
-
-error:
-	close(fd);
-	return ret;
-}
-#endif
-
-	int fd;
-	void* _nvmem_unused_buffer(u32 start,u32 end)
-	{
-		void* ptr=mmap(&virt_ram_base[start], end-start, PROT_NONE, MAP_FIXED | MAP_PRIVATE | MAP_ANON, -1, 0);
-		if (MAP_FAILED==ptr)
-			return 0;
-		return ptr;
-	}
-
-	
-	void* _nvmem_map_buffer(u32 dst,u32 addrsz,u32 offset,u32 size, bool w)
-	{
-		void* ptr;
-		void* rv;
-
-		printf("MAP %08X w/ %d\n",dst,offset);
-		u32 map_times=addrsz/size;
-		verify((addrsz%size)==0);
-		verify(map_times>=1);
-		u32 prot=PROT_READ|(w?PROT_WRITE:0);
-		rv= mmap(&virt_ram_base[dst], size, prot, MAP_SHARED | MAP_NOSYNC | MAP_FIXED, fd, offset);
-		if (MAP_FAILED==rv || rv!=(void*)&virt_ram_base[dst] || (mprotect(rv,size,prot)!=0)) 
-		{
-			printf("MAP1 failed %d\n",errno);
-			return 0;
-		}
-
-		for (u32 i=1;i<map_times;i++)
-		{
-			dst+=size;
-			ptr=mmap(&virt_ram_base[dst], size, prot , MAP_SHARED | MAP_NOSYNC | MAP_FIXED, fd, offset);
-			if (MAP_FAILED==ptr || ptr!=(void*)&virt_ram_base[dst] || (mprotect(rv,size,prot)!=0))
-			{
-				printf("MAP2 failed %d\n",errno);
-				return 0;
-			}
-		}
-
-		return rv;
-	}
-
-	void* _nvmem_alloc_mem()
-	{
-        
-#if HOST_OS == OS_DARWIN
-		string path = get_writable_data_path("/dcnzorz_mem");
-        fd = open(path.c_str(),O_CREAT|O_RDWR|O_TRUNC,S_IRWXU|S_IRWXG|S_IRWXO);
-        unlink(path.c_str());
-        verify(ftruncate(fd, RAM_SIZE_MAX + VRAM_SIZE_MAX + ARAM_SIZE_MAX) == 0);
-#elif !defined(_ANDROID)
-		fd = shm_open("/dcnzorz_mem", O_CREAT | O_EXCL | O_RDWR,S_IREAD | S_IWRITE);
-		shm_unlink("/dcnzorz_mem");
-		if (fd==-1)
-		{
-			fd = open("dcnzorz_mem",O_CREAT|O_RDWR|O_TRUNC,S_IRWXU|S_IRWXG|S_IRWXO);
-			unlink("dcnzorz_mem");
-		}
-
-		verify(ftruncate(fd, RAM_SIZE_MAX + VRAM_SIZE_MAX + ARAM_SIZE_MAX) == 0);
-#else
-
-		fd = ashmem_create_region(0, RAM_SIZE_MAX + VRAM_SIZE_MAX + ARAM_SIZE_MAX);
-		if (false)//this causes writebacks to flash -> slow and stuttery 
-		{
-		fd = open("/data/data/com.reicast.emulator/files/dcnzorz_mem",O_CREAT|O_RDWR|O_TRUNC,S_IRWXU|S_IRWXG|S_IRWXO);
-		unlink("/data/data/com.reicast.emulator/files/dcnzorz_mem");
-		}
-#endif
-
-		
-
-		u32 sz = 512*1024*1024 + sizeof(Sh4RCB) + ARAM_SIZE_MAX + 0x10000;
-		void* rv=mmap(0, sz, PROT_NONE, MAP_PRIVATE | MAP_ANON, -1, 0);
-		verify(rv != NULL);
-		munmap(rv,sz);
-		return (u8*)rv + 0x10000 - unat(rv)%0x10000;//align to 64 KB (Needed for linaro mmap not to extend to next region)
-	}
-#endif
-
-#define map_buffer(dsts,dste,offset,sz,w) {ptr=_nvmem_map_buffer(dsts,dste-dsts,offset,sz,w);if (!ptr) return false;}
-#define unused_buffer(start,end) {ptr=_nvmem_unused_buffer(start,end);if (!ptr) return false;}
-
-u32 pagecnt;
-void _vmem_bm_reset_nvmem()
-{
-	#if defined(TARGET_NO_NVMEM)
-		return;
-	#endif
-
-	#ifdef TARGET_IPHONE
-		//On iOS & nacl we allways allocate all of the mapping table
-		mprotect(p_sh4rcb, sizeof(p_sh4rcb->fpcb), PROT_READ | PROT_WRITE);
-		return;
-	#endif
-	pagecnt=0;
-
-#if HOST_OS==OS_WINDOWS
-	VirtualFree(p_sh4rcb,sizeof(p_sh4rcb->fpcb),MEM_DECOMMIT);
-#else
-	mprotect(p_sh4rcb, sizeof(p_sh4rcb->fpcb), PROT_NONE);
-	madvise(p_sh4rcb,sizeof(p_sh4rcb->fpcb),MADV_DONTNEED);
-    #ifdef MADV_REMOVE
-	madvise(p_sh4rcb,sizeof(p_sh4rcb->fpcb),MADV_REMOVE);
-    #else
-    //OSX, IOS
-    madvise(p_sh4rcb,sizeof(p_sh4rcb->fpcb),MADV_FREE);
-    #endif
-#endif
-
-	printf("Freeing fpcb\n");
-}
-
-bool BM_LockedWrite(u8* address)
-{
-	if (!_nvmem_enabled())
-		return false;
-	
-#if FEAT_SHREC != DYNAREC_NONE
-	u32 addr=address-(u8*)p_sh4rcb->fpcb;
-
-	address=(u8*)p_sh4rcb->fpcb+ (addr&~PAGE_MASK);
-
-	if (addr<sizeof(p_sh4rcb->fpcb))
-	{
-		//printf("Allocated %d PAGES [%08X]\n",++pagecnt,addr);
-
-#if HOST_OS==OS_WINDOWS
-		verify(VirtualAlloc(address,PAGE_SIZE,MEM_COMMIT,PAGE_READWRITE));
-#else
-		mprotect (address, PAGE_SIZE, PROT_READ | PROT_WRITE);
-#endif
-
-		bm_vmem_pagefill((void**)address,PAGE_SIZE);
-		
+	if (ptrint >= start && ptrint < end) {
+		// Alloc the page then and initialize it to default values
+		void *aligned_addr = (void*)(ptrint & (~PAGE_MASK));
+		vmem_platform_ondemand_page(aligned_addr, PAGE_SIZE);
+		bm_vmem_pagefill((void**)aligned_addr, PAGE_SIZE);
 		return true;
 	}
-#else
-die("BM_LockedWrite and NO REC");
-#endif
 	return false;
 }
 
-bool _vmem_reserve()
-{
-	void* ptr=0;
-
+bool _vmem_reserve() {
+	// TODO: Static assert?
 	verify((sizeof(Sh4RCB)%PAGE_SIZE)==0);
 
-	if (settings.dynarec.disable_nvmem)
-		return _vmem_reserve_nonvmem();
+	VMemType vmemstatus = MemTypeError;
 
-	virt_ram_base=(u8*)_nvmem_alloc_mem();
+	// Use vmem only if settings mandate so, and if we have proper exception handlers.
+	#ifndef TARGET_NO_EXCEPTIONS
+	if (!settings.dynarec.disable_nvmem)
+		vmemstatus = vmem_platform_init((void**)&virt_ram_base, (void**)&p_sh4rcb);
+	#endif
 
-	if (virt_ram_base==0)
-		return _vmem_reserve_nonvmem();
-	
-	p_sh4rcb=(Sh4RCB*)virt_ram_base;
+	// Fallback to statically allocated buffers, this results in slow-ops being generated.
+	if (vmemstatus == MemTypeError) {
+		printf("Warning! nvmem is DISABLED (due to failure or not being built-in\n");
+		virt_ram_base = 0;
 
-	// Map the sh4 context but protect access to Sh4RCB.fpcb[]
-#if HOST_OS==OS_WINDOWS
-	//verify(p_sh4rcb==VirtualAlloc(p_sh4rcb,sizeof(Sh4RCB),MEM_RESERVE|MEM_COMMIT,PAGE_READWRITE));
-	verify(p_sh4rcb==VirtualAlloc(p_sh4rcb,sizeof(Sh4RCB),MEM_RESERVE,PAGE_NOACCESS));
+		// Allocate it all and initialize it.
+		p_sh4rcb = (Sh4RCB*)malloc_pages(sizeof(Sh4RCB));
+		bm_vmem_pagefill((void**)p_sh4rcb->fpcb, sizeof(p_sh4rcb->fpcb));
 
-	verify(VirtualAlloc((u8*)p_sh4rcb + sizeof(p_sh4rcb->fpcb),sizeof(Sh4RCB)-sizeof(p_sh4rcb->fpcb),MEM_COMMIT,PAGE_READWRITE));
-#else
-	verify(p_sh4rcb==mmap(p_sh4rcb,sizeof(Sh4RCB),PROT_NONE,MAP_PRIVATE | MAP_ANON, -1, 0));
-	mprotect((u8*)p_sh4rcb + sizeof(p_sh4rcb->fpcb),sizeof(Sh4RCB)-sizeof(p_sh4rcb->fpcb),PROT_READ|PROT_WRITE);
-#endif
-	virt_ram_base+=sizeof(Sh4RCB);
+		mem_b.size = RAM_SIZE;
+		mem_b.data = (u8*)malloc_pages(RAM_SIZE);
 
-	//Area 0
-	//[0x00000000 ,0x00800000) -> unused
-	unused_buffer(0x00000000,0x00800000);
+		vram.size = VRAM_SIZE;
+		vram.data = (u8*)malloc_pages(VRAM_SIZE);
 
-	//I wonder, aica ram warps here ?.?
-	//I really should check teh docs before codin ;p
-	//[0x00800000,0x00A00000);
-	map_buffer(0x00800000,0x01000000,MAP_ARAM_START_OFFSET,ARAM_SIZE,false);
-	map_buffer(0x20000000,0x20000000+ARAM_SIZE,MAP_ARAM_START_OFFSET,ARAM_SIZE,true);
+		aica_ram.size = ARAM_SIZE;
+		aica_ram.data = (u8*)malloc_pages(ARAM_SIZE);
+	}
+	else {
+		printf("Info: nvmem is enabled, with addr space of size %s\n", vmemstatus == MemType4GB ? "4GB" : "512MB");
+		// Map the different parts of the memory file into the new memory range we got.
+		#define MAP_RAM_START_OFFSET  0
+		#define MAP_VRAM_START_OFFSET (MAP_RAM_START_OFFSET+RAM_SIZE)
+		#define MAP_ARAM_START_OFFSET (MAP_VRAM_START_OFFSET+VRAM_SIZE)
+		const vmem_mapping mem_mappings[] = {
+			{0x00000000, 0x00800000,                               0,         0, false},  // Area 0 -> unused
+			{0x00800000, 0x01000000,           MAP_ARAM_START_OFFSET, ARAM_SIZE, false},  // Aica, wraps too
+			{0x20000000, 0x20000000+ARAM_SIZE, MAP_ARAM_START_OFFSET, ARAM_SIZE,  true},
+			{0x01000000, 0x04000000,                               0,         0, false},  // More unused
+			{0x04000000, 0x05000000,           MAP_VRAM_START_OFFSET, VRAM_SIZE,  true},  // Area 1 (vram, 16MB, wrapped on DC)
+			{0x05000000, 0x06000000,                               0,         0, false},  // 32 bit path (unused)
+			{0x06000000, 0x07000000,           MAP_VRAM_START_OFFSET, VRAM_SIZE,  true},  // VRAM mirror
+			{0x07000000, 0x08000000,                               0,         0, false},  // 32 bit path (unused) mirror
+			{0x08000000, 0x0C000000,                               0,         0, false},  // Area 2
+			{0x0C000000, 0x10000000,            MAP_RAM_START_OFFSET,  RAM_SIZE,  true},  // Area 3 (main RAM + 3 mirrors)
+			{0x10000000, 0x20000000,                               0,         0, false},  // Area 4-7 (unused)
+		};
+		vmem_platform_create_mappings(&mem_mappings[0], sizeof(mem_mappings) / sizeof(mem_mappings[0]));
 
-	aica_ram.size=ARAM_SIZE;
-	aica_ram.data=(u8*)ptr;
-	//[0x01000000 ,0x04000000) -> unused
-	unused_buffer(0x01000000,0x04000000);
-	
+		// Point buffers to actual data pointers
+		aica_ram.size = ARAM_SIZE;
+		aica_ram.data = &virt_ram_base[0x20000000];  // Points to the writtable AICA addrspace
 
-	//Area 1
-	//[0x04000000,0x05000000) -> vram (16mb, warped on dc)
-	map_buffer(0x04000000,0x05000000,MAP_VRAM_START_OFFSET,VRAM_SIZE,true);
-	
-	vram.size=VRAM_SIZE;
-	vram.data=(u8*)ptr;
+		vram.size = VRAM_SIZE;
+		vram.data = &virt_ram_base[0x04000000];   // Points to first vram mirror (writtable and lockable)
 
-	//[0x05000000,0x06000000) -> unused (32b path)
-	unused_buffer(0x05000000,0x06000000);
+		mem_b.size = RAM_SIZE;
+		mem_b.data = &virt_ram_base[0x0C000000];   // Main memory, first mirror
+	}
 
-	//[0x06000000,0x07000000) -> vram   mirror
-	map_buffer(0x06000000,0x07000000,MAP_VRAM_START_OFFSET,VRAM_SIZE,true);
-
-
-	//[0x07000000,0x08000000) -> unused (32b path) mirror
-	unused_buffer(0x07000000,0x08000000);
-	
-	//Area 2
-	//[0x08000000,0x0C000000) -> unused
-	unused_buffer(0x08000000,0x0C000000);
-	
-	//Area 3
-	//[0x0C000000,0x0D000000) -> main ram
-	//[0x0D000000,0x0E000000) -> main ram mirror
-	//[0x0E000000,0x0F000000) -> main ram mirror
-	//[0x0F000000,0x10000000) -> main ram mirror
-	map_buffer(0x0C000000,0x10000000,MAP_RAM_START_OFFSET,RAM_SIZE,true);
-	
-	mem_b.size=RAM_SIZE;
-	mem_b.data=(u8*)ptr;
-	
-	//Area 4
-	//Area 5
-	//Area 6
-	//Area 7
-	//all -> Unused 
-	//[0x10000000,0x20000000) -> unused
-	unused_buffer(0x10000000,0x20000000);
-
-	printf("vmem reserve: base: %08X, aram: %08x, vram: %08X, ram: %08X\n",virt_ram_base,aica_ram.data,vram.data,mem_b.data);
-
+	// Clear out memory
 	aica_ram.Zero();
 	vram.Zero();
 	mem_b.Zero();
 
-	printf("Mem alloc successful!\n");
-
-	return virt_ram_base!=0;
+	return true;
 }
 
-void _vmem_release()
-{
-	if (!_nvmem_enabled())
-		_vmem_release_nonvmem();
-	else
-	{
-		if (virt_ram_base != NULL)
-		{
-#if HOST_OS == OS_WINDOWS
-			VirtualFree(virt_ram_base, 0, MEM_RELEASE);
-#else
-			munmap(virt_ram_base, 0x20000000);
-#endif
-			virt_ram_base = NULL;
-		}
-#if HOST_OS != OS_WINDOWS
-		close(fd);
-#endif
+#define freedefptr(x) \
+	if (x) { free(x); x = NULL; }
+
+void _vmem_release() {
+	if (virt_ram_base)
+		vmem_platform_destroy();
+	else {
+		freedefptr(p_sh4rcb);
+		freedefptr(vram.data);
+		freedefptr(aica_ram.data);
+		freedefptr(mem_b.data);
 	}
 }
 
-#else
-
-bool _vmem_reserve()
-{
-	return _vmem_reserve_nonvmem();
-}
-void _vmem_release()
-{
-	_vmem_release_nonvmem();
-}
-#endif

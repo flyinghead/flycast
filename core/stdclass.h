@@ -279,35 +279,45 @@ string get_game_save_prefix();
 string get_game_basename();
 string get_game_dir();
 
-class VArray2
-{
+
+// Locked memory class, used for texture invalidation purposes.
+class VLockedMemory {
 public:
-
 	u8* data;
-	u32 size;
-	//void Init(void* data,u32 sz);
-	//void Term();
-	void LockRegion(u32 offset,u32 size);
-	void UnLockRegion(u32 offset,u32 size);
+	unsigned size;
 
-	void Zero()
-	{
-		UnLockRegion(0,size);
-		memset(data,0,size);
+	void SetRegion(void* ptr, unsigned size) {
+		this->data = (u8*)ptr;
+		this->size = size;
+	}
+	void *getPtr() const { return data; }
+	unsigned getSize() const { return size; }
+
+	#ifdef TARGET_NO_EXCEPTIONS
+	void LockRegion(unsigned offset, unsigned size_bytes) {}
+	void UnLockRegion(unsigned offset, unsigned size_bytes) {}
+	#else
+	void LockRegion(unsigned offset, unsigned size_bytes);
+	void UnLockRegion(unsigned offset, unsigned size_bytes);
+	#endif
+
+	void Zero() {
+		UnLockRegion(0, size);
+		memset(data, 0, size);
 	}
 
-	INLINE u8& operator [](const u32 i)
-    {
+	INLINE u8& operator [](unsigned i) {
 #ifdef MEM_BOUND_CHECK
-        if (i>=size)
+        if (i >= size)
 		{
-			printf("Error: VArray2 , index out of range (%d>%d)\n",i,size-1);
+			printf("Error: VLockedMemory , index out of range (%d > %d)\n", i, size-1);
 			MEM_DO_BREAK;
 		}
 #endif
 		return data[i];
     }
 };
+
 
 int msgboxf(const wchar* text,unsigned int type,...);
 
