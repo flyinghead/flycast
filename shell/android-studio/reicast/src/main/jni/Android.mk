@@ -22,6 +22,7 @@ WEBUI := 1
 USE_GLES := 1
 CHD5_LZMA := 1
 CHD5_FLAC := 1
+USE_MODEM := 1
 
 ifneq ($(TARGET_ARCH_ABI),armeabi-v7a)
   NOT_ARM := 1

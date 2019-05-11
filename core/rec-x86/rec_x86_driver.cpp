@@ -326,8 +326,8 @@ void ngen_Compile(RuntimeBlockInfo* block, SmcCheckEnum smc_checks, bool reset, 
 
 	if (prof.enable)
 	{
-		if (force_checks)
-		x86e->Emit(op_add32,&prof.counters.blkrun.force_check,1);
+		//if (force_checks)
+		//	x86e->Emit(op_add32,&prof.counters.blkrun.force_check,1);
 
 		x86e->Emit(op_add32,&prof.counters.blkrun.cycles[block->guest_cycles],1);
 	}
