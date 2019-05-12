@@ -1442,13 +1442,14 @@ void ngen_CC_Finish(shil_opcode* op)
 bool ngen_Rewrite(unat& host_pc, unat, unat)
 {
 	//printf("ngen_Rewrite pc %p\n", host_pc);
-	RuntimeBlockInfo *block = bm_GetBlock((void *)host_pc);
+	void *host_pc_rw = CC_RX2RW(host_pc);
+	RuntimeBlockInfo *block = bm_GetBlock((void*)host_pc);
 	if (block == NULL)
 	{
 		printf("ngen_Rewrite: Block at %p not found\n", (void *)host_pc);
 		return false;
 	}
-	u32 *code_ptr = (u32*)host_pc;
+	u32 *code_ptr = (u32*)host_pc_rw;
 	auto it = block->memory_accesses.find(code_ptr);
 	if (it == block->memory_accesses.end())
 	{
@@ -1466,7 +1467,7 @@ bool ngen_Rewrite(unat& host_pc, unat, unat)
 		assembler->GenWriteMemorySlow(op);
 	assembler->Finalize(true);
 	delete assembler;
-	host_pc = (unat)(code_ptr - 2);
+	host_pc = (unat)CC_RW2RX(code_ptr - 2);
 
 	return true;
 }

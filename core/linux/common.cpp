@@ -59,12 +59,8 @@ void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 
 	context_from_segfault(&ctx, segfault_ctx);
 
-	bool dyna_cde = ((unat)ctx.pc>(unat)CodeCache) && ((unat)ctx.pc<(unat)(CodeCache + CODE_SIZE));
+	bool dyna_cde = ((unat)CC_RX2RW(ctx.pc) > (unat)CodeCache) && ((unat)CC_RX2RW(ctx.pc) < (unat)(CodeCache + CODE_SIZE));
 
-	//ucontext_t* ctx=(ucontext_t*)ctxr;
-	//printf("mprot hit @ ptr 0x%08X @@ code: %08X, %d\n",si->si_addr,ctx->uc_mcontext.arm_pc,dyna_cde);
-
-	
 	if (VramLockedWrite((u8*)si->si_addr) || BM_LockedWrite((u8*)si->si_addr))
 		return;
 	#if FEAT_SHREC == DYNAREC_JIT

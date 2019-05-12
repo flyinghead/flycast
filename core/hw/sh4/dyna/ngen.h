@@ -55,8 +55,8 @@
 // sub/add the pointer offset. CodeCache will point to the RW pointer for simplicity.
 #ifdef FEAT_NO_RWX_PAGES
 	extern uintptr_t cc_rx_offset;
-	#define CC_RW2RX(ptr) (void*)(((uintptr_t)ptr) + cc_rx_offset)
-	#define CC_RX2RW(ptr) (void*)(((uintptr_t)ptr) - cc_rx_offset)
+	#define CC_RW2RX(ptr) (void*)(((uintptr_t)(ptr)) + cc_rx_offset)
+	#define CC_RX2RW(ptr) (void*)(((uintptr_t)(ptr)) - cc_rx_offset)
 #else
 	#define CC_RW2RX(ptr) (ptr)
 	#define CC_RX2RW(ptr) (ptr)
