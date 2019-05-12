@@ -129,6 +129,9 @@
     <ClCompile Include="..\core\windows\winmain.cpp">
       <Filter>windows</Filter>
     </ClCompile>
+    <ClCompile Include="..\core\windows\win_vmem.cpp">
+      <Filter>windows</Filter>
+    </ClCompile>
     <ClCompile Include="..\core\profiler\profiler.cpp">
       <Filter>profiler</Filter>
     </ClCompile>

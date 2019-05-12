@@ -57,7 +57,6 @@ void sigill_handler(int sn, siginfo_t * si, void *segfault_ctx) {
 }
 #endif
 
-#if !defined(TARGET_NO_EXCEPTIONS)
 void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 {
 	rei_host_context_t ctx;
@@ -108,12 +107,9 @@ void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 		signal(SIGSEGV, SIG_DFL);
 	}
 }
-#endif
 
-#endif
-void install_fault_handler (void)
+void install_fault_handler(void)
 {
-#if !defined(TARGET_NO_EXCEPTIONS)
 	struct sigaction act, segv_oact;
 	memset(&act, 0, sizeof(act));
 	act.sa_sigaction = fault_handler;
@@ -127,77 +123,14 @@ void install_fault_handler (void)
     act.sa_sigaction = sigill_handler;
     sigaction(SIGILL, &act, &segv_oact);
 #endif
-#endif
 }
+#else  // !defined(TARGET_NO_EXCEPTIONS)
+// No exceptions/nvmem dummy handlers.
+void install_fault_handler(void) {}
+#endif // !defined(TARGET_NO_EXCEPTIONS)
 
 #include <errno.h>
 
-void VArray2::LockRegion(u32 offset,u32 size)
-{
-	#if !defined(TARGET_NO_EXCEPTIONS)
-	u32 inpage=offset & PAGE_MASK;
-	u32 rv=mprotect (data+offset-inpage, size+inpage, PROT_READ );
-	if (rv!=0)
-	{
-		printf("mprotect(%8s,%08X,R) failed: %d | %d\n",data+offset-inpage,size+inpage,rv,errno);
-		die("mprotect  failed ..\n");
-	}
-
-	#else
-		//printf("VA2: LockRegion\n");
-	#endif
-}
-
-void print_mem_addr()
-{
-    FILE *ifp, *ofp;
-
-    char outputFilename[] = "/data/data/com.reicast.emulator/files/mem_alloc.txt";
-
-    ifp = fopen("/proc/self/maps", "r");
-
-    if (ifp == NULL) {
-        fprintf(stderr, "Can't open input file /proc/self/maps!\n");
-        exit(1);
-    }
-
-    ofp = fopen(outputFilename, "w");
-
-    if (ofp == NULL) {
-        fprintf(stderr, "Can't open output file %s!\n",
-                outputFilename);
-#if HOST_OS == OS_LINUX
-        ofp = stderr;
-#else
-        exit(1);
-#endif
-    }
-
-    char line [ 512 ];
-    while (fgets(line, sizeof line, ifp) != NULL) {
-        fprintf(ofp, "%s", line);
-    }
-
-    fclose(ifp);
-    if (ofp != stderr)
-        fclose(ofp);
-}
-
-void VArray2::UnLockRegion(u32 offset,u32 size)
-{
-	#if !defined(TARGET_NO_EXCEPTIONS)
-	u32 inpage=offset & PAGE_MASK;
-	u32 rv=mprotect (data+offset-inpage, size+inpage, PROT_READ | PROT_WRITE);
-	if (rv!=0)
-	{
-        print_mem_addr();
-		printf("mprotect(%8p,%08X,RW) failed: %d | %d\n",data+offset-inpage,size+inpage,rv,errno);
-		die("mprotect  failed ..\n");
-	}
-	#else
-		//printf("VA2: UnLockRegion\n");
-	#endif
-}
 double os_GetSeconds()
 {
 	timeval a;

@@ -101,7 +101,7 @@ extern AicaTimer timers[3];
 
 
 //./core/hw/aica/aica_if.o
-extern VArray2 aica_ram;
+extern VLockedMemory aica_ram;
 extern u32 VREG;//video reg =P
 extern u32 ARMRST;//arm reset reg
 extern u32 rtc_EN;
@@ -381,7 +381,7 @@ extern DECL_ALIGN(4) u32 SFaceOffsColor;
 //extern vector<vram_block*> VramLocks[/*VRAM_SIZE*/(16*1024*1024)/PAGE_SIZE];
 //maybe - probably not - just a locking mechanism
 //extern cMutex vramlist_lock;
-extern VArray2 vram;
+extern VLockedMemory vram;
 
 
 
@@ -403,7 +403,7 @@ extern Array<RegisterStruct> SCIF; //SCIF : 10 registers
 
 
 //./core/hw/sh4/sh4_mem.o
-extern VArray2 mem_b;
+extern VLockedMemory mem_b;
 //one-time init
 //extern _vmem_handler area1_32b;
 //one-time init

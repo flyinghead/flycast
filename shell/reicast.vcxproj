@@ -322,6 +322,7 @@
     <ClCompile Include="..\core\stdclass.cpp" />
     <ClCompile Include="..\core\webui\server.cpp" />
     <ClCompile Include="..\core\windows\winmain.cpp" />
+    <ClCompile Include="..\core\windows\win_vmem.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\core\archive\7zArchive.h" />

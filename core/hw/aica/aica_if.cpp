@@ -13,7 +13,7 @@
 
 #include <time.h>
 
-VArray2 aica_ram;
+VLockedMemory aica_ram;
 u32 VREG;//video reg =P
 u32 ARMRST;//arm reset reg
 u32 rtc_EN=0;

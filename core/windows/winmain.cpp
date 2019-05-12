@@ -148,12 +148,10 @@ LONG ExeptionHandler(EXCEPTION_POINTERS *ExceptionInfo)
 	{
 		return EXCEPTION_CONTINUE_EXECUTION;
 	}
-#ifndef TARGET_NO_NVMEM
 	else if (BM_LockedWrite(address))
 	{
 		return EXCEPTION_CONTINUE_EXECUTION;
 	}
-#endif
 #if FEAT_SHREC == DYNAREC_JIT && HOST_CPU == CPU_X86
 		else if ( ngen_Rewrite((unat&)ep->ContextRecord->Eip,*(unat*)ep->ContextRecord->Esp,ep->ContextRecord->Eax) )
 		{
@@ -798,22 +796,6 @@ void os_DoEvents()
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
 	}
-}
-
-
-void VArray2::LockRegion(u32 offset,u32 size)
-{
-	//verify(offset+size<this->size);
-	verify(size!=0);
-	DWORD old;
-	VirtualProtect(((u8*)data)+offset , size, PAGE_READONLY,&old);
-}
-void VArray2::UnLockRegion(u32 offset,u32 size)
-{
-	//verify(offset+size<=this->size);
-	verify(size!=0);
-	DWORD old;
-	VirtualProtect(((u8*)data)+offset , size, PAGE_READWRITE,&old);
 }
 
 int get_mic_data(u8* buffer) { return 0; }

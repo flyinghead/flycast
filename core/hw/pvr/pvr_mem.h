@@ -9,7 +9,7 @@ f32 vrf(u32 addr);
 u32 vri(u32 addr);
 
 //vram 32-64b
-extern VArray2 vram;
+extern VLockedMemory vram;
 //read
 u8 DYNACALL pvr_read_area1_8(u32 addr);
 u16 DYNACALL pvr_read_area1_16(u32 addr);
