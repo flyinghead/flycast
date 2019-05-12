@@ -7,7 +7,7 @@
 #if HOST_OS!=OS_WINDOWS
 #include <pthread.h>
 #else
-#include <Windows.h>
+#include <windows.h>
 #endif
 
 

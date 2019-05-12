@@ -18,6 +18,7 @@ CC=${CC_PREFIX}gcc
 AS=${CC_PREFIX}as
 STRIP=${CC_PREFIX}strip
 LD=${CC}
+WINDRES=${CC_PREFIX}windres
 CHD5_LZMA := 1
 CHD5_FLAC := 1
 
@@ -432,7 +433,7 @@ OBJECTS:=$(patsubst $(RZDCY_SRC_DIR)/%,$(BUILDDIR)/%,$(OBJECTS))
 ifdef FOR_WINDOWS
 OBJECTS+=$(BUILDDIR)/reicastres.build_obj
 $(BUILDDIR)/reicastres.build_obj: $(LOCAL_PATH)/../windows/reicast.rc $(LOCAL_PATH)/../windows/reicast.ico $(RZDCY_SRC_DIR)/version.h
-	windres $< $@
+	$(WINDRES) $< $@
 endif
 
 DEPDIR := .dep-$(BUILDDIR)

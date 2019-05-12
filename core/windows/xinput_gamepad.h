@@ -1,4 +1,4 @@
-#include <Xinput.h>
+#include <xinput.h>
 #include "input/gamepad_device.h"
 #include "rend/gui.h"
 

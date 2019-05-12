@@ -783,7 +783,7 @@ GLuint fogTextureId;
 
 		return rv;
 	}
-	#include <Wingdi.h>
+	#include <wingdi.h>
 	void gl_swap()
 	{
 		wglSwapLayerBuffers(ourWindowHandleToDeviceContext,WGL_SWAP_MAIN_PLANE);
