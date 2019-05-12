@@ -1,6 +1,6 @@
-#include "oslib\oslib.h"
-#include "oslib\audiostream.h"
-#include "imgread\common.h"
+#include "oslib/oslib.h"
+#include "oslib/audiostream.h"
+#include "imgread/common.h"
 #include "stdclass.h"
 #include "cfg/cfg.h"
 #include "xinput_gamepad.h"
@@ -10,8 +10,8 @@
 #include <windows.h>
 #include <windowsx.h>
 
-#include <Xinput.h>
-#include "hw\maple\maple_cfg.h"
+#include <xinput.h>
+#include "hw/maple/maple_cfg.h"
 #pragma comment(lib, "XInput9_1_0.lib")
 
 PCHAR*

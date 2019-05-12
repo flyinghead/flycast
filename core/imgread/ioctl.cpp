@@ -4,7 +4,7 @@
 #include "common.h"
 
 #include <stddef.h>
-#include <Windows.h>
+#include <windows.h>
 
 #include <ntddscsi.h>
 #include "SCSIDEFS.H"
