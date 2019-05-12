@@ -176,3 +176,20 @@ void vmem_platform_create_mappings(const vmem_mapping *vmem_maps, unsigned numma
 	}
 }
 
+// Prepares the code region for JIT operations, thus marking it as RWX
+void vmem_platform_prepare_jit_block(void *code_area, unsigned size, void **code_area_rwx) {
+	// Try to map is as RWX, this fails apparently on OSX (and perhaps other systems?)
+	if (mprotect(code_area, size, PROT_READ | PROT_WRITE | PROT_EXEC)) {
+		// Well it failed, use another approach, unmap the memory area and remap it back.
+		// Seems it works well on Darwin according to reicast code :P
+		munmap(code_area, size);
+		void *ret_ptr = mmap(code_area, size, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_FIXED | MAP_PRIVATE | MAP_ANON, 0, 0);
+		// Ensure it's the area we requested
+		verify(ret_ptr == code_area);
+	}
+
+	// Pointer location should be same:
+	*code_area_rwx = code_area;
+}
+
+

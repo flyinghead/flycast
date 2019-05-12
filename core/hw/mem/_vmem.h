@@ -24,6 +24,9 @@ void vmem_platform_ondemand_page(void *address, unsigned size_bytes);
 void vmem_platform_create_mappings(const vmem_mapping *vmem_maps, unsigned nummaps);
 // Just tries to wipe as much as possible in the relevant area.
 void vmem_platform_destroy();
+// Given a block of data in the .text section, prepares it for JIT action.
+// both code_area and size are page aligned.
+void vmem_platform_prepare_jit_block(void *code_area, unsigned size, void **code_area_rwx);
 
 // Note: if you want to disable vmem magic in any given platform, implement the
 // above functions as empty functions and make vmem_platform_init return MemTypeError.

@@ -102,3 +102,44 @@ void vmem_platform_create_mappings(const vmem_mapping *vmem_maps, unsigned numma
 	}
 }
 
+// Prepares the code region for JIT operations, thus marking it as RWX
+void vmem_platform_prepare_jit_block(void *code_area, unsigned size, void **code_area_rwx) {
+	// Several issues on Windows: can't protect arbitrary pages due to (I guess) the way
+	// kernel tracks mappings, so only stuff that has been allocated with VirtualAlloc can be
+	// protected (the entire allocation IIUC).
+
+	// Strategy: ignore code_area and allocate a new one. Protect it properly.
+	// More issues: the area should be "close" to the .text stuff so that code gen works.
+	// Remember that on x64 we have 4 byte jump/load offset immediates, no issues on x86 :D
+
+	// Take this function addr as reference.
+	uintptr_t base_addr = reinterpret_cast<uintptr_t>(&vmem_platform_prepare_jit_block);
+
+	// Probably safe to assume reicast code is <200MB (today seems to be <16MB on every platform I've seen).
+	for (unsigned i = 0; i < 1800*1024*1024; i += 10*1024*1024) {  // Some arbitrary step size.
+		uintptr_t try_addr_above = base_addr + i;
+		uintptr_t try_addr_below = base_addr - i;
+
+		// We need to make sure there's no address wrap around the end of the addrspace (meaning: int overflow).
+		if (try_addr_above > base_addr) {
+			void *ptr = VirtualAlloc((void*)try_addr_above, size, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+			if (ptr) {
+				*code_area_rwx = ptr;
+				break;
+			}
+		}
+		if (try_addr_below < base_addr) {
+			void *ptr = *code_area_rwx = VirtualAlloc((void*)try_addr_below, size, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+			if (ptr) {
+				*code_area_rwx = ptr;
+				break;
+			}
+		}
+	}
+
+	printf("Found code area at %p, not too far away from %p\n", *code_area_rwx, (void*)base_addr);
+
+	// We should have found some area in the addrspace, after all size is ~tens of megabytes.
+	// Pages are already RWX, all done
+}
+
