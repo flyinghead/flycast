@@ -62,14 +62,14 @@ void VLockedMemory::UnLockRegion(unsigned offset, unsigned size_bytes) {
 }
 
 // Allocates memory via a fd on shmem/ahmem or even a file on disk
-static int allocate_shared_filemem() {
+static int allocate_shared_filemem(unsigned size) {
 	int fd = -1;
 	#if defined(_ANDROID)
 	// Use Android's specific shmem stuff.
-	fd = ashmem_create_region(0, RAM_SIZE_MAX + VRAM_SIZE_MAX + ARAM_SIZE_MAX);
+	fd = ashmem_create_region(0, size);
 	#else
 		#if HOST_OS != OS_DARWIN
-		fd = shm_open("/dcnzorz_mem", O_CREAT | O_EXCL | O_RDWR,S_IREAD | S_IWRITE);
+		fd = shm_open("/dcnzorz_mem", O_CREAT | O_EXCL | O_RDWR, S_IREAD | S_IWRITE);
 		shm_unlink("/dcnzorz_mem");
 		#endif
 
@@ -84,7 +84,7 @@ static int allocate_shared_filemem() {
 			return -1;
 
 		// Finally make the file as big as we need!
-		if (ftruncate(fd, RAM_SIZE_MAX + VRAM_SIZE_MAX + ARAM_SIZE_MAX)) {
+		if (ftruncate(fd, size)) {
 			// Can't get as much memory as needed, fallback.
 			close(fd);
 			return -1;
@@ -97,7 +97,7 @@ static int allocate_shared_filemem() {
 // Implement vmem initialization for RAM, ARAM, VRAM and SH4 context, fpcb etc.
 // The function supports allocating 512MB or 4GB addr spaces.
 
-static int shmem_fd = -1;
+static int shmem_fd = -1, shmem_fd2 = -1;
 
 // vmem_base_addr points to an address space of 512MB (or 4GB) that can be used for fast memory ops.
 // In negative offsets of the pointer (up to FPCB size, usually 65/129MB) the context and jump table
@@ -105,7 +105,7 @@ static int shmem_fd = -1;
 // memory using a fallback (that is, regular mallocs and falling back to slow memory JIT).
 VMemType vmem_platform_init(void **vmem_base_addr, void **sh4rcb_addr) {
 	// Firt let's try to allocate the shm-backed memory
-	shmem_fd = allocate_shared_filemem();
+	shmem_fd = allocate_shared_filemem(RAM_SIZE_MAX + VRAM_SIZE_MAX + ARAM_SIZE_MAX);
 	if (shmem_fd < 0)
 		return MemTypeError;
 
@@ -177,7 +177,7 @@ void vmem_platform_create_mappings(const vmem_mapping *vmem_maps, unsigned numma
 }
 
 // Prepares the code region for JIT operations, thus marking it as RWX
-void vmem_platform_prepare_jit_block(void *code_area, unsigned size, void **code_area_rwx) {
+bool vmem_platform_prepare_jit_block(void *code_area, unsigned size, void **code_area_rwx) {
 	// Try to map is as RWX, this fails apparently on OSX (and perhaps other systems?)
 	if (mprotect(code_area, size, PROT_READ | PROT_WRITE | PROT_EXEC)) {
 		// Well it failed, use another approach, unmap the memory area and remap it back.
@@ -185,11 +185,39 @@ void vmem_platform_prepare_jit_block(void *code_area, unsigned size, void **code
 		munmap(code_area, size);
 		void *ret_ptr = mmap(code_area, size, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_FIXED | MAP_PRIVATE | MAP_ANON, 0, 0);
 		// Ensure it's the area we requested
-		verify(ret_ptr == code_area);
+		if (ret_ptr != code_area)
+			return false;   // Couldn't remap it? Perhaps RWX is disabled? This should never happen in any supported Unix platform.
 	}
 
 	// Pointer location should be same:
 	*code_area_rwx = code_area;
+	return true;
+}
+
+// Use two addr spaces: need to remap something twice, therefore use allocate_shared_filemem()
+bool vmem_platform_prepare_jit_block(void *code_area, unsigned size, void **code_area_rw, uintptr_t *rx_offset) {
+	shmem_fd2 = allocate_shared_filemem(size);
+	if (shmem_fd2 < 0)
+		return false;
+
+	// Need to unmap the section we are about to use (it might be already unmapped but nevertheless...)
+	munmap(code_area, size);
+
+	// Map the RX bits on the code_area, for proximity, as usual.
+	void *ptr_rx = mmap(code_area, size, PROT_READ | PROT_EXEC,
+	                    MAP_SHARED | MAP_NOSYNC | MAP_FIXED, shmem_fd2, 0);
+	if (ptr_rx != code_area)
+		return false;
+
+	// Now remap the same memory as RW in some location we don't really care at all.
+	void *ptr_rw = mmap(NULL, size, PROT_READ | PROT_WRITE,
+	                    MAP_SHARED | MAP_NOSYNC, shmem_fd2, 0);
+
+	*code_area_rw = ptr_rw;
+	*rx_offset = (char*)ptr_rx - (char*)ptr_rw;
+	printf("Info: Using NO_RWX mode, rx ptr: %p, rw ptr: %p, offset: %p\n", ptr_rx, ptr_rw, *rx_offset);
+
+	return (ptr_rw != MAP_FAILED);
 }
 
 

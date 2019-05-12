@@ -33,7 +33,7 @@ u8 SH4_TCB[CODE_SIZE+4096]
 #endif
 
 u8* CodeCache;
-
+uintptr_t cc_rx_offset;
 
 u32 LastAddr;
 u32 LastAddr_min;
@@ -266,7 +266,7 @@ DynarecCodeEntryPtr DYNACALL rdv_FailedToFindBlock(u32 pc)
 	//printf("rdv_FailedToFindBlock ~ %08X\n",pc);
 	next_pc=pc;
 
-	return rdv_CompilePC();
+	return (DynarecCodeEntryPtr)CC_RW2RX(rdv_CompilePC());
 }
 
 static void ngen_FailedToFindBlock_internal() {
@@ -305,35 +305,27 @@ DynarecCodeEntryPtr DYNACALL rdv_BlockCheckFail(u32 pc)
 {
 	next_pc=pc;
 	recSh4_ClearCache();
-	return rdv_CompilePC();
-}
-
-DynarecCodeEntryPtr rdv_FindCode()
-{
-	DynarecCodeEntryPtr rv=bm_GetCode(next_pc);
-	if (rv==ngen_FailedToFindBlock)
-		return 0;
-	
-	return rv;
+	return (DynarecCodeEntryPtr)CC_RW2RX(rdv_CompilePC());
 }
 
 DynarecCodeEntryPtr rdv_FindOrCompile()
 {
-	DynarecCodeEntryPtr rv=bm_GetCode(next_pc);
-	if (rv==ngen_FailedToFindBlock)
-		rv=rdv_CompilePC();
+	DynarecCodeEntryPtr rv = bm_GetCode(next_pc);  // Returns exec addr
+	if (rv == ngen_FailedToFindBlock)
+		rv = (DynarecCodeEntryPtr)CC_RW2RX(rdv_CompilePC());  // Returns rw addr
 	
 	return rv;
 }
 
 void* DYNACALL rdv_LinkBlock(u8* code,u32 dpc)
 {
-	RuntimeBlockInfo* rbi=bm_GetBlock(code);
+	// code is the RX addr to return after, however bm_GetBlock returns RW
+	RuntimeBlockInfo* rbi = bm_GetBlock(code);
 
 	if (!rbi)
 	{
 		printf("Stale block ..");
-		rbi=bm_GetStaleBlock(code);
+		rbi = bm_GetStaleBlock(code);
 	}
 	
 	verify(rbi != NULL);
@@ -356,7 +348,7 @@ void* DYNACALL rdv_LinkBlock(u8* code,u32 dpc)
 			next_pc=rbi->NextBlock;
 	}
 
-	DynarecCodeEntryPtr rv=rdv_FindOrCompile();
+	DynarecCodeEntryPtr rv = rdv_FindOrCompile();  // Returns rx ptr
 
 	bool do_link=bm_GetBlock(code)==rbi;
 
@@ -452,12 +444,17 @@ void recSh4_Init()
 
 	// Call the platform-specific magic to make the pages RWX
 	CodeCache = NULL;
-	vmem_platform_prepare_jit_block(candidate_ptr, CODE_SIZE, (void**)&CodeCache);
+	#ifdef FEAT_NO_RWX_PAGES
+	verify(vmem_platform_prepare_jit_block(candidate_ptr, CODE_SIZE, (void**)&CodeCache, &cc_rx_offset));
+	#else
+	verify(vmem_platform_prepare_jit_block(candidate_ptr, CODE_SIZE, (void**)&CodeCache));
+	#endif
 	// Ensure the pointer returned is non-null
 	verify(CodeCache != NULL);
 
 	memset(CodeCache, 0xFF, CODE_SIZE);
 	ngen_init();
+	bm_Reset();
 }
 
 void recSh4_Term()

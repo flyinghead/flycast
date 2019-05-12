@@ -148,7 +148,7 @@
 #define CPU_GENERIC  0x20000005 //used for pnacl, emscripten, etc
 #define CPU_PPC      0x20000006
 #define CPU_PPC64    0x20000007
-#define CPU_A64      0x20000008
+#define CPU_ARM64    0x20000008
 #define CPU_MIPS64   0x20000009
 
 //BUILD_COMPILER
@@ -325,6 +325,13 @@
 #define ATTR_UNUSED
 #endif
 
+
+// Some restrictions on FEAT_NO_RWX_PAGES
+#if defined(FEAT_NO_RWX_PAGES) && FEAT_SHREC == DYNAREC_JIT
+#if HOST_CPU != CPU_X64 && HOST_CPU != CPU_ARM64
+#error "FEAT_NO_RWX_PAGES Only implemented for X64 and ARMv8"
+#endif
+#endif
 
 
 // TARGET PLATFORM

@@ -23,7 +23,7 @@ void VLockedMemory::UnLockRegion(unsigned offset, unsigned size) {
 	VirtualProtect(&data[offset], size, PAGE_READWRITE, &old);
 }
 
-static HANDLE mem_handle = INVALID_HANDLE_VALUE;
+static HANDLE mem_handle = INVALID_HANDLE_VALUE, mem_handle2 = INVALID_HANDLE_VALUE;
 static char * base_alloc = NULL;
 
 // Implement vmem initialization for RAM, ARAM, VRAM and SH4 context, fpcb etc.
@@ -102,8 +102,10 @@ void vmem_platform_create_mappings(const vmem_mapping *vmem_maps, unsigned numma
 	}
 }
 
-// Prepares the code region for JIT operations, thus marking it as RWX
-void vmem_platform_prepare_jit_block(void *code_area, unsigned size, void **code_area_rwx) {
+typedef void* (*mapper_fn) (void *addr, unsigned size);
+
+// This is a tempalted function since it's used twice
+static void* vmem_platform_prepare_jit_block_template(void *code_area, unsigned size, mapper_fn mapper) {
 	// Several issues on Windows: can't protect arbitrary pages due to (I guess) the way
 	// kernel tracks mappings, so only stuff that has been allocated with VirtualAlloc can be
 	// protected (the entire allocation IIUC).
@@ -113,33 +115,76 @@ void vmem_platform_prepare_jit_block(void *code_area, unsigned size, void **code
 	// Remember that on x64 we have 4 byte jump/load offset immediates, no issues on x86 :D
 
 	// Take this function addr as reference.
-	uintptr_t base_addr = reinterpret_cast<uintptr_t>(&vmem_platform_prepare_jit_block);
+	uintptr_t base_addr = reinterpret_cast<uintptr_t>(&vmem_platform_init) & ~0xFFFFF;
 
 	// Probably safe to assume reicast code is <200MB (today seems to be <16MB on every platform I've seen).
-	for (unsigned i = 0; i < 1800*1024*1024; i += 10*1024*1024) {  // Some arbitrary step size.
+	for (unsigned i = 0; i < 1800*1024*1024; i += 8*1024*1024) {  // Some arbitrary step size.
 		uintptr_t try_addr_above = base_addr + i;
 		uintptr_t try_addr_below = base_addr - i;
 
 		// We need to make sure there's no address wrap around the end of the addrspace (meaning: int overflow).
 		if (try_addr_above > base_addr) {
-			void *ptr = VirtualAlloc((void*)try_addr_above, size, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
-			if (ptr) {
-				*code_area_rwx = ptr;
-				break;
-			}
+			void *ptr = mapper((void*)try_addr_above, size);
+			if (ptr)
+				return ptr;
 		}
 		if (try_addr_below < base_addr) {
-			void *ptr = *code_area_rwx = VirtualAlloc((void*)try_addr_below, size, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
-			if (ptr) {
-				*code_area_rwx = ptr;
-				break;
-			}
+			void *ptr = mapper((void*)try_addr_below, size);
+			if (ptr)
+				return ptr;
 		}
 	}
+	return NULL;
+}
 
-	printf("Found code area at %p, not too far away from %p\n", *code_area_rwx, (void*)base_addr);
+static void* mem_alloc(void *addr, unsigned size) {
+	return VirtualAlloc(addr, size, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+}
+
+// Prepares the code region for JIT operations, thus marking it as RWX
+bool vmem_platform_prepare_jit_block(void *code_area, unsigned size, void **code_area_rwx) {
+	// Get the RWX page close to the code_area
+	void *ptr = vmem_platform_prepare_jit_block_template(code_area, size, &mem_alloc);
+	if (!ptr)
+		return false;
+
+	*code_area_rwx = ptr;
+	printf("Found code area at %p, not too far away from %p\n", *code_area_rwx, &vmem_platform_init);
 
 	// We should have found some area in the addrspace, after all size is ~tens of megabytes.
 	// Pages are already RWX, all done
+	return true;
+}
+
+
+static void* mem_file_map(void *addr, unsigned size) {
+	// Maps the entire file at the specified addr.
+	void *ptr = VirtualAlloc(addr, size, MEM_RESERVE, PAGE_NOACCESS);
+	if (!ptr)
+		return NULL;
+	VirtualFree(ptr, 0, MEM_RELEASE);
+	if (ptr != addr)
+		return NULL;
+
+	return MapViewOfFileEx(mem_handle2, FILE_MAP_READ | FILE_MAP_EXECUTE, 0, 0, size, addr);
+}
+
+// Use two addr spaces: need to remap something twice, therefore use CreateFileMapping()
+bool vmem_platform_prepare_jit_block(void *code_area, unsigned size, void **code_area_rw, uintptr_t *rx_offset) {
+	mem_handle2 = CreateFileMapping(INVALID_HANDLE_VALUE, 0, PAGE_EXECUTE_READWRITE, 0, size, 0);
+
+	// Get the RX page close to the code_area
+	void *ptr_rx = vmem_platform_prepare_jit_block_template(code_area, size, &mem_file_map);
+	if (!ptr_rx)
+		return false;
+
+	// Ok now we just remap the RW segment at any position (dont' care).
+	void *ptr_rw = MapViewOfFileEx(mem_handle2, FILE_MAP_READ | FILE_MAP_WRITE, 0, 0, size, NULL);
+
+	*code_area_rw = ptr_rw;
+	*rx_offset = (char*)ptr_rx - (char*)ptr_rw;
+	printf("Info: Using NO_RWX mode, rx ptr: %p, rw ptr: %p, offset: %p\n", ptr_rx, ptr_rw, *rx_offset);
+
+	return (ptr_rw != NULL);
 }
 
