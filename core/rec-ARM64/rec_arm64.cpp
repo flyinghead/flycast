@@ -1442,7 +1442,7 @@ void ngen_CC_Finish(shil_opcode* op)
 bool ngen_Rewrite(unat& host_pc, unat, unat)
 {
 	//printf("ngen_Rewrite pc %p\n", host_pc);
-	void *host_pc_rw = CC_RX2RW(host_pc);
+	void *host_pc_rw = (void*)CC_RX2RW(host_pc);
 	RuntimeBlockInfo *block = bm_GetBlock((void*)host_pc);
 	if (block == NULL)
 	{
