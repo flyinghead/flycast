@@ -5,6 +5,10 @@
 #include "types.h"
 #include "cfg/cfg.h"
 #include "stdclass.h"
+#if HOST_OS == OS_DARWIN
+#include <mach/clock.h>
+#include <mach/mach.h>
+#endif
 
 
 #if COMPILER_VC_OR_CLANG_WIN32

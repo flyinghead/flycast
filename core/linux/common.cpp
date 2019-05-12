@@ -23,10 +23,6 @@
   #include <sys/personality.h>
   #include <dlfcn.h>
 #endif
-#if HOST_OS == OS_DARWIN
-#include <mach/clock.h>
-#include <mach/mach.h>
-#endif
 #include <unistd.h>
 #include "hw/sh4/dyna/blockmanager.h"
 

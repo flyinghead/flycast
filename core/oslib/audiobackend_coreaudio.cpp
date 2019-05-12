@@ -28,7 +28,7 @@ static u8 samples_temp[BUFSIZE];
 
 static std::atomic<int> samples_wptr;
 static std::atomic<int> samples_rptr;
-static cResetEvent bufferEmpty(false, true);
+static cResetEvent bufferEmpty;
 
 static OSStatus coreaudio_callback(void* ctx, AudioUnitRenderActionFlags* flags, const AudioTimeStamp* ts,
                             UInt32 bus, UInt32 frames, AudioBufferList* abl)
