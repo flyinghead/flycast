@@ -141,10 +141,11 @@ void vmem_platform_reset_mem(void *ptr, unsigned size_bytes) {
 	mprotect(ptr, size_bytes, PROT_NONE);
 	// Tell the kernel to flush'em all (FIXME: perhaps unmap+mmap 'd be better?)
 	madvise(ptr, size_bytes, MADV_DONTNEED);
-    #ifdef MADV_REMOVE
+	#if defined(MADV_REMOVE)
 	madvise(ptr, size_bytes, MADV_REMOVE);
-    #endif
-    madvise(ptr, size_bytes, MADV_FREE);
+	#elif defined(MADV_FREE)
+	madvise(ptr, size_bytes, MADV_FREE);
+	#endif
 }
 
 // Allocates a bunch of memory (page aligned and page-sized)

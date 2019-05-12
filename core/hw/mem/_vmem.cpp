@@ -478,7 +478,7 @@ bool _vmem_reserve() {
 			{0x00800000, 0x01000000,           MAP_ARAM_START_OFFSET, ARAM_SIZE, false},  // Aica, wraps too
 			{0x20000000, 0x20000000+ARAM_SIZE, MAP_ARAM_START_OFFSET, ARAM_SIZE,  true},
 			{0x01000000, 0x04000000,                               0,         0, false},  // More unused
-			{0x04000000, 0x05000000,           MAP_VRAM_START_OFFSET, VRAM_SIZE,  true},  // Area 1 (vram, 16MB, wrapped on DC)
+			{0x04000000, 0x05000000,           MAP_VRAM_START_OFFSET, VRAM_SIZE,  true},  // Area 1 (vram, 16MB, wrapped on DC as 2x8MB)
 			{0x05000000, 0x06000000,                               0,         0, false},  // 32 bit path (unused)
 			{0x06000000, 0x07000000,           MAP_VRAM_START_OFFSET, VRAM_SIZE,  true},  // VRAM mirror
 			{0x07000000, 0x08000000,                               0,         0, false},  // 32 bit path (unused) mirror
