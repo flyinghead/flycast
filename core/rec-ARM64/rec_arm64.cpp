@@ -45,12 +45,11 @@ using namespace vixl::aarch64;
 extern "C" void no_update();
 extern "C" void intc_sched();
 extern "C" void ngen_blockcheckfail(u32 pc);
-
 extern "C" void ngen_LinkBlock_Generic_stub();
 extern "C" void ngen_LinkBlock_cond_Branch_stub();
 extern "C" void ngen_LinkBlock_cond_Next_stub();
-
 extern "C" void ngen_FailedToFindBlock_();
+extern void vmem_platform_flush_cache(void *icache_start, void *icache_end, void *dcache_start, void *dcache_end);
 
 struct DynaRBI : RuntimeBlockInfo
 {
@@ -60,47 +59,6 @@ struct DynaRBI : RuntimeBlockInfo
 		verify(false);
 	}
 };
-
-// Code borrowed from Dolphin https://github.com/dolphin-emu/dolphin
-void Arm64CacheFlush(void* start, void* end)
-{
-	if (start == end)
-		return;
-
-#if HOST_OS == OS_DARWIN
-	// Header file says this is equivalent to: sys_icache_invalidate(start, end - start);
-	sys_cache_control(kCacheFunctionPrepareForExecution, start, end - start);
-#else
-	// Don't rely on GCC's __clear_cache implementation, as it caches
-	// icache/dcache cache line sizes, that can vary between cores on
-	// big.LITTLE architectures.
-	u64 addr, ctr_el0;
-	static size_t icache_line_size = 0xffff, dcache_line_size = 0xffff;
-	size_t isize, dsize;
-
-	__asm__ volatile("mrs %0, ctr_el0" : "=r"(ctr_el0));
-	isize = 4 << ((ctr_el0 >> 0) & 0xf);
-	dsize = 4 << ((ctr_el0 >> 16) & 0xf);
-
-	// use the global minimum cache line size
-	icache_line_size = isize = icache_line_size < isize ? icache_line_size : isize;
-	dcache_line_size = dsize = dcache_line_size < dsize ? dcache_line_size : dsize;
-
-	addr = (u64)start & ~(u64)(dsize - 1);
-	for (; addr < (u64)end; addr += dsize)
-		// use "civac" instead of "cvau", as this is the suggested workaround for
-		// Cortex-A53 errata 819472, 826319, 827319 and 824069.
-		__asm__ volatile("dc civac, %0" : : "r"(addr) : "memory");
-	__asm__ volatile("dsb ish" : : : "memory");
-
-	addr = (u64)start & ~(u64)(isize - 1);
-	for (; addr < (u64)end; addr += isize)
-		__asm__ volatile("ic ivau, %0" : : "r"(addr) : "memory");
-
-	__asm__ volatile("dsb ish" : : : "memory");
-	__asm__ volatile("isb" : : : "memory");
-#endif
-}
 
 double host_cpu_time;
 u64 guest_cpu_cycles;
@@ -147,7 +105,7 @@ __asm__
 	"ngen_LinkBlock_Shared_stub:			\n\t"
 		"mov x0, lr							\n\t"
 		"sub x0, x0, #4						\n\t"	// go before the call
-		"bl rdv_LinkBlock					\n\t"
+		"bl rdv_LinkBlock					\n\t"   // returns an RX addr
 		"br x0								\n"
 
 		".hidden ngen_FailedToFindBlock_	\n\t"
@@ -1013,7 +971,7 @@ public:
 
 			Ldr(w29, sh4_context_mem_operand(&next_pc));
 
-			GenBranch(no_update);
+			GenBranchRuntime(no_update);
 			break;
 
 		default:
@@ -1038,7 +996,12 @@ public:
 
 			emit_Skip(block->host_code_size);
 		}
-		Arm64CacheFlush(GetBuffer()->GetStartAddress<void*>(), GetBuffer()->GetEndAddress<void*>());
+
+		// Flush and invalidate caches
+		vmem_platform_flush_cache(
+			CC_RW2RX(GetBuffer()->GetStartAddress<void*>()), CC_RW2RX(GetBuffer()->GetEndAddress<void*>()),
+			GetBuffer()->GetStartAddress<void*>(), GetBuffer()->GetEndAddress<void*>());
+
 #if 0
 //		if (rewrite)
 		{
@@ -1060,15 +1023,29 @@ public:
 	}
 
 private:
+	// Runtime branches/calls need to be adjusted if rx space is different to rw space.
+	// Therefore can't mix GenBranch with GenBranchRuntime!
+
 	template <typename R, typename... P>
 	void GenCallRuntime(R (*function)(P...))
 	{
-		ptrdiff_t offset = reinterpret_cast<uintptr_t>(function) - GetBuffer()->GetStartAddress<uintptr_t>();
+		ptrdiff_t offset = reinterpret_cast<uintptr_t>(function) - reinterpret_cast<uintptr_t>(CC_RW2RX(GetBuffer()->GetStartAddress<void*>()));
 		verify(offset >= -128 * 1024 * 1024 && offset <= 128 * 1024 * 1024);
 		verify((offset & 3) == 0);
 		Label function_label;
 		BindToOffset(&function_label, offset);
 		Bl(&function_label);
+	}
+
+   template <typename R, typename... P>
+	void GenBranchRuntime(R (*target)(P...))
+	{
+		ptrdiff_t offset = reinterpret_cast<uintptr_t>(target) - reinterpret_cast<uintptr_t>(CC_RW2RX(GetBuffer()->GetStartAddress<void*>()));
+		verify(offset >= -128 * 1024 * 1024 && offset <= 128 * 1024 * 1024);
+		verify((offset & 3) == 0);
+		Label target_label;
+		BindToOffset(&target_label, offset);
+		B(&target_label);
 	}
 
 	template <typename R, typename... P>

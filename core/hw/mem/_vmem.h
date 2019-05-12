@@ -30,6 +30,8 @@ bool vmem_platform_prepare_jit_block(void *code_area, unsigned size, void **code
 // Same as above but uses two address spaces one with RX and RW protections.
 // Note: this function doesnt have to be implemented, it's a fallback for the above one.
 bool vmem_platform_prepare_jit_block(void *code_area, unsigned size, void **code_area_rw, uintptr_t *rx_offset);
+// This might not need an implementation (ie x86/64 cpus).
+void vmem_platform_flush_cache(void *icache_start, void *icache_end, void *dcache_start, void *dcache_end);
 
 // Note: if you want to disable vmem magic in any given platform, implement the
 // above functions as empty functions and make vmem_platform_init return MemTypeError.

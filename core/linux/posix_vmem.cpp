@@ -215,9 +215,63 @@ bool vmem_platform_prepare_jit_block(void *code_area, unsigned size, void **code
 
 	*code_area_rw = ptr_rw;
 	*rx_offset = (char*)ptr_rx - (char*)ptr_rw;
-	printf("Info: Using NO_RWX mode, rx ptr: %p, rw ptr: %p, offset: %p\n", ptr_rx, ptr_rw, *rx_offset);
+	printf("Info: Using NO_RWX mode, rx ptr: %p, rw ptr: %p, offset: %lu\n", ptr_rx, ptr_rw, (unsigned long)*rx_offset);
 
 	return (ptr_rw != MAP_FAILED);
 }
 
+// Some OSes restrict cache flushing, cause why not right? :D
+
+#if HOST_CPU == CPU_ARM64
+
+// Code borrowed from Dolphin https://github.com/dolphin-emu/dolphin
+static void Arm64_CacheFlush(void* start, void* end) {
+	if (start == end)
+		return;
+
+#if HOST_OS == OS_DARWIN
+	// Header file says this is equivalent to: sys_icache_invalidate(start, end - start);
+	sys_cache_control(kCacheFunctionPrepareForExecution, start, end - start);
+#else
+	// Don't rely on GCC's __clear_cache implementation, as it caches
+	// icache/dcache cache line sizes, that can vary between cores on
+	// big.LITTLE architectures.
+	u64 addr, ctr_el0;
+	static size_t icache_line_size = 0xffff, dcache_line_size = 0xffff;
+	size_t isize, dsize;
+
+	__asm__ volatile("mrs %0, ctr_el0" : "=r"(ctr_el0));
+	isize = 4 << ((ctr_el0 >> 0) & 0xf);
+	dsize = 4 << ((ctr_el0 >> 16) & 0xf);
+
+	// use the global minimum cache line size
+	icache_line_size = isize = icache_line_size < isize ? icache_line_size : isize;
+	dcache_line_size = dsize = dcache_line_size < dsize ? dcache_line_size : dsize;
+
+	addr = (u64)start & ~(u64)(dsize - 1);
+	for (; addr < (u64)end; addr += dsize)
+		// use "civac" instead of "cvau", as this is the suggested workaround for
+		// Cortex-A53 errata 819472, 826319, 827319 and 824069.
+		__asm__ volatile("dc civac, %0" : : "r"(addr) : "memory");
+	__asm__ volatile("dsb ish" : : : "memory");
+
+	addr = (u64)start & ~(u64)(isize - 1);
+	for (; addr < (u64)end; addr += isize)
+		__asm__ volatile("ic ivau, %0" : : "r"(addr) : "memory");
+
+	__asm__ volatile("dsb ish" : : : "memory");
+	__asm__ volatile("isb" : : : "memory");
+#endif
+}
+
+
+void vmem_platform_flush_cache(void *icache_start, void *icache_end, void *dcache_start, void *dcache_end) {
+	Arm64_CacheFlush(dcache_start, dcache_end);
+
+	// Dont risk it and flush and invalidate icache&dcache for both ranges just in case.
+	if (icache_start != dcache_start)
+		Arm64_CacheFlush(icache_start, icache_end);
+}
+
+#endif // #if HOST_CPU == CPU_ARM64
 

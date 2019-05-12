@@ -183,7 +183,7 @@ bool vmem_platform_prepare_jit_block(void *code_area, unsigned size, void **code
 
 	*code_area_rw = ptr_rw;
 	*rx_offset = (char*)ptr_rx - (char*)ptr_rw;
-	printf("Info: Using NO_RWX mode, rx ptr: %p, rw ptr: %p, offset: %p\n", ptr_rx, ptr_rw, *rx_offset);
+	printf("Info: Using NO_RWX mode, rx ptr: %p, rw ptr: %p, offset: %lu\n", ptr_rx, ptr_rw, (unsigned long)*rx_offset);
 
 	return (ptr_rw != NULL);
 }
