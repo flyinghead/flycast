@@ -1072,10 +1072,17 @@ bool dec_DecodeBlock(RuntimeBlockInfo* rbi,u32 max_cycles)
 					else
 					{
 						blk->guest_opcodes++;
-						if (op>=0xF000)
-							blk->guest_cycles+=0;
+						if (!mmu_enabled())
+						{
+							if (op>=0xF000)
+								blk->guest_cycles+=0;
+							else
+								blk->guest_cycles+=CPU_RATIO;
+						}
 						else
-							blk->guest_cycles+=CPU_RATIO;
+						{
+							blk->guest_cycles += max((int)OpDesc[op]->LatencyCycles, 1);
+						}
 						if (OpDesc[op]->IsFloatingPoint())
 						{
 							if (sr.FD == 1)
@@ -1158,7 +1165,7 @@ _end:
 	if (settings.dynarec.idleskip)
 	{
 		//Experimental hash-id based idle skip
-		if (strstr(idle_hash,blk->hash(false,true)))	// FIXME don't hash temp blocks. Use xxhash instead of sha1
+		if (!mmu_enabled() && strstr(idle_hash,blk->hash(false,true)))	// FIXME Use xxhash instead of sha1
 		{
 			//printf("IDLESKIP: %08X reloc match %s\n",blk->addr,blk->hash(false,true));
 			blk->guest_cycles=max_cycles*100;
@@ -1203,7 +1210,7 @@ _end:
 	}
 	// Win CE boost
 	if (mmu_enabled())
-		blk->guest_cycles *= 2;
+		blk->guest_cycles *= 1.2f;
 
 	//make sure we don't use wayy-too-many cycles
 	blk->guest_cycles=min(blk->guest_cycles,max_cycles);
