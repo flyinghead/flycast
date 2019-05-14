@@ -28,7 +28,7 @@
 using namespace vixl::aarch64;
 //#include "deps/vixl/aarch32/disasm-aarch32.h"
 
-extern void Arm64CacheFlush(void* start, void* end);
+extern void vmem_platform_flush_cache(void *icache_start, void *icache_end, void *dcache_start, void *dcache_end);
 extern u32 arm_single_op(u32 opcode);
 extern "C" void arm_dispatch();
 extern "C" void arm_exit();
@@ -41,7 +41,7 @@ extern reg_pair arm_Reg[RN_ARM_REG_COUNT];
 MacroAssembler *assembler;
 
 extern "C" void armFlushICache(void *bgn, void *end) {
-	Arm64CacheFlush(bgn, end);
+	vmem_platform_flush_cache(bgn, end, bgn, end);
 }
 
 static MemOperand arm_reg_operand(u32 regn)
@@ -143,7 +143,9 @@ void armv_end(void* codestart, u32 cycl)
 
 	assembler->FinalizeCode();
 	verify(assembler->GetBuffer()->GetCursorOffset() <= assembler->GetBuffer()->GetCapacity());
-	Arm64CacheFlush(codestart, assembler->GetBuffer()->GetEndAddress<void*>());
+	vmem_platform_flush_cache(
+		codestart, assembler->GetBuffer()->GetEndAddress<void*>(),
+		codestart, assembler->GetBuffer()->GetEndAddress<void*>());
 	icPtr += assembler->GetBuffer()->GetSizeInBytes();
 
 #if 0

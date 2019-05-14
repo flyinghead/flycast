@@ -469,6 +469,7 @@ bool _vmem_reserve() {
 	}
 	else {
 		printf("Info: nvmem is enabled, with addr space of size %s\n", vmemstatus == MemType4GB ? "4GB" : "512MB");
+		printf("Info: p_sh4rcb: %p virt_ram_base: %p\n", p_sh4rcb, virt_ram_base);
 		// Map the different parts of the memory file into the new memory range we got.
 		#define MAP_RAM_START_OFFSET  0
 		#define MAP_VRAM_START_OFFSET (MAP_RAM_START_OFFSET+RAM_SIZE)

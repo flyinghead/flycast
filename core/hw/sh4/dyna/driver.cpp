@@ -1,18 +1,12 @@
 #include "types.h"
 
-#if HOST_OS==OS_WINDOWS
-#include <windows.h>
-#elif HOST_OS==OS_LINUX
-#include <unistd.h>
-#include <sys/mman.h>
-#endif
-
 #include "../sh4_interpreter.h"
 #include "../sh4_opcode_list.h"
 #include "../sh4_core.h"
 #include "../sh4_if.h"
 #include "hw/sh4/sh4_interrupts.h"
 
+#include "hw/mem/_vmem.h"
 #include "hw/sh4/sh4_mem.h"
 #include "hw/pvr/pvr_mem.h"
 #include "hw/aica/aica_if.h"
@@ -26,9 +20,7 @@
 #include "decoder.h"
 
 #if FEAT_SHREC != DYNAREC_NONE
-//uh uh
 
-#if !defined(_WIN64)
 u8 SH4_TCB[CODE_SIZE+4096]
 #if HOST_OS == OS_WINDOWS || FEAT_SHREC != DYNAREC_JIT
 	;
@@ -39,10 +31,9 @@ u8 SH4_TCB[CODE_SIZE+4096]
 #else
 	#error SH4_TCB ALLOC
 #endif
-#endif
 
 u8* CodeCache;
-
+uintptr_t cc_rx_offset;
 
 u32 LastAddr;
 u32 LastAddr_min;
@@ -275,7 +266,7 @@ DynarecCodeEntryPtr DYNACALL rdv_FailedToFindBlock(u32 pc)
 	//printf("rdv_FailedToFindBlock ~ %08X\n",pc);
 	next_pc=pc;
 
-	return rdv_CompilePC();
+	return (DynarecCodeEntryPtr)CC_RW2RX(rdv_CompilePC());
 }
 
 static void ngen_FailedToFindBlock_internal() {
@@ -314,35 +305,27 @@ DynarecCodeEntryPtr DYNACALL rdv_BlockCheckFail(u32 pc)
 {
 	next_pc=pc;
 	recSh4_ClearCache();
-	return rdv_CompilePC();
-}
-
-DynarecCodeEntryPtr rdv_FindCode()
-{
-	DynarecCodeEntryPtr rv=bm_GetCode(next_pc);
-	if (rv==ngen_FailedToFindBlock)
-		return 0;
-	
-	return rv;
+	return (DynarecCodeEntryPtr)CC_RW2RX(rdv_CompilePC());
 }
 
 DynarecCodeEntryPtr rdv_FindOrCompile()
 {
-	DynarecCodeEntryPtr rv=bm_GetCode(next_pc);
-	if (rv==ngen_FailedToFindBlock)
-		rv=rdv_CompilePC();
+	DynarecCodeEntryPtr rv = bm_GetCode(next_pc);  // Returns exec addr
+	if (rv == ngen_FailedToFindBlock)
+		rv = (DynarecCodeEntryPtr)CC_RW2RX(rdv_CompilePC());  // Returns rw addr
 	
 	return rv;
 }
 
 void* DYNACALL rdv_LinkBlock(u8* code,u32 dpc)
 {
-	RuntimeBlockInfo* rbi=bm_GetBlock(code);
+	// code is the RX addr to return after, however bm_GetBlock returns RW
+	RuntimeBlockInfo* rbi = bm_GetBlock(code);
 
 	if (!rbi)
 	{
 		printf("Stale block ..");
-		rbi=bm_GetStaleBlock(code);
+		rbi = bm_GetStaleBlock(code);
 	}
 	
 	verify(rbi != NULL);
@@ -365,7 +348,7 @@ void* DYNACALL rdv_LinkBlock(u8* code,u32 dpc)
 			next_pc=rbi->NextBlock;
 	}
 
-	DynarecCodeEntryPtr rv=rdv_FindOrCompile();
+	DynarecCodeEntryPtr rv = rdv_FindOrCompile();  // Returns rx ptr
 
 	bool do_link=bm_GetBlock(code)==rbi;
 
@@ -455,56 +438,23 @@ void recSh4_Init()
 	if (_nvmem_enabled()) {
 		verify(mem_b.data==((u8*)p_sh4rcb->sq_buffer+512+0x0C000000));
 	}
-	
-#if defined(_WIN64)
-#ifdef _MSC_VER
-	for (int i = 10; i < 1300; i++) {
 
+	// Prepare some pointer to the pre-allocated code cache:
+	void *candidate_ptr = (void*)(((unat)SH4_TCB + 4095) & ~4095);
 
-		//align to next page ..
-		u8* ptr = (u8*)recSh4_Init - i * 1024 * 1024;
-
-		CodeCache = (u8*)VirtualAlloc(ptr, CODE_SIZE, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);//; (u8*)(((unat)SH4_TCB+4095)& ~4095);
-
-		if (CodeCache)
-			break;
-	}
-#else
-	CodeCache = (u8*)VirtualAlloc(NULL, CODE_SIZE, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
-#endif
-	verify(CodeCache != NULL);
-#else
-	CodeCache = (u8*)(((unat)SH4_TCB+4095)& ~4095);
-#endif
-
-#if HOST_OS == OS_DARWIN
-    munmap(CodeCache, CODE_SIZE);
-    CodeCache = (u8*)mmap(CodeCache, CODE_SIZE, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_FIXED | MAP_PRIVATE | MAP_ANON, 0, 0);
-#endif
-
-#if HOST_OS == OS_WINDOWS
-	DWORD old;
-	VirtualProtect(CodeCache,CODE_SIZE,PAGE_EXECUTE_READWRITE,&old);
-#elif HOST_OS == OS_LINUX || HOST_OS == OS_DARWIN
-	
-	printf("\n\t CodeCache addr: %p | from: %p | addr here: %p\n", CodeCache, CodeCache, recSh4_Init);
-
-	#if FEAT_SHREC == DYNAREC_JIT
-		if (mprotect(CodeCache, CODE_SIZE, PROT_READ|PROT_WRITE|PROT_EXEC))
-		{
-			perror("\n\tError,Couldn’t mprotect CodeCache!");
-			die("Couldn’t mprotect CodeCache");
-		}
+	// Call the platform-specific magic to make the pages RWX
+	CodeCache = NULL;
+	#ifdef FEAT_NO_RWX_PAGES
+	verify(vmem_platform_prepare_jit_block(candidate_ptr, CODE_SIZE, (void**)&CodeCache, &cc_rx_offset));
+	#else
+	verify(vmem_platform_prepare_jit_block(candidate_ptr, CODE_SIZE, (void**)&CodeCache));
 	#endif
+	// Ensure the pointer returned is non-null
+	verify(CodeCache != NULL);
 
-#if TARGET_IPHONE
-	memset((u8*)mmap(CodeCache, CODE_SIZE, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_FIXED | MAP_PRIVATE | MAP_ANON, 0, 0),0xFF,CODE_SIZE);
-#else
-	memset(CodeCache,0xFF,CODE_SIZE);
-#endif
-
-#endif
+	memset(CodeCache, 0xFF, CODE_SIZE);
 	ngen_init();
+	bm_Reset();
 }
 
 void recSh4_Term()
@@ -532,4 +482,5 @@ void Get_Sh4Recompiler(sh4_if* rv)
 	rv->IsCpuRunning = recSh4_IsCpuRunning;
 	rv->ResetCache = recSh4_ClearCache;
 }
-#endif
+
+#endif  // FEAT_SHREC != DYNAREC_NONE

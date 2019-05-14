@@ -251,7 +251,14 @@ public:
 		
 		regalloc.DoAlloc(block);
 
+		#ifdef FEAT_NO_RWX_PAGES
+		// Use absolute addressing for this one
+		// TODO(davidgfnet) remove the ifsef using CC_RX2RW/CC_RW2RX
+		mov(rax, (uintptr_t)&cycle_counter);
+		sub(dword[rax], block->guest_cycles);
+		#else
 		sub(dword[rip + &cycle_counter], block->guest_cycles);
+		#endif
 #ifdef PROFILING
 		mov(rax, (uintptr_t)&guest_cpu_cycles);
 		mov(ecx, block->guest_cycles);
@@ -1104,7 +1111,7 @@ private:
 					mov(rax, reinterpret_cast<uintptr_t>(ptr));
 					mov(edx, *(u32*)ptr);
 					cmp(dword[rax], edx);
-					jne(reinterpret_cast<const void*>(&ngen_blockcheckfail));		
+					jne(reinterpret_cast<const void*>(CC_RX2RW(&ngen_blockcheckfail)));
 				}
 		 	}
 		 	break;
@@ -1140,7 +1147,7 @@ private:
 							sz -= 2;
 							sa += 2;
 						}
-						jne(reinterpret_cast<const void*>(&ngen_blockcheckfail));
+						jne(reinterpret_cast<const void*>(CC_RX2RW(&ngen_blockcheckfail)));
 						ptr = (void*)GetMemPtr(sa, sz > 8 ? 8 : sz);
 					}
 		 		}
@@ -1184,7 +1191,7 @@ private:
 		movd(ptr[rsp + 12], xmm11);
 #endif
 
-		call(function);
+		call(CC_RX2RW(function));
 
 #ifndef _WIN32
 		movd(xmm8, ptr[rsp + 0]);
