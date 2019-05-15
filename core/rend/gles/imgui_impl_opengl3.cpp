@@ -141,7 +141,7 @@ void    ImGui_ImplOpenGL3_RenderDrawData(ImDrawData* draw_data, bool save_backgr
 
     if (save_background)
     {
-#if !defined(GLES) || defined(_ANDROID)
+#ifndef GLES2
     	if (!gl.is_gles && glReadBuffer != NULL)
     		glReadBuffer(GL_FRONT);
 
@@ -190,12 +190,12 @@ void    ImGui_ImplOpenGL3_RenderDrawData(ImDrawData* draw_data, bool save_backgr
     glcache.UseProgram(g_ShaderHandle);
     glUniform1i(g_AttribLocationTex, 0);
     glUniformMatrix4fv(g_AttribLocationProjMtx, 1, GL_FALSE, &ortho_projection[0][0]);
-#if !defined(GLES) || defined(_ANDROID)
+#ifndef GLES2
     if (gl.gl_major >= 3 && glBindSampler != NULL)
     	glBindSampler(0, 0); // We use combined texture/sampler state. Applications using GL 3.3 may set that otherwise.
 #endif
     GLuint vao_handle = 0;
-#if !defined(GLES) || defined(_ANDROID)
+#ifndef GLES2
     if (gl.gl_major >= 3)
     {
 		// Recreate the VAO every time
@@ -252,7 +252,7 @@ void    ImGui_ImplOpenGL3_RenderDrawData(ImDrawData* draw_data, bool save_backgr
             idx_buffer_offset += pcmd->ElemCount;
         }
     }
-#if !defined(GLES) || defined(_ANDROID)
+#ifndef GLES2
     if (vao_handle != 0)
     	glDeleteVertexArrays(1, &vao_handle);
 #endif

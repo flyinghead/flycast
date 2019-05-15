@@ -565,9 +565,7 @@ GLuint fogTextureId;
 				}
 #ifdef GLES
 // EGL only supports runtime loading with android? TDB
-#ifdef _ANDROID
 				load_gles_symbols();
-#endif
 #else
 				egl_makecurrent();
 				if (gl3wInit())
@@ -1205,7 +1203,7 @@ bool gl_create_resources()
 		//create vao
 		//This is really not "proper", vaos are supposed to be defined once
 		//i keep updating the same one to make the es2 code work in 3.1 context
-#if !defined(GLES) || defined(_ANDROID)
+#ifndef GLES2
 		glGenVertexArrays(1, &gl.vbo.vao);
 #endif
 	}
@@ -2006,7 +2004,7 @@ struct glesrend : Renderer
 
 	void DrawOSD(bool clear_screen)
 	{
-#if !defined(GLES) || defined(_ANDROID)
+#ifndef GLES2
 		if (gl.gl_major >= 3)
 			glBindVertexArray(gl.vbo.vao);
 #endif

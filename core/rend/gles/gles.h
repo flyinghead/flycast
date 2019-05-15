@@ -17,7 +17,7 @@
 #endif
 #include <GLES32/gl32.h>
 #include <GLES32/gl2ext.h>
-#ifdef _ANDROID
+#ifndef GLES2
 #include "gl32funcs.h"
 #endif
 

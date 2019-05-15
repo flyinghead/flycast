@@ -948,7 +948,7 @@ void SetMVS_Mode(ModifierVolumeMode mv_mode, ISP_Modvol ispc)
 
 static void SetupMainVBO()
 {
-#if !defined(GLES) || defined(_ANDROID)
+#ifndef GLES2
 	if (gl.gl_major >= 3)
 		glBindVertexArray(gl.vbo.vao);
 #endif
@@ -971,7 +971,7 @@ static void SetupMainVBO()
 
 void SetupModvolVBO()
 {
-#if !defined(GLES) || defined(_ANDROID)
+#ifndef GLES2
 	if (gl.gl_major >= 3)
 		glBindVertexArray(gl.vbo.vao);
 #endif
