@@ -3,7 +3,10 @@
         android:name="com.reicast.emulator.Emulator">
 
         <activity
-            android:name="com.reicast.emulator.MainActivity">
+            android:name="com.reicast.emulator.NativeGLActivity"/>
+        <activity-alias
+            android:name="com.reicast.emulator.MainActivity"
+            android:targetActivity="com.reicast.emulator.NativeGLActivity">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
 
@@ -61,6 +64,6 @@
                     android:pathPattern=".*\\.7z"
                     android:scheme="file" />
             </intent-filter>
-        </activity>
+        </activity-alias>
     </application>
 </manifest>

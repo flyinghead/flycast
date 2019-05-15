@@ -134,7 +134,7 @@ void LoadSpecialSettings()
 	safemode_game = false;
 	tr_poly_depth_mask_game = false;
 	extra_depth_game = false;
-	
+
 	if (reios_windows_ce)
 	{
 		printf("Enabling Extra depth scaling for Windows CE games\n");
@@ -190,7 +190,7 @@ void LoadSpecialSettings()
 	}
 #elif DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
 	printf("Game ID is [%s]\n", naomi_game_id);
-	
+
 	if (!strcmp("METAL SLUG 6", naomi_game_id) || !strcmp("WAVE RUNNER GP", naomi_game_id))
 	{
 		printf("Enabling Dynarec safe mode for game %s\n", naomi_game_id);
@@ -213,12 +213,14 @@ void LoadSpecialSettings()
 		printf("Enabling JVS rotary encoders for game %s\n", naomi_game_id);
 		settings.input.JammaSetup = 2;
 	}
-	else if (!strcmp("POWER STONE 2 JAPAN", naomi_game_id))
+	else if (!strcmp("POWER STONE 2 JAPAN", naomi_game_id)		// Naomi
+			|| !strcmp("GUILTY GEAR isuka", naomi_game_id))		// AW
 	{
 		printf("Enabling 4-player setup for game %s\n", naomi_game_id);
 		settings.input.JammaSetup = 1;
 	}
-	else if (!strcmp("SEGA MARINE FISHING JAPAN", naomi_game_id))
+	else if (!strcmp("SEGA MARINE FISHING JAPAN", naomi_game_id)
+				|| !strcmp(naomi_game_id, "BASS FISHING SIMULATOR VER.A"))	// AW
 	{
 		printf("Enabling specific JVS setup for game %s\n", naomi_game_id);
 		settings.input.JammaSetup = 3;
@@ -228,9 +230,11 @@ void LoadSpecialSettings()
 		printf("Enabling specific JVS setup for game %s\n", naomi_game_id);
 		settings.input.JammaSetup = 4;
 	}
-	else if (!strcmp("NINJA ASSAULT", naomi_game_id))
+	else if (!strcmp("NINJA ASSAULT", naomi_game_id)
+				|| !strcmp(naomi_game_id, "Sports Shooting USA")	// AW
+				|| !strcmp(naomi_game_id, "SEGA CLAY CHALLENGE"))	// AW
 	{
-		printf("Enabling specific JVS setup for game %s\n", naomi_game_id);
+		printf("Enabling lightgun setup for game %s\n", naomi_game_id);
 		settings.input.JammaSetup = 5;
 	}
 	else if (!strcmp(" BIOHAZARD  GUN SURVIVOR2", naomi_game_id))
@@ -309,11 +313,12 @@ int dc_start_game(const char *path)
 	{
 		InitSettings();
 		LoadSettings(false);
-		settings.dreamcast.RTC = GetRTC_now();	// FIXME This shouldn't be in settings anymore
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST
 		if (!settings.bios.UseReios)
 #endif
-			LoadRomFiles(get_readonly_data_path(DATA_PATH));
+			if (!LoadRomFiles(get_readonly_data_path(DATA_PATH)))
+				return -5;
+
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST
 		if (path == NULL)
 		{
@@ -345,7 +350,6 @@ int dc_start_game(const char *path)
 		return 0;
 	}
 
-	settings.dreamcast.RTC = GetRTC_now();	// FIXME This shouldn't be in settings anymore
 	if (settings.bios.UseReios || !LoadRomFiles(get_readonly_data_path(DATA_PATH)))
 	{
 #ifdef USE_REIOS
@@ -485,7 +489,6 @@ void dc_exit()
 
 void InitSettings()
 {
-	settings.dreamcast.RTC			= GetRTC_now();
 	settings.dynarec.Enable			= true;
 	settings.dynarec.idleskip		= true;
 	settings.dynarec.unstable_opt	= false;
@@ -499,6 +502,7 @@ void InitSettings()
 	settings.aica.LimitFPS			= true;
 	settings.aica.NoBatch			= false;	// This also controls the DSP. Disabled by default
     settings.aica.NoSound			= false;
+	settings.audio.backend 			= "auto";
 	settings.rend.UseMipmaps		= true;
 	settings.rend.WideScreen		= false;
 	settings.rend.ShowFPS			= false;
@@ -513,6 +517,10 @@ void InitSettings()
 	settings.rend.CustomTextures    = false;
 	settings.rend.DumpTextures      = false;
 	settings.rend.ScreenScaling     = 100;
+	settings.rend.ScreenStretching  = 100;
+	settings.rend.Fog				= true;
+	settings.rend.FloatVMUs			= false;
+	settings.rend.Rotate90			= false;
 
 	settings.pvr.ta_skip			= 0;
 	settings.pvr.rend				= 0;
@@ -559,6 +567,7 @@ void LoadSettings(bool game_specific)
 {
 	const char *config_section = game_specific ? cfgGetGameId() : "config";
 	const char *input_section = game_specific ? cfgGetGameId() : "input";
+	const char *audio_section = game_specific ? cfgGetGameId() : "audio";
 
 	settings.dynarec.Enable			= cfgLoadBool(config_section, "Dynarec.Enabled", settings.dynarec.Enable);
 	settings.dynarec.idleskip		= cfgLoadBool(config_section, "Dynarec.idleskip", settings.dynarec.idleskip);
@@ -574,6 +583,7 @@ void LoadSettings(bool game_specific)
 	settings.aica.LimitFPS			= cfgLoadBool(config_section, "aica.LimitFPS", settings.aica.LimitFPS);
 	settings.aica.NoBatch			= cfgLoadBool(config_section, "aica.NoBatch", settings.aica.NoBatch);
     settings.aica.NoSound			= cfgLoadBool(config_section, "aica.NoSound", settings.aica.NoSound);
+    settings.audio.backend			= cfgLoadStr(audio_section, "backend", settings.audio.backend.c_str());
 	settings.rend.UseMipmaps		= cfgLoadBool(config_section, "rend.UseMipmaps", settings.rend.UseMipmaps);
 	settings.rend.WideScreen		= cfgLoadBool(config_section, "rend.WideScreen", settings.rend.WideScreen);
 	settings.rend.ShowFPS			= cfgLoadBool(config_section, "rend.ShowFPS", settings.rend.ShowFPS);
@@ -595,6 +605,10 @@ void LoadSettings(bool game_specific)
 	settings.rend.DumpTextures      = cfgLoadBool(config_section, "rend.DumpTextures", settings.rend.DumpTextures);
 	settings.rend.ScreenScaling     = cfgLoadInt(config_section, "rend.ScreenScaling", settings.rend.ScreenScaling);
 	settings.rend.ScreenScaling = min(max(1, settings.rend.ScreenScaling), 100);
+	settings.rend.ScreenStretching  = cfgLoadInt(config_section, "rend.ScreenStretching", settings.rend.ScreenStretching);
+	settings.rend.Fog				= cfgLoadBool(config_section, "rend.Fog", settings.rend.Fog);
+	settings.rend.FloatVMUs			= cfgLoadBool(config_section, "rend.FloatVMUs", settings.rend.FloatVMUs);
+	settings.rend.Rotate90			= cfgLoadBool(config_section, "rend.Rotate90", settings.rend.Rotate90);
 
 	settings.pvr.ta_skip			= cfgLoadInt(config_section, "ta.skip", settings.pvr.ta_skip);
 	settings.pvr.rend				= cfgLoadInt(config_section, "pvr.rend", settings.pvr.rend);
@@ -706,6 +720,27 @@ void SaveSettings()
 	cfgSaveBool("config", "aica.LimitFPS", settings.aica.LimitFPS);
 	cfgSaveBool("config", "aica.NoBatch", settings.aica.NoBatch);
 	cfgSaveBool("config", "aica.NoSound", settings.aica.NoSound);
+	cfgSaveStr("audio", "backend", settings.audio.backend.c_str());
+
+	// Write backend specific settings
+	// std::map<std::string, std::map<std::string, std::string>>
+	for (std::map<std::string, std::map<std::string, std::string>>::iterator it = settings.audio.options.begin(); it != settings.audio.options.end(); ++it)
+	{
+
+		std::pair<std::string, std::map<std::string, std::string>> p = (std::pair<std::string, std::map<std::string, std::string>>)*it;
+		std::string section = p.first;
+		std::map<std::string, std::string> options = p.second;
+
+		for (std::map<std::string, std::string>::iterator it2 = options.begin(); it2 != options.end(); ++it2)
+		{
+			std::pair<std::string, std::string> p2 = (std::pair<std::string, std::string>)*it2;
+			std::string key = p2.first;
+			std::string val = p2.second;
+
+			cfgSaveStr(section.c_str(), key.c_str(), val.c_str());
+		}
+	}
+
 	cfgSaveBool("config", "rend.WideScreen", settings.rend.WideScreen);
 	cfgSaveBool("config", "rend.ShowFPS", settings.rend.ShowFPS);
 	if (!rtt_to_buffer_game || !settings.rend.RenderToTextureBuffer)
@@ -718,6 +753,10 @@ void SaveSettings()
 	cfgSaveBool("config", "rend.CustomTextures", settings.rend.CustomTextures);
 	cfgSaveBool("config", "rend.DumpTextures", settings.rend.DumpTextures);
 	cfgSaveInt("config", "rend.ScreenScaling", settings.rend.ScreenScaling);
+	cfgSaveInt("config", "rend.ScreenStretching", settings.rend.ScreenStretching);
+	cfgSaveBool("config", "rend.Fog", settings.rend.Fog);
+	cfgSaveBool("config", "rend.FloatVMUs", settings.rend.FloatVMUs);
+	cfgSaveBool("config", "rend.Rotate90", settings.rend.Rotate90);
 	cfgSaveInt("config", "ta.skip", settings.pvr.ta_skip);
 	cfgSaveInt("config", "pvr.rend", settings.pvr.rend);
 

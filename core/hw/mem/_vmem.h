@@ -1,6 +1,33 @@
 #pragma once
 #include "types.h"
 
+enum VMemType {
+	MemType4GB,
+	MemType512MB,
+	MemTypeError
+};
+
+struct vmem_mapping {
+	u32 start_address, end_address;
+	unsigned memoffset, memsize;
+	bool allow_writes;
+};
+
+// Platform specific vmemory API
+// To initialize (maybe) the vmem subsystem
+VMemType vmem_platform_init(void **vmem_base_addr, void **sh4rcb_addr);
+// To reset the on-demand allocated pages.
+void vmem_platform_reset_mem(void *ptr, unsigned size_bytes);
+// To handle a fault&allocate an ondemand page.
+void vmem_platform_ondemand_page(void *address, unsigned size_bytes);
+// To create the mappings in the address space.
+void vmem_platform_create_mappings(const vmem_mapping *vmem_maps, unsigned nummaps);
+// Just tries to wipe as much as possible in the relevant area.
+void vmem_platform_destroy();
+
+// Note: if you want to disable vmem magic in any given platform, implement the
+// above functions as empty functions and make vmem_platform_init return MemTypeError.
+
 //Typedef's
 //ReadMem 
 typedef u8 DYNACALL _vmem_ReadMem8FP(u32 Address);

@@ -1,6 +1,6 @@
-#include "oslib\oslib.h"
-#include "oslib\audiostream.h"
-#include "imgread\common.h"
+#include "oslib/oslib.h"
+#include "oslib/audiostream.h"
+#include "imgread/common.h"
 #include "stdclass.h"
 #include "cfg/cfg.h"
 #include "xinput_gamepad.h"
@@ -10,8 +10,8 @@
 #include <windows.h>
 #include <windowsx.h>
 
-#include <Xinput.h>
-#include "hw\maple\maple_cfg.h"
+#include <xinput.h>
+#include "hw/maple/maple_cfg.h"
 #pragma comment(lib, "XInput9_1_0.lib")
 
 PCHAR*
@@ -148,12 +148,10 @@ LONG ExeptionHandler(EXCEPTION_POINTERS *ExceptionInfo)
 	{
 		return EXCEPTION_CONTINUE_EXECUTION;
 	}
-#ifndef TARGET_NO_NVMEM
 	else if (BM_LockedWrite(address))
 	{
 		return EXCEPTION_CONTINUE_EXECUTION;
 	}
-#endif
 #if FEAT_SHREC == DYNAREC_JIT && HOST_CPU == CPU_X86
 		else if ( ngen_Rewrite((unat&)ep->ContextRecord->Eip,*(unat*)ep->ContextRecord->Esp,ep->ContextRecord->Eax) )
 		{
@@ -188,8 +186,6 @@ u16 kcode[4] = { 0xffff, 0xffff, 0xffff, 0xffff };
 u32 vks[4];
 s8 joyx[4],joyy[4];
 u8 rt[4],lt[4];
-extern bool coin_chute;
-extern bool naomi_test_button;
 // Mouse
 extern s32 mo_x_abs;
 extern s32 mo_y_abs;
@@ -199,6 +195,10 @@ extern f32 mo_y_delta;
 extern f32 mo_wheel_delta;
 // Keyboard
 static Win32KeyboardDevice keyboard(0);
+
+
+void ToggleFullscreen();
+
 
 void UpdateInputState(u32 port)
 {
@@ -220,12 +220,6 @@ void UpdateInputState(u32 port)
 	std::shared_ptr<XInputGamepadDevice> gamepad = XInputGamepadDevice::GetXInputDevice(port);
 	if (gamepad != NULL)
 		gamepad->ReadInput();
-
-#if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
-		// FIXME
-		coin_chute = GetAsyncKeyState(VK_F8);
-		naomi_test_button = GetAsyncKeyState(VK_F7);
-#endif
 }
 
 // Windows class name to register
@@ -339,6 +333,14 @@ LRESULT CALLBACK WndProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			keyboard.keyboard_input(keycode, message == WM_KEYDOWN);
 		}
 		break;
+	
+	case WM_SYSKEYDOWN:
+		if (wParam == VK_RETURN)
+			if ((HIWORD(lParam) & KF_ALTDOWN))
+				ToggleFullscreen();
+		
+		break;
+
 	case WM_CHAR:
 		keyboard.keyboard_character((char)wParam);
 		return 0;
@@ -395,6 +397,45 @@ void* libPvr_GetRenderSurface()
 {
 	return GetDC((HWND)window_win);
 }
+
+
+void ToggleFullscreen()
+{
+	static RECT rSaved;
+	static bool fullscreen=false;
+	HWND hWnd = (HWND)window_win;
+
+	fullscreen = !fullscreen;
+
+
+	if (fullscreen)
+	{
+		GetWindowRect(hWnd, &rSaved);
+
+		MONITORINFO mi = { sizeof(mi) };
+		HMONITOR hmon = MonitorFromWindow(hWnd, MONITOR_DEFAULTTONEAREST);
+		if (GetMonitorInfo(hmon, &mi)) {
+
+			SetWindowLongPtr(hWnd, GWL_EXSTYLE, WS_EX_APPWINDOW | WS_EX_TOPMOST);
+			SetWindowLongPtr(hWnd, GWL_STYLE, WS_POPUP | WS_VISIBLE);
+
+			SetWindowPos(hWnd, HWND_TOPMOST, mi.rcMonitor.left, mi.rcMonitor.top,
+				mi.rcMonitor.right - mi.rcMonitor.left, mi.rcMonitor.bottom - mi.rcMonitor.top, 
+				SWP_SHOWWINDOW|SWP_FRAMECHANGED|SWP_ASYNCWINDOWPOS);
+		}
+	}
+	else {
+		
+		SetWindowLongPtr(hWnd, GWL_EXSTYLE, WS_EX_APPWINDOW | WS_EX_TOPMOST);
+		SetWindowLongPtr(hWnd, GWL_STYLE, WS_VISIBLE | WS_OVERLAPPEDWINDOW | (window_maximized ? WS_MAXIMIZE : 0));
+
+		SetWindowPos(hWnd, NULL, rSaved.left, rSaved.top,
+			rSaved.right - rSaved.left, rSaved.bottom - rSaved.top, 
+			SWP_SHOWWINDOW|SWP_FRAMECHANGED|SWP_ASYNCWINDOWPOS|SWP_NOZORDER);
+	}
+
+}
+
 
 BOOL CtrlHandler( DWORD fdwCtrlType )
 {
@@ -646,15 +687,31 @@ int CALLBACK WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine
 	int argc=0;
 	wchar* cmd_line=GetCommandLineA();
 	wchar** argv=CommandLineToArgvA(cmd_line,&argc);
-	if(strstr(cmd_line,"NoConsole")==0)
+	for (int i = 0; i < argc; i++)
 	{
-		if (AllocConsole())
+		if (!stricmp(argv[i], "-console"))
 		{
-			freopen("CON","w",stdout);
-			freopen("CON","w",stderr);
-			freopen("CON","r",stdin);
+			if (AllocConsole())
+			{
+				freopen("CON", "w", stdout);
+				freopen("CON", "w", stderr);
+				freopen("CON", "r", stdin);
+			}
+			SetConsoleCtrlHandler((PHANDLER_ROUTINE)CtrlHandler, TRUE);
 		}
-		SetConsoleCtrlHandler( (PHANDLER_ROUTINE) CtrlHandler, TRUE );
+		else if (!stricmp(argv[i], "-log"))
+		{
+			const char *logfile;
+			if (i < argc - 1)
+			{
+				logfile = argv[i + 1];
+				i++;
+			}
+			else
+				logfile = "reicast-log.txt";
+			freopen(logfile, "w", stdout);
+			freopen(logfile, "w", stderr);
+		}
 	}
 
 #endif
@@ -662,14 +719,13 @@ int CALLBACK WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine
 	ReserveBottomMemory();
 	SetupPath();
 
-#ifndef __GNUC__
-	__try
-#else
 #ifdef _WIN64
 	AddVectoredExceptionHandler(1, ExeptionHandler);
 #else
-	SetUnhandledExceptionFilter(&ExeptionHandler);
+	SetUnhandledExceptionFilter((LPTOP_LEVEL_EXCEPTION_FILTER)&ExeptionHandler);
 #endif
+#ifndef __GNUC__
+	__try
 #endif
 	{
 		int reicast_init(int argc, char* argv[]);
@@ -740,91 +796,6 @@ void os_DoEvents()
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
 	}
-}
-
-
-
-
-//Windoze Code implementation of commong classes from here and after ..
-
-//Thread class
-cThread::cThread(ThreadEntryFP* function,void* prm)
-{
-	Entry=function;
-	param=prm;
-}
-
-
-void cThread::Start()
-{
-	hThread=CreateThread(NULL,0,(LPTHREAD_START_ROUTINE)Entry,param,0,NULL);
-	ResumeThread(hThread);
-}
-
-void cThread::WaitToEnd()
-{
-	WaitForSingleObject(hThread,INFINITE);
-}
-//End thread class
-
-//cResetEvent Calss
-cResetEvent::cResetEvent(bool State,bool Auto)
-{
-		hEvent = CreateEvent(
-		NULL,             // default security attributes
-		Auto?FALSE:TRUE,  // auto-reset event?
-		State?TRUE:FALSE, // initial state is State
-		NULL			  // unnamed object
-		);
-}
-cResetEvent::~cResetEvent()
-{
-	//Destroy the event object ?
-	 CloseHandle(hEvent);
-}
-void cResetEvent::Set()//Signal
-{
-	#if defined(DEBUG_THREADS)
-		Sleep(rand() % 10);
-	#endif
-	SetEvent(hEvent);
-}
-void cResetEvent::Reset()//reset
-{
-	#if defined(DEBUG_THREADS)
-		Sleep(rand() % 10);
-	#endif
-	ResetEvent(hEvent);
-}
-bool cResetEvent::Wait(u32 msec)//Wait for signal , then reset
-{
-	#if defined(DEBUG_THREADS)
-		Sleep(rand() % 10);
-	#endif
-	return WaitForSingleObject(hEvent,msec) == WAIT_OBJECT_0;
-}
-void cResetEvent::Wait()//Wait for signal , then reset
-{
-	#if defined(DEBUG_THREADS)
-		Sleep(rand() % 10);
-	#endif
-	WaitForSingleObject(hEvent,(u32)-1);
-}
-//End AutoResetEvent
-
-void VArray2::LockRegion(u32 offset,u32 size)
-{
-	//verify(offset+size<this->size);
-	verify(size!=0);
-	DWORD old;
-	VirtualProtect(((u8*)data)+offset , size, PAGE_READONLY,&old);
-}
-void VArray2::UnLockRegion(u32 offset,u32 size)
-{
-	//verify(offset+size<=this->size);
-	verify(size!=0);
-	DWORD old;
-	VirtualProtect(((u8*)data)+offset , size, PAGE_READWRITE,&old);
 }
 
 int get_mic_data(u8* buffer) { return 0; }

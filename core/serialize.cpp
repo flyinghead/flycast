@@ -101,7 +101,7 @@ extern AicaTimer timers[3];
 
 
 //./core/hw/aica/aica_if.o
-extern VArray2 aica_ram;
+extern VLockedMemory aica_ram;
 extern u32 VREG;//video reg =P
 extern u32 ARMRST;//arm reset reg
 extern u32 rtc_EN;
@@ -381,7 +381,7 @@ extern DECL_ALIGN(4) u32 SFaceOffsColor;
 //extern vector<vram_block*> VramLocks[/*VRAM_SIZE*/(16*1024*1024)/PAGE_SIZE];
 //maybe - probably not - just a locking mechanism
 //extern cMutex vramlist_lock;
-extern VArray2 vram;
+extern VLockedMemory vram;
 
 
 
@@ -403,7 +403,7 @@ extern Array<RegisterStruct> SCIF; //SCIF : 10 registers
 
 
 //./core/hw/sh4/sh4_mem.o
-extern VArray2 mem_b;
+extern VLockedMemory mem_b;
 //one-time init
 //extern _vmem_handler area1_32b;
 //one-time init
@@ -441,7 +441,7 @@ extern u32 old_dn;
 //./core/hw/sh4/sh4_sched.o
 extern u64 sh4_sched_ffb;
 extern u32 sh4_sched_intr;
-extern vector<sched_list> list;
+extern vector<sched_list> sch_list;
 //extern int sh4_sched_next_id;
 
 
@@ -975,8 +975,6 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	REICAST_S(decoded_srimask);
 
 
-
-
 	//default to nommu_full
 	i = 3 ;
 	if ( do_sqw_nommu == &do_sqw_nommu_area_3)
@@ -1008,60 +1006,62 @@ bool dc_serialize(void **data, unsigned int *total_size)
 
 	//extern vector<sched_list> list;
 
-	REICAST_S(list[aica_schid].tag) ;
-	REICAST_S(list[aica_schid].start) ;
-	REICAST_S(list[aica_schid].end) ;
 
-	REICAST_S(list[rtc_schid].tag) ;
-	REICAST_S(list[rtc_schid].start) ;
-	REICAST_S(list[rtc_schid].end) ;
+	REICAST_S(sch_list[aica_schid].tag) ;
+	REICAST_S(sch_list[aica_schid].start) ;
+	REICAST_S(sch_list[aica_schid].end) ;
 
-	REICAST_S(list[gdrom_schid].tag) ;
-	REICAST_S(list[gdrom_schid].start) ;
-	REICAST_S(list[gdrom_schid].end) ;
+	REICAST_S(sch_list[rtc_schid].tag) ;
+	REICAST_S(sch_list[rtc_schid].start) ;
+	REICAST_S(sch_list[rtc_schid].end) ;
 
-	REICAST_S(list[maple_schid].tag) ;
-	REICAST_S(list[maple_schid].start) ;
-	REICAST_S(list[maple_schid].end) ;
+	REICAST_S(sch_list[gdrom_schid].tag) ;
+	REICAST_S(sch_list[gdrom_schid].start) ;
+	REICAST_S(sch_list[gdrom_schid].end) ;
 
-	REICAST_S(list[dma_sched_id].tag) ;
-	REICAST_S(list[dma_sched_id].start) ;
-	REICAST_S(list[dma_sched_id].end) ;
+	REICAST_S(sch_list[maple_schid].tag) ;
+	REICAST_S(sch_list[maple_schid].start) ;
+	REICAST_S(sch_list[maple_schid].end) ;
+
+	REICAST_S(sch_list[dma_sched_id].tag) ;
+	REICAST_S(sch_list[dma_sched_id].start) ;
+	REICAST_S(sch_list[dma_sched_id].end) ;
 
 	for (int i = 0; i < 3; i++)
 	{
-		REICAST_S(list[tmu_sched[i]].tag) ;
-		REICAST_S(list[tmu_sched[i]].start) ;
-		REICAST_S(list[tmu_sched[i]].end) ;
+		REICAST_S(sch_list[tmu_sched[i]].tag) ;
+		REICAST_S(sch_list[tmu_sched[i]].start) ;
+		REICAST_S(sch_list[tmu_sched[i]].end) ;
 	}
 
-	REICAST_S(list[render_end_schid].tag) ;
-	REICAST_S(list[render_end_schid].start) ;
-	REICAST_S(list[render_end_schid].end) ;
+	REICAST_S(sch_list[render_end_schid].tag) ;
+	REICAST_S(sch_list[render_end_schid].start) ;
+	REICAST_S(sch_list[render_end_schid].end) ;
 
-	REICAST_S(list[vblank_schid].tag) ;
-	REICAST_S(list[vblank_schid].start) ;
-	REICAST_S(list[vblank_schid].end) ;
+	REICAST_S(sch_list[vblank_schid].tag) ;
+	REICAST_S(sch_list[vblank_schid].start) ;
+	REICAST_S(sch_list[vblank_schid].end) ;
 
-	REICAST_S(list[time_sync].tag) ;
-	REICAST_S(list[time_sync].start) ;
-	REICAST_S(list[time_sync].end) ;
+	REICAST_S(sch_list[time_sync].tag) ;
+	REICAST_S(sch_list[time_sync].start) ;
+	REICAST_S(sch_list[time_sync].end) ;
 
-	REICAST_S(list[modem_sched].tag) ;
-    REICAST_S(list[modem_sched].start) ;
-    REICAST_S(list[modem_sched].end) ;
-
-
+	#ifdef ENABLE_MODEM
+	REICAST_S(sch_list[modem_sched].tag) ;
+    REICAST_S(sch_list[modem_sched].start) ;
+    REICAST_S(sch_list[modem_sched].end) ;
+	#else
+	int modem_dummy = 0;
+	REICAST_S(modem_dummy);
+	REICAST_S(modem_dummy);
+	REICAST_S(modem_dummy);
+	#endif
 
 	REICAST_S(SCIF_SCFSR2);
 	REICAST_S(SCIF_SCFRDR2);
 	REICAST_S(SCIF_SCFDR2);
 
-
 	REICAST_S(BSC_PDTRA);
-
-
-
 
 	REICAST_SA(tmu_shift,3);
 	REICAST_SA(tmu_mask,3);
@@ -1070,13 +1070,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	REICAST_SA(tmu_ch_base,3);
 	REICAST_SA(tmu_ch_base64,3);
 
-
-
-
 	REICAST_SA(CCN_QACR_TR,2);
-
-
-
 
 	REICAST_SA(UTLB,64);
 	REICAST_SA(ITLB,4);
@@ -1086,8 +1080,6 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	REICAST_SA(ITLB_LRU_USE,64);
 	REICAST_S(mmu_error_TT);
 #endif
-
-
 
 	REICAST_S(NullDriveDiscType);
 	REICAST_SA(q_subchannel,96);
@@ -1130,21 +1122,15 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	REICAST_S(div_som_reg2);
 	REICAST_S(div_som_reg3);
 
-
-
 	REICAST_S(LastAddr);
 	REICAST_S(LastAddr_min);
 	REICAST_SA(block_hash,1024);
-
 
 	REICAST_SA(RegisterWrite,sh4_reg_count);
 	REICAST_SA(RegisterRead,sh4_reg_count);
 	REICAST_S(fallback_blocks);
 	REICAST_S(total_blocks);
 	REICAST_S(REMOVED_OPS);
-
-
-
 
 	REICAST_SA(kcode,4);
 	REICAST_SA(rt,4);
@@ -1246,12 +1232,7 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	//this is one-time init, no updates - don't need to serialize
 	//extern _vmem_handler area0_handler;
 
-
-
-
-	REICAST_USA(reply_11,16) ;
-
-
+	REICAST_USA(reply_11,16);
 
 	REICAST_US(sns_asc);
 	REICAST_US(sns_ascq);
@@ -1365,8 +1346,6 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 
 	REICAST_USA(mem_b.data, mem_b.size);
 
-
-
 	REICAST_US(IRLPriority);
 	REICAST_USA(InterruptEnvId,32);
 	REICAST_USA(InterruptBit,32);
@@ -1374,9 +1353,6 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	REICAST_US(interrupt_vpend);
 	REICAST_US(interrupt_vmask);
 	REICAST_US(decoded_srimask);
-
-
-
 
 	REICAST_US(i) ;
 	if ( i == 0 )
@@ -1402,68 +1378,66 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	REICAST_US(old_rm);
 	REICAST_US(old_dn);
 
-
-
-
 	REICAST_US(sh4_sched_ffb);
 	REICAST_US(sh4_sched_intr);
 
-	//extern vector<sched_list> list;
+	//extern vector<sched_list> sch_list;
 
-	REICAST_US(list[aica_schid].tag) ;
-	REICAST_US(list[aica_schid].start) ;
-	REICAST_US(list[aica_schid].end) ;
+	REICAST_US(sch_list[aica_schid].tag) ;
+	REICAST_US(sch_list[aica_schid].start) ;
+	REICAST_US(sch_list[aica_schid].end) ;
 
-	REICAST_US(list[rtc_schid].tag) ;
-	REICAST_US(list[rtc_schid].start) ;
-	REICAST_US(list[rtc_schid].end) ;
+	REICAST_US(sch_list[rtc_schid].tag) ;
+	REICAST_US(sch_list[rtc_schid].start) ;
+	REICAST_US(sch_list[rtc_schid].end) ;
 
-	REICAST_US(list[gdrom_schid].tag) ;
-	REICAST_US(list[gdrom_schid].start) ;
-	REICAST_US(list[gdrom_schid].end) ;
+	REICAST_US(sch_list[gdrom_schid].tag) ;
+	REICAST_US(sch_list[gdrom_schid].start) ;
+	REICAST_US(sch_list[gdrom_schid].end) ;
 
-	REICAST_US(list[maple_schid].tag) ;
-	REICAST_US(list[maple_schid].start) ;
-	REICAST_US(list[maple_schid].end) ;
+	REICAST_US(sch_list[maple_schid].tag) ;
+	REICAST_US(sch_list[maple_schid].start) ;
+	REICAST_US(sch_list[maple_schid].end) ;
 
-	REICAST_US(list[dma_sched_id].tag) ;
-	REICAST_US(list[dma_sched_id].start) ;
-	REICAST_US(list[dma_sched_id].end) ;
+	REICAST_US(sch_list[dma_sched_id].tag) ;
+	REICAST_US(sch_list[dma_sched_id].start) ;
+	REICAST_US(sch_list[dma_sched_id].end) ;
 
 	for (int i = 0; i < 3; i++)
 	{
-		REICAST_US(list[tmu_sched[i]].tag) ;
-		REICAST_US(list[tmu_sched[i]].start) ;
-		REICAST_US(list[tmu_sched[i]].end) ;
+		REICAST_US(sch_list[tmu_sched[i]].tag) ;
+		REICAST_US(sch_list[tmu_sched[i]].start) ;
+		REICAST_US(sch_list[tmu_sched[i]].end) ;
 	}
 
-	REICAST_US(list[render_end_schid].tag) ;
-	REICAST_US(list[render_end_schid].start) ;
-	REICAST_US(list[render_end_schid].end) ;
+	REICAST_US(sch_list[render_end_schid].tag) ;
+	REICAST_US(sch_list[render_end_schid].start) ;
+	REICAST_US(sch_list[render_end_schid].end) ;
 
-	REICAST_US(list[vblank_schid].tag) ;
-	REICAST_US(list[vblank_schid].start) ;
-	REICAST_US(list[vblank_schid].end) ;
+	REICAST_US(sch_list[vblank_schid].tag) ;
+	REICAST_US(sch_list[vblank_schid].start) ;
+	REICAST_US(sch_list[vblank_schid].end) ;
 
-	REICAST_US(list[time_sync].tag) ;
-	REICAST_US(list[time_sync].start) ;
-	REICAST_US(list[time_sync].end) ;
+	REICAST_US(sch_list[time_sync].tag) ;
+	REICAST_US(sch_list[time_sync].start) ;
+	REICAST_US(sch_list[time_sync].end) ;
 
-	REICAST_US(list[modem_sched].tag) ;
-    REICAST_US(list[modem_sched].start) ;
-    REICAST_US(list[modem_sched].end) ;
-
-
+	#ifdef ENABLE_MODEM
+	REICAST_US(sch_list[modem_sched].tag) ;
+    REICAST_US(sch_list[modem_sched].start) ;
+    REICAST_US(sch_list[modem_sched].end) ;
+	#else
+	int modem_dummy;
+	REICAST_US(modem_dummy);
+	REICAST_US(modem_dummy);
+	REICAST_US(modem_dummy);
+	#endif
 
 	REICAST_US(SCIF_SCFSR2);
 	REICAST_US(SCIF_SCFRDR2);
 	REICAST_US(SCIF_SCFDR2);
 
-
 	REICAST_US(BSC_PDTRA);
-
-
-
 
 	REICAST_USA(tmu_shift,3);
 	REICAST_USA(tmu_mask,3);
@@ -1472,13 +1446,7 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	REICAST_USA(tmu_ch_base,3);
 	REICAST_USA(tmu_ch_base64,3);
 
-
-
-
 	REICAST_USA(CCN_QACR_TR,2);
-
-
-
 
 	REICAST_USA(UTLB,64);
 	REICAST_USA(ITLB,4);
@@ -1488,9 +1456,6 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	REICAST_USA(ITLB_LRU_USE,64);
 	REICAST_US(mmu_error_TT);
 #endif
-
-
-
 
 	REICAST_US(NullDriveDiscType);
 	REICAST_USA(q_subchannel,96);
@@ -1545,9 +1510,6 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	REICAST_US(div_som_reg1);
 	REICAST_US(div_som_reg2);
 	REICAST_US(div_som_reg3);
-
-
-
 
 	//REICAST_USA(CodeCache,CODE_SIZE) ;
 	//REICAST_USA(SH4_TCB,CODE_SIZE+4096);
@@ -1612,15 +1574,12 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 		REICAST_US(timers[i].m_step);
 	}
 
-
 	REICAST_USA(aica_ram.data,aica_ram.size) ;
 	REICAST_US(VREG);
 	REICAST_US(ARMRST);
 	REICAST_US(rtc_EN);
 
 	REICAST_USA(aica_reg,0x8000);
-
-
 
 	REICAST_USA(volume_lut,16);
 	REICAST_USA(tl_lut,256 + 768);
@@ -1636,13 +1595,10 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	REICAST_USA(mxlr,64);
 	REICAST_US(samples_gen);
 
-
 	register_unserialize(sb_regs, data, total_size) ;
 	REICAST_US(SB_ISTNRM);
 	REICAST_US(SB_FFST_rc);
 	REICAST_US(SB_FFST);
-
-
 
 	//this is one-time init, no updates - don't need to serialize
 	//extern RomChip sys_rom;
@@ -1755,8 +1711,6 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 
 	REICAST_USA(mem_b.data, mem_b.size);
 
-
-
 	REICAST_US(IRLPriority);
 	REICAST_USA(InterruptEnvId,32);
 	REICAST_USA(InterruptBit,32);
@@ -1764,9 +1718,6 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	REICAST_US(interrupt_vpend);
 	REICAST_US(interrupt_vmask);
 	REICAST_US(decoded_srimask);
-
-
-
 
 	REICAST_US(i) ;
 	if ( i == 0 )
@@ -1800,50 +1751,55 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 
 	//extern vector<sched_list> list;
 
-	REICAST_US(list[aica_schid].tag) ;
-	REICAST_US(list[aica_schid].start) ;
-	REICAST_US(list[aica_schid].end) ;
+	REICAST_US(sch_list[aica_schid].tag) ;
+	REICAST_US(sch_list[aica_schid].start) ;
+	REICAST_US(sch_list[aica_schid].end) ;
 
-	REICAST_US(list[rtc_schid].tag) ;
-	REICAST_US(list[rtc_schid].start) ;
-	REICAST_US(list[rtc_schid].end) ;
+	REICAST_US(sch_list[rtc_schid].tag) ;
+	REICAST_US(sch_list[rtc_schid].start) ;
+	REICAST_US(sch_list[rtc_schid].end) ;
 
-	REICAST_US(list[gdrom_schid].tag) ;
-	REICAST_US(list[gdrom_schid].start) ;
-	REICAST_US(list[gdrom_schid].end) ;
+	REICAST_US(sch_list[gdrom_schid].tag) ;
+	REICAST_US(sch_list[gdrom_schid].start) ;
+	REICAST_US(sch_list[gdrom_schid].end) ;
 
-	REICAST_US(list[maple_schid].tag) ;
-	REICAST_US(list[maple_schid].start) ;
-	REICAST_US(list[maple_schid].end) ;
+	REICAST_US(sch_list[maple_schid].tag) ;
+	REICAST_US(sch_list[maple_schid].start) ;
+	REICAST_US(sch_list[maple_schid].end) ;
 
-	REICAST_US(list[dma_sched_id].tag) ;
-	REICAST_US(list[dma_sched_id].start) ;
-	REICAST_US(list[dma_sched_id].end) ;
+	REICAST_US(sch_list[dma_sched_id].tag) ;
+	REICAST_US(sch_list[dma_sched_id].start) ;
+	REICAST_US(sch_list[dma_sched_id].end) ;
 
 	for (int i = 0; i < 3; i++)
 	{
-		REICAST_US(list[tmu_sched[i]].tag) ;
-		REICAST_US(list[tmu_sched[i]].start) ;
-		REICAST_US(list[tmu_sched[i]].end) ;
+		REICAST_US(sch_list[tmu_sched[i]].tag) ;
+		REICAST_US(sch_list[tmu_sched[i]].start) ;
+		REICAST_US(sch_list[tmu_sched[i]].end) ;
 	}
 
-	REICAST_US(list[render_end_schid].tag) ;
-	REICAST_US(list[render_end_schid].start) ;
-	REICAST_US(list[render_end_schid].end) ;
+	REICAST_US(sch_list[render_end_schid].tag) ;
+	REICAST_US(sch_list[render_end_schid].start) ;
+	REICAST_US(sch_list[render_end_schid].end) ;
 
-	REICAST_US(list[vblank_schid].tag) ;
-	REICAST_US(list[vblank_schid].start) ;
-	REICAST_US(list[vblank_schid].end) ;
+	REICAST_US(sch_list[vblank_schid].tag) ;
+	REICAST_US(sch_list[vblank_schid].start) ;
+	REICAST_US(sch_list[vblank_schid].end) ;
 
-	REICAST_US(list[time_sync].tag) ;
-	REICAST_US(list[time_sync].start) ;
-	REICAST_US(list[time_sync].end) ;
+	REICAST_US(sch_list[time_sync].tag) ;
+	REICAST_US(sch_list[time_sync].start) ;
+	REICAST_US(sch_list[time_sync].end) ;
 
-	REICAST_US(list[modem_sched].tag) ;
-    REICAST_US(list[modem_sched].start) ;
-    REICAST_US(list[modem_sched].end) ;
-
-
+	#ifdef ENABLE_MODEM
+	REICAST_US(sch_list[modem_sched].tag) ;
+    REICAST_US(sch_list[modem_sched].start) ;
+    REICAST_US(sch_list[modem_sched].end) ;
+	#else
+	int modem_dummy;
+	REICAST_US(modem_dummy);
+	REICAST_US(modem_dummy);
+	REICAST_US(modem_dummy);
+	#endif
 
 	REICAST_US(SCIF_SCFSR2);
 	REICAST_US(SCIF_SCFRDR2);
@@ -1880,8 +1836,6 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 #endif
 
 
-
-
 	REICAST_US(NullDriveDiscType);
 	REICAST_USA(q_subchannel,96);
 
@@ -1895,7 +1849,6 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 //	REICAST_US(i);	// RAM_MASK
 //	REICAST_US(i);	// ARAM_MASK
 //	REICAST_US(i);	// VRAM_MASK
-
 
 
 	REICAST_US(naomi_updates);
@@ -1936,24 +1889,17 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	REICAST_US(div_som_reg2);
 	REICAST_US(div_som_reg3);
 
-
-
-
 	//REICAST_USA(CodeCache,CODE_SIZE) ;
 	//REICAST_USA(SH4_TCB,CODE_SIZE+4096);
 	REICAST_US(LastAddr);
 	REICAST_US(LastAddr_min);
 	REICAST_USA(block_hash,1024);
 
-
 	REICAST_USA(RegisterWrite,sh4_reg_count);
 	REICAST_USA(RegisterRead,sh4_reg_count);
 	REICAST_US(fallback_blocks);
 	REICAST_US(total_blocks);
 	REICAST_US(REMOVED_OPS);
-
-
-
 
 	REICAST_USA(kcode,4);
 	REICAST_USA(rt,4);

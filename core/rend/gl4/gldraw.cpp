@@ -45,10 +45,15 @@ static GLuint texSamplers[2];
 static GLuint depth_fbo;
 GLuint depthSaveTexId;
 
-static int gl4GetProgramID(u32 cp_AlphaTest, u32 pp_ClipTestMode,
+static gl4PipelineShader *gl4GetProgram(u32 cp_AlphaTest, u32 pp_ClipTestMode,
 							u32 pp_Texture, u32 pp_UseAlpha, u32 pp_IgnoreTexA, u32 pp_ShadInstr, u32 pp_Offset,
 							u32 pp_FogCtrl, bool pp_TwoVolumes, u32 pp_DepthFunc, bool pp_Gouraud, bool pp_BumpMap, bool fog_clamping, int pass)
 {
+	if (settings.rend.Rotate90 != gl4.rotate90)
+	{
+		gl4_delete_shaders();
+		gl4.rotate90 = settings.rend.Rotate90;
+	}
 	u32 rv=0;
 
 	rv|=pp_ClipTestMode;
@@ -66,45 +71,27 @@ static int gl4GetProgramID(u32 cp_AlphaTest, u32 pp_ClipTestMode,
 	rv <<= 1; rv |= fog_clamping;
 	rv <<= 2; rv |= pass;
 
-	return rv;
-}
-
-static void setCurrentShader(u32 cp_AlphaTest, u32 pp_ClipTestMode,
-							u32 pp_Texture, u32 pp_UseAlpha, u32 pp_IgnoreTexA, u32 pp_ShadInstr, u32 pp_Offset,
-							u32 pp_FogCtrl, bool pp_TwoVolumes, u32 pp_DepthFunc, bool pp_Gouraud, bool pp_BumpMap, bool fog_clamping, int pass)
-{
-	int shaderId = gl4GetProgramID(cp_AlphaTest,
-				pp_ClipTestMode + 1,
-				pp_Texture,
-				pp_UseAlpha,
-				pp_IgnoreTexA,
-				pp_ShadInstr,
-				pp_Offset,
-				pp_FogCtrl,
-				pp_TwoVolumes,
-				pp_DepthFunc,
-				pp_Gouraud,
-				pp_BumpMap,
-				fog_clamping,
-				pass);
-	CurrentShader = gl4.getShader(shaderId);
-	if (CurrentShader->program == -1) {
-		CurrentShader->cp_AlphaTest = cp_AlphaTest;
-		CurrentShader->pp_ClipTestMode = pp_ClipTestMode;
-		CurrentShader->pp_Texture = pp_Texture;
-		CurrentShader->pp_UseAlpha = pp_UseAlpha;
-		CurrentShader->pp_IgnoreTexA = pp_IgnoreTexA;
-		CurrentShader->pp_ShadInstr = pp_ShadInstr;
-		CurrentShader->pp_Offset = pp_Offset;
-		CurrentShader->pp_FogCtrl = pp_FogCtrl;
-		CurrentShader->pp_TwoVolumes = pp_TwoVolumes;
-		CurrentShader->pp_DepthFunc = pp_DepthFunc;
-		CurrentShader->pp_Gouraud = pp_Gouraud;
-		CurrentShader->pp_BumpMap = pp_BumpMap;
-		CurrentShader->fog_clamping = fog_clamping;
-		CurrentShader->pass = pass;
-		gl4CompilePipelineShader(CurrentShader);
+	gl4PipelineShader *shader = &gl4.shaders[rv];
+	if (shader->program == 0)
+	{
+		shader->cp_AlphaTest = cp_AlphaTest;
+		shader->pp_ClipTestMode = pp_ClipTestMode;
+		shader->pp_Texture = pp_Texture;
+		shader->pp_UseAlpha = pp_UseAlpha;
+		shader->pp_IgnoreTexA = pp_IgnoreTexA;
+		shader->pp_ShadInstr = pp_ShadInstr;
+		shader->pp_Offset = pp_Offset;
+		shader->pp_FogCtrl = pp_FogCtrl;
+		shader->pp_TwoVolumes = pp_TwoVolumes;
+		shader->pp_DepthFunc = pp_DepthFunc;
+		shader->pp_Gouraud = pp_Gouraud;
+		shader->pp_BumpMap = pp_BumpMap;
+		shader->fog_clamping = fog_clamping;
+		shader->pass = pass;
+		gl4CompilePipelineShader(shader, settings.rend.Rotate90);
 	}
+
+	return shader;
 }
 
 static void SetTextureRepeatMode(int index, GLuint dir, u32 clamp, u32 mirror)
@@ -132,7 +119,7 @@ template <u32 Type, bool SortingEnabled>
 
 	if (pass == 0)
 	{
-		setCurrentShader(Type == ListType_Punch_Through ? 1 : 0,
+		CurrentShader = gl4GetProgram(Type == ListType_Punch_Through ? 1 : 0,
 				clipping,
 				Type == ListType_Punch_Through ? gp->pcw.Texture : 0,
 				1,
@@ -153,6 +140,8 @@ template <u32 Type, bool SortingEnabled>
 		bool two_volumes_mode = (gp->tsp1.full != -1) && Type != ListType_Translucent;
 		bool color_clamp = gp->tsp.ColorClamp && (pvrrc.fog_clamp_min != 0 || pvrrc.fog_clamp_max != 0xffffffff);
 
+		int fog_ctrl = settings.rend.Fog ? gp->tsp.FogCtrl : 2;
+
 		int depth_func = 0;
 		if (Type == ListType_Translucent)
 		{
@@ -162,14 +151,14 @@ template <u32 Type, bool SortingEnabled>
 				depth_func = gp->isp.DepthMode;
 		}
 
-		setCurrentShader(Type == ListType_Punch_Through ? 1 : 0,
+		CurrentShader = gl4GetProgram(Type == ListType_Punch_Through ? 1 : 0,
 				clipping,
 				gp->pcw.Texture,
 				gp->tsp.UseAlpha,
 				gp->tsp.IgnoreTexA,
 				gp->tsp.ShadInstr,
 				gp->pcw.Offset,
-				gp->tsp.FogCtrl,
+				fog_ctrl,
 				two_volumes_mode,
 				depth_func,
 				gp->pcw.Gouraud,
@@ -681,7 +670,7 @@ static void gl4_draw_quad_texture(GLuint texture, bool upsideDown, float x = 0.f
 
 	ShaderUniforms.trilinear_alpha = 1.0;
 
-	setCurrentShader(0,
+	CurrentShader = gl4GetProgram(0,
 				0,
 				1,
 				0,
@@ -713,11 +702,15 @@ void gl4DrawFramebuffer(float w, float h)
 
 bool gl4_render_output_framebuffer()
 {
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glViewport(0, 0, screen_width, screen_height);
-	if (gl.ofbo.tex == 0)
+	glcache.Disable(GL_SCISSOR_TEST);
+	if (gl.ofbo.fbo == 0)
 		return false;
-
-	gl4_draw_quad_texture(gl.ofbo.tex, true);
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, gl.ofbo.fbo);
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+	glBlitFramebuffer(0, 0, gl.ofbo.width, gl.ofbo.height,
+			0, 0, screen_width, screen_height,
+			GL_COLOR_BUFFER_BIT, GL_LINEAR);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	return true;
 }

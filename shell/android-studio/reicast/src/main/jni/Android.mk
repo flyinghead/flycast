@@ -22,6 +22,7 @@ WEBUI := 1
 USE_GLES := 1
 CHD5_LZMA := 1
 CHD5_FLAC := 1
+USE_MODEM := 1
 
 ifneq ($(TARGET_ARCH_ABI),armeabi-v7a)
   NOT_ARM := 1
@@ -111,6 +112,8 @@ else
     LOCAL_LDLIBS +=  -Wl,--no-warn-shared-textrel
   endif
 endif
+
+$(LOCAL_SRC_FILES): $(VERSION_HEADER)
 
 #
 # android has poor support for hardfp calling.

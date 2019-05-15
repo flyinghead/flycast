@@ -39,7 +39,7 @@
 #undef _CRT_SECURE_NO_DEPRECATE
 #endif
 
-#define _CRT_SECURE_NO_DEPRECATE 
+#define _CRT_SECURE_NO_DEPRECATE
 //unnamed struncts/unions
 #pragma warning( disable : 4201)
 
@@ -123,7 +123,7 @@ enum HollyInterruptType
 };
 
 enum HollyInterruptID
-{		
+{
 		// asic9a /sh4 external holly normal [internal]
 		holly_RENDER_DONE_vd = holly_nrm | 0,	//bit 0 = End of Render interrupt : Video
 		holly_RENDER_DONE_isp = holly_nrm | 1,	//bit 1 = End of Render interrupt : ISP
@@ -132,11 +132,11 @@ enum HollyInterruptID
 		holly_SCANINT1 = holly_nrm | 3,			//bit 3 = V Blank-in interrupt
 		holly_SCANINT2 = holly_nrm | 4,			//bit 4 = V Blank-out interrupt
 		holly_HBLank = holly_nrm | 5,			//bit 5 = H Blank-in interrupt
-												
+
 		holly_YUV_DMA = holly_nrm | 6,			//bit 6 = End of Transferring interrupt : YUV
 		holly_OPAQUE = holly_nrm | 7,			//bit 7 = End of Transferring interrupt : Opaque List
 		holly_OPAQUEMOD = holly_nrm | 8,		//bit 8 = End of Transferring interrupt : Opaque Modifier Volume List
-		
+
 		holly_TRANS = holly_nrm | 9,			//bit 9 = End of Transferring interrupt : Translucent List
 		holly_TRANSMOD = holly_nrm | 10,		//bit 10 = End of Transferring interrupt : Translucent Modifier Volume List
 		holly_PVR_DMA = holly_nrm | 11,			//bit 11 = End of DMA interrupt : PVR-DMA
@@ -145,12 +145,12 @@ enum HollyInterruptID
 		holly_MAPLE_VBOI = holly_nrm | 13,		//bit 13 = Maple V blank over interrupt
 		holly_GDROM_DMA = holly_nrm | 14,		//bit 14 = End of DMA interrupt : GD-DMA
 		holly_SPU_DMA = holly_nrm | 15,			//bit 15 = End of DMA interrupt : AICA-DMA
-		
+
 		holly_EXT_DMA1 = holly_nrm | 16,		//bit 16 = End of DMA interrupt : Ext-DMA1(External 1)
 		holly_EXT_DMA2 = holly_nrm | 17,		//bit 17 = End of DMA interrupt : Ext-DMA2(External 2)
 		holly_DEV_DMA = holly_nrm | 18,			//bit 18 = End of DMA interrupt : Dev-DMA(Development tool DMA)
-		
-		holly_CH2_DMA = holly_nrm | 19,			//bit 19 = End of DMA interrupt : ch2-DMA 
+
+		holly_CH2_DMA = holly_nrm | 19,			//bit 19 = End of DMA interrupt : ch2-DMA
 		holly_PVR_SortDMA = holly_nrm | 20,		//bit 20 = End of DMA interrupt : Sort-DMA (Transferring for alpha sorting)
 		holly_PUNCHTHRU = holly_nrm | 21,		//bit 21 = End of Transferring interrupt : Punch Through List
 
@@ -188,8 +188,8 @@ enum HollyInterruptID
 		//bit 23 = G2 : AICA-DMA Time out
 		//bit 24 = G2 : Ext-DMA1 Time out
 		//bit 25 = G2 : Ext-DMA2 Time out
-		//bit 26 = G2 : Dev-DMA Time out 
-		//bit 27 = G2 : Time out in CPU accessing 	
+		//bit 26 = G2 : Dev-DMA Time out
+		//bit 27 = G2 : Time out in CPU accessing
 };
 
 
@@ -200,7 +200,7 @@ struct vram_block
 	u32 end;
 	u32 len;
 	u32 type;
- 
+
 	void* userdata;
 };
 
@@ -229,7 +229,7 @@ struct NDC_WINDOW_RECT
 //******************************************************
 //*********************** PowerVR **********************
 //******************************************************
- 
+
 void libCore_vramlock_Unlock_block  (vram_block* block);
 void libCore_vramlock_Unlock_block_wb  (vram_block* block);
 vram_block* libCore_vramlock_Lock(u32 start_offset,u32 end_offset,void* userdata);
@@ -246,7 +246,7 @@ enum DiscType
 	CdRom_XA=0x20,
 	CdRom_Extra=0x30,
 	CdRom_CDI=0x40,
-	GdRom=0x80,		
+	GdRom=0x80,
 
 	NoDisk=0x1,			//These are a bit hacky .. but work for now ...
 	Open=0x2,			//tray is open :)
@@ -344,6 +344,7 @@ int darw_printf(const wchar* Text,...);
 //includes from c++rt
 #include <vector>
 #include <string>
+#include <map>
 using namespace std;
 
 //used for asm-olny functions
@@ -385,9 +386,9 @@ using namespace std;
 #include "stdclass.h"
 
 #ifndef RELEASE
-#define EMUERROR(format, ...) printf("Error in %s:%s:%d: " format "\n", \
-		strlen(__FILE__) <= 20 ? __FILE__ : __FILE__ + strlen(__FILE__) - 20, \
-		__FUNCTION__, __LINE__, ##__VA_ARGS__)
+#define EMUERROR(format, ...) printf("Error in %20s:%s:%d: " format "\n", \
+		__FILE__, __FUNCTION__, __LINE__, ##__VA_ARGS__)
+//strlen(__FILE__) <= 20 ? __FILE__ : __FILE__ + strlen(__FILE__) - 20,
 #else
 #define EMUERROR(format, ...)
 #endif
@@ -518,7 +519,7 @@ typedef union
 
 
 
-#if COMPILER_VC==BUILD_COMPILER
+#if COMPILER_VC_OR_CLANG_WIN32
 #pragma warning( disable : 4127 4996 /*4244*/)
 #else
 #define stricmp strcasecmp
@@ -576,7 +577,7 @@ enum RegIO
 	RIO_RO = REG_RO | REG_WF,
 	RIO_RO_FUNC = REG_RO | REG_RF | REG_WF,
 	RIO_CONST = REG_RO | REG_WF,
-	RIO_WO_FUNC = REG_WF | REG_RF | REG_WO, 
+	RIO_WO_FUNC = REG_WF | REG_RF | REG_WO,
 	RIO_NO_ACCESS = REG_WF | REG_RF | REG_NO_ACCESS
 };
 
@@ -632,7 +633,11 @@ struct settings_t
 		f32 ExtraDepthScale;
 		bool CustomTextures;
 		bool DumpTextures;
-		int ScreenScaling;	// in percent. 50 means half the native resolution
+		int ScreenScaling;		// in percent. 50 means half the native resolution
+		int ScreenStretching;	// in percent. 150 means stretch from 4/3 to 6/3
+		bool Fog;
+		bool FloatVMUs;
+		bool Rotate90;			// Rotate the screen 90 deg CC
 	} rend;
 
 	struct
@@ -644,7 +649,7 @@ struct settings_t
 		bool disable_nvmem;
 		SmcCheckEnum SmcCheckLevel;
 	} dynarec;
-	
+
 	struct
 	{
 		u32 run_counts;
@@ -653,7 +658,6 @@ struct settings_t
 	struct
 	{
 		u32 cable;			// 0 -> VGA, 1 -> VGA, 2 -> RGB, 3 -> TV
-		u32 RTC;
 		u32 region;			// 0 -> JP, 1 -> USA, 2 -> EU, 3 -> default
 		u32 broadcast;		// 0 -> NTSC, 1 -> PAL, 2 -> PAL/M, 3 -> PAL/N, 4 -> default
 		u32 language;		// 0 -> JP, 1 -> EN, 2 -> DE, 3 -> FR, 4 -> SP, 5 -> IT, 6 -> default
@@ -675,6 +679,14 @@ struct settings_t
 		bool NoBatch;
 		bool NoSound;
 	} aica;
+
+	struct{
+		std::string backend;
+
+		// slug<<key, value>>
+		std::map<std::string, std::map<std::string, std::string>> options;
+	} audio;
+
 
 #if USE_OMX
 	struct
@@ -705,7 +717,7 @@ struct settings_t
 	{
 		u32 ta_skip;
 		u32 rend;
-		
+
 		u32 MaxThreads;
 		bool SynchronousRender;
 	} pvr;
@@ -748,7 +760,7 @@ static inline void do_nada(...) { }
 #ifdef _ANDROID
 #include <android/log.h>
 
-#ifdef printf 
+#ifdef printf
 #undef printf
 #endif
 
@@ -855,7 +867,7 @@ void libARM_Update(u32 cycles);
 			else if (sz==2)							\
 				return *(u16*)&arr[addr];			\
 			else if (sz==4)							\
-				return *(u32*)&arr[addr];}	
+				return *(u32*)&arr[addr];}
 
 #define WriteMemArr(arr,addr,data,sz)				\
 			{if(sz==1)								\
@@ -863,7 +875,7 @@ void libARM_Update(u32 cycles);
 			else if (sz==2)							\
 				{*(u16*)&arr[addr]=(u16)data;}		\
 			else if (sz==4)							\
-			{*(u32*)&arr[addr]=data;}}	
+			{*(u32*)&arr[addr]=data;}}
 
 #define WriteMemArrRet(arr,addr,data,sz)				\
 			{if(sz==1)								\
@@ -871,7 +883,7 @@ void libARM_Update(u32 cycles);
 			else if (sz==2)							\
 				{*(u16*)&arr[addr]=(u16)data;return;}		\
 			else if (sz==4)							\
-			{*(u32*)&arr[addr]=data;return;}}	
+			{*(u32*)&arr[addr]=data;return;}}
 
 struct OnLoad
 {

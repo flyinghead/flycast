@@ -79,6 +79,7 @@ const char* VertexShaderSource =
 %s \n\
 #define TARGET_GL %s \n\
 #define pp_Gouraud %d \n\
+#define ROTATE_90 %d \n\
  \n\
 #define GLES2 0 \n\
 #define GLES3 1 \n\
@@ -136,6 +137,9 @@ void main() \n\
 	vpos.z = vpos.w; \n\
 #else \n\
 	vpos.z=depth_scale.x+depth_scale.y*vpos.w;  \n\
+#endif \n\
+#if ROTATE_90 == 1 \n\
+	vpos.xy = vec2(vpos.y, -vpos.x);  \n\
 #endif \n\
 	vpos.xy=vpos.xy*scale.xy-scale.zw;  \n\
 	vpos.xy*=vpos.w;  \n\
@@ -782,7 +786,7 @@ GLuint fogTextureId;
 
 		return rv;
 	}
-	#include <Wingdi.h>
+	#include <wingdi.h>
 	void gl_swap()
 	{
 		wglSwapLayerBuffers(ourWindowHandleToDeviceContext,WGL_SWAP_MAIN_PLANE);
@@ -853,9 +857,20 @@ GLuint fogTextureId;
 extern void gl_term();
 #endif
 
+static void gl_delete_shaders()
+{
+	for (auto it : gl.shaders)
+	{
+		if (it.second.program != 0)
+			glcache.DeleteProgram(it.second.program);
+	}
+	gl.shaders.clear();
+	glcache.DeleteProgram(gl.modvol_shader.program);
+	gl.modvol_shader.program = 0;
+}
+
 static void gles_term()
 {
-	glDeleteProgram(gl.modvol_shader.program);
 	glDeleteBuffers(1, &gl.vbo.geometry);
 	gl.vbo.geometry = 0;
 	glDeleteBuffers(1, &gl.vbo.modvols);
@@ -868,7 +883,7 @@ static void gles_term()
 	gl_free_osd_resources();
 	free_output_framebuffer();
 
-	memset(gl.pogram_table, 0, sizeof(gl.pogram_table));
+	gl_delete_shaders();
 	gl_term();
 }
 
@@ -1017,10 +1032,15 @@ GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentShader)
 	return program;
 }
 
-int GetProgramID(u32 cp_AlphaTest, u32 pp_ClipTestMode,
+PipelineShader *GetProgram(u32 cp_AlphaTest, u32 pp_ClipTestMode,
 							u32 pp_Texture, u32 pp_UseAlpha, u32 pp_IgnoreTexA, u32 pp_ShadInstr, u32 pp_Offset,
 							u32 pp_FogCtrl, bool pp_Gouraud, bool pp_BumpMap, bool fog_clamping, bool trilinear)
 {
+	if (settings.rend.Rotate90 != gl.rotate90)
+	{
+		gl_delete_shaders();
+		gl.rotate90 = settings.rend.Rotate90;
+	}
 	u32 rv=0;
 
 	rv|=pp_ClipTestMode;
@@ -1036,14 +1056,32 @@ int GetProgramID(u32 cp_AlphaTest, u32 pp_ClipTestMode,
 	rv<<=1; rv|=fog_clamping;
 	rv<<=1; rv|=trilinear;
 
-	return rv;
+	PipelineShader *shader = &gl.shaders[rv];
+	if (shader->program == 0)
+	{
+		shader->cp_AlphaTest = cp_AlphaTest;
+		shader->pp_ClipTestMode = pp_ClipTestMode-1;
+		shader->pp_Texture = pp_Texture;
+		shader->pp_UseAlpha = pp_UseAlpha;
+		shader->pp_IgnoreTexA = pp_IgnoreTexA;
+		shader->pp_ShadInstr = pp_ShadInstr;
+		shader->pp_Offset = pp_Offset;
+		shader->pp_FogCtrl = pp_FogCtrl;
+		shader->pp_Gouraud = pp_Gouraud;
+		shader->pp_BumpMap = pp_BumpMap;
+		shader->fog_clamping = fog_clamping;
+		shader->trilinear = trilinear;
+		CompilePipelineShader(shader);
+	}
+
+	return shader;
 }
 
 bool CompilePipelineShader(	PipelineShader* s)
 {
 	char vshader[8192];
 
-	sprintf(vshader, VertexShaderSource, gl.glsl_version_header, gl.gl_version, s->pp_Gouraud);
+	sprintf(vshader, VertexShaderSource, gl.glsl_version_header, gl.gl_version, s->pp_Gouraud, settings.rend.Rotate90);
 
 	char pshader[8192];
 
@@ -1129,13 +1167,30 @@ void gl_load_osd_resources()
 
 void gl_free_osd_resources()
 {
-	glDeleteProgram(gl.OSD_SHADER.program);
+	glcache.DeleteProgram(gl.OSD_SHADER.program);
 
     if (osd_tex != 0) {
         glcache.DeleteTextures(1, &osd_tex);
         osd_tex = 0;
     }
 }
+
+static void create_modvol_shader()
+{
+	if (gl.modvol_shader.program != 0)
+		return;
+	char vshader[8192];
+	sprintf(vshader, VertexShaderSource, gl.glsl_version_header, gl.gl_version, 1, settings.rend.Rotate90);
+	char fshader[8192];
+	sprintf(fshader, ModifierVolumeShader, gl.glsl_version_header, gl.gl_version);
+
+	gl.modvol_shader.program=gl_CompileAndLink(vshader, fshader);
+	gl.modvol_shader.scale          = glGetUniformLocation(gl.modvol_shader.program, "scale");
+	gl.modvol_shader.sp_ShaderColor = glGetUniformLocation(gl.modvol_shader.program, "sp_ShaderColor");
+	gl.modvol_shader.depth_scale    = glGetUniformLocation(gl.modvol_shader.program, "depth_scale");
+	gl.modvol_shader.extra_depth_scale = glGetUniformLocation(gl.modvol_shader.program, "extra_depth_scale");
+}
+
 bool gl_create_resources()
 {
 	if (gl.vbo.geometry != 0)
@@ -1161,84 +1216,7 @@ bool gl_create_resources()
 	glGenBuffers(1, &gl.vbo.idxs);
 	glGenBuffers(1, &gl.vbo.idxs2);
 
-	memset(gl.pogram_table,0,sizeof(gl.pogram_table));
-
-	PipelineShader* dshader=0;
-	u32 compile=0;
-#define forl(name,max) for(u32 name=0;name<=max;name++)
-	forl(cp_AlphaTest,1)
-	{
-		forl(pp_ClipTestMode,2)
-		{
-			forl(pp_UseAlpha,1)
-			{
-				forl(pp_Texture,1)
-				{
-					forl(pp_FogCtrl,3)
-					{
-						forl(pp_IgnoreTexA,1)
-						{
-							forl(pp_ShadInstr,3)
-							{
-								forl(pp_Offset,1)
-								{
-									forl(pp_Gouraud,1)
-									{
-										forl(pp_BumpMap,1)
-										{
-											forl(fog_clamping,1)
-											{
-												forl(trilinear,1)
-												{
-													dshader=&gl.pogram_table[GetProgramID(cp_AlphaTest,pp_ClipTestMode,pp_Texture,pp_UseAlpha,pp_IgnoreTexA,
-																			pp_ShadInstr,pp_Offset,pp_FogCtrl, (bool)pp_Gouraud, (bool)pp_BumpMap, (bool)fog_clamping,
-																			(bool)trilinear)];
-
-														dshader->cp_AlphaTest = cp_AlphaTest;
-														dshader->pp_ClipTestMode = pp_ClipTestMode-1;
-														dshader->pp_Texture = pp_Texture;
-														dshader->pp_UseAlpha = pp_UseAlpha;
-														dshader->pp_IgnoreTexA = pp_IgnoreTexA;
-														dshader->pp_ShadInstr = pp_ShadInstr;
-														dshader->pp_Offset = pp_Offset;
-														dshader->pp_FogCtrl = pp_FogCtrl;
-														dshader->pp_Gouraud = pp_Gouraud;
-														dshader->pp_BumpMap = pp_BumpMap;
-														dshader->fog_clamping = fog_clamping;
-														dshader->trilinear = trilinear;
-														dshader->program = -1;
-												}
-											}
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-	
-	char vshader[8192];
-	sprintf(vshader, VertexShaderSource, gl.glsl_version_header, gl.gl_version, 1);
-	char fshader[8192];
-	sprintf(fshader, ModifierVolumeShader, gl.glsl_version_header, gl.gl_version);
-
-	gl.modvol_shader.program=gl_CompileAndLink(vshader, fshader);
-	gl.modvol_shader.scale          = glGetUniformLocation(gl.modvol_shader.program, "scale");
-	gl.modvol_shader.sp_ShaderColor = glGetUniformLocation(gl.modvol_shader.program, "sp_ShaderColor");
-	gl.modvol_shader.depth_scale    = glGetUniformLocation(gl.modvol_shader.program, "depth_scale");
-	gl.modvol_shader.extra_depth_scale = glGetUniformLocation(gl.modvol_shader.program, "extra_depth_scale");
-
-	//#define PRECOMPILE_SHADERS
-	#ifdef PRECOMPILE_SHADERS
-	for (u32 i=0;i<sizeof(gl.pogram_table)/sizeof(gl.pogram_table[0]);i++)
-	{
-		if (!CompilePipelineShader(	&gl.pogram_table[i] ))
-			return false;
-	}
-	#endif
+	create_modvol_shader();
 
 	gl_load_osd_resources();
 
@@ -1558,6 +1536,7 @@ static void upload_vertex_indices()
 bool RenderFrame()
 {
 	DoCleanup();
+	create_modvol_shader();
 
 	bool is_rtt=pvrrc.isRTT;
 
@@ -1677,6 +1656,8 @@ bool RenderFrame()
 	{
 		scale_x=fb_scale_x;
 		scale_y=fb_scale_y;
+		if (SCALER_CTL.interlace == 0 && SCALER_CTL.vscalefactor >= 0x400)
+			scale_y *= SCALER_CTL.vscalefactor / 0x400;
 
 		//work out scaling parameters !
 		//Pixel doubling is on VO, so it does not affect any pixel operations
@@ -1724,17 +1705,41 @@ bool RenderFrame()
 	/*
 		Handle Dc to screen scaling
 	*/
-	float screen_scaling = is_rtt ? 1.f : settings.rend.ScreenScaling / 100.f;
-	float dc2s_scale_h = is_rtt ? (screen_width / dc_width) : (screen_height / 480.0);
-	dc2s_scale_h *=  screen_scaling;
-	float ds2s_offs_x =  is_rtt ? 0 : (((screen_width * screen_scaling) - dc2s_scale_h * 640.0) / 2);
+	float screen_stretching = settings.rend.ScreenStretching / 100.f;
+	float screen_scaling = settings.rend.ScreenScaling / 100.f;
 
-	//-1 -> too much to left
-	ShaderUniforms.scale_coefs[0] = 2.0f / (screen_width * screen_scaling / dc2s_scale_h * scale_x);
-	ShaderUniforms.scale_coefs[1]= (is_rtt ? 2 : -2) / dc_height;		// FIXME CT2 needs 480 here instead of dc_height=512
-	ShaderUniforms.scale_coefs[2]= 1 - 2 * ds2s_offs_x / (screen_width * screen_scaling);
-	ShaderUniforms.scale_coefs[3]= (is_rtt ? 1 : -1);
+	float dc2s_scale_h;
+	float ds2s_offs_x;
 
+	if (is_rtt)
+	{
+		ShaderUniforms.scale_coefs[0] = 2.0f / dc_width;
+		ShaderUniforms.scale_coefs[1] = 2.0f / dc_height;	// FIXME CT2 needs 480 here instead of dc_height=512
+		ShaderUniforms.scale_coefs[2] = 1;
+		ShaderUniforms.scale_coefs[3] = 1;
+	}
+	else
+	{
+		if (settings.rend.Rotate90)
+		{
+			dc2s_scale_h = screen_height / 640.0f;
+			ds2s_offs_x =  (screen_width - dc2s_scale_h * 480.0f * screen_stretching) / 2;
+			ShaderUniforms.scale_coefs[0] = 2.0f / (screen_width / dc2s_scale_h * scale_x) * screen_stretching;
+			ShaderUniforms.scale_coefs[1] = -2.0f / dc_width;
+			ShaderUniforms.scale_coefs[2] = 1 - 2 * ds2s_offs_x / screen_width;
+			ShaderUniforms.scale_coefs[3] = 1;
+		}
+		else
+		{
+			dc2s_scale_h = screen_height / 480.0f;
+			ds2s_offs_x =  (screen_width - dc2s_scale_h * 640.0f * screen_stretching) / 2;
+			ShaderUniforms.scale_coefs[0] = 2.0f / (screen_width / dc2s_scale_h * scale_x) * screen_stretching;
+			ShaderUniforms.scale_coefs[1] = -2.0f / dc_height;
+			ShaderUniforms.scale_coefs[2] = 1 - 2 * ds2s_offs_x / screen_width;
+			ShaderUniforms.scale_coefs[3] = -1;
+		}
+		//-1 -> too much to left
+	}
 
 	ShaderUniforms.depth_coefs[0]=2/(vtx_max_fZ-vtx_min_fZ);
 	ShaderUniforms.depth_coefs[1]=-vtx_min_fZ-1;
@@ -1773,7 +1778,7 @@ bool RenderFrame()
 	ShaderUniforms.fog_clamp_max[2] = ((pvrrc.fog_clamp_max >> 0) & 0xFF) / 255.0f;
 	ShaderUniforms.fog_clamp_max[3] = ((pvrrc.fog_clamp_max >> 24) & 0xFF) / 255.0f;
 	
-	if (fog_needs_update)
+	if (fog_needs_update && settings.rend.Fog)
 	{
 		fog_needs_update = false;
 		UpdateFogTexture((u8 *)FOG_TABLE, GL_TEXTURE1, gl.fog_image_format);
@@ -1787,16 +1792,12 @@ bool RenderFrame()
 
 	ShaderUniforms.PT_ALPHA=(PT_ALPHA_REF&0xFF)/255.0f;
 
-//	for (u32 i=0;i<sizeof(gl.pogram_table)/sizeof(gl.pogram_table[0]);i++)
-//	{
-//		PipelineShader* s=&gl.pogram_table[i];
-//		if (s->program == -1)
-//			continue;
-//
-//		glcache.UseProgram(s->program);
-//
-//		ShaderUniforms.Set(s);
-//	}
+	for (auto it : gl.shaders)
+	{
+		glcache.UseProgram(it.second.program);
+		ShaderUniforms.Set(&it.second);
+	}
+
 	//setup render target first
 	if (is_rtt)
 	{
@@ -1841,7 +1842,7 @@ bool RenderFrame()
 	{
 		if (settings.rend.ScreenScaling != 100 || gl.swap_buffer_not_preserved)
 		{
-			init_output_framebuffer(screen_width * screen_scaling, screen_height * screen_scaling);
+			init_output_framebuffer(screen_width * screen_scaling + 0.5f, screen_height * screen_scaling + 0.5f);
 		}
 		else
 		{
@@ -1888,9 +1889,6 @@ bool RenderFrame()
 			glBufferData(GL_ARRAY_BUFFER,pvrrc.modtrig.bytes(),pvrrc.modtrig.head(),GL_STREAM_DRAW); glCheck();
 		}
 
-		int offs_x=ds2s_offs_x+0.5f;
-		//this needs to be scaled
-
 		//not all scaling affects pixel operations, scale to adjust for that
 		scale_x *= scissoring_scale_x;
 
@@ -1909,22 +1907,37 @@ bool RenderFrame()
 			float min_y = pvrrc.fb_Y_CLIP.min / scale_y;
 			if (!is_rtt)
 			{
+				if (SCALER_CTL.interlace && SCALER_CTL.vscalefactor >= 0x400)
+				{
+					// Clipping is done after scaling/filtering so account for that if enabled
+					height *= SCALER_CTL.vscalefactor / 0x400;
+					min_y *= SCALER_CTL.vscalefactor / 0x400;
+				}
+				if (settings.rend.Rotate90)
+				{
+					float t = width;
+					width = height;
+					height = t;
+					t = min_x;
+					min_x = min_y;
+					min_y = 640 - t - height;
+				}
 				// Add x offset for aspect ratio > 4/3
-				min_x = min_x * dc2s_scale_h + ds2s_offs_x;
+				min_x = (min_x * dc2s_scale_h * screen_stretching + ds2s_offs_x) * screen_scaling;
 				// Invert y coordinates when rendering to screen
-				min_y = screen_height * screen_scaling - (min_y + height) * dc2s_scale_h;
-				width *= dc2s_scale_h;
-				height *= dc2s_scale_h;
+				min_y = (screen_height - (min_y + height) * dc2s_scale_h) * screen_scaling;
+				width *= dc2s_scale_h * screen_stretching * screen_scaling;
+				height *= dc2s_scale_h * screen_scaling;
 
 				if (ds2s_offs_x > 0)
 				{
-					float rounded_offs_x = ds2s_offs_x + 0.5f;
+					float scaled_offs_x = ds2s_offs_x * screen_scaling;
 
 					glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
 					glcache.Enable(GL_SCISSOR_TEST);
-					glScissor(0, 0, rounded_offs_x, screen_height);
+					glScissor(0, 0, scaled_offs_x + 0.5f, screen_height * screen_scaling + 0.5f);
 					glClear(GL_COLOR_BUFFER_BIT);
-					glScissor(screen_width - rounded_offs_x, 0, rounded_offs_x, screen_height);
+					glScissor(screen_width * screen_scaling - scaled_offs_x + 0.5f, 0, scaled_offs_x + 1.f, screen_height * screen_scaling + 0.5f);
 					glClear(GL_COLOR_BUFFER_BIT);
 				}
 			}

@@ -339,9 +339,9 @@ void bm_Rebuild()
 	rebuild_counter=30;
 }
 
-void bm_vmem_pagefill(void** ptr,u32 PAGE_SZ)
+void bm_vmem_pagefill(void** ptr, u32 size_bytes)
 {
-	for (size_t i=0; i<PAGE_SZ/sizeof(ptr[0]); i++)
+	for (size_t i=0; i < size_bytes / sizeof(ptr[0]); i++)
 	{
 		ptr[i]=(void*)ngen_FailedToFindBlock;
 	}

@@ -1,6 +1,6 @@
 #pragma once
 #include "rend/gles/gles.h"
-#include <map>
+#include <unordered_map>
 
 void gl4DrawStrips(GLuint output_fbo);
 
@@ -44,7 +44,8 @@ struct gl4_ctx
 		GLuint extra_depth_scale;
 	} modvol_shader;
 
-	std::map<int, gl4PipelineShader *> shaders;
+	std::unordered_map<u32, gl4PipelineShader> shaders;
+	bool rotate90;
 
 	struct
 	{
@@ -53,16 +54,6 @@ struct gl4_ctx
 		GLuint modvol_vao;
 		GLuint tr_poly_params;
 	} vbo;
-
-	gl4PipelineShader *getShader(int programId) {
-		gl4PipelineShader *shader = shaders[programId];
-		if (shader == NULL) {
-			shader = new gl4PipelineShader();
-			shaders[programId] = shader;
-			shader->program = -1;
-		}
-		return shader;
-	}
 };
 
 extern gl4_ctx gl4;
@@ -76,7 +67,8 @@ bool gl4_render_output_framebuffer();
 void abufferDrawQuad(bool upsideDown = false, float x = 0.f, float y = 0.f, float w = 0.f, float h = 0.f);
 
 extern const char *gl4PixelPipelineShader;
-bool gl4CompilePipelineShader(gl4PipelineShader* s, const char *source = gl4PixelPipelineShader);
+bool gl4CompilePipelineShader(gl4PipelineShader* s, bool rotate_90, const char *source = gl4PixelPipelineShader);
+void gl4_delete_shaders();
 
 extern GLuint stencilTexId;
 extern GLuint depthTexId;

@@ -1,4 +1,4 @@
-#include <Xinput.h>
+#include <xinput.h>
 #include "input/gamepad_device.h"
 #include "rend/gui.h"
 
@@ -181,7 +181,6 @@ protected:
 private:
 	void do_rumble(float power)
 	{
-		printf("do_rumble %f\n", power);
 		XINPUT_VIBRATION vib;
 
 		vib.wLeftMotorSpeed = (u16)(65535 * power);

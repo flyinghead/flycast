@@ -84,8 +84,6 @@ Atom wmDeleteMessage;
 void* x11_vis;
 
 extern bool dump_frame_switch;
-extern bool naomi_test_button;
-extern bool coin_chute;
 
 void dc_exit(void);
 
@@ -275,16 +273,6 @@ void input_x11_handle()
 							x11_fullscreen = !x11_fullscreen;
 							x11_window_set_fullscreen(x11_fullscreen);
 						}
-#if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
-						else if (e.xkey.keycode == KEY_F8)
-						{
-							coin_chute = e.type == KeyPress;
-						}
-						else if (e.xkey.keycode == KEY_F7)
-						{
-							naomi_test_button = e.type == KeyPress;
-						}
-#endif
 					}
 				}
 				break;
@@ -371,6 +359,11 @@ void input_x11_init()
 	x11_keyboard_input = (cfgLoadInt("input", "enable_x11_keyboard", 1) >= 1);
 	if (!x11_keyboard_input)
 		printf("X11 Keyboard input disabled by config.\n");
+}
+
+static int x11_error_handler(Display *, XErrorEvent *)
+{
+	return 0;
 }
 
 void x11_window_create()
@@ -531,20 +524,22 @@ void x11_window_create()
 				GLX_CONTEXT_PROFILE_MASK_ARB, GLX_CONTEXT_CORE_PROFILE_BIT_ARB,
 				None
 			};
+			int (*old_handler)(Display *, XErrorEvent *) = XSetErrorHandler(&x11_error_handler);
 
 			x11_glc = glXCreateContextAttribsARB(x11Display, bestFbc, 0, True, context_attribs);
 			if (!x11_glc)
 			{
 				printf("Open GL 4.3 not supported\n");
-				// Try GL 3.1
+				// Try GL 3.0
 				context_attribs[1] = 3;
-				context_attribs[3] = 1;
+				context_attribs[3] = 0;
 				x11_glc = glXCreateContextAttribsARB(x11Display, bestFbc, 0, True, context_attribs);
 				if (!x11_glc)
 				{
-					die("Open GL 3.1 not supported\n");
+					die("Open GL 3.0 not supported\n");
 				}
 			}
+			XSetErrorHandler(old_handler);
 			XSync(x11Display, False);
 
 		#endif

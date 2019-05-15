@@ -1,4 +1,6 @@
 #pragma once
+#include <unordered_map>
+#include <atomic>
 #include "rend/rend.h"
 
 #if (defined(GLES) && !defined(TARGET_NACL32) && HOST_OS != OS_DARWIN && !defined(USE_SDL)) || defined(_ANDROID)
@@ -95,7 +97,9 @@ struct gl_ctx
 
 	} modvol_shader;
 
-	PipelineShader pogram_table[24576];
+	std::unordered_map<u32, PipelineShader> shaders;
+	bool rotate90;
+
 	struct
 	{
 		GLuint program;
@@ -119,6 +123,7 @@ struct gl_ctx
 	struct
 	{
 		GLuint depthb;
+		GLuint colorb;
 		GLuint tex;
 		GLuint fbo;
 		int width;
@@ -178,7 +183,7 @@ void free_output_framebuffer();
 
 void HideOSD();
 void OSD_DRAW(bool clear_screen);
-int GetProgramID(u32 cp_AlphaTest, u32 pp_ClipTestMode,
+PipelineShader *GetProgram(u32 cp_AlphaTest, u32 pp_ClipTestMode,
 							u32 pp_Texture, u32 pp_UseAlpha, u32 pp_IgnoreTexA, u32 pp_ShadInstr, u32 pp_Offset,
 							u32 pp_FogCtrl, bool pp_Gouraud, bool pp_BumpMap, bool fog_clamping, bool trilinear);
 
@@ -225,9 +230,6 @@ extern struct ShaderUniforms_t
 		if (s->sp_FOG_COL_VERT!=-1)
 			glUniform3fv( s->sp_FOG_COL_VERT, 1, ps_FOG_COL_VERT);
 
-		if (s->trilinear_alpha != -1)
-			glUniform1f(s->trilinear_alpha, trilinear_alpha);
-		
 		if (s->fog_clamp_min != -1)
 			glUniform4fv(s->fog_clamp_min, 1, fog_clamp_min);
 		if (s->fog_clamp_max != -1)
@@ -274,10 +276,10 @@ struct TextureCacheData
 	//a texture can't be both VQ and PAL at the same time
 	u32 texture_hash;			// xxhash of texture data, used for custom textures
 	u32 old_texture_hash;		// legacy hash
-	u8* custom_image_data;		// loaded custom image data
-	u32 custom_width;
-	u32 custom_height;
-	bool custom_load_in_progress;
+	u8* volatile custom_image_data;		// loaded custom image data
+	volatile u32 custom_width;
+	volatile u32 custom_height;
+	std::atomic_int custom_load_in_progress;
 	
 	void PrintTextureName();
 	
