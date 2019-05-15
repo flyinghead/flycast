@@ -152,6 +152,7 @@ void LoadSpecialSettings()
 		extra_depth_game = true;
 		settings.dreamcast.FullMMU = true;
 		full_mmu_game = true;
+		settings.aica.NoBatch = true;
 	}
 
 	// Tony Hawk's Pro Skater 2
@@ -496,8 +497,9 @@ void InitSettings()
 	settings.dreamcast.broadcast	= 4;	// default
 	settings.dreamcast.language     = 6;	// default
 	settings.dreamcast.FullMMU      = false;
+	settings.aica.DSPEnabled		= false;
 	settings.aica.LimitFPS			= true;
-	settings.aica.NoBatch			= false;	// This also controls the DSP. Disabled by default
+	settings.aica.NoBatch			= false;
     settings.aica.NoSound			= false;
 	settings.rend.UseMipmaps		= true;
 	settings.rend.WideScreen		= false;
@@ -572,7 +574,7 @@ void LoadSettings(bool game_specific)
 	settings.dreamcast.language     = cfgLoadInt(config_section, "Dreamcast.Language", settings.dreamcast.language);
 	settings.dreamcast.FullMMU      = cfgLoadBool(config_section, "Dreamcast.FullMMU", settings.dreamcast.FullMMU);
 	settings.aica.LimitFPS			= cfgLoadBool(config_section, "aica.LimitFPS", settings.aica.LimitFPS);
-	settings.aica.NoBatch			= cfgLoadBool(config_section, "aica.NoBatch", settings.aica.NoBatch);
+	settings.aica.DSPEnabled		= cfgLoadBool(config_section, "aica.DSPEnabled", settings.aica.DSPEnabled);
     settings.aica.NoSound			= cfgLoadBool(config_section, "aica.NoSound", settings.aica.NoSound);
 	settings.rend.UseMipmaps		= cfgLoadBool(config_section, "rend.UseMipmaps", settings.rend.UseMipmaps);
 	settings.rend.WideScreen		= cfgLoadBool(config_section, "rend.WideScreen", settings.rend.WideScreen);
@@ -705,7 +707,7 @@ void SaveSettings()
 		cfgSaveBool("config", "Dynarec.DisableVmem32", settings.dynarec.disable_vmem32);
 	cfgSaveInt("config", "Dreamcast.Language", settings.dreamcast.language);
 	cfgSaveBool("config", "aica.LimitFPS", settings.aica.LimitFPS);
-	cfgSaveBool("config", "aica.NoBatch", settings.aica.NoBatch);
+	cfgSaveBool("config", "aica.DSPEnabled", settings.aica.DSPEnabled);
 	cfgSaveBool("config", "aica.NoSound", settings.aica.NoSound);
 	cfgSaveBool("config", "rend.WideScreen", settings.rend.WideScreen);
 	cfgSaveBool("config", "rend.ShowFPS", settings.rend.ShowFPS);

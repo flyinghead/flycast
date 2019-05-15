@@ -764,7 +764,7 @@ struct settings_t
 		u32 BufferCount;	//BufferCount+2 buffers used , max 60 , default 0
 		u32 CDDAMute;
 		u32 GlobalMute;
-		u32 DSPEnabled;		//0 -> no, 1 -> yes
+		bool DSPEnabled;
 		bool NoBatch;
 		bool NoSound;
 	} aica;

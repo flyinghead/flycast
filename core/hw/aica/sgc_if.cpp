@@ -1184,7 +1184,7 @@ u32 samples_gen;
 //no DSP for now in this version
 void AICA_Sample32()
 {
-	if (settings.aica.NoBatch)
+	if (settings.aica.NoBatch || settings.aica.DSPEnabled)
 	{
 		return;
 	}
@@ -1341,7 +1341,7 @@ void AICA_Sample()
 		DSPData->EXTS[0] = 0;
 		DSPData->EXTS[1] = 0;
 	}
-	//if (settings.aica.DSPEnabled)
+	if (settings.aica.DSPEnabled)
 	{
 		dsp_step();
 

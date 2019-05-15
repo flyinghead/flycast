@@ -98,7 +98,7 @@ void libAICA_TimeStep()
 
 	SCIPD->SAMPLE_DONE=1;
 
-	if (settings.aica.NoBatch)
+	if (settings.aica.NoBatch || settings.aica.DSPEnabled)
 		AICA_Sample();
 
 	//Make sure sh4/arm interrupt system is up to date :)
