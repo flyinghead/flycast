@@ -5,6 +5,7 @@ set(TNAME reicast)
 project(${TNAME})
 
 enable_language(ASM)
+enable_language(ASM_MASM)
 
 set(DEBUG_CMAKE ON)
 
@@ -177,6 +178,7 @@ list(APPEND osd_SRCS ${d_aout}/audiostream.cpp)
 if (${HOST_OS} EQUAL ${OS_WINDOWS})
 
   list(APPEND osd_SRCS ${d_core}/windows/winmain.cpp)
+  list(APPEND osd_SRCS ${d_core}/windows/win_vmem.cpp)
   list(APPEND osd_SRCS ${d_aout}/audiobackend_directsound.cpp)
   
   

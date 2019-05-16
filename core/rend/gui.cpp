@@ -1112,7 +1112,7 @@ static void gui_display_settings()
 						std::string cur = check ? "1" : "0";
 						(*cfg_entries)[options->cfg_name] = cur;
 					}
-					else if (options->type == list)
+					else if (options->type == ::list)
 					{
 						if (ImGui::BeginCombo(options->caption.c_str(), value.c_str(), ImGuiComboFlags_None))
 						{
