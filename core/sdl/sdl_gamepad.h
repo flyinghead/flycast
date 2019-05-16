@@ -182,7 +182,7 @@ public:
 	SDLKbGamepadDevice(int maple_port) : GamepadDevice(maple_port, "SDL")
 	{
 		_name = "Keyboard";
-		_unique_id = "sdl_keyboard;
+		_unique_id = "sdl_keyboard";
 		if (!find_mapping())
 			input_mapper = new KbInputMapping();
 	}
