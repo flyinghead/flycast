@@ -123,12 +123,15 @@ WIN32_ONLY( ".seh_pushreg %r14              \n\t")
 #else
 			"subq $8, %rsp                  \n\t"   // 8 for stack 16-byte alignment
 #endif
-			"movl $" _S(SH4_TIMESLICE) "," _U "cycle_counter(%rip)  \n"
+			"movl $" _S(SH4_TIMESLICE) "," _U "cycle_counter(%rip)  \n\t"
 
-#ifndef _WIN32
-			"lea " _U "jmp_env(%rip), %rdi	\n\t"
-			"call " _U "setjmp				\n\t"
+#ifdef _WIN32
+			"leaq " _U "jmp_env(%rip), %rcx	\n\t"	// SETJMP
+			"xor %rdx, %rdx					\n\t"	// no frame pointer
+#else
+			"leaq " _U "jmp_env(%rip), %rdi	\n\t"
 #endif
+			"call " _U "setjmp				\n"
 
 		"1:                                 \n\t"   // run_loop
 			"movq " _U "p_sh4rcb(%rip), %rax		\n\t"
@@ -227,9 +230,7 @@ static void handle_mem_exception(u32 exception_raised, u32 pc)
 		else
 			spc = pc;
 		cycle_counter += CPU_RATIO * 2;	// probably more is needed but no easy way to find out
-#ifndef _WIN32
 		longjmp(jmp_env, 1);
-#endif
 	}
 }
 
@@ -269,34 +270,24 @@ static void handle_sh4_exception(SH4ThrownException& ex, u32 pc)
 	}
 	Do_Exception(pc, ex.expEvn, ex.callVect);
 	cycle_counter += CPU_RATIO * 4;	// probably more is needed
-#ifndef _WIN32
 	longjmp(jmp_env, 1);
-#endif
 }
 
-static u32 interpreter_fallback(u16 op, OpCallFP *oph, u32 pc)
+static void interpreter_fallback(u16 op, OpCallFP *oph, u32 pc)
 {
 	try {
 		oph(op);
-#ifdef _WIN32
-		return 0;
-#endif
 	} catch (SH4ThrownException& ex) {
 		handle_sh4_exception(ex, pc);
-		return 1;
 	}
 }
 
-static u32 do_sqw_mmu_no_ex(u32 addr, u32 pc)
+static void do_sqw_mmu_no_ex(u32 addr, u32 pc)
 {
 	try {
 		do_sqw_mmu(addr);
-#ifdef _WIN32
-		return 0;
-#endif
 	} catch (SH4ThrownException& ex) {
 		handle_sh4_exception(ex, pc);
-		return 1;
 	}
 }
 
@@ -401,13 +392,8 @@ public:
 				if (!mmu_enabled())
 					GenCall(OpDesc[op.rs3._imm]->oph);
 				else
-				{
 					GenCall(interpreter_fallback);
-#ifdef _WIN32
-					test(eax, 1);
-					jnz(exit_block, T_NEAR);
-#endif
-				}
+
 				break;
 
 			case shop_jcond:
@@ -776,10 +762,6 @@ public:
 						mov(call_regs[1], block->vaddr + op.guest_offs - (op.delay_slot ? 1 : 0));	// pc
 
 						GenCall(do_sqw_mmu_no_ex);
-#ifdef _WIN32
-						test(eax, 1);
-						jnz(exit_block, T_NEAR);
-#endif
 					}
 					else
 					{
@@ -1146,13 +1128,6 @@ public:
 			L(quick_exit);
 			verify(getCurr() - start_addr == read_mem_op_size);
 		}
-#ifdef _WIN32
-		if (mmu_enabled())
-		{
-			test(dword[(void *)&exception_raised], 1);
-			jnz(exit_block, T_NEAR);
-		}
-#endif
 	}
 
 	void GenWriteMemorySlow(const shil_opcode& op, RuntimeBlockInfo* block)
@@ -1200,13 +1175,6 @@ public:
 			L(quick_exit);
 			verify(getCurr() - start_addr == write_mem_op_size);
 		}
-#ifdef _WIN32
-		if (mmu_enabled())
-		{
-			test(eax, 1);
-			jnz(exit_block, T_NEAR);
-		}
-#endif
 	}
 
 	void InitializeRewrite(RuntimeBlockInfo *block, size_t opid)
