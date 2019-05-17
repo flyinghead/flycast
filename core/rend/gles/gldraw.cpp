@@ -260,11 +260,9 @@ __forceinline
 		glcache.DepthFunc(Zfunction[gp->isp.DepthMode]);
 	}
 
-#if TRIG_SORT
-	if (SortingEnabled)
+	if (SortingEnabled && !settings.rend.PerStripSorting)
 		glcache.DepthMask(GL_FALSE);
 	else
-#endif
 		glcache.DepthMask(!gp->isp.ZWriteDis);
 }
 
@@ -1105,13 +1103,16 @@ void DrawStrips()
 		{
 			if (current_pass.autosort)
             {
-#if TRIG_SORT
-				GenSorted(previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
-				DrawSorted(render_pass < pvrrc.render_passes.used() - 1);
-#else
-                SortPParams(previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
-                DrawList<ListType_Translucent,true>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
-#endif
+				if (!settings.rend.PerStripSorting)
+				{
+					GenSorted(previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
+					DrawSorted(render_pass < pvrrc.render_passes.used() - 1);
+				}
+				else
+				{
+					SortPParams(previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
+					DrawList<ListType_Translucent,true>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
+				}
             }
 			else
 				DrawList<ListType_Translucent,false>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);

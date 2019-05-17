@@ -942,20 +942,41 @@ static void gui_display_settings()
 		if (ImGui::BeginTabItem("Video"))
 		{
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
-#if !defined(GLES) && HOST_OS != OS_DARWIN
-		    if (!gl.is_gles && gl.gl_major >= 4 && ImGui::CollapsingHeader("Transparent Sorting", ImGuiTreeNodeFlags_DefaultOpen))
+			int renderer = settings.pvr.rend == 3 ? 2 : settings.rend.PerStripSorting ? 1 : 0;
+			bool has_per_pixel = !gl.is_gles && gl.gl_major >= 4;
+		    if (ImGui::CollapsingHeader("Transparent Sorting", ImGuiTreeNodeFlags_DefaultOpen))
 		    {
-		    	ImGui::Columns(2, "renderers", false);
-		    	ImGui::RadioButton("Per Triangle", (int *)&settings.pvr.rend, 0);
+		    	ImGui::Columns(has_per_pixel ? 3 : 2, "renderers", false);
+		    	ImGui::RadioButton("Per Triangle", &renderer, 0);
 	            ImGui::SameLine();
 	            ShowHelpMarker("Sort transparent polygons per triangle. Fast but may produce graphical glitches");
-		    	ImGui::NextColumn();
-		    	ImGui::RadioButton("Per Pixel", (int *)&settings.pvr.rend, 3);
+            	ImGui::NextColumn();
+		    	ImGui::RadioButton("Per Strip", &renderer, 1);
 	            ImGui::SameLine();
-	            ShowHelpMarker("Sort transparent polygons per pixel. Slower but accurate");
+	            ShowHelpMarker("Sort transparent polygons per strip. Faster but may produce graphical glitches");
+	            if (has_per_pixel)
+	            {
+	            	ImGui::NextColumn();
+	            	ImGui::RadioButton("Per Pixel", &renderer, 2);
+	            	ImGui::SameLine();
+	            	ShowHelpMarker("Sort transparent polygons per pixel. Slower but accurate");
+	            }
 		    	ImGui::Columns(1, NULL, false);
+		    	switch (renderer)
+		    	{
+		    	case 0:
+		    		settings.pvr.rend = 0;
+		    		settings.rend.PerStripSorting = false;
+		    		break;
+		    	case 1:
+		    		settings.pvr.rend = 0;
+		    		settings.rend.PerStripSorting = true;
+		    		break;
+		    	case 2:
+		    		settings.pvr.rend = 3;
+		    		break;
+		    	}
 		    }
-#endif
 		    if (ImGui::CollapsingHeader("Rendering Options", ImGuiTreeNodeFlags_DefaultOpen))
 		    {
 		    	ImGui::Checkbox("Synchronous Rendering", &settings.pvr.SynchronousRender);

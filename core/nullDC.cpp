@@ -521,6 +521,7 @@ void InitSettings()
 	settings.rend.Fog				= true;
 	settings.rend.FloatVMUs			= false;
 	settings.rend.Rotate90			= false;
+	settings.rend.PerStripSorting	= false;
 
 	settings.pvr.ta_skip			= 0;
 	settings.pvr.rend				= 0;
@@ -609,6 +610,7 @@ void LoadSettings(bool game_specific)
 	settings.rend.Fog				= cfgLoadBool(config_section, "rend.Fog", settings.rend.Fog);
 	settings.rend.FloatVMUs			= cfgLoadBool(config_section, "rend.FloatVMUs", settings.rend.FloatVMUs);
 	settings.rend.Rotate90			= cfgLoadBool(config_section, "rend.Rotate90", settings.rend.Rotate90);
+	settings.rend.PerStripSorting	= cfgLoadBool(config_section, "rend.PerStripSorting", settings.rend.PerStripSorting);
 
 	settings.pvr.ta_skip			= cfgLoadInt(config_section, "ta.skip", settings.pvr.ta_skip);
 	settings.pvr.rend				= cfgLoadInt(config_section, "pvr.rend", settings.pvr.rend);
@@ -759,6 +761,7 @@ void SaveSettings()
 	cfgSaveBool("config", "rend.Rotate90", settings.rend.Rotate90);
 	cfgSaveInt("config", "ta.skip", settings.pvr.ta_skip);
 	cfgSaveInt("config", "pvr.rend", settings.pvr.rend);
+	cfgSaveBool("config", "rend.PerStripSorting", settings.rend.PerStripSorting);
 
 	cfgSaveInt("config", "pvr.MaxThreads", settings.pvr.MaxThreads);
 	cfgSaveBool("config", "pvr.SynchronousRendering", settings.pvr.SynchronousRender);

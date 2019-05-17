@@ -638,6 +638,7 @@ struct settings_t
 		bool Fog;
 		bool FloatVMUs;
 		bool Rotate90;			// Rotate the screen 90 deg CC
+		bool PerStripSorting;
 	} rend;
 
 	struct
