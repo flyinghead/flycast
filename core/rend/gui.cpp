@@ -981,7 +981,7 @@ static void gui_display_settings()
 			ImGui::Checkbox("Disable Sound", &settings.aica.NoSound);
             ImGui::SameLine();
             ShowHelpMarker("Disable the emulator sound output");
-			ImGui::Checkbox("Enable DSP", &settings.aica.NoBatch);
+			ImGui::Checkbox("Enable DSP", &settings.aica.DSPEnabled);
             ImGui::SameLine();
             ShowHelpMarker("Enable the Dreamcast Digital Sound Processor. Only recommended on fast and arm64 platforms");
 			ImGui::Checkbox("Limit FPS", &settings.aica.LimitFPS);
