@@ -141,6 +141,7 @@ void    ImGui_ImplOpenGL3_RenderDrawData(ImDrawData* draw_data, bool save_backgr
 
     if (save_background)
     {
+#ifndef GLES2
     	if (!gl.is_gles && glReadBuffer != NULL)
     		glReadBuffer(GL_FRONT);
 
@@ -157,6 +158,7 @@ void    ImGui_ImplOpenGL3_RenderDrawData(ImDrawData* draw_data, bool save_backgr
 
 		// Copy the current framebuffer into it
 		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, fb_width, fb_height);
+#endif
     }
 
     // Setup render state: alpha-blending enabled, no face culling, no depth testing, scissor enabled, polygon fill
@@ -188,10 +190,12 @@ void    ImGui_ImplOpenGL3_RenderDrawData(ImDrawData* draw_data, bool save_backgr
     glcache.UseProgram(g_ShaderHandle);
     glUniform1i(g_AttribLocationTex, 0);
     glUniformMatrix4fv(g_AttribLocationProjMtx, 1, GL_FALSE, &ortho_projection[0][0]);
+#ifndef GLES2
     if (gl.gl_major >= 3 && glBindSampler != NULL)
     	glBindSampler(0, 0); // We use combined texture/sampler state. Applications using GL 3.3 may set that otherwise.
-
+#endif
     GLuint vao_handle = 0;
+#ifndef GLES2
     if (gl.gl_major >= 3)
     {
 		// Recreate the VAO every time
@@ -199,6 +203,7 @@ void    ImGui_ImplOpenGL3_RenderDrawData(ImDrawData* draw_data, bool save_backgr
 		glGenVertexArrays(1, &vao_handle);
 		glBindVertexArray(vao_handle);
     }
+#endif
     glBindBuffer(GL_ARRAY_BUFFER, g_VboHandle);
     glEnableVertexAttribArray(g_AttribLocationPosition);
     glEnableVertexAttribArray(g_AttribLocationUV);
@@ -247,8 +252,10 @@ void    ImGui_ImplOpenGL3_RenderDrawData(ImDrawData* draw_data, bool save_backgr
             idx_buffer_offset += pcmd->ElemCount;
         }
     }
+#ifndef GLES2
     if (vao_handle != 0)
     	glDeleteVertexArrays(1, &vao_handle);
+#endif
 }
 
 bool ImGui_ImplOpenGL3_CreateFontsTexture()
@@ -320,7 +327,7 @@ static bool CheckProgram(GLuint handle, const char* desc)
     return (GLboolean)status == GL_TRUE;
 }
 
-bool    ImGui_ImplOpenGL3_CreateDeviceObjects()
+bool ImGui_ImplOpenGL3_CreateDeviceObjects()
 {
     // Parse GLSL version string
     int glsl_version = 130;

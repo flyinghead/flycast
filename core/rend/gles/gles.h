@@ -17,7 +17,9 @@
 #endif
 #include <GLES32/gl32.h>
 #include <GLES32/gl2ext.h>
+#ifndef GLES2
 #include "gl32funcs.h"
+#endif
 
 #ifndef GL_NV_draw_path
 //IMGTEC GLES emulation

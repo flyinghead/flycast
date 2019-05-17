@@ -171,8 +171,7 @@ else ifneq (,$(findstring rpi,$(platform)))
         INCS += -I/opt/vc/include/ -I/opt/vc/include/interface/vmcs_host/linux -I/opt/vc/include/interface/vcos/pthreads
         LIBS += -L/opt/vc/lib/ -lbcm_host -ldl
         LIBS += -lbrcmEGL -lbrcmGLESv2
-        CFLAGS += -D TARGET_VIDEOCORE
-        CXXFLAGS += -DGLES
+        CFLAGS += -D TARGET_VIDEOCORE -DGLES
         USE_OMX := 1
         USE_DISPMANX := 1
     endif
@@ -208,7 +207,7 @@ else ifneq (,$(findstring odroid,$(platform)))
     ifneq (,$(findstring odroidxu3,$(platform)))
         MFLAGS += -march=armv7ve -mtune=cortex-a15.cortex-a7
         ASFLAGS += -march=armv7ve
-
+		CFLAGS += -DGLES3
     # Other ODROIDs
     else
         MFLAGS += -march=armv7-a
@@ -382,7 +381,7 @@ endif
 
 # GLES on x11?
 ifdef USE_GLES
-    CXXFLAGS += -DGLES
+    CFLAGS += -DGLES
     LIBS += -lEGL -lGLESv2
 else ifdef FOR_LINUX
     LIBS += -ldl -lGL #for desktop gl

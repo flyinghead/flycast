@@ -948,9 +948,10 @@ void SetMVS_Mode(ModifierVolumeMode mv_mode, ISP_Modvol ispc)
 
 static void SetupMainVBO()
 {
+#ifndef GLES2
 	if (gl.gl_major >= 3)
 		glBindVertexArray(gl.vbo.vao);
-
+#endif
 	glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.geometry); glCheck();
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs); glCheck();
 
@@ -970,9 +971,10 @@ static void SetupMainVBO()
 
 void SetupModvolVBO()
 {
+#ifndef GLES2
 	if (gl.gl_major >= 3)
 		glBindVertexArray(gl.vbo.vao);
-
+#endif
 	glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.modvols); glCheck();
 
 	//setup vertex buffers attrib pointers

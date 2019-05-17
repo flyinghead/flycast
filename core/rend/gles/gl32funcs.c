@@ -2,10 +2,11 @@
 #include <GLES32/gl32.h>
 #include <EGL/egl.h>
 #include "gl32funcs.h"
+#include "build.h"
 
 void load_gles_symbols()
 {
-#ifdef _ANDROID
+#ifdef GLES3
 	for (int i = 0; rglgen_symbol_map[i].sym != NULL; i++)
 		*(void **)rglgen_symbol_map[i].ptr = eglGetProcAddress(rglgen_symbol_map[i].sym);
 #endif
