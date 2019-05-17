@@ -85,6 +85,8 @@ bool renderer_changed = false;	// Signals the renderer thread to switch renderer
 cResetEvent rs(false,true);
 cResetEvent re(false,true);
 #endif
+static bool swap_pending;
+static bool do_swap;
 
 int max_idx,max_mvo,max_op,max_pt,max_tr,max_vtx,max_modt, ovrn;
 
@@ -282,6 +284,7 @@ bool rend_single_frame()
 			// Use the rendering start event to wait between two frames but save its value
 			if (rs.Wait(17))
 				rs.Set();
+			swap_pending = false;
 			return true;
 		}
 		else
@@ -291,12 +294,18 @@ bool rend_single_frame()
 
 			if (!rs.Wait(100))
 				return false;
+			if (do_swap)
+			{
+				do_swap = false;
+				renderer->Present();
+			}
 		}
 #else
 		if (gui_is_open())
 		{
 			gui_display_ui();
 			FinishRender(NULL);
+			swap_pending = false;
 			return true;
 		}
 		if (renderer != NULL)
@@ -309,6 +318,7 @@ bool rend_single_frame()
 	}
 	while (!_pvrrc);
 	bool do_swp = rend_frame(_pvrrc, true);
+	swap_pending = do_swp && !_pvrrc->rend.isRenderFramebuffer;
 
 #if !defined(TARGET_NO_THREADS)
 	if (_pvrrc->rend.isRTT)
@@ -363,6 +373,7 @@ void rend_init_renderer()
     	}
     	printf("Selected renderer initialization failed. Falling back to default renderer.\n");
     	renderer  = fallback_renderer;
+    	fallback_renderer = NULL;	// avoid double-free
     }
 }
 
@@ -391,7 +402,13 @@ void* rend_thread(void* p)
 	while (renderer_enabled)
 	{
 		if (rend_single_frame())
-			renderer->Present();
+		{
+			if (FB_R_SOF1 == FB_W_SOF1 || !swap_pending)
+			{
+				renderer->Present();
+				swap_pending = false;
+			}
+		}
 		if (renderer_changed)
 		{
 			renderer_changed = false;
@@ -571,3 +588,12 @@ void rend_cancel_emu_wait()
 #endif
 }
 
+void rend_swap_frame()
+{
+	if (swap_pending)
+	{
+		swap_pending = false;
+		do_swap = true;
+		rs.Set();
+	}
+}

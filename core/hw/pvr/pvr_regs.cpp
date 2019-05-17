@@ -38,6 +38,8 @@ void pvr_WriteReg(u32 paddr,u32 data)
 		{
 			ta_vtx_ListInit();
 			data=0;
+			TA_NEXT_OPB = TA_NEXT_OPB_INIT;
+			TA_ITP_CURRENT = TA_ISP_BASE;
 		}
 	}
 
@@ -84,11 +86,24 @@ void pvr_WriteReg(u32 paddr,u32 data)
 		}
 		return;
 	}
-	if (addr == TA_YUV_TEX_BASE_addr || addr == TA_YUV_TEX_CTRL_addr)
+	if (addr == TA_YUV_TEX_BASE_addr)
+	{
+		PvrReg(addr, u32) = data & 0x00FFFFF8;
+		YUV_init();
+		return;
+	}
+	else if (addr == TA_YUV_TEX_CTRL_addr)
 	{
 		PvrReg(addr, u32) = data;
 		YUV_init();
 		return;
+	}
+	else if (addr == FB_R_SOF1_addr)
+	{
+		if (data == FB_W_SOF1)
+		{
+			rend_swap_frame();
+		}
 	}
 
 	if (addr>=PALETTE_RAM_START_addr && PvrReg(addr,u32)!=data)
