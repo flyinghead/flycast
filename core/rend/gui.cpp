@@ -943,7 +943,11 @@ static void gui_display_settings()
 		{
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
 			int renderer = settings.pvr.rend == 3 ? 2 : settings.rend.PerStripSorting ? 1 : 0;
+#if HOST_OS != OS_DARWIN
 			bool has_per_pixel = !gl.is_gles && gl.gl_major >= 4;
+#else
+			bool has_per_pixel = false;
+#endif
 		    if (ImGui::CollapsingHeader("Transparent Sorting", ImGuiTreeNodeFlags_DefaultOpen))
 		    {
 		    	ImGui::Columns(has_per_pixel ? 3 : 2, "renderers", false);
