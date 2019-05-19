@@ -88,10 +88,8 @@ cResetEvent rs, re;
 int max_idx,max_mvo,max_op,max_pt,max_tr,max_vtx,max_modt, ovrn;
 
 static bool render_called = false;
-u32 fb1_watch_addr_start;
-u32 fb1_watch_addr_end;
-u32 fb2_watch_addr_start;
-u32 fb2_watch_addr_end;
+u32 fb_watch_addr_start;
+u32 fb_watch_addr_end;
 bool fb_dirty;
 
 TA_context* _pvrrc;
@@ -558,10 +556,8 @@ void rend_vblank()
 void check_framebuffer_write()
 {
 	u32 fb_size = (FB_R_SIZE.fb_y_size + 1) * (FB_R_SIZE.fb_x_size + FB_R_SIZE.fb_modulus) * 4;
-	fb1_watch_addr_start = FB_R_SOF1 & VRAM_MASK;
-	fb1_watch_addr_end = fb1_watch_addr_start + fb_size;
-	fb2_watch_addr_start = FB_R_SOF2 & VRAM_MASK;
-	fb2_watch_addr_end = fb2_watch_addr_start + fb_size;
+	fb_watch_addr_start = FB_R_SOF2 & VRAM_MASK;
+	fb_watch_addr_end = fb_watch_addr_start + fb_size;
 }
 
 void rend_cancel_emu_wait()
