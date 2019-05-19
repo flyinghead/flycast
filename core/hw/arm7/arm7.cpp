@@ -69,12 +69,6 @@ bool Arm7Enabled=false;
 
 u8 cpuBitsSet[256];
 
-bool intState = false;
-bool stopState = false;
-bool holdState = false;
-
-
-
 void CPUSwitchMode(int mode, bool saveState, bool breakLoop=true);
 extern "C" void CPUFiq();
 void CPUUpdateCPSR();

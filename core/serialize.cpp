@@ -54,9 +54,6 @@ extern bool armFiqEnable;
 extern int armMode;
 extern bool Arm7Enabled;
 extern u8 cpuBitsSet[256];
-extern bool intState ;
-extern bool stopState ;
-extern bool holdState ;
 /*
 	if AREC dynarec enabled:
 	vector<ArmDPOP> ops;
@@ -256,15 +253,6 @@ extern u32 FrameCount;
 //the renderer thread - one time set
 //extern cThread rthd;
 extern bool pend_rend;
-
-//these will all get cleared out after a few frames - no need to serialize
-//static bool render_called = false;
-//u32 fb1_watch_addr_start;
-//u32 fb1_watch_addr_end;
-//u32 fb2_watch_addr_start;
-//u32 fb2_watch_addr_end;
-//bool fb_dirty;
-
 
 //maybe
 //extern u32 memops_t,memops_l;
@@ -722,18 +710,6 @@ extern u32 fallback_blocks;
 extern u32 total_blocks;
 extern u32 REMOVED_OPS;
 
-
-
-
-//./core/linux-dist/main.cpp, ./core/windows/winmain.cpp , ...
-extern u16 kcode[4];
-extern u8 rt[4];
-extern u8 lt[4];
-extern u32 vks[4];
-extern s8 joyx[4];
-extern s8 joyy[4];
-
-
 bool rc_serialize(void *src, unsigned int src_size, void **dest, unsigned int *total_size)
 {
 	if ( *dest != NULL )
@@ -812,9 +788,10 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	REICAST_S(armMode);
 	REICAST_S(Arm7Enabled);
 	REICAST_SA(cpuBitsSet,256);
-	REICAST_S(intState);
-	REICAST_S(stopState);
-	REICAST_S(holdState);
+	bool dummy;
+	REICAST_S(dummy);
+	REICAST_S(dummy);
+	REICAST_S(dummy);
 
 	REICAST_S(dsp);
 
@@ -1132,12 +1109,16 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	REICAST_S(total_blocks);
 	REICAST_S(REMOVED_OPS);
 
-	REICAST_SA(kcode,4);
-	REICAST_SA(rt,4);
-	REICAST_SA(lt,4);
-	REICAST_SA(vks,4);
-	REICAST_SA(joyx,4);
-	REICAST_SA(joyy,4);
+	REICAST_S(i); //REICAST_SA(kcode,4);
+	REICAST_S(i);
+	REICAST_S(i); //REICAST_SA(rt,4);
+	REICAST_S(i); //REICAST_SA(lt,4);
+	REICAST_S(i); //REICAST_SA(vks,4);
+	REICAST_S(i);
+	REICAST_S(i);
+	REICAST_S(i);
+	REICAST_S(i); //REICAST_SA(joyx,4);
+	REICAST_S(i); //REICAST_SA(joyy,4);
 
 	REICAST_S(settings.dreamcast.broadcast);
 	REICAST_S(settings.dreamcast.cable);
@@ -1166,9 +1147,10 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	REICAST_US(armMode);
 	REICAST_US(Arm7Enabled);
 	REICAST_USA(cpuBitsSet,256);
-	REICAST_US(intState);
-	REICAST_US(stopState);
-	REICAST_US(holdState);
+	bool dummy;
+	REICAST_US(dummy);
+	REICAST_US(dummy);
+	REICAST_US(dummy);
 
 	REICAST_US(dsp);
 
@@ -1562,9 +1544,10 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	REICAST_US(armMode);
 	REICAST_US(Arm7Enabled);
 	REICAST_USA(cpuBitsSet,256);
-	REICAST_US(intState);
-	REICAST_US(stopState);
-	REICAST_US(holdState);
+	bool dummy;
+	REICAST_US(dummy);
+	REICAST_US(dummy);
+	REICAST_US(dummy);
 
 	REICAST_US(dsp);
 
@@ -1901,12 +1884,16 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	REICAST_US(total_blocks);
 	REICAST_US(REMOVED_OPS);
 
-	REICAST_USA(kcode,4);
-	REICAST_USA(rt,4);
-	REICAST_USA(lt,4);
-	REICAST_USA(vks,4);
-	REICAST_USA(joyx,4);
-	REICAST_USA(joyy,4);
+	REICAST_US(i); //REICAST_USA(kcode,4);
+	REICAST_US(i);
+	REICAST_US(i); //REICAST_USA(rt,4);
+	REICAST_US(i); //REICAST_USA(lt,4);
+	REICAST_US(i); //REICAST_USA(vks,4);
+	REICAST_US(i);
+	REICAST_US(i);
+	REICAST_US(i);
+	REICAST_US(i); //REICAST_USA(joyx,4);
+	REICAST_US(i); //REICAST_USA(joyy,4);
 
 
 	REICAST_US(settings.dreamcast.broadcast);
