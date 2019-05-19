@@ -160,6 +160,8 @@ void aica_Init()
 void aica_Reset(bool Manual)
 {
 	aica_Init();
+	VREG = 0;
+	ARMRST = 0;
 }
 
 void aica_Term()
