@@ -233,7 +233,7 @@ void DYNACALL pvr_write_area1_8(u32 addr,u8 data)
 void DYNACALL pvr_write_area1_16(u32 addr,u16 data)
 {
     u32 vaddr = addr & VRAM_MASK;
-    if (!fb_dirty && vaddr >= fb_watch_addr_start && vaddr < fb_watch_addr_end)
+    if (vaddr >= fb_watch_addr_start && vaddr < fb_watch_addr_end)
     {
         fb_dirty = true;
     }
@@ -242,7 +242,7 @@ void DYNACALL pvr_write_area1_16(u32 addr,u16 data)
 void DYNACALL pvr_write_area1_32(u32 addr,u32 data)
 {
     u32 vaddr = addr & VRAM_MASK;
-    if (!fb_dirty && vaddr >= fb_watch_addr_start && vaddr < fb_watch_addr_end)
+    if (vaddr >= fb_watch_addr_start && vaddr < fb_watch_addr_end)
     {
         fb_dirty = true;
     }
