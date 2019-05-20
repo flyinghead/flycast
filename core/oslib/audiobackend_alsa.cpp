@@ -159,30 +159,13 @@ static u32 alsa_push(void* frame, u32 samples, bool wait)
 	if (rc == -EPIPE)
 	{
 		/* EPIPE means underrun */
-		fprintf(stderr, "ALSA: underrun occurred\n");
 		snd_pcm_prepare(handle);
 		// Write some silence then our samples
 		const size_t silence_size = period_size * 4;
 		void *silence = alloca(silence_size * 4);
 		memset(silence, 0, silence_size * 4);
-		rc = snd_pcm_writei(handle, silence, silence_size);
-		if (rc < 0)
-			fprintf(stderr, "ALSA: error from writei(silence): %s\n", snd_strerror(rc));
-		else if (rc < silence_size)
-			fprintf(stderr, "ALSA: short write from writei(silence): %d/%ld frames\n", rc, silence_size);
-		rc = snd_pcm_writei(handle, frame, samples);
-		if (rc < 0)
-			fprintf(stderr, "ALSA: error from writei(again): %s\n", snd_strerror(rc));
-		else if (rc < samples)
-			fprintf(stderr, "ALSA: short write from writei(again): %d/%d frames\n", rc, samples);
-	}
-	else if (rc < 0)
-	{
-		fprintf(stderr, "ALSA: error from writei: %s\n", snd_strerror(rc));
-	}
-	else if (rc != samples)
-	{
-		fprintf(stderr, "ALSA: short write, wrote %d frames of %d\n", rc, samples);
+		snd_pcm_writei(handle, silence, silence_size);
+		snd_pcm_writei(handle, frame, samples);
 	}
 	return 1;
 }
