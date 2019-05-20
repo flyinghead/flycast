@@ -150,7 +150,8 @@ void WriteSample(s16 r, s16 l)
 
 	if (WritePtr==(SAMPLE_COUNT-1))
 	{
-		bool do_wait = settings.aica.LimitFPS && (mspdf <= 11);
+		bool do_wait = settings.aica.LimitFPS == LimitFPSEnabled
+				|| (settings.aica.LimitFPS == LimitFPSAuto && mspdf <= 11);
 
 		PushAudio(RingBuffer,SAMPLE_COUNT, do_wait);
 	}
