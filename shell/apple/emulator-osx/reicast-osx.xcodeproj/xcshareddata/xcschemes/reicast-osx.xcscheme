@@ -17,7 +17,7 @@
                BlueprintIdentifier = "84A388B21B1CDD3E000166C0"
                BuildableName = "Reicast.app"
                BlueprintName = "reicast-osx"
-               ReferencedContainer = "container:emulator-osx/reicast-osx.xcodeproj">
+               ReferencedContainer = "container:reicast-osx.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
          <BuildActionEntry
@@ -31,7 +31,7 @@
                BlueprintIdentifier = "84A388C21B1CDD3F000166C0"
                BuildableName = "reicast-osxTests.xctest"
                BlueprintName = "reicast-osxTests"
-               ReferencedContainer = "container:emulator-osx/reicast-osx.xcodeproj">
+               ReferencedContainer = "container:reicast-osx.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -50,7 +50,7 @@
                BlueprintIdentifier = "84A388C21B1CDD3F000166C0"
                BuildableName = "reicast-osxTests.xctest"
                BlueprintName = "reicast-osxTests"
-               ReferencedContainer = "container:emulator-osx/reicast-osx.xcodeproj">
+               ReferencedContainer = "container:reicast-osx.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -60,7 +60,7 @@
             BlueprintIdentifier = "84A388B21B1CDD3E000166C0"
             BuildableName = "Reicast.app"
             BlueprintName = "reicast-osx"
-            ReferencedContainer = "container:emulator-osx/reicast-osx.xcodeproj">
+            ReferencedContainer = "container:reicast-osx.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
       <AdditionalOptions>
@@ -84,7 +84,7 @@
             BlueprintIdentifier = "84A388B21B1CDD3E000166C0"
             BuildableName = "Reicast.app"
             BlueprintName = "reicast-osx"
-            ReferencedContainer = "container:emulator-osx/reicast-osx.xcodeproj">
+            ReferencedContainer = "container:reicast-osx.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
       <AdditionalOptions>
@@ -103,7 +103,7 @@
             BlueprintIdentifier = "84A388B21B1CDD3E000166C0"
             BuildableName = "Reicast.app"
             BlueprintName = "reicast-osx"
-            ReferencedContainer = "container:emulator-osx/reicast-osx.xcodeproj">
+            ReferencedContainer = "container:reicast-osx.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>
