@@ -28,11 +28,11 @@ bool bios_loaded = false;
 	#include <errno.h>
 #endif
 
-fd_t*	RomCacheMap;
+fd_t*	RomCacheMap = NULL;
 u32		RomCacheMapCount;
 
 char naomi_game_id[33];
-InputDescriptors *naomi_game_inputs;
+InputDescriptors *NaomiGameInputs;
 u8 *naomi_default_eeprom;
 
 extern RomChip sys_rom;
@@ -246,7 +246,7 @@ static bool naomi_cart_LoadZip(char *filename)
 		break;
 	}
 	CurrentCartridge->SetKey(game->key);
-	naomi_game_inputs = game->inputs;
+	NaomiGameInputs = game->inputs;
 
 	for (int romid = 0; game->blobs[romid].filename != NULL; romid++)
 	{
@@ -636,10 +636,10 @@ bool naomi_cart_SelectFile()
 	if (!naomi_cart_LoadRom(SelectedFile))
 	{
 		printf("Cannot load %s: error %d\n", SelectedFile, errno);
+		cfgSetVirtual("config", "image", "");
+
 		return false;
 	}
-
-	cfgSaveStr("emu", "gamefile", SelectedFile);
 
 	return true;
 }

@@ -243,6 +243,8 @@ void TextureCacheData::ComputeHash()
 	texture_hash = XXH32(&vram[sa], size, 7);
 	if (IsPaletted())
 		texture_hash ^= palette_hash;
+	old_texture_hash = texture_hash;
+	texture_hash ^= tcw.full;
 }
 	
 void TextureCacheData::Update()
@@ -294,10 +296,7 @@ void TextureCacheData::Update()
 		}
 	}
 	if (settings.rend.CustomTextures)
-	{
-		custom_load_in_progress = true;
 		custom_texture.LoadCustomTextureAsync(this);
-	}
 
 	void *temp_tex_buffer = NULL;
 	u32 upscaled_w = w;
@@ -426,7 +425,7 @@ void TextureCacheData::UploadToGPU(GLuint textype, int width, int height, u8 *te
 
 void TextureCacheData::CheckCustomTexture()
 {
-	if (custom_image_data != NULL)
+	if (custom_load_in_progress == 0 && custom_image_data != NULL)
 	{
 		UploadToGPU(GL_UNSIGNED_BYTE, custom_width, custom_height, custom_image_data);
 		delete [] custom_image_data;
@@ -444,7 +443,7 @@ bool TextureCacheData::NeedsUpdate() {
 	
 bool TextureCacheData::Delete()
 {
-	if (custom_load_in_progress)
+	if (custom_load_in_progress > 0)
 		return false;
 	
 	if (pData) {
@@ -734,11 +733,7 @@ TextureCacheData *getTextureCacheData(TSP tsp, TCW tcw) {
 	}
 	else //create if not existing
 	{
-		TextureCacheData tfc={0};
-		TexCache[key] = tfc;
-
-		tx=TexCache.find(key);
-		tf=&tx->second;
+		tf=&TexCache[key];
 
 		tf->tsp = tsp;
 		tf->tcw = tcw;
@@ -798,11 +793,7 @@ text_info raw_GetTexture(TSP tsp, TCW tcw)
 	}
 	else //create if not existing
 	{
-		TextureCacheData tfc = { 0 };
-		TexCache[key] = tfc;
-
-		tx = TexCache.find(key);
-		tf = &tx->second;
+		tf = &TexCache[key];
 
 		tf->tsp = tsp;
 		tf->tcw = tcw;
@@ -1005,13 +996,7 @@ GLuint init_output_framebuffer(int width, int height)
 {
 	if (width != gl.ofbo.width || height != gl.ofbo.height)
 	{
-		if (gl.ofbo.fbo != 0)
-		{
-			glDeleteFramebuffers(1, &gl.ofbo.fbo);
-			gl.ofbo.fbo = 0;
-			glDeleteRenderbuffers(1, &gl.ofbo.depthb);
-			glcache.DeleteTextures(1, &gl.ofbo.tex);
-		}
+		free_output_framebuffer();
 		gl.ofbo.width = width;
 		gl.ofbo.height = height;
 	}
@@ -1035,15 +1020,25 @@ GLuint init_output_framebuffer(int width, int height)
 		else
 			glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
 
-		// Create a texture for rendering to
-		gl.ofbo.tex = glcache.GenTexture();
-		glcache.BindTexture(GL_TEXTURE_2D, gl.ofbo.tex);
+		if (gl.gl_major < 3)
+		{
+			// Create a texture for rendering to
+			gl.ofbo.tex = glcache.GenTexture();
+			glcache.BindTexture(GL_TEXTURE_2D, gl.ofbo.tex);
 
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+			glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+			glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		}
+		else
+		{
+			// Use a renderbuffer and glBlitFramebuffer
+			glGenRenderbuffers(1, &gl.ofbo.colorb);
+			glBindRenderbuffer(GL_RENDERBUFFER, gl.ofbo.colorb);
+			glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA8, width, height);
+		}
 
 		// Create the framebuffer
 		glGenFramebuffers(1, &gl.ofbo.fbo);
@@ -1055,13 +1050,20 @@ GLuint init_output_framebuffer(int width, int height)
 		if (!gl.is_gles || gl.GL_OES_packed_depth_stencil_supported)
 			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, gl.ofbo.depthb);
 
-		// Attach the texture to the FBO
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, gl.ofbo.tex, 0);
+		// Attach the texture/renderbuffer to the FBO
+		if (gl.gl_major < 3)
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, gl.ofbo.tex, 0);
+		else
+			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, gl.ofbo.colorb);
 
 		// Check that our FBO creation was successful
 		GLuint uStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 
 		verify(uStatus == GL_FRAMEBUFFER_COMPLETE);
+
+		glcache.Disable(GL_SCISSOR_TEST);
+		glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
+		glClear(GL_COLOR_BUFFER_BIT);
 	}
 	else
 		glBindFramebuffer(GL_FRAMEBUFFER, gl.ofbo.fbo);
@@ -1080,7 +1082,15 @@ void free_output_framebuffer()
 		gl.ofbo.fbo = 0;
 		glDeleteRenderbuffers(1, &gl.ofbo.depthb);
 		gl.ofbo.depthb = 0;
-		glcache.DeleteTextures(1, &gl.ofbo.tex);
-		gl.ofbo.tex = 0;
+		if (gl.ofbo.tex != 0)
+		{
+			glcache.DeleteTextures(1, &gl.ofbo.tex);
+			gl.ofbo.tex = 0;
+		}
+		if (gl.ofbo.colorb != 0)
+		{
+			glDeleteRenderbuffers(1, &gl.ofbo.colorb);
+			gl.ofbo.colorb = 0;
+		}
 	}
 }

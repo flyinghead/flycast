@@ -6,6 +6,7 @@
 #include "hw/holly/sb.h"
 #include "hw/sh4/sh4_mem.h"
 #include "hw/holly/holly_intc.h"
+#include "hw/maple/maple_cfg.h"
 
 #include "naomi.h"
 #include "naomi_cart.h"
@@ -15,7 +16,7 @@ u32 naomi_updates;
 
 //#define NAOMI_COMM
 
-u32 BoardID=0x980055AA;
+static const u32 BoardID=0x980055AA;
 u32 GSerialBuffer=0,BSerialBuffer=0;
 int GBufPos=0,BBufPos=0;
 int GState=0,BState=0;
@@ -388,6 +389,7 @@ u32 reg_dimm_48;	//parameters
 u32 reg_dimm_4c=0x11;	//status/control reg ?
 
 bool NaomiDataRead = false;
+static bool aw_ram_test_skipped = false;
 
 void naomi_process(u32 r3c,u32 r40,u32 r44, u32 r48)
 {
@@ -552,6 +554,8 @@ void naomi_reg_Term()
 void naomi_reg_Reset(bool Manual)
 {
 	NaomiDataRead = false;
+	aw_ram_test_skipped = false;
+	BLastCmd = 0;
 }
 
 void Update_naomi()
@@ -631,8 +635,6 @@ void Update_naomi()
 }
 
 static u8 aw_maple_devs;
-extern bool coin_chute;
-static bool once = false;
 
 u32 libExtDevice_ReadMem_A0_006(u32 addr,u32 size) {
 	addr &= 0x7ff;
@@ -645,18 +647,19 @@ u32 libExtDevice_ReadMem_A0_006(u32 addr,u32 size) {
 		//	c/d - 3P/4P coin inputs (EX. IO board), active low
 		//
 		//	(ab == 0) -> BIOS skip RAM test
-		if (!once)
+		if (!aw_ram_test_skipped)
 		{
 			// Skip RAM test at startup
-			once = true;
+			aw_ram_test_skipped = true;
 			return 0;
 		}
-		if (coin_chute)
 		{
-			// FIXME Coin Error if coin_chute is set for too long
-			return 0xE;
+			u8 coin_input = 0xF;
+			for (int slot = 0; slot < 4; slot++)
+				if (maple_atomiswave_coin_chute(slot))
+					coin_input &= ~(1 << slot);
+			return coin_input;
 		}
-		return 0xF;
 
 	case 0x284:		// Atomiswave maple devices
 		// ddcc0000 where cc/dd are the types of devices on maple bus 2 and 3:

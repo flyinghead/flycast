@@ -2,80 +2,8 @@
 
     <string name="app_name" translatable="false">reicast</string>
 
-    <string name="app_site" translatable="false">http://reicast.com</string>
+    <string name="app_site" translatable="false">reicast.com</string>
 
     <string name="flavor" translatable="false">dreamcast</string>
-
-    <string-array name="depth">
-        <item>16</item>
-        <item>24</item>
-        <item>32</item>        
-    </string-array>
-
-    <string-array name="flash">
-        <item>bin</item>
-    </string-array>
-
-    <string-array name="cable">
-        <item>VGA</item>
-        <item>Component</item>
-        <item>TV</item>
-    </string-array>
-    
-    <string-array name="themes">
-        <item>png</item>
-        <item>jpg</item>
-        <item>jpeg</item>
-    </string-array>
-    
-    <string-array name="images">
-        <item>cdi</item>
-        <item>chd</item>
-        <item>gdi</item>
-    </string-array>
-
-   	<string-array name="region">
-        <item>Japan</item>
-        <item>USA</item>
-        <item>Europe</item>
-        <item>reicast</item>
-    </string-array>
-
-    <string-array name="bios">
-        <item>Japan</item>
-        <item>USA</item>
-        <item>Europe</item>
-        <item>reicast</item>
-        <item>Katana</item>
-    </string-array>
- 
-    <string-array name="broadcast">
-        <item>NTSC</item>
-        <item>PAL</item>
-        <item>PAL-M</item>
-        <item>PAL-N</item>
-        <item>reicast</item>
-    </string-array>
-
-    <string-array name="bioscode">
-        <item>J</item>
-        <item>E</item>
-        <item>U</item>
-        <item>R</item>
-        <item>K</item>
-    </string-array>
-
-    <string-array name="peripherals">
-        <item>None</item>
-        <item>VMU</item>
-        <item>Microphone</item>
-        <item>Purupuru</item>
-    </string-array>
-
-    <string-array name="right_stick">
-        <item>None</item>
-        <item>L / R</item>
-        <item>A / B</item>
-    </string-array>
 
 </resources>

@@ -9,12 +9,18 @@ public:
 	: GamepadDevice(maple_port, "evdev"), _fd(fd), _rumble_effect_id(-1), _devnode(devnode)
 	{
 		fcntl(fd, F_SETFL, O_NONBLOCK);
-		char name[256] = "Unknown";
-		if (ioctl(fd, EVIOCGNAME(sizeof(name)), name) < 0)
+		char buf[256] = "Unknown";
+		if (ioctl(fd, EVIOCGNAME(sizeof(buf) - 1), buf) < 0)
 			perror("evdev: ioctl(EVIOCGNAME)");
 		else
-			printf("evdev: Opened device '%s' ", name);
-		_name = name;
+			printf("evdev: Opened device '%s' ", buf);
+		_name = buf;
+		buf[0] = 0;
+		if (ioctl(fd, EVIOCGUNIQ(sizeof(buf) - 1), buf) == 0)
+			_unique_id = buf;
+		if (_unique_id.empty())
+			_unique_id = devnode;
+
 		if (!find_mapping(mapping_file))
 		{
 #if defined(TARGET_PANDORA)
@@ -22,18 +28,18 @@ public:
 #elif defined(TARGET_GCW0)
 			mapping_file = "controller_gcwz.cfg";
 #else
-			if (!strcmp(name, "Microsoft X-Box 360 pad")
-				|| !strcmp(name, "Xbox 360 Wireless Receiver")
-				|| !strcmp(name, "Xbox 360 Wireless Receiver (XBOX)"))
+			if (_name == "Microsoft X-Box 360 pad"
+				|| _name == "Xbox 360 Wireless Receiver"
+				|| _name == "Xbox 360 Wireless Receiver (XBOX)")
 			{
 				mapping_file = "controller_xpad.cfg";
 			}
-			else if (strstr(name, "Xbox Gamepad (userspace driver)") != NULL)
+			else if (_name.find("Xbox Gamepad (userspace driver)") != std::string::npos)
 			{
 				mapping_file = "controller_xboxdrv.cfg";
 			}
-			else if (strstr(name, "keyboard") != NULL ||
-					 strstr(name, "Keyboard") != NULL)
+			else if (_name.find("keyboard") != std::string::npos
+						|| _name.find("Keyboard") != std::string::npos)
 			{
 				mapping_file = "keyboard.cfg";
 			}

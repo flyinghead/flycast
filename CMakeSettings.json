@@ -1,0 +1,220 @@
+﻿{
+  "environments": [
+    {
+      "environment": "toolchain.generic",
+      "TOOLCHAIN_FILE": "ps4sdk.cmake"
+    }
+  ],
+  "configurations": [
+    {
+      "name": "win-x86-Debug",
+      "generator": "Ninja",
+      "description": "TemplateDescription_Localize_x86Debug",
+      "configurationType": "Debug",
+      "inheritEnvironments": [
+        "msvc_x86"
+      ],
+      "buildRoot": "${projectDir}\\build\\${name}",
+      "installRoot": "${projectDir}\\build\\${name}\\install",
+      "cmakeCommandArgs": "",
+      "buildCommandArgs": "-v",
+      "ctestCommandArgs": ""
+    },
+    {
+      "name": "win-x86-Release",
+      "generator": "Ninja",
+      "description": "TemplateDescription_Localize_x86Release",
+      "configurationType": "RelWithDebInfo",
+      "inheritEnvironments": [
+        "msvc_x86"
+      ],
+      "buildRoot": "${projectDir}\\build\\${name}",
+      "installRoot": "${projectDir}\\build\\${name}\\install",
+      "cmakeCommandArgs": "",
+      "buildCommandArgs": "-v",
+      "ctestCommandArgs": ""
+    },
+    {
+      "name": "win-x64-Debug",
+      "generator": "Ninja",
+      "description": "TemplateDescription_Localize_x64Debug",
+      "configurationType": "Debug",
+      "inheritEnvironments": [
+        "msvc_x64_x64"
+      ],
+      "buildRoot": "${projectDir}\\build\\${name}",
+      "installRoot": "${projectDir}\\build\\${name}\\install",
+      "cmakeCommandArgs": "-DNINJA=1",
+      "buildCommandArgs": "-v",
+      "ctestCommandArgs": ""
+    },
+    {
+      "name": "win-x64-Release",
+      "generator": "Ninja",
+      "description": "TemplateDescription_Localize_x64Release",
+      "configurationType": "RelWithDebInfo",
+      "inheritEnvironments": [
+        "msvc_x64_x64"
+      ],
+      "buildRoot": "${projectDir}\\build\\${name}",
+      "installRoot": "${projectDir}\\build\\${name}\\install",
+      "cmakeCommandArgs": "-DNINJA=1",
+      "buildCommandArgs": "-v",
+      "ctestCommandArgs": ""
+    },
+    {
+      "name": "win-x64-Clang-RelWithDebInfo",
+      "generator": "Ninja",
+      "description": "TemplateDescription_Localize_x64Release",
+      "configurationType": "RelWithDebInfo",
+      "inheritEnvironments": [
+        "msvc_x64_x64"
+      ],
+      "buildRoot": "${projectDir}\\build\\${name}",
+      "installRoot": "${projectDir}\\build\\${name}\\install",
+      "cmakeCommandArgs": "",
+      "buildCommandArgs": "-v",
+      "ctestCommandArgs": "",
+      "variables": [
+        {
+          "name": "CMAKE_C_COMPILER",
+          "value": "clang-cl.exe"
+        },
+        {
+          "name": "CMAKE_CXX_COMPILER",
+          "value": "clang-cl.exe"
+        }
+      ]
+    },
+
+    // Console SDK's
+    {
+      "name": "PS4 SDK",
+      "generator": "Ninja",
+      "description": "TemplateDescription_Localize_PS4SDK",
+      "configurationType": "RelWithDebInfo",
+      "inheritEnvironments": [
+        "toolchain.generic"
+      ],
+      "buildRoot": "${projectDir}\\build\\${name}",
+      "installRoot": "${projectDir}\\build\\${name}\\install",
+      "cmakeCommandArgs": "-DCMAKE_TOOLCHAIN_FILE=${projectDir}\\cmake\\ps4sdk.cmake",
+      "buildCommandArgs": "-v",
+      "ctestCommandArgs": ""
+    },
+    {
+      "name": "NSW SDK",
+      "generator": "Ninja",
+      "description": "TemplateDescription_Localize_PS4SDK",
+      "configurationType": "RelWithDebInfo",
+      "inheritEnvironments": [
+        "toolchain.generic"
+      ],
+      "buildRoot": "${projectDir}\\build\\${name}",
+      "installRoot": "${projectDir}\\build\\${name}\\install",
+      "cmakeCommandArgs": "-DCMAKE_TOOLCHAIN_FILE=${projectDir}\\cmake\\devkitA64.cmake",
+      "buildCommandArgs": "-v",
+      "ctestCommandArgs": ""
+    },
+
+    // UWP and VS Gen (temp?)
+    {
+      "name": "uwp-x64-Release",
+      "generator": "Visual Studio 15 2017 Win64",
+      "description": "TemplateDescription_Localize_x64Release",
+      "configurationType": "RelWithDebInfo",
+      "inheritEnvironments": [
+        "msvc_x64_x64"
+      ],
+      "buildRoot": "${projectDir}\\build\\${name}",
+      "installRoot": "${projectDir}\\build\\${name}\\install",
+      "cmakeCommandArgs": "-DCMAKE_SYSTEM_NAME=WindowsStore -DCMAKE_SYSTEM_VERSION=10",
+      "buildCommandArgs": "",
+      "ctestCommandArgs": ""
+    },
+    {
+      "name": "win-x64-MSBuild-Release",
+      "generator": "Visual Studio 15 2017 Win64",
+      "description": "TemplateDescription_Localize_x64Release",
+      "configurationType": "RelWithDebInfo",
+      "inheritEnvironments": [
+        "msvc_x64_x64"
+      ],
+      "buildRoot": "${projectDir}\\build\\${name}",
+      "installRoot": "${projectDir}\\build\\${name}\\install",
+      "cmakeCommandArgs": "",
+      "buildCommandArgs": "",
+      "ctestCommandArgs": ""
+    },
+    {
+      "environments": [
+        {
+          //"MINGW64_ROOT": "C:\\msys64\\mingw64",
+          "BIN_ROOT": "${env.MINGW64_ROOT}\\bin",
+          "FLAVOR": "x86_64-w64-mingw32",
+          "TOOLSET_VERSION": "7.3.0",
+          "PATH": "${env.MINGW64_ROOT}\\bin;${env.MINGW64_ROOT}\\..\\usr\\local\\bin;${env.MINGW64_ROOT}\\..\\usr\\bin;${env.MINGW64_ROOT}\\..\\bin;${env.PATH}",
+          "INCLUDE": "${env.INCLUDE};${env.MINGW64_ROOT}\\include\\c++\\${env.TOOLSET_VERSION};${env.MINGW64_ROOT}\\include\\c++\\${env.TOOLSET_VERSION}\\tr1;${env.MINGW64_ROOT}\\include\\c++\\${env.TOOLSET_VERSION}\\${env.FLAVOR}",
+          "environment": "mingw_64"
+        }
+      ],
+      "name": "Mingw64-Release",
+      "generator": "Ninja",
+      "configurationType": "RelWithDebInfo",
+      "inheritEnvironments": [
+        "mingw_64"
+      ],
+      "buildRoot": "${projectDir}\\build\\${name}",
+      "installRoot": "${projectDir}\\build\\${name}\\install",
+      "cmakeCommandArgs": "",
+      "buildCommandArgs": "-v",
+      "ctestCommandArgs": "",
+      "intelliSenseMode": "linux-gcc-x64",
+      "variables": [
+        {
+          "name": "CMAKE_C_COMPILER",
+          "value": "${env.BIN_ROOT}\\gcc.exe"
+        },
+        {
+          "name": "CMAKE_CXX_COMPILER",
+          "value": "${env.BIN_ROOT}\\g++.exe"
+        }
+      ]
+    },
+    {
+      "environments": [
+        {
+          //"MINGW64_ROOT": "C:\\msys64\\mingw64",
+          "BIN_ROOT": "${env.MINGW64_ROOT}\\bin",
+          "FLAVOR": "x86_64-w64-mingw32",
+          "TOOLSET_VERSION": "7.3.0",
+          "PATH": "${env.MINGW64_ROOT}\\bin;${env.MINGW64_ROOT}\\..\\usr\\local\\bin;${env.MINGW64_ROOT}\\..\\usr\\bin;${env.MINGW64_ROOT}\\..\\bin;${env.PATH}",
+          "INCLUDE": "${env.INCLUDE};${env.MINGW64_ROOT}\\include\\c++\\${env.TOOLSET_VERSION};${env.MINGW64_ROOT}\\include\\c++\\${env.TOOLSET_VERSION}\\tr1;${env.MINGW64_ROOT}\\include\\c++\\${env.TOOLSET_VERSION}\\${env.FLAVOR}",
+          "environment": "mingw_64"
+        }
+      ],
+      "name": "Mingw64-Debug",
+      "generator": "Ninja",
+      "configurationType": "Debug",
+      "inheritEnvironments": [
+        "mingw_64"
+      ],
+      "buildRoot": "${projectDir}\\build\\${name}",
+      "installRoot": "${projectDir}\\build\\${name}\\install",
+      "cmakeCommandArgs": "",
+      "buildCommandArgs": "-v",
+      "ctestCommandArgs": "",
+      "intelliSenseMode": "linux-gcc-x64",
+      "variables": [
+        {
+          "name": "CMAKE_C_COMPILER",
+          "value": "${env.BIN_ROOT}\\gcc.exe"
+        },
+        {
+          "name": "CMAKE_CXX_COMPILER",
+          "value": "${env.BIN_ROOT}\\g++.exe"
+        }
+      ]
+    }
+  ]
+}

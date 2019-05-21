@@ -133,7 +133,7 @@ bool ConvertSector(u8* in_buff , u8* out_buff , int from , int to,int sector)
 
 Disc* OpenDisc(const wchar* fn)
 {
-	Disc* rv = nullptr;
+	Disc* rv = NULL;
 
 	for (unat i=0; drivers[i] && !rv; i++) {  // ;drivers[i] && !(rv=drivers[i](fn));
 		rv = drivers[i](fn);

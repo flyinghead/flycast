@@ -3,6 +3,8 @@
 
 wchar* trim_ws(wchar* str);
 
+namespace emucfg {
+
 /* ConfigEntry */
 
 string ConfigEntry::get_string()
@@ -298,4 +300,6 @@ void ConfigFile::delete_entry(const std::string& section_name, const std::string
 	if (section != NULL)
 		section->delete_entry(entry_name);
 }
+
+} // namespace emucfg
 

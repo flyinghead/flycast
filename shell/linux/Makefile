@@ -6,9 +6,11 @@ FOR_LINUX :=1
 WEBUI :=1
 USE_OSS := 1
 #USE_PULSEAUDIO := 1
+#USE_SDLAUDIO := 1
 #USE_LIBAO := 1
 USE_EVDEV := 1
 USE_UDEV := 1
+USE_MODEM := 1
 PLATFORM_EXT := elf
 
 CXX=${CC_PREFIX}g++
@@ -16,6 +18,7 @@ CC=${CC_PREFIX}gcc
 AS=${CC_PREFIX}as
 STRIP=${CC_PREFIX}strip
 LD=${CC}
+WINDRES=${CC_PREFIX}windres
 CHD5_LZMA := 1
 CHD5_FLAC := 1
 
@@ -45,6 +48,7 @@ ifeq (,$(platform))
     else ifeq ($(ARCH), $(filter $(ARCH), x86_64 AMD64 amd64))
         platform = x64
     else ifneq (,$(findstring aarch64,$(ARCH)))
+        platform = arm64
         HARDWARE = $(shell grep Hardware /proc/cpuinfo)
         ifneq (,$(findstring Vero4K,$(HARDWARE)))
             platform = vero4k
@@ -122,6 +126,15 @@ else ifneq (,$(findstring x64,$(platform)))
         HAS_SOFTREND := 1
     endif
 
+# Generic 64 bit ARM (armv8) Linux
+else ifneq (,$(findstring arm64,$(platform)))
+    NOT_ARM := 1
+    USE_X11 := 1
+    ARM64_REC := 1
+    ISARM64 := 1
+    CFLAGS += -D TARGET_LINUX_ARMv8 -D TARGET_NO_AREC -fno-builtin-sqrtf
+    CXXFLAGS += -fexceptions
+
 # Generic 32 bit ARMhf (a.k.a. ARMv7h)
 else ifneq (,$(findstring armv7h,$(platform)))
     MFLAGS += -marm -mfloat-abi=hard -march=armv7-a -funroll-loops
@@ -156,10 +169,9 @@ else ifneq (,$(findstring rpi,$(platform)))
         USE_GLES := 1
     else
         INCS += -I/opt/vc/include/ -I/opt/vc/include/interface/vmcs_host/linux -I/opt/vc/include/interface/vcos/pthreads
-        LIBS += -L/opt/vc/lib/ -lbcm_host
+        LIBS += -L/opt/vc/lib/ -lbcm_host -ldl
         LIBS += -lbrcmEGL -lbrcmGLESv2
-        CFLAGS += -D TARGET_VIDEOCORE
-        CXXFLAGS += -DGLES
+        CFLAGS += -D TARGET_VIDEOCORE -DGLES
         USE_OMX := 1
         USE_DISPMANX := 1
     endif
@@ -195,7 +207,7 @@ else ifneq (,$(findstring odroid,$(platform)))
     ifneq (,$(findstring odroidxu3,$(platform)))
         MFLAGS += -march=armv7ve -mtune=cortex-a15.cortex-a7
         ASFLAGS += -march=armv7ve
-
+		CFLAGS += -DGLES3
     # Other ODROIDs
     else
         MFLAGS += -march=armv7-a
@@ -240,7 +252,7 @@ else ifneq (,$(findstring vero4k,$(platform)))
 else ifneq (,$(findstring win32,$(platform)))
     NOT_ARM := 1
     CFLAGS += -DTARGET_NO_WEBUI -fno-builtin-sqrtf -funroll-loops -DHAVE_FSEEKO -D TARGET_NO_AREC
-    LDFLAGS += -static-libgcc -static-libstdc++
+    LDFLAGS += -static-libgcc -static-libstdc++ -Wl,-subsystem,windows
     LIBS := -lopengl32 -lwinmm -lgdi32 -lwsock32 -ldsound -lcomctl32 -lcomdlg32 -lxinput -liphlpapi
     PLATFORM_EXT := exe
     CC = gcc
@@ -274,21 +286,13 @@ CFLAGS += $(RZDCY_CFLAGS) -g -O3 -D RELEASE -c -D USES_HOMEDIR -fopenmp #-D NO_R
 CFLAGS += -frename-registers -fno-strict-aliasing
 CFLAGS += -ffast-math -ftree-vectorize
 
-# 7-Zip/LZMA settings (CHDv5)
-ifdef CHD5_LZMA
-	CFLAGS += -D_7ZIP_ST -DCHD5_LZMA
-endif
-ifdef CHD5_FLAC
-	CFLAGS += -DCHD5_FLAC
-endif
-
 CXXFLAGS += $(RZDCY_CFLAGS) -fno-rtti -fpermissive -fno-operator-names -D_GLIBCXX_USE_CXX11_ABI=0 -std=gnu++11
 
 INCS += -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps -I$(RZDCY_SRC_DIR)/khronos
 
 LIBS += -lm -lpthread
 ifdef FOR_LINUX
-LIBS += -lrt -ldl
+LIBS += -lrt
 endif
 
 PREFIX ?= /usr/local
@@ -359,6 +363,11 @@ ifdef USE_PULSEAUDIO
     LIBS += `pkg-config --libs libpulse-simple`
 endif
 
+ifdef USE_SDLAUDIO
+    CXXFLAGS += `sdl2-config --cflags` -D USE_SDL_AUDIO
+    LIBS += `sdl2-config --libs`
+endif
+
 ifdef USE_LIBAO
 	CXXFLAGS += `pkg-config --cflags ao` -D USE_LIBAO
 	LIBS += `pkg-config --libs ao`
@@ -372,7 +381,7 @@ endif
 
 # GLES on x11?
 ifdef USE_GLES
-    CXXFLAGS += -DGLES
+    CFLAGS += -DGLES
     LIBS += -lEGL -lGLESv2
 else ifdef FOR_LINUX
     LIBS += -ldl -lGL #for desktop gl
@@ -420,6 +429,12 @@ OBJECTS:=$(OBJECTS:.c=.build_obj)
 OBJECTS:=$(OBJECTS:.S=.build_obj)
 OBJECTS:=$(patsubst $(RZDCY_SRC_DIR)/%,$(BUILDDIR)/%,$(OBJECTS))
 
+ifdef FOR_WINDOWS
+OBJECTS+=$(BUILDDIR)/reicastres.build_obj
+$(BUILDDIR)/reicastres.build_obj: $(LOCAL_PATH)/../windows/reicast.rc $(LOCAL_PATH)/../windows/reicast.ico $(RZDCY_SRC_DIR)/version.h
+	$(WINDRES) $< $@
+endif
+
 DEPDIR := .dep-$(BUILDDIR)
 DEPFLAGS = -MT $@ -MD -MP -MF $(DEPDIR)/$*.Td
 DEPS=$(RZDCY_FILES:.cpp=.d)
@@ -441,27 +456,27 @@ $(EXECUTABLE_STRIPPED): $(EXECUTABLE)
 	cp $< $@ && $(STRIP) $@
 
 $(BUILDDIR)/%.build_obj : $(RZDCY_SRC_DIR)/%.cpp
-$(BUILDDIR)/%.build_obj: $(RZDCY_SRC_DIR)/%.cpp $(DEPDIR)/%.d
+$(BUILDDIR)/%.build_obj: $(RZDCY_SRC_DIR)/%.cpp $(DEPDIR)/%.d $(VERSION_HEADER)
 	mkdir -p $(dir $@)
 	mkdir -p .dep-$(dir $@)
 	$(CXX) $(EXTRAFLAGS) $(INCS) $(DEPFLAGS) $(CFLAGS) $(MFLAGS) $(CXXFLAGS) $< -o $@
 	$(POSTCOMPILE)
 
 $(BUILDDIR)/%.build_obj : $(RZDCY_SRC_DIR)/%.cc
-$(BUILDDIR)/%.build_obj: $(RZDCY_SRC_DIR)/%.cc $(DEPDIR)/%.d
+$(BUILDDIR)/%.build_obj: $(RZDCY_SRC_DIR)/%.cc $(DEPDIR)/%.d $(VERSION_HEADER)
 	mkdir -p $(dir $@)
 	mkdir -p .dep-$(dir $@)
 	$(CXX) $(EXTRAFLAGS) $(INCS) $(DEPFLAGS) $(CFLAGS) $(MFLAGS) $(CXXFLAGS) $< -o $@
 	$(POSTCOMPILE)
 
 $(BUILDDIR)/%.build_obj : $(RZDCY_SRC_DIR)/%.c
-$(BUILDDIR)/%.build_obj: $(RZDCY_SRC_DIR)/%.c $(DEPDIR)/%.d
+$(BUILDDIR)/%.build_obj: $(RZDCY_SRC_DIR)/%.c $(DEPDIR)/%.d $(VERSION_HEADER)
 	mkdir -p $(dir $@)
 	mkdir -p .dep-$(dir $@)
 	$(CC) $(EXTRAFLAGS) $(INCS) $(DEPFLAGS) $(CFLAGS) $< -o $@
 	$(POSTCOMPILE)
 
-$(BUILDDIR)/%.build_obj : $(RZDCY_SRC_DIR)/%.S
+$(BUILDDIR)/%.build_obj : $(RZDCY_SRC_DIR)/%.S $(VERSION_HEADER)
 	mkdir -p $(dir $@)
 	$(AS) $(ASFLAGS) $(INCS) $< -o $@
 
@@ -499,10 +514,9 @@ uninstall:
 	rm -f $(DESTDIR)$(ICON_DIR)/reicast.png
 
 clean:
-	rm -f $(OBJECTS) $(EXECUTABLE) $(EXECUTABLE_STRIPPED) .map
+	rm -f $(OBJECTS) $(EXECUTABLE) $(EXECUTABLE_STRIPPED) .map $(VERSION_HEADER)
 
 .PRECIOUS = $(DEPDIR)/%.d
 $(DEPDIR)/%.d: ;
 
 -include $(DEPS)
-

@@ -1311,10 +1311,10 @@ public:
 		idx[1]=vbase+1;
 		idx[2]=vbase+2;
 		idx[3]=vbase+3;
-		idx[4]=vbase+3;
-		idx[5]=vbase+4;
+        idx[4]=vbase+3;
+        idx[5]=vbase+4;
 
-		CurrentPP->count=vdrc.idx.used()-CurrentPP->first-2;
+        CurrentPP->count=vdrc.idx.used()-CurrentPP->first-2;
 
 		Vertex* cv = vdrc.verts.Append(4);
 
@@ -1519,7 +1519,6 @@ int ta_parse_cnt = 0;
 bool ta_parse_vdrc(TA_context* ctx)
 {
 	bool rv=false;
-
 	verify( vd_ctx == 0);
 	vd_ctx = ctx;
 	vd_rc = vd_ctx->rend;

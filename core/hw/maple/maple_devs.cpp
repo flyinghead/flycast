@@ -7,6 +7,7 @@
 #include "hw/naomi/naomi.h"
 #include "hw/naomi/naomi_cart.h"
 #include "hw/pvr/spg.h"
+#include "input/gamepad.h"
 #include <time.h>
 
 #include "deps/zlib/zlib.h"
@@ -198,6 +199,35 @@ struct maple_base: maple_device
 */
 struct maple_sega_controller: maple_base
 {
+	virtual u32 get_capabilities() {
+		// byte 0: 0  0  0  0  0  0  0  0
+		// byte 1: 0  0  a5 a4 a3 a2 a1 a0
+		// byte 2: R2 L2 D2 U2 D  X  Y  Z
+		// byte 3: R  L  D  U  St A  B  C
+
+		return 0xfe060f00;	// 4 analog axes (0-3) X Y A B Start U D L R
+	}
+
+	virtual u32 transform_kcode(u32 kcode) {
+		return kcode;
+	}
+
+	virtual u32 get_analog_axis(int index, const PlainJoystickState &pjs) {
+		switch (index)
+		{
+		case 0:
+			return pjs.trigger[PJTI_R];		// Right trigger
+		case 1:
+			return pjs.trigger[PJTI_L];		// Left trigger
+		case 2:
+			return pjs.joy[PJAI_X1];		// Stick X
+		case 3:
+			return pjs.joy[PJAI_Y1];		// Stick Y
+		default:
+			return 0x80;					// unused
+		}
+	}
+
 	virtual MapleDeviceType get_device_type()
 	{
 		return MDT_SegaController;
@@ -215,9 +245,9 @@ struct maple_sega_controller: maple_base
 
 			//struct data
 			//3*4
-			w32( 0xfe060f00);
-			w32( 0);
-			w32( 0);
+			w32(get_capabilities());
+			w32(0);
+			w32(0);
 
 			//1	area code
 			w8(0xFF);
@@ -250,26 +280,26 @@ struct maple_sega_controller: maple_base
 
 				//state data
 				//2 key code
-				w16(pjs.kcode);
+				w16(transform_kcode(pjs.kcode));
 
 				//triggers
 				//1 R
-				w8(pjs.trigger[PJTI_R]);
+				w8(get_analog_axis(0, pjs));
 				//1 L
-				w8(pjs.trigger[PJTI_L]);
+				w8(get_analog_axis(1, pjs));
 
 				//joyx
 				//1
-				w8(pjs.joy[PJAI_X1]);
+				w8(get_analog_axis(2, pjs));
 				//joyy
 				//1
-				w8(pjs.joy[PJAI_Y1]);
+				w8(get_analog_axis(3, pjs));
 
 				//not used
 				//1
-				w8(0x80);
+				w8(get_analog_axis(4, pjs));
 				//1
-				w8(0x80);
+				w8(get_analog_axis(5, pjs));
 			}
 
 			return MDRS_DataTransfer;
@@ -277,6 +307,38 @@ struct maple_sega_controller: maple_base
 		default:
 			//printf("UNKOWN MAPLE COMMAND %d\n",cmd);
 			return MDRE_UnknownCmd;
+		}
+	}
+};
+
+struct maple_atomiswave_controller: maple_sega_controller
+{
+	virtual u32 get_capabilities() override {
+		// byte 0: 0  0  0  0  0  0  0  0
+		// byte 1: 0  0  a5 a4 a3 a2 a1 a0
+		// byte 2: R2 L2 D2 U2 D  X  Y  Z
+		// byte 3: R  L  D  U  St A  B  C
+
+		return 0xff663f00;	// 6 analog axes, X Y L2/D2(?) A B C Start U D L R
+	}
+
+	virtual u32 transform_kcode(u32 kcode) override {
+		return kcode | AWAVE_TRIGGER_KEY;
+	}
+
+	virtual u32 get_analog_axis(int index, const PlainJoystickState &pjs) override {
+		switch (index)
+		{
+		case 2:
+			return pjs.joy[PJAI_X1];
+		case 3:
+			return pjs.joy[PJAI_Y1];
+		case 4:
+			return pjs.joy[PJAI_X2];
+		case 5:
+			return pjs.joy[PJAI_Y2];
+		default:
+			return 0x80;
 		}
 	}
 };
@@ -644,9 +706,7 @@ struct maple_sega_vmu: maple_base
 							}
 						}
 						config->SetImage(lcd_data_decoded);
-#if !defined(TARGET_PANDORA) && HOST_OS != OS_DARWIN
-						push_vmu_screen(lcd_data_decoded);
-#endif
+						push_vmu_screen(bus_id, bus_port, lcd_data_decoded);
 #if 0
 						// Update LCD window
 						if (!dev->lcd.visible)
@@ -791,7 +851,7 @@ struct maple_microphone: maple_base
 		switch (cmd)
 		{
 		case MDC_DeviceRequest:
-			LOGI("maple_microphone::dma MDC_DeviceRequest");
+			LOGI("maple_microphone::dma MDC_DeviceRequest\n");
 			//this was copied from the controller case with just the id and name replaced!
 
 			//caps
@@ -826,7 +886,7 @@ struct maple_microphone: maple_base
 
 		case MDCF_GetCondition:
 			{
-				LOGI("maple_microphone::dma MDCF_GetCondition");
+				LOGI("maple_microphone::dma MDCF_GetCondition\n");
 				//this was copied from the controller case with just the id replaced!
 
 				//PlainJoystickState pjs;
@@ -863,7 +923,7 @@ struct maple_microphone: maple_base
 
 		case MDC_DeviceReset:
 			//uhhh do nothing?
-			LOGI("maple_microphone::dma MDC_DeviceReset");
+			LOGI("maple_microphone::dma MDC_DeviceReset\n");
 			return MDRS_DeviceReply;
 
 		case MDCF_MICControl:
@@ -932,7 +992,7 @@ struct maple_microphone: maple_base
 					LOGI("maple_microphone::dma MDCF_MICControl set gain %#010x\n",secondword);
 					return MDRS_DeviceReply;
 				case MDRE_TransmitAgain:
-					LOGW("maple_microphone::dma MDCF_MICControl MDRE_TransminAgain");
+					LOGW("maple_microphone::dma MDCF_MICControl MDRE_TransmitAgain\n");
 					//apparently this doesnt matter
 					//wptr(micdata, SIZE_OF_MIC_DATA);
 					return MDRS_DeviceReply;//MDRS_DataTransfer;
@@ -1269,6 +1329,10 @@ struct maple_mouse : maple_base
 
 struct maple_lightgun : maple_base
 {
+	virtual u32 transform_kcode(u32 kcode) {
+		return kcode | 0xFF01;
+	}
+
 	virtual MapleDeviceType get_device_type()
 	{
 		return MDT_LightGun;
@@ -1317,21 +1381,13 @@ struct maple_lightgun : maple_base
 			PlainJoystickState pjs;
 			config->GetInput(&pjs);
 
-			// Also use the mouse buttons
-			if (!(mo_buttons & 4))	// Left button
-				pjs.kcode &= ~4;	// A
-			if (!(mo_buttons & 2))	// Right button
-				pjs.kcode &= ~2;	// B
-			if (!(mo_buttons & 8))	// Wheel button
-				pjs.kcode &= ~8;	// Start
-
 			//caps
 			//4
 			w32(MFID_0_Input);
 
 			//state data
 			//2 key code
-			w16(pjs.kcode | 0xFF01);
+			w16(transform_kcode(pjs.kcode));
 
 			//not used
 			//2
@@ -1354,6 +1410,13 @@ struct maple_lightgun : maple_base
 	{
 		read_lightgun_position(mo_x_abs, mo_y_abs);
 		// TODO If NAOMI, set some bits at 0x600284 http://64darksoft.blogspot.com/2013/10/atomiswage-to-naomi-update-4.html
+	}
+};
+
+struct atomiswave_lightgun : maple_lightgun
+{
+	virtual u32 transform_kcode(u32 kcode) override {
+		return (kcode & AWAVE_TRIGGER_KEY) == 0 ? ~AWAVE_BTN0_KEY : ~0;
 	}
 };
 
@@ -1383,20 +1446,29 @@ static u16 getRightTriggerAxis()
 	return rt[0] << 8;
 }
 
-NaomiInputMapping Naomi_Mapping = {
-	{ getJoystickXAxis, getJoystickYAxis, getRightTriggerAxis, getLeftTriggerAxis },
-	{ 0,    0,    0,    0,    0,    0,    0,    0,    0, 1,    1,    0, 0 },
-	{ 0x40, 0x01, 0x02, 0x80, 0x20, 0x10, 0x08, 0x04, 0, 0x80, 0x40, 0, 0 },
-//  SERVICE BTN1  BTN0  START UP    DOWN  LEFT  RIGHT    BTN2  BTN3
+u32 naomi_button_mapping[] = {
+		NAOMI_SERVICE_KEY,	// DC_BTN_C
+		NAOMI_BTN1_KEY,		// DC_BTN_B
+		NAOMI_BTN0_KEY,		// DC_BTN_A
+		NAOMI_START_KEY,	// DC_BTN_START
+		NAOMI_UP_KEY,		// DC_DPAD_UP
+		NAOMI_DOWN_KEY,		// DC_DPAD_DOWN
+		NAOMI_LEFT_KEY,		// DC_DPAD_LEFT
+		NAOMI_RIGHT_KEY,	// DC_DPAD_RIGHT
+		NAOMI_TEST_KEY,		// DC_BTN_Z
+		NAOMI_BTN3_KEY,		// DC_BTN_Y
+		NAOMI_BTN2_KEY,		// DC_BTN_X
+		NAOMI_COIN_KEY,		// DC_BTN_D
+		// DC_DPAD2_UP
+		// DC_DPAD2_DOWN
+		// DC_DPAD2_LEFT
+		// DC_DPAD2_RIGHT
 };
-
 /*
  * Sega JVS I/O board
 */
-bool coin_chute;
-static bool old_coin_chute;
-static int coin_count;
-bool naomi_test_button = false;
+static bool old_coin_chute[4];
+static int coin_count[4];
 
 struct maple_naomi_jamma;
 
@@ -2315,63 +2387,56 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 					{
 						JVS_STATUS1();	// report byte
 
-						LOGJVS("btns ");
-						JVS_OUT(naomi_test_button ? 0x80 : 0x00); // test, tilt1, tilt2, tilt3, unused, unused, unused, unused
-						// FIXME in-lst mapping
-						u8 buttons[8] = { 0 };
-						u32 keycode = ~kcode[0];
-						for (int i = 0; i < 16; i++)
-							if ((keycode & (1 << i)) != 0)
-							{
-								buttons[Naomi_Mapping.button_mapping_byte[i]] |= Naomi_Mapping.button_mapping_mask[i];
-							}
-						for (int player = 0; player < buffer_in[cmdi + 1]; player++)
+						u16 buttons[4] = { 0 };
+						for (int player = 0; player < buffer_in[cmdi + 1] && first_player + player < ARRAY_SIZE(kcode); player++)
 						{
-							u8 *cur_btns = &buttons[(first_player + player) * 2];
-							LOGJVS("P%d %02x ", player + 1 + first_player, cur_btns[0]);
-							JVS_OUT(cur_btns[0]);
-							if (buffer_in[cmdi + 2] == 2)
+							u32 keycode = ~kcode[first_player + player];
+							for (int i = 0; i < 16; i++)
 							{
-								LOGJVS("%02x ", cur_btns[1]);
-								JVS_OUT(cur_btns[1]);
+								if ((keycode & (1 << i)) != 0)
+									buttons[player] |= naomi_button_mapping[i];
 							}
 						}
-//								for (int player = 0; player < jvs_request[channel][cmdi + 1]; player++)
-//								{
-//									u32 keycode = ~kcode[player];
-//									if (keycode & DC_BTN_C)
-//										keycode |= 0xFFff;
-//
-//									if (jvs_request[channel][cmdi + 2] == 1)
-//										JVS_OUT(keycode);
-//									else
-//										w16(keycode);
-//								}
+
+						LOGJVS("btns ");
+						JVS_OUT((buttons[0] & NAOMI_TEST_KEY) ? 0x80 : 0x00); // test, tilt1, tilt2, tilt3, unused, unused, unused, unused
+						for (int player = 0; player < buffer_in[cmdi + 1]; player++)
+						{
+							u16 cur_btns = first_player + player < ARRAY_SIZE(buttons) ? buttons[first_player + player] : 0;
+							LOGJVS("P%d %02x ", player + 1 + first_player, cur_btns >> 8);
+							JVS_OUT(cur_btns >> 8);
+							if (buffer_in[cmdi + 2] == 2)
+							{
+								LOGJVS("%02x ", cur_btns & 0xFF);
+								JVS_OUT(cur_btns);
+							}
+						}
 						cmdi += 3;
 					}
 					break;
 
 				case 0x21:	// Read coins
 					{
-						if (coin_chute && !old_coin_chute)
-							coin_count++;
-						old_coin_chute = coin_chute;
 						JVS_STATUS1();	// report byte
 						LOGJVS("coins ");
 						for (int slot = 0; slot < buffer_in[cmdi + 1]; slot++)
 						{
-							if (slot == 0)
+							bool coin_chute = false;
+							u32 keycode = ~kcode[first_player + slot];
+							for (int i = 0; i < 16 && !coin_chute; i++)
 							{
-								LOGJVS("0:%d ", coin_count);
-								JVS_OUT((coin_count >> 8) & 0x3F);		// status (2 highest bits, 0: normal), coin count MSB
-								JVS_OUT(coin_count);						// coin count LSB
+								if (naomi_button_mapping[i] == NAOMI_COIN_KEY && (keycode & (1 << i)) != 0)
+									coin_chute = true;
 							}
-							else
-							{
-								LOGJVS("%d:0 ", slot);
-								JVS_OUT(0);
-								JVS_OUT(0);
-							}
+							if (coin_chute && !old_coin_chute[first_player + slot])
+								coin_count[first_player + slot] += 1;
+							old_coin_chute[first_player + slot] = coin_chute;
+
+							LOGJVS("%d:%d ", slot + 1 + first_player, coin_count[first_player + slot]);
+							// status (2 highest bits, 0: normal), coin count MSB
+							JVS_OUT((coin_count[first_player + slot] >> 8) & 0x3F);
+							// coin count LSB
+							JVS_OUT(coin_count[first_player + slot]);
 						}
 						cmdi += 2;
 					}
@@ -2395,34 +2460,50 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 							}
 							LOGJVS("x,y:%4x,%4x ", x, y);
 							JVS_OUT(x >> 8);		// X, MSB
-							JVS_OUT(x);			// X, LSB
+							JVS_OUT(x);				// X, LSB
 							JVS_OUT(y >> 8);		// Y, MSB
-							JVS_OUT(y);			// Y, LSB
+							JVS_OUT(y);				// Y, LSB
 							axis = 2;
 						}
 
+						int full_axis_count = 0;
+						int half_axis_count = 0;
 						for (; axis < buffer_in[cmdi + 1]; axis++)
 						{
-							// FIXME Need to know how many axes per player for proper mapping
 							u16 axis_value;
-							if (axis + first_player * 4 < 8 && Naomi_Mapping.axis[axis + first_player * 4] != NULL)
-								axis_value = Naomi_Mapping.axis[axis + first_player * 4]();
+							if (NaomiGameInputs != NULL
+									&& axis < ARRAY_SIZE(NaomiGameInputs->axes)
+									&& NaomiGameInputs->axes[axis].name != NULL
+									&& NaomiGameInputs->axes[axis].type == Half)
+							{
+								if (half_axis_count == 0)
+									axis_value = rt[first_player] << 8;
+								else if (half_axis_count == 1)
+									axis_value = lt[first_player] << 8;
+								else
+									axis_value = 0;
+								half_axis_count++;
+							}
 							else
 							{
-								switch (axis) {
+								switch (full_axis_count) {
 								case 0:
-									axis_value = (joyx[first_player + axis / 4] + 128) << 8;
+									axis_value = (joyx[first_player] + 128) << 8;
 									break;
 								case 1:
-									axis_value = (joyy[first_player + axis / 4] + 128) << 8;
+									axis_value = (joyy[first_player] + 128) << 8;
 									break;
-								case 2:
-									axis_value = rt[first_player + axis / 4] << 8;
-									break;
-								case 3:
-									axis_value = lt[first_player + axis / 4] << 8;
-									break;
+								// TODO right analog stick
+//								case 2:
+//									axis_value = (joyrx[first_player] + 128) << 8;
+//									break;
+//								case 3:
+//									axis_value = (joyry[first_player] + 128) << 8;
+//									break;
+								default:
+									axis_value = 128;
 								}
+								full_axis_count++;
 							}
 							LOGJVS("%d:%4x ", axis, axis_value);
 							JVS_OUT(axis_value >> 8);
@@ -2495,8 +2576,8 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 					break;
 
 				case 0x30:	// substract coin
-					if (buffer_in[cmdi + 1] == 1)
-						coin_count -= (buffer_in[cmdi + 2] << 8) + buffer_in[cmdi + 3];
+					if (buffer_in[cmdi + 1] > 0 && first_player + buffer_in[cmdi + 1] - 1 < ARRAY_SIZE(coin_count))
+						coin_count[first_player + buffer_in[cmdi + 1] - 1] -= (buffer_in[cmdi + 2] << 8) + buffer_in[cmdi + 3];
 					JVS_STATUS1();	// report byte
 					cmdi += 4;
 					break;
@@ -2544,7 +2625,11 @@ maple_device* maple_Create(MapleDeviceType type)
 	switch(type)
 	{
 	case MDT_SegaController:
-		rv=new maple_sega_controller();
+#if DC_PLATFORM != DC_PLATFORM_ATOMISWAVE
+		rv = new maple_sega_controller();
+#else
+		rv = new maple_atomiswave_controller();
+#endif
 		break;
 
 	case MDT_Microphone:
@@ -2568,7 +2653,11 @@ maple_device* maple_Create(MapleDeviceType type)
 		break;
 
 	case MDT_LightGun:
+#if DC_PLATFORM != DC_PLATFORM_ATOMISWAVE
 		rv = new maple_lightgun();
+#else
+		rv = new atomiswave_lightgun();
+#endif
 		break;
 
 	case MDT_NaomiJamma:

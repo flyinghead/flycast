@@ -1,6 +1,6 @@
 #include <d3d11.h>
-#include "hw\pvr\Renderer_if.h"
-#include "oslib\oslib.h"
+#include "hw/pvr/Renderer_if.h"
+#include "oslib/oslib.h"
 
 #pragma comment(lib,"d3d11.lib")
 

@@ -1,0 +1,1066 @@
+-----------------------------------------------------------------------------
+Neill Corlett's Yamaha AICA notes
+Based on:
+- The official AICA spec
+- Yamato's aica_v08.txt (yamato@20to4.net)
+- Much experimentation
+-----------------------------------------------------------------------------
+
+LOGARITHMIC VOLUMES
+
+Like many Yamaha sound chips, the AICA uses logarithmic volume levels.
+Here's how that works:
+
+A value of 0 means no attenuation, or full volume.  From there, every
+increment of a constant amount decreases the volume level by 3dB.  Of course,
+"3dB" in the literature is just a fancy way of saying "half".  And the values
+aren't logarithmic at all, but a log/linear approximation.
+
+To convert a "logarithmic" attenuation level to a volume multiplier:
+1. You first need to know what increment constitutes a 3dB decrease.  We'll
+   call this I.  This is going to always be a power of 2.
+2. Divide (by which I mean shift) the attenuation level by this constant to
+   get the "exponent", and the remaining lowest bits are the "mantissa".
+3. Invert all bits in the mantissa, then add I to it.
+4. Shift the mantissa left to whatever precision you want.
+5. Shift the mantissa right by the exponent.
+
+One of the advantages of logarithmic attenuation levels is that you can apply
+several volumes on top of each other by adding them, and this has the same
+effect as if you'd multiplied the linear volume levels together.  I suspect
+this is what's happening, though I haven't tested specifically for it yet.
+
+-----------------------------------------------------------------------------
+
+RESAMPLING
+
+...appears to be linear.
+
+-----------------------------------------------------------------------------
+
+AMPLITUDE ENVELOPE CALCULATION
+
+This is a typical 4-stage envelope: Attack, Decay, Sustain, Release.  The
+envelope gets louder during attack, and can only remain the same or quieter
+during Decay, Sustain, and Release.  (There is no increase sustain mode.)
+
+The envelope uses a logarithmic attenuation level where 0 means no
+attenuation (full volume) and every increment of 0x40 decreases the volume
+by 3dB.  The level can range from 0x000 to 0x3BF.  Note that if the
+attenuation level exceeds 0x3BF _at any time_, the channel will become
+inactive and the attenuation level will appear as 0x1FFF.
+
+"EFFECTIVE RATE" refers to the following:
+- If KRS == 0xF: EFFECTIVE RATE = RATE*2
+- If KRS <  0xF: EFFECTIVE RATE = (KRS+OCT+RATE)*2+FNS
+(where FNS is bit 9 of SampleRatePitch)
+EFFECTIVE RATE is truncated to the range of 0x00-0x3C if necessary.
+
+After a key on, the attack attenuation level begins at 0x280.  Note that a
+key on event is completely ignored unless the channel is either inactive
+(attenuation level exceeds 0x3BF) or is presently in the release state.
+
+During attack, subtract ((currentlevel >> N)+1) from the current level at
+each step, where N is the following:
+
+                       STEP mod 4 is
+EFFECTIVE RATE         0   1   2   3
+------------------------------------
+0x30 or less           4   4   4   4
+0x31                   3   4   4   4
+0x32                   3   4   3   4
+0x33                   3   3   3   4
+0x34                   3   3   3   3
+0x35                   2   3   3   3
+0x36                   2   3   2   3
+0x37                   2   2   2   3
+0x38                   2   2   2   2
+0x39                   1   2   2   2
+0x3A                   1   2   1   2
+0x3B                   1   1   1   2
+0x3C or greater        1   1   1   1
+
+Once the envelope level reaches 0, transition to the decay state.
+
+Decay is linear in the attenuation level.  Simply add the following constants
+to the attenuation level at each step:
+
+                       STEP mod 4 is
+EFFECTIVE RATE         0   1   2   3
+------------------------------------
+0x30 or less           1   1   1   1
+0x31                   2   1   1   1
+0x32                   2   1   2   1
+0x33                   2   2   2   1
+0x34                   2   2   2   2
+0x35                   4   2   2   2
+0x36                   4   2   4   2
+0x37                   4   4   4   2
+0x38                   4   4   4   4
+0x39                   8   4   4   4
+0x3A                   8   4   8   4
+0x3B                   8   8   8   4
+0x3C or greater        8   8   8   8
+
+The step timing, for both attack and decay, is as follows:
+
+EFFECTIVE RATE         Step occurs every N samples
+--------------------------------------------------
+0x00                   Never
+0x01                   Never
+0x02                   8192, 4096, 4096
+0x03                   8192, 4096, 4096, 4096, 4096, 4096, 4096
+0x04                   4096
+0x05                   4096, 4096, 4096, 2048, 2048
+0x06                   (same as 0x02 shifted right by 1)
+...                    ...
+0x30 and up            2
+
+During decay, when the attenuation level reaches the "decay level", defined
+as DL << 5, transition to the sustain state.
+
+Sustain follows the same formula as decay and continues until either the
+envelope attenuation level exceeds 0x3BF, or a key off event occurs.
+
+After a key off, transition to the release state.  Release also follows the
+same formula as decay.  When the envelope attenuation level exceeds 0x3BF,
+the channel becomes inactive.
+
+If "voff" is set, then this envelope is still computed, but the attenuation
+has no effect.  However, the channel will still end abruptly once the level
+exceeds 0x3BF.
+
+-----------------------------------------------------------------------------
+
+FILTER ENVELOPE CALCULATION
+
+Filter envelopes follow the same step timings as amplitude envelopes (key
+scaling is also shared between filter and amplitude), and likely the same
+step sizes as in the decay phases of amplitude envelopes (based on a few
+trials).
+
+The only difference is that instead of an attenuation level, it uses a 13-bit
+lowpass value.
+
+- Start at FLV0
+- Attack: Add or subtract the attack step size until you reach FLV1
+- Decay: Add or subtract the decay (1) step size until you reach FLV2
+- Sustain: Add or subtract the sustain (2) step size until you reach FLV3
+- Wait for a key off
+- Release: Add or subtract the release step size
+
+If "lpoff" is set, then this envelope is still computed, but the filter
+itself has no effect.
+
+-----------------------------------------------------------------------------
+
+LOW FREQUENCY OSCILLATOR (LFO)
+
+There are 6 components to the LFO:
+
+- The "reset" bit, meaning the LFO phase is zeroed on every sample loop start
+- The LFO frequency (0x00-0x1F)
+- Pitch modulation waveform type
+- Pitch modulation depth
+- Amplitude modulation waveform type
+- Amplitude modulation depth
+
+Here is the LFO period, in samples, for every frequency value:
+
+f=0x00:0x3FC00  f=0x08:0x0FC00  f=0x10:0x03C00  f=0x18:0x00C00
+f=0x01:0x37C00  f=0x09:0x0BC00  f=0x11:0x03400  f=0x19:0x00A00
+f=0x02:0x2FC00  f=0x0A:0x0DC00  f=0x12:0x02C00  f=0x1A:0x00800
+f=0x03:0x27C00  f=0x0B:0x09C00  f=0x13:0x02400  f=0x1B:0x00600
+f=0x04:0x1FC00  f=0x0C:0x07C00  f=0x14:0x01C00  f=0x1C:0x00400
+f=0x05:0x1BC00  f=0x0D:0x06C00  f=0x15:0x01800  f=0x1D:0x00300
+f=0x06:0x17C00  f=0x0E:0x05C00  f=0x16:0x01400  f=0x1E:0x00200
+f=0x07:0x13C00  f=0x0F:0x04C00  f=0x17:0x01000  f=0x1F:0x00100
+
+LFO pitch depth:
+
+The pitch can vary by a maximum of plus or minus (base phaseinc)>>(10-d)
+d=0: do not apply pitch modulation
+d=1: base phaseinc of 0x40000 can sway from 0x3FE00 to 0x40200
+...
+d=7: base phaseinc of 0x40000 can sway from 0x38000 to 0x48000
+
+LFO pitch waveform:
+
+0: sawtooth, starting in the middle, going higher
+1: square, high pitch for first half, low pitch for second half
+2: triangle, starting in the middle, going higher, much like sin(x)
+3: noise
+
+LFO amplitude depth:
+
+Amplitude modulation adds positive values to the envelope attenuation, so it
+can only make the resulting output softer, not louder.
+d=7: can add up to 24dB or 0x200 to envelope attenuation
+d=6: can add up to 12dB or 0x100 to envelope attenuation
+d=5: can add up to  6dB or 0x080 to envelope attenuation
+d=4: can add up to  3dB or 0x040 to envelope attenuation
+d=3: can add up to         0x020 to envelope attenuation
+d=2: can add up to         0x010 to envelope attenuation
+d=1: can add up to         0x008 to envelope attenuation
+d=0: do not apply amplitude modulation
+
+LFO amplitude waveform:
+
+0: sawtooth, starting at 0 (no attenuation), going up (more attenuation)
+1: square, 0 for first half, max attenuation second half
+2: triangle, starting at 0, going down then up
+3: noise
+
+LFO phase resets on every sample loop start if the reset bit is set.
+It never resets in any other circumstances (not even on key on).
+
+-----------------------------------------------------------------------------
+
+RESONANT LOWPASS FILTER
+
+If lpoff=0, the channel output is run through a resonant lowpass filter.  The
+algorithm works like this:
+
+out = f * in + (1.0 - f + q) * prev_out - q * prev_prev_out
+
+Where f and q are coefficients.  Exactly how f and q are computed, I'm still
+not 100% sure.  I have a fairly good idea for f:
+
+f = (((filtervalue & 0xFF) | 0x100) << 4) >> ((filtervalue>>8)^0x1F)
+
+Where filtervalue is the filter envelope level, and f becomes a linear value
+in the range of 0x0000 (0.0) to 0x1FFF (almost 1.0).
+
+I'm less certain about q.  For now, I intend to simply use the Q register
+value, where 0x00=0.0 and 0x20=1.0 (max is 0x1F).
+
+-----------------------------------------------------------------------------
+
+ADPCM SAMPLE FORMAT
+
+The ADPCM sample format is standard Yamaha ADPCM.  It's the same format used
+in the YMZ280B.
+
+-----------------------------------------------------------------------------
+
+REGISTERS
+
+The AICA registers are accessible starting at 0x800000 on the ARM7 side and
+0xA0700000 on the SH4 side.  Register addresses in this document will usually
+refer to an offset from either 0x800000 or 0xA0700000.
+
+There are 64 channels and a set of registers associated with each, a set of
+common registers, and a set of registers associated with the effects DSP.
+
+-----------------------------------------------------------------------------
+
+CHANNEL REGISTERS
+
+The area at 0x0000-0x1FFF contains the channel registers.  There are 32
+32-bit registers for each channel, but only the first 18 are used, and only
+the lowest 16 bits have any effect.
+
+Channel 0's registers start at 0x0000, channel 1's at 0x0080, and so on.
+
+All register writes take effect immediately.  NONE of the channel registers
+are temporarily stored until key-on (as was the case on the PSX SPU).
+
+When you read from a channel register, you'll simply get the last value that
+was written to it, EXCEPT for bits which are not saved (always return 0).
+These bits are clearly labeled below.
+
+-----------------------------------------------------------------------------
+0x00 - PlayControl
+
+bit 15    = key on execute (KYONEX) [NOY SAVED, always 0 when read]
+            Writing a 1 bit here will execute a key on for every channel that
+            has KYONB=1, and a key off for every channel that has KYONB=0,
+            simultaneously.  There's no way to single out individual
+            channels.  (Though it works out since redundant key on/key off
+            events are ignored.)
+bit 14    = key on bit (KYONB)
+            Set this to either 1 or 0 to "mark" a channel for key on or off.
+bit 13-11 = unused [NOT SAVED, always 0 when read]
+bit 10    = noise enable (SSCTL)
+            0 means read sample data from RAM, as per usual
+            1 means use random data instead of actually reading RAM.
+            This seems to only affect what bytes are read.  If you have the
+            sample format set to 16-bit, you'll get random 16-bit samples.
+            If you have the format set to ADPCM, you'll get random ADPCM
+            samples, but I think they're still run through the ADPCM decoder.
+bit 9     = sample loop (LPCTL) 1=enabled, 0=disabled
+bit 8-7   = sample format (PCMS)
+            0 = 16-bit signed little-endian
+            1 = 8-bit signed
+            2 = 4-bit Yamaha ADPCM
+            3 = prohibited
+                Actual behavior seems to be "sample data is all zeroes".
+bit 6-0   = highest 7 bits of sample start address (SA) (in bytes)
+
+-----------------------------------------------------------------------------
+0x04 - SampleAddrLow
+
+bit 15-0 = lowest 7 bits of sample start address (SA) (in bytes)
+
+-----------------------------------------------------------------------------
+0x08 - LoopStart
+
+bit 15-0 = Loop start address (in samples)
+           Very low values of this may not work depending on the pitch and
+           loop mode.
+
+-----------------------------------------------------------------------------
+0x0C - LoopEnd
+
+bit 15-0 = Loop end address (in samples)
+           If sample looping is disabled, this acts as the total sample size.
+           Very high values may not work depending on the pitch and loop
+           mode.
+           Also, you can't set this to 0xFFFF if you expect the interpolation
+           to work.
+
+-----------------------------------------------------------------------------
+0x10 - AmpEnv1
+
+bit 15-11 = sustain rate (D2R) rate, 0x00-0x1F
+bit 10-6  = decay rate (D1R), 0x00-0x1F
+bit 5     = unused [NOT SAVED, always 0 when read]
+bit 4-0   = attack rate (AR), 0x00-0x1F
+
+-----------------------------------------------------------------------------
+0x14 - AmpEnv2
+
+bit 15    = unused [NOT SAVED, always 0 when read]
+bit 14    = link (LPSLNK), 1=on 0=off
+            If this bit is set, then the envelope transitions to the decay
+            state when the sample loop start address is exceeded.
+bit 13-10 = key rate scaling (KRS), 0x0-0xF
+            See the amplitude envelope notes for details on this.
+            0xF means that all scaling is OFF.
+bit 9-5   = decay level (DL), 0x00-0x1F
+bit 4-0   = release rate (RR), 0x00-0x1F
+
+-----------------------------------------------------------------------------
+0x18 - SampleRatePitch
+
+bit 15    = unused [SAVED]
+bit 14-11 = octave (OCT), signed value, -0x8 to 0x7
+bit 10-0  = FNS
+
+This is basically a phase increment value, just computed in a peculiar way.
+phaseinc = (FNS ^ 0x400) << ((unsigned OCT value) ^ 0x8)
+There's 18 fractional phase bits, so phaseinc=0x40000 is the base frequency,
+or 44100Hz.
+
+Supposedly if the signed OCT value is 2 or higher, and the sample format is
+ADPCM, the actual octave is one higher.
+
+-----------------------------------------------------------------------------
+0x1C - LFOControl
+
+bit 15    = reset (LFORE) 1=on, 0=off
+            If set, the LFO phase is reset at the start of EACH SAMPLE LOOP.
+bit 14-10 = frequency (LFOF)
+bit 9-8   = pitch modulation waveform (PLFOWS)
+bit 5-7   = pitch modulation depth (PLFOS)
+bit 4-3   = amplitude modulation waveform (ALFOWS)
+bit 2-0   = amplitude modulation depth (ALFOS)
+
+See the LFO notes for more details.
+
+-----------------------------------------------------------------------------
+0x20 - DSPChannelSend
+
+bit 15-8 = unused [NOT SAVED, always 0 when read]
+bit 7-4  = DSP send level, 0x0-0xF
+           Scales the output of this channel to one of the effect send buses.
+           0xF is full volume (no attenuation), every level beneath that adds
+           3dB, and 0x0 means no output.
+bit 3-0  = DSP send channel, 0x0-0xF
+           This affects which DSP MIXS register will receive this channel's
+           output.
+           I have verified that bit 19 of MIXS corresponds to bit 15 of a
+           single 16-bit sample played at the maximum possible volume.
+
+-----------------------------------------------------------------------------
+0x24 - DirectPanVolSend
+
+bit 15-12 = unused [SAVED]
+bit 11-8  = Direct send volume (DISDL), 0x0-0xF
+            Affects how much of this channel is being sent directly to the
+            dry output.  0xF is full volume (no attenuation), every level
+            beneath that adds 3dB, and 0x0 means no output.  (I have verified
+            this.)
+bit 7-5   = unused [SAVED]
+bit 4-0   = Direct send pan (DIPAN), 0x00-0x1F
+            0x00 or 0x10 is center, 0x0F is full right, 0x1F is full left
+            0x00-0x0F: each step beyond 0x00 attenuates the left side by 3db
+                       (right side remains at same volume)
+            0x10-0x1F: each step beyond 0x10 attenuates the right side by 3db
+                       (left side remains at same volume)
+
+-----------------------------------------------------------------------------
+0x28 - LPF1Volume
+
+bit 15-8  = constant attenuation (I think this may be TL)
+            this value *4 seems to be added to the envelope attenuation
+            (as in, 0x00-0xFF here corresponds to 0x000-0x3FF when referring
+            to the envelope attenuation)
+            every 0x10 on the constant attenuation is 3dB
+bit 7     = unknown [SAVED]
+bit 6     = voff
+            if this bit is set to 1, the constant attenuation, envelope, and
+            LFO volumes will not take effect. however, the note will still
+            end when the envelope level reaches zero in the release state.
+bit 5     = lpoff
+            1 = turn off lowpass filter.
+bit 4-0   = Q, 0x00-0x1F
+            filter resonance value Q = (0.75*value)-3, from -3 to 20.25 db
+            0x1F = 20.25dB
+            0x1C = 18dB
+            0x18 = 15dB
+            0x10 =  9dB
+            0x0C =  6dB
+            0x08 =  3dB
+            0x04 =  0dB
+            0x00 = -3dB
+
+-----------------------------------------------------------------------------
+0x2C - LPF2
+
+bit 15-13 = unused [NOT SAVED, always 0 when read]
+bit 12-0  = filterValue0 (FLV0): starting filter frequency
+            attack start
+
+-----------------------------------------------------------------------------
+0x30 - LPF3
+
+bit 15-13 = unused [NOT SAVED, always 0 when read]
+bit 12-0  = filterValue1 (FLV1): stage 1 filter frequency
+            decay start time
+
+-----------------------------------------------------------------------------
+0x34 - LPF4
+
+bit 15-13 = unused [NOT SAVED, always 0 when read]
+bit 12-0  = filterValue2 (FLV2): stage 2 filter frequency
+            sustain start time
+
+-----------------------------------------------------------------------------
+0x38 - LPF5
+
+bit 15-13 = unused [NOT SAVED, always 0 when read]
+bit 12-0  = filterValue3 (FLV3): stage 3 filter frequency
+            KeyOff time
+
+-----------------------------------------------------------------------------
+0x3C - LPF6
+
+bit 15-13 = unused [NOT SAVED, always 0 when read]
+bit 12-0  = filterValue4 (FLV4): release filter frequency
+
+-----------------------------------------------------------------------------
+0x40 - LPF7
+
+bit 15-13 = unused [NOT SAVED, always 0 when read]
+bit 12-8  = LPF attack rate (FAR), 0x00-0x1F
+bit 7-5   = unused [NOT SAVED, always 0 when read]
+bit 4-0   = LPF decay rate (FD1R), 0x00-0x1F
+
+----------------------------------------------------------------------------
+0x44 - LPF8
+
+bit 15-13 = unused [NOT SAVED, always 0 when read]
+bit 12-8  = LPF sustain rate (FD2R), 0x00-0x1F
+bit 7-5   = unused [NOT SAVED, always 0 when read]
+bit 4-0   = LPF release rate (FRR), 0x00-0x1F
+
+-----------------------------------------------------------------------------
+0x48 to 0x7C - unused
+
+-----------------------------------------------------------------------------
+
+COMMON REGISTERS
+
+-----------------------------------------------------------------------------
+0x2000-0x2044 - DSP Output Mixer registers
+
+These determine how loudly the DSP effect output channels are played.
+
+bit 15-12 = unused
+bit 11-8  = Effect output level (EFSDL), 0x0-0xF
+            0xF is no attenuation (full volume), and each value below that
+            increases the attenuation by 3dB.
+bit 7-5   = unused
+bit 4-0   = Effect output pan (EFPAN), 0x00-0x1F
+            This works the same as the direct output pan register.
+
+The first 16 registers (0x2000-0x203C) correspond to mixer outputs 0-15.
+0x2040 is CDDA output left. 0x2044 is CDDA output right.
+
+-----------------------------------------------------------------------------
+0x2800 - MasterVolume
+
+bit 15    = MONO (1=mono, 0=stereo)
+            In mono mode, pan attenuation values do not take effect.
+bit 14-10 = unused
+bit 9     = MEM8MB (1=8MB memory, 0=2MB memory)
+bit 8     = DAC18B (1=use 18-bit DAC, 0=use 16-bit DAC)
+bit 7-4   = LSI version (VER)
+            Read this to get the LSI version of the chip.  Should be 1.
+bit 3-0   = Master volume (MVOL)
+            0xF=no attenuation (full volume)
+            Every value beneath 0xF decreases the volume by 3dB.
+
+Whenever you read this register, the result should be 0x0010.
+
+-----------------------------------------------------------------------------
+0x2804 - RingBufferAddress
+
+bit 15    = $T (used for LSI testing?)
+bit 14-13 = Ring buffer size (RBL)
+            0 = 8Kwords
+            1 = 16Kwords
+            2 = 32Kwords
+            3 = 64Kwords (where "word" means 16-bit)
+bit 12    = unused
+bit 11-0  = Ring buffer pointer (RBP)
+            This corresponds to bits 22-11 of an actual RAM address.
+            Each increment of RBP represents 2Kbytes of memory.
+
+-----------------------------------------------------------------------------
+0x2808 - MIDIInput
+
+bit 15-13 = unused
+bit 12    = MIDI Output FIFO is full (MOFUL) 1=yes, 0=no
+bit 11    = MIDI Output FIFO is empty (MOEMP) 1=yes, 0=no
+bit 10    = MIDI Input FIFO has overflowed (MIOVF) 1=yes, 0=no
+bit 9     = MIDI Input FIFO is full (MIFUL) 1=yes, 0=no
+bit 8     = MIDI Input FIFO is empty (undocumented!) 1=yes, 0=no
+bit 7-0   = MIDI Input Buffer (MIBUF)
+            Data coming in from the MIDI port in a 4-byte FIFO.
+
+Note that when you read this register all at once, the status flags represent
+the state of the input FIFO _before_ you read that next byte.
+
+-----------------------------------------------------------------------------
+0x280C - ChnInfoReq
+
+bit 15    = unused
+bit 14    = Amplitude or Filter select (AFSEL)
+            0 = we will be monitoring the amplitude envelope
+            1 = we will be monitoring the filter envelope
+bit 13-8  = Monitor select (MSLC), 0x00-0x3F
+            Selects a channel to monitor using the monitor regs below.
+bit 7-0   = MIDI Output Buffer (MOBUF)
+            Probably best not to write stuff here under normal circumstances
+
+-----------------------------------------------------------------------------
+0x2810 - PlayStatus
+
+This register refers to the channel selected by MSLC above.
+Also it can refer to either the amplitude or filter envelope, depending on
+the AFSEL bit.
+
+bit 15    = Loop end flag (LP)
+            Set to 1 when the sample loop end is reached.
+            Cleared to 0 upon reading.
+bit 14-13 = Current envelope state (SGC)
+            0=attack, 1=decay, 2=sustain, 3=release
+bit 12-0  = Envelope level (EG)
+            For amplitude envelope, this is generally in the range of
+            0x0000-0x03BF.  (0x000 means full volume/no attenuation.)
+            Any higher attenuation level is returned as 0x1FFF.
+            For filter envelope, you'll get all 13 bits of the current
+            lowpass value.
+
+(every 0x40 on the envelope attenuation level is 3dB)
+
+-----------------------------------------------------------------------------
+0x2814 - PlayPos
+
+bit 15-0 = Current sample position from the requested channel (CA)
+
+-----------------------------------------------------------------------------
+0x2880 - ?
+
+has to do with DMA and other obscure stuff
+
+bit 15-9 = DMEA 22:16
+bit 8    = unused
+bit 7-5  = TSCD 2:0
+bit 4    = $T (used for LSI testing?)
+bit 3-0  = MRWINH
+           Setting any of the bits of MRWINH to 1 prohibits sound memory
+           access from various devices:
+           bit 3 = main CPU
+           bit 2 = sound CPU (yes, it will lock up if you set this to 1)
+           bit 1 = sound samples
+           bit 0 = effects processor
+
+-----------------------------------------------------------------------------
+0x2884 - ?
+
+has to do with DMA and other obscure stuff
+
+bit 15-1 = DMEA 15:1
+bit 0    = unused
+
+-----------------------------------------------------------------------------
+0x2888 - ?
+
+has to do with DMA and other obscure stuff
+
+bit 15   = GA
+bit 14-1 = DRGA 14:1
+bit 0    = unused
+
+-----------------------------------------------------------------------------
+0x288C - ?
+
+has to do with DMA and other obscure stuff
+
+bit 15   = DI
+bit 14-1 = DLG 14:1
+bit 0    = EX
+
+-----------------------------------------------------------------------------
+0x2890 - TimerAControl
+
+bit 15-11 = unused
+bit 10-8  = Timer A prescale (TACTL)
+            0 = Timer increments every sample
+            1 = Timer increments every 2 samples
+            2 = Timer increments every 4 samples
+            3 = Timer increments every 8 samples
+            4 = Timer increments every 16 samples
+            5 = Timer increments every 32 samples
+            6 = Timer increments every 64 samples
+            7 = Timer increments every 128 samples
+bit 7-0   = Timer A value (TIMA)
+            Can be written directly, maybe also read, not sure.
+            Counts up at the rate specified by TACTL.
+            When it overflows from 0xFF->0x00, an interrupt occurs.
+
+-----------------------------------------------------------------------------
+0x2894 - TimerBControl
+
+bit 15-11 = unused
+bit 10-8  = Timer B prescale (TBCTL), similar to TACTL
+bit 7-0   = Timer B value (TIMB), similar to TIMA
+
+-----------------------------------------------------------------------------
+0x2898 - TimerCControl
+
+bit 15-11 = unused
+bit 10-8  = Timer C prescale (TCCTL), similar to TACTL
+bit 7-0   = Timer C value (TIMC), similar to TIMA
+
+-----------------------------------------------------------------------------
+0x289C - Sound CPU Interrupt Enable (SCIEB)
+0x28A0 - Sound CPU Interrupt Pending (SCIPD)
+0x28A4 - Sound CPU Interrupt Reset (SCIRE)
+
+The following bits apply to all 3 registers:
+
+bit 15-11 = unused
+bit 10    = One-sample interval interrupt
+bit 9     = MIDI output interrupt
+bit 8     = Timer C interrupt
+bit 7     = Timer B interrupt
+bit 6     = Timer A interrupt
+bit 5     = CPU interrupt
+bit 4     = DMA end interrupt
+bit 3     = MIDI input interrupt
+bit 2     = reserved
+bit 1     = reserved
+bit 0     = External interrupt pin (used for SCSI in the devkit)
+
+Writing SCIEB determines which of the above interrupts are enabled.
+(1=on, 0=off).  Reading may also work, not sure.
+
+Reading SCIPD tells you which interrupts are pending (have been signaled).
+(1=on, 0=off)
+
+Writing SCIPD allows you to signal interrupts yourself, but it only works for
+bit 5, supposedly.  (1=on, 0=off)
+
+Writing SCIRE resets (acknowledges) whichever interrupts are set to 1 in the
+value you write.  Probably meaning it clears the corresponding bits of SCIPD.
+Reading this is unlikely to work.
+
+-----------------------------------------------------------------------------
+0x28A8 - SCILV0 (usually initialized to 0x18)
+0x28AC - SCILV1 (usually initialized to 0x50)
+0x28B0 - SCILV2 (usually initialized to 0x08)
+
+bit 15-8  = unused
+bit 7     = refers collectively to bits 7-10 of SCIEB/SCIPD/SCIRE.
+bit 6-0   = refers to bits 6-0 of SCIEB/SCIPD/SCIRE.
+
+When an interrupt happens, the corresponding bits in SCILV0-2 are what forms
+the INTREQ number.  For instance:
+
+bit     7      6       5     4    3     2  1  0
+        misc.  TimerA  SCPU  DMA  MIDI  -  -  Ext.
+--------------------------------------------------
+SCILV0  0      0       0     1    1     0  0  0    = 0x18
+SCILV1  0      1       0     1    0     0  0  0    = 0x50
+SCILV2  0      0       0     0    1     0  0  0    = 0x08
+               |             |    |
+               |             |    +-----> MIDI INTREQ = 5
+               |             +----------> DMA INTREQ = 3
+               +------------------------> Timer A INTREQ = 2
+
+No, nothing to do with overclocking or burning.  ;)
+
+-----------------------------------------------------------------------------
+0x28B4 - Main CPU Interrupt Enable (MCIEB)
+0x28B8 - Main CPU Interrupt Pending (MCIPD)
+0x28BC - Main CPU Interrupt Reset (MCIRE)
+
+Same as SCIEB/SCIPD/SCIRE, but refers to the Main CPU.
+
+The usual application of this is to set bit 5 of MCIEB (enable CPU interrupt)
+and then set bit 5 of MCIPD (set pending CPU interrupt).  That sends an
+interrupt to the SH4 side.
+
+-----------------------------------------------------------------------------
+0x2C00: ARMReset
+
+bit 15-1 = unused
+bit 0    = Reset ARM CPU
+
+There are actually other bits in this register, but they're inaccessible from
+the ARM side, and undefined on the AICA.  There's probably no use accessing
+this reg on the ARM side anyway.
+
+-----------------------------------------------------------------------------
+0x2D00 - INTRequest
+
+bit 15-8 = unused
+bit 7-3  = unknown
+bit 0-2  = Current interrupt request level (INTREQ)
+
+Whenever there's an interrupt, the INTREQ number (determined by SCILV0-2) is
+stored here.
+
+-----------------------------------------------------------------------------
+0x2D04 - INTClear
+
+bit 15-9 = unused
+bit 8    = RP
+bit 7-0  = M7-M0
+
+Writing 0x01 to M7-M0 signals an end-of-interrupt to the AICA.
+Sometimes this is done 4 times, perhaps to clear a queue.
+
+-----------------------------------------------------------------------------
+0x2E00 - RTCHi
+
+bit 15-0 = RTC bits 31-16
+Realtime clock, counts seconds.
+
+-----------------------------------------------------------------------------
+0x2E04 - RTCLo
+
+bit 15-0 = RTC bits 15-0
+Realtime clock, counts seconds.
+
+-----------------------------------------------------------------------------
+
+DSP REGISTERS
+
+All values used internally in the DSP are linear integers, signed, 2's
+complement.  By default, external ringbuffer memory is read and written in a
+special floating-point format, but all internal calculations are integer.
+
+Every DSP register described here is a 32-bit register, but only the lowest
+16 bits are used.
+
+0x3000-0x31FF: Coefficients (COEF), 128 registers, 13 bits each
+               0x3000: bits 15-3 = COEF(0)
+               0x3004: bits 15-3 = COEF(1)
+               ...
+               0x31FC: bits 15-3 = COEF(127)
+               You could interpret these as 16-bit signed (2's complement)
+               coefficients with the lowest 3 bits are always 0.
+               Each of the 128 COEFs is used by the corresponding instruction
+               (MPRO).
+
+0x3200-0x32FF: External memory addresses (MADRS), 64 registers, 16 bits each
+               0x3200: bits 15-0 = MADRS(0)
+               ...
+               0x3204: bits 15-0 = MADRS(1)
+               0x32FC: bits 15-0 = MADRS(63)
+               These are memory offsets that refer to locations in the
+               external ringbuffer.  Every increment of a MADRS register
+               represents 2 bytes.
+
+0x3400-0x3BFF: DSP program (MPRO), 128 registers, 64 bits each
+               0x3400: bits 15-0 = bits 63-48 of first instruction
+               0x3404: bits 15-0 = bits 47-32 of first instruction
+               0x3408: bits 15-0 = bits 31-16 of first instruction
+               0x340C: bits 15-0 = bits 15-0  of first instruction
+               0x3410: bits 15-0 = bits 63-48 of second instruction
+               ...
+               0x3BFC: bits 15-0 = bits 15-0  of last instruction
+
+0x4000-0x43FF: Temp buffer (TEMP), 128 registers, 24 bits each
+               0x4000: bits 7-0  = bits 7-0 of TEMP(0)
+               0x4004: bits 15-0 = bits 23-8 of TEMP(0)
+               0x4008: bits 7-0  = bits 7-0 of TEMP(1)
+               ...
+               0x43FC: bits 15-0 = bits 23-8 of TEMP(127)
+               The temp buffer is configured as a ring buffer, so pointers
+               referring to it decrement by 1 each sample.
+
+0x4400-0x44FF: Memory data (MEMS), 32 registers, 24 bits each
+               0x4400: bits 7-0  = bits 7-0 of MEMS(0)
+               0x4404: bits 15-0 = bits 23-8 of MEMS(0)
+               0x4408: bits 7-0  = bits 7-0 of MEMS(1)
+               ...
+               0x44FC: bits 15-0 = bits 23-8 of MEMS(31)
+               Used for holding data that was read out of the ringbuffer.
+
+0x4500-0x457F: Mixer input data (MIXS), 16 registers, 20 bits each
+               0x4500: bits 3-0  = bits 3-0 of MIXS(0)
+               0x4504: bits 15-0 = bits 19-4 of MIXS(0)
+               0x4508: bits 3-0  = bits 3-0 of MIXS(1)
+               ...
+               0x457C: bits 15-0 = bits 19-4 of MIXS(15)
+               These are the 16 send buses coming from the 64 main channels.
+
+0x4580-0x45BF: Effect output data (EFREG), 16 registers, 16 bits each
+               0x4580: bits 15-0 = EFREG(0)
+               0x4584: bits 15-0 = EFREG(1)
+               ...
+               0x45BC: bits 15-0 = EFREG(15)
+               These are the 16 sound outputs.
+
+0x45C0-0x45C7: External input data stack (EXTS), 2 registers, 16 bits each
+               0x45C0: bits 15-0 = EXTS(0)
+               0x45C4: bits 15-0 = EXTS(1)
+               These come from CDDA left and right, respectively.
+
+-----------------------------------------------------------------------------
+
+DSP PROGRAM
+
+The DSP contains a 128-step program.  All 128 steps are executed in order on
+every sample.  There's no branching or looping.
+
+The instruction word format (MPRO) is as follows:
+
+bit 63-57 = TRA [6:0]
+bit 56    = TWT
+bit 55-49 = TWA [6:0]
+bit 48    = unused
+--------
+bit 47    = XSEL
+bit 46-45 = YSEL [1:0]
+bit 44-39 = IRA [5:0]
+bit 38    = IWT
+bit 37-33 = IWA [4:0]
+bit 32    = unused
+--------
+bit 31    = TABLE
+bit 30    = MWT
+bit 29    = MRD
+bit 28    = EWT
+bit 27-24 = EWA [3:0]
+bit 23    = ADRL
+bit 22    = FRCL
+bit 21-20 = SHFT [1:0]
+bit 19    = YRL
+bit 18    = NEGB
+bit 17    = ZERO
+bit 16    = BSEL
+--------
+bit 15    = NOFL
+bit 14-9  = MASA [5:0]
+bit 8     = ADREB
+bit 7     = NXADR
+bit 6-0   = unused
+
+Here's what happens on each step.  In the following description, I will be
+referring to these internal registers:
+
+MDEC_CT.... 16-bit unsigned register which is decremented on every sample
+INPUTS..... 24-bit signed input value
+B.......... 26-bit signed addend
+X.......... 24-bit signed multiplicand
+Y.......... 13-bit signed multiplier
+ACC........ 26-bit signed accumulator
+SHIFTED.... 24-bit signed shifted output value
+Y_REG...... 24-bit signed latch register
+FRC_REG.... 13-bit fractional address
+ADRS_REG... 12-bit whole address
+
+In the course of one step, all of the following occur in order:
+
+(Beginning of step)
+
+- Input read
+
+  A 24-bit value (INPUTS) is read from either MEMS, MIXS, or EXTS, depending
+  on the value of IRA:
+
+  IRA 0x00-0x1F: one of the MEMS registers (0x00-0x1F)
+  IRA 0x20-0x2F: one of the MIXS registers (0x0-0xF)
+  IRA 0x30-0x31: one of the EXTS registers (0 or 1)
+  other values: undefined
+
+  If the source register is less than 24 bits, it's promoted to 24-bit by
+  shifting left.
+
+- Input write
+
+  If IWT is set, then the memory data from a MRD (either 2 or 3 instructions
+  ago) is copied into the MEMS register indicated by IWA (0x00-0x1F).
+
+  If NOFL was set 2 instructions ago (only), the value is simply promoted
+  from 16 to 24-bit by shifting left.  Otherwise, it's converted from 16-bit
+  float format to 24-bit integer.  (See float notes)
+
+- B selection
+
+  A 26-bit value (B) is read from one of two sources:
+
+  If BSEL=0: The TEMP register indicated by ((TRA + MDEC_CT) & 0x7F).
+             This value is sign-extended from 24 to 26 bits, not shifted.
+  If BSEL=1: The accumulator (ACC), already 26 bits.
+
+  If NEGB=1, this value is then made negative. (B becomes 0-B)
+  If ZERO=1, this value becomes zero, regardless of all other bits.
+
+- X selection
+
+  A 24-bit value (X) is read from one of two sources:
+
+  If XSEL=0: One of the TEMP registers indicated by ((TRA + MDEC_CT) & 0x7F).
+  If XSEL=1: The INPUTS register.
+
+- Y selection
+
+  A 13-bit value (Y) is read from one of four sources:
+  If YSEL=0: Y becomes FRC_REG
+  If YSEL=1: Y becomes this instruction's COEF
+  If YSEL=2: Y becomes bits 23-11 of Y_REG
+  If YSEL=3: Y becomes bits 15-4 of Y_REG, ZERO-EXTENDED to 13 bits.
+
+- Y latch
+
+  If YRL is set, Y_REG becomes INPUTS.
+
+- Shift of previous accumulator
+
+  A 24-bit value (SHIFTED) is set to one of the following:
+
+  If SHFT=0: SHIFTED becomes ACC, with saturation
+  If SHFT=1: SHIFTED becomes ACC*2, with saturation
+  If SHFT=2: SHIFTED becomes ACC*2, with the highest bits simply cut off
+  If SHFT=3: SHIFTED becomes ACC, with the highest bits simply cut off
+
+  If saturation is enabled, SHIFTED is clipped to the range
+  -0x800000...0x7FFFFF.
+
+- Multiply and accumulate
+
+  A 26-bit value (ACC) becomes ((X * Y) >> 12) + B.
+  The multiplication is signed.  I don't think the addition includes
+  saturation.
+
+- Temp write
+
+  If TWT is set, the value SHIFTED is written to the temp buffer address
+  indicated by ((TWA + MDEC_CT) & 0x7F).
+
+- Fractional address latch
+
+  If FRCL is set, FRC_REG (13-bit) becomes one of the following:
+
+  If SHFT=3: FRC_REG = lowest 12 bits of SHIFTED, ZERO-EXTENDED to 13 bits.
+  Other values of SHFT: FRC_REG = bits 23-11 of SHIFTED.
+
+- Memory operations
+
+  If either MRD or MWT are set, we are performing a memory operation (on the
+  external ringbuffer) and we'll need to compute an address.
+
+  Start with the 16-bit value of the MADRS register indicated by MASA
+  (0x00-0x3F).
+  If TABLE=0, add the 16-bit value MDEC_CT.
+  If ADREB=1, add the 12-bit value ADRS_REG, zero-extended.
+  If NXADR=1, add 1.
+  If TABLE=0, mod the address so it's within the proper ringbuffer size.
+    For a 8Kword  ringbuffer: AND by 0x1FFF
+    For a 16Kword ringbuffer: AND by 0x3FFF
+    For a 32Kword ringbuffer: AND by 0x7FFF
+    For a 64Kword ringbuffer: AND by 0xFFFF
+  If TABLE=1, simply AND the address by 0xFFFF.
+  Shift the address left by 1 (so it's referring to a word offset).
+  Add (RBP<<11).
+  This is the address, in main memory, you'll be reading or writing.
+
+  If MRD is set, read the 16-bit word at the calculated address and put it
+  in a temporary place.  It will then be accessible by the instruction either
+  2 or 3 steps ahead.  That instruction will have to use a IWT to get the
+  result.  Don't perform any conversions yet; let the IWT handle it later on.
+
+  If MWT is set, write the value of SHIFTED into memory at the calculated
+  address.  If NOFL=1, simply shift it right by 8 to make it 16-bit.
+  Otherwise, convert from 24-bit integer to 16-bit float (see float notes).
+
+- Address latch
+
+  If ADRL is set, ADRS_REG (12-bit) becomes one of the following:
+
+  If SHFT=3: ADRS_REG = INPUTS >> 16 (signed shift with sign extension).
+  Other values of SHFT: ADRS_REG = bits 23-12 of SHIFTED.
+
+- Effect output write
+
+  If EWT is set, write (SHIFTED >> 8) into the EFREG register specified by
+  EWA (0x0-0xF).
+
+(End of step)
+
+Supposedly, external memory reads and writes (MRD/MWT) are only allowed on
+odd steps (prohibited on step 0, allowed on step 1, etc.), but I found that
+MWT seems to work on any step.  I'm just not sure if it's guaranteed to write
+anything meaningful.  I doubt it would hurt to allow MRD/MWT on every step in
+an emulator.
+
+-----------------------------------------------------------------------------
+
+DSP FLOATING-POINT FORMAT
+
+When reading/writing external memory, the default (unless NOFL is specified)
+is to use a 16-bit floating-point format, as follows:
+
+bit 15    = sign
+bit 14-11 = exponent
+bit 10-0  = mantissa
+
+To convert from 16-bit float to 24-bit integer (on read):
+
+- Take the mantissa and shift it left by 11
+- Make bit 23 be the sign bit
+- Make bit 22 be the reverse of the sign bit
+- Shift right (signed) by the exponent
+
+To convert from 24-bit integer to 16-bit float (on write):
+
+- While the top 2 bits are the same, shift left
+  The number of times you have to shift becomes the exponent
+- Shift right (signed) by 11
+- Set bits 14-11 to the exponent value
+
+-----------------------------------------------------------------------------
+
+TODO:
+
+- Obsess over the lowpass f and q coefficients some more
+
+-----------------------------------------------------------------------------

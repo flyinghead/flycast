@@ -127,10 +127,18 @@
 #define DC_PLATFORM_AURORA      6   /* Needs to be done, Uses newer 300 mhz sh4 + 150 mhz pvr mbx SoC */
 
 
+
 //HOST_OS
 #define OS_WINDOWS   0x10000001
 #define OS_LINUX     0x10000002
 #define OS_DARWIN    0x10000003
+#define OS_IOS       0x10000004
+#define OS_ANDROID   0x10000005
+
+#define OS_UWP       0x10000011
+#define OS_NSW_HOS   0x80000001
+#define OS_PS4_BSD   0x80000002
+
 
 //HOST_CPU
 #define CPU_X86      0x20000001
@@ -138,11 +146,16 @@
 #define CPU_MIPS     0x20000003
 #define CPU_X64      0x20000004
 #define CPU_GENERIC  0x20000005 //used for pnacl, emscripten, etc
-#define CPU_ARM64    0x20000006
+#define CPU_PPC      0x20000006
+#define CPU_PPC64    0x20000007
+#define CPU_ARM64    0x20000008
+#define CPU_MIPS64   0x20000009
 
 //BUILD_COMPILER
-#define COMPILER_VC  0x30000001
-#define COMPILER_GCC 0x30000002
+#define COMPILER_VC    0x30000001
+#define COMPILER_GCC   0x30000002
+#define COMPILER_CLANG 0x30000003
+#define COMPILER_INTEL 0x30000004
 
 //FEAT_SHREC, FEAT_AREC, FEAT_DSPREC
 #define DYNAREC_NONE	0x40000001
@@ -151,6 +164,8 @@
 
 
 //automatic
+
+#ifndef CMAKE_BUILD
 
 #if defined(_WIN32) && !defined(TARGET_WIN86) && !defined(TARGET_WIN64)
 	#if !defined(_M_AMD64) && !defined(__x86_64__)
@@ -233,6 +248,8 @@
 #define FEAT_DSPREC DYNAREC_NONE
 #endif
 
+#endif	// !CMAKE_BUILD
+
 
 #if defined(TARGET_NO_NIXPROF)
 #define FEAT_HAS_NIXPROF 0
@@ -286,10 +303,6 @@
 	#define FEAT_HAS_SOFTREND BUILD_COMPILER == COMPILER_VC	//GCC wants us to enable sse4 globaly to enable intrins
 #endif
 
-#define RAM_SIZE_MAX (32*1024*1024)
-#define VRAM_SIZE_MAX (16*1024*1024)
-#define ARAM_SIZE_MAX (8*1024*1024)
-
 //Depricated build configs
 #ifdef HOST_NO_REC
 #error Dont use HOST_NO_REC
@@ -297,4 +310,135 @@
 
 #ifdef HOST_NO_AREC
 #error Dont use HOST_NO_AREC
+#endif
+
+
+// Compiler Related
+
+#define COMPILER_VC_OR_CLANG_WIN32 ((BUILD_COMPILER == COMPILER_VC) || (BUILD_COMPILER == COMPILER_CLANG) && defined(WIN32))
+
+#if BUILD_COMPILER!=COMPILER_VC
+#define ATTR_USED   __attribute__((used))
+#define ATTR_UNUSED __attribute__((used))
+#else
+#define ATTR_USED
+#define ATTR_UNUSED
+#endif
+
+
+// Some restrictions on FEAT_NO_RWX_PAGES
+#if defined(FEAT_NO_RWX_PAGES) && FEAT_SHREC == DYNAREC_JIT
+#if HOST_CPU != CPU_X64 && HOST_CPU != CPU_ARM64
+#error "FEAT_NO_RWX_PAGES Only implemented for X64 and ARMv8"
+#endif
+#endif
+
+
+// TARGET PLATFORM
+
+#define RAM_SIZE_MAX (32*1024*1024)
+#define VRAM_SIZE_MAX (16*1024*1024)
+#define ARAM_SIZE_MAX (8*1024*1024)
+
+#if (DC_PLATFORM==DC_PLATFORM_DREAMCAST)
+
+	#define BUILD_DREAMCAST 1
+
+	//DC : 16 mb ram, 8 mb vram, 2 mb aram, 2 mb bios, 128k flash
+	#define RAM_SIZE (16*1024*1024)
+	#define VRAM_SIZE (8*1024*1024)
+	#define ARAM_SIZE (2*1024*1024)
+	#define BIOS_SIZE (2*1024*1024)
+	#define FLASH_SIZE (128*1024)
+
+	#define ROM_PREFIX "dc_"
+	#define ROM_NAMES
+	#define NVR_OPTIONAL 0
+
+#elif  (DC_PLATFORM==DC_PLATFORM_DEV_UNIT)
+
+	#define BUILD_DEV_UNIT 1
+
+	//Devkit : 32 mb ram, 8? mb vram, 2? mb aram, 2? mb bios, ? flash
+	#define RAM_SIZE (32*1024*1024)
+	#define VRAM_SIZE (8*1024*1024)
+	#define ARAM_SIZE (2*1024*1024)
+	#define BIOS_SIZE (2*1024*1024)
+	#define FLASH_SIZE (128*1024)
+
+	#define ROM_PREFIX "hkt_"
+	#define ROM_NAMES
+	#define NVR_OPTIONAL 0
+
+#elif  (DC_PLATFORM==DC_PLATFORM_NAOMI)
+
+	//Naomi : 32 mb ram, 16 mb vram, 8 mb aram, 2 mb bios, ? flash
+	#define RAM_SIZE (32*1024*1024)
+	#define VRAM_SIZE (16*1024*1024)
+	#define ARAM_SIZE (8*1024*1024)
+	#define BIOS_SIZE (2*1024*1024)
+	#define BBSRAM_SIZE (32*1024)
+
+	#define ROM_PREFIX "naomi_"
+	#define ROM_NAMES ";epr-21576d.bin"
+	#define NVR_OPTIONAL 1
+
+#elif  (DC_PLATFORM==DC_PLATFORM_NAOMI2)
+
+	//Naomi2 : 32 mb ram, 16 mb vram, 8 mb aram, 2 mb bios, ? flash
+	#define RAM_SIZE (32*1024*1024)
+	#define VRAM_SIZE (16*1024*1024)
+	#define ARAM_SIZE (8*1024*1024)
+	#define BIOS_SIZE (2*1024*1024)
+	#define BBSRAM_SIZE (32*1024)
+
+	#define ROM_PREFIX "n2_"
+	#define ROM_NAMES
+	#define NVR_OPTIONAL 1
+
+#elif  (DC_PLATFORM==DC_PLATFORM_ATOMISWAVE)
+
+	#define BUILD_ATOMISWAVE 1
+
+	//Atomiswave : 16 mb ram, 8 mb vram, 8 mb aram, 128kb bios on flash, 128kb battery-backed ram
+	#define RAM_SIZE (16*1024*1024)
+	#define VRAM_SIZE (8*1024*1024)
+	#define ARAM_SIZE (8*1024*1024)
+	#define BIOS_SIZE (128*1024)
+	#define BBSRAM_SIZE (128*1024)
+
+	#define ROM_PREFIX "aw_"
+	#define ROM_NAMES ";bios.ic23_l"
+	#define NVR_OPTIONAL 1
+
+#else
+	#error invalid build config
+#endif
+
+#define RAM_MASK	(RAM_SIZE-1)
+#define VRAM_MASK	(VRAM_SIZE-1)
+#define ARAM_MASK	(ARAM_SIZE-1)
+#define BIOS_MASK	(BIOS_SIZE-1)
+
+#ifdef FLASH_SIZE
+#define FLASH_MASK	(FLASH_SIZE-1)
+#endif
+
+#ifdef BBSRAM_SIZE
+#define BBSRAM_MASK	(BBSRAM_SIZE-1)
+#endif
+
+#define GD_CLOCK 33868800				//GDROM XTAL -- 768fs
+
+#define AICA_CORE_CLOCK (GD_CLOCK*4/3)		//[45158400]  GD->PLL 3:4 -> AICA CORE	 -- 1024fs
+#define ADAC_CLOCK (AICA_CORE_CLOCK/2)		//[11289600]  44100*256, AICA CORE -> PLL 4:1 -> ADAC -- 256fs
+#define AICA_ARM_CLOCK (AICA_CORE_CLOCK/2)	//[22579200]  AICA CORE -> PLL 2:1 -> ARM
+#define AICA_SDRAM_CLOCK (GD_CLOCK*2)		//[67737600]  GD-> PLL 2 -> SDRAM
+#define SH4_MAIN_CLOCK (200*1000*1000)		//[200000000] XTal(13.5) -> PLL (33.3) -> PLL 1:6 (200)
+#define SH4_RAM_CLOCK (100*1000*1000)		//[100000000] XTal(13.5) -> PLL (33.3) -> PLL 1:3 (100)	, also suplied to HOLLY chip
+#define G2_BUS_CLOCK (25*1000*1000)			//[25000000]  from Holly, from SH4_RAM_CLOCK w/ 2 2:1 plls
+
+#if defined(GLES) && !defined(GLES3)
+// Only use GL ES 2.0 API functions
+#define GLES2
 #endif

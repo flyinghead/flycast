@@ -21,8 +21,16 @@
 #include <vector>
 #include <algorithm>
 #include <stdlib.h>
+#ifdef _MSC_VER
+#include <io.h>
+#include "dirent/dirent.h"
+#define S_ISDIR(mode) (((mode) & _S_IFMT) == _S_IFDIR)
+#define access _access
+#define R_OK   4
+#else
 #include <dirent.h>
 #include <unistd.h>
+#endif
 #include <sys/stat.h>
 
 #include "types.h"
@@ -33,7 +41,7 @@ extern int screen_width, screen_height;
 
 static std::string select_current_directory;
 static std::vector<std::string> select_subfolders;
-static bool subfolders_read;
+bool subfolders_read;
 #ifdef _WIN32
 static const std::string separators = "/\\";
 static const std::string native_separator = "\\";
@@ -183,7 +191,7 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
 		}
 
 		ImGui::Text("%s", error_message.empty() ? select_current_directory.c_str() : error_message.c_str());
-		ImGui::BeginChild(ImGui::GetID("dir_list"), ImVec2(0, -ImGui::CalcTextSize("Cancel").y - ImGui::GetStyle().FramePadding. y * 2 - ImGui::GetStyle().ItemSpacing.y), true);
+		ImGui::BeginChild(ImGui::GetID("dir_list"), ImVec2(0, - 30 * scaling - ImGui::GetStyle().ItemSpacing.y), true);
 
 		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8 * scaling, 20 * scaling));		// from 8, 4
 
@@ -245,14 +253,14 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
 		}
 		ImGui::PopStyleVar();
 		ImGui::EndChild();
-		if (ImGui::Button("Select Current Directory"))
+		if (ImGui::Button("Select Current Directory", ImVec2(0, 30 * scaling)))
 		{
 			subfolders_read = false;
 			callback(false, select_current_directory);
 			ImGui::CloseCurrentPopup();
 		}
 		ImGui::SameLine();
-		if (ImGui::Button("Cancel"))
+		if (ImGui::Button("Cancel", ImVec2(0, 30 * scaling)))
 		{
 			subfolders_read = false;
 			callback(true, "");

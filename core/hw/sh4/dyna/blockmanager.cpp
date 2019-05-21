@@ -86,49 +86,55 @@ u32 bm_gc_luc,bm_gcf_luc;
 
 #define FPCA(x) ((DynarecCodeEntryPtr&)sh4rcb.fpcb[(x>>1)&FPCB_MASK])
 
+// This returns an executable address
 DynarecCodeEntryPtr DYNACALL bm_GetCode(u32 addr)
 {
-	//rdv_FailedToFindBlock_pc=addr;
-	DynarecCodeEntryPtr rv=(DynarecCodeEntryPtr)FPCA(addr);
+	DynarecCodeEntryPtr rv = (DynarecCodeEntryPtr)FPCA(addr);
 
 	return (DynarecCodeEntryPtr)rv;
 }
 
+// This returns an executable address
 DynarecCodeEntryPtr DYNACALL bm_GetCode2(u32 addr)
 {
 	return (DynarecCodeEntryPtr)bm_GetCode(addr);
 }
 
+// This returns an executable address
 RuntimeBlockInfo* DYNACALL bm_GetBlock(u32 addr)
 {
-	DynarecCodeEntryPtr cde=bm_GetCode(addr);
+	DynarecCodeEntryPtr cde = bm_GetCode(addr);  // Returns RX ptr
 
-	if (cde==ngen_FailedToFindBlock)
+	if (cde == ngen_FailedToFindBlock)
 		return 0;
 	else
-		return bm_GetBlock((void*)cde);
+		return bm_GetBlock((void*)cde);  // Returns RX pointer
 }
 
+// This takes a RX address and returns the info block ptr (RW space)
 RuntimeBlockInfo* bm_GetBlock(void* dynarec_code)
 {
-	blkmap_t::iterator iter=blkmap.find((RuntimeBlockInfo*)dynarec_code);
-	if (iter!=blkmap.end())
+	void *dynarecrw = CC_RX2RW(dynarec_code);
+	blkmap_t::iterator iter = blkmap.find((RuntimeBlockInfo*)dynarecrw);
+	if (iter != blkmap.end())
 	{
-		verify((*iter)->contains_code((u8*)dynarec_code));
+		verify((*iter)->contains_code((u8*)dynarecrw));
 		return *iter;
 	}
 	else
 	{
-		printf("bm_GetBlock(%p) failed ..\n",dynarec_code);
+		printf("bm_GetBlock(%p) failed ..\n", dynarec_code);
 		return 0;
 	}
 }
 
+// Takes RX pointer and returns a RW pointer
 RuntimeBlockInfo* bm_GetStaleBlock(void* dynarec_code)
 {
+	void *dynarecrw = CC_RX2RW(dynarec_code);
 	for(u32 i=0;i<del_blocks.size();i++)
 	{
-		if (del_blocks[i]->contains_code((u8*)dynarec_code))
+		if (del_blocks[i]->contains_code((u8*)dynarecrw))
 			return del_blocks[i];
 	}
 
@@ -145,9 +151,8 @@ void bm_AddBlock(RuntimeBlockInfo* blk)
 	}
 	blkmap.insert(blk);
 
-
 	verify((void*)bm_GetCode(blk->addr)==(void*)ngen_FailedToFindBlock);
-	FPCA(blk->addr)=blk->code;
+	FPCA(blk->addr) = (DynarecCodeEntryPtr)CC_RW2RX(blk->code);
 
 #ifdef DYNA_OPROF
 	if (oprofHandle)
@@ -304,6 +309,8 @@ void bm_Rebuild()
 {
 	return;
 
+	die("this is broken in multiple levels, including compile options");
+
 	void RASDASD();
 	RASDASD();
 
@@ -321,7 +328,7 @@ void bm_Rebuild()
 			//constprop(all_blocks[i]);
 //#endif
 		}
-		ngen_Compile(all_blocks[i],false,false,all_blocks[i]->staging_runs>0,do_opts);
+		ngen_Compile(all_blocks[i],NoCheck,false,all_blocks[i]->staging_runs>0,do_opts);
 
 		blkmap.insert(all_blocks[i]);
 		verify(bm_GetBlock((RuntimeBlockInfo*)all_blocks[i]->code)==all_blocks[i]);
@@ -337,9 +344,9 @@ void bm_Rebuild()
 	rebuild_counter=30;
 }
 
-void bm_vmem_pagefill(void** ptr,u32 PAGE_SZ)
+void bm_vmem_pagefill(void** ptr, u32 size_bytes)
 {
-	for (size_t i=0; i<PAGE_SZ/sizeof(ptr[0]); i++)
+	for (size_t i=0; i < size_bytes / sizeof(ptr[0]); i++)
 	{
 		ptr[i]=(void*)ngen_FailedToFindBlock;
 	}

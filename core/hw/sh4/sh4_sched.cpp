@@ -25,15 +25,15 @@ u64 sh4_sched_ffb;
 u32 sh4_sched_intr;
 
 
-vector<sched_list> list;
+vector<sched_list> sch_list;	// using list as external inside a macro confuses clang and msc
 
 int sh4_sched_next_id=-1;
 
 u32 sh4_sched_remaining(int id, u32 reference)
 {
-	if (list[id].end != -1)
+	if (sch_list[id].end != -1)
 	{
-		return list[id].end - reference;
+		return sch_list[id].end - reference;
 	}
 	else
 	{
@@ -51,7 +51,7 @@ void sh4_sched_ffts()
 	u32 diff=-1;
 	int slot=-1;
 
-	for (size_t i=0;i<list.size();i++)
+	for (size_t i=0;i<sch_list.size();i++)
 	{
 		if (sh4_sched_remaining(i)<diff)
 		{
@@ -79,9 +79,9 @@ int sh4_sched_register(int tag, sh4_sched_callback* ssc)
 {
 	sched_list t={ssc,tag,-1,-1};
 
-	list.push_back(t);
+	sch_list.push_back(t);
 
-	return list.size()-1;
+	return sch_list.size()-1;
 }
 
 /*
@@ -103,16 +103,16 @@ void sh4_sched_request(int id, int cycles)
 {
 	verify(cycles== -1 || (cycles >= 0 && cycles <= SH4_MAIN_CLOCK));
 
-	list[id].start=sh4_sched_now();
+	sch_list[id].start=sh4_sched_now();
 
 	if (cycles == -1) {
-		list[id].end = -1;
+		sch_list[id].end = -1;
 	}
 	else
 	{
-		list[id].end = list[id].start + cycles;
-		if (list[id].end == -1)
-			list[id].end++;
+		sch_list[id].end = sch_list[id].start + cycles;
+		if (sch_list[id].end == -1)
+			sch_list[id].end++;
 	}
 
 	sh4_sched_ffts();
@@ -120,10 +120,10 @@ void sh4_sched_request(int id, int cycles)
 
 int sh4_sched_elapsed(int id)
 {
-	if (list[id].end!=-1)
+	if (sch_list[id].end!=-1)
 	{
-		int rv=sh4_sched_now()-list[id].start;
-		list[id].start=sh4_sched_now();
+		int rv=sh4_sched_now()-sch_list[id].start;
+		sch_list[id].start=sh4_sched_now();
 		return rv;
 	}
 	else
@@ -132,12 +132,12 @@ int sh4_sched_elapsed(int id)
 
 void handle_cb(int id)
 {
-	int remain=list[id].end-list[id].start;
+	int remain=sch_list[id].end-sch_list[id].start;
 	int elapsd=sh4_sched_elapsed(id);
 	int jitter=elapsd-remain;
 
-	list[id].end=-1;
-	int re_sch=list[id].cb(list[id].tag,remain,jitter);
+	sch_list[id].end=-1;
+	int re_sch=sch_list[id].cb(sch_list[id].tag,remain,jitter);
 
 	if (re_sch > 0)
 		sh4_sched_request(id, max(0, re_sch - jitter));
@@ -156,7 +156,7 @@ void sh4_sched_tick(int cycles)
 		sh4_sched_intr++;
 		if (sh4_sched_next_id!=-1)
 		{
-			for (int i=0;i<list.size();i++)
+			for (int i=0;i<sch_list.size();i++)
 			{
 				int remaining = sh4_sched_remaining(i, fztime);
 				verify(remaining >= 0 || remaining == -1);

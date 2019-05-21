@@ -82,8 +82,7 @@ bool renderer_enabled = true;	// Signals the renderer thread to exit
 bool renderer_changed = false;	// Signals the renderer thread to switch renderer
 
 #if !defined(TARGET_NO_THREADS)
-cResetEvent rs(false,true);
-cResetEvent re(false,true);
+cResetEvent rs, re;
 #endif
 
 int max_idx,max_mvo,max_op,max_pt,max_tr,max_vtx,max_modt, ovrn;
@@ -99,6 +98,7 @@ TA_context* _pvrrc;
 void SetREP(TA_context* cntx);
 void killtex();
 bool render_output_framebuffer();
+static void rend_create_renderer();
 
 void dump_frame(const char* file, TA_context* ctx, u8* vram, u8* vram_ref = NULL) {
 	FILE* fw = fopen(file, "wb");
@@ -267,6 +267,13 @@ bool rend_frame(TA_context* ctx, bool draw_osd) {
 
 bool rend_single_frame()
 {
+	if (renderer_changed)
+	{
+		renderer_changed = false;
+		rend_term_renderer();
+		rend_create_renderer();
+		rend_init_renderer();
+	}
 	//wait render start only if no frame pending
 	do
 	{
@@ -363,6 +370,7 @@ void rend_init_renderer()
     	}
     	printf("Selected renderer initialization failed. Falling back to default renderer.\n");
     	renderer  = fallback_renderer;
+    	fallback_renderer = NULL;	// avoid double-free
     }
 }
 
@@ -378,7 +386,6 @@ void rend_term_renderer()
 		delete fallback_renderer;
 		fallback_renderer = NULL;
 	}
-	tactx_Term();
 }
 
 void* rend_thread(void* p)
@@ -392,13 +399,6 @@ void* rend_thread(void* p)
 	{
 		if (rend_single_frame())
 			renderer->Present();
-		if (renderer_changed)
-		{
-			renderer_changed = false;
-			rend_term_renderer();
-			rend_create_renderer();
-			rend_init_renderer();
-		}
 	}
 
 	rend_term_renderer();
@@ -539,6 +539,7 @@ void rend_end_render()
 void rend_stop_renderer()
 {
 	renderer_enabled = false;
+	tactx_Term();
 }
 
 void rend_vblank()

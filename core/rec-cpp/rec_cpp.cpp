@@ -13,7 +13,6 @@
 #include "hw/sh4/dyna/ngen.h"
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/dyna/regalloc.h"
-#include "emitter/x86_emitter.h"
 #include "profiler/profiler.h"
 #include "oslib/oslib.h"
 
@@ -1191,10 +1190,10 @@ public:
 
 	size_t opcode_index;
 	opcodeExec** ptrsg;
-	void compile(RuntimeBlockInfo* block, bool force_checks, bool reset, bool staging, bool optimise) {
+	void compile(RuntimeBlockInfo* block,  SmcCheckEnum smc_checks, bool reset, bool staging, bool optimise) {
 		
 		//we need an extra one for the end opcode and optionally one more for block check
-		auto ptrs = fnnCtor_forreal(block->oplist.size() + 1 + (force_checks ? 1 : 0))(block->guest_cycles);
+		auto ptrs = fnnCtor_forreal(block->oplist.size() + 1 + (smc_checks != NoCheck ? 1 : 0))(block->guest_cycles);
 
 		ptrsg = ptrs.ptrs;
 
@@ -1208,9 +1207,16 @@ public:
 		}
 
 		size_t i = 0;
-		if (force_checks)
+		if (smc_checks != NoCheck)
 		{
+			verify (smc_checks == FastCheck || smc_checks == FullCheck)
 			opcodeExec* op;
+			int check_size = block->sh4_code_size;
+
+			if (smc_checks == FastCheck) {
+				check_size = 4;
+			}
+
 			switch (block->sh4_code_size)
 			{
 			case 4:
@@ -1228,6 +1234,7 @@ public:
 			}
 			ptrs.ptrs[i++] = op;
 		}
+
 		for (size_t opnum = 0; opnum < block->oplist.size(); opnum++, i++) {
 			opcode_index = i;
 			shil_opcode& op = block->oplist[opnum];
@@ -1552,14 +1559,14 @@ public:
 
 BlockCompiler* compiler;
 
-void ngen_Compile(RuntimeBlockInfo* block, bool force_checks, bool reset, bool staging, bool optimise)
+void ngen_Compile(RuntimeBlockInfo* block, SmcCheckEnum smc_checks, bool reset, bool staging, bool optimise)
 {
 	verify(emit_FreeSpace() >= 16 * 1024);
 
 	compiler = new BlockCompiler();
 
 
-	compiler->compile(block, force_checks, reset, staging, optimise);
+	compiler->compile(block, smc_checks, reset, staging, optimise);
 
 	delete compiler;
 }

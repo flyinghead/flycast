@@ -378,19 +378,19 @@ struct DCFlashChip : MemChip
 			else if ((val & 0xff) == 0x30)
 			{
 				// sector erase
-				addr = max(addr, write_protect_size);
-#if DC_PLATFORM != DC_PLATFORM_ATOMISWAVE
-				printf("Erase Sector %08X! (%08X)\n",addr,addr&(~0x3FFF));
-				memset(&data[addr&(~0x3FFF)],0xFF,0x4000);
-#else
-				// AtomisWave's Macronix 29L001mc has 64k blocks
-				printf("Erase Sector %08X! (%08X)\n",addr,addr&(~0xFFFF));
-				u8 save[0x2000];
-				// this area is write-protected on AW
-				memcpy(save, data + 0x1a000, 0x2000);
-				memset(&data[addr&(~0xFFFF)], 0xFF, 0x10000);
-				memcpy(data + 0x1a000, save, 0x2000);
+				if (addr >= write_protect_size)
+				{
+#if DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
+					u8 save[0x2000];
+					// this area is write-protected on AW
+					memcpy(save, data + 0x1a000, 0x2000);
 #endif
+					printf("Erase Sector %08X! (%08X)\n",addr,addr&(~0x3FFF));
+					memset(&data[addr&(~0x3FFF)],0xFF,0x4000);
+#if DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
+					memcpy(data + 0x1a000, save, 0x2000);
+#endif
+				}
 				state = FS_Normal;
 			}
 			else

@@ -1,12 +1,13 @@
 name: reicast
 version: git
-summary: Reicast
+summary: Reicast -- The fastest Dreamcast Emulator
 description: |
-  Reicast is a Sega Dreamcast emulator. It is designed to run dreamcast games
+  Reicast is a Sega Dreamcast emulator. It is designed to run Dreamcast games
   and homebrew in x86, x64 and aarch64 based platforms.
 grade: stable
 icon: shell/linux/reicast.png
 confinement: strict
+# architectures: all
 
 apps:
   reicast:
@@ -38,6 +39,15 @@ parts:
       - libgles2-mesa-dev
       - mesa-common-dev
       - pkg-config
+      - libudev-dev
     stage-packages:
       - libevdev2
     after: [desktop-gtk2, alsa]
+
+    # use prime to select specific packages
+
+# TODOS:
+#   * have to setup docker image to test on clean environment for further customization
+#   * add a stable channel and all the specific releases
+#   * research on cmake usage with snapcraft
+#   * research on gradle integration for android testing

@@ -1,6 +1,7 @@
-#include "oslib/audiobackend_alsa.h"
+#include "oslib/audiostream.h"
 #if USE_ALSA
 #include <alsa/asoundlib.h>
+#include "cfg/cfg.h"
 
 static snd_pcm_t *handle;
 static bool pcm_blocking = true;
@@ -10,28 +11,62 @@ static snd_pcm_uframes_t period_size;
 // We're making these functions static - there's no need to pollute the global namespace
 static void alsa_init()
 {
-
-	long loops;
-	int size;
-
 	snd_pcm_hw_params_t *params;
 	unsigned int val;
 	int dir=-1;
 
-	/* Open PCM device for playback. */
-	int rc = snd_pcm_open(&handle, "default", SND_PCM_STREAM_PLAYBACK, 0);
+	string device = cfgLoadStr("alsa", "device", "");
 
-	if (rc<0)
-		rc = snd_pcm_open(&handle, "plughw:0,0,0", SND_PCM_STREAM_PLAYBACK, 0);
+	int rc = -1;
+	if (device == "" || device == "auto")
+	{
+		printf("ALSA: trying to determine audio device\n");
 
-	if (rc<0)
-		rc = snd_pcm_open(&handle, "plughw:0,0", SND_PCM_STREAM_PLAYBACK, 0);
+		// trying default device
+		device = "default";
+		rc = snd_pcm_open(&handle, device.c_str(), SND_PCM_STREAM_PLAYBACK, 0);
+
+		// "default" didn't work, try first device
+		if (rc < 0)
+		{
+			device = "plughw:0,0,0";
+			rc = snd_pcm_open(&handle, device.c_str(), SND_PCM_STREAM_PLAYBACK, 0);
+
+			if (rc < 0)
+			{
+				device = "plughw:0,0";
+				rc = snd_pcm_open(&handle, device.c_str(), SND_PCM_STREAM_PLAYBACK, 0);
+			}
+		}
+
+		// first didn't work, try second
+		if (rc < 0)
+		{
+			device = "plughw:1,0";
+			rc = snd_pcm_open(&handle, device.c_str(), SND_PCM_STREAM_PLAYBACK, 0);
+		}
+
+		// try pulse audio backend
+		if (rc < 0)
+		{
+			device = "pulse";
+			rc = snd_pcm_open(&handle, device.c_str(), SND_PCM_STREAM_PLAYBACK, 0);
+		}
+
+		if (rc < 0)
+			printf("ALSA: unable to automatically determine audio device.\n");
+	}
+	else {
+		rc = snd_pcm_open(&handle, device.c_str(), SND_PCM_STREAM_PLAYBACK, 0);
+	}
 
 	if (rc < 0)
 	{
-		fprintf(stderr, "unable to open PCM device: %s\n", snd_strerror(rc));
+		fprintf(stderr, "ALSA: unable to open PCM device %s: %s\n", device.c_str(), snd_strerror(rc));
 		return;
 	}
+
+	printf("ALSA: Successfully initialized \"%s\"\n", device.c_str());
 
 	/* Allocate a hardware parameters object. */
 	snd_pcm_hw_params_alloca(&params);
@@ -40,7 +75,7 @@ static void alsa_init()
 	rc=snd_pcm_hw_params_any(handle, params);
 	if (rc < 0)
 	{
-		fprintf(stderr, "Error:snd_pcm_hw_params_any %s\n", snd_strerror(rc));
+		fprintf(stderr, "ALSA: Error:snd_pcm_hw_params_any %s\n", snd_strerror(rc));
 		return;
 	}
 
@@ -50,7 +85,7 @@ static void alsa_init()
 	rc=snd_pcm_hw_params_set_access(handle, params, SND_PCM_ACCESS_RW_INTERLEAVED);
 	if (rc < 0)
 	{
-		fprintf(stderr, "Error:snd_pcm_hw_params_set_access %s\n", snd_strerror(rc));
+		fprintf(stderr, "ALSA: Error:snd_pcm_hw_params_set_access %s\n", snd_strerror(rc));
 		return;
 	}
 
@@ -58,7 +93,7 @@ static void alsa_init()
 	rc=snd_pcm_hw_params_set_format(handle, params, SND_PCM_FORMAT_S16_LE);
 	if (rc < 0)
 	{
-		fprintf(stderr, "Error:snd_pcm_hw_params_set_format %s\n", snd_strerror(rc));
+		fprintf(stderr, "ALSA: Error:snd_pcm_hw_params_set_format %s\n", snd_strerror(rc));
 		return;
 	}
 
@@ -66,7 +101,7 @@ static void alsa_init()
 	rc=snd_pcm_hw_params_set_channels(handle, params, 2);
 	if (rc < 0)
 	{
-		fprintf(stderr, "Error:snd_pcm_hw_params_set_channels %s\n", snd_strerror(rc));
+		fprintf(stderr, "ALSA: Error:snd_pcm_hw_params_set_channels %s\n", snd_strerror(rc));
 		return;
 	}
 
@@ -75,7 +110,7 @@ static void alsa_init()
 	rc=snd_pcm_hw_params_set_rate_near(handle, params, &val, &dir);
 	if (rc < 0)
 	{
-		fprintf(stderr, "Error:snd_pcm_hw_params_set_rate_near %s\n", snd_strerror(rc));
+		fprintf(stderr, "ALSA: Error:snd_pcm_hw_params_set_rate_near %s\n", snd_strerror(rc));
 		return;
 	}
 
@@ -84,26 +119,31 @@ static void alsa_init()
 	rc=snd_pcm_hw_params_set_period_size_near(handle, params, &period_size, &dir);
 	if (rc < 0)
 	{
-		fprintf(stderr, "Error:snd_pcm_hw_params_set_buffer_size_near %s\n", snd_strerror(rc));
+		fprintf(stderr, "ALSA: Error:snd_pcm_hw_params_set_buffer_size_near %s\n", snd_strerror(rc));
 		return;
 	}
 	else
+	{
 		printf("ALSA: period size set to %ld\n", period_size);
+	}
+
 	buffer_size = (44100 * 100 /* settings.omx.Audio_Latency */ / 1000 / period_size + 1) * period_size;
 	rc=snd_pcm_hw_params_set_buffer_size_near(handle, params, &buffer_size);
 	if (rc < 0)
 	{
-		fprintf(stderr, "Error:snd_pcm_hw_params_set_buffer_size_near %s\n", snd_strerror(rc));
+		fprintf(stderr, "ALSA: Error:snd_pcm_hw_params_set_buffer_size_near %s\n", snd_strerror(rc));
 		return;
 	}
 	else
+	{
 		printf("ALSA: buffer size set to %ld\n", buffer_size);
+	}
 
 	/* Write the parameters to the driver */
 	rc = snd_pcm_hw_params(handle, params);
 	if (rc < 0)
 	{
-		fprintf(stderr, "Unable to set hw parameters: %s\n", snd_strerror(rc));
+		fprintf(stderr, "ALSA: Unable to set hw parameters: %s\n", snd_strerror(rc));
 		return;
 	}
 }
@@ -153,11 +193,84 @@ static void alsa_term()
 	snd_pcm_close(handle);
 }
 
-audiobackend_t audiobackend_alsa = {
+std::vector<std::string> alsa_get_devicelist()
+{
+	std::vector<std::string> result;
+
+	char **hints;
+	int err = snd_device_name_hint(-1, "pcm", (void***)&hints);
+
+	// Error initializing ALSA
+	if (err != 0)
+		return result;
+
+	// special value to automatically detect on initialization
+	result.push_back("auto");
+
+	char** n = hints;
+	while (*n != NULL)
+	{
+		// Get the type (NULL/Input/Output)
+		char *type = snd_device_name_get_hint(*n, "IOID");
+		char *name = snd_device_name_get_hint(*n, "NAME");
+
+		if (name != NULL)
+		{
+			// We only want output or special devices (like "default" or "pulse")
+			// TODO Only those with type == NULL?
+			if (type == NULL || strcmp(type, "Output") == 0)
+			{
+				// TODO Check if device works (however we need to hash the resulting list then)
+				/*snd_pcm_t *handle;
+				int rc = snd_pcm_open(&handle, name, SND_PCM_STREAM_PLAYBACK, 0);
+
+				if (rc == 0)
+				{
+					result.push_back(name);
+					snd_pcm_close(handle);
+				}
+				*/
+
+				result.push_back(name);
+			}
+
+		}
+
+		if (type != NULL)
+			free(type);
+
+		if (name != NULL)
+			free(name);
+
+		n++;
+	}
+
+	snd_device_name_free_hint((void**)hints);
+
+	return result;
+}
+
+static audio_option_t* alsa_audio_options(int* option_count)
+{
+	*option_count = 1;
+	static audio_option_t result[1];
+
+	result[0].cfg_name = "device";
+	result[0].caption = "Device";
+	result[0].type = list;
+	result[0].list_callback = alsa_get_devicelist;
+
+	return result;
+}
+
+static audiobackend_t audiobackend_alsa = {
     "alsa", // Slug
     "Advanced Linux Sound Architecture", // Name
     &alsa_init,
     &alsa_push,
-    &alsa_term
+    &alsa_term,
+	&alsa_audio_options
 };
+
+static bool alsa = RegisterAudioBackend(&audiobackend_alsa);
 #endif

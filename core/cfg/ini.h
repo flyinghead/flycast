@@ -2,6 +2,8 @@
 #include "types.h"
 #include <map>
 
+namespace emucfg {
+
 struct ConfigEntry {
 	std::string value;
 	std::string get_string();
@@ -45,3 +47,6 @@ struct ConfigFile {
 		void delete_section(const std::string& section_name);
 		void delete_entry(const std::string& section_name, const std::string& entry_name);
 };
+
+} // namespace emucfg
+

@@ -45,12 +45,11 @@ using namespace vixl::aarch64;
 extern "C" void no_update();
 extern "C" void intc_sched();
 extern "C" void ngen_blockcheckfail(u32 pc);
-
 extern "C" void ngen_LinkBlock_Generic_stub();
 extern "C" void ngen_LinkBlock_cond_Branch_stub();
 extern "C" void ngen_LinkBlock_cond_Next_stub();
-
 extern "C" void ngen_FailedToFindBlock_();
+extern void vmem_platform_flush_cache(void *icache_start, void *icache_end, void *dcache_start, void *dcache_end);
 
 struct DynaRBI : RuntimeBlockInfo
 {
@@ -60,47 +59,6 @@ struct DynaRBI : RuntimeBlockInfo
 		verify(false);
 	}
 };
-
-// Code borrowed from Dolphin https://github.com/dolphin-emu/dolphin
-void Arm64CacheFlush(void* start, void* end)
-{
-	if (start == end)
-		return;
-
-#if HOST_OS == OS_DARWIN
-	// Header file says this is equivalent to: sys_icache_invalidate(start, end - start);
-	sys_cache_control(kCacheFunctionPrepareForExecution, start, end - start);
-#else
-	// Don't rely on GCC's __clear_cache implementation, as it caches
-	// icache/dcache cache line sizes, that can vary between cores on
-	// big.LITTLE architectures.
-	u64 addr, ctr_el0;
-	static size_t icache_line_size = 0xffff, dcache_line_size = 0xffff;
-	size_t isize, dsize;
-
-	__asm__ volatile("mrs %0, ctr_el0" : "=r"(ctr_el0));
-	isize = 4 << ((ctr_el0 >> 0) & 0xf);
-	dsize = 4 << ((ctr_el0 >> 16) & 0xf);
-
-	// use the global minimum cache line size
-	icache_line_size = isize = icache_line_size < isize ? icache_line_size : isize;
-	dcache_line_size = dsize = dcache_line_size < dsize ? dcache_line_size : dsize;
-
-	addr = (u64)start & ~(u64)(dsize - 1);
-	for (; addr < (u64)end; addr += dsize)
-		// use "civac" instead of "cvau", as this is the suggested workaround for
-		// Cortex-A53 errata 819472, 826319, 827319 and 824069.
-		__asm__ volatile("dc civac, %0" : : "r"(addr) : "memory");
-	__asm__ volatile("dsb ish" : : : "memory");
-
-	addr = (u64)start & ~(u64)(isize - 1);
-	for (; addr < (u64)end; addr += isize)
-		__asm__ volatile("ic ivau, %0" : : "r"(addr) : "memory");
-
-	__asm__ volatile("dsb ish" : : : "memory");
-	__asm__ volatile("isb" : : : "memory");
-#endif
-}
 
 double host_cpu_time;
 u64 guest_cpu_cycles;
@@ -147,7 +105,7 @@ __asm__
 	"ngen_LinkBlock_Shared_stub:			\n\t"
 		"mov x0, lr							\n\t"
 		"sub x0, x0, #4						\n\t"	// go before the call
-		"bl rdv_LinkBlock					\n\t"
+		"bl rdv_LinkBlock					\n\t"   // returns an RX addr
 		"br x0								\n"
 
 		".hidden ngen_FailedToFindBlock_	\n\t"
@@ -348,15 +306,15 @@ public:
 		return *ret_reg;
 	}
 
-	void ngen_Compile(RuntimeBlockInfo* block, bool force_checks, bool reset, bool staging, bool optimise)
+	void ngen_Compile(RuntimeBlockInfo* block, SmcCheckEnum smc_checks, bool reset, bool staging, bool optimise)
 	{
 		//printf("REC-ARM64 compiling %08x\n", block->addr);
 #ifdef PROFILING
 		SaveFramePointer();
 #endif
 		this->block = block;
-		if (force_checks)
-			CheckBlock(block);
+		
+		CheckBlock(smc_checks, block);
 
 		// run register allocator
 		regalloc.DoAlloc(block);
@@ -617,31 +575,25 @@ public:
 				break;
 
 			case shop_pref:
-				Mov(w0, regalloc.MapRegister(op.rs1));
-				if (op.flags != 0x1337)
 				{
 					Lsr(w1, regalloc.MapRegister(op.rs1), 26);
 					Cmp(w1, 0x38);
-				}
+					Label not_sqw;
+					B(&not_sqw, ne);
+					Mov(w0, regalloc.MapRegister(op.rs1));
 
-				if (CCN_MMUCR.AT)
-				{
-					Ldr(x9, reinterpret_cast<uintptr_t>(&do_sqw_mmu));
-				}
-				else
-				{
-					Sub(x9, x28, offsetof(Sh4RCB, cntx) - offsetof(Sh4RCB, do_sqw_nommu));
-					Ldr(x9, MemOperand(x9));
-					Sub(x1, x28, offsetof(Sh4RCB, cntx) - offsetof(Sh4RCB, sq_buffer));
-				}
-				if (op.flags == 0x1337)
+					if (CCN_MMUCR.AT)
+					{
+						Ldr(x9, reinterpret_cast<uintptr_t>(&do_sqw_mmu));
+					}
+					else
+					{
+						Sub(x9, x28, offsetof(Sh4RCB, cntx) - offsetof(Sh4RCB, do_sqw_nommu));
+						Ldr(x9, MemOperand(x9));
+						Sub(x1, x28, offsetof(Sh4RCB, cntx) - offsetof(Sh4RCB, sq_buffer));
+					}
 					Blr(x9);
-				else
-				{
-					Label no_branch;
-					B(&no_branch, ne);
-					Blr(x9);
-					Bind(&no_branch);
+					Bind(&not_sqw);
 				}
 				break;
 
@@ -1019,7 +971,7 @@ public:
 
 			Ldr(w29, sh4_context_mem_operand(&next_pc));
 
-			GenBranch(no_update);
+			GenBranchRuntime(no_update);
 			break;
 
 		default:
@@ -1044,7 +996,12 @@ public:
 
 			emit_Skip(block->host_code_size);
 		}
-		Arm64CacheFlush(GetBuffer()->GetStartAddress<void*>(), GetBuffer()->GetEndAddress<void*>());
+
+		// Flush and invalidate caches
+		vmem_platform_flush_cache(
+			CC_RW2RX(GetBuffer()->GetStartAddress<void*>()), CC_RW2RX(GetBuffer()->GetEndAddress<void*>()),
+			GetBuffer()->GetStartAddress<void*>(), GetBuffer()->GetEndAddress<void*>());
+
 #if 0
 //		if (rewrite)
 		{
@@ -1066,15 +1023,29 @@ public:
 	}
 
 private:
+	// Runtime branches/calls need to be adjusted if rx space is different to rw space.
+	// Therefore can't mix GenBranch with GenBranchRuntime!
+
 	template <typename R, typename... P>
 	void GenCallRuntime(R (*function)(P...))
 	{
-		ptrdiff_t offset = reinterpret_cast<uintptr_t>(function) - GetBuffer()->GetStartAddress<uintptr_t>();
+		ptrdiff_t offset = reinterpret_cast<uintptr_t>(function) - reinterpret_cast<uintptr_t>(CC_RW2RX(GetBuffer()->GetStartAddress<void*>()));
 		verify(offset >= -128 * 1024 * 1024 && offset <= 128 * 1024 * 1024);
 		verify((offset & 3) == 0);
 		Label function_label;
 		BindToOffset(&function_label, offset);
 		Bl(&function_label);
+	}
+
+   template <typename R, typename... P>
+	void GenBranchRuntime(R (*target)(P...))
+	{
+		ptrdiff_t offset = reinterpret_cast<uintptr_t>(target) - reinterpret_cast<uintptr_t>(CC_RW2RX(GetBuffer()->GetStartAddress<void*>()));
+		verify(offset >= -128 * 1024 * 1024 && offset <= 128 * 1024 * 1024);
+		verify((offset & 3) == 0);
+		Label target_label;
+		BindToOffset(&target_label, offset);
+		B(&target_label);
 	}
 
 	template <typename R, typename... P>
@@ -1298,49 +1269,72 @@ private:
 		verify (GetCursorAddress<Instruction *>() - start_instruction == code_size * kInstructionSize);
 	}
 
-	void CheckBlock(RuntimeBlockInfo* block)
+	void CheckBlock(SmcCheckEnum smc_checks, RuntimeBlockInfo* block)
 	{
-		s32 sz = block->sh4_code_size;
 
 		Label blockcheck_fail;
 		Label blockcheck_success;
 
-		u8* ptr = GetMemPtr(block->addr, sz);
-		if (ptr == NULL)
-			// FIXME Can a block cross a RAM / non-RAM boundary??
-			return;
+		switch (smc_checks) {
+			case NoCheck:
+				return;
 
-		Ldr(x9, reinterpret_cast<uintptr_t>(ptr));
-
-		while (sz > 0)
-		{
-			if (sz >= 8)
-			{
-				Ldr(x10, MemOperand(x9, 8, PostIndex));
-				Ldr(x11, *(u64*)ptr);
-				Cmp(x10, x11);
-				sz -= 8;
-				ptr += 8;
-			}
-			else if (sz >= 4)
-			{
-				Ldr(w10, MemOperand(x9, 4, PostIndex));
+			case FastCheck: {
+				u8* ptr = GetMemPtr(block->addr, 4);
+				if (ptr == NULL)
+					return;
+				Ldr(x9, reinterpret_cast<uintptr_t>(ptr));
+				Ldr(w10, MemOperand(x9));
 				Ldr(w11, *(u32*)ptr);
 				Cmp(w10, w11);
-				sz -= 4;
-				ptr += 4;
+				B(eq, &blockcheck_success);
 			}
-			else
-			{
-				Ldrh(w10, MemOperand(x9, 2, PostIndex));
-				Mov(w11, *(u16*)ptr);
-				Cmp(w10, w11);
-				sz -= 2;
-				ptr += 2;
+			break;
+
+			case FullCheck: {
+				s32 sz = block->sh4_code_size;
+
+				u8* ptr = GetMemPtr(block->addr, sz);
+				if (ptr == NULL)
+					return;
+
+				Ldr(x9, reinterpret_cast<uintptr_t>(ptr));
+
+				while (sz > 0)
+				{
+					if (sz >= 8)
+					{
+						Ldr(x10, MemOperand(x9, 8, PostIndex));
+						Ldr(x11, *(u64*)ptr);
+						Cmp(x10, x11);
+						sz -= 8;
+						ptr += 8;
+					}
+					else if (sz >= 4)
+					{
+						Ldr(w10, MemOperand(x9, 4, PostIndex));
+						Ldr(w11, *(u32*)ptr);
+						Cmp(w10, w11);
+						sz -= 4;
+						ptr += 4;
+					}
+					else
+					{
+						Ldrh(w10, MemOperand(x9, 2, PostIndex));
+						Mov(w11, *(u16*)ptr);
+						Cmp(w10, w11);
+						sz -= 2;
+						ptr += 2;
+					}
+					B(ne, &blockcheck_fail);
+				}
+				B(&blockcheck_success);
 			}
-			B(ne, &blockcheck_fail);
+			break;
+
+			default:
+				die("unhandled smc_checks");
 		}
-		B(&blockcheck_success);
 
 		Bind(&blockcheck_fail);
 		Ldr(w0, block->addr);
@@ -1403,20 +1397,23 @@ private:
 	std::vector<const VRegister*> call_fregs;
 	Arm64RegAlloc regalloc;
 	RuntimeBlockInfo* block;
+	const int write_memory_rewrite_size = 3;  // same size (fast write) for any size: add, bfc, str
+	#ifdef EXPLODE_SPANS
 	const int read_memory_rewrite_size = 6;	// worst case for u64: add, bfc, ldr, fmov, lsr, fmov
-											// FIXME rewrite size per read/write size?
-	const int write_memory_rewrite_size = 3;
+	#else
+	const int read_memory_rewrite_size = 4;	// worst case for u64: add, bfc, ldr, str
+	#endif
 };
 
 static Arm64Assembler* compiler;
 
-void ngen_Compile(RuntimeBlockInfo* block, bool force_checks, bool reset, bool staging, bool optimise)
+void ngen_Compile(RuntimeBlockInfo* block, SmcCheckEnum smc_checks, bool reset, bool staging, bool optimise)
 {
 	verify(emit_FreeSpace() >= 16 * 1024);
 
 	compiler = new Arm64Assembler();
 
-	compiler->ngen_Compile(block, force_checks, reset, staging, optimise);
+	compiler->ngen_Compile(block, smc_checks, reset, staging, optimise);
 
 	delete compiler;
 	compiler = NULL;
@@ -1445,13 +1442,14 @@ void ngen_CC_Finish(shil_opcode* op)
 bool ngen_Rewrite(unat& host_pc, unat, unat)
 {
 	//printf("ngen_Rewrite pc %p\n", host_pc);
-	RuntimeBlockInfo *block = bm_GetBlock((void *)host_pc);
+	void *host_pc_rw = (void*)CC_RX2RW(host_pc);
+	RuntimeBlockInfo *block = bm_GetBlock((void*)host_pc);
 	if (block == NULL)
 	{
 		printf("ngen_Rewrite: Block at %p not found\n", (void *)host_pc);
 		return false;
 	}
-	u32 *code_ptr = (u32*)host_pc;
+	u32 *code_ptr = (u32*)host_pc_rw;
 	auto it = block->memory_accesses.find(code_ptr);
 	if (it == block->memory_accesses.end())
 	{
@@ -1469,7 +1467,7 @@ bool ngen_Rewrite(unat& host_pc, unat, unat)
 		assembler->GenWriteMemorySlow(op);
 	assembler->Finalize(true);
 	delete assembler;
-	host_pc = (unat)(code_ptr - 2);
+	host_pc = (unat)CC_RW2RX(code_ptr - 2);
 
 	return true;
 }

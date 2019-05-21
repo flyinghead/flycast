@@ -18,13 +18,18 @@
  */
 #include <algorithm>
 #include <math.h>
+#ifdef _MSC_VER
+#include "dirent/dirent.h"
+#define S_ISDIR(mode) (((mode) & _S_IFMT) == _S_IFDIR)
+#else
 #include <dirent.h>
+#endif
 #include <sys/stat.h>
 
 #include "gui.h"
 #include "oslib/oslib.h"
 #include "cfg/cfg.h"
-#include "hw/maple/maple_cfg.h"
+#include "hw/maple/maple_if.h"
 #include "imgui/imgui.h"
 #include "gles/imgui_impl_opengl3.h"
 #include "imgui/roboto_medium.h"
@@ -34,7 +39,10 @@
 #include "linux-dist/main.h"	// FIXME for kcode[]
 #include "gui_util.h"
 #include "gui_android.h"
-#include "version/version.h"
+
+#include "version.h"
+#include "oslib/audiostream.h"
+
 
 extern void dc_loadstate();
 extern void dc_savestate();
@@ -63,6 +71,10 @@ static float scaling = 1;
 GuiState gui_state = Main;
 static bool settings_opening;
 static bool touch_up;
+
+static void display_vmus();
+static void reset_vmus();
+static void term_vmus();
 
 void gui_init()
 {
@@ -289,6 +301,10 @@ static void gui_display_commands()
     ImGui::NewFrame();
     if (!settings_opening)
     	ImGui_ImplOpenGL3_DrawBackground();
+
+    if (!settings.rend.FloatVMUs)
+    	// If floating VMUs, they are already visible on the background
+    	display_vmus();
 
     ImGui::SetNextWindowPos(ImVec2(screen_width / 2.f, screen_height / 2.f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
     ImGui::SetNextWindowSize(ImVec2(330 * scaling, 0));
@@ -611,6 +627,8 @@ void directory_selected_callback(bool cancelled, std::string selection)
 
 static void gui_display_settings()
 {
+	static bool maple_devices_changed;
+
 	ImGui_Impl_NewFrame();
     ImGui::NewFrame();
 
@@ -633,11 +651,14 @@ static void gui_display_settings()
     		gui_state = Commands;
     	else
     		gui_state = Main;
+    	if (maple_devices_changed)
+    	{
+    		maple_devices_changed = false;
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-    	// TODO only if changed? sleep time on emu thread?
-    	mcfg_DestroyDevices();
-   		mcfg_CreateDevices();
+    		maple_ReconnectDevices();
+    		reset_vmus();
 #endif
+    	}
        	SaveSettings();
     }
 	if (game_started)
@@ -791,13 +812,14 @@ static void gui_display_settings()
 		if (ImGui::BeginTabItem("Controls"))
 		{
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
+#if DC_PLATFORM == DC_PLATFORM_DREAMCAST || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
 		    if (ImGui::CollapsingHeader("Dreamcast Devices", ImGuiTreeNodeFlags_DefaultOpen))
 		    {
 				for (int bus = 0; bus < MAPLE_PORTS; bus++)
 				{
 					ImGui::Text("Device %c", bus + 'A');
 					ImGui::SameLine();
+#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
 					char device_name[32];
 					sprintf(device_name, "##device%d", bus);
 					float w = ImGui::CalcItemWidth() / 3;
@@ -808,7 +830,10 @@ static void gui_display_settings()
 						{
 							bool is_selected = settings.input.maple_devices[bus] == maple_device_type_from_index(i);
 							if (ImGui::Selectable(maple_device_types[i], &is_selected))
+							{
 								settings.input.maple_devices[bus] = maple_device_type_from_index(i);
+								maple_devices_changed = true;
+							}
 							if (is_selected)
 								ImGui::SetItemDefaultFocus();
 						}
@@ -826,7 +851,10 @@ static void gui_display_settings()
 							{
 								bool is_selected = settings.input.maple_expansion_devices[bus][port] == maple_expansion_device_type_from_index(i);
 								if (ImGui::Selectable(maple_expansion_device_types[i], &is_selected))
+								{
 									settings.input.maple_expansion_devices[bus][port] = maple_expansion_device_type_from_index(i);
+									maple_devices_changed = true;
+								}
 								if (is_selected)
 									ImGui::SetItemDefaultFocus();
 							}
@@ -835,6 +863,10 @@ static void gui_display_settings()
 						ImGui::PopID();
 					}
 					ImGui::PopItemWidth();
+#elif DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
+					if (MapleDevices[bus][5] != NULL)
+						ImGui::Text("%s", maple_device_name(MapleDevices[bus][5]->get_device_type()));
+#endif
 				}
 				ImGui::Spacing();
 		    }
@@ -935,15 +967,27 @@ static void gui_display_settings()
 		    	ImGui::Checkbox("Shadows", &settings.rend.ModifierVolumes);
 	            ImGui::SameLine();
 	            ShowHelpMarker("Enable modifier volumes, usually used for shadows");
+		    	ImGui::Checkbox("Fog", &settings.rend.Fog);
+	            ImGui::SameLine();
+	            ShowHelpMarker("Enable fog effects");
 		    	ImGui::Checkbox("Widescreen", &settings.rend.WideScreen);
 	            ImGui::SameLine();
 	            ShowHelpMarker("Draw geometry outside of the normal 4:3 aspect ratio. May produce graphical glitches in the revealed areas");
 		    	ImGui::Checkbox("Show FPS Counter", &settings.rend.ShowFPS);
 	            ImGui::SameLine();
 	            ShowHelpMarker("Show on-screen frame/sec counter");
+		    	ImGui::Checkbox("Show VMU in game", &settings.rend.FloatVMUs);
+	            ImGui::SameLine();
+	            ShowHelpMarker("Show the VMU LCD screens while in game");
+		    	ImGui::Checkbox("Rotate screen 90°", &settings.rend.Rotate90);
+	            ImGui::SameLine();
+	            ShowHelpMarker("Rotate the screen 90° counterclockwise");
 		    	ImGui::SliderInt("Scaling", (int *)&settings.rend.ScreenScaling, 1, 100);
 	            ImGui::SameLine();
 	            ShowHelpMarker("Downscaling factor relative to native screen resolution. Higher is better");
+		    	ImGui::SliderInt("Horizontal Stretching", (int *)&settings.rend.ScreenStretching, 100, 150);
+	            ImGui::SameLine();
+	            ShowHelpMarker("Stretch the screen horizontally");
 		    	ImGui::SliderInt("Frame Skipping", (int *)&settings.pvr.ta_skip, 0, 6);
 	            ImGui::SameLine();
 	            ShowHelpMarker("Number of frames to skip between two actually rendered frames");
@@ -981,12 +1025,122 @@ static void gui_display_settings()
 			ImGui::Checkbox("Disable Sound", &settings.aica.NoSound);
             ImGui::SameLine();
             ShowHelpMarker("Disable the emulator sound output");
+
 			ImGui::Checkbox("Enable DSP", &settings.aica.NoBatch);
             ImGui::SameLine();
             ShowHelpMarker("Enable the Dreamcast Digital Sound Processor. Only recommended on fast and arm64 platforms");
 			ImGui::Checkbox("Limit FPS", &settings.aica.LimitFPS);
             ImGui::SameLine();
             ShowHelpMarker("Use the sound output to limit the speed of the emulator. Recommended in most cases");
+
+			audiobackend_t* backend = NULL;;
+			std::string backend_name = settings.audio.backend;
+			if (backend_name != "auto" && backend_name != "none")
+			{
+				backend = GetAudioBackend(settings.audio.backend);
+				if (backend != NULL)
+					backend_name = backend->slug;
+			}
+
+			SortAudioBackends();
+
+			audiobackend_t* current_backend = backend;
+			if (ImGui::BeginCombo("Audio Backend", backend_name.c_str(), ImGuiComboFlags_None))
+			{
+				bool is_selected = (settings.audio.backend == "auto");
+				if (ImGui::Selectable("auto", &is_selected))
+					settings.audio.backend = "auto";
+				ImGui::SameLine(); ImGui::Text("-");
+				ImGui::SameLine(); ImGui::Text("Autoselect audio backend");
+
+				is_selected = (settings.audio.backend == "none");
+				if (ImGui::Selectable("none", &is_selected))
+					settings.audio.backend = "none";
+				ImGui::SameLine(); ImGui::Text("-");
+				ImGui::SameLine(); ImGui::Text("No audio backend");
+
+				for (int i = 0; i < GetAudioBackendCount(); i++)
+				{
+					backend = GetAudioBackend(i);
+					is_selected = (settings.audio.backend == backend->slug);
+
+					if (is_selected)
+						current_backend = backend;
+
+					if (ImGui::Selectable(backend->slug.c_str(), &is_selected))
+						settings.audio.backend = backend->slug;
+					ImGui::SameLine(); ImGui::Text("-");
+					ImGui::SameLine(); ImGui::Text(backend->name.c_str());
+	                if (is_selected)
+	                    ImGui::SetItemDefaultFocus();
+				}
+				ImGui::EndCombo();
+			}
+            ImGui::SameLine();
+            ShowHelpMarker("The audio backend to use");
+
+			if (current_backend != NULL && current_backend->get_options != NULL)
+			{
+				// get backend specific options
+				int option_count;
+				audio_option_t* options = current_backend->get_options(&option_count);
+
+				// initialize options if not already done
+				std::map<std::string, std::string>* cfg_entries = &settings.audio.options[current_backend->slug];
+				bool populate_entries = (cfg_entries->size() == 0);
+
+				for (int o = 0; o < option_count; o++)
+				{
+					std::string value;
+					if (populate_entries)
+					{
+						value = cfgLoadStr(current_backend->slug.c_str(), options->cfg_name.c_str(), "");
+						(*cfg_entries)[options->cfg_name] = value;
+					}
+					value = (*cfg_entries)[options->cfg_name];
+
+					if (options->type == integer)
+					{
+						int val = stoi(value);
+						ImGui::SliderInt(options->caption.c_str(), &val, options->min_value, options->max_value);
+						(*cfg_entries)[options->cfg_name] = to_string(val);
+					}
+					else if (options->type == checkbox)
+					{
+						bool check = (value == "1");
+						ImGui::Checkbox(options->caption.c_str(), &check);
+						std::string cur = check ? "1" : "0";
+						(*cfg_entries)[options->cfg_name] = cur;
+					}
+					else if (options->type == ::list)
+					{
+						if (ImGui::BeginCombo(options->caption.c_str(), value.c_str(), ImGuiComboFlags_None))
+						{
+							bool is_selected = false;
+							std::vector<std::string> list_items = options->list_callback();
+							for (std::vector<std::string>::iterator it = list_items.begin() ; it != list_items.end(); ++it)
+							{
+								std::string cur = (std::string)*it;
+								is_selected = (value == cur);
+								if (ImGui::Selectable(cur.c_str(), &is_selected))
+								{
+									(*cfg_entries)[options->cfg_name] = cur;
+								}
+
+								if (is_selected)
+									ImGui::SetItemDefaultFocus();
+							}
+							ImGui::EndCombo();
+						}
+					}
+					else {
+						printf("Unknown option\n");
+					}
+
+					options++;
+				}
+			}
+
 			ImGui::PopStyleVar();
 			ImGui::EndTabItem();
 		}
@@ -1012,10 +1166,33 @@ static void gui_display_settings()
 	            ShowHelpMarker("Do not optimize integer division. Recommended");
 		    	ImGui::Checkbox("Unstable Optimizations", &settings.dynarec.unstable_opt);
 	            ImGui::SameLine();
-	            ShowHelpMarker("Enable unsafe optimizations. May cause crash or environmental disaster");
+	            ShowHelpMarker("Enable unsafe optimizations. Will cause crash or environmental disaster");
 		    	ImGui::Checkbox("Idle Skip", &settings.dynarec.idleskip);
 	            ImGui::SameLine();
 	            ShowHelpMarker("Skip wait loops. Recommended");
+				ImGui::PushItemWidth(ImGui::CalcTextSize("Largeenough").x);
+	            const char *preview = settings.dynarec.SmcCheckLevel == NoCheck ? "Faster" : settings.dynarec.SmcCheckLevel == FastCheck ? "Fast" : "Full";
+				if (ImGui::BeginCombo("SMC Checks", preview	, ImGuiComboFlags_None))
+				{
+					bool is_selected = settings.dynarec.SmcCheckLevel == NoCheck;
+					if (ImGui::Selectable("Faster", &is_selected))
+						settings.dynarec.SmcCheckLevel = NoCheck;
+					if (is_selected)
+						ImGui::SetItemDefaultFocus();
+					is_selected = settings.dynarec.SmcCheckLevel == FastCheck;
+					if (ImGui::Selectable("Fast", &is_selected))
+						settings.dynarec.SmcCheckLevel = FastCheck;
+					if (is_selected)
+						ImGui::SetItemDefaultFocus();
+					is_selected = settings.dynarec.SmcCheckLevel == FullCheck;
+					if (ImGui::Selectable("Full", &is_selected))
+						settings.dynarec.SmcCheckLevel = FullCheck;
+					if (is_selected)
+						ImGui::SetItemDefaultFocus();
+					ImGui::EndCombo();
+				}
+	            ImGui::SameLine();
+	            ShowHelpMarker("How to detect self-modifying code. Full check recommended");
 		    }
 		    if (ImGui::CollapsingHeader("Other", ImGuiTreeNodeFlags_DefaultOpen))
 		    {
@@ -1036,9 +1213,9 @@ static void gui_display_settings()
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
 		    if (ImGui::CollapsingHeader("Reicast", ImGuiTreeNodeFlags_DefaultOpen))
 		    {
-				ImGui::Text("Version: %s", version);
-				ImGui::Text("Git Hash: %s", git_hash);
-				ImGui::Text("Build Date: %s", build_date);
+				ImGui::Text("Version: %s", REICAST_VERSION);
+				ImGui::Text("Git Hash: %s", GIT_HASH);
+				ImGui::Text("Build Date: %s", BUILD_DATE);
 				ImGui::Text("Target: %s",
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST
 						"Dreamcast"
@@ -1220,6 +1397,7 @@ static void gui_start_game(const std::string& path)
 	{
 		gui_state = Main;
 		game_started = false;
+		cfgSetVirtual("config", "image", "");
 		switch (rc) {
 		case -3:
 			error_msg = "Audio/video initialization failed";
@@ -1269,6 +1447,17 @@ static void gui_display_content()
 	ImGui::BeginChild(ImGui::GetID("library"), ImVec2(0, 0), true);
     {
 		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8 * scaling, 20 * scaling));		// from 8, 4
+
+#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
+		ImGui::PushID("bios");
+		if (ImGui::Selectable("Dreamcast BIOS"))
+		{
+			gui_state = ClosedNoResume;
+			cfgSetVirtual("config", "image", "");
+			gui_start_game("");
+		}
+		ImGui::PopID();
+#endif
 
         for (auto game : game_list)
         	if (filter.PassFilter(game.name.c_str()))
@@ -1366,24 +1555,6 @@ void gui_display_ui()
 		gui_state = Closed;
 }
 
-void gui_display_fps(const char *string)
-{
-	ImGui_Impl_NewFrame();
-    ImGui::NewFrame();
-
-    ImGui::SetNextWindowBgAlpha(0);
-    ImGui::SetNextWindowPos(ImVec2(0, screen_height), ImGuiCond_Always, ImVec2(0.f, 1.f));	// Lower left corner
-
-    ImGui::Begin("##fps", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav
-    		| ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoBackground);
-    ImGui::SetWindowFontScale(2);
-    ImGui::TextColored(ImVec4(1, 1, 0, 0.7), "%s", string);
-    ImGui::End();
-
-    ImGui::Render();
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-}
-
 static float LastFPSTime;
 static int lastFrameCount = 0;
 static float fps = -1;
@@ -1431,26 +1602,32 @@ void gui_display_osd()
 	if (osd_message.empty())
 	{
 		message = getFPSNotification();
-		if (message.empty())
-			return;
 	}
 	else
 		message = osd_message;
 
-	ImGui_Impl_NewFrame();
-    ImGui::NewFrame();
+	if (!message.empty() || settings.rend.FloatVMUs)
+	{
+		ImGui_Impl_NewFrame();
+		ImGui::NewFrame();
 
-    ImGui::SetNextWindowBgAlpha(0);
-    ImGui::SetNextWindowPos(ImVec2(0, screen_height), ImGuiCond_Always, ImVec2(0.f, 1.f));	// Lower left corner
+		if (!message.empty())
+		{
+			ImGui::SetNextWindowBgAlpha(0);
+			ImGui::SetNextWindowPos(ImVec2(0, screen_height), ImGuiCond_Always, ImVec2(0.f, 1.f));	// Lower left corner
 
-    ImGui::Begin("##osd", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav
-    		| ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoBackground);
-    ImGui::SetWindowFontScale(1.5);
-    ImGui::TextColored(ImVec4(1, 1, 0, 0.7), "%s", message.c_str());
-    ImGui::End();
+			ImGui::Begin("##osd", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav
+					| ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoBackground);
+			ImGui::SetWindowFontScale(1.5);
+			ImGui::TextColored(ImVec4(1, 1, 0, 0.7), "%s", message.c_str());
+			ImGui::End();
+		}
+		if (settings.rend.FloatVMUs)
+			display_vmus();
 
-    ImGui::Render();
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+		ImGui::Render();
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+	}
 }
 
 void gui_open_onboarding()
@@ -1461,6 +1638,7 @@ void gui_open_onboarding()
 void gui_term()
 {
 	inited = false;
+	term_vmus();
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui::DestroyContext();
 }
@@ -1472,10 +1650,108 @@ int msgboxf(const wchar* text, unsigned int type, ...) {
     va_start(args, type);
     vsnprintf(temp, sizeof(temp), text, args);
     va_end(args);
-    printf("%s", temp);
+    printf("%s\n", temp);
 
     gui_display_notification(temp, 2000);
 
     return 1;
 }
 
+extern bool subfolders_read;
+
+void gui_refresh_files()
+{
+	game_list_done = false;
+	subfolders_read = false;
+}
+
+#define VMU_WIDTH (70 * 48 * scaling / 32)
+#define VMU_HEIGHT (70 * scaling)
+#define VMU_PADDING (8 * scaling)
+static u32 vmu_lcd_data[8][48 * 32];
+static bool vmu_lcd_status[8];
+static ImTextureID vmu_lcd_tex_ids[8];
+
+void push_vmu_screen(int bus_id, int bus_port, u8* buffer)
+{
+	int vmu_id = bus_id * 2 + bus_port;
+	if (vmu_id < 0 || vmu_id >= ARRAY_SIZE(vmu_lcd_data))
+		return;
+	u32 *p = &vmu_lcd_data[vmu_id][0];
+	for (int i = 0; i < ARRAY_SIZE(vmu_lcd_data[vmu_id]); i++, buffer++)
+		*p++ = *buffer != 0 ? 0xFFFFFFFFu : 0xFF000000u;
+	vmu_lcd_status[vmu_id] = true;
+}
+
+static const int vmu_coords[8][2] = {
+		{ 0 , 0 },
+		{ 0 , 0 },
+		{ 1 , 0 },
+		{ 1 , 0 },
+		{ 0 , 1 },
+		{ 0 , 1 },
+		{ 1 , 1 },
+		{ 1 , 1 },
+};
+
+static void display_vmus()
+{
+	if (!game_started)
+		return;
+    ImGui::SetNextWindowBgAlpha(0);
+    ImGui::SetNextWindowPos(ImVec2(0, 0));
+    ImGui::SetNextWindowSize(ImVec2(screen_width, screen_height));
+
+    ImGui::Begin("vmu-window", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoInputs
+    		| ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoFocusOnAppearing);
+	for (int i = 0; i < 8; i++)
+	{
+		if (!vmu_lcd_status[i])
+			continue;
+
+		if (vmu_lcd_tex_ids[i] != (ImTextureID)0)
+			ImGui_ImplOpenGL3_DeleteVmuTexture(vmu_lcd_tex_ids[i]);
+		vmu_lcd_tex_ids[i] = ImGui_ImplOpenGL3_CreateVmuTexture(vmu_lcd_data[i]);
+
+	    int x = vmu_coords[i][0];
+	    int y = vmu_coords[i][1];
+	    ImVec2 pos;
+	    if (x == 0)
+	    	pos.x = VMU_PADDING;
+	    else
+	    	pos.x = screen_width - VMU_WIDTH - VMU_PADDING;
+	    if (y == 0)
+	    {
+	    	pos.y = VMU_PADDING;
+	    	if (i & 1)
+	    		pos.y += VMU_HEIGHT + VMU_PADDING;
+	    }
+	    else
+	    {
+	    	pos.y = screen_height - VMU_HEIGHT - VMU_PADDING;
+	    	if (i & 1)
+	    		pos.y -= VMU_HEIGHT + VMU_PADDING;
+	    }
+	    ImVec2 pos_b(pos.x + VMU_WIDTH, pos.y + VMU_HEIGHT);
+		ImGui::GetWindowDrawList()->AddImage(vmu_lcd_tex_ids[i], pos, pos_b, ImVec2(0, 1), ImVec2(1, 0), 0xC0ffffff);
+	}
+    ImGui::End();
+}
+
+static void reset_vmus()
+{
+	for (int i = 0; i < ARRAY_SIZE(vmu_lcd_status); i++)
+		vmu_lcd_status[i] = false;
+}
+
+static void term_vmus()
+{
+	for (int i = 0; i < ARRAY_SIZE(vmu_lcd_status); i++)
+	{
+		if (vmu_lcd_tex_ids[i] != (ImTextureID)0)
+		{
+			ImGui_ImplOpenGL3_DeleteVmuTexture(vmu_lcd_tex_ids[i]);
+			vmu_lcd_tex_ids[i] = (ImTextureID)0;
+		}
+	}
+}

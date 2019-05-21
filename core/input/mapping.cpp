@@ -104,6 +104,8 @@ void InputMapping::set_axis(DreamcastKey id, u32 code, bool is_inverted)
 	}
 }
 
+using namespace emucfg;
+
 void InputMapping::load(FILE* fp)
 {
 	ConfigFile mf;

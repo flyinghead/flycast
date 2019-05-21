@@ -72,7 +72,7 @@ void input_sdl_init()
 	{
 		if (SDL_InitSubSystem(SDL_INIT_JOYSTICK) < 0)
 		{
-			die("error initializing SDL Joystick subsystem");
+			die("SDL: error initializing Joystick subsystem");
 		}
 	}
 	if (SDL_WasInit(SDL_INIT_HAPTIC) == 0)

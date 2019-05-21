@@ -12,50 +12,16 @@ import android.preference.PreferenceManager;
 import com.reicast.emulator.config.Config;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FilenameFilter;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.nio.IntBuffer;
 import java.text.SimpleDateFormat;
-import java.util.Collection;
 import java.util.Date;
-import java.util.List;
 import java.util.Locale;
-import java.util.Vector;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
 
 import javax.microedition.khronos.opengles.GL10;
 
 public class FileUtils {
 
-	public Collection<File> listFiles(File directory, FilenameFilter[] filter,
-			int recurse) {
-
-		Vector<File> files = new Vector<>();
-
-		File[] entries = directory.listFiles();
-
-		if (entries != null) {
-			for (File entry : entries) {
-				for (FilenameFilter filefilter : filter) {
-					if (filefilter.accept(directory, entry.getName())) {
-						files.add(entry);
-					}
-				}
-				if ((recurse <= -1) || (recurse > 0 && entry.isDirectory())) {
-					recurse--;
-					files.addAll(listFiles(entry, filter, recurse));
-					recurse++;
-				}
-			}
-		}
-		return files;
-	}
-	
 	public static void saveScreenshot(final Context c, int w, int h, GL10 gl){
 		try {
 			SharedPreferences mPrefs = PreferenceManager.getDefaultSharedPreferences(c);
@@ -80,7 +46,7 @@ public class FileUtils {
 	}
 	
 	//thank you stackoverflow
-	public static Bitmap savePixels(int x, int y, int w, int h, GL10 gl)
+	private static Bitmap savePixels(int x, int y, int w, int h, GL10 gl)
 	{
 		int b[]=new int[w*(y+h)];
 		int bt[]=new int[w*h];

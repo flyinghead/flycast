@@ -34,6 +34,8 @@ IMGUI_IMPL_API void     ImGui_ImplOpenGL3_Shutdown();
 IMGUI_IMPL_API void     ImGui_ImplOpenGL3_NewFrame();
 IMGUI_IMPL_API void     ImGui_ImplOpenGL3_RenderDrawData(ImDrawData* draw_data, bool save_background = false);
 IMGUI_IMPL_API void     ImGui_ImplOpenGL3_DrawBackground();
+IMGUI_IMPL_API ImTextureID ImGui_ImplOpenGL3_CreateVmuTexture(const unsigned int *);
+IMGUI_IMPL_API void     ImGui_ImplOpenGL3_DeleteVmuTexture(ImTextureID);
 
 // Called by Init/NewFrame/Shutdown
 IMGUI_IMPL_API bool     ImGui_ImplOpenGL3_CreateFontsTexture();

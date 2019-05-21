@@ -12,7 +12,7 @@
 static string cfgPath;
 static bool save_config = true;
 
-static ConfigFile cfgdb;
+static emucfg::ConfigFile cfgdb;
 static string game_id;
 static bool has_game_specific_config = false;
 
