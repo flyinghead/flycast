@@ -325,7 +325,7 @@ void libCore_gdrom_disc_change()
 	read_params = { 0 };
 	set_mode_offset = 0;
 	packet_cmd = { 0 };
-	read_buff = { 0 };
+	memset(&read_buff, 0, sizeof(read_buff));
 	pio_buff = { gds_waitcmd, 0 };
 	ata_cmd = { 0 };
 	cdda = { 0 };
