@@ -143,9 +143,7 @@ void LoadSpecialSettings()
 	full_mmu_game = false;
 	disable_vmem32_game = false;
 	
-	if (reios_windows_ce
-			// Half-life
-			|| !strncmp("MK-51035", reios_product_number, 8))
+	if (reios_windows_ce)
 	{
 		printf("Enabling Full MMU and Extra depth scaling for Windows CE game\n");
 		settings.rend.ExtraDepthScale = 0.1;
