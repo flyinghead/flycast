@@ -499,7 +499,7 @@ void InitSettings()
 	settings.dreamcast.language     = 6;	// default
 	settings.dreamcast.FullMMU      = false;
 	settings.dynarec.SmcCheckLevel  = FullCheck;
-	settings.aica.LimitFPS			= true;
+	settings.aica.LimitFPS			= LimitFPSEnabled;
 	settings.aica.NoBatch			= false;	// This also controls the DSP. Disabled by default
     settings.aica.NoSound			= false;
 	settings.audio.backend 			= "auto";
@@ -581,7 +581,7 @@ void LoadSettings(bool game_specific)
 	settings.dreamcast.broadcast	= cfgLoadInt(config_section, "Dreamcast.Broadcast", settings.dreamcast.broadcast);
 	settings.dreamcast.language     = cfgLoadInt(config_section, "Dreamcast.Language", settings.dreamcast.language);
 	settings.dreamcast.FullMMU      = cfgLoadBool(config_section, "Dreamcast.FullMMU", settings.dreamcast.FullMMU);
-	settings.aica.LimitFPS			= cfgLoadBool(config_section, "aica.LimitFPS", settings.aica.LimitFPS);
+	settings.aica.LimitFPS			= (LimitFPSEnum)cfgLoadInt(config_section, "aica.LimitFPS", (int)settings.aica.LimitFPS);
 	settings.aica.NoBatch			= cfgLoadBool(config_section, "aica.NoBatch", settings.aica.NoBatch);
     settings.aica.NoSound			= cfgLoadBool(config_section, "aica.NoSound", settings.aica.NoSound);
     settings.audio.backend			= cfgLoadStr(audio_section, "backend", settings.audio.backend.c_str());
@@ -719,7 +719,7 @@ void SaveSettings()
 	cfgSaveInt("config", "Dynarec.SmcCheckLevel", (int)settings.dynarec.SmcCheckLevel);
 
 	cfgSaveInt("config", "Dreamcast.Language", settings.dreamcast.language);
-	cfgSaveBool("config", "aica.LimitFPS", settings.aica.LimitFPS);
+	cfgSaveInt("config", "aica.LimitFPS", (int)settings.aica.LimitFPS);
 	cfgSaveBool("config", "aica.NoBatch", settings.aica.NoBatch);
 	cfgSaveBool("config", "aica.NoSound", settings.aica.NoSound);
 	cfgSaveStr("audio", "backend", settings.audio.backend.c_str());

@@ -1054,9 +1054,28 @@ static void gui_display_settings()
 			ImGui::Checkbox("Enable DSP", &settings.aica.NoBatch);
             ImGui::SameLine();
             ShowHelpMarker("Enable the Dreamcast Digital Sound Processor. Only recommended on fast and arm64 platforms");
-			ImGui::Checkbox("Limit FPS", &settings.aica.LimitFPS);
-            ImGui::SameLine();
-            ShowHelpMarker("Use the sound output to limit the speed of the emulator. Recommended in most cases");
+			const char *preview = settings.aica.LimitFPS == LimitFPSDisabled ? "Disabled" : settings.aica.LimitFPS == LimitFPSAuto ? "Automatic" : "Enabled";
+			if (ImGui::BeginCombo("Limit Emulator Speed", preview, ImGuiComboFlags_None))
+			{
+				bool is_selected = settings.aica.LimitFPS == LimitFPSDisabled;
+				if (ImGui::Selectable("Disabled", &is_selected))
+					settings.aica.LimitFPS = LimitFPSDisabled;
+				if (is_selected)
+					ImGui::SetItemDefaultFocus();
+				is_selected = settings.aica.LimitFPS == LimitFPSAuto;
+				if (ImGui::Selectable("Automatic", &is_selected))
+					settings.aica.LimitFPS = LimitFPSAuto;
+				if (is_selected)
+					ImGui::SetItemDefaultFocus();
+				is_selected = settings.aica.LimitFPS == LimitFPSEnabled;
+				if (ImGui::Selectable("Enabled", &is_selected))
+					settings.aica.LimitFPS = LimitFPSEnabled;
+				if (is_selected)
+					ImGui::SetItemDefaultFocus();
+				ImGui::EndCombo();
+			}
+			ImGui::SameLine();
+			ShowHelpMarker("Whether to limit the emulator speed using the audio output. Enabled recommended");
 
 			audiobackend_t* backend = NULL;;
 			std::string backend_name = settings.audio.backend;
@@ -1070,19 +1089,15 @@ static void gui_display_settings()
 			SortAudioBackends();
 
 			audiobackend_t* current_backend = backend;
-			if (ImGui::BeginCombo("Audio Backend", backend_name.c_str(), ImGuiComboFlags_None))
+			if (ImGui::BeginCombo("Audio Driver", backend_name.c_str(), ImGuiComboFlags_None))
 			{
 				bool is_selected = (settings.audio.backend == "auto");
-				if (ImGui::Selectable("auto", &is_selected))
+				if (ImGui::Selectable("auto - Automatic driver selection", &is_selected))
 					settings.audio.backend = "auto";
-				ImGui::SameLine(); ImGui::Text("-");
-				ImGui::SameLine(); ImGui::Text("Autoselect audio backend");
 
 				is_selected = (settings.audio.backend == "none");
-				if (ImGui::Selectable("none", &is_selected))
+				if (ImGui::Selectable("none - No audio driver", &is_selected))
 					settings.audio.backend = "none";
-				ImGui::SameLine(); ImGui::Text("-");
-				ImGui::SameLine(); ImGui::Text("No audio backend");
 
 				for (int i = 0; i < GetAudioBackendCount(); i++)
 				{
@@ -1092,17 +1107,15 @@ static void gui_display_settings()
 					if (is_selected)
 						current_backend = backend;
 
-					if (ImGui::Selectable(backend->slug.c_str(), &is_selected))
+					if (ImGui::Selectable((backend->slug + " - " + backend->name).c_str(), &is_selected))
 						settings.audio.backend = backend->slug;
-					ImGui::SameLine(); ImGui::Text("-");
-					ImGui::SameLine(); ImGui::Text(backend->name.c_str());
-	                if (is_selected)
-	                    ImGui::SetItemDefaultFocus();
+					if (is_selected)
+						ImGui::SetItemDefaultFocus();
 				}
 				ImGui::EndCombo();
 			}
-            ImGui::SameLine();
-            ShowHelpMarker("The audio backend to use");
+			ImGui::SameLine();
+			ShowHelpMarker("The audio driver to use");
 
 			if (current_backend != NULL && current_backend->get_options != NULL)
 			{
