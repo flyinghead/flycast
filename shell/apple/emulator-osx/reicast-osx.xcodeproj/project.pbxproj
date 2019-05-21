@@ -329,7 +329,7 @@
 		84967CBA1B8F49EE005F1140 /* pngwrite.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pngwrite.c; sourceTree = "<group>"; };
 		84967CBB1B8F49EE005F1140 /* pngwtran.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pngwtran.c; sourceTree = "<group>"; };
 		84967CBC1B8F49EE005F1140 /* pngwutil.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pngwutil.c; sourceTree = "<group>"; };
-		84A388B31B1CDD3E000166C0 /* reicast-osx.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; name = "reicast-osx.app"; path = Reicast.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		84A388B31B1CDD3E000166C0 /* Reicast.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Reicast.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		84A388B71B1CDD3E000166C0 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		84A388B81B1CDD3E000166C0 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		84A388BA1B1CDD3E000166C0 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
@@ -634,6 +634,8 @@
 		AE1E292B20947D4700FC6BA2 /* xbyak_util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = xbyak_util.h; sourceTree = "<group>"; };
 		AE1E293A2095FB1600FC6BA2 /* rec_cpp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = rec_cpp.cpp; sourceTree = "<group>"; };
 		AE1E293F20A96B0B00FC6BA2 /* rec_x64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = rec_x64.cpp; sourceTree = "<group>"; };
+		AE2A234922941A0500DD3034 /* NaomiConfig.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = NaomiConfig.xcconfig; sourceTree = "<group>"; };
+		AE2A234A22941AF000DD3034 /* DreamcastConfig.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = DreamcastConfig.xcconfig; sourceTree = "<group>"; };
 		AE2A2D4921D6820D004B308D /* glcache.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = glcache.h; sourceTree = "<group>"; };
 		AE2A2D4D21D6846F004B308D /* awcartridge.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = awcartridge.h; sourceTree = "<group>"; };
 		AE2A2D4E21D6846F004B308D /* gdcartridge.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = gdcartridge.cpp; sourceTree = "<group>"; };
@@ -928,7 +930,7 @@
 		84A388B41B1CDD3E000166C0 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				84A388B31B1CDD3E000166C0 /* reicast-osx.app */,
+				84A388B31B1CDD3E000166C0 /* Reicast.app */,
 				84A388C31B1CDD3F000166C0 /* reicast-osxTests.xctest */,
 			);
 			name = Products;
@@ -946,6 +948,8 @@
 				84B7BF851B72871600F9733F /* EmuGLView.swift */,
 				AE60BD9F22256E2500FA8A5B /* osx_keyboard.h */,
 				AE60BDA02225725800FA8A5B /* osx_gamepad.h */,
+				AE2A234922941A0500DD3034 /* NaomiConfig.xcconfig */,
+				AE2A234A22941AF000DD3034 /* DreamcastConfig.xcconfig */,
 			);
 			name = "reicast-osx";
 			path = "emulator-osx";
@@ -2093,7 +2097,7 @@
 			);
 			name = "reicast-osx";
 			productName = "reicast-osx";
-			productReference = 84A388B31B1CDD3E000166C0 /* reicast-osx.app */;
+			productReference = 84A388B31B1CDD3E000166C0 /* Reicast.app */;
 			productType = "com.apple.product-type.application";
 		};
 		84A388C21B1CDD3F000166C0 /* reicast-osxTests */ = {
@@ -2508,6 +2512,7 @@
 /* Begin XCBuildConfiguration section */
 		84A388CB1B1CDD3F000166C0 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = AE2A234A22941AF000DD3034 /* DreamcastConfig.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
@@ -2565,6 +2570,7 @@
 		};
 		84A388CC1B1CDD3F000166C0 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = AE2A234A22941AF000DD3034 /* DreamcastConfig.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
@@ -2620,6 +2626,7 @@
 		};
 		84A388CE1B1CDD3F000166C0 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = AE2A234A22941AF000DD3034 /* DreamcastConfig.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				COMBINE_HIDPI_IMAGES = YES;
@@ -2647,7 +2654,7 @@
 				);
 				INFOPLIST_FILE = "emulator-osx/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
-				PRODUCT_NAME = Reicast;
+				PRODUCT_NAME = "$(REI_APP_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "emulator-osx/emulator-osx-Bridging-Header.h";
 				SWIFT_VERSION = 3.0;
 			};
@@ -2655,6 +2662,7 @@
 		};
 		84A388CF1B1CDD3F000166C0 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = AE2A234A22941AF000DD3034 /* DreamcastConfig.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				COMBINE_HIDPI_IMAGES = YES;
@@ -2679,7 +2687,7 @@
 				);
 				INFOPLIST_FILE = "emulator-osx/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
-				PRODUCT_NAME = Reicast;
+				PRODUCT_NAME = "$(REI_APP_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "emulator-osx/emulator-osx-Bridging-Header.h";
 				SWIFT_VERSION = 3.0;
 			};
@@ -2687,6 +2695,7 @@
 		};
 		84A388D11B1CDD3F000166C0 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = AE2A234A22941AF000DD3034 /* DreamcastConfig.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				COMBINE_HIDPI_IMAGES = YES;
@@ -2708,6 +2717,7 @@
 		};
 		84A388D21B1CDD3F000166C0 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = AE2A234A22941AF000DD3034 /* DreamcastConfig.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				COMBINE_HIDPI_IMAGES = YES;
@@ -2723,6 +2733,231 @@
 			};
 			name = Release;
 		};
+		AE2A23432294179900DD3034 /* DebugNaomi */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = AE2A234922941A0500DD3034 /* NaomiConfig.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				COPY_PHASE_STRIP = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					TARGET_NO_WEBUI,
+					TARGET_NO_NIXPROF,
+					TARGET_NO_COREIO_HTTP,
+					TARGET_NO_AREC,
+					XBYAK_NO_OP_NAMES,
+					TARGET_NO_OPENMP,
+					ENABLE_MODEM,
+					CHD5_LZMA,
+					_7ZIP_ST,
+					CHD5_FLAC,
+					"PACKAGE_VERSION=\\\"1.3.2\\\"",
+					"FLAC__HAS_OGG=0",
+					FLAC__NO_DLL,
+					HAVE_LROUND,
+					HAVE_STDINT_H,
+					HAVE_STDLIB_H,
+					HAVE_SYS_PARAM_H,
+					"${CFLAGS}",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.9;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = DebugNaomi;
+		};
+		AE2A23442294179900DD3034 /* DebugNaomi */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = AE2A234922941A0500DD3034 /* NaomiConfig.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				"GCC_PREPROCESSOR_DEFINITIONS[arch=i386]" = (
+					TARGET_OSX,
+					"$(inherited)",
+				);
+				"GCC_PREPROCESSOR_DEFINITIONS[arch=x86_64]" = (
+					TARGET_OSX_X64,
+					"$(inherited)",
+				);
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
+					../../../core/deps,
+					../../../core,
+					../../../core/khronos,
+					"../../../core/deps/picotcp/**",
+					../../../core/deps/flac/include,
+					../../../core/deps/flac/src/libFLAC/include,
+				);
+				INFOPLIST_FILE = "emulator-osx/Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				PRODUCT_NAME = "$(REI_APP_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "emulator-osx/emulator-osx-Bridging-Header.h";
+				SWIFT_VERSION = 3.0;
+			};
+			name = DebugNaomi;
+		};
+		AE2A23452294179900DD3034 /* DebugNaomi */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = AE2A234922941A0500DD3034 /* NaomiConfig.xcconfig */;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(DEVELOPER_FRAMEWORKS_DIR)",
+					"$(inherited)",
+				);
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				INFOPLIST_FILE = "emulator-osxTests/Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				PRODUCT_NAME = "reicast-osxTests";
+				SWIFT_VERSION = 3.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/reicast-osx.app/Contents/MacOS/reicast-osx";
+			};
+			name = DebugNaomi;
+		};
+		AE2A2346229417A400DD3034 /* ReleaseNaomi */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = AE2A234922941A0500DD3034 /* NaomiConfig.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					TARGET_NO_WEBUI,
+					TARGET_NO_NIXPROF,
+					TARGET_NO_COREIO_HTTP,
+					TARGET_NO_AREC,
+					XBYAK_NO_OP_NAMES,
+					TARGET_NO_OPENMP,
+					ENABLE_MODEM,
+					CHD5_LZMA,
+					_7ZIP_ST,
+					CHD5_FLAC,
+					"PACKAGE_VERSION=\\\"1.3.2\\\"",
+					"FLAC__HAS_OGG=0",
+					FLAC__NO_DLL,
+					HAVE_LROUND,
+					HAVE_STDINT_H,
+					HAVE_STDLIB_H,
+					HAVE_SYS_PARAM_H,
+					RELEASE,
+					"${CFLAGS}",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.9;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = macosx;
+			};
+			name = ReleaseNaomi;
+		};
+		AE2A2347229417A400DD3034 /* ReleaseNaomi */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = AE2A234922941A0500DD3034 /* NaomiConfig.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_PREPROCESSOR_DEFINITIONS = "$(inherited)";
+				"GCC_PREPROCESSOR_DEFINITIONS[arch=i386]" = (
+					TARGET_OSX,
+					"$(inherited)",
+				);
+				"GCC_PREPROCESSOR_DEFINITIONS[arch=x86_64]" = (
+					TARGET_OSX_X64,
+					"$(inherited)",
+				);
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
+					../../../core/deps,
+					../../../core,
+					../../../core/khronos,
+					"../../../core/deps/picotcp/**",
+					../../../core/deps/flac/include,
+					../../../core/deps/flac/src/libFLAC/include,
+				);
+				INFOPLIST_FILE = "emulator-osx/Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				PRODUCT_NAME = "$(REI_APP_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "emulator-osx/emulator-osx-Bridging-Header.h";
+				SWIFT_VERSION = 3.0;
+			};
+			name = ReleaseNaomi;
+		};
+		AE2A2348229417A400DD3034 /* ReleaseNaomi */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = AE2A234922941A0500DD3034 /* NaomiConfig.xcconfig */;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(DEVELOPER_FRAMEWORKS_DIR)",
+					"$(inherited)",
+				);
+				INFOPLIST_FILE = "emulator-osxTests/Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				PRODUCT_NAME = "reicast-osxTests";
+				SWIFT_VERSION = 3.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/reicast-osx.app/Contents/MacOS/reicast-osx";
+			};
+			name = ReleaseNaomi;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -2730,7 +2965,9 @@
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				84A388CB1B1CDD3F000166C0 /* Debug */,
+				AE2A23432294179900DD3034 /* DebugNaomi */,
 				84A388CC1B1CDD3F000166C0 /* Release */,
+				AE2A2346229417A400DD3034 /* ReleaseNaomi */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -2739,7 +2976,9 @@
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				84A388CE1B1CDD3F000166C0 /* Debug */,
+				AE2A23442294179900DD3034 /* DebugNaomi */,
 				84A388CF1B1CDD3F000166C0 /* Release */,
+				AE2A2347229417A400DD3034 /* ReleaseNaomi */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -2748,7 +2987,9 @@
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				84A388D11B1CDD3F000166C0 /* Debug */,
+				AE2A23452294179900DD3034 /* DebugNaomi */,
 				84A388D21B1CDD3F000166C0 /* Release */,
+				AE2A2348229417A400DD3034 /* ReleaseNaomi */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

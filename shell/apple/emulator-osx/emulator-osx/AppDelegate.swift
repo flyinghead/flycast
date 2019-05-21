@@ -15,6 +15,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
+		if let name = Bundle.main.infoDictionary?["CFBundleDisplayName"] as? String {
+			window.title = name
+		}
     }
 
     func applicationWillTerminate(_ aNotification: Notification) {
