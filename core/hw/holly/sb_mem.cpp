@@ -85,7 +85,9 @@ bool LoadRomFiles(const string& root)
 	if (settings.dreamcast.language <= 5)
 		syscfg.lang = settings.dreamcast.language;
 
-	sys_nvmem.WriteBlock(FLASH_PT_USER, FLASH_USER_SYSCFG, &syscfg);
+	if (sys_nvmem.WriteBlock(FLASH_PT_USER, FLASH_USER_SYSCFG, &syscfg) != 1)
+		printf("Failed to save time and language to flash RAM\n");
+
 #endif
 
 #if DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
