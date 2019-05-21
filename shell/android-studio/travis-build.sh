@@ -1,7 +1,7 @@
 #!/bin/bash
 set -ev
 if [ "${TRAVIS_PULL_REQUEST}" = "false" ]; then
-	./gradlew build  --configure-on-demand
+	./gradlew build --configure-on-demand --console=plain
 else
-	./gradlew assembleDebug  --configure-on-demand
+	./gradlew assembleDebug  --configure-on-demand --console=plain
 fi
