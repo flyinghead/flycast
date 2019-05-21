@@ -2,8 +2,8 @@ version: git-{branch}-{build}
 image: Visual Studio 2017
 
 configuration:
-- RelWithDebInfo
 - fast
+- RelWithDebInfo
 
 platform:
 - x64
@@ -45,14 +45,3 @@ after_build:
 artifacts:
   - path: artifacts
     name: reicast-win_$(PLATFORM)-$(CONFIGURATION)-$(APPVEYOR_REPO_COMMIT)
-
-deploy:
-- provider: S3
-  access_key_id: AKIAJETEBUZSLZF3YNKA
-  secret_access_key:
-    secure: ZxrysCeqMK99dOOzKyoeN4R5aO8JjA4RTrwVAQPQHz8sjyyKuVDZT2fC+9m6lUIi
-  region: eu-west-1
-  bucket: reicast-builds-windows
-  folder: 'builds/heads/$(APPVEYOR_REPO_BRANCH)-$(APPVEYOR_REPO_COMMIT)'
-  artifact: reicast-win_$(PLATFORM)-$(CONFIGURATION)-$(APPVEYOR_REPO_COMMIT)
-  set_public: true
