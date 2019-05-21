@@ -34,20 +34,6 @@
                ReferencedContainer = "container:emulator-osx/reicast-osx.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
-         <BuildActionEntry
-            buildForTesting = "YES"
-            buildForRunning = "YES"
-            buildForProfiling = "YES"
-            buildForArchiving = "YES"
-            buildForAnalyzing = "YES">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "849169A01B78C80B00F3F2B4"
-               BuildableName = "reicast-osx copy.app"
-               BlueprintName = "reicast-osx-naomi"
-               ReferencedContainer = "container:emulator-osx/reicast-osx.xcodeproj">
-            </BuildableReference>
-         </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
    <TestAction
