@@ -811,13 +811,19 @@ struct opcode_check_block : public opcodeExec {
 	opcodeExec* setup(RuntimeBlockInfo* block) {
 		this->block = block;
 		ptr = GetMemPtr(block->addr, 4);
-		code.resize(sz == -1 ? block->sh4_code_size : sz);
-		memcpy(&code[0], ptr, sz == -1 ? block->sh4_code_size : sz);
+		if (ptr != NULL)
+		{
+			code.resize(sz == -1 ? block->sh4_code_size : sz);
+			memcpy(&code[0], ptr, sz == -1 ? block->sh4_code_size : sz);
+		}
 
 		return this;
 	}
 
 	void execute() {
+		if (code.empty())
+			return;
+
 		switch (sz)
 		{
 		case 4:
