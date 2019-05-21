@@ -4,11 +4,15 @@ default_step_lib_source: https://github.com/bitrise-io/bitrise-steplib.git
 project_type: macos
 trigger_map:
 - push_branch: "*"
-  workflow: primary
+  workflow: deploy
 - pull_request_source_branch: "*"
-  workflow: primary
+  workflow: deploy
 workflows:
-  deploy:
+  deploy-naomi:
+    envs:
+    - opts:
+        is_expand: false
+      BITRISE_SCHEME: reicast-osx-naomi
     steps:
     - activate-ssh-key@4.0.3:
         run_if: '{{getenv "SSH_RSA_PRIVATE_KEY" | ne ""}}'
@@ -27,7 +31,11 @@ workflows:
         - export_method: "$BITRISE_EXPORT_METHOD"
     - deploy-to-bitrise-io@1.3.19: {}
     - cache-push@2.1.1: {}
-  primary:
+  deploy:
+    envs:
+    - opts:
+        is_expand: false
+      BITRISE_SCHEME: reicast-osx
     steps:
     - activate-ssh-key@4.0.3:
         run_if: '{{getenv "SSH_RSA_PRIVATE_KEY" | ne ""}}'
@@ -39,16 +47,20 @@ workflows:
     - recreate-user-schemes@1.0.2:
         inputs:
         - project_path: "$BITRISE_PROJECT_PATH"
+    - xcode-archive-mac@1.6.2:
+        inputs:
+        - project_path: "$BITRISE_PROJECT_PATH"
+        - scheme: "$BITRISE_SCHEME"
+        - export_method: "$BITRISE_EXPORT_METHOD"
     - deploy-to-bitrise-io@1.3.19: {}
     - cache-push@2.1.1: {}
+    after_run:
+    - deploy-naomi
 app:
   envs:
   - opts:
       is_expand: false
     BITRISE_PROJECT_PATH: shell/apple/reicast.xcworkspace
-  - opts:
-      is_expand: false
-    BITRISE_SCHEME: reicast-osx
   - opts:
       is_expand: false
     BITRISE_EXPORT_METHOD: none
