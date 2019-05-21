@@ -1174,6 +1174,7 @@ bool render_output_framebuffer()
 	}
 	else
 	{
+#ifndef GLES2
 		if (gl.ofbo.fbo == 0)
 			return false;
 		glBindFramebuffer(GL_READ_FRAMEBUFFER, gl.ofbo.fbo);
@@ -1182,6 +1183,7 @@ bool render_output_framebuffer()
 				0, 0, screen_width, screen_height,
 				GL_COLOR_BUFFER_BIT, GL_LINEAR);
     	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+#endif
 	}
 	return true;
 }
