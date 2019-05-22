@@ -54,7 +54,8 @@ bool mem_region_unmap_file(void *start, size_t len)
 	return UnmapViewOfFile(start);
 }
 
-static HANDLE mem_handle = INVALID_HANDLE_VALUE, mem_handle2 = INVALID_HANDLE_VALUE;
+HANDLE mem_handle = INVALID_HANDLE_VALUE;
+static HANDLE mem_handle2 = INVALID_HANDLE_VALUE;
 static char * base_alloc = NULL;
 
 // Implement vmem initialization for RAM, ARAM, VRAM and SH4 context, fpcb etc.
