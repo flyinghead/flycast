@@ -4,13 +4,11 @@
 #if HOST_OS==OS_LINUX
 #include <poll.h>
 #include <termios.h>
-//#include <curses.h>
 #include <fcntl.h>
 #include <semaphore.h>
 #include <stdarg.h>
 #include <signal.h>
 #include <sys/param.h>
-#include <sys/mman.h>
 #include <sys/time.h>
 #include "hw/sh4/dyna/blockmanager.h"
 #include "hw/maple/maple_cfg.h"

@@ -58,7 +58,7 @@ class DecryptedCartridge : public NaomiCartridge
 {
 public:
 	DecryptedCartridge(u8 *rom_ptr, u32 size) : NaomiCartridge(size) { RomPtr = rom_ptr; }
-	// FIXME Must do a munmap and close for each segment
+	virtual ~DecryptedCartridge() override;
 };
 
 class M2Cartridge : public NaomiCartridge

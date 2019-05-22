@@ -11,13 +11,11 @@
 #include <poll.h>
 #include <termios.h>
 #endif  
-//#include <curses.h>
 #include <fcntl.h>
 #include <semaphore.h>
 #include <stdarg.h>
 #include <signal.h>
 #include <sys/param.h>
-#include <sys/mman.h>
 #include <sys/time.h>
 #if !defined(TARGET_BSD) && !defined(_ANDROID) && !defined(TARGET_IPHONE) && !defined(TARGET_NACL32) && !defined(TARGET_EMSCRIPTEN) && !defined(TARGET_OSX) && !defined(TARGET_OSX_X64)
   #include <sys/personality.h>

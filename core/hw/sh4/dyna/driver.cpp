@@ -417,10 +417,6 @@ void recSh4_Reset(bool Manual)
 	Sh4_int_Reset(Manual);
 }
 
-#if HOST_OS == OS_DARWIN
-#include <sys/mman.h>
-#endif
-
 void recSh4_Init()
 {
 	printf("recSh4 Init\n");

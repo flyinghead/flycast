@@ -279,6 +279,13 @@ string get_game_save_prefix();
 string get_game_basename();
 string get_game_dir();
 
+bool mem_region_lock(void *start, size_t len);
+bool mem_region_unlock(void *start, size_t len);
+bool mem_region_set_exec(void *start, size_t len);
+void *mem_region_reserve(void *start, size_t len);
+bool mem_region_release(void *start, size_t len);
+void *mem_region_map_file(void *file_handle, void *dest, size_t len, size_t offset, bool readwrite);
+bool mem_region_unmap_file(void *start, size_t len);
 
 // Locked memory class, used for texture invalidation purposes.
 class VLockedMemory {
@@ -297,8 +304,15 @@ public:
 	void LockRegion(unsigned offset, unsigned size_bytes) {}
 	void UnLockRegion(unsigned offset, unsigned size_bytes) {}
 	#else
-	void LockRegion(unsigned offset, unsigned size_bytes);
-	void UnLockRegion(unsigned offset, unsigned size_bytes);
+	void LockRegion(unsigned offset, unsigned size_bytes)
+	{
+		mem_region_lock(&data[offset], size_bytes);
+	}
+
+	void UnLockRegion(unsigned offset, unsigned size_bytes)
+	{
+		mem_region_unlock(&data[offset], size_bytes);
+	}
 	#endif
 
 	void Zero() {
@@ -317,7 +331,6 @@ public:
 		return data[i];
     }
 };
-
 
 int msgboxf(const wchar* text,unsigned int type,...);
 

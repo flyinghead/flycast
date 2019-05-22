@@ -465,12 +465,6 @@ void os_SetWindowText(const char* text)
 	}
 }
 
-void os_MakeExecutable(void* ptr, u32 sz)
-{
-	DWORD old;
-	VirtualProtect(ptr, sz, PAGE_EXECUTE_READWRITE, &old);  // sizeof(sz) really?
-}
-
 void ReserveBottomMemory()
 {
 #if defined(_WIN64) && defined(_DEBUG)

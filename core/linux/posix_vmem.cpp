@@ -46,19 +46,64 @@ int ashmem_create_region(const char *name, size_t size) {
 }
 #endif  // #ifdef _ANDROID
 
-void VLockedMemory::LockRegion(unsigned offset, unsigned size_bytes) {
-	size_t inpage = offset & PAGE_MASK;
-	if (mprotect(&data[offset - inpage], size_bytes + inpage, PROT_READ)) {
-		die("mprotect failed ..\n");
-	}
+bool mem_region_lock(void *start, size_t len)
+{
+	size_t inpage = (uintptr_t)start & PAGE_MASK;
+	if (mprotect((u8*)start - inpage, len + inpage, PROT_READ))
+		die("mprotect failed...");
+	return true;
 }
 
-void VLockedMemory::UnLockRegion(unsigned offset, unsigned size_bytes) {
-	size_t inpage = offset & PAGE_MASK;
-	if (mprotect(&data[offset - inpage], size_bytes + inpage, PROT_READ|PROT_WRITE)) {
+bool mem_region_unlock(void *start, size_t len)
+{
+	size_t inpage = (uintptr_t)start & PAGE_MASK;
+	if (mprotect((u8*)start - inpage, len + inpage, PROT_READ | PROT_WRITE))
 		// Add some way to see why it failed? gdb> info proc mappings
-		die("mprotect  failed ..\n");
+		die("mprotect  failed...");
+	return true;
+}
+
+bool mem_region_set_exec(void *start, size_t len)
+{
+	size_t inpage = (uintptr_t)start & PAGE_MASK;
+	if (mprotect((u8*)start - inpage, len + inpage, PROT_READ | PROT_WRITE | PROT_EXEC))
+		die("mprotect  failed...");
+	return true;
+}
+
+void *mem_region_reserve(void *start, size_t len)
+{
+	void *p = mmap(start, len, PROT_NONE, MAP_PRIVATE | MAP_ANON, -1, 0);
+	if (p == MAP_FAILED)
+	{
+		perror("mmap");
+		return NULL;
 	}
+	else
+		return p;
+}
+
+bool mem_region_release(void *start, size_t len)
+{
+	return munmap(start, len) == 0;
+}
+
+void *mem_region_map_file(void *file_handle, void *dest, size_t len, size_t offset, bool readwrite)
+{
+	int flags = MAP_SHARED | MAP_NOSYNC | (dest != NULL ? MAP_FIXED : 0);
+	void *p = mmap(dest, len, PROT_READ | (readwrite ? PROT_WRITE : 0), flags, (int)(uintptr_t)file_handle, offset);
+	if (p == MAP_FAILED)
+	{
+		perror("mmap");
+		return NULL;
+	}
+	else
+		return p;
+}
+
+bool mem_region_unmap_file(void *start, size_t len)
+{
+	return mem_region_release(start, len);
 }
 
 // Allocates memory via a fd on shmem/ahmem or even a file on disk
@@ -111,7 +156,7 @@ VMemType vmem_platform_init(void **vmem_base_addr, void **sh4rcb_addr) {
 
 	// Now try to allocate a contiguous piece of memory.
 	unsigned memsize = 512*1024*1024 + sizeof(Sh4RCB) + ARAM_SIZE_MAX + 0x10000;
-	void *first_ptr = mmap(0, memsize, PROT_NONE, MAP_PRIVATE | MAP_ANON, -1, 0);
+	void *first_ptr = mem_region_reserve(NULL, memsize);
 	if (!first_ptr) {
 		close(shmem_fd);
 		return MemTypeError;
@@ -125,14 +170,14 @@ VMemType vmem_platform_init(void **vmem_base_addr, void **sh4rcb_addr) {
 	void *sh4rcb_base_ptr  = (void*)(ptrint + FPCB_SIZE);
 
 	// Now map the memory for the SH4 context, do not include FPCB on purpose (paged on demand).
-	mprotect(sh4rcb_base_ptr, sizeof(Sh4RCB) - FPCB_SIZE, PROT_READ | PROT_WRITE);
+	mem_region_unlock(sh4rcb_base_ptr, sizeof(Sh4RCB) - FPCB_SIZE);
 
 	return MemType512MB;
 }
 
 // Just tries to wipe as much as possible in the relevant area.
 void vmem_platform_destroy() {
-	munmap(virt_ram_base, 0x20000000);
+	mem_region_release(virt_ram_base, 0x20000000);
 }
 
 // Resets a chunk of memory by deleting its data and setting its protection back.
@@ -150,7 +195,7 @@ void vmem_platform_reset_mem(void *ptr, unsigned size_bytes) {
 
 // Allocates a bunch of memory (page aligned and page-sized)
 void vmem_platform_ondemand_page(void *address, unsigned size_bytes) {
-	verify(!mprotect(address, size_bytes, PROT_READ | PROT_WRITE));
+	verify(mem_region_unlock(address, size_bytes));
 }
 
 // Creates mappings to the underlying file including mirroring sections
@@ -163,15 +208,13 @@ void vmem_platform_create_mappings(const vmem_mapping *vmem_maps, unsigned numma
 		// Calculate the number of mirrors
 		unsigned address_range_size = vmem_maps[i].end_address - vmem_maps[i].start_address;
 		unsigned num_mirrors = (address_range_size) / vmem_maps[i].memsize;
-		int protection = vmem_maps[i].allow_writes ? (PROT_READ | PROT_WRITE) : PROT_READ;
 		verify((address_range_size % vmem_maps[i].memsize) == 0 && num_mirrors >= 1);
 
 		for (unsigned j = 0; j < num_mirrors; j++) {
 			unsigned offset = vmem_maps[i].start_address + j * vmem_maps[i].memsize;
-			verify(!munmap(&virt_ram_base[offset], vmem_maps[i].memsize));
-			verify(MAP_FAILED != mmap(&virt_ram_base[offset], vmem_maps[i].memsize, protection,
-			                          MAP_SHARED | MAP_NOSYNC | MAP_FIXED, shmem_fd, vmem_maps[i].memoffset));
-			// ??? (mprotect(rv,size,prot)!=0)
+			verify(mem_region_unmap_file(&virt_ram_base[offset], vmem_maps[i].memsize));
+			verify(mem_region_map_file((void*)(uintptr_t)shmem_fd, &virt_ram_base[offset],
+					vmem_maps[i].memsize, vmem_maps[i].memoffset, vmem_maps[i].allow_writes) != NULL);
 		}
 	}
 }
@@ -179,7 +222,8 @@ void vmem_platform_create_mappings(const vmem_mapping *vmem_maps, unsigned numma
 // Prepares the code region for JIT operations, thus marking it as RWX
 bool vmem_platform_prepare_jit_block(void *code_area, unsigned size, void **code_area_rwx) {
 	// Try to map is as RWX, this fails apparently on OSX (and perhaps other systems?)
-	if (mprotect(code_area, size, PROT_READ | PROT_WRITE | PROT_EXEC)) {
+	if (!mem_region_set_exec(code_area, size))
+	{
 		// Well it failed, use another approach, unmap the memory area and remap it back.
 		// Seems it works well on Darwin according to reicast code :P
 		munmap(code_area, size);

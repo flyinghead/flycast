@@ -1,5 +1,4 @@
 #include <unistd.h>
-#include <sys/mman.h>
 #include "types.h"
 
 #if FEAT_SHREC == DYNAREC_JIT

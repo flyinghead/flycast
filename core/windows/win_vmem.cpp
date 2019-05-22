@@ -8,19 +8,50 @@
 // Implementation of the vmem related function for Windows platforms.
 // For now this probably does some assumptions on the CPU/platform.
 
-// This implements the VLockedMemory interface, as defined in _vmem.h
 // The implementation allows it to be empty (that is, to not lock memory).
 
-void VLockedMemory::LockRegion(unsigned offset, unsigned size) {
-	//verify(offset + size < this->size && size != 0);
+bool mem_region_lock(void *start, size_t len)
+{
 	DWORD old;
-	VirtualProtect(&data[offset], size, PAGE_READONLY, &old);
+	if (!VirtualProtect(start, len, PAGE_READONLY, &old))
+		die("VirtualProtect failed ..\n");
+	return true;
 }
 
-void VLockedMemory::UnLockRegion(unsigned offset, unsigned size) {
-	//verify(offset + size <= this->size && size != 0);
+bool mem_region_unlock(void *start, size_t len)
+{
 	DWORD old;
-	VirtualProtect(&data[offset], size, PAGE_READWRITE, &old);
+	if (!VirtualProtect(start, len, PAGE_READWRITE, &old))
+		die("VirtualProtect failed ..\n");
+	return true;
+}
+
+bool mem_region_set_exec(void *start, size_t len)
+{
+	DWORD old;
+	if (!VirtualProtect(start, len, PAGE_EXECUTE_READWRITE, &old))
+		die("VirtualProtect failed ..\n");
+	return true;
+}
+
+void *mem_region_reserve(void *start, size_t len)
+{
+	return VirtualAlloc(start, len, MEM_RESERVE, PAGE_NOACCESS);
+}
+
+bool mem_region_release(void *start, size_t len)
+{
+	return VirtualFree(start, 0, MEM_RELEASE);
+}
+
+void *mem_region_map_file(void *file_handle, void *dest, size_t len, size_t offset, bool readwrite)
+{
+	return MapViewOfFileEx((HANDLE)file_handle, readwrite ? FILE_MAP_WRITE : FILE_MAP_READ, (DWORD)(offset >> 32), (DWORD)offset, len, dest);
+}
+
+bool mem_region_unmap_file(void *start, size_t len)
+{
+	return UnmapViewOfFile(start);
 }
 
 static HANDLE mem_handle = INVALID_HANDLE_VALUE, mem_handle2 = INVALID_HANDLE_VALUE;
@@ -37,7 +68,7 @@ VMemType vmem_platform_init(void **vmem_base_addr, void **sh4rcb_addr) {
 
 	// Now allocate the actual address space (it will be 64KB aligned on windows).
 	unsigned memsize = 512*1024*1024 + sizeof(Sh4RCB) + ARAM_SIZE_MAX;
-	base_alloc = (char*)VirtualAlloc(0, memsize, MEM_RESERVE, PAGE_NOACCESS);
+	base_alloc = (char*)mem_region_reserve(NULL, memsize);
 
 	// Calculate pointers now
 	*sh4rcb_addr = &base_alloc[0];

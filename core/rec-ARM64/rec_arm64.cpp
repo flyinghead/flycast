@@ -22,7 +22,6 @@
 #if FEAT_SHREC == DYNAREC_JIT
 
 #include <unistd.h>
-#include <sys/mman.h>
 #include <map>
 
 #include "deps/vixl/aarch64/macro-assembler-aarch64.h"

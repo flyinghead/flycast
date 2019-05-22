@@ -186,13 +186,7 @@ void dsp_init()
 	dsp.RBP=0;
 	dsp.regs.MDEC_CT=1;
 
-
-	//os_MakeExecutable(dsp.DynCode,sizeof(dsp.DynCode));
-#if HOST_OS == OS_WINDOWS
-	DWORD old;
-	VirtualProtect(dsp.DynCode, sizeof(dsp.DynCode), PAGE_EXECUTE_READWRITE, &old);
-#endif
-
+	mem_region_set_exec(dsp.DynCode, sizeof(dsp.DynCode));
 }
 void dsp_recompile();
 
