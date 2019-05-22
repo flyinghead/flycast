@@ -20,6 +20,10 @@
 #include <limits.h>
 #include "gamepad_device.h"
 #include "rend/gui.h"
+#include "oslib/oslib.h"
+#include "cfg/cfg.h"
+
+#define MAPLE_PORT_CFG_PREFIX "maple_"
 
 extern void dc_exit();
 
@@ -32,7 +36,8 @@ std::mutex GamepadDevice::_gamepads_mutex;
 
 bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 {
-	if (_input_detected != NULL && _detecting_button && pressed)
+	if (_input_detected != NULL && _detecting_button 
+			&& os_GetSeconds() >= _detection_start_time && pressed)
 	{
 		_input_detected(code);
 		_input_detected = NULL;
@@ -46,7 +51,39 @@ bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 	if (key < 0x10000)
 	{
 		if (pressed)
+		{
 			kcode[_maple_port] &= ~(u16)key;
+			// Avoid two opposite dpad keys being pressed simultaneously
+			switch (key)
+			{
+			case DC_DPAD_UP:
+				kcode[_maple_port] |= (u16)DC_DPAD_DOWN;
+				break;
+			case DC_DPAD_DOWN:
+				kcode[_maple_port] |= (u16)DC_DPAD_UP;
+				break;
+			case DC_DPAD_LEFT:
+				kcode[_maple_port] |= (u16)DC_DPAD_RIGHT;
+				break;
+			case DC_DPAD_RIGHT:
+				kcode[_maple_port] |= (u16)DC_DPAD_LEFT;
+				break;
+			case DC_DPAD2_UP:
+				kcode[_maple_port] |= (u16)DC_DPAD2_DOWN;
+				break;
+			case DC_DPAD2_DOWN:
+				kcode[_maple_port] |= (u16)DC_DPAD2_UP;
+				break;
+			case DC_DPAD2_LEFT:
+				kcode[_maple_port] |= (u16)DC_DPAD2_RIGHT;
+				break;
+			case DC_DPAD2_RIGHT:
+				kcode[_maple_port] |= (u16)DC_DPAD2_LEFT;
+				break;
+			default:
+				break;
+			}
+		}
 		else
 			kcode[_maple_port] |= (u16)key;
 	}
@@ -84,7 +121,8 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 		v = (get_axis_min_value(code) + get_axis_range(code) - value) * 255 / get_axis_range(code) - 128;
 	else
 		v = (value - get_axis_min_value(code)) * 255 / get_axis_range(code) - 128; //-128 ... + 127 range
-	if (_input_detected != NULL && !_detecting_button && (v >= 64 || v <= -64))
+	if (_input_detected != NULL && !_detecting_button 
+			&& os_GetSeconds() >= _detection_start_time && (v >= 64 || v <= -64))
 	{
 		_input_detected(code);
 		_input_detected = NULL;
@@ -233,5 +271,53 @@ void UpdateVibration(u32 port, float power, float inclination, u32 duration_ms)
 		std::shared_ptr<GamepadDevice> gamepad = GamepadDevice::GetGamepad(i);
 		if (gamepad != NULL && gamepad->maple_port() == port && gamepad->is_rumble_enabled())
 			gamepad->rumble(power, inclination, duration_ms);
+	}
+}
+
+void GamepadDevice::detect_btn_input(input_detected_cb button_pressed)
+{
+	_input_detected = button_pressed;
+	_detecting_button = true;
+	_detection_start_time = os_GetSeconds() + 0.2;
+}
+
+void GamepadDevice::detect_axis_input(input_detected_cb axis_moved)
+{
+	_input_detected = axis_moved;
+	_detecting_button = false;
+	_detection_start_time = os_GetSeconds() + 0.2;
+}
+
+void GamepadDevice::Register(std::shared_ptr<GamepadDevice> gamepad)
+{
+	int maple_port = cfgLoadInt("input",
+			(MAPLE_PORT_CFG_PREFIX + gamepad->unique_id()).c_str(), 12345);
+	if (maple_port != 12345)
+		gamepad->set_maple_port(maple_port);
+
+	_gamepads_mutex.lock();
+	_gamepads.push_back(gamepad);
+	_gamepads_mutex.unlock();
+}
+
+void GamepadDevice::Unregister(std::shared_ptr<GamepadDevice> gamepad)
+{
+	gamepad->save_mapping();
+	_gamepads_mutex.lock();
+	for (auto it = _gamepads.begin(); it != _gamepads.end(); it++)
+		if (*it == gamepad) {
+			_gamepads.erase(it);
+			break;
+		}
+	_gamepads_mutex.unlock();
+}
+
+void GamepadDevice::SaveMaplePorts()
+{
+	for (int i = 0; i < GamepadDevice::GetGamepadCount(); i++)
+	{
+		std::shared_ptr<GamepadDevice> gamepad = GamepadDevice::GetGamepad(i);
+		if (gamepad != NULL && !gamepad->unique_id().empty())
+			cfgSaveInt("input", (MAPLE_PORT_CFG_PREFIX + gamepad->unique_id()).c_str(), gamepad->maple_port());
 	}
 }

@@ -1,5 +1,4 @@
 #include <unistd.h>
-#include <sys/mman.h>
 #include "types.h"
 
 #if FEAT_SHREC == DYNAREC_JIT
@@ -2082,7 +2081,7 @@ __default:
 }
 
 
-void ngen_Compile(RuntimeBlockInfo* block,bool force_checks, bool reset, bool staging,bool optimise)
+void ngen_Compile(RuntimeBlockInfo* block, SmcCheckEnum smc_checks, bool reset, bool staging,bool optimise)
 {
 	//printf("Compile: %08X, %d, %d\n",block->addr,staging,optimise);
 	block->code=(DynarecCodeEntryPtr)EMIT_GET_PTR();
@@ -2114,38 +2113,67 @@ void ngen_Compile(RuntimeBlockInfo* block,bool force_checks, bool reset, bool st
 	reg.OpBegin(&block->oplist[0],0);
 
 	//scheduler
-	if (force_checks)
-	{
-		s32 sz = block->sh4_code_size;
-		u32 addr = block->addr;
-		MOV32(r0,addr);
+	switch (smc_checks) {
+		case NoCheck:
+			break;
 
-		while (sz > 0)
-		{
-			if (sz > 2)
+		case FastCheck: {
+			MOV32(r0,block->addr);
+			u32* ptr=(u32*)GetMemPtr(block->addr,4);
+			if (ptr != NULL)
 			{
-				u32* ptr=(u32*)GetMemPtr(addr,4);
 				MOV32(r2,(u32)ptr);
 				LDR(r2,r2,0);
 				MOV32(r1,*ptr);
 				CMP(r1,r2);
-
 				JUMP((u32)ngen_blockcheckfail, CC_NE);
-				addr += 4;
-				sz -= 4;
 			}
-			else
+		}
+		break;
+
+		case FullCheck: {
+			s32 sz = block->sh4_code_size;
+			u32 addr = block->addr;
+			MOV32(r0,addr);
+
+			while (sz > 0)
 			{
-				u16* ptr = (u16 *)GetMemPtr(addr, 2);
-				MOV32(r2, (u32)ptr);
-				LDRH(r2, r2, 0, AL);
-				MOVW(r1, *ptr, AL);
-				CMP(r1, r2);
+				if (sz > 2)
+				{
+					u32* ptr=(u32*)GetMemPtr(addr,4);
+					if (ptr != NULL)
+					{
+						MOV32(r2,(u32)ptr);
+						LDR(r2,r2,0);
+						MOV32(r1,*ptr);
+						CMP(r1,r2);
 
-				JUMP((u32)ngen_blockcheckfail, CC_NE);
-				addr += 2;
-				sz -= 2;
+						JUMP((u32)ngen_blockcheckfail, CC_NE);
+					}
+					addr += 4;
+					sz -= 4;
+				}
+				else
+				{
+					u16* ptr = (u16 *)GetMemPtr(addr, 2);
+					if (ptr != NULL)
+					{
+						MOV32(r2, (u32)ptr);
+						LDRH(r2, r2, 0, AL);
+						MOVW(r1, *ptr, AL);
+						CMP(r1, r2);
+
+						JUMP((u32)ngen_blockcheckfail, CC_NE);
+					}
+					addr += 2;
+					sz -= 2;
+				}
 			}
+		}
+		break;
+
+		default: {
+			die("unhandled smc_checks");
 		}
 	}
 

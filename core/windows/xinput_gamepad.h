@@ -1,4 +1,4 @@
-#include <Xinput.h>
+#include <xinput.h>
 #include "input/gamepad_device.h"
 #include "rend/gui.h"
 
@@ -36,6 +36,9 @@ public:
 	XInputGamepadDevice(int maple_port, int xinput_port)
 	: GamepadDevice(maple_port, "xinput"), _xinput_port(xinput_port)
 	{
+		char buf[32];
+		sprintf(buf, "xinput-%d", xinput_port + 1);
+		_unique_id = buf;
 	}
 
 	void ReadInput()
@@ -178,7 +181,6 @@ protected:
 private:
 	void do_rumble(float power)
 	{
-		printf("do_rumble %f\n", power);
 		XINPUT_VIBRATION vib;
 
 		vib.wLeftMotorSpeed = (u16)(65535 * power);
@@ -231,6 +233,7 @@ public:
 	WinKbGamepadDevice(int maple_port) : GamepadDevice(maple_port, "win32")
 	{
 		_name = "Keyboard";
+		_unique_id = "win_keyboard";
 		if (!find_mapping())
 			input_mapper = new KbInputMapping();
 	}
@@ -257,6 +260,7 @@ public:
 	WinMouseGamepadDevice(int maple_port) : GamepadDevice(maple_port, "win32")
 	{
 		_name = "Mouse";
+		_unique_id = "win_mouse";
 		if (!find_mapping())
 			input_mapper = new MouseInputMapping();
 	}

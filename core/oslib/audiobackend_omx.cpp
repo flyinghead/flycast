@@ -1,4 +1,4 @@
-#include "oslib/audiobackend_omx.h"
+#include "oslib/audiostream.h"
 #if USE_OMX
 
 #include <IL/OMX_Broadcom.h>
@@ -313,7 +313,9 @@ audiobackend_t audiobackend_omx = {
     "OpenMAX IL", // Name
     &omx_init,
     &omx_push,
-    &omx_term
+    &omx_term,
+	NULL
 };
 
+static bool omx = RegisterAudioBackend(&audiobackend_omx);
 #endif

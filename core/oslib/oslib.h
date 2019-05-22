@@ -2,7 +2,6 @@
 #include "types.h"
 
 void os_SetWindowText(const char* text);
-void os_MakeExecutable(void* ptr, u32 sz);
 double os_GetSeconds();
 
 void os_DoEvents();

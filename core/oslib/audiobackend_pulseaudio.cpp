@@ -1,4 +1,4 @@
-#include "oslib/audiobackend_pulseaudio.h"
+#include "oslib/audiostream.h"
 #ifdef USE_PULSEAUDIO
 #include <sys/ioctl.h>
 #include <sys/fcntl.h>
@@ -43,6 +43,9 @@ audiobackend_t audiobackend_pulseaudio = {
 		"PulseAudio", // Name
 		&pulseaudio_init,
 		&pulseaudio_push,
-		&pulseaudio_term
+		&pulseaudio_term,
+		NULL
 };
+
+static bool pulse = RegisterAudioBackend(&audiobackend_pulseaudio);
 #endif

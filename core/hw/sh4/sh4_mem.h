@@ -2,7 +2,7 @@
 #include "types.h"
 
 //main system mem
-extern VArray2 mem_b;
+extern VLockedMemory mem_b;
 
 #include "hw/mem/_vmem.h"
 #include "modules/mmu.h"

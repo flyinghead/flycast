@@ -21,7 +21,7 @@ struct MemChip
 		this->mask=size-1;//must be power of 2
 		this->write_protect_size = write_protect_size;
 	}
-	~MemChip() { delete[] data; }
+	virtual ~MemChip() { delete[] data; }
 
 	virtual u8 Read8(u32 addr)
 	{
@@ -118,14 +118,11 @@ struct MemChip
 
 		printf("Saved %s as %s\n\n",path,title.c_str());
 	}
+	virtual void Reset() {}
 };
 struct RomChip : MemChip
 {
 	RomChip(u32 sz, u32 write_protect_size = 0) : MemChip(sz, write_protect_size) {}
-	void Reset()
-	{
-		//nothing, its permanent read only ;p
-	}
 	void Write(u32 addr,u32 data,u32 sz)
 	{
 		die("Write to RomChip is not possible, address=%x, data=%x, size=%d");
@@ -135,10 +132,6 @@ struct SRamChip : MemChip
 {
 	SRamChip(u32 sz, u32 write_protect_size = 0) : MemChip(sz, write_protect_size) {}
 
-	void Reset()
-	{
-		//nothing, its battery backed up storage
-	}
 	void Write(u32 addr,u32 val,u32 sz)
 	{
 		addr&=mask;
@@ -234,7 +227,7 @@ struct DCFlashChip : MemChip
 	};
 
 	FlashState state;
-	void Reset()
+	virtual void Reset() override
 	{
 		//reset the flash chip state
 		state = FS_Normal;
@@ -378,19 +371,19 @@ struct DCFlashChip : MemChip
 			else if ((val & 0xff) == 0x30)
 			{
 				// sector erase
-				addr = max(addr, write_protect_size);
-#if DC_PLATFORM != DC_PLATFORM_ATOMISWAVE
-				printf("Erase Sector %08X! (%08X)\n",addr,addr&(~0x3FFF));
-				memset(&data[addr&(~0x3FFF)],0xFF,0x4000);
-#else
-				// AtomisWave's Macronix 29L001mc has 64k blocks
-				printf("Erase Sector %08X! (%08X)\n",addr,addr&(~0xFFFF));
-				u8 save[0x2000];
-				// this area is write-protected on AW
-				memcpy(save, data + 0x1a000, 0x2000);
-				memset(&data[addr&(~0xFFFF)], 0xFF, 0x10000);
-				memcpy(data + 0x1a000, save, 0x2000);
+				if (addr >= write_protect_size)
+				{
+#if DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
+					u8 save[0x2000];
+					// this area is write-protected on AW
+					memcpy(save, data + 0x1a000, 0x2000);
 #endif
+					printf("Erase Sector %08X! (%08X)\n",addr,addr&(~0x3FFF));
+					memset(&data[addr&(~0x3FFF)],0xFF,0x4000);
+#if DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
+					memcpy(data + 0x1a000, save, 0x2000);
+#endif
+				}
 				state = FS_Normal;
 			}
 			else

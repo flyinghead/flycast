@@ -41,7 +41,7 @@ bool LoadRomFiles(const string& root)
 	{
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST
 		// Dreamcast absolutely needs a BIOS
-		msgboxf("Unable to find bios in \n%s\nExiting...", MBX_ICONERROR, root.c_str());
+		msgboxf("Unable to find bios in %s. Exiting...", MBX_ICONERROR, root.c_str());
 		return false;
 #endif
 	}
@@ -85,7 +85,9 @@ bool LoadRomFiles(const string& root)
 	if (settings.dreamcast.language <= 5)
 		syscfg.lang = settings.dreamcast.language;
 
-	sys_nvmem.WriteBlock(FLASH_PT_USER, FLASH_USER_SYSCFG, &syscfg);
+	if (sys_nvmem.WriteBlock(FLASH_PT_USER, FLASH_USER_SYSCFG, &syscfg) != 1)
+		printf("Failed to save time and language to flash RAM\n");
+
 #endif
 
 #if DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
@@ -206,7 +208,9 @@ T DYNACALL ReadMem_area0(u32 addr)
 		}
 		else if (likely((addr>= 0x005F8000) && (addr<=0x005F9FFF))) //	:TA / PVR Core Reg.
 		{
-			if (sz != 4) return 0;		// House of the Dead 2
+			if (sz != 4)
+				// House of the Dead 2
+				return 0;
 			return (T)pvr_ReadReg(addr);
 		}
 	}
@@ -215,8 +219,10 @@ T DYNACALL ReadMem_area0(u32 addr)
 	{
 #if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
 		return (T)libExtDevice_ReadMem_A0_006(addr, sz);
-#else
+#elif defined(ENABLE_MODEM)
 		return (T)ModemReadMem_A0_006(addr, sz);
+#else
+		return (T)0;
 #endif
 	}
 	//map 0x0060 to 0x006F
@@ -300,7 +306,7 @@ void  DYNACALL WriteMem_area0(u32 addr,T data)
 	{
 #if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
 		libExtDevice_WriteMem_A0_006(addr, data, sz);
-#else
+#elif defined(ENABLE_MODEM)
 		ModemWriteMem_A0_006(addr, data, sz);
 #endif
 	}
@@ -344,6 +350,10 @@ void sh4_area0_Init()
 void sh4_area0_Reset(bool Manual)
 {
 	sb_Reset(Manual);
+	sys_rom.Reset();
+#if defined(FLASH_SIZE) || defined(BBSRAM_SIZE)
+	sys_nvmem.Reset();
+#endif
 }
 
 void sh4_area0_Term()

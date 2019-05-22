@@ -4,13 +4,11 @@
 #if HOST_OS==OS_LINUX
 #include <poll.h>
 #include <termios.h>
-//#include <curses.h>
 #include <fcntl.h>
 #include <semaphore.h>
 #include <stdarg.h>
 #include <signal.h>
 #include <sys/param.h>
-#include <sys/mman.h>
 #include <sys/time.h>
 #include "hw/sh4/dyna/blockmanager.h"
 #include "hw/maple/maple_cfg.h"
@@ -408,7 +406,6 @@ int main(int argc, wchar* argv[])
 #endif
 
 int get_mic_data(u8* buffer) { return 0; }
-int push_vmu_screen(u8* buffer) { return 0; }
 
 void os_DebugBreak()
 {

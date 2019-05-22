@@ -15,7 +15,7 @@ import com.reicast.emulator.periph.InputDeviceManager;
 import com.reicast.emulator.periph.VJoy;
 
 public class VirtualJoystickDelegate {
-    private Vibrator vib;
+    private VibratorThread vibratorThread;
 
     private boolean editVjoyMode = false;
     private int selectedVjoyElement = -1;
@@ -39,7 +39,10 @@ public class VirtualJoystickDelegate {
     public VirtualJoystickDelegate(View view) {
         this.view = view;
         this.context = view.getContext();
-        vib = (Vibrator)context.getSystemService(Context.VIBRATOR_SERVICE);
+
+        vibratorThread = new VibratorThread(context);
+        vibratorThread.start();
+
         readCustomVjoyValues();
         scaleGestureDetector = new ScaleGestureDetector(context, new OscOnScaleGestureListener());
     }
@@ -224,8 +227,9 @@ public class VirtualJoystickDelegate {
                             if (y > vjoy[j][1] && y <= (vjoy[j][1] + vjoy[j][3])) {
                                 if (vjoy[j][4] >= -2) {
                                     if (vjoy[j][5] == 0)
-                                        if (!editVjoyMode && Emulator.vibrationDuration > 0)
-                                            vib.vibrate(Emulator.vibrationDuration);
+                                        if (!editVjoyMode) {
+                                            vibratorThread.vibrate();
+                                        }
                                     vjoy[j][5] = 2;
                                 }
 
@@ -395,6 +399,53 @@ public class VirtualJoystickDelegate {
         @Override
         public void onScaleEnd(ScaleGestureDetector detector) {
             selectedVjoyElement = -1;
+        }
+    }
+
+    private class VibratorThread extends Thread
+    {
+        private Vibrator vibrator;
+        private boolean vibrate = false;
+        private boolean stopping = false;
+
+        VibratorThread(Context context) {
+            vibrator = (Vibrator)context.getSystemService(Context.VIBRATOR_SERVICE);
+        }
+
+        @Override
+        public void run() {
+            while (!stopping) {
+                boolean doVibrate;
+                synchronized (this) {
+                    doVibrate = false;
+                    try {
+                        this.wait();
+                    } catch (InterruptedException e) {
+                    }
+                    if (vibrate) {
+                        doVibrate = true;
+                        vibrate = false;
+                    }
+                }
+                if (doVibrate)
+                    vibrator.vibrate(Emulator.vibrationDuration);
+            }
+        }
+
+        public void stopVibrator() {
+            synchronized (this) {
+                stopping = true;
+                notify();
+            }
+        }
+
+        public void vibrate() {
+            if (Emulator.vibrationDuration > 0) {
+                synchronized (this) {
+                    vibrate = true;
+                    notify();
+                }
+            }
         }
     }
 }

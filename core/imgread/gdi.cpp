@@ -7,9 +7,9 @@
 
 string normalize_path_separator(string path)
 {
-	#if HOST_OS == OS_WINDOWS
-		std::replace( path.begin(), path.end(), '/', '\\');
-	#endif
+#if HOST_OS == OS_WINDOWS
+	std::replace(path.begin(), path.end(), '/', '\\');
+#endif
 
 	return path;
 }

@@ -751,7 +751,10 @@ __forceinline SampleType DecodeADPCM(u32 sample,s32 prev,s32& quant)
 	u32 data=sample&7;
 
 	/*(1 - 2 * L4) * (L3 + L2/2 +L1/4 + 1/8) * quantized width (ƒΆn) + decode value (Xn - 1) */
-	SampleType rv = prev + sign*((quant*adpcm_scale[data])>>3);
+	SampleType rv = (quant * adpcm_scale[data]) >> 3;
+	if (rv > 0x7FFF)
+		rv = 0x7FFF;
+	rv = sign * rv + prev;
 
 	quant = (quant * adpcm_qs[data])>>8;
 

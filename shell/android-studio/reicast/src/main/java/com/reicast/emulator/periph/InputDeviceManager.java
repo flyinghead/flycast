@@ -24,7 +24,7 @@ public final class InputDeviceManager implements InputManager.InputDeviceListene
     {
         maple_port = 0;
         if (applicationContext.getPackageManager().hasSystemFeature("android.hardware.touchscreen"))
-            joystickAdded(VIRTUAL_GAMEPAD_ID, "Virtual Gamepad", maple_port == 3 ? 3 : maple_port++);
+            joystickAdded(VIRTUAL_GAMEPAD_ID, "Virtual Gamepad", maple_port == 3 ? 3 : maple_port++, "virtual_gamepad_uid");
         int[] ids = InputDevice.getDeviceIds();
         for (int id : ids)
             onInputDeviceAdded(id);
@@ -34,8 +34,10 @@ public final class InputDeviceManager implements InputManager.InputDeviceListene
 
     public void stopListening()
     {
-        inputManager.unregisterInputDeviceListener(this);
-        inputManager = null;
+        if (inputManager != null) {
+            inputManager.unregisterInputDeviceListener(this);
+            inputManager = null;
+        }
         joystickRemoved(VIRTUAL_GAMEPAD_ID);
     }
 
@@ -47,7 +49,7 @@ public final class InputDeviceManager implements InputManager.InputDeviceListene
             if ((device.getSources() & InputDevice.SOURCE_CLASS_JOYSTICK) == InputDevice.SOURCE_CLASS_JOYSTICK) {
                 port = this.maple_port == 3 ? 3 : this.maple_port++;
             }
-            joystickAdded(i, device.getName(), port);
+            joystickAdded(i, device.getName(), port, device.getDescriptor());
         }
     }
 
@@ -94,6 +96,6 @@ public final class InputDeviceManager implements InputManager.InputDeviceListene
     public native boolean joystickButtonEvent(int id, int button, boolean pressed);
     public native boolean joystickAxisEvent(int id, int button, int value);
     public native void mouseEvent(int xpos, int ypos, int buttons);
-    private native void joystickAdded(int id, String name, int maple_port);
+    private native void joystickAdded(int id, String name, int maple_port, String uniqueId);
     private native void joystickRemoved(int id);
 }

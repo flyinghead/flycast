@@ -1,7 +1,9 @@
-#include "oslib\oslib.h"
-#include "oslib\audiostream.h"
-#include "imgread\common.h"
-#include "hw\mem\vmem32.h"
+#include "oslib/oslib.h"
+#include "oslib/audiostream.h"
+#include "imgread/common.h"
+#include "hw/mem/vmem32.h"
+#include "stdclass.h"
+#include "cfg/cfg.h"
 #include "xinput_gamepad.h"
 #include "win_keyboard.h"
 
@@ -9,8 +11,8 @@
 #include <windows.h>
 #include <windowsx.h>
 
-#include <Xinput.h>
-#include "hw\maple\maple_cfg.h"
+#include <xinput.h>
+#include "hw/maple/maple_cfg.h"
 #pragma comment(lib, "XInput9_1_0.lib")
 
 PCHAR*
@@ -152,12 +154,10 @@ LONG ExeptionHandler(EXCEPTION_POINTERS *ExceptionInfo)
 	{
 		return EXCEPTION_CONTINUE_EXECUTION;
 	}
-#ifndef TARGET_NO_NVMEM
 	else if (BM_LockedWrite(address))
 	{
 		return EXCEPTION_CONTINUE_EXECUTION;
 	}
-#endif
 #if FEAT_SHREC == DYNAREC_JIT
 #if HOST_CPU == CPU_X86
 		else if ( ngen_Rewrite((unat&)ep->ContextRecord->Eip,*(unat*)ep->ContextRecord->Esp,ep->ContextRecord->Eax) )
@@ -177,7 +177,7 @@ LONG ExeptionHandler(EXCEPTION_POINTERS *ExceptionInfo)
 #endif
 	else
 	{
-		printf("[GPF]Unhandled access to : 0x%X\n",address);
+		printf("[GPF]Unhandled access to : 0x%X\n",(unat)address);
 	}
 
 	return EXCEPTION_CONTINUE_SEARCH;
@@ -199,8 +199,6 @@ u16 kcode[4] = { 0xffff, 0xffff, 0xffff, 0xffff };
 u32 vks[4];
 s8 joyx[4],joyy[4];
 u8 rt[4],lt[4];
-extern bool coin_chute;
-extern bool naomi_test_button;
 // Mouse
 extern s32 mo_x_abs;
 extern s32 mo_y_abs;
@@ -210,6 +208,10 @@ extern f32 mo_y_delta;
 extern f32 mo_wheel_delta;
 // Keyboard
 static Win32KeyboardDevice keyboard(0);
+
+
+void ToggleFullscreen();
+
 
 void UpdateInputState(u32 port)
 {
@@ -231,21 +233,16 @@ void UpdateInputState(u32 port)
 	std::shared_ptr<XInputGamepadDevice> gamepad = XInputGamepadDevice::GetXInputDevice(port);
 	if (gamepad != NULL)
 		gamepad->ReadInput();
-
-#if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
-		// FIXME
-		coin_chute = GetAsyncKeyState(VK_F8);
-		naomi_test_button = GetAsyncKeyState(VK_F7);
-#endif
 }
 
 // Windows class name to register
 #define WINDOW_CLASS "nilDC"
 
 // Width and height of the window
-#define WINDOW_WIDTH  1280
-#define WINDOW_HEIGHT 720
-
+#define DEFAULT_WINDOW_WIDTH  1280
+#define DEFAULT_WINDOW_HEIGHT 720
+extern int screen_width, screen_height;
+static bool window_maximized = false;
 
 LRESULT CALLBACK WndProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -269,6 +266,12 @@ LRESULT CALLBACK WndProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_CLOSE:
 		PostQuitMessage(0);
 		return 1;
+
+	case WM_SIZE:
+		screen_width = LOWORD(lParam);
+		screen_height = HIWORD(lParam);
+		window_maximized = (wParam & SIZE_MAXIMIZED) != 0;
+		return 0;
 
 	case WM_LBUTTONDOWN:
 	case WM_LBUTTONUP:
@@ -304,8 +307,8 @@ LRESULT CALLBACK WndProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			static int prev_y = -1;
 			int xPos = GET_X_LPARAM(lParam);
 			int yPos = GET_Y_LPARAM(lParam);
-			mo_x_abs = (xPos - (WINDOW_WIDTH - 640 * WINDOW_HEIGHT / 480) / 2) * 480 / WINDOW_HEIGHT;
-			mo_y_abs = yPos * 480 / WINDOW_HEIGHT;
+			mo_x_abs = (xPos - (screen_width - 640 * screen_height / 480) / 2) * 480 / screen_height;
+			mo_y_abs = yPos * 480 / screen_height;
 			mo_buttons = 0xffffffff;
 			if (wParam & MK_LBUTTON)
 				mo_buttons &= ~(1 << 2);
@@ -343,6 +346,14 @@ LRESULT CALLBACK WndProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			keyboard.keyboard_input(keycode, message == WM_KEYDOWN);
 		}
 		break;
+	
+	case WM_SYSKEYDOWN:
+		if (wParam == VK_RETURN)
+			if ((HIWORD(lParam) & KF_ALTDOWN))
+				ToggleFullscreen();
+		
+		break;
+
 	case WM_CHAR:
 		keyboard.keyboard_character((char)wParam);
 		return 0;
@@ -365,12 +376,13 @@ void os_CreateWindow()
 	sWC.cbWndExtra = 0;
 	sWC.hInstance = (HINSTANCE)GetModuleHandle(0);
 	sWC.hIcon = 0;
-	sWC.hCursor = 0;
+	sWC.hCursor = LoadCursor(NULL, IDC_ARROW);
 	sWC.lpszMenuName = 0;
 	sWC.hbrBackground = (HBRUSH) GetStockObject(WHITE_BRUSH);
 	sWC.lpszClassName = WINDOW_CLASS;
-	unsigned int nWidth = WINDOW_WIDTH;
-	unsigned int nHeight = WINDOW_HEIGHT;
+	screen_width = cfgLoadInt("windows", "width", DEFAULT_WINDOW_WIDTH);
+	screen_height = cfgLoadInt("windows", "height", DEFAULT_WINDOW_HEIGHT);
+	window_maximized = cfgLoadBool("windows", "maximized", false);
 
 	ATOM registerClass = RegisterClass(&sWC);
 	if (!registerClass)
@@ -380,9 +392,10 @@ void os_CreateWindow()
 
 	// Create the eglWindow
 	RECT sRect;
-	SetRect(&sRect, 0, 0, nWidth, nHeight);
-	AdjustWindowRectEx(&sRect, WS_CAPTION | WS_SYSMENU, false, 0);
-	HWND hWnd = CreateWindow( WINDOW_CLASS, VER_FULLNAME, WS_VISIBLE | WS_SYSMENU,
+	SetRect(&sRect, 0, 0, screen_width, screen_height);
+	AdjustWindowRectEx(&sRect, WS_OVERLAPPEDWINDOW, false, 0);
+
+	HWND hWnd = CreateWindow( WINDOW_CLASS, VER_FULLNAME, WS_VISIBLE | WS_OVERLAPPEDWINDOW | (window_maximized ? WS_MAXIMIZE : 0),
 		0, 0, sRect.right-sRect.left, sRect.bottom-sRect.top, NULL, NULL, sWC.hInstance, NULL);
 
 	window_win=hWnd;
@@ -397,6 +410,45 @@ void* libPvr_GetRenderSurface()
 {
 	return GetDC((HWND)window_win);
 }
+
+
+void ToggleFullscreen()
+{
+	static RECT rSaved;
+	static bool fullscreen=false;
+	HWND hWnd = (HWND)window_win;
+
+	fullscreen = !fullscreen;
+
+
+	if (fullscreen)
+	{
+		GetWindowRect(hWnd, &rSaved);
+
+		MONITORINFO mi = { sizeof(mi) };
+		HMONITOR hmon = MonitorFromWindow(hWnd, MONITOR_DEFAULTTONEAREST);
+		if (GetMonitorInfo(hmon, &mi)) {
+
+			SetWindowLongPtr(hWnd, GWL_EXSTYLE, WS_EX_APPWINDOW | WS_EX_TOPMOST);
+			SetWindowLongPtr(hWnd, GWL_STYLE, WS_POPUP | WS_VISIBLE);
+
+			SetWindowPos(hWnd, HWND_TOPMOST, mi.rcMonitor.left, mi.rcMonitor.top,
+				mi.rcMonitor.right - mi.rcMonitor.left, mi.rcMonitor.bottom - mi.rcMonitor.top, 
+				SWP_SHOWWINDOW|SWP_FRAMECHANGED|SWP_ASYNCWINDOWPOS);
+		}
+	}
+	else {
+		
+		SetWindowLongPtr(hWnd, GWL_EXSTYLE, WS_EX_APPWINDOW | WS_EX_TOPMOST);
+		SetWindowLongPtr(hWnd, GWL_STYLE, WS_VISIBLE | WS_OVERLAPPEDWINDOW | (window_maximized ? WS_MAXIMIZE : 0));
+
+		SetWindowPos(hWnd, NULL, rSaved.left, rSaved.top,
+			rSaved.right - rSaved.left, rSaved.bottom - rSaved.top, 
+			SWP_SHOWWINDOW|SWP_FRAMECHANGED|SWP_ASYNCWINDOWPOS|SWP_NOZORDER);
+	}
+
+}
+
 
 BOOL CtrlHandler( DWORD fdwCtrlType )
 {
@@ -424,12 +476,6 @@ void os_SetWindowText(const char* text)
 	{
 		SetWindowText((HWND)libPvr_GetRenderTarget(), text);
 	}
-}
-
-void os_MakeExecutable(void* ptr, u32 sz)
-{
-	DWORD old;
-	VirtualProtect(ptr,sizeof(sz),PAGE_EXECUTE_READWRITE,&old);
 }
 
 void ReserveBottomMemory()
@@ -628,34 +674,65 @@ void setup_seh() {
 }
 #endif
 
-int CALLBACK WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine,int nCmdShowCmd)
-{
-	ReserveBottomMemory();
 
+
+
+// DEF_CONSOLE allows you to override linker subsystem and therefore default console //
+//	: pragma isn't pretty but def's are configurable 
+#ifdef DEF_CONSOLE
+#pragma comment(linker, "/subsystem:console")
+
+int main(int argc, char **argv)
+{
+
+#else
+#pragma comment(linker, "/subsystem:windows")
+
+int CALLBACK WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine,int nCmdShowCmd)
+
+{
 	int argc=0;
 	wchar* cmd_line=GetCommandLineA();
 	wchar** argv=CommandLineToArgvA(cmd_line,&argc);
-	if(strstr(cmd_line,"NoConsole")==0)
+	for (int i = 0; i < argc; i++)
 	{
-		if (AllocConsole())
+		if (!stricmp(argv[i], "-console"))
 		{
-			freopen("CON","w",stdout);
-			freopen("CON","w",stderr);
-			freopen("CON","r",stdin);
+			if (AllocConsole())
+			{
+				freopen("CON", "w", stdout);
+				freopen("CON", "w", stderr);
+				freopen("CON", "r", stdin);
+			}
+			SetConsoleCtrlHandler((PHANDLER_ROUTINE)CtrlHandler, TRUE);
 		}
-		SetConsoleCtrlHandler( (PHANDLER_ROUTINE) CtrlHandler, TRUE );
+		else if (!stricmp(argv[i], "-log"))
+		{
+			const char *logfile;
+			if (i < argc - 1)
+			{
+				logfile = argv[i + 1];
+				i++;
+			}
+			else
+				logfile = "reicast-log.txt";
+			freopen(logfile, "w", stdout);
+			freopen(logfile, "w", stderr);
+		}
 	}
 
+#endif
+
+	ReserveBottomMemory();
 	SetupPath();
 
-#ifndef __GNUC__
-	__try
-#else
 #ifdef _WIN64
 	AddVectoredExceptionHandler(1, ExeptionHandler);
 #else
-	SetUnhandledExceptionFilter(&ExeptionHandler);
+	SetUnhandledExceptionFilter((LPTOP_LEVEL_EXCEPTION_FILTER)&ExeptionHandler);
 #endif
+#ifndef __GNUC__
+	__try
 #endif
 	{
 		int reicast_init(int argc, char* argv[]);
@@ -680,6 +757,12 @@ int CALLBACK WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine
 	}
 #endif
 	SetUnhandledExceptionFilter(0);
+	cfgSaveBool("windows", "maximized", window_maximized);
+	if (!window_maximized && screen_width != 0 && screen_width != 0)
+	{
+		cfgSaveInt("windows", "width", screen_width);
+		cfgSaveInt("windows", "height", screen_height);
+	}
 
 	return 0;
 }
@@ -720,91 +803,6 @@ void os_DoEvents()
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
 	}
-}
-
-
-
-
-//Windoze Code implementation of commong classes from here and after ..
-
-//Thread class
-cThread::cThread(ThreadEntryFP* function,void* prm)
-{
-	Entry=function;
-	param=prm;
-}
-
-
-void cThread::Start()
-{
-	hThread=CreateThread(NULL,0,(LPTHREAD_START_ROUTINE)Entry,param,0,NULL);
-	ResumeThread(hThread);
-}
-
-void cThread::WaitToEnd()
-{
-	WaitForSingleObject(hThread,INFINITE);
-}
-//End thread class
-
-//cResetEvent Calss
-cResetEvent::cResetEvent(bool State,bool Auto)
-{
-		hEvent = CreateEvent(
-		NULL,             // default security attributes
-		Auto?FALSE:TRUE,  // auto-reset event?
-		State?TRUE:FALSE, // initial state is State
-		NULL			  // unnamed object
-		);
-}
-cResetEvent::~cResetEvent()
-{
-	//Destroy the event object ?
-	 CloseHandle(hEvent);
-}
-void cResetEvent::Set()//Signal
-{
-	#if defined(DEBUG_THREADS)
-		Sleep(rand() % 10);
-	#endif
-	SetEvent(hEvent);
-}
-void cResetEvent::Reset()//reset
-{
-	#if defined(DEBUG_THREADS)
-		Sleep(rand() % 10);
-	#endif
-	ResetEvent(hEvent);
-}
-bool cResetEvent::Wait(u32 msec)//Wait for signal , then reset
-{
-	#if defined(DEBUG_THREADS)
-		Sleep(rand() % 10);
-	#endif
-	return WaitForSingleObject(hEvent,msec) == WAIT_OBJECT_0;
-}
-void cResetEvent::Wait()//Wait for signal , then reset
-{
-	#if defined(DEBUG_THREADS)
-		Sleep(rand() % 10);
-	#endif
-	WaitForSingleObject(hEvent,(u32)-1);
-}
-//End AutoResetEvent
-
-void VArray2::LockRegion(u32 offset,u32 size)
-{
-	//verify(offset+size<this->size);
-	verify(size!=0);
-	DWORD old;
-	VirtualProtect(((u8*)data)+offset , size, PAGE_READONLY,&old);
-}
-void VArray2::UnLockRegion(u32 offset,u32 size)
-{
-	//verify(offset+size<=this->size);
-	verify(size!=0);
-	DWORD old;
-	VirtualProtect(((u8*)data)+offset , size, PAGE_READWRITE,&old);
 }
 
 int get_mic_data(u8* buffer) { return 0; }

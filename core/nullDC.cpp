@@ -23,6 +23,7 @@
 #include "imgread/common.h"
 #include "rend/gui.h"
 #include "profiler/profiler.h"
+#include "input/gamepad_device.h"
 
 void FlushCache();
 void LoadCustom();
@@ -99,10 +100,6 @@ s32 plugins_Init()
 	if (s32 rv = libGDR_Init())
 		return rv;
 #endif
-#if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
-	if (!naomi_cart_SelectFile())
-		return rv_serror;
-#endif
 
 	if (s32 rv = libAICA_Init())
 		return rv;
@@ -142,7 +139,7 @@ void LoadSpecialSettings()
 	extra_depth_game = false;
 	full_mmu_game = false;
 	disable_vmem32_game = false;
-	
+
 	if (reios_windows_ce)
 	{
 		printf("Enabling Full MMU and Extra depth scaling for Windows CE game\n");
@@ -218,7 +215,7 @@ void LoadSpecialSettings()
 	}
 #elif DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
 	printf("Game ID is [%s]\n", naomi_game_id);
-	
+
 	if (!strcmp("METAL SLUG 6", naomi_game_id) || !strcmp("WAVE RUNNER GP", naomi_game_id))
 	{
 		printf("Enabling Dynarec safe mode for game %s\n", naomi_game_id);
@@ -241,12 +238,14 @@ void LoadSpecialSettings()
 		printf("Enabling JVS rotary encoders for game %s\n", naomi_game_id);
 		settings.input.JammaSetup = 2;
 	}
-	else if (!strcmp("POWER STONE 2 JAPAN", naomi_game_id))
+	else if (!strcmp("POWER STONE 2 JAPAN", naomi_game_id)		// Naomi
+			|| !strcmp("GUILTY GEAR isuka", naomi_game_id))		// AW
 	{
 		printf("Enabling 4-player setup for game %s\n", naomi_game_id);
 		settings.input.JammaSetup = 1;
 	}
-	else if (!strcmp("SEGA MARINE FISHING JAPAN", naomi_game_id))
+	else if (!strcmp("SEGA MARINE FISHING JAPAN", naomi_game_id)
+				|| !strcmp(naomi_game_id, "BASS FISHING SIMULATOR VER.A"))	// AW
 	{
 		printf("Enabling specific JVS setup for game %s\n", naomi_game_id);
 		settings.input.JammaSetup = 3;
@@ -256,9 +255,11 @@ void LoadSpecialSettings()
 		printf("Enabling specific JVS setup for game %s\n", naomi_game_id);
 		settings.input.JammaSetup = 4;
 	}
-	else if (!strcmp("NINJA ASSAULT", naomi_game_id))
+	else if (!strcmp("NINJA ASSAULT", naomi_game_id)
+				|| !strcmp(naomi_game_id, "Sports Shooting USA")	// AW
+				|| !strcmp(naomi_game_id, "SEGA CLAY CHALLENGE"))	// AW
 	{
-		printf("Enabling specific JVS setup for game %s\n", naomi_game_id);
+		printf("Enabling lightgun setup for game %s\n", naomi_game_id);
 		settings.input.JammaSetup = 5;
 	}
 	else if (!strcmp(" BIOHAZARD  GUN SURVIVOR2", naomi_game_id))
@@ -284,6 +285,7 @@ void dc_reset()
 }
 
 static bool init_done;
+static bool reset_requested;
 
 int reicast_init(int argc, char* argv[])
 {
@@ -344,10 +346,25 @@ int dc_start_game(const char *path)
 		InitSettings();
 		LoadSettings(false);
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-		if (DiscSwap())
-			LoadCustom();
+		if (!settings.bios.UseReios)
+#endif
+			if (!LoadRomFiles(get_readonly_data_path(DATA_PATH)))
+				return -5;
+
+#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
+		if (path == NULL)
+		{
+			// Boot BIOS
+			settings.imgread.LastImage[0] = 0;
+			TermDrive();
+			InitDrive();
+		}
+		else
+		{
+			if (DiscSwap())
+				LoadCustom();
+		}
 #elif DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
-		LoadRomFiles(get_readonly_data_path(DATA_PATH));
 		if (!naomi_cart_SelectFile())
 			return -6;
 		LoadCustom();
@@ -365,7 +382,6 @@ int dc_start_game(const char *path)
 		return 0;
 	}
 
-	settings.dreamcast.RTC = GetRTC_now();	// FIXME This shouldn't be in settings anymore
 	if (settings.bios.UseReios || !LoadRomFiles(get_readonly_data_path(DATA_PATH)))
 	{
 #ifdef USE_REIOS
@@ -385,6 +401,11 @@ int dc_start_game(const char *path)
 
 	if (plugins_Init())
 		return -3;
+
+#if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
+	if (!naomi_cart_SelectFile())
+		return -6;
+#endif
 
 	LoadCustom();
 
@@ -446,9 +467,18 @@ void* dc_run(void*)
 		Get_Sh4Interpreter(&sh4_cpu);
 		printf("Using Interpreter\n");
 	}
-   	sh4_cpu.Run();
+	do {
+		reset_requested = false;
 
-	SaveRomFiles(get_writable_data_path("/data/"));
+		sh4_cpu.Run();
+
+   		SaveRomFiles(get_writable_data_path("/data/"));
+   		if (reset_requested)
+   		{
+   			dc_reset();
+   		}
+	} while (reset_requested);
+
     TermAudio();
 
     return NULL;
@@ -476,6 +506,13 @@ void dc_stop()
 	emu_thread.WaitToEnd();
 }
 
+// Called on the emulator thread for soft reset
+void dc_request_reset()
+{
+	reset_requested = true;
+	sh4_cpu.Stop();
+}
+
 void dc_exit()
 {
 	dc_stop();
@@ -484,7 +521,6 @@ void dc_exit()
 
 void InitSettings()
 {
-	settings.dreamcast.RTC			= GetRTC_now();
 	settings.dynarec.Enable			= true;
 	settings.dynarec.idleskip		= true;
 	settings.dynarec.unstable_opt	= false;
@@ -495,10 +531,12 @@ void InitSettings()
 	settings.dreamcast.broadcast	= 4;	// default
 	settings.dreamcast.language     = 6;	// default
 	settings.dreamcast.FullMMU      = false;
+	settings.dynarec.SmcCheckLevel  = FullCheck;
 	settings.aica.DSPEnabled		= false;
-	settings.aica.LimitFPS			= true;
+	settings.aica.LimitFPS			= LimitFPSEnabled;
 	settings.aica.NoBatch			= false;
     settings.aica.NoSound			= false;
+	settings.audio.backend 			= "auto";
 	settings.rend.UseMipmaps		= true;
 	settings.rend.WideScreen		= false;
 	settings.rend.ShowFPS			= false;
@@ -513,6 +551,11 @@ void InitSettings()
 	settings.rend.CustomTextures    = false;
 	settings.rend.DumpTextures      = false;
 	settings.rend.ScreenScaling     = 100;
+	settings.rend.ScreenStretching  = 100;
+	settings.rend.Fog				= true;
+	settings.rend.FloatVMUs			= false;
+	settings.rend.Rotate90			= false;
+	settings.rend.PerStripSorting	= false;
 
 	settings.pvr.ta_skip			= 0;
 	settings.pvr.rend				= 0;
@@ -559,21 +602,24 @@ void LoadSettings(bool game_specific)
 {
 	const char *config_section = game_specific ? cfgGetGameId() : "config";
 	const char *input_section = game_specific ? cfgGetGameId() : "input";
+	const char *audio_section = game_specific ? cfgGetGameId() : "audio";
 
 	settings.dynarec.Enable			= cfgLoadBool(config_section, "Dynarec.Enabled", settings.dynarec.Enable);
 	settings.dynarec.idleskip		= cfgLoadBool(config_section, "Dynarec.idleskip", settings.dynarec.idleskip);
 	settings.dynarec.unstable_opt	= cfgLoadBool(config_section, "Dynarec.unstable-opt", settings.dynarec.unstable_opt);
 	settings.dynarec.safemode		= cfgLoadBool(config_section, "Dynarec.safe-mode", settings.dynarec.safemode);
 	settings.dynarec.disable_vmem32 = cfgLoadBool(config_section, "Dynarec.DisableVmem32", settings.dynarec.disable_vmem32);
+	settings.dynarec.SmcCheckLevel  = (SmcCheckEnum)cfgLoadInt(config_section, "Dynarec.SmcCheckLevel", settings.dynarec.SmcCheckLevel);
 	//disable_nvmem can't be loaded, because nvmem init is before cfg load
 	settings.dreamcast.cable		= cfgLoadInt(config_section, "Dreamcast.Cable", settings.dreamcast.cable);
 	settings.dreamcast.region		= cfgLoadInt(config_section, "Dreamcast.Region", settings.dreamcast.region);
 	settings.dreamcast.broadcast	= cfgLoadInt(config_section, "Dreamcast.Broadcast", settings.dreamcast.broadcast);
 	settings.dreamcast.language     = cfgLoadInt(config_section, "Dreamcast.Language", settings.dreamcast.language);
 	settings.dreamcast.FullMMU      = cfgLoadBool(config_section, "Dreamcast.FullMMU", settings.dreamcast.FullMMU);
-	settings.aica.LimitFPS			= cfgLoadBool(config_section, "aica.LimitFPS", settings.aica.LimitFPS);
+	settings.aica.LimitFPS			= (LimitFPSEnum)cfgLoadInt(config_section, "aica.LimitFPS", (int)settings.aica.LimitFPS);
 	settings.aica.DSPEnabled		= cfgLoadBool(config_section, "aica.DSPEnabled", settings.aica.DSPEnabled);
     settings.aica.NoSound			= cfgLoadBool(config_section, "aica.NoSound", settings.aica.NoSound);
+    settings.audio.backend			= cfgLoadStr(audio_section, "backend", settings.audio.backend.c_str());
 	settings.rend.UseMipmaps		= cfgLoadBool(config_section, "rend.UseMipmaps", settings.rend.UseMipmaps);
 	settings.rend.WideScreen		= cfgLoadBool(config_section, "rend.WideScreen", settings.rend.WideScreen);
 	settings.rend.ShowFPS			= cfgLoadBool(config_section, "rend.ShowFPS", settings.rend.ShowFPS);
@@ -595,6 +641,11 @@ void LoadSettings(bool game_specific)
 	settings.rend.DumpTextures      = cfgLoadBool(config_section, "rend.DumpTextures", settings.rend.DumpTextures);
 	settings.rend.ScreenScaling     = cfgLoadInt(config_section, "rend.ScreenScaling", settings.rend.ScreenScaling);
 	settings.rend.ScreenScaling = min(max(1, settings.rend.ScreenScaling), 100);
+	settings.rend.ScreenStretching  = cfgLoadInt(config_section, "rend.ScreenStretching", settings.rend.ScreenStretching);
+	settings.rend.Fog				= cfgLoadBool(config_section, "rend.Fog", settings.rend.Fog);
+	settings.rend.FloatVMUs			= cfgLoadBool(config_section, "rend.FloatVMUs", settings.rend.FloatVMUs);
+	settings.rend.Rotate90			= cfgLoadBool(config_section, "rend.Rotate90", settings.rend.Rotate90);
+	settings.rend.PerStripSorting	= cfgLoadBool(config_section, "rend.PerStripSorting", settings.rend.PerStripSorting);
 
 	settings.pvr.ta_skip			= cfgLoadInt(config_section, "ta.skip", settings.pvr.ta_skip);
 	settings.pvr.rend				= cfgLoadInt(config_section, "pvr.rend", settings.pvr.rend);
@@ -659,9 +710,9 @@ void LoadSettings(bool game_specific)
 	}
 /*
 	//make sure values are valid
-	settings.dreamcast.cable	= min(max(settings.dreamcast.cable,    0),3);
-	settings.dreamcast.region	= min(max(settings.dreamcast.region,   0),3);
-	settings.dreamcast.broadcast= min(max(settings.dreamcast.broadcast,0),4);
+	settings.dreamcast.cable		= min(max(settings.dreamcast.cable,    0),3);
+	settings.dreamcast.region		= min(max(settings.dreamcast.region,   0),3);
+	settings.dreamcast.broadcast	= min(max(settings.dreamcast.broadcast,0),4);
 */
 }
 
@@ -701,12 +752,35 @@ void SaveSettings()
 	cfgSaveBool("config", "Dynarec.unstable-opt", settings.dynarec.unstable_opt);
 	if (!safemode_game || !settings.dynarec.safemode)
 		cfgSaveBool("config", "Dynarec.safe-mode", settings.dynarec.safemode);
+	cfgSaveInt("config", "Dynarec.SmcCheckLevel", (int)settings.dynarec.SmcCheckLevel);
+
 	if (!disable_vmem32_game || !settings.dynarec.disable_vmem32)
 		cfgSaveBool("config", "Dynarec.DisableVmem32", settings.dynarec.disable_vmem32);
 	cfgSaveInt("config", "Dreamcast.Language", settings.dreamcast.language);
-	cfgSaveBool("config", "aica.LimitFPS", settings.aica.LimitFPS);
+	cfgSaveInt("config", "aica.LimitFPS", (int)settings.aica.LimitFPS);
 	cfgSaveBool("config", "aica.DSPEnabled", settings.aica.DSPEnabled);
 	cfgSaveBool("config", "aica.NoSound", settings.aica.NoSound);
+	cfgSaveStr("audio", "backend", settings.audio.backend.c_str());
+
+	// Write backend specific settings
+	// std::map<std::string, std::map<std::string, std::string>>
+	for (std::map<std::string, std::map<std::string, std::string>>::iterator it = settings.audio.options.begin(); it != settings.audio.options.end(); ++it)
+	{
+
+		std::pair<std::string, std::map<std::string, std::string>> p = (std::pair<std::string, std::map<std::string, std::string>>)*it;
+		std::string section = p.first;
+		std::map<std::string, std::string> options = p.second;
+
+		for (std::map<std::string, std::string>::iterator it2 = options.begin(); it2 != options.end(); ++it2)
+		{
+			std::pair<std::string, std::string> p2 = (std::pair<std::string, std::string>)*it2;
+			std::string key = p2.first;
+			std::string val = p2.second;
+
+			cfgSaveStr(section.c_str(), key.c_str(), val.c_str());
+		}
+	}
+
 	cfgSaveBool("config", "rend.WideScreen", settings.rend.WideScreen);
 	cfgSaveBool("config", "rend.ShowFPS", settings.rend.ShowFPS);
 	if (!rtt_to_buffer_game || !settings.rend.RenderToTextureBuffer)
@@ -719,8 +793,13 @@ void SaveSettings()
 	cfgSaveBool("config", "rend.CustomTextures", settings.rend.CustomTextures);
 	cfgSaveBool("config", "rend.DumpTextures", settings.rend.DumpTextures);
 	cfgSaveInt("config", "rend.ScreenScaling", settings.rend.ScreenScaling);
+	cfgSaveInt("config", "rend.ScreenStretching", settings.rend.ScreenStretching);
+	cfgSaveBool("config", "rend.Fog", settings.rend.Fog);
+	cfgSaveBool("config", "rend.FloatVMUs", settings.rend.FloatVMUs);
+	cfgSaveBool("config", "rend.Rotate90", settings.rend.Rotate90);
 	cfgSaveInt("config", "ta.skip", settings.pvr.ta_skip);
 	cfgSaveInt("config", "pvr.rend", settings.pvr.rend);
+	cfgSaveBool("config", "rend.PerStripSorting", settings.rend.PerStripSorting);
 
 	cfgSaveInt("config", "pvr.MaxThreads", settings.pvr.MaxThreads);
 	cfgSaveBool("config", "pvr.SynchronousRendering", settings.pvr.SynchronousRender);
@@ -747,6 +826,9 @@ void SaveSettings()
 		paths += path;
 	}
 	cfgSaveStr("config", "Dreamcast.ContentPath", paths.c_str());
+
+	GamepadDevice::SaveMaplePorts();
+
 #ifdef _ANDROID
 	void SaveAndroidSettings();
 	SaveAndroidSettings();

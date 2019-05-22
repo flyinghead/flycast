@@ -317,7 +317,7 @@ struct Sh4RCB
 	Sh4Context cntx;
 };
 
-extern Sh4RCB* p_sh4rcb;
+extern "C" Sh4RCB* p_sh4rcb;
 extern u8* sh4_dyna_rcb;
 
 INLINE u32 sh4_sr_GetFull()

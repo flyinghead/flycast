@@ -18,6 +18,9 @@
     You should have received a copy of the GNU General Public License
     along with reicast.  If not, see <https://www.gnu.org/licenses/>.
  */
+#include "types.h"
+
+#if BUILD_COMPILER!=COMPILER_VC && (BUILD_COMPILER!=COMPILER_CLANG || !defined(WIN32))
 
 #include <stdio.h>
 #include <errno.h>
@@ -145,3 +148,5 @@ char *read_name(char *reader, char *buffer, int *count)
 
 	return name;
 }
+
+#endif // !COMPILER_VC_OR_CLANG_WIN32

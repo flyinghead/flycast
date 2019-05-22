@@ -13,7 +13,7 @@ struct CHDDisc : Disc
 
 	u32 hunkbytes;
 	u32 sph;
-	
+
 	CHDDisc()
 	{
 		chd=0;
@@ -22,8 +22,8 @@ struct CHDDisc : Disc
 
 	bool TryOpen(const wchar* file);
 
-	~CHDDisc() 
-	{ 
+	~CHDDisc()
+	{
 		if (hunk_mem)
 			delete [] hunk_mem;
 		if (chd)
@@ -48,7 +48,7 @@ struct CHDTrack : TrackFile
 		this->swap_bytes = swap_bytes;
 	}
 
-	virtual void Read(u32 FAD,u8* dst,SectorFormat* sector_type,u8* subcode,SubcodeFormat* subcode_type)
+	virtual void Read(u32 FAD, u8* dst, SectorFormat* sector_type, u8* subcode, SubcodeFormat* subcode_type)
 	{
 		u32 fad_offs = FAD + Offset;
 		u32 hunk=(fad_offs)/disc->sph;
@@ -58,9 +58,9 @@ struct CHDTrack : TrackFile
 			disc->old_hunk = hunk;
 		}
 
-		u32 hunk_ofs=fad_offs%disc->sph;
+		u32 hunk_ofs = fad_offs%disc->sph;
 
-		memcpy(dst,disc->hunk_mem+hunk_ofs*(2352+96),fmt);
+		memcpy(dst, disc->hunk_mem + hunk_ofs * (2352+96), fmt);
 
 		if (swap_bytes)
 		{
@@ -71,7 +71,6 @@ struct CHDTrack : TrackFile
 				dst[i + 1] = b;
 			}
 		}
-
 		*sector_type=fmt==2352?SECFMT_2352:SECFMT_2048_MODE1;
 
 		//While space is reserved for it, the images contain no actual subcodes
@@ -100,23 +99,24 @@ bool CHDDisc::TryOpen(const wchar* file)
 
 	sph = hunkbytes/(2352+96);
 
-	if (hunkbytes%(2352+96)!=0) 
+	if (hunkbytes%(2352+96)!=0)
 	{
 		printf("chd: hunkbytes is invalid, %d\n",hunkbytes);
 		return false;
 	}
-	
+
 	u32 tag;
 	u8 flags;
 	char temp[512];
 	u32 temp_len;
-	u32 total_frames=150;
-	s32 Offset = 0;
+	u32 total_frames = 150;
+
+	u32 Offset = 0;
 
 	for(;;)
 	{
 		char type[16], subtype[16], pgtype[16], pgsub[16];
-		int tkid=-1,frames=0,pregap=0,postgap=0, padframes=0;
+		int tkid=-1, frames=0, pregap=0, postgap=0, padframes=0;
 
 		err = chd_get_metadata(chd, CDROM_TRACK_METADATA2_TAG, tracks.size(), temp, sizeof(temp), &temp_len, &tag, &flags);
 		if (err == CHDERR_NONE)
@@ -124,7 +124,7 @@ bool CHDDisc::TryOpen(const wchar* file)
 			//"TRACK:%d TYPE:%s SUBTYPE:%s FRAMES:%d PREGAP:%d PGTYPE:%s PGSUB:%s POSTGAP:%d"
 			sscanf(temp, CDROM_TRACK_METADATA2_FORMAT, &tkid, type, subtype, &frames, &pregap, pgtype, pgsub, &postgap);
 		}
-		else if (CHDERR_NONE == (err = chd_get_metadata(chd, CDROM_TRACK_METADATA_TAG, tracks.size(), temp, sizeof(temp), &temp_len, &tag, &flags)) )
+		else if (CHDERR_NONE== (err = chd_get_metadata(chd, CDROM_TRACK_METADATA_TAG, tracks.size(), temp, sizeof(temp), &temp_len, &tag, &flags)) )
 		{
 			//CDROM_TRACK_METADATA_FORMAT	"TRACK:%d TYPE:%s SUBTYPE:%s FRAMES:%d"
 			sscanf(temp, CDROM_TRACK_METADATA_FORMAT, &tkid, type, subtype, &frames);
@@ -136,7 +136,6 @@ bool CHDDisc::TryOpen(const wchar* file)
 			{
 				err = chd_get_metadata(chd, GDROM_TRACK_METADATA_TAG, tracks.size(), temp, sizeof(temp), &temp_len, &tag, &flags);
 			}
-
 			if (err == CHDERR_NONE)
 			{
 				//GDROM_TRACK_METADATA_FORMAT	"TRACK:%d TYPE:%s SUBTYPE:%s FRAMES:%d PAD:%d PREGAP:%d PGTYPE:%s PGSUB:%s POSTGAP:%d"
@@ -160,8 +159,12 @@ bool CHDDisc::TryOpen(const wchar* file)
 		t.EndFAD = total_frames - 1;
 		t.ADDR = 0;
 		t.CTRL = strcmp(type,"AUDIO") == 0 ? 0 : 4;
-		t.file = new CHDTrack(this, t.StartFAD, Offset - t.StartFAD, strcmp(type,"MODE1") ? 2352 : 2048, t.CTRL == 0 && head->version >= 5);
 
+		t.file = new CHDTrack(this, t.StartFAD, Offset - t.StartFAD, strcmp(type, "MODE1") ? 2352 : 2048,
+							  // audio tracks are byteswapped in CHDv5+
+							  t.CTRL == 0 && head->version >= 5);
+
+		// CHD files are padded, so we have to respect the offset
 		int padded = (frames + CD_TRACK_PADDING - 1) / CD_TRACK_PADDING;
 		Offset += padded * CD_TRACK_PADDING;
 
@@ -186,7 +189,7 @@ bool CHDDisc::TryOpen(const wchar* file)
 Disc* chd_parse(const wchar* file)
 {
 	CHDDisc* rv = new CHDDisc();
-	
+
 	if (rv->TryOpen(file))
 		return rv;
 	else

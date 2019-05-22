@@ -36,7 +36,9 @@ struct DynaRBI : RuntimeBlockInfo
 	}
 };
 
-int cycle_counter;
+extern "C" {
+	int cycle_counter;
+}
 
 double host_cpu_time;
 u64 guest_cpu_cycles;
@@ -81,6 +83,8 @@ static __attribute((used)) void end_slice()
 #endif
 
 jmp_buf jmp_env;
+
+#ifndef _MSC_VER
 
 #ifdef _WIN32
         // Fully naked function in win32 for proper SEH prologue
@@ -191,6 +195,7 @@ WIN32_ONLY( ".seh_pushreg %r14              \n\t")
 }
 #endif
 
+#endif	// !_MSC_VER
 #undef _U
 #undef _S
 
@@ -331,20 +336,18 @@ public:
 		call_regsxmm.push_back(xmm3);
 	}
 
-	void compile(RuntimeBlockInfo* block, bool force_checks, bool reset, bool staging, bool optimise)
+	void compile(RuntimeBlockInfo* block, SmcCheckEnum smc_checks, bool reset, bool staging, bool optimise)
 	{
 		//printf("X86_64 compiling %08x to %p\n", block->addr, emit_GetCCPtr());
 		current_opid = -1;
-		if (force_checks) {
-			CheckBlock(block);
-		}
+
+		CheckBlock(smc_checks, block);
 
 #ifdef _WIN32
 		sub(rsp, 0x28);		// 32-byte shadow space + 8 byte alignment
 #else
 		sub(rsp, 0x8);		// align stack
 #endif
-
 		if (mmu_enabled() && block->has_fpu_op)
 		{
 			Xbyak::Label fpu_enabled;
@@ -358,7 +361,14 @@ public:
 			jmp(exit_block, T_NEAR);
 			L(fpu_enabled);
 		}
+#ifdef FEAT_NO_RWX_PAGES
+		// Use absolute addressing for this one
+		// TODO(davidgfnet) remove the ifsef using CC_RX2RW/CC_RW2RX
+		mov(rax, (uintptr_t)&cycle_counter);
+		sub(dword[rax], block->guest_cycles);
+#else
 		sub(dword[rip + &cycle_counter], block->guest_cycles);
+#endif
 #ifdef PROFILING
 		mov(rax, (uintptr_t)&guest_cpu_cycles);
 		mov(ecx, block->guest_cycles);
@@ -1479,7 +1489,7 @@ private:
 		return true;
 	}
 
-	void CheckBlock(RuntimeBlockInfo* block) {
+	void CheckBlock(SmcCheckEnum smc_checks, RuntimeBlockInfo* block) {
 		mov(call_regs[0], block->addr);
 
 		// FIXME This test shouldn't be necessary
@@ -1493,38 +1503,64 @@ private:
 			jne(reinterpret_cast<const void*>(&ngen_blockcheckfail));
 		}
 
-		s32 sz=block->sh4_code_size;
-		u32 sa=block->addr;
+		switch (smc_checks) {
+			case NoCheck:
+				return;
 
-		while (sz > 0)
-		{
-			void* ptr = (void*)GetMemPtr(sa, sz > 8 ? 8 : sz);
-			if (ptr)
-			{
-				mov(rax, reinterpret_cast<uintptr_t>(ptr));
-
-				if (sz >= 8) {
-					mov(rdx, *(u64*)ptr);
-					cmp(qword[rax], rdx);
-					sz -= 8;
-					sa += 8;
-				}
-				else if (sz >= 4) {
+		 	case FastCheck: {
+		 		void* ptr = (void*)GetMemPtr(block->addr, 4);
+                if (ptr)
+				{
+					mov(call_regs[0], block->addr);
+					mov(rax, reinterpret_cast<uintptr_t>(ptr));
 					mov(edx, *(u32*)ptr);
 					cmp(dword[rax], edx);
-					sz -= 4;
-					sa += 4;
+					jne(reinterpret_cast<const void*>(CC_RX2RW(&ngen_blockcheckfail)));
 				}
-				else {
-					mov(edx, *(u16*)ptr);
-					cmp(word[rax],dx);
-					sz -= 2;
-					sa += 2;
-				}
-				jne(reinterpret_cast<const void*>(&ngen_blockcheckfail));
-			}
-		}
+		 	}
+		 	break;
 
+		 	case FullCheck: {
+		 		s32 sz=block->sh4_code_size;
+				u32 sa=block->addr;
+
+				void* ptr = (void*)GetMemPtr(sa, sz > 8 ? 8 : sz);
+				if (ptr)
+				{
+					mov(call_regs[0], block->addr);
+
+					while (sz > 0)
+					{
+						mov(rax, reinterpret_cast<uintptr_t>(ptr));
+
+						if (sz >= 8) {
+							mov(rdx, *(u64*)ptr);
+							cmp(qword[rax], rdx);
+							sz -= 8;
+							sa += 8;
+						}
+						else if (sz >= 4) {
+							mov(edx, *(u32*)ptr);
+							cmp(dword[rax], edx);
+							sz -= 4;
+							sa += 4;
+						}
+						else {
+							mov(edx, *(u16*)ptr);
+							cmp(word[rax],dx);
+							sz -= 2;
+							sa += 2;
+						}
+						jne(reinterpret_cast<const void*>(CC_RX2RW(&ngen_blockcheckfail)));
+						ptr = (void*)GetMemPtr(sa, sz > 8 ? 8 : sz);
+					}
+		 		}
+		 	}
+		 	break;
+
+			default:
+				die("unhandled smc_checks");
+		}
 	}
 
 	void GenBinaryOp(const shil_opcode &op, X64BinaryOp natop)
@@ -1584,7 +1620,7 @@ private:
 		}
 #endif
 
-		call(function);
+		call(CC_RX2RW(function));
 
 #ifndef _WIN32
 		if (xmm8_mapped || xmm9_mapped || xmm10_mapped || xmm11_mapped)
@@ -1747,13 +1783,13 @@ void X64RegAlloc::Writeback_FPU(u32 reg, s8 nreg)
 
 static BlockCompiler* compiler;
 
-void ngen_Compile(RuntimeBlockInfo* block, bool force_checks, bool reset, bool staging, bool optimise)
+void ngen_Compile(RuntimeBlockInfo* block, SmcCheckEnum smc_checks, bool reset, bool staging, bool optimise)
 {
 	verify(emit_FreeSpace() >= 16 * 1024);
 
 	compiler = new BlockCompiler();
 	
-	compiler->compile(block, force_checks, reset, staging, optimise);
+	compiler->compile(block, smc_checks, reset, staging, optimise);
 
 	delete compiler;
 }

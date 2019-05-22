@@ -31,60 +31,27 @@ bool sse_3=true;
 bool ssse_3=true;
 bool mmx=true;
 
-void DetectCpuFeatures()
-{
+void DetectCpuFeatures() {
 	static bool detected=false;
 	if (detected) return;
 	detected=true;
 
-#ifdef _MSC_VER
-	__try
-	{
-		__asm addps xmm0,xmm0
-	}
-	__except(1) 
-	{
-		sse_1=false;
-	}
-
-	__try
-	{
-		__asm addpd xmm0,xmm0
-	}
-	__except(1) 
-	{
-		sse_2=false;
-	}
-
-	__try
-	{
-		__asm addsubpd xmm0,xmm0
-	}
-	__except(1) 
-	{
-		sse_3=false;
-	}
-
-	__try
-	{
-		__asm phaddw xmm0,xmm0
-	}
-	__except(1) 
-	{
-		ssse_3=false;
-	}
-
-	
-	__try
-	{
-		__asm paddd mm0,mm1
-		__asm emms;
-	}
-	__except(1) 
-	{
-		mmx=false;
-	}
-#endif
+	#if BUILD_COMPILER == COMPILER_VC
+	#include <intrin.h>
+	int info[4];
+	__cpuid(info, 1);
+	mmx    = info[3] & (1 << 23);
+	sse_1  = info[3] & (1 << 25);
+	sse_2  = info[3] & (1 << 26);
+	sse_3  = info[2] & (1 <<  0);
+	ssse_3 = info[2] & (1 <<  9);
+	#else
+	mmx    = __builtin_cpu_supports("mmx");
+	sse_1  = __builtin_cpu_supports("sse");
+	sse_2  = __builtin_cpu_supports("sse2");
+	sse_3  = __builtin_cpu_supports("sse3");
+	ssse_3 = __builtin_cpu_supports("ssse3");
+	#endif
 }
 
 
@@ -262,36 +229,56 @@ u32 rdmt[6];
 extern u32 memops_t,memops_l;
 extern int mips_counter;
 
-void CheckBlock(RuntimeBlockInfo* block,x86_ptr_imm place)
+//TODO: Get back validating mode for this
+void CheckBlock(SmcCheckEnum smc_checks, RuntimeBlockInfo* block)
 {
-	s32 sz=block->sh4_code_size;
-	u32 sa=block->addr;
-	while(sz>0)
-	{
-		void* ptr=(void*)GetMemPtr(sa,4);
-		if (ptr)
-		{
-			if (sz==2)
-				x86e->Emit(op_cmp16,ptr,*(u16*)ptr);
-			else
-				x86e->Emit(op_cmp32,ptr,*(u32*)ptr);
-			x86e->Emit(op_jne,place);
+	switch (smc_checks) {
+		case NoCheck:
+			break;
+
+		case FastCheck: {
+			void* ptr = (void*)GetMemPtr(block->addr, 4);
+			if (ptr)
+			{
+				x86e->Emit(op_cmp32, ptr, *(u32*)ptr);
+				x86e->Emit(op_jne, x86_ptr_imm(ngen_blockcheckfail));
+			}
 		}
-		sz-=4;
-		sa+=4;
+		break;
+
+		case FullCheck: {
+			s32 sz=block->sh4_code_size;
+			u32 sa=block->addr;
+			while(sz>0)
+			{
+				void* ptr=(void*)GetMemPtr(sa,4);
+				if (ptr)
+				{
+					if (sz==2)
+						x86e->Emit(op_cmp16,ptr,*(u16*)ptr);
+					else
+						x86e->Emit(op_cmp32,ptr,*(u32*)ptr);
+					x86e->Emit(op_jne,x86_ptr_imm(ngen_blockcheckfail));
+				}
+				sz-=4;
+				sa+=4;
+			}
+		}
+		break;
+
+		default:
+			die("unhandled smc_checks");
 	}
-	
 }
 
 
-void ngen_Compile(RuntimeBlockInfo* block,bool force_checks, bool reset, bool staging,bool optimise)
+void ngen_Compile(RuntimeBlockInfo* block, SmcCheckEnum smc_checks, bool reset, bool staging,bool optimise)
 {
 	//initialise stuff
 	DetectCpuFeatures();
 
 	((DynaRBI*)block)->reloc_info=0;
 
-	
 	//Setup emitter
 	x86e = new x86_block();
 	x86e->Init(0,0);
@@ -316,7 +303,7 @@ void ngen_Compile(RuntimeBlockInfo* block,bool force_checks, bool reset, bool st
 	//block invl. checks
 	x86e->Emit(op_mov32,ECX,block->addr);
 
-	CheckBlock(block,force_checks?x86_ptr_imm(ngen_blockcheckfail):x86_ptr_imm(ngen_blockcheckfail2));
+	CheckBlock(smc_checks, block);
 
 	//Scheduler
 	x86_Label* no_up=x86e->CreateLabel(false,8);
@@ -339,8 +326,8 @@ void ngen_Compile(RuntimeBlockInfo* block,bool force_checks, bool reset, bool st
 
 	if (prof.enable)
 	{
-		if (force_checks)
-		x86e->Emit(op_add32,&prof.counters.blkrun.force_check,1);
+		//if (force_checks)
+		//	x86e->Emit(op_add32,&prof.counters.blkrun.force_check,1);
 
 		x86e->Emit(op_add32,&prof.counters.blkrun.cycles[block->guest_cycles],1);
 	}

@@ -69,12 +69,6 @@ bool Arm7Enabled=false;
 
 u8 cpuBitsSet[256];
 
-bool intState = false;
-bool stopState = false;
-bool holdState = false;
-
-
-
 void CPUSwitchMode(int mode, bool saveState, bool breakLoop=true);
 extern "C" void CPUFiq();
 void CPUUpdateCPSR();
@@ -428,7 +422,7 @@ void arm_Run(u32 CycleCount) {
 }
 #else	// FEAT_AREC != DYNAREC_NONE
 
-#if HOST_OS == OS_LINUX || HOST_OS == OS_DARWIN
+#if HOST_OS == OS_DARWIN
 #include <sys/mman.h>
 #endif
 
@@ -1563,10 +1557,6 @@ naked void arm_exit()
  *
  */
 
-//mprotect and stuff ..
-
-#include <sys/mman.h>
-
 void  armEmit32(u32 emit32)
 {
 	if (icPtr >= (ICache+ICacheSize-1024))
@@ -2189,25 +2179,12 @@ void armt_init()
 		ICache = (u8*)mmap(ICache, ICacheSize, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_FIXED | MAP_PRIVATE | MAP_ANON, 0, 0);
 	#endif
 
-#if HOST_OS == OS_WINDOWS
-	DWORD old;
-	VirtualProtect(ICache,ICacheSize,PAGE_EXECUTE_READWRITE,&old);
-#elif HOST_OS == OS_LINUX || HOST_OS == OS_DARWIN
-
-	printf("\n\t ARM7_TCB addr: %p | from: %p | addr here: %p\n", ICache, ARM7_TCB, armt_init);
-
-	if (mprotect(ICache, ICacheSize, PROT_EXEC|PROT_READ|PROT_WRITE))
-	{
-		perror("\n\tError - Couldn’t mprotect ARM7_TCB!");
-		verify(false);
-	}
+	mem_region_set_exec(ICache, ICacheSize);
 
 #if TARGET_IPHONE
 	memset((u8*)mmap(ICache, ICacheSize, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_FIXED | MAP_PRIVATE | MAP_ANON, 0, 0),0xFF,ICacheSize);
 #else
 	memset(ICache,0xFF,ICacheSize);
-#endif
-
 #endif
 
 	icPtr=ICache;

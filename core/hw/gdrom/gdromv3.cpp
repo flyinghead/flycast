@@ -256,6 +256,7 @@ void gd_set_state(gd_states state)
 
 void gd_setdisc()
 {
+	cdda.playing = false;
 	DiscType newd = (DiscType)libGDR_GetDiscType();
 	
 	switch(newd)
@@ -321,6 +322,13 @@ u32 GetFAD(u8* data, bool msf)
 void libCore_gdrom_disc_change()
 {
 	gd_setdisc();
+	read_params = { 0 };
+	set_mode_offset = 0;
+	packet_cmd = { 0 };
+	memset(&read_buff, 0, sizeof(read_buff));
+	pio_buff = { gds_waitcmd, 0 };
+	ata_cmd = { 0 };
+	cdda = { 0 };
 }
 
 //This handles the work of setting up the pio regs/state :)

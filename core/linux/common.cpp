@@ -11,21 +11,15 @@
 #include <poll.h>
 #include <termios.h>
 #endif  
-//#include <curses.h>
 #include <fcntl.h>
 #include <semaphore.h>
 #include <stdarg.h>
 #include <signal.h>
 #include <sys/param.h>
-#include <sys/mman.h>
 #include <sys/time.h>
 #if !defined(TARGET_BSD) && !defined(_ANDROID) && !defined(TARGET_IPHONE) && !defined(TARGET_NACL32) && !defined(TARGET_EMSCRIPTEN) && !defined(TARGET_OSX) && !defined(TARGET_OSX_X64)
   #include <sys/personality.h>
   #include <dlfcn.h>
-#endif
-#if HOST_OS == OS_DARWIN
-#include <mach/clock.h>
-#include <mach/mach.h>
 #endif
 #include <unistd.h>
 #include "hw/sh4/dyna/blockmanager.h"
@@ -58,14 +52,13 @@ void sigill_handler(int sn, siginfo_t * si, void *segfault_ctx) {
 }
 #endif
 
-#if !defined(TARGET_NO_EXCEPTIONS)
 void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 {
 	rei_host_context_t ctx;
 
 	context_from_segfault(&ctx, segfault_ctx);
 
-	bool dyna_cde = ((unat)ctx.pc>(unat)CodeCache) && ((unat)ctx.pc<(unat)(CodeCache + CODE_SIZE + TEMP_CODE_SIZE));
+	bool dyna_cde = ((unat)CC_RX2RW(ctx.pc) > (unat)CodeCache) && ((unat)CC_RX2RW(ctx.pc) < (unat)(CodeCache + CODE_SIZE + TEMP_CODE_SIZE));
 
 	//ucontext_t* ctx=(ucontext_t*)ctxr;
 	//printf("mprot hit @ ptr 0x%08X @@ code: %08X, %d\n",si->si_addr,ctx->uc_mcontext.arm_pc,dyna_cde);
@@ -121,12 +114,9 @@ void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 		signal(SIGSEGV, SIG_DFL);
 	}
 }
-#endif
 
-#endif
-void install_fault_handler (void)
+void install_fault_handler(void)
 {
-#if !defined(TARGET_NO_EXCEPTIONS)
 	struct sigaction act, segv_oact;
 	memset(&act, 0, sizeof(act));
 	act.sa_sigaction = fault_handler;
@@ -140,172 +130,14 @@ void install_fault_handler (void)
     act.sa_sigaction = sigill_handler;
     sigaction(SIGILL, &act, &segv_oact);
 #endif
-#endif
 }
-
-#if !defined(TARGET_NO_THREADS)
-
-//Thread class
-cThread::cThread(ThreadEntryFP* function,void* prm)
-{
-	Entry=function;
-	param=prm;
-}
-
-void cThread::Start()
-{
-		pthread_create( (pthread_t*)&hThread, NULL, Entry, param);
-}
-
-void cThread::WaitToEnd()
-{
-	pthread_join((pthread_t)hThread,0);
-}
-
-//End thread class
-#endif
-
-//cResetEvent Calss
-cResetEvent::cResetEvent(bool State,bool Auto)
-{
-	//sem_init((sem_t*)hEvent, 0, State?1:0);
-	verify(State==false&&Auto==true);
-	pthread_mutex_init(&mutx, NULL);
-	pthread_cond_init(&cond, NULL);
-}
-cResetEvent::~cResetEvent()
-{
-	//Destroy the event object ?
-
-}
-void cResetEvent::Set()//Signal
-{
-	pthread_mutex_lock( &mutx );
-	state=true;
-    pthread_cond_signal( &cond);
-	pthread_mutex_unlock( &mutx );
-}
-void cResetEvent::Reset()//reset
-{
-	pthread_mutex_lock( &mutx );
-	state=false;
-	pthread_mutex_unlock( &mutx );
-}
-bool cResetEvent::Wait(u32 msec)//Wait for signal , then reset
-{
-	pthread_mutex_lock( &mutx );
-	if (!state)
-	{
-		struct timespec ts;
-#if HOST_OS == OS_DARWIN
-		// OSX doesn't have clock_gettime.
-		clock_serv_t cclock;
-		mach_timespec_t mts;
-
-		host_get_clock_service(mach_host_self(), CALENDAR_CLOCK, &cclock);
-		clock_get_time(cclock, &mts);
-		mach_port_deallocate(mach_task_self(), cclock);
-		ts.tv_sec = mts.tv_sec;
-		ts.tv_nsec = mts.tv_nsec;
-#else
-		clock_gettime(CLOCK_REALTIME, &ts);
-#endif
-		ts.tv_sec += msec / 1000;
-		ts.tv_nsec += (msec % 1000) * 1000000;
-		while (ts.tv_nsec > 1000000000)
-		{
-			ts.tv_nsec -= 1000000000;
-			ts.tv_sec++;
-		}
-		pthread_cond_timedwait( &cond, &mutx, &ts );
-	}
-	bool rc = state;
-	state=false;
-	pthread_mutex_unlock( &mutx );
-
-	return rc;
-}
-void cResetEvent::Wait()//Wait for signal , then reset
-{
-	pthread_mutex_lock( &mutx );
-	if (!state)
-	{
-		pthread_cond_wait( &cond, &mutx );
-	}
-	state=false;
-	pthread_mutex_unlock( &mutx );
-}
-
-//End AutoResetEvent
+#else  // !defined(TARGET_NO_EXCEPTIONS)
+// No exceptions/nvmem dummy handlers.
+void install_fault_handler(void) {}
+#endif // !defined(TARGET_NO_EXCEPTIONS)
 
 #include <errno.h>
 
-void VArray2::LockRegion(u32 offset,u32 size)
-{
-	#if !defined(TARGET_NO_EXCEPTIONS)
-	u32 inpage=offset & PAGE_MASK;
-	u32 rv=mprotect (data+offset-inpage, size+inpage, PROT_READ );
-	if (rv!=0)
-	{
-		printf("mprotect(%8s,%08X,R) failed: %d | %d\n",data+offset-inpage,size+inpage,rv,errno);
-		die("mprotect  failed ..\n");
-	}
-
-	#else
-		//printf("VA2: LockRegion\n");
-	#endif
-}
-
-void print_mem_addr()
-{
-    FILE *ifp, *ofp;
-
-    char outputFilename[] = "/data/data/com.reicast.emulator/files/mem_alloc.txt";
-
-    ifp = fopen("/proc/self/maps", "r");
-
-    if (ifp == NULL) {
-        fprintf(stderr, "Can't open input file /proc/self/maps!\n");
-        exit(1);
-    }
-
-    ofp = fopen(outputFilename, "w");
-
-    if (ofp == NULL) {
-        fprintf(stderr, "Can't open output file %s!\n",
-                outputFilename);
-#if HOST_OS == OS_LINUX
-        ofp = stderr;
-#else
-        exit(1);
-#endif
-    }
-
-    char line [ 512 ];
-    while (fgets(line, sizeof line, ifp) != NULL) {
-        fprintf(ofp, "%s", line);
-    }
-
-    fclose(ifp);
-    if (ofp != stderr)
-        fclose(ofp);
-}
-
-void VArray2::UnLockRegion(u32 offset,u32 size)
-{
-	#if !defined(TARGET_NO_EXCEPTIONS)
-	u32 inpage=offset & PAGE_MASK;
-	u32 rv=mprotect (data+offset-inpage, size+inpage, PROT_READ | PROT_WRITE);
-	if (rv!=0)
-	{
-        print_mem_addr();
-		printf("mprotect(%8p,%08X,RW) failed: %d | %d\n",data+offset-inpage,size+inpage,rv,errno);
-		die("mprotect  failed ..\n");
-	}
-	#else
-		//printf("VA2: UnLockRegion\n");
-	#endif
-}
 double os_GetSeconds()
 {
 	timeval a;

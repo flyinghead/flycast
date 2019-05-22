@@ -1,19 +1,13 @@
 #include "types.h"
 #include <unordered_set>
 
-#if HOST_OS==OS_WINDOWS
-#include <windows.h>
-#elif HOST_OS==OS_LINUX
-#include <unistd.h>
-#include <sys/mman.h>
-#endif
-
 #include "../sh4_interpreter.h"
 #include "../sh4_opcode_list.h"
 #include "../sh4_core.h"
 #include "../sh4_if.h"
 #include "hw/sh4/sh4_interrupts.h"
 
+#include "hw/mem/_vmem.h"
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/modules/mmu.h"
 #include "hw/pvr/pvr_mem.h"
@@ -28,9 +22,7 @@
 #include "decoder.h"
 
 #if FEAT_SHREC != DYNAREC_NONE
-//uh uh
 
-#if !defined(_WIN64)
 u8 SH4_TCB[CODE_SIZE + TEMP_CODE_SIZE + 4096]
 #if HOST_OS == OS_WINDOWS || FEAT_SHREC != DYNAREC_JIT
 	;
@@ -41,10 +33,10 @@ u8 SH4_TCB[CODE_SIZE + TEMP_CODE_SIZE + 4096]
 #else
 	#error SH4_TCB ALLOC
 #endif
-#endif
 
 u8* CodeCache;
 u8* TempCodeCache;
+uintptr_t cc_rx_offset;
 
 u32 LastAddr;
 u32 LastAddr_min;
@@ -101,6 +93,15 @@ void recSh4_Run()
 
 	sh4_dyna_rcb=(u8*)&Sh4cntx + sizeof(Sh4cntx);
 	printf("cntx // fpcb offset: %td // pc offset: %td // pc %08X\n",(u8*)&sh4rcb.fpcb - sh4_dyna_rcb, (u8*)&sh4rcb.cntx.pc - sh4_dyna_rcb,sh4rcb.cntx.pc);
+
+	if (!settings.dynarec.safemode)
+		printf("Warning: Dynarec safe mode is off\n");
+
+	if (settings.dynarec.unstable_opt)
+		printf("Warning: Unstable optimizations is on\n");
+
+	if (settings.dynarec.SmcCheckLevel != FullCheck)
+		printf("Warning: SMC check mode is %d\n", settings.dynarec.SmcCheckLevel);
 	
 	verify(rcb_noffs(&next_pc)==-184);
 	ngen_mainloop(sh4_dyna_rcb);
@@ -141,34 +142,51 @@ u32 emit_FreeSpace()
 }
 
 // pc must be a physical address
-bool DoCheck(u32 pc)
+SmcCheckEnum DoCheck(u32 pc)
 {
-	if (IsOnRam(pc))
-	{
-		if (!settings.dynarec.unstable_opt)
-			return true;
 
-		pc&=0xFFFFFF;
-		switch(pc)
-		{
-			//DOA2LE
-			case 0x3DAFC6:
-			case 0x3C83F8:
+	switch (settings.dynarec.SmcCheckLevel) {
 
-			//Shenmue 2
-			case 0x348000:
-				
-			//Shenmue
-			case 0x41860e:
-			
+		// Heuristic-elimintaed FastChecks
+		case NoCheck: {
+			if (IsOnRam(pc))
+			{
+				pc&=0xFFFFFF;
+				switch(pc)
+				{
+					//DOA2LE
+					case 0x3DAFC6:
+					case 0x3C83F8:
 
-				return true;
+					//Shenmue 2
+					case 0x348000:
+						
+					//Shenmue
+					case 0x41860e:
+					
 
-			default:
-				return false;
+						return FastCheck;
+
+					default:
+						return NoCheck;
+				}
+			}
+			return NoCheck;
 		}
+		break;
+
+		// Fast Check everything
+		case FastCheck:
+			return FastCheck;
+
+		// Full Check everything
+		case FullCheck:
+			return FullCheck;
+
+		default:
+			die("Unhandled settings.dynarec.SmcCheckLevel");
+			return FullCheck;
 	}
-	return false;
 }
 
 void AnalyseBlock(RuntimeBlockInfo* blk);
@@ -307,6 +325,8 @@ DynarecCodeEntryPtr DYNACALL rdv_FailedToFindBlock(u32 pc)
 	DynarecCodeEntryPtr code = rdv_CompilePC(0);
 	if (code == NULL)
 		code = bm_GetCodeByVAddr(next_pc);
+	else
+		code = (DynarecCodeEntryPtr)CC_RW2RX(code);
 	return code;
 }
 
@@ -361,7 +381,7 @@ DynarecCodeEntryPtr DYNACALL rdv_BlockCheckFail(u32 addr)
 		next_pc = addr;
 		recSh4_ClearCache();
 	}
-	return rdv_CompilePC(blockcheck_failures);
+	return (DynarecCodeEntryPtr)CC_RW2RX(rdv_CompilePC(blockcheck_failures));
 }
 
 //DynarecCodeEntryPtr rdv_FindCode()
@@ -375,21 +395,22 @@ DynarecCodeEntryPtr DYNACALL rdv_BlockCheckFail(u32 addr)
 
 DynarecCodeEntryPtr rdv_FindOrCompile()
 {
-	DynarecCodeEntryPtr rv=bm_GetCodeByVAddr(next_pc);
-	if (rv==ngen_FailedToFindBlock)
-		rv=rdv_CompilePC(0);
+	DynarecCodeEntryPtr rv = bm_GetCodeByVAddr(next_pc);  // Returns exec addr
+	if (rv == ngen_FailedToFindBlock)
+		rv = (DynarecCodeEntryPtr)CC_RW2RX(rdv_CompilePC(0));  // Returns rw addr
 	
 	return rv;
 }
 
 void* DYNACALL rdv_LinkBlock(u8* code,u32 dpc)
 {
-	RuntimeBlockInfo* rbi=bm_GetBlock(code);
+	// code is the RX addr to return after, however bm_GetBlock returns RW
+	RuntimeBlockInfo* rbi = bm_GetBlock(code);
 
 	if (!rbi)
 	{
 		printf("Stale block ..");
-		rbi=bm_GetStaleBlock(code);
+		rbi = bm_GetStaleBlock(code);
 	}
 	
 	verify(rbi != NULL);
@@ -412,7 +433,7 @@ void* DYNACALL rdv_LinkBlock(u8* code,u32 dpc)
 			next_pc=rbi->NextBlock;
 	}
 
-	DynarecCodeEntryPtr rv=rdv_FindOrCompile();
+	DynarecCodeEntryPtr rv = rdv_FindOrCompile();  // Returns rx ptr
 
 	bool do_link = !mmu_enabled() && bm_GetBlock(code) == rbi;
 
@@ -481,10 +502,6 @@ void recSh4_Reset(bool Manual)
 	Sh4_int_Reset(Manual);
 }
 
-#if HOST_OS == OS_DARWIN
-#include <sys/mman.h>
-#endif
-
 void recSh4_Init()
 {
 	printf("recSh4 Init\n");
@@ -502,57 +519,24 @@ void recSh4_Init()
 	if (_nvmem_enabled()) {
 		verify(mem_b.data==((u8*)p_sh4rcb->sq_buffer+512+0x0C000000));
 	}
-	
-#if defined(_WIN64)
-#ifdef _MSC_VER
-	for (int i = 10; i < 1300; i++) {
 
+	// Prepare some pointer to the pre-allocated code cache:
+	void *candidate_ptr = (void*)(((unat)SH4_TCB + 4095) & ~4095);
 
-		//align to next page ..
-		u8* ptr = (u8*)recSh4_Init - i * 1024 * 1024;
-
-		CodeCache = (u8*)VirtualAlloc(ptr, CODE_SIZE + TEMP_CODE_SIZE, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);//; (u8*)(((unat)SH4_TCB+4095)& ~4095);
-
-		if (CodeCache)
-			break;
-	}
-#else
-	CodeCache = (u8*)VirtualAlloc(NULL, CODE_SIZE + TEMP_CODE_SIZE, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
-#endif
-	verify(CodeCache != NULL);
-#else
-	CodeCache = (u8*)(((unat)SH4_TCB+4095)& ~4095);
-#endif
-
-#if HOST_OS == OS_DARWIN
-    munmap(CodeCache, CODE_SIZE + TEMP_CODE_SIZE);
-    CodeCache = (u8*)mmap(CodeCache, CODE_SIZE + TEMP_CODE_SIZE, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_FIXED | MAP_PRIVATE | MAP_ANON, 0, 0);
-#endif
-
-#if HOST_OS == OS_WINDOWS
-	DWORD old;
-	VirtualProtect(CodeCache,CODE_SIZE + TEMP_CODE_SIZE,PAGE_EXECUTE_READWRITE,&old);
-#elif HOST_OS == OS_LINUX || HOST_OS == OS_DARWIN
-	
-	printf("\n\t CodeCache addr: %p | from: %p | addr here: %p\n", CodeCache, CodeCache, recSh4_Init);
-
-	#if FEAT_SHREC == DYNAREC_JIT
-		if (mprotect(CodeCache, CODE_SIZE + TEMP_CODE_SIZE, PROT_READ|PROT_WRITE|PROT_EXEC))
-		{
-			perror("\n\tError,Couldn’t mprotect CodeCache!");
-			die("Couldn’t mprotect CodeCache");
-		}
+	// Call the platform-specific magic to make the pages RWX
+	CodeCache = NULL;
+	#ifdef FEAT_NO_RWX_PAGES
+	verify(vmem_platform_prepare_jit_block(candidate_ptr, CODE_SIZE + TEMP_CODE_SIZE, (void**)&CodeCache, &cc_rx_offset));
+	#else
+	verify(vmem_platform_prepare_jit_block(candidate_ptr, CODE_SIZE + TEMP_CODE_SIZE, (void**)&CodeCache));
 	#endif
+	// Ensure the pointer returned is non-null
+	verify(CodeCache != NULL);
 
-#if TARGET_IPHONE
-	memset((u8*)mmap(CodeCache, CODE_SIZE + TEMP_CODE_SIZE, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_FIXED | MAP_PRIVATE | MAP_ANON, 0, 0),0xFF,CODE_SIZE + TEMP_CODE_SIZE);
-#else
-	memset(CodeCache,0xFF,CODE_SIZE + TEMP_CODE_SIZE);
-#endif
-
-#endif
+	memset(CodeCache, 0xFF, CODE_SIZE + TEMP_CODE_SIZE);
 	TempCodeCache = CodeCache + CODE_SIZE;
 	ngen_init();
+	bm_Reset();
 }
 
 void recSh4_Term()
@@ -580,4 +564,5 @@ void Get_Sh4Recompiler(sh4_if* rv)
 	rv->IsCpuRunning = recSh4_IsCpuRunning;
 	rv->ResetCache = recSh4_ClearCache;
 }
-#endif
+
+#endif  // FEAT_SHREC != DYNAREC_NONE

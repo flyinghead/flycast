@@ -126,8 +126,7 @@ void palette_update()
 using namespace std;
 
 vector<vram_block*> VramLocks[VRAM_SIZE/PAGE_SIZE];
-//vram 32-64b
-VArray2 vram;
+VLockedMemory vram;  // vram 32-64b
 
 //List functions
 //
@@ -209,7 +208,7 @@ vram_block* libCore_vramlock_Lock(u32 start_offset64,u32 end_offset64,void* user
 	{
 		vramlist_lock.Lock();
 	
-		vram.LockRegion(block->start,block->len);
+		vram.LockRegion(block->start, block->len);
 
 		//TODO: Fix this for 32M wrap as well
 		if (_nvmem_enabled() && VRAM_SIZE == 0x800000) {

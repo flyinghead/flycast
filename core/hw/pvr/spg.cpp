@@ -88,6 +88,8 @@ double full_rps;
 static u32 lightgun_line = 0xffff;
 static u32 lightgun_hpos;
 
+double mspdf;
+
 u32 fskip=0;
 //called from sh4 context , should update pvr/ta state and everything else
 int spg_line_sched(int tag, int cycl, int jit)
@@ -117,6 +119,20 @@ int spg_line_sched(int tag, int cycl, int jit)
 		SPG_STATUS.vsync=in_vblank;
 		SPG_STATUS.scanline=prv_cur_scanline;
 		
+		switch (SPG_HBLANK_INT.hblank_int_mode)
+		{
+		case 0x0:
+			if (prv_cur_scanline == SPG_HBLANK_INT.line_comp_val)
+				asic_RaiseInterrupt(holly_HBLank);
+			break;
+		case 0x2:
+			asic_RaiseInterrupt(holly_HBLank);
+			break;
+		default:
+			die("Unimplemented HBLANK INT mode");
+			break;
+		}
+
 		//Vblank start -- really need to test the scanline values
 		if (prv_cur_scanline==0)
 		{
@@ -127,7 +143,6 @@ int spg_line_sched(int tag, int cycl, int jit)
 
 			//Vblank counter
 			vblk_cnt++;
-			asic_RaiseInterrupt(holly_HBLank);// -> This turned out to be HBlank btw , needs to be emulated ;(
 			//TODO : rend_if_VBlank();
 			rend_vblank();//notify for vblank :)
 			
@@ -174,7 +189,7 @@ int spg_line_sched(int tag, int cycl, int jit)
 				}
 
 				double frames_done=spd_cpu/2;
-				double mspdf=1/frames_done*1000;
+				mspdf=1/frames_done*1000;
 
 				full_rps=(spd_fps+fskip/ts);
 

@@ -13,8 +13,6 @@
 # limitations under the License.
 #
 
-LOCAL_CERTIFICATE := shared
-
 LOCAL_PATH:= $(call my-dir)/..
 
 include $(CLEAR_VARS)
@@ -24,6 +22,7 @@ WEBUI := 1
 USE_GLES := 1
 CHD5_LZMA := 1
 CHD5_FLAC := 1
+USE_MODEM := 1
 
 ifneq ($(TARGET_ARCH_ABI),armeabi-v7a)
   NOT_ARM := 1
@@ -70,25 +69,22 @@ LOCAL_CPPFLAGS  := $(RZDCY_CXXFLAGS) -fPIC -fvisibility=hidden -fvisibility-inli
 ifdef CHD5_LZMA
 	LOCAL_CFLAGS += -D_7ZIP_ST -DCHD5_LZMA
 endif
+
 # FLAC settings (CHDv5)
 ifdef CHD5_FLAC
 	LOCAL_CFLAGS += -DCHD5_FLAC
 endif
 
 ifdef NAOMI
-LOCAL_CFLAGS += -DTARGET_NAOMI=1
-LOCAL_CPPFLAGS += -DTARGET_NAOMI=1
-LOCAL_CXXFLAGS += -DTARGET_NAOMI=1
+    LOCAL_CFLAGS += -DTARGET_NAOMI=1
 endif
 
-# LOCAL_CFLAGS += -std=c++11
+LOCAL_CFLAGS += -DGLES3
 LOCAL_CXXFLAGS += -std=c++11 -fopenmp
 LOCAL_LDFLAGS  += -fopenmp
 
 ifeq ($(TARGET_ARCH_ABI),x86)
   LOCAL_CFLAGS+= -DTARGET_NO_AREC -DTARGET_NO_OPENMP
-  LOCAL_CXXFLAGS+= -DTARGET_NO_AREC -fpermissive -DTARGET_NO_OPENMP
-  LOCAL_CPPFLAGS+= -DTARGET_NO_AREC -DTARGET_NO_OPENMP
 endif
 
 LOCAL_CPP_FEATURES := 
@@ -112,6 +108,8 @@ else
     LOCAL_LDLIBS +=  -Wl,--no-warn-shared-textrel
   endif
 endif
+
+$(LOCAL_SRC_FILES): $(VERSION_HEADER)
 
 #
 # android has poor support for hardfp calling.

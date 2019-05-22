@@ -7,7 +7,7 @@
 #if HOST_OS!=OS_WINDOWS
 #include <pthread.h>
 #else
-#include <Windows.h>
+#include <windows.h>
 #endif
 
 
@@ -166,38 +166,41 @@ public:
 #if !defined(HOST_NO_THREADS)
 typedef  void* ThreadEntryFP(void* param);
 
-typedef void* THREADHANDLE;
-
-class cThread
-{
+class cThread {
 private:
-	ThreadEntryFP* Entry;
+	ThreadEntryFP* entry;
 	void* param;
 public :
-	THREADHANDLE hThread;
-	cThread(ThreadEntryFP* function,void* param);
-	
+	#if HOST_OS==OS_WINDOWS
+	HANDLE hThread;
+	#else
+	pthread_t *hThread;
+	#endif
+
+	cThread(ThreadEntryFP* function, void* param)
+		:entry(function), param(param), hThread(NULL) {}
+	~cThread() { WaitToEnd(); }
 	void Start();
 	void WaitToEnd();
 };
 #endif
+
+
 //Wait Events
 typedef void* EVENTHANDLE;
 class cResetEvent
 {
-
 private:
 #if HOST_OS==OS_WINDOWS
 	EVENTHANDLE hEvent;
 #else
 	pthread_mutex_t mutx;
 	pthread_cond_t cond;
-
+	bool state;
 #endif
 
 public :
-	bool state;
-	cResetEvent(bool State,bool Auto);
+	cResetEvent();
 	~cResetEvent();
 	void Set();		//Set state to signaled
 	void Reset();	//Set state to non signaled
@@ -276,29 +279,52 @@ string get_game_save_prefix();
 string get_game_basename();
 string get_game_dir();
 
-class VArray2
-{
+bool mem_region_lock(void *start, size_t len);
+bool mem_region_unlock(void *start, size_t len);
+bool mem_region_set_exec(void *start, size_t len);
+void *mem_region_reserve(void *start, size_t len);
+bool mem_region_release(void *start, size_t len);
+void *mem_region_map_file(void *file_handle, void *dest, size_t len, size_t offset, bool readwrite);
+bool mem_region_unmap_file(void *start, size_t len);
+
+// Locked memory class, used for texture invalidation purposes.
+class VLockedMemory {
 public:
-
 	u8* data;
-	u32 size;
-	//void Init(void* data,u32 sz);
-	//void Term();
-	void LockRegion(u32 offset,u32 size);
-	void UnLockRegion(u32 offset,u32 size);
+	unsigned size;
 
-	void Zero()
+	void SetRegion(void* ptr, unsigned size) {
+		this->data = (u8*)ptr;
+		this->size = size;
+	}
+	void *getPtr() const { return data; }
+	unsigned getSize() const { return size; }
+
+	#ifdef TARGET_NO_EXCEPTIONS
+	void LockRegion(unsigned offset, unsigned size_bytes) {}
+	void UnLockRegion(unsigned offset, unsigned size_bytes) {}
+	#else
+	void LockRegion(unsigned offset, unsigned size_bytes)
 	{
-		UnLockRegion(0,size);
-		memset(data,0,size);
+		mem_region_lock(&data[offset], size_bytes);
 	}
 
-	INLINE u8& operator [](const u32 i)
-    {
+	void UnLockRegion(unsigned offset, unsigned size_bytes)
+	{
+		mem_region_unlock(&data[offset], size_bytes);
+	}
+	#endif
+
+	void Zero() {
+		UnLockRegion(0, size);
+		memset(data, 0, size);
+	}
+
+	INLINE u8& operator [](unsigned i) {
 #ifdef MEM_BOUND_CHECK
-        if (i>=size)
+        if (i >= size)
 		{
-			printf("Error: VArray2 , index out of range (%d>%d)\n",i,size-1);
+			printf("Error: VLockedMemory , index out of range (%d > %d)\n", i, size-1);
 			MEM_DO_BREAK;
 		}
 #endif

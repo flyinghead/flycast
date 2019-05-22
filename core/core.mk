@@ -1,26 +1,17 @@
-#LOCAL_PATH:= 
+#LOCAL_PATH:=
 
 #MFLAGS	:= -marm -march=armv7-a -mtune=cortex-a8 -mfpu=vfpv3-d16 -mfloat-abi=softfp
 #ASFLAGS	:= -march=armv7-a -mfpu=vfp-d16 -mfloat-abi=softfp
-#LDFLAGS	:= -Wl,-Map,$(notdir $@).map,--gc-sections -Wl,-O3 -Wl,--sort-common 
+#LDFLAGS	:= -Wl,-Map,$(notdir $@).map,--gc-sections -Wl,-O3 -Wl,--sort-common
 
 RZDCY_SRC_DIR ?= $(call my-dir)
-VERSION_SRC := $(RZDCY_SRC_DIR)/version/version.cpp
+VERSION_HEADER := $(RZDCY_SRC_DIR)/version.h
 
-RZDCY_MODULES	:=	cfg/ hw/arm7/ hw/aica/ hw/holly/ hw/ hw/gdrom/ hw/maple/ hw/modem/ \
+RZDCY_MODULES	:=	cfg/ hw/arm7/ hw/aica/ hw/holly/ hw/ hw/gdrom/ hw/maple/ \
  hw/mem/ hw/pvr/ hw/sh4/ hw/sh4/interpr/ hw/sh4/modules/ plugins/ profiler/ oslib/ \
  hw/extdev/ hw/arm/ hw/naomi/ imgread/ ./ deps/coreio/ deps/zlib/ deps/chdr/ deps/crypto/ \
  deps/libelf/ deps/chdpsr/ arm_emitter/ rend/ reios/ deps/libpng/ deps/xbrz/ \
- deps/picotcp/modules/ deps/picotcp/stack/ deps/xxhash/ deps/libzip/ deps/imgui/ \
- archive/ input/
-
-ifdef CHD5_LZMA
-	RZDCY_MODULES += deps/lzma/
-endif
-
-ifdef CHD5_FLAC
-	RZDCY_MODULES += deps/flac/src/libFLAC/
-endif
+ deps/xxhash/ deps/libzip/ deps/imgui/ archive/ input/
 
 ifdef WEBUI
 	RZDCY_MODULES += webui/
@@ -29,10 +20,6 @@ ifdef WEBUI
 	ifdef FOR_ANDROID
 		RZDCY_MODULES += deps/ifaddrs/
 	endif
-endif
-
-ifndef NO_REC
-	RZDCY_MODULES += hw/sh4/dyna/
 endif
 
 ifndef NOT_ARM
@@ -66,10 +53,6 @@ else
     RZDCY_MODULES += rend/norend/
 endif
 
-ifdef HAS_SOFTREND
-	RZDCY_MODULES += rend/soft/
-endif
-
 ifndef NO_NIXPROF
     RZDCY_MODULES += linux/nixprof/
 endif
@@ -89,12 +72,6 @@ endif
 ifdef FOR_WINDOWS
     RZDCY_MODULES += windows/
 endif
-
-RZDCY_FILES := $(foreach dir,$(addprefix $(RZDCY_SRC_DIR)/,$(RZDCY_MODULES)),$(wildcard $(dir)*.cpp))
-RZDCY_FILES += $(foreach dir,$(addprefix $(RZDCY_SRC_DIR)/,$(RZDCY_MODULES)),$(wildcard $(dir)*.cc))
-RZDCY_FILES += $(foreach dir,$(addprefix $(RZDCY_SRC_DIR)/,$(RZDCY_MODULES)),$(wildcard $(dir)*.c))
-RZDCY_FILES += $(foreach dir,$(addprefix $(RZDCY_SRC_DIR)/,$(RZDCY_MODULES)),$(wildcard $(dir)*.S))
-RZDCY_FILES += $(VERSION_SRC)
 
 ifdef FOR_PANDORA
 RZDCY_CFLAGS	:= \
@@ -134,11 +111,17 @@ RZDCY_CFLAGS :=
 endif
 
 RZDCY_CFLAGS += -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/rend/gles -I$(RZDCY_SRC_DIR)/deps \
-		-I$(RZDCY_SRC_DIR)/deps/picotcp/include -I$(RZDCY_SRC_DIR)/deps/picotcp/modules \
 		 -I$(RZDCY_SRC_DIR)/deps/vixl -I$(RZDCY_SRC_DIR)/khronos
 
+ifdef USE_MODEM
+	RZDCY_CFLAGS += -DENABLE_MODEM -I$(RZDCY_SRC_DIR)/deps/picotcp/include -I$(RZDCY_SRC_DIR)/deps/picotcp/modules
+	RZDCY_MODULES += hw/modem/ deps/picotcp/modules/ deps/picotcp/stack/
+endif
+
 ifdef NO_REC
-  RZDCY_CFLAGS += -DTARGET_NO_REC
+	RZDCY_CFLAGS += -DTARGET_NO_REC
+else
+	RZDCY_MODULES += hw/sh4/dyna/
 endif
 
 ifdef USE_GLES
@@ -147,17 +130,30 @@ endif
 
 ifdef HAS_SOFTREND
 	RZDCY_CFLAGS += -DTARGET_SOFTREND
+	RZDCY_MODULES += rend/soft/
 endif
 
 ifdef CHD5_FLAC
-	RZDCY_CFLAGS += -I$(RZDCY_SRC_DIR)/deps/flac/src/libFLAC/include/ -I$(RZDCY_SRC_DIR)/deps/flac/include
+	RZDCY_CFLAGS += -DCHD5_FLAC -I$(RZDCY_SRC_DIR)/deps/flac/src/libFLAC/include/ -I$(RZDCY_SRC_DIR)/deps/flac/include
 	RZDCY_CFLAGS += -DPACKAGE_VERSION=\"1.3.2\" -DFLAC__HAS_OGG=0 -DFLAC__NO_DLL -DHAVE_LROUND -DHAVE_STDINT_H -DHAVE_STDLIB_H -DHAVE_SYS_PARAM_H
+	RZDCY_MODULES += deps/flac/src/libFLAC/
+endif
+
+# 7-Zip/LZMA settings (CHDv5)
+ifdef CHD5_LZMA
+	RZDCY_MODULES += deps/lzma/
+	RZDCY_CFLAGS += -D_7ZIP_ST -DCHD5_LZMA
 endif
 
 RZDCY_CXXFLAGS := $(RZDCY_CFLAGS) -fno-exceptions -fno-rtti -std=gnu++11
 
-$(VERSION_SRC):
-	echo "const char *version = \"`git describe --tags --always`\";" > $(VERSION_SRC)
-	echo "const char *git_hash = \"`git rev-parse --short HEAD`\";" >> $(VERSION_SRC)
-	echo "const char *build_date = \"`date '+%Y-%m-%d %H:%M:%S %Z'`\";" >> $(VERSION_SRC)
+RZDCY_FILES := $(foreach dir,$(addprefix $(RZDCY_SRC_DIR)/,$(RZDCY_MODULES)),$(wildcard $(dir)*.cpp))
+RZDCY_FILES += $(foreach dir,$(addprefix $(RZDCY_SRC_DIR)/,$(RZDCY_MODULES)),$(wildcard $(dir)*.cc))
+RZDCY_FILES += $(foreach dir,$(addprefix $(RZDCY_SRC_DIR)/,$(RZDCY_MODULES)),$(wildcard $(dir)*.c))
+RZDCY_FILES += $(foreach dir,$(addprefix $(RZDCY_SRC_DIR)/,$(RZDCY_MODULES)),$(wildcard $(dir)*.S))
+
+$(VERSION_HEADER):
+	echo "#define REICAST_VERSION \"`git describe --tags --always`\"" > $(VERSION_HEADER)
+	echo "#define GIT_HASH \"`git rev-parse --short HEAD`\"" >> $(VERSION_HEADER)
+	echo "#define BUILD_DATE \"`date '+%Y-%m-%d %H:%M:%S %Z'`\"" >> $(VERSION_HEADER)
 

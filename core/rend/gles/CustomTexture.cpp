@@ -22,7 +22,11 @@
 #include <sstream>
 #include <sys/types.h>
 #include <sys/stat.h>
+#ifdef _MSC_VER
+#include "dirent/dirent.h"
+#else
 #include <dirent.h>
+#endif
 
 #include "deps/libpng/png.h"
 #include "reios/reios.h"
@@ -46,19 +50,28 @@ void CustomTexture::LoaderThread()
 			
 			if (texture != NULL)
 			{
-				// FIXME texture may have been deleted. Need to detect this.
 				texture->ComputeHash();
-				int width, height;
-				u8 *image_data = LoadCustomTexture(texture->texture_hash, width, height);
-				if (image_data != NULL)
+				if (texture->custom_image_data != NULL)
 				{
-					if (texture->custom_image_data != NULL)
-						delete [] texture->custom_image_data;
-					texture->custom_width = width;
-					texture->custom_height = height;
-					texture->custom_image_data = image_data;
+					delete [] texture->custom_image_data;
+					texture->custom_image_data = NULL;
 				}
-				texture->custom_load_in_progress = false;
+				if (!texture->dirty)
+				{
+					int width, height;
+					u8 *image_data = LoadCustomTexture(texture->texture_hash, width, height);
+					if (image_data == NULL)
+					{
+						image_data = LoadCustomTexture(texture->old_texture_hash, width, height);
+					}
+					if (image_data != NULL)
+					{
+						texture->custom_width = width;
+						texture->custom_height = height;
+						texture->custom_image_data = image_data;
+					}
+				}
+				texture->custom_load_in_progress--;
 			}
 
 		} while (texture != NULL);
@@ -126,7 +139,7 @@ u8* CustomTexture::LoadCustomTexture(u32 hash, int& width, int& height)
 	std::stringstream path;
 	path << textures_path << std::hex << hash << ".png";
 
-	u8 *image_data = loadPNGData(path.str(), width, height, false);
+	u8 *image_data = loadPNGData(path.str(), width, height);
 	if (image_data == NULL)
 		unknown_hashes.insert(hash);
 
@@ -136,10 +149,9 @@ u8* CustomTexture::LoadCustomTexture(u32 hash, int& width, int& height)
 void CustomTexture::LoadCustomTextureAsync(TextureCacheData *texture_data)
 {
 	if (!Init())
-	{
-		texture_data->custom_load_in_progress = false;
 		return;
-	}
+
+	texture_data->custom_load_in_progress++;
 	work_queue_mutex.Lock();
 	work_queue.insert(work_queue.begin(), texture_data);
 	work_queue_mutex.Unlock();
@@ -173,8 +185,8 @@ void CustomTexture::DumpTexture(u32 hash, int w, int h, GLuint textype, void *te
 	png_bytepp rows = (png_bytepp)malloc(h * sizeof(png_bytep));
 	for (int y = 0; y < h; y++)
 	{
-		rows[y] = (png_bytep)malloc(w * 4);	// 32-bit per pixel
-		u8 *dst = (u8 *)rows[y];
+		rows[h - y - 1] = (png_bytep)malloc(w * 4);	// 32-bit per pixel
+		u8 *dst = (u8 *)rows[h - y - 1];
 		switch (textype)
 		{
 		case GL_UNSIGNED_SHORT_4_4_4_4:

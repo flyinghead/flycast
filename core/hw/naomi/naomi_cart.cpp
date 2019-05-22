@@ -24,15 +24,14 @@ bool bios_loaded = false;
 
 	#include <unistd.h>
 	#include <fcntl.h>
-	#include <sys/mman.h>
 	#include <errno.h>
 #endif
 
-fd_t*	RomCacheMap;
+fd_t*	RomCacheMap = NULL;
 u32		RomCacheMapCount;
 
 char naomi_game_id[33];
-InputDescriptors *naomi_game_inputs;
+InputDescriptors *NaomiGameInputs;
 u8 *naomi_default_eeprom;
 
 extern RomChip sys_rom;
@@ -246,7 +245,7 @@ static bool naomi_cart_LoadZip(char *filename)
 		break;
 	}
 	CurrentCartridge->SetKey(game->key);
-	naomi_game_inputs = game->inputs;
+	NaomiGameInputs = game->inputs;
 
 	for (int romid = 0; game->blobs[romid].filename != NULL; romid++)
 	{
@@ -485,15 +484,9 @@ bool naomi_cart_LoadRom(char* file)
 	RomCacheMapCount = (u32)files.size();
 	RomCacheMap = new fd_t[files.size()]();
 
-	//Allocate space for the ram, so we are sure we have a segment of continius ram
-#if HOST_OS == OS_WINDOWS
-	RomPtr = (u8*)VirtualAlloc(0, RomSize, MEM_RESERVE, PAGE_NOACCESS);
-#else
-	RomPtr = (u8*)mmap(0, RomSize, PROT_NONE, MAP_PRIVATE | MAP_ANON, -1, 0);
-#endif
-
-	verify(RomPtr != 0);
-	verify(RomPtr != (void*)-1);
+	//Allocate space for the ram, so we are sure we have a segment of continuous ram
+	RomPtr = (u8*)mem_region_reserve(NULL, RomSize);
+	verify(RomPtr != NULL);
 
 	bool load_error = false;
 
@@ -550,11 +543,7 @@ bool naomi_cart_LoadRom(char* file)
 	}
 
 	//Release the segment we reserved so we can map the files there
-#if HOST_OS == OS_WINDOWS
-	verify(VirtualFree(RomPtr, 0, MEM_RELEASE));
-#else
-	munmap(RomPtr, RomSize);
-#endif
+	mem_region_release(RomPtr, RomSize);
 
 	if (load_error)
 	{
@@ -574,23 +563,13 @@ bool naomi_cart_LoadRom(char* file)
 		if (RomCacheMap[i] == INVALID_FD)
 		{
 			//printf("-Reserving ram at 0x%08X, size 0x%08X\n", fstart[i], fsize[i]);
-			
-#if HOST_OS == OS_WINDOWS
-			bool mapped = RomDest == VirtualAlloc(RomDest, fsize[i], MEM_RESERVE, PAGE_NOACCESS);
-#else
-			bool mapped = RomDest == (u8*)mmap(RomDest, RomSize, PROT_NONE, MAP_PRIVATE, 0, 0);
-#endif
-
+			bool mapped = RomDest == (u8 *)mem_region_reserve(RomDest, fsize[i]);
 			verify(mapped);
 		}
 		else
 		{
 			//printf("-Mapping \"%s\" at 0x%08X, size 0x%08X\n", files[i].c_str(), fstart[i], fsize[i]);
-#if HOST_OS == OS_WINDOWS
-			bool mapped = RomDest == MapViewOfFileEx(RomCacheMap[i], FILE_MAP_READ, 0, 0, fsize[i], RomDest);
-#else
-			bool mapped = RomDest == mmap(RomDest, fsize[i], PROT_READ, MAP_PRIVATE, RomCacheMap[i], 0 );
-#endif
+			bool mapped = RomDest == (u8 *)mem_region_map_file((void *)(uintptr_t)RomCacheMap[i], RomDest, fsize[i], 0, false);
 			if (!mapped)
 			{
 				printf("-Mapping ROM FAILED: %s @ %08x size %x\n", files[i].c_str(), fstart[i], fsize[i]);
@@ -636,10 +615,10 @@ bool naomi_cart_SelectFile()
 	if (!naomi_cart_LoadRom(SelectedFile))
 	{
 		printf("Cannot load %s: error %d\n", SelectedFile, errno);
+		cfgSetVirtual("config", "image", "");
+
 		return false;
 	}
-
-	cfgSaveStr("emu", "gamefile", SelectedFile);
 
 	return true;
 }
@@ -653,7 +632,8 @@ Cartridge::Cartridge(u32 size)
 
 Cartridge::~Cartridge()
 {
-	free(RomPtr);
+	if (RomPtr != NULL)
+		free(RomPtr);
 }
 
 bool Cartridge::Read(u32 offset, u32 size, void* dst)
@@ -1035,4 +1015,12 @@ void M2Cartridge::Serialize(void** data, unsigned int* total_size) {
 void M2Cartridge::Unserialize(void** data, unsigned int* total_size) {
 	REICAST_US(naomi_cart_ram);
 	NaomiCartridge::Unserialize(data, total_size);
+}
+
+DecryptedCartridge::~DecryptedCartridge()
+{
+	// TODO this won't work on windows -> need to unmap each file first
+	mem_region_release(RomPtr, RomSize);
+	// Avoid crash when freeing vmem
+	RomPtr = NULL;
 }

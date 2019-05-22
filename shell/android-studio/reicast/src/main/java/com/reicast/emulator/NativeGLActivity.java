@@ -2,13 +2,17 @@ package com.reicast.emulator;
 
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.view.ViewGroup;
 import android.view.Window;
+import android.widget.RelativeLayout;
 
 import com.reicast.emulator.emu.JNIdc;
 import com.reicast.emulator.emu.NativeGLView;
 import com.reicast.emulator.periph.VJoy;
 
 public final class NativeGLActivity extends BaseGLActivity {
+
+    private static ViewGroup mLayout;   // used for text input
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -17,26 +21,26 @@ public final class NativeGLActivity extends BaseGLActivity {
         super.onCreate(savedInstanceState);
 
         // Create the actual GL view
-//        mView = new NativeGLView(this);
-//        setContentView(mView);
-        setContentView(R.layout.nativegl_content);
-        mView = findViewById(R.id.glView);
+        mView = new NativeGLView(this);
+        mLayout = new RelativeLayout(this);
+        mLayout.addView(mView);
 
-        //setup mic
-        if (Emulator.micPluggedIn())
-            requestRecordAudioPermission();
+        setContentView(mLayout);
     }
 
     @Override
-    protected void onPause() {
-        super.onPause();
+    protected void doPause() {
         ((NativeGLView)mView).pause();
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
+    protected void doResume() {
         ((NativeGLView)mView).resume();
+    }
+
+    @Override
+    public boolean isSurfaceReady() {
+        return ((NativeGLView)mView).isSurfaceReady();
     }
 
     // Called from native code

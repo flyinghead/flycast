@@ -13,11 +13,12 @@
 
 #include <time.h>
 
-VArray2 aica_ram;
+VLockedMemory aica_ram;
 u32 VREG;//video reg =P
 u32 ARMRST;//arm reset reg
 u32 rtc_EN=0;
 int dma_sched_id;
+u32 RealTimeClock;
 
 u32 GetRTC_now()
 {
@@ -39,9 +40,9 @@ u32 ReadMem_aica_rtc(u32 addr,u32 sz)
 	switch( addr & 0xFF )
 	{
 	case 0:
-		return settings.dreamcast.RTC>>16;
+		return RealTimeClock>>16;
 	case 4:
-		return settings.dreamcast.RTC &0xFFFF;
+		return RealTimeClock &0xFFFF;
 	case 8:
 		return 0;
 	}
@@ -57,16 +58,16 @@ void WriteMem_aica_rtc(u32 addr,u32 data,u32 sz)
 	case 0:
 		if (rtc_EN)
 		{
-			settings.dreamcast.RTC&=0xFFFF;
-			settings.dreamcast.RTC|=(data&0xFFFF)<<16;
+			RealTimeClock&=0xFFFF;
+			RealTimeClock|=(data&0xFFFF)<<16;
 			rtc_EN=0;
 		}
 		return;
 	case 4:
 		if (rtc_EN)
 		{
-			settings.dreamcast.RTC&=0xFFFF0000;
-			settings.dreamcast.RTC|= data&0xFFFF;
+			RealTimeClock&=0xFFFF0000;
+			RealTimeClock|= data&0xFFFF;
 			//TODO: Clean the internal timer ?
 		}
 		return;
@@ -153,15 +154,14 @@ void WriteMem_aica_reg(u32 addr,u32 data,u32 sz)
 //Init/res/term
 void aica_Init()
 {
-	//mmnnn ? gotta fill it w/ something
+	RealTimeClock = GetRTC_now();
 }
 
 void aica_Reset(bool Manual)
 {
-	if (!Manual)
-	{
-		aica_ram.Zero();
-	}
+	aica_Init();
+	VREG = 0;
+	ARMRST = 0;
 }
 
 void aica_Term()
@@ -183,13 +183,13 @@ int dma_end_sched(int tag, int cycl, int jitt)
 	SB_ADST = 0x00000000;//dma done
 	SB_ADLEN = 0x00000000;
 
+	// indicate that dma is not happening, or has been paused
 	SB_ADSUSP |= 0x10;
 
 	asic_RaiseInterrupt(holly_SPU_DMA);
 
 	return 0;
 }
-
 
 void Write_SB_ADST(u32 addr, u32 data)
 {
@@ -227,14 +227,24 @@ void Write_SB_ADST(u32 addr, u32 data)
 				WriteMem32_nommu(dst+i,data);
 			}
 			*/
+
+			// idicate that dma is in progress
 			SB_ADSUSP &= ~0x10;
 
-			// Schedule the end of DMA transfer interrupt
-			int cycles = len * (SH4_MAIN_CLOCK / 2 / 25000000);       // 16 bits @ 25 MHz
-			if (cycles < 4096)
-				dma_end_sched(0, 0, 0);
+			if (!settings.aica.OldSyncronousDma)
+			{
+
+				// Schedule the end of DMA transfer interrupt
+				int cycles = len * (SH4_MAIN_CLOCK / 2 / 25000000);       // 16 bits @ 25 MHz
+				if (cycles < 4096)
+					dma_end_sched(0, 0, 0);
+				else
+					sh4_sched_request(dma_sched_id, cycles);
+			}
 			else
-				sh4_sched_request(dma_sched_id, cycles);
+			{
+				dma_end_sched(0, 0, 0);
+			}
 		}
 	}
 }

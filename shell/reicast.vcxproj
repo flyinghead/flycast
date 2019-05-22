@@ -35,6 +35,27 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\core\archive\7zArchive.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Naomi Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Naomi Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Naomi Release|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Naomi Debug|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\core\archive\archive.cpp" />
+    <ClCompile Include="..\core\archive\ZipArchive.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Naomi Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Naomi Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Naomi Release|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Naomi Debug|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="..\core\cfg\cl.cpp" />
     <ClCompile Include="..\core\cfg\cfg.cpp" />
     <ClCompile Include="..\core\cfg\ini.cpp" />
@@ -47,6 +68,7 @@
     <ClCompile Include="..\core\deps\coreio\coreio.cpp" />
     <ClCompile Include="..\core\deps\crypto\md5.cpp" />
     <ClCompile Include="..\core\deps\crypto\sha1.cpp" />
+    <ClCompile Include="..\core\deps\dirent\dirent.c" />
     <ClCompile Include="..\core\deps\flac\src\libFLAC\bitmath.c" />
     <ClCompile Include="..\core\deps\flac\src\libFLAC\bitreader.c" />
     <ClCompile Include="..\core\deps\flac\src\libFLAC\cpu.c" />
@@ -68,6 +90,10 @@
     <ClCompile Include="..\core\deps\flac\src\libFLAC\stream_decoder.c" />
     <ClCompile Include="..\core\deps\flac\src\libFLAC\window.c" />
     <ClCompile Include="..\core\deps\flac\src\libFLAC\windows_unicode_filenames.c" />
+    <ClCompile Include="..\core\deps\imgui\imgui.cpp" />
+    <ClCompile Include="..\core\deps\imgui\imgui_demo.cpp" />
+    <ClCompile Include="..\core\deps\imgui\imgui_draw.cpp" />
+    <ClCompile Include="..\core\deps\imgui\imgui_widgets.cpp" />
     <ClCompile Include="..\core\deps\libelf\elf.cpp" />
     <ClCompile Include="..\core\deps\libelf\elf32.cpp" />
     <ClCompile Include="..\core\deps\libelf\elf64.cpp" />
@@ -154,6 +180,11 @@
     <ClCompile Include="..\core\hw\mem\_vmem.cpp" />
     <ClCompile Include="..\core\hw\modem\modem.cpp" />
     <ClCompile Include="..\core\hw\modem\picoppp.cpp" />
+    <ClCompile Include="..\core\hw\naomi\awcartridge.cpp" />
+    <ClCompile Include="..\core\hw\naomi\decrypt.cpp" />
+    <ClCompile Include="..\core\hw\naomi\gdcartridge.cpp" />
+    <ClCompile Include="..\core\hw\naomi\m1cartridge.cpp" />
+    <ClCompile Include="..\core\hw\naomi\m4cartridge.cpp" />
     <ClCompile Include="..\core\hw\naomi\naomi.cpp" />
     <ClCompile Include="..\core\hw\naomi\naomi_cart.cpp" />
     <ClCompile Include="..\core\hw\pvr\drkPvr.cpp" />
@@ -192,9 +223,13 @@
     <ClCompile Include="..\core\imgread\cdi.cpp" />
     <ClCompile Include="..\core\imgread\chd.cpp" />
     <ClCompile Include="..\core\imgread\common.cpp" />
+    <ClCompile Include="..\core\imgread\cue.cpp" />
     <ClCompile Include="..\core\imgread\gdi.cpp" />
     <ClCompile Include="..\core\imgread\ImgReader.cpp" />
     <ClCompile Include="..\core\imgread\ioctl.cpp" />
+    <ClCompile Include="..\core\input\gamepad_device.cpp" />
+    <ClCompile Include="..\core\input\keyboard_device.cpp" />
+    <ClCompile Include="..\core\input\mapping.cpp" />
     <ClCompile Include="..\core\linux\common.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Naomi Debug|Win32'">true</ExcludedFromBuild>
@@ -269,6 +304,8 @@
     <ClCompile Include="..\core\reios\reios.cpp" />
     <ClCompile Include="..\core\reios\reios_elf.cpp" />
     <ClCompile Include="..\core\rend\d3d11\d3d11.cpp" />
+    <ClCompile Include="..\core\rend\gles\CustomTexture.cpp" />
+    <ClCompile Include="..\core\rend\gles\gl32funcs.c" />
     <ClCompile Include="..\core\rend\gles\gldraw.cpp" />
     <ClCompile Include="..\core\rend\gles\gles.cpp" />
     <ClCompile Include="..\core\rend\gles\gltex.cpp" />
@@ -276,14 +313,21 @@
     <ClCompile Include="..\core\rend\gl4\gldraw.cpp" />
     <ClCompile Include="..\core\rend\gl4\gles.cpp" />
     <ClCompile Include="..\core\rend\gl4\gltex.cpp" />
+    <ClCompile Include="..\core\rend\gles\imgui_impl_opengl3.cpp" />
+    <ClCompile Include="..\core\rend\gui.cpp" />
+    <ClCompile Include="..\core\rend\gui_util.cpp" />
     <ClCompile Include="..\core\rend\soft\softrend.cpp" />
     <ClCompile Include="..\core\rend\TexCache.cpp" />
     <ClCompile Include="..\core\serialize.cpp" />
     <ClCompile Include="..\core\stdclass.cpp" />
     <ClCompile Include="..\core\webui\server.cpp" />
     <ClCompile Include="..\core\windows\winmain.cpp" />
+    <ClCompile Include="..\core\windows\win_vmem.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\core\archive\7zArchive.h" />
+    <ClInclude Include="..\core\archive\archive.h" />
+    <ClInclude Include="..\core\archive\ZipArchive.h" />
     <ClInclude Include="..\core\build.h" />
     <ClInclude Include="..\core\cfg\cfg.h" />
     <ClInclude Include="..\core\cfg\ini.h" />
@@ -297,6 +341,7 @@
     <ClInclude Include="..\core\deps\coreio\coreio.h" />
     <ClInclude Include="..\core\deps\crypto\md5.h" />
     <ClInclude Include="..\core\deps\crypto\sha1.h" />
+    <ClInclude Include="..\core\deps\dirent\dirent.h" />
     <ClInclude Include="..\core\deps\flac\include\FLAC\all.h" />
     <ClInclude Include="..\core\deps\flac\include\FLAC\assert.h" />
     <ClInclude Include="..\core\deps\flac\include\FLAC\callback.h" />
@@ -313,6 +358,13 @@
     <ClInclude Include="..\core\deps\flac\include\share\safe_str.h" />
     <ClInclude Include="..\core\deps\flac\include\share\windows_unicode_filenames.h" />
     <ClInclude Include="..\core\deps\flac\include\share\win_utf8_io.h" />
+    <ClInclude Include="..\core\deps\imgui\imconfig.h" />
+    <ClInclude Include="..\core\deps\imgui\imgui.h" />
+    <ClInclude Include="..\core\deps\imgui\imgui_internal.h" />
+    <ClInclude Include="..\core\deps\imgui\imstb_rectpack.h" />
+    <ClInclude Include="..\core\deps\imgui\imstb_textedit.h" />
+    <ClInclude Include="..\core\deps\imgui\imstb_truetype.h" />
+    <ClInclude Include="..\core\deps\imgui\roboto_medium.h" />
     <ClInclude Include="..\core\deps\libelf\debug.h" />
     <ClInclude Include="..\core\deps\libelf\elf.h" />
     <ClInclude Include="..\core\deps\libelf\elf32.h" />
@@ -384,9 +436,17 @@
     <ClInclude Include="..\core\hw\modem\modem.h" />
     <ClInclude Include="..\core\hw\modem\modem_regs.h" />
     <ClInclude Include="..\core\hw\modem\picoppp.h" />
+    <ClInclude Include="..\core\hw\naomi\awave_regs.h" />
+    <ClInclude Include="..\core\hw\naomi\awcartridge.h" />
+    <ClInclude Include="..\core\hw\naomi\decrypt.h" />
+    <ClInclude Include="..\core\hw\naomi\gdcartridge.h" />
+    <ClInclude Include="..\core\hw\naomi\m1cartridge.h" />
+    <ClInclude Include="..\core\hw\naomi\m4cartridge.h" />
     <ClInclude Include="..\core\hw\naomi\naomi.h" />
     <ClInclude Include="..\core\hw\naomi\naomi_cart.h" />
     <ClInclude Include="..\core\hw\naomi\naomi_regs.h" />
+    <ClInclude Include="..\core\hw\naomi\naomi_roms.h" />
+    <ClInclude Include="..\core\hw\naomi\naomi_roms_input.h" />
     <ClInclude Include="..\core\hw\pvr\config.h" />
     <ClInclude Include="..\core\hw\pvr\drkPvr.h" />
     <ClInclude Include="..\core\hw\pvr\helper_classes.h" />
@@ -430,6 +490,10 @@
     <ClInclude Include="..\core\imgread\pfctoc.h" />
     <ClInclude Include="..\core\imgread\resource.h" />
     <ClInclude Include="..\core\imgread\SCSIDEFS.H" />
+    <ClInclude Include="..\core\input\gamepad.h" />
+    <ClInclude Include="..\core\input\gamepad_device.h" />
+    <ClInclude Include="..\core\input\keyboard_device.h" />
+    <ClInclude Include="..\core\input\mapping.h" />
     <ClInclude Include="..\core\linux\context.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Naomi Release|Win32'">true</ExcludedFromBuild>
@@ -454,6 +518,11 @@
     <ClInclude Include="..\core\oslib\audiostream.h" />
     <ClInclude Include="..\core\oslib\oslib.h" />
     <ClInclude Include="..\core\profiler\profiler.h" />
+    <ClInclude Include="..\core\windows\win_keyboard.h" />
+    <ClInclude Include="..\core\windows\xinput_gamepad.h" />
+    <MASM Include="..\core\rec-x64\msvc.asm">
+      <FileType>Document</FileType>
+    </MASM>
     <ClInclude Include="..\core\rec-x86\rec_x86_ngen.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Naomi Release|x64'">true</ExcludedFromBuild>
@@ -464,9 +533,14 @@
     <ClInclude Include="..\core\reios\gdrom_hle.h" />
     <ClInclude Include="..\core\reios\reios.h" />
     <ClInclude Include="..\core\reios\reios_elf.h" />
+    <ClInclude Include="..\core\rend\gles\CustomTexture.h" />
+    <ClInclude Include="..\core\rend\gles\gl32funcs.h" />
     <ClInclude Include="..\core\rend\gles\gles.h" />
     <ClInclude Include="..\core\rend\gles\glcache.h" />
     <ClInclude Include="..\core\rend\gl4\gl4.h" />
+    <ClInclude Include="..\core\rend\gles\imgui_impl_opengl3.h" />
+    <ClInclude Include="..\core\rend\gui.h" />
+    <ClInclude Include="..\core\rend\gui_util.h" />
     <ClInclude Include="..\core\rend\rend.h" />
     <ClInclude Include="..\core\rend\TexCache.h" />
     <ClInclude Include="..\core\stdclass.h" />
@@ -501,7 +575,7 @@
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>reicast</RootNamespace>
     <ProjectName>reicast</ProjectName>
-    <WindowsTargetPlatformVersion>10.0.17134.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Fast|Win32'" Label="Configuration">
@@ -640,7 +714,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Full</Optimization>
       <PreprocessorDefinitions>WIN32;CHD5_FLAC;PACKAGE_VERSION="1.3.2";FLAC__HAS_OGG=0;FLAC__NO_DLL;HAVE_LROUND;HAVE_STDINT_H;HAVE_STDLIB_H;CHD5_LZMA;_7ZIP_ST;NDEBUG;_CONSOLE;X86;RELEASE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;$(ProjectDir)..\core\rend\gles;$(ProjectDir)..\core\deps\flac\src\libflac\include;$(ProjectDir)..\core\deps\flac\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;$(ProjectDir)..\core\rend\gles;$(ProjectDir)..\core\deps;$(ProjectDir)..\core\deps\flac\src\libflac\include;$(ProjectDir)..\core\deps\flac\include</AdditionalIncludeDirectories>
       <AdditionalOptions>/MP %(AdditionalOptions)</AdditionalOptions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -664,6 +738,13 @@
       <AdditionalLibraryDirectories>$(SolutionDir)..\pvrframe</AdditionalLibraryDirectories>
       <AdditionalDependencies>Dsound.lib;winmm.lib;wsock32.lib;comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PreBuildEvent>
+      <Command>for /f "delims=" %%i in ('git describe') do echo #define REICAST_VERSION "%%i" &gt;$(ProjectDir)\..\core\version.h
+for /f "delims=" %%i in ('git rev-parse --short HEAD') do echo #define GIT_HASH "%%i" &gt;&gt;$(ProjectDir)\..\core\version.h
+for /f "delims=" %%i in ('date /T') do echo #define BUILD_DATE "%%i" &gt;&gt;$(ProjectDir)\..\core\version.h
+</Command>
+      <Message>Create version.h</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Naomi Release|Win32'">
     <ClCompile>
@@ -672,7 +753,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Full</Optimization>
       <PreprocessorDefinitions>WIN32;CHD5_FLAC;PACKAGE_VERSION="1.3.2";FLAC__HAS_OGG=0;FLAC__NO_DLL;HAVE_LROUND;HAVE_STDINT_H;HAVE_STDLIB_H;CHD5_LZMA;_7ZIP_ST;NDEBUG;_CONSOLE;X86;RELEASE;TARGET_NAOMI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;$(ProjectDir)..\core\rend\gles;$(ProjectDir)..\core\deps\flac\src\libflac\include;$(ProjectDir)..\core\deps\flac\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;$(ProjectDir)..\core\rend\gles;$(ProjectDir)..\core\deps;$(ProjectDir)..\core\deps\flac\src\libflac\include;$(ProjectDir)..\core\deps\flac\include</AdditionalIncludeDirectories>
       <AdditionalOptions>/MP %(AdditionalOptions)</AdditionalOptions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -696,6 +777,13 @@
       <AdditionalLibraryDirectories>$(SolutionDir)..\pvrframe</AdditionalLibraryDirectories>
       <AdditionalDependencies>Dsound.lib;winmm.lib;wsock32.lib;comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PreBuildEvent>
+      <Command>for /f "delims=" %%i in ('git describe') do echo #define REICAST_VERSION "%%i" &gt;$(ProjectDir)\..\core\version.h
+for /f "delims=" %%i in ('git rev-parse --short HEAD') do echo #define GIT_HASH "%%i" &gt;&gt;$(ProjectDir)\..\core\version.h
+for /f "delims=" %%i in ('date /T') do echo #define BUILD_DATE "%%i" &gt;&gt;$(ProjectDir)\..\core\version.h
+</Command>
+      <Message>Create version.h</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Fast|x64'">
     <ClCompile>
@@ -704,7 +792,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Full</Optimization>
       <PreprocessorDefinitions>WIN32;CHD5_FLAC;PACKAGE_VERSION="1.3.2";FLAC__HAS_OGG=0;FLAC__NO_DLL;HAVE_LROUND;HAVE_STDINT_H;HAVE_STDLIB_H;CHD5_LZMA;_7ZIP_ST;NDEBUG;_CONSOLE;X86;RELEASE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;$(ProjectDir)..\core\rend\gles;$(ProjectDir)..\core\deps\flac\src\libflac\include;$(ProjectDir)..\core\deps\flac\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;$(ProjectDir)..\core\rend\gles;$(ProjectDir)..\core\deps;$(ProjectDir)..\core\deps\flac\src\libflac\include;$(ProjectDir)..\core\deps\flac\include</AdditionalIncludeDirectories>
       <AdditionalOptions>/MP %(AdditionalOptions)</AdditionalOptions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -730,6 +818,13 @@
       <AdditionalLibraryDirectories>$(SolutionDir)..\pvrframe</AdditionalLibraryDirectories>
       <AdditionalDependencies>Dsound.lib;winmm.lib;wsock32.lib;comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PreBuildEvent>
+      <Command>for /f "delims=" %%i in ('git describe') do echo #define REICAST_VERSION "%%i" &gt;$(ProjectDir)\..\core\version.h
+for /f "delims=" %%i in ('git rev-parse --short HEAD') do echo #define GIT_HASH "%%i" &gt;&gt;$(ProjectDir)\..\core\version.h
+for /f "delims=" %%i in ('date /T') do echo #define BUILD_DATE "%%i" &gt;&gt;$(ProjectDir)\..\core\version.h
+</Command>
+      <Message>Create version.h</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Naomi Release|x64'">
     <ClCompile>
@@ -738,7 +833,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Full</Optimization>
       <PreprocessorDefinitions>WIN32;CHD5_FLAC;PACKAGE_VERSION="1.3.2";FLAC__HAS_OGG=0;FLAC__NO_DLL;HAVE_LROUND;HAVE_STDINT_H;HAVE_STDLIB_H;CHD5_LZMA;_7ZIP_ST;NDEBUG;_CONSOLE;X86;RELEASE;TARGET_NAOMI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;$(ProjectDir)..\core\rend\gles;$(ProjectDir)..\core\deps\flac\src\libflac\include;$(ProjectDir)..\core\deps\flac\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;$(ProjectDir)..\core\rend\gles;$(ProjectDir)..\core\deps;$(ProjectDir)..\core\deps\flac\src\libflac\include;$(ProjectDir)..\core\deps\flac\include</AdditionalIncludeDirectories>
       <AdditionalOptions>/MP %(AdditionalOptions)</AdditionalOptions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -764,6 +859,13 @@
       <AdditionalLibraryDirectories>$(SolutionDir)..\pvrframe</AdditionalLibraryDirectories>
       <AdditionalDependencies>Dsound.lib;winmm.lib;wsock32.lib;comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PreBuildEvent>
+      <Command>for /f "delims=" %%i in ('git describe') do echo #define REICAST_VERSION "%%i" &gt;$(ProjectDir)\..\core\version.h
+for /f "delims=" %%i in ('git rev-parse --short HEAD') do echo #define GIT_HASH "%%i" &gt;&gt;$(ProjectDir)\..\core\version.h
+for /f "delims=" %%i in ('date /T') do echo #define BUILD_DATE "%%i" &gt;&gt;$(ProjectDir)\..\core\version.h
+</Command>
+      <Message>Create version.h</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Slow|Win32'">
     <ClCompile>
@@ -772,7 +874,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;CHD5_FLAC;PACKAGE_VERSION="1.3.2";FLAC__HAS_OGG=0;FLAC__NO_DLL;HAVE_LROUND;HAVE_STDINT_H;HAVE_STDLIB_H;CHD5_LZMA;_7ZIP_ST;_DEBUG;_CONSOLE;X86;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;$(ProjectDir)..\core\rend\gles;$(ProjectDir)..\core\deps\flac\src\libflac\include;$(ProjectDir)..\core\deps\flac\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;$(ProjectDir)..\core\rend\gles;$(ProjectDir)..\core\deps;$(ProjectDir)..\core\deps\flac\src\libflac\include;$(ProjectDir)..\core\deps\flac\include</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
@@ -785,6 +887,13 @@
       <AdditionalLibraryDirectories>$(SolutionDir)..\pvrframe</AdditionalLibraryDirectories>
       <AdditionalDependencies>Dsound.lib;winmm.lib;wsock32.lib;comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PreBuildEvent>
+      <Command>for /f "delims=" %%i in ('git describe') do echo #define REICAST_VERSION "%%i" &gt;$(ProjectDir)\..\core\version.h
+for /f "delims=" %%i in ('git rev-parse --short HEAD') do echo #define GIT_HASH "%%i" &gt;&gt;$(ProjectDir)\..\core\version.h
+for /f "delims=" %%i in ('date /T') do echo #define BUILD_DATE "%%i" &gt;&gt;$(ProjectDir)\..\core\version.h
+</Command>
+      <Message>Create version.h</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Naomi Debug|Win32'">
     <ClCompile>
@@ -793,7 +902,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;CHD5_FLAC;PACKAGE_VERSION="1.3.2";FLAC__HAS_OGG=0;FLAC__NO_DLL;HAVE_LROUND;HAVE_STDINT_H;HAVE_STDLIB_H;CHD5_LZMA;_7ZIP_ST;_DEBUG;_CONSOLE;X86;TARGET_NAOMI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;$(ProjectDir)..\core\rend\gles;$(ProjectDir)..\core\deps\flac\src\libflac\include;$(ProjectDir)..\core\deps\flac\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;$(ProjectDir)..\core\rend\gles;$(ProjectDir)..\core\deps;$(ProjectDir)..\core\deps\flac\src\libflac\include;$(ProjectDir)..\core\deps\flac\include</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
@@ -806,6 +915,13 @@
       <AdditionalLibraryDirectories>$(SolutionDir)..\pvrframe</AdditionalLibraryDirectories>
       <AdditionalDependencies>Dsound.lib;winmm.lib;wsock32.lib;comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PreBuildEvent>
+      <Command>for /f "delims=" %%i in ('git describe') do echo #define REICAST_VERSION "%%i" &gt;$(ProjectDir)\..\core\version.h
+for /f "delims=" %%i in ('git rev-parse --short HEAD') do echo #define GIT_HASH "%%i" &gt;&gt;$(ProjectDir)\..\core\version.h
+for /f "delims=" %%i in ('date /T') do echo #define BUILD_DATE "%%i" &gt;&gt;$(ProjectDir)\..\core\version.h
+</Command>
+      <Message>Create version.h</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Slow|x64'">
     <ClCompile>
@@ -814,7 +930,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;CHD5_FLAC;PACKAGE_VERSION="1.3.2";FLAC__HAS_OGG=0;FLAC__NO_DLL;HAVE_LROUND;HAVE_STDINT_H;HAVE_STDLIB_H;CHD5_LZMA;_7ZIP_ST;_DEBUG;_CONSOLE;X86;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;$(ProjectDir)..\core\rend\gles;$(ProjectDir)..\core\deps\flac\src\libflac\include;$(ProjectDir)..\core\deps\flac\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;$(ProjectDir)..\core\rend\gles;$(ProjectDir)..\core\deps;$(ProjectDir)..\core\deps\flac\src\libflac\include;$(ProjectDir)..\core\deps\flac\include</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
@@ -830,6 +946,13 @@
       <AdditionalLibraryDirectories>$(SolutionDir)..\pvrframe</AdditionalLibraryDirectories>
       <AdditionalDependencies>Dsound.lib;winmm.lib;wsock32.lib;comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PreBuildEvent>
+      <Command>for /f "delims=" %%i in ('git describe') do echo #define REICAST_VERSION "%%i" &gt;$(ProjectDir)\..\core\version.h
+for /f "delims=" %%i in ('git rev-parse --short HEAD') do echo #define GIT_HASH "%%i" &gt;&gt;$(ProjectDir)\..\core\version.h
+for /f "delims=" %%i in ('date /T') do echo #define BUILD_DATE "%%i" &gt;&gt;$(ProjectDir)\..\core\version.h
+</Command>
+      <Message>Create version.h</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Naomi Debug|x64'">
     <ClCompile>
@@ -838,7 +961,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;CHD5_FLAC;PACKAGE_VERSION="1.3.2";FLAC__HAS_OGG=0;FLAC__NO_DLL;HAVE_LROUND;HAVE_STDINT_H;HAVE_STDLIB_H;CHD5_LZMA;_7ZIP_ST;_DEBUG;_CONSOLE;X86;TARGET_NAOMI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;$(ProjectDir)..\core\rend\gles;$(ProjectDir)..\core\deps\flac\src\libflac\include;$(ProjectDir)..\core\deps\flac\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;$(ProjectDir)..\core\rend\gles;$(ProjectDir)..\core\deps;$(ProjectDir)..\core\deps\flac\src\libflac\include;$(ProjectDir)..\core\deps\flac\include</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
@@ -854,6 +977,13 @@
       <AdditionalLibraryDirectories>$(SolutionDir)..\pvrframe</AdditionalLibraryDirectories>
       <AdditionalDependencies>Dsound.lib;winmm.lib;wsock32.lib;comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PreBuildEvent>
+      <Command>for /f "delims=" %%i in ('git describe') do echo #define REICAST_VERSION "%%i" &gt;$(ProjectDir)\..\core\version.h
+for /f "delims=" %%i in ('git rev-parse --short HEAD') do echo #define GIT_HASH "%%i" &gt;&gt;$(ProjectDir)\..\core\version.h
+for /f "delims=" %%i in ('date /T') do echo #define BUILD_DATE "%%i" &gt;&gt;$(ProjectDir)\..\core\version.h
+</Command>
+      <Message>Create version.h</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

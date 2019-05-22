@@ -48,6 +48,9 @@ reicast-ios.xccheckout
 shell/linux/.map
 shell/linux/nosym-reicast.elf
 shell/linux/reicast.elf
+shell/linux/reicast_naomi.elf
+shell/linux/reicast_awave.elf
+shell/linux/dispframe.elf
 
 # Visual Studio
 generated
