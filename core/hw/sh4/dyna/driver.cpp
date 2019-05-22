@@ -243,7 +243,6 @@ bool RuntimeBlockInfo::Setup(u32 rpc,fpscr_t rfpu_cfg)
 	BranchBlock=NextBlock=csc_RetCache=0xFFFFFFFF;
 	BlockType=BET_SCL_Intr;
 	has_fpu_op = false;
-	asid = 0xFFFFFFFF;
 	temp_block = false;
 	
 	vaddr = rpc;
@@ -256,8 +255,6 @@ bool RuntimeBlockInfo::Setup(u32 rpc,fpscr_t rfpu_cfg)
 			DoMMUException(vaddr, rv, MMU_TT_IREAD);
 			return false;
 		}
-		if (addr != vaddr && !shared)
-			asid = CCN_PTEH.ASID;
 	}
 	else
 		addr = vaddr;
@@ -383,15 +380,6 @@ DynarecCodeEntryPtr DYNACALL rdv_BlockCheckFail(u32 addr)
 	}
 	return (DynarecCodeEntryPtr)CC_RW2RX(rdv_CompilePC(blockcheck_failures));
 }
-
-//DynarecCodeEntryPtr rdv_FindCode()
-//{
-//	DynarecCodeEntryPtr rv=bm_GetCode(next_pc);
-//	if (rv==ngen_FailedToFindBlock)
-//		return 0;
-//
-//	return rv;
-//}
 
 DynarecCodeEntryPtr rdv_FindOrCompile()
 {

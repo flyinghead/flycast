@@ -87,8 +87,6 @@ DynarecCodeEntryPtr DYNACALL rdv_FailedToFindBlock_pc();
 DynarecCodeEntryPtr DYNACALL rdv_BlockCheckFail(u32 pc);
 //Called to compile code @pc
 DynarecCodeEntryPtr rdv_CompilePC(u32 blockcheck_failures);
-//Returns 0 if there is no code @pc, code ptr otherwise
-//DynarecCodeEntryPtr rdv_FindCode();
 //Finds or compiles code @pc
 DynarecCodeEntryPtr rdv_FindOrCompile();
 

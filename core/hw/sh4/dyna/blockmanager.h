@@ -36,7 +36,6 @@ struct RuntimeBlockInfo: RuntimeBlockInfo_Core
 	u32 guest_opcodes;
 	u32 host_opcodes;
 	bool has_fpu_op;
-	u32 asid;	// if not 0xFFFFFFFF then private page belonging to this id
 	u32 blockcheck_failures;
 	bool temp_block;
 

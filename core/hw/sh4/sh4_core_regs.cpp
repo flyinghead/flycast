@@ -33,10 +33,6 @@ INLINE void ChangeFP()
 	}
 }
 
-f32 saved_xffr[32];
-u32 saved_fpul;
-fpscr_t saved_fpscr;
-
 //called when sr is changed and we must check for reg banks etc.. , returns true if interrupts got
 bool UpdateSR()
 {
