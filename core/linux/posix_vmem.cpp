@@ -156,11 +156,22 @@ VMemType vmem_platform_init(void **vmem_base_addr, void **sh4rcb_addr) {
 		return MemTypeError;
 
 	// Now try to allocate a contiguous piece of memory.
-	unsigned memsize = 512*1024*1024 + sizeof(Sh4RCB) + ARAM_SIZE_MAX + 0x10000;
-	void *first_ptr = mem_region_reserve(NULL, memsize);
-	if (!first_ptr) {
-		close(vmem_fd);
-		return MemTypeError;
+	void *first_ptr = NULL;
+	VMemType rv;
+#ifdef HOST_64BIT_CPU
+	size_t bigsize = 0x100000000L + sizeof(Sh4RCB) + 0x10000;	// 4GB + context size + 64K padding
+	first_ptr = mem_region_reserve(NULL, bigsize);
+	rv = MemType4GB;
+#endif
+	if (first_ptr == NULL)
+	{
+		unsigned memsize = 512*1024*1024 + sizeof(Sh4RCB) + ARAM_SIZE_MAX + 0x10000;
+		first_ptr = mem_region_reserve(NULL, memsize);
+		if (!first_ptr) {
+			close(vmem_fd);
+			return MemTypeError;
+		}
+		rv = MemType512MB;
 	}
 
 	// Align pointer to 64KB too, some Linaro bug (no idea but let's just be safe I guess).
@@ -173,12 +184,15 @@ VMemType vmem_platform_init(void **vmem_base_addr, void **sh4rcb_addr) {
 	// Now map the memory for the SH4 context, do not include FPCB on purpose (paged on demand).
 	mem_region_unlock(sh4rcb_base_ptr, sizeof(Sh4RCB) - FPCB_SIZE);
 
-	return MemType512MB;
+	return rv;
 }
 
 // Just tries to wipe as much as possible in the relevant area.
 void vmem_platform_destroy() {
-	mem_region_release(virt_ram_base, 0x20000000);
+	if (vmem_4gb_space)
+		mem_region_release(virt_ram_base, 0x100000000);
+	else
+		mem_region_release(virt_ram_base, 0x20000000);
 }
 
 // Resets a chunk of memory by deleting its data and setting its protection back.
@@ -207,12 +221,12 @@ void vmem_platform_create_mappings(const vmem_mapping *vmem_maps, unsigned numma
 			continue;
 
 		// Calculate the number of mirrors
-		unsigned address_range_size = vmem_maps[i].end_address - vmem_maps[i].start_address;
+		u64 address_range_size = vmem_maps[i].end_address - vmem_maps[i].start_address;
 		unsigned num_mirrors = (address_range_size) / vmem_maps[i].memsize;
 		verify((address_range_size % vmem_maps[i].memsize) == 0 && num_mirrors >= 1);
 
 		for (unsigned j = 0; j < num_mirrors; j++) {
-			unsigned offset = vmem_maps[i].start_address + j * vmem_maps[i].memsize;
+			u64 offset = vmem_maps[i].start_address + j * vmem_maps[i].memsize;
 			verify(mem_region_unmap_file(&virt_ram_base[offset], vmem_maps[i].memsize));
 			verify(mem_region_map_file((void*)(uintptr_t)vmem_fd, &virt_ram_base[offset],
 					vmem_maps[i].memsize, vmem_maps[i].memoffset, vmem_maps[i].allow_writes) != NULL);

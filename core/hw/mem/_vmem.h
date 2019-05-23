@@ -8,8 +8,8 @@ enum VMemType {
 };
 
 struct vmem_mapping {
-	u32 start_address, end_address;
-	unsigned memoffset, memsize;
+	u64 start_address, end_address;
+	u64 memoffset, memsize;
 	bool allow_writes;
 };
 
@@ -102,9 +102,17 @@ void* _vmem_get_ptr2(u32 addr,u32& mask);
 void* _vmem_read_const(u32 addr,bool& ismem,u32 sz);
 
 extern u8* virt_ram_base;
+extern bool vmem_4gb_space;
 
 static inline bool _nvmem_enabled() {
 	return virt_ram_base != 0;
 }
-
+static inline bool _nvmem_4gb_space() {
+	return vmem_4gb_space;
+}
 void _vmem_bm_reset();
+void _vmem_disable_mmu();
+
+#define MAP_RAM_START_OFFSET  0
+#define MAP_VRAM_START_OFFSET (MAP_RAM_START_OFFSET+RAM_SIZE)
+#define MAP_ARAM_START_OFFSET (MAP_VRAM_START_OFFSET+VRAM_SIZE)

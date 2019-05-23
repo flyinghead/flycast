@@ -6,7 +6,6 @@
 #include "oslib/oslib.h"
 #include "oslib/audiostream.h"
 #include "hw/mem/_vmem.h"
-#include "hw/mem/vmem32.h"
 #include "stdclass.h"
 #include "cfg/cfg.h"
 
@@ -298,13 +297,6 @@ int reicast_init(int argc, char* argv[])
 		printf("Failed to alloc mem\n");
 		return -1;
 	}
-#ifdef HOST_64BIT_CPU
-	if (!vmem32_init())
-	{
-		printf("Failed to alloc 32-bit mem space\n");
-		return -1;
-	}
-#endif
 	if (ParseCommandLine(argc, argv))
 	{
         return 69;

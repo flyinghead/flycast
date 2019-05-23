@@ -297,7 +297,6 @@ extern "C" void DYNACALL TAWriteSQ(u32 address,u8* sqb)
 		if (SB_LMMODE0 == 0)
 		{
 			// 64b path
-			u8* vram=sqb+512+0x04000000;
 			MemWrite32(&vram[address_w&(VRAM_MASK-0x1F)],sq);
 		}
 		else

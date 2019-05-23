@@ -153,8 +153,6 @@ void ngen_mainloop(void* v_cntx)
 		"ldr x28, [sp]				\n\t"	// Set context
 		// w29 is next_pc
 		"ldr w29, [x28, %[pc]]		\n\t"
-		// x27 is vmem32_base
-		"ldr x27, [x28, %[vmem32_base]]	\n\t"
 		"b no_update				\n"
 
 		".hidden intc_sched			\n\t"
@@ -220,8 +218,7 @@ void ngen_mainloop(void* v_cntx)
 	  [RCB_SIZE] "i" (sizeof(Sh4RCB) >> 16),
 	  [SH4CTX_SIZE] "i" (sizeof(Sh4Context)),
 	  [jmp_env] "r"(reinterpret_cast<uintptr_t>(jmp_env)),
-	  [cycle_counter] "r"(reinterpret_cast<uintptr_t>(&cycle_counter)),
-  	  [vmem32_base] "i"(offsetof(Sh4Context, vmem32_base))
+	  [cycle_counter] "r"(reinterpret_cast<uintptr_t>(&cycle_counter))
 	: "memory"
 	);
 }
@@ -1419,26 +1416,20 @@ private:
 
 		Instruction *start_instruction = GetCursorAddress<Instruction *>();
 
-		const XRegister* base_reg;
-		const XRegister* offset_reg;
-		// WARNING: the rewrite code relies on having two ops before the memory access (3 when mmu is enabled)
+		// WARNING: the rewrite code relies on having 1-2 ops before the memory access (4 when mmu is enabled)
 		// Update ngen_Rewrite (and perhaps read_memory_rewrite_size) if adding or removing code
-		if (!mmu_enabled())
+		Add(x1, *call_regs64[0], sizeof(Sh4Context), LeaveFlags);
+		if (!_nvmem_4gb_space())
 		{
-			Add(w1, *call_regs[0], sizeof(Sh4Context), LeaveFlags);
 			Bfc(w1, 29, 3);		// addr &= ~0xE0000000
-			base_reg = &x28;
-			offset_reg = &x1;
 		}
-		else
+		else if (mmu_enabled())
 		{
 			u32 exception_pc = block->vaddr + op.guest_offs - (op.delay_slot ? 2 : 0);
 			// 3 ops before memory access
 			Mov(w8, exception_pc & 0xFFFF);
 			Movk(w8, exception_pc >> 16, 16);
 			Str(w8, sh4_context_mem_operand(&p_sh4rcb->cntx.exception_pc));
-			base_reg = &x27;
-			offset_reg = call_regs64[0];
 		}
 
 		//printf("direct read memory access opid %d pc %p code addr %08x\n", opid, GetCursorAddress<void *>(), this->block->addr);
@@ -1450,22 +1441,22 @@ private:
 			switch(size)
 			{
 			case 1:
-				Ldrsb(regalloc.MapRegister(op.rd), MemOperand(*base_reg, *offset_reg));
+				Ldrsb(regalloc.MapRegister(op.rd), MemOperand(x28, x1));
 				break;
 
 			case 2:
-				Ldrsh(regalloc.MapRegister(op.rd), MemOperand(*base_reg, *offset_reg));
+				Ldrsh(regalloc.MapRegister(op.rd), MemOperand(x28, x1));
 				break;
 
 			case 4:
 				if (!op.rd.is_r32f())
-					Ldr(regalloc.MapRegister(op.rd), MemOperand(*base_reg, *offset_reg));
+					Ldr(regalloc.MapRegister(op.rd), MemOperand(x28, x1));
 				else
-					Ldr(regalloc.MapVRegister(op.rd), MemOperand(*base_reg, *offset_reg));
+					Ldr(regalloc.MapVRegister(op.rd), MemOperand(x28, x1));
 				break;
 
 			case 8:
-				Ldr(x1, MemOperand(*base_reg, *offset_reg));
+				Ldr(x1, MemOperand(x28, x1));
 				break;
 			}
 
@@ -1486,19 +1477,19 @@ private:
 			switch(size)
 			{
 			case 1:
-				Ldrsb(w1, MemOperand(*base_reg, *offset_reg));
+				Ldrsb(w1, MemOperand(x28, x1));
 				break;
 
 			case 2:
-				Ldrsh(w1, MemOperand(*base_reg, *offset_reg));
+				Ldrsh(w1, MemOperand(x28, x1));
 				break;
 
 			case 4:
-				Ldr(w1, MemOperand(*base_reg, *offset_reg));
+				Ldr(w1, MemOperand(x28, x1));
 				break;
 
 			case 8:
-				Ldr(x1, MemOperand(*base_reg, *offset_reg));
+				Ldr(x1, MemOperand(x28, x1));
 				break;
 			}
 			if (size == 8)
@@ -1544,25 +1535,19 @@ private:
 
 		Instruction *start_instruction = GetCursorAddress<Instruction *>();
 
-		const XRegister* base_reg;
-		const XRegister* offset_reg;
-		// WARNING: the rewrite code relies on having two ops before the memory access (3 when mmu is enabled)
+		// WARNING: the rewrite code relies on having 1-2 ops before the memory access (4 when mmu is enabled)
 		// Update ngen_Rewrite (and perhaps write_memory_rewrite_size) if adding or removing code
-		if (!mmu_enabled())
+		Add(x7, *call_regs64[0], sizeof(Sh4Context), LeaveFlags);
+		if (!_nvmem_4gb_space())
 		{
-			Add(w7, *call_regs[0], sizeof(Sh4Context), LeaveFlags);
 			Bfc(w7, 29, 3);		// addr &= ~0xE0000000
-			base_reg = &x28;
-			offset_reg = &x7;
 		}
-		else
+		else if (mmu_enabled())
 		{
 			u32 exception_pc = block->vaddr + op.guest_offs - (op.delay_slot ? 2 : 0);
 			Mov(w8, exception_pc & 0xFFFF);
 			Movk(w8, exception_pc >> 16, 16);
 			Str(w8, sh4_context_mem_operand(&p_sh4rcb->cntx.exception_pc));
-			base_reg = &x27;
-			offset_reg = call_regs64[0];
 		}
 
 		//printf("direct write memory access opid %d pc %p code addr %08x\n", opid, GetCursorAddress<void *>(), this->block->addr);
@@ -1572,19 +1557,19 @@ private:
 		switch(size)
 		{
 		case 1:
-			Strb(w1, MemOperand(*base_reg, *offset_reg));
+			Strb(w1, MemOperand(x28, x7));
 			break;
 
 		case 2:
-			Strh(w1, MemOperand(*base_reg, *offset_reg));
+			Strh(w1, MemOperand(x28, x7));
 			break;
 
 		case 4:
-			Str(w1, MemOperand(*base_reg, *offset_reg));
+			Str(w1, MemOperand(x28, x7));
 			break;
 
 		case 8:
-			Str(x1, MemOperand(*base_reg, *offset_reg));
+			Str(x1, MemOperand(x28, x7));
 			break;
 		}
 		EnsureCodeSize(start_instruction, write_memory_rewrite_size);
@@ -1767,7 +1752,7 @@ private:
 	RuntimeBlockInfo* block = NULL;
 	const int read_memory_rewrite_size = 6;	// worst case for u64: add, bfc, ldr, fmov, lsr, fmov
 											// FIXME rewrite size per read/write size?
-	const int write_memory_rewrite_size = 4; // TODO only 3 if !mmu
+	const int write_memory_rewrite_size = 5; // TODO only 2 if !mmu & 4gb
 };
 
 static Arm64Assembler* compiler;
@@ -1824,7 +1809,9 @@ bool ngen_Rewrite(unat& host_pc, unat, unat)
 	u32 opid = it->second;
 	verify(opid < block->oplist.size());
 	const shil_opcode& op = block->oplist[opid];
-	Arm64Assembler *assembler = new Arm64Assembler(code_ptr - 2 - (mmu_enabled() ? 1 : 0));	// Skip the 2 preceding ops (bic, add)
+	// Skip the preceding ops (add, bic, ...)
+	u32 *code_rewrite = code_ptr - 1 - (!_nvmem_4gb_space() ? 1 : 0) - (mmu_enabled() ? 3 : 0);
+	Arm64Assembler *assembler = new Arm64Assembler(code_rewrite);
 	assembler->InitializeRewrite(block, opid);
 	if (op.op == shop_readm)
 		assembler->GenReadMemorySlow(op);
@@ -1832,7 +1819,7 @@ bool ngen_Rewrite(unat& host_pc, unat, unat)
 		assembler->GenWriteMemorySlow(op);
 	assembler->Finalize(true);
 	delete assembler;
-	host_pc = (unat)CC_RW2RX(code_ptr - 2 - (mmu_enabled() ? 1 : 0));
+	host_pc = (unat)CC_RW2RX(code_rewrite);
 
 	return true;
 }

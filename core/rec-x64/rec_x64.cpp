@@ -1402,7 +1402,7 @@ private:
 		mov(rax, (uintptr_t)&p_sh4rcb->cntx.exception_pc);
 		mov(dword[rax], block->vaddr + op.guest_offs - (op.delay_slot ? 2 : 0));
 
-		mov(rax, (uintptr_t)p_sh4rcb->cntx.vmem32_base);
+		mov(rax, (uintptr_t)virt_ram_base);
 
 		u32 size = op.flags & 0x7f;
 		//verify(getCurr() - start_addr == 26);
@@ -1450,7 +1450,7 @@ private:
 		mov(rax, (uintptr_t)&p_sh4rcb->cntx.exception_pc);
 		mov(dword[rax], block->vaddr + op.guest_offs - (op.delay_slot ? 2 : 0));
 
-		mov(rax, (uintptr_t)p_sh4rcb->cntx.vmem32_base);
+		mov(rax, (uintptr_t)virt_ram_base);
 
 		u32 size = op.flags & 0x7f;
 		//verify(getCurr() - start_addr == 26);

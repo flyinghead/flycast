@@ -284,7 +284,6 @@ struct Sh4Context
 			u32 interrupt_pend;
 
 			u32 exception_pc;
-			u8 *vmem32_base;
 		};
 		u64 raw[64-8];
 	};

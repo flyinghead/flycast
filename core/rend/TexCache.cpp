@@ -214,8 +214,27 @@ vram_block* libCore_vramlock_Lock(u32 start_offset64,u32 end_offset64,void* user
 		if (_nvmem_enabled() && VRAM_SIZE == 0x800000) {
 			vram.LockRegion(block->start + VRAM_SIZE, block->len);
 		}
-		if (mmu_enabled())
+		if (!mmu_enabled())
+		{
+			if (_nvmem_4gb_space())
+			{
+				// In 4GB mode, vram.LockRegion() locks in the P1 area only so we also need to lock P0
+				// We should also lock P2 and P3 but they don't seem to be used...
+				mem_region_lock(virt_ram_base + 0x04000000 + block->start, block->len);
+				//mem_region_lock(virt_ram_base + 0xA4000000 + block->start, block->len);
+				//mem_region_lock(virt_ram_base + 0xC4000000 + block->start, block->len);
+				if (VRAM_SIZE == 0x800000)
+				{
+					mem_region_lock(virt_ram_base + 0x04000000 + block->start + VRAM_SIZE, block->len);
+					//mem_region_lock(virt_ram_base + 0xA4000000 + block->start + VRAM_SIZE, block->len);
+					//mem_region_lock(virt_ram_base + 0xC4000000 + block->start + VRAM_SIZE, block->len);
+				}
+			}
+		}
+		else
+		{
 			vmem32_protect_vram(block);
+		}
 		
 		vramlock_list_add(block);
 		
@@ -252,13 +271,20 @@ bool VramLockedWriteOffset(size_t offset)
 			}
 			list->clear();
 
-			vram.UnLockRegion((u32)offset&(~(PAGE_SIZE-1)),PAGE_SIZE);
+			u32 aligned_offset = (u32)offset & ~(PAGE_SIZE - 1);
+			vram.UnLockRegion(aligned_offset, PAGE_SIZE);
 
 			//TODO: Fix this for 32M wrap as well
 			if (_nvmem_enabled() && VRAM_SIZE == 0x800000) {
-				vram.UnLockRegion((u32)offset&(~(PAGE_SIZE-1)) + VRAM_SIZE,PAGE_SIZE);
+				vram.UnLockRegion(aligned_offset + VRAM_SIZE, PAGE_SIZE);
 			}
-			
+			if (_nvmem_4gb_space() && !mmu_enabled())
+			{
+				mem_region_unlock(virt_ram_base + 0x04000000 + aligned_offset, PAGE_SIZE);
+				if (VRAM_SIZE == 0x800000)
+					mem_region_unlock(virt_ram_base + 0x04000000 + aligned_offset + VRAM_SIZE, PAGE_SIZE);
+			}
+
 			vramlist_lock.Unlock();
 		}
 
@@ -274,8 +300,16 @@ bool VramLockedWrite(u8* address)
 
 	if (offset < 0x01000000)
 		return VramLockedWriteOffset(offset & (VRAM_SIZE - 1));
-	else
-		return false;
+	if (_nvmem_4gb_space() && !mmu_enabled())
+	{
+		offset = address - virt_ram_base;
+		if (offset >= 0x04000000 && offset < 0x050000000)
+			return VramLockedWriteOffset((offset - 0x04000000) & (VRAM_SIZE - 1));
+		// 32MB wrap not set yet
+		//if (offset >= 0x06000000 && offset < 0x070000000)
+		//	return VramLockedWriteOffset((offset - 0x06000000) & (VRAM_SIZE - 1));
+	}
+	return false;
 }
 
 //unlocks mem

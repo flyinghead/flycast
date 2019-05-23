@@ -80,7 +80,7 @@ void clear_temp_cache(bool full)
 
 void recSh4_ClearCache()
 {
-	printf("recSh4:Dynarec Cache clear at %08X free space %d\n",curr_pc, emit_FreeSpace());
+	printf("recSh4:Dynarec Cache clear at %08X free space %d\n", curr_pc, emit_FreeSpace());
 	LastAddr=LastAddr_min;
 	bm_Reset();
 	smc_hotspots.clear();
@@ -130,7 +130,7 @@ void emit_Skip(u32 sz)
 	if (emit_ptr)
 		emit_ptr = (u32*)((u8*)emit_ptr + sz);
 	else
-		LastAddr+=sz;
+		LastAddr += sz;
 
 }
 u32 emit_FreeSpace()
@@ -138,7 +138,7 @@ u32 emit_FreeSpace()
 	if (emit_ptr)
 		return (emit_ptr_limit - emit_ptr) * sizeof(u32);
 	else
-		return CODE_SIZE-LastAddr;
+		return CODE_SIZE - LastAddr;
 }
 
 // pc must be a physical address
@@ -262,7 +262,7 @@ bool RuntimeBlockInfo::Setup(u32 rpc,fpscr_t rfpu_cfg)
 	
 	oplist.clear();
 
-	if (!dec_DecodeBlock(this,SH4_TIMESLICE/2))
+	if (!dec_DecodeBlock(this, SH4_TIMESLICE / 2))
 		return false;
 
 	AnalyseBlock(this);
@@ -293,7 +293,7 @@ DynarecCodeEntryPtr rdv_CompilePC(u32 blockcheck_failures)
 		emit_ptr_limit = (u32 *)(TempCodeCache + TEMP_CODE_SIZE);
 		rbi->temp_block = true;
 	}
-	bool do_opts = !rbi->temp_block; //((rbi->addr&0x3FFFFFFF)>0x0C010100);
+	bool do_opts = !rbi->temp_block;
 	rbi->staging_runs=do_opts?100:-100;
 	ngen_Compile(rbi,DoCheck(rbi->addr),(pc&0xFFFFFF)==0x08300 || (pc&0xFFFFFF)==0x10000,false,do_opts);
 	verify(rbi->code!=0);
@@ -505,7 +505,14 @@ void recSh4_Init()
 	verify(rcb_noffs(&p_sh4rcb->cntx.interrupt_pend) == -148);
 	
 	if (_nvmem_enabled()) {
-		verify(mem_b.data==((u8*)p_sh4rcb->sq_buffer+512+0x0C000000));
+		if (!_nvmem_4gb_space())
+		{
+			verify(mem_b.data==((u8*)p_sh4rcb->sq_buffer+512+0x0C000000));
+		}
+		else
+		{
+			verify(mem_b.data==((u8*)p_sh4rcb->sq_buffer+512+0x8C000000));
+		}
 	}
 
 	// Prepare some pointer to the pre-allocated code cache:

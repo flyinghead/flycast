@@ -142,7 +142,6 @@ void SetFloatStatusReg()
 //called when fpscr is changed and we must check for reg banks etc..
 void UpdateFPSCR()
 {
-	verify(fpscr.PR == 0 || fpscr.SZ == 0);
 	if (fpscr.FR !=old_fpscr.FR)
 		ChangeFP(); // FPU bank change
 

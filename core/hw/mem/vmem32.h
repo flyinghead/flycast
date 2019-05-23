@@ -1,6 +1,5 @@
-#include "types.h"
+#include "_vmem.h"
 
-bool vmem32_init();
 void vmem32_term();
 bool vmem32_handle_signal(void *fault_addr, bool write);
 void vmem32_flush_mmu();
@@ -10,6 +9,6 @@ static inline bool vmem32_enabled() {
 #if HOST_OS == OS_WINDOWS
 	return false;
 #else
-	return !settings.dynarec.disable_vmem32;
+	return !settings.dynarec.disable_vmem32 && _nvmem_4gb_space();
 #endif
 }
