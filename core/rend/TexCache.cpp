@@ -303,7 +303,7 @@ bool VramLockedWrite(u8* address)
 	if (_nvmem_4gb_space() && !mmu_enabled())
 	{
 		offset = address - virt_ram_base;
-		if (offset >= 0x04000000 && offset < 0x050000000)
+		if (offset >= 0x04000000 && offset < 0x05000000)
 			return VramLockedWriteOffset((offset - 0x04000000) & (VRAM_SIZE - 1));
 		// 32MB wrap not set yet
 		//if (offset >= 0x06000000 && offset < 0x070000000)
