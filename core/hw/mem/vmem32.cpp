@@ -50,6 +50,8 @@ static const u64 AREA7_ADDRESS = 0x7C000000L;
 static std::unordered_set<u32> vram_mapped_pages;
 static std::vector<vram_block*> vram_blocks[VRAM_SIZE / VRAM_PROT_SEGMENT];
 
+bool vmem32_inited;
+
 // stats
 //u64 vmem32_page_faults;
 //u64 vmem32_flush;
@@ -129,7 +131,7 @@ static void vmem32_unprotect_buffer(u32 start, u32 size)
 
 void vmem32_protect_vram(vram_block *block)
 {
-	if (virt_ram_base == NULL)
+	if (!vmem32_inited)
 		return;
 	for (int i = block->start / VRAM_PROT_SEGMENT; i <= block->end / VRAM_PROT_SEGMENT; i++)
 	{
@@ -138,7 +140,7 @@ void vmem32_protect_vram(vram_block *block)
 }
 void vmem32_unprotect_vram(vram_block *block)
 {
-	if (virt_ram_base == NULL)
+	if (!vmem32_inited)
 		return;
 	for (int page = block->start / VRAM_PROT_SEGMENT; page <= block->end / VRAM_PROT_SEGMENT; page++)
 	{
@@ -294,7 +296,7 @@ static u32 vmem32_map_address(u32 address, bool write)
 #if !defined(NO_MMU) && defined(HOST_64BIT_CPU)
 bool vmem32_handle_signal(void *fault_addr, bool write)
 {
-	if ((u8*)fault_addr < virt_ram_base || (u8*)fault_addr >= virt_ram_base + VMEM32_SIZE)
+	if (!vmem32_inited || (u8*)fault_addr < virt_ram_base || (u8*)fault_addr >= virt_ram_base + VMEM32_SIZE)
 		return false;
 	//vmem32_page_faults++;
 	u32 guest_addr = (u8*)fault_addr - virt_ram_base;
@@ -320,10 +322,24 @@ void vmem32_flush_mmu()
 	// TODO flush P3?
 }
 
+bool vmem32_init()
+{
+#if HOST_OS == OS_WINDOWS
+	return false;
+#else
+	if (settings.dynarec.disable_vmem32 || !_nvmem_4gb_space())
+		return false;
+
+	vmem32_inited = true;
+	return true;
+#endif
+}
+
 void vmem32_term()
 {
-	if (virt_ram_base != NULL)
+	if (vmem32_inited)
 	{
+		vmem32_inited = false;
 		vmem32_flush_mmu();
 	}
 }

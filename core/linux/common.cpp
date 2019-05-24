@@ -60,7 +60,7 @@ void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 
 	bool dyna_cde = ((unat)CC_RX2RW(ctx.pc) > (unat)CodeCache) && ((unat)CC_RX2RW(ctx.pc) < (unat)(CodeCache + CODE_SIZE + TEMP_CODE_SIZE));
 
-#if !defined(NO_MMU) && defined(HOST_64BIT_CPU) && HOST_OS != OS_WINDOWS
+#if !defined(NO_MMU) && defined(HOST_64BIT_CPU)
 #if HOST_CPU == CPU_ARM64
 	u32 op = *(u32*)ctx.pc;
 	bool write = (op & 0x00400000) == 0;

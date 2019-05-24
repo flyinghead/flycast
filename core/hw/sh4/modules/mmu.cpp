@@ -667,6 +667,7 @@ void mmu_set_state()
 		WriteMem16 = &mmu_WriteMem<u16>;
 		WriteMem32 = &mmu_WriteMem<u32>;
 		WriteMem64 = &mmu_WriteMem<u64>;
+		_vmem_enable_mmu(true);
 		mmu_flush_table();
 	}
 	else
@@ -681,7 +682,7 @@ void mmu_set_state()
 		WriteMem16 = &_vmem_WriteMem16;
 		WriteMem32 = &_vmem_WriteMem32;
 		WriteMem64 = &_vmem_WriteMem64;
-		_vmem_disable_mmu();
+		_vmem_enable_mmu(false);
 	}
 }
 
