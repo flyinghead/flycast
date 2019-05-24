@@ -179,10 +179,11 @@ VMemType vmem_platform_init(void **vmem_base_addr, void **sh4rcb_addr) {
 	ptrint = (ptrint + 0x10000 - 1) & (~0xffff);
 	*sh4rcb_addr = (void*)ptrint;
 	*vmem_base_addr = (void*)(ptrint + sizeof(Sh4RCB));
-	void *sh4rcb_base_ptr  = (void*)(ptrint + FPCB_SIZE);
+	const size_t fpcb_size = sizeof(((Sh4RCB *)NULL)->fpcb);
+	void *sh4rcb_base_ptr  = (void*)(ptrint + fpcb_size);
 
 	// Now map the memory for the SH4 context, do not include FPCB on purpose (paged on demand).
-	mem_region_unlock(sh4rcb_base_ptr, sizeof(Sh4RCB) - FPCB_SIZE);
+	mem_region_unlock(sh4rcb_base_ptr, sizeof(Sh4RCB) - fpcb_size);
 
 	return rv;
 }
