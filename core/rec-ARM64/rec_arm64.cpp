@@ -43,14 +43,17 @@ using namespace vixl::aarch64;
 
 #undef do_sqw_nommu
 
-extern "C" void no_update();
-extern "C" void intc_sched();
 extern "C" void ngen_blockcheckfail(u32 pc);
 extern "C" void ngen_LinkBlock_Generic_stub();
 extern "C" void ngen_LinkBlock_cond_Branch_stub();
 extern "C" void ngen_LinkBlock_cond_Next_stub();
-extern "C" void ngen_FailedToFindBlock_();
+extern "C" void ngen_FailedToFindBlock_mmu();
+extern "C" void ngen_FailedToFindBlock_nommu();
 extern void vmem_platform_flush_cache(void *icache_start, void *icache_end, void *dcache_start, void *dcache_end);
+static void generate_mainloop();
+
+u32 mem_writes, mem_reads;
+u32 mem_rewrites_w, mem_rewrites_r;
 
 struct DynaRBI : RuntimeBlockInfo
 {
@@ -65,6 +68,10 @@ double host_cpu_time;
 u64 guest_cpu_cycles;
 static jmp_buf jmp_env;
 static u32 cycle_counter;
+
+static void (*mainloop)(void *context);
+static void (*arm64_intc_sched)();
+static void (*arm64_no_update)();
 
 #ifdef PROFILING
 #include <time.h>
@@ -111,10 +118,16 @@ __asm__
 		"bl rdv_LinkBlock					\n\t"   // returns an RX addr
 		"br x0								\n"
 
-		".hidden ngen_FailedToFindBlock_	\n\t"
-		".globl ngen_FailedToFindBlock_		\n\t"
-	"ngen_FailedToFindBlock_:				\n\t"
-//		"mov w0, w29						\n\t"	// FIXME w29 might not be up to date anymore (exception in bm_GetCodeByVAddr)
+		".hidden ngen_FailedToFindBlock_nommu	\n\t"
+		".globl ngen_FailedToFindBlock_nommu	\n\t"
+	"ngen_FailedToFindBlock_nommu:			\n\t"
+		"mov w0, w29						\n\t"
+		"bl rdv_FailedToFindBlock			\n\t"
+		"br x0								\n"
+
+		".hidden ngen_FailedToFindBlock_mmu	\n\t"
+		".globl ngen_FailedToFindBlock_mmu	\n\t"
+	"ngen_FailedToFindBlock_mmu:			\n\t"
 		"bl rdv_FailedToFindBlock_pc		\n\t"
 		"br x0								\n"
 
@@ -127,121 +140,34 @@ __asm__
 
 void ngen_mainloop(void* v_cntx)
 {
-	Sh4RCB* ctx = (Sh4RCB*)((u8*)v_cntx - sizeof(Sh4RCB));
+	generate_mainloop();
+	mainloop(v_cntx);
+}
 
-	__asm__
-	(
-		"stp x19, x20, [sp, #-160]!	\n\t"
-		"stp x21, x22, [sp, #16]	\n\t"
-		"stp x23, x24, [sp, #32]	\n\t"
-		"stp x25, x26, [sp, #48]	\n\t"
-		"stp x27, x28, [sp, #64]	\n\t"
-		"stp s14, s15, [sp, #80]	\n\t"
-		"stp s8, s9, [sp, #96]		\n\t"
-		"stp s10, s11, [sp, #112]	\n\t"
-		"stp s12, s13, [sp, #128]	\n\t"
-		"stp x29, x30, [sp, #144]	\n\t"
-
-		"stp %[cntx], %[cycle_counter], [sp, #-16]!	\n\t"	// Push context, cycle_counter address
-		"mov w1, %[_SH4_TIMESLICE]	\n\t"
-		"str w1, [%[cycle_counter]]	\n\t"
-
-		"mov x0, %[jmp_env]			\n\t"	// SETJMP
-		"bl setjmp					\n\t"
-
-		// Use x28 as sh4 context pointer
-		"ldr x28, [sp]				\n\t"	// Set context
-		// w29 is next_pc
-		"ldr w29, [x28, %[pc]]		\n\t"
-		"b no_update				\n"
-
-		".hidden intc_sched			\n\t"
-		".globl intc_sched			\n\t"
-	"intc_sched:					\n\t"
-		"ldr x1, [sp, #8]			\n\t"	// &cycle_counter
-		"ldr w0, [x1]				\n\t"	// cycle_counter
-		"add w0, w0, %[_SH4_TIMESLICE]	\n\t"
-		"str w0, [x1]				\n\t"
-		"mov x29, lr				\n\t"	// Trashing pc here but it will be reset at the end of the block or in DoInterrupts
-		"bl UpdateSystem			\n\t"
-		"mov lr, x29				\n\t"
-		"cbnz w0, .do_interrupts	\n\t"
-		"ret						\n"
-
-	".do_interrupts:				\n\t"
-		"mov x0, x29				\n\t"
-		"bl rdv_DoInterrupts		\n\t"	// Updates next_pc based on host pc
-		"mov w29, w0				\n"
-
-		".hidden no_update			\n\t"
-		".globl no_update			\n\t"
-	"no_update:						\n\t"	// next_pc _MUST_ be on w29
-		"ldr w0, [x28, %[CpuRunning]] \n\t"
-		"cbz w0, .end_mainloop		\n\t"
-
-#ifdef NO_MMU
-		"movz x2, %[RCB_SIZE], lsl #16	\n\t"
-		"sub x2, x28, x2			\n\t"
-		"add x2, x2, %[SH4CTX_SIZE]	\n\t"
-#if RAM_SIZE_MAX == 33554432
-		"ubfx w1, w29, #1, #24		\n\t"	// 24+1 bits: 32 MB
-#elif RAM_SIZE_MAX == 16777216
-		"ubfx w1, w29, #1, #23		\n\t"	// 23+1 bits: 16 MB
-#else
-#error "Define RAM_SIZE_MAX"
-#endif
-		"ldr x0, [x2, x1, lsl #3]	\n\t"
-		"br x0						\n"
-#else
-		"mov w0, w29				\n\t"
-		"bl bm_GetCodeByVAddr		\n\t"
-		"br x0						\n"
-#endif
-
-	".end_mainloop:					\n\t"
-		"add sp, sp, #16			\n\t"	// Pop context
-		"ldp x29, x30, [sp, #144]	\n\t"
-		"ldp s12, s13, [sp, #128]	\n\t"
-		"ldp s10, s11, [sp, #112]	\n\t"
-		"ldp s8, s9, [sp, #96]		\n\t"
-		"ldp s14, s15, [sp, #80]	\n\t"
-		"ldp x27, x28, [sp, #64]	\n\t"
-		"ldp x25, x26, [sp, #48]	\n\t"
-		"ldp x23, x24, [sp, #32]	\n\t"
-		"ldp x21, x22, [sp, #16]	\n\t"
-		"ldp x19, x20, [sp], #160	\n\t"
-	:
-	: [cntx] "r"(reinterpret_cast<uintptr_t>(&ctx->cntx)),
-	  [pc] "i"(offsetof(Sh4Context, pc)),
-	  [_SH4_TIMESLICE] "i"(SH4_TIMESLICE),
-	  [CpuRunning] "i"(offsetof(Sh4Context, CpuRunning)),
-	  [RCB_SIZE] "i" (sizeof(Sh4RCB) >> 16),
-	  [SH4CTX_SIZE] "i" (sizeof(Sh4Context)),
-	  [jmp_env] "r"(reinterpret_cast<uintptr_t>(jmp_env)),
-	  [cycle_counter] "r"(reinterpret_cast<uintptr_t>(&cycle_counter))
-	: "memory"
-	);
+static int setjmp_local(jmp_buf env)
+{
+	return setjmp(env);
 }
 
 void ngen_init()
 {
 	printf("Initializing the ARM64 dynarec\n");
-	ngen_FailedToFindBlock = &ngen_FailedToFindBlock_;
+	ngen_FailedToFindBlock = &ngen_FailedToFindBlock_nommu;
 }
 
 void ngen_ResetBlocks()
 {
+	mainloop = NULL;
+	if (mmu_enabled())
+		ngen_FailedToFindBlock = &ngen_FailedToFindBlock_mmu;
+	else
+		ngen_FailedToFindBlock = &ngen_FailedToFindBlock_nommu;
 }
 
 void ngen_GetFeatures(ngen_features* dst)
 {
 	dst->InterpreterFallback = false;
 	dst->OnlyDynamicEnds = false;
-}
-
-RuntimeBlockInfo* ngen_AllocateBlock()
-{
-	return new DynaRBI();
 }
 
 template<typename T>
@@ -434,13 +360,20 @@ public:
 		regalloc.DoAlloc(block);
 
 		// scheduler
-		Mov(x1, reinterpret_cast<uintptr_t>(&cycle_counter));
-		Ldr(w0, MemOperand(x1));
-		Subs(w0, w0, block->guest_cycles);
-		Str(w0, MemOperand(x1));
+		if (mmu_enabled())
+		{
+			Mov(x1, reinterpret_cast<uintptr_t>(&cycle_counter));
+			Ldr(w0, MemOperand(x1));
+			Subs(w0, w0, block->guest_cycles);
+			Str(w0, MemOperand(x1));
+		}
+		else
+		{
+			Subs(w27, w27, block->guest_cycles);
+		}
 		Label cycles_remaining;
 		B(&cycles_remaining, pl);
-		GenCallRuntime(intc_sched);
+		GenCall(*arm64_intc_sched);
 		Bind(&cycles_remaining);
 
 #ifdef PROFILING
@@ -1100,7 +1033,7 @@ public:
 				{
 					Mov(w29, block->BranchBlock);
 					Str(w29, sh4_context_mem_operand(&next_pc));
-					GenBranch(no_update);
+					GenBranch(*arm64_no_update);
 				}
 			}
 			else
@@ -1134,7 +1067,7 @@ public:
 					{
 						Mov(w29, block->BranchBlock);
 						Str(w29, sh4_context_mem_operand(&next_pc));
-						GenBranch(no_update);
+						GenBranch(*arm64_no_update);
 					}
 				}
 
@@ -1150,7 +1083,7 @@ public:
 					{
 						Mov(w29, block->NextBlock);
 						Str(w29, sh4_context_mem_operand(&next_pc));
-						GenBranch(no_update);
+						GenBranch(*arm64_no_update);
 					}
 				}
 			}
@@ -1179,7 +1112,7 @@ public:
 			else
 			{
 				Str(w29, sh4_context_mem_operand(&next_pc));
-				GenBranch(no_update);
+				GenBranch(*arm64_no_update);
 			}
 
 			break;
@@ -1196,8 +1129,8 @@ public:
 			GenCallRuntime(UpdateINTC);
 
 			Ldr(w29, sh4_context_mem_operand(&next_pc));
+			GenBranch(*arm64_no_update);
 
-			GenBranchRuntime(no_update);
 			break;
 
 		default:
@@ -1248,6 +1181,130 @@ public:
 #endif
 	}
 
+	void GenMainloop()
+	{
+		Label no_update;
+		Label intc_sched;
+
+		mainloop = (void (*)(void *))GetBuffer()->GetStartAddress<void*>();
+
+		// Save registers
+		Stp(x19, x20, MemOperand(sp, -160, PreIndex));
+		Stp(x21, x22, MemOperand(sp, 16));
+		Stp(x23, x24, MemOperand(sp, 32));
+		Stp(x25, x26, MemOperand(sp, 48));
+		Stp(x27, x28, MemOperand(sp, 64));
+		Stp(s14, s15, MemOperand(sp, 80));
+		Stp(vixl::aarch64::s8, s9, MemOperand(sp, 96));
+		Stp(s10, s11, MemOperand(sp, 112));
+		Stp(s12, s13, MemOperand(sp, 128));
+		Stp(x29, x30, MemOperand(sp, 144));
+
+		Sub(x0, x0, sizeof(Sh4Context));
+		if (mmu_enabled())
+		{
+			Ldr(x1, reinterpret_cast<uintptr_t>(&cycle_counter));
+			// Push context, cycle_counter address
+			Stp(x0, x1, MemOperand(sp, -16, PreIndex));
+			Mov(w0, SH4_TIMESLICE);
+			Str(w0, MemOperand(x1));
+
+			Mov(x0, reinterpret_cast<uintptr_t>(jmp_env));
+			GenCallRuntime(setjmp_local);
+
+			Ldr(x28, MemOperand(sp));	// Set context
+		}
+		else
+		{
+			// Use x28 as sh4 context pointer
+			Mov(x28, x0);
+			// Use x27 as cycle_counter
+			Mov(w27, SH4_TIMESLICE);
+		}
+		Label do_interrupts;
+		Label end_mainloop;
+
+		// w29 is next_pc
+		Ldr(w29, MemOperand(x28, offsetof(Sh4Context, pc)));
+		B(&no_update);
+
+		Bind(&intc_sched);
+
+		Ldr(w0, MemOperand(x28, offsetof(Sh4Context, CpuRunning)));
+		Cbz(w0, &end_mainloop);
+		// Add timeslice to cycle counter
+		if (!mmu_enabled())
+		{
+			Add(w27, w27, SH4_TIMESLICE);
+		}
+		else
+		{
+			Ldr(x1, MemOperand(sp, 8));	// &cycle_counter
+			Ldr(w0, MemOperand(x1));	// cycle_counter
+			Add(w0, w0, SH4_TIMESLICE);
+			Str(w0, MemOperand(x1));
+		}
+		Mov(x29, lr);				// Trashing pc here but it will be reset at the end of the block or in DoInterrupts
+		GenCallRuntime(UpdateSystem);
+		Mov(lr, x29);
+		Cbnz(w0, &do_interrupts);
+		Ret();
+
+		Bind(&do_interrupts);
+		Mov(x0, x29);
+		GenCallRuntime(rdv_DoInterrupts);	// Updates next_pc based on host pc
+		Mov(w29, w0);
+
+		Bind(&no_update);				// next_pc _MUST_ be on w29
+
+		if (!mmu_enabled())
+		{
+			Sub(x2, x28, offsetof(Sh4RCB, cntx));
+			if (RAM_SIZE == 32 * 1024 * 1024)
+				Ubfx(w1, w29, 1, 24);	// 24+1 bits: 32 MB
+			else if (RAM_SIZE == 16 * 1024 * 1024)
+				Ubfx(w1, w29, 1, 23);	// 23+1 bits: 16 MB
+			else
+				die("Unsupported RAM_SIZE");
+			Ldr(x0, MemOperand(x2, x1, LSL, 3));
+		}
+		else
+		{
+			Mov(w0, w29);
+			GenCallRuntime(bm_GetCodeByVAddr);
+		}
+		Br(x0);
+
+		Bind(&end_mainloop);
+		if (mmu_enabled())
+			// Pop context
+			Add(sp, sp, 16);
+		// Restore registers
+		Ldp(x29, x30, MemOperand(sp, 144));
+		Ldp(s12, s13, MemOperand(sp, 128));
+		Ldp(s10, s11, MemOperand(sp, 112));
+		Ldp(vixl::aarch64::s8, s9, MemOperand(sp, 96));
+		Ldp(s14, s15, MemOperand(sp, 80));
+		Ldp(x27, x28, MemOperand(sp, 64));
+		Ldp(x25, x26, MemOperand(sp, 48));
+		Ldp(x23, x24, MemOperand(sp, 32));
+		Ldp(x21, x22, MemOperand(sp, 16));
+		Ldp(x19, x20, MemOperand(sp, 160, PostIndex));
+		Ret();
+
+		FinalizeCode();
+		emit_Skip(GetBuffer()->GetSizeInBytes());
+
+		arm64_intc_sched = (void (*)())GetBuffer()->GetOffsetAddress<void*>(intc_sched.GetLocation());
+		arm64_no_update = (void (*)())GetBuffer()->GetOffsetAddress<void*>(no_update.GetLocation());
+
+		// Flush and invalidate caches
+		vmem_platform_flush_cache(
+			CC_RW2RX(GetBuffer()->GetStartAddress<void*>()), CC_RW2RX(GetBuffer()->GetEndAddress<void*>()),
+			GetBuffer()->GetStartAddress<void*>(), GetBuffer()->GetEndAddress<void*>());
+	}
+
+
 private:
 	// Runtime branches/calls need to be adjusted if rx space is different to rw space.
 	// Therefore can't mix GenBranch with GenBranchRuntime!
@@ -1256,6 +1313,17 @@ private:
 	void GenCallRuntime(R (*function)(P...))
 	{
 		ptrdiff_t offset = reinterpret_cast<uintptr_t>(function) - reinterpret_cast<uintptr_t>(CC_RW2RX(GetBuffer()->GetStartAddress<void*>()));
+		verify(offset >= -128 * 1024 * 1024 && offset <= 128 * 1024 * 1024);
+		verify((offset & 3) == 0);
+		Label function_label;
+		BindToOffset(&function_label, offset);
+		Bl(&function_label);
+	}
+
+	template <typename R, typename... P>
+	void GenCall(R (*function)(P...))
+	{
+		ptrdiff_t offset = reinterpret_cast<uintptr_t>(function) - GetBuffer()->GetStartAddress<uintptr_t>();
 		verify(offset >= -128 * 1024 * 1024 && offset <= 128 * 1024 * 1024);
 		verify((offset & 3) == 0);
 		Label function_label;
@@ -1336,7 +1404,7 @@ private:
 				switch (size)
 				{
 				case 2:
-					Ldrsh(regalloc.MapRegister(op.rd), MemOperand(x1, xzr, SXTW));
+					Ldrsh(regalloc.MapRegister(op.rd), MemOperand(x1));
 					break;
 
 				case 4:
@@ -1356,7 +1424,7 @@ private:
 				switch (size)
 				{
 				case 2:
-					Ldrsh(w1, MemOperand(x1, xzr, SXTW));
+					Ldrsh(w1, MemOperand(x1));
 					break;
 
 				case 4:
@@ -1413,23 +1481,28 @@ private:
 		// Direct memory access. Need to handle SIGSEGV and rewrite block as needed. See ngen_Rewrite()
 		if (!_nvmem_enabled() || (mmu_enabled() && !vmem32_enabled()))
 			return false;
+		mem_reads++;
 
 		Instruction *start_instruction = GetCursorAddress<Instruction *>();
 
 		// WARNING: the rewrite code relies on having 1-2 ops before the memory access (4 when mmu is enabled)
 		// Update ngen_Rewrite (and perhaps read_memory_rewrite_size) if adding or removing code
-		Add(x1, *call_regs64[0], sizeof(Sh4Context), LeaveFlags);
 		if (!_nvmem_4gb_space())
 		{
-			Bfc(w1, 29, 3);		// addr &= ~0xE0000000
+			Ubfx(x1, *call_regs64[0], 0, 29);
+			Add(x1, x1, sizeof(Sh4Context), LeaveFlags);
 		}
-		else if (mmu_enabled())
+		else
 		{
-			u32 exception_pc = block->vaddr + op.guest_offs - (op.delay_slot ? 2 : 0);
-			// 3 ops before memory access
-			Mov(w8, exception_pc & 0xFFFF);
-			Movk(w8, exception_pc >> 16, 16);
-			Str(w8, sh4_context_mem_operand(&p_sh4rcb->cntx.exception_pc));
+			Add(x1, *call_regs64[0], sizeof(Sh4Context), LeaveFlags);
+			if (mmu_enabled())
+			{
+				u32 exception_pc = block->vaddr + op.guest_offs - (op.delay_slot ? 2 : 0);
+				// 3 ops before memory access
+				Mov(w8, exception_pc & 0xFFFF);
+				Movk(w8, exception_pc >> 16, 16);
+				Str(w8, sh4_context_mem_operand(&p_sh4rcb->cntx.exception_pc));
+			}
 		}
 
 		//printf("direct read memory access opid %d pc %p code addr %08x\n", opid, GetCursorAddress<void *>(), this->block->addr);
@@ -1532,22 +1605,27 @@ private:
 		// Direct memory access. Need to handle SIGSEGV and rewrite block as needed. See ngen_Rewrite()
 		if (!_nvmem_enabled() || (mmu_enabled() && !vmem32_enabled()))
 			return false;
+		mem_writes++;
 
 		Instruction *start_instruction = GetCursorAddress<Instruction *>();
 
 		// WARNING: the rewrite code relies on having 1-2 ops before the memory access (4 when mmu is enabled)
 		// Update ngen_Rewrite (and perhaps write_memory_rewrite_size) if adding or removing code
-		Add(x7, *call_regs64[0], sizeof(Sh4Context), LeaveFlags);
 		if (!_nvmem_4gb_space())
 		{
-			Bfc(w7, 29, 3);		// addr &= ~0xE0000000
+			Ubfx(x7, *call_regs64[0], 0, 29);
+			Add(x7, x7, sizeof(Sh4Context), LeaveFlags);
 		}
-		else if (mmu_enabled())
+		else
 		{
-			u32 exception_pc = block->vaddr + op.guest_offs - (op.delay_slot ? 2 : 0);
-			Mov(w8, exception_pc & 0xFFFF);
-			Movk(w8, exception_pc >> 16, 16);
-			Str(w8, sh4_context_mem_operand(&p_sh4rcb->cntx.exception_pc));
+			Add(x7, *call_regs64[0], sizeof(Sh4Context), LeaveFlags);
+			if (mmu_enabled())
+			{
+				u32 exception_pc = block->vaddr + op.guest_offs - (op.delay_slot ? 2 : 0);
+				Mov(w8, exception_pc & 0xFFFF);
+				Movk(w8, exception_pc >> 16, 16);
+				Str(w8, sh4_context_mem_operand(&p_sh4rcb->cntx.exception_pc));	// TODO Store exception_pc is w27 ?
+			}
 		}
 
 		//printf("direct write memory access opid %d pc %p code addr %08x\n", opid, GetCursorAddress<void *>(), this->block->addr);
@@ -1676,7 +1754,7 @@ private:
 			Mov(*call_regs[2], 0x100);			// vector
 			CallRuntime(Do_Exception);
 			Ldr(w29, sh4_context_mem_operand(&next_pc));
-			GenBranch(no_update);
+			GenBranch(*arm64_no_update);
 
 			Bind(&fpu_enabled);
 		}
@@ -1814,14 +1892,38 @@ bool ngen_Rewrite(unat& host_pc, unat, unat)
 	Arm64Assembler *assembler = new Arm64Assembler(code_rewrite);
 	assembler->InitializeRewrite(block, opid);
 	if (op.op == shop_readm)
+	{
+		mem_rewrites_r++;
 		assembler->GenReadMemorySlow(op);
+	}
 	else
+	{
+		mem_rewrites_w++;
 		assembler->GenWriteMemorySlow(op);
+	}
 	assembler->Finalize(true);
 	delete assembler;
 	host_pc = (unat)CC_RW2RX(code_rewrite);
 
 	return true;
+}
+
+static void generate_mainloop()
+{
+	if (mainloop != NULL)
+		return;
+	compiler = new Arm64Assembler();
+
+	compiler->GenMainloop();
+
+	delete compiler;
+	compiler = NULL;
+}
+
+RuntimeBlockInfo* ngen_AllocateBlock()
+{
+	generate_mainloop();
+	return new DynaRBI();
 }
 
 void ngen_HandleException()
