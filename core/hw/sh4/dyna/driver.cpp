@@ -80,7 +80,7 @@ void clear_temp_cache(bool full)
 
 void recSh4_ClearCache()
 {
-	printf("recSh4:Dynarec Cache clear at %08X free space %d\n", curr_pc, emit_FreeSpace());
+	printf("recSh4:Dynarec Cache clear at %08X free space %d\n", next_pc, emit_FreeSpace());
 	LastAddr=LastAddr_min;
 	bm_Reset();
 	smc_hotspots.clear();
@@ -488,6 +488,7 @@ void recSh4_Skip()
 void recSh4_Reset(bool Manual)
 {
 	Sh4_int_Reset(Manual);
+	recSh4_ClearCache();
 }
 
 void recSh4_Init()

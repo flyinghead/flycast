@@ -746,8 +746,8 @@ void SaveSettings()
 		cfgSaveBool("config", "Dynarec.safe-mode", settings.dynarec.safemode);
 	cfgSaveInt("config", "Dynarec.SmcCheckLevel", (int)settings.dynarec.SmcCheckLevel);
 
-	if (!disable_vmem32_game || !settings.dynarec.disable_vmem32)
-		cfgSaveBool("config", "Dynarec.DisableVmem32", settings.dynarec.disable_vmem32);
+//	if (!disable_vmem32_game || !settings.dynarec.disable_vmem32)
+//		cfgSaveBool("config", "Dynarec.DisableVmem32", settings.dynarec.disable_vmem32);
 	cfgSaveInt("config", "Dreamcast.Language", settings.dreamcast.language);
 	cfgSaveInt("config", "aica.LimitFPS", (int)settings.aica.LimitFPS);
 	cfgSaveBool("config", "aica.DSPEnabled", settings.aica.DSPEnabled);
@@ -947,7 +947,6 @@ void dc_loadstate()
 
 	data_ptr = data ;
 
-	sh4_cpu.ResetCache();
 #if FEAT_AREC == DYNAREC_JIT
     FlushCache();
 #endif
@@ -964,6 +963,7 @@ void dc_loadstate()
 	}
 
 	mmu_set_state();
+	sh4_cpu.ResetCache();
     dsp.dyndirty = true;
     sh4_sched_ffts();
     CalculateSync();

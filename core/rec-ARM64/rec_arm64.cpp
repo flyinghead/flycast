@@ -138,15 +138,18 @@ __asm__
 		"br x0								\n"
 );
 
+static bool restarting;
+
 void ngen_mainloop(void* v_cntx)
 {
-	generate_mainloop();
-	mainloop(v_cntx);
-}
+	do {
+		restarting = false;
+		generate_mainloop();
 
-static int setjmp_local(jmp_buf env)
-{
-	return setjmp(env);
+		mainloop(v_cntx);
+		if (restarting)
+			p_sh4rcb->cntx.CpuRunning = 1;
+	} while (restarting);
 }
 
 void ngen_init()
@@ -162,6 +165,12 @@ void ngen_ResetBlocks()
 		ngen_FailedToFindBlock = &ngen_FailedToFindBlock_mmu;
 	else
 		ngen_FailedToFindBlock = &ngen_FailedToFindBlock_nommu;
+	if (p_sh4rcb->cntx.CpuRunning)
+	{
+		// Force the dynarec out of mainloop() to regenerate it
+		p_sh4rcb->cntx.CpuRunning = 0;
+		restarting = true;
+	}
 }
 
 void ngen_GetFeatures(ngen_features* dst)
@@ -1185,8 +1194,37 @@ public:
 	{
 		Label no_update;
 		Label intc_sched;
+		Label end_mainloop;
 
-		mainloop = (void (*)(void *))GetBuffer()->GetStartAddress<void*>();
+		// void intc_sched()
+		arm64_intc_sched = GetCursorAddress<void (*)()>();
+		B(&intc_sched);
+
+		// void no_update()
+		Bind(&no_update);				// next_pc _MUST_ be on w29
+
+		Ldr(w0, MemOperand(x28, offsetof(Sh4Context, CpuRunning)));
+		Cbz(w0, &end_mainloop);
+		if (!mmu_enabled())
+		{
+			Sub(x2, x28, offsetof(Sh4RCB, cntx));
+			if (RAM_SIZE == 32 * 1024 * 1024)
+				Ubfx(w1, w29, 1, 24);	// 24+1 bits: 32 MB
+			else if (RAM_SIZE == 16 * 1024 * 1024)
+				Ubfx(w1, w29, 1, 23);	// 23+1 bits: 16 MB
+			else
+				die("Unsupported RAM_SIZE");
+			Ldr(x0, MemOperand(x2, x1, LSL, 3));
+		}
+		else
+		{
+			Mov(w0, w29);
+			GenCallRuntime(bm_GetCodeByVAddr);
+		}
+		Br(x0);
+
+		// void mainloop(void *context)
+		mainloop = GetCursorAddress<void (*)(void *)>();
 
 		// Save registers
 		Stp(x19, x20, MemOperand(sp, -160, PreIndex));
@@ -1209,8 +1247,9 @@ public:
 			Mov(w0, SH4_TIMESLICE);
 			Str(w0, MemOperand(x1));
 
-			Mov(x0, reinterpret_cast<uintptr_t>(jmp_env));
-			GenCallRuntime(setjmp_local);
+			Ldr(x0, reinterpret_cast<uintptr_t>(jmp_env));
+			Ldr(x1, reinterpret_cast<uintptr_t>(&setjmp));
+			Blr(x1);
 
 			Ldr(x28, MemOperand(sp));	// Set context
 		}
@@ -1222,7 +1261,6 @@ public:
 			Mov(w27, SH4_TIMESLICE);
 		}
 		Label do_interrupts;
-		Label end_mainloop;
 
 		// w29 is next_pc
 		Ldr(w29, MemOperand(x28, offsetof(Sh4Context, pc)));
@@ -1230,8 +1268,6 @@ public:
 
 		Bind(&intc_sched);
 
-		Ldr(w0, MemOperand(x28, offsetof(Sh4Context, CpuRunning)));
-		Cbz(w0, &end_mainloop);
 		// Add timeslice to cycle counter
 		if (!mmu_enabled())
 		{
@@ -1255,25 +1291,7 @@ public:
 		GenCallRuntime(rdv_DoInterrupts);	// Updates next_pc based on host pc
 		Mov(w29, w0);
 
-		Bind(&no_update);				// next_pc _MUST_ be on w29
-
-		if (!mmu_enabled())
-		{
-			Sub(x2, x28, offsetof(Sh4RCB, cntx));
-			if (RAM_SIZE == 32 * 1024 * 1024)
-				Ubfx(w1, w29, 1, 24);	// 24+1 bits: 32 MB
-			else if (RAM_SIZE == 16 * 1024 * 1024)
-				Ubfx(w1, w29, 1, 23);	// 23+1 bits: 16 MB
-			else
-				die("Unsupported RAM_SIZE");
-			Ldr(x0, MemOperand(x2, x1, LSL, 3));
-		}
-		else
-		{
-			Mov(w0, w29);
-			GenCallRuntime(bm_GetCodeByVAddr);
-		}
-		Br(x0);
+		B(&no_update);
 
 		Bind(&end_mainloop);
 		if (mmu_enabled())
@@ -1295,8 +1313,7 @@ public:
 		FinalizeCode();
 		emit_Skip(GetBuffer()->GetSizeInBytes());
 
-		arm64_intc_sched = (void (*)())GetBuffer()->GetOffsetAddress<void*>(intc_sched.GetLocation());
-		arm64_no_update = (void (*)())GetBuffer()->GetOffsetAddress<void*>(no_update.GetLocation());
+		arm64_no_update = GetLabelAddress<void (*)()>(&no_update);
 
 		// Flush and invalidate caches
 		vmem_platform_flush_cache(
@@ -1933,8 +1950,6 @@ void ngen_HandleException()
 
 u32 DynaRBI::Relink()
 {
-	if (mmu_enabled())
-		return 0;
 	//printf("DynaRBI::Relink %08x\n", this->addr);
 	Arm64Assembler *compiler = new Arm64Assembler((u8 *)this->code + this->relink_offset);
 
