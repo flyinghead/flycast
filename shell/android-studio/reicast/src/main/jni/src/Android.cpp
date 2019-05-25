@@ -401,36 +401,14 @@ JNIEXPORT jint JNICALL Java_com_reicast_emulator_emu_JNIdc_data(JNIEnv *env, job
     return 0;
 }
 
-extern void gl_swap();
 extern void egl_stealcntx();
-volatile static bool render_running;
-volatile static bool render_reinit;
 
-void *render_thread_func(void *)
+static void *render_thread_func(void *)
 {
-	render_running = true;
+	rend_thread(NULL);
 
-	rend_init_renderer();
-
-    while (render_running) {
-        if (render_reinit)
-        {
-        	render_reinit = false;
-        	rend_init_renderer();
-        }
-        else
-            if (!egl_makecurrent())
-                break;;
-
-        bool ret = rend_single_frame();
-        if (ret)
-            gl_swap();
-    }
-    egl_makecurrent();
-    rend_term_renderer();
-    ANativeWindow_release(g_window);
+	ANativeWindow_release(g_window);
     g_window = NULL;
-	render_running = false;
 
     return NULL;
 }
@@ -443,11 +421,11 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_rendinitNative(JNIEnv
 	{
 		if (surface == NULL)
 		{
-			render_running = false;
+			renderer_enabled = false;
 	        render_thread.WaitToEnd();
 		}
 		else
-			render_reinit = true;
+			renderer_reinit_requested = true;
 	}
 	else if (surface != NULL)
 	{

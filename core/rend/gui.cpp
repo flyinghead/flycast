@@ -62,7 +62,6 @@ extern u32 mo_buttons;
 extern f32 mo_x_delta;
 extern f32 mo_y_delta;
 extern f32 mo_wheel_delta;
-extern bool renderer_changed;
 
 int screen_dpi = 96;
 

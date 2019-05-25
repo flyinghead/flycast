@@ -14,6 +14,7 @@ void rend_end_render();
 void rend_cancel_emu_wait();
 bool rend_single_frame();
 void rend_swap_frame();
+void *rend_thread(void *);
 
 void rend_set_fb_scale(float x,float y);
 void rend_resize(int width, int height);
@@ -52,8 +53,9 @@ struct Renderer
 };
 
 extern Renderer* renderer;
-extern bool renderer_enabled;	// Signals the renderer thread to exit
-extern bool renderer_changed;	// Signals the renderer thread to switch renderer
+extern volatile bool renderer_enabled;	// Signals the renderer thread to exit
+extern volatile bool renderer_changed;	// Signals the renderer thread to switch renderer
+extern volatile bool renderer_reinit_requested;	// Signals the renderer thread to reinit the renderer
 
 Renderer* rend_GLES2();
 #if !defined(GLES) && HOST_OS != OS_DARWIN

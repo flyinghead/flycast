@@ -78,8 +78,9 @@ u32 FrameCount=1;
 
 Renderer* renderer;
 static Renderer* fallback_renderer;
-bool renderer_enabled = true;	// Signals the renderer thread to exit
-bool renderer_changed = false;	// Signals the renderer thread to switch renderer
+volatile bool renderer_enabled = true;	// Signals the renderer thread to exit
+volatile bool renderer_changed = false;	// Signals the renderer thread to switch renderer
+volatile bool renderer_reinit_requested = false;	// Signals the renderer thread to reinit the renderer
 
 #if !defined(TARGET_NO_THREADS)
 cResetEvent rs, re;
@@ -398,6 +399,8 @@ void rend_term_renderer()
 
 void* rend_thread(void* p)
 {
+	renderer_enabled = true;
+
 	rend_init_renderer();
 
 	//we don't know if this is true, so let's not speculate here
@@ -416,8 +419,14 @@ void* rend_thread(void* p)
 		if (renderer_changed)
 		{
 			renderer_changed = false;
+			renderer_reinit_requested = false;
 			rend_term_renderer();
 			rend_create_renderer();
+			rend_init_renderer();
+		}
+		else if (renderer_reinit_requested)
+		{
+			renderer_reinit_requested = false;
 			rend_init_renderer();
 		}
 	}
