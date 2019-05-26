@@ -545,6 +545,11 @@ public:
 				Sbcs(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rs1), regalloc.MapRegister(op.rs2)); // (C,rd) = rs1 - rs2 - ~rs3(C)
 				Cset(regalloc.MapRegister(op.rd2), cc);	// rd2 = ~C
 				break;
+			case shop_negc:
+				Cmp(wzr, regalloc.MapRegister(op.rs2));	// C = ~rs2
+				Sbcs(regalloc.MapRegister(op.rd), wzr, regalloc.MapRegister(op.rs1)); // (C,rd) = 0 - rs1 - ~rs2(C)
+				Cset(regalloc.MapRegister(op.rd2), cc);	// rd2 = ~C
+				break;
 
 			case shop_rocr:
 				Ubfx(w0, regalloc.MapRegister(op.rs1), 0, 1);										// w0 = rs1[0] (new C)
@@ -701,6 +706,12 @@ public:
 				break;
 			case shop_ext_s16:
 				Sxth(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rs1));
+				break;
+
+			case shop_xtrct:
+				Lsr(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rs1), 16);
+				Lsl(w0, regalloc.MapRegister(op.rs2), 16);
+				Orr(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rd), w0);
 				break;
 
 			//
@@ -1502,7 +1513,7 @@ private:
 
 		Instruction *start_instruction = GetCursorAddress<Instruction *>();
 
-		// WARNING: the rewrite code relies on having 1-2 ops before the memory access (4 when mmu is enabled)
+		// WARNING: the rewrite code relies on having 1-2 ops before the memory access (3 when mmu is enabled)
 		// Update ngen_Rewrite (and perhaps read_memory_rewrite_size) if adding or removing code
 		if (!_nvmem_4gb_space())
 		{
@@ -1515,10 +1526,8 @@ private:
 			if (mmu_enabled())
 			{
 				u32 exception_pc = block->vaddr + op.guest_offs - (op.delay_slot ? 2 : 0);
-				// 3 ops before memory access
-				Mov(w8, exception_pc & 0xFFFF);
-				Movk(w8, exception_pc >> 16, 16);
-				Str(w8, sh4_context_mem_operand(&p_sh4rcb->cntx.exception_pc));
+				Mov(w27, exception_pc & 0xFFFF);
+				Movk(w27, exception_pc >> 16, 16);
 			}
 		}
 
@@ -1626,7 +1635,7 @@ private:
 
 		Instruction *start_instruction = GetCursorAddress<Instruction *>();
 
-		// WARNING: the rewrite code relies on having 1-2 ops before the memory access (4 when mmu is enabled)
+		// WARNING: the rewrite code relies on having 1-2 ops before the memory access (3 when mmu is enabled)
 		// Update ngen_Rewrite (and perhaps write_memory_rewrite_size) if adding or removing code
 		if (!_nvmem_4gb_space())
 		{
@@ -1639,9 +1648,8 @@ private:
 			if (mmu_enabled())
 			{
 				u32 exception_pc = block->vaddr + op.guest_offs - (op.delay_slot ? 2 : 0);
-				Mov(w8, exception_pc & 0xFFFF);
-				Movk(w8, exception_pc >> 16, 16);
-				Str(w8, sh4_context_mem_operand(&p_sh4rcb->cntx.exception_pc));	// TODO Store exception_pc is w27 ?
+				Mov(w27, exception_pc & 0xFFFF);
+				Movk(w27, exception_pc >> 16, 16);
 			}
 		}
 
@@ -1845,9 +1853,9 @@ private:
 	std::vector<const VRegister*> call_fregs;
 	Arm64RegAlloc regalloc;
 	RuntimeBlockInfo* block = NULL;
-	const int read_memory_rewrite_size = 6;	// worst case for u64: add, bfc, ldr, fmov, lsr, fmov
+	const int read_memory_rewrite_size = 5;	// worst case for u64/mmu: add, mov, movk, ldr, str
 											// FIXME rewrite size per read/write size?
-	const int write_memory_rewrite_size = 5; // TODO only 2 if !mmu & 4gb
+	const int write_memory_rewrite_size = 4; // TODO only 2 if !mmu & 4gb
 };
 
 static Arm64Assembler* compiler;
@@ -1905,7 +1913,7 @@ bool ngen_Rewrite(unat& host_pc, unat, unat)
 	verify(opid < block->oplist.size());
 	const shil_opcode& op = block->oplist[opid];
 	// Skip the preceding ops (add, bic, ...)
-	u32 *code_rewrite = code_ptr - 1 - (!_nvmem_4gb_space() ? 1 : 0) - (mmu_enabled() ? 3 : 0);
+	u32 *code_rewrite = code_ptr - 1 - (!_nvmem_4gb_space() ? 1 : 0) - (mmu_enabled() ? 2 : 0);
 	Arm64Assembler *assembler = new Arm64Assembler(code_rewrite);
 	assembler->InitializeRewrite(block, opid);
 	if (op.op == shop_readm)

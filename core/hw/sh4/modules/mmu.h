@@ -36,6 +36,7 @@ struct TLB_Entry
 extern TLB_Entry UTLB[64];
 extern TLB_Entry ITLB[4];
 extern u32 sq_remap[64];
+extern const u32 fast_reg_lut[8];
 
 //These are working only for SQ remaps on ndce
 bool UTLB_Sync(u32 entry);
@@ -56,7 +57,25 @@ static INLINE bool mmu_enabled()
 
 template<bool internal = false>
 u32 mmu_full_lookup(u32 va, const TLB_Entry **entry, u32& rv);
-u32 mmu_instruction_translation(u32 va, u32& rv, bool& shared);
+
+#ifdef FAST_MMU
+static INLINE u32 mmu_instruction_translation(u32 va, u32& rv)
+{
+	if (va & 1)
+		return MMU_ERROR_BADADDR;
+	if (fast_reg_lut[va >> 29] != 0)
+	{
+		rv = va;
+		return MMU_ERROR_NONE;
+	}
+
+	const TLB_Entry *tlb_entry;
+	return mmu_full_lookup(va, &tlb_entry, rv);
+}
+#else
+u32 mmu_instruction_translation(u32 va, u32& rv);
+#endif
+
 template<u32 translation_type, typename T>
 extern u32 mmu_data_translation(u32 va, u32& rv);
 void DoMMUException(u32 addr, u32 error_code, u32 access_type);

@@ -146,7 +146,7 @@ LONG ExeptionHandler(EXCEPTION_POINTERS *ExceptionInfo)
 	//printf("[EXC] During access to : 0x%X\n", address);
 #if 0
 	bool write = false;	// TODO?
-	if (vmem32_handle_signal(address, write))
+	if (vmem32_handle_signal(address, write, 0))
 		return EXCEPTION_CONTINUE_EXECUTION;
 #endif
 

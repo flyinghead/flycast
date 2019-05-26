@@ -144,12 +144,11 @@ DynarecCodeEntryPtr DYNACALL bm_GetCodeByVAddr(u32 addr)
 		}
 
 		u32 paddr;
-		bool shared;
-		u32 rv = mmu_instruction_translation(addr, paddr, shared);
+		u32 rv = mmu_instruction_translation(addr, paddr);
 		if (rv != MMU_ERROR_NONE)
 		{
 			DoMMUException(addr, rv, MMU_TT_IREAD);
-			mmu_instruction_translation(next_pc, paddr, shared);
+			mmu_instruction_translation(next_pc, paddr);
 		}
 
 		return bm_GetCode(paddr);

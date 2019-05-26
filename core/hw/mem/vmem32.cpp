@@ -294,7 +294,7 @@ static u32 vmem32_map_address(u32 address, bool write)
 }
 
 #if !defined(NO_MMU) && defined(HOST_64BIT_CPU)
-bool vmem32_handle_signal(void *fault_addr, bool write)
+bool vmem32_handle_signal(void *fault_addr, bool write, u32 exception_pc)
 {
 	if (!vmem32_inited || (u8*)fault_addr < virt_ram_base || (u8*)fault_addr >= virt_ram_base + VMEM32_SIZE)
 		return false;
@@ -306,7 +306,11 @@ bool vmem32_handle_signal(void *fault_addr, bool write)
 		return true;
 	if (rv == VMEM32_ERROR_NOT_MAPPED)
 		return false;
+#if HOST_CPU == CPU_ARM64
+	p_sh4rcb->cntx.pc = exception_pc;
+#else
 	p_sh4rcb->cntx.pc = p_sh4rcb->cntx.exception_pc;
+#endif
 	DoMMUException(guest_addr, rv, write ? MMU_TT_DWRITE : MMU_TT_DREAD);
 	ngen_HandleException();
 	// not reached

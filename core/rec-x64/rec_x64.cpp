@@ -43,6 +43,9 @@ extern "C" {
 double host_cpu_time;
 u64 guest_cpu_cycles;
 
+u32 mem_writes, mem_reads;
+u32 mem_rewrites_w, mem_rewrites_r;
+
 #ifdef PROFILING
 static double slice_start;
 extern "C"
@@ -597,9 +600,9 @@ public:
 				cmp(regalloc.MapRegister(op.rs3), 1);	// C = ~rs3
 				cmc();		// C = rs3
 				adc(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rs2)); // (C,rd)=rs1+rs2+rs3(C)
-				setc(al);
-				movzx(regalloc.MapRegister(op.rd2), al);	// rd2 = C
+				setc(regalloc.MapRegister(op.rd2).cvt8());	// rd2 = C
 				break;
+
 			/* FIXME buggy
 			case shop_sbc:
 				if (regalloc.mapg(op.rd) != regalloc.mapg(op.rs1))
@@ -614,6 +617,19 @@ public:
 				cmovc(regalloc.MapRegister(op.rd2), ecx);	// rd2 = C
 				break;
 			*/
+			case shop_negc:
+				{
+					if (regalloc.mapg(op.rd) != regalloc.mapg(op.rs1))
+						mov(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rs1));
+					Xbyak::Reg64 rd64 = regalloc.MapRegister(op.rd).cvt64();
+					neg(rd64);
+					sub(rd64, regalloc.MapRegister(op.rs2).cvt64());
+					Xbyak::Reg64 rd2_64 = regalloc.MapRegister(op.rd2).cvt64();
+					mov(rd2_64, rd64);
+					shr(rd2_64, 63);
+				}
+				break;
+
 			case shop_rocr:
 			case shop_rocl:
 				if (regalloc.mapg(op.rd) != regalloc.mapg(op.rs1))
@@ -795,6 +811,15 @@ public:
 				break;
 			case shop_ext_s16:
 				movsx(regalloc.MapRegister(op.rd), Xbyak::Reg16(regalloc.MapRegister(op.rs1).getIdx()));
+				break;
+
+			case shop_xtrct:
+				if (regalloc.mapg(op.rd) != regalloc.mapg(op.rs1))
+					mov(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rs1));
+				shr(regalloc.MapRegister(op.rd), 16);
+				mov(eax, regalloc.MapRegister(op.rs2));
+				shl(eax, 16);
+				or_(regalloc.MapRegister(op.rd), eax);
 				break;
 
 			//
@@ -1397,6 +1422,7 @@ private:
 	{
 		if (!mmu_enabled() || !vmem32_enabled())
 			return false;
+		mem_reads++;
 		const u8 *start_addr = getCurr();
 
 		mov(rax, (uintptr_t)&p_sh4rcb->cntx.exception_pc);
@@ -1445,6 +1471,7 @@ private:
 	{
 		if (!mmu_enabled() || !vmem32_enabled())
 			return false;
+		mem_writes++;
 		const u8 *start_addr = getCurr();
 
 		mov(rax, (uintptr_t)&p_sh4rcb->cntx.exception_pc);
@@ -1839,9 +1866,15 @@ bool ngen_Rewrite(unat& host_pc, unat, unat)
 	BlockCompiler *assembler = new BlockCompiler(code_ptr - BlockCompiler::mem_access_offset);
 	assembler->InitializeRewrite(block, opid);
 	if (op.op == shop_readm)
+	{
+		mem_rewrites_r++;
 		assembler->GenReadMemorySlow(op, block);
+	}
 	else
+	{
+		mem_rewrites_w++;
 		assembler->GenWriteMemorySlow(op, block);
+	}
 	assembler->FinalizeRewrite();
 	verify(block->host_code_size >= assembler->getSize());
 	delete assembler;

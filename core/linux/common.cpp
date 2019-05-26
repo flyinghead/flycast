@@ -64,10 +64,12 @@ void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 #if HOST_CPU == CPU_ARM64
 	u32 op = *(u32*)ctx.pc;
 	bool write = (op & 0x00400000) == 0;
+	u32 exception_pc = ctx.x27;
 #elif HOST_CPU == CPU_X64
 	bool write = false;	// TODO?
+	u32 exception_pc = 0;
 #endif
-	if (vmem32_handle_signal(si->si_addr, write))
+	if (vmem32_handle_signal(si->si_addr, write, exception_pc))
 		return;
 #endif
 	if (VramLockedWrite((u8*)si->si_addr) || BM_LockedWrite((u8*)si->si_addr))

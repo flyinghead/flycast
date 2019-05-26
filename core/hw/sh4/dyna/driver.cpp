@@ -248,8 +248,7 @@ bool RuntimeBlockInfo::Setup(u32 rpc,fpscr_t rfpu_cfg)
 	vaddr = rpc;
 	if (mmu_enabled())
 	{
-		bool shared;
-		u32 rv = mmu_instruction_translation(vaddr, addr, shared);
+		u32 rv = mmu_instruction_translation(vaddr, addr);
 		if (rv != MMU_ERROR_NONE)
 		{
 			DoMMUException(vaddr, rv, MMU_TT_IREAD);

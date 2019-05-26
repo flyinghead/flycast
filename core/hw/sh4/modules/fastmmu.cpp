@@ -26,7 +26,6 @@ extern u32 sq_remap[64];
 #define printf_win32(...)
 
 extern const u32 mmu_mask[4];
-extern const u32 fast_reg_lut[8];
 
 const TLB_Entry *lru_entry = NULL;
 static u32 lru_mask;
@@ -276,20 +275,12 @@ u32 mmu_data_translation(u32 va, u32& rv)
 		}
 	}
 
-//	if ((sr.MD == 0) && (va & 0x80000000) != 0)
-//	{
-//		//if on kernel, and not SQ addr -> error
-//		return MMU_ERROR_BADADDR;
-//	}
-
 	if (sr.MD == 1 && ((va & 0xFC000000) == 0x7C000000))
 	{
 		rv = va;
 		return MMU_ERROR_NONE;
 	}
 
-	// Not called if CCN_MMUCR.AT == 0
-	//if ((CCN_MMUCR.AT == 0) || (fast_reg_lut[va >> 29] != 0))
 	if (fast_reg_lut[va >> 29] != 0)
 	{
 		rv = va;
@@ -298,9 +289,6 @@ u32 mmu_data_translation(u32 va, u32& rv)
 
 	const TLB_Entry *entry;
 	u32 lookup = mmu_full_lookup(va, &entry, rv);
-
-//	if (lookup != MMU_ERROR_NONE)
-//		return lookup;
 
 #ifdef TRACE_WINCE_SYSCALLS
 	if (unresolved_unicode_string != 0 && lookup == MMU_ERROR_NONE)
@@ -312,34 +300,6 @@ u32 mmu_data_translation(u32 va, u32& rv)
 		}
 	}
 #endif
-
-//	u32 md = entry->Data.PR >> 1;
-//
-//	//0X  & User mode-> protection violation
-//	//Priv mode protection
-//	if ((md == 0) && sr.MD == 0)
-//	{
-//		die("MMU_ERROR_PROTECTED");
-//		return MMU_ERROR_PROTECTED;
-//	}
-//
-//	//X0 -> read olny
-//	//X1 -> read/write , can be FW
-//
-//	//Write Protection (Lock or FW)
-//	if (translation_type == MMU_TT_DWRITE)
-//	{
-//		if ((entry->Data.PR & 1) == 0)
-//		{
-//			die("MMU_ERROR_PROTECTED");
-//			return MMU_ERROR_PROTECTED;
-//		}
-//		else if (entry->Data.D == 0)
-//		{
-//			die("MMU_ERROR_FIRSTWRITE");
-//			return MMU_ERROR_FIRSTWRITE;
-//		}
-//	}
 
 	return lookup;
 }
@@ -353,53 +313,8 @@ template u32 mmu_data_translation<MMU_TT_DWRITE, u16>(u32 va, u32& rv);
 template u32 mmu_data_translation<MMU_TT_DWRITE, u32>(u32 va, u32& rv);
 template u32 mmu_data_translation<MMU_TT_DWRITE, u64>(u32 va, u32& rv);
 
-u32 mmu_instruction_translation(u32 va, u32& rv, bool& shared)
-{
-	if (va & 1)
-	{
-		return MMU_ERROR_BADADDR;
-	}
-//	if ((sr.MD == 0) && (va & 0x80000000) != 0)
-//	{
-//		//if SQ disabled , or if if SQ on but out of SQ mem then BAD ADDR ;)
-//		if (va >= 0xE0000000)
-//			return MMU_ERROR_BADADDR;
-//	}
-
-	if ((CCN_MMUCR.AT == 0) || (fast_reg_lut[va >> 29] != 0))
-	{
-		rv = va;
-		return MMU_ERROR_NONE;
-	}
-
-	// Hack fast implementation
-	const TLB_Entry *tlb_entry;
-	u32 lookup = mmu_full_lookup(va, &tlb_entry, rv);
-	if (lookup != MMU_ERROR_NONE)
-		return lookup;
-	u32 md = tlb_entry->Data.PR >> 1;
-	//0X  & User mode-> protection violation
-	//Priv mode protection
-//	if ((md == 0) && sr.MD == 0)
-//	{
-//		return MMU_ERROR_PROTECTED;
-//	}
-	shared = tlb_entry->Data.SH == 1;
-	return MMU_ERROR_NONE;
-}
-
 void mmu_flush_table()
 {
-//	printf("MMU tables flushed\n");
-
-//	ITLB[0].Data.V = 0;
-//	ITLB[1].Data.V = 0;
-//	ITLB[2].Data.V = 0;
-//	ITLB[3].Data.V = 0;
-//
-//	for (u32 i = 0; i < 64; i++)
-//		UTLB[i].Data.V = 0;
-
 	lru_entry = NULL;
 	flush_cache();
 }

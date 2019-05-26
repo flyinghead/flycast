@@ -980,6 +980,10 @@ bool dec_generic(u32 op)
 		}
 		break;
 
+	case DM_NEGC:
+		Emit(natop, rs1, rs2, mk_reg(reg_sr_T), 0, shil_param(), mk_reg(reg_sr_T));
+		break;
+
 	default:
 		verify(false);
 	}

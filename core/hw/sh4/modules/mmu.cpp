@@ -562,7 +562,7 @@ template u32 mmu_data_translation<MMU_TT_DREAD, u16>(u32 va, u32& rv);
 template u32 mmu_data_translation<MMU_TT_DREAD, u32>(u32 va, u32& rv);
 template u32 mmu_data_translation<MMU_TT_DWRITE, u64>(u32 va, u32& rv);
 
-u32 mmu_instruction_translation(u32 va, u32& rv, bool& shared)
+u32 mmu_instruction_translation(u32 va, u32& rv)
 {
 	if (va & 1)
 	{
@@ -603,7 +603,6 @@ retry_ITLB_Match:
 				nom++;
 				//VPN->PPN | low bits
 				rv = ((ITLB[i].Data.PPN << 10)&mask) | (va&(~mask));
-				shared = ITLB[i].Data.SH == 1;
 			}
 		}
 	}
@@ -745,8 +744,7 @@ T DYNACALL mmu_ReadMem(u32 adr)
 u16 DYNACALL mmu_IReadMem16(u32 vaddr)
 {
 	u32 addr;
-	bool shared;
-	u32 rv = mmu_instruction_translation(vaddr, addr, shared);
+	u32 rv = mmu_instruction_translation(vaddr, addr);
 	if (rv != MMU_ERROR_NONE)
 		mmu_raise_exception(rv, vaddr, MMU_TT_IREAD);
 	return _vmem_ReadMem16(addr);
@@ -787,8 +785,7 @@ template u64 mmu_ReadMemNoEx<u64>(u32 adr, u32 *exception_occurred);
 u16 DYNACALL mmu_IReadMem16NoEx(u32 vaddr, u32 *exception_occurred)
 {
 	u32 addr;
-	bool shared;
-	u32 rv = mmu_instruction_translation(vaddr, addr, shared);
+	u32 rv = mmu_instruction_translation(vaddr, addr);
 	if (rv != MMU_ERROR_NONE)
 	{
 		DoMMUException(vaddr, rv, MMU_TT_IREAD);

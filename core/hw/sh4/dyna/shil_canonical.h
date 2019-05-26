@@ -347,6 +347,28 @@ shil_compile
 )
 shil_opc_end()
 
+//shop_negc - Negate with carry
+shil_opc(negc)
+shil_canonical
+(
+u64,f1,(u32 r1, u32 C),
+	u64 res = -(u64)r1 - C;
+
+	u64 rv;
+	((u32*)&rv)[0]=res;
+	((u32*)&rv)[1]=(res>>32)&1;
+
+	return rv;
+)
+
+shil_compile
+(
+	shil_cf_arg_u32(rs2);
+	shil_cf_arg_u32(rs1);
+	shil_cf(f1);
+	shil_cf_rv_u64(rd);
+)
+shil_opc_end()
 
 //shop_ror
 shil_opc(ror)
@@ -998,6 +1020,22 @@ shil_compile
 	shil_cf_arg_ptr(rs1);
 	shil_cf_arg_ptr(rd);
 	shil_cf_arg_ptr(rd2);
+	shil_cf(f1);
+)
+shil_opc_end()
+
+//shop_xtrct
+shil_opc(xtrct)
+shil_canonical
+(
+u32,f1,(u32 r1, u32 r2),
+	return (r1 >> 16) | (r2 << 16);
+)
+shil_compile
+(
+	shil_cf_arg_ptr(rs2);
+	shil_cf_arg_ptr(rs1);
+	shil_cf_arg_ptr(rd);
 	shil_cf(f1);
 )
 shil_opc_end()
