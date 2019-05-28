@@ -254,6 +254,23 @@ u32 mmu_full_lookup(u32 va, const TLB_Entry** tlb_entry_ret, u32& rv)
 }
 template u32 mmu_full_lookup<false>(u32 va, const TLB_Entry** tlb_entry_ret, u32& rv);
 
+template<u32 translation_type>
+u32 mmu_full_SQ(u32 va, u32& rv)
+{
+	//Address=Dest&0xFFFFFFE0;
+
+	const TLB_Entry *entry;
+	u32 lookup = mmu_full_lookup(va, &entry, rv);
+
+	if (lookup != MMU_ERROR_NONE)
+		return lookup;
+
+	rv &= ~31;//lower 5 bits are forced to 0
+
+	return MMU_ERROR_NONE;
+}
+template u32 mmu_full_SQ<MMU_TT_DREAD>(u32 va, u32& rv);
+
 template<u32 translation_type, typename T>
 u32 mmu_data_translation(u32 va, u32& rv)
 {

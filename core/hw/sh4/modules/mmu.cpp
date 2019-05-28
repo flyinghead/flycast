@@ -263,7 +263,7 @@ void mmu_raise_exception(u32 mmu_error, u32 address, u32 am)
 
 void DoMMUException(u32 address, u32 mmu_error, u32 access_type)
 {
-	printf_mmu("DoMMUException -> pc = 0x%X : ", next_pc);
+	printf_mmu("DoMMUException -> pc = 0x%X : %d ", next_pc, access_type);
 	CCN_TEA = address;
 	CCN_PTEH.VPN = address >> 10;
 
@@ -431,6 +431,7 @@ u32 mmu_QACR_SQ(u32 va)
 	return QACR + va;
 }
 
+#ifndef FAST_MMU
 template<u32 translation_type>
 u32 mmu_full_SQ(u32 va, u32& rv)
 {
@@ -476,9 +477,8 @@ u32 mmu_full_SQ(u32 va, u32& rv)
 	}
 	return MMU_ERROR_NONE;
 }
-template u32 mmu_full_SQ<MMU_TT_DWRITE>(u32 va, u32& rv);
+template u32 mmu_full_SQ<MMU_TT_DREAD>(u32 va, u32& rv);
 
-#ifndef FAST_MMU
 template<u32 translation_type, typename T>
 u32 mmu_data_translation(u32 va, u32& rv)
 {
