@@ -1214,9 +1214,6 @@ public:
 
 	void InitializeRewrite(RuntimeBlockInfo *block, size_t opid)
 	{
-		// shouldn't be necessary since all regs are flushed before mem access when mmu is enabled
-		//regalloc.DoAlloc(block);
-		regalloc.current_opid = opid;
 	}
 
 	void FinalizeRewrite()

@@ -1029,8 +1029,12 @@ public:
 	void InitializeRewrite(RuntimeBlockInfo *block, size_t opid)
 	{
 		this->block = block;
-		regalloc.DoAlloc(block);
-		regalloc.current_opid = opid;
+		// writem rewrite doesn't use regalloc
+		if (block->oplist[opid].op == shop_readm)
+		{
+			regalloc.DoAlloc(block);
+			regalloc.current_opid = opid;
+		}
 	}
 
 	u32 RelinkBlock(RuntimeBlockInfo *block)
