@@ -1029,9 +1029,7 @@ public:
 	void InitializeRewrite(RuntimeBlockInfo *block, size_t opid)
 	{
 		this->block = block;
-		// with full mmu, all regs are flushed before mem ops
-		if (!mmu_enabled())
-			regalloc.DoAlloc(block);
+		regalloc.DoAlloc(block);
 		regalloc.current_opid = opid;
 	}
 
@@ -1114,9 +1112,9 @@ public:
 		case BET_DynamicRet:
 			// next_pc = *jdyn;
 
+			Str(w29, sh4_context_mem_operand(&next_pc));
 			if (!mmu_enabled())
 			{
-				Str(w29, sh4_context_mem_operand(&next_pc));
 				// TODO Call no_update instead (and check CpuRunning less frequently?)
 				Mov(x2, sizeof(Sh4RCB));
 				Sub(x2, x28, x2);
@@ -1131,7 +1129,6 @@ public:
 			}
 			else
 			{
-				Str(w29, sh4_context_mem_operand(&next_pc));
 				GenBranch(*arm64_no_update);
 			}
 
