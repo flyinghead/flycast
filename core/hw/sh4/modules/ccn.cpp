@@ -88,7 +88,7 @@ void CCN_CCR_write(u32 addr, u32 value)
 	if (temp.ICI) {
 		printf_smc("Sh4: i-cache invalidation %08X\n",curr_pc);
 
-		if (settings.dynarec.SmcCheckLevel != FullCheck) {
+		if (settings.dynarec.SmcCheckLevel == NoCheck) {
 			//TODO: Add skip/check vectors for Shikigami No Shiro II (uses ICI frequently)
 			//which game is 0xAC13DBF8 from ?
 			if (curr_pc != 0xAC13DBF8)
