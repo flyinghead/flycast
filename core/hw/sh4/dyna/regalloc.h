@@ -362,14 +362,17 @@ struct RegAlloc
 		}
 	}
 	
+	bool IsExceptionOp(shil_opcode* op)
+	{
+		return mmu_enabled() && (op->op == shop_readm || op->op == shop_writem || op->op == shop_pref);
+	}
 
 	bool IsFlushOp(RuntimeBlockInfo* block, int opid)
 	{
 		verify(opid>=0 && opid<block->oplist.size());
 		shil_opcode* op=&block->oplist[opid];
 
-		return op->op == shop_sync_fpscr || op->op == shop_sync_sr || op->op == shop_ifb
-				 || (mmu_enabled() && (op->op == shop_readm || op->op == shop_writem || op->op == shop_pref));
+		return op->op == shop_sync_fpscr || op->op == shop_sync_sr || op->op == shop_ifb;
 	}
 
 	bool IsRegWallOp(RuntimeBlockInfo* block, int opid, bool is_fpr)
@@ -490,12 +493,6 @@ struct RegAlloc
 				{
 					fp=true;
 				}
-				else
-				{
-					all = true;
-					fp = true;
-					gpr_b = true;
-				}
 
 				if (all)
 				{
@@ -536,6 +533,19 @@ struct RegAlloc
 			}
 			else
 			{
+				if (IsExceptionOp(op))
+				{
+					// If the current op may throw an exception, flush all writeback spans before the op
+					for (int regid = 0; regid < sh4_reg_count; regid++)
+					{
+						RegSpan *span = spans[regid];
+						if (span && span->writeback)
+						{
+							span->Flush();
+							spans[regid] = 0;
+						}
+					}
+				}
 				set<shil_param> reg_wt;
 				set<shil_param> reg_rd;
 
@@ -601,7 +611,12 @@ struct RegAlloc
 									if (iter->count() == 1 && iter->_reg == op->rs1._reg + 3)
 										spans[iter->_reg + i]->Flush();
 									else
-										spans[iter->_reg + i]->Kill();
+									{
+										if (IsExceptionOp(op))
+											spans[iter->_reg + i]->Flush();
+										else
+											spans[iter->_reg + i]->Kill();
+									}
 								}
 								spans[iter->_reg + i] = 0;
 							}
@@ -610,7 +625,12 @@ struct RegAlloc
 							if (iter->is_r32())
 							{
 								if (spans[iter->_reg] != 0)
-									spans[iter->_reg]->Kill();
+								{
+									if (IsExceptionOp(op))
+										spans[iter->_reg]->Flush();
+									else
+										spans[iter->_reg]->Kill();
+								}
 
 								spans[iter->_reg] = new RegSpan(*iter, opid, AM_WRITE);
 								all_spans.push_back(spans[iter->_reg]);
@@ -722,68 +742,25 @@ struct RegAlloc
 		//Allocate the registers to the spans !
 		for (size_t opid=0;opid<block->oplist.size();opid++)
 		{
-			bool alias_mov=false;
-
-			if (block->oplist[opid].op==shop_mov32 && 
-				( 
-				(block->oplist[opid].rd.is_r32i() && block->oplist[opid].rs1.is_r32i() ) || 
-				(block->oplist[opid].rd.is_r32f() && block->oplist[opid].rs1.is_r32f() )
-				))
-			{
-				//FindSpan(block->oplist[opid].rd._reg);
-				RegSpan* x=FindSpan(block->oplist[opid].rs1._reg,opid);
-				if (0 && x->nacc_w(opid)==-1 && (x->nreg!=-1 || x->nregf!=-1) && !x->aliased)
-				{
-					RegSpan* d=FindSpan(block->oplist[opid].rd._reg,opid);
-					int nwa=d->nacc_w(opid);
-
-					if (nwa==-1 || nwa>=x->end)
-					{
-
-						verify(d->fpr==x->fpr);
-						d->nreg=x->nreg;
-						d->nregf=x->nregf;
-						//x->aliased=true;
-
-						verify(d->begining(opid) && !d->preload);
-						//verify(d->end>=x->end);
-
-						if (d->end>=x->end)
-							x->aliased=true;
-						else
-							d->aliased=true;
-
-						//printf("[%08X] rALIA %d from %d\n",spn,spn->regstart,spn->nreg);
-						alias_mov=true;
-					}
-				}
-			}
-
-			if (!alias_mov)
-			{
-				for (RegSpan *span : all_spans)
-				{
-					if (span->begining(opid))
-					{
-						if (span->fpr)
-						{
-							verify(regsf.size()>0);
-							span->nregf=regsf.back();
-							regsf.pop_back();
-						}
-						else
-						{
-							verify(regs.size()>0);
-							span->nreg=regs.back();
-							regs.pop_back();
-
-							//printf("rALOC %d from %d\n",spn->regstart,spn->nreg);
-						}
-					}
-				}
-			}
 			for (RegSpan *span : all_spans)
 			{
+				if (span->begining(opid))
+				{
+					if (span->fpr)
+					{
+						verify(regsf.size()>0);
+						span->nregf=regsf.back();
+						regsf.pop_back();
+					}
+					else
+					{
+						verify(regs.size()>0);
+						span->nreg=regs.back();
+						regs.pop_back();
+
+						//printf("rALOC %d from %d\n",spn->regstart,spn->nreg);
+					}
+				}
 				if (span->ending(opid) && !span->aliased)
 				{
 					if (span->fpr)
