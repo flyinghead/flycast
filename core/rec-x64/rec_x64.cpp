@@ -1124,14 +1124,14 @@ public:
 			if (!mmu_enabled())
 				GenCall(ReadMem8);
 			else
-				GenCall(ReadMemNoEx<u8>);
+				GenCall(ReadMemNoEx<u8>, true);
 			movsx(ecx, al);
 			break;
 		case 2:
 			if (!mmu_enabled())
 				GenCall(ReadMem16);
 			else
-				GenCall(ReadMemNoEx<u16>);
+				GenCall(ReadMemNoEx<u16>, true);
 			movsx(ecx, ax);
 			break;
 
@@ -1139,14 +1139,14 @@ public:
 			if (!mmu_enabled())
 				GenCall(ReadMem32);
 			else
-				GenCall(ReadMemNoEx<u32>);
+				GenCall(ReadMemNoEx<u32>, true);
 			mov(ecx, eax);
 			break;
 		case 8:
 			if (!mmu_enabled())
 				GenCall(ReadMem64);
 			else
-				GenCall(ReadMemNoEx<u64>);
+				GenCall(ReadMemNoEx<u64>, true);
 			mov(rcx, rax);
 			break;
 		default:
@@ -1177,25 +1177,25 @@ public:
 			if (!mmu_enabled())
 				GenCall(WriteMem8);
 			else
-				GenCall(WriteMemNoEx<u8>);
+				GenCall(WriteMemNoEx<u8>, true);
 			break;
 		case 2:
 			if (!mmu_enabled())
 				GenCall(WriteMem16);
 			else
-				GenCall(WriteMemNoEx<u16>);
+				GenCall(WriteMemNoEx<u16>, true);
 			break;
 		case 4:
 			if (!mmu_enabled())
 				GenCall(WriteMem32);
 			else
-				GenCall(WriteMemNoEx<u32>);
+				GenCall(WriteMemNoEx<u32>, true);
 			break;
 		case 8:
 			if (!mmu_enabled())
 				GenCall(WriteMem64);
 			else
-				GenCall(WriteMemNoEx<u64>);
+				GenCall(WriteMemNoEx<u64>, true);
 			break;
 		default:
 			die("1..8 bytes");
@@ -1611,13 +1611,13 @@ private:
 	}
 
 	template<class Ret, class... Params>
-	void GenCall(Ret(*function)(Params...))
+	void GenCall(Ret(*function)(Params...), bool skip_floats = false)
 	{
 #ifndef _WIN32
-		bool xmm8_mapped = current_opid != -1 && regalloc.IsMapped(xmm8, current_opid);
-		bool xmm9_mapped = current_opid != -1 && regalloc.IsMapped(xmm9, current_opid);
-		bool xmm10_mapped = current_opid != -1 && regalloc.IsMapped(xmm10, current_opid);
-		bool xmm11_mapped = current_opid != -1 && regalloc.IsMapped(xmm11, current_opid);
+		bool xmm8_mapped = !skip_floats && current_opid != -1 && regalloc.IsMapped(xmm8, current_opid);
+		bool xmm9_mapped = !skip_floats && current_opid != -1 && regalloc.IsMapped(xmm9, current_opid);
+		bool xmm10_mapped = !skip_floats && current_opid != -1 && regalloc.IsMapped(xmm10, current_opid);
+		bool xmm11_mapped = !skip_floats && current_opid != -1 && regalloc.IsMapped(xmm11, current_opid);
 
 		// Need to save xmm registers as they are not preserved in linux/mach
 		int offset = 0;
