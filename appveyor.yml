@@ -52,4 +52,5 @@ deploy:
   bucket: flycast-builds
   folder: 'builds/heads/$(APPVEYOR_REPO_BRANCH)-$(APPVEYOR_REPO_COMMIT)'
   artifact: reicast-win_$(PLATFORM)-$(CONFIGURATION)-$(APPVEYOR_REPO_COMMIT)
+  region: us-east-2
   set_public: true
