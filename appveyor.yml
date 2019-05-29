@@ -45,3 +45,12 @@ after_build:
 artifacts:
   - path: artifacts
     name: reicast-win_$(PLATFORM)-$(CONFIGURATION)-$(APPVEYOR_REPO_COMMIT)
+deploy:
+- provider: S3
+  access_key_id: AKIAJOZQS4H2PHQWYFCA
+  secret_access_key:
+    secure: $S3_SECRET_KEY
+  bucket: flycast-builds
+  folder: 'builds/heads/$(APPVEYOR_REPO_BRANCH)-$(APPVEYOR_REPO_COMMIT)'
+  artifact: reicast-win_$(PLATFORM)-$(CONFIGURATION)-$(APPVEYOR_REPO_COMMIT)
+set_public: true
