@@ -19,30 +19,11 @@ workflows:
     - git-clone@4.0.14: {}
     - cache-pull@2.0.1: {}
     - script@1.1.5:
-        title: Do anything with Script step
-    - certificate-and-profile-installer@1.10.1: {}
-    - recreate-user-schemes@1.0.2:
         inputs:
-        - project_path: "$BITRISE_PROJECT_PATH"
-    - xcode-archive-mac@1.6.2:
-        inputs:
-        - project_path: "$BITRISE_PROJECT_PATH"
-        - scheme: "$BITRISE_SCHEME"
-        - export_method: "$BITRISE_EXPORT_METHOD"
-    - deploy-to-bitrise-io@1.3.19: {}
-    - cache-push@2.1.1: {}
-  deploy:
-    envs:
-    - opts:
-        is_expand: false
-      BITRISE_SCHEME: reicast-osx
-    steps:
-    - activate-ssh-key@4.0.3:
-        run_if: '{{getenv "SSH_RSA_PRIVATE_KEY" | ne ""}}'
-    - git-clone@4.0.14: {}
-    - cache-pull@2.0.1: {}
-    - script@1.1.5:
-        title: Do anything with Script step
+        - content: |
+            #!/bin/bash
+			envman add --key GIT_HASH=`git log --pretty=format:'%h' -n 1`
+            envman add --key GIT_BUILD --value `git describe --all --always`-$GIT_HASH
     - certificate-and-profile-installer@1.10.1: {}
     - recreate-user-schemes@1.0.2:
         inputs:
@@ -55,7 +36,51 @@ workflows:
     - deploy-to-bitrise-io@1.3.19: {}
     - cache-push@2.1.1: {}
     after_run:
-    - deploy-naomi
+      steps:
+      - amazon-s3-uploader@1.0.1:
+          inputs:
+          - aws_access_key: AKIAJOZQS4H2PHQWYFCA
+          - aws_secret_key: "$S3_SECRET_KEY"
+          - bucket_name: flycast-builds
+          - path_in_bucket: osx/$GIT_BUILD
+          - file_path: "$BITRISE_EXPORTED_FILE_PATH"
+  deploy:
+    envs:
+    - opts:
+        is_expand: false
+      BITRISE_SCHEME: reicast-osx
+    steps:
+    - activate-ssh-key@4.0.3:	
+        run_if: '{{getenv "SSH_RSA_PRIVATE_KEY" | ne ""}}'
+    - git-clone@4.0.14: {}
+    - cache-pull@2.0.1: {}
+    - script@1.1.5:
+        inputs:
+        - content: |
+            #!/bin/bash
+			envman add --key GIT_HASH=`git log --pretty=format:'%h' -n 1`
+            envman add --key GIT_BUILD --value `git describe --all --always`-$GIT_HASH
+    - certificate-and-profile-installer@1.10.1: {}
+    - recreate-user-schemes@1.0.2:
+        inputs:
+        - project_path: "$BITRISE_PROJECT_PATH"
+    - xcode-archive-mac@1.6.2:
+        inputs:
+        - project_path: "$BITRISE_PROJECT_PATH"
+        - scheme: "$BITRISE_SCHEME"
+        - export_method: "$BITRISE_EXPORT_METHOD"
+    - deploy-to-bitrise-io@1.3.19: {}
+    - cache-push@2.1.1: {}
+    after_run:
+      steps:
+      - amazon-s3-uploader@1.0.1:
+          inputs:
+          - aws_access_key: AKIAJOZQS4H2PHQWYFCA
+          - aws_secret_key: "$S3_SECRET_KEY"
+          - bucket_name: flycast-builds
+          - path_in_bucket: osx/$GIT_BUILD
+          - file_path: "$BITRISE_EXPORTED_FILE_PATH"
+      - deploy-naomi
 app:
   envs:
   - opts:
