@@ -42,3 +42,21 @@ script:
 - export NUMBER_OF_PROCESSORS=2
 - sudo chmod 755 travis-build.sh
 - "./travis-build.sh"
+before_deploy:
+- cd ../../
+- mkdir -p artifacts/$GIT_BUILD/
+- cp shell/android-studio/reicast/build/outputs/apk/dreamcast/debug/reicast-dreamcast-debug.apk artifacts/$GIT_BUILD/reicast-debug-$GIT_HASH.apk
+- cp shell/android-studio/reicast/build/outputs/apk/naomi/debug/reicast-naomi-debug.apk artifacts/$GIT_BUILD/reicast-naomi-debug-$GIT_HASH.apk
+deploy:
+  provider: s3
+  access_key_id: AKIAJOZQS4H2PHQWYFCA
+  secret_access_key:
+    secure: $S3_SECRET_KEY
+  bucket: flycast-builds
+  local-dir: artifacts
+  upload-dir: android
+  skip_cleanup: true
+  on:
+    all_branches: true
+repo: flyinghead/reicast-emulator
+
