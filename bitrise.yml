@@ -36,14 +36,13 @@ workflows:
     - deploy-to-bitrise-io@1.3.19: {}
     - cache-push@2.1.1: {}
     after_run:
-      steps:
-      - amazon-s3-uploader@1.0.1:
-          inputs:
-          - aws_access_key: AKIAJOZQS4H2PHQWYFCA
-          - aws_secret_key: "$S3_SECRET_KEY"
-          - bucket_name: flycast-builds
-          - path_in_bucket: osx/$GIT_BUILD
-          - file_path: "$BITRISE_EXPORTED_FILE_PATH"
+    - amazon-s3-uploader@1.0.1:
+        inputs:
+        - aws_access_key: AKIAJOZQS4H2PHQWYFCA
+        - aws_secret_key: "$S3_SECRET_KEY"
+        - bucket_name: flycast-builds
+        - path_in_bucket: osx/$GIT_BUILD
+        - file_path: "$BITRISE_EXPORTED_FILE_PATH"
   deploy:
     envs:
     - opts:
@@ -72,15 +71,14 @@ workflows:
     - deploy-to-bitrise-io@1.3.19: {}
     - cache-push@2.1.1: {}
     after_run:
-      steps:
-      - amazon-s3-uploader@1.0.1:
-          inputs:
-          - aws_access_key: AKIAJOZQS4H2PHQWYFCA
-          - aws_secret_key: "$S3_SECRET_KEY"
-          - bucket_name: flycast-builds
-          - path_in_bucket: osx/$GIT_BUILD
-          - file_path: "$BITRISE_EXPORTED_FILE_PATH"
-      - deploy-naomi
+    - amazon-s3-uploader@1.0.1:
+        inputs:
+        - aws_access_key: AKIAJOZQS4H2PHQWYFCA
+        - aws_secret_key: "$S3_SECRET_KEY"
+        - bucket_name: flycast-builds
+        - path_in_bucket: osx/$GIT_BUILD
+        - file_path: "$BITRISE_EXPORTED_FILE_PATH"
+    - deploy-naomi
 app:
   envs:
   - opts:
