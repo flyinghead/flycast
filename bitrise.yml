@@ -18,13 +18,6 @@ workflows:
         run_if: '{{getenv "SSH_RSA_PRIVATE_KEY" | ne ""}}'
     - git-clone@4.0.14: {}
     - cache-pull@2.0.1: {}
-    - script@1.1.5:
-        inputs:
-        - content: |
-            #!/bin/bash
-            export GIT_HASH=`git log --pretty=format:'%h' -n 1`
-            envman add --key GIT_HASH --value $GIT_HASH
-            envman add --key GIT_BUILD --value `git describe --all --always | sed 's/remotes\/origin/heads/'`-$GIT_HASH
     - certificate-and-profile-installer@1.10.1: {}
     - recreate-user-schemes@1.0.2:
         inputs:
