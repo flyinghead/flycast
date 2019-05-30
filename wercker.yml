@@ -20,6 +20,17 @@ build:
               gzip reicast
               popd
               mv shell/linux/reicast.gz s3
+        - script:
+            name: reicast x64 naomi build
+            code: make -C shell/linux platform=x64 NAOMI=1
+        - script:
+            name: package naomi app
+            code: |
+              pushd shell/linux
+              mv -f nosym-reicast.elf reicast_naomi
+              gzip reicast_naomi
+              popd
+              mv shell/linux/reicast_naomi.gz s3
         - s3sync:
             source_dir: s3
             delete-removed: false
