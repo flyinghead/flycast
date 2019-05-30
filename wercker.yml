@@ -11,3 +11,18 @@ build:
         - script:
             name: reicast x64 build
             code: make -C shell/linux platform=x64
+        - script:
+            name: package app
+            code: |
+              mkdir s3
+              pushd shell/linux
+              mv -f nosym-reicast.elf reicast
+              gzip reicast
+              popd
+              mv shell/linux/reicast.gz s3
+        - s3sync:
+            source_dir: s3
+            delete-removed: false
+            bucket-url: s3://flycast-builds/linux/heads/$WERCKER_GIT_BRANCH-$WERCKER_GIT_COMMIT/
+            key-id: AKIAJOZQS4H2PHQWYFCA
+            key-secret: $S3_SECRET_KEY
