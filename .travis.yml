@@ -55,6 +55,7 @@ deploy:
   bucket: flycast-builds
   local-dir: artifacts
   upload-dir: android
+  acl: public_read
   skip_cleanup: true
   on:
     all_branches: true
