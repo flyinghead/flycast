@@ -3,16 +3,14 @@ image: Visual Studio 2017
 
 configuration:
 - fast
-- RelWithDebInfo
+- naomi
 
 platform:
 - x64
 
 before_build:
   - cmd: >-
-      if "%CONFIGURATION%"=="RelWithDebInfo" (set BUILD_PATH=build)
-      
-      if "%CONFIGURATION%"=="fast" (set BUILD_PATH=shell\linux)
+      set BUILD_PATH=shell\linux
       
       set EXTRA_PATH=C:\mingw-w64\x86_64-7.2.0-posix-seh-rt_v5-rev1\mingw64\bin\
       
@@ -20,27 +18,25 @@ before_build:
       
       if not exist %BUILD_PATH% (mkdir %BUILD_PATH%)
      
-      if "%CONFIGURATION%"=="RelWithDebInfo" (cmake -B %BUILD_PATH% -G "Visual Studio 15 2017 Win64" -DCMAKE_CONFIGURATION_TYPES=RelWithDebInfo)
-      
       cd %BUILD_PATH%
       
 build_script:
   - cmd: >-
-      if "%CONFIGURATION%"=="RelWithDebInfo" (msbuild reicast.sln /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll")
-      
       if "%CONFIGURATION%"=="fast" (mingw32-make platform=win32)
+
+      if "%CONFIGURATION%"=="naomi" (mingw32-make platform=win32 NAOMI=1)
 
 after_build:
   - cmd: >-      
-      if "%CONFIGURATION%"=="RelWithDebInfo" (cd .. && set EXE_PATH=build\RelWithDebInfo\reicast.exe)
-      
       if "%CONFIGURATION%"=="fast" (cd ..\.. && set EXE_PATH=shell\linux\nosym-reicast.exe)
+      
+      if "%CONFIGURATION%"=="naomi" (cd ..\.. && set EXE_PATH=shell\linux\nosym-reicast.exe)
       
       mkdir artifacts
       
       move %EXE_PATH% artifacts\reicast-win_%PLATFORM%-%CONFIGURATION%-%APPVEYOR_REPO_COMMIT%.exe
       
-      if "%CONFIGURATION%"=="fast" (copy %EXTRA_PATH%\libgcc_s_seh-1.dll artifacts && copy %EXTRA_PATH%\libwinpthread-1.dll artifacts && copy %EXTRA_PATH%\libgomp-1.dll artifacts)
+      copy %EXTRA_PATH%\libgcc_s_seh-1.dll artifacts && copy %EXTRA_PATH%\libwinpthread-1.dll artifacts && copy %EXTRA_PATH%\libgomp-1.dll artifacts
 
 artifacts:
   - path: artifacts
@@ -51,7 +47,7 @@ deploy:
   secret_access_key:
     secure: Y/QobuGrBsa137sbi9a+UnvSLqpWITTCp5yFTgDJ4i1Gduyi9V7i/g3zLZ4s2J7d
   bucket: flycast-builds
-  folder: 'builds/heads/$(APPVEYOR_REPO_BRANCH)-$(APPVEYOR_REPO_COMMIT)'
+  folder: 'win/heads/$(APPVEYOR_REPO_BRANCH)-$(APPVEYOR_REPO_COMMIT)'
   artifact: reicast-win_$(PLATFORM)-$(CONFIGURATION)-$(APPVEYOR_REPO_COMMIT)
   region: us-east-2
   set_public: true
