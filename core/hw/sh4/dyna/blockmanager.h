@@ -1,7 +1,6 @@
 /*
 	In case you wonder, the extern "C" stuff are for the assembly code on beagleboard/pandora
 */
-#include <map>
 #include "types.h"
 #include "decoder.h"
 #pragma once

@@ -41,6 +41,7 @@ struct shil_param
 	{
 		type=FMT_NULL;
 		_imm=0xFFFFFFFF;
+		memset(version, 0, sizeof(version));
 	}
 	shil_param(u32 type,u32 imm)
 	{
@@ -48,6 +49,7 @@ struct shil_param
 		if (type >= FMT_REG_BASE)
 			new (this) shil_param((Sh4RegType)imm);
 		_imm=imm;
+		memset(version, 0, sizeof(version));
 	}
 
 	shil_param(Sh4RegType reg)
@@ -88,7 +90,7 @@ struct shil_param
 			type=FMT_I32;
 			_reg=reg;
 		}
-		
+		memset(version, 0, sizeof(version));
 	}
 	union
 	{
@@ -96,6 +98,7 @@ struct shil_param
 		Sh4RegType _reg;
 	};
 	u32 type;
+	u16 version[16];
 
 	bool is_null() const { return type==FMT_NULL; }
 	bool is_imm() const { return type==FMT_IMM; }
@@ -118,7 +121,7 @@ struct shil_param
 	s32  reg_nofs()  const { verify(is_reg()); return (s32)((u8*)GetRegPtr(_reg) - (u8*)GetRegPtr(reg_xf_0)-sizeof(Sh4cntx)); }
 	u32  reg_aofs()  const { return -reg_nofs(); }
 
-	u32 imm_value() { verify(is_imm()); return _imm; }
+	u32 imm_value() const { verify(is_imm()); return _imm; }
 
 	bool is_vector() const { return type>=FMT_VECTOR_BASE; }
 
@@ -153,9 +156,9 @@ struct shil_opcode
 	u16 guest_offs;
 	bool delay_slot;
 
-	string dissasm();
+	string dissasm() const;
 };
 
 const char* shil_opcode_name(int op);
 
-string name_reg(u32 reg);
+string name_reg(Sh4RegType reg);

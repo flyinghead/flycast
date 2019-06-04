@@ -1152,7 +1152,7 @@ _end:
 
 	verify(blk->oplist.size() <= BLOCK_MAX_SH_OPS_HARD);
 	
-#if HOST_OS == OS_WINDOWS
+#if 0
 	switch(rbi->addr)
 	{
 	case 0x8C09ED16:
