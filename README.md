@@ -1,6 +1,6 @@
-reicast
+flycast
 ===========
-**reicast** is a multi-platform Sega Dreamcast emulator.
+**flycast** is a multi-platform Sega Dreamcast emulator derived from [**reicast**](https://reicast.com/)
 
 Binaries
 ========
