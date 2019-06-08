@@ -233,7 +233,7 @@ struct DCFlashChip : MemChip
 		state = FS_Normal;
 	}
 	
-	virtual u8 Read8(u32 addr)
+	virtual u8 Read8(u32 addr) override
 	{
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST
 		switch (addr)

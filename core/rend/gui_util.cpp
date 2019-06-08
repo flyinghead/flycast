@@ -196,7 +196,7 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
 		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8 * scaling, 20 * scaling));		// from 8, 4
 
 
-		for (auto name : select_subfolders)
+		for (auto& name : select_subfolders)
 		{
 			std::string child_path;
 			if (name == "..")

@@ -1,6 +1,7 @@
 #pragma once
 #include "types.h"
 #include "hw/sh4/sh4_mmr.h"
+#include "hw/mem/_vmem.h"
 
 //Translation Types
 //Opcode read
@@ -95,6 +96,37 @@ void DoMMUException(u32 addr, u32 error_code, u32 access_type);
 	bool mmu_TranslateSQW(u32 addr, u32* mapped);
 
 	u16 DYNACALL mmu_IReadMem16NoEx(u32 adr, u32 *exception_occurred);
-	template<typename T> T DYNACALL mmu_ReadMemNoEx(u32 adr, u32 *exception_occurred);
-	template<typename T> u32 DYNACALL mmu_WriteMemNoEx(u32 adr, T data);
+
+	template<typename T>
+	T DYNACALL mmu_ReadMemNoEx(u32 adr, u32 *exception_occurred)
+	{
+		u32 addr;
+		u32 rv = mmu_data_translation<MMU_TT_DREAD, T>(adr, addr);
+		if (rv != MMU_ERROR_NONE)
+		{
+			DoMMUException(adr, rv, MMU_TT_DREAD);
+			*exception_occurred = 1;
+			return 0;
+		}
+		else
+		{
+			*exception_occurred = 0;
+			return _vmem_readt<T, T>(addr);
+		}
+	}
+
+	template<typename T>
+	u32 DYNACALL mmu_WriteMemNoEx(u32 adr, T data)
+	{
+		u32 addr;
+		u32 rv = mmu_data_translation<MMU_TT_DWRITE, T>(adr, addr);
+		if (rv != MMU_ERROR_NONE)
+		{
+			DoMMUException(adr, rv, MMU_TT_DWRITE);
+			return 1;
+		}
+		_vmem_writet<T>(addr, data);
+		return 0;
+	}
+
 #endif

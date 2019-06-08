@@ -811,7 +811,7 @@ void SaveSettings()
 	}
 	// FIXME This should never be a game-specific setting
 	std::string paths;
-	for (auto path : settings.dreamcast.ContentPath)
+	for (auto& path : settings.dreamcast.ContentPath)
 	{
 		if (!paths.empty())
 			paths += ";";

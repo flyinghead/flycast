@@ -754,7 +754,7 @@ static void gui_display_settings()
 
             static int current_item;
             std::vector<const char *> paths;
-            for (auto path : settings.dreamcast.ContentPath)
+            for (auto& path : settings.dreamcast.ContentPath)
             	paths.push_back(path.c_str());
 
             ImVec2 size;
@@ -1410,7 +1410,7 @@ static void fetch_game_list()
 	if (game_list_done)
 		return;
 	game_list.clear();
-	for (auto path : settings.dreamcast.ContentPath)
+	for (auto& path : settings.dreamcast.ContentPath)
 		add_game_directory(path, game_list);
 	std::stable_sort(game_list.begin(), game_list.end());
 	game_list_done = true;
@@ -1495,7 +1495,7 @@ static void gui_display_content()
 		ImGui::PopID();
 #endif
 
-        for (auto game : game_list)
+        for (auto& game : game_list)
         	if (filter.PassFilter(game.name.c_str()))
         	{
     			ImGui::PushID(game.path.c_str());

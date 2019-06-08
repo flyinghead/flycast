@@ -477,7 +477,7 @@ void bm_ResetTempCache(bool full)
 {
 	if (!full)
 	{
-		for (auto block : all_temp_blocks)
+		for (auto& block : all_temp_blocks)
 		{
 			FPCA(block->addr) = ngen_FailedToFindBlock;
 			auto it = blkmap.find(block);

@@ -4,10 +4,6 @@
 #include "hw/sh4/sh4_core.h"
 #include "types.h"
 
-
-#include "hw/mem/_vmem.h"
-
-
 TLB_Entry UTLB[64];
 TLB_Entry ITLB[4];
 
@@ -760,28 +756,6 @@ void DYNACALL mmu_WriteMem(u32 adr, T data)
 	_vmem_writet<T>(addr, data);
 }
 
-template<typename T>
-T DYNACALL mmu_ReadMemNoEx(u32 adr, u32 *exception_occurred)
-{
-	u32 addr;
-	u32 rv = mmu_data_translation<MMU_TT_DREAD, T>(adr, addr);
-	if (rv != MMU_ERROR_NONE)
-	{
-		DoMMUException(adr, rv, MMU_TT_DREAD);
-		*exception_occurred = 1;
-		return 0;
-	}
-	else
-	{
-		*exception_occurred = 0;
-		return _vmem_readt<T, T>(addr);
-	}
-}
-template u8 mmu_ReadMemNoEx<u8>(u32 adr, u32 *exception_occurred);
-template u16 mmu_ReadMemNoEx<u16>(u32 adr, u32 *exception_occurred);
-template u32 mmu_ReadMemNoEx<u32>(u32 adr, u32 *exception_occurred);
-template u64 mmu_ReadMemNoEx<u64>(u32 adr, u32 *exception_occurred);
-
 u16 DYNACALL mmu_IReadMem16NoEx(u32 vaddr, u32 *exception_occurred)
 {
 	u32 addr;
@@ -799,24 +773,6 @@ u16 DYNACALL mmu_IReadMem16NoEx(u32 vaddr, u32 *exception_occurred)
 	}
 }
 
-template<typename T>
-u32 DYNACALL mmu_WriteMemNoEx(u32 adr, T data)
-{
-	u32 addr;
-	u32 rv = mmu_data_translation<MMU_TT_DWRITE, T>(adr, addr);
-	if (rv != MMU_ERROR_NONE)
-	{
-		DoMMUException(adr, rv, MMU_TT_DWRITE);
-		return 1;
-	}
-	_vmem_writet<T>(addr, data);
-	return 0;
-}
-template u32 mmu_WriteMemNoEx<u8>(u32 adr, u8 data);
-template u32 mmu_WriteMemNoEx<u16>(u32 adr, u16 data);
-template u32 mmu_WriteMemNoEx<u32>(u32 adr, u32 data);
-template u32 mmu_WriteMemNoEx<u64>(u32 adr, u64 data);
-
 bool mmu_TranslateSQW(u32 adr, u32* out)
 {
 	if (!settings.dreamcast.FullMMU)
@@ -830,7 +786,7 @@ bool mmu_TranslateSQW(u32 adr, u32* out)
 	{
 		u32 addr;
 		u32 tv = mmu_full_SQ<MMU_TT_DREAD>(adr, addr);
-		if (tv != 0)
+		if (tv != MMU_ERROR_NONE)
 		{
 			mmu_raise_exception(tv, adr, MMU_TT_DREAD);
 			return false;

@@ -135,7 +135,7 @@ void InputMapping::load(FILE* fp)
 
 u32 InputMapping::get_button_code(DreamcastKey key)
 {
-	for (auto it : buttons)
+	for (auto& it : buttons)
 	{
 		if (it.second == key)
 			return it.first;
@@ -145,7 +145,7 @@ u32 InputMapping::get_button_code(DreamcastKey key)
 
 u32 InputMapping::get_axis_code(DreamcastKey key)
 {
-	for (auto it : axes)
+	for (auto& it : axes)
 	{
 		if (it.second == key)
 			return it.first;
@@ -192,7 +192,7 @@ bool InputMapping::save(const char *name)
 
 	for (int i = 0; i < ARRAY_SIZE(button_list); i++)
 	{
-		for (auto it : buttons)
+		for (auto& it : buttons)
 		{
 			if (it.second == button_list[i].id)
 				mf.set_int(button_list[i].section, button_list[i].option, (int)it.first);
@@ -201,7 +201,7 @@ bool InputMapping::save(const char *name)
 
 	for (int i = 0; i < ARRAY_SIZE(axis_list); i++)
 	{
-		for (auto it : axes)
+		for (auto& it : axes)
 		{
 			if (it.second == axis_list[i].id)
 			{

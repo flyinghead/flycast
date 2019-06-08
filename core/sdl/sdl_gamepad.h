@@ -131,7 +131,7 @@ public:
 	}
 	static void UpdateRumble()
 	{
-		for (auto pair : sdl_gamepads)
+		for (auto& pair : sdl_gamepads)
 			pair.second->update_rumble();
 	}
 
