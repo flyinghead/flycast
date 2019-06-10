@@ -247,11 +247,9 @@ public:
 
 	virtual void Preload(u32 reg, nreg_t nreg) = 0;
 	virtual void Writeback(u32 reg, nreg_t nreg) = 0;
-	virtual void CheckReg(u32 reg, nreg_t nreg) = 0;
 
 	virtual void Preload_FPU(u32 reg, nregf_t nreg) = 0;
 	virtual void Writeback_FPU(u32 reg, nregf_t nreg) = 0;
-	virtual void CheckReg_FPU(u32 reg, nregf_t nreg) = 0;
 
 private:
 	struct reg_alloc {

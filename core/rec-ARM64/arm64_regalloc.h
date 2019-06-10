@@ -20,8 +20,11 @@
 #ifndef CORE_REC_ARM64_ARM64_REGALLOC_H_
 #define CORE_REC_ARM64_ARM64_REGALLOC_H_
 
-
+#ifdef OLD_REGALLOC
 #include "hw/sh4/dyna/regalloc.h"
+#else
+#include "hw/sh4/dyna/ssa_regalloc.h"
+#endif
 #include "deps/vixl/aarch64/macro-assembler-aarch64.h"
 using namespace vixl::aarch64;
 
@@ -67,7 +70,15 @@ struct Arm64RegAlloc : RegAlloc<eReg, eFReg
 
 	const VRegister& MapVRegister(const shil_param& param, u32 index = 0)
 	{
+#ifdef OLD_REGALLOC
 		eFReg ereg = mapfv(param, index);
+#else
+#ifdef EXPLODE_SPANS
+#error EXPLODE_SPANS not supported with ssa regalloc
+#endif
+		verify(index == 0);
+		eFReg ereg = mapf(param);
+#endif
 		if (ereg == (eFReg)-1)
 			die("VRegister not allocated");
 		return VRegister::GetSRegFromCode(ereg);

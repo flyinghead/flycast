@@ -437,7 +437,7 @@ public:
 				if (regalloc.IsAllocf(op.rd))
 				{
 					if (op.rs1.is_imm())
-						Fmov(regalloc.MapVRegister(op.rd), (float&)op.rs1._imm);
+						Fmov(regalloc.MapVRegister(op.rd), reinterpret_cast<f32&>(op.rs1._imm));
 					else if (regalloc.IsAllocf(op.rs1))
 						Fmov(regalloc.MapVRegister(op.rd), regalloc.MapVRegister(op.rs1));
 					else
@@ -483,9 +483,13 @@ public:
 				break;
 
 			case shop_swaplb:
-				Mov(w9, Operand(regalloc.MapRegister(op.rs1), LSR, 16));
-				Rev16(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rs1));
-				Bfi(regalloc.MapRegister(op.rd), w9, 16, 16);
+				{
+					const Register rs1 = regalloc.MapRegister(op.rs1);
+					const Register rd = regalloc.MapRegister(op.rd);
+					Mov(w9, Operand(rs1, LSR, 16));
+					Rev16(rd, rs1);
+					Bfi(rd, w9, 16, 16);
+				}
 				break;
 
 			case shop_neg:
@@ -536,60 +540,182 @@ public:
 				break;
 
 			case shop_adc:
-				Cmp(regalloc.MapRegister(op.rs3), 1);	// C = rs3
-				Adcs(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rs1), regalloc.MapRegister(op.rs2)); // (C,rd)=rs1+rs2+rs3(C)
-				Cset(regalloc.MapRegister(op.rd2), cs);	// rd2 = C
+				{
+					Register reg1;
+					Operand op2;
+					Register reg3;
+					if (op.rs1.is_imm())
+					{
+						Mov(w0, op.rs1.imm_value());
+						reg1 = w0;
+					}
+					else
+					{
+						reg1 = regalloc.MapRegister(op.rs1);
+					}
+					if (op.rs2.is_imm())
+						op2 = Operand(op.rs2.imm_value());
+					else
+						op2 = regalloc.MapRegister(op.rs2);
+					if (op.rs3.is_imm())
+					{
+						Mov(w1, op.rs3.imm_value());
+						reg3 = w1;
+					}
+					else
+					{
+						reg3 = regalloc.MapRegister(op.rs3);
+					}
+					Cmp(reg3, 1);	// C = rs3
+					Adcs(regalloc.MapRegister(op.rd), reg1, op2); // (C,rd)=rs1+rs2+rs3(C)
+					Cset(regalloc.MapRegister(op.rd2), cs);	// rd2 = C
+				}
 				break;
 			case shop_sbc:
-				Cmp(wzr, regalloc.MapRegister(op.rs3));	// C = ~rs3
-				Sbcs(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rs1), regalloc.MapRegister(op.rs2)); // (C,rd) = rs1 - rs2 - ~rs3(C)
-				Cset(regalloc.MapRegister(op.rd2), cc);	// rd2 = ~C
+				{
+					Register reg1;
+					Operand op2;
+					Operand op3;
+					if (op.rs1.is_imm())
+					{
+						Mov(w0, op.rs1.imm_value());
+						reg1 = w0;
+					}
+					else
+					{
+						reg1 = regalloc.MapRegister(op.rs1);
+					}
+					if (op.rs2.is_imm())
+						op2 = Operand(op.rs2.imm_value());
+					else
+						op2 = regalloc.MapRegister(op.rs2);
+					if (op.rs3.is_imm())
+						op3 = Operand(op.rs3.imm_value());
+					else
+						op3 = regalloc.MapRegister(op.rs3);
+					Cmp(wzr, op3);	// C = ~rs3
+					Sbcs(regalloc.MapRegister(op.rd), reg1, op2); // (C,rd) = rs1 - rs2 - ~rs3(C)
+					Cset(regalloc.MapRegister(op.rd2), cc);	// rd2 = ~C
+				}
 				break;
 			case shop_negc:
-				Cmp(wzr, regalloc.MapRegister(op.rs2));	// C = ~rs2
-				Sbcs(regalloc.MapRegister(op.rd), wzr, regalloc.MapRegister(op.rs1)); // (C,rd) = 0 - rs1 - ~rs2(C)
-				Cset(regalloc.MapRegister(op.rd2), cc);	// rd2 = ~C
+				{
+					Operand op1;
+					Operand op2;
+					if (op.rs1.is_imm())
+						op1 = Operand(op.rs1.imm_value());
+					else
+						op1 = regalloc.MapRegister(op.rs1);
+					if (op.rs2.is_imm())
+						op2 = Operand(op.rs2.imm_value());
+					else
+						op2 = regalloc.MapRegister(op.rs2);
+					Cmp(wzr, op2);	// C = ~rs2
+					Sbcs(regalloc.MapRegister(op.rd), wzr, op1);	// (C,rd) = 0 - rs1 - ~rs2(C)
+					Cset(regalloc.MapRegister(op.rd2), cc);			// rd2 = ~C
+				}
 				break;
 
 			case shop_rocr:
-				Ubfx(w0, regalloc.MapRegister(op.rs1), 0, 1);										// w0 = rs1[0] (new C)
-				Mov(regalloc.MapRegister(op.rd), Operand(regalloc.MapRegister(op.rs1), LSR, 1));	// rd = rs1 >> 1
-				Bfi(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rs2), 31, 1);				// rd |= C << 31
-				Mov(regalloc.MapRegister(op.rd2), w0);												// rd2 = w0 (new C)
+				{
+					Register reg1;
+					Register reg2;
+					if (op.rs1.is_imm())
+					{
+						Mov(w1, op.rs1.imm_value());
+						reg1 = w1;
+					}
+					else
+					{
+						reg1 = regalloc.MapRegister(op.rs1);
+					}
+					if (op.rs2.is_imm())
+					{
+						Mov(w2, op.rs2.imm_value());
+						reg2 = w2;
+					}
+					else
+					{
+						reg2 = regalloc.MapRegister(op.rs2);
+					}
+					Ubfx(w0, reg1, 0, 1);										// w0 = rs1[0] (new C)
+					const Register rd = regalloc.MapRegister(op.rd);
+					Mov(rd, Operand(reg1, LSR, 1));	// rd = rs1 >> 1
+					Bfi(rd, reg2, 31, 1);				// rd |= C << 31
+					Mov(regalloc.MapRegister(op.rd2), w0);						// rd2 = w0 (new C)
+				}
 				break;
 			case shop_rocl:
-				Tst(regalloc.MapRegister(op.rs1), 0x80000000);	// Z = ~rs1[31]
-				Orr(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rs2), Operand(regalloc.MapRegister(op.rs1), LSL, 1)); // rd = rs1 << 1 | rs2(C)
-				Cset(regalloc.MapRegister(op.rd2), ne);			// rd2 = ~Z(C)
+				{
+					Register reg1;
+					Register reg2;
+					if (op.rs1.is_imm())
+					{
+						Mov(w0, op.rs1.imm_value());
+						reg1 = w0;
+					}
+					else
+					{
+						reg1 = regalloc.MapRegister(op.rs1);
+					}
+					if (op.rs2.is_imm())
+					{
+						Mov(w1, op.rs2.imm_value());
+						reg2 = w1;
+					}
+					else
+					{
+						reg2 = regalloc.MapRegister(op.rs2);
+					}
+					Tst(reg1, 0x80000000);						// Z = ~rs1[31]
+					Orr(regalloc.MapRegister(op.rd), reg2, Operand(reg1, LSL, 1)); // rd = rs1 << 1 | rs2(C)
+					Cset(regalloc.MapRegister(op.rd2), ne);		// rd2 = ~Z(C)
+				}
 				break;
 
 			case shop_shld:
 			case shop_shad:
 				{
+					Register reg1;
+					if (op.rs1.is_imm())
+					{
+						Mov(w0, op.rs1.imm_value());
+						reg1 = w0;
+					}
+					else
+					{
+						reg1 = regalloc.MapRegister(op.rs1);
+					}
 					Label positive_shift, negative_shift, end;
-					Tbz(regalloc.MapRegister(op.rs2), 31, &positive_shift);
-					Cmn(regalloc.MapRegister(op.rs2), 32);
+					const Register rs2 = regalloc.MapRegister(op.rs2);
+					Tbz(rs2, 31, &positive_shift);
+					Cmn(rs2, 32);
 					B(&negative_shift, ne);
+					const Register rd = regalloc.MapRegister(op.rd);
+					// rs2 == -32 => rd = 0 (logical) or 0/-1 (arith)
 					if (op.op == shop_shld)
 						// Logical shift
-						Lsr(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rd), 31);
+						//Lsr(rd, reg1, 31);
+						Mov(rd, wzr);
 					else
 						// Arithmetic shift
-						Asr(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rs1), 31);
+						Asr(rd, reg1, 31);
 					B(&end);
 
 					Bind(&positive_shift);
-					Lsl(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rs1), regalloc.MapRegister(op.rs2));
+					// rs2 >= 0 => left shift
+					Lsl(rd, reg1, rs2);
 					B(&end);
 
 					Bind(&negative_shift);
-					Neg(w1, regalloc.MapRegister(op.rs2));
+					// rs2 < 0 => right shift
+					Neg(w1, rs2);
 					if (op.op == shop_shld)
 						// Logical shift
-						Lsr(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rd), w1);
+						Lsr(rd, reg1, w1);
 					else
 						// Arithmetic shift
-						Asr(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rs1), w1);
+						Asr(rd, reg1, w1);
 					Bind(&end);
 				}
 				break;
@@ -601,19 +727,20 @@ public:
 			case shop_setae:
 			case shop_setab:
 				{
+					const Register rs1 = regalloc.MapRegister(op.rs1);
 					if (op.op == shop_test)
 					{
 						if (op.rs2.is_imm())
-							Tst(regalloc.MapRegister(op.rs1), op.rs2._imm);
+							Tst(rs1, op.rs2._imm);
 						else
-							Tst(regalloc.MapRegister(op.rs1), regalloc.MapRegister(op.rs2));
+							Tst(rs1, regalloc.MapRegister(op.rs2));
 					}
 					else
 					{
 						if (op.rs2.is_imm())
-							Cmp(regalloc.MapRegister(op.rs1), op.rs2._imm);
+							Cmp(rs1, op.rs2._imm);
 						else
-							Cmp(regalloc.MapRegister(op.rs1), regalloc.MapRegister(op.rs2));
+							Cmp(rs1, regalloc.MapRegister(op.rs2));
 					}
 
 					static const Condition shop_conditions[] = { eq, eq, ge, gt, hs, hi };
@@ -622,32 +749,90 @@ public:
 				}
 				break;
 			case shop_setpeq:
-				Eor(w1, regalloc.MapRegister(op.rs1), regalloc.MapRegister(op.rs2));
-
-				Mov(regalloc.MapRegister(op.rd), wzr);
-				Mov(w2, wzr);	// wzr not supported by csinc (?!)
-				Tst(w1, 0xFF000000);
-				Csinc(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rd), w2, ne);
-				Tst(w1, 0x00FF0000);
-				Csinc(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rd), w2, ne);
-				Tst(w1, 0x0000FF00);
-				Csinc(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rd), w2, ne);
-				Tst(w1, 0x000000FF);
-				Csinc(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rd), w2, ne);
+				{
+					Register reg1;
+					Register reg2;
+					if (op.rs1.is_imm())
+					{
+						Mov(w0, op.rs1.imm_value());
+						reg1 = w0;
+					}
+					else
+					{
+						reg1 = regalloc.MapRegister(op.rs1);
+					}
+					if (op.rs2.is_imm())
+					{
+						Mov(w1, op.rs2.imm_value());
+						reg2 = w1;
+					}
+					else
+					{
+						reg2 = regalloc.MapRegister(op.rs2);
+					}
+					Eor(w1, reg1, reg2);
+					const Register rd = regalloc.MapRegister(op.rd);
+					Mov(rd, wzr);
+					Mov(w2, wzr);	// wzr not supported by csinc (?!)
+					Tst(w1, 0xFF000000);
+					Csinc(rd, rd, w2, ne);
+					Tst(w1, 0x00FF0000);
+					Csinc(rd, rd, w2, ne);
+					Tst(w1, 0x0000FF00);
+					Csinc(rd, rd, w2, ne);
+					Tst(w1, 0x000000FF);
+					Csinc(rd, rd, w2, ne);
+				}
 				break;
 
 			case shop_mul_u16:
-				Uxth(w10, regalloc.MapRegister(op.rs1));
-				Uxth(w11, regalloc.MapRegister(op.rs2));
-				Mul(regalloc.MapRegister(op.rd), w10, w11);
+				{
+					Register reg2;
+					if (op.rs2.is_imm())
+					{
+						Mov(w0, op.rs2.imm_value());
+						reg2 = w0;
+					}
+					else
+					{
+						reg2 = regalloc.MapRegister(op.rs2);
+					}
+					Uxth(w10, regalloc.MapRegister(op.rs1));
+					Uxth(w11, reg2);
+					Mul(regalloc.MapRegister(op.rd), w10, w11);
+				}
 				break;
 			case shop_mul_s16:
-				Sxth(w10, regalloc.MapRegister(op.rs1));
-				Sxth(w11, regalloc.MapRegister(op.rs2));
-				Mul(regalloc.MapRegister(op.rd), w10, w11);
+				{
+					Register reg2;
+					if (op.rs2.is_imm())
+					{
+						Mov(w0, op.rs2.imm_value());
+						reg2 = w0;
+					}
+					else
+					{
+						reg2 = regalloc.MapRegister(op.rs2);
+					}
+					Sxth(w10, regalloc.MapRegister(op.rs1));
+					Sxth(w11, reg2);
+					Mul(regalloc.MapRegister(op.rd), w10, w11);
+				}
 				break;
 			case shop_mul_i32:
-				Mul(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rs1), regalloc.MapRegister(op.rs2));
+				{
+					Register reg2;
+					if (op.rs2.is_imm())
+					{
+						Mov(w0, op.rs2.imm_value());
+						reg2 = w0;
+					}
+					else
+					{
+						reg2 = regalloc.MapRegister(op.rs2);
+					}
+					Mul(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rs1), reg2);
+				}
 				break;
 			case shop_mul_u64:
 			case shop_mul_s64:
@@ -709,9 +894,12 @@ public:
 				break;
 
 			case shop_xtrct:
-				Lsr(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rs1), 16);
-				Lsl(w0, regalloc.MapRegister(op.rs2), 16);
-				Orr(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rd), w0);
+				{
+					const Register rd = regalloc.MapRegister(op.rd);
+					Lsr(rd, regalloc.MapRegister(op.rs1), 16);
+					Lsl(w0, regalloc.MapRegister(op.rs2), 16);
+					Orr(rd, rd, w0);
+				}
 				break;
 
 			//
@@ -719,16 +907,104 @@ public:
 			//
 
 			case shop_fadd:
-				Fadd(regalloc.MapVRegister(op.rd), regalloc.MapVRegister(op.rs1), regalloc.MapVRegister(op.rs2));
+				{
+					VRegister reg1;
+					VRegister reg2;
+					if (op.rs1.is_imm())
+					{
+						Fmov(s0, reinterpret_cast<f32&>(op.rs1._imm));
+						reg1 = s0;
+					}
+					else
+					{
+						reg1 = regalloc.MapVRegister(op.rs1);
+					}
+					if (op.rs2.is_imm())
+					{
+						Fmov(s1, reinterpret_cast<f32&>(op.rs2._imm));
+						reg2 = s1;
+					}
+					else
+					{
+						reg2 = regalloc.MapVRegister(op.rs2);
+					}
+					Fadd(regalloc.MapVRegister(op.rd), reg1, reg2);
+				}
 				break;
 			case shop_fsub:
-				Fsub(regalloc.MapVRegister(op.rd), regalloc.MapVRegister(op.rs1), regalloc.MapVRegister(op.rs2));
+				{
+					VRegister reg1;
+					VRegister reg2;
+					if (op.rs1.is_imm())
+					{
+						Fmov(s0, reinterpret_cast<f32&>(op.rs1._imm));
+						reg1 = s0;
+					}
+					else
+					{
+						reg1 = regalloc.MapVRegister(op.rs1);
+					}
+					if (op.rs2.is_imm())
+					{
+						Fmov(s1, reinterpret_cast<f32&>(op.rs2._imm));
+						reg2 = s1;
+					}
+					else
+					{
+						reg2 = regalloc.MapVRegister(op.rs2);
+					}
+					Fsub(regalloc.MapVRegister(op.rd), reg1, reg2);
+				}
 				break;
 			case shop_fmul:
-				Fmul(regalloc.MapVRegister(op.rd), regalloc.MapVRegister(op.rs1), regalloc.MapVRegister(op.rs2));
+				{
+					VRegister reg1;
+					VRegister reg2;
+					if (op.rs1.is_imm())
+					{
+						Fmov(s0, reinterpret_cast<f32&>(op.rs1._imm));
+						reg1 = s0;
+					}
+					else
+					{
+						reg1 = regalloc.MapVRegister(op.rs1);
+					}
+					if (op.rs2.is_imm())
+					{
+						Fmov(s1, reinterpret_cast<f32&>(op.rs2._imm));
+						reg2 = s1;
+					}
+					else
+					{
+						reg2 = regalloc.MapVRegister(op.rs2);
+					}
+					Fmul(regalloc.MapVRegister(op.rd), reg1, reg2);
+				}
 				break;
 			case shop_fdiv:
-				Fdiv(regalloc.MapVRegister(op.rd), regalloc.MapVRegister(op.rs1), regalloc.MapVRegister(op.rs2));
+				{
+					VRegister reg1;
+					VRegister reg2;
+					if (op.rs1.is_imm())
+					{
+						Fmov(s0, reinterpret_cast<f32&>(op.rs1._imm));
+						reg1 = s0;
+					}
+					else
+					{
+						reg1 = regalloc.MapVRegister(op.rs1);
+					}
+					if (op.rs2.is_imm())
+					{
+						Fmov(s1, reinterpret_cast<f32&>(op.rs2._imm));
+						reg2 = s1;
+					}
+					else
+					{
+						reg2 = regalloc.MapVRegister(op.rs2);
+					}
+					Fdiv(regalloc.MapVRegister(op.rd), reg1, reg2);
+				}
 				break;
 
 			case shop_fabs:
@@ -888,12 +1164,12 @@ public:
 				break;
 
 			case CPT_f32:
-				if (prm.is_reg()) {
+				if (prm.is_reg())
 					Fmov(*call_fregs[fregused], regalloc.MapVRegister(prm));
-				}
-				else {
+				else if (prm.is_imm())
+					Fmov(*call_fregs[fregused], reinterpret_cast<f32&>(prm._imm));
+				else
 					verify(prm.is_null());
-				}
 				fregused++;
 				break;
 
@@ -1033,7 +1309,7 @@ public:
 		if (block->oplist[opid].op == shop_readm)
 		{
 			regalloc.DoAlloc(block);
-			regalloc.current_opid = opid;
+			regalloc.SetOpnum(opid);
 		}
 	}
 
@@ -1181,9 +1457,8 @@ public:
 		vmem_platform_flush_cache(
 			CC_RW2RX(GetBuffer()->GetStartAddress<void*>()), CC_RW2RX(GetBuffer()->GetEndAddress<void*>()),
 			GetBuffer()->GetStartAddress<void*>(), GetBuffer()->GetEndAddress<void*>());
-
 #if 0
-//		if (rewrite)
+		if (rewrite && block != NULL)
 		{
 			Instruction* instr_start = (Instruction*)block->code;
 //			Instruction* instr_end = GetLabelAddress<Instruction*>(&code_end);
@@ -1432,6 +1707,10 @@ private:
 			{
 				switch (size)
 				{
+				case 1:
+					Ldrsb(regalloc.MapRegister(op.rd), MemOperand(x1));
+					break;
+
 				case 2:
 					Ldrsh(regalloc.MapRegister(op.rd), MemOperand(x1));
 					break;
@@ -1452,6 +1731,10 @@ private:
 			{
 				switch (size)
 				{
+				case 1:
+					Ldrsb(w1, MemOperand(x1));
+					break;
+
 				case 2:
 					Ldrsh(w1, MemOperand(x1));
 					break;
@@ -1460,11 +1743,18 @@ private:
 					Ldr(w1, MemOperand(x1));
 					break;
 
+				case 8:
+					Ldr(x1, MemOperand(x1));
+					break;
+
 				default:
 					die("Invalid size");
 					break;
 				}
-				Str(w1, sh4_context_mem_operand(op.rd.reg_ptr()));
+				if (size == 8)
+					Str(x1, sh4_context_mem_operand(op.rd.reg_ptr()));
+				else
+					Str(w1, sh4_context_mem_operand(op.rd.reg_ptr()));
 			}
 		}
 		else
@@ -1568,7 +1858,7 @@ private:
 				Lsr(x1, x1, 32);
 				Fmov(regalloc.MapVRegister(op.rd, 1), w1);
 #else
-				Str(x1, sh4_context_mem_operand(op.rd.reg_ptr()));
+				die("GenReadMemoryFast: size == 8 and !explode_spans");
 #endif
 			}
 		}
@@ -1604,6 +1894,9 @@ private:
 
 	void GenWriteMemory(const shil_opcode& op, size_t opid, bool optimise)
 	{
+		if (GenWriteMemoryImmediate(op))
+			return;
+
 		GenMemAddr(op, call_regs[0]);
 
 		u32 size = op.flags & 0x7f;
@@ -1625,6 +1918,111 @@ private:
 			return;
 
 		GenWriteMemorySlow(op);
+	}
+
+	bool GenWriteMemoryImmediate(const shil_opcode& op)
+	{
+		if (!op.rs1.is_imm())
+			return false;
+
+		u32 size = op.flags & 0x7f;
+		u32 addr = op.rs1._imm;
+		if (mmu_enabled())
+		{
+			if ((addr >> 12) != (block->vaddr >> 12))
+				// When full mmu is on, only consider addresses in the same 4k page
+				return false;
+			u32 paddr;
+			u32 rv;
+			switch (size)
+			{
+			case 1:
+				rv = mmu_data_translation<MMU_TT_DWRITE, u8>(addr, paddr);
+				break;
+			case 2:
+				rv = mmu_data_translation<MMU_TT_DWRITE, u16>(addr, paddr);
+				break;
+			case 4:
+			case 8:
+				rv = mmu_data_translation<MMU_TT_DWRITE, u32>(addr, paddr);
+				break;
+			}
+			if (rv != MMU_ERROR_NONE)
+				return false;
+			addr = paddr;
+		}
+		bool isram = false;
+		void* ptr = _vmem_write_const(addr, isram, size);
+
+		Register reg2;
+		if (op.rs2.is_imm())
+		{
+			Mov(w0, op.rs2._imm);
+			reg2 = w0;
+		}
+		else if (regalloc.IsAllocg(op.rs2))
+		{
+			reg2 = regalloc.MapRegister(op.rs2);
+		}
+		else if (regalloc.IsAllocf(op.rs2))
+		{
+			Fmov(w0, regalloc.MapVRegister(op.rs2));
+			reg2 = w0;
+		}
+		else
+			die("Invalid rs2 param");
+		if (isram)
+		{
+			Ldr(x1, reinterpret_cast<uintptr_t>(ptr));
+			switch (size)
+			{
+			case 1:
+				Strb(reg2, MemOperand(x1));
+				break;
+
+			case 2:
+				Strh(reg2, MemOperand(x1));
+				break;
+
+			case 4:
+				if (op.rs2.is_r32f())
+					Str(reg2, MemOperand(x1));
+				else
+					Str(reg2, MemOperand(x1));
+				break;
+
+			default:
+				die("Invalid size");
+				break;
+			}
+		}
+		else
+		{
+			// Not RAM
+			Mov(w1, reg2);
+			Mov(w0, addr);
+
+			switch(size)
+			{
+			case 1:
+				GenCallRuntime((void (*)())ptr);
+				break;
+
+			case 2:
+				GenCallRuntime((void (*)())ptr);
+				break;
+
+			case 4:
+				GenCallRuntime((void (*)())ptr);
+				break;
+
+			case 8:
+				die("SZ_64F not supported");
+				break;
+			}
+		}
+
+		return true;
 	}
 
 	bool GenWriteMemoryFast(const shil_opcode& op, size_t opid)

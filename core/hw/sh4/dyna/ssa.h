@@ -42,7 +42,7 @@ public:
 
 		ConstPropPass();
 		DeadCodeRemovalPass();
-		ConstantExpressionsPass();
+		SimplifyExpressionPass();
 		CombineShiftsPass();
 		DeadRegisterPass();
 		IdentityMovePass();
@@ -355,7 +355,7 @@ private:
 		}
 	}
 
-	void ConstantExpressionsPass()
+	void SimplifyExpressionPass()
 	{
 		for (int opnum = 0; opnum < block->oplist.size(); opnum++)
 		{
@@ -404,11 +404,12 @@ private:
 					continue;
 				}
 			}
-			// Not sure it's worth the trouble, except for the xor perhaps
+			// Not sure it's worth the trouble, except for the 'and' and 'xor'
 			else if (op.rs1.is_r32i() && op.rs1._reg == op.rs2._reg)
 			{
 				// a ^ a == 0
-				if (op.op == shop_xor)
+				// a - a == 0
+				if (op.op == shop_xor || op.op == shop_sub)
 				{
 					//printf("%08x ZERO %s\n", block->vaddr + op.guest_offs, op.dissasm().c_str());
 					ReplaceByMov32(op, 0);
@@ -419,6 +420,14 @@ private:
 				{
 					//printf("%08x IDEN %s\n", block->vaddr + op.guest_offs, op.dissasm().c_str());
 					ReplaceByMov32(op);
+				}
+				// a + a == a * 2 == a << 1
+				else if (op.op == shop_add)
+				{
+					// There's quite a few of these
+					//printf("%08x +t<< %s\n", block->vaddr + op.guest_offs, op.dissasm().c_str());
+					op.op = shop_shl;
+					op.rs2 = shil_param(FMT_IMM, 1);
 				}
 			}
 		}

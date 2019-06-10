@@ -190,6 +190,8 @@ bool SSAOptimizer::ExecuteConstOp(shil_opcode& op)
 				case shop_setae:
 					rd = rs1 >= rs2;
 					break;
+				default:
+					break;
 				}
 			}
 			break;

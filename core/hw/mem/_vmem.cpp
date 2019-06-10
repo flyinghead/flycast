@@ -97,6 +97,46 @@ void* _vmem_read_const(u32 addr,bool& ismem,u32 sz)
 	return 0;
 }
 
+void* _vmem_write_const(u32 addr,bool& ismem,u32 sz)
+{
+	u32   page=addr>>24;
+	unat  iirf=(unat)_vmem_MemInfo_ptr[page];
+	void* ptr=(void*)(iirf&~HANDLER_MAX);
+
+	if (ptr==0)
+	{
+		ismem=false;
+		const unat id=iirf;
+		if (sz==1)
+		{
+			return (void*)_vmem_WF8[id/4];
+		}
+		else if (sz==2)
+		{
+			return (void*)_vmem_WF16[id/4];
+		}
+		else if (sz==4)
+		{
+			return (void*)_vmem_WF32[id/4];
+		}
+		else
+		{
+			die("Invalid size");
+		}
+	}
+	else
+	{
+		ismem=true;
+		addr<<=iirf;
+		addr>>=iirf;
+
+		return &(((u8*)ptr)[addr]);
+	}
+	die("Invalid memory size");
+
+	return 0;
+}
+
 void* _vmem_page_info(u32 addr,bool& ismem,u32 sz,u32& page_sz,bool rw)
 {
 	u32   page=addr>>24;

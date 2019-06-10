@@ -824,7 +824,7 @@ void constlink(RuntimeBlockInfo* blk)
 			else if (def==NoReg && op->rs1.is_imm() && op->rs1._imm==0)
 			{
 				//def=op->rd._reg;
-				val=op->rs1._imm;
+				val = op->rs1._imm;
 			}
 		}
 	}
@@ -892,8 +892,9 @@ void srt_waw(RuntimeBlockInfo* blk)
 //Seems to be working
 void AnalyseBlock(RuntimeBlockInfo* blk)
 {
-	//SSAOptimizer optim(blk);
-	//optim.Optimize();
+	SSAOptimizer optim(blk);
+	optim.Optimize();
+	return;
 
 	u32 st[sh4_reg_count]={0};
 	/*
