@@ -1033,10 +1033,10 @@ u32,f1,(u32 r1, u32 r2),
 )
 shil_compile
 (
-	shil_cf_arg_ptr(rs2);
-	shil_cf_arg_ptr(rs1);
-	shil_cf_arg_ptr(rd);
+	shil_cf_arg_u32(rs2);
+	shil_cf_arg_u32(rs1);
 	shil_cf(f1);
+	shil_cf_rv_u32(rd);
 )
 shil_opc_end()
 
