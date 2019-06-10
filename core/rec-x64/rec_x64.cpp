@@ -477,20 +477,20 @@ public:
 
 					u32 size = op.flags & 0x7f;
 					if (size != 8)
-						host_reg_to_shil_param(op.rd, ecx);
+						host_reg_to_shil_param(op.rd, eax);
 					else {
 #ifdef EXPLODE_SPANS
 						if (op.rd.count() == 2 && regalloc.IsAllocf(op.rd, 0) && regalloc.IsAllocf(op.rd, 1))
 						{
-							movd(regalloc.MapXRegister(op.rd, 0), ecx);
-							shr(rcx, 32);
-							movd(regalloc.MapXRegister(op.rd, 1), ecx);
+							movd(regalloc.MapXRegister(op.rd, 0), eax);
+							shr(rax, 32);
+							movd(regalloc.MapXRegister(op.rd, 1), eax);
 						}
 						else
 #endif
 						{
-							mov(rax, (uintptr_t)op.rd.reg_ptr());
-							mov(qword[rax], rcx);
+							mov(rcx, (uintptr_t)op.rd.reg_ptr());
+							mov(qword[rcx], rax);
 						}
 					}
 				}
@@ -1260,14 +1260,14 @@ public:
 				GenCall(ReadMem8);
 			else
 				GenCall(ReadMemNoEx<u8>, true);
-			movsx(ecx, al);
+			movsx(eax, al);
 			break;
 		case 2:
 			if (!mmu_enabled())
 				GenCall(ReadMem16);
 			else
 				GenCall(ReadMemNoEx<u16>, true);
-			movsx(ecx, ax);
+			movsx(eax, ax);
 			break;
 
 		case 4:
@@ -1275,14 +1275,12 @@ public:
 				GenCall(ReadMem32);
 			else
 				GenCall(ReadMemNoEx<u32>, true);
-			mov(ecx, eax);
 			break;
 		case 8:
 			if (!mmu_enabled())
 				GenCall(ReadMem64);
 			else
 				GenCall(ReadMemNoEx<u64>, true);
-			mov(rcx, rax);
 			break;
 		default:
 			die("1..8 bytes");
@@ -1560,24 +1558,23 @@ private:
 			{
 			case 1:
 				GenCall((void (*)())ptr);
-				movsx(ecx, al);
+				movsx(eax, al);
 				break;
 
 			case 2:
 				GenCall((void (*)())ptr);
-				movsx(ecx, ax);
+				movsx(eax, ax);
 				break;
 
 			case 4:
 				GenCall((void (*)())ptr);
-				mov(ecx, eax);
 				break;
 
 			default:
 				die("Invalid immediate size");
 					break;
 			}
-			host_reg_to_shil_param(op.rd, ecx);
+			host_reg_to_shil_param(op.rd, eax);
 		}
 
 		return true;
@@ -1722,19 +1719,19 @@ private:
 		switch (size)
 		{
 		case 1:
-			movsx(ecx, byte[rax + call_regs64[0]]);
+			movsx(eax, byte[rax + call_regs64[0]]);
 			break;
 
 		case 2:
-			movsx(ecx, word[rax + call_regs64[0]]);
+			movsx(eax, word[rax + call_regs64[0]]);
 			break;
 
 		case 4:
-			mov(ecx, dword[rax + call_regs64[0]]);
+			mov(eax, dword[rax + call_regs64[0]]);
 			break;
 
 		case 8:
-			mov(rcx, qword[rax + call_regs64[0]]);
+			mov(rax, qword[rax + call_regs64[0]]);
 			break;
 
 		default:
