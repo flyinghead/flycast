@@ -655,6 +655,7 @@ void _vmem_enable_mmu(bool enable)
 	{
 		// Restore P0/U0 mem mappings
 		vmem32_term();
-		_vmem_set_p0_mappings();
+		if (_nvmem_4gb_space())
+			_vmem_set_p0_mappings();
 	}
 }
