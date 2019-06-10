@@ -251,6 +251,7 @@ class Arm64Assembler : public MacroAssembler
 {
 	typedef void (MacroAssembler::*Arm64Op_RRO)(const Register&, const Register&, const Operand&);
 	typedef void (MacroAssembler::*Arm64Op_RROF)(const Register&, const Register&, const Operand&, enum FlagsUpdate);
+	typedef void (MacroAssembler::*Arm64Fop_RRR)(const VRegister&, const VRegister&, const VRegister&);
 
 public:
 	Arm64Assembler() : Arm64Assembler(emit_GetCCPtr())
@@ -301,6 +302,31 @@ public:
 			((*this).*arm_op)(regalloc.MapRegister(op->rd), regalloc.MapRegister(op->rs1), op3);
 		else
 			((*this).*arm_op2)(regalloc.MapRegister(op->rd), regalloc.MapRegister(op->rs1), op3, LeaveFlags);
+	}
+
+	void ngen_BinaryFop(shil_opcode* op, Arm64Fop_RRR arm_op)
+	{
+		VRegister reg1;
+		VRegister reg2;
+		if (op->rs1.is_imm())
+		{
+			Fmov(s0, reinterpret_cast<f32&>(op->rs1._imm));
+			reg1 = s0;
+		}
+		else
+		{
+			reg1 = regalloc.MapVRegister(op->rs1);
+		}
+		if (op->rs2.is_imm())
+		{
+			Fmov(s1, reinterpret_cast<f32&>(op->rs2._imm));
+			reg2 = s1;
+		}
+		else
+		{
+			reg2 = regalloc.MapVRegister(op->rs2);
+		}
+		((*this).*arm_op)(regalloc.MapVRegister(op->rd), reg1, reg2);
 	}
 
 	const Register& GenMemAddr(const shil_opcode& op, const Register* raddr = NULL)
@@ -422,12 +448,15 @@ public:
 
 			case shop_jcond:
 			case shop_jdyn:
-				if (op.rs2.is_imm())
-					Add(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rs1), op.rs2._imm);
-				else
-					Mov(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rs1));
-				// Save it for the branching at the end of the block
-				Mov(w29, regalloc.MapRegister(op.rd));
+				{
+					const Register rd = regalloc.MapRegister(op.rd);
+					if (op.rs2.is_imm())
+						Add(rd, regalloc.MapRegister(op.rs1), op.rs2._imm);
+					else
+						Mov(rd, regalloc.MapRegister(op.rs1));
+					// Save it for the branching at the end of the block
+					Mov(w29, rd);
+				}
 				break;
 
 			case shop_mov32:
@@ -436,21 +465,23 @@ public:
 
 				if (regalloc.IsAllocf(op.rd))
 				{
+					const VRegister rd = regalloc.MapVRegister(op.rd);
 					if (op.rs1.is_imm())
-						Fmov(regalloc.MapVRegister(op.rd), reinterpret_cast<f32&>(op.rs1._imm));
+						Fmov(rd, reinterpret_cast<f32&>(op.rs1._imm));
 					else if (regalloc.IsAllocf(op.rs1))
-						Fmov(regalloc.MapVRegister(op.rd), regalloc.MapVRegister(op.rs1));
+						Fmov(rd, regalloc.MapVRegister(op.rs1));
 					else
-						Fmov(regalloc.MapVRegister(op.rd), regalloc.MapRegister(op.rs1));
+						Fmov(rd, regalloc.MapRegister(op.rs1));
 				}
 				else
 				{
+					const Register rd = regalloc.MapRegister(op.rd);
 					if (op.rs1.is_imm())
-						Mov(regalloc.MapRegister(op.rd), op.rs1._imm);
+						Mov(rd, op.rs1._imm);
 					else if (regalloc.IsAllocg(op.rs1))
-						Mov(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rs1));
+						Mov(rd, regalloc.MapRegister(op.rs1));
 					else
-						Fmov(regalloc.MapRegister(op.rd), regalloc.MapVRegister(op.rs1));
+						Fmov(rd, regalloc.MapVRegister(op.rs1));
 				}
 				break;
 
@@ -849,18 +880,23 @@ public:
 
 			case shop_pref:
 				{
-					if (regalloc.IsAllocg(op.rs1))
-						Lsr(w1, regalloc.MapRegister(op.rs1), 26);
+					Label not_sqw;
+					if (op.rs1.is_imm())
+						Mov(*call_regs[0], op.rs1._imm);
 					else
 					{
-						Ldr(w0, sh4_context_mem_operand(op.rs1.reg_ptr()));
-						Lsr(w1, w0, 26);
+						if (regalloc.IsAllocg(op.rs1))
+							Lsr(w1, regalloc.MapRegister(op.rs1), 26);
+						else
+						{
+							Ldr(w0, sh4_context_mem_operand(op.rs1.reg_ptr()));
+							Lsr(w1, w0, 26);
+						}
+						Cmp(w1, 0x38);
+						B(&not_sqw, ne);
+						if (regalloc.IsAllocg(op.rs1))
+							Mov(w0, regalloc.MapRegister(op.rs1));
 					}
-					Cmp(w1, 0x38);
-					Label not_sqw;
-					B(&not_sqw, ne);
-					if (regalloc.IsAllocg(op.rs1))
-						Mov(w0, regalloc.MapRegister(op.rs1));
 
 					if (mmu_enabled())
 					{
@@ -907,104 +943,16 @@ public:
 			//
 
 			case shop_fadd:
-				{
-					VRegister reg1;
-					VRegister reg2;
-					if (op.rs1.is_imm())
-					{
-						Fmov(s0, reinterpret_cast<f32&>(op.rs1._imm));
-						reg1 = s0;
-					}
-					else
-					{
-						reg1 = regalloc.MapVRegister(op.rs1);
-					}
-					if (op.rs2.is_imm())
-					{
-						Fmov(s1, reinterpret_cast<f32&>(op.rs2._imm));
-						reg2 = s1;
-					}
-					else
-					{
-						reg2 = regalloc.MapVRegister(op.rs2);
-					}
-					Fadd(regalloc.MapVRegister(op.rd), reg1, reg2);
-				}
+				ngen_BinaryFop(&op, &MacroAssembler::Fadd);
 				break;
 			case shop_fsub:
-				{
-					VRegister reg1;
-					VRegister reg2;
-					if (op.rs1.is_imm())
-					{
-						Fmov(s0, reinterpret_cast<f32&>(op.rs1._imm));
-						reg1 = s0;
-					}
-					else
-					{
-						reg1 = regalloc.MapVRegister(op.rs1);
-					}
-					if (op.rs2.is_imm())
-					{
-						Fmov(s1, reinterpret_cast<f32&>(op.rs2._imm));
-						reg2 = s1;
-					}
-					else
-					{
-						reg2 = regalloc.MapVRegister(op.rs2);
-					}
-					Fsub(regalloc.MapVRegister(op.rd), reg1, reg2);
-				}
+				ngen_BinaryFop(&op, &MacroAssembler::Fsub);
 				break;
 			case shop_fmul:
-				{
-					VRegister reg1;
-					VRegister reg2;
-					if (op.rs1.is_imm())
-					{
-						Fmov(s0, reinterpret_cast<f32&>(op.rs1._imm));
-						reg1 = s0;
-					}
-					else
-					{
-						reg1 = regalloc.MapVRegister(op.rs1);
-					}
-					if (op.rs2.is_imm())
-					{
-						Fmov(s1, reinterpret_cast<f32&>(op.rs2._imm));
-						reg2 = s1;
-					}
-					else
-					{
-						reg2 = regalloc.MapVRegister(op.rs2);
-					}
-					Fmul(regalloc.MapVRegister(op.rd), reg1, reg2);
-				}
+				ngen_BinaryFop(&op, &MacroAssembler::Fmul);
 				break;
 			case shop_fdiv:
-				{
-					VRegister reg1;
-					VRegister reg2;
-					if (op.rs1.is_imm())
-					{
-						Fmov(s0, reinterpret_cast<f32&>(op.rs1._imm));
-						reg1 = s0;
-					}
-					else
-					{
-						reg1 = regalloc.MapVRegister(op.rs1);
-					}
-					if (op.rs2.is_imm())
-					{
-						Fmov(s1, reinterpret_cast<f32&>(op.rs2._imm));
-						reg2 = s1;
-					}
-					else
-					{
-						reg2 = regalloc.MapVRegister(op.rs2);
-					}
-					Fdiv(regalloc.MapVRegister(op.rd), reg1, reg2);
-				}
+				ngen_BinaryFop(&op, &MacroAssembler::Fdiv);
 				break;
 
 			case shop_fabs:
