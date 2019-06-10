@@ -188,6 +188,7 @@
 		84B7BF861B72871600F9733F /* EmuGLView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BF851B72871600F9733F /* EmuGLView.swift */; };
 		AE1E293B2095FB1600FC6BA2 /* rec_cpp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE1E293A2095FB1600FC6BA2 /* rec_cpp.cpp */; };
 		AE1E294020A96B0B00FC6BA2 /* rec_x64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE1E293F20A96B0B00FC6BA2 /* rec_x64.cpp */; };
+		AE2A24DA22AE7EB600DD3034 /* ssa.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE2A24D922AE7EB600DD3034 /* ssa.cpp */; };
 		AE2A2D5A21D68470004B308D /* gdcartridge.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE2A2D4E21D6846F004B308D /* gdcartridge.cpp */; };
 		AE2A2D5B21D68470004B308D /* m1cartridge.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE2A2D5221D6846F004B308D /* m1cartridge.cpp */; };
 		AE2A2D5C21D68470004B308D /* awcartridge.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE2A2D5321D6846F004B308D /* awcartridge.cpp */; };
@@ -638,6 +639,9 @@
 		AE1E293F20A96B0B00FC6BA2 /* rec_x64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = rec_x64.cpp; sourceTree = "<group>"; };
 		AE2A234922941A0500DD3034 /* NaomiConfig.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = NaomiConfig.xcconfig; sourceTree = "<group>"; };
 		AE2A234A22941AF000DD3034 /* DreamcastConfig.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = DreamcastConfig.xcconfig; sourceTree = "<group>"; };
+		AE2A24D722AE7EB600DD3034 /* ssa.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ssa.h; sourceTree = "<group>"; };
+		AE2A24D822AE7EB600DD3034 /* ssa_regalloc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ssa_regalloc.h; sourceTree = "<group>"; };
+		AE2A24D922AE7EB600DD3034 /* ssa.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ssa.cpp; sourceTree = "<group>"; };
 		AE2A2D4921D6820D004B308D /* glcache.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = glcache.h; sourceTree = "<group>"; };
 		AE2A2D4D21D6846F004B308D /* awcartridge.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = awcartridge.h; sourceTree = "<group>"; };
 		AE2A2D4E21D6846F004B308D /* gdcartridge.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = gdcartridge.cpp; sourceTree = "<group>"; };
@@ -1443,6 +1447,9 @@
 				84B7BE181B72720100F9733F /* shil.cpp */,
 				84B7BE191B72720100F9733F /* shil.h */,
 				84B7BE1A1B72720100F9733F /* shil_canonical.h */,
+				AE2A24D922AE7EB600DD3034 /* ssa.cpp */,
+				AE2A24D722AE7EB600DD3034 /* ssa.h */,
+				AE2A24D822AE7EB600DD3034 /* ssa_regalloc.h */,
 			);
 			path = dyna;
 			sourceTree = "<group>";
@@ -2365,6 +2372,7 @@
 				AEFF7F72214D9D590068CE11 /* pico_protocol.c in Sources */,
 				84B7BF6A1B72720200F9733F /* audiobackend_pulseaudio.cpp in Sources */,
 				84B7BF3F1B72720200F9733F /* ta.cpp in Sources */,
+				AE2A24DA22AE7EB600DD3034 /* ssa.cpp in Sources */,
 				84B7BF751B72720200F9733F /* gdrom_hle.cpp in Sources */,
 				84B7BEFF1B72720200F9733F /* zip_name_locate.c in Sources */,
 				AE649BFD218C552500EF4A81 /* lpc_intrin_avx2.c in Sources */,
