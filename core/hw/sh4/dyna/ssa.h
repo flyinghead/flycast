@@ -366,8 +366,8 @@ private:
 				{
 					// a & 0 == 0
 					// a * 0 == 0
-					if (op.op == shop_and || op.op == shop_mul_i32 || op.op == shop_mul_s16 || op.op == shop_mul_u16
-							 || op.op == shop_fmul)
+					// Not true for FPU ops because of Inf and NaN
+					if (op.op == shop_and || op.op == shop_mul_i32 || op.op == shop_mul_s16 || op.op == shop_mul_u16)
 					{
 						//printf("%08x ZERO %s\n", block->vaddr + op.guest_offs, op.dissasm().c_str());
 						ReplaceByMov32(op, 0);
@@ -386,9 +386,9 @@ private:
 					// a ^ 0 == a
 					// a >> 0 == a
 					// a << 0 == a
+					// Not true for FPU ops because of Inf and NaN
 					else if (op.op == shop_add || op.op == shop_sub || op.op == shop_or || op.op == shop_xor
-							|| op.op == shop_shl || op.op == shop_shr || op.op == shop_sar || op.op == shop_shad || op.op == shop_shld
-							|| op.op == shop_fadd || op.op == shop_fsub)
+							|| op.op == shop_shl || op.op == shop_shr || op.op == shop_sar || op.op == shop_shad || op.op == shop_shld)
 					{
 						//printf("%08x IDEN %s\n", block->vaddr + op.guest_offs, op.dissasm().c_str());
 						ReplaceByMov32(op);
