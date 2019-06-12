@@ -407,12 +407,28 @@ private:
 			// Not sure it's worth the trouble, except for the 'and' and 'xor'
 			else if (op.rs1.is_r32i() && op.rs1._reg == op.rs2._reg)
 			{
+				// a + a == a * 2 == a << 1
+				if (op.op == shop_add)
+				{
+					// There's quite a few of these
+					//printf("%08x +t<< %s\n", block->vaddr + op.guest_offs, op.dissasm().c_str());
+					op.op = shop_shl;
+					op.rs2 = shil_param(FMT_IMM, 1);
+				}
 				// a ^ a == 0
 				// a - a == 0
-				if (op.op == shop_xor || op.op == shop_sub)
+				else if (op.op == shop_xor || op.op == shop_sub)
 				{
 					//printf("%08x ZERO %s\n", block->vaddr + op.guest_offs, op.dissasm().c_str());
 					ReplaceByMov32(op, 0);
+				}
+				// SBC a, a == SBC 0,0
+				else if (op.op == shop_sbc)
+				{
+					//printf("%08x ZERO %s\n", block->vaddr + op.guest_offs, op.dissasm().c_str());
+					op.rs1 = shil_param(FMT_IMM, 0);
+					op.rs2 = shil_param(FMT_IMM, 0);
+					stats.prop_constants += 2;
 				}
 				// a & a == a
 				// a | a == a
@@ -420,14 +436,6 @@ private:
 				{
 					//printf("%08x IDEN %s\n", block->vaddr + op.guest_offs, op.dissasm().c_str());
 					ReplaceByMov32(op);
-				}
-				// a + a == a * 2 == a << 1
-				else if (op.op == shop_add)
-				{
-					// There's quite a few of these
-					//printf("%08x +t<< %s\n", block->vaddr + op.guest_offs, op.dissasm().c_str());
-					op.op = shop_shl;
-					op.rs2 = shil_param(FMT_IMM, 1);
 				}
 			}
 		}

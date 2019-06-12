@@ -41,9 +41,11 @@ public:
 		SSAOptimizer optim(block);
 		optim.AddVersionPass();
 
+		verify(host_gregs.empty());
 		while (*regs_avail != (nreg_t)-1)
 			host_gregs.push_back(*regs_avail++);
 
+		verify(host_fregs.empty());
 		while (*regsf_avail != (nregf_t)-1)
 			host_fregs.push_back(*regsf_avail++);
 	}
@@ -243,6 +245,13 @@ public:
 
 	void Cleanup() {
 		verify(final_opend || block->oplist.size() == 0);
+		final_opend = false;
+		FlushAllRegs(true);
+		verify(reg_alloced.empty());
+		verify(pending_flushes.empty());
+		block = NULL;
+		host_fregs.clear();
+		host_gregs.clear();
 	}
 
 	virtual void Preload(u32 reg, nreg_t nreg) = 0;
