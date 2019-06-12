@@ -1898,16 +1898,6 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 			}
 			break;
 
-/*
-		case shop_cvt_i2f_z:
-		case shop_cvt_i2f_n:
-			
-			break;
-*/
-
-			//shop_cvt_f2i_t
-			//shop_cvt_i2f_n
-			//shop_cvt_i2f_z
 		case shop_ext_s8:
 		case shop_ext_s16:
 			{
@@ -1918,8 +1908,19 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 			}
 			break;
 			
+		case shop_xtrct:
+			{
+				eReg rd = reg.mapg(op->rd);
+				LSR(rd, reg.mapg(op->rs1), 16);
+				LSL(r0, reg.mapg(op->rs2), 16);
+				ORR(rd, rd, r0);
+			}
+			break;
 
-				//fpu
+		//
+		// FPU
+		//
+
 		case shop_fadd:
 		case shop_fsub:
 		case shop_fmul:
