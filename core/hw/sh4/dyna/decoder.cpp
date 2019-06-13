@@ -907,16 +907,16 @@ bool dec_generic(u32 op)
 				{
 					verify(!state.cpu.is_delayslot);
 					//div32u
-					Emit(shop_div32u,mk_reg(div_som_reg1),mk_reg(div_som_reg1),mk_reg(div_som_reg2),0,shil_param(),mk_reg(div_som_reg3));
+					Emit(shop_div32u, mk_reg(div_som_reg1), mk_reg(div_som_reg1), mk_reg(div_som_reg2), 0, mk_reg(div_som_reg3), mk_reg(div_som_reg3));
 					
-					Emit(shop_and,mk_reg(reg_sr_T),mk_reg(div_som_reg1),mk_imm(1));
-					Emit(shop_shr,mk_reg(div_som_reg1),mk_reg(div_som_reg1),mk_imm(1));
+					Emit(shop_and, mk_reg(reg_sr_T), mk_reg(div_som_reg1), mk_imm(1));
+					Emit(shop_shr, mk_reg(div_som_reg1), mk_reg(div_som_reg1), mk_imm(1));
 
-					Emit(shop_div32p2,mk_reg(div_som_reg3),mk_reg(div_som_reg3),mk_reg(div_som_reg2),0,shil_param(reg_sr_T));
+					Emit(shop_div32p2, mk_reg(div_som_reg3), mk_reg(div_som_reg3), mk_reg(div_som_reg2), 0, mk_reg(reg_sr_T));
 					
 					//skip the aggregated opcodes
-					state.cpu.rpc+=128;
-					blk->guest_cycles+=CPU_RATIO*64;
+					state.cpu.rpc += 128;
+					blk->guest_cycles += CPU_RATIO*64;
 				}
 				else
 				{
@@ -933,16 +933,18 @@ bool dec_generic(u32 op)
 				{
 					verify(!state.cpu.is_delayslot);
 					//div32s
-					Emit(shop_div32s,mk_reg(div_som_reg1),mk_reg(div_som_reg1),mk_reg(div_som_reg2),0,shil_param(),mk_reg(div_som_reg3));
+					Emit(shop_div32s, mk_reg(div_som_reg1), mk_reg(div_som_reg1), mk_reg(div_som_reg2), 0, mk_reg(div_som_reg3), mk_reg(div_som_reg3));
 					
-					Emit(shop_and,mk_reg(reg_sr_T),mk_reg(div_som_reg1),mk_imm(1));
-					Emit(shop_sar,mk_reg(div_som_reg1),mk_reg(div_som_reg1),mk_imm(1));
+					Emit(shop_and, mk_reg(reg_sr_T), mk_reg(div_som_reg1), mk_imm((1 << 31) | 1));	// set lsb and sign of quotient in T
+					Emit(shop_sar, mk_reg(div_som_reg1), mk_reg(div_som_reg1), mk_imm(1));			// shift quotient right
 
-					Emit(shop_div32p2,mk_reg(div_som_reg3),mk_reg(div_som_reg3),mk_reg(div_som_reg2),0,shil_param(reg_sr_T));
+					Emit(shop_div32p2, mk_reg(div_som_reg3), mk_reg(div_som_reg3), mk_reg(div_som_reg2), 0, mk_reg(reg_sr_T));
 					
+					Emit(shop_and, mk_reg(reg_sr_T), mk_reg(reg_sr_T), mk_imm(1));					// clean up T
+
 					//skip the aggregated opcodes
 					state.cpu.rpc+=128;
-					blk->guest_cycles+=CPU_RATIO*64;
+					blk->guest_cycles += CPU_RATIO * 64;
 				}
 				else
 				{

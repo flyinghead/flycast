@@ -205,7 +205,7 @@ bool SSAOptimizer::ExecuteConstOp(shil_opcode& op)
 		case shop_div32u:
 		case shop_div32s:
 			{
-				u64 res =  op.op == shop_div32u ? shil_opcl_div32u::f1::impl(rs1, rs2) : shil_opcl_div32s::f1::impl(rs1, rs2);
+				u64 res =  op.op == shop_div32u ? shil_opcl_div32u::f1::impl(rs1, rs2, rs3) : shil_opcl_div32s::f1::impl(rs1, rs2, rs3);
 				rd = (u32)res;
 				constprop_values[RegValue(op.rd, 1)] = res >> 32;
 

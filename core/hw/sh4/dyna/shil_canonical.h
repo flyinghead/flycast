@@ -583,9 +583,10 @@ shil_opc_end()
 shil_opc(div32u)
 shil_canonical
 (
-u64,f1,(u32 r1,u32 r2),
-	u32 quo=r1/r2;
-	u32 rem=r1%r2;
+u64,f1,(u32 r1, u32 r2, u32 r3),
+	u64 dividend = ((u64)r3 << 32) | r1;
+	u32 quo = dividend / r2;
+	u32 rem = dividend % r2;
 
 	u64 rv;
 	((u32*)&rv)[0]=quo;
@@ -595,6 +596,7 @@ u64,f1,(u32 r1,u32 r2),
 
 shil_compile
 (
+	shil_cf_arg_u32(rs3);
 	shil_cf_arg_u32(rs2);
 	shil_cf_arg_u32(rs1);
 	shil_cf(f1);
@@ -607,9 +609,29 @@ shil_opc_end()
 shil_opc(div32s)
 shil_canonical
 (
-u64,f1,(s32 r1,s32 r2),
-	u32 quo=r1/r2;
-	u32 rem=r1%r2;
+u64,f1,(u32 r1, u32 r2, s32 r3),
+	s64 dividend = ((s64)r3 << 32) | r1;
+	bool negative;
+	if (dividend < 0)
+	{
+		// 1's complement -> 2's complement
+		dividend++;
+		negative = true;
+	}
+	else
+	{
+		negative = false;
+	}
+	s32 quo = dividend / r2;
+	s32 rem = dividend % r2;
+	// 2's complement -> 1's complement
+	if (negative)
+	{
+		if (quo <= 0)
+			quo--;
+		if (rem <= 0)
+			rem--;
+	}
 
 	u64 rv;
 	((u32*)&rv)[0]=quo;
@@ -619,6 +641,7 @@ u64,f1,(s32 r1,s32 r2),
 
 shil_compile
 (
+	shil_cf_arg_u32(rs3);
 	shil_cf_arg_u32(rs2);
 	shil_cf_arg_u32(rs1);
 	shil_cf(f1);
@@ -631,11 +654,20 @@ shil_opc_end()
 shil_opc(div32p2)
 shil_canonical
 (
-u32,f1,(s32 a,s32 b,s32 T),
-	if (!T)
-	{
-		a-=b;
-	}
+u32,f1,(s32 a,s32 b,u32 T),
+	a += b * (((T >> 31) ^ ~T) & 1) * (2 * (T & 1) - 1);
+	// This is equivalent to this:
+	// (the sign of the quotient is stored in bit 31 of T)
+	//	if (quo >= 0)
+	//	{
+	//		if (!T)
+	//			rem -= divisor;
+	//	}
+	//	else
+	//	{
+	//		if (T)
+	//			rem += divisor;
+	//	}
 
 	return a;
 )

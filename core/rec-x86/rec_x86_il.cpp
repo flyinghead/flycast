@@ -1492,6 +1492,7 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 			}
 			break;
 
+		/* TODO Update this according to new canonical implementation
 		case shop_div32s:
 		case shop_div32u:
 			{
@@ -1519,7 +1520,7 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 				x86e->Emit(op_sub32,reg.mapg(op->rd),EAX);
 			}
 			break;
-
+		*/
 
 #endif
 

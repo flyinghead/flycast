@@ -169,20 +169,8 @@ void LoadSpecialSettings()
 		settings.rend.TranslucentPolygonDepthMask = 1;
 		tr_poly_depth_mask_game = true;
 	}
-	// Pro Pinball Trilogy
-	if (!strncmp("T30701D", reios_product_number, 7)
-		// Demolition Racer
-		|| !strncmp("T15112N", reios_product_number, 7)
-		// Star Wars - Episode I - Racer (United Kingdom)
-		|| !strncmp("T23001D", reios_product_number, 7)
-		// Star Wars - Episode I - Racer (USA)
-		|| !strncmp("T23001N", reios_product_number, 7)
-		// Record of Lodoss War (EU)
-		|| !strncmp("T7012D", reios_product_number, 6)
-		// Record of Lodoss War (USA)
-		|| !strncmp("T40218N", reios_product_number, 7)
-		// Surf Rocket Racers
-		|| !strncmp("T40216N", reios_product_number, 7))
+	// Demolition Racer
+	if (!strncmp("T15112N", reios_product_number, 7))
 	{
 		printf("Enabling Dynarec safe mode for game %s\n", reios_product_number);
 		settings.dynarec.safemode = 1;

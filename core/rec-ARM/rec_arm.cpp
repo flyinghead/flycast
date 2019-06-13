@@ -1698,13 +1698,14 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 			CALL((u32)UpdateSR);
 			break;
 		}
-
+		/* TODO Update this to use quotient sign as well
 		case shop_div32p2:
 		{
 			CMP(reg.mapg(op->rs3), 0);
 			SUB(reg.mapg(op->rd), reg.mapg(op->rs1), reg.mapg(op->rs2), CC_EQ);
 		}
 		break;
+		*/
 
 		case shop_test:
 		case shop_seteq:
