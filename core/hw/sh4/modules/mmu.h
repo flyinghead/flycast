@@ -95,8 +95,6 @@ void DoMMUException(u32 addr, u32 error_code, u32 access_type);
 	
 	bool mmu_TranslateSQW(u32 addr, u32* mapped);
 
-	u16 DYNACALL mmu_IReadMem16NoEx(u32 adr, u32 *exception_occurred);
-
 	template<typename T>
 	T DYNACALL mmu_ReadMemNoEx(u32 adr, u32 *exception_occurred)
 	{

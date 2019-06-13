@@ -1059,18 +1059,8 @@ bool dec_DecodeBlock(RuntimeBlockInfo* rbi,u32 max_cycles)
 					}
 					*/
 
-					u32 op;
-					if (!mmu_enabled())
-						op = IReadMem16(state.cpu.rpc);
-#ifndef NO_MMU
-					else
-					{
-						u32 exception_occurred;
-						op = mmu_IReadMem16NoEx(state.cpu.rpc, &exception_occurred);
-						if (exception_occurred)
-							return false;
-					}
-#endif
+					u32 op = IReadMem16(state.cpu.rpc);
+
 					if (op==0 && state.cpu.is_delayslot)
 					{
 						printf("Delayslot 0 hack!\n");

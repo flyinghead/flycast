@@ -756,23 +756,6 @@ void DYNACALL mmu_WriteMem(u32 adr, T data)
 	_vmem_writet<T>(addr, data);
 }
 
-u16 DYNACALL mmu_IReadMem16NoEx(u32 vaddr, u32 *exception_occurred)
-{
-	u32 addr;
-	u32 rv = mmu_instruction_translation(vaddr, addr);
-	if (rv != MMU_ERROR_NONE)
-	{
-		DoMMUException(vaddr, rv, MMU_TT_IREAD);
-		*exception_occurred = 1;
-		return 0;
-	}
-	else
-	{
-		*exception_occurred = 0;
-		return _vmem_ReadMem16(addr);
-	}
-}
-
 bool mmu_TranslateSQW(u32 adr, u32* out)
 {
 	if (!settings.dreamcast.FullMMU)
