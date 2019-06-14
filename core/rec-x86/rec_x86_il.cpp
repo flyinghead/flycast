@@ -12,20 +12,31 @@ void ngen_Bin(shil_opcode* op,x86_opcode_class natop,bool has_imm=true,bool has_
 	verify(reg.IsAllocg(op->rs1._reg));
 	verify(reg.IsAllocg(op->rd._reg));
 
-	if (has_wb && reg.mapg(op->rs1)!=reg.mapg(op->rd))
+	x86_reg rs2;
+	if (op->rs2.is_r32i())
 	{
-		x86e->Emit(op_mov32,reg.mapg(op->rd),reg.mapg(op->rs1));
+		if (has_wb && reg.mapg(op->rs2) == reg.mapg(op->rd))
+		{
+			x86e->Emit(op_mov32, EAX, reg.mapg(op->rs2));
+			rs2 = EAX;
+		}
+		else
+		{
+			rs2 = reg.mapg(op->rs2);
+		}
+	}
+	if (has_wb && reg.mapg(op->rs1) != reg.mapg(op->rd))
+	{
+		x86e->Emit(op_mov32, reg.mapg(op->rd), reg.mapg(op->rs1));
 	}
 
 	if (has_imm && op->rs2.is_imm())
 	{
-		x86e->Emit(natop,has_wb?reg.mapg(op->rd):reg.mapg(op->rs1),op->rs2._imm);
+		x86e->Emit(natop, has_wb ? reg.mapg(op->rd) : reg.mapg(op->rs1), op->rs2._imm);
 	}
 	else if (op->rs2.is_r32i())
 	{
-		verify(reg.IsAllocg(op->rs2._reg));
-		
-		x86e->Emit(natop,has_wb?reg.mapg(op->rd):reg.mapg(op->rs1),reg.mapg(op->rs2));
+		x86e->Emit(natop, has_wb ? reg.mapg(op->rd) : reg.mapg(op->rs1), rs2);
 	}
 	else
 	{
@@ -37,21 +48,37 @@ void ngen_Bin(shil_opcode* op,x86_opcode_class natop,bool has_imm=true,bool has_
 void ngen_fp_bin(shil_opcode* op,x86_opcode_class natop)
 {
 	verify(reg.IsAllocf(op->rs1));
-	verify(reg.IsAllocf(op->rs2));
 	verify(reg.IsAllocf(op->rd));
 
-	if (op->rd._reg!=op->rs1._reg)
-		x86e->Emit(op_movss,reg.mapf(op->rd),reg.mapf(op->rs1));
-
+	x86_reg rs2;
 	if (op->rs2.is_r32f())
 	{
-		x86e->Emit(natop,reg.mapf(op->rd),reg.mapf(op->rs2));
+		if (reg.mapf(op->rs2) == reg.mapf(op->rd))
+		{
+			x86e->Emit(op_movss, XMM0, reg.mapf(op->rs2));
+			rs2 = XMM0;
+		}
+		else
+		{
+			rs2 = reg.mapf(op->rs2);
+		}
+	}
+	else if (op->rs2.is_imm())
+	{
+		//x86e->Emit(op_movss, XMM0, x86_ptr(&reinterpret_cast<f32&>(op->rs2._imm)));
+		x86e->Emit(op_mov32, EAX, op->rs2._imm);
+		x86e->Emit(op_movd_xmm_from_r32, XMM0, EAX);
+		rs2 = XMM0;
 	}
 	else
 	{
 		printf("%d \n",op->rs2.type);
 		verify(false);
 	}
+	if (op->rd._reg != op->rs1._reg)
+		x86e->Emit(op_movss, reg.mapf(op->rd), reg.mapf(op->rs1));
+
+	x86e->Emit(natop, reg.mapf(op->rd), rs2);
 //	verify(has_wb);
 		//x86e->Emit(op_movss,op->rd.reg_ptr(),XMM0);
 }
@@ -106,7 +133,7 @@ void ngen_CC_Param(shil_opcode* op,shil_param* par,CanonicalParamType tp)
 			verify(par->is_reg());
 
 			x86e->Emit(op_push,(unat)par->reg_ptr());
-
+/* FIXME wtf is this?
 			for (u32 ri=0; ri<(*par).count(); ri++)
 			{
 				if (reg.IsAllocf(*par,ri))
@@ -119,7 +146,7 @@ void ngen_CC_Param(shil_opcode* op,shil_param* par,CanonicalParamType tp)
 					verify(!reg.IsAllocAny((Sh4RegType)(par->_reg+ri)));
 				}
 			}
-
+*/
 			
 			ngen_CC_BytesPushed+=4;
 			break;
@@ -224,36 +251,37 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 		{
 		case shop_readm:
 			{
-				void* fuct=0;
-				bool isram=false;
+				void* fuct = 0;
+				bool isram = false;
 				verify(op->rs1.is_imm() || op->rs1.is_r32i());
 	
 				verify(op->rs1.is_imm() || reg.IsAllocg(op->rs1));
 				verify(op->rs3.is_null() || op->rs3.is_imm() || reg.IsAllocg(op->rs3));
 				
-				for (u32 i=0;i<op->rd.count();i++)
+				for (u32 i = 0; i < op->rd.count(); i++)
 				{
-					verify(reg.IsAllocAny((Sh4RegType)(op->rd._reg+i)));
+					verify(reg.IsAllocAny((Sh4RegType)(op->rd._reg + i)));
 				}
 
-				u32 size=op->flags&0x7f;
+				u32 size = op->flags & 0x7f;
 
 				if (op->rs1.is_imm())
 				{
-					if (prof.enable) x86e->Emit(op_add32,&prof.counters.shil.readm_const,1);
-					void* ptr=_vmem_read_const(op->rs1._imm,isram,size);
+					if (prof.enable) x86e->Emit(op_add32, &prof.counters.shil.readm_const, 1);
+					void* ptr = _vmem_read_const(op->rs1._imm, isram, size);
 					if (isram)
 					{
 #ifdef PROF2
-						x86e->Emit(op_add32,&srmlu,1);
+						x86e->Emit(op_add32, &srmlu, 1);
 #endif
-						if (size==1)
-							x86e->Emit(op_movsx8to32,EAX,ptr);
-						else if (size==2)
-							x86e->Emit(op_movsx16to32,EAX,ptr);
-						else if (size==4)
+						if (size == 1)
+							x86e->Emit(op_movsx8to32, EAX, ptr);
+						else if (size == 2)
+							x86e->Emit(op_movsx16to32, EAX, ptr);
+						else if (size == 4)
 						{
-							x86e->Emit(op_mov32,EAX,ptr);
+							x86e->Emit(op_mov32, EAX, ptr);
+#if 0
 							//this is a pretty good sieve, but its not perfect.
 							//whitelisting is much better, but requires side channel data
 							//Page locking w/ invalidation is another strategy we can try (leads to 'excessive'
@@ -282,6 +310,7 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 #endif
 								}
 							}
+#endif
 						}
 						else if (size==8)
 						{
@@ -321,146 +350,6 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 					}
 					else
 						if (prof.enable) x86e->Emit(op_add32,&prof.counters.shil.readm_reg,1);
-#if 0
-					if (op->flags==0x431 || op->flags==0x440)
-					{
-						verify(!reg.IsAllocAny(op->rd));
-						verify(!reg.IsAllocAny((Sh4RegType)(op->rd._reg+1)));
-						verify(!reg.IsAllocAny((Sh4RegType)(op->rd._reg+2)));
-						verify(!reg.IsAllocAny((Sh4RegType)(op->rd._reg+3)));
-
-						x86e->Emit(op_add32,&vrml_431,1);
-						x86e->Emit(op_mov32,EDX,ECX);
-						x86e->Emit(op_and32,EDX,0x1FFFFFFF);
-						x86e->Emit(op_movups,XMM0,x86_mrm(EDX,x86_ptr(virt_ram_base)));
-						x86e->Emit(op_movaps,op->rd.reg_ptr(),XMM0);
-
-						if (op->flags==0x431)
-							x86e->Emit(op_mov32,op->rd.reg_ptr()+3,0x3f800000);
-						else if (op->flags==0x430)
-							x86e->Emit(op_mov32,op->rd.reg_ptr()+3,0);
-
-						break;
-					}
-					
-					bool vect=op->flags&0x80;
-
-					if (vect)
-					{
-						u32 sz=size;
-						//x86e->Emit(op_add32,&cvld,sz/(op->flags&0x100?8:4));
-						x86e->Emit(op_add32,&vrml_431,sz/(op->flags&0x100?8:4)*2);
-						verify(sz==8 || sz==12 || sz==16 || sz==32 || sz==64);
-
-						void** vmap,** funct;
-						_vmem_get_ptrs(4,false,&vmap,&funct);
-						x86e->Emit(op_mov32,EAX,ECX);
-						x86e->Emit(op_shr32,EAX,24);
-						x86e->Emit(op_mov32,EAX,x86_mrm(EAX,sib_scale_4,vmap));
-
-						x86e->Emit(op_test32,EAX,~0x7F);
-						x86e->Emit(op_jz,x86_ptr_imm::create(op->flags));
-						x86e->Emit(op_xchg32,ECX,EAX);
-						x86e->Emit(op_shl32,EAX,ECX);
-						x86e->Emit(op_shr32,EAX,ECX);
-						x86e->Emit(op_and32,ECX,~0x7F);
-
-						int i=0;
-						for (i=0;(i+16)<=sz;i+=16)
-						{
-							x86e->Emit(op_movups,XMM0,x86_mrm(EAX,ECX,sib_scale_1,x86_ptr::create(i)));
-							if (op->rd._reg&3)
-								x86e->Emit(op_movups,op->rd.reg_ptr()+i/4,XMM0);
-							else
-								x86e->Emit(op_movaps,op->rd.reg_ptr()+i/4,XMM0);
-						}
-						for (;(i+8)<=sz;i+=8)
-						{
-							x86e->Emit(op_movlps,XMM0,x86_mrm(EAX,ECX,sib_scale_1,x86_ptr::create(i)));
-							x86e->Emit(op_movlps,op->rd.reg_ptr()+i/4,XMM0);
-						}
-						for (;(i+4)<=sz;i+=4)
-						{
-							x86e->Emit(op_movss,XMM0,x86_mrm(EAX,ECX,sib_scale_1,x86_ptr::create(i)));
-							x86e->Emit(op_movss,op->rd.reg_ptr()+i/4,XMM0);
-						}
-
-						verify(i==sz);
-
-						break;
-
-					}
-					
-					if (optimise)
-					{
-						if (staging || op->flags&0x80000000)
-						{
-
-							//opt disabled for now
-							op->flags|=0x80000000;
-
-							x86_Label* _ram=x86e->CreateLabel(false,8);
-							void** vmap,** funct;
-							_vmem_get_ptrs(4,false,&vmap,&funct);
-							x86e->Emit(op_mov32,EAX,ECX);
-							x86e->Emit(op_shr32,EAX,24);
-							x86e->Emit(op_mov32,EAX,x86_mrm(EAX,sib_scale_4,vmap));
-
-							x86e->Emit(op_test32,EAX,~0x7F);
-							x86e->Emit(op_jnz,_ram);
-
-							if (staging)
-							{
-								x86e->Emit(op_and32,&op->flags,~0x80000000);
-							}
-							else
-							{
-								//x86e->Emit(op_int3);
-							}
-
-							x86e->MarkLabel(_ram);
-						}
-
-						if ( !staging)
-						{
-							if (op->flags & 0x80000000)
-							{
-#ifdef PROF2
-								x86e->Emit(op_add32,&rmlu,1);
-#endif
-								if (true)
-								{
-									u32 sz=op->flags&0x7f;
-									if (sz!=8)
-									{
-										x86e->Emit(op_mov32,EDX,ECX);
-										x86e->Emit(op_and32,EDX,0x1FFFFFFF);
-										if (sz==1)
-										{
-											x86e->Emit(op_movsx8to32,EAX,x86_mrm(EDX,x86_ptr(virt_ram_base)));
-										}
-										else if (sz==2)
-										{
-											x86e->Emit(op_movsx16to32,EAX,x86_mrm(EDX,x86_ptr(virt_ram_base)));
-										}
-										else if (sz==4)
-										{
-											x86e->Emit(op_mov32,EAX,x86_mrm(EDX,x86_ptr(virt_ram_base)));
-										}
-										isram=true;
-									}
-								}
-
-							}
-#ifdef PROF2
-							else
-							{
-								x86e->Emit(op_add32,&rmls,1);
-							}
-#endif
-						}
-					}
-#endif
 #if 1
 					//new code ...
 					//yay ...
@@ -514,21 +403,21 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 						switch(size)
 						{
 						case 1:
-							if (!fuct) fuct=reinterpret_cast<void*>(&ReadMem8);
+							if (!fuct) fuct=reinterpret_cast<void*>(ReadMem8);
 							x86e->Emit(op_call,x86_ptr_imm(fuct));
 							x86e->Emit(op_movsx8to32,EAX,EAX);
 							break;
 						case 2:
-							if (!fuct) fuct=reinterpret_cast<void*>(&ReadMem16);
+							if (!fuct) fuct=reinterpret_cast<void*>(ReadMem16);
 							x86e->Emit(op_call,x86_ptr_imm(fuct));
 							x86e->Emit(op_movsx16to32,EAX,EAX);
 							break;
 						case 4:
-							if (!fuct) fuct=reinterpret_cast<void*>(&ReadMem32);
+							if (!fuct) fuct=reinterpret_cast<void*>(ReadMem32);
 							x86e->Emit(op_call,x86_ptr_imm(fuct));
 							break;
 						case 8:
-							if (!fuct) fuct=reinterpret_cast<void*>(&ReadMem64);
+							if (!fuct) fuct=reinterpret_cast<void*>(ReadMem64);
 							x86e->Emit(op_call,x86_ptr_imm(fuct));
 							break;
 						default:
@@ -563,7 +452,7 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 				u32 size=op->flags&0x7f;
 				verify(reg.IsAllocg(op->rs1) || op->rs1.is_imm());
 				
-				verify(op->rs2.is_r32() || (op->rs2.count()==2 && reg.IsAllocf(op->rs2,0) && reg.IsAllocf(op->rs2,1)));
+				verify(op->rs2.is_imm() || op->rs2.is_r32() || (op->rs2.count()==2 && reg.IsAllocf(op->rs2,0) && reg.IsAllocf(op->rs2,1)));
 
 				if (op->rs1.is_imm() && size<=4)
 				{
@@ -572,21 +461,25 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 					void* ptr=_vmem_read_const(op->rs1._imm,isram,size);
 					if (isram)
 					{
-						if (size<=2)
-							x86e->Emit(op_mov32,EAX,reg.mapg(op->rs2));
-						if (size==1)
-							x86e->Emit(op_mov8,ptr,EAX);
-						else if (size==2)
-							x86e->Emit(op_mov16,ptr,EAX);
-						else if (size==4)
+						if (op->rs2.is_imm())
+							x86e->Emit(op_mov32, EAX, op->rs2._imm);
+						else if (size <= 2)
+							x86e->Emit(op_mov32, EAX, reg.mapg(op->rs2));
+						if (size == 1)
+							x86e->Emit(op_mov8, ptr, EAX);
+						else if (size == 2)
+							x86e->Emit(op_mov16, ptr, EAX);
+						else if (op->rs2.is_imm())
+							x86e->Emit(op_mov32, ptr, EAX);
+						else if (size == 4)
 						{
 							if (op->rs2.is_r32i())
-								x86e->Emit(op_mov32,ptr,reg.mapg(op->rs2));
+								x86e->Emit(op_mov32, ptr, reg.mapg(op->rs2));
 							else
-								x86e->Emit(op_movss,ptr,reg.mapf(op->rs2));
+								x86e->Emit(op_movss, ptr, reg.mapf(op->rs2));
 						}
 
-						else if (size==8)
+						else if (size == 8)
 						{
 							die("A");
 						}
@@ -622,210 +515,32 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 				//new code ...
 				//yay ...
 
-				int Lsz=0;
-				int sz=size;
-				if (sz==2) Lsz=1;
-				if (sz==4 && op->rs2.is_r32i()) Lsz=2;
-				if (sz==4 && op->rs2.is_r32f()) Lsz=3;
-				if (sz==8) Lsz=4;
+				int Lsz = 0;
+				int sz = size;
+				if (sz == 2) Lsz = 1;
+				if (sz == 4 && (op->rs2.is_r32i() || op->rs2.is_imm())) Lsz = 2;
+				if (sz == 4 && op->rs2.is_r32f()) Lsz = 3;
+				if (sz == 8) Lsz = 4;
 
 				//x86e->Emit(op_int3);
 				//if (Lsz==0)
 				{
-
-					if (Lsz<=2)
-						x86e->Emit(op_mov32,EDX,reg.mapg(op->rs2));
+					if (op->rs2.is_imm())
+						x86e->Emit(op_mov32, EDX, op->rs2._imm);
+					else if (Lsz <= 2)
+						x86e->Emit(op_mov32, EDX, reg.mapg(op->rs2));
 					else 
 					{
-						x86e->Emit(op_movss,XMM0,reg.mapfv(op->rs2,0));
-						if (Lsz==4)
-							x86e->Emit(op_movss,XMM1,reg.mapfv(op->rs2,1));
+						x86e->Emit(op_movss, XMM0, reg.mapfv(op->rs2, 0));
+						if (Lsz == 4)
+							x86e->Emit(op_movss, XMM1, reg.mapfv(op->rs2, 1));
 					}
 
 					reg.FreezeXMM();
-					x86e->Emit(op_call,x86_ptr_imm(mem_code[2][1][Lsz]));
+					x86e->Emit(op_call, x86_ptr_imm(mem_code[2][1][Lsz]));
 					reg.ThawXMM();
 
 					break;
-				}
-#endif
-#ifdef OPTIMIZATION_GRAVEYARD
-				die("woohoo");
-				/*
-				if (size==8 && optimise)
-				{
-					verify(!reg.IsAllocAny(op->rd));
-					verify(!reg.IsAllocAny((Sh4RegType)(op->rd._reg+1)));
-
-					x86e->Emit(op_mov32,EDX,ECX);
-					x86e->Emit(op_and32,EDX,0x1FFFFFFF);
-					x86e->Emit(op_movlps,XMM0,op->rs2.reg_ptr());
-					x86e->Emit(op_movlps,x86_mrm(EDX,x86_ptr(virt_ram_base)),XMM0);
-					break;
-				}*/
-
-				bool vect=op->flags&0x80;
-
-				if (!vect && size<=8)
-				{
-					if (size!=8)
-					{
-						if (reg.IsAllocg(op->rs2))
-						{
-							x86e->Emit(op_mov32,EDX,reg.mapg(op->rs2));
-						}
-						else if (reg.IsAllocf(op->rs2))
-						{
-							x86e->Emit(op_movd_xmm_to_r32,EDX,reg.mapf(op->rs2));
-						}
-						else
-						{
-							die("Must not happen\n");
-						}
-					}
-					else
-					{
-						verify(op->rs2.count()==2 && reg.IsAllocf(op->rs2,0) && reg.IsAllocf(op->rs2,1));
-						
-						x86e->Emit(op_sub32,ESP,8);
-						//[ESP+4]=rs2[1]//-4 +8= +4
-						//[ESP+0]=rs2[0]//-8 +8 = 0
-						x86e->Emit(op_movss,x86_mrm(ESP,x86_ptr::create(+4)),reg.mapfv(op->rs2,1));
-						x86e->Emit(op_movss,x86_mrm(ESP,x86_ptr::create(-0)),reg.mapfv(op->rs2,0));
-					}
-				
-
-
-					if (optimise)
-					{
-						if (staging || op->flags&0x80000000)
-						{
-
-							//opt disabled for now
-							op->flags|=0x80000000;
-							x86_Label* _ram=x86e->CreateLabel(false,8);
-							void** vmap,** funct;
-							_vmem_get_ptrs(4,false,&vmap,&funct);
-							x86e->Emit(op_mov32,EAX,ECX);
-							x86e->Emit(op_shr32,EAX,24);
-							x86e->Emit(op_mov32,EAX,x86_mrm(EAX,sib_scale_4,vmap));
-
-							x86e->Emit(op_test32,EAX,~0x7F);
-							x86e->Emit(op_jnz,_ram);
-
-							if (staging)
-							{
-								x86e->Emit(op_and32,&op->flags,~0x80000000);
-							}
-							else
-							{
-								//x86e->Emit(op_int3);
-							}
-
-							x86e->MarkLabel(_ram);
-						}
-
-
-						if (!staging)
-						{
-							if (op->flags & 0x80000000)
-							{
-#ifdef PROF2
-								x86e->Emit(op_add32,&wmlu,1);
-#endif
-								if (false && size<4)
-								{
-									x86e->Emit(op_mov32,EAX,ECX);
-									x86e->Emit(op_and32,EAX,0x1FFFFFFF);
-
-									if (size==1)
-									{
-										x86e->Emit(op_mov8,x86_mrm(EAX,x86_ptr(virt_ram_base)),EDX);
-									}
-									else if (size==2)
-									{
-										x86e->Emit(op_mov16,x86_mrm(EAX,x86_ptr(virt_ram_base)),EDX);
-									}
-									else if (size==4)
-									{
-										x86e->Emit(op_mov32,x86_mrm(EAX,x86_ptr(virt_ram_base)),EAX);
-									}
-									break;
-								}
-
-							}
-#ifdef PROF2
-							else
-								x86e->Emit(op_add32,&wmls,1);
-#endif
-						}
-					}
-				}
-
-				if (vect)
-				{
-					u32 sz=op->flags&0x7f;
-					x86e->Emit(op_add32,&vrml_431,sz/(op->flags&0x100?8:4)*5);
-					verify(sz==8 || sz==12 || sz==16 || sz==32 || sz==64);
-
-					void** vmap,** funct;
-					_vmem_get_ptrs(4,false,&vmap,&funct);
-					x86e->Emit(op_mov32,EAX,ECX);
-					x86e->Emit(op_shr32,EAX,24);
-					x86e->Emit(op_mov32,EAX,x86_mrm(EAX,sib_scale_4,vmap));
-
-					x86e->Emit(op_test32,EAX,~0x7F);
-					x86e->Emit(op_jz,x86_ptr_imm::create(op->flags));
-					x86e->Emit(op_xchg32,ECX,EAX);
-					x86e->Emit(op_shl32,EAX,ECX);
-					x86e->Emit(op_shr32,EAX,ECX);
-					x86e->Emit(op_and32,ECX,~0x7F);
-
-					u32 i=0;
-					for (; (i+16)<=sz; i+=16)
-					{
-						if (op->rs2._reg&3)
-							x86e->Emit(op_movups,XMM0,op->rs2.reg_ptr()+i/4);
-						else
-							x86e->Emit(op_movaps,XMM0,op->rs2.reg_ptr()+i/4);
-
-						x86e->Emit(op_movups,x86_mrm(EAX,ECX,sib_scale_1,x86_ptr::create(i)),XMM0);
-					}
-					for (; (i+8)<=sz; i+=8)
-					{
-						x86e->Emit(op_movlps,XMM0,op->rs2.reg_ptr()+i/4);
-						x86e->Emit(op_movlps,x86_mrm(EAX,ECX,sib_scale_1,x86_ptr::create(i)),XMM0);
-					}
-					for (; (i+4)<=sz; i+=4)
-					{
-						x86e->Emit(op_movss,XMM0,op->rs2.reg_ptr()+i/4);
-						x86e->Emit(op_movss,x86_mrm(EAX,ECX,sib_scale_1,x86_ptr::create(i)),XMM0);
-					}
-
-					verify(i==sz);
-				}
-				else
-				{
-
-					reg.FreezeXMM();
-					switch(size)
-					{
-					case 1:
-						x86e->Emit(op_call,x86_ptr_imm(&WriteMem8));
-						break;
-					case 2:
-						x86e->Emit(op_call,x86_ptr_imm(&WriteMem16));
-						break;
-					case 4:
-						x86e->Emit(op_call,x86_ptr_imm(&WriteMem32));
-						break;
-					case 8:
-						x86e->Emit(op_call,x86_ptr_imm(&WriteMem64));
-						break;
-					default:
-						verify(false);
-					}
-					reg.ThawXMM();
 				}
 #endif
 			}
@@ -903,14 +618,12 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 					if (op->rd.is_r32i())
 					{
 						x86e->Emit(op_mov32,reg.mapg(op->rd),op->rs1._imm);
-				//		x86e->Emit(op_add32,&rdmt[4],1);
 					}
 					else
 					{
 						//verify(!reg.IsAllocAny(op->rd));
 						x86e->Emit(op_mov32,EAX,op->rs1._imm);
 						x86e->Emit(op_movd_xmm_from_r32,reg.mapf(op->rd),EAX);
-					//	x86e->Emit(op_add32,&rdmt[5],1);
 					}
 				}
 				else if (op->rs1.is_r32())
@@ -922,7 +635,7 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 					
 					if (reg.IsAllocf(op->rs1))
 						type|=2;
-				//	x86e->Emit(op_add32,&rdmt[type],1);
+
 					switch(type)
 					{
 					case 0: //reg=reg
@@ -964,7 +677,7 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 		case shop_xor:	ngen_Bin(op,op_xor32);		break;
 		case shop_add:	ngen_Bin(op,op_add32);		break;
 		case shop_sub:	ngen_Bin(op,op_sub32);		break;
-		case shop_ror:	ngen_Bin(op,op_ror32);	break;
+		case shop_ror:	ngen_Bin(op,op_ror32);		break;
 
 		case shop_shl:
 		case shop_shr:
@@ -978,9 +691,13 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 		case shop_rocr:
 		case shop_rocl:
 			{
-				x86e->Emit(op_sar32,reg.mapg(op->rs2),1);
-				x86e->Emit(op->op==shop_rocr?op_rcr32:op_rcl32,reg.mapg(op->rd),1);
-				x86e->Emit(op_rcl32,reg.mapg(op->rd2),1);
+				x86e->Emit(op_mov32, EAX, reg.mapg(op->rs2));
+				x86e->Emit(op_sar32, EAX, 1);
+				if (reg.mapg(op->rd) != reg.mapg(op->rs1))
+					x86e->Emit(op_mov32, reg.mapg(op->rd), reg.mapg(op->rs1));
+				x86e->Emit(op->op == shop_rocr ? op_rcr32 : op_rcl32, reg.mapg(op->rd), 1);
+				x86e->Emit(op_mov32, reg.mapg(op->rd2), 0);
+				x86e->Emit(op_rcl32, reg.mapg(op->rd2), 1);
 			}
 			break;
 
@@ -1001,11 +718,43 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 
 		case shop_adc:
 			{
-				x86e->Emit(op_sar32,reg.mapg(op->rs3),1);
-				if (reg.mapg(op->rd)!=reg.mapg(op->rs1))
-					x86e->Emit(op_mov32,reg.mapg(op->rd),reg.mapg(op->rs1));
-				x86e->Emit(op_adc32,reg.mapg(op->rd),reg.mapg(op->rs2));
-				x86e->Emit(op_rcl32,reg.mapg(op->rd2),1);
+				x86e->Emit(op_mov32, EAX, reg.mapg(op->rs3));
+				x86e->Emit(op_sar32, EAX, 1);
+				x86_reg rs1;
+				if (op->rs1.is_imm())
+				{
+					rs1 = ECX;
+					x86e->Emit(op_mov32, ECX, op->rs1._imm);
+				}
+				else
+				{
+					rs1 = reg.mapg(op->rs1);
+				}
+				x86_reg rs2;
+				if (op->rs2.is_imm())
+				{
+					rs2 = EDX;
+					x86e->Emit(op_mov32, EDX, op->rs2._imm);
+				}
+				else
+				{
+					rs2 = reg.mapg(op->rs2);
+				}
+				if (reg.mapg(op->rd) != rs1)
+				{
+					if (reg.mapg(op->rd) == rs2)
+					{
+						// Invert the operands
+						rs2 = rs1;
+					}
+					else
+					{
+						x86e->Emit(op_mov32, reg.mapg(op->rd), rs1);
+					}
+				}
+				x86e->Emit(op_adc32, reg.mapg(op->rd), rs2);
+				x86e->Emit(op_mov32, reg.mapg(op->rd2), 0);
+				x86e->Emit(op_rcl32, reg.mapg(op->rd2), 1);
 			}
 			break;
 
@@ -1013,15 +762,19 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 		case shop_shad:
 		case shop_shld:
 			{
-				verify(reg.IsAllocg(op->rs1));
 				verify(op->rs2.is_imm() || reg.IsAllocg(op->rs2));
 				verify(reg.IsAllocg(op->rd));
 
-				x86_opcode_class sl32=op->op==shop_shad?op_sal32:op_shl32;
-				x86_opcode_class sr32=op->op==shop_shad?op_sar32:op_shr32;
+				x86_opcode_class sl32 = op->op == shop_shad ? op_sal32 : op_shl32;
+				x86_opcode_class sr32 = op->op == shop_shad ? op_sar32 : op_shr32;
 
-				if (reg.mapg(op->rd)!=reg.mapg(op->rs1))
-					x86e->Emit(op_mov32,reg.mapg(op->rd),reg.mapg(op->rs1));
+				if (op->rs1.is_imm())
+					x86e->Emit(op_mov32, reg.mapg(op->rd), op->rs1._imm);
+				else if (reg.mapg(op->rd) != reg.mapg(op->rs1))
+				{
+					verify(reg.mapg(op->rs2) != reg.mapg(op->rd));
+					x86e->Emit(op_mov32, reg.mapg(op->rd), reg.mapg(op->rs1));
+				}
 
 				if (op->rs2.is_imm())
 				{
@@ -1080,7 +833,6 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 			}
 			break;
 
-
 		case shop_neg:	ngen_Unary(op,op_neg32);	break;
 		case shop_not:	ngen_Unary(op,op_not32);	break;
 
@@ -1120,7 +872,6 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 			}
 			break;
 
-
 		case shop_mul_u16:
 		case shop_mul_s16:
 		case shop_mul_i32:
@@ -1128,7 +879,6 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 		case shop_mul_s64:
 			{
 				verify(reg.IsAllocg(op->rs1));
-				verify(reg.IsAllocg(op->rs2));
 				verify(reg.IsAllocg(op->rd));
 
 				x86_opcode_class opdt[]={op_movzx16to32,op_movsx16to32,op_mov32,op_mov32,op_mov32};
@@ -1138,7 +888,21 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 				u32 opofs=op->op-shop_mul_u16;
 
 				x86e->Emit(opdt[opofs],EAX,reg.mapg(op->rs1));
-				x86e->Emit(opdt[opofs],EDX,reg.mapg(op->rs2));
+				if (op->rs2.is_reg())
+					x86e->Emit(opdt[opofs], EDX, reg.mapg(op->rs2));
+				else
+				{
+					verify(op->rs2.is_imm());
+					if (opofs <= 2)
+					{
+						x86e->Emit(op_mov32, EDX, op->rs2._imm);
+						x86e->Emit(opdt[opofs], EDX, EDX);
+					}
+					else
+					{
+						x86e->Emit(opdt[opofs], EDX, op->rs2._imm);
+					}
+				}
 				
 				x86e->Emit(opmt[opofs],EDX);
 				x86e->Emit(op_mov32,reg.mapg(op->rd),EAX);
@@ -1148,17 +912,12 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 			}
 			break;
 
-
 			//fpu
 		case shop_fadd:
 		case shop_fsub:
 		case shop_fmul:
 		case shop_fdiv:
 			{
-				verify(reg.IsAllocf(op->rs1));
-				verify(reg.IsAllocf(op->rs2));
-				verify(reg.IsAllocf(op->rd));
-
 				const x86_opcode_class opcds[]= { op_addss, op_subss, op_mulss, op_divss };
 				ngen_fp_bin(op,opcds[op->op-shop_fadd]);
 			}
@@ -1171,8 +930,9 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 
 				static DECL_ALIGN(16) u32 AND_ABS_MASK[4] = { 0x7FFFFFFF, 0x7FFFFFFF, 0x7FFFFFFF, 0x7FFFFFFF };
 
-				verify(op->rd._reg==op->rs1._reg);
-				x86e->Emit(op_pand,reg.mapf(op->rd),AND_ABS_MASK);
+				if (op->rd._reg != op->rs1._reg)
+					x86e->Emit(op_movss, reg.mapf(op->rd), reg.mapf(op->rs1));
+				x86e->Emit(op_pand, reg.mapf(op->rd), AND_ABS_MASK);
 			}
 			break;
 
@@ -1183,12 +943,13 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 
 				static DECL_ALIGN(16) u32 XOR_NEG_MASK[4] = { 0x80000000, 0x80000000, 0x80000000, 0x80000000 };
 
-				verify(op->rd._reg==op->rs1._reg);
-				x86e->Emit(op_pxor,reg.mapf(op->rd),XOR_NEG_MASK);
+				if (op->rd._reg != op->rs1._reg)
+					x86e->Emit(op_movss, reg.mapf(op->rd), reg.mapf(op->rs1));
+				x86e->Emit(op_pxor, reg.mapf(op->rd), XOR_NEG_MASK);
 			}
 			break;
 
-		case shop_fsca:
+		case shop_fsca:	// FIXME the canonical version doesn't work because components of the resulting vector are allocated (mapfv)
 			{
 				verify(op->rs1.is_r32i());
 
@@ -1250,7 +1011,7 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 				//x86e->Emit(op_movss ,op->rd.reg_ptr(),XMM0);
 			}
 			break;
-			
+
 		case shop_ftrv:
 			{
 #ifdef PROF2
@@ -1339,7 +1100,7 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 #endif
 			}
 			break;
-			
+
 		case shop_fmac:
 			{
 				verify(reg.IsAllocf(op->rs1));
@@ -1453,10 +1214,11 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 			verify(op->rs1.is_r32f());
 			verify(reg.IsAllocg(op->rd));
 			verify(reg.IsAllocf(op->rs1));
-			static f32 sse_ftrc_saturate = 2147483520.0f;           // IEEE 754: 0x4effffff
-			x86e->Emit(op_movaps, XMM0, reg.mapf(op->rs1));
-			x86e->Emit(op_minss, XMM0, &sse_ftrc_saturate);
-			x86e->Emit(op_cvttss2si, reg.mapg(op->rd), XMM0);
+
+			x86e->Emit(op_cvttss2si, reg.mapg(op->rd), reg.mapf(op->rs1));
+			x86e->Emit(op_mov32, EAX, 0x7fffffff);
+			x86e->Emit(op_cmp32, reg.mapg(op->rd), 0x7fffff80);	// 2147483520.0f
+			x86e->Emit(op_cmovge32, reg.mapg(op->rd), EAX);
 		}
 		break;
 
@@ -1525,15 +1287,8 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 #endif
 
 		default:
-#if 1 || CANONICAL_TEST
 			shil_chf[op->op](op);
 			break;
-#endif
-
-
-defaulty:
-			printf("OH CRAP %d\n",op->op);
-			verify(false);
 		}
 }
 
