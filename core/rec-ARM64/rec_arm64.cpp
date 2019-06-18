@@ -29,6 +29,7 @@
 using namespace vixl::aarch64;
 
 //#define EXPLODE_SPANS
+//#define NO_BLOCK_LINKING
 
 #include "hw/sh4/sh4_opcode_list.h"
 
@@ -154,7 +155,7 @@ void ngen_mainloop(void* v_cntx)
 
 void ngen_init()
 {
-	printf("Initializing the ARM64 dynarec\n");
+	LOGI("Initializing the ARM64 dynarec\n");
 	ngen_FailedToFindBlock = &ngen_FailedToFindBlock_nommu;
 }
 
@@ -180,17 +181,14 @@ void ngen_GetFeatures(ngen_features* dst)
 }
 
 template<typename T>
-static T ReadMemNoEx(u32 addr, u32 pc)
+static T ReadMemNoEx(u32 addr, u32, u32 pc)
 {
 #ifndef NO_MMU
 	u32 ex;
 	T rv = mmu_ReadMemNoEx<T>(addr, &ex);
 	if (ex)
 	{
-		if (pc & 1)
-			spc = pc - 1;
-		else
-			spc = pc;
+		spc = pc;
 		longjmp(jmp_env, 1);
 	}
 	return rv;
@@ -206,10 +204,7 @@ static void WriteMemNoEx(u32 addr, T data, u32 pc)
 	u32 ex = mmu_WriteMemNoEx<T>(addr, data);
 	if (ex)
 	{
-		if (pc & 1)
-			spc = pc - 1;
-		else
-			spc = pc;
+		spc = pc;
 		longjmp(jmp_env, 1);
 	}
 #endif
@@ -868,11 +863,21 @@ public:
 			case shop_mul_u64:
 			case shop_mul_s64:
 				{
+					Register reg2;
+					if (op.rs2.is_imm())
+					{
+						Mov(w0, op.rs2.imm_value());
+						reg2 = w0;
+					}
+					else
+					{
+						reg2 = regalloc.MapRegister(op.rs2);
+					}
 					const Register& rd_xreg = Register::GetXRegFromCode(regalloc.MapRegister(op.rd).GetCode());
 					if (op.op == shop_mul_u64)
-						Umull(rd_xreg, regalloc.MapRegister(op.rs1), regalloc.MapRegister(op.rs2));
+						Umull(rd_xreg, regalloc.MapRegister(op.rs1), reg2);
 					else
-						Smull(rd_xreg, regalloc.MapRegister(op.rs1), regalloc.MapRegister(op.rs2));
+						Smull(rd_xreg, regalloc.MapRegister(op.rs1), reg2);
 					const Register& rd2_xreg = Register::GetXRegFromCode(regalloc.MapRegister(op.rd2).GetCode());
 					Lsr(rd2_xreg, rd_xreg, 32);
 				}
@@ -983,7 +988,10 @@ public:
 
 			case shop_fsca:
 				Mov(x1, reinterpret_cast<uintptr_t>(&sin_table));
-				Add(x1, x1, Operand(regalloc.MapRegister(op.rs1), UXTH, 3));
+				if (op.rs1.is_reg())
+					Add(x1, x1, Operand(regalloc.MapRegister(op.rs1), UXTH, 3));
+				else
+					Add(x1, x1, Operand(op.rs1.imm_value() << 3));
 #ifdef EXPLODE_SPANS
 				Ldr(regalloc.MapVRegister(op.rd, 0), MemOperand(x1, 4, PostIndex));
 				Ldr(regalloc.MapVRegister(op.rd, 1), MemOperand(x1));
@@ -1145,13 +1153,9 @@ public:
 		return MemOperand(x28, offset);
 	}
 
-	void GenReadMemorySlow(const shil_opcode& op)
+	void GenReadMemorySlow(u32 size)
 	{
 		Instruction *start_instruction = GetCursorAddress<Instruction *>();
-		u32 size = op.flags & 0x7f;
-
-		if (mmu_enabled())
-			Mov(*call_regs[1], block->vaddr + op.guest_offs - (op.delay_slot ? 1 : 0));	// pc
 
 		switch (size)
 		{
@@ -1189,30 +1193,13 @@ public:
 			die("1..8 bytes");
 			break;
 		}
-
-		if (size != 8)
-			host_reg_to_shil_param(op.rd, w0);
-		else
-		{
-#ifdef EXPLODE_SPANS
-			verify(op.rd.count() == 2 && regalloc.IsAllocf(op.rd, 0) && regalloc.IsAllocf(op.rd, 1));
-			Fmov(regalloc.MapVRegister(op.rd, 0), w0);
-			Lsr(x0, x0, 32);
-			Fmov(regalloc.MapVRegister(op.rd, 1), w0);
-#else
-			host_reg_to_shil_param(op.rd, x0);
-#endif
-		}
 		EnsureCodeSize(start_instruction, read_memory_rewrite_size);
 	}
 
-	void GenWriteMemorySlow(const shil_opcode& op)
+	void GenWriteMemorySlow(u32 size)
 	{
 		Instruction *start_instruction = GetCursorAddress<Instruction *>();
-		if (mmu_enabled())
-			Mov(*call_regs[2], block->vaddr + op.guest_offs - (op.delay_slot ? 1 : 0));	// pc
 
-		u32 size = op.flags & 0x7f;
 		switch (size)
 		{
 		case 1:
@@ -1250,17 +1237,6 @@ public:
 		EnsureCodeSize(start_instruction, write_memory_rewrite_size);
 	}
 
-	void InitializeRewrite(RuntimeBlockInfo *block, size_t opid)
-	{
-		this->block = block;
-		// writem rewrite doesn't use regalloc
-		if (block->oplist[opid].op == shop_readm)
-		{
-			regalloc.DoAlloc(block);
-			regalloc.SetOpnum(opid);
-		}
-	}
-
 	u32 RelinkBlock(RuntimeBlockInfo *block)
 	{
 		ptrdiff_t start_offset = GetBuffer()->GetCursorOffset();
@@ -1271,19 +1247,23 @@ public:
 		case BET_StaticJump:
 		case BET_StaticCall:
 			// next_pc = block->BranchBlock;
-			if (block->pBranchBlock == NULL)
+#ifndef NO_BLOCK_LINKING
+			if (block->pBranchBlock != NULL)
+				GenBranch(block->pBranchBlock->code);
+			else
 			{
 				if (!mmu_enabled())
 					GenCallRuntime(ngen_LinkBlock_Generic_stub);
 				else
+#else
+			{
+#endif
 				{
 					Mov(w29, block->BranchBlock);
 					Str(w29, sh4_context_mem_operand(&next_pc));
 					GenBranch(*arm64_no_update);
 				}
 			}
-			else
-				GenBranch(block->pBranchBlock->code);
 			break;
 
 		case BET_Cond_0:
@@ -1303,6 +1283,7 @@ public:
 				Label branch_not_taken;
 
 				B(ne, &branch_not_taken);
+#ifndef NO_BLOCK_LINKING
 				if (block->pBranchBlock != NULL)
 					GenBranch(block->pBranchBlock->code);
 				else
@@ -1310,6 +1291,9 @@ public:
 					if (!mmu_enabled())
 						GenCallRuntime(ngen_LinkBlock_cond_Branch_stub);
 					else
+#else
+				{
+#endif
 					{
 						Mov(w29, block->BranchBlock);
 						Str(w29, sh4_context_mem_operand(&next_pc));
@@ -1319,6 +1303,7 @@ public:
 
 				Bind(&branch_not_taken);
 
+#ifndef NO_BLOCK_LINKING
 				if (block->pNextBlock != NULL)
 					GenBranch(block->pNextBlock->code);
 				else
@@ -1326,6 +1311,9 @@ public:
 					if (!mmu_enabled())
 						GenCallRuntime(ngen_LinkBlock_cond_Next_stub);
 					else
+#else
+				{
+#endif
 					{
 						Mov(w29, block->NextBlock);
 						Str(w29, sh4_context_mem_operand(&next_pc));
@@ -1408,6 +1396,7 @@ public:
 #if 0
 		if (rewrite && block != NULL)
 		{
+			LOGI("BLOCK %08x\n", block->vaddr);
 			Instruction* instr_start = (Instruction*)block->code;
 //			Instruction* instr_end = GetLabelAddress<Instruction*>(&code_end);
 			Instruction* instr_end = (Instruction*)((u8 *)block->code + block->host_code_size);
@@ -1417,7 +1406,7 @@ public:
 			Instruction* instr;
 			for (instr = instr_start; instr < instr_end; instr += kInstructionSize) {
 				decoder.Decode(instr);
-				printf("VIXL\t %p:\t%s\n",
+				LOGI("VIXL\t %p:\t%s\n",
 						   reinterpret_cast<void*>(instr),
 						   disasm.GetOutput());
 			}
@@ -1614,11 +1603,26 @@ private:
 			return;
 
 		GenMemAddr(op, call_regs[0]);
+		if (mmu_enabled())
+			Mov(*call_regs[2], block->vaddr + op.guest_offs - (op.delay_slot ? 2 : 0));	// pc
 
-		if (optimise && GenReadMemoryFast(op, opid))
-			return;
+		u32 size = op.flags & 0x7f;
+		if (!optimise || !GenReadMemoryFast(op, opid))
+			GenReadMemorySlow(size);
 
-		GenReadMemorySlow(op);
+		if (size < 8)
+			host_reg_to_shil_param(op.rd, w0);
+		else
+		{
+#ifdef EXPLODE_SPANS
+			verify(op.rd.count() == 2 && regalloc.IsAllocf(op.rd, 0) && regalloc.IsAllocf(op.rd, 1));
+			Fmov(regalloc.MapVRegister(op.rd, 0), w0);
+			Lsr(x0, x0, 32);
+			Fmov(regalloc.MapVRegister(op.rd, 1), w0);
+#else
+			Str(x0, sh4_context_mem_operand(op.rd.reg_ptr()));
+#endif
+		}
 	}
 
 	bool GenReadMemoryImmediate(const shil_opcode& op)
@@ -1650,7 +1654,7 @@ private:
 
 		if (isram)
 		{
-			Ldr(x1, reinterpret_cast<uintptr_t>(ptr));
+			Ldr(x1, reinterpret_cast<uintptr_t>(ptr));	// faster than Mov
 			if (regalloc.IsAllocAny(op.rd))
 			{
 				switch (size)
@@ -1752,7 +1756,7 @@ private:
 
 		Instruction *start_instruction = GetCursorAddress<Instruction *>();
 
-		// WARNING: the rewrite code relies on having 1-2 ops before the memory access (3 when mmu is enabled)
+		// WARNING: the rewrite code relies on having 1 or 2 ops before the memory access
 		// Update ngen_Rewrite (and perhaps read_memory_rewrite_size) if adding or removing code
 		if (!_nvmem_4gb_space())
 		{
@@ -1762,78 +1766,26 @@ private:
 		else
 		{
 			Add(x1, *call_regs64[0], sizeof(Sh4Context), LeaveFlags);
-			if (mmu_enabled())
-			{
-				u32 exception_pc = block->vaddr + op.guest_offs - (op.delay_slot ? 2 : 0);
-				Mov(w27, exception_pc & 0xFFFF);
-				Movk(w27, exception_pc >> 16, 16);
-			}
 		}
-
-		//printf("direct read memory access opid %d pc %p code addr %08x\n", opid, GetCursorAddress<void *>(), this->block->addr);
-		this->block->memory_accesses[GetCursorAddress<void *>()] = (u32)opid;
 
 		u32 size = op.flags & 0x7f;
-		if (regalloc.IsAllocAny(op.rd))
+		switch(size)
 		{
-			switch(size)
-			{
-			case 1:
-				Ldrsb(regalloc.MapRegister(op.rd), MemOperand(x28, x1));
-				break;
+		case 1:
+			Ldrsb(w0, MemOperand(x28, x1));
+			break;
 
-			case 2:
-				Ldrsh(regalloc.MapRegister(op.rd), MemOperand(x28, x1));
-				break;
+		case 2:
+			Ldrsh(w0, MemOperand(x28, x1));
+			break;
 
-			case 4:
-				if (!op.rd.is_r32f())
-					Ldr(regalloc.MapRegister(op.rd), MemOperand(x28, x1));
-				else
-					Ldr(regalloc.MapVRegister(op.rd), MemOperand(x28, x1));
-				break;
+		case 4:
+			Ldr(w0, MemOperand(x28, x1));
+			break;
 
-			case 8:
-				Ldr(x1, MemOperand(x28, x1));
-				break;
-			}
-
-			if (size == 8)
-			{
-#ifdef EXPLODE_SPANS
-				verify(op.rd.count() == 2 && regalloc.IsAllocf(op.rd, 0) && regalloc.IsAllocf(op.rd, 1));
-				Fmov(regalloc.MapVRegister(op.rd, 0), w1);
-				Lsr(x1, x1, 32);
-				Fmov(regalloc.MapVRegister(op.rd, 1), w1);
-#else
-				die("GenReadMemoryFast: size == 8 and !explode_spans");
-#endif
-			}
-		}
-		else
-		{
-			switch(size)
-			{
-			case 1:
-				Ldrsb(w1, MemOperand(x28, x1));
-				break;
-
-			case 2:
-				Ldrsh(w1, MemOperand(x28, x1));
-				break;
-
-			case 4:
-				Ldr(w1, MemOperand(x28, x1));
-				break;
-
-			case 8:
-				Ldr(x1, MemOperand(x28, x1));
-				break;
-			}
-			if (size == 8)
-				Str(x1, sh4_context_mem_operand(op.rd.reg_ptr()));
-			else
-				Str(w1, sh4_context_mem_operand(op.rd.reg_ptr()));
+		case 8:
+			Ldr(x0, MemOperand(x28, x1));
+			break;
 		}
 		EnsureCodeSize(start_instruction, read_memory_rewrite_size);
 
@@ -1846,6 +1798,8 @@ private:
 			return;
 
 		GenMemAddr(op, call_regs[0]);
+		if (mmu_enabled())
+			Mov(*call_regs[2], block->vaddr + op.guest_offs - (op.delay_slot ? 2 : 0));	// pc
 
 		u32 size = op.flags & 0x7f;
 		if (size != 8)
@@ -1865,7 +1819,7 @@ private:
 		if (optimise && GenWriteMemoryFast(op, opid))
 			return;
 
-		GenWriteMemorySlow(op);
+		GenWriteMemorySlow(size);
 	}
 
 	bool GenWriteMemoryImmediate(const shil_opcode& op)
@@ -1877,7 +1831,7 @@ private:
 		u32 addr = op.rs1._imm;
 		if (mmu_enabled())
 		{
-			if ((addr >> 12) != (block->vaddr >> 12))
+			if ((addr >> 12) != (block->vaddr >> 12) && ((addr >> 12) != ((block->vaddr + block->guest_opcodes * 2 - 1) >> 12)))
 				// When full mmu is on, only consider addresses in the same 4k page
 				return false;
 			u32 paddr;
@@ -1933,10 +1887,7 @@ private:
 				break;
 
 			case 4:
-				if (op.rs2.is_r32f())
-					Str(reg2, MemOperand(x1));
-				else
-					Str(reg2, MemOperand(x1));
+				Str(reg2, MemOperand(x1));
 				break;
 
 			default:
@@ -1982,7 +1933,7 @@ private:
 
 		Instruction *start_instruction = GetCursorAddress<Instruction *>();
 
-		// WARNING: the rewrite code relies on having 1-2 ops before the memory access (3 when mmu is enabled)
+		// WARNING: the rewrite code relies on having 1 or 2 ops before the memory access
 		// Update ngen_Rewrite (and perhaps write_memory_rewrite_size) if adding or removing code
 		if (!_nvmem_4gb_space())
 		{
@@ -1992,16 +1943,7 @@ private:
 		else
 		{
 			Add(x7, *call_regs64[0], sizeof(Sh4Context), LeaveFlags);
-			if (mmu_enabled())
-			{
-				u32 exception_pc = block->vaddr + op.guest_offs - (op.delay_slot ? 2 : 0);
-				Mov(w27, exception_pc & 0xFFFF);
-				Movk(w27, exception_pc >> 16, 16);
-			}
 		}
-
-		//printf("direct write memory access opid %d pc %p code addr %08x\n", opid, GetCursorAddress<void *>(), this->block->addr);
-		this->block->memory_accesses[GetCursorAddress<void *>()] = (u32)opid;
 
 		u32 size = op.flags & 0x7f;
 		switch(size)
@@ -2050,7 +1992,10 @@ private:
 
 		switch (smc_checks) {
 			case NoCheck:
-				return;
+				if (!mmu_enabled())
+					return;
+				B(&blockcheck_success);
+				break;
 
 			case FastCheck: {
 				u8* ptr = GetMemPtr(block->addr, 4);
@@ -2200,9 +2145,8 @@ private:
 	std::vector<const VRegister*> call_fregs;
 	Arm64RegAlloc regalloc;
 	RuntimeBlockInfo* block = NULL;
-	const int read_memory_rewrite_size = 5;	// worst case for u64/mmu: add, mov, movk, ldr, str
-											// FIXME rewrite size per read/write size?
-	const int write_memory_rewrite_size = 4; // TODO only 2 if !mmu & 4gb
+	const int read_memory_rewrite_size = 3;	// ubfx, add, ldr
+	const int write_memory_rewrite_size = 3; // ubfx, add, str
 };
 
 static Arm64Assembler* compiler;
@@ -2239,39 +2183,71 @@ void ngen_CC_Finish(shil_opcode* op)
 
 }
 
+#define STR_LDR_MASK   0xFFE0EC00
+
+static const u32 armv8_mem_ops[] = {
+		0x38E06800,		// Ldrsb
+		0x78E06800,		// Ldrsh
+		0xB8606800,		// Ldr w
+		0xF8606800,		// Ldr x
+		0x38206800,		// Strb
+		0x78206800,		// Strh
+		0xB8206800,		// Str w
+		0xF8206800,		// Str x
+};
+static const bool read_ops[] = {
+		true,
+		true,
+		true,
+		true,
+		false,
+		false,
+		false,
+		false,
+};
+static const u32 op_sizes[] = {
+		1,
+		2,
+		4,
+		8,
+		1,
+		2,
+		4,
+		8,
+};
 bool ngen_Rewrite(unat& host_pc, unat, unat)
 {
-	//printf("ngen_Rewrite pc %p\n", host_pc);
-	void *host_pc_rw = (void*)CC_RX2RW(host_pc);
-	RuntimeBlockInfo *block = bm_GetBlock((void*)host_pc);
-	if (block == NULL)
+	//LOGI("ngen_Rewrite pc %zx\n", host_pc);
+	u32 *code_ptr = (u32 *)CC_RX2RW(host_pc);
+	u32 armv8_op = *code_ptr;
+	bool is_read;
+	u32 size;
+	bool found = false;
+	u32 masked = armv8_op & STR_LDR_MASK;
+	for (int i = 0; i < ARRAY_SIZE(armv8_mem_ops); i++)
 	{
-		printf("ngen_Rewrite: Block at %p not found\n", (void *)host_pc);
-		return false;
+		if (masked == armv8_mem_ops[i])
+		{
+			size = op_sizes[i];
+			is_read = read_ops[i];
+			found = true;
+			break;
+		}
 	}
-	u32 *code_ptr = (u32*)host_pc_rw;
-	auto it = block->memory_accesses.find(code_ptr);
-	if (it == block->memory_accesses.end())
-	{
-		printf("ngen_Rewrite: memory access at %p not found (%lu entries)\n", code_ptr, block->memory_accesses.size());
-		return false;
-	}
-	u32 opid = it->second;
-	verify(opid < block->oplist.size());
-	const shil_opcode& op = block->oplist[opid];
-	// Skip the preceding ops (add, bic, ...)
-	u32 *code_rewrite = code_ptr - 1 - (!_nvmem_4gb_space() ? 1 : 0) - (mmu_enabled() ? 2 : 0);
+	verify(found);
+
+	// Skip the preceding ops (add, ubfx)
+	u32 *code_rewrite = code_ptr - 1 - (!_nvmem_4gb_space() ? 1 : 0);
 	Arm64Assembler *assembler = new Arm64Assembler(code_rewrite);
-	assembler->InitializeRewrite(block, opid);
-	if (op.op == shop_readm)
+	if (is_read)
 	{
 		mem_rewrites_r++;
-		assembler->GenReadMemorySlow(op);
+		assembler->GenReadMemorySlow(size);
 	}
 	else
 	{
 		mem_rewrites_w++;
-		assembler->GenWriteMemorySlow(op);
+		assembler->GenWriteMemorySlow(size);
 	}
 	assembler->Finalize(true);
 	delete assembler;
@@ -2305,6 +2281,7 @@ void ngen_HandleException()
 
 u32 DynaRBI::Relink()
 {
+#ifndef NO_BLOCK_LINKING
 	//printf("DynaRBI::Relink %08x\n", this->addr);
 	Arm64Assembler *compiler = new Arm64Assembler((u8 *)this->code + this->relink_offset);
 
@@ -2313,6 +2290,9 @@ u32 DynaRBI::Relink()
 	delete compiler;
 
 	return code_size;
+#else
+	return 0;
+#endif
 }
 
 void Arm64RegAlloc::Preload(u32 reg, eReg nreg)

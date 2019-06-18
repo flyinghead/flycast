@@ -55,7 +55,6 @@ void sigill_handler(int sn, siginfo_t * si, void *segfault_ctx) {
 void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 {
 	rei_host_context_t ctx;
-
 	context_from_segfault(&ctx, segfault_ctx);
 
 	bool dyna_cde = ((unat)CC_RX2RW(ctx.pc) > (unat)CodeCache) && ((unat)CC_RX2RW(ctx.pc) < (unat)(CodeCache + CODE_SIZE + TEMP_CODE_SIZE));
@@ -64,7 +63,7 @@ void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 #if HOST_CPU == CPU_ARM64
 	u32 op = *(u32*)ctx.pc;
 	bool write = (op & 0x00400000) == 0;
-	u32 exception_pc = ctx.x27;
+	u32 exception_pc = ctx.x2;
 #elif HOST_CPU == CPU_X64
 	bool write = false;	// TODO?
 	u32 exception_pc = 0;
