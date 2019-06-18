@@ -418,11 +418,26 @@ public:
 			case shop_jdyn:
 				{
 					Xbyak::Reg32 rd = regalloc.MapRegister(op.rd);
-					Xbyak::Reg32 rs1 = regalloc.MapRegister(op.rs1);
-					if (rd != rs1)
-						mov(rd, rs1);
-					if (op.rs2.is_imm())
-						add(rd, op.rs2._imm);
+					// This shouldn't happen since the block type would have been changed to static.
+					// But it doesn't hurt and is handy when partially disabling ssa for testing
+					if (op.rs1.is_imm())
+					{
+						if (op.rs2.is_imm())
+							mov(rd, op.rs1._imm + op.rs2._imm);
+						else
+						{
+							mov(rd, op.rs1._imm);
+							verify(op.rs2.is_null());
+						}
+					}
+					else
+					{
+						Xbyak::Reg32 rs1 = regalloc.MapRegister(op.rs1);
+						if (rd != rs1)
+							mov(rd, rs1);
+						if (op.rs2.is_imm())
+							add(rd, op.rs2._imm);
+					}
 				}
 				break;
 
@@ -776,11 +791,31 @@ public:
 					movzx(regalloc.MapRegister(op.rd), al);
 				}
 				break;
-/*
+
 			case shop_setpeq:
-				// TODO
+				{
+					Xbyak::Label end;
+					mov(ecx, regalloc.MapRegister(op.rs1));
+					if (op.rs2.is_r32i())
+						xor_(ecx, regalloc.MapRegister(op.rs2));
+					else
+						xor_(ecx, op.rs2._imm);
+
+					Xbyak::Reg32 rd = regalloc.MapRegister(op.rd);
+					mov(rd, 1);
+					test(ecx, 0xFF000000);
+					je(end);
+					test(ecx, 0x00FF0000);
+					je(end);
+					test(ecx, 0x0000FF00);
+					je(end);
+					xor_(rd, rd);
+					test(cl, cl);
+					sete(rd.cvt8());
+					L(end);
+				}
 				break;
-*/
+
 			case shop_mul_u16:
 				movzx(eax, regalloc.MapRegister(op.rs1).cvt16());
 				if (op.rs2.is_reg())
@@ -952,18 +987,14 @@ public:
 				break;
 
 			case shop_fabs:
-				if (regalloc.mapf(op.rd) != regalloc.mapf(op.rs1))
-					movss(regalloc.MapXRegister(op.rd), regalloc.MapXRegister(op.rs1));
-				mov(rcx, (size_t)&float_abs_mask);
-				movss(xmm0, dword[rcx]);
-				pand(regalloc.MapXRegister(op.rd), xmm0);
+				movd(eax, regalloc.MapXRegister(op.rs1));
+				and_(eax, 0x7FFFFFFF);
+				movd(regalloc.MapXRegister(op.rd), eax);
 				break;
 			case shop_fneg:
-				if (regalloc.mapf(op.rd) != regalloc.mapf(op.rs1))
-					movss(regalloc.MapXRegister(op.rd), regalloc.MapXRegister(op.rs1));
-				mov(rcx, (size_t)&float_sign_mask);
-				movss(xmm0, dword[rcx]);
-				pxor(regalloc.MapXRegister(op.rd), xmm0);
+				movd(eax, regalloc.MapXRegister(op.rs1));
+				xor_(eax, 0x80000000);
+				movd(regalloc.MapXRegister(op.rd), eax);
 				break;
 
 			case shop_fsqrt:
@@ -1033,7 +1064,10 @@ public:
 				break;
 
 			case shop_fsca:
-				movzx(rax, regalloc.MapRegister(op.rs1).cvt16());
+				if (op.rs1.is_imm())
+					mov(rax, op.rs1._imm & 0xFFFF);
+				else
+					movzx(rax, regalloc.MapRegister(op.rs1).cvt16());
 				mov(rcx, (uintptr_t)&sin_table);
 #ifdef EXPLODE_SPANS
 				movss(regalloc.MapXRegister(op.rd, 0), dword[rcx + rax * 8]);
@@ -1149,10 +1183,13 @@ public:
 				break;
 
 			case shop_cvt_f2i_t:
-				mov(rcx, (uintptr_t)&cvtf2i_pos_saturation);
-				movss(xmm0, dword[rcx]);
-				minss(xmm0, regalloc.MapXRegister(op.rs1));
-				cvttss2si(regalloc.MapRegister(op.rd), xmm0);
+				{
+					Xbyak::Reg32 rd = regalloc.MapRegister(op.rd);
+					cvttss2si(rd, regalloc.MapXRegister(op.rs1));
+					mov(eax, 0x7fffffff);
+					cmp(rd, 0x7fffff80);	// 2147483520.0f
+					cmovge(rd, eax);
+				}
 				break;
 			case shop_cvt_i2f_n:
 			case shop_cvt_i2f_z:
@@ -1623,27 +1660,27 @@ private:
 			{
 			case 1:
 				if (regalloc.IsAllocg(op.rs2))
-					mov(byte[rax], regalloc.MapRegister(op.rs2));
+					mov(byte[rax], regalloc.MapRegister(op.rs2).cvt8());
 				else if (op.rs2.is_imm())
-					mov(byte[rax], op.rs2._imm);
+					mov(byte[rax], (u8)op.rs2._imm);
 				else
 				{
 					mov(rcx, (uintptr_t)op.rs2.reg_ptr());
-					mov(ecx, dword[rcx]);
-					mov(byte[rax], ecx);
+					mov(cl, byte[rcx]);
+					mov(byte[rax], cl);
 				}
 				break;
 
 			case 2:
 				if (regalloc.IsAllocg(op.rs2))
-					mov(word[rax], regalloc.MapRegister(op.rs2));
+					mov(word[rax], regalloc.MapRegister(op.rs2).cvt16());
 				else if (op.rs2.is_imm())
-					mov(word[rax], op.rs2._imm);
+					mov(word[rax], (u16)op.rs2._imm);
 				else
 				{
 					mov(rcx, (uintptr_t)op.rs2.reg_ptr());
-					mov(ecx, dword[rcx]);
-					mov(word[rax], ecx);
+					mov(cx, word[rcx]);
+					mov(word[rax], cx);
 				}
 				break;
 
@@ -1678,6 +1715,7 @@ private:
 					mov(rcx, qword[rcx]);
 					mov(qword[rax], rcx);
 				}
+				break;
 
 			default:
 				die("Invalid immediate size");
@@ -1879,9 +1917,8 @@ private:
 				if (op.op == shop_sub)
 				{
 					// This op isn't commutative
-					mov(ecx, regalloc.MapRegister(op.rs2));
-					mov(rd, regalloc.MapRegister(op.rs1));
-					(this->*natop)(rd, ecx);
+					neg(rd);
+					add(rd, regalloc.MapRegister(op.rs1));
 
 					return;
 				}
@@ -2102,18 +2139,12 @@ private:
 	Xbyak::util::Cpu cpu;
 	size_t current_opid;
 	Xbyak::Label exit_block;
-	static const u32 float_sign_mask;
-	static const u32 float_abs_mask;
-	static const f32 cvtf2i_pos_saturation;
 	static const u32 read_mem_op_size;
 	static const u32 write_mem_op_size;
 public:
 	static u32 mem_access_offset;
 };
 
-const u32 BlockCompiler::float_sign_mask = 0x80000000;
-const u32 BlockCompiler::float_abs_mask = 0x7fffffff;
-const f32 BlockCompiler::cvtf2i_pos_saturation = 2147483520.0f;		// IEEE 754: 0x4effffff;
 const u32 BlockCompiler::read_mem_op_size = 30;
 const u32 BlockCompiler::write_mem_op_size = 30;
 u32 BlockCompiler::mem_access_offset = 0;
