@@ -191,7 +191,7 @@ private:
 			}
 			else if (op.op == shop_and || op.op == shop_or || op.op == shop_xor || op.op == shop_add || op.op == shop_mul_s16 || op.op == shop_mul_u16
 					  || op.op == shop_mul_i32 || op.op == shop_test || op.op == shop_seteq || op.op == shop_fseteq || op.op == shop_fadd || op.op == shop_fmul
-					  || op.op == shop_mul_u64 || op.op == shop_mul_s64 || op.op == shop_adc)
+					  || op.op == shop_mul_u64 || op.op == shop_mul_s64 || op.op == shop_adc || op.op == shop_setpeq)
 			{
 				if (op.rs1.is_imm() && op.rs2.is_reg())
 				{
