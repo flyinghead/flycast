@@ -62,7 +62,11 @@ static const u64 AREA7_ADDRESS = 0x7C000000L;
 #define VRAM_PROT_SEGMENT (1024 * 1024)	// vram protection regions are grouped by 1MB segment
 
 static std::unordered_set<u32> vram_mapped_pages;
-static std::vector<vram_block*> vram_blocks[VRAM_SIZE / VRAM_PROT_SEGMENT];
+struct vram_lock {
+	u32 start;
+	u32 end;
+};
+static std::vector<vram_lock> vram_blocks[VRAM_SIZE / VRAM_PROT_SEGMENT];
 static u8 sram_mapped_pages[KERNEL_SPACE / PAGE_SIZE / 8];	// bit set to 1 if page is mapped
 
 bool vmem32_inited;
@@ -144,27 +148,29 @@ static void vmem32_unprotect_buffer(u32 start, u32 size)
 #endif
 }
 
-void vmem32_protect_vram(vram_block *block)
+void vmem32_protect_vram(u32 addr, u32 size)
 {
 	if (!vmem32_inited)
 		return;
-	for (int i = block->start / VRAM_PROT_SEGMENT; i <= block->end / VRAM_PROT_SEGMENT; i++)
+	for (int page = (addr & VRAM_MASK) / VRAM_PROT_SEGMENT; page <= ((addr & VRAM_MASK) + size - 1) / VRAM_PROT_SEGMENT; page++)
 	{
-		vram_blocks[i].push_back(block);
+		vram_blocks[page].push_back({ addr, addr + size - 1 });
 	}
 }
-void vmem32_unprotect_vram(vram_block *block)
+void vmem32_unprotect_vram(u32 addr, u32 size)
 {
 	if (!vmem32_inited)
 		return;
-	for (int page = block->start / VRAM_PROT_SEGMENT; page <= block->end / VRAM_PROT_SEGMENT; page++)
+	for (int page = (addr & VRAM_MASK) / VRAM_PROT_SEGMENT; page <= ((addr & VRAM_MASK) + size - 1) / VRAM_PROT_SEGMENT; page++)
 	{
-		for (int i = 0; i < vram_blocks[page].size(); i++)
-			if (vram_blocks[page][i] == block)
-			{
-				vram_blocks[page].erase(vram_blocks[page].begin() + i);
-				break;
-			}
+		std::vector<vram_lock>& block_list = vram_blocks[page];
+		for (auto it = block_list.begin(); it != block_list.end(); )
+		{
+			if (it->start >= addr && it->end < addr + size)
+				it = block_list.erase(it);
+			else
+				it++;
+		}
 	}
 }
 
@@ -258,15 +264,15 @@ static u32 vmem32_map_mmu(u32 address, bool write)
 			}
 			verify(vmem32_map_buffer(vpn, page_size, offset, page_size, (entry->Data.PR & 1) != 0) != NULL);
 			u32 end = start + page_size;
-			const vector<vram_block *>& blocks = vram_blocks[start / VRAM_PROT_SEGMENT];
+			const vector<vram_lock>& blocks = vram_blocks[start / VRAM_PROT_SEGMENT];
 
 			vramlist_lock.Lock();
 			for (int i = blocks.size() - 1; i >= 0; i--)
 			{
-				if (blocks[i]->start < end && blocks[i]->end >= start)
+				if (blocks[i].start < end && blocks[i].end >= start)
 				{
-					u32 prot_start = max(start, blocks[i]->start);
-					u32 prot_size = min(end, blocks[i]->end + 1) - prot_start;
+					u32 prot_start = max(start, blocks[i].start);
+					u32 prot_size = min(end, blocks[i].end + 1) - prot_start;
 					prot_size += prot_start % PAGE_SIZE;
 					prot_start &= ~PAGE_MASK;
 					vmem32_protect_buffer(vpn + (prot_start & (page_size - 1)), prot_size);

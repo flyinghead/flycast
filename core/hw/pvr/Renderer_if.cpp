@@ -3,6 +3,7 @@
 #include "hw/pvr/pvr_mem.h"
 #include "rend/TexCache.h"
 #include "rend/gui.h"
+#include "hw/mem/_vmem.h"
 
 #include "deps/zlib/zlib.h"
 
@@ -205,7 +206,7 @@ TA_context* read_frame(const char* file, u8* vram_ref = NULL) {
 	fread(&t, 1, sizeof(t), fw);
 	verify(t == VRAM_SIZE);
 
-	vram.UnLockRegion(0, VRAM_SIZE);
+	_vmem_unprotect_vram(0, VRAM_SIZE);
 
 	uLongf compressed_size;
 

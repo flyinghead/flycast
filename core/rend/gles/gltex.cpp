@@ -585,7 +585,7 @@ void ReadRTTBuffer() {
 				}
 			}
 		}
-		vram.UnLockRegion(0, 2 * vram.size);
+		_vmem_unprotect_vram(0, VRAM_SIZE);
 
 		glPixelStorei(GL_PACK_ALIGNMENT, 1);
 		u16 *dst = (u16 *)&vram[tex_addr];
@@ -644,14 +644,8 @@ void ReadRTTBuffer() {
 		// Restore VRAM locks
 		for (TexCacheIter i = TexCache.begin(); i != TexCache.end(); i++)
 		{
-				if (i->second.lock_block != NULL) {
-						vram.LockRegion(i->second.sa_tex, i->second.sa + i->second.size - i->second.sa_tex);
-
-						//TODO: Fix this for 32M wrap as well
-						if (_nvmem_enabled() && VRAM_SIZE == 0x800000) {
-								vram.LockRegion(i->second.sa_tex + VRAM_SIZE, i->second.sa + i->second.size - i->second.sa_tex);
-						}
-				}
+			if (i->second.lock_block != NULL)
+				_vmem_protect_vram(i->second.sa_tex, i->second.sa + i->second.size - i->second.sa_tex);
 		}
 	}
 	else

@@ -117,3 +117,7 @@ void _vmem_enable_mmu(bool enable);
 #define MAP_RAM_START_OFFSET  0
 #define MAP_VRAM_START_OFFSET (MAP_RAM_START_OFFSET+RAM_SIZE)
 #define MAP_ARAM_START_OFFSET (MAP_VRAM_START_OFFSET+VRAM_SIZE)
+
+void _vmem_protect_vram(u32 addr, u32 size);
+void _vmem_unprotect_vram(u32 addr, u32 size);
+u32 _vmem_get_vram_offset(void *addr);
