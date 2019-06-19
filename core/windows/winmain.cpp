@@ -6,6 +6,7 @@
 #include "cfg/cfg.h"
 #include "xinput_gamepad.h"
 #include "win_keyboard.h"
+#include "hw/sh4/dyna/blockmanager.h"
 
 #define _WIN32_WINNT 0x0500
 #include <windows.h>
