@@ -237,6 +237,7 @@ bool RuntimeBlockInfo::Setup(u32 rpc,fpscr_t rfpu_cfg)
 {
 	staging_runs=addr=lookups=runs=host_code_size=0;
 	guest_cycles=guest_opcodes=host_opcodes=0;
+	sh4_code_size = 0;
 	pBranchBlock=pNextBlock=0;
 	code=0;
 	has_jcond=false;

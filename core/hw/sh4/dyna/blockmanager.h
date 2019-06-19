@@ -106,7 +106,7 @@ void bm_Init();
 void bm_Term();
 
 void bm_vmem_pagefill(void** ptr,u32 PAGE_SZ);
-bool bm_RamWriteAccess(void *p, unat pc);
+bool bm_RamWriteAccess(void *p);
 void bm_RamWriteAccess(u32 addr);
 static inline bool bm_IsRamPageProtected(u32 addr)
 {

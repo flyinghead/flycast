@@ -150,7 +150,7 @@ LONG ExeptionHandler(EXCEPTION_POINTERS *ExceptionInfo)
 	if (vmem32_handle_signal(address, write, 0))
 		return EXCEPTION_CONTINUE_EXECUTION;
 #endif
-	if (bm_RamWriteAccess(address, 0))
+	if (bm_RamWriteAccess(address))
 	{
 		return EXCEPTION_CONTINUE_EXECUTION;
 	}

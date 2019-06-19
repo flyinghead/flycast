@@ -255,7 +255,7 @@ bool rend_frame(TA_context* ctx, bool draw_osd) {
 	bool proc = renderer->Process(ctx);
 	if ((ctx->rend.isRTT || ctx->rend.isRenderFramebuffer) && swap_pending)
 	{
-		// If there a frame swap pending, we want to do it now.
+		// If there is a frame swap pending, we want to do it now.
 		// The current frame "swapping" detection mechanism (using FB_R_SOF1) doesn't work
 		// if a RTT frame is rendered in between.
 		renderer->Present();

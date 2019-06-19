@@ -653,10 +653,13 @@ void bm_Sort()
 
 RuntimeBlockInfo::~RuntimeBlockInfo()
 {
-	if (read_only)
-		protected_blocks--;
-	else
-		unprotected_blocks--;
+	if (sh4_code_size != 0)
+	{
+		if (read_only)
+			protected_blocks--;
+		else
+			unprotected_blocks--;
+	}
 }
 
 void RuntimeBlockInfo::AddRef(RuntimeBlockInfoPtr other)
@@ -699,8 +702,7 @@ void RuntimeBlockInfo::Discard()
 void RuntimeBlockInfo::SetProtectedFlags()
 {
 	// Don't write protect rom
-	// TODO Enable this for wince. hangs 4x4 EVO
-	if (mmu_enabled() || (!IsOnRam(addr) /*|| (vaddr & 0x1FFF0000) == 0x0C000000 */))
+	if (!IsOnRam(addr))
 	{
 		this->read_only = false;
 		unprotected_blocks++;
@@ -746,7 +748,7 @@ void bm_RamWriteAccess(u32 addr)
 	verify(block_list.empty());
 }
 
-bool bm_RamWriteAccess(void *p, unat pc)
+bool bm_RamWriteAccess(void *p)
 {
 	if (_nvmem_4gb_space())
 	{

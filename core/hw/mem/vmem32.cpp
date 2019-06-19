@@ -249,6 +249,7 @@ static u32 vmem32_map_mmu(u32 address, bool write)
 		if (offset == -1)
 			return VMEM32_ERROR_NOT_MAPPED;
 
+		bool allow_write = (entry->Data.PR & 1) != 0;
 		if (offset >= MAP_VRAM_START_OFFSET && offset < MAP_VRAM_START_OFFSET + VRAM_SIZE)
 		{
 			// Check vram protected regions
@@ -262,7 +263,7 @@ static u32 vmem32_map_mmu(u32 address, bool write)
 
 				return MMU_ERROR_NONE;
 			}
-			verify(vmem32_map_buffer(vpn, page_size, offset, page_size, (entry->Data.PR & 1) != 0) != NULL);
+			verify(vmem32_map_buffer(vpn, page_size, offset, page_size, allow_write) != NULL);
 			u32 end = start + page_size;
 			const vector<vram_lock>& blocks = vram_blocks[start / VRAM_PROT_SEGMENT];
 
@@ -281,12 +282,14 @@ static u32 vmem32_map_mmu(u32 address, bool write)
 			vramlist_lock.Unlock();
 
 		}
-		else if (offset >= MAP_VRAM_START_OFFSET && offset < MAP_VRAM_START_OFFSET + VRAM_SIZE)
+		else if (offset >= MAP_RAM_START_OFFSET && offset < MAP_RAM_START_OFFSET + RAM_SIZE)
 		{
 			// Check system RAM protected pages
-			if (bm_IsRamPageProtected(ppn))
+			u32 start = offset - MAP_RAM_START_OFFSET;
+
+			if (bm_IsRamPageProtected(start) && allow_write)
 			{
-				if (sram_mapped_pages[ppn >> 15] & (1 << ((ppn >> 12) & 7)))
+				if (sram_mapped_pages[start >> 15] & (1 << ((start >> 12) & 7)))
 				{
 					// Already mapped => write access
 					vmem32_unprotect_buffer(address & ~PAGE_MASK, PAGE_SIZE);
@@ -294,16 +297,16 @@ static u32 vmem32_map_mmu(u32 address, bool write)
 				}
 				else
 				{
-					sram_mapped_pages[ppn >> 15] |= (1 << ((ppn >> 12) & 7));
+					sram_mapped_pages[start >> 15] |= (1 << ((start >> 12) & 7));
 					verify(vmem32_map_buffer(vpn, page_size, offset, page_size, false) != NULL);
 				}
 			}
 			else
-				verify(vmem32_map_buffer(vpn, page_size, offset, page_size, (entry->Data.PR & 1) != 0) != NULL);
+				verify(vmem32_map_buffer(vpn, page_size, offset, page_size, allow_write) != NULL);
 		}
 		else
 			// Not vram or system ram
-			verify(vmem32_map_buffer(vpn, page_size, offset, page_size, (entry->Data.PR & 1) != 0) != NULL);
+			verify(vmem32_map_buffer(vpn, page_size, offset, page_size, allow_write) != NULL);
 
 		return MMU_ERROR_NONE;
 	}

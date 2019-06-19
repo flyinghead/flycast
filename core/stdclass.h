@@ -287,7 +287,7 @@ bool mem_region_release(void *start, size_t len);
 void *mem_region_map_file(void *file_handle, void *dest, size_t len, size_t offset, bool readwrite);
 bool mem_region_unmap_file(void *start, size_t len);
 
-// Locked memory class, used for texture invalidation purposes.
+// Locked memory class, was used for texture invalidation purposes.
 class VLockedMemory {
 public:
 	u8* data;
@@ -300,23 +300,7 @@ public:
 	void *getPtr() const { return data; }
 	unsigned getSize() const { return size; }
 
-	#ifdef TARGET_NO_EXCEPTIONS
-	void LockRegion(unsigned offset, unsigned size_bytes) {}
-	void UnLockRegion(unsigned offset, unsigned size_bytes) {}
-	#else
-	void LockRegion(unsigned offset, unsigned size_bytes)
-	{
-		mem_region_lock(&data[offset], size_bytes);
-	}
-
-	void UnLockRegion(unsigned offset, unsigned size_bytes)
-	{
-		mem_region_unlock(&data[offset], size_bytes);
-	}
-	#endif
-
 	void Zero() {
-		UnLockRegion(0, size);
 		memset(data, 0, size);
 	}
 
