@@ -82,7 +82,7 @@ void recSh4_ClearCache()
 {
 	printf("recSh4:Dynarec Cache clear at %08X free space %d\n", next_pc, emit_FreeSpace());
 	LastAddr=LastAddr_min;
-	bm_Reset();
+	bm_ResetCache();
 	smc_hotspots.clear();
 	clear_temp_cache(true);
 }
@@ -200,7 +200,7 @@ const char* RuntimeBlockInfo::hash(bool full, bool relocable)
 	sha1_ctx ctx;
 	sha1_init(&ctx);
 
-	u8* ptr = GetMemPtr(this->addr,this->guest_opcodes*2);
+	u8* ptr = GetMemPtr(this->addr, this->sh4_code_size);
 
 	if (ptr)
 	{
@@ -218,7 +218,7 @@ const char* RuntimeBlockInfo::hash(bool full, bool relocable)
 		}
 		else
 		{
-			sha1_update(&ctx,this->guest_opcodes*2,ptr);
+			sha1_update(&ctx, this->sh4_code_size, ptr);
 		}
 	}
 
@@ -273,6 +273,7 @@ bool RuntimeBlockInfo::Setup(u32 rpc,fpscr_t rfpu_cfg)
 		return false;
 	}
 #endif
+	SetProtectedFlags();
 
 	AnalyseBlock(this);
 
@@ -301,10 +302,17 @@ DynarecCodeEntryPtr rdv_CompilePC(u32 blockcheck_failures)
 		emit_ptr = (u32 *)(TempCodeCache + TempLastAddr);
 		emit_ptr_limit = (u32 *)(TempCodeCache + TEMP_CODE_SIZE);
 		rbi->temp_block = true;
+		if (rbi->read_only)
+			printf("WARNING: temp block %x (%x) is protected!\n", rbi->vaddr, rbi->addr);
 	}
 	bool do_opts = !rbi->temp_block;
 	rbi->staging_runs=do_opts?100:-100;
-	ngen_Compile(rbi,DoCheck(rbi->addr),(pc&0xFFFFFF)==0x08300 || (pc&0xFFFFFF)==0x10000,false,do_opts);
+	SmcCheckEnum block_check;
+	if (rbi->read_only)
+		block_check = NoCheck;
+	else
+		block_check = DoCheck(rbi->addr);
+	ngen_Compile(rbi, block_check, (pc & 0xFFFFFF) == 0x08300 || (pc & 0xFFFFFF) == 0x10000, false, do_opts);
 	verify(rbi->code!=0);
 
 	bm_AddBlock(rbi);
@@ -362,7 +370,7 @@ u32 DYNACALL rdv_DoInterrupts_pc(u32 pc) {
 
 u32 DYNACALL rdv_DoInterrupts(void* block_cpde)
 {
-	RuntimeBlockInfo* rbi = bm_GetBlock(block_cpde);
+	RuntimeBlockInfoPtr rbi = bm_GetBlock(block_cpde);
 	return rdv_DoInterrupts_pc(rbi->vaddr);
 }
 
@@ -372,7 +380,7 @@ DynarecCodeEntryPtr DYNACALL rdv_BlockCheckFail(u32 addr)
 	u32 blockcheck_failures = 0;
 	if (mmu_enabled())
 	{
-		RuntimeBlockInfo *block = bm_GetBlock(addr);
+		RuntimeBlockInfoPtr block = bm_GetBlock(addr);
 		blockcheck_failures = block->blockcheck_failures + 1;
 		if (blockcheck_failures > 5)
 		{
@@ -380,7 +388,7 @@ DynarecCodeEntryPtr DYNACALL rdv_BlockCheckFail(u32 addr)
 			//if (inserted)
 			//	printf("rdv_BlockCheckFail SMC hotspot @ %08x fails %d\n", addr, blockcheck_failures);
 		}
-		bm_RemoveBlock(block);
+		bm_DiscardBlock(block.get());
 	}
 	else
 	{
@@ -402,74 +410,75 @@ DynarecCodeEntryPtr rdv_FindOrCompile()
 void* DYNACALL rdv_LinkBlock(u8* code,u32 dpc)
 {
 	// code is the RX addr to return after, however bm_GetBlock returns RW
-	RuntimeBlockInfo* rbi = bm_GetBlock(code);
-
+	RuntimeBlockInfoPtr rbi = bm_GetBlock(code);
+	bool stale_block = false;
 	if (!rbi)
 	{
-		printf("Stale block ..");
+		stale_block = true;
 		rbi = bm_GetStaleBlock(code);
 	}
 	
 	verify(rbi != NULL);
 
-	u32 bcls=BET_GET_CLS(rbi->BlockType);
+	u32 bcls = BET_GET_CLS(rbi->BlockType);
 
-	if (bcls==BET_CLS_Static)
+	if (bcls == BET_CLS_Static)
 	{
-		next_pc=rbi->BranchBlock;
+		if (rbi->BlockType == BET_StaticIntr)
+			next_pc = rbi->NextBlock;
+		else
+			next_pc = rbi->BranchBlock;
 	}
-	else if (bcls==BET_CLS_Dynamic)
+	else if (bcls == BET_CLS_Dynamic)
 	{
-		next_pc=dpc;
+		next_pc = dpc;
 	}
-	else if (bcls==BET_CLS_COND)
+	else if (bcls == BET_CLS_COND)
 	{
 		if (dpc)
-			next_pc=rbi->BranchBlock;
+			next_pc = rbi->BranchBlock;
 		else
-			next_pc=rbi->NextBlock;
+			next_pc = rbi->NextBlock;
 	}
 
 	DynarecCodeEntryPtr rv = rdv_FindOrCompile();  // Returns rx ptr
 
-	bool do_link = !mmu_enabled() && bm_GetBlock(code) == rbi;
-
-	if (do_link)
+	if (!mmu_enabled() && !stale_block)
 	{
-		if (bcls==BET_CLS_Dynamic)
+		if (bcls == BET_CLS_Dynamic)
 		{
-			verify(rbi->relink_data==0 || rbi->pBranchBlock==0);
+			verify(rbi->relink_data == 0 || rbi->pBranchBlock == NULL);
 
-			if (rbi->pBranchBlock!=0)
+			if (rbi->pBranchBlock != NULL)
 			{
 				rbi->pBranchBlock->RemRef(rbi);
-				rbi->pBranchBlock=0;
-				rbi->relink_data=1;
+				rbi->pBranchBlock = NULL;
+				rbi->relink_data = 1;
 			}
-			else if (rbi->relink_data==0)
+			else if (rbi->relink_data == 0)
 			{
-				rbi->pBranchBlock=bm_GetBlock(next_pc);
+				rbi->pBranchBlock = bm_GetBlock(next_pc).get();
 				rbi->pBranchBlock->AddRef(rbi);
 			}
 		}
 		else
 		{
-			RuntimeBlockInfo* nxt=bm_GetBlock(next_pc);
+			RuntimeBlockInfo* nxt = bm_GetBlock(next_pc).get();
 
-			if (rbi->BranchBlock==next_pc)
-				rbi->pBranchBlock=nxt;
-			if (rbi->NextBlock==next_pc)
-				rbi->pNextBlock=nxt;
+			if (rbi->BranchBlock == next_pc)
+				rbi->pBranchBlock = nxt;
+			if (rbi->NextBlock == next_pc)
+				rbi->pNextBlock = nxt;
 
 			nxt->AddRef(rbi);
 		}
-		u32 ncs=rbi->relink_offset+rbi->Relink();
-		verify(rbi->host_code_size>=ncs);
-		rbi->host_code_size=ncs;
+		u32 ncs = rbi->relink_offset + rbi->Relink();
+		verify(rbi->host_code_size >= ncs);
+		rbi->host_code_size = ncs;
 	}
 	else
 	{
-		printf(" .. null RBI: %08X -- unlinked stale block\n",next_pc);
+		printf(" .. null RBI: from %08X to %08X -- unlinked stale block -- code %p next %p\n", rbi->vaddr, next_pc, code, rv);
 	}
 	
 	return (void*)rv;
@@ -498,6 +507,7 @@ void recSh4_Reset(bool Manual)
 {
 	Sh4_int_Reset(Manual);
 	recSh4_ClearCache();
+	bm_Reset();
 }
 
 void recSh4_Init()
@@ -505,7 +515,6 @@ void recSh4_Init()
 	printf("recSh4 Init\n");
 	Sh4_int_Init();
 	bm_Init();
-	bm_Reset();
 
 	verify(rcb_noffs(p_sh4rcb->fpcb) == FPCB_OFFSET);
 
@@ -541,7 +550,7 @@ void recSh4_Init()
 	memset(CodeCache, 0xFF, CODE_SIZE + TEMP_CODE_SIZE);
 	TempCodeCache = CodeCache + CODE_SIZE;
 	ngen_init();
-	bm_Reset();
+	bm_ResetCache();
 }
 
 void recSh4_Term()

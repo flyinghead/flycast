@@ -26,6 +26,7 @@
 #include "types.h"
 #include "decoder.h"
 #include "hw/sh4/modules/mmu.h"
+#include "hw/sh4/sh4_mem.h"
 
 class SSAOptimizer
 {
@@ -36,11 +37,12 @@ public:
 	{
 		AddVersionPass();
 #if DEBUG
-		printf("BEFORE\n");
-		PrintBlock();
+			printf("BEFORE\n");
+			PrintBlock();
 #endif
 
 		ConstPropPass();
+		WriteAfterWritePass();
 		DeadCodeRemovalPass();
 		SimplifyExpressionPass();
 		CombineShiftsPass();
@@ -49,13 +51,13 @@ public:
 
 #if DEBUG
 		if (stats.prop_constants > 0 || stats.dead_code_ops > 0 || stats.constant_ops_replaced > 0
-				|| stats.dead_registers > 0 || stats.dyn_to_stat_blocks > 0)
+				|| stats.dead_registers > 0 || stats.dyn_to_stat_blocks > 0 || stats.waw_blocks > 0 || stats.combined_shifts > 0)
 		{
 			//printf("AFTER %08x\n", block->vaddr);
 			//PrintBlock();
-			printf("STATS: %08x ops %zd constants %d constops replaced %d dead code %d dead regs %d dyn2stat blks %d\n", block->vaddr, block->oplist.size(),
+			printf("STATS: %08x ops %zd constants %d constops replaced %d dead code %d dead regs %d dyn2stat blks %d waw %d shifts %d\n", block->vaddr, block->oplist.size(),
 					stats.prop_constants, stats.constant_ops_replaced,
-					stats.dead_code_ops, stats.dead_registers, stats.dyn_to_stat_blocks);
+					stats.dead_code_ops, stats.dead_registers, stats.dyn_to_stat_blocks, stats.waw_blocks, stats.combined_shifts);
 		}
 #endif
 	}
@@ -151,7 +153,7 @@ private:
 		}
 	}
 
-	bool ExecuteConstOp(shil_opcode& op);
+	bool ExecuteConstOp(shil_opcode* op);
 
 	void ConstPropPass()
 	{
@@ -159,6 +161,7 @@ private:
 		{
 			shil_opcode& op = block->oplist[opnum];
 
+			// TODO do shop_sub and others
 			if (op.op != shop_setab && op.op != shop_setae && op.op != shop_setgt && op.op != shop_setge && op.op != shop_sub && op.op != shop_fsetgt
 					 && op.op != shop_fseteq && op.op != shop_fdiv && op.op != shop_fsub && op.op != shop_fmac)
 				ConstPropOperand(op.rs1);
@@ -184,9 +187,52 @@ private:
 						op.rs1 = op.rs3;
 						op.rs3 = t;
 					}
+
+					// If we know the address to read and it's in the same memory page(s) as the block
+					// and if those pages are read-only, then we can directly read the memory at compile time
+					// and propagate the read value as a constant.
+					if (op.rs1.is_imm() && op.op == shop_readm  && block->read_only
+							&& (op.rs1._imm >> 12) >= (block->vaddr >> 12)
+							&& (op.rs1._imm >> 12) <= ((block->vaddr + block->sh4_code_size - 1) >> 12)
+							&& (op.flags & 0x7f) <= 4)
+					{
+						bool doit = false;
+						if (mmu_enabled())
+						{
+							// Only for user space addresses
+							if ((op.rs1._imm & 0x80000000) == 0)
+								doit = true;
+							else
+								// And kernel RAM addresses
+								doit = IsOnRam(op.rs1._imm);
+						}
+						else
+							doit = IsOnRam(op.rs1._imm);
+						if (doit)
+						{
+							u32 v;
+							switch (op.flags & 0x7f)
+							{
+							case 1:
+								v = (s32)(::s8)ReadMem8(op.rs1._imm);
+								break;
+							case 2:
+								v = (s32)(::s16)ReadMem16(op.rs1._imm);
+								break;
+							case 4:
+								v = ReadMem32(op.rs1._imm);
+								break;
+							default:
+								die("invalid size");
+								break;
+							}
+							ReplaceByMov32(op, v);
+							constprop_values[RegValue(op.rd)] = v;
+						}
+					}
 				}
 			}
-			else if (ExecuteConstOp(op))
+			else if (ExecuteConstOp(&op))
 			{
 			}
 			else if (op.op == shop_and || op.op == shop_or || op.op == shop_xor || op.op == shop_add || op.op == shop_mul_s16 || op.op == shop_mul_u16
@@ -598,7 +644,32 @@ private:
 					next_op.rs2._imm += op.rs2._imm;
 					//printf("%08x SHFT %s -> %d\n", block->vaddr + op.guest_offs, op.dissasm().c_str(), next_op.rs2._imm);
 					ReplaceByMov32(op);
+					stats.combined_shifts++;
 				}
+			}
+		}
+	}
+
+	void WriteAfterWritePass()
+	{
+		for (int opnum = 0; opnum < (int)block->oplist.size() - 1; opnum++)
+		{
+			shil_opcode& op = block->oplist[opnum];
+			shil_opcode& next_op = block->oplist[opnum + 1];
+			if (op.op == next_op.op && op.op == shop_writem
+					&& op.rs1.type == next_op.rs1.type
+					&& op.rs1._imm == next_op.rs1._imm
+					&& op.rs1.version[0] == next_op.rs1.version[0]
+					&& op.rs3.type == next_op.rs3.type
+					&& op.rs3._imm == next_op.rs3._imm
+					&& op.rs3.version[0] == next_op.rs3.version[0]
+					&& op.rs2.count() == next_op.rs2.count())
+			{
+				//printf("%08x DEAD %s\n", block->vaddr + op.guest_offs, op.dissasm().c_str());
+				block->oplist.erase(block->oplist.begin() + opnum);
+				opnum--;
+				stats.dead_code_ops++;
+				stats.waw_blocks++;
 			}
 		}
 	}
@@ -612,6 +683,8 @@ private:
 		u32 dead_code_ops = 0;
 		u32 dead_registers = 0;
 		u32 dyn_to_stat_blocks = 0;
+		u32 waw_blocks = 0;
+		u32 combined_shifts = 0;
 	} stats;
 
 	// transient vars

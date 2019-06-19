@@ -1,11 +1,13 @@
 /*
 	In case you wonder, the extern "C" stuff are for the assembly code on beagleboard/pandora
 */
+#include <memory>
 #include "types.h"
 #include "decoder.h"
 #pragma once
 
 typedef void (*DynarecCodeEntryPtr)();
+typedef std::shared_ptr<RuntimeBlockInfo> RuntimeBlockInfoPtr;
 
 struct RuntimeBlockInfo_Core
 {
@@ -65,22 +67,19 @@ struct RuntimeBlockInfo: RuntimeBlockInfo_Core
 	virtual void Relocate(void* dst)=0;
 	
 	//predecessors references
-	vector<RuntimeBlockInfo*> pre_refs;
+	vector<RuntimeBlockInfoPtr> pre_refs;
 
-	void AddRef(RuntimeBlockInfo* other);
-	void RemRef(RuntimeBlockInfo* other);
+	void AddRef(RuntimeBlockInfoPtr other);
+	void RemRef(RuntimeBlockInfoPtr other);
 
 	void Discard();
 	void UpdateRefs();
+	void SetProtectedFlags();
 
 	u32 memops;
 	u32 linkedmemops;
 	std::map<void*, u32> memory_accesses;	// key is host pc when access is made, value is opcode id
-};
-
-struct CachedBlockInfo: RuntimeBlockInfo_Core
-{
-	RuntimeBlockInfo* block;
+	bool read_only;
 };
 
 void bm_WriteBlockMap(const string& file);
@@ -92,19 +91,26 @@ extern "C" {
 ATTR_USED DynarecCodeEntryPtr DYNACALL bm_GetCodeByVAddr(u32 addr);
 }
 
-RuntimeBlockInfo* bm_GetBlock(void* dynarec_code);
-RuntimeBlockInfo* bm_GetStaleBlock(void* dynarec_code);
-RuntimeBlockInfo* DYNACALL bm_GetBlock(u32 addr);
+RuntimeBlockInfoPtr bm_GetBlock(void* dynarec_code);
+RuntimeBlockInfoPtr bm_GetStaleBlock(void* dynarec_code);
+RuntimeBlockInfoPtr DYNACALL bm_GetBlock(u32 addr);
 
 void bm_AddBlock(RuntimeBlockInfo* blk);
-void bm_RemoveBlock(RuntimeBlockInfo* block);
+void bm_DiscardBlock(RuntimeBlockInfo* block);
 void bm_Reset();
+void bm_ResetCache();
 void bm_ResetTempCache(bool full);
 void bm_Periodical_1s();
-void bm_Periodical_14k();
-void bm_Sort();
 
 void bm_Init();
 void bm_Term();
 
 void bm_vmem_pagefill(void** ptr,u32 PAGE_SZ);
+bool bm_RamWriteAccess(void *p, unat pc);
+void bm_RamWriteAccess(u32 addr);
+static inline bool bm_IsRamPageProtected(u32 addr)
+{
+	extern bool unprotected_pages[RAM_SIZE_MAX/PAGE_SIZE];
+	addr &= RAM_MASK;
+	return !unprotected_pages[addr / PAGE_SIZE];
+}

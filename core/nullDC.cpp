@@ -23,6 +23,7 @@
 #include "rend/gui.h"
 #include "profiler/profiler.h"
 #include "input/gamepad_device.h"
+#include "hw/sh4/dyna/blockmanager.h"
 
 void FlushCache();
 void LoadCustom();
@@ -170,7 +171,11 @@ void LoadSpecialSettings()
 		tr_poly_depth_mask_game = true;
 	}
 	// Demolition Racer
-	if (!strncmp("T15112N", reios_product_number, 7))
+	if (!strncmp("T15112N", reios_product_number, 7)
+			// Ducati World - Racing Challenge (NTSC)
+			|| !strncmp("T-8113N", reios_product_number, 7)
+			// Ducati World (PAL)
+			|| !strncmp("T-8121D-50", reios_product_number, 10))
 	{
 		printf("Enabling Dynarec safe mode for game %s\n", reios_product_number);
 		settings.dynarec.safemode = 1;
@@ -324,6 +329,7 @@ int dc_start_game(const char *path)
 	if (init_done)
 	{
 		InitSettings();
+		dc_reset();
 		LoadSettings(false);
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST
 		if (!settings.bios.UseReios)
@@ -354,7 +360,6 @@ int dc_start_game(const char *path)
 		mcfg_CreateAtomisWaveControllers();
 #endif
 #endif
-		dc_reset();
 
 		game_started = true;
 		dc_resume();
@@ -951,6 +956,7 @@ void dc_loadstate()
 	}
 
 	mmu_set_state();
+	bm_Reset();
 	sh4_cpu.ResetCache();
     dsp.dyndirty = true;
     sh4_sched_ffts();

@@ -149,8 +149,11 @@ LONG ExeptionHandler(EXCEPTION_POINTERS *ExceptionInfo)
 	if (vmem32_handle_signal(address, write, 0))
 		return EXCEPTION_CONTINUE_EXECUTION;
 #endif
-
-	if (VramLockedWrite(address))
+	if (bm_RamWriteAccess(address, 0))
+	{
+		return EXCEPTION_CONTINUE_EXECUTION;
+	}
+	else if (VramLockedWrite(address))
 	{
 		return EXCEPTION_CONTINUE_EXECUTION;
 	}
