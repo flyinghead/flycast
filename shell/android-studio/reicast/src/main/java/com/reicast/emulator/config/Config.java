@@ -8,5 +8,5 @@ public class Config {
 	public static final String pref_rendertype = "render_type";
 	public static final String pref_renderdepth = "depth_render";
 
-	public static String git_issues = "https://github.com/reicast/reicast-emulator/issues/";
+	public static String git_issues = "https://github.com/flyinghead/flycast/issues/";
 }

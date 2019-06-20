@@ -702,7 +702,7 @@ int CALLBACK WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine
 				i++;
 			}
 			else
-				logfile = "reicast-log.txt";
+				logfile = "flycast-log.txt";
 			freopen(logfile, "w", stdout);
 			freopen(logfile, "w", stderr);
 		}
