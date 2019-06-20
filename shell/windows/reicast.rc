@@ -22,13 +22,13 @@ BEGIN
   BEGIN
     BLOCK "040904E4"
     BEGIN
-      VALUE "CompanyName", "Reicast Team"
-      VALUE "FileDescription", "Reicast"
+      VALUE "CompanyName", "Flycast Team"
+      VALUE "FileDescription", "Flycast"
       VALUE "FileVersion", REICAST_VERSION
       VALUE "InternalName", "reicast"
-      VALUE "LegalCopyright", "Copyright (c) Reicast Team. All rights reserved."
-      VALUE "OriginalFilename", "reicast.exe"
-      VALUE "ProductName", "Reicast"
+      VALUE "LegalCopyright", "Copyright (c) Reicast contributors. All rights reserved."
+      VALUE "OriginalFilename", "flycast.exe"
+      VALUE "ProductName", "Flycast"
       VALUE "ProductVersion", REICAST_VERSION
     END
   END
