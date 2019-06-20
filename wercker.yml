@@ -9,28 +9,28 @@ build:
             name: gcc-version
             code: gcc --version
         - script:
-            name: reicast x64 build
+            name: flycast x64 build
             code: make -C shell/linux platform=x64
         - script:
             name: package app
             code: |
               mkdir s3
               pushd shell/linux
-              mv -f nosym-reicast.elf reicast
-              gzip reicast
+              mv -f nosym-reicast.elf flycast
+              gzip flycast
               popd
-              mv shell/linux/reicast.gz s3
+              mv shell/linux/flycast.gz s3
         - script:
-            name: reicast x64 naomi build
+            name: flycast x64 naomi build
             code: make -C shell/linux platform=x64 NAOMI=1
         - script:
             name: package naomi app
             code: |
               pushd shell/linux
-              mv -f nosym-reicast.elf reicast_naomi
-              gzip reicast_naomi
+              mv -f nosym-reicast.elf flycast_naomi
+              gzip flycast_naomi
               popd
-              mv shell/linux/reicast_naomi.gz s3
+              mv shell/linux/flycast_naomi.gz s3
         - s3sync:
             source_dir: s3
             delete-removed: false

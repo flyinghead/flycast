@@ -29,7 +29,7 @@ android {
     buildToolsVersion "27.0.3"
 
     defaultConfig {
-        applicationId "com.reicast.emulator"
+        applicationId "com.flycast.emulator"
         minSdkVersion 16
         targetSdkVersion 26
         versionCode getBuildId()
@@ -72,7 +72,7 @@ android {
         dreamcast {
         }
         naomi {
-            applicationId = "com.reicast.emulator.naomi"
+            applicationId = "com.flycast.emulator.naomi"
             versionNameSuffix " Naomi"
             externalNativeBuild { ndkBuild { arguments "NAOMI=1" } }
         }
@@ -93,7 +93,7 @@ afterEvaluate {
     android.applicationVariants.all {  v ->
         if (v.buildType.name == "release") {
             def hashtag = getVersionHash()
-            v.outputs[0].outputFileName = "reicast-android-" + hashtag + ".apk"
+            v.outputs[0].outputFileName = "flycast-android-" + hashtag + ".apk"
         }
     }
 }
