@@ -14,6 +14,8 @@
 #define _DEVEL 1
 #include "arm_emitter/arm_emitter.h"
 
+//#define CANONICALTEST
+
 /*
 
 	ARM ABI
@@ -303,8 +305,12 @@ u32 DynaRBI::Relink()
 	{
 		//quick opt here:
 		//peek into reg alloc, store actuall sr_T register to relink_data
+#ifndef CANONICALTEST
 		bool last_op_sets_flags=!has_jcond && oplist.size() > 0 && 
 			oplist[oplist.size()-1].rd._reg==reg_sr_T && ccmap.count(oplist[oplist.size()-1].op);
+#else
+		bool last_op_sets_flags = false;
+#endif
 
 		ConditionCode CC=CC_EQ;
 
@@ -636,33 +642,34 @@ void ngen_CC_Param(shil_opcode* op,shil_param* par,CanonicalParamType tp)
 	}
 }
 
-void ngen_CC_Call(shil_opcode* op,void* function) 
+void ngen_CC_Call(shil_opcode* op, void* function)
 {
-	u32 rd=r0;
-	u32 fd=f0;
+	u32 rd = r0;
+	u32 fd = f0;
 
-	for (int i=CC_pars.size();i-->0;)
+	for (int i = CC_pars.size(); i-- > 0; )
 	{
-		if (CC_pars[i].type==CPT_ptr)
+		CC_PS& param = CC_pars[i];
+		if (param.type == CPT_ptr)
 		{
-			MOV32((eReg)rd, (u32)CC_pars[i].par->reg_ptr());
+			MOV32((eReg)rd, (u32)param.par->reg_ptr());
 		}
 		else
 		{
-			if (CC_pars[i].par->is_reg())
+			if (param.par->is_reg())
 			{
 				#ifdef ARM_HARDFP
-				if (CC_pars[i].type == CPT_f32) 
+				if (param.type == CPT_f32)
 				{
-					if (reg.IsAllocg(*CC_pars[i].par))
+					if (reg.IsAllocg(*param.par))
 					{
-						//printf("MOV((eReg)rd,reg.map(*CC_pars[i].par)); %d %d\n",rd,reg.map(*CC_pars[i].par));
-						VMOV((eFSReg)fd,reg.mapg(*CC_pars[i].par));
+						//printf("MOV((eReg)rd,reg.map(*param.par)); %d %d\n",rd,reg.map(*param.par));
+						VMOV((eFSReg)fd, reg.mapg(*param.par));
 					}
-					else if (reg.IsAllocf(*CC_pars[i].par))
+					else if (reg.IsAllocf(*param.par))
 					{
-						//printf("LoadSh4Reg_mem((eReg)rd, *CC_pars[i].par); %d\n",rd);
-						VMOV((eFSReg)fd,reg.mapfs(*CC_pars[i].par));
+						//printf("LoadSh4Reg_mem((eReg)rd, *param.par); %d\n",rd);
+						VMOV((eFSReg)fd, reg.mapfs(*param.par));
 					}
 					else
 						die("Must not happen!\n");
@@ -670,27 +677,28 @@ void ngen_CC_Call(shil_opcode* op,void* function)
 				}
 				#endif
 
-				if (reg.IsAllocg(*CC_pars[i].par))
+				if (reg.IsAllocg(*param.par))
 				{
-					//printf("MOV((eReg)rd,reg.map(*CC_pars[i].par)); %d %d\n",rd,reg.map(*CC_pars[i].par));
-					MOV((eReg)rd,reg.mapg(*CC_pars[i].par));
+					//printf("MOV((eReg)rd,reg.map(*param.par)); %d %d\n",rd,reg.map(*param.par));
+					MOV((eReg)rd, reg.mapg(*param.par));
 				}
-				else if (reg.IsAllocf(*CC_pars[i].par))
+				else if (reg.IsAllocf(*param.par))
 				{
-					//printf("LoadSh4Reg_mem((eReg)rd, *CC_pars[i].par); %d\n",rd);
-					VMOV((eReg)rd,reg.mapfs(*CC_pars[i].par));
+					//printf("LoadSh4Reg_mem((eReg)rd, *param.par); %d\n",rd);
+					VMOV((eReg)rd, reg.mapfs(*param.par));
 				}
 				else
 					die("Must not happen!\n");
 			}
 			else
 			{
-				verify(CC_pars[i].type != CPT_f32);
-				//printf("MOV32((eReg)rd, CC_pars[i].par->_imm); %d\n",rd);
-				MOV32((eReg)rd, CC_pars[i].par->_imm);
+				verify(param.par->is_imm());
+				//printf("MOV32((eReg)rd, param.par->_imm); %d\n",rd);
+				MOV32((eReg)rd, param.par->_imm);
 			}
 		}
 		rd++;
+		fd++;
 	}
 	//printf("used reg r0 to r%d, %d params, calling %08X\n",rd-1,CC_pars.size(),function);
 	CALL((u32)function);
@@ -1020,9 +1028,14 @@ u32* ngen_readm_fail_v2(u32* ptrv,u32* regs,u32 fault_addr)
 	return (u32*)ptr;
 }
 
-EAPI NEG(eReg Rd,eReg Rs)
+EAPI NEG(eReg Rd, eReg Rs)
 {
-	RSB(Rd,Rs,0);
+	RSB(Rd, Rs, 0);
+}
+
+EAPI NEG(eReg Rd, eReg Rs, ConditionCode CC)
+{
+	RSB(Rd, Rs, 0, CC);
 }
 
 eReg GenMemAddr(shil_opcode* op, eReg raddr = r0)
@@ -1072,92 +1085,48 @@ bool ngen_readm_immediate(RuntimeBlockInfo* block, shil_opcode* op, bool staging
 
 	if (isram)
 	{
+		MOV32(r0, (u32)ptr);
 		switch(optp)
 		{
 		case SZ_8:
-			{
-				verify(false);
-				MOV32(r0, (u32)ptr);
-				LDRB(rd, r0);
-				SXTB(rd, rd);
-			}
+			LDRSB(rd, r0);
 			break;
 
 		case SZ_16:
-			{
-				LoadImmBase16(rd, (u32)ptr, true);    // true for sx
-			}
+			LDRSH(rd, r0);
 			break;
 
 		case SZ_32I:
-			{
-				verify(reg.IsAllocg(op->rd));
-				{
-					if (optimise && staging && !is_s8(*(u32*)ptr) && abs((int)op->rs1._imm - (int)block->addr) <= 1024)
-					{
-						op->flags |= 0x40000000;
-
-						MOV32(r0, (u32)ptr);
-						LDR(rd, r0);
-						MOV32(r1, *(u32*)ptr);
-						CMP(rd, r1);
-						//JUMP((unat)EMIT_GET_PTR() + 24, CC_EQ);
-						MOV32(r1, (u32)&op->flags);
-						MOV32(r2, ~0x40000000);
-						LDR(r3, r1);
-						AND(r3, r3, r2, CC_NE);
-						STR(r3, r1);
-					}
-					else if (optimise && !staging && (op->flags & 0x40000000))
-					{
-						MOV32(rd, *(u32*)ptr);
-					}
-					else
-					{
-						MOV32(r0, (u32)ptr);
-						LDR(rd, r0);
-					}
-				}
-			}
+			LDR(rd, r0);
 			break;
 
 		case SZ_32F:
-			{
-				verify(reg.IsAllocf(op->rd));
-				MOV32(r0, (u32)ptr);
-				VLDR(reg.mapfs(op->rd), r0, 0);
-
-			}
+			VLDR(reg.mapfs(op->rd), r0, 0);
 			break;
 
 		case SZ_64F:
-			{
-				MOV32(r0, (u32)ptr);
-				VLDR(d0, r0, 0);
-				VSTR(d0, r8, op->rd.reg_nofs() / 4);
-			}
+			VLDR(d0, r0, 0);
+			VSTR(d0, r8, op->rd.reg_nofs() / 4);
 			break;
 		}
 	}
 	else
 	{
 		MOV32(r0, op->rs1._imm);
+		CALL((u32)ptr);
 
 		switch(optp)
 		{
 		case SZ_8:
-			CALL((u32)ptr);
 			SXTB(r0, r0);
 			break;
 
 		case SZ_16:
-			CALL((u32)ptr);
 			SXTH(r0, r0);
 			break;
 
 		case SZ_32I:
 		case SZ_32F:
-			CALL((u32)ptr);
 			break;
 
 		case SZ_64F:
@@ -1169,6 +1138,8 @@ bool ngen_readm_immediate(RuntimeBlockInfo* block, shil_opcode* op, bool staging
 			MOV(rd, r0);
 		else if (reg.IsAllocf(op->rd))
 			VMOV(reg.mapfs(op->rd), r0);
+		else
+			die("Unsupported");
 	}
 
 	return true;
@@ -1184,20 +1155,14 @@ bool ngen_writemem_immediate(RuntimeBlockInfo* block, shil_opcode* op, bool stag
 	void* ptr = _vmem_write_const(op->rs1._imm, isram, memop_bytes(optp));
 
 	eReg rs2 = r1;
-	eFSReg rs2f = f1;
+	eFSReg rs2f = f0;
 	if (op->rs2.is_imm())
-	{
 		MOV32(rs2, op->rs2._imm);
-		if (optp == SZ_32F)
-			VMOV(rs2f, rs2);
-	}
+	else if (optp == SZ_32F)
+		rs2f = reg.mapf(op->rs2);
 	else
-	{
-		if (optp == SZ_32F)
-			rs2f = reg.mapf(op->rs2);
-		else
-			rs2 = reg.mapg(op->rs2);
-	}
+		rs2 = reg.mapg(op->rs2);
+
 	if (isram)
 	{
 		MOV32(r0, (u32)ptr);
@@ -1208,7 +1173,7 @@ bool ngen_writemem_immediate(RuntimeBlockInfo* block, shil_opcode* op, bool stag
 			break;
 
 		case SZ_16:
-			STRH(rs2, r0);
+			STRH(rs2, r0, 0);
 			break;
 
 		case SZ_32I:
@@ -1229,7 +1194,9 @@ bool ngen_writemem_immediate(RuntimeBlockInfo* block, shil_opcode* op, bool stag
 		if (optp == SZ_64F)
 			die("SZ_64F not supported");
 		MOV32(r0, op->rs1._imm);
-		if (r1 != rs2)
+		if (optp == SZ_32F)
+			VMOV(r1, rs2f);
+		else if (r1 != rs2)
 			MOV(r1, rs2);
 
 		CALL((u32)ptr);
@@ -1351,45 +1318,17 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 						break;
 
 					case SZ_32I:
-						if (op->flags2!=0x1337)
-							STR(rs2, r1, r8, Offset, true);
-						else
-						{
-							emit_Skip(-4);
-							AND(r1,raddr,0x3F);
-							ADD(r1,r1,r8);
-							STR(rs2, r1, sq_offs);
-						}
+						STR(rs2, r1, r8, Offset, true);
 						break;
 
 					case SZ_32F:
-						if (op->flags2!=0x1337)
-						{
-							ADD(r1,r1,r8);	//3 opcodes: there's no [REG+REG] VLDR, also required for SQ
-							VSTR(rs2f, r1, 0);
-						}
-						else
-						{
-							emit_Skip(-4);
-							AND(r1,raddr,0x3F);
-							ADD(r1,r1,r8);
-							VSTR(rs2f, r1, sq_offs / 4);
-						}
+						ADD(r1, r1, r8);	//3 opcodes: there's no [REG+REG] VLDR, also required for SQ
+						VSTR(rs2f, r1, 0);
 						break;
 
 					case SZ_64F:
-						if (op->flags2!=0x1337)
-						{
-							ADD(r1,r1,r8);	//3 opcodes: there's no [REG+REG] VLDR, also required for SQ
-							VSTR(d0,r1,0);	//TODO: use reg alloc
-						}
-						else
-						{
-							emit_Skip(-4);
-							AND(r1,raddr,0x3F);
-							ADD(r1,r1,r8);
-							VSTR(d0,r1,sq_offs/4);
-						}
+						ADD(r1, r1, r8);	//3 opcodes: there's no [REG+REG] VLDR, also required for SQ
+						VSTR(d0, r1, 0);	//TODO: use reg alloc
 						break;
 					}
 				} else {
@@ -1427,8 +1366,8 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 			verify(op->rd.is_reg() && op->rd._reg==reg_pc_dyn);
 			if (op->rs2.is_imm())
 			{
-				MOV32(r2, (u32)op->rs2._imm);
-				ADD(r4,reg.mapg(op->rs1),r2);
+				MOV32(r2, op->rs2.imm_value());
+				ADD(r4, reg.mapg(op->rs1), r2);
 			}
 			else //if (r4!=rs1.reg)
 			{
@@ -1547,7 +1486,6 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 			break;
 		}
 
-//#define CANONICALTEST
 #ifndef CANONICALTEST
 		case shop_neg: ngen_Unary(op,NEG);     break;
 		case shop_not: ngen_Unary(op,NOT);     break;
@@ -1564,7 +1502,6 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 		case shop_add:	ngen_Binary(op,ADD,ADD);    break;
 		case shop_sub:	ngen_Binary(op,SUB,SUB);    break;
 		case shop_ror:	ngen_Binary(op,ROR,ROR);    break;
-
 			
 		case shop_adc:
 		{
@@ -1598,7 +1535,6 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 				eReg rs1 = GetParam(op->rs1, r1);
 				eReg rs2 = GetParam(op->rs2, r2);
 				if (rd2 != rs1) {
-					verify(rd2 != rs1);
 					LSR(rd2, rs2, 1, true);	//C=rs2, rd2=0
 					AND(rd2, rs1, 1);     	//get new carry
 				} else {
@@ -1698,14 +1634,24 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 			CALL((u32)UpdateSR);
 			break;
 		}
-		/* TODO Update this to use quotient sign as well
+
 		case shop_div32p2:
 		{
-			CMP(reg.mapg(op->rs3), 0);
-			SUB(reg.mapg(op->rd), reg.mapg(op->rs1), reg.mapg(op->rs2), CC_EQ);
+			eReg remainder = reg.mapg(op->rs1);
+			eReg divisor = reg.mapg(op->rs2);
+			eReg T = reg.mapg(op->rs3);
+
+			LSR(r0, T, 31);
+			EOR(r0, r0, T);
+			NOT(r0, r0);
+			SBFX(r0, r0, 0, 1);
+			AND(r0, r0, divisor);
+			TST(T, 1);
+			NEG(r1, r0, EQ);
+			MOV(r1, r0, NE);
+			ADD(reg.mapg(op->rd), remainder, r1);
 		}
 		break;
-		*/
 
 		case shop_test:
 		case shop_seteq:
@@ -1758,7 +1704,7 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 		    MOVW(rd, 1, opcls2[op->op-shop_test]);
 		    break;
         }
-		
+
 		case shop_setpeq:
 			{
 				eReg rs1 = GetParam(op->rs1, r1);
@@ -1804,12 +1750,14 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 			break;
 		case shop_mul_u64:
 			{
-				UMULL(reg.mapg(op->rd2), reg.mapg(op->rd), reg.mapg(op->rs1), reg.mapg(op->rs2));
+				eReg rs2 = GetParam(op->rs2, r2);
+				UMULL(reg.mapg(op->rd2), reg.mapg(op->rd), reg.mapg(op->rs1), rs2);
 			}
 			break;
 		case shop_mul_s64:
 			{
-				SMULL(reg.mapg(op->rd2), reg.mapg(op->rd), reg.mapg(op->rs1), reg.mapg(op->rs2));
+				eReg rs2 = GetParam(op->rs2, r2);
+				SMULL(reg.mapg(op->rd2), reg.mapg(op->rd), reg.mapg(op->rs1), rs2);
 			}
 			break;
 
@@ -1872,7 +1820,7 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 		case shop_pref:
 			{
 				ConditionCode cc = CC_EQ;
-				if (op->flags != 0x1337 && !op->rs1.is_imm())
+				if (!op->rs1.is_imm())
 				{
 					LSR(r1,reg.mapg(op->rs1),26);
 					MOV(r0,reg.mapg(op->rs1));
@@ -1880,15 +1828,15 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 				}
 				else
 				{
-					// The decoder or SSA pass has already checked that the
+					// The SSA pass has already checked that the
 					// destination is a store queue so no need to check
-					MOV(r0,reg.mapg(op->rs1));
+					MOV32(r0, op->rs1.imm_value());
 					cc = CC_AL;
 				}
 
 				if (CCN_MMUCR.AT)
 				{
-					CALL((unat)&do_sqw_mmu,op->flags==0x1337?CC_AL:CC_EQ);
+					CALL((unat)&do_sqw_mmu, cc);
 				}
 				else
 				{	
