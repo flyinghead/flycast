@@ -4,8 +4,8 @@
 //
 //  Created by flyinghead on 21/05/2019.
 //
-REI_APP_NAME = Reicast
-PRODUCT_NAME = Reicast
+REI_APP_NAME = Flycast
+PRODUCT_NAME = Flycast
 CFLAGS =
 
 

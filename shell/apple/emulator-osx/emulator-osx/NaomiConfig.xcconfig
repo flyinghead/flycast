@@ -4,7 +4,7 @@
 //
 //  Created by flyinghead on 21/05/2019.
 //
-REI_APP_NAME = Reicast Naomi
-PRODUCT_NAME = Reicast Naomi
+REI_APP_NAME = Flycast Naomi
+PRODUCT_NAME = Flycast Naomi
 CFLAGS = DC_PLATFORM=2
 

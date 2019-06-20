@@ -329,7 +329,7 @@
 		84967CBA1B8F49EE005F1140 /* pngwrite.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pngwrite.c; sourceTree = "<group>"; };
 		84967CBB1B8F49EE005F1140 /* pngwtran.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pngwtran.c; sourceTree = "<group>"; };
 		84967CBC1B8F49EE005F1140 /* pngwutil.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pngwutil.c; sourceTree = "<group>"; };
-		84A388B31B1CDD3E000166C0 /* Reicast.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Reicast.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		84A388B31B1CDD3E000166C0 /* Flycast.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Flycast.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		84A388B71B1CDD3E000166C0 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		84A388B81B1CDD3E000166C0 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		84A388BA1B1CDD3E000166C0 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
@@ -930,7 +930,7 @@
 		84A388B41B1CDD3E000166C0 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				84A388B31B1CDD3E000166C0 /* Reicast.app */,
+				84A388B31B1CDD3E000166C0 /* Flycast.app */,
 				84A388C31B1CDD3F000166C0 /* reicast-osxTests.xctest */,
 			);
 			name = Products;
@@ -2097,7 +2097,7 @@
 			);
 			name = "reicast-osx";
 			productName = "reicast-osx";
-			productReference = 84A388B31B1CDD3E000166C0 /* Reicast.app */;
+			productReference = 84A388B31B1CDD3E000166C0 /* Flycast.app */;
 			productType = "com.apple.product-type.application";
 		};
 		84A388C21B1CDD3F000166C0 /* reicast-osxTests */ = {
@@ -2654,6 +2654,7 @@
 				);
 				INFOPLIST_FILE = "emulator-osx/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.flyinghead.Flycast;
 				PRODUCT_NAME = "$(REI_APP_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "emulator-osx/emulator-osx-Bridging-Header.h";
 				SWIFT_VERSION = 3.0;
@@ -2822,6 +2823,7 @@
 				);
 				INFOPLIST_FILE = "emulator-osx/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.flyinghead.Flycast;
 				PRODUCT_NAME = "$(REI_APP_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "emulator-osx/emulator-osx-Bridging-Header.h";
 				SWIFT_VERSION = 3.0;
