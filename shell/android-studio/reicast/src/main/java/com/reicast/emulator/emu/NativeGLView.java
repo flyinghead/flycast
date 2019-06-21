@@ -90,7 +90,7 @@ public class NativeGLView extends SurfaceView implements SurfaceHolder.Callback 
 
     @Override
     public void surfaceChanged(SurfaceHolder surfaceHolder, int format, int w, int h) {
-        //Log.i("reicast", "NativeGLView.surfaceChanged: " + w + "x" + h);
+        //Log.i("flycast", "NativeGLView.surfaceChanged: " + w + "x" + h);
         surfaceReady = true;
         JNIdc.rendinitNative(surfaceHolder.getSurface());
         Emulator.getCurrentActivity().handleStateChange(false);
@@ -98,7 +98,7 @@ public class NativeGLView extends SurfaceView implements SurfaceHolder.Callback 
 
     @Override
     public void surfaceDestroyed(SurfaceHolder surfaceHolder) {
-        //Log.i("reicast", "NativeGLView.surfaceDestroyed");
+        //Log.i("flycast", "NativeGLView.surfaceDestroyed");
         surfaceReady = false;
         JNIdc.rendinitNative(null);
         Emulator.getCurrentActivity().handleStateChange(true);
@@ -111,12 +111,12 @@ public class NativeGLView extends SurfaceView implements SurfaceHolder.Callback 
     public void pause() {
         paused = true;
         JNIdc.pause();
-        //Log.i("reicast", "NativeGLView.pause");
+        //Log.i("flycast", "NativeGLView.pause");
     }
 
     public void resume() {
         if (paused) {
-            //Log.i("reicast", "NativeGLView.resume");
+            //Log.i("flycast", "NativeGLView.resume");
             paused = false;
             setFocusable(true);
             setFocusableInTouchMode(true);

@@ -125,7 +125,7 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
         List<String> pathList = new ArrayList<>();
         pathList.add(android_home_directory);
         pathList.addAll(FileBrowser.getExternalMounts());
-        Log.i("reicast", "External storage dirs: " + pathList);
+        Log.i("flycast", "External storage dirs: " + pathList);
         JNIdc.setExternalStorageDirectories(pathList.toArray());
     }
 

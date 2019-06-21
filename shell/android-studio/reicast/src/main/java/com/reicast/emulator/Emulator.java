@@ -51,7 +51,7 @@ public class Emulator extends Application {
      */
     public void SaveAndroidSettings(String homeDirectory)
     {
-        Log.i("reicast", "SaveAndroidSettings: saving preferences");
+        Log.i("flycast", "SaveAndroidSettings: saving preferences");
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         Emulator.nosound = JNIdc.getNosound();
         Emulator.vibrationDuration = JNIdc.getVirtualGamepadVibration();
