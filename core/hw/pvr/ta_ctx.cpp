@@ -198,13 +198,15 @@ bool rend_framePending() {
 
 void FinishRender(TA_context* ctx)
 {
-	verify(ctx == NULL || rqueue == ctx);
-	mtx_rqueue.Lock();
-	rqueue = 0;
-	mtx_rqueue.Unlock();
-
 	if (ctx != NULL)
+	{
+		verify(rqueue == ctx);
+		mtx_rqueue.Lock();
+		rqueue = NULL;
+		mtx_rqueue.Unlock();
+
 		tactx_Recycle(ctx);
+	}
 	frame_finished.Set();
 }
 
