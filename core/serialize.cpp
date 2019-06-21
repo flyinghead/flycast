@@ -671,8 +671,8 @@ extern Sh4RegType div_som_reg3;
 //extern u8 SH4_TCB[CODE_SIZE+4096];
 //one time ptr set
 //extern u8* CodeCache;
-extern u32 LastAddr;
-extern u32 LastAddr_min;
+//extern u32 LastAddr;
+//extern u32 LastAddr_min;
 //temp storage only
 //extern u32* emit_ptr;
 extern char block_hash[1024];
@@ -1097,8 +1097,8 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	REICAST_S(div_som_reg2);
 	REICAST_S(div_som_reg3);
 
-	REICAST_S(LastAddr);
-	REICAST_S(LastAddr_min);
+	REICAST_S(i); //LastAddr
+	REICAST_S(i); //LastAddr_min
 	REICAST_SA(block_hash,1024);
 
 	REICAST_SA(RegisterWrite,sh4_reg_count);
@@ -1492,8 +1492,8 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 
 	//REICAST_USA(CodeCache,CODE_SIZE) ;
 	//REICAST_USA(SH4_TCB,CODE_SIZE+4096);
-	REICAST_US(LastAddr);
-	REICAST_US(LastAddr_min);
+	REICAST_US(i); //LastAddr
+	REICAST_US(i); //LastAddr_min
 	REICAST_USA(block_hash,1024);
 
 
@@ -1870,8 +1870,8 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 
 	//REICAST_USA(CodeCache,CODE_SIZE) ;
 	//REICAST_USA(SH4_TCB,CODE_SIZE+4096);
-	REICAST_US(LastAddr);
-	REICAST_US(LastAddr_min);
+	REICAST_US(i); //LastAddr
+	REICAST_US(i); //LastAddr_min);
 	REICAST_USA(block_hash,1024);
 
 	REICAST_USA(RegisterWrite,sh4_reg_count);

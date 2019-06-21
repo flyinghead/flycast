@@ -56,7 +56,7 @@ extern int vmem_fd;
 #define VMEM32_ERROR_NOT_MAPPED 0x100
 
 static const u64 VMEM32_SIZE = 0x100000000L;
-static const u64 KERNEL_SPACE = 0x80000000L;
+static const u64 USER_SPACE = 0x80000000L;
 static const u64 AREA7_ADDRESS = 0x7C000000L;
 
 #define VRAM_PROT_SEGMENT (1024 * 1024)	// vram protection regions are grouped by 1MB segment
@@ -67,7 +67,7 @@ struct vram_lock {
 	u32 end;
 };
 static std::vector<vram_lock> vram_blocks[VRAM_SIZE / VRAM_PROT_SEGMENT];
-static u8 sram_mapped_pages[KERNEL_SPACE / PAGE_SIZE / 8];	// bit set to 1 if page is mapped
+static u8 sram_mapped_pages[USER_SPACE / PAGE_SIZE / 8];	// bit set to 1 if page is mapped
 
 bool vmem32_inited;
 
@@ -368,7 +368,7 @@ void vmem32_flush_mmu()
 	//vmem32_flush++;
 	vram_mapped_pages.clear();
 	memset(sram_mapped_pages, 0, sizeof(sram_mapped_pages));
-	vmem32_unmap_buffer(0, KERNEL_SPACE);
+	vmem32_unmap_buffer(0, USER_SPACE);
 	// TODO flush P3?
 }
 
@@ -380,6 +380,7 @@ bool vmem32_init()
 	if (settings.dynarec.disable_vmem32 || !_nvmem_4gb_space())
 		return false;
 	vmem32_inited = true;
+	vmem32_flush_mmu();
 	return true;
 #endif
 }

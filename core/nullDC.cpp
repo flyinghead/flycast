@@ -455,7 +455,13 @@ void* dc_run(void*)
 	do {
 		reset_requested = false;
 
-		sh4_cpu.Run();
+		try {
+			sh4_cpu.Run();
+		} catch (const FatalError& error) {
+			printf("FATAL: %s in %s:%d: %s\n", error.message.c_str(), error.file.c_str(), error.line, error.function.c_str());
+			reset_requested = false;
+			sh4_cpu.Stop();
+		}
 
    		SaveRomFiles(get_writable_data_path("/data/"));
    		if (reset_requested)
@@ -949,6 +955,7 @@ void dc_loadstate()
 #ifndef NO_MMU
     mmu_flush_table();
 #endif
+	bm_Reset();
 
 	if ( ! dc_unserialize(&data_ptr, &total_size) )
 	{
@@ -959,7 +966,6 @@ void dc_loadstate()
 	}
 
 	mmu_set_state();
-	bm_Reset();
 	sh4_cpu.ResetCache();
     dsp.dyndirty = true;
     sh4_sched_ffts();
