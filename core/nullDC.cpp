@@ -455,13 +455,7 @@ void* dc_run(void*)
 	do {
 		reset_requested = false;
 
-		try {
-			sh4_cpu.Run();
-		} catch (const FatalError& error) {
-			printf("FATAL: %s in %s:%d: %s\n", error.message.c_str(), error.file.c_str(), error.line, error.function.c_str());
-			reset_requested = false;
-			sh4_cpu.Stop();
-		}
+		sh4_cpu.Run();
 
    		SaveRomFiles(get_writable_data_path("/data/"));
    		if (reset_requested)
