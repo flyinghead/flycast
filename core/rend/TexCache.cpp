@@ -244,7 +244,7 @@ bool VramLockedWriteOffset(size_t offset)
 			}
 			list->clear();
 
-			_vmem_unprotect_vram((u32)offset, PAGE_SIZE);
+			_vmem_unprotect_vram((u32)(offset & ~PAGE_MASK), PAGE_SIZE);
 
 			vramlist_lock.Unlock();
 		}
