@@ -129,10 +129,12 @@ RuntimeBlockInfoPtr bm_GetBlock(void* dynarec_code)
 	void *dynarecrw = CC_RX2RW(dynarec_code);
 	// Returns a block who's code addr is bigger than dynarec_code (or end)
 	auto iter = blkmap.upper_bound(dynarecrw);
+	if (iter == blkmap.begin())
+		return NULL;
 	iter--;  // Need to go back to find the potential candidate
 
 	// However it might be out of bounds, check for that
-	if ((u8*)iter->second->code + iter->second->host_code_size < dynarec_code)
+	if ((u8*)iter->second->code + iter->second->host_code_size < (u8*)dynarec_code)
 		return NULL;
 
 	verify(iter->second->contains_code((u8*)dynarecrw));
@@ -701,8 +703,8 @@ void RuntimeBlockInfo::Discard()
 
 void RuntimeBlockInfo::SetProtectedFlags()
 {
-	// Don't write protect rom
-	if (!IsOnRam(addr))
+	// Don't write protect rom and BIOS/IP.BIN (Grandia II)
+	if (!IsOnRam(addr) || (vaddr & 0x1FFF0000) == 0x0c000000)
 	{
 		this->read_only = false;
 		unprotected_blocks++;
