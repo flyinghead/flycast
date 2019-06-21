@@ -33,13 +33,13 @@ after_build:
       
       mkdir artifacts
       
-      move %EXE_PATH% artifacts\reicast-win_%PLATFORM%-%CONFIGURATION%-%APPVEYOR_REPO_COMMIT%.exe
+      move %EXE_PATH% artifacts\flycast-win_%PLATFORM%-%CONFIGURATION%-%APPVEYOR_REPO_COMMIT%.exe
       
       copy %EXTRA_PATH%\libgcc_s_seh-1.dll artifacts && copy %EXTRA_PATH%\libwinpthread-1.dll artifacts && copy %EXTRA_PATH%\libgomp-1.dll artifacts
 
 artifacts:
   - path: artifacts
-    name: reicast-win_$(PLATFORM)-$(CONFIGURATION)-$(APPVEYOR_REPO_COMMIT)
+    name: flycast-win_$(PLATFORM)-$(CONFIGURATION)-$(APPVEYOR_REPO_COMMIT)
 deploy:
 - provider: S3
   access_key_id: AKIAJOZQS4H2PHQWYFCA
@@ -47,6 +47,6 @@ deploy:
     secure: Y/QobuGrBsa137sbi9a+UnvSLqpWITTCp5yFTgDJ4i1Gduyi9V7i/g3zLZ4s2J7d
   bucket: flycast-builds
   folder: 'win/heads/$(APPVEYOR_REPO_BRANCH)-$(APPVEYOR_REPO_COMMIT)'
-  artifact: reicast-win_$(PLATFORM)-$(CONFIGURATION)-$(APPVEYOR_REPO_COMMIT)
+  artifact: flycast-win_$(PLATFORM)-$(CONFIGURATION)-$(APPVEYOR_REPO_COMMIT)
   region: us-east-2
   set_public: true

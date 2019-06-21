@@ -15,7 +15,7 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "84A388B21B1CDD3E000166C0"
-               BuildableName = "Reicast.app"
+               BuildableName = "Flycast.app"
                BlueprintName = "reicast-osx"
                ReferencedContainer = "container:reicast-osx.xcodeproj">
             </BuildableReference>
@@ -34,7 +34,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "84A388B21B1CDD3E000166C0"
-            BuildableName = "Reicast.app"
+            BuildableName = "Flycast.app"
             BlueprintName = "reicast-osx"
             ReferencedContainer = "container:reicast-osx.xcodeproj">
          </BuildableReference>
@@ -58,7 +58,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "84A388B21B1CDD3E000166C0"
-            BuildableName = "Reicast.app"
+            BuildableName = "Flycast.app"
             BlueprintName = "reicast-osx"
             ReferencedContainer = "container:reicast-osx.xcodeproj">
          </BuildableReference>
@@ -77,7 +77,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "84A388B21B1CDD3E000166C0"
-            BuildableName = "Reicast.app"
+            BuildableName = "Flycast.app"
             BlueprintName = "reicast-osx"
             ReferencedContainer = "container:reicast-osx.xcodeproj">
          </BuildableReference>

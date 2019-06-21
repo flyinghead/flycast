@@ -70,7 +70,7 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
             AlertDialog.Builder dlgAlert  = new AlertDialog.Builder(this);
             dlgAlert.setMessage("Initialization failed. Please try again and/or reinstall.\n\n"
                     + "Error: " + result);
-            dlgAlert.setTitle("Reicast Error");
+            dlgAlert.setTitle("Flycast Error");
             dlgAlert.setPositiveButton("Exit",
                     new DialogInterface.OnClickListener() {
                         @Override
@@ -125,7 +125,7 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
         List<String> pathList = new ArrayList<>();
         pathList.add(android_home_directory);
         pathList.addAll(FileBrowser.getExternalMounts());
-        Log.i("reicast", "External storage dirs: " + pathList);
+        Log.i("flycast", "External storage dirs: " + pathList);
         JNIdc.setExternalStorageDirectories(pathList.toArray());
     }
 
@@ -305,7 +305,7 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
             AlertDialog.Builder dlgAlert  = new AlertDialog.Builder(this);
             dlgAlert.setMessage("An error occurred retrieving the log file:\n\n"
                     + e.getMessage());
-            dlgAlert.setTitle("Reicast Error");
+            dlgAlert.setTitle("Flycast Error");
             dlgAlert.setPositiveButton("Ok",
                     new DialogInterface.OnClickListener() {
                         @Override

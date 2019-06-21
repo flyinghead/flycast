@@ -172,7 +172,7 @@ static void destroy_empty_cursor()
 
 static void x11_capture_mouse()
 {
-	x11_window_set_text("Reicast - mouse capture");
+	x11_window_set_text("Flycast - mouse capture");
 	capturing_mouse = true;
 	Cursor cursor = create_empty_cursor();
 	Display *display = (Display*)x11_disp;
@@ -185,7 +185,7 @@ static void x11_capture_mouse()
 
 static void x11_uncapture_mouse()
 {
-	x11_window_set_text("Reicast");
+	x11_window_set_text("Flycast");
 	capturing_mouse = false;
 	Display *display = (Display*)x11_disp;
 	Window window = (Window)x11_win;
@@ -551,7 +551,7 @@ void x11_window_create()
 		x11_win = (void*)x11Window;
 		x11_vis = (void*)x11Visual->visual;
 
-		x11_window_set_text("Reicast");
+		x11_window_set_text("Flycast");
 	}
 	else
 	{
