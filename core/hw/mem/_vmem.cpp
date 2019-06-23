@@ -724,7 +724,6 @@ void _vmem_unprotect_vram(u32 addr, u32 size)
 			//mem_region_unlock(virt_ram_base + 0xA4000000 + addr + VRAM_SIZE, size);
 			//mem_region_unlock(virt_ram_base + 0xC4000000 + addr + VRAM_SIZE, size);
 		}
-		vmem32_unprotect_vram(addr, size);
 	}
 }
 

@@ -279,7 +279,8 @@ void libCore_vramlock_Unlock_block_wb(vram_block* block)
 		msgboxf("Error : block end is after vram , skipping unlock",MBX_OK);
 	else
 	{
-		_vmem_unprotect_vram(block->start, block->len);
+		if (mmu_enabled())
+			vmem32_unprotect_vram(block->start, block->len);
 		vramlock_list_remove(block);
 		//more work needed
 		free(block);
