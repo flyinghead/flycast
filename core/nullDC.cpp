@@ -199,7 +199,13 @@ void LoadSpecialSettings()
 		// Resident Evil 2 (US)
 		|| !strncmp("T1205N", reios_product_number, 6)
 		// Resident Evil 2 (EU)
-		|| !strncmp("T7004D  50", reios_product_number, 10))
+		|| !strncmp("T7004D  50", reios_product_number, 10)
+		// Rune Jade
+		|| !strncmp("T14304M", reios_product_number, 7)
+		// Marionette Company
+		|| !strncmp("T5202M", reios_product_number, 6)
+		// Marionette Company 2
+		|| !strncmp("T5203M", reios_product_number, 6))
 	{
 		printf("Disabling 32-bit virtual memory for game %s\n", reios_product_number);
 		settings.dynarec.disable_vmem32 = true;
