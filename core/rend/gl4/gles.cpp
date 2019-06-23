@@ -657,7 +657,7 @@ static bool RenderFrame()
 		scale_x=fb_scale_x;
 		scale_y=fb_scale_y;
 		if (SCALER_CTL.interlace == 0 && SCALER_CTL.vscalefactor >= 0x400)
-			scale_y *= SCALER_CTL.vscalefactor / 0x400;
+			scale_y *= (float)SCALER_CTL.vscalefactor / 0x400;
 
 		//work out scaling parameters !
 		//Pixel doubling is on VO, so it does not affect any pixel operations
@@ -719,7 +719,7 @@ static bool RenderFrame()
 
 	gl4ShaderUniforms.extra_depth_scale = settings.rend.ExtraDepthScale;
 
-	//printf("scale: %f, %f, %f, %f\n",gl4ShaderUniforms.scale_coefs[0],gl4ShaderUniforms.scale_coefs[1],gl4ShaderUniforms.scale_coefs[2],gl4ShaderUniforms.scale_coefs[3]);
+	//printf("scale: %f, %f, %f, %f\n", gl4ShaderUniforms.scale_coefs[0], gl4ShaderUniforms.scale_coefs[1], gl4ShaderUniforms.scale_coefs[2], gl4ShaderUniforms.scale_coefs[3]);
 
 	//VERT and RAM fog color constants
 	u8* fog_colvert_bgra=(u8*)&FOG_COL_VERT;
@@ -873,8 +873,8 @@ static bool RenderFrame()
 				if (SCALER_CTL.interlace && SCALER_CTL.vscalefactor >= 0x400)
 				{
 					// Clipping is done after scaling/filtering so account for that if enabled
-					height *= SCALER_CTL.vscalefactor / 0x400;
-					min_y *= SCALER_CTL.vscalefactor / 0x400;
+					height *= (float)SCALER_CTL.vscalefactor / 0x400;
+					min_y *= (float)SCALER_CTL.vscalefactor / 0x400;
 				}
 				if (settings.rend.Rotate90)
 				{

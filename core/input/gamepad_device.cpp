@@ -34,6 +34,11 @@ extern s8 joyx[4], joyy[4];
 std::vector<std::shared_ptr<GamepadDevice>> GamepadDevice::_gamepads;
 std::mutex GamepadDevice::_gamepads_mutex;
 
+#ifdef TEST_AUTOMATION
+#include "hw/sh4/sh4_sched.h"
+static FILE *record_input;
+#endif
+
 bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 {
 	if (_input_detected != NULL && _detecting_button 
@@ -86,6 +91,10 @@ bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 		}
 		else
 			kcode[_maple_port] |= (u16)key;
+#ifdef TEST_AUTOMATION
+		if (record_input != NULL)
+			fprintf(record_input, "%ld button %x %04x\n", sh4_sched_now64(), _maple_port, kcode[_maple_port]);
+#endif
 	}
 	else
 	{
@@ -288,13 +297,35 @@ void GamepadDevice::detect_axis_input(input_detected_cb axis_moved)
 	_detection_start_time = os_GetSeconds() + 0.2;
 }
 
+#ifdef TEST_AUTOMATION
+static FILE *get_record_input(bool write)
+{
+	if (write && !cfgLoadBool("record", "record_input", false))
+		return NULL;
+	if (!write && !cfgLoadBool("record", "replay_input", false))
+		return NULL;
+	string game_dir = cfgLoadStr("config", "image", "");
+	size_t slash = game_dir.find_last_of("/");
+	size_t dot = game_dir.find_last_of(".");
+	string input_file = "scripts/" + game_dir.substr(slash + 1, dot - slash) + "input";
+	return fopen(input_file.c_str(), write ? "w" : "r");
+}
+#endif
+
 void GamepadDevice::Register(std::shared_ptr<GamepadDevice> gamepad)
 {
 	int maple_port = cfgLoadInt("input",
 			(MAPLE_PORT_CFG_PREFIX + gamepad->unique_id()).c_str(), 12345);
 	if (maple_port != 12345)
 		gamepad->set_maple_port(maple_port);
-
+#ifdef TEST_AUTOMATION
+	if (record_input == NULL)
+	{
+		record_input = get_record_input(true);
+		if (record_input != NULL)
+			setbuf(record_input, NULL);
+	}
+#endif
 	_gamepads_mutex.lock();
 	_gamepads.push_back(gamepad);
 	_gamepads_mutex.unlock();
@@ -321,3 +352,43 @@ void GamepadDevice::SaveMaplePorts()
 			cfgSaveInt("input", (MAPLE_PORT_CFG_PREFIX + gamepad->unique_id()).c_str(), gamepad->maple_port());
 	}
 }
+
+#ifdef TEST_AUTOMATION
+static bool replay_inited;
+FILE *replay_file;
+u64 next_event;
+u32 next_port;
+u32 next_kcode;
+bool do_screenshot;
+
+void replay_input()
+{
+	if (!replay_inited)
+	{
+		replay_file = get_record_input(false);
+		replay_inited = true;
+	}
+	if (replay_file == NULL)
+	{
+		if (next_event > 0 && sh4_sched_now64() - next_event > SH4_MAIN_CLOCK * 5)
+			die("Automation time-out after 5 s\n");
+		return;
+	}
+	u64 now = sh4_sched_now64();
+	while (next_event <= now)
+	{
+		if (next_event > 0)
+			kcode[next_port] = next_kcode;
+
+		char action[32];
+		if (fscanf(replay_file, "%ld %s %x %x\n", &next_event, action, &next_port, &next_kcode) != 4)
+		{
+			fclose(replay_file);
+			replay_file = NULL;
+			printf("Input replay terminated\n");
+			do_screenshot = true;
+			break;
+		}
+	}
+}
+#endif

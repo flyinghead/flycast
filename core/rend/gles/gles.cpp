@@ -33,6 +33,7 @@ int fbdev = -1;
 #ifdef _ANDROID
 #include <android/native_window.h> // requires ndk r5 or newer
 #endif
+#include "deps/libpng/png.h"
 
 /*
 GL|ES 2
@@ -446,6 +447,48 @@ int screen_width;
 int screen_height;
 GLuint fogTextureId;
 
+#ifdef TEST_AUTOMATION
+void dump_screenshot(u8 *buffer, u32 width, u32 height)
+{
+	FILE *fp = fopen("screenshot.png", "wb");
+	if (fp == NULL)
+	{
+		printf("Failed to open screenshot.png for writing\n");
+		return;
+	}
+
+	png_bytepp rows = (png_bytepp)malloc(height * sizeof(png_bytep));
+	for (int y = 0; y < height; y++)
+	{
+		rows[height - y - 1] = (png_bytep)buffer + y * width * 3;
+	}
+
+	png_structp png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+	png_infop info_ptr = png_create_info_struct(png_ptr);
+
+	png_init_io(png_ptr, fp);
+
+
+	// write header
+	png_set_IHDR(png_ptr, info_ptr, width, height,
+			 8, PNG_COLOR_TYPE_RGB, PNG_INTERLACE_NONE,
+			 PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
+
+	png_write_info(png_ptr, info_ptr);
+
+
+	// write bytes
+	png_write_image(png_ptr, rows);
+
+	// end write
+	png_write_end(png_ptr, NULL);
+	fclose(fp);
+
+	free(rows);
+
+}
+#endif
+
 #ifdef USE_EGL
 
 	extern "C" void load_gles_symbols();
@@ -819,6 +862,33 @@ GLuint fogTextureId;
 
 	void gl_swap()
 	{
+#ifdef TEST_AUTOMATION
+		static FILE* video_file = fopen(cfgLoadStr("record", "rawvid","").c_str(), "wb");
+		extern bool do_screenshot;
+
+		if (video_file)
+		{
+			int bytesz = screen_width * screen_height * 3;
+			u8* img = new u8[bytesz];
+
+			glReadPixels(0, 0, screen_width, screen_height, GL_RGB, GL_UNSIGNED_BYTE, img);
+			fwrite(img, 1, bytesz, video_file);
+			fflush(video_file);
+		}
+
+		if (do_screenshot)
+		{
+			extern void dc_exit();
+			int bytesz = screen_width * screen_height * 3;
+			u8* img = new u8[bytesz];
+
+			glReadPixels(0, 0, screen_width, screen_height, GL_RGB, GL_UNSIGNED_BYTE, img);
+			dump_screenshot(img, screen_width, screen_height);
+			delete[] img;
+			dc_exit();
+			exit(0);
+		}
+#endif
 		glXSwapBuffers((Display*)libPvr_GetRenderSurface(), (GLXDrawable)libPvr_GetRenderTarget());
 
 		Window win;
@@ -1655,7 +1725,7 @@ bool RenderFrame()
 		scale_x=fb_scale_x;
 		scale_y=fb_scale_y;
 		if (SCALER_CTL.interlace == 0 && SCALER_CTL.vscalefactor >= 0x400)
-			scale_y *= SCALER_CTL.vscalefactor / 0x400;
+			scale_y *= (float)SCALER_CTL.vscalefactor / 0x400;
 
 		//work out scaling parameters !
 		//Pixel doubling is on VO, so it does not affect any pixel operations
@@ -1908,8 +1978,8 @@ bool RenderFrame()
 				if (SCALER_CTL.interlace && SCALER_CTL.vscalefactor >= 0x400)
 				{
 					// Clipping is done after scaling/filtering so account for that if enabled
-					height *= SCALER_CTL.vscalefactor / 0x400;
-					min_y *= SCALER_CTL.vscalefactor / 0x400;
+					height *= (float)SCALER_CTL.vscalefactor / 0x400;
+					min_y *= (float)SCALER_CTL.vscalefactor / 0x400;
 				}
 				if (settings.rend.Rotate90)
 				{
@@ -2026,8 +2096,6 @@ struct glesrend : Renderer
 	}
 };
 
-
-#include "deps/libpng/png.h"
 
 FILE* pngfile;
 

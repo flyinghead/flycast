@@ -4,6 +4,7 @@
 #include "hw/holly/holly_intc.h"
 #include "oslib/oslib.h"
 #include "hw/sh4/sh4_sched.h"
+#include "input/gamepad_device.h"
 
 //SPG emulation; Scanline/Raster beam registers & interrupts
 //Time to emulate that stuff correctly ;)
@@ -145,6 +146,9 @@ int spg_line_sched(int tag, int cycl, int jit)
 			vblk_cnt++;
 			//TODO : rend_if_VBlank();
 			rend_vblank();//notify for vblank :)
+#ifdef TEST_AUTOMATION
+			replay_input();
+#endif
 			
 			if ((os_GetSeconds()-last_fps)>2)
 			{
