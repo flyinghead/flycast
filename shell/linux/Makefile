@@ -121,6 +121,7 @@ else ifneq (,$(findstring x64,$(platform)))
     USE_X11 := 1
     CFLAGS += -D TARGET_LINUX_x64 -D TARGET_NO_AREC -fno-builtin-sqrtf
     CXXFLAGS += -fexceptions
+    LDFLAGS := -no-pie
 
     ifneq (,$(findstring sse4_1,$(platform)))
         HAS_SOFTREND := 1
