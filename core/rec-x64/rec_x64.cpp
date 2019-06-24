@@ -948,9 +948,17 @@ public:
 			case shop_xtrct:
 				{
 					Xbyak::Reg32 rd = regalloc.MapRegister(op.rd);
-					Xbyak::Reg32 rs1 = regalloc.MapRegister(op.rs1);
-					Xbyak::Reg32 rs2 = regalloc.MapRegister(op.rs2);
-					if (regalloc.mapg(op.rd) == regalloc.mapg(op.rs2))
+					Xbyak::Reg32 rs1 = ecx;
+					if (op.rs1.is_reg())
+						rs1 = regalloc.MapRegister(op.rs1);
+					else
+						mov(rs1, op.rs1.imm_value());
+					Xbyak::Reg32 rs2 = eax;
+					if (op.rs2.is_reg())
+						rs2 = regalloc.MapRegister(op.rs2);
+					else
+						mov(rs2, op.rs2.imm_value());
+					if (rd == rs2)
 					{
 						shl(rd, 16);
 						mov(eax, rs1);
@@ -958,7 +966,7 @@ public:
 						or_(rd, eax);
 						break;
 					}
-					else if (regalloc.mapg(op.rd) != regalloc.mapg(op.rs1))
+					else if (rd != rs1)
 					{
 						mov(rd, rs1);
 					}
@@ -1693,7 +1701,7 @@ private:
 					mov(dword[rax], op.rs2._imm);
 				else
 				{
-					mov(rcx, (uintptr_t)op.rd.reg_ptr());
+					mov(rcx, (uintptr_t)op.rs2.reg_ptr());
 					mov(ecx, dword[rcx]);
 					mov(dword[rax], ecx);
 				}
@@ -1711,7 +1719,7 @@ private:
 				else
 #endif
 				{
-					mov(rcx, (uintptr_t)op.rd.reg_ptr());
+					mov(rcx, (uintptr_t)op.rs2.reg_ptr());
 					mov(rcx, qword[rcx]);
 					mov(qword[rax], rcx);
 				}

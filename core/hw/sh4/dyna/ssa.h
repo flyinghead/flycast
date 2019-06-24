@@ -37,12 +37,14 @@ public:
 	{
 		AddVersionPass();
 #if DEBUG
-			printf("BEFORE\n");
-			PrintBlock();
+		printf("BEFORE\n");
+		PrintBlock();
 #endif
 
 		ConstPropPass();
-		WriteAfterWritePass();
+		// This should only be done for ram/vram/aram access
+		// Disabled for now and probably not worth the trouble
+		//WriteAfterWritePass();
 		DeadCodeRemovalPass();
 		SimplifyExpressionPass();
 		CombineShiftsPass();
@@ -170,7 +172,34 @@ private:
 			if (op.op != shop_fmac && op.op != shop_adc)
 				ConstPropOperand(op.rs3);
 
-			if (op.op == shop_readm || op.op == shop_writem)
+			if (op.op == shop_ifb)
+			{
+				constprop_values.clear();
+			}
+			else if (op.op == shop_sync_sr)
+			{
+				for (auto it = constprop_values.begin(); it != constprop_values.end(); )
+				{
+					Sh4RegType reg = it->first.get_reg();
+					if (reg == reg_sr_status || reg == reg_old_sr_status || (reg >= reg_r0 && reg <= reg_r7)
+							|| (reg >= reg_r0_Bank && reg <= reg_r7_Bank))
+						it = constprop_values.erase(it);
+					else
+						it++;
+				}
+			}
+			else if (op.op == shop_sync_fpscr)
+			{
+				for (auto it = constprop_values.begin(); it != constprop_values.end(); )
+				{
+					Sh4RegType reg = it->first.get_reg();
+					if (reg == reg_fpscr || reg == reg_old_fpscr || (reg >= reg_fr_0 && reg <= reg_xf_15))
+						it = constprop_values.erase(it);
+					else
+						it++;
+				}
+			}
+			else if (op.op == shop_readm || op.op == shop_writem)
 			{
 				if (op.rs1.is_imm())
 				{

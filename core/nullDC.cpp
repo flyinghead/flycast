@@ -158,8 +158,10 @@ void LoadSpecialSettings()
 			|| !strncmp("T40204D", reios_product_number, 7)
 			// Skies of Arcadia
 			|| !strncmp("MK-51052", reios_product_number, 8)
-			// Flag to Flag
-			|| !strncmp("MK-51007", reios_product_number, 8))
+			// Flag to Flag (US)
+			|| !strncmp("MK-51007", reios_product_number, 8)
+			// Super Speed Racing (JP)
+			|| !strncmp("HDR-0013", reios_product_number, 8))
 	{
 		settings.rend.RenderToTextureBuffer = 1;
 		rtt_to_buffer_game = true;
