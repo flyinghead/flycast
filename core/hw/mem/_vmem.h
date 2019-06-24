@@ -75,7 +75,13 @@ void _vmem_map_handler(_vmem_handler Handler,u32 start,u32 end);
 void _vmem_map_block(void* base,u32 start,u32 end,u32 mask);
 void _vmem_mirror_mapping(u32 new_region,u32 start,u32 size);
 
-#define _vmem_map_block_mirror(base,start,end,blck_size) {u32 block_size=(blck_size)>>24;u32 map_sz=(end)-(start)+1;/*verify((map_sz%block_size)==0);u32 map_times=map_sz/(block_size);*/ for (u32 _maip=(start);_maip<(end);_maip+=block_size) _vmem_map_block((base),_maip,_maip+block_size-1,blck_size-1);}
+#define _vmem_map_block_mirror(base, start, end, blck_size) { \
+	u32 block_size = (blck_size) >> 24; \
+	u32 map_sz = (end) - (start) + 1; \
+	/* verify((map_sz % block_size) == 0); */ \
+	for (u32 _maip = (start); _maip <= (end); _maip += block_size) \
+		_vmem_map_block((base), _maip, _maip + block_size - 1, blck_size - 1); \
+}
 
 //ReadMem(s)
 u32 DYNACALL _vmem_ReadMem8SX32(u32 Address);
