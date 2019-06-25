@@ -1675,6 +1675,10 @@ struct maple_naomi_jamma : maple_sega_controller
 			break;
 		}
 	}
+	virtual ~maple_naomi_jamma()
+	{
+		EEPROM_loaded = false;
+	}
 
 	virtual MapleDeviceType get_device_type()
 	{
@@ -2353,8 +2357,6 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 			LOGJVS("JVS Node %d: ", node_id);
 			PlainJoystickState pjs;
 			parent->config->GetInput(&pjs);
-			u32 keycode = ~kcode[0];
-			u32 keycode2 = ~kcode[1];
 
 			JVS_STATUS1();	// status
 			for (int cmdi = 0; cmdi < length_in; )
@@ -2365,6 +2367,8 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 					{
 						JVS_STATUS1();	// report byte
 
+						u32 keycode = ~kcode[0];
+						u32 keycode2 = ~kcode[1];
 						u16 buttons[4] = { 0 };
 						for (int player = 0; player < buffer_in[cmdi + 1] && first_player + player < ARRAY_SIZE(kcode); player++)
 						{
@@ -2397,17 +2401,25 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 					{
 						JVS_STATUS1();	// report byte
 						LOGJVS("coins ");
+						u32 mask = 0;
+						for (int i = 0; i < 16; i++)
+						{
+							if (naomi_button_mapping[i] == NAOMI_COIN_KEY)
+							{
+								mask = 1 << i;
+								break;
+							}
+						}
 						for (int slot = 0; slot < buffer_in[cmdi + 1]; slot++)
 						{
+							u16 keycode = ~kcode[first_player + slot];
 							bool coin_chute = false;
-							u32 keycode = ~kcode[first_player + slot];
-							for (int i = 0; i < 16 && !coin_chute; i++)
+							if (keycode & mask)
 							{
-								if (naomi_button_mapping[i] == NAOMI_COIN_KEY && (keycode & (1 << i)) != 0)
-									coin_chute = true;
+								coin_chute = true;
+								if (!old_coin_chute[first_player + slot])
+									coin_count[first_player + slot] += 1;
 							}
-							if (coin_chute && !old_coin_chute[first_player + slot])
-								coin_count[first_player + slot] += 1;
 							old_coin_chute[first_player + slot] = coin_chute;
 
 							LOGJVS("%d:%d ", slot + 1 + first_player, coin_count[first_player + slot]);
