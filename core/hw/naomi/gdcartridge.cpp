@@ -507,7 +507,8 @@ void GDCartridge::device_start()
 		if (gdrom == NULL)
 			gdrom = OpenDisc((gdrom_path + ".gdi").c_str());
 		if (gdrom == NULL)
-			return;
+			throw NaomiCartException("Naomi GDROM: Cannot open " + gdrom_path + ".chd or " + gdrom_path + ".gdi");
+
 		// primary volume descriptor
 		// read frame 0xb06e (frame=sector+150)
 		// dimm board firmware starts straight from this frame
@@ -564,6 +565,7 @@ void GDCartridge::device_start()
 			u32 file_rounded_size = (file_size + 2047) & -2048;
 			for (dimm_data_size = 4096; dimm_data_size < file_rounded_size; dimm_data_size <<= 1);
 			dimm_data = (u8 *)malloc(dimm_data_size);
+			verify(dimm_data != NULL);
 			if (dimm_data_size != file_rounded_size)
 				memset(dimm_data + file_rounded_size, 0, dimm_data_size - file_rounded_size);
 
@@ -583,7 +585,7 @@ void GDCartridge::device_start()
 		delete gdrom;
 
 		if (!dimm_data)
-			printf("Naomi GDROM: Could not find the file to decrypt.\n");
+			throw NaomiCartException("Naomi GDROM: Could not find the file to decrypt.");
 	}
 }
 
@@ -593,6 +595,8 @@ void GDCartridge::device_reset()
 }
 void *GDCartridge::GetDmaPtr(u32 &size)
 {
+	if (dimm_data == NULL)
+		return NULL;
 	dimm_cur_address = DmaOffset & (dimm_data_size-1);
 	size = min(size, dimm_data_size - dimm_cur_address);
 	return dimm_data + dimm_cur_address;
@@ -607,6 +611,11 @@ void GDCartridge::AdvancePtr(u32 size)
 
 bool GDCartridge::Read(u32 offset, u32 size, void *dst)
 {
+	if (dimm_data == NULL)
+	{
+		*(u32 *)dst = 0;
+		return true;
+	}
 	u32 addr = offset & (dimm_data_size-1);
 	memcpy(dst, &dimm_data[addr], min(size, dimm_data_size - addr));
 	return true;

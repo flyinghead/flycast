@@ -1639,18 +1639,28 @@ private:
 				return false;
 			u32 paddr;
 			u32 rv;
-			if (size == 2)
+			switch (size)
+			{
+			case 1:
+				rv = mmu_data_translation<MMU_TT_DREAD, u8>(addr, paddr);
+				break;
+			case 2:
 				rv = mmu_data_translation<MMU_TT_DREAD, u16>(addr, paddr);
-			else if (size == 4)
+				break;
+			case 4:
+			case 8:
 				rv = mmu_data_translation<MMU_TT_DREAD, u32>(addr, paddr);
-			else
+				break;
+			default:
 				die("Invalid immediate size");
+				break;
+			}
 			if (rv != MMU_ERROR_NONE)
 				return false;
 			addr = paddr;
 		}
 		bool isram = false;
-		void* ptr = _vmem_read_const(addr, isram, size);
+		void* ptr = _vmem_read_const(addr, isram, size > 4 ? 4 : size);
 
 		if (isram)
 		{
@@ -1712,35 +1722,50 @@ private:
 		else
 		{
 			// Not RAM
-			Mov(w0, addr);
-
-			switch(size)
+			if (size == 8)
 			{
-			case 1:
+				verify(!regalloc.IsAllocAny(op.rd));
+				// Need to call the handler twice
+				Mov(w0, addr);
 				GenCallRuntime((void (*)())ptr);
-				Sxtb(w0, w0);
-				break;
+				Str(w0, sh4_context_mem_operand(op.rd.reg_ptr()));
 
-			case 2:
+				Mov(w0, addr + 4);
 				GenCallRuntime((void (*)())ptr);
-				Sxth(w0, w0);
-				break;
-
-			case 4:
-				GenCallRuntime((void (*)())ptr);
-				break;
-
-			case 8:
-				die("SZ_64F not supported");
-				break;
+				Str(w0, sh4_context_mem_operand((u8*)op.rd.reg_ptr() + 4));
 			}
-
-			if (regalloc.IsAllocg(op.rd))
-				Mov(regalloc.MapRegister(op.rd), w0);
 			else
 			{
-				verify(regalloc.IsAllocf(op.rd));
-				Fmov(regalloc.MapVRegister(op.rd), w0);
+				Mov(w0, addr);
+
+				switch(size)
+				{
+				case 1:
+					GenCallRuntime((void (*)())ptr);
+					Sxtb(w0, w0);
+					break;
+
+				case 2:
+					GenCallRuntime((void (*)())ptr);
+					Sxth(w0, w0);
+					break;
+
+				case 4:
+					GenCallRuntime((void (*)())ptr);
+					break;
+
+				default:
+					die("Invalid size");
+					break;
+				}
+
+				if (regalloc.IsAllocg(op.rd))
+					Mov(regalloc.MapRegister(op.rd), w0);
+				else
+				{
+					verify(regalloc.IsAllocf(op.rd));
+					Fmov(regalloc.MapVRegister(op.rd), w0);
+				}
 			}
 		}
 
@@ -1848,13 +1873,16 @@ private:
 			case 8:
 				rv = mmu_data_translation<MMU_TT_DWRITE, u32>(addr, paddr);
 				break;
+			default:
+				die("Invalid immediate size");
+				break;
 			}
 			if (rv != MMU_ERROR_NONE)
 				return false;
 			addr = paddr;
 		}
 		bool isram = false;
-		void* ptr = _vmem_write_const(addr, isram, size);
+		void* ptr = _vmem_write_const(addr, isram, size > 4 ? 4 : size);
 
 		Register reg2;
 		if (op.rs2.is_imm())

@@ -331,7 +331,12 @@ static bool naomi_cart_LoadZip(char *filename)
 	if (parent_archive != NULL)
 		delete parent_archive;
 
-	CurrentCartridge->Init();
+	try {
+		CurrentCartridge->Init();
+	} catch (NaomiCartException& e) {
+		printf("%s\n", e.reason.c_str());
+		return false;
+	}
 
 	strcpy(naomi_game_id, CurrentCartridge->GetGameId().c_str());
 	printf("NAOMI GAME ID [%s]\n", naomi_game_id);
@@ -604,6 +609,7 @@ void naomi_cart_Close()
 		delete[] RomCacheMap;
 		RomCacheMap = NULL;
 	}
+	bios_loaded = false;
 }
 
 bool naomi_cart_SelectFile()

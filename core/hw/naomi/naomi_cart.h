@@ -78,6 +78,14 @@ private:
 	u8 naomi_cart_ram[64 * 1024];
 };
 
+class NaomiCartException
+{
+public:
+	NaomiCartException(std::string reason) : reason(reason) {}
+
+	std::string reason;
+};
+
 bool naomi_cart_SelectFile();
 void naomi_cart_Close();
 

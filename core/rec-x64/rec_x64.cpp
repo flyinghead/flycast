@@ -1517,19 +1517,29 @@ private:
 
 			u32 paddr;
 			u32 rv;
-			if (size == 2)
+			switch (size)
+			{
+			case 1:
+				rv = mmu_data_translation<MMU_TT_DREAD, u8>(addr, paddr);
+				break;
+			case 2:
 				rv = mmu_data_translation<MMU_TT_DREAD, u16>(addr, paddr);
-			else if (size == 4)
+				break;
+			case 4:
+			case 8:
 				rv = mmu_data_translation<MMU_TT_DREAD, u32>(addr, paddr);
-			else
+				break;
+			default:
 				die("Invalid immediate size");
+				break;
+			}
 			if (rv != MMU_ERROR_NONE)
 				return false;
 
 			addr = paddr;
 		}
 		bool isram = false;
-		void* ptr = _vmem_read_const(addr, isram, size);
+		void* ptr = _vmem_read_const(addr, isram, size > 4 ? 4 : size);
 
 		if (isram)
 		{
@@ -1597,29 +1607,47 @@ private:
 		else
 		{
 			// Not RAM: the returned pointer is a memory handler
-			mov(call_regs[0], addr);
-
-			switch(size)
+			if (size == 8)
 			{
-			case 1:
-				GenCall((void (*)())ptr);
-				movsx(eax, al);
-				break;
+				verify(!regalloc.IsAllocAny(op.rd));
 
-			case 2:
+				// Need to call the handler twice
+				mov(call_regs[0], addr);
 				GenCall((void (*)())ptr);
-				movsx(eax, ax);
-				break;
+				mov(rcx, (size_t)op.rd.reg_ptr());
+				mov(dword[rcx], eax);
 
-			case 4:
+				mov(call_regs[0], addr + 4);
 				GenCall((void (*)())ptr);
-				break;
-
-			default:
-				die("Invalid immediate size");
-					break;
+				mov(rcx, (size_t)op.rd.reg_ptr() + 4);
+				mov(dword[rcx], eax);
 			}
-			host_reg_to_shil_param(op.rd, eax);
+			else
+			{
+				mov(call_regs[0], addr);
+
+				switch(size)
+				{
+				case 1:
+					GenCall((void (*)())ptr);
+					movsx(eax, al);
+					break;
+
+				case 2:
+					GenCall((void (*)())ptr);
+					movsx(eax, ax);
+					break;
+
+				case 4:
+					GenCall((void (*)())ptr);
+					break;
+
+				default:
+					die("Invalid immediate size");
+						break;
+				}
+				host_reg_to_shil_param(op.rd, eax);
+			}
 		}
 
 		return true;
@@ -1651,6 +1679,9 @@ private:
 			case 8:
 				rv = mmu_data_translation<MMU_TT_DWRITE, u32>(addr, paddr);
 				break;
+			default:
+				die("Invalid immediate size");
+				break;
 			}
 			if (rv != MMU_ERROR_NONE)
 				return false;
@@ -1658,7 +1689,7 @@ private:
 			addr = paddr;
 		}
 		bool isram = false;
-		void* ptr = _vmem_write_const(addr, isram, size);
+		void* ptr = _vmem_write_const(addr, isram, size > 4 ? 4 : size);
 
 		if (isram)
 		{
