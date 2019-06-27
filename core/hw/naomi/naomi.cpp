@@ -7,6 +7,7 @@
 #include "hw/sh4/sh4_mem.h"
 #include "hw/holly/holly_intc.h"
 #include "hw/maple/maple_cfg.h"
+#include "hw/sh4/sh4_sched.h"
 
 #include "naomi.h"
 #include "naomi_cart.h"
@@ -55,7 +56,7 @@ unsigned int ShiftCRC(unsigned int CRC,unsigned int rounds)
 	return CRC;
 }
 
-unsigned short CRCSerial(unsigned char *Serial,unsigned int len)
+unsigned short CRCSerial(const u8 *Serial,unsigned int len)
 {
 	unsigned int CRC=0xDEBDEB00;
 	unsigned int i;
@@ -463,7 +464,8 @@ void Naomi_DmaStart(u32 addr, u32 data)
 			{
 				u32 block_len = len;
 				void* ptr = CurrentCartridge->GetDmaPtr(block_len);
-				WriteMemBlock_nommu_ptr(SB_GDSTAR + offset, (u32*)ptr, block_len);
+				if (ptr != NULL)
+					WriteMemBlock_nommu_ptr(SB_GDSTAR + offset, (u32*)ptr, block_len);
 				CurrentCartridge->AdvancePtr(block_len);
 				len -= block_len;
 				offset += block_len;
@@ -555,7 +557,22 @@ void naomi_reg_Reset(bool Manual)
 {
 	NaomiDataRead = false;
 	aw_ram_test_skipped = false;
+	GSerialBuffer = 0;
+	BSerialBuffer = 0;
+	GBufPos = 0;
+	BBufPos = 0;
+	GState = 0;
+	BState = 0;
+	GOldClk = 0;
+	BOldClk = 0;
+	BControl = 0;
+	BCmd = 0;
 	BLastCmd = 0;
+	GControl = 0;
+	GCmd = 0;
+	GLastCmd = 0;
+	SerStep = 0;
+	SerStep2 = 0;
 }
 
 void Update_naomi()
@@ -635,6 +652,7 @@ void Update_naomi()
 }
 
 static u8 aw_maple_devs;
+static u64 coin_chute_time[4];
 
 u32 libExtDevice_ReadMem_A0_006(u32 addr,u32 size) {
 	addr &= 0x7ff;
@@ -655,9 +673,25 @@ u32 libExtDevice_ReadMem_A0_006(u32 addr,u32 size) {
 		}
 		{
 			u8 coin_input = 0xF;
+			u64 now = sh4_sched_now64();
 			for (int slot = 0; slot < 4; slot++)
+			{
 				if (maple_atomiswave_coin_chute(slot))
-					coin_input &= ~(1 << slot);
+				{
+					// ggx15 needs 4 or 5 reads to register the coin but it needs to be limited to avoid coin errors
+					// 1 s of cpu time is too much, 1/2 s seems to work, let's use 100 ms
+					if (coin_chute_time[slot] == 0 || now - coin_chute_time[slot] < SH4_MAIN_CLOCK / 10)
+					{
+						if (coin_chute_time[slot] == 0)
+							coin_chute_time[slot] = now;
+						coin_input &= ~(1 << slot);
+					}
+				}
+				else
+				{
+					coin_chute_time[slot] = 0;
+				}
+			}
 			return coin_input;
 		}
 
