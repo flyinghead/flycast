@@ -561,6 +561,8 @@ static bool gl_create_resources()
 
 //setup
 extern void initABuffer();
+void reshapeABuffer(int width, int height);
+extern void gl4CreateTextures(int width, int height);
 
 static bool gles_init()
 {
@@ -610,15 +612,41 @@ static bool gles_init()
 	return true;
 }
 
+static void resize(int w, int h)
+{
+	static int cur_width, cur_height;
+	if (w > cur_width || h > cur_height || stencilTexId == 0)
+	{
+		cur_width = w;
+		cur_height = h;
+
+		if (stencilTexId != 0)
+		{
+			glcache.DeleteTextures(1, &stencilTexId);
+			stencilTexId = 0;
+		}
+		if (depthTexId != 0)
+		{
+			glcache.DeleteTextures(1, &depthTexId);
+			depthTexId = 0;
+		}
+		if (opaqueTexId != 0)
+		{
+			glcache.DeleteTextures(1, &opaqueTexId);
+			opaqueTexId = 0;
+		}
+		if (depthSaveTexId != 0)
+		{
+			glcache.DeleteTextures(1, &depthSaveTexId);
+			depthSaveTexId = 0;
+		}
+		gl4CreateTextures(w, h);
+		reshapeABuffer(w, h);
+	}
+}
+
 static bool RenderFrame()
 {
-	static int old_screen_width, old_screen_height, old_screen_scaling;
-	if (screen_width != old_screen_width || screen_height != old_screen_height || settings.rend.ScreenScaling != old_screen_scaling) {
-		rend_resize(screen_width, screen_height);
-		old_screen_width = screen_width;
-		old_screen_height = screen_height;
-		old_screen_scaling = settings.rend.ScreenScaling;
-	}
 	DoCleanup();
 	create_modvol_shader();
 
@@ -687,12 +715,17 @@ static bool RenderFrame()
 	float dc2s_scale_h;
 	float ds2s_offs_x;
 
+	int rendering_width;
+	int rendering_height;
 	if (is_rtt)
 	{
 		gl4ShaderUniforms.scale_coefs[0] = 2.0f / dc_width;
 		gl4ShaderUniforms.scale_coefs[1] = 2.0f / dc_height;	// FIXME CT2 needs 480 here instead of dc_height=512
 		gl4ShaderUniforms.scale_coefs[2] = 1;
 		gl4ShaderUniforms.scale_coefs[3] = 1;
+		int scaling = settings.rend.RenderToTextureBuffer ? 1 : settings.rend.RenderToTextureUpscale;
+		rendering_width = dc_width * scaling;
+		rendering_height = dc_height * scaling;
 	}
 	else
 	{
@@ -715,7 +748,10 @@ static bool RenderFrame()
 			gl4ShaderUniforms.scale_coefs[2] = 1 - 2 * ds2s_offs_x / screen_width;
 			gl4ShaderUniforms.scale_coefs[3] = -1;
 		}
+		rendering_width = screen_width * screen_scaling + 0.5f;
+		rendering_height = screen_height * screen_scaling + 0.5f;
 	}
+	resize(rendering_width, rendering_height);
 
 	gl4ShaderUniforms.extra_depth_scale = settings.rend.ExtraDepthScale;
 
@@ -808,7 +844,7 @@ static bool RenderFrame()
 	{
 		if (settings.rend.ScreenScaling != 100 || gl.swap_buffer_not_preserved)
 		{
-			output_fbo = init_output_framebuffer(screen_width * screen_scaling + 0.5f, screen_height * screen_scaling + 0.5f);
+			output_fbo = init_output_framebuffer(rendering_width, rendering_width);
 		}
 		else
 		{
@@ -820,9 +856,9 @@ static bool RenderFrame()
 
 	bool wide_screen_on = !is_rtt && settings.rend.WideScreen
 			&& pvrrc.fb_X_CLIP.min == 0
-			&& (pvrrc.fb_X_CLIP.max + 1) / scale_x == 640
+			&& int((pvrrc.fb_X_CLIP.max + 1) / scale_x + 0.5f) == 640
 			&& pvrrc.fb_Y_CLIP.min == 0
-			&& (pvrrc.fb_Y_CLIP.max + 1) / scale_y == 480;
+			&& int((pvrrc.fb_Y_CLIP.max + 1) / scale_y + 0.5f) == 480;
 
 	//Color is cleared by the background plane
 
@@ -898,9 +934,9 @@ static bool RenderFrame()
 
 					glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
 					glcache.Enable(GL_SCISSOR_TEST);
-					glScissor(0, 0, scaled_offs_x + 0.5f, screen_height * screen_scaling + 0.5f);
+					glScissor(0, 0, scaled_offs_x + 0.5f, rendering_height);
 					glClear(GL_COLOR_BUFFER_BIT);
-					glScissor(screen_width * screen_scaling - scaled_offs_x + 0.5f, 0, scaled_offs_x + 1.f, screen_height * screen_scaling + 0.5f);
+					glScissor(screen_width * screen_scaling - scaled_offs_x + 0.5f, 0, scaled_offs_x + 1.f, rendering_height);
 					glClear(GL_COLOR_BUFFER_BIT);
 				}
 			}
@@ -918,7 +954,7 @@ static bool RenderFrame()
 
 		//restore scale_x
 		scale_x /= scissoring_scale_x;
-		gl4DrawStrips(output_fbo);
+		gl4DrawStrips(output_fbo, rendering_width, rendering_height);
 	}
 	else
 	{
@@ -952,27 +988,7 @@ struct gl4rend : Renderer
 	{
 		screen_width=w;
 		screen_height=h;
-		if (stencilTexId != 0)
-		{
-			glcache.DeleteTextures(1, &stencilTexId);
-			stencilTexId = 0;
-		}
-		if (depthTexId != 0)
-		{
-			glcache.DeleteTextures(1, &depthTexId);
-			depthTexId = 0;
-		}
-		if (opaqueTexId != 0)
-		{
-			glcache.DeleteTextures(1, &opaqueTexId);
-			opaqueTexId = 0;
-		}
-		if (depthSaveTexId != 0)
-		{
-			glcache.DeleteTextures(1, &depthSaveTexId);
-			depthSaveTexId = 0;
-		}
-		reshapeABuffer(w, h);
+		resize(w * settings.rend.ScreenScaling / 100.f + 0.5f, h * settings.rend.ScreenScaling / 100.f + 0.5f);
 	}
 	void Term()
 	{

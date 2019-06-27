@@ -482,7 +482,7 @@ void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 
 	gl.rtt.TexAddr=addy>>3;
 
-	// Find the smallest power of two texture that fits into the viewport
+	// Find the smallest power of two texture that fits the viewport
 	int fbh2 = 2;
 	while (fbh2 < fbh)
 		fbh2 *= 2;

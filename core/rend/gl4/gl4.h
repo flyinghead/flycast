@@ -2,7 +2,7 @@
 #include "rend/gles/gles.h"
 #include <unordered_map>
 
-void gl4DrawStrips(GLuint output_fbo);
+void gl4DrawStrips(GLuint output_fbo, int width, int height);
 
 struct gl4PipelineShader
 {
@@ -64,7 +64,7 @@ extern int screen_height;
 GLuint gl4BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt);
 void gl4DrawFramebuffer(float w, float h);
 bool gl4_render_output_framebuffer();
-void abufferDrawQuad(bool upsideDown = false, float x = 0.f, float y = 0.f, float w = 0.f, float h = 0.f);
+void abufferDrawQuad(float w, float h);
 
 extern const char *gl4PixelPipelineShader;
 bool gl4CompilePipelineShader(gl4PipelineShader* s, bool rotate_90, const char *source = gl4PixelPipelineShader);

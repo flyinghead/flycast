@@ -280,9 +280,6 @@ void main(void) \n\
 
 void initABuffer()
 {
-	g_imageWidth = (int)roundf(screen_width * settings.rend.ScreenScaling / 100.f);
-	g_imageHeight = (int)roundf(screen_height * settings.rend.ScreenScaling / 100.f);
-
 	if (g_imageWidth > 0 && g_imageHeight > 0)
 	{
 		if (pixels_pointers == 0)
@@ -384,7 +381,7 @@ void initABuffer()
 	glcache.UseProgram(g_abuffer_clear_shader.program);
 	gl4ShaderUniforms.Set(&g_abuffer_clear_shader);
 
-	abufferDrawQuad();
+	abufferDrawQuad(g_imageWidth, g_imageHeight);
 	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 
 	glCheck();
@@ -432,39 +429,34 @@ void termABuffer()
 
 void reshapeABuffer(int w, int h)
 {
-	w = (int)roundf(w * settings.rend.ScreenScaling / 100.f);
-	h = (int)roundf(h * settings.rend.ScreenScaling / 100.f);
-
 	if (w != g_imageWidth || h != g_imageHeight) {
 		if (pixels_pointers != 0)
 		{
 			glcache.DeleteTextures(1, &pixels_pointers);
 			pixels_pointers = 0;
 		}
-
+		g_imageWidth = w;
+		g_imageHeight = h;
 		initABuffer();
 	}
 }
 
-void abufferDrawQuad(bool upsideDown, float x, float y, float w, float h)
+void abufferDrawQuad(float w, float h)
 {
-	if (w == 0 || h == 0)
-	{
-	    float scl = 480.f / screen_height;
-	    float tx = (screen_width * scl - 640.f) / 2;
+    float scl = 480.f / h;
+    float tx = (w * scl - 640.f) / 2;
 
-		x = -tx;
-		y = 0.f;
-		w = 640.f + tx * 2;
-		h = 480.f;
-	}
+    float x = -tx;
+    float y = 0.f;
+    w = 640.f + tx * 2;
+    h = 480.f;
 	glBindVertexArray(g_quadVertexArray);
 
 	struct Vertex vertices[] = {
-			{ x,     y + h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, upsideDown ? 0.f : 1.f },
-			{ x,     y,     1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, upsideDown ? 1.f : 0.f },
-			{ x + w, y + h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, upsideDown ? 0.f : 1.f },
-			{ x + w, y,     1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, upsideDown ? 1.f : 0.f },
+			{ x,     y + h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 1.f },
+			{ x,     y,     1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 0.f },
+			{ x + w, y + h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 1.f },
+			{ x + w, y,     1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 0.f },
 	};
 	GLushort indices[] = { 0, 1, 2, 1, 3 };
 
@@ -574,15 +566,15 @@ void checkOverflowAndReset()
  	glBufferSubData(GL_ATOMIC_COUNTER_BUFFER, 0 , sizeof(GLuint), &max_pixel_index);
 }
 
-void renderABuffer(bool sortFragments)
+void renderABuffer(bool sortFragments, int width, int height)
 {
 	// Reset scale params to a standard 640x480 dc screen
-	float scale_h = screen_height / 480.f;
-	float offs_x = (screen_width - scale_h * 640.f) / 2.f;
-	gl4ShaderUniforms.scale_coefs[0] = 2.f / (screen_width / scale_h);
-	gl4ShaderUniforms.scale_coefs[1]= -2.f / 480.f;
-	gl4ShaderUniforms.scale_coefs[2]= 1.f - 2.f * offs_x / screen_width;
-	gl4ShaderUniforms.scale_coefs[3]= -1.f;
+	float scale_h = height / 480.f;
+	float offs_x = (width - scale_h * 640.f) / 2.f;
+	gl4ShaderUniforms.scale_coefs[0] = 2.f / (width / scale_h);
+	gl4ShaderUniforms.scale_coefs[1] = -2.f / 480.f;
+	gl4ShaderUniforms.scale_coefs[2] = 1.f - 2.f * offs_x / width;
+	gl4ShaderUniforms.scale_coefs[3] = -1.f;
 
 	// Render to output FBO
 	glcache.UseProgram(sortFragments ? g_abuffer_final_shader.program : g_abuffer_final_nosort_shader.program);
@@ -592,7 +584,7 @@ void renderABuffer(bool sortFragments)
 	glcache.Disable(GL_CULL_FACE);
 	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_BUFFER_UPDATE_BARRIER_BIT);
 
-	abufferDrawQuad();
+	abufferDrawQuad(width, height);
 
 	glCheck();
 
@@ -601,7 +593,7 @@ void renderABuffer(bool sortFragments)
 	gl4ShaderUniforms.Set(&g_abuffer_clear_shader);
 
 	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
-	abufferDrawQuad();
+	abufferDrawQuad(width, height);
 
 	glActiveTexture(GL_TEXTURE0);
 

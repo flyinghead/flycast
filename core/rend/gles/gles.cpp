@@ -1924,9 +1924,9 @@ bool RenderFrame()
 
 	bool wide_screen_on = !is_rtt && settings.rend.WideScreen
 			&& pvrrc.fb_X_CLIP.min == 0
-			&& (pvrrc.fb_X_CLIP.max + 1) / scale_x == 640
+			&& int((pvrrc.fb_X_CLIP.max + 1) / scale_x + 0.5f) == 640
 			&& pvrrc.fb_Y_CLIP.min == 0
-			&& (pvrrc.fb_Y_CLIP.max + 1) / scale_y == 480;
+			&& int((pvrrc.fb_Y_CLIP.max + 1) / scale_y + 0.5f) == 480;
 
 	//Color is cleared by the background plane
 
