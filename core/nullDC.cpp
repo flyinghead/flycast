@@ -289,7 +289,7 @@ static bool reset_requested;
 
 int reicast_init(int argc, char* argv[])
 {
-#ifdef _WIN32
+#if defined(_WIN32) || defined(TEST_AUTOMATION)
 	setbuf(stdout, 0);
 	setbuf(stderr, 0);
 #endif

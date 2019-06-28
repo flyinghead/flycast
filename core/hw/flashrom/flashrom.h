@@ -283,13 +283,13 @@ struct DCFlashChip : MemChip
 					state = FS_ReadAMDID1;
 				break;
 			default:
-				printf("Unknown FlashWrite mode: %x\n", val);
+				EMUERROR("Unknown FlashWrite mode: %x\n", val);
 				break;
 			}
 			break;
 
 		case FS_ReadAMDID1:
-			if ((addr & 0xffff) == 0x2aa && (val & 0xff) == 0x55)
+			if ((addr & 0xffff) == 0x02aa && (val & 0xff) == 0x55)
 				state = FS_ReadAMDID2;
 			else if ((addr & 0xffff) == 0x2aaa && (val & 0xff) == 0x55)
 				state = FS_ReadAMDID2;
@@ -303,13 +303,13 @@ struct DCFlashChip : MemChip
 			break;
 
 		case FS_ReadAMDID2:
-			if ((addr & 0xffff) == 0x555 && (val & 0xff) == 0x80)
+			if ((addr & 0xffff) == 0x0555 && (val & 0xff) == 0x80)
 				state = FS_EraseAMD1;
 			else if ((addr & 0xffff) == 0x5555 && (val & 0xff) == 0x80)
 				state = FS_EraseAMD1;
 			else if ((addr & 0xfff) == 0xaaa && (val & 0xff) == 0x80)
 				state = FS_EraseAMD1;
-			else if ((addr & 0xffff) == 0x555 && (val & 0xff) == 0xa0)
+			else if ((addr & 0xffff) == 0x0555 && (val & 0xff) == 0xa0)
 				state = FS_ByteProgram;
 			else if ((addr & 0xffff) == 0x5555 && (val & 0xff) == 0xa0)
 				state = FS_ByteProgram;
@@ -339,7 +339,7 @@ struct DCFlashChip : MemChip
 			break;
 
 		case FS_EraseAMD2:
-			if ((addr & 0xffff) == 0x2aa && (val & 0xff) == 0x55)
+			if ((addr & 0xffff) == 0x02aa && (val & 0xff) == 0x55)
 				state = FS_EraseAMD3;
 			else if ((addr & 0xffff) == 0x2aaa && (val & 0xff) == 0x55)
 				state = FS_EraseAMD3;

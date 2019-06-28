@@ -212,7 +212,7 @@ void YUV_data(u32* data , u32 count)
 //read
 u8 DYNACALL pvr_read_area1_8(u32 addr)
 {
-	printf("8-bit VRAM reads are not possible\n");
+	EMUERROR("8-bit VRAM reads are not possible\n");
 	return 0;
 }
 
@@ -228,7 +228,7 @@ u32 DYNACALL pvr_read_area1_32(u32 addr)
 //write
 void DYNACALL pvr_write_area1_8(u32 addr,u8 data)
 {
-	printf("8-bit VRAM writes are not possible\n");
+	EMUERROR("8-bit VRAM writes are not possible\n");
 }
 void DYNACALL pvr_write_area1_16(u32 addr,u16 data)
 {
