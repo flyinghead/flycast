@@ -18,9 +18,6 @@ gl4PipelineShader g_abuffer_tr_modvol_shaders[ModeCount];
 static GLuint g_quadBuffer = 0;
 static GLuint g_quadVertexArray = 0;
 
-static int g_imageWidth = 0;
-static int g_imageHeight = 0;
-
 GLuint pixel_buffer_size = 512 * 1024 * 1024;	// Initial size 512 MB
 
 #define MAX_PIXELS_PER_FRAGMENT "32"
@@ -280,7 +277,7 @@ void main(void) \n\
 
 void initABuffer()
 {
-	if (g_imageWidth > 0 && g_imageHeight > 0)
+	if (max_image_width > 0 && max_image_height > 0)
 	{
 		if (pixels_pointers == 0)
 			pixels_pointers = glcache.GenTexture();
@@ -288,7 +285,7 @@ void initABuffer()
 		glBindTexture(GL_TEXTURE_2D, pixels_pointers);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_R32UI, g_imageWidth, g_imageHeight, 0, GL_RED_INTEGER, GL_UNSIGNED_INT, 0);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_R32UI, max_image_width, max_image_height, 0, GL_RED_INTEGER, GL_UNSIGNED_INT, 0);
 		glBindImageTexture(4, pixels_pointers, 0, false, 0,  GL_READ_WRITE, GL_R32UI);
 		glCheck();
 	}
@@ -381,7 +378,7 @@ void initABuffer()
 	glcache.UseProgram(g_abuffer_clear_shader.program);
 	gl4ShaderUniforms.Set(&g_abuffer_clear_shader);
 
-	abufferDrawQuad(g_imageWidth, g_imageHeight);
+	abufferDrawQuad(max_image_width, max_image_height);
 	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 
 	glCheck();
@@ -429,34 +426,23 @@ void termABuffer()
 
 void reshapeABuffer(int w, int h)
 {
-	if (w != g_imageWidth || h != g_imageHeight) {
-		if (pixels_pointers != 0)
-		{
-			glcache.DeleteTextures(1, &pixels_pointers);
-			pixels_pointers = 0;
-		}
-		g_imageWidth = w;
-		g_imageHeight = h;
-		initABuffer();
+	if (pixels_pointers != 0)
+	{
+		glcache.DeleteTextures(1, &pixels_pointers);
+		pixels_pointers = 0;
 	}
+	initABuffer();
 }
 
 void abufferDrawQuad(float w, float h)
 {
-    float scl = 480.f / h;
-    float tx = (w * scl - 640.f) / 2;
-
-    float x = -tx;
-    float y = 0.f;
-    w = 640.f + tx * 2;
-    h = 480.f;
 	glBindVertexArray(g_quadVertexArray);
 
 	struct Vertex vertices[] = {
-			{ x,     y + h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 1.f },
-			{ x,     y,     1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 0.f },
-			{ x + w, y + h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 1.f },
-			{ x + w, y,     1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 0.f },
+			{ 0, h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 1.f },
+			{ 0, 0, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 0.f },
+			{ w, h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 1.f },
+			{ w, 0, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 0.f },
 	};
 	GLushort indices[] = { 0, 1, 2, 1, 3 };
 
@@ -568,14 +554,11 @@ void checkOverflowAndReset()
 
 void renderABuffer(bool sortFragments, int width, int height)
 {
-	// Reset scale params to a standard 640x480 dc screen
-	float scale_h = height / 480.f;
-	float offs_x = (width - scale_h * 640.f) / 2.f;
-	gl4ShaderUniforms.scale_coefs[0] = 2.f / (width / scale_h);
-	gl4ShaderUniforms.scale_coefs[1] = -2.f / 480.f;
-	gl4ShaderUniforms.scale_coefs[2] = 1.f - 2.f * offs_x / width;
-	gl4ShaderUniforms.scale_coefs[3] = -1.f;
-
+	// Reset scale params
+	gl4ShaderUniforms.scale_coefs[0] = 2.0f / width;
+	gl4ShaderUniforms.scale_coefs[1] = 2.0f / height;
+	gl4ShaderUniforms.scale_coefs[2] = 1;
+	gl4ShaderUniforms.scale_coefs[3] = 1;
 	// Render to output FBO
 	glcache.UseProgram(sortFragments ? g_abuffer_final_shader.program : g_abuffer_final_nosort_shader.program);
 	gl4ShaderUniforms.Set(&g_abuffer_final_shader);

@@ -505,7 +505,7 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 					glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_STENCIL_TEXTURE_MODE, GL_DEPTH_COMPONENT);
 					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-					glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH32F_STENCIL8, width, height, 0, GL_DEPTH_STENCIL, GL_FLOAT_32_UNSIGNED_INT_24_8_REV, NULL); glCheck();
+					glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH32F_STENCIL8, max_image_width, max_image_height, 0, GL_DEPTH_STENCIL, GL_FLOAT_32_UNSIGNED_INT_24_8_REV, NULL); glCheck();
 					glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, depthSaveTexId, 0); glCheck();
 				}
 				GLuint uStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
@@ -612,7 +612,7 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 				//
 				// PASS 3c: Render a-buffer to temporary texture
 				//
-				GLuint texId = CreateColorFBOTexture(width, height);
+				GLuint texId = CreateColorFBOTexture(max_image_width, max_image_height);
 
 				glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 

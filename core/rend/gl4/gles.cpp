@@ -396,6 +396,8 @@ void main() \n\
 gl4_ctx gl4;
 
 struct gl4ShaderUniforms_t gl4ShaderUniforms;
+int max_image_width;
+int max_image_height;
 
 bool gl4CompilePipelineShader(	gl4PipelineShader* s, bool rotate_90, const char *source /* = PixelPipelineShader */)
 {
@@ -614,11 +616,10 @@ static bool gles_init()
 
 static void resize(int w, int h)
 {
-	static int cur_width, cur_height;
-	if (w > cur_width || h > cur_height || stencilTexId == 0)
+	if (w > max_image_width || h > max_image_height || stencilTexId == 0)
 	{
-		cur_width = w;
-		cur_height = h;
+		max_image_width = w;
+		max_image_height = h;
 
 		if (stencilTexId != 0)
 		{
@@ -978,7 +979,6 @@ static bool RenderFrame()
 	return !is_rtt;
 }
 
-void reshapeABuffer(int w, int h);
 void termABuffer();
 
 struct gl4rend : Renderer
@@ -993,34 +993,34 @@ struct gl4rend : Renderer
 	void Term()
 	{
 		termABuffer();
-	   if (stencilTexId != 0)
-	   {
-		  glcache.DeleteTextures(1, &stencilTexId);
-		  stencilTexId = 0;
-	   }
-	   if (depthTexId != 0)
-	   {
-		  glcache.DeleteTextures(1, &depthTexId);
-		  depthTexId = 0;
-	   }
-	   if (opaqueTexId != 0)
-	   {
-		  glcache.DeleteTextures(1, &opaqueTexId);
-		  opaqueTexId = 0;
-	   }
-	   if (depthSaveTexId != 0)
-	   {
-		  glcache.DeleteTextures(1, &depthSaveTexId);
-		  depthSaveTexId = 0;
-	   }
-	   if (KillTex)
-		  killtex();
+		if (stencilTexId != 0)
+		{
+			glcache.DeleteTextures(1, &stencilTexId);
+			stencilTexId = 0;
+		}
+		if (depthTexId != 0)
+		{
+			glcache.DeleteTextures(1, &depthTexId);
+			depthTexId = 0;
+		}
+		if (opaqueTexId != 0)
+		{
+			glcache.DeleteTextures(1, &opaqueTexId);
+			opaqueTexId = 0;
+		}
+		if (depthSaveTexId != 0)
+		{
+			glcache.DeleteTextures(1, &depthSaveTexId);
+			depthSaveTexId = 0;
+		}
+		if (KillTex)
+			killtex();
 
-	   CollectCleanup();
+		CollectCleanup();
 
-	   gl_free_osd_resources();
-	   free_output_framebuffer();
-	   gles_term();
+		gl_free_osd_resources();
+		free_output_framebuffer();
+		gles_term();
 	}
 
 	bool Process(TA_context* ctx) { return ProcessFrame(ctx); }

@@ -60,6 +60,8 @@ extern gl4_ctx gl4;
 
 extern int screen_width;
 extern int screen_height;
+extern int max_image_width;
+extern int max_image_height;
 
 GLuint gl4BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt);
 void gl4DrawFramebuffer(float w, float h);
