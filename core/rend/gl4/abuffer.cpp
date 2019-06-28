@@ -436,13 +436,26 @@ void reshapeABuffer(int w, int h)
 
 void abufferDrawQuad(float w, float h)
 {
+	float x = 0;
+	float y = 0;
+	if (gl4ShaderUniforms.scale_coefs[3] < 0)
+	{
+		// rendering to screen
+		float scl = 480.f / h;
+		float tx = (w * scl - 640.f) / 2;
+
+		x = -tx;
+		y = 0.f;
+		w = 640.f + tx * 2;
+		h = 480.f;
+	}
 	glBindVertexArray(g_quadVertexArray);
 
 	struct Vertex vertices[] = {
-			{ 0, h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 1.f },
-			{ 0, 0, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 0.f },
-			{ w, h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 1.f },
-			{ w, 0, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 0.f },
+			{ x,     y + h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 1.f },
+			{ x,     y,     1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 0.f },
+			{ x + w, y + h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 1.f },
+			{ x + w, y,     1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 0.f },
 	};
 	GLushort indices[] = { 0, 1, 2, 1, 3 };
 
@@ -555,10 +568,22 @@ void checkOverflowAndReset()
 void renderABuffer(bool sortFragments, int width, int height)
 {
 	// Reset scale params
-	gl4ShaderUniforms.scale_coefs[0] = 2.0f / width;
-	gl4ShaderUniforms.scale_coefs[1] = 2.0f / height;
-	gl4ShaderUniforms.scale_coefs[2] = 1;
-	gl4ShaderUniforms.scale_coefs[3] = 1;
+	if (gl4ShaderUniforms.scale_coefs[3] < 0)
+	{
+		// screen
+		float scale_h = height / 480.f;
+		float offs_x = (width - scale_h * 640.f) / 2.f;
+		gl4ShaderUniforms.scale_coefs[0] = 2.f / (width / scale_h);
+		gl4ShaderUniforms.scale_coefs[1] = -2.f / 480.f;
+		gl4ShaderUniforms.scale_coefs[2] = 1.f - 2.f * offs_x / width;
+	}
+	else
+	{
+		// RTT
+		gl4ShaderUniforms.scale_coefs[0] = 2.0f / width;
+		gl4ShaderUniforms.scale_coefs[1] = 2.0f / height;
+		gl4ShaderUniforms.scale_coefs[2] = 1;
+	}
 	// Render to output FBO
 	glcache.UseProgram(sortFragments ? g_abuffer_final_shader.program : g_abuffer_final_nosort_shader.program);
 	gl4ShaderUniforms.Set(&g_abuffer_final_shader);
