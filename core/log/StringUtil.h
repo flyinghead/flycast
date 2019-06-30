@@ -134,7 +134,7 @@ std::wstring CPToUTF16(u32 code_page, const std::string& input)
 
 std::string UTF16ToCP(u32 code_page, const std::wstring& input)
 {
-  bool usedDefaultChar;
+  int usedDefaultChar;
   auto const size = WideCharToMultiByte(code_page, 0, input.data(), static_cast<int>(input.size()),
                                         nullptr, 0, nullptr, &usedDefaultChar);
 
