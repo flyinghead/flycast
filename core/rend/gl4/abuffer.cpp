@@ -275,6 +275,16 @@ void main(void) \n\
 } \n\
 ";
 
+static const char* VertexShaderSource =
+"#version 430 \n"
+"\
+in highp vec3 in_pos; \n\
+ \n\
+void main() \n\
+{ \n\
+	gl_Position = vec4(in_pos, 1.0); \n\
+}";
+
 void initABuffer()
 {
 	if (max_image_width > 0 && max_image_height > 0)
@@ -325,23 +335,23 @@ void initABuffer()
 	{
 		char source[16384];
 		sprintf(source, final_shader_source, 1);
-		gl4CompilePipelineShader(&g_abuffer_final_shader, false, source);
+		gl4CompilePipelineShader(&g_abuffer_final_shader, false, source, VertexShaderSource);
 	}
 	if (g_abuffer_final_nosort_shader.program == 0)
 	{
 		char source[16384];
 		sprintf(source, final_shader_source, 0);
-		gl4CompilePipelineShader(&g_abuffer_final_nosort_shader, false, source);
+		gl4CompilePipelineShader(&g_abuffer_final_nosort_shader, false, source, VertexShaderSource);
 	}
 	if (g_abuffer_clear_shader.program == 0)
-		gl4CompilePipelineShader(&g_abuffer_clear_shader, false, clear_shader_source);
+		gl4CompilePipelineShader(&g_abuffer_clear_shader, false, clear_shader_source, VertexShaderSource);
 	if (g_abuffer_tr_modvol_shaders[0].program == 0)
 	{
 		char source[16384];
 		for (int mode = 0; mode < ModeCount; mode++)
 		{
 			sprintf(source, tr_modvol_shader_source, mode);
-			gl4CompilePipelineShader(&g_abuffer_tr_modvol_shaders[mode], false, source);
+			gl4CompilePipelineShader(&g_abuffer_tr_modvol_shaders[mode], false, source, VertexShaderSource);
 		}
 	}
 
@@ -353,21 +363,8 @@ void initABuffer()
 		glGenBuffers(1, &g_quadBuffer);
 		glBindBuffer(GL_ARRAY_BUFFER, g_quadBuffer); glCheck();
 
-		glEnableVertexAttribArray(VERTEX_POS_ARRAY); glCheck();
-		glVertexAttribPointer(VERTEX_POS_ARRAY, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex,x)); glCheck();
-
-		glEnableVertexAttribArray(VERTEX_COL_BASE_ARRAY); glCheck();
-		glVertexAttribPointer(VERTEX_COL_BASE_ARRAY, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*)offsetof(Vertex,col)); glCheck();
-
-		glEnableVertexAttribArray(VERTEX_COL_OFFS_ARRAY); glCheck();
-		glVertexAttribPointer(VERTEX_COL_OFFS_ARRAY, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*)offsetof(Vertex,spc)); glCheck();
-
-		glEnableVertexAttribArray(VERTEX_UV_ARRAY); glCheck();
-		glVertexAttribPointer(VERTEX_UV_ARRAY, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex,u)); glCheck();
-
-		glDisableVertexAttribArray(VERTEX_UV1_ARRAY);
-		glDisableVertexAttribArray(VERTEX_COL_OFFS1_ARRAY);
-		glDisableVertexAttribArray(VERTEX_COL_BASE1_ARRAY);
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void*)0);
 
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); glCheck();
 		glBindVertexArray(0);
@@ -378,7 +375,7 @@ void initABuffer()
 	glcache.UseProgram(g_abuffer_clear_shader.program);
 	gl4ShaderUniforms.Set(&g_abuffer_clear_shader);
 
-	abufferDrawQuad(max_image_width, max_image_height);
+	abufferDrawQuad();
 	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 
 	glCheck();
@@ -434,28 +431,15 @@ void reshapeABuffer(int w, int h)
 	initABuffer();
 }
 
-void abufferDrawQuad(float w, float h)
+void abufferDrawQuad()
 {
-	float x = 0;
-	float y = 0;
-	if (gl4ShaderUniforms.scale_coefs[3] < 0)
-	{
-		// rendering to screen
-		float scl = 480.f / h;
-		float tx = (w * scl - 640.f) / 2;
-
-		x = -tx;
-		y = 0.f;
-		w = 640.f + tx * 2;
-		h = 480.f;
-	}
 	glBindVertexArray(g_quadVertexArray);
 
-	struct Vertex vertices[] = {
-			{ x,     y + h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 1.f },
-			{ x,     y,     1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 0.f },
-			{ x + w, y + h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 1.f },
-			{ x + w, y,     1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 0.f },
+	float vertices[] = {
+			-1,  1, 1,
+			-1, -1, 1,
+			 1,  1, 1,
+			 1, -1, 1,
 	};
 	GLushort indices[] = { 0, 1, 2, 1, 3 };
 
@@ -565,25 +549,8 @@ void checkOverflowAndReset()
  	glBufferSubData(GL_ATOMIC_COUNTER_BUFFER, 0 , sizeof(GLuint), &max_pixel_index);
 }
 
-void renderABuffer(bool sortFragments, int width, int height)
+void renderABuffer(bool sortFragments)
 {
-	// Reset scale params
-	if (gl4ShaderUniforms.scale_coefs[3] < 0)
-	{
-		// screen
-		float scale_h = height / 480.f;
-		float offs_x = (width - scale_h * 640.f) / 2.f;
-		gl4ShaderUniforms.scale_coefs[0] = 2.f / (width / scale_h);
-		gl4ShaderUniforms.scale_coefs[1] = -2.f / 480.f;
-		gl4ShaderUniforms.scale_coefs[2] = 1.f - 2.f * offs_x / width;
-	}
-	else
-	{
-		// RTT
-		gl4ShaderUniforms.scale_coefs[0] = 2.0f / width;
-		gl4ShaderUniforms.scale_coefs[1] = 2.0f / height;
-		gl4ShaderUniforms.scale_coefs[2] = 1;
-	}
 	// Render to output FBO
 	glcache.UseProgram(sortFragments ? g_abuffer_final_shader.program : g_abuffer_final_nosort_shader.program);
 	gl4ShaderUniforms.Set(&g_abuffer_final_shader);
@@ -592,7 +559,7 @@ void renderABuffer(bool sortFragments, int width, int height)
 	glcache.Disable(GL_CULL_FACE);
 	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_BUFFER_UPDATE_BARRIER_BIT);
 
-	abufferDrawQuad(width, height);
+	abufferDrawQuad();
 
 	glCheck();
 
@@ -601,7 +568,7 @@ void renderABuffer(bool sortFragments, int width, int height)
 	gl4ShaderUniforms.Set(&g_abuffer_clear_shader);
 
 	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
-	abufferDrawQuad(width, height);
+	abufferDrawQuad();
 
 	glActiveTexture(GL_TEXTURE0);
 

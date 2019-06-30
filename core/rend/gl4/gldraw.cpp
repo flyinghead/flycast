@@ -386,7 +386,7 @@ static void DrawModVols(int first, int count)
 	glcache.DepthMask(GL_TRUE);
 }
 
-void renderABuffer(bool sortFragments, int width, int height);
+void renderABuffer(bool sortFragments);
 void DrawTranslucentModVols(int first, int count);
 void checkOverflowAndReset();
 
@@ -620,7 +620,7 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 				glBindSampler(0, 0);
 				glBindTexture(GL_TEXTURE_2D, opaqueTexId);
 
-				renderABuffer(current_pass.autosort, width, height);
+				renderABuffer(current_pass.autosort);
 
 				glcache.DeleteTextures(1, &opaqueTexId);
 				opaqueTexId = texId;
@@ -648,7 +648,7 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 	glActiveTexture(GL_TEXTURE0);
 	glBindSampler(0, 0);
 	glBindTexture(GL_TEXTURE_2D, opaqueTexId);
-	renderABuffer(previous_pass.autosort, width, height);
+	renderABuffer(previous_pass.autosort);
 }
 
 static void gl4_draw_quad_texture(GLuint texture, float w, float h)
@@ -681,7 +681,19 @@ static void gl4_draw_quad_texture(GLuint texture, float w, float h)
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, texture);
 
-	abufferDrawQuad(w, h);
+	struct Vertex vertices[] = {
+		{ 0,     0 + h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 1 },
+		{ 0,     0,     1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 0 },
+		{ 0 + w, 0 + h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 1 },
+		{ 0 + w, 0,     1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 0 },
+	};
+	GLushort indices[] = { 0, 1, 2, 1, 3 };
+
+	gl4SetupMainVBO();
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STREAM_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STREAM_DRAW);
+
+	glDrawElements(GL_TRIANGLE_STRIP, 5, GL_UNSIGNED_SHORT, (void *)0);
 }
 
 void gl4DrawFramebuffer(float w, float h)

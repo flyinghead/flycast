@@ -158,10 +158,14 @@ void LoadSpecialSettings()
 			|| !strncmp("T40204D", reios_product_number, 7)
 			// Skies of Arcadia
 			|| !strncmp("MK-51052", reios_product_number, 8)
+			// Eternal Arcadia (JP)
+			|| !strncmp("HDR-0076", reios_product_number, 8)
 			// Flag to Flag (US)
 			|| !strncmp("MK-51007", reios_product_number, 8)
 			// Super Speed Racing (JP)
-			|| !strncmp("HDR-0013", reios_product_number, 8))
+			|| !strncmp("HDR-0013", reios_product_number, 8)
+			// Yu Suzuki Game Works Vol. 1
+			|| !strncmp("6108099", reios_product_number, 7))
 	{
 		settings.rend.RenderToTextureBuffer = 1;
 		rtt_to_buffer_game = true;

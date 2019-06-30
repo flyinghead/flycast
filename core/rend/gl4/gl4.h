@@ -66,10 +66,10 @@ extern int max_image_height;
 GLuint gl4BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt);
 void gl4DrawFramebuffer(float w, float h);
 bool gl4_render_output_framebuffer();
-void abufferDrawQuad(float w, float h);
+void abufferDrawQuad();
 
 extern const char *gl4PixelPipelineShader;
-bool gl4CompilePipelineShader(gl4PipelineShader* s, bool rotate_90, const char *source = gl4PixelPipelineShader);
+bool gl4CompilePipelineShader(gl4PipelineShader* s, bool rotate_90, const char *pixel_source = gl4PixelPipelineShader, const char *vertex_source = NULL);
 void gl4_delete_shaders();
 
 extern GLuint stencilTexId;

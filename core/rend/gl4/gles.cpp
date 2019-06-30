@@ -399,15 +399,15 @@ struct gl4ShaderUniforms_t gl4ShaderUniforms;
 int max_image_width;
 int max_image_height;
 
-bool gl4CompilePipelineShader(	gl4PipelineShader* s, bool rotate_90, const char *source /* = PixelPipelineShader */)
+bool gl4CompilePipelineShader(	gl4PipelineShader* s, bool rotate_90, const char *pixel_source /* = PixelPipelineShader */, const char *vertex_source /* = NULL */)
 {
 	char vshader[16384];
 
-	sprintf(vshader, VertexShaderSource, s->pp_Gouraud, rotate_90);
+	sprintf(vshader, vertex_source == NULL ? VertexShaderSource : vertex_source, s->pp_Gouraud, rotate_90);
 
 	char pshader[16384];
 
-	sprintf(pshader, source,
+	sprintf(pshader, pixel_source,
                 s->cp_AlphaTest,s->pp_ClipTestMode,s->pp_UseAlpha,
                 s->pp_Texture,s->pp_IgnoreTexA,s->pp_ShadInstr,s->pp_Offset,s->pp_FogCtrl, s->pp_TwoVolumes, s->pp_DepthFunc, s->pp_Gouraud, s->pp_BumpMap, s->fog_clamping, s->pass);
 
@@ -618,8 +618,10 @@ static void resize(int w, int h)
 {
 	if (w > max_image_width || h > max_image_height || stencilTexId == 0)
 	{
-		max_image_width = w;
-		max_image_height = h;
+		if (w > max_image_width)
+			max_image_width = w;
+		if (h > max_image_height)
+			max_image_height = h;
 
 		if (stencilTexId != 0)
 		{
@@ -641,8 +643,8 @@ static void resize(int w, int h)
 			glcache.DeleteTextures(1, &depthSaveTexId);
 			depthSaveTexId = 0;
 		}
-		gl4CreateTextures(w, h);
-		reshapeABuffer(w, h);
+		gl4CreateTextures(max_image_width, max_image_height);
+		reshapeABuffer(max_image_width, max_image_height);
 	}
 }
 
@@ -845,7 +847,7 @@ static bool RenderFrame()
 	{
 		if (settings.rend.ScreenScaling != 100 || gl.swap_buffer_not_preserved)
 		{
-			output_fbo = init_output_framebuffer(rendering_width, rendering_width);
+			output_fbo = init_output_framebuffer(rendering_width, rendering_height);
 		}
 		else
 		{

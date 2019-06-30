@@ -1565,6 +1565,10 @@ void gui_display_ui()
 			{
 				gui_state = ClosedNoResume;
 				gui_start_game(game_file);
+#ifdef TEST_AUTOMATION
+				if (gui_state == Main)
+					die("Game load failed");
+#endif
 			}
 			else
 				gui_display_content();
