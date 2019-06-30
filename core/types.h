@@ -385,13 +385,9 @@ using namespace std;
 //basic includes
 #include "stdclass.h"
 
-#ifndef RELEASE
-#define EMUERROR(format, ...) printf("Error in %20s:%s:%d: " format "\n", \
-		__FILE__, __FUNCTION__, __LINE__, ##__VA_ARGS__)
-//strlen(__FILE__) <= 20 ? __FILE__ : __FILE__ + strlen(__FILE__) - 20,
-#else
-#define EMUERROR(format, ...)
-#endif
+#include "log/Log.h"
+
+#define EMUERROR(...) INFO_LOG(COMMON, __VA_ARGS__)
 #define EMUERROR2 EMUERROR
 #define EMUERROR3 EMUERROR
 #define EMUERROR4 EMUERROR

@@ -7,6 +7,7 @@
 #include "xinput_gamepad.h"
 #include "win_keyboard.h"
 #include "hw/sh4/dyna/blockmanager.h"
+#include "log/LogManager.h"
 
 #define _WIN32_WINNT 0x0500
 #include <windows.h>
@@ -695,6 +696,7 @@ int main(int argc, char **argv)
 int CALLBACK WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine,int nCmdShowCmd)
 
 {
+	LogManager::Init();
 	int argc=0;
 	wchar* cmd_line=GetCommandLineA();
 	wchar** argv=CommandLineToArgvA(cmd_line,&argc);

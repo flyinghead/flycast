@@ -24,6 +24,7 @@
 #include "imgread/common.h"
 #include "rend/gui.h"
 #include "cfg/cfg.h"
+#include "log/LogManager.h"
 
 JavaVM* g_jvm;
 
@@ -230,6 +231,7 @@ JNIEXPORT jstring JNICALL Java_com_reicast_emulator_emu_JNIdc_initEnvironment(JN
     if (first_init)
     {
         // Do one-time initialization
+    	LogManager::Init();
         jstring msg = NULL;
         int rc = reicast_init(0, NULL);
         if (rc == -4)

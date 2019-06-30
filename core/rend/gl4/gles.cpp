@@ -579,10 +579,10 @@ static bool gles_init()
 	glGetIntegerv(GL_MINOR_VERSION, &minor);
 	if (major < 4 || (major == 4 && minor < 3))
 	{
-		printf("Warning: OpenGL version doesn't support per-pixel sorting.\n");
+		WARN_LOG(RENDERER, "Warning: OpenGL version doesn't support per-pixel sorting.");
 		return false;
 	}
-	printf("Per-pixel sorting enabled\n");
+	INFO_LOG(RENDERER, "Per-pixel sorting enabled");
 
 	glcache.DisableCache();
 
@@ -758,7 +758,7 @@ static bool RenderFrame()
 
 	gl4ShaderUniforms.extra_depth_scale = settings.rend.ExtraDepthScale;
 
-	//printf("scale: %f, %f, %f, %f\n", gl4ShaderUniforms.scale_coefs[0], gl4ShaderUniforms.scale_coefs[1], gl4ShaderUniforms.scale_coefs[2], gl4ShaderUniforms.scale_coefs[3]);
+	DEBUG_LOG(RENDERER, "scale: %f, %f, %f, %f\n", gl4ShaderUniforms.scale_coefs[0], gl4ShaderUniforms.scale_coefs[1], gl4ShaderUniforms.scale_coefs[2], gl4ShaderUniforms.scale_coefs[3]);
 
 	//VERT and RAM fog color constants
 	u8* fog_colvert_bgra=(u8*)&FOG_COL_VERT;
@@ -832,15 +832,15 @@ static bool RenderFrame()
 		case 4: //0x4   888 RGB 24 bit packed
 		case 5: //0x5   0888 KRGB 32 bit    K is the value of fk_kval.
 		case 6: //0x6   8888 ARGB 32 bit
-			fprintf(stderr, "Unsupported render to texture format: %d\n", FB_W_CTRL.fb_packmode);
+			WARN_LOG(RENDERER, "Unsupported render to texture format: %d", FB_W_CTRL.fb_packmode);
 			return false;
 
 		case 7: //7     invalid
 			die("7 is not valid");
 			break;
 		}
-		//printf("RTT packmode=%d stride=%d - %d,%d -> %d,%d\n", FB_W_CTRL.fb_packmode, FB_W_LINESTRIDE.stride * 8,
-		//		FB_X_CLIP.min, FB_Y_CLIP.min, FB_X_CLIP.max, FB_Y_CLIP.max);
+		DEBUG_LOG(RENDERER, "RTT packmode=%d stride=%d - %d,%d -> %d,%d", FB_W_CTRL.fb_packmode, FB_W_LINESTRIDE.stride * 8,
+				FB_X_CLIP.min, FB_Y_CLIP.min, FB_X_CLIP.max, FB_Y_CLIP.max);
 		output_fbo = gl4BindRTT(FB_W_SOF1 & VRAM_MASK, dc_width, dc_height, channels, format);
 	}
 	else
@@ -896,9 +896,9 @@ static bool RenderFrame()
 
 		#if 0
 			//handy to debug really stupid render-not-working issues ...
-			printf("SS: %dx%d\n", screen_width, screen_height);
-			printf("SCI: %d, %f\n", pvrrc.fb_X_CLIP.max, dc2s_scale_h);
-			printf("SCI: %f, %f, %f, %f\n", offs_x+pvrrc.fb_X_CLIP.min/scale_x,(pvrrc.fb_Y_CLIP.min/scale_y)*dc2s_scale_h,(pvrrc.fb_X_CLIP.max-pvrrc.fb_X_CLIP.min+1)/scale_x*dc2s_scale_h,(pvrrc.fb_Y_CLIP.max-pvrrc.fb_Y_CLIP.min+1)/scale_y*dc2s_scale_h);
+			DEBUG_LOG(RENDERER, "SS: %dx%d", screen_width, screen_height);
+			DEBUG_LOG(RENDERER, "SCI: %d, %f", pvrrc.fb_X_CLIP.max, dc2s_scale_h);
+			DEBUG_LOG(RENDERER, "SCI: %f, %f, %f, %f", offs_x+pvrrc.fb_X_CLIP.min/scale_x,(pvrrc.fb_Y_CLIP.min/scale_y)*dc2s_scale_h,(pvrrc.fb_X_CLIP.max-pvrrc.fb_X_CLIP.min+1)/scale_x*dc2s_scale_h,(pvrrc.fb_Y_CLIP.max-pvrrc.fb_Y_CLIP.min+1)/scale_y*dc2s_scale_h);
 		#endif
 
 		if (!wide_screen_on)
@@ -1027,7 +1027,7 @@ struct gl4rend : Renderer
 
 	bool Process(TA_context* ctx) { return ProcessFrame(ctx); }
 	bool Render() { return RenderFrame(); }
-	bool RenderLastFrame() { return gl4_render_output_framebuffer(); }
+	bool RenderLastFrame() { return gl.swap_buffer_not_preserved ? gl4_render_output_framebuffer() : false; }
 
 	void Present() { gl_swap(); }
 

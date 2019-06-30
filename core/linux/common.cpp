@@ -45,7 +45,7 @@ void sigill_handler(int sn, siginfo_t * si, void *segfault_ctx) {
 	unat pc = (unat)ctx.pc;
 	bool dyna_cde = (pc>(unat)CodeCache) && (pc<(unat)(CodeCache + CODE_SIZE + TEMP_CODE_SIZE));
 	
-	printf("SIGILL @ %lx -> %p was not in vram, dynacode:%d\n", pc, si->si_addr, dyna_cde);
+	ERROR_LOG(COMMON, "SIGILL @ %lx -> %p was not in vram, dynacode:%d", pc, si->si_addr, dyna_cde);
 	
 	//printf("PC is used here %08X\n", pc);
     kill(getpid(), SIGABRT);
@@ -109,7 +109,7 @@ void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 	#endif
 	else
 	{
-		printf("SIGSEGV @ %lx -> %p was not in vram, dynacode:%d\n", ctx.pc, si->si_addr, dyna_cde);
+		ERROR_LOG(COMMON, "SIGSEGV @ %lx -> %p was not in vram, dynacode:%d", ctx.pc, si->si_addr, dyna_cde);
 		die("segfault");
 		signal(SIGSEGV, SIG_DFL);
 	}
@@ -172,15 +172,15 @@ void enable_runfast()
 		: "r"(x), "r"(y)
 	);
 
-	printf("ARM VFP-Run Fast (NFP) enabled !\n");
+	DEBUG_LOG(BOOT, "ARM VFP-Run Fast (NFP) enabled !");
 	#endif
 }
 
 void linux_fix_personality() {
         #if !defined(TARGET_BSD) && !defined(_ANDROID) && !defined(TARGET_OS_MAC) && !defined(TARGET_NACL32) && !defined(TARGET_EMSCRIPTEN)
-          printf("Personality: %08X\n", personality(0xFFFFFFFF));
+          DEBUG_LOG(BOOT, "Personality: %08X", personality(0xFFFFFFFF));
           personality(~READ_IMPLIES_EXEC & personality(0xFFFFFFFF));
-          printf("Updated personality: %08X\n", personality(0xFFFFFFFF));
+          DEBUG_LOG(BOOT, "Updated personality: %08X", personality(0xFFFFFFFF));
         #endif
 }
 
@@ -192,10 +192,10 @@ void linux_rpi2_init() {
 	handle = dlopen("libbcm_host.so", RTLD_LAZY);
 	
 	if (handle) {
-		printf("found libbcm_host\n");
+		DEBUG_LOG(BOOT, "found libbcm_host");
 		*(void**) (&rpi_bcm_init) = dlsym(handle, "bcm_host_init");
 		if (rpi_bcm_init) {
-			printf("rpi2: bcm_init\n");
+			DEBUG_LOG(BOOT, "rpi2: bcm_init");
 			rpi_bcm_init();
 		}
 	}
@@ -213,7 +213,7 @@ void common_linux_setup()
 	
 	settings.profile.run_counts=0;
 	
-	printf("Linux paging: %ld %08X %08X\n",sysconf(_SC_PAGESIZE),PAGE_SIZE,PAGE_MASK);
+	DEBUG_LOG(BOOT, "Linux paging: %ld %08X %08X", sysconf(_SC_PAGESIZE), PAGE_SIZE, PAGE_MASK);
 	verify(PAGE_MASK==(sysconf(_SC_PAGESIZE)-1));
 }
 #endif

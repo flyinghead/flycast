@@ -12,6 +12,7 @@
 
 #include "types.h"
 #include "hw/maple/maple_cfg.h"
+#include "log/LogManager.h"
 #include "rend/gui.h"
 #include "osx_keyboard.h"
 #include "osx_gamepad.h"
@@ -161,6 +162,7 @@ extern "C" void emu_gles_init(int width, int height) {
 
 extern "C" int emu_reicast_init()
 {
+	LogManager::Init();
 	common_linux_setup();
 	return reicast_init(0, NULL);
 }

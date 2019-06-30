@@ -1526,7 +1526,7 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 		return dc_unserialize_libretro(data, total_size);
 	if (version != V4)
 	{
-		fprintf(stderr, "Save State version not supported: %d\n", version);
+		WARN_LOG(SAVESTATE, "Save State version not supported: %d", version);
 		return false;
 	}
 	REICAST_US(aica_interr) ;

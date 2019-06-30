@@ -453,7 +453,7 @@ void dump_screenshot(u8 *buffer, u32 width, u32 height)
 	FILE *fp = fopen("screenshot.png", "wb");
 	if (fp == NULL)
 	{
-		printf("Failed to open screenshot.png for writing\n");
+		ERROR_LOG(RENDERER, "Failed to open screenshot.png for writing\n");
 		return;
 	}
 
@@ -519,7 +519,7 @@ void dump_screenshot(u8 *buffer, u32 width, u32 height)
 		EGLint maj, min;
 		if (!eglInitialize(gl.setup.display, &maj, &min))
 		{
-			printf("EGL Error: eglInitialize failed\n");
+			ERROR_LOG(RENDERER, "EGL Error: eglInitialize failed");
 			return false;
 		}
 
@@ -548,7 +548,7 @@ void dump_screenshot(u8 *buffer, u32 width, u32 height)
 				};
 				if (!eglChooseConfig(gl.setup.display, pi32ConfigFallbackAttribs, &config, 1, &num_config) || (num_config != 1))
 				{
-					printf("EGL Error: eglChooseConfig failed\n");
+					ERROR_LOG(RENDERER, "EGL Error: eglChooseConfig failed");
 					return false;
 				}
 			}
@@ -556,7 +556,7 @@ void dump_screenshot(u8 *buffer, u32 width, u32 height)
 			EGLint format;
 			if (!eglGetConfigAttrib(gl.setup.display, config, EGL_NATIVE_VISUAL_ID, &format))
 			{
-				printf("eglGetConfigAttrib() returned error %x\n", eglGetError());
+				ERROR_LOG(RENDERER, "eglGetConfigAttrib() returned error %x", eglGetError());
 				return false;
 			}
 			ANativeWindow_setBuffersGeometry((ANativeWindow *)wind, 0, 0, format);
@@ -565,7 +565,7 @@ void dump_screenshot(u8 *buffer, u32 width, u32 height)
 
 			if (gl.setup.surface == EGL_NO_SURFACE)
 			{
-				printf("EGL Error: eglCreateWindowSurface failed: %x\n", eglGetError());
+				ERROR_LOG(RENDERER, "EGL Error: eglCreateWindowSurface failed: %x", eglGetError());
 				return false;
 			}
 
@@ -573,7 +573,7 @@ void dump_screenshot(u8 *buffer, u32 width, u32 height)
 			bool try_full_gl = true;
 			if (!eglBindAPI(EGL_OPENGL_API))
 			{
-				printf("eglBindAPI(EGL_OPENGL_API) failed: %x\n", eglGetError());
+				INFO_LOG(RENDERER, "eglBindAPI(EGL_OPENGL_API) failed: %x", eglGetError());
 				try_full_gl = false;
 			}
 			if (try_full_gl)
@@ -586,7 +586,7 @@ void dump_screenshot(u8 *buffer, u32 width, u32 height)
 				{
 					egl_makecurrent();
 					if (gl3wInit())
-						printf("gl3wInit() failed\n");
+						ERROR_LOG(RENDERER, "gl3wInit() failed");
 				}
 			}
 #endif
@@ -594,7 +594,7 @@ void dump_screenshot(u8 *buffer, u32 width, u32 height)
 			{
 				if (!eglBindAPI(EGL_OPENGL_ES_API))
 				{
-					printf("eglBindAPI() failed: %x\n", eglGetError());
+					ERROR_LOG(RENDERER, "eglBindAPI() failed: %x", eglGetError());
 					return false;
 				}
 				EGLint contextAttrs[] = { EGL_CONTEXT_CLIENT_VERSION, 2 , EGL_NONE };
@@ -603,7 +603,7 @@ void dump_screenshot(u8 *buffer, u32 width, u32 height)
 
 				if (gl.setup.context == EGL_NO_CONTEXT)
 				{
-					printf("eglCreateContext() failed: %x\n", eglGetError());
+					ERROR_LOG(RENDERER, "eglCreateContext() failed: %x", eglGetError());
 					return false;
 				}
 #ifdef GLES
@@ -612,7 +612,7 @@ void dump_screenshot(u8 *buffer, u32 width, u32 height)
 #else
 				egl_makecurrent();
 				if (gl3wInit())
-				    printf("gl3wInit() failed\n");
+					INFO_LOG(RENDERER, "gl3wInit() failed");
 #endif
 			}
 			created_context = true;
@@ -625,7 +625,7 @@ void dump_screenshot(u8 *buffer, u32 width, u32 height)
 
 		if (!egl_makecurrent())
 		{
-			printf("eglMakeCurrent() failed: %x\n", eglGetError());
+			ERROR_LOG(RENDERER, "eglMakeCurrent() failed: %x", eglGetError());
 			return false;
 		}
 
@@ -639,11 +639,11 @@ void dump_screenshot(u8 *buffer, u32 width, u32 height)
 		// Required when doing partial redraws
         if (!eglSurfaceAttrib(gl.setup.display, gl.setup.surface, EGL_SWAP_BEHAVIOR, EGL_BUFFER_PRESERVED))
         {
-        	printf("Swap buffers are not preserved. Last frame copy enabled\n");
+        	INFO_LOG(RENDERER, "Swap buffers are not preserved. Last frame copy enabled");
         	gl.swap_buffer_not_preserved = true;
         }
 
-		printf("EGL config: %p, %p, %p %dx%d\n",gl.setup.context,gl.setup.display,gl.setup.surface,w,h);
+        INFO_LOG(RENDERER, "EGL config: %p, %p, %p %dx%d", gl.setup.context, gl.setup.display, gl.setup.surface, w, h);
 		return true;
 	}
 
@@ -801,7 +801,7 @@ void dump_screenshot(u8 *buffer, u32 width, u32 height)
 
 			if (!m_hrc)
 			{
-				printf("Open GL 4.3 not supported\n");
+				INFO_LOG(RENDERER, "Open GL 4.3 not supported");
 				// Try Gl 3.1
 				attribs[1] = 3;
 				attribs[3] = 1;
@@ -966,7 +966,7 @@ void findGLVersion()
 	if (glGetError() == GL_INVALID_ENUM)
 		gl.gl_major = 2;
 	const char *version = (const char *)glGetString(GL_VERSION);
-	printf("OpenGL version: %s\n", version);
+	INFO_LOG(RENDERER, "OpenGL version: %s", version);
 	if (!strncmp(version, "OpenGL ES", 9))
 	{
 		gl.is_gles = true;
@@ -988,7 +988,7 @@ void findGLVersion()
 		if (strstr(extensions, "GL_OES_depth24") != NULL)
 			gl.GL_OES_depth24_supported = true;
 		if (!gl.GL_OES_packed_depth_stencil_supported)
-			printf("Packed depth/stencil not supported: no modifier volumes when rendering to a texture\n");
+			INFO_LOG(RENDERER, "Packed depth/stencil not supported: no modifier volumes when rendering to a texture");
 	}
 	else
 	{
@@ -1032,7 +1032,7 @@ GLuint gl_CompileShader(const char* shader,GLuint type)
 		*compile_log=0;
 
 		glGetShaderInfoLog(rv, compile_log_len, &compile_log_len, compile_log);
-		printf("Shader: %s \n%s\n",result?"compiled!":"failed to compile",compile_log);
+		WARN_LOG(RENDERER, "Shader: %s \n%s", result ? "compiled!" : "failed to compile", compile_log);
 
 		free(compile_log);
 	}
@@ -1080,13 +1080,13 @@ GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentShader)
 		*compile_log=0;
 
 		glGetProgramInfoLog(program, compile_log_len, &compile_log_len, compile_log);
-		printf("Shader linking: %s \n (%d bytes), - %s -\n",result?"linked":"failed to link", compile_log_len,compile_log);
+		WARN_LOG(RENDERER, "Shader linking: %s \n (%d bytes), - %s -", result ? "linked" : "failed to link", compile_log_len, compile_log);
 
 		free(compile_log);
 
 		// Dump the shaders source for troubleshooting
-		printf("// VERTEX SHADER\n%s\n// END\n", VertexShader);
-		printf("// FRAGMENT SHADER\n%s\n// END\n", FragmentShader);
+		INFO_LOG(RENDERER, "// VERTEX SHADER\n%s\n// END", VertexShader);
+		INFO_LOG(RENDERER, "// FRAGMENT SHADER\n%s\n// END", FragmentShader);
 		die("shader compile fail\n");
 	}
 
@@ -1578,7 +1578,7 @@ bool ProcessFrame(TA_context* ctx)
 	CollectCleanup();
 
 	if (ctx->rend.Overrun)
-		printf("ERROR: TA context overrun\n");
+		WARN_LOG(PVR, "ERROR: TA context overrun");
 
 	return !ctx->rend.Overrun;
 }
@@ -1895,15 +1895,15 @@ bool RenderFrame()
 		case 4: //0x4   888 RGB 24 bit packed
 		case 5: //0x5   0888 KRGB 32 bit    K is the value of fk_kval.
 		case 6: //0x6   8888 ARGB 32 bit
-			fprintf(stderr, "Unsupported render to texture format: %d\n", FB_W_CTRL.fb_packmode);
+			WARN_LOG(RENDERER, "Unsupported render to texture format: %d", FB_W_CTRL.fb_packmode);
 			return false;
 
 		case 7: //7     invalid
 			die("7 is not valid");
 			break;
 		}
-		//printf("RTT packmode=%d stride=%d - %d,%d -> %d,%d\n", FB_W_CTRL.fb_packmode, FB_W_LINESTRIDE.stride * 8,
-		//		FB_X_CLIP.min, FB_Y_CLIP.min, FB_X_CLIP.max, FB_Y_CLIP.max);
+		DEBUG_LOG(RENDERER, "RTT packmode=%d stride=%d - %d,%d -> %d,%d", FB_W_CTRL.fb_packmode, FB_W_LINESTRIDE.stride * 8,
+				FB_X_CLIP.min, FB_Y_CLIP.min, FB_X_CLIP.max, FB_Y_CLIP.max);
 		BindRTT(FB_W_SOF1 & VRAM_MASK, dc_width, dc_height, channels, format);
 	}
 	else
@@ -2069,7 +2069,7 @@ struct glesrend : Renderer
 
 	bool Process(TA_context* ctx) { return ProcessFrame(ctx); }
 	bool Render() { return RenderFrame(); }
-	bool RenderLastFrame() { return render_output_framebuffer(); }
+	bool RenderLastFrame() { return gl.swap_buffer_not_preserved ? render_output_framebuffer() : false; }
 	void Present() { gl_swap(); glViewport(0, 0, screen_width, screen_height); }
 
 	void DrawOSD(bool clear_screen)
@@ -2127,7 +2127,7 @@ u8* loadPNGData(const string& fname, int &width, int &height)
 	if (!is_png)
 	{
 		fclose(file);
-		printf("Not a PNG file : %s\n", filename);
+		WARN_LOG(RENDERER, "Not a PNG file : %s", filename);
 		return NULL;
 	}
 
@@ -2137,7 +2137,7 @@ u8* loadPNGData(const string& fname, int &width, int &height)
 	if (!png_ptr)
 	{
 		fclose(file);
-		printf("Unable to create PNG struct : %s\n", filename);
+		WARN_LOG(RENDERER, "Unable to create PNG struct : %s", filename);
 		return (NULL);
 	}
 
@@ -2146,7 +2146,7 @@ u8* loadPNGData(const string& fname, int &width, int &height)
 	if (!info_ptr)
 	{
 		png_destroy_read_struct(&png_ptr, (png_infopp) NULL, (png_infopp) NULL);
-		printf("Unable to create PNG info : %s\n", filename);
+		WARN_LOG(RENDERER, "Unable to create PNG info : %s", filename);
 		fclose(file);
 		return (NULL);
 	}
@@ -2156,7 +2156,7 @@ u8* loadPNGData(const string& fname, int &width, int &height)
 	if (!end_info)
 	{
 		png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp) NULL);
-		printf("Unable to create PNG end info : %s\n", filename);
+		WARN_LOG(RENDERER, "Unable to create PNG end info : %s", filename);
 		fclose(file);
 		return (NULL);
 	}
@@ -2165,7 +2165,7 @@ u8* loadPNGData(const string& fname, int &width, int &height)
 	if (setjmp(png_jmpbuf(png_ptr)))
 	{
 		fclose(file);
-		printf("Error during setjmp : %s\n", filename);
+		WARN_LOG(RENDERER, "Error during setjmp : %s", filename);
 		png_destroy_read_struct(&png_ptr, &info_ptr, &end_info);
 		return (NULL);
 	}
@@ -2204,7 +2204,7 @@ u8* loadPNGData(const string& fname, int &width, int &height)
 	{
 		//clean up memory and close stuff
 		png_destroy_read_struct(&png_ptr, &info_ptr, &end_info);
-		printf("Unable to allocate image_data while loading %s\n", filename);
+		WARN_LOG(RENDERER, "Unable to allocate image_data while loading %s", filename);
 		fclose(file);
 		return NULL;
 	}
@@ -2216,7 +2216,7 @@ u8* loadPNGData(const string& fname, int &width, int &height)
 		//clean up memory and close stuff
 		png_destroy_read_struct(&png_ptr, &info_ptr, &end_info);
 		delete[] image_data;
-		printf("Unable to allocate row_pointer while loading %s\n", filename);
+		WARN_LOG(RENDERER, "Unable to allocate row_pointer while loading %s", filename);
 		fclose(file);
 		return NULL;
 	}

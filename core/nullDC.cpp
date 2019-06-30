@@ -24,6 +24,7 @@
 #include "profiler/profiler.h"
 #include "input/gamepad_device.h"
 #include "hw/sh4/dyna/blockmanager.h"
+#include "log/LogManager.h"
 
 void FlushCache();
 void LoadCustom();
@@ -132,7 +133,7 @@ void plugins_Reset(bool Manual)
 void LoadSpecialSettings()
 {
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-	printf("Game ID is [%s]\n", reios_product_number);
+	INFO_LOG(BOOT, "Game ID is [%s]", reios_product_number);
 	rtt_to_buffer_game = false;
 	safemode_game = false;
 	tr_poly_depth_mask_game = false;
@@ -142,7 +143,7 @@ void LoadSpecialSettings()
 
 	if (reios_windows_ce)
 	{
-		printf("Enabling Full MMU and Extra depth scaling for Windows CE game\n");
+		INFO_LOG(BOOT, "Enabling Full MMU and Extra depth scaling for Windows CE game\n");
 		settings.rend.ExtraDepthScale = 0.1;
 		extra_depth_game = true;
 		settings.dreamcast.FullMMU = true;
@@ -187,14 +188,14 @@ void LoadSpecialSettings()
 			// Ducati World (PAL)
 			|| !strncmp("T-8121D-50", reios_product_number, 10))
 	{
-		printf("Enabling Dynarec safe mode for game %s\n", reios_product_number);
+		INFO_LOG(BOOT, "Enabling Dynarec safe mode for game %s\n", reios_product_number);
 		settings.dynarec.safemode = 1;
 		safemode_game = true;
 	}
 	// NHL 2K2
 	if (!strncmp("MK-51182", reios_product_number, 8))
 	{
-		printf("Enabling Extra depth scaling for game %s\n", reios_product_number);
+		INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s\n", reios_product_number);
 		settings.rend.ExtraDepthScale = 10000;
 		extra_depth_game = true;
 	}
@@ -217,22 +218,22 @@ void LoadSpecialSettings()
 		// Marionette Company 2
 		|| !strncmp("T5203M", reios_product_number, 6))
 	{
-		printf("Disabling 32-bit virtual memory for game %s\n", reios_product_number);
+		INFO_LOG(BOOT, "Disabling 32-bit virtual memory for game %s\n", reios_product_number);
 		settings.dynarec.disable_vmem32 = true;
 		disable_vmem32_game = true;
 	}
 #elif DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
-	printf("Game ID is [%s]\n", naomi_game_id);
+	INFO_LOG(BOOT, "Game ID is [%s]", naomi_game_id);
 
 	if (!strcmp("METAL SLUG 6", naomi_game_id) || !strcmp("WAVE RUNNER GP", naomi_game_id))
 	{
-		printf("Enabling Dynarec safe mode for game %s\n", naomi_game_id);
+		INFO_LOG(BOOT, "Enabling Dynarec safe mode for game %s", naomi_game_id);
 		settings.dynarec.safemode = 1;
 		safemode_game = true;
 	}
 	if (!strcmp("SAMURAI SPIRITS 6", naomi_game_id))
 	{
-		printf("Enabling Extra depth scaling for game %s\n", naomi_game_id);
+		INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", naomi_game_id);
 		settings.rend.ExtraDepthScale = 1e26;
 		extra_depth_game = true;
 	}
@@ -243,41 +244,41 @@ void LoadSpecialSettings()
 			|| !strcmp("CRACKIN'DJ PART2  ver JAPAN", naomi_game_id)
 			|| !strcmp("KICK '4' CASH", naomi_game_id))
 	{
-		printf("Enabling JVS rotary encoders for game %s\n", naomi_game_id);
+		INFO_LOG(BOOT, "Enabling JVS rotary encoders for game %s", naomi_game_id);
 		settings.input.JammaSetup = 2;
 	}
 	else if (!strcmp("POWER STONE 2 JAPAN", naomi_game_id)		// Naomi
 			|| !strcmp("GUILTY GEAR isuka", naomi_game_id))		// AW
 	{
-		printf("Enabling 4-player setup for game %s\n", naomi_game_id);
+		INFO_LOG(BOOT, "Enabling 4-player setup for game %s", naomi_game_id);
 		settings.input.JammaSetup = 1;
 	}
 	else if (!strcmp("SEGA MARINE FISHING JAPAN", naomi_game_id)
 				|| !strcmp(naomi_game_id, "BASS FISHING SIMULATOR VER.A"))	// AW
 	{
-		printf("Enabling specific JVS setup for game %s\n", naomi_game_id);
+		INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", naomi_game_id);
 		settings.input.JammaSetup = 3;
 	}
 	else if (!strcmp("RINGOUT 4X4 JAPAN", naomi_game_id))
 	{
-		printf("Enabling specific JVS setup for game %s\n", naomi_game_id);
+		INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", naomi_game_id);
 		settings.input.JammaSetup = 4;
 	}
 	else if (!strcmp("NINJA ASSAULT", naomi_game_id)
 				|| !strcmp(naomi_game_id, "Sports Shooting USA")	// AW
 				|| !strcmp(naomi_game_id, "SEGA CLAY CHALLENGE"))	// AW
 	{
-		printf("Enabling lightgun setup for game %s\n", naomi_game_id);
+		INFO_LOG(BOOT, "Enabling lightgun setup for game %s", naomi_game_id);
 		settings.input.JammaSetup = 5;
 	}
 	else if (!strcmp(" BIOHAZARD  GUN SURVIVOR2", naomi_game_id))
 	{
-		printf("Enabling specific JVS setup for game %s\n", naomi_game_id);
+		INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", naomi_game_id);
 		settings.input.JammaSetup = 7;
 	}
 	if (!strcmp("COSMIC SMASH IN JAPAN", naomi_game_id))
 	{
-		printf("Enabling translucent depth multipass for game %s\n", naomi_game_id);
+		INFO_LOG(BOOT, "Enabling translucent depth multipass for game %s", naomi_game_id);
 		settings.rend.TranslucentPolygonDepthMask = true;
 		tr_poly_depth_mask_game = true;
 	}
@@ -303,7 +304,7 @@ int reicast_init(int argc, char* argv[])
 #endif
 	if (!_vmem_reserve())
 	{
-		printf("Failed to alloc mem\n");
+		ERROR_LOG(VMEM, "Failed to alloc mem");
 		return -1;
 	}
 	if (ParseCommandLine(argc, argv))
@@ -311,13 +312,18 @@ int reicast_init(int argc, char* argv[])
         return 69;
 	}
 	InitSettings();
+	LogManager::Shutdown();
 	if (!cfgOpen())
 	{
-		printf("Config directory is not set. Starting onboarding\n");
+		LogManager::Init();
+		NOTICE_LOG(BOOT, "Config directory is not set. Starting onboarding");
 		gui_open_onboarding();
 	}
 	else
+	{
+		LogManager::Init();
 		LoadSettings(false);
+	}
 
 	os_CreateWindow();
 	os_SetupInput();
@@ -392,10 +398,10 @@ int dc_start_game(const char *path)
 		}
 		else
 		{
-			printf("Did not load bios, using reios\n");
+			NOTICE_LOG(BOOT, "Did not load bios, using reios\n");
 		}
 #else
-		printf("Cannot find BIOS files\n");
+		ERROR_LOG(BOOT, "Cannot find BIOS files\n");
         return -5;
 #endif
 	}
@@ -415,14 +421,14 @@ int dc_start_game(const char *path)
 	sh4_cpu.Init();		// Also initialize the interpreter
 	if(settings.dynarec.Enable)
 	{
-		printf("Using Recompiler\n");
+		INFO_LOG(DYNAREC, "Using Recompiler");
 	}
 	else
 #endif
 	{
 		Get_Sh4Interpreter(&sh4_cpu);
 		sh4_cpu.Init();
-		printf("Using Interpreter\n");
+		INFO_LOG(INTERPRETER, "Using Interpreter");
 	}
 
 	mem_Init();
@@ -461,12 +467,12 @@ void* dc_run(void*)
 	if (settings.dynarec.Enable)
 	{
 		Get_Sh4Recompiler(&sh4_cpu);
-		printf("Using Recompiler\n");
+		INFO_LOG(DYNAREC, "Using Recompiler");
 	}
 	else
 	{
 		Get_Sh4Interpreter(&sh4_cpu);
-		printf("Using Interpreter\n");
+		INFO_LOG(DYNAREC, "Using Interpreter");
 	}
 	do {
 		reset_requested = false;
@@ -877,7 +883,7 @@ void dc_savestate()
 
 	if ( ! dc_serialize(&data, &total_size) )
 	{
-		printf("Failed to save state - could not initialize total size\n") ;
+		WARN_LOG(SAVESTATE, "Failed to save state - could not initialize total size") ;
 		gui_display_notification("Save state failed", 2000);
 		cleanup_serialize(data) ;
     	return;
@@ -886,7 +892,7 @@ void dc_savestate()
 	data = malloc(total_size) ;
 	if ( data == NULL )
 	{
-		printf("Failed to save state - could not malloc %d bytes", total_size) ;
+		WARN_LOG(SAVESTATE, "Failed to save state - could not malloc %d bytes", total_size) ;
 		gui_display_notification("Save state failed - memory full", 2000);
 		cleanup_serialize(data) ;
     	return;
@@ -896,7 +902,7 @@ void dc_savestate()
 
 	if ( ! dc_serialize(&data_ptr, &total_size) )
 	{
-		printf("Failed to save state - could not serialize data\n") ;
+		WARN_LOG(SAVESTATE, "Failed to save state - could not serialize data") ;
 		gui_display_notification("Save state failed", 2000);
 		cleanup_serialize(data) ;
     	return;
@@ -907,7 +913,7 @@ void dc_savestate()
 
 	if ( f == NULL )
 	{
-		printf("Failed to save state - could not open %s for writing\n", filename.c_str()) ;
+		WARN_LOG(SAVESTATE, "Failed to save state - could not open %s for writing", filename.c_str()) ;
 		gui_display_notification("Cannot open save file", 2000);
 		cleanup_serialize(data) ;
     	return;
@@ -917,7 +923,7 @@ void dc_savestate()
 	fclose(f);
 
 	cleanup_serialize(data) ;
-	printf("Saved state to %s\n size %d", filename.c_str(), total_size) ;
+	INFO_LOG(SAVESTATE, "Saved state to %s size %d", filename.c_str(), total_size) ;
 	gui_display_notification("State saved", 1000);
 }
 
@@ -936,7 +942,7 @@ void dc_loadstate()
 
 	if ( f == NULL )
 	{
-		printf("Failed to load state - could not open %s for reading\n", filename.c_str()) ;
+		WARN_LOG(SAVESTATE, "Failed to load state - could not open %s for reading", filename.c_str()) ;
 		gui_display_notification("Save state not found", 2000);
 		cleanup_serialize(data) ;
     	return;
@@ -947,7 +953,7 @@ void dc_loadstate()
 	data = malloc(total_size) ;
 	if ( data == NULL )
 	{
-		printf("Failed to load state - could not malloc %d bytes", total_size) ;
+		WARN_LOG(SAVESTATE, "Failed to load state - could not malloc %d bytes", total_size) ;
 		gui_display_notification("Failed to load state - memory full", 2000);
 		cleanup_serialize(data) ;
 		return;
@@ -969,7 +975,7 @@ void dc_loadstate()
 
 	if ( ! dc_unserialize(&data_ptr, &total_size) )
 	{
-		printf("Failed to load state - could not unserialize data\n") ;
+		WARN_LOG(SAVESTATE, "Failed to load state - could not unserialize data") ;
 		gui_display_notification("Invalid save state", 2000);
 		cleanup_serialize(data) ;
     	return;
@@ -982,5 +988,5 @@ void dc_loadstate()
     CalculateSync();
 
     cleanup_serialize(data) ;
-	printf("Loaded state from %s size %d\n", filename.c_str(), total_size) ;
+    INFO_LOG(SAVESTATE, "Loaded state from %s size %d", filename.c_str(), total_size) ;
 }
