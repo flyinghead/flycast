@@ -35,7 +35,7 @@ u32 sb_ReadMem(u32 addr,u32 sz)
 #ifdef TRACE
 	if (offset & 3/*(size-1)*/) //4 is min align size
 	{
-		EMUERROR("Unaligned System Bus register read");
+		INFO_LOG(HOLLY, "Unaligned System Bus register read");
 	}
 #endif
 
@@ -59,7 +59,7 @@ u32 sb_ReadMem(u32 addr,u32 sz)
 			//printf("SB: %08X\n",addr);
 			if ((sb_regs[offset].flags & REG_WO) || sb_regs[offset].readFunctionAddr == NULL)
 			{
-				EMUERROR("sb_ReadMem write-only reg %08x %d\n", addr, sz);
+				INFO_LOG(HOLLY, "sb_ReadMem write-only reg %08x %d", addr, sz);
 				return 0;
 			}
 			return sb_regs[offset].readFunctionAddr(addr);
@@ -69,7 +69,7 @@ u32 sb_ReadMem(u32 addr,u32 sz)
 	else
 	{
 		if (!(sb_regs[offset].flags& REG_NOT_IMPL))
-			EMUERROR("ERROR [wrong size read on register]");
+			INFO_LOG(HOLLY, "ERROR [wrong size read on register]");
 	}
 #endif
 //  if ((sb_regs[offset].flags& REG_NOT_IMPL))
@@ -83,7 +83,7 @@ void sb_WriteMem(u32 addr,u32 data,u32 sz)
 #ifdef TRACE
 	if (offset & 3/*(size-1)*/) //4 is min align size
 	{
-		EMUERROR("Unaligned System bus register write");
+		INFO_LOG(HOLLY, "Unaligned System bus register write");
 	}
 #endif
 offset>>=2;
@@ -128,10 +128,10 @@ offset>>=2;
 	else
 	{
 		if (!(sb_regs[offset].flags& REG_NOT_IMPL))
-			EMUERROR4("ERROR :wrong size write on register ; offset=%x , data=%x,sz=%d",offset,data,sz);
+			INFO_LOG(HOLLY, "ERROR: wrong size write on register; offset=%x, data=%x, sz=%d", offset, data, sz);
 	}
 	if ((sb_regs[offset].flags& REG_NOT_IMPL))
-		EMUERROR3("Write to System Control Regs , not  implemented , addr=%x,data=%x",addr,data);
+		INFO_LOG(HOLLY, "Write to System Control Regs, not implemented, addr=%x, data=%x", addr, data);
 #endif
 
 }

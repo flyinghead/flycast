@@ -56,10 +56,11 @@ bool LoadRomFiles(const string& root)
 	{
 		if (NVR_OPTIONAL)
 		{
-			printf("flash/nvmem is missing, will create new file...\n");
+			INFO_LOG(FLASHROM, "flash/nvmem is missing, will create new file...");
 		}
 		else
 		{
+			ERROR_LOG(FLASHROM, "Unable to find flash/nvmem in %s. Exiting...", root.c_str());
 			msgboxf("Unable to find flash/nvmem in \n%s\nExiting...", MBX_ICONERROR, root.c_str());
 			return false;
 		}
@@ -86,7 +87,7 @@ bool LoadRomFiles(const string& root)
 		syscfg.lang = settings.dreamcast.language;
 
 	if (sys_nvmem.WriteBlock(FLASH_PT_USER, FLASH_USER_SYSCFG, &syscfg) != 1)
-		printf("Failed to save time and language to flash RAM\n");
+		WARN_LOG(FLASHROM, "Failed to save time and language to flash RAM");
 
 #endif
 
@@ -111,7 +112,7 @@ void SaveRomFiles(const string& root)
 
 bool LoadHle(const string& root) {
 	if (!sys_nvmem.Load(root, ROM_PREFIX, "%nvmem.bin;%flash_wb.bin;%flash.bin;%flash.bin.bin", "nvram")) {
-		printf("No nvmem loaded\n");
+		INFO_LOG(FLASHROM, "No nvmem loaded");
 	}
 
 	return reios_init(sys_rom.data, sys_nvmem.data);
@@ -123,7 +124,7 @@ void WriteFlash(u32 addr,u32 data,u32 sz) { sys_nvmem.Write(addr,data,sz); }
 #if (DC_PLATFORM == DC_PLATFORM_DREAMCAST) || (DC_PLATFORM == DC_PLATFORM_DEV_UNIT) || (DC_PLATFORM == DC_PLATFORM_NAOMI) || (DC_PLATFORM == DC_PLATFORM_NAOMI2)
 
 u32 ReadBios(u32 addr,u32 sz) { return sys_rom.Read(addr,sz); }
-void WriteBios(u32 addr,u32 data,u32 sz) { EMUERROR4("Write to [Boot ROM] is not possible, addr=%x,data=%x,size=%d",addr,data,sz); }
+void WriteBios(u32 addr,u32 data,u32 sz) { INFO_LOG(MEMORY, "Write to [Boot ROM] is not possible, addr=%x, data=%x, size=%d", addr, data, sz); }
 
 #elif (DC_PLATFORM == DC_PLATFORM_ATOMISWAVE)
 	u32 ReadBios(u32 addr,u32 sz)
@@ -135,7 +136,7 @@ void WriteBios(u32 addr,u32 data,u32 sz) { EMUERROR4("Write to [Boot ROM] is not
 	{
 		if (sz != 1)
 		{
-			EMUERROR("Invalid access size @%08x data %x sz %d\n", addr, data, sz);
+			INFO_LOG(MEMORY, "Invalid access size @%08x data %x sz %d", addr, data, sz);
 			return;
 		}
 		sys_rom.Write(addr, data, sz);
@@ -192,7 +193,7 @@ T DYNACALL ReadMem_area0(u32 addr)
 	{
 		if ( /*&& (addr>= 0x00400000)*/ (addr<= 0x005F67FF)) // :Unassigned
 		{
-			EMUERROR2("Read from area0_32 not implemented [Unassigned], addr=%x",addr);
+			INFO_LOG(MEMORY, "Read from area0_32 not implemented [Unassigned], addr=%x", addr);
 		}
 		else if ((addr>= 0x005F7000) && (addr<= 0x005F70FF)) // GD-ROM
 		{
