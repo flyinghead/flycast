@@ -111,3 +111,76 @@ std::string StringFromFormat(const char* format, ...)
   va_end(args);
   return res;
 }
+
+
+#ifdef _WIN32
+std::wstring CPToUTF16(u32 code_page, const std::string& input)
+{
+  auto const size =
+      MultiByteToWideChar(code_page, 0, input.data(), static_cast<int>(input.size()), nullptr, 0);
+
+  std::wstring output;
+  output.resize(size);
+
+  if (size == 0 ||
+      size != MultiByteToWideChar(code_page, 0, input.data(), static_cast<int>(input.size()),
+                                  &output[0], static_cast<int>(output.size())))
+  {
+    output.clear();
+  }
+
+  return output;
+}
+
+std::string UTF16ToCP(u32 code_page, const std::wstring& input)
+{
+  auto const size = WideCharToMultiByte(code_page, 0, input.data(), static_cast<int>(input.size()),
+                                        nullptr, 0, nullptr, false);
+
+  std::string output;
+  output.resize(size);
+
+  if (size == 0 ||
+      size != WideCharToMultiByte(code_page, 0, input.data(), static_cast<int>(input.size()),
+                                  &output[0], static_cast<int>(output.size()), nullptr, false))
+  {
+    const DWORD error_code = GetLastError();
+    ERROR_LOG(COMMON, "WideCharToMultiByte Error in String '%s': %lu", input.c_str(), error_code);
+    output.clear();
+  }
+  return output;
+}
+
+std::string UTF16ToUTF8(const std::wstring& input)
+{
+  return UTF16ToCP(CP_UTF8, input);
+}
+
+std::wstring UTF8ToUTF16(const std::string& input)
+{
+  return CPToUTF16(CP_UTF8, input);
+}
+
+#ifdef _UNICODE
+inline std::string TStrToUTF8(const std::wstring& str)
+{
+  return UTF16ToUTF8(str);
+}
+
+inline std::wstring UTF8ToTStr(const std::string& str)
+{
+  return UTF8ToUTF16(str);
+}
+#else
+inline std::string TStrToUTF8(const std::string& str)
+{
+  return str;
+}
+
+inline std::string UTF8ToTStr(const std::string& str)
+{
+  return str;
+}
+#endif
+
+#endif
