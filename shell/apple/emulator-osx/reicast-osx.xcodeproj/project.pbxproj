@@ -204,6 +204,10 @@
 		AE2A2D7F21D6851E004B308D /* 7zFile.c in Sources */ = {isa = PBXBuildFile; fileRef = AE2A2D7321D6851D004B308D /* 7zFile.c */; };
 		AE2A2D8021D6851E004B308D /* 7zDec.c in Sources */ = {isa = PBXBuildFile; fileRef = AE2A2D7721D6851E004B308D /* 7zDec.c */; };
 		AE2A2D8321D7DB78004B308D /* CustomTexture.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE2A2D8121D7DB77004B308D /* CustomTexture.cpp */; };
+		AE43537222C9420C005E19CE /* ConsoleListenerDroid.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE43536B22C9420C005E19CE /* ConsoleListenerDroid.cpp */; };
+		AE43537322C9420C005E19CE /* ConsoleListenerNix.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE43536C22C9420C005E19CE /* ConsoleListenerNix.cpp */; };
+		AE43537422C9420C005E19CE /* ConsoleListenerWin.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE43536D22C9420C005E19CE /* ConsoleListenerWin.cpp */; };
+		AE43537522C9420C005E19CE /* LogManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE43536F22C9420C005E19CE /* LogManager.cpp */; };
 		AE649BB62188689000EF4A81 /* xxhash.c in Sources */ = {isa = PBXBuildFile; fileRef = AE649BB42188689000EF4A81 /* xxhash.c */; };
 		AE649BF3218C552500EF4A81 /* bitmath.c in Sources */ = {isa = PBXBuildFile; fileRef = AE649BCD218C552500EF4A81 /* bitmath.c */; };
 		AE649BF4218C552500EF4A81 /* bitreader.c in Sources */ = {isa = PBXBuildFile; fileRef = AE649BCE218C552500EF4A81 /* bitreader.c */; };
@@ -673,6 +677,15 @@
 		AE2A2D7721D6851E004B308D /* 7zDec.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = 7zDec.c; sourceTree = "<group>"; };
 		AE2A2D8121D7DB77004B308D /* CustomTexture.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CustomTexture.cpp; sourceTree = "<group>"; };
 		AE2A2D8221D7DB78004B308D /* CustomTexture.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CustomTexture.h; sourceTree = "<group>"; };
+		AE43536922C9420C005E19CE /* BitSet.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BitSet.h; sourceTree = "<group>"; };
+		AE43536A22C9420C005E19CE /* ConsoleListener.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ConsoleListener.h; sourceTree = "<group>"; };
+		AE43536B22C9420C005E19CE /* ConsoleListenerDroid.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ConsoleListenerDroid.cpp; sourceTree = "<group>"; };
+		AE43536C22C9420C005E19CE /* ConsoleListenerNix.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ConsoleListenerNix.cpp; sourceTree = "<group>"; };
+		AE43536D22C9420C005E19CE /* ConsoleListenerWin.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ConsoleListenerWin.cpp; sourceTree = "<group>"; };
+		AE43536E22C9420C005E19CE /* Log.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Log.h; sourceTree = "<group>"; };
+		AE43536F22C9420C005E19CE /* LogManager.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = LogManager.cpp; sourceTree = "<group>"; };
+		AE43537022C9420C005E19CE /* LogManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LogManager.h; sourceTree = "<group>"; };
+		AE43537122C9420C005E19CE /* StringUtil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = StringUtil.h; sourceTree = "<group>"; };
 		AE60BD9F22256E2500FA8A5B /* osx_keyboard.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = osx_keyboard.h; sourceTree = "<group>"; };
 		AE60BDA02225725800FA8A5B /* osx_gamepad.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = osx_gamepad.h; sourceTree = "<group>"; };
 		AE649BB42188689000EF4A81 /* xxhash.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = xxhash.c; sourceTree = "<group>"; };
@@ -1005,6 +1018,7 @@
 				AEE6278022131BB500EC7E89 /* input */,
 				84B7BE4D1B72720100F9733F /* khronos */,
 				84B7BE641B72720100F9733F /* linux */,
+				AE43536822C9420C005E19CE /* log */,
 				84B7BE6E1B72720200F9733F /* nullDC.cpp */,
 				84B7BE6F1B72720200F9733F /* oslib */,
 				84B7BE7C1B72720200F9733F /* profiler */,
@@ -1715,6 +1729,23 @@
 			path = ../../../core/archive;
 			sourceTree = "<group>";
 		};
+		AE43536822C9420C005E19CE /* log */ = {
+			isa = PBXGroup;
+			children = (
+				AE43536922C9420C005E19CE /* BitSet.h */,
+				AE43536A22C9420C005E19CE /* ConsoleListener.h */,
+				AE43536B22C9420C005E19CE /* ConsoleListenerDroid.cpp */,
+				AE43536C22C9420C005E19CE /* ConsoleListenerNix.cpp */,
+				AE43536D22C9420C005E19CE /* ConsoleListenerWin.cpp */,
+				AE43536E22C9420C005E19CE /* Log.h */,
+				AE43536F22C9420C005E19CE /* LogManager.cpp */,
+				AE43537022C9420C005E19CE /* LogManager.h */,
+				AE43537122C9420C005E19CE /* StringUtil.h */,
+			);
+			name = log;
+			path = ../../../core/log;
+			sourceTree = "<group>";
+		};
 		AE649BB32188689000EF4A81 /* xxhash */ = {
 			isa = PBXGroup;
 			children = (
@@ -2251,6 +2282,7 @@
 				AE2A2D8321D7DB78004B308D /* CustomTexture.cpp in Sources */,
 				84B7BF191B72720200F9733F /* deflate.c in Sources */,
 				84B7BF7E1B72720200F9733F /* TexCache.cpp in Sources */,
+				AE43537522C9420C005E19CE /* LogManager.cpp in Sources */,
 				AEFF7F4E214D9D590068CE11 /* pico_dev_ppp.c in Sources */,
 				84B7BEE41B72720200F9733F /* zip_delete.c in Sources */,
 				84B7BF1A1B72720200F9733F /* infback.c in Sources */,
@@ -2307,6 +2339,7 @@
 				84B7BEE61B72720200F9733F /* zip_entry_free.c in Sources */,
 				84B7BF511B72720200F9733F /* tmu.cpp in Sources */,
 				84B7BF181B72720200F9733F /* crc32.c in Sources */,
+				AE43537422C9420C005E19CE /* ConsoleListenerWin.cpp in Sources */,
 				84B7BEF21B72720200F9733F /* zip_file_get_offset.c in Sources */,
 				84B7BF7B1B72720200F9733F /* gltex.cpp in Sources */,
 				84B7BEF41B72720200F9733F /* zip_filerange_crc.c in Sources */,
@@ -2380,6 +2413,7 @@
 				84B7BEB61B72720200F9733F /* sha256.cpp in Sources */,
 				84B7BF5A1B72720200F9733F /* cdi.cpp in Sources */,
 				AE649C05218C552500EF4A81 /* stream_decoder.c in Sources */,
+				AE43537322C9420C005E19CE /* ConsoleListenerNix.cpp in Sources */,
 				84B7BEF91B72720200F9733F /* zip_get_archive_comment.c in Sources */,
 				AE649C02218C552500EF4A81 /* memory.c in Sources */,
 				84B7BF831B727AD700F9733F /* osx-main.mm in Sources */,
@@ -2485,6 +2519,7 @@
 				84B7BF491B72720200F9733F /* bsc.cpp in Sources */,
 				AE649BFB218C552500EF4A81 /* format.c in Sources */,
 				84B7BF2D1B72720200F9733F /* virt_arm.cpp in Sources */,
+				AE43537222C9420C005E19CE /* ConsoleListenerDroid.cpp in Sources */,
 				84A388B91B1CDD3E000166C0 /* AppDelegate.swift in Sources */,
 				84B7BF001B72720200F9733F /* zip_new.c in Sources */,
 				84B7BF0A1B72720200F9733F /* zip_source_filep.c in Sources */,
