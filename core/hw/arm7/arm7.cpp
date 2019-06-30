@@ -7,11 +7,7 @@
 
 #define C_CORE
 
-#if 0
-	#define arm_printf printf
-#else
-	void arm_printf(...) { }
-#endif
+#define arm_printf(...) DEBUG_LOG(AICA_ARM, __VA_ARGS__)
 
 //#define CPUReadHalfWordQuick(addr) arm_ReadMem16(addr & 0x7FFFFF)
 #define CPUReadMemoryQuick(addr) (*(u32*)&aica_ram[addr&ARAM_MASK])
@@ -224,7 +220,7 @@ void CPUSwitchMode(int mode, bool saveState, bool breakLoop)
 			reg[17].I = reg[SPSR_UND].I;
 		break;
 	default:
-		printf("Unsupported ARM mode %02x\n", mode);
+		ERROR_LOG(AICA_ARM, "Unsupported ARM mode %02x", mode);
 		die("Arm error..");
 		break;
 	}
@@ -298,7 +294,7 @@ void CPUSoftwareInterrupt(int comment)
 
 void CPUUndefinedException()
 {
-	printf("arm7: CPUUndefinedException(). SOMETHING WENT WRONG\n");
+	WARN_LOG(AICA_ARM, "arm7: CPUUndefinedException(). SOMETHING WENT WRONG");
 	u32 PC = reg[R15_ARM_NEXT].I+4;
 	CPUSwitchMode(0x1b, true, false);
 	reg[14].I = PC;
@@ -1345,7 +1341,7 @@ void DumpRegs(const char* output)
 
 void DYNACALL PrintOp(u32 opcd)
 {
-	printf("%08X\n",opcd);
+	DEBUG_LOG(AICA_ARM, "%08X", opcd);
 }
 
 void armv_imm_to_reg(u32 regn, u32 imm)

@@ -157,7 +157,7 @@ void armv_end(void* codestart, u32 cycl)
 	Instruction* instr;
 	for (instr = instr_start; instr < instr_end; instr += kInstructionSize) {
 		decoder.Decode(instr);
-		printf("arm64 arec\t %p:\t%s\n",
+		DEBUG_LOG(AICA_ARM, "arm64 arec\t %p:\t%s",
 				   reinterpret_cast<void*>(instr),
 				   disasm.GetOutput());
 	}
@@ -206,7 +206,7 @@ class android_buf : public std::stringbuf
 {
 public:
     virtual int sync() override {
-    	LOGI("ARM7: %s\n", this->str().c_str());
+    	DEBUG_LOG(AICA_ARM, "ARM7: %s", this->str().c_str());
     	str("");
 
     	return 0;
