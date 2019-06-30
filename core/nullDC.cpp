@@ -165,7 +165,11 @@ void LoadSpecialSettings()
 			// Super Speed Racing (JP)
 			|| !strncmp("HDR-0013", reios_product_number, 8)
 			// Yu Suzuki Game Works Vol. 1
-			|| !strncmp("6108099", reios_product_number, 7))
+			|| !strncmp("6108099", reios_product_number, 7)
+			// L.O.L
+			|| !strncmp("T2106M", reios_product_number, 6)
+			// Miss Moonlight
+			|| !strncmp("T18702M", reios_product_number, 7))
 	{
 		settings.rend.RenderToTextureBuffer = 1;
 		rtt_to_buffer_game = true;
