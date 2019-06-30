@@ -52,11 +52,11 @@ void maple_vblank()
 		{
 			if (maple_ddt_pending_reset)
 			{
-				//printf("DDT vblank ; reset pending\n");
+				DEBUG_LOG(MAPLE, "DDT vblank ; reset pending");
 			}
 			else
 			{
-				//printf("DDT vblank\n");
+				DEBUG_LOG(MAPLE, "DDT vblank");
 				SB_MDST = 1;
 				maple_DoDma();
 				SB_MDST = 0;
@@ -98,7 +98,7 @@ void maple_SB_MDEN_Write(u32 addr, u32 data)
 
 	if ((data & 0x1)==0  && SB_MDST)
 	{
-		printf("Maple DMA abort ?\n");
+		INFO_LOG(MAPLE, "Maple DMA abort ?");
 	}
 }
 
@@ -122,9 +122,7 @@ void maple_DoDma()
 	verify(SB_MDEN &1)
 	verify(SB_MDST &1)
 
-#if debug_maple
-	printf("Maple: DoMapleDma SB_MDSTAR=%x\n", SB_MDSTAR);
-#endif
+	DEBUG_LOG(MAPLE, "Maple: DoMapleDma SB_MDSTAR=%x", SB_MDSTAR);
 	u32 addr = SB_MDSTAR;
 	u32 xfer_count=0;
 	bool last = false;
@@ -147,7 +145,7 @@ void maple_DoDma()
 		{
 			if (!IsOnSh4Ram(header_2))
 			{
-				printf("MAPLE ERROR : DESTINATION NOT ON SH4 RAM 0x%X\n",header_2);
+				INFO_LOG(MAPLE, "MAPLE ERROR : DESTINATION NOT ON SH4 RAM 0x%X", header_2);
 				header_2&=0xFFFFFF;
 				header_2|=(3<<26);
 			}
@@ -157,7 +155,7 @@ void maple_DoDma()
 			u32* p_data =(u32*) GetMemPtr(addr + 8,(plen)*sizeof(u32));
 			if (p_data == NULL)
 			{
-				printf("MAPLE ERROR : INVALID SB_MDSTAR value 0x%X\n", addr);
+				INFO_LOG(MAPLE, "MAPLE ERROR : INVALID SB_MDSTAR value 0x%X", addr);
 				SB_MDST=0;
 				return;
 			}
@@ -183,7 +181,7 @@ void maple_DoDma()
 			else
 			{
 				if (port != 5 && command != 1)
-					printf("MAPLE: Unknown device bus %d port %d cmd %d\n", bus, port, command);
+					INFO_LOG(MAPLE, "MAPLE: Unknown device bus %d port %d cmd %d", bus, port, command);
 				outlen=4;
 				p_out[0]=0xFFFFFFFF;
 			}
@@ -216,7 +214,7 @@ void maple_DoDma()
 			break;
 
 		default:
-			printf("MAPLE: Unknown maple_op == %d length %d\n", maple_op, plen * 4);
+			INFO_LOG(MAPLE, "MAPLE: Unknown maple_op == %d length %d", maple_op, plen * 4);
 			addr += 1 * 4;
 		}
 	}
@@ -234,7 +232,7 @@ int maple_schd(int tag, int c, int j)
 	}
 	else
 	{
-		printf("WARNING: MAPLE DMA ABORT\n");
+		INFO_LOG(MAPLE, "WARNING: MAPLE DMA ABORT");
 		SB_MDST=0; //I really wonder what this means, can the DMA be continued ?
 	}
 
