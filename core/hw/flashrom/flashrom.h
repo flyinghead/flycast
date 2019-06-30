@@ -101,7 +101,7 @@ struct MemChip
 
 			if (Load(temp))
 			{
-				printf("Loaded %s as %s\n\n",temp,title.c_str());
+				INFO_LOG(FLASHROM, "Loaded %s as %s", temp, title.c_str());
 				return true;
 			}
 		} while(next);
@@ -116,7 +116,7 @@ struct MemChip
 		sprintf(path,"%s%s%s",root.c_str(),prefix.c_str(),name_ro.c_str());
 		Save(path);
 
-		printf("Saved %s as %s\n\n",path,title.c_str());
+		INFO_LOG(FLASHROM, "Saved %s as %s", path, title.c_str());
 	}
 	virtual void Reset() {}
 };
@@ -297,7 +297,7 @@ struct DCFlashChip : MemChip
 				state = FS_ReadAMDID2;
 			else
 			{
-				printf("FlashRom: ReadAMDID1 unexpected write @ %x: %x\n", addr, val);
+				WARN_LOG(FLASHROM, "FlashRom: ReadAMDID1 unexpected write @ %x: %x", addr, val);
 				state = FS_Normal;
 			}
 			break;
@@ -317,7 +317,7 @@ struct DCFlashChip : MemChip
 				state = FS_ByteProgram;
 			else
 			{
-				printf("FlashRom: ReadAMDID2 unexpected write @ %x: %x\n", addr, val);
+				WARN_LOG(FLASHROM, "FlashRom: ReadAMDID2 unexpected write @ %x: %x", addr, val);
 				state = FS_Normal;
 			}
 			break;
@@ -334,7 +334,7 @@ struct DCFlashChip : MemChip
 				state = FS_EraseAMD2;
 			else
 			{
-				printf("FlashRom: EraseAMD1 unexpected write @ %x: %x\n", addr, val);
+				WARN_LOG(FLASHROM, "FlashRom: EraseAMD1 unexpected write @ %x: %x", addr, val);
 			}
 			break;
 
@@ -347,7 +347,7 @@ struct DCFlashChip : MemChip
 				state = FS_EraseAMD3;
 			else
 			{
-				printf("FlashRom: EraseAMD2 unexpected write @ %x: %x\n", addr, val);
+				WARN_LOG(FLASHROM, "FlashRom: EraseAMD2 unexpected write @ %x: %x", addr, val);
 			}
 			break;
 
@@ -356,7 +356,7 @@ struct DCFlashChip : MemChip
 				|| ((addr & 0xfff) == 0xaaa && (val & 0xff) == 0x10))
 			{
 				// chip erase
-				printf("Erasing Chip!\n");
+				INFO_LOG(FLASHROM, "Erasing Chip!");
 #if DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
 				u8 save[0x2000];
 				// this area is write-protected on AW
@@ -378,7 +378,7 @@ struct DCFlashChip : MemChip
 					// this area is write-protected on AW
 					memcpy(save, data + 0x1a000, 0x2000);
 #endif
-					printf("Erase Sector %08X! (%08X)\n",addr,addr&(~0x3FFF));
+					INFO_LOG(FLASHROM, "Erase Sector %08X! (%08X)", addr, addr & ~0x3FFF);
 					memset(&data[addr&(~0x3FFF)],0xFF,0x4000);
 #if DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
 					memcpy(data + 0x1a000, save, 0x2000);
@@ -388,7 +388,7 @@ struct DCFlashChip : MemChip
 			}
 			else
 			{
-				printf("FlashRom: EraseAMD3 unexpected write @ %x: %x\n", addr, val);
+				WARN_LOG(FLASHROM, "FlashRom: EraseAMD3 unexpected write @ %x: %x", addr, val);
 			}
 			break;
 		}
@@ -617,7 +617,7 @@ private:
 			if (user.block_id == block_id)
 			{
 				if (!validate_crc(&user))
-					printf("flash_lookup_block physical block %d has an invalid crc\n", phys_id);
+					WARN_LOG(FLASHROM, "flash_lookup_block physical block %d has an invalid crc", phys_id);
 				else
 					result = phys_id;
 			}
