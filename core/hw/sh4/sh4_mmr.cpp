@@ -28,17 +28,17 @@ Array<RegisterStruct> SCIF(10,true); //SCIF : 10 registers
 
 u32 sh4io_read_noacc(u32 addr) 
 { 
-	EMUERROR("sh4io: Invalid read access @@ %08X",addr);
+	INFO_LOG(SH4, "sh4io: Invalid read access @@ %08X", addr);
 	return 0; 
 } 
 void sh4io_write_noacc(u32 addr, u32 data) 
 { 
-	EMUERROR("sh4io: Invalid write access @@ %08X %08X",addr,data);
+	INFO_LOG(SH4, "sh4io: Invalid write access @@ %08X %08X", addr, data);
 	//verify(false); 
 }
 void sh4io_write_const(u32 addr, u32 data) 
 { 
-	EMUERROR("sh4io: Const write ignored @@ %08X <- %08X",addr,data);
+	INFO_LOG(SH4, "sh4io: Const write ignored @@ %08X <- %08X", addr, data);
 }
 
 void sh4_rio_reg(Array<RegisterStruct>& arr, u32 addr, RegIO flags, u32 sz, RegReadAddrFP* rf, RegWriteAddrFP* wf)
@@ -77,7 +77,7 @@ u32 sh4_rio_read(Array<RegisterStruct>& sb_regs, u32 addr)
 #ifdef TRACE
 	if (offset & 3/*(size-1)*/) //4 is min align size
 	{
-		EMUERROR("Unaligned System Bus register read");
+		INFO_LOG(SH4, "Unaligned System Bus register read");
 	}
 #endif
 
@@ -105,7 +105,7 @@ u32 sh4_rio_read(Array<RegisterStruct>& sb_regs, u32 addr)
 	else
 	{
 		if (!(sb_regs[offset].flags& REG_NOT_IMPL))
-			EMUERROR("ERROR [wrong size read on register]");
+			INFO_LOG(SH4, "ERROR [wrong size read on register]");
 	}
 #endif
 //	if ((sb_regs[offset].flags& REG_NOT_IMPL))
@@ -120,7 +120,7 @@ void sh4_rio_write(Array<RegisterStruct>& sb_regs, u32 addr, u32 data)
 #ifdef TRACE
 	if (offset & 3/*(size-1)*/) //4 is min align size
 	{
-		EMUERROR("Unaligned System bus register write");
+		INFO_LOG(SH4, "Unaligned System bus register write");
 	}
 #endif
 offset>>=2;
@@ -165,10 +165,10 @@ offset>>=2;
 	else
 	{
 		if (!(sb_regs[offset].flags& REG_NOT_IMPL))
-			EMUERROR4("ERROR: Wrong size write on register - offset=%x, data=%x, size=%d",offset,data,sz);
+			INFO_LOG(SH4, "ERROR: Wrong size write on register - offset=%x, data=%x, size=%d",offset,data,sz);
 	}
 	if ((sb_regs[offset].flags& REG_NOT_IMPL))
-		EMUERROR3("Write to System Control Regs, not implemented - addr=%x, data=%x",addr,data);
+		INFO_LOG(SH4, "Write to System Control Regs, not implemented - addr=%x, data=%x",addr,data);
 #endif
 	
 }
@@ -190,7 +190,7 @@ T DYNACALL ReadMem_P4(u32 addr)
 	case 0xE1:
 	case 0xE2:
 	case 0xE3:
-		EMUERROR("Unhandled p4 read [Store queue] 0x%x",addr);
+		INFO_LOG(SH4, "Unhandled p4 read [Store queue] 0x%x", addr);
 		return 0;
 		break;
 
@@ -249,15 +249,14 @@ T DYNACALL ReadMem_P4(u32 addr)
 		break;
 
 	case 0xFF:
-		EMUERROR("Unhandled p4 read [area7] 0x%x",addr);
+		INFO_LOG(SH4, "Unhandled p4 read [area7] 0x%x", addr);
 		break;
 
 	default:
-		EMUERROR("Unhandled p4 read [Reserved] 0x%x",addr);
+		INFO_LOG(SH4, "Unhandled p4 read [Reserved] 0x%x", addr);
 		break;
 	}
 
-	EMUERROR("Read from P4 not implemented - addr=%x",addr);
 	return 0;
 
 }
@@ -279,7 +278,7 @@ void DYNACALL WriteMem_P4(u32 addr,T data)
 	case 0xE1:
 	case 0xE2:
 	case 0xE3:
-		EMUERROR("Unhandled p4 Write [Store queue] 0x%x",addr);
+		INFO_LOG(SH4, "Unhandled p4 Write [Store queue] 0x%x", addr);
 		break;
 
 	case 0xF0:
@@ -337,7 +336,7 @@ void DYNACALL WriteMem_P4(u32 addr,T data)
 			if (addr&0x80)
 			{
 				#ifdef NO_MMU
-				EMUERROR("Unhandled p4 Write [Unified TLB address array, Associative Write] 0x%x = %x",addr,data);
+				INFO_LOG(SH4, "Unhandled p4 Write [Unified TLB address array, Associative Write] 0x%x = %x", addr, data);
 				#endif
 
 				CCN_PTEH_type t;
@@ -398,15 +397,13 @@ void DYNACALL WriteMem_P4(u32 addr,T data)
 		}
 
 	case 0xFF:
-		EMUERROR("Unhandled p4 Write [area7] 0x%x = %x",addr,data);
+		INFO_LOG(SH4, "Unhandled p4 Write [area7] 0x%x = %x", addr, data);
 		break;
 
 	default:
-		EMUERROR("Unhandled p4 Write [Reserved] 0x%x",addr);
+		INFO_LOG(SH4, "Unhandled p4 Write [Reserved] 0x%x", addr);
 		break;
 	}
-
-	EMUERROR3("Write to P4 not implemented - addr=%x, data=%x",addr,data);
 }
 
 
@@ -420,7 +417,7 @@ T DYNACALL ReadMem_sq(u32 addr)
 {
 	if (sz!=4)
 	{
-		EMUERROR("Store Queue Error - only 4 byte read are possible[x%X]",addr);
+		INFO_LOG(SH4, "Store Queue Error - only 4 byte read are possible[x%X]", addr);
 		return 0xDE;
 	}
 
@@ -435,7 +432,7 @@ template <u32 sz,class T>
 void DYNACALL WriteMem_sq(u32 addr,T data)
 {
 	if (sz!=4)
-		EMUERROR("Store Queue Error - only 4 byte writes are possible[x%X=0x%X]",addr,data);
+		INFO_LOG(SH4, "Store Queue Error - only 4 byte writes are possible[x%X=0x%X]", addr, data);
 
 	u32 united_offset=addr & 0x3C;
 
@@ -481,7 +478,7 @@ T DYNACALL ReadMem_area7(u32 addr)
 		}
 		else
 		{
-			EMUERROR2("Out of range on register index %x",addr);
+			INFO_LOG(SH4, "Out of range on register index %x", addr);
 		}
 		break;
 
@@ -492,7 +489,7 @@ T DYNACALL ReadMem_area7(u32 addr)
 		}
 		else
 		{
-			EMUERROR2("Out of range on register index %x",addr);
+			INFO_LOG(SH4, "Out of range on register index %x", addr);
 		}
 		break;
 
@@ -504,16 +501,16 @@ T DYNACALL ReadMem_area7(u32 addr)
 		else if ((addr>=BSC_SDMR2_addr) && (addr<= 0x1F90FFFF))
 		{
 			//dram settings 2 / write only
-			EMUERROR("Read from write-only registers [dram settings 2]");
+			INFO_LOG(SH4, "Read from write-only registers [dram settings 2]");
 		}
 		else if ((addr>=BSC_SDMR3_addr) && (addr<= 0x1F94FFFF))
 		{
 			//dram settings 3 / write only
-			EMUERROR("Read from write-only registers [dram settings 3]");
+			INFO_LOG(SH4, "Read from write-only registers [dram settings 3]");
 		}
 		else
 		{
-			EMUERROR2("Out of range on register index . %x",addr);
+			INFO_LOG(SH4, "Out of range on register index . %x", addr);
 		}
 		break;
 
@@ -526,7 +523,7 @@ T DYNACALL ReadMem_area7(u32 addr)
 		}
 		else
 		{
-			EMUERROR2("Out of range on register index %x",addr);
+			INFO_LOG(SH4, "Out of range on register index %x", addr);
 		}
 		break;
 
@@ -537,7 +534,7 @@ T DYNACALL ReadMem_area7(u32 addr)
 		}
 		else
 		{
-			EMUERROR2("Out of range on register index %x",addr);
+			INFO_LOG(SH4, "Out of range on register index %x", addr);
 		}
 		break;
 
@@ -548,7 +545,7 @@ T DYNACALL ReadMem_area7(u32 addr)
 		}
 		else
 		{
-			EMUERROR2("Out of range on register index %x",addr);
+			INFO_LOG(SH4, "Out of range on register index %x", addr);
 		}
 		break;
 
@@ -559,7 +556,7 @@ T DYNACALL ReadMem_area7(u32 addr)
 		}
 		else
 		{
-			EMUERROR2("Out of range on register index %x",addr);
+			INFO_LOG(SH4, "Out of range on register index %x", addr);
 		}
 		break;
 
@@ -570,7 +567,7 @@ T DYNACALL ReadMem_area7(u32 addr)
 		}
 		else
 		{
-			EMUERROR2("Out of range on register index %x",addr);
+			INFO_LOG(SH4, "Out of range on register index %x", addr);
 		}
 		break;
 
@@ -581,7 +578,7 @@ T DYNACALL ReadMem_area7(u32 addr)
 		}
 		else
 		{
-			EMUERROR2("Out of range on register index %x",addr);
+			INFO_LOG(SH4, "Out of range on register index %x", addr);
 		}
 		break;
 
@@ -592,7 +589,7 @@ T DYNACALL ReadMem_area7(u32 addr)
 		}
 		else
 		{
-			EMUERROR2("Out of range on register index %x",addr);
+			INFO_LOG(SH4, "Out of range on register index %x", addr);
 		}
 		break;
 
@@ -613,7 +610,7 @@ T DYNACALL ReadMem_area7(u32 addr)
 	}
 
 
-	//EMUERROR2("Unknown Read from Area7 - addr=%x",addr);
+	//INFO_LOG(SH4, "Unknown Read from Area7 - addr=%x", addr);
 	return 0;
 }
 
@@ -647,7 +644,7 @@ void DYNACALL WriteMem_area7(u32 addr,T data)
 		}
 		else
 		{
-			EMUERROR2("Out of range on register index %x",addr);
+			INFO_LOG(SH4, "Out of range on register index %x", addr);
 		}
 		break;
 
@@ -659,7 +656,7 @@ void DYNACALL WriteMem_area7(u32 addr,T data)
 		}
 		else
 		{
-			EMUERROR2("Out of range on register index %x",addr);
+			INFO_LOG(SH4, "Out of range on register index %x", addr);
 		}
 		break;
 
@@ -681,7 +678,7 @@ void DYNACALL WriteMem_area7(u32 addr,T data)
 		}
 		else
 		{
-			EMUERROR2("Out of range on register index %x",addr);
+			INFO_LOG(SH4, "Out of range on register index %x", addr);
 		}
 		break;
 
@@ -695,7 +692,7 @@ void DYNACALL WriteMem_area7(u32 addr,T data)
 		}
 		else
 		{
-			EMUERROR2("Out of range on register index %x",addr);
+			INFO_LOG(SH4, "Out of range on register index %x", addr);
 		}
 		break;
 
@@ -707,7 +704,7 @@ void DYNACALL WriteMem_area7(u32 addr,T data)
 		}
 		else
 		{
-			EMUERROR2("Out of range on register index %x",addr);
+			INFO_LOG(SH4, "Out of range on register index %x", addr);
 		}
 		break;
 
@@ -719,7 +716,7 @@ void DYNACALL WriteMem_area7(u32 addr,T data)
 		}
 		else
 		{
-			EMUERROR2("Out of range on register index %x",addr);
+			INFO_LOG(SH4, "Out of range on register index %x", addr);
 		}
 		break;
 
@@ -731,7 +728,7 @@ void DYNACALL WriteMem_area7(u32 addr,T data)
 		}
 		else
 		{
-			EMUERROR2("Out of range on register index %x",addr);
+			INFO_LOG(SH4, "Out of range on register index %x", addr);
 		}
 		break;
 
@@ -743,7 +740,7 @@ void DYNACALL WriteMem_area7(u32 addr,T data)
 		}
 		else
 		{
-			EMUERROR2("Out of range on register index %x",addr);
+			INFO_LOG(SH4, "Out of range on register index %x", addr);
 		}
 		break;
 
@@ -755,7 +752,7 @@ void DYNACALL WriteMem_area7(u32 addr,T data)
 		}
 		else
 		{
-			EMUERROR2("Out of range on register index %x",addr);
+			INFO_LOG(SH4, "Out of range on register index %x", addr);
 		}
 		break;
 
@@ -767,7 +764,7 @@ void DYNACALL WriteMem_area7(u32 addr,T data)
 		}
 		else
 		{
-			EMUERROR2("Out of range on register index %x",addr);
+			INFO_LOG(SH4, "Out of range on register index %x", addr);
 		}
 		break;
 
@@ -808,13 +805,13 @@ T DYNACALL ReadMem_area7_OCR_T(u32 addr)
 			return (T)*(u32*)&OnChipRAM[addr&OnChipRAM_MASK];
 		else
 		{
-			EMUERROR("ReadMem_area7_OCR_T: template SZ is wrong = %d",sz);
+			ERROR_LOG(SH4, "ReadMem_area7_OCR_T: template SZ is wrong = %d", sz);
 			return 0xDE;
 		}
 	}
 	else
 	{
-		EMUERROR("On Chip Ram Read, but OCR is disabled");
+		INFO_LOG(SH4, "On Chip Ram Read, but OCR is disabled");
 		return 0xDE;
 	}
 }
@@ -833,12 +830,12 @@ void DYNACALL WriteMem_area7_OCR_T(u32 addr,T data)
 			*(u32*)&OnChipRAM[addr&OnChipRAM_MASK]=data;
 		else
 		{
-			EMUERROR("WriteMem_area7_OCR_T: template SZ is wrong = %d",sz);
+			ERROR_LOG(SH4, "WriteMem_area7_OCR_T: template SZ is wrong = %d", sz);
 		}
 	}
 	else
 	{
-		EMUERROR("On Chip Ram Write, but OCR is disabled");
+		INFO_LOG(SH4, "On Chip Ram Write, but OCR is disabled");
 	}
 }
 

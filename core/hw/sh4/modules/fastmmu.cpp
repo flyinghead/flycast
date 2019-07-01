@@ -39,10 +39,6 @@ extern u32 sq_remap[64];
 
 #include "wince.h"
 
-#define printf_mmu(...)
-//#define printf_mmu printf
-#define printf_win32(...)
-
 extern const u32 mmu_mask[4];
 
 const TLB_Entry *lru_entry = NULL;
@@ -327,7 +323,7 @@ u32 mmu_data_translation(u32 va, u32& rv)
 		if (va == unresolved_unicode_string)
 		{
 			unresolved_unicode_string = 0;
-			printf("RESOLVED %s\n", get_unicode_string(va).c_str());
+			INFO_LOG(SH4, "RESOLVED %s", get_unicode_string(va).c_str());
 		}
 	}
 #endif

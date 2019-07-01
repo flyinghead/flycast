@@ -13,9 +13,6 @@
 
 //Types
 
-#define printf_smc(...) // printf
-
-
 u32 CCN_QACR_TR[2];
 
 template<u32 idx>
@@ -86,15 +83,16 @@ void CCN_CCR_write(u32 addr, u32 value)
 
 
 	if (temp.ICI) {
-		printf_smc("Sh4: i-cache invalidation %08X\n",curr_pc);
+		DEBUG_LOG(SH4, "Sh4: i-cache invalidation %08X", curr_pc);
 
 		if (settings.dynarec.SmcCheckLevel == NoCheck) {
 			//TODO: Add skip/check vectors for Shikigami No Shiro II (uses ICI frequently)
 			//which game is 0xAC13DBF8 from ?
 			if (curr_pc != 0xAC13DBF8)
 			{
-				printf("Sh4: code cache clear (ICI) pc: %08X\n",curr_pc);
-				sh4_cpu.ResetCache();
+				// Disabled as it causes instant crash by invalidating the block the dynarec is currently running
+				//DEBUG_LOG(DYNAREC, "Sh4: code cache clear (ICI) pc: %08X", curr_pc);
+				//sh4_cpu.ResetCache();
 			}
 		}
 	}

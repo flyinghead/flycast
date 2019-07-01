@@ -28,6 +28,7 @@ enum LOG_TYPE
 	PVR,
 	RENDERER,
 	SAVESTATE,
+	SH4,
 
 	NUMBER_OF_LOGS  // Must be last
 };

@@ -36,17 +36,17 @@ void DMAC_Ch2St()
 
 	if(0x8201 != (dmaor &DMAOR_MASK))
 	{
-		printf("\n!\tDMAC: DMAOR has invalid settings (%X) !\n", dmaor);
+		INFO_LOG(SH4, "DMAC: DMAOR has invalid settings (%X) !", dmaor);
 		return;
 	}
 
 	if (len & 0x1F)
 	{
-		printf("\n!\tDMAC: SB_C2DLEN has invalid size (%X) !\n", len);
+		INFO_LOG(SH4, "DMAC: SB_C2DLEN has invalid size (%X) !", len);
 		return;
 	}
 
-	//printf(">>\tDMAC: Ch2 DMA SRC=%X DST=%X LEN=%X\n", src, dst, len );
+	DEBUG_LOG(SH4, ">> DMAC: Ch2 DMA SRC=%X DST=%X LEN=%X", src, dst, len);
 
 	// Direct DList DMA (Ch2)
 
@@ -127,7 +127,7 @@ void DMAC_Ch2St()
 	}
 	else 
 	{ 
-		printf("\n!\tDMAC: SB_C2DSTAT has invalid address (%X) !\n", dst); 
+		INFO_LOG(SH4, "DMAC: SB_C2DSTAT has invalid address (%X) !", dst);
 		src+=len;
 	}
 

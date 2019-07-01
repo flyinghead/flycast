@@ -102,7 +102,7 @@ void Sh4_int_Step()
 {
 	if (sh4_int_bCpuRun)
 	{
-		printf("Sh4 Is running , can't step\n");
+		WARN_LOG(INTERPRETER, "Sh4 Is running , can't step");
 	}
 	else
 	{
@@ -116,7 +116,7 @@ void Sh4_int_Skip()
 {
 	if (sh4_int_bCpuRun)
 	{
-		printf("Sh4 Is running, can't Skip\n");
+		WARN_LOG(INTERPRETER, "Sh4 Is running, can't Skip");
 	}
 	else
 	{
@@ -128,7 +128,7 @@ void Sh4_int_Reset(bool Manual)
 {
 	if (sh4_int_bCpuRun)
 	{
-		printf("Sh4 Is running, can't Reset\n");
+		WARN_LOG(INTERPRETER, "Sh4 Is running, can't Reset");
 	}
 	else
 	{
@@ -149,7 +149,7 @@ void Sh4_int_Reset(bool Manual)
 		UpdateFPSCR();
 
 		//Any more registers have default value ?
-		printf("Sh4 Reset\n");
+		INFO_LOG(INTERPRETER, "Sh4 Reset");
 	}
 }
 
@@ -189,7 +189,7 @@ void ExecuteDelayslot_RTE()
 #if !defined(NO_MMU)
 	}
 	catch (SH4ThrownException& ex) {
-		msgboxf("Exception in RTE delay slot", MBX_ICONERROR);
+		ERROR_LOG(INTERPRETER, "Exception in RTE delay slot");
 	}
 #endif
 }
@@ -300,7 +300,7 @@ void Sh4_int_Init()
 void Sh4_int_Term()
 {
 	Sh4_int_Stop();
-	printf("Sh4 Term\n");
+	INFO_LOG(INTERPRETER, "Sh4 Term");
 }
 
 /*

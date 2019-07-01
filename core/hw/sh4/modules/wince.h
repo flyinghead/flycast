@@ -312,33 +312,31 @@ static bool print_wince_syscall(u32 address)
 			sprintf(method_buf, "[%d]", meth_id);
 			method = method_buf;
 		}
-		printf("WinCE %08x %04x.%04x %s: %s", address, getCurrentProcessId() & 0xffff, getCurrentThreadId() & 0xffff, api, method);
+		INFO_LOG(SH4, "WinCE %08x %04x.%04x %s: %s", address, getCurrentProcessId() & 0xffff, getCurrentThreadId() & 0xffff, api, method);
 		if (address == 0xfffffd51)		// SetLastError
-			printf(" dwErrCode = %x\n", r[4]);
+			INFO_LOG(SH4, " dwErrCode = %x", r[4]);
 		else if (address == 0xffffd5ef)	// CreateFile
-			printf(" lpFileName = %s\n", get_unicode_string(r[4]).c_str());
+			INFO_LOG(SH4, " lpFileName = %s", get_unicode_string(r[4]).c_str());
 		else if (address == 0xfffffd97) // CreateProc
-			printf(" imageName = %s, commandLine = %s\n", get_unicode_string(r[4]).c_str(), get_unicode_string(r[5]).c_str());
+			INFO_LOG(SH4, " imageName = %s, commandLine = %s", get_unicode_string(r[4]).c_str(), get_unicode_string(r[5]).c_str());
 		else if (!strcmp("DebugNotify", method))
-			printf(" %x, %x\n", r[4], r[5]);
+			INFO_LOG(SH4, " %x, %x\n", r[4], r[5]);
 		else if (address == 0xffffd5d3) // RegOpenKeyExW
-			printf(" hKey = %x, lpSubKey = %s\n", r[4], get_unicode_string(r[5]).c_str());
+			INFO_LOG(SH4, " hKey = %x, lpSubKey = %s", r[4], get_unicode_string(r[5]).c_str());
 		else if (!strcmp("LoadLibraryW", method))
-			printf(" fileName = %s\n", get_unicode_string(r[4]).c_str());
+			INFO_LOG(SH4, " fileName = %s", get_unicode_string(r[4]).c_str());
 		else if (!strcmp("GetProcAddressW", method))
-			printf(" hModule = %x, procName = %s\n", r[4], get_unicode_string(r[5]).c_str());
+			INFO_LOG(SH4, " hModule = %x, procName = %s", r[4], get_unicode_string(r[5]).c_str());
 		else if (!strcmp("NKvDbgPrintfW", method))
-			printf(" fmt = %s\n", get_unicode_string(r[4]).c_str());
+			INFO_LOG(SH4, " fmt = %s", get_unicode_string(r[4]).c_str());
 		else if (!strcmp("OutputDebugStringW", method))
-			printf(" str = %s\n", get_unicode_string(r[4]).c_str());
+			INFO_LOG(SH4, " str = %s", get_unicode_string(r[4]).c_str());
 		else if (!strcmp("RegisterAFSName", method))
-			printf(" name = %s\n", get_unicode_string(r[4]).c_str());
+			INFO_LOG(SH4, " name = %s", get_unicode_string(r[4]).c_str());
 		else if (!strcmp("CreateAPISet", method))
-			printf(" name = %s\n", get_ascii_string(r[4]).c_str());
+			INFO_LOG(SH4, " name = %s", get_ascii_string(r[4]).c_str());
 		else if (!strcmp("Register", method) && !strcmp("APISET", api))
-			printf(" p = %x, id = %x\n", r[4], r[5]);
-		else
-			printf("\n");
+			INFO_LOG(SH4, " p = %x, id = %x", r[4], r[5]);
 		// might be useful to detect errors? (hidden & dangerous)
 		//if (!strcmp("GetProcName", method))
 		//	os_DebugBreak();

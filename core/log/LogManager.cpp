@@ -111,6 +111,7 @@ LogManager::LogManager()
 	m_log[LogTypes::PVR] = {"PVR", "PowerVR GPU"};
 	m_log[LogTypes::RENDERER] = {"RENDERER", "OpenGL Renderer"};
 	m_log[LogTypes::SAVESTATE] = {"SAVESTATE", "Save States"};
+	m_log[LogTypes::SH4] = {"SH4", "SH4 Modules"};
 
 	RegisterListener(LogListener::FILE_LISTENER, new FileLogListener("flycast.log"));
 	RegisterListener(LogListener::CONSOLE_LISTENER, new ConsoleListener());

@@ -43,7 +43,7 @@ static INLINE f64 GetDR(u32 n)
 {
 #ifdef TRACE
 	if (n>7)
-		printf("DR_r INDEX OVERRUN %d >7",n);
+		INFO_LOG(SH4, "DR_r INDEX OVERRUN %d >7", n);
 #endif
 	DoubleReg t;
 
@@ -57,7 +57,7 @@ static INLINE f64 GetXD(u32 n)
 {
 #ifdef TRACE
 	if (n>7)
-		printf("XD_r INDEX OVERRUN %d >7",n);
+		INFO_LOG(SH4, "XD_r INDEX OVERRUN %d >7", n);
 #endif
 	DoubleReg t;
 
@@ -71,7 +71,7 @@ static INLINE void SetDR(u32 n,f64 val)
 {
 #ifdef TRACE
 	if (n>7)
-		printf("DR_w INDEX OVERRUN %d >7",n);
+		INFO_LOG(SH4, "DR_w INDEX OVERRUN %d >7", n);
 #endif
 	DoubleReg t;
 	t.dbl=val;
@@ -85,7 +85,7 @@ static INLINE void SetXD(u32 n,f64 val)
 {
 #ifdef TRACE
 	if (n>7)
-		printf("XD_w INDEX OVERRUN %d >7",n);
+		INFO_LOG(SH4, "XD_w INDEX OVERRUN %d >7", n);
 #endif
 
 	DoubleReg t;

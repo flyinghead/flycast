@@ -160,6 +160,9 @@ void bsc_reset()
 	BSC_PCTRB.full=0x0;
 	//BSC_PDTRB.full; undef
 	BSC_GPIOIC.full=0x0;
+#if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
+	BSC_RFCR.full = 17;
+#endif
 }
 void bsc_term()
 {

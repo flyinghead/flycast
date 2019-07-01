@@ -608,7 +608,7 @@ std::string disassemble_op(const char* tx1, u32 pc, u16 opcode)
 						ti++;
 				}
 
-				printf("Sh4Dissasm : Tag not known\"%s\"\n",tx1);
+				DEBUG_LOG(SH4, "Sh4Dissasm : Tag not known\"%s\"", tx1);
 
 				buf[0] = '<';
 				buf[1] = *tx1;
