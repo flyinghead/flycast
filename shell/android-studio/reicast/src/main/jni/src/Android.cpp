@@ -223,8 +223,8 @@ JNIEXPORT jstring JNICALL Java_com_reicast_emulator_emu_JNIdc_initEnvironment(JN
     const char* path = homeDirectory != NULL ? env->GetStringUTFChars(homeDirectory, 0) : "";
     set_user_config_dir(path);
     set_user_data_dir(path);
-    printf("Config dir is: %s\n", get_writable_config_path("").c_str());
-    printf("Data dir is:   %s\n", get_writable_data_path("").c_str());
+    INFO_LOG(BOOT, "Config dir is: %s", get_writable_config_path("").c_str());
+    INFO_LOG(BOOT, "Data dir is:   %s", get_writable_data_path("").c_str());
     if (homeDirectory != NULL)
     	env->ReleaseStringUTFChars(homeDirectory, path);
 
@@ -269,7 +269,7 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_bootdisk(JNIEnv *env,
         const char *P = env->GetStringUTFChars(disk, 0);
         if (!P) settings.imgread.DefaultImage[0] = '\0';
         else {
-            printf("Boot Disk URI: '%s'\n", P);
+        	INFO_LOG(BOOT, "Boot Disk URI: '%s'", P);
             strncpy(settings.imgread.DefaultImage,(strlen(P)>=7)&&!memcmp(
                     P,"file://",7)? P+7:P,sizeof(settings.imgread.DefaultImage));
             settings.imgread.DefaultImage[sizeof(settings.imgread.DefaultImage) - 1] = '\0';
@@ -283,7 +283,7 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setGameUri(JNIEnv *en
     {
         // Get filename string from Java
         const char* file_path = env->GetStringUTFChars(fileName, 0);
-        printf("Game Disk URI: '%s'\n", file_path);
+        INFO_LOG(BOOT, "Game Disk URI: '%s'", file_path);
         strncpy(gamedisk, strlen(file_path) >= 7 && !memcmp(file_path, "file://", 7) ? file_path + 7 : file_path, sizeof(gamedisk));
         gamedisk[sizeof(gamedisk) - 1] = '\0';
         env->ReleaseStringUTFChars(fileName, file_path);
@@ -303,7 +303,7 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_diskSwap(JNIEnv *env,
         const char *P = env->GetStringUTFChars(disk, 0);
         if (!P) settings.imgread.DefaultImage[0] = '\0';
         else {
-            printf("Swap Disk URI: '%s'\n", P);
+        	INFO_LOG(GDROM, "Swap Disk URI: '%s'", P);
             strncpy(settings.imgread.DefaultImage,(strlen(P)>=7)&&!memcmp(
                     P,"file://",7)? P+7:P,sizeof(settings.imgread.DefaultImage));
             settings.imgread.DefaultImage[sizeof(settings.imgread.DefaultImage) - 1] = '\0';
@@ -360,19 +360,19 @@ JNIEXPORT jint JNICALL Java_com_reicast_emulator_emu_JNIdc_send(JNIEnv *env,jobj
         if (param==0)
         {
             KillTex=true;
-            printf("Killing texture cache\n");
+            INFO_LOG(RENDERER, "Killing texture cache");
         }
 
         if (param==1)
         {
             settings.pvr.ta_skip^=1;
-            printf("settings.pvr.ta_skip: %d\n",settings.pvr.ta_skip);
+            INFO_LOG(RENDERER, "settings.pvr.ta_skip: %d", settings.pvr.ta_skip);
         }
         if (param==2)
         {
 #if FEAT_SHREC != DYNAREC_NONE
             print_stats=true;
-            printf("Storing blocks ...\n");
+            INFO_LOG(DYNAREC, "Storing blocks ...");
 #endif
         }
     }
@@ -393,10 +393,10 @@ JNIEXPORT jint JNICALL Java_com_reicast_emulator_emu_JNIdc_data(JNIEnv *env, job
 {
     if (id==1)
     {
-        printf("Loading symtable (%p,%p,%d,%p)\n",env,obj,id,d);
+    	INFO_LOG(DYNAREC, "Loading symtable (%p,%p,%d,%p)",env,obj,id,d);
         jsize len=env->GetArrayLength(d);
         u8* syms=(u8*)malloc((size_t)len);
-        printf("Loading symtable to %8s, %d\n",syms,len);
+        INFO_LOG(DYNAREC, "Loading symtable to %8s, %d",syms,len);
         env->GetByteArrayRegion(d,0,len,(jbyte*)syms);
         sample_Syms(syms, (size_t)len);
     }
