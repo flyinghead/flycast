@@ -119,22 +119,24 @@ static void dumpRtTexture(u32 name, u32 w, u32 h) {
 //Texture Cache :)
 void TextureCacheData::PrintTextureName()
 {
-	printf("Texture: %s ",tex?tex->name:"?format?");
+	char str[512];
+	sprintf(str, "Texture: %s ", tex ? tex->name : "?format?");
 
 	if (tcw.VQ_Comp)
-		printf(" VQ");
+		strcat(str, " VQ");
 
 	if (tcw.ScanOrder==0)
-		printf(" TW");
+		strcat(str, " TW");
 
 	if (tcw.MipMapped)
-		printf(" MM");
+		strcat(str, " MM");
 
 	if (tcw.StrideSel)
-		printf(" Stride");
+		strcat(str, " Stride");
 
-	printf(" %dx%d @ 0x%X",8<<tsp.TexU,8<<tsp.TexV,tcw.TexAddr<<3);
-	printf(" id=%d\n", texID);
+	sprintf(str + strlen(str), " %dx%d @ 0x%X", 8 << tsp.TexU, 8 << tsp.TexV, tcw.TexAddr << 3);
+	sprintf(str + strlen(str), " id=%d", texID);
+	DEBUG_LOG(RENDERER, "%s", str);
 }
 
 //Create GL texture from tsp/tcw
@@ -192,7 +194,7 @@ void TextureCacheData::Create(bool isGL)
 			//Texture is stored 'planar' in memory, no deswizzle is needed
 			//verify(tcw.VQ_Comp==0);
 			if (tcw.VQ_Comp != 0)
-				printf("Warning: planar texture with VQ set (invalid)\n");
+				WARN_LOG(RENDERER, "Warning: planar texture with VQ set (invalid)");
 
 			//Planar textures support stride selection, mostly used for non power of 2 textures (videos)
 			int stride=w;
@@ -231,7 +233,7 @@ void TextureCacheData::Create(bool isGL)
 		}
 		break;
 	default:
-		printf("Unhandled texture %d\n",tcw.PixelFmt);
+		WARN_LOG(RENDERER, "Unhandled texture format %d", tcw.PixelFmt);
 		size=w*h*2;
 		texconv = NULL;
 		texconv32 = NULL;
@@ -278,7 +280,7 @@ void TextureCacheData::Update()
 	if (tcw.StrideSel && tcw.ScanOrder && (tex->PL || tex->PL32))
 		stride=(TEXT_CONTROL&31)*32; //I think this needs +1 ?
 
-	//PrintTextureName();
+	PrintTextureName();
 	u32 original_h = h;
 	if (sa_tex > VRAM_SIZE || size == 0 || sa + size > VRAM_SIZE)
 	{
@@ -291,7 +293,7 @@ void TextureCacheData::Update()
 		}
 		else
 		{
-			printf("Warning: invalid texture. Address %08X %08X size %d\n", sa_tex, sa, size);
+			WARN_LOG(RENDERER, "Warning: invalid texture. Address %08X %08X size %d", sa_tex, sa, size);
 			return;
 		}
 	}
@@ -362,7 +364,7 @@ void TextureCacheData::Update()
 	else
 	{
 		//fill it in with a temp color
-		printf("UNHANDLED TEXTURE\n");
+		WARN_LOG(RENDERER, "UNHANDLED TEXTURE");
 		pb16.init(w, h);
 		memset(pb16.data(), 0x80, w * h * 2);
 		temp_tex_buffer = pb16.data();
@@ -846,7 +848,7 @@ void killtex()
 	}
 
 	TexCache.clear();
-	printf("Texture cache cleared\n");
+	INFO_LOG(RENDERER, "Texture cache cleared");
 }
 
 void rend_text_invl(vram_block* bl)

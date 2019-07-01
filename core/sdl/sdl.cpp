@@ -52,7 +52,7 @@ static void sdl_open_joystick(int index)
 
 	if (pJoystick == NULL)
 	{
-		printf("SDL: Cannot open joystick %d\n", index + 1);
+		INFO_LOG(INPUT, "SDL: Cannot open joystick %d", index + 1);
 		return;
 	}
 	std::shared_ptr<SDLGamepadDevice> gamepad = std::make_shared<SDLGamepadDevice>(index < MAPLE_PORTS ? index : -1, pJoystick);
@@ -266,7 +266,7 @@ void sdl_window_create()
 	if (!SDL_GetDisplayDPI(SDL_GetWindowDisplayIndex(window), &ddpi, &hdpi, &vdpi))
 		screen_dpi = (int)roundf(max(hdpi, vdpi));
 
-	printf("Created SDL Window (%ix%i) and GL Context successfully\n", window_width, window_height);
+	INFO_LOG(RENDERER, "Created SDL Window (%ix%i) and GL Context successfully", window_width, window_height);
 }
 
 bool gl_init(void* wind, void* disp)
