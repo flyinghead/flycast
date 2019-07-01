@@ -2246,14 +2246,14 @@ bool ngen_Rewrite(unat& host_pc, unat, unat)
 	RuntimeBlockInfoPtr block = bm_GetBlock((void *)host_pc);
 	if (block == NULL)
 	{
-		printf("ngen_Rewrite: Block at %p not found\n", (void *)host_pc);
+		WARN_LOG(DYNAREC, "ngen_Rewrite: Block at %p not found", (void *)host_pc);
 		return false;
 	}
 	u8 *code_ptr = (u8*)host_pc;
 	auto it = block->memory_accesses.find(code_ptr);
 	if (it == block->memory_accesses.end())
 	{
-		printf("ngen_Rewrite: memory access at %p not found (%lu entries)\n", code_ptr, block->memory_accesses.size());
+		WARN_LOG(DYNAREC, "ngen_Rewrite: memory access at %p not found (%lu entries)", code_ptr, block->memory_accesses.size());
 		return false;
 	}
 	u32 opid = it->second;

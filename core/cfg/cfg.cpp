@@ -21,7 +21,7 @@ void savecfgf()
 	FILE* cfgfile = fopen(cfgPath.c_str(),"wt");
 	if (!cfgfile)
 	{
-		printf("Error: Unable to open file '%s' for saving\n", cfgPath.c_str());
+		WARN_LOG(COMMON, "Error: Unable to open file '%s' for saving", cfgPath.c_str());
 	}
 	else
 	{
@@ -93,11 +93,11 @@ bool cfgOpen()
 	{
 		// Config file can't be opened
 		int error_code = errno;
-		printf("Warning: Unable to open the config file '%s' for reading (%s)\n", config_path_read.c_str(), strerror(error_code));
+		WARN_LOG(COMMON, "Warning: Unable to open the config file '%s' for reading (%s)", config_path_read.c_str(), strerror(error_code));
 		if (error_code == ENOENT || cfgPath != config_path_read)
 		{
 			// Config file didn't exist
-			printf("Creating new empty config file at '%s'\n", cfgPath.c_str());
+			INFO_LOG(COMMON, "Creating new empty config file at '%s'", cfgPath.c_str());
 			savecfgf();
 		}
 		else

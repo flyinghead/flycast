@@ -20,9 +20,7 @@
 
 #include <map>
 
-//#define debugf printf
-
-#define debugf(...) 
+#define debugf(...) DEBUG_LOG(REIOS, __VA_ARGS__)
 
 #define dc_bios_syscall_system				0x8C0000B0
 #define dc_bios_syscall_font				0x8C0000B4
@@ -55,13 +53,13 @@ bool reios_locate_bootfile(const char* bootfile="1ST_READ.BIN") {
 	libGDR_ReadSector(temp, base_fad + 16, 1, 2048);
 
 	if (memcmp(temp, "\001CD001\001", 7) == 0) {
-		printf("reios: iso9660 PVD found\n");
+		INFO_LOG(REIOS, "reios: iso9660 PVD found");
 		u32 lba = read_u32bi(&temp[156 + 2]); //make sure to use big endian
 		u32 len = read_u32bi(&temp[156 + 10]); //make sure to use big endian
 		
 		data_len = ((len + 2047) / 2048) *2048;
 
-		printf("reios: iso9660 root_directory, FAD: %d, len: %d\n", 150 + lba, data_len);
+		INFO_LOG(REIOS, "reios: iso9660 root_directory, FAD: %d, len: %d", 150 + lba, data_len);
 		libGDR_ReadSector(temp, 150 + lba, data_len/2048, 2048);
 	}
 	else {
@@ -70,14 +68,14 @@ bool reios_locate_bootfile(const char* bootfile="1ST_READ.BIN") {
 
 	for (int i = 0; i < (data_len-20); i++) {
 		if (memcmp(temp+i, bootfile, strlen(bootfile)) == 0){
-			printf("Found %s at %06X\n", bootfile, i);
+			INFO_LOG(REIOS, "Found %s at %06X", bootfile, i);
 
 			u32 lba = read_u32bi(&temp[i - 33 +  2]); //make sure to use big endian
 			u32 len = read_u32bi(&temp[i - 33 + 10]); //make sure to use big endian
 			
-			printf("filename len: %d\n", temp[i - 1]);
-			printf("file LBA: %d\n", lba);
-			printf("file LEN: %d\n", len);
+			INFO_LOG(REIOS, "filename len: %d", temp[i - 1]);
+			INFO_LOG(REIOS, "file LBA: %d", lba);
+			INFO_LOG(REIOS, "file LEN: %d", len);
 
 			if (descrambl)
 				descrambl_file(lba + 150, len, GetMemPtr(0x8c010000, 0));
@@ -168,7 +166,7 @@ void reios_sys_system() {
 
 		case 2: //SYSINFO_ICON 
 		{
-			printf("SYSINFO_ICON\n");
+			INFO_LOG(REIOS, "SYSINFO_ICON");
 			/*
 				r4 = icon number (0-9, but only 5-9 seems to really be icons)
 				r5 = destination buffer (704 bytes in size)
@@ -187,13 +185,13 @@ void reios_sys_system() {
 		break;
 
 		default:
-			printf("unhandled: reios_sys_system\n");
+			INFO_LOG(REIOS, "unhandled: reios_sys_system");
 			break;
 	}
 }
 
 void reios_sys_font() {
-	printf("reios_sys_font\n");
+	INFO_LOG(REIOS, "reios_sys_font");
 }
 
 void reios_sys_flashrom() {
@@ -305,7 +303,7 @@ void reios_sys_flashrom() {
 			break;
 			
 	default:
-		printf("reios_sys_flashrom: not handled, %d\n", cmd);
+		INFO_LOG(REIOS, "reios_sys_flashrom: not handled, %d", cmd);
 	}
 }
 
@@ -359,7 +357,7 @@ void gd_do_bioscall()
 		break;
 
 	default:
-		printf("gd_do_bioscall: (%d) %d, %d, %d\n", Sh4cntx.r[4], Sh4cntx.r[5], Sh4cntx.r[6], Sh4cntx.r[7]);
+		INFO_LOG(REIOS, "gd_do_bioscall: (%d) %d, %d, %d", Sh4cntx.r[4], Sh4cntx.r[5], Sh4cntx.r[6], Sh4cntx.r[7]);
 		break;
 	}
 	
@@ -367,7 +365,7 @@ void gd_do_bioscall()
 }
 
 void reios_sys_misc() {
-	printf("reios_sys_misc - r7: 0x%08X, r4 0x%08X, r5 0x%08X, r6 0x%08X\n", Sh4cntx.r[7], Sh4cntx.r[4], Sh4cntx.r[5], Sh4cntx.r[6]);
+	INFO_LOG(REIOS, "reios_sys_misc - r7: 0x%08X, r4 0x%08X, r5 0x%08X, r6 0x%08X", Sh4cntx.r[7], Sh4cntx.r[4], Sh4cntx.r[5], Sh4cntx.r[6]);
 	Sh4cntx.r[0] = 0;
 }
 
@@ -574,9 +572,9 @@ void reios_setuo_naomi(u32 boot_addr) {
 	sh4rcb.cntx.old_fpscr.full = 0x00040001;
 }
 void reios_boot() {
-	printf("-----------------\n");
-	printf("REIOS: Booting up\n");
-	printf("-----------------\n");
+	NOTICE_LOG(REIOS, "-----------------");
+	NOTICE_LOG(REIOS, "REIOS: Booting up");
+	NOTICE_LOG(REIOS, "-----------------");
 	//setup syscalls
 	//find boot file
 	//boot it
@@ -609,7 +607,7 @@ void reios_boot() {
 			verify(DC_PLATFORM == DC_PLATFORM_NAOMI);
 			if (CurrentCartridge == NULL)
 			{
-				printf("No cartridge loaded\n");
+				WARN_LOG(REIOS, "No cartridge loaded");
 				return;
 			}
 			u32 data_size = 4;
@@ -657,7 +655,7 @@ u32 hook_addr(hook_fp* fn) {
 	if (hooks_rev.count(fn))
 		return hooks_rev[fn];
 	else {
-		printf("hook_addr: Failed to reverse lookup %p\n", 	fn);
+		ERROR_LOG(REIOS, "hook_addr: Failed to reverse lookup %p", fn);
 		verify(false);
 		return 0;
 	}
@@ -665,7 +663,7 @@ u32 hook_addr(hook_fp* fn) {
 
 bool reios_init(u8* rom, u8* flash) {
 
-	printf("reios: Init\n");
+	INFO_LOG(REIOS, "reios: Init");
 
 	biosrom = rom;
 	flashrom = flash;

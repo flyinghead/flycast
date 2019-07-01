@@ -246,7 +246,7 @@ void ConfigFile::parse(FILE* file)
 
 			if (!separator)
 			{
-				printf("Malformed entry on config - ignoring @ %d(%s)\n",cline, tl);
+				WARN_LOG(COMMON, "Malformed entry on config - ignoring @ %d(%s)", cline, tl);
 				continue;
 			}
 

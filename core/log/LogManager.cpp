@@ -93,7 +93,7 @@ LogManager::LogManager()
 	// create log containers
 	m_log[LogTypes::AICA] = {"AICA", "AICA Audio Emulation"};
 	m_log[LogTypes::AICA_ARM] = {"AICA_ARM", "AICA ARM Emulation"};
-	m_log[LogTypes::AUDIO] = {"Audio", "Audio Ouput Interface"};
+	m_log[LogTypes::AUDIO] = {"AUDIO", "Audio Ouput Interface"};
 	m_log[LogTypes::BOOT] = {"BOOT", "Boot"};
 	m_log[LogTypes::COMMON] = {"COMMON", "Common"};
 	m_log[LogTypes::DYNAREC] = {"DYNAREC", "Dynamic Recompiler"};
@@ -109,6 +109,7 @@ LogManager::LogManager()
 	m_log[LogTypes::MODEM] = {"MODEM", "Modem and Network"};
 	m_log[LogTypes::NAOMI] = {"NAOMI", "Naomi"};
 	m_log[LogTypes::PVR] = {"PVR", "PowerVR GPU"};
+	m_log[LogTypes::REIOS] = {"REIOS", "HLE BIOS"};
 	m_log[LogTypes::RENDERER] = {"RENDERER", "OpenGL Renderer"};
 	m_log[LogTypes::SAVESTATE] = {"SAVESTATE", "Save States"};
 	m_log[LogTypes::SH4] = {"SH4", "SH4 Modules"};
