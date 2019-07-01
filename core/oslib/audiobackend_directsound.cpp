@@ -167,7 +167,8 @@ static u32 directsound_push(void* frame, u32 samples, bool wait)
 	*/
 
 	while (!directsound_push_nw(frame, samples) && wait)
-		0 && INFO_LOG(AUDIO, "FAILED waiting on audio FAILED %d", directsound_getusedSamples());
+		//DEBUG_LOG(AUDIO, "FAILED waiting on audio FAILED %d", directsound_getusedSamples())
+		;
 
 	return 1;
 }
