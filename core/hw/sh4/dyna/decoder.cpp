@@ -1063,7 +1063,7 @@ bool dec_DecodeBlock(RuntimeBlockInfo* rbi,u32 max_cycles)
 
 					if (op==0 && state.cpu.is_delayslot)
 					{
-						printf("Delayslot 0 hack!\n");
+						INFO_LOG(DYNAREC, "Delayslot 0 hack!");
 					}
 					else
 					{
@@ -1152,7 +1152,7 @@ _end:
 	case 0x8C0BA506:
 	case 0x8C0BA526:
 	case 0x8C224800:
-		printf("HASH: %08X reloc %s\n",blk->addr,blk->hash(false,true));
+		INFO_LOG(DYNAREC, "HASH: %08X reloc %s",blk->addr,blk->hash(false,true));
 		break;
 	}
 #endif

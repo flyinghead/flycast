@@ -171,7 +171,7 @@ void bm_AddBlock(RuntimeBlockInfo* blk)
 		all_temp_blocks.insert(block);
 	auto iter = blkmap.find((void*)blk->code);
 	if (iter != blkmap.end()) {
-		printf("DUP: %08X %p %08X %p\n", iter->second->addr, iter->second->code, block->addr, block->code);
+		INFO_LOG(DYNAREC, "DUP: %08X %p %08X %p", iter->second->addr, iter->second->code, block->addr, block->code);
 		verify(false);
 	}
 	blkmap[(void*)block->code] = block;
@@ -188,7 +188,7 @@ void bm_AddBlock(RuntimeBlockInfo* blk)
 
 		if (op_write_native_code(oprofHandle, fname, (uint64_t)block->code, (void*)block->code, block->host_code_size) != 0)
 		{
-			printf("op_write_native_code error\n");
+			INFO_LOG(DYNAREC, "op_write_native_code error");
 		}
 	}
 #endif
@@ -268,9 +268,9 @@ u32 FindPath(RuntimeBlockInfo* rbi, u32 sa,s32 mc,u32& plc)
 	else
 	{
 		if (plc!=1)
-			printf("Chain lost due to %d\n",rbi->BlockType);
+			INFO_LOG(DYNAREC, "Chain lost due to %d", rbi->BlockType);
 		else
-			printf("Chain fail due to %d\n",rbi->BlockType);
+			INFO_LOG(DYNAREC, "Chain fail due to %d", rbi->BlockType);
 		return rbi->guest_cycles;
 	}
 }
@@ -287,7 +287,7 @@ void FindPath(u32 start)
 	if (plen>1)
 	{
 		total_saved+=(plen-1)*2*rbi->runs;
-		printf("%08X: %d, %d, %.2f, %.2f\n",start,pclc,plen,pclc/(float)plen,plen*2*rbi->runs/1000.f);
+		INFO_LOG(DYNAREC, "%08X: %d, %d, %.2f, %.2f",start,pclc,plen,pclc/(float)plen,plen*2*rbi->runs/1000.f);
 	}
 	rbi->runs=0;
 }
@@ -347,7 +347,7 @@ void bm_Periodical_1s()
 	for(int i=0;i<all_blocks.size();i++)
 		all_blocks[i]->runs=0;
 
-	printf("Total Saved: %.2f || Total Loop Runs: %.2f  || Total Runs: %.2f\n",total_saved/1000.f,total_l_runs/1000.f,total_runs/1000.f);
+	INFO_LOG(DYNAREC, "Total Saved: %.2f || Total Loop Runs: %.2f  || Total Runs: %.2f",total_saved/1000.f,total_l_runs/1000.f,total_runs/1000.f);
 #endif
 }
 
@@ -477,7 +477,7 @@ void bm_ResetCache()
 		{
 			if (op_unload_native_code(oprofHandle, (uint64_t)del_blocks[i]->code) != 0)
 			{
-				printf("op_unload_native_code error\n");
+				INFO_LOG(DYNAREC, "op_unload_native_code error");
 			}
 		}
 	}
@@ -504,9 +504,9 @@ void bm_Init()
 #ifdef DYNA_OPROF
 	oprofHandle=op_open_agent();
 	if (oprofHandle==0)
-		printf("bm: Failed to open oprofile\n");
+		INFO_LOG(DYNAREC, "bm: Failed to open oprofile");
 	else
-		printf("bm: Oprofile integration enabled !\n");
+		INFO_LOG(DYNAREC, "bm: Oprofile integration enabled !");
 #endif
 	bm_Reset();
 }
@@ -526,7 +526,7 @@ void bm_WriteBlockMap(const string& file)
 	FILE* f=fopen(file.c_str(),"wb");
 	if (f)
 	{
-		printf("Writing block map !\n");
+		INFO_LOG(DYNAREC, "Writing block map !");
 		for (auto& it : blkmap)
 		{
 			RuntimeBlockInfoPtr& block = it.second;
@@ -535,7 +535,7 @@ void bm_WriteBlockMap(const string& file)
 				fprintf(f,"\top: %zd:%d:%s\n", j, block->oplist[j].guest_offs, block->oplist[j].dissasm().c_str());
 		}
 		fclose(f);
-		printf("Finished writing block map\n");
+		INFO_LOG(DYNAREC, "Finished writing block map");
 	}
 }
 
@@ -585,7 +585,7 @@ void bm_PrintTopBlocks()
 		total_runs+=all_blocks[i]->runs;
 	}
 
-	printf("Total lookups:  %.0fKRuns, %.0fKLuops, Total cycles: %.0fMhz, Total Hops: %.0fMips, Total Sops: %.0fMips! \n",total_runs/1000,total_lups/1000,total_cycles/1000/1000,total_hops/1000/1000,total_sops/1000/1000);
+	INFO_LOG(DYNAREC, "Total lookups:  %.0fKRuns, %.0fKLuops, Total cycles: %.0fMhz, Total Hops: %.0fMips, Total Sops: %.0fMips!",total_runs/1000,total_lups/1000,total_cycles/1000/1000,total_hops/1000/1000,total_sops/1000/1000);
 	total_hops/=100;
 	total_cycles/=100;
 	total_runs/=100;
@@ -593,7 +593,7 @@ void bm_PrintTopBlocks()
 	double sel_hops=0;
 	for (size_t i=0;i<(all_blocks.size()/100);i++)
 	{
-		printf("Block %08X: %p, r: %d (c: %d, s: %d, h: %d) (r: %.2f%%, c: %.2f%%, h: %.2f%%)\n",
+		INFO_LOG(DYNAREC, "Block %08X: %p, r: %d (c: %d, s: %d, h: %d) (r: %.2f%%, c: %.2f%%, h: %.2f%%)",
 			all_blocks[i]->addr, all_blocks[i]->code,all_blocks[i]->runs,
 			all_blocks[i]->guest_cycles,all_blocks[i]->guest_opcodes,all_blocks[i]->host_opcodes,
 
@@ -604,12 +604,12 @@ void bm_PrintTopBlocks()
 		sel_hops+=all_blocks[i]->host_opcodes*all_blocks[i]->runs;
 	}
 
-	printf(" >-< %.2f%% covered in top 1%% blocks\n",sel_hops/total_hops);
+	INFO_LOG(DYNAREC, " >-< %.2f%% covered in top 1%% blocks",sel_hops/total_hops);
 
 	size_t i;
 	for (i=all_blocks.size()/100;sel_hops/total_hops<50;i++)
 	{
-		printf("Block %08X: %p, r: %d (c: %d, s: %d, h: %d) (r: %.2f%%, c: %.2f%%, h: %.2f%%)\n",
+		INFO_LOG(DYNAREC, "Block %08X: %p, r: %d (c: %d, s: %d, h: %d) (r: %.2f%%, c: %.2f%%, h: %.2f%%)",
 			all_blocks[i]->addr, all_blocks[i]->code,all_blocks[i]->runs,
 			all_blocks[i]->guest_cycles,all_blocks[i]->guest_opcodes,all_blocks[i]->host_opcodes,
 
@@ -620,31 +620,31 @@ void bm_PrintTopBlocks()
 		sel_hops+=all_blocks[i]->host_opcodes*all_blocks[i]->runs;
 	}
 
-	printf(" >-< %.2f%% covered in top %.2f%% blocks\n",sel_hops/total_hops,i*100.0/all_blocks.size());
+	INFO_LOG(DYNAREC, " >-< %.2f%% covered in top %.2f%% blocks",sel_hops/total_hops,i*100.0/all_blocks.size());
 
 }
 
 void bm_Sort()
 {
-	printf("!!!!!!!!!!!!!!!!!!! BLK REPORT !!!!!!!!!!!!!!!!!!!!n");
+	INFO_LOG(DYNAREC, "!!!!!!!!!!!!!!!!!!! BLK REPORT !!!!!!!!!!!!!!!!!!!!");
 
-	printf("     ---- Blocks: Sorted based on Runs ! ----     \n");
+	INFO_LOG(DYNAREC, "     ---- Blocks: Sorted based on Runs ! ----     ");
 	std::sort(all_blocks.begin(),all_blocks.end(),UDgreater);
 	bm_PrintTopBlocks();
 
-	printf("<><><><><><><><><><><><><><><><><><><><><><><><><>\n");
+	INFO_LOG(DYNAREC, "<><><><><><><><><><><><><><><><><><><><><><><><><>");
 
-	printf("     ---- Blocks: Sorted based on hops ! ----     \n");
+	INFO_LOG(DYNAREC, "     ---- Blocks: Sorted based on hops ! ----     ");
 	std::sort(all_blocks.begin(),all_blocks.end(),UDgreater2);
 	bm_PrintTopBlocks();
 
-	printf("<><><><><><><><><><><><><><><><><><><><><><><><><>\n");
+	INFO_LOG(DYNAREC, "<><><><><><><><><><><><><><><><><><><><><><><><><>");
 
-	printf("     ---- Blocks: Sorted based on wefs ! ----     \n");
+	INFO_LOG(DYNAREC, "     ---- Blocks: Sorted based on wefs ! ----     ");
 	std::sort(all_blocks.begin(),all_blocks.end(),UDgreater3);
 	bm_PrintTopBlocks();
 
-	printf("^^^^^^^^^^^^^^^^^^^ END REPORT ^^^^^^^^^^^^^^^^^^^\n");
+	INFO_LOG(DYNAREC, "^^^^^^^^^^^^^^^^^^^ END REPORT ^^^^^^^^^^^^^^^^^^^");
 
 	for (size_t i=0;i<all_blocks.size();i++)
 	{
@@ -733,7 +733,7 @@ void bm_RamWriteAccess(u32 addr)
 	addr &= RAM_MASK;
 	if (unprotected_pages[addr / PAGE_SIZE])
 	{
-		printf("Page %08x already unprotected\n", addr);
+		ERROR_LOG(DYNAREC, "Page %08x already unprotected", addr);
 		die("Fatal error");
 	}
 	unprotected_pages[addr / PAGE_SIZE] = true;
@@ -741,8 +741,8 @@ void bm_RamWriteAccess(u32 addr)
 	set<RuntimeBlockInfo*>& block_list = blocks_per_page[addr / PAGE_SIZE];
 	vector<RuntimeBlockInfo*> list_copy;
 	list_copy.insert(list_copy.begin(), block_list.begin(), block_list.end());
-	//if (!list_copy.empty())
-	//	printf("bm_RamWriteAccess write access to %08x\n", addr);
+	if (!list_copy.empty())
+		DEBUG_LOG(DYNAREC, "bm_RamWriteAccess write access to %08x pc %08x", addr, next_pc);
 	for (auto& block : list_copy)
 	{
 		bm_DiscardBlock(block);
@@ -808,7 +808,7 @@ void print_blocks()
 		f=fopen(get_writable_data_path("/blkmap.lst").c_str(),"w");
 		print_stats=0;
 
-		printf("Writing blocks to %p\n",f);
+		INFO_LOG(DYNAREC, "Writing blocks to %p", f);
 	}
 
 	for (RuntimeBlockInfo *blk : blkmap)

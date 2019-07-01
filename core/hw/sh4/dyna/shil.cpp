@@ -31,7 +31,7 @@ void RegWriteInfo(shil_opcode* ops, shil_param p,size_t ord)
 		{
 			if (RegisterWrite[p._reg+i]>=RegisterRead[p._reg+i] && RegisterWrite[p._reg+i]!=0xFFFFFFFF)	//if last read was before last write, and there was a last write
 			{
-				printf("DEAD OPCODE %d %zd!\n",RegisterWrite[p._reg+i],ord);
+				DEBUG_LOG(DYNAREC, "DEAD OPCODE %d %zd!\n",RegisterWrite[p._reg+i],ord);
 				ops[RegisterWrite[p._reg+i]].Flow=1; //the last write was unused
 			}
 			RegisterWrite[p._reg+i]=ord;
@@ -112,11 +112,11 @@ void sq_pref(RuntimeBlockInfo* blk, int i, Sh4RegType rt, bool mark)
 	{
 		blk->oplist[i].flags =0x1337;
 		sq_pref(blk,i,rt,true);
-		printf("SQW-WM match %d !\n",data);
+		DEBUG_LOG(DYNAREC, "SQW-WM match %d !",data);
 	}
 	else if (data)
 	{
-		printf("SQW-WM FAIL %d !\n",data);
+		DEBUG_LOG(DYNAREC, "SQW-WM FAIL %d !",data);
 	}
 }
 
@@ -187,11 +187,11 @@ void rdgrp(RuntimeBlockInfo* blk)
 					blk->oplist[started].Flow=(rdc-1)*2 - (pend_add?1:0);
 					blk->oplist[started+1].rs2._imm=addv;
 
-					printf("Read Combination %d %d!\n",rdc,addv);
+					DEBUG_LOG(DYNAREC, "Read Combination %d %d!",rdc,addv);
 				}
 				else if (rdc!=1)
 				{
-					printf("Read Combination failed %d %d %d\n",rdc,rdc*stride*4,addv);
+					DEBUG_LOG(DYNAREC, "Read Combination failed %d %d %d",rdc,rdc*stride*4,addv);
 				}
 				started=-1;
 			}
@@ -272,11 +272,11 @@ void wtgrp(RuntimeBlockInfo* blk)
 					blk->oplist[started].Flow=(rdc-1)*2 - (pend_add?1:0);
 					blk->oplist[started+1].rs2._imm=addv;
 
-					printf("Write Combination %d %d!\n",rdc,addv);
+					DEBUG_LOG(DYNAREC, "Write Combination %d %d!",rdc,addv);
 				}
 				else if (rdc!=1)
 				{
-					printf("Write Combination failed fr%d,%d, %d %d %d\n",regd,mask,rdc,rdc*stride*4,addv);
+					DEBUG_LOG(DYNAREC, "Write Combination failed fr%d,%d, %d %d %d",regd,mask,rdc,rdc*stride*4,addv);
 				}
 				i=started;
 				started=-1;
@@ -406,7 +406,7 @@ void constprop(RuntimeBlockInfo* blk)
 				{
 					//convert em to mov/shl/shr
 
-					printf("sh*d -> s*l !\n");
+					DEBUG_LOG(DYNAREC, "sh*d -> s*l !");
 					s32 v=op->rs2._imm;
 
 					if (v>=0)
@@ -460,7 +460,7 @@ void constprop(RuntimeBlockInfo* blk)
 					op->rs1._imm+=op->rs3._imm;
 					op->rs3.type=FMT_NULL;
 				}
-				printf("%s promotion: %08X\n",shop_readm==op->op?"shop_readm":"shop_writem",op->rs1._imm);
+				DEBUG_LOG(DYNAREC, "%s promotion: %08X",shop_readm==op->op?"shop_readm":"shop_writem",op->rs1._imm);
 			}
 			else if (op->op==shop_jdyn)
 			{
@@ -473,12 +473,12 @@ void constprop(RuntimeBlockInfo* blk)
 					blk->BlockType=blk->BlockType==BET_DynamicJump?BET_StaticJump:BET_StaticCall;
 					blk->oplist.erase(blk->oplist.begin()+i);
 					i--;
-					printf("SBP: %08X -> %08X!\n",blk->addr,blk->BranchBlock);
+					DEBUG_LOG(DYNAREC, "SBP: %08X -> %08X!",blk->addr,blk->BranchBlock);
 					continue;
 				}
 				else
 				{
-					printf("SBP: failed :(\n");
+					DEBUG_LOG(DYNAREC, "SBP: failed :(");
 				}
 			}
 			else if (op->op==shop_mov32)
@@ -495,7 +495,7 @@ void constprop(RuntimeBlockInfo* blk)
 						(rv[op->rs1._reg]+op->rs2._imm):
 						(rv[op->rs1._reg]-op->rs2._imm);
 					op->rs2.type = FMT_NULL;
-					printf("%s -> mov32!\n",op->op==shop_add?"shop_add":"shop_sub");
+					DEBUG_LOG(DYNAREC, "%s -> mov32!",op->op==shop_add?"shop_add":"shop_sub");
 					op->op=shop_mov32;
 				}
 				
@@ -505,7 +505,7 @@ void constprop(RuntimeBlockInfo* blk)
 					op->rs1=op->rs2;
 					op->rs2.type = FMT_IMM;
 					op->rs2._imm=immy;
-					printf("%s -> imm prm (%08X)!\n",op->op==shop_add?"shop_add":"shop_sub",immy);
+					DEBUG_LOG(DYNAREC, "%s -> imm prm (%08X)!",op->op==shop_add?"shop_add":"shop_sub",immy);
 				}
 			}
 			else
@@ -533,7 +533,7 @@ void constprop(RuntimeBlockInfo* blk)
 			{
 				isi[op->rd._reg]=true;
 				rv[op->rd._reg]= ReadMem32(op->rs1._imm);
-				printf("IMM MOVE: %08X -> %08X\n",op->rs1._imm,rv[op->rd._reg]);
+				DEBUG_LOG(DYNAREC, "IMM MOVE: %08X -> %08X",op->rs1._imm,rv[op->rd._reg]);
 
 				op->op=shop_mov32;
 				op->rs1._imm=rv[op->rd._reg];
@@ -625,7 +625,7 @@ void read_v4m3z1(RuntimeBlockInfo* blk)
 				if (b)
 					st_sta--;
 				if (a)
-					printf("NOT B\b");
+					DEBUG_LOG(DYNAREC, "NOT B");
 				u32 start=st_sta;
 								
 				for (int j=0;j<5;j++)
@@ -742,7 +742,7 @@ void enswap(RuntimeBlockInfo* blk)
 			}
 			else
 			{
-				printf("bswap -- wrong regs\n");
+				DEBUG_LOG(DYNAREC, "bswap -- wrong regs");
 			}
 		}
 
@@ -757,7 +757,7 @@ void enswap(RuntimeBlockInfo* blk)
 			}
 			else
 			{
-				printf("bswap -- wrong regs\n");
+				DEBUG_LOG(DYNAREC, "bswap -- wrong regs");
 			}
 		}
 
@@ -765,11 +765,11 @@ void enswap(RuntimeBlockInfo* blk)
 		{
 			if (op->rd._reg!=r)
 			{
-				printf("oops?\n");
+				DEBUG_LOG(DYNAREC, "oops?");
 			}
 			else
 			{
-				printf("SWAPM!\n");
+				DEBUG_LOG(DYNAREC, "SWAPM!");
 			}
 			op->Flow=1;
 			state=0;

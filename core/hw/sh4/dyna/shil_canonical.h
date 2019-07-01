@@ -688,7 +688,7 @@ shil_opc(debug_3)
 shil_canonical
 (
 void,f1,(u32 r1,u32 r2,u32 r3),
-	printf("%08X, %08X, %08X\n",r1,r2,r3);
+	INFO_LOG(DYNAREC, "debug_3: %08X, %08X, %08X", r1, r2, r3);
 )
 
 shil_compile
@@ -706,7 +706,7 @@ shil_opc(debug_1)
 shil_canonical
 (
 void,f1,(u32 r1),
-	printf("%08X\n",r1);
+	INFO_LOG(DYNAREC, "debug_1: %08X", r1);
 )
 
 shil_compile

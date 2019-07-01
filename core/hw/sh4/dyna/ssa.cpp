@@ -355,7 +355,7 @@ bool SSAOptimizer::ExecuteConstOp(shil_opcode* op)
 			break;
 
 		default:
-			printf("unhandled constant op %d\n", op->op);
+			ERROR_LOG(DYNAREC, "unhandled constant op %d", op->op);
 			die("unhandled constant op");
 			break;
 		}

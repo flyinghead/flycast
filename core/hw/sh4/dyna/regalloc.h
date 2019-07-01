@@ -728,13 +728,13 @@ struct RegAlloc
 
 			if (false)
 			{
-				printf("After reduction ..\n");
+				INFO_LOG(DYNAREC, "After reduction ..");
 				for (u32 sid=0;sid<all_spans.size();sid++)
 				{
 					RegSpan* spn=all_spans[sid];
 
 					if (spn->contains(opid))
-						printf("\t[%c]span: %d (r%d), [%d:%d],n: %d, p: %d\n",spn->cacc(opid)?'x':' ',sid,all_spans[sid]->regstart,all_spans[sid]->start,all_spans[sid]->end,all_spans[sid]->nacc(opid),all_spans[sid]->pacc(opid));
+						INFO_LOG(DYNAREC, "[%c]span: %d (r%d), [%d:%d],n: %d, p: %d",spn->cacc(opid)?'x':' ',sid,all_spans[sid]->regstart,all_spans[sid]->start,all_spans[sid]->end,all_spans[sid]->nacc(opid),all_spans[sid]->pacc(opid));
 				}
 			}
 		}
@@ -839,12 +839,12 @@ struct RegAlloc
 
 				if ( do_move)
 				{
-					printf("Span PLD is movable by %d, moved by %d w/ %d!!\n",slack,spn->start-opid_found,opid_plc);
+					DEBUG_LOG(DYNAREC, "Span PLD is movable by %d, moved by %d w/ %d!!",slack,spn->start-opid_found,opid_plc);
 					spn->start=opid_found;
 				}
 				else
 				{
-					printf("Span PLD is movable by %d but  %d -> not moved :(\n",slack,opid_plc);
+					DEBUG_LOG(DYNAREC, "Span PLD is movable by %d but  %d -> not moved :(",slack,opid_plc);
 				}
 			}
 		}
@@ -908,12 +908,12 @@ struct RegAlloc
 
 				if ( do_move)
 				{
-					printf("Span WB is movable by %d, moved by %d w/ %d!!\n",slack,opid_found-spn->end,opid_plc);
+					DEBUG_LOG(DYNAREC, "Span WB is movable by %d, moved by %d w/ %d!!",slack,opid_found-spn->end,opid_plc);
 					spn->end=opid_found;
 				}
 				else
 				{
-					printf("Span WB is movable by %d but  %d -> not moved :(\n",slack,opid_plc);
+					DEBUG_LOG(DYNAREC, "Span WB is movable by %d but  %d -> not moved :(",slack,opid_plc);
 				}
 			}
 		}
@@ -926,12 +926,9 @@ struct RegAlloc
 
 	void SplitSpans(u32 cc,u32 reg_cc_max ,bool fpr,u32 opid)
 	{
-		bool was_large=false;	//this control prints
-
 		while (cc>reg_cc_max)
 		{
-			if (was_large)
-				printf("Opcode: %d, %d active spans\n",opid,cc);
+			DEBUG_LOG(DYNAREC, "Opcode: %d, %d active spans", opid, cc);
 
 			RegSpan* last_pacc=0;
 			RegSpan* last_nacc=0;
@@ -948,8 +945,7 @@ struct RegAlloc
 						if (!last_pacc || span->pacc(opid)<last_pacc->pacc(opid))
 							last_pacc=span;
 					}
-					if (was_large)
-						printf("\t[%c]span: r%d, [%d:%d],n: %d, p: %d\n",span->cacc(opid)?'x':' ',span->regstart,span->start,span->end,span->nacc(opid),span->pacc(opid));
+					DEBUG_LOG(DYNAREC, "[%c]span: r%d, [%d:%d],n: %d, p: %d",span->cacc(opid)?'x':' ',span->regstart,span->start,span->end,span->nacc(opid),span->pacc(opid));
 				}
 			}
 

@@ -53,13 +53,13 @@ void emit_WriteCodeCache()
 	wchar path[512];
 	sprintf(path,"/code_cache_%8p.bin",CodeCache);
 	string pt2=get_writable_data_path(path);
-	printf("Writing code cache to %s\n",pt2.c_str());
+	INFO_LOG(DYNAREC, "Writing code cache to %s",pt2.c_str());
 	FILE*f=fopen(pt2.c_str(),"wb");
 	if (f)
 	{
 		fwrite(CodeCache,LastAddr,1,f);
 		fclose(f);
-		printf("Written!\n");
+		INFO_LOG(DYNAREC, "Written!");
 	}
 
 	bm_WriteBlockMap(pt2+".map");
@@ -80,7 +80,7 @@ void clear_temp_cache(bool full)
 
 void recSh4_ClearCache()
 {
-	printf("recSh4:Dynarec Cache clear at %08X free space %d\n", next_pc, emit_FreeSpace());
+	INFO_LOG(DYNAREC, "recSh4:Dynarec Cache clear at %08X free space %d", next_pc, emit_FreeSpace());
 	LastAddr=LastAddr_min;
 	bm_ResetCache();
 	smc_hotspots.clear();
@@ -92,16 +92,16 @@ void recSh4_Run()
 	sh4_int_bCpuRun=true;
 
 	sh4_dyna_rcb=(u8*)&Sh4cntx + sizeof(Sh4cntx);
-	printf("cntx // fpcb offset: %td // pc offset: %td // pc %08X\n",(u8*)&sh4rcb.fpcb - sh4_dyna_rcb, (u8*)&sh4rcb.cntx.pc - sh4_dyna_rcb,sh4rcb.cntx.pc);
+	INFO_LOG(DYNAREC, "cntx // fpcb offset: %td // pc offset: %td // pc %08X", (u8*)&sh4rcb.fpcb - sh4_dyna_rcb, (u8*)&sh4rcb.cntx.pc - sh4_dyna_rcb, sh4rcb.cntx.pc);
 
 	if (!settings.dynarec.safemode)
-		printf("Warning: Dynarec safe mode is off\n");
+		NOTICE_LOG(DYNAREC, "Warning: Dynarec safe mode is off");
 
 	if (settings.dynarec.unstable_opt)
-		printf("Warning: Unstable optimizations is on\n");
+		NOTICE_LOG(DYNAREC, "Warning: Unstable optimizations is on");
 
 	if (settings.dynarec.SmcCheckLevel != FullCheck)
-		printf("Warning: SMC check mode is %d\n", settings.dynarec.SmcCheckLevel);
+		NOTICE_LOG(DYNAREC, "Warning: SMC check mode is %d", settings.dynarec.SmcCheckLevel);
 	
 	verify(rcb_noffs(&next_pc)==-184);
 	ngen_mainloop(sh4_dyna_rcb);
@@ -304,7 +304,7 @@ DynarecCodeEntryPtr rdv_CompilePC(u32 blockcheck_failures)
 		emit_ptr_limit = (u32 *)(TempCodeCache + TEMP_CODE_SIZE);
 		rbi->temp_block = true;
 		if (rbi->read_only)
-			printf("WARNING: temp block %x (%x) is protected!\n", rbi->vaddr, rbi->addr);
+			INFO_LOG(DYNAREC, "WARNING: temp block %x (%x) is protected!", rbi->vaddr, rbi->addr);
 	}
 	bool do_opts = !rbi->temp_block;
 	rbi->staging_runs=do_opts?100:-100;
@@ -386,8 +386,8 @@ DynarecCodeEntryPtr DYNACALL rdv_BlockCheckFail(u32 addr)
 		if (blockcheck_failures > 5)
 		{
 			bool inserted = smc_hotspots.insert(addr).second;
-			//if (inserted)
-			//	printf("rdv_BlockCheckFail SMC hotspot @ %08x fails %d\n", addr, blockcheck_failures);
+			if (inserted)
+				DEBUG_LOG(DYNAREC, "rdv_BlockCheckFail SMC hotspot @ %08x fails %d", addr, blockcheck_failures);
 		}
 		bm_DiscardBlock(block.get());
 	}
@@ -479,7 +479,7 @@ void* DYNACALL rdv_LinkBlock(u8* code,u32 dpc)
 	}
 	else
 	{
-		printf(" .. null RBI: from %08X to %08X -- unlinked stale block -- code %p next %p\n", rbi->vaddr, next_pc, code, rv);
+		INFO_LOG(DYNAREC, "null RBI: from %08X to %08X -- unlinked stale block -- code %p next %p", rbi->vaddr, next_pc, code, rv);
 	}
 	
 	return (void*)rv;
@@ -513,7 +513,7 @@ void recSh4_Reset(bool Manual)
 
 void recSh4_Init()
 {
-	printf("recSh4 Init\n");
+	INFO_LOG(DYNAREC, "recSh4 Init");
 	Sh4_int_Init();
 	bm_Init();
 
@@ -556,7 +556,7 @@ void recSh4_Init()
 
 void recSh4_Term()
 {
-	printf("recSh4 Term\n");
+	INFO_LOG(DYNAREC, "recSh4 Term");
 	bm_Term();
 	Sh4_int_Term();
 }
