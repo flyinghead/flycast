@@ -297,7 +297,7 @@ void DYNACALL ta_thd_data32_i(void* data)
 {
 	if (ta_ctx == NULL)
 	{
-		printf("Warning: data sent to TA prior to ListInit. Implied\n");
+		INFO_LOG(PVR, "Warning: data sent to TA prior to ListInit. Implied");
 		ta_vtx_ListInit();
 	}
 

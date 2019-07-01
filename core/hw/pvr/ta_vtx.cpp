@@ -159,7 +159,7 @@ public:
 
 	static Ta_Dma* DYNACALL NullVertexData(Ta_Dma* data,Ta_Dma* data_end)
 	{
-		printf("TA: Invalid state, ignoring VTX data\n");
+		INFO_LOG(PVR, "TA: Invalid state, ignoring VTX data");
 		return data+SZ32;
 	}
 
@@ -427,7 +427,7 @@ public:
 				//32B
 			case ParamType_Object_List_Set:
 				{
-					printf("Unsupported list type: ParamType_Object_List_Set\n");	// NAOMI Virtual on Oratorio Tangram
+					INFO_LOG(PVR, "Unsupported list type: ParamType_Object_List_Set");	// NAOMI Virtual on Oratorio Tangram
 
 					// *cough* ignore it :p
 					data+=SZ32;

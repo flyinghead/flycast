@@ -19,7 +19,7 @@ struct List
 		*overrun |= true;
 		Clear();
 		if (list_name != NULL)
-			printf("List overrun for list %s\n", list_name);
+			WARN_LOG(PVR, "List overrun for list %s", list_name);
 
 		return daty;
 	}

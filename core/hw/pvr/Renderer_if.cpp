@@ -386,7 +386,7 @@ void rend_init_renderer()
     			delete fallback_renderer;
     		die("Renderer initialization failed\n");
     	}
-    	printf("Selected renderer initialization failed. Falling back to default renderer.\n");
+    	INFO_LOG(PVR, "Selected renderer initialization failed. Falling back to default renderer.");
     	renderer  = fallback_renderer;
     	fallback_renderer = NULL;	// avoid double-free
     }
@@ -485,7 +485,7 @@ void rend_start_render()
 				int ch = fgetc(fCheckFrames);
 
 				if (ch == EOF) {
-					printf("Testing: TA Hash log matches, exiting\n");
+					INFO_LOG(PVR, "Testing: TA Hash log matches, exiting");
 					exit(1);
 				}
 				
@@ -548,7 +548,7 @@ void rend_start_render()
 		else
 		{
 			ovrn++;
-			printf("WARNING: Rendering context is overrun (%d), aborting frame\n",ovrn);
+			INFO_LOG(PVR, "WARNING: Rendering context is overrun (%d), aborting frame", ovrn);
 			tactx_Recycle(ctx);
 		}
 	}
@@ -585,6 +585,7 @@ void rend_vblank()
 {
 	if (!render_called && fb_dirty && FB_R_CTRL.fb_enable)
 	{
+		DEBUG_LOG(PVR, "Direct framebuffer write detected");
 		SetCurrentTARC(CORE_CURRENT_CTX);
 		ta_ctx->rend.isRenderFramebuffer = true;
 		rend_start_render();
