@@ -347,13 +347,13 @@ u32  _ReadMem_naomi(u32 Addr, u32 sz)
 {
 	verify(sz!=1);
 
-	EMUERROR("naomi?WTF? ReadMem: %X, %d", Addr, sz);
+	DEBUG_LOG(NAOMI, "naomi?WTF? ReadMem: %X, %d", Addr, sz);
 	return 1;
 
 }
 void _WriteMem_naomi(u32 Addr, u32 data, u32 sz)
 {
-	EMUERROR("naomi?WTF? WriteMem: %X <= %X, %d", Addr, data, sz);
+	DEBUG_LOG(NAOMI, "naomi?WTF? WriteMem: %X <= %X, %d", Addr, data, sz);
 }
 
 
@@ -394,23 +394,23 @@ static bool aw_ram_test_skipped = false;
 
 void naomi_process(u32 r3c,u32 r40,u32 r44, u32 r48)
 {
-	printf("Naomi process 0x%04X 0x%04X 0x%04X 0x%04X\n",r3c,r40,r44,r48);
-	printf("Possible format 0 %d 0x%02X 0x%04X\n",r3c>>15,(r3c&0x7e00)>>9,r3c&0x1FF);
-	printf("Possible format 1 0x%02X 0x%02X\n",(r3c&0xFF00)>>8,r3c&0xFF);
+	DEBUG_LOG(NAOMI, "Naomi process 0x%04X 0x%04X 0x%04X 0x%04X", r3c, r40, r44, r48);
+	DEBUG_LOG(NAOMI, "Possible format 0 %d 0x%02X 0x%04X",r3c >> 15,(r3c & 0x7e00) >> 9, r3c & 0x1FF);
+	DEBUG_LOG(NAOMI, "Possible format 1 0x%02X 0x%02X", (r3c & 0xFF00) >> 8,r3c & 0xFF);
 
 	u32 param=(r3c&0xFF);
 	if (param==0xFF)
 	{
-		printf("invalid opcode or smth ?");
+		DEBUG_LOG(NAOMI, "invalid opcode or smth ?");
 	}
 	static int opcd=0;
 	//else if (param!=3)
 	if (opcd<255)
 	{
 		reg_dimm_3c=0x8000 | (opcd%12<<9) | (0x0);
-		printf("new reg is 0x%X\n",reg_dimm_3c);
+		DEBUG_LOG(NAOMI, "new reg is 0x%X", reg_dimm_3c);
 		asic_RaiseInterrupt(holly_EXP_PCI);
-		printf("Interrupt raised\n");
+		DEBUG_LOG(NAOMI, "Interrupt raised");
 		opcd++;
 	}
 }
@@ -420,7 +420,7 @@ u32 ReadMem_naomi(u32 Addr, u32 sz)
 	verify(sz!=1);
 	if (unlikely(CurrentCartridge == NULL))
 	{
-		EMUERROR("called without cartridge\n");
+		INFO_LOG(NAOMI, "called without cartridge");
 		return 0xFFFF;
 	}
 	return CurrentCartridge->ReadMem(Addr, sz);
@@ -430,7 +430,7 @@ void WriteMem_naomi(u32 Addr, u32 data, u32 sz)
 {
 	if (unlikely(CurrentCartridge == NULL))
 	{
-		EMUERROR("called without cartridge\n");
+		INFO_LOG(NAOMI, "called without cartridge");
 		return;
 	}
 	CurrentCartridge->WriteMem(Addr, data, sz);
@@ -441,7 +441,7 @@ void Naomi_DmaStart(u32 addr, u32 data)
 {
 	if (SB_GDEN==0)
 	{
-		printf("Invalid (NAOMI)GD-DMA start, SB_GDEN=0.Ingoring it.\n");
+		INFO_LOG(NAOMI, "Invalid (NAOMI)GD-DMA start, SB_GDEN=0. Ignoring it.");
 		return;
 	}
 	
@@ -482,7 +482,7 @@ void Naomi_DmaEnable(u32 addr, u32 data)
 	SB_GDEN=data&1;
 	if (SB_GDEN==0 && SB_GDST==1)
 	{
-		printf("(NAOMI)GD-DMA aborted\n");
+		INFO_LOG(NAOMI, "(NAOMI)GD-DMA aborted");
 		SB_GDST=0;
 	}
 }
@@ -602,17 +602,17 @@ void Update_naomi()
 	//len=min(len,(u32)32);
 	// do we need to do this for gdrom dma ?
 	if(0x8201 != (dmaor &DMAOR_MASK)) {
-		printf("\n!\tGDROM: DMAOR has invalid settings (%X) !\n", dmaor);
+		INFO_LOG(NAOMI, "GDROM: DMAOR has invalid settings (%X) !", dmaor);
 		//return;
 	}
 	if(len & 0x1F) {
-		printf("\n!\tGDROM: SB_GDLEN has invalid size (%X) !\n", len);
+		INFO_LOG(NAOMI, "GDROM: SB_GDLEN has invalid size (%X) !", len);
 		return;
 	}
 
 	if(0 == len) 
 	{
-		printf("\n!\tGDROM: Len: %X, Abnormal Termination !\n", len);
+		INFO_LOG(NAOMI, "GDROM: Len: %X, Abnormal Termination !", len);
 	}
 	u32 len_backup=len;
 	if( 1 == SB_GDDIR ) 
@@ -622,7 +622,7 @@ void Update_naomi()
 		DmaCount=0xffff;
 	}
 	else
-		msgboxf(L"GDROM: SB_GDDIR %X (TO AICA WAVE MEM?)",MBX_ICONERROR, SB_GDDIR);
+		INFO_LOG(NAOMI, "GDROM: SB_GDDIR %X (TO AICA WAVE MEM?)");
 
 	//SB_GDLEN = 0x00000000; //13/5/2k7 -> acording to docs these regs are not updated by hardware
 	//SB_GDSTAR = (src + len_backup);
@@ -707,7 +707,7 @@ u32 libExtDevice_ReadMem_A0_006(u32 addr,u32 size) {
 		return 0;
 
 	}
-	EMUERROR("Unhandled read @ %x sz %d", addr, size);
+	INFO_LOG(NAOMI, "Unhandled read @ %x sz %d", addr, size);
 	return 0xFF;
 }
 
@@ -717,7 +717,7 @@ void libExtDevice_WriteMem_A0_006(u32 addr,u32 data,u32 size) {
 	switch (addr)
 	{
 	case 0x284:		// Atomiswave maple devices
-		printf("NAOMI 600284 write %x\n", data);
+		DEBUG_LOG(NAOMI, "NAOMI 600284 write %x", data);
 		aw_maple_devs = data & 0xF0;
 		return;
 	case 0x288:
@@ -727,5 +727,5 @@ void libExtDevice_WriteMem_A0_006(u32 addr,u32 data,u32 size) {
 	default:
 		break;
 	}
-	EMUERROR("Unhandled write @ %x (%d): %x", addr, size, data);
+	INFO_LOG(NAOMI, "Unhandled write @ %x (%d): %x", addr, size, data);
 }

@@ -409,7 +409,7 @@ void GDCartridge::find_file(const char *name, const u8 *dir_sector, u32 &file_st
 {
 	file_start = 0;
 	file_size = 0;
-	printf("Looking for file [%s]\n", name);
+	DEBUG_LOG(NAOMI, "Looking for file [%s]", name);
 	for(u32 pos = 0; pos < 2048; pos += dir_sector[pos]) {
 		int fnlen = 0;
 		if(!(dir_sector[pos+25] & 2)) {
@@ -441,7 +441,7 @@ void GDCartridge::find_file(const char *name, const u8 *dir_sector, u32 &file_st
 							(dir_sector[pos+12] << 16) |
 							(dir_sector[pos+13] << 24));
 
-			printf("start %08x size %08x\n", file_start, file_size);
+			DEBUG_LOG(NAOMI, "start %08x size %08x", file_start, file_size);
 			break;
 		}
 		if (dir_sector[pos] == 0)
@@ -470,7 +470,7 @@ void GDCartridge::device_start()
 	if (RomSize > 0 && gdrom_name != NULL)
 	{
 		if (RomSize >= 0x4000) {
-			printf("Real PIC binary found\n");
+			DEBUG_LOG(NAOMI, "Real PIC binary found");
 			for(int i=0;i<7;i++)
 				name[i] = picdata[0x7c0+i*2];
 			for(int i=0;i<7;i++)
@@ -499,7 +499,7 @@ void GDCartridge::device_start()
 					(u64(picdata[0x29]) << 0));
 		}
 
-		printf("key is %08x%08x\n", (u32)((key & 0xffffffff00000000ULL)>>32), (u32)(key & 0x00000000ffffffffULL));
+		DEBUG_LOG(NAOMI, "key is %08x%08x\n", (u32)((key & 0xffffffff00000000ULL)>>32), (u32)(key & 0x00000000ffffffffULL));
 
 		u8 buffer[2048];
 		std::string gdrom_path = get_game_basename() + "/" + gdrom_name;
