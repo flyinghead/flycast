@@ -182,7 +182,7 @@ LONG ExeptionHandler(EXCEPTION_POINTERS *ExceptionInfo)
 #endif
 	else
 	{
-		printf("[GPF]Unhandled access to : 0x%X\n",(unat)address);
+	    ERROR_LOG(COMMON, "[GPF]Unhandled access to : %p\n", address);
 	}
 
 	return EXCEPTION_CONTINUE_SEARCH;
@@ -642,7 +642,7 @@ _In_opt_ PVOID Context
 	Table[0].BeginAddress = 0;// (CodeCache - (u8*)__ImageBase);
 	Table[0].EndAddress = /*(CodeCache - (u8*)__ImageBase) +*/ CODE_SIZE + TEMP_CODE_SIZE;
 	Table[0].UnwindData = (DWORD)((u8 *)unwind_info - CodeCache);
-	printf("TABLE CALLBACK\n");
+    INFO_LOG(COMMON, "TABLE CALLBACK");
 	//for (;;);
 	return Table;
 }
@@ -759,7 +759,7 @@ int CALLBACK WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine
 #ifndef __GNUC__
 	__except( ExeptionHandler(GetExceptionInformation()) )
 	{
-		printf("Unhandled exception - Emulation thread halted...\n");
+	    ERROR_LOG(COMMON, "Unhandled exception - Emulation thread halted...");
 	}
 #endif
 	SetUnhandledExceptionFilter(0);

@@ -92,7 +92,7 @@ public:
 		}
 		else if (input_mapper != NULL)
 		{
-			printf("xinput: Controller '%s' on port %d disconnected\n", _name.c_str(), _xinput_port);
+			INFO_LOG(INPUT, "xinput: Controller '%s' on port %d disconnected", _name.c_str(), _xinput_port);
 			GamepadDevice::Unregister(xinput_gamepads[_xinput_port]);
 			input_mapper = NULL;
 			last_buttons_state = 0;
@@ -134,16 +134,16 @@ public:
 			_name = "xinput" + std::to_string(_xinput_port);
 		else
 			_name = joycaps.szPname;
-		printf("xinput: Opened controller '%s' on port %d ", _name.c_str(), _xinput_port);
+		INFO_LOG(INPUT, "xinput: Opened controller '%s' on port %d", _name.c_str(), _xinput_port);
 		if (!find_mapping())
 		{
 			input_mapper = new XInputMapping();
 			input_mapper->name = _name + " mapping";
 			save_mapping();
-			printf("using default mapping\n");
+			INFO_LOG(INPUT, "using default mapping");
 		}
 		else
-			printf("using custom mapping '%s'\n", input_mapper->name.c_str());
+			INFO_LOG(INPUT, "using custom mapping '%s'n", input_mapper->name.c_str());
 		GamepadDevice::Register(xinput_gamepads[_xinput_port]);
 	}
 

@@ -183,7 +183,7 @@ bool InputMapping::save(const char *name)
 	FILE *fp = fopen(path.c_str(), "w");
 	if (fp == NULL)
 	{
-		printf("Cannot save controller mappings into %s\n", path.c_str());
+		WARN_LOG(INPUT, "Cannot save controller mappings into %s", path.c_str());
 		return false;
 	}
 	ConfigFile mf;

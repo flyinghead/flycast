@@ -149,7 +149,7 @@ void gui_init()
 		ImGui::GetStyle().ScaleAllSizes(scaling);
 
     io.Fonts->AddFontFromMemoryCompressedTTF(roboto_medium_compressed_data, roboto_medium_compressed_size, 17 * scaling);
-    printf("Screen DPI is %d, size %d x %d. Scaling by %.2f\n", screen_dpi, screen_width, screen_height, scaling);
+    INFO_LOG(RENDERER, "Screen DPI is %d, size %d x %d. Scaling by %.2f", screen_dpi, screen_width, screen_height, scaling);
 }
 
 void ImGui_Impl_NewFrame()
@@ -1170,7 +1170,7 @@ static void gui_display_settings()
 						}
 					}
 					else {
-						printf("Unknown option\n");
+						WARN_LOG(RENDERER, "Unknown option");
 					}
 
 					options++;
@@ -1690,7 +1690,7 @@ int msgboxf(const wchar* text, unsigned int type, ...) {
     va_start(args, type);
     vsnprintf(temp, sizeof(temp), text, args);
     va_end(args);
-    printf("%s\n", temp);
+    ERROR_LOG(COMMON, "%s", temp);
 
     gui_display_notification(temp, 2000);
 

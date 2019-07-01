@@ -385,7 +385,7 @@ void replay_input()
 		{
 			fclose(replay_file);
 			replay_file = NULL;
-			printf("Input replay terminated\n");
+			NOTICE_LOG(INPUT, "Input replay terminated");
 			do_screenshot = true;
 			break;
 		}

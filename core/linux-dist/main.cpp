@@ -414,7 +414,7 @@ void os_DebugBreak()
 	#if !defined(TARGET_EMSCRIPTEN)
 		raise(SIGTRAP);
 	#else
-		printf("DEBUGBREAK!\n");
+		ERROR_LOG(COMMON, "DEBUGBREAK!");
 		exit(-1);
 	#endif
 }

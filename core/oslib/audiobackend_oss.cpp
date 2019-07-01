@@ -12,21 +12,21 @@ static void oss_init()
 	oss_audio_fd = open("/dev/dsp", O_WRONLY);
 	if (oss_audio_fd < 0)
 	{
-		printf("Couldn't open /dev/dsp.\n");
+		WARN_LOG(AUDIO, "Couldn't open /dev/dsp.");
 	}
 	else
 	{
-		printf("sound enabled, dsp opened for write\n");
+		INFO_LOG(AUDIO, "sound enabled, dsp opened for write");
 		int tmp=44100;
 		int err_ret;
 		err_ret=ioctl(oss_audio_fd,SNDCTL_DSP_SPEED,&tmp);
-		printf("set Frequency to %i, return %i (rate=%i)\n", 44100, err_ret, tmp);
+		INFO_LOG(AUDIO, "set Frequency to %i, return %i (rate=%i)", 44100, err_ret, tmp);
 		int channels=2;
 		err_ret=ioctl(oss_audio_fd, SNDCTL_DSP_CHANNELS, &channels);
-		printf("set dsp to stereo (%i => %i)\n", channels, err_ret);
+		INFO_LOG(AUDIO, "set dsp to stereo (%i => %i)", channels, err_ret);
 		int format=AFMT_S16_LE;
 		err_ret=ioctl(oss_audio_fd, SNDCTL_DSP_SETFMT, &format);
-		printf("set dsp to %s audio (%i/%i => %i)\n", "16bits signed", AFMT_S16_LE, format, err_ret);
+		INFO_LOG(AUDIO, "set dsp to %s audio (%i/%i => %i)", "16bits signed", AFMT_S16_LE, format, err_ret);
 	}
 }
 

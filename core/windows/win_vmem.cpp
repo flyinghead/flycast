@@ -181,7 +181,7 @@ bool vmem_platform_prepare_jit_block(void *code_area, unsigned size, void **code
 		return false;
 
 	*code_area_rwx = ptr;
-	printf("Found code area at %p, not too far away from %p\n", *code_area_rwx, &vmem_platform_init);
+	INFO_LOG(DYNAREC, "Found code area at %p, not too far away from %p", *code_area_rwx, &vmem_platform_init);
 
 	// We should have found some area in the addrspace, after all size is ~tens of megabytes.
 	// Pages are already RWX, all done
@@ -215,7 +215,7 @@ bool vmem_platform_prepare_jit_block(void *code_area, unsigned size, void **code
 
 	*code_area_rw = ptr_rw;
 	*rx_offset = (char*)ptr_rx - (char*)ptr_rw;
-	printf("Info: Using NO_RWX mode, rx ptr: %p, rw ptr: %p, offset: %lu\n", ptr_rx, ptr_rw, (unsigned long)*rx_offset);
+	INFO_LOG(DYNAREC, "Info: Using NO_RWX mode, rx ptr: %p, rw ptr: %p, offset: %lu", ptr_rx, ptr_rw, (unsigned long)*rx_offset);
 
 	return (ptr_rw != NULL);
 }

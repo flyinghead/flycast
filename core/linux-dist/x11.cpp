@@ -429,7 +429,7 @@ void x11_window_create()
 			if (!glXQueryVersion(x11Display, &glx_major, &glx_minor) ||
 					((glx_major == 1) && (glx_minor < 3)) || (glx_major < 1))
 			{
-				printf("Invalid GLX version");
+				ERROR_LOG(RENDERER, "Invalid GLX version");
 				exit(1);
 			}
 

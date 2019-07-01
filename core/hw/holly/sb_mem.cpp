@@ -60,7 +60,6 @@ bool LoadRomFiles(const string& root)
 		}
 		else
 		{
-			ERROR_LOG(FLASHROM, "Unable to find flash/nvmem in %s. Exiting...", root.c_str());
 			msgboxf("Unable to find flash/nvmem in \n%s\nExiting...", MBX_ICONERROR, root.c_str());
 			return false;
 		}

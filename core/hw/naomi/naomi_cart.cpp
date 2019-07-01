@@ -166,14 +166,12 @@ static bool naomi_cart_LoadZip(char *filename)
 #if DC_PLATFORM == DC_PLATFORM_NAOMI
 	if (game->cart_type == AW)
 	{
-		ERROR_LOG(NAOMI, "Atomiswave cartridges are not supported by NAOMI");
 		msgboxf("Atomiswave cartridges are not supported by NAOMI", 0);
 		return false;
 	}
 #else
 	if (game->cart_type != AW)
 	{
-		ERROR_LOG(NAOMI, "NAOMI cartridges are not supported by Atomiswave");
 		msgboxf("NAOMI cartridges are not supported by Atomiswave", 0);
 		return false;
 	}
