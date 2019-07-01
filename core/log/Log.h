@@ -56,7 +56,7 @@ __attribute__((format(printf, 5, 6)))
 #define MAX_LOGLEVEL LogTypes::LOG_LEVELS::LDEBUG
 #else
 #ifndef MAX_LOGLEVEL
-#define MAX_LOGLEVEL LogTypes::LOG_LEVELS::LINFO
+#define MAX_LOGLEVEL LogTypes::LOG_LEVELS::LWARNING
 #endif  // loglevel
 #endif  // logging
 

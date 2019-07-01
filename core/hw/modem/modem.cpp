@@ -43,11 +43,7 @@
 
 #define MODEM_DEVICE_TYPE_336K 0
 
-#ifdef RELEASE
-#define LOG(...)
-#else
-#define LOG(...) do { printf("[%d.%03d] MODEM ", (int)os_GetSeconds(), (int)(os_GetSeconds() * 1000) % 1000); printf(__VA_ARGS__); putchar('\n'); } while (false);
-#endif
+#define LOG(...) DEBUG_LOG(MODEM, __VA_ARGS__)
 
 const static u32 MODEM_ID[2] =
 {
@@ -142,7 +138,7 @@ static int modem_sched_func(int tag, int c, int j)
 	{
 		if (last_comm_stats != 0)
 		{
-			printf("Stats sent %d (%.2f kB/s) received %d (%.2f kB/s) TDBE %d RDBF %d\n", sent_bytes, sent_bytes / 2000.0,
+			DEBUG_LOG(MODEM, "Stats sent %d (%.2f kB/s) received %d (%.2f kB/s) TDBE %d RDBF %d\n", sent_bytes, sent_bytes / 2000.0,
 					recvd_bytes, recvd_bytes / 2000.0,
 					modem_regs.reg1e.TDBE, modem_regs.reg1e.RDBF);
 			sent_bytes = 0;
@@ -211,7 +207,7 @@ static int modem_sched_func(int tag, int c, int j)
 			break;
 
 		case PRE_CONNECTED:
-			printf("MODEM Connected\n");
+			INFO_LOG(MODEM, "MODEM Connected");
 			if (modem_regs.reg03.RLSDE)
 				SET_STATUS_BIT(0x0f, modem_regs.reg0f.RLSD, 1);
 			if (modem_regs.reg12 == 0xAA)
@@ -317,6 +313,11 @@ static int modem_sched_func(int tag, int c, int j)
 void ModemInit()
 {
 	modem_sched = sh4_sched_register(0, &modem_sched_func);
+}
+
+void ModemTerm()
+{
+	stop_pppd();
 }
 
 static void schedule_callback(int ms)
@@ -428,7 +429,7 @@ static void modem_reset(u32 v)
 		state=MS_RESETING;
 		modem_regs.ptr[0x20]=1;
 		ControllerTestStart();
-		printf("MODEM Reset\n");
+		INFO_LOG(MODEM, "MODEM Reset");
 	}
 }
 
@@ -495,7 +496,7 @@ static void ModemNormalWrite(u32 reg, u32 data)
 			//LOG("ModemNormalWrite : TBUFFER = %X", data);
 			if (connect_state == DISCONNECTED)
 			{
-				printf("MODEM Dialing\n");
+				INFO_LOG(MODEM, "MODEM Dialing");
 				connect_state = DIALING;
 			}
 			schedule_callback(100);

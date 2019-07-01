@@ -99,7 +99,7 @@ static void* vmem32_map_buffer(u32 dst, u32 addrsz, u32 offset, u32 size, bool w
 	rv = mmap(&virt_ram_base[dst], size, prot, MAP_SHARED | MAP_NOSYNC | MAP_FIXED, vmem_fd, offset);
 	if (MAP_FAILED == rv)
 	{
-		printf("MAP1 failed %d\n", errno);
+		ERROR_LOG(VMEM, "MAP1 failed %d", errno);
 		return NULL;
 	}
 
@@ -109,7 +109,7 @@ static void* vmem32_map_buffer(u32 dst, u32 addrsz, u32 offset, u32 size, bool w
 		ptr = mmap(&virt_ram_base[dst], size, prot , MAP_SHARED | MAP_NOSYNC | MAP_FIXED, vmem_fd, offset);
 		if (MAP_FAILED == ptr)
 		{
-			printf("MAP2 failed %d\n", errno);
+			ERROR_LOG(VMEM, "MAP2 failed %d", errno);
 			return NULL;
 		}
 	}
@@ -346,7 +346,7 @@ bool vmem32_handle_signal(void *fault_addr, bool write, u32 exception_pc)
 	//vmem32_page_faults++;
 	u32 guest_addr = (u8*)fault_addr - virt_ram_base;
 	u32 rv = vmem32_map_address(guest_addr, write);
-	//printf("vmem32_handle_signal handled signal %s @ %p -> %08x rv=%d\n", write ? "W" : "R", fault_addr, guest_addr, rv);
+	DEBUG_LOG(VMEM, "vmem32_handle_signal handled signal %s @ %p -> %08x rv=%d", write ? "W" : "R", fault_addr, guest_addr, rv);
 	if (rv == MMU_ERROR_NONE)
 		return true;
 	if (rv == VMEM32_ERROR_NOT_MAPPED)

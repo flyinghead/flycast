@@ -499,6 +499,7 @@ void dc_term()
 	naomi_cart_Close();
 #endif
 	plugins_Term();
+	mem_Term();
 	_vmem_release();
 
 	mcfg_DestroyDevices();

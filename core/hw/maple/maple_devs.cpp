@@ -1188,7 +1188,7 @@ struct maple_keyboard : maple_base
 			return MDRS_DataTransfer;
 
 		default:
-			DEBUG_LOG(MAPLE, "Keyboard: unknown MAPLE COMMAND %d", cmd);
+			INFO_LOG(MAPLE, "Keyboard: unknown MAPLE COMMAND %d", cmd);
 			return MDRE_UnknownCmd;
 		}
 	}
@@ -1295,7 +1295,7 @@ struct maple_mouse : maple_base
 			return MDRS_DataTransfer;
 
 		default:
-			DEBUG_LOG(MAPLE, "Mouse: unknown MAPLE COMMAND %d", cmd);
+			INFO_LOG(MAPLE, "Mouse: unknown MAPLE COMMAND %d", cmd);
 			return MDRE_UnknownCmd;
 		}
 	}
@@ -1375,7 +1375,7 @@ struct maple_lightgun : maple_base
 		return MDRS_DataTransfer;
 
 		default:
-			DEBUG_LOG(MAPLE, "Light gun: unknown MAPLE COMMAND %d", cmd);
+			INFO_LOG(MAPLE, "Light gun: unknown MAPLE COMMAND %d", cmd);
 			return MDRE_UnknownCmd;
 		}
 	}
@@ -2569,7 +2569,7 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 					break;
 
 				default:
-					INFO_LOG(MAPLE, "JVS: Unknown input type %x", buffer_in[cmdi]);
+					DEBUG_LOG(MAPLE, "JVS: Unknown input type %x", buffer_in[cmdi]);
 					JVS_OUT(2);			// report byte: command error
 					cmdi = length_in;	// Ignore subsequent commands
 					break;

@@ -790,6 +790,9 @@ void sb_Init()
 
 void sb_Reset(bool Manual)
 {
+#if DC_PLATFORM == DC_PLATFORM_DREAMCAST && defined(ENABLE_MODEM)
+	ModemTerm();
+#endif
 	asic_reg_Reset(Manual);
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST
 	gdrom_reg_Reset(Manual);
@@ -803,6 +806,9 @@ void sb_Reset(bool Manual)
 
 void sb_Term()
 {
+#if DC_PLATFORM == DC_PLATFORM_DREAMCAST && defined(ENABLE_MODEM)
+	ModemTerm();
+#endif
 	aica_sb_Term();
 	maple_Term();
 	pvr_sb_Term();

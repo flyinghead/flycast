@@ -213,7 +213,7 @@ static void tcp_callback(uint16_t ev, struct pico_socket *s)
 		if (it == tcp_sockets.end())
 		{
 			if (tcp_connecting_sockets.find(s) == tcp_connecting_sockets.end())
-				printf("Unknown socket: remote port %d\n", short_be(s->remote_port));
+				INFO_LOG(MODEM, "Unknown socket: remote port %d", short_be(s->remote_port));
 		}
 		else
 		{
@@ -234,7 +234,7 @@ static void tcp_callback(uint16_t ev, struct pico_socket *s)
 		{
 			// Also called for child sockets
 			if (tcp_sockets.find(s) == tcp_sockets.end())
-				printf("pico_socket_accept: %s\n", strerror(pico_err));
+				INFO_LOG(MODEM, "pico_socket_accept: %s\n", strerror(pico_err));
 		}
 		else
 		{
@@ -270,8 +270,7 @@ static void tcp_callback(uint16_t ev, struct pico_socket *s)
 					if (get_last_error() != EINPROGRESS && get_last_error() != L_EWOULDBLOCK)
 					{
 						pico_ipv4_to_string(peer, sock_a->local_addr.ip4.addr);
-						printf("TCP connection to %s:%d failed: ", peer, short_be(sock_a->local_port));
-						perror(NULL);
+						INFO_LOG(MODEM, "TCP connection to %s:%d failed: %s", peer, short_be(sock_a->local_port), strerror(get_last_error()));
 						closesocket(sockfd);
 					}
 					else
@@ -291,7 +290,7 @@ static void tcp_callback(uint16_t ev, struct pico_socket *s)
 		auto it = tcp_sockets.find(s);
 		if (it == tcp_sockets.end())
 		{
-			printf("PICO_SOCK_EV_FIN: Unknown socket: remote port %d\n", short_be(s->remote_port));
+			INFO_LOG(MODEM, "PICO_SOCK_EV_FIN: Unknown socket: remote port %d", short_be(s->remote_port));
 		}
 		else
 		{
@@ -301,11 +300,11 @@ static void tcp_callback(uint16_t ev, struct pico_socket *s)
 	}
 
 	if (ev & PICO_SOCK_EV_ERR) {
-		printf("Socket error received: %s\n", strerror(pico_err));
+		INFO_LOG(MODEM, "Socket error received: %s", strerror(pico_err));
 		auto it = tcp_sockets.find(s);
 		if (it == tcp_sockets.end())
 		{
-			printf("PICO_SOCK_EV_ERR: Unknown socket: remote port %d\n", short_be(s->remote_port));
+			INFO_LOG(MODEM, "PICO_SOCK_EV_ERR: Unknown socket: remote port %d", short_be(s->remote_port));
 		}
 		else
 		{
@@ -319,7 +318,7 @@ static void tcp_callback(uint16_t ev, struct pico_socket *s)
 		auto it = tcp_sockets.find(s);
 		if (it == tcp_sockets.end())
 		{
-			printf("PICO_SOCK_EV_CLOSE: Unknown socket: remote port %d\n", short_be(s->remote_port));
+			INFO_LOG(MODEM, "PICO_SOCK_EV_CLOSE: Unknown socket: remote port %d", short_be(s->remote_port));
 		}
 		else
 		{
@@ -374,7 +373,7 @@ static void udp_callback(uint16_t ev, struct pico_socket *s)
 			if (r <= 0)
 			{
 				if (r < 0)
-					printf("%s: error UDP recv: %s\n", __FUNCTION__, strerror(pico_err));
+					INFO_LOG(MODEM, "error UDP recv: %s", strerror(pico_err));
 				break;
 			}
 
@@ -394,7 +393,7 @@ static void udp_callback(uint16_t ev, struct pico_socket *s)
 	}
 
 	if (ev & PICO_SOCK_EV_ERR) {
-		printf("UDP Callback error received\n");
+		INFO_LOG(MODEM, "UDP Callback error received");
 	}
 }
 
@@ -420,7 +419,7 @@ static void read_native_sockets()
     	struct pico_socket *ps = pico_socket_open(PICO_PROTO_IPV4, PICO_PROTO_TCP, &tcp_callback);
     	if (ps == NULL)
     	{
-    		printf("pico_socket_open failed: error %d\n", pico_err);
+    		INFO_LOG(MODEM, "pico_socket_open failed: error %d", pico_err);
     		closesocket(sockfd);
     		continue;
     	}
@@ -428,7 +427,7 @@ static void read_native_sockets()
     	ps->local_port = src_addr.sin_port;
     	if (pico_socket_connect(ps, &dcaddr.addr, it->first) != 0)
     	{
-    		printf("pico_socket_connect failed: error %d\n", pico_err);
+    		INFO_LOG(MODEM, "pico_socket_connect failed: error %d", pico_err);
     		closesocket(sockfd);
     		pico_socket_close(ps);
     		continue;
@@ -469,8 +468,7 @@ static void read_native_sockets()
 			{
 				char peer[30];
 				pico_ipv4_to_string(peer, it->first->local_addr.ip4.addr);
-				printf("TCP connection to %s:%d failed: ", peer, short_be(it->first->local_port));
-				perror(NULL);
+				INFO_LOG(MODEM, "TCP connection to %s:%d failed: %s", peer, short_be(it->first->local_port), strerror(get_last_error()));
 				pico_socket_close(it->first);
 				closesocket(it->second);
 			}
@@ -511,7 +509,7 @@ static void read_native_sockets()
 			//printf("read_native_sockets UDP received %d bytes from %08x:%d\n", r, long_be(msginfo.local_addr.ip4.addr), short_be(msginfo.local_port));
 			int r2 = pico_socket_sendto_extended(pico_udp_socket, buf, r, &dcaddr, it->first, &msginfo);
 			if (r2 < r)
-				printf("%s: error UDP sending to %d: %s\n", __FUNCTION__, short_be(it->first), strerror(pico_err));
+				INFO_LOG(MODEM, "error UDP sending to %d: %s", short_be(it->first), strerror(pico_err));
 		}
 		else if (r < 0 && get_last_error() != L_EAGAIN && get_last_error() != L_EWOULDBLOCK)
 		{
@@ -543,10 +541,10 @@ static void read_native_sockets()
 
 			int r2 = pico_socket_send(it->first, buf, r);
 			if (r2 < 0)
-				printf("%s: error TCP sending: %s\n", __FUNCTION__, strerror(pico_err));
+				INFO_LOG(MODEM, "error TCP sending: %s", strerror(pico_err));
 			else if (r2 < r)
 				// FIXME EAGAIN errors. Need to buffer data or wait for call back.
-				printf("%s: truncated send: %d -> %d\n", __FUNCTION__, r, r2);
+				INFO_LOG(MODEM, "truncated send: %d -> %d", r, r2);
 		}
 		else if (r == 0)
 		{
@@ -629,7 +627,7 @@ static void check_dns_entries()
 				dns_query_start = 0;
 				char myip[16];
 				pico_ipv4_to_string(myip, public_ip.addr);
-				printf("My IP is %s\n", myip);
+				INFO_LOG(MODEM, "My IP is %s", myip);
 			}
 			else
 			{
@@ -662,7 +660,7 @@ static void check_dns_entries()
 				dns_query_start = 0;
 				char afoip[16];
 				pico_ipv4_to_string(afoip, afo_ip.addr);
-				printf("AFO server IP is %s\n", afoip);
+				INFO_LOG(MODEM, "AFO server IP is %s", afoip);
 			}
 			else
 			{
@@ -698,7 +696,7 @@ static void *pico_thread_func(void *)
 #if _WIN32
 		static WSADATA wsaData;
 		if (WSAStartup(MAKEWORD(2, 0), &wsaData) != 0)
-			printf("WSAStartup failed\n");
+			WARN_LOG(MODEM, "WSAStartup failed");
 #endif
     }
 
@@ -717,28 +715,28 @@ static void *pico_thread_func(void *)
 
     pico_udp_socket = pico_socket_open(PICO_PROTO_IPV4, PICO_PROTO_UDP, &udp_callback);
     if (pico_udp_socket == NULL) {
-        printf("%s: error opening UDP socket: %s\n", __FUNCTION__, strerror(pico_err));
+    	INFO_LOG(MODEM, "error opening UDP socket: %s", strerror(pico_err));
     }
     int yes = 1;
     struct pico_ip4 inaddr_any = {0};
     uint16_t listen_port = 0;
     int ret = pico_socket_bind(pico_udp_socket, &inaddr_any, &listen_port);
     if (ret < 0)
-        printf("%s: error binding UDP socket to port %u: %s\n", __FUNCTION__, short_be(listen_port), strerror(pico_err));
+    	INFO_LOG(MODEM, "error binding UDP socket to port %u: %s", short_be(listen_port), strerror(pico_err));
 
     pico_tcp_socket = pico_socket_open(PICO_PROTO_IPV4, PICO_PROTO_TCP, &tcp_callback);
     if (pico_tcp_socket == NULL) {
-        printf("%s: error opening TCP socket: %s\n", __FUNCTION__, strerror(pico_err));
+    	INFO_LOG(MODEM, "error opening TCP socket: %s", strerror(pico_err));
     }
     pico_socket_setoption(pico_tcp_socket, PICO_TCP_NODELAY, &yes);
     ret = pico_socket_bind(pico_tcp_socket, &inaddr_any, &listen_port);
     if (ret < 0) {
-        printf("%s: error binding TCP socket to port %u: %s\n", __FUNCTION__, short_be(listen_port), strerror(pico_err));
+    	INFO_LOG(MODEM, "error binding TCP socket to port %u: %s", short_be(listen_port), strerror(pico_err));
     }
     else
     {
         if (pico_socket_listen(pico_tcp_socket, 10) != 0)
-            printf("%s: error listening on port %u\n", __FUNCTION__, short_be(listen_port));
+        	INFO_LOG(MODEM, "error listening on port %u", short_be(listen_port));
     }
     ppp->proxied = 1;
 
