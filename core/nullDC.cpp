@@ -143,7 +143,7 @@ void LoadSpecialSettings()
 
 	if (reios_windows_ce)
 	{
-		INFO_LOG(BOOT, "Enabling Full MMU and Extra depth scaling for Windows CE game\n");
+		INFO_LOG(BOOT, "Enabling Full MMU and Extra depth scaling for Windows CE game");
 		settings.rend.ExtraDepthScale = 0.1;
 		extra_depth_game = true;
 		settings.dreamcast.FullMMU = true;
@@ -188,14 +188,14 @@ void LoadSpecialSettings()
 			// Ducati World (PAL)
 			|| !strncmp("T-8121D-50", reios_product_number, 10))
 	{
-		INFO_LOG(BOOT, "Enabling Dynarec safe mode for game %s\n", reios_product_number);
+		INFO_LOG(BOOT, "Enabling Dynarec safe mode for game %s", reios_product_number);
 		settings.dynarec.safemode = 1;
 		safemode_game = true;
 	}
 	// NHL 2K2
 	if (!strncmp("MK-51182", reios_product_number, 8))
 	{
-		INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s\n", reios_product_number);
+		INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", reios_product_number);
 		settings.rend.ExtraDepthScale = 10000;
 		extra_depth_game = true;
 	}
@@ -218,7 +218,7 @@ void LoadSpecialSettings()
 		// Marionette Company 2
 		|| !strncmp("T5203M", reios_product_number, 6))
 	{
-		INFO_LOG(BOOT, "Disabling 32-bit virtual memory for game %s\n", reios_product_number);
+		INFO_LOG(BOOT, "Disabling 32-bit virtual memory for game %s", reios_product_number);
 		settings.dynarec.disable_vmem32 = true;
 		disable_vmem32_game = true;
 	}

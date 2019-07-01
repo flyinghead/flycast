@@ -38,7 +38,7 @@ void PatchRegion_0(u8* sector,int size)
 
 	if (size!=2048)
 	{
-		printf("PatchRegion_0 -> sector size %d , skipping patch\n",size);
+		INFO_LOG(GDROM, "PatchRegion_0 -> sector size %d , skipping patch", size);
 	}
 
 	//patch meta info
@@ -58,7 +58,7 @@ void PatchRegion_6(u8* sector,int size)
 
 	if (size!=2048)
 	{
-		printf("PatchRegion_6 -> sector size %d , skipping patch\n",size);
+		INFO_LOG(GDROM, "PatchRegion_6 -> sector size %d , skipping patch", size);
 	}
 
 	//patch area symbols
@@ -124,7 +124,7 @@ bool ConvertSector(u8* in_buff , u8* out_buff , int from , int to,int sector)
 		}
 		break;
 	default :
-		printf("Sector conversion from %d to %d not supported \n", from , to);
+		INFO_LOG(GDROM, "Sector conversion from %d to %d not supported \n", from , to);
 		break;
 	}
 
@@ -139,9 +139,9 @@ Disc* OpenDisc(const wchar* fn)
 		rv = drivers[i](fn);
 
 		if (rv && cdi_parse == drivers[i]) {
-			const wchar warn_str[] = "Warning: CDI Image Loaded!\n  Many CDI images are known to be defective, GDI, CUE or CHD format is preferred. "
+			const wchar warn_str[] = "Warning: CDI Image Loaded! Many CDI images are known to be defective, GDI, CUE or CHD format is preferred. "
 					"Please only file bug reports when using images known to be good (GDI, CUE or CHD).";
-			printf("%s\n", warn_str);
+			WARN_LOG(GDROM, "%s", warn_str);
 
 			break;
 		}
@@ -159,7 +159,7 @@ bool InitDrive_(wchar* fn)
 
 	if (disc!=0)
 	{
-		printf("gdrom: Opened image \"%s\"\n",fn);
+		INFO_LOG(GDROM, "gdrom: Opened image \"%s\"", fn);
 		NullDriveDiscType=Busy;
 #ifndef NOT_REICAST
 		libCore_gdrom_disc_change();
@@ -169,7 +169,7 @@ bool InitDrive_(wchar* fn)
 	}
 	else
 	{
-		printf("gdrom: Failed to open image \"%s\"\n",fn);
+		INFO_LOG(GDROM, "gdrom: Failed to open image \"%s\"", fn);
 		NullDriveDiscType=NoDisk; //no disc :)
 	}
 	return false;
@@ -180,7 +180,7 @@ bool InitDrive(u32 fileflags)
 {
 	if (settings.imgread.LoadDefaultImage)
 	{
-		printf("Loading default image \"%s\"\n",settings.imgread.DefaultImage);
+		INFO_LOG(GDROM, "Loading default image \"%s\"", settings.imgread.DefaultImage);
 		if (!InitDrive_(settings.imgread.DefaultImage))
 		{
 			msgboxf("Default image \"%s\" failed to load",MBX_ICONERROR,settings.imgread.DefaultImage);
@@ -244,7 +244,7 @@ bool DiscSwap(u32 fileflags)
 	sns_key = 0x6;
 	if (settings.imgread.LoadDefaultImage)
 	{
-		printf("Loading default image \"%s\"\n",settings.imgread.DefaultImage);
+		INFO_LOG(GDROM, "Loading default image \"%s\"", settings.imgread.DefaultImage);
 		if (!InitDrive_(settings.imgread.DefaultImage))
 		{
 			msgboxf("Default image \"%s\" failed to load",MBX_ICONERROR,settings.imgread.DefaultImage);
@@ -409,19 +409,19 @@ void GetDriveSessionInfo(u8* to,u8 session)
 
 void printtoc(TocInfo* toc,SessionInfo* ses)
 {
-	printf("Sessions %d\n",ses->SessionCount);
+	INFO_LOG(GDROM, "Sessions %d", ses->SessionCount);
 	for (u32 i=0;i<ses->SessionCount;i++)
 	{
-		printf("Session %d: FAD %d,First Track %d\n",i+1,ses->SessionFAD[i],ses->SessionStart[i]);
+		INFO_LOG(GDROM, "Session %d: FAD %d,First Track %d", i + 1, ses->SessionFAD[i], ses->SessionStart[i]);
 		for (u32 t=toc->FistTrack-1;t<=toc->LastTrack;t++)
 		{
 			if (toc->tracks[t].Session==i+1)
 			{
-				printf("\tTrack %d : FAD %d CTRL %d ADR %d\n",t,toc->tracks[t].FAD,toc->tracks[t].Control,toc->tracks[t].Addr);
+				INFO_LOG(GDROM, "    Track %d : FAD %d CTRL %d ADR %d", t, toc->tracks[t].FAD, toc->tracks[t].Control, toc->tracks[t].Addr);
 			}
 		}
 	}
-	printf("Session END: FAD END %d\n",ses->SessionsEndFAD);
+	INFO_LOG(GDROM, "Session END: FAD END %d", ses->SessionsEndFAD);
 }
 
 DiscType GuessDiscType(bool m1, bool m2, bool da)

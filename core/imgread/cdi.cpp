@@ -43,7 +43,7 @@ Disc* cdi_parse(const wchar* file)
 		//printf("\nSession %d has %d track(s)\n",image.global_current_session,image.tracks);
 
 		if (image.tracks == 0)
-			printf("Open session\n");
+			INFO_LOG(GDROM, "Open session");
 		else
 		{
 			// Clear cuesheet
@@ -111,14 +111,13 @@ Disc* cdi_parse(const wchar* file)
 				//       if (track.pregap_length != 150) printf("Warning! This track seems to have a non-standard pregap...\n");
 
 				if (track.length < 0)
-					printf( "Negative track size found\n"
-					"You must extract image with /pregap option");
+					WARN_LOG(GDROM, "Negative track size found. You must extract image with /pregap option");
 
 				//if (!opts.showinfo)
 				{
 					if (track.total_length < track.length + track.pregap_length)
 					{
-						printf("\nThis track seems truncated. Skipping...\n");
+						WARN_LOG(GDROM, "This track seems truncated. Skipping...");
 						core_fseek(fsource, track.position, SEEK_SET);
 						core_fseek(fsource, track.total_length, SEEK_CUR);
 						track.position = core_ftell(fsource);

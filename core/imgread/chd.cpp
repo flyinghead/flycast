@@ -85,11 +85,11 @@ bool CHDDisc::TryOpen(const wchar* file)
 
 	if (err!=CHDERR_NONE)
 	{
-		printf("chd: chd_open failed for file %s: %d\n", file, err);
+		INFO_LOG(GDROM, "chd: chd_open failed for file %s: %d", file, err);
 		return false;
 	}
 
-	printf("chd: parsing file %s\n",file);
+	INFO_LOG(GDROM, "chd: parsing file %s", file);
 
 	const chd_header* head = chd_get_header(chd);
 
@@ -101,7 +101,7 @@ bool CHDDisc::TryOpen(const wchar* file)
 
 	if (hunkbytes%(2352+96)!=0)
 	{
-		printf("chd: hunkbytes is invalid, %d\n",hunkbytes);
+		INFO_LOG(GDROM, "chd: hunkbytes is invalid, %d\n",hunkbytes);
 		return false;
 	}
 
@@ -149,10 +149,10 @@ bool CHDDisc::TryOpen(const wchar* file)
 
 		if (tkid!=(tracks.size()+1) || (strcmp(type,"MODE1_RAW")!=0 && strcmp(type,"AUDIO")!=0 && strcmp(type,"MODE1")!=0) || strcmp(subtype,"NONE")!=0 || pregap!=0 || postgap!=0)
 		{
-			printf("chd: track type %s is not supported\n",type);
+			INFO_LOG(GDROM, "chd: track type %s is not supported", type);
 			return false;
 		}
-		printf("%s\n",temp);
+		DEBUG_LOG(GDROM, "%s", temp);
 		Track t;
 		t.StartFAD = total_frames;
 		total_frames += frames;
@@ -173,7 +173,7 @@ bool CHDDisc::TryOpen(const wchar* file)
 
 	if (total_frames!=549300 || tracks.size()<3)
 	{
-		printf("WARNING: chd: Total frames is wrong: %u frames in %u tracks\n",total_frames,tracks.size());
+		WARN_LOG(GDROM, "WARNING: chd: Total frames is wrong: %u frames in %zu tracks", total_frames, tracks.size());
 #ifndef NOT_REICAST
 		msgboxf("This is an improper dump!",MBX_ICONEXCLAMATION);
 #endif

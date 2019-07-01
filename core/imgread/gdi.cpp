@@ -87,7 +87,7 @@ Disc* load_gdi(const char* file)
 	istringstream gdi(gdi_data);
 
 	gdi >> iso_tc;
-	printf("\nGDI : %d tracks\n",iso_tc);
+	INFO_LOG(GDROM, "GDI : %d tracks", iso_tc);
 
 	
 	string basepath = OS_dirname(file);
@@ -129,7 +129,7 @@ Disc* load_gdi(const char* file)
 
 		gdi >> OFFSET;
 		
-		printf("file[%d] \"%s\": FAD:%d, CTRL:%d, SSIZE:%d, OFFSET:%d\n", TRACK, track_filename.c_str(), FADS, CTRL, SSIZE, OFFSET);
+		DEBUG_LOG(GDROM, "file[%d] \"%s\": FAD:%d, CTRL:%d, SSIZE:%d, OFFSET:%d", TRACK, track_filename.c_str(), FADS, CTRL, SSIZE, OFFSET);
 
 		Track t;
 		t.ADDR=0;

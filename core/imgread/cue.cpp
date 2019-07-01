@@ -60,7 +60,7 @@ Disc* cue_parse(const wchar* file)
 
 	if (cue_len >= sizeof(cue_data))
 	{
-		printf("CUE parse error: CUE file too big\n");
+		WARN_LOG(GDROM, "CUE parse error: CUE file too big");
 		core_fclose(fsource);
 		return NULL;
 	}
@@ -90,10 +90,10 @@ Disc* cue_parse(const wchar* file)
 				current_fad = 45000 + 150;
 			}
 			else if (token != "SINGLE-DENSITY")
-				printf("CUE parse error: unrecognized REM token %s. Expected SINGLE-DENSITY or HIGH-DENSITY\n", token.c_str());
+				WARN_LOG(GDROM, "CUE parse error: unrecognized REM token %s. Expected SINGLE-DENSITY or HIGH-DENSITY", token.c_str());
 			cuesheet >> token;
 			if (token != "AREA")
-				printf("CUE parse error: unrecognized REM token %s. Expected AREA\n", token.c_str());
+				WARN_LOG(GDROM, "CUE parse error: unrecognized REM token %s. Expected AREA", token.c_str());
 		}
 		else if (token == "FILE")
 		{
@@ -121,7 +121,7 @@ Disc* cue_parse(const wchar* file)
 			}
 			cuesheet >> token;	// BINARY
 			if (token != "BINARY")
-				printf("CUE parse error: unrecognized FILE token %s. Expected BINARY\n", token.c_str());
+				WARN_LOG(GDROM, "CUE parse error: unrecognized FILE token %s. Expected BINARY", token.c_str());
 		}
 		else if (token == "TRACK")
 		{
@@ -142,17 +142,17 @@ Disc* cue_parse(const wchar* file)
 				core_file* track_file = core_fopen(path.c_str());
 				if (track_file == NULL)
 				{
-					printf("CUE file: cannot open track %d: %s\n", track_number, path.c_str());
+					WARN_LOG(GDROM, "CUE file: cannot open track %d: %s", track_number, path.c_str());
 					return NULL;
 				}
 				u32 sector_size = getSectorSize(track_type);
 				if (sector_size == 0)
 				{
-					printf("CUE file: track %d has unknown sector type: %s\n", track_number, track_type.c_str());
+					WARN_LOG(GDROM, "CUE file: track %d has unknown sector type: %s", track_number, track_type.c_str());
 					return NULL;
 				}
 				if (core_fsize(track_file) % sector_size != 0)
-					printf("Warning: Size of track %s is not multiple of sector size %d\n", track_filename.c_str(), sector_size);
+					WARN_LOG(GDROM, "Warning: Size of track %s is not multiple of sector size %d", track_filename.c_str(), sector_size);
 				current_fad = t.StartFAD + (u32)core_fsize(track_file) / sector_size;
 				
 				//printf("file[%lu] \"%s\": StartFAD:%d, sector_size:%d file_size:%d\n", disc->tracks.size(),
