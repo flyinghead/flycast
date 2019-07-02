@@ -4,7 +4,9 @@ flycast
 
 Binaries
 ========
-Get fresh builds for your system [on the builds page](https://flyinghead.github.io/flycast-builds/)
+Get fresh builds for your system [on the builds page](https://flyinghead.github.io/flycast-builds/).
+
+**New:** Now automated test results are available as well.
 
 Disclaimer
 ==========
