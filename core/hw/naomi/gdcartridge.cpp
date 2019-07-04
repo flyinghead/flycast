@@ -499,7 +499,7 @@ void GDCartridge::device_start()
 					(u64(picdata[0x29]) << 0));
 		}
 
-		DEBUG_LOG(NAOMI, "key is %08x%08x\n", (u32)((key & 0xffffffff00000000ULL)>>32), (u32)(key & 0x00000000ffffffffULL));
+		DEBUG_LOG(NAOMI, "key is %08x%08x", (u32)((key & 0xffffffff00000000ULL)>>32), (u32)(key & 0x00000000ffffffffULL));
 
 		u8 buffer[2048];
 		std::string gdrom_path = get_game_basename() + "/" + gdrom_name;
@@ -596,7 +596,10 @@ void GDCartridge::device_reset()
 void *GDCartridge::GetDmaPtr(u32 &size)
 {
 	if (dimm_data == NULL)
+	{
+		size = 0;
 		return NULL;
+	}
 	dimm_cur_address = DmaOffset & (dimm_data_size-1);
 	size = min(size, dimm_data_size - dimm_cur_address);
 	return dimm_data + dimm_cur_address;

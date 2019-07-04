@@ -1,3 +1,24 @@
+/*
+	This file is part of reicast.
+
+    reicast is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 2 of the License, or
+    (at your option) any later version.
+
+    reicast is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with reicast.  If not, see <https://www.gnu.org/licenses/>.
+*/
+// Naomi comm board emulation from mame
+// https://github.com/mamedev/mame/blob/master/src/mame/machine/m3comm.cpp
+// license:BSD-3-Clause
+// copyright-holders:MetalliC
+
 #include "naomi_cart.h"
 #include "naomi_regs.h"
 #include "cfg/cfg.h"
@@ -779,12 +800,38 @@ u32 NaomiCartridge::ReadMem(u32 address, u32 size)
 		DEBUG_LOG(NAOMI, "naomi GD? READ: %X, %d", address, size);
 		return reg_dimm_4c;
 
-	case 0x18:
-		DEBUG_LOG(NAOMI, "naomi reg 0x18 : returning random data");
-		return 0x4000^rand();
-		break;
+	case NAOMI_COMM2_CTRL_addr & 255:
+		DEBUG_LOG(NAOMI, "NAOMI_COMM2_CTRL read");
+		return comm_ctrl;
 
-	default: break;
+	case NAOMI_COMM2_OFFSET_addr & 255:
+		DEBUG_LOG(NAOMI, "NAOMI_COMM2_OFFSET read");
+		return comm_offset;
+
+	case NAOMI_COMM2_DATA_addr & 255:
+		{
+			DEBUG_LOG(NAOMI, "NAOMI_COMM2_DATA read @ %04x", comm_offset);
+			u16 value;
+			if (comm_ctrl & 1)
+				value = m68k_ram[comm_offset / 2];
+			else {
+				// TODO u16 *commram = (u16*)membank("comm_ram")->base();
+				value = comm_ram[comm_offset / 2];
+			}
+			comm_offset += 2;
+			return value;
+		}
+
+	case NAOMI_COMM2_STATUS0_addr & 255:
+		DEBUG_LOG(NAOMI, "NAOMI_COMM2_STATUS0 read");
+		return comm_offset_status0;
+
+	case NAOMI_COMM2_STATUS1_addr & 255:
+		DEBUG_LOG(NAOMI, "NAOMI_COMM2_STATUS1 read");
+		return comm_offset_status1;
+
+	default:
+		break;
 	}
 	DEBUG_LOG(NAOMI, "naomi?WTF? ReadMem: %X, %d", address, size);
 
@@ -901,6 +948,37 @@ void NaomiCartridge::WriteMem(u32 address, u32 data, u32 size)
 		//This should be valid
 	case NAOMI_BOARDID_READ_addr&255:
 		DEBUG_LOG(NAOMI, "naomi WriteMem: %X <= %X, %d", address, data, size);
+		return;
+
+	case NAOMI_COMM2_CTRL_addr & 255:
+		comm_ctrl = (u16)data;
+		DEBUG_LOG(NAOMI, "NAOMI_COMM2_CTRL set to %x", comm_ctrl);
+		return;
+
+	case NAOMI_COMM2_OFFSET_addr & 255:
+		comm_offset = (u16)data;
+		DEBUG_LOG(NAOMI, "NAOMI_COMM2_OFFSET set to %x", comm_offset);
+		return;
+
+	case NAOMI_COMM2_DATA_addr & 255:
+		DEBUG_LOG(NAOMI, "NAOMI_COMM2_DATA written @ %04x %04x", comm_offset, (u16)data);
+		if (comm_ctrl & 1)
+			m68k_ram[comm_offset / 2] = (u16)data;
+		else {
+			// TODO u16 *commram = (u16*)membank("comm_ram")->base();
+			comm_ram[comm_offset / 2] = (u16)data;
+		}
+		comm_offset += 2;
+		return;
+
+	case NAOMI_COMM2_STATUS0_addr & 255:
+		comm_offset_status0 = (u16)data;
+		DEBUG_LOG(NAOMI, "NAOMI_COMM2_STATUS0 set to %x", comm_offset_status0);
+		return;
+
+	case NAOMI_COMM2_STATUS1_addr & 255:
+		comm_offset_status1 = (u16)data;
+		DEBUG_LOG(NAOMI, "NAOMI_COMM2_STATUS1 set to %x", comm_offset_status1);
 		return;
 
 	default: break;
