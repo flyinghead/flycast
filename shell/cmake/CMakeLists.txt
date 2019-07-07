@@ -67,7 +67,6 @@ elseif("${CMAKE_SYSTEM_NAME}" STREQUAL Linux)
 else()
   message(FATAL_ERROR "Unknown target")
   # TODO, TARGET_GCW0
-  # TODO, TARGET_NACL32
   # TODO, TARGET_IPHONE
   # TODO, TARGET_PANDORA
 endif()

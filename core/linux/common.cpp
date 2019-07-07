@@ -7,17 +7,15 @@
 	#define __USE_GNU 1
 	#include <TargetConditionals.h>
 #endif
-#if !defined(TARGET_NACL32)
 #include <poll.h>
 #include <termios.h>
-#endif  
 #include <fcntl.h>
 #include <semaphore.h>
 #include <stdarg.h>
 #include <signal.h>
 #include <sys/param.h>
 #include <sys/time.h>
-#if !defined(TARGET_BSD) && !defined(_ANDROID) && !defined(TARGET_IPHONE) && !defined(TARGET_NACL32) && !defined(TARGET_EMSCRIPTEN) && !defined(TARGET_OSX) && !defined(TARGET_OSX_X64)
+#if !defined(TARGET_BSD) && !defined(_ANDROID) && !defined(TARGET_IPHONE) && !defined(TARGET_EMSCRIPTEN) && !defined(TARGET_OSX) && !defined(TARGET_OSX_X64)
   #include <sys/personality.h>
   #include <dlfcn.h>
 #endif
@@ -177,7 +175,7 @@ void enable_runfast()
 }
 
 void linux_fix_personality() {
-        #if !defined(TARGET_BSD) && !defined(_ANDROID) && !defined(TARGET_OS_MAC) && !defined(TARGET_NACL32) && !defined(TARGET_EMSCRIPTEN)
+        #if !defined(TARGET_BSD) && !defined(_ANDROID) && !defined(TARGET_OS_MAC) && !defined(TARGET_EMSCRIPTEN)
           DEBUG_LOG(BOOT, "Personality: %08X", personality(0xFFFFFFFF));
           personality(~READ_IMPLIES_EXEC & personality(0xFFFFFFFF));
           DEBUG_LOG(BOOT, "Updated personality: %08X", personality(0xFFFFFFFF));
@@ -185,7 +183,7 @@ void linux_fix_personality() {
 }
 
 void linux_rpi2_init() {
-#if !defined(TARGET_BSD) && !defined(_ANDROID) && !defined(TARGET_NACL32) && !defined(TARGET_EMSCRIPTEN) && defined(TARGET_VIDEOCORE)
+#if !defined(TARGET_BSD) && !defined(_ANDROID) && !defined(TARGET_EMSCRIPTEN) && defined(TARGET_VIDEOCORE)
 	void* handle;
 	void (*rpi_bcm_init)(void);
 
