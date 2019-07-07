@@ -245,7 +245,13 @@ template <u32 Type, bool SortingEnabled>
 
 	// Depth buffer is updated in pass 0 (and also in pass 1 for OP PT)
 	if (pass < 2)
-		glcache.DepthMask(!gp->isp.ZWriteDis);
+	{
+		// Ignore ZWriteDis for punch-through? fixes Worms World Party
+		if (Type == ListType_Punch_Through)
+			glcache.DepthMask(GL_TRUE);
+		else
+			glcache.DepthMask(!gp->isp.ZWriteDis);
+	}
 	else
 		glcache.DepthMask(GL_FALSE);
 }

@@ -263,7 +263,13 @@ __forceinline
 	if (SortingEnabled && !settings.rend.PerStripSorting)
 		glcache.DepthMask(GL_FALSE);
 	else
-		glcache.DepthMask(!gp->isp.ZWriteDis);
+	{
+		// Ignore ZWriteDis for punch-through? fixes Worms World Party
+		if (Type == ListType_Punch_Through)
+			glcache.DepthMask(GL_TRUE);
+		else
+			glcache.DepthMask(!gp->isp.ZWriteDis);
+	}
 }
 
 template <u32 Type, bool SortingEnabled>
