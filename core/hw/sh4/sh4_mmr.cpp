@@ -443,6 +443,9 @@ void DYNACALL WriteMem_sq(u32 addr,T data)
 //***********
 //**Area  7**
 //***********
+
+#define OUT_OF_RANGE(reg) INFO_LOG(SH4, "Out of range on register %s index %x", reg, addr)
+
 //Read Area7
 template <u32 sz,class T>
 T DYNACALL ReadMem_area7(u32 addr)
@@ -478,7 +481,8 @@ T DYNACALL ReadMem_area7(u32 addr)
 		}
 		else
 		{
-			INFO_LOG(SH4, "Out of range on register index %x", addr);
+			OUT_OF_RANGE("CCN");
+			return 0;
 		}
 		break;
 
@@ -489,7 +493,8 @@ T DYNACALL ReadMem_area7(u32 addr)
 		}
 		else
 		{
-			INFO_LOG(SH4, "Out of range on register index %x", addr);
+			OUT_OF_RANGE("UBC");
+			return 0;
 		}
 		break;
 
@@ -498,21 +503,20 @@ T DYNACALL ReadMem_area7(u32 addr)
 		{
 			return (T)sh4_rio_read<sz>(BSC,addr & 0xFF);
 		}
-		else if ((addr>=BSC_SDMR2_addr) && (addr<= 0x1F90FFFF))
-		{
-			//dram settings 2 / write only
-			INFO_LOG(SH4, "Read from write-only registers [dram settings 2]");
-		}
-		else if ((addr>=BSC_SDMR3_addr) && (addr<= 0x1F94FFFF))
-		{
-			//dram settings 3 / write only
-			INFO_LOG(SH4, "Read from write-only registers [dram settings 3]");
-		}
 		else
 		{
-			INFO_LOG(SH4, "Out of range on register index . %x", addr);
+			OUT_OF_RANGE("BSC");
+			return 0;
 		}
 		break;
+	case A7_REG_HASH(BSC_SDMR2_addr):
+		//dram settings 2 / write only
+		INFO_LOG(SH4, "Read from write-only registers [dram settings 2]");
+		return 0;
+	case A7_REG_HASH(BSC_SDMR3_addr):
+		//dram settings 3 / write only
+		INFO_LOG(SH4, "Read from write-only registers [dram settings 3]");
+		return 0;
 
 
 
@@ -523,7 +527,8 @@ T DYNACALL ReadMem_area7(u32 addr)
 		}
 		else
 		{
-			INFO_LOG(SH4, "Out of range on register index %x", addr);
+			OUT_OF_RANGE("DMAC");
+			return 0;
 		}
 		break;
 
@@ -534,7 +539,8 @@ T DYNACALL ReadMem_area7(u32 addr)
 		}
 		else
 		{
-			INFO_LOG(SH4, "Out of range on register index %x", addr);
+			OUT_OF_RANGE("CPG");
+			return 0;
 		}
 		break;
 
@@ -545,7 +551,8 @@ T DYNACALL ReadMem_area7(u32 addr)
 		}
 		else
 		{
-			INFO_LOG(SH4, "Out of range on register index %x", addr);
+			OUT_OF_RANGE("RTC");
+			return 0;
 		}
 		break;
 
@@ -556,7 +563,8 @@ T DYNACALL ReadMem_area7(u32 addr)
 		}
 		else
 		{
-			INFO_LOG(SH4, "Out of range on register index %x", addr);
+			OUT_OF_RANGE("INTC");
+			return 0;
 		}
 		break;
 
@@ -567,7 +575,8 @@ T DYNACALL ReadMem_area7(u32 addr)
 		}
 		else
 		{
-			INFO_LOG(SH4, "Out of range on register index %x", addr);
+			OUT_OF_RANGE("TMU");
+			return 0;
 		}
 		break;
 
@@ -578,7 +587,8 @@ T DYNACALL ReadMem_area7(u32 addr)
 		}
 		else
 		{
-			INFO_LOG(SH4, "Out of range on register index %x", addr);
+			OUT_OF_RANGE("SCI");
+			return 0;
 		}
 		break;
 
@@ -589,7 +599,8 @@ T DYNACALL ReadMem_area7(u32 addr)
 		}
 		else
 		{
-			INFO_LOG(SH4, "Out of range on register index %x", addr);
+			OUT_OF_RANGE("SCIF");
+			return 0;
 		}
 		break;
 
@@ -610,7 +621,7 @@ T DYNACALL ReadMem_area7(u32 addr)
 	}
 
 
-	//INFO_LOG(SH4, "Unknown Read from Area7 - addr=%x", addr);
+	INFO_LOG(SH4, "Unknown Read from Area7 - addr=%x", addr);
 	return 0;
 }
 
@@ -640,133 +651,118 @@ void DYNACALL WriteMem_area7(u32 addr,T data)
 		if (addr<=0x1F00003C)
 		{
 			sh4_rio_write<sz>(CCN,addr & 0xFF,data);
-			return;
 		}
 		else
 		{
-			INFO_LOG(SH4, "Out of range on register index %x", addr);
+			OUT_OF_RANGE("CCN");
 		}
-		break;
+		return;
 
 	case A7_REG_HASH(UBC_BASE_addr):
 		if (addr<=0x1F200020)
 		{
 			sh4_rio_write<sz>(UBC,addr & 0xFF,data);
-			return;
 		}
 		else
 		{
-			INFO_LOG(SH4, "Out of range on register index %x", addr);
+			OUT_OF_RANGE("UBC");
 		}
-		break;
+		return;
 
 	case A7_REG_HASH(BSC_BASE_addr):
 		if (addr<=0x1F800048)
 		{
 			sh4_rio_write<sz>(BSC,addr & 0xFF,data);
-			return;
-		}
-		else if ((addr>=BSC_SDMR2_addr) && (addr<= 0x1F90FFFF))
-		{
-			//dram settings 2 / write only
-			return;//no need ?
-		}
-		else if ((addr>=BSC_SDMR3_addr) && (addr<= 0x1F94FFFF))
-		{
-			//dram settings 3 / write only
-			return;//no need ?
 		}
 		else
 		{
-			INFO_LOG(SH4, "Out of range on register index %x", addr);
+			OUT_OF_RANGE("BSC");
 		}
-		break;
+		return;
+	case A7_REG_HASH(BSC_SDMR2_addr):
+		//dram settings 2 / write only
+		return;
 
-
+	case A7_REG_HASH(BSC_SDMR3_addr):
+		//dram settings 3 / write only
+		return;
 
 	case A7_REG_HASH(DMAC_BASE_addr):
 		if (addr<=0x1FA00040)
 		{
 			sh4_rio_write<sz>(DMAC,addr & 0xFF,data);
-			return;
 		}
 		else
 		{
-			INFO_LOG(SH4, "Out of range on register index %x", addr);
+			OUT_OF_RANGE("DMAC");
 		}
-		break;
+		return;
 
 	case A7_REG_HASH(CPG_BASE_addr):
 		if (addr<=0x1FC00010)
 		{
 			sh4_rio_write<sz>(CPG,addr & 0xFF,data);
-			return;
 		}
 		else
 		{
-			INFO_LOG(SH4, "Out of range on register index %x", addr);
+			OUT_OF_RANGE("CPG");
 		}
-		break;
+		return;
 
 	case A7_REG_HASH(RTC_BASE_addr):
 		if (addr<=0x1FC8003C)
 		{
 			sh4_rio_write<sz>(RTC,addr & 0xFF,data);
-			return;
 		}
 		else
 		{
-			INFO_LOG(SH4, "Out of range on register index %x", addr);
+			OUT_OF_RANGE("RTC");
 		}
-		break;
+		return;
 
 	case A7_REG_HASH(INTC_BASE_addr):
 		if (addr<=0x1FD0000C)
 		{
 			sh4_rio_write<sz>(INTC,addr & 0xFF,data);
-			return;
 		}
 		else
 		{
-			INFO_LOG(SH4, "Out of range on register index %x", addr);
+			OUT_OF_RANGE("INTC");
 		}
-		break;
+		return;
 
 	case A7_REG_HASH(TMU_BASE_addr):
 		if (addr<=0x1FD8002C)
 		{
 			sh4_rio_write<sz>(TMU,addr & 0xFF,data);
-			return;
 		}
 		else
 		{
-			INFO_LOG(SH4, "Out of range on register index %x", addr);
+			OUT_OF_RANGE("TMU");
 		}
-		break;
+		return;
 
 	case A7_REG_HASH(SCI_BASE_addr):
 		if (addr<=0x1FE0001C)
 		{
 			sh4_rio_write<sz>(SCI,addr & 0xFF,data);
-			return;
 		}
 		else
 		{
-			INFO_LOG(SH4, "Out of range on register index %x", addr);
+			OUT_OF_RANGE("SCI");
 		}
-		break;
+		return;
 
 	case A7_REG_HASH(SCIF_BASE_addr):
 		if (addr<=0x1FE80024)
 		{
 			sh4_rio_write<sz>(SCIF,addr & 0xFF,data);
-			return;
 		}
 		else
 		{
-			INFO_LOG(SH4, "Out of range on register index %x", addr);
+			OUT_OF_RANGE("SCIF");
 		}
-		break;
+		return;
 
 		//who really cares about ht-udi ? it's not existent on dc iirc ..
 	case A7_REG_HASH(UDI_BASE_addr):
@@ -784,7 +780,7 @@ void DYNACALL WriteMem_area7(u32 addr,T data)
 		break;
 	}
 
-	//EMUERROR3("Write to Area7 not implemented , addr=%x,data=%x",addr,data);
+	INFO_LOG(SH4, "Write to Area7 not implemented, addr=%x, data=%x", addr, data);
 }
 
 

@@ -230,7 +230,7 @@ struct Disc
 
 		//session 2 : start @ track 3, and its fad
 		ses.FirstTrack=3;
-		ses.StartFAD=tracks[0].StartFAD;
+		ses.StartFAD=tracks[2].StartFAD;
 		sessions.push_back(ses);
 
 		//this isn't always true for gdroms, depends on area look @ the get-toc code

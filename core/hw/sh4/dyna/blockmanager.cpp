@@ -11,6 +11,7 @@
 
 #include "../sh4_core.h"
 #include "hw/sh4/sh4_mem.h"
+#include "hw/sh4/sh4_opcode_list.h"
 #include "hw/sh4/sh4_sched.h"
 
 
@@ -785,8 +786,8 @@ bool bm_RamWriteAccess(void *p)
 	return true;
 }
 
-bool print_stats;
-#if 0
+bool print_stats = true;
+
 void fprint_hex(FILE* d,const char* init,u8* ptr, u32& ofs, u32 limit)
 {
 	int base=ofs;
@@ -822,12 +823,12 @@ void print_blocks()
 		INFO_LOG(DYNAREC, "Writing blocks to %p", f);
 	}
 
-	for (RuntimeBlockInfo *blk : blkmap)
+	for (auto it : blkmap)
 	{
-
+		RuntimeBlockInfoPtr blk = it.second;
 		if (f)
 		{
-			fprintf(f,"block: %p\n",blk);
+			fprintf(f,"block: %p\n",blk.get());
 			fprintf(f,"vaddr: %08X\n",blk->vaddr);
 			fprintf(f,"paddr: %08X\n",blk->addr);
 			fprintf(f,"hash: %s\n",blk->hash());
@@ -854,7 +855,7 @@ void print_blocks()
 			for (;j<blk->oplist.size();j++)
 			{
 				shil_opcode* op = &blk->oplist[j];
-				fprint_hex(f,"//h:",pucode,hcode,op->host_offs);
+				//fprint_hex(f,"//h:",pucode,hcode,op->host_offs);
 
 				if (gcode!=op->guest_offs)
 				{
@@ -880,7 +881,7 @@ void print_blocks()
 				fprintf(f,"//il:%d:%d: %s\n",op->guest_offs,op->host_offs,s.c_str());
 			}
 			
-			fprint_hex(f,"//h:",pucode,hcode,blk->host_code_size);
+			//fprint_hex(f,"//h:",pucode,hcode,blk->host_code_size);
 
 			fprintf(f,"}\n");
 		}
@@ -890,6 +891,5 @@ void print_blocks()
 
 	if (f) fclose(f);
 }
-#endif
 #endif
 
