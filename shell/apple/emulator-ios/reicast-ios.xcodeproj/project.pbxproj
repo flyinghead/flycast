@@ -1826,7 +1826,6 @@
 					"DEBUG=1",
 					"TARGET_IPHONE=1",
 					"$(inherited)",
-					"TARGET_NO_WEBUI=1",
 				);
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1861,7 +1860,6 @@
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"GLES=1",
 					"TARGET_IPHONE=1",
-					"TARGET_NO_WEBUI=1",
 				);
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",

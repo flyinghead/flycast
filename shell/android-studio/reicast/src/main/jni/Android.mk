@@ -18,7 +18,6 @@ LOCAL_PATH:= $(call my-dir)/..
 include $(CLEAR_VARS)
 
 FOR_ANDROID := 1
-WEBUI := 1
 USE_GLES := 1
 CHD5_LZMA := 1
 CHD5_FLAC := 1

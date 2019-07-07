@@ -21,7 +21,6 @@ option(USE_ALSA "Use ALSA" ON)
 option(USE_LIBAO "Use LibAO" OFF)
 option(USE_GLES "Use GL ES" OFF)
 option(USE_PULSEAUDIO "Use PulseAudio" OFF)
-option(USE_WEBUI "Use WebUI" ON)
 option(USE_REND "Use some rendering" ON)
 option(USE_EVDEV "Use EVDEV" ON)
 option(USE_JOYSTICK "Use Joystick" ON)
@@ -188,13 +187,6 @@ else()
 endif()
 
 # Optional features
-
-if(USE_WEBUI)
-  add_definitions(-DWEBUI)
-  add_directory(core/webui)
-  add_directory(core/deps/libwebsocket)
-  # TODO, deps/ifaddrs/ for Android
-endif()
 
 if(USE_EVDEV)
   add_definitions(-DUSE_EVDEV)

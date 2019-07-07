@@ -13,15 +13,6 @@ RZDCY_MODULES	:=	cfg/ hw/arm7/ hw/aica/ hw/holly/ hw/ hw/gdrom/ hw/maple/ \
  deps/libelf/ deps/chdpsr/ arm_emitter/ rend/ reios/ deps/libpng/ deps/xbrz/ \
  deps/xxhash/ deps/libzip/ deps/imgui/ archive/ input/ log/
 
-ifdef WEBUI
-	RZDCY_MODULES += webui/
-	RZDCY_MODULES += deps/libwebsocket/
-
-	ifdef FOR_ANDROID
-		RZDCY_MODULES += deps/ifaddrs/
-	endif
-endif
-
 ifndef NOT_ARM
     RZDCY_MODULES += rec-ARM/
 endif

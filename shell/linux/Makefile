@@ -3,7 +3,6 @@ LOCAL_PATH := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 FOR_LINUX :=1
 #NO_REC := 1
 #NO_REND := 1
-WEBUI :=1
 USE_OSS := 1
 #USE_PULSEAUDIO := 1
 #USE_SDLAUDIO := 1
@@ -13,11 +12,11 @@ USE_UDEV := 1
 USE_MODEM := 1
 PLATFORM_EXT := elf
 
-CXX=${CC_PREFIX}g++
-CC=${CC_PREFIX}gcc
-AS=${CC_PREFIX}as
-STRIP=${CC_PREFIX}strip
-LD=${CC}
+CXX ?= ${CC_PREFIX}g++
+CC ?= ${CC_PREFIX}gcc
+AS ?= ${CC_PREFIX}as
+STRIP ?= ${CC_PREFIX}strip
+LD ?= ${CC}
 WINDRES=${CC_PREFIX}windres
 CHD5_LZMA := 1
 CHD5_FLAC := 1
@@ -252,7 +251,7 @@ else ifneq (,$(findstring vero4k,$(platform)))
 # Windows
 else ifneq (,$(findstring win32,$(platform)))
     NOT_ARM := 1
-    CFLAGS += -DTARGET_NO_WEBUI -fno-builtin-sqrtf -funroll-loops -DHAVE_FSEEKO -D TARGET_NO_AREC
+    CFLAGS += -fno-builtin-sqrtf -funroll-loops -DHAVE_FSEEKO -D TARGET_NO_AREC
     LDFLAGS += -static-libgcc -static-libstdc++ -Wl,-subsystem,windows
     LIBS := -lopengl32 -lwinmm -lgdi32 -lwsock32 -ldsound -lcomctl32 -lcomdlg32 -lxinput -liphlpapi
     PLATFORM_EXT := exe
@@ -271,7 +270,6 @@ endif
     undefine USE_EVDEV
     undefine USE_UDEV
     undefine FOR_LINUX
-    undefine WEBUI
     NO_NIXPROF := 1
     FOR_WINDOWS := 1
 else
@@ -395,6 +393,10 @@ endif
 
 ifdef TEST_AUTOMATION
     CFLAGS += -DTEST_AUTOMATION
+endif
+
+ifdef DEBUGFAST
+    CFLAGS += -DDEBUGFAST
 endif
 
 EXECUTABLE_STRIPPED=nosym-reicast.$(PLATFORM_EXT)
