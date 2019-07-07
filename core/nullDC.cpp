@@ -141,7 +141,7 @@ void LoadSpecialSettings()
 	full_mmu_game = false;
 	disable_vmem32_game = false;
 
-	if (reios_windows_ce)
+	if (reios_windows_ce || !strncmp("T26702N", reios_product_number, 7)) // PBA Tour Bowling 2001
 	{
 		INFO_LOG(BOOT, "Enabling Full MMU and Extra depth scaling for Windows CE game");
 		settings.rend.ExtraDepthScale = 0.1;
@@ -216,7 +216,14 @@ void LoadSpecialSettings()
 		// Marionette Company
 		|| !strncmp("T5202M", reios_product_number, 6)
 		// Marionette Company 2
-		|| !strncmp("T5203M", reios_product_number, 6))
+		|| !strncmp("T5203M", reios_product_number, 6)
+		// Maximum Pool (for online support)
+		|| !strncmp("T11010N", reios_product_number, 7)
+		// StarLancer (US) (for online support)
+		|| !strncmp("T40209N", reios_product_number, 7)
+		// StarLancer (EU) (for online support)
+		|| !strncmp("T17723D 05", reios_product_number, 10)
+		)
 	{
 		INFO_LOG(BOOT, "Disabling 32-bit virtual memory for game %s", reios_product_number);
 		settings.dynarec.disable_vmem32 = true;

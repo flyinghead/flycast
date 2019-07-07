@@ -121,7 +121,8 @@ static void ControllerTestEnd();
 static void DSPTestStart();
 static void DSPTestEnd();
 
-static double last_dial_time;
+static u64 last_dial_time;
+static u64 connected_time;
 
 #ifndef RELEASE
 static double last_comm_stats;
@@ -131,7 +132,7 @@ static FILE *recv_fp;
 static FILE *sent_fp;
 #endif
 
-static int modem_sched_func(int tag, int c, int j)
+static int modem_sched_func(int tag, int cycles, int jitter)
 {
 #ifndef RELEASE
 	if (os_GetSeconds() - last_comm_stats >= 2)
@@ -166,7 +167,7 @@ static int modem_sched_func(int tag, int c, int j)
 		switch (connect_state)
 		{
 		case DIALING:
-			if (last_dial_time != 0 && os_GetSeconds() - last_dial_time > 0.99)
+			if (last_dial_time != 0 && sh4_sched_now64() - last_dial_time >= SH4_MAIN_CLOCK + jitter)
 			{
 				LOG("Switching to RINGING state");
 				connect_state = RINGING;
@@ -174,7 +175,7 @@ static int modem_sched_func(int tag, int c, int j)
 			}
 			else
 			{
-				last_dial_time = os_GetSeconds();
+				last_dial_time = sh4_sched_now64();
 
 				modem_regs.reg1e.TDBE = 1;
 				schedule_callback(1000);	// To switch to Ringing state
@@ -201,7 +202,7 @@ static int modem_sched_func(int tag, int c, int j)
 			SET_STATUS_BIT(0x0f, modem_regs.reg0f.RI, 0);
 			SET_STATUS_BIT(0x0b, modem_regs.reg0b.ATV25, 0);
 
-			callback_cycles = SH4_MAIN_CLOCK / 1000000 * 500;		// 500 ms
+			callback_cycles = SH4_MAIN_CLOCK / 1000 * 500;		// 500 ms
 			connect_state = PRE_CONNECTED;
 
 			break;
@@ -214,10 +215,13 @@ static int modem_sched_func(int tag, int c, int j)
 			{
 				// V8 AUTO mode
 				dspram[0x302] |= 1 << 4;				// protocol octet received
+				dspram[0x302] = (dspram[0x302] & 0x1f) | (dspram[0x304] & 0xe0);	// Received Call Function
 				dspram[0x301] |= 1 << 4;				// JM detected
 				dspram[0x303] |= 0xE0;					// Received protocol bits (?)
-				dspram[0x2e3] |= 5;						// Symbol rate 3429
-				dspram[0x239] |= 12;					// RTD 0 @ 3429 sym rate
+				dspram[0x2e3] = 5;						// Symbol rate 3429
+				dspram[0x2e4] = 0xe;					// V.34 Receiver Speed 33.6
+				dspram[0x2e5] = 0xe;					// V.34 Transmitter Speed 33.6
+				dspram[0x239] = 12;						// RTD 0 @ 3429 sym rate
 				if (modem_regs.reg08.ASYN)
 				{
 					modem_regs.reg12 = 0xce;		// CONF V34 - K56flex
@@ -253,7 +257,7 @@ static int modem_sched_func(int tag, int c, int j)
 			if (modem_regs.reg02.v0.RTSDE)
 				SET_STATUS_BIT(0x0f, modem_regs.reg0f.RTSDT, 1);
 
-			// What is this? This is required for games to detect the connection
+			// Energy detected. Required for games to detect the connection
 			SET_STATUS_BIT(0x0f, modem_regs.reg0f.FED, 1);
 
 			// V.34 Remote Modem Data Rate Capability
@@ -263,6 +267,7 @@ static int modem_sched_func(int tag, int c, int j)
 			start_pppd();
 			connect_state = CONNECTED;
 			callback_cycles = SH4_MAIN_CLOCK / 1000000 * 238;	// 238 us
+			connected_time = 0;
 
 			break;
 
@@ -276,10 +281,13 @@ static int modem_sched_func(int tag, int c, int j)
 					LOG("modem_regs %02x == %02x", i, modem_regs.ptr[i]);
 			}
 #endif
+			if (connected_time == 0)
+				connected_time = sh4_sched_now64();
 			if (!modem_regs.reg1e.RDBF)
 			{
 				int c = read_pppd();
-				if (c >= 0)
+				// Delay reading from ppp to avoid choking WinCE
+				if (c >= 0 && sh4_sched_now64() - connected_time >= SH4_MAIN_CLOCK / 4)
 				{
 					//LOG("pppd received %02x", c);
 #ifndef RELEASE
@@ -572,10 +580,7 @@ static void ModemNormalWrite(u32 reg, u32 data)
 			u32 dspram_addr = modem_regs.reg1c_1d.MEMADD_l | (modem_regs.reg1c_1d.MEMADD_h << 8);
 			if (modem_regs.reg1c_1d.MEMW)
 			{
-				//LOG("DSP mem Write%s address %08x = %x",
-				//		word_dspram_write ? " (w)" : "",
-				//		dspram_addr,
-				//		modem_regs.reg18_19 );
+				LOG("DSP mem Write%s address %08x = %x", word_dspram_write ? " (w)" : "", dspram_addr, modem_regs.reg18_19);
 				if (word_dspram_write)
 				{
 					if (dspram_addr & 1)
@@ -595,9 +600,7 @@ static void ModemNormalWrite(u32 reg, u32 data)
 					modem_regs.reg18_19 = dspram[dspram_addr] | (dspram[dspram_addr + 1] << 8);
 				else
 					modem_regs.reg18_19 = *(u16*)&dspram[dspram_addr];
-				//LOG("DSP mem Read address %08x == %x",
-				//		dspram_addr,
-				//		modem_regs.reg18_19 );
+				LOG("DSP mem Read address %08x == %x", dspram_addr, modem_regs.reg18_19 );
 			}
 		}
 		break;
@@ -631,7 +634,7 @@ static void ModemNormalWrite(u32 reg, u32 data)
 		break;
 
 	default:
-		//printf("ModemNormalWrite : undef %03X=%X\n",reg,data);
+		//LOG("ModemNormalWrite : undef %03X = %X", reg, data);
 		break;
 	}
 	update_interrupt();
