@@ -279,6 +279,11 @@ static void DrawList(const List<PolyParam>& gply, int first, int count, int pass
 					continue;
 				}
 			}
+			if (pass == 0 && Type == ListType_Translucent && (params->isp.DepthMode != 7 || params->isp.ZWriteDis))
+			{
+				params++;
+				continue;
+			}
 			gl4ShaderUniforms.poly_number = params - gply.head();
 			SetGPState<Type,SortingEnabled>(params, pass);
 			glDrawElements(GL_TRIANGLE_STRIP, params->count, GL_UNSIGNED_INT, (GLvoid*)(sizeof(u32) * params->first)); glCheck();
@@ -578,6 +583,22 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 
 		if (!skip_tr)
 		{
+
+			if (!current_pass.autosort)
+			{
+				// This pass is for HeadHunter but possibly others as well.
+				// The map/radar HUD is drawn is a second pass without autosort.
+				// The first poly drawn uses Always depth func to punch a hole in the depth buffer
+				// and the subsequent polys draw on top of it with Greater depth func.
+				// That doesn't work with this renderer because the depth test for transparent polys
+				// only use the opaque/pt depth, so the first poly is correctly drawn but subsequent polys are discarded.
+				// To work around this problem, we do a depth only pass with the transparent polys
+				// that use the Always depth func.
+				glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+				glcache.Enable(GL_DEPTH_TEST);
+				glcache.DepthMask(GL_TRUE);
+				DrawList<ListType_Translucent, false>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count, 0);
+			}
 			//
 			// PASS 3: Render TR to a-buffers
 			//
