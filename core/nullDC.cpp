@@ -170,7 +170,11 @@ void LoadSpecialSettings()
 			// L.O.L
 			|| !strncmp("T2106M", reios_product_number, 6)
 			// Miss Moonlight
-			|| !strncmp("T18702M", reios_product_number, 7))
+			|| !strncmp("T18702M", reios_product_number, 7)
+			// Tom Clancy's Rainbow Six (US)
+			|| !strncmp("T40401N", reios_product_number, 7)
+			// Tom Clancy's Rainbow Six incl. Eagle Watch Missions (EU)
+			|| !strncmp("T-45001D05", reios_product_number, 10))
 	{
 		settings.rend.RenderToTextureBuffer = 1;
 		rtt_to_buffer_game = true;
@@ -197,6 +201,13 @@ void LoadSpecialSettings()
 	{
 		INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", reios_product_number);
 		settings.rend.ExtraDepthScale = 10000;
+		extra_depth_game = true;
+	}
+	// Re-Volt (US, EU)
+	else if (!strncmp("T-8109N", reios_product_number, 7) || !strncmp("T8107D  50", reios_product_number, 10))
+	{
+		INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", reios_product_number);
+		settings.rend.ExtraDepthScale = 100;
 		extra_depth_game = true;
 	}
 	// Super Producers
@@ -292,12 +303,12 @@ void LoadSpecialSettings()
 #endif
 }
 
-void dc_reset()
+void dc_reset(bool manual)
 {
-	plugins_Reset(false);
-	mem_Reset(false);
+	plugins_Reset(manual);
+	mem_Reset(manual);
 
-	sh4_cpu.Reset(false);
+	sh4_cpu.Reset(manual);
 }
 
 static bool init_done;
@@ -358,7 +369,7 @@ int dc_start_game(const char *path)
 	if (init_done)
 	{
 		InitSettings();
-		dc_reset();
+		dc_reset(true);
 		LoadSettings(false);
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST
 		if (!settings.bios.UseReios)
@@ -449,7 +460,7 @@ int dc_start_game(const char *path)
 #endif
 	init_done = true;
 
-	dc_reset();
+	dc_reset(true);
 
 	game_started = true;
 	dc_resume();
@@ -489,7 +500,7 @@ void* dc_run(void*)
    		SaveRomFiles(get_writable_data_path("/data/"));
    		if (reset_requested)
    		{
-   			dc_reset();
+   			dc_reset(false);
    		}
 	} while (reset_requested);
 

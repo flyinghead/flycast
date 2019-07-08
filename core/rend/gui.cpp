@@ -47,7 +47,7 @@
 extern void dc_loadstate();
 extern void dc_savestate();
 extern void dc_stop();
-extern void dc_reset();
+extern void dc_reset(bool manual);
 extern void dc_resume();
 extern int dc_start_game(const char *path);
 extern void UpdateInputState(u32 port);
@@ -337,7 +337,7 @@ static void gui_display_commands()
 	ImGui::NextColumn();
 	if (ImGui::Button("Restart", ImVec2(150 * scaling, 50 * scaling)))
 	{
-		dc_reset();
+		dc_reset(true);
 		gui_state = Closed;
 	}
 	ImGui::NextColumn();
