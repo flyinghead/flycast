@@ -2189,6 +2189,14 @@ struct maple_naomi_jamma : maple_sega_controller
 
 			break;
 
+		case MDCF_GetCondition:
+			w8(MDRE_UnknownCmd);
+			w8(0x00);
+			w8(0x00);
+			w8(0x00);
+
+			break;
+
 		default:
 			INFO_LOG(MAPLE, "Unknown Maple command %x", cmd);
 			w8(MDRE_UnknownCmd);

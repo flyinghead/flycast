@@ -707,7 +707,6 @@ struct settings_t
 		bool PatchRegion;
 		bool LoadDefaultImage;
 		char DefaultImage[512];
-		char LastImage[512];
 	} imgread;
 
 	struct

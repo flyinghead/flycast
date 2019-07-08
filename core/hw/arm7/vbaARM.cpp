@@ -9,7 +9,6 @@
 //called when plugin is used by emu (you should do first time init here)
 s32 libARM_Init()
 {
-	init_mem();
 	arm_Init();
 
 	return rv_ok;
@@ -18,7 +17,6 @@ s32 libARM_Init()
 //called when plugin is unloaded by emu, only if dcInit is called (eg, not called to enumerate plugins)
 void libARM_Term()
 {
-	term_mem();
 	//arm7_Term ?
 }
 

@@ -192,8 +192,7 @@ bool InitDrive(u32 fileflags)
 
 	// FIXME: Data loss if buffer is too small
 	wchar fn[512];
-	strncpy(fn,settings.imgread.LastImage, sizeof(fn));
-	fn[sizeof(fn) - 1] = '\0';
+	fn[0] = '\0';
 
 #ifdef BUILD_DREAMCAST
 	int gfrv=GetFile(fn,0,fileflags);
@@ -214,20 +213,14 @@ bool InitDrive(u32 fileflags)
 		return false;
 	}
 
-	// FIXME: Data loss if buffer is too small
-	strncpy(settings.imgread.LastImage, fn, sizeof(settings.imgread.LastImage));
-	settings.imgread.LastImage[sizeof(settings.imgread.LastImage) - 1] = '\0';
-
-	SaveSettings();
-
 	if (!InitDrive_(fn))
 	{
 		//msgboxf("Selected image failed to load",MBX_ICONERROR);
-			NullDriveDiscType=NoDisk;
-			gd_setdisc();
-			sns_asc=0x29;
-			sns_ascq=0x00;
-			sns_key=0x6;
+		NullDriveDiscType = NoDisk;
+		gd_setdisc();
+		sns_asc = 0x29;
+		sns_ascq = 0x00;
+		sns_key = 0x6;
 		return true;
 	}
 	else
@@ -256,8 +249,7 @@ bool DiscSwap(u32 fileflags)
 
 	// FIXME: Data loss if buffer is too small
 	wchar fn[512];
-	strncpy(fn, settings.imgread.LastImage, sizeof(fn));
-	fn[sizeof(fn) - 1] = '\0';
+	fn[0] = '\0';
 
 
 #ifdef BUILD_DREAMCAST
@@ -267,7 +259,7 @@ bool DiscSwap(u32 fileflags)
 #endif
 	if (gfrv == 0)
 	{
-		NullDriveDiscType=Open;
+		NullDriveDiscType = Open;
 		gd_setdisc();
 		return true;
 	}
@@ -276,17 +268,10 @@ bool DiscSwap(u32 fileflags)
 		return false;
 	}
 
-	// FIXME: Data loss if buffer is too small
-	strncpy(settings.imgread.LastImage, fn, sizeof(settings.imgread.LastImage));
-	settings.imgread.LastImage[sizeof(settings.imgread.LastImage) - 1] = '\0';
-
-
-	SaveSettings();
-
 	if (!InitDrive_(fn))
 	{
 		//msgboxf("Selected image failed to load",MBX_ICONERROR);
-		NullDriveDiscType=Open;
+		NullDriveDiscType = Open;
 		gd_setdisc();
 	}
 
@@ -296,10 +281,10 @@ bool DiscSwap(u32 fileflags)
 
 void TermDrive()
 {
-	if (disc!=0)
+	if (disc != NULL)
 		delete disc;
 
-	disc=0;
+	disc = NULL;
 }
 
 

@@ -311,7 +311,6 @@ void dc_reset(bool manual)
 	sh4_cpu.Reset(manual);
 }
 
-static bool init_done;
 static bool reset_requested;
 
 int reicast_init(int argc, char* argv[])
@@ -359,81 +358,14 @@ int reicast_init(int argc, char* argv[])
 #define DATA_PATH "/"
 #endif
 
-bool game_started;
-
-int dc_start_game(const char *path)
+static int dc_init()
 {
-	if (path != NULL)
-		cfgSetVirtual("config", "image", path);
+	static bool init_done;
 
 	if (init_done)
-	{
-		InitSettings();
-		dc_reset(true);
-		LoadSettings(false);
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-		if (!settings.bios.UseReios)
-#endif
-			if (!LoadRomFiles(get_readonly_data_path(DATA_PATH)))
-				return -5;
-
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-		if (path == NULL)
-		{
-			// Boot BIOS
-			settings.imgread.LastImage[0] = 0;
-			TermDrive();
-			InitDrive();
-		}
-		else
-		{
-			if (DiscSwap())
-				LoadCustom();
-		}
-#elif DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
-		if (!naomi_cart_SelectFile())
-			return -6;
-		LoadCustom();
-#if DC_PLATFORM == DC_PLATFORM_NAOMI
-		mcfg_CreateNAOMIJamma();
-#elif DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
-		mcfg_CreateAtomisWaveControllers();
-#endif
-#endif
-
-		game_started = true;
-		dc_resume();
-
 		return 0;
-	}
-
-	if (settings.bios.UseReios || !LoadRomFiles(get_readonly_data_path(DATA_PATH)))
-	{
-#ifdef USE_REIOS
-		if (!LoadHle(get_readonly_data_path(DATA_PATH)))
-		{
-			return -5;
-		}
-		else
-		{
-			NOTICE_LOG(BOOT, "Did not load bios, using reios\n");
-		}
-#else
-		ERROR_LOG(BOOT, "Cannot find BIOS files\n");
-        return -5;
-#endif
-	}
-
 	if (plugins_Init())
 		return -3;
-
-#if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
-	if (!naomi_cart_SelectFile())
-		return -6;
-#endif
-
-	LoadCustom();
-
 #if FEAT_SHREC != DYNAREC_NONE
 	Get_Sh4Recompiler(&sh4_cpu);
 	sh4_cpu.Init();		// Also initialize the interpreter
@@ -450,17 +382,74 @@ int dc_start_game(const char *path)
 	}
 
 	mem_Init();
+	mem_map_default();	// TODO needs to be called again if changing platform
 
-	mem_map_default();
+	init_done = true;
 
+	return 0;
+}
+
+bool game_started;
+
+int dc_start_game(const char *path)
+{
+	if (path != NULL)
+		cfgSetVirtual("config", "image", path);
+
+	int rc = dc_init();
+	if (rc != 0)
+		return rc;
+
+	InitSettings();
+	dc_reset(true);
+	LoadSettings(false);
+	if (!LoadRomFiles(get_readonly_data_path(DATA_PATH)))
+	{
+#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
+#ifdef USE_REIOS
+		if (settings.bios.UseReios)
+		{
+			if (!LoadHle(get_readonly_data_path(DATA_PATH)))
+			{
+				ERROR_LOG(BOOT, "Cannot init HLE BIOS");
+				return -5;
+			}
+			else
+			{
+				NOTICE_LOG(BOOT, "Did not load bios, using reios");
+			}
+		}
+		else
+#endif
+		{
+			ERROR_LOG(BOOT, "Cannot find BIOS files");
+			return -5;
+		}
+#endif
+	}
+
+#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
+	if (path == NULL)
+	{
+		// Boot BIOS
+		TermDrive();
+		InitDrive();
+	}
+	else
+	{
+		if (DiscSwap())
+			LoadCustom();
+	}
+#elif DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
+	if (!naomi_cart_SelectFile())
+		return -6;
+	LoadCustom();
 #if DC_PLATFORM == DC_PLATFORM_NAOMI
 	mcfg_CreateNAOMIJamma();
 #elif DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
 	mcfg_CreateAtomisWaveControllers();
 #endif
-	init_done = true;
-
-	dc_reset(true);
+#endif
 
 	game_started = true;
 	dc_resume();
