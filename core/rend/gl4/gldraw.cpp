@@ -103,7 +103,7 @@ static void SetTextureRepeatMode(int index, GLuint dir, u32 clamp, u32 mirror)
 }
 
 template <u32 Type, bool SortingEnabled>
-	static void SetGPState(const PolyParam* gp, int pass, u32 cflip=0)
+	static void SetGPState(PolyParam* gp, int pass)
 {
 	if (gp->pcw.Texture && gp->tsp.FilterMode > 1)
 	{
@@ -231,14 +231,14 @@ template <u32 Type, bool SortingEnabled>
 	//set cull mode !
 	//cflip is required when exploding triangles for triangle sorting
 	//gcflip is global clip flip, needed for when rendering to texture due to mirrored Y direction
-	SetCull(gp->isp.CullMode^cflip^gcflip);
+	SetCull(gp->isp.CullMode ^ gcflip);
 
 	//set Z mode, only if required
-	if (Type == ListType_Punch_Through || (Type == ListType_Translucent && SortingEnabled))
+	if (Type == ListType_Punch_Through)
 	{
 		glcache.DepthFunc(Zfunction[6]);	// Greater or equal
 	}
-	else
+	else if (Type == ListType_Opaque)
 	{
 		glcache.DepthFunc(Zfunction[gp->isp.DepthMode]);
 	}
@@ -246,7 +246,8 @@ template <u32 Type, bool SortingEnabled>
 	// Depth buffer is updated in pass 0 (and also in pass 1 for OP PT)
 	if (pass < 2)
 	{
-		// Ignore ZWriteDis for punch-through? fixes Worms World Party
+		// Z Write Disable seems to be ignored for punch-through polys
+		// Fixes Worms World Party, Bust-a-Move 4 and Re-Volt
 		if (Type == ListType_Punch_Through)
 			glcache.DepthMask(GL_TRUE);
 		else
@@ -256,7 +257,7 @@ template <u32 Type, bool SortingEnabled>
 		glcache.DepthMask(GL_FALSE);
 }
 
-template <u32 Type, bool SortingEnabled>
+template <u32 Type, bool SortingEnabled, bool OnlyAlwaysDepth>
 static void DrawList(const List<PolyParam>& gply, int first, int count, int pass)
 {
 	PolyParam* params = &gply.head()[first];
@@ -279,7 +280,7 @@ static void DrawList(const List<PolyParam>& gply, int first, int count, int pass
 					continue;
 				}
 			}
-			if (pass == 0 && Type == ListType_Translucent && (params->isp.DepthMode != 7 || params->isp.ZWriteDis))
+			if (OnlyAlwaysDepth && (params->isp.DepthMode != 7 || params->isp.ZWriteDis))
 			{
 				params++;
 				continue;
@@ -534,8 +535,8 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 			glcache.Enable(GL_STENCIL_TEST);
 			glcache.StencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 
-			DrawList<ListType_Opaque, false>(pvrrc.global_param_op, previous_pass.op_count, current_pass.op_count - previous_pass.op_count, 0);
-			DrawList<ListType_Punch_Through, false>(pvrrc.global_param_pt, previous_pass.pt_count, current_pass.pt_count - previous_pass.pt_count, 0);
+			DrawList<ListType_Opaque, false, false>(pvrrc.global_param_op, previous_pass.op_count, current_pass.op_count - previous_pass.op_count, 0);
+			DrawList<ListType_Punch_Through, false, false>(pvrrc.global_param_pt, previous_pass.pt_count, current_pass.pt_count - previous_pass.pt_count, 0);
 
 			// Modifier volumes
 			if (settings.rend.ModifierVolumes)
@@ -570,10 +571,10 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 			glCheck();
 
 			//Opaque
-			DrawList<ListType_Opaque, false>(pvrrc.global_param_op, previous_pass.op_count, current_pass.op_count - previous_pass.op_count, 1);
+			DrawList<ListType_Opaque, false, false>(pvrrc.global_param_op, previous_pass.op_count, current_pass.op_count - previous_pass.op_count, 1);
 
 			//Alpha tested
-			DrawList<ListType_Punch_Through, false>(pvrrc.global_param_pt, previous_pass.pt_count, current_pass.pt_count - previous_pass.pt_count, 1);
+			DrawList<ListType_Punch_Through, false, false>(pvrrc.global_param_pt, previous_pass.pt_count, current_pass.pt_count - previous_pass.pt_count, 1);
 
 			// Unbind stencil
 			glActiveTexture(GL_TEXTURE3);
@@ -597,7 +598,7 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 				glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 				glcache.Enable(GL_DEPTH_TEST);
 				glcache.DepthMask(GL_TRUE);
-				DrawList<ListType_Translucent, false>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count, 0);
+				DrawList<ListType_Translucent, false, true>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count, 0);
 			}
 			//
 			// PASS 3: Render TR to a-buffers
@@ -611,9 +612,9 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 
 			//Alpha blended
 			if (current_pass.autosort)
-				DrawList<ListType_Translucent, true>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count, 3); // 3 because pass 2 is no more
+				DrawList<ListType_Translucent, true, false>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count, 3); // 3 because pass 2 is no more
 			else
-				DrawList<ListType_Translucent, false>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count, 3); // 3 because pass 2 is no more
+				DrawList<ListType_Translucent, false, false>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count, 3); // 3 because pass 2 is no more
 			glCheck();
 
 			// Translucent modifier volumes
@@ -632,9 +633,9 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 
 				glcache.Enable(GL_DEPTH_TEST);
 				if (current_pass.autosort)
-					DrawList<ListType_Translucent, true>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count, 0);
+					DrawList<ListType_Translucent, true, false>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count, 0);
 				else
-					DrawList<ListType_Translucent, false>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count, 0);
+					DrawList<ListType_Translucent, false, false>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count, 0);
 
 				//
 				// PASS 3c: Render a-buffer to temporary texture

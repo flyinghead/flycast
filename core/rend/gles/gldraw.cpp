@@ -264,7 +264,8 @@ __forceinline
 		glcache.DepthMask(GL_FALSE);
 	else
 	{
-		// Ignore ZWriteDis for punch-through? fixes Worms World Party
+		// Z Write Disable seems to be ignored for punch-through.
+		// Fixes Worms World Party, Bust-a-Move 4 and Re-Volt
 		if (Type == ListType_Punch_Through)
 			glcache.DepthMask(GL_TRUE);
 		else

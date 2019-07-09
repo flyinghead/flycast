@@ -72,46 +72,53 @@ vec4 resolveAlphaBlend(ivec2 coords) { \n\
 	vec4 secondaryBuffer = vec4(0.0); // Secondary accumulation buffer \n\
 	float depth = 1.0; \n\
 	 \n\
+	bool do_depth_test = false; \n\
 	for (int i = 0; i < num_frag; i++) \n\
 	{ \n\
 		const Pixel pixel = pixels[pixel_list[i]]; \n\
 		const PolyParam pp = tr_poly_params[getPolyNumber(pixel)]; \n\
 #if DEPTH_SORTED != 1 \n\
 		const float frag_depth = pixel.depth; \n\
-		switch (getDepthFunc(pp)) \n\
+		if (do_depth_test) \n\
 		{ \n\
-		case 0:		// Never \n\
-			continue; \n\
-		case 1:		// Greater \n\
-			if (frag_depth <= depth) \n\
+			switch (getDepthFunc(pp)) \n\
+			{ \n\
+			case 0:		// Never \n\
 				continue; \n\
-			break; \n\
-		case 2:		// Equal \n\
-			if (frag_depth != depth) \n\
-				continue; \n\
-			break; \n\
-		case 3:		// Greater or equal \n\
-			if (frag_depth < depth) \n\
-				continue; \n\
-			break; \n\
-		case 4:		// Less \n\
-			if (frag_depth >= depth) \n\
-				continue; \n\
-			break; \n\
-		case 5:		// Not equal \n\
-			if (frag_depth == depth) \n\
-				continue; \n\
-			break; \n\
-		case 6:		// Less or equal \n\
-			if (frag_depth > depth) \n\
-				continue; \n\
-			break; \n\
-		case 7:		// Always \n\
-			break; \n\
+			case 1:		// Greater \n\
+				if (frag_depth <= depth) \n\
+					continue; \n\
+				break; \n\
+			case 2:		// Equal \n\
+				if (frag_depth != depth) \n\
+					continue; \n\
+				break; \n\
+			case 3:		// Greater or equal \n\
+				if (frag_depth < depth) \n\
+					continue; \n\
+				break; \n\
+			case 4:		// Less \n\
+				if (frag_depth >= depth) \n\
+					continue; \n\
+				break; \n\
+			case 5:		// Not equal \n\
+				if (frag_depth == depth) \n\
+					continue; \n\
+				break; \n\
+			case 6:		// Less or equal \n\
+				if (frag_depth > depth) \n\
+					continue; \n\
+				break; \n\
+			case 7:		// Always \n\
+				break; \n\
+			} \n\
 		} \n\
 		 \n\
 		if (getDepthMask(pp)) \n\
+		{ \n\
 			depth = frag_depth; \n\
+			do_depth_test = true; \n\
+		} \n\
 #endif \n\
 		bool area1 = false; \n\
 		bool shadowed = false; \n\
@@ -207,7 +214,7 @@ void main(void) \n\
 	ivec2 coords = ivec2(gl_FragCoord.xy); \n\
 	// Compute and output final color for the frame buffer \n\
 	// Visualize the number of layers in use \n\
-	//FragColor = vec4(float(fillFragmentArray(coords)) / MAX_PIXELS_PER_FRAGMENT, 0, 0, 1); \n\
+	//FragColor = vec4(float(fillAndSortFragmentArray(coords)) / MAX_PIXELS_PER_FRAGMENT * 4, 0, 0, 1); \n\
 	FragColor = resolveAlphaBlend(coords); \n\
 } \n\
 ";
