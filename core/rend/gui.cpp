@@ -653,10 +653,11 @@ static void gui_display_settings()
     	if (maple_devices_changed)
     	{
     		maple_devices_changed = false;
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-    		maple_ReconnectDevices();
-    		reset_vmus();
-#endif
+    		if (game_started && settings.platform.system == DC_PLATFORM_DREAMCAST)
+    		{
+    			maple_ReconnectDevices();
+    			reset_vmus();
+    		}
     	}
        	SaveSettings();
     }
@@ -811,14 +812,12 @@ static void gui_display_settings()
 		if (ImGui::BeginTabItem("Controls"))
 		{
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
 		    if (ImGui::CollapsingHeader("Dreamcast Devices", ImGuiTreeNodeFlags_DefaultOpen))
 		    {
 				for (int bus = 0; bus < MAPLE_PORTS; bus++)
 				{
 					ImGui::Text("Device %c", bus + 'A');
 					ImGui::SameLine();
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
 					char device_name[32];
 					sprintf(device_name, "##device%d", bus);
 					float w = ImGui::CalcItemWidth() / 3;
@@ -862,14 +861,9 @@ static void gui_display_settings()
 						ImGui::PopID();
 					}
 					ImGui::PopItemWidth();
-#elif DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
-					if (MapleDevices[bus][5] != NULL)
-						ImGui::Text("%s", maple_device_name(MapleDevices[bus][5]->get_device_type()));
-#endif
 				}
 				ImGui::Spacing();
 		    }
-#endif
 		    if (ImGui::CollapsingHeader("Physical Devices", ImGuiTreeNodeFlags_DefaultOpen))
 		    {
 				ImGui::Columns(4, "renderers", false);
@@ -1253,15 +1247,14 @@ static void gui_display_settings()
 				ImGui::Text("Git Hash: %s", GIT_HASH);
 				ImGui::Text("Build Date: %s", BUILD_DATE);
 				ImGui::Text("Target: %s",
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
+					settings.platform.system == DC_PLATFORM_DREAMCAST ?
 						"Dreamcast"
-#elif DC_PLATFORM == DC_PLATFORM_NAOMI
+					: settings.platform.system == DC_PLATFORM_NAOMI ?
 						"Naomi"
-#elif DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
+					: settings.platform.system == DC_PLATFORM_ATOMISWAVE ?
 						"Atomiswave"
-#else
+					:
 						"Unknown"
-#endif
 						);
 		    }
 		    if (ImGui::CollapsingHeader("Platform", ImGuiTreeNodeFlags_DefaultOpen))
@@ -1379,25 +1372,17 @@ static void add_game_directory(const std::string& path, std::vector<GameMedia>& 
 		}
 		else
 		{
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-			if (name.size() >= 4)
-			{
-				std::string extension = name.substr(name.size() - 4).c_str();
-				//printf("  found game %s ext %s\n", entry->d_name, extension.c_str());
-				if (stricmp(extension.c_str(), ".cdi") && stricmp(extension.c_str(), ".gdi") && stricmp(extension.c_str(), ".chd") && stricmp(extension.c_str(), ".cue"))
-					continue;
-				game_list.push_back({ name, child_path });
-			}
-#else
 			std::string::size_type dotpos = name.find_last_of(".");
 			if (dotpos == std::string::npos || dotpos == name.size() - 1)
 				continue;
 			std::string extension = name.substr(dotpos);
-			if (stricmp(extension.c_str(), ".zip") && stricmp(extension.c_str(), ".7z") && stricmp(extension.c_str(), ".bin")
-					 && stricmp(extension.c_str(), ".lst") && stricmp(extension.c_str(), ".dat"))
+			if (stricmp(extension.c_str(), ".zip") && stricmp(extension.c_str(), ".7z")
+					&& stricmp(extension.c_str(), ".bin") && stricmp(extension.c_str(), ".lst")
+					&& stricmp(extension.c_str(), ".dat")
+					&& stricmp(extension.c_str(), ".cdi") && stricmp(extension.c_str(), ".gdi")
+					&& stricmp(extension.c_str(), ".chd")  && stricmp(extension.c_str(), ".cue"))
 				continue;
 			game_list.push_back({ name, child_path });
-#endif
 		}
 	}
 	closedir(dir);
@@ -1484,7 +1469,6 @@ static void gui_display_content()
     {
 		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8 * scaling, 20 * scaling));		// from 8, 4
 
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
 		ImGui::PushID("bios");
 		if (ImGui::Selectable("Dreamcast BIOS"))
 		{
@@ -1493,7 +1477,6 @@ static void gui_display_content()
 			gui_start_game("");
 		}
 		ImGui::PopID();
-#endif
 
         for (auto& game : game_list)
         	if (filter.PassFilter(game.name.c_str()))

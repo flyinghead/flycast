@@ -441,6 +441,7 @@ void _vmem_term() {}
 
 u8* virt_ram_base;
 bool vmem_4gb_space;
+static VMemType vmemstatus;
 
 void* malloc_pages(size_t size) {
 #if HOST_OS == OS_WINDOWS
@@ -512,14 +513,49 @@ bool _vmem_reserve() {
 	// TODO: Static assert?
 	verify((sizeof(Sh4RCB)%PAGE_SIZE)==0);
 
-	VMemType vmemstatus = MemTypeError;
+	vmemstatus = MemTypeError;
 
 	// Use vmem only if settings mandate so, and if we have proper exception handlers.
-	#ifndef TARGET_NO_EXCEPTIONS
+#ifndef TARGET_NO_EXCEPTIONS
 	if (!settings.dynarec.disable_nvmem)
 		vmemstatus = vmem_platform_init((void**)&virt_ram_base, (void**)&p_sh4rcb);
-	#endif
+#endif
+	return true;
+}
 
+void _vmem_term_mappings()
+{
+	if (vmemstatus == MemTypeError) {
+		if (p_sh4rcb != NULL)
+		{
+			free(p_sh4rcb);
+			p_sh4rcb = NULL;
+		}
+		if (mem_b.data != NULL)
+		{
+			free(mem_b.data);
+			mem_b.data = NULL;
+		}
+		if (vram.data != NULL)
+		{
+			free(vram.data);
+			vram.data = NULL;
+		}
+		if (aica_ram.data != NULL)
+		{
+			free(aica_ram.data);
+			aica_ram.data = NULL;
+		}
+	}
+	else
+	{
+		//vmem_platform_destroy();	// FIXME Needed for Windows
+	}
+}
+
+void _vmem_init_mappings()
+{
+	_vmem_term_mappings();
 	// Fallback to statically allocated buffers, this results in slow-ops being generated.
 	if (vmemstatus == MemTypeError) {
 		WARN_LOG(VMEM, "Warning! nvmem is DISABLED (due to failure or not being built-in");
@@ -627,8 +663,6 @@ bool _vmem_reserve() {
 	aica_ram.Zero();
 	vram.Zero();
 	mem_b.Zero();
-
-	return true;
 }
 
 #define freedefptr(x) \

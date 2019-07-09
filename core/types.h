@@ -421,8 +421,8 @@ bool dc_unserialize(void **data, unsigned int *total_size);
 #define REICAST_S(v) rc_serialize(&(v), sizeof(v), data, total_size)
 #define REICAST_US(v) rc_unserialize(&(v), sizeof(v), data, total_size)
 
-#define REICAST_SA(v_arr,num) rc_serialize(v_arr, sizeof(v_arr[0])*num, data, total_size)
-#define REICAST_USA(v_arr,num) rc_unserialize(v_arr, sizeof(v_arr[0])*num, data, total_size)
+#define REICAST_SA(v_arr,num) rc_serialize((v_arr), sizeof((v_arr)[0])*(num), data, total_size)
+#define REICAST_USA(v_arr,num) rc_unserialize((v_arr), sizeof((v_arr)[0])*(num), data, total_size)
 
 enum
 {
@@ -606,6 +606,19 @@ enum LimitFPSEnum {
 struct settings_t
 {
 	struct {
+		int system;
+		u32 ram_size;
+		u32 ram_mask;
+		u32 vram_size;
+		u32 vram_mask;
+		u32 aram_size;
+		u32 aram_mask;
+		u32 bios_size;
+		u32 flash_size;
+		u32 bbsram_size;
+	} platform;
+
+	struct {
 		bool UseReios;
 	} bios;
 
@@ -737,6 +750,16 @@ struct settings_t
 };
 
 extern settings_t settings;
+
+#define RAM_SIZE settings.platform.ram_size
+#define RAM_MASK settings.platform.ram_mask
+#define ARAM_SIZE settings.platform.aram_size
+#define ARAM_MASK settings.platform.aram_mask
+#define VRAM_SIZE settings.platform.vram_size
+#define VRAM_MASK settings.platform.vram_mask
+#define BIOS_SIZE settings.platform.bios_size
+#define FLASH_SIZE settings.platform.flash_size
+#define BBSRAM_SIZE settings.platform.bbsram_size
 
 void InitSettings();
 void LoadSettings(bool game_specific);

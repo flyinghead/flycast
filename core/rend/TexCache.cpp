@@ -125,7 +125,7 @@ void palette_update()
 
 using namespace std;
 
-vector<vram_block*> VramLocks[VRAM_SIZE/PAGE_SIZE];
+vector<vram_block*> VramLocks[VRAM_SIZE_MAX / PAGE_SIZE];
 VLockedMemory vram;  // vram 32-64b
 
 //List functions

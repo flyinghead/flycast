@@ -58,12 +58,9 @@ struct IMapleConfigMap
 	virtual ~IMapleConfigMap() {}
 };
 
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
 void mcfg_CreateDevices();
-#else
 void mcfg_CreateNAOMIJamma();
 void mcfg_CreateAtomisWaveControllers();
-#endif
 
 void mcfg_DestroyDevices();
 void mcfg_SerializeDevices(void **data, unsigned int *total_size);

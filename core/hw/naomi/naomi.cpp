@@ -534,10 +534,6 @@ void naomi_reg_Init()
 	}
 	#endif
 	NaomiInit();
-
-	sb_rio_register(SB_GDST_addr, RIO_WF, 0, &Naomi_DmaStart);
-
-	sb_rio_register(SB_GDEN_addr, RIO_WF, 0, &Naomi_DmaEnable);
 }
 
 void naomi_reg_Term()
@@ -555,6 +551,9 @@ void naomi_reg_Term()
 }
 void naomi_reg_Reset(bool Manual)
 {
+	sb_rio_register(SB_GDST_addr, RIO_WF, 0, &Naomi_DmaStart);
+	sb_rio_register(SB_GDEN_addr, RIO_WF, 0, &Naomi_DmaEnable);
+
 	NaomiDataRead = false;
 	aw_ram_test_skipped = false;
 	GSerialBuffer = 0;

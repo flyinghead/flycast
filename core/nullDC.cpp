@@ -132,175 +132,178 @@ void plugins_Reset(bool Manual)
 
 void LoadSpecialSettings()
 {
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-	INFO_LOG(BOOT, "Game ID is [%s]", reios_product_number);
-	rtt_to_buffer_game = false;
-	safemode_game = false;
-	tr_poly_depth_mask_game = false;
-	extra_depth_game = false;
-	full_mmu_game = false;
-	disable_vmem32_game = false;
+	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+	{
+		INFO_LOG(BOOT, "Game ID is [%s]", reios_product_number);
+		rtt_to_buffer_game = false;
+		safemode_game = false;
+		tr_poly_depth_mask_game = false;
+		extra_depth_game = false;
+		full_mmu_game = false;
+		disable_vmem32_game = false;
 
-	if (reios_windows_ce || !strncmp("T26702N", reios_product_number, 7)) // PBA Tour Bowling 2001
-	{
-		INFO_LOG(BOOT, "Enabling Full MMU and Extra depth scaling for Windows CE game");
-		settings.rend.ExtraDepthScale = 0.1;
-		extra_depth_game = true;
-		settings.dreamcast.FullMMU = true;
-		full_mmu_game = true;
-		settings.aica.NoBatch = true;
-	}
+		if (reios_windows_ce || !strncmp("T26702N", reios_product_number, 7)) // PBA Tour Bowling 2001
+		{
+			INFO_LOG(BOOT, "Enabling Full MMU and Extra depth scaling for Windows CE game");
+			settings.rend.ExtraDepthScale = 0.1;
+			extra_depth_game = true;
+			settings.dreamcast.FullMMU = true;
+			full_mmu_game = true;
+			settings.aica.NoBatch = true;
+		}
 
-	// Tony Hawk's Pro Skater 2
-	if (!strncmp("T13008D", reios_product_number, 7) || !strncmp("T13006N", reios_product_number, 7)
-			// Tony Hawk's Pro Skater 1
-			|| !strncmp("T40205N", reios_product_number, 7)
-			// Tony Hawk's Skateboarding
-			|| !strncmp("T40204D", reios_product_number, 7)
-			// Skies of Arcadia
-			|| !strncmp("MK-51052", reios_product_number, 8)
-			// Eternal Arcadia (JP)
-			|| !strncmp("HDR-0076", reios_product_number, 8)
-			// Flag to Flag (US)
-			|| !strncmp("MK-51007", reios_product_number, 8)
-			// Super Speed Racing (JP)
-			|| !strncmp("HDR-0013", reios_product_number, 8)
-			// Yu Suzuki Game Works Vol. 1
-			|| !strncmp("6108099", reios_product_number, 7)
-			// L.O.L
-			|| !strncmp("T2106M", reios_product_number, 6)
-			// Miss Moonlight
-			|| !strncmp("T18702M", reios_product_number, 7)
-			// Tom Clancy's Rainbow Six (US)
-			|| !strncmp("T40401N", reios_product_number, 7)
-			// Tom Clancy's Rainbow Six incl. Eagle Watch Missions (EU)
-			|| !strncmp("T-45001D05", reios_product_number, 10))
-	{
-		settings.rend.RenderToTextureBuffer = 1;
-		rtt_to_buffer_game = true;
+		// Tony Hawk's Pro Skater 2
+		if (!strncmp("T13008D", reios_product_number, 7) || !strncmp("T13006N", reios_product_number, 7)
+				// Tony Hawk's Pro Skater 1
+				|| !strncmp("T40205N", reios_product_number, 7)
+				// Tony Hawk's Skateboarding
+				|| !strncmp("T40204D", reios_product_number, 7)
+				// Skies of Arcadia
+				|| !strncmp("MK-51052", reios_product_number, 8)
+				// Eternal Arcadia (JP)
+				|| !strncmp("HDR-0076", reios_product_number, 8)
+				// Flag to Flag (US)
+				|| !strncmp("MK-51007", reios_product_number, 8)
+				// Super Speed Racing (JP)
+				|| !strncmp("HDR-0013", reios_product_number, 8)
+				// Yu Suzuki Game Works Vol. 1
+				|| !strncmp("6108099", reios_product_number, 7)
+				// L.O.L
+				|| !strncmp("T2106M", reios_product_number, 6)
+				// Miss Moonlight
+				|| !strncmp("T18702M", reios_product_number, 7)
+				// Tom Clancy's Rainbow Six (US)
+				|| !strncmp("T40401N", reios_product_number, 7)
+				// Tom Clancy's Rainbow Six incl. Eagle Watch Missions (EU)
+				|| !strncmp("T-45001D05", reios_product_number, 10))
+		{
+			settings.rend.RenderToTextureBuffer = 1;
+			rtt_to_buffer_game = true;
+		}
+		if (!strncmp("HDR-0176", reios_product_number, 8) || !strncmp("RDC-0057", reios_product_number, 8))
+		{
+			// Cosmic Smash
+			settings.rend.TranslucentPolygonDepthMask = 1;
+			tr_poly_depth_mask_game = true;
+		}
+		// Demolition Racer
+		if (!strncmp("T15112N", reios_product_number, 7)
+				// Ducati World - Racing Challenge (NTSC)
+				|| !strncmp("T-8113N", reios_product_number, 7)
+				// Ducati World (PAL)
+				|| !strncmp("T-8121D-50", reios_product_number, 10))
+		{
+			INFO_LOG(BOOT, "Enabling Dynarec safe mode for game %s", reios_product_number);
+			settings.dynarec.safemode = 1;
+			safemode_game = true;
+		}
+		// NHL 2K2
+		if (!strncmp("MK-51182", reios_product_number, 8))
+		{
+			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", reios_product_number);
+			settings.rend.ExtraDepthScale = 10000;
+			extra_depth_game = true;
+		}
+		// Re-Volt (US, EU)
+		else if (!strncmp("T-8109N", reios_product_number, 7) || !strncmp("T8107D  50", reios_product_number, 10))
+		{
+			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", reios_product_number);
+			settings.rend.ExtraDepthScale = 100;
+			extra_depth_game = true;
+		}
+		// Super Producers
+		if (!strncmp("T14303M", reios_product_number, 7)
+			// Giant Killers
+			|| !strncmp("T45401D 50", reios_product_number, 10)
+			// Wild Metal (US)
+			|| !strncmp("T42101N 00", reios_product_number, 10)
+			// Wild Metal (EU)
+			|| !strncmp("T40501D-50", reios_product_number, 10)
+			// Resident Evil 2 (US)
+			|| !strncmp("T1205N", reios_product_number, 6)
+			// Resident Evil 2 (EU)
+			|| !strncmp("T7004D  50", reios_product_number, 10)
+			// Rune Jade
+			|| !strncmp("T14304M", reios_product_number, 7)
+			// Marionette Company
+			|| !strncmp("T5202M", reios_product_number, 6)
+			// Marionette Company 2
+			|| !strncmp("T5203M", reios_product_number, 6)
+			// Maximum Pool (for online support)
+			|| !strncmp("T11010N", reios_product_number, 7)
+			// StarLancer (US) (for online support)
+			|| !strncmp("T40209N", reios_product_number, 7)
+			// StarLancer (EU) (for online support)
+			|| !strncmp("T17723D 05", reios_product_number, 10)
+			)
+		{
+			INFO_LOG(BOOT, "Disabling 32-bit virtual memory for game %s", reios_product_number);
+			settings.dynarec.disable_vmem32 = true;
+			disable_vmem32_game = true;
+		}
 	}
-	if (!strncmp("HDR-0176", reios_product_number, 8) || !strncmp("RDC-0057", reios_product_number, 8))
+	else if (settings.platform.system == DC_PLATFORM_NAOMI || settings.platform.system == DC_PLATFORM_ATOMISWAVE)
 	{
-		// Cosmic Smash
-		settings.rend.TranslucentPolygonDepthMask = 1;
-		tr_poly_depth_mask_game = true;
-	}
-	// Demolition Racer
-	if (!strncmp("T15112N", reios_product_number, 7)
-			// Ducati World - Racing Challenge (NTSC)
-			|| !strncmp("T-8113N", reios_product_number, 7)
-			// Ducati World (PAL)
-			|| !strncmp("T-8121D-50", reios_product_number, 10))
-	{
-		INFO_LOG(BOOT, "Enabling Dynarec safe mode for game %s", reios_product_number);
-		settings.dynarec.safemode = 1;
-		safemode_game = true;
-	}
-	// NHL 2K2
-	if (!strncmp("MK-51182", reios_product_number, 8))
-	{
-		INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", reios_product_number);
-		settings.rend.ExtraDepthScale = 10000;
-		extra_depth_game = true;
-	}
-	// Re-Volt (US, EU)
-	else if (!strncmp("T-8109N", reios_product_number, 7) || !strncmp("T8107D  50", reios_product_number, 10))
-	{
-		INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", reios_product_number);
-		settings.rend.ExtraDepthScale = 100;
-		extra_depth_game = true;
-	}
-	// Super Producers
-	if (!strncmp("T14303M", reios_product_number, 7)
-		// Giant Killers
-		|| !strncmp("T45401D 50", reios_product_number, 10)
-		// Wild Metal (US)
-		|| !strncmp("T42101N 00", reios_product_number, 10)
-		// Wild Metal (EU)
-		|| !strncmp("T40501D-50", reios_product_number, 10)
-		// Resident Evil 2 (US)
-		|| !strncmp("T1205N", reios_product_number, 6)
-		// Resident Evil 2 (EU)
-		|| !strncmp("T7004D  50", reios_product_number, 10)
-		// Rune Jade
-		|| !strncmp("T14304M", reios_product_number, 7)
-		// Marionette Company
-		|| !strncmp("T5202M", reios_product_number, 6)
-		// Marionette Company 2
-		|| !strncmp("T5203M", reios_product_number, 6)
-		// Maximum Pool (for online support)
-		|| !strncmp("T11010N", reios_product_number, 7)
-		// StarLancer (US) (for online support)
-		|| !strncmp("T40209N", reios_product_number, 7)
-		// StarLancer (EU) (for online support)
-		|| !strncmp("T17723D 05", reios_product_number, 10)
-		)
-	{
-		INFO_LOG(BOOT, "Disabling 32-bit virtual memory for game %s", reios_product_number);
-		settings.dynarec.disable_vmem32 = true;
-		disable_vmem32_game = true;
-	}
-#elif DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
-	INFO_LOG(BOOT, "Game ID is [%s]", naomi_game_id);
+		INFO_LOG(BOOT, "Game ID is [%s]", naomi_game_id);
 
-	if (!strcmp("METAL SLUG 6", naomi_game_id) || !strcmp("WAVE RUNNER GP", naomi_game_id))
-	{
-		INFO_LOG(BOOT, "Enabling Dynarec safe mode for game %s", naomi_game_id);
-		settings.dynarec.safemode = 1;
-		safemode_game = true;
+		if (!strcmp("METAL SLUG 6", naomi_game_id) || !strcmp("WAVE RUNNER GP", naomi_game_id))
+		{
+			INFO_LOG(BOOT, "Enabling Dynarec safe mode for game %s", naomi_game_id);
+			settings.dynarec.safemode = 1;
+			safemode_game = true;
+		}
+		if (!strcmp("SAMURAI SPIRITS 6", naomi_game_id))
+		{
+			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", naomi_game_id);
+			settings.rend.ExtraDepthScale = 1e26;
+			extra_depth_game = true;
+		}
+		if (!strcmp("DYNAMIC GOLF", naomi_game_id)
+				|| !strcmp("SHOOTOUT POOL", naomi_game_id)
+				|| !strcmp("OUTTRIGGER     JAPAN", naomi_game_id)
+				|| !strcmp("CRACKIN'DJ  ver JAPAN", naomi_game_id)
+				|| !strcmp("CRACKIN'DJ PART2  ver JAPAN", naomi_game_id)
+				|| !strcmp("KICK '4' CASH", naomi_game_id))
+		{
+			INFO_LOG(BOOT, "Enabling JVS rotary encoders for game %s", naomi_game_id);
+			settings.input.JammaSetup = 2;
+		}
+		else if (!strcmp("POWER STONE 2 JAPAN", naomi_game_id)		// Naomi
+				|| !strcmp("GUILTY GEAR isuka", naomi_game_id))		// AW
+		{
+			INFO_LOG(BOOT, "Enabling 4-player setup for game %s", naomi_game_id);
+			settings.input.JammaSetup = 1;
+		}
+		else if (!strcmp("SEGA MARINE FISHING JAPAN", naomi_game_id)
+					|| !strcmp(naomi_game_id, "BASS FISHING SIMULATOR VER.A"))	// AW
+		{
+			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", naomi_game_id);
+			settings.input.JammaSetup = 3;
+		}
+		else if (!strcmp("RINGOUT 4X4 JAPAN", naomi_game_id))
+		{
+			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", naomi_game_id);
+			settings.input.JammaSetup = 4;
+		}
+		else if (!strcmp("NINJA ASSAULT", naomi_game_id)
+					|| !strcmp(naomi_game_id, "Sports Shooting USA")	// AW
+					|| !strcmp(naomi_game_id, "SEGA CLAY CHALLENGE"))	// AW
+		{
+			INFO_LOG(BOOT, "Enabling lightgun setup for game %s", naomi_game_id);
+			settings.input.JammaSetup = 5;
+		}
+		else if (!strcmp(" BIOHAZARD  GUN SURVIVOR2", naomi_game_id))
+		{
+			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", naomi_game_id);
+			settings.input.JammaSetup = 7;
+		}
+		if (!strcmp("COSMIC SMASH IN JAPAN", naomi_game_id))
+		{
+			INFO_LOG(BOOT, "Enabling translucent depth multipass for game %s", naomi_game_id);
+			settings.rend.TranslucentPolygonDepthMask = true;
+			tr_poly_depth_mask_game = true;
+		}
 	}
-	if (!strcmp("SAMURAI SPIRITS 6", naomi_game_id))
-	{
-		INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", naomi_game_id);
-		settings.rend.ExtraDepthScale = 1e26;
-		extra_depth_game = true;
-	}
-	if (!strcmp("DYNAMIC GOLF", naomi_game_id)
-			|| !strcmp("SHOOTOUT POOL", naomi_game_id)
-			|| !strcmp("OUTTRIGGER     JAPAN", naomi_game_id)
-			|| !strcmp("CRACKIN'DJ  ver JAPAN", naomi_game_id)
-			|| !strcmp("CRACKIN'DJ PART2  ver JAPAN", naomi_game_id)
-			|| !strcmp("KICK '4' CASH", naomi_game_id))
-	{
-		INFO_LOG(BOOT, "Enabling JVS rotary encoders for game %s", naomi_game_id);
-		settings.input.JammaSetup = 2;
-	}
-	else if (!strcmp("POWER STONE 2 JAPAN", naomi_game_id)		// Naomi
-			|| !strcmp("GUILTY GEAR isuka", naomi_game_id))		// AW
-	{
-		INFO_LOG(BOOT, "Enabling 4-player setup for game %s", naomi_game_id);
-		settings.input.JammaSetup = 1;
-	}
-	else if (!strcmp("SEGA MARINE FISHING JAPAN", naomi_game_id)
-				|| !strcmp(naomi_game_id, "BASS FISHING SIMULATOR VER.A"))	// AW
-	{
-		INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", naomi_game_id);
-		settings.input.JammaSetup = 3;
-	}
-	else if (!strcmp("RINGOUT 4X4 JAPAN", naomi_game_id))
-	{
-		INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", naomi_game_id);
-		settings.input.JammaSetup = 4;
-	}
-	else if (!strcmp("NINJA ASSAULT", naomi_game_id)
-				|| !strcmp(naomi_game_id, "Sports Shooting USA")	// AW
-				|| !strcmp(naomi_game_id, "SEGA CLAY CHALLENGE"))	// AW
-	{
-		INFO_LOG(BOOT, "Enabling lightgun setup for game %s", naomi_game_id);
-		settings.input.JammaSetup = 5;
-	}
-	else if (!strcmp(" BIOHAZARD  GUN SURVIVOR2", naomi_game_id))
-	{
-		INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", naomi_game_id);
-		settings.input.JammaSetup = 7;
-	}
-	if (!strcmp("COSMIC SMASH IN JAPAN", naomi_game_id))
-	{
-		INFO_LOG(BOOT, "Enabling translucent depth multipass for game %s", naomi_game_id);
-		settings.rend.TranslucentPolygonDepthMask = true;
-		tr_poly_depth_mask_game = true;
-	}
-#endif
 }
 
 void dc_reset(bool manual)
@@ -358,12 +361,58 @@ int reicast_init(int argc, char* argv[])
 #define DATA_PATH "/"
 #endif
 
+void set_platform(int platform)
+{
+	switch (platform)
+	{
+	case DC_PLATFORM_DREAMCAST:
+		printf("Starting Dreamcast game\n");
+		settings.platform.ram_size = 16 * 1024 * 1024;
+		settings.platform.vram_size = 8 * 1024 * 1024;
+		settings.platform.aram_size = 2 * 1024 * 1024;
+		settings.platform.bios_size = 2 * 1024 * 1024;
+		settings.platform.flash_size = 128 * 1024;
+		settings.platform.bbsram_size = 0;
+		break;
+	case DC_PLATFORM_NAOMI:
+		printf("Starting Naomi game\n");
+		settings.platform.ram_size = 32 * 1024 * 1024;
+		settings.platform.vram_size = 16 * 1024 * 1024;
+		settings.platform.aram_size = 8 * 1024 * 1024;
+		settings.platform.bios_size = 2 * 1024 * 1024;
+		settings.platform.flash_size = 0;
+		settings.platform.bbsram_size = 32 * 1024;
+		break;
+	case DC_PLATFORM_ATOMISWAVE:
+		printf("Starting Atomiswave game\n");
+		settings.platform.ram_size = 16 * 1024 * 1024;
+		settings.platform.vram_size = 8 * 1024 * 1024;
+		settings.platform.aram_size = 8 * 1024 * 1024;
+		settings.platform.bios_size = 128 * 1024;
+		settings.platform.flash_size = 0;
+		settings.platform.bbsram_size = 128 * 1024;
+		break;
+	default:
+		die("Unsupported platform");
+		break;
+	}
+	settings.platform.system = platform;
+	settings.platform.ram_mask = settings.platform.ram_size - 1;
+	settings.platform.vram_mask = settings.platform.vram_size - 1;
+	settings.platform.aram_mask = settings.platform.aram_size - 1;
+	_vmem_init_mappings();
+}
+
 static int dc_init()
 {
 	static bool init_done;
 
 	if (init_done)
 		return 0;
+
+	// Default platform
+	set_platform(DC_PLATFORM_DREAMCAST);
+
 	if (plugins_Init())
 		return -3;
 #if FEAT_SHREC != DYNAREC_NONE
@@ -382,7 +431,6 @@ static int dc_init()
 	}
 
 	mem_Init();
-	mem_map_default();	// TODO needs to be called again if changing platform
 
 	init_done = true;
 
@@ -390,6 +438,23 @@ static int dc_init()
 }
 
 bool game_started;
+
+static int get_game_platform(const char *path)
+{
+	if (path == NULL)
+		// Dreamcast BIOS
+		return DC_PLATFORM_DREAMCAST;
+
+	const char *dot = strrchr(path, '.');
+	if (dot == NULL)
+		return DC_PLATFORM_DREAMCAST;	// unknown
+	if (!stricmp(dot, ".zip") || !stricmp(dot, ".7z"))
+		return naomi_cart_GetPlatform(path);
+	if (!stricmp(dot, ".bin") || !stricmp(dot, ".dat"))
+		return DC_PLATFORM_NAOMI;
+
+	return DC_PLATFORM_DREAMCAST;
+}
 
 int dc_start_game(const char *path)
 {
@@ -400,57 +465,64 @@ int dc_start_game(const char *path)
 	if (rc != 0)
 		return rc;
 
+	set_platform(get_game_platform(path));
+	mem_map_default();
+
 	InitSettings();
 	dc_reset(true);
 	LoadSettings(false);
 	if (!LoadRomFiles(get_readonly_data_path(DATA_PATH)))
 	{
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-#ifdef USE_REIOS
-		if (settings.bios.UseReios)
+		if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 		{
-			if (!LoadHle(get_readonly_data_path(DATA_PATH)))
+#ifdef USE_REIOS
+			if (settings.bios.UseReios)
 			{
-				ERROR_LOG(BOOT, "Cannot init HLE BIOS");
-				return -5;
+				if (!LoadHle(get_readonly_data_path(DATA_PATH)))
+				{
+					ERROR_LOG(BOOT, "Cannot init HLE BIOS");
+					return -5;
+				}
+				else
+				{
+					NOTICE_LOG(BOOT, "Did not load bios, using reios");
+				}
 			}
 			else
+#endif
 			{
-				NOTICE_LOG(BOOT, "Did not load bios, using reios");
+				ERROR_LOG(BOOT, "Cannot find BIOS files");
+				return -5;
 			}
 		}
-		else
-#endif
+	}
+
+	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+	{
+		mcfg_CreateDevices();
+
+		if (path == NULL)
 		{
-			ERROR_LOG(BOOT, "Cannot find BIOS files");
-			return -5;
+			// Boot BIOS
+			TermDrive();
+			InitDrive();
 		}
-#endif
+		else
+		{
+			if (DiscSwap())
+				LoadCustom();
+		}
 	}
-
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-	if (path == NULL)
+	else if (settings.platform.system == DC_PLATFORM_NAOMI || settings.platform.system == DC_PLATFORM_ATOMISWAVE)
 	{
-		// Boot BIOS
-		TermDrive();
-		InitDrive();
+		if (!naomi_cart_SelectFile())
+			return -6;
+		LoadCustom();
+		if (settings.platform.system == DC_PLATFORM_NAOMI)
+			mcfg_CreateNAOMIJamma();
+		else if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
+			mcfg_CreateAtomisWaveControllers();
 	}
-	else
-	{
-		if (DiscSwap())
-			LoadCustom();
-	}
-#elif DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
-	if (!naomi_cart_SelectFile())
-		return -6;
-	LoadCustom();
-#if DC_PLATFORM == DC_PLATFORM_NAOMI
-	mcfg_CreateNAOMIJamma();
-#elif DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
-	mcfg_CreateAtomisWaveControllers();
-#endif
-#endif
-
 	game_started = true;
 	dc_resume();
 
@@ -502,9 +574,8 @@ void* dc_run(void*)
 void dc_term()
 {
 	sh4_cpu.Term();
-#if DC_PLATFORM != DC_PLATFORM_DREAMCAST
-	naomi_cart_Close();
-#endif
+	if (settings.platform.system != DC_PLATFORM_DREAMCAST)
+		naomi_cart_Close();
 	plugins_Term();
 	mem_Term();
 	_vmem_release();
@@ -736,18 +807,22 @@ void LoadSettings(bool game_specific)
 
 void LoadCustom()
 {
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-	char *reios_id = reios_disk_id();
+	char *reios_id;
+	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+	{
+		reios_id = reios_disk_id();
 
-	char *p = reios_id + strlen(reios_id) - 1;
-	while (p >= reios_id && *p == ' ')
-		*p-- = '\0';
-	if (*p == '\0')
-		return;
-#elif DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
-	char *reios_id = naomi_game_id;
-	char *reios_software_name = naomi_game_id;
-#endif
+		char *p = reios_id + strlen(reios_id) - 1;
+		while (p >= reios_id && *p == ' ')
+			*p-- = '\0';
+		if (*p == '\0')
+			return;
+	}
+	else if (settings.platform.system == DC_PLATFORM_NAOMI || settings.platform.system == DC_PLATFORM_ATOMISWAVE)
+	{
+		reios_id = naomi_game_id;
+		char *reios_software_name = naomi_game_id;
+	}
 
 	// Default per-game settings
 	LoadSpecialSettings();

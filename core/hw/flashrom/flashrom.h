@@ -40,6 +40,11 @@ struct MemChip
 		return rv;
 	}
 
+	virtual void Write(u32 addr, u32 data, u32 size)
+	{
+		die("Method not supported");
+	}
+
 	bool Load(const string& file)
 	{
 		FILE* f=fopen(file.c_str(),"rb");
@@ -119,20 +124,20 @@ struct MemChip
 		INFO_LOG(FLASHROM, "Saved %s as %s", path, title.c_str());
 	}
 	virtual void Reset() {}
+	virtual bool Serialize(void **data, unsigned int *total_size) { return true; }
+	virtual bool Unserialize(void **data, unsigned int *total_size) { return true; }
 };
+
 struct RomChip : MemChip
 {
 	RomChip(u32 sz, u32 write_protect_size = 0) : MemChip(sz, write_protect_size) {}
-	void Write(u32 addr,u32 data,u32 sz)
-	{
-		die("Write to RomChip is not possible, address=%x, data=%x, size=%d");
-	}
 };
+
 struct SRamChip : MemChip
 {
 	SRamChip(u32 sz, u32 write_protect_size = 0) : MemChip(sz, write_protect_size) {}
 
-	void Write(u32 addr,u32 val,u32 sz)
+	void Write(u32 addr,u32 val,u32 sz) override
 	{
 		addr&=mask;
 		if (addr < write_protect_size)
@@ -151,6 +156,18 @@ struct SRamChip : MemChip
 		default:
 			die("invalid access size");
 		}
+	}
+
+	virtual bool Serialize(void **data, unsigned int *total_size)
+	{
+		REICAST_SA(&this->data[write_protect_size], size - write_protect_size);
+		return true;
+	}
+
+	virtual bool Unserialize(void **data, unsigned int *total_size)
+	{
+		REICAST_USA(&this->data[write_protect_size], size - write_protect_size);
+		return true;
 	}
 };
 
@@ -235,26 +252,27 @@ struct DCFlashChip : MemChip
 	
 	virtual u8 Read8(u32 addr) override
 	{
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-		switch (addr)
+		if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 		{
-		case 0x1A002:
-		case 0x1A0A2:
-			if (settings.dreamcast.region <= 2)
-				return '0' + settings.dreamcast.region;
-			break;
-		case 0x1A003:
-		case 0x1A0A3:
-			if (settings.dreamcast.language <= 5)
-				return '0' + settings.dreamcast.language;
-			break;
-		case 0x1A004:
-		case 0x1A0A4:
-			if (settings.dreamcast.broadcast <= 3)
-				return '0' + settings.dreamcast.broadcast;
-			break;
+			switch (addr)
+			{
+			case 0x1A002:
+			case 0x1A0A2:
+				if (settings.dreamcast.region <= 2)
+					return '0' + settings.dreamcast.region;
+				break;
+			case 0x1A003:
+			case 0x1A0A3:
+				if (settings.dreamcast.language <= 5)
+					return '0' + settings.dreamcast.language;
+				break;
+			case 0x1A004:
+			case 0x1A0A4:
+				if (settings.dreamcast.broadcast <= 3)
+					return '0' + settings.dreamcast.broadcast;
+				break;
+			}
 		}
-#endif
 
 		u32 rv=MemChip::Read8(addr);
 
@@ -262,7 +280,7 @@ struct DCFlashChip : MemChip
 	}
 	
 
-	void Write(u32 addr,u32 val,u32 sz)
+	void Write(u32 addr,u32 val,u32 sz) override
 	{
 		if (sz != 1)
 			die("invalid access size");
@@ -283,7 +301,7 @@ struct DCFlashChip : MemChip
 					state = FS_ReadAMDID1;
 				break;
 			default:
-				EMUERROR("Unknown FlashWrite mode: %x\n", val);
+				INFO_LOG(FLASHROM, "Unknown FlashWrite mode: %x\n", val);
 				break;
 			}
 			break;
@@ -357,15 +375,13 @@ struct DCFlashChip : MemChip
 			{
 				// chip erase
 				INFO_LOG(FLASHROM, "Erasing Chip!");
-#if DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
 				u8 save[0x2000];
-				// this area is write-protected on AW
-				memcpy(save, data + 0x1a000, 0x2000);
-#endif
+				if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
+					// this area is write-protected on AW
+					memcpy(save, data + 0x1a000, 0x2000);
 				memset(data + write_protect_size, 0xff, size - write_protect_size);
-#if DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
-				memcpy(data + 0x1a000, save, 0x2000);
-#endif
+				if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
+					memcpy(data + 0x1a000, save, 0x2000);
 				state = FS_Normal;
 			}
 			else if ((val & 0xff) == 0x30)
@@ -373,16 +389,14 @@ struct DCFlashChip : MemChip
 				// sector erase
 				if (addr >= write_protect_size)
 				{
-#if DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
 					u8 save[0x2000];
-					// this area is write-protected on AW
-					memcpy(save, data + 0x1a000, 0x2000);
-#endif
+					if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
+						// this area is write-protected on AW
+						memcpy(save, data + 0x1a000, 0x2000);
 					INFO_LOG(FLASHROM, "Erase Sector %08X! (%08X)", addr, addr & ~0x3FFF);
 					memset(&data[addr&(~0x3FFF)],0xFF,0x4000);
-#if DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
-					memcpy(data + 0x1a000, save, 0x2000);
-#endif
+					if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
+						memcpy(data + 0x1a000, save, 0x2000);
 				}
 				state = FS_Normal;
 			}
@@ -626,5 +640,19 @@ private:
 		}
 
 		return result;
+	}
+
+	virtual bool Serialize(void **data, unsigned int *total_size)
+	{
+		REICAST_SA(&this->data[write_protect_size], size - write_protect_size);
+		REICAST_S(state);
+		return true;
+	}
+
+	virtual bool Unserialize(void **data, unsigned int *total_size)
+	{
+		REICAST_USA(&this->data[write_protect_size], size - write_protect_size);
+		REICAST_US(state);
+		return true;
 	}
 };

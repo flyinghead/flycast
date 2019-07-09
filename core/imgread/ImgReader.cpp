@@ -70,10 +70,8 @@ void libGDR_Reset(bool Manual)
 //called when entering sh4 thread , from the new thread context (for any thread specific init)
 s32 libGDR_Init()
 {
-	if (!InitDrive())
-		return rv_serror;
 	libCore_gdrom_disc_change();
-	settings.imgread.PatchRegion=true;
+	settings.imgread.PatchRegion = true;
 	return rv_ok;
 }
 

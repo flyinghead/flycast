@@ -77,33 +77,36 @@ struct MapleConfigMap : IMapleConfigMap
 		UpdateInputState(player_num);
 
 		pjs->kcode=kcode[player_num];
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-		pjs->kcode |= 0xF901;		// mask off DPad2, C, D and Z
-		pjs->joy[PJAI_X1]=GetBtFromSgn(joyx[player_num]);
-		pjs->joy[PJAI_Y1]=GetBtFromSgn(joyy[player_num]);
-		pjs->trigger[PJTI_R]=rt[player_num];
-		pjs->trigger[PJTI_L]=lt[player_num];
-#elif DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
-		pjs->kcode = 0xFFFF;
-		for (int i = 0; i < 16; i++)
+		if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 		{
-			if ((kcode[player_num] & (1 << i)) == 0)
-				pjs->kcode &= ~awave_button_mapping[i];
+			pjs->kcode |= 0xF901;		// mask off DPad2, C, D and Z
+			pjs->joy[PJAI_X1]=GetBtFromSgn(joyx[player_num]);
+			pjs->joy[PJAI_Y1]=GetBtFromSgn(joyy[player_num]);
+			pjs->trigger[PJTI_R]=rt[player_num];
+			pjs->trigger[PJTI_L]=lt[player_num];
 		}
-		pjs->joy[PJAI_X1] = GetBtFromSgn(joyx[player_num]);
-		if (NaomiGameInputs != NULL && NaomiGameInputs->axes[1].name != NULL && NaomiGameInputs->axes[1].type == Half)
+		else if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
 		{
-			// Driving games: put axis 2 on RT (accel) and axis 3 on LT (brake)
-			pjs->joy[PJAI_Y1] = rt[player_num];
-			pjs->joy[PJAI_X2] = lt[player_num];
+			pjs->kcode = 0xFFFF;
+			for (int i = 0; i < 16; i++)
+			{
+				if ((kcode[player_num] & (1 << i)) == 0)
+					pjs->kcode &= ~awave_button_mapping[i];
+			}
+			pjs->joy[PJAI_X1] = GetBtFromSgn(joyx[player_num]);
+			if (NaomiGameInputs != NULL && NaomiGameInputs->axes[1].name != NULL && NaomiGameInputs->axes[1].type == Half)
+			{
+				// Driving games: put axis 2 on RT (accel) and axis 3 on LT (brake)
+				pjs->joy[PJAI_Y1] = rt[player_num];
+				pjs->joy[PJAI_X2] = lt[player_num];
+			}
+			else
+			{
+				pjs->joy[PJAI_Y1] = GetBtFromSgn(joyy[player_num]);
+				pjs->joy[PJAI_X2] = rt[player_num];
+				pjs->joy[PJAI_Y2] = lt[player_num];
+			}
 		}
-		else
-		{
-			pjs->joy[PJAI_Y1] = GetBtFromSgn(joyy[player_num]);
-			pjs->joy[PJAI_X2] = rt[player_num];
-			pjs->joy[PJAI_Y2] = lt[player_num];
-		}
-#endif
 	}
 	void SetImage(void* img)
 	{
@@ -134,12 +137,16 @@ void mcfg_Create(MapleDeviceType type, u32 bus, u32 port, s32 player_num = -1)
 
 void mcfg_CreateNAOMIJamma()
 {
+	printf("mcfg_CreateNAOMIJamma\n");
+	mcfg_DestroyDevices();
 	mcfg_Create(MDT_NaomiJamma, 0, 5);
 //	mcfg_Create(MDT_Keyboard, 2, 5);
 }
 
 void mcfg_CreateAtomisWaveControllers()
 {
+	printf("mcfg_CreateAtomisWaveControllers\n");
+	mcfg_DestroyDevices();
 	// Looks like two controllers needs to be on bus 0 and 1 for digital inputs
 	// Then other devices on port 2 and 3 for analog axes, light guns, ...
 	mcfg_Create(MDT_SegaController, 0, 5);
@@ -174,6 +181,7 @@ void mcfg_CreateAtomisWaveControllers()
 
 void mcfg_CreateDevices()
 {
+	printf("mcfg_CreateDevices\n");
 	for (int bus = 0; bus < MAPLE_PORTS; ++bus)
 	{
 		switch ((MapleDeviceType)settings.input.maple_devices[bus])
@@ -205,6 +213,7 @@ void mcfg_CreateDevices()
 
 void mcfg_DestroyDevices()
 {
+	printf("mcfg_DestroyDevices\n");
 	for (int i = 0; i < MAPLE_PORTS; i++)
 		for (int j=0;j<=5;j++)
 		{

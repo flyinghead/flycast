@@ -1,0 +1,1994 @@
+diff --git a/core/build.h b/core/build.h
+index 3ba546c..398c301 100755
+--- a/core/build.h
++++ b/core/build.h
+@@ -345,7 +345,7 @@
+ #define RAM_SIZE_MAX (32*1024*1024)
+ #define VRAM_SIZE_MAX (16*1024*1024)
+ #define ARAM_SIZE_MAX (8*1024*1024)
+-
++/*
+ #if (DC_PLATFORM==DC_PLATFORM_DREAMCAST)
+ 
+ 	#define BUILD_DREAMCAST 1
+@@ -433,7 +433,7 @@
+ #ifdef BBSRAM_SIZE
+ #define BBSRAM_MASK	(BBSRAM_SIZE-1)
+ #endif
+-
++*/
+ #define GD_CLOCK 33868800				//GDROM XTAL -- 768fs
+ 
+ #define AICA_CORE_CLOCK (GD_CLOCK*4/3)		//[45158400]  GD->PLL 3:4 -> AICA CORE	 -- 1024fs
+diff --git a/core/deps/vixl/platform-vixl.h b/core/deps/vixl/platform-vixl.h
+index ad8d057..8da090c 100644
+--- a/core/deps/vixl/platform-vixl.h
++++ b/core/deps/vixl/platform-vixl.h
+@@ -33,7 +33,7 @@ extern "C" {
+ }
+ 
+ #define VIXL_CODE_BUFFER_MALLOC
+-
++#define VIXL_DEBUG
+ 
+ #if defined(_ANDROID) && defined(VIXL_DEBUG)
+ #include <android/log.h>
+diff --git a/core/hw/flashrom/flashrom.h b/core/hw/flashrom/flashrom.h
+index 807f128..7dd03a9 100644
+--- a/core/hw/flashrom/flashrom.h
++++ b/core/hw/flashrom/flashrom.h
+@@ -40,6 +40,11 @@ struct MemChip
+ 		return rv;
+ 	}
+ 
++	virtual void Write(u32 addr, u32 data, u32 size)
++	{
++		die("Method not supported");
++	}
++
+ 	bool Load(const string& file)
+ 	{
+ 		FILE* f=fopen(file.c_str(),"rb");
+@@ -119,20 +124,20 @@ struct MemChip
+ 		INFO_LOG(FLASHROM, "Saved %s as %s", path, title.c_str());
+ 	}
+ 	virtual void Reset() {}
++	virtual bool Serialize(void **data, unsigned int *total_size) { return true; }
++	virtual bool Unserialize(void **data, unsigned int *total_size) { return true; }
+ };
++
+ struct RomChip : MemChip
+ {
+ 	RomChip(u32 sz, u32 write_protect_size = 0) : MemChip(sz, write_protect_size) {}
+-	void Write(u32 addr,u32 data,u32 sz)
+-	{
+-		die("Write to RomChip is not possible, address=%x, data=%x, size=%d");
+-	}
+ };
++
+ struct SRamChip : MemChip
+ {
+ 	SRamChip(u32 sz, u32 write_protect_size = 0) : MemChip(sz, write_protect_size) {}
+ 
+-	void Write(u32 addr,u32 val,u32 sz)
++	void Write(u32 addr,u32 val,u32 sz) override
+ 	{
+ 		addr&=mask;
+ 		if (addr < write_protect_size)
+@@ -152,6 +157,18 @@ struct SRamChip : MemChip
+ 			die("invalid access size");
+ 		}
+ 	}
++
++	virtual bool Serialize(void **data, unsigned int *total_size)
++	{
++		REICAST_SA(&this->data[write_protect_size], size - write_protect_size);
++		return true;
++	}
++
++	virtual bool Unserialize(void **data, unsigned int *total_size)
++	{
++		REICAST_USA(&this->data[write_protect_size], size - write_protect_size);
++		return true;
++	}
+ };
+ 
+ //
+@@ -262,7 +279,7 @@ struct DCFlashChip : MemChip
+ 	}
+ 	
+ 
+-	void Write(u32 addr,u32 val,u32 sz)
++	void Write(u32 addr,u32 val,u32 sz) override
+ 	{
+ 		if (sz != 1)
+ 			die("invalid access size");
+@@ -283,7 +300,19 @@ struct DCFlashChip : MemChip
+ 					state = FS_ReadAMDID1;
+ 				break;
+ 			default:
+-				EMUERROR("Unknown FlashWrite mode: %x\n", val);
++				INFO_LOG(FLASHROM, "Unknown FlashWrite mode: %x\n", val);
++/*
++				void print_blocks();
++				print_blocks();
++#define r p_sh4rcb->cntx.r
++#define next_pc p_sh4rcb->cntx.pc
++				DEBUG_LOG(SH4, "r0 %08x r1 %08x r2  %08x r3  %08x r4  %08x r5  %08x r6  %08x r7  %08x pc %08x ", r[0], r[1], r[2], r[3], r[4], r[5], r[6], r[7], next_pc);
++				DEBUG_LOG(SH4, "r8 %08x r9 %08x r10 %08x r11 %08x r12 %08x r13 %08x r14 %08x r15 %08x", r[8], r[9], r[10], r[11], r[12], r[13], r[14], r[15]);
++#undef r
++#undef next_pc
++				INFO_LOG(MEMORY, "[flash]Write pc=%x pr=%x\n", p_sh4rcb->cntx.pc, p_sh4rcb->cntx.pr);
++				die("done");
++*/
+ 				break;
+ 			}
+ 			break;
+@@ -627,4 +656,18 @@ private:
+ 
+ 		return result;
+ 	}
++
++	virtual bool Serialize(void **data, unsigned int *total_size)
++	{
++		REICAST_SA(&this->data[write_protect_size], size - write_protect_size);
++		REICAST_S(state);
++		return true;
++	}
++
++	virtual bool Unserialize(void **data, unsigned int *total_size)
++	{
++		REICAST_USA(&this->data[write_protect_size], size - write_protect_size);
++		REICAST_US(state);
++		return true;
++	}
+ };
+diff --git a/core/hw/gdrom/gdromv3.cpp b/core/hw/gdrom/gdromv3.cpp
+index cf675d9..9cccf3e 100644
+--- a/core/hw/gdrom/gdromv3.cpp
++++ b/core/hw/gdrom/gdromv3.cpp
+@@ -115,6 +115,27 @@ void FillReadBuffer()
+ 	libGDR_ReadSector(read_buff.cache,read_params.start_sector,count,read_params.sector_type);
+ 	read_params.start_sector+=count;
+ 	read_params.remaining_sectors-=count;
++/*
++	static const u8 pattern[] = {
++		// debug 0x01, 0xe5, 0x07, 0xe4, //0x01, 0xe5, //0x10, 0xe6, //0x00, 0xe7
++		//0x08, 0xe4, 0x74, 0x1f, 0x01, 0xe5, 0x75, 0x1f
++		//0x43, 0x6b, 0x53, 0x6d, 0x63, 0x6c, 0xec, 0x7f
++		0x20, 0x62, 0x2c, 0x62, 0x37, 0x32, 0x01, 0x8b
++	};
++	for (int i = 0; i < read_buff.cache_size - sizeof(pattern); i++)
++	{
++		if (!memcmp(&read_buff.cache[i], pattern, sizeof(pattern)))
++		{
++//			read_buff.cache[i + 0] = 0x00;
++//			read_buff.cache[i + 1] = 0xeb;
++//			read_buff.cache[i + 2] = 0x00;
++//			read_buff.cache[i + 3] = 0xed;
++//			read_buff.cache[i + 6] = 0x09;
++//			read_buff.cache[i + 7] = 0x00;
++			ERROR_LOG(GDROM, "Pattern found");
++		}
++	}
++*/
+ }
+ 
+ 
+@@ -755,7 +776,7 @@ void gd_process_spi_cmd()
+ 					subc_info[1]=0x15;//15h	No audio status information
+ 			}
+ 			
+-			subc_info[1]=0x15;
++//			subc_info[1]=0x15;
+ 
+ 			if (format==0)
+ 			{
+@@ -1029,14 +1050,14 @@ int GDRomschd(int i, int c, int j)
+ 	{
+ 		while(len)
+ 		{
+-			u32 buff_size =read_buff.cache_size;
+-			if (buff_size==0)
++			u32 buff_size = read_buff.cache_size;
++			if (buff_size == 0)
+ 			{
+ 				verify(read_params.remaining_sectors>0);
+ 				//buffer is empty , fill it :)
+ 				FillReadBuffer();
++				buff_size = read_buff.cache_size;
+ 			}
+-
+ 			//transfer up to len bytes
+ 			if (buff_size>len)
+ 			{
+diff --git a/core/hw/holly/sb.cpp b/core/hw/holly/sb.cpp
+index a3f50bc..7fc081c 100644
+--- a/core/hw/holly/sb.cpp
++++ b/core/hw/holly/sb.cpp
+@@ -426,14 +426,14 @@ void sb_Init()
+ 	sb_rio_register(SB_GDDIR_addr,RIO_DATA);
+ 
+ 
+-
++//#if 0
+ 	//0x005F7414    SB_GDEN     RW  GD-DMA enable
+ 	sb_rio_register(SB_GDEN_addr,RIO_DATA);
+ 
+ 
+ 	//0x005F7418    SB_GDST     RW  GD-DMA start
+ 	sb_rio_register(SB_GDST_addr,RIO_DATA);
+-
++//#endif
+ 
+ 
+ 	//0x005F7480    SB_G1RRC    W   System ROM read access timing
+diff --git a/core/hw/holly/sb_mem.cpp b/core/hw/holly/sb_mem.cpp
+index 77728c1..bc9b8d0 100644
+--- a/core/hw/holly/sb_mem.cpp
++++ b/core/hw/holly/sb_mem.cpp
+@@ -18,26 +18,36 @@
+ #include "hw/flashrom/flashrom.h"
+ #include "reios/reios.h"
+ 
+-#if DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
+-DCFlashChip sys_rom(BIOS_SIZE, BIOS_SIZE / 2);
+-#else
+-RomChip sys_rom(BIOS_SIZE);
+-#endif
++MemChip *sys_rom;
++MemChip *sys_nvmem;
+ 
+-#ifdef FLASH_SIZE
+-DCFlashChip sys_nvmem(FLASH_SIZE);
+-#endif
++extern bool bios_loaded;
+ 
+-#ifdef BBSRAM_SIZE
+-SRamChip sys_nvmem(BBSRAM_SIZE);
+-#endif
++static std::string getRomPrefix()
++{
++	switch (settings.platform.system)
++	{
++	case DC_PLATFORM_DREAMCAST:
++		return "dc_";
++	case DC_PLATFORM_NAOMI:
++		return "naomi_";
++	case DC_PLATFORM_ATOMISWAVE:
++		return "aw_";
++	default:
++		die("Unsupported platform");
++		return "";
++	}
++}
+ 
+-extern bool bios_loaded;
++static bool nvmemOptional()
++{
++	return settings.platform.system != DC_PLATFORM_DREAMCAST;
++}
+ 
+ bool LoadRomFiles(const string& root)
+ {
+ #if DC_PLATFORM != DC_PLATFORM_ATOMISWAVE
+-	if (!sys_rom.Load(root, ROM_PREFIX, "%boot.bin;%boot.bin.bin;%bios.bin;%bios.bin.bin" ROM_NAMES, "bootrom"))
++	if (!sys_rom->Load(root, getRomPrefix(), "%boot.bin;%boot.bin.bin;%bios.bin;%bios.bin.bin", "bootrom"))
+ 	{
+ #if DC_PLATFORM == DC_PLATFORM_DREAMCAST
+ 		// Dreamcast absolutely needs a BIOS
+@@ -49,12 +59,12 @@ bool LoadRomFiles(const string& root)
+ 		bios_loaded = true;
+ #endif
+ #if DC_PLATFORM == DC_PLATFORM_DREAMCAST
+-	if (!sys_nvmem.Load(root, ROM_PREFIX, "%nvmem.bin;%flash_wb.bin;%flash.bin;%flash.bin.bin", "nvram"))
++	if (!sys_nvmem->Load(root, getRomPrefix(), "%nvmem.bin;%flash_wb.bin;%flash.bin;%flash.bin.bin", "nvram"))
+ #else
+-	if (!sys_nvmem.Load(get_game_save_prefix() + ".nvmem"))
++	if (!sys_nvmem->Load(get_game_save_prefix() + ".nvmem"))
+ #endif
+ 	{
+-		if (NVR_OPTIONAL)
++		if (nvmemOptional())
+ 		{
+ 			INFO_LOG(FLASHROM, "flash/nvmem is missing, will create new file...");
+ 		}
+@@ -67,7 +77,7 @@ bool LoadRomFiles(const string& root)
+ 
+ #if DC_PLATFORM == DC_PLATFORM_DREAMCAST
+ 	struct flash_syscfg_block syscfg;
+-	int res = sys_nvmem.ReadBlock(FLASH_PT_USER, FLASH_USER_SYSCFG, &syscfg);
++	int res = static_cast<DCFlashChip*>(sys_nvmem)->ReadBlock(FLASH_PT_USER, FLASH_USER_SYSCFG, &syscfg);
+ 
+ 	if (!res)
+ 	{
+@@ -85,13 +95,13 @@ bool LoadRomFiles(const string& root)
+ 	if (settings.dreamcast.language <= 5)
+ 		syscfg.lang = settings.dreamcast.language;
+ 
+-	if (sys_nvmem.WriteBlock(FLASH_PT_USER, FLASH_USER_SYSCFG, &syscfg) != 1)
++	if (static_cast<DCFlashChip*>(sys_nvmem)->WriteBlock(FLASH_PT_USER, FLASH_USER_SYSCFG, &syscfg) != 1)
+ 		WARN_LOG(FLASHROM, "Failed to save time and language to flash RAM");
+ 
+ #endif
+ 
+ #if DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
+-	sys_rom.Load(get_game_save_prefix() + ".nvmem2");
++	sys_rom->Load(get_game_save_prefix() + ".nvmem2");
+ #endif
+ 
+ 	return true;
+@@ -100,35 +110,35 @@ bool LoadRomFiles(const string& root)
+ void SaveRomFiles(const string& root)
+ {
+ #if DC_PLATFORM == DC_PLATFORM_DREAMCAST
+-	sys_nvmem.Save(root, ROM_PREFIX, "nvmem.bin", "nvmem");
++	sys_nvmem->Save(root, getRomPrefix(), "nvmem.bin", "nvmem");
+ #else
+-	sys_nvmem.Save(get_game_save_prefix() + ".nvmem");
++	sys_nvmem->Save(get_game_save_prefix() + ".nvmem");
+ #endif
+ #if DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
+-	sys_rom.Save(get_game_save_prefix() + ".nvmem2");
++	sys_rom->Save(get_game_save_prefix() + ".nvmem2");
+ #endif
+ }
+ 
+ bool LoadHle(const string& root) {
+-	if (!sys_nvmem.Load(root, ROM_PREFIX, "%nvmem.bin;%flash_wb.bin;%flash.bin;%flash.bin.bin", "nvram")) {
++	if (!sys_nvmem->Load(root, getRomPrefix(), "%nvmem.bin;%flash_wb.bin;%flash.bin;%flash.bin.bin", "nvram")) {
+ 		INFO_LOG(FLASHROM, "No nvmem loaded");
+ 	}
+ 
+-	return reios_init(sys_rom.data, sys_nvmem.data);
++	return reios_init(sys_rom->data, sys_nvmem->data);
+ }
+ 
+-u32 ReadFlash(u32 addr,u32 sz) { return sys_nvmem.Read(addr,sz); }
+-void WriteFlash(u32 addr,u32 data,u32 sz) { sys_nvmem.Write(addr,data,sz); }
++u32 ReadFlash(u32 addr,u32 sz) { return sys_nvmem->Read(addr,sz); }
++void WriteFlash(u32 addr,u32 data,u32 sz) { sys_nvmem->Write(addr,data,sz); }
+ 
+ #if (DC_PLATFORM == DC_PLATFORM_DREAMCAST) || (DC_PLATFORM == DC_PLATFORM_DEV_UNIT) || (DC_PLATFORM == DC_PLATFORM_NAOMI) || (DC_PLATFORM == DC_PLATFORM_NAOMI2)
+ 
+-u32 ReadBios(u32 addr,u32 sz) { return sys_rom.Read(addr,sz); }
++u32 ReadBios(u32 addr,u32 sz) { return sys_rom->Read(addr,sz); }
+ void WriteBios(u32 addr,u32 data,u32 sz) { INFO_LOG(MEMORY, "Write to [Boot ROM] is not possible, addr=%x, data=%x, size=%d", addr, data, sz); }
+ 
+ #elif (DC_PLATFORM == DC_PLATFORM_ATOMISWAVE)
+ 	u32 ReadBios(u32 addr,u32 sz)
+ 	{
+-		return sys_rom.Read(addr, sz);
++		return sys_rom->Read(addr, sz);
+ 	}
+ 
+ 	void WriteBios(u32 addr,u32 data,u32 sz)
+@@ -136,9 +146,13 @@ void WriteBios(u32 addr,u32 data,u32 sz) { INFO_LOG(MEMORY, "Write to [Boot ROM]
+ 		if (sz != 1)
+ 		{
+ 			INFO_LOG(MEMORY, "Invalid access size @%08x data %x sz %d", addr, data, sz);
++//				void print_blocks();
++//				print_blocks();
++//				INFO_LOG(MEMORY, "[flash]Write pc=%x pr=%x", p_sh4rcb->cntx.pc, p_sh4rcb->cntx.pr);
++//				die("done");
+ 			return;
+ 		}
+-		sys_rom.Write(addr, data, sz);
++		sys_rom->Write(addr, data, sz);
+ 	}
+ 
+ #else
+@@ -345,19 +359,59 @@ void  DYNACALL WriteMem_area0(u32 addr,T data)
+ void sh4_area0_Init()
+ {
+ 	sb_Init();
++	sh4_area0_Reset(true);
+ }
+ 
+-void sh4_area0_Reset(bool Manual)
++void sh4_area0_Reset(bool manual)
+ {
+-	sb_Reset(Manual);
+-	sys_rom.Reset();
+-#if defined(FLASH_SIZE) || defined(BBSRAM_SIZE)
+-	sys_nvmem.Reset();
+-#endif
++	if (manual)
++	{
++		if (sys_rom != NULL)
++		{
++			delete sys_rom;
++			sys_rom = NULL;
++		}
++		if (sys_nvmem != NULL)
++		{
++			delete sys_nvmem;
++			sys_nvmem = NULL;
++		}
++		switch (settings.platform.system)
++		{
++		case DC_PLATFORM_DREAMCAST:
++			sys_rom = new RomChip(settings.platform.bios_size);
++			sys_nvmem = new DCFlashChip(settings.platform.bios_size);
++			break;
++		case DC_PLATFORM_NAOMI:
++			sys_rom = new RomChip(settings.platform.bios_size);
++			sys_nvmem = new SRamChip(settings.platform.bbsram_size);
++			break;
++		case DC_PLATFORM_ATOMISWAVE:
++			sys_rom = new DCFlashChip(settings.platform.bios_size, settings.platform.bios_size / 2);
++			sys_nvmem = new SRamChip(settings.platform.bbsram_size);
++			break;
++		}
++	}
++	else
++	{
++		sys_rom->Reset();
++		sys_nvmem->Reset();
++	}
++	sb_Reset(manual);
+ }
+ 
+ void sh4_area0_Term()
+ {
++	if (sys_rom != NULL)
++	{
++		delete sys_rom;
++		sys_rom = NULL;
++	}
++	if (sys_nvmem != NULL)
++	{
++		delete sys_nvmem;
++		sys_nvmem = NULL;
++	}
+ 	sb_Term();
+ }
+ 
+diff --git a/core/hw/mem/_vmem.cpp b/core/hw/mem/_vmem.cpp
+index 1eb8d6b..bd2526e 100644
+--- a/core/hw/mem/_vmem.cpp
++++ b/core/hw/mem/_vmem.cpp
+@@ -182,6 +182,10 @@ template<typename T,typename Trv>
+ INLINE Trv DYNACALL _vmem_readt(u32 addr)
+ {
+ 	const u32 sz=sizeof(T);
++//	if ((addr & 0x1ffffff0) == 0x0c19d3d0 || (addr & 0x1ffffff) == 0x0c1c0164) {
++//		extern VLockedMemory mem_b;
++//		printf("Read %08x pc %08x v %x\n", addr, p_sh4rcb->cntx.pc, *(u32*)&mem_b[addr & RAM_MASK]);
++//	}
+ 
+ 	u32   page=addr>>24;	//1 op, shift/extract
+ 	unat  iirf=(unat)_vmem_MemInfo_ptr[page]; //2 ops, insert + read [vmem table will be on reg ]
+@@ -232,7 +236,45 @@ template<typename T>
+ INLINE void DYNACALL _vmem_writet(u32 addr,T data)
+ {
+ 	const u32 sz=sizeof(T);
+-
++/*
++//db if (addr == 0x8cd4F604 || addr == 0x8cd4F504 || addr == 0x8cd4F504) printf("Write %08x pc %08x v %x\n", addr, p_sh4rcb->cntx.pc, (u32)data);
++	if ((addr & 0x1fffffff) == 0x0c19d3d0) {
++		printf("Write %08x pc %08x v %x\n", addr, p_sh4rcb->cntx.pc, (u32)data);
++		if (data == 0)
++			data = 0x8c600000;
++//		void print_blocks();
++//		print_blocks();
++//		//INFO_LOG(MEMORY, "[sh4]Read32 pc=%x pr=%x\n", p_sh4rcb->cntx.pc, p_sh4rcb->cntx.pr);
++//		die("done");
++	}
++	else if ((addr & 0x1fffffff) == 0x0c19d3d4) {
++			printf("Write %08x pc %08x v %x\n", addr, p_sh4rcb->cntx.pc, (u32)data);
++			if (data == 0)
++				data = 0x8c700000;
++	//		void print_blocks();
++	//		print_blocks();
++	//		//INFO_LOG(MEMORY, "[sh4]Read32 pc=%x pr=%x\n", p_sh4rcb->cntx.pc, p_sh4rcb->cntx.pr);
++	//		die("done");
++	}
++	else if ((addr & 0x1fffffff) == 0x0c19d3dc) {
++			printf("Write %08x pc %08x v %x\n", addr, p_sh4rcb->cntx.pc, (u32)data);
++			if (data == 0)
++				data = 0x8c780000;
++	//		void print_blocks();
++	//		print_blocks();
++	//		//INFO_LOG(MEMORY, "[sh4]Read32 pc=%x pr=%x\n", p_sh4rcb->cntx.pc, p_sh4rcb->cntx.pr);
++	//		die("done");
++	}
++	else if ((addr & 0x1fffffff) == 0x0c1c0164) {
++			printf("Write %08x pc %08x v %x\n", addr, p_sh4rcb->cntx.pc, (u32)data);
++//			if (data == 0)
++//				data = 0x8c780000;
++	//		void print_blocks();
++	//		print_blocks();
++	//		//INFO_LOG(MEMORY, "[sh4]Read32 pc=%x pr=%x\n", p_sh4rcb->cntx.pc, p_sh4rcb->cntx.pr);
++	//		die("done");
++	}
++*/
+ 	u32 page=addr>>24;
+ 	unat  iirf=(unat)_vmem_MemInfo_ptr[page];
+ 	void* ptr=(void*)(iirf&~HANDLER_MAX);
+@@ -299,31 +341,38 @@ void DYNACALL _vmem_WriteMem64(u32 Address,u64 data) { _vmem_writet<u64>(Address
+ //default read handlers
+ u8 DYNACALL _vmem_ReadMem8_not_mapped(u32 addresss)
+ {
+-	DEBUG_LOG(MEMORY, "[sh4]Read8 from 0x%X, not mapped [_vmem default handler]", addresss);
++	INFO_LOG(MEMORY, "[sh4]Read8 from 0x%X, not mapped [_vmem default handler]", addresss);
+ 	return (u8)MEM_ERROR_RETURN_VALUE;
+ }
+ u16 DYNACALL _vmem_ReadMem16_not_mapped(u32 addresss)
+ {
+-	DEBUG_LOG(MEMORY, "[sh4]Read16 from 0x%X, not mapped [_vmem default handler]", addresss);
++	INFO_LOG(MEMORY, "[sh4]Read16 from 0x%X, not mapped [_vmem default handler]", addresss);
+ 	return (u16)MEM_ERROR_RETURN_VALUE;
+ }
+-u32 DYNACALL _vmem_ReadMem32_not_mapped(u32 addresss)
++u32 DYNACALL _vmem_ReadMem32_not_mapped(u32 address)
+ {
+-	DEBUG_LOG(MEMORY, "[sh4]Read32 from 0x%X, not mapped [_vmem default handler]", addresss);
++	INFO_LOG(MEMORY, "[sh4]Read32 from 0x%X, not mapped [_vmem default handler]", address);
++//	if (address == 0x3A507150)
++//	{
++//		void print_blocks();
++//		print_blocks();
++//		INFO_LOG(MEMORY, "[sh4]Read32 pc=%x pr=%x\n", p_sh4rcb->cntx.pc, p_sh4rcb->cntx.pr);
++//		die("done");
++//	}
+ 	return (u32)MEM_ERROR_RETURN_VALUE;
+ }
+ //default write handers
+ void DYNACALL _vmem_WriteMem8_not_mapped(u32 addresss,u8 data)
+ {
+-	DEBUG_LOG(MEMORY, "[sh4]Write8 to 0x%X=0x%X, not mapped [_vmem default handler]", addresss, data);
++	INFO_LOG(MEMORY, "[sh4]Write8 to 0x%X=0x%X, not mapped [_vmem default handler]", addresss, data);
+ }
+ void DYNACALL _vmem_WriteMem16_not_mapped(u32 addresss,u16 data)
+ {
+-	DEBUG_LOG(MEMORY, "[sh4]Write16 to 0x%X=0x%X, not mapped [_vmem default handler]", addresss, data);
++	INFO_LOG(MEMORY, "[sh4]Write16 to 0x%X=0x%X, not mapped [_vmem default handler]", addresss, data);
+ }
+ void DYNACALL _vmem_WriteMem32_not_mapped(u32 addresss,u32 data)
+ {
+-	DEBUG_LOG(MEMORY, "[sh4]Write32 to 0x%X=0x%X, not mapped [_vmem default handler]", addresss, data);
++	INFO_LOG(MEMORY, "[sh4]Write32 to 0x%X=0x%X, not mapped [_vmem default handler]", addresss, data);
+ }
+ //code to register handlers
+ //0 is considered error :)
+diff --git a/core/hw/mem/vmem32.cpp b/core/hw/mem/vmem32.cpp
+index e40c893..12e26e3 100644
+--- a/core/hw/mem/vmem32.cpp
++++ b/core/hw/mem/vmem32.cpp
+@@ -66,7 +66,7 @@ struct vram_lock {
+ 	u32 start;
+ 	u32 end;
+ };
+-static std::vector<vram_lock> vram_blocks[VRAM_SIZE / VRAM_PROT_SEGMENT];
++static std::vector<vram_lock> vram_blocks[VRAM_SIZE_MAX / VRAM_PROT_SEGMENT];
+ static u8 sram_mapped_pages[USER_SPACE / PAGE_SIZE / 8];	// bit set to 1 if page is mapped
+ 
+ bool vmem32_inited;
+diff --git a/core/hw/naomi/naomi.cpp b/core/hw/naomi/naomi.cpp
+index 131559e..0f17b71 100644
+--- a/core/hw/naomi/naomi.cpp
++++ b/core/hw/naomi/naomi.cpp
+@@ -8,6 +8,7 @@
+ #include "hw/holly/holly_intc.h"
+ #include "hw/maple/maple_cfg.h"
+ #include "hw/sh4/sh4_sched.h"
++#include "hw/sh4/modules/dmac.h"
+ 
+ #include "naomi.h"
+ #include "naomi_cart.h"
+@@ -340,23 +341,6 @@ u16 NaomiGameIDRead()
+ 	return (GSerialBuffer&(1<<(31-GBufPos)))?1:0;
+ }
+ 
+-
+-
+-
+-u32  _ReadMem_naomi(u32 Addr, u32 sz)
+-{
+-	verify(sz!=1);
+-
+-	DEBUG_LOG(NAOMI, "naomi?WTF? ReadMem: %X, %d", Addr, sz);
+-	return 1;
+-
+-}
+-void _WriteMem_naomi(u32 Addr, u32 data, u32 sz)
+-{
+-	DEBUG_LOG(NAOMI, "naomi?WTF? WriteMem: %X <= %X, %d", Addr, data, sz);
+-}
+-
+-
+ //DIMM board
+ //Uses interrupt ext#3  (holly_EXT_PCI)
+ 
+@@ -382,23 +366,22 @@ void _WriteMem_naomi(u32 Addr, u32 data, u32 sz)
+ //n1 bios writes the value -1, meaning it expects the bit 0 to be set
+ //.//
+ 
+-u32 reg_dimm_3c;	//IO window ! written, 0x1E03 some flag ?
+-u32 reg_dimm_40;	//parameters
+-u32 reg_dimm_44;	//parameters
+-u32 reg_dimm_48;	//parameters
+-
+-u32 reg_dimm_4c=0x11;	//status/control reg ?
++u32 reg_dimm_command;		// command, written, 0x1E03 some flag ?
++u32 reg_dimm_offsetl;
++u32 reg_dimm_parameterl;
++u32 reg_dimm_parameterh;
++u32 reg_dimm_status = 0x11;
+ 
+ bool NaomiDataRead = false;
+ static bool aw_ram_test_skipped = false;
+ 
+-void naomi_process(u32 r3c,u32 r40,u32 r44, u32 r48)
++void naomi_process(u32 command, u32 offsetl, u32 parameterl, u32 parameterh)
+ {
+-	DEBUG_LOG(NAOMI, "Naomi process 0x%04X 0x%04X 0x%04X 0x%04X", r3c, r40, r44, r48);
+-	DEBUG_LOG(NAOMI, "Possible format 0 %d 0x%02X 0x%04X",r3c >> 15,(r3c & 0x7e00) >> 9, r3c & 0x1FF);
+-	DEBUG_LOG(NAOMI, "Possible format 1 0x%02X 0x%02X", (r3c & 0xFF00) >> 8,r3c & 0xFF);
++	DEBUG_LOG(NAOMI, "Naomi process 0x%04X 0x%04X 0x%04X 0x%04X", command, offsetl, parameterl, parameterh);
++	DEBUG_LOG(NAOMI, "Possible format 0 %d 0x%02X 0x%04X",command >> 15,(command & 0x7e00) >> 9, command & 0x1FF);
++	DEBUG_LOG(NAOMI, "Possible format 1 0x%02X 0x%02X", (command & 0xFF00) >> 8,command & 0xFF);
+ 
+-	u32 param=(r3c&0xFF);
++	u32 param=(command&0xFF);
+ 	if (param==0xFF)
+ 	{
+ 		DEBUG_LOG(NAOMI, "invalid opcode or smth ?");
+@@ -407,8 +390,8 @@ void naomi_process(u32 r3c,u32 r40,u32 r44, u32 r48)
+ 	//else if (param!=3)
+ 	if (opcd<255)
+ 	{
+-		reg_dimm_3c=0x8000 | (opcd%12<<9) | (0x0);
+-		DEBUG_LOG(NAOMI, "new reg is 0x%X", reg_dimm_3c);
++		reg_dimm_command=0x8000 | (opcd%12<<9) | (0x0);
++		DEBUG_LOG(NAOMI, "new reg is 0x%X", reg_dimm_command);
+ 		asic_RaiseInterrupt(holly_EXP_PCI);
+ 		DEBUG_LOG(NAOMI, "Interrupt raised");
+ 		opcd++;
+@@ -437,8 +420,23 @@ void WriteMem_naomi(u32 Addr, u32 data, u32 sz)
+ }
+ 
+ //Dma Start
++int naomi_schid;
++
++int Naomi_DmaSchd(int i, int c, int j)
++{
++	SB_GDSTARD = SB_GDSTAR + SB_GDLEN;
++	SB_GDLEND = SB_GDLEN;
++	SB_GDST = 0;
++	// interrupt not needed? SB_GDST is monitored
++	asic_RaiseInterrupt(holly_GDROM_DMA);
++//	asic_RaiseInterrupt(holly_GDROM_CMD);
++
++	return 0;
++}
++
+ void Naomi_DmaStart(u32 addr, u32 data)
+ {
++//	asic_CancelInterrupt(holly_GDROM_CMD);
+ 	if (SB_GDEN==0)
+ 	{
+ 		INFO_LOG(NAOMI, "Invalid (NAOMI)GD-DMA start, SB_GDEN=0. Ignoring it.");
+@@ -451,11 +449,26 @@ void Naomi_DmaStart(u32 addr, u32 data)
+ 	if (SB_GDST==1)
+ 	{
+ 		verify(1 == SB_GDDIR );
+-	
+-		SB_GDSTARD=SB_GDSTAR+SB_GDLEN;
++		if (false) // breaks doa2 (sz 15a15c & 3a7cc) if (SB_GDLEN & 0x1F)
++		{
++			ERROR_LOG(NAOMI, "SB_GDLEN has invalid value: %x", SB_GDLEN);
++			//die("NAOMI: SB_GDLEN has invalid size !");
++			SB_GDSTARD = SB_GDSTAR;
++			SB_GDLEND = 0;
++			SB_GDST = 0;
++			return;
++		}
++		if (0x8201 != (DMAC_DMAOR.full & DMAOR_MASK))
++		{
++			INFO_LOG(NAOMI, "NAOMI: DMAOR has invalid settings (%X)", DMAC_DMAOR.full);
++			//return;
++		}
++		DEBUG_LOG(NAOMI, "NAOMI-DMA start addr %08X len %d", SB_GDSTAR, SB_GDLEN);
++
++//		SB_GDSTARD=SB_GDSTAR+SB_GDLEN;
+ 		
+-		SB_GDLEND=SB_GDLEN;
+-		SB_GDST=0;
++//		SB_GDLEND=SB_GDLEN;
++//		SB_GDST=0;
+ 		if (CurrentCartridge != NULL)
+ 		{
+ 			u32 len = SB_GDLEN;
+@@ -464,21 +477,28 @@ void Naomi_DmaStart(u32 addr, u32 data)
+ 			{
+ 				u32 block_len = len;
+ 				void* ptr = CurrentCartridge->GetDmaPtr(block_len);
+-				if (ptr != NULL)
+-					WriteMemBlock_nommu_ptr(SB_GDSTAR + offset, (u32*)ptr, block_len);
++				if (block_len == 0)
++				{
++					INFO_LOG(NAOMI, "Aborted DMA transfer. Read past end of cart?");
++					break;
++				}
++				WriteMemBlock_nommu_ptr(SB_GDSTAR + offset, (u32*)ptr, block_len);
+ 				CurrentCartridge->AdvancePtr(block_len);
+ 				len -= block_len;
+ 				offset += block_len;
+ 			}
+ 		}
+ 
+-		asic_RaiseInterrupt(holly_GDROM_DMA);
++//		asic_RaiseInterrupt(holly_GDROM_DMA);
++//		sh4_sched_request(naomi_schid, SB_GDLEN * 2);
++		Naomi_DmaSchd(0, 0, 0);
+ 	}
+ }
+ 
+ 
+ void Naomi_DmaEnable(u32 addr, u32 data)
+ {
++//	asic_CancelInterrupt(holly_GDROM_CMD);
+ 	SB_GDEN=data&1;
+ 	if (SB_GDEN==0 && SB_GDST==1)
+ 	{
+@@ -538,6 +558,8 @@ void naomi_reg_Init()
+ 	sb_rio_register(SB_GDST_addr, RIO_WF, 0, &Naomi_DmaStart);
+ 
+ 	sb_rio_register(SB_GDEN_addr, RIO_WF, 0, &Naomi_DmaEnable);
++
++	naomi_schid = sh4_sched_register(0, &Naomi_DmaSchd);
+ }
+ 
+ void naomi_reg_Term()
+@@ -573,82 +595,11 @@ void naomi_reg_Reset(bool Manual)
+ 	GLastCmd = 0;
+ 	SerStep = 0;
+ 	SerStep2 = 0;
+-}
+-
+-void Update_naomi()
+-{
+-	/*
+-	if (naomi_updates>1)
+-	{
+-		naomi_updates--;
+-	}
+-	else if (naomi_updates==1)
+-	{
+-		naomi_updates=0;
+-		asic_RaiseInterrupt(holly_EXP_PCI);
+-	}*/
+-#if 0
+-	if(!(SB_GDST&1) || !(SB_GDEN &1))
+-		return;
+-
+-	//SB_GDST=0;
+-
+-	//TODO : Fix dmaor
+-	u32 dmaor	= DMAC_DMAOR.full;
+-
+-	u32	src		= SB_GDSTARD,
+-		len		= SB_GDLEN-SB_GDLEND ;
+-
+-	//len=min(len,(u32)32);
+-	// do we need to do this for gdrom dma ?
+-	if(0x8201 != (dmaor &DMAOR_MASK)) {
+-		INFO_LOG(NAOMI, "GDROM: DMAOR has invalid settings (%X) !", dmaor);
+-		//return;
+-	}
+-	if(len & 0x1F) {
+-		INFO_LOG(NAOMI, "GDROM: SB_GDLEN has invalid size (%X) !", len);
+-		return;
+-	}
+-
+-	if(0 == len) 
+-	{
+-		INFO_LOG(NAOMI, "GDROM: Len: %X, Abnormal Termination !", len);
+-	}
+-	u32 len_backup=len;
+-	if( 1 == SB_GDDIR ) 
+-	{
+-		WriteMemBlock_nommu_ptr(dst,NaomiRom+(DmaOffset&0x7ffffff),size);
+-
+-		DmaCount=0xffff;
+-	}
+-	else
+-		INFO_LOG(NAOMI, "GDROM: SB_GDDIR %X (TO AICA WAVE MEM?)");
+-
+-	//SB_GDLEN = 0x00000000; //13/5/2k7 -> acording to docs these regs are not updated by hardware
+-	//SB_GDSTAR = (src + len_backup);
+-
+-	SB_GDLEND+= len_backup;
+-	SB_GDSTARD+= len_backup;//(src + len_backup)&0x1FFFFFFF;
+-
+-	if (SB_GDLEND==SB_GDLEN)
+-	{
+-		//printf("Streamed GDMA end - %d bytes trasnfered\n",SB_GDLEND);
+-		SB_GDST=0;//done
+-		// The DMA end interrupt flag
+-		asic_RaiseInterrupt(holly_GDROM_DMA);
+-	}
+-	//Readed ALL sectors
+-	if (read_params.remaining_sectors==0)
+-	{
+-		u32 buff_size =read_buff.cache_size - read_buff.cache_index;
+-		//And all buffer :p
+-		if (buff_size==0)
+-		{
+-			verify(!SB_GDST&1)		
+-			gd_set_state(gds_procpacketdone);
+-		}
+-	}
+-#endif
++	reg_dimm_command = 0;
++	reg_dimm_offsetl = 0;
++	reg_dimm_parameterl = 0;
++	reg_dimm_parameterh = 0;
++	reg_dimm_status = 0x11;
+ }
+ 
+ static u8 aw_maple_devs;
+@@ -659,6 +610,10 @@ u32 libExtDevice_ReadMem_A0_006(u32 addr,u32 size) {
+ 	//printf("libExtDevice_ReadMem_A0_006 %d@%08x: %x\n", size, addr, mem600[addr]);
+ 	switch (addr)
+ 	{
++//	case 0:
++//		return 0;
++//	case 4:
++//		return 1;
+ 	case 0x280:
+ 		// 0x00600280 r  0000dcba
+ 		//	a/b - 1P/2P coin inputs (JAMMA), active low
+diff --git a/core/hw/naomi/naomi.h b/core/hw/naomi/naomi.h
+index 8781f03..88ae8cb 100644
+--- a/core/hw/naomi/naomi.h
++++ b/core/hw/naomi/naomi.h
+@@ -8,8 +8,6 @@ void naomi_reg_Init();
+ void naomi_reg_Term();
+ void naomi_reg_Reset(bool Manual);
+ 
+-void Update_naomi();
+-
+ u32  ReadMem_naomi(u32 Addr, u32 sz);
+ void WriteMem_naomi(u32 Addr, u32 data, u32 sz);
+ 
+@@ -20,21 +18,11 @@ u16 NaomiGameIDRead();
+ void NaomiGameIDWrite(const u16 Data);
+ void naomi_process(u32 r3c,u32 r40,u32 r44, u32 r48);
+ 
+-typedef u16 (*getNaomiAxisFP)();
+-
+-struct NaomiInputMapping {
+-	getNaomiAxisFP axis[8];
+-	u8 button_mapping_byte[16];
+-	u8 button_mapping_mask[16];
+-};
+-
+-extern NaomiInputMapping Naomi_Mapping;
+-
+-extern u32 reg_dimm_3c;			//IO window ! written, 0x1E03 some flag ?
+-extern u32 reg_dimm_40;			//parameters
+-extern u32 reg_dimm_44;			//parameters
+-extern u32 reg_dimm_48;			//parameters
+-extern u32 reg_dimm_4c;			//status/control reg ?
++extern u32 reg_dimm_command;	// command, written, 0x1E03 some flag ?
++extern u32 reg_dimm_offsetl;
++extern u32 reg_dimm_parameterl;
++extern u32 reg_dimm_parameterh;
++extern u32 reg_dimm_status;
+ 
+ extern bool NaomiDataRead;
+ extern u32 naomi_updates;
+diff --git a/core/hw/naomi/naomi_cart.cpp b/core/hw/naomi/naomi_cart.cpp
+index 209df28..0a46132 100644
+--- a/core/hw/naomi/naomi_cart.cpp
++++ b/core/hw/naomi/naomi_cart.cpp
+@@ -730,23 +730,26 @@ void NaomiCartridge::AdvancePtr(u32 size) {
+ u32 NaomiCartridge::ReadMem(u32 address, u32 size)
+ {
+ 	verify(size!=1);
+-	//printf("+naomi?WTF? ReadMem: %X, %d\n", address, size);
++
+ 	switch(address & 255)
+ 	{
+-	case 0x3c:
+-		DEBUG_LOG(NAOMI, "naomi GD? READ: %X, %d", address, size);
+-		return reg_dimm_3c | (NaomiDataRead ? 0 : -1); //pretend the board isn't there for the bios
+-	case 0x40:
+-		DEBUG_LOG(NAOMI, "naomi GD? READ: %X, %d", address, size);
+-		return reg_dimm_40;
+-	case 0x44:
+-		DEBUG_LOG(NAOMI, "naomi GD? READ: %X, %d", address, size);
+-		return reg_dimm_44;
+-	case 0x48:
+-		DEBUG_LOG(NAOMI, "naomi GD? READ: %X, %d", address, size);
+-		return reg_dimm_48;
++	case 0x3c:	// 5f703c: DIMM COMMAND
++		DEBUG_LOG(NAOMI, "DIMM COMMAND read<%d>", size);
++		return reg_dimm_command | (NaomiDataRead ? 0 : -1); //pretend the board isn't there for the bios
++//		return 0xffff;
++	case 0x40:	// 5f7040: DIMM OFFSETL
++		DEBUG_LOG(NAOMI, "DIMM OFFSETL read<%d>", size);
++		return reg_dimm_offsetl;
++	case 0x44:	// 5f7044: DIMM PARAMETERL
++		DEBUG_LOG(NAOMI, "DIMM PARAMETERL read<%d>", size);
++		return reg_dimm_parameterl;
++	case 0x48:	// 5f7048: DIMM PARAMETERH
++		DEBUG_LOG(NAOMI, "DIMM PARAMETERH read<%d>", size);
++		return reg_dimm_parameterh;
++	case 0x04C:	// 5f704c: DIMM STATUS
++		DEBUG_LOG(NAOMI, "DIMM STATUS read<%d>", size);
++		return reg_dimm_status;
+ 
+-		//These are known to be valid on normal ROMs and DIMM board
+ 	case NAOMI_ROM_OFFSETH_addr&255:
+ 		return RomPioOffset>>16 | (RomPioAutoIncrement << 15);
+ 
+@@ -786,7 +789,6 @@ u32 NaomiCartridge::ReadMem(u32 address, u32 size)
+ 		return 1;
+ 
+ 
+-		//This should be valid
+ 	case NAOMI_DMA_OFFSETH_addr&255:
+ 		return DmaOffset>>16;
+ 	case NAOMI_DMA_OFFSETL_addr&255:
+@@ -796,10 +798,6 @@ u32 NaomiCartridge::ReadMem(u32 address, u32 size)
+ 		DEBUG_LOG(NAOMI, "naomi ReadBoardId: %X, %d", address, size);
+ 		return 1;
+ 
+-	case 0x04C:
+-		DEBUG_LOG(NAOMI, "naomi GD? READ: %X, %d", address, size);
+-		return reg_dimm_4c;
+-
+ 	case NAOMI_COMM2_CTRL_addr & 255:
+ 		DEBUG_LOG(NAOMI, "NAOMI_COMM2_CTRL read");
+ 		return comm_ctrl;
+@@ -840,35 +838,34 @@ u32 NaomiCartridge::ReadMem(u32 address, u32 size)
+ 
+ void NaomiCartridge::WriteMem(u32 address, u32 data, u32 size)
+ {
+-	//	printf("+naomi WriteMem: %X <= %X, %d\n", address, data, size);
+ 	switch(address & 255)
+ 	{
+-	case 0x3c:
+-		 if (0x1E03==data)
++	case 0x3c:	// 5f703c: DIMM COMMAND
++		 if (0x1E03 == data)
+ 		 {
+ 			 /*
+-			 if (!(reg_dimm_4c&0x100))
++			 if (!(reg_dimm_status & 0x100))
+ 				asic_RaiseInterrupt(holly_EXP_PCI);
+-			 reg_dimm_4c|=1;*/
++			 reg_dimm_status |= 1;*/
+ 		 }
+-		 reg_dimm_3c=data;
+-		 DEBUG_LOG(NAOMI, "naomi GD? Write: %X <= %X, %d", address, data, size);
++		 reg_dimm_command = data;
++		 DEBUG_LOG(NAOMI, "DIMM COMMAND Write: %X <= %X, %d", address, data, size);
+ 		 return;
+ 
+-	case 0x40:
+-		reg_dimm_40=data;
+-		DEBUG_LOG(NAOMI, "naomi GD? Write: %X <= %X, %d", address, data, size);
++	case 0x40:	// 5f7040: DIMM OFFSETL
++		reg_dimm_offsetl = data;
++		DEBUG_LOG(NAOMI, "DIMM OFFSETL Write: %X <= %X, %d", address, data, size);
+ 		return;
+-	case 0x44:
+-		reg_dimm_44=data;
+-		DEBUG_LOG(NAOMI, "naomi GD? Write: %X <= %X, %d", address, data, size);
++	case 0x44:	// 5f7044: DIMM PARAMETERL
++		reg_dimm_parameterl = data;
++		DEBUG_LOG(NAOMI, "DIMM PARAMETERL Write: %X <= %X, %d", address, data, size);
+ 		return;
+-	case 0x48:
+-		reg_dimm_48=data;
+-		DEBUG_LOG(NAOMI, "naomi GD? Write: %X <= %X, %d", address, data, size);
++	case 0x48:	// 5f7048: DIMM PARAMETERH
++		reg_dimm_parameterh = data;
++		DEBUG_LOG(NAOMI, "DIMM PARAMETERH Write: %X <= %X, %d", address, data, size);
+ 		return;
+ 
+-	case 0x4C:
++	case 0x4C:	// 5f704c: DIMM STATUS
+ 		if (data&0x100)
+ 		{
+ 			asic_CancelInterrupt(holly_EXP_PCI);
+@@ -879,10 +876,10 @@ void NaomiCartridge::WriteMem(u32 address, u32 data, u32 size)
+ 			/*FILE* ramd=fopen("c:\\ndc.ram.bin","wb");
+ 			fwrite(mem_b.data,1,RAM_SIZE,ramd);
+ 			fclose(ramd);*/
+-			naomi_process(reg_dimm_3c,reg_dimm_40,reg_dimm_44,reg_dimm_48);
++			naomi_process(reg_dimm_command, reg_dimm_offsetl, reg_dimm_parameterl, reg_dimm_parameterh);
+ 		}
+-		reg_dimm_4c=data&~0x100;
+-		DEBUG_LOG(NAOMI, "naomi GD? Write: %X <= %X, %d", address, data, size);
++		reg_dimm_status = data & ~0x100;
++		DEBUG_LOG(NAOMI, "DIMM STATUS Write: %X <= %X, %d", address, data, size);
+ 		return;
+ 
+ 		//These are known to be valid on normal ROMs and DIMM board
+diff --git a/core/hw/sh4/dyna/blockmanager.cpp b/core/hw/sh4/dyna/blockmanager.cpp
+index 26f9945..1884483 100644
+--- a/core/hw/sh4/dyna/blockmanager.cpp
++++ b/core/hw/sh4/dyna/blockmanager.cpp
+@@ -412,15 +412,18 @@ void bm_Reset()
+ 	// Windows cannot lock/unlock a region spanning more than one VirtualAlloc or MapViewOfFile
+ 	// so we have to unlock each region individually
+ 	// No need for this mess in 4GB mode since windows doesn't use it
+-#if RAM_SIZE == 16 * 1024 * 1024
+-	mem_region_unlock(virt_ram_base + 0x0C000000, RAM_SIZE);
+-	mem_region_unlock(virt_ram_base + 0x0D000000, RAM_SIZE);
+-	mem_region_unlock(virt_ram_base + 0x0E000000, RAM_SIZE);
+-	mem_region_unlock(virt_ram_base + 0x0F000000, RAM_SIZE);
+-#else
+-	mem_region_unlock(virt_ram_base + 0x0C000000, RAM_SIZE);
+-	mem_region_unlock(virt_ram_base + 0x0E000000, RAM_SIZE);
+-#endif
++	if (settings.platform.ram_size == 16 * 1024 * 1024)
++	{
++		mem_region_unlock(virt_ram_base + 0x0C000000, RAM_SIZE);
++		mem_region_unlock(virt_ram_base + 0x0D000000, RAM_SIZE);
++		mem_region_unlock(virt_ram_base + 0x0E000000, RAM_SIZE);
++		mem_region_unlock(virt_ram_base + 0x0F000000, RAM_SIZE);
++	}
++	else
++	{
++		mem_region_unlock(virt_ram_base + 0x0C000000, RAM_SIZE);
++		mem_region_unlock(virt_ram_base + 0x0E000000, RAM_SIZE);
++	}
+ 	if (_nvmem_4gb_space())
+ 	{
+ 		mem_region_unlock(virt_ram_base + 0x8C000000, 0x90000000 - 0x8C000000);
+diff --git a/core/hw/sh4/dyna/driver.cpp b/core/hw/sh4/dyna/driver.cpp
+index 5926bb8..e616985 100644
+--- a/core/hw/sh4/dyna/driver.cpp
++++ b/core/hw/sh4/dyna/driver.cpp
+@@ -284,6 +284,11 @@ bool RuntimeBlockInfo::Setup(u32 rpc,fpscr_t rfpu_cfg)
+ DynarecCodeEntryPtr rdv_CompilePC(u32 blockcheck_failures)
+ {
+ 	u32 pc=next_pc;
++//	if (next_pc == 0x8C046E82)
++//	{
++//		DEBUG_LOG(SH4, "r0 %08x r1 %08x r2  %08x r3  %08x r4  %08x r5  %08x r6  %08x r7  %08x pc %08x ", r[0], r[1], r[2], r[3], r[4], r[5], r[6], r[7], next_pc);
++//		DEBUG_LOG(SH4, "r8 %08x r9 %08x r10 %08x r11 %08x r12 %08x r13 %08x r14 %08x r15 %08x", r[8], r[9], r[10], r[11], r[12], r[13], r[14], r[15]);
++//	}
+ 
+ 	if (emit_FreeSpace()<16*1024 || pc==0x8c0000e0 || pc==0xac010000 || pc==0xac008300)
+ 		recSh4_ClearCache();
+@@ -324,7 +329,14 @@ DynarecCodeEntryPtr rdv_CompilePC(u32 blockcheck_failures)
+ 		emit_ptr = NULL;
+ 		emit_ptr_limit = NULL;
+ 	}
+-
++	/*
++	if (rbi->vaddr <= 0x8c018120 && rbi->vaddr + rbi->sh4_code_size > 0x8c018120)
++	//if (rbi->vaddr == 0x8c7e9c80)
++	{
++		extern void print_blocks();
++		print_blocks();
++	}
++	*/
+ 	return rbi->code;
+ }
+ 
+diff --git a/core/hw/sh4/interpr/sh4_interpreter.cpp b/core/hw/sh4/interpr/sh4_interpreter.cpp
+index 3a1c9e3..6b55a27 100644
+--- a/core/hw/sh4/interpr/sh4_interpreter.cpp
++++ b/core/hw/sh4/interpr/sh4_interpreter.cpp
+@@ -32,9 +32,18 @@
+ #define GetM(str) ((str>>4) & 0xf)
+ 
+ static s32 l;
++static bool disassemble = false;
+ 
+ static void ExecuteOpcode(u16 op)
+ {
++//	if ((next_pc & 0x1ffffff0) == 0x0C0180F0)
++//		disassemble = true;
++	if (disassemble)
++	{
++		char s[128];
++		OpDesc[op]->Disassemble(s, next_pc - 2, op);
++		printf("%s\n", s);
++	}
+ 	if (sr.FD == 1 && OpDesc[op]->IsFloatingPoint())
+ 		RaiseFPUDisableException();
+ 	OpPtr[op](op);
+diff --git a/core/hw/sh4/interpr/sh4_opcodes.cpp b/core/hw/sh4/interpr/sh4_opcodes.cpp
+index 9ede446..074d942 100644
+--- a/core/hw/sh4/interpr/sh4_opcodes.cpp
++++ b/core/hw/sh4/interpr/sh4_opcodes.cpp
+@@ -982,7 +982,7 @@ sh4op(i1011_iiii_iiii_iiii)
+ // trapa #<imm>
+ sh4op(i1100_0011_iiii_iiii)
+ {
+-	//printf("trapa 0x%X\n",(GetImm8(op) << 2));
++	ERROR_LOG(GDROM, "TRAPA %d\n", (GetImm8(op) << 2));
+ 	CCN_TRA = (GetImm8(op) << 2);
+ 	Do_Exception(next_pc,0x160,0x100);
+ }
+diff --git a/core/hw/sh4/modules/fastmmu.cpp b/core/hw/sh4/modules/fastmmu.cpp
+index c1d685b..4c40584 100644
+--- a/core/hw/sh4/modules/fastmmu.cpp
++++ b/core/hw/sh4/modules/fastmmu.cpp
+@@ -35,7 +35,7 @@ extern TLB_Entry UTLB[64];
+ // Used when FullMMU is off
+ extern u32 sq_remap[64];
+ 
+-//#define TRACE_WINCE_SYSCALLS
++#define TRACE_WINCE_SYSCALLS
+ 
+ #include "wince.h"
+ 
+@@ -323,7 +323,7 @@ u32 mmu_data_translation(u32 va, u32& rv)
+ 		if (va == unresolved_unicode_string)
+ 		{
+ 			unresolved_unicode_string = 0;
+-			INFO_LOG(SH4, "RESOLVED %s", get_unicode_string(va).c_str());
++			printf("RESOLVED %s\n", get_unicode_string(va).c_str());
+ 		}
+ 	}
+ #endif
+diff --git a/core/hw/sh4/modules/mmu.cpp b/core/hw/sh4/modules/mmu.cpp
+index d3aae1f..42931f6 100644
+--- a/core/hw/sh4/modules/mmu.cpp
++++ b/core/hw/sh4/modules/mmu.cpp
+@@ -77,13 +77,15 @@ defining NO_MMU disables the full mmu emulation
+ template<bool internal = false>
+ u32 mmu_full_lookup(u32 va, u32& idx, u32& rv);
+ 
+-//#define TRACE_WINCE_SYSCALLS
++#define TRACE_WINCE_SYSCALLS
+ 
+ #ifdef TRACE_WINCE_SYSCALLS
+ #include "wince.h"
++u32 unresolved_ascii_string;
++u32 unresolved_unicode_string;
+ #endif
+ 
+-#define printf_mmu(...) DEBUG_LOG(SH4, __VA_ARGS__)
++#define printf_mmu(...) //DEBUG_LOG(SH4, __VA_ARGS__)
+ 
+ ReadMem8Func ReadMem8;
+ ReadMem16Func ReadMem16;
+diff --git a/core/hw/sh4/modules/wince.h b/core/hw/sh4/modules/wince.h
+index d967df5..74bfcc4 100644
+--- a/core/hw/sh4/modules/wince.h
++++ b/core/hw/sh4/modules/wince.h
+@@ -31,7 +31,7 @@ static bool read_mem32(u32 addr, u32& data)
+ {
+ 	u32 pa;
+ 	const TLB_Entry *entry;
+-	if (mmu_full_lookup<true>(addr, &entry, pa) != MMU_ERROR_NONE)
++	if (mmu_full_lookup<false>(addr, &entry, pa) != MMU_ERROR_NONE)
+ 		return false;
+ 	data = ReadMem32_nommu(pa);
+ 	return true;
+@@ -41,7 +41,7 @@ static bool read_mem16(u32 addr, u16& data)
+ {
+ 	u32 pa;
+ 	const TLB_Entry *entry;
+-	if (mmu_full_lookup<true>(addr, &entry, pa) != MMU_ERROR_NONE)
++	if (mmu_full_lookup<false>(addr, &entry, pa) != MMU_ERROR_NONE)
+ 		return false;
+ 	data = ReadMem16_nommu(pa);
+ 	return true;
+@@ -51,7 +51,7 @@ static bool read_mem8(u32 addr, u8& data)
+ {
+ 	u32 pa;
+ 	const TLB_Entry *entry;
+-	if (mmu_full_lookup<true>(addr, &entry, pa) != MMU_ERROR_NONE)
++	if (mmu_full_lookup<false>(addr, &entry, pa) != MMU_ERROR_NONE)
+ 		return false;
+ 	data = ReadMem8_nommu(pa);
+ 	return true;
+@@ -227,10 +227,10 @@ static const char *wince_methods[][256] = {
+ 		},
+ };
+ 
+-u32 unresolved_ascii_string;
+-u32 unresolved_unicode_string;
++extern u32 unresolved_ascii_string;
++extern u32 unresolved_unicode_string;
+ 
+-std::string get_unicode_string(u32 addr)
++static inline std::string get_unicode_string(u32 addr)
+ {
+ 	std::string str;
+ 	while (true)
+@@ -248,7 +248,7 @@ std::string get_unicode_string(u32 addr)
+ 	}
+ 	return str;
+ }
+-std::string get_ascii_string(u32 addr)
++static inline std::string get_ascii_string(u32 addr)
+ {
+ 	std::string str;
+ 	while (true)
+@@ -312,31 +312,33 @@ static bool print_wince_syscall(u32 address)
+ 			sprintf(method_buf, "[%d]", meth_id);
+ 			method = method_buf;
+ 		}
+-		INFO_LOG(SH4, "WinCE %08x %04x.%04x %s: %s", address, getCurrentProcessId() & 0xffff, getCurrentThreadId() & 0xffff, api, method);
++		printf("WinCE %08x %04x.%04x %s: %s", address, getCurrentProcessId() & 0xffff, getCurrentThreadId() & 0xffff, api, method);
+ 		if (address == 0xfffffd51)		// SetLastError
+-			INFO_LOG(SH4, " dwErrCode = %x", r[4]);
++			printf(" dwErrCode = %x\n", r[4]);
+ 		else if (address == 0xffffd5ef)	// CreateFile
+-			INFO_LOG(SH4, " lpFileName = %s", get_unicode_string(r[4]).c_str());
++			printf(" lpFileName = %s\n", get_unicode_string(r[4]).c_str());
+ 		else if (address == 0xfffffd97) // CreateProc
+-			INFO_LOG(SH4, " imageName = %s, commandLine = %s", get_unicode_string(r[4]).c_str(), get_unicode_string(r[5]).c_str());
++			printf(" imageName = %s, commandLine = %s\n", get_unicode_string(r[4]).c_str(), get_unicode_string(r[5]).c_str());
+ 		else if (!strcmp("DebugNotify", method))
+-			INFO_LOG(SH4, " %x, %x\n", r[4], r[5]);
++			printf(" %x, %x\n", r[4], r[5]);
+ 		else if (address == 0xffffd5d3) // RegOpenKeyExW
+-			INFO_LOG(SH4, " hKey = %x, lpSubKey = %s", r[4], get_unicode_string(r[5]).c_str());
++			printf(" hKey = %x, lpSubKey = %s\n", r[4], get_unicode_string(r[5]).c_str());
+ 		else if (!strcmp("LoadLibraryW", method))
+-			INFO_LOG(SH4, " fileName = %s", get_unicode_string(r[4]).c_str());
++			printf(" fileName = %s\n", get_unicode_string(r[4]).c_str());
+ 		else if (!strcmp("GetProcAddressW", method))
+-			INFO_LOG(SH4, " hModule = %x, procName = %s", r[4], get_unicode_string(r[5]).c_str());
++			printf(" hModule = %x, procName = %s\n", r[4], get_unicode_string(r[5]).c_str());
+ 		else if (!strcmp("NKvDbgPrintfW", method))
+-			INFO_LOG(SH4, " fmt = %s", get_unicode_string(r[4]).c_str());
++			printf(" fmt = %s\n", get_unicode_string(r[4]).c_str());
+ 		else if (!strcmp("OutputDebugStringW", method))
+-			INFO_LOG(SH4, " str = %s", get_unicode_string(r[4]).c_str());
++			printf(" str = %s\n", get_unicode_string(r[4]).c_str());
+ 		else if (!strcmp("RegisterAFSName", method))
+-			INFO_LOG(SH4, " name = %s", get_unicode_string(r[4]).c_str());
++			printf(" name = %s\n", get_unicode_string(r[4]).c_str());
+ 		else if (!strcmp("CreateAPISet", method))
+-			INFO_LOG(SH4, " name = %s", get_ascii_string(r[4]).c_str());
++			printf(" name = %s\n", get_ascii_string(r[4]).c_str());
+ 		else if (!strcmp("Register", method) && !strcmp("APISET", api))
+-			INFO_LOG(SH4, " p = %x, id = %x", r[4], r[5]);
++			printf(" p = %x, id = %x\n", r[4], r[5]);
++		else
++			printf("\n");
+ 		// might be useful to detect errors? (hidden & dangerous)
+ 		//if (!strcmp("GetProcName", method))
+ 		//	os_DebugBreak();
+diff --git a/core/hw/sh4/sh4_interrupts.cpp b/core/hw/sh4/sh4_interrupts.cpp
+index bec7356..4f87d2f 100644
+--- a/core/hw/sh4/sh4_interrupts.cpp
++++ b/core/hw/sh4/sh4_interrupts.cpp
+@@ -14,7 +14,7 @@
+ #include "sh4_core.h"
+ #include "sh4_mmr.h"
+ #include "oslib/oslib.h"
+-
++#include "hw/holly/sb.h"
+ /*
+ 
+ */
+@@ -154,6 +154,7 @@ bool Do_Interrupt(u32 intEvn)
+ 	sr.RB = 1;
+ 	UpdateSR();
+ 	next_pc = vbr + 0x600;
++	//DEBUG_LOG(SH4, "Do_Interrupt: v_pc %08X SB_ISTNRM %08x", next_pc, SB_ISTNRM);
+ 
+ 	return true;
+ }
+diff --git a/core/nullDC.cpp b/core/nullDC.cpp
+index e193a94..b6cd7cf 100755
+--- a/core/nullDC.cpp
++++ b/core/nullDC.cpp
+@@ -358,12 +358,62 @@ int reicast_init(int argc, char* argv[])
+ #define DATA_PATH "/"
+ #endif
+ 
++void set_platform(int platform)
++{
++	switch (platform)
++	{
++	case DC_PLATFORM_DREAMCAST:
++		settings.platform.ram_size = 16 * 1024 * 1024;
++		settings.platform.vram_size = 8 * 1024 * 1024;
++		settings.platform.aram_size = 2 * 1024 * 1024;
++		settings.platform.bios_size = 2 * 1024 * 1024;
++		settings.platform.flash_size = 128 * 1024;
++		settings.platform.bbsram_size = 0;
++		break;
++	case DC_PLATFORM_NAOMI:
++		settings.platform.ram_size = 32 * 1024 * 1024;
++		settings.platform.vram_size = 16 * 1024 * 1024;
++		settings.platform.aram_size = 8 * 1024 * 1024;
++		settings.platform.bios_size = 2 * 1024 * 1024;
++		settings.platform.flash_size = 0;
++		settings.platform.bbsram_size = 32 * 1024;
++		break;
++	case DC_PLATFORM_ATOMISWAVE:
++		settings.platform.ram_size = 16 * 1024 * 1024;
++		settings.platform.vram_size = 8 * 1024 * 1024;
++		settings.platform.aram_size = 8 * 1024 * 1024;
++		settings.platform.bios_size = 128 * 1024;
++		settings.platform.flash_size = 0;
++		settings.platform.bbsram_size = 128 * 1024;
++		break;
++	default:
++		die("Unsupported platform");
++		break;
++	}
++	settings.platform.system = platform;
++	settings.platform.ram_mask = settings.platform.ram_size - 1;
++	settings.platform.vram_mask = settings.platform.vram_size - 1;
++	settings.platform.aram_mask = settings.platform.aram_size - 1;
++}
++
+ static int dc_init()
+ {
+ 	static bool init_done;
+ 
+ 	if (init_done)
+ 		return 0;
++
++	// FIXME
++#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
++	set_platform(DC_PLATFORM_DREAMCAST);
++#elif DC_PLATFORM == DC_PLATFORM_NAOMI
++	set_platform(DC_PLATFORM_NAOMI);
++#elif DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
++	set_platform(DC_PLATFORM_ATOMISWAVE);
++#else
++#error Unsupported platform
++#endif
++
+ 	if (plugins_Init())
+ 		return -3;
+ #if FEAT_SHREC != DYNAREC_NONE
+diff --git a/core/rec-x86/rec_x86_driver.cpp b/core/rec-x86/rec_x86_driver.cpp
+index 3ddc683..8be81bf 100644
+--- a/core/rec-x86/rec_x86_driver.cpp
++++ b/core/rec-x86/rec_x86_driver.cpp
+@@ -106,7 +106,11 @@ void x86_reg_alloc::FreezeXMM()
+ 	f32* slpc=thaw_regs;
+ 	while(*fpreg!=-1)
+ 	{
+-		if (SpanNRegfIntr(current_opid,*fpreg))	
++#ifdef OLD_REGALLOC
++		if (SpanNRegfIntr(current_opid,*fpreg))
++#else
++		if (regf_used((x86_reg)*fpreg))
++#endif
+ 			x86e->Emit(op_movss,slpc++,*fpreg);
+ 		fpreg++;
+ 	}
+@@ -121,7 +125,11 @@ void x86_reg_alloc::ThawXMM()
+ 	f32* slpc=thaw_regs;
+ 	while(*fpreg!=-1)
+ 	{
+-		if (SpanNRegfIntr(current_opid,*fpreg))	
++#ifdef OLD_REGALLOC
++		if (SpanNRegfIntr(current_opid,*fpreg))
++#else
++		if (regf_used((x86_reg)*fpreg))
++#endif
+ 			x86e->Emit(op_movss,*fpreg,slpc++);
+ 		fpreg++;
+ 	}
+@@ -157,7 +165,7 @@ void DYNACALL csc_fail(u32 addr,u32 addy)
+ 	{
+ 		u32 fail_idx=(csc_sidx>>1)|(csc_sidx<<31);
+ 
+-		printf("Ret Mismatch: %08X instead of %08X!\n",addr,addy);
++		INFO_LOG(DYNAREC, "Ret Mismatch: %08X instead of %08X!", addr, addy);
+ 	}
+ }
+ void csc_pop(RuntimeBlockInfo* block)
+@@ -218,10 +226,9 @@ void csc_pop(RuntimeBlockInfo* block)
+ 
+ void DYNACALL PrintBlock(u32 pc)
+ {
+-	printf("block: 0x%08X\n",pc);
++	INFO_LOG(DYNAREC, "block: 0x%08X", pc);
+ 	for (int i=0;i<16;i++)
+-		printf("%08X ",r[i]);
+-	printf("\n");
++		INFO_LOG(DYNAREC, "%08X ",r[i]);
+ }
+ 
+ u32 cvld;
+@@ -396,6 +403,7 @@ void ngen_Compile(RuntimeBlockInfo* block, SmcCheckEnum smc_checks, bool reset,
+ 
+ 		reg.OpEnd(op);
+ 	}
++	reg.Cleanup();
+ 
+ 	block->relink_offset=x86e->x86_indx;
+ 	block->relink_data=0;
+@@ -843,7 +851,7 @@ bool ngen_Rewrite(unat& addr,unat retadr,unat acc)
+ 					//found !
+ 
+ 					if ((acc >> 26) == 0x38 && !w) {
+-						printf("WARNING: SQ AREA READ, %08X from sh4:%08X. THIS IS UNDEFINED ON A REAL DREACMAST.\n", acc, bm_GetBlock(x86e->x86_buff)->addr);
++						INFO_LOG(DYNAREC, "WARNING: SQ AREA READ, %08X from sh4:%08X. THIS IS UNDEFINED ON A REAL DREACMAST.", acc, bm_GetBlock(x86e->x86_buff)->addr);
+ 					}
+ 
+ 					if ((acc >> 26) == 0x38) //sq ?
+diff --git a/core/rec-x86/rec_x86_il.cpp b/core/rec-x86/rec_x86_il.cpp
+index 3778baf..23efd76 100644
+--- a/core/rec-x86/rec_x86_il.cpp
++++ b/core/rec-x86/rec_x86_il.cpp
+@@ -1,6 +1,6 @@
+ #include "types.h"
+ 
+-#if FEAT_SHREC == DYNAREC_JIT && HOST_CPU == CPU_X86
++#if 1 //FEAT_SHREC == DYNAREC_JIT && HOST_CPU == CPU_X86
+ #include "rec_x86_ngen.h"
+ #include "hw/sh4/sh4_mmr.h"
+ #include "hw/sh4/sh4_rom.h"
+@@ -9,8 +9,8 @@ void ngen_Bin(shil_opcode* op,x86_opcode_class natop,bool has_imm=true,bool has_
+ {
+ 	//x86e->Emit(op_mov32,EAX,op->rs1.reg_ptr());
+ 
+-	verify(reg.IsAllocg(op->rs1._reg));
+-	verify(reg.IsAllocg(op->rd._reg));
++	verify(reg.IsAllocg(op->rs1));
++	verify(reg.IsAllocg(op->rd));
+ 
+ 	x86_reg rs2;
+ 	if (op->rs2.is_r32i())
+@@ -40,7 +40,7 @@ void ngen_Bin(shil_opcode* op,x86_opcode_class natop,bool has_imm=true,bool has_
+ 	}
+ 	else
+ 	{
+-		printf("%d \n",op->rs1.type);
++		ERROR_LOG(DYNAREC, "%d", op->rs1.type);
+ 		verify(false);
+ 	}
+ }
+@@ -72,7 +72,7 @@ void ngen_fp_bin(shil_opcode* op,x86_opcode_class natop)
+ 	}
+ 	else
+ 	{
+-		printf("%d \n",op->rs2.type);
++		ERROR_LOG(DYNAREC, "%d", op->rs2.type);
+ 		verify(false);
+ 	}
+ 	if (op->rd._reg != op->rs1._reg)
+@@ -258,10 +258,10 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool
+ 				verify(op->rs1.is_imm() || reg.IsAllocg(op->rs1));
+ 				verify(op->rs3.is_null() || op->rs3.is_imm() || reg.IsAllocg(op->rs3));
+ 				
+-				for (u32 i = 0; i < op->rd.count(); i++)
+-				{
+-					verify(reg.IsAllocAny((Sh4RegType)(op->rd._reg + i)));
+-				}
++//				for (u32 i = 0; i < op->rd.count(); i++)
++//				{
++//					verify(reg.IsAllocAny((Sh4RegType)(op->rd._reg + i)));
++//				}
+ 
+ 				u32 size = op->flags & 0x7f;
+ 
+@@ -373,9 +373,15 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool
+ 					}
+ 					else
+ 					{
++#ifdef OLD_REGALLOC
+ 						x86e->Emit(op_movss, reg.mapfv(op->rd, 0), XMM0);
+ 						if (Lsz == 4)
+ 							x86e->Emit(op_movss, reg.mapfv(op->rd, 1), XMM1);
++#else
++						x86e->Emit(op_movss, op->rd.reg_ptr(), XMM0);
++						if (Lsz == 4)
++							x86e->Emit(op_movss, op->rd.reg_ptr() + 1, XMM1);
++#endif
+ 					}
+ 					break;
+ #endif
+@@ -384,10 +390,10 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool
+ 				if (size<=8)
+ 				{
+ 
++#ifdef OPTIMIZATION_GRAVEYARD
+ 					if (size==8 && optimise)
+ 					{
+ 						die("unreachable");
+-#ifdef OPTIMIZATION_GRAVEYARD
+ 						verify(op->rd.count()==2 && reg.IsAllocf(op->rd,0) && reg.IsAllocf(op->rd,1));
+ 
+ 						x86e->Emit(op_mov32,EDX,ECX);
+@@ -395,8 +401,8 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool
+ 						x86e->Emit(op_movss,reg.mapfv(op->rd,0),x86_mrm(EDX,x86_ptr(virt_ram_base)));
+ 						x86e->Emit(op_movss,reg.mapfv(op->rd,1),x86_mrm(EDX,x86_ptr(4+virt_ram_base)));
+ 						break;
+-#endif
+ 					}
++#endif
+ 					if (!isram)
+ 					{
+ 						reg.FreezeXMM();
+@@ -437,10 +443,15 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool
+ 					}
+ 					else
+ 					{
++#ifdef OLD_REGALLOC
+ 						verify(op->rd.count()==2 && reg.IsAllocf(op->rd,0) && reg.IsAllocf(op->rd,1));
+ 						
+ 						x86e->Emit(op_movd_xmm_from_r32,reg.mapfv(op->rd,0),EAX);
+ 						x86e->Emit(op_movd_xmm_from_r32,reg.mapfv(op->rd,1),EDX);
++#else
++						x86e->Emit(op_mov32, op->rd.reg_ptr(), EAX);
++						x86e->Emit(op_mov32, op->rd.reg_ptr() + 1, EDX);
++#endif
+ 					}
+ 
+ 				}
+@@ -452,7 +463,11 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool
+ 				u32 size=op->flags&0x7f;
+ 				verify(reg.IsAllocg(op->rs1) || op->rs1.is_imm());
+ 				
+-				verify(op->rs2.is_imm() || op->rs2.is_r32() || (op->rs2.count()==2 && reg.IsAllocf(op->rs2,0) && reg.IsAllocf(op->rs2,1)));
++#ifdef OLD_REGALLOC
++				verify(op->rs2.is_imm() || op->rs2.is_r32() || (op->rs2.count() == 2 && reg.IsAllocf(op->rs2, 0) && reg.IsAllocf(op->rs2, 1)));
++#else
++				verify(op->rs2.is_imm() || op->rs2.is_r32() || op->rs2.count() == 2);
++#endif
+ 
+ 				if (op->rs1.is_imm() && size<=4)
+ 				{
+@@ -507,7 +522,7 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool
+ 				}
+ 				else if (!op->rs3.is_null())
+ 				{
+-					printf("rs3: %08X\n",op->rs3.type);
++					ERROR_LOG(DYNAREC, "rs3: %08X", op->rs3.type);
+ 					die("invalid rs3");
+ 				}
+ 
+@@ -531,9 +546,15 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool
+ 						x86e->Emit(op_mov32, EDX, reg.mapg(op->rs2));
+ 					else 
+ 					{
++#ifdef OLD_REGALLOC
+ 						x86e->Emit(op_movss, XMM0, reg.mapfv(op->rs2, 0));
+ 						if (Lsz == 4)
+ 							x86e->Emit(op_movss, XMM1, reg.mapfv(op->rs2, 1));
++#else
++						x86e->Emit(op_movss, XMM0, op->rs2.reg_ptr());
++						if (Lsz == 4)
++							x86e->Emit(op_movss, XMM1, op->rs2.reg_ptr() + 1);
++#endif
+ 					}
+ 
+ 					reg.FreezeXMM();
+@@ -599,13 +620,18 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool
+ 			{
+ 				verify(op->rd.is_r64());
+ 				verify(op->rs1.is_r64());
+-				
++#ifdef OLD_REGALLOC
+ 				verify(reg.IsAllocf(op->rs1,0) && reg.IsAllocf(op->rs1,1));
+ 				verify(reg.IsAllocf(op->rd,0) && reg.IsAllocf(op->rd,1));
+ 				
+-				
+ 				x86e->Emit(op_movaps,reg.mapfv(op->rd,0),reg.mapfv(op->rs1,0));
+ 				x86e->Emit(op_movaps,reg.mapfv(op->rd,1),reg.mapfv(op->rs1,1));
++#else
++				x86e->Emit(op_mov32, EAX, x86_ptr(op->rs1.reg_ptr()));
++				x86e->Emit(op_mov32, x86_ptr(op->rd.reg_ptr()), EAX);
++				x86e->Emit(op_mov32, EAX, x86_ptr(op->rs1.reg_ptr() + 1));
++				x86e->Emit(op_mov32, x86_ptr(op->rd.reg_ptr() + 1), EAX);
++#endif
+ 			}
+ 			break;
+ 
+@@ -656,7 +682,7 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool
+ 						if (reg.mapf(op->rd) != reg.mapf(op->rs1))
+ 							x86e->Emit(op_movss,reg.mapf(op->rd),reg.mapf(op->rs1));
+ 						else
+-							printf("Renamed fmov !\n");
++							INFO_LOG(DYNAREC, "Renamed fmov !");
+ 						break;
+ 						
+ 					}
+@@ -839,15 +865,16 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool
+ 		
+ 		case shop_sync_sr:
+ 			{
++#ifdef OLD_REGALLOC
+ 				//reg alloc should be flushed here. Add Check
+ 				for (int i=0;i<8;i++)
+ 				{
+ 					verify(!reg.IsAllocAny((Sh4RegType)(reg_r0+i)));
+ 					verify(!reg.IsAllocAny((Sh4RegType)(reg_r0_Bank+i)));
+ 				}
+-
+ 				verify(!reg.IsAllocAny(reg_old_sr_status));
+ 				verify(!reg.IsAllocAny(reg_sr_status));
++#endif
+ 
+ 				//reg alloc should be flushed here, add checks
+ 				x86e->Emit(op_call,x86_ptr_imm(UpdateSR));
+@@ -856,15 +883,16 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool
+ 
+ 		case shop_sync_fpscr:
+ 			{
++#ifdef OLD_REGALLOC
+ 				//reg alloc should be flushed here. Add Check
+ 				for (int i=0;i<16;i++)
+ 				{
+ 					verify(!reg.IsAllocAny((Sh4RegType)(reg_fr_0+i)));
+ 					verify(!reg.IsAllocAny((Sh4RegType)(reg_xf_0+i)));
+ 				}
+-
+ 				verify(!reg.IsAllocAny(reg_old_fpscr));
+ 				verify(!reg.IsAllocAny(reg_fpscr));
++#endif
+ 
+ 
+ 				//reg alloc should be flushed here, add checks
+@@ -956,12 +984,19 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool
+ 				//verify(op->rd.is_vector); //double ? vector(2) ?
+ 
+ 				verify(reg.IsAllocg(op->rs1));
+-				verify(reg.IsAllocf(op->rd,0) && reg.IsAllocf(op->rd,1));
+ 
+ 				//sin/cos
+ 				x86e->Emit(op_movzx16to32,EAX,reg.mapg(op->rs1));
++#ifdef OLD_REGALLOC
++				verify(reg.IsAllocf(op->rd,0) && reg.IsAllocf(op->rd,1));
+ 				x86e->Emit(op_movss,reg.mapfv(op->rd,0),x86_mrm(EAX,sib_scale_8,x86_ptr(&sin_table->u[0])));
+ 				x86e->Emit(op_movss,reg.mapfv(op->rd,1),x86_mrm(EAX,sib_scale_8,x86_ptr(&sin_table->u[1])));
++#else
++				x86e->Emit(op_mov32, EAX, x86_mrm(EAX,sib_scale_8, x86_ptr(&sin_table->u[0])));
++				x86e->Emit(op_mov32, x86_ptr(op->rd.reg_ptr()), EAX);
++				x86e->Emit(op_mov32, EAX, x86_mrm(EAX,sib_scale_8, x86_ptr(&sin_table->u[1])));
++				x86e->Emit(op_mov32, x86_ptr(op->rd.reg_ptr() + 1), EAX);
++#endif
+ 			}
+ 			break;
+ 
+diff --git a/core/rec-x86/rec_x86_ngen.h b/core/rec-x86/rec_x86_ngen.h
+index d68b5fc..bb6aeb7 100644
+--- a/core/rec-x86/rec_x86_ngen.h
++++ b/core/rec-x86/rec_x86_ngen.h
+@@ -7,11 +7,17 @@
+ #include "hw/sh4/sh4_core.h"
+ #include "hw/sh4/dyna/ngen.h"
+ #include "hw/sh4/sh4_mem.h"
+-#include "hw/sh4/dyna/regalloc.h"
+ #include "emitter/x86_emitter.h"
+ #include "profiler/profiler.h"
+ #include "oslib/oslib.h"
+ 
++#define OLD_REGALLOC
++#ifdef OLD_REGALLOC
++#include "hw/sh4/dyna/regalloc.h"
++#else
++#include "hw/sh4/dyna/ssa_regalloc.h"
++#endif
++
+ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool staging, bool optimise);
+ 
+ #if BUILD_COMPILER == COMPILER_GCC
+@@ -46,7 +52,11 @@ extern bool sse_3;
+ extern bool ssse_3;
+ extern bool mmx;
+ 
+-struct x86_reg_alloc: RegAlloc<x86_reg,x86_reg>
++struct x86_reg_alloc : RegAlloc<x86_reg, x86_reg
++#ifndef OLD_REGALLOC
++												, false
++#endif
++														>
+ {
+ 	virtual void Preload(u32 reg,x86_reg nreg);
+ 	virtual void Writeback(u32 reg,x86_reg nreg);
+diff --git a/core/rend/TexCache.cpp b/core/rend/TexCache.cpp
+index e6aa10a..fba0ce9 100644
+--- a/core/rend/TexCache.cpp
++++ b/core/rend/TexCache.cpp
+@@ -125,7 +125,7 @@ void palette_update()
+ 
+ using namespace std;
+ 
+-vector<vram_block*> VramLocks[VRAM_SIZE/PAGE_SIZE];
++vector<vram_block*> VramLocks[VRAM_SIZE_MAX / PAGE_SIZE];
+ VLockedMemory vram;  // vram 32-64b
+ 
+ //List functions
+diff --git a/core/rend/gl4/gldraw.cpp b/core/rend/gl4/gldraw.cpp
+index d6e5a5f..c569f89 100644
+--- a/core/rend/gl4/gldraw.cpp
++++ b/core/rend/gl4/gldraw.cpp
+@@ -472,7 +472,7 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
+ 	for (int render_pass = 0; render_pass < render_pass_count; render_pass++)
+     {
+         const RenderPass& current_pass = pvrrc.render_passes.head()[render_pass];
+-
++//        printf("PASS %d autosort %d\n", render_pass, current_pass.autosort);
+         // Check if we can skip this pass, in part or completely, in case nothing is drawn (Cosmic Smash)
+ 		bool skip_op_pt = true;
+ 		bool skip_tr = true;
+diff --git a/core/rend/norend/norend.cpp b/core/rend/norend/norend.cpp
+index 01d507d..83aecb7 100644
+--- a/core/rend/norend/norend.cpp
++++ b/core/rend/norend/norend.cpp
+@@ -22,7 +22,7 @@ struct norend : Renderer
+ 
+ 	bool Render()
+ 	{
+-		return true;//!pvrrc.isRTT;
++		return !pvrrc.isRTT;
+ 	}
+ 
+ 	void Present() { }
+diff --git a/core/serialize.cpp b/core/serialize.cpp
+index 699757a..bb77f0e 100644
+--- a/core/serialize.cpp
++++ b/core/serialize.cpp
+@@ -157,19 +157,8 @@ extern u32 SB_FFST;
+ //static HollyInterruptID dmatmp2;
+ //static HollyInterruptID OldDmaId;
+ 
+-//this is one-time init, no updates - don't need to serialize
+-//extern RomChip sys_rom;
+-#ifdef FLASH_SIZE
+-extern DCFlashChip sys_nvmem;
+-#endif
+-
+-#ifdef BBSRAM_SIZE
+-extern SRamChip sys_nvmem;
+-#endif
+-//this is one-time init, no updates - don't need to serialize
+-//extern _vmem_handler area0_handler;
+-
+-
++extern MemChip *sys_rom;
++extern MemChip *sys_nvmem;
+ 
+ 
+ //./core/hw/gdrom/gdrom_response.o
+@@ -622,11 +611,11 @@ extern int SerStep;
+ extern int SerStep2;
+ extern unsigned char BSerial[];
+ extern unsigned char GSerial[];
+-extern u32 reg_dimm_3c;	//IO window ! writen, 0x1E03 some flag ?
+-extern u32 reg_dimm_40;	//parameters
+-extern u32 reg_dimm_44;	//parameters
+-extern u32 reg_dimm_48;	//parameters
+-extern u32 reg_dimm_4c;	//status/control reg ?
++extern u32 reg_dimm_command;
++extern u32 reg_dimm_offsetl;
++extern u32 reg_dimm_parameterl;
++extern u32 reg_dimm_parameterh;
++extern u32 reg_dimm_status;
+ extern bool NaomiDataRead;
+ 
+ 
+@@ -831,20 +820,16 @@ bool dc_serialize(void **data, unsigned int *total_size)
+ 	REICAST_S(SB_FFST);
+ 
+ 
+-
+-	//this is one-time init, no updates - don't need to serialize
+-	//extern RomChip sys_rom;
+-	REICAST_S(sys_nvmem.size);
+-	REICAST_S(sys_nvmem.mask);
++	sys_rom->Serialize(data, total_size);
++	sys_nvmem->Serialize(data, total_size);
++	/*
++	REICAST_S(sys_nvmem->size);
++	REICAST_S(sys_nvmem->mask);
+ #ifdef FLASH_SIZE
+-	REICAST_S(sys_nvmem.state);
++	REICAST_S(sys_nvmem->state);
+ #endif
+-	REICAST_SA(sys_nvmem.data,sys_nvmem.size);
+-
+-	//this is one-time init, no updates - don't need to serialize
+-	//extern _vmem_handler area0_handler;
+-
+-
++	REICAST_SA(sys_nvmem->data, sys_nvmem->size);
++	*/
+ 
+ 
+ 	REICAST_SA(reply_11,16) ;
+@@ -1079,11 +1064,11 @@ bool dc_serialize(void **data, unsigned int *total_size)
+ 	REICAST_S(SerStep2);
+ 	REICAST_SA(BSerial,69);
+ 	REICAST_SA(GSerial,69);
+-	REICAST_S(reg_dimm_3c);
+-	REICAST_S(reg_dimm_40);
+-	REICAST_S(reg_dimm_44);
+-	REICAST_S(reg_dimm_48);
+-	REICAST_S(reg_dimm_4c);
++	REICAST_S(reg_dimm_command);
++	REICAST_S(reg_dimm_offsetl);
++	REICAST_S(reg_dimm_parameterl);
++	REICAST_S(reg_dimm_parameterh);
++	REICAST_S(reg_dimm_status);
+ 	REICAST_S(NaomiDataRead);
+ 
+ #if FEAT_SHREC == DYNAREC_CPP
+@@ -1198,15 +1183,15 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
+ 	REICAST_US(i); //LIBRETRO_S(sys_nvmem_sram.mask);
+ 	//LIBRETRO_SA(sys_nvmem_sram.data,sys_nvmem_sram.size);
+ 
+-	REICAST_US(sys_nvmem.size);
+-	REICAST_US(sys_nvmem.mask);
++	REICAST_US(sys_nvmem->size);
++	REICAST_US(sys_nvmem->mask);
+ #if DC_PLATFORM == DC_PLATFORM_DREAMCAST
+-	REICAST_US(sys_nvmem.state);
++	REICAST_US(static_cast<DCFlashChip*>(sys_nvmem)->state);
+ #else
+ 	// FIXME
+ 	die("Naomi/Atomiswave libretro savestates are not supported");
+ #endif
+-	REICAST_USA(sys_nvmem.data,sys_nvmem.size);
++	REICAST_USA(sys_nvmem->data, sys_nvmem->size);
+ 
+ 
+ 	//this is one-time init, no updates - don't need to serialize
+@@ -1471,11 +1456,11 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
+ 	REICAST_US(SerStep2);
+ 	REICAST_USA(BSerial,69);
+ 	REICAST_USA(GSerial,69);
+-	REICAST_US(reg_dimm_3c);
+-	REICAST_US(reg_dimm_40);
+-	REICAST_US(reg_dimm_44);
+-	REICAST_US(reg_dimm_48);
+-	REICAST_US(reg_dimm_4c);
++	REICAST_US(reg_dimm_command);
++	REICAST_US(reg_dimm_offsetl);
++	REICAST_US(reg_dimm_parameterl);
++	REICAST_US(reg_dimm_parameterh);
++	REICAST_US(reg_dimm_status);
+ 	REICAST_US(NaomiDataRead);
+ 
+ 	REICAST_US(i); //LIBRETRO_S(cycle_counter);
+@@ -1580,15 +1565,16 @@ bool dc_unserialize(void **data, unsigned int *total_size)
+ 	REICAST_US(SB_FFST_rc);
+ 	REICAST_US(SB_FFST);
+ 
+-	//this is one-time init, no updates - don't need to serialize
+-	//extern RomChip sys_rom;
++	sys_rom->Unserialize(data, total_size);
++	sys_nvmem->Unserialize(data, total_size);
++	/*
+ 	REICAST_US(sys_nvmem.size);
+ 	REICAST_US(sys_nvmem.mask);
+ #ifdef FLASH_SIZE
+ 	REICAST_US(sys_nvmem.state);
+ #endif
+ 	REICAST_USA(sys_nvmem.data,sys_nvmem.size);
+-
++	*/
+ 
+ 	//this is one-time init, no updates - don't need to serialize
+ 	//extern _vmem_handler area0_handler;
+@@ -1850,11 +1836,11 @@ bool dc_unserialize(void **data, unsigned int *total_size)
+ 	REICAST_US(SerStep2);
+ 	REICAST_USA(BSerial,69);
+ 	REICAST_USA(GSerial,69);
+-	REICAST_US(reg_dimm_3c);
+-	REICAST_US(reg_dimm_40);
+-	REICAST_US(reg_dimm_44);
+-	REICAST_US(reg_dimm_48);
+-	REICAST_US(reg_dimm_4c);
++	REICAST_US(reg_dimm_command);
++	REICAST_US(reg_dimm_offsetl);
++	REICAST_US(reg_dimm_parameterl);
++	REICAST_US(reg_dimm_parameterh);
++	REICAST_US(reg_dimm_status);
+ 	REICAST_US(NaomiDataRead);
+ 
+ #if FEAT_SHREC == DYNAREC_CPP
+diff --git a/core/types.h b/core/types.h
+index cf55226..a179a01 100644
+--- a/core/types.h
++++ b/core/types.h
+@@ -421,8 +421,8 @@ bool dc_unserialize(void **data, unsigned int *total_size);
+ #define REICAST_S(v) rc_serialize(&(v), sizeof(v), data, total_size)
+ #define REICAST_US(v) rc_unserialize(&(v), sizeof(v), data, total_size)
+ 
+-#define REICAST_SA(v_arr,num) rc_serialize(v_arr, sizeof(v_arr[0])*num, data, total_size)
+-#define REICAST_USA(v_arr,num) rc_unserialize(v_arr, sizeof(v_arr[0])*num, data, total_size)
++#define REICAST_SA(v_arr,num) rc_serialize((v_arr), sizeof((v_arr)[0])*(num), data, total_size)
++#define REICAST_USA(v_arr,num) rc_unserialize((v_arr), sizeof((v_arr)[0])*(num), data, total_size)
+ 
+ enum
+ {
+@@ -606,6 +606,19 @@ enum LimitFPSEnum {
+ struct settings_t
+ {
+ 	struct {
++		int system;
++		u32 ram_size;
++		u32 ram_mask;
++		u32 vram_size;
++		u32 vram_mask;
++		u32 aram_size;
++		u32 aram_mask;
++		u32 bios_size;
++		u32 flash_size;
++		u32 bbsram_size;
++	} platform;
++
++	struct {
+ 		bool UseReios;
+ 	} bios;
+ 
+@@ -738,6 +751,16 @@ struct settings_t
+ 
+ extern settings_t settings;
+ 
++#define RAM_SIZE settings.platform.ram_size
++#define RAM_MASK settings.platform.ram_mask
++#define ARAM_SIZE settings.platform.aram_size
++#define ARAM_MASK settings.platform.aram_mask
++#define VRAM_SIZE settings.platform.vram_size
++#define VRAM_MASK settings.platform.vram_mask
++#define BIOS_SIZE settings.platform.bios_size
++#define FLASH_SIZE settings.platform.flash_size
++#define BBSRAM_SIZE settings.platform.bbsram_size
++
+ void InitSettings();
+ void LoadSettings(bool game_specific);
+ void SaveSettings();
+diff --git a/shell/android-studio/reicast/build.gradle b/shell/android-studio/reicast/build.gradle
+index 71d1d4e..78175ac 100644
+--- a/shell/android-studio/reicast/build.gradle
++++ b/shell/android-studio/reicast/build.gradle
+@@ -1,6 +1,8 @@
+ apply plugin: 'com.android.application'
+ apply plugin: 'com.github.triplet.play'
+ 
++apply from: 'profiling.gradle'
++
+ def getBuildId = { ->
+     def build_id = System.getenv("TRAVIS_JOB_ID") ?: "8"
+     return Integer.parseInt( build_id )
+@@ -38,7 +40,7 @@ android {
+ 
+         ndk {
+             moduleName "dc"
+-                abiFilters 'armeabi-v7a', 'arm64-v8a'
++                abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86'
+         }
+     }
+ 
+@@ -70,11 +72,12 @@ android {
+     flavorDimensions "systemtype"
+     productFlavors {
+         dreamcast {
++            externalNativeBuild { ndkBuild { arguments "-j8" } }
+         }
+         naomi {
+             applicationId = "com.flycast.emulator.naomi"
+             versionNameSuffix " Naomi"
+-            externalNativeBuild { ndkBuild { arguments "NAOMI=1" } }
++            externalNativeBuild { ndkBuild { arguments "NAOMI=1", "-j8" } }
+         }
+     }
+ 
+@@ -87,6 +90,12 @@ android {
+     lintOptions {
+         abortOnError false
+     }
++    
++	packagingOptions{
++	    doNotStrip "*/armeabi/*.so"
++	    doNotStrip "*/armeabi-v7a/*.so"
++	    doNotStrip "*/arm64-v8a/*.so"
++	}
+ }
+ 
+ afterEvaluate {
+@@ -117,4 +126,3 @@ dependencies {
+     }
+     implementation fileTree(include: ['*.jar'], dir: 'libs')
+ }
+-

@@ -773,32 +773,26 @@ void sb_Init()
 
 	asic_reg_Init();
 
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
 	gdrom_reg_Init();
-#else
 	naomi_reg_Init();
-#endif
 
 	pvr_sb_Init();
 	maple_Init();
 	aica_sb_Init();
 
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST && defined(ENABLE_MODEM)
+#ifdef ENABLE_MODEM
 	ModemInit();
 #endif
 }
 
 void sb_Reset(bool Manual)
 {
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST && defined(ENABLE_MODEM)
+#ifdef ENABLE_MODEM
 	ModemTerm();
 #endif
 	asic_reg_Reset(Manual);
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
 	gdrom_reg_Reset(Manual);
-#else
 	naomi_reg_Reset(Manual);
-#endif
 	pvr_sb_Reset(Manual);
 	maple_Reset(Manual);
 	aica_sb_Reset(Manual);
@@ -806,16 +800,13 @@ void sb_Reset(bool Manual)
 
 void sb_Term()
 {
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST && defined(ENABLE_MODEM)
+#ifdef ENABLE_MODEM
 	ModemTerm();
 #endif
 	aica_sb_Term();
 	maple_Term();
 	pvr_sb_Term();
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
 	gdrom_reg_Term();
-#else
 	naomi_reg_Term();
-#endif
 	asic_reg_Term();
 }

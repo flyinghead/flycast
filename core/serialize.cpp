@@ -157,19 +157,8 @@ extern u32 SB_FFST;
 //static HollyInterruptID dmatmp2;
 //static HollyInterruptID OldDmaId;
 
-//this is one-time init, no updates - don't need to serialize
-//extern RomChip sys_rom;
-#ifdef FLASH_SIZE
-extern DCFlashChip sys_nvmem;
-#endif
-
-#ifdef BBSRAM_SIZE
-extern SRamChip sys_nvmem;
-#endif
-//this is one-time init, no updates - don't need to serialize
-//extern _vmem_handler area0_handler;
-
-
+extern MemChip *sys_rom;
+extern MemChip *sys_nvmem;
 
 
 //./core/hw/gdrom/gdrom_response.o
@@ -831,20 +820,16 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	REICAST_S(SB_FFST);
 
 
-
-	//this is one-time init, no updates - don't need to serialize
-	//extern RomChip sys_rom;
-	REICAST_S(sys_nvmem.size);
-	REICAST_S(sys_nvmem.mask);
+	sys_rom->Serialize(data, total_size);
+	sys_nvmem->Serialize(data, total_size);
+	/*
+	REICAST_S(sys_nvmem->size);
+	REICAST_S(sys_nvmem->mask);
 #ifdef FLASH_SIZE
-	REICAST_S(sys_nvmem.state);
+	REICAST_S(sys_nvmem->state);
 #endif
-	REICAST_SA(sys_nvmem.data,sys_nvmem.size);
-
-	//this is one-time init, no updates - don't need to serialize
-	//extern _vmem_handler area0_handler;
-
-
+	REICAST_SA(sys_nvmem->data, sys_nvmem->size);
+	*/
 
 
 	REICAST_SA(reply_11,16) ;
@@ -1198,15 +1183,14 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	REICAST_US(i); //LIBRETRO_S(sys_nvmem_sram.mask);
 	//LIBRETRO_SA(sys_nvmem_sram.data,sys_nvmem_sram.size);
 
-	REICAST_US(sys_nvmem.size);
-	REICAST_US(sys_nvmem.mask);
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-	REICAST_US(sys_nvmem.state);
-#else
-	// FIXME
-	die("Naomi/Atomiswave libretro savestates are not supported");
-#endif
-	REICAST_USA(sys_nvmem.data,sys_nvmem.size);
+	REICAST_US(sys_nvmem->size);
+	REICAST_US(sys_nvmem->mask);
+	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+		REICAST_US(static_cast<DCFlashChip*>(sys_nvmem)->state);
+	else
+		// FIXME
+		die("Naomi/Atomiswave libretro savestates are not supported");
+	REICAST_USA(sys_nvmem->data, sys_nvmem->size);
 
 
 	//this is one-time init, no updates - don't need to serialize
@@ -1580,15 +1564,16 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	REICAST_US(SB_FFST_rc);
 	REICAST_US(SB_FFST);
 
-	//this is one-time init, no updates - don't need to serialize
-	//extern RomChip sys_rom;
+	sys_rom->Unserialize(data, total_size);
+	sys_nvmem->Unserialize(data, total_size);
+	/*
 	REICAST_US(sys_nvmem.size);
 	REICAST_US(sys_nvmem.mask);
 #ifdef FLASH_SIZE
 	REICAST_US(sys_nvmem.state);
 #endif
 	REICAST_USA(sys_nvmem.data,sys_nvmem.size);
-
+	*/
 
 	//this is one-time init, no updates - don't need to serialize
 	//extern _vmem_handler area0_handler;

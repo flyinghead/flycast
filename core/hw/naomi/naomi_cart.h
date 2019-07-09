@@ -95,6 +95,7 @@ public:
 
 bool naomi_cart_SelectFile();
 void naomi_cart_Close();
+int naomi_cart_GetPlatform(const char *path);
 
 extern char naomi_game_id[];
 extern u8 *naomi_default_eeprom;

@@ -66,7 +66,7 @@ struct vram_lock {
 	u32 start;
 	u32 end;
 };
-static std::vector<vram_lock> vram_blocks[VRAM_SIZE / VRAM_PROT_SEGMENT];
+static std::vector<vram_lock> vram_blocks[VRAM_SIZE_MAX / VRAM_PROT_SEGMENT];
 static u8 sram_mapped_pages[USER_SPACE / PAGE_SIZE / 8];	// bit set to 1 if page is mapped
 
 bool vmem32_inited;
