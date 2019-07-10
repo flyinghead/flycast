@@ -103,7 +103,7 @@ static void SetTextureRepeatMode(int index, GLuint dir, u32 clamp, u32 mirror)
 }
 
 template <u32 Type, bool SortingEnabled>
-	static void SetGPState(PolyParam* gp, int pass)
+	static void SetGPState(const PolyParam* gp, int pass)
 {
 	if (gp->pcw.Texture && gp->tsp.FilterMode > 1)
 	{
@@ -234,11 +234,11 @@ template <u32 Type, bool SortingEnabled>
 	SetCull(gp->isp.CullMode ^ gcflip);
 
 	//set Z mode, only if required
-	if (Type == ListType_Punch_Through)
+	if (Type == ListType_Punch_Through || (pass == 0 && SortingEnabled))
 	{
 		glcache.DepthFunc(Zfunction[6]);	// Greater or equal
 	}
-	else if (Type == ListType_Opaque)
+	else if (Type == ListType_Opaque || (pass == 0 && !SortingEnabled))
 	{
 		glcache.DepthFunc(Zfunction[gp->isp.DepthMode]);
 	}
