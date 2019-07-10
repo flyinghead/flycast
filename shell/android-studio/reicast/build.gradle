@@ -1,8 +1,6 @@
 apply plugin: 'com.android.application'
 apply plugin: 'com.github.triplet.play'
 
-apply from: 'profiling.gradle'
-
 def getBuildId = { ->
     def build_id = System.getenv("TRAVIS_JOB_ID") ?: "8"
     return Integer.parseInt( build_id )
@@ -40,7 +38,7 @@ android {
 
         ndk {
             moduleName "dc"
-                abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86'
+                abiFilters 'armeabi-v7a', 'arm64-v8a'
         }
     }
 
@@ -72,12 +70,11 @@ android {
     flavorDimensions "systemtype"
     productFlavors {
         dreamcast {
-            externalNativeBuild { ndkBuild { arguments "-j8" } }
         }
         naomi {
             applicationId = "com.flycast.emulator.naomi"
             versionNameSuffix " Naomi"
-            externalNativeBuild { ndkBuild { arguments "NAOMI=1", "-j8" } }
+            externalNativeBuild { ndkBuild { arguments "NAOMI=1" } }
         }
     }
 
@@ -90,12 +87,6 @@ android {
     lintOptions {
         abortOnError false
     }
-    
-	packagingOptions{
-	    doNotStrip "*/armeabi/*.so"
-	    doNotStrip "*/armeabi-v7a/*.so"
-	    doNotStrip "*/arm64-v8a/*.so"
-	}
 }
 
 afterEvaluate {

@@ -33,7 +33,7 @@ extern "C" {
 }
 
 #define VIXL_CODE_BUFFER_MALLOC
-#define VIXL_DEBUG
+//#define VIXL_DEBUG
 
 #if defined(_ANDROID) && defined(VIXL_DEBUG)
 #include <android/log.h>
