@@ -259,7 +259,7 @@ void maple_Init()
 	maple_schid=sh4_sched_register(0,&maple_schd);
 }
 
-void maple_Reset(bool Manual)
+void maple_Reset(bool hard)
 {
 	maple_ddt_pending_reset=false;
 	SB_MDTSEL = 0x00000000;

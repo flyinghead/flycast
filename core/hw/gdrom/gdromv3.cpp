@@ -1129,7 +1129,7 @@ void gdrom_reg_Term()
 	
 }
 
-void gdrom_reg_Reset(bool Manual)
+void gdrom_reg_Reset(bool hard)
 {
 	sb_rio_register(SB_GDST_addr, RIO_WF, 0, &GDROM_DmaStart);
 	sb_rio_register(SB_GDEN_addr, RIO_WF, 0, &GDROM_DmaEnable);

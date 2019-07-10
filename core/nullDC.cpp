@@ -120,13 +120,13 @@ void plugins_Term()
 	libPvr_Term();
 }
 
-void plugins_Reset(bool Manual)
+void plugins_Reset(bool hard)
 {
 	reios_reset();
-	libPvr_Reset(Manual);
-	libGDR_Reset(Manual);
-	libAICA_Reset(Manual);
-	libARM_Reset(Manual);
+	libPvr_Reset(hard);
+	libGDR_Reset(hard);
+	libAICA_Reset(hard);
+	libARM_Reset(hard);
 	//libExtDevice_Reset(Manual);
 }
 
@@ -306,12 +306,12 @@ void LoadSpecialSettings()
 	}
 }
 
-void dc_reset(bool manual)
+void dc_reset(bool hard)
 {
-	plugins_Reset(manual);
-	mem_Reset(manual);
+	plugins_Reset(hard);
+	mem_Reset(hard);
 
-	sh4_cpu.Reset(manual);
+	sh4_cpu.Reset(hard);
 }
 
 static bool reset_requested;
@@ -366,7 +366,6 @@ void set_platform(int platform)
 	switch (platform)
 	{
 	case DC_PLATFORM_DREAMCAST:
-		printf("Starting Dreamcast game\n");
 		settings.platform.ram_size = 16 * 1024 * 1024;
 		settings.platform.vram_size = 8 * 1024 * 1024;
 		settings.platform.aram_size = 2 * 1024 * 1024;
@@ -375,7 +374,6 @@ void set_platform(int platform)
 		settings.platform.bbsram_size = 0;
 		break;
 	case DC_PLATFORM_NAOMI:
-		printf("Starting Naomi game\n");
 		settings.platform.ram_size = 32 * 1024 * 1024;
 		settings.platform.vram_size = 16 * 1024 * 1024;
 		settings.platform.aram_size = 8 * 1024 * 1024;
@@ -384,7 +382,6 @@ void set_platform(int platform)
 		settings.platform.bbsram_size = 32 * 1024;
 		break;
 	case DC_PLATFORM_ATOMISWAVE:
-		printf("Starting Atomiswave game\n");
 		settings.platform.ram_size = 16 * 1024 * 1024;
 		settings.platform.vram_size = 8 * 1024 * 1024;
 		settings.platform.aram_size = 8 * 1024 * 1024;

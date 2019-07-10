@@ -61,8 +61,8 @@ void EXPORT_CALL handle_SwitchDisc(u32 id,void* w,void* p)
 	//new disc is in
 }
 */
-//It's supposed to reset everything (if not a manual reset)
-void libGDR_Reset(bool Manual)
+//It's supposed to reset everything (if not a soft reset)
+void libGDR_Reset(bool hard)
 {
 	libCore_gdrom_disc_change();
 }

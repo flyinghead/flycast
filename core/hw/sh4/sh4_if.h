@@ -218,7 +218,7 @@ typedef void StopFP();
 typedef void StartFP();
 typedef void StepFP();
 typedef void SkipFP();
-typedef void ResetFP(bool Manual);
+typedef void ResetFP(bool hard);
 typedef void InitFP();
 typedef void TermFP();
 typedef bool IsCpuRunningFP();

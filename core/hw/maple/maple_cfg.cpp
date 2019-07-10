@@ -137,7 +137,6 @@ void mcfg_Create(MapleDeviceType type, u32 bus, u32 port, s32 player_num = -1)
 
 void mcfg_CreateNAOMIJamma()
 {
-	printf("mcfg_CreateNAOMIJamma\n");
 	mcfg_DestroyDevices();
 	mcfg_Create(MDT_NaomiJamma, 0, 5);
 //	mcfg_Create(MDT_Keyboard, 2, 5);
@@ -145,7 +144,6 @@ void mcfg_CreateNAOMIJamma()
 
 void mcfg_CreateAtomisWaveControllers()
 {
-	printf("mcfg_CreateAtomisWaveControllers\n");
 	mcfg_DestroyDevices();
 	// Looks like two controllers needs to be on bus 0 and 1 for digital inputs
 	// Then other devices on port 2 and 3 for analog axes, light guns, ...
@@ -181,7 +179,6 @@ void mcfg_CreateAtomisWaveControllers()
 
 void mcfg_CreateDevices()
 {
-	printf("mcfg_CreateDevices\n");
 	for (int bus = 0; bus < MAPLE_PORTS; ++bus)
 	{
 		switch ((MapleDeviceType)settings.input.maple_devices[bus])
@@ -213,7 +210,6 @@ void mcfg_CreateDevices()
 
 void mcfg_DestroyDevices()
 {
-	printf("mcfg_DestroyDevices\n");
 	for (int i = 0; i < MAPLE_PORTS; i++)
 		for (int j=0;j<=5;j++)
 		{

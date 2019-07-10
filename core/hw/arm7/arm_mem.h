@@ -59,6 +59,10 @@ void sh4_WriteMem_reg(u32 addr,u32 data,u32 size);
 #define AICA_RAM_SIZE (ARAM_SIZE)
 #define AICA_RAM_MASK (ARAM_MASK)
 
+extern bool aica_interr;
+extern u32 aica_reg_L;
 extern bool e68k_out;
+extern u32 e68k_reg_L;
+extern u32 e68k_reg_M;
 
 void update_armintc();

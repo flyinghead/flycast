@@ -785,17 +785,30 @@ void sb_Init()
 #endif
 }
 
-void sb_Reset(bool Manual)
+void sb_Reset(bool hard)
 {
+	if (hard)
+	{
+		for (u32 i = 0; i < sb_regs.Size; i++)
+		{
+			if (!(sb_regs[i].flags & (REG_RO|REG_WO|REG_RF)))
+				sb_regs[i].data32 = 0;
+		}
+	}
+	SB_ISTNRM = 0;
+	SB_FFST_rc = 0;
+	SB_FFST = 0;
 #ifdef ENABLE_MODEM
 	ModemTerm();
 #endif
-	asic_reg_Reset(Manual);
-	gdrom_reg_Reset(Manual);
-	naomi_reg_Reset(Manual);
-	pvr_sb_Reset(Manual);
-	maple_Reset(Manual);
-	aica_sb_Reset(Manual);
+	asic_reg_Reset(hard);
+	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+		gdrom_reg_Reset(hard);
+	else
+		naomi_reg_Reset(hard);
+	pvr_sb_Reset(hard);
+	maple_Reset(hard);
+	aica_sb_Reset(hard);
 }
 
 void sb_Term()

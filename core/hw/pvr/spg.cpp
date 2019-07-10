@@ -286,7 +286,7 @@ void spg_Term()
 {
 }
 
-void spg_Reset(bool Manual)
+void spg_Reset(bool hard)
 {
 	CalculateSync();
 }

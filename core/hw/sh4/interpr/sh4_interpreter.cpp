@@ -124,7 +124,7 @@ void Sh4_int_Skip()
 	}
 }
 
-void Sh4_int_Reset(bool Manual)
+void Sh4_int_Reset(bool hard)
 {
 	if (sh4_int_bCpuRun)
 	{

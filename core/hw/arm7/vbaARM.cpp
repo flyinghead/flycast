@@ -21,7 +21,7 @@ void libARM_Term()
 }
 
 //It's supposed to reset anything
-void libARM_Reset(bool Manual)
+void libARM_Reset(bool hard)
 {
 	arm_Reset();
 	arm_SetEnabled(false);

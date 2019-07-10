@@ -348,9 +348,9 @@ void sh4_area0_Init()
 	sb_Init();
 }
 
-void sh4_area0_Reset(bool manual)
+void sh4_area0_Reset(bool hard)
 {
-	if (manual)
+	if (hard)
 	{
 		if (sys_rom != NULL)
 		{
@@ -384,7 +384,7 @@ void sh4_area0_Reset(bool manual)
 		sys_rom->Reset();
 		sys_nvmem->Reset();
 	}
-	sb_Reset(manual);
+	sb_Reset(hard);
 }
 
 void sh4_area0_Term()
