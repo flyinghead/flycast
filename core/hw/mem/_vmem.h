@@ -22,8 +22,6 @@ void vmem_platform_reset_mem(void *ptr, unsigned size_bytes);
 void vmem_platform_ondemand_page(void *address, unsigned size_bytes);
 // To create the mappings in the address space.
 void vmem_platform_create_mappings(const vmem_mapping *vmem_maps, unsigned nummaps);
-// Delete (unmap) the previously mapped regions
-void vmem_platform_delete_mappings();
 // Just tries to wipe as much as possible in the relevant area.
 void vmem_platform_destroy();
 // Given a block of data in the .text section, prepares it for JIT action.

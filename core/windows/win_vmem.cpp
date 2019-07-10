@@ -66,7 +66,11 @@ static std::vector<void *> mapped_regions;
 
 // Plase read the POSIX implementation for more information. On Windows this is
 // rather straightforward.
-VMemType vmem_platform_init(void **vmem_base_addr, void **sh4rcb_addr) {
+VMemType vmem_platform_init(void **vmem_base_addr, void **sh4rcb_addr)
+{
+	unmapped_regions.reserve(32);
+	mapped_regions.reserve(32);
+
 	// Firt let's try to allocate the in-memory file
 	mem_handle = CreateFileMapping(INVALID_HANDLE_VALUE, 0, PAGE_READWRITE, 0, RAM_SIZE_MAX + VRAM_SIZE_MAX + ARAM_SIZE_MAX, 0);
 
@@ -116,7 +120,12 @@ void vmem_platform_create_mappings(const vmem_mapping *vmem_maps, unsigned numma
 	// we unmap the whole thing only to remap it later.
 
 	// Unmap the whole section
-	vmem_platform_delete_mappings();
+	for (void *p : mapped_regions)
+		mem_region_unmap_file(p, 0);
+	mapped_regions.clear();
+	for (void *p : unmapped_regions)
+		mem_region_release(p, 0);
+	unmapped_regions.clear();
 
 	for (unsigned i = 0; i < nummaps; i++) {
 		unsigned address_range_size = vmem_maps[i].end_address - vmem_maps[i].start_address;
@@ -144,16 +153,6 @@ void vmem_platform_create_mappings(const vmem_mapping *vmem_maps, unsigned numma
 			}
 		}
 	}
-}
-
-void vmem_platform_delete_mappings()
-{
-	for (void *p : mapped_regions)
-		mem_region_unmap_file(p, 0);
-	mapped_regions.clear();
-	for (void *p : unmapped_regions)
-		mem_region_release(p, 0);
-	unmapped_regions.clear();
 }
 
 typedef void* (*mapper_fn) (void *addr, unsigned size);
