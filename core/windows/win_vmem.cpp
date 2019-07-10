@@ -58,6 +58,9 @@ HANDLE mem_handle = INVALID_HANDLE_VALUE;
 static HANDLE mem_handle2 = INVALID_HANDLE_VALUE;
 static char * base_alloc = NULL;
 
+static std::vector<void *> unmapped_regions;
+static std::vector<void *> mapped_regions;
+
 // Implement vmem initialization for RAM, ARAM, VRAM and SH4 context, fpcb etc.
 // The function supports allocating 512MB or 4GB addr spaces.
 
@@ -74,6 +77,19 @@ VMemType vmem_platform_init(void **vmem_base_addr, void **sh4rcb_addr) {
 	// Calculate pointers now
 	*sh4rcb_addr = &base_alloc[0];
 	*vmem_base_addr = &base_alloc[sizeof(Sh4RCB)];
+
+	VirtualFree(base_alloc, 0, MEM_RELEASE);
+	// Map the SH4CB block too
+	void *base_ptr = VirtualAlloc(base_alloc, sizeof(Sh4RCB), MEM_RESERVE, PAGE_NOACCESS);
+	verify(base_ptr == base_alloc);
+	// Map the rest of the context
+	void *cntx_ptr = VirtualAlloc((u8*)p_sh4rcb + sizeof(p_sh4rcb->fpcb), sizeof(Sh4RCB) - sizeof(p_sh4rcb->fpcb), MEM_COMMIT, PAGE_READWRITE);
+	verify(cntx_ptr == (u8*)p_sh4rcb + sizeof(p_sh4rcb->fpcb));
+
+	// Reserve the rest of the memory but don't commit it
+	void *ptr = VirtualAlloc(*vmem_base_addr, memsize - sizeof(Sh4RCB), MEM_RESERVE, PAGE_NOACCESS);
+	verify(ptr == *vmem_base_addr);
+	unmapped_regions.push_back(ptr);
 
 	return MemType512MB;
 }
@@ -100,13 +116,7 @@ void vmem_platform_create_mappings(const vmem_mapping *vmem_maps, unsigned numma
 	// we unmap the whole thing only to remap it later.
 
 	// Unmap the whole section
-	VirtualFree(base_alloc, 0, MEM_RELEASE);
-
-	// Map the SH4CB block too
-	void *base_ptr = VirtualAlloc(base_alloc, sizeof(Sh4RCB), MEM_RESERVE, PAGE_NOACCESS);
-	verify(base_ptr == base_alloc);
-	void *cntx_ptr = VirtualAlloc((u8*)p_sh4rcb + sizeof(p_sh4rcb->fpcb), sizeof(Sh4RCB) - sizeof(p_sh4rcb->fpcb), MEM_COMMIT, PAGE_READWRITE);
-	verify(cntx_ptr == (u8*)p_sh4rcb + sizeof(p_sh4rcb->fpcb));
+	vmem_platform_delete_mappings();
 
 	for (unsigned i = 0; i < nummaps; i++) {
 		unsigned address_range_size = vmem_maps[i].end_address - vmem_maps[i].start_address;
@@ -116,6 +126,7 @@ void vmem_platform_create_mappings(const vmem_mapping *vmem_maps, unsigned numma
 			// Unmapped stuff goes with a protected area or memory. Prevent anything from allocating here
 			void *ptr = VirtualAlloc(&virt_ram_base[vmem_maps[i].start_address], address_range_size, MEM_RESERVE, PAGE_NOACCESS);
 			verify(ptr == &virt_ram_base[vmem_maps[i].start_address]);
+			unmapped_regions.push_back(ptr);
 		}
 		else {
 			// Calculate the number of mirrors
@@ -129,9 +140,20 @@ void vmem_platform_create_mappings(const vmem_mapping *vmem_maps, unsigned numma
 				void *ptr = MapViewOfFileEx(mem_handle, protection, 0, vmem_maps[i].memoffset,
 				                    vmem_maps[i].memsize, &virt_ram_base[offset]);
 				verify(ptr == &virt_ram_base[offset]);
+				mapped_regions.push_back(ptr);
 			}
 		}
 	}
+}
+
+void vmem_platform_delete_mappings()
+{
+	for (void *p : mapped_regions)
+		mem_region_unmap_file(p, 0);
+	mapped_regions.clear();
+	for (void *p : unmapped_regions)
+		mem_region_release(p, 0);
+	unmapped_regions.clear();
 }
 
 typedef void* (*mapper_fn) (void *addr, unsigned size);

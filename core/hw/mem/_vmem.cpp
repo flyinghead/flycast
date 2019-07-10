@@ -523,7 +523,7 @@ bool _vmem_reserve() {
 	return true;
 }
 
-void _vmem_term_mappings()
+static void _vmem_term_mappings()
 {
 	if (vmemstatus == MemTypeError) {
 		if (p_sh4rcb != NULL)
@@ -549,7 +549,7 @@ void _vmem_term_mappings()
 	}
 	else
 	{
-		//vmem_platform_destroy();	// FIXME Needed for Windows
+		vmem_platform_delete_mappings();
 	}
 }
 

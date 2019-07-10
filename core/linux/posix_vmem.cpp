@@ -235,6 +235,14 @@ void vmem_platform_create_mappings(const vmem_mapping *vmem_maps, unsigned numma
 	}
 }
 
+void vmem_platform_delete_mappings()
+{
+	if (vmem_4gb_space)
+		vmem_platform_reset_mem(virt_ram_base, 0x100000000);
+	else
+		vmem_platform_reset_mem(virt_ram_base, 0x20000000);
+}
+
 // Prepares the code region for JIT operations, thus marking it as RWX
 bool vmem_platform_prepare_jit_block(void *code_area, unsigned size, void **code_area_rwx) {
 	// Try to map is as RWX, this fails apparently on OSX (and perhaps other systems?)

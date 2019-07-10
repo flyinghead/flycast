@@ -178,7 +178,7 @@ LONG ExeptionHandler(EXCEPTION_POINTERS *ExceptionInfo)
 #endif
 	else
 	{
-	    ERROR_LOG(COMMON, "[GPF]Unhandled access to : %p\n", address);
+	    ERROR_LOG(COMMON, "[GPF]Unhandled access to : %p", address);
 	}
 
 	return EXCEPTION_CONTINUE_SEARCH;
