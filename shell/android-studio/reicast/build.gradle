@@ -71,11 +71,6 @@ android {
     productFlavors {
         dreamcast {
         }
-        naomi {
-            applicationId = "com.flycast.emulator.naomi"
-            versionNameSuffix " Naomi"
-            externalNativeBuild { ndkBuild { arguments "NAOMI=1" } }
-        }
     }
 
     externalNativeBuild {

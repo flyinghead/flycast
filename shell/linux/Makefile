@@ -400,26 +400,9 @@ ifdef DEBUGFAST
 endif
 
 EXECUTABLE_STRIPPED=nosym-reicast.$(PLATFORM_EXT)
-ifdef NAOMI
-    CFLAGS += -D TARGET_NAOMI
-    DC_PLATFORM=naomi
-    EXECUTABLE=reicast_naomi.$(PLATFORM_EXT)
-    EXECUTABLE_NAME=reicast-naomi
-else ifdef ATOMISWAVE
-    CFLAGS += -D DC_PLATFORM=DC_PLATFORM_ATOMISWAVE
-    DC_PLATFORM=atomiswave
-    EXECUTABLE=reicast_awave.$(PLATFORM_EXT)
-    EXECUTABLE_NAME=reicast-awave
-else ifdef DISPFRAME
-    CFLAGS += -D TARGET_DISPFRAME #-D TARGET_NAOMI
-    DC_PLATFORM=dispframe
-    EXECUTABLE=dispframe.$(PLATFORM_EXT)
-    EXECUTABLE_NAME=dispframe
-else
-    DC_PLATFORM=dreamcast
-    EXECUTABLE=reicast.$(PLATFORM_EXT)
-    EXECUTABLE_NAME=reicast
-endif
+DC_PLATFORM=dreamcast
+EXECUTABLE=reicast.$(PLATFORM_EXT)
+EXECUTABLE_NAME=reicast
 
 ifndef NOT_ARM
     AS=${CC_PREFIX}gcc

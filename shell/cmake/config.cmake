@@ -311,14 +311,6 @@ set(CMAKE_C_FLAGS " ${_C_FLAGS}") # ${CMAKE_C_FLAGS}   -- these hold default VC 
 set(CMAKE_CXX_FLAGS " ${_CXX_FLAGS}") # ${CMAKE_CXX_FLAGS}
 
 
-
-#if defined(TARGET_NAOMI)
-	#define DC_PLATFORM DC_PLATFORM_NAOMI
-	#undef TARGET_NAOMI
-#endif
-
-
-
 #if defined(TARGET_NO_NIXPROF)
 #define FEAT_HAS_NIXPROF 0
 #endif

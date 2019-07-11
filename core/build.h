@@ -227,11 +227,6 @@
 	#error Invalid Target: TARGET_* not defined
 #endif
 
-#if defined(TARGET_NAOMI)
-	#define DC_PLATFORM DC_PLATFORM_NAOMI
-	#undef TARGET_NAOMI
-#endif
-
 #if defined(TARGET_NO_REC)
 #define FEAT_SHREC DYNAREC_NONE
 #define FEAT_AREC DYNAREC_NONE
@@ -266,10 +261,6 @@
 #endif
 
 //defaults
-
-#ifndef DC_PLATFORM 
-	#define DC_PLATFORM DC_PLATFORM_DREAMCAST
-#endif
 
 #ifndef FEAT_SHREC
 	#define FEAT_SHREC DYNAREC_JIT
