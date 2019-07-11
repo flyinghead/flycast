@@ -49,7 +49,7 @@ extern void dc_savestate();
 extern void dc_stop();
 extern void dc_reset(bool manual);
 extern void dc_resume();
-extern int dc_start_game(const char *path);
+extern void dc_start_game(const char *path);
 extern void UpdateInputState(u32 port);
 extern bool game_started;
 
@@ -349,14 +349,6 @@ static void gui_display_commands()
 		cfgSetVirtual("config", "image", "");
 	}
 
-#if 0
-	ImGui::NextColumn();
-	if (ImGui::Button("RenderDone Int", ImVec2(150 * scaling, 50 * scaling)))
-	{
-		asic_RaiseInterrupt(holly_RENDER_DONE);
-		gui_state = Closed;
-	}
-#endif
 	ImGui::End();
 
     ImGui::Render();
@@ -1413,25 +1405,14 @@ static void gui_display_demo()
 
 static void gui_start_game(const std::string& path)
 {
-	int rc = dc_start_game(path.empty() ? NULL : path.c_str());
-	if (rc != 0)
-	{
+	try {
+		dc_start_game(path.empty() ? NULL : path.c_str());
+	} catch (ReicastException& ex) {
+		ERROR_LOG(BOOT, "%s", ex.reason.c_str());
+		error_msg = ex.reason;
 		gui_state = Main;
 		game_started = false;
 		cfgSetVirtual("config", "image", "");
-		switch (rc) {
-		case -3:
-			error_msg = "Audio/video initialization failed";
-			break;
-		case -5:
-			error_msg = "Cannot find BIOS files";
-			break;
-		case -6:
-			error_msg = "Cannot load NAOMI rom or BIOS";
-			break;
-		default:
-			break;
-		}
 	}
 }
 

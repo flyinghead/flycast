@@ -400,18 +400,18 @@ void set_platform(int platform)
 	_vmem_init_mappings();
 }
 
-static int dc_init()
+static void dc_init()
 {
 	static bool init_done;
 
 	if (init_done)
-		return 0;
+		return;
 
 	// Default platform
 	set_platform(DC_PLATFORM_DREAMCAST);
 
-	if (plugins_Init())
-		return -3;
+	plugins_Init();
+
 #if FEAT_SHREC != DYNAREC_NONE
 	Get_Sh4Recompiler(&sh4_cpu);
 	sh4_cpu.Init();		// Also initialize the interpreter
@@ -430,8 +430,6 @@ static int dc_init()
 	mem_Init();
 
 	init_done = true;
-
-	return 0;
 }
 
 bool game_started;
@@ -453,14 +451,12 @@ static int get_game_platform(const char *path)
 	return DC_PLATFORM_DREAMCAST;
 }
 
-int dc_start_game(const char *path)
+void dc_start_game(const char *path)
 {
 	if (path != NULL)
 		cfgSetVirtual("config", "image", path);
 
-	int rc = dc_init();
-	if (rc != 0)
-		return rc;
+	dc_init();
 
 	set_platform(get_game_platform(path));
 	mem_map_default();
@@ -476,20 +472,14 @@ int dc_start_game(const char *path)
 			if (settings.bios.UseReios)
 			{
 				if (!LoadHle(get_readonly_data_path(DATA_PATH)))
-				{
-					ERROR_LOG(BOOT, "Cannot init HLE BIOS");
-					return -5;
-				}
-				else
-				{
-					NOTICE_LOG(BOOT, "Did not load bios, using reios");
-				}
+					throw ReicastException("Failed to initialize HLE BIOS");
+
+				NOTICE_LOG(BOOT, "Did not load BIOS, using reios");
 			}
 			else
 #endif
 			{
-				ERROR_LOG(BOOT, "Cannot find BIOS files");
-				return -5;
+				throw ReicastException("Cannot find BIOS files");
 			}
 		}
 	}
@@ -512,8 +502,7 @@ int dc_start_game(const char *path)
 	}
 	else if (settings.platform.system == DC_PLATFORM_NAOMI || settings.platform.system == DC_PLATFORM_ATOMISWAVE)
 	{
-		if (!naomi_cart_SelectFile())
-			return -6;
+		naomi_cart_LoadRom(path);
 		LoadCustom();
 		if (settings.platform.system == DC_PLATFORM_NAOMI)
 			mcfg_CreateNAOMIJamma();
@@ -522,8 +511,6 @@ int dc_start_game(const char *path)
 	}
 	game_started = true;
 	dc_resume();
-
-	return 0;
 }
 
 bool dc_is_running()
