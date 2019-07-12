@@ -608,10 +608,17 @@ template void texture_VQ<convBMP_TW<pp_565>, u16>(PixelBuffer<u16>* pb,u8* p_in,
 #define tex4444_VQ texture_VQ<conv4444_TW<pp_565>, u16>
 #define texYUV422_VQ texture_VQ<convYUV_TW<pp_8888>, u32>
 #define texBMP_VQ texture_VQ<convBMP_TW<pp_565>, u16>
+// According to the documentation, a texture cannot be compressed and use
+// a palette at the same time. However the hardware displays them
+// just fine.
+#define texPAL4_VQ texture_VQ<convPAL4_TW<pp_565, u16>, u16>
+#define texPAL8_VQ texture_VQ<convPAL8_TW<pp_565, u16>, u16>
 
 #define tex565_VQ32 texture_VQ<conv565_TW32<pp_8888>, u32>
 #define tex1555_VQ32 texture_VQ<conv1555_TW32<pp_8888>, u32>
 #define tex4444_VQ32 texture_VQ<conv4444_TW32<pp_8888>, u32>
+#define texPAL4_VQ32 texture_VQ<convPAL4_TW<pp_8888, u32>, u32>
+#define texPAL8_VQ32 texture_VQ<convPAL8_TW<pp_8888, u32>, u32>
 
 void DePosterize(u32* source, u32* dest, int width, int height);
 void UpscalexBRZ(int factor, u32* source, u32* dest, int width, int height, bool has_alpha);

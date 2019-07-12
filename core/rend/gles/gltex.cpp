@@ -53,8 +53,8 @@ PvrTexInfo format[8]=
 	{"4444", 	16, GL_UNSIGNED_SHORT_4_4_4_4, tex4444_PL,	tex4444_TW,  tex4444_VQ, 	tex4444_PL32,  tex4444_TW32,  tex4444_VQ32 },	//4444
 	{"yuv", 	16, GL_UNSIGNED_BYTE,          NULL, 		NULL, 		 NULL,			texYUV422_PL,  texYUV422_TW,  texYUV422_VQ },	//yuv
 	{"bumpmap", 16, GL_UNSIGNED_SHORT_4_4_4_4, texBMP_PL,	texBMP_TW,	 texBMP_VQ, 	NULL},											//bump map
-	{"pal4", 	4,	0,						   0,			texPAL4_TW,  0, 			NULL, 		   texPAL4_TW32,  NULL },			//pal4
-	{"pal8", 	8,	0,						   0,			texPAL8_TW,  0, 			NULL, 		   texPAL8_TW32,  NULL },			//pal8
+	{"pal4", 	4,	0,						   0,			texPAL4_TW,  texPAL4_VQ, 	NULL, 		   texPAL4_TW32,  texPAL4_VQ32 },	//pal4
+	{"pal8", 	8,	0,						   0,			texPAL8_TW,  texPAL8_VQ, 	NULL, 		   texPAL8_TW32,  texPAL8_VQ32 },	//pal8
 	{"ns/1555", 0},																														// Not supported (1555)
 };
 
@@ -168,14 +168,14 @@ void TextureCacheData::Create(bool isGL)
 	h=8<<tsp.TexV;                   //tex height
 
 	//PAL texture
-	if (tex->bpp==4)
-		indirect_color_ptr=tcw.PalSelect<<4;
-	else if (tex->bpp==8)
-		indirect_color_ptr=(tcw.PalSelect>>4)<<8;
+	if (tex->bpp == 4)
+		palette_index = tcw.PalSelect << 4;
+	else if (tex->bpp == 8)
+		palette_index = (tcw.PalSelect >> 4) << 8;
 
 	//VQ table (if VQ tex)
 	if (tcw.VQ_Comp)
-		indirect_color_ptr=sa;
+		vq_codebook = sa;
 
 	//Convert a pvr texture into OpenGL
 	switch (tcw.PixelFmt)
@@ -214,7 +214,7 @@ void TextureCacheData::Create(bool isGL)
 			if (tcw.VQ_Comp)
 			{
 				verify(tex->VQ != NULL || tex->VQ32 != NULL);
-				indirect_color_ptr=sa;
+				vq_codebook = sa;
 				if (tcw.MipMapped)
 					sa+=MipPoint[tsp.TexU];
 				texconv = tex->VQ;
@@ -271,8 +271,8 @@ void TextureCacheData::Update()
 			palette_hash = pal_hash_256[tcw.PalSelect >> 4];
 	}
 
-	palette_index=indirect_color_ptr; //might be used if pal. tex
-	vq_codebook=(u8*)&vram[indirect_color_ptr];  //might be used if VQ tex
+	::palette_index = this->palette_index; // might be used if pal. tex
+	::vq_codebook = &vram[vq_codebook];    // might be used if VQ tex
 
 	//texture conversion work
 	u32 stride=w;
