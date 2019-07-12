@@ -1026,9 +1026,15 @@ void dc_loadstate()
 		return;
 	}
 
-	fread(data, 1, total_size, f) ;
+	size_t read_size = fread(data, 1, total_size, f) ;
 	fclose(f);
-
+	if (read_size != total_size)
+	{
+		WARN_LOG(SAVESTATE, "Failed to load state - I/O error");
+		gui_display_notification("Failed to load state - I/O error", 2000);
+		cleanup_serialize(data) ;
+		return;
+	}
 
 	data_ptr = data ;
 
@@ -1040,13 +1046,16 @@ void dc_loadstate()
 #endif
 	bm_Reset();
 
-	if ( ! dc_unserialize(&data_ptr, &total_size) )
+	u32 unserialized_size = 0;
+	if ( ! dc_unserialize(&data_ptr, &unserialized_size) )
 	{
 		WARN_LOG(SAVESTATE, "Failed to load state - could not unserialize data") ;
 		gui_display_notification("Invalid save state", 2000);
 		cleanup_serialize(data) ;
     	return;
 	}
+	if (unserialized_size != total_size)
+		WARN_LOG(SAVESTATE, "Save state error: read %d bytes but used %d", total_size, unserialized_size);
 
 	mmu_set_state();
 	sh4_cpu.ResetCache();

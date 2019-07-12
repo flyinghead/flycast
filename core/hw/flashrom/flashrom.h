@@ -644,15 +644,15 @@ private:
 
 	virtual bool Serialize(void **data, unsigned int *total_size) override
 	{
-		REICAST_SA(&this->data[write_protect_size], size - write_protect_size);
 		REICAST_S(state);
+		REICAST_SA(&this->data[write_protect_size], size - write_protect_size);
 		return true;
 	}
 
 	virtual bool Unserialize(void **data, unsigned int *total_size) override
 	{
-		REICAST_USA(&this->data[write_protect_size], size - write_protect_size);
 		REICAST_US(state);
+		REICAST_USA(&this->data[write_protect_size], size - write_protect_size);
 		return true;
 	}
 };

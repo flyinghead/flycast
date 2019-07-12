@@ -64,6 +64,6 @@ void mcfg_CreateAtomisWaveControllers();
 
 void mcfg_DestroyDevices();
 void mcfg_SerializeDevices(void **data, unsigned int *total_size);
-void mcfg_UnserializeDevices(void **data, unsigned int *total_size);
+void mcfg_UnserializeDevices(void **data, unsigned int *total_size, bool old_type_numbering);
 
 bool maple_atomiswave_coin_chute(int slot);

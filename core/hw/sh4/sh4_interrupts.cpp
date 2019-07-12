@@ -20,7 +20,7 @@
 */
 
 //these are fixed
-/* TODO const */ u16 IRLPriority=0x0246;
+const u16 IRLPriority = 0x0246;
 #define IRLP9 &IRLPriority,0
 #define IRLP11 &IRLPriority,4
 #define IRLP13 &IRLPriority,8

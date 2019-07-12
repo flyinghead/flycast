@@ -245,7 +245,7 @@ void mcfg_SerializeDevices(void **data, unsigned int *total_size)
 		}
 }
 
-void mcfg_UnserializeDevices(void **data, unsigned int *total_size)
+void mcfg_UnserializeDevices(void **data, unsigned int *total_size, bool old)
 {
 	mcfg_DestroyDevices();
 
@@ -256,6 +256,42 @@ void mcfg_UnserializeDevices(void **data, unsigned int *total_size)
 			MapleDeviceType device_type = (MapleDeviceType)**p;
 			*p = *p + 1;
 			*total_size = *total_size + 1;
+			if (old)
+			{
+				switch (device_type)
+				{
+				case OldMapleDeviceType::MDT_None:
+					device_type = MDT_None;
+					break;
+				case OldMapleDeviceType::MDT_SegaController:
+					device_type = MDT_SegaController;
+					break;
+				case OldMapleDeviceType::MDT_SegaVMU:
+					device_type = MDT_SegaVMU;
+					break;
+				case OldMapleDeviceType::MDT_PurupuruPack:
+					device_type = MDT_PurupuruPack;
+					break;
+				case OldMapleDeviceType::MDT_Microphone:
+					device_type = MDT_Microphone;
+					break;
+				case OldMapleDeviceType::MDT_Keyboard:
+					device_type = MDT_Keyboard;
+					break;
+				case OldMapleDeviceType::MDT_Mouse:
+					device_type = MDT_Mouse;
+					break;
+				case OldMapleDeviceType::MDT_LightGun:
+					device_type = MDT_LightGun;
+					break;
+				case OldMapleDeviceType::MDT_NaomiJamma:
+					device_type = MDT_NaomiJamma;
+					break;
+				default:
+					die("Invalid maple device type");
+					break;
+				}
+			}
 			if (device_type != MDT_None)
 			{
 				mcfg_Create(device_type, i, j);
