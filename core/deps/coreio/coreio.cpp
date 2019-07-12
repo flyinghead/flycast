@@ -148,7 +148,7 @@ size_t HTTP_GET(string host, int port,string path, size_t offs, size_t len, void
 			string CL = "Content-Length:";
 
 			if (ln.substr(0, CL.size()) == CL) {
-				sscanf(ln.substr(CL.size(), ln.npos).c_str(),"%d", &content_length);
+				sscanf(ln.substr(CL.size(), ln.npos).c_str(),"%zd", &content_length);
 			}
 
 			break;

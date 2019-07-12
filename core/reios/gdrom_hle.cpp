@@ -192,14 +192,14 @@ void gdrom_hle_op()
 		case GDROM_RESET:	INFO_LOG(REIOS, "GDROM:\tHLE GDROM_RESET");	break;
 
 		case GDROM_CHECK_DRIVE:		// 
-			debugf("\nGDROM:\tHLE GDROM_CHECK_DRIVE r4:%X\n",r[4],r[5]);
+			debugf("\nGDROM:\tHLE GDROM_CHECK_DRIVE r4:%X\n",r[4]);
 			WriteMem32(r[4]+0,0x02);	// STANDBY
 			WriteMem32(r[4]+4,libGDR_GetDiscType());	// CDROM | 0x80 for GDROM
 			r[0]=0;					// RET SUCCESS
 		break;
 
 		case GDROM_ABORT_COMMAND:	// 
-			INFO_LOG(REIOS, "GDROM:\tHLE GDROM_ABORT_COMMAND r4:%X",r[4],r[5]);
+			INFO_LOG(REIOS, "GDROM:\tHLE GDROM_ABORT_COMMAND r4:%X",r[4]);
 			r[0]=-1;				// RET FAILURE
 		break;
 

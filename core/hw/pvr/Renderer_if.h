@@ -36,6 +36,7 @@ extern TA_context* _pvrrc;
 struct Renderer
 {
 	virtual bool Init()=0;
+	virtual ~Renderer() {}
 	
 	virtual void Resize(int w, int h)=0;
 

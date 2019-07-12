@@ -204,6 +204,9 @@ void mcfg_CreateDevices()
 			if (settings.input.maple_expansion_devices[bus][0] != MDT_None)
 				mcfg_Create((MapleDeviceType)settings.input.maple_expansion_devices[bus][0], bus, 0);
 			break;
+		default:
+			WARN_LOG(MAPLE, "Invalid device type %d for port %d", settings.input.maple_devices[bus], bus);
+			break;
 		}
 	}
 }
@@ -258,7 +261,7 @@ void mcfg_UnserializeDevices(void **data, unsigned int *total_size, bool old)
 			*total_size = *total_size + 1;
 			if (old)
 			{
-				switch (device_type)
+				switch ((OldMapleDeviceType::MapleDeviceType)device_type)
 				{
 				case OldMapleDeviceType::MDT_None:
 					device_type = MDT_None;
