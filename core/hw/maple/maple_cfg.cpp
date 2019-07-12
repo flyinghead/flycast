@@ -204,6 +204,19 @@ void mcfg_CreateDevices()
 			if (settings.input.maple_expansion_devices[bus][0] != MDT_None)
 				mcfg_Create((MapleDeviceType)settings.input.maple_expansion_devices[bus][0], bus, 0);
 			break;
+
+		case MDT_TwinStick:
+			mcfg_Create(MDT_TwinStick, bus, 5);
+			if (settings.input.maple_expansion_devices[bus][0] != MDT_None)
+				mcfg_Create((MapleDeviceType)settings.input.maple_expansion_devices[bus][0], bus, 0);
+			break;
+
+		case MDT_AsciiStick:
+			mcfg_Create(MDT_AsciiStick, bus, 5);
+			if (settings.input.maple_expansion_devices[bus][0] != MDT_None)
+				mcfg_Create((MapleDeviceType)settings.input.maple_expansion_devices[bus][0], bus, 0);
+			break;
+
 		default:
 			WARN_LOG(MAPLE, "Invalid device type %d for port %d", settings.input.maple_devices[bus], bus);
 			break;

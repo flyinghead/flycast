@@ -356,7 +356,7 @@ static void gui_display_commands()
     settings_opening = false;
 }
 
-const char *maple_device_types[] = { "None", "Sega Controller", "Light Gun", "Keyboard", "Mouse" };
+const char *maple_device_types[] = { "None", "Sega Controller", "Light Gun", "Keyboard", "Mouse", "Twin Stick", "Ascii Stick" };
 const char *maple_expansion_device_types[] = { "None", "Sega VMU", "Purupuru", "Microphone" };
 
 static const char *maple_device_name(MapleDeviceType type)
@@ -371,6 +371,10 @@ static const char *maple_device_name(MapleDeviceType type)
 		return maple_device_types[3];
 	case MDT_Mouse:
 		return maple_device_types[4];
+	case MDT_TwinStick:
+		return maple_device_types[5];
+	case MDT_AsciiStick:
+		return maple_device_types[6];
 	case MDT_None:
 	default:
 		return maple_device_types[0];
@@ -389,6 +393,10 @@ static MapleDeviceType maple_device_type_from_index(int idx)
 		return MDT_Keyboard;
 	case 4:
 		return MDT_Mouse;
+	case 5:
+		return MDT_TwinStick;
+	case 6:
+		return MDT_AsciiStick;
 	case 0:
 	default:
 		return MDT_None;
@@ -829,7 +837,9 @@ static void gui_display_settings()
 						}
 						ImGui::EndCombo();
 					}
-					int port_count = settings.input.maple_devices[bus] == MDT_SegaController ? 2 : settings.input.maple_devices[bus] == MDT_LightGun ? 1 : 0;
+					int port_count = settings.input.maple_devices[bus] == MDT_SegaController ? 2
+							: settings.input.maple_devices[bus] == MDT_LightGun || settings.input.maple_devices[bus] == MDT_TwinStick || settings.input.maple_devices[bus] == MDT_AsciiStick ? 1
+							: 0;
 					for (int port = 0; port < port_count; port++)
 					{
 						ImGui::SameLine();
