@@ -16,7 +16,7 @@
 #include "pvr_regs.h"
 #include "pvr_mem.h"
 #include "Renderer_if.h"
-
+#include "rend/TexCache.h"
 
 void libPvr_LockedBlockWrite (vram_block* block,u32 addr)
 {
@@ -26,6 +26,7 @@ void libPvr_LockedBlockWrite (vram_block* block,u32 addr)
 
 void libPvr_Reset(bool hard)
 {
+	KillTex = true;
 	Regs_Reset(hard);
 	spg_Reset(hard);
 }

@@ -70,6 +70,7 @@ static float scaling = 1;
 GuiState gui_state = Main;
 static bool settings_opening;
 static bool touch_up;
+static std::string error_msg;
 
 static void display_vmus();
 static void reset_vmus();
@@ -292,6 +293,19 @@ void gui_open_settings()
 	}
 }
 
+static void gui_start_game(const std::string& path)
+{
+	try {
+		dc_start_game(path.empty() ? NULL : path.c_str());
+	} catch (ReicastException& ex) {
+		ERROR_LOG(BOOT, "%s", ex.reason.c_str());
+		error_msg = ex.reason;
+		gui_state = Main;
+		game_started = false;
+		cfgSetVirtual("config", "image", "");
+	}
+}
+
 static void gui_display_commands()
 {
 	dc_stop();
@@ -337,8 +351,8 @@ static void gui_display_commands()
 	ImGui::NextColumn();
 	if (ImGui::Button("Restart", ImVec2(150 * scaling, 50 * scaling)))
 	{
-		dc_reset(true);
-		gui_state = Closed;
+		gui_state = ClosedNoResume;
+		gui_start_game(cfgLoadStr("config", "image", ""));
 	}
 	ImGui::NextColumn();
 	if (ImGui::Button("Exit", ImVec2(150 * scaling, 50 * scaling)))
@@ -586,8 +600,6 @@ static void controller_mapping_popup(std::shared_ptr<GamepadDevice> gamepad)
 	}
 	ImGui::PopStyleVar();
 }
-
-static std::string error_msg;
 
 static void error_popup()
 {
@@ -1411,19 +1423,6 @@ static void gui_display_demo()
 	ImGui::ShowDemoWindow();
 	ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData(), false);
-}
-
-static void gui_start_game(const std::string& path)
-{
-	try {
-		dc_start_game(path.empty() ? NULL : path.c_str());
-	} catch (ReicastException& ex) {
-		ERROR_LOG(BOOT, "%s", ex.reason.c_str());
-		error_msg = ex.reason;
-		gui_state = Main;
-		game_started = false;
-		cfgSetVirtual("config", "image", "");
-	}
 }
 
 static void gui_display_content()
