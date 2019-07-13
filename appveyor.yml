@@ -23,13 +23,9 @@ build_script:
   - cmd: >-
       if "%CONFIGURATION%"=="fast" (mingw32-make platform=win32)
 
-      if "%CONFIGURATION%"=="naomi" (mingw32-make platform=win32 NAOMI=1)
-
 after_build:
   - cmd: >-      
       if "%CONFIGURATION%"=="fast" (cd ..\.. && set EXE_PATH=shell\linux\nosym-reicast.exe)
-      
-      if "%CONFIGURATION%"=="naomi" (cd ..\.. && set EXE_PATH=shell\linux\nosym-reicast.exe)
       
       mkdir artifacts
       
