@@ -31,7 +31,7 @@ static bool read_mem32(u32 addr, u32& data)
 {
 	u32 pa;
 	const TLB_Entry *entry;
-	if (mmu_full_lookup<true>(addr, &entry, pa) != MMU_ERROR_NONE)
+	if (mmu_full_lookup<false>(addr, &entry, pa) != MMU_ERROR_NONE)
 		return false;
 	data = ReadMem32_nommu(pa);
 	return true;
@@ -41,7 +41,7 @@ static bool read_mem16(u32 addr, u16& data)
 {
 	u32 pa;
 	const TLB_Entry *entry;
-	if (mmu_full_lookup<true>(addr, &entry, pa) != MMU_ERROR_NONE)
+	if (mmu_full_lookup<false>(addr, &entry, pa) != MMU_ERROR_NONE)
 		return false;
 	data = ReadMem16_nommu(pa);
 	return true;
@@ -51,7 +51,7 @@ static bool read_mem8(u32 addr, u8& data)
 {
 	u32 pa;
 	const TLB_Entry *entry;
-	if (mmu_full_lookup<true>(addr, &entry, pa) != MMU_ERROR_NONE)
+	if (mmu_full_lookup<false>(addr, &entry, pa) != MMU_ERROR_NONE)
 		return false;
 	data = ReadMem8_nommu(pa);
 	return true;
@@ -227,10 +227,10 @@ static const char *wince_methods[][256] = {
 		},
 };
 
-u32 unresolved_ascii_string;
-u32 unresolved_unicode_string;
+extern u32 unresolved_ascii_string;
+extern u32 unresolved_unicode_string;
 
-std::string get_unicode_string(u32 addr)
+static inline std::string get_unicode_string(u32 addr)
 {
 	std::string str;
 	while (true)
@@ -248,7 +248,7 @@ std::string get_unicode_string(u32 addr)
 	}
 	return str;
 }
-std::string get_ascii_string(u32 addr)
+static inline std::string get_ascii_string(u32 addr)
 {
 	std::string str;
 	while (true)
@@ -312,31 +312,33 @@ static bool print_wince_syscall(u32 address)
 			sprintf(method_buf, "[%d]", meth_id);
 			method = method_buf;
 		}
-		INFO_LOG(SH4, "WinCE %08x %04x.%04x %s: %s", address, getCurrentProcessId() & 0xffff, getCurrentThreadId() & 0xffff, api, method);
+		printf("WinCE %08x %04x.%04x %s: %s", address, getCurrentProcessId() & 0xffff, getCurrentThreadId() & 0xffff, api, method);
 		if (address == 0xfffffd51)		// SetLastError
-			INFO_LOG(SH4, " dwErrCode = %x", r[4]);
+			printf(" dwErrCode = %x\n", r[4]);
 		else if (address == 0xffffd5ef)	// CreateFile
-			INFO_LOG(SH4, " lpFileName = %s", get_unicode_string(r[4]).c_str());
+			printf(" lpFileName = %s\n", get_unicode_string(r[4]).c_str());
 		else if (address == 0xfffffd97) // CreateProc
-			INFO_LOG(SH4, " imageName = %s, commandLine = %s", get_unicode_string(r[4]).c_str(), get_unicode_string(r[5]).c_str());
+			printf(" imageName = %s, commandLine = %s\n", get_unicode_string(r[4]).c_str(), get_unicode_string(r[5]).c_str());
 		else if (!strcmp("DebugNotify", method))
-			INFO_LOG(SH4, " %x, %x\n", r[4], r[5]);
+			printf(" %x, %x\n", r[4], r[5]);
 		else if (address == 0xffffd5d3) // RegOpenKeyExW
-			INFO_LOG(SH4, " hKey = %x, lpSubKey = %s", r[4], get_unicode_string(r[5]).c_str());
+			printf(" hKey = %x, lpSubKey = %s\n", r[4], get_unicode_string(r[5]).c_str());
 		else if (!strcmp("LoadLibraryW", method))
-			INFO_LOG(SH4, " fileName = %s", get_unicode_string(r[4]).c_str());
+			printf(" fileName = %s\n", get_unicode_string(r[4]).c_str());
 		else if (!strcmp("GetProcAddressW", method))
-			INFO_LOG(SH4, " hModule = %x, procName = %s", r[4], get_unicode_string(r[5]).c_str());
+			printf(" hModule = %x, procName = %s\n", r[4], get_unicode_string(r[5]).c_str());
 		else if (!strcmp("NKvDbgPrintfW", method))
-			INFO_LOG(SH4, " fmt = %s", get_unicode_string(r[4]).c_str());
+			printf(" fmt = %s\n", get_unicode_string(r[4]).c_str());
 		else if (!strcmp("OutputDebugStringW", method))
-			INFO_LOG(SH4, " str = %s", get_unicode_string(r[4]).c_str());
+			printf(" str = %s\n", get_unicode_string(r[4]).c_str());
 		else if (!strcmp("RegisterAFSName", method))
-			INFO_LOG(SH4, " name = %s", get_unicode_string(r[4]).c_str());
+			printf(" name = %s\n", get_unicode_string(r[4]).c_str());
 		else if (!strcmp("CreateAPISet", method))
-			INFO_LOG(SH4, " name = %s", get_ascii_string(r[4]).c_str());
+			printf(" name = %s\n", get_ascii_string(r[4]).c_str());
 		else if (!strcmp("Register", method) && !strcmp("APISET", api))
-			INFO_LOG(SH4, " p = %x, id = %x", r[4], r[5]);
+			printf(" p = %x, id = %x\n", r[4], r[5]);
+		else
+			printf("\n");
 		// might be useful to detect errors? (hidden & dangerous)
 		//if (!strcmp("GetProcName", method))
 		//	os_DebugBreak();

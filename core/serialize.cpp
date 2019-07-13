@@ -622,11 +622,11 @@ extern int SerStep;
 extern int SerStep2;
 extern unsigned char BSerial[];
 extern unsigned char GSerial[];
-extern u32 reg_dimm_3c;	//IO window ! writen, 0x1E03 some flag ?
-extern u32 reg_dimm_40;	//parameters
-extern u32 reg_dimm_44;	//parameters
-extern u32 reg_dimm_48;	//parameters
-extern u32 reg_dimm_4c;	//status/control reg ?
+extern u32 reg_dimm_command;
+extern u32 reg_dimm_offsetl;
+extern u32 reg_dimm_parameterl;
+extern u32 reg_dimm_parameterh;
+extern u32 reg_dimm_status;
 extern bool NaomiDataRead;
 
 
@@ -1079,11 +1079,11 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	REICAST_S(SerStep2);
 	REICAST_SA(BSerial,69);
 	REICAST_SA(GSerial,69);
-	REICAST_S(reg_dimm_3c);
-	REICAST_S(reg_dimm_40);
-	REICAST_S(reg_dimm_44);
-	REICAST_S(reg_dimm_48);
-	REICAST_S(reg_dimm_4c);
+	REICAST_S(reg_dimm_command);
+	REICAST_S(reg_dimm_offsetl);
+	REICAST_S(reg_dimm_parameterl);
+	REICAST_S(reg_dimm_parameterh);
+	REICAST_S(reg_dimm_status);
 	REICAST_S(NaomiDataRead);
 
 #if FEAT_SHREC == DYNAREC_CPP
@@ -1471,11 +1471,11 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	REICAST_US(SerStep2);
 	REICAST_USA(BSerial,69);
 	REICAST_USA(GSerial,69);
-	REICAST_US(reg_dimm_3c);
-	REICAST_US(reg_dimm_40);
-	REICAST_US(reg_dimm_44);
-	REICAST_US(reg_dimm_48);
-	REICAST_US(reg_dimm_4c);
+	REICAST_US(reg_dimm_command);
+	REICAST_US(reg_dimm_offsetl);
+	REICAST_US(reg_dimm_parameterl);
+	REICAST_US(reg_dimm_parameterh);
+	REICAST_US(reg_dimm_status);
 	REICAST_US(NaomiDataRead);
 
 	REICAST_US(i); //LIBRETRO_S(cycle_counter);
@@ -1850,11 +1850,11 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	REICAST_US(SerStep2);
 	REICAST_USA(BSerial,69);
 	REICAST_USA(GSerial,69);
-	REICAST_US(reg_dimm_3c);
-	REICAST_US(reg_dimm_40);
-	REICAST_US(reg_dimm_44);
-	REICAST_US(reg_dimm_48);
-	REICAST_US(reg_dimm_4c);
+	REICAST_US(reg_dimm_command);
+	REICAST_US(reg_dimm_offsetl);
+	REICAST_US(reg_dimm_parameterl);
+	REICAST_US(reg_dimm_parameterh);
+	REICAST_US(reg_dimm_status);
 	REICAST_US(NaomiDataRead);
 
 #if FEAT_SHREC == DYNAREC_CPP

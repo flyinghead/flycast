@@ -8,6 +8,7 @@
 #include "hw/holly/holly_intc.h"
 #include "hw/maple/maple_cfg.h"
 #include "hw/sh4/sh4_sched.h"
+#include "hw/sh4/modules/dmac.h"
 
 #include "naomi.h"
 #include "naomi_cart.h"
@@ -340,23 +341,6 @@ u16 NaomiGameIDRead()
 	return (GSerialBuffer&(1<<(31-GBufPos)))?1:0;
 }
 
-
-
-
-u32  _ReadMem_naomi(u32 Addr, u32 sz)
-{
-	verify(sz!=1);
-
-	DEBUG_LOG(NAOMI, "naomi?WTF? ReadMem: %X, %d", Addr, sz);
-	return 1;
-
-}
-void _WriteMem_naomi(u32 Addr, u32 data, u32 sz)
-{
-	DEBUG_LOG(NAOMI, "naomi?WTF? WriteMem: %X <= %X, %d", Addr, data, sz);
-}
-
-
 //DIMM board
 //Uses interrupt ext#3  (holly_EXT_PCI)
 
@@ -382,23 +366,22 @@ void _WriteMem_naomi(u32 Addr, u32 data, u32 sz)
 //n1 bios writes the value -1, meaning it expects the bit 0 to be set
 //.//
 
-u32 reg_dimm_3c;	//IO window ! written, 0x1E03 some flag ?
-u32 reg_dimm_40;	//parameters
-u32 reg_dimm_44;	//parameters
-u32 reg_dimm_48;	//parameters
-
-u32 reg_dimm_4c=0x11;	//status/control reg ?
+u32 reg_dimm_command;		// command, written, 0x1E03 some flag ?
+u32 reg_dimm_offsetl;
+u32 reg_dimm_parameterl;
+u32 reg_dimm_parameterh;
+u32 reg_dimm_status = 0x11;
 
 bool NaomiDataRead = false;
 static bool aw_ram_test_skipped = false;
 
-void naomi_process(u32 r3c,u32 r40,u32 r44, u32 r48)
+void naomi_process(u32 command, u32 offsetl, u32 parameterl, u32 parameterh)
 {
-	DEBUG_LOG(NAOMI, "Naomi process 0x%04X 0x%04X 0x%04X 0x%04X", r3c, r40, r44, r48);
-	DEBUG_LOG(NAOMI, "Possible format 0 %d 0x%02X 0x%04X",r3c >> 15,(r3c & 0x7e00) >> 9, r3c & 0x1FF);
-	DEBUG_LOG(NAOMI, "Possible format 1 0x%02X 0x%02X", (r3c & 0xFF00) >> 8,r3c & 0xFF);
+	DEBUG_LOG(NAOMI, "Naomi process 0x%04X 0x%04X 0x%04X 0x%04X", command, offsetl, parameterl, parameterh);
+	DEBUG_LOG(NAOMI, "Possible format 0 %d 0x%02X 0x%04X",command >> 15,(command & 0x7e00) >> 9, command & 0x1FF);
+	DEBUG_LOG(NAOMI, "Possible format 1 0x%02X 0x%02X", (command & 0xFF00) >> 8,command & 0xFF);
 
-	u32 param=(r3c&0xFF);
+	u32 param=(command&0xFF);
 	if (param==0xFF)
 	{
 		DEBUG_LOG(NAOMI, "invalid opcode or smth ?");
@@ -407,8 +390,8 @@ void naomi_process(u32 r3c,u32 r40,u32 r44, u32 r48)
 	//else if (param!=3)
 	if (opcd<255)
 	{
-		reg_dimm_3c=0x8000 | (opcd%12<<9) | (0x0);
-		DEBUG_LOG(NAOMI, "new reg is 0x%X", reg_dimm_3c);
+		reg_dimm_command=0x8000 | (opcd%12<<9) | (0x0);
+		DEBUG_LOG(NAOMI, "new reg is 0x%X", reg_dimm_command);
 		asic_RaiseInterrupt(holly_EXP_PCI);
 		DEBUG_LOG(NAOMI, "Interrupt raised");
 		opcd++;
@@ -451,11 +434,12 @@ void Naomi_DmaStart(u32 addr, u32 data)
 	if (SB_GDST==1)
 	{
 		verify(1 == SB_GDDIR );
-	
-		SB_GDSTARD=SB_GDSTAR+SB_GDLEN;
+		DEBUG_LOG(NAOMI, "NAOMI-DMA start addr %08X len %d", SB_GDSTAR, SB_GDLEN);
+
+		SB_GDSTARD = SB_GDSTAR + SB_GDLEN;
 		
-		SB_GDLEND=SB_GDLEN;
-		SB_GDST=0;
+		SB_GDLEND = SB_GDLEN;
+		SB_GDST = 0;
 		if (CurrentCartridge != NULL)
 		{
 			u32 len = SB_GDLEN;
@@ -464,8 +448,12 @@ void Naomi_DmaStart(u32 addr, u32 data)
 			{
 				u32 block_len = len;
 				void* ptr = CurrentCartridge->GetDmaPtr(block_len);
-				if (ptr != NULL)
-					WriteMemBlock_nommu_ptr(SB_GDSTAR + offset, (u32*)ptr, block_len);
+				if (block_len == 0)
+				{
+					INFO_LOG(NAOMI, "Aborted DMA transfer. Read past end of cart?");
+					break;
+				}
+				WriteMemBlock_nommu_ptr(SB_GDSTAR + offset, (u32*)ptr, block_len);
 				CurrentCartridge->AdvancePtr(block_len);
 				len -= block_len;
 				offset += block_len;
@@ -573,82 +561,11 @@ void naomi_reg_Reset(bool Manual)
 	GLastCmd = 0;
 	SerStep = 0;
 	SerStep2 = 0;
-}
-
-void Update_naomi()
-{
-	/*
-	if (naomi_updates>1)
-	{
-		naomi_updates--;
-	}
-	else if (naomi_updates==1)
-	{
-		naomi_updates=0;
-		asic_RaiseInterrupt(holly_EXP_PCI);
-	}*/
-#if 0
-	if(!(SB_GDST&1) || !(SB_GDEN &1))
-		return;
-
-	//SB_GDST=0;
-
-	//TODO : Fix dmaor
-	u32 dmaor	= DMAC_DMAOR.full;
-
-	u32	src		= SB_GDSTARD,
-		len		= SB_GDLEN-SB_GDLEND ;
-
-	//len=min(len,(u32)32);
-	// do we need to do this for gdrom dma ?
-	if(0x8201 != (dmaor &DMAOR_MASK)) {
-		INFO_LOG(NAOMI, "GDROM: DMAOR has invalid settings (%X) !", dmaor);
-		//return;
-	}
-	if(len & 0x1F) {
-		INFO_LOG(NAOMI, "GDROM: SB_GDLEN has invalid size (%X) !", len);
-		return;
-	}
-
-	if(0 == len) 
-	{
-		INFO_LOG(NAOMI, "GDROM: Len: %X, Abnormal Termination !", len);
-	}
-	u32 len_backup=len;
-	if( 1 == SB_GDDIR ) 
-	{
-		WriteMemBlock_nommu_ptr(dst,NaomiRom+(DmaOffset&0x7ffffff),size);
-
-		DmaCount=0xffff;
-	}
-	else
-		INFO_LOG(NAOMI, "GDROM: SB_GDDIR %X (TO AICA WAVE MEM?)");
-
-	//SB_GDLEN = 0x00000000; //13/5/2k7 -> acording to docs these regs are not updated by hardware
-	//SB_GDSTAR = (src + len_backup);
-
-	SB_GDLEND+= len_backup;
-	SB_GDSTARD+= len_backup;//(src + len_backup)&0x1FFFFFFF;
-
-	if (SB_GDLEND==SB_GDLEN)
-	{
-		//printf("Streamed GDMA end - %d bytes trasnfered\n",SB_GDLEND);
-		SB_GDST=0;//done
-		// The DMA end interrupt flag
-		asic_RaiseInterrupt(holly_GDROM_DMA);
-	}
-	//Readed ALL sectors
-	if (read_params.remaining_sectors==0)
-	{
-		u32 buff_size =read_buff.cache_size - read_buff.cache_index;
-		//And all buffer :p
-		if (buff_size==0)
-		{
-			verify(!SB_GDST&1)		
-			gd_set_state(gds_procpacketdone);
-		}
-	}
-#endif
+	reg_dimm_command = 0;
+	reg_dimm_offsetl = 0;
+	reg_dimm_parameterl = 0;
+	reg_dimm_parameterh = 0;
+	reg_dimm_status = 0x11;
 }
 
 static u8 aw_maple_devs;
@@ -659,6 +576,10 @@ u32 libExtDevice_ReadMem_A0_006(u32 addr,u32 size) {
 	//printf("libExtDevice_ReadMem_A0_006 %d@%08x: %x\n", size, addr, mem600[addr]);
 	switch (addr)
 	{
+//	case 0:
+//		return 0;
+//	case 4:
+//		return 1;
 	case 0x280:
 		// 0x00600280 r  0000dcba
 		//	a/b - 1P/2P coin inputs (JAMMA), active low

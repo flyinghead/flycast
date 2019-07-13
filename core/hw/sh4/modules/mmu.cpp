@@ -81,6 +81,8 @@ u32 mmu_full_lookup(u32 va, u32& idx, u32& rv);
 
 #ifdef TRACE_WINCE_SYSCALLS
 #include "wince.h"
+u32 unresolved_ascii_string;
+u32 unresolved_unicode_string;
 #endif
 
 #define printf_mmu(...) DEBUG_LOG(SH4, __VA_ARGS__)

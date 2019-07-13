@@ -323,7 +323,7 @@ u32 mmu_data_translation(u32 va, u32& rv)
 		if (va == unresolved_unicode_string)
 		{
 			unresolved_unicode_string = 0;
-			INFO_LOG(SH4, "RESOLVED %s", get_unicode_string(va).c_str());
+			printf("RESOLVED %s\n", get_unicode_string(va).c_str());
 		}
 	}
 #endif
