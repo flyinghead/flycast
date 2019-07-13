@@ -371,7 +371,7 @@ struct maple_sega_twinstick: maple_sega_controller
 		return 0x80;
 	}
 
-	virtual const char *get_device_name()
+	virtual const char *get_device_name() override
 	{
 		return maple_sega_twinstick_name;
 	}
@@ -396,7 +396,7 @@ struct maple_ascii_stick: maple_sega_controller
 		return kcode | 0xF800;
 	}
 
-	virtual MapleDeviceType get_device_type()
+	virtual MapleDeviceType get_device_type() override
 	{
 		return MDT_AsciiStick;
 	}
@@ -405,7 +405,7 @@ struct maple_ascii_stick: maple_sega_controller
 		return 0x80;
 	}
 
-	virtual const char *get_device_name()
+	virtual const char *get_device_name() override
 	{
 		return maple_ascii_stick_name;
 	}

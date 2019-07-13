@@ -217,6 +217,9 @@ void mcfg_CreateDevices()
 				mcfg_Create((MapleDeviceType)settings.input.maple_expansion_devices[bus][0], bus, 0);
 			break;
 
+		case MDT_None:
+			break;
+
 		default:
 			WARN_LOG(MAPLE, "Invalid device type %d for port %d", settings.input.maple_devices[bus], bus);
 			break;
