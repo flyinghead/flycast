@@ -77,33 +77,36 @@ struct MapleConfigMap : IMapleConfigMap
 		UpdateInputState(player_num);
 
 		pjs->kcode=kcode[player_num];
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-		pjs->kcode |= 0xF901;		// mask off DPad2, C, D and Z
-		pjs->joy[PJAI_X1]=GetBtFromSgn(joyx[player_num]);
-		pjs->joy[PJAI_Y1]=GetBtFromSgn(joyy[player_num]);
-		pjs->trigger[PJTI_R]=rt[player_num];
-		pjs->trigger[PJTI_L]=lt[player_num];
-#elif DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
-		pjs->kcode = 0xFFFF;
-		for (int i = 0; i < 16; i++)
+		if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 		{
-			if ((kcode[player_num] & (1 << i)) == 0)
-				pjs->kcode &= ~awave_button_mapping[i];
+			pjs->kcode |= 0xF901;		// mask off DPad2, C, D and Z
+			pjs->joy[PJAI_X1]=GetBtFromSgn(joyx[player_num]);
+			pjs->joy[PJAI_Y1]=GetBtFromSgn(joyy[player_num]);
+			pjs->trigger[PJTI_R]=rt[player_num];
+			pjs->trigger[PJTI_L]=lt[player_num];
 		}
-		pjs->joy[PJAI_X1] = GetBtFromSgn(joyx[player_num]);
-		if (NaomiGameInputs != NULL && NaomiGameInputs->axes[1].name != NULL && NaomiGameInputs->axes[1].type == Half)
+		else if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
 		{
-			// Driving games: put axis 2 on RT (accel) and axis 3 on LT (brake)
-			pjs->joy[PJAI_Y1] = rt[player_num];
-			pjs->joy[PJAI_X2] = lt[player_num];
+			pjs->kcode = 0xFFFF;
+			for (int i = 0; i < 16; i++)
+			{
+				if ((kcode[player_num] & (1 << i)) == 0)
+					pjs->kcode &= ~awave_button_mapping[i];
+			}
+			pjs->joy[PJAI_X1] = GetBtFromSgn(joyx[player_num]);
+			if (NaomiGameInputs != NULL && NaomiGameInputs->axes[1].name != NULL && NaomiGameInputs->axes[1].type == Half)
+			{
+				// Driving games: put axis 2 on RT (accel) and axis 3 on LT (brake)
+				pjs->joy[PJAI_Y1] = rt[player_num];
+				pjs->joy[PJAI_X2] = lt[player_num];
+			}
+			else
+			{
+				pjs->joy[PJAI_Y1] = GetBtFromSgn(joyy[player_num]);
+				pjs->joy[PJAI_X2] = rt[player_num];
+				pjs->joy[PJAI_Y2] = lt[player_num];
+			}
 		}
-		else
-		{
-			pjs->joy[PJAI_Y1] = GetBtFromSgn(joyy[player_num]);
-			pjs->joy[PJAI_X2] = rt[player_num];
-			pjs->joy[PJAI_Y2] = lt[player_num];
-		}
-#endif
 	}
 	void SetImage(void* img)
 	{
@@ -134,12 +137,14 @@ void mcfg_Create(MapleDeviceType type, u32 bus, u32 port, s32 player_num = -1)
 
 void mcfg_CreateNAOMIJamma()
 {
+	mcfg_DestroyDevices();
 	mcfg_Create(MDT_NaomiJamma, 0, 5);
 //	mcfg_Create(MDT_Keyboard, 2, 5);
 }
 
 void mcfg_CreateAtomisWaveControllers()
 {
+	mcfg_DestroyDevices();
 	// Looks like two controllers needs to be on bus 0 and 1 for digital inputs
 	// Then other devices on port 2 and 3 for analog axes, light guns, ...
 	mcfg_Create(MDT_SegaController, 0, 5);
@@ -199,6 +204,22 @@ void mcfg_CreateDevices()
 			if (settings.input.maple_expansion_devices[bus][0] != MDT_None)
 				mcfg_Create((MapleDeviceType)settings.input.maple_expansion_devices[bus][0], bus, 0);
 			break;
+
+		case MDT_TwinStick:
+			mcfg_Create(MDT_TwinStick, bus, 5);
+			if (settings.input.maple_expansion_devices[bus][0] != MDT_None)
+				mcfg_Create((MapleDeviceType)settings.input.maple_expansion_devices[bus][0], bus, 0);
+			break;
+
+		case MDT_AsciiStick:
+			mcfg_Create(MDT_AsciiStick, bus, 5);
+			if (settings.input.maple_expansion_devices[bus][0] != MDT_None)
+				mcfg_Create((MapleDeviceType)settings.input.maple_expansion_devices[bus][0], bus, 0);
+			break;
+
+		default:
+			WARN_LOG(MAPLE, "Invalid device type %d for port %d", settings.input.maple_devices[bus], bus);
+			break;
 		}
 	}
 }
@@ -240,7 +261,7 @@ void mcfg_SerializeDevices(void **data, unsigned int *total_size)
 		}
 }
 
-void mcfg_UnserializeDevices(void **data, unsigned int *total_size)
+void mcfg_UnserializeDevices(void **data, unsigned int *total_size, bool old)
 {
 	mcfg_DestroyDevices();
 
@@ -251,6 +272,42 @@ void mcfg_UnserializeDevices(void **data, unsigned int *total_size)
 			MapleDeviceType device_type = (MapleDeviceType)**p;
 			*p = *p + 1;
 			*total_size = *total_size + 1;
+			if (old)
+			{
+				switch ((OldMapleDeviceType::MapleDeviceType)device_type)
+				{
+				case OldMapleDeviceType::MDT_None:
+					device_type = MDT_None;
+					break;
+				case OldMapleDeviceType::MDT_SegaController:
+					device_type = MDT_SegaController;
+					break;
+				case OldMapleDeviceType::MDT_SegaVMU:
+					device_type = MDT_SegaVMU;
+					break;
+				case OldMapleDeviceType::MDT_PurupuruPack:
+					device_type = MDT_PurupuruPack;
+					break;
+				case OldMapleDeviceType::MDT_Microphone:
+					device_type = MDT_Microphone;
+					break;
+				case OldMapleDeviceType::MDT_Keyboard:
+					device_type = MDT_Keyboard;
+					break;
+				case OldMapleDeviceType::MDT_Mouse:
+					device_type = MDT_Mouse;
+					break;
+				case OldMapleDeviceType::MDT_LightGun:
+					device_type = MDT_LightGun;
+					break;
+				case OldMapleDeviceType::MDT_NaomiJamma:
+					device_type = MDT_NaomiJamma;
+					break;
+				default:
+					die("Invalid maple device type");
+					break;
+				}
+			}
 			if (device_type != MDT_None)
 			{
 				mcfg_Create(device_type, i, j);

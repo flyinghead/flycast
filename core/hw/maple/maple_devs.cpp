@@ -26,6 +26,8 @@ const char* maple_sega_dreameye_name_2 = "Dreamcast Camera Flash LDevic";
 const char* maple_sega_mic_name = "MicDevice for Dreameye";
 const char* maple_sega_purupuru_name = "Puru Puru Pack";
 const char* maple_sega_lightgun_name = "Dreamcast Gun";
+const char* maple_sega_twinstick_name = "Twin Stick";
+const char* maple_ascii_stick_name = "ASCII STICK";
 
 const char* maple_sega_brand = "Produced By or Under License From SEGA ENTERPRISES,LTD.";
 
@@ -222,6 +224,16 @@ struct maple_sega_controller: maple_base
 		return MDT_SegaController;
 	}
 
+	virtual const char *get_device_name()
+	{
+		return maple_sega_controller_name;
+	}
+
+	virtual const char *get_device_brand()
+	{
+		return maple_sega_brand;
+	}
+
 	virtual u32 dma(u32 cmd)
 	{
 		//printf("maple_sega_controller::dma Called 0x%X;Command %d\n", bus_id, cmd);
@@ -245,10 +257,10 @@ struct maple_sega_controller: maple_base
 			w8(0);
 
 			//30
-			wstr(maple_sega_controller_name,30);
+			wstr(get_device_name(), 30);
 
 			//60
-			wstr(maple_sega_brand,60);
+			wstr(get_device_brand(), 60);
 
 			//2
 			w16(0x01AE);	// 43 mA
@@ -329,6 +341,73 @@ struct maple_atomiswave_controller: maple_sega_controller
 		default:
 			return 0x80;
 		}
+	}
+};
+
+/*
+	Sega Twin Stick Controller
+*/
+struct maple_sega_twinstick: maple_sega_controller
+{
+	virtual u32 get_capabilities() override {
+		// byte 0: 0  0  0  0  0  0  0  0
+		// byte 1: 0  0  a5 a4 a3 a2 a1 a0
+		// byte 2: R2 L2 D2 U2 D  X  Y  Z
+		// byte 3: R  L  D  U  St A  B  C
+
+		return 0xfefe0000;	// no analog axes, X Y A B D Start U/D/L/R U2/D2/L2/R2
+	}
+
+	virtual u32 transform_kcode(u32 kcode) override {
+		return kcode | 0x0101;
+	}
+
+	virtual MapleDeviceType get_device_type() override
+	{
+		return MDT_TwinStick;
+	}
+
+	virtual u32 get_analog_axis(int index, const PlainJoystickState &pjs) override {
+		return 0x80;
+	}
+
+	virtual const char *get_device_name()
+	{
+		return maple_sega_twinstick_name;
+	}
+};
+
+
+/*
+	Ascii Stick (Arcade/FT Stick)
+*/
+struct maple_ascii_stick: maple_sega_controller
+{
+	virtual u32 get_capabilities() override {
+		// byte 0: 0  0  0  0  0  0  0  0
+		// byte 1: 0  0  a5 a4 a3 a2 a1 a0
+		// byte 2: R2 L2 D2 U2 D  X  Y  Z
+		// byte 3: R  L  D  U  St A  B  C
+
+		return 0xff070000;	// no analog axes, X Y Z A B C Start U/D/L/R
+	}
+
+	virtual u32 transform_kcode(u32 kcode) override {
+		return kcode | 0xF800;
+	}
+
+	virtual MapleDeviceType get_device_type()
+	{
+		return MDT_AsciiStick;
+	}
+
+	virtual u32 get_analog_axis(int index, const PlainJoystickState &pjs) override {
+		return 0x80;
+	}
+
+	virtual const char *get_device_name()
+	{
+		return maple_ascii_stick_name;
 	}
 };
 
@@ -2619,11 +2698,10 @@ maple_device* maple_Create(MapleDeviceType type)
 	switch(type)
 	{
 	case MDT_SegaController:
-#if DC_PLATFORM != DC_PLATFORM_ATOMISWAVE
-		rv = new maple_sega_controller();
-#else
-		rv = new maple_atomiswave_controller();
-#endif
+		if (settings.platform.system != DC_PLATFORM_ATOMISWAVE)
+			rv = new maple_sega_controller();
+		else
+			rv = new maple_atomiswave_controller();
 		break;
 
 	case MDT_Microphone:
@@ -2647,19 +2725,28 @@ maple_device* maple_Create(MapleDeviceType type)
 		break;
 
 	case MDT_LightGun:
-#if DC_PLATFORM != DC_PLATFORM_ATOMISWAVE
-		rv = new maple_lightgun();
-#else
-		rv = new atomiswave_lightgun();
-#endif
+		if (settings.platform.system != DC_PLATFORM_ATOMISWAVE)
+			rv = new maple_lightgun();
+		else
+			rv = new atomiswave_lightgun();
 		break;
 
 	case MDT_NaomiJamma:
 		rv = new maple_naomi_jamma();
 		break;
 
+	case MDT_TwinStick:
+		rv = new maple_sega_twinstick();
+		break;
+
+	case MDT_AsciiStick:
+		rv = new maple_ascii_stick();
+		break;
+
 	default:
-		return 0;
+		ERROR_LOG(MAPLE, "Invalid device type %d", type);
+		die("Invalid maple device type");
+		break;
 	}
 
 	return rv;

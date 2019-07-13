@@ -627,7 +627,7 @@ namespace ARM
 		eFSReg SnS=(eFSReg)(Sn*2);
 		eFSReg SmS=(eFSReg)(Sm*2);
 
-		verify(Sd<32 && Sn<32 && Sm<32);
+		verify((int)Sd < 32 && (int)Sn < 32 && (int)Sm < 32);
 
 		VDIV_VFP(SdS,SnS,SmS);
 	}

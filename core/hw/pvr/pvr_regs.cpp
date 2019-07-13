@@ -118,8 +118,10 @@ void pvr_WriteReg(u32 paddr,u32 data)
 	PvrReg(addr,u32)=data;
 }
 
-void Regs_Reset(bool Manual)
+void Regs_Reset(bool hard)
 {
+	if (hard)
+		memset(&pvr_regs[0], 0, sizeof(pvr_regs));
 	ID                  = 0x17FD11DB;
 	REVISION            = 0x00000011;
 	SOFTRESET           = 0x00000007;

@@ -49,7 +49,7 @@ extern void dc_savestate();
 extern void dc_stop();
 extern void dc_reset(bool manual);
 extern void dc_resume();
-extern int dc_start_game(const char *path);
+extern void dc_start_game(const char *path);
 extern void UpdateInputState(u32 port);
 extern bool game_started;
 
@@ -70,6 +70,7 @@ static float scaling = 1;
 GuiState gui_state = Main;
 static bool settings_opening;
 static bool touch_up;
+static std::string error_msg;
 
 static void display_vmus();
 static void reset_vmus();
@@ -292,6 +293,19 @@ void gui_open_settings()
 	}
 }
 
+static void gui_start_game(const std::string& path)
+{
+	try {
+		dc_start_game(path.empty() ? NULL : path.c_str());
+	} catch (ReicastException& ex) {
+		ERROR_LOG(BOOT, "%s", ex.reason.c_str());
+		error_msg = ex.reason;
+		gui_state = Main;
+		game_started = false;
+		cfgSetVirtual("config", "image", "");
+	}
+}
+
 static void gui_display_commands()
 {
 	dc_stop();
@@ -337,8 +351,8 @@ static void gui_display_commands()
 	ImGui::NextColumn();
 	if (ImGui::Button("Restart", ImVec2(150 * scaling, 50 * scaling)))
 	{
-		dc_reset(true);
-		gui_state = Closed;
+		gui_state = ClosedNoResume;
+		gui_start_game(cfgLoadStr("config", "image", ""));
 	}
 	ImGui::NextColumn();
 	if (ImGui::Button("Exit", ImVec2(150 * scaling, 50 * scaling)))
@@ -349,14 +363,6 @@ static void gui_display_commands()
 		cfgSetVirtual("config", "image", "");
 	}
 
-#if 0
-	ImGui::NextColumn();
-	if (ImGui::Button("RenderDone Int", ImVec2(150 * scaling, 50 * scaling)))
-	{
-		asic_RaiseInterrupt(holly_RENDER_DONE);
-		gui_state = Closed;
-	}
-#endif
 	ImGui::End();
 
     ImGui::Render();
@@ -364,7 +370,7 @@ static void gui_display_commands()
     settings_opening = false;
 }
 
-const char *maple_device_types[] = { "None", "Sega Controller", "Light Gun", "Keyboard", "Mouse" };
+const char *maple_device_types[] = { "None", "Sega Controller", "Light Gun", "Keyboard", "Mouse", "Twin Stick", "Ascii Stick" };
 const char *maple_expansion_device_types[] = { "None", "Sega VMU", "Purupuru", "Microphone" };
 
 static const char *maple_device_name(MapleDeviceType type)
@@ -379,6 +385,10 @@ static const char *maple_device_name(MapleDeviceType type)
 		return maple_device_types[3];
 	case MDT_Mouse:
 		return maple_device_types[4];
+	case MDT_TwinStick:
+		return maple_device_types[5];
+	case MDT_AsciiStick:
+		return maple_device_types[6];
 	case MDT_None:
 	default:
 		return maple_device_types[0];
@@ -397,6 +407,10 @@ static MapleDeviceType maple_device_type_from_index(int idx)
 		return MDT_Keyboard;
 	case 4:
 		return MDT_Mouse;
+	case 5:
+		return MDT_TwinStick;
+	case 6:
+		return MDT_AsciiStick;
 	case 0:
 	default:
 		return MDT_None;
@@ -587,8 +601,6 @@ static void controller_mapping_popup(std::shared_ptr<GamepadDevice> gamepad)
 	ImGui::PopStyleVar();
 }
 
-static std::string error_msg;
-
 static void error_popup()
 {
 	if (!error_msg.empty())
@@ -653,10 +665,11 @@ static void gui_display_settings()
     	if (maple_devices_changed)
     	{
     		maple_devices_changed = false;
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-    		maple_ReconnectDevices();
-    		reset_vmus();
-#endif
+    		if (game_started && settings.platform.system == DC_PLATFORM_DREAMCAST)
+    		{
+    			maple_ReconnectDevices();
+    			reset_vmus();
+    		}
     	}
        	SaveSettings();
     }
@@ -811,14 +824,12 @@ static void gui_display_settings()
 		if (ImGui::BeginTabItem("Controls"))
 		{
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
 		    if (ImGui::CollapsingHeader("Dreamcast Devices", ImGuiTreeNodeFlags_DefaultOpen))
 		    {
 				for (int bus = 0; bus < MAPLE_PORTS; bus++)
 				{
 					ImGui::Text("Device %c", bus + 'A');
 					ImGui::SameLine();
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
 					char device_name[32];
 					sprintf(device_name, "##device%d", bus);
 					float w = ImGui::CalcItemWidth() / 3;
@@ -838,7 +849,9 @@ static void gui_display_settings()
 						}
 						ImGui::EndCombo();
 					}
-					int port_count = settings.input.maple_devices[bus] == MDT_SegaController ? 2 : settings.input.maple_devices[bus] == MDT_LightGun ? 1 : 0;
+					int port_count = settings.input.maple_devices[bus] == MDT_SegaController ? 2
+							: settings.input.maple_devices[bus] == MDT_LightGun || settings.input.maple_devices[bus] == MDT_TwinStick || settings.input.maple_devices[bus] == MDT_AsciiStick ? 1
+							: 0;
 					for (int port = 0; port < port_count; port++)
 					{
 						ImGui::SameLine();
@@ -862,14 +875,9 @@ static void gui_display_settings()
 						ImGui::PopID();
 					}
 					ImGui::PopItemWidth();
-#elif DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
-					if (MapleDevices[bus][5] != NULL)
-						ImGui::Text("%s", maple_device_name(MapleDevices[bus][5]->get_device_type()));
-#endif
 				}
 				ImGui::Spacing();
 		    }
-#endif
 		    if (ImGui::CollapsingHeader("Physical Devices", ImGuiTreeNodeFlags_DefaultOpen))
 		    {
 				ImGui::Columns(4, "renderers", false);
@@ -1253,15 +1261,14 @@ static void gui_display_settings()
 				ImGui::Text("Git Hash: %s", GIT_HASH);
 				ImGui::Text("Build Date: %s", BUILD_DATE);
 				ImGui::Text("Target: %s",
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
+					settings.platform.system == DC_PLATFORM_DREAMCAST ?
 						"Dreamcast"
-#elif DC_PLATFORM == DC_PLATFORM_NAOMI
+					: settings.platform.system == DC_PLATFORM_NAOMI ?
 						"Naomi"
-#elif DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
+					: settings.platform.system == DC_PLATFORM_ATOMISWAVE ?
 						"Atomiswave"
-#else
+					:
 						"Unknown"
-#endif
 						);
 		    }
 		    if (ImGui::CollapsingHeader("Platform", ImGuiTreeNodeFlags_DefaultOpen))
@@ -1379,25 +1386,17 @@ static void add_game_directory(const std::string& path, std::vector<GameMedia>& 
 		}
 		else
 		{
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-			if (name.size() >= 4)
-			{
-				std::string extension = name.substr(name.size() - 4).c_str();
-				//printf("  found game %s ext %s\n", entry->d_name, extension.c_str());
-				if (stricmp(extension.c_str(), ".cdi") && stricmp(extension.c_str(), ".gdi") && stricmp(extension.c_str(), ".chd") && stricmp(extension.c_str(), ".cue"))
-					continue;
-				game_list.push_back({ name, child_path });
-			}
-#else
 			std::string::size_type dotpos = name.find_last_of(".");
 			if (dotpos == std::string::npos || dotpos == name.size() - 1)
 				continue;
 			std::string extension = name.substr(dotpos);
-			if (stricmp(extension.c_str(), ".zip") && stricmp(extension.c_str(), ".7z") && stricmp(extension.c_str(), ".bin")
-					 && stricmp(extension.c_str(), ".lst") && stricmp(extension.c_str(), ".dat"))
+			if (stricmp(extension.c_str(), ".zip") && stricmp(extension.c_str(), ".7z")
+					&& stricmp(extension.c_str(), ".bin") && stricmp(extension.c_str(), ".lst")
+					&& stricmp(extension.c_str(), ".dat")
+					&& stricmp(extension.c_str(), ".cdi") && stricmp(extension.c_str(), ".gdi")
+					&& stricmp(extension.c_str(), ".chd")  && stricmp(extension.c_str(), ".cue"))
 				continue;
 			game_list.push_back({ name, child_path });
-#endif
 		}
 	}
 	closedir(dir);
@@ -1424,30 +1423,6 @@ static void gui_display_demo()
 	ImGui::ShowDemoWindow();
 	ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData(), false);
-}
-
-static void gui_start_game(const std::string& path)
-{
-	int rc = dc_start_game(path.empty() ? NULL : path.c_str());
-	if (rc != 0)
-	{
-		gui_state = Main;
-		game_started = false;
-		cfgSetVirtual("config", "image", "");
-		switch (rc) {
-		case -3:
-			error_msg = "Audio/video initialization failed";
-			break;
-		case -5:
-			error_msg = "Cannot find BIOS files";
-			break;
-		case -6:
-			error_msg = "Cannot load NAOMI rom or BIOS";
-			break;
-		default:
-			break;
-		}
-	}
 }
 
 static void gui_display_content()
@@ -1484,7 +1459,6 @@ static void gui_display_content()
     {
 		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8 * scaling, 20 * scaling));		// from 8, 4
 
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
 		ImGui::PushID("bios");
 		if (ImGui::Selectable("Dreamcast BIOS"))
 		{
@@ -1493,7 +1467,6 @@ static void gui_display_content()
 			gui_start_game("");
 		}
 		ImGui::PopID();
-#endif
 
         for (auto& game : game_list)
         	if (filter.PassFilter(game.name.c_str()))

@@ -8,6 +8,27 @@ enum MapleDeviceType
 	MDT_SegaVMU,
 	MDT_Microphone,
 	MDT_PurupuruPack,
+	MDT_AsciiStick,
+	MDT_Keyboard,
+	MDT_Mouse,
+	MDT_LightGun,
+	MDT_TwinStick,
+
+	MDT_NaomiJamma,
+
+	MDT_None,
+	MDT_Count
+};
+
+namespace OldMapleDeviceType
+{
+enum MapleDeviceType
+{
+	MDT_SegaController,
+
+	MDT_SegaVMU,
+	MDT_Microphone,
+	MDT_PurupuruPack,
 	MDT_Keyboard,
 	MDT_Mouse,
 	MDT_LightGun,
@@ -17,6 +38,7 @@ enum MapleDeviceType
 	MDT_None,
 	MDT_Count
 };
+}
 
 enum NAOMI_KEYS
 {

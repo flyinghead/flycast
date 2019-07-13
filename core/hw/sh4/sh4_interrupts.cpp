@@ -20,7 +20,7 @@
 */
 
 //these are fixed
-u16 IRLPriority=0x0246;
+const u16 IRLPriority = 0x0246;
 #define IRLP9 &IRLPriority,0
 #define IRLP11 &IRLPriority,4
 #define IRLP13 &IRLPriority,8
@@ -31,7 +31,7 @@ u16 IRLPriority=0x0246;
 
 struct InterptSourceList_Entry
 {
-	u16* PrioReg;
+	const u16* PrioReg;
 	u32 Shift;
 	u32 IntEvnCode;
 

@@ -133,8 +133,7 @@ bool ParseCommandLine(int argc,wchar* argv[])
 
 			if (extension
 				&& (stricmp(extension, ".cdi") == 0 || stricmp(extension, ".chd") == 0
-					|| stricmp(extension, ".gdi") == 0 || stricmp(extension, ".lst") == 0
-					|| stricmp(extension, ".cue") == 0))
+					|| stricmp(extension, ".gdi") == 0 || stricmp(extension, ".cue") == 0))
 			{
 				INFO_LOG(COMMON, "Using '%s' as cd image", *arg);
 				cfgSetVirtual("config", "image", *arg);
@@ -147,12 +146,8 @@ bool ParseCommandLine(int argc,wchar* argv[])
 			}
 			else
 			{
-#if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
 				INFO_LOG(COMMON, "Using '%s' as rom", *arg);
 				cfgSetVirtual("config", "image", *arg);
-#else
-				WARN_LOG(COMMON, "wtf %s is supposed to do ?",*arg);
-#endif
 			}
 		}
 		arg++;

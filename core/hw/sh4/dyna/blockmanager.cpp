@@ -412,15 +412,18 @@ void bm_Reset()
 	// Windows cannot lock/unlock a region spanning more than one VirtualAlloc or MapViewOfFile
 	// so we have to unlock each region individually
 	// No need for this mess in 4GB mode since windows doesn't use it
-#if RAM_SIZE == 16 * 1024 * 1024
-	mem_region_unlock(virt_ram_base + 0x0C000000, RAM_SIZE);
-	mem_region_unlock(virt_ram_base + 0x0D000000, RAM_SIZE);
-	mem_region_unlock(virt_ram_base + 0x0E000000, RAM_SIZE);
-	mem_region_unlock(virt_ram_base + 0x0F000000, RAM_SIZE);
-#else
-	mem_region_unlock(virt_ram_base + 0x0C000000, RAM_SIZE);
-	mem_region_unlock(virt_ram_base + 0x0E000000, RAM_SIZE);
-#endif
+	if (settings.platform.ram_size == 16 * 1024 * 1024)
+	{
+		mem_region_unlock(virt_ram_base + 0x0C000000, RAM_SIZE);
+		mem_region_unlock(virt_ram_base + 0x0D000000, RAM_SIZE);
+		mem_region_unlock(virt_ram_base + 0x0E000000, RAM_SIZE);
+		mem_region_unlock(virt_ram_base + 0x0F000000, RAM_SIZE);
+	}
+	else
+	{
+		mem_region_unlock(virt_ram_base + 0x0C000000, RAM_SIZE);
+		mem_region_unlock(virt_ram_base + 0x0E000000, RAM_SIZE);
+	}
 	if (_nvmem_4gb_space())
 	{
 		mem_region_unlock(virt_ram_base + 0x8C000000, 0x90000000 - 0x8C000000);

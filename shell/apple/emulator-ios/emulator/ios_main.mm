@@ -89,9 +89,6 @@ void os_CreateWindow() {
 }
 
 void os_SetupInput() {
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-	mcfg_CreateDevices();
-#endif
 }
 
 void UpdateInputState(u32 port) {

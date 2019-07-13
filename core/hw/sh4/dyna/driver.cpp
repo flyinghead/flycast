@@ -504,9 +504,9 @@ void recSh4_Skip()
 	Sh4_int_Skip();
 }
 
-void recSh4_Reset(bool Manual)
+void recSh4_Reset(bool hard)
 {
-	Sh4_int_Reset(Manual);
+	Sh4_int_Reset(hard);
 	recSh4_ClearCache();
 	bm_Reset();
 }

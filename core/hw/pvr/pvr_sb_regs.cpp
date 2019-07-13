@@ -144,6 +144,6 @@ void pvr_sb_Term()
 {
 }
 //Reset -> Reset - Initialise
-void pvr_sb_Reset(bool Manual)
+void pvr_sb_Reset(bool hard)
 {
 }

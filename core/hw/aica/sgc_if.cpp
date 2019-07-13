@@ -1179,9 +1179,6 @@ void WriteCommonReg8(u32 reg,u32 data)
 s16 cdda_sector[CDDA_SIZE]={0};
 u32 cdda_index=CDDA_SIZE<<1;
 
-
-SampleType mxlr[64];
-
 u32 samples_gen;
 
 //no DSP for now in this version
@@ -1192,6 +1189,7 @@ void AICA_Sample32()
 		return;
 	}
 
+	SampleType mxlr[64];
 	memset(mxlr,0,sizeof(mxlr));
 
 	//Generate 32 samples for each channel, before moving to next channel

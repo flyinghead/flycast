@@ -157,7 +157,7 @@ void aica_Init()
 	RealTimeClock = GetRTC_now();
 }
 
-void aica_Reset(bool Manual)
+void aica_Reset(bool hard)
 {
 	aica_Init();
 	VREG = 0;
@@ -357,7 +357,7 @@ void aica_sb_Init()
 	dma_sched_id = sh4_sched_register(0, &dma_end_sched);
 }
 
-void aica_sb_Reset(bool Manual)
+void aica_sb_Reset(bool hard)
 {
 }
 

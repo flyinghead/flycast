@@ -193,17 +193,17 @@ void mem_Init()
 }
 
 //Reset Sysmem/Regs -- Pvr is not changed , bios/flash are not zeroed out
-void mem_Reset(bool Manual)
+void mem_Reset(bool hard)
 {
 	//mem is reseted on hard restart(power on) , not manual...
-	if (!Manual)
+	if (hard)
 	{
 		//fill mem w/ 0's
 		mem_b.Zero();
 	}
 
 	//Reset registers
-	sh4_area0_Reset(Manual);
+	sh4_area0_Reset(hard);
 	sh4_mmr_reset();
 	MMU_reset();
 }

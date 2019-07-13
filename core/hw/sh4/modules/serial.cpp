@@ -138,7 +138,7 @@ void serial_reset()
 	*/
 	SCIF_SCSMR2.full=0x0000;
 	SCIF_SCBRR2=0xFF;
-	SCIF_SCFSR2.full=0x000;
+	SCIF_SCFSR2.full=0x060;
 	SCIF_SCFCR2.full=0x000;
 	SCIF_SCFDR2.full=0x000;
 	SCIF_SCSPTR2.full=0x000;

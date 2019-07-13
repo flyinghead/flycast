@@ -441,6 +441,7 @@ void _vmem_term() {}
 
 u8* virt_ram_base;
 bool vmem_4gb_space;
+static VMemType vmemstatus;
 
 void* malloc_pages(size_t size) {
 #if HOST_OS == OS_WINDOWS
@@ -512,14 +513,45 @@ bool _vmem_reserve() {
 	// TODO: Static assert?
 	verify((sizeof(Sh4RCB)%PAGE_SIZE)==0);
 
-	VMemType vmemstatus = MemTypeError;
+	vmemstatus = MemTypeError;
 
 	// Use vmem only if settings mandate so, and if we have proper exception handlers.
-	#ifndef TARGET_NO_EXCEPTIONS
+#ifndef TARGET_NO_EXCEPTIONS
 	if (!settings.dynarec.disable_nvmem)
 		vmemstatus = vmem_platform_init((void**)&virt_ram_base, (void**)&p_sh4rcb);
-	#endif
+#endif
+	return true;
+}
 
+static void _vmem_term_mappings()
+{
+	if (vmemstatus == MemTypeError) {
+		if (p_sh4rcb != NULL)
+		{
+			free(p_sh4rcb);
+			p_sh4rcb = NULL;
+		}
+		if (mem_b.data != NULL)
+		{
+			free(mem_b.data);
+			mem_b.data = NULL;
+		}
+		if (vram.data != NULL)
+		{
+			free(vram.data);
+			vram.data = NULL;
+		}
+		if (aica_ram.data != NULL)
+		{
+			free(aica_ram.data);
+			aica_ram.data = NULL;
+		}
+	}
+}
+
+void _vmem_init_mappings()
+{
+	_vmem_term_mappings();
 	// Fallback to statically allocated buffers, this results in slow-ops being generated.
 	if (vmemstatus == MemTypeError) {
 		WARN_LOG(VMEM, "Warning! nvmem is DISABLED (due to failure or not being built-in");
@@ -547,7 +579,6 @@ bool _vmem_reserve() {
 			const vmem_mapping mem_mappings[] = {
 				{0x00000000, 0x00800000,                               0,         0, false},  // Area 0 -> unused
 				{0x00800000, 0x01000000,           MAP_ARAM_START_OFFSET, ARAM_SIZE, false},  // Aica
-				{0x20000000, 0x20000000+ARAM_SIZE, MAP_ARAM_START_OFFSET, ARAM_SIZE,  true},
 				{0x01000000, 0x04000000,                               0,         0, false},  // More unused
 				{0x04000000, 0x05000000,           MAP_VRAM_START_OFFSET, VRAM_SIZE,  true},  // Area 1 (vram, 16MB, wrapped on DC as 2x8MB)
 				{0x05000000, 0x06000000,                               0,         0, false},  // 32 bit path (unused)
@@ -556,6 +587,8 @@ bool _vmem_reserve() {
 				{0x08000000, 0x0C000000,                               0,         0, false},  // Area 2
 				{0x0C000000, 0x10000000,            MAP_RAM_START_OFFSET,  RAM_SIZE,  true},  // Area 3 (main RAM + 3 mirrors)
 				{0x10000000, 0x20000000,                               0,         0, false},  // Area 4-7 (unused)
+				// This is outside of the 512MB addr space
+				{0x20000000, 0x20800000,           MAP_ARAM_START_OFFSET, ARAM_SIZE,  true},  // writable aica ram
 			};
 			vmem_platform_create_mappings(&mem_mappings[0], ARRAY_SIZE(mem_mappings));
 
@@ -627,8 +660,6 @@ bool _vmem_reserve() {
 	aica_ram.Zero();
 	vram.Zero();
 	mem_b.Zero();
-
-	return true;
 }
 
 #define freedefptr(x) \

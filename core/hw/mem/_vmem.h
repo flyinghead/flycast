@@ -55,6 +55,7 @@ typedef u32 _vmem_handler;
 void _vmem_init();
 void _vmem_reset();
 void _vmem_term();
+void _vmem_init_mappings();
 
 //functions to register and map handlers/memory
 _vmem_handler _vmem_register_handler(_vmem_ReadMem8FP* read8,_vmem_ReadMem16FP* read16,_vmem_ReadMem32FP* read32, _vmem_WriteMem8FP* write8,_vmem_WriteMem16FP* write16,_vmem_WriteMem32FP* write32);

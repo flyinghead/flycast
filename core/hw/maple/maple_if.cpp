@@ -71,9 +71,8 @@ void maple_vblank()
 			maple_ddt_pending_reset=false;
 		}
 	}
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-	maple_handle_reconnect();
-#endif
+	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+		maple_handle_reconnect();
 }
 void maple_SB_MSHTCL_Write(u32 addr, u32 data)
 {
@@ -260,7 +259,7 @@ void maple_Init()
 	maple_schid=sh4_sched_register(0,&maple_schd);
 }
 
-void maple_Reset(bool Manual)
+void maple_Reset(bool hard)
 {
 	maple_ddt_pending_reset=false;
 	SB_MDTSEL = 0x00000000;
@@ -277,7 +276,6 @@ void maple_Term()
 	
 }
 
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
 static u64 reconnect_time;
 
 void maple_ReconnectDevices()
@@ -294,4 +292,3 @@ static void maple_handle_reconnect()
 		mcfg_CreateDevices();
 	}
 }
-#endif

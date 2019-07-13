@@ -311,6 +311,12 @@ void arm_Reset()
 #if FEAT_AREC != DYNAREC_NONE
 	FlushCache();
 #endif
+	aica_interr = false;
+	aica_reg_L = 0;
+	e68k_out = false;
+	e68k_reg_L = 0;
+	e68k_reg_M = 0;
+
 	Arm7Enabled = false;
 	// clean registers
 	memset(&arm_Reg[0], 0, sizeof(arm_Reg));

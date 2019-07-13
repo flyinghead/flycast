@@ -61,8 +61,8 @@ void EXPORT_CALL handle_SwitchDisc(u32 id,void* w,void* p)
 	//new disc is in
 }
 */
-//It's supposed to reset everything (if not a manual reset)
-void libGDR_Reset(bool Manual)
+//It's supposed to reset everything (if not a soft reset)
+void libGDR_Reset(bool hard)
 {
 	libCore_gdrom_disc_change();
 }
@@ -70,10 +70,8 @@ void libGDR_Reset(bool Manual)
 //called when entering sh4 thread , from the new thread context (for any thread specific init)
 s32 libGDR_Init()
 {
-	if (!InitDrive())
-		return rv_serror;
 	libCore_gdrom_disc_change();
-	settings.imgread.PatchRegion=true;
+	settings.imgread.PatchRegion = true;
 	return rv_ok;
 }
 

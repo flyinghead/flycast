@@ -85,16 +85,15 @@ private:
 	u8 naomi_cart_ram[64 * 1024];
 };
 
-class NaomiCartException
+class NaomiCartException : public ReicastException
 {
 public:
-	NaomiCartException(std::string reason) : reason(reason) {}
-
-	std::string reason;
+	NaomiCartException(std::string reason) : ReicastException(reason) {}
 };
 
-bool naomi_cart_SelectFile();
+void naomi_cart_LoadRom(const char* file);
 void naomi_cart_Close();
+int naomi_cart_GetPlatform(const char *path);
 
 extern char naomi_game_id[];
 extern u8 *naomi_default_eeprom;

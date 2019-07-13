@@ -248,7 +248,7 @@ void asic_reg_Term()
 
 }
 //Reset -> Reset - Initialise to default values
-void asic_reg_Reset(bool Manual)
+void asic_reg_Reset(bool hard)
 {
 
 }
