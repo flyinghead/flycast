@@ -216,7 +216,7 @@ static void naomi_cart_LoadZip(const char *filename)
 		{
 			// If a specific BIOS is needed for this game, fail.
 			if (game->bios != NULL || !bios_loaded)
-				throw NaomiCartException(std::string("Error: cannot load BIOS ") + (game->bios != NULL ? game->bios : "naomi.zip"));
+				throw NaomiCartException(std::string("Error: cannot load BIOS ") + (game->bios != NULL ? game->bios : "naomi.zip") + " in " + get_readonly_data_path(DATA_PATH));
 
 			// otherwise use the default BIOS
 		}

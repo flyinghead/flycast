@@ -458,7 +458,9 @@ void dc_start_game(const char *path)
 	InitSettings();
 	dc_reset(true);
 	LoadSettings(false);
-	if (!LoadRomFiles(get_readonly_data_path(DATA_PATH)))
+	
+	std::string data_path = get_readonly_data_path(DATA_PATH);
+	if (!LoadRomFiles(data_path))
 	{
 		if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 		{
@@ -473,7 +475,7 @@ void dc_start_game(const char *path)
 			else
 #endif
 			{
-				throw ReicastException("Cannot find BIOS files");
+				throw ReicastException("Cannot find BIOS files in " + data_path);
 			}
 		}
 	}
