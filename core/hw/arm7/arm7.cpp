@@ -2183,7 +2183,7 @@ void armt_init()
 
 	mem_region_set_exec(ICache, ICacheSize);
 
-#if TARGET_IPHONE
+#ifdef TARGET_IPHONE
 	memset((u8*)mmap(ICache, ICacheSize, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_FIXED | MAP_PRIVATE | MAP_ANON, 0, 0),0xFF,ICacheSize);
 #else
 	memset(ICache,0xFF,ICacheSize);

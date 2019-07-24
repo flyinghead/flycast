@@ -120,7 +120,7 @@ string get_game_save_prefix()
 #endif
 	if (lastindex != -1)
 		save_file = save_file.substr(lastindex + 1);
-	return get_writable_data_path("/data/") + save_file;
+	return get_writable_data_path(DATA_PATH) + save_file;
 }
 
 string get_game_basename()

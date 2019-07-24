@@ -101,7 +101,7 @@ bool CustomTexture::Init()
 		std::string game_id = GetGameId();
 		if (game_id.length() > 0)
 		{
-			textures_path = get_readonly_data_path("/data/") + "textures/" + game_id + "/";
+			textures_path = get_readonly_data_path(DATA_PATH) + "textures/" + game_id + "/";
 
 			DIR *dir = opendir(textures_path.c_str());
 			if (dir != NULL)
@@ -160,7 +160,7 @@ void CustomTexture::LoadCustomTextureAsync(TextureCacheData *texture_data)
 
 void CustomTexture::DumpTexture(u32 hash, int w, int h, GLuint textype, void *temp_tex_buffer)
 {
-	std::string base_dump_dir = get_writable_data_path("/data/texdump/");
+	std::string base_dump_dir = get_writable_data_path(DATA_PATH "texdump/");
 	if (!file_exists(base_dump_dir))
 		make_directory(base_dump_dir);
 	std::string game_id = GetGameId();

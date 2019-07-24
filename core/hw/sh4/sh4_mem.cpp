@@ -215,7 +215,7 @@ void mem_Term()
 	sh4_area0_Term();
 
 	// done by emulator thread
-	//SaveRomFiles(get_writable_data_path("/data/"));
+	//SaveRomFiles(get_writable_data_path(DATA_PATH));
 	
 	//mem_b.Term(); // handled by vmem
 

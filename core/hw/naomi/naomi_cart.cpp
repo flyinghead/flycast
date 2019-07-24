@@ -72,11 +72,7 @@ static bool naomi_LoadBios(const char *filename, Archive *child_archive, Archive
 
 	struct BIOS_t *bios = &BIOS[biosid];
 
-#if HOST_OS != OS_DARWIN
-	std::string basepath = get_readonly_data_path("/data/");
-#else
-	std::string basepath = get_readonly_data_path("/");
-#endif
+	std::string basepath = get_readonly_data_path(DATA_PATH);
 	std::unique_ptr<Archive> bios_archive(OpenArchive((basepath + filename).c_str()));
 
 	bool found_region = false;
