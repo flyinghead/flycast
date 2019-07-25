@@ -60,9 +60,9 @@ void CPUUpdateCPSR();
 void CPUUpdateFlags();
 void CPUSoftwareInterrupt(int comment);
 void CPUUndefinedException();
+void libAICA_TimeStep();
 
 #if FEAT_AREC == DYNAREC_NONE
-void libAICA_TimeStep();
 
 //
 // ARM7 interpreter
