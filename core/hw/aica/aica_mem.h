@@ -8,7 +8,4 @@ void init_mem();
 void term_mem();
 
 extern u8 aica_reg[0x8000];
-#define aica_reg_16 ((u16*)aica_reg)
 
-#define AICA_RAM_SIZE (ARAM_SIZE)
-#define AICA_RAM_MASK (ARAM_MASK)
