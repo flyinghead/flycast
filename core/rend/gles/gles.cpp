@@ -1229,7 +1229,7 @@ void gl_load_osd_resources()
 #ifdef _ANDROID
 	int w, h;
 	if (osd_tex == 0)
-		osd_tex = loadPNG(get_readonly_data_path("/data/buttons.png"), w, h);
+		osd_tex = loadPNG(get_readonly_data_path(DATA_PATH "buttons.png"), w, h);
 #endif
 }
 

@@ -4,12 +4,8 @@
 
 #include <map>
 
-
-#define C_CORE
-
 #define arm_printf(...) DEBUG_LOG(AICA_ARM, __VA_ARGS__)
 
-//#define CPUReadHalfWordQuick(addr) arm_ReadMem16(addr & 0x7FFFFF)
 #define CPUReadMemoryQuick(addr) (*(u32*)&aica_ram[addr&ARAM_MASK])
 #define CPUReadByte arm_ReadMem8
 #define CPUReadMemory arm_ReadMem32
@@ -45,12 +41,6 @@ void CPUSwap(u32 *a, u32 *b)
 	*a = c;
 }
 
-/*
-bool N_FLAG;
-bool Z_FLAG;
-bool C_FLAG;
-bool V_FLAG;
-*/
 #define N_FLAG (reg[RN_PSR_FLAGS].FLG.N)
 #define Z_FLAG (reg[RN_PSR_FLAGS].FLG.Z)
 #define C_FLAG (reg[RN_PSR_FLAGS].FLG.C)
@@ -58,10 +48,9 @@ bool V_FLAG;
 
 bool armIrqEnable;
 bool armFiqEnable;
-//bool armState;
 int armMode;
 
-bool Arm7Enabled=false;
+bool Arm7Enabled = false;
 
 u8 cpuBitsSet[256];
 
@@ -71,16 +60,20 @@ void CPUUpdateCPSR();
 void CPUUpdateFlags();
 void CPUSoftwareInterrupt(int comment);
 void CPUUndefinedException();
+void libAICA_TimeStep();
 
 #if FEAT_AREC == DYNAREC_NONE
 
+//
+// ARM7 interpreter
+//
 void arm_Run_(u32 CycleCount)
 {
 	if (!Arm7Enabled)
 		return;
 
-	u32 clockTicks=0;
-	while (clockTicks<CycleCount)
+	u32 clockTicks = 0;
+	while (clockTicks < CycleCount)
 	{
 		if (reg[INTR_PEND].I)
 		{
@@ -92,16 +85,22 @@ void arm_Run_(u32 CycleCount)
 	}
 }
 
+void arm_Run(u32 CycleCount) {
+	for (int i=0;i<32;i++)
+	{
+		arm_Run_(CycleCount/32);
+		libAICA_TimeStep();
+	}
+}
 #endif
 
 void armt_init();
-//void CreateTables();
+
 void arm_Init()
 {
 #if FEAT_AREC != DYNAREC_NONE
 	armt_init();
 #endif
-	//CreateTables();
 	arm_Reset();
 
 	for (int i = 0; i < 256; i++)
@@ -235,21 +234,7 @@ void CPUUpdateCPSR()
 
 	CPSR.I = reg[RN_CPSR].I & 0x40;
 
-	/*
-	if(N_FLAG)
-		CPSR |= 0x80000000;
-	if(Z_FLAG)
-		CPSR |= 0x40000000;
-	if(C_FLAG)
-		CPSR |= 0x20000000;
-	if(V_FLAG)
-		CPSR |= 0x10000000;
-	if(!armState)
-		CPSR |= 0x00000020;
-	*/
-
 	CPSR.PSR.NZCV=reg[RN_PSR_FLAGS].FLG.NZCV;
-
 
 	if (!armFiqEnable)
 		CPSR.I |= 0x40;
@@ -267,13 +252,6 @@ void CPUUpdateFlags()
 
 	reg[RN_PSR_FLAGS].FLG.NZCV=reg[16].PSR.NZCV;
 
-	/*
-	N_FLAG = (CPSR & 0x80000000) ? true: false;
-	Z_FLAG = (CPSR & 0x40000000) ? true: false;
-	C_FLAG = (CPSR & 0x20000000) ? true: false;
-	V_FLAG = (CPSR & 0x10000000) ? true: false;
-	*/
-	//armState = (CPSR & 0x20) ? false : true;
 	armIrqEnable = (CPSR & 0x80) ? false : true;
 	armFiqEnable = (CPSR & 0x40) ? false : true;
 	update_armintc();
@@ -282,14 +260,11 @@ void CPUUpdateFlags()
 void CPUSoftwareInterrupt(int comment)
 {
 	u32 PC = reg[R15_ARM_NEXT].I+4;
-	//bool savedArmState = armState;
 	CPUSwitchMode(0x13, true, false);
 	reg[14].I = PC;
-//	reg[15].I = 0x08;
 	
 	armIrqEnable = false;
 	armNextPC = 0x08;
-//	reg[15].I += 4;
 }
 
 void CPUUndefinedException()
@@ -298,10 +273,8 @@ void CPUUndefinedException()
 	u32 PC = reg[R15_ARM_NEXT].I+4;
 	CPUSwitchMode(0x1b, true, false);
 	reg[14].I = PC;
-//	reg[15].I = 0x04;
 	armIrqEnable = false;
 	armNextPC = 0x04;
-//	reg[15].I += 4;  
 }
 
 void FlushCache();
@@ -332,7 +305,6 @@ void arm_Reset()
 	armFiqEnable = false;
 	update_armintc();
 
-	//armState = true;
 	C_FLAG = V_FLAG = N_FLAG = Z_FLAG = false;
 
 	// disable FIQ
@@ -344,45 +316,18 @@ void arm_Reset()
 	reg[15].I += 4;
 }
 
-/*
-
-//NO IRQ on aica ..
-void CPUInterrupt()
-{
-	u32 PC = reg[15].I;
-	//bool savedState = armState;
-	CPUSwitchMode(0x12, true, false);
-	reg[14].I = PC;
-	//if(!savedState)
-	//	reg[14].I += 2;
-	reg[15].I = 0x18;
-	//armState = true;
-	armIrqEnable = false;
-
-	armNextPC = reg[15].I;
-	reg[15].I += 4;
-}
-
-*/
-
 extern "C"
 NOINLINE
 void CPUFiq()
 {
 	u32 PC = reg[R15_ARM_NEXT].I+4;
-	//bool savedState = armState;
 	CPUSwitchMode(0x11, true, false);
 	reg[14].I = PC;
-	//if(!savedState)
-	//	reg[14].I += 2;
-	//reg[15].I = 0x1c;
-	//armState = true;
 	armIrqEnable = false;
 	armFiqEnable = false;
 	update_armintc();
 
 	armNextPC = 0x1c;
-	//reg[15].I += 4;
 }
 
 
@@ -412,17 +357,10 @@ void update_armintc()
 	reg[INTR_PEND].I=e68k_out && armFiqEnable;
 }
 
-void libAICA_TimeStep();
-
-#if FEAT_AREC == DYNAREC_NONE
-void arm_Run(u32 CycleCount) { 
-	for (int i=0;i<32;i++)
-	{
-		arm_Run_(CycleCount/32);
-		libAICA_TimeStep();
-	}
-}
-#else	// FEAT_AREC != DYNAREC_NONE
+#if FEAT_AREC != DYNAREC_NONE
+//
+// ARM7 Recompiler
+//
 
 #if HOST_OS == OS_DARWIN
 #include <sys/mman.h>
@@ -744,9 +682,9 @@ u32 DYNACALL DoMemOp(u32 addr,u32 data)
 			arm_WriteMem32(addr,data);
 	}
 
-	#if HOST_CPU==CPU_X86
-		virt_arm_reg(0)=rv;
-	#endif
+#if HOST_CPU==CPU_X86
+	virt_arm_reg(0)=rv;
+#endif
 
 	return rv;
 }
@@ -1303,7 +1241,7 @@ void *armGetEmitPtr()
 	return NULL;
 }
 
-#if HOST_CPU == CPU_X86 && FEAT_AREC != DYNAREC_NONE
+#if HOST_CPU == CPU_X86
 
 /* X86 backend
  * Uses a mix of
@@ -2175,15 +2113,15 @@ void armt_init()
 	//align to next page ..
 	ICache = (u8*)(((unat)ARM7_TCB+4095)& ~4095);
 
-	#if HOST_OS==OS_DARWIN
-		//Can't just mprotect on iOS
-		munmap(ICache, ICacheSize);
-		ICache = (u8*)mmap(ICache, ICacheSize, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_FIXED | MAP_PRIVATE | MAP_ANON, 0, 0);
-	#endif
+#ifdef TARGET_IPHONE
+	//Can't just mprotect on iOS
+	munmap(ICache, ICacheSize);
+	ICache = (u8*)mmap(ICache, ICacheSize, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_FIXED | MAP_PRIVATE | MAP_ANON, 0, 0);
+#endif
 
 	mem_region_set_exec(ICache, ICacheSize);
 
-#if TARGET_IPHONE
+#ifdef TARGET_IPHONE
 	memset((u8*)mmap(ICache, ICacheSize, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_FIXED | MAP_PRIVATE | MAP_ANON, 0, 0),0xFF,ICacheSize);
 #else
 	memset(ICache,0xFF,ICacheSize);
@@ -2193,4 +2131,4 @@ void armt_init()
 }
 
 
-#endif
+#endif	// FEAT_AREC != DYNAREC_NONE

@@ -144,7 +144,7 @@ double os_GetSeconds()
 	return a.tv_sec-tvs_base+a.tv_usec/1000000.0;
 }
 
-#if TARGET_IPHONE
+#ifdef TARGET_IPHONE
 void os_DebugBreak() {
     __asm__("trap");
 }

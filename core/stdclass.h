@@ -261,6 +261,12 @@ public :
 	}
 };
 
+#if !defined(TARGET_IPHONE)
+#define DATA_PATH "/data/"
+#else
+#define DATA_PATH "/"
+#endif
+
 //Set the path !
 void set_user_config_dir(const string& dir);
 void set_user_data_dir(const string& dir);

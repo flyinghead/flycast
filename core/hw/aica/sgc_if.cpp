@@ -1169,8 +1169,8 @@ void WriteCommonReg8(u32 reg,u32 data)
 	WriteMemArr(aica_reg,reg,data,1);
 	if (reg==0x2804 || reg==0x2805)
 	{
-		dsp.RBL=(8192<<CommonData->RBL)-1;
-		dsp.RBP=( CommonData->RBP*2048&AICA_RAM_MASK);
+		dsp.RBL = (8192 << CommonData->RBL) - 1;
+		dsp.RBP = (CommonData->RBP * 2048) & ARAM_MASK;
 		dsp.dyndirty=true;
 	}
 }

@@ -475,7 +475,6 @@
 		84B7BDD51B72720100F9733F /* arm7.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = arm7.h; sourceTree = "<group>"; };
 		84B7BDD61B72720100F9733F /* arm_mem.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = arm_mem.cpp; sourceTree = "<group>"; };
 		84B7BDD71B72720100F9733F /* arm_mem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = arm_mem.h; sourceTree = "<group>"; };
-		84B7BDD81B72720100F9733F /* resource.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = resource.h; sourceTree = "<group>"; };
 		84B7BDD91B72720100F9733F /* vbaARM.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = vbaARM.cpp; sourceTree = "<group>"; };
 		84B7BDDA1B72720100F9733F /* virt_arm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = virt_arm.cpp; sourceTree = "<group>"; };
 		84B7BDDB1B72720100F9733F /* virt_arm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = virt_arm.h; sourceTree = "<group>"; };
@@ -1324,7 +1323,6 @@
 				84B7BDD51B72720100F9733F /* arm7.h */,
 				84B7BDD61B72720100F9733F /* arm_mem.cpp */,
 				84B7BDD71B72720100F9733F /* arm_mem.h */,
-				84B7BDD81B72720100F9733F /* resource.h */,
 				84B7BDD91B72720100F9733F /* vbaARM.cpp */,
 				84B7BDDA1B72720100F9733F /* virt_arm.cpp */,
 				84B7BDDB1B72720100F9733F /* virt_arm.h */,

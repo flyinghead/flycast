@@ -1296,7 +1296,7 @@ static void gui_display_settings()
 #elif HOST_OS == OS_LINUX
 					"Linux"
 #elif HOST_OS == OS_DARWIN
-#if TARGET_IPHONE
+#ifdef TARGET_IPHONE
 		    		"iOS"
 #else
 					"OSX"
