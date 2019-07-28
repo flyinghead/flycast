@@ -470,7 +470,7 @@ void naomi_cart_LoadRom(const char* file)
 		raw_bin_file = true;
 	}
 
-	INFO_LOG(NAOMI, "+%ld romfiles, %.2f MB set size, %.2f MB set address space", files.size(), setsize / 1024.f / 1024.f, RomSize / 1024.f / 1024.f);
+	INFO_LOG(NAOMI, "+%zd romfiles, %.2f MB set size, %.2f MB set address space", files.size(), setsize / 1024.f / 1024.f, RomSize / 1024.f / 1024.f);
 
 	if (RomCacheMap)
 	{

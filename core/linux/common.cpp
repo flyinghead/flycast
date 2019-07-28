@@ -107,7 +107,7 @@ void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 	#endif
 	else
 	{
-		ERROR_LOG(COMMON, "SIGSEGV @ %lx -> %p was not in vram, dynacode:%d", ctx.pc, si->si_addr, dyna_cde);
+		ERROR_LOG(COMMON, "SIGSEGV @ %zx -> %p was not in vram, dynacode:%d", ctx.pc, si->si_addr, dyna_cde);
 		die("segfault");
 		signal(SIGSEGV, SIG_DFL);
 	}

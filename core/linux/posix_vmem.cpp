@@ -191,7 +191,7 @@ VMemType vmem_platform_init(void **vmem_base_addr, void **sh4rcb_addr) {
 // Just tries to wipe as much as possible in the relevant area.
 void vmem_platform_destroy() {
 	if (vmem_4gb_space)
-		mem_region_release(virt_ram_base, 0x100000000);
+		mem_region_release(virt_ram_base, (size_t)0x100000000);
 	else
 		mem_region_release(virt_ram_base, 0x20000000);
 }

@@ -230,7 +230,7 @@ else ifneq (,$(findstring gcwz,$(platform)))
     NO_REC := 1
     CC_PREFIX ?= /opt/gcw0-toolchain/usr/bin/mipsel-gcw0-linux-uclibc-
     CFLAGS += -D TARGET_GCW0 -D TARGET_NO_REC -fsingle-precision-constant
-    LIBS += -L../linux-deps/lib -L./enta_viv -lglapi
+    LIBS += -L./gcwz/enta_viv -lglapi
     GCWZ_PKG = reicast-gcwz.opk
     GCWZ_PKG_FILES = gcwz/default.gcw0.desktop gcwz/icon-32.png
 

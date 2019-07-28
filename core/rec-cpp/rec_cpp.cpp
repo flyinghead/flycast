@@ -42,11 +42,8 @@ void ngen_mainloop(void* v_cntx)
 
 	cycle_counter = 0;
 
-#if !defined(TARGET_BOUNDED_EXECUTION)
-	while (sh4_int_bCpuRun) {
-#else
-	for (int i=0; i<10000; i++) {
-#endif
+	while (sh4_int_bCpuRun)
+	{
 		cycle_counter = SH4_TIMESLICE;
 		do {
 			DynarecCodeEntryPtr rcb = bm_GetCodeByVAddr(ctx->cntx.pc);

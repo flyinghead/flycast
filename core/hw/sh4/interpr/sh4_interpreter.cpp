@@ -47,11 +47,7 @@ void Sh4_int_Run()
 
 	l = SH4_TIMESLICE;
 
-#if !defined(TARGET_BOUNDED_EXECUTION)
 	do
-#else
-	for (int i=0; i<10000; i++)
-#endif
 	{
 #if !defined(NO_MMU)
 		try {
@@ -73,13 +69,9 @@ void Sh4_int_Run()
 			l -= CPU_RATIO * 5;	// an exception requires the instruction pipeline to drain, so approx 5 cycles
 		}
 #endif
-#if !defined(TARGET_BOUNDED_EXECUTION)
-	} while(sh4_int_bCpuRun);
+	} while (sh4_int_bCpuRun);
 
-	sh4_int_bCpuRun=false;
-#else
-	}
-#endif
+	sh4_int_bCpuRun = false;
 }
 
 void Sh4_int_Stop()
