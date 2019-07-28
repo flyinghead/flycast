@@ -98,8 +98,6 @@ bool fb_dirty;
 
 TA_context* _pvrrc;
 void SetREP(TA_context* cntx);
-void killtex();
-bool render_output_framebuffer();
 static void rend_create_renderer();
 
 void dump_frame(const char* file, TA_context* ctx, u8* vram, u8* vram_ref = NULL) {
@@ -394,7 +392,6 @@ void rend_init_renderer()
 
 void rend_term_renderer()
 {
-	killtex();
 	gui_term();
 	renderer->Term();
 	delete renderer;

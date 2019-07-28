@@ -274,17 +274,11 @@ void libCore_vramlock_Unlock_block(vram_block* block)
 
 void libCore_vramlock_Unlock_block_wb(vram_block* block)
 {
-		//VRAM_SIZE/PAGE_SIZE;
-	if (block->end>VRAM_SIZE)
-		WARN_LOG(PVR, "Error : block end is after vram , skipping unlock");
-	else
-	{
-		if (mmu_enabled())
-			vmem32_unprotect_vram(block->start, block->len);
-		vramlock_list_remove(block);
-		//more work needed
-		free(block);
-	}
+	if (mmu_enabled())
+		vmem32_unprotect_vram(block->start, block->len);
+	vramlock_list_remove(block);
+	//more work needed
+	free(block);
 }
 
 //

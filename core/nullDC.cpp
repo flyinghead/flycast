@@ -357,6 +357,7 @@ int reicast_init(int argc, char* argv[])
 
 void set_platform(int platform)
 {
+	_vmem_unprotect_vram(0, VRAM_SIZE);
 	switch (platform)
 	{
 	case DC_PLATFORM_DREAMCAST:

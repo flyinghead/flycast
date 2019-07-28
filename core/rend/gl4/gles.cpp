@@ -971,8 +971,6 @@ static bool RenderFrame()
 
 	eglCheck();
 
-	KillTex=false;
-
 	if (is_rtt)
 		ReadRTTBuffer();
 	else if (settings.rend.ScreenScaling != 100 || gl.swap_buffer_not_preserved)
@@ -1015,8 +1013,7 @@ struct gl4rend : Renderer
 			glcache.DeleteTextures(1, &depthSaveTexId);
 			depthSaveTexId = 0;
 		}
-		if (KillTex)
-			killtex();
+		killtex();
 
 		CollectCleanup();
 

@@ -2040,8 +2040,6 @@ bool RenderFrame()
 
 	eglCheck();
 
-	KillTex=false;
-
 	if (is_rtt)
 		ReadRTTBuffer();
 	else if (settings.rend.ScreenScaling != 100 || gl.swap_buffer_not_preserved)
@@ -2062,8 +2060,7 @@ struct glesrend : Renderer
 	void Resize(int w, int h) { screen_width=w; screen_height=h; }
 	void Term()
 	{
-		if (KillTex)
-			killtex();
+		killtex();
 		gles_term();
 	}
 

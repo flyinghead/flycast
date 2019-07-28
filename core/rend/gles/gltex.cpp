@@ -848,6 +848,7 @@ void killtex()
 	}
 
 	TexCache.clear();
+	KillTex = false;
 	INFO_LOG(RENDERER, "Texture cache cleared");
 }
 
