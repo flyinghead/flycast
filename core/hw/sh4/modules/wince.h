@@ -373,7 +373,7 @@ static bool wince_resolve_address(u32 va, TLB_Entry &entry)
 					u32 sz = entry.Data.SZ1 * 2 + entry.Data.SZ0;
 					entry.Address.VPN = (va & mmu_mask[sz]) >> 10;
 
-					true;
+					return true;
 				}
 			}
 		}
