@@ -120,7 +120,7 @@ public:
 			AllocDestReg(op->rd);
 			AllocDestReg(op->rd2);
 		}
-		ssa_printf("%08x  %s gregs %ld fregs %ld", block->vaddr + op->guest_offs, op->dissasm().c_str(), host_gregs.size(), host_fregs.size());
+		ssa_printf("%08x  %s gregs %zd fregs %zd", block->vaddr + op->guest_offs, op->dissasm().c_str(), host_gregs.size(), host_fregs.size());
 	}
 
 	void OpEnd(shil_opcode* op)

@@ -273,7 +273,6 @@ sh4dec(i0000_0000_0001_1011)
 /*
 sh4dec(i0100_nnnn_0000_0111)
 {
-	/*
 	u32 sr_t;
 	ReadMemU32(sr_t,r[n]);
 	if (sh4_exept_raised)
@@ -284,7 +283,7 @@ sh4dec(i0100_nnnn_0000_0111)
 	{
 		//FIXME only if interrupts got on .. :P
 		UpdateINTC();
-	}* /
+	}
 	dec_End(0xFFFFFFFF,BET_StaticIntr,false);
 }
 */

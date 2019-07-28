@@ -2599,13 +2599,7 @@
 					CHD5_LZMA,
 					_7ZIP_ST,
 					CHD5_FLAC,
-					"PACKAGE_VERSION=\\\"1.3.2\\\"",
-					"FLAC__HAS_OGG=0",
-					FLAC__NO_DLL,
-					HAVE_LROUND,
-					HAVE_STDINT_H,
-					HAVE_STDLIB_H,
-					HAVE_SYS_PARAM_H,
+					"HAVE_CONFIG_H=1",
 				);
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -2656,13 +2650,7 @@
 					CHD5_LZMA,
 					_7ZIP_ST,
 					CHD5_FLAC,
-					"PACKAGE_VERSION=\\\"1.3.2\\\"",
-					"FLAC__HAS_OGG=0",
-					FLAC__NO_DLL,
-					HAVE_LROUND,
-					HAVE_STDINT_H,
-					HAVE_STDLIB_H,
-					HAVE_SYS_PARAM_H,
+					"HAVE_CONFIG_H=1",
 					RELEASE,
 				);
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -2821,13 +2809,7 @@
 					CHD5_LZMA,
 					_7ZIP_ST,
 					CHD5_FLAC,
-					"PACKAGE_VERSION=\\\"1.3.2\\\"",
-					"FLAC__HAS_OGG=0",
-					FLAC__NO_DLL,
-					HAVE_LROUND,
-					HAVE_STDINT_H,
-					HAVE_STDLIB_H,
-					HAVE_SYS_PARAM_H,
+					"HAVE_CONFIG_H=1",
 					"${CFLAGS}",
 				);
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
@@ -2938,13 +2920,7 @@
 					CHD5_LZMA,
 					_7ZIP_ST,
 					CHD5_FLAC,
-					"PACKAGE_VERSION=\\\"1.3.2\\\"",
-					"FLAC__HAS_OGG=0",
-					FLAC__NO_DLL,
-					HAVE_LROUND,
-					HAVE_STDINT_H,
-					HAVE_STDLIB_H,
-					HAVE_SYS_PARAM_H,
+					"HAVE_CONFIG_H=1",
 					RELEASE,
 					"${CFLAGS}",
 				);

@@ -536,7 +536,7 @@ void ngen_Binary(shil_opcode* op, BinaryOP dtop, BinaryOPImm dtopimm)
 	dtop(reg.mapg(op->rd), rs1, rs2, CC_AL);
 }
 
-void ngen_fp_bin(shil_opcode* op, const FPBinOP fpop)
+void ngen_fp_bin(shil_opcode* op, FPBinOP fpop)
 {
 	eFSReg rs1 = f0;
 	if (op->rs1.is_imm())
@@ -563,7 +563,7 @@ void ngen_fp_bin(shil_opcode* op, const FPBinOP fpop)
 	fpop(reg.mapfs(op->rd), rs1, rs2, CC_AL);
 }
 
-void ngen_fp_una(shil_opcode* op, const FPUnOP fpop)
+void ngen_fp_una(shil_opcode* op, FPUnOP fpop)
 {
 	verify(op->rd.is_r32f());
 	verify(op->rs1.is_r32f());
@@ -894,7 +894,7 @@ u32* ngen_readm_fail_v2(u32* ptrv,u32* regs,u32 fault_addr)
 
 	if (offs==-1)
 	{
-		ERROR_LOG(DYNAREC, "%08X : invalid size", ptr[0]);
+		ERROR_LOG(DYNAREC, "%08X : invalid size", fop);
 		die("can't decode opcode\n");
 	}
 
@@ -1875,7 +1875,7 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 		case shop_fmul:
 		case shop_fdiv:
 		{
-			const FPBinOP* opcds[]= { VADD_VFP,VSUB_VFP,VMUL_VFP,VDIV_VFP };
+			FPBinOP* opcds[] = { VADD_VFP, VSUB_VFP, VMUL_VFP, VDIV_VFP };
 			ngen_fp_bin(op, opcds[op->op-shop_fadd]);
 		}
 		break;
@@ -1883,7 +1883,7 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 		case shop_fabs:
 		case shop_fneg:
 		{
-			const FPUnOP* opcds[]= { VABS_VFP,VNEG_VFP};
+			FPUnOP* opcds[] = { VABS_VFP, VNEG_VFP };
 			ngen_fp_una(op, opcds[op->op-shop_fabs]);
 		}
 		break;
@@ -2472,7 +2472,7 @@ void ngen_init()
 		BX(LR);
 	}
 
-	INFO_LOG(DYNAREC, "readm helpers: up to %08X", EMIT_GET_PTR());
+	INFO_LOG(DYNAREC, "readm helpers: up to %p", EMIT_GET_PTR());
 	emit_SetBaseAddr();
 
 
