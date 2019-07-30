@@ -269,11 +269,6 @@ struct arm_reg_alloc: RegAlloc<eReg,eFSReg,false>
 
 arm_reg_alloc reg;
 
-#ifdef naked
-#undef naked
-#define naked __attribute__((naked))
-#endif
-
 u32 blockno=0;
 
 extern "C" void no_update();
