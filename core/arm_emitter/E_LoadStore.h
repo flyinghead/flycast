@@ -242,6 +242,8 @@ EAPI LDRH(eReg Rt, eReg Rn, s32 sImm8, ConditionCode CC=AL)	{	DECL_Id(0x005000B0
 EAPI STRH(eReg Rt, eReg Rn, s32 sImm8, ConditionCode CC=AL)	{	DECL_Id(0x004000B0);	SET_CC;	SET_Rtn;	SET_P;	SET_sImm8;	EMIT_I;	}
 EAPI LDRD(eReg Rt, eReg Rn, s32 sImm8, ConditionCode CC=AL)	{	DECL_Id(0x004000D0);	SET_CC;	SET_Rtn;	SET_P;	SET_sImm8;	EMIT_I;	}
 EAPI STRD(eReg Rt, eReg Rn, s32 sImm8, ConditionCode CC=AL)	{	DECL_Id(0x004000F0);	SET_CC;	SET_Rtn;	SET_P;	SET_sImm8;	EMIT_I;	}
+EAPI LDRSB(eReg Rt, eReg Rn, s32 sImm8 = 0, ConditionCode CC = AL) { DECL_Id(0x005000D0); SET_CC; SET_Rtn;	SET_P;	SET_sImm8;	EMIT_I;	}
+EAPI LDRSH(eReg Rt, eReg Rn, s32 sImm8 = 0, ConditionCode CC = AL) { DECL_Id(0x005000F0); SET_CC; SET_Rtn;	SET_P;	SET_sImm8;	EMIT_I;	}
 
 EAPI LDRH(eReg Rt, eReg Rn, eReg Rm, bool Add=true,ConditionCode CC=AL)	{	DECL_Id(0x001000B0);	SET_CC;	SET_Rtnm;	SET_P;	if (Add) {SET_U;} EMIT_I;	}
 EAPI STRH(eReg Rt, eReg Rn, eReg Rm, bool Add=true,ConditionCode CC=AL)	{	DECL_Id(0x000000B0);	SET_CC;	SET_Rtnm;	SET_P;	if (Add) {SET_U;} EMIT_I;	}

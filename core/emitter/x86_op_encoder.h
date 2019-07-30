@@ -381,6 +381,9 @@ void x86_encode_opcode_tmpl(x86_block* block, const x86_opcode* op, encoded_type
 	case enc_imm_32 :
 		block->write32(p3);
 		break;
+
+	case enc_imm_none:
+		break;
 	}
 }
 

@@ -3,5 +3,5 @@ set -ev
 #if [ "${TRAVIS_PULL_REQUEST}" = "false" ]; then
 #	./gradlew build --configure-on-demand --console=plain
 #else
-	./gradlew assembleDebug  --configure-on-demand --console=plain
+	./gradlew assembleDreamcastDebug  --configure-on-demand --console=plain
 #fi

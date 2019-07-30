@@ -4,6 +4,7 @@
 #include "hw/holly/holly_intc.h"
 #include "oslib/oslib.h"
 #include "hw/sh4/sh4_sched.h"
+#include "input/gamepad_device.h"
 
 //SPG emulation; Scanline/Raster beam registers & interrupts
 //Time to emulate that stuff correctly ;)
@@ -145,6 +146,9 @@ int spg_line_sched(int tag, int cycl, int jit)
 			vblk_cnt++;
 			//TODO : rend_if_VBlank();
 			rend_vblank();//notify for vblank :)
+#ifdef TEST_AUTOMATION
+			replay_input();
+#endif
 			
 			if ((os_GetSeconds()-last_fps)>2)
 			{
@@ -193,19 +197,12 @@ int spg_line_sched(int tag, int cycl, int jit)
 
 				full_rps=(spd_fps+fskip/ts);
 
-				#ifdef TARGET_PANDORA
-				printf("CPU: %4.2f V: %4.2f (%s%s%4.2f) R: %4.2f+%4.2f\n",
-					spd_cpu*100/200,spd_vbs,
-					mode,res,fullvbs,
-					spd_fps,fskip/ts);
-				#else
-				printf("%s/%c - %4.2f - %4.2f - V: %4.2f (%.2f, %s%s%4.2f) R: %4.2f+%4.2f VTX: %4.2f%c, MIPS: %.2f\n",
+				INFO_LOG(COMMON, "%s/%c - %4.2f - %4.2f - V: %4.2f (%.2f, %s%s%4.2f) R: %4.2f+%4.2f VTX: %4.2f%c, MIPS: %.2f",
 					VER_SHORTNAME,'n',mspdf,spd_cpu*100/200,spd_vbs,
 					spd_vbs/full_rps,mode,res,fullvbs,
 					spd_fps,fskip/ts
 					, mv, mv_c, mips_counter/ 1024.0 / 1024.0);
 					mips_counter = 0;
-				#endif
 				
 				fskip=0;
 				last_fps=os_GetSeconds();
@@ -289,7 +286,7 @@ void spg_Term()
 {
 }
 
-void spg_Reset(bool Manual)
+void spg_Reset(bool hard)
 {
 	CalculateSync();
 }

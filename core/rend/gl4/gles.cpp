@@ -396,16 +396,18 @@ void main() \n\
 gl4_ctx gl4;
 
 struct gl4ShaderUniforms_t gl4ShaderUniforms;
+int max_image_width;
+int max_image_height;
 
-bool gl4CompilePipelineShader(	gl4PipelineShader* s, bool rotate_90, const char *source /* = PixelPipelineShader */)
+bool gl4CompilePipelineShader(	gl4PipelineShader* s, bool rotate_90, const char *pixel_source /* = PixelPipelineShader */, const char *vertex_source /* = NULL */)
 {
 	char vshader[16384];
 
-	sprintf(vshader, VertexShaderSource, s->pp_Gouraud, rotate_90);
+	sprintf(vshader, vertex_source == NULL ? VertexShaderSource : vertex_source, s->pp_Gouraud, rotate_90);
 
 	char pshader[16384];
 
-	sprintf(pshader, source,
+	sprintf(pshader, pixel_source,
                 s->cp_AlphaTest,s->pp_ClipTestMode,s->pp_UseAlpha,
                 s->pp_Texture,s->pp_IgnoreTexA,s->pp_ShadInstr,s->pp_Offset,s->pp_FogCtrl, s->pp_TwoVolumes, s->pp_DepthFunc, s->pp_Gouraud, s->pp_BumpMap, s->fog_clamping, s->pass);
 
@@ -561,6 +563,8 @@ static bool gl_create_resources()
 
 //setup
 extern void initABuffer();
+void reshapeABuffer(int width, int height);
+extern void gl4CreateTextures(int width, int height);
 
 static bool gles_init()
 {
@@ -575,10 +579,10 @@ static bool gles_init()
 	glGetIntegerv(GL_MINOR_VERSION, &minor);
 	if (major < 4 || (major == 4 && minor < 3))
 	{
-		printf("Warning: OpenGL version doesn't support per-pixel sorting.\n");
+		WARN_LOG(RENDERER, "Warning: OpenGL version doesn't support per-pixel sorting.");
 		return false;
 	}
-	printf("Per-pixel sorting enabled\n");
+	INFO_LOG(RENDERER, "Per-pixel sorting enabled");
 
 	glcache.DisableCache();
 
@@ -610,15 +614,42 @@ static bool gles_init()
 	return true;
 }
 
+static void resize(int w, int h)
+{
+	if (w > max_image_width || h > max_image_height || stencilTexId == 0)
+	{
+		if (w > max_image_width)
+			max_image_width = w;
+		if (h > max_image_height)
+			max_image_height = h;
+
+		if (stencilTexId != 0)
+		{
+			glcache.DeleteTextures(1, &stencilTexId);
+			stencilTexId = 0;
+		}
+		if (depthTexId != 0)
+		{
+			glcache.DeleteTextures(1, &depthTexId);
+			depthTexId = 0;
+		}
+		if (opaqueTexId != 0)
+		{
+			glcache.DeleteTextures(1, &opaqueTexId);
+			opaqueTexId = 0;
+		}
+		if (depthSaveTexId != 0)
+		{
+			glcache.DeleteTextures(1, &depthSaveTexId);
+			depthSaveTexId = 0;
+		}
+		gl4CreateTextures(max_image_width, max_image_height);
+		reshapeABuffer(max_image_width, max_image_height);
+	}
+}
+
 static bool RenderFrame()
 {
-	static int old_screen_width, old_screen_height, old_screen_scaling;
-	if (screen_width != old_screen_width || screen_height != old_screen_height || settings.rend.ScreenScaling != old_screen_scaling) {
-		rend_resize(screen_width, screen_height);
-		old_screen_width = screen_width;
-		old_screen_height = screen_height;
-		old_screen_scaling = settings.rend.ScreenScaling;
-	}
 	DoCleanup();
 	create_modvol_shader();
 
@@ -657,7 +688,7 @@ static bool RenderFrame()
 		scale_x=fb_scale_x;
 		scale_y=fb_scale_y;
 		if (SCALER_CTL.interlace == 0 && SCALER_CTL.vscalefactor >= 0x400)
-			scale_y *= SCALER_CTL.vscalefactor / 0x400;
+			scale_y *= (float)SCALER_CTL.vscalefactor / 0x400;
 
 		//work out scaling parameters !
 		//Pixel doubling is on VO, so it does not affect any pixel operations
@@ -687,12 +718,17 @@ static bool RenderFrame()
 	float dc2s_scale_h;
 	float ds2s_offs_x;
 
+	int rendering_width;
+	int rendering_height;
 	if (is_rtt)
 	{
 		gl4ShaderUniforms.scale_coefs[0] = 2.0f / dc_width;
 		gl4ShaderUniforms.scale_coefs[1] = 2.0f / dc_height;	// FIXME CT2 needs 480 here instead of dc_height=512
 		gl4ShaderUniforms.scale_coefs[2] = 1;
 		gl4ShaderUniforms.scale_coefs[3] = 1;
+		int scaling = settings.rend.RenderToTextureBuffer ? 1 : settings.rend.RenderToTextureUpscale;
+		rendering_width = dc_width * scaling;
+		rendering_height = dc_height * scaling;
 	}
 	else
 	{
@@ -715,11 +751,14 @@ static bool RenderFrame()
 			gl4ShaderUniforms.scale_coefs[2] = 1 - 2 * ds2s_offs_x / screen_width;
 			gl4ShaderUniforms.scale_coefs[3] = -1;
 		}
+		rendering_width = screen_width * screen_scaling + 0.5f;
+		rendering_height = screen_height * screen_scaling + 0.5f;
 	}
+	resize(rendering_width, rendering_height);
 
 	gl4ShaderUniforms.extra_depth_scale = settings.rend.ExtraDepthScale;
 
-	//printf("scale: %f, %f, %f, %f\n",gl4ShaderUniforms.scale_coefs[0],gl4ShaderUniforms.scale_coefs[1],gl4ShaderUniforms.scale_coefs[2],gl4ShaderUniforms.scale_coefs[3]);
+	//DEBUG_LOG(RENDERER, "scale: %f, %f, %f, %f", gl4ShaderUniforms.scale_coefs[0], gl4ShaderUniforms.scale_coefs[1], gl4ShaderUniforms.scale_coefs[2], gl4ShaderUniforms.scale_coefs[3]);
 
 	//VERT and RAM fog color constants
 	u8* fog_colvert_bgra=(u8*)&FOG_COL_VERT;
@@ -793,22 +832,22 @@ static bool RenderFrame()
 		case 4: //0x4   888 RGB 24 bit packed
 		case 5: //0x5   0888 KRGB 32 bit    K is the value of fk_kval.
 		case 6: //0x6   8888 ARGB 32 bit
-			fprintf(stderr, "Unsupported render to texture format: %d\n", FB_W_CTRL.fb_packmode);
+			WARN_LOG(RENDERER, "Unsupported render to texture format: %d", FB_W_CTRL.fb_packmode);
 			return false;
 
 		case 7: //7     invalid
 			die("7 is not valid");
 			break;
 		}
-		//printf("RTT packmode=%d stride=%d - %d,%d -> %d,%d\n", FB_W_CTRL.fb_packmode, FB_W_LINESTRIDE.stride * 8,
-		//		FB_X_CLIP.min, FB_Y_CLIP.min, FB_X_CLIP.max, FB_Y_CLIP.max);
+		DEBUG_LOG(RENDERER, "RTT packmode=%d stride=%d - %d,%d -> %d,%d", FB_W_CTRL.fb_packmode, FB_W_LINESTRIDE.stride * 8,
+				FB_X_CLIP.min, FB_Y_CLIP.min, FB_X_CLIP.max, FB_Y_CLIP.max);
 		output_fbo = gl4BindRTT(FB_W_SOF1 & VRAM_MASK, dc_width, dc_height, channels, format);
 	}
 	else
 	{
 		if (settings.rend.ScreenScaling != 100 || gl.swap_buffer_not_preserved)
 		{
-			output_fbo = init_output_framebuffer(screen_width * screen_scaling + 0.5f, screen_height * screen_scaling + 0.5f);
+			output_fbo = init_output_framebuffer(rendering_width, rendering_height);
 		}
 		else
 		{
@@ -820,9 +859,9 @@ static bool RenderFrame()
 
 	bool wide_screen_on = !is_rtt && settings.rend.WideScreen
 			&& pvrrc.fb_X_CLIP.min == 0
-			&& (pvrrc.fb_X_CLIP.max + 1) / scale_x == 640
+			&& int((pvrrc.fb_X_CLIP.max + 1) / scale_x + 0.5f) == 640
 			&& pvrrc.fb_Y_CLIP.min == 0
-			&& (pvrrc.fb_Y_CLIP.max + 1) / scale_y == 480;
+			&& int((pvrrc.fb_Y_CLIP.max + 1) / scale_y + 0.5f) == 480;
 
 	//Color is cleared by the background plane
 
@@ -857,9 +896,9 @@ static bool RenderFrame()
 
 		#if 0
 			//handy to debug really stupid render-not-working issues ...
-			printf("SS: %dx%d\n", screen_width, screen_height);
-			printf("SCI: %d, %f\n", pvrrc.fb_X_CLIP.max, dc2s_scale_h);
-			printf("SCI: %f, %f, %f, %f\n", offs_x+pvrrc.fb_X_CLIP.min/scale_x,(pvrrc.fb_Y_CLIP.min/scale_y)*dc2s_scale_h,(pvrrc.fb_X_CLIP.max-pvrrc.fb_X_CLIP.min+1)/scale_x*dc2s_scale_h,(pvrrc.fb_Y_CLIP.max-pvrrc.fb_Y_CLIP.min+1)/scale_y*dc2s_scale_h);
+			DEBUG_LOG(RENDERER, "SS: %dx%d", screen_width, screen_height);
+			DEBUG_LOG(RENDERER, "SCI: %d, %f", pvrrc.fb_X_CLIP.max, dc2s_scale_h);
+			DEBUG_LOG(RENDERER, "SCI: %f, %f, %f, %f", offs_x+pvrrc.fb_X_CLIP.min/scale_x,(pvrrc.fb_Y_CLIP.min/scale_y)*dc2s_scale_h,(pvrrc.fb_X_CLIP.max-pvrrc.fb_X_CLIP.min+1)/scale_x*dc2s_scale_h,(pvrrc.fb_Y_CLIP.max-pvrrc.fb_Y_CLIP.min+1)/scale_y*dc2s_scale_h);
 		#endif
 
 		if (!wide_screen_on)
@@ -873,8 +912,8 @@ static bool RenderFrame()
 				if (SCALER_CTL.interlace && SCALER_CTL.vscalefactor >= 0x400)
 				{
 					// Clipping is done after scaling/filtering so account for that if enabled
-					height *= SCALER_CTL.vscalefactor / 0x400;
-					min_y *= SCALER_CTL.vscalefactor / 0x400;
+					height *= (float)SCALER_CTL.vscalefactor / 0x400;
+					min_y *= (float)SCALER_CTL.vscalefactor / 0x400;
 				}
 				if (settings.rend.Rotate90)
 				{
@@ -898,9 +937,9 @@ static bool RenderFrame()
 
 					glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
 					glcache.Enable(GL_SCISSOR_TEST);
-					glScissor(0, 0, scaled_offs_x + 0.5f, screen_height * screen_scaling + 0.5f);
+					glScissor(0, 0, scaled_offs_x + 0.5f, rendering_height);
 					glClear(GL_COLOR_BUFFER_BIT);
-					glScissor(screen_width * screen_scaling - scaled_offs_x + 0.5f, 0, scaled_offs_x + 1.f, screen_height * screen_scaling + 0.5f);
+					glScissor(screen_width * screen_scaling - scaled_offs_x + 0.5f, 0, scaled_offs_x + 1.f, rendering_height);
 					glClear(GL_COLOR_BUFFER_BIT);
 				}
 			}
@@ -918,7 +957,7 @@ static bool RenderFrame()
 
 		//restore scale_x
 		scale_x /= scissoring_scale_x;
-		gl4DrawStrips(output_fbo);
+		gl4DrawStrips(output_fbo, rendering_width, rendering_height);
 	}
 	else
 	{
@@ -932,8 +971,6 @@ static bool RenderFrame()
 
 	eglCheck();
 
-	KillTex=false;
-
 	if (is_rtt)
 		ReadRTTBuffer();
 	else if (settings.rend.ScreenScaling != 100 || gl.swap_buffer_not_preserved)
@@ -942,7 +979,6 @@ static bool RenderFrame()
 	return !is_rtt;
 }
 
-void reshapeABuffer(int w, int h);
 void termABuffer();
 
 struct gl4rend : Renderer
@@ -952,6 +988,11 @@ struct gl4rend : Renderer
 	{
 		screen_width=w;
 		screen_height=h;
+		resize(w * settings.rend.ScreenScaling / 100.f + 0.5f, h * settings.rend.ScreenScaling / 100.f + 0.5f);
+	}
+	void Term()
+	{
+		termABuffer();
 		if (stencilTexId != 0)
 		{
 			glcache.DeleteTextures(1, &stencilTexId);
@@ -972,44 +1013,18 @@ struct gl4rend : Renderer
 			glcache.DeleteTextures(1, &depthSaveTexId);
 			depthSaveTexId = 0;
 		}
-		reshapeABuffer(w, h);
-	}
-	void Term()
-	{
-		termABuffer();
-	   if (stencilTexId != 0)
-	   {
-		  glcache.DeleteTextures(1, &stencilTexId);
-		  stencilTexId = 0;
-	   }
-	   if (depthTexId != 0)
-	   {
-		  glcache.DeleteTextures(1, &depthTexId);
-		  depthTexId = 0;
-	   }
-	   if (opaqueTexId != 0)
-	   {
-		  glcache.DeleteTextures(1, &opaqueTexId);
-		  opaqueTexId = 0;
-	   }
-	   if (depthSaveTexId != 0)
-	   {
-		  glcache.DeleteTextures(1, &depthSaveTexId);
-		  depthSaveTexId = 0;
-	   }
-	   if (KillTex)
-		  killtex();
+		killtex();
 
-	   CollectCleanup();
+		CollectCleanup();
 
-	   gl_free_osd_resources();
-	   free_output_framebuffer();
-	   gles_term();
+		gl_free_osd_resources();
+		free_output_framebuffer();
+		gles_term();
 	}
 
 	bool Process(TA_context* ctx) { return ProcessFrame(ctx); }
 	bool Render() { return RenderFrame(); }
-	bool RenderLastFrame() { return gl4_render_output_framebuffer(); }
+	bool RenderLastFrame() { return gl.swap_buffer_not_preserved ? gl4_render_output_framebuffer() : false; }
 
 	void Present() { gl_swap(); }
 

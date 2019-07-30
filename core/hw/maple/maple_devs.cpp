@@ -13,18 +13,7 @@
 #include "deps/zlib/zlib.h"
 #include "deps/xxhash/xxhash.h"
 
-#if _ANDROID
-#include <android/log.h>
-#include <jni.h>
-#else
-#define LOGW printf
-#define LOGI printf
-#endif
-#ifndef RELEASE
-#define LOGJVS(...) LOGI(__VA_ARGS__)
-#else
-#define LOGJVS(...)
-#endif
+#define LOGJVS(...) DEBUG_LOG(JVS, __VA_ARGS__)
 
 #define SAVE_EEPROM 1
 
@@ -37,6 +26,8 @@ const char* maple_sega_dreameye_name_2 = "Dreamcast Camera Flash LDevic";
 const char* maple_sega_mic_name = "MicDevice for Dreameye";
 const char* maple_sega_purupuru_name = "Puru Puru Pack";
 const char* maple_sega_lightgun_name = "Dreamcast Gun";
+const char* maple_sega_twinstick_name = "Twin Stick";
+const char* maple_ascii_stick_name = "ASCII STICK";
 
 const char* maple_sega_brand = "Produced By or Under License From SEGA ENTERPRISES,LTD.";
 
@@ -91,7 +82,7 @@ enum MapleDeviceRV
 
 	MDRE_UnknownFunction = 0xFE, //0 words
 	MDRE_UnknownCmd      = 0xFD, //0 words
-	MDRE_TransmitAgain   = 0xFC, //1 word, 1 or 2?
+	MDRE_TransmitAgain   = 0xFC, //0 words
 	MDRE_FileError       = 0xFB, //1 word, bitfield
 	MDRE_LCDError        = 0xFA, //1 word, bitfield
 	MDRE_ARGunError      = 0xF9, //1 word, bitfield
@@ -153,7 +144,7 @@ struct maple_base: maple_device
 	u8 r8()	  { u8  rv=*((u8*)dma_buffer_in);dma_buffer_in+=1;dma_count_in-=1; return rv; }
 	u16 r16() { u16 rv=*((u16*)dma_buffer_in);dma_buffer_in+=2;dma_count_in-=2; return rv; }
 	u32 r32() { u32 rv=*(u32*)dma_buffer_in;dma_buffer_in+=4;dma_count_in-=4; return rv; }
-	void rptr(const void* dst,u32 len)
+	void rptr(void* dst, u32 len)
 	{
 		u8* dst8=(u8*)dst;
 		while(len--)
@@ -233,9 +224,19 @@ struct maple_sega_controller: maple_base
 		return MDT_SegaController;
 	}
 
+	virtual const char *get_device_name()
+	{
+		return maple_sega_controller_name;
+	}
+
+	virtual const char *get_device_brand()
+	{
+		return maple_sega_brand;
+	}
+
 	virtual u32 dma(u32 cmd)
 	{
-		//printf("maple_sega_controller::dma Called 0x%X;Command %d\n",device_instance->port,Command);
+		//printf("maple_sega_controller::dma Called 0x%X;Command %d\n", bus_id, cmd);
 		switch (cmd)
 		{
 		case MDC_DeviceRequest:
@@ -256,10 +257,10 @@ struct maple_sega_controller: maple_base
 			w8(0);
 
 			//30
-			wstr(maple_sega_controller_name,30);
+			wstr(get_device_name(), 30);
 
 			//60
-			wstr(maple_sega_brand,60);
+			wstr(get_device_brand(), 60);
 
 			//2
 			w16(0x01AE);	// 43 mA
@@ -305,7 +306,7 @@ struct maple_sega_controller: maple_base
 			return MDRS_DataTransfer;
 
 		default:
-			//printf("UNKOWN MAPLE COMMAND %d\n",cmd);
+			//printf("maple_sega_controller UNKOWN MAPLE COMMAND %d\n",cmd);
 			return MDRE_UnknownCmd;
 		}
 	}
@@ -344,30 +345,97 @@ struct maple_atomiswave_controller: maple_sega_controller
 };
 
 /*
+	Sega Twin Stick Controller
+*/
+struct maple_sega_twinstick: maple_sega_controller
+{
+	virtual u32 get_capabilities() override {
+		// byte 0: 0  0  0  0  0  0  0  0
+		// byte 1: 0  0  a5 a4 a3 a2 a1 a0
+		// byte 2: R2 L2 D2 U2 D  X  Y  Z
+		// byte 3: R  L  D  U  St A  B  C
+
+		return 0xfefe0000;	// no analog axes, X Y A B D Start U/D/L/R U2/D2/L2/R2
+	}
+
+	virtual u32 transform_kcode(u32 kcode) override {
+		return kcode | 0x0101;
+	}
+
+	virtual MapleDeviceType get_device_type() override
+	{
+		return MDT_TwinStick;
+	}
+
+	virtual u32 get_analog_axis(int index, const PlainJoystickState &pjs) override {
+		return 0x80;
+	}
+
+	virtual const char *get_device_name() override
+	{
+		return maple_sega_twinstick_name;
+	}
+};
+
+
+/*
+	Ascii Stick (Arcade/FT Stick)
+*/
+struct maple_ascii_stick: maple_sega_controller
+{
+	virtual u32 get_capabilities() override {
+		// byte 0: 0  0  0  0  0  0  0  0
+		// byte 1: 0  0  a5 a4 a3 a2 a1 a0
+		// byte 2: R2 L2 D2 U2 D  X  Y  Z
+		// byte 3: R  L  D  U  St A  B  C
+
+		return 0xff070000;	// no analog axes, X Y Z A B C Start U/D/L/R
+	}
+
+	virtual u32 transform_kcode(u32 kcode) override {
+		return kcode | 0xF800;
+	}
+
+	virtual MapleDeviceType get_device_type() override
+	{
+		return MDT_AsciiStick;
+	}
+
+	virtual u32 get_analog_axis(int index, const PlainJoystickState &pjs) override {
+		return 0x80;
+	}
+
+	virtual const char *get_device_name() override
+	{
+		return maple_ascii_stick_name;
+	}
+};
+
+/*
 	Sega Dreamcast Visual Memory Unit
 	This is pretty much done (?)
 */
 
 
 u8 vmu_default[] = {
-	0x78,0x9c,0xed,0xd2,0x31,0x4e,0x02,0x61,0x10,0x06,0xd0,0x8f,0x04,0x28,0x4c,0x2c,
-	0x28,0x2d,0x0c,0xa5,0x57,0xe0,0x16,0x56,0x16,0x76,0x14,0x1e,0xc4,0x03,0x50,0x98,
-	0x50,0x40,0x69,0xc1,0x51,0x28,0xbc,0x8e,0x8a,0x0a,0xeb,0xc2,0xcf,0x66,0x13,0x1a,
-	0x13,0xa9,0x30,0x24,0xe6,0xbd,0xc9,0x57,0xcc,0x4c,0x33,0xc5,0x2c,0xb3,0x48,0x6e,
-	0x67,0x01,0x00,0x00,0x00,0x00,0x00,0x4e,0xaf,0xdb,0xe4,0x7a,0xd2,0xcf,0x53,0x16,
-	0x6d,0x46,0x99,0xb6,0xc9,0x78,0x9e,0x3c,0x5f,0x9c,0xfb,0x3c,0x00,0x00,0x00,0x00,
-	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-	0x00,0x00,0x00,0x80,0x5f,0xd5,0x45,0xfd,0xef,0xaa,0xca,0x6b,0xde,0xf2,0x9e,0x55,
-	0x3e,0xf2,0x99,0xaf,0xac,0xb3,0x49,0x95,0xef,0xd4,0xa9,0x9a,0xdd,0xdd,0x0f,0x9d,
-	0x52,0xca,0xc3,0x91,0x7f,0xb9,0x9a,0x0f,0x6e,0x92,0xfb,0xee,0xa1,0x2f,0x6d,0x76,
-	0xe9,0x64,0x9b,0xcb,0xf4,0xf2,0x92,0x61,0x33,0x79,0xfc,0xeb,0xb7,0xe5,0x44,0xf6,
-	0x77,0x19,0x06,0xef,
+		0x78,0x9c,0xed,0xd2,0x31,0x4e,0x02,0x61,0x10,0x06,0xd0,0x8f,0x04,0x28,0x4c,0x2c,
+		0x28,0x2d,0x0c,0xa5,0x57,0xe0,0x16,0x56,0x16,0x76,0x14,0x1e,0xc4,0x03,0x50,0x98,
+		0x50,0x40,0x69,0xc1,0x51,0x28,0xbc,0x8e,0x8a,0x0a,0xeb,0xc2,0xcf,0x66,0x13,0x1a,
+		0x13,0xa9,0x30,0x24,0xe6,0xbd,0xc9,0x57,0xcc,0x4c,0x33,0xc5,0x2c,0xb3,0x48,0x6e,
+		0x67,0x01,0x00,0x00,0x00,0x00,0x00,0x4e,0xaf,0xdb,0xe4,0x7a,0xd2,0xcf,0x53,0x16,
+		0x6d,0x46,0x99,0xb6,0xc9,0x78,0x9e,0x3c,0x5f,0x9c,0xfb,0x3c,0x00,0x00,0x00,0x00,
+		0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+		0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+		0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+		0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+		0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+		0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+		0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+		0x00,0x00,0x00,0x80,0x5f,0xd5,0x45,0xfd,0xef,0xaa,0xca,0x6b,0xde,0xf2,0x9e,0x55,
+		0x3e,0xf2,0x99,0xaf,0xac,0xb3,0x49,0x95,0xef,0xd4,0xa9,0x9a,0xdd,0xdd,0x0f,0x9d,
+		0x52,0xca,0xc3,0x91,0x7f,0xb9,0x9a,0x0f,0x6e,0x92,0xfb,0xee,0xa1,0x2f,0x6d,0x76,
+		0xe9,0x64,0x9b,0xcb,0xf4,0xf2,0x92,0x61,0x33,0x79,0xfc,0xeb,0xb7,0xe5,0x44,0xf6,
+		0x77,0x19,0x06,0xef,
 };
 
 struct maple_sega_vmu: maple_base
@@ -385,7 +453,7 @@ struct maple_sega_vmu: maple_base
 	// creates an empty VMU
 	bool init_emptyvmu()
 	{
-		printf("Initialising empty VMU...\n");
+		INFO_LOG(MAPLE, "Initialising empty VMU...");
 
 		uLongf dec_sz = sizeof(flash_data);
 		int rv = uncompress(flash_data, &dec_sz, vmu_default, sizeof(vmu_default));
@@ -421,24 +489,24 @@ struct maple_sega_vmu: maple_base
 		file = fopen(apath.c_str(), "rb+");
 		if (!file)
 		{
-			printf("Unable to open VMU save file \"%s\", creating new file\n",apath.c_str());
+			INFO_LOG(MAPLE, "Unable to open VMU save file \"%s\", creating new file", apath.c_str());
 			file = fopen(apath.c_str(), "wb");
 			if (file) {
 				if (!init_emptyvmu())
-					printf("Failed to initialize an empty VMU, you should reformat it using the BIOS\n");
+					INFO_LOG(MAPLE, "Failed to initialize an empty VMU, you should reformat it using the BIOS");
 
 				fwrite(flash_data, sizeof(flash_data), 1, file);
 				fseek(file, 0, SEEK_SET);
 			}
 			else
 			{
-				printf("Unable to create VMU!\n");
+				INFO_LOG(MAPLE, "Unable to create VMU!");
 			}
 		}
 
 		if (!file)
 		{
-			printf("Failed to create VMU save file \"%s\"\n",apath.c_str());
+			INFO_LOG(MAPLE, "Failed to create VMU save file \"%s\"", apath.c_str());
 		}
 		else
 		{
@@ -462,12 +530,12 @@ struct maple_sega_vmu: maple_base
 					fseek(file, 0, SEEK_SET);
 				}
 				else {
-					printf("Unable to create VMU!\n");
+					INFO_LOG(MAPLE, "Unable to create VMU!");
 				}
 			}
 			else
 			{
-				printf("Failed to initialize an empty VMU, you should reformat it using the BIOS\n");
+				INFO_LOG(MAPLE, "Failed to initialize an empty VMU, you should reformat it using the BIOS");
 			}
 		}
 
@@ -478,7 +546,7 @@ struct maple_sega_vmu: maple_base
 	}
 	virtual u32 dma(u32 cmd)
 	{
-		//printf("maple_sega_vmu::dma Called for port 0x%X, Command %d\n",device_instance->port,Command);
+		//printf("maple_sega_vmu::dma Called for port %d:%d, Command %d\n", bus_id, bus_port, cmd);
 		switch (cmd)
 		{
 		case MDC_DeviceRequest:
@@ -522,30 +590,8 @@ struct maple_sega_vmu: maple_base
 					{
 						w32(MFID_1_Storage);
 
-						//total_size;
-						w16(0xff);
-						//partition_number;
-						w16(0);
-						//system_area_block;
-						w16(0xFF);
-						//fat_area_block;
-						w16(0xfe);
-						//number_fat_areas_block;
-						w16(1);
-						//file_info_block;
-						w16(0xfd);
-						//number_info_blocks;
-						w16(0xd);
-						//volume_icon;
-						w8(0);
-						//reserved1;
-						w8(0);
-						//save_area_block;
-						w16(0xc8);
-						//number_of_save_blocks;
-						w16(0x1f);
-						//reserverd0 (something for execution files?)
-						w32(0);
+						// Get data from the vmu system area (block 0xFF)
+						wptr(flash_data + 0xFF * 512 + 0x40, 24);
 
 						return MDRS_DataTransfer;//data transfer
 					}
@@ -556,7 +602,7 @@ struct maple_sega_vmu: maple_base
 						u32 pt=r32();
 						if (pt!=0)
 						{
-							printf("VMU: MDCF_GetMediaInfo -> bad input |%08X|, returning MDRE_UnknownCmd\n",pt);
+							INFO_LOG(MAPLE, "VMU: MDCF_GetMediaInfo -> bad input |%08X|, returning MDRE_UnknownCmd", pt);
 							return MDRE_UnknownCmd;
 						}
 						else
@@ -566,7 +612,7 @@ struct maple_sega_vmu: maple_base
 							w8(47);             //X dots -1
 							w8(31);             //Y dots -1
 							w8(((1)<<4) | (0)); //1 Color, 0 contrast levels
-							w8(0);              //Padding
+							w8(2);              //Padding
 
 							return MDRS_DataTransfer;
 						}
@@ -574,7 +620,7 @@ struct maple_sega_vmu: maple_base
 					break;
 
 				default:
-					printf("VMU: MDCF_GetMediaInfo -> Bad function used |%08X|, returning -2\n",function);
+					INFO_LOG(MAPLE, "VMU: MDCF_GetMediaInfo -> Bad function used |%08X|, returning -2", function);
 					return MDRE_UnknownFunction;//bad function
 				}
 			}
@@ -594,8 +640,8 @@ struct maple_sega_vmu: maple_base
 
 						if (Block>255)
 						{
-							printf("Block read : %d\n",Block);
-							printf("BLOCK READ ERROR\n");
+							DEBUG_LOG(MAPLE, "Block read : %d", Block);
+							DEBUG_LOG(MAPLE, "BLOCK READ ERROR");
 							Block&=255;
 						}
 						wptr(flash_data+Block*512,512);
@@ -618,7 +664,7 @@ struct maple_sega_vmu: maple_base
 					{
 						if (r32()!=0)
 						{
-							printf("VMU: Block read: MFID_3_Clock : invalid params \n");
+							INFO_LOG(MAPLE, "VMU: Block read: MFID_3_Clock : invalid params");
 							return MDRE_TransmitAgain; //invalid params
 						}
 						else
@@ -642,7 +688,13 @@ struct maple_sega_vmu: maple_base
 							w8(timenow->tm_sec);
 							w8(0);
 
-							printf("VMU: CLOCK Read-> datetime is %04d/%02d/%02d ~ %02d:%02d:%02d!\n",timebuf[0]+timebuf[1]*256,timebuf[2],timebuf[3],timebuf[4],timebuf[5],timebuf[6]);
+							DEBUG_LOG(MAPLE, "VMU: CLOCK Read-> datetime is %04d/%02d/%02d ~ %02d:%02d:%02d!",
+									timebuf[0] + timebuf[1] * 256,
+									timebuf[2],
+									timebuf[3],
+									timebuf[4],
+									timebuf[5],
+									timebuf[6]);
 
 							return MDRS_DataTransfer;//transfer reply ...
 						}
@@ -650,7 +702,7 @@ struct maple_sega_vmu: maple_base
 					break;
 
 				default:
-					printf("VMU: cmd MDCF_BlockRead -> Bad function |%08X| used, returning -2\n",function);
+					INFO_LOG(MAPLE, "VMU: cmd MDCF_BlockRead -> Bad function |%08X| used, returning -2", function);
 					return MDRE_UnknownFunction;//bad function
 				}
 			}
@@ -677,7 +729,7 @@ struct maple_sega_vmu: maple_base
 						}
 						else
 						{
-							printf("Failed to save VMU %s data\n",logical_port);
+							INFO_LOG(MAPLE, "Failed to save VMU %s data", logical_port);
 						}
 						return MDRS_DeviceReply;//just ko
 					}
@@ -768,7 +820,8 @@ struct maple_sega_vmu: maple_base
 						{
 							u8 timebuf[8];
 							rptr(timebuf,8);
-							printf("VMU: CLOCK Write-> datetime is %04d/%02d/%02d ~ %02d:%02d:%02d! Nothing set tho ...\n",timebuf[0]+timebuf[1]*256,timebuf[2],timebuf[3],timebuf[4],timebuf[5],timebuf[6]);
+							DEBUG_LOG(MAPLE, "VMU: CLOCK Write-> datetime is %04d/%02d/%02d ~ %02d:%02d:%02d! Nothing set tho ...",
+									timebuf[0]+timebuf[1]*256,timebuf[2],timebuf[3],timebuf[4],timebuf[5],timebuf[6]);
 							return  MDRS_DeviceReply;//ok !
 						}
 					}
@@ -776,7 +829,7 @@ struct maple_sega_vmu: maple_base
 
 					default:
 					{
-						printf("VMU: command MDCF_BlockWrite -> Bad function used, returning MDRE_UnknownFunction\n");
+						INFO_LOG(MAPLE, "VMU: command MDCF_BlockWrite -> Bad function used, returning MDRE_UnknownFunction");
 						return  MDRE_UnknownFunction;//bad function
 					}
 				}
@@ -795,7 +848,7 @@ struct maple_sega_vmu: maple_base
 						u32 bp=r32();
 						if (bp)
 						{
-							printf("BEEP : %08X\n",bp);
+							INFO_LOG(MAPLE, "BEEP : %08X", bp);
 						}
 						return  MDRS_DeviceReply;//just ko
 					}
@@ -803,7 +856,7 @@ struct maple_sega_vmu: maple_base
 
 				default:
 					{
-						printf("VMU: command MDCF_SetCondition -> Bad function used, returning MDRE_UnknownFunction\n");
+						INFO_LOG(MAPLE, "VMU: command MDCF_SetCondition -> Bad function used, returning MDRE_UnknownFunction");
 						return MDRE_UnknownFunction;//bad function
 					}
 					break;
@@ -812,7 +865,7 @@ struct maple_sega_vmu: maple_base
 
 
 		default:
-			//printf("Unknown MAPLE COMMAND %d\n",cmd);
+			DEBUG_LOG(MAPLE, "Unknown MAPLE COMMAND %d", cmd);
 			return MDRE_UnknownCmd;
 		}
 	}
@@ -851,7 +904,7 @@ struct maple_microphone: maple_base
 		switch (cmd)
 		{
 		case MDC_DeviceRequest:
-			LOGI("maple_microphone::dma MDC_DeviceRequest\n");
+			DEBUG_LOG(MAPLE, "maple_microphone::dma MDC_DeviceRequest");
 			//this was copied from the controller case with just the id and name replaced!
 
 			//caps
@@ -886,7 +939,7 @@ struct maple_microphone: maple_base
 
 		case MDCF_GetCondition:
 			{
-				LOGI("maple_microphone::dma MDCF_GetCondition\n");
+				DEBUG_LOG(MAPLE, "maple_microphone::dma MDCF_GetCondition");
 				//this was copied from the controller case with just the id replaced!
 
 				//PlainJoystickState pjs;
@@ -923,7 +976,7 @@ struct maple_microphone: maple_base
 
 		case MDC_DeviceReset:
 			//uhhh do nothing?
-			LOGI("maple_microphone::dma MDC_DeviceReset\n");
+			DEBUG_LOG(MAPLE, "maple_microphone::dma MDC_DeviceReset");
 			return MDRS_DeviceReply;
 
 		case MDCF_MICControl:
@@ -986,29 +1039,29 @@ struct maple_microphone: maple_base
 					return MDRS_DataTransfer;
 				}
 				case 0x02:
-					LOGI("maple_microphone::dma MDCF_MICControl toggle recording %#010x\n",secondword);
+					DEBUG_LOG(MAPLE, "maple_microphone::dma MDCF_MICControl toggle recording %#010x", secondword);
 					return MDRS_DeviceReply;
 				case 0x03:
-					LOGI("maple_microphone::dma MDCF_MICControl set gain %#010x\n",secondword);
+					DEBUG_LOG(MAPLE, "maple_microphone::dma MDCF_MICControl set gain %#010x", secondword);
 					return MDRS_DeviceReply;
 				case MDRE_TransmitAgain:
-					LOGW("maple_microphone::dma MDCF_MICControl MDRE_TransmitAgain\n");
+					WARN_LOG(MAPLE, "maple_microphone::dma MDCF_MICControl MDRE_TransmitAgain");
 					//apparently this doesnt matter
 					//wptr(micdata, SIZE_OF_MIC_DATA);
 					return MDRS_DeviceReply;//MDRS_DataTransfer;
 				default:
-					LOGW("maple_microphone::dma UNHANDLED secondword %#010x\n",secondword);
+					INFO_LOG(MAPLE, "maple_microphone::dma UNHANDLED secondword %#010x", secondword);
 					return MDRE_UnknownFunction;
 				}
 			}
 			default:
-				LOGW("maple_microphone::dma UNHANDLED function %#010x\n",function);
+				INFO_LOG(MAPLE, "maple_microphone::dma UNHANDLED function %#010x", function);
 				return MDRE_UnknownFunction;
 			}
 		}
 
 		default:
-			LOGW("maple_microphone::dma UNHANDLED MAPLE COMMAND %d\n",cmd);
+			INFO_LOG(MAPLE, "maple_microphone::dma UNHANDLED MAPLE COMMAND %d", cmd);
 			return MDRE_UnknownCmd;
 		}
 	}
@@ -1143,7 +1196,7 @@ struct maple_sega_purupuru : maple_base
 			return MDRS_DeviceReply;
 
 		default:
-			//printf("UNKOWN MAPLE COMMAND %d\n",cmd);
+			INFO_LOG(MAPLE, "UNKOWN MAPLE COMMAND %d", cmd);
 			return MDRE_UnknownCmd;
 		}
 	}
@@ -1214,7 +1267,7 @@ struct maple_keyboard : maple_base
 			return MDRS_DataTransfer;
 
 		default:
-			//printf("Keyboard: unknown MAPLE COMMAND %d\n", cmd);
+			INFO_LOG(MAPLE, "Keyboard: unknown MAPLE COMMAND %d", cmd);
 			return MDRE_UnknownCmd;
 		}
 	}
@@ -1321,7 +1374,7 @@ struct maple_mouse : maple_base
 			return MDRS_DataTransfer;
 
 		default:
-			//printf("Mouse: unknown MAPLE COMMAND %d\n", cmd);
+			INFO_LOG(MAPLE, "Mouse: unknown MAPLE COMMAND %d", cmd);
 			return MDRE_UnknownCmd;
 		}
 	}
@@ -1401,7 +1454,7 @@ struct maple_lightgun : maple_base
 		return MDRS_DataTransfer;
 
 		default:
-			//printf("Light gun: unknown MAPLE COMMAND %d\n", cmd);
+			INFO_LOG(MAPLE, "Light gun: unknown MAPLE COMMAND %d", cmd);
 			return MDRE_UnknownCmd;
 		}
 	}
@@ -1697,6 +1750,10 @@ struct maple_naomi_jamma : maple_sega_controller
 			break;
 		}
 	}
+	virtual ~maple_naomi_jamma()
+	{
+		EEPROM_loaded = false;
+	}
 
 	virtual MapleDeviceType get_device_type()
 	{
@@ -1869,7 +1926,7 @@ struct maple_naomi_jamma : maple_sega_controller
 			case 0x13:	// Store repeated request
 				if (len > 0 && node_id > 0 && node_id <= 0x1f)
 				{
-					printf("JVS node %d: Storing %d cmd bytes\n", node_id, len);
+					INFO_LOG(MAPLE, "JVS node %d: Storing %d cmd bytes", node_id, len);
 					jvs_repeat_request[node_id - 1][0] = len;
 					memcpy(&jvs_repeat_request[node_id - 1][1], cmd, len);
 				}
@@ -1974,7 +2031,7 @@ struct maple_naomi_jamma : maple_sega_controller
 			{
 				int address = dma_buffer_in[1];
 				int size = dma_buffer_in[2];
-				//printf("EEprom write %08X %08X\n",address,size);
+				DEBUG_LOG(MAPLE, "EEprom write %08X %08X\n", address, size);
 				//printState(Command,buffer_in,buffer_in_len);
 				memcpy(EEPROM + address, dma_buffer_in + 4, size);
 
@@ -1985,10 +2042,10 @@ struct maple_naomi_jamma : maple_sega_controller
 				{
 					fwrite(EEPROM, 1, 0x80, f);
 					fclose(f);
-					printf("Saved EEPROM to %s\n", eeprom_file.c_str());
+					INFO_LOG(MAPLE, "Saved EEPROM to %s", eeprom_file.c_str());
 				}
 				else
-					printf("EEPROM SAVE FAILED to %s\n", eeprom_file.c_str());
+					WARN_LOG(MAPLE, "EEPROM SAVE FAILED to %s", eeprom_file.c_str());
 #endif
 				w8(MDRS_JVSReply);
 				w8(0x00);
@@ -2012,15 +2069,15 @@ struct maple_naomi_jamma : maple_sega_controller
 					{
 						fread(EEPROM, 1, 0x80, f);
 						fclose(f);
-						printf("Loaded EEPROM from %s\n", eeprom_file.c_str());
+						DEBUG_LOG(MAPLE, "Loaded EEPROM from %s", eeprom_file.c_str());
 					}
 					else if (naomi_default_eeprom != NULL)
 					{
-						printf("Using default EEPROM file\n");
+						DEBUG_LOG(MAPLE, "Using default EEPROM file");
 						memcpy(EEPROM, naomi_default_eeprom, 0x80);
 					}
 					else
-						printf("EEPROM file not found at %s and no default found\n", eeprom_file.c_str());
+						DEBUG_LOG(MAPLE, "EEPROM file not found at %s and no default found", eeprom_file.c_str());
 				}
 #endif
 				//printf("EEprom READ\n");
@@ -2075,7 +2132,7 @@ struct maple_naomi_jamma : maple_sega_controller
 				break;
 
 			default:
-				printf("JVS: Unknown 0x86 sub-command %x\n", subcode);
+				INFO_LOG(MAPLE, "JVS: Unknown 0x86 sub-command %x", subcode);
 				w8(MDRE_UnknownCmd);
 				w8(0x00);
 				w8(0x20);
@@ -2133,7 +2190,7 @@ struct maple_naomi_jamma : maple_sega_controller
 						if (fw_dump == NULL)
 						{
 							fw_dump = fopen(filename, "w");
-							printf("Saving JVS firmware to %s\n", filename);
+							INFO_LOG(MAPLE, "Saving JVS firmware to %s", filename);
 							break;
 						}
 					}
@@ -2211,8 +2268,16 @@ struct maple_naomi_jamma : maple_sega_controller
 
 			break;
 
+		case MDCF_GetCondition:
+			w8(MDRE_UnknownCmd);
+			w8(0x00);
+			w8(0x00);
+			w8(0x00);
+
+			break;
+
 		default:
-			//printf("Unknown Maple command %x\n", cmd);
+			INFO_LOG(MAPLE, "Unknown Maple command %x", cmd);
 			w8(MDRE_UnknownCmd);
 			w8(0x00);
 			w8(0x00);
@@ -2375,8 +2440,6 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 			LOGJVS("JVS Node %d: ", node_id);
 			PlainJoystickState pjs;
 			parent->config->GetInput(&pjs);
-			u32 keycode = ~kcode[0];
-			u32 keycode2 = ~kcode[1];
 
 			JVS_STATUS1();	// status
 			for (int cmdi = 0; cmdi < length_in; )
@@ -2387,6 +2450,8 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 					{
 						JVS_STATUS1();	// report byte
 
+						u32 keycode = ~kcode[0];
+						u32 keycode2 = ~kcode[1];
 						u16 buttons[4] = { 0 };
 						for (int player = 0; player < buffer_in[cmdi + 1] && first_player + player < ARRAY_SIZE(kcode); player++)
 						{
@@ -2419,17 +2484,25 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 					{
 						JVS_STATUS1();	// report byte
 						LOGJVS("coins ");
+						u32 mask = 0;
+						for (int i = 0; i < 16; i++)
+						{
+							if (naomi_button_mapping[i] == NAOMI_COIN_KEY)
+							{
+								mask = 1 << i;
+								break;
+							}
+						}
 						for (int slot = 0; slot < buffer_in[cmdi + 1]; slot++)
 						{
+							u16 keycode = ~kcode[first_player + slot];
 							bool coin_chute = false;
-							u32 keycode = ~kcode[first_player + slot];
-							for (int i = 0; i < 16 && !coin_chute; i++)
+							if (keycode & mask)
 							{
-								if (naomi_button_mapping[i] == NAOMI_COIN_KEY && (keycode & (1 << i)) != 0)
-									coin_chute = true;
+								coin_chute = true;
+								if (!old_coin_chute[first_player + slot])
+									coin_count[first_player + slot] += 1;
 							}
-							if (coin_chute && !old_coin_chute[first_player + slot])
-								coin_count[first_player + slot] += 1;
 							old_coin_chute[first_player + slot] = coin_chute;
 
 							LOGJVS("%d:%d ", slot + 1 + first_player, coin_count[first_player + slot]);
@@ -2583,7 +2656,7 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 					break;
 
 				default:
-					printf("JVS: Unknown input type %x\n", buffer_in[cmdi]);
+					DEBUG_LOG(MAPLE, "JVS: Unknown input type %x", buffer_in[cmdi]);
 					JVS_OUT(2);			// report byte: command error
 					cmdi = length_in;	// Ignore subsequent commands
 					break;
@@ -2593,7 +2666,7 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 		}
 		else
 		{
-			printf("JVS: Unknown JVS command %x\n", jvs_cmd);
+			INFO_LOG(MAPLE, "JVS: Unknown JVS command %x", jvs_cmd);
 			JVS_OUT(2);	// Unknown command
 		}
 		break;
@@ -2625,11 +2698,10 @@ maple_device* maple_Create(MapleDeviceType type)
 	switch(type)
 	{
 	case MDT_SegaController:
-#if DC_PLATFORM != DC_PLATFORM_ATOMISWAVE
-		rv = new maple_sega_controller();
-#else
-		rv = new maple_atomiswave_controller();
-#endif
+		if (settings.platform.system != DC_PLATFORM_ATOMISWAVE)
+			rv = new maple_sega_controller();
+		else
+			rv = new maple_atomiswave_controller();
 		break;
 
 	case MDT_Microphone:
@@ -2653,19 +2725,28 @@ maple_device* maple_Create(MapleDeviceType type)
 		break;
 
 	case MDT_LightGun:
-#if DC_PLATFORM != DC_PLATFORM_ATOMISWAVE
-		rv = new maple_lightgun();
-#else
-		rv = new atomiswave_lightgun();
-#endif
+		if (settings.platform.system != DC_PLATFORM_ATOMISWAVE)
+			rv = new maple_lightgun();
+		else
+			rv = new atomiswave_lightgun();
 		break;
 
 	case MDT_NaomiJamma:
 		rv = new maple_naomi_jamma();
 		break;
 
+	case MDT_TwinStick:
+		rv = new maple_sega_twinstick();
+		break;
+
+	case MDT_AsciiStick:
+		rv = new maple_ascii_stick();
+		break;
+
 	default:
-		return 0;
+		ERROR_LOG(MAPLE, "Invalid device type %d", type);
+		die("Invalid maple device type");
+		break;
 	}
 
 	return rv;

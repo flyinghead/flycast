@@ -18,7 +18,6 @@ LOCAL_PATH:= $(call my-dir)/..
 include $(CLEAR_VARS)
 
 FOR_ANDROID := 1
-WEBUI := 1
 USE_GLES := 1
 CHD5_LZMA := 1
 CHD5_FLAC := 1
@@ -62,8 +61,8 @@ LOCAL_SRC_FILES := $(RZDCY_FILES)
 LOCAL_SRC_FILES += $(wildcard $(LOCAL_PATH)/jni/src/Android.cpp)
 LOCAL_SRC_FILES += $(wildcard $(LOCAL_PATH)/jni/src/utils.cpp)
 LOCAL_CFLAGS  := $(RZDCY_CFLAGS) -fPIC -fvisibility=hidden -ffunction-sections -fdata-sections
-LOCAL_CXXFLAGS  := $(RZDCY_CXXFLAGS) -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -ffunction-sections -fdata-sections
-LOCAL_CPPFLAGS  := $(RZDCY_CXXFLAGS) -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -ffunction-sections -fdata-sections
+LOCAL_CXXFLAGS  := $(RZDCY_CXXFLAGS) -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -ffunction-sections -fdata-sections -fexceptions
+LOCAL_CPPFLAGS  := $(RZDCY_CXXFLAGS) -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -ffunction-sections -fdata-sections -fexceptions
 
 # 7-Zip/LZMA settings (CHDv5)
 ifdef CHD5_LZMA

@@ -8,9 +8,9 @@ using namespace std;
 #undef FAR
 
 //#define CLIP_WARN
-#define key_printf(...)
-#define aeg_printf(...)
-#define step_printf(...)
+#define key_printf(...) DEBUG_LOG(AICA, __VA_ARGS__)
+#define aeg_printf(...) DEBUG_LOG(AICA, __VA_ARGS__)
+#define step_printf(...) DEBUG_LOG(AICA, __VA_ARGS__)
 
 #ifdef CLIP_WARN
 #define clip_verify(x) verify(x)
@@ -490,7 +490,7 @@ struct ChannelEx
 
 			StepStreamInitial(this);
 
-			key_printf("[%d] KEY_ON %s @ %f Hz, loop : %d\n",Channel,stream_names[ChanData->PCMS],(44100.0*update_rate)/1024,ChanData->LPCTL);
+			key_printf("[%p] KEY_ON %s @ %f Hz, loop : %d", this, stream_names[ccd->PCMS], (44100.0 * update_rate) / 1024, ccd->LPCTL);
 		}
 		else
 		{
@@ -501,7 +501,7 @@ struct ChannelEx
 	{
 		if (AEG.state!=EG_Release)
 		{
-			key_printf("[%d] KEY_OFF -> Release\n",Channel);
+			key_printf("[%p] KEY_OFF -> Release", this);
 			SetAegState(EG_Release);
 			//switch to release state
 		}
@@ -862,7 +862,7 @@ void StreamStep(ChannelEx* ch)
 			if ((ch->AEG.state==EG_Attack) && (CA>=ch->loop.LSA))
 			{
 				
-				step_printf("[%d]LPSLNK : Switching to EG_Decay1 %X\n",Channel,AEG.GetValue());
+				step_printf("[%p]LPSLNK : Switching to EG_Decay1 %X", ch, ch->AEG.GetValue());
 				ch->SetAegState(EG_Decay1);
 			}
 		}
@@ -963,7 +963,7 @@ void AegStep(ChannelEx* ch)
 				ch->AEG.SetValue(0);
 				if (!ch->ccd->LPSLNK)
 				{
-					aeg_printf("[%d]AEG_step : Switching to EG_Decay1 %d\n",ch->AEG.GetValue());
+					aeg_printf("[%p]AEG_step : Switching to EG_Decay1 %d", ch, ch->AEG.GetValue());
 					ch->SetAegState(EG_Decay1);
 				}
 			}
@@ -975,7 +975,7 @@ void AegStep(ChannelEx* ch)
 			ch->AEG.val+=ch->AEG.Decay1Rate;
 			if (((u32)ch->AEG.GetValue())>=ch->AEG.Decay2Value)
 			{
-				aeg_printf("[%d]AEG_step : Switching to EG_Decay2 @ %x\n",ch->AEG.GetValue());
+				aeg_printf("[%p]AEG_step : Switching to EG_Decay2 @ %x", ch, ch->AEG.GetValue());
 				ch->SetAegState(EG_Decay2);
 			}
 		}
@@ -986,7 +986,7 @@ void AegStep(ChannelEx* ch)
 			ch->AEG.val+=ch->AEG.Decay2Rate;
 			if (ch->AEG.GetValue()>=0x3FF)
 			{
-				aeg_printf("[%d]AEG_step : Switching to EG_Release @ %x\n",ch->AEG.GetValue());
+				aeg_printf("[%p]AEG_step : Switching to EG_Release @ %x", ch, ch->AEG.GetValue());
 				ch->AEG.SetValue(0x3FF);
 				ch->SetAegState(EG_Release);
 			}
@@ -998,7 +998,7 @@ void AegStep(ChannelEx* ch)
 			
 			if (ch->AEG.GetValue()>=0x3FF)
 			{
-				aeg_printf("[%d]AEG_step : EG_Release End @ %x\n",ch->AEG.GetValue());
+				aeg_printf("[%p]AEG_step : EG_Release End @ %x", ch, ch->AEG.GetValue());
 				ch->AEG.SetValue(0x3FF); // TODO: mnn, should we do anything about it running wild ?
 				ch->disable(); // TODO: Is this ok here? It's a speed optimisation (since the channel is muted)
 			}
@@ -1169,8 +1169,8 @@ void WriteCommonReg8(u32 reg,u32 data)
 	WriteMemArr(aica_reg,reg,data,1);
 	if (reg==0x2804 || reg==0x2805)
 	{
-		dsp.RBL=(8192<<CommonData->RBL)-1;
-		dsp.RBP=( CommonData->RBP*2048&AICA_RAM_MASK);
+		dsp.RBL = (8192 << CommonData->RBL) - 1;
+		dsp.RBP = (CommonData->RBP * 2048) & ARAM_MASK;
 		dsp.dyndirty=true;
 	}
 }
@@ -1179,19 +1179,17 @@ void WriteCommonReg8(u32 reg,u32 data)
 s16 cdda_sector[CDDA_SIZE]={0};
 u32 cdda_index=CDDA_SIZE<<1;
 
-
-SampleType mxlr[64];
-
 u32 samples_gen;
 
 //no DSP for now in this version
 void AICA_Sample32()
 {
-	if (settings.aica.NoBatch)
+	if (settings.aica.NoBatch || settings.aica.DSPEnabled)
 	{
 		return;
 	}
 
+	SampleType mxlr[64];
 	memset(mxlr,0,sizeof(mxlr));
 
 	//Generate 32 samples for each channel, before moving to next channel
@@ -1344,7 +1342,7 @@ void AICA_Sample()
 		DSPData->EXTS[0] = 0;
 		DSPData->EXTS[1] = 0;
 	}
-	//if (settings.aica.DSPEnabled)
+	if (settings.aica.DSPEnabled)
 	{
 		dsp_step();
 

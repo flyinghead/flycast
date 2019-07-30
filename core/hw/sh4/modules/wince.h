@@ -1,3 +1,21 @@
+/*
+	Copyright 2019 flyinghead
+
+	This file is part of reicast.
+
+    reicast is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 2 of the License, or
+    (at your option) any later version.
+
+    reicast is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with reicast.  If not, see <https://www.gnu.org/licenses/>.
+ */
 #include "hw/sh4/sh4_sched.h"
 
 #define	PUserKData 			0x00005800
@@ -7,11 +25,13 @@
 #define SH_CURTHREAD            1
 #define SH_CURPROC              2
 
+extern const u32 mmu_mask[4];
+
 static bool read_mem32(u32 addr, u32& data)
 {
 	u32 pa;
-	u32 idx;
-	if (mmu_full_lookup<true>(addr, idx, pa) != MMU_ERROR_NONE)
+	const TLB_Entry *entry;
+	if (mmu_full_lookup<false>(addr, &entry, pa) != MMU_ERROR_NONE)
 		return false;
 	data = ReadMem32_nommu(pa);
 	return true;
@@ -20,8 +40,8 @@ static bool read_mem32(u32 addr, u32& data)
 static bool read_mem16(u32 addr, u16& data)
 {
 	u32 pa;
-	u32 idx;
-	if (mmu_full_lookup<true>(addr, idx, pa) != MMU_ERROR_NONE)
+	const TLB_Entry *entry;
+	if (mmu_full_lookup<false>(addr, &entry, pa) != MMU_ERROR_NONE)
 		return false;
 	data = ReadMem16_nommu(pa);
 	return true;
@@ -30,14 +50,14 @@ static bool read_mem16(u32 addr, u16& data)
 static bool read_mem8(u32 addr, u8& data)
 {
 	u32 pa;
-	u32 idx;
-	if (mmu_full_lookup<true>(addr, idx, pa) != MMU_ERROR_NONE)
+	const TLB_Entry *entry;
+	if (mmu_full_lookup<false>(addr, &entry, pa) != MMU_ERROR_NONE)
 		return false;
 	data = ReadMem8_nommu(pa);
 	return true;
 }
 
-static inline u32 GetCurrentThreadId()
+static inline u32 getCurrentThreadId()
 {
 	u32 addr = PUserKData + SYSHANDLE_OFFSET + SH_CURTHREAD * 4;
 	u32 tid;
@@ -47,7 +67,7 @@ static inline u32 GetCurrentThreadId()
 		return 0;
 }
 
-static inline u32 GetCurrentProcessId()
+static inline u32 getCurrentProcessId()
 {
 	u32 addr = PUserKData + SYSHANDLE_OFFSET + SH_CURPROC * 4;
 	u32 pid;
@@ -207,10 +227,10 @@ static const char *wince_methods[][256] = {
 		},
 };
 
-u32 unresolved_ascii_string;
-u32 unresolved_unicode_string;
+extern u32 unresolved_ascii_string;
+extern u32 unresolved_unicode_string;
 
-std::string get_unicode_string(u32 addr)
+static inline std::string get_unicode_string(u32 addr)
 {
 	std::string str;
 	while (true)
@@ -228,7 +248,7 @@ std::string get_unicode_string(u32 addr)
 	}
 	return str;
 }
-std::string get_ascii_string(u32 addr)
+static inline std::string get_ascii_string(u32 addr)
 {
 	std::string str;
 	while (true)
@@ -246,9 +266,8 @@ std::string get_ascii_string(u32 addr)
 	return str;
 }
 
-static bool print_wince_syscall(u32 address, bool &skip_exception)
+static bool print_wince_syscall(u32 address)
 {
-	skip_exception = false;
 	if (address & 1)
 	{
 		if (address == 0xfffffd5d || address == 0xfffffd05)	// Sleep, QueryPerformanceCounter
@@ -293,7 +312,7 @@ static bool print_wince_syscall(u32 address, bool &skip_exception)
 			sprintf(method_buf, "[%d]", meth_id);
 			method = method_buf;
 		}
-		printf("WinCE %08x %04x.%04x %s: %s", address, GetCurrentProcessId() & 0xffff, GetCurrentThreadId() & 0xffff, api, method);
+		printf("WinCE %08x %04x.%04x %s: %s", address, getCurrentProcessId() & 0xffff, getCurrentThreadId() & 0xffff, api, method);
 		if (address == 0xfffffd51)		// SetLastError
 			printf(" dwErrCode = %x\n", r[4]);
 		else if (address == 0xffffd5ef)	// CreateFile
@@ -329,3 +348,59 @@ static bool print_wince_syscall(u32 address, bool &skip_exception)
 		return false;
 
 }
+
+static bool wince_resolve_address(u32 va, TLB_Entry &entry)
+{
+	// WinCE hack
+	if ((va & 0x80000000) == 0)
+	{
+		u32 page_group = ReadMem32_nommu(CCN_TTB + ((va >> 25) << 2));
+		u32 page = ((va >> 16) & 0x1ff) << 2;
+		u32 paddr = ReadMem32_nommu(page_group + page);
+		if (paddr & 0x80000000)
+		{
+			u32 whatever = ReadMem32_nommu(r_bank[4] + 0x14);
+			if (whatever != ReadMem32_nommu(paddr))
+			{
+				paddr += 12;
+				u32 ptel = ReadMem32_nommu(paddr + ((va >> 10) & 0x3c));
+				//FIXME CCN_PTEA = paddr >> 29;
+				if (ptel != 0)
+				{
+					entry.Data.reg_data = ptel - 1;
+					entry.Address.ASID = CCN_PTEH.ASID;
+					entry.Assistance.reg_data = 0;
+					u32 sz = entry.Data.SZ1 * 2 + entry.Data.SZ0;
+					entry.Address.VPN = (va & mmu_mask[sz]) >> 10;
+
+					return true;
+				}
+			}
+		}
+	}
+	else
+	{
+		// SQ
+		if (((va >> 26) & 0x3F) == 0x38)
+		{
+			u32 r1 = (va - 0xe0000000) & 0xfff00000;
+			//r1 &= 0xfff00000;
+			//u32 r0 = ReadMem32_nommu(0x8C01258C);	// FIXME
+			//u32 r0 = 0x8c138b14;
+			//r0 = ReadMem32_nommu(r0);	// 0xE0001F5
+			u32 r0 = 0xe0001f5;
+			r0 += r1;
+			entry.Data.reg_data = r0 - 1;
+			entry.Assistance.reg_data = r0 >> 29;
+			entry.Address.ASID = CCN_PTEH.ASID;
+			u32 sz = entry.Data.SZ1 * 2 + entry.Data.SZ0;
+			entry.Address.VPN = (va & mmu_mask[sz]) >> 10;
+
+			return true;
+		}
+	}
+
+	return false;
+}
+
+

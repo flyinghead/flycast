@@ -47,11 +47,7 @@ void Sh4_int_Run()
 
 	l = SH4_TIMESLICE;
 
-#if !defined(TARGET_BOUNDED_EXECUTION)
 	do
-#else
-	for (int i=0; i<10000; i++)
-#endif
 	{
 #if !defined(NO_MMU)
 		try {
@@ -73,13 +69,9 @@ void Sh4_int_Run()
 			l -= CPU_RATIO * 5;	// an exception requires the instruction pipeline to drain, so approx 5 cycles
 		}
 #endif
-#if !defined(TARGET_BOUNDED_EXECUTION)
-	} while(sh4_int_bCpuRun);
+	} while (sh4_int_bCpuRun);
 
-	sh4_int_bCpuRun=false;
-#else
-	}
-#endif
+	sh4_int_bCpuRun = false;
 }
 
 void Sh4_int_Stop()
@@ -102,7 +94,7 @@ void Sh4_int_Step()
 {
 	if (sh4_int_bCpuRun)
 	{
-		printf("Sh4 Is running , can't step\n");
+		WARN_LOG(INTERPRETER, "Sh4 Is running , can't step");
 	}
 	else
 	{
@@ -116,7 +108,7 @@ void Sh4_int_Skip()
 {
 	if (sh4_int_bCpuRun)
 	{
-		printf("Sh4 Is running, can't Skip\n");
+		WARN_LOG(INTERPRETER, "Sh4 Is running, can't Skip");
 	}
 	else
 	{
@@ -124,11 +116,11 @@ void Sh4_int_Skip()
 	}
 }
 
-void Sh4_int_Reset(bool Manual)
+void Sh4_int_Reset(bool hard)
 {
 	if (sh4_int_bCpuRun)
 	{
-		printf("Sh4 Is running, can't Reset\n");
+		WARN_LOG(INTERPRETER, "Sh4 Is running, can't Reset");
 	}
 	else
 	{
@@ -149,7 +141,7 @@ void Sh4_int_Reset(bool Manual)
 		UpdateFPSCR();
 
 		//Any more registers have default value ?
-		printf("Sh4 Reset\n");
+		INFO_LOG(INTERPRETER, "Sh4 Reset");
 	}
 }
 
@@ -173,11 +165,7 @@ void ExecuteDelayslot()
 #if !defined(NO_MMU)
 	}
 	catch (SH4ThrownException& ex) {
-		ex.epc -= 2;
-		if (ex.expEvn == 0x800)	// FPU disable exception
-			ex.expEvn = 0x820;	// Slot FPU disable exception
-		else if (ex.expEvn == 0x180)	// Illegal instruction exception
-			ex.expEvn = 0x1A0;			// Slot illegal instruction exception
+		AdjustDelaySlotException(ex);
 		//printf("Delay slot exception\n");
 		throw ex;
 	}
@@ -193,7 +181,7 @@ void ExecuteDelayslot_RTE()
 #if !defined(NO_MMU)
 	}
 	catch (SH4ThrownException& ex) {
-		msgboxf("Exception in RTE delay slot", MBX_ICONERROR);
+		ERROR_LOG(INTERPRETER, "Exception in RTE delay slot");
 	}
 #endif
 }
@@ -304,7 +292,7 @@ void Sh4_int_Init()
 void Sh4_int_Term()
 {
 	Sh4_int_Stop();
-	printf("Sh4 Term\n");
+	INFO_LOG(INTERPRETER, "Sh4 Term");
 }
 
 /*

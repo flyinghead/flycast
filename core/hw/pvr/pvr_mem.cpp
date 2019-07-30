@@ -212,7 +212,7 @@ void YUV_data(u32* data , u32 count)
 //read
 u8 DYNACALL pvr_read_area1_8(u32 addr)
 {
-	printf("8-bit VRAM reads are not possible\n");
+	INFO_LOG(MEMORY, "%08x: 8-bit VRAM reads are not possible", addr);
 	return 0;
 }
 
@@ -228,7 +228,7 @@ u32 DYNACALL pvr_read_area1_32(u32 addr)
 //write
 void DYNACALL pvr_write_area1_8(u32 addr,u8 data)
 {
-	printf("8-bit VRAM writes are not possible\n");
+	INFO_LOG(MEMORY, "%08x: 8-bit VRAM writes are not possible", addr);
 }
 void DYNACALL pvr_write_area1_16(u32 addr,u16 data)
 {
@@ -263,7 +263,7 @@ void TAWrite(u32 address,u32* data,u32 count)
 	else //Vram Writef
 	{
 		//shouldn't really get here (?) -> works on dc :D need to handle lmmodes
-		//printf("Vram TAWrite 0x%X , bkls %d\n",address,count);
+		DEBUG_LOG(MEMORY, "Vram TAWrite 0x%X , bkls %d\n", address, count);
 		verify(SB_LMMODE0 == 0);
 		memcpy(&vram.data[address&VRAM_MASK],data,count*32);
 	}
@@ -293,11 +293,10 @@ extern "C" void DYNACALL TAWriteSQ(u32 address,u8* sqb)
 	else //Vram Writef
 	{
 		// Used by WinCE
-		//printf("Vram TAWriteSQ 0x%X SB_LMMODE0 %d\n",address, SB_LMMODE0);
+		DEBUG_LOG(MEMORY, "Vram TAWriteSQ 0x%X SB_LMMODE0 %d", address, SB_LMMODE0);
 		if (SB_LMMODE0 == 0)
 		{
 			// 64b path
-			u8* vram=sqb+512+0x04000000;
 			MemWrite32(&vram[address_w&(VRAM_MASK-0x1F)],sq);
 		}
 		else

@@ -3,6 +3,7 @@
 #include "hw/pvr/pvr_mem.h"
 #include "rend/TexCache.h"
 #include "rend/gui.h"
+#include "hw/mem/_vmem.h"
 
 #include "deps/zlib/zlib.h"
 
@@ -78,12 +79,15 @@ u32 FrameCount=1;
 
 Renderer* renderer;
 static Renderer* fallback_renderer;
-bool renderer_enabled = true;	// Signals the renderer thread to exit
-bool renderer_changed = false;	// Signals the renderer thread to switch renderer
+volatile bool renderer_enabled = true;	// Signals the renderer thread to exit
+volatile bool renderer_changed = false;	// Signals the renderer thread to switch renderer
+volatile bool renderer_reinit_requested = false;	// Signals the renderer thread to reinit the renderer
 
 #if !defined(TARGET_NO_THREADS)
 cResetEvent rs, re;
 #endif
+static bool swap_pending;
+static bool do_swap;
 
 int max_idx,max_mvo,max_op,max_pt,max_tr,max_vtx,max_modt, ovrn;
 
@@ -94,8 +98,6 @@ bool fb_dirty;
 
 TA_context* _pvrrc;
 void SetREP(TA_context* cntx);
-void killtex();
-bool render_output_framebuffer();
 static void rend_create_renderer();
 
 void dump_frame(const char* file, TA_context* ctx, u8* vram, u8* vram_ref = NULL) {
@@ -202,7 +204,7 @@ TA_context* read_frame(const char* file, u8* vram_ref = NULL) {
 	fread(&t, 1, sizeof(t), fw);
 	verify(t == VRAM_SIZE);
 
-	vram.UnLockRegion(0, VRAM_SIZE);
+	_vmem_unprotect_vram(0, VRAM_SIZE);
 
 	uLongf compressed_size;
 
@@ -249,6 +251,14 @@ bool rend_frame(TA_context* ctx, bool draw_osd) {
 		dump_frame_switch = false;
 	}
 	bool proc = renderer->Process(ctx);
+	if ((ctx->rend.isRTT || ctx->rend.isRenderFramebuffer) && swap_pending)
+	{
+		// If there is a frame swap pending, we want to do it now.
+		// The current frame "swapping" detection mechanism (using FB_R_SOF1) doesn't work
+		// if a RTT frame is rendered in between.
+		renderer->Present();
+		swap_pending = false;
+	}
 #if !defined(TARGET_NO_THREADS)
 	if (!proc || (!ctx->rend.isRTT && !ctx->rend.isRenderFramebuffer))
 		// If rendering to texture, continue locking until the frame is rendered
@@ -287,6 +297,7 @@ bool rend_single_frame()
 			// Use the rendering start event to wait between two frames but save its value
 			if (rs.Wait(17))
 				rs.Set();
+			swap_pending = false;
 			return true;
 		}
 		else
@@ -296,12 +307,18 @@ bool rend_single_frame()
 
 			if (!rs.Wait(100))
 				return false;
+			if (do_swap)
+			{
+				do_swap = false;
+				renderer->Present();
+			}
 		}
 #else
 		if (gui_is_open())
 		{
 			gui_display_ui();
 			FinishRender(NULL);
+			swap_pending = false;
 			return true;
 		}
 		if (renderer != NULL)
@@ -314,6 +331,7 @@ bool rend_single_frame()
 	}
 	while (!_pvrrc);
 	bool do_swp = rend_frame(_pvrrc, true);
+	swap_pending = do_swp && !_pvrrc->rend.isRenderFramebuffer;
 
 #if !defined(TARGET_NO_THREADS)
 	if (_pvrrc->rend.isRTT)
@@ -366,7 +384,7 @@ void rend_init_renderer()
     			delete fallback_renderer;
     		die("Renderer initialization failed\n");
     	}
-    	printf("Selected renderer initialization failed. Falling back to default renderer.\n");
+    	INFO_LOG(PVR, "Selected renderer initialization failed. Falling back to default renderer.");
     	renderer  = fallback_renderer;
     	fallback_renderer = NULL;	// avoid double-free
     }
@@ -374,7 +392,6 @@ void rend_init_renderer()
 
 void rend_term_renderer()
 {
-	killtex();
 	gui_term();
 	renderer->Term();
 	delete renderer;
@@ -388,6 +405,8 @@ void rend_term_renderer()
 
 void* rend_thread(void* p)
 {
+	renderer_enabled = true;
+
 	rend_init_renderer();
 
 	//we don't know if this is true, so let's not speculate here
@@ -396,7 +415,26 @@ void* rend_thread(void* p)
 	while (renderer_enabled)
 	{
 		if (rend_single_frame())
-			renderer->Present();
+		{
+			if (FB_R_SOF1 == FB_W_SOF1 || !swap_pending)
+			{
+				renderer->Present();
+				swap_pending = false;
+			}
+		}
+		if (renderer_changed)
+		{
+			renderer_changed = false;
+			renderer_reinit_requested = false;
+			rend_term_renderer();
+			rend_create_renderer();
+			rend_init_renderer();
+		}
+		else if (renderer_reinit_requested)
+		{
+			renderer_reinit_requested = false;
+			rend_init_renderer();
+		}
 	}
 
 	rend_term_renderer();
@@ -444,7 +482,7 @@ void rend_start_render()
 				int ch = fgetc(fCheckFrames);
 
 				if (ch == EOF) {
-					printf("Testing: TA Hash log matches, exiting\n");
+					INFO_LOG(PVR, "Testing: TA Hash log matches, exiting");
 					exit(1);
 				}
 				
@@ -507,7 +545,7 @@ void rend_start_render()
 		else
 		{
 			ovrn++;
-			printf("WARNING: Rendering context is overrun (%d), aborting frame\n",ovrn);
+			INFO_LOG(PVR, "WARNING: Rendering context is overrun (%d), aborting frame", ovrn);
 			tactx_Recycle(ctx);
 		}
 	}
@@ -544,6 +582,7 @@ void rend_vblank()
 {
 	if (!render_called && fb_dirty && FB_R_CTRL.fb_enable)
 	{
+		DEBUG_LOG(PVR, "Direct framebuffer write detected");
 		SetCurrentTARC(CORE_CURRENT_CTX);
 		ta_ctx->rend.isRenderFramebuffer = true;
 		rend_start_render();
@@ -568,3 +607,12 @@ void rend_cancel_emu_wait()
 #endif
 }
 
+void rend_swap_frame()
+{
+	if (swap_pending)
+	{
+		swap_pending = false;
+		do_swap = true;
+		rs.Set();
+	}
+}

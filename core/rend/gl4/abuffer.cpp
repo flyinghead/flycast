@@ -18,9 +18,6 @@ gl4PipelineShader g_abuffer_tr_modvol_shaders[ModeCount];
 static GLuint g_quadBuffer = 0;
 static GLuint g_quadVertexArray = 0;
 
-static int g_imageWidth = 0;
-static int g_imageHeight = 0;
-
 GLuint pixel_buffer_size = 512 * 1024 * 1024;	// Initial size 512 MB
 
 #define MAX_PIXELS_PER_FRAGMENT "32"
@@ -75,46 +72,53 @@ vec4 resolveAlphaBlend(ivec2 coords) { \n\
 	vec4 secondaryBuffer = vec4(0.0); // Secondary accumulation buffer \n\
 	float depth = 1.0; \n\
 	 \n\
+	bool do_depth_test = false; \n\
 	for (int i = 0; i < num_frag; i++) \n\
 	{ \n\
 		const Pixel pixel = pixels[pixel_list[i]]; \n\
 		const PolyParam pp = tr_poly_params[getPolyNumber(pixel)]; \n\
 #if DEPTH_SORTED != 1 \n\
 		const float frag_depth = pixel.depth; \n\
-		switch (getDepthFunc(pp)) \n\
+		if (do_depth_test) \n\
 		{ \n\
-		case 0:		// Never \n\
-			continue; \n\
-		case 1:		// Greater \n\
-			if (frag_depth <= depth) \n\
+			switch (getDepthFunc(pp)) \n\
+			{ \n\
+			case 0:		// Never \n\
 				continue; \n\
-			break; \n\
-		case 2:		// Equal \n\
-			if (frag_depth != depth) \n\
-				continue; \n\
-			break; \n\
-		case 3:		// Greater or equal \n\
-			if (frag_depth < depth) \n\
-				continue; \n\
-			break; \n\
-		case 4:		// Less \n\
-			if (frag_depth >= depth) \n\
-				continue; \n\
-			break; \n\
-		case 5:		// Not equal \n\
-			if (frag_depth == depth) \n\
-				continue; \n\
-			break; \n\
-		case 6:		// Less or equal \n\
-			if (frag_depth > depth) \n\
-				continue; \n\
-			break; \n\
-		case 7:		// Always \n\
-			break; \n\
+			case 1:		// Greater \n\
+				if (frag_depth <= depth) \n\
+					continue; \n\
+				break; \n\
+			case 2:		// Equal \n\
+				if (frag_depth != depth) \n\
+					continue; \n\
+				break; \n\
+			case 3:		// Greater or equal \n\
+				if (frag_depth < depth) \n\
+					continue; \n\
+				break; \n\
+			case 4:		// Less \n\
+				if (frag_depth >= depth) \n\
+					continue; \n\
+				break; \n\
+			case 5:		// Not equal \n\
+				if (frag_depth == depth) \n\
+					continue; \n\
+				break; \n\
+			case 6:		// Less or equal \n\
+				if (frag_depth > depth) \n\
+					continue; \n\
+				break; \n\
+			case 7:		// Always \n\
+				break; \n\
+			} \n\
 		} \n\
 		 \n\
 		if (getDepthMask(pp)) \n\
+		{ \n\
 			depth = frag_depth; \n\
+			do_depth_test = true; \n\
+		} \n\
 #endif \n\
 		bool area1 = false; \n\
 		bool shadowed = false; \n\
@@ -210,7 +214,7 @@ void main(void) \n\
 	ivec2 coords = ivec2(gl_FragCoord.xy); \n\
 	// Compute and output final color for the frame buffer \n\
 	// Visualize the number of layers in use \n\
-	//FragColor = vec4(float(fillFragmentArray(coords)) / MAX_PIXELS_PER_FRAGMENT, 0, 0, 1); \n\
+	//FragColor = vec4(float(fillAndSortFragmentArray(coords)) / MAX_PIXELS_PER_FRAGMENT * 4, 0, 0, 1); \n\
 	FragColor = resolveAlphaBlend(coords); \n\
 } \n\
 ";
@@ -278,12 +282,19 @@ void main(void) \n\
 } \n\
 ";
 
+static const char* VertexShaderSource =
+"#version 430 \n"
+"\
+in highp vec3 in_pos; \n\
+ \n\
+void main() \n\
+{ \n\
+	gl_Position = vec4(in_pos, 1.0); \n\
+}";
+
 void initABuffer()
 {
-	g_imageWidth = (int)roundf(screen_width * settings.rend.ScreenScaling / 100.f);
-	g_imageHeight = (int)roundf(screen_height * settings.rend.ScreenScaling / 100.f);
-
-	if (g_imageWidth > 0 && g_imageHeight > 0)
+	if (max_image_width > 0 && max_image_height > 0)
 	{
 		if (pixels_pointers == 0)
 			pixels_pointers = glcache.GenTexture();
@@ -291,7 +302,7 @@ void initABuffer()
 		glBindTexture(GL_TEXTURE_2D, pixels_pointers);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_R32UI, g_imageWidth, g_imageHeight, 0, GL_RED_INTEGER, GL_UNSIGNED_INT, 0);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_R32UI, max_image_width, max_image_height, 0, GL_RED_INTEGER, GL_UNSIGNED_INT, 0);
 		glBindImageTexture(4, pixels_pointers, 0, false, 0,  GL_READ_WRITE, GL_R32UI);
 		glCheck();
 	}
@@ -331,23 +342,23 @@ void initABuffer()
 	{
 		char source[16384];
 		sprintf(source, final_shader_source, 1);
-		gl4CompilePipelineShader(&g_abuffer_final_shader, false, source);
+		gl4CompilePipelineShader(&g_abuffer_final_shader, false, source, VertexShaderSource);
 	}
 	if (g_abuffer_final_nosort_shader.program == 0)
 	{
 		char source[16384];
 		sprintf(source, final_shader_source, 0);
-		gl4CompilePipelineShader(&g_abuffer_final_nosort_shader, false, source);
+		gl4CompilePipelineShader(&g_abuffer_final_nosort_shader, false, source, VertexShaderSource);
 	}
 	if (g_abuffer_clear_shader.program == 0)
-		gl4CompilePipelineShader(&g_abuffer_clear_shader, false, clear_shader_source);
+		gl4CompilePipelineShader(&g_abuffer_clear_shader, false, clear_shader_source, VertexShaderSource);
 	if (g_abuffer_tr_modvol_shaders[0].program == 0)
 	{
 		char source[16384];
 		for (int mode = 0; mode < ModeCount; mode++)
 		{
 			sprintf(source, tr_modvol_shader_source, mode);
-			gl4CompilePipelineShader(&g_abuffer_tr_modvol_shaders[mode], false, source);
+			gl4CompilePipelineShader(&g_abuffer_tr_modvol_shaders[mode], false, source, VertexShaderSource);
 		}
 	}
 
@@ -359,21 +370,8 @@ void initABuffer()
 		glGenBuffers(1, &g_quadBuffer);
 		glBindBuffer(GL_ARRAY_BUFFER, g_quadBuffer); glCheck();
 
-		glEnableVertexAttribArray(VERTEX_POS_ARRAY); glCheck();
-		glVertexAttribPointer(VERTEX_POS_ARRAY, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex,x)); glCheck();
-
-		glEnableVertexAttribArray(VERTEX_COL_BASE_ARRAY); glCheck();
-		glVertexAttribPointer(VERTEX_COL_BASE_ARRAY, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*)offsetof(Vertex,col)); glCheck();
-
-		glEnableVertexAttribArray(VERTEX_COL_OFFS_ARRAY); glCheck();
-		glVertexAttribPointer(VERTEX_COL_OFFS_ARRAY, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*)offsetof(Vertex,spc)); glCheck();
-
-		glEnableVertexAttribArray(VERTEX_UV_ARRAY); glCheck();
-		glVertexAttribPointer(VERTEX_UV_ARRAY, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex,u)); glCheck();
-
-		glDisableVertexAttribArray(VERTEX_UV1_ARRAY);
-		glDisableVertexAttribArray(VERTEX_COL_OFFS1_ARRAY);
-		glDisableVertexAttribArray(VERTEX_COL_BASE1_ARRAY);
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void*)0);
 
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); glCheck();
 		glBindVertexArray(0);
@@ -432,39 +430,23 @@ void termABuffer()
 
 void reshapeABuffer(int w, int h)
 {
-	w = (int)roundf(w * settings.rend.ScreenScaling / 100.f);
-	h = (int)roundf(h * settings.rend.ScreenScaling / 100.f);
-
-	if (w != g_imageWidth || h != g_imageHeight) {
-		if (pixels_pointers != 0)
-		{
-			glcache.DeleteTextures(1, &pixels_pointers);
-			pixels_pointers = 0;
-		}
-
-		initABuffer();
+	if (pixels_pointers != 0)
+	{
+		glcache.DeleteTextures(1, &pixels_pointers);
+		pixels_pointers = 0;
 	}
+	initABuffer();
 }
 
-void abufferDrawQuad(bool upsideDown, float x, float y, float w, float h)
+void abufferDrawQuad()
 {
-	if (w == 0 || h == 0)
-	{
-	    float scl = 480.f / screen_height;
-	    float tx = (screen_width * scl - 640.f) / 2;
-
-		x = -tx;
-		y = 0.f;
-		w = 640.f + tx * 2;
-		h = 480.f;
-	}
 	glBindVertexArray(g_quadVertexArray);
 
-	struct Vertex vertices[] = {
-			{ x,     y + h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, upsideDown ? 0.f : 1.f },
-			{ x,     y,     1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, upsideDown ? 1.f : 0.f },
-			{ x + w, y + h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, upsideDown ? 0.f : 1.f },
-			{ x + w, y,     1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, upsideDown ? 1.f : 0.f },
+	float vertices[] = {
+			-1,  1, 1,
+			-1, -1, 1,
+			 1,  1, 1,
+			 1, -1, 1,
 	};
 	GLushort indices[] = { 0, 1, 2, 1, 3 };
 
@@ -576,14 +558,6 @@ void checkOverflowAndReset()
 
 void renderABuffer(bool sortFragments)
 {
-	// Reset scale params to a standard 640x480 dc screen
-	float scale_h = screen_height / 480.f;
-	float offs_x = (screen_width - scale_h * 640.f) / 2.f;
-	gl4ShaderUniforms.scale_coefs[0] = 2.f / (screen_width / scale_h);
-	gl4ShaderUniforms.scale_coefs[1]= -2.f / 480.f;
-	gl4ShaderUniforms.scale_coefs[2]= 1.f - 2.f * offs_x / screen_width;
-	gl4ShaderUniforms.scale_coefs[3]= -1.f;
-
 	// Render to output FBO
 	glcache.UseProgram(sortFragments ? g_abuffer_final_shader.program : g_abuffer_final_nosort_shader.program);
 	gl4ShaderUniforms.Set(&g_abuffer_final_shader);

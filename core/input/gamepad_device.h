@@ -91,3 +91,8 @@ private:
 	static std::vector<std::shared_ptr<GamepadDevice>> _gamepads;
 	static std::mutex _gamepads_mutex;
 };
+
+#ifdef TEST_AUTOMATION
+void replay_input();
+#endif
+

@@ -53,6 +53,57 @@
 					android:mimeType="*/*"
 					android:pathPattern=".*\\.cue"
 					android:scheme="file" />
+
+				<data
+					android:host="*"
+					android:mimeType="*/*"
+					android:pathPattern=".*\\.LST"
+					android:scheme="file" />
+				<data
+					android:host="*"
+					android:mimeType="*/*"
+					android:pathPattern=".*\\.lst"
+					android:scheme="file" />
+				<data
+					android:host="*"
+					android:mimeType="*/*"
+					android:pathPattern=".*\\.BIN"
+					android:scheme="file" />
+				<data
+					android:host="*"
+					android:mimeType="*/*"
+					android:pathPattern=".*\\.bin"
+					android:scheme="file" />
+				<data
+					android:host="*"
+					android:mimeType="*/*"
+					android:pathPattern=".*\\.DAT"
+					android:scheme="file" />
+				<data
+					android:host="*"
+					android:mimeType="*/*"
+					android:pathPattern=".*\\.dat"
+					android:scheme="file" />
+				<data
+					android:host="*"
+					android:mimeType="*/*"
+					android:pathPattern=".*\\.ZIP"
+					android:scheme="file" />
+				<data
+					android:host="*"
+					android:mimeType="*/*"
+					android:pathPattern=".*\\.zip"
+					android:scheme="file" />
+				<data
+					android:host="*"
+					android:mimeType="*/*"
+					android:pathPattern=".*\\.7Z"
+					android:scheme="file" />
+				<data
+					android:host="*"
+					android:mimeType="*/*"
+					android:pathPattern=".*\\.7z"
+					android:scheme="file" />
 			</intent-filter>
 		</activity-alias>
 	</application>

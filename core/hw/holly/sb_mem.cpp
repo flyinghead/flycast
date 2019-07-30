@@ -18,132 +18,139 @@
 #include "hw/flashrom/flashrom.h"
 #include "reios/reios.h"
 
-#if DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
-DCFlashChip sys_rom(BIOS_SIZE, BIOS_SIZE / 2);
-#else
-RomChip sys_rom(BIOS_SIZE);
-#endif
-
-#ifdef FLASH_SIZE
-DCFlashChip sys_nvmem(FLASH_SIZE);
-#endif
-
-#ifdef BBSRAM_SIZE
-SRamChip sys_nvmem(BBSRAM_SIZE);
-#endif
+MemChip *sys_rom;
+MemChip *sys_nvmem;
 
 extern bool bios_loaded;
 
+static std::string getRomPrefix()
+{
+	switch (settings.platform.system)
+	{
+	case DC_PLATFORM_DREAMCAST:
+		return "dc_";
+	case DC_PLATFORM_NAOMI:
+		return "naomi_";
+	case DC_PLATFORM_ATOMISWAVE:
+		return "aw_";
+	default:
+		die("Unsupported platform");
+		return "";
+	}
+}
+
+static bool nvmemOptional()
+{
+	return settings.platform.system != DC_PLATFORM_DREAMCAST;
+}
+
 bool LoadRomFiles(const string& root)
 {
-#if DC_PLATFORM != DC_PLATFORM_ATOMISWAVE
-	if (!sys_rom.Load(root, ROM_PREFIX, "%boot.bin;%boot.bin.bin;%bios.bin;%bios.bin.bin" ROM_NAMES, "bootrom"))
+	if (settings.platform.system != DC_PLATFORM_ATOMISWAVE)
 	{
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-		// Dreamcast absolutely needs a BIOS
-		msgboxf("Unable to find bios in %s. Exiting...", MBX_ICONERROR, root.c_str());
-		return false;
-#endif
-	}
-	else
-		bios_loaded = true;
-#endif
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-	if (!sys_nvmem.Load(root, ROM_PREFIX, "%nvmem.bin;%flash_wb.bin;%flash.bin;%flash.bin.bin", "nvram"))
-#else
-	if (!sys_nvmem.Load(get_game_save_prefix() + ".nvmem"))
-#endif
-	{
-		if (NVR_OPTIONAL)
+		if (!sys_rom->Load(root, getRomPrefix(), "%boot.bin;%boot.bin.bin;%bios.bin;%bios.bin.bin", "bootrom"))
 		{
-			printf("flash/nvmem is missing, will create new file...\n");
+			if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+			{
+				// Dreamcast absolutely needs a BIOS
+				msgboxf("Unable to find bios in %s. Exiting...", MBX_ICONERROR, root.c_str());
+				return false;
+			}
+		}
+		else
+			bios_loaded = true;
+	}
+	bool rc;
+	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+		rc = sys_nvmem->Load(root, getRomPrefix(), "%nvmem.bin;%flash_wb.bin;%flash.bin;%flash.bin.bin", "nvram");
+	else
+		rc = sys_nvmem->Load(get_game_save_prefix() + ".nvmem");
+	if (!rc)
+	{
+		if (nvmemOptional())
+		{
+			INFO_LOG(FLASHROM, "flash/nvmem is missing, will create new file...");
 		}
 		else
 		{
-			msgboxf("Unable to find flash/nvmem in \n%s\nExiting...", MBX_ICONERROR, root.c_str());
+			msgboxf("Unable to find flash/nvmem in %s. Exiting...", MBX_ICONERROR, root.c_str());
 			return false;
 		}
 	}
 
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-	struct flash_syscfg_block syscfg;
-	int res = sys_nvmem.ReadBlock(FLASH_PT_USER, FLASH_USER_SYSCFG, &syscfg);
-
-	if (!res)
+	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 	{
-		// write out default settings
-		memset(&syscfg, 0xff, sizeof(syscfg));
-		syscfg.time_lo = 0;
-		syscfg.time_hi = 0;
-		syscfg.lang = 0;
-		syscfg.mono = 0;
-		syscfg.autostart = 1;
+		struct flash_syscfg_block syscfg;
+		int res = static_cast<DCFlashChip*>(sys_nvmem)->ReadBlock(FLASH_PT_USER, FLASH_USER_SYSCFG, &syscfg);
+
+		if (!res)
+		{
+			// write out default settings
+			memset(&syscfg, 0xff, sizeof(syscfg));
+			syscfg.time_lo = 0;
+			syscfg.time_hi = 0;
+			syscfg.lang = 0;
+			syscfg.mono = 0;
+			syscfg.autostart = 1;
+		}
+		u32 time = GetRTC_now();
+		syscfg.time_lo = time & 0xffff;
+		syscfg.time_hi = time >> 16;
+		if (settings.dreamcast.language <= 5)
+			syscfg.lang = settings.dreamcast.language;
+
+		if (static_cast<DCFlashChip*>(sys_nvmem)->WriteBlock(FLASH_PT_USER, FLASH_USER_SYSCFG, &syscfg) != 1)
+			WARN_LOG(FLASHROM, "Failed to save time and language to flash RAM");
 	}
-	u32 time = GetRTC_now();
-	syscfg.time_lo = time & 0xffff;
-	syscfg.time_hi = time >> 16;
-	if (settings.dreamcast.language <= 5)
-		syscfg.lang = settings.dreamcast.language;
 
-	if (sys_nvmem.WriteBlock(FLASH_PT_USER, FLASH_USER_SYSCFG, &syscfg) != 1)
-		printf("Failed to save time and language to flash RAM\n");
-
-#endif
-
-#if DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
-	sys_rom.Load(get_game_save_prefix() + ".nvmem2");
-#endif
+	if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
+		sys_rom->Load(get_game_save_prefix() + ".nvmem2");
 
 	return true;
 }
 
 void SaveRomFiles(const string& root)
 {
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-	sys_nvmem.Save(root, ROM_PREFIX, "nvmem.bin", "nvmem");
-#else
-	sys_nvmem.Save(get_game_save_prefix() + ".nvmem");
-#endif
-#if DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
-	sys_rom.Save(get_game_save_prefix() + ".nvmem2");
-#endif
+	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+		sys_nvmem->Save(root, getRomPrefix(), "nvmem.bin", "nvmem");
+	else
+		sys_nvmem->Save(get_game_save_prefix() + ".nvmem");
+	if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
+		sys_rom->Save(get_game_save_prefix() + ".nvmem2");
 }
 
 bool LoadHle(const string& root) {
-	if (!sys_nvmem.Load(root, ROM_PREFIX, "%nvmem.bin;%flash_wb.bin;%flash.bin;%flash.bin.bin", "nvram")) {
-		printf("No nvmem loaded\n");
+	if (!sys_nvmem->Load(root, getRomPrefix(), "%nvmem.bin;%flash_wb.bin;%flash.bin;%flash.bin.bin", "nvram")) {
+		INFO_LOG(FLASHROM, "No nvmem loaded");
 	}
 
-	return reios_init(sys_rom.data, sys_nvmem.data);
+	return reios_init(sys_rom->data, sys_nvmem->data);
 }
 
-u32 ReadFlash(u32 addr,u32 sz) { return sys_nvmem.Read(addr,sz); }
-void WriteFlash(u32 addr,u32 data,u32 sz) { sys_nvmem.Write(addr,data,sz); }
+u32 ReadFlash(u32 addr,u32 sz) { return sys_nvmem->Read(addr,sz); }
+void WriteFlash(u32 addr,u32 data,u32 sz) { sys_nvmem->Write(addr,data,sz); }
 
-#if (DC_PLATFORM == DC_PLATFORM_DREAMCAST) || (DC_PLATFORM == DC_PLATFORM_DEV_UNIT) || (DC_PLATFORM == DC_PLATFORM_NAOMI) || (DC_PLATFORM == DC_PLATFORM_NAOMI2)
+u32 ReadBios(u32 addr,u32 sz)
+{
+	return sys_rom->Read(addr, sz);
+}
 
-u32 ReadBios(u32 addr,u32 sz) { return sys_rom.Read(addr,sz); }
-void WriteBios(u32 addr,u32 data,u32 sz) { EMUERROR4("Write to [Boot ROM] is not possible, addr=%x,data=%x,size=%d",addr,data,sz); }
-
-#elif (DC_PLATFORM == DC_PLATFORM_ATOMISWAVE)
-	u32 ReadBios(u32 addr,u32 sz)
-	{
-		return sys_rom.Read(addr, sz);
-	}
-
-	void WriteBios(u32 addr,u32 data,u32 sz)
+void WriteBios(u32 addr,u32 data,u32 sz)
+{
+	if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
 	{
 		if (sz != 1)
 		{
-			EMUERROR("Invalid access size @%08x data %x sz %d\n", addr, data, sz);
+			INFO_LOG(MEMORY, "Invalid access size @%08x data %x sz %d", addr, data, sz);
 			return;
 		}
-		sys_rom.Write(addr, data, sz);
+		sys_rom->Write(addr, data, sz);
 	}
-
-#else
-#error unknown flash
-#endif
+	else
+	{
+		INFO_LOG(MEMORY, "Write to [Boot ROM] is not possible, addr=%x, data=%x, size=%d", addr, data, sz);
+	}
+}
 
 //Area 0 mem map
 //0x00000000- 0x001FFFFF	:MPX	System/Boot ROM
@@ -174,11 +181,9 @@ T DYNACALL ReadMem_area0(u32 addr)
 	//map 0x0000 to 0x01FF to Default handler
 	//mirror 0x0200 to 0x03FF , from 0x0000 to 0x03FFF
 	//map 0x0000 to 0x001F
-#if DC_PLATFORM != DC_PLATFORM_ATOMISWAVE
-	if (base<=0x001F)//	:MPX	System/Boot ROM
-#else
-	if (base<=0x0001)		// Only 128k BIOS on AtomisWave
-#endif
+
+	//	:MPX	System/Boot ROM
+	if (base <= (settings.platform.system == DC_PLATFORM_ATOMISWAVE ? 0x0001 : 0x001F))		// Only 128k BIOS on AtomisWave
 	{
 		return ReadBios(addr,sz);
 	}
@@ -192,15 +197,14 @@ T DYNACALL ReadMem_area0(u32 addr)
 	{
 		if ( /*&& (addr>= 0x00400000)*/ (addr<= 0x005F67FF)) // :Unassigned
 		{
-			EMUERROR2("Read from area0_32 not implemented [Unassigned], addr=%x",addr);
+			INFO_LOG(MEMORY, "Read from area0_32 not implemented [Unassigned], addr=%x", addr);
 		}
 		else if ((addr>= 0x005F7000) && (addr<= 0x005F70FF)) // GD-ROM
 		{
-#if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
-			return (T)ReadMem_naomi(addr,sz);
-#else
-			return (T)ReadMem_gdrom(addr,sz);
-#endif
+			if (settings.platform.system != DC_PLATFORM_DREAMCAST)
+				return (T)ReadMem_naomi(addr, sz);
+			else
+				return (T)ReadMem_gdrom(addr, sz);
 		}
 		else if (likely((addr>= 0x005F6800) && (addr<=0x005F7CFF))) //	/*:PVR i/f Control Reg.*/ -> ALL SB registers now
 		{
@@ -217,12 +221,13 @@ T DYNACALL ReadMem_area0(u32 addr)
 	//map 0x0060 to 0x0060
 	else if ((base ==0x0060) /*&& (addr>= 0x00600000)*/ && (addr<= 0x006007FF)) //	:MODEM
 	{
-#if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
-		return (T)libExtDevice_ReadMem_A0_006(addr, sz);
-#elif defined(ENABLE_MODEM)
-		return (T)ModemReadMem_A0_006(addr, sz);
+		if (settings.platform.system != DC_PLATFORM_DREAMCAST)
+			return (T)libExtDevice_ReadMem_A0_006(addr, sz);
+		else
+#if defined(ENABLE_MODEM)
+			return (T)ModemReadMem_A0_006(addr, sz);
 #else
-		return (T)0;
+			return (T)0;
 #endif
 	}
 	//map 0x0060 to 0x006F
@@ -261,12 +266,8 @@ void  DYNACALL WriteMem_area0(u32 addr,T data)
 	const u32 base=(addr>>16);
 
 	//map 0x0000 to 0x001F
-#if DC_PLATFORM != DC_PLATFORM_ATOMISWAVE
-	if ((base <=0x001F) /*&& (addr<=0x001FFFFF)*/)// :MPX System/Boot ROM
-#else
-
-	if (base <= 0x0001) // Only 128k BIOS on AtomisWave
-#endif
+	 // :MPX System/Boot ROM
+	if (base <= (settings.platform.system == DC_PLATFORM_ATOMISWAVE ? 0x0001 : 0x001F)) // Only 128k BIOS on AtomisWave
 	{
 		WriteBios(addr,data,sz);
 	}
@@ -285,11 +286,10 @@ void  DYNACALL WriteMem_area0(u32 addr,T data)
 		}
 		else if ((addr>= 0x005F7000) && (addr<= 0x005F70FF)) // GD-ROM
 		{
-#if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
-			WriteMem_naomi(addr,data,sz);
-#else
-			WriteMem_gdrom(addr,data,sz);
-#endif
+			if (settings.platform.system != DC_PLATFORM_DREAMCAST)
+				WriteMem_naomi(addr,data,sz);
+			else
+				WriteMem_gdrom(addr,data,sz);
 		}
 		else if ( likely((addr>= 0x005F6800) && (addr<=0x005F7CFF)) ) // /*:PVR i/f Control Reg.*/ -> ALL SB registers
 		{
@@ -304,10 +304,11 @@ void  DYNACALL WriteMem_area0(u32 addr,T data)
 	//map 0x0060 to 0x0060
 	else if ((base ==0x0060) /*&& (addr>= 0x00600000)*/ && (addr<= 0x006007FF)) // MODEM
 	{
-#if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
-		libExtDevice_WriteMem_A0_006(addr, data, sz);
-#elif defined(ENABLE_MODEM)
-		ModemWriteMem_A0_006(addr, data, sz);
+		if (settings.platform.system != DC_PLATFORM_DREAMCAST)
+			libExtDevice_WriteMem_A0_006(addr, data, sz);
+#if defined(ENABLE_MODEM)
+		else
+			ModemWriteMem_A0_006(addr, data, sz);
 #endif
 	}
 	//map 0x0060 to 0x006F
@@ -347,17 +348,57 @@ void sh4_area0_Init()
 	sb_Init();
 }
 
-void sh4_area0_Reset(bool Manual)
+void sh4_area0_Reset(bool hard)
 {
-	sb_Reset(Manual);
-	sys_rom.Reset();
-#if defined(FLASH_SIZE) || defined(BBSRAM_SIZE)
-	sys_nvmem.Reset();
-#endif
+	if (hard)
+	{
+		if (sys_rom != NULL)
+		{
+			delete sys_rom;
+			sys_rom = NULL;
+		}
+		if (sys_nvmem != NULL)
+		{
+			delete sys_nvmem;
+			sys_nvmem = NULL;
+		}
+
+		switch (settings.platform.system)
+		{
+		case DC_PLATFORM_DREAMCAST:
+			sys_rom = new RomChip(settings.platform.bios_size);
+			sys_nvmem = new DCFlashChip(settings.platform.flash_size);
+			break;
+		case DC_PLATFORM_NAOMI:
+			sys_rom = new RomChip(settings.platform.bios_size);
+			sys_nvmem = new SRamChip(settings.platform.bbsram_size);
+			break;
+		case DC_PLATFORM_ATOMISWAVE:
+			sys_rom = new DCFlashChip(settings.platform.bios_size, settings.platform.bios_size / 2);
+			sys_nvmem = new SRamChip(settings.platform.bbsram_size);
+			break;
+		}
+	}
+	else
+	{
+		sys_rom->Reset();
+		sys_nvmem->Reset();
+	}
+	sb_Reset(hard);
 }
 
 void sh4_area0_Term()
 {
+	if (sys_rom != NULL)
+	{
+		delete sys_rom;
+		sys_rom = NULL;
+	}
+	if (sys_nvmem != NULL)
+	{
+		delete sys_nvmem;
+		sys_nvmem = NULL;
+	}
 	sb_Term();
 }
 

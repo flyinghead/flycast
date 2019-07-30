@@ -228,10 +228,10 @@ struct RegAlloc
 
 	bool IsAllocg(Sh4RegType reg)
 	{
-		for (u32 sid=0;sid<all_spans.size();sid++)
+		for (RegSpan *span : all_spans)
 		{
-			if (all_spans[sid]->regstart==(u32)reg && all_spans[sid]->contains(current_opid))
-				return !all_spans[sid]->fpr;
+			if (span->regstart == (u32)reg && span->contains(current_opid))
+				return !span->fpr;
 		}
 
 		return false;
@@ -252,10 +252,10 @@ struct RegAlloc
 
 	bool IsAllocf(Sh4RegType reg)
 	{
-		for (u32 sid=0;sid<all_spans.size();sid++)
+		for (RegSpan *span : all_spans)
 		{
-			if (all_spans[sid]->regstart==(u32)reg && all_spans[sid]->contains(current_opid))
-				return all_spans[sid]->fpr;
+			if (span->regstart == (u32)reg && span->contains(current_opid))
+				return span->fpr;
 		}
 
 		return false;
@@ -362,6 +362,10 @@ struct RegAlloc
 		}
 	}
 	
+	bool IsExceptionOp(shil_opcode* op)
+	{
+		return mmu_enabled() && (op->op == shop_readm || op->op == shop_writem || op->op == shop_pref);
+	}
 
 	bool IsFlushOp(RuntimeBlockInfo* block, int opid)
 	{
@@ -404,11 +408,11 @@ struct RegAlloc
 
 	RegSpan* FindSpan(Sh4RegType reg, u32 opid)
 	{
-		for (u32 sid=0;sid<all_spans.size();sid++)
+		for (RegSpan *span : all_spans)
 		{
-			if (all_spans[sid]->regstart==(u32)reg && all_spans[sid]->contains(opid))
+			if (span->regstart == (u32)reg && span->contains(opid))
 			{
-				return all_spans[sid];
+				return span;
 			}
 		}
 		die("Failed to find span");
@@ -431,13 +435,6 @@ struct RegAlloc
 		{
 			op=&block->oplist[opid];
 
-			/*
-			if (op->op!=shop_readm && op->op!=shop_writem && ( op->rd.is_vector() ||op->rs1.is_vector()))
-			{
-			//	__asm int 3;
-			}*/
-
-			//if (op->op != shop_readm && op->op != shop_writem && op->op != shop_jcond && op->op != shop_jdyn && op->op != shop_mov32 && op->op != shop_mov64 && (op->op != shop_add || block->addr<=0x8c0DA0BA))
 			if (IsFlushOp(block,opid))
 			{
 				bool fp=false,gpr_b=false,all=false;
@@ -536,6 +533,19 @@ struct RegAlloc
 			}
 			else
 			{
+				if (IsExceptionOp(op))
+				{
+					// If the current op may throw an exception, flush all writeback spans before the op
+					for (int regid = 0; regid < sh4_reg_count; regid++)
+					{
+						RegSpan *span = spans[regid];
+						if (span && span->writeback)
+						{
+							span->Flush();
+							spans[regid] = 0;
+						}
+					}
+				}
 				set<shil_param> reg_wt;
 				set<shil_param> reg_rd;
 
@@ -557,29 +567,29 @@ struct RegAlloc
 					{
 						reg_rd.erase(*iter);
 						{
-							if ((*iter).is_reg())
+							if (iter->is_reg())
 							{
 								//r~w
-								if ((*iter).is_r32())
+								if (iter->is_r32())
 								{
-									if (spans[(*iter)._reg]==0)
+									if (spans[iter->_reg]==0)
 									{
-										spans[(*iter)._reg] = new RegSpan((*iter),opid,AM_READWRITE);
-										all_spans.push_back(spans[(*iter)._reg]);
+										spans[iter->_reg] = new RegSpan(*iter, opid, AM_READWRITE);
+										all_spans.push_back(spans[iter->_reg]);
 									}
 									else
 									{
-										spans[(*iter)._reg]->Access(opid,AM_READWRITE);
+										spans[iter->_reg]->Access(opid, AM_READWRITE);
 									}
 								}
 								else
 								{
-									for (u32 i=0; i<(*iter).count(); i++)
+									for (u32 i = 0; i < iter->count(); i++)
 									{
-										if (spans[(*iter)._reg+i]!=0)
-											spans[(*iter)._reg+i]->Flush();
+										if (spans[iter->_reg + i] != 0)
+											spans[iter->_reg + i]->Flush();
 
-										spans[(*iter)._reg+i]=0;
+										spans[iter->_reg + i]=0;
 									}
 								}
 							}
@@ -587,65 +597,75 @@ struct RegAlloc
 					}
 					else
 					{
-						if ((*iter).is_reg())
+						if (iter->is_reg())
 						{
-							for (u32 i=0; i<(*iter).count(); i++)
+							for (u32 i = 0; i < iter->count(); i++)
 							{
-								if (spans[(*iter)._reg+i]!=0)
+								if (spans[iter->_reg + i] != 0)
 								{
 									//hack//
 									//this is a bug on the current reg alloc code, affects fipr.
 									//generally, vector registers aren't treated correctly
 									//as groups of phy registers. I really need a better model
 									//to accommodate for that on the reg alloc side of things ..
-									if ((*iter).count()==1 && iter->_reg==op->rs1._reg+3)
-										spans[(*iter)._reg+i]->Flush();
+									if (iter->count() == 1 && iter->_reg == op->rs1._reg + 3)
+										spans[iter->_reg + i]->Flush();
 									else
-										spans[(*iter)._reg+i]->Kill();
+									{
+										if (IsExceptionOp(op))
+											spans[iter->_reg + i]->Flush();
+										else
+											spans[iter->_reg + i]->Kill();
+									}
 								}
-								spans[(*iter)._reg+i]=0;
+								spans[iter->_reg + i] = 0;
 							}
 
 							//w
-							if ((*iter).is_r32())
+							if (iter->is_r32())
 							{
-								if (spans[(*iter)._reg]!=0)
-									spans[(*iter)._reg]->Kill();
+								if (spans[iter->_reg] != 0)
+								{
+									if (IsExceptionOp(op))
+										spans[iter->_reg]->Flush();
+									else
+										spans[iter->_reg]->Kill();
+								}
 
-								spans[(*iter)._reg]= new RegSpan((*iter),opid,AM_WRITE);
-								all_spans.push_back(spans[(*iter)._reg]);
+								spans[iter->_reg] = new RegSpan(*iter, opid, AM_WRITE);
+								all_spans.push_back(spans[iter->_reg]);
 							}
 						}
 					}
 					++iter;
 				}
 
-				iter=reg_rd.begin();
-				while( iter != reg_rd.end() ) 
+				iter = reg_rd.begin();
+				while (iter != reg_rd.end())
 				{
 					//r
-					if ((*iter).is_reg())
+					if (iter->is_reg())
 					{
-						if ((*iter).is_r32())
+						if (iter->is_r32())
 						{
-							if (spans[(*iter)._reg]==0)
+							if (spans[iter->_reg] == 0)
 							{
-								spans[(*iter)._reg] = new RegSpan((*iter),opid,AM_READ);
-								all_spans.push_back(spans[(*iter)._reg]);
+								spans[iter->_reg] = new RegSpan((*iter), opid, AM_READ);
+								all_spans.push_back(spans[iter->_reg]);
 							}
 							else
 							{
-								spans[(*iter)._reg]->Access(opid,AM_READ);
+								spans[iter->_reg]->Access(opid, AM_READ);
 							}
 						}
 						else
 						{
-							for (u32 i=0; i<(*iter).count(); i++)
+							for (u32 i = 0; i < iter->count(); i++)
 							{
-								if (spans[(*iter)._reg+i]!=0)
-									spans[(*iter)._reg+i]->Flush();
+								if (spans[iter->_reg + i] != 0)
+									spans[iter->_reg + i]->Flush();
 
-								spans[(*iter)._reg+i]=0;
+								spans[iter->_reg + i] = 0;
 							}
 						}
 					}
@@ -691,11 +711,11 @@ struct RegAlloc
 			u32 cc_g=0;
 			u32 cc_f=0;
 
-			for (u32 sid=0;sid<all_spans.size();sid++)
+			for (RegSpan *span : all_spans)
 			{
-				if (all_spans[sid]->contains(opid))
+				if (span->contains(opid))
 				{
-					if (all_spans[sid]->fpr)
+					if (span->fpr)
 						cc_f++;
 					else
 						cc_g++;
@@ -708,13 +728,13 @@ struct RegAlloc
 
 			if (false)
 			{
-				printf("After reduction ..\n");
+				INFO_LOG(DYNAREC, "After reduction ..");
 				for (u32 sid=0;sid<all_spans.size();sid++)
 				{
 					RegSpan* spn=all_spans[sid];
 
 					if (spn->contains(opid))
-						printf("\t[%c]span: %d (r%d), [%d:%d],n: %d, p: %d\n",spn->cacc(opid)?'x':' ',sid,all_spans[sid]->regstart,all_spans[sid]->start,all_spans[sid]->end,all_spans[sid]->nacc(opid),all_spans[sid]->pacc(opid));
+						INFO_LOG(DYNAREC, "[%c]span: %d (r%d), [%d:%d],n: %d, p: %d",spn->cacc(opid)?'x':' ',sid,all_spans[sid]->regstart,all_spans[sid]->start,all_spans[sid]->end,all_spans[sid]->nacc(opid),all_spans[sid]->pacc(opid));
 				}
 			}
 		}
@@ -722,83 +742,36 @@ struct RegAlloc
 		//Allocate the registers to the spans !
 		for (size_t opid=0;opid<block->oplist.size();opid++)
 		{
-			bool alias_mov=false;
-
-			if (block->oplist[opid].op==shop_mov32 && 
-				( 
-				(block->oplist[opid].rd.is_r32i() && block->oplist[opid].rs1.is_r32i() ) || 
-				(block->oplist[opid].rd.is_r32f() && block->oplist[opid].rs1.is_r32f() )
-				))
+			for (RegSpan *span : all_spans)
 			{
-				//FindSpan(block->oplist[opid].rd._reg);
-				RegSpan* x=FindSpan(block->oplist[opid].rs1._reg,opid);
-				if (0 && x->nacc_w(opid)==-1 && (x->nreg!=-1 || x->nregf!=-1) && !x->aliased)
+				if (span->begining(opid))
 				{
-					RegSpan* d=FindSpan(block->oplist[opid].rd._reg,opid);
-					int nwa=d->nacc_w(opid);
-
-					if (nwa==-1 || nwa>=x->end)
+					if (span->fpr)
 					{
+						verify(regsf.size()>0);
+						span->nregf=regsf.back();
+						regsf.pop_back();
+					}
+					else
+					{
+						verify(regs.size()>0);
+						span->nreg=regs.back();
+						regs.pop_back();
 
-						verify(d->fpr==x->fpr);
-						d->nreg=x->nreg;
-						d->nregf=x->nregf;
-						//x->aliased=true;
-
-						verify(d->begining(opid) && !d->preload);
-						//verify(d->end>=x->end);
-
-						if (d->end>=x->end)
-							x->aliased=true;
-						else
-							d->aliased=true;
-
-						//printf("[%08X] rALIA %d from %d\n",spn,spn->regstart,spn->nreg);
-						alias_mov=true;
+						//printf("rALOC %d from %d\n",spn->regstart,spn->nreg);
 					}
 				}
-			}
-
-			if (!alias_mov)
-			{
-				for (u32 sid=0;sid<all_spans.size();sid++)
+				if (span->ending(opid) && !span->aliased)
 				{
-					RegSpan* spn=all_spans[sid];
-
-					if (spn->begining(opid))
-					{
-						if (spn->fpr)
-						{
-							verify(regsf.size()>0);
-							spn->nregf=regsf.back();
-							regsf.pop_back();
-						}
-						else
-						{
-							verify(regs.size()>0);
-							spn->nreg=regs.back();
-							regs.pop_back();
-
-							//printf("rALOC %d from %d\n",spn->regstart,spn->nreg);
-						}
-					}
-				}
-			}
-			for (u32 sid=0;sid<all_spans.size();sid++)
-			{
-				RegSpan* spn=all_spans[sid];
-
-				if ( spn->ending(opid) && !spn->aliased)
-				{
-					if (spn->fpr)
+					if (span->fpr)
 					{
 						verify(regsf.size()<reg_cc_max_f);
-						regsf.push_front(spn->nregf);
+						regsf.push_front(span->nregf);
 					}
 					else
 					{
 						verify(regs.size()<reg_cc_max_g);
-						regs.push_front(spn->nreg);
+						regs.push_front(span->nreg);
 						//printf("rFREE %d from %d\n",spn->regstart,spn->nreg);
 					}
 				}
@@ -866,12 +839,12 @@ struct RegAlloc
 
 				if ( do_move)
 				{
-					printf("Span PLD is movable by %d, moved by %d w/ %d!!\n",slack,spn->start-opid_found,opid_plc);
+					DEBUG_LOG(DYNAREC, "Span PLD is movable by %d, moved by %d w/ %d!!",slack,spn->start-opid_found,opid_plc);
 					spn->start=opid_found;
 				}
 				else
 				{
-					printf("Span PLD is movable by %d but  %d -> not moved :(\n",slack,opid_plc);
+					DEBUG_LOG(DYNAREC, "Span PLD is movable by %d but  %d -> not moved :(",slack,opid_plc);
 				}
 			}
 		}
@@ -935,12 +908,12 @@ struct RegAlloc
 
 				if ( do_move)
 				{
-					printf("Span WB is movable by %d, moved by %d w/ %d!!\n",slack,opid_found-spn->end,opid_plc);
+					DEBUG_LOG(DYNAREC, "Span WB is movable by %d, moved by %d w/ %d!!",slack,opid_found-spn->end,opid_plc);
 					spn->end=opid_found;
 				}
 				else
 				{
-					printf("Span WB is movable by %d but  %d -> not moved :(\n",slack,opid_plc);
+					DEBUG_LOG(DYNAREC, "Span WB is movable by %d but  %d -> not moved :(",slack,opid_plc);
 				}
 			}
 		}
@@ -953,51 +926,45 @@ struct RegAlloc
 
 	void SplitSpans(u32 cc,u32 reg_cc_max ,bool fpr,u32 opid)
 	{
-		bool was_large=false;	//this control prints
-
 		while (cc>reg_cc_max)
 		{
-			if (was_large)
-				printf("Opcode: %d, %d active spans\n",opid,cc);
+			DEBUG_LOG(DYNAREC, "Opcode: %d, %d active spans", opid, cc);
 
 			RegSpan* last_pacc=0;
 			RegSpan* last_nacc=0;
 
-			for (u32 sid=0;sid<all_spans.size();sid++)
+			for (RegSpan *span : all_spans)
 			{
-				RegSpan* spn=all_spans[sid];
-
-				if (spn->contains(opid) && fpr==spn->fpr)
+				if (span->contains(opid) && fpr==span->fpr)
 				{
-					if (!spn->cacc(opid))
+					if (!span->cacc(opid))
 					{
-						if (!last_nacc || spn->nacc(opid)>last_nacc->nacc(opid))
-							last_nacc=spn;
+						if (!last_nacc || span->nacc(opid)>last_nacc->nacc(opid))
+							last_nacc=span;
 
-						if (!last_pacc || spn->pacc(opid)<last_pacc->pacc(opid))
-							last_pacc=spn;
+						if (!last_pacc || span->pacc(opid)<last_pacc->pacc(opid))
+							last_pacc=span;
 					}
-					if (was_large)
-						printf("\t[%c]span: %d (r%d), [%d:%d],n: %d, p: %d\n",spn->cacc(opid)?'x':' ',sid,all_spans[sid]->regstart,all_spans[sid]->start,all_spans[sid]->end,all_spans[sid]->nacc(opid),all_spans[sid]->pacc(opid));
+					DEBUG_LOG(DYNAREC, "[%c]span: r%d, [%d:%d],n: %d, p: %d",span->cacc(opid)?'x':' ',span->regstart,span->start,span->end,span->nacc(opid),span->pacc(opid));
 				}
 			}
 
 			//printf("Last pacc: %d, vlen %d | reg r%d\n",last_pacc->nacc(opid)-opid,last_pacc->nacc(opid)-last_pacc->pacc(opid),last_pacc->regstart);
 			//printf("Last nacc: %d, vlen %d | reg r%d\n",last_nacc->nacc(opid)-opid,last_nacc->nacc(opid)-last_nacc->pacc(opid),last_nacc->regstart);
 
-			RegSpan* spn= new RegSpan(*last_nacc);
-			spn->start=last_nacc->nacc(opid);
+			RegSpan* span= new RegSpan(*last_nacc);
+			span->start=last_nacc->nacc(opid);
 			last_nacc->end=last_nacc->pacc(opid);
 
 			//trim the access arrays as required ..
-			spn->trim_access();
+			span->trim_access();
 			last_nacc->trim_access();
 
-			spn->preload=spn->NeedsPL();
+			span->preload=span->NeedsPL();
 			last_nacc->writeback=last_nacc->NeedsWB();
 
 			//add it to the span list !
-			all_spans.push_back(spn);
+			all_spans.push_back(span);
 			spills++;
 			cc--;
 		}
@@ -1007,9 +974,9 @@ struct RegAlloc
 	{
 		verify(reg!=-1);
 		int cc=0;
-		for (u32 sid=0;sid<all_spans.size();sid++)
+		for (RegSpan *span : all_spans)
 		{
-			if (all_spans[sid]->regstart==reg && all_spans[sid]->contains(opid))
+			if (span->regstart == reg && span->contains(opid))
 				cc++;
 		}
 		return cc;
@@ -1019,9 +986,9 @@ struct RegAlloc
 	{
 		verify(nreg!=-1);
 		int cc=0;
-		for (u32 sid=0;sid<all_spans.size();sid++)
+		for (RegSpan *span : all_spans)
 		{
-			if (all_spans[sid]->nreg==nreg && all_spans[sid]->contains(opid))
+			if (span->nreg == nreg && span->contains(opid))
 				cc++;
 		}
 		return cc;
@@ -1031,9 +998,9 @@ struct RegAlloc
 	{
 		verify(nregf!=-1);
 		int cc=0;
-		for (u32 sid=0;sid<all_spans.size();sid++)
+		for (RegSpan *span : all_spans)
 		{
-			if (all_spans[sid]->nregf==nregf && all_spans[sid]->contains(opid))
+			if (span->nregf == nregf && span->contains(opid))
 				cc++;
 		}
 		return cc;
@@ -1043,11 +1010,9 @@ struct RegAlloc
 	{
 		int rv=0;
 
-		for (u32 sid=0;sid<all_spans.size();sid++)
+		for (RegSpan *span : all_spans)
 		{
-			RegSpan* spn=all_spans[sid];
-
-			if (spn->preload && spn->begining(opid))
+			if (span->preload && span->begining(opid))
 				rv++;
 		}
 
@@ -1058,11 +1023,9 @@ struct RegAlloc
 	{
 		int rv=0;
 
-		for (u32 sid=0;sid<all_spans.size();sid++)
+		for (RegSpan *span : all_spans)
 		{
-			RegSpan* spn=all_spans[sid];
-
-			if (spn->writeback && spn->ending(opid))
+			if (span->writeback && span->ending(opid))
 				rv++;
 		}
 
@@ -1073,23 +1036,21 @@ struct RegAlloc
 	{
 		current_opid=opid;
 
-		for (u32 sid=0;sid<all_spans.size();sid++)
+		for (RegSpan *span : all_spans)
 		{
-			RegSpan* spn=all_spans[sid];
-
-			if (spn->begining(current_opid) && spn->preload)
+			if (span->begining(current_opid) && span->preload)
 			{
-				if (spn->fpr)
+				if (span->fpr)
 				{
 					//printf("Op %d: Preloading f%d to %d\n",current_opid,spn->regstart,spn->nregf);
 					preload_fpu++;
-					Preload_FPU(spn->regstart,spn->nregf);
+					Preload_FPU(span->regstart,span->nregf);
 				}
 				else
 				{
 					//printf("Op %d: Preloading r%d to %d\n",current_opid,spn->regstart,spn->nreg);
 					preload_gpr++;
-					Preload(spn->regstart,spn->nreg);
+					Preload(span->regstart,span->nreg);
 				}
 			}
 		}
@@ -1097,23 +1058,39 @@ struct RegAlloc
 
 	void OpEnd(shil_opcode* op)
 	{
-		for (u32 sid=0;sid<all_spans.size();sid++)
+		for (RegSpan *span : all_spans)
 		{
-			RegSpan* spn=all_spans[sid];
-
-			if (spn->ending(current_opid) && spn->writeback)
+			if (span->ending(current_opid) && span->writeback)
 			{
-				if (spn->fpr)
+				if (span->fpr)
 				{
 					//printf("Op %d: Writing back f%d from %d\n",current_opid,spn->regstart,spn->nregf);
 					writeback_fpu++;
-					Writeback_FPU(spn->regstart,spn->nregf);
+					Writeback_FPU(span->regstart,span->nregf);
 				}
 				else
 				{
 					//printf("Op %d: Writing back r%d from %d\n",current_opid,spn->regstart,spn->nreg);
 					writeback_gpr++;
-					Writeback(spn->regstart,spn->nreg);
+					Writeback(span->regstart,span->nreg);
+				}
+			}
+		}
+	}
+
+	void BailOut(u32 opid)
+	{
+		for (RegSpan *span : all_spans)
+		{
+			if (span->end >= opid && span->start < opid && span->writeback)
+			{
+				if (span->fpr)
+				{
+					Writeback_FPU(span->regstart, span->nregf);
+				}
+				else
+				{
+					Writeback(span->regstart, span->nreg);
 				}
 			}
 		}
@@ -1130,8 +1107,8 @@ struct RegAlloc
 				spans[sid]=0;
 		}
 
-		for (size_t sid=0;sid<all_spans.size();sid++)
-			delete all_spans[sid];
+		for (RegSpan *span : all_spans)
+			delete span;
 
 		all_spans.clear();
 	}

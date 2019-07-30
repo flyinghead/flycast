@@ -176,15 +176,15 @@ void UpdateTMUCounts(u32 reg)
 			break;
 
 		case 5: //reserved
-			printf("TMU ch%d - TCR%d mode is reserved (5)",reg,reg);
+			INFO_LOG(SH4, "TMU ch%d - TCR%d mode is reserved (5)",reg,reg);
 			break;
 
 		case 6: //RTC
-			printf("TMU ch%d - TCR%d mode is RTC (6), can't be used on Dreamcast",reg,reg);
+			INFO_LOG(SH4, "TMU ch%d - TCR%d mode is RTC (6), can't be used on Dreamcast",reg,reg);
 			break;
 
 		case 7: //external
-			printf("TMU ch%d - TCR%d mode is External (7), can't be used on Dreamcast",reg,reg);
+			INFO_LOG(SH4, "TMU ch%d - TCR%d mode is External (7), can't be used on Dreamcast",reg,reg);
 			break;
 	}
 	tmu_shift[reg]+=2;
@@ -203,13 +203,13 @@ void TMU_TCR_write(u32 addr, u32 data)
 //Chan 2 not used functions
 u32 TMU_TCPR2_read(u32 addr)
 {
-	EMUERROR("Read from TMU_TCPR2 - this register should be not used on Dreamcast according to docs");
+	INFO_LOG(SH4, "Read from TMU_TCPR2 - this register should be not used on Dreamcast according to docs");
 	return 0;
 }
 
 void TMU_TCPR2_write(u32 addr, u32 data)
 {
-	EMUERROR2("Write to TMU_TCPR2 - this register should be not used on Dreamcast according to docs, data=%d",data);
+	INFO_LOG(SH4, "Write to TMU_TCPR2 - this register should be not used on Dreamcast according to docs, data=%d", data);
 }
 
 void write_TMU_TSTR(u32 addr, u32 data)

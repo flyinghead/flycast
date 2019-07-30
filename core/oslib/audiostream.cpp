@@ -44,12 +44,12 @@ bool RegisterAudioBackend(audiobackend_t *backend)
 	// Check if backend is valid
 	if (backend == NULL)
 	{
-		printf("ERROR: Tried to register invalid audio backend (NULL pointer).\n");
+		WARN_LOG(AUDIO, "ERROR: Tried to register invalid audio backend (NULL pointer).");
 		return false;
 	}
 
 	if (backend->slug == "auto" || backend->slug == "none") {
-		printf("ERROR: Tried to register invalid audio backend (slug \"%s\" is a reserved keyword).\n", backend->slug.c_str());
+		WARN_LOG(AUDIO, "ERROR: Tried to register invalid audio backend (slug \"%s\" is a reserved keyword).", backend->slug.c_str());
 		return false;
 	}
 
@@ -63,7 +63,7 @@ bool RegisterAudioBackend(audiobackend_t *backend)
 		// Check for integer overflows
 		if (audiobackends_num_max == UINT_MAX)
 		{
-			printf("ERROR: Registering audio backend \"%s\" (%s) failed. Cannot register more than %u backends\n", backend->slug.c_str(), backend->name.c_str(), audiobackends_num_max);
+			WARN_LOG(AUDIO, "ERROR: Registering audio backend \"%s\" (%s) failed. Cannot register more than %u backends", backend->slug.c_str(), backend->name.c_str(), audiobackends_num_max);
 			return false;
 		}
 		audiobackends_num_max++;
@@ -71,7 +71,7 @@ bool RegisterAudioBackend(audiobackend_t *backend)
 		// Make sure that allocation worked
 		if (new_ptr == NULL)
 		{
-			printf("ERROR: Registering audio backend \"%s\" (%s) failed. Cannot allocate additional memory.\n", backend->slug.c_str(), backend->name.c_str());
+			WARN_LOG(AUDIO, "ERROR: Registering audio backend \"%s\" (%s) failed. Cannot allocate additional memory.", backend->slug.c_str(), backend->name.c_str());
 			return false;
 		}
 		audiobackends = new_ptr;
@@ -86,7 +86,7 @@ audiobackend_t* GetAudioBackend(std::string slug)
 {
 	if (slug == "none")
 	{
-			printf("WARNING: Audio backend set to \"none\"!\n");
+		INFO_LOG(AUDIO, "WARNING: Audio backend set to \"none\"!");
 	}
 	else if (audiobackends_num_registered > 0)
 	{
@@ -95,7 +95,7 @@ audiobackend_t* GetAudioBackend(std::string slug)
 			/* FIXME: At some point, one might want to insert some intelligent
 				 algorithm for autoselecting the approriate audio backend here.
 				 I'm too lazy right now. */
-			printf("Auto-selected audio backend \"%s\" (%s).\n", audiobackends[0]->slug.c_str(), audiobackends[0]->name.c_str());
+			INFO_LOG(AUDIO, "Auto-selected audio backend \"%s\" (%s).", audiobackends[0]->slug.c_str(), audiobackends[0]->name.c_str());
 			return audiobackends[0];
 		}
 		else
@@ -107,12 +107,12 @@ audiobackend_t* GetAudioBackend(std::string slug)
 						return audiobackends[i];
 				}
 			}
-			printf("WARNING: Audio backend \"%s\" not found!\n", slug.c_str());
+			WARN_LOG(AUDIO, "WARNING: Audio backend \"%s\" not found!", slug.c_str());
 		}
 	}
 	else
 	{
-			printf("WARNING: No audio backends available!\n");
+		WARN_LOG(AUDIO, "WARNING: No audio backends available!");
 	}
 	return NULL;
 }
@@ -181,14 +181,14 @@ void SortAudioBackends()
 void InitAudio()
 {
 	if (cfgLoadInt("audio", "disable", 0)) {
-		printf("WARNING: Audio disabled in config!\n");
+		INFO_LOG(AUDIO, "WARNING: Audio disabled in config!");
 		return;
 	}
 
 	cfgSaveInt("audio", "disable", 0);
 
 	if (audiobackend_current != NULL) {
-		printf("ERROR: The audio backend \"%s\" (%s) has already been initialized, you need to terminate it before you can call audio_init() again!\n", audiobackend_current->slug.c_str(), audiobackend_current->name.c_str());
+		WARN_LOG(AUDIO, "ERROR: The audio backend \"%s\" (%s) has already been initialized, you need to terminate it before you can call audio_init() again!", audiobackend_current->slug.c_str(), audiobackend_current->name.c_str());
 		return;
 	}
 
@@ -197,11 +197,11 @@ void InitAudio()
 	string audiobackend_slug = settings.audio.backend;
 	audiobackend_current = GetAudioBackend(audiobackend_slug);
 	if (audiobackend_current == NULL) {
-		printf("WARNING: Running without audio!\n");
+		INFO_LOG(AUDIO, "WARNING: Running without audio!");
 		return;
 	}
 
-	printf("Initializing audio backend \"%s\" (%s)...\n", audiobackend_current->slug.c_str(), audiobackend_current->name.c_str());
+	INFO_LOG(AUDIO, "Initializing audio backend \"%s\" (%s)...", audiobackend_current->slug.c_str(), audiobackend_current->name.c_str());
 	audiobackend_current->init();
 }
 
@@ -209,7 +209,7 @@ void TermAudio()
 {
 	if (audiobackend_current != NULL) {
 		audiobackend_current->term();
-		printf("Terminating audio backend \"%s\" (%s)...\n", audiobackend_current->slug.c_str(), audiobackend_current->name.c_str());
+		INFO_LOG(AUDIO, "Terminating audio backend \"%s\" (%s)...", audiobackend_current->slug.c_str(), audiobackend_current->name.c_str());
 		audiobackend_current = NULL;
 	}
 }

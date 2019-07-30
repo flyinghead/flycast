@@ -543,7 +543,7 @@ static int ppp_fcs_verify(uint8_t *buf, uint32_t len)
 }
 
 /* Serial send (DTE->DCE) functions */
-static int pico_ppp_ctl_send(struct pico_device *dev, uint16_t code, uint8_t *pkt, uint32_t len)
+static int pico_ppp_ctl_send(struct pico_device *dev, uint16_t code, uint8_t *pkt, uint32_t len, uint32_t no_escape)
 {
     struct pico_device_ppp *ppp = (struct pico_device_ppp *) dev;
     uint16_t fcs;
@@ -567,7 +567,15 @@ static int pico_ppp_ctl_send(struct pico_device *dev, uint16_t code, uint8_t *pk
     pkt[len - 3] = (uint8_t)(fcs & 0xFFu);
     pkt[len - 2] = (uint8_t)((fcs & 0xFF00u) >> 8);
     pkt[len - 1] = PPPF_FLAG_SEQ;
+    uint32_t asyncmap;
+    if (no_escape)
+    {
+    	asyncmap = ppp->asyncmap;
+    	ppp->asyncmap = 0xffffffff;
+    }
     ppp_serial_send_escape(ppp, pkt, (int)len);
+    if (no_escape)
+    	ppp->asyncmap = asyncmap;
     return (int)len;
 }
 
@@ -912,7 +920,8 @@ static void lcp_send_configure_request(struct pico_device_ppp *ppp)
                                  sizeof(struct pico_lcp_hdr) + /* LCP HDR */
                                  optsize +  /* Actual options size */
                                  PPP_FCS_SIZE + /* FCS at the end of the frame */
-                                 1u)          /* STOP Byte */
+                                 1u),          /* STOP Byte */
+					  1	/* no escape */
                       );
     PICO_FREE(lcpbuf);
     ppp->timer_val = PICO_PPP_DEFAULT_TIMER;
@@ -1007,8 +1016,9 @@ static void lcp_send_configure_ack(struct pico_device_ppp *ppp)
                       PPP_HDR_SIZE + PPP_PROTO_SLOT_SIZE +  /* PPP Header, etc. */
                       short_be(lcpreq->len) +               /* Actual options size + hdr (whole lcp packet) */
                       PPP_FCS_SIZE +                        /* FCS at the end of the frame */
-                      1                                     /* STOP Byte */
-                      );
+                      1,                                    /* STOP Byte */
+					  1	                                    /* no escape */
+					  );
 }
 
 static void lcp_send_terminate_request(struct pico_device_ppp *ppp)
@@ -1023,7 +1033,8 @@ static void lcp_send_terminate_request(struct pico_device_ppp *ppp)
                       PPP_HDR_SIZE + PPP_PROTO_SLOT_SIZE +  /* PPP Header, etc. */
                       sizeof(struct pico_lcp_hdr) +         /* Actual options size + hdr (whole lcp packet) */
                       PPP_FCS_SIZE +                        /* FCS at the end of the frame */
-                      1                                     /* STOP Byte */
+                      1,                                    /* STOP Byte */
+					  1	                                    /* no escape */
                       );
     lcp_timer_start(ppp, PPP_TIMER_ON_LCPTERM);
 }
@@ -1042,7 +1053,8 @@ static void lcp_send_terminate_ack(struct pico_device_ppp *ppp)
                       PPP_HDR_SIZE + PPP_PROTO_SLOT_SIZE +  /* PPP Header, etc. */
                       short_be(lcpreq->len) +               /* Actual options size + hdr (whole lcp packet) */
                       PPP_FCS_SIZE +                        /* FCS at the end of the frame */
-                      1                                     /* STOP Byte */
+                      1,                                    /* STOP Byte */
+					  1	                                    /* no escape */
                       );
 }
 
@@ -1088,7 +1100,8 @@ static void lcp_send_configure_nack(struct pico_device_ppp *ppp)
                                  sizeof(struct pico_lcp_hdr) + /* LCP HDR */
                                  dstopts_len +              /* Actual options size */
                                  PPP_FCS_SIZE +             /* FCS at the end of the frame */
-                                 1u)                          /* STOP Byte */
+                                 1u),                       /* STOP Byte */
+								 1	                        /* no escape */
                       );
 }
 
@@ -1216,7 +1229,8 @@ static void ipcp_send_ack(struct pico_device_ppp *ppp)
                       PPP_HDR_SIZE + PPP_PROTO_SLOT_SIZE +  /* PPP Header, etc. */
                       short_be(ipcpreq->len) +               /* Actual options size + hdr (whole ipcp packet) */
                       PPP_FCS_SIZE +                        /* FCS at the end of the frame */
-                      1                                     /* STOP Byte */
+                      1,                                    /* STOP Byte */
+					  0	                                    /* escape */
                       );
 }
 
@@ -1267,7 +1281,8 @@ static void ipcp_send_req(struct pico_device_ppp *ppp)
                       (uint32_t)(prefix +   /* PPP Header, etc. */
                                  (uint32_t)len + /* IPCP Header + options */
                                  PPP_FCS_SIZE + /* FCS at the end of the frame */
-                                 1u)        /* STOP Byte */
+                                 1u),        /* STOP Byte */
+					  0	                     /* escape */
                       );
 }
 
@@ -1295,7 +1310,8 @@ static void ipcp_reject_vj(struct pico_device_ppp *ppp, uint8_t *comp_req)
                                  sizeof(struct pico_ipcp_hdr) + /* LCP HDR */
                                  IPCP_VJ_LEN + /* Actual options size */
                                  PPP_FCS_SIZE + /* FCS at the end of the frame */
-                                 1u)         /* STOP Byte */
+                                 1u),        /* STOP Byte */
+					  0	                     /* escape */
                       );
 }
 
@@ -1574,8 +1590,9 @@ static void lcp_send_echo_reply(struct pico_device_ppp *ppp)
                       PPP_HDR_SIZE + PPP_PROTO_SLOT_SIZE +  /* PPP Header, etc. */
                       short_be(lcpreq->len) +               /* Actual options size + hdr (whole lcp packet) */
                       PPP_FCS_SIZE +                        /* FCS at the end of the frame */
-                      1                                     /* STOP Byte */
-                      );
+                      1,                                    /* STOP Byte */
+					  0	                                    /* escape */
+    				  );
 }
 
 static const struct pico_ppp_fsm ppp_lcp_fsm[PPP_LCP_STATE_MAX][PPP_LCP_EVENT_MAX] = {
@@ -1618,7 +1635,7 @@ static const struct pico_ppp_fsm ppp_lcp_fsm[PPP_LCP_STATE_MAX][PPP_LCP_EVENT_MA
     [PPP_LCP_STATE_CLOSED] = {
         [PPP_LCP_EVENT_UP]      = { PPP_LCP_STATE_CLOSED, {} },
         [PPP_LCP_EVENT_DOWN]    = { PPP_LCP_STATE_INITIAL, {} },
-        [PPP_LCP_EVENT_OPEN]    = { PPP_LCP_STATE_REQ_SENT, { lcp_send_configure_request} },
+        [PPP_LCP_EVENT_OPEN]    = { PPP_LCP_STATE_REQ_SENT, { lcp_send_configure_request } },
         [PPP_LCP_EVENT_CLOSE]   = { PPP_LCP_STATE_CLOSED, {} },
         [PPP_LCP_EVENT_TO_POS]  = { PPP_LCP_STATE_CLOSED, {} },
         [PPP_LCP_EVENT_TO_NEG]  = { PPP_LCP_STATE_CLOSED, {} },
@@ -1871,7 +1888,8 @@ static void auth_req(struct pico_device_ppp *ppp)
                           PPP_HDR_SIZE + PPP_PROTO_SLOT_SIZE + /* PPP Header, etc. */
                           pap_len + /* Authentication packet len */
                           PPP_FCS_SIZE + /* FCS */
-                          1)   /* STOP Byte */
+                          1),   /* STOP Byte */
+						  0	    /* escape */
                       );
     PICO_FREE(req);
 }
@@ -1916,7 +1934,8 @@ static void auth_rsp(struct pico_device_ppp *ppp)
                           1                            + /* Value length */
                           CHAP_MD5_SIZE + /* Actual payload size */
                           PPP_FCS_SIZE + /* FCS at the end of the frame */
-                          1)             /* STOP Byte */
+                          1),            /* STOP Byte */
+						  0	             /* escape */
                       );
 }
 
@@ -2051,7 +2070,8 @@ static void ipcp_send_nack(struct pico_device_ppp *ppp)
     ppp_dbg("Sending IPCP CONF NAK\n");
     pico_ppp_ctl_send(&ppp->dev, PPP_PROTO_IPCP,
                       ipcp_req,             /* Start of PPP packet */
-                      (uint32_t)sizeof(ipcp_req));
+                      (uint32_t)sizeof(ipcp_req),
+					  0);	/* escape */
 }
 
 static void ipcp_bring_up(struct pico_device_ppp *ppp)
@@ -2329,6 +2349,7 @@ struct pico_device *pico_ppp_create(void)
     ppp->lcp_state = PPP_LCP_STATE_INITIAL;
     ppp->auth_state = PPP_AUTH_STATE_INITIAL;
     ppp->ipcp_state = PPP_IPCP_STATE_INITIAL;
+    ppp->asyncmap = 0xffffffff;
 
     ppp->timer = pico_timer_add(1000, pico_ppp_tick, ppp);
     if (!ppp->timer) {

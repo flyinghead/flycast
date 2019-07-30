@@ -11,16 +11,7 @@ RZDCY_MODULES	:=	cfg/ hw/arm7/ hw/aica/ hw/holly/ hw/ hw/gdrom/ hw/maple/ \
  hw/mem/ hw/pvr/ hw/sh4/ hw/sh4/interpr/ hw/sh4/modules/ plugins/ profiler/ oslib/ \
  hw/extdev/ hw/arm/ hw/naomi/ imgread/ ./ deps/coreio/ deps/zlib/ deps/chdr/ deps/crypto/ \
  deps/libelf/ deps/chdpsr/ arm_emitter/ rend/ reios/ deps/libpng/ deps/xbrz/ \
- deps/xxhash/ deps/libzip/ deps/imgui/ archive/ input/
-
-ifdef WEBUI
-	RZDCY_MODULES += webui/
-	RZDCY_MODULES += deps/libwebsocket/
-
-	ifdef FOR_ANDROID
-		RZDCY_MODULES += deps/ifaddrs/
-	endif
-endif
+ deps/xxhash/ deps/libzip/ deps/imgui/ archive/ input/ log/
 
 ifndef NOT_ARM
     RZDCY_MODULES += rec-ARM/
@@ -135,7 +126,7 @@ endif
 
 ifdef CHD5_FLAC
 	RZDCY_CFLAGS += -DCHD5_FLAC -I$(RZDCY_SRC_DIR)/deps/flac/src/libFLAC/include/ -I$(RZDCY_SRC_DIR)/deps/flac/include
-	RZDCY_CFLAGS += -DPACKAGE_VERSION=\"1.3.2\" -DFLAC__HAS_OGG=0 -DFLAC__NO_DLL -DHAVE_LROUND -DHAVE_STDINT_H -DHAVE_STDLIB_H -DHAVE_SYS_PARAM_H
+	RZDCY_CFLAGS += -DHAVE_CONFIG_H
 	RZDCY_MODULES += deps/flac/src/libFLAC/
 endif
 

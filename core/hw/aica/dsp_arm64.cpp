@@ -36,7 +36,7 @@ public:
 	void Compile(struct dsp_t *DSP)
 	{
 		this->DSP = DSP;
-		//printf("DSPAssembler::DSPCompile recompiling for arm64 at %p\n", GetBuffer()->GetStartAddress<void*>());
+		DEBUG_LOG(AICA_ARM, "DSPAssembler::DSPCompile recompiling for arm64 at %p", GetBuffer()->GetStartAddress<void*>());
 
 		if (DSP->Stopped)
 		{
@@ -101,7 +101,7 @@ public:
 
 #ifndef _ANDROID
 		Instruction* instr_cur = GetBuffer()->GetEndAddress<Instruction*>();
-		printf("DSP PROLOGUE\n");
+		DEBUG_LOG(AICA_ARM, "DSP PROLOGUE");
 		Disassemble(instr_start, instr_cur);
 		instr_start = instr_cur;
 #endif
@@ -358,7 +358,7 @@ public:
 			}
 #ifndef _ANDROID
 			instr_cur = GetBuffer()->GetEndAddress<Instruction*>();
-			printf("DSP STEP %d: %04x %04x %04x %04x\n", step, mpro[0], mpro[1], mpro[2], mpro[3]);
+			DEBUG_LOG(AICA_ARM, "DSP STEP %d: %04x %04x %04x %04x", step, mpro[0], mpro[1], mpro[2], mpro[3]);
 			Disassemble(instr_start, instr_cur);
 			instr_start = instr_cur;
 #endif
@@ -380,7 +380,7 @@ public:
 		Ret();
 #ifndef _ANDROID
 		instr_cur = GetBuffer()->GetEndAddress<Instruction*>();
-		printf("DSP EPILOGUE\n");
+		DEBUG_LOG(AICA_ARM, "DSP EPILOGUE");
 		Disassemble(instr_start, instr_cur);
 		instr_start = instr_cur;
 #endif
@@ -486,9 +486,7 @@ private:
 		Instruction* instr;
 		for (instr = instr_start; instr < instr_end; instr += kInstructionSize) {
 			decoder.Decode(instr);
-			printf("\t %p:\t%s\n",
-					   reinterpret_cast<void*>(instr),
-					   disasm.GetOutput());
+			DEBUG_LOG(AICA_ARM, "    %p:\t%s", reinterpret_cast<void*>(instr), disasm.GetOutput());
 		}
 	}
 

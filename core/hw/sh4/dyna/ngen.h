@@ -45,8 +45,12 @@
 #include "decoder.h"
 #include "blockmanager.h"
 
-
 #define CODE_SIZE   (10*1024*1024)
+#ifdef NO_MMU
+#define TEMP_CODE_SIZE (0)
+#else
+#define TEMP_CODE_SIZE (1024*1024)
+#endif
 
 // When NO_RWX is enabled there's two address-spaces, one executable and
 // one writtable. The emitter and most of the code in rec-* will work with
@@ -78,12 +82,11 @@ void emit_SetBaseAddr();
 
 //Called from ngen_FailedToFindBlock
 DynarecCodeEntryPtr DYNACALL rdv_FailedToFindBlock(u32 pc);
+DynarecCodeEntryPtr DYNACALL rdv_FailedToFindBlock_pc();
 //Called when a block check failed, and the block needs to be invalidated
 DynarecCodeEntryPtr DYNACALL rdv_BlockCheckFail(u32 pc);
 //Called to compile code @pc
-DynarecCodeEntryPtr rdv_CompilePC();
-//Returns 0 if there is no code @pc, code ptr otherwise
-DynarecCodeEntryPtr rdv_FindCode();
+DynarecCodeEntryPtr rdv_CompilePC(u32 blockcheck_failures);
 //Finds or compiles code @pc
 DynarecCodeEntryPtr rdv_FindOrCompile();
 
@@ -109,6 +112,7 @@ extern void (*ngen_FailedToFindBlock)();
 void ngen_mainloop(void* cntx);
 
 void ngen_GetFeatures(ngen_features* dst);
+void ngen_HandleException();
 
 //Canonical callback interface
 enum CanonicalParamType

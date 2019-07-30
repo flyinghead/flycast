@@ -3,7 +3,6 @@ LOCAL_PATH := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 FOR_LINUX :=1
 #NO_REC := 1
 #NO_REND := 1
-WEBUI :=1
 USE_OSS := 1
 #USE_PULSEAUDIO := 1
 #USE_SDLAUDIO := 1
@@ -13,11 +12,11 @@ USE_UDEV := 1
 USE_MODEM := 1
 PLATFORM_EXT := elf
 
-CXX=${CC_PREFIX}g++
-CC=${CC_PREFIX}gcc
-AS=${CC_PREFIX}as
-STRIP=${CC_PREFIX}strip
-LD=${CC}
+CXX ?= ${CC_PREFIX}g++
+CC ?= ${CC_PREFIX}gcc
+AS ?= ${CC_PREFIX}as
+STRIP ?= ${CC_PREFIX}strip
+LD ?= ${CC}
 WINDRES=${CC_PREFIX}windres
 CHD5_LZMA := 1
 CHD5_FLAC := 1
@@ -121,6 +120,7 @@ else ifneq (,$(findstring x64,$(platform)))
     USE_X11 := 1
     CFLAGS += -D TARGET_LINUX_x64 -D TARGET_NO_AREC -fno-builtin-sqrtf
     CXXFLAGS += -fexceptions
+    LDFLAGS := -no-pie
 
     ifneq (,$(findstring sse4_1,$(platform)))
         HAS_SOFTREND := 1
@@ -230,7 +230,7 @@ else ifneq (,$(findstring gcwz,$(platform)))
     NO_REC := 1
     CC_PREFIX ?= /opt/gcw0-toolchain/usr/bin/mipsel-gcw0-linux-uclibc-
     CFLAGS += -D TARGET_GCW0 -D TARGET_NO_REC -fsingle-precision-constant
-    LIBS += -L../linux-deps/lib -L./enta_viv -lglapi
+    LIBS += -L./gcwz/enta_viv -lglapi
     GCWZ_PKG = reicast-gcwz.opk
     GCWZ_PKG_FILES = gcwz/default.gcw0.desktop gcwz/icon-32.png
 
@@ -251,7 +251,7 @@ else ifneq (,$(findstring vero4k,$(platform)))
 # Windows
 else ifneq (,$(findstring win32,$(platform)))
     NOT_ARM := 1
-    CFLAGS += -DTARGET_NO_WEBUI -fno-builtin-sqrtf -funroll-loops -DHAVE_FSEEKO -D TARGET_NO_AREC
+    CFLAGS += -fno-builtin-sqrtf -funroll-loops -DHAVE_FSEEKO -D TARGET_NO_AREC
     LDFLAGS += -static-libgcc -static-libstdc++ -Wl,-subsystem,windows
     LIBS := -lopengl32 -lwinmm -lgdi32 -lwsock32 -ldsound -lcomctl32 -lcomdlg32 -lxinput -liphlpapi
     PLATFORM_EXT := exe
@@ -270,7 +270,6 @@ endif
     undefine USE_EVDEV
     undefine USE_UDEV
     undefine FOR_LINUX
-    undefine WEBUI
     NO_NIXPROF := 1
     FOR_WINDOWS := 1
 else
@@ -392,27 +391,18 @@ ifdef HAS_SOFTREND
     CXXFLAGS += -DTARGET_SOFTREND
 endif
 
-EXECUTABLE_STRIPPED=nosym-reicast.$(PLATFORM_EXT)
-ifdef NAOMI
-    CFLAGS += -D TARGET_NAOMI
-    DC_PLATFORM=naomi
-    EXECUTABLE=reicast_naomi.$(PLATFORM_EXT)
-    EXECUTABLE_NAME=reicast-naomi
-else ifdef ATOMISWAVE
-    CFLAGS += -D DC_PLATFORM=DC_PLATFORM_ATOMISWAVE
-    DC_PLATFORM=atomiswave
-    EXECUTABLE=reicast_awave.$(PLATFORM_EXT)
-    EXECUTABLE_NAME=reicast-awave
-else ifdef DISPFRAME
-    CFLAGS += -D TARGET_DISPFRAME #-D TARGET_NAOMI
-    DC_PLATFORM=dispframe
-    EXECUTABLE=dispframe.$(PLATFORM_EXT)
-    EXECUTABLE_NAME=dispframe
-else
-    DC_PLATFORM=dreamcast
-    EXECUTABLE=reicast.$(PLATFORM_EXT)
-    EXECUTABLE_NAME=reicast
+ifdef TEST_AUTOMATION
+    CFLAGS += -DTEST_AUTOMATION
 endif
+
+ifdef DEBUGFAST
+    CFLAGS += -DDEBUGFAST
+endif
+
+EXECUTABLE_STRIPPED=nosym-reicast.$(PLATFORM_EXT)
+DC_PLATFORM=dreamcast
+EXECUTABLE=reicast.$(PLATFORM_EXT)
+EXECUTABLE_NAME=reicast
 
 ifndef NOT_ARM
     AS=${CC_PREFIX}gcc

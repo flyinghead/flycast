@@ -257,7 +257,7 @@ NOINLINE void DYNACALL ta_handle_cmd(u32 trans)
 			if (ta_fsm_cl==7)
 				ta_fsm_cl=dat->pcw.ListType;
 
-			verify(!IsModVolList(ta_fsm_cl));
+			//verify(!IsModVolList(ta_fsm_cl));	// fails with "F1 World Grand Prix for Dreamcast" and only with dynarec...
 			trans=TAS_PLV32;
 		}
 		else
@@ -297,7 +297,7 @@ void DYNACALL ta_thd_data32_i(void* data)
 {
 	if (ta_ctx == NULL)
 	{
-		printf("Warning: data sent to TA prior to ListInit. Implied\n");
+		INFO_LOG(PVR, "Warning: data sent to TA prior to ListInit. Implied");
 		ta_vtx_ListInit();
 	}
 

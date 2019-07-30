@@ -53,8 +53,8 @@ PvrTexInfo format[8]=
 	{"4444", 	16, GL_UNSIGNED_SHORT_4_4_4_4, tex4444_PL,	tex4444_TW,  tex4444_VQ, 	tex4444_PL32,  tex4444_TW32,  tex4444_VQ32 },	//4444
 	{"yuv", 	16, GL_UNSIGNED_BYTE,          NULL, 		NULL, 		 NULL,			texYUV422_PL,  texYUV422_TW,  texYUV422_VQ },	//yuv
 	{"bumpmap", 16, GL_UNSIGNED_SHORT_4_4_4_4, texBMP_PL,	texBMP_TW,	 texBMP_VQ, 	NULL},											//bump map
-	{"pal4", 	4,	0,						   0,			texPAL4_TW,  0, 			NULL, 		   texPAL4_TW32,  NULL },			//pal4
-	{"pal8", 	8,	0,						   0,			texPAL8_TW,  0, 			NULL, 		   texPAL8_TW32,  NULL },			//pal8
+	{"pal4", 	4,	0,						   0,			texPAL4_TW,  texPAL4_VQ, 	NULL, 		   texPAL4_TW32,  texPAL4_VQ32 },	//pal4
+	{"pal8", 	8,	0,						   0,			texPAL8_TW,  texPAL8_VQ, 	NULL, 		   texPAL8_TW32,  texPAL8_VQ32 },	//pal8
 	{"ns/1555", 0},																														// Not supported (1555)
 };
 
@@ -119,22 +119,24 @@ static void dumpRtTexture(u32 name, u32 w, u32 h) {
 //Texture Cache :)
 void TextureCacheData::PrintTextureName()
 {
-	printf("Texture: %s ",tex?tex->name:"?format?");
+	char str[512];
+	sprintf(str, "Texture: %s ", tex ? tex->name : "?format?");
 
 	if (tcw.VQ_Comp)
-		printf(" VQ");
+		strcat(str, " VQ");
 
 	if (tcw.ScanOrder==0)
-		printf(" TW");
+		strcat(str, " TW");
 
 	if (tcw.MipMapped)
-		printf(" MM");
+		strcat(str, " MM");
 
 	if (tcw.StrideSel)
-		printf(" Stride");
+		strcat(str, " Stride");
 
-	printf(" %dx%d @ 0x%X",8<<tsp.TexU,8<<tsp.TexV,tcw.TexAddr<<3);
-	printf(" id=%d\n", texID);
+	sprintf(str + strlen(str), " %dx%d @ 0x%X", 8 << tsp.TexU, 8 << tsp.TexV, tcw.TexAddr << 3);
+	sprintf(str + strlen(str), " id=%d", texID);
+	DEBUG_LOG(RENDERER, "%s", str);
 }
 
 //Create GL texture from tsp/tcw
@@ -166,14 +168,14 @@ void TextureCacheData::Create(bool isGL)
 	h=8<<tsp.TexV;                   //tex height
 
 	//PAL texture
-	if (tex->bpp==4)
-		indirect_color_ptr=tcw.PalSelect<<4;
-	else if (tex->bpp==8)
-		indirect_color_ptr=(tcw.PalSelect>>4)<<8;
+	if (tex->bpp == 4)
+		palette_index = tcw.PalSelect << 4;
+	else if (tex->bpp == 8)
+		palette_index = (tcw.PalSelect >> 4) << 8;
 
 	//VQ table (if VQ tex)
 	if (tcw.VQ_Comp)
-		indirect_color_ptr=sa;
+		vq_codebook = sa;
 
 	//Convert a pvr texture into OpenGL
 	switch (tcw.PixelFmt)
@@ -192,7 +194,7 @@ void TextureCacheData::Create(bool isGL)
 			//Texture is stored 'planar' in memory, no deswizzle is needed
 			//verify(tcw.VQ_Comp==0);
 			if (tcw.VQ_Comp != 0)
-				printf("Warning: planar texture with VQ set (invalid)\n");
+				WARN_LOG(RENDERER, "Warning: planar texture with VQ set (invalid)");
 
 			//Planar textures support stride selection, mostly used for non power of 2 textures (videos)
 			int stride=w;
@@ -212,7 +214,7 @@ void TextureCacheData::Create(bool isGL)
 			if (tcw.VQ_Comp)
 			{
 				verify(tex->VQ != NULL || tex->VQ32 != NULL);
-				indirect_color_ptr=sa;
+				vq_codebook = sa;
 				if (tcw.MipMapped)
 					sa+=MipPoint[tsp.TexU];
 				texconv = tex->VQ;
@@ -231,7 +233,7 @@ void TextureCacheData::Create(bool isGL)
 		}
 		break;
 	default:
-		printf("Unhandled texture %d\n",tcw.PixelFmt);
+		WARN_LOG(RENDERER, "Unhandled texture format %d", tcw.PixelFmt);
 		size=w*h*2;
 		texconv = NULL;
 		texconv32 = NULL;
@@ -269,8 +271,8 @@ void TextureCacheData::Update()
 			palette_hash = pal_hash_256[tcw.PalSelect >> 4];
 	}
 
-	palette_index=indirect_color_ptr; //might be used if pal. tex
-	vq_codebook=(u8*)&vram[indirect_color_ptr];  //might be used if VQ tex
+	::palette_index = this->palette_index; // might be used if pal. tex
+	::vq_codebook = &vram[vq_codebook];    // might be used if VQ tex
 
 	//texture conversion work
 	u32 stride=w;
@@ -278,7 +280,7 @@ void TextureCacheData::Update()
 	if (tcw.StrideSel && tcw.ScanOrder && (tex->PL || tex->PL32))
 		stride=(TEXT_CONTROL&31)*32; //I think this needs +1 ?
 
-	//PrintTextureName();
+	PrintTextureName();
 	u32 original_h = h;
 	if (sa_tex > VRAM_SIZE || size == 0 || sa + size > VRAM_SIZE)
 	{
@@ -291,7 +293,7 @@ void TextureCacheData::Update()
 		}
 		else
 		{
-			printf("Warning: invalid texture. Address %08X %08X size %d\n", sa_tex, sa, size);
+			WARN_LOG(RENDERER, "Warning: invalid texture. Address %08X %08X size %d", sa_tex, sa, size);
 			return;
 		}
 	}
@@ -362,7 +364,7 @@ void TextureCacheData::Update()
 	else
 	{
 		//fill it in with a temp color
-		printf("UNHANDLED TEXTURE\n");
+		WARN_LOG(RENDERER, "UNHANDLED TEXTURE");
 		pb16.init(w, h);
 		memset(pb16.data(), 0x80, w * h * 2);
 		temp_tex_buffer = pb16.data();
@@ -482,7 +484,7 @@ void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 
 	gl.rtt.TexAddr=addy>>3;
 
-	// Find the smallest power of two texture that fits into the viewport
+	// Find the smallest power of two texture that fits the viewport
 	int fbh2 = 2;
 	while (fbh2 < fbh)
 		fbh2 *= 2;
@@ -585,7 +587,7 @@ void ReadRTTBuffer() {
 				}
 			}
 		}
-		vram.UnLockRegion(0, 2 * vram.size);
+		_vmem_unprotect_vram(0, VRAM_SIZE);
 
 		glPixelStorei(GL_PACK_ALIGNMENT, 1);
 		u16 *dst = (u16 *)&vram[tex_addr];
@@ -644,14 +646,8 @@ void ReadRTTBuffer() {
 		// Restore VRAM locks
 		for (TexCacheIter i = TexCache.begin(); i != TexCache.end(); i++)
 		{
-				if (i->second.lock_block != NULL) {
-						vram.LockRegion(i->second.sa_tex, i->second.sa + i->second.size - i->second.sa_tex);
-
-						//TODO: Fix this for 32M wrap as well
-						if (_nvmem_enabled() && VRAM_SIZE == 0x800000) {
-								vram.LockRegion(i->second.sa_tex + VRAM_SIZE, i->second.sa + i->second.size - i->second.sa_tex);
-						}
-				}
+			if (i->second.lock_block != NULL)
+				_vmem_protect_vram(i->second.sa_tex, i->second.sa + i->second.size - i->second.sa_tex);
 		}
 	}
 	else
@@ -852,7 +848,8 @@ void killtex()
 	}
 
 	TexCache.clear();
-	printf("Texture cache cleared\n");
+	KillTex = false;
+	INFO_LOG(RENDERER, "Texture cache cleared");
 }
 
 void rend_text_invl(vram_block* bl)

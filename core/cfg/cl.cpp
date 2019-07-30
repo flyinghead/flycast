@@ -49,19 +49,19 @@ int setconfig(wchar** arg,int cl)
 	{
 		if (cl<1)
 		{
-			printf("-config : invalid number of parameters, format is section:key=value\n");
+			WARN_LOG(COMMON, "-config : invalid number of parameters, format is section:key=value");
 			return rv;
 		}
 		wchar* sep=strstr(arg[1],":");
 		if (sep==0)
 		{
-			printf("-config : invalid parameter %s, format is section:key=value\n",arg[1]);
+			WARN_LOG(COMMON, "-config : invalid parameter %s, format is section:key=value", arg[1]);
 			return rv;
 		}
 		wchar* value=strstr(sep+1,"=");
 		if (value==0)
 		{
-			printf("-config : invalid parameter %s, format is section:key=value\n",arg[1]);
+			WARN_LOG(COMMON, "-config : invalid parameter %s, format is section:key=value", arg[1]);
 			return rv;
 		}
 
@@ -74,14 +74,14 @@ int setconfig(wchar** arg,int cl)
 
 		if (sect==0 || key==0)
 		{
-			printf("-config : invalid parameter, format is section:key=value\n");
+			WARN_LOG(COMMON, "-config : invalid parameter, format is section:key=value");
 			return rv;
 		}
 
 		const wchar* constval = value;
 		if (constval==0)
 			constval="";
-		printf("Virtual cfg %s:%s=%s\n",sect,key,value);
+		INFO_LOG(COMMON, "Virtual cfg %s:%s=%s", sect, key, value);
 
 		cfgSetVirtual(sect,key,value);
 		rv++;
@@ -101,10 +101,10 @@ int setconfig(wchar** arg,int cl)
 
 int showhelp(wchar** arg,int cl)
 {
-	printf("\nAvailable commands :\n");
+	NOTICE_LOG(COMMON, "Available commands:");
 
-	printf("-config	section:key=value [, ..]: add a virtual config value\n Virtual config values won't be saved to the .cfg file\n unless a different value is written to em\nNote :\n You can specify many settings in the xx:yy=zz , gg:hh=jj , ...\n format.The spaces between the values and ',' are needed.\n");
-	printf("\n-help: show help info\n");
+	NOTICE_LOG(COMMON, "-config	section:key=value [, ..]: add a virtual config value\n Virtual config values won't be saved to the .cfg file\n unless a different value is written to em\nNote :\n You can specify many settings in the xx:yy=zz , gg:hh=jj , ...\n format.The spaces between the values and ',' are needed.");
+	NOTICE_LOG(COMMON, "-help: show help info");
 
 	return 0;
 }
@@ -133,31 +133,25 @@ bool ParseCommandLine(int argc,wchar* argv[])
 
 			if (extension
 				&& (stricmp(extension, ".cdi") == 0 || stricmp(extension, ".chd") == 0
-					|| stricmp(extension, ".gdi") == 0 || stricmp(extension, ".lst") == 0
-					|| stricmp(extension, ".cue") == 0))
+					|| stricmp(extension, ".gdi") == 0 || stricmp(extension, ".cue") == 0))
 			{
-				printf("Using '%s' as cd image\n", *arg);
+				INFO_LOG(COMMON, "Using '%s' as cd image", *arg);
 				cfgSetVirtual("config", "image", *arg);
 			}
 			else if (extension && stricmp(extension, ".elf") == 0)
 			{
-				printf("Using '%s' as reios elf file\n", *arg);
+				INFO_LOG(COMMON, "Using '%s' as reios elf file", *arg);
 				cfgSetVirtual("config", "reios.enabled", "1");
 				cfgSetVirtual("reios", "ElfFile", *arg);
 			}
 			else
 			{
-#if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
-				printf("Using '%s' as rom\n", *arg);
+				INFO_LOG(COMMON, "Using '%s' as rom", *arg);
 				cfgSetVirtual("config", "image", *arg);
-#else
-				printf("wtf %s is supposed to do ?\n",*arg);
-#endif
 			}
 		}
 		arg++;
 		cl--;
 	}
-	printf("\n");
 	return false;
 }

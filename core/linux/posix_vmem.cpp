@@ -142,7 +142,8 @@ static int allocate_shared_filemem(unsigned size) {
 // Implement vmem initialization for RAM, ARAM, VRAM and SH4 context, fpcb etc.
 // The function supports allocating 512MB or 4GB addr spaces.
 
-static int shmem_fd = -1, shmem_fd2 = -1;
+int vmem_fd = -1;
+static int shmem_fd2 = -1;
 
 // vmem_base_addr points to an address space of 512MB (or 4GB) that can be used for fast memory ops.
 // In negative offsets of the pointer (up to FPCB size, usually 65/129MB) the context and jump table
@@ -150,16 +151,27 @@ static int shmem_fd = -1, shmem_fd2 = -1;
 // memory using a fallback (that is, regular mallocs and falling back to slow memory JIT).
 VMemType vmem_platform_init(void **vmem_base_addr, void **sh4rcb_addr) {
 	// Firt let's try to allocate the shm-backed memory
-	shmem_fd = allocate_shared_filemem(RAM_SIZE_MAX + VRAM_SIZE_MAX + ARAM_SIZE_MAX);
-	if (shmem_fd < 0)
+	vmem_fd = allocate_shared_filemem(RAM_SIZE_MAX + VRAM_SIZE_MAX + ARAM_SIZE_MAX);
+	if (vmem_fd < 0)
 		return MemTypeError;
 
 	// Now try to allocate a contiguous piece of memory.
-	unsigned memsize = 512*1024*1024 + sizeof(Sh4RCB) + ARAM_SIZE_MAX + 0x10000;
-	void *first_ptr = mem_region_reserve(NULL, memsize);
-	if (!first_ptr) {
-		close(shmem_fd);
-		return MemTypeError;
+	void *first_ptr = NULL;
+	VMemType rv;
+#ifdef HOST_64BIT_CPU
+	size_t bigsize = 0x100000000L + sizeof(Sh4RCB) + 0x10000;	// 4GB + context size + 64K padding
+	first_ptr = mem_region_reserve(NULL, bigsize);
+	rv = MemType4GB;
+#endif
+	if (first_ptr == NULL)
+	{
+		unsigned memsize = 512*1024*1024 + sizeof(Sh4RCB) + ARAM_SIZE_MAX + 0x10000;
+		first_ptr = mem_region_reserve(NULL, memsize);
+		if (!first_ptr) {
+			close(vmem_fd);
+			return MemTypeError;
+		}
+		rv = MemType512MB;
 	}
 
 	// Align pointer to 64KB too, some Linaro bug (no idea but let's just be safe I guess).
@@ -167,17 +179,21 @@ VMemType vmem_platform_init(void **vmem_base_addr, void **sh4rcb_addr) {
 	ptrint = (ptrint + 0x10000 - 1) & (~0xffff);
 	*sh4rcb_addr = (void*)ptrint;
 	*vmem_base_addr = (void*)(ptrint + sizeof(Sh4RCB));
-	void *sh4rcb_base_ptr  = (void*)(ptrint + FPCB_SIZE);
+	const size_t fpcb_size = sizeof(((Sh4RCB *)NULL)->fpcb);
+	void *sh4rcb_base_ptr  = (void*)(ptrint + fpcb_size);
 
 	// Now map the memory for the SH4 context, do not include FPCB on purpose (paged on demand).
-	mem_region_unlock(sh4rcb_base_ptr, sizeof(Sh4RCB) - FPCB_SIZE);
+	mem_region_unlock(sh4rcb_base_ptr, sizeof(Sh4RCB) - fpcb_size);
 
-	return MemType512MB;
+	return rv;
 }
 
 // Just tries to wipe as much as possible in the relevant area.
 void vmem_platform_destroy() {
-	mem_region_release(virt_ram_base, 0x20000000);
+	if (vmem_4gb_space)
+		mem_region_release(virt_ram_base, (size_t)0x100000000);
+	else
+		mem_region_release(virt_ram_base, 0x20000000);
 }
 
 // Resets a chunk of memory by deleting its data and setting its protection back.
@@ -206,14 +222,14 @@ void vmem_platform_create_mappings(const vmem_mapping *vmem_maps, unsigned numma
 			continue;
 
 		// Calculate the number of mirrors
-		unsigned address_range_size = vmem_maps[i].end_address - vmem_maps[i].start_address;
+		u64 address_range_size = vmem_maps[i].end_address - vmem_maps[i].start_address;
 		unsigned num_mirrors = (address_range_size) / vmem_maps[i].memsize;
 		verify((address_range_size % vmem_maps[i].memsize) == 0 && num_mirrors >= 1);
 
 		for (unsigned j = 0; j < num_mirrors; j++) {
-			unsigned offset = vmem_maps[i].start_address + j * vmem_maps[i].memsize;
+			u64 offset = vmem_maps[i].start_address + j * vmem_maps[i].memsize;
 			verify(mem_region_unmap_file(&virt_ram_base[offset], vmem_maps[i].memsize));
-			verify(mem_region_map_file((void*)(uintptr_t)shmem_fd, &virt_ram_base[offset],
+			verify(mem_region_map_file((void*)(uintptr_t)vmem_fd, &virt_ram_base[offset],
 					vmem_maps[i].memsize, vmem_maps[i].memoffset, vmem_maps[i].allow_writes) != NULL);
 		}
 	}
@@ -259,7 +275,7 @@ bool vmem_platform_prepare_jit_block(void *code_area, unsigned size, void **code
 
 	*code_area_rw = ptr_rw;
 	*rx_offset = (char*)ptr_rx - (char*)ptr_rw;
-	printf("Info: Using NO_RWX mode, rx ptr: %p, rw ptr: %p, offset: %lu\n", ptr_rx, ptr_rw, (unsigned long)*rx_offset);
+	INFO_LOG(DYNAREC, "Info: Using NO_RWX mode, rx ptr: %p, rw ptr: %p, offset: %lu", ptr_rx, ptr_rw, (unsigned long)*rx_offset);
 
 	return (ptr_rw != MAP_FAILED);
 }

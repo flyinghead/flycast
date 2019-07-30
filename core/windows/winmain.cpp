@@ -1,17 +1,19 @@
 #include "oslib/oslib.h"
 #include "oslib/audiostream.h"
 #include "imgread/common.h"
+#include "hw/mem/vmem32.h"
 #include "stdclass.h"
 #include "cfg/cfg.h"
 #include "xinput_gamepad.h"
 #include "win_keyboard.h"
+#include "hw/sh4/dyna/blockmanager.h"
+#include "log/LogManager.h"
 
 #define _WIN32_WINNT 0x0500
 #include <windows.h>
 #include <windowsx.h>
 
 #include <xinput.h>
-#include "hw/maple/maple_cfg.h"
 #pragma comment(lib, "XInput9_1_0.lib")
 
 PCHAR*
@@ -119,9 +121,6 @@ static std::shared_ptr<WinMouseGamepadDevice> mouse_gamepad;
 
 void os_SetupInput()
 {
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-	mcfg_CreateDevices();
-#endif
 	XInputGamepadDevice::CreateDevices();
 	kb_gamepad = std::make_shared<WinKbGamepadDevice>(0);
 	GamepadDevice::Register(kb_gamepad);
@@ -143,8 +142,16 @@ LONG ExeptionHandler(EXCEPTION_POINTERS *ExceptionInfo)
 	u8* address=(u8*)pExceptionRecord->ExceptionInformation[1];
 
 	//printf("[EXC] During access to : 0x%X\n", address);
-
-	if (VramLockedWrite(address))
+#if 0
+	bool write = false;	// TODO?
+	if (vmem32_handle_signal(address, write, 0))
+		return EXCEPTION_CONTINUE_EXECUTION;
+#endif
+	if (bm_RamWriteAccess(address))
+	{
+		return EXCEPTION_CONTINUE_EXECUTION;
+	}
+	else if (VramLockedWrite(address))
 	{
 		return EXCEPTION_CONTINUE_EXECUTION;
 	}
@@ -152,7 +159,8 @@ LONG ExeptionHandler(EXCEPTION_POINTERS *ExceptionInfo)
 	{
 		return EXCEPTION_CONTINUE_EXECUTION;
 	}
-#if FEAT_SHREC == DYNAREC_JIT && HOST_CPU == CPU_X86
+#if FEAT_SHREC == DYNAREC_JIT
+#if HOST_CPU == CPU_X86
 		else if ( ngen_Rewrite((unat&)ep->ContextRecord->Eip,*(unat*)ep->ContextRecord->Esp,ep->ContextRecord->Eax) )
 		{
 			//remove the call from call stack
@@ -161,10 +169,16 @@ LONG ExeptionHandler(EXCEPTION_POINTERS *ExceptionInfo)
 			ep->ContextRecord->Ecx=ep->ContextRecord->Eax;
 			return EXCEPTION_CONTINUE_EXECUTION;
 		}
+#elif HOST_CPU == CPU_X64
+		else if (ngen_Rewrite((unat&)ep->ContextRecord->Rip, 0, 0))
+		{
+			return EXCEPTION_CONTINUE_EXECUTION;
+		}
+#endif
 #endif
 	else
 	{
-		printf("[GPF]Unhandled access to : 0x%X\n",(unat)address);
+	    ERROR_LOG(COMMON, "[GPF]Unhandled access to : %p", address);
 	}
 
 	return EXCEPTION_CONTINUE_SEARCH;
@@ -622,9 +636,9 @@ _In_opt_ PVOID Context
 	//	(DWORD)((u8 *)__gnat_SEH_error_handler - CodeCache);
 	/* Set its scope to the entire program.  */
 	Table[0].BeginAddress = 0;// (CodeCache - (u8*)__ImageBase);
-	Table[0].EndAddress = /*(CodeCache - (u8*)__ImageBase) +*/ CODE_SIZE;
+	Table[0].EndAddress = /*(CodeCache - (u8*)__ImageBase) +*/ CODE_SIZE + TEMP_CODE_SIZE;
 	Table[0].UnwindData = (DWORD)((u8 *)unwind_info - CodeCache);
-	printf("TABLE CALLBACK\n");
+    INFO_LOG(COMMON, "TABLE CALLBACK");
 	//for (;;);
 	return Table;
 }
@@ -651,13 +665,13 @@ void setup_seh() {
 		//(DWORD)((u8 *)__gnat_SEH_error_handler - CodeCache);
 	/* Set its scope to the entire program.  */
 	Table[0].BeginAddress = 0;// (CodeCache - (u8*)__ImageBase);
-	Table[0].EndAddress = /*(CodeCache - (u8*)__ImageBase) +*/ CODE_SIZE;
+	Table[0].EndAddress = /*(CodeCache - (u8*)__ImageBase) +*/ CODE_SIZE + TEMP_CODE_SIZE;
 	Table[0].UnwindData = (DWORD)((u8 *)unwind_info - CodeCache);
 	/* Register the unwind information.  */
 	RtlAddFunctionTable(Table, 1, (DWORD64)CodeCache);
 #endif
 
-	//verify(RtlInstallFunctionTableCallback((unat)CodeCache | 0x3, (DWORD64)CodeCache, CODE_SIZE, seh_callback, 0, 0));
+	//verify(RtlInstallFunctionTableCallback((unat)CodeCache | 0x3, (DWORD64)CodeCache, CODE_SIZE + TEMP_CODE_SIZE, seh_callback, 0, 0));
 }
 #endif
 
@@ -678,6 +692,7 @@ int main(int argc, char **argv)
 int CALLBACK WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine,int nCmdShowCmd)
 
 {
+	LogManager::Init();
 	int argc=0;
 	wchar* cmd_line=GetCommandLineA();
 	wchar** argv=CommandLineToArgvA(cmd_line,&argc);
@@ -740,7 +755,7 @@ int CALLBACK WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine
 #ifndef __GNUC__
 	__except( ExeptionHandler(GetExceptionInformation()) )
 	{
-		printf("Unhandled exception - Emulation thread halted...\n");
+	    ERROR_LOG(COMMON, "Unhandled exception - Emulation thread halted...");
 	}
 #endif
 	SetUnhandledExceptionFilter(0);

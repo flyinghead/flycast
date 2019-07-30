@@ -3,7 +3,7 @@
 #include <atomic>
 #include "rend/rend.h"
 
-#if (defined(GLES) && !defined(TARGET_NACL32) && HOST_OS != OS_DARWIN && !defined(USE_SDL)) || defined(_ANDROID)
+#if (defined(GLES) && HOST_OS != OS_DARWIN && !defined(USE_SDL)) || defined(_ANDROID)
 #define USE_EGL
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
@@ -269,11 +269,10 @@ struct TextureCacheData
 	
 	u32 Updates;
 	
+	u32 palette_index;
 	//used for palette updates
 	u32 palette_hash;			// Palette hash at time of last update
-	u32  indirect_color_ptr;    //palette color table index for pal. tex
-	//VQ quantizers table for VQ tex
-	//a texture can't be both VQ and PAL at the same time
+	u32 vq_codebook;            // VQ quantizers table for compressed textures
 	u32 texture_hash;			// xxhash of texture data, used for custom textures
 	u32 old_texture_hash;		// legacy hash
 	u8* volatile custom_image_data;		// loaded custom image data

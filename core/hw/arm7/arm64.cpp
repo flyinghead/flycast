@@ -157,7 +157,7 @@ void armv_end(void* codestart, u32 cycl)
 	Instruction* instr;
 	for (instr = instr_start; instr < instr_end; instr += kInstructionSize) {
 		decoder.Decode(instr);
-		printf("arm64 arec\t %p:\t%s\n",
+		DEBUG_LOG(AICA_ARM, "arm64 arec\t %p:\t%s",
 				   reinterpret_cast<void*>(instr),
 				   disasm.GetOutput());
 	}
@@ -206,7 +206,7 @@ class android_buf : public std::stringbuf
 {
 public:
     virtual int sync() override {
-    	LOGI("ARM7: %s\n", this->str().c_str());
+    	DEBUG_LOG(AICA_ARM, "ARM7: %s", this->str().c_str());
     	str("");
 
     	return 0;
@@ -501,13 +501,7 @@ __asm__ (
 		".hidden arm_dispatch				\n"
 	"arm_dispatch:							\n\t"
 		"ldp w0, w1, [x28, #184]			\n\t"	// load Next PC, interrupt
-#if ARAM_SIZE == 2*1024*1024
-		"ubfx w2, w0, #2, #19				\n\t"	// w2 = pc >> 2. Note: assuming address space == 2 MB (21 bits)
-#elif ARAM_SIZE == 8*1024*1024
 		"ubfx w2, w0, #2, #21				\n\t"	// w2 = pc >> 2. Note: assuming address space == 8 MB (23 bits)
-#else
-#error Unsupported AICA RAM size
-#endif
 		"cbnz w1, arm_dofiq					\n\t"	// if interrupt pending, handle it
 
 		"add x2, x26, x2, lsl #3			\n\t"	// x2 = EntryPoints + pc << 1

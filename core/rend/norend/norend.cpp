@@ -22,7 +22,7 @@ struct norend : Renderer
 
 	bool Render()
 	{
-		return true;//!pvrrc.isRTT;
+		return !pvrrc.isRTT;
 	}
 
 	void Present() { }

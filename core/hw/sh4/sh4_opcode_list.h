@@ -152,4 +152,5 @@ enum DecMode
 	DM_MUL,
 	DM_DIV0,
 	DM_ADC,
+	DM_NEGC,
 };

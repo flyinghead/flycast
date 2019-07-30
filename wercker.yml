@@ -20,17 +20,6 @@ build:
               gzip flycast
               popd
               mv shell/linux/flycast.gz s3
-        - script:
-            name: flycast x64 naomi build
-            code: make -C shell/linux platform=x64 NAOMI=1
-        - script:
-            name: package naomi app
-            code: |
-              pushd shell/linux
-              mv -f nosym-reicast.elf flycast_naomi
-              gzip flycast_naomi
-              popd
-              mv shell/linux/flycast_naomi.gz s3
         - s3sync:
             source_dir: s3
             delete-removed: false

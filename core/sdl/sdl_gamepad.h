@@ -49,7 +49,7 @@ public:
 	{
 		_name = SDL_JoystickName(sdl_joystick);
 		sdl_joystick_instance = SDL_JoystickInstanceID(sdl_joystick);
-		printf("SDL: Opened joystick on port %d: '%s' ", maple_port, _name.c_str());
+		INFO_LOG(INPUT, "SDL: Opened joystick on port %d: '%s'", maple_port, _name.c_str());
 		SDL_JoystickGUID guid = SDL_JoystickGetGUID(sdl_joystick);
 		char buf[33];
 		SDL_JoystickGetGUIDString(guid, buf, sizeof(buf));
@@ -62,17 +62,17 @@ public:
 			if (_name == "Microsoft X-Box 360 pad")
 			{
 				input_mapper = new Xbox360InputMapping();
-				printf("using Xbox 360 mapping\n");
+				INFO_LOG(INPUT, "using Xbox 360 mapping");
 			}
 			else
 			{
 				input_mapper = new DefaultInputMapping();
-				printf("using default mapping\n");
+				INFO_LOG(INPUT, "using default mapping");
 			}
 			save_mapping();
 		}
 		else
-			printf("using custom mapping '%s'\n", input_mapper->name.c_str());
+			INFO_LOG(INPUT, "using custom mapping '%s'", input_mapper->name.c_str());
 		sdl_haptic = SDL_HapticOpenFromJoystick(sdl_joystick);
 		if (SDL_HapticRumbleInit(sdl_haptic) != 0)
 		{
@@ -108,7 +108,7 @@ public:
 
 	void close()
 	{
-		printf("SDL: Joystick '%s' on port %d disconnected\n", _name.c_str(), maple_port());
+		INFO_LOG(INPUT, "SDL: Joystick '%s' on port %d disconnected", _name.c_str(), maple_port());
 		if (sdl_haptic != NULL)
 			SDL_HapticClose(sdl_haptic);
 		SDL_JoystickClose(sdl_joystick);
@@ -131,7 +131,7 @@ public:
 	}
 	static void UpdateRumble()
 	{
-		for (auto pair : sdl_gamepads)
+		for (auto& pair : sdl_gamepads)
 			pair.second->update_rumble();
 	}
 

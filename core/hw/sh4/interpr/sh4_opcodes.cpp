@@ -61,7 +61,7 @@ void dofoo(sh4_opcode op)
 // 0xxx
 void cpu_iNimp(u32 op, const char* info)
 {
-	printf("\n\nUnimplemented opcode: %08X next_pc: %08X pr: %08X msg: %s\n", op, next_pc, pr, info);
+	ERROR_LOG(INTERPRETER, "Unimplemented opcode: %08X next_pc: %08X pr: %08X msg: %s", op, next_pc, pr, info);
 	//next_pc = pr; //debug hackfix: try to recover by returning from call
 	die("iNimp reached\n");
 	//sh4_cpu.Stop();
@@ -69,9 +69,7 @@ void cpu_iNimp(u32 op, const char* info)
 
 void cpu_iWarn(u32 op, const char* info)
 {
-	printf("Check opcode : %X : ", op);
-	printf("%s", info);
-	printf(" @ %X\n", curr_pc);
+	INFO_LOG(INTERPRETER, "Check opcode : %X : %s @ %X", op, info, curr_pc);
 }
 
 //this file contains ALL register to register full moves
@@ -1586,7 +1584,7 @@ sh4op(i0011_nnnn_mmmm_0100)
 	u32 n=GetN(op);
 	u32 m=GetM(op);
 
-	unsigned long tmp0, tmp2;
+	u32 tmp0, tmp2;
 	unsigned char old_q, tmp1;
 
 	old_q = sr.Q;
@@ -1596,39 +1594,44 @@ sh4op(i0011_nnnn_mmmm_0100)
 	r[n] |= (unsigned long)sr.T;
 
 	tmp0 = r[n];	// this need only be done once here ..
-	tmp2 = r[m];
+	// Old implementation
+//	tmp2 = r[m];
+//
+//	if( 0 == old_q )
+//	{
+//		if( 0 == sr.M )
+//		{
+//			r[n] -= tmp2;
+//			tmp1	= (r[n]>tmp0);
+//			sr.Q	= (sr.Q==0) ? tmp1 : (u8)(tmp1==0) ;
+//		}
+//		else
+//		{
+//			r[n] += tmp2;
+//			tmp1	=(r[n]<tmp0);
+//			sr.Q	= (sr.Q==0) ? (u8)(tmp1==0) : tmp1 ;
+//		}
+//	}
+//	else
+//	{
+//		if( 0 == sr.M )
+//		{
+//			r[n] += tmp2;
+//			tmp1	=(r[n]<tmp0);
+//			sr.Q	= (sr.Q==0) ? tmp1 : (u8)(tmp1==0) ;
+//		}
+//		else
+//		{
+//			r[n] -= tmp2;
+//			tmp1	=(r[n]>tmp0);
+//			sr.Q	= (sr.Q==0) ? (u8)(tmp1==0) : tmp1 ;
+//		}
+//	}
 
-	if( 0 == old_q )
-	{
-		if( 0 == sr.M )
-		{
-			r[n] -= tmp2;
-			tmp1	= (r[n]>tmp0);
-			sr.Q	= (sr.Q==0) ? tmp1 : (u8)(tmp1==0) ;
-		}
-		else
-		{
-			r[n] += tmp2;
-			tmp1	=(r[n]<tmp0);
-			sr.Q	= (sr.Q==0) ? (u8)(tmp1==0) : tmp1 ;
-		}
-	}
-	else
-	{
-		if( 0 == sr.M )
-		{
-			r[n] += tmp2;
-			tmp1	=(r[n]<tmp0);
-			sr.Q	= (sr.Q==0) ? tmp1 : (u8)(tmp1==0) ;
-		}
-		else
-		{
-			r[n] -= tmp2;
-			tmp1	=(r[n]>tmp0);
-			sr.Q	= (sr.Q==0) ? (u8)(tmp1==0) : tmp1 ;
-		}
-	}
-	sr.T = (sr.Q==sr.M);
+	r[n] += (2 * (old_q ^ sr.M) - 1) * r[m];
+	sr.Q ^= old_q ^ (sr.M ? r[n] > tmp0 : r[n] >= tmp0);
+
+	sr.T = (sr.Q == sr.M);
 }
 
 //************************ Simple maths ************************
@@ -2066,7 +2069,7 @@ sh4op(i0000_nnnn_0110_1010)
 {
 	u32 n = GetN(op);
 	r[n] = fpscr.full;
-	UpdateFPSCR();
+	//UpdateFPSCR();
 }
 
 //sts.l FPSCR,@-<REG_N>
@@ -2136,7 +2139,7 @@ sh4op(i0100_nnnn_0000_1110)
 sh4op(iNotImplemented)
 {
 #ifndef NO_MMU
-	printf("iNimp %04X\n", op);
+	INFO_LOG(INTERPRETER, "iNimp %04X", op);
 	SH4ThrownException ex = { next_pc - 2, 0x180, 0x100 };
 	throw ex;
 #else

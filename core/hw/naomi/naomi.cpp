@@ -7,6 +7,8 @@
 #include "hw/sh4/sh4_mem.h"
 #include "hw/holly/holly_intc.h"
 #include "hw/maple/maple_cfg.h"
+#include "hw/sh4/sh4_sched.h"
+#include "hw/sh4/modules/dmac.h"
 
 #include "naomi.h"
 #include "naomi_cart.h"
@@ -55,7 +57,7 @@ unsigned int ShiftCRC(unsigned int CRC,unsigned int rounds)
 	return CRC;
 }
 
-unsigned short CRCSerial(unsigned char *Serial,unsigned int len)
+unsigned short CRCSerial(const u8 *Serial,unsigned int len)
 {
 	unsigned int CRC=0xDEBDEB00;
 	unsigned int i;
@@ -339,23 +341,6 @@ u16 NaomiGameIDRead()
 	return (GSerialBuffer&(1<<(31-GBufPos)))?1:0;
 }
 
-
-
-
-u32  _ReadMem_naomi(u32 Addr, u32 sz)
-{
-	verify(sz!=1);
-
-	EMUERROR("naomi?WTF? ReadMem: %X, %d", Addr, sz);
-	return 1;
-
-}
-void _WriteMem_naomi(u32 Addr, u32 data, u32 sz)
-{
-	EMUERROR("naomi?WTF? WriteMem: %X <= %X, %d", Addr, data, sz);
-}
-
-
 //DIMM board
 //Uses interrupt ext#3  (holly_EXT_PCI)
 
@@ -381,35 +366,34 @@ void _WriteMem_naomi(u32 Addr, u32 data, u32 sz)
 //n1 bios writes the value -1, meaning it expects the bit 0 to be set
 //.//
 
-u32 reg_dimm_3c;	//IO window ! written, 0x1E03 some flag ?
-u32 reg_dimm_40;	//parameters
-u32 reg_dimm_44;	//parameters
-u32 reg_dimm_48;	//parameters
-
-u32 reg_dimm_4c=0x11;	//status/control reg ?
+u32 reg_dimm_command;		// command, written, 0x1E03 some flag ?
+u32 reg_dimm_offsetl;
+u32 reg_dimm_parameterl;
+u32 reg_dimm_parameterh;
+u32 reg_dimm_status = 0x11;
 
 bool NaomiDataRead = false;
 static bool aw_ram_test_skipped = false;
 
-void naomi_process(u32 r3c,u32 r40,u32 r44, u32 r48)
+void naomi_process(u32 command, u32 offsetl, u32 parameterl, u32 parameterh)
 {
-	printf("Naomi process 0x%04X 0x%04X 0x%04X 0x%04X\n",r3c,r40,r44,r48);
-	printf("Possible format 0 %d 0x%02X 0x%04X\n",r3c>>15,(r3c&0x7e00)>>9,r3c&0x1FF);
-	printf("Possible format 1 0x%02X 0x%02X\n",(r3c&0xFF00)>>8,r3c&0xFF);
+	DEBUG_LOG(NAOMI, "Naomi process 0x%04X 0x%04X 0x%04X 0x%04X", command, offsetl, parameterl, parameterh);
+	DEBUG_LOG(NAOMI, "Possible format 0 %d 0x%02X 0x%04X",command >> 15,(command & 0x7e00) >> 9, command & 0x1FF);
+	DEBUG_LOG(NAOMI, "Possible format 1 0x%02X 0x%02X", (command & 0xFF00) >> 8,command & 0xFF);
 
-	u32 param=(r3c&0xFF);
+	u32 param=(command&0xFF);
 	if (param==0xFF)
 	{
-		printf("invalid opcode or smth ?");
+		DEBUG_LOG(NAOMI, "invalid opcode or smth ?");
 	}
 	static int opcd=0;
 	//else if (param!=3)
 	if (opcd<255)
 	{
-		reg_dimm_3c=0x8000 | (opcd%12<<9) | (0x0);
-		printf("new reg is 0x%X\n",reg_dimm_3c);
+		reg_dimm_command=0x8000 | (opcd%12<<9) | (0x0);
+		DEBUG_LOG(NAOMI, "new reg is 0x%X", reg_dimm_command);
 		asic_RaiseInterrupt(holly_EXP_PCI);
-		printf("Interrupt raised\n");
+		DEBUG_LOG(NAOMI, "Interrupt raised");
 		opcd++;
 	}
 }
@@ -419,7 +403,7 @@ u32 ReadMem_naomi(u32 Addr, u32 sz)
 	verify(sz!=1);
 	if (unlikely(CurrentCartridge == NULL))
 	{
-		EMUERROR("called without cartridge\n");
+		INFO_LOG(NAOMI, "called without cartridge");
 		return 0xFFFF;
 	}
 	return CurrentCartridge->ReadMem(Addr, sz);
@@ -429,7 +413,7 @@ void WriteMem_naomi(u32 Addr, u32 data, u32 sz)
 {
 	if (unlikely(CurrentCartridge == NULL))
 	{
-		EMUERROR("called without cartridge\n");
+		INFO_LOG(NAOMI, "called without cartridge");
 		return;
 	}
 	CurrentCartridge->WriteMem(Addr, data, sz);
@@ -440,7 +424,7 @@ void Naomi_DmaStart(u32 addr, u32 data)
 {
 	if (SB_GDEN==0)
 	{
-		printf("Invalid (NAOMI)GD-DMA start, SB_GDEN=0.Ingoring it.\n");
+		INFO_LOG(NAOMI, "Invalid (NAOMI)GD-DMA start, SB_GDEN=0. Ignoring it.");
 		return;
 	}
 	
@@ -450,11 +434,12 @@ void Naomi_DmaStart(u32 addr, u32 data)
 	if (SB_GDST==1)
 	{
 		verify(1 == SB_GDDIR );
-	
-		SB_GDSTARD=SB_GDSTAR+SB_GDLEN;
+		DEBUG_LOG(NAOMI, "NAOMI-DMA start addr %08X len %d", SB_GDSTAR, SB_GDLEN);
+
+		SB_GDSTARD = SB_GDSTAR + SB_GDLEN;
 		
-		SB_GDLEND=SB_GDLEN;
-		SB_GDST=0;
+		SB_GDLEND = SB_GDLEN;
+		SB_GDST = 0;
 		if (CurrentCartridge != NULL)
 		{
 			u32 len = SB_GDLEN;
@@ -463,6 +448,11 @@ void Naomi_DmaStart(u32 addr, u32 data)
 			{
 				u32 block_len = len;
 				void* ptr = CurrentCartridge->GetDmaPtr(block_len);
+				if (block_len == 0)
+				{
+					INFO_LOG(NAOMI, "Aborted DMA transfer. Read past end of cart?");
+					break;
+				}
 				WriteMemBlock_nommu_ptr(SB_GDSTAR + offset, (u32*)ptr, block_len);
 				CurrentCartridge->AdvancePtr(block_len);
 				len -= block_len;
@@ -480,7 +470,7 @@ void Naomi_DmaEnable(u32 addr, u32 data)
 	SB_GDEN=data&1;
 	if (SB_GDEN==0 && SB_GDST==1)
 	{
-		printf("(NAOMI)GD-DMA aborted\n");
+		INFO_LOG(NAOMI, "(NAOMI)GD-DMA aborted");
 		SB_GDST=0;
 	}
 }
@@ -532,10 +522,6 @@ void naomi_reg_Init()
 	}
 	#endif
 	NaomiInit();
-
-	sb_rio_register(SB_GDST_addr, RIO_WF, 0, &Naomi_DmaStart);
-
-	sb_rio_register(SB_GDEN_addr, RIO_WF, 0, &Naomi_DmaEnable);
 }
 
 void naomi_reg_Term()
@@ -551,96 +537,50 @@ void naomi_reg_Term()
 	}
 	#endif
 }
-void naomi_reg_Reset(bool Manual)
+void naomi_reg_Reset(bool hard)
 {
+	sb_rio_register(SB_GDST_addr, RIO_WF, 0, &Naomi_DmaStart);
+	sb_rio_register(SB_GDEN_addr, RIO_WF, 0, &Naomi_DmaEnable);
+	SB_GDST = 0;
+	SB_GDEN = 0;
+
 	NaomiDataRead = false;
 	aw_ram_test_skipped = false;
+	GSerialBuffer = 0;
+	BSerialBuffer = 0;
+	GBufPos = 0;
+	BBufPos = 0;
+	GState = 0;
+	BState = 0;
+	GOldClk = 0;
+	BOldClk = 0;
+	BControl = 0;
+	BCmd = 0;
 	BLastCmd = 0;
-}
-
-void Update_naomi()
-{
-	/*
-	if (naomi_updates>1)
-	{
-		naomi_updates--;
-	}
-	else if (naomi_updates==1)
-	{
-		naomi_updates=0;
-		asic_RaiseInterrupt(holly_EXP_PCI);
-	}*/
-#if 0
-	if(!(SB_GDST&1) || !(SB_GDEN &1))
-		return;
-
-	//SB_GDST=0;
-
-	//TODO : Fix dmaor
-	u32 dmaor	= DMAC_DMAOR.full;
-
-	u32	src		= SB_GDSTARD,
-		len		= SB_GDLEN-SB_GDLEND ;
-
-	//len=min(len,(u32)32);
-	// do we need to do this for gdrom dma ?
-	if(0x8201 != (dmaor &DMAOR_MASK)) {
-		printf("\n!\tGDROM: DMAOR has invalid settings (%X) !\n", dmaor);
-		//return;
-	}
-	if(len & 0x1F) {
-		printf("\n!\tGDROM: SB_GDLEN has invalid size (%X) !\n", len);
-		return;
-	}
-
-	if(0 == len) 
-	{
-		printf("\n!\tGDROM: Len: %X, Abnormal Termination !\n", len);
-	}
-	u32 len_backup=len;
-	if( 1 == SB_GDDIR ) 
-	{
-		WriteMemBlock_nommu_ptr(dst,NaomiRom+(DmaOffset&0x7ffffff),size);
-
-		DmaCount=0xffff;
-	}
-	else
-		msgboxf(L"GDROM: SB_GDDIR %X (TO AICA WAVE MEM?)",MBX_ICONERROR, SB_GDDIR);
-
-	//SB_GDLEN = 0x00000000; //13/5/2k7 -> acording to docs these regs are not updated by hardware
-	//SB_GDSTAR = (src + len_backup);
-
-	SB_GDLEND+= len_backup;
-	SB_GDSTARD+= len_backup;//(src + len_backup)&0x1FFFFFFF;
-
-	if (SB_GDLEND==SB_GDLEN)
-	{
-		//printf("Streamed GDMA end - %d bytes trasnfered\n",SB_GDLEND);
-		SB_GDST=0;//done
-		// The DMA end interrupt flag
-		asic_RaiseInterrupt(holly_GDROM_DMA);
-	}
-	//Readed ALL sectors
-	if (read_params.remaining_sectors==0)
-	{
-		u32 buff_size =read_buff.cache_size - read_buff.cache_index;
-		//And all buffer :p
-		if (buff_size==0)
-		{
-			verify(!SB_GDST&1)		
-			gd_set_state(gds_procpacketdone);
-		}
-	}
-#endif
+	GControl = 0;
+	GCmd = 0;
+	GLastCmd = 0;
+	SerStep = 0;
+	SerStep2 = 0;
+	reg_dimm_command = 0;
+	reg_dimm_offsetl = 0;
+	reg_dimm_parameterl = 0;
+	reg_dimm_parameterh = 0;
+	reg_dimm_status = 0x11;
 }
 
 static u8 aw_maple_devs;
+static u64 coin_chute_time[4];
 
 u32 libExtDevice_ReadMem_A0_006(u32 addr,u32 size) {
 	addr &= 0x7ff;
 	//printf("libExtDevice_ReadMem_A0_006 %d@%08x: %x\n", size, addr, mem600[addr]);
 	switch (addr)
 	{
+//	case 0:
+//		return 0;
+//	case 4:
+//		return 1;
 	case 0x280:
 		// 0x00600280 r  0000dcba
 		//	a/b - 1P/2P coin inputs (JAMMA), active low
@@ -655,9 +595,25 @@ u32 libExtDevice_ReadMem_A0_006(u32 addr,u32 size) {
 		}
 		{
 			u8 coin_input = 0xF;
+			u64 now = sh4_sched_now64();
 			for (int slot = 0; slot < 4; slot++)
+			{
 				if (maple_atomiswave_coin_chute(slot))
-					coin_input &= ~(1 << slot);
+				{
+					// ggx15 needs 4 or 5 reads to register the coin but it needs to be limited to avoid coin errors
+					// 1 s of cpu time is too much, 1/2 s seems to work, let's use 100 ms
+					if (coin_chute_time[slot] == 0 || now - coin_chute_time[slot] < SH4_MAIN_CLOCK / 10)
+					{
+						if (coin_chute_time[slot] == 0)
+							coin_chute_time[slot] = now;
+						coin_input &= ~(1 << slot);
+					}
+				}
+				else
+				{
+					coin_chute_time[slot] = 0;
+				}
+			}
 			return coin_input;
 		}
 
@@ -673,7 +629,7 @@ u32 libExtDevice_ReadMem_A0_006(u32 addr,u32 size) {
 		return 0;
 
 	}
-	EMUERROR("Unhandled read @ %x sz %d", addr, size);
+	INFO_LOG(NAOMI, "Unhandled read @ %x sz %d", addr, size);
 	return 0xFF;
 }
 
@@ -683,7 +639,7 @@ void libExtDevice_WriteMem_A0_006(u32 addr,u32 data,u32 size) {
 	switch (addr)
 	{
 	case 0x284:		// Atomiswave maple devices
-		printf("NAOMI 600284 write %x\n", data);
+		DEBUG_LOG(NAOMI, "NAOMI 600284 write %x", data);
 		aw_maple_devs = data & 0xF0;
 		return;
 	case 0x288:
@@ -693,5 +649,5 @@ void libExtDevice_WriteMem_A0_006(u32 addr,u32 data,u32 size) {
 	default:
 		break;
 	}
-	EMUERROR("Unhandled write @ %x (%d): %x", addr, size, data);
+	INFO_LOG(NAOMI, "Unhandled write @ %x (%d): %x", addr, size, data);
 }

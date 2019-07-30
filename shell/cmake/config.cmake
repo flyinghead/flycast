@@ -311,14 +311,6 @@ set(CMAKE_C_FLAGS " ${_C_FLAGS}") # ${CMAKE_C_FLAGS}   -- these hold default VC 
 set(CMAKE_CXX_FLAGS " ${_CXX_FLAGS}") # ${CMAKE_CXX_FLAGS}
 
 
-
-#if defined(TARGET_NAOMI)
-	#define DC_PLATFORM DC_PLATFORM_NAOMI
-	#undef TARGET_NAOMI
-#endif
-
-
-
 #if defined(TARGET_NO_NIXPROF)
 #define FEAT_HAS_NIXPROF 0
 #endif
@@ -340,7 +332,7 @@ if (TARGET_NSW) # -DCMAKE_TOOLCHAIN_FILE=./cmake/devkitA64.cmake -DTARGET_NSW=ON
 
   add_definitions(-D__SWITCH__ -DGLES -DMESA_EGL_NO_X11_HEADERS)
   add_definitions(-DTARGET_NO_THREADS -DTARGET_NO_EXCEPTIONS -DTARGET_NO_NIXPROF)
-  add_definitions(-DTARGET_NO_COREIO_HTTP -DTARGET_NO_WEBUI -UTARGET_SOFTREND)
+  add_definitions(-DTARGET_NO_COREIO_HTTP -UTARGET_SOFTREND)
   add_definitions(-D_GLIBCXX_USE_C99_MATH_TR1 -D_LDBL_EQ_DBL)
 
 endif()
@@ -352,13 +344,11 @@ if (TARGET_PS4) # -DCMAKE_TOOLCHAIN_FILE=./cmake/{ps4sdk,clang_scei}.cmake -DTAR
 
   add_definitions(-DPS4 -DTARGET_PS4 -DTARGET_BSD -D__ORBIS__ -DGLES -DMESA_EGL_NO_X11_HEADERS)  ## last needed for __unix__ on eglplatform.h
   add_definitions(-DTARGET_NO_THREADS -DTARGET_NO_EXCEPTIONS -DTARGET_NO_NIXPROF)
-  add_definitions(-DTARGET_NO_COREIO_HTTP -DTARGET_NO_WEBUI -UTARGET_SOFTREND)
+  add_definitions(-DTARGET_NO_COREIO_HTTP -UTARGET_SOFTREND)
 
 
   message("*******FIXME******** LARGE PAGES !!")
 endif()
-
-
 
 if(ZBUILD)
   set(DEBUG_CMAKE ON)
@@ -370,8 +360,6 @@ if(ZBUILD)
   endif()
 endif()
 
-
-
 # configure options for osd/ui 
 # osd_default, osd_qt
 # ui_default, ui_sdl, ui_qt
@@ -379,22 +367,9 @@ endif()
 
 option(USE_QT False "Use Qt5 for UI and support OS Deps.")
 
-
-
-
-#option TARGET_NO_WEBUI
-
-
-
-
-
 #option(BUILD_TESTS "Build tests" OFF)	# todo: luserx0 this is your arena, you want tests add em
 
-
 add_definitions(-DCMAKE_BUILD)
-
-
-
 
 add_definitions(-DHOST_OS=${HOST_OS})
 add_definitions(-DHOST_CPU=${HOST_CPU})
@@ -405,14 +380,8 @@ add_definitions(-DFEAT_DSPREC=${FEAT_DSPREC})
 
 add_definitions(-DBUILD_COMPILER=${BUILD_COMPILER})
 
-add_definitions(-DTARGET_NO_WEBUI)
 add_definitions(-DDEF_CONSOLE)
 
 
 set(RE_CMAKE_CONFIGURED 1)
 #add_definitions(-D=${})
-
-
-
-
-

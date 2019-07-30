@@ -99,7 +99,7 @@ void libAICA_TimeStep()
 
 	SCIPD->SAMPLE_DONE=1;
 
-	if (settings.aica.NoBatch)
+	if (settings.aica.NoBatch || settings.aica.DSPEnabled)
 		AICA_Sample();
 
 	//Make sure sh4/arm interrupt system is up to date :)
@@ -199,21 +199,22 @@ s32 libAICA_Init()
 	MCIRE=(InterruptInfo*)&aica_reg[0x28B4+8];
 
 	sgc_Init();
-	for (int i=0;i<3;i++)
-		timers[i].Init(aica_reg,i);
 
 	return rv_ok;
 }
 
-void libAICA_Reset(bool manual)
+void libAICA_Reset(bool hard)
 {
-	if (!manual)
+	if (hard)
 		init_mem();
 	sgc_Init();
-	aica_Reset(manual);
+	for (int i = 0; i < 3; i++)
+		timers[i].Init(aica_reg, i);
+	aica_Reset(hard);
 }
 
 void libAICA_Term()
 {
 	sgc_Term();
+	term_mem();
 }

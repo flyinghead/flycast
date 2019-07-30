@@ -33,6 +33,7 @@ int fbdev = -1;
 #ifdef _ANDROID
 #include <android/native_window.h> // requires ndk r5 or newer
 #endif
+#include "deps/libpng/png.h"
 
 /*
 GL|ES 2
@@ -446,6 +447,48 @@ int screen_width;
 int screen_height;
 GLuint fogTextureId;
 
+#ifdef TEST_AUTOMATION
+void dump_screenshot(u8 *buffer, u32 width, u32 height)
+{
+	FILE *fp = fopen("screenshot.png", "wb");
+	if (fp == NULL)
+	{
+		ERROR_LOG(RENDERER, "Failed to open screenshot.png for writing\n");
+		return;
+	}
+
+	png_bytepp rows = (png_bytepp)malloc(height * sizeof(png_bytep));
+	for (int y = 0; y < height; y++)
+	{
+		rows[height - y - 1] = (png_bytep)buffer + y * width * 3;
+	}
+
+	png_structp png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+	png_infop info_ptr = png_create_info_struct(png_ptr);
+
+	png_init_io(png_ptr, fp);
+
+
+	// write header
+	png_set_IHDR(png_ptr, info_ptr, width, height,
+			 8, PNG_COLOR_TYPE_RGB, PNG_INTERLACE_NONE,
+			 PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
+
+	png_write_info(png_ptr, info_ptr);
+
+
+	// write bytes
+	png_write_image(png_ptr, rows);
+
+	// end write
+	png_write_end(png_ptr, NULL);
+	fclose(fp);
+
+	free(rows);
+
+}
+#endif
+
 #ifdef USE_EGL
 
 	extern "C" void load_gles_symbols();
@@ -476,7 +519,7 @@ GLuint fogTextureId;
 		EGLint maj, min;
 		if (!eglInitialize(gl.setup.display, &maj, &min))
 		{
-			printf("EGL Error: eglInitialize failed\n");
+			ERROR_LOG(RENDERER, "EGL Error: eglInitialize failed");
 			return false;
 		}
 
@@ -505,7 +548,7 @@ GLuint fogTextureId;
 				};
 				if (!eglChooseConfig(gl.setup.display, pi32ConfigFallbackAttribs, &config, 1, &num_config) || (num_config != 1))
 				{
-					printf("EGL Error: eglChooseConfig failed\n");
+					ERROR_LOG(RENDERER, "EGL Error: eglChooseConfig failed");
 					return false;
 				}
 			}
@@ -513,7 +556,7 @@ GLuint fogTextureId;
 			EGLint format;
 			if (!eglGetConfigAttrib(gl.setup.display, config, EGL_NATIVE_VISUAL_ID, &format))
 			{
-				printf("eglGetConfigAttrib() returned error %x\n", eglGetError());
+				ERROR_LOG(RENDERER, "eglGetConfigAttrib() returned error %x", eglGetError());
 				return false;
 			}
 			ANativeWindow_setBuffersGeometry((ANativeWindow *)wind, 0, 0, format);
@@ -522,7 +565,7 @@ GLuint fogTextureId;
 
 			if (gl.setup.surface == EGL_NO_SURFACE)
 			{
-				printf("EGL Error: eglCreateWindowSurface failed: %x\n", eglGetError());
+				ERROR_LOG(RENDERER, "EGL Error: eglCreateWindowSurface failed: %x", eglGetError());
 				return false;
 			}
 
@@ -530,7 +573,7 @@ GLuint fogTextureId;
 			bool try_full_gl = true;
 			if (!eglBindAPI(EGL_OPENGL_API))
 			{
-				printf("eglBindAPI(EGL_OPENGL_API) failed: %x\n", eglGetError());
+				INFO_LOG(RENDERER, "eglBindAPI(EGL_OPENGL_API) failed: %x", eglGetError());
 				try_full_gl = false;
 			}
 			if (try_full_gl)
@@ -543,7 +586,7 @@ GLuint fogTextureId;
 				{
 					egl_makecurrent();
 					if (gl3wInit())
-						printf("gl3wInit() failed\n");
+						ERROR_LOG(RENDERER, "gl3wInit() failed");
 				}
 			}
 #endif
@@ -551,7 +594,7 @@ GLuint fogTextureId;
 			{
 				if (!eglBindAPI(EGL_OPENGL_ES_API))
 				{
-					printf("eglBindAPI() failed: %x\n", eglGetError());
+					ERROR_LOG(RENDERER, "eglBindAPI() failed: %x", eglGetError());
 					return false;
 				}
 				EGLint contextAttrs[] = { EGL_CONTEXT_CLIENT_VERSION, 2 , EGL_NONE };
@@ -560,7 +603,7 @@ GLuint fogTextureId;
 
 				if (gl.setup.context == EGL_NO_CONTEXT)
 				{
-					printf("eglCreateContext() failed: %x\n", eglGetError());
+					ERROR_LOG(RENDERER, "eglCreateContext() failed: %x", eglGetError());
 					return false;
 				}
 #ifdef GLES
@@ -569,7 +612,7 @@ GLuint fogTextureId;
 #else
 				egl_makecurrent();
 				if (gl3wInit())
-				    printf("gl3wInit() failed\n");
+					INFO_LOG(RENDERER, "gl3wInit() failed");
 #endif
 			}
 			created_context = true;
@@ -582,7 +625,7 @@ GLuint fogTextureId;
 
 		if (!egl_makecurrent())
 		{
-			printf("eglMakeCurrent() failed: %x\n", eglGetError());
+			ERROR_LOG(RENDERER, "eglMakeCurrent() failed: %x", eglGetError());
 			return false;
 		}
 
@@ -596,11 +639,11 @@ GLuint fogTextureId;
 		// Required when doing partial redraws
         if (!eglSurfaceAttrib(gl.setup.display, gl.setup.surface, EGL_SWAP_BEHAVIOR, EGL_BUFFER_PRESERVED))
         {
-        	printf("Swap buffers are not preserved. Last frame copy enabled\n");
+        	INFO_LOG(RENDERER, "Swap buffers are not preserved. Last frame copy enabled");
         	gl.swap_buffer_not_preserved = true;
         }
 
-		printf("EGL config: %p, %p, %p %dx%d\n",gl.setup.context,gl.setup.display,gl.setup.surface,w,h);
+        INFO_LOG(RENDERER, "EGL config: %p, %p, %p %dx%d", gl.setup.context, gl.setup.display, gl.setup.surface, w, h);
 		return true;
 	}
 
@@ -758,7 +801,7 @@ GLuint fogTextureId;
 
 			if (!m_hrc)
 			{
-				printf("Open GL 4.3 not supported\n");
+				INFO_LOG(RENDERER, "Open GL 4.3 not supported");
 				// Try Gl 3.1
 				attribs[1] = 3;
 				attribs[3] = 1;
@@ -819,6 +862,33 @@ GLuint fogTextureId;
 
 	void gl_swap()
 	{
+#ifdef TEST_AUTOMATION
+		static FILE* video_file = fopen(cfgLoadStr("record", "rawvid","").c_str(), "wb");
+		extern bool do_screenshot;
+
+		if (video_file)
+		{
+			int bytesz = screen_width * screen_height * 3;
+			u8* img = new u8[bytesz];
+
+			glReadPixels(0, 0, screen_width, screen_height, GL_RGB, GL_UNSIGNED_BYTE, img);
+			fwrite(img, 1, bytesz, video_file);
+			fflush(video_file);
+		}
+
+		if (do_screenshot)
+		{
+			extern void dc_exit();
+			int bytesz = screen_width * screen_height * 3;
+			u8* img = new u8[bytesz];
+
+			glReadPixels(0, 0, screen_width, screen_height, GL_RGB, GL_UNSIGNED_BYTE, img);
+			dump_screenshot(img, screen_width, screen_height);
+			delete[] img;
+			dc_exit();
+			exit(0);
+		}
+#endif
 		glXSwapBuffers((Display*)libPvr_GetRenderSurface(), (GLXDrawable)libPvr_GetRenderTarget());
 
 		Window win;
@@ -896,7 +966,7 @@ void findGLVersion()
 	if (glGetError() == GL_INVALID_ENUM)
 		gl.gl_major = 2;
 	const char *version = (const char *)glGetString(GL_VERSION);
-	printf("OpenGL version: %s\n", version);
+	INFO_LOG(RENDERER, "OpenGL version: %s", version);
 	if (!strncmp(version, "OpenGL ES", 9))
 	{
 		gl.is_gles = true;
@@ -918,7 +988,7 @@ void findGLVersion()
 		if (strstr(extensions, "GL_OES_depth24") != NULL)
 			gl.GL_OES_depth24_supported = true;
 		if (!gl.GL_OES_packed_depth_stencil_supported)
-			printf("Packed depth/stencil not supported: no modifier volumes when rendering to a texture\n");
+			INFO_LOG(RENDERER, "Packed depth/stencil not supported: no modifier volumes when rendering to a texture");
 	}
 	else
 	{
@@ -962,7 +1032,7 @@ GLuint gl_CompileShader(const char* shader,GLuint type)
 		*compile_log=0;
 
 		glGetShaderInfoLog(rv, compile_log_len, &compile_log_len, compile_log);
-		printf("Shader: %s \n%s\n",result?"compiled!":"failed to compile",compile_log);
+		WARN_LOG(RENDERER, "Shader: %s \n%s", result ? "compiled!" : "failed to compile", compile_log);
 
 		free(compile_log);
 	}
@@ -1010,13 +1080,13 @@ GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentShader)
 		*compile_log=0;
 
 		glGetProgramInfoLog(program, compile_log_len, &compile_log_len, compile_log);
-		printf("Shader linking: %s \n (%d bytes), - %s -\n",result?"linked":"failed to link", compile_log_len,compile_log);
+		WARN_LOG(RENDERER, "Shader linking: %s \n (%d bytes), - %s -", result ? "linked" : "failed to link", compile_log_len, compile_log);
 
 		free(compile_log);
 
 		// Dump the shaders source for troubleshooting
-		printf("// VERTEX SHADER\n%s\n// END\n", VertexShader);
-		printf("// FRAGMENT SHADER\n%s\n// END\n", FragmentShader);
+		INFO_LOG(RENDERER, "// VERTEX SHADER\n%s\n// END", VertexShader);
+		INFO_LOG(RENDERER, "// FRAGMENT SHADER\n%s\n// END", FragmentShader);
 		die("shader compile fail\n");
 	}
 
@@ -1159,7 +1229,7 @@ void gl_load_osd_resources()
 #ifdef _ANDROID
 	int w, h;
 	if (osd_tex == 0)
-		osd_tex = loadPNG(get_readonly_data_path("/data/buttons.png"), w, h);
+		osd_tex = loadPNG(get_readonly_data_path(DATA_PATH "buttons.png"), w, h);
 #endif
 }
 
@@ -1508,7 +1578,7 @@ bool ProcessFrame(TA_context* ctx)
 	CollectCleanup();
 
 	if (ctx->rend.Overrun)
-		printf("ERROR: TA context overrun\n");
+		WARN_LOG(PVR, "ERROR: TA context overrun");
 
 	return !ctx->rend.Overrun;
 }
@@ -1655,7 +1725,7 @@ bool RenderFrame()
 		scale_x=fb_scale_x;
 		scale_y=fb_scale_y;
 		if (SCALER_CTL.interlace == 0 && SCALER_CTL.vscalefactor >= 0x400)
-			scale_y *= SCALER_CTL.vscalefactor / 0x400;
+			scale_y *= (float)SCALER_CTL.vscalefactor / 0x400;
 
 		//work out scaling parameters !
 		//Pixel doubling is on VO, so it does not affect any pixel operations
@@ -1746,7 +1816,7 @@ bool RenderFrame()
 
 	ShaderUniforms.extra_depth_scale = settings.rend.ExtraDepthScale;
 
-	//printf("scale: %f, %f, %f, %f\n",ShaderUniforms.scale_coefs[0],ShaderUniforms.scale_coefs[1],ShaderUniforms.scale_coefs[2],ShaderUniforms.scale_coefs[3]);
+	//DEBUG_LOG(RENDERER, "scale: %f, %f, %f, %f", ShaderUniforms.scale_coefs[0], ShaderUniforms.scale_coefs[1], ShaderUniforms.scale_coefs[2], ShaderUniforms.scale_coefs[3]);
 
 
 	//VERT and RAM fog color constants
@@ -1825,15 +1895,15 @@ bool RenderFrame()
 		case 4: //0x4   888 RGB 24 bit packed
 		case 5: //0x5   0888 KRGB 32 bit    K is the value of fk_kval.
 		case 6: //0x6   8888 ARGB 32 bit
-			fprintf(stderr, "Unsupported render to texture format: %d\n", FB_W_CTRL.fb_packmode);
+			WARN_LOG(RENDERER, "Unsupported render to texture format: %d", FB_W_CTRL.fb_packmode);
 			return false;
 
 		case 7: //7     invalid
 			die("7 is not valid");
 			break;
 		}
-		//printf("RTT packmode=%d stride=%d - %d,%d -> %d,%d\n", FB_W_CTRL.fb_packmode, FB_W_LINESTRIDE.stride * 8,
-		//		FB_X_CLIP.min, FB_Y_CLIP.min, FB_X_CLIP.max, FB_Y_CLIP.max);
+		DEBUG_LOG(RENDERER, "RTT packmode=%d stride=%d - %d,%d -> %d,%d", FB_W_CTRL.fb_packmode, FB_W_LINESTRIDE.stride * 8,
+				FB_X_CLIP.min, FB_Y_CLIP.min, FB_X_CLIP.max, FB_Y_CLIP.max);
 		BindRTT(FB_W_SOF1 & VRAM_MASK, dc_width, dc_height, channels, format);
 	}
 	else
@@ -1854,9 +1924,9 @@ bool RenderFrame()
 
 	bool wide_screen_on = !is_rtt && settings.rend.WideScreen
 			&& pvrrc.fb_X_CLIP.min == 0
-			&& (pvrrc.fb_X_CLIP.max + 1) / scale_x == 640
+			&& int((pvrrc.fb_X_CLIP.max + 1) / scale_x + 0.5f) == 640
 			&& pvrrc.fb_Y_CLIP.min == 0
-			&& (pvrrc.fb_Y_CLIP.max + 1) / scale_y == 480;
+			&& int((pvrrc.fb_Y_CLIP.max + 1) / scale_y + 0.5f) == 480;
 
 	//Color is cleared by the background plane
 
@@ -1908,8 +1978,8 @@ bool RenderFrame()
 				if (SCALER_CTL.interlace && SCALER_CTL.vscalefactor >= 0x400)
 				{
 					// Clipping is done after scaling/filtering so account for that if enabled
-					height *= SCALER_CTL.vscalefactor / 0x400;
-					min_y *= SCALER_CTL.vscalefactor / 0x400;
+					height *= (float)SCALER_CTL.vscalefactor / 0x400;
+					min_y *= (float)SCALER_CTL.vscalefactor / 0x400;
 				}
 				if (settings.rend.Rotate90)
 				{
@@ -1970,8 +2040,6 @@ bool RenderFrame()
 
 	eglCheck();
 
-	KillTex=false;
-
 	if (is_rtt)
 		ReadRTTBuffer();
 	else if (settings.rend.ScreenScaling != 100 || gl.swap_buffer_not_preserved)
@@ -1992,14 +2060,13 @@ struct glesrend : Renderer
 	void Resize(int w, int h) { screen_width=w; screen_height=h; }
 	void Term()
 	{
-		if (KillTex)
-			killtex();
+		killtex();
 		gles_term();
 	}
 
 	bool Process(TA_context* ctx) { return ProcessFrame(ctx); }
 	bool Render() { return RenderFrame(); }
-	bool RenderLastFrame() { return render_output_framebuffer(); }
+	bool RenderLastFrame() { return gl.swap_buffer_not_preserved ? render_output_framebuffer() : false; }
 	void Present() { gl_swap(); glViewport(0, 0, screen_width, screen_height); }
 
 	void DrawOSD(bool clear_screen)
@@ -2026,8 +2093,6 @@ struct glesrend : Renderer
 	}
 };
 
-
-#include "deps/libpng/png.h"
 
 FILE* pngfile;
 
@@ -2059,7 +2124,7 @@ u8* loadPNGData(const string& fname, int &width, int &height)
 	if (!is_png)
 	{
 		fclose(file);
-		printf("Not a PNG file : %s\n", filename);
+		WARN_LOG(RENDERER, "Not a PNG file : %s", filename);
 		return NULL;
 	}
 
@@ -2069,7 +2134,7 @@ u8* loadPNGData(const string& fname, int &width, int &height)
 	if (!png_ptr)
 	{
 		fclose(file);
-		printf("Unable to create PNG struct : %s\n", filename);
+		WARN_LOG(RENDERER, "Unable to create PNG struct : %s", filename);
 		return (NULL);
 	}
 
@@ -2078,7 +2143,7 @@ u8* loadPNGData(const string& fname, int &width, int &height)
 	if (!info_ptr)
 	{
 		png_destroy_read_struct(&png_ptr, (png_infopp) NULL, (png_infopp) NULL);
-		printf("Unable to create PNG info : %s\n", filename);
+		WARN_LOG(RENDERER, "Unable to create PNG info : %s", filename);
 		fclose(file);
 		return (NULL);
 	}
@@ -2088,7 +2153,7 @@ u8* loadPNGData(const string& fname, int &width, int &height)
 	if (!end_info)
 	{
 		png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp) NULL);
-		printf("Unable to create PNG end info : %s\n", filename);
+		WARN_LOG(RENDERER, "Unable to create PNG end info : %s", filename);
 		fclose(file);
 		return (NULL);
 	}
@@ -2097,7 +2162,7 @@ u8* loadPNGData(const string& fname, int &width, int &height)
 	if (setjmp(png_jmpbuf(png_ptr)))
 	{
 		fclose(file);
-		printf("Error during setjmp : %s\n", filename);
+		WARN_LOG(RENDERER, "Error during setjmp : %s", filename);
 		png_destroy_read_struct(&png_ptr, &info_ptr, &end_info);
 		return (NULL);
 	}
@@ -2136,7 +2201,7 @@ u8* loadPNGData(const string& fname, int &width, int &height)
 	{
 		//clean up memory and close stuff
 		png_destroy_read_struct(&png_ptr, &info_ptr, &end_info);
-		printf("Unable to allocate image_data while loading %s\n", filename);
+		WARN_LOG(RENDERER, "Unable to allocate image_data while loading %s", filename);
 		fclose(file);
 		return NULL;
 	}
@@ -2148,7 +2213,7 @@ u8* loadPNGData(const string& fname, int &width, int &height)
 		//clean up memory and close stuff
 		png_destroy_read_struct(&png_ptr, &info_ptr, &end_info);
 		delete[] image_data;
-		printf("Unable to allocate row_pointer while loading %s\n", filename);
+		WARN_LOG(RENDERER, "Unable to allocate row_pointer while loading %s", filename);
 		fclose(file);
 		return NULL;
 	}

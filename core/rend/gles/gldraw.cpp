@@ -263,7 +263,14 @@ __forceinline
 	if (SortingEnabled && !settings.rend.PerStripSorting)
 		glcache.DepthMask(GL_FALSE);
 	else
-		glcache.DepthMask(!gp->isp.ZWriteDis);
+	{
+		// Z Write Disable seems to be ignored for punch-through.
+		// Fixes Worms World Party, Bust-a-Move 4 and Re-Volt
+		if (Type == ListType_Punch_Through)
+			glcache.DepthMask(GL_TRUE);
+		else
+			glcache.DepthMask(!gp->isp.ZWriteDis);
+	}
 }
 
 template <u32 Type, bool SortingEnabled>
@@ -765,7 +772,7 @@ void GenSorted(int first, int count)
 			glBufferData(GL_ELEMENT_ARRAY_BUFFER, vidx_sort.size() * sizeof(u32), &vidx_sort[0], GL_STREAM_DRAW);
 		glCheck();
 
-		if (tess_gen) printf("Generated %.2fK Triangles !\n",tess_gen/1000.0);
+		if (tess_gen) DEBUG_LOG(RENDERER, "Generated %.2fK Triangles !", tess_gen / 1000.0);
 	}
 }
 

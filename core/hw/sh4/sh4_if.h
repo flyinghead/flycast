@@ -218,7 +218,7 @@ typedef void StopFP();
 typedef void StartFP();
 typedef void StepFP();
 typedef void SkipFP();
-typedef void ResetFP(bool Manual);
+typedef void ResetFP(bool hard);
 typedef void InitFP();
 typedef void TermFP();
 typedef bool IsCpuRunningFP();
@@ -282,6 +282,8 @@ struct Sh4Context
 
 			int sh4_sched_next;
 			u32 interrupt_pend;
+
+			u32 exception_pc;
 		};
 		u64 raw[64-8];
 	};

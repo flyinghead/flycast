@@ -591,6 +591,19 @@ ADD.SP.REG	0x008D0000
 		 	EMIT_I;
 		}
 
+		EAPI SBFX(eReg Rd, eReg Rm, u8 lsb, u8 width, ConditionCode CC=AL)
+		{
+			DECL_Id(0x07A00050);
+			verify(lsb+width<=32);
+
+			SET_CC;
+			I |= (Rd&15)<<12;
+			I |= (Rm&15);
+			I |= (lsb&31)<<7;
+		    I |= ((width-1)&31)<<16;
+		 	EMIT_I;
+		}
+
 		EAPI MOV(eReg Rd, eReg Rm, ConditionCode CC=AL)
 		{
 			DECL_Id(0x01A00000);

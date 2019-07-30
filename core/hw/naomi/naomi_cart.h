@@ -52,6 +52,13 @@ protected:
 	u32 DmaOffset;
 	u32 DmaCount;
 	u32 key;
+	// Naomi 840-0001E communication board
+	u16 comm_ctrl = 0xC000;
+	u16 comm_offset = 0;
+	u16 comm_offset_status0 = 0;
+	u16 comm_offset_status1 = 0;
+	u16 m68k_ram[128 * 1024 / sizeof(u16)];
+	u16 comm_ram[64 * 1024 / sizeof(u16)];
 };
 
 class DecryptedCartridge : public NaomiCartridge
@@ -78,8 +85,15 @@ private:
 	u8 naomi_cart_ram[64 * 1024];
 };
 
-bool naomi_cart_SelectFile();
+class NaomiCartException : public ReicastException
+{
+public:
+	NaomiCartException(std::string reason) : ReicastException(reason) {}
+};
+
+void naomi_cart_LoadRom(const char* file);
 void naomi_cart_Close();
+int naomi_cart_GetPlatform(const char *path);
 
 extern char naomi_game_id[];
 extern u8 *naomi_default_eeprom;

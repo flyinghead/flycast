@@ -35,7 +35,7 @@ u32 sb_ReadMem(u32 addr,u32 sz)
 #ifdef TRACE
 	if (offset & 3/*(size-1)*/) //4 is min align size
 	{
-		EMUERROR("Unaligned System Bus register read");
+		INFO_LOG(HOLLY, "Unaligned System Bus register read");
 	}
 #endif
 
@@ -59,7 +59,7 @@ u32 sb_ReadMem(u32 addr,u32 sz)
 			//printf("SB: %08X\n",addr);
 			if ((sb_regs[offset].flags & REG_WO) || sb_regs[offset].readFunctionAddr == NULL)
 			{
-				EMUERROR("sb_ReadMem write-only reg %08x %d\n", addr, sz);
+				INFO_LOG(HOLLY, "sb_ReadMem write-only reg %08x %d", addr, sz);
 				return 0;
 			}
 			return sb_regs[offset].readFunctionAddr(addr);
@@ -69,7 +69,7 @@ u32 sb_ReadMem(u32 addr,u32 sz)
 	else
 	{
 		if (!(sb_regs[offset].flags& REG_NOT_IMPL))
-			EMUERROR("ERROR [wrong size read on register]");
+			INFO_LOG(HOLLY, "ERROR [wrong size read on register]");
 	}
 #endif
 //  if ((sb_regs[offset].flags& REG_NOT_IMPL))
@@ -83,7 +83,7 @@ void sb_WriteMem(u32 addr,u32 data,u32 sz)
 #ifdef TRACE
 	if (offset & 3/*(size-1)*/) //4 is min align size
 	{
-		EMUERROR("Unaligned System bus register write");
+		INFO_LOG(HOLLY, "Unaligned System bus register write");
 	}
 #endif
 offset>>=2;
@@ -128,10 +128,10 @@ offset>>=2;
 	else
 	{
 		if (!(sb_regs[offset].flags& REG_NOT_IMPL))
-			EMUERROR4("ERROR :wrong size write on register ; offset=%x , data=%x,sz=%d",offset,data,sz);
+			INFO_LOG(HOLLY, "ERROR: wrong size write on register; offset=%x, data=%x, sz=%d", offset, data, sz);
 	}
 	if ((sb_regs[offset].flags& REG_NOT_IMPL))
-		EMUERROR3("Write to System Control Regs , not  implemented , addr=%x,data=%x",addr,data);
+		INFO_LOG(HOLLY, "Write to System Control Regs, not implemented, addr=%x, data=%x", addr, data);
 #endif
 
 }
@@ -773,43 +773,53 @@ void sb_Init()
 
 	asic_reg_Init();
 
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
 	gdrom_reg_Init();
-#else
 	naomi_reg_Init();
-#endif
 
 	pvr_sb_Init();
 	maple_Init();
 	aica_sb_Init();
 
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST && defined(ENABLE_MODEM)
+#ifdef ENABLE_MODEM
 	ModemInit();
 #endif
 }
 
-void sb_Reset(bool Manual)
+void sb_Reset(bool hard)
 {
-	asic_reg_Reset(Manual);
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-	gdrom_reg_Reset(Manual);
-#else
-	naomi_reg_Reset(Manual);
+	if (hard)
+	{
+		for (u32 i = 0; i < sb_regs.Size; i++)
+		{
+			if (!(sb_regs[i].flags & (REG_RO|REG_WO|REG_RF)))
+				sb_regs[i].data32 = 0;
+		}
+	}
+	SB_ISTNRM = 0;
+	SB_FFST_rc = 0;
+	SB_FFST = 0;
+#ifdef ENABLE_MODEM
+	ModemTerm();
 #endif
-	pvr_sb_Reset(Manual);
-	maple_Reset(Manual);
-	aica_sb_Reset(Manual);
+	asic_reg_Reset(hard);
+	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+		gdrom_reg_Reset(hard);
+	else
+		naomi_reg_Reset(hard);
+	pvr_sb_Reset(hard);
+	maple_Reset(hard);
+	aica_sb_Reset(hard);
 }
 
 void sb_Term()
 {
+#ifdef ENABLE_MODEM
+	ModemTerm();
+#endif
 	aica_sb_Term();
 	maple_Term();
 	pvr_sb_Term();
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
 	gdrom_reg_Term();
-#else
 	naomi_reg_Term();
-#endif
 	asic_reg_Term();
 }

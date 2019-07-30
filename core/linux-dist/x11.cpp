@@ -107,7 +107,7 @@ void x11_window_set_fullscreen(bool fullscreen)
 		xev.xclient.data.l[3] = 1;
 		xev.xclient.data.l[4] = 0;
 
-		printf("x11: setting fullscreen to %d\n", fullscreen);
+		INFO_LOG(RENDERER, "x11: setting fullscreen to %d", fullscreen);
 		XSendEvent((Display*)x11_disp, DefaultRootWindow((Display*)x11_disp), False, SubstructureNotifyMask, &xev);
 }
 
@@ -261,9 +261,9 @@ void input_x11_handle()
 						if (e.type == KeyRelease && e.xkey.keycode == KEY_F10)
 						{
 							if (sample_Switch(3000)) {
-								printf("Starting profiling\n");
+								INFO_LOG(COMMON, "Starting profiling");
 							} else {
-								printf("Stopping profiling\n");
+								INFO_LOG(COMMON, "Stopping profiling");
 							}
 						}
 						else
@@ -358,7 +358,7 @@ void input_x11_init()
 
 	x11_keyboard_input = (cfgLoadInt("input", "enable_x11_keyboard", 1) >= 1);
 	if (!x11_keyboard_input)
-		printf("X11 Keyboard input disabled by config.\n");
+		INFO_LOG(INPUT, "X11 Keyboard input disabled by config.");
 }
 
 static int x11_error_handler(Display *, XErrorEvent *)
@@ -390,7 +390,7 @@ void x11_window_create()
 		x11Display = XOpenDisplay(NULL);
 		if (!x11Display && !(x11Display = XOpenDisplay(":0")))
 		{
-			printf("Error: Unable to open X display\n");
+			ERROR_LOG(RENDERER, "Error: Unable to open X display");
 			return;
 		}
 		x11Screen = XDefaultScreen(x11Display);
@@ -429,7 +429,7 @@ void x11_window_create()
 			if (!glXQueryVersion(x11Display, &glx_major, &glx_minor) ||
 					((glx_major == 1) && (glx_minor < 3)) || (glx_major < 1))
 			{
-				printf("Invalid GLX version");
+				ERROR_LOG(RENDERER, "Invalid GLX version");
 				exit(1);
 			}
 
@@ -437,17 +437,17 @@ void x11_window_create()
 			GLXFBConfig* fbc = glXChooseFBConfig(x11Display, x11Screen, visual_attribs, &fbcount);
 			if (!fbc)
 			{
-				printf("Failed to retrieve a framebuffer config\n");
+				ERROR_LOG(RENDERER, "Failed to retrieve a framebuffer config");
 				exit(1);
 			}
-			printf("Found %d matching FB configs.\n", fbcount);
+			INFO_LOG(RENDERER, "Found %d matching FB configs.", fbcount);
 
 			GLXFBConfig bestFbc = fbc[0];
 			XFree(fbc);
 
 			// Get a visual
 			XVisualInfo *vi = glXGetVisualFromFBConfig(x11Display, bestFbc);
-			printf("Chosen visual ID = 0x%lx\n", vi->visualid);
+			INFO_LOG(RENDERER, "Chosen visual ID = 0x%lx", vi->visualid);
 
 
 			depth = vi->depth;
@@ -460,7 +460,7 @@ void x11_window_create()
 			XMatchVisualInfo(x11Display, x11Screen, i32Depth, TrueColor, x11Visual);
 			if (!x11Visual)
 			{
-				printf("Error: Unable to acquire visual\n");
+				ERROR_LOG(RENDERER, "Error: Unable to acquire visual");
 				return;
 			}
 			x11Colormap = XCreateColormap(x11Display, sRootWindow, x11Visual->visual, AllocNone);
@@ -529,7 +529,7 @@ void x11_window_create()
 			x11_glc = glXCreateContextAttribsARB(x11Display, bestFbc, 0, True, context_attribs);
 			if (!x11_glc)
 			{
-				printf("Open GL 4.3 not supported\n");
+				INFO_LOG(RENDERER, "Open GL 4.3 not supported");
 				// Try GL 3.0
 				context_attribs[1] = 3;
 				context_attribs[3] = 0;
@@ -555,7 +555,7 @@ void x11_window_create()
 	}
 	else
 	{
-		printf("Not creating X11 window ..\n");
+		INFO_LOG(RENDERER, "Not creating X11 window ..");
 	}
 }
 

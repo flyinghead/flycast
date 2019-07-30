@@ -147,12 +147,12 @@ static void get_udev_events()
 					{
 						if (strstr(action, "add") != NULL)
 						{
-							//printf("udev monitor: device added %s\n", devnode);
+							DEBUG_LOG(INPUT, "udev monitor: device added %s", devnode);
 							input_evdev_add_device(devnode);
 						}
 						else if (strstr(action, "remove") != NULL)
 						{
-							//printf("udev monitor: device removed %s\n", devnode);
+							DEBUG_LOG(INPUT, "udev monitor: device removed %s", devnode);
 							input_evdev_remove_device(devnode);
 						}
 					}

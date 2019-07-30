@@ -8,8 +8,8 @@ enum VMemType {
 };
 
 struct vmem_mapping {
-	u32 start_address, end_address;
-	unsigned memoffset, memsize;
+	u64 start_address, end_address;
+	u64 memoffset, memsize;
 	bool allow_writes;
 };
 
@@ -55,6 +55,7 @@ typedef u32 _vmem_handler;
 void _vmem_init();
 void _vmem_reset();
 void _vmem_term();
+void _vmem_init_mappings();
 
 //functions to register and map handlers/memory
 _vmem_handler _vmem_register_handler(_vmem_ReadMem8FP* read8,_vmem_ReadMem16FP* read16,_vmem_ReadMem32FP* read32, _vmem_WriteMem8FP* write8,_vmem_WriteMem16FP* write16,_vmem_WriteMem32FP* write32);
@@ -75,7 +76,13 @@ void _vmem_map_handler(_vmem_handler Handler,u32 start,u32 end);
 void _vmem_map_block(void* base,u32 start,u32 end,u32 mask);
 void _vmem_mirror_mapping(u32 new_region,u32 start,u32 size);
 
-#define _vmem_map_block_mirror(base,start,end,blck_size) {u32 block_size=(blck_size)>>24;u32 map_sz=(end)-(start)+1;/*verify((map_sz%block_size)==0);u32 map_times=map_sz/(block_size);*/ for (u32 _maip=(start);_maip<(end);_maip+=block_size) _vmem_map_block((base),_maip,_maip+block_size-1,blck_size-1);}
+#define _vmem_map_block_mirror(base, start, end, blck_size) { \
+	u32 block_size = (blck_size) >> 24; \
+	u32 map_sz = (end) - (start) + 1; \
+	/* verify((map_sz % block_size) == 0); */ \
+	for (u32 _maip = (start); _maip <= (end); _maip += block_size) \
+		_vmem_map_block((base), _maip, _maip + block_size - 1, blck_size - 1); \
+}
 
 //ReadMem(s)
 u32 DYNACALL _vmem_ReadMem8SX32(u32 Address);
@@ -84,11 +91,13 @@ u8 DYNACALL _vmem_ReadMem8(u32 Address);
 u16 DYNACALL _vmem_ReadMem16(u32 Address);
 u32 DYNACALL _vmem_ReadMem32(u32 Address);
 u64 DYNACALL _vmem_ReadMem64(u32 Address);
+template<typename T, typename Trv> Trv DYNACALL _vmem_readt(u32 addr);
 //WriteMem(s)
 void DYNACALL _vmem_WriteMem8(u32 Address,u8 data);
 void DYNACALL _vmem_WriteMem16(u32 Address,u16 data);
 void DYNACALL _vmem_WriteMem32(u32 Address,u32 data);
 void DYNACALL _vmem_WriteMem64(u32 Address,u64 data);
+template<typename T> void DYNACALL _vmem_writet(u32 addr, T data);
 
 //should be called at start up to ensure it will succeed :)
 bool _vmem_reserve();
@@ -98,11 +107,24 @@ void _vmem_release();
 void _vmem_get_ptrs(u32 sz,bool write,void*** vmap,void*** func);
 void* _vmem_get_ptr2(u32 addr,u32& mask);
 void* _vmem_read_const(u32 addr,bool& ismem,u32 sz);
+void* _vmem_write_const(u32 addr,bool& ismem,u32 sz);
 
 extern u8* virt_ram_base;
+extern bool vmem_4gb_space;
 
 static inline bool _nvmem_enabled() {
 	return virt_ram_base != 0;
 }
-
+static inline bool _nvmem_4gb_space() {
+	return vmem_4gb_space;
+}
 void _vmem_bm_reset();
+void _vmem_enable_mmu(bool enable);
+
+#define MAP_RAM_START_OFFSET  0
+#define MAP_VRAM_START_OFFSET (MAP_RAM_START_OFFSET+RAM_SIZE)
+#define MAP_ARAM_START_OFFSET (MAP_VRAM_START_OFFSET+VRAM_SIZE)
+
+void _vmem_protect_vram(u32 addr, u32 size);
+void _vmem_unprotect_vram(u32 addr, u32 size);
+u32 _vmem_get_vram_offset(void *addr);

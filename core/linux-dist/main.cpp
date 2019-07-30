@@ -11,7 +11,7 @@
 #include <sys/param.h>
 #include <sys/time.h>
 #include "hw/sh4/dyna/blockmanager.h"
-#include "hw/maple/maple_cfg.h"
+#include "log/LogManager.h"
 #include <unistd.h>
 
 #if defined(TARGET_EMSCRIPTEN)
@@ -87,7 +87,7 @@ void os_SetupInput()
 #if defined(USE_JOYSTICK)
 	int joystick_device_id = cfgLoadInt("input", "joystick_device_id", JOYSTICK_DEFAULT_DEVICE_ID);
 	if (joystick_device_id < 0) {
-		puts("Legacy Joystick input disabled by config.\n");
+		INFO_LOG(INPUT, "Legacy Joystick input disabled by config.");
 	}
 	else
 	{
@@ -105,10 +105,6 @@ void os_SetupInput()
 
 #if defined(USE_SDL)
 	input_sdl_init();
-#endif
-
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-	mcfg_CreateDevices();
 #endif
 }
 
@@ -342,6 +338,7 @@ std::vector<string> find_system_data_dirs()
 
 int main(int argc, wchar* argv[])
 {
+	LogManager::Init();
 	#ifdef TARGET_PANDORA
 		signal(SIGSEGV, clean_exit);
 		signal(SIGKILL, clean_exit);
@@ -361,8 +358,8 @@ int main(int argc, wchar* argv[])
 	{
 		add_system_data_dir(dirs[i]);
 	}
-	printf("Config dir is: %s\n", get_writable_config_path("/").c_str());
-	printf("Data dir is:   %s\n", get_writable_data_path("/").c_str());
+	INFO_LOG(BOOT, "Config dir is: %s", get_writable_config_path("/").c_str());
+	INFO_LOG(BOOT, "Data dir is:   %s", get_writable_data_path("/").c_str());
 
 	#if defined(USE_SDL)
 		if (SDL_Init(0) != 0)
@@ -412,7 +409,7 @@ void os_DebugBreak()
 	#if !defined(TARGET_EMSCRIPTEN)
 		raise(SIGTRAP);
 	#else
-		printf("DEBUGBREAK!\n");
+		ERROR_LOG(COMMON, "DEBUGBREAK!");
 		exit(-1);
 	#endif
 }

@@ -7,6 +7,8 @@
 #include "TexCache.h"
 #include "hw/pvr/pvr_regs.h"
 #include "hw/mem/_vmem.h"
+#include "hw/mem/vmem32.h"
+#include "hw/sh4/modules/mmu.h"
 #include "deps/xbrz/xbrz.h"
 #include "deps/xxhash/xxhash.h"
 
@@ -123,7 +125,7 @@ void palette_update()
 
 using namespace std;
 
-vector<vram_block*> VramLocks[VRAM_SIZE/PAGE_SIZE];
+vector<vram_block*> VramLocks[VRAM_SIZE_MAX / PAGE_SIZE];
 VLockedMemory vram;  // vram 32-64b
 
 //List functions
@@ -185,13 +187,13 @@ vram_block* libCore_vramlock_Lock(u32 start_offset64,u32 end_offset64,void* user
  
 	if (end_offset64>(VRAM_SIZE-1))
 	{
-		msgboxf("vramlock_Lock_64: end_offset64>(VRAM_SIZE-1) \n Tried to lock area out of vram , possibly bug on the pvr plugin",MBX_OK);
+		WARN_LOG(PVR, "vramlock_Lock_64: end_offset64>(VRAM_SIZE-1) \n Tried to lock area out of vram , possibly bug on the pvr plugin");
 		end_offset64=(VRAM_SIZE-1);
 	}
 
 	if (start_offset64>end_offset64)
 	{
-		msgboxf("vramlock_Lock_64: start_offset64>end_offset64 \n Tried to lock negative block , possibly bug on the pvr plugin",MBX_OK);
+		WARN_LOG(PVR, "vramlock_Lock_64: start_offset64>end_offset64 \n Tried to lock negative block , possibly bug on the pvr plugin");
 		start_offset64=0;
 	}
 
@@ -206,13 +208,7 @@ vram_block* libCore_vramlock_Lock(u32 start_offset64,u32 end_offset64,void* user
 	{
 		vramlist_lock.Lock();
 	
-		vram.LockRegion(block->start, block->len);
-
-		//TODO: Fix this for 32M wrap as well
-		if (_nvmem_enabled() && VRAM_SIZE == 0x800000) {
-			vram.LockRegion(block->start + VRAM_SIZE, block->len);
-		}
-		
+		_vmem_protect_vram(block->start, block->len);
 		vramlock_list_add(block);
 		
 		vramlist_lock.Unlock();
@@ -221,11 +217,8 @@ vram_block* libCore_vramlock_Lock(u32 start_offset64,u32 end_offset64,void* user
 	return block;
 }
 
-
-bool VramLockedWrite(u8* address)
+bool VramLockedWriteOffset(size_t offset)
 {
-	size_t offset=address-vram.data;
-
 	if (offset<VRAM_SIZE)
 	{
 
@@ -243,21 +236,16 @@ bool VramLockedWrite(u8* address)
 				
 					if ((*list)[i])
 					{
-						msgboxf("Error : pvr is supposed to remove lock",MBX_OK);
-						dbgbreak;
+						ERROR_LOG(PVR, "Error : pvr is supposed to remove lock");
+						die("Invalid state");
 					}
 
 				}
 			}
 			list->clear();
 
-			vram.UnLockRegion((u32)offset&(~(PAGE_SIZE-1)),PAGE_SIZE);
+			_vmem_unprotect_vram((u32)(offset & ~PAGE_MASK), PAGE_SIZE);
 
-			//TODO: Fix this for 32M wrap as well
-			if (_nvmem_enabled() && VRAM_SIZE == 0x800000) {
-				vram.UnLockRegion((u32)offset&(~(PAGE_SIZE-1)) + VRAM_SIZE,PAGE_SIZE);
-			}
-			
 			vramlist_lock.Unlock();
 		}
 
@@ -265,6 +253,14 @@ bool VramLockedWrite(u8* address)
 	}
 	else
 		return false;
+}
+
+bool VramLockedWrite(u8* address)
+{
+	u32 offset = _vmem_get_vram_offset(address);
+	if (offset == -1)
+		return false;
+	return VramLockedWriteOffset(offset);
 }
 
 //unlocks mem
@@ -278,15 +274,11 @@ void libCore_vramlock_Unlock_block(vram_block* block)
 
 void libCore_vramlock_Unlock_block_wb(vram_block* block)
 {
-		//VRAM_SIZE/PAGE_SIZE;
-	if (block->end>VRAM_SIZE)
-		msgboxf("Error : block end is after vram , skipping unlock",MBX_OK);
-	else
-	{
-		vramlock_list_remove(block);
-		//more work needed
-		free(block);
-	}
+	if (mmu_enabled())
+		vmem32_unprotect_vram(block->start, block->len);
+	vramlock_list_remove(block);
+	//more work needed
+	free(block);
 }
 
 //

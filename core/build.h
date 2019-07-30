@@ -115,7 +115,9 @@
 
 */
 
-#define NO_MMU
+//#define NO_MMU
+#define FAST_MMU
+#define USE_WINCE_HACK
 
 #define DC_PLATFORM_MASK        7
 #define DC_PLATFORM_DREAMCAST   0   /* Works, for the most part */
@@ -209,7 +211,7 @@
 #elif defined(TARGET_GCW0)
 	#define HOST_OS OS_LINUX
 	#define HOST_CPU CPU_MIPS
-#elif defined(TARGET_NACL32) || defined(TARGET_EMSCRIPTEN)
+#elif defined(TARGET_EMSCRIPTEN)
 	#define HOST_OS OS_LINUX
 	#define HOST_CPU CPU_GENERIC
 #elif defined(TARGET_IPHONE)
@@ -223,11 +225,6 @@
     #define HOST_CPU CPU_X64
 #else
 	#error Invalid Target: TARGET_* not defined
-#endif
-
-#if defined(TARGET_NAOMI)
-	#define DC_PLATFORM DC_PLATFORM_NAOMI
-	#undef TARGET_NAOMI
 #endif
 
 #if defined(TARGET_NO_REC)
@@ -265,10 +262,6 @@
 
 //defaults
 
-#ifndef DC_PLATFORM 
-	#define DC_PLATFORM DC_PLATFORM_DREAMCAST
-#endif
-
 #ifndef FEAT_SHREC
 	#define FEAT_SHREC DYNAREC_JIT
 #endif
@@ -301,6 +294,10 @@
 
 #ifndef FEAT_HAS_SOFTREND
 	#define FEAT_HAS_SOFTREND BUILD_COMPILER == COMPILER_VC	//GCC wants us to enable sse4 globaly to enable intrins
+#endif
+
+#if HOST_CPU == CPU_X64 || HOST_CPU == CPU_ARM64
+#define HOST_64BIT_CPU
 #endif
 
 //Depricated build configs
@@ -339,94 +336,7 @@
 #define RAM_SIZE_MAX (32*1024*1024)
 #define VRAM_SIZE_MAX (16*1024*1024)
 #define ARAM_SIZE_MAX (8*1024*1024)
-
-#if (DC_PLATFORM==DC_PLATFORM_DREAMCAST)
-
-	#define BUILD_DREAMCAST 1
-
-	//DC : 16 mb ram, 8 mb vram, 2 mb aram, 2 mb bios, 128k flash
-	#define RAM_SIZE (16*1024*1024)
-	#define VRAM_SIZE (8*1024*1024)
-	#define ARAM_SIZE (2*1024*1024)
-	#define BIOS_SIZE (2*1024*1024)
-	#define FLASH_SIZE (128*1024)
-
-	#define ROM_PREFIX "dc_"
-	#define ROM_NAMES
-	#define NVR_OPTIONAL 0
-
-#elif  (DC_PLATFORM==DC_PLATFORM_DEV_UNIT)
-
-	#define BUILD_DEV_UNIT 1
-
-	//Devkit : 32 mb ram, 8? mb vram, 2? mb aram, 2? mb bios, ? flash
-	#define RAM_SIZE (32*1024*1024)
-	#define VRAM_SIZE (8*1024*1024)
-	#define ARAM_SIZE (2*1024*1024)
-	#define BIOS_SIZE (2*1024*1024)
-	#define FLASH_SIZE (128*1024)
-
-	#define ROM_PREFIX "hkt_"
-	#define ROM_NAMES
-	#define NVR_OPTIONAL 0
-
-#elif  (DC_PLATFORM==DC_PLATFORM_NAOMI)
-
-	//Naomi : 32 mb ram, 16 mb vram, 8 mb aram, 2 mb bios, ? flash
-	#define RAM_SIZE (32*1024*1024)
-	#define VRAM_SIZE (16*1024*1024)
-	#define ARAM_SIZE (8*1024*1024)
-	#define BIOS_SIZE (2*1024*1024)
-	#define BBSRAM_SIZE (32*1024)
-
-	#define ROM_PREFIX "naomi_"
-	#define ROM_NAMES ";epr-21576d.bin"
-	#define NVR_OPTIONAL 1
-
-#elif  (DC_PLATFORM==DC_PLATFORM_NAOMI2)
-
-	//Naomi2 : 32 mb ram, 16 mb vram, 8 mb aram, 2 mb bios, ? flash
-	#define RAM_SIZE (32*1024*1024)
-	#define VRAM_SIZE (16*1024*1024)
-	#define ARAM_SIZE (8*1024*1024)
-	#define BIOS_SIZE (2*1024*1024)
-	#define BBSRAM_SIZE (32*1024)
-
-	#define ROM_PREFIX "n2_"
-	#define ROM_NAMES
-	#define NVR_OPTIONAL 1
-
-#elif  (DC_PLATFORM==DC_PLATFORM_ATOMISWAVE)
-
-	#define BUILD_ATOMISWAVE 1
-
-	//Atomiswave : 16 mb ram, 8 mb vram, 8 mb aram, 128kb bios on flash, 128kb battery-backed ram
-	#define RAM_SIZE (16*1024*1024)
-	#define VRAM_SIZE (8*1024*1024)
-	#define ARAM_SIZE (8*1024*1024)
-	#define BIOS_SIZE (128*1024)
-	#define BBSRAM_SIZE (128*1024)
-
-	#define ROM_PREFIX "aw_"
-	#define ROM_NAMES ";bios.ic23_l"
-	#define NVR_OPTIONAL 1
-
-#else
-	#error invalid build config
-#endif
-
-#define RAM_MASK	(RAM_SIZE-1)
-#define VRAM_MASK	(VRAM_SIZE-1)
-#define ARAM_MASK	(ARAM_SIZE-1)
-#define BIOS_MASK	(BIOS_SIZE-1)
-
-#ifdef FLASH_SIZE
-#define FLASH_MASK	(FLASH_SIZE-1)
-#endif
-
-#ifdef BBSRAM_SIZE
-#define BBSRAM_MASK	(BBSRAM_SIZE-1)
-#endif
+#define BUILD_DREAMCAST 1
 
 #define GD_CLOCK 33868800				//GDROM XTAL -- 768fs
 

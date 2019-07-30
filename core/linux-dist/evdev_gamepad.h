@@ -13,7 +13,7 @@ public:
 		if (ioctl(fd, EVIOCGNAME(sizeof(buf) - 1), buf) < 0)
 			perror("evdev: ioctl(EVIOCGNAME)");
 		else
-			printf("evdev: Opened device '%s' ", buf);
+			INFO_LOG(INPUT, "evdev: Opened device '%s'", buf);
 		_name = buf;
 		buf[0] = 0;
 		if (ioctl(fd, EVIOCGUNIQ(sizeof(buf) - 1), buf) == 0)
@@ -50,7 +50,7 @@ public:
 #endif
 			if (find_mapping(mapping_file))
 			{
-				printf("using default mapping '%s'\n", input_mapper->name.c_str());
+				INFO_LOG(INPUT, "using default mapping '%s'", input_mapper->name.c_str());
 				input_mapper = new InputMapping(*input_mapper);
 			}
 			else
@@ -59,11 +59,11 @@ public:
 			save_mapping();
 		}
 		else
-			printf("using custom mapping '%s'\n", input_mapper->name.c_str());
+			INFO_LOG(INPUT, "using custom mapping '%s'", input_mapper->name.c_str());
 	}
 	virtual ~EvdevGamepadDevice() override
 	{
-		printf("evdev: Device '%s' on port %d disconnected\n", _name.c_str(), maple_port());
+		INFO_LOG(INPUT, "evdev: Device '%s' on port %d disconnected", _name.c_str(), maple_port());
 		close(_fd);
 	}
 
@@ -88,7 +88,7 @@ public:
 
 	static std::shared_ptr<EvdevGamepadDevice> GetControllerForPort(int port)
 	{
-		for (auto pair : evdev_gamepads)
+		for (auto& pair : evdev_gamepads)
 			if (pair.second->maple_port() == port)
 				return pair.second;
 		return NULL;
@@ -104,7 +104,7 @@ public:
 
 	static void PollDevices()
 	{
-		for (auto pair : evdev_gamepads)
+		for (auto& pair : evdev_gamepads)
 			pair.second->read_input();
 	}
 
@@ -138,7 +138,7 @@ protected:
 		}
 		axis_min_values[axis] = abs.minimum;
 		axis_ranges[axis] = abs.maximum - abs.minimum;
-		//printf("evdev: range of axis %d is from %d to %d\n", axis, axis_min_values[axis], axis_min_values[axis] + axis_ranges[axis]);
+		DEBUG_LOG(INPUT, "evdev: range of axis %d is from %d to %d", axis, axis_min_values[axis], axis_min_values[axis] + axis_ranges[axis]);
 	}
 
 private:

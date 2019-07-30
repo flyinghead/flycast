@@ -92,7 +92,7 @@ public:
 	{
 		_name = name;
 		_unique_id = unique_id;
-		printf("Android: Opened joystick %d on port %d: '%s' descriptor '%s'", id, maple_port, _name.c_str(), _unique_id.c_str());
+		INFO_LOG(INPUT, "Android: Opened joystick %d on port %d: '%s' descriptor '%s'", id, maple_port, _name.c_str(), _unique_id.c_str());
 		if (id == VIRTUAL_GAMEPAD_ID)
 		{
 			input_mapper = new IdentityInputMapping();
@@ -104,7 +104,6 @@ public:
 			axis_ranges[DC_AXIS_LT] = 255;
 			axis_min_values[DC_AXIS_RT] = 0;
 			axis_ranges[DC_AXIS_RT] = 255;
-			printf("\n");
 		}
 		else if (!find_mapping())
 		{
@@ -113,14 +112,14 @@ public:
 			else
 				input_mapper = new DefaultInputMapping();
 			save_mapping();
-			printf("using default mapping\n");
+			INFO_LOG(INPUT, "using default mapping");
 		}
 		else
-			printf("using custom mapping '%s'\n", input_mapper->name.c_str());
+			INFO_LOG(INPUT, "using custom mapping '%s'", input_mapper->name.c_str());
 	}
 	virtual ~AndroidGamepadDevice() override
 	{
-		printf("Android: Joystick '%s' on port %d disconnected\n", _name.c_str(), maple_port());
+		INFO_LOG(INPUT, "Android: Joystick '%s' on port %d disconnected", _name.c_str(), maple_port());
 	}
 
 	static std::shared_ptr<AndroidGamepadDevice> GetAndroidGamepad(int id)

@@ -61,12 +61,12 @@ INLINE void Denorm32(float &value)
 		if ((*v<=0x007FFFFF) && *v>0)
 		{
 			*v=0;
-			printf("Fixed +denorm\n");
+			INFO_LOG(INTERPRETER, "Fixed +denorm");
 		}
 		else if ((*v<=0x807FFFFF) && *v>0x80000000)
 		{
 			*v=0x80000000;
-			printf("Fixed -denorm\n");
+			INFO_LOG(INTERPRETER, "Fixed -denorm");
 		}
 	}
 }
@@ -733,6 +733,6 @@ sh4op(i1111_nn01_1111_1101)
 
 void iNimp(const char*str)
 {
-	printf("Unimplemented sh4 FPU instruction: %s\n", str);
+	WARN_LOG(INTERPRETER, "Unimplemented sh4 FPU instruction: %s", str);
 	//Sh4_int_Stop();
 }

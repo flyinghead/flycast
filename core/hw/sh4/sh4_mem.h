@@ -22,15 +22,15 @@ extern VLockedMemory mem_b;
 //#define WriteMem64(addr,reg) {  _vmem_WriteMem32(addr,((u32*)reg)[0]);_vmem_WriteMem32((addr)+4, ((u32*)reg)[1]); }
 #else
 
-typedef u8 (*ReadMem8Func)(u32 addr);
-typedef u16 (*ReadMem16Func)(u32 addr);
-typedef u32 (*ReadMem32Func)(u32 addr);
-typedef u64 (*ReadMem64Func)(u32 addr);
+typedef u8 DYNACALL (*ReadMem8Func)(u32 addr);
+typedef u16 DYNACALL (*ReadMem16Func)(u32 addr);
+typedef u32 DYNACALL (*ReadMem32Func)(u32 addr);
+typedef u64 DYNACALL (*ReadMem64Func)(u32 addr);
 
-typedef void (*WriteMem8Func)(u32 addr, u8 data);
-typedef void (*WriteMem16Func)(u32 addr, u16 data);
-typedef void (*WriteMem32Func)(u32 addr, u32 data);
-typedef void (*WriteMem64Func)(u32 addr, u64 data);
+typedef void DYNACALL (*WriteMem8Func)(u32 addr, u8 data);
+typedef void DYNACALL (*WriteMem16Func)(u32 addr, u16 data);
+typedef void DYNACALL (*WriteMem32Func)(u32 addr, u32 data);
+typedef void DYNACALL (*WriteMem64Func)(u32 addr, u64 data);
 
 extern ReadMem8Func ReadMem8;
 extern ReadMem16Func ReadMem16;

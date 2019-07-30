@@ -190,7 +190,7 @@ struct Disc
 				}
 				else if (fmt==2352 && (secfmt==SECFMT_2048_MODE1 || secfmt==SECFMT_2048_MODE2_FORM1 ))
 				{
-					printf("GDR:fmt=2352;secfmt=2048\n");
+					INFO_LOG(GDROM, "GDR:fmt=2352;secfmt=2048");
 					memcpy(dst,temp,2048);
 				}
 				else if (fmt==2048 && secfmt==SECFMT_2448_MODE2)
@@ -200,13 +200,13 @@ struct Disc
 				}
 				else
 				{
-					printf("ERROR: UNABLE TO CONVERT SECTOR. THIS IS FATAL. Format: %d Sector format: %d\n", fmt, secfmt);
+					WARN_LOG(GDROM, "ERROR: UNABLE TO CONVERT SECTOR. THIS IS FATAL. Format: %d Sector format: %d", fmt, secfmt);
 					//verify(false);
 				}
 			}
 			else
 			{
-				printf("Sector Read miss FAD: %d\n", FAD);
+				INFO_LOG(GDROM, "Sector Read miss FAD: %d", FAD);
 			}
 			dst+=fmt;
 			FAD++;
@@ -230,7 +230,7 @@ struct Disc
 
 		//session 2 : start @ track 3, and its fad
 		ses.FirstTrack=3;
-		ses.StartFAD=tracks[0].StartFAD;
+		ses.StartFAD=tracks[2].StartFAD;
 		sessions.push_back(ses);
 
 		//this isn't always true for gdroms, depends on area look @ the get-toc code

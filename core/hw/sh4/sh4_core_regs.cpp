@@ -45,7 +45,7 @@ bool UpdateSR()
 	{
 		if (sr.RB)
 		{
-			printf("UpdateSR MD=0;RB=1 , this must not happen\n");
+			WARN_LOG(SH4, "UpdateSR MD=0;RB=1 , this must not happen");
 			sr.RB =0;//error - must always be 0
 		}
 		if (old_sr.RB)
@@ -240,7 +240,7 @@ u32* Sh4_int_GetRegisterPtr(Sh4RegType reg)
 			return &Sh4cntx.jdyn;
 
 		default:
-			EMUERROR2("Unknown register ID %d",reg);
+			ERROR_LOG(SH4, "Unknown register ID %d", reg);
 			die("Invalid reg");
 			return 0;
 			break;

@@ -101,12 +101,12 @@ bool CustomTexture::Init()
 		std::string game_id = GetGameId();
 		if (game_id.length() > 0)
 		{
-			textures_path = get_readonly_data_path("/data/") + "textures/" + game_id + "/";
+			textures_path = get_readonly_data_path(DATA_PATH) + "textures/" + game_id + "/";
 
 			DIR *dir = opendir(textures_path.c_str());
 			if (dir != NULL)
 			{
-				printf("Found custom textures directory: %s\n", textures_path.c_str());
+				INFO_LOG(RENDERER, "Found custom textures directory: %s", textures_path.c_str());
 				custom_textures_available = true;
 				closedir(dir);
 				loader_thread.Start();
@@ -160,7 +160,7 @@ void CustomTexture::LoadCustomTextureAsync(TextureCacheData *texture_data)
 
 void CustomTexture::DumpTexture(u32 hash, int w, int h, GLuint textype, void *temp_tex_buffer)
 {
-	std::string base_dump_dir = get_writable_data_path("/data/texdump/");
+	std::string base_dump_dir = get_writable_data_path(DATA_PATH "texdump/");
 	if (!file_exists(base_dump_dir))
 		make_directory(base_dump_dir);
 	std::string game_id = GetGameId();
@@ -176,7 +176,7 @@ void CustomTexture::DumpTexture(u32 hash, int w, int h, GLuint textype, void *te
 	FILE *fp = fopen(path.str().c_str(), "wb");
 	if (fp == NULL)
 	{
-		printf("Failed to open %s for writing\n", path.str().c_str());
+		WARN_LOG(RENDERER, "Failed to open %s for writing", path.str().c_str());
 		return;
 	}
 
@@ -228,7 +228,7 @@ void CustomTexture::DumpTexture(u32 hash, int w, int h, GLuint textype, void *te
 			}
 			break;
 		default:
-			printf("dumpTexture: unsupported picture format %x\n", textype);
+			WARN_LOG(RENDERER, "dumpTexture: unsupported picture format %x", textype);
 			fclose(fp);
 			free(rows[0]);
 			free(rows);
