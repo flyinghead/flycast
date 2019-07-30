@@ -792,7 +792,7 @@ void libGDR_ReadSubChannel(u8 * buff, u32 format, u32 len);
 void libGDR_GetToc(u32* toc,u32 area);
 u32 libGDR_GetDiscType();
 void libGDR_GetSessionInfo(u8* pout,u8 session);
-
+u32 libGDR_GetTrackNumber(u32 sector, u32& elapsed);
 
 // 0x00600000 - 0x006007FF [NAOMI] (modem area for dreamcast)
 u32  libExtDevice_ReadMem_A0_006(u32 addr,u32 size);

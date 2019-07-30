@@ -5,6 +5,7 @@
 		http://www.ludd.luth.se/~jlo/dc/bootROM.c
 		http://www.ludd.luth.se/~jlo/dc/bootROM.h
 		http://www.ludd.luth.se/~jlo/dc/security_stuff.c
+	Bits and pieces from redream (https://github.com/inolen/redream)
 */
 
 #include "reios.h"
@@ -15,8 +16,9 @@
 #include "descrambl.h"
 
 #include "hw/sh4/sh4_mem.h"
-
+#include "hw/holly/sb_mem.h"
 #include "hw/naomi/naomi_cart.h"
+#include "iso9660.h"
 
 #include <map>
 
@@ -33,47 +35,69 @@
 
 #define SYSINFO_ID_ADDR 0x8C001010
 
-u8* biosrom;
-u8* flashrom;
-u32 base_fad = 45150;
-bool descrambl = false;
+static u8* biosrom;
+static MemChip *flashrom;
+static u32 base_fad = 45150;
+static bool descrambl = false;
 
-//Read 32 bit 'bi-endian' integer
-//Uses big-endian bytes, that's what the dc bios does too
-u32 read_u32bi(u8* ptr) {
-	return (ptr[4]<<24) | (ptr[5]<<16) | (ptr[6]<<8) | (ptr[7]<<0);
+static void reios_pre_init()
+{
+	if (libGDR_GetDiscType() == GdRom) {
+		base_fad = 45150;
+		descrambl = false;
+	} else {
+		u8 ses[6];
+		libGDR_GetSessionInfo(ses, 0);
+		libGDR_GetSessionInfo(ses, ses[2]);
+		base_fad = (ses[3] << 16) | (ses[4] << 8) | (ses[5] << 0);
+		descrambl = true;
+	}
 }
 
-static bool bootfile_inited = false;
+static bool reios_locate_bootfile(const char* bootfile="1ST_READ.BIN")
+{
+	reios_pre_init();
 
-bool reios_locate_bootfile(const char* bootfile="1ST_READ.BIN") {
+	// Load IP.BIN bootstrap
+	libGDR_ReadSector(GetMemPtr(0x8c008000, 0), base_fad, 16, 2048);
+
 	u32 data_len = 2048 * 1024;
 	u8* temp = new u8[data_len];
 
 	libGDR_ReadSector(temp, base_fad + 16, 1, 2048);
+	iso9660_pvd_t *pvd = (iso9660_pvd_t *)temp;
 
-	if (memcmp(temp, "\001CD001\001", 7) == 0) {
-		INFO_LOG(REIOS, "reios: iso9660 PVD found");
-		u32 lba = read_u32bi(&temp[156 + 2]); //make sure to use big endian
-		u32 len = read_u32bi(&temp[156 + 10]); //make sure to use big endian
+	if (pvd->type == 1 && !memcmp(pvd->id, ISO_STANDARD_ID, strlen(ISO_STANDARD_ID)) && pvd->version == 1)
+	{
+		INFO_LOG(REIOS, "iso9660 PVD found");
+		u32 lba = pvd->root_directory_record.extent & 0xffffffff;
+		u32 len = pvd->root_directory_record.size & 0xffffffff;
 		
-		data_len = ((len + 2047) / 2048) *2048;
+		data_len = ((len + 2047) / 2048) * 2048;
 
-		INFO_LOG(REIOS, "reios: iso9660 root_directory, FAD: %d, len: %d", 150 + lba, data_len);
-		libGDR_ReadSector(temp, 150 + lba, data_len/2048, 2048);
+		INFO_LOG(REIOS, "iso9660 root_directory, FAD: %d, len: %d", 150 + lba, data_len);
+		libGDR_ReadSector(temp, 150 + lba, data_len / 2048, 2048);
 	}
 	else {
 		libGDR_ReadSector(temp, base_fad + 16, data_len / 2048, 2048);
 	}
 
-	for (int i = 0; i < (data_len-20); i++) {
-		if (memcmp(temp+i, bootfile, strlen(bootfile)) == 0){
-			INFO_LOG(REIOS, "Found %s at %06X", bootfile, i);
+	int bootfile_len = strlen(bootfile);
+	while (bootfile_len > 0 && isspace(bootfile[bootfile_len - 1]))
+		bootfile_len--;
+	for (int i = 0; i < data_len; )
+	{
+		iso9660_dir_t *dir = (iso9660_dir_t *)&temp[i];
+		if (dir->length == 0)
+			break;
 
-			u32 lba = read_u32bi(&temp[i - 33 +  2]); //make sure to use big endian
-			u32 len = read_u32bi(&temp[i - 33 + 10]); //make sure to use big endian
+		if ((dir->file_flags & ISO_DIRECTORY) == 0 && memcmp(dir->filename.str + 1, bootfile, bootfile_len) == 0)
+		{
+			INFO_LOG(REIOS, "Found %.*s at offset %X", bootfile_len, bootfile, i);
+
+			u32 lba = dir->extent & 0xffffffff;
+			u32 len = dir->size & 0xffffffff;
 			
-			INFO_LOG(REIOS, "filename len: %d", temp[i - 1]);
 			INFO_LOG(REIOS, "file LBA: %d", lba);
 			INFO_LOG(REIOS, "file LEN: %d", len);
 
@@ -82,24 +106,33 @@ bool reios_locate_bootfile(const char* bootfile="1ST_READ.BIN") {
 			else
 				libGDR_ReadSector(GetMemPtr(0x8c010000, 0), lba + 150, (len + 2047) / 2048, 2048);
 
-			if (false) {
-				FILE* f = fopen("z:\\1stboot.bin", "wb");
-				fwrite(GetMemPtr(0x8c010000, 0), 1, len, f);
-				fclose(f);
-			}
-
 			delete[] temp;
 
-			bootfile_inited = true;
+			u8 data[24] = {0};
+			// system id
+			for (u32 j = 0; j < 8; j++)
+				data[j] = _vmem_ReadMem8(0x0021a056 + j);
+
+			// system properties
+			for (u32 j = 0; j < 5; j++)
+				data[8 + j] = _vmem_ReadMem8(0x0021a000 + j);
+
+			// system settings
+			flash_syscfg_block syscfg;
+			verify(static_cast<DCFlashChip*>(flashrom)->ReadBlock(FLASH_PT_USER, FLASH_USER_SYSCFG, &syscfg));
+			memcpy(&data[16], &syscfg.time_lo, 8);
+
+			memcpy(GetMemPtr(0x8c000068, sizeof(data)), data, sizeof(data));
+
 			return true;
 		}
+		i += dir->length;
 	}
 
 	delete[] temp;
 	return false;
 }
 
-char ip_bin[256];
 char reios_hardware_id[17];
 char reios_maker_id[17];
 char reios_device_info[17];
@@ -114,124 +147,115 @@ char reios_software_name[129];
 char reios_bootfile[32];
 bool reios_windows_ce = false;
 
-bool pre_init = false;
-
-void reios_pre_init()
-{
-	if (libGDR_GetDiscType() == GdRom) {
-		base_fad = 45150;
-		descrambl = false;
-	} else {
-		u8 ses[6];
-		libGDR_GetSessionInfo(ses, 0);
-		libGDR_GetSessionInfo(ses, ses[2]);
-		base_fad = (ses[3] << 16) | (ses[4] << 8) | (ses[5] << 0);
-		descrambl = true;
-	}
-	pre_init = true;
-}
-
 char* reios_disk_id() {
 
-	if (!pre_init) reios_pre_init();
+	reios_pre_init();
 
-	libGDR_ReadSector(GetMemPtr(0x8c008000, 0), base_fad, 256, 2048);
-	memset(ip_bin, 0, sizeof(ip_bin));
-	memcpy(ip_bin, GetMemPtr(0x8c008000, 0), 256);
-	memcpy(&reios_hardware_id[0], &ip_bin[0], 16 * sizeof(char));
-	memcpy(&reios_maker_id[0], &ip_bin[16],   16 * sizeof(char));
-	memcpy(&reios_device_info[0], &ip_bin[32],   16 * sizeof(char));
-	memcpy(&reios_area_symbols[0], &ip_bin[48],   8 * sizeof(char));
-	memcpy(&reios_peripherals[0], &ip_bin[56],   8 * sizeof(char));
-	memcpy(&reios_product_number[0], &ip_bin[64],   10 * sizeof(char));
-	memcpy(&reios_product_version[0], &ip_bin[74],   6 * sizeof(char));
-	memcpy(&reios_releasedate[0], &ip_bin[80],   16 * sizeof(char));
-	memcpy(&reios_boot_filename[0], &ip_bin[96],   16 * sizeof(char));
-	memcpy(&reios_software_company[0], &ip_bin[112],   16 * sizeof(char));
-	memcpy(&reios_software_name[0], &ip_bin[128],   128 * sizeof(char));
+	u8 buf[2048];
+	libGDR_ReadSector(buf, base_fad, 1, sizeof(buf));
+	memcpy(&reios_hardware_id[0], &buf[0], 16 * sizeof(char));
+	memcpy(&reios_maker_id[0], &buf[16],   16 * sizeof(char));
+	memcpy(&reios_device_info[0], &buf[32],   16 * sizeof(char));
+	memcpy(&reios_area_symbols[0], &buf[48],   8 * sizeof(char));
+	memcpy(&reios_peripherals[0], &buf[56],   8 * sizeof(char));
+	memcpy(&reios_product_number[0], &buf[64],   10 * sizeof(char));
+	memcpy(&reios_product_version[0], &buf[74],   6 * sizeof(char));
+	memcpy(&reios_releasedate[0], &buf[80],   16 * sizeof(char));
+	memcpy(&reios_boot_filename[0], &buf[96],   16 * sizeof(char));
+	memcpy(&reios_software_company[0], &buf[112],   16 * sizeof(char));
+	memcpy(&reios_software_name[0], &buf[128],   128 * sizeof(char));
 	reios_windows_ce = memcmp("0WINCEOS.BIN", &reios_boot_filename[0], 12) == 0;
 
 	return reios_product_number;
 }
 
-void reios_sys_system() {
-	debugf("reios_sys_system\n");
-
+static void reios_sys_system() {
 	u32 cmd = Sh4cntx.r[7];
 
 	switch (cmd) {
 		case 0:	//SYSINFO_INIT
+		{
+			debugf("reios_sys_system: SYSINFO_INIT");
+			// 0x00-0x07: system_id
+			// 0x08-0x0c: system_props
+			// 0x0d-0x0f: padding (zeroed out)
+			// 0x10-0x17: settings (zeroed out)
+			u8 data[24] = {0};
+
+			// read system_id from 0x0001a056
+			for (int i  = 0; i < 8; i++)
+				data[i] = flashrom->Read8(0x1a056 + i);
+
+			// read system_props from 0x0001a000
+			for (int i  = 0; i < 5; i++)
+				data[8 + i] = flashrom->Read8(0x1a000 + i);
+
+			memcpy(GetMemPtr(0x8c000068, sizeof(data)), data, sizeof(data));
+
 			Sh4cntx.r[0] = 0;
-			break;
+		}
+		break;
 
 		case 2: //SYSINFO_ICON 
 		{
-			INFO_LOG(REIOS, "SYSINFO_ICON");
-			/*
-				r4 = icon number (0-9, but only 5-9 seems to really be icons)
-				r5 = destination buffer (704 bytes in size)
-			*/
+			debugf("reios_sys_system: SYSINFO_ICON");
+			// r4 = icon number (0-9, but only 5-9 seems to really be icons)
+			// r5 = destination buffer (704 bytes in size)
 			Sh4cntx.r[0] = 704;
 		}
 		break;
 
 		case 3: //SYSINFO_ID 
 		{
-			WriteMem32(SYSINFO_ID_ADDR + 0, 0xe1e2e3e4);
-			WriteMem32(SYSINFO_ID_ADDR + 4, 0xe5e6e7e8);
-
-			Sh4cntx.r[0] = SYSINFO_ID_ADDR;
+			debugf("reios_sys_system: SYSINFO_ID");
+//			WriteMem32(SYSINFO_ID_ADDR + 0, 0xe1e2e3e4);
+//			WriteMem32(SYSINFO_ID_ADDR + 4, 0xe5e6e7e8);
+//
+//			Sh4cntx.r[0] = SYSINFO_ID_ADDR;
+			// TODO or this?
+			Sh4cntx.r[0] = 0x8c000068;
 		}
 		break;
 
 		default:
-			INFO_LOG(REIOS, "unhandled: reios_sys_system");
+			WARN_LOG(REIOS, "reios_sys_system: unhandled cmd %d", cmd);
 			break;
 	}
 }
 
-void reios_sys_font() {
-	INFO_LOG(REIOS, "reios_sys_font");
+static void reios_sys_font() {
+	WARN_LOG(REIOS, "reios_sys_font");
 }
 
-void reios_sys_flashrom() {
-	debugf("reios_sys_flashrom\n");
-
+static void reios_sys_flashrom() {
 	u32 cmd = Sh4cntx.r[7];
 
-	u32 flashrom_info[][2] = {
-		{ 0 * 1024, 8 * 1024 },
-		{ 8 * 1024, 8 * 1024 },
-		{ 16 * 1024, 16 * 1024 },
-		{ 32 * 1024, 32 * 1024 },
-		{ 64 * 1024, 64 * 1024 },
-	};
-
-	switch (cmd) {
-			case 0: // FLASHROM_INFO 
+	switch (cmd)
+	{
+		case 0: // FLASHROM_INFO
 			{
 				/*
-					r4 = partition number(0 - 4)
-					r5 = pointer to two 32 bit integers to receive the result.
-						The first will be the offset of the partition start, in bytes from the start of the flashrom.
-						The second will be the size of the partition, in bytes.
+						r4 = partition number(0 - 4)
+						r5 = pointer to two 32 bit integers to receive the result.
+							The first will be the offset of the partition start, in bytes from the start of the flashrom.
+							The second will be the size of the partition, in bytes.
 
-						#define FLASHROM_PT_SYSTEM      0   /< \brief Factory settings (read-only, 8K) 
-						#define FLASHROM_PT_RESERVED    1   /< \brief reserved (all 0s, 8K) 
-						#define FLASHROM_PT_BLOCK_1     2   /< \brief Block allocated (16K) 
-						#define FLASHROM_PT_SETTINGS    3   /< \brief Game settings (block allocated, 32K) 
-						#define FLASHROM_PT_BLOCK_2     4   /< \brief Block allocated (64K) 
-				*/
+							#define FLASHROM_PT_SYSTEM      0   /< \brief Factory settings (read-only, 8K)
+							#define FLASHROM_PT_RESERVED    1   /< \brief reserved (all 0s, 8K)
+							#define FLASHROM_PT_BLOCK_1     2   /< \brief Block allocated (16K)
+							#define FLASHROM_PT_SETTINGS    3   /< \brief Game settings (block allocated, 32K)
+							#define FLASHROM_PT_BLOCK_2     4   /< \brief Block allocated (64K)
+				 */
 
 				u32 part = Sh4cntx.r[4];
 				u32 dest = Sh4cntx.r[5];
+				debugf("reios_sys_flashrom: FLASHROM_INFO part %d dest %08x", part, dest);
 
-				u32* pDst = (u32*)GetMemPtr(dest, 8);
+				int* pDst = (int*)GetMemPtr(dest, 8);
 
 				if (part <= 4) {
-					pDst[0] = flashrom_info[part][0];
-					pDst[1] = flashrom_info[part][1];
-					
+					static_cast<DCFlashChip*>(flashrom)->GetPartitionInfo(part, pDst, pDst + 1);
+
 					Sh4cntx.r[0] = 0;
 				}
 				else {
@@ -240,25 +264,27 @@ void reios_sys_flashrom() {
 			}
 			break;
 
-			case 1:	//FLASHROM_READ 
+		case 1:	//FLASHROM_READ
 			{
 				/*
 				r4 = read start position, in bytes from the start of the flashrom
 				r5 = pointer to destination buffer
 				r6 = number of bytes to read
 				*/
-				u32 offs = Sh4cntx.r[4];
+				u32 offset = Sh4cntx.r[4];
 				u32 dest = Sh4cntx.r[5];
 				u32 size = Sh4cntx.r[6];
 
-				memcpy(GetMemPtr(dest, size), flashrom + offs, size);
+				debugf("reios_sys_flashrom: FLASHROM_READ offs %x dest %08x size %x", offset, dest, size);
+				for (int i = 0; i < size; i++)
+					WriteMem8(dest++, flashrom->Read8(offset + i));
 
 				Sh4cntx.r[0] = size;
 			}
 			break;
 
 			
-			case 2:	//FLASHROM_WRITE 
+		case 2:	//FLASHROM_WRITE
 			{
 				/*
 					r4 = write start position, in bytes from the start of the flashrom
@@ -270,44 +296,46 @@ void reios_sys_flashrom() {
 				u32 src = Sh4cntx.r[5];
 				u32 size = Sh4cntx.r[6];
 
+				debugf("reios_sys_flashrom: FLASHROM_WRITE offs %x src %08x size %x", offs, src, size);
 				u8* pSrc = GetMemPtr(src, size);
 
 				for (int i = 0; i < size; i++) {
-					flashrom[offs + i] &= pSrc[i];
+					flashrom->data[offs + i] &= pSrc[i];
 				}
 			}
 			break;
 
-			case 3:	//FLASHROM_DELETE  
+		case 3:	//FLASHROM_DELETE
 			{			
-				u32 offs = Sh4cntx.r[4];
-				u32 dest = Sh4cntx.r[5];
+				u32 offset = Sh4cntx.r[4];
 
-				u32 part = 5;
+				debugf("reios_sys_flashrom: FLASHROM_DELETE offs %x", offset);
 
-				for (int i = 0; i <= 4; i++) {
-					if (offs >= flashrom_info[i][0] && offs < (flashrom_info[i][0] + flashrom_info[i][1])) {
-						part = i;
-						break;
+				bool found = false;
+
+				for (int part = 0; part < FLASH_PT_NUM; part++)
+				{
+					int part_offset;
+					int size;
+					static_cast<DCFlashChip*>(flashrom)->GetPartitionInfo(part, &part_offset, &size);
+					if (offset == part_offset)
+					{
+						found = true;
+						memset(flashrom->data + offset, 0xFF, size);
 					}
 				}
 
-				if (part <= 4) {
-					memset(flashrom + flashrom_info[part][0], 0xFF, flashrom_info[part][1]);
-					Sh4cntx.r[0] = 0;
-				}
-				else {
-					Sh4cntx.r[0] = -1;
-				}
+				Sh4cntx.r[0] = found ? 0 : -1;
 			}
 			break;
-			
-	default:
-		INFO_LOG(REIOS, "reios_sys_flashrom: not handled, %d", cmd);
+
+		default:
+			WARN_LOG(REIOS, "reios_sys_flashrom: not handled, %d", cmd);
+			break;
 	}
 }
 
-void reios_sys_gd() {
+static void reios_sys_gd() {
 	gdrom_hle_op();
 }
 
@@ -318,7 +346,7 @@ void reios_sys_gd() {
 	- gdGdcInitSystem, 3
 	- gdGdcGetDrvStat, 4
 */
-void gd_do_bioscall()
+static void gd_do_bioscall()
 {
 	//looks like the "real" entrypoint for this on a dreamcast
 	gdrom_hle_op();
@@ -364,23 +392,24 @@ void gd_do_bioscall()
 	//gdGdcInitSystem
 }
 
-void reios_sys_misc() {
-	INFO_LOG(REIOS, "reios_sys_misc - r7: 0x%08X, r4 0x%08X, r5 0x%08X, r6 0x%08X", Sh4cntx.r[7], Sh4cntx.r[4], Sh4cntx.r[5], Sh4cntx.r[6]);
+static void reios_sys_misc()
+{
+	WARN_LOG(REIOS, "reios_sys_misc - r7: 0x%08X, r4 0x%08X, r5 0x%08X, r6 0x%08X", Sh4cntx.r[7], Sh4cntx.r[4], Sh4cntx.r[5], Sh4cntx.r[6]);
 	Sh4cntx.r[0] = 0;
 }
 
 typedef void hook_fp();
-u32 hook_addr(hook_fp* fn);
+static u32 hook_addr(hook_fp* fn);
 
-void setup_syscall(u32 hook_addr, u32 syscall_addr) {
+static void setup_syscall(u32 hook_addr, u32 syscall_addr) {
 	WriteMem32(syscall_addr, hook_addr);
 	WriteMem16(hook_addr, REIOS_OPCODE);
 
-	debugf("reios: Patching syscall vector %08X, points to %08X\n", syscall_addr, hook_addr);
-	debugf("reios: - address %08X: data %04X [%04X]\n", hook_addr, ReadMem16(hook_addr), REIOS_OPCODE);
+	debugf("Patching syscall vector %08X, points to %08X", syscall_addr, hook_addr);
+	debugf(" - address %08X: data %04X [%04X]", hook_addr, ReadMem16(hook_addr), REIOS_OPCODE);
 }
 
-void reios_setup_state(u32 boot_addr) {
+static void reios_setup_state(u32 boot_addr) {
 	/*
 	Post Boot registers from actual bios boot
 	r
@@ -451,7 +480,7 @@ void reios_setup_state(u32 boot_addr) {
 	sh4rcb.cntx.old_fpscr.full = 0x00040001;
 }
 
-void reios_setuo_naomi(u32 boot_addr) {
+static void reios_setup_naomi(u32 boot_addr) {
 	/*
 		SR 0x60000000 0x00000001
 		FPSRC 0x00040001
@@ -571,7 +600,9 @@ void reios_setuo_naomi(u32 boot_addr) {
 	sh4rcb.cntx.fpscr.full = 0x00040001;
 	sh4rcb.cntx.old_fpscr.full = 0x00040001;
 }
-void reios_boot() {
+
+static void reios_boot()
+{
 	NOTICE_LOG(REIOS, "-----------------");
 	NOTICE_LOG(REIOS, "REIOS: Booting up");
 	NOTICE_LOG(REIOS, "-----------------");
@@ -593,14 +624,14 @@ void reios_boot() {
 
 	if (settings.reios.ElfFile.size()) {
 		if (!reios_loadElf(settings.reios.ElfFile)) {
-			msgboxf("Failed to open %s\n", MBX_ICONERROR, settings.reios.ElfFile.c_str());
+			msgboxf("Failed to open %s", MBX_ICONERROR, settings.reios.ElfFile.c_str());
 		}
 		reios_setup_state(0x8C010000);
 	}
 	else {
 		if (settings.platform.system == DC_PLATFORM_DREAMCAST) {
-			if (!bootfile_inited)
-				msgboxf("Failed to locate bootfile", MBX_ICONERROR);
+			if (reios_boot_filename == NULL || !reios_locate_bootfile(reios_boot_filename))
+				msgboxf("Failed to locate bootfile %s", MBX_ICONERROR, reios_boot_filename);
 			reios_setup_state(0xac008300);
 		}
 		else {
@@ -624,17 +655,17 @@ void reios_boot() {
 			data_size = size;
 			WriteMemBlock_nommu_ptr(0x0c020000, (u32*)CurrentCartridge->GetPtr(0, data_size), size);
 
-			reios_setuo_naomi(0x0c021000);
+			reios_setup_naomi(0x0c021000);
 		}
 	}
 }
 
-map<u32, hook_fp*> hooks;
-map<hook_fp*, u32> hooks_rev;
+static std::map<u32, hook_fp*> hooks;
+static std::map<hook_fp*, u32> hooks_rev;
 
 #define SYSCALL_ADDR_MAP(addr) ((addr & 0x1FFFFFFF) | 0x80000000)
 
-void register_hook(u32 pc, hook_fp* fn) {
+static void register_hook(u32 pc, hook_fp* fn) {
 	hooks[SYSCALL_ADDR_MAP(pc)] = fn;
 	hooks_rev[fn] = pc;
 }
@@ -646,12 +677,12 @@ void DYNACALL reios_trap(u32 op) {
 
 	u32 mapd = SYSCALL_ADDR_MAP(pc);
 
-	debugf("reios: dispatch %08X -> %08X\n", pc, mapd);
+	//debugf("dispatch %08X -> %08X", pc, mapd);
 
 	hooks[mapd]();
 }
 
-u32 hook_addr(hook_fp* fn) {
+static u32 hook_addr(hook_fp* fn) {
 	if (hooks_rev.count(fn))
 		return hooks_rev[fn];
 	else {
@@ -661,7 +692,7 @@ u32 hook_addr(hook_fp* fn) {
 	}
 }
 
-bool reios_init(u8* rom, u8* flash) {
+bool reios_init(u8* rom, MemChip* flash) {
 
 	INFO_LOG(REIOS, "reios: Init");
 
@@ -689,9 +720,7 @@ bool reios_init(u8* rom, u8* flash) {
 }
 
 void reios_reset() {
-	pre_init = false;
 }
 
 void reios_term() {
-
 }

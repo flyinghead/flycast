@@ -46,11 +46,12 @@ static bool nvmemOptional()
 
 bool LoadRomFiles(const string& root)
 {
+	bool rom_loaded = false;
 	if (settings.platform.system != DC_PLATFORM_ATOMISWAVE)
 	{
 		if (!sys_rom->Load(root, getRomPrefix(), "%boot.bin;%boot.bin.bin;%bios.bin;%bios.bin.bin", "bootrom"))
 		{
-			if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+			if (settings.platform.system == DC_PLATFORM_DREAMCAST && !settings.bios.UseReios)
 			{
 				// Dreamcast absolutely needs a BIOS
 				msgboxf("Unable to find bios in %s. Exiting...", MBX_ICONERROR, root.c_str());
@@ -58,7 +59,14 @@ bool LoadRomFiles(const string& root)
 			}
 		}
 		else
+		{
 			bios_loaded = true;
+			rom_loaded = true;
+		}
+	}
+	else
+	{
+		rom_loaded = true;
 	}
 	bool rc;
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
@@ -106,7 +114,7 @@ bool LoadRomFiles(const string& root)
 	if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
 		sys_rom->Load(get_game_save_prefix() + ".nvmem2");
 
-	return true;
+	return rom_loaded;
 }
 
 void SaveRomFiles(const string& root)
@@ -119,12 +127,9 @@ void SaveRomFiles(const string& root)
 		sys_rom->Save(get_game_save_prefix() + ".nvmem2");
 }
 
-bool LoadHle(const string& root) {
-	if (!sys_nvmem->Load(root, getRomPrefix(), "%nvmem.bin;%flash_wb.bin;%flash.bin;%flash.bin.bin", "nvram")) {
-		INFO_LOG(FLASHROM, "No nvmem loaded");
-	}
-
-	return reios_init(sys_rom->data, sys_nvmem->data);
+bool HleInit()
+{
+	return reios_init(sys_rom->data, sys_nvmem);
 }
 
 u32 ReadFlash(u32 addr,u32 sz) { return sys_nvmem->Read(addr,sz); }

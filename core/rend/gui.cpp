@@ -303,6 +303,7 @@ static void gui_start_game(const std::string& path)
 		gui_state = Main;
 		game_started = false;
 		cfgSetVirtual("config", "image", "");
+		cfgSetVirtual("reios", "ElfFile", "");
 	}
 }
 
@@ -1240,6 +1241,9 @@ static void gui_display_settings()
 		    }
 		    if (ImGui::CollapsingHeader("Other", ImGuiTreeNodeFlags_DefaultOpen))
 		    {
+				ImGui::Checkbox("HLE BIOS", &settings.bios.UseReios);
+	            ImGui::SameLine();
+	            ShowHelpMarker("Use high-level BIOS emulation if BIOS files are not found");
 #ifndef _ANDROID
 				ImGui::Checkbox("Serial Console", &settings.debug.SerialConsole);
 	            ImGui::SameLine();

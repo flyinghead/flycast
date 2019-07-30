@@ -26,6 +26,19 @@ void libGDR_GetToc(u32* toc,u32 area)
 {
 	GetDriveToc(toc,(DiskArea)area);
 }
+
+u32 libGDR_GetTrackNumber(u32 sector, u32& elapsed)
+{
+	for (int i = 0; i < disc->tracks.size(); i++)
+		if (disc->tracks[i].StartFAD <= sector && (sector <= disc->tracks[i].EndFAD || disc->tracks[i].EndFAD == 0))
+		{
+			elapsed = sector - disc->tracks[i].StartFAD;
+			return i + 1;
+		}
+	elapsed = 0;
+	return 0xAA;
+}
+
 //TODO : fix up
 u32 libGDR_GetDiscType()
 {
@@ -39,28 +52,7 @@ void libGDR_GetSessionInfo(u8* out,u8 ses)
 {
 	GetDriveSessionInfo(out,ses);
 }
-/*
-void EXPORT_CALL handle_SwitchDisc(u32 id,void* w,void* p)
-{
-	//msgboxf("This feature is not yet implemented",MB_ICONWARNING);
-	//return;
-	TermDrive();
-	
-	NullDriveDiscType=Busy;
-	DriveNotifyEvent(DiskChange,0);
-	Sleep(150);	//busy for a bit
 
-	NullDriveDiscType=Open;
-	DriveNotifyEvent(DiskChange,0);
-	Sleep(150); //tray is open
-
-	while(!InitDrive(2))//no "cancel"
-		msgboxf("Init Drive failed, disc must be valid for swap",0x00000010L);
-
-	DriveNotifyEvent(DiskChange,0);
-	//new disc is in
-}
-*/
 //It's supposed to reset everything (if not a soft reset)
 void libGDR_Reset(bool hard)
 {

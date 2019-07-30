@@ -11,6 +11,8 @@ void gdrom_reg_Reset(bool Manual);
 u32 ReadMem_gdrom(u32 Addr, u32 sz);
 void WriteMem_gdrom(u32 Addr, u32 data, u32 sz);
 
+u32 gd_get_subcode(u32 format, u32 fad, u8 *subc_info);
+
 enum gd_states
 {
 	//Generic
@@ -221,6 +223,23 @@ union ByteCount_t
 
 	u16 full;
 } ;
+
+// REQ_MODE / SET_MODE
+struct GD_HardwareInfo_t
+{
+  u8 _res0[2];
+  u8 speed;
+  u8 _res1;
+  u8 standby_hi;
+  u8 standby_lo;
+  u8 read_flags;
+  u8 _res2[2];
+  u8 read_retry;
+  char drive_info[8];
+  char system_version[8];
+  char system_date[6];
+};
+extern GD_HardwareInfo_t GD_HardwareInfo;
 
 #define GD_BUSY    0x00 // State transition
 #define GD_PAUSE   0x01 // Pause

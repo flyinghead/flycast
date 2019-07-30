@@ -88,9 +88,6 @@ extern u32 SB_FFST;
 extern MemChip *sys_rom;
 extern MemChip *sys_nvmem;
 
-//./core/hw/gdrom/gdrom_response.o
-extern u16 reply_11[] ;
-
 //./core/hw/gdrom/gdromv3.o
 extern int gdrom_schid;
 extern signed int sns_asc;
@@ -367,7 +364,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	sys_rom->Serialize(data, total_size);
 	sys_nvmem->Serialize(data, total_size);
 
-	REICAST_SA(reply_11,16) ;
+	REICAST_S(GD_HardwareInfo);
 
 
 	REICAST_S(sns_asc);
@@ -651,7 +648,7 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 		die("Naomi/Atomiswave libretro savestates are not supported");
 	REICAST_USA(sys_nvmem->data, sys_nvmem->size);
 
-	REICAST_USA(reply_11,16);
+	REICAST_US(GD_HardwareInfo);
 
 	REICAST_US(sns_asc);
 	REICAST_US(sns_ascq);
@@ -1012,7 +1009,7 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	sys_rom->Unserialize(data, total_size);
 	sys_nvmem->Unserialize(data, total_size);
 
-	REICAST_USA(reply_11,16) ;
+	REICAST_US(GD_HardwareInfo);
 
 	REICAST_US(sns_asc);
 	REICAST_US(sns_ascq);

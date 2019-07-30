@@ -58,6 +58,7 @@ u32 data_write_mode=0;
 	ByteCount_t ByteCount;
 	
 //end
+GD_HardwareInfo_t GD_HardwareInfo;
 
 #define printf_rm(...) DEBUG_LOG(GDROM, __VA_ARGS__)
 #define printf_ata(...) DEBUG_LOG(GDROM, __VA_ARGS__)
@@ -240,7 +241,7 @@ void gd_set_state(gd_states state)
 			break;
 
 		case gds_process_set_mode:
-			memcpy(&reply_11[set_mode_offset],pio_buff.data ,pio_buff.size<<1);
+			memcpy((u8 *)&GD_HardwareInfo + set_mode_offset, pio_buff.data, pio_buff.size << 1);
 			//end pio transfer ;)
 			gd_set_state(gds_pio_end);
 			break;
@@ -434,6 +435,53 @@ void gd_process_ata_cmd()
 	};
 }
 
+u32 gd_get_subcode(u32 format, u32 fad, u8 *subc_info)
+{
+	subc_info[0] = 0;
+	subc_info[1] = 0x15;	// no audio status info
+	if (format == 0)
+	{
+		subc_info[2] = 0;
+		subc_info[3] = 100;
+		libGDR_ReadSubChannel(subc_info + 4, 0, 100 - 4);
+	}
+	else
+	{
+		u32 elapsed;
+		u32 tracknum = libGDR_GetTrackNumber(fad, elapsed);
+
+		//2 DATA Length MSB (0 = 0h)
+		subc_info[2] = 0;
+		//3 DATA Length LSB (14 = Eh)
+		subc_info[3] = 0xE;
+		//4 Control ADR
+		subc_info[4] = (SecNumber.DiscFormat == 0 ? 0 : 0x40) | 1; // Control = 4 for data track
+		//5-13	DATA-Q
+		u8* data_q = &subc_info[5 - 1];
+		//-When ADR = 1
+		//1 TNO - track number
+		data_q[1] = tracknum;
+		//2 X - index within track
+		data_q[2] = 1;
+		//3-5   Elapsed FAD within track
+		data_q[3] = elapsed >> 16;
+		data_q[4] = elapsed >> 8;
+		data_q[5] = elapsed;
+		//6 ZERO
+		data_q[6] = 0;
+		//7-9 FAD
+		data_q[7] = fad >> 16;
+		data_q[8] = fad >> 8;
+		data_q[9] = fad;
+		DEBUG_LOG(GDROM, "gd_get_subcode: %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x",
+				 subc_info[0], subc_info[1], subc_info[2], subc_info[3],
+				 subc_info[4], subc_info[5], subc_info[6], subc_info[7],
+				 subc_info[8], subc_info[9], subc_info[10], subc_info[11],
+				 subc_info[12], subc_info[13]);
+	}
+	return subc_info[3];
+}
+
 void gd_process_spi_cmd()
 {
 
@@ -461,7 +509,7 @@ void gd_process_spi_cmd()
 
 	case SPI_REQ_MODE:
 		printf_spicmd("SPI_REQ_MODE");
-		gd_spi_pio_end((u8*)&reply_11[packet_cmd.data_8[2]>>1],packet_cmd.data_8[4]);
+		gd_spi_pio_end((u8*)&GD_HardwareInfo + packet_cmd.data_8[2], packet_cmd.data_8[4]);
 		break;
 
 		/////////////////////////////////////////////////
@@ -723,79 +771,10 @@ void gd_process_spi_cmd()
 		{
 			printf_spicmd("SPI_GET_SCD");
 
-			u32 format;
-			format=packet_cmd.data_8[1]&0xF;
-			u32 sz;
+			u32 format = packet_cmd.data_8[1] & 0xF;
 			u8 subc_info[100];
-
-
-			//0 Reserved
-			subc_info[0]=0;
-			//1 Audio status
-			if (SecNumber.Status==GD_STANDBY)
-			{
-				//13h  Audio playback ended normally
-				subc_info[1]=0x13;
-			}
-			else if (SecNumber.Status==GD_PAUSE)
-			{
-				//12h  Audio playback paused
-				subc_info[1]=0x12;
-			}
-			else if (SecNumber.Status==GD_PLAY)
-			{
-				//11h  Audio playback in progress
-				subc_info[1]=0x11;
-			}
-			else
-			{
-				if (cdda.playing)
-					subc_info[1]=0x11;//11h	Audio playback in progress
-				else
-					subc_info[1]=0x15;//15h	No audio status information
-			}
-			
-			subc_info[1]=0x15;
-
-			if (format==0)
-			{
-				sz=100;
-				subc_info[2]=0;
-				subc_info[3]=100;
-				libGDR_ReadSubChannel(subc_info+4,0,96);
-			}
-			else
-			{
-				//2 DATA Length MSB (0 = 0h)
-				subc_info[2]=0;
-				//3 DATA Length LSB (14 = Eh)
-				subc_info[3]=0xE;
-				//4 Control ADR
-				subc_info[4]=(4<<4) | (1); //Audio :p
-				//5-13	DATA-Q
-				u8* data_q=&subc_info[5-1];
-				//-When ADR = 1
-				//Byte Description
-				//1 TNO
-				data_q[1]=1;//Track number .. dunno whats it :P gotta parse toc xD ;p
-				//2 X
-				data_q[2]=1;//gap #1 (main track)
-				//3-5   Elapsed FAD within track
-				u32 FAD_el=cdda.CurrAddr.FAD-cdda.StartAddr.FAD;
-				data_q[3]=0;//(u8)(FAD_el>>16);
-				data_q[4]=0;//(u8)(FAD_el>>8);
-				data_q[5]=0;//(u8)(FAD_el>>0);
-				//6 0   0   0   0   0   0   0   0
-				data_q[6]=0;//
-				//7-9   -> seems to be FAD
-				data_q[7]=0;   //(u8)(cdda.CurrAddr.FAD>>16);
-				data_q[8]=0x0; //(u8)(cdda.CurrAddr.FAD>>8);
-				data_q[9]=0x96;//(u8)(cdda.CurrAddr.FAD>>0);
-				sz=0xE;
-				printf_subcode("NON raw subcode read -- partially wrong [format=%d]",format);
-			}
-
-			gd_spi_pio_end((u8*)&subc_info[0],sz);
+			u32 size = gd_get_subcode(format, read_params.start_sector - 1, subc_info);
+			gd_spi_pio_end(subc_info, size);
 		}
 		break;
 
@@ -1135,4 +1114,15 @@ void gdrom_reg_Reset(bool hard)
 	sb_rio_register(SB_GDEN_addr, RIO_WF, 0, &GDROM_DmaEnable);
 	SB_GDST = 0;
 	SB_GDEN = 0;
+	// set default hardware information
+	memset(&GD_HardwareInfo, 0, sizeof(GD_HardwareInfo));
+	GD_HardwareInfo.speed = 0x0;
+	GD_HardwareInfo.standby_hi = 0x00;
+	GD_HardwareInfo.standby_lo = 0xb4;
+	GD_HardwareInfo.read_flags = 0x19;
+	GD_HardwareInfo.read_retry = 0x08;
+	memcpy(GD_HardwareInfo.drive_info, "SE      ", sizeof(GD_HardwareInfo.drive_info));
+	memcpy(GD_HardwareInfo.system_version, "Rev 6.43", sizeof(GD_HardwareInfo.system_version));
+	memcpy(GD_HardwareInfo.system_date, "990408", sizeof(GD_HardwareInfo.system_date));
+
 }

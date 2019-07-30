@@ -411,7 +411,7 @@ struct DCFlashChip : MemChip
 	int WriteBlock(u32 part_id, u32 block_id, const void *data)
 	{
 		int offset, size;
-		partition_info(part_id, &offset, &size);
+		GetPartitionInfo(part_id, &offset, &size);
 
 		if (!validate_header(offset, part_id))
 			return 0;
@@ -448,7 +448,7 @@ struct DCFlashChip : MemChip
 	int ReadBlock(u32 part_id, u32 block_id, void *data)
 	{
 		int offset, size;
-		partition_info(part_id, &offset, &size);
+		GetPartitionInfo(part_id, &offset, &size);
 
 		if (!validate_header(offset, part_id))
 			return 0;
@@ -462,8 +462,7 @@ struct DCFlashChip : MemChip
 		return 1;
 	}
 
-private:
-	void partition_info(int part_id, int *offset, int *size)
+	void GetPartitionInfo(int part_id, int *offset, int *size)
 	{
 		switch (part_id)
 		{
@@ -493,6 +492,7 @@ private:
 		}
 	}
 
+private:
 	int crc_block(struct flash_user_block *block)
 	{
 		const u8 *buf = (const u8 *)block;

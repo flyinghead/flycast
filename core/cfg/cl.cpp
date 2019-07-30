@@ -141,7 +141,7 @@ bool ParseCommandLine(int argc,wchar* argv[])
 			else if (extension && stricmp(extension, ".elf") == 0)
 			{
 				INFO_LOG(COMMON, "Using '%s' as reios elf file", *arg);
-				cfgSetVirtual("config", "reios.enabled", "1");
+				cfgSetVirtual("config", "bios.UseReios", "yes");
 				cfgSetVirtual("reios", "ElfFile", *arg);
 			}
 			else

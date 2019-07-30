@@ -465,16 +465,14 @@ void dc_start_game(const char *path)
 	{
 		if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 		{
-#ifdef USE_REIOS
 			if (settings.bios.UseReios)
 			{
-				if (!LoadHle(get_readonly_data_path(DATA_PATH)))
+				if (!HleInit())
 					throw ReicastException("Failed to initialize HLE BIOS");
 
 				NOTICE_LOG(BOOT, "Did not load BIOS, using reios");
 			}
 			else
-#endif
 			{
 				throw ReicastException("Cannot find BIOS files in " + data_path);
 			}
@@ -632,7 +630,7 @@ void InitSettings()
 
 	settings.debug.SerialConsole	= false;
 
-	settings.bios.UseReios		    = 0;
+	settings.bios.UseReios		    = false;
 	settings.reios.ElfFile		    = "";
 
 	settings.validate.OpenGlChecks  = false;
@@ -827,6 +825,7 @@ void SaveSettings()
 	if (!safemode_game || !settings.dynarec.safemode)
 		cfgSaveBool("config", "Dynarec.safe-mode", settings.dynarec.safemode);
 	cfgSaveInt("config", "Dynarec.SmcCheckLevel", (int)settings.dynarec.SmcCheckLevel);
+	cfgSaveBool("config", "bios.UseReios", settings.bios.UseReios);
 
 //	if (!disable_vmem32_game || !settings.dynarec.disable_vmem32)
 //		cfgSaveBool("config", "Dynarec.DisableVmem32", settings.dynarec.disable_vmem32);
