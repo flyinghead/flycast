@@ -630,7 +630,7 @@ static void reios_boot()
 	}
 	else {
 		if (settings.platform.system == DC_PLATFORM_DREAMCAST) {
-			if (reios_boot_filename == NULL || !reios_locate_bootfile(reios_boot_filename))
+			if (reios_boot_filename[0] == '\0' || !reios_locate_bootfile(reios_boot_filename))
 				msgboxf("Failed to locate bootfile %s", MBX_ICONERROR, reios_boot_filename);
 			reios_setup_state(0xac008300);
 		}
