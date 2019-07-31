@@ -140,7 +140,6 @@ void GD_HLE_Command(u32 cc, u32 prm)
 		break;
 
 	case GDCC_GETSES:
-		debugf("GDROM: GETSES CC:%X PRM:%X", cc, prm);
 		GDROM_HLE_ReadSES(prm);
 		break;
 
@@ -153,7 +152,6 @@ void GD_HLE_Command(u32 cc, u32 prm)
 		break;
 
 	case GDCC_DMAREAD:
-		debugf("GDROM: CMD DMAREAD CC:%X PRM:%X", cc, prm);
 		GDROM_HLE_ReadDMA(prm);
 		break;
 
@@ -194,7 +192,6 @@ void GD_HLE_Command(u32 cc, u32 prm)
 		break;
 
 	case GDCC_GETSCD:
-		debugf("GDROM: GETSCD CC:%X PRM:%X",cc,prm);
 		GDCC_HLE_GETSCD(prm);
 		break;
 
@@ -318,7 +315,7 @@ void gdrom_hle_op()
 		switch(r[7])				// COMMAND CODE
 		{
 		case GDROM_SEND_COMMAND:	// SEND GDROM COMMAND RET: - if failed + req id
-			debugf("GDROM: HLE SEND COMMAND CC:%X  param ptr: %X", r[4], r[5]);
+			//debugf("GDROM: HLE SEND COMMAND CC:%X  param ptr: %X", r[4], r[5]);
 			memset(bios_result, 0, sizeof(bios_result));
 			LastCommandId = r[0] = NextCommandId++;		// Request Id
 			GD_HLE_Command(r[4], r[5]);
@@ -337,7 +334,7 @@ void gdrom_hle_op()
 			{
 				r[0] = 2;	// Finished
 			}
-			debugf("GDROM: HLE CHECK COMMAND REQID:%X  param ptr: %X -> %X", r[4], r[5], r[0]);
+			//debugf("GDROM: HLE CHECK COMMAND REQID:%X  param ptr: %X -> %X", r[4], r[5], r[0]);
 			LastCommandId = 0xFFFFFFFF;			// INVALIDATE CHECK CMD
 			WriteMem32(r[5], bios_result[0]);
 			WriteMem32(r[5] + 4, bios_result[1]);

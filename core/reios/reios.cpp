@@ -259,16 +259,12 @@ static void reios_sys_flashrom() {
 		case 0: // FLASHROM_INFO
 			{
 				/*
-						r4 = partition number(0 - 4)
-						r5 = pointer to two 32 bit integers to receive the result.
-							The first will be the offset of the partition start, in bytes from the start of the flashrom.
-							The second will be the size of the partition, in bytes.
-
-							#define FLASHROM_PT_SYSTEM      0   /< \brief Factory settings (read-only, 8K)
-							#define FLASHROM_PT_RESERVED    1   /< \brief reserved (all 0s, 8K)
-							#define FLASHROM_PT_BLOCK_1     2   /< \brief Block allocated (16K)
-							#define FLASHROM_PT_SETTINGS    3   /< \brief Game settings (block allocated, 32K)
-							#define FLASHROM_PT_BLOCK_2     4   /< \brief Block allocated (64K)
+					r4 = partition number(0 - 4)
+					r5 = pointer to two 32 bit integers to receive the result.
+						The first will be the offset of the partition start, in bytes from the start of the flashrom.
+						The second will be the size of the partition, in bytes.
+					returns:
+					r0 = 0 if partition found, -1 if error or not found
 				 */
 
 				u32 part = Sh4cntx.r[4];
@@ -291,9 +287,11 @@ static void reios_sys_flashrom() {
 		case 1:	//FLASHROM_READ
 			{
 				/*
-				r4 = read start position, in bytes from the start of the flashrom
-				r5 = pointer to destination buffer
-				r6 = number of bytes to read
+					r4 = read start position, in bytes from the start of the flashrom
+					r5 = pointer to destination buffer
+					r6 = number of bytes to read
+					returns:
+					r0 = number of bytes read
 				*/
 				u32 offset = Sh4cntx.r[4];
 				u32 dest = Sh4cntx.r[5];
@@ -314,6 +312,8 @@ static void reios_sys_flashrom() {
 					r4 = write start position, in bytes from the start of the flashrom
 					r5 = pointer to source buffer
 					r6 = number of bytes to write
+					returns:
+					r0 = number of bytes written
 				*/
 
 				u32 offs = Sh4cntx.r[4];
@@ -323,14 +323,16 @@ static void reios_sys_flashrom() {
 				debugf("reios_sys_flashrom: FLASHROM_WRITE offs %x src %08x size %x", offs, src, size);
 				u8* pSrc = GetMemPtr(src, size);
 
-				for (int i = 0; i < size; i++) {
+				for (int i = 0; i < size; i++)
 					flashrom->data[offs + i] &= pSrc[i];
-				}
+
+				Sh4cntx.r[0] = size;
 			}
 			break;
 
 		case 3:	//FLASHROM_DELETE
 			{			
+				// offset of partition to delete
 				u32 offset = Sh4cntx.r[4];
 
 				debugf("reios_sys_flashrom: FLASHROM_DELETE offs %x", offset);

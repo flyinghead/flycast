@@ -74,20 +74,30 @@ bool LoadRomFiles(const string& root)
 	else
 		rc = sys_nvmem->Load(get_game_save_prefix() + ".nvmem");
 	if (!rc)
-	{
-		if (nvmemOptional())
-		{
-			INFO_LOG(FLASHROM, "flash/nvmem is missing, will create new file...");
-		}
-		else
-		{
-			msgboxf("Unable to find flash/nvmem in %s. Exiting...", MBX_ICONERROR, root.c_str());
-			return false;
-		}
-	}
+		INFO_LOG(FLASHROM, "flash/nvmem is missing, will create new file...");
 
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 	{
+		static_cast<DCFlashChip*>(sys_nvmem)->Validate();
+
+		// overwrite factory flash settings
+		if (settings.dreamcast.region <= 2)
+		{
+			sys_nvmem->data[0x1a002] = '0' + settings.dreamcast.region;
+			sys_nvmem->data[0x1a0a2] = '0' + settings.dreamcast.region;
+		}
+		if (settings.dreamcast.language <= 5)
+		{
+			sys_nvmem->data[0x1a003] = '0' + settings.dreamcast.language;
+			sys_nvmem->data[0x1a0a3] = '0' + settings.dreamcast.language;
+		}
+		if (settings.dreamcast.broadcast <= 3)
+		{
+			sys_nvmem->data[0x1a004] = '0' + settings.dreamcast.broadcast;
+			sys_nvmem->data[0x1a0a4] = '0' + settings.dreamcast.broadcast;
+		}
+
+		// overwrite user settings
 		struct flash_syscfg_block syscfg;
 		int res = static_cast<DCFlashChip*>(sys_nvmem)->ReadBlock(FLASH_PT_USER, FLASH_USER_SYSCFG, &syscfg);
 
