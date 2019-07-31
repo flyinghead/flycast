@@ -19,6 +19,7 @@
 #include "hw/holly/sb_mem.h"
 #include "hw/naomi/naomi_cart.h"
 #include "iso9660.h"
+#include "font.h"
 
 #include <map>
 
@@ -34,6 +35,7 @@
 #define dc_bios_entrypoint_gd_do_bioscall	0x8c0010F0
 
 #define SYSINFO_ID_ADDR 0x8C001010
+#define FONT_TABLE_ADDR 0xa0100020
 
 static u8* biosrom;
 static MemChip *flashrom;
@@ -224,7 +226,29 @@ static void reios_sys_system() {
 }
 
 static void reios_sys_font() {
-	WARN_LOG(REIOS, "reios_sys_font");
+	u32 cmd = Sh4cntx.r[1];
+
+	switch (cmd)
+	{
+	case 0:		// FONTROM_ADDRESS
+		debugf("FONTROM_ADDRESS");
+		Sh4cntx.r[0] = FONT_TABLE_ADDR;	// in ROM
+		break;
+
+	case 1:		// FONTROM_LOCK
+		debugf("FONTROM_LOCK");
+		Sh4cntx.r[0] = 0;
+		break;
+
+	case 2:		// FONTROM_UNLOCK
+		debugf("FONTROM_UNLOCK");
+		Sh4cntx.r[0] = 0;
+		break;
+
+	default:
+		WARN_LOG(REIOS, "reios_sys_font cmd %x", cmd);
+		break;
+	}
 }
 
 static void reios_sys_flashrom() {
@@ -715,6 +739,31 @@ bool reios_init(u8* rom, MemChip* flash) {
 	register_hook(0x8C001008, reios_sys_misc);
 
 	register_hook(dc_bios_entrypoint_gd_do_bioscall, &gd_do_bioscall);
+
+	u8 *pFont = rom + (FONT_TABLE_ADDR % BIOS_SIZE);
+
+	// 288 12 × 24 pixels (36 bytes) characters
+	// 7078 24 × 24 pixels (72 bytes) characters
+	// 129 32 × 32 pixels (128 bytes) characters
+	memset(pFont, 0, 536496);
+	FILE *font = fopen(get_readonly_data_path(DATA_PATH "font.bin").c_str(), "rb");
+	if (font == NULL)
+	{
+		INFO_LOG(REIOS, "font.bin not found. Using built-in font");
+		memcpy(pFont, builtin_font, sizeof(builtin_font));
+	}
+	else
+	{
+		fseek(font, 0, SEEK_END);
+		size_t size = ftell(font);
+		fseek(font, 0, SEEK_SET);
+		size_t nread = fread(pFont, 1, size, font);
+		fclose(font);
+		if (nread != size)
+			WARN_LOG(REIOS, "font.bin: read truncated");
+		else
+			INFO_LOG(REIOS, "font.bin: loaded %zd bytes", size);
+	}
 
 	return true;
 }
