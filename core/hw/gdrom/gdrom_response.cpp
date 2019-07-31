@@ -49,14 +49,3 @@ u16 reply_71[] =
 
 
 u32 reply_71_sz=sizeof(reply_71);
-char szExDT[8][32] =
-{
-	"Any...",
-	"CD-DA",
-	"Mode1",
-	"Mode2",
-	"Mode2-Form1",
-	"Mode2-Form2",
-	"Mode2-Non-XA",
-	"-> GD UNKNOWN TYPE <="
-};

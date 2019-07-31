@@ -134,6 +134,7 @@ struct GD_SecNumbT
 		u8 full;
 	};
 };
+extern GD_SecNumbT SecNumber;
 
 struct read_params_t
 {
@@ -212,6 +213,7 @@ struct cdda_t
 		};
 	}CurrAddr,EndAddr,StartAddr;
 } ;
+extern cdda_t cdda;
 
 union ByteCount_t
 {
@@ -254,11 +256,7 @@ extern GD_HardwareInfo_t GD_HardwareInfo;
 
 //Response strings
 extern u16 reply_a1[];
-extern u16 reply_11[];
 extern u16 reply_71[];
-extern char szExDT[8][32];
-
-
 
 
 #define GD_IMPEDHI0_Read  0x005F7000 // (R) These are all 

@@ -132,7 +132,7 @@ void GD_HLE_Command(u32 cc, u32 prm)
 	switch(cc)
 	{
 	case GDCC_GETTOC:
-		WARN_LOG(REIOS, "GDROM: *FIXME* CMD GETTOC CC:%X PRM:%X",cc,prm);
+		WARN_LOG(REIOS, "GDROM: *FIXME* CMD GETTOC PRM:%X", prm);
 		break;
 
 	case GDCC_GETTOC2:
@@ -144,7 +144,7 @@ void GD_HLE_Command(u32 cc, u32 prm)
 		break;
 
 	case GDCC_INIT:
-		INFO_LOG(REIOS, "GDROM: CMD INIT CC:%X PRM:%X",cc,prm);
+		INFO_LOG(REIOS, "GDROM: CMD INIT PRM:%X", prm);
 		break;
 
 	case GDCC_PIOREAD:
@@ -157,27 +157,50 @@ void GD_HLE_Command(u32 cc, u32 prm)
 
 
 	case GDCC_PLAY_SECTOR:
-		WARN_LOG(REIOS, "GDROM: CMD PLAYSEC? CC:%X PRM:%X",cc,prm);
+		WARN_LOG(REIOS, "GDROM: CMD PLAYSEC? PRM:%X", prm);
 		break;
 
 	case GDCC_RELEASE:
-		WARN_LOG(REIOS, "GDROM: CMD RELEASE? CC:%X PRM:%X",cc,prm);
+		WARN_LOG(REIOS, "GDROM: CMD RELEASE? PRM:%X", prm);
 		break;
 
 	case GDCC_STOP:
-		WARN_LOG(REIOS, "GDROM: CMD STOP CC:%X PRM:%X",cc,prm);
+		INFO_LOG(REIOS, "GDROM: CMD STOP PRM:%X", prm);
+		cdda.playing = false;
+		SecNumber.Status = GD_STANDBY;
 		break;
 
 	case GDCC_SEEK:
-		WARN_LOG(REIOS, "GDROM: CMD SEEK CC:%X PRM:%X",cc,prm);
+		INFO_LOG(REIOS, "GDROM: CMD SEEK PRM:%X", prm);
+		cdda.playing = false;
+		SecNumber.Status = GD_PAUSE;
 		break;
 
 	case GDCC_PLAY:
-		WARN_LOG(REIOS, "GDROM: CMD PLAY PRM:%X args: %x %x %x %x", prm, ReadMem32(prm), ReadMem32(prm + 4), ReadMem32(prm + 8), ReadMem32(prm + 12));
+		{
+
+			u32 first_track = ReadMem32(prm);
+			u32 last_track = ReadMem32(prm + 4);
+			u32 repeats = ReadMem32(prm + 8);
+			u32 start_fad, end_fad, dummy;
+			libGDR_GetTrack(first_track, start_fad, dummy);
+			libGDR_GetTrack(last_track, dummy, end_fad);
+			INFO_LOG(REIOS, "GDROM: CMD PLAY first_track %x last_track %x repeats %x start_fad %x end_fad %x param4 %x", first_track, last_track, repeats,
+					start_fad, end_fad, ReadMem32(prm + 12));
+			cdda.playing = true;
+			cdda.StartAddr.FAD = start_fad;
+			cdda.EndAddr.FAD = end_fad;
+			cdda.repeats = repeats;
+			if (SecNumber.Status != GD_PAUSE || cdda.CurrAddr.FAD < start_fad || cdda.CurrAddr.FAD > end_fad)
+				cdda.CurrAddr.FAD = start_fad;
+			SecNumber.Status = GD_PLAY;
+		}
 		break;
 
 	case GDCC_PAUSE:
-		WARN_LOG(REIOS, "GDROM: CMD PAUSE CC:%X PRM:%X",cc,prm);
+		INFO_LOG(REIOS, "GDROM: CMD PAUSE");
+		cdda.playing = false;
+		SecNumber.Status = GD_PAUSE;
 		break;
 
 	case GDCC_READ:
@@ -266,7 +289,7 @@ void GD_HLE_Command(u32 cc, u32 prm)
 			// 1     |  0  |  0  |  0  |  0  | repeat count
 			// ------------------------------------------------------
 			// 2-3   |  0  |  0  |  0  |  0  |  0  |  0  |  0  |  0
-			WriteMem32(dst0, 2);	// repeat 0, status 2 (standby)
+			WriteMem32(dst0, (cdda.repeats << 8) | SecNumber.Status);
 
 			// bit   |  7  |  6  |  5  |  4  |  3  |  2  |  1  |  0
 			// byte  |     |     |     |     |     |     |     |
@@ -372,7 +395,7 @@ void gdrom_hle_op()
 
 
 		case GDROM_SECTOR_MODE:
-			INFO_LOG(REIOS, "GDROM: HLE GDROM_SECTOR_MODE PTR_r4:%X",r[4]);
+			WARN_LOG(REIOS, "GDROM: HLE GDROM_SECTOR_MODE PTR_r4:%X",r[4]);
 			for(int i=0; i<4; i++) {
 				SecMode[i] = ReadMem32(r[4]+(i<<2));
 				INFO_LOG(REIOS, "%08X", SecMode[i]);
