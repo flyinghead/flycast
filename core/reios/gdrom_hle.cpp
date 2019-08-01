@@ -18,24 +18,33 @@
 #define debugf(...) DEBUG_LOG(REIOS, __VA_ARGS__)
 
 // FIXME Serialize
-u32 LastCommandId = 0xFFFFFFFF;
-u32 NextCommandId = 1;
-u32 bios_result[4];				// BIOS result vector
-u32 cur_sector;
-
-void GDROM_HLE_ReadSES(u32 addr)
+typedef enum { BIOS_ERROR = -1, BIOS_INACTIVE, BIOS_ACTIVE, BIOS_COMPLETED } gd_bios_status;
+struct gdrom_hle_state_t
 {
-	u32 s = ReadMem32(addr + 0);
-	u32 b = ReadMem32(addr + 4);
-	u32 ba = ReadMem32(addr + 8);
-	u32 bb = ReadMem32(addr + 12);
+	u32 last_request_id;
+	u32 next_request_id;
+	gd_bios_status status;
+	u32 command;
+	u32 params[4];
+	u32 result[4];
+	u32 cur_sector;
+};
+gdrom_hle_state_t gd_hle_state = { 0xffffffff, 1, BIOS_INACTIVE };
+
+static void GDROM_HLE_ReadSES()
+{
+	u32 s = gd_hle_state.params[0];
+	u32 b = gd_hle_state.params[1];
+	u32 ba = gd_hle_state.params[2];
+	u32 bb = gd_hle_state.params[3];
 
 	WARN_LOG(REIOS, "GDROM_HLE_ReadSES: doing nothing w/ %d, %d, %d, %d", s, b, ba, bb);
 }
-void GDROM_HLE_ReadTOC(u32 Addr)
+
+static void GDROM_HLE_ReadTOC()
 {
-	u32 area = ReadMem32(Addr + 0);
-	u32 dest = ReadMem32(Addr + 4);
+	u32 area = gd_hle_state.params[0];
+	u32 dest = gd_hle_state.params[1];
 
 	u32* pDst = (u32*)GetMemPtr(dest, 0);
 
@@ -43,7 +52,7 @@ void GDROM_HLE_ReadTOC(u32 Addr)
 	if (area == DoubleDensity && libGDR_GetDiscType() != GdRom)
 	{
 		// Only GD-ROM has a high-density area but no error is reported
-		LastCommandId = 0xFFFFFFFF;
+		gd_hle_state.status = BIOS_INACTIVE;
 		return;
 	}
 
@@ -55,12 +64,12 @@ void GDROM_HLE_ReadTOC(u32 Addr)
 	}
 }
 
-void read_sectors_to(u32 addr, u32 sector, u32 count) {
+static void read_sectors_to(u32 addr, u32 sector, u32 count) {
 	u8 * pDst = GetMemPtr(addr, 0);
 
 	if (pDst) {
 		libGDR_ReadSector(pDst, sector, count, 2048);
-		cur_sector = sector + count - 1;
+		gd_hle_state.cur_sector = sector + count - 1;
 	}
 	else {
 		u8 temp[2048];
@@ -76,117 +85,119 @@ void read_sectors_to(u32 addr, u32 sector, u32 count) {
 			sector++;
 			count--;
 		}
-		cur_sector = sector - 1;
+		gd_hle_state.cur_sector = sector - 1;
 	}
 }
 
-void GDROM_HLE_ReadDMA(u32 addr)
+static void GDROM_HLE_ReadDMA()
 {
-	u32 s = ReadMem32(addr + 0x00);
-	u32 n = ReadMem32(addr + 0x04);
-	u32 b = ReadMem32(addr + 0x08);
-	u32 u = ReadMem32(addr + 0x0C);
+	u32 s = gd_hle_state.params[0];
+	u32 n = gd_hle_state.params[1];
+	u32 b = gd_hle_state.params[2];
+	u32 u = gd_hle_state.params[3];
 
 	debugf("GDROM: DMA READ Sector=%d, Num=%d, Buffer=0x%08X, Unk01=0x%08X", s, n, b, u);
 	read_sectors_to(b, s, n);
-	bios_result[2] = n * 2048;
-	bios_result[3] = -n * 2048;
+	gd_hle_state.result[2] = n * 2048;
+	gd_hle_state.result[3] = -n * 2048;
 }
 
-void GDROM_HLE_ReadPIO(u32 addr)
+static void GDROM_HLE_ReadPIO()
 {
-	u32 s = ReadMem32(addr + 0x00);
-	u32 n = ReadMem32(addr + 0x04);
-	u32 b = ReadMem32(addr + 0x08);
-	u32 u = ReadMem32(addr + 0x0C);
+	u32 s = gd_hle_state.params[0];
+	u32 n = gd_hle_state.params[1];
+	u32 b = gd_hle_state.params[2];
+	u32 u = gd_hle_state.params[3];
 
 	debugf("GDROM: PIO READ Sector=%d, Num=%d, Buffer=0x%08X, Unk01=0x%08X", s, n, b, u);
 
 	read_sectors_to(b, s, n);
-	bios_result[2] = n * 2048;
-	bios_result[3] = -n * 2048;
+	gd_hle_state.result[2] = n * 2048;
+	gd_hle_state.result[3] = -n * 2048;
 }
 
-void GDCC_HLE_GETSCD(u32 addr) {
-	u32 format = ReadMem32(addr + 0x00);
-	u32 size = ReadMem32(addr + 0x04);
-	u32 dest = ReadMem32(addr + 0x08);
+static void GDCC_HLE_GETSCD() {
+	u32 format = gd_hle_state.params[0];
+	u32 size = gd_hle_state.params[1];
+	u32 dest = gd_hle_state.params[2];
 
 	INFO_LOG(REIOS, "GDROM: GETSCD format %x size %x dest %08x", format, size, dest);
 
+	if (cdda.playing)
+		gd_hle_state.cur_sector = cdda.CurrAddr.FAD;
 	u8 scd[100];
-	gd_get_subcode(format, cur_sector, scd);
+	gd_get_subcode(format, gd_hle_state.cur_sector, scd);
 	verify(scd[3] == size);
 
 	memcpy(GetMemPtr(dest, size), scd, size);
 
 	// record size of pio transfer to gdrom
-	bios_result[2] = size;
+	gd_hle_state.result[2] = size;
 }
 
 
 u32 SecMode[4];
 
-void GD_HLE_Command(u32 cc, u32 prm)
+static void GD_HLE_Command(u32 cc)
 {
+	gd_hle_state.status = BIOS_COMPLETED;
 	switch(cc)
 	{
 	case GDCC_GETTOC:
-		WARN_LOG(REIOS, "GDROM: *FIXME* CMD GETTOC PRM:%X", prm);
+		WARN_LOG(REIOS, "GDROM: *FIXME* CMD GETTOC");
 		break;
 
 	case GDCC_GETTOC2:
-		GDROM_HLE_ReadTOC(prm);
+		GDROM_HLE_ReadTOC();
 		break;
 
 	case GDCC_GETSES:
-		GDROM_HLE_ReadSES(prm);
+		GDROM_HLE_ReadSES();
 		break;
 
 	case GDCC_INIT:
-		INFO_LOG(REIOS, "GDROM: CMD INIT PRM:%X", prm);
+		INFO_LOG(REIOS, "GDROM: CMD INIT");
 		break;
 
 	case GDCC_PIOREAD:
-		GDROM_HLE_ReadPIO(prm);
+		GDROM_HLE_ReadPIO();
 		break;
 
 	case GDCC_DMAREAD:
-		GDROM_HLE_ReadDMA(prm);
+		GDROM_HLE_ReadDMA();
 		break;
 
 
 	case GDCC_PLAY_SECTOR:
-		WARN_LOG(REIOS, "GDROM: CMD PLAYSEC? PRM:%X", prm);
+		WARN_LOG(REIOS, "GDROM: CMD PLAYSEC?");
 		break;
 
 	case GDCC_RELEASE:
-		WARN_LOG(REIOS, "GDROM: CMD RELEASE? PRM:%X", prm);
+		WARN_LOG(REIOS, "GDROM: CMD RELEASE?");
 		break;
 
 	case GDCC_STOP:
-		INFO_LOG(REIOS, "GDROM: CMD STOP PRM:%X", prm);
+		INFO_LOG(REIOS, "GDROM: CMD STOP");
 		cdda.playing = false;
 		SecNumber.Status = GD_STANDBY;
 		break;
 
 	case GDCC_SEEK:
-		INFO_LOG(REIOS, "GDROM: CMD SEEK PRM:%X", prm);
+		INFO_LOG(REIOS, "GDROM: CMD SEEK");
 		cdda.playing = false;
 		SecNumber.Status = GD_PAUSE;
 		break;
 
 	case GDCC_PLAY:
 		{
-
-			u32 first_track = ReadMem32(prm);
-			u32 last_track = ReadMem32(prm + 4);
-			u32 repeats = ReadMem32(prm + 8);
+			u32 first_track = gd_hle_state.params[0];
+			u32 last_track = gd_hle_state.params[1];
+			u32 repeats = gd_hle_state.params[2];
 			u32 start_fad, end_fad, dummy;
 			libGDR_GetTrack(first_track, start_fad, dummy);
 			libGDR_GetTrack(last_track, dummy, end_fad);
 			INFO_LOG(REIOS, "GDROM: CMD PLAY first_track %x last_track %x repeats %x start_fad %x end_fad %x param4 %x", first_track, last_track, repeats,
-					start_fad, end_fad, ReadMem32(prm + 12));
+					start_fad, end_fad, gd_hle_state.params[3]);
 			cdda.playing = true;
 			cdda.StartAddr.FAD = start_fad;
 			cdda.EndAddr.FAD = end_fad;
@@ -205,23 +216,23 @@ void GD_HLE_Command(u32 cc, u32 prm)
 
 	case GDCC_READ:
 		{
-			u32 s = ReadMem32(prm + 0x00);
-			u32 n = ReadMem32(prm + 0x04);
-			u32 b = ReadMem32(prm + 0x08);
-			u32 u = ReadMem32(prm + 0x0C);
+			u32 s = gd_hle_state.params[0];
+			u32 n = gd_hle_state.params[1];
+			u32 b = gd_hle_state.params[2];
+			u32 u = gd_hle_state.params[3];
 
-			WARN_LOG(REIOS, "GDROM: CMD READ PRM:%X Sector=%d, Num=%d, Buffer=0x%08X, Unk01=%08x", prm, s, n, b, u);
+			WARN_LOG(REIOS, "GDROM: CMD READ Sector=%d, Num=%d, Buffer=0x%08X, Unk01=%08x", s, n, b, u);
 		}
 		break;
 
 	case GDCC_GETSCD:
-		GDCC_HLE_GETSCD(prm);
+		GDCC_HLE_GETSCD();
 		break;
 
 	case GDCC_REQ_MODE:
 		{
-			debugf("GDROM: REQ_MODE PRM:%X", prm);
-			u32 dest = ReadMem32(prm);
+			u32 dest = gd_hle_state.params[0];
+			debugf("GDROM: REQ_MODE dest:%x", dest);
 			u32 *out = (u32 *)GetMemPtr(dest, 16);
 			out[0] = GD_HardwareInfo.speed;
 			out[1] = (GD_HardwareInfo.standby_hi << 8) | GD_HardwareInfo.standby_lo;
@@ -229,18 +240,18 @@ void GD_HLE_Command(u32 cc, u32 prm)
 			out[3] = GD_HardwareInfo.read_retry;
 
 			// record size of pio transfer to gdrom
-			bios_result[2] = 0xa;
+			gd_hle_state.result[2] = 0xa;
 		}
 		break;
 
 	case GDCC_SET_MODE:
 		{
-			u32 speed = ReadMem32(prm);
-			u32 standby = ReadMem32(prm + 4);
-			u32 read_flags = ReadMem32(prm + 8);
-			u32 read_retry = ReadMem32(prm + 12);
+			u32 speed = gd_hle_state.params[0];
+			u32 standby = gd_hle_state.params[1];
+			u32 read_flags = gd_hle_state.params[2];
+			u32 read_retry = gd_hle_state.params[3];
 
-			debugf("GDROM: SET_MODE PRM:%X speed %x standby %x read_flags %x read_retry %x", prm, speed, standby, read_flags, read_retry);
+			debugf("GDROM: SET_MODE speed %x standby %x read_flags %x read_retry %x", speed, standby, read_flags, read_retry);
 
 			GD_HardwareInfo.speed = speed;
 			GD_HardwareInfo.standby_hi = (standby & 0xff00) >> 8;
@@ -249,13 +260,13 @@ void GD_HLE_Command(u32 cc, u32 prm)
 			GD_HardwareInfo.read_retry = read_retry;
 
 			// record size of pio transfer to gdrom
-			bios_result[2] = 0xa;
+			gd_hle_state.result[2] = 0xa;
 		}
 		break;
 
 	case GDCC_GET_VER:
 		{
-			u32 dest = ReadMem32(prm);
+			u32 dest = gd_hle_state.params[0];
 
 			debugf("GDROM: GDCC_GET_VER dest %x", dest);
 
@@ -274,10 +285,10 @@ void GD_HLE_Command(u32 cc, u32 prm)
 	case GDCC_REQ_STAT:
 		{
 			// odd, but this function seems to get passed 4 unique pointers
-			u32 dst0 = ReadMem32(prm);
-			u32 dst1 = ReadMem32(prm + 4);
-			u32 dst2 = ReadMem32(prm + 8);
-			u32 dst3 = ReadMem32(prm + 12);
+			u32 dst0 = gd_hle_state.params[0];
+			u32 dst1 = gd_hle_state.params[1];
+			u32 dst2 = gd_hle_state.params[2];
+			u32 dst3 = gd_hle_state.params[3];
 
 			debugf("GDROM: GDCC_REQ_STAT dst0=%08x dst1=%08x dst2=%08x dst3=%08x", dst0, dst1, dst2, dst3);
 
@@ -298,7 +309,7 @@ void GD_HLE_Command(u32 cc, u32 prm)
 			// ------------------------------------------------------
 			// 1-3   |  0  |  0  |  0  |  0  |  0  |  0  |  0  |  0
 			u32 elapsed;
-			u32 tracknum = libGDR_GetTrackNumber(cur_sector, elapsed);
+			u32 tracknum = libGDR_GetTrackNumber(gd_hle_state.cur_sector, elapsed);
 			WriteMem32(dst1, tracknum);
 
 			// bit   |  7  |  6  |  5  |  4  |  3  |  2  |  1  |  0
@@ -308,7 +319,7 @@ void GD_HLE_Command(u32 cc, u32 prm)
 			// ------------------------------------------------------
 			// 3    | address                | control
 			// FIXME address/control
-			u32 out = ((0x4) << 28) | ((0x1) << 24) | (cur_sector & 0x00ffffff);
+			u32 out = ((0x4) << 28) | ((0x1) << 24) | (gd_hle_state.cur_sector & 0x00ffffff);
 			WriteMem32(dst2, out);
 
 			// bit   |  7  |  6  |  5  |  4  |  3  |  2  |  1  |  0
@@ -320,11 +331,11 @@ void GD_HLE_Command(u32 cc, u32 prm)
 			WriteMem32(dst3, 1);
 
 			// record pio transfer size
-			bios_result[2] = 0xa;
+			gd_hle_state.result[2] = 0xa;
 		}
 		break;
 	default:
-		WARN_LOG(REIOS, "GDROM: Unknown GDROM CC:%X PRM:%X", cc, prm);
+		WARN_LOG(REIOS, "GDROM: Unknown GDROM CC:%X", cc);
 		break;
 	}
 }
@@ -337,70 +348,142 @@ void gdrom_hle_op()
 	{
 		switch(r[7])				// COMMAND CODE
 		{
-		case GDROM_SEND_COMMAND:	// SEND GDROM COMMAND RET: - if failed + req id
-			//debugf("GDROM: HLE SEND COMMAND CC:%X  param ptr: %X", r[4], r[5]);
-			memset(bios_result, 0, sizeof(bios_result));
-			LastCommandId = r[0] = NextCommandId++;		// Request Id
-			GD_HLE_Command(r[4], r[5]);
-			break;
-
-		case GDROM_CHECK_COMMAND:
-			if (r[4] != LastCommandId)
+		case GDROM_SEND_COMMAND:
+			// Enqueue a command for the GDROM subsystem to execute.
+			//
+			// Args:
+			//	r4 = command code
+			//	r5 = pointer to parameter block for the command, can be NULL if the command does not take parameters
+			//
+			// Returns: a request id (>=0) if successful, negative error code if failed
+			debugf("GDROM: HLE SEND COMMAND CC:%X  param ptr: %X", r[4], r[5]);
+			if (gd_hle_state.status != BIOS_INACTIVE)
 			{
-				r[0] = -1;	// Error (examine extended status information for cause of failure)
-				bios_result[0] = 5;	// Invalid command id
-				bios_result[1] = 0;
-				bios_result[2] = 0;
-				bios_result[3] = 0;
+				r[0] = 0;
 			}
 			else
 			{
-				r[0] = 2;	// Finished
+				memset(gd_hle_state.result, 0, sizeof(gd_hle_state.result));
+				gd_hle_state.last_request_id = r[0] = gd_hle_state.next_request_id++;
+				gd_hle_state.status = BIOS_ACTIVE;
+				gd_hle_state.command = r[4];
+				for (int i = 0; i < 4; i++)
+					gd_hle_state.params[i] = ReadMem32(r[5] + i * 4);
 			}
-			//debugf("GDROM: HLE CHECK COMMAND REQID:%X  param ptr: %X -> %X", r[4], r[5], r[0]);
-			LastCommandId = 0xFFFFFFFF;			// INVALIDATE CHECK CMD
-			WriteMem32(r[5], bios_result[0]);
-			WriteMem32(r[5] + 4, bios_result[1]);
-			WriteMem32(r[5] + 8, bios_result[2]);
-			WriteMem32(r[5] + 12, bios_result[3]);
+			break;
+
+		case GDROM_CHECK_COMMAND:
+			// Check if an enqueued command has completed.
+			//
+			// Args:
+			//	r4 = request id
+			//	r5 = pointer to four 32 bit integers to receive extended status information. The first is a generic error code.
+			//
+			// Returns:
+			//	0 - no such request active
+			//	1 - request is still being processed
+			//	2 - request has completed (if queried again, you will get a 0)
+			//	3 - request was aborted(?)
+			//	-1 - request has failed (examine extended status information for cause of failure)
+			if (gd_hle_state.status != BIOS_COMPLETED && gd_hle_state.status != BIOS_ERROR)
+			{
+				r[0] = gd_hle_state.status;	// no such request active or still being processed
+			}
+			else if (r[4] != gd_hle_state.last_request_id)
+			{
+				r[0] = 0; // no such request active
+			}
+			else
+			{
+				r[0] = gd_hle_state.status;	// completed or error
+
+				//debugf("GDROM: HLE CHECK COMMAND REQID:%X  param ptr: %X -> %X", r[4], r[5], r[0]);
+				gd_hle_state.last_request_id = 0xFFFFFFFF;
+				WriteMem32(r[5], gd_hle_state.result[0]);
+				WriteMem32(r[5] + 4, gd_hle_state.result[1]);
+				WriteMem32(r[5] + 8, gd_hle_state.result[2]);
+				WriteMem32(r[5] + 12, gd_hle_state.result[3]);
+				gd_hle_state.status = BIOS_INACTIVE;
+			}
 			break;
 
 		case GDROM_MAIN:
+			// In order for enqueued commands to get processed, this function must be called a few times.
 			//debugf("GDROM: HLE GDROM_MAIN");
+			if (gd_hle_state.status == BIOS_ACTIVE)
+			{
+				GD_HLE_Command(gd_hle_state.command);
+			}
 			break;
 
 		case GDROM_INIT:
+			// Initialize the GDROM subsystem. Should be called before any requests are enqueued.
 			INFO_LOG(REIOS, "GDROM: HLE GDROM_INIT");
-			LastCommandId = 0xFFFFFFFF;
+			gd_hle_state.last_request_id = 0xFFFFFFFF;
+			gd_hle_state.status = BIOS_INACTIVE;
 			break;
 
 		case GDROM_RESET:
+			// Resets the drive.
 			INFO_LOG(REIOS, "GDROM: HLE GDROM_RESET");
+			gd_hle_state.last_request_id = 0xFFFFFFFF;
+			gd_hle_state.status = BIOS_INACTIVE;
 			break;
 
 		case GDROM_CHECK_DRIVE:
+			// Checks the general condition of the drive.
+			//
+			// Args:
+			//	r4 = pointer to two 32 bit integers, to receive the drive status. The first is the current drive status, the second is the type of disc inserted (if any).
+			//	0 	Drive is busy
+			//	1 	Drive is paused
+			//	2 	Drive is in standby
+			//	3 	Drive is playing
+			//	4 	Drive is seeking
+			//	5 	Drive is scanning
+			//	6 	Drive lid is open
+			//	7 	Lid is closed, but there is no disc
+			//
+			// Returns: zero if successful, nonzero if failure
 			//debugf("GDROM: HLE GDROM_CHECK_DRIVE r4:%X", r[4]);
 			WriteMem32(r[4] + 0, 0x02);	// STANDBY
 			if (strstr(reios_device_info, "GD-ROM") != NULL)
 				WriteMem32(r[4] + 4, GdRom);
 			else
 				WriteMem32(r[4] + 4, libGDR_GetDiscType());
-			r[0] = 0;					// Success
+			r[0] = 0;
 			break;
 
 		case GDROM_ABORT_COMMAND:
+			// Tries to abort a previously enqueued command.
+			//
+			// Args:
+			//	r4 = request id
+			//
+			// Returns: zero if successful, nonzero if failure
 			INFO_LOG(REIOS, "GDROM: HLE GDROM_ABORT_COMMAND r4:%X",r[4]);
-			r[0] = -1;					// Failure
+			r[0] = -1;
 			break;
 
 
 		case GDROM_SECTOR_MODE:
+			// Sets/gets the sector format for read commands.
+			//
+			// Args:
+			//	r4 = pointer to a struct of four 32 bit integers containing new values, or to receive the old values
+			//	Field	Function
+			//	0 	Get/Set, if 0 the mode will be set, if 1 it will be queried.
+			//	1 	? (always 8192)
+			//	2 	1024 = mode 1, 2048 = mode 2, 0 = auto detect
+			//	3 	Sector size in bytes (normally 2048)
+			//
+			// Returns: zero if successful, -1 if failure
 			WARN_LOG(REIOS, "GDROM: HLE GDROM_SECTOR_MODE PTR_r4:%X",r[4]);
 			for(int i=0; i<4; i++) {
 				SecMode[i] = ReadMem32(r[4]+(i<<2));
 				INFO_LOG(REIOS, "%08X", SecMode[i]);
 			}
-			r[0] = 0;					// Success
+			r[0] = 0;
 			break;
 
 		default:
@@ -413,10 +496,20 @@ void gdrom_hle_op()
 		switch(r[7])
 		{
 		case MISC_INIT:
+			// Initializes all the syscall vectors to their default values.
+			// Returns: zero
 			WARN_LOG(REIOS, "GDROM: MISC_INIT not implemented");
+			r[0] = 0;
 			break;
 
 		case MISC_SETVECTOR:
+			// Sets/clears the handler for one of the eight superfunctions for this vector. Setting a handler is only allowed if it not currently set.
+			//
+			// Args:
+			//	r4 = superfunction number (0-7)
+			//	r5 = pointer to handler function, or NULL to clear
+			//
+			// Returns: zero if successful, -1 if setting/clearing the handler fails
 			WARN_LOG(REIOS, "GDROM: MISC_SETVECTOR not implemented");
 			break;
 

@@ -40,4 +40,3 @@
 #define CTOC_TRACK(n) (n<<16)
 
 void gdrom_hle_op();
-void GD_HLE_Command(u32 cc, u32 prm);

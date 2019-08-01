@@ -174,8 +174,9 @@ char* reios_disk_id() {
 static void reios_sys_system() {
 	u32 cmd = Sh4cntx.r[7];
 
-	switch (cmd) {
-		case 0:	//SYSINFO_INIT
+	switch (cmd)
+	{
+	case 0:	//SYSINFO_INIT
 		{
 			debugf("reios_sys_system: SYSINFO_INIT");
 			// 0x00-0x07: system_id
@@ -198,30 +199,21 @@ static void reios_sys_system() {
 		}
 		break;
 
-		case 2: //SYSINFO_ICON 
-		{
-			debugf("reios_sys_system: SYSINFO_ICON");
-			// r4 = icon number (0-9, but only 5-9 seems to really be icons)
-			// r5 = destination buffer (704 bytes in size)
-			Sh4cntx.r[0] = 704;
-		}
+	case 2: //SYSINFO_ICON
+		debugf("reios_sys_system: SYSINFO_ICON");
+		// r4 = icon number (0-9, but only 5-9 seems to really be icons)
+		// r5 = destination buffer (704 bytes in size)
+		Sh4cntx.r[0] = 704;
 		break;
 
-		case 3: //SYSINFO_ID 
-		{
-			debugf("reios_sys_system: SYSINFO_ID");
-//			WriteMem32(SYSINFO_ID_ADDR + 0, 0xe1e2e3e4);
-//			WriteMem32(SYSINFO_ID_ADDR + 4, 0xe5e6e7e8);
-//
-//			Sh4cntx.r[0] = SYSINFO_ID_ADDR;
-			// TODO or this?
-			Sh4cntx.r[0] = 0x8c000068;
-		}
+	case 3: //SYSINFO_ID
+		debugf("reios_sys_system: SYSINFO_ID");
+		Sh4cntx.r[0] = 0x8c000068;
 		break;
 
-		default:
-			WARN_LOG(REIOS, "reios_sys_system: unhandled cmd %d", cmd);
-			break;
+	default:
+		WARN_LOG(REIOS, "reios_sys_system: unhandled cmd %d", cmd);
+		break;
 	}
 }
 
@@ -263,8 +255,8 @@ static void reios_sys_flashrom() {
 					r5 = pointer to two 32 bit integers to receive the result.
 						The first will be the offset of the partition start, in bytes from the start of the flashrom.
 						The second will be the size of the partition, in bytes.
-					returns:
-					r0 = 0 if partition found, -1 if error or not found
+					Returns:
+					r0 = 0 if successful, -1 if no such partition exists
 				 */
 
 				u32 part = Sh4cntx.r[4];
@@ -290,8 +282,8 @@ static void reios_sys_flashrom() {
 					r4 = read start position, in bytes from the start of the flashrom
 					r5 = pointer to destination buffer
 					r6 = number of bytes to read
-					returns:
-					r0 = number of bytes read
+					Returns:
+					r0 = number of read bytes if successful, -1 if read failed
 				*/
 				u32 offset = Sh4cntx.r[4];
 				u32 dest = Sh4cntx.r[5];
@@ -312,8 +304,8 @@ static void reios_sys_flashrom() {
 					r4 = write start position, in bytes from the start of the flashrom
 					r5 = pointer to source buffer
 					r6 = number of bytes to write
-					returns:
-					r0 = number of bytes written
+					Returns:
+					r0 = number of written bytes if successful, -1 if write failed
 				*/
 
 				u32 offs = Sh4cntx.r[4];
@@ -332,7 +324,11 @@ static void reios_sys_flashrom() {
 
 		case 3:	//FLASHROM_DELETE
 			{			
-				// offset of partition to delete
+				/*
+				   r4 = offset of the start of the partition you want to delete, in bytes from the start of the flashrom
+				   Returns:
+				   r0 = zero if successful, -1 if delete failed
+				*/
 				u32 offset = Sh4cntx.r[4];
 
 				debugf("reios_sys_flashrom: FLASHROM_DELETE offs %x", offset);
@@ -382,38 +378,38 @@ static void gd_do_bioscall()
 		int func1, func2, arg1, arg2;
 	*/
 
-	switch (Sh4cntx.r[7]) {
-	case 0:	//gdGdcReqCmd, wth is r6 ?
-		GD_HLE_Command(Sh4cntx.r[4], Sh4cntx.r[5]);
-		Sh4cntx.r[0] = 0xf344312e;
-		break;
-
-	case 1:	//gdGdcGetCmdStat, r4 -> id as returned by gdGdcReqCmd, r5 -> buffer to get status in ram, r6 ?
-		Sh4cntx.r[0] = 0; //All good, no status info
-		break;
-
-	case 2: //gdGdcExecServer
-		//nop? returns something, though.
-		//Bios seems to be based on a cooperative threading model
-		//this is the "context" switch entry point
-		break;
-
-	case 3: //gdGdcInitSystem
-		//nop? returns something, though.
-		break;
-	case 4: //gdGdcGetDrvStat
-		/*
-			Looks to same as GDROM_CHECK_DRIVE
-		*/
-		WriteMem32(Sh4cntx.r[4] + 0, 0x02);	// STANDBY
-		WriteMem32(Sh4cntx.r[4] + 4, 0x80);	// CDROM | 0x80 for GDROM
-		Sh4cntx.r[0] = 0;					// RET SUCCESS
-		break;
-
-	default:
-		INFO_LOG(REIOS, "gd_do_bioscall: (%d) %d, %d, %d", Sh4cntx.r[4], Sh4cntx.r[5], Sh4cntx.r[6], Sh4cntx.r[7]);
-		break;
-	}
+//	switch (Sh4cntx.r[7]) {
+//	case 0:	//gdGdcReqCmd, wth is r6 ?
+//		GD_HLE_Command(Sh4cntx.r[4], Sh4cntx.r[5]);
+//		Sh4cntx.r[0] = 0xf344312e;
+//		break;
+//
+//	case 1:	//gdGdcGetCmdStat, r4 -> id as returned by gdGdcReqCmd, r5 -> buffer to get status in ram, r6 ?
+//		Sh4cntx.r[0] = 0; //All good, no status info
+//		break;
+//
+//	case 2: //gdGdcExecServer
+//		//nop? returns something, though.
+//		//Bios seems to be based on a cooperative threading model
+//		//this is the "context" switch entry point
+//		break;
+//
+//	case 3: //gdGdcInitSystem
+//		//nop? returns something, though.
+//		break;
+//	case 4: //gdGdcGetDrvStat
+//		/*
+//			Looks to same as GDROM_CHECK_DRIVE
+//		*/
+//		WriteMem32(Sh4cntx.r[4] + 0, 0x02);	// STANDBY
+//		WriteMem32(Sh4cntx.r[4] + 4, 0x80);	// CDROM | 0x80 for GDROM
+//		Sh4cntx.r[0] = 0;					// RET SUCCESS
+//		break;
+//
+//	default:
+//		INFO_LOG(REIOS, "gd_do_bioscall: (%d) %d, %d, %d", Sh4cntx.r[4], Sh4cntx.r[5], Sh4cntx.r[6], Sh4cntx.r[7]);
+//		break;
+//	}
 	
 	//gdGdcInitSystem
 }

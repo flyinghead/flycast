@@ -38,7 +38,7 @@ android {
 
         ndk {
             moduleName "dc"
-                abiFilters 'armeabi-v7a', 'arm64-v8a'
+                abiFilters 'armeabi-v7a', 'arm64-v8a'//, 'x86'
         }
     }
 
@@ -70,6 +70,7 @@ android {
     flavorDimensions "systemtype"
     productFlavors {
         dreamcast {
+            externalNativeBuild { ndkBuild { arguments ("-j" + Runtime.runtime.availableProcessors()) } }
         }
     }
 
@@ -82,6 +83,12 @@ android {
     lintOptions {
         abortOnError false
     }
+    
+	//packagingOptions{
+	//    doNotStrip "*/armeabi/*.so"
+	//    doNotStrip "*/armeabi-v7a/*.so"
+	//    doNotStrip "*/arm64-v8a/*.so"
+	//}
 }
 
 afterEvaluate {
