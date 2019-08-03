@@ -329,7 +329,7 @@ void GetDriveToc(u32* to,DiskArea area)
 {
 	if (!disc)
 		return;
-	memset(to,0xFFFFFFFF,102*4);
+	memset(to, 0xFF, 102 * 4);
 
 	//can't get toc on the second area on discs that don't have it
 	verify(area != DoubleDensity || disc->type == GdRom);

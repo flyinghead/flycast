@@ -15,6 +15,7 @@
 #include "gdrom_hle.h"
 #include "descrambl.h"
 
+#include "hw/sh4/sh4_core.h"
 #include "hw/sh4/sh4_mem.h"
 #include "hw/holly/sb_mem.h"
 #include "hw/naomi/naomi_cart.h"
@@ -29,10 +30,11 @@
 #define dc_bios_syscall_font				0x8C0000B4
 #define dc_bios_syscall_flashrom			0x8C0000B8
 #define dc_bios_syscall_gd					0x8C0000BC
+#define dc_bios_syscall_gd2					0x8C0000C0
 #define dc_bios_syscall_misc				0x8c0000E0
 
 //At least one game (ooga) uses this directly
-#define dc_bios_entrypoint_gd_do_bioscall	0x8c0010F0
+#define dc_bios_entrypoint_gd2	0x8c0010F0
 
 #define SYSINFO_ID_ADDR 0x8C001010
 #define FONT_TABLE_ADDR 0xa0100020
@@ -100,6 +102,12 @@ static bool reios_locate_bootfile(const char* bootfile="1ST_READ.BIN")
 			u32 lba = dir->extent & 0xffffffff;
 			u32 len = dir->size & 0xffffffff;
 			
+			if (!memcmp(bootfile, "0WINCEOS.BIN", 12))
+			{
+				lba++;
+				len -= 2048;
+			}
+
 			INFO_LOG(REIOS, "file LBA: %d", lba);
 			INFO_LOG(REIOS, "file LEN: %d", len);
 
@@ -172,7 +180,7 @@ char* reios_disk_id() {
 }
 
 static void reios_sys_system() {
-	u32 cmd = Sh4cntx.r[7];
+	u32 cmd = r[7];
 
 	switch (cmd)
 	{
@@ -182,7 +190,7 @@ static void reios_sys_system() {
 			// 0x00-0x07: system_id
 			// 0x08-0x0c: system_props
 			// 0x0d-0x0f: padding (zeroed out)
-			// 0x10-0x17: settings (zeroed out)
+			// 0x10-0x17: settings
 			u8 data[24] = {0};
 
 			// read system_id from 0x0001a056
@@ -193,9 +201,14 @@ static void reios_sys_system() {
 			for (int i  = 0; i < 5; i++)
 				data[8 + i] = flashrom->Read8(0x1a000 + i);
 
+			// system settings
+			flash_syscfg_block syscfg;
+			verify(static_cast<DCFlashChip*>(flashrom)->ReadBlock(FLASH_PT_USER, FLASH_USER_SYSCFG, &syscfg));
+			memcpy(&data[16], &syscfg.time_lo, 8);
+
 			memcpy(GetMemPtr(0x8c000068, sizeof(data)), data, sizeof(data));
 
-			Sh4cntx.r[0] = 0;
+			r[0] = 0;
 		}
 		break;
 
@@ -203,12 +216,12 @@ static void reios_sys_system() {
 		debugf("reios_sys_system: SYSINFO_ICON");
 		// r4 = icon number (0-9, but only 5-9 seems to really be icons)
 		// r5 = destination buffer (704 bytes in size)
-		Sh4cntx.r[0] = 704;
+		r[0] = 704;
 		break;
 
 	case 3: //SYSINFO_ID
 		debugf("reios_sys_system: SYSINFO_ID");
-		Sh4cntx.r[0] = 0x8c000068;
+		r[0] = 0x8c000068;
 		break;
 
 	default:
@@ -218,23 +231,23 @@ static void reios_sys_system() {
 }
 
 static void reios_sys_font() {
-	u32 cmd = Sh4cntx.r[1];
+	u32 cmd = r[1];
 
 	switch (cmd)
 	{
 	case 0:		// FONTROM_ADDRESS
 		debugf("FONTROM_ADDRESS");
-		Sh4cntx.r[0] = FONT_TABLE_ADDR;	// in ROM
+		r[0] = FONT_TABLE_ADDR;	// in ROM
 		break;
 
 	case 1:		// FONTROM_LOCK
 		debugf("FONTROM_LOCK");
-		Sh4cntx.r[0] = 0;
+		r[0] = 0;
 		break;
 
 	case 2:		// FONTROM_UNLOCK
 		debugf("FONTROM_UNLOCK");
-		Sh4cntx.r[0] = 0;
+		r[0] = 0;
 		break;
 
 	default:
@@ -244,7 +257,7 @@ static void reios_sys_font() {
 }
 
 static void reios_sys_flashrom() {
-	u32 cmd = Sh4cntx.r[7];
+	u32 cmd = r[7];
 
 	switch (cmd)
 	{
@@ -259,19 +272,21 @@ static void reios_sys_flashrom() {
 					r0 = 0 if successful, -1 if no such partition exists
 				 */
 
-				u32 part = Sh4cntx.r[4];
-				u32 dest = Sh4cntx.r[5];
+				u32 part = r[4];
+				u32 dest = r[5];
 				debugf("reios_sys_flashrom: FLASHROM_INFO part %d dest %08x", part, dest);
 
-				int* pDst = (int*)GetMemPtr(dest, 8);
+				if (part < FLASH_PT_NUM)
+				{
+					int offset, size;
+					static_cast<DCFlashChip*>(flashrom)->GetPartitionInfo(part, &offset, &size);
+					WriteMem32(dest, offset);
+					WriteMem32(dest + 4, size);
 
-				if (part <= 4) {
-					static_cast<DCFlashChip*>(flashrom)->GetPartitionInfo(part, pDst, pDst + 1);
-
-					Sh4cntx.r[0] = 0;
+					r[0] = 0;
 				}
 				else {
-					Sh4cntx.r[0] = -1;
+					r[0] = -1;
 				}
 			}
 			break;
@@ -285,15 +300,15 @@ static void reios_sys_flashrom() {
 					Returns:
 					r0 = number of read bytes if successful, -1 if read failed
 				*/
-				u32 offset = Sh4cntx.r[4];
-				u32 dest = Sh4cntx.r[5];
-				u32 size = Sh4cntx.r[6];
+				u32 offset = r[4];
+				u32 dest = r[5];
+				u32 size = r[6];
 
 				debugf("reios_sys_flashrom: FLASHROM_READ offs %x dest %08x size %x", offset, dest, size);
 				for (int i = 0; i < size; i++)
 					WriteMem8(dest++, flashrom->Read8(offset + i));
 
-				Sh4cntx.r[0] = size;
+				r[0] = size;
 			}
 			break;
 
@@ -308,17 +323,16 @@ static void reios_sys_flashrom() {
 					r0 = number of written bytes if successful, -1 if write failed
 				*/
 
-				u32 offs = Sh4cntx.r[4];
-				u32 src = Sh4cntx.r[5];
-				u32 size = Sh4cntx.r[6];
+				u32 offs = r[4];
+				u32 src = r[5];
+				u32 size = r[6];
 
 				debugf("reios_sys_flashrom: FLASHROM_WRITE offs %x src %08x size %x", offs, src, size);
-				u8* pSrc = GetMemPtr(src, size);
 
 				for (int i = 0; i < size; i++)
-					flashrom->data[offs + i] &= pSrc[i];
+					flashrom->data[offs + i] &= ReadMem8(src + i);
 
-				Sh4cntx.r[0] = size;
+				r[0] = size;
 			}
 			break;
 
@@ -329,7 +343,7 @@ static void reios_sys_flashrom() {
 				   Returns:
 				   r0 = zero if successful, -1 if delete failed
 				*/
-				u32 offset = Sh4cntx.r[4];
+				u32 offset = r[4];
 
 				debugf("reios_sys_flashrom: FLASHROM_DELETE offs %x", offset);
 
@@ -347,7 +361,7 @@ static void reios_sys_flashrom() {
 					}
 				}
 
-				Sh4cntx.r[0] = found ? 0 : -1;
+				r[0] = found ? 0 : -1;
 			}
 			break;
 
@@ -357,67 +371,28 @@ static void reios_sys_flashrom() {
 	}
 }
 
-static void reios_sys_gd() {
+static void reios_sys_gd()
+{
 	gdrom_hle_op();
 }
 
-/*
-	- gdGdcReqCmd, 0
-	- gdGdcGetCmdStat, 1
-	- gdGdcExecServer, 2
-	- gdGdcInitSystem, 3
-	- gdGdcGetDrvStat, 4
-*/
-static void gd_do_bioscall()
+static void reios_sys_gd2()
 {
-	//looks like the "real" entrypoint for this on a dreamcast
 	gdrom_hle_op();
-	return;
-
-	/*
-		int func1, func2, arg1, arg2;
-	*/
-
-//	switch (Sh4cntx.r[7]) {
-//	case 0:	//gdGdcReqCmd, wth is r6 ?
-//		GD_HLE_Command(Sh4cntx.r[4], Sh4cntx.r[5]);
-//		Sh4cntx.r[0] = 0xf344312e;
-//		break;
-//
-//	case 1:	//gdGdcGetCmdStat, r4 -> id as returned by gdGdcReqCmd, r5 -> buffer to get status in ram, r6 ?
-//		Sh4cntx.r[0] = 0; //All good, no status info
-//		break;
-//
-//	case 2: //gdGdcExecServer
-//		//nop? returns something, though.
-//		//Bios seems to be based on a cooperative threading model
-//		//this is the "context" switch entry point
-//		break;
-//
-//	case 3: //gdGdcInitSystem
-//		//nop? returns something, though.
-//		break;
-//	case 4: //gdGdcGetDrvStat
-//		/*
-//			Looks to same as GDROM_CHECK_DRIVE
-//		*/
-//		WriteMem32(Sh4cntx.r[4] + 0, 0x02);	// STANDBY
-//		WriteMem32(Sh4cntx.r[4] + 4, 0x80);	// CDROM | 0x80 for GDROM
-//		Sh4cntx.r[0] = 0;					// RET SUCCESS
-//		break;
-//
-//	default:
-//		INFO_LOG(REIOS, "gd_do_bioscall: (%d) %d, %d, %d", Sh4cntx.r[4], Sh4cntx.r[5], Sh4cntx.r[6], Sh4cntx.r[7]);
-//		break;
-//	}
-	
-	//gdGdcInitSystem
 }
 
 static void reios_sys_misc()
 {
-	WARN_LOG(REIOS, "reios_sys_misc - r7: 0x%08X, r4 0x%08X, r5 0x%08X, r6 0x%08X", Sh4cntx.r[7], Sh4cntx.r[4], Sh4cntx.r[5], Sh4cntx.r[6]);
-	Sh4cntx.r[0] = 0;
+	WARN_LOG(REIOS, "reios_sys_misc - r7: 0x%08X, r4 0x%08X, r5 0x%08X, r6 0x%08X", r[7], r[4], r[5], r[6]);
+	switch (r[4])
+	{
+	case 2:	// check disk
+		r[0] = 0;
+		break;
+	default:
+		r[0] = 0;
+		break;
+	}
 }
 
 typedef void hook_fp();
@@ -481,25 +456,25 @@ static void reios_setup_state(u32 boot_addr) {
 	*/
 
 	//Setup registers to immitate a normal boot
-	sh4rcb.cntx.r[15] = 0x8d000000;
+	r[15] = 0x8d000000;
 
-	sh4rcb.cntx.gbr = 0x8c000000;
-	sh4rcb.cntx.ssr = 0x40000001;
-	sh4rcb.cntx.spc = 0x8c000776;
-	sh4rcb.cntx.sgr = 0x8d000000;
-	sh4rcb.cntx.dbr = 0x8c000010;
-	sh4rcb.cntx.vbr = 0x8c000000;
-	sh4rcb.cntx.pr = 0xac00043c;
-	sh4rcb.cntx.fpul = 0x00000000;
-	sh4rcb.cntx.pc = boot_addr;
+	gbr = 0x8c000000;
+	ssr = 0x40000001;
+	spc = 0x8c000776;
+	sgr = 0x8d000000;
+	dbr = 0x8c000010;
+	vbr = 0x8c000000;
+	pr = 0xac00043c;
+	fpul = 0x00000000;
+	next_pc = boot_addr;
 
-	sh4rcb.cntx.sr.status = 0x400000f0;
-	sh4rcb.cntx.sr.T = 1;
+	sr.status = 0x400000f0;
+	sr.T = 1;
 
-	sh4rcb.cntx.old_sr.status = 0x400000f0;
+	old_sr.status = 0x400000f0;
 
-	sh4rcb.cntx.fpscr.full = 0x00040001;
-	sh4rcb.cntx.old_fpscr.full = 0x00040001;
+	fpscr.full = 0x00040001;
+	old_fpscr.full = 0x00040001;
 }
 
 static void reios_setup_naomi(u32 boot_addr) {
@@ -587,40 +562,40 @@ static void reios_setup_naomi(u32 boot_addr) {
 	*/
 
 	//Setup registers to immitate a normal boot
-	sh4rcb.cntx.r[0] = 0x0c021000;
-	sh4rcb.cntx.r[1] = 0x0c01f820;
-	sh4rcb.cntx.r[2] = 0xa0710004;
-	sh4rcb.cntx.r[3] = 0x0c01f130;
-	sh4rcb.cntx.r[4] = 0x5bfccd08;
-	sh4rcb.cntx.r[5] = 0xa05f7000;
-	sh4rcb.cntx.r[6] = 0xa05f7008;
-	sh4rcb.cntx.r[7] = 0x00000007;
-	sh4rcb.cntx.r[8] = 0x00000000;
-	sh4rcb.cntx.r[9] = 0x00002000;
-	sh4rcb.cntx.r[10] = 0xffffffff;
-	sh4rcb.cntx.r[11] = 0x0c0e0000;
-	sh4rcb.cntx.r[12] = 0x00000000;
-	sh4rcb.cntx.r[13] = 0x00000000;
-	sh4rcb.cntx.r[14] = 0x00000000;
-	sh4rcb.cntx.r[15] = 0x0cc00000;
+	r[0] = 0x0c021000;
+	r[1] = 0x0c01f820;
+	r[2] = 0xa0710004;
+	r[3] = 0x0c01f130;
+	r[4] = 0x5bfccd08;
+	r[5] = 0xa05f7000;
+	r[6] = 0xa05f7008;
+	r[7] = 0x00000007;
+	r[8] = 0x00000000;
+	r[9] = 0x00002000;
+	r[10] = 0xffffffff;
+	r[11] = 0x0c0e0000;
+	r[12] = 0x00000000;
+	r[13] = 0x00000000;
+	r[14] = 0x00000000;
+	r[15] = 0x0cc00000;
 
-	sh4rcb.cntx.gbr = 0x0c2abcc0;
-	sh4rcb.cntx.ssr = 0x60000000;
-	sh4rcb.cntx.spc = 0x0c041738;
-	sh4rcb.cntx.sgr = 0x0cbfffb0;
-	sh4rcb.cntx.dbr = 0x00000fff;
-	sh4rcb.cntx.vbr = 0x0c000000;
-	sh4rcb.cntx.pr = 0xac0195ee;
-	sh4rcb.cntx.fpul = 0x000001e0;
-	sh4rcb.cntx.pc = boot_addr;
+	gbr = 0x0c2abcc0;
+	ssr = 0x60000000;
+	spc = 0x0c041738;
+	sgr = 0x0cbfffb0;
+	dbr = 0x00000fff;
+	vbr = 0x0c000000;
+	pr = 0xac0195ee;
+	fpul = 0x000001e0;
+	next_pc = boot_addr;
 
-	sh4rcb.cntx.sr.status = 0x60000000;
-	sh4rcb.cntx.sr.T = 1;
+	sr.status = 0x60000000;
+	sr.T = 1;
 
-	sh4rcb.cntx.old_sr.status = 0x60000000;
+	old_sr.status = 0x60000000;
 
-	sh4rcb.cntx.fpscr.full = 0x00040001;
-	sh4rcb.cntx.old_fpscr.full = 0x00040001;
+	fpscr.full = 0x00040001;
+	old_fpscr.full = 0x00040001;
 }
 
 static void reios_boot()
@@ -638,9 +613,9 @@ static void reios_boot()
 	setup_syscall(hook_addr(&reios_sys_font), dc_bios_syscall_font);
 	setup_syscall(hook_addr(&reios_sys_flashrom), dc_bios_syscall_flashrom);
 	setup_syscall(hook_addr(&reios_sys_gd), dc_bios_syscall_gd);
+	setup_syscall(hook_addr(&reios_sys_gd2), dc_bios_syscall_gd2);
 	setup_syscall(hook_addr(&reios_sys_misc), dc_bios_syscall_misc);
 
-	WriteMem32(dc_bios_entrypoint_gd_do_bioscall, REIOS_OPCODE);
 	//Infinitive loop for arm !
 	WriteMem32(0x80800000, 0xEAFFFFFE);
 
@@ -694,14 +669,17 @@ static void register_hook(u32 pc, hook_fp* fn) {
 
 void DYNACALL reios_trap(u32 op) {
 	verify(op == REIOS_OPCODE);
-	u32 pc = sh4rcb.cntx.pc - 2;
-	sh4rcb.cntx.pc = sh4rcb.cntx.pr;
+	u32 pc = next_pc - 2;
 
 	u32 mapd = SYSCALL_ADDR_MAP(pc);
 
 	//debugf("dispatch %08X -> %08X", pc, mapd);
 
 	hooks[mapd]();
+
+	// Return from syscall, except if pc was modified
+	if (pc == next_pc - 2)
+		next_pc = pr;
 }
 
 static u32 hook_addr(hook_fp* fn) {
@@ -736,7 +714,7 @@ bool reios_init(u8* rom, MemChip* flash) {
 	register_hook(0x8C001006, reios_sys_gd);
 	register_hook(0x8C001008, reios_sys_misc);
 
-	register_hook(dc_bios_entrypoint_gd_do_bioscall, &gd_do_bioscall);
+	register_hook(dc_bios_entrypoint_gd2, reios_sys_gd2);
 
 	u8 *pFont = rom + (FONT_TABLE_ADDR % BIOS_SIZE);
 

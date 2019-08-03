@@ -7,10 +7,15 @@
 #define GDROM_MAIN				0x02
 #define GDROM_INIT				0x03
 #define GDROM_CHECK_DRIVE		0x04
+#define GDROM_G1_DMA_END		0x05	// r4: callback, r5: callback arg
+#define GDROM_REQ_DMA_TRANS		0x06	// r4: request id
+#define GDROM_CHECK_DMA_TRANS	0x07	// r4: request id, r5: u32 *size
 #define GDROM_ABORT_COMMAND		0x08
 #define GDROM_RESET				0x09
 #define GDROM_SECTOR_MODE		0x0A
-
+#define GDROM_SET_PIO_CALLBACK	0x0B	// r4: callback, r5: callback arg
+#define GDROM_REQ_PIO_TRANS		0x0C	// r4: request id
+#define GDROM_CHECK_PIO_TRANS	0x0D	// r4: request id, r5: u32 *size
 
 #define GDCC_PIOREAD			0x10
 #define GDCC_DMAREAD			0x11
@@ -29,7 +34,12 @@
 #define GDCC_GETSCD				0x22
 #define GDCC_GETSES				0x23
 #define GDCC_REQ_STAT			0x24
+#define GDCC_MULTI_DMAREAD		0x26
+#define GDCC_MULTI_PIOREAD		0x27
 #define GDCC_GET_VER			0x28
+// pseudo-commands for multi dma/pio xfers
+#define GDCC_REQ_DMA_TRANS	   0x106
+#define GDCC_REQ_PIO_TRANS	   0x10C
 
 #define MISC_INIT				0x00
 #define MISC_SETVECTOR			0x01
