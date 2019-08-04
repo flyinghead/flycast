@@ -34,6 +34,7 @@ struct gdrom_hle_state_t
 	u32 multi_read_total;
 	u32 multi_callback;
 	u32 multi_callback_arg;
+	bool dma_trans_ended;
 };
 gdrom_hle_state_t gd_hle_state = { 0xffffffff, 1, BIOS_INACTIVE };
 
@@ -223,14 +224,23 @@ static void multi_xfer()
 			}
 		}
 	}
-	gd_hle_state.result[2] = gd_hle_state.multi_read_total - gd_hle_state.multi_read_count;
-	gd_hle_state.result[3] = gd_hle_state.multi_read_count;
+	if (!dma)
+	{
+		gd_hle_state.result[2] = gd_hle_state.multi_read_total - gd_hle_state.multi_read_count;
+		gd_hle_state.result[3] = gd_hle_state.multi_read_count;
+	}
+	else
+	{
+		gd_hle_state.result[2] = 800;
+		gd_hle_state.result[3] = gd_hle_state.multi_read_count > 0 ? 1 : 0;
+		gd_hle_state.dma_trans_ended = true;
+	}
 	if (gd_hle_state.multi_callback != 0)
 	{
 		Sh4cntx.r[4] = gd_hle_state.multi_callback_arg;
 		Sh4cntx.pc = gd_hle_state.multi_callback;
 	}
-	else if (dma)
+	if (dma)
 	{
 		asic_RaiseInterrupt(holly_GDROM_DMA);
 	}
@@ -317,21 +327,19 @@ static void GD_HLE_Command(u32 cc)
 		SecNumber.Status = GD_PAUSE;
 		break;
 
-	case GDCC_READ:	// FIXME
+	case GDCC_READ:
 		{
-			u32 s = gd_hle_state.params[0];
-			u32 n = 1; //gd_hle_state.params[1];
-			u32 b = gd_hle_state.params[2];
-			u32 u = gd_hle_state.params[3];
+			u32 sector = gd_hle_state.params[0];
+			u32 num = gd_hle_state.params[1];
 
-			WARN_LOG(REIOS, "GDROM: CMD READ Sector=%d, Num=%d, Buffer=0x%08X, Unk01=%08x", s, n, b, u);
+			WARN_LOG(REIOS, "GDROM: CMD READ Sector=%d, Num=%d", sector, num);
 			gd_hle_state.status = BIOS_DATA_AVAIL;
-			gd_hle_state.multi_read_sector = s;
-			gd_hle_state.multi_read_count = n * 2048;
+			gd_hle_state.multi_read_sector = sector;
+			gd_hle_state.multi_read_count = num * 2048;
 			gd_hle_state.multi_read_total = gd_hle_state.multi_read_count;
 			gd_hle_state.multi_read_offset = 0;
-			gd_hle_state.result[2] = 0;
-			gd_hle_state.result[3] = n * 2048;
+			gd_hle_state.result[2] = 800;
+			gd_hle_state.result[3] = num > 0 ? 1 : 0;
 		}
 		break;
 
@@ -410,7 +418,8 @@ static void GD_HLE_Command(u32 cc)
 			// 1     |  0  |  0  |  0  |  0  | repeat count
 			// ------------------------------------------------------
 			// 2-3   |  0  |  0  |  0  |  0  |  0  |  0  |  0  |  0
-			WriteMem32(dst0, (cdda.repeats << 8) | SecNumber.Status);
+//			WriteMem32(dst0, (cdda.repeats << 8) | SecNumber.Status);
+			WriteMem32(dst0, (cdda.repeats << 8) | (SecNumber.Status == GD_STANDBY ? GD_PAUSE : SecNumber.Status));
 
 			// bit   |  7  |  6  |  5  |  4  |  3  |  2  |  1  |  0
 			// byte  |     |     |     |     |     |     |     |
@@ -515,6 +524,8 @@ void gdrom_hle_op()
 				for (int i = 0; i < 4; i++)
 					gd_hle_state.params[i] = r[5] == 0 ? 0 : ReadMem32(r[5] + i * 4);
 				memset(gd_hle_state.result, 0, sizeof(gd_hle_state.result));
+				if (gd_hle_state.next_request_id == -1 || gd_hle_state.next_request_id == 0)
+					gd_hle_state.next_request_id = 1;
 				gd_hle_state.last_request_id = r[0] = gd_hle_state.next_request_id++;
 				gd_hle_state.status = BIOS_ACTIVE;
 				gd_hle_state.command = r[4];
@@ -545,20 +556,24 @@ void gdrom_hle_op()
 			}
 			else
 			{
+				if (gd_hle_state.status == BIOS_DATA_AVAIL && gd_hle_state.multi_read_count == 0)
+				{
+					gd_hle_state.status = BIOS_COMPLETED;
+					gd_hle_state.result[3] = 0;
+				}
 				WriteMem32(r[5], gd_hle_state.result[0]);
 				WriteMem32(r[5] + 4, gd_hle_state.result[1]);
 				WriteMem32(r[5] + 8, gd_hle_state.result[2]);
 				WriteMem32(r[5] + 12, gd_hle_state.result[3]);
 
-				r[0] = gd_hle_state.status;	// completed or error
+				if (gd_hle_state.status == BIOS_DATA_AVAIL && gd_hle_state.command == GDCC_REQ_PIO_TRANS)
+					r[0] = BIOS_ACTIVE;	// FIXME correct? doesn't seem to help
+				else
+					r[0] = gd_hle_state.status;	// completed or error
 				if (gd_hle_state.status != BIOS_DATA_AVAIL)
 				{
 					gd_hle_state.status = BIOS_INACTIVE;
 					gd_hle_state.last_request_id = 0xFFFFFFFF;
-				}
-				else
-				{
-					gd_hle_state.status = BIOS_COMPLETED;
 				}
 			}
 			debugf("GDROM: HLE CHECK COMMAND REQID:%X  param ptr: %X -> %X", r[4], r[5], r[0]);
@@ -567,9 +582,10 @@ void gdrom_hle_op()
 		case GDROM_MAIN:
 			// In order for enqueued commands to get processed, this function must be called a few times.
 			debugf("GDROM: HLE GDROM_MAIN");
-			if (gd_hle_state.status == BIOS_ACTIVE)
+			if (gd_hle_state.status == BIOS_ACTIVE || (gd_hle_state.status == BIOS_DATA_AVAIL && gd_hle_state.command == GDCC_REQ_PIO_TRANS))
 			{
 				GD_HLE_Command(gd_hle_state.command);
+				gd_hle_state.command = -1;
 			}
 			break;
 
@@ -602,12 +618,12 @@ void gdrom_hle_op()
 			//	7 	Lid is closed, but there is no disc
 			//
 			// Returns: zero if successful, nonzero if failure
-			debugf("GDROM: HLE GDROM_CHECK_DRIVE r4:%X", r[4]);
-			WriteMem32(r[4] + 0, SecNumber.Status == GD_PLAY ? 3 : SecNumber.Status == GD_PAUSE ? 1 : 2);
+			WriteMem32(r[4] + 0, (gd_hle_state.status == BIOS_DATA_AVAIL || SecNumber.Status == GD_PLAY) ? 3 : 1);
 			if (strstr(reios_device_info, "GD-ROM") != NULL)
 				WriteMem32(r[4] + 4, GdRom);
 			else
 				WriteMem32(r[4] + 4, libGDR_GetDiscType());
+			debugf("GDROM: HLE GDROM_CHECK_DRIVE r4:%X -> %x %x", r[4], ReadMem32(r[4]), ReadMem32(r[4] + 4));
 			r[0] = 0;
 			break;
 
@@ -619,7 +635,15 @@ void gdrom_hle_op()
 			//
 			// Returns: zero if successful, nonzero if failure
 			WARN_LOG(REIOS, "GDROM: HLE GDROM_ABORT_COMMAND r4:%X",r[4]);
-			r[0] = -1;
+			if (r[4] == gd_hle_state.last_request_id && gd_hle_state.status == BIOS_DATA_AVAIL)
+			{
+				r[0] = 0;
+				gd_hle_state.multi_read_count = 0;
+			}
+			else
+			{
+				r[0] = -1;
+			}
 			break;
 
 
@@ -648,10 +672,11 @@ void gdrom_hle_op()
 			gd_hle_state.multi_callback = r[4];
 			gd_hle_state.multi_callback_arg = r[5];
 			r[0] = 0;
-			if (gd_hle_state.multi_callback != 0)	// FIXME hack for 2K sports games
+			if (gd_hle_state.multi_callback != 0 && gd_hle_state.dma_trans_ended)	// FIXME hack for 2K sports games
 			{
 				r[4] = gd_hle_state.multi_callback_arg;
 				Sh4cntx.pc = gd_hle_state.multi_callback;
+				gd_hle_state.dma_trans_ended = false;
 			}
 			break;
 
@@ -661,8 +686,15 @@ void gdrom_hle_op()
 			WARN_LOG(REIOS, "GDROM: REQ_DMA_TRANS req_id %x dest %x size %x",
 					r[4], gd_hle_state.params[0], gd_hle_state.params[1]);
 
-			multi_xfer<true>();
-			r[0] = 0;
+			if (gd_hle_state.status != BIOS_DATA_AVAIL || gd_hle_state.params[1] > gd_hle_state.multi_read_count)
+			{
+				r[0] = -1;
+			}
+			else
+			{
+				multi_xfer<true>();
+				r[0] = 0;
+			}
 			break;
 
 		case GDROM_REQ_PIO_TRANS:
@@ -670,16 +702,30 @@ void gdrom_hle_op()
 			gd_hle_state.params[1] = ReadMem32(r[5] + 4);
 			WARN_LOG(REIOS, "GDROM: REQ_PIO_TRANS req_id %x dest %x size %x",
 					r[4], gd_hle_state.params[0], gd_hle_state.params[1]);
-			gd_hle_state.status = BIOS_ACTIVE;
-			gd_hle_state.command = GDCC_REQ_PIO_TRANS;
+			if (gd_hle_state.status != BIOS_DATA_AVAIL || gd_hle_state.params[1] > gd_hle_state.multi_read_count)
+			{
+				r[0] = -1;
+			}
+			else
+			{
+				gd_hle_state.command = GDCC_REQ_PIO_TRANS;
+				r[0] = 0;
+			}
 			break;
 
 		case GDROM_CHECK_DMA_TRANS:
 			{
 				u32 len_addr = r[5];
 				WARN_LOG(REIOS, "GDROM: CHECK_DMA_TRANS req_id %x len_addr %x -> %x", r[4], len_addr, gd_hle_state.multi_read_count);
-				WriteMem32(len_addr, gd_hle_state.multi_read_count);
-				r[0] = 0;
+				if (gd_hle_state.status == BIOS_DATA_AVAIL)
+				{
+					WriteMem32(len_addr, gd_hle_state.multi_read_count);
+					r[0] = 0;
+				}
+				else
+				{
+					r[0] = -1;
+				}
 			}
 			break;
 
@@ -694,8 +740,15 @@ void gdrom_hle_op()
 			{
 				u32 len_addr = r[5];
 				WARN_LOG(REIOS, "GDROM: CHECK_PIO_TRANS req_id %x len_addr %x -> %x", r[4], len_addr, gd_hle_state.multi_read_count);
-				WriteMem32(len_addr, gd_hle_state.multi_read_count);
-				r[0] = 0;
+				if (gd_hle_state.status == BIOS_DATA_AVAIL)
+				{
+					WriteMem32(len_addr, gd_hle_state.multi_read_count);
+					r[0] = 0;
+				}
+				else
+				{
+					r[0] = -1;
+				}
 			}
 			break;
 

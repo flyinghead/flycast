@@ -699,7 +699,7 @@ bool reios_init(u8* rom, MemChip* flash) {
 	biosrom = rom;
 	flashrom = flash;
 
-	memset(rom, 0xEA, 2048 * 1024);
+	memset(rom, 0xFF, 2048 * 1024);
 	memset(GetMemPtr(0x8C000000, 0), 0, RAM_SIZE);
 
 	u16* rom16 = (u16*)rom;
