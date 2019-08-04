@@ -231,7 +231,7 @@ static void multi_xfer()
 	}
 	else
 	{
-		gd_hle_state.result[2] = 800;
+		gd_hle_state.result[2] = 2048;
 		gd_hle_state.result[3] = gd_hle_state.multi_read_count > 0 ? 1 : 0;
 		gd_hle_state.dma_trans_ended = true;
 	}
@@ -338,7 +338,7 @@ static void GD_HLE_Command(u32 cc)
 			gd_hle_state.multi_read_count = num * 2048;
 			gd_hle_state.multi_read_total = gd_hle_state.multi_read_count;
 			gd_hle_state.multi_read_offset = 0;
-			gd_hle_state.result[2] = 800;
+			gd_hle_state.result[2] = 2048;
 			gd_hle_state.result[3] = num > 0 ? 1 : 0;
 		}
 		break;
