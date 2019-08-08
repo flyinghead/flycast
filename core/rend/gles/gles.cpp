@@ -448,7 +448,7 @@ int screen_height;
 GLuint fogTextureId;
 
 #ifdef TEST_AUTOMATION
-void dump_screenshot(u8 *buffer, u32 width, u32 height)
+static void dump_screenshot(u8 *buffer, u32 width, u32 height)
 {
 	FILE *fp = fopen("screenshot.png", "wb");
 	if (fp == NULL)
@@ -487,6 +487,36 @@ void dump_screenshot(u8 *buffer, u32 width, u32 height)
 	free(rows);
 
 }
+
+static void do_swap_automation()
+{
+	static FILE* video_file = fopen(cfgLoadStr("record", "rawvid","").c_str(), "wb");
+	extern bool do_screenshot;
+
+	if (video_file)
+	{
+		int bytesz = screen_width * screen_height * 3;
+		u8* img = new u8[bytesz];
+		
+		glReadPixels(0, 0, screen_width, screen_height, GL_RGB, GL_UNSIGNED_BYTE, img);
+		fwrite(img, 1, bytesz, video_file);
+		fflush(video_file);
+	}
+
+	if (do_screenshot)
+	{
+		extern void dc_exit();
+		int bytesz = screen_width * screen_height * 3;
+		u8* img = new u8[bytesz];
+		
+		glReadPixels(0, 0, screen_width, screen_height, GL_RGB, GL_UNSIGNED_BYTE, img);
+		dump_screenshot(img, screen_width, screen_height);
+		delete[] img;
+		dc_exit();
+		exit(0);
+	}
+}
+
 #endif
 
 #ifdef USE_EGL
@@ -657,6 +687,7 @@ void dump_screenshot(u8 *buffer, u32 width, u32 height)
 	//swap buffers
 	void gl_swap()
 	{
+		do_swap_automation();
 #ifdef TARGET_PANDORA0
 		if (fbdev >= 0)
 		{
@@ -830,6 +861,7 @@ void dump_screenshot(u8 *buffer, u32 width, u32 height)
 	#include <wingdi.h>
 	void gl_swap()
 	{
+		do_swap_automation();
 		wglSwapLayerBuffers(ourWindowHandleToDeviceContext,WGL_SWAP_MAIN_PLANE);
 		//SwapBuffers(ourWindowHandleToDeviceContext);
 	}
@@ -862,33 +894,7 @@ void dump_screenshot(u8 *buffer, u32 width, u32 height)
 
 	void gl_swap()
 	{
-#ifdef TEST_AUTOMATION
-		static FILE* video_file = fopen(cfgLoadStr("record", "rawvid","").c_str(), "wb");
-		extern bool do_screenshot;
-
-		if (video_file)
-		{
-			int bytesz = screen_width * screen_height * 3;
-			u8* img = new u8[bytesz];
-
-			glReadPixels(0, 0, screen_width, screen_height, GL_RGB, GL_UNSIGNED_BYTE, img);
-			fwrite(img, 1, bytesz, video_file);
-			fflush(video_file);
-		}
-
-		if (do_screenshot)
-		{
-			extern void dc_exit();
-			int bytesz = screen_width * screen_height * 3;
-			u8* img = new u8[bytesz];
-
-			glReadPixels(0, 0, screen_width, screen_height, GL_RGB, GL_UNSIGNED_BYTE, img);
-			dump_screenshot(img, screen_width, screen_height);
-			delete[] img;
-			dc_exit();
-			exit(0);
-		}
-#endif
+		do_swap_automation();
 		glXSwapBuffers((Display*)libPvr_GetRenderSurface(), (GLXDrawable)libPvr_GetRenderTarget());
 
 		Window win;
@@ -923,6 +929,14 @@ void dump_screenshot(u8 *buffer, u32 width, u32 height)
 
 #else
 extern void gl_term();
+#if HOST_OS == OS_DARWIN
+void gl_swap()
+{
+#ifdef TEST_AUTOMATION
+	do_swap_automation();
+#endif
+}
+#endif
 #endif
 
 static void gl_delete_shaders()

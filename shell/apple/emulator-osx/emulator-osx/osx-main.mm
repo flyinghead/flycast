@@ -83,10 +83,6 @@ void gl_term() {
 
 }
 
-void gl_swap() {
-
-}
-
 void common_linux_setup();
 int reicast_init(int argc, char* argv[]);
 void dc_exit();
@@ -160,7 +156,19 @@ extern "C" int emu_reicast_init()
 {
 	LogManager::Init();
 	common_linux_setup();
-	return reicast_init(0, NULL);
+	NSArray *arguments = [[NSProcessInfo processInfo] arguments];
+	unsigned long argc = [arguments count];
+	char **argv = (char **)malloc(argc * sizeof(char*));
+	for (unsigned long i = 0; i < argc; i++)
+		argv[i] = strdup([[arguments objectAtIndex:i] UTF8String]);
+	
+	int rc = reicast_init((int)argc, argv);
+	
+	for (unsigned long i = 0; i < argc; i++)
+		free(argv[i]);
+	free(argv);
+	
+	return rc;
 }
 
 extern "C" void emu_key_input(UInt16 keyCode, bool pressed, UInt modifierFlags) {
