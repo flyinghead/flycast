@@ -104,12 +104,9 @@ u32 sh4_rio_read(Array<RegisterStruct>& sb_regs, u32 addr)
 	}
 	else
 	{
-		if (!(sb_regs[offset].flags& REG_NOT_IMPL))
-			INFO_LOG(SH4, "ERROR [wrong size read on register]");
+		INFO_LOG(SH4, "ERROR [wrong size read on register]");
 	}
 #endif
-//	if ((sb_regs[offset].flags& REG_NOT_IMPL))
-//		EMUERROR2("Read from System Control Regs , not  implemented , addr=%x",addr);
 	return 0;
 }
 
@@ -142,33 +139,14 @@ offset>>=2;
 		{
 			//printf("RSW: %08X\n",addr);
 			sb_regs[offset].writeFunctionAddr(addr,data);
-			/*
-			if (sb_regs[offset].flags & REG_CONST)
-				EMUERROR("Error [Write to read only register , const]");
-			else
-			{
-				if ()
-				{
-					sb_regs[offset].writeFunction(data);
-					return;
-				}
-				else
-				{
-					if (!(sb_regs[offset].flags& REG_NOT_IMPL))
-						EMUERROR("ERROR [Write to read only register]");
-				}
-			}*/
 			return;
 		}
 #ifdef TRACE
 	}
 	else
 	{
-		if (!(sb_regs[offset].flags& REG_NOT_IMPL))
-			INFO_LOG(SH4, "ERROR: Wrong size write on register - offset=%x, data=%x, size=%d",offset,data,sz);
+		INFO_LOG(SH4, "ERROR: Wrong size write on register - offset=%x, data=%x, size=%d",offset,data,sz);
 	}
-	if ((sb_regs[offset].flags& REG_NOT_IMPL))
-		INFO_LOG(SH4, "Write to System Control Regs, not implemented - addr=%x, data=%x",addr,data);
 #endif
 	
 }

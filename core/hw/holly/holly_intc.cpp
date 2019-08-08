@@ -199,48 +199,30 @@ void Write_SB_IML2ERR(u32 addr, u32 data)
 void asic_reg_Init()
 {
 	sb_rio_register(SB_ISTNRM_addr,RIO_FUNC,&Read_SB_ISTNRM,&Write_SB_ISTNRM);
-	/*
-	sb_regs[((SB_ISTNRM_addr-SB_BASE)>>2)].flags=REG_32BIT_READWRITE;
-	sb_regs[((SB_ISTNRM_addr-SB_BASE)>>2)].readFunction=Read_SB_ISTNRM;
-	sb_regs[((SB_ISTNRM_addr-SB_BASE)>>2)].writeFunction=Write_SB_ISTNRM;
-	*/
-
 	sb_rio_register(SB_ISTEXT_addr,RIO_WF,0,&Write_SB_ISTEXT);
-	//sb_regs[((SB_ISTEXT_addr-SB_BASE)>>2)].writeFunction=Write_SB_ISTEXT;
-
 	sb_rio_register(SB_ISTERR_addr,RIO_WF,0,&Write_SB_ISTERR);
-//	sb_regs[((SB_ISTERR_addr-SB_BASE)>>2)].writeFunction=Write_SB_ISTERR;
 
 	//NRM
 	//6
 	sb_rio_register(SB_IML6NRM_addr,RIO_WF,0,&Write_SB_IML6NRM);
-	//sb_regs[((SB_IML6NRM_addr-SB_BASE)>>2)].writeFunction=Write_SB_SB_IML6NRM;
 	//4
 	sb_rio_register(SB_IML4NRM_addr,RIO_WF,0,&Write_SB_IML4NRM);
-	//sb_regs[((SB_IML4NRM_addr-SB_BASE)>>2)].writeFunction=Write_SB_SB_IML4NRM;
 	//2
 	sb_rio_register(SB_IML2NRM_addr,RIO_WF,0,&Write_SB_IML2NRM);
-	//sb_regs[((SB_IML2NRM_addr-SB_BASE)>>2)].writeFunction=Write_SB_SB_IML2NRM;
 	//EXT
 	//6
 	sb_rio_register(SB_IML6EXT_addr,RIO_WF,0,&Write_SB_IML6EXT);
-	//sb_regs[((SB_IML6EXT_addr-SB_BASE)>>2)].writeFunction=Write_SB_SB_IML6EXT;
 	//4
 	sb_rio_register(SB_IML4EXT_addr,RIO_WF,0,&Write_SB_IML4EXT);
-	//sb_regs[((SB_IML4EXT_addr-SB_BASE)>>2)].writeFunction=Write_SB_SB_IML4EXT;
 	//2
 	sb_rio_register(SB_IML2EXT_addr,RIO_WF,0,&Write_SB_IML2EXT);
-	//sb_regs[((SB_IML2EXT_addr-SB_BASE)>>2)].writeFunction=Write_SB_SB_IML2EXT;
 	//ERR
 	//6
 	sb_rio_register(SB_IML6ERR_addr,RIO_WF,0,&Write_SB_IML6ERR);
-	//sb_regs[((SB_IML6ERR_addr-SB_BASE)>>2)].writeFunction=Write_SB_SB_IML6ERR;
 	//4
 	sb_rio_register(SB_IML4ERR_addr,RIO_WF,0,&Write_SB_IML4ERR);
-	//sb_regs[((SB_IML4ERR_addr-SB_BASE)>>2)].writeFunction=Write_SB_SB_IML4ERR;
 	//2
 	sb_rio_register(SB_IML2ERR_addr,RIO_WF,0,&Write_SB_IML2ERR);
-	//sb_regs[((SB_IML2ERR_addr-SB_BASE)>>2)].writeFunction=Write_SB_SB_IML2ERR;
 }
 
 void asic_reg_Term()
