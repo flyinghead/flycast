@@ -687,7 +687,9 @@ static void do_swap_automation()
 	//swap buffers
 	void gl_swap()
 	{
+#ifdef TEST_AUTOMATION
 		do_swap_automation();
+#endif
 #ifdef TARGET_PANDORA0
 		if (fbdev >= 0)
 		{
@@ -861,7 +863,9 @@ static void do_swap_automation()
 	#include <wingdi.h>
 	void gl_swap()
 	{
+#ifdef TEST_AUTOMATION
 		do_swap_automation();
+#endif
 		wglSwapLayerBuffers(ourWindowHandleToDeviceContext,WGL_SWAP_MAIN_PLANE);
 		//SwapBuffers(ourWindowHandleToDeviceContext);
 	}
@@ -894,7 +898,9 @@ static void do_swap_automation()
 
 	void gl_swap()
 	{
+#ifdef TEST_AUTOMATION
 		do_swap_automation();
+#endif
 		glXSwapBuffers((Display*)libPvr_GetRenderSurface(), (GLXDrawable)libPvr_GetRenderTarget());
 
 		Window win;
