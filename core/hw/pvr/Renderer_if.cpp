@@ -595,7 +595,7 @@ void rend_vblank()
 void check_framebuffer_write()
 {
 	u32 fb_size = (FB_R_SIZE.fb_y_size + 1) * (FB_R_SIZE.fb_x_size + FB_R_SIZE.fb_modulus) * 4;
-	fb_watch_addr_start = FB_R_SOF2 & VRAM_MASK;
+	fb_watch_addr_start = (SPG_CONTROL.interlace ? FB_R_SOF2 : FB_R_SOF1) & VRAM_MASK;
 	fb_watch_addr_end = fb_watch_addr_start + fb_size;
 }
 

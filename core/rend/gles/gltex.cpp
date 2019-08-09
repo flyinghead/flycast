@@ -948,24 +948,36 @@ void RenderFramebuffer()
 		case fbde_888:		// 888 RGB
 			for (int y = 0; y < height; y++)
 			{
-				for (int i = 0; i < width; i++)
+				for (int i = 0; i < width; i += 4)
 				{
-					if (addr & 1)
-					{
-						u32 src = pvr_read_area1_32(addr - 1);
-						*dst++ = src >> 16;
-						*dst++ = src >> 8;
-						*dst++ = src;
-					}
-					else
-					{
-						u32 src = pvr_read_area1_32(addr);
-						*dst++ = src >> 24;
-						*dst++ = src >> 16;
-						*dst++ = src >> 8;
-					}
+					u32 src = pvr_read_area1_32(addr);
+					*dst++ = src >> 16;
+					*dst++ = src >> 8;
+					*dst++ = src;
 					*dst++ = 0xFF;
-					addr += bpp;
+					addr += 4;
+					if (i + 1 >= width)
+						break;
+					u32 src2 = pvr_read_area1_32(addr);
+					*dst++ = src2 >> 8;
+					*dst++ = src2;
+					*dst++ = src >> 24;
+					*dst++ = 0xFF;
+					addr += 4;
+					if (i + 2 >= width)
+						break;
+					u32 src3 = pvr_read_area1_32(addr);
+					*dst++ = src3;
+					*dst++ = src2 >> 24;
+					*dst++ = src2 >> 16;
+					*dst++ = 0xFF;
+					addr += 4;
+					if (i + 3 >= width)
+						break;
+					*dst++ = src3 >> 24;
+					*dst++ = src3 >> 16;
+					*dst++ = src3 >> 8;
+					*dst++ = 0xFF;
 				}
 				addr += modulus * bpp;
 			}
