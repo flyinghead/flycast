@@ -14,7 +14,7 @@
 
 ConsoleListener::ConsoleListener()
 {
-  m_use_color = !!isatty(fileno(stdout));
+  m_use_color = !!isatty(fileno(stderr));
 }
 
 ConsoleListener::~ConsoleListener()
@@ -48,6 +48,20 @@ void ConsoleListener::Log(LogTypes::LOG_LEVELS level, const char* text)
       break;
     }
   }
+#if HOST_OS != OS_DARWIN
   fprintf(stderr, "%s%s%s", color_attr, text, reset_attr);
+#else
+  // Skip the time
+  const char *trimmed_text = strchr(text, ' ');
+  if (trimmed_text != NULL)
+	  trimmed_text++;
+	else
+	  trimmed_text = text;
+  int text_size = (int)strlen(trimmed_text);
+  // trim the ending newline
+  if (trimmed_text[text_size - 1] == '\n')
+	  text_size--;
+  darw_printf("%s%.*s%s", color_attr, text_size, trimmed_text, reset_attr);
+#endif
 }
 #endif // !_WIN32 && !_ANDROID

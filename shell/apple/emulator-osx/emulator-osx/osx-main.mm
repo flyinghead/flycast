@@ -21,12 +21,13 @@ OSXKeyboardDevice keyboard(0);
 static std::shared_ptr<OSXKbGamepadDevice> kb_gamepad(0);
 static std::shared_ptr<OSXMouseGamepadDevice> mouse_gamepad(0);
 
-int darw_printf(const wchar* text,...) {
+int darw_printf(const wchar* text, ...)
+{
     va_list args;
 
     wchar temp[2048];
     va_start(args, text);
-    vsprintf(temp, text, args);
+    vsnprintf(temp, sizeof(temp), text, args);
     va_end(args);
 
     NSLog(@"%s", temp);

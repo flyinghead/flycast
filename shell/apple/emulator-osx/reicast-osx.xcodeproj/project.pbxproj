@@ -174,7 +174,6 @@
 		84B7BF6A1B72720200F9733F /* audiobackend_pulseaudio.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BE771B72720200F9733F /* audiobackend_pulseaudio.cpp */; };
 		84B7BF6B1B72720200F9733F /* audiostream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BE791B72720200F9733F /* audiostream.cpp */; };
 		84B7BF6C1B72720200F9733F /* profiler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BE7D1B72720200F9733F /* profiler.cpp */; };
-		84B7BF6D1B72720200F9733F /* README.md in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BE7F1B72720200F9733F /* README.md */; };
 		84B7BF741B72720200F9733F /* descrambl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BE901B72720200F9733F /* descrambl.cpp */; };
 		84B7BF751B72720200F9733F /* gdrom_hle.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BE921B72720200F9733F /* gdrom_hle.cpp */; };
 		84B7BF761B72720200F9733F /* reios.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BE941B72720200F9733F /* reios.cpp */; };
@@ -256,6 +255,7 @@
 		AE8C274121122E2500D4D8F4 /* Changelog.txt in Resources */ = {isa = PBXBuildFile; fileRef = AE8C273B21122E2500D4D8F4 /* Changelog.txt */; };
 		AE8C274221122E2500D4D8F4 /* License.txt in Resources */ = {isa = PBXBuildFile; fileRef = AE8C273C21122E2500D4D8F4 /* License.txt */; };
 		AE8C274321122E2500D4D8F4 /* xbrz.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE8C273D21122E2500D4D8F4 /* xbrz.cpp */; };
+		AED73BAE22FC0E9600ECDB64 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = AED73BAD22FC0E9600ECDB64 /* README.md */; };
 		AEE62768220D7B4400EC7E89 /* cue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEE62767220D7B4300EC7E89 /* cue.cpp */; };
 		AEE6276B220D7B5500EC7E89 /* gui.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEE6276A220D7B5500EC7E89 /* gui.cpp */; };
 		AEE6277A220D7B7E00EC7E89 /* imgui.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEE6276E220D7B7E00EC7E89 /* imgui.cpp */; };
@@ -612,7 +612,6 @@
 		84B7BE7B1B72720200F9733F /* oslib.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = oslib.h; sourceTree = "<group>"; };
 		84B7BE7D1B72720200F9733F /* profiler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = profiler.cpp; sourceTree = "<group>"; };
 		84B7BE7E1B72720200F9733F /* profiler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = profiler.h; sourceTree = "<group>"; };
-		84B7BE7F1B72720200F9733F /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; name = README.md; path = ../../../core/README.md; sourceTree = "<group>"; };
 		84B7BE901B72720200F9733F /* descrambl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = descrambl.cpp; sourceTree = "<group>"; };
 		84B7BE911B72720200F9733F /* descrambl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = descrambl.h; sourceTree = "<group>"; };
 		84B7BE921B72720200F9733F /* gdrom_hle.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = gdrom_hle.cpp; sourceTree = "<group>"; };
@@ -790,6 +789,7 @@
 		AE8C273E21122E2500D4D8F4 /* xbrz.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = xbrz.h; sourceTree = "<group>"; };
 		AE8C273F21122E2500D4D8F4 /* xbrz_config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = xbrz_config.h; sourceTree = "<group>"; };
 		AE8C274021122E2500D4D8F4 /* xbrz_tools.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = xbrz_tools.h; sourceTree = "<group>"; };
+		AED73BAD22FC0E9600ECDB64 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; name = README.md; path = ../../../core/README.md; sourceTree = "<group>"; };
 		AEE62767220D7B4300EC7E89 /* cue.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = cue.cpp; sourceTree = "<group>"; };
 		AEE62769220D7B5500EC7E89 /* gui.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = gui.h; sourceTree = "<group>"; };
 		AEE6276A220D7B5500EC7E89 /* gui.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = gui.cpp; sourceTree = "<group>"; };
@@ -1008,7 +1008,6 @@
 			isa = PBXGroup;
 			children = (
 				AE2A2D5F21D684B9004B308D /* archive */,
-				84B7BD121B72720100F9733F /* build.h */,
 				84B7BD131B72720100F9733F /* cfg */,
 				84B7BD171B72720100F9733F /* deps */,
 				84B7BDB81B72720100F9733F /* emitter */,
@@ -1018,14 +1017,15 @@
 				84B7BE4D1B72720100F9733F /* khronos */,
 				84B7BE641B72720100F9733F /* linux */,
 				AE43536822C9420C005E19CE /* log */,
-				84B7BE6E1B72720200F9733F /* nullDC.cpp */,
 				84B7BE6F1B72720200F9733F /* oslib */,
 				84B7BE7C1B72720200F9733F /* profiler */,
-				84B7BE7F1B72720200F9733F /* README.md */,
 				AE1E29392095FB1600FC6BA2 /* rec-cpp */,
 				AE1E293E20A96B0B00FC6BA2 /* rec-x64 */,
 				84B7BE8F1B72720200F9733F /* reios */,
 				84B7BE981B72720200F9733F /* rend */,
+				AED73BAD22FC0E9600ECDB64 /* README.md */,
+				84B7BD121B72720100F9733F /* build.h */,
+				84B7BE6E1B72720200F9733F /* nullDC.cpp */,
 				AE80EDB62157D4D500F7800F /* serialize.cpp */,
 				84B7BEA71B72720200F9733F /* stdclass.cpp */,
 				84B7BEA81B72720200F9733F /* stdclass.h */,
@@ -2178,11 +2178,11 @@
 				TargetAttributes = {
 					84A388B21B1CDD3E000166C0 = {
 						CreatedOnToolsVersion = 6.1;
-						LastSwiftMigration = 0820;
+						LastSwiftMigration = 0920;
 					};
 					84A388C21B1CDD3F000166C0 = {
 						CreatedOnToolsVersion = 6.1;
-						LastSwiftMigration = 0820;
+						LastSwiftMigration = 0920;
 						TestTargetID = 84A388B21B1CDD3E000166C0;
 					};
 				};
@@ -2214,6 +2214,7 @@
 				84B7BF221B72720200F9733F /* emitter.vcxproj in Resources */,
 				84B7BF231B72720200F9733F /* emitter.vcxproj.user in Resources */,
 				AE8C274221122E2500D4D8F4 /* License.txt in Resources */,
+				AED73BAE22FC0E9600ECDB64 /* README.md in Resources */,
 				84A388BB1B1CDD3E000166C0 /* Images.xcassets in Resources */,
 				84A388BE1B1CDD3E000166C0 /* MainMenu.xib in Resources */,
 				AE8C274121122E2500D4D8F4 /* Changelog.txt in Resources */,
@@ -2347,7 +2348,6 @@
 				AEFF7F76214D9D590068CE11 /* pico_tree.c in Sources */,
 				AEE6277A220D7B7E00EC7E89 /* imgui.cpp in Sources */,
 				84B7BEB91B72720200F9733F /* elf.cpp in Sources */,
-				84B7BF6D1B72720200F9733F /* README.md in Sources */,
 				84B7BF2B1B72720200F9733F /* arm_mem.cpp in Sources */,
 				84B7BF4F1B72720200F9733F /* rtc.cpp in Sources */,
 				84B7BF361B72720200F9733F /* maple_helper.cpp in Sources */,
