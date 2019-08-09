@@ -271,10 +271,6 @@ void main() \n\
 			#if pp_IgnoreTexA==1 \n\
 				texcol.a=1.0;	 \n\
 			#endif\n\
-			\n\
-			#if cp_AlphaTest == 1 \n\
-				if (cp_AlphaTestValue>texcol.a) discard;\n\
-			#endif  \n\
 		#endif \n\
 		#if pp_ShadInstr==0 \n\
 		{ \n\
@@ -297,6 +293,11 @@ void main() \n\
 			color*=texcol; \n\
 		} \n\
 		#endif\n\
+		\n\
+		#if cp_AlphaTest == 1 \n\
+			if (cp_AlphaTestValue > color.a) \n\
+				discard; \n\
+		#endif  \n\
 		\n\
 		#if pp_Offset==1 && pp_BumpMap == 0 \n\
 		{ \n\

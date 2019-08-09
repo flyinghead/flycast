@@ -179,7 +179,7 @@ template <u32 Type, bool SortingEnabled>
 __forceinline
 	void SetGPState(const PolyParam* gp,u32 cflip=0)
 {
-	if (gp->pcw.Texture && gp->tsp.FilterMode > 1)
+	if (gp->pcw.Texture && gp->tsp.FilterMode > 1 && Type != ListType_Punch_Through)
 	{
 		ShaderUniforms.trilinear_alpha = 0.25 * (gp->tsp.MipMapD & 0x3);
 		if (gp->tsp.FilterMode == 2)
@@ -237,7 +237,8 @@ __forceinline
 		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	}
 
-	if (Type==ListType_Translucent)
+	// Apparently punch-through polys support blending, or at least some combinations
+	if (Type == ListType_Translucent || Type == ListType_Punch_Through)
 	{
 		glcache.Enable(GL_BLEND);
 		glcache.BlendFunc(SrcBlendGL[gp->tsp.SrcInstr],DstBlendGL[gp->tsp.DstInstr]);
