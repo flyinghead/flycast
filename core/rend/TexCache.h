@@ -622,3 +622,6 @@ template void texture_VQ<convBMP_TW<pp_565>, u16>(PixelBuffer<u16>* pb,u8* p_in,
 
 void DePosterize(u32* source, u32* dest, int width, int height);
 void UpscalexBRZ(int factor, u32* source, u32* dest, int width, int height, bool has_alpha);
+
+#undef clamp
+
