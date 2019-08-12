@@ -73,35 +73,29 @@ extern int screen_height;
 
 PipelineShader* CurrentShader;
 u32 gcflip;
-static GLuint g_previous_frame_tex;
 
 s32 SetTileClip(u32 val, GLint uniform)
 {
 	if (!settings.rend.Clipping)
 		return 0;
 
-	u32 clipmode=val>>28;
+	u32 clipmode = val >> 28;
 	s32 clip_mode;
-	if (clipmode<2)
-	{
-		clip_mode=0;    //always passes
-	}
-	else if (clipmode&1)
-		clip_mode=-1;   //render stuff outside the region
+	if (clipmode < 2)
+		clip_mode = 0;    //always passes
+	else if (clipmode & 1)
+		clip_mode = -1;   //render stuff outside the region
 	else
-		clip_mode=1;    //render stuff inside the region
+		clip_mode = 1;    //render stuff inside the region
 
-	float csx=0,csy=0,cex=0,cey=0;
-
-
-	csx=(float)(val&63);
-	cex=(float)((val>>6)&63);
-	csy=(float)((val>>12)&31);
-	cey=(float)((val>>17)&31);
-	csx=csx*32;
-	cex=cex*32 +32;
-	csy=csy*32;
-	cey=cey*32 +32;
+	float csx = val & 63;
+	float cex = (val >> 6) & 63;
+	float csy = (val >> 12) & 31;
+	float cey = (val >> 17) & 31;
+	csx = csx * 32;
+	cex = cex * 32 + 32;
+	csy = csy * 32;
+	cey = cey * 32 + 32;
 
 	if (csx <= 0 && csy <= 0 && cex >= 640 && cey >= 480)
 		return 0;
@@ -110,36 +104,15 @@ s32 SetTileClip(u32 val, GLint uniform)
 	{
 		if (!pvrrc.isRTT)
 		{
-			csx /= scale_x;
-			csy /= scale_y;
-			cex /= scale_x;
-			cey /= scale_y;
-			float dc2s_scale_h;
-			float ds2s_offs_x;
-			float screen_stretching = settings.rend.ScreenStretching / 100.f;
+			glm::vec4 clip_start(csx, csy, 0, 1);
+			glm::vec4 clip_end(cex, cey, 0, 1);
+			clip_start = ViewportMatrix * clip_start;
+			clip_end = ViewportMatrix * clip_end;
 
-			if (settings.rend.Rotate90)
-			{
-				float t = cex;
-				cex = cey;
-				cey = 640 - csx;
-				csx = csy;
-				csy = 640 - t;
-				dc2s_scale_h = screen_height / 640.0f;
-				ds2s_offs_x =  (screen_width - dc2s_scale_h * 480.0 * screen_stretching) / 2;
-			}
-			else
-			{
-				float t = cey;
-				cey = 480 - csy;
-				csy = 480 - t;
-				dc2s_scale_h = screen_height / 480.0f;
-				ds2s_offs_x =  (screen_width - dc2s_scale_h * 640.0 * screen_stretching) / 2;
-			}
-			csx = csx * dc2s_scale_h * screen_stretching + ds2s_offs_x;
-			cex = cex * dc2s_scale_h * screen_stretching + ds2s_offs_x;
-			csy = csy * dc2s_scale_h;
-			cey = cey * dc2s_scale_h;
+			csx = clip_start[0];
+			csy = clip_start[1];
+			cey = clip_end[1];
+			cex = clip_end[0];
 		}
 		else if (!settings.rend.RenderToTextureBuffer)
 		{
@@ -148,7 +121,7 @@ s32 SetTileClip(u32 val, GLint uniform)
 			cex *= settings.rend.RenderToTextureUpscale;
 			cey *= settings.rend.RenderToTextureUpscale;
 		}
-		glUniform4f(uniform, csx, csy, cex, cey);
+		glUniform4f(uniform, std::min(csx, cex), std::min(csy, cey), std::max(csx, cex), std::max(csy, cey));
 	}
 
 	return clip_mode;

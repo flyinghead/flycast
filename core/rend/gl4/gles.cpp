@@ -14,7 +14,6 @@ static const char* VertexShaderSource =
 "\
 #version 140 \n\
 #define pp_Gouraud %d \n\
-#define ROTATE_90 %d \n\
  \n\
 #if pp_Gouraud == 0 \n\
 #define INTERPOLATION flat \n\
@@ -24,7 +23,7 @@ static const char* VertexShaderSource =
  \n\
 /* Vertex constants*/  \n\
 uniform highp vec4      scale; \n\
-uniform highp float     extra_depth_scale; \n\
+uniform highp mat4 normal_matrix; \n\
 /* Vertex input */ \n\
 in highp vec4    in_pos; \n\
 in lowp vec4     in_base; \n\
@@ -42,26 +41,23 @@ INTERPOLATION out lowp vec4 vtx_offs1; \n\
 			  out mediump vec2 vtx_uv1; \n\
 void main() \n\
 { \n\
-	vtx_base=in_base; \n\
-	vtx_offs=in_offs; \n\
-	vtx_uv=in_uv; \n\
+	vtx_base = in_base; \n\
+	vtx_offs = in_offs; \n\
+	vtx_uv = in_uv; \n\
 	vtx_base1 = in_base1; \n\
 	vtx_offs1 = in_offs1; \n\
 	vtx_uv1 = in_uv1; \n\
-	vec4 vpos=in_pos; \n\
+	vec4 vpos = in_pos; \n\
 	if (vpos.z < 0.0 || vpos.z > 3.4e37) \n\
 	{ \n\
 		gl_Position = vec4(0.0, 0.0, 1.0, 1.0 / vpos.z); \n\
 		return; \n\
 	} \n\
 	\n\
-	vpos.w = extra_depth_scale / vpos.z; \n\
+	vpos = normal_matrix * vpos; \n\
+	vpos.w = 1.0 / vpos.z; \n\
 	vpos.z = vpos.w; \n\
-#if ROTATE_90 == 1 \n\
-	vpos.xy = vec2(vpos.y, -vpos.x);  \n\
-#endif \n\
-	vpos.xy=vpos.xy*scale.xy-scale.zw;  \n\
-	vpos.xy*=vpos.w;  \n\
+	vpos.xy *= vpos.w;  \n\
 	gl_Position = vpos; \n\
 }";
 
@@ -399,11 +395,11 @@ struct gl4ShaderUniforms_t gl4ShaderUniforms;
 int max_image_width;
 int max_image_height;
 
-bool gl4CompilePipelineShader(	gl4PipelineShader* s, bool rotate_90, const char *pixel_source /* = PixelPipelineShader */, const char *vertex_source /* = NULL */)
+bool gl4CompilePipelineShader(	gl4PipelineShader* s, const char *pixel_source /* = PixelPipelineShader */, const char *vertex_source /* = NULL */)
 {
 	char vshader[16384];
 
-	sprintf(vshader, vertex_source == NULL ? VertexShaderSource : vertex_source, s->pp_Gouraud, rotate_90);
+	sprintf(vshader, vertex_source == NULL ? VertexShaderSource : vertex_source, s->pp_Gouraud);
 
 	char pshader[16384];
 
@@ -423,7 +419,6 @@ bool gl4CompilePipelineShader(	gl4PipelineShader* s, bool rotate_90, const char 
 		glUniform1i(gu, 1);
 
 	//get the uniform locations
-	s->scale	            = glGetUniformLocation(s->program, "scale");
 	s->extra_depth_scale = glGetUniformLocation(s->program, "extra_depth_scale");
 
 	s->pp_ClipTest      = glGetUniformLocation(s->program, "pp_ClipTest");
@@ -464,6 +459,7 @@ bool gl4CompilePipelineShader(	gl4PipelineShader* s, bool rotate_90, const char 
 		s->fog_clamp_min = -1;
 		s->fog_clamp_max = -1;
 	}
+	s->normal_matrix = glGetUniformLocation(s->program, "normal_matrix");
 
 	// Shadow stencil for OP/PT rendering pass
 	gu = glGetUniformLocation(s->program, "shadow_stencil");
@@ -516,10 +512,10 @@ static void create_modvol_shader()
 	if (gl4.modvol_shader.program != 0)
 		return;
 	char vshader[16384];
-	sprintf(vshader, VertexShaderSource, 1, settings.rend.Rotate90);
+	sprintf(vshader, VertexShaderSource, 1);
 
 	gl4.modvol_shader.program=gl_CompileAndLink(vshader, ModifierVolumeShader);
-	gl4.modvol_shader.scale          = glGetUniformLocation(gl4.modvol_shader.program, "scale");
+	gl4.modvol_shader.normal_matrix  = glGetUniformLocation(gl4.modvol_shader.program, "normal_matrix");
 	gl4.modvol_shader.extra_depth_scale = glGetUniformLocation(gl4.modvol_shader.program, "extra_depth_scale");
 }
 
@@ -653,59 +649,24 @@ static bool RenderFrame()
 	DoCleanup();
 	create_modvol_shader();
 
-	bool is_rtt=pvrrc.isRTT;
-
-	//if (FrameCount&7) return;
+	bool is_rtt = pvrrc.isRTT;
 
 	//these should be adjusted based on the current PVR scaling etc params
-	float dc_width=640;
-	float dc_height=480;
-
+	float dc_width;
+	float dc_height;
+	GetFramebufferSize(dc_width, dc_height);
+	
 	if (!is_rtt)
-	{
-		gcflip=0;
-	}
+		gcflip = 0;
 	else
-	{
-		gcflip=1;
-
-		//For some reason this produces wrong results
-		//so for now its hacked based like on the d3d code
-		/*
-		u32 pvr_stride=(FB_W_LINESTRIDE.stride)*8;
-		*/
-		dc_width = pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1;
-		dc_height = pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1;
-	}
-
-	scale_x = 1;
-	scale_y = 1;
-
-	float scissoring_scale_x = 1;
-
-	if (!is_rtt && !pvrrc.isRenderFramebuffer)
-	{
-		scale_x=fb_scale_x;
-		scale_y=fb_scale_y;
-		if (SCALER_CTL.interlace == 0 && SCALER_CTL.vscalefactor >= 0x400)
-			scale_y *= (float)SCALER_CTL.vscalefactor / 0x400;
-
-		//work out scaling parameters !
-		//Pixel doubling is on VO, so it does not affect any pixel operations
-		//A second scaling is used here for scissoring
-		if (VO_CONTROL.pixel_double)
-		{
-			scissoring_scale_x = 0.5f;
-			scale_x *= 0.5f;
-		}
-
-		if (SCALER_CTL.hscale)
-		{
-			scissoring_scale_x /= 2;
-			scale_x*=2;
-		}
-	}
-
+		gcflip = 1;
+	
+	float scale_x;
+	float scale_y;
+	float scissoring_scale_x;
+	float scissoring_scale_y;
+	GetFramebufferScaling(scale_x, scale_y, scissoring_scale_x, scissoring_scale_y);
+	
 	dc_width  *= scale_x;
 	dc_height *= scale_y;
 
@@ -713,48 +674,25 @@ static bool RenderFrame()
 		Handle Dc to screen scaling
 	*/
 	float screen_scaling = settings.rend.ScreenScaling / 100.f;
-	float screen_stretching = settings.rend.ScreenStretching / 100.f;
-
-	float dc2s_scale_h;
-	float ds2s_offs_x;
-
 	int rendering_width;
 	int rendering_height;
 	if (is_rtt)
 	{
-		gl4ShaderUniforms.scale_coefs[0] = 2.0f / dc_width;
-		gl4ShaderUniforms.scale_coefs[1] = 2.0f / dc_height;	// FIXME CT2 needs 480 here instead of dc_height=512
-		gl4ShaderUniforms.scale_coefs[2] = 1;
-		gl4ShaderUniforms.scale_coefs[3] = 1;
 		int scaling = settings.rend.RenderToTextureBuffer ? 1 : settings.rend.RenderToTextureUpscale;
 		rendering_width = dc_width * scaling;
 		rendering_height = dc_height * scaling;
 	}
 	else
 	{
-		if (settings.rend.Rotate90)
-		{
-			dc2s_scale_h = screen_height / 640.0;
-			ds2s_offs_x =  (screen_width - dc2s_scale_h * 480.0 * screen_stretching) / 2;
-			gl4ShaderUniforms.scale_coefs[0] = 2.0f / (screen_width / dc2s_scale_h * scale_x) * screen_stretching;
-			gl4ShaderUniforms.scale_coefs[1] = -2.0f / dc_width;
-			gl4ShaderUniforms.scale_coefs[2] = 1 - 2 * ds2s_offs_x / screen_width;
-			gl4ShaderUniforms.scale_coefs[3] = 1;
-		}
-		else
-		{
-			dc2s_scale_h = screen_height / 480.0;
-			ds2s_offs_x =  (screen_width - dc2s_scale_h * 640.0 * screen_stretching) / 2;
-			//-1 -> too much to left
-			gl4ShaderUniforms.scale_coefs[0] = 2.0f / (screen_width / dc2s_scale_h * scale_x) * screen_stretching;
-			gl4ShaderUniforms.scale_coefs[1] = -2.0f / dc_height;
-			gl4ShaderUniforms.scale_coefs[2] = 1 - 2 * ds2s_offs_x / screen_width;
-			gl4ShaderUniforms.scale_coefs[3] = -1;
-		}
 		rendering_width = screen_width * screen_scaling + 0.5f;
 		rendering_height = screen_height * screen_scaling + 0.5f;
 	}
 	resize(rendering_width, rendering_height);
+	
+	float ds2s_offs_x;
+	
+	glm::mat4 scissor_mat;
+	SetupMatrices(dc_width, dc_height, scale_x, scale_y, scissoring_scale_x, scissoring_scale_y, ds2s_offs_x, gl4ShaderUniforms.normal_mat, scissor_mat);
 
 	gl4ShaderUniforms.extra_depth_scale = settings.rend.ExtraDepthScale;
 
@@ -795,8 +733,7 @@ static bool RenderFrame()
 
 	glcache.UseProgram(gl4.modvol_shader.program);
 
-	glUniform4fv( gl4.modvol_shader.scale, 1, gl4ShaderUniforms.scale_coefs);
-
+	glUniformMatrix4fv(gl4.modvol_shader.normal_matrix, 1, GL_FALSE, &gl4ShaderUniforms.normal_mat[0][0]);
 	glUniform1f(gl4.modvol_shader.extra_depth_scale, gl4ShaderUniforms.extra_depth_scale);
 
 	gl4ShaderUniforms.PT_ALPHA=(PT_ALPHA_REF&0xFF)/255.0f;
@@ -903,34 +840,32 @@ static bool RenderFrame()
 
 		if (!wide_screen_on)
 		{
-			float width = (pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1) / scale_x;
-			float height = (pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1) / scale_y;
-			float min_x = pvrrc.fb_X_CLIP.min / scale_x;
-			float min_y = pvrrc.fb_Y_CLIP.min / scale_y;
+			float width;
+			float height;
+			float min_x;
+			float min_y;
 			if (!is_rtt)
 			{
-				if (SCALER_CTL.interlace && SCALER_CTL.vscalefactor >= 0x400)
+				glm::vec4 clip_min(pvrrc.fb_X_CLIP.min, pvrrc.fb_Y_CLIP.min, 0, 1);
+				glm::vec4 clip_dim(pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1,
+								   pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1, 0, 0);
+				clip_min = scissor_mat * clip_min;
+				clip_dim = scissor_mat * clip_dim;
+				
+				min_x = clip_min[0];
+				min_y = clip_min[1];
+				width = clip_dim[0];
+				height = clip_dim[1];
+				if (width < 0)
 				{
-					// Clipping is done after scaling/filtering so account for that if enabled
-					height *= (float)SCALER_CTL.vscalefactor / 0x400;
-					min_y *= (float)SCALER_CTL.vscalefactor / 0x400;
+					min_x += width;
+					width = -width;
 				}
-				if (settings.rend.Rotate90)
+				if (height < 0)
 				{
-					float t = width;
-					width = height;
-					height = t;
-					t = min_x;
-					min_x = min_y;
-					min_y = 640 - t - height;
+					min_y += height;
+					height = -height;
 				}
-				// Add x offset for aspect ratio > 4/3
-            	min_x = (min_x * dc2s_scale_h * screen_stretching + ds2s_offs_x) * screen_scaling;
-				// Invert y coordinates when rendering to screen
-				min_y = (screen_height - (min_y + height) * dc2s_scale_h) * screen_scaling;
-				width *= dc2s_scale_h * screen_stretching * screen_scaling;
-				height *= dc2s_scale_h * screen_scaling;
-
 				if (ds2s_offs_x > 0)
 				{
 					float scaled_offs_x = ds2s_offs_x * screen_scaling;
@@ -943,14 +878,20 @@ static bool RenderFrame()
 					glClear(GL_COLOR_BUFFER_BIT);
 				}
 			}
-			else if (settings.rend.RenderToTextureUpscale > 1 && !settings.rend.RenderToTextureBuffer)
+			else
 			{
-				min_x *= settings.rend.RenderToTextureUpscale;
-				min_y *= settings.rend.RenderToTextureUpscale;
-				width *= settings.rend.RenderToTextureUpscale;
-				height *= settings.rend.RenderToTextureUpscale;
+				width = pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1;
+				height = pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1;
+				min_x = pvrrc.fb_X_CLIP.min;
+				min_y = pvrrc.fb_Y_CLIP.min;
+				if (settings.rend.RenderToTextureUpscale > 1 && !settings.rend.RenderToTextureBuffer)
+				{
+					min_x *= settings.rend.RenderToTextureUpscale;
+					min_y *= settings.rend.RenderToTextureUpscale;
+					width *= settings.rend.RenderToTextureUpscale;
+					height *= settings.rend.RenderToTextureUpscale;
+				}
 			}
-
 			glScissor(min_x + 0.5f, min_y + 0.5f, width + 0.5f, height + 0.5f);
 			glcache.Enable(GL_SCISSOR_TEST);
 		}

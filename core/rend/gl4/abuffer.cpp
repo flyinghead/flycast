@@ -342,23 +342,23 @@ void initABuffer()
 	{
 		char source[16384];
 		sprintf(source, final_shader_source, 1);
-		gl4CompilePipelineShader(&g_abuffer_final_shader, false, source, VertexShaderSource);
+		gl4CompilePipelineShader(&g_abuffer_final_shader, source, VertexShaderSource);
 	}
 	if (g_abuffer_final_nosort_shader.program == 0)
 	{
 		char source[16384];
 		sprintf(source, final_shader_source, 0);
-		gl4CompilePipelineShader(&g_abuffer_final_nosort_shader, false, source, VertexShaderSource);
+		gl4CompilePipelineShader(&g_abuffer_final_nosort_shader, source, VertexShaderSource);
 	}
 	if (g_abuffer_clear_shader.program == 0)
-		gl4CompilePipelineShader(&g_abuffer_clear_shader, false, clear_shader_source, VertexShaderSource);
+		gl4CompilePipelineShader(&g_abuffer_clear_shader, clear_shader_source, VertexShaderSource);
 	if (g_abuffer_tr_modvol_shaders[0].program == 0)
 	{
 		char source[16384];
 		for (int mode = 0; mode < ModeCount; mode++)
 		{
 			sprintf(source, tr_modvol_shader_source, mode);
-			gl4CompilePipelineShader(&g_abuffer_tr_modvol_shaders[mode], false, source, VertexShaderSource);
+			gl4CompilePipelineShader(&g_abuffer_tr_modvol_shaders[mode], source, VertexShaderSource);
 		}
 	}
 
