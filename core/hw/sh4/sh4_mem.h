@@ -100,4 +100,4 @@ u32 GetRamPageFromAddress(u32 RamAddress);
 
 bool LoadRomFiles(const string& root);
 void SaveRomFiles(const string& root);
-bool HleInit();
+bool LoadHle(const string& root);

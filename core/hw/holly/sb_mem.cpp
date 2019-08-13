@@ -39,35 +39,8 @@ static std::string getRomPrefix()
 	}
 }
 
-static bool nvmemOptional()
+static bool nvmem_load(const string& root)
 {
-	return settings.platform.system != DC_PLATFORM_DREAMCAST;
-}
-
-bool LoadRomFiles(const string& root)
-{
-	bool rom_loaded = false;
-	if (settings.platform.system != DC_PLATFORM_ATOMISWAVE)
-	{
-		if (!sys_rom->Load(root, getRomPrefix(), "%boot.bin;%boot.bin.bin;%bios.bin;%bios.bin.bin", "bootrom"))
-		{
-			if (settings.platform.system == DC_PLATFORM_DREAMCAST && !settings.bios.UseReios)
-			{
-				// Dreamcast absolutely needs a BIOS
-				msgboxf("Unable to find bios in %s. Exiting...", MBX_ICONERROR, root.c_str());
-				return false;
-			}
-		}
-		else
-		{
-			bios_loaded = true;
-			rom_loaded = true;
-		}
-	}
-	else
-	{
-		rom_loaded = true;
-	}
 	bool rc;
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 		rc = sys_nvmem->Load(root, getRomPrefix(), "%nvmem.bin;%flash_wb.bin;%flash.bin;%flash.bin.bin", "nvram");
@@ -75,11 +48,11 @@ bool LoadRomFiles(const string& root)
 		rc = sys_nvmem->Load(get_game_save_prefix() + ".nvmem");
 	if (!rc)
 		INFO_LOG(FLASHROM, "flash/nvmem is missing, will create new file...");
-
+	
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 	{
 		static_cast<DCFlashChip*>(sys_nvmem)->Validate();
-
+		
 		// overwrite factory flash settings
 		if (settings.dreamcast.region <= 2)
 		{
@@ -96,11 +69,11 @@ bool LoadRomFiles(const string& root)
 			sys_nvmem->data[0x1a004] = '0' + settings.dreamcast.broadcast;
 			sys_nvmem->data[0x1a0a4] = '0' + settings.dreamcast.broadcast;
 		}
-
+		
 		// overwrite user settings
 		struct flash_syscfg_block syscfg;
 		int res = static_cast<DCFlashChip*>(sys_nvmem)->ReadBlock(FLASH_PT_USER, FLASH_USER_SYSCFG, &syscfg);
-
+		
 		if (!res)
 		{
 			// write out default settings
@@ -116,15 +89,38 @@ bool LoadRomFiles(const string& root)
 		syscfg.time_hi = time >> 16;
 		if (settings.dreamcast.language <= 5)
 			syscfg.lang = settings.dreamcast.language;
-
+		
 		if (static_cast<DCFlashChip*>(sys_nvmem)->WriteBlock(FLASH_PT_USER, FLASH_USER_SYSCFG, &syscfg) != 1)
 			WARN_LOG(FLASHROM, "Failed to save time and language to flash RAM");
 	}
-
+	
 	if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
 		sys_rom->Load(get_game_save_prefix() + ".nvmem2");
+	
+	return true;
+}
 
-	return rom_loaded;
+bool LoadRomFiles(const string& root)
+{
+	if (settings.platform.system != DC_PLATFORM_ATOMISWAVE)
+	{
+		if (!sys_rom->Load(root, getRomPrefix(), "%boot.bin;%boot.bin.bin;%bios.bin;%bios.bin.bin", "bootrom"))
+		{
+			if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+			{
+				// Dreamcast absolutely needs a BIOS
+				msgboxf("Unable to find bios in %s. Exiting...", MBX_ICONERROR, root.c_str());
+				return false;
+			}
+		}
+		else
+		{
+			bios_loaded = true;
+		}
+	}
+	nvmem_load(root);
+
+	return true;
 }
 
 void SaveRomFiles(const string& root)
@@ -137,8 +133,11 @@ void SaveRomFiles(const string& root)
 		sys_rom->Save(get_game_save_prefix() + ".nvmem2");
 }
 
-bool HleInit()
+bool LoadHle(const string& root)
 {
+	if (!nvmem_load(root))
+		WARN_LOG(FLASHROM, "No nvmem loaded\n");
+
 	return reios_init(sys_rom->data, sys_nvmem);
 }
 

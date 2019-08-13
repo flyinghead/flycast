@@ -461,21 +461,19 @@ void dc_start_game(const char *path)
 	LoadSettings(false);
 	
 	std::string data_path = get_readonly_data_path(DATA_PATH);
-	if (!LoadRomFiles(data_path))
+	if ((settings.platform.system == DC_PLATFORM_DREAMCAST && settings.bios.UseReios)
+		|| !LoadRomFiles(data_path))
 	{
 		if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 		{
-			if (settings.bios.UseReios)
-			{
-				if (!HleInit())
-					throw ReicastException("Failed to initialize HLE BIOS");
+			if (!LoadHle(data_path))
+				throw ReicastException("Failed to initialize HLE BIOS");
 
-				NOTICE_LOG(BOOT, "Did not load BIOS, using reios");
-			}
-			else
-			{
-				throw ReicastException("Cannot find BIOS files in " + data_path);
-			}
+			NOTICE_LOG(BOOT, "Did not load BIOS, using reios");
+		}
+		else
+		{
+			throw ReicastException("Cannot find BIOS files in " + data_path);
 		}
 	}
 
